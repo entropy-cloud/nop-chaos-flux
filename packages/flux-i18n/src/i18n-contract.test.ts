@@ -55,6 +55,17 @@ describe('i18n sink contracts', () => {
     expect(uiT('flux.common.close')).toBe('Close');
   });
 
+  it('routes ui chrome keys through flux-i18n for a non-en locale (P1-8 bridge proof)', async () => {
+    // zh-CN resolves to a value that does NOT exist in ui's built-in English
+    // fallback map, so a passing assertion can only be explained by the bridge
+    // routing ui.t() through the active flux-i18n instance.
+    initFluxI18n({ lng: 'zh-CN', fallbackLng: 'zh-CN' });
+    await changeLanguage('zh-CN');
+    const uiT = await getUiT();
+    expect(uiT('flux.carousel.label')).toBe('轮播图');
+    expect(uiT('flux.dialog.close')).toBe('关闭');
+  });
+
   it('falls back to ui local defaults when flux i18n has no matching key', async () => {
     initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
     await changeLanguage('en-US');

@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
@@ -32,17 +30,6 @@ vi.mock('@nop-chaos/flux-react', async () => {
     useRendererRuntime: mocks.useRendererRuntime,
     createFormComponentHandle: mocks.createFormComponentHandle,
     resolveGap: mocks.resolveGap,
-  };
-});
-
-vi.mock('@nop-chaos/flux-react/unstable', async () => {
-  const ReactModule = await vi.importActual<typeof import('react')>('react');
-
-  return {
-    FormContext: ReactModule.createContext(undefined),
-    FormLayoutContext: ReactModule.createContext(undefined),
-    ScopeContext: ReactModule.createContext(null),
-    createFormComponentHandle: mocks.createFormComponentHandle,
   };
 });
 

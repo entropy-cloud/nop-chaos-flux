@@ -34,7 +34,8 @@
 
 ## 8. 事件、动作与组件句柄能力
 
-- 首版不要求专门事件或句柄。
+- `onLoadError`：二维码生成失败时触发（payload 过大/颜色非法等），与 image/audio/video 家族对齐；触发后维持 failed UI（失败占位）。早期 schema 缺该事件，作者挂的 `onLoadError` 被静默忽略——已补齐（见 `docs/plans/2026-06-25-0510-2-new-package-advertised-contract-and-lifecycle-honesty-plan.md` WS-B）。
+- 生成失败的诊断 `console.warn` 属另一计划（C-22），与本事件同处 catch、互不冲突。
 
 ## 9. 数据源、表达式、导入能力接入点
 

@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JsonViewRenderer } from './json-view.js';
@@ -101,5 +99,44 @@ describe('JsonViewRenderer', () => {
     await Promise.resolve();
     expect(writeText).toHaveBeenCalledTimes(1);
     expect(writeText.mock.calls[0][0]).toContain('"x": 1');
+  });
+
+  it('clears the copy reset timer on unmount so no pending setState leaks', async () => {
+    // S2 remediation: the "reset copied" timer must be cleared on unmount (no pending
+    // setState after teardown) and cleared before a new one is scheduled (no stacking).
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      get: () => ({ writeText }),
+    });
+
+    const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
+    const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
+
+    const props = createMockRendererProps<JsonViewSchema>({
+      schema: { type: 'json-view' },
+      props: { value: { x: 1 }, showCopy: true },
+    });
+    const { container, unmount } = render(<JsonViewRenderer {...props} />);
+    const btn = container.querySelector(
+      '[data-slot="json-view-toolbar"] button',
+    ) as HTMLButtonElement;
+
+    fireEvent.click(btn);
+    // flush the async clipboard writeText microtask chain
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // A reset timer was scheduled after the successful copy.
+    expect(setTimeoutSpy).toHaveBeenCalled();
+    const timerId = setTimeoutSpy.mock.results.at(-1)?.value as number | undefined;
+    expect(timerId).toBeDefined();
+
+    // Unmount must clear the pending timer → no pending setCopied after teardown.
+    unmount();
+    expect(clearTimeoutSpy).toHaveBeenCalledWith(timerId);
+
+    setTimeoutSpy.mockRestore();
+    clearTimeoutSpy.mockRestore();
   });
 });

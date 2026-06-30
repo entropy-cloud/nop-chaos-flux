@@ -229,14 +229,16 @@ describe('disposeOwnerState', () => {
 });
 
 describe('buildFormOwnerRuntime error fidelity', () => {
-  it('preserves the original thrown cause on synthetic field validation errors', async () => {
+  it('routes a thrown field-validation failure through diagnostics and preserves the original cause on the form-level error (V18 convergence)', async () => {
     const thrown = { code: 'E_FIELD', reason: 'unexpected' };
+    const reportFailure = vi.fn();
     const sharedState = createSharedState({
       inputValue: {
         executeValidationRule: async () => undefined,
         validateRule: () => {
           throw thrown;
         },
+        reportDependentRevalidationFailure: reportFailure,
         validation: {
           order: ['name'],
           behavior: { triggers: ['blur'], showErrorOn: ['touched'] },
@@ -273,17 +275,22 @@ describe('buildFormOwnerRuntime error fidelity', () => {
       setLastChange: vi.fn(),
     });
 
-    await expect(owner.validateForm('submit')).resolves.toMatchObject({
-      ok: false,
-      fieldErrors: {
-        name: [
-          expect.objectContaining({
-            cause: expect.objectContaining({ cause: thrown }),
-            sourceKind: 'form',
-            ownerPath: 'name',
-          }),
-        ],
-      },
-    });
+    const result = await owner.validateForm('submit');
+
+    // V18: the thrown failure no longer becomes a field-addressed error
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors).toEqual({});
+    // the original cause is still preserved on the form-level error (cause chain)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          cause: expect.objectContaining({ cause: thrown }),
+          sourceKind: 'form',
+          ownerPath: 'name',
+        }),
+      ]),
+    );
+    // the failure is routed through the owner diagnostics seam
+    expect(reportFailure).toHaveBeenCalledWith('name', expect.objectContaining({ cause: thrown }));
   });
 });

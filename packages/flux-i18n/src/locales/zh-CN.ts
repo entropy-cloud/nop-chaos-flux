@@ -28,6 +28,7 @@ export const zhCN: Resource = {
       editItem: '编辑{{item}}',
       edit: '编辑',
       saveFailed: '保存失败',
+      queryFailed: '查询失败',
       saving: '保存中...',
       unsaved: '未保存',
       retry: '重试',
@@ -61,6 +62,11 @@ export const zhCN: Resource = {
       loadedAll: '已加载全部 ({{count}})',
       loadingMore: '加载更多...',
     },
+    list: {
+      loadingMore: '加载更多...',
+      noMore: '没有更多了',
+      loadFailed: '加载失败，点击重试',
+    },
     table: {
       columns: '列设置',
       expand: '展开',
@@ -78,6 +84,9 @@ export const zhCN: Resource = {
       resizeColumn: '调整列宽',
       viewDetails: '查看详情',
       popoverEmpty: '暂无内容',
+      loading: '加载中',
+      copy: '复制到剪贴板',
+      copied: '已复制',
     },
     form: {
       required: '必填',
@@ -97,6 +106,7 @@ export const zhCN: Resource = {
       uploadFiles: '上传多个文件',
       uploading: '上传中…',
       clear: '清空',
+      cancel: '取消',
       uploadFailed: '上传失败',
       uploadActionMissing: '未配置 uploadAction —— 无法上传。',
       uploadNoResult: '上传动作未返回可用结果',
@@ -466,6 +476,13 @@ export const zhCN: Resource = {
         shortcuts: '快捷键',
         deleteNode: '删除节点',
       },
+      nodeCard: {
+        position: 'x:{{x}} y:{{y}}',
+        empty: '无节点',
+      },
+      edgeRow: {
+        empty: '无连线',
+      },
     },
     reportDesigner: {
       title: '报表设计器',
@@ -629,6 +646,7 @@ export const zhCN: Resource = {
     email: '邮箱',
     validation: {
       required: '{{label}}不能为空',
+      requiredRange: '{{label}}需要填写完整的范围',
       minLength: '{{label}}至少需要{{min}}个字符',
       maxLength: '{{label}}不能超过{{max}}个字符',
       minItems: '{{label}}至少需要{{min}}项',

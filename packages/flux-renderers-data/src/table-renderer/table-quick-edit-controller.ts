@@ -328,6 +328,12 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     const generation = ++saveGenerationRef.current;
     setSaving(true);
     setSaveError(undefined);
+    // H20: snapshot the draft record at save start. If `record` mutates during the
+    // await (e.g. an upstream refresh resets `draftRecordRef` via the sync effect),
+    // `saveGenerationRef` only guards against a *concurrent* save — it does not stop
+    // the record swap. Commit the snapshot so a record mutation mid-save cannot
+    // poison the result (no cross-record saving).
+    const recordSnapshot = { ...draftRecordRef.current };
     try {
       const result = await helpers.dispatch(saveAction, { scope: draftRowScope });
       if (saveGenerationRef.current !== generation) {
@@ -336,7 +342,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
       if (isExplicitActionFailure(result)) {
         throw result.error ?? new Error('Save action returned ok=false');
       }
-      const committedRecord = draftRecordRef.current;
+      const committedRecord = recordSnapshot;
       rowScope.update('record', committedRecord);
       const nextSavedValue = field ? toOptionalDraftValue(committedRecord, field) : draftValue;
       lastRecordValueRef.current = nextSavedValue;

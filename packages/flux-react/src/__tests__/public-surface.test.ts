@@ -25,12 +25,25 @@ describe('flux-react public surface', () => {
   });
 
   it('exposes internal orchestration exports through the unstable entry', () => {
-    expect(typeof fluxReactUnstable.RenderNodes).toBe('function');
     expect(typeof fluxReactUnstable.createHelpers).toBe('function');
     expect(typeof fluxReactUnstable.mergeActionContext).toBe('function');
     expect(typeof fluxReactUnstable.rendererHooks).toBe('object');
     expect(typeof fluxReactUnstable.rendererHooks.useCurrentImportFrame).toBe('function');
-    expect(fluxReactUnstable.FormContext).toBeTruthy();
     expect(typeof fluxReactUnstable.publishOwnerStatus).toBe('function');
+    // Contexts that are deliberately unstable-only (not yet on the stable barrel).
+    expect(fluxReactUnstable.RenderInstancePathContext).toBeTruthy();
+    expect(fluxReactUnstable.StructuralLoopContext).toBeTruthy();
+    expect(typeof fluxReactUnstable.useRequiredContext).toBe('function');
+  });
+
+  it('keeps the unstable entry disjoint from the stable barrel (AUDIT-05)', () => {
+    // Symbols that live on the stable barrel MUST NOT be re-exported from
+    // /unstable — otherwise callers root on the unstable path for symbols they
+    // could import from the stable barrel, creating a hidden coupling to the
+    // unstable surface.
+    const stableKeys = new Set(Object.keys(fluxReact));
+    const unstableKeys = Object.keys(fluxReactUnstable);
+    const intersection = unstableKeys.filter((key) => stableKeys.has(key));
+    expect(intersection).toEqual([]);
   });
 });

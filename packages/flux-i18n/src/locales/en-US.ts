@@ -28,6 +28,7 @@ export const enUS: Resource = {
       editItem: 'Edit {{item}}',
       edit: 'Edit',
       saveFailed: 'Save failed',
+      queryFailed: 'Query failed',
       saving: 'Saving...',
       unsaved: 'Unsaved',
       retry: 'Retry',
@@ -61,6 +62,11 @@ export const enUS: Resource = {
       loadedAll: 'Loaded all ({{count}})',
       loadingMore: 'Loading more...',
     },
+    list: {
+      loadingMore: 'Loading more...',
+      noMore: 'No more data',
+      loadFailed: 'Load failed. Click to retry',
+    },
     table: {
       columns: 'Columns',
       expand: 'Expand',
@@ -78,6 +84,9 @@ export const enUS: Resource = {
       resizeColumn: 'Resize Column',
       viewDetails: 'View details',
       popoverEmpty: 'No content',
+      loading: 'Loading',
+      copy: 'Copy to clipboard',
+      copied: 'Copied',
     },
     form: {
       required: 'Required',
@@ -97,6 +106,7 @@ export const enUS: Resource = {
       uploadFiles: 'Upload files',
       uploading: 'Uploading…',
       clear: 'Clear',
+      cancel: 'Cancel',
       uploadFailed: 'Upload failed',
       uploadActionMissing: 'uploadAction is not configured — cannot upload.',
       uploadNoResult: 'Upload action did not return a usable result',
@@ -468,6 +478,13 @@ export const enUS: Resource = {
         shortcuts: 'Shortcuts',
         deleteNode: 'Delete Node',
       },
+      nodeCard: {
+        position: 'x:{{x}} y:{{y}}',
+        empty: 'No node',
+      },
+      edgeRow: {
+        empty: 'No edge',
+      },
     },
     reportDesigner: {
       title: 'Report Designer',
@@ -631,6 +648,7 @@ export const enUS: Resource = {
     email: 'Email',
     validation: {
       required: '{{label}} is required',
+      requiredRange: '{{label}} requires both ends of the range',
       minLength: '{{label}} must be at least {{min}} characters',
       maxLength: '{{label}} must be at most {{max}} characters',
       minItems: '{{label}} must contain at least {{min}} item(s)',

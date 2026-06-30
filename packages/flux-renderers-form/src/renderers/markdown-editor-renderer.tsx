@@ -7,7 +7,7 @@ import {
   type SchemaFieldRule,
 } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
-import { cn, Textarea, useIsMobile } from '@nop-chaos/ui';
+import { Button, cn, Textarea, useIsMobile } from '@nop-chaos/ui';
 import { formFieldRules, useFormFieldController } from '../field-utils.js';
 import type { MarkdownEditorSchema } from '../schemas.js';
 import { createFieldValidation, validateInputFieldSchema } from './input.js';
@@ -227,17 +227,18 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
           aria-label="Markdown formatting"
         >
           {TOOLBAR_ACTIONS.map((action) => (
-            <button
+            <Button
               key={action.id}
               type="button"
+              variant="outline"
+              size="sm"
               title={action.title}
               aria-label={action.title}
               data-testid={`md-toolbar-${action.id}`}
-              className="inline-flex h-7 min-w-7 items-center justify-center rounded border border-border bg-background px-1.5 text-xs font-medium transition-colors hover:bg-accent"
               onClick={() => runToolbarAction(action)}
             >
               {action.label}
-            </button>
+            </Button>
           ))}
         </div>
       ) : null}

@@ -179,6 +179,7 @@ These constraints prevent silent styling regressions in monorepo and renderer in
 - Tailwind class generation must be treated as a runtime dependency, not an assumption. In monorepo apps, `@source` coverage and path correctness are required.
 - `@source` and `@config` paths must be validated relative to the CSS file location, especially after directory moves.
 - Semantic marker classes (for testing and host integration) are architecture contracts and should not be removed during visual refactors.
+- **STY2 (LOCK)**: Flux utility classNames（如 `text-destructive`）经 Tailwind v4 生成，**仅默认 stylesheet bundle 即生效，不需要独立 helper.css 或 `.amis-scope` scope-prefix**。Tailwind v4 经 `apps/playground/src/styles.css` 的 `@source "../../../packages"` 扫描全 packages 源，配合 `@theme inline` 颜色映射（如 `--color-destructive: hsl(var(--destructive))`）生成；Flux 全仓**不引入平行 helper.css，也无 `.amis-scope` 选择器**。重新引入 helper.css 或 scope-prefix 属于回归（对应 doc-14 §I NOT-ADOPTED #1807/#5553/#5502；见 `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`）。该保证由 repo-structure guard 锁定：`packages/ui/src/__tests__/styling-no-helper-css.test.ts`。
 
 Use `docs/references/architecture-guardrails-from-bugs.md` for practical diagnostics and regression checks.
 

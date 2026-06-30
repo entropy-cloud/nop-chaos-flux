@@ -145,6 +145,18 @@ The validation runtime model has three core abstractions:
 | `ActionResult`                 | Current exported result for `FormRuntime.submit()`                                        |
 | `ScopeValidationStateSnapshot` | Scope-wide validation state summary                                                       |
 
+### `FormValidationResult.fieldErrors` Failure-Path Contract (V23)
+
+`FormValidationResult` extends `ValidationResult` with `fieldErrors: Record<string, ValidationError[]>` — a path-keyed map of the field-addressed errors produced (or preserved) by a scope-wide / subtree run.
+
+Contract rules:
+
+1. `fieldErrors[path]` is the authoritative "this path failed" signal for downstream branching (submit gating, UI field chrome, programmatic `validate()` consumers). A path is to be treated as failing the run iff it appears in `fieldErrors` with a non-empty array.
+2. `errors` is the flat aggregate list (which may also carry form-level / scope-level errors that are not field-addressed, such as the V18 form-level internal-error entry). `fieldErrors` is the field-addressed subset; consumers that branch on "did this specific field fail" must read `fieldErrors`, not scan `errors`.
+3. `validateForm` / `validateAll` / `validateSubtree` return `fieldErrors` populated only for paths that produced field-addressed rule failures. Failures routed through the diagnostics seam (see _Async / Validator Failure Routing_) deliberately do **not** appear in `fieldErrors`.
+4. `ok` is `errors.length === 0`. Because form-level errors live in `errors`, a V18-style diagnostics-routed failure still yields `ok: false` even though `fieldErrors` may be empty for that path.
+5. `FormRuntime.validate()` / `componentHandle.validate()` expose the full `FormValidationResult`, so programmatic callers can branch on `fieldErrors` to identify the exact failing paths (e.g. to focus the first failing field) without re-running validation.
+
 ### ValidationScopeRuntime
 
 The core runtime abstraction exists for any scope that has validation semantics:
@@ -268,7 +280,7 @@ Rules:
 Current implementation note:
 
 - dependency-triggered revalidation for untouched fields uses `reason: 'system'`; it does not clear stored errors just because the field has not been touched yet
-- dependent revalidation failures now report through the runtime owner diagnostics seam (`env.monitor?.onError?.(...)` plus `env.notify('error', ...)`) when the owner was created by the runtime factory, instead of remaining console-only fire-and-forget failures
+- dependent revalidation failures now report through the runtime owner diagnostics seam (`env.monitor?.onError?.(...)` plus `env.notify('error', ...)`) when the owner was created by the runtime factory, instead of remaining console-only fire-and-forget failures; all three dependent-revalidation entries converge on this seam — `validateForm`/`validateFormPath`, `executeSetValues` (via `attachDependentRevalidationFailureHandler`), and `applyChangesAndRevalidate` (via its `revalidateDependents` catch)
 
 Debounce policy is not a separate owner-level authoring feature.
 
@@ -654,9 +666,12 @@ These complement each other. Structural mutations should clear obviously stale s
 
 ## Rule Template Model
 
+> **Implementation Status**: The `CompiledRuleTemplate` / `EffectiveValidationRule` / `EffectiveRuleMaterialization` sketches below describe the target-state rule-template model. They are **not** live exported types. The live exported runtime contract is `CompiledValidationRule` (`flux-core/src/types/validation.ts`), whose `rule` field is the compile-time-static `ValidationRule` discriminated union and which carries only `{ id, rule, dependencyPaths, precompiled? }` — no `when`, no `args`, no per-run expression materialization. Rule parameters (`pattern.value`, `minLength.value`, `equals`, `path`, ...) are compile-time-static values; they are not re-evaluated at materialization time.
+
 Rules are compiled once as templates, then materialized per validation run.
 
 ```ts
+// target-state sketch only; not a live exported type
 interface CompiledRuleTemplate {
   id: string;
   kind: ValidationRuleKind;
@@ -666,6 +681,7 @@ interface CompiledRuleTemplate {
   dependencyPaths: string[];
 }
 
+// target-state sketch only; not a live exported type
 interface EffectiveValidationRule {
   id: string;
   kind: ValidationRuleKind;
@@ -673,6 +689,7 @@ interface EffectiveValidationRule {
   message?: string;
 }
 
+// target-state sketch only; not a live exported type
 interface EffectiveRuleMaterialization {
   path: string;
   rules: EffectiveValidationRule[];
@@ -684,6 +701,32 @@ Rules may use expressions for activation, thresholds, cross-field comparisons, a
 
 Schema is not reparsed during validation.
 
+### Live Rule Kind Set And Numeric-Range Gap (V10 adjudication)
+
+The live `ValidationRule` discriminated union (`flux-core/src/types/validation.ts`) supports exactly these `kind` values: `required`, `requiredRange`, `minLength`, `maxLength`, `minItems`, `maxItems`, `atLeastOneFilled`, `allOrNone`, `uniqueBy`, `atLeastOneOf`, `pattern`, `email`, `equalsField`, `notEqualsField`, `requiredWhen`, `requiredUnless`, `async`.
+
+`requiredRange` is a range-aware variant of `required` for delimited composite values (e.g. date-range): it fails only when the value is **partially** filled (one bound filled, the other empty); a fully empty value is left to the generic `required` rule, and a fully filled value passes. Its message uses the dedicated `validation.requiredRange` i18n key (distinct from `validation.required`) so a partial range does not read as the generic "is required" prompt.
+
+There is **no** numeric-range rule kind. `min` / `max` / `isInt` / `minimum` / `maximum` / `isLength` amis-parity numeric-range semantics are **not modeled** in Flux (exhaustive repo grep returns zero matches). This is an adjudicated feature gap, not an untested property: Flux does not pretend to test numeric-range rules it does not implement.
+
+The underlying V10 concern — _a non-numeric input must not produce contradictory validation results_ — is mapped onto the **existing** length/items rules that Flux does implement:
+
+1. `minLength` / `maxLength` guard on `typeof input.value === 'string'` and short-circuit (return no error) for any non-string value.
+2. `minItems` / `maxItems` guard on `Array.isArray(input.value)` and short-circuit for any non-array value.
+3. therefore a value of the wrong type produces exactly one, non-contradictory result (no error) rather than both "too short" and "too long" or a misleading type-coercion error.
+
+This non-contradiction property is locked by focused tests in `packages/flux-runtime/src/__tests__/validation-rule-semantics-and-lifecycle.test.ts` and by the per-kind type-guard cases in `validators.test.ts`.
+
+### Expression-Based Rule Parameters (V13 adjudication)
+
+Expression-based rule parameters (Design Goal 4) are a **stated design target, not a landed live capability**. In the live runtime:
+
+1. `validateRule` (`flux-runtime/src/validation-runtime.ts`) passes the compile-time-static `compiledRule.rule` directly to the validator; parameters are never re-evaluated.
+2. `dependencyPaths` is populated only from explicit cross-field rule paths (`equalsField` / `notEqualsField` / `requiredWhen` / `requiredUnless`) plus any schema-declared `dependsOn` roots — never from expression-argument dependencies, because there are no expression arguments.
+3. the live `CompiledValidationRule` has no `args: Record<string, CompiledRuntimeValue>` field; the `CompiledRuleTemplate.args` shape above is a target-state sketch only.
+
+This is an adjudicated DESIGN-GAP (doc claims a target state that live code has not landed), recorded here so doc and live code stay consistent. amis-parity expression thresholds are **not** a "claimed-and-live" property of Flux. If Flux later lands expression-parameterized rules, it lands as an explicit new feature through a model-generation lifecycle change, not as a silent fill-in of the target sketch.
+
 Rule execution does not short-circuit on the first failing rule.
 
 Rules:
@@ -692,6 +735,7 @@ Rules:
 2. the owner collects all produced errors for that path in one run
 3. a failing `required` rule does not by itself suppress later `pattern`, `minLength`, aggregate, or async rules
 4. future per-rule short-circuit semantics, if ever introduced, must be explicit rule metadata rather than an implicit runtime optimization
+5. every validation entry — `validateAt` / `validateField` (`manual`, `change`, `blur`), `validateForm` / `validateAll` (the action / owner-wide entry), `validateSubtree`, and `submit` — runs the same full rule pipeline; there is no `required`-only weakened mode at any entry, and no entry silently drops later rules after `required` passes
 
 ## Materialization Service
 
@@ -715,6 +759,18 @@ The dependency graph merges three sources:
 
 This dependency graph is used to expand validation impact beyond a single leaf path.
 
+> **Live baseline note (source 2):** in the live runtime, source 2 (expression dependencies from `when` / `args` / `message`) contributes **nothing**, because expression-parameterized rule parameters are a target-state capability that has not landed (see _Expression-Based Rule Parameters_ under Rule Template Model). The live dependency graph is therefore built from source 1 (explicit cross-field rule paths) and source 3 (compiler-added aggregate child-to-parent edges), plus schema-declared `dependsOn` roots. This is recorded so the three-source description above is read as the target model, not as a claim that expression dependencies currently flow.
+
+### Derived / Computed Fields (V3 adjudication)
+
+Flux does **not** model derived or computed fields as first-class participants in the validation dependency graph. Specifically:
+
+1. there is no mechanism by which a derived/computed write enters the validation revalidation graph as a value-producing dependency;
+2. `formula` exists only as `FormulaDataSourceSchema` for asynchronous data loading; it does not write validation values and does not register validation dependency edges;
+3. the revalidation graph is fed exclusively by `compiledRule.dependencyPaths` (explicit cross-field rule paths and schema `dependsOn` roots) — a derived write to some path does not cause rules depending on that path to re-materialize unless that path is itself an explicit `dependencyPaths` member.
+
+This is an adjudicated feature gap, recorded as NOT-ADOPTED amis-parity (amis "computed/tpl" derived-field hooks are intentionally not mirrored). Flux-idiomatic derived participation is expected to flow through explicit `dependsOn` declaration or through value writes that the owner already treats as first-class change events, not through an implicit derived-field revalidation mechanism. `docs/architecture/value-adaptation-and-detail-field.md` covers projected-owner subtree rebasing but does not model derived-field writes into the validation graph.
+
 Current dynamic-required baseline:
 
 - `requiredWhen` / `requiredUnless` dependency paths are extracted from compiled field rules and consumed as explicit form-store path subscriptions.
@@ -727,6 +783,14 @@ Compiled expression dependencies may only create reactive edges within the curre
 
 If a rule needs data originating from another owner, that data must be projected into the current owner as an explicit input value rather than modeled as a cross-owner reactive dependency edge.
 
+### Array Row-Local Relative Cross-Field Addressing (V6 adjudication)
+
+Cross-field rules (`equalsField`, `requiredWhen`, ...) resolve their `rule.path` against the **absolute** owner scope (`scope.get(rule.path)`), and their `dependencyPaths` are absolute owner paths. There is **no** row-local relative addressing mechanism that lets a rule inside one array row reference a sibling field of the _same row_ via a relative path.
+
+`array-field`'s `validation.getChildFieldPathPrefix()` returns `false` by design: array item children are **not** collected into the parent owner's static compiled validation graph. Item field validation instead flows through the projected per-item form runtime registration. Consequently a relative cross-field rule authored on an array item field is not modeled as a per-row sibling check; authors must use absolute index-addressed paths (`items.${i}.x`) for any cross-row or row-targeting rule. `path-binding.ts` `toAbsolute` / `toRelative` / `owns` only serve the projected-owner subtree (detail / object / variant rebasing) against a fixed `ownerRootPath`; they do not represent dynamic per-index row instances and there is no row-instance path-binding context.
+
+This is an adjudicated gap (roadmap B3.2 裁定 B = `DESIGN-ACK-NOT-IMPL`). Row-local relative addressing is an amis-parity feature that Flux has never claimed; it would require architectural changes across validation-collection, path-binding, and the projected validation runtime. It is recorded as a candidate successor under roadmap B7. Non-array projected-owner path rebasing is covered by `docs/architecture/value-adaptation-and-detail-field.md`.
+
 Dependency closure must be cycle-safe.
 
 Rules:
@@ -735,6 +799,25 @@ Rules:
 2. closure expansion must therefore track visited paths and converge to a fixed owner-local target set rather than recurse indefinitely
 3. cycles are not by themselves a compile-time error
 4. the compiler may emit diagnostics for suspicious or needlessly large strongly connected components, but benign owner-local cycles remain legal
+
+### Error Clearing On Rule Pass
+
+Error ownership is field-addressed state, so clearing errors is part of the same owner-local contract that publishes them.
+
+Rules:
+
+1. when a value change makes a path's effective rule(s) pass, the owner must clear the field-addressed error(s) for that path
+2. this applies to both the directly edited path (after the renderer triggers revalidation) and to peers reached through dependency-closure revalidation, including mutual cross-field constraints where fixing one side must clear the other side's error
+3. the underlying field-addressed error state is cleared before and independently of any `showErrorOn` display policy; `showErrorOn` only governs when an error is shown, never whether the underlying state has already been cleared
+4. clearing is not gated on touched / visited / submitted state: a not-yet-touched field whose error is resolved by a dependent write still has its underlying error state cleared even if its display policy would have hidden the message
+5. `validateForm()` aggregation must remove the previously stored error for any path that the current run validates as passing, so stale errors cannot survive a full-form revalidation
+
+Current live baseline note:
+
+- the rule loop in `validateCompiledField` runs every effective rule, and when a path produces no errors the owner writes an empty error set (clearing) through `setPathErrors` / `commitPathValidationState`
+- `commitPathValidationState` deletes `errors` from the field state when the produced error list is empty
+- `validateForm()` merges per-path results and removes stored errors for paths the run validates as passing
+- dependency-closure revalidation (`revalidateDependents`) re-runs real validation for impacted peers rather than only toggling which paths were visited, so a peer that becomes valid has its error cleared
 
 ## Participation Rules
 
@@ -794,6 +877,16 @@ Current live participation baseline:
 - hiding a parent path also invalidates descendant in-flight async validation work so stale async completions cannot republish into the hidden subtree
 - `clearValueWhenHidden` now cascades across descendant compiled fields inside the hidden subtree rather than only clearing the exact path passed to `notifyFieldHidden(...)`
 - renderer-triggered validation entry points on advanced composite controls must preserve the actual owner reason (`change`, `blur`, etc.) and must not silently fall back to manual/no-reason validation after already consulting `shouldValidateOn(...)`
+
+### Hidden Field Value And Submit Payload (C10 adjudication)
+
+The submit flow reads the form store values directly (`store.getState().values`) and applies **no** hidden-field projection. The Flux contract (roadmap B3.2 裁定 B) is therefore:
+
+1. by default, a field hidden through `when`/`visible` **keeps its value** in the store and that value **is included** in the submitted payload — "hide ≠ clear"
+2. the only built-in mechanism that removes a hidden field's value is `clearValueWhenHidden` (opt-in, defaults to `false`), which clears the stored value when the field becomes hidden; a cleared value is consequently absent from the submitted payload
+3. there is **no** "exclude from submit payload but keep in store" mechanism modeled today; that is a distinct submit-payload-projection semantics recorded as a candidate successor (roadmap B7), not a claimed-and-live property
+
+This default is intentional: silently stripping hidden values from every existing form's submit payload would be a high blast-radius behavioral change, and Flux already provides the explicit `clearValueWhenHidden` opt-out. (Note: validation-participation exclusion of hidden fields is a separate concern already covered by the participation rules above and by `hiddenFieldPolicy.validateWhenHidden`; it does not imply submit-payload exclusion.)
 
 Refresh baseline note:
 
@@ -1008,6 +1101,21 @@ Cancellation ownership note:
 
 - `ValidationResult` itself does not currently expose a `cancelled` flag; owner-local validation APIs fold cancellation into `no published errors` / `cancelled async-governance settle` semantics before returning higher-level validation results
 - that folding belongs inside validation/runtime helpers and owner orchestration, not in callers trying to reconstruct cancellation later from arbitrary error shapes
+
+### Async / Validator Failure Routing (V18 adjudication)
+
+A validation failure that reaches an owner entry point as a _thrown_ error (an async rule's transport/HTTP/infrastructure failure, or a sync/async validator programming error) is **not** a field-value problem and is therefore never converted into a field-addressed error.
+
+Live baseline (adjudicated A — unified convergence):
+
+1. the direct `change` / `blur` path (`validateCompiledField`) never commits async-transport failures as field errors — its `finally` only commits sync rule results, and a thrown async failure propagates without writing the field's error state
+2. the dependent-revalidation path reports such failures through the owner diagnostics seam (`createDependentRevalidationFailureHandler` → `env.monitor.onError` + a single `env.notify('error', ...)`)
+3. the aggregate `validateForm` / `validateAll` entry (the `validateFormPath` catch in `form-runtime-owner.ts`, effective for every reason including `submit` / `manual` / `commit` / `system`) converges to the same seam: a thrown non-abort failure is routed through `reportDependentRevalidationFailure` (the same handler used by the dependent-revalidation path) and is **not** written into `fieldErrors[path]`; abort failures still re-throw
+4. because `validateCompiledField` normalizes non-`Error` throws into `Error(..., { cause })` before the aggregate catch observes them, transport failures and validator throws are not reliably distinguishable at the catch site; Flux therefore does not attempt a transport-vs-throw split and routes both classes through the diagnostics seam uniformly
+
+The aggregate entry still marks its returned result `ok: false` when such a failure occurs, by carrying a form-level error (`sourceKind: 'form'`, `rule: 'async'`, with the original failure on `cause`) in the `errors` array — but **not** in `fieldErrors`. This keeps `submit` from silently proceeding on unknown validation state while avoiding misleading per-field red text that the user cannot resolve by editing the field.
+
+User-visible result (Failure Paths V18-transport-fail / V18-rule-throw): a single toast carrying the backend/infrastructure message via the diagnostics seam, no field red text, submit blocked.
 
 ## Parent And Child Scope Interaction
 

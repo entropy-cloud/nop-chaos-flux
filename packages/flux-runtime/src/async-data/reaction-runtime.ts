@@ -417,6 +417,13 @@ export function registerReaction(input: {
     }
 
     abortController.abort();
+    // H34: `unsubscribe` is declared below (line ~442) as a const after this
+    // function declaration. This forward reference is safe because `dispose`
+    // is only callable after `createReaction` returns synchronously — by then
+    // `unsubscribe` is initialized. The internal `dispose()` calls inside
+    // `runReaction` (lines ~189/294/309) all run via microtask
+    // (`Promise.resolve().then(invoke)` at line ~411), which also settles
+    // after the synchronous initialization of `unsubscribe`.
     unsubscribe?.();
     pendingChangedPaths.clear();
     pendingForce = false;

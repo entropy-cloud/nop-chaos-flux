@@ -2,13 +2,13 @@ import { startTransition, useCallback, useMemo, useState } from 'react';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
-import { buildTableRowEntries, toStringArray } from './table-data.js';
+import { toStringArray } from './table-data.js';
 import { createTableEventContext } from './table-event-context.js';
 import type { TableRowEntry } from './types.js';
 
 export function useTableSelection(
   schemaProps: TableSchema,
-  source: TableRowEntry['record'][],
+  rows: TableRowEntry[],
   onSelectionChange: RendererComponentProps<TableSchema>['events']['onSelectionChange'],
   helpers: RendererComponentProps<TableSchema>['helpers'],
 ) {
@@ -55,20 +55,44 @@ export function useTableSelection(
     { paths: selectionStatePath ? [selectionStatePath] : undefined },
   );
 
-  const selectedRowKeys = useMemo(
-    () =>
-      selectionOwnership === 'controlled'
-        ? controlledSelectedRowKeys
-        : selectionOwnership === 'scope'
-          ? (scopeSelectedRowKeys ?? new Set<string>())
-          : localSelectedRowKeys,
-    [selectionOwnership, controlledSelectedRowKeys, scopeSelectedRowKeys, localSelectedRowKeys],
+  const normalizedRows = rows;
+
+  const currentRowKeySet = useMemo(
+    () => new Set(normalizedRows.map((row) => row.rowKey)),
+    [normalizedRows],
   );
 
-  const normalizedRows = useMemo(
-    () => buildTableRowEntries(source, schemaProps.rowKey),
-    [schemaProps.rowKey, source],
-  );
+  const selectedRowKeys = useMemo(() => {
+    if (selectionOwnership === 'controlled') {
+      return controlledSelectedRowKeys;
+    }
+    if (selectionOwnership === 'scope') {
+      return scopeSelectedRowKeys ?? new Set<string>();
+    }
+    // Local ownership: prune dead keys at render time so selection tracks the
+    // visible data (P1-7) without a setState-in-effect. When keepOnPageChange is
+    // set, keys for rows on other pages are intentionally retained.
+    if (keepOnPageChange || localSelectedRowKeys.size === 0) {
+      return localSelectedRowKeys;
+    }
+    let changed = false;
+    const pruned = new Set<string>();
+    for (const key of localSelectedRowKeys) {
+      if (currentRowKeySet.has(key)) {
+        pruned.add(key);
+      } else {
+        changed = true;
+      }
+    }
+    return changed ? pruned : localSelectedRowKeys;
+  }, [
+    selectionOwnership,
+    controlledSelectedRowKeys,
+    scopeSelectedRowKeys,
+    localSelectedRowKeys,
+    keepOnPageChange,
+    currentRowKeySet,
+  ]);
 
   const checkableRowKeys = useMemo(() => {
     if (!checkableWhen) {
@@ -133,9 +157,17 @@ export function useTableSelection(
 
       let nextKeys: Set<string>;
 
+      // H21: under keepOnPageChange, retained cross-page keys can include phantom
+      // keys for rows that were since deleted. Prune those against the full known
+      // dataset (currentRowKeySet) so they never survive into the payload, then
+      // apply the add/remove of the current rows.
+      const retainedKnown = keepOnPageChange
+        ? new Set(Array.from(selectedRowKeys).filter((key) => currentRowKeySet.has(key)))
+        : null;
+
       if (checked) {
         if (keepOnPageChange) {
-          nextKeys = new Set(selectedRowKeys);
+          nextKeys = new Set(retainedKnown);
           for (const key of currentRowKeys) {
             if (maxSelectionLength && nextKeys.size >= maxSelectionLength) {
               break;
@@ -155,7 +187,7 @@ export function useTableSelection(
         if (keepOnPageChange) {
           const currentPageSet = new Set(currentRowKeys);
           nextKeys = new Set(
-            Array.from(selectedRowKeys).filter((key) => !currentPageSet.has(key)),
+            Array.from(retainedKnown!).filter((key) => !currentPageSet.has(key)),
           );
         } else {
           nextKeys = new Set<string>();
@@ -200,6 +232,7 @@ export function useTableSelection(
       maxSelectionLength,
       selectedRowKeys,
       checkableRowKeys,
+      currentRowKeySet,
     ],
   );
 
@@ -209,7 +242,13 @@ export function useTableSelection(
         return;
       }
 
-      const baseSet = selectionOwnership === 'local' ? localSelectedRowKeys : selectedRowKeys;
+      // Build every payload from the already-pruned `selectedRowKeys`, never the
+      // raw `localSelectedRowKeys`. This keeps the three observable channels
+      // (display value / onSelectionChange payload / internal local state) in
+      // sync after rows disappear: a deleted row's phantom key cannot leak back
+      // into the payload, and the clean set is what gets written to local state
+      // so subsequent renders stop allocating fresh Sets (M-01 / G7).
+      const baseSet = selectedRowKeys;
 
       let newSet: Set<string>;
       if (isRadio) {
@@ -256,7 +295,6 @@ export function useTableSelection(
     [
       helpers,
       isRadio,
-      localSelectedRowKeys,
       onSelectionChange,
       renderScope,
       selectedRowKeys,

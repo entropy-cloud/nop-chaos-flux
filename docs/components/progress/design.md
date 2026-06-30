@@ -6,13 +6,13 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前尚未实现，但 UI primitive 已具备基础能力。
-- 首版建议只支持线性进度和标签，圆形/仪表盘可后续补充。
+- 已 shipped：注册于 `flux-renderers-content`（`content-renderer-definitions.ts`），复用 `@nop-chaos/ui` Progress primitive。
+- 首版为线性进度：`value`、`max`、`variant`、`showValue` 及 `label`（value-or-region）；圆形/仪表盘后续补充。
 
 ## 3. Flux 中的 renderer/type 定义
 
-- 目标 `type: 'progress'`
-- 预期归属 `@nop-chaos/flux-renderers-content`
+- 实际 `type: 'progress'`
+- 实际归属 `@nop-chaos/flux-renderers-content`
 
 ## 4. schema 设计
 

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useId, useMemo, useState } from 'react';
+import { useRef, useEffect, useId, useCallback, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import {
   AreaChart,
@@ -16,7 +16,7 @@ import {
   YAxis,
   CartesianGrid,
 } from 'recharts';
-import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
+import { getIn, type ComponentHandle, type RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
@@ -94,16 +94,32 @@ function sanitizeSeries(value: unknown): ChartSeriesSchema[] {
 export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
   const chartRef = useRef<HTMLDivElement>(null);
+  const [chartNode, setChartNode] = useState<HTMLDivElement | null>(null);
   const titleId = useId();
 
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (typeof ResizeObserver === 'undefined') {
-      return;
-    }
+  // Callback ref so the observer re-attaches when the async canvas mounts (the
+  // canvas is only rendered once data arrives, so a plain ref + empty-deps effect
+  // would bail on the first empty render and never observe the late-mounted node).
+  const setChartRef = useCallback((node: HTMLDivElement | null) => {
+    chartRef.current = node;
+    setChartNode(node);
+  }, []);
+
+  const measureContainerWidth = useCallback(() => {
     const node = chartRef.current;
     if (!node) {
+      return;
+    }
+    const width = node.getBoundingClientRect().width;
+    if (Number.isFinite(width)) {
+      setContainerWidth(width);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined' || !chartNode) {
       return;
     }
     const observer = new ResizeObserver((entries) => {
@@ -113,9 +129,9 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         setContainerWidth(width);
       }
     });
-    observer.observe(node);
+    observer.observe(chartNode);
     return () => observer.disconnect();
-  }, []);
+  }, [chartNode]);
 
   const chartType = isChartType(props.props.chartType) ? props.props.chartType : 'bar';
   const titleContent = resolveRendererSlotContent(props, 'title');
@@ -161,11 +177,19 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
   const pieData = (() => {
     if (source.length > 0 && xKey) {
-      return source.map((item, i) => ({
-        name: String(item[xKey] ?? ''),
-        value: Number(series[0]?.dataRegionKey ? item[series[0].dataRegionKey] : (item.value ?? 0)),
-        fill: palette[i % palette.length],
-      }));
+      return source.map((item, i) => {
+        // H22: guard the source-array numeric coercion so a non-numeric cell does
+        // not pollute the chart with NaN.
+        const rawValue = series[0]?.dataRegionKey
+          ? getIn(item, series[0].dataRegionKey)
+          : (item.value ?? 0);
+        const coerced = Number(rawValue);
+        return {
+          name: String(getIn(item, xKey) ?? ''),
+          value: Number.isFinite(coerced) ? coerced : 0,
+          fill: palette[i % palette.length],
+        };
+      });
     }
     if (series[0]?.data) {
       return series[0].data.map((d, i) => ({
@@ -215,20 +239,20 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
     return cartesianData.slice(0, 20).map((item, index) => {
       const record = item as Record<string, unknown>;
-      const label = xKey ? String(record[xKey] ?? `item-${index + 1}`) : `item-${index + 1}`;
+      const label = xKey ? String(getIn(record, xKey) ?? `item-${index + 1}`) : `item-${index + 1}`;
       const seriesList = (series.length > 0 ? series : [{ name: 'value' } as ChartSeriesSchema])
         .map((seriesItem) => {
           const key = seriesItem.dataRegionKey ?? seriesItem.name ?? 'value';
-          return `${seriesItem.name ?? key}: ${String(record[key] ?? '')}`;
+          return `${seriesItem.name ?? key}: ${String(getIn(record, key) ?? '')}`;
         })
         .join(', ');
       return `${label}: ${seriesList}`;
     });
   })();
 
-  const handleResize = () => {
-    void chartRef.current;
-  };
+  const handleResize = useCallback(() => {
+    measureContainerWidth();
+  }, [measureContainerWidth]);
 
   const chartHandle: ComponentHandle = useMemo(() => ({
     id: componentId,
@@ -253,7 +277,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         return ['resize'];
       },
     },
-  }), [componentId]);
+  }), [componentId, handleResize]);
 
   useEffect(() => {
     if (!componentRegistry) return;
@@ -268,7 +292,12 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
           <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%">
             {pieData.map((item, i) => (
-              <Cell key={item.name || `cell-${item.value}-${i}`} fill={palette[i % palette.length]} />
+              // H22: key on name+value so same-named Pie cells no longer collide
+              // (previously keyed on `item.name` alone).
+              <Cell
+                key={`pie-cell-${item.name}:${item.value}`}
+                fill={palette[i % palette.length]}
+              />
             ))}
           </Pie>
         </PieChart>
@@ -291,8 +320,8 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
                 data={
                   s.dataRegionKey
                     ? cartesianData.map((item: Record<string, unknown>) => ({
-                        x: item[xKey ?? 'name'],
-                        y: item[s.dataRegionKey!],
+                        x: getIn(item, xKey ?? 'name'),
+                        y: getIn(item, s.dataRegionKey!),
                       }))
                     : cartesianData
                 }
@@ -398,7 +427,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       ) : (
         <div
           data-slot="chart-canvas"
-          ref={chartRef}
+          ref={setChartRef}
           style={{ width: '100%', height: '100%' }}
           role="img"
           tabIndex={0}

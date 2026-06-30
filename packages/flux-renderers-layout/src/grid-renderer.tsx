@@ -1,6 +1,6 @@
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { cn } from '@nop-chaos/ui';
-import type { GridItemSchema, GridSchema } from './schemas.js';
+import { cn, useIsMobile } from '@nop-chaos/ui';
+import type { GridItemSchema, GridResponsiveColumns, GridSchema } from './schemas.js';
 
 type CompiledGridItem = GridItemSchema & {
   bodyRegionKey?: string;
@@ -24,6 +24,37 @@ function resolveColumnCount(columns: unknown): number | undefined {
   return undefined;
 }
 
+function isResponsiveColumnsObject(value: unknown): value is GridResponsiveColumns {
+  return value !== null && typeof value === 'object';
+}
+
+/**
+ * Resolve the effective column count for the current viewport.
+ *
+ * Adjudication (Decision): grid responsive uses a runtime `useIsMobile()` branch (Option A)
+ * rather than per-breakpoint CSS. Inline `style.gridTemplateColumns` cannot express `@media`,
+ * and Tailwind v4 content scanning cannot detect dynamically constructed `grid-cols-*`
+ * classes, so a pure-CSS approach is infeasible. The runtime branch keeps the existing inline
+ * `repeat(N, minmax(0,1fr))` path and is consistent with the crud/chart responsive baseline.
+ *
+ * Viewport signal: `useIsMobile()` is a single 768px threshold, so `md`/`lg` collapse into the
+ * desktop (≥ 768) bucket and `sm` maps to the mobile (< 768) bucket. Each bucket falls back to
+ * the base `columns` value when its breakpoint is unset.
+ */
+function resolveEffectiveColumnCount(
+  baseCount: number | undefined,
+  responsiveColumns: unknown,
+  isMobile: boolean,
+): number | undefined {
+  if (!isResponsiveColumnsObject(responsiveColumns)) {
+    return baseCount;
+  }
+  if (isMobile) {
+    return resolveColumnCount(responsiveColumns.sm) ?? baseCount;
+  }
+  return resolveColumnCount(responsiveColumns.lg) ?? resolveColumnCount(responsiveColumns.md) ?? baseCount;
+}
+
 function clampSpan(span: unknown, max: number | undefined): number {
   const n = typeof span === 'number' ? Math.floor(span) : 1;
   const lower = Math.max(1, n);
@@ -33,12 +64,14 @@ function clampSpan(span: unknown, max: number | undefined): number {
   return lower;
 }
 
-function buildGridStyle(schemaProps: GridSchema): React.CSSProperties {
+function buildGridStyle(
+  schemaProps: GridSchema,
+  effectiveColumns: number | undefined,
+): React.CSSProperties {
   const style: React.CSSProperties = { display: 'grid' };
-  const columnCount = resolveColumnCount(schemaProps.columns);
 
-  if (columnCount !== undefined) {
-    style.gridTemplateColumns = `repeat(${columnCount}, minmax(0, 1fr))`;
+  if (effectiveColumns !== undefined) {
+    style.gridTemplateColumns = `repeat(${effectiveColumns}, minmax(0, 1fr))`;
   } else if (typeof schemaProps.columns === 'string' && schemaProps.columns.length > 0) {
     style.gridTemplateColumns = schemaProps.columns;
   }
@@ -62,12 +95,19 @@ function buildGridStyle(schemaProps: GridSchema): React.CSSProperties {
 
 export function GridRenderer(props: RendererComponentProps<GridSchema>) {
   const schemaProps = props.props;
+  const isMobile = useIsMobile();
   const rawItems = Array.isArray(schemaProps.items)
     ? (schemaProps.items as unknown as CompiledGridItem[])
     : [];
 
-  const gridStyle = buildGridStyle(schemaProps as GridSchema);
-  const columnCount = resolveColumnCount(schemaProps.columns);
+  const responsiveConfigured = isResponsiveColumnsObject(schemaProps.responsiveColumns);
+  const effectiveColumns = resolveEffectiveColumnCount(
+    resolveColumnCount(schemaProps.columns),
+    schemaProps.responsiveColumns,
+    isMobile,
+  );
+
+  const gridStyle = buildGridStyle(schemaProps as GridSchema, effectiveColumns);
 
   return (
     <div
@@ -75,7 +115,8 @@ export function GridRenderer(props: RendererComponentProps<GridSchema>) {
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="grid-root"
-      data-columns={columnCount ?? undefined}
+      data-columns={effectiveColumns ?? undefined}
+      data-responsive={responsiveConfigured && isMobile ? 'narrow' : undefined}
       style={gridStyle}
     >
       {rawItems.length === 0
@@ -86,7 +127,7 @@ export function GridRenderer(props: RendererComponentProps<GridSchema>) {
               typeof item.bodyRegionKey === 'string' ? props.regions[item.bodyRegionKey] : undefined;
             const content = bodyRegion ? asReactNode(bodyRegion.render()) : null;
 
-            const colSpan = clampSpan(item.colSpan, columnCount);
+            const colSpan = clampSpan(item.colSpan, effectiveColumns);
             const rowSpan = clampSpan(item.rowSpan, undefined);
             const itemStyle: React.CSSProperties = {};
             if (colSpan > 1) {

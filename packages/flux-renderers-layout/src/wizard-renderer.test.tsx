@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import { readFileSync } from 'node:fs';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -221,6 +219,35 @@ describe('WizardRenderer (W2a — layered interaction/lifecycle state)', () => {
     expect(src).not.toMatch(/currentStepIndex.*committing|committing.*currentStepIndex/);
   });
 
+  it('does NOT advertise dead valueOwnership/valueStatePath contracts (advertised-but-dead honesty)', () => {
+    // F4 remediation: WizardSchema declared valueOwnership/valueStatePath but the renderer
+    // never read them — step navigation is local controlled (value/defaultValue seed only).
+    // statusPath (read-only summary) IS implemented and must remain.
+    const renderer = readFileSync('src/wizard-renderer.tsx', 'utf8');
+    const schemas = readFileSync('src/schemas.ts', 'utf8');
+    const definitions = readFileSync('src/layout-renderer-definitions.ts', 'utf8');
+
+    const wizardSchemaBlock = schemas.slice(
+      schemas.indexOf('export interface WizardSchema'),
+      schemas.indexOf('export type WizardLastCommitStatus'),
+    );
+    const wizardDefinitionBlock = definitions.slice(
+      definitions.indexOf("type: 'wizard'"),
+      definitions.indexOf("type: 'grid'"),
+    );
+
+    // Dead ownership fields removed from schema + definition + renderer.
+    expect(wizardSchemaBlock).not.toMatch(/valueOwnership/);
+    expect(wizardSchemaBlock).not.toMatch(/valueStatePath/);
+    expect(wizardDefinitionBlock).not.toMatch(/valueOwnership/);
+    expect(wizardDefinitionBlock).not.toMatch(/valueStatePath/);
+    expect(renderer).not.toMatch(/valueOwnership/);
+    expect(renderer).not.toMatch(/valueStatePath/);
+    // The IMPLEMENTED statusPath summary publication remains.
+    expect(wizardSchemaBlock).toMatch(/statusPath/);
+    expect(renderer).toMatch(/useStatusPathPublication/);
+  });
+
   it('blocks non-linear step jumping when linear=true and allowStepJump=false', () => {
     const SchemaRenderer = createLayoutSchemaRenderer();
     render(
@@ -372,5 +399,52 @@ describe('WizardRenderer (W2a — layered interaction/lifecycle state)', () => {
 
     fireEvent.click(screen.getByTestId('wizard-next'));
     await waitFor(() => expect(screen.getByText('idx:1:commit:success')).toBeTruthy());
+  });
+
+  it('gates a step authored with disabled:true (boolean-literal envelope from production normalize)', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/wizard-disabled-step"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'wizard',
+              // allowStepJump isolates the disabled effect: the ONLY thing that
+              // should block step B is its disabled flag, not the linear gate.
+              allowStepJump: true,
+              steps: [
+                { title: 'A', body: [{ type: 'text', text: 'A' }] },
+                { title: 'B', disabled: true, body: [{ type: 'text', text: 'B' }] },
+                { title: 'C', body: [{ type: 'text', text: 'C' }] },
+              ],
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    // Step B (index 1) is disabled: nav button reflects data-disabled and is not clickable.
+    const stepBButton = document.querySelector(
+      '[data-slot="wizard-step-nav-button"][data-step-index="1"]',
+    ) as HTMLButtonElement;
+    expect(stepBButton).toBeTruthy();
+    expect(stepBButton.getAttribute('data-disabled')).toBe('true');
+    expect(stepBButton.disabled).toBe(true);
+
+    // Clicking the disabled step does not navigate.
+    fireEvent.click(stepBButton);
+    expect(wizardRoot().getAttribute('data-current-step-index')).toBe('0');
+
+    // canGoNext must skip the disabled step: Next commits step A then advances
+    // directly to step C (index 2), bypassing the disabled step B.
+    fireEvent.click(screen.getByTestId('wizard-next'));
+    await waitFor(() =>
+      expect(wizardRoot().getAttribute('data-current-step-index')).toBe('2'),
+    );
   });
 });

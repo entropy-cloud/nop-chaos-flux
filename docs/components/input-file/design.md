@@ -40,6 +40,31 @@
 - 推荐事件为 `onUploadSuccess`、`onUploadError`。
 - 若后续需要，句柄可提供 `component:clear`、`component:focus`。
 
+### 8.1 upload lifecycle 状态机契约（U1）
+
+- 状态机：`pending → done | error`（`UploadItemState`，本地局部状态）。**无独立 `uploading` 状态——`pending` 兼任上传中态**（by design；UI 在 pending 时显示「Uploading」label）。这是刻意裁定，不引入冗余状态。
+- **payload / 顺序契约**：
+  - `pending`：文件选中后立即加入（`handleFiles` → `status:'pending'`），携带 `id`/`name`。
+  - `done`：`uploadAction` 成功后转 `done`，携带 `item`（`UploadResultItem`，含 `url`/`name`/`size`）；触发 `onUploadSuccess`（payload `{ type:'upload-success', file:{name,size,type}, item }`）。
+  - `error`：失败（action `!ok`/`cancelled` 除外）转 `error`，携带 `message`；触发 `onUploadError`（payload `{ type:'upload-error', file:{…}, error }`，error 来自 server `result.error.message` / thrown Error / 末路兜底 i18n，**非** hardcoded）。
+- **form `onChange` 仅在 success 写值（刻意契约）**：字段值（`commitItems`）只在 `done` 时写回；`pending`/`error` **不**触发 form `onChange`、不污染字段值。这是刻意的「form 值保持干净」契约——失败的上传不留半值。无 `onChange`-at-pending（如需跟踪上传中态，用 `onUploadSuccess`/`onUploadError` 或 future tracked-operation surface，不在本契约）。
+
+### 8.2 deleteAction 裁定（U5）
+
+- **裁定 B（non-goal for B4.2）**：当前移除已上传文件是**纯本地操作**（`removeExisting` → filter → `commitItems`），**无** backend 通知；schema **无** `deleteAction` 字段，**无** `onDeleteSuccess`/`onDeleteError` 事件。
+- 这不是「已声称但未测试」的契约漂移——backend 删除通知是 distinct server-contract feature。如产品判断需要，须以独立 feature plan 实现 `deleteAction` action-ref（镜像 `uploadAction` 桥接，用户点击驱动 pattern #3 + scope 携带 `__deletedFile`）为 successor（roadmap B7）。
+
+### 8.3 maxSize 客户端拒绝 裁定（U6）
+
+- **裁定 B（non-goal for B4.2）**：当前**无** `maxSize` 字段；`handleFiles` **无** JS 级 size/accept 校验（`accept` 仅透传 native `<input>`，弱约束）；拒绝文件不滤出 pending；**无** `onReject`/`onFileRejected` 事件。
+- 这是 distinct feature（非契约漂移）。如产品判断需要，须以独立 feature plan 实现 `maxSize` + `onReject`（拒绝文件不入 pending、不占 `maxFiles`，payload 带 file+reason）为 successor（roadmap B7）。
+
+### 8.4 upload 行为契约（U2 / U3 / U4）
+
+- **onUploadError 带 server msg（U2）**：失败时 `result.error.message`（server 返回 `{data:{message}}`）/ thrown Error / 末路 i18n 兜底经 `toUploadError` 进入 error 项 `message` 与 `onUploadError` payload `error` 字段——**非** hardcoded。该 server 消息同时显于用户可见 error DOM。
+- **successive append（U3）**：`multiple` 时每次成功 upload 经 `[...committedItems(), item]` 累积；`latestValueRef` 使并行/连续 upload 同步累积——连续选择（选 2 再 1）共得 3，不会覆盖。
+- **merge existing + uploaded-vs-pending 区分（U4）**：`existingItems()` 读字段值、`committedItems()` 读 `latestValueRef`，新 upload 经 `[...committedItems(), item]` merge → init form data 已有文件列表 + 新增保留既有 uploaded。pending（局部 UI 态）与 done（字段值）分开追踪，互不污染。
+
 ## 9. 数据源、表达式、导入能力接入点
 
 - 上传本身应走显式 action/source 路线，不把完整请求协议重新塞进字段 JSX。

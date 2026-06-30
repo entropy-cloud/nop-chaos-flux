@@ -7,12 +7,12 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前尚未实现，但 UI 组件层已有 `JsonViewer` 可复用。
-- 折叠层级、复制和只读展示是首版高价值能力。
+- 已 shipped：注册于 `flux-renderers-content`（`content-renderer-definitions.ts`），复用 UI 层 `JsonViewer`。
+- 支持折叠层级、复制与只读展示（`value`、`collapsed`、`showCopy`、`empty`）。
 
 ## 3. Flux 中的 renderer/type 定义
 
-- 目标 `type: 'json-view'`
+- 实际 `type: 'json-view'`
 - 实际归属 `@nop-chaos/flux-renderers-content`
 
 ## 4. schema 设计
@@ -47,6 +47,10 @@
 ## 11. 实现拆分建议
 
 - 数据格式化、展开态管理和复制行为分离。
+
+## 11.1 复制定时器生命周期
+
+复制成功后重置 `copied` 标志的定时器在卸载时必须清理（消除 pending `setCopied`），并在重新复制前清除上一个定时器（避免快速双击叠加定时器）。实现用 ref 持有 timer id + unmount cleanup（见 `docs/plans/2026-06-25-0510-2-new-package-advertised-contract-and-lifecycle-honesty-plan.md` WS-C，S2）。
 
 ## 12. 风险、取舍与后续阶段
 

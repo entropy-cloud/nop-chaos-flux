@@ -34,6 +34,7 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
       : '#ffffff';
   const labelContent = resolveRendererSlotContent(props, 'label');
   const hasLabel = hasRendererSlotContent(labelContent);
+  const onLoadError = props.events.onLoadError;
 
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const [failed, setFailed] = React.useState(false);
@@ -58,13 +59,18 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
     }).catch((error: unknown) => {
       if (!cancelled) {
         setFailed(true);
+        // Align with the image/audio/video family: surface the failure as an event
+        // so schema authors can attach error handling.
+        void onLoadError?.();
+        if (import.meta.env?.DEV === true) {
+          console.warn('[qrcode] render failed:', error);
+        }
       }
-      void error;
     });
     return () => {
       cancelled = true;
     };
-  }, [valueStr, size, level, foreground, background]);
+  }, [valueStr, size, level, foreground, background, onLoadError]);
 
   if (valueStr.length === 0 || failed) {
     return (

@@ -214,7 +214,7 @@ function ChartTooltipContent({
 
             return (
               <div
-                key={key}
+                key={payloadItemKey(item)}
                 className={cn(
                   'flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground',
                   indicator === 'dot' && 'items-center',
@@ -312,7 +312,7 @@ function ChartLegendContent({
 
           return (
             <div
-              key={item.value}
+              key={payloadItemKey(item)}
               className={cn(
                 'flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground',
               )}
@@ -358,6 +358,21 @@ function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key:
   }
 
   return configLabelKey in config ? config[configLabelKey] : config[key];
+}
+
+// Stable, collision-resistant React key for a single chart payload item (S-6).
+// Combines the per-item identifying fields instead of a bare `item.value`/`name`
+// (which collide across series) or the array index (forbidden by the lint rule).
+function payloadItemKey(item: {
+  dataKey?: unknown;
+  name?: unknown;
+  color?: unknown;
+  type?: unknown;
+}): string {
+  const parts = [item.dataKey, item.name, item.color, item.type]
+    .filter((part) => part != null && part !== '' && typeof part !== 'function')
+    .map((part) => String(part));
+  return parts.length ? parts.join('|') : 'item';
 }
 
 export {

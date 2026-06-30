@@ -7,12 +7,12 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前尚未实现，但已明确列入高优先级内容 renderer。
-- 首版必须把安全过滤作为一等关注点。
+- 已 shipped：注册于 `flux-renderers-content`（`content-renderer-definitions.ts`），通过 `dangerouslySetInnerHTML` 渲染 HTML 字符串。
+- 安全过滤为一等关注点：`sanitize` 默认开启，经 DOMPurify 清洗（剥离 `<script>`/事件处理器/`javascript:` URI）；`sanitize: false` 为显式受信逃生口，由调用方自担风险。
 
 ## 3. Flux 中的 renderer/type 定义
 
-- 目标 `type: 'html'`
+- 实际 `type: 'html'`
 - 实际归属 `@nop-chaos/flux-renderers-content`
 
 ## 4. schema 设计

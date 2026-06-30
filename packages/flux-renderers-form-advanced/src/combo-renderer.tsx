@@ -26,6 +26,12 @@ import { Button, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import type { ComboSchema } from './composite-field/composite-schemas.js';
 import { createItemFormProxy, createItemScope } from './composite-field/array-field-runtime.js';
+import { instancePathEqual } from './composite-field/instance-path-equal.js';
+import { isRemoveBlockedByWhen, isRemoveWhenConfigured } from './composite-field/remove-when-gating.js';
+import {
+  buildStableObjectItemKeys,
+  useCompatibilityItemKeys,
+} from './composite-field/composite-item-keys.js';
 import { createProjectedValidationRuntime } from './detail-view/projected-validation-runtime.js';
 import {
   COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
@@ -43,40 +49,6 @@ function toArrayItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function buildObjectArrayItemKeys(
-  items: unknown[],
-  itemKeyField?: string,
-): { itemKeys: string[]; duplicatePreferredKeys: string[] } {
-  const preferredKeys = items.map((item, sourceIndex) => {
-    if (isRecord(item)) {
-      const explicitValue = itemKeyField ? getIn(item, itemKeyField) : undefined;
-      const compatibilityValue = explicitValue ?? item.__rowKey ?? item.id;
-      if (compatibilityValue !== null && compatibilityValue !== undefined && compatibilityValue !== '') {
-        return String(compatibilityValue);
-      }
-    }
-    return `combo-index:${sourceIndex}`;
-  });
-
-  const counts = new Map<string, number>();
-  for (const key of preferredKeys) {
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-
-  return {
-    itemKeys: preferredKeys.map((preferredKey, sourceIndex) =>
-      (counts.get(preferredKey) ?? 0) > 1 ? `combo-index:${sourceIndex}` : preferredKey,
-    ),
-    duplicatePreferredKeys: Array.from(counts.entries())
-      .filter(([key, count]) => count > 1 && !key.startsWith('combo-index:'))
-      .map(([key]) => key),
-  };
-}
-
 type ComboItemProps = {
   itemIdentity: string;
   index: number;
@@ -89,6 +61,7 @@ type ComboItemProps = {
   reorderable: boolean;
   totalCount: number;
   minItems: number;
+  removeBlocked: boolean;
   onRemove: (index: number) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
@@ -110,6 +83,7 @@ function ComboItemView(props: ComboItemProps) {
     reorderable,
     totalCount,
     minItems,
+    removeBlocked,
     onRemove,
     onMoveUp,
     onMoveDown,
@@ -152,11 +126,12 @@ function ComboItemView(props: ComboItemProps) {
   );
 
   const canRemove = totalCount > minItems;
+  const canRemoveNow = canRemove && !removeBlocked;
   const canMoveUp = index > 0;
   const canMoveDown = index < totalCount - 1;
 
   return (
-    <div className="nop-combo__item rounded-lg border border-border bg-card p-3" data-slot="combo-item">
+    <div className="rounded-lg border border-border bg-card p-3" data-slot="combo-item">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1" data-slot="combo-item-body">
           <FormContext.Provider value={itemForm ?? undefined}>
@@ -199,10 +174,10 @@ function ComboItemView(props: ComboItemProps) {
                 variant="ghost"
                 size="icon-sm"
                 data-slot="combo-remove"
-                disabled={readOnly || !canRemove}
+                disabled={readOnly || !canRemoveNow}
                 className="hover:text-destructive"
                 aria-label={t('flux.form.remove', { defaultValue: `Remove item ${index + 1}` })}
-                onClick={() => canRemove && onRemove(index)}
+                onClick={() => canRemoveNow && onRemove(index)}
               >
                 <Trash2Icon className="size-4" />
               </Button>
@@ -214,7 +189,7 @@ function ComboItemView(props: ComboItemProps) {
   );
 }
 
-const ComboItem = React.memo(ComboItemView, (prev, next) =>
+export const ComboItem = React.memo(ComboItemView, (prev, next) =>
   prev.itemIdentity === next.itemIdentity &&
   prev.index === next.index &&
   prev.arrayPath === next.arrayPath &&
@@ -226,10 +201,12 @@ const ComboItem = React.memo(ComboItemView, (prev, next) =>
   prev.reorderable === next.reorderable &&
   prev.totalCount === next.totalCount &&
   prev.minItems === next.minItems &&
+  prev.removeBlocked === next.removeBlocked &&
   prev.onRemove === next.onRemove &&
   prev.onMoveUp === next.onMoveUp &&
   prev.onMoveDown === next.onMoveDown &&
   prev.item === next.item &&
+  instancePathEqual(prev.itemInstancePath, next.itemInstancePath) &&
   prev.itemRegion === next.itemRegion,
 );
 
@@ -256,6 +233,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
     typeof props.props.maxItems === 'number' && Number.isFinite(props.props.maxItems)
       ? Math.max(0, Math.floor(props.props.maxItems))
       : undefined;
+  const removeWhenHandle = props.templateNode.structuralFields?.removeWhen;
 
   const presentation = useFieldPresentation(name, parentValidationOwner, {
     disabled: props.props.disabled === true,
@@ -284,15 +262,21 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
   const items = parentForm ? formValue : scopeValue;
   const itemsArray = React.useMemo(() => items ?? EMPTY_ITEMS, [items]);
 
+  const {
+    keyAt: compatKeyAt,
+    removeAt: compatRemoveAt,
+    append: compatAppend,
+    move: compatMove,
+  } = useCompatibilityItemKeys(itemsArray.length, 'combo-');
   const objectItemKeyResolution = React.useMemo(
-    () => buildObjectArrayItemKeys(itemsArray, itemKeyField),
-    [itemsArray, itemKeyField],
+    () => buildStableObjectItemKeys(itemsArray, itemKeyField, compatKeyAt),
+    [itemsArray, itemKeyField, compatKeyAt],
   );
   const itemRepeatedTemplateId = `combo-item:${props.templateNode.templateNodeId ?? 'unknown'}`;
   const itemEntries = React.useMemo(
     () =>
       itemsArray.map((item, index) => {
-        const itemIdentity = objectItemKeyResolution.itemKeys[index] ?? `combo-index:${index}`;
+        const itemIdentity = objectItemKeyResolution.itemKeys[index];
         const itemInstancePath: readonly InstanceFrame[] = [
           ...(parentInstancePath ?? []),
           { repeatedTemplateId: itemRepeatedTemplateId, instanceKey: itemIdentity },
@@ -307,11 +291,47 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
       return;
     }
     console.warn(
-      `[ComboRenderer] Duplicate itemKey values detected for "${name}": ${objectItemKeyResolution.duplicatePreferredKeys.join(', ')}. Falling back to index identity for conflicting items.`,
+      `[ComboRenderer] Duplicate itemKey values detected for "${name}": ${objectItemKeyResolution.duplicatePreferredKeys.join(', ')}. Falling back to compatibility identity for conflicting items.`,
     );
   }, [name, objectItemKeyResolution.duplicatePreferredKeys]);
 
   const atMaxItems = maxItems !== undefined && itemsArray.length >= maxItems;
+
+  const removeBlockedByIndex = React.useMemo(() => {
+    if (!isRemoveWhenConfigured(removeWhenHandle)) {
+      return null;
+    }
+    return itemsArray.map((_, index) => {
+      const itemIdentity = objectItemKeyResolution.itemKeys[index];
+      const itemScope = createItemScope(
+        parentScope,
+        name,
+        index,
+        'object',
+        readOnly || presentation.effectiveDisabled,
+        itemIdentity,
+      );
+      return isRemoveBlockedByWhen({
+        removeWhenHandle,
+        itemScope,
+        evaluateCompiled: (compiled, scope) => props.helpers.evaluateCompiled(compiled, scope),
+      });
+    });
+  }, [
+    removeWhenHandle,
+    itemsArray,
+    objectItemKeyResolution.itemKeys,
+    parentScope,
+    name,
+    readOnly,
+    presentation.effectiveDisabled,
+    props.helpers,
+  ]);
+
+  const isRemoveBlockedAt = React.useCallback(
+    (index: number) => Boolean(removeBlockedByIndex?.[index]),
+    [removeBlockedByIndex],
+  );
 
   const writeValue = React.useCallback(
     (next: unknown[]) => {
@@ -334,15 +354,20 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
     if (atMaxItems) {
       return;
     }
+    compatAppend();
     writeValue([...itemsArray, {}]);
     void props.events.onAdd?.();
-  }, [atMaxItems, itemsArray, props.events, writeValue]);
+  }, [atMaxItems, itemsArray, props.events, writeValue, compatAppend]);
 
   const handleRemove = React.useCallback(
     (index: number) => {
       if (index < 0 || index >= itemsArray.length || itemsArray.length <= minItems) {
         return;
       }
+      if (isRemoveBlockedAt(index)) {
+        return;
+      }
+      compatRemoveAt(index);
       if (parentForm && name) {
         parentForm.removeValue(name, index);
         if (shouldValidateOn(name, parentForm, 'change')) {
@@ -353,7 +378,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
       }
       void props.events.onRemove?.();
     },
-    [itemsArray, minItems, name, parentForm, props.events, writeValue],
+    [itemsArray, minItems, name, parentForm, props.events, writeValue, isRemoveBlockedAt, compatRemoveAt],
   );
 
   const handleMove = React.useCallback(
@@ -361,6 +386,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
       if (from === to || from < 0 || to < 0 || from >= itemsArray.length || to >= itemsArray.length) {
         return;
       }
+      compatMove(from, to);
       if (parentForm && name) {
         parentForm.moveValue(name, from, to);
         if (shouldValidateOn(name, parentForm, 'change')) {
@@ -376,7 +402,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
       }
       void props.events.onReorder?.();
     },
-    [itemsArray, name, parentForm, props.events, writeValue],
+    [itemsArray, name, parentForm, props.events, writeValue, compatMove],
   );
 
   const handleMoveUp = React.useCallback((index: number) => handleMove(index, index - 1), [handleMove]);
@@ -394,6 +420,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
         return { skipped: true };
       }
       const newItem = value && typeof value === 'object' && !Array.isArray(value) ? { ...(value as Record<string, unknown>) } : {};
+      compatAppend();
       if (parentForm && name) {
         parentForm.appendValue(name, newItem);
         if (shouldValidateOn(name, parentForm, 'change')) {
@@ -412,6 +439,10 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
       if (itemsArray.length <= minItems) {
         return { skipped: true };
       }
+      if (isRemoveBlockedAt(index)) {
+        return { skipped: true };
+      }
+      compatRemoveAt(index);
       if (parentForm && name) {
         parentForm.removeValue(name, index);
         if (shouldValidateOn(name, parentForm, 'change')) {
@@ -430,6 +461,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
       if (from === to) {
         return {};
       }
+      compatMove(from, to);
       if (parentForm && name) {
         parentForm.moveValue(name, from, to);
         if (shouldValidateOn(name, parentForm, 'change')) {
@@ -475,6 +507,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
           reorderable={reorderable}
           totalCount={itemsArray.length}
           minItems={minItems}
+          removeBlocked={isRemoveBlockedAt(index)}
           onRemove={handleRemove}
           onMoveUp={handleMoveUp}
           onMoveDown={handleMoveDown}
@@ -509,13 +542,13 @@ export const comboRendererDefinition: RendererDefinition = {
   fields: [
     { key: 'name', kind: 'prop' },
     ...formFieldRules,
-    { key: 'multiple', kind: 'prop', valueType: 'boolean' },
     { key: 'addable', kind: 'prop', valueType: 'boolean' },
     { key: 'removable', kind: 'prop', valueType: 'boolean' },
     { key: 'reorderable', kind: 'prop', valueType: 'boolean' },
     { key: 'minItems', kind: 'prop' },
     { key: 'maxItems', kind: 'prop' },
     { key: 'itemKey', kind: 'prop' },
+    { key: 'removeWhen', kind: 'prop', lazyEval: true, params: ['record', 'index', 'value'] },
     { key: 'readOnly', kind: 'prop' },
     { key: 'onAdd', kind: 'event' },
     { key: 'onRemove', kind: 'event' },

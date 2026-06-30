@@ -199,6 +199,40 @@ describe('DialogHost responsive behavior (M1c)', () => {
     expect(mocks.drawerContentProps[0]!['data-mobile-side-overridden']).toBeUndefined();
   });
 
+  // L6 regression anchor: inner overlays (Base UI Popover/Select) portal to the
+  // document root independently. The flux surface host must NEVER write a
+  // `position` (or any overlay geometry) into DrawerContent's inline style —
+  // otherwise opening an inner popover would corrupt the drawer host geometry.
+  // This invariant is satisfied by construction (buildSurfaceInlineStyle only
+  // emits width/height), and this anchor locks it.
+  it('never writes position into DrawerContent inline style regardless of size/width/height (L6)', () => {
+    for (const surface of [
+      { body: 'drawer-body', side: 'right' },
+      { body: 'drawer-body', side: 'right', size: 'full' as const },
+      { body: 'drawer-body', side: 'left', width: 320 },
+      { body: 'drawer-body', side: 'bottom', height: 200 },
+      { body: 'drawer-body', side: 'right', width: '50%', height: '100%' },
+    ]) {
+      mocks.drawerContentProps = [];
+      seedPageAndRuntime([
+        { id: 'drawer-geom', kind: 'drawer', scope: makeScope(), surface },
+      ]);
+
+      render(<DialogHost />);
+
+      expect(mocks.drawerContentProps).toHaveLength(1);
+      const style = mocks.drawerContentProps[0]!.style as Record<string, unknown> | undefined;
+      expect(style).toBeTruthy();
+      expect(style).not.toHaveProperty('position');
+      expect(style).not.toHaveProperty('top');
+      expect(style).not.toHaveProperty('left');
+      expect(style).not.toHaveProperty('right');
+      expect(style).not.toHaveProperty('bottom');
+      expect(style).not.toHaveProperty('zIndex');
+      cleanup();
+    }
+  });
+
   afterEach(() => {
     cleanup();
   });

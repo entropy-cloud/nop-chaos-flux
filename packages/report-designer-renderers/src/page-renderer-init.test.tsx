@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';

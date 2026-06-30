@@ -300,49 +300,39 @@ UI primitive 对齐补充规则：
 
 ### 当前代码已注册的通用 renderer
 
-- `fragment`
-- `loop`
-- `recurse`
-- `page`
-- `container`
-- `flex`
-- `text`
-- `button`
-- `icon`
-- `badge`
-- `dynamic-renderer`
-- `reaction`
-- `dialog`
-- `drawer`
-- `tabs`
-- `form`
-- `fieldset`
+按 package 家族分组，全部逐条来自对应 `*-renderer-definitions.ts` 注册数组（含 `flux-renderers-content` / `flux-renderers-layout` / `flux-renderers-data` / `flux-renderers-form-advanced` / `flux-code-editor` / `flux-renderers-mobile`）。
+
+**结构 / 基础 / 表面（`flux-renderers-basic`）**
+
+- `fragment`、`loop`、`recurse`、`page`、`container`、`flex`、`text`、`button`、`icon`、`badge`、`dynamic-renderer`、`reaction`、`scope-debug`、`dialog`、`drawer`、`tabs`
+
+**内容 / 反馈 / 多媒体（`flux-renderers-content`）**
+
+- `separator`、`spinner`、`progress`、`empty`、`card`、`link`、`image`、`json-view`、`markdown`、`html`、`cards`、`alert`、`mapping`、`status`、`audio`、`video`、`carousel`、`qrcode`
+
+**布局 / 流程 / 动作（`flux-renderers-layout`）**
+
+- `grid`、`collapse`、`button-group`、`dropdown-button`、`steps`、`timeline`、`wizard`
+
+**数据（`flux-renderers-data`）**
+
+- `table`、`tree`、`list`、`data-source`、`service`、`pagination`、`chart`、`crud`
+
+**表单 owner / 核心字段（`flux-renderers-form`）**
+
+- `form`、`fieldset`、`input-text`、`input-email`、`input-password`、`input-number`、`textarea`、`select`、`checkbox`、`switch`、`radio-group`、`checkbox-group`、`input-date`、`input-datetime`、`input-time`、`date-range`、`input-month`、`input-quarter`、`input-year`、`markdown-editor`
+
+**复合 / 高级字段（`flux-renderers-form-advanced`）**
+
+- `input-tree`、`tree-select`、`tag-list`、`key-value`、`array-editor`、`condition-builder`、`object-field`、`array-field`、`variant-field`、`detail-field`、`detail-view`、`editor`、`input-file`、`input-image`、`combo`、`input-table`、`transfer`、`picker`
+
+**代码编辑器（`flux-code-editor`）**
+
 - `code-editor`
-- `input-text`
-- `input-email`
-- `input-password`
-- `textarea`
-- `select`
-- `checkbox`
-- `switch`
-- `radio-group`
-- `checkbox-group`
-- `input-tree`
-- `tree-select`
-- `tag-list`
-- `key-value`
-- `array-editor`
-- `condition-builder`
-- `object-field`
-- `array-field`
-- `variant-field`
-- `detail-field`
-- `detail-view`
-- `table`
-- `tree`
-- `data-source`
-- `chart`
-- `crud`
+
+**移动端原生交互（`flux-renderers-mobile`）**
+
+- `pull-refresh`、`infinite-scroll`、`swipe-cell`、`countdown`、`notice-bar`
 
 ### 当前仓库已注册的领域 renderer
 
@@ -352,6 +342,8 @@ UI primitive 对齐补充规则：
 - `designer-field`
 - `designer-canvas`
 - `designer-palette`
+- `designer-node-card`
+- `designer-edge-row`
 - `report-inspector-shell`
 - `report-inspector`
 - `report-field-panel`
@@ -360,57 +352,15 @@ UI primitive 对齐补充规则：
 - `spreadsheet-page`
 - `word-editor-page`
 
-### 已文档化且当前尚未实现的 retained renderer
+### 已文档化但 runtime 尚未注册的 retained renderer
 
-完整 retained baseline 请以 `docs/components/amis-baseline-matrix.md` 为准。这里仅列当前已有 owner doc、但 runtime 尚未注册的 canonical retained 组件。
+完整 retained baseline 请以 `docs/components/amis-baseline-matrix.md` 为准。
 
-- `alert`
-- `audio`
-- `button-group`
-- `card`
-- `cards`
-- `carousel`
-- `collapse`
-- `combo`
-- `date-range`
-- `dropdown-button`
-- `editor`
-- `separator`
-- `grid`
-- `list`
-- `image`
-- `input-date`
-- `input-datetime`
-- `input-file`
-- `input-image`
-- `input-month`
-- `input-quarter`
-- `input-table`
-- `input-time`
-- `input-year`
-- `progress`
-- `link`
-- `mapping`
-- `markdown`
-- `html`
-- `json-view`
-- `pagination`
-- `picker`
-- `qrcode`
-- `service`
-- `spinner`
-- `empty`
-- `status`
-- `steps`
-- `timeline`
-- `transfer`
-- `video`
-- `wizard`
+当前无此项：原先列出的 `alert` / `audio` / `card` / `cards` / `carousel` / `collapse` / `combo` / `date-range` / `dropdown-button` / `editor` / `separator` / `grid` / `list` / `image` / `input-date` / `input-datetime` / `input-file` / `input-image` / `input-month` / `input-quarter` / `input-table` / `input-time` / `input-year` / `progress` / `link` / `mapping` / `markdown` / `html` / `json-view` / `pagination` / `picker` / `qrcode` / `service` / `spinner` / `empty` / `status` / `steps` / `timeline` / `transfer` / `video` / `wizard` / `button-group` 等均已 shipped，已移入上方“当前代码已注册的通用 renderer”清单。
 
 ### schema 已声明但尚未注册的领域 renderer
 
-- `designer-node-card`
-- `designer-edge-row`
+当前无此项：原先列出的 `designer-node-card` 与 `designer-edge-row` 均已在 `flowDesignerRendererDefinitions`（`packages/flow-designer-renderers/src/renderer-definitions.ts`）中注册，已移入上方“当前仓库已注册的领域 renderer”清单。
 
 ### 更长尾的候选 renderer
 

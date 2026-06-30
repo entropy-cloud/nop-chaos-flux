@@ -396,7 +396,7 @@ Shared field chrome lives in `packages/flux-renderers-form/src/renderers/shared/
 
 `resolveGap` is part of the shared renderer/runtime surface through `@nop-chaos/flux-react`; `flux-renderers-basic` no longer keeps a local duplicate copy.
 
-`crud-renderer.tsx` now imports `createReadonlyScopeBinding` from `@nop-chaos/flux-react/unstable`; the implementation owner remains `@nop-chaos/flux-runtime` and is also still exported from `@nop-chaos/flux-runtime` root.
+`crud-renderer.tsx` imports `createReadonlyScopeBinding` from `@nop-chaos/flux-react` root; the implementation owner remains `@nop-chaos/flux-runtime` and is also still exported from `@nop-chaos/flux-runtime` root.
 
 `schema-compiler-registry.test.ts` no longer imports `@nop-chaos/flux-renderers-data`.
 
@@ -464,7 +464,7 @@ Current unstable-only examples:
 - raw context exports such as `FormContext` / `ScopeContext` / `RuntimeContext`
 - internal helper surfaces such as `createHelpers`, `mergeActionContext`, `publishOwnerStatus`, and `createProjectedScopeStore`
 
-`createReadonlyScopeBinding` remains runtime-owned (`packages/flux-runtime/src/status-owner.ts`) and is currently reachable both from `@nop-chaos/flux-runtime` root and the convenience re-export at `@nop-chaos/flux-react/unstable`; treat the unstable path as a renderer-facing convenience surface rather than proof that ownership moved into `flux-react`.
+`createReadonlyScopeBinding` remains runtime-owned (`packages/flux-runtime/src/status-owner.ts`) and is currently reachable from `@nop-chaos/flux-runtime` root, the `@nop-chaos/flux-react` root (the path `crud-renderer.tsx` actually imports), and the convenience re-export at `@nop-chaos/flux-react/unstable`; treat the `flux-react` exports as renderer-facing convenience surfaces rather than proof that ownership moved into `flux-react`.
 
 The same rule now applies to `@nop-chaos/flow-designer-renderers`: the root entry keeps the stable schema/manifest registration surface, while Xyflow bridge primitives, palette/canvas internals, and designer context helpers move behind `@nop-chaos/flow-designer-renderers/unstable`.
 

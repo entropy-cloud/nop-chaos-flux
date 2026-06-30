@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -225,5 +223,80 @@ describe('MappingRenderer (W3c — value→display-result mapping)', () => {
       container.querySelector('[data-testid="m1"] [data-slot="mapping-item"]')?.textContent,
     ).toBe('In Progress');
     expect(container.querySelector('[data-testid="m1"]')?.getAttribute('data-state')).toBe('hit');
+  });
+
+  // B6.2 — MP2: mapping source-scope / 无 wildcard 回归锚
+  describe('MP2 source-scope / no-wildcard (B6.2)', () => {
+    it('shared map expression resolves to the same object per row (no per-row divergence, no wildcard)', () => {
+      const SchemaRenderer = createContentSchemaRenderer();
+      const { container } = render(
+        <SchemaRenderer
+          schemaUrl="test://mapping/mp2-shared-map"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'cards',
+                items: '${rows}',
+                card: {
+                  type: 'mapping',
+                  value: '${$slot.item.status}',
+                  map: '${statusMap}',
+                  defaultLabel: 'Unknown',
+                },
+              },
+            ],
+          }}
+          data={{
+            statusMap: { active: 'Active', idle: 'Idle' },
+            rows: [{ status: 'active' }, { status: 'idle' }, { status: 'pending' }],
+          }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+      const items = container.querySelectorAll('[data-slot="mapping-item"]');
+      expect(items.length).toBe(3);
+      // 每行按各自 row value 经共享 statusMap 解析到正确 label（无 per-row 发散）。
+      expect(items[0]?.textContent).toBe('Active');
+      expect(items[1]?.textContent).toBe('Idle');
+      // 'pending' 不在 map 内 → miss → defaultLabel（无 wildcard 误命中）。
+      expect(items[2]?.textContent).toBe('Unknown');
+    });
+
+    it('map miss never falls back to a "*" wildcard key (literal-key match only)', () => {
+      const { container } = renderMapping(
+        [
+          {
+            type: 'mapping',
+            testid: 'nomatch',
+            value: 'unknown',
+            map: { '*': 'Star', a: 'Alpha' },
+            defaultLabel: 'Default',
+          },
+          {
+            type: 'mapping',
+            testid: 'starmatch',
+            value: '*',
+            map: { '*': 'Star', a: 'Alpha' },
+          },
+        ],
+        'test://mapping/mp2-no-wildcard',
+      );
+      // 'unknown' 不命中字面 '*' 键 → miss → defaultLabel（锁定无 wildcard fallback）。
+      expect(container.querySelector('[data-testid="nomatch"]')?.getAttribute('data-state')).toBe(
+        'miss',
+      );
+      expect(
+        container.querySelector('[data-testid="nomatch"] [data-slot="mapping-item"]')?.textContent,
+      ).toBe('Default');
+      // value 字面等于 '*' → 命中字面 '*' 键（证明 '*' 是字面 key 而非通配）。
+      expect(container.querySelector('[data-testid="starmatch"]')?.getAttribute('data-state')).toBe(
+        'hit',
+      );
+      expect(
+        container.querySelector('[data-testid="starmatch"] [data-slot="mapping-item"]')?.textContent,
+      ).toBe('Star');
+    });
   });
 });

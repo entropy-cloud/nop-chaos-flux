@@ -202,6 +202,16 @@ export interface ShowToastActionSchema extends ActionShapeFields {
   args: ShowToastActionArgs;
 }
 
+export interface ConfirmActionSchema extends ActionShapeFields {
+  action: 'confirm';
+  args: { message?: SchemaValue; title?: SchemaValue };
+}
+
+export interface AlertActionSchema extends ActionShapeFields {
+  action: 'alert';
+  args: { message?: SchemaValue; title?: SchemaValue };
+}
+
 export interface NavigateActionSchema extends ActionShapeFields {
   action: 'navigate';
   args: NavigateActionArgs;
@@ -230,6 +240,8 @@ export type BuiltInActionSchema =
   | SetValueActionSchema
   | SetValuesActionSchema
   | ShowToastActionSchema
+  | ConfirmActionSchema
+  | AlertActionSchema
   | NavigateActionSchema;
 
 export interface ActionSchema extends ActionShapeFields {

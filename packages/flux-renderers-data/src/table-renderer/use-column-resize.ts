@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getIn } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableColumnSchema } from '../schemas.js';
@@ -64,11 +64,19 @@ interface ActiveResize {
   maxWidth: number | undefined;
   startWidth: number;
   startClientX: number;
+  // Live dragged-to width, updated on every pointermove and committed on pointerup.
+  next: number;
+  // Whether pointermove should reflect visual feedback for this drag. Under
+  // `controlled` without an `onWidthsChange` channel the handle is read-only, so
+  // reflecting a transient width would falsely imply a successful drag.
+  feedback: boolean;
 }
 
 export interface UseColumnResizeOptions {
   columnWidthsOwnership?: 'local' | 'controlled' | 'scope';
   columnWidthsStatePath?: string;
+  // Controlled write-back channel (mirrors use-row-drag-sort's `onReorder`).
+  onWidthsChange?: (next: Record<string, number>) => void;
 }
 
 function normalizeWidthsRecord(value: unknown): Record<string, number> | undefined {
@@ -97,6 +105,7 @@ export function useColumnResize(
 ): ColumnResizeApi {
   const ownership = options?.columnWidthsOwnership ?? 'local';
   const statePath = options?.columnWidthsStatePath;
+  const onWidthsChange = options?.onWidthsChange;
   const renderScope = useRenderScope();
 
   if (ownership === 'scope' && !statePath && isDevRuntime()) {
@@ -107,6 +116,17 @@ export function useColumnResize(
 
   const effectiveOwnership: 'local' | 'controlled' | 'scope' =
     ownership === 'scope' && !statePath ? 'local' : ownership;
+
+  // G10 parity (mirrors use-row-drag-sort): controlled ownership without an
+  // onWidthsChange channel is read-only, so a drag would otherwise be a fully
+  // silent no-op. Surface it as a dev warning so the misconfiguration is
+  // diagnosable instead of invisible.
+  if (effectiveOwnership === 'controlled' && !onWidthsChange && isDevRuntime()) {
+    console.warn(
+      '[TableRenderer] columnWidthsOwnership "controlled" is read-only without an onWidthsChange handler. ' +
+        'The resize handle cannot persist a drag. Supply onWidthsChange to receive width changes, or switch to "local"/"scope".',
+    );
+  }
 
   const initialWidths = useMemo(() => {
     const map: Record<string, number> = {};
@@ -121,7 +141,17 @@ export function useColumnResize(
   }, [columns, columnResize]);
 
   const [localWidths, setLocalWidths] = useState<Record<string, number>>(initialWidths);
+  // Transient overlay applied during a drag so the column visually tracks the
+  // pointer under every ownership mode (scope had zero feedback before). For
+  // scope/controlled it is retained past pointerup until the authoritative owner
+  // reflects the same value, avoiding a revert-flicker; the sync effect below
+  // clears synced scope entries.
+  const [draggingWidths, setDraggingWidths] = useState<Record<string, number>>({});
   const activeResizeRef = useRef<ActiveResize | null>(null);
+  // Teardown for the window listeners attached during the active drag. Owned by
+  // React via the unmount effect below so a mid-drag unmount / pointercancel /
+  // touch-scroll takeover never leaks listeners or leaves activeResizeRef stuck.
+  const listenerCleanupRef = useRef<(() => void) | null>(null);
 
   const scopeWidths = useScopeSelector(
     (scopeData) => {
@@ -140,17 +170,56 @@ export function useColumnResize(
     { paths: statePath && effectiveOwnership === 'scope' ? [statePath] : undefined },
   );
 
-  const controlledWidths = effectiveOwnership === 'controlled' ? initialWidths : undefined;
-
   const widths: Record<string, number> = useMemo(() => {
-    if (effectiveOwnership === 'scope' && scopeWidths) {
-      return { ...initialWidths, ...scopeWidths };
-    }
-    if (effectiveOwnership === 'controlled' && controlledWidths) {
-      return controlledWidths;
-    }
-    return { ...initialWidths, ...localWidths };
-  }, [controlledWidths, effectiveOwnership, initialWidths, localWidths, scopeWidths]);
+    const base =
+      effectiveOwnership === 'scope' && scopeWidths
+        ? { ...initialWidths, ...scopeWidths }
+        : effectiveOwnership === 'controlled'
+          ? { ...initialWidths }
+          : { ...initialWidths, ...localWidths };
+    return { ...base, ...draggingWidths };
+  }, [effectiveOwnership, initialWidths, localWidths, scopeWidths, draggingWidths]);
+
+  // Latest-values ref so the (closure-based) pointer listeners always read fresh
+  // values without stale-capture bugs. Synced in an effect (never during render).
+  const latest = useRef({
+    effectiveOwnership,
+    statePath,
+    onWidthsChange,
+    scopeWidths,
+    initialWidths,
+    draggingWidths,
+    renderScope,
+  });
+  useEffect(() => {
+    latest.current = {
+      effectiveOwnership,
+      statePath,
+      onWidthsChange,
+      scopeWidths,
+      initialWidths,
+      draggingWidths,
+      renderScope,
+    };
+  });
+
+  // The dragging overlay is bounded (only the actively-resized column is added on
+  // pointermove, and local mode clears it on pointerup). For scope/controlled the
+  // last-dragged entry is retained so there is no revert-flicker before the owner
+  // propagates the same value; it is naturally superseded by the next drag and
+  // agrees with the owner once it catches up, so no render-time setState sync is
+  // needed.
+
+  // H4: unmount teardown. If a drag is in progress when the table unmounts, the
+  // window listeners must be removed and activeResizeRef reset (no persist — a
+  // half-drag should not be committed to scope/local on teardown).
+  useEffect(() => {
+    return () => {
+      listenerCleanupRef.current?.();
+      listenerCleanupRef.current = null;
+      activeResizeRef.current = null;
+    };
+  }, []);
 
   const columnKey = useCallback(
     (column: TableColumnSchema, index: number): string =>
@@ -166,17 +235,10 @@ export function useColumnResize(
     [columnKey, widths],
   );
 
-  const persistWidth = useCallback(
-    (next: Record<string, number>) => {
-      if (effectiveOwnership === 'scope' && statePath) {
-        renderScope.update(statePath, next);
-      } else if (effectiveOwnership === 'local') {
-        setLocalWidths(next);
-      }
-      // controlled: no local write; upstream owner decides
-    },
-    [effectiveOwnership, renderScope, statePath],
-  );
+  const stopListeners = useCallback(() => {
+    listenerCleanupRef.current?.();
+    listenerCleanupRef.current = null;
+  }, []);
 
   const startResize = useCallback(
     (column: TableColumnSchema, index: number, startClientX: number) => {
@@ -184,7 +246,18 @@ export function useColumnResize(
       const minWidth = resolveColumnMinWidth(column);
       const maxWidth = resolveColumnMaxWidth(column);
       const startWidth = widths[key] ?? resolveColumnWidth(column);
-      activeResizeRef.current = { key, minWidth, maxWidth, startWidth, startClientX };
+      const { effectiveOwnership: eo, onWidthsChange: oc } = latest.current;
+
+      stopListeners();
+      activeResizeRef.current = {
+        key,
+        minWidth,
+        maxWidth,
+        startWidth,
+        startClientX,
+        next: startWidth,
+        feedback: eo !== 'controlled' || Boolean(oc),
+      };
 
       const onPointerMove = (event: PointerEvent) => {
         const active = activeResizeRef.current;
@@ -193,34 +266,75 @@ export function useColumnResize(
         let next = active.startWidth + delta;
         if (next < active.minWidth) next = active.minWidth;
         if (active.maxWidth !== undefined && next > active.maxWidth) next = active.maxWidth;
-        const patch: Record<string, number> = { [active.key]: next };
-        if (effectiveOwnership === 'local') {
-          setLocalWidths((prev) => ({ ...prev, ...patch }));
+        active.next = next;
+        if (active.feedback) {
+          setDraggingWidths((prev) => (prev[active.key] === next ? prev : { ...prev, [active.key]: next }));
         }
       };
 
-      const onPointerUp = () => {
-        window.removeEventListener('pointermove', onPointerMove);
-        window.removeEventListener('pointerup', onPointerUp);
+      const finish = () => {
+        stopListeners();
         const active = activeResizeRef.current;
         activeResizeRef.current = null;
-        if (active && effectiveOwnership === 'scope' && statePath) {
-          const current = (() => {
-            if (typeof scopeWidths === 'object' && scopeWidths) return scopeWidths;
-            return { ...initialWidths };
-          })();
-          const currentWidth = localWidths[active.key] ?? active.startWidth;
-          renderScope.update(statePath, { ...current, [active.key]: currentWidth });
+        if (!active) return;
+        const finalWidth = active.next;
+        const key = active.key;
+        const {
+          effectiveOwnership: eo2,
+          statePath: sp,
+          onWidthsChange: oc2,
+          scopeWidths: sw,
+          initialWidths: iw,
+          draggingWidths: dw,
+          renderScope: rs,
+        } = latest.current;
+
+        if (eo2 === 'scope' && sp) {
+          const current = sw && typeof sw === 'object' ? sw : { ...iw };
+          // H1: persist the dragged-TO width (active.next), not the pre-drag width.
+          rs.update(sp, { ...current, [key]: finalWidth });
+          // keep dragging overlay until scope syncs (sync effect clears it)
+        } else if (eo2 === 'local') {
+          setLocalWidths((prev) => ({ ...prev, [key]: finalWidth }));
+          setDraggingWidths((prev) => {
+            if (!(key in prev)) return prev;
+            const next = { ...prev };
+            delete next[key];
+            return next;
+          });
+        } else if (eo2 === 'controlled') {
+          if (oc2) {
+            oc2({ ...iw, ...dw, [key]: finalWidth });
+            // keep overlay (no upstream store to sync within the hook)
+          }
+          // no callback: read-only; warning already issued at render (G10).
         }
       };
 
       window.addEventListener('pointermove', onPointerMove);
-      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointerup', finish);
+      window.addEventListener('pointercancel', finish);
+      listenerCleanupRef.current = () => {
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', finish);
+        window.removeEventListener('pointercancel', finish);
+      };
 
-      return onPointerUp;
+      return stopListeners;
     },
-    [columnKey, effectiveOwnership, initialWidths, localWidths, renderScope, scopeWidths, statePath, widths],
+    [columnKey, stopListeners, widths],
   );
+
+  const persistWidth = useCallback((next: Record<string, number>) => {
+    const { effectiveOwnership: eo, statePath: sp, onWidthsChange: oc, renderScope: rs } = latest.current;
+    if (eo === 'scope' && sp) {
+      rs.update(sp, next);
+    } else if (eo === 'local') {
+      setLocalWidths(next);
+    } else if (eo === 'controlled' && oc) {
+      oc(next);
+    }
+  }, []);
 
   return {
     widths,

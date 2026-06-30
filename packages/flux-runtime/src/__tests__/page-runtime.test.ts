@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createManagedPageRuntime } from '../page-runtime.js';
-import { createPageStore } from '../form-store.js';
+import { createPageStore } from '../page-store.js';
 import type { ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { createScopeRef } from '../scope.js';
 

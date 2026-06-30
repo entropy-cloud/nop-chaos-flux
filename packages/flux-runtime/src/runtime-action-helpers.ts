@@ -18,9 +18,11 @@ import {
   isAbortError,
   resolveRequestControl,
 } from '@nop-chaos/flux-action-core';
-import { executeApiSchema } from './async-data/request-runtime.js';
+import { executeApiSchema, prepareApiRequestForExecution } from './async-data/request-runtime.js';
 import { createValidationError } from './validation/index.js';
 import type { ApiRequestExecutor } from './async-data/request-runtime.js';
+import { generateCacheKey, resolveCacheKey } from './async-data/api-cache.js';
+import type { SchemaFetchSharingContext } from './async-data/request-in-flight-registry.js';
 import type { RuntimeEvalHelpers } from './runtime-eval-helpers.js';
 
 const abortSignalControllers = new WeakMap<AbortSignal, AbortController>();
@@ -107,53 +109,173 @@ export async function executeRuntimeAjaxAction(
     expressionCompiler: ExpressionCompiler;
     evaluate: RuntimeEvalHelpers['evaluate'];
     executeApiRequest: ApiRequestExecutor;
+    sharing?: SchemaFetchSharingContext;
   },
 ): Promise<ActionResult> {
-  try {
-    let monitoredApi: ExecutableApiRequest | undefined;
-    const requestControl = resolveRequestControl(action);
-    const response = await executeApiSchema(
-      api,
-      ctx.scope,
-      helpers.getEnv(),
-      helpers.expressionCompiler,
-      {
-        signal,
-        evaluate: helpers.evaluate,
-        onPreparedRequest: (preparedApi) => {
-          monitoredApi = preparedApi;
-        },
-        executor: (adaptedApi) =>
-          helpers.executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
-            signal,
-            interactionId: ctx.interactionId,
-            control: requestControl,
-          }),
-        control: requestControl,
-      },
-    );
+  const requestControl = resolveRequestControl(action);
+  const sharing = helpers.sharing;
+  const cacheTTL = requestControl?.cacheTTL;
+  const cacheEnabled = typeof cacheTTL === 'number' && cacheTTL > 0;
+  const env = helpers.getEnv();
 
-    if (monitoredApi) {
-      helpers.getEnv().monitor?.onApiRequest?.({
-        api: monitoredApi,
-        nodeId: ctx.nodeInstance?.templateNode.id,
-        path: ctx.nodeInstance?.templateNode.templatePath,
-        interactionId: ctx.interactionId,
-      });
+  const reportMonitor = (monitoredApi: ExecutableApiRequest | undefined) => {
+    if (!monitoredApi) {
+      return;
+    }
+    env.monitor?.onApiRequest?.({
+      api: monitoredApi,
+      nodeId: ctx.nodeInstance?.templateNode.id,
+      path: ctx.nodeInstance?.templateNode.templatePath,
+      interactionId: ctx.interactionId,
+    });
+  };
+
+  try {
+    // A11: schema-fetch cross-subscriber dedup + runtime cache, opt-in via
+    // control.cacheTTL on a safe HTTP method. Other ajax paths keep the original
+    // always-fetch behavior, so owner-local source refresh dedup is untouched.
+    if (sharing && cacheEnabled) {
+      const evaluatedApi = helpers.evaluate<ApiSchema>(api, ctx.scope);
+      const prepared = prepareApiRequestForExecution(
+        evaluatedApi,
+        ctx.scope,
+        env,
+        helpers.expressionCompiler,
+      );
+
+      if (!isSafeRequestMethod(prepared.request.method)) {
+        return await runStandardAjaxRequest(api, ctx, signal, requestControl, helpers, env, reportMonitor);
+      }
+
+      const cacheKey = resolveCacheKey(prepared.request, requestControl);
+
+      if (cacheKey) {
+        const cached = sharing.apiCache.get<unknown>(cacheKey);
+        if (cached) {
+          reportMonitor(prepared.request);
+          // M-06: a single subscriber aborting never cancels the shared fetch
+          // (documented intent), but an already-aborted caller that reaches a
+          // cache hit must not receive a success result. The shared fetch is
+          // not touched; only this caller's result reflects the abort.
+          if (signal?.aborted) {
+            return createCancelledResult(signal.reason);
+          }
+          return { ok: true, data: cached.data, attempts: 0, failureCount: 0, error: undefined };
+        }
+      }
+
+      const runOnce = (registrySignal: AbortSignal) =>
+        executeApiSchema(evaluatedApi, ctx.scope, env, helpers.expressionCompiler, {
+          signal: registrySignal,
+          preparedRequest: prepared,
+          onPreparedRequest: reportMonitor,
+          executor: (adaptedApi, executorSignal) =>
+            helpers.executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
+              signal: executorSignal,
+              interactionId: ctx.interactionId,
+              control: requestControl,
+            }),
+          control: requestControl,
+        });
+
+      const identityKey = generateCacheKey(prepared.request);
+      const response = await sharing.inFlight.acquire(identityKey, runOnce);
+
+      if (cacheKey) {
+        sharing.apiCache.set(cacheKey, response.data, cacheTTL as number);
+      }
+
+      return {
+        ok: true,
+        data: response.data,
+        attempts: response.attempts,
+        failureCount: response.failureCount,
+        error: undefined,
+      };
     }
 
-    return {
-      ok: true,
-      data: response.data,
-      attempts: response.attempts,
-      failureCount: response.failureCount,
-      error: undefined,
-    };
+    return await runStandardAjaxRequest(api, ctx, signal, requestControl, helpers, env, reportMonitor);
   } catch (error) {
     if (isAbortError(error)) {
       return createCancelledResult(error);
     }
 
+    // HTTP business failures (non-OK fetcher responses) are surfaced as action
+    // failure results rather than re-thrown, so the action dispatcher's single
+    // error->notify translation reports them exactly once with the backend
+    // message carried on `error`. Genuine infrastructure errors (network,
+    // adaptor compile failures, etc.) keep re-throwing so `onActionError` /
+    // plugin `onError` diagnostic hooks still fire for them.
+    if (isHttpResponseFailure(error)) {
+      const failureMeta = error as {
+        attempts?: number;
+        failureCount?: number;
+        lastFailureReason?: unknown;
+      };
+
+      return {
+        ok: false,
+        error,
+        attempts: failureMeta.attempts ?? 0,
+        failureCount: failureMeta.failureCount ?? 1,
+      };
+    }
+
     throw error;
   }
+}
+
+function isSafeRequestMethod(method: string | undefined): boolean {
+  const normalized = (method ?? 'get').toLowerCase();
+  return normalized === 'get' || normalized === 'head' || normalized === 'options';
+}
+
+async function runStandardAjaxRequest(
+  api: ApiSchema,
+  ctx: ActionContext,
+  signal: AbortSignal | undefined,
+  requestControl: ReturnType<typeof resolveRequestControl>,
+  helpers: {
+    getEnv: () => RendererEnv;
+    expressionCompiler: ExpressionCompiler;
+    evaluate: RuntimeEvalHelpers['evaluate'];
+    executeApiRequest: ApiRequestExecutor;
+  },
+  env: RendererEnv,
+  reportMonitor: (api: ExecutableApiRequest | undefined) => void,
+): Promise<ActionResult> {
+  let monitoredApi: ExecutableApiRequest | undefined;
+  const response = await executeApiSchema(api, ctx.scope, env, helpers.expressionCompiler, {
+    signal,
+    evaluate: helpers.evaluate,
+    onPreparedRequest: (preparedApi) => {
+      monitoredApi = preparedApi;
+    },
+    executor: (adaptedApi) =>
+      helpers.executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
+        signal,
+        interactionId: ctx.interactionId,
+        control: requestControl,
+      }),
+    control: requestControl,
+  });
+
+  reportMonitor(monitoredApi);
+
+  return {
+    ok: true,
+    data: response.data,
+    attempts: response.attempts,
+    failureCount: response.failureCount,
+    error: undefined,
+  };
+}
+
+function isHttpResponseFailure(error: unknown): boolean {
+  return (
+    error != null &&
+    typeof error === 'object' &&
+    'response' in error &&
+    typeof (error as { status?: unknown }).status === 'number'
+  );
 }

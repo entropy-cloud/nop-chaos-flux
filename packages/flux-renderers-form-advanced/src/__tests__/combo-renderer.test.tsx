@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { formAdvancedRendererDefinitions } from '../index.js';
@@ -202,7 +200,7 @@ describe('combo: composite handle addItem / removeItem / moveItem', () => {
     ).toBe(true);
   });
 
-  it('emits nop-combo and nop-combo__item markers', () => {
+  it('emits nop-combo and combo-item slot markers', () => {
     renderSchema({
       type: 'form',
       id: 'f',
@@ -211,7 +209,8 @@ describe('combo: composite handle addItem / removeItem / moveItem', () => {
     });
 
     expect(document.querySelector('.nop-combo')).toBeTruthy();
-    expect(document.querySelectorAll('.nop-combo__item')).toHaveLength(1);
+    // C-06: dead BEM modifier `nop-combo__item` removed; the stable slot marker remains.
+    expect(document.querySelectorAll('[data-slot="combo-item"]')).toHaveLength(1);
   });
 });
 

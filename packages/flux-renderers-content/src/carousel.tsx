@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import {
@@ -44,6 +44,14 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
   const [activeIndex, setActiveIndex] = useState(0);
   const onChange = props.events.onChange;
   const lastIndexRef = useRef(0);
+  // O-03 / F6: activeIndex is mirrored into a ref — updated alongside
+  // setActiveIndex inside the select handler below — so getDebugData reads the
+  // current slide WITHOUT the component handle needing activeIndex in its
+  // reactive deps. The handle therefore stays identity-stable across slide
+  // changes (no register churn). autoPlay / loop stay direct reads (they are in
+  // the register-effect deps and change rarely).
+  const activeIndexRef = useRef(activeIndex);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Track the selected slide via the embla api and bridge it to local state.
   useEffect(() => {
@@ -52,11 +60,12 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
     }
     const onSelect = () => {
       const next = api.selectedScrollSnap();
+      activeIndexRef.current = next;
       setActiveIndex(next);
       if (next !== lastIndexRef.current) {
         lastIndexRef.current = next;
         const item = items[next];
-        const payload = { type: 'change', index: next, activeIndex: next, item };
+        const payload = { type: 'change', activeIndex: next, item };
         void onChange?.(payload, { event: payload, evaluationBindings: payload });
       }
     };
@@ -69,19 +78,99 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
     };
   }, [api, items, onChange]);
 
-  // Auto-advance the carousel on an interval.
+  // Auto-advance the carousel on an interval. O-04 / F1 / F2: honor
+  // prefers-reduced-motion reactively, and pause on hover/focus and while
+  // offscreen (WCAG 2.2.2). F1: each pause source owns an independent flag and
+  // the tick derives `paused = hovered || focused || !visible`, so resuming one
+  // source never clobbers another. F2: reduced-motion gates the interval
+  // lifecycle directly (clear/restart on `change`) for zero-tick-latency
+  // compliance, instead of being read once at setup.
   useEffect(() => {
     if (!autoPlay || !api) {
       return;
     }
-    const id = window.setInterval(() => {
-      api.scrollNext();
-    }, interval);
-    return () => window.clearInterval(id);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let hovered = false;
+    let focused = false;
+    let visible = true;
+    let id: number | undefined;
+    const tick = () => {
+      const paused = hovered || focused || !visible;
+      if (!paused) {
+        api.scrollNext();
+      }
+    };
+    const start = () => {
+      if (id !== undefined) {
+        return;
+      }
+      id = window.setInterval(tick, interval);
+    };
+    const stop = () => {
+      if (id === undefined) {
+        return;
+      }
+      window.clearInterval(id);
+      id = undefined;
+    };
+    const onReducedMotionChange = () => {
+      if (reducedMotion.matches) {
+        stop();
+      } else {
+        start();
+      }
+    };
+    const onHoverEnter = () => {
+      hovered = true;
+    };
+    const onHoverLeave = () => {
+      hovered = false;
+    };
+    const onFocusIn = () => {
+      focused = true;
+    };
+    const onFocusOut = () => {
+      focused = false;
+    };
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('mouseenter', onHoverEnter);
+      container.addEventListener('mouseleave', onHoverLeave);
+      container.addEventListener('focusin', onFocusIn);
+      container.addEventListener('focusout', onFocusOut);
+    }
+    let observer: IntersectionObserver | undefined;
+    if (container && typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver((entries) => {
+        visible = entries[0]?.isIntersecting ?? true;
+      });
+      observer.observe(container);
+    }
+    reducedMotion.addEventListener('change', onReducedMotionChange);
+    onReducedMotionChange();
+    return () => {
+      stop();
+      if (container) {
+        container.removeEventListener('mouseenter', onHoverEnter);
+        container.removeEventListener('mouseleave', onHoverLeave);
+        container.removeEventListener('focusin', onFocusIn);
+        container.removeEventListener('focusout', onFocusOut);
+      }
+      observer?.disconnect();
+      reducedMotion.removeEventListener('change', onReducedMotionChange);
+    };
   }, [autoPlay, interval, api]);
 
-  const handle = useMemo<ComponentHandle>(
-    () => ({
+  // O-03 / F6: the handle is constructed inside the register effect (no
+  // hand-written useMemo). Its reactive inputs are the effect deps below;
+  // activeIndex is read via `activeIndexRef` (not a dep), so the handle keeps a
+  // stable identity across slide changes (no register churn) while getDebugData
+  // still returns fresh values.
+  useEffect(() => {
+    if (!componentRegistry) {
+      return;
+    }
+    const handle: ComponentHandle = {
       id: props.id,
       name: typeof slotProps.name === 'string' ? slotProps.name : undefined,
       type: 'carousel',
@@ -114,19 +203,17 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
           return ['next', 'prev', 'setValue'];
         },
         getDebugData() {
-          return { activeIndex, itemCount: items.length, autoPlay, loop };
+          return {
+            activeIndex: activeIndexRef.current,
+            itemCount: items.length,
+            autoPlay,
+            loop,
+          };
         },
       },
-    }),
-    [api, props.id, slotProps.name, activeIndex, items.length, autoPlay, loop],
-  );
-
-  useEffect(() => {
-    if (!componentRegistry) {
-      return;
-    }
+    };
     return componentRegistry.register(handle, { cid: props.meta.cid });
-  }, [componentRegistry, props.meta.cid, handle]);
+  }, [componentRegistry, props.id, props.meta.cid, api, items.length, slotProps.name, autoPlay, loop]);
 
   if (items.length === 0) {
     return (
@@ -146,6 +233,7 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
 
   return (
     <div
+      ref={containerRef}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="carousel"

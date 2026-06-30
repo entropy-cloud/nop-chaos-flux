@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   ActionContext,
   RendererComponentProps,
@@ -18,6 +18,16 @@ function SaveProbeRenderer(props: RendererComponentProps) {
 }
 
 const saveProbeCalls: Array<{ scopeRecord: unknown }> = [];
+
+beforeEach(() => {
+  // C-35: reset the module-level mutable probe buffer in beforeEach for test isolation
+  // instead of relying on ad-hoc inline resets scattered across individual tests.
+  saveProbeCalls.length = 0;
+});
+
+afterEach(() => {
+  cleanup();
+});
 
 const saveProbeRenderer: RendererDefinition = {
   type: 'save-probe',

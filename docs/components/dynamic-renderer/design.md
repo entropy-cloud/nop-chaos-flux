@@ -36,7 +36,7 @@
 
 ## 5. 字段分类
 
-- `loadAction`: `event`
+- `loadAction`: `prop`（C-02：声明为 `kind:'prop'`，编译期一次性把 `${}` 模板预编译进节点 propsProgram，prop channel 对当前 scope **reactive** 解析；renderer 消费 `props.props.loadAction` 的解析值。reload reactivity 经 `loadActionKey`（JSON 序列化）保留——scope 喂给 action 的数据变化时 prop channel 重新解析并触发 reload）。
 - `autoLoad`: `prop`（`valueType: 'boolean'`，缺省 `true`）
 - `body`: `region`
 - `fallback`、`empty`: 仅作为潜在后续扩展
@@ -45,6 +45,7 @@
 
 - `body` 是主渲染入口。
 - 如果后续增加 `fallback`/`empty`，它们应作为补充 UI，而不是和 `body` 形成双主内容区。
+- **Lexical / per-instance scope（DD12 + DD13）**：加载的 schema 经 `props.helpers.render(schema)` 在 dynamic-renderer **自身的 lexical scope** 内渲染（非 page root、非共享单例）。因此：(DD12) prop channel reactive 读 live scope，`loadActionKey` 变化触发 reload；(DD13) 同名 componentId 的多个 instance **互不碰撞**——每个 instance 在各自 lexical scope 内解析绑定，定向其一不影响另一。回归锚见 `dynamic-renderer-lexical.test.tsx`（child/row scope 读取 + per-instance 隔离），cache dedup 的相反轴见 `basic-dynamic-renderer.test.tsx`（A11）。
 
 ## 7. 运行期状态归属
 

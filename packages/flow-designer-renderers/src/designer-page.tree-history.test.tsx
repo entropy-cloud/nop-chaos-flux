@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { DesignerCore } from '@nop-chaos/flow-designer-core';

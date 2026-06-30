@@ -217,6 +217,51 @@ interface ArrayFieldSchema extends BaseSchema {
 - 但 value writeback 和 validation 仍按 index-addressed parent-owned path 执行
 - projected item form 只是把相对 item 字段 rebasing 到 parent owner 的 owner-local absolute path
 
+### Per-Row Delete Gating (`removeWhen`)
+
+`array-field` 与 `combo` 支持 item-scoped 的删除门控：schema 可声明 `removeWhen`（一个相对当前 item 求值的布尔表达式字符串，如 `'${value.locked !== true}'`）。当声明了 `removeWhen` 时，某一行只有在表达式对该 item 求值为真时才允许删除；求值为假的行其删除按钮被禁用。
+
+规则：
+
+1. `removeWhen` 表达式以 `${...}` 形式编写，per-item 在投影 item scope 上求值（可引用 `value`（当前 item 对象）、`index`、`readOnly`，以及 `value.<childField>`）
+2. 删除按钮 disabled 态 = `readOnly || atMinItems || (hasRemoveWhen && !truthy(eval(removeWhen, itemScope)))`（`atMinItems` 仅 `combo` 适用——`combo` 声明 `minItems` field-global 地板；`array-field` schema 无 `minItems`，该项恒为 false）
+3. `removeWhen` 未声明时，所有行在 `minItems` 地板之上均可删除（无 per-row 条件）
+4. `minItems` field-global 地板（仅 `combo`）保留，与 `removeWhen` 叠加（取并集禁用）
+5. 表达式求值出错时 fail-open（不禁用，避免因表达式缺陷锁住数据），并在 console 报错
+6. `array-field`（object itemKind）与 `combo` 两条路径行为一致
+
+### Hidden Field Value And Submit Payload (C10)
+
+参见 `docs/architecture/form-validation.md` 的 _Hidden Field Value And Submit Payload (C10 adjudication)_。`array-field`/`combo` 的 item 子字段若被 `when` 隐藏，其值默认仍保留并包含进提交 payload；仅当显式配置 `clearValueWhenHidden` 时才在隐藏时清值从而排除出提交。提交时投影排除（保留 store）是未建模的 distinct 语义，记为 successor（roadmap B7）。
+
+### Row-Local Relative Cross-Field Addressing (V6)
+
+参见 `docs/architecture/form-validation.md` 的 _Array Row-Local Relative Cross-Field Addressing (V6 adjudication)_。`array-field` 行内校验使用绝对 index-addressed 路径（`getChildFieldPathPrefix` 返回 false 是有意——item 子校验经投影 form 运行时注册，非静态模型）；行本地相对跨字段引用（如以兄弟名编写的 `equalsField`）不被支持，记为 candidate successor（roadmap B7，`DESIGN-ACK-NOT-IMPL`）。作者须用绝对路径。
+
+### Nested Write Isolation (C1)
+
+`array-field`/`combo` 的每个 item 经 `createItemScope`（`array-field-runtime.ts`）以 `itemPrefix = ${arrayPath}.${index}` 投影：所有读写经 `parentScope.get/update(${itemPrefix}...)`，per-item form proxy（`createItemFormProxy`）以 `${arrayPath}.${index}.${path}` 前缀所有 form 路径。嵌套 combo/array-field 在 item 内相对父 item 投影自身 `arrayPath`，得到 `${parent}.${i}.${child}.${j}`。因此跨行写串扰在结构上不可能：每 item 的 scope/form 是共享父 owner 上的隔离前缀投影，编辑某行的子项（含多级嵌套）只落在该行的 index-addressed 路径。
+
+### External Error Addressing (C5)
+
+外部（服务端）错误经 `applyExternalErrors` 以 path 为键存入 owner `externalErrors` map 并并入 `fieldStates[path]`，不论该字段是否已注册。`isPathOwned` 用 flat dotted-prefix 匹配，故行级（`items.1`）、叶级（`items.0.sku`）、穿容器/Tab（`items.2.tabs.t.sku`）均被 root form 拥有并附着高亮；undefined-target（如 `items.999.unknown`）不抛错，仍以 path 为键记录。数组变更（remove/move）时 `remapExternalErrors` + `transformArrayIndexedPath` 重映射 index 路径。
+
+### Add-vs-Validate Timing (C7)
+
+`add`/`scaffold` 新空行后，`array-field`/`combo`/`array-editor` 会触发 `validateSubtree('change')` / `validateField('change')`，但错误**可见性**由 `showErrorOn`（默认 `['touched','submit']`）门控：未 touch 的新行 required 错误不浮现，直至该行被 touch/编辑或 submit。submit 触发全行校验，使所有未通过行浮现。`showErrorOn` 策略本身不在此裁 定范围内（C7 仅靠其门控成立）。
+
+### Submit Payload Contains Only Declared Fields (C9)
+
+item 字段写仅经投影 item scope 的 `update()` / 投影 form 的 `setValue()` 落入 array 值。data-source 的 `options` 作为 transient `SourceTransientState`（`optionsSourceState`）交付在渲染期 `props.props.optionsSourceState`，**不写入** form scope values；故 item 含 select 其 options 来自 per-item data-source 时，提交值**仅含声明的子字段**，transient option payload（候选集）永不入提交值。
+
+### Per-Item Re-render Isolation (C12)
+
+`array-field`/`combo` 的 item 组件为 `React.memo`（自定义比较器：`itemIdentity`、`item`、`index`、`parentForm`…）并以稳定 `itemKey` 为 `key`。结构共享的值更新使仅编辑行的 `item` prop ref 变化，兄弟行因 memo 比较器命中而跳过重渲染。`itemKey` 连续性（非 index 身份）是关键：reorder/remap 时稳定 `itemKey` 保持 item subtree 身份，避免不必要 remount。`array-field` 记录 item-locality 不变量（item-local 回调的 `useCallback` deps 不含 `items`，避免每次数组变更改写所有 item 回调身份）。
+
+### Per-Item Action Writeback (C13)
+
+item scope 内运行的 action 经投影 item scope 的 `update()` / 投影 form 的 `setValue()` → `parent.update(${itemPrefix}.${path})` 回写，故 per-item action 返回数据可定向 `${name}.${i}.*` 并反映到父 array 值（index-addressed）。combo/array-field item affordance 不携带 per-row loading flag：async 治理 per-request/scope，单行 async loading 不会 field-global 地禁用兄弟行交互（兄弟行保持可交互）。
+
 ## Example: Scalar Array
 
 ```json

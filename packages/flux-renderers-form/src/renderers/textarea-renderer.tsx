@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { stringAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
-import { cn, Textarea, useIsMobile } from '@nop-chaos/ui';
+import { Button, cn, Textarea, useIsMobile } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
 import { useFormFieldController } from '../field-utils.js';
 import type { TextareaSchema } from '../schemas.js';
@@ -150,15 +150,17 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
       {textareaEl}
       <div className="flex items-center justify-end gap-2" data-slot="textarea-footer">
         {showClearButton ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             data-slot="textarea-clear"
             aria-label="Clear"
-            className="inline-flex size-5 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+            className="size-5 text-muted-foreground hover:text-foreground"
             onClick={handleClear}
           >
             <XIcon className="pointer-events-none size-3.5" />
-          </button>
+          </Button>
         ) : null}
         {counterText !== undefined ? (
           <span data-slot="textarea-counter" className="text-xs text-muted-foreground tabular-nums">

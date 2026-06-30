@@ -1,0 +1,260 @@
+{
+  "type": "designer-page",
+  "document": {
+    "id": "summary-demo",
+    "kind": "workflow",
+    "name": "Node/Edge Summary Demo",
+    "version": "1.0",
+    "nodes": [
+      {
+        "id": "start-1",
+        "type": "start",
+        "position": { "x": 80, "y": 160 },
+        "data": { "label": "Start" }
+      },
+      {
+        "id": "task-1",
+        "type": "task",
+        "position": { "x": 320, "y": 160 },
+        "data": { "label": "Send Email" }
+      },
+      {
+        "id": "end-1",
+        "type": "end",
+        "position": { "x": 560, "y": 160 },
+        "data": { "label": "End" }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-start-task",
+        "type": "default",
+        "source": "start-1",
+        "target": "task-1",
+        "data": { "condition": "trigger" }
+      },
+      {
+        "id": "edge-task-end",
+        "type": "default",
+        "source": "task-1",
+        "target": "end-1",
+        "data": { "condition": "success" }
+      }
+    ],
+    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+  },
+  "config": {
+    "version": "1.0",
+    "kind": "workflow",
+    "nodeTypes": [
+      {
+        "id": "start",
+        "label": "Start Node",
+        "icon": "play",
+        "body": {
+          "type": "flex",
+          "direction": "column",
+          "className": "node-card node-card--start",
+          "items": [
+            {
+              "type": "container",
+              "className": "node-icon node-icon--start",
+              "body": [{ "type": "icon", "icon": "play" }]
+            },
+            {
+              "type": "text",
+              "text": "${label}",
+              "className": "node-title"
+            }
+          ]
+        },
+        "defaults": { "label": "Start" },
+        "ports": [{ "id": "out", "direction": "output", "position": "right" }],
+        "constraints": { "maxInstances": 1, "allowIncoming": false },
+        "inspector": {
+          "body": {
+            "type": "form",
+            "body": [{ "type": "input-text", "name": "label", "label": "Label" }]
+          }
+        }
+      },
+      {
+        "id": "task",
+        "label": "Task Node",
+        "icon": "workflow",
+        "body": {
+          "type": "flex",
+          "direction": "column",
+          "className": "node-card",
+          "items": [
+            {
+              "type": "container",
+              "className": "node-icon node-icon--task",
+              "body": [{ "type": "icon", "icon": "workflow" }]
+            },
+            {
+              "type": "text",
+              "text": "${label}",
+              "className": "node-title"
+            }
+          ]
+        },
+        "defaults": { "label": "Task" },
+        "ports": [
+          { "id": "in", "direction": "input", "position": "left" },
+          { "id": "out", "direction": "output", "position": "right" }
+        ],
+        "inspector": {
+          "body": {
+            "type": "form",
+            "body": [{ "type": "input-text", "name": "label", "label": "Label" }]
+          }
+        }
+      },
+      {
+        "id": "end",
+        "label": "End Node",
+        "icon": "flag",
+        "body": {
+          "type": "flex",
+          "direction": "column",
+          "className": "node-card node-card--end",
+          "items": [
+            {
+              "type": "container",
+              "className": "node-icon node-icon--end",
+              "body": [{ "type": "icon", "icon": "flag" }]
+            },
+            {
+              "type": "text",
+              "text": "${label}",
+              "className": "node-title"
+            }
+          ]
+        },
+        "defaults": { "label": "End" },
+        "ports": [{ "id": "in", "direction": "input", "position": "left" }],
+        "constraints": { "allowOutgoing": false },
+        "inspector": {
+          "body": {
+            "type": "form",
+            "body": [{ "type": "input-text", "name": "label", "label": "Label" }]
+          }
+        }
+      }
+    ],
+    "edgeTypes": [
+      {
+        "id": "default",
+        "label": "Flow",
+        "body": {
+          "type": "text",
+          "text": "${condition}",
+          "className": "text-sm font-medium text-gray-600"
+        },
+        "defaults": { "condition": "" }
+      }
+    ],
+    "palette": {
+      "searchable": false,
+      "groups": [
+        {
+          "id": "basic",
+          "label": "Basic",
+          "nodeTypes": ["start", "end"]
+        },
+        {
+          "id": "execution",
+          "label": "Execution",
+          "nodeTypes": ["task"]
+        }
+      ]
+    },
+    "toolbar": {
+      "items": [
+        { "type": "back", "label": "Back", "action": "designer:navigate-back" },
+        { "type": "title", "body": "{{doc.name}}" },
+        { "type": "divider" },
+        { "type": "text", "body": "{{doc.nodes.length}} nodes · {{doc.edges.length}} edges" }
+      ]
+    },
+    "features": {
+      "undo": true,
+      "redo": true,
+      "history": true,
+      "grid": true,
+      "fitView": true
+    },
+    "rules": {
+      "allowSelfLoop": false,
+      "allowMultiEdge": true,
+      "defaultEdgeType": "default"
+    }
+  },
+  "inspector": {
+    "type": "container",
+    "className": "nop-designer-summary-demo p-3 flex flex-col gap-3 text-sm",
+    "body": [
+      {
+        "type": "text",
+        "text": "Click a card or canvas node/edge to see selection state update. Cards reflect active/selected state from the designer snapshot.",
+        "className": "text-xs text-muted-foreground"
+      },
+      {
+        "type": "container",
+        "className": "h-px bg-border my-1",
+        "body": []
+      },
+      {
+        "type": "text",
+        "text": "Nodes",
+        "className": "text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+      },
+      {
+        "type": "designer-node-card",
+        "testid": "summary-node-start",
+        "nodeId": "start-1"
+      },
+      {
+        "type": "designer-node-card",
+        "testid": "summary-node-task",
+        "nodeId": "task-1"
+      },
+      {
+        "type": "designer-node-card",
+        "testid": "summary-node-end",
+        "nodeId": "end-1"
+      },
+      {
+        "type": "designer-node-card",
+        "testid": "summary-node-missing",
+        "nodeId": "does-not-exist"
+      },
+      {
+        "type": "container",
+        "className": "h-px bg-border my-1",
+        "body": []
+      },
+      {
+        "type": "text",
+        "text": "Edges",
+        "className": "text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+      },
+      {
+        "type": "designer-edge-row",
+        "testid": "summary-edge-1",
+        "edgeId": "edge-start-task"
+      },
+      {
+        "type": "designer-edge-row",
+        "testid": "summary-edge-2",
+        "edgeId": "edge-task-end"
+      },
+      {
+        "type": "designer-edge-row",
+        "testid": "summary-edge-missing",
+        "edgeId": "does-not-exist"
+      }
+    ]
+  }
+}

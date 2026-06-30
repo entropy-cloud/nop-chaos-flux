@@ -15,9 +15,13 @@ import {
   DesignerPaletteRenderer,
 } from './designer-page.js';
 import { DesignerFieldRenderer } from './designer-field.js';
+import { DesignerNodeCardRenderer } from './designer-node-card.js';
+import { DesignerEdgeRowRenderer } from './designer-edge-row.js';
 import type {
   DesignerCanvasSchema,
+  DesignerEdgeRowSchema,
   DesignerFieldSchema,
+  DesignerNodeCardSchema,
   DesignerPageSchema,
   DesignerPaletteSchema,
 } from './schemas.js';
@@ -44,6 +48,16 @@ const LazyDesignerFieldRenderer = useEagerRenderersInTests
   ? DesignerFieldRenderer
   : createLazyRendererComponent<DesignerFieldSchema>(
       () => import('./designer-field.js').then((m) => m.DesignerFieldRenderer),
+    );
+const LazyDesignerNodeCardRenderer = useEagerRenderersInTests
+  ? DesignerNodeCardRenderer
+  : createLazyRendererComponent<DesignerNodeCardSchema>(
+      () => import('./designer-node-card.js').then((m) => m.DesignerNodeCardRenderer),
+    );
+const LazyDesignerEdgeRowRenderer = useEagerRenderersInTests
+  ? DesignerEdgeRowRenderer
+  : createLazyRendererComponent<DesignerEdgeRowSchema>(
+      () => import('./designer-edge-row.js').then((m) => m.DesignerEdgeRowRenderer),
     );
 
 function compileDesignerConfig(value: unknown, context: FieldCompileContext): unknown {
@@ -283,6 +297,16 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
     type: 'designer-palette',
     component: LazyDesignerPaletteRenderer,
     fields: [],
+  },
+  {
+    type: 'designer-node-card',
+    component: LazyDesignerNodeCardRenderer,
+    fields: [{ key: 'nodeId', kind: 'prop' }],
+  },
+  {
+    type: 'designer-edge-row',
+    component: LazyDesignerEdgeRowRenderer,
+    fields: [{ key: 'edgeId', kind: 'prop' }],
   },
 ];
 

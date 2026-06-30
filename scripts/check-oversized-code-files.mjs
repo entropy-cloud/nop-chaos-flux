@@ -20,6 +20,30 @@ const ignoredPathParts = new Set([
   '.turbo/',
 ]);
 
+// Explicit opt-in exemptions for files that exceed ERROR_LINES but have a
+// documented architectural justification. Each entry MUST cite the decision
+// reference (plan / audit / inline source comment) explaining why physical
+// splitting would harm cohesion. This is intentionally an opt-in list — never
+// a silent passthrough — so every over-limit file remains visible in the
+// script output and every exemption is auditable.
+//
+// To add an exemption: append `{ path, reason }`. The script still prints the
+// file in the ERROR section but marks it `[exempt]` and does not flip the
+// exit code. Review the cited decision before adding or removing an entry.
+const OVERSIZED_EXEMPTIONS = [
+  {
+    path: 'packages/flux-runtime/src/form-runtime-owner.ts',
+    reason:
+      'Single `buildFormOwnerRuntime` orchestrator. Documented decision (AUDIT-01 / Plan 2026-06-27-0850-1 Phase 1): the orchestrator closure shares substantial mutable state (sharedState, lifecycle, validation pipeline) already partially extracted to sibling files (`form-runtime-owner-{external-errors,field-states,lifecycle,validation,values}.ts`); further splitting fragments the orchestration coherence without improving maintainability.',
+  },
+  {
+    path: 'packages/flux-compiler/src/schema-compiler/node-compiler.ts',
+    reason:
+      'Single `compileSingleNode` closure. Documented inline decision at node-compiler.ts:57-65 (Plan 444 / 02-N1, reaffirmed AUDIT-01 / Plan 2026-06-27-0850-1 Phase 1): the closure shares substantial mutable state (symbolTable, regions, compiledPropEntries, sourcePropKeys, rawEventPlans); helpers are already extracted. Splitting would require passing significant shared state between modules, reducing clarity.',
+  },
+];
+const exemptPaths = new Set(OVERSIZED_EXEMPTIONS.map((entry) => entry.path));
+
 function isTrackedCodeFile(filePath) {
   if (!rootPrefixes.some((prefix) => filePath.startsWith(prefix))) {
     return false;
@@ -74,14 +98,33 @@ async function main() {
   warnFiles.sort(sortByLines);
 
   let hasError = false;
+  const exemptedFiles = [];
 
   if (errorFiles.length > 0) {
-    hasError = true;
     console.error(
       `[check-oversized-code-files] ERROR: ${errorFiles.length} files exceed ${ERROR_LINES} lines (MUST split):`,
     );
     for (const item of errorFiles) {
-      console.error(`  - ${item.filePath}: ${item.lineCount}`);
+      const tag = exemptPaths.has(item.filePath) ? ' [exempt]' : '';
+      console.error(`  - ${item.filePath}: ${item.lineCount}${tag}`);
+      if (exemptPaths.has(item.filePath)) {
+        exemptedFiles.push(item);
+      } else {
+        hasError = true;
+      }
+    }
+  }
+
+  if (exemptedFiles.length > 0) {
+    console.warn(
+      `[check-oversized-code-files] EXEMPT: ${exemptedFiles.length} over-limit file(s) carry an explicit opt-in exemption:`,
+    );
+    for (const item of exemptedFiles) {
+      const entry = OVERSIZED_EXEMPTIONS.find((record) => record.path === item.filePath);
+      console.warn(`  - ${item.filePath}: ${item.lineCount} lines`);
+      if (entry) {
+        console.warn(`      reason: ${entry.reason}`);
+      }
     }
   }
 
@@ -105,7 +148,7 @@ async function main() {
     );
   } else {
     console.log(
-      `[check-oversized-code-files] ${warnFiles.length} warnings, ${errorFiles.length} errors`,
+      `[check-oversized-code-files] ${warnFiles.length} warnings, ${errorFiles.length} errors, ${exemptedFiles.length} exempt`,
     );
   }
 }

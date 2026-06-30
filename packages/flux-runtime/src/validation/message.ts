@@ -10,11 +10,13 @@ export function buildValidationMessage(
 
   switch (rule.kind) {
     case 'required':
-      return t('validation.required', { label });
+      return rule.message ?? t('validation.required', { label });
+    case 'requiredRange':
+      return rule.message ?? t('validation.requiredRange', { label });
     case 'minLength':
-      return t('validation.minLength', { label, min: rule.value });
+      return rule.message ?? t('validation.minLength', { label, min: rule.value });
     case 'maxLength':
-      return t('validation.maxLength', { label, max: rule.value });
+      return rule.message ?? t('validation.maxLength', { label, max: rule.value });
     case 'minItems':
       return rule.message ?? t('validation.minItems', { label, min: rule.value });
     case 'maxItems':

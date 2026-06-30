@@ -7,6 +7,7 @@ import {
   useTableSelection,
   useTableSort,
 } from '../table-renderer/use-table-controls.js';
+import { buildTableRowEntries } from '../table-renderer/table-data.js';
 
 export const mockScopeState: { data: Record<string, unknown> } = {
   data: {},
@@ -55,9 +56,10 @@ export function SelectionProbe(props: {
   helpers?: any;
   onReady: (value: any) => void;
 }) {
+  const rows = buildTableRowEntries(props.source, props.schemaProps.rowKey);
   const api = useTableSelection(
     props.schemaProps,
-    props.source,
+    rows,
     props.onSelectionChange,
     props.helpers ?? createHelpers(),
   );

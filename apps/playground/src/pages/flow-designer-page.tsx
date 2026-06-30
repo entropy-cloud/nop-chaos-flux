@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from '@nop-chaos/ui';
 import workflowDesignerSchema from '../schemas/workflow-designer-schema.json';
 import dingtalkWorkflowTreeSchema from '../schemas/dingtalk-workflow-tree-schema.json';
 import actionFlowTreeSchema from '../schemas/action-flow-tree-schema.json';
+import designerSummaryDemoSchema from '../schemas/designer-summary-demo-schema.json';
 
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
@@ -27,12 +28,13 @@ registerFlowDesignerRenderers(registry);
 const SchemaRenderer = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();
 
-type ExampleKey = 'workflow' | 'dingtalk' | 'action-flow';
+type ExampleKey = 'workflow' | 'dingtalk' | 'action-flow' | 'summary';
 
 const EXAMPLES: Record<ExampleKey, { label: string; schema: unknown }> = {
   workflow: { label: '工作流', schema: workflowDesignerSchema },
   dingtalk: { label: '钉钉审批流', schema: dingtalkWorkflowTreeSchema },
   'action-flow': { label: 'Action 编排', schema: actionFlowTreeSchema },
+  summary: { label: '节点/边摘要', schema: designerSummaryDemoSchema },
 };
 
 interface FlowDesignerPageProps {

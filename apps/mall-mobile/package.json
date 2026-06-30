@@ -1,0 +1,37 @@
+{
+  "name": "@nop-chaos/mall-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "nop-app-mall mobile H5 app built on nop-chaos-flux (React 19 + JSON Schema renderer). Consumes the mall backend GraphQL/REST API.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-i18n": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-renderers-basic": "workspace:*",
+    "@nop-chaos/flux-renderers-content": "workspace:*",
+    "@nop-chaos/flux-renderers-data": "workspace:*",
+    "@nop-chaos/flux-renderers-form": "workspace:*",
+    "@nop-chaos/flux-renderers-layout": "workspace:*",
+    "@nop-chaos/flux-renderers-mobile": "workspace:*",
+    "@nop-chaos/theme-tokens": "workspace:*",
+    "@nop-chaos/ui": "workspace:*",
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "vite": "^8.0.3"
+  }
+}

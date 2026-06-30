@@ -6,6 +6,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import {
   resolveRendererSlotContent,
+  unwrapBooleanLiteral,
   useCurrentComponentRegistry,
   useSchemaProps,
 } from '@nop-chaos/flux-react';
@@ -30,21 +31,49 @@ const TABS_SWIPE_THRESHOLD = 50;
 const TABS_SWIPE_DIRECTION_THRESHOLD = 10;
 
 function isTabDisabled(input: unknown): boolean {
-  if (input === true) {
-    return true;
-  }
-
-  if (!input || typeof input !== 'object') {
-    return false;
-  }
-
-  const candidate = input as { __nopPreserveLiteral?: unknown; value?: unknown };
-  return candidate.__nopPreserveLiteral === true && candidate.value === true;
+  return unwrapBooleanLiteral(input);
 }
 
 function getItemValue(item: TabsItemSchema, index: number): string {
   const candidate = item.value ?? item.key;
   return String(candidate ?? index);
+}
+
+// design.md §10 candidate-fix: when the active value vanishes from `items`,
+// correct it instead of leaving a stale value (which would render no panel).
+// Rule: keep → nearest-right (item now at the removed index) → nearest-left
+// (previous item) → empty. Returns `undefined` when no correction is needed
+// (active value still present, or items empty with no candidate). This is the
+// trigger+idempotency guard: once corrected, the value matches `items` and the
+// effect no longer writes back.
+function resolveCandidateValue(
+  items: TabsItemSchema[],
+  currentValue: string,
+  prevItems: TabsItemSchema[],
+): string | undefined {
+  if (items.some((item, index) => getItemValue(item, index) === currentValue)) {
+    return undefined;
+  }
+
+  const prevIndex = prevItems.findIndex(
+    (item, index) => getItemValue(item, index) === currentValue,
+  );
+
+  if (prevIndex >= 0) {
+    if (prevIndex < items.length) {
+      return getItemValue(items[prevIndex]!, prevIndex);
+    }
+    if (items.length > 0) {
+      return getItemValue(items[items.length - 1]!, items.length - 1);
+    }
+    return undefined;
+  }
+
+  if (items.length > 0) {
+    return getItemValue(items[0]!, 0);
+  }
+
+  return undefined;
 }
 
 function resolveTabsVariant(tabsMode?: string): 'default' | 'line' {
@@ -139,6 +168,23 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const isMobile = useIsMobile();
   const tabsListRef = useRef<HTMLDivElement | null>(null);
   const swipeStateRef = useRef<{ startX: number; startY: number; tracking: boolean } | null>(null);
+  const prevItemsRef = useRef<TabsItemSchema[]>(items);
+
+  // candidate-fix (design.md §10): write back a corrected value when the active
+  // tab disappears from `items`. Only local/scope ownership self-corrects;
+  // controlled ownership stays driven by its bound expression.
+  useEffect(() => {
+    if (ownedAxis.ownership === 'controlled') {
+      prevItemsRef.current = items;
+      return;
+    }
+
+    const candidate = resolveCandidateValue(items, ownedAxis.value, prevItemsRef.current);
+    if (candidate !== undefined && candidate !== ownedAxis.value) {
+      ownedAxis.setValue(candidate);
+    }
+    prevItemsRef.current = items;
+  }, [items, ownedAxis]);
 
   const tabsMode = schemaProps.tabsMode ?? '';
   const sidePosition = schemaProps.sidePosition ?? 'left';

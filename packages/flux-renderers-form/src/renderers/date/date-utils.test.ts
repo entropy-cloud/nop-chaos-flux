@@ -146,6 +146,52 @@ describe('date-utils — UTC round-trip (utc:true)', () => {
   });
 });
 
+describe('date-utils — D2 utc split contract (commit honors utc, display/picker local)', () => {
+  it('commit path (toStorageDate + {utc}) preserves the picked wall-clock in UTC components', () => {
+    const picked = new Date(2024, 5, 12, 9, 30);
+    const storage = toStorageDate(picked, true)!;
+    // The storage instant's UTC components equal the picked wall-clock — this is
+    // the commit-path bridge that utc:true turns on.
+    expect(storage.getUTCFullYear()).toBe(2024);
+    expect(storage.getUTCMonth()).toBe(5);
+    expect(storage.getUTCDate()).toBe(12);
+    expect(storage.getUTCHours()).toBe(9);
+    expect(storage.getUTCMinutes()).toBe(30);
+    // And formatting with the utc option reproduces the picked wall-clock.
+    expect(formatDate(storage, DEFAULT_DATETIME_FORMAT, { utc: true })).toBe('2024-06-12 09:30');
+  });
+
+  it('display/picker path (toCalendarDate then format WITHOUT utc) reads local wall-clock', () => {
+    const picked = new Date(2024, 5, 12, 9, 30);
+    const storage = toStorageDate(picked, true)!;
+    // Display deliberately omits the utc option: it formats the calendar
+    // (local wall-clock) date, which toCalendarDate recovered from storage.
+    const calendar = toCalendarDate(storage, true)!;
+    expect(calendar.getFullYear()).toBe(2024);
+    expect(calendar.getMonth()).toBe(5);
+    expect(calendar.getDate()).toBe(12);
+    expect(calendar.getHours()).toBe(9);
+    expect(calendar.getMinutes()).toBe(30);
+    // No utc option here → reads LOCAL components of the calendar date.
+    expect(formatDate(calendar, DEFAULT_DATETIME_FORMAT)).toBe('2024-06-12 09:30');
+  });
+
+  it('utc only changes the storage instant, not the recovered wall-clock display', () => {
+    const picked = new Date(2024, 5, 12, 9, 30);
+    const withUtc = toStorageDate(picked, true)!;
+    const withoutUtc = toStorageDate(picked, false)!;
+    // The two commit paths produce different instants exactly when the host TZ
+    // is non-UTC; but the recovered wall-clock (display) is identical either way.
+    const displayWithUtc = formatDate(
+      toCalendarDate(withUtc, true)!,
+      DEFAULT_DATETIME_FORMAT,
+    );
+    const displayWithoutUtc = formatDate(toCalendarDate(withoutUtc, false)!, DEFAULT_DATETIME_FORMAT);
+    expect(displayWithUtc).toBe('2024-06-12 09:30');
+    expect(displayWithoutUtc).toBe('2024-06-12 09:30');
+  });
+});
+
 describe('date-utils — range normalization', () => {
   it('swaps ends when start > end', () => {
     const result = normalizeRange('2024-06-20', '2024-06-01', DEFAULT_DATE_FORMAT);

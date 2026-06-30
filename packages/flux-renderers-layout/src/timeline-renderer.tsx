@@ -12,10 +12,10 @@ import type {
 const LEVEL_DOT_CLASS: Record<TimelineItemLevel, string> = {
   default: 'bg-muted-foreground',
   primary: 'bg-primary',
-  success: 'bg-green-500',
-  warning: 'bg-amber-500',
+  success: 'bg-success',
+  warning: 'bg-warning',
   error: 'bg-destructive',
-  info: 'bg-sky-500',
+  info: 'bg-info',
 };
 
 function normalizeItems(value: unknown): TimelineItemSchema[] {

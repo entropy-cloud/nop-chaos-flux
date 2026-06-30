@@ -1,9 +1,5 @@
 import type { ResponsiveBreakpoint } from './schemas.js';
 
-export function classNames(...values: Array<string | undefined | false>) {
-  return values.filter(Boolean).join(' ');
-}
-
 export function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }

@@ -31,6 +31,7 @@ import { compileActions } from '@nop-chaos/flux-compiler';
 import { createActionRuntimeAdapter } from './action-adapter.js';
 import { createActionScope } from './action-scope.js';
 import { createApiCacheStore } from './async-data/api-cache.js';
+import { createRequestInFlightRegistry } from './async-data/request-in-flight-registry.js';
 import { createAsyncGovernanceStore } from './async-data/async-governance.js';
 import { createComponentHandleRegistry } from './component-handle-registry.js';
 import {
@@ -113,6 +114,8 @@ export function createRendererRuntime(input: {
   };
   const getEnv = () => envRef.current;
   const apiCache = createApiCacheStore();
+  const requestInFlight = createRequestInFlightRegistry();
+  const schemaFetchSharing = { apiCache, inFlight: requestInFlight };
   const asyncGovernance = createAsyncGovernanceStore();
   const executeApiRequest = createApiRequestExecutor(getEnv);
   const sourceRegistryRef: { current?: ReturnType<typeof createRuntimeSourceRegistry> } = {};
@@ -550,6 +553,7 @@ export function createRendererRuntime(input: {
       }
       ownedActionScopes.clear();
       executeApiRequest.dispose?.();
+      requestInFlight.dispose();
       if (ownsModuleCache) {
         moduleCache.clear();
       }
@@ -562,6 +566,7 @@ export function createRendererRuntime(input: {
     expressionCompiler,
     evaluate,
     executeApiRequest,
+    sharing: schemaFetchSharing,
     runtime,
     createSurfaceScope: (kind, ctx, patch) => {
       const ownerInstanceKey = ctx.nodeInstance?.instancePath?.length

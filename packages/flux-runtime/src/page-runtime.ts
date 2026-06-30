@@ -5,7 +5,7 @@ import type {
   ScopeRef,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
-import { createPageStore } from './form-store.js';
+import { createPageStore } from './page-store.js';
 import { createScopeRef } from './scope.js';
 
 export function createManagedPageRuntime(

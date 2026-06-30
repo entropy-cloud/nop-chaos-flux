@@ -19,39 +19,20 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
         shape: { kind: 'array', item: { kind: 'unknown' } },
         displayName: 'Steps',
         description:
-          'Renderer-owned structured step list. Declaration order = navigation order. Each step carries title/body/actions regions + visible/disabled/optional flags.',
+          'Renderer-owned structured step list. Declaration order = navigation order. Each step carries title/body/actions regions + visible/disabled flags.',
         editorType: 'object-array',
       },
       value: {
         shape: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'number' }] },
         displayName: 'Value',
         description:
-          'Current step key or index (1-based index when numeric and no matching key). Local controlled by default.',
+          'Initial step key or index (1-based index when numeric and no matching key). Seed only — step navigation is local controlled state (non-reactive to runtime value changes).',
         editorType: 'expression',
       },
       defaultValue: {
         shape: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'number' }] },
         displayName: 'Default Value',
-        description: 'Initial current step when value is not provided.',
-        editorType: 'expression',
-      },
-      valueOwnership: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'local' },
-            { kind: 'literal', value: 'controlled' },
-            { kind: 'literal', value: 'scope' },
-          ],
-        },
-        displayName: 'Value Ownership',
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-      valueStatePath: {
-        shape: { kind: 'string' },
-        displayName: 'Value State Path',
-        description: 'Scope path publishing the writable current-step value.',
+        description: 'Initial current step when value is not provided. Seed only (non-reactive).',
         editorType: 'expression',
       },
       statusPath: {
@@ -168,7 +149,7 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
             isolate: false,
           },
         ],
-        booleanKeys: ['disabled', 'optional'],
+        booleanKeys: ['disabled'],
         normalize(input) {
           if (!Array.isArray(input.value)) {
             return input.value;
@@ -210,7 +191,7 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
               compileSchema: input.compileSchema,
             }).value as Record<string, unknown>;
 
-            for (const booleanKey of ['disabled', 'optional']) {
+            for (const booleanKey of ['disabled']) {
               if (normalized[booleanKey] !== undefined) {
                 normalized[booleanKey] = {
                   __nopPreserveLiteral: true,
@@ -228,8 +209,6 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
       { key: 'steps', kind: 'prop' },
       { key: 'value', kind: 'prop' },
       { key: 'defaultValue', kind: 'prop' },
-      { key: 'valueOwnership', kind: 'prop' },
-      { key: 'valueStatePath', kind: 'prop' },
       { key: 'statusPath', kind: 'prop' },
       { key: 'linear', kind: 'prop', valueType: 'boolean' },
       { key: 'allowStepJump', kind: 'prop', valueType: 'boolean' },
@@ -348,6 +327,7 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'items', kind: 'prop' },
       { key: 'columns', kind: 'prop' },
+      { key: 'responsiveColumns', kind: 'prop' },
       { key: 'gap', kind: 'prop' },
       { key: 'autoFlow', kind: 'prop' },
       { key: 'alignItems', kind: 'prop' },
@@ -573,13 +553,14 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
       value: {
         shape: { kind: 'unknown' },
         displayName: 'Value',
-        description: 'Currently selected key(s).',
+        description:
+          'Initial selected key(s) — seed only. Selection is local controlled state and is NOT reactive to runtime value changes.',
         editorType: 'expression',
       },
       defaultValue: {
         shape: { kind: 'unknown' },
         displayName: 'Default Value',
-        description: 'Initial selected value.',
+        description: 'Initial selected value when value is not provided. Seed only (non-reactive).',
         editorType: 'expression',
       },
     },

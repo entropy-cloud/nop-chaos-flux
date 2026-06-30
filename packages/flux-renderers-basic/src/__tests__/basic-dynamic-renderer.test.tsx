@@ -24,9 +24,9 @@ afterEach(() => {
 });
 
 describe('basicRendererDefinitions dynamic-renderer', () => {
-  it('publishes loadAction as an event field', () => {
+  it('publishes loadAction as a raw prop (evaluated by the renderer, not a renderer event)', () => {
     const dynamicRenderer = basicRendererDefinitions.find((definition) => definition.type === 'dynamic-renderer');
-    expect(dynamicRenderer?.fields?.find((field) => field.key === 'loadAction')?.kind).toBe('event');
+    expect(dynamicRenderer?.fields?.find((field) => field.key === 'loadAction')?.kind).toBe('prop');
   });
 
   it('renders body content while loading', () => {
@@ -516,6 +516,60 @@ describe('basicRendererDefinitions dynamic-renderer autoLoad + component:refresh
     );
 
     await waitFor(() => expect(screen.getByText('Auto-loaded')).toBeTruthy());
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    cleanup();
+  });
+});
+
+describe('basicRendererDefinitions dynamic-renderer schema-fetch dedup + cache (A11)', () => {
+  it('two co-mounted dynamic-renderers with the same cacheable loadAction share one in-flight fetch', async () => {
+    let release: ((value: { ok: boolean; status: number; data: unknown }) => void) | undefined;
+    const fetcher = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    ) as RendererEnv['fetcher'];
+
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dynamic-renderer',
+              id: 'dyn-a',
+              loadAction: {
+                action: 'ajax',
+                args: { url: '/api/shared-schema' },
+                control: { cacheTTL: 5000 },
+              },
+              body: { type: 'text', text: 'Loading A' },
+            },
+            {
+              type: 'dynamic-renderer',
+              id: 'dyn-b',
+              loadAction: {
+                action: 'ajax',
+                args: { url: '/api/shared-schema' },
+                control: { cacheTTL: 5000 },
+              },
+              body: { type: 'text', text: 'Loading B' },
+            },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+
+    release?.({ ok: true, status: 200, data: { type: 'text', text: 'Shared schema' } });
+
+    await waitFor(() => expect(screen.getAllByText('Shared schema')).toHaveLength(2));
     expect(fetcher).toHaveBeenCalledTimes(1);
     cleanup();
   });

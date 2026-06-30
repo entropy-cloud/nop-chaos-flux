@@ -1,6 +1,26 @@
 import { describe, expect, it } from 'vitest';
+import type { RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
+import { getMessageFormatter, setMessageFormatter } from '@nop-chaos/flux-core';
 import { createFormulaCompiler, createFormulaRegistry } from './index.js';
 import { customEquals } from './builtins.js';
+
+const evalEnv: RendererEnv = {
+  fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),
+  notify: () => undefined,
+};
+
+const emptyScope: ScopeRef = {
+  id: 'scope',
+  path: 'scope',
+  get: () => undefined,
+  has: () => false,
+  readOwn: () => ({}),
+  readVisible: () => ({}),
+  materializeVisible: () => ({}),
+  value: {},
+  update: () => undefined,
+  merge: () => undefined,
+};
 
 describe('builtins', () => {
   function createBuiltinsSnapshot() {
@@ -155,5 +175,57 @@ describe('builtins', () => {
     >;
     expect(result.a.ok).toBe(true);
     expect('__proto__' in result.a).toBe(false);
+  });
+});
+
+// I3: `t(key, params?)` is exposed as a formula builtin so schema authors can
+// write `${t('flux.common.noData')}` or `${t('greeting', {name})}`. It resolves
+// through the shared i18n sink (getMessageFormatter), so it reflects the active
+// locale at evaluation time and never silently turns into a static literal.
+describe('builtins — t() i18n formula builtin (I3)', () => {
+  function withFormatter<T>(fn: (key: string, params?: Record<string, unknown>) => string, body: () => T): T {
+    const previous = getMessageFormatter();
+    setMessageFormatter(fn);
+    try {
+      return body();
+    } finally {
+      setMessageFormatter(previous);
+    }
+  }
+
+  it('resolves t(key) through the message formatter (expression form)', () => {
+    const compiler = createFormulaCompiler();
+    const result = withFormatter(
+      (key) => `[${key}]`,
+      () => {
+        const expr = compiler.compileExpression<string>("t('flux.common.noData')");
+        return expr.exec(emptyScope, evalEnv);
+      },
+    );
+    expect(result).toBe('[flux.common.noData]');
+  });
+
+  it('passes interpolation params through to the formatter (template form)', () => {
+    const compiler = createFormulaCompiler();
+    const result = withFormatter(
+      (key, params) => (params ? `${key}:${params.name}` : key),
+      () => {
+        const tmpl = compiler.compileTemplate('msg=${t("greeting", {name: "World"})}');
+        return tmpl.exec(emptyScope, evalEnv);
+      },
+    );
+    expect(result).toBe('msg=greeting:World');
+  });
+
+  it('falls back to the identity formatter (returns the key) when no i18n is wired', () => {
+    const compiler = createFormulaCompiler();
+    const previous = getMessageFormatter();
+    setMessageFormatter((key) => key);
+    try {
+      const expr = compiler.compileExpression<string>("t('any.missing.key')");
+      expect(expr.exec(emptyScope, evalEnv)).toBe('any.missing.key');
+    } finally {
+      setMessageFormatter(previous);
+    }
   });
 });

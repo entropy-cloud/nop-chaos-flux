@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { useIsMobile } from '../../hooks/use-mobile.js';
+import { isEditableTarget } from '../../lib/focus-target.js';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -68,6 +69,10 @@ export function SidebarProvider({
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
+        // P1-5: do not hijack Cmd/Ctrl+B while typing in an editable control.
+        if (isEditableTarget(event.target)) {
+          return;
+        }
         event.preventDefault();
         toggleSidebar();
       }

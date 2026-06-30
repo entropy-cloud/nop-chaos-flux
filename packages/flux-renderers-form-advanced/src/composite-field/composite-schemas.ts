@@ -25,6 +25,7 @@ export interface ArrayFieldSchema extends BoundFieldSchemaBase {
   addable?: boolean;
   removable?: boolean;
   sortable?: boolean;
+  removeWhen?: string;
   transformInAction?: ActionSchema | ActionSchema[];
   transformOutAction?: ActionSchema | ActionSchema[];
   validateValueAction?: ActionSchema | ActionSchema[];
@@ -97,13 +98,13 @@ export interface DetailFieldSchema extends BoundFieldSchemaBase {
 export interface ComboSchema extends BoundFieldSchemaBase {
   type: 'combo';
   items: SchemaInput;
-  multiple?: boolean;
   addable?: boolean;
   removable?: boolean;
   reorderable?: boolean;
   minItems?: number;
   maxItems?: number;
   itemKey?: string;
+  removeWhen?: string;
   onAdd?: ActionSchema | ActionSchema[];
   onRemove?: ActionSchema | ActionSchema[];
   onReorder?: ActionSchema | ActionSchema[];
@@ -147,6 +148,7 @@ export interface TransferSchema extends BoundFieldSchemaBase {
   valueKey?: string;
   labelKey?: string;
   searchable?: boolean;
+  searchOnly?: boolean;
   searchPlaceholder?: string;
   onAdd?: ActionSchema | ActionSchema[];
   onRemove?: ActionSchema | ActionSchema[];

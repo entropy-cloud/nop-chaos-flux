@@ -56,6 +56,8 @@
 
 - `title` 和 `empty` 是正式 supported slots。
 - 数据点 tooltip、legend 自定义等复杂渲染不建议首版直接开放 arbitrary schema slot。
+- **空态硬契约（DD1）**：`source`/`series` 为空（`[]`、`undefined`、`null`，或全部 series 无 data）时，渲染 `empty` slot（缺省 `t('flux.common.noData')`）——**显式空态，永不抛错**。`sanitizeSeries`/`isChartDatum` 守护渲染路径，畸形 series/data 被过滤而非报错（回归锚见 `chart-renderer.unit.test.tsx` 的 DD1 anchors）。
+- **In-place 更新契约（DD2）**：数据经 prop 流（`props.props.source`/`series`），**无 key-remount**；数据更新时 chart-canvas 宿主节点 identity 稳定、无 loading flash。recharts `ResponsiveContainer` 默认走 in-place 路径。**注意：本保证按构造成立**（数据经 prop 流、无 key-remount），**非测试验证**——chart 单测 mock 掉 recharts（无法断言内部 `ResponsiveContainer` identity）；可测部分（宿主节点稳定 + 无 flash）已锁为回归锚（`chart-renderer.unit.test.tsx` 的 DD2 anchor）。后续若 unmock recharts 可补内部 identity 真实断言（watch-only，见 Non-Blocking Follow-ups）。
 
 ## 7. 运行期状态归属
 

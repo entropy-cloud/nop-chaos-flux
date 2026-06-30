@@ -60,6 +60,23 @@ function createDisposedRequestAbortReason(): Error {
   return createAbortReasonError('Request executor was disposed', { reason: 'request-executor-disposed' });
 }
 
+function readResponseErrorMessage(responseData: unknown): string | undefined {
+  if (!responseData || typeof responseData !== 'object') {
+    return undefined;
+  }
+
+  const record = responseData as Record<string, unknown>;
+  if (typeof record.message === 'string' && record.message.length > 0) {
+    return record.message;
+  }
+
+  if (typeof record.msg === 'string' && record.msg.length > 0) {
+    return record.msg;
+  }
+
+  return undefined;
+}
+
 function createApiResponseError(
   response: ApiResponse<unknown>,
   retryMetadata: { attempts: number; failureCount: number; lastFailureReason?: unknown },
@@ -71,12 +88,7 @@ function createApiResponseError(
 } {
   const responseData = response.data;
   const message =
-    responseData &&
-    typeof responseData === 'object' &&
-    'message' in (responseData as Record<string, unknown>) &&
-    typeof (responseData as { message?: unknown }).message === 'string'
-      ? (responseData as { message: string }).message
-      : `Request failed with status ${response.status}`;
+    readResponseErrorMessage(responseData) ?? `Request failed with status ${response.status}`;
 
   return Object.assign(new Error(message, { cause: response }), retryMetadata, {
     response,
@@ -185,6 +197,35 @@ export function extractScopeData(
   return result;
 }
 
+function appendParamValues(searchParams: URLSearchParams, key: string, value: unknown): void {
+  if (value === undefined || value === null) {
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      if (item !== undefined && item !== null) {
+        searchParams.append(key, String(item));
+      }
+    }
+  } else if (typeof value === 'object') {
+    try {
+      const safeObj: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        if (v === undefined) { safeObj[k] = '[undefined]'; }
+        else if (typeof v === 'number' && Number.isNaN(v)) { safeObj[k] = '[NaN]'; }
+        else if (typeof v === 'number' && !Number.isFinite(v)) { safeObj[k] = `[${v}]`; }
+        else { safeObj[k] = v; }
+      }
+      searchParams.append(key, JSON.stringify(safeObj));
+    } catch {
+      searchParams.append(key, String(value));
+    }
+  } else {
+    searchParams.append(key, String(value));
+  }
+}
+
 export function buildUrlWithParams(
   url: string,
   params: Record<string, unknown> | undefined,
@@ -195,32 +236,7 @@ export function buildUrlWithParams(
 
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || value === null) {
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (item !== undefined && item !== null) {
-          searchParams.append(`${key}[]`, String(item));
-        }
-      }
-    } else if (typeof value === 'object') {
-      try {
-        const safeObj: Record<string, unknown> = {};
-        for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-          if (v === undefined) { safeObj[k] = '[undefined]'; }
-          else if (typeof v === 'number' && Number.isNaN(v)) { safeObj[k] = '[NaN]'; }
-          else if (typeof v === 'number' && !Number.isFinite(v)) { safeObj[k] = `[${v}]`; }
-          else { safeObj[k] = v; }
-        }
-        searchParams.append(key, JSON.stringify(safeObj));
-      } catch {
-        searchParams.append(key, String(value));
-      }
-    } else {
-      searchParams.append(key, String(value));
-    }
+    appendParamValues(searchParams, key, value);
   }
 
   const queryString = searchParams.toString();
@@ -245,10 +261,8 @@ function canonicalizeUrlWithParams(
 
   for (const [key, value] of Object.entries(params)) {
     searchParams.delete(key);
-
-    if (value !== undefined && value !== null) {
-      searchParams.append(key, String(value));
-    }
+    searchParams.delete(`${key}[]`);
+    appendParamValues(searchParams, key, value);
   }
 
   const queryString = searchParams.toString();
@@ -386,13 +400,49 @@ export async function executeApiSchema(
   const response = execution.response;
 
   if (!response.ok) {
+    let errorPayload = response.data;
+    if (resolvedApi.responseAdaptor) {
+      try {
+        errorPayload = applyResponseAdaptor(
+          expressionCompiler,
+          executableApi,
+          resolvedApi,
+          response.data,
+          scope,
+          env,
+          response.status,
+        );
+      } catch (adaptorError) {
+        // M-08: a throwing responseAdaptor on an error-shaped payload previously
+        // failed completely silently (bare catch). Surface it through structured
+        // diagnostics (monitor + console) so a broken adaptor is dev-visible,
+        // while still falling back to the raw response body so the backend
+        // message is preserved on the thrown error below. This mirrors the
+        // observability of the success path, which has no catch and propagates.
+        env.monitor?.onError?.({
+          phase: 'api',
+          error: adaptorError,
+          details: {
+            url: executableApi.url,
+            status: response.status,
+            adaptor: 'responseAdaptor',
+          },
+        });
+        console.warn(
+          `[flux-runtime] responseAdaptor threw while adapting a non-OK response from ${executableApi.url} (status ${response.status}); falling back to the raw response body.`,
+          adaptorError,
+        );
+        errorPayload = response.data;
+      }
+    }
+
     const retryMetadata = {
       attempts: execution.retry.attempts,
       failureCount: execution.retry.failureCount,
       lastFailureReason: execution.retry.lastFailureReason,
     };
 
-    throw createApiResponseError(response, retryMetadata);
+    throw createApiResponseError({ ...response, data: errorPayload }, retryMetadata);
   }
 
   const adaptedData = applyResponseAdaptor(
@@ -402,7 +452,9 @@ export async function executeApiSchema(
     response.data,
     scope,
     env,
+    response.status,
   );
+
   return {
     data: adaptedData,
     ok: response.ok,
@@ -417,7 +469,7 @@ export const executeApiObject = executeApiSchema;
 
 export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestExecutor {
   const activeControllers = new Map<string, AbortController>();
-  const activePromises = new Map<string, Promise<ApiResponse<any>>>();
+  const activePromises = new Map<string, Promise<ApiResponse<unknown>>>();
 
   function clearStaleActiveRequest(requestKey: string) {
     const controller = activeControllers.get(requestKey);

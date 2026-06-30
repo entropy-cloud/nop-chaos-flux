@@ -145,6 +145,7 @@ Exit Criteria:
 - Why Not Blocking Closure: list design §7 明确首版不预置分页/排序；infinite-scroll 集成属 roadmap W1d（移动端交互组），分页属 W2a（pagination）。首版聚焦静态/已装配 items 渲染，不影响 list 作为集合展示 renderer 的 closure 成立。
 - Successor Required: `yes`
 - Successor Path: W1d（infinite-scroll）/ W2a（pagination）。
+- **已由 successor 收口**：`docs/plans/2026-06-24-1633-2-list-scrolling-pagination-integration-plan.md`（`done`）——`list` 内建分页（local/controlled/scope 三态 + clamp + onPageChange + gotoPage 能力）与 infinite 触底加载（复用同包 `useInfiniteScroll`，sentinel + IO + onLoadMore + 末页禁用），请求下沉约束成立（list 零组件级请求字段）。
 
 ### list 虚拟滚动
 

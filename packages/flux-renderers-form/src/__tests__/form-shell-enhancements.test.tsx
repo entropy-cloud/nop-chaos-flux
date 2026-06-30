@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -94,7 +92,8 @@ describe('form shell enhancements - inline mode', () => {
 
     const body = container.querySelector('[data-slot="form-body"]') as HTMLElement;
     expect(body).toBeTruthy();
-    expect(body.className).toContain('nop-form-body--inline');
+    // C-31: dead BEM modifier `nop-form-body--inline` removed; the inline mode is now
+    // identified by the stable data-form-mode attribute instead.
     expect(body.dataset.formMode).toBe('inline');
   });
 });

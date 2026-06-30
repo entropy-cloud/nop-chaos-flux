@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import React from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';

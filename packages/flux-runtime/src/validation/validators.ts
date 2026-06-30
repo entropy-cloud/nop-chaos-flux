@@ -123,6 +123,24 @@ export const builtInValidators: SyncValidatorMap = {
   required(input) {
     return isEmptyValue(input.value) ? createBuiltInError(input) : undefined;
   },
+  requiredRange(input) {
+    const value = input.value;
+    if (typeof value !== 'string' || value === '') {
+      // Fully empty is handled by the generic `required` rule; range-aware check
+      // only applies to a delimited composite value.
+      return undefined;
+    }
+    const delimiter = input.rule.delimiter ?? ',';
+    const parts = value.split(delimiter);
+    if (parts.length < 2) {
+      return undefined;
+    }
+    const hasFilled = parts.some((part) => part.trim() !== '');
+    const hasEmpty = parts.some((part) => part.trim() === '');
+    // Partial range: one bound filled, the other empty → required not satisfied.
+    // Fully filled (no empty) or fully empty (no filled) are left to other rules.
+    return hasFilled && hasEmpty ? createBuiltInError(input) : undefined;
+  },
   minLength(input) {
     return typeof input.value === 'string' && input.value.length < input.rule.value
       ? createBuiltInError(input)

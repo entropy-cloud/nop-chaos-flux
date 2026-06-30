@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -47,6 +45,21 @@ describe('CardRenderer', () => {
     const img = rootOf(container).querySelector('[data-slot="card-image"]') as HTMLImageElement;
     expect(img).toBeTruthy();
     expect(img.getAttribute('src')).toBe('https://example.com/x.png');
+  });
+
+  it('honors author imageClassName on the media instead of overriding it with hardcoded geometry (L14)', () => {
+    const props = createMockRendererProps<CardSchema>({
+      schema: { type: 'card' },
+      props: { title: 'T', image: 'https://example.com/x.png', imageClassName: 'w-60 h-48 object-cover' },
+    });
+    const { container } = render(<CardRenderer {...props} />);
+    const img = rootOf(container).querySelector('[data-slot="card-image"]') as HTMLImageElement;
+    expect(img).toBeTruthy();
+    // author classes are present (their intent controls sizing), and the
+    // renderer keeps a sensible default base that the author can extend/override
+    expect(img.className).toContain('w-60');
+    expect(img.className).toContain('h-48');
+    expect(img.className).toContain('object-cover');
   });
 
   it('maps variant sm to ui Card size sm', () => {

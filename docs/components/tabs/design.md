@@ -47,6 +47,15 @@
 - 仅 `unmountOnExit: true`：初始即 mounted；切走后卸载。
 - 两者都配：首次激活前不在 DOM；激活后切走时按 `unmountOnExit` 卸载（每次进出均重新挂载/卸载）。
 
+### L9 regression 契约声明（owner lifecycle）
+
+`mountOnEnter` / `unmountOnExit` 的 inner-owner lifecycle 由 React unmount/remount 承载，并锁定为回归契约（锚见 `tabs-owner-lifecycle.test.tsx`）：
+
+- `mountOnEnter: true`：inactive tab body 首次激活前**不在 DOM**；激活时挂载并渲染（无空白面板）。
+- `unmountOnExit: true`：切离时 inner owner（form/source 等）**卸载**；再次切入时**干净重初始化**（草稿重置、subscriber 无累积/无重复挂载）。
+
+这与缺省 `keepMounted=true`（保留 form/detail 草稿，锚见 `basic-tabs-behavior.test.tsx`）是正交的卸载轴。
+
 ## 3. 与 AMIS 的能力对照
 
 建议把 AMIS `tabs` 的能力拆成三层：
@@ -251,9 +260,11 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 默认模式。
 
-- 初始化时从 `defaultValue` 或首个可见 tab 推导
+- 初始化时从 `defaultValue` 推导；若未给 `defaultValue`，则 `value` 也充当初值（`useOwnedAxisValue` 实现为 `defaultValue ?? value ?? fallbackValue`，`interaction-owner.ts`），最终回退到首个可见 tab
 - 用户点击后由组件内部维护
 - 同步触发 `onChange`
+
+> 注意：`value` 在 `local` 下仅作为初值种子，点击后即由本地 state 接管；「外部 `value` 是唯一真值」的无歧义受控语义仅在 `valueOwnership: 'controlled'` 时成立（见 §8.2）。
 
 ### 8.2 `controlled`
 
@@ -281,16 +292,23 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 ## 10. 可见性与候选激活项修正
 
-当当前激活 tab 不可见、被删除、或数据源变化导致不存在时，需要自动修正激活项。
+当当前激活 tab 不可见、被删除、或数据源变化导致不存在时，自动修正激活项。
 
-建议规则：
+**最终设计（已落地，L8 Fix）**——规则：
 
 1. 优先保留当前 key，如果对应 tab 仍存在且可见
-2. 否则向右查找最近可见项
+2. 否则向右查找最近可见项（被移除项原位置处现存的项）
 3. 再向左查找最近可见项
 4. 仍不存在则清空激活态，并渲染 empty shell 或不渲染内容区
 
-这里的“可见”应由 item 级 `visible`/`hidden` 之类的规范 meta 决定，而不是 DOM 检测。
+实现要点（`tabs.tsx` 的 candidate-fix effect）：
+
+- 触发条件为「`ownedAxis.value` 不在 `items` 中」。修正后即匹配，不再触发（幂等，无渲染循环）。
+- 仅 `local` / `scope` ownership 主动写回修正值（经 `ownedAxis.setValue`）；`controlled` ownership 保持受控契约，**不自动改写** bound expr——由外部驱动。
+- 本规则覆盖「**removed** item（active key 从 items 数组消失）」。item 级 `visible`/`hidden` meta 是相邻但独立的可见性维度（属 Non-Blocking Follow-ups）。
+- 回归锚见 `tabs-candidate-fix.test.tsx`（keep → nearest-right → nearest-left → empty + controlled 不改写）。
+
+这里的"可见"应由 item 级 `visible`/`hidden` 之类的规范 meta 决定，而不是 DOM 检测。
 
 ## 11. `items` 的动态输入
 

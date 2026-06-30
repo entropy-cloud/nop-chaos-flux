@@ -252,12 +252,27 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
         : groups)
     : [];
 
+  const noMatchText = props.props.noMatchText ? String(props.props.noMatchText) : undefined;
+  const valueArray = Array.isArray(value) ? (value as unknown[]) : [];
+  const hasEchoValue = value !== undefined && value !== null && value !== '';
   const comboboxValue = multiple
-    ? allOptions.filter((option) => {
-        const arr = Array.isArray(value) ? value : [];
-        return arr.some((candidate) => Object.is(candidate, option.value));
-      })
-    : (allOptions.find((option) => Object.is(option.value, value)) ?? null);
+    ? [
+        ...allOptions.filter((option) =>
+          valueArray.some((candidate) => Object.is(candidate, option.value)),
+        ),
+        ...valueArray
+          .filter(
+            (candidate) => !allOptions.some((option) => Object.is(option.value, candidate)),
+          )
+          .map((primitive) => ({
+            label: String(primitive),
+            value: primitive as ChoiceOption['value'],
+          })),
+      ]
+    : (allOptions.find((option) => Object.is(option.value, value)) ??
+        (hasEchoValue
+          ? { label: noMatchText ?? String(value), value: value as ChoiceOption['value'] }
+          : null));
 
   const handleValueChange = (next: unknown) => {
     if (!interactive) {
@@ -272,17 +287,16 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   };
 
   const mobileTriggerText = multiple
-    ? (allOptions
-        .filter((option) => {
-          const arr = Array.isArray(value) ? value : [];
-          return arr.some((candidate) => Object.is(candidate, option.value));
-        })
-        .map((option) => option.label)
-        .join(', '))
-    : (allOptions.find((option) => Object.is(option.value, value))?.label ?? '');
-  const mobileHasSelection = multiple
-    ? Array.isArray(value) && value.length > 0
-    : allOptions.some((option) => Object.is(option.value, value));
+    ? valueArray
+        .map(
+          (candidate) =>
+            allOptions.find((option) => Object.is(option.value, candidate))?.label ??
+            String(candidate),
+        )
+        .join(', ')
+    : (allOptions.find((option) => Object.is(option.value, value))?.label ??
+        (hasEchoValue ? noMatchText ?? String(value) : ''));
+  const mobileHasSelection = multiple ? valueArray.length > 0 : hasEchoValue;
 
   const toggleMobileOption = (option: ChoiceOption) => {
     if (!interactive || option.disabled) {

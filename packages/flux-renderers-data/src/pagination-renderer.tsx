@@ -132,7 +132,11 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
     ),
   );
   const [pageSize, setPageSize] = useState<number>(initialPageSize);
-  const [total] = useState<number>(initialTotal);
+  // H2: `total` is a server/schema-derived value (not user-mutated interaction
+  // state like currentPage/pageSize), so it must follow `schemaProps.total` at
+  // render time. The previous `useState(initialTotal)` captured the first value
+  // forever, so the first server refresh left totalPages / canGoNext stale.
+  const total = initialTotal;
 
   const currentTotalPages = computeTotalPages(total, pageSize);
   const canGoPrev = currentPage > 1;

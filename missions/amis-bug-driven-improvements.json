@@ -1,0 +1,21 @@
+{
+  "name": "amis-bug-driven-improvements",
+  "description": "Close Flux design/test gaps surfaced by mining amis historical bug-fix history (1785 issues → 214 signals in docs/components/amis-bug-driven-improvements/). Each signal is a Flux-first generic correctness property, NOT amis-parity: design gaps (DESIGN-GAP, owner doc silent → add decision), test gaps (TEST-GAP, design claims it → add regression test), locks (LOCK, design correct → regression anchor), and explicitly-rejected amis designs (NOT-ADOPTED). Driven by amis-bug-driven-improvement-roadmap.md. P0+P1 signals (109) span 6 themed waves B1–B6 (validation dependency closure, async request/scope, table/CRUD row-identity, form-field controlled-value, surfaces/display/i18n, action-graph/button/cards/condition-builder/styling); P2/P3 (103) in B7 backlog. Requests sink to data-source; unified `when`; shadcn/ui naming; no amis valueField/joinValues/delimiter, no level/actionType discriminator, no themeCss/mobileUI, no frontend export, no echarts. amis is reference only, NOT the yardstick. Complements (does not duplicate) existing-components-improvement-roadmap (E0/E1/E2/X all done) — this mission only adds tests/design boundaries those waves left untested.",
+  "roadmapPath": "docs/components/amis-bug-driven-improvement-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": "packages",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "feat(<scope>): <description>"
+}

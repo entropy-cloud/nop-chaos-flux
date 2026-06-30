@@ -1,4 +1,3 @@
-// @vitest-environment happy-dom
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
@@ -75,15 +74,6 @@ vi.mock('@nop-chaos/flux-react', () => ({
     }),
   }),
   useRenderScope: () => ({}),
-}));
-
-vi.mock('@nop-chaos/flux-react/unstable', () => ({
-  ClassAliasesContext: {
-    Provider: ({ children }: { children: React.ReactNode }) => children,
-  },
-  RenderNodes: ({ input }: { input: any }) => {
-    return input ? <div data-testid="rendered-body">{String(input?.type ?? 'unknown')}</div> : null;
-  },
 }));
 
 vi.mock('./designer-context', async () => {

@@ -49,6 +49,8 @@
     "designer-field",
     "designer-canvas",
     "designer-palette",
+    "designer-node-card",
+    "designer-edge-row",
     "report-inspector-shell",
     "report-inspector",
     "report-field-panel",
@@ -107,5 +109,5 @@
     "video",
     "wizard"
   ],
-  "declaredButUnregistered": ["designer-node-card", "designer-edge-row"]
+  "declaredButUnregistered": []
 }

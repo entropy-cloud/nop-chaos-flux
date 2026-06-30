@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 // OA-18 regression suite — pull-refresh rebound GEOMETRY.
 //
 // The package's whole reason for existing is native-feel rebound geometry. For

@@ -59,7 +59,8 @@ export interface RendererEnv extends ExpressionExecutionEnv {
   fetcher: ApiFetcher;
   notify: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;
   navigate?: (to: string | number, options?: { replace?: boolean }) => void;
-  confirm?: (message: string, options?: unknown) => Promise<boolean>;
+  confirm?: (message: string, title?: string) => Promise<boolean>;
+  alert?: (message: string, title?: string) => void;
   functions?: Record<string, (...args: any[]) => any>;
   filters?: Record<string, (input: any, ...args: any[]) => any>;
   importLoader?: ImportedLibraryLoader;

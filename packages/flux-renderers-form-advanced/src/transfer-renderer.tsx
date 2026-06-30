@@ -13,7 +13,7 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, cn, Input, Empty } from '@nop-chaos/ui';
+import { Button, Checkbox, Label, cn, Input, Empty } from '@nop-chaos/ui';
 import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from 'lucide-react';
 import type { TransferSchema } from './composite-field/composite-schemas.js';
 import { normalizeOptions, type NormalizedOption } from './option-normalize.js';
@@ -311,10 +311,9 @@ interface TransferPaneProps {
 }
 
 function TransferPane(props: TransferPaneProps) {
-  const paneMarker = props.kind === 'candidate' ? 'nop-transfer__candidate' : 'nop-transfer__selected';
   return (
     <div
-      className={cn(paneMarker, 'flex flex-col rounded-lg border border-border bg-card')}
+      className={cn('flex flex-col rounded-lg border border-border bg-card')}
       data-slot={`transfer-pane-${props.kind}`}
     >
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
@@ -344,22 +343,21 @@ function TransferPane(props: TransferPaneProps) {
               const isChecked = props.checked.has(option.value);
               return (
                 <li key={String(option.value)}>
-                  <label
+                  <Label
                     className={cn(
-                      'flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent',
+                      'flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm font-normal hover:bg-accent',
                       props.interactionDisabled && 'cursor-not-allowed opacity-60',
                     )}
                   >
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={isChecked}
                       disabled={props.interactionDisabled || option.disabled}
-                      onChange={() => props.onToggle(option.value)}
+                      onCheckedChange={() => props.onToggle(option.value)}
                       data-slot={`transfer-option-${props.kind}`}
                       aria-label={option.label}
                     />
                     <span className="truncate">{option.label}</span>
-                  </label>
+                  </Label>
                 </li>
               );
             })}
@@ -382,8 +380,9 @@ export const transferRendererDefinition: RendererDefinition = {
     { key: 'multiple', kind: 'prop', valueType: 'boolean' },
     { key: 'valueKey', kind: 'prop' },
     { key: 'labelKey', kind: 'prop' },
-    { key: 'searchable', kind: 'prop', valueType: 'boolean' },
-    { key: 'searchPlaceholder', kind: 'prop' },
+      { key: 'searchable', kind: 'prop', valueType: 'boolean' },
+      { key: 'searchOnly', kind: 'prop', valueType: 'boolean' },
+      { key: 'searchPlaceholder', kind: 'prop' },
     { key: 'readOnly', kind: 'prop' },
     { key: 'onAdd', kind: 'event' },
     { key: 'onRemove', kind: 'event' },

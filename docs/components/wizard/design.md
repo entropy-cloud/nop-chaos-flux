@@ -30,8 +30,6 @@ interface WizardSchema extends BaseSchema {
   steps: WizardStepSchema[];
   value?: string | number;
   defaultValue?: string | number;
-  valueOwnership?: 'local' | 'controlled' | 'scope';
-  valueStatePath?: string;
   statusPath?: string;
   linear?: boolean;
   allowStepJump?: boolean;
@@ -51,7 +49,6 @@ interface WizardStepSchema extends BaseSchemaWithoutType {
   actions?: SchemaInput;
   visible?: SchemaValue;
   disabled?: SchemaValue;
-  optional?: SchemaValue;
   beforeEnter?: ActionSchema | ActionSchema[];
   beforeLeave?: ActionSchema | ActionSchema[];
 }
@@ -80,8 +77,8 @@ interface WizardStepSchema extends BaseSchemaWithoutType {
 
 因此：
 
-- `valueStatePath` 负责可写的当前步骤持久化
-- 外部若需要只读摘要，可通过 `statusPath`
+- step 切换交互态是 **local controlled**（renderer 自维护）；`value`/`defaultValue` 仅作初始种子读一次，运行时不响应 `value` 变更（见 §10.1）。
+- 外部若需要只读摘要，可通过 `statusPath`（真实实现、保留）。
 
 ### 6.2 Step Commit
 
@@ -147,15 +144,21 @@ interface WizardStatusSummary {
 - 与 `tabs` 的边界：`wizard` 有 step commit 语义，不能只当作换皮 tabs
 - 与 `form` 的边界：如果某一步内部有 form，该 form 仍然拥有自己的 submit/validate 状态；wizard 只拥有 step-level commit 语义
 
-## 10. 可选步骤
+## 10. 可选步骤（optional）
 
-step 是否 optional 是 step 级语义，不是整体 wizard 的隐式跳步协议。
+`WizardStepSchema` 不再声明 `optional` 字段。早期 schema 曾为 step 声明 `optional`，但渲染器从未实现「可跳过」语义（`computeCanGoTo` 不放行 optional 步骤），是暗示了未实现能力的死字段，故已移除（见 `docs/plans/2026-06-25-0510-1-wizard-boolean-literal-normalization-correctness-plan.md` Phase 1 Decision）。
 
-推荐：
+- `step.disabled`（经编译器 `__nopPreserveLiteral` 包裹后由 `unwrapBooleanLiteral` 解包）才是真正的步骤门禁：disabled step 不可进入、不可点、不计入 `canGoNext`。
+- 如果未来需要「条件性跳过 step」，优先通过 step `visible` 或更明确的 step guard 收口，不要把跳步逻辑塞进 page 或 host 私有脚本。
+- 若要重新引入显式「可跳过」语义，必须同步实现 `computeCanGoTo` 放行逻辑并补 focused 测试，再恢复字段声明——不得再次保留暗示了未实现能力的死字段。
 
-- `optional` 仅表达该 step 可以跳过
-- 真正是否允许进入下一步，仍由 step commit / validation 语义决定
-- 如果需要条件性跳过 step，优先通过 step `visible` 或更明确的 step guard 收口，不要把跳步逻辑塞进 page 或 host 私有脚本
+## 10.1 步骤切换 value ownership 字段（valueOwnership / valueStatePath）
+
+`WizardSchema` 不再声明 `valueOwnership` / `valueStatePath`。早期 schema 曾声明二者（仿 steps/collapse 的 local/controlled/scope 三态分层），但 wizard renderer 从未读取它们——step 切换是 **local controlled interaction state**，`value`/`defaultValue` 仅作受控**种子**读一次（运行时改 `value` 不移动步骤），外部只读摘要经 `statusPath` 发布。二者属于「发布了 renderer 本体从不接线的契约」，已移除（见 `docs/plans/2026-06-25-0510-2-new-package-advertised-contract-and-lifecycle-honesty-plan.md` WS-A，per-component 裁定 (B) 移除并文档化为 local-only）。
+
+- canonical 三态分层（`valueOwnership`/`valueStatePath` 真正实现）只保留在 steps/collapse duo；wizard 与之边界不同：wizard 是组合 owner（interaction + lifecycle 分层），步骤切换交互态本身就是 local controlled。
+- 若未来需要 wizard 的当前步骤受外部受控/scope 驱动，应重新引入 ownership 契约**并同时实现** controlled/scope 的读/写管线（对齐 steps/collapse 范式），再恢复字段声明——不得再次保留死字段。
+- `statusPath`（只读摘要发布）是真实实现的能力，保留不变。
 
 ## 11. 样式与 DOM marker 约定
 

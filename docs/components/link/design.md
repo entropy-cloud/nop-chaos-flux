@@ -7,12 +7,12 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前尚未实现，但属于高优先级通用 renderer。
-- 首版应保留 `href`、`target`、`label` 和 `onClick`，不再把所有动作都映射成按钮。
+- 已 shipped：注册于 `flux-renderers-content`（`content-renderer-definitions.ts`）。
+- 保留 `label`、`href`、`target`、`rel` 与 `onClick`，负责语义化链接而非按钮式主操作。
 
 ## 3. Flux 中的 renderer/type 定义
 
-- 目标 `type: 'link'`
+- 实际 `type: 'link'`
 - 实际归属 `@nop-chaos/flux-renderers-content`
 
 ## 4. schema 设计

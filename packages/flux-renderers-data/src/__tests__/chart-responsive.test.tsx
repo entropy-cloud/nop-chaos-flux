@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChartRenderer } from '../chart-renderer.js';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
@@ -243,5 +243,49 @@ describe('ChartRenderer — responsive (M4c)', () => {
     );
 
     expect(chartRoot().style.height).toBe('50vh');
+  });
+
+  it('async data: attaches the observer after the canvas mounts late and applies responsive width (P0-3)', async () => {
+    // Narrow container: once the canvas mounts, the chart must pick up the 320px width
+    // and clamp height / mark itself responsive — even though the first render was empty.
+    roState.width = 320;
+
+    let currentSource: Array<Record<string, unknown>> = [];
+
+    function Harness() {
+      const [source, setSource] = React.useState(currentSource);
+      React.useEffect(() => {
+        // Simulate async data arriving after first paint (canvas mounts late).
+        const timer = window.setTimeout(() => {
+          currentSource = [{ month: 'Jan', value: 12 }];
+          setSource(currentSource);
+        }, 0);
+        return () => window.clearTimeout(timer);
+      }, []);
+      return (
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              height: 400,
+              chartType: 'bar',
+              source,
+              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+            },
+          })}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    // First paint is empty (no canvas, no responsive support yet).
+    expect(document.querySelector('[data-slot="chart-canvas"]')).toBeNull();
+
+    // After async data arrives, the canvas mounts, the observer attaches, and the
+    // responsive width (320 < 768) takes effect: height clamps to 300 and the narrow marker appears.
+    await waitFor(() => {
+      expect(chartRoot().style.height).toBe('300px');
+    });
+    expect(chartRoot().getAttribute('data-responsive')).toBe('narrow');
   });
 });

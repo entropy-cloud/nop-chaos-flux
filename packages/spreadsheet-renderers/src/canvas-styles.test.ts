@@ -1,7 +1,4 @@
-// @vitest-environment happy-dom
-
 import { readFileSync } from 'node:fs';
-// @ts-expect-error test-only node builtin import
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 

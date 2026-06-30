@@ -6,7 +6,7 @@ import type {
   DynamicRendererSchema,
   RendererComponentProps,
 } from '@nop-chaos/flux-core';
-import { useCurrentComponentRegistry, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { cn, Spinner } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { asReactNode } from './utils.js';
@@ -67,21 +67,26 @@ function createDynamicRendererState(
 export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSchema>) {
   'use no memo';
 
-  const scope = useRenderScope();
   const componentRegistry = useCurrentComponentRegistry();
   const autoLoad = props.props.autoLoad !== false;
-  const loadActionKey = useScopeSelector(
-    () =>
-      getLoadActionKey(
-        props.helpers.evaluate(props.schema.loadAction, scope) as
-          | DynamicRendererSchema['loadAction']
-          | undefined,
-      ),
-    Object.is,
-  );
-  const loadAction = props.helpers.evaluate(props.schema.loadAction, scope) as
-    | DynamicRendererSchema['loadAction']
-    | undefined;
+  // C-02: `loadAction` is declared `kind: 'prop'`, so the compiler pre-compiles its
+  // `${}` templates into the node's propsProgram exactly once and the prop channel
+  // reactively resolves them against the current scope. Consuming the resolved
+  // value from `props.props.loadAction` replaces the former raw-schema re-evaluation
+  // path (helpers.evaluate against the schema-defined loadAction), which re-compiled
+  // the action expressions on every load / scope change and bypassed the compile
+  // pipeline. Reload reactivity is preserved because the prop channel re-resolves
+  // whenever the scope data feeding the action changes.
+  const loadAction = props.props.loadAction as DynamicRendererSchema['loadAction'] | undefined;
+  const loadActionKey = getLoadActionKey(loadAction);
+  const loadActionRef = useRef(loadAction);
+  // Keep the ref synced in an effect (not during render) so the load pipeline's
+  // `run()` and the refresh capability always dispatch the latest resolved action
+  // without making the object reference a dependency of the load effect (which
+  // would spuriously reload on every prop re-resolution).
+  useEffect(() => {
+    loadActionRef.current = loadAction;
+  }, [loadAction]);
   const [state, setState] = useState<DynamicRendererState>(
     () => createDynamicRendererState(loadAction, autoLoad),
   );
@@ -101,14 +106,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     const run = async (): Promise<ComponentCapabilityResult> => {
       loadSchemaRef.current?.abort();
 
-      let evaluatedLoadAction: DynamicRendererSchema['loadAction'] | undefined;
-      try {
-        evaluatedLoadAction = props.helpers.evaluate(props.schema.loadAction, scope) as
-          | DynamicRendererSchema['loadAction']
-          | undefined;
-      } catch (err) {
-        return { ok: false, error: err };
-      }
+      const evaluatedLoadAction = loadActionRef.current;
 
       if (!evaluatedLoadAction) {
         return {
@@ -118,15 +116,23 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
       }
 
       const key = getLoadActionKey(evaluatedLoadAction);
-      controller = new AbortController();
+      // `run()` is reachable more than once within a single effect lifecycle
+      // (initial autoload + the exposed `refresh` capability). Capture the
+      // controller per invocation and guard on it after each `await`: a later
+      // run reassigns the shared `controller`, so reading it post-await would
+      // test the wrong controller and let an aborted run's stale result / error
+      // win. `controller` still tracks the latest invocation for the abort and
+      // cleanup paths.
+      const myController = new AbortController();
+      controller = myController;
       setState({ loadActionKey: key, loading: true, error: undefined, schema: null });
 
       try {
         const result = await props.helpers.dispatch(evaluatedLoadAction as LoadAction, {
-          signal: controller.signal,
+          signal: myController.signal,
         });
 
-        if (controller.signal.aborted) {
+        if (myController.signal.aborted) {
           return { ok: false, cancelled: true };
         }
 
@@ -155,7 +161,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
         setState({ loadActionKey: key, loading: false, error: undefined, schema: nextSchema });
         return { ok: true };
       } catch (err) {
-        if (controller.signal.aborted) {
+        if (myController.signal.aborted) {
           return { ok: false, cancelled: true };
         }
         setState({ loadActionKey: key, loading: false, error: err, schema: null });
@@ -177,7 +183,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     return () => {
       controller?.abort();
     };
-  }, [loadActionKey, autoLoad, props.helpers, props.schema.loadAction, scope]);
+  }, [loadActionKey, autoLoad, props.helpers]);
 
   useEffect(() => {
     if (!componentRegistry) {
@@ -251,7 +257,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
   if (visibleState.loading) {
     return (
       <div
-        className={cn('nop-dynamic-renderer flex flex-col gap-3', props.meta.className)}
+        className={cn('nop-dynamic-renderer', props.meta.className)}
         data-loading=""
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}

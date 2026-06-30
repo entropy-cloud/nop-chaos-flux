@@ -8,13 +8,12 @@ import {
   renderStructuralLoop,
   resolveLoopBindings,
 } from '../structural-loop.js';
-import { classNames, resolveDirection } from '../utils.js';
+import { resolveDirection } from '../utils.js';
 import { resolveGap } from '@nop-chaos/flux-react';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 describe('basic renderer coverage gaps', () => {
   it('covers layout utility helpers across token, numeric, and css gap inputs', () => {
-    expect(classNames('alpha', undefined, false, 'beta')).toBe('alpha beta');
     expect(resolveDirection('column')).toBe('flex-col');
     expect(resolveDirection('row')).toBe('flex-row');
     expect(resolveDirection()).toBeUndefined();

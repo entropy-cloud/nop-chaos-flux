@@ -20,6 +20,13 @@
 
 - 建议正式字段为 `name`、`label`、`valueFormat`、`displayFormat`、`minDate`、`maxDate`、`utc`、`clearable`、`required`。
 
+### 4.1 format / utc / 边界语义契约（D1 / D2 / D9 / D12）
+
+- **valueFormat vs displayFormat 分离（D1）**：commit 路径用 `valueFormat`（`formatDate(toStorageDate(next, utc), valueFormat, options)`），display 路径用 `displayFormat`（`formatDate(selected, displayFormat)`，**无** utc option），`selected` 以 `valueFormat` 解析。两路完全解耦——可 `valueFormat:"YYYYMMDD"` + `displayFormat:"DD/MM/YYYY"` 同时成立。token grammar 仅 `YYYY/YY/MM/DD/HH/mm/ss`（unix `"X"` 等 token 不支持，归 candidate future i18n 扩展）。
+- **utc 仅影响 commit（D2）**：commit 经 UTC bridge（`toStorageDate(next, utc)` + `{utc}` option）；display 故意省略 utc option → 本地分量；picker 经 `toCalendarDate` 操作本地 wall-clock。即 `utc:true` 改变存储值（UTC 化），但 display/picker 始终留本地，**不**发生 day-shift。
+- **min/max 跨所有 entry path（D9）**：`minDate`/`maxDate` 约束必须覆盖 calendar pick **与** time-typing 两条路径。calendar pick 经 disabled matchers（`buildDisabledMatchers`）。input-datetime 的 time sub-field typing（`handleTimeChange`）在 commit 前用 `isWithinRange(base, minDate, maxDate)` 校验最终 datetime，越界则 clamp 到 `[minDate, maxDate]`——与 calendar 路径同语义，typing 时间不得绕过 min/max。（input-time 用 `minTime`/`maxTime` 独立 clamp，不在本契约。）
+- **time sub-field 无 doubling（D12）**：`handleTimeChange` 读整个 `<input type="number">` 值并 clamp，input controlled `value={String(hour)}` 派生自 committed Date——逐位输入 `1`→`4` 得 `14`，非 `1`→`11` 拼接。
+
 ## 5. 字段分类
 
 - `label`: `value-or-region`

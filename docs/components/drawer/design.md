@@ -102,6 +102,7 @@ Current live implementation note:
 ## 10. 样式与 DOM marker 约定
 
 - 根节点保留 `nop-drawer` marker；host 在 DrawerContent 上额外发布 `data-slot="drawer-surface"` 以及 `data-close-on-outside` / `data-close-on-esc` 状态 marker。
+- **Inner overlay 不污染 host 几何（L6）**：DrawerContent 的 inline style 只承载尺寸（`buildSurfaceInlineStyle` 仅输出 `width`/`height`，`dialog-host.tsx`），**永不写入 `position`/`top`/`left`/`zIndex` 等定位属性**。Drawer 内的 Base UI Popover/Select 等 inner overlay 独立 portal 到 document root，自带各自定位/层级；它们不会把几何回写到 DrawerContent。该不变量按构造满足（回归锚见 `dialog-host-responsive.test.tsx` 的 L6 anchor）。
 - `size` 映射：Flux 6 档映射到 drawer 几何（left/right 影响 width，top/bottom 影响 height）；`full` 走 inline `width: 100%; height: 100%`。
 - `width`/`height` 显式 override：number→px，string 透传 CSS length；与 `size` 并存时显式优先。
 - `bodyClassName`/`headerClassName`/`footerClassName` 经 `cn()` 合并到 `DrawerBody`/`DrawerHeader`/`DrawerFooter`，不污染 `nop-drawer` 根 marker。

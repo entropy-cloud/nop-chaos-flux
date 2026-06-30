@@ -106,7 +106,7 @@ export function processTableData(
   if (sortEntries.length > 0) {
     data.sort((a, b) => {
       for (const entry of sortEntries) {
-        const comparison = compareValues(a.record[entry.column], b.record[entry.column]);
+        const comparison = compareValues(getIn(a.record, entry.column), getIn(b.record, entry.column));
         if (comparison !== 0) {
           return entry.direction === 'asc' ? comparison : -comparison;
         }
@@ -117,13 +117,13 @@ export function processTableData(
 
   Object.entries(filterState).forEach(([columnName, values]) => {
     if (values.values.size > 0) {
-      data = data.filter((row) => values.values.has(String(row.record[columnName])));
+      data = data.filter((row) => values.values.has(String(getIn(row.record, columnName) ?? '')));
     }
 
     if (values.keyword && values.keyword.trim().length > 0) {
       const needle = values.keyword.trim().toLowerCase();
       data = data.filter((row) =>
-        String(row.record[columnName] ?? '')
+        String(getIn(row.record, columnName) ?? '')
           .toLowerCase()
           .includes(needle),
       );

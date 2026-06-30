@@ -36,6 +36,15 @@
 
 - 范围值与校验状态归最近表单或 owner scope。
 - 临时起止选择态属于字段内部交互状态。
+- **immediate-commit 契约（D7）**：选择/时间变更**立即** commit 并写回字段值（`commitRange` 每次交互都 `handlers.onChange`）。无 pending/preview state、无 confirm 按钮——显示值恒等于已提交值，因此「previewed-but-uncommitted 泄漏」不可发生。amis 式 confirm-step 在 Flux 是**设计差异（刻意不采纳）**，而非缺陷。
+
+## 7.1 边界与校验契约（D4 / D6）
+
+- **bound 独立性（D4）**：设一端时间分量**不**变异另一端。`setTimeOn('start', …)` 调 `commitRange(base, endDate)`（end 透传不变），`setTimeOn('end', …)` 调 `commitRange(startDate, base)`（start 不变）。`normalizeRange` 仅在两端均存在且 start>end 时 swap，**不**清零时间分量。datetime-range 两端的时间分量彼此独立存活。
+- **required 两端校验（D6）**：范围值是单 delimited 字符串（`joinDateRange`，默认 `,`）。当 `required: true` 时，**两端均须非空**——仅设一端（值形如 `'2024-06-01,'`）视为未满足 required。
+  - 裁定（option-a，validator 注册）：date-range renderer 经 `validation.collectRules` 在 `required: true` 时贡献 `{ kind: 'requiredRange', delimiter }` 规则。该规则**仅**在「部分填充」（一端非空、另一端空）时触发错误；全空由通用 `required` 规则处理，全填不触发。故任一状态至多一条 required 类错误。
+  - 不采用 option-b（归一化使单端触发），因其会在非 required range 丢掉合法的半选值（regression 风险）。
+- **start≤end 保证（D5）**：写时 `commitRange` 调 `normalizeRange`，两端均存在且 start>end 时 swap；读时亦 swap（`date-range-renderer.tsx:95-97`）。故存储值恒满足 start≤end。
 
 ## 8. 事件、动作与组件句柄能力
 

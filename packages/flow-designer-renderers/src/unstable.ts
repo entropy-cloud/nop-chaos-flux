@@ -8,6 +8,8 @@ export { DesignerPaletteContent } from './designer-palette.js';
 export { DesignerCanvasContent } from './designer-canvas.js';
 export { DefaultInspector } from './designer-inspector.js';
 export { DesignerFieldRenderer } from './designer-field.js';
+export { DesignerNodeCardRenderer } from './designer-node-card.js';
+export { DesignerEdgeRowRenderer } from './designer-edge-row.js';
 export {
   DesignerXyflowCanvasBridge,
   renderDesignerCanvasBridge,

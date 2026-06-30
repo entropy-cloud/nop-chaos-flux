@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
@@ -10,7 +10,7 @@ import {
   useSchemaProps,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Separator, cn, useIsMobile } from '@nop-chaos/ui';
+import { Button, PaginationNext, PaginationPrevious, Separator, cn, useIsMobile } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
 import type { TableSchema } from './schemas.js';
 import { normalizeCrudSchema } from './crud-schema.js';
@@ -47,12 +47,62 @@ function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
 
+/**
+ * AUDIT-03: the single, documented cast seam for CRUD→Table renderer delegation.
+ *
+ * The CRUD composes a `TableRenderer` from a CRUD-derived `tableSchema` plus the
+ * CRUD's own `regions` / `events` / `helpers` / `node` / `templateNode`. These are
+ * structurally compatible — the table only reads the region keys, event names, and
+ * helpers it declares — but they are typed under different schema generics
+ * (`CrudSchema` vs `TableSchema`), so a cast is unavoidable. Centralizing it here
+ * keeps the unsafe surface to one audited location instead of scattered
+ * `as unknown as` at each field. Only the genuinely cross-generic fields are cast;
+ * `props`/`meta`/`helpers`/`schema` are assigned without any cast.
+ */
+function delegateTableRendererProps(
+  source: RendererComponentProps<CrudSchema>,
+  tableSchema: TableSchema,
+  tableResolvedProps: RendererComponentProps<TableSchema>['props'],
+  crudScope: ReturnType<typeof createReadonlyScopeBinding>,
+): RendererComponentProps<TableSchema> {
+  return {
+    id: `${source.id}-table`,
+    path: `${source.path}.table`,
+    schema: tableSchema,
+    // `templateNode` / `node` carry the CrudSchema generic; the table only consumes
+    // their structural shape (instance path / scope), so they cross the generic
+    // boundary here — the single audited `as unknown as` seam for this delegation.
+    templateNode:
+      source.templateNode as unknown as RendererComponentProps<TableSchema>['templateNode'],
+    node: {
+      ...source.node,
+      scope: crudScope,
+    } as unknown as RendererComponentProps<TableSchema>['node'],
+    props: tableResolvedProps,
+    meta: {
+      ...source.meta,
+      cid: undefined,
+      className: undefined,
+      testid: undefined,
+    },
+    regions: source.regions as RendererComponentProps<TableSchema>['regions'],
+    events: source.events as RendererComponentProps<TableSchema>['events'],
+    helpers: source.helpers,
+  };
+}
+
 export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const defaultEmptyLabel = t('flux.common.noData');
   const onRefresh = props.events.onRefresh;
   const nodeScope = props.node.scope;
   const schemaProps = useSchemaProps(props);
-  const normalizedSchema = normalizeCrudSchema(schemaProps as CrudSchema);
+  // Memoize the normalized schema on the resolved props so its nested fields
+  // (defaultParams / queryForm) stay referentially stable across renders, which
+  // in turn lets `defaultQuery` memoize cleanly (H18).
+  const normalizedSchema = useMemo(
+    () => normalizeCrudSchema(schemaProps as CrudSchema),
+    [schemaProps],
+  );
   const scope = useRenderScope();
   const componentRegistry = useCurrentComponentRegistry();
   const env = useRendererEnv();
@@ -60,11 +110,17 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const refreshCountRef = useRef(0);
 
   const ownerPaths = createCrudOwnerPaths({ id: props.id, cid: props.meta.cid, schema: normalizedSchema });
-  const defaultQuery = {
-    ...toRecord(normalizedSchema.defaultParams),
-    ...toRecord(normalizedSchema.queryForm?.defaultParams),
-    ...toRecord(normalizedSchema.queryForm?.data),
-  };
+  // H18: stabilize defaultQuery identity on the (now-memoized) normalizedSchema so
+  // downstream memoization (useCrudRuntimeState init effect, useCrudQueryBridge,
+  // CrudQueryRegion) does not bust every render.
+  const defaultQuery = useMemo(
+    () => ({
+      ...toRecord(normalizedSchema.defaultParams),
+      ...toRecord(normalizedSchema.queryForm?.defaultParams),
+      ...toRecord(normalizedSchema.queryForm?.data),
+    }),
+    [normalizedSchema],
+  );
 
   const { queryState, paginationState, sortState, filterState, selectedRowKeys } =
     useCrudRuntimeState({
@@ -174,7 +230,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   };
   const crudScope = createReadonlyScopeBinding(scope, '$crud', () => summary);
 
-  const handleRefresh = (ctx?: CrudRefreshContext) => {
+  const handleRefresh = (ctx?: CrudRefreshContext): Promise<unknown> | void => {
     if (normalizedSchema.autoClearSelectionOnRefresh) {
       scope?.update(selectionStatePath, []);
     }
@@ -193,7 +249,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       selectedRowKeys,
     };
 
-    onRefresh?.(refreshSummary, {
+    return onRefresh?.(refreshSummary, {
       scope: scope ?? ctx?.scope ?? nodeScope,
       event: refreshSummary,
       actionScope: ctx?.actionScope,
@@ -212,7 +268,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     });
   };
 
-  const queryFormId = createCrudQueryFormId(props.schema.id, props.path);
+  const queryFormId = createCrudQueryFormId(props.id, props.path);
   const { handleQuerySubmit, handleQueryReset } = useCrudQueryBridge({
     componentRegistry,
     queryFormId,
@@ -243,7 +299,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const infiniteSentinelEnabled = infiniteActive && filteredRows.length > 0;
   const infiniteSentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const handleLoadMore = () => {
+  const handleLoadMore = (): Promise<unknown> | void => {
     if (loadDataOnce || atLastPage) {
       return;
     }
@@ -254,8 +310,12 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       currentPage: paginationState.currentPage + 1,
       pageSize: paginationState.pageSize,
     });
+    // When the renderer owns fetching (no loadAction), drive the refresh and
+    // return its promise so the infinite-scroll hook can track loading/error
+    // and guard concurrent triggers (G5). With a loadAction, the owner hook
+    // drives fetching; do not double-trigger here.
     if (!useLoadAction) {
-      handleRefresh();
+      return handleRefresh();
     }
   };
 
@@ -395,7 +455,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
     return base as TableSchema;
   })();
-  const tableEvents = props.events as unknown as RendererComponentProps<TableSchema>['events'];
   const tableResolvedProps: RendererComponentProps<TableSchema>['props'] = {
     ...tableSchema,
     disabled: props.props.disabled,
@@ -404,34 +463,30 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     testid: props.props.testid,
     cid: props.props.cid,
   };
-  const tableRendererProps: RendererComponentProps<TableSchema> = {
-    id: `${props.id}-table`,
-    path: `${props.path}.table`,
-    schema: tableSchema,
-    templateNode:
-      props.templateNode as unknown as RendererComponentProps<TableSchema>['templateNode'],
-    node: {
-      ...props.node,
-      scope: crudScope,
-    } as unknown as RendererComponentProps<TableSchema>['node'],
-    props: tableResolvedProps,
-    meta: {
-      ...props.meta,
-      cid: undefined,
-      className: undefined,
-      testid: undefined,
-    },
-    regions: props.regions as RendererComponentProps<TableSchema>['regions'],
-    events: tableEvents,
-    helpers: props.helpers,
-  };
+  const tableRendererProps = delegateTableRendererProps(
+    props,
+    tableSchema,
+    tableResolvedProps,
+    crudScope,
+  );
   const hasQueryForm = Boolean(props.regions.queryFormRegion?.templateNode);
 
   const handleClearSelection = () => {
     scope?.update(selectionStatePath, []);
   };
 
-  useCrudHandle(props, selectedRowKeys, handleClearSelection, handleRefresh);
+  const handleToggleSelection = (key: unknown) => {
+    if (!scope || key === undefined || key === null) {
+      return;
+    }
+    const keyStr = String(key);
+    const next = selectedRowKeys.includes(keyStr)
+      ? selectedRowKeys.filter((existing) => existing !== keyStr)
+      : [...selectedRowKeys, keyStr];
+    scope.update(selectionStatePath, next);
+  };
+
+  useCrudHandle(props, selectedRowKeys, handleClearSelection, handleRefresh, handleToggleSelection);
 
   const handleToolbarPageChange = (page: number) => {
     scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });
@@ -449,12 +504,65 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
   const handleQuerySubmitWithFeedback = () => {
     void handleQuerySubmit().catch((error) => {
+      const fallback = new Error(t('flux.common.queryFailed'), {
+        cause: error,
+      });
       env.notify?.(
         'warning',
-        error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+        error instanceof Error && error.message ? error.message : fallback.message,
       );
     });
   };
+
+  const listMode = normalizedSchema.listMode ?? 'table';
+  const nonTableMode = listMode === 'cards' || listMode === 'list';
+  const listTotalPages = Math.max(1, Math.ceil(filteredRows.length / paginationState.pageSize));
+  const listAtLastPage = paginationState.currentPage >= listTotalPages;
+
+  // Build the nested carrier schema (list/cards) inline. The React Compiler auto-memoizes this,
+  // and the carrier wrapper below is keyed on pagination/selection state so the nested
+  // `helpers.render` subtree remounts (and re-evaluates template bindings) when that state changes.
+  const carrierSchema: BaseSchema | null = nonTableMode
+    ? (() => {
+        const carrierRows =
+          listMode === 'cards'
+            ? filteredRows.slice(
+                (paginationState.currentPage - 1) * paginationState.pageSize,
+                paginationState.currentPage * paginationState.pageSize,
+              )
+            : filteredRows;
+        const rawSchema = props.schema;
+        const base = {
+          items: carrierRows as BaseSchema['data'],
+          selectionMode: 'none' as const,
+          keyField: normalizedSchema.rowKey,
+          empty: tableEmptyContent,
+        };
+        if (listMode === 'list') {
+          return {
+            ...base,
+            type: 'list' as const,
+            item: rawSchema.item,
+            pagination: { enabled: true, mode: 'page' as const, pageSize: paginationState.pageSize },
+            paginationOwnership: 'scope' as const,
+            paginationStatePath,
+          };
+        }
+        return {
+          ...base,
+          type: 'cards' as const,
+          card: rawSchema.card,
+        };
+      })()
+    : null;
+
+  const carrierNode =
+    carrierSchema && nonTableMode
+      ? props.helpers.render(carrierSchema, {
+          scope: crudScope,
+          pathSuffix: listMode,
+        })
+      : null;
 
   return (
     <div
@@ -506,9 +614,53 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         </div>
       ) : null}
 
-      <div className="nop-crud-table" data-slot="crud-table">
-        <TableRenderer {...tableRendererProps} />
-      </div>
+      {nonTableMode ? (
+        <div
+          className="nop-crud-list-body"
+          data-slot="crud-list-body"
+          data-list-mode={listMode}
+          // AUDIT-02: the carrier used to be force-remounted via a key on
+          // pagination/selection state to mask per-render recompilation. The carrier
+          // now stays mounted across CRUD-owned state changes: its `item`/`card`
+          // template is compiled once (on first mount) and the carrier updates
+          // reactively as `carrierSchema.items` / scope bindings change, instead of
+          // being torn down and recompiled on every page/selection change.
+        >
+          {asReactNode(carrierNode)}
+          {paginationMode === 'pages' ? (
+            <div
+              className="nop-crud-list-pagination mt-3 flex flex-wrap items-center justify-end gap-2"
+              data-slot="crud-list-pagination"
+              data-list-mode={listMode}
+            >
+              <PaginationPrevious
+                text={t('flux.pagination.previous')}
+                aria-label={t('flux.pagination.previous')}
+                onClick={() => handleToolbarPageChange(Math.max(1, paginationState.currentPage - 1))}
+                className={paginationState.currentPage <= 1 ? 'pointer-events-none opacity-50' : undefined}
+                aria-disabled={paginationState.currentPage <= 1 || undefined}
+              />
+              <span className="text-sm text-muted-foreground">
+                {t('flux.pagination.page', {
+                  current: paginationState.currentPage,
+                  total: listTotalPages,
+                })}
+              </span>
+              <PaginationNext
+                text={t('flux.pagination.next')}
+                aria-label={t('flux.pagination.next')}
+                onClick={() => handleToolbarPageChange(paginationState.currentPage + 1)}
+                className={listAtLastPage ? 'pointer-events-none opacity-50' : undefined}
+                aria-disabled={listAtLastPage || undefined}
+              />
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="nop-crud-table" data-slot="crud-table">
+          <TableRenderer {...tableRendererProps} />
+        </div>
+      )}
 
       {paginationMode === 'infinite' ? (
         <div className="nop-crud-infinite" data-slot="crud-infinite">

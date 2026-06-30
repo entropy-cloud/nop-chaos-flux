@@ -661,6 +661,15 @@ Preferred targeting matrix:
 - surface family -> built-in `closeSurface`, which closes the current surface by default and only needs `surfaceId` for an explicit non-default target
 - runtime-owned source entry -> built-in `refreshSource` plus `targetId`, where the target value is the source `name`
 
+amis `reload` → Flux mapping (NOT-ADOPTED 字面 `reload`):
+
+- Flux 在 action-dispatch pipeline **没有**字面 `reload` built-in（`built-in-actions.ts` switch 无 `reload` case；故意拒绝 amis 术语）。
+- amis 的 `reload`（定向重载命名目标，非整页）在 Flux 由两条**定向**路径实现，均**不**触发整页 `refreshTable`：
+  - `refreshSource` + `targetId`：按 source `name` 重载（`built-in-actions.ts:194-210` → `action-adapter.ts:325-342` → `async-data/source-registry.ts:341`，调用 `controller.refresh()`，**不调** `ctx.page?.refresh()`）。
+  - `component:refresh` + `componentId`/`componentName`：按组件实例重载（`action-runners.ts:70-137` → `action-adapter.ts:352-431`，调用 `handle.capabilities.invoke('refresh', ...)`，**不调** `ctx.page?.refresh()`）。
+- 整页刷新是**独立的** `refreshTable`（`built-in-actions.ts:185-193` → `action-adapter.ts:317-323`，唯一调 `ctx.page?.refresh()` 并递增 `refreshTick` 的路径）。
+- 回归锚：`refreshSource`/`component:refresh` 后 `page.refreshTick` **不变**（`packages/flux-runtime/src/__tests__/runtime-actions-advanced.test.ts`「does not bump page refreshTick」断言锁定）。
+
 Compatibility carriers:
 
 - built-in `setValue` / `setValues` belong to the lexical scope-write family, not the component-targeting family. Their canonical baseline is to write the current dispatch scope only. If schema needs to target a concrete form or component instance, prefer `component:setValue` / `component:setValues`.

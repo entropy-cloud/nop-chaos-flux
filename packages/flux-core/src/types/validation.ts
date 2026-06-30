@@ -8,6 +8,7 @@ export interface HiddenFieldPolicy extends SchemaObject {
 
 export type ValidationRule =
   | { kind: 'required'; message?: string }
+  | { kind: 'requiredRange'; delimiter?: string; message?: string }
   | { kind: 'minLength'; value: number; message?: string }
   | { kind: 'maxLength'; value: number; message?: string }
   | { kind: 'minItems'; value: number; message?: string }

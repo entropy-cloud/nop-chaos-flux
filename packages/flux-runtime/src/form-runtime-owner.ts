@@ -32,6 +32,7 @@ import {
   validateSubtreeByNode,
   waitForActiveLifecycle,
 } from './form-runtime-validation.js';
+import { defaultReportDependentRevalidationFailure } from './form-runtime-values.js';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 export function buildFormOwnerRuntime(input: {
@@ -308,14 +309,42 @@ export function buildFormOwnerRuntime(input: {
       }
     }
 
+    // M-09: the third dependent-revalidation entry. A throwing dependent
+    // revalidation is routed through the same owner diagnostics seam as
+    // `validateForm`/`validateFormPath` (and `executeSetValues`'s
+    // attachDependentRevalidationFailureHandler) instead of rejecting this
+    // entry bare. The failure is reported via reportDependentRevalidationFailure
+    // and surfaced as a form-level error so submit stays blocked, mirroring the
+    // other two entries.
+    const reportFailure =
+      input.sharedState.inputValue.reportDependentRevalidationFailure ??
+      defaultReportDependentRevalidationFailure;
+    const dependentRevalidationErrors: ValidationError[] = [];
+
     for (const path of changedPaths) {
-      await revalidateDependents(path, reason);
+      try {
+        await revalidateDependents(path, reason);
+      } catch (error) {
+        if (isAbortError(error)) {
+          throw error;
+        }
+
+        reportFailure(path, error);
+        dependentRevalidationErrors.push({
+          path,
+          ownerPath: path,
+          message: 'Dependent revalidation failed due to an internal error',
+          rule: 'async' as const,
+          sourceKind: 'form' as const,
+          cause: error,
+        });
+      }
     }
 
     if (reason === 'change') {
       const fieldStates = input.sharedState.store.getState().fieldStates;
       const fieldErrors: Record<string, ValidationError[]> = {};
-      const errors: ValidationError[] = [];
+      const errors: ValidationError[] = [...dependentRevalidationErrors];
 
        for (const [path, pathErrors] of changedPathResults.entries()) {
         if (pathErrors.length > 0) {
@@ -336,6 +365,15 @@ export function buildFormOwnerRuntime(input: {
       }
 
       return { ok: errors.length === 0, errors, fieldErrors };
+    }
+
+    if (dependentRevalidationErrors.length > 0) {
+      const formResult = await input.getThisForm().validateForm(reason);
+      return {
+        ...formResult,
+        ok: false,
+        errors: [...formResult.errors, ...dependentRevalidationErrors],
+      };
     }
 
     return input.getThisForm().validateForm(reason);
@@ -409,16 +447,31 @@ export function buildFormOwnerRuntime(input: {
         }
 
         console.error(`[flux-runtime] Field validation threw for path "${path}":`, error);
-        const validationError = {
+        // V18 / M-09: a failure (async transport/infrastructure failure or a
+        // validator programming error) reaching the aggregate `validateForm`
+        // entry is routed through the same owner diagnostics seam as the
+        // dependent-revalidation path (`reportDependentRevalidationFailure` ->
+        // env.monitor.onError + env.notify). It is NOT converted into a
+        // field-addressed error: such a failure is not a value problem the
+        // user can fix by editing the field, so a field red text would be
+        // misleading. All three dependent-revalidation entries now converge on
+        // this seam: this `validateForm`/`validateFormPath` entry, the
+        // `executeSetValues` entry (via attachDependentRevalidationFailureHandler),
+        // and the `applyChangesAndRevalidate` entry (via its revalidateDependents
+        // catch). The form result is still marked not-ok (form-level error
+        // below) so submit does not silently proceed on unknown validation state.
+        const reportFailure =
+          input.sharedState.inputValue.reportDependentRevalidationFailure ??
+          defaultReportDependentRevalidationFailure;
+        reportFailure(path, error);
+        errors.push({
           path,
           ownerPath: path,
           message: 'Validation failed due to an internal error',
           rule: 'async' as const,
           sourceKind: 'form' as const,
           cause: error,
-        };
-        fieldErrors[path] = [validationError];
-        errors.push(validationError);
+        });
       }
 
       captureSideEffectErrors(path);

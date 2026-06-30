@@ -6,6 +6,8 @@ import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
+import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
+import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 
 interface M4DataDisplayDemoPageProps {
   onBack: () => void;
@@ -15,6 +17,8 @@ const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
 registerDataRenderers(registry);
+registerLayoutRenderers(registry);
+registerContentRenderers(registry);
 
 const SchemaRenderer = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();
@@ -107,6 +111,53 @@ const CHART_SCHEMA = {
   ],
 };
 
+const GRID_SCHEMA = {
+  type: 'page',
+  testid: 'm4-grid-page',
+  body: [
+    {
+      type: 'grid',
+      id: 'm4-grid',
+      testid: 'm4-grid-widget',
+      columns: 3,
+      gap: 12,
+      responsiveColumns: { sm: 1, lg: 3 },
+      items: ROWS.slice(0, 3).map((row) => ({
+        body: [{ type: 'text', text: `${row.name} · ${row.department}` }],
+      })),
+    },
+  ],
+};
+
+const LIST_SCHEMA = {
+  type: 'page',
+  testid: 'm4-list-page',
+  body: [
+    {
+      type: 'list',
+      id: 'm4-list',
+      testid: 'm4-list-widget',
+      items: ROWS,
+      item: { type: 'text', text: '${$slot.item.name} — ${$slot.item.role}' },
+    },
+  ],
+};
+
+const CARDS_SCHEMA = {
+  type: 'page',
+  testid: 'm4-cards-page',
+  body: [
+    {
+      type: 'cards',
+      id: 'm4-cards',
+      testid: 'm4-cards-widget',
+      columns: { sm: 1, md: 2, lg: 3 },
+      items: ROWS,
+      card: { type: 'text', text: '${$slot.item.name} / ${$slot.item.department}' },
+    },
+  ],
+};
+
 function Section({
   title,
   testidPrefix,
@@ -144,6 +195,9 @@ export function M4DataDisplayDemoPage({ onBack }: M4DataDisplayDemoPageProps) {
     () => ({
       crud: CRUD_SCHEMA,
       chart: CHART_SCHEMA,
+      grid: GRID_SCHEMA,
+      list: LIST_SCHEMA,
+      cards: CARDS_SCHEMA,
     }),
     [],
   );
@@ -154,12 +208,15 @@ export function M4DataDisplayDemoPage({ onBack }: M4DataDisplayDemoPageProps) {
         Back to Home
       </Button>
       <p className="mb-3 uppercase tracking-[0.16em] text-xs text-muted-foreground">
-        Mobile Data Display (M4a / M4c)
+        Mobile Data Display (M4a / M4c) + 新落地 renderer 响应式 (grid / list / cards)
       </p>
-      <h1 className="m-0 mb-2">M4 数据展示响应式 — crud 工具栏/查询/分页简化 + chart 尺寸自适应</h1>
+      <h1 className="m-0 mb-2">
+        M4 数据展示响应式 — crud 工具栏/查询/分页简化 + chart 尺寸自适应 + grid/list/cards 响应式
+      </h1>
       <p className="mb-6 text-sm text-muted-foreground">
         在 DevTools 设备模拟器中切到 <strong>&lt; 768px</strong> 视口观察：crud 隐藏「每页条数切换」、查询区默认折叠、toolbar 纵列堆叠；
-        chart 高度 clamp 到 300px、图例换行不挤压。桌面宽度下两者均维持原样（无回归）。
+        chart 高度 clamp 到 300px、图例换行不挤压；grid 按断点切列数、list hairline 分隔 + 触摸滚动、cards 列数 schema 化。
+        桌面宽度下全部维持原样（无回归）。
       </p>
 
       <Section
@@ -173,6 +230,24 @@ export function M4DataDisplayDemoPage({ onBack }: M4DataDisplayDemoPageProps) {
         testidPrefix="m4-chart"
         schema={schemas.chart}
         hint="小屏容器宽度 < 768px：高度 clamp 到 300px（ authored 400），图例 flex-wrap 换行。ResizeObserver 缺席时回退固定 400px（无报错）。"
+      />
+      <Section
+        title="Grid — 断点列数切换 (responsiveColumns)"
+        testidPrefix="m4-grid"
+        schema={schemas.grid}
+        hint="responsiveColumns: { sm: 1, lg: 3 }。桌面（≥768）：3 列、无 marker；小屏（<768）：1 列、data-responsive='narrow'。colSpan 按有效列数 clamp。"
+      />
+      <Section
+        title="List — hairline 分隔 + 小屏触摸滚动"
+        testidPrefix="m4-list"
+        schema={schemas.list}
+        hint="条目间分隔迁移到 nop-hairline--bottom（0.5px 高 DPI 细线，末项无底边）。小屏：data-responsive='narrow' + touch-pan-y + py-3 触摸目标。桌面：py-2、无 marker。"
+      />
+      <Section
+        title="Cards — 列数 schema 化 (columns)"
+        testidPrefix="m4-cards"
+        schema={schemas.cards}
+        hint="columns: { sm: 1, md: 2, lg: 3 }。桌面（≥768）：3 列、无 marker；小屏（<768）：1 列、data-responsive='narrow'。缺省 columns 时维持原 sm:grid-cols-2 lg:grid-cols-3。"
       />
 
       <Toaster />

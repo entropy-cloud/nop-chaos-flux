@@ -161,6 +161,7 @@ Exit Criteria:
 - Why Not Blocking Closure: `cards`/`list` renderer 尚未落地（主 roadmap W1c `list` / W2a `cards` 均 `todo`，`flux-renderers-content` 包不存在）。M4b「cards/list 小屏单列、触摸滚动」无对象可适配——cards/list 组件本身是 M4b 的外部前置，不是本 plan 结果面内的 defect。crud（M4a）与 chart（M4c）可独立收口。
 - Successor Required: yes
 - Successor Path: 主 roadmap W1c（list）/ W2a（cards）renderer 落地后，其响应式行为随对应 design.md 响应式小节或独立 follow-up 收口。
+- Closure Note: ✅ successor 已落地于 `docs/plans/2026-06-24-2358-1-newly-landed-renderer-responsive-followups-plan.md`（Phase 2 list hairline 迁移 + 触摸滚动 + `list/design.md` §13；Phase 3 cards `columns` schema 化 + `cards/design.md` §13；各配 focused 单测 + e2e）。
 
 ### 业务 renderer border→hairline 迁移（list/cards/cell 分隔线）
 
@@ -168,6 +169,7 @@ Exit Criteria:
 - Why Not Blocking Closure: M0.1 plan L185-190 路由到 M4b。对象（list/cards/cell 分隔线）均未落地，无可迁移项；迁移工作随 cards/list/cell 一同转 W1c/W2a successor。
 - Successor Required: yes
 - Successor Path: 主 roadmap W1c / W2a（同上）
+- Closure Note: ✅ list 分隔线 `divide-y` → `nop-hairline--bottom` 已迁移（successor plan Phase 2）；cards 裁定为「gap-3 间距即视觉分隔，无需 hairline 迁移」（successor plan Phase 3 Decision，记录于 `cards/design.md` §13）。
 
 ## Non-Blocking Follow-ups
 

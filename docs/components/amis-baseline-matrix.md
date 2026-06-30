@@ -168,21 +168,21 @@ Notes:
 
 ### 6. Flux-Only Domain Components
 
-| Flux component           | Role                          | AMIS source | Status                    | Owner doc                                          |
-| ------------------------ | ----------------------------- | ----------- | ------------------------- | -------------------------------------------------- |
-| `designer-page`          | Flow Designer host renderer   | none        | `runtime`                 | `docs/components/designer-page/design.md`          |
-| `designer-field`         | designer field renderer       | none        | `runtime`                 | `docs/components/designer-field/design.md`         |
-| `designer-canvas`        | designer canvas bridge        | none        | `runtime`                 | `docs/components/designer-canvas/design.md`        |
-| `designer-palette`       | designer palette renderer     | none        | `runtime`                 | `docs/components/designer-palette/design.md`       |
-| `designer-node-card`     | designer node-card contract   | none        | `declaredButUnregistered` | `docs/components/designer-node-card/design.md`     |
-| `designer-edge-row`      | designer edge-row contract    | none        | `declaredButUnregistered` | `docs/components/designer-edge-row/design.md`      |
-| `report-inspector-shell` | report inspector shell        | none        | `runtime`                 | `docs/components/report-inspector-shell/design.md` |
-| `report-inspector`       | report inspector              | none        | `runtime`                 | `docs/components/report-inspector/design.md`       |
-| `report-field-panel`     | report field panel            | none        | `runtime`                 | `docs/components/report-field-panel/design.md`     |
-| `report-toolbar`         | report toolbar                | none        | `runtime`                 | `docs/components/report-toolbar/design.md`         |
-| `report-designer-page`   | report-designer host renderer | none        | `runtime`                 | `docs/components/report-designer-page/design.md`   |
-| `spreadsheet-page`       | spreadsheet host renderer     | none        | `runtime`                 | `docs/components/spreadsheet-page/design.md`       |
-| `word-editor-page`       | word-editor host renderer     | none        | `runtime`                 | `docs/components/word-editor-page/design.md`       |
+| Flux component           | Role                          | AMIS source | Status    | Owner doc                                          |
+| ------------------------ | ----------------------------- | ----------- | --------- | -------------------------------------------------- |
+| `designer-page`          | Flow Designer host renderer   | none        | `runtime` | `docs/components/designer-page/design.md`          |
+| `designer-field`         | designer field renderer       | none        | `runtime` | `docs/components/designer-field/design.md`         |
+| `designer-canvas`        | designer canvas bridge        | none        | `runtime` | `docs/components/designer-canvas/design.md`        |
+| `designer-palette`       | designer palette renderer     | none        | `runtime` | `docs/components/designer-palette/design.md`       |
+| `designer-node-card`     | designer node-card contract   | none        | `runtime` | `docs/components/designer-node-card/design.md`     |
+| `designer-edge-row`      | designer edge-row contract    | none        | `runtime` | `docs/components/designer-edge-row/design.md`      |
+| `report-inspector-shell` | report inspector shell        | none        | `runtime` | `docs/components/report-inspector-shell/design.md` |
+| `report-inspector`       | report inspector              | none        | `runtime` | `docs/components/report-inspector/design.md`       |
+| `report-field-panel`     | report field panel            | none        | `runtime` | `docs/components/report-field-panel/design.md`     |
+| `report-toolbar`         | report toolbar                | none        | `runtime` | `docs/components/report-toolbar/design.md`         |
+| `report-designer-page`   | report-designer host renderer | none        | `runtime` | `docs/components/report-designer-page/design.md`   |
+| `spreadsheet-page`       | spreadsheet host renderer     | none        | `runtime` | `docs/components/spreadsheet-page/design.md`       |
+| `word-editor-page`       | word-editor host renderer     | none        | `runtime` | `docs/components/word-editor-page/design.md`       |
 
 ### 7. Flux-Only Form Component Families
 
@@ -290,6 +290,10 @@ Notes:
 | `sparkline`       | small-chart specialization should stay under the chart family if needed                                                | `chart`                                 |
 | `iframe`          | security and host embedding policy make it a poor retained baseline component                                          | host-specific optional integration      |
 | `hidden`          | hidden-field behavior belongs to field metadata and validation/submit policy, not a standalone visible renderer family | hidden-field policy on normal fields    |
+
+### Not-Retained Boundary: `iframe` (L16 裁定)
+
+`iframe` is **not a flux retained renderer** (`naming-conventions.md:84`, this table). There is no flux-package iframe renderer (zero source matches), and none is planned as a retained baseline component because security and host embedding policy make it host-specific. Consequently the signal-L16 concerns — `postMessage` listener accumulation and clone-safety across host/iframe boundaries — are **host integration responsibilities**, not flux-renderer concerns: a flux-retained renderer must remain free of host embedding coupling. If a future host needs iframe embedding, it owns the listener lifecycle / clone-safety on its side; flux would only re-evaluate a retained `iframe` renderer if a standalone, host-independent contract becomes warranted.
 
 ## Maintenance Rule
 

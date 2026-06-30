@@ -19,6 +19,7 @@ import {
   validateHostMethodPayload,
 } from '@nop-chaos/flux-core';
 import type { ApiRequestExecutor } from './async-data/request-runtime.js';
+import type { SchemaFetchSharingContext } from './async-data/request-in-flight-registry.js';
 import { executeRuntimeAjaxAction } from './runtime-action-helpers.js';
 
 export interface ActionAdapterInput {
@@ -26,6 +27,7 @@ export interface ActionAdapterInput {
   expressionCompiler: ExpressionCompiler;
   evaluate: <T = unknown>(target: unknown, scope: ScopeRef) => T;
   executeApiRequest: ApiRequestExecutor;
+  sharing?: SchemaFetchSharingContext;
   runtime: RendererRuntime;
   createSurfaceScope: (
     kind: 'dialog' | 'drawer',
@@ -162,6 +164,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               expressionCompiler,
               evaluate,
               executeApiRequest,
+              sharing: input.sharing,
             },
           );
         }
@@ -285,6 +288,44 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               : 'Action completed';
           ctx.runtime.env.notify(level, message);
           return { ok: true, data: invocation.args };
+        }
+
+        case 'confirm': {
+          const env = getEnv();
+          const message =
+            typeof invocation.args?.message === 'string'
+              ? invocation.args.message
+              : 'Are you sure?';
+          const title =
+            typeof invocation.args?.title === 'string'
+              ? invocation.args.title
+              : undefined;
+          if (!env.confirm) {
+            return {
+              ok: false,
+              error: new Error('confirm action requires env.confirm to be configured'),
+            };
+          }
+          const confirmed = await env.confirm(message, title);
+          return { ok: true, data: { confirmed } };
+        }
+
+        case 'alert': {
+          const env = getEnv();
+          const message =
+            typeof invocation.args?.message === 'string'
+              ? invocation.args.message
+              : '';
+          const title =
+            typeof invocation.args?.title === 'string'
+              ? invocation.args.title
+              : undefined;
+          if (env.alert) {
+            env.alert(message, title);
+          } else {
+            ctx.runtime.env.notify('info', message);
+          }
+          return { ok: true };
         }
 
         case 'navigate': {

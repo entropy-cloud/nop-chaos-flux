@@ -60,6 +60,7 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
   const [visible, setVisible] = React.useState<boolean>(true);
   const [currentIndex, setCurrentIndex] = React.useState<number>(0);
   const [textWidth, setTextWidth] = React.useState<number>(0);
+  const [containerWidth, setContainerWidth] = React.useState<number>(0);
 
   React.useLayoutEffect(() => {
     if (!scrollableConfig) {
@@ -77,7 +78,31 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
     const overflow = textEl.scrollWidth - contentEl.clientWidth;
     setShouldScroll(overflow > 0);
     setTextWidth(textEl.scrollWidth);
-  }, [scrollableConfig, textList, currentIndex]);
+  }, [scrollableConfig, textList, currentIndex, containerWidth]);
+
+  // H31: observe the container width so overflow detection re-runs when the
+  // host layout changes the available content box (viewport resize, parent
+  // flex shrink, orientation change). Without this, a bar that initially fit
+  // but later gets a narrower container keeps `shouldScroll=false` and a bar
+  // that initially overflowed but later gets more room keeps animating.
+  // Symmetric with swipe-cell.tsx:58-83.
+  React.useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const contentEl = contentRef.current;
+    if (!contentEl) return;
+    setContainerWidth(contentEl.clientWidth);
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width =
+          entry.contentRect?.width ??
+          (entry.target as HTMLElement).clientWidth ??
+          0;
+        setContainerWidth(width);
+      }
+    });
+    ro.observe(contentEl);
+    return () => ro.disconnect();
+  }, [visible]);
 
   // animationDuration (one full marquee cycle, in seconds). Computed before the
   // carousel effect so the dwell can reference it. The `+100` buffer keeps a
@@ -130,25 +155,22 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
     return () => clearTimeout(id);
   }, [textList.length, currentIndex, loop, carouselDwellMs, visible]);
 
-  const handleClose = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClose = (event: React.MouseEvent<HTMLButtonElement>) => {
     setVisible(false);
     void props.events.onClose?.(event);
-  }, [props.events]);
+  };
 
   const hasClick = Boolean(props.events.onClick);
 
-  const handleClick = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     void props.events.onClick?.(event);
-  }, [props.events]);
+  };
 
-  const handleKeyDown = React.useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      void props.events.onClick?.(event);
-    },
-    [props.events],
-  );
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    void props.events.onClick?.(event);
+  };
 
   if (!visible) {
     return null;

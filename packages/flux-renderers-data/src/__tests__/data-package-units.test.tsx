@@ -2,7 +2,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
-import { ComponentRegistryContext } from '@nop-chaos/flux-react/unstable';
+import { ComponentRegistryContext } from '@nop-chaos/flux-react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { CrudToolbarBlocks, normalizeToolbarBlocks } from '../crud-renderer-toolbar.js';
 import { dataRendererDefinitions, registerDataRenderers } from '../index.js';

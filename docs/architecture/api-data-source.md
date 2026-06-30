@@ -110,7 +110,7 @@ Normative rule:
 
 - `ApiResponse` is only the fetcher boundary result
 - runtime callers should not consume non-OK `ApiResponse` values as normal business results
-- `executeApiSchema(...)` converts non-OK responses into thrown errors
+- `executeApiSchema(...)` applies `responseAdaptor` to the fetcher payload first, and only then converts a non-OK response into a thrown error
 - therefore runtime and renderer consumers observe successful adapted `data` or an exception
 
 Recommended host behavior:
@@ -118,6 +118,24 @@ Recommended host behavior:
 - either return `ok: true` responses for success
 - or throw an `Error` for failures
 - returning `ok: false` is still tolerated at the fetcher boundary, but request runtime will immediately convert it into a thrown error before the result reaches action/source/form consumers
+
+#### Error response adaptor reachability (A1)
+
+`responseAdaptor` runs for **both** OK and non-OK responses; it is not gated on `response.ok`.
+
+- adaptor context on a non-OK response still exposes `payload` (the raw error body), `api`, and lexical `scope`, so an adaptor may normalize an error body or map a backend error field into a standard shape
+- the adapted payload then feeds `createApiResponseError(...)`, so a message extracted by the adaptor is the message carried by the thrown error
+- applying the adaptor on non-OK **never recovers** a non-OK response into success: after the adaptor runs, a non-OK response is still converted into a thrown error and `onError`/host notify still fire
+- if the adaptor returns a non-object or does not surface a recognizable message field, the error falls back to the standard `Request failed with status <n>` message
+- the adaptor is **not** required to be status-defensive: if the adaptor throws on an error-shaped payload (the common case for success-only adaptors written assuming a success shape, e.g. `return { ...payload, data: payload.data.items }` meeting an error body), the runtime catches that throw **on the error branch only** and falls back to the raw `response.data`, so `readResponseErrorMessage` (`message` → `msg` → `Request failed with status <n>`) still surfaces the backend message rather than degrading it into a generic adaptor/infra exception. The thrown error still carries a numeric `status` and `response`, so the single error→notify translation (A2) reports the backend message exactly once. The success branch is unaffected: a throwing adaptor on a success response still propagates as a normal execution failure.
+
+#### Single error→notify translation (A2)
+
+The runtime owns the only error→`env.notify` translation for ajax action failures.
+
+- the default host fetcher does **not** call `env.notify(...)`; only the action dispatcher's unhandled-failure path reports the error, exactly once
+- the thrown error message is extracted from the (adapted) response data with this priority: `data.message` (standard) → `data.msg` (amis-compatible backend convention) → `Request failed with status <n>`
+- `statusPath`/`errors` structures are not mined for a notify message; only `message`/`msg` strings are used
 
 ### includeScope
 
@@ -130,6 +148,12 @@ finalData = { ...extractScope(includeScope), ...data }
 ```
 
 Explicit `data` keys win over extracted scope keys.
+
+#### Route / Location Parameter Binding (A16)
+
+Flux does **not** bind router/location/route parameters (such as `$route`, `$query`, `$params`, or `useParams`-style values) into page or surface scope. There is no router integration layer in the runtime: the only navigation surface is the `navigate` action, which forwards to `env.navigate(url, opts)` and performs no scope injection. Consequently there is no `$route`/`$query`/`$params` scope binding and no page/surface seeding from the URL.
+
+This is adjudicated as a watch-only residual: route/location → scope binding is not applicable until an app/navigation layer exists. Isolation properties of such a binding cannot be evaluated until that prerequisite layer lands. See the successor record in the B2.2 plan (`docs/plans/2026-06-26-0406-2-b22-scope-propagation-isolation-reaction-plan.md`).
 
 ### params
 
@@ -153,6 +177,28 @@ Examples:
   "data": { "name": "Alice" }
 }
 ```
+
+#### Array Parameter Serialization (A8)
+
+Array-valued `params` are serialized as **repeated same-name keys**:
+
+```text
+{ "ids": [1, 2, 3] }  ->  /api?ids=1&ids=2&ids=3
+```
+
+Contract:
+
+- both URL builders (`buildUrlWithParams` for first materialization, `canonicalizeUrlWithParams` for post-adaptor finalization) emit the identical repeated-key form, so the full `prepareApiRequestForExecution` pipeline never produces two coexisting forms (no `ids[]=` alongside a comma-joined `ids=1,2,3`)
+- this intentionally diverges from the amis `bar[0]`/`bar[]` bracket default in favor of the more RESTful repeated-key form
+- object-valued params continue to be JSON-stringified into a single key; primitive values use a single key
+- there is no per-request override of the array serialization form; the form is a fixed runtime contract
+
+#### Template Interpolation Boundary (A7)
+
+- in every string field that the runtime evaluates as a template (`url`, `params` values, `data` values, `headers`), the literal sequence `${` is **always** the start of an interpolation expression; there is no escape syntax (no `\${`, no `$$`)
+- an unmatched `${` (no closing `}` at brace depth 0) is treated as literal text, so such a string is preserved verbatim rather than producing a partial/empty interpolation
+- this is an intentional known limitation, not a defect: `${` is reserved as the interpolation delimiter across the whole Flux DSL, and introducing a template-level escape is a language-wide feature (it would interact with every template string in the system) better scoped to a dedicated feature plan than to bug-driven cleanup
+- `url` and `params` both reach the backend: template path segments evaluated in `url` and every `params` value are both materialized into the final executable URL, so authors should not assume only one of them carries dynamic values
 
 ### requestAdaptor / responseAdaptor
 
@@ -184,7 +230,19 @@ Current authoring note:
 - `return <expression>;` is accepted today as compatibility sugar; runtime strips the leading `return` and trailing semicolon before compiling the adaptor expression
 - request adaptor results are shallow-merged back onto the current declarative `ApiSchema`, so adaptors can rewrite fields such as `headers`, `data`, and `params`
 - because request preparation finalizes URL canonicalization after adaptor application, request adaptors may still rewrite `params` and affect the final executable URL
-- response adaptors currently receive the adapted fetch payload plus executable request context, but they do not receive a richer fetch-metadata object beyond `payload` / `response`, `api`, and lexical `scope`
+- response adaptors currently receive the adapted fetch payload plus executable request context (`payload` / `response`, `api`, lexical `scope`, and the response `status`), but they do not receive a richer fetch-metadata object beyond those fields
+
+#### Request Adaptor Shallow-Merge No-Op Contract (A5)
+
+- when a request adaptor returns a **plain object**, the runtime shallow-merges it onto the current `ApiSchema` (`{ ...api, ...adapted }`), so a partial return such as `{ headers }` preserves `url` / `data` / `params` / other adaptors from the original schema while applying only the returned fields
+- when a request adaptor returns a **non-object** (`undefined`, `null`, a primitive, or an array), the runtime treats it as a defined **no-op**: the original `ApiSchema` is returned unchanged
+- there is no fall-through "use the return value as data" behavior; an adaptor that wants to change `data` must return an object containing a `data` field
+
+#### Adaptor Abort Boundary (A4)
+
+- a request adaptor **cannot abort or skip** a request; there is no sentinel return value and no throw-to-abort contract
+- requests are only gated upstream by `sendOn` (and `initFetch` for the first automatic fetch). To conditionally prevent a request, author `sendOn` rather than trying to abort from inside an adaptor
+- an adaptor that throws propagates the error as a normal request-execution failure (it does not silently cancel the request as if it were never sent)
 
 Example:
 
@@ -238,6 +296,30 @@ Fields such as:
 
 belong to `Operation Control`, not to transport description. Action-backed and source-backed consumers may carry those controls through their own narrower schema surfaces, but the transport contract stays focused on request inputs and adaptors.
 
+### Schema-Fetch Cross-Subscriber Dedup And Cache (A11)
+
+Schema-fetch (the `DynamicRenderer` `loadAction` path: `loadAction` → `runtime.dispatch(...)` → ajax action → `executeRuntimeAjaxAction` → `executeApiSchema`) participates in two runtime-owned layers that are **independent of owner-local source refresh dedup**:
+
+- the ajax action path owns a runtime-level in-flight registry and reuses the same runtime `apiCache` used by `data-source` controllers
+- engagement is opt-in per ajax action via `control.cacheTTL > 0` on a safe HTTP method (`get`/`head`/`options`, with `get` the default); non-safe methods (`post`/`put`/`patch`/`delete`) and actions without `cacheTTL` keep the original always-fetch behavior, so owner-local `cancel-previous`/`ignore-new`/`parallel` source refresh semantics are untouched
+
+Dedup contract:
+
+- the in-flight registry is keyed by **executable identity** (`method + url + headers + data`, the same identity produced by `generateCacheKey(...)`), **not** by owner/actionType/scope
+- when a second subscriber fires a request whose executable identity is already in flight, it attaches to the in-flight promise instead of issuing a new fetch; when that promise settles, every attached subscriber receives the same result (success or error)
+- the shared fetch is owned by the registry's own `AbortController`, decoupled from any single subscriber's signal, so one subscriber unmounting or aborting does not cancel the shared fetch for the others; the registry aborts pending shared fetches on runtime dispose
+- this is distinct from owner-local source refresh dedup (`cancel-previous`/`ignore-new`/`parallel`), which still describes same-owner reentry and is not changed by this layer
+
+Cache contract:
+
+- when `control.cacheTTL > 0`, the ajax action path resolves the cache key via `resolveCacheKey(...)` (`control.cacheKey` if present, otherwise `generateCacheKey(...)`); a hit returns the cached adapted payload without issuing a fetch, and a miss writes the adapted payload back into `apiCache` after a successful settle
+- the cache stores the **post-`responseAdaptor`** adapted data, consistent with what `data-source` controllers cache
+- different executable identities (different url/data/headers/method) are never merged
+
+Ownership boundary:
+
+- the in-flight registry and `apiCache` are runtime-owned (created in the runtime factory, disposed with the runtime) and are threaded into the ajax action helpers; they do not live on `ScopeRef` and do not pollute the lexical scope contract
+
 ### Required Request Execution Flow
 
 `executeApiSchema(...)` should be the single convergence path for request execution from declarative `ApiSchema` to fetcher-facing `ExecutableApiRequest`.
@@ -249,8 +331,8 @@ The required flow is:
 3. Build the final URL with `params`
 4. Apply `requestAdaptor`
 5. Execute through runtime-managed fetch / abort / dedup / cache coordination
-6. Apply `responseAdaptor`
-7. If the fetcher result is non-OK, throw an error
+6. Apply `responseAdaptor` to the fetcher payload (for both OK and non-OK responses; on non-OK the adapted payload feeds the error message but does not recover success; if the adaptor throws on the non-OK branch the runtime falls back to the raw payload so the backend message is not lost — see A1)
+7. If the fetcher result is non-OK, throw an error whose message is `data.message ?? data.msg ?? "Request failed with status <n>"` (read from the adapted payload, or the raw payload when the adaptor threw)
 8. Return the adapted payload to the caller
 
 Current baseline note:
@@ -276,6 +358,13 @@ Current baseline note:
 - current source runtime now has a dependency-aware invalidation baseline: formula sources automatically recompute and action-backed remote sources automatically refresh when changed scope paths hit the dependencies collected from formula evaluation or request-config evaluation
 - current invalidation also includes a self-target loop guard so a source does not immediately retrigger itself from writes to its own published `name` binding
 - current action/runtime integration includes a built-in `refreshSource` action that targets a registered source id through `targetId` and delegates to the runtime-owned source registry refresh semantics; this is runtime-entry targeting, not component-handle dispatch
+
+#### Per-Runtime-Instance Namespace (A15)
+
+- each `createRendererRuntime(...)` call produces an independent runtime instance with its own `runtimeId`, its own source registry, reaction registry, and component-handle registry (all held in closure-local refs, not in any shared page-global bag)
+- therefore two co-mounted Flux runtimes (for example two independent host roots on the same page) are fully isolated: a `refreshSource` action, a `component:refresh` capability, or any component-handle invocation in one runtime only ever targets sources/handles registered in **that same runtime instance**
+- two runtimes may register sources with the same `name`/`id` without colliding, because lookup is namespaced by runtime instance first and then by `ScopeRef.id`
+- this is why `refreshSource` is scope-scoped first within a runtime, but the runtime instance is the outer isolation boundary across co-mounted roots
 
 ### Action Adapter Convergence Boundary
 
@@ -870,6 +959,20 @@ Normative guidance:
 - docs and new examples should describe the canonical core state first
 - convenience fields are acceptable when they are explicitly documented as derived helpers over the canonical state
 - compatibility-only status vocabulary should not be presented as a co-equal peer of the canonical state surface
+
+#### Polling Loading Semantics (A9)
+
+Every request kind (initial fetch, manual `refresh()`, and `interval`-driven poll) flips the umbrella `loading` boolean while in flight, because `loading` is derived as `inFlightCount > 0 || fetchStatus === 'fetching'` and every request bumps `inFlightCount`. Polling does **not** receive a separate "silent" loading treatment.
+
+To distinguish a background poll/refresh from a blocking initial load, consumers should key off the derived subdivision fields rather than `loading` alone:
+
+- `isInitialLoading` (`loading && !hasData`): true only on the first load when there is no data yet — bind a full-screen blocker to this
+- `isRefreshing` (`loading && hasData`): true while a request is in flight but data is already present — bind a lightweight refresh indicator to this
+- `hasData`: whether a value has already been published
+
+So a poll that fires after data exists flips `isRefreshing` (not `isInitialLoading`); consumers that want to avoid poll flicker should drive the full-screen chrome from `isInitialLoading`, not from the umbrella `loading`.
+
+Decision record: the lean signal wording suggested "poll flips isRefreshing, not loading". The current baseline was adjudicated as-is (documented current behavior) rather than reworked, because `loading`, `inFlightCount`, and `isRefreshing` are coupled inside the single `deriveDataSourceState` derivation that is applied on every controller state update and consumed by async-governance, refresh-dedup, and the status-contract tests. Making `loading` stay false while `isRefreshing` is true would require decoupling that shared derivation across multiple controllers and their focused regression suites, which is disproportionate to a UX-polish signal. The `isInitialLoading` / `isRefreshing` subdivision already delivers the no-flicker UX when consumers bind to it correctly.
 
 ### Retry Ownership
 

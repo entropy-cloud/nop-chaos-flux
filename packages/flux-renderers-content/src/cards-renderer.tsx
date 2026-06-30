@@ -12,8 +12,8 @@ import {
   resolveRendererSlotContent,
   useRenderInstancePath,
 } from '@nop-chaos/flux-react';
-import { Card, CardContent, cn } from '@nop-chaos/ui';
-import type { CardsSchema, CardsSelectionMode } from './schemas.js';
+import { Card, CardContent, cn, useIsMobile } from '@nop-chaos/ui';
+import type { CardsResponsiveColumns, CardsSchema, CardsSelectionMode } from './schemas.js';
 
 const DEFAULT_CARDS_KEY_FIELD = 'id';
 const EMPTY_SET: ReadonlySet<string> = new Set();
@@ -37,6 +37,71 @@ function toCardKey(item: unknown, keyField: string, index: number): string {
 
 function resolveSelectionMode(value: unknown): CardsSelectionMode {
   return value === 'single' || value === 'multiple' ? value : 'none';
+}
+
+function resolvePositiveInt(value: unknown): number | undefined {
+  if (typeof value === 'number' && value > 0) {
+    return Math.floor(value);
+  }
+  return undefined;
+}
+
+function isResponsiveColumnsObject(value: unknown): value is CardsResponsiveColumns {
+  return value !== null && typeof value === 'object';
+}
+
+/**
+ * Derive the cards grid layout for the current viewport.
+ *
+ * Adjudication (Decision B): when `columns` is provided, derive `gridTemplateColumns` via inline
+ * style (consistent with grid's `buildGridStyle`). A responsive object switches the count through a
+ * `useIsMobile()` runtime branch (768px threshold: < 768 → `sm`, ≥ 768 → `lg ?? md`), aligning the
+ * `data-responsive="narrow"` marker with the crud/chart/grid baseline. When `columns` is unset, the
+ * original Tailwind default (`sm:grid-cols-2 lg:grid-cols-3`) is preserved byte-for-byte (zero
+ * regression). Per-breakpoint values fall back to the documented defaults (mobile 1, desktop 3).
+ */
+interface ResolvedCardsLayout {
+  gridClassName: string;
+  style: React.CSSProperties;
+  responsiveMarker: string | undefined;
+}
+
+function resolveCardsLayout(columns: unknown, isMobile: boolean): ResolvedCardsLayout {
+  if (columns === undefined) {
+    return {
+      gridClassName: 'nop-cards grid gap-3 sm:grid-cols-2 lg:grid-cols-3',
+      style: {},
+      responsiveMarker: undefined,
+    };
+  }
+
+  const baseClassName = 'nop-cards grid gap-3';
+  if (typeof columns === 'number') {
+    const count = resolvePositiveInt(columns) ?? 3;
+    return {
+      gridClassName: baseClassName,
+      style: { gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` },
+      responsiveMarker: undefined,
+    };
+  }
+
+  if (isResponsiveColumnsObject(columns)) {
+    const mobileCount = resolvePositiveInt(columns.sm) ?? 1;
+    const desktopCount = resolvePositiveInt(columns.lg) ?? resolvePositiveInt(columns.md) ?? 3;
+    const count = isMobile ? mobileCount : desktopCount;
+    return {
+      gridClassName: baseClassName,
+      style: { gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` },
+      responsiveMarker: isMobile ? 'narrow' : undefined,
+    };
+  }
+
+  // Unknown shape — fall back to the documented default to stay robust.
+  return {
+    gridClassName: 'nop-cards grid gap-3 sm:grid-cols-2 lg:grid-cols-3',
+    style: {},
+    responsiveMarker: undefined,
+  };
 }
 
 function createCardsRepeatedTemplateId(ownerId: string): string {
@@ -137,6 +202,8 @@ export function CardsRenderer(props: RendererComponentProps<CardsSchema>) {
   const parentInstancePath = useRenderInstancePath();
   const repeatedTemplateId = createCardsRepeatedTemplateId(props.id);
   const [selectedKeys, setSelectedKeys] = useState<ReadonlySet<string>>(() => EMPTY_SET);
+  const isMobile = useIsMobile();
+  const cardsLayout = resolveCardsLayout(schemaProps.columns, isMobile);
 
   const handleSelect = (key: string) => {
     if (selectionMode === 'none') return;
@@ -179,10 +246,12 @@ export function CardsRenderer(props: RendererComponentProps<CardsSchema>) {
 
   return (
     <div
-      className={cn('nop-cards grid gap-3 sm:grid-cols-2 lg:grid-cols-3', props.meta.className)}
+      className={cn(cardsLayout.gridClassName, props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="cards-root"
+      data-responsive={cardsLayout.responsiveMarker}
+      style={cardsLayout.style}
       role="list"
     >
       {items.map((item, index) => {

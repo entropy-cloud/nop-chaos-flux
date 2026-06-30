@@ -352,6 +352,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'combineNum', kind: 'prop' },
       { key: 'draggable', kind: 'prop', valueType: 'boolean' },
       { key: 'orderField', kind: 'prop' },
+      { key: 'orderOwnership', kind: 'prop' },
+      { key: 'orderStatePath', kind: 'prop' },
       { key: 'rowChildrenField', kind: 'prop' },
       { key: 'columnWidthsOwnership', kind: 'prop' },
       { key: 'columnWidthsStatePath', kind: 'prop' },
@@ -397,30 +399,14 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         defaultValue: true,
       },
     },
-    eventContracts: {
-      onSuccess: {
-        displayName: 'On Success',
-        description: 'Dispatched after a successful fetch. Payload: { data, dataUpdatedAt }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            data: { kind: 'unknown' },
-            dataUpdatedAt: { kind: 'number' },
-          },
-        },
-      },
-      onError: {
-        displayName: 'On Error',
-        description: 'Dispatched after a failed fetch. Payload: { error, failureCount }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            error: { kind: 'unknown' },
-            failureCount: { kind: 'number' },
-          },
-        },
-      },
-    },
+    // NOTE: `onSuccess` / `onError` are intentionally NOT declared here as
+    // renderer `eventContracts` (kind:'event'). They are data-source *lifecycle
+    // actions* — declared on `ActionDataSourceSchema` and compiled into the
+    // data-source artifact (`compiledSources[0].onSuccess/onError`), dispatched
+    // by the controller (see `runtime-sources-lifecycle.test.ts`). Declaring
+    // them as renderer events would route them to `props.events`, which this
+    // renderer never reads — a "lying contract". They stay author-facing via the
+    // data-source schema type and are surfaced to tooling by the artifact.
     componentCapabilityContracts: [
       {
         handle: 'refresh',
@@ -444,8 +430,6 @@ export const dataRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'sendOn', kind: 'prop' },
       { key: 'initFetch', kind: 'prop', valueType: 'boolean' },
-      { key: 'onSuccess', kind: 'event' },
-      { key: 'onError', kind: 'event' },
     ],
   },
   {
@@ -545,6 +529,41 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         editorType: 'expression',
         defaultValue: 'id',
       },
+      pagination: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Pagination',
+        description:
+          'Pagination / infinite-scroll configuration. Opt-in via enabled. List never owns a request: data flows via onPageChange/onLoadMore → action graph → data-source → scope items (request-sink).',
+        editorType: 'object',
+      },
+      paginationOwnership: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'local' },
+            { kind: 'literal', value: 'controlled' },
+            { kind: 'literal', value: 'scope' },
+          ],
+        },
+        displayName: 'Pagination Ownership',
+        description:
+          'Where pagination interaction state lives. local = list holds currentPage; controlled = pure view driven by pagination.currentPage; scope = read/write paginationStatePath.',
+        editorType: 'select',
+        defaultValue: 'local',
+      },
+      paginationStatePath: {
+        shape: { kind: 'string' },
+        displayName: 'Pagination State Path',
+        description:
+          'Scope path holding { currentPage, pageSize } for scope ownership. Missing path degrades with a dev warning (no crash).',
+        editorType: 'expression',
+      },
+      pageSizeStatePath: {
+        shape: { kind: 'string' },
+        displayName: 'Page Size State Path',
+        description: 'Optional separate scope path for pageSize (scope ownership).',
+        editorType: 'expression',
+      },
     },
     eventContracts: {
       onItemClick: {
@@ -572,13 +591,78 @@ export const dataRendererDefinitions: RendererDefinition[] = [
           },
         },
       },
+      onPageChange: {
+        displayName: 'On Page Change',
+        description:
+          'Dispatched when the list actively changes its resolved current page (capability gotoPage or infinite load-more). Payload: { currentPage, pageSize, totalPages, total }. Pure passive scope/controlled reads do not dispatch.',
+        payload: {
+          kind: 'object',
+          fields: {
+            currentPage: { kind: 'number' },
+            pageSize: { kind: 'number' },
+            totalPages: { kind: 'number' },
+            total: { kind: 'number' },
+          },
+        },
+      },
+      onLoadMore: {
+        displayName: 'On Load More',
+        description:
+          'Dispatched when the infinite sentinel intersects (bottom reached). Payload: { currentPage, pageSize, total }. List never self-requests; the host advances the page and appends items to scope.',
+        payload: {
+          kind: 'object',
+          fields: {
+            currentPage: { kind: 'number' },
+            pageSize: { kind: 'number' },
+            total: { kind: 'number' },
+          },
+        },
+      },
     },
+    componentCapabilityContracts: [
+      {
+        handle: 'gotoPage',
+        displayName: 'Goto Page',
+        description:
+          'Clamp and apply a new current page (local/scope ownership). Returns the pagination snapshot. No-op for controlled ownership.',
+        args: { kind: 'object', fields: { page: { kind: 'number' } } },
+        result: {
+          kind: 'object',
+          fields: {
+            currentPage: { kind: 'number' },
+            pageSize: { kind: 'number' },
+            totalPages: { kind: 'number' },
+            total: { kind: 'number' },
+          },
+        },
+      },
+      {
+        handle: 'getPagination',
+        displayName: 'Get Pagination',
+        description: 'Return the current pagination snapshot { currentPage, pageSize, totalPages, total }.',
+        result: {
+          kind: 'object',
+          fields: {
+            currentPage: { kind: 'number' },
+            pageSize: { kind: 'number' },
+            totalPages: { kind: 'number' },
+            total: { kind: 'number' },
+          },
+        },
+      },
+    ],
     fields: [
       { key: 'items', kind: 'prop' },
       { key: 'selectionMode', kind: 'prop' },
       { key: 'keyField', kind: 'prop' },
+      { key: 'pagination', kind: 'prop' },
+      { key: 'paginationOwnership', kind: 'prop' },
+      { key: 'paginationStatePath', kind: 'prop' },
+      { key: 'pageSizeStatePath', kind: 'prop' },
       { key: 'onItemClick', kind: 'event' },
       { key: 'onSelectionChange', kind: 'event' },
+      { key: 'onPageChange', kind: 'event' },
+      { key: 'onLoadMore', kind: 'event' },
       { key: 'item', kind: 'region', params: ['item', 'index'], isolate: false },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],

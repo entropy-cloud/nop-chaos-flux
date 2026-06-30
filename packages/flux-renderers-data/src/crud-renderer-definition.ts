@@ -127,6 +127,21 @@ export const crudRendererDefinition: RendererDefinition = {
         'Table column declarations, including operation, fixed, searchable, filterable, and quick-edit metadata.',
       editorType: 'crud-columns',
     },
+    listMode: {
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'table' },
+          { kind: 'literal', value: 'cards' },
+          { kind: 'literal', value: 'list' },
+        ],
+      },
+      displayName: 'List Mode',
+      description:
+        "Row rendering carrier: 'table' (default, zero-regression), 'cards', or 'list'. In cards/list modes CRUD self-holds selection and drives pagination.",
+      editorType: 'select',
+      defaultValue: 'table',
+    },
     rowKey: {
       shape: { kind: 'string' },
       displayName: 'Row Key',
@@ -368,6 +383,13 @@ export const crudRendererDefinition: RendererDefinition = {
       displayName: 'Clear Selection',
       description: 'Clear the current selection.',
     },
+    {
+      handle: 'toggleSelection',
+      displayName: 'Toggle Selection',
+      description:
+        'Toggle a single row key in the CRUD-owned selectionStatePath (used by non-table carrier templates to express selection).',
+      args: { kind: 'object', fields: { key: { kind: 'string' } } },
+    },
   ],
   deepFields: [
     {
@@ -425,6 +447,9 @@ export const crudRendererDefinition: RendererDefinition = {
     { key: 'statusPath', kind: 'prop' },
     { key: 'source', kind: 'prop', allowSource: true },
     { key: 'columns', kind: 'prop' },
+    { key: 'listMode', kind: 'prop' },
+    { key: 'card', kind: 'region', params: ['item', 'index'], isolate: false },
+    { key: 'item', kind: 'region', params: ['item', 'index'], isolate: false },
     { key: 'rowKey', kind: 'prop' },
     { key: 'selection', kind: 'prop' },
     { key: 'selectionOwnership', kind: 'prop' },

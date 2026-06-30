@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { useStatusPathPublication } from '@nop-chaos/flux-react';
+import { unwrapBooleanLiteral, useStatusPathPublication } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
@@ -60,8 +60,8 @@ function isStepVisible(step: WizardStepSchema): boolean {
   return step.visible !== false && step.visible !== 'false' && step.visible !== 0;
 }
 
-function isStepDisabled(step: WizardStepSchema): boolean {
-  return step.disabled === true || step.disabled === 'true' || step.disabled === 1;
+export function isStepDisabled(step: WizardStepSchema): boolean {
+  return unwrapBooleanLiteral(step.disabled);
 }
 
 function findStepIndexByKey(steps: WizardStepSchema[], key: string | number): number {
@@ -419,8 +419,10 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
 
     return (
       <li key={toStepKeyString(stepKey)} data-slot="wizard-step-nav-item" data-step-index={index}>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           data-slot="wizard-step-nav-button"
           data-step-index={index}
           data-active={isActive || undefined}
@@ -431,9 +433,9 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           disabled={!clickable && !isActive}
           onClick={handleStepClick}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm',
+            'gap-1.5 px-2 py-1 text-sm',
             isActive
-              ? 'bg-primary text-primary-foreground'
+              ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
               : reachable
                 ? 'text-foreground hover:bg-muted'
                 : 'text-muted-foreground cursor-not-allowed',
@@ -453,7 +455,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
             {isPast ? <CheckIcon className="size-3" /> : index + 1}
           </span>
           <span data-slot="wizard-step-nav-title">{titleText}</span>
-        </button>
+        </Button>
       </li>
     );
   });

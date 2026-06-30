@@ -88,11 +88,8 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
   const activeDragOffset =
     state.direction === 'horizontal' && state.isTouching ? state.deltaX : 0;
 
-  const computedOffset = React.useMemo(() => {
-    if (openState === 'open-left') return leftWidth;
-    if (openState === 'open-right') return -rightWidth;
-    return 0;
-  }, [openState, leftWidth, rightWidth]);
+  const computedOffset =
+    openState === 'open-left' ? leftWidth : openState === 'open-right' ? -rightWidth : 0;
 
   const dragOffset = activeDragOffset !== 0 ? activeDragOffset : computedOffset;
 

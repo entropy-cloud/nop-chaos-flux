@@ -2,7 +2,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { initFluxI18n, resetFluxI18n, t } from '@nop-chaos/flux-i18n';
-import { RuntimeContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
+import { RuntimeContext, ScopeContext } from '@nop-chaos/flux-react';
 import {
   resolveTableQuickEditConfig,
   TableQuickEditCell,

@@ -22,6 +22,7 @@ import {
   renderDataRow,
   renderExpandedRow,
 } from '../table-renderer/table-body-row-rendering.js';
+import { areColumnsRenderEquivalent } from '../table-renderer/table-flattened-items.js';
 
 function makeRowScope(record: Record<string, unknown>, index: number): ScopeRef {
   return {
@@ -494,5 +495,56 @@ describe('table row rendering helpers', () => {
     expect(container.querySelector('[data-slot="table-responsive-expanded-value"]')?.textContent).toBe(
       'alice@example.com',
     );
+  });
+});
+
+// G6: areColumnsRenderEquivalent gates MemoizedDataRow re-rendering. It must
+// compare EVERY schema field the cell chrome reads, otherwise toggling only an
+// un-compared field (quickEdit / copyable) makes the comparator return "equal"
+// and the row skips re-render — leaving stale chrome (no edit control, no copy
+// button) until something else forces a re-render.
+describe('areColumnsRenderEquivalent — chrome-relevant field coverage (G6)', () => {
+  it('treats the same columns as equivalent', () => {
+    const cols: TableColumnSchema[] = [{ name: 'x', type: 'column' }];
+    expect(areColumnsRenderEquivalent(cols, cols)).toBe(true);
+  });
+
+  it('flags a change in quickEdit alone (chrome switches to the quick-edit cell)', () => {
+    const prev: TableColumnSchema[] = [{ type: 'column', name: 'x', quickEdit: false }];
+    const next: TableColumnSchema[] = [{ type: 'column', name: 'x', quickEdit: true }];
+    expect(areColumnsRenderEquivalent(prev, next)).toBe(false);
+  });
+
+  it('flags a change in quickEditBodyRegionKey alone', () => {
+    expect(
+      areColumnsRenderEquivalent(
+        [{ type: 'column', name: 'x', quickEditBodyRegionKey: 'a' }],
+        [{ type: 'column', name: 'x', quickEditBodyRegionKey: 'b' }],
+      ),
+    ).toBe(false);
+  });
+
+  it('flags a change in copyable alone (chrome shows/hides the copy button)', () => {
+    expect(
+      areColumnsRenderEquivalent(
+        [{ type: 'column', name: 'x', copyable: false }],
+        [{ type: 'column', name: 'x', copyable: true }],
+      ),
+    ).toBe(false);
+  });
+
+  it('still flags structural changes (name / type / width)', () => {
+    expect(
+      areColumnsRenderEquivalent(
+        [{ type: 'column', name: 'x' }],
+        [{ type: 'column', name: 'y' }],
+      ),
+    ).toBe(false);
+    expect(
+      areColumnsRenderEquivalent(
+        [{ type: 'column', name: 'x', width: 100 }],
+        [{ type: 'column', name: 'x', width: 200 }],
+      ),
+    ).toBe(false);
   });
 });

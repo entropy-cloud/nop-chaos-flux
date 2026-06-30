@@ -109,3 +109,121 @@ describe('input-datetime renderer', () => {
     expect(submitCalls[0].at).toBe('2024-06-09 08:30');
   });
 });
+
+describe('input-datetime — D12 time sub-field no digit doubling', () => {
+  it('sequential digit typing 1 then 14 yields hour 14 (reads full value, no concat)', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'dt-form',
+      data: { at: '2024-06-09 04:30' },
+      submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+      body: [
+        { type: 'input-datetime', name: 'at', label: 'At' },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'component:submit', componentId: 'dt-form' },
+        },
+      ],
+    } as any);
+
+    const popover = await openPicker();
+    const hourInput = within(popover).getByLabelText('Hour') as HTMLInputElement;
+    // Simulate digit-by-digit typing: first '1' (hour → 1), then the DOM
+    // accumulates to '14'. handleTimeChange reads the whole value + clamps, so
+    // the result is 14 — NOT a doubled '11'.
+    fireEvent.change(hourInput, { target: { value: '1' } });
+    fireEvent.change(hourInput, { target: { value: '14' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(1));
+    expect(submitCalls[0].at).toBe('2024-06-09 14:30');
+  });
+});
+
+describe('input-datetime — min/max across entry paths (D9)', () => {
+  it('clamps a time-typed value that escapes below minDate back into [min,max]', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'dt-form',
+      // minDate is later the same day than the typed hour would produce.
+      data: { at: '2024-06-10 14:30' },
+      submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+      body: [
+        { type: 'input-datetime', name: 'at', label: 'At', minDate: '2024-06-10 12:00' },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'component:submit', componentId: 'dt-form' },
+        },
+      ],
+    } as any);
+
+    const popover = await openPicker();
+    const hourInput = within(popover).getByLabelText('Hour') as HTMLInputElement;
+    // Typing 05 would yield 2024-06-10 05:30, which is < minDate 2024-06-10 12:00.
+    fireEvent.change(hourInput, { target: { value: '05' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(1));
+    // Time-typing must NOT bypass minDate; committed value clamped into range.
+    expect(submitCalls[0].at).toBe('2024-06-10 12:00');
+  });
+
+  it('clamps a time-typed value that escapes above maxDate back into [min,max]', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'dt-form',
+      data: { at: '2024-06-10 14:30' },
+      submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+      body: [
+        { type: 'input-datetime', name: 'at', label: 'At', maxDate: '2024-06-10 16:00' },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'component:submit', componentId: 'dt-form' },
+        },
+      ],
+    } as any);
+
+    const popover = await openPicker();
+    const hourInput = within(popover).getByLabelText('Hour') as HTMLInputElement;
+    // Typing 23 would yield 2024-06-10 23:30, which is > maxDate 2024-06-10 16:00.
+    fireEvent.change(hourInput, { target: { value: '23' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(1));
+    expect(submitCalls[0].at).toBe('2024-06-10 16:00');
+  });
+
+  it('does not clamp when the typed time stays within [min,max]', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'dt-form',
+      data: { at: '2024-06-10 14:30' },
+      submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+      body: [
+        {
+          type: 'input-datetime',
+          name: 'at',
+          label: 'At',
+          minDate: '2024-06-10 08:00',
+          maxDate: '2024-06-10 18:00',
+        },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'component:submit', componentId: 'dt-form' },
+        },
+      ],
+    } as any);
+
+    const popover = await openPicker();
+    const hourInput = within(popover).getByLabelText('Hour') as HTMLInputElement;
+    fireEvent.change(hourInput, { target: { value: '10' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(1));
+    expect(submitCalls[0].at).toBe('2024-06-10 10:30');
+  });
+});

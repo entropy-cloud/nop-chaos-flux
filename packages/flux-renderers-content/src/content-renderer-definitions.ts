@@ -108,6 +108,7 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'footer', kind: 'region', regionKey: 'footer' },
       { key: 'actions', kind: 'region', regionKey: 'actions' },
       { key: 'image', kind: 'prop' },
+      { key: 'imageClassName', kind: 'prop' },
       { key: 'variant', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
     ],
@@ -250,28 +251,14 @@ export const contentRendererDefinitions: RendererDefinition[] = [
           },
         },
       },
-      onPageChange: {
-        displayName: 'On Page Change',
-        description:
-          'Dispatched when a bridge to an external pagination renderer reports a page change. Payload: { currentPage, pageSize }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            currentPage: { kind: 'number' },
-            pageSize: { kind: 'number' },
-          },
-        },
-      },
     },
     fields: [
       { key: 'items', kind: 'prop' },
+      { key: 'columns', kind: 'prop' },
       { key: 'selectionMode', kind: 'prop' },
       { key: 'keyField', kind: 'prop' },
-      { key: 'selectionOwnership', kind: 'prop' },
-      { key: 'selectionStatePath', kind: 'prop' },
       { key: 'onItemClick', kind: 'event' },
       { key: 'onSelectionChange', kind: 'event' },
-      { key: 'onPageChange', kind: 'event' },
       { key: 'card', kind: 'region', params: ['item', 'index'], isolate: false },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],
@@ -495,6 +482,7 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'foreground', kind: 'prop' },
       { key: 'background', kind: 'prop' },
       { key: 'label', kind: 'value-or-region', regionKey: 'label' },
+      { key: 'onLoadError', kind: 'event' },
     ],
   },
 ];

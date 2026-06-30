@@ -231,6 +231,83 @@ describe('useTableTree hook', () => {
   });
 });
 
+// B3.3 T11 — preload-only tree model: expand/collapse reads preloaded `children`
+// synchronously and performs NO per-node lazy / on-expand fetch (locks Decision B:
+// lazy-children is DESIGN-ACK-NOT-IMPL, candidate future mirroring input-tree
+// `childrenSource`). See `docs/components/table/design.md` §7 B3.3 T11.
+describe('B3.3 T11 — preload-only tree (no lazy fetch; locks Decision B)', () => {
+  function TreeProbe({
+    rows,
+    onReady,
+  }: {
+    rows: TableRowEntry[];
+    onReady: (api: any) => void;
+  }) {
+    const api = useTableTree({ type: 'table', rowChildrenField: 'children' } as TableSchema, rows);
+    React.useEffect(() => {
+      onReady(api);
+    }, [api, onReady]);
+    return null;
+  }
+
+  it('expand/collapse only reads preloaded children (no fetch fills empty children)', () => {
+    const rowsWithChildren: TableRowEntry[] = [
+      makeRowEntry({ id: '1', children: [{ id: '1-1' }, { id: '1-2' }] }, 0, '1'),
+    ];
+    // A node whose `children` field is ABSENT — under a lazy contract, expanding it
+    // would fetch children; under the preload-only contract (Decision B), expanding it
+    // must yield NO additional rows.
+    const rowsWithoutChildren: TableRowEntry[] = [
+      makeRowEntry({ id: 'empty', name: 'no-children-field' }, 0, 'empty'),
+    ];
+
+    let api: any;
+    const { rerender } = render(<TreeProbe rows={rowsWithChildren} onReady={(v) => (api = v)} />);
+
+    expect(api.treeRows.length).toBe(1);
+    expect(api.expandedTreeRowKeys.has('1')).toBe(false);
+
+    // Expand a node WITH preloaded children -> children appear synchronously from preload.
+    act(() => api.handleToggleTreeExpand('1'));
+    rerender(<TreeProbe rows={rowsWithChildren} onReady={(v) => (api = v)} />);
+    expect(api.treeRows.length).toBe(3); // root + 2 preloaded children
+    expect(api.expandedTreeRowKeys.has('1')).toBe(true);
+
+    // Collapse -> children disappear (local Set toggle only, no state beyond the Set).
+    act(() => api.handleToggleTreeExpand('1'));
+    rerender(<TreeProbe rows={rowsWithChildren} onReady={(v) => (api = v)} />);
+    expect(api.treeRows.length).toBe(1);
+    expect(api.expandedTreeRowKeys.has('1')).toBe(false);
+
+    // Expand a node with NO preloaded children -> still 1 row (no lazy fetch adds rows).
+    // This is the lock for Decision B: there is no on-expand fetch contract.
+    rerender(<TreeProbe rows={rowsWithoutChildren} onReady={(v) => (api = v)} />);
+    expect(api.treeRows.length).toBe(1);
+    act(() => api.handleToggleTreeExpand('empty'));
+    rerender(<TreeProbe rows={rowsWithoutChildren} onReady={(v) => (api = v)} />);
+    expect(api.treeRows.length).toBe(1);
+  });
+
+  it('handleToggleTreeExpand is synchronous and exposes no async load/fetch callback', () => {
+    const rows: TableRowEntry[] = [
+      makeRowEntry({ id: '1', children: [{ id: '1-1' }] }, 0, '1'),
+    ];
+    let api: any;
+    render(<TreeProbe rows={rows} onReady={(v) => (api = v)} />);
+
+    // The hook api exposes only treeMode / treeRows / expandedTreeRowKeys /
+    // handleToggleTreeExpand — there is no loadChildren / fetchChildren / defer method,
+    // i.e. no lazy-load contract surface.
+    expect(Object.keys(api).sort()).toEqual(
+      ['expandedTreeRowKeys', 'handleToggleTreeExpand', 'treeMode', 'treeRows'].sort(),
+    );
+
+    // handleToggleTreeExpand returns void (synchronous local Set mutation), not a Promise.
+    const result = api.handleToggleTreeExpand('1');
+    expect(result).toBeUndefined();
+  });
+});
+
 describe('renderDataRow tree mode', () => {
   const columns: TableColumnSchema[] = [{ type: 'column', name: 'name' }] as TableColumnSchema[];
 

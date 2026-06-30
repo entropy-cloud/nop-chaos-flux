@@ -1,4 +1,3 @@
-// @vitest-environment happy-dom
 import { render, screen, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { SQLResultPanel } from './sql-result-panel.js';

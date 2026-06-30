@@ -304,7 +304,7 @@
 - `autoGenerateQueryForm`（`autoGenerateFilter`）— schema 存在，runtime 未实现 `DESIGN-ACK-NOT-IMPL`
 - 列拖拽排序 — `DESIGN-ACK-NOT-IMPL`
 - 跨页选择保留 — **Flux schema 字段 `keepOnPageChange`/`maxSelectionLength`/`maxKeepSelectionLength`/`checkableWhen`（`crud-schema.ts:103-109`）存在但 `useTableSelection`/`crud-renderer-state.ts` 完全不消费 — 契约漂移（详见主文件登记表）**
-- Cards/List/Grid 模式（amis CRUD 支持 table/cards/list/grid；Flux 仅 table）
+- Cards/List 模式 — ✅ **已实现**（CRUD `listMode: 'table' \| 'cards' \| 'list'`，见 `design.md` §4.1.1；successor plan `2026-06-24-2358-2`）。Grid 模式仍不采纳（amis CRUD 支持 table/cards/list/grid；Flux 现 table/cards/list，grid 不在范围）
 - `clientMode.matchFunc` — `DESIGN-ACK-NOT-IMPL`
 - 原生 api 生命周期（`api`+`initFetch`/`initFetchOn`/`sendOn`）— `BY-DESIGN`（Flux 用 source + data-source）
 - `lazyRenderAfter`

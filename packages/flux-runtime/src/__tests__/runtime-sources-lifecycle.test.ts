@@ -323,4 +323,78 @@ describe('data-source request-layer lifecycle (X4)', () => {
       vi.useRealTimers();
     }
   });
+
+  it('A19: refresh path returns {skipped:true} and issues no request when sendOn is falsy', async () => {
+    const fetcher = vi.fn(async <T>(api: { url: string }) => ({
+      ok: true,
+      status: 200,
+      data: { url: api.url } as T,
+    }));
+    const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
+    const page = runtime.createPageRuntime({ featureFlag: false });
+
+    const registration = runtime.registerDataSource({
+      id: 'refresh-skipped',
+      scope: page.scope,
+      compiledSource: compileDataSource(
+        'refresh-skipped',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/items' },
+          name: 'payload',
+          sendOn: 'featureFlag === true',
+          initFetch: false,
+        },
+        expressionCompiler,
+      ),
+    });
+
+    const result = await registration.controller.refresh();
+    expect(result).toEqual({ skipped: true });
+    expect(fetcher).not.toHaveBeenCalled();
+
+    registration.dispose();
+  });
+
+  it('A19: sendOn evaluates against the lexical scope chain and can read an ancestor (cross-owner) value', async () => {
+    const fetcher = vi.fn(async <T>(api: { url: string }) => ({
+      ok: true,
+      status: 200,
+      data: { url: api.url } as T,
+    }));
+    const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
+    const page = runtime.createPageRuntime({ gate: true });
+    // the data-source owner is a child scope; `gate` lives on the ancestor page scope
+    const childScope = runtime.createChildScope(page.scope, { local: 1 });
+
+    const registration = runtime.registerDataSource({
+      id: 'cross-owner-sendon',
+      scope: childScope,
+      compiledSource: compileDataSource(
+        'cross-owner-sendon',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/items' },
+          name: 'payload',
+          sendOn: 'gate === true',
+          initFetch: false,
+        },
+        expressionCompiler,
+      ),
+    });
+
+    const allowed = await registration.controller.refresh();
+    expect(allowed).toEqual({ skipped: false });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    // flip the ancestor value → refresh now skipped
+    page.scope.update('gate', false);
+    const blocked = await registration.controller.refresh();
+    expect(blocked).toEqual({ skipped: true });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    registration.dispose();
+  });
 });

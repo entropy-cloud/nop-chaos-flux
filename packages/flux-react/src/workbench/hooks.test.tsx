@@ -1,4 +1,3 @@
-// @vitest-environment happy-dom
 import React, { useLayoutEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';

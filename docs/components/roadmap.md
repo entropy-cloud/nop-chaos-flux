@@ -1,6 +1,6 @@
 # Components Roadmap
 
-> Last Updated: 2026-06-24
+> Last Updated: 2026-06-25
 > Source: `docs/components/amis-baseline-matrix.md`, `docs/components/index.md`
 
 ## Purpose
@@ -30,7 +30,7 @@
 - W4a. 多媒体组（4）: `done`（plan: `docs/plans/2026-06-24-0718-2-w4a-multimedia-family-plan.md`；audio/video/carousel/qrcode 落 `flux-renderers-content`——audio/video 原生媒体元素 + marker、carousel 复用 ui Carousel(embla，零新依赖) + 注册 next/prev/setValue 句柄收口 X1 deferred、qrcode 引入轻量 MIT 库 `qrcode`(canvas) + 单一 canonical 名；4 份 design §3 drift basic→content 收敛）
 - W4b. 流程展示组（2）: `done`（plan: `docs/plans/2026-06-24-0718-3-w4b-process-display-family-plan.md`；steps/timeline 落地于 `flux-renderers-layout`——steps 复用 W3a collapse valueOwnership 三态分层（不承担流程 owner，与 wizard 边界清晰，scope 缺 valueStatePath 显式降级 local controlled + dev 告警）、value 越界 clamp、orientation 横/纵；timeline 展示型集合 item 归一化（time/title/detail/icon/level）+ mode/orientation/reverse + 缺字段项降级，无 owner 状态；2 份 design §3 drift basic→layout 收敛）
 - W4c. 复合表单组（4）: `done`（plan: `docs/plans/2026-06-24-1300-1-w4c-composite-form-family-plan.md`；combo/input-table/transfer/picker 落地于 `flux-renderers-form-advanced`——combo/input-table 复用 W3d staged owner 内核（`createItemScope`/`createItemFormProxy`/`createProjectedValidationRuntime` + `currentForm.append/remove/moveValue` + canonical `addItem`/`removeItem`/`moveItem` 句柄）；transfer/picker 新建最小 valueKey/labelKey 归一化 helper（`option-normalize.ts`），picker 复用 dialog surface + `useInputComponentHandle` 的 open/clear slot；4 份 design §3 归属 drift 收敛 form-advanced；含 playground 演示页 + e2e + focused 单测；main roadmap Wave 1–4 收尾）
-- D1a. 设计器补充组（2）: `todo`
+- D1a. 设计器补充组（2）: `done`（plan: `docs/plans/2026-06-25-0307-1-d1a-designer-node-card-edge-row-registration-plan.md`；`designer-node-card`/`designer-edge-row` 已注册于 `packages/flow-designer-renderers/src/renderer-definitions.ts`，按 id 解析 node/edge 摘要（`designer-summary-helpers.ts`）、渲染 type label/position/source→target/选中态、点击派发 `selectNode`/`selectEdge` command、缺失 id 受控降级；含 playground 摘要 demo（flow-designer 页「节点/边摘要」tab）+ e2e + focused 单测；design.md §12 deferral 已翻转、§3 标「已注册」；主组件 roadmap `todo` 队列清空）
 - **M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈）: `done`** ← 镜像自 `mobile-roadmap.md`（4 子项 M0.1a~M0.1d 已全部落地；plan: `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`；细节与口径以 mobile-roadmap 为准）
 - O1. 非 retained 可选项（13）: 按需启动，不列工作项
 
@@ -75,12 +75,12 @@
 
 **核心缺口：** **0 个 retained-but-unimplemented renderer**（W1–W4 共 43 个 wave 组件已全部 `runtime`，12 个工作项 W1a–W4c 均 `done`；逐组件状态以 `amis-baseline-matrix.md` 为权威）。剩余仅为：
 
-- D1a（2 个 declared-but-unregistered）：`designer-node-card`/`designer-edge-row`——schema 已声明于 `packages/flow-designer-renderers/src/schemas.ts:45-53`，但 renderer **刻意未注册**，受各 design.md §12「需等 host bridge 稳定后再注册」的稳定性裁定约束，分类为 `deferred`（非本 wave 收尾范畴，见 Non-Goals）。
+- ~~D1a（2 个 declared-but-unregistered）：`designer-node-card`/`designer-edge-row`~~ 已收口（`done`）：两个 renderer 已注册于 `flowDesignerRendererDefinitions`，design.md §12 deferral 已翻转（host bridge 由稳定 `HostProjectionContract` 解除）。
 - O1（13 个非 retained 可选项）：按需启动，启动前需先更新 `amis-baseline-matrix.md` 的 retained 决策并建工作项。
 - W1d（2 个 Flux-native 移动端组件）：`pull-refresh`/`infinite-scroll`——无 AMIS 源、不经 `amis-baseline-matrix`，已随 `mobile-roadmap.md` M5 一并 `done`。
-- W1c list-scrolling successor：`list` 的 infinite-scroll/分页集成（区别于 M5 移动端 `infinite-scroll` 组件本身）不在主 wave 收尾范畴，归 successor plan `docs/plans/2026-06-24-1633-2-list-scrolling-pagination-integration-plan.md`。
+- W1c list-scrolling successor：`list` 的 infinite-scroll/分页集成（区别于 M5 移动端 `infinite-scroll` 组件本身）已由 successor plan 收口（`docs/plans/2026-06-24-1633-2-list-scrolling-pagination-integration-plan.md`，`done`）——`list` 内建分页（local/controlled/scope 三态 + clamp）与 infinite 触底加载（复用同包 `useInfiniteScroll`，sentinel + IO，派发 `onLoadMore`，末页禁用），全程遵守请求下沉（list 零组件级请求字段）。
 
-> 尾部归属总结：主组件 wave（W1a–W4c + W1d）已**全部 `done`**，43 个 wave 组件全 `runtime`，0 retained-but-unimplemented。剩余仅为 deferred（D1a）、optional（O1）、successor（list-scrolling）三类，均不在本主 wave 收尾范畴。
+> 尾部归属总结：主组件 wave（W1a–W4c + W1d）已**全部 `done`**，43 个 wave 组件全 `runtime`，0 retained-but-unimplemented。D1a deferred 已收口（`done`）；剩余仅为 optional（O1）类；W1c list-scrolling successor 已收口。**主组件 roadmap `todo`/`deferred` 队列已清空。**
 
 ---
 

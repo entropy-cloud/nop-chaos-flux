@@ -36,8 +36,8 @@ function StatusProbe(props: { scope?: any; statusPath?: string; summary: any }) 
   return null;
 }
 
-function HandleProbe(props: { inputProps: any; selectedRowKeys: unknown[]; clearSelection: () => void; handleRefresh: () => void }) {
-  useCrudHandle(props.inputProps, props.selectedRowKeys, props.clearSelection, props.handleRefresh);
+function HandleProbe(props: { inputProps: any; selectedRowKeys: unknown[]; clearSelection: () => void; handleRefresh: () => void; toggleSelection: (key: unknown) => void }) {
+  useCrudHandle(props.inputProps, props.selectedRowKeys, props.clearSelection, props.handleRefresh, props.toggleSelection);
   return null;
 }
 
@@ -125,6 +125,51 @@ describe('crud-renderer-state helpers', () => {
       page: 3,
       pageSize: 20,
     });
+  });
+
+  it('normalizes nullish items/total without infinite pagination (B3.1 / T27)', () => {
+    // { items: null } -> empty rows, total 0 -> totalPages = max(1, ceil(0/ps)) = 1
+    expect(normalizeCrudSourceValue({ items: null })).toEqual({ rows: [], total: 0 });
+    expect(normalizeCrudSourceValue({ items: undefined })).toEqual({ rows: [], total: 0 });
+    expect(normalizeCrudSourceValue({})).toEqual({ rows: [], total: 0 });
+
+    // { total: null } falls back to rows.length
+    expect(
+      normalizeCrudSourceValue({ items: [{ id: 1 }, { id: 2 }], total: null }),
+    ).toEqual({ rows: [{ id: 1 }, { id: 2 }], total: 2 });
+    expect(
+      normalizeCrudSourceValue({ items: [{ id: 1 }], total: undefined, count: null }),
+    ).toEqual({ rows: [{ id: 1 }], total: 1 });
+
+    // Empty rows + missing total -> total 0; consumer clamps totalPages to >= 1 (no loop).
+    const empty = normalizeCrudSourceValue({ items: null, total: null });
+    expect(empty.rows).toHaveLength(0);
+    expect(Math.max(1, Math.ceil(empty.rows.length / 10))).toBe(1);
+  });
+
+  it('treats a falsy-but-present filter value 0 as an active filter (B3.1 / F1)', () => {
+    const rows = [
+      { id: 1, count: 0 },
+      { id: 2, count: 1 },
+      { id: 3, count: 0 },
+    ];
+
+    // number 0 is kept (not dropped as "no filter") and matched via cell === value
+    expect(applyQueryToRows(rows as any, { count: 0 })).toEqual([
+      { id: 1, count: 0 },
+      { id: 3, count: 0 },
+    ]);
+
+    // string "0" is also kept (trim().length > 0); matched via cell === value
+    expect(applyQueryToRows(rows as any, { count: '0' })).toEqual([
+      { id: 1, count: 0 },
+      { id: 3, count: 0 },
+    ]);
+
+    // null / undefined / empty string are still treated as "no filter" (return all rows)
+    expect(applyQueryToRows(rows as any, { count: null })).toBe(rows);
+    expect(applyQueryToRows(rows as any, { count: undefined })).toBe(rows);
+    expect(applyQueryToRows(rows as any, { count: '' })).toBe(rows);
   });
 });
 
@@ -229,6 +274,7 @@ describe('useCrudHandle', () => {
     const handleRefresh = vi.fn();
     const clearSelection = vi.fn();
     const selectedRowKeys = ['r1'];
+    const toggleSelection = vi.fn();
 
     const { unmount } = render(
       <HandleProbe
@@ -236,6 +282,7 @@ describe('useCrudHandle', () => {
         selectedRowKeys={selectedRowKeys}
         clearSelection={clearSelection}
         handleRefresh={handleRefresh}
+        toggleSelection={toggleSelection}
       />,
     );
 
@@ -244,10 +291,12 @@ describe('useCrudHandle', () => {
     expect(register).toHaveBeenCalledWith(expect.any(Object), { cid: 3 });
     expect(handle.name).toBe('users');
     expect(handle.capabilities.hasMethod('refresh')).toBe(true);
+    expect(handle.capabilities.hasMethod('toggleSelection')).toBe(true);
     expect(handle.capabilities.listMethods()).toEqual([
       'refresh',
       'getSelection',
       'clearSelection',
+      'toggleSelection',
     ]);
     await expect(handle.capabilities.invoke('refresh')).resolves.toEqual({ ok: true });
     expect(handleRefresh).toHaveBeenCalled();
@@ -257,6 +306,10 @@ describe('useCrudHandle', () => {
     });
     await expect(handle.capabilities.invoke('clearSelection')).resolves.toEqual({ ok: true });
     expect(clearSelection).toHaveBeenCalled();
+    await expect(
+      handle.capabilities.invoke('toggleSelection', { key: 'r2' }),
+    ).resolves.toEqual({ ok: true });
+    expect(toggleSelection).toHaveBeenCalledWith('r2');
     await expect(handle.capabilities.invoke('unknown')).resolves.toMatchObject({ ok: false });
 
     unmount();
@@ -273,6 +326,7 @@ describe('useCrudHandle', () => {
         selectedRowKeys={[]}
         clearSelection={() => {}}
         handleRefresh={() => {}}
+        toggleSelection={() => {}}
       />,
     );
 
@@ -285,6 +339,7 @@ describe('useCrudHandle', () => {
         selectedRowKeys={[]}
         clearSelection={() => {}}
         handleRefresh={() => {}}
+        toggleSelection={() => {}}
       />,
     );
     expect(register).not.toHaveBeenCalled();

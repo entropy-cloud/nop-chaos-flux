@@ -119,6 +119,7 @@ export interface SelectSchema extends InputSchema {
   filterOption?: boolean | { ignoreCase?: boolean };
   searchPlaceholder?: string;
   noResultsText?: string;
+  noMatchText?: string;
   virtual?: boolean;
   optionTemplate?: BaseSchema[];
 }

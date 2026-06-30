@@ -43,7 +43,12 @@ export function CardRenderer(props: RendererComponentProps<CardSchema>) {
       className={cn('nop-card', props.meta.className)}
     >
       {image ? (
-        <img src={image} alt="" data-slot="card-image" className="aspect-video w-full object-cover" />
+        <img
+          src={image}
+          alt=""
+          data-slot="card-image"
+          className={cn('aspect-video w-full object-cover', slotProps.imageClassName)}
+        />
       ) : null}
       {showHeader ? (
         <CardHeader>

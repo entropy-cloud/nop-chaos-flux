@@ -35,6 +35,8 @@
 - 未命中 own 字段时沿父链查找
 - 依赖订阅会感知 parent scope 变化
 
+这种继承是**无限深度**的：读查找（`get`/`has`/`readVisible`）与祖先写→后代失效/通知都沿**整条父链**递归传播，不止单层。祖父级的写会经父级 composite store 的链式订阅（`scope.ts` 中 `createCompositeScopeStore` 订阅 `parent.store`）传播到孙级订阅者；同理，孙级 `get` 会穿透父级直达祖父级命中。因此三层（或更深）的 scope 链在读写两侧都保持一致的词法可见性。
+
 这是当前最符合易用性的默认：
 
 - 绝大多数页面、表单、容器、dialog body、fragment 都需要自然读取上层业务数据

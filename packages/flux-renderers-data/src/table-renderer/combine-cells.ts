@@ -1,3 +1,4 @@
+import { getIn } from '@nop-chaos/flux-core';
 import type { TableColumnSchema } from '../schemas.js';
 import type { TableRowEntry } from './types.js';
 
@@ -14,7 +15,7 @@ export const EMPTY_COMBINE_PLAN: CombinePlan = [];
 
 function getCellValue(record: Record<string, unknown>, column: TableColumnSchema): unknown {
   if (!column.name) return undefined;
-  return record[column.name];
+  return getIn(record, column.name);
 }
 
 function valuesEqual(a: unknown, b: unknown): boolean {

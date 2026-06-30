@@ -77,6 +77,7 @@
   --secondary-surface: 217 89% 96%;
   --secondary-surface-hover: 217 89% 93%;
   --secondary-foreground: 217 89% 35%;
+  --info: 199 89% 48%;
   --success: 160 84% 39%;
   --success-bg: 160 84% 95%;
   --danger: 0 84% 60%;
@@ -136,6 +137,7 @@
   --secondary-surface: 217 30% 20%;
   --secondary-surface-hover: 217 30% 24%;
   --secondary-foreground: 217 89% 84%;
+  --info: 199 89% 60%;
   --success: 160 70% 50%;
   --success-bg: 160 30% 20%;
   --danger: 0 70% 50%;
@@ -195,6 +197,7 @@
   --secondary-surface: 172 76% 96%;
   --secondary-surface-hover: 172 76% 92%;
   --secondary-foreground: 172 76% 28%;
+  --info: 199 89% 48%;
   --success: 160 84% 39%;
   --success-bg: 160 84% 95%;
   --danger: 0 84% 60%;
@@ -254,6 +257,7 @@
   --secondary-surface: 172 30% 20%;
   --secondary-surface-hover: 172 30% 24%;
   --secondary-foreground: 172 76% 82%;
+  --info: 199 89% 60%;
   --success: 160 70% 50%;
   --success-bg: 160 30% 20%;
   --danger: 0 70% 50%;

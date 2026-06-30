@@ -15,6 +15,16 @@ export function JsonViewRenderer(props: RendererComponentProps<JsonViewSchema>) 
   // Hooks must run unconditionally (Rules of Hooks) — declare copy state
   // before the empty-value early return below.
   const [copied, setCopied] = React.useState(false);
+  // Ref holding the pending "reset copied" timer so it can be cleared on
+  // unmount (no pending setState after teardown) and on re-click (no stacking).
+  const copiedResetRef = React.useRef<number | undefined>(undefined);
+  React.useEffect(() => {
+    return () => {
+      if (copiedResetRef.current !== undefined) {
+        window.clearTimeout(copiedResetRef.current);
+      }
+    };
+  }, []);
 
   if (isEmptyValue(value)) {
     const emptyContent = resolveRendererSlotContent(props, 'empty');
@@ -46,7 +56,13 @@ export function JsonViewRenderer(props: RendererComponentProps<JsonViewSchema>) 
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(text);
         setCopied(true);
-        window.setTimeout(() => setCopied(false), 1500);
+        if (copiedResetRef.current !== undefined) {
+          window.clearTimeout(copiedResetRef.current);
+        }
+        copiedResetRef.current = window.setTimeout(() => {
+          copiedResetRef.current = undefined;
+          setCopied(false);
+        }, 1500);
       }
     } catch {
       // clipboard unavailable — copy is best-effort

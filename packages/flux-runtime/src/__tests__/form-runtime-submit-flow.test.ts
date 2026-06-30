@@ -612,3 +612,44 @@ describe('executeFormSubmit', () => {
     });
   });
 });
+
+describe('executeFormSubmit - hidden field submit payload (C10 裁定 B)', () => {
+  it('includes hidden field values in the submit payload by default (no hidden filtering)', async () => {
+    // C10 裁定 B: live default keeps hidden field values in the store and the
+    // submit flow reads store.getState().values directly with no hidden-field
+    // projection. A field hidden via `when` therefore still appears in the
+    // submitted payload unless `clearValueWhenHidden` clears it.
+    const setup = createSubmitInput({
+      storeState: { values: { name: 'Alice', secret: 'top-secret' } },
+    });
+
+    const result = await executeFormSubmit(setup.input);
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({ name: 'Alice', secret: 'top-secret' });
+  });
+
+  it('does not strip a value just because it is absent from runtime field registrations', async () => {
+    // The submit payload is the full values snapshot, not a projection of
+    // registered/visible fields. An undeclared-or-hidden value remains.
+    const setup = createSubmitInput({
+      storeState: { values: { keep: 1, dropIfProjected: 2 } },
+      sharedState: {
+        store: {
+          getState: () => ({ fieldStates: {}, values: { keep: 1, dropIfProjected: 2 } }),
+          setSubmitAttempted: vi.fn(),
+          setSubmitting: vi.fn(),
+          batchUpdate: vi.fn(),
+        } as any,
+        lifecycleState: 'active',
+        runtimeFieldRegistrations: new Map(),
+        childContracts: new Map(),
+      },
+    });
+
+    const result = await executeFormSubmit(setup.input);
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({ keep: 1, dropIfProjected: 2 });
+  });
+});

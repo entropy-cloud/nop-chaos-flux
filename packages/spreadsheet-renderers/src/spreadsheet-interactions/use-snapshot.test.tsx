@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import React, { Profiler } from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';

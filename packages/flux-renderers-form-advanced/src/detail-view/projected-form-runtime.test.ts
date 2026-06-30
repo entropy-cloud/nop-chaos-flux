@@ -179,7 +179,7 @@ describe('projected form runtime helpers', () => {
     projectedForm.isVisited('name');
     projectedForm.touchField('name');
     projectedForm.visitField('name');
-    projectedForm.clearErrors(undefined);
+    projectedForm.clearErrors('name');
     projectedForm.notifyFieldHidden('name', true);
     projectedForm.validateSubtree('name', 'submit');
     projectedForm.setValue('name', 'Bob');
@@ -202,8 +202,8 @@ describe('projected form runtime helpers', () => {
 
     expect(parentForm.isPathOwned).toHaveBeenCalledWith('profile.name');
     expect(parentForm.getFieldState).toHaveBeenCalledWith('profile.name');
-    expect(parentForm.validateAt).toHaveBeenCalledWith('profile.name', 'blur');
-    expect(parentForm.validateField).toHaveBeenCalledWith('profile.name', 'change');
+    expect(parentForm.validateAt).toHaveBeenCalledWith('profile.name', 'blur', undefined);
+    expect(parentForm.validateField).toHaveBeenCalledWith('profile.name', 'change', undefined);
     expect(parentForm.getField).toHaveBeenCalledWith('profile.name');
     expect(parentForm.getDependents).toHaveBeenCalledWith('profile.name');
     expect(parentForm.findByPrefix).toHaveBeenCalledWith('profile.name');
@@ -215,9 +215,9 @@ describe('projected form runtime helpers', () => {
     expect(parentForm.isVisited).toHaveBeenCalledWith('profile.name');
     expect(parentForm.touchField).toHaveBeenCalledWith('profile.name');
     expect(parentForm.visitField).toHaveBeenCalledWith('profile.name');
-    expect(parentForm.clearErrors).toHaveBeenCalledWith(undefined);
+    expect(parentForm.clearErrors).toHaveBeenCalledWith('profile.name');
     expect(parentForm.notifyFieldHidden).toHaveBeenCalledWith('profile.name', true);
-    expect(parentForm.validateSubtree).toHaveBeenCalledWith('profile.name', 'submit');
+    expect(parentForm.validateSubtree).toHaveBeenCalledWith('profile.name', 'submit', undefined);
     expect(setValue).toHaveBeenCalledWith('name', 'Bob');
     expect(setValues).toHaveBeenCalledWith({ name: 'Bob' });
     expect(parentForm.registerField).toHaveBeenCalledWith(

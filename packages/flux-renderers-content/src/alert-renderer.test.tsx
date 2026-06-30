@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -98,6 +96,10 @@ describe('AlertRenderer (W2a — content package inline feedback)', () => {
     );
 
     expect(screen.getByTestId('demo-alert').getAttribute('data-level')).toBe('success');
+    // C-13: success/warning levels route through theme tokens (not hardcoded
+    // emerald/amber palette). DOM className assertion of the token utility.
+    expect(screen.getByTestId('demo-alert').className).toContain('bg-success-bg');
+    expect(screen.getByTestId('demo-alert').className).not.toMatch(/emerald/);
 
     rerender(
       <SchemaRenderer
@@ -112,6 +114,8 @@ describe('AlertRenderer (W2a — content package inline feedback)', () => {
       />,
     );
     expect(screen.getByTestId('demo-alert').getAttribute('data-level')).toBe('warning');
+    expect(screen.getByTestId('demo-alert').className).toContain('bg-warning-bg');
+    expect(screen.getByTestId('demo-alert').className).not.toMatch(/amber/);
   });
 
   it('hides and dispatches onClose when the close button is clicked (closable=true)', () => {

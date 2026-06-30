@@ -40,6 +40,7 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "sql-formatter": "^15.7.3"
   },
@@ -51,7 +52,6 @@
     "@lezer/common": "^1.2.0",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/flux-renderers-data": "workspace:*",
-    "@nop-chaos/flux-renderers-form": "workspace:*",
     "@testing-library/react": "^16.3.0",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0"

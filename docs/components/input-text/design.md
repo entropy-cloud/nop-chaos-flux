@@ -120,6 +120,9 @@
 
 ## 12. 风险、取舍与后续阶段
 
+- **字段写同步、无 write-debounce、故无 flush 契约（B4.1 / I2+I5）**：input-text 的字段写是**同步**的——`onChange` 直接经 `handlers.onChange`→`setValue`（`field-handlers.tsx`）同步写入 form store（`form-store.ts` `setValue` 同步，无 debounced field-write）。故：`form.reset()`/`component:reset` 后，controlled `<input value=...>` 经 `useBoundFieldValue` 订阅同步重渲染，DOM `input.value` 立即跟随 runtime 值（无需 flush）。当前**刻意不引入** debounced field-write（仅 validation/reaction 有 debounce，均不延迟 committed 值）；未来若加 debounced write，必须同时加 flush hook（submit/handle 读最新 committed 值），否则会产生 stale-value 缺陷。回归锚见 `input-reset-resync.test.tsx`。
+- **所有变更路径发统一 onChange（B4.1 / I6）**：native typing、`component:clear`、`component:reset`、action `setValue`/`setValues` 四条路径都收敛到同一 store update + `setLastChange`，可被 `when`/reaction/依赖表达式统一消费（无旁路写入）。回归锚见 `input-controlled-value.test.tsx`。
+- **字面量 vs `${}` 求值（B4.1 / I8）**：schema 字符串值经 `hasExpression = input.includes('${')` 判定（`formula-compiler.ts:106`）。bare `$`（如 `name:"$catId"`、`placeholder:"$catId"`）**不含** `${` → 字面渲染/绑定（不作表达式求值）；只有 `${...}` 包装才求值为动态绑定。这是刻意边界（与 amis `$var` 变量语法不同）。回归锚见 `input-controlled-value.test.tsx`。
 - 需要防止 `input-text` 再次吸收过多专有能力，导致其他输入类型无法共享基线。
 - E3 suggest 与 `nativeAutoComplete`（HTML autocomplete 属性）**正交共存**：`nativeAutoComplete` 是浏览器原生 autofill（声明时透传 `<input autocomplete="...">`），suggest 是 data-source 驱动的远程建议浮层。两者互不干扰，可同时声明（Failure Path `suggest-native-autocomplete-coexist`：无交互冲突，前者由浏览器接管 input history，后者由 renderer 管 Popover）。
 - **abort/慢请求时序**：依赖 data-source controller 现有 abort 语义（`dedup`/`cancel-previous`）。新输入触发 refresh 时，data-source controller 按其策略 abort/忽略前请求；renderer 不自维护 abort（请求下沉纪律）。浮层在新结果到达前保持上一次内容或 loading（Failure Path `suggest-source-slow-aborted`）。

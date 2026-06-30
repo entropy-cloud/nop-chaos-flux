@@ -131,9 +131,9 @@ describe('buildUrlWithParams', () => {
     expect(result).toBe('/api');
   });
 
-  it('serializes array params as repeated key[] entries', () => {
+  it('serializes array params as repeated same-name key entries', () => {
     const result = buildUrlWithParams('/api', { ids: [1, 2, 3] });
-    expect(result).toBe('/api?ids%5B%5D=1&ids%5B%5D=2&ids%5B%5D=3');
+    expect(result).toBe('/api?ids=1&ids=2&ids=3');
   });
 
   it('serializes object params as JSON string', () => {
@@ -148,7 +148,7 @@ describe('buildUrlWithParams', () => {
 
   it('skips null/undefined array items', () => {
     const result = buildUrlWithParams('/api', { ids: [1, null, 3] });
-    expect(result).toBe('/api?ids%5B%5D=1&ids%5B%5D=3');
+    expect(result).toBe('/api?ids=1&ids=3');
   });
 });
 
@@ -305,6 +305,59 @@ describe('prepareApiRequestForExecution', () => {
     expect(prepared.request.params).toBeUndefined();
   });
 
+  it('A8: serializes array params as a single repeated-key form through the full pipeline (no ids[] and ids= coexistence)', () => {
+    const scope = createTestScope({});
+    const env = { fetcher: vi.fn(), notify: vi.fn() } as unknown as RendererEnv;
+    const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+
+    const prepared = prepareApiRequestForExecution(
+      { url: '/api/items', method: 'get', params: { ids: [1, 2, 3] } },
+      scope,
+      env,
+      expressionCompiler,
+    );
+
+    const parsed = new URL(prepared.finalUrl, 'http://localhost');
+    expect(parsed.searchParams.getAll('ids')).toEqual(['1', '2', '3']);
+    expect(Array.from(parsed.searchParams.keys())).not.toContain('ids[]');
+    expect(parsed.searchParams.get('ids')).not.toBe('1,2,3');
+  });
+
+  it('A8: different array values are not mis-merged into a comma-joined value', () => {
+    const scope = createTestScope({});
+    const env = { fetcher: vi.fn(), notify: vi.fn() } as unknown as RendererEnv;
+    const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+
+    const prepared = prepareApiRequestForExecution(
+      { url: '/api/items', method: 'get', params: { ids: [7, 8] } },
+      scope,
+      env,
+      expressionCompiler,
+    );
+
+    const parsed = new URL(prepared.finalUrl, 'http://localhost');
+    expect(parsed.searchParams.getAll('ids')).toEqual(['7', '8']);
+    expect(Array.from(parsed.searchParams.keys())).not.toContain('ids[]');
+  });
+
+  it('A7: both url path segments and params values are materialized into the final executable url', () => {
+    const scope = createTestScope({});
+    const env = { fetcher: vi.fn(), notify: vi.fn() } as unknown as RendererEnv;
+    const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+
+    const prepared = prepareApiRequestForExecution(
+      { url: '/api/fruit', method: 'get', params: { region: 'eu', page: 2 } },
+      scope,
+      env,
+      expressionCompiler,
+    );
+
+    const parsed = new URL(prepared.finalUrl, 'http://localhost');
+    expect(parsed.pathname).toBe('/api/fruit');
+    expect(parsed.searchParams.get('region')).toBe('eu');
+    expect(parsed.searchParams.get('page')).toBe('2');
+  });
+
   it('rebuilds final url after requestAdaptor mutates params and data', () => {
     const scope = createTestScope({ token: 'secure-token' });
     const env = { fetcher: vi.fn(), notify: vi.fn() } as unknown as RendererEnv;
@@ -349,5 +402,17 @@ describe('finalizeApiRequest', () => {
       data: { q: 'demo' },
       params: undefined,
     });
+  });
+
+  it('A8: canonicalizes array params to the repeated-key form and removes any pre-existing bracket entries', () => {
+    const finalized = finalizeApiRequest({
+      url: '/api/items?ids[]=1&ids[]=2',
+      method: 'get',
+      params: { ids: [1, 2, 3] },
+    });
+
+    const parsed = new URL(finalized.finalUrl, 'http://localhost');
+    expect(parsed.searchParams.getAll('ids')).toEqual(['1', '2', '3']);
+    expect(Array.from(parsed.searchParams.keys())).not.toContain('ids[]');
   });
 });

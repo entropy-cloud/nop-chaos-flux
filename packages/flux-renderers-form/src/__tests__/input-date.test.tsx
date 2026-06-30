@@ -138,6 +138,87 @@ describe('input-date renderer', () => {
   });
 });
 
+describe('input-date — valueFormat vs displayFormat separation (D1)', () => {
+  it('renders via displayFormat while committing in a different valueFormat', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'date-form',
+      // Stored in compact valueFormat YYYYMMDD.
+      data: { when: '20240609' },
+      submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+      body: [
+        {
+          type: 'input-date',
+          name: 'when',
+          label: 'When',
+          valueFormat: 'YYYYMMDD',
+          displayFormat: 'DD/MM/YYYY',
+        },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'component:submit', componentId: 'date-form' },
+        },
+      ],
+    } as any);
+
+    // Display derives from displayFormat, independent of valueFormat.
+    expect(screen.getByTestId('date-display').textContent).toBe('09/06/2024');
+
+    const popover = await openDatePicker();
+    pickDay(popover, 20);
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(1));
+    // Commit writes back in valueFormat (YYYYMMDD), NOT displayFormat.
+    expect(submitCalls[0].when).toBe('20240620');
+  });
+});
+
+describe('input-date — single-value required regression (D6 scalar isolation)', () => {
+  it('blocks submit when a required scalar date is empty', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'date-form',
+      data: {},
+      submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+      body: [
+        { type: 'input-date', name: 'when', label: 'When', required: true },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'component:submit', componentId: 'date-form' },
+        },
+      ],
+    } as any);
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(0));
+    expect(await screen.findByText(/is required/i)).toBeTruthy();
+  });
+
+  it('passes submit when a required scalar date has a value', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'date-form',
+      data: { when: '2024-06-09' },
+      submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+      body: [
+        { type: 'input-date', name: 'when', label: 'When', required: true },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'component:submit', componentId: 'date-form' },
+        },
+      ],
+    } as any);
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(1));
+    expect(submitCalls[0].when).toBe('2024-06-09');
+  });
+});
+
 describe('input-date min/max constraint', () => {
   it('disables days outside the minDate/maxDate window', async () => {
     renderSchema({

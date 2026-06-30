@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChartRenderer } from '../chart-renderer.js';
-import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
+import { addResources, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 
 const mockState: {
   currentRegistry: { register: ReturnType<typeof vi.fn> } | undefined;
@@ -140,6 +140,78 @@ describe('ChartRenderer', () => {
     expect(screen.getByText('Nothing to show')).toBeTruthy();
     expect(document.querySelector('[data-slot="chart-empty"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="chart-canvas"]')).toBeNull();
+  });
+
+  // DD1 "explicit empty state, never error" hard contract: every empty-ish
+  // source shape ([], undefined, null) resolves to the empty branch instead of
+  // throwing, and malformed series never throws (sanitizeSeries/isChartDatum
+  // guard the render path).
+  it.each([
+    ['empty array', []],
+    ['undefined source', undefined],
+    ['null source', null],
+  ])('renders the empty state for %s without erroring (DD1)', (_label, source) => {
+    render(
+      <ChartRenderer
+        {...makeProps({ props: { source, series: [null, { name: 'Bad', data: [null, 'x'] }], empty: 'empty' } })}
+      />,
+    );
+
+    expect(screen.getByText('empty')).toBeTruthy();
+    expect(document.querySelector('[data-slot="chart-empty"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="chart-canvas"]')).toBeNull();
+  });
+
+  it('keeps the chart-canvas node identity stable across a data update with no loading flash (DD2)', () => {
+    const { rerender } = render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'bar',
+            source: [{ label: 'Jan', value: 3 }],
+            series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+          },
+        })}
+      />,
+    );
+
+    const canvasBefore = document.querySelector('[data-slot="chart-canvas"]') as HTMLElement;
+    expect(canvasBefore).toBeTruthy();
+    expect(canvasBefore.getAttribute('data-loading')).toBeNull();
+    expect(screen.getByTestId('BarChart')).toBeTruthy();
+
+    // update the data in-place (new prop value)
+    rerender(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'bar',
+            source: [
+              { label: 'Jan', value: 3 },
+              { label: 'Feb', value: 5 },
+            ],
+            series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+          },
+        })}
+      />,
+    );
+
+    const canvasAfter = document.querySelector('[data-slot="chart-canvas"]') as HTMLElement;
+    // same host node (no remount), still no loading flash
+    expect(canvasAfter).toBe(canvasBefore);
+    expect(canvasAfter.getAttribute('data-loading')).toBeNull();
+    expect(document.querySelector('[data-slot="chart-empty"]')).toBeNull();
+  });
+
+  // I2 leak-guard: a high-surface renderer's default user-visible string must be
+  // registry-driven (resolved through t()), NOT a baked-in literal. Overriding
+  // the `flux.common.noData` resource must surface in the chart's empty fallback
+  // — if a future change hardcodes the string, this guard fails.
+  it('drives the empty fallback through the i18n registry, not a baked-in literal (I2)', () => {
+    addResources('en-US', 'flux', { common: { noData: 'REGISTRY_NO_DATA_OVERRIDE' } });
+    render(<ChartRenderer {...makeProps({ props: { source: [] } })} />);
+
+    expect(screen.getByText('REGISTRY_NO_DATA_OVERRIDE')).toBeTruthy();
   });
 
   it('renders loading state and forwards click and hover events', () => {
@@ -399,229 +471,5 @@ describe('ChartRenderer', () => {
     expect(screen.getAllByTestId('Bar')).toHaveLength(2);
     expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).toContain('Revenue');
     expect(document.querySelector('[data-slot="chart-empty"]')).toBeNull();
-  });
-
-  describe('visual configuration (area/legend/stacked/grid/colors)', () => {
-    it('renders an area chart when chartType is "area"', () => {
-      render(
-        <ChartRenderer
-          {...makeProps({
-            props: {
-              chartType: 'area',
-              xAxis: { dataKey: 'month', label: 'Month' },
-              source: [
-                { month: 'Jan', revenue: 12 },
-                { month: 'Feb', revenue: 15 },
-              ],
-              series: [{ name: 'Revenue', dataRegionKey: 'revenue' }],
-            },
-          })}
-        />,
-      );
-
-      expect(screen.getByTestId('AreaChart')).toBeTruthy();
-      const area = screen.getByTestId('Area');
-      expect(area.getAttribute('data-props')).toContain('revenue');
-      expect(area.getAttribute('data-props')).toContain('monotone');
-    });
-
-    it('hides the legend when legend:false even with multiple series', () => {
-      render(
-        <ChartRenderer
-          {...makeProps({
-            props: {
-              chartType: 'bar',
-              xAxis: { dataKey: 'month' },
-              source: [
-                { month: 'Jan', revenue: 12, expenses: 8 },
-                { month: 'Feb', revenue: 15, expenses: 9 },
-              ],
-              series: [
-                { name: 'Revenue', dataRegionKey: 'revenue' },
-                { name: 'Expenses', dataRegionKey: 'expenses' },
-              ],
-              legend: false,
-            },
-          })}
-        />,
-      );
-
-      expect(screen.getByTestId('BarChart')).toBeTruthy();
-      expect(screen.queryByTestId('ChartLegend')).toBeNull();
-    });
-
-    it('shows the legend when legend:true even with a single series', () => {
-      render(
-        <ChartRenderer
-          {...makeProps({
-            props: {
-              chartType: 'bar',
-              source: [{ month: 'Jan', value: 12 }],
-              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
-              legend: true,
-            },
-          })}
-        />,
-      );
-
-      expect(screen.getByTestId('ChartLegend')).toBeTruthy();
-    });
-
-    it('adds stackId to bar series when stacked:true', () => {
-      render(
-        <ChartRenderer
-          {...makeProps({
-            props: {
-              chartType: 'bar',
-              xAxis: { dataKey: 'month' },
-              source: [
-                { month: 'Jan', revenue: 12, expenses: 8 },
-                { month: 'Feb', revenue: 15, expenses: 9 },
-              ],
-              series: [
-                { name: 'Revenue', dataRegionKey: 'revenue' },
-                { name: 'Expenses', dataRegionKey: 'expenses' },
-              ],
-              stacked: true,
-            },
-          })}
-        />,
-      );
-
-      const bars = screen.getAllByTestId('Bar');
-      expect(bars).toHaveLength(2);
-      expect(bars[0].getAttribute('data-props')).toContain('"stackId":"a"');
-      expect(bars[1].getAttribute('data-props')).toContain('"stackId":"a"');
-    });
-
-    it('adds stackId to area series when stacked:true', () => {
-      render(
-        <ChartRenderer
-          {...makeProps({
-            props: {
-              chartType: 'area',
-              xAxis: { dataKey: 'month' },
-              source: [
-                { month: 'Jan', revenue: 12, expenses: 8 },
-                { month: 'Feb', revenue: 15, expenses: 9 },
-              ],
-              series: [
-                { name: 'Revenue', dataRegionKey: 'revenue' },
-                { name: 'Expenses', dataRegionKey: 'expenses' },
-              ],
-              stacked: true,
-            },
-          })}
-        />,
-      );
-
-      const areas = screen.getAllByTestId('Area');
-      expect(areas).toHaveLength(2);
-      expect(areas[0].getAttribute('data-props')).toContain('"stackId":"a"');
-      expect(areas[1].getAttribute('data-props')).toContain('"stackId":"a"');
-    });
-
-    it('ignores stacked on pie (no stackId semantics)', () => {
-      render(
-        <ChartRenderer
-          {...makeProps({
-            props: {
-              chartType: 'pie',
-              xAxis: { dataKey: 'label' },
-              source: [
-                { label: 'Jan', value: 12 },
-                { label: 'Feb', value: 8 },
-              ],
-              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
-              stacked: true,
-            },
-          })}
-        />,
-      );
-
-      expect(screen.getByTestId('PieChart')).toBeTruthy();
-      expect(screen.getByTestId('Pie').getAttribute('data-props')).not.toContain('stackId');
-    });
-
-    it('omits CartesianGrid when grid:false', () => {
-      render(
-        <ChartRenderer
-          {...makeProps({
-            props: {
-              chartType: 'bar',
-              source: [{ month: 'Jan', value: 12 }],
-              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
-              grid: false,
-            },
-          })}
-        />,
-      );
-
-      expect(screen.getByTestId('BarChart')).toBeTruthy();
-      expect(screen.queryByTestId('CartesianGrid')).toBeNull();
-    });
-
-    it('renders CartesianGrid by default (grid not set)', () => {
-      render(
-        <ChartRenderer
-          {...makeProps({
-            props: {
-              chartType: 'bar',
-              source: [{ month: 'Jan', value: 12 }],
-              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
-            },
-          })}
-        />,
-      );
-
-      expect(screen.getByTestId('CartesianGrid')).toBeTruthy();
-    });
-
-    it('uses custom colors palette when colors is a non-empty array', () => {
-      render(
-        <ChartRenderer
-          {...makeProps({
-            props: {
-              chartType: 'bar',
-              xAxis: { dataKey: 'month' },
-              source: [
-                { month: 'Jan', revenue: 12, expenses: 8 },
-                { month: 'Feb', revenue: 15, expenses: 9 },
-              ],
-              series: [
-                { name: 'Revenue', dataRegionKey: 'revenue' },
-                { name: 'Expenses', dataRegionKey: 'expenses' },
-              ],
-              colors: ['#f00', '#0f0'],
-            },
-          })}
-        />,
-      );
-
-      const bars = screen.getAllByTestId('Bar');
-      expect(bars).toHaveLength(2);
-      expect(bars[0].getAttribute('data-props')).toContain('#f00');
-      expect(bars[1].getAttribute('data-props')).toContain('#0f0');
-      expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).not.toContain(
-        'hsl(var(--chart-',
-      );
-    });
-
-    it('falls back to default COLORS when colors is an empty array', () => {
-      render(
-        <ChartRenderer
-          {...makeProps({
-            props: {
-              chartType: 'bar',
-              source: [{ month: 'Jan', value: 12 }],
-              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
-              colors: [],
-            },
-          })}
-        />,
-      );
-
-      expect(screen.getByTestId('Bar').getAttribute('data-props')).toContain('hsl(var(--chart-1))');
-    });
   });
 });

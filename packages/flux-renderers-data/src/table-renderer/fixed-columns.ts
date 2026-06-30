@@ -46,7 +46,7 @@ function createStickyStyle(
 }
 
 export function createFixedColumnLayout(
-  schemaProps: TableSchema,
+  schemaProps: Pick<TableSchema, 'rowSelection' | 'expandable'>,
   columns: TableColumnSchema[],
   showExpandColumn = Boolean(schemaProps.expandable),
 ) {

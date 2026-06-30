@@ -38,7 +38,24 @@
 
 ## 9. 数据源、表达式、导入能力接入点
 
-- `value` 可来自表达式，`map` 也可来自静态值或 loader 归一化结果。
+- `value` 与 `map` 均为 value-or-expression prop（`map: "${statusMap}"` 合法）。`map` 取值来源仅限**静态对象或表达式**，无组件级 `source`/loader 字段（`MappingSchema` 不含 `source`/`initApi`/`api`；与请求下沉审计一致，组件级请求被显式拒绝）。`map` 应由 loader/组装层注入到 scope，或经 `map:"${...}"` 表达式从 page scope 取得。
+
+### 9.1 source-scope 契约（重复上下文）
+
+- `map` 是 per-row prop：在 `cards`/`list`/`crud` 行内，`map` 对各自 row scope 求值。
+- 绑 page-level 的共享 `map` 表达式（如 `map:"${statusMap}"`，`statusMap` 在 page scope）经词法继承每行解析到**同一对象**（无 per-row 发散）。
+- renderer 无 once-per-renderer cache；行为 = 每 row / 每 render 的 prop 重求值（与所有 prop 一致，无特殊缓存语义）。
+
+### 9.2 empty `map` / 未命中 / 无 wildcard fallback
+
+- `map:{}` + 有 value → miss → 落 `defaultLabel ?? placeholder ?? null`。
+- `lookupMap` 逐字 key 匹配（`hasOwnProperty(String(value))`），**无 `*` 通配 fallback**：即使 `map` 含 `'*'` 键，未命中 value 也不会命中该键。`'*'` 仅作为字面 key，当 value 本身等于字符串 `"*"` 时才命中。
+
+### 9.3 loader-sourced map + 「loader wins」precedence —— DESIGN-ACK-NOT-IMPL
+
+- Flux 当前无 mapping loader/source 机制。loader-sourced map + 「loader wins」precedence 是**独立 feature**（Flux 从未声称）。
+- 裁定：`DESIGN-ACK-NOT-IMPL` + successor B7。如产品判断需要，开独立 feature plan，评估为 loader/组装层职责（`map` 经 loader 注入 scope 或表达式），而非在 mapping renderer 内加 `api`/`source`。
+- 当前 vacuously 满足「无 precedence 冲突」（无 loader → 无 loader-vs-static 冲突）。详见 `docs/plans/2026-06-26-2016-1-b62-button-mapping-toast-styling-contract-plan.md` 的 `Deferred But Adjudicated` 节。
 
 ## 10. 样式与 DOM marker 约定
 

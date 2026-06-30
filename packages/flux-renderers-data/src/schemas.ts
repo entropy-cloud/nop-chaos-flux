@@ -138,6 +138,8 @@ export interface TableSchema extends BaseSchema {
   combineNum?: number;
   draggable?: boolean;
   orderField?: string;
+  orderOwnership?: 'local' | 'controlled' | 'scope';
+  orderStatePath?: string;
   rowChildrenField?: string;
   columnWidthsOwnership?: 'local' | 'controlled' | 'scope';
   columnWidthsStatePath?: string;
@@ -202,6 +204,29 @@ export interface TreeSchema extends BaseSchema {
 
 export type ListSelectionMode = 'single' | 'multiple' | 'none';
 
+export type ListPaginationOwnership = 'local' | 'controlled' | 'scope';
+
+export type ListPaginationMode = 'page' | 'infinite';
+
+export interface ListPaginationConfig extends SchemaObject {
+  /** Opt-in gate. When falsy, list renders all items (no slicing). */
+  enabled?: boolean;
+  /** 'page' = slice by current page; 'infinite' = cumulative load-more via sentinel. Defaults to 'page'. */
+  mode?: ListPaginationMode;
+  /** Items per page. Defaults to 10. */
+  pageSize?: number;
+  /** Selectable page sizes (host UI hint). Defaults to [10, 20, 50, 100]. */
+  pageSizeOptions?: number[];
+  /** 1-based current page seed (controlled/local) or value (controlled). */
+  currentPage?: number;
+  /** Total item count used for totalPages + last-page detection. Defaults to items.length. */
+  total?: number;
+  /** Infinite mode: explicit "more available" flag. Defaults derived from total, else true. */
+  hasMore?: boolean;
+  /** Host UI hint to show a page-size selector. */
+  showSizeChanger?: boolean;
+}
+
 export interface ListSchema extends BaseSchema {
   type: 'list';
   items?: SchemaValue;
@@ -209,8 +234,20 @@ export interface ListSchema extends BaseSchema {
   empty?: SchemaInput | string;
   selectionMode?: ListSelectionMode;
   keyField?: string;
+  /** Pagination / infinite-scroll configuration. Opt-in via `pagination.enabled`. */
+  pagination?: ListPaginationConfig;
+  /** Where pagination interaction state lives. Defaults to 'local'. */
+  paginationOwnership?: ListPaginationOwnership;
+  /** Scope path holding `{ currentPage, pageSize }` (scope ownership). */
+  paginationStatePath?: string;
+  /** Optional separate scope path for pageSize (scope ownership). */
+  pageSizeStatePath?: string;
   onItemClick?: BaseSchema;
   onSelectionChange?: BaseSchema;
+  /** Dispatched when the list's resolved current page changes. Payload: { currentPage, pageSize, totalPages, total }. */
+  onPageChange?: BaseSchema;
+  /** Dispatched when the infinite sentinel intersects (bottom reached). Payload: { currentPage, pageSize, total }. List never self-requests. */
+  onLoadMore?: BaseSchema;
 }
 
 // ───────────────────────────── W2a 数据组合组 ─────────────────────────────
@@ -246,10 +283,6 @@ export interface PaginationSchema extends BaseSchema {
   pageSizeOptions?: number[];
   /** 模式：simple（仅页码）/ with-page-size（含页大小切换），默认 simple */
   mode?: PaginationMode;
-  /** 分页所有权：local controlled（renderer 自维护交互态） */
-  pageOwnership?: 'local' | 'controlled' | 'scope';
-  /** 发布分页状态摘要的 scope 路径 */
-  pageStatePath?: string;
   /** 发布只读 summary 的 scope 路径 */
   statusPath?: string;
   onChange?: BaseSchema;

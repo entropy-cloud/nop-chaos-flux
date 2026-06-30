@@ -219,6 +219,54 @@ describe('createRendererRuntime', () => {
     registration.dispose();
   });
 
+  it('does not bump page refreshTick through refreshSource actions (reload targets named source, not page)', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ price: 2, qty: 3 });
+
+    const registration = runtime.registerDataSource({
+      id: 'total-source',
+      scope: page.scope,
+      compiledSource: compileDataSource(
+        'total-source',
+        {
+          type: 'data-source',
+          name: 'total',
+          formula: '${(price || 0) * (qty || 0)}',
+        },
+        expressionCompiler,
+      ),
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('total')).toBe(6);
+    });
+
+    page.scope.update('qty', 4);
+    const tickBefore = page.store.getState().refreshTick;
+
+    const result = await runtime.dispatch(
+      {
+        action: 'refreshSource',
+        targetId: 'total',
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+      },
+    );
+
+    expect(result).toMatchObject({ ok: true, data: true });
+    expect(page.scope.get('total')).toBe(8);
+    expect(page.store.getState().refreshTick).toBe(tickBefore);
+
+    registration.dispose();
+  });
+
   it('skips actions when the when precondition evaluates false', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),

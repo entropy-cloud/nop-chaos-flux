@@ -253,6 +253,16 @@ Compatibility fallback order:
 
 The compatibility fallback is not the normative editable architecture.
 
+Live resolution (`normalizeRowKey`, `table-data.ts`) honors a single dotted field path via the shared path binder: `rowKey: 'a.b'` resolves `getIn(record, 'a.b')` (nested), then falls back to `record.__rowKey` / `record.id`, then the legacy source-index token. The dotted single-path resolution is part of the supported baseline, not a compatibility fallback.
+
+### Composite / Computed Row Key (B3.1 裁定)
+
+Composite (multi-field, e.g. `ip + port`) or expression-derived row keys are **not** supported as a built-in `rowKey` form. The Flux-idiomatic path for a composite identity is the **synthetic `__rowKey` hydrate pattern**: the data owner projects a composite field into a single `__rowKey` (string) before the source enters the table owner, and the table reads it via the documented `record.__rowKey` fallback (or `rowKey: '__rowKey'`). This keeps row identity a single stable string token — preserving React `key`, `instanceKey`, row-scope cache, and row-following UI state continuity — without inventing an expression engine inside the row-key resolver.
+
+- `rowKey: 'a.b'` (single dotted path) and `rowKey: '__rowKey'` / `__rowKey` hydrate fallback: **supported baseline**.
+- Composite projection via owner-side hydrate into `__rowKey`: **supported baseline** (owner responsibility, resolved before table render).
+- Expression `rowKey` (e.g. `rowKey: '${ip}:${port}'` resolved inside the table): **candidate future feature** (successor), not in the current baseline. Owners needing it today must hydrate `__rowKey` upstream.
+
 Save-time continuity rule:
 
 - if a row first materializes with a generated key such as `__rowKey`, later arrival of `id` must not silently promote the active live row identity from `__rowKey` to `id`

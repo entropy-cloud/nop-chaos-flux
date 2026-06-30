@@ -143,6 +143,18 @@ export interface CrudSchema extends BaseSchema {
   toolbarLayout?: CrudToolbarLayoutConfig;
   columns?: CrudColumnSchema[];
   empty?: SchemaInput | string;
+  /**
+   * Row rendering carrier. `'table'` (default) renders rows through the internal
+   * `<TableRenderer>` (zero-regression default path). `'cards'` / `'list'` render
+   * the row set through the corresponding carrier renderer; in those modes CRUD
+   * self-holds selection (carrier `selectionMode: 'none'`) and drives pagination
+   * itself. See `docs/components/crud/design.md` §4.1 for the carrier boundary.
+   */
+  listMode?: 'table' | 'cards' | 'list';
+  /** Cards-mode row template (per-record region, `item`/`index` params). Consumed only when `listMode: 'cards'`. */
+  card?: SchemaInput;
+  /** List-mode row template (per-record region, `item`/`index` params). Consumed only when `listMode: 'list'`. */
+  item?: SchemaInput;
   selectionOwnership?: 'local' | 'controlled' | 'scope';
   selectionStatePath?: string;
   paginationOwnership?: 'local' | 'controlled' | 'scope';
@@ -213,6 +225,7 @@ export function normalizeCrudSchema(schema: CrudSchema): CrudSchema {
   return {
     ...schema,
     rowKey: schema.rowKey ?? 'id',
+    listMode: schema.listMode ?? 'table',
     autoClearSelectionOnRefresh: schema.autoClearSelectionOnRefresh ?? true,
     selectionOwnership: schema.selection ? (schema.selectionOwnership ?? 'local') : undefined,
     paginationOwnership: schema.paginationOwnership ?? 'local',

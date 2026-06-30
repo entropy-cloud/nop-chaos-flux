@@ -1,6 +1,6 @@
 import React, { startTransition, useMemo, useState } from 'react';
 import { getIn, type RendererComponentProps, type RendererRenderOutput } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useRenderScope, useScopeSelector, unwrapBooleanLiteral } from '@nop-chaos/flux-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
 import type { CollapseItemSchema, CollapseSchema } from './schemas.js';
@@ -22,11 +22,7 @@ function resolveItemKey(item: CompiledCollapseItem, index: number): string {
 }
 
 function isItemDisabled(item: CompiledCollapseItem): boolean {
-  const candidate = item.disabled as unknown;
-  if (candidate === true || candidate === 'true' || candidate === 1) return true;
-  const wrapped = candidate as { __nopPreserveLiteral?: unknown; value?: unknown } | undefined;
-  if (wrapped && wrapped.__nopPreserveLiteral === true && wrapped.value === true) return true;
-  return false;
+  return unwrapBooleanLiteral(item.disabled);
 }
 
 function toKeyArray(value: unknown): string[] {

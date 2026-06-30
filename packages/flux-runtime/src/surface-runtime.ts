@@ -7,7 +7,7 @@ import type {
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
 import { publishOwnerStatus } from './status-owner.js';
-import { createSurfaceStore } from './form-store.js';
+import { createSurfaceStore } from './surface-store.js';
 
 export function createManagedSurfaceRuntime(
   input: {

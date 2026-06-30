@@ -36,19 +36,18 @@ function periodFieldType(kind: PeriodKind): string {
   return `input-${kind}`;
 }
 
-function resolveKind(schemaType: string): PeriodKind {
-  if (schemaType === 'input-quarter') return 'quarter';
-  if (schemaType === 'input-year') return 'year';
-  return 'month';
-}
-
 /**
  * Shared control for the period family (month/quarter/year). Each kind renders
  * the appropriate native/simple inputs; range mode emits a delimiter-joined
  * pair. The stored value uses the period valueFormat (YYYY-MM / YYYY-Qq / YYYY).
+ *
+ * The `kind` is supplied by the thin type-specific wrapper (M-07) instead of a
+ * runtime `schema.type` switch, so this component is fully kind-driven.
  */
-export function PeriodRenderer(props: RendererComponentProps<InputPeriodSchema>) {
-  const kind = resolveKind(props.schema.type);
+export function PeriodRenderer(
+  props: RendererComponentProps<InputPeriodSchema>,
+  kind: PeriodKind,
+) {
   const name = String(props.props.name ?? '');
   const selectionMode = props.props.selectionMode === 'range' ? 'range' : 'single';
   const delimiter =
@@ -144,7 +143,7 @@ export function PeriodRenderer(props: RendererComponentProps<InputPeriodSchema>)
   return (
     <div
       className={cn(periodMarker(kind), 'flex flex-wrap items-center gap-2', props.meta.className)}
-      data-slot="field-control"
+      data-slot="period-control"
       data-period-kind={kind}
       data-selection-mode={selectionMode}
       data-has-value={hasValue ? '' : undefined}
@@ -368,3 +367,18 @@ function PeriodPicker(props: PeriodPickerProps) {
 }
 
 export { monthToQuarter };
+
+// M-07: thin type-specific wrappers. Each renderer type maps to its own wrapper
+// that supplies the period kind directly, removing any runtime `schema.type`
+// dispatch from the renderer family.
+export function MonthPeriodRenderer(props: RendererComponentProps<InputPeriodSchema>) {
+  return PeriodRenderer(props, 'month');
+}
+
+export function QuarterPeriodRenderer(props: RendererComponentProps<InputPeriodSchema>) {
+  return PeriodRenderer(props, 'quarter');
+}
+
+export function YearPeriodRenderer(props: RendererComponentProps<InputPeriodSchema>) {
+  return PeriodRenderer(props, 'year');
+}

@@ -12,6 +12,7 @@ describe('data renderer static contracts', () => {
       'refresh',
       'getSelection',
       'clearSelection',
+      'toggleSelection',
     ]);
     expect(crud?.eventContracts?.onSelectionChange?.payload?.kind).toBe('object');
   });

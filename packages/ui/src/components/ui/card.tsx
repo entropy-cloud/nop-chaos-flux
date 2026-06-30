@@ -6,6 +6,7 @@ function Card({
   className,
   size = 'default',
   onClick,
+  onKeyDown,
   ...props
 }: React.ComponentProps<'div'> & { size?: 'default' | 'sm' }) {
   const isInteractive = typeof onClick === 'function';
@@ -19,7 +20,20 @@ function Card({
         className,
       )}
       {...props}
-      {...(onClick ? { onClick } : null)}
+      {...(isInteractive
+        ? {
+            role: 'button',
+            tabIndex: 0,
+            onClick,
+            onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                event.currentTarget.click();
+              }
+              onKeyDown?.(event);
+            },
+          }
+        : null)}
     />
   );
 }

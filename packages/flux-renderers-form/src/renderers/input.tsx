@@ -7,6 +7,7 @@ import {
   type RendererDefinition,
   type RendererSchemaValidationContext,
   type SchemaFieldRule,
+  type ValidationRule,
 } from '@nop-chaos/flux-core';
 import {
   Input,
@@ -439,6 +440,31 @@ export function createFieldValidation(
         });
       }
 
+      return rules;
+    },
+  };
+}
+
+/**
+ * Field validation for delimited range fields (e.g. date-range). In addition to
+ * the base field rules, when the schema is `required` it contributes a
+ * range-aware `requiredRange` rule: a partial range (one bound filled, the other
+ * empty — value shaped like `'2024-06-01,'`) must fail required, while the
+ * generic `required` rule handles the fully-empty case. Both rules are
+ * mutually exclusive in practice (partial → requiredRange, empty → required).
+ */
+export function createRangeFieldValidation() {
+  const base = createFieldValidation();
+  return {
+    kind: 'field' as const,
+    valueKind: 'scalar' as const,
+    getFieldPath: base.getFieldPath,
+    collectRules(schema: BaseSchema) {
+      const rules: ValidationRule[] = [...(base.collectRules?.(schema as InputSchema) ?? [])];
+      const rangeSchema = schema as { required?: boolean; delimiter?: string };
+      if (rangeSchema.required) {
+        rules.push({ kind: 'requiredRange', delimiter: rangeSchema.delimiter ?? ',' });
+      }
       return rules;
     },
   };

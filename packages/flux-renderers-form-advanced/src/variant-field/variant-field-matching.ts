@@ -1,4 +1,5 @@
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
+import { unwrapPreservedLiteral } from '@nop-chaos/flux-react';
 import type { VariantOption } from '../composite-field/composite-schemas.js';
 
 function unwrapPreservedMatchWhen(input: unknown): string | undefined {
@@ -6,16 +7,8 @@ function unwrapPreservedMatchWhen(input: unknown): string | undefined {
     return input;
   }
 
-  if (!input || typeof input !== 'object') {
-    return undefined;
-  }
-
-  const candidate = input as { __nopPreserveLiteral?: unknown; value?: unknown };
-  if (candidate.__nopPreserveLiteral !== true || typeof candidate.value !== 'string') {
-    return undefined;
-  }
-
-  return candidate.value;
+  const inner = unwrapPreservedLiteral(input);
+  return typeof inner === 'string' ? inner : undefined;
 }
 
 export function matchesVariant(

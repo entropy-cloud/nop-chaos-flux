@@ -1,4 +1,4 @@
-import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
+import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
 import { arrayEditorRendererDefinition } from './array-editor.js';
 import { arrayFieldRendererDefinition } from './composite-field/array-field.js';
 import { comboRendererDefinition } from './combo-renderer.js';
@@ -27,7 +27,6 @@ export {
 export { DetailFieldRenderer, detailFieldRendererDefinition } from './detail-view/detail-field.js';
 export { DetailViewRenderer, detailViewRendererDefinition } from './detail-view/detail-view.js';
 export { EditorRenderer, editorRendererDefinition } from './editor-renderer.js';
-export { sanitizeEditorHtml } from './editor-renderer.js';
 export { InputFileRenderer, inputFileRendererDefinition } from './input-file-renderer.js';
 export { InputImageRenderer, inputImageRendererDefinition } from './input-image-renderer.js';
 export { InputTableRenderer, inputTableRendererDefinition } from './input-table-renderer.js';
@@ -50,24 +49,13 @@ export type {
   UploadItemState,
 } from './upload-schemas.js';
 export type { EditorSchema, EditorToolbarButton } from './editor-schemas.js';
-export {
-  DEFAULT_EDITOR_TOOLBAR,
-  resolveToolbarButtons,
-} from './editor-schemas.js';
-export {
-  normalizeUploadValue,
-  readUploadValue,
-} from './upload-schemas.js';
-export * from './composite-field/composite-schemas.js';
-export * from './composite-field/composite-item-id.js';
-export * from './tree-options.js';
-export {
-  normalizeOption,
-  normalizeOptions,
-  resolveSelectedLabel,
-  type NormalizedOption,
-} from './option-normalize.js';
 
+// The `as RendererDefinition[]` cast is structurally required, not redundant:
+// detail-field/detail-view definitions are typed as `RendererDefinition<DetailFieldSchema>`,
+// and `ValidationContributor<S>` is invariant, so the specific-schema definitions are
+// not assignable to `RendererDefinition<BaseSchema>[]` without it (verified: removing the
+// cast fails the build with TS2322). The C-08 substantive change — using the shared
+// `registerRendererDefinitions` helper — is in place below.
 export const formAdvancedRendererDefinitions = [
   ...treeControlRendererDefinitions,
   tagListRendererDefinition,
@@ -89,8 +77,5 @@ export const formAdvancedRendererDefinitions = [
 ] as RendererDefinition[];
 
 export function registerFormAdvancedRenderers(registry: RendererRegistry) {
-  for (const definition of formAdvancedRendererDefinitions) {
-    registry.register(definition as RendererDefinition);
-  }
-  return registry;
+  return registerRendererDefinitions(registry, formAdvancedRendererDefinitions);
 }

@@ -185,6 +185,24 @@ describe('H12: composite store subscriptions', () => {
     expect(second).toHaveBeenCalledTimes(1);
     expect(third).toHaveBeenCalledTimes(1);
   });
+
+  it('A14: grandparent write propagates through the full chain to a grandchild composite subscriber (infinite-depth inheritance)', () => {
+    const grandparent = createTestScope({ root: 'gp-original' });
+    const parent = createChildScope(grandparent, { mid: 'p-original' });
+    const child = createChildScope(parent, { leaf: 'c-original' });
+    const listener = vi.fn();
+
+    child.store?.subscribe(listener);
+
+    grandparent.update('root', 'gp-changed');
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(child.readVisible().root).toBe('gp-changed');
+
+    parent.update('mid', 'p-changed');
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(child.readVisible().mid).toBe('p-changed');
+  });
 });
 
 describe('H13: replace edge cases', () => {

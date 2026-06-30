@@ -136,6 +136,7 @@ export function applyResponseAdaptor(
   responseData: unknown,
   scope: ScopeRef,
   env: RendererEnv,
+  status?: number,
 ): unknown {
   if (!sourceApi.responseAdaptor) {
     return responseData;
@@ -149,6 +150,7 @@ export function applyResponseAdaptor(
       response: responseData,
       api,
       scope: createAdaptorScopeView(scope),
+      status,
     },
     env,
   );

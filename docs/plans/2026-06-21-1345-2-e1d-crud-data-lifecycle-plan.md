@@ -208,6 +208,7 @@ Exit Criteria:
 - Why Not Blocking Closure: Q2 裁定（roadmap L99 引用）"等主 roadmap list/cards 落地后作为集成"。design.md §2 L41 + §9 L305 已注明 cards/list 是独立 renderer（`cards`/`list`），不是 CRUD 内部模式。E1d 的数据生命周期（polling/filterTogglable/infinite）独立于 cards/list 模式 —— 后者是"如何渲染行"，前者是"如何获取/刷新数据"。
 - Successor Required: yes
 - Successor Path: 主 roadmap W1c（list）/ W2a（cards）落地后，独立集成 plan 处理"CRUD 与 cards/list renderer 协作"。
+- Closure Note (2026-06-25): 已由 successor plan `docs/plans/2026-06-24-2358-2-crud-cards-list-rendering-mode-plan.md` 收口 —— CRUD `listMode: 'table' | 'cards' | 'list'` 已落地，非 table 模式下 CRUD 自持 selection（`component:toggleSelection` 写 `selectionStatePath`）并按载体承载 pagination（list 复用 runtime scope 分页；cards 预切片 + footer 分页）。design.md §2 L41 已翻转为「实现」、§4.1.1 补 carrier 边界。
 
 ### `clientMode.matchFunc`
 

@@ -300,6 +300,7 @@ export function useCrudHandle(
   selectedRowKeys: unknown[],
   clearSelection: () => void,
   handleRefresh: (ctx?: Partial<ActionContext>) => void,
+  toggleSelection: (key: unknown) => void,
 ) {
   const componentRegistry = useCurrentComponentRegistry();
   const cid = props.meta.cid;
@@ -318,12 +319,12 @@ export function useCrudHandle(
         type: 'crud',
         capabilities: {
           hasMethod(method) {
-            return ['refresh', 'getSelection', 'clearSelection'].includes(method);
+            return ['refresh', 'getSelection', 'clearSelection', 'toggleSelection'].includes(method);
           },
           listMethods() {
-            return ['refresh', 'getSelection', 'clearSelection'];
+            return ['refresh', 'getSelection', 'clearSelection', 'toggleSelection'];
           },
-          async invoke(method, _payload, ctx) {
+          async invoke(method, payload, ctx) {
             switch (method) {
               case 'refresh':
                 handleRefresh(toPartialActionContext(ctx));
@@ -333,6 +334,9 @@ export function useCrudHandle(
               case 'clearSelection':
                 clearSelection();
                 return { ok: true };
+              case 'toggleSelection':
+                toggleSelection((payload as { key?: unknown } | undefined)?.key);
+                return { ok: true };
               default:
                 return { ok: false, error: new Error(`Unknown method: ${method}`) };
             }
@@ -341,7 +345,7 @@ export function useCrudHandle(
       },
       { cid },
     );
-  }, [clearSelection, componentRegistry, cid, handleRefresh, id, name, selectedRowKeys]);
+  }, [clearSelection, componentRegistry, cid, handleRefresh, id, name, selectedRowKeys, toggleSelection]);
 }
 
 export function useCrudRuntimeState(args: {

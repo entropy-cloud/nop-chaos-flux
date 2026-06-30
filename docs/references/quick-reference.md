@@ -11,33 +11,36 @@ Code source of truth: `packages/flux-core/src/types/`, `packages/flux-react/src/
 
 ## Package Directory Map
 
-| Directory                    | npm name                                | Layer |
-| ---------------------------- | --------------------------------------- | ----- |
-| flux-core                    | @nop-chaos/flux-core                    | 1     |
-| flux-formula                 | @nop-chaos/flux-formula                 | 2     |
-| flux-compiler                | @nop-chaos/flux-compiler                | 3     |
-| flux-action-core             | @nop-chaos/flux-action-core             | 4     |
-| flux-runtime                 | @nop-chaos/flux-runtime                 | 5     |
-| flux-react                   | @nop-chaos/flux-react                   | 6     |
-| flux-renderers-basic         | @nop-chaos/flux-renderers-basic         | 7     |
-| flux-renderers-form          | @nop-chaos/flux-renderers-form          | 7     |
-| flux-renderers-form-advanced | @nop-chaos/flux-renderers-form-advanced | 7     |
-| flux-renderers-data          | @nop-chaos/flux-renderers-data          | 7     |
-| ui                           | @nop-chaos/ui                           | 7     |
-| flux-code-editor             | @nop-chaos/flux-code-editor             | 7     |
-| flux-i18n                    | @nop-chaos/flux-i18n                    | 7     |
-| nop-debugger                 | @nop-chaos/nop-debugger                 | 7     |
-| flux-bundle                  | @nop-chaos/flux-bundle                  | 8     |
-| flow-designer-core           | @nop-chaos/flow-designer-core           | 5     |
-| flow-designer-renderers      | @nop-chaos/flow-designer-renderers      | 7     |
-| spreadsheet-core             | @nop-chaos/spreadsheet-core             | 5     |
-| spreadsheet-renderers        | @nop-chaos/spreadsheet-renderers        | 7     |
-| word-editor-core             | @nop-chaos/word-editor-core             | 5     |
-| word-editor-renderers        | @nop-chaos/word-editor-renderers        | 7     |
-| report-designer-core         | @nop-chaos/report-designer-core         | 5     |
-| report-designer-renderers    | @nop-chaos/report-designer-renderers    | 7     |
-| tailwind-preset              | @nop-chaos/tailwind-preset              | -     |
-| theme-tokens                 | @nop-chaos/theme-tokens                 | -     |
+| Directory                                            | npm name                                | Layer |
+| ---------------------------------------------------- | --------------------------------------- | ----- |
+| flux-core                                            | @nop-chaos/flux-core                    | 1     |
+| flux-formula                                         | @nop-chaos/flux-formula                 | 2     |
+| flux-compiler                                        | @nop-chaos/flux-compiler                | 3     |
+| flux-action-core                                     | @nop-chaos/flux-action-core             | 4     |
+| flux-runtime                                         | @nop-chaos/flux-runtime                 | 5     |
+| flux-react                                           | @nop-chaos/flux-react                   | 6     |
+| flux-renderers-basic                                 | @nop-chaos/flux-renderers-basic         | 7     |
+| flux-renderers-form                                  | @nop-chaos/flux-renderers-form          | 7     |
+| flux-renderers-form-advanced                         | @nop-chaos/flux-renderers-form-advanced | 7     |
+| flux-renderers-data                                  | @nop-chaos/flux-renderers-data          | 7     |
+| flux-renderers-mobile                                | @nop-chaos/flux-renderers-mobile        | 7     |
+| flux-renderers-content                               | @nop-chaos/flux-renderers-content       | 7     |
+| flux-renderers-layout                                | @nop-chaos/flux-renderers-layout        | 7     |
+| ui                                                   | @nop-chaos/ui                           | 7     |
+| flux-code-editor                                     | @nop-chaos/flux-code-editor             | 7     |
+| flux-i18n                                            | @nop-chaos/flux-i18n                    | 7     |
+| nop-debugger                                         | @nop-chaos/nop-debugger                 | 7     |
+| flux-bundle (dir) / @nop-chaos/flux (published name) | @nop-chaos/flux                         | 8     |
+| flow-designer-core                                   | @nop-chaos/flow-designer-core           | 5     |
+| flow-designer-renderers                              | @nop-chaos/flow-designer-renderers      | 7     |
+| spreadsheet-core                                     | @nop-chaos/spreadsheet-core             | 5     |
+| spreadsheet-renderers                                | @nop-chaos/spreadsheet-renderers        | 7     |
+| word-editor-core                                     | @nop-chaos/word-editor-core             | 5     |
+| word-editor-renderers                                | @nop-chaos/word-editor-renderers        | 7     |
+| report-designer-core                                 | @nop-chaos/report-designer-core         | 5     |
+| report-designer-renderers                            | @nop-chaos/report-designer-renderers    | 7     |
+| tailwind-preset                                      | @nop-chaos/tailwind-preset              | -     |
+| theme-tokens                                         | @nop-chaos/theme-tokens                 | -     |
 
 Renderer packages use `{feature}-renderers` naming, NOT `flux-renderers-{feature}`.
 
@@ -478,9 +481,9 @@ interface PageRuntime {
 | `useCurrentFormState(selector)`        | `T`                                   | Reactive selector over form store state        |
 | `useCurrentValidationValues(selector)` | `T`                                   | Reactive selector over validation scope values |
 | `useCurrentFormErrors()`               | `ValidationError[]`                   | All current form errors                        |
-| `useCurrentFormError(path)`            | `ValidationError[] \| undefined`      | Error for specific path                        |
+| `useCurrentFormError(path)`            | `ValidationError \| undefined`        | Error for specific path                        |
 | `useCurrentFormFieldState(path)`       | `FormFieldPresentationSnapshot`       | Field state + presentation                     |
-| `useFieldError(path)`                  | `ValidationError[] \| undefined`      | Error for a field                              |
+| `useFieldError(path)`                  | `ValidationError \| undefined`        | Error for a field                              |
 | `useOwnedFieldState(path)`             | field state                           | Owned field state                              |
 | `useChildFieldState(path)`             | field state                           | Child field state                              |
 | `useAggregateError(path)`              | aggregated error                      | Aggregated error for a path                    |
@@ -489,18 +492,18 @@ interface PageRuntime {
 
 ### Context hooks
 
-| Hook                            | Returns                    | Purpose                          |
-| ------------------------------- | -------------------------- | -------------------------------- |
-| `useCurrentPage()`              | `PageRuntime \| undefined` | Get current page                 |
-| `useCurrentSurfaceRuntime()`    | `SurfaceRuntime`           | Get surface runtime              |
-| `useCurrentNodeMeta()`          | `ResolvedNodeMeta`         | Get current node metadata        |
-| `useCurrentNodeInstance()`      | `NodeInstance`             | Get current node instance        |
-| `useCurrentActionScope()`       | `ActionScope`              | Get action scope                 |
-| `useCurrentComponentRegistry()` | `ComponentHandleRegistry`  | Get component handle registry    |
-| `useCurrentImportFrame()`       | `ImportFrame`              | Get current import frame         |
-| `useRenderInstancePath()`       | `string`                   | Get current render instance path |
-| `useFormLayout()`               | `FormLayoutContextValue`   | Get form layout context          |
-| `useStrictMode()`               | `boolean`                  | Whether strict mode enabled      |
+| Hook                            | Returns                                 | Purpose                          |
+| ------------------------------- | --------------------------------------- | -------------------------------- |
+| `useCurrentPage()`              | `PageRuntime \| undefined`              | Get current page                 |
+| `useCurrentSurfaceRuntime()`    | `SurfaceRuntime`                        | Get surface runtime              |
+| `useCurrentNodeMeta()`          | `ResolvedNodeMeta`                      | Get current node metadata        |
+| `useCurrentNodeInstance()`      | `NodeInstance`                          | Get current node instance        |
+| `useCurrentActionScope()`       | `ActionScope`                           | Get action scope                 |
+| `useCurrentComponentRegistry()` | `ComponentHandleRegistry`               | Get component handle registry    |
+| `useCurrentImportFrame()`       | `ImportFrame`                           | Get current import frame         |
+| `useRenderInstancePath()`       | `readonly InstanceFrame[] \| undefined` | Get current render instance path |
+| `useFormLayout()`               | `FormLayoutContextValue`                | Get form layout context          |
+| `useStrictMode()`               | `boolean`                               | Whether strict mode enabled      |
 
 ### Utility hooks
 

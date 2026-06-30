@@ -3,7 +3,7 @@
 ## 1. 组件定位
 
 - `designer-node-card` 是 Flow Designer 节点卡片的候选专用 renderer。
-- 当前它已作为 schema 类型存在，但尚未注册为公开 renderer definition。
+- 当前它已作为 schema 类型存在并已在 `flowDesignerRendererDefinitions` 中正式注册，作为 designer-page 边界内的 schema 级节点摘要展示（inspector / 摘要面板用）。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
@@ -14,7 +14,7 @@
 
 - 目标 `type: 'designer-node-card'`
 - 预期归属 `@nop-chaos/flow-designer-renderers`
-- 当前状态：schema 已导出，renderer 未注册
+- 当前状态：已注册（`packages/flow-designer-renderers/src/renderer-definitions.ts` 注册 `DesignerNodeCardRenderer`，按 id 解析 node 摘要、渲染 type label/position/选中态、点击派发 `selectNode` command）
 
 ## 4. schema 设计
 
@@ -53,4 +53,4 @@
 
 ## 12. 风险、取舍与后续阶段
 
-- 过早公开 renderer 会把内部画布实现细节固定下来，需要等 host bridge 稳定后再注册。
+- ~~过早公开 renderer 会把内部画布实现细节固定下来，需要等 host bridge 稳定后再注册。~~ 已落地：host bridge 现已稳定（`HostProjectionContract` 由 `designer-host-projection.ts` + `designer-manifest.ts` + `designer-context.ts` 构成正式契约），deferral 前置条件已解除。renderer 已注册于 `flowDesignerRendererDefinitions`，落地 plan：`docs/plans/2026-06-25-0307-1-d1a-designer-node-card-edge-row-registration-plan.md`。schema 级 node 摘要展示与画布内 xyflow 节点壳为不同渲染层，互不替代。

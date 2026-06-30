@@ -101,25 +101,6 @@ export const w2aDataCompositionDefinitions: RendererDefinition[] = [
         editorType: 'select',
         defaultValue: 'simple',
       },
-      pageOwnership: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'local' },
-            { kind: 'literal', value: 'controlled' },
-            { kind: 'literal', value: 'scope' },
-          ],
-        },
-        displayName: 'Page Ownership',
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-      pageStatePath: {
-        shape: { kind: 'string' },
-        displayName: 'Page State Path',
-        description: 'Scope path publishing the writable pagination interaction state.',
-        editorType: 'expression',
-      },
       statusPath: {
         shape: { kind: 'string' },
         displayName: 'Status Path',
@@ -162,8 +143,6 @@ export const w2aDataCompositionDefinitions: RendererDefinition[] = [
       { key: 'total', kind: 'prop' },
       { key: 'pageSizeOptions', kind: 'prop' },
       { key: 'mode', kind: 'prop' },
-      { key: 'pageOwnership', kind: 'prop' },
-      { key: 'pageStatePath', kind: 'prop' },
       { key: 'statusPath', kind: 'prop' },
       { key: 'onChange', kind: 'event' },
       { key: 'onPageSizeChange', kind: 'event' },

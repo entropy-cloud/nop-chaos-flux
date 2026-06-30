@@ -1,3 +1,4 @@
+import { getMessageFormatter } from '@nop-chaos/flux-core';
 import { dateHelper } from './date-helper.js';
 import type { FormulaRegistry } from './registry.js';
 
@@ -185,6 +186,18 @@ export function installBuiltins(registry: FormulaRegistry): void {
   registry.registerFunction('MOD', (left: unknown, right: unknown) => Number(left) % Number(right));
   registry.registerFunction('RAND', () => Math.random());
   registry.registerFunction('PI', () => Math.PI);
+
+  // I3: expose the i18n sink as a formula builtin so schema authors can resolve
+  // message keys (e.g. flux.common.noData) and parametrized messages inside
+  // expressions. The formatter is read at call time (getMessageFormatter), so
+  // the expression reflects the active locale at evaluation and is not collapsed
+  // into a static literal. flux-formula already depends on flux-core
+  // (package.json), and the sink is the same one consumed by validation
+  // messages — no new infra.
+  registry.registerFunction('t', (key: unknown, params?: unknown) => {
+    const formatter = getMessageFormatter();
+    return formatter(key == null ? '' : String(key), params as Record<string, unknown> | undefined);
+  });
 }
 
 export { customEquals };

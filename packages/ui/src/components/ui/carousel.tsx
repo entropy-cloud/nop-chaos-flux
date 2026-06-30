@@ -1,6 +1,7 @@
 import * as React from 'react';
 import useEmblaCarousel, { type UseEmblaCarouselType } from 'embla-carousel-react';
 import { t } from '../../lib/i18n.js';
+import { isEditableTarget } from '../../lib/focus-target.js';
 
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
@@ -75,14 +76,21 @@ function Carousel({
   }, [api]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        scrollPrev();
-      } else if (event.key === 'ArrowRight') {
-        event.preventDefault();
-        scrollNext();
-      }
-    };
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      return;
+    }
+    // P1-4: do not hijack arrow keys when focus is inside an editable control
+    // (text input, range slider, contenteditable, ...) — let it behave natively.
+    if (isEditableTarget(event.target)) {
+      return;
+    }
+    event.preventDefault();
+    if (event.key === 'ArrowLeft') {
+      scrollPrev();
+    } else {
+      scrollNext();
+    }
+  };
 
   React.useEffect(() => {
     if (!api || !setApi) return;

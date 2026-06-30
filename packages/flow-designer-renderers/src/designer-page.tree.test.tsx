@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';

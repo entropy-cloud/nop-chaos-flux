@@ -13,7 +13,7 @@ describe('CRUD selection drift — keepOnPageChange (hook-level)', () => {
     resetTableControlTestState();
   });
 
-  it('keepOnPageChange: true — handleSelectAll(true) merges current rows into existing selection', () => {
+  it('keepOnPageChange: true — handleSelectAll(true) merges current rows into existing selection, retaining real cross-page rows but pruning phantom keys (H21)', () => {
     let api: any;
 
     render(
@@ -22,11 +22,14 @@ describe('CRUD selection drift — keepOnPageChange (hook-level)', () => {
           selectionOwnership: 'local',
           rowSelection: {
             type: 'checkbox',
-            selectedRowKeys: ['X'],
+            // The hook receives the full known dataset (treeFlattenedData). "X" is a
+            // real row present in the dataset (a cross-page row); "gone" is a phantom
+            // key whose row was deleted and is no longer in the dataset.
+            selectedRowKeys: ['X', 'gone'],
             keepOnPageChange: true,
           },
         }}
-        source={[{ id: 'a' }, { id: 'b' }]}
+        source={[{ id: 'a' }, { id: 'b' }, { id: 'X' }]}
         onSelectionChange={vi.fn()}
         helpers={createHelpers()}
         onReady={(value) => {
@@ -35,16 +38,17 @@ describe('CRUD selection drift — keepOnPageChange (hook-level)', () => {
       />,
     );
 
-    expect(Array.from(api.selectedRowKeys)).toEqual(['X']);
+    expect(Array.from(api.selectedRowKeys).sort()).toEqual(['X', 'gone']);
 
     act(() => {
       api.handleSelectAll(true);
     });
 
+    // "X" (real row) is retained; "gone" (phantom) is pruned; current rows added.
     expect(Array.from(api.selectedRowKeys).sort()).toEqual(['X', 'a', 'b']);
   });
 
-  it('keepOnPageChange: true — handleSelectAll(false) removes only current page rows', () => {
+  it('keepOnPageChange: true — handleSelectAll(false) clears the dataset rows and drops phantom keys (H21)', () => {
     let api: any;
 
     render(
@@ -53,11 +57,11 @@ describe('CRUD selection drift — keepOnPageChange (hook-level)', () => {
           selectionOwnership: 'local',
           rowSelection: {
             type: 'checkbox',
-            selectedRowKeys: ['X', 'a', 'b'],
+            selectedRowKeys: ['X', 'a', 'b', 'gone'],
             keepOnPageChange: true,
           },
         }}
-        source={[{ id: 'a' }, { id: 'b' }]}
+        source={[{ id: 'a' }, { id: 'b' }, { id: 'X' }]}
         onSelectionChange={vi.fn()}
         helpers={createHelpers()}
         onReady={(value) => {
@@ -66,13 +70,16 @@ describe('CRUD selection drift — keepOnPageChange (hook-level)', () => {
       />,
     );
 
-    expect(Array.from(api.selectedRowKeys).sort()).toEqual(['X', 'a', 'b']);
+    expect(Array.from(api.selectedRowKeys).sort()).toEqual(['X', 'a', 'b', 'gone']);
 
     act(() => {
       api.handleSelectAll(false);
     });
 
-    expect(Array.from(api.selectedRowKeys)).toEqual(['X']);
+    // All dataset rows deselected and the phantom "gone" dropped — no phantom key
+    // survives into the selection state / payload.
+    expect(Array.from(api.selectedRowKeys)).toEqual([]);
+    expect(api.selectedRowKeys.has('gone')).toBe(false);
   });
 
   it('keepOnPageChange: false (default) — handleSelectAll(true) replaces selection (current behavior preserved)', () => {

@@ -121,6 +121,29 @@ Flux 的顶层基线不是“防御性复制优先”，而是“只读纪律 + 
 
 这四个平台层仅描述端到端的职责划分，不应与 `Flux` `Execution Model` 内部使用的分类体系相混淆。
 
+## i18n 边界裁定（locale 解析覆盖）
+
+> 裁定来源：roadmap B5.1 / signal `12-i18n.md` I1。本节显式化 locale 解析的「两半」边界。
+
+Flux 的 i18n 契约拆为两个职责不同的半边：
+
+| 半边                      | 归属                      | 契约                                                                                                                                                                                                                            | 状态                                              |
+| ------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| renderer message-key 半边 | `Flux` `Execution Model`  | renderer 层 message-key 查找：`t('flux.*')` / `useFluxTranslation` 解析，reactive 于组件渲染与 locale 切换（locale 变化触发已挂载组件重算）。实现在 `flux-i18n`（`i18n.ts` 的 `initFluxI18n`/`t`/`changeLanguage`、`hooks.ts`） | ✅ 已锁（已实现 + 已测，`i18n.test.ts`）          |
+| schema-string 翻译半边    | Loader / 组装层（+ 宿主） | 对 schemaApi-fetched / dynamically-injected schema 的字符串翻译 pass **不在 runtime 渲染期执行**。runtime 不对任意 schema 字符串做翻译。远程/动态 schema 的本地化是 Loader/组装层在「跨越执行边界前」完成的职责                 | 🟡 DESIGN-ACK（架构归 Loader 层；runtime 未实现） |
+
+证据（live baseline）：
+
+- `getMessageFormatter()` 全仓唯一的生产消费者是校验消息（`packages/flux-runtime/src/validation/message.ts`），没有第二个 runtime 消费点。
+- `flux-formula` 无 `t` builtin（公式层不持有翻译能力）。
+- dynamic-renderer 加载 schema 无 i18n pass（`packages/flux-renderers-basic/src/dynamic-renderer.tsx`）。
+- 上表「Loader / 组装层」行已将 `i18n` 列为该层职责（见平台分层表）。
+
+结论与 successor：
+
+- message-key 半边是 Flux runtime 契约，已锁；schema-string 翻译半边是 distinct feature（涉及编译期/加载期 i18n pass），Flux 从未声称在 runtime 做。
+- 若产品判断需要 runtime/加载期 schema-string 翻译 pass，升级为 Loader 层 feature 工作项（roadmap B7 successor），不在此边界债内实现。
+
 ## Execution Model 分类体系
 
 在 `Flux` `Execution Model` 内部，概念分为三类：

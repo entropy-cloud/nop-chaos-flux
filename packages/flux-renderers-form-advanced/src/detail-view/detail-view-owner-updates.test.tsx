@@ -2,10 +2,16 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { baseEnv, createPageSchemaRenderer, formulaCompiler } from '../test-support.js';
 
 let viewerMountCount = 0;
+
+beforeEach(() => {
+  // C-23: reset module-level mutable counters in beforeEach for test isolation
+  // instead of relying on ad-hoc inline resets scattered across individual tests.
+  viewerMountCount = 0;
+});
 
 function DetailViewerLifecycleProbe() {
   const title = useScopeSelector((data: any) => data.summary?.title);
@@ -269,7 +275,6 @@ describe('detail-view renderer owner update behavior', () => {
 
   it('refreshes viewer content after confirm without remounting the viewer subtree', async () => {
     cleanup();
-    viewerMountCount = 0;
     const SchemaRenderer = createPageSchemaRenderer([detailViewerLifecycleProbeRenderer]);
 
     render(

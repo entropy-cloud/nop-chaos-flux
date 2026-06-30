@@ -132,7 +132,7 @@ describe('page renderer — responsive toolbar stacking (M3a)', () => {
     expect(toolbar.className).not.toContain('flex-col');
   });
 
-  it('stacks toolbar vertically on mobile', () => {
+  it('emits only the marker class on mobile (H32: layout-renderer marker-only contract)', () => {
     mobileState.isMobile = true;
     const { container } = renderPage({
       type: 'page',
@@ -142,8 +142,12 @@ describe('page renderer — responsive toolbar stacking (M3a)', () => {
     } as BaseSchema);
     const toolbar = container.querySelector('[data-slot="page-toolbar"]') as HTMLElement;
     expect(toolbar).toBeTruthy();
-    expect(toolbar.className).toContain('flex');
-    expect(toolbar.className).toContain('flex-col');
+    // H32: page is a layout renderer and must NOT hardcode visual classes
+    // (flex/flex-col) conditionally on isMobile. Mobile stacking is driven by
+    // schema (toolbarClassName) or CSS targetinging the marker, not by the
+    // component branching on a viewport boolean.
+    expect(toolbar.className).not.toContain('flex-col');
+    expect(toolbar.className).not.toContain('flex');
   });
 });
 

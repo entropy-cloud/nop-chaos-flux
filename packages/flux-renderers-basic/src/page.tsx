@@ -50,8 +50,13 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
       ? slotProps.remark
       : undefined;
   const asidePosition = slotProps.asidePosition === 'right' ? 'right' : 'left';
-  const rawAsideSchema = props.schema.aside;
-  const hasAside = Array.isArray(rawAsideSchema) ? rawAsideSchema.length > 0 : false;
+  // C-11: detect the aside via the compiled region handle rather than the raw schema
+  // fragment. An empty `aside: []` compiles to an empty template-node array, so check
+  // for actual content to keep the collapse-on-empty behavior.
+  const asideTemplate = props.regions.aside?.templateNode;
+  const hasAside = Array.isArray(asideTemplate)
+    ? asideTemplate.length > 0
+    : Boolean(asideTemplate);
   const asideContent = hasAside ? asReactNode(props.regions.aside?.render()) : null;
 
   useStatusPathPublication(
@@ -120,10 +125,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
         </header>
       ) : null}
       {hasRendererSlotContent(headerContent) ? (
-        <div
-          data-slot="page-toolbar"
-          className={cn(slotProps.toolbarClassName, isMobile && 'flex flex-col')}
-        >
+        <div data-slot="page-toolbar" className={cn(slotProps.toolbarClassName)}>
           {headerContent}
         </div>
       ) : null}

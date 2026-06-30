@@ -357,7 +357,15 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       },
     ],
     fields: [
-      { key: 'loadAction', kind: 'event' },
+      // NOTE: `loadAction` is intentionally NOT declared as `kind:'event'`. It is a
+      // prop whose `${}` templates the compiler pre-compiles into the node's
+      // propsProgram (compile-once). The renderer consumes the reactively-resolved
+      // value from `props.props.loadAction` and dispatches it itself (with a custom
+      // AbortSignal + reload change-detection). Declaring it as an event would be a
+      // "lying contract" (compiles an unused RendererEventHandler) and would hide
+      // the resolved-action change-detection the renderer relies on for reload
+      // reactivity. Its shape is validated by the schemaValidator above.
+      { key: 'loadAction', kind: 'prop' },
       { key: 'autoLoad', kind: 'prop', valueType: 'boolean' },
       { key: 'body', kind: 'region', regionKey: 'body' },
     ],

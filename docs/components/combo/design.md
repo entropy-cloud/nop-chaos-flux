@@ -18,7 +18,8 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `name`、`label`、`items`、`multiple`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`itemKey`。
+- 建议正式字段为 `name`、`label`、`items`、`multiple`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`itemKey`、`removeWhen`。
+- `removeWhen`（可选）：相对当前 item 求值的布尔表达式字符串（`${...}` 形式，如 `'${value.locked !== true}'`）。声明后，某行仅在表达式对该 item 求值为真时允许删除；求值为假的行删除按钮禁用。未声明时所有行在 `minItems` 地板之上均可删除。求值出错 fail-open。详见 `docs/architecture/array-field.md` 的 _Per-Row Delete Gating_。
 
 ## 5. 字段分类
 
@@ -38,6 +39,7 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 推荐句柄为 `component:addItem`、`component:removeItem`、`component:moveItem`（canonical composite handle，method-locked，不扩展句柄工厂）。
+- `removeItem` 受 `minItems` field-global 地板与 per-row `removeWhen` 门控叠加约束（取并集禁用）；详见 §4 与 `docs/architecture/array-field.md` 的 _Per-Row Delete Gating_。
 
 ## 9. 数据源、表达式、导入能力接入点
 

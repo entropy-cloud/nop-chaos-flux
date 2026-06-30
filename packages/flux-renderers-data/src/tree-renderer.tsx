@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { InstanceFrame, RendererComponentProps } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
@@ -17,6 +17,30 @@ import {
 } from '@nop-chaos/ui';
 import { ChevronRightIcon } from 'lucide-react';
 import type { TreeSchema } from './schemas.js';
+import {
+  createTreeNodeId,
+  createTreeNodeRepeatedTemplateId,
+  shouldExpandInitially,
+  toNodeKey,
+  toTreeNodes,
+  type TreeNodeRecord,
+  DEFAULT_CHILDREN_KEY,
+  DEFAULT_KEY_FIELD,
+  DEFAULT_LABEL_FIELD,
+} from './tree-node-helpers.js';
+import type { TreeNavigationKey } from './tree-focus-nav.js';
+import {
+  getTreeItemDepth,
+  getTreeItemNodeId,
+  getVisibleTreeItems,
+} from './tree-focus-nav.js';
+import {
+  collectTreeNodeIds,
+  computeTreeSearch,
+  EMPTY_TREE_SEARCH,
+  renderHighlightedLabel,
+  type TreeSearchState,
+} from './tree-search.js';
 
 const TREE_EXPANDED_CHILD_BATCH_SIZE = 50;
 const TREE_INDENT_PX = 16;
@@ -24,214 +48,6 @@ const TREE_BASE_PADDING_PX = 8;
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
-}
-
-interface TreeNodeRecord {
-  [key: string]: unknown;
-}
-
-const DEFAULT_CHILDREN_KEY = 'children';
-const DEFAULT_LABEL_FIELD = 'label';
-const DEFAULT_KEY_FIELD = 'id';
-type TreeNavigationKey = 'ArrowDown' | 'ArrowUp' | 'Home' | 'End';
-
-function createTreeNodeRepeatedTemplateId(ownerId: string): string {
-  return `tree-node:${ownerId}`;
-}
-
-function isTreeNodeRecord(value: unknown): value is TreeNodeRecord {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function toTreeNodes(value: unknown): TreeNodeRecord[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.filter(isTreeNodeRecord);
-}
-
-function toNodeKey(node: TreeNodeRecord, keyField: string, index: number): string {
-  const explicitKey = getIn(node, keyField);
-
-  if (explicitKey !== undefined && explicitKey !== null && explicitKey !== '') {
-    return String(explicitKey);
-  }
-
-  return `node:${index}`;
-}
-
-function shouldExpandInitially(initiallyExpanded: unknown, depth: number): boolean {
-  if (typeof initiallyExpanded === 'number') {
-    return depth < initiallyExpanded;
-  }
-
-  return initiallyExpanded === true;
-}
-
-function createTreeNodeId(parentTreeNodeId: string | undefined, nodeKey: string): string {
-  return parentTreeNodeId ? `${parentTreeNodeId}/${nodeKey}` : nodeKey;
-}
-
-function getVisibleTreeItems(root: HTMLDivElement | null): HTMLDivElement[] {
-  if (!root) {
-    return [];
-  }
-
-  return Array.from(root.querySelectorAll<HTMLDivElement>('[role="treeitem"]'));
-}
-
-function getTreeItemDepth(element: HTMLDivElement | undefined): number {
-  if (!element) {
-    return 0;
-  }
-
-  const depth = Number(element.dataset.depth);
-  return Number.isFinite(depth) ? depth : 0;
-}
-
-function getTreeItemNodeId(element: HTMLDivElement | undefined): string | undefined {
-  return element?.dataset.treeNodeId;
-}
-
-function collectTreeNodeIdsInto(
-  nodes: readonly TreeNodeRecord[],
-  nodeIds: Set<string>,
-  childrenKey: string,
-  keyField: string,
-  parentTreeNodeId?: string,
-) {
-  
-  nodes.forEach((node, index) => {
-    const nodeKey = toNodeKey(node, keyField, index);
-    const treeNodeId = createTreeNodeId(parentTreeNodeId, nodeKey);
-    nodeIds.add(treeNodeId);
-
-    collectTreeNodeIdsInto(
-      toTreeNodes(getIn(node, childrenKey)),
-      nodeIds,
-      childrenKey,
-      keyField,
-      treeNodeId,
-    );
-  });
-}
-
-function collectTreeNodeIds(
-  nodes: readonly TreeNodeRecord[],
-  childrenKey: string,
-  keyField: string,
-  parentTreeNodeId?: string,
-): Set<string> {
-  const nodeIds = new Set<string>();
-  collectTreeNodeIdsInto(nodes, nodeIds, childrenKey, keyField, parentTreeNodeId);
-  return nodeIds;
-}
-
-interface TreeSearchState {
-  query: string;
-  active: boolean;
-  visibleNodeIds: Set<string>;
-  forcedOpenNodeIds: Set<string>;
-}
-
-const EMPTY_TREE_SEARCH: TreeSearchState = {
-  query: '',
-  active: false,
-  visibleNodeIds: new Set<string>(),
-  forcedOpenNodeIds: new Set<string>(),
-};
-
-function computeTreeSearch(
-  nodes: readonly TreeNodeRecord[],
-  rawQuery: string,
-  childrenKey: string,
-  labelField: string,
-  keyField: string,
-): TreeSearchState {
-  const query = rawQuery.trim();
-  const normalizedQuery = query.toLowerCase();
-  if (!normalizedQuery) {
-    return { ...EMPTY_TREE_SEARCH, visibleNodeIds: new Set(), forcedOpenNodeIds: new Set() };
-  }
-
-  const matchedNodeIds = new Set<string>();
-  const forcedOpenNodeIds = new Set<string>();
-
-  const walk = (
-    nodesList: readonly TreeNodeRecord[],
-    parentTreeNodeId: string | undefined,
-    ancestorIds: readonly string[],
-  ): boolean => {
-    let subtreeHasMatch = false;
-    nodesList.forEach((node, index) => {
-      const nodeKey = toNodeKey(node, keyField, index);
-      const treeNodeId = createTreeNodeId(parentTreeNodeId, nodeKey);
-      const labelValue = getIn(node, labelField);
-      const labelStr = String(labelValue ?? '').toLowerCase();
-      const isMatch = labelStr.includes(normalizedQuery);
-      const childNodes = toTreeNodes(getIn(node, childrenKey));
-      const childAncestors = [...ancestorIds, treeNodeId];
-      const childHasMatch = walk(childNodes, treeNodeId, childAncestors);
-
-      if (isMatch) {
-        matchedNodeIds.add(treeNodeId);
-        ancestorIds.forEach((aid) => forcedOpenNodeIds.add(aid));
-        subtreeHasMatch = true;
-      }
-
-      if (childHasMatch) {
-        forcedOpenNodeIds.add(treeNodeId);
-        ancestorIds.forEach((aid) => forcedOpenNodeIds.add(aid));
-        subtreeHasMatch = true;
-      }
-    });
-    return subtreeHasMatch;
-  };
-
-  walk(nodes, undefined, []);
-
-  const visibleNodeIds = new Set<string>(matchedNodeIds);
-  forcedOpenNodeIds.forEach((id) => visibleNodeIds.add(id));
-
-  return { query, active: true, visibleNodeIds, forcedOpenNodeIds };
-}
-
-function renderHighlightedLabel(label: string, query: string): React.ReactNode {
-  const normalizedQuery = query.trim().toLowerCase();
-  if (!normalizedQuery) {
-    return <span>{label}</span>;
-  }
-
-  const lower = label.toLowerCase();
-  const parts: React.ReactNode[] = [];
-  let cursor = 0;
-  let key = 0;
-  let idx = lower.indexOf(normalizedQuery, cursor);
-
-  while (idx !== -1) {
-    if (idx > cursor) {
-      parts.push(label.slice(cursor, idx));
-    }
-    parts.push(
-      <mark
-        key={`hl-${key}`}
-        data-slot="tree-search-highlight"
-        className="rounded-sm bg-yellow-200/70 px-0.5 text-inherit"
-      >
-        {label.slice(idx, idx + normalizedQuery.length)}
-      </mark>,
-    );
-    key += 1;
-    cursor = idx + normalizedQuery.length;
-    idx = lower.indexOf(normalizedQuery, cursor);
-  }
-
-  if (cursor < label.length) {
-    parts.push(label.slice(cursor));
-  }
-
-  return <span>{parts}</span>;
 }
 
 function renderNodeIcon(node: TreeNodeRecord, iconField: string): React.ReactNode {
@@ -346,22 +162,30 @@ function TreeNodeRenderer(props: {
       return;
     }
 
-    setRenderedChildCount((previous) => {
-      if (previous >= childNodes.length) {
-        return previous;
-      }
+    // H17: incremental chunking. The first batch renders synchronously; each
+    // subsequent batch is scheduled via a 0ms timer that only appends one batch
+    // (`prev + BATCH`) and re-arms (via the renderedChildCount dep) until it
+    // catches up to childNodes.length. Previously a single 0ms timer jumped
+    // straight to the full length, locking the main thread for 5k–50k children.
+    if (renderedChildCount >= childNodes.length) {
+      return;
+    }
 
-      return Math.max(previous, TREE_EXPANDED_CHILD_BATCH_SIZE);
-    });
+    if (renderedChildCount < TREE_EXPANDED_CHILD_BATCH_SIZE) {
+      setRenderedChildCount(TREE_EXPANDED_CHILD_BATCH_SIZE);
+      return;
+    }
 
     const timer = window.setTimeout(() => {
-      setRenderedChildCount(childNodes.length);
+      setRenderedChildCount((previous) =>
+        Math.min(previous + TREE_EXPANDED_CHILD_BATCH_SIZE, childNodes.length),
+      );
     }, 0);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [childNodes.length, open, searchActive]);
+  }, [childNodes.length, open, searchActive, renderedChildCount]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (searchActive) {
@@ -567,7 +391,10 @@ function TreeNodeRenderer(props: {
 
 export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const schemaProps = props.props as TreeSchema;
-  const data = toTreeNodes(schemaProps.data);
+  // `toTreeNodes` returns a fresh array every call, which would defeat the React
+  // Compiler's auto-memoization of the O(N) tree walks below. Memoize the parsed
+  // nodes on the raw data so `collectTreeNodeIds` / `computeTreeSearch` are stable.
+  const data = useMemo(() => toTreeNodes(schemaProps.data), [schemaProps.data]);
   const childrenKey =
     typeof schemaProps.childrenKey === 'string' && schemaProps.childrenKey
       ? schemaProps.childrenKey
@@ -610,6 +437,27 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const searchHasMatch = searchState.visibleNodeIds.size > 0;
   const resolvedActiveNodeId =
     activeNodeId && knownNodeIds.has(activeNodeId) ? activeNodeId : firstRootNodeId;
+
+  // G17: when the active node disappears (e.g. a data refresh removed it), DOM
+  // focus would otherwise fall back to <body>, stranding keyboard users outside
+  // the tree. If focus was lost to <body>, move it back onto the resolved active
+  // landing node so roving-tabIndex and real focus stay aligned.
+  useEffect(() => {
+    if (activeNodeId && knownNodeIds.has(activeNodeId)) {
+      return;
+    }
+    if (typeof document === 'undefined' || document.activeElement !== document.body) {
+      return;
+    }
+    const target = resolvedActiveNodeId;
+    if (!target) {
+      return;
+    }
+    const targetItem = getVisibleTreeItems(rootRef.current).find(
+      (item) => getTreeItemNodeId(item) === target,
+    );
+    targetItem?.focus({ preventScroll: true });
+  }, [activeNodeId, knownNodeIds, resolvedActiveNodeId]);
 
   const focusNode = (nodeId: string) => {
     const visibleTreeItems = getVisibleTreeItems(rootRef.current);

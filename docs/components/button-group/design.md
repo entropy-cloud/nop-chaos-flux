@@ -31,6 +31,7 @@
 ## 7. 运行期状态归属
 
 - 若支持 toggle-like 选中态，应明确为自身交互状态；普通纯动作组则无复杂 owner 状态。
+- `value` / `defaultValue` 是**初始种子**（seed only）：selection 为 **local controlled state**（renderer 自维护），运行时改 `value` 不会移动选中（非响应式）。这是诚实裁定（per-component Decision (B) 文档化为 local-only，见 `docs/plans/2026-06-25-0510-2-new-package-advertised-contract-and-lifecycle-honesty-plan.md` WS-A）——button-group 不声明 `valueOwnership`/`valueStatePath`，不暗示受控/scope 能力。若未来需要运行时受控选中，应引入显式 ownership 契约**并同时实现**响应式读/写（对齐 steps/collapse canonical duo），再恢复受控语义——不得保留误导性死契约。
 
 ## 8. 事件、动作与组件句柄能力
 

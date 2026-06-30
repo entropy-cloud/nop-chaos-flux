@@ -7,14 +7,14 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前尚未实现，但 UI 层已有 `Empty` primitive 可复用。
-- 首版应覆盖标题、描述和可选 actions，不引入复杂插画系统协议。
+- 已 shipped：注册于 `flux-renderers-content`（`content-renderer-definitions.ts`），复用 `@nop-chaos/ui` Empty primitive。
+- 覆盖 `title`、`description`、`image` 与可选 `actions`，不引入复杂插画系统协议。
 
 ## 3. Flux 中的 renderer/type 定义
 
-- 目标 `type: 'empty'`
-- 预期归属 `@nop-chaos/flux-renderers-content`
-- 预期 regions: `title`、`description`、`actions`
+- 实际 `type: 'empty'`
+- 实际归属 `@nop-chaos/flux-renderers-content`
+- 实际 regions: `title`、`description`、`actions`
 
 ## 4. schema 设计
 

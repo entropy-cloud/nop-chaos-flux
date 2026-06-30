@@ -235,6 +235,58 @@ describe('tree controls - async lazy loading (E2d childrenSource)', () => {
     });
   });
 
+  it('TR4: an initial value referencing a deferred child resolves to checked once children load', async () => {
+    const { env } = makeLazyChildrenEnv(() => [
+      { label: 'Leaf One', value: 'leaf-1' },
+      { label: 'Leaf Two', value: 'leaf-2' },
+    ]);
+
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/tree-lazy-children.test.tsx#lazy-echo"
+        schema={
+          {
+            type: 'form',
+            // Initial value references a deferred (not-yet-loaded) child.
+            data: { tree: ['leaf-1'] },
+            body: [
+              {
+                type: 'input-tree',
+                name: 'tree',
+                label: 'Tree',
+                treeMode: 'checkbox',
+                childrenSource: {
+                  action: 'ajax',
+                  args: { url: '/api/children', method: 'get' },
+                },
+                options: [{ label: 'Root', value: 'root', deferChildren: true }],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    // Expand the deferred root so its children load.
+    fireEvent.click(screen.getAllByLabelText('Expand')[0]!);
+
+    // After children arrive, the deferred child referenced by the initial value
+    // must render as checked (echo resolves deterministically via re-render).
+    await waitFor(() => {
+      expect(screen.getByRole('treeitem', { name: 'Leaf One' })).toBeTruthy();
+    });
+    const leafCheckbox = screen
+      .getByRole('treeitem', { name: 'Leaf One' })
+      .querySelector('[role="checkbox"]') as HTMLElement;
+    await waitFor(() => {
+      expect(leafCheckbox.getAttribute('aria-checked')).toBe('true');
+    });
+  });
+
   it('degrades to no children and warns when deferChildren set but no childrenSource declared', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 

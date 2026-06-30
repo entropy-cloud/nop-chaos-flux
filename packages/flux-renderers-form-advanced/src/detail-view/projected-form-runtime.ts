@@ -282,11 +282,11 @@ export function createProjectedFormRuntime(
     getFieldState(path) {
       return parentForm.getFieldState(options.prefixPath(path));
     },
-    validateAt(path, reason) {
-      return parentForm.validateAt(options.prefixPath(path), reason);
+    validateAt(path, reason, validateOptions) {
+      return parentForm.validateAt(options.prefixPath(path), reason, validateOptions);
     },
-    validateField(path, reason) {
-      return parentForm.validateField(options.prefixPath(path), reason);
+    validateField(path, reason, validateOptions) {
+      return parentForm.validateField(options.prefixPath(path), reason, validateOptions);
     },
     applyChangesAndRevalidate(input) {
       return parentForm.applyChangesAndRevalidate({
@@ -334,7 +334,23 @@ export function createProjectedFormRuntime(
       parentForm.visitField(options.prefixPath(path));
     },
     clearErrors(path) {
-      parentForm.clearErrors(path === undefined ? undefined : options.prefixPath(path));
+      if (path === undefined) {
+        // P0-5: clearErrors() with no path must only clear the projected subtree, not
+        // the whole parent form. Enumerate the projected field states that carry errors
+        // and clear each on the parent so sibling fields outside this owner are preserved.
+        const storeState =
+          typeof options.store.getState === 'function' ? options.store.getState() : undefined;
+        const projectedFieldStates = storeState?.fieldStates;
+        if (projectedFieldStates && typeof projectedFieldStates === 'object') {
+          for (const [relativePath, fieldState] of Object.entries(projectedFieldStates)) {
+            if (fieldState && (fieldState as { errors?: unknown }).errors) {
+              parentForm.clearErrors(options.prefixPath(relativePath));
+            }
+          }
+        }
+        return;
+      }
+      parentForm.clearErrors(options.prefixPath(path));
     },
     setValue(path, value) {
       if (options.setValue) {
@@ -368,13 +384,13 @@ export function createProjectedFormRuntime(
     notifyFieldHidden(path, hidden) {
       parentForm.notifyFieldHidden(options.prefixPath(path), hidden);
     },
-    validateSubtree(path, reason) {
-      return parentForm.validateSubtree(options.prefixPath(path), reason);
+    validateSubtree(path, reason, validateOptions) {
+      return parentForm.validateSubtree(options.prefixPath(path), reason, validateOptions);
     },
-    validateAll(reason) {
+    validateAll(reason, validateOptions) {
       return options.ownerRootPath
-        ? parentForm.validateSubtree(options.ownerRootPath, reason)
-        : parentForm.validateForm(reason);
+        ? parentForm.validateSubtree(options.ownerRootPath, reason, validateOptions)
+        : parentForm.validateForm(reason, validateOptions);
     },
   };
 

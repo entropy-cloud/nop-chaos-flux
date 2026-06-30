@@ -436,11 +436,13 @@ describe('createVariantFormProxy', () => {
     expect(form.clearErrors).toHaveBeenCalledWith('payload.name');
   });
 
-  it('delegates clearErrors with undefined unchanged', () => {
+  it('clearErrors(undefined) does not forward a whole-form clear (P0-5 scope-local)', () => {
     const store = createMinimalFormStore();
     const form = createMinimalFormRuntime(store);
     const proxy = createVariantFormProxy(form, 'payload');
     proxy.clearErrors(undefined);
-    expect(form.clearErrors).toHaveBeenCalledWith(undefined);
+    // P0-5: undefined must never propagate as a parent-form-wide clearErrors(undefined),
+    // which would wipe sibling field errors outside this owner's subtree.
+    expect(form.clearErrors).not.toHaveBeenCalledWith(undefined);
   });
 });

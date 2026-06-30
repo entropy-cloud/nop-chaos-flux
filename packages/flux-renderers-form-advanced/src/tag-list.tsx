@@ -85,7 +85,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   return (
     <div
       className={cn('nop-tag-list', 'flex flex-wrap gap-2.5', props.meta.className)}
-      data-slot="field-control"
+      data-slot="tag-list-control"
     >
       {tags.map((tag) => {
         const active = value.includes(tag);

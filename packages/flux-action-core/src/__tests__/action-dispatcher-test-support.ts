@@ -68,6 +68,8 @@ export function createMockEnv(): RendererEnv {
   return {
     fetcher: vi.fn(),
     notify: vi.fn(),
+    confirm: vi.fn(async () => true),
+    alert: vi.fn(),
     monitor: {
       onActionStart: vi.fn(),
       onActionEnd: vi.fn(),

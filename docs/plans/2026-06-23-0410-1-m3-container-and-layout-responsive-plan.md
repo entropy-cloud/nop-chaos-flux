@@ -178,6 +178,7 @@ Exit Criteria:
 - Why Not Blocking Closure: `grid` renderer 尚未落地（主 roadmap W3a `todo`，`flux-renderers-layout` 包不存在）。M3b 的「grid 响应式」无对象可适配——grid 组件本身是 M3b 的外部前置，不是 M3 结果面内的 defect。flex/container 响应式可独立收口。
 - Successor Required: yes
 - Successor Path: 主 roadmap W3a（grid renderer 落地后，其响应式行为随 W3a design.md 响应式小节或独立 follow-up 收口）
+- Closure Note: ✅ successor 已落地于 `docs/plans/2026-06-24-2358-1-newly-landed-renderer-responsive-followups-plan.md`（Phase 1：grid `responsiveColumns` schema + `useIsMobile()` 断点列数切换 + `data-responsive` marker + `grid/design.md` §13 + focused 单测 + e2e）。
 
 ## Non-Blocking Follow-ups
 

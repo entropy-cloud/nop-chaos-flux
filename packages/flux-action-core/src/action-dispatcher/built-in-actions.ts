@@ -154,6 +154,50 @@ export async function runBuiltInAction(
       };
       break;
     }
+    case 'confirm': {
+      const payload = evaluateActionArgs(action, ctx, internals.evaluator);
+      const message =
+        payload && typeof payload === 'object' && 'message' in payload
+          ? (payload as { message?: unknown }).message
+          : undefined;
+      const title =
+        payload && typeof payload === 'object' && 'title' in payload
+          ? (payload as { title?: unknown }).title
+          : undefined;
+      invocation = {
+        action: 'confirm',
+        args: {
+          message: typeof message === 'string' ? message : undefined,
+          title: typeof title === 'string' ? title : undefined,
+        },
+        targeting: action.targeting,
+        actionNode: action,
+        signal,
+      };
+      break;
+    }
+    case 'alert': {
+      const payload = evaluateActionArgs(action, ctx, internals.evaluator);
+      const message =
+        payload && typeof payload === 'object' && 'message' in payload
+          ? (payload as { message?: unknown }).message
+          : undefined;
+      const title =
+        payload && typeof payload === 'object' && 'title' in payload
+          ? (payload as { title?: unknown }).title
+          : undefined;
+      invocation = {
+        action: 'alert',
+        args: {
+          message: typeof message === 'string' ? message : undefined,
+          title: typeof title === 'string' ? title : undefined,
+        },
+        targeting: action.targeting,
+        actionNode: action,
+        signal,
+      };
+      break;
+    }
     case 'closeDialog': {
       invocation = {
         action: 'closeSurface',

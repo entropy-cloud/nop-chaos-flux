@@ -190,4 +190,39 @@ describe('useTablePagination', () => {
     expect(api.currentPage).toBe(2);
     expect(api.pageSize).toBe(10);
   });
+
+  it('preserves the current pageSize when changing page (B3.1 / T3)', () => {
+    const helpers = createHelpers();
+    let api: any;
+
+    mockScopeState.data = { tableState: { pagination: { currentPage: 1, pageSize: 20 } } };
+
+    render(
+      <PaginationProbe
+        schemaProps={{
+          paginationOwnership: 'scope',
+          paginationStatePath: 'tableState.pagination',
+          pagination: { currentPage: 1, pageSize: 20 },
+        }}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    expect(api.pageSize).toBe(20);
+
+    act(() => {
+      api.handlePageChange(2);
+    });
+
+    // page change must not collapse pageSize back to the default (10): the scope write-back
+    // carries the current pageSize alongside the new page.
+    expect(api.pageSize).toBe(20);
+    expect(renderScopeUpdate).toHaveBeenCalledWith('tableState.pagination', {
+      currentPage: 2,
+      pageSize: 20,
+    });
+  });
 });

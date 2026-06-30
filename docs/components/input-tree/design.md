@@ -86,6 +86,13 @@ interface InputTreeSchema extends InputSchema {
 - **`onlyLeaf` 优先级**：`onlyLeaf: true` 优先于 `cascade` —— 父节点（非叶节点）的值**永不写入** value 数组；cascade 仅向叶子后代传播；父节点仍显示派生的 `checked` / `indeterminate` 视觉态（不响应把自身写入 value 的"直接选中"），点击父节点会批量翻转其叶子后代。`onlyLeaf: true` 且某父节点的可选后代集合为空（例如其全部后代均为内部节点）时，父节点不响应 cascade 选中。
 - **提交值**：只有真正被翻转的值进入表单 value 数组。`onlyLeaf: true` 下父/内部节点值不进入数组；`onlyLeaf: false` 下被批量翻转的父值与其全部后代值一起进入数组。
 
+### option model 不变量（TR1 / TR4 / TR5 / TR6）
+
+- **空 `children: []` 为叶（TR1）**：`buildTreeOptionMeta` 以 `rawChildren.length > 0` 判定子节点；空数组（或缺失 `children` 键）得 `hasRawChildren=false` → 叶节点（无 `deferChildren`），其 checkbox 可选。即 `{value:'a',children:[]}` 等价于 `{value:'a'}`，均为可选叶。
+- **lazy echo 经 re-render 重算（TR4）**：`useTreeLazyChildren` 到达子节点后 immutable merge（`mergeChildOptions`）；form value 数组留 scope，`deriveCheckedState`/`isTreeSelectionChecked` 每渲染对新 option tree 重算 → 初始值引用的 deferred 子节点在 children 加载后**确定性地**解析为 checked（经 re-render，无 flake）。
+- **option 输入不可变（TR5）**：`buildTreeOptionMeta`/`flattenTreeOptions`/`mergeChildOptions`/cascade helper 均以 spread/`.map()`/新数组构建，`getIn` 只读，不写 `input.node`；对 `Object.freeze()` 的 options 输入不抛、不改。
+- **`valueField` remap（TR6）**：`getTreeOptionConfig` 解析 `valueField`（默认 `'value'`），build/flatten/cascade/derive 一致按 `valueField` 读取值（如 `valueField:'code'`）。
+
 ## 5. 字段分类
 
 - `options`: `value`，允许 source-enabled value

@@ -38,7 +38,7 @@ interface DesignerProjection {
 
 function getDesignerDoc(ctx: ActionContext): DesignerProjection['doc'] | null {
   try {
-    const designer = (ctx.scope as any)?.get?.('$designer') as DesignerProjection | undefined;
+    const designer = ctx.scope.get('$designer') as DesignerProjection | undefined;
     if (designer?.doc) return designer.doc;
     return null;
   } catch {

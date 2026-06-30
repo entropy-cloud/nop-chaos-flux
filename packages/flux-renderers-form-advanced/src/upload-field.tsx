@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { Trash2Icon, UploadCloudIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Trash2Icon, UploadCloudIcon, XIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type {
   ActionResult,
@@ -136,6 +136,26 @@ export function UploadFieldRenderer(
   const [items, setItems] = useState<UploadItemState[]>([]);
   const [missingAction, setMissingAction] = useState(false);
 
+  // G11: track mount state and in-flight upload abort controllers so that
+  // unmounting the field (a) cancels pending uploads via their abort signal and
+  // (b) prevents any late `onChange` write into the now-unmounted field.
+  const mountedRef = useRef(true);
+  const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
+  useEffect(() => {
+    // `abortControllersRef.current` is never reassigned (the Map is mutated in
+    // place), so capturing it here is equivalent to reading `.current` at
+    // cleanup time and satisfies the exhaustive-deps ref-stability check.
+    const controllers = abortControllersRef.current;
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      for (const controller of controllers.values()) {
+        controller.abort();
+      }
+      controllers.clear();
+    };
+  }, []);
+
   const errorId = name ? `${name}-error` : undefined;
   const interactive = presentation.interactive;
 
@@ -200,10 +220,24 @@ export function UploadFieldRenderer(
       __uploadFileRef: file,
     });
 
+    const controller = new AbortController();
+    abortControllersRef.current.set(id, controller);
+
     try {
       const result: ActionResult = await props.helpers.dispatch(uploadAction, {
         scope: uploadScope,
+        signal: controller.signal,
       });
+      // G11: cancellation (user cancel or field unmount) aborts the controller.
+      // Treat an aborted upload as cancelled regardless of how the dispatcher
+      // settled the action, so the pending entry is removed and no value is written.
+      if (!mountedRef.current) {
+        return;
+      }
+      if (controller.signal.aborted) {
+        setItems((prev) => prev.filter((entry) => entry.id !== id));
+        return;
+      }
       if (!result.ok || result.cancelled) {
         throw new Error(
           typeof result.error === 'string'
@@ -229,7 +263,10 @@ export function UploadFieldRenderer(
         item,
       });
     } catch (error) {
-      if (isAbortError(error)) {
+      if (!mountedRef.current) {
+        return;
+      }
+      if (controller.signal.aborted || isAbortError(error)) {
         setItems((prev) => prev.filter((entry) => entry.id !== id));
         return;
       }
@@ -246,7 +283,15 @@ export function UploadFieldRenderer(
         error: toUploadError(error),
       });
     } finally {
+      abortControllersRef.current.delete(id);
       runtime.disposeScope(uploadScope.id);
+    }
+  }
+
+  function cancelUpload(id: string) {
+    const controller = abortControllersRef.current.get(id);
+    if (controller) {
+      controller.abort();
     }
   }
 
@@ -306,7 +351,7 @@ export function UploadFieldRenderer(
   return (
     <div
       className={cn(options.marker, 'flex flex-col gap-2', props.meta.className)}
-      data-slot="field-control"
+      data-slot="upload-field-control"
       data-upload-kind={options.kind}
       data-has-value={existing.length > 0 ? '' : undefined}
       data-pending={pending.length > 0 ? '' : undefined}
@@ -380,15 +425,16 @@ export function UploadFieldRenderer(
                 </span>
               )}
               {interactive ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   aria-label={`Remove ${entry.name ?? entry.url}`}
-                  className="ml-auto inline-flex size-5 items-center justify-center rounded text-muted-foreground transition-colors hover:text-destructive"
                   data-testid={`${options.marker}-remove-${index}`}
                   onClick={() => removeExisting(index)}
                 >
                   <Trash2Icon className="size-3.5" />
-                </button>
+                </Button>
               ) : null}
             </li>
           ))}
@@ -405,12 +451,25 @@ export function UploadFieldRenderer(
               >
                 <span className="truncate">{entry.name}</span>
                 {entry.status === 'pending' ? (
-                  <span
-                    className="ml-auto text-xs text-muted-foreground"
-                    data-slot="upload-pending"
-                  >
-                    {t('flux.form.uploading')}
-                  </span>
+                  <>
+                    <span
+                      className="ml-auto text-xs text-muted-foreground"
+                      data-slot="upload-pending"
+                    >
+                      {t('flux.form.uploading')}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={t('flux.form.cancel', { defaultValue: `Cancel ${entry.name}` })}
+                      data-testid={`${options.marker}-cancel-${entry.id}`}
+                      data-slot="upload-cancel"
+                      onClick={() => cancelUpload(entry.id)}
+                    >
+                      <XIcon className="size-3.5" />
+                    </Button>
+                  </>
                 ) : (
                   <span
                     className="ml-auto text-xs text-destructive"

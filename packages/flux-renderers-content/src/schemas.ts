@@ -63,6 +63,8 @@ export interface CardSchema extends BaseSchema {
   actions?: SchemaInput;
   /** 顶部图片 URL */
   image?: string;
+  /** 顶部图片 className（作者控制尺寸/比例，经 cn() 合并到默认 base，可覆盖硬编码几何） */
+  imageClassName?: string;
   /** 视觉变体，默认 'default'（映射 ui Card size） */
   variant?: CardVariant;
   onClick?: ActionSchema;
@@ -145,25 +147,35 @@ export interface HtmlSchema extends BaseSchema {
 
 export type CardsSelectionMode = 'single' | 'multiple' | 'none';
 
+export interface CardsResponsiveColumns extends SchemaObject {
+  /** Column count for the small-screen bucket (viewport < 768px). Defaults to 1 when unset. */
+  sm?: number;
+  /** Column count for the large-screen bucket (viewport ≥ 768px). Falls back to `lg` then 3. */
+  md?: number;
+  /** Column count for the large-screen bucket (viewport ≥ 768px). Falls back to `md` then 3. */
+  lg?: number;
+}
+
 export interface CardsSchema extends BaseSchema {
   type: 'cards';
   /** 唯一集合字段：卡片集合数据数组（表达式值绑定，从 scope 读取） */
   items?: SchemaValue;
+  /**
+   * 卡片网格列数。`number` → 全断点统一列数；`{ sm?, md?, lg? }` → per-breakpoint（经 `useIsMobile()`
+   * 派生：< 768 → `sm`，≥ 768 → `lg ?? md`）。缺省（undefined）= 原默认行为（mobile 1 / sm 2 / lg 3，
+   * 由 Tailwind `sm:grid-cols-2 lg:grid-cols-3` 表达）。
+   */
+  columns?: number | CardsResponsiveColumns;
   /** 单卡片模板 region（运行在每条记录的 item/index 作用域内） */
   card?: SchemaInput;
   /** 空态（value-or-region） */
   empty?: SchemaInput | string;
   /** 单项 key 字段，缺省按 index 派生 */
   keyField?: string;
-  /** 选择模式：none 禁用、single 互斥、multiple 累积 */
+  /** 选择模式：none 禁用、single 互斥、multiple 累积（选择为 local controlled state，renderer 自维护） */
   selectionMode?: CardsSelectionMode;
-  /** 选择所有权：local controlled state（renderer 自维护） */
-  selectionOwnership?: 'local' | 'controlled' | 'scope';
-  /** 发布选择状态的 scope 路径 */
-  selectionStatePath?: string;
   onItemClick?: ActionSchema;
   onSelectionChange?: ActionSchema;
-  onPageChange?: ActionSchema;
 }
 
 export type AlertLevel = 'info' | 'success' | 'warning' | 'error';
@@ -189,7 +201,7 @@ export interface AlertSchema extends BaseSchema {
 
 export interface MappingSchema extends BaseSchema {
   type: 'mapping';
-  /** 待映射的值（可来自表达式/source） */
+  /** 待映射的值（可来自表达式） */
   value?: SchemaValue;
   /** 映射表：键为值的字符串形式，值为命中后的展示结果（文本/badge 片段） */
   map?: Record<string, SchemaValue>;
@@ -303,5 +315,7 @@ export interface QrCodeSchema extends BaseSchema {
   foreground?: string;
   /** 背景色（浅色模块），默认 #fff */
   background?: string;
+  /** 加载/生成失败回调（与 image/audio/video 家族一致，触发后显示失败占位） */
+  onLoadError?: ActionSchema;
   // `label` 继承 BaseSchema（string）；renderer definition 用 value-or-region 规则。
 }

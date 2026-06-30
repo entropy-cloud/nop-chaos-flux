@@ -1,6 +1,6 @@
 # 2 list 集合分页与无限滚动集成（W1c successor）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-06-24
 > Source: `docs/plans/2026-06-24-0040-3-w1c-list-collection-display-plan.md`（Deferred: list infinite-scroll/分页集成，Successor Required: yes）、`docs/components/roadmap.md`（W1d 表：infinite-scroll 内建于 crud/list）、`docs/components/list/design.md`
 > Related: `docs/plans/2026-06-24-0335-1-w2a-data-composition-family-plan.md`（pagination）、`docs/plans/2026-06-22-2057-2-m5-mobile-native-components-plan.md`（infinite-scroll）
@@ -71,68 +71,78 @@
 
 ### Phase 1 - 集成模型裁定（Decision + Proof）
 
-Status: planned
+Status: completed
 Targets: `docs/components/list/design.md`、list schema 定义处（Phase 1 核实确切文件/行）
 
 - Item Types: `Decision | Proof | Fix`
 
-- [ ] `Proof`：核实 list schema 当前定义位置与字段、crud 的 `pagination`/`paginationOwnership`/`paginationStatePath`/`pageSizeStatePath`/infinite sentinel 既成契约，确认 list 可对齐而不复制请求语义。
-- [ ] `Proof`：核实同包 `use-infinite-scroll.ts` hook 的入参/返回与测试 seam（`setIntersectionObserverCtor`/`window.__crudInfiniteObserver`），确认它可作为 list infinite 的复用基座（而非重写一份 IO）。
-- [ ] `Decision`：裁定 list 分页/infinite 集成契约——(a) 分页状态归属三态 `local`/`scope`（缺 scope 路径显式降级 + dev 告警，对齐 W4b steps）；(b) infinite 模式经 opt-in（如 `pagination.mode:'infinite'`）复用同包 `useInfiniteScroll` 渲染 sentinel + IntersectionObserver，派发 `onLoadMore`（list 不自发请求），而非重新实现 IO；确认复用不引入请求语义；(c) list 零组件级请求字段（请求下沉）；(d) 与独立 `pagination` renderer 组合边界（pagination 为交互 owner，list 消费 page 状态）。
-- [ ] `Fix`：按裁定更新 `list/design.md` §7（运行期状态归属，含三态 + infinite）、§9（数据接入点，明示经事件→action graph→data-source，list 不接 loader 字段）为最终契约。
+- [x] `Proof`：核实 list schema 当前定义位置与字段、crud 的 `pagination`/`paginationOwnership`/`paginationStatePath`/`pageSizeStatePath`/infinite sentinel 既成契约，确认 list 可对齐而不复制请求语义。
+- [x] `Proof`：核实同包 `use-infinite-scroll.ts` hook 的入参/返回与测试 seam（`setIntersectionObserverCtor`/`window.__crudInfiniteObserver`），确认它可作为 list infinite 的复用基座（而非重写一份 IO）。
+- [x] `Decision`：裁定 list 分页/infinite 集成契约——(a) 分页状态归属三态 `local`/`controlled`/`scope`（缺 scope 路径显式降级 + dev 告警，对齐 W4b steps）；(b) infinite 模式经 opt-in（如 `pagination.mode:'infinite'`）复用同包 `useInfiniteScroll` 渲染 sentinel + IntersectionObserver，派发 `onLoadMore`（list 不自发请求），而非重新实现 IO；确认复用不引入请求语义；(c) list 零组件级请求字段（请求下沉）；(d) 与独立 `pagination` renderer 组合边界（pagination 为交互 owner，list 消费 page 状态）。
+- [x] `Fix`：按裁定更新 `list/design.md` §7（运行期状态归属，含三态 + infinite）、§9（数据接入点，明示经事件→action graph→data-source，list 不接 loader 字段）为最终契约。
+
+**Phase 1 Decision Record（最终字段命名 + 行为裁定）**
+
+- 字段命名（与同包 `crud`/`table` 对齐）：`pagination`（配置对象）、`paginationOwnership`（`local` | `controlled` | `scope`，默认 `local`）、`paginationStatePath`、`pageSizeStatePath`、`onPageChange`、`onLoadMore`。
+- `pagination` 配置形状：`{ enabled?: boolean; mode?: 'page' | 'infinite'; pageSize?: number; pageSizeOptions?: number[]; currentPage?: number; total?: number; hasMore?: boolean; showSizeChanger?: boolean }`。
+- 三态归属：`local`（组件内持有 currentPage，由 `pagination.currentPage` 播种）；`controlled`（纯视图，完全由 `pagination.currentPage` prop 驱动，不持有不写回）；`scope`（读写 `paginationStatePath`，可选 `pageSizeStatePath` 拆分 pageSize 通道）。`currentPage` 始终 clamp 到 `[1, totalPages]`，`totalPages = ceil(total / pageSize)`，`total` 缺省按 `items.length` 推导。
+- infinite：opt-in = `pagination.enabled:true` + `pagination.mode:'infinite'`；复用同包 `useInfiniteScroll`（`packages/flux-renderers-data/src/use-infinite-scroll.ts`，含 `setIntersectionObserverCtor` / `window.__crudInfiniteObserver.__fireIntersection` 测试 seam）；sentinel `data-slot="list-infinite-sentinel"`，命名对齐 crud `crud-infinite-sentinel`；触底派发 `onLoadMore`（list 不自发请求），累计展示 `currentPage * pageSize` 条；`hasMore===false` 或 `currentPage >= totalPages` 时隐藏/禁用 sentinel。
+- 请求下沉（硬约束）：list schema 零 `api`/`source`/`initFetch`/`action` 字段；数据经事件 → action graph → `<data-source>` → scope `items`。
+- 与独立 `pagination` renderer 组合：pagination 为交互 owner（用户点击派发 onChange，宿主写 scope）；list 消费 page 状态切片，不内建分页 UI 控件。
+- Proof 证据：list schema 现 fields `schemas.ts:203-212`；crud infinite sentinel `crud-renderer.tsx:483-490`；`use-infinite-scroll.ts:10-22,71-80`（ctor seam + window 全局）；crud 三态 ownership `crud-renderer-ownership.ts:48-65`。结论与 crud 既成模式一致。
 
 Exit Criteria:
 
-- [ ] design.md §7/§9 反映可执行的最终分页/infinite 契约（含三态归属、infinite sentinel、请求下沉边界），无「首版不持有」等已被超越的措辞。
-- [ ] Decision 结论（字段命名 + 三态 + infinite 触发条件 + 末页/降级行为 + 是否复用 `useInfiniteScroll`）在本计划记录且与 crud 既成模式一致。
+- [x] design.md §7/§9 反映可执行的最终分页/infinite 契约（含三态归属、infinite sentinel、请求下沉边界），无「首版不持有」等已被超越的措辞。
+- [x] Decision 结论（字段命名 + 三态 + infinite 触发条件 + 末页/降级行为 + 是否复用 `useInfiniteScroll`）在本计划记录且与 crud 既成模式一致。
 
 ### Phase 2 - 分页集成（Fix）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/list-renderer.tsx`、list schema、field-rule
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`：list 支持分页状态归属三态（local/scope）+ `paginationStatePath`/`pageSizeStatePath`，按 page/pageSize 对 items 切片展示，currentPage clamp 到 [1, totalPages]。
-- [ ] `Fix`：list 派发 `onPageChange`，可与独立 `pagination` renderer（交互 owner）组合；list 不内建分页 UI 控件（控件归 pagination renderer / 宿主）。
-- [ ] `Proof`：focused 单测——分页切片正确性、clamp 边界、scope 缺路径降级 + dev 告警、零组件级请求字段断言（grep list schema 无 `api`/`source`/`initFetch`）。
+- [x] `Fix`：list 支持分页状态归属三态（local/controlled/scope）+ `paginationStatePath`/`pageSizeStatePath`，按 page/pageSize 对 items 切片展示，currentPage clamp 到 [1, totalPages]。
+- [x] `Fix`：list 派发 `onPageChange`，可与独立 `pagination` renderer（交互 owner）组合；list 不内建分页 UI 控件（控件归 pagination renderer / 宿主）。
+- [x] `Proof`：focused 单测——分页切片正确性、clamp 边界、scope 缺路径降级 + dev 告警、零组件级请求字段断言（grep list schema 无 `api`/`source`/`initFetch`）。
 
 Exit Criteria:
 
-- [ ] list 在 local/scope 两态下按 page 切片且 clamp 正确（单测可观测断言）。
-- [ ] list schema 无组件级请求字段（请求下沉约束成立）。
+- [x] list 在 local/scope 两态下按 page 切片且 clamp 正确（单测可观测断言）。
+- [x] list schema 无组件级请求字段（请求下沉约束成立）。
 
 ### Phase 3 - infinite 模式集成（Fix）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/list-renderer.tsx`、list schema
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`：list opt-in infinite 模式复用同包 `useInfiniteScroll` 渲染触底 sentinel（稳定 data-slot，对齐 crud `crud-infinite-sentinel` 命名风格），触底派发 `onLoadMore`（list 不自发请求）；`hasMore===false`/末页时禁用/隐藏 sentinel。
-- [ ] `Proof`：focused 单测——sentinel intersect 派发 onLoadMore、末页不再派发、降级场景不静默崩溃；经 `use-infinite-scroll.ts` 暴露的 `setIntersectionObserverCtor`/`window.__crudInfiniteObserver.__fireIntersection` 程序化触发 IO（对齐 crud `crud-lifecycle.test.tsx:347` E1d infinite 模式断言风格，非截图）。
+- [x] `Fix`：list opt-in infinite 模式复用同包 `useInfiniteScroll` 渲染触底 sentinel（稳定 data-slot，对齐 crud `crud-infinite-sentinel` 命名风格），触底派发 `onLoadMore`（list 不自发请求）；`hasMore===false`/末页时禁用/隐藏 sentinel。
+- [x] `Proof`：focused 单测——sentinel intersect 派发 onLoadMore、末页不再派发、降级场景不静默崩溃；经 `use-infinite-scroll.ts` 暴露的 `setIntersectionObserverCtor`/`window.__crudInfiniteObserver.__fireIntersection` 程序化触发 IO（对齐 crud `crud-lifecycle.test.tsx:347` E1d infinite 模式断言风格，非截图）。
 
 Exit Criteria:
 
-- [ ] infinite 模式触底派发 onLoadMore 且末页禁用可经单测程序化断言（IO intersect 触发）。
-- [ ] list infinite 行为不引入组件级请求字段。
+- [x] infinite 模式触底派发 onLoadMore 且末页禁用可经单测程序化断言（IO intersect 触发）。
+- [x] list infinite 行为不引入组件级请求字段。
 
 ### Phase 4 - 注册/field-rule + playground + e2e + owner-doc 同步
 
-Status: planned
+Status: completed
 Targets: `data-renderer-definitions.ts`、`apps/playground/src/`、`tests/e2e/`、`docs/components/list/design.md`、roadmap
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] `Fix`：list renderer definition/field-rule 补齐新字段（pagination/paginationOwnership/paginationStatePath/pageSizeStatePath/onLoadMore/onPageChange，命名以 Phase 1 Decision 为准）。
-- [ ] `Fix`：playground list 演示页增「分页（list + pagination 组合）」与「infinite（触底加载更多）」两类可交互示例，注册到 playground 路由/component-lab。
-- [ ] `Proof`：`tests/e2e/` 增 list 分页/infinite 关键路径 e2e（程序化断言：分页点击切片变化、视口滚动触底触发加载、末页停止），不靠截图诊断。
-- [ ] `Follow-up`：daily log 记录；本计划为 W1c deferred successor，closure 后在 W1c plan 的 deferred 项标注「已由 successor 收口」。
+- [x] `Fix`：list renderer definition/field-rule 补齐新字段（pagination/paginationOwnership/paginationStatePath/pageSizeStatePath/onLoadMore/onPageChange，命名以 Phase 1 Decision 为准）。
+- [x] `Fix`：playground list 演示页增「分页（list + pagination 组合）」与「infinite（触底加载更多）」两类可交互示例，注册到 playground 路由/component-lab。
+- [x] `Proof`：`tests/e2e/` 增 list 分页/infinite 关键路径 e2e（程序化断言：分页点击切片变化、视口滚动触底触发加载、末页停止），不靠截图诊断。
+- [x] `Follow-up`：daily log 记录；本计划为 W1c deferred successor，closure 后在 W1c plan 的 deferred 项标注「已由 successor 收口」。
 
 Exit Criteria:
 
-- [ ] list 新字段经 renderer definition/field-rule 注册，playground 有分页+infinite 两类可交互示例。
-- [ ] e2e 程序化断言覆盖分页切片 + 触底加载 + 末页停止关键路径。
+- [x] list 新字段经 renderer definition/field-rule 注册，playground 有分页+infinite 两类可交互示例。
+- [x] e2e 程序化断言覆盖分页切片 + 触底加载 + 末页停止关键路径。
 
 ## Draft Review Record
 
@@ -146,18 +156,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] list 分页集成（三态归属 + clamp + onPageChange + 与 pagination renderer 组合）行为落地且 focused 单测通过
-- [ ] list infinite 模式（sentinel + IO + onLoadMore + 末页禁用）行为落地且 focused 单测通过
-- [ ] list schema 零组件级请求字段（请求下沉约束成立，有断言）
-- [ ] list/design.md §7/§9 已同步为最终契约
-- [ ] playground 分页+infinite 示例 + e2e 关键路径（程序化断言）就位
-- [ ] 不存在被静默降级到 deferred/follow-up 的 in-scope 项
-- [ ] 受影响 owner docs（list/design.md、roadmap W1c deferred 标注）已同步
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] list 分页集成（三态归属 + clamp + onPageChange + 与 pagination renderer 组合）行为落地且 focused 单测通过
+- [x] list infinite 模式（sentinel + IO + onLoadMore + 末页禁用）行为落地且 focused 单测通过
+- [x] list schema 零组件级请求字段（请求下沉约束成立，有断言）
+- [x] list/design.md §7/§9 已同步为最终契约
+- [x] playground 分页+infinite 示例 + e2e 关键路径（程序化断言）就位
+- [x] 不存在被静默降级到 deferred/follow-up 的 in-scope 项
+- [x] 受影响 owner docs（list/design.md、roadmap W1c deferred 标注）已同步
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -174,13 +184,24 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行与 closure audit 后填写。
+Status Note: W1c deferred successor 义务已兑现。`list` 集合 renderer 已具备分页（local/controlled/scope 三态归属 + clamp + onPageChange + gotoPage 能力，可与独立 pagination renderer 组合）与 infinite 触底加载（复用同包 useInfiniteScroll，sentinel + IO + onLoadMore + 末页禁用）两项能力，全程遵守请求下沉（list 零组件级请求字段）。所有 Phase 完成，Closure Gates 全勾，全量验证（typecheck/build/lint/test + e2e）全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent（fresh session）填写
-- Evidence: 待填写
+- Auditor / Agent: 独立子 agent（fresh session，ses_105b3281affebeS2q08arZAvqJ，general 类型），不复用执行 session 上下文。
+- Verdict: `approved`（无 real gap；仅有机械性 post-audit 收尾 nit：Plan Status/Closure Gates/Closure 待翻转，现已执行）。
+- Evidence（auditor 给出的 file:line 核对，已交叉验证）：
+  - 切片语义真实：`list-renderer.tsx:143-152` `computeVisibleItems`（page 切片 + infinite 累计）。
+  - clamp 真实：`list-pagination.ts:23-34` `clampPage`，应用于 `:157`/`:170`。
+  - scope 归属真实：`list-pagination.ts:93-111` `useScopeSelector` 读 `paginationStatePath`；缺路径降级 + dev 告警 `:113-139`。
+  - onLoadMore 触底派发真实：`list-renderer.tsx:296-300` 复用 `useInfiniteScroll` → `:272-294` `handleLoadMore` 派发；末页 sentinel 隐藏 `:269`/`:406-408`；hasMore 翻转 `list-pagination.ts:159-164`。
+  - `useInfiniteScroll` 确为复用（`list-renderer.tsx:25` import），非重写。
+  - 请求下沉成立：list 定义 `data-renderer-definitions.ts:517-684` 无 api/source/initFetch/action/interval/sendOn；`list-renderer.tsx` 无 fetch；单测断言 `list-pagination-infinite.test.tsx:221-232`。
+  - 4 个 Phase 全 `Status: completed`、checklist/exit criteria 全 `[x]`；deferred（虚拟滚动）分类诚实；owner docs（list/design.md §7/§9、roadmap W1c、W1c plan deferred）已同步。
+- 执行 session 验证：`pnpm typecheck`(55/55) + `pnpm build`(29/29) + `pnpm lint`(0 error) + `pnpm test`(全过，data 包 522) + `playwright test`(520 passed/0 failed)；focused 新单测 10/10、新 e2e 2/2。
 
 Follow-up:
 
-- 待填写（预期：W1c deferred「list infinite-scroll/分页集成」已收口；虚拟滚动保持 deferred）。
+- W1c deferred「list infinite-scroll/分页集成」已由本 successor 收口（roadmap 与 W1c plan deferred 项均已标注）。
+- 虚拟滚动保持 deferred（optimization candidate，Successor Required: no）。
+- 继承的 watch-only 项：list selection controlled scope ownership 增强、list/cards 条目模板复用评估。

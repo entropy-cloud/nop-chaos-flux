@@ -93,6 +93,7 @@ describe('FlowDesignerPage', () => {
     expect(screen.getByText('工作流')).toBeTruthy();
     expect(screen.getByText('钉钉审批流')).toBeTruthy();
     expect(screen.getByText('Action 编排')).toBeTruthy();
+    expect(screen.getByText('节点/边摘要')).toBeTruthy();
   });
 
   it('switches to dingtalk example on tab click', () => {

@@ -1,8 +1,6 @@
-// @vitest-environment happy-dom
-
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { Carousel } from './carousel.js';
 
 const emblaState = vi.hoisted(() => {
@@ -42,5 +40,32 @@ describe('Carousel', () => {
 
     expect(emblaState.api.off).toHaveBeenCalledWith('reInit', expect.any(Function));
     expect(emblaState.api.off).toHaveBeenCalledWith('select', expect.any(Function));
+  });
+
+  it('does not hijack arrow keys originating from editable controls (P1-4)', () => {
+    const view = render(
+      <Carousel>
+        <input data-testid="editable" type="text" />
+      </Carousel>,
+    );
+    const input = view.getByTestId('editable');
+
+    fireEvent.keyDown(input, { key: 'ArrowRight' });
+    fireEvent.keyDown(input, { key: 'ArrowLeft' });
+
+    expect(emblaState.api.scrollNext).not.toHaveBeenCalled();
+    expect(emblaState.api.scrollPrev).not.toHaveBeenCalled();
+  });
+
+  it('still scrolls on arrow keys from non-editable targets (P1-4)', () => {
+    const { container } = render(
+      <Carousel>
+        <div data-testid="slide">slide</div>
+      </Carousel>,
+    );
+    const carousel = container.querySelector('[data-slot="carousel"]') as HTMLElement;
+
+    fireEvent.keyDown(carousel, { key: 'ArrowLeft' });
+    expect(emblaState.api.scrollPrev).toHaveBeenCalled();
   });
 });

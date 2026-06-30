@@ -1,5 +1,4 @@
-// @vitest-environment happy-dom
-
+import { readFileSync } from 'node:fs';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentHandle, ComponentHandleRegistry } from '@nop-chaos/flux-core';
@@ -131,5 +130,48 @@ describe('CarouselRenderer', () => {
     const handle = lastHandle();
     const result = handle.capabilities.invoke('play', {}, {} as never) as { ok: boolean };
     expect(result.ok).toBe(false);
+  });
+
+  it('emits a single canonical activeIndex key in the onChange payload (no redundant index)', () => {
+    // S3 remediation: the published onChange payload must carry a single canonical key
+    // (`activeIndex`, aligning with the schema/state field name) — not a redundant `index`
+    // duplicate carrying the same value.
+    const src = readFileSync('src/carousel.tsx', 'utf8');
+    const changePayload = src.match(/type:\s*'change'[^}]*\}/)?.[0];
+    expect(changePayload).toBeTruthy();
+    expect(changePayload).toContain('activeIndex');
+    // No redundant duplicate `index` key in the change payload.
+    expect(changePayload).not.toMatch(/\bindex\s*:/);
+  });
+
+  it('keeps the component handle identity stable across slide changes (O-03)', () => {
+    // O-03 / F6: activeIndex is read via a ref (updated inside the embla select
+    // handler) so the handle stays identity-stable across slide changes → no
+    // register/unregister churn. autoPlay / loop are direct reads in the now
+    // effect-scoped, useMemo-free handle. The previously hand-written useMemo
+    // and the no-deps ref-mirror effect are both gone.
+    const src = readFileSync('src/carousel.tsx', 'utf8');
+    expect(src).toMatch(/activeIndexRef\.current/);
+    // The handle is no longer wrapped in a hand-written useMemo.
+    expect(src).not.toMatch(/useMemo<ComponentHandle>/);
+    // The previous (churn-causing) handle deps array must be gone.
+    expect(src).not.toMatch(
+      /\[api,\s*props\.id,\s*slotProps\.name,\s*activeIndex,\s*items\.length,\s*autoPlay,\s*loop\]/,
+    );
+  });
+
+  it('gates autoplay on reduced-motion and pauses on hover/focus/offscreen (O-04)', () => {
+    // WCAG 2.2 2.2.2: autoplay must honor prefers-reduced-motion and pause on
+    // hover/focus and while offscreen. (jsdom cannot drive embla, so this guards
+    // the presence of the contract; the runtime behavior is exercised in the
+    // playground.)
+    const src = readFileSync('src/carousel.tsx', 'utf8');
+    expect(src).toMatch(/prefers-reduced-motion:\s*reduce/);
+    expect(src).toMatch(/reducedMotion\.matches/);
+    expect(src).toMatch(/'mouseenter'/);
+    expect(src).toMatch(/'mouseleave'/);
+    expect(src).toMatch(/'focusin'/);
+    expect(src).toMatch(/'focusout'/);
+    expect(src).toMatch(/IntersectionObserver/);
   });
 });

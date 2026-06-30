@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type {
   BaseSchema,
   FormRuntime,
@@ -134,10 +134,10 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   const fields = staticFields;
   const effectiveOperatorsOverride = operatorsOverride;
 
-  const evaluateFormula = useCallback(
+  const evaluateFormula = useMemo(
     () => createFormulaEvaluator(props.helpers, scope, formulas),
     [props.helpers, scope, formulas],
-  )();
+  );
 
   const valueRef = useRef<ConditionGroupValue>(toGroupValue(undefined));
   const registrationRef = useRef<RuntimeFieldRegistration | undefined>(undefined);

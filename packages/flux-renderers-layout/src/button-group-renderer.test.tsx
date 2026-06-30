@@ -1,5 +1,4 @@
-// @vitest-environment happy-dom
-
+import { readFileSync } from 'node:fs';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createLayoutSchemaRenderer, env, formulaCompiler } from './test-support.js';
@@ -235,5 +234,42 @@ describe('ButtonGroupRenderer (W3b — grouped action container)', () => {
     expect((items[0] as HTMLButtonElement).disabled).toBe(false);
     expect((items[1] as HTMLButtonElement).disabled).toBe(true);
     expect(items[1].getAttribute('data-disabled')).toBe('true');
+  });
+
+  it('documents value/defaultValue as non-reactive initial seed (no advertised-but-dead ownership)', () => {
+    // F4 remediation: button-group has no valueOwnership field, and `value` is NOT reactive
+    // (it only seeds local controlled selection once). The contract surface must not claim
+    // reactive control. Assert the schema/definition document seed-only semantics and that
+    // the renderer reads value/defaultValue only in the useState initializer (seed).
+    const renderer = readFileSync('src/button-group-renderer.tsx', 'utf8');
+    const schemas = readFileSync('src/schemas.ts', 'utf8');
+    const definitions = readFileSync('src/layout-renderer-definitions.ts', 'utf8');
+
+    const buttonGroupSchemaBlock = schemas.slice(
+      schemas.indexOf('export interface ButtonGroupSchema'),
+      schemas.indexOf('// ───────────────────────────── W3b Dropdown Button'),
+    );
+    const buttonGroupDefinitionBlock = definitions.slice(
+      definitions.indexOf("type: 'button-group'"),
+      definitions.indexOf("type: 'dropdown-button'"),
+    );
+
+    // No ownership trio on button-group (never declared; selection is local controlled).
+    expect(buttonGroupSchemaBlock).not.toMatch(/valueOwnership/);
+    expect(buttonGroupSchemaBlock).not.toMatch(/valueStatePath/);
+    expect(buttonGroupDefinitionBlock).not.toMatch(/valueOwnership/);
+
+    // The value contract documents seed-only / non-reactive semantics (not "currently selected").
+    const valueContract = buttonGroupDefinitionBlock.slice(
+      buttonGroupDefinitionBlock.indexOf("displayName: 'Value'"),
+      buttonGroupDefinitionBlock.indexOf("displayName: 'Default Value'"),
+    );
+    expect(valueContract.toLowerCase()).toMatch(/seed/);
+    expect(valueContract.toLowerCase()).not.toMatch(/currently selected/);
+
+    // Renderer seeds from defaultValue ?? value exactly once in the useState initializer.
+    expect(renderer).toMatch(/defaultValue \?\? schemaProps\.value/);
+    // No reactive subscription/sync of runtime value changes.
+    expect(renderer).not.toMatch(/useScopeSelector/);
   });
 });

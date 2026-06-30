@@ -258,6 +258,26 @@ describe('input-file — upload failure & error handling', () => {
     void onUploadError;
   });
 
+  it('U2: surfaces the server error message (propagates to both DOM and onUploadError payload)', async () => {
+    renderSchema(
+      buildForm('input-file', 'file', {
+        uploadAction: { action: 'ajax', args: { url: '/api/upload-fail' } },
+      }),
+    );
+    const input = document.querySelector<HTMLInputElement>(
+      'input[data-testid="nop-input-file-input"]',
+    )!;
+    setFiles(input, [new File(['x'], 'bad.txt')]);
+
+    // The server responds { data: { message: 'rejected' } }; that message must
+    // propagate to the user-visible error (and is the same string carried by the
+    // onUploadError event payload's `error` field via toUploadError).
+    await waitFor(() => {
+      const errorSlot = document.querySelector('[data-slot="upload-error"]');
+      expect(errorSlot?.textContent).toBe('rejected');
+    });
+  });
+
   it('warns when uploadAction is missing', async () => {
     renderSchema(buildForm('input-file', 'file', {}));
     const input = document.querySelector<HTMLInputElement>(
@@ -268,6 +288,95 @@ describe('input-file — upload failure & error handling', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('nop-input-file-missing-action')).toBeTruthy();
     });
+  });
+});
+
+describe('input-file — U3 successive selection appends', () => {
+  it('appends across successive selections (select 2 then 1 → 3 total)', async () => {
+    renderSchema(
+      buildForm('input-file', 'files', {
+        multiple: true,
+        valueMode: 'array',
+        uploadAction: { action: 'ajax', args: { url: '/api/upload' } },
+      }),
+    );
+    const input = document.querySelector<HTMLInputElement>(
+      'input[data-testid="nop-input-file-input"]',
+    )!;
+
+    // First batch: 2 files.
+    setFiles(input, [new File(['a'], 'a.txt'), new File(['b'], 'b.txt')]);
+    await waitFor(() =>
+      expect(
+        document.querySelectorAll(
+          '[data-testid="nop-input-file-item"][data-item-status="done"]',
+        ).length,
+      ).toBe(2),
+    );
+
+    // Second batch: 1 more file.
+    setFiles(input, [new File(['c'], 'c.txt')]);
+    await waitFor(() =>
+      expect(
+        document.querySelectorAll(
+          '[data-testid="nop-input-file-item"][data-item-status="done"]',
+        ).length,
+      ).toBe(3),
+    );
+
+    await submit();
+    const stored = submitCalls[0].files as unknown[];
+    expect(stored).toHaveLength(3);
+    expect((stored[0] as { url: string }).url).toBe('https://cdn.example.com/a.txt');
+    expect((stored[2] as { url: string }).url).toBe('https://cdn.example.com/c.txt');
+  });
+});
+
+describe('input-file — U4 init existing list + new upload merges', () => {
+  it('preserves existing items and merges a new upload (init 2 + add 1 → 3)', async () => {
+    renderSchema(
+      buildForm(
+        'input-file',
+        'files',
+        {
+          multiple: true,
+          valueMode: 'array',
+          uploadAction: { action: 'ajax', args: { url: '/api/upload' } },
+        },
+        [
+          { url: 'https://existing.example.com/one', name: 'one' },
+          { url: 'https://existing.example.com/two', name: 'two' },
+        ],
+      ),
+    );
+
+    // Existing items render immediately.
+    expect(
+      document.querySelectorAll(
+        '[data-testid="nop-input-file-item"][data-item-status="done"]',
+      ).length,
+    ).toBe(2);
+
+    const input = document.querySelector<HTMLInputElement>(
+      'input[data-testid="nop-input-file-input"]',
+    )!;
+    setFiles(input, [new File(['n'], 'new.txt')]);
+    await waitFor(() =>
+      expect(
+        document.querySelectorAll(
+          '[data-testid="nop-input-file-item"][data-item-status="done"]',
+        ).length,
+      ).toBe(3),
+    );
+
+    await submit();
+    const stored = submitCalls[0].files as Array<{ url: string }>;
+    expect(stored).toHaveLength(3);
+    // Existing items are preserved.
+    expect(stored[0]!.url).toBe('https://existing.example.com/one');
+    expect(stored[1]!.url).toBe('https://existing.example.com/two');
+    // New upload appended.
+    expect(stored[2]!.url).toBe('https://cdn.example.com/new.txt');
   });
 });
 

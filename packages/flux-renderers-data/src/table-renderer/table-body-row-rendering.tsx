@@ -1,137 +1,28 @@
 import React from 'react';
-import type { InstanceFrame, RenderRegionHandle, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { Button, Checkbox, RadioGroupItem, TableCell, TableRow } from '@nop-chaos/ui';
-import { ChevronDownIcon, ChevronRightIcon, GripVerticalIcon, CopyIcon, CheckIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronRightIcon, GripVerticalIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
-import type { TableSchema } from '../schemas.js';
+import type { TableSchema, TableColumnSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell.js';
-import { TableCellPopOver } from './table-cell-popover.js';
-import type { TableRowEntry } from './types.js';
 import type { TreeRowEntry } from './use-table-tree.js';
 import type { RowDragSortApi } from './use-row-drag-sort.js';
-import { copyToClipboard } from './copy-to-clipboard.js';
 import { getCellRowSpan, type CombinePlan } from './combine-cells.js';
+import { asReactNode, indentStyle, CellContentWithPopOver } from './table-cell-chrome.js';
+import {
+  areColumnsRenderEquivalent,
+  type FlattenedRow,
+} from './table-flattened-items.js';
 
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
-
-function indentStyle(level: number): React.CSSProperties {
-  if (level <= 0) return {};
-  return { paddingLeft: `${level * 1.25}rem` };
-}
-
-interface CellContentWithPopOverProps {
-  column: import('../schemas.js').TableColumnSchema;
-  record: Record<string, unknown>;
-  rowIndex: number;
-  rowScope: ScopeRef;
-  rowInstancePath: InstanceFrame[];
-  columnIndex: number;
-  regions: RendererComponentProps<TableSchema>['regions'];
-}
-
-function CellContentWithPopOver(props: CellContentWithPopOverProps) {
-  const { column, record, rowIndex, rowScope, rowInstancePath, columnIndex, regions } = props;
-  const cellContentRef = React.useRef<HTMLElement | null>(null);
-  const popOverConfig = column.popOver;
-  const hasPopOver = Boolean(popOverConfig);
-
-  const cellText = column.name ? String(record[column.name] ?? '') : '';
-
-  let popOverContentRegion: Pick<RenderRegionHandle, 'render' | 'key'> | undefined;
-  if (
-    popOverConfig &&
-    typeof popOverConfig.contentRegionKey === 'string' &&
-    regions[popOverConfig.contentRegionKey]
-  ) {
-    popOverContentRegion = regions[popOverConfig.contentRegionKey];
-  }
-
-  return (
-    <span className="inline-flex items-center">
-      <span ref={hasPopOver ? cellContentRef : undefined} className="truncate">
-        {cellText}
-      </span>
-      {column.copyable === true && column.name ? (
-        <CopyButton value={String(record[column.name] ?? '')} />
-      ) : null}
-      {hasPopOver && popOverConfig ? (
-        <TableCellPopOver
-          popOver={popOverConfig}
-          rowValue={column.name ? record[column.name] : undefined}
-          record={record}
-          rowIndex={rowIndex}
-          rowScope={rowScope}
-          rowInstancePath={rowInstancePath}
-          contentRegion={popOverContentRegion}
-          cellContentRef={cellContentRef}
-          columnIndex={columnIndex}
-        />
-      ) : null}
-    </span>
-  );
-}
-
-function CopyButton({ value }: { value: string }) {
-  const [copied, setCopied] = React.useState(false);
-  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  React.useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  const onClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    const result = await copyToClipboard(value);
-    if (result.success) {
-      setCopied(true);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setCopied(false), 1500);
-    }
-  };
-
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-xs"
-      data-slot="table-cell-copy-button"
-      className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-primary"
-      onClick={onClick}
-      aria-label={copied ? 'Copied' : 'Copy to clipboard'}
-    >
-      {copied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
-    </Button>
-  );
-}
-
-export interface FlattenedRow {
-  kind: 'data';
-  entry: TableRowEntry;
-  rowScope: ScopeRef;
-  rowKey: string;
-  rowInstancePath: InstanceFrame[];
-  isExpanded: boolean;
-  isSelected: boolean;
-  isEven: boolean;
-}
-
-export interface FlattenedExpandedRow {
-  kind: 'expanded';
-  rowKey: string;
-  columnCount: number;
-}
-
-export type FlattenedItem = FlattenedRow | FlattenedExpandedRow;
+export type { FlattenedItem, FlattenedRow, FlattenedExpandedRow } from './table-flattened-items.js';
+export { buildFlattenedItems } from './table-flattened-items.js';
+export { renderExpandedRow } from './table-expanded-row.js';
 
 type DataRowRenderProps = {
   item: FlattenedRow;
   schemaProps: TableSchema;
-  columns: import('../schemas.js').TableColumnSchema[];
+  columns: TableColumnSchema[];
   helpers: RendererComponentProps<TableSchema>['helpers'];
   parentProps: RendererComponentProps<TableSchema>;
   fixedColumnLayout: FixedColumnLayout;
@@ -150,80 +41,6 @@ type DataRowRenderProps = {
   draggable?: boolean;
   rowDragSortApi?: RowDragSortApi | null;
 };
-
-function areColumnsRenderEquivalent(
-  prev: import('../schemas.js').TableColumnSchema[],
-  next: import('../schemas.js').TableColumnSchema[],
-) {
-  if (prev === next) {
-    return true;
-  }
-
-  if (prev.length !== next.length) {
-    return false;
-  }
-
-  return prev.every((column, index) => {
-    const nextColumn = next[index];
-    if (!nextColumn) {
-      return false;
-    }
-
-    return (
-      column === nextColumn ||
-      (column.name === nextColumn.name &&
-        column.type === nextColumn.type &&
-        column.width === nextColumn.width &&
-        column.fixed === nextColumn.fixed &&
-        column.cellRegionKey === nextColumn.cellRegionKey &&
-        column.buttonsRegionKey === nextColumn.buttonsRegionKey &&
-        column.labelRegionKey === nextColumn.labelRegionKey &&
-        column.popOver === nextColumn.popOver)
-    );
-  });
-}
-
-export function buildFlattenedItems(
-  processedData: TableRowEntry[],
-  rowScopeCache: Map<string, ScopeRef>,
-  expandedRowKeys: Set<string>,
-  selectedRowKeys: Set<string>,
-  columnCount: number,
-  parentProps: RendererComponentProps<TableSchema>,
-  rowRepeatedTemplateId: string,
-): FlattenedItem[] {
-  const items: FlattenedItem[] = [];
-
-  for (const entry of processedData) {
-    const cacheKey = entry.cacheKey ?? entry.rowKey;
-    const rowScope = rowScopeCache.get(cacheKey);
-    if (!rowScope) continue;
-
-    const rowKey = cacheKey;
-    const rowInstancePath: InstanceFrame[] = [
-      ...(parentProps.node.instancePath ?? []),
-      { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey },
-    ];
-    const isExpanded = expandedRowKeys.has(rowKey);
-
-    items.push({
-      kind: 'data',
-      entry,
-      rowScope,
-      rowKey,
-      rowInstancePath,
-      isExpanded,
-      isSelected: selectedRowKeys.has(rowKey),
-      isEven: entry.sourceIndex % 2 === 0,
-    });
-
-    if (isExpanded) {
-      items.push({ kind: 'expanded', rowKey, columnCount });
-    }
-  }
-
-  return items;
-}
 
 function DataRowView({
   item,
@@ -542,6 +359,16 @@ function DataRowView({
   );
 }
 
+// H10: row-level bailout is load-bearing for the table single-row locality
+// contract (a change to one row must not re-render sibling rows — see the
+// playground `performance-table-page` diagnostic; the React Compiler is not
+// active in the test environment, so an explicit memo is required there). The
+// previous hand-written comparator compared every field the row reads EXCEPT
+// `fixedColumnLayout` (used ~11× in JSX), so a `fixedColumnLayout` identity
+// churn with all compared fields equal made the comparator return true and the
+// row rendered with stale sticky offset / className / style. The comparator now
+// includes `fixedColumnLayout`, closing that stale-render gap while preserving
+// row locality.
 const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
   return (
     prev.item.entry.record === next.item.entry.record &&
@@ -579,7 +406,7 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
 export function renderDataRow(
   item: FlattenedRow,
   schemaProps: TableSchema,
-  columns: import('../schemas.js').TableColumnSchema[],
+  columns: TableColumnSchema[],
   helpers: RendererComponentProps<TableSchema>['helpers'],
   parentProps: RendererComponentProps<TableSchema>,
   fixedColumnLayout: FixedColumnLayout,
@@ -621,103 +448,5 @@ export function renderDataRow(
       draggable={draggable}
       rowDragSortApi={rowDragSortApi}
     />
-  );
-}
-
-export function renderExpandedRow(
-  item: FlattenedExpandedRow,
-  schemaProps: TableSchema,
-  helpers: RendererComponentProps<TableSchema>['helpers'],
-  parentProps: RendererComponentProps<TableSchema>,
-  rowScopeCache: Map<string, ScopeRef>,
-  rowRepeatedTemplateId: string,
-  responsiveHiddenColumns: import('../schemas.js').TableColumnSchema[],
-) {
-  const regionKey = schemaProps.expandable?.expandedRowRegionKey;
-  const hasResponsiveHiddenColumns = responsiveHiddenColumns.length > 0;
-  if (!regionKey && !hasResponsiveHiddenColumns) return null;
-
-  const rowScope = rowScopeCache.get(item.rowKey);
-  if (!rowScope) return null;
-
-  const rowInstancePath: InstanceFrame[] = [
-    ...(parentProps.node.instancePath ?? []),
-    { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: item.rowKey },
-  ];
-
-  return (
-    <TableRow data-slot="table-expanded-row">
-      <TableCell colSpan={item.columnCount} data-slot="table-expanded-cell">
-        {hasResponsiveHiddenColumns ? (
-          <div
-            className="nop-safe-bottom grid gap-2 p-2 sm:grid-cols-2 sm:p-1"
-            data-slot="table-responsive-expanded"
-          >
-            {responsiveHiddenColumns.map((column, index) => {
-              const cellRegion =
-                typeof column.cellRegionKey === 'string'
-                  ? parentProps.regions[column.cellRegionKey]
-                  : undefined;
-              const labelRegion =
-                typeof column.labelRegionKey === 'string'
-                  ? parentProps.regions[column.labelRegionKey]
-                  : undefined;
-              const label =
-                asReactNode(labelRegion?.render()) ??
-                (typeof column.label === 'string' ? column.label : (column.name ?? `Column ${index + 1}`));
-              const columnKey = column.name ?? `${label}-${column.type ?? 'value'}`;
-              return (
-                <div
-                  key={columnKey}
-                  className="nop-hairline nop-hairline--bottom rounded-md border bg-muted/20 px-3 py-3 sm:py-2"
-                  data-slot="table-responsive-expanded-item"
-                >
-                  <div
-                    className="text-xs font-medium text-muted-foreground"
-                    data-slot="table-responsive-expanded-label"
-                  >
-                    {label}
-                  </div>
-                  <div className="mt-1 text-sm" data-slot="table-responsive-expanded-value">
-                    {cellRegion
-                      ? asReactNode(
-                          cellRegion.render({
-                            scope: rowScope,
-                            bindings: {
-                              record: rowScope.get('record'),
-                              index: rowScope.get('index'),
-                            },
-                            instancePath: rowInstancePath,
-                            pathSuffix: `responsive.${index}`,
-                          }),
-                        )
-                      : column.name
-                        ? String(
-                            (rowScope.get('record') as Record<string, unknown> | undefined)?.[
-                              column.name
-                            ] ?? '',
-                          )
-                        : ''}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-        {regionKey && parentProps.regions[regionKey]
-          ? asReactNode(
-              parentProps.regions[regionKey].render({
-                scope: rowScope,
-                bindings: {
-                  record: rowScope.get('record'),
-                  index: rowScope.get('index'),
-                },
-                instancePath: rowInstancePath,
-                pathSuffix: `expanded.${item.rowKey}`,
-              }),
-            )
-          : null}
-      </TableCell>
-    </TableRow>
   );
 }

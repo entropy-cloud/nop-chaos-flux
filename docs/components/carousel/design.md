@@ -35,6 +35,7 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 推荐句柄为 `component:next`、`component:prev`、`component:setValue`。
+- `onChange` payload 采用单一规范键 `activeIndex`（对齐 schema/state 字段名），不再冗余重复 `index`（Decision A，见 `docs/plans/2026-06-25-0510-2-new-package-advertised-contract-and-lifecycle-honesty-plan.md` WS-C）。
 
 ## 9. 数据源、表达式、导入能力接入点
 
@@ -51,3 +52,12 @@
 ## 12. 风险、取舍与后续阶段
 
 - 主要风险是与 `cards`、`image`、`video` 族重复建模。
+
+## 13. 自动轮播可访问性契约（WCAG 2.2.2）
+
+`autoPlay` 开启时，轮播必须满足 WCAG 2.2.2「Pause, Stop, Hide」。实现约定（`packages/flux-renderers-content/src/carousel.tsx`，audit F1/F2 修复后落地）：
+
+- **分层暂停源**：hover、focus、offscreen 三个来源各自独立跟踪（`hovered` / `focused` / `visible`），interval tick 内派生 `paused = hovered || focused || !visible`。任一来源的 resume 不得 clobber 其他来源（修复 F1：避免「hover → 滚出视口 → mouseleave 后在 offscreen 仍自动推进」的交错缺陷）。offscreen 检测用 `IntersectionObserver`。
+- **响应式 reduced-motion**：订阅 `matchMedia('(prefers-reduced-motion: reduce)')` 的 `change` 事件，运行中开启 reduced-motion 立即 `clearInterval`（零 tick 延迟），关闭且仍 `autoPlay` 时重起 interval（修复 F2：不再「mount 时读一次 early-return 永久生效」）。
+
+回归测试见 `packages/flux-renderers-content/src/carousel-autoplay.test.tsx`（pause-source 交错 + reduced-motion 双向切换）。

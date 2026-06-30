@@ -1,6 +1,8 @@
 import React from 'react';
 import type {
   BaseSchema,
+  CompiledValidationBehavior,
+  FormRuntime,
   RendererComponentProps,
   RendererDefinition,
   RuntimeFieldRegistration,
@@ -14,16 +16,19 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button, Input, cn } from '@nop-chaos/ui';
+import { ChevronDownIcon, ChevronUpIcon, Trash2Icon } from 'lucide-react';
 import {
   formFieldRules,
+  getChildFieldUiState,
   getFieldValidationBehavior,
   shouldValidateOn,
+  useCompositeChildFieldState,
   useFormFieldController,
 } from '@nop-chaos/flux-renderers-form';
 import type { KeyValuePair, KeyValueSchema } from '@nop-chaos/flux-renderers-form';
+import { FieldHint } from '@nop-chaos/flux-renderers-form';
 import { createNextCompositeItemId } from './composite-field/composite-item-id.js';
-import { KeyValueRow } from './key-value-row.js';
 import { useCompatibilityItemKeys } from './composite-field/composite-item-keys.js';
 import {
   EMPTY_RAW_KEY_VALUE_PAIRS,
@@ -34,6 +39,223 @@ import {
   COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
   COMPOSITE_EDITOR_METHODS,
 } from './composite-field/composite-editor-capability-contracts.js';
+
+function KeyValueRow(props: {
+  pair: KeyValuePair;
+  index: number;
+  totalCount: number;
+  minItems: number;
+  name: string;
+  currentForm: FormRuntime | undefined;
+  childBehavior: CompiledValidationBehavior;
+  onSync(nextPairs: KeyValuePair[]): void;
+  onRemove: (index: number) => void;
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
+  pairs: KeyValuePair[];
+  disabled?: boolean;
+  readOnly?: boolean;
+  removeButtonRef?: (button: HTMLButtonElement | null) => void;
+}) {
+  const {
+    pair,
+    index,
+    totalCount,
+    minItems,
+    name,
+    currentForm,
+    childBehavior,
+    onSync,
+    onRemove,
+    onMoveUp,
+    onMoveDown,
+    pairs,
+    disabled,
+    readOnly,
+    removeButtonRef,
+  } = props;
+  const keyPath = `${name}.${index}.key`;
+  const valuePath = `${name}.${index}.value`;
+  const keyInputId = `${name || 'key-value'}-${pair.id}-key`;
+  const valueInputId = `${name || 'key-value'}-${pair.id}-value`;
+  const keyErrorId = `${keyInputId}-error`;
+  const valueErrorId = `${valueInputId}-error`;
+  const keyFieldState = useCompositeChildFieldState(keyPath);
+  const valueFieldState = useCompositeChildFieldState(valuePath);
+  const keyUi = getChildFieldUiState({
+    behavior: childBehavior,
+    fieldState: keyFieldState,
+  });
+  const valueUi = getChildFieldUiState({
+    behavior: childBehavior,
+    fieldState: valueFieldState,
+  });
+  const canRemove = totalCount > minItems;
+  const canMoveUp = index > 0;
+  const canMoveDown = index < totalCount - 1;
+
+  return (
+    <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2.5 items-start">
+      <div
+        className={keyUi.className}
+        data-child-field-visited={keyUi['data-child-field-visited']}
+        data-child-field-touched={keyUi['data-child-field-touched']}
+        data-child-field-dirty={keyUi['data-child-field-dirty']}
+        data-child-field-invalid={keyUi['data-child-field-invalid']}
+      >
+        <Input
+          id={keyInputId}
+          type="text"
+          value={pair.key}
+          disabled={disabled}
+          placeholder="Key"
+          aria-label={`Key ${index + 1}`}
+          aria-invalid={keyUi.showError ? true : undefined}
+          aria-describedby={keyUi.showError ? keyErrorId : undefined}
+          aria-errormessage={keyUi.showError ? keyErrorId : undefined}
+          onFocus={() => {
+            if (currentForm && name) {
+              currentForm.visitField(name);
+              currentForm.visitField(keyPath);
+            }
+          }}
+          onChange={(event) => {
+            if (readOnly) {
+              return;
+            }
+
+            const nextPairs = pairs.map((candidate, candidateIndex) =>
+              candidateIndex === index ? { ...candidate, key: event.target.value } : candidate,
+            );
+            onSync(nextPairs);
+
+            if (currentForm) {
+              currentForm.touchField(keyPath);
+              currentForm.setValue(keyPath, event.target.value);
+
+              if (shouldValidateOn(name, currentForm, 'change')) {
+                void currentForm.validateField(keyPath, 'change');
+              }
+            }
+          }}
+          onBlur={() => {
+            if (currentForm) {
+              currentForm.touchField(keyPath);
+
+              if (shouldValidateOn(name, currentForm, 'blur')) {
+                void currentForm.validateField(keyPath, 'blur');
+              }
+            }
+          }}
+        />
+        <FieldHint errorMessage={keyUi.error?.message} showError={keyUi.showError} id={keyErrorId} />
+      </div>
+      <div
+        className={valueUi.className}
+        data-child-field-visited={valueUi['data-child-field-visited']}
+        data-child-field-touched={valueUi['data-child-field-touched']}
+        data-child-field-dirty={valueUi['data-child-field-dirty']}
+        data-child-field-invalid={valueUi['data-child-field-invalid']}
+      >
+        <Input
+          id={valueInputId}
+          type="text"
+          value={pair.value}
+          disabled={disabled}
+          placeholder="Value"
+          aria-label={`Value ${index + 1}`}
+          aria-invalid={valueUi.showError ? true : undefined}
+          aria-describedby={valueUi.showError ? valueErrorId : undefined}
+          aria-errormessage={valueUi.showError ? valueErrorId : undefined}
+          onFocus={() => {
+            if (currentForm && name) {
+              currentForm.visitField(name);
+              currentForm.visitField(valuePath);
+            }
+          }}
+          onChange={(event) => {
+            if (readOnly) {
+              return;
+            }
+
+            const nextPairs = pairs.map((candidate, candidateIndex) =>
+              candidateIndex === index ? { ...candidate, value: event.target.value } : candidate,
+            );
+            onSync(nextPairs);
+
+            if (currentForm) {
+              currentForm.touchField(valuePath);
+              currentForm.setValue(valuePath, event.target.value);
+
+              if (shouldValidateOn(name, currentForm, 'change')) {
+                void currentForm.validateField(valuePath, 'change');
+              }
+            }
+          }}
+          onBlur={() => {
+            if (currentForm) {
+              currentForm.touchField(valuePath);
+
+              if (shouldValidateOn(name, currentForm, 'blur')) {
+                void currentForm.validateField(valuePath, 'blur');
+              }
+            }
+          }}
+        />
+        <FieldHint errorMessage={valueUi.error?.message} showError={valueUi.showError} id={valueErrorId} />
+      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-slot="key-value-move-up"
+        disabled={disabled || !canMoveUp}
+        aria-label={`Move up entry ${index + 1}`}
+        onClick={() => {
+          if (readOnly || !canMoveUp) {
+            return;
+          }
+          onMoveUp(index);
+        }}
+      >
+        <ChevronUpIcon className="size-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-slot="key-value-move-down"
+        disabled={disabled || !canMoveDown}
+        aria-label={`Move down entry ${index + 1}`}
+        onClick={() => {
+          if (readOnly || !canMoveDown) {
+            return;
+          }
+          onMoveDown(index);
+        }}
+      >
+        <ChevronDownIcon className="size-4" />
+      </Button>
+      <Button
+        ref={removeButtonRef}
+        type="button"
+        variant="ghost"
+        size="sm"
+        disabled={disabled || !canRemove}
+        className="hover:text-destructive"
+        aria-label={`${t('flux.form.remove')} entry ${index + 1}`}
+        onClick={() => {
+          if (!canRemove) {
+            return;
+          }
+          onRemove(index);
+        }}
+      >
+        <Trash2Icon className="size-4" />
+      </Button>
+    </div>
+  );
+}
 
 export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
   const name = String(props.props.name ?? '');
@@ -46,7 +268,6 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     typeof props.props.maxItems === 'number' && Number.isFinite(props.props.maxItems)
       ? Math.max(0, Math.floor(props.props.maxItems))
       : undefined;
-  const uniqueKeysEnabled = Boolean(props.props.uniqueKeys);
   const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.props.disabled,
     required: props.props.required,
@@ -58,41 +279,52 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   const removeButtonRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
   const modelGeneration = useCurrentFormModelGeneration();
 
-  const formExternalValue = useCurrentFormState(
-    (state) => (currentForm && hasName ? toKeyValuePairs(getIn(state.values, name)) : undefined),
+  const formRawValue = useCurrentFormState(
+    (state) => (currentForm && hasName ? toRawKeyValuePairs(getIn(state.values, name)) : undefined),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
-      return a.every(
-        (pair, index) =>
-          pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value,
-      );
+      return rawKeyValuePairsEqual(a, b);
     },
     { enabled: Boolean(currentForm && hasName), path: hasName ? name : undefined },
   );
-  const scopeExternalValue = useScopeSelector(
-    (scopeData) => (currentForm || !hasName ? undefined : toKeyValuePairs(getIn(scopeData, name))),
+  const scopeRawValue = useScopeSelector(
+    (scopeData) => (currentForm || !hasName ? undefined : toRawKeyValuePairs(getIn(scopeData, name))),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
-      return a.every(
-        (pair, index) =>
-          pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value,
-      );
+      return rawKeyValuePairsEqual(a, b);
     },
     { enabled: Boolean(!currentForm && hasName), fallback: undefined, paths: hasName ? [name] : undefined },
   );
-  const externalValue = currentForm ? formExternalValue : scopeExternalValue;
-  const pairs = externalValue ?? EMPTY_KEY_VALUE_PAIRS;
+  const rawValue = currentForm ? formRawValue : scopeRawValue;
+  const rawPairs = rawValue ?? EMPTY_RAW_KEY_VALUE_PAIRS;
+  const {
+    keyAt: compatKeyAt,
+    removeAt: compatRemoveAt,
+    append: compatAppend,
+    move: compatMove,
+  } = useCompatibilityItemKeys(rawPairs.length, 'pair-');
+  const pairs = React.useMemo<KeyValuePair[]>(
+    () =>
+      rawPairs.map((pair, index) => ({
+        id: pair.id ?? compatKeyAt(index),
+        key: pair.key,
+        value: pair.value,
+      })),
+    [rawPairs, compatKeyAt],
+  );
   const childPaths = React.useMemo(
-    () => pairs.flatMap((_, index) => [`${name}.${index}.key`, `${name}.${index}.value`]),
-    [name, pairs],
+    () =>
+      Array.from({ length: pairs.length }, (_, index) => [
+        `${name}.${index}.key`,
+        `${name}.${index}.value`,
+      ]).flat(),
+    [name, pairs.length],
   );
 
   React.useEffect(() => {
-    if (!keyValuePairsEqual(pairsRef.current, pairs)) {
-      pairsRef.current = pairs;
-    }
+    pairsRef.current = pairs;
   }, [pairs]);
 
   React.useEffect(() => {
@@ -129,15 +361,11 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       const nextFocusIndex = Math.min(index, nextPairs.length - 1);
 
       pairsRef.current = nextPairs;
+      compatRemoveAt(index);
 
       if (currentForm && name) {
         currentForm.removeValue(name, index);
-        // Gate removal validation on `validateOn` for parity with add/move and
-        // with the sibling composite editors (combo/input-table/array-editor),
-        // which all respect shouldValidateOn before revalidating.
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateSubtree(name, 'change');
-        }
+        void currentForm.validateSubtree(name, 'change');
       } else {
         syncField(nextPairs);
       }
@@ -148,7 +376,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
         }
       });
     },
-    [currentForm, name, pairs, syncField],
+    [currentForm, name, pairs, syncField, compatRemoveAt],
   );
 
   const handleMove = React.useCallback(
@@ -164,6 +392,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       }
       nextPairs.splice(to, 0, moved);
       pairsRef.current = nextPairs;
+      compatMove(index, to);
 
       if (currentForm && name) {
         currentForm.moveValue(name, index, to);
@@ -175,7 +404,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
       syncField(nextPairs);
     },
-    [currentForm, name, pairs, syncField],
+    [currentForm, name, pairs, syncField, compatMove],
   );
 
   const handleMoveUp = React.useCallback((index: number) => handleMove(index, index - 1), [handleMove]);
@@ -216,6 +445,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           : { id: createNextCompositeItemId(pairs, 'pair-'), key: '', value: '' };
       const nextPairs = [...pairs, nextEntry];
       pairsRef.current = nextPairs;
+      compatAppend();
       if (currentForm && name) {
         currentForm.appendValue(name, nextEntry);
         if (shouldValidateOn(name, currentForm, 'change')) {
@@ -236,11 +466,10 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       const nextPairs = pairs.filter((_, candidateIndex) => candidateIndex !== index);
       const nextFocusIndex = Math.min(index, nextPairs.length - 1);
       pairsRef.current = nextPairs;
+      compatRemoveAt(index);
       if (currentForm && name) {
         currentForm.removeValue(name, index);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateSubtree(name, 'change');
-        }
+        void currentForm.validateSubtree(name, 'change');
       } else {
         syncField(nextPairs);
       }
@@ -262,6 +491,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       }
       nextPairs.splice(to, 0, moved);
       pairsRef.current = nextPairs;
+      compatMove(from, to);
       if (currentForm && name) {
         currentForm.moveValue(name, from, to);
         if (shouldValidateOn(name, currentForm, 'change')) {
@@ -330,26 +560,6 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           ];
         }
 
-        // Inline duplicate-key feedback (H25): when uniqueKeys is configured,
-        // flag the offending row's key inline (not only as an aggregate field
-        // error) so the user sees WHICH entries collide.
-        if (match[2] === 'key' && uniqueKeysEnabled && !keyEmpty) {
-          const key = pair.key.trim();
-          const hasDuplicate = pairsRef.current.some(
-            (other, otherIndex) =>
-              otherIndex !== Number(match[1]) && other && other.key.trim() === key,
-          );
-          if (hasDuplicate) {
-            return [
-              {
-                path,
-                rule: 'uniqueBy',
-                message: `Entry ${Number(match[1]) + 1} key must be unique`,
-              },
-            ];
-          }
-        }
-
         return [];
       },
     };
@@ -357,7 +567,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     const handle = currentForm.registerField(registration);
     registrationRef.current = handle.accepted ? { registrationId: handle.registrationId } : undefined;
     return handle.unregister;
-  }, [childPaths, currentForm, modelGeneration, name, uniqueKeysEnabled]);
+  }, [childPaths, currentForm, modelGeneration, name]);
 
   return (
     <div
@@ -401,6 +611,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           const nextEntry = { id: createNextCompositeItemId(pairs, 'pair-'), key: '', value: '' };
           const nextPairs = [...pairs, nextEntry];
           pairsRef.current = nextPairs;
+          compatAppend();
 
           if (currentForm && name) {
             currentForm.appendValue(name, nextEntry);

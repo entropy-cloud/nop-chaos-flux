@@ -1,7 +1,5 @@
 /// <reference types="node" />
 
-// @vitest-environment happy-dom
-
 import { readFileSync } from 'node:fs';
 import React from 'react';
 import { render, screen } from '@testing-library/react';

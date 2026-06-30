@@ -303,6 +303,8 @@
 
 **已修复**：已从该清单中移除这三个条目，使其与 `examples.manifest.json` 保持一致。
 
+> 注：本次（2026-04-10）修复仅覆盖 `fragment`/`loop`/`recurse` 三个结构节点。后续复核发现该清单仍残留约 42 个已 shipped 的内容/布局/数据/复合表单 renderer（`alert`/`card`/`carousel`/`combo`/`editor`/`grid`/`list`/`markdown`/`html`/`pagination`/`picker`/`service`/`steps`/`timeline`/`transfer`/`wizard` 等），已于 2026-06-25（`docs/plans/2026-06-25-0630-3-docs-baseline-remediation.md`，C-25）整体重建：全部已注册类型移入“当前代码已注册的通用 renderer”，“已文档化但 runtime 尚未注册的 retained renderer”清单已清空。`schema 已声明但尚未注册的领域 renderer` 中的 `designer-node-card`/`designer-edge-row` 同期确认已在 `flowDesignerRendererDefinitions` 注册并移出该清单。
+
 ### 9.3 @nop-chaos/ui 覆盖分析
 
 当前 `@nop-chaos/ui/src/index.ts` 共导出 59 项。其中 utility 或仅作实现工具的 primitive（`cn`、`kbd`、`item`、`field`、`direction`、`toolbar`、`command`、`scroll-area`、`resizable`、`native-select`、`button-group`、`collapsible`、`hover-card`、`context-menu`、`dropdown-menu`、`menubar`、`input-group`、`sidebar`、`popover`）不需要独立 renderer type。

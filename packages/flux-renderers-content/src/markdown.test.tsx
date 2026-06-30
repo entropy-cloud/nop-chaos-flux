@@ -78,3 +78,38 @@ describe('MarkdownRenderer — allowHtml gate + GFM', () => {
     expect(root.textContent).toBe('No content');
   });
 });
+
+// DD10 (b): code-block content is preserved verbatim, with no entity
+// double-escaping. Satisfied by construction (pipeline is remarkGfm + a
+// conditional rehypeRaw only; no escape plugin), this anchor pins the
+// behavior so a future rehype-escape plugin cannot regress it silently.
+describe('MarkdownRenderer — fenced code block verbatim preservation (sanitize strategy b)', () => {
+  it('preserves literal quotes and angle brackets inside a fenced code block', () => {
+    const code = `const s = "he said 'hi' & <tag>;`;
+    const props = createMockRendererProps<MarkdownSchema>({
+      schema: { type: 'markdown' },
+      props: { content: '```js\n' + code + '\n```' },
+    });
+    const { container } = render(<MarkdownRenderer {...props} />);
+    const codeEl = rootOf(container).querySelector('code');
+    expect(codeEl).not.toBeNull();
+    const text = codeEl?.textContent ?? '';
+    // literal characters survive, no entity double-escaping (&amp;amp;, &#39; …)
+    expect(text).toContain(`"he said 'hi'`);
+    expect(text).toContain('<tag>');
+    expect(text).not.toContain('&amp;amp;');
+    expect(text).not.toContain('&#39;');
+    expect(text).not.toContain('&quot;');
+  });
+
+  it('preserves code-block verbatim content even when allowHtml is true', () => {
+    const code = `x = "a" + 'b'`;
+    const props = createMockRendererProps<MarkdownSchema>({
+      schema: { type: 'markdown' },
+      props: { content: '```\n' + code + '\n```', allowHtml: true },
+    });
+    const { container } = render(<MarkdownRenderer {...props} />);
+    const text = rootOf(container).querySelector('code')?.textContent ?? '';
+    expect(text).toContain(`"a" + 'b'`);
+  });
+});

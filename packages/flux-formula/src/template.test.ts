@@ -24,4 +24,23 @@ describe('template helpers', () => {
       { type: 'text', value: '${unterminated' },
     ]);
   });
+
+  it('A7: ${ is always an interpolation start and has no escape syntax', () => {
+    expect(parseTemplateSegments('value ${x}')).toEqual([
+      { type: 'text', value: 'value ' },
+      { type: 'expr', value: 'x' },
+    ]);
+
+    expect(parseTemplateSegments('literal \\${x}')).toEqual([
+      { type: 'text', value: 'literal \\' },
+      { type: 'expr', value: 'x' },
+    ]);
+  });
+
+  it('A7: an unclosed ${ is preserved as literal text', () => {
+    expect(parseTemplateSegments('cost is ${amount')).toEqual([
+      { type: 'text', value: 'cost is ' },
+      { type: 'text', value: '${amount' },
+    ]);
+  });
 });

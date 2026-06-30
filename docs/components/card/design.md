@@ -6,30 +6,34 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前代码库已具备 `@nop-chaos/ui` Card primitive，但通用 renderer 尚未落位。
-- 文档首版应优先围绕壳层与 regions 建模，而不是把视觉变体写成大量专属字段。
+- 已 shipped：注册于 `flux-renderers-content`（`content-renderer-definitions.ts`），复用 `@nop-chaos/ui` Card primitive 作为视觉壳层。
+- 建模围绕壳层与 regions，视觉变体通过 `variant` 等少量字段表达，而非大量专属字段。
 
 ## 3. Flux 中的 renderer/type 定义
 
-- 目标 `type: 'card'`
-- 预期归属 `@nop-chaos/flux-renderers-content`
-- 预期 regions: `header`、`body`、`footer`、`actions`
+- 实际 `type: 'card'`
+- 实际归属 `@nop-chaos/flux-renderers-content`
+- 实际 regions: `header`、`body`、`footer`、`actions`
 
 ## 4. schema 设计
 
-- 建议字段为 `title`、`header`、`body`、`footer`、`actions`、`image`、`variant`。
+- 建议字段为 `title`、`header`、`body`、`footer`、`actions`、`image`、`imageClassName`、`variant`。
 
 ## 5. 字段分类
 
 - `title`: `value-or-region`
 - `header`、`body`、`footer`、`actions`: `region`
-- `image`、`variant`: `value`
+- `image`、`imageClassName`、`variant`: `value`
 
 ## 6. regions 与 slot 约定
 
 - `header` 负责顶部壳。
 - `body` 是主内容。
 - `actions` 是卡片交互区。
+
+### Media className 契约（L14）
+
+顶部图片媒体经 `imageClassName?: string` 暴露作者 className 通道：renderer 用 `cn('aspect-video w-full object-cover', imageClassName)` 合并。默认 base（`aspect-video w-full object-cover`）保留合理视觉基线，作者 className 追加其后可扩展或覆盖（Tailwind 后置类覆盖前置）。renderer **不再用硬编码几何覆盖作者意图**——这与 styling-system 契约一致（widget renderer 自带视觉默认，但作者可控制）。回归锚见 `card.test.tsx` 的 L14 anchor。
 
 ## 7. 运行期状态归属
 
@@ -39,6 +43,7 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 可支持 `onClick` 作为卡片整体点击事件。
+- 行级 itemScope（per-row `item`/`index` 求值上下文）是**集合** `cards` 的能力（见 `docs/components/cards/design.md` §6/§8），不属于独立的 `card`。独立 `card` 无 per-row itemScope，其 `onClick` 在自身节点 scope 求值。
 
 ## 9. 数据源、表达式、导入能力接入点
 

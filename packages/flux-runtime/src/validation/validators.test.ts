@@ -71,6 +71,47 @@ describe('builtInValidators', () => {
     expect(error?.message).toBeTruthy();
   });
 
+  describe('requiredRange (range-aware required)', () => {
+    const field = createField('range', 'date-range');
+    const invoke = (value: unknown, delimiter = ',') => {
+      const validator = registry.get('requiredRange');
+      const rule = createRule('range', { kind: 'requiredRange', delimiter });
+      return validator?.({
+        compiledRule: rule,
+        rule: rule.rule as SyncValidationRule,
+        value,
+        field,
+        scope: createScope(),
+      });
+    };
+
+    it('fails on a partial range (one bound filled, the other empty)', () => {
+      expect(invoke('2024-06-01,')).toMatchObject({ rule: 'requiredRange' });
+      expect(invoke(',2024-06-20')).toMatchObject({ rule: 'requiredRange' });
+    });
+
+    it('passes on a fully-filled range (both bounds present)', () => {
+      expect(invoke('2024-06-01,2024-06-20')).toBeUndefined();
+    });
+
+    it('does not fire on fully-empty values (left to the generic required rule)', () => {
+      expect(invoke('')).toBeUndefined();
+      expect(invoke(undefined)).toBeUndefined();
+      expect(invoke(null)).toBeUndefined();
+    });
+
+    it('does not fire on non-string / non-range-shaped values', () => {
+      expect(invoke('2024-06-01')).toBeUndefined();
+      expect(invoke(['a', 'b'])).toBeUndefined();
+      expect(invoke(42)).toBeUndefined();
+    });
+
+    it('honors a custom delimiter', () => {
+      expect(invoke('2024-06-01~', '~')).toMatchObject({ rule: 'requiredRange' });
+      expect(invoke('2024-06-01~2024-06-20', '~')).toBeUndefined();
+    });
+  });
+
   it('validates relational dependencies and reports related paths', () => {
     const validator = registry.get('equalsField');
     const field = createField('confirmPassword');

@@ -106,8 +106,8 @@ flux-core → flux-formula → flux-runtime → flux-react → renderer-*
 ```text
 packages/
 ├── flux-renderers-basic/          # 结构节点 + 表面 owner + 基础动作/展示
-├── flux-renderers-content/        # 纯内容展示与反馈（目标态；当前尚未创建）
-├── flux-renderers-layout/         # 高级布局与流程容器（目标态；当前尚未创建）
+├── flux-renderers-content/        # 纯内容展示与反馈（已落地）
+├── flux-renderers-layout/         # 高级布局与流程容器（已落地）
 ├── flux-renderers-form/           # 表单 owner + 核心表单字段
 ├── flux-renderers-form-advanced/  # 复合/高级表单字段（当前已存在，已从 form 拆出）
 ├── flux-renderers-data/           # 数据展示与复合数据工作流
@@ -121,7 +121,7 @@ packages/
 
 ### 2.2 `@nop-chaos/flux-renderers-basic` — 结构与基础
 
-当前 live baseline 只有 `flux-renderers-basic`、`flux-renderers-form`、`flux-renderers-form-advanced`、`flux-renderers-data`、`flux-code-editor` 以及各领域 renderer 包实际存在于 workspace。`flux-renderers-content` 与 `flux-renderers-layout` 仍是目标态拆包方向，不应被当作已落地 package。
+当前 live baseline 已包含 `flux-renderers-basic`、`flux-renderers-content`、`flux-renderers-layout`、`flux-renderers-mobile`、`flux-renderers-form`、`flux-renderers-form-advanced`、`flux-renderers-data`、`flux-code-editor` 以及各领域 renderer 包。`flux-renderers-content` 与 `flux-renderers-layout` 均已落地（含 `src/index.ts` + `package.json` + 注册数组），不再是目标态拆包方向。
 
 **职责**：无 UI 结构节点、页面级 owner、表面 owner（dialog/drawer）、基础动作触发器、最基础的展示单元。
 
@@ -623,22 +623,22 @@ src/
 
 ### 3.7 领域包（不变）
 
-| 组件                     | 包                                                   |
-| ------------------------ | ---------------------------------------------------- |
-| `designer-page`          | `flow-designer-renderers`                            |
-| `designer-field`         | `flow-designer-renderers`                            |
-| `designer-canvas`        | `flow-designer-renderers`                            |
-| `designer-palette`       | `flow-designer-renderers`                            |
-| `designer-node-card`     | `flow-designer-renderers`（declaredButUnregistered） |
-| `designer-edge-row`      | `flow-designer-renderers`（declaredButUnregistered） |
-| `report-inspector-shell` | `report-designer-renderers`                          |
-| `report-inspector`       | `report-designer-renderers`                          |
-| `report-field-panel`     | `report-designer-renderers`                          |
-| `report-toolbar`         | `report-designer-renderers`                          |
-| `report-designer-page`   | `report-designer-renderers`                          |
-| `spreadsheet-page`       | `spreadsheet-renderers`                              |
-| `word-editor-page`       | `word-editor-renderers`                              |
-| `code-editor`            | `flux-code-editor`                                   |
+| 组件                     | 包                          |
+| ------------------------ | --------------------------- |
+| `designer-page`          | `flow-designer-renderers`   |
+| `designer-field`         | `flow-designer-renderers`   |
+| `designer-canvas`        | `flow-designer-renderers`   |
+| `designer-palette`       | `flow-designer-renderers`   |
+| `designer-node-card`     | `flow-designer-renderers`   |
+| `designer-edge-row`      | `flow-designer-renderers`   |
+| `report-inspector-shell` | `report-designer-renderers` |
+| `report-inspector`       | `report-designer-renderers` |
+| `report-field-panel`     | `report-designer-renderers` |
+| `report-toolbar`         | `report-designer-renderers` |
+| `report-designer-page`   | `report-designer-renderers` |
+| `spreadsheet-page`       | `spreadsheet-renderers`     |
+| `word-editor-page`       | `word-editor-renderers`     |
+| `code-editor`            | `flux-code-editor`          |
 
 ---
 
@@ -646,19 +646,19 @@ src/
 
 ### 4.1 Renderer 包依赖矩阵
 
-当前表格以 live `package.json` 为准，区分 runtime `dependencies` 与 dev/test `devDependencies`。目标态未创建 package 只保留说明，不再伪装成当前 runtime 依赖事实。
+当前表格以 live `package.json` 为准，区分 runtime `dependencies` 与 dev/test `devDependencies`。`flux-renderers-content` 与 `flux-renderers-layout` 均已落地，矩阵记录其真实 runtime 依赖。
 
 #### Runtime Dependencies
 
-| 包依赖 →      | flux-core | flux-react | flux-runtime | flux-formula | flux-renderers-basic | flux-renderers-form |   ui   | echarts | @dnd-kit |
-| ------------- | :-------: | :--------: | :----------: | :----------: | :------------------: | :-----------------: | :----: | :-----: | :------: |
-| basic         |     x     |     x      |              |              |                      |                     |   x    |         |          |
-| content       |  target   |   target   |    target    |    target    |                      |                     | target |         |          |
-| layout        |  target   |   target   |    target    |    target    |                      |                     | target |         |          |
-| form          |     x     |     x      |              |              |                      |                     |   x    |         |          |
-| form-advanced |     x     |     x      |      x       |              |                      |          x          |   x    |         |    x     |
-| data          |     x     |     x      |              |              |                      |                     |   x    |  peer   |          |
-| code-editor   |     x     |     x      |              |              |                      |                     |   x    |         |          |
+| 包依赖 →      | flux-core | flux-react | flux-runtime | flux-formula | flux-renderers-basic | flux-renderers-form | ui  | echarts | @dnd-kit |
+| ------------- | :-------: | :--------: | :----------: | :----------: | :------------------: | :-----------------: | :-: | :-----: | :------: |
+| basic         |     x     |     x      |              |              |                      |                     |  x  |         |          |
+| content       |     x     |     x      |              |              |                      |                     |  x  |         |          |
+| layout        |     x     |     x      |              |              |                      |                     |  x  |         |          |
+| form          |     x     |     x      |              |              |                      |                     |  x  |         |          |
+| form-advanced |     x     |     x      |      x       |              |                      |          x          |  x  |         |    x     |
+| data          |     x     |     x      |              |              |                      |                     |  x  |  peer   |          |
+| code-editor   |     x     |     x      |              |              |                      |                     |  x  |         |          |
 
 #### Dev/Test Dependencies
 
@@ -674,7 +674,7 @@ src/
 
 - `x` = live `package.json dependencies` / `devDependencies` 中存在直接依赖。
 - `peer` = 当前通过 `peerDependencies` 暴露，而不是本包 runtime `dependencies`。
-- `target` = 目标态拆包推演，当前 workspace 尚未创建该 package。
+- `target`（历史标记）= 目标态拆包推演；当前矩阵已无此标记，`flux-renderers-content` 与 `flux-renderers-layout` 均已落地为 live package。
 - `flux-renderers-form-advanced -> flux-renderers-form` 是当前真实 runtime 依赖；复合字段仍复用 form owner/field 基础能力。
 - `flux-renderers-form` 当前不依赖 `flux-renderers-basic`；相关测试/fixtures 依赖存在于 `devDependencies`，不应被写成 runtime 拓扑。
 - `flux-renderers-data` 当前不依赖 `flux-renderers-basic`；若未来 lowering/实现变化引入该依赖，应在落地时再更新此矩阵。

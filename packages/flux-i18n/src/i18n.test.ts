@@ -99,4 +99,30 @@ describe('flux i18n', () => {
       expect(screen.getByTestId('language').textContent).toBe('zh-CN');
     });
   });
+
+  // I1 message-key half (LOCKED Flux runtime contract): a renderer-owned
+  // default string resolved through t() is reactive to locale and re-resolves
+  // in BOTH directions (zh→en→zh) without remount. The schema-string
+  // translation half is a Loader-layer responsibility (DESIGN-ACK) and is out
+  // of scope for this runtime anchor. getMessageFormatter() (the validation
+  // message sink) shares the same instance, so it is covered by the same path.
+  it('I1: renderer-owned t() string re-resolves on locale switch in both directions', async () => {
+    initFluxI18n({ lng: 'zh-CN', fallbackLng: 'zh-CN' });
+
+    function Probe() {
+      const { t: translate } = useFluxTranslation();
+      return React.createElement('div', { 'data-testid': 'label' }, translate('common.save'));
+    }
+
+    render(React.createElement(Probe));
+
+    expect(screen.getByTestId('label').textContent).toBe('保存');
+
+    await changeLanguage('en-US');
+    await waitFor(() => expect(screen.getByTestId('label').textContent).toBe('Save'));
+
+    // flip back — reactivity must work in both directions without remount
+    await changeLanguage('zh-CN');
+    await waitFor(() => expect(screen.getByTestId('label').textContent).toBe('保存'));
+  });
 });

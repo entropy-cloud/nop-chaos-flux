@@ -1,10 +1,9 @@
-// @vitest-environment happy-dom
 import React from 'react';
 import { describe, expect, it, afterEach, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
-import { RuntimeContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
+import { RuntimeContext, ScopeContext } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {

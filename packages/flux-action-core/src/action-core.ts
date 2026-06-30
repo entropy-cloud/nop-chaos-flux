@@ -81,6 +81,14 @@ export function classifyActionResult(result: ActionResult): ActionResultClass {
 
 export function isFailureClass(result: ActionResult): boolean {
   const resultClass = classifyActionResult(result);
+  // H35: cancelled/timedOut results are intentionally treated as failure-class
+  // so they trigger onError and onSettled cleanup. A timeout is an abnormal
+  // termination; a cancellation may need error recovery (e.g. abort cleanup,
+  // user-facing rollback). This semantics is locked by
+  // cancelled-class-and-error-guard.test.ts and action-core-result.test.ts.
+  // Changing it to exclude cancelled from failure-class would silently drop
+  // cleanup hooks — do not change without updating those tests and the
+  // onError contract docs.
   return resultClass === 'failure' || resultClass === 'cancelled';
 }
 

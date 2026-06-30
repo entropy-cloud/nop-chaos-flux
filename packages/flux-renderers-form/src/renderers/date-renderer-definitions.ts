@@ -3,10 +3,9 @@ import { InputDateRenderer } from './input-date-renderer.js';
 import { InputDatetimeRenderer } from './input-datetime-renderer.js';
 import { InputTimeRenderer } from './input-time-renderer.js';
 import { DateRangeRenderer } from './date-range-renderer.js';
-import { PeriodRenderer } from './period-renderers.js';
+import { MonthPeriodRenderer, QuarterPeriodRenderer, YearPeriodRenderer } from './period-renderers.js';
 import { formFieldRules } from '../field-utils.js';
-import { createFieldValidation } from './input.js';
-import { validateInputFieldSchema } from './input.js';
+import { createFieldValidation, createRangeFieldValidation, validateInputFieldSchema } from './input.js';
 
 export const dateFieldRules: SchemaFieldRule[] = [
   { key: 'valueFormat', kind: 'prop' },
@@ -108,7 +107,7 @@ export const dateRendererDefinitions: RendererDefinition[] = [
       { key: 'maxDate', kind: 'prop' },
       { key: 'shortcuts', kind: 'prop' },
     ],
-    validation: createFieldValidation(),
+    validation: createRangeFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     componentCapabilityContracts: FOCUS_CAPABILITY_CONTRACTS,
     wrap: true,
@@ -122,7 +121,7 @@ export const dateRendererDefinitions: RendererDefinition[] = [
     schemaValidator: validateInputFieldSchema,
     componentCapabilityContracts: FOCUS_CAPABILITY_CONTRACTS,
     wrap: true,
-    component: PeriodRenderer,
+    component: MonthPeriodRenderer,
   },
   {
     type: 'input-quarter',
@@ -132,7 +131,7 @@ export const dateRendererDefinitions: RendererDefinition[] = [
     schemaValidator: validateInputFieldSchema,
     componentCapabilityContracts: FOCUS_CAPABILITY_CONTRACTS,
     wrap: true,
-    component: PeriodRenderer,
+    component: QuarterPeriodRenderer,
   },
   {
     type: 'input-year',
@@ -142,6 +141,6 @@ export const dateRendererDefinitions: RendererDefinition[] = [
     schemaValidator: validateInputFieldSchema,
     componentCapabilityContracts: FOCUS_CAPABILITY_CONTRACTS,
     wrap: true,
-    component: PeriodRenderer,
+    component: YearPeriodRenderer,
   },
 ];

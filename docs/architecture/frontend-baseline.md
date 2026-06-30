@@ -120,6 +120,15 @@ Legacy sync workflow baseline:
 - the only remaining sync target is `flux-lib/ui/` for the current `nop-chaos-next` UI workspace
 - Flux core consumption now flows through the packed `@nop-chaos/flux` tarball instead of `flux-lib/flux-*`
 
+## UI i18n Bridge Contract
+
+`@nop-chaos/ui` chrome strings (carousel/dialog/drawer/sheet/sidebar/breadcrumb/pagination `aria-label`, `aria-roledescription`, and `sr-only` text) resolve through a shared cross-package bridge rather than an `@nop-chaos/*` import inside `ui`:
+
+- the bridge state lives on the global `Symbol.for('nop.ui.i18nBridge')` slot; `ui/src/lib/i18n.ts` exposes `setI18nGetter()`/`t()` over it, with a built-in English fallback map
+- `@nop-chaos/flux-i18n` owns the binding: `initFluxI18n()` calls `bindUiI18n(instance)`, which installs a getter that routes `ui`'s `t('flux.*')` calls through the active flux-i18n instance (stripping the `flux.` namespace prefix); `resetFluxI18n()` detaches it again
+- host apps MUST call `initFluxI18n()` at startup to localize `ui` chrome; without it `ui` chrome falls back to its built-in English map. `apps/playground/src/main.tsx` is the reference wiring for the dev surface
+- `@nop-chaos/flux` (`flux-bundle`) is a renderer facade and deliberately does not own i18n init; production hosts compose `flux-i18n` (which owns the bridge binding) the same way the playground does
+
 ## Package Naming
 
 Current workspace package names use the `@nop-chaos/*` scope.

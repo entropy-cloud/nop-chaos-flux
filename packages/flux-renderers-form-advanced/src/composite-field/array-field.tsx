@@ -25,6 +25,17 @@ import { cn } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas.js';
 import { formFieldRules, shouldValidateOn, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createItemFormProxy, createItemScope } from './array-field-runtime.js';
+import { instancePathEqual } from './instance-path-equal.js';
+import { isRemoveBlockedByWhen, isRemoveWhenConfigured } from './remove-when-gating.js';
+import {
+  buildStableObjectItemKeys,
+  useCompatibilityItemKeys,
+} from './composite-item-keys.js';
+import {
+  collectScalarArrayItemErrors,
+  getScalarItemValidationMetadata,
+  publishScalarArrayItemErrors,
+} from './array-field-scalar-validation.js';
 import { WrappedFieldAction } from '../wrapped-field-action.js';
 import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime.js';
 
@@ -36,59 +47,8 @@ function toArrayItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
 function createArrayFieldRepeatedTemplateId(templateNodeId: number | undefined): string {
   return `array-field-item:${templateNodeId ?? 'unknown'}`;
-}
-
-function resolvePreferredObjectArrayItemKey(
-  item: unknown,
-  sourceIndex: number,
-  itemKeyField?: string,
-): string {
-  if (isRecord(item)) {
-    const explicitValue = itemKeyField ? getIn(item, itemKeyField) : undefined;
-    const compatibilityValue = explicitValue ?? item.__rowKey ?? item.id;
-
-    if (
-      compatibilityValue !== null &&
-      compatibilityValue !== undefined &&
-      compatibilityValue !== ''
-    ) {
-      return String(compatibilityValue);
-    }
-  }
-
-  return `legacy-index:${sourceIndex}`;
-}
-
-function buildObjectArrayItemKeys(
-  items: unknown[],
-  itemKeyField?: string,
-): {
-  itemKeys: string[];
-  duplicatePreferredKeys: string[];
-} {
-  const preferredKeys = items.map((item, sourceIndex) =>
-    resolvePreferredObjectArrayItemKey(item, sourceIndex, itemKeyField),
-  );
-  const counts = new Map<string, number>();
-
-  for (const key of preferredKeys) {
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-
-  return {
-    itemKeys: preferredKeys.map((preferredKey, sourceIndex) =>
-      (counts.get(preferredKey) ?? 0) > 1 ? `legacy-index:${sourceIndex}` : preferredKey,
-    ),
-    duplicatePreferredKeys: Array.from(counts.entries())
-      .filter(([key, count]) => count > 1 && !key.startsWith('legacy-index:'))
-      .map(([key]) => key),
-  };
 }
 
 type ArrayItemProps = {
@@ -101,6 +61,7 @@ type ArrayItemProps = {
   parentValidationOwner: import('@nop-chaos/flux-core').ValidationScopeRuntime | undefined;
   readOnly: boolean;
   removable: boolean;
+  removeBlocked: boolean;
   onRemove: (index: number) => void;
   item: unknown;
   itemInstancePath: readonly InstanceFrame[];
@@ -118,6 +79,7 @@ function ArrayItemView(props: ArrayItemProps) {
     parentValidationOwner,
     readOnly,
     removable,
+    removeBlocked,
     onRemove,
     item,
     itemInstancePath,
@@ -170,7 +132,14 @@ function ArrayItemView(props: ArrayItemProps) {
         </FormContext.Provider>
       </div>
       {removable && (
-        <WrappedFieldAction variant="ghost" size="sm" className="mt-1 hover:text-destructive" onClick={() => onRemove(index)} aria-label={t('flux.form.remove')}>
+        <WrappedFieldAction
+          variant="ghost"
+          size="sm"
+          className="mt-1 hover:text-destructive"
+          disabled={removeBlocked}
+          onClick={() => !removeBlocked && onRemove(index)}
+          aria-label={t('flux.form.remove')}
+        >
           {t('flux.form.remove')}
         </WrappedFieldAction>
       )}
@@ -178,7 +147,7 @@ function ArrayItemView(props: ArrayItemProps) {
   );
 }
 
-const ArrayItem = React.memo(ArrayItemView, (prev, next) => {
+export const ArrayItem = React.memo(ArrayItemView, (prev, next) => {
   return (
     prev.itemIdentity === next.itemIdentity &&
     prev.index === next.index &&
@@ -189,110 +158,13 @@ const ArrayItem = React.memo(ArrayItemView, (prev, next) => {
     prev.parentValidationOwner === next.parentValidationOwner &&
     prev.readOnly === next.readOnly &&
     prev.removable === next.removable &&
+    prev.removeBlocked === next.removeBlocked &&
     prev.onRemove === next.onRemove &&
     prev.item === next.item &&
+    instancePathEqual(prev.itemInstancePath, next.itemInstancePath) &&
     prev.itemRegion === next.itemRegion
   );
 });
-
-type ScalarItemValidationMetadata = {
-  label?: string;
-  required?: boolean;
-};
-
-function getScalarItemValidationMetadata(
-  value: unknown,
-): ScalarItemValidationMetadata | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return undefined;
-  }
-
-  const record = value as Record<string, unknown>;
-  const label = typeof record.label === 'string' && record.label ? record.label : undefined;
-  const required = record.required === true ? true : undefined;
-
-  if (label === undefined && required === undefined) {
-    return undefined;
-  }
-
-  return { label, required };
-}
-
-function collectScalarArrayItemErrors(input: {
-  items: unknown[];
-  arrayPath: string;
-  childPaths: string[];
-  childLabel: string;
-  required: boolean;
-}) {
-  if (!input.required) {
-    return [] as Array<{
-      path: string;
-      ownerPath: string;
-      rule: 'required';
-      message: string;
-      sourceKind: 'runtime-registration';
-    }>;
-  }
-
-  const errors: Array<{
-    path: string;
-    ownerPath: string;
-    rule: 'required';
-    message: string;
-    sourceKind: 'runtime-registration';
-  }> = [];
-
-  for (const path of input.childPaths) {
-    const relativePath = path.startsWith(`${input.arrayPath}.`)
-      ? path.slice(input.arrayPath.length + 1)
-      : path;
-    const match = relativePath.match(/^(\d+)$/);
-    if (!match) {
-      continue;
-    }
-
-    const rawValue = input.items[Number(match[1])];
-    const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
-    if (value === '' || value === undefined || value === null) {
-      errors.push({
-        path,
-        ownerPath: path,
-        rule: 'required',
-        message: `${input.childLabel} is required`,
-        sourceKind: 'runtime-registration',
-      });
-    }
-  }
-
-  return errors;
-}
-
-function publishScalarArrayItemErrors(input: {
-  form: FormRuntime;
-  sourceId: string;
-  childPaths: string[];
-  items: unknown[];
-  arrayPath: string;
-  childLabel: string;
-  required: boolean;
-}) {
-  const errors = collectScalarArrayItemErrors({
-    items: input.items,
-    arrayPath: input.arrayPath,
-    childPaths: input.childPaths,
-    childLabel: input.childLabel,
-    required: input.required,
-  });
-
-  input.form.applyExternalErrors({
-    sourceId: input.sourceId,
-    errors,
-    replace: true,
-  });
-
-  return errors;
-}
 
 export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchema>) {
   const parentScope = useRenderScope();
@@ -309,6 +181,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   const addable = props.props.addable !== false;
   const removable = props.props.removable !== false;
   const readOnly = props.props.readOnly ?? false;
+  const removeWhenHandle = props.templateNode.structuralFields?.removeWhen;
   const itemRepeatedTemplateId = React.useMemo(
     () => createArrayFieldRepeatedTemplateId(props.templateNode.templateNodeId),
     [props.templateNode.templateNodeId],
@@ -345,22 +218,37 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
     [parentForm, formValue, scopeValue],
   );
   const nextItemKeyRef = React.useRef(items.length);
+  // P0-6: keep a ref to the current items so the scope-only Add/Remove handlers can read
+  // the latest array WITHOUT adding `items` to their useCallback deps (which would change
+  // their identity on every array mutation and re-render every memoized item — breaking
+  // array-item locality, see performance-table-page array-item-locality diagnostic).
+  // Sync in an effect (not during render) to satisfy react-hooks/refs; event handlers fire
+  // post-commit, so itemsRef.current is always the latest committed array when they run.
+  const itemsRef = React.useRef(items);
+  React.useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
   const [compatibilityItemKeys, setCompatibilityItemKeys] = React.useState<string[]>(() =>
     items.map((_, index) => `array-item-${index}`),
   );
+  const {
+    keyAt: objectCompatKeyAt,
+    removeAt: objectCompatRemoveAt,
+    append: objectCompatAppend,
+  } = useCompatibilityItemKeys(items.length, 'array-obj-');
   const objectItemKeyResolution = React.useMemo(
     () =>
       itemKind === 'object'
-        ? buildObjectArrayItemKeys(items, itemKeyField)
+        ? buildStableObjectItemKeys(items, itemKeyField, objectCompatKeyAt)
         : { itemKeys: [], duplicatePreferredKeys: [] },
-    [itemKind, items, itemKeyField],
+    [itemKind, items, itemKeyField, objectCompatKeyAt],
   );
   const itemEntries = React.useMemo(
     () =>
       items.map((item, index) => {
         const itemIdentity =
           itemKind === 'object'
-            ? (objectItemKeyResolution.itemKeys[index] ?? `legacy-index:${index}`)
+            ? (objectItemKeyResolution.itemKeys[index] ?? `array-obj-${index}`)
             : (compatibilityItemKeys[index] ?? `array-item-${index}`);
         const itemInstancePath: readonly InstanceFrame[] = [
           ...(parentInstancePath ?? []),
@@ -393,8 +281,11 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   const scalarItemLabel = scalarItemField?.label;
   const scalarItemRequired = scalarItemField?.required === true;
   const scalarChildPaths = React.useMemo(
-    () => (itemKind === 'scalar' && name ? items.map((_, index) => `${name}.${index}`) : []),
-    [itemKind, items, name],
+    () =>
+      itemKind === 'scalar' && name
+        ? Array.from({ length: items.length }, (_, index) => `${name}.${index}`)
+        : [],
+    [itemKind, items.length, name],
   );
 
   React.useEffect(() => {
@@ -432,35 +323,93 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   }, [itemKind, name, objectItemKeyResolution.duplicatePreferredKeys]);
 
   function handleAdd() {
+    const newItem = itemKind === 'scalar' ? '' : {};
+
+    if (itemKind === 'scalar') {
+      const nextItemKey = `array-item-${nextItemKeyRef.current++}`;
+      setCompatibilityItemKeys((current) => [...current, nextItemKey]);
+    } else {
+      objectCompatAppend();
+    }
+
     if (parentForm) {
-      const newItem = itemKind === 'scalar' ? '' : {};
-
-      if (itemKind === 'scalar') {
-        const nextItemKey = `array-item-${nextItemKeyRef.current++}`;
-        setCompatibilityItemKeys((current) => [...current, nextItemKey]);
-      }
-
       parentForm.appendValue(name, newItem);
       if (shouldValidateOn(name, parentForm, 'change')) {
         void parentForm.validateSubtree(name, 'change');
       }
+    } else {
+      // P0-6: scope-only mode (no parent form) — write the next array back to the
+      // owning scope instead of silently no-op'ing. Aligns with combo/input-table.
+      parentScope.update(name, [...itemsRef.current, newItem]);
     }
   }
 
-  const handleRemove = React.useCallback((index: number) => {
-    if (parentForm) {
-      if (itemKind === 'scalar') {
-        setCompatibilityItemKeys((current) =>
-          current.filter((_, currentIndex) => currentIndex !== index),
-        );
-      }
+  const removeBlockedByIndex = React.useMemo(() => {
+    if (!isRemoveWhenConfigured(removeWhenHandle)) {
+      return null;
+    }
+    return items.map((item, index) => {
+      const itemIdentity =
+        itemKind === 'object'
+          ? (objectItemKeyResolution.itemKeys[index] ?? `legacy-index:${index}`)
+          : (compatibilityItemKeys[index] ?? `array-item-${index}`);
+      const itemScope = createItemScope(
+        parentScope,
+        name,
+        index,
+        itemKind,
+        readOnly || presentation.effectiveDisabled,
+        itemIdentity,
+      );
+      return isRemoveBlockedByWhen({
+        removeWhenHandle,
+        itemScope,
+        evaluateCompiled: (compiled, scope) => props.helpers.evaluateCompiled(compiled, scope),
+      });
+    });
+  }, [
+    removeWhenHandle,
+    items,
+    itemKind,
+    objectItemKeyResolution.itemKeys,
+    compatibilityItemKeys,
+    parentScope,
+    name,
+    readOnly,
+    presentation.effectiveDisabled,
+    props.helpers,
+  ]);
 
+  const isRemoveBlockedAt = React.useCallback(
+    (index: number) => Boolean(removeBlockedByIndex?.[index]),
+    [removeBlockedByIndex],
+  );
+
+  const handleRemove = React.useCallback((index: number) => {
+    if (isRemoveBlockedAt(index)) {
+      return;
+    }
+    if (itemKind === 'scalar') {
+      setCompatibilityItemKeys((current) =>
+        current.filter((_, currentIndex) => currentIndex !== index),
+      );
+    } else {
+      objectCompatRemoveAt(index);
+    }
+
+    if (parentForm) {
       parentForm.removeValue(name, index);
       if (shouldValidateOn(name, parentForm, 'change')) {
         void parentForm.validateSubtree(name, 'change');
       }
+    } else {
+      // P0-6: scope-only mode — drop the item and write the next array back to scope.
+      parentScope.update(
+        name,
+        itemsRef.current.filter((_, currentIndex) => currentIndex !== index),
+      );
     }
-  }, [itemKind, name, parentForm]);
+  }, [isRemoveBlockedAt, itemKind, name, parentForm, parentScope, objectCompatRemoveAt]);
 
   React.useLayoutEffect(() => {
     if (!parentForm || !name || itemKind !== 'scalar' || scalarChildPaths.length === 0) {
@@ -474,11 +423,11 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       return parentForm.registerField({
         path,
         getValue() {
-          return items[index];
+          return itemsRef.current[index];
         },
         async validate() {
           return collectScalarArrayItemErrors({
-            items,
+            items: itemsRef.current,
             arrayPath: name,
             childPaths: [path],
             childLabel,
@@ -493,7 +442,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
         registration.unregister();
       }
     };
-  }, [itemKind, modelGeneration, name, parentForm, scalarChildPaths, scalarItemLabel, scalarItemRequired, items]);
+  }, [itemKind, modelGeneration, name, parentForm, scalarChildPaths, scalarItemLabel, scalarItemRequired]);
 
   React.useEffect(() => {
     if (!parentForm || !name || itemKind !== 'scalar') {
@@ -513,7 +462,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       },
       getState() {
         const errors = collectScalarArrayItemErrors({
-          items,
+          items: itemsRef.current,
           arrayPath: name,
           childPaths: scalarChildPaths,
           childLabel,
@@ -531,7 +480,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
           form: parentForm,
           sourceId,
           childPaths: scalarChildPaths,
-          items,
+          items: itemsRef.current,
           arrayPath: name,
           childLabel,
           required: scalarItemRequired,
@@ -547,7 +496,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       parentForm.unregisterChildContract(childOwnerId);
       parentForm.applyExternalErrors({ sourceId, errors: [], replace: true });
     };
-  }, [itemKind, items, name, parentForm, scalarChildPaths, scalarItemLabel, scalarItemRequired]);
+  }, [itemKind, name, parentForm, scalarChildPaths, scalarItemLabel, scalarItemRequired]);
 
   return (
     <div
@@ -568,6 +517,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
               parentValidationOwner={parentValidationOwner}
               readOnly={readOnly || presentation.effectiveDisabled}
               removable={removable && !readOnly && !presentation.effectiveDisabled}
+              removeBlocked={isRemoveBlockedAt(index)}
               onRemove={handleRemove}
               item={item}
               itemInstancePath={itemInstancePath}
@@ -597,6 +547,7 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
     { key: 'itemKey', kind: 'prop' },
     { key: 'addable', kind: 'prop' },
     { key: 'removable', kind: 'prop' },
+    { key: 'removeWhen', kind: 'prop', lazyEval: true, params: ['record', 'index', 'value'] },
     { key: 'readOnly', kind: 'prop' },
     { key: 'scalarItemValidation', kind: 'prop' },
     { key: 'item', kind: 'region', regionKey: 'item', params: ['index', 'value'] },

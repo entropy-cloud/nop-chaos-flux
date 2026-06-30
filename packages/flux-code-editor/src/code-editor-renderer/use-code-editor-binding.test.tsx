@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
-import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
+import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
 import { useCodeEditorBinding } from './use-code-editor-binding.js';
 
 function createScope() {

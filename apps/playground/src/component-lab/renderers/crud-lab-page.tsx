@@ -57,6 +57,79 @@ const records = [
   { id: 3, name: 'Gamma', status: 'archived', owner: 'Carol', category: 'Ops' },
 ];
 
+const modeRecords = Array.from({ length: 25 }, (_, index) => ({
+  id: `m${index + 1}`,
+  name: `Record-${index + 1}`,
+  status: index % 3 === 0 ? 'active' : index % 3 === 1 ? 'draft' : 'archived',
+  owner: ['Alice', 'Bob', 'Carol'][index % 3],
+}));
+
+const cardsModeCrud = {
+  type: 'page',
+  body: [
+    {
+      type: 'crud',
+      id: 'cards-mode-crud',
+      listMode: 'cards',
+      source: '${modeRecords}',
+      rowKey: 'id',
+      selection: {},
+      selectionStatePath: '$selCards',
+      card: [
+        {
+          type: 'button',
+          variant: 'outline',
+          size: 'sm',
+          label: '${ARRAYINCLUDES($selCards, $slot.item.id) ? "✓ Selected" : "Select"}',
+          onClick: {
+            action: 'component:toggleSelection',
+            componentId: 'cards-mode-crud',
+            args: { key: '${$slot.item.id}' },
+          },
+        },
+        { type: 'text', text: '${$slot.item.name} · ${$slot.item.status} · ${$slot.item.owner}' },
+      ],
+      footerToolbar: [
+        { type: 'text', text: 'Selected: ${$crud.selectionCount} / Total: ${$crud.itemCount}' },
+      ],
+      columns: [{ name: 'name', label: 'Name' }],
+    },
+  ],
+};
+
+const listModeCrud = {
+  type: 'page',
+  body: [
+    {
+      type: 'crud',
+      id: 'list-mode-crud',
+      listMode: 'list',
+      source: '${modeRecords}',
+      rowKey: 'id',
+      selection: {},
+      selectionStatePath: '$selList',
+      item: [
+        {
+          type: 'button',
+          variant: 'ghost',
+          size: 'sm',
+          label: '${ARRAYINCLUDES($selList, $slot.item.id) ? "✓ Selected" : "Select"}',
+          onClick: {
+            action: 'component:toggleSelection',
+            componentId: 'list-mode-crud',
+            args: { key: '${$slot.item.id}' },
+          },
+        },
+        { type: 'text', text: '${$slot.item.name} · ${$slot.item.status} · ${$slot.item.owner}' },
+      ],
+      footerToolbar: [
+        { type: 'text', text: 'Selected: ${$crud.selectionCount} / Total: ${$crud.itemCount}' },
+      ],
+      columns: [{ name: 'name', label: 'Name' }],
+    },
+  ],
+};
+
 const basicCrud = {
   type: 'page',
   body: [
@@ -474,6 +547,20 @@ export function CrudLabPage() {
           schema: clientModeFetchOnFilterCrud,
           data: { records },
           env: crudLabEnv,
+        },
+        {
+          title: 'CRUD cards mode',
+          description:
+            'Shows `listMode: "cards"`: CRUD renders rows through the cards carrier (resolved by type), self-holds selection via a template button bound to the same selectionStatePath (`component:toggleSelection`), and drives pagination itself (CRUD pre-slices the current page into carrier items + footer pagination).',
+          schema: cardsModeCrud,
+          data: { modeRecords },
+        },
+        {
+          title: 'CRUD list mode',
+          description:
+            'Shows `listMode: "list"`: CRUD renders rows through the list carrier, self-holds selection via a template button, and reuses the list runtime for scope-owned pagination slicing (footer pagination still rendered by CRUD).',
+          schema: listModeCrud,
+          data: { modeRecords },
         },
       ]}
     />

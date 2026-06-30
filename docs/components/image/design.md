@@ -6,12 +6,12 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前尚未实现，但已列入高优先级通用 renderer。
-- 首版应聚焦 `src`、`alt`、尺寸和预览开关，不混入媒体库管理能力。
+- 已 shipped：注册于 `flux-renderers-content`（`content-renderer-definitions.ts`）。
+- 聚焦 `src`、`alt`、尺寸（`width`/`height`）、`fit`、`preview`、`lazy`，不混入媒体库管理能力。
 
 ## 3. Flux 中的 renderer/type 定义
 
-- 目标 `type: 'image'`
+- 实际 `type: 'image'`
 - 实际归属 `@nop-chaos/flux-renderers-content`
 
 ## 4. schema 设计

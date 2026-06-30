@@ -12,7 +12,7 @@ import {
   RuntimeContext,
   ScopeContext,
   ValidationContext,
-} from '@nop-chaos/flux-react/unstable';
+} from '@nop-chaos/flux-react';
 import {
   createFieldHandlers,
   defaultValidationBehavior,

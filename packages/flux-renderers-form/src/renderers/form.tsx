@@ -348,7 +348,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         }
       })
       .finally(() => {
-        if (inFlightInitKeyRef.current === activationKey) {
+        if (inFlightInitKeyRef.current === activationKey && initActionAbortRef.current === controller) {
           inFlightInitKeyRef.current = undefined;
         }
         if (initActionAbortRef.current === controller) {
@@ -360,6 +360,13 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       if (initActionAbortRef.current === controller) {
         controller.abort();
         initActionAbortRef.current = null;
+        // Refs outlive the effect body, so an abort strands the in-flight marker;
+        // clear it or the next effect body bails for the same activationKey and
+        // init is silently dropped. `.finally` is controller-identity-guarded so a
+        // stale aborted promise cannot clear a fresh re-run's marker.
+        if (inFlightInitKeyRef.current === activationKey) {
+          inFlightInitKeyRef.current = undefined;
+        }
       }
     };
   }, [activationKey, autoInit, importsReady, initAction, lifecycleScope, ownedForm, props.path, runtime]);
@@ -537,7 +544,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
                 data-slot="form-body"
                 className={cn(
                   formGap.className,
-                  isInline && 'nop-form-body--inline',
                   slotProps.bodyClassName,
                 )}
                 data-form-mode={formMode ?? undefined}

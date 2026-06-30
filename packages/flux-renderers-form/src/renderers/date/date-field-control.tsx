@@ -6,6 +6,7 @@ import {
   DEFAULT_DATETIME_FORMAT,
   type DateOptions,
   formatDate,
+  isWithinRange,
   parseDate,
   toCalendarDate,
   toStorageDate,
@@ -148,7 +149,23 @@ export function DateFieldControl(props: DateFieldControlProps) {
       0,
       0,
     );
-    commitDate(base);
+    // Time-typing must not bypass minDate/maxDate. Clamp the resulting datetime
+    // into [minDate, maxDate] (calendar path already constrains via disabled
+    // matchers). Bounds are calendar-local, same frame as `selected`/`base`.
+    commitDate(clampToRange(base));
+  }
+
+  function clampToRange(date: Date): Date {
+    if (isWithinRange(date, minDate, maxDate)) {
+      return date;
+    }
+    if (minDate && date.getTime() < minDate.getTime()) {
+      return new Date(minDate);
+    }
+    if (maxDate && date.getTime() > maxDate.getTime()) {
+      return new Date(maxDate);
+    }
+    return date;
   }
 
   function handleClear() {

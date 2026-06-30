@@ -43,9 +43,48 @@ describe('buildValidationMessage', () => {
     expect(calls[0].params).toEqual({ label: 'name' });
   });
 
+  it('formats requiredRange with a dedicated validation.requiredRange key (range-aware required)', () => {
+    const result = buildValidationMessage({ kind: 'requiredRange' }, makeField());
+    expect(result).toContain('validation.requiredRange');
+    expect(calls[0].params).toEqual({ label: 'Name' });
+  });
+
+  it('requiredRange returns custom message when provided', () => {
+    const result = buildValidationMessage(
+      { kind: 'requiredRange', delimiter: ',', message: 'Pick both ends' },
+      makeField(),
+    );
+    expect(result).toBe('Pick both ends');
+    expect(calls).toHaveLength(0);
+  });
+
   it('formats required message falling back to path when label is null', () => {
     buildValidationMessage({ kind: 'required' }, makeField({ label: undefined as any }));
     expect(calls[0].params).toEqual({ label: 'name' });
+  });
+
+  it('required returns custom message when provided (G3)', () => {
+    const result = buildValidationMessage({ kind: 'required', message: 'Must fill this' }, makeField());
+    expect(result).toBe('Must fill this');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('minLength returns custom message when provided (G3)', () => {
+    const result = buildValidationMessage(
+      { kind: 'minLength', value: 5, message: 'Too short' },
+      makeField(),
+    );
+    expect(result).toBe('Too short');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('maxLength returns custom message when provided (G3)', () => {
+    const result = buildValidationMessage(
+      { kind: 'maxLength', value: 100, message: 'Too long' },
+      makeField(),
+    );
+    expect(result).toBe('Too long');
+    expect(calls).toHaveLength(0);
   });
 
   it('formats minLength message with label and min', () => {

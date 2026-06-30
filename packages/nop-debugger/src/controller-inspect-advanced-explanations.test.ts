@@ -1,4 +1,3 @@
-// @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest';
 import { createNopDebugger } from './controller-inspect-advanced.test-support.js';
 

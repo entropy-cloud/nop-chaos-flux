@@ -7,13 +7,13 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前尚未实现，但 UI primitive 已具备基础组件。
-- 首版应保持极简：大小、标签和可见性即可。
+- 已 shipped：注册于 `flux-renderers-content`（`content-renderer-definitions.ts`），复用 `@nop-chaos/ui` Spinner primitive。
+- 极简基线：`label`（value-or-region）、`size`、`visible`（meta），不承担 skeleton 或进度条语义。
 
 ## 3. Flux 中的 renderer/type 定义
 
-- 目标 `type: 'spinner'`
-- 预期归属 `@nop-chaos/flux-renderers-content`
+- 实际 `type: 'spinner'`
+- 实际归属 `@nop-chaos/flux-renderers-content`
 
 ## 4. schema 设计
 

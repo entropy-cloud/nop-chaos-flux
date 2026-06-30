@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
@@ -246,5 +244,50 @@ describe('PaginationRenderer (W2a — standalone pagination interaction owner)',
     expect(paginationRoot().getAttribute('data-current-page')).toBe('5');
     const ellipses = document.querySelectorAll('[data-slot="pagination-ellipsis"]');
     expect(ellipses.length).toBeGreaterThan(0);
+  });
+
+  it('H2: total follows a server refresh — totalPages / data-total update reactively', () => {
+    const SchemaRenderer = createDataSchemaRenderer();
+    const schema = {
+      type: 'page',
+      body: [
+        {
+          type: 'pagination',
+          testid: 'h2-pagination',
+          currentPage: 1,
+          pageSize: 10,
+          total: '${count}',
+        },
+      ],
+    };
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://data/pagination-h2"
+        schema={schema}
+        data={{ count: 25 }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    // total=25, pageSize=10 → 3 pages.
+    expect(paginationRoot().getAttribute('data-total')).toBe('25');
+    expect(paginationRoot().getAttribute('data-total-pages')).toBe('3');
+
+    // Server refresh pushes a new total (100 → 10 pages). Previously `total` was
+    // captured once in useState and never updated, leaving totalPages stale.
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://data/pagination-h2"
+        schema={schema}
+        data={{ count: 100 }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(paginationRoot().getAttribute('data-total')).toBe('100');
+    expect(paginationRoot().getAttribute('data-total-pages')).toBe('10');
   });
 });

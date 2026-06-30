@@ -1,7 +1,11 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
 import { Field, FieldContent, FieldDescription, FieldError, FieldLabel, FieldTitle } from './field.js';
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('Field', () => {
   it('renders the group role and orientation contract', () => {
@@ -41,5 +45,17 @@ describe('Field', () => {
     const alert = screen.getByRole('alert');
     expect(alert.getAttribute('data-slot')).toBe('field-error');
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('uses distinct data-slots for FieldTitle and FieldLabel (S-5)', () => {
+    render(
+      <Field>
+        <FieldLabel htmlFor="username">Username</FieldLabel>
+        <FieldTitle>Profile</FieldTitle>
+      </Field>,
+    );
+
+    expect(screen.getByText('Username').getAttribute('data-slot')).toBe('field-label');
+    expect(screen.getByText('Profile').getAttribute('data-slot')).toBe('field-title');
   });
 });

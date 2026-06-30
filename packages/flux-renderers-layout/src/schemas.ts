@@ -17,8 +17,6 @@ export interface WizardStepSchema extends SchemaObject {
   visible?: SchemaValue;
   /** Step disabled (expression) — disabled steps cannot be entered */
   disabled?: SchemaValue;
-  /** Step is skippable (does not block linear progress when omitted from commit chain) */
-  optional?: SchemaValue;
   /** Lifecycle action fired before entering this step */
   beforeEnter?: ActionSchema | ActionSchema[];
   /** Lifecycle action fired before leaving this step */
@@ -29,14 +27,15 @@ export interface WizardSchema extends BaseSchema {
   type: 'wizard';
   /** Renderer-owned structured step list (declaration order = navigation order). */
   steps: WizardStepSchema[];
-  /** Current step key or index (1-based index when numeric and no matching key) */
+  /**
+   * Initial current step key or index (1-based index when numeric and no matching key).
+   * Seed only — step navigation is local controlled interaction state (renderer-maintained);
+   * runtime changes to `value` are NOT reactive. The render-read-only status summary is
+   * published via `statusPath`.
+   */
   value?: string | number;
-  /** Initial current step value when `value` is not provided */
+  /** Initial current step value when `value` is not provided (seed only, non-reactive). */
   defaultValue?: string | number;
-  /** Step-switching ownership: local controlled (renderer maintains interaction state) */
-  valueOwnership?: 'local' | 'controlled' | 'scope';
-  /** Scope path publishing the writable current-step value */
-  valueStatePath?: string;
   /** Scope path publishing the read-only wizard status summary */
   statusPath?: string;
   /** Linear mode (default true): uncommitted steps cannot be jumped to unless `allowStepJump` is set */
@@ -91,12 +90,28 @@ export interface GridItemSchema extends SchemaObject {
   rowSpan?: number;
 }
 
+export interface GridResponsiveColumns extends SchemaObject {
+  /** Column count for the small-screen bucket (viewport < 768px). Falls back to base `columns` when absent. */
+  sm?: number;
+  /** Column count for the large-screen bucket (viewport ≥ 768px). Falls back to `lg` then base `columns`. */
+  md?: number;
+  /** Column count for the large-screen bucket (viewport ≥ 768px). Falls back to `md` then base `columns`. */
+  lg?: number;
+}
+
 export interface GridSchema extends BaseSchema {
   type: 'grid';
   /** Grid items collection */
   items?: GridItemSchema[];
   /** Number of columns (number → repeat(N, 1fr); string → raw grid-template-columns) */
   columns?: number | string;
+  /**
+   * Per-breakpoint column overrides. When provided, the renderer switches the column
+   * count based on `useIsMobile()` (< 768px → `sm`; ≥ 768px → `lg ?? md`), each falling
+   * back to the base `columns` value when unset. Only applies a numeric override; a
+   * string `columns` is left untouched unless a numeric breakpoint value resolves.
+   */
+  responsiveColumns?: GridResponsiveColumns;
   /** Gap between grid items (number → px; string → raw CSS) */
   gap?: number | string;
   /** CSS grid-auto-flow value */
@@ -166,9 +181,9 @@ export interface ButtonGroupSchema extends BaseSchema {
   size?: 'default' | 'xs' | 'sm' | 'lg';
   /** Selection mode: none (pure actions), single, multiple (toggle-like selection) */
   selectionMode?: 'none' | 'single' | 'multiple';
-  /** Currently selected key(s) */
+  /** Initial selected key(s) — seed only. Selection is local controlled state (renderer-maintained, non-reactive to runtime value changes). */
   value?: string | number | (string | number)[];
-  /** Initial selected value */
+  /** Initial selected value when `value` is not provided (seed only, non-reactive) */
   defaultValue?: string | number | (string | number)[];
   onChange?: ActionSchema;
 }

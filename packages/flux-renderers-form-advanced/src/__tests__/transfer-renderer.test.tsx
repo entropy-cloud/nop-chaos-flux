@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { formAdvancedRendererDefinitions } from '../index.js';
@@ -204,8 +202,9 @@ describe('transfer: shuttle selection + valueKey/labelKey normalization', () => 
     });
 
     expect(document.querySelector('.nop-transfer')).toBeTruthy();
-    expect(document.querySelector('.nop-transfer__candidate')).toBeTruthy();
-    expect(document.querySelector('.nop-transfer__selected')).toBeTruthy();
+    // C-06: dead BEM pane markers removed; the stable data-slot pane markers remain.
+    expect(document.querySelector('[data-slot="transfer-pane-candidate"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="transfer-pane-selected"]')).toBeTruthy();
   });
 });
 

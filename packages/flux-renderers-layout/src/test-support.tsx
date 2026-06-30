@@ -74,7 +74,7 @@ export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
               isolate: false,
             },
           ],
-          booleanKeys: ['disabled', 'optional'],
+          booleanKeys: ['disabled'],
           normalize: wizardStepsNormalize,
         },
       ],
@@ -119,6 +119,7 @@ export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
       fields: [
         { key: 'items', kind: 'prop' },
         { key: 'columns', kind: 'prop' },
+        { key: 'responsiveColumns', kind: 'prop' },
         { key: 'gap', kind: 'prop' },
         { key: 'autoFlow', kind: 'prop' },
         { key: 'alignItems', kind: 'prop' },
@@ -282,7 +283,7 @@ function wizardStepsNormalize(input: {
       regions: input.regions,
       compileSchema: input.compileSchema,
     }).value as Record<string, unknown>;
-    for (const booleanKey of ['disabled', 'optional']) {
+    for (const booleanKey of ['disabled']) {
       if (normalized[booleanKey] !== undefined) {
         normalized[booleanKey] = {
           __nopPreserveLiteral: true,

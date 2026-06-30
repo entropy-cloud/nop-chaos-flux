@@ -1,13 +1,21 @@
-// @vitest-environment happy-dom
-
 import { readFileSync } from 'node:fs';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import React from 'react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { contentRendererDefinitions } from './content-renderer-definitions.js';
+
+const mobileState = vi.hoisted(() => ({ isMobile: false }));
+
+vi.mock('@nop-chaos/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@nop-chaos/ui')>();
+  return {
+    ...actual,
+    useIsMobile: () => mobileState.isMobile,
+  };
+});
 
 const env: RendererEnv = {
   fetcher: async function <T>() {
@@ -34,8 +42,13 @@ function createContentSchemaRenderer() {
 const formulaCompiler = createFormulaCompiler();
 
 describe('CardsRenderer (W2a — content package card collection)', () => {
+  beforeEach(() => {
+    mobileState.isMobile = false;
+  });
+
   afterEach(() => {
     cleanup();
+    mobileState.isMobile = false;
   });
 
   it('instantiates the card region once per collection entry with per-card scope (item/index)', () => {
@@ -227,5 +240,135 @@ describe('CardsRenderer (W2a — content package card collection)', () => {
     expect(cardsSchemaBlock).not.toMatch(/^\s*source\s*[?:]/m);
     // Renderer source must iterate a single items-derived array.
     expect(renderer).toMatch(/toCardsItems/);
+  });
+
+  it('does NOT advertise dead selection/pagination contracts (advertised-but-dead honesty)', () => {
+    // F2 remediation: selectionOwnership / selectionStatePath / onPageChange were advertised
+    // in the schema/definition but the renderer never read them (selection is local useState,
+    // there is no pagination logic). They must be removed from the contract surface.
+    const renderer = readFileSync('src/cards-renderer.tsx', 'utf8');
+    const schemas = readFileSync('src/schemas.ts', 'utf8');
+    const definitions = readFileSync('src/content-renderer-definitions.ts', 'utf8');
+
+    const cardsSchemaBlock = schemas.slice(
+      schemas.indexOf('export interface CardsSchema'),
+      schemas.indexOf('export type AlertLevel'),
+    );
+    const cardsDefinitionBlock = definitions.slice(
+      definitions.indexOf("type: 'cards'"),
+      definitions.indexOf("type: 'alert'"),
+    );
+
+    // Dead fields removed from the schema interface.
+    expect(cardsSchemaBlock).not.toMatch(/selectionOwnership/);
+    expect(cardsSchemaBlock).not.toMatch(/selectionStatePath/);
+    expect(cardsSchemaBlock).not.toMatch(/onPageChange/);
+    // Dead fields/events removed from the renderer definition.
+    expect(cardsDefinitionBlock).not.toMatch(/selectionOwnership/);
+    expect(cardsDefinitionBlock).not.toMatch(/selectionStatePath/);
+    expect(cardsDefinitionBlock).not.toMatch(/onPageChange/);
+    // Renderer body references none of the dead names.
+    expect(renderer).not.toMatch(/selectionOwnership/);
+    expect(renderer).not.toMatch(/selectionStatePath/);
+    expect(renderer).not.toMatch(/onPageChange/);
+    // The IMPLEMENTED selection contract (selectionMode + onSelectionChange) remains.
+    expect(cardsSchemaBlock).toMatch(/selectionMode/);
+    expect(cardsDefinitionBlock).toMatch(/onSelectionChange/);
+  });
+});
+
+describe('CardsRenderer responsive — schema-driven columns (successor)', () => {
+  const SchemaRenderer = createContentSchemaRenderer();
+
+  beforeEach(() => {
+    mobileState.isMobile = false;
+  });
+
+  afterEach(() => {
+    cleanup();
+    mobileState.isMobile = false;
+  });
+
+  function renderCards(columns: number | { sm?: number; md?: number; lg?: number } | undefined) {
+    return render(
+      <SchemaRenderer
+        schemaUrl="test://content/cards-columns"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'cards',
+              columns,
+              items: '${rows}',
+              card: { type: 'text', text: '${$slot.item.label}' },
+            },
+          ],
+        }}
+        data={{
+          rows: [
+            { id: 'a', label: 'Alpha' },
+            { id: 'b', label: 'Beta' },
+            { id: 'c', label: 'Gamma' },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+  }
+
+  it('keeps the default Tailwind column classes when columns is unset (zero regression)', () => {
+    renderCards(undefined);
+    const root = document.querySelector('.nop-cards') as HTMLElement;
+    expect(root.className).toContain('sm:grid-cols-2');
+    expect(root.className).toContain('lg:grid-cols-3');
+    expect(root.style.gridTemplateColumns).toBe('');
+    expect(root.getAttribute('data-responsive')).toBeNull();
+  });
+
+  it('derives a uniform column count from a numeric columns value across viewports', () => {
+    renderCards(4);
+    const root = document.querySelector('.nop-cards') as HTMLElement;
+    expect(root.className).not.toContain('sm:grid-cols-2');
+    expect(root.style.gridTemplateColumns).toContain('repeat(4');
+    expect(root.getAttribute('data-responsive')).toBeNull();
+
+    // Also uniform on mobile.
+    mobileState.isMobile = true;
+    cleanup();
+    renderCards(4);
+    const mobileRoot = document.querySelector('.nop-cards') as HTMLElement;
+    expect(mobileRoot.style.gridTemplateColumns).toContain('repeat(4');
+  });
+
+  it('switches to the sm bucket and emits the narrow marker on mobile', () => {
+    mobileState.isMobile = true;
+    renderCards({ sm: 1, lg: 3 });
+    const root = document.querySelector('.nop-cards') as HTMLElement;
+    expect(root.style.gridTemplateColumns).toContain('repeat(1');
+    expect(root.getAttribute('data-responsive')).toBe('narrow');
+  });
+
+  it('uses the lg/md desktop bucket and emits no marker on desktop', () => {
+    renderCards({ sm: 1, md: 2, lg: 4 });
+    const root = document.querySelector('.nop-cards') as HTMLElement;
+    expect(root.style.gridTemplateColumns).toContain('repeat(4');
+    expect(root.getAttribute('data-responsive')).toBeNull();
+  });
+
+  it('falls back to the documented defaults when breakpoint values are unset', () => {
+    // Only sm set → desktop defaults to 3.
+    renderCards({ sm: 2 });
+    const root = document.querySelector('.nop-cards') as HTMLElement;
+    expect(root.style.gridTemplateColumns).toContain('repeat(3');
+    expect(root.getAttribute('data-responsive')).toBeNull();
+
+    // Only lg set → mobile defaults to 1 and emits the narrow marker.
+    mobileState.isMobile = true;
+    cleanup();
+    renderCards({ lg: 4 });
+    const mobileRoot = document.querySelector('.nop-cards') as HTMLElement;
+    expect(mobileRoot.style.gridTemplateColumns).toContain('repeat(1');
+    expect(mobileRoot.getAttribute('data-responsive')).toBe('narrow');
   });
 });

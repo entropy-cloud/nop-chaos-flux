@@ -29,12 +29,11 @@ import {
 import type { ArrayEditorItem, ArrayEditorSchema } from '@nop-chaos/flux-renderers-form';
 import { FieldHint } from '@nop-chaos/flux-renderers-form';
 import { createNextCompositeItemId } from './composite-field/composite-item-id.js';
+import { useCompatibilityItemKeys } from './composite-field/composite-item-keys.js';
 import {
   COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
   COMPOSITE_EDITOR_METHODS,
 } from './composite-field/composite-editor-capability-contracts.js';
-
-const EMPTY_ARRAY_EDITOR_ITEMS: ArrayEditorItem[] = [];
 
 function ArrayEditorRow(props: {
   item: ArrayEditorItem;
@@ -195,16 +194,20 @@ function ArrayEditorRow(props: {
   );
 }
 
-function toArrayEditorItems(value: unknown): ArrayEditorItem[] {
+type RawArrayEditorItem = { id?: string; value: string };
+
+const EMPTY_RAW_ARRAY_EDITOR_ITEMS: RawArrayEditorItem[] = [];
+
+function toRawArrayEditorItems(value: unknown): RawArrayEditorItem[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
-  return value.map((item, index) => {
+  return value.map((item) => {
     const candidate = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
 
     return {
-      id: typeof candidate.id === 'string' ? candidate.id : `item-${index}`,
+      id: typeof candidate.id === 'string' ? candidate.id : undefined,
       value:
         typeof candidate.value === 'string'
           ? candidate.value
@@ -215,7 +218,7 @@ function toArrayEditorItems(value: unknown): ArrayEditorItem[] {
   });
 }
 
-function arrayItemsEqual(a: ArrayEditorItem[], b: ArrayEditorItem[]): boolean {
+function rawArrayItemsEqual(a: RawArrayEditorItem[], b: RawArrayEditorItem[]): boolean {
   if (a === b) return true;
   if (a.length !== b.length) return false;
   return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
@@ -245,36 +248,48 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const addButtonRef = React.useRef<HTMLButtonElement>(null);
   const pendingFocusRef = React.useRef<{ kind: 'add' } | { kind: 'remove'; index: number } | null>(null);
 
-  const formExternalValue = useCurrentFormState(
-    (state) => (currentForm && hasName ? toArrayEditorItems(getIn(state.values, name)) : undefined),
+  const formRawValue = useCurrentFormState(
+    (state) => (currentForm && hasName ? toRawArrayEditorItems(getIn(state.values, name)) : undefined),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
-      return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
+      return rawArrayItemsEqual(a, b);
     },
     { enabled: Boolean(currentForm && hasName), path: hasName ? name : undefined },
   );
-  const scopeExternalValue = useScopeSelector(
+  const scopeRawValue = useScopeSelector(
     (scopeData) =>
-      currentForm || !hasName ? undefined : toArrayEditorItems(getIn(scopeData, name)),
+      currentForm || !hasName ? undefined : toRawArrayEditorItems(getIn(scopeData, name)),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
-      return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
+      return rawArrayItemsEqual(a, b);
     },
     { enabled: Boolean(!currentForm && hasName), fallback: undefined, paths: hasName ? [name] : undefined },
   );
-  const externalValue = currentForm ? formExternalValue : scopeExternalValue;
-  const items = externalValue ?? EMPTY_ARRAY_EDITOR_ITEMS;
+  const rawValue = currentForm ? formRawValue : scopeRawValue;
+  const rawItems = rawValue ?? EMPTY_RAW_ARRAY_EDITOR_ITEMS;
+  const {
+    keyAt: compatKeyAt,
+    removeAt: compatRemoveAt,
+    append: compatAppend,
+    move: compatMove,
+  } = useCompatibilityItemKeys(rawItems.length, 'item-');
+  const items = React.useMemo<ArrayEditorItem[]>(
+    () =>
+      rawItems.map((item, index) => ({
+        id: item.id ?? compatKeyAt(index),
+        value: item.value,
+      })),
+    [rawItems, compatKeyAt],
+  );
   const childPaths = React.useMemo(
-    () => items.map((_, index) => `${name}.${index}.value`),
-    [items, name],
+    () => Array.from({ length: items.length }, (_, index) => `${name}.${index}.value`),
+    [items.length, name],
   );
 
   React.useEffect(() => {
-    if (!arrayItemsEqual(itemsRef.current, items)) {
-      itemsRef.current = items;
-    }
+    itemsRef.current = items;
   }, [items]);
 
   React.useEffect(() => {
@@ -334,6 +349,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
 
       itemsRef.current = nextItems;
+      compatRemoveAt(index);
 
       if (currentForm && name) {
         currentForm.removeValue(name, index);
@@ -345,7 +361,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
       syncItems(nextItems);
     },
-    [currentForm, items, name, syncItems],
+    [currentForm, items, name, syncItems, compatRemoveAt],
   );
 
   const handleMove = React.useCallback(
@@ -361,6 +377,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       }
       nextItems.splice(to, 0, moved);
       itemsRef.current = nextItems;
+      compatMove(index, to);
 
       if (currentForm && name) {
         currentForm.moveValue(name, index, to);
@@ -372,7 +389,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
       syncItems(nextItems);
     },
-    [currentForm, items, name, syncItems],
+    [currentForm, items, name, syncItems, compatMove],
   );
 
   const handleMoveUp = React.useCallback(
@@ -412,6 +429,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           : { id: createNextCompositeItemId(items, 'item-'), value: '' };
       const nextItems = [...items, nextItem];
       itemsRef.current = nextItems;
+      compatAppend();
       pendingFocusRef.current = { kind: 'add' };
       if (currentForm && name) {
         currentForm.appendValue(name, nextItem);
@@ -433,6 +451,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       pendingFocusRef.current = { kind: 'remove', index };
       const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
       itemsRef.current = nextItems;
+      compatRemoveAt(index);
       if (currentForm && name) {
         currentForm.removeValue(name, index);
         if (shouldValidateOn(name, currentForm, 'change')) {
@@ -454,6 +473,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       }
       nextItems.splice(to, 0, moved);
       itemsRef.current = nextItems;
+      compatMove(from, to);
       if (currentForm && name) {
         currentForm.moveValue(name, from, to);
         if (shouldValidateOn(name, currentForm, 'change')) {
@@ -512,7 +532,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   return (
     <div
       className={cn('nop-array-editor', 'grid gap-3', props.meta.className)}
-      data-slot="field-control"
+      data-slot="array-editor-control"
     >
       {items.map((item, index) => {
         return (
@@ -557,6 +577,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           const nextItem = { id: createNextCompositeItemId(items, 'item-'), value: '' };
           const nextItems = [...items, nextItem];
           itemsRef.current = nextItems;
+          compatAppend();
           pendingFocusRef.current = { kind: 'add' };
 
           if (currentForm && name) {

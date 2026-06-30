@@ -198,15 +198,6 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const [inlineColumnSettingsOpen, setInlineColumnSettingsOpen] = useState(false);
   const { paginationEnabled, serverPaged, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage } =
     useTablePagination(tableSchemaProps, props.events.onPageChange, helpers);
-  const {
-    selectedRowKeys,
-    allSelected,
-    handleSelectAll,
-    handleSelectRow,
-    setSelectionExternal,
-    isRowCheckable,
-    isAtMaxSelection,
-  } = useTableSelection(tableSchemaProps, source, props.events.onSelectionChange, helpers);
   const { sortState, sortEntries, handleSort } = useTableSort(
     tableSchemaProps,
     props.events.onSortChange,
@@ -223,7 +214,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       }
 
       const nextFilteredRows = processTableData(source, schemaProps.rowKey, sortState, nextFilterState);
-      clampPage(1, nextFilteredRows.length);
+      clampPage(currentPage, nextFilteredRows.length);
     },
   );
   const { expandedRowKeys, handleToggleExpand } = useTableExpand(tableSchemaProps);
@@ -251,19 +242,62 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     () => processTableData(source, schemaProps.rowKey, sortEntries.length > 0 ? sortEntries : sortState, filterState),
     [source, schemaProps.rowKey, sortState, sortEntries, filterState],
   );
+  // Flatten the tree BEFORE building selection so selection's row-key set covers
+  // expanded nested children (G2). Previously selection consumed the top-level
+  // filteredData, so currentRowKeySet lacked child keys and the render-time
+  // prune snapped a just-checked child back to unchecked. In non-tree mode
+  // useTableTree returns its input unchanged, so this is a no-op for flat tables.
   const {
     treeMode,
     treeRows: treeFlattenedData,
     expandedTreeRowKeys,
     handleToggleTreeExpand,
   } = useTableTree(tableSchemaProps, filteredData);
+  const {
+    selectedRowKeys,
+    allSelected,
+    handleSelectAll,
+    handleSelectRow,
+    setSelectionExternal,
+    isRowCheckable,
+    isAtMaxSelection,
+  } = useTableSelection(tableSchemaProps, treeFlattenedData, props.events.onSelectionChange, helpers);
+
+  const paginationTotal = schemaProps.pagination?.total;
+  const effectiveTotalRows =
+    serverPaged && typeof paginationTotal === 'number' && Number.isFinite(paginationTotal)
+      ? paginationTotal
+      : treeFlattenedData.length;
+
+  const totalPages = useMemo(() => {
+    if (!paginationEnabled) return 1;
+    return Math.max(1, Math.ceil(effectiveTotalRows / pageSize));
+  }, [effectiveTotalRows, pageSize, paginationEnabled]);
+
+  // Render-time currentPage clamp mirrors list-pagination
+  // (currentPage = enabled ? clampPage(resolvedPage, totalPages) : 1). This prevents an
+  // empty page when the source shrinks below (currentPage-1)*pageSize (delete / bulk action).
+  // It is a pure render-time derivation; it does NOT write back scope/local state, so external
+  // readers ($crud.pagination.currentPage) still observe the owner value.
+  const resolvedCurrentPage = paginationEnabled
+    ? Math.min(Math.max(1, currentPage), totalPages)
+    : 1;
+
   const processedData = useMemo(
-    () => paginateTableData(treeFlattenedData, paginationEnabled && !serverPaged, currentPage, pageSize),
-    [treeFlattenedData, paginationEnabled, serverPaged, currentPage, pageSize],
+    () => paginateTableData(treeFlattenedData, paginationEnabled && !serverPaged, resolvedCurrentPage, pageSize),
+    [treeFlattenedData, paginationEnabled, serverPaged, resolvedCurrentPage, pageSize],
   );
+  // H10: `createFixedColumnLayout` only reads `schemaProps.rowSelection` + the
+  // columns' `fixed`/`width` + `showExpandColumn`. Memoizing on those specific
+  // values (instead of the whole `tableSchemaProps`, whose identity churns every
+  // render) keeps `fixedColumnLayout` referentially stable across renders, so the
+  // row memo is not busted by pure identity churn and rows never render with a
+  // stale layout object. A genuine layout change still forces a row re-render
+  // because all content inputs are covered by the row comparator (columns via
+  // areColumnsRenderEquivalent, rowSelection, showExpandColumn).
   const fixedColumnLayout = useMemo(
-    () => createFixedColumnLayout(tableSchemaProps, mainColumns, showExpandColumn),
-    [tableSchemaProps, mainColumns, showExpandColumn],
+    () => createFixedColumnLayout({ rowSelection: tableSchemaProps.rowSelection }, mainColumns, showExpandColumn),
+    [mainColumns, tableSchemaProps.rowSelection, showExpandColumn],
   );
 
   const columnResizeEnabled = schemaProps.columnResize !== false;
@@ -298,19 +332,24 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     return changed ? next : baseColumns;
   }, [columnResizeEnabled, leafBodyColumns, mainColumns, nestedHeadersActive, resizeApi.widths]);
 
-  const rowScopeCache = useTableRowScopeCache(processedData, ownerKey, helpers, props.path);
-
   const rowDragSortApi = useRowDragSort({
     enabled: schemaProps.draggable === true,
     orderField: schemaProps.orderField,
-    statePath: schemaProps.columnWidthsStatePath,
-    ownership: 'local',
+    statePath: schemaProps.orderStatePath,
+    ownership: schemaProps.orderOwnership ?? 'local',
     rows: processedData,
   });
 
+  // When drag-sort is active under local ownership, apply the reordered rows to the
+  // rendered body (and the row-scope cache) so the new order is visible and persists
+  // across re-renders instead of resetting on the next render (P0-1).
+  const displayData = rowDragSortApi ? rowDragSortApi.orderedRows : processedData;
+
+  const rowScopeCache = useTableRowScopeCache(displayData, ownerKey, helpers, props.path);
+
   useTableHandle(
     props,
-    currentPage,
+    resolvedCurrentPage,
     pageSize,
     selectedRowKeys,
     selectionOwnership,
@@ -319,17 +358,6 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     paginationStatePath,
     setSelectionExternal,
   );
-
-  const paginationTotal = schemaProps.pagination?.total;
-  const effectiveTotalRows =
-    serverPaged && typeof paginationTotal === 'number' && Number.isFinite(paginationTotal)
-      ? paginationTotal
-      : treeFlattenedData.length;
-
-  const totalPages = useMemo(() => {
-    if (!paginationEnabled) return 1;
-    return Math.max(1, Math.ceil(effectiveTotalRows / pageSize));
-  }, [effectiveTotalRows, pageSize, paginationEnabled]);
 
   const isLoading = schemaProps.loading === true;
   const isStriped = schemaProps.stripe === true;
@@ -555,7 +583,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
           <TableBodyRows
             props={props}
             columns={effectiveMainColumns}
-            processedData={processedData}
+            processedData={displayData}
             rowScopeCache={rowScopeCache}
             rowRepeatedTemplateId={rowRepeatedTemplateId}
             expandedRowKeys={expandedRowKeys}
@@ -601,7 +629,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
       {paginationEnabled && treeFlattenedData.length > 0 ? (
         <TablePaginationBar
-          currentPage={currentPage}
+          currentPage={resolvedCurrentPage}
           pageSize={pageSize}
           totalPages={totalPages}
           totalRows={effectiveTotalRows}

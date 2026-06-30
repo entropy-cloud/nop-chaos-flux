@@ -102,3 +102,7 @@ export { createFormComponentHandle, createReadonlyScopeBinding } from '@nop-chao
 export type { SourceTransientState } from './use-node-source-props.js';
 export type { WorkbenchShellProps } from './workbench/index.js';
 export { resolveGap, GAP_TOKENS } from './resolve-gap.js';
+export {
+  unwrapPreservedLiteral,
+  unwrapBooleanLiteral,
+} from './preserve-literal.js';

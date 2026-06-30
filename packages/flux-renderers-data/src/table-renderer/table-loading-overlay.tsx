@@ -1,4 +1,5 @@
 import { hasRendererSlotContent } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Spinner } from '@nop-chaos/ui';
 
 interface TableLoadingOverlayProps {
@@ -6,7 +7,9 @@ interface TableLoadingOverlayProps {
 }
 
 export function TableLoadingOverlay({ loadingContent }: TableLoadingOverlayProps) {
-  const statusText = hasRendererSlotContent(loadingContent) ? loadingContent : 'Loading';
+  // H23: route the fallback status text through i18n instead of a hardcoded
+  // English literal so check:i18n-keys and non-English locales cover it.
+  const statusText = hasRendererSlotContent(loadingContent) ? loadingContent : t('flux.table.loading');
 
   return (
     <div

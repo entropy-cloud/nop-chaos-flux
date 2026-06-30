@@ -18,7 +18,7 @@ import {
 import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { sanitizeHtml } from '@nop-chaos/flux-renderers-content';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { formFieldRules, useFormFieldController } from '@nop-chaos/flux-renderers-form';
 import {
   DEFAULT_EDITOR_TOOLBAR,
@@ -343,9 +343,11 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
             const active = config.isActive(editor);
             const disabled = !config.canRun(editor);
             return (
-              <button
+              <Button
                 key={id}
                 type="button"
+                variant="ghost"
+                size="sm"
                 title={config.title}
                 aria-label={config.title}
                 aria-pressed={active ? true : undefined}
@@ -358,14 +360,14 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
                 // selection).
                 onMouseDown={(event) => event.preventDefault()}
                 className={cn(
-                  'inline-flex h-7 min-w-7 items-center justify-center rounded border border-border bg-background px-1.5 text-xs font-medium transition-colors hover:bg-accent',
+                  'h-7 min-w-7 items-center justify-center border border-border px-1.5',
                   active && 'bg-accent text-accent-foreground',
                   disabled && 'opacity-40',
                 )}
                 onClick={() => config.run(editor)}
               >
                 {Icon ? <Icon className="size-3.5" /> : config.label}
-              </button>
+              </Button>
             );
           })}
         </div>

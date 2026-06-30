@@ -257,4 +257,67 @@ describe('request runtime adaptor helpers', () => {
     expect(untouched).toEqual({ ok: true });
     expect(adapted).toEqual({ wrapped: { ok: true }, token: 'secret' });
   });
+
+  it('A5: request adaptor returning undefined or null is a defined no-op (original api unchanged)', () => {
+    const compileExpression = vi.fn((source: string) => ({
+      exec: vi.fn(() => (source === 'returns-undefined' ? undefined : null)),
+    }));
+    const expressionCompiler = { formulaCompiler: { compileExpression } } as any;
+    const scope = createScopeRef({ id: 'scope', path: '$scope', initialData: {} });
+    const env = {} as RendererEnv;
+    const base: ApiSchema = {
+      url: '/api/demo',
+      method: 'get',
+      data: { keep: 1 },
+      params: { page: 2 },
+      headers: { a: 'b' },
+    };
+
+    const undefinedResult = applyRequestAdaptor(
+      expressionCompiler,
+      { ...base, requestAdaptor: 'returns-undefined' },
+      scope,
+      env,
+    );
+    const nullResult = applyRequestAdaptor(
+      expressionCompiler,
+      { ...base, requestAdaptor: 'returns-null' },
+      scope,
+      env,
+    );
+
+    expect(undefinedResult).toEqual({ ...base, requestAdaptor: 'returns-undefined' });
+    expect(nullResult).toEqual({ ...base, requestAdaptor: 'returns-null' });
+  });
+
+  it('A5: partial request adaptor return is shallow-merged, preserving url/data/params', () => {
+    const compileExpression = vi.fn(() => ({
+      exec: vi.fn(() => ({ headers: { added: 'yes' } })),
+    }));
+    const expressionCompiler = { formulaCompiler: { compileExpression } } as any;
+    const scope = createScopeRef({ id: 'scope', path: '$scope', initialData: {} });
+    const env = {} as RendererEnv;
+    const base: ApiSchema = {
+      url: '/api/demo',
+      method: 'get',
+      data: { keep: 1 },
+      params: { page: 2 },
+    };
+
+    const result = applyRequestAdaptor(
+      expressionCompiler,
+      { ...base, requestAdaptor: 'partial' },
+      scope,
+      env,
+    );
+
+    expect(result).toEqual({
+      url: '/api/demo',
+      method: 'get',
+      data: { keep: 1 },
+      params: { page: 2 },
+      headers: { added: 'yes' },
+      requestAdaptor: 'partial',
+    });
+  });
 });

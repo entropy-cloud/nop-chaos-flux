@@ -212,4 +212,56 @@ describe('button enhancements (E2e)', () => {
       expect(button.disabled).toBe(true);
     });
   });
+
+  // B6.2 — button 契约回归锚（B1 disabled-expr LOCK / B3 label `&` 忠实渲染 TEST-GAP）
+  describe('contract regression anchors (B6.2: B1 disabled-expr / B3 label)', () => {
+    function renderWithScope(schema: BaseSchema, data: Record<string, unknown>) {
+      const SchemaRenderer = createBasicSchemaRenderer();
+      return render(
+        <SchemaRenderer
+          schemaUrl="test://button-contract"
+          schema={{ type: 'page', body: [schema] }}
+          data={data}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+    }
+
+    it('B1: disabled from scope expression resolves to enabled when expr is false', () => {
+      const { container } = renderWithScope(
+        { type: 'button', label: 'Toggle', testid: 'btn', disabled: '${!isAdmin}' },
+        { isAdmin: true },
+      );
+      const button = container.querySelector<HTMLButtonElement>('button[data-testid="btn"]');
+      expect(button).toBeTruthy();
+      // isAdmin === true → !isAdmin === false → DOM button is NOT disabled.
+      expect(button?.disabled).toBe(false);
+    });
+
+    it('B1: disabled from scope expression resolves to disabled when expr is true', () => {
+      const { container } = renderWithScope(
+        { type: 'button', label: 'Toggle', testid: 'btn', disabled: '${!isAdmin}' },
+        { isAdmin: false },
+      );
+      const button = container.querySelector<HTMLButtonElement>('button[data-testid="btn"]');
+      expect(button).toBeTruthy();
+      // isAdmin === false → !isAdmin === true → DOM button IS disabled.
+      expect(button?.disabled).toBe(true);
+    });
+
+    it('B3: label expression renders literal `&` text faithfully (single-layer escape, no double-escape)', () => {
+      const { container } = renderWithScope(
+        { type: 'button', testid: 'btn', label: '${name}' },
+        { name: 'A & B' },
+      );
+      const button = container.querySelector<HTMLButtonElement>('button[data-testid="btn"]');
+      expect(button).toBeTruthy();
+      // textContent decodes entities → the source text 'A & B' survives intact.
+      expect(button?.textContent).toBe('A & B');
+      // The serialized HTML carries exactly one entity for the literal ampersand
+      // (React's standard text escape), never a double-escaped '&amp;amp;'.
+      expect(button?.innerHTML).not.toContain('&amp;amp;');
+    });
+  });
 });
