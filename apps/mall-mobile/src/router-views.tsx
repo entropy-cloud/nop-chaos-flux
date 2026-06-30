@@ -7,6 +7,12 @@ import { LoginPage } from './pages/auth/login';
 import { RegisterPage } from './pages/auth/register';
 import { ForgotPasswordPage } from './pages/auth/forgot';
 import { Placeholder } from './pages/placeholder';
+import { SearchPage } from './pages/search';
+import { BrandListPage } from './pages/brand/list';
+import { BrandDetailPage } from './pages/brand/detail';
+import { TopicDetailPage } from './pages/topic/detail';
+import { GoodsDetailPage } from './pages/goods/detail';
+import { PageShell } from './components/page-shell';
 import type { AuthRouteSpec, PageRouteSpec, TabKey, AuthPageKey } from './route-model';
 
 interface TabViewProps {
@@ -80,22 +86,40 @@ export function AuthView({ route, onBack, navigateAuth, onLoggedIn, onReset }: A
   );
 }
 
-export function PagePlaceholder({ route, onBack }: { route: PageRouteSpec; onBack: () => void }) {
+function renderPageRoute(route: PageRouteSpec) {
+  const params = route.params ?? {};
+  switch (route.page) {
+    case 'search':
+      return <SearchPage initialKeyword={params.keyword} />;
+    case 'brand-list':
+      return <BrandListPage />;
+    case 'brand-detail':
+      return params.id ? <BrandDetailPage brandId={params.id} /> : missingArg('品牌');
+    case 'topic-detail':
+      return params.id ? <TopicDetailPage topicId={params.id} /> : missingArg('专题');
+    case 'goods-detail':
+      return params.id ? <GoodsDetailPage goodsId={params.id} /> : missingArg('商品');
+    default:
+      return (
+        <PageShell title={route.title ?? route.page}>
+          <Placeholder
+            title={route.title ?? route.page}
+            hint={`页面栈占位：page=${route.page}（push/pop）。后续 Phase 填充实体内容。`}
+          />
+        </PageShell>
+      );
+  }
+}
+
+function missingArg(name: string) {
   return (
-    <div className="mall-app-shell nop-theme-root">
-      <header className="mall-navbar">
-        <button type="button" className="mall-navbar-side" onClick={onBack} aria-label="返回">
-          ←
-        </button>
-        <span className="mall-navbar-title">{route.title ?? route.page}</span>
-        <span className="mall-navbar-side" />
-      </header>
-      <main className="mall-app-main mall-page">
-        <Placeholder
-          title={route.title ?? route.page}
-          hint={`页面栈占位：page=${route.page}（push/pop）。M2+ 填充实体内容。`}
-        />
-      </main>
-    </div>
+    <PageShell title={name}>
+      <Placeholder title={name} hint={`缺少必要参数（${name} ID）。`} />
+    </PageShell>
   );
+}
+
+export function PageView({ route, onBack }: { route: PageRouteSpec; onBack: () => void }) {
+  void onBack;
+  return <>{renderPageRoute(route)}</>;
 }

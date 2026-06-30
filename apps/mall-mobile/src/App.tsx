@@ -3,7 +3,7 @@ import { useRoute, back } from './use-route';
 import { activeTabFromRoute, type TabKey, type AuthPageKey } from './route-model';
 import { useMallStore } from './store';
 import { getAppEnv } from './env-instance';
-import { TabView, AuthView, PagePlaceholder } from './router-views';
+import { TabView, AuthView, PageView } from './router-views';
 
 getAppEnv();
 
@@ -42,7 +42,7 @@ export function App() {
   }
 
   if (route.kind === 'page') {
-    return <PagePlaceholder route={route} onBack={back} />;
+    return <PageView route={route} onBack={back} />;
   }
 
   return <TabView activeTab={activeTabFromRoute(route)} cartBadge={cartBadge} onTab={onTab} />;
