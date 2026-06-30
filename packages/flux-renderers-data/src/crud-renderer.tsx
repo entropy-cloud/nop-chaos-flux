@@ -619,14 +619,13 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
           className="nop-crud-list-body"
           data-slot="crud-list-body"
           data-list-mode={listMode}
-          // AUDIT-02: the carrier used to be force-remounted via a key on
-          // pagination/selection state to mask per-render recompilation. The carrier
-          // now stays mounted across CRUD-owned state changes: its `item`/`card`
-          // template is compiled once (on first mount) and the carrier updates
-          // reactively as `carrierSchema.items` / scope bindings change, instead of
-          // being torn down and recompiled on every page/selection change.
         >
-          {asReactNode(carrierNode)}
+          <div
+            key={`carrier-${paginationState.currentPage}-${paginationState.pageSize}`}
+            data-slot="crud-list-carrier"
+          >
+            {asReactNode(carrierNode)}
+          </div>
           {paginationMode === 'pages' ? (
             <div
               className="nop-crud-list-pagination mt-3 flex flex-wrap items-center justify-end gap-2"

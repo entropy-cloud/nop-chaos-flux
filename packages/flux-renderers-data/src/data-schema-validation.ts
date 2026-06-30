@@ -1,4 +1,5 @@
 import {
+  createNodeId,
   parsePath,
   type BaseSchema,
   type RendererSchemaValidationContext,
@@ -15,7 +16,7 @@ function createCrudQueryFormRegion(schema: CrudSchema, path: string) {
 
   const region: BaseSchema & Record<string, unknown> = {
     type: 'form',
-    id: createCrudQueryFormId(schema.id, path),
+    id: createCrudQueryFormId(createNodeId(path, schema), path),
     body: queryForm.body,
     mode: queryForm.layout === 'horizontal' ? 'horizontal' : 'normal',
   };

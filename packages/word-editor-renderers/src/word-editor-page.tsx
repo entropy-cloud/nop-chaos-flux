@@ -26,18 +26,17 @@ function collectDocumentText(value: unknown): string {
     return '';
   }
 
-  const parts = value
+  return value
     .map((item) => {
       if (!item || typeof item !== 'object') {
         return '';
       }
 
       const text = 'value' in item ? item.value : undefined;
-      return typeof text === 'string' ? text.trim() : '';
+      return typeof text === 'string' ? text : '';
     })
-    .filter((part) => part.length > 0);
-
-  return parts.join(' ').trim();
+    .join('')
+    .trim();
 }
 
 function asReactNode(value: unknown): React.ReactNode {

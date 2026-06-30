@@ -128,7 +128,7 @@ describe('data renderer definition contracts', () => {
 
     expect((transformed as any).queryFormRegion).toMatchObject({
       type: 'form',
-      id: 'body-0-query-form',
+      id: '_.body_0_-query-form',
       statusPath: 'ui.queryFormStatus',
       mode: 'horizontal',
     });

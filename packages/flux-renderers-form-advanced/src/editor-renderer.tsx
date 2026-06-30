@@ -297,6 +297,8 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
     };
   }, [editor]);
 
+
+
   useInputComponentHandle({
     id: props.id,
     name,
@@ -358,6 +360,7 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
                 // when a formatting button is clicked (standard rich-text
                 // toolbar pattern; otherwise toggleBold/etc. act on an empty
                 // selection).
+                onPointerDown={(event) => event.preventDefault()}
                 onMouseDown={(event) => event.preventDefault()}
                 className={cn(
                   'h-7 min-w-7 items-center justify-center border border-border px-1.5',

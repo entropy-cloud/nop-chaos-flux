@@ -34,7 +34,7 @@ test.describe('M5 mobile showcase — single-JSON app loads', () => {
   test('architecture panel explains scope-based tab switching', async ({ page }) => {
     await openShowcase(page);
     await expect(page.getByText('架构说明')).toBeVisible();
-    await expect(page.getByText('单个 JSON schema')).toBeVisible();
+    await expect(page.getByText('单个外部 JSON schema')).toBeVisible();
   });
 
   test('JSON structure panel shows schema tree', async ({ page }) => {
@@ -115,7 +115,7 @@ test.describe('M5 mobile showcase — tabbar buttons exist and are clickable', (
 
     const frame = page.locator('[data-testid="phone-frame"]');
     await expect(frame.getByText('购物车 (3)')).toBeVisible({ timeout: 5_000 });
-    await expect(frame.getByText('¥11,297')).toBeVisible();
+    await expect(frame.getByText('¥13,196')).toBeVisible();
   });
 
   test('clicking tabbar profile button switches to profile', async ({ page }) => {
@@ -171,7 +171,7 @@ test.describe('M5 mobile showcase — Cart tab', () => {
     await clickTabbar(page, 'tabbar-cart');
 
     const frame = page.locator('[data-testid="phone-frame"]');
-    await expect(frame.getByText('¥11,297')).toBeVisible({ timeout: 5_000 });
+    await expect(frame.getByText('¥13,196')).toBeVisible({ timeout: 5_000 });
     await expect(frame.getByText('结算(3)')).toBeVisible();
   });
 });

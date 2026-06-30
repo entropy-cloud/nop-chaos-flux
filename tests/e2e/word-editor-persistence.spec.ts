@@ -42,8 +42,6 @@ test('saves a document marker that survives a reload', async ({ page }) => {
   await expect(savedPreview(page)).toContainText(marker, { timeout: 10_000 });
 
   const saveButton = page.getByRole('button', { name: '保存' });
-  await canvasElement.click();
-  await page.waitForTimeout(200);
   await page.keyboard.type(` ${explicitSaveMarker}`);
   await saveButton.click();
 

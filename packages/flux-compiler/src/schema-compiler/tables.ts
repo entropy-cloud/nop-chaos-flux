@@ -44,21 +44,18 @@ export const TABS_ITEM_REGION_FIELDS = [
     regionKeySuffix: 'title',
     compiledKey: 'titleRegionKey',
     params: ['item', 'index', 'key'] as readonly string[],
-    isolate: true,
   },
   {
     key: 'body',
     regionKeySuffix: 'body',
     compiledKey: 'bodyRegionKey',
     params: ['item', 'index', 'key'] as readonly string[],
-    isolate: true,
   },
   {
     key: 'toolbar',
     regionKeySuffix: 'toolbar',
     compiledKey: 'toolbarRegionKey',
     params: ['item', 'index', 'key'] as readonly string[],
-    isolate: true,
   },
 ] as const;
 

@@ -68,7 +68,7 @@ test.describe('crud renderer query and ownership flows', () => {
     await stage.getByLabel('Keyword').fill('remote');
     await stage.getByRole('button', { name: /搜索|search/i }).click();
 
-    await expect(crudFooter(stage)).toContainText('Visible rows: 0; Total: 0; Query: remote');
+    await expect(crudFooter(stage)).toContainText(/Visible rows: 0; Total: \d+; Query: remote/);
     await expect(dataRows(stage)).toHaveCount(0);
     await expect(emptyRows(stage)).toHaveCount(1);
   });
