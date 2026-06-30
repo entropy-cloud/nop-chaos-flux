@@ -338,55 +338,7 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 
 ---
 
-## 6. 日期范围控件 (`date-range`)
-
-### 统一范围选择器
-
-`date-range` 通过 `rangeKind` 字段在三种模式间切换：
-
-```json
-{
-  "type": "date-range",
-  "name": "period",
-  "rangeKind": "date"       // "date" | "datetime" | "time"
-}
-```
-
-| `rangeKind`  | 界面                          | 输出格式             |
-| ------------ | ----------------------------- | -------------------- |
-| `'date'`     | 日历起止选择                  | `2025-06-01,2025-06-30` |
-| `'datetime'` | 日历 + 起止时分输入           | `2025-06-01T10:00,2025-06-30T18:30` |
-| `'time'`     | 原生 time 起止输入            | `10:00,18:30`        |
-
-> 命名为什么不是 `input-date-range`？因为它并非 `input-date` 的变体——`rangeKind` 可以独立切换为 datetime/time，用单项命名会误导。设计取舍：一致性 (`input-*` 惯例) vs 语义准确性。
-
-### 常用配置
-
-```json
-{
-  "type": "date-range",
-  "name": "createdAt",
-  "rangeKind": "datetime",
-  "valueFormat": "YYYY-MM-DD HH:mm:ss",
-  "displayFormat": "YYYY/MM/DD HH:mm",
-  "delimiter": "~",
-  "minDate": "2020-01-01",
-  "maxDate": "2030-12-31",
-  "utc": true,
-  "clearable": true,
-  "shortcuts": [
-    { "label": "今天", "start": "today", "end": "today" },
-    { "label": "最近 7 天", "start": "-7d", "end": "today" },
-    { "label": "本月", "start": "thisMonth", "end": "today" }
-  ]
-}
-```
-
-完整字段见 `DateRangeSchema` 类型定义。
-
----
-
-## 7. 结构节点
+## 6. 结构节点
 
 ### Fragment (分组)
 
@@ -439,7 +391,7 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 
 ---
 
-## 8. Tabs 状态管理
+## 7. Tabs 状态管理
 
 ### 非受控 (默认)
 
@@ -478,7 +430,7 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 
 ---
 
-## 9. 组件实例方法
+## 8. 组件实例方法
 
 通过 `component:method` 动作调用组件实例方法：
 
@@ -501,7 +453,7 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 
 ---
 
-## 10. 与 AMIS 的主要差异
+## 9. 与 AMIS 的主要差异
 
 | 特性     | AMIS                     | Flux                                             |
 | -------- | ------------------------ | ------------------------------------------------ |

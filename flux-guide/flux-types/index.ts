@@ -15,7 +15,7 @@ export type {
   // Form
   FormSchema, FieldsetSchema, InputTextSchema, InputPasswordSchema, InputEmailSchema, InputNumberSchema, TextareaSchema,
   SelectSchema, CheckboxSchema, CheckboxGroupSchema, SwitchSchema, RadioGroupSchema,
-  InputDateSchema, InputDatetimeSchema, InputTimeSchema, DateRangeSchema, InputPeriodSchema, MarkdownEditorSchema,
+  InputDateSchema, DateRangeSchema, InputMonthSchema, InputQuarterSchema, InputYearSchema, MarkdownEditorSchema,
   // Advanced Form
   ComboSchema, InputTreeSchema, TreeSelectSchema, TransferSchema,
   ConditionBuilderSchema, InputFileSchema, InputImageSchema,
@@ -48,7 +48,7 @@ import type {
   DialogSchema, DrawerSchema,
   FormSchema, FieldsetSchema, InputTextSchema, InputPasswordSchema, InputEmailSchema, InputNumberSchema, TextareaSchema,
   SelectSchema, CheckboxSchema, CheckboxGroupSchema, SwitchSchema, RadioGroupSchema,
-  InputDateSchema, InputDatetimeSchema, InputTimeSchema, DateRangeSchema, InputPeriodSchema, MarkdownEditorSchema,
+  InputDateSchema, DateRangeSchema, InputMonthSchema, InputQuarterSchema, InputYearSchema, MarkdownEditorSchema,
   ComboSchema, InputTreeSchema, TreeSelectSchema, TransferSchema,
   ConditionBuilderSchema, InputFileSchema, InputImageSchema,
   TagListSchema, KeyValueSchema, ArrayEditorSchema, ObjectFieldSchema, ArrayFieldSchema, VariantFieldSchema,
@@ -70,7 +70,7 @@ export type FluxSchema =
   | DialogSchema | DrawerSchema
   | FormSchema | FieldsetSchema | InputTextSchema | InputPasswordSchema | InputEmailSchema | InputNumberSchema | TextareaSchema
   | SelectSchema | CheckboxSchema | CheckboxGroupSchema | SwitchSchema | RadioGroupSchema
-  | InputDateSchema | InputDatetimeSchema | InputTimeSchema | DateRangeSchema | InputPeriodSchema | MarkdownEditorSchema
+  | InputDateSchema | DateRangeSchema | InputMonthSchema | InputQuarterSchema | InputYearSchema | MarkdownEditorSchema
   | ComboSchema | InputTreeSchema | TreeSelectSchema | TransferSchema
   | ConditionBuilderSchema | InputFileSchema | InputImageSchema
   | TagListSchema | KeyValueSchema | ArrayEditorSchema | ObjectFieldSchema | ArrayFieldSchema | VariantFieldSchema
@@ -117,12 +117,12 @@ export interface FluxSchemaByType {
   'switch': SwitchSchema;
   'radio-group': RadioGroupSchema;
   'input-date': InputDateSchema;
-  'input-datetime': InputDatetimeSchema;
-  'input-time': InputTimeSchema;
+  'input-datetime': InputDateSchema;
+  'input-time': InputDateSchema;
   'date-range': DateRangeSchema;
-  'input-month': InputPeriodSchema;
-  'input-quarter': InputPeriodSchema;
-  'input-year': InputPeriodSchema;
+  'input-month': InputMonthSchema;
+  'input-quarter': InputQuarterSchema;
+  'input-year': InputYearSchema;
   'markdown-editor': MarkdownEditorSchema;
   'combo': ComboSchema;
   'input-tree': InputTreeSchema;

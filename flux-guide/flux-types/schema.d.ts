@@ -175,67 +175,36 @@ export interface RadioGroupSchema extends BoundFieldSchemaBase {
 }
 
 export interface InputDateSchema extends BoundFieldSchemaBase {
-  type: 'input-date';
+  type: 'input-date' | 'input-datetime' | 'input-time';
   value?: string;
-  valueFormat?: string;
-  displayFormat?: string;
-  minDate?: string;
-  maxDate?: string;
-  utc?: boolean;
-  clearable?: boolean;
-}
-
-export interface InputDatetimeSchema extends BoundFieldSchemaBase {
-  type: 'input-datetime';
-  value?: string;
-  valueFormat?: string;
-  displayFormat?: string;
-  timeFormat?: string;
-  minDate?: string;
-  maxDate?: string;
-  utc?: boolean;
-  clearable?: boolean;
-}
-
-export interface InputTimeSchema extends BoundFieldSchemaBase {
-  type: 'input-time';
-  value?: string;
-  valueFormat?: string;
-  displayFormat?: string;
-  minTime?: string;
-  maxTime?: string;
-  clearable?: boolean;
+  format?: string;
+  min?: string;
+  max?: string;
 }
 
 export interface DateRangeSchema extends BoundFieldSchemaBase {
   type: 'date-range';
-  value?: string;
-  rangeKind?: 'date' | 'datetime' | 'time';
-  valueFormat?: string;
-  displayFormat?: string;
-  delimiter?: string;
-  minDate?: string;
-  maxDate?: string;
-  utc?: boolean;
-  clearable?: boolean;
-  shortcuts?: Array<{ label: string; start: string; end: string }>;
+  value?: [string, string];
+  format?: string;
+  min?: string;
+  max?: string;
 }
 
-/**
- * Period input family. Month/quarter/year share a single canonical owner
- * per kind and distinguish single-value vs range via selectionMode.
- */
-export interface InputPeriodSchema extends BoundFieldSchemaBase {
-  type: 'input-month' | 'input-quarter' | 'input-year';
+export interface InputMonthSchema extends BoundFieldSchemaBase {
+  type: 'input-month';
   value?: string;
-  selectionMode?: 'single' | 'range';
-  valueFormat?: string;
-  displayFormat?: string;
-  delimiter?: string;
-  minDate?: string;
-  maxDate?: string;
-  clearable?: boolean;
-  shortcuts?: Array<{ label: string; start: string; end: string }>;
+  format?: string;
+}
+
+export interface InputQuarterSchema extends BoundFieldSchemaBase {
+  type: 'input-quarter';
+  value?: string;
+}
+
+export interface InputYearSchema extends BoundFieldSchemaBase {
+  type: 'input-year';
+  value?: string;
+  format?: string;
 }
 
 export interface MarkdownEditorSchema extends BoundFieldSchemaBase {
