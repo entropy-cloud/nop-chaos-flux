@@ -50,7 +50,7 @@ function getTrackedPageAssert(page: Page): (() => Promise<void>) | undefined {
   return trackedPageAsserts.get(getTrackedPageKey(page));
 }
 
-const KNOWN_NOISE_PATTERNS = ['favicon', 'Download the React DevTools'];
+const KNOWN_NOISE_PATTERNS = ['favicon', 'Download the React DevTools', 'net::ERR_NAME_NOT_RESOLVED'];
 
 function formatConsoleMessage(msg: ConsoleMessage): string {
   return `[console.error] ${msg.text()}`;

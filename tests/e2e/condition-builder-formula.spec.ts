@@ -14,6 +14,8 @@ test.describe('E3 condition-builder formula integration', () => {
   test('renders formula value slot when formulas.enabled=true', async ({ page }) => {
     await openConditionBuilderFormulaPage(page);
 
+    // Add a condition first — the formula value slot renders per condition item
+    await page.getByRole('button', { name: '添加条件' }).first().click();
     const formulaSlot = page.locator('[data-slot="condition-formula-value"]').first();
     await expect(formulaSlot).toBeVisible({ timeout: 10_000 });
 
@@ -23,6 +25,8 @@ test.describe('E3 condition-builder formula integration', () => {
   test('formula value slot writes expression string back to form value', async ({ page }) => {
     await openConditionBuilderFormulaPage(page);
 
+    // Add a condition first — the formula value slot renders per condition item
+    await page.getByRole('button', { name: '添加条件' }).first().click();
     const formulaSlot = page.locator('[data-slot="condition-formula-value"]').first();
     await expect(formulaSlot).toBeVisible({ timeout: 10_000 });
 

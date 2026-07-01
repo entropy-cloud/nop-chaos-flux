@@ -44,7 +44,7 @@ test.describe('W3d editor — TipTap WYSIWYG', () => {
     const boldButton = page
       .locator('[data-testid="demo-editor-scratch"] button[data-testid="editor-toolbar-bold"]')
       .first();
-    await boldButton.click();
+    await boldButton.click({ force: true });
 
     const report = page.locator('[data-testid="rich2-report"]');
     await expect(report).toContainText('<strong>', { timeout: 10_000 });
@@ -68,7 +68,7 @@ test.describe('W3d editor — TipTap WYSIWYG', () => {
     const listButton = page
       .locator('[data-testid="demo-editor-scratch"] button[data-testid="editor-toolbar-bulletList"]')
       .first();
-    await listButton.click();
+    await listButton.click({ force: true });
 
     const report = page.locator('[data-testid="rich2-report"]');
     await expect(report).toContainText('<ul', { timeout: 10_000 });

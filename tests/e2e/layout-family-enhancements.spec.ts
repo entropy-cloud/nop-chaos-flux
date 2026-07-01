@@ -14,11 +14,8 @@ test.describe('E3 layout family enhancements (flex enums + page aside + tabs bad
   test('flex row-reverse applies flex-row-reverse class to root', async ({ page }) => {
     await openLayoutFamilyPage(page);
 
-    const el = page.getByTestId('lf-flex-reverse-a').locator('..');
-    await expect(el).toBeVisible({ timeout: 10_000 });
-    const flexRoot = page.locator('.nop-flex').filter({
-      has: page.getByTestId('lf-flex-reverse-a'),
-    });
+    const flexRoot = page.getByTestId('lf-flex-reverse-a').locator('..');
+    await expect(flexRoot).toBeVisible({ timeout: 10_000 });
     const className = await flexRoot.evaluate((node) => node.className);
     expect(className).toContain('flex-row-reverse');
 
@@ -28,9 +25,8 @@ test.describe('E3 layout family enhancements (flex enums + page aside + tabs bad
   test('flex justify=evenly applies justify-evenly class', async ({ page }) => {
     await openLayoutFamilyPage(page);
 
-    const flexRoot = page.locator('.nop-flex').filter({
-      has: page.getByTestId('lf-flex-evenly-1'),
-    });
+    const flexRoot = page.getByTestId('lf-flex-evenly-1').locator('..');
+    await expect(flexRoot).toBeVisible({ timeout: 10_000 });
     const className = await flexRoot.evaluate((node) => node.className);
     expect(className).toContain('justify-evenly');
 
@@ -40,9 +36,8 @@ test.describe('E3 layout family enhancements (flex enums + page aside + tabs bad
   test('flex align=baseline applies items-baseline class', async ({ page }) => {
     await openLayoutFamilyPage(page);
 
-    const flexRoot = page.locator('.nop-flex').filter({
-      has: page.getByTestId('lf-flex-baseline-title'),
-    });
+    const flexRoot = page.getByTestId('lf-flex-baseline-title').locator('..');
+    await expect(flexRoot).toBeVisible({ timeout: 10_000 });
     const className = await flexRoot.evaluate((node) => node.className);
     expect(className).toContain('items-baseline');
 
@@ -52,9 +47,8 @@ test.describe('E3 layout family enhancements (flex enums + page aside + tabs bad
   test('flex alignContent=center applies content-center class', async ({ page }) => {
     await openLayoutFamilyPage(page);
 
-    const flexRoot = page.locator('.nop-flex').filter({
-      has: page.getByTestId('lf-flex-content-1'),
-    });
+    const flexRoot = page.getByTestId('lf-flex-content-1').locator('..');
+    await expect(flexRoot).toBeVisible({ timeout: 10_000 });
     const className = await flexRoot.evaluate((node) => node.className);
     expect(className).toContain('content-center');
 
@@ -69,16 +63,15 @@ test.describe('E3 layout family enhancements (flex enums + page aside + tabs bad
     const body = page.getByTestId('lf-page-body');
     await expect(body).toBeVisible({ timeout: 10_000 });
 
-    const pageRoot = body.locator('xpath=ancestor::section[contains(@class,"nop-page")]');
-    const aside = pageRoot.locator('[data-slot="page-aside"]');
+    const aside = page.getByTestId('lf-page-aside');
     await expect(aside).toBeVisible();
     expect(await aside.textContent()).toContain('侧边栏');
 
-    const subtitle = pageRoot.locator('[data-slot="page-subtitle"]');
+    const subtitle = page.locator('[data-slot="page-subtitle"]').first();
     await expect(subtitle).toBeVisible();
     expect(await subtitle.textContent()).toContain('子标题');
 
-    const remark = pageRoot.locator('[data-slot="page-remark"]');
+    const remark = page.locator('[data-slot="page-remark"]').first();
     await expect(remark).toBeVisible();
 
     await assertTrackedPageErrors(page);
@@ -89,18 +82,21 @@ test.describe('E3 layout family enhancements (flex enums + page aside + tabs bad
 
     const body = page.getByTestId('lf-page-body-right');
     await expect(body).toBeVisible({ timeout: 10_000 });
-    const pageRoot = body.locator('xpath=ancestor::section[contains(@class,"nop-page")]');
-    const aside = pageRoot.locator('[data-slot="page-aside"]');
+    const aside = page.getByTestId('lf-page-aside-right');
     await expect(aside).toBeVisible();
 
-    const order = await pageRoot.evaluate((node) => {
-      const body = node.querySelector('[data-slot="page-body"]');
-      const aside = node.querySelector('[data-slot="page-aside"]');
-      if (!body || !aside) return 'missing';
-      const all = Array.from(node.children);
-      const bi = all.indexOf(body);
-      const ai = all.indexOf(aside);
-      return bi < ai ? 'body-before-aside' : 'aside-before-body';
+    const order = await page.evaluate(() => {
+      const asideTestidEl = document.querySelector('[data-testid="lf-page-aside-right"]');
+      if (!asideTestidEl) return 'missing';
+      const pageSection = asideTestidEl.closest('section.nop-page');
+      if (!pageSection) return 'missing';
+      const bodySlot = pageSection.querySelector('[data-slot="page-body"]');
+      const asideSlot = pageSection.querySelector('[data-slot="page-aside"]');
+      if (!bodySlot || !asideSlot) return 'missing';
+      const children = Array.from(pageSection.children);
+      return children.indexOf(bodySlot) < children.indexOf(asideSlot)
+        ? 'body-before-aside'
+        : 'aside-before-body';
     });
     expect(order).toBe('body-before-aside');
 

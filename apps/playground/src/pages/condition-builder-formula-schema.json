@@ -20,7 +20,7 @@
           "showIf": true,
           "formulas": {
             "enabled": true,
-            "formula": "${data.defaultExpr}"
+            "formula": "'defaultExpr'"
           },
           "formulaForIf": {
             "enabled": true

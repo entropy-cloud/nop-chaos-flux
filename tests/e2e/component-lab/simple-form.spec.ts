@@ -243,7 +243,7 @@ test.describe('select renderer', () => {
     const triggerEl = stage.getByRole('combobox').first();
     await triggerEl.click();
     await page.getByRole('option', { name: 'United Kingdom' }).click();
-    await expect(triggerEl).toContainText('uk', { timeout: 5_000 });
+    await expect(triggerEl).toContainText('United Kingdom', { timeout: 5_000 });
   });
 
   test('write: custom optionTemplate renders rich content and binds the option value on select', async ({

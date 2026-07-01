@@ -159,6 +159,7 @@ export function M2TouchDemoPage({ onBack }: M2TouchDemoPageProps) {
           schemaUrl="playground://m2-touch"
           schema={schema as React.ComponentProps<typeof SchemaRenderer>['schema']}
           env={env}
+          registry={registry}
           formulaCompiler={formulaCompiler}
         />
       </div>

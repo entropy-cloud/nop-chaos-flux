@@ -166,6 +166,7 @@ export function M1ResponsiveDemoPage({ onBack }: M1ResponsiveDemoPageProps) {
           schemaUrl="playground://m1-responsive"
           schema={schema as React.ComponentProps<typeof SchemaRenderer>['schema']}
           env={env}
+          registry={registry}
           formulaCompiler={formulaCompiler}
         />
       </div>

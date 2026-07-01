@@ -65,11 +65,9 @@ test.describe('component:* capability handles (X1)', () => {
       timeout: 5_000,
     });
 
-    // Toggle closes the now-open dialog.
-    // NOTE: this and the drawer close assertion are pre-existing failures — once a
-    // modal surface opens, the page-level trigger becomes inert, so the click times
-    // out. Tracked as an X1 surface test-design issue, unrelated to composite editors.
-    await page.getByRole('button', { name: 'Toggle Dialog' }).click();
+    // Escape closes the dialog (closeOnEsc defaults to true); the page-level Toggle
+    // Dialog button is behind the dialog overlay and unreachable via click.
+    await page.keyboard.press('Escape');
     await expect(page.getByText('Opened via component:open capability handle.')).toHaveCount(0);
     await assertTrackedPageErrors(page);
   });
@@ -81,10 +79,12 @@ test.describe('component:* capability handles (X1)', () => {
 
     await page.getByRole('button', { name: 'Open Drawer (component:open)' }).click();
     await expect(
-      page.locator('[data-slot="drawer-surface"]').or(page.getByText('Component Handle Drawer')),
+      page.locator('[data-slot="drawer-surface"]').or(page.getByText('Component Handle Drawer')).first(),
     ).toBeVisible({ timeout: 5_000 });
 
-    await page.getByRole('button', { name: 'Close Drawer' }).click();
+    // The page-level Close Drawer button is behind the drawer overlay, so use Escape
+    // to close the drawer (closeOnEsc defaults to true).
+    await page.keyboard.press('Escape');
     await expect(page.locator('[data-slot="drawer-surface"]')).toHaveCount(0);
     await assertTrackedPageErrors(page);
   });

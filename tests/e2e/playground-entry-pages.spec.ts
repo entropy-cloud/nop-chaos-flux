@@ -295,6 +295,34 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
     await expect(page.locator('[data-testid="w4b-renderer-host"]')).toBeVisible();
   },
+  'w4c-composite-form-family': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /复合表单族/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+  },
+  'm5-showcase': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /M1–M5 移动端组件全景/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: /Back/ })).toBeVisible();
+  },
+  'data-verify': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /Data-Source Mechanism Verify/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back' })).toBeVisible();
+    await expect(page.locator('[data-testid="verify-root"]')).toBeVisible();
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {
