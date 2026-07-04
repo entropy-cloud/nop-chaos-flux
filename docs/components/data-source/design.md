@@ -18,7 +18,7 @@
 
 ## 4. schema 设计
 
-- 基础字段：`name`、`formula`、`api`、`interval`、`stopWhen`、`silent`、`statusPath`、`dependsOn`、`initialData`、`mergeStrategy`、`mergeKey`。
+- 基础字段：`name`、`formula`、`action`（如 `"ajax"`）、`args`（HTTP 配置）、`interval`、`stopWhen`、`silent`、`statusPath`、`dependsOn`、`initialData`、`mergeStrategy`、`mergeKey`。
 - 请求编排字段（X4）：`sendOn`、`initFetch`、`onSuccess`、`onError`。
 - 当使用 API 模式时，HTTP 请求配置（`url`、`method`、`data`、`params`、`headers`）位于 `args` 内的 `ApiSchema` 中，不提升为 renderer 顶层字段。
 - 具体契约以 `packages/flux-core/src/types/schema.ts` 为实现基线。
@@ -41,13 +41,12 @@ data-source 的属性分布在三个层级，职责正交：
   "sendOn": "featureFlag === true",
   "initFetch": false,
   "onSuccess": { "action": "setValue", "args": { "path": "lastFetchTime", "value": "${now}" } },
-  "onError": { "action": "toast", "args": { "msg": "Fetch failed", "level": "error" } },
+  "onError": { "action": "showToast", "args": { "msg": "Fetch failed", "level": "error" } },
   "args": {
     "url": "/api/users",
     "method": "GET",
     "params": { "page": "${page}" }
-  },
-  "control": { "retry": { "times": 3 }, "dedup": "cancel-previous" }
+  }
 }
 ```
 
@@ -59,7 +58,7 @@ data-source 的属性分布在三个层级，职责正交：
 
 ## 5. 字段分类
 
-**value 字段**：`name`、`formula`、`api`、`interval`、`stopWhen`、`silent`、`sendOn`（raw expression）、`initFetch`（boolean）
+**value 字段**：`name`、`formula`、`action`、`args`、`interval`、`stopWhen`、`silent`、`sendOn`（raw expression）、`initFetch`（boolean）
 
 **event 字段**：`onSuccess`、`onError`（action schema）
 

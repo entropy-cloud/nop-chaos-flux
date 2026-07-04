@@ -9,7 +9,7 @@
 ## 2. 与 AMIS 或既有产品的能力对照
 
 - 目标契约中，`form` 不只承载 `body` / `actions` / `data`，还应拥有语义生命周期入口与状态读面。
-- 提交、验证失败、提交成功/失败 follow-up 都归 `form` 节点所有；触发器只负责调用 `component:submit`。
+- 提交、验证失败、提交成功/失败 follow-up 都归 `form` 节点所有；触发器只负责调用 `component:submit`（需指定 `componentId` 为表单的 `id` 以定位目标实例）。
 
 ### Flux 决策表
 

@@ -18,12 +18,12 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `currentPage`、`pageSize`、`total`、`pageSizeOptions`、`mode`、`pageOwnership`、`pageStatePath`、`statusPath`。
+- 建议正式字段为 `currentPage`、`pageSize`、`total`、`pageSizeOptions`、`mode`、`statusPath`。
 - 是否显示输入框、总数和页面大小切换应作为明确布尔值，而不是依赖 layout 字符串拼装。
 
 ## 5. 字段分类
 
-- `currentPage`、`pageSize`、`total`、`pageSizeOptions`、`mode`、`pageOwnership`、`pageStatePath`、`statusPath`: `value`
+- `currentPage`、`pageSize`、`total`、`pageSizeOptions`、`mode`、`statusPath`: `value`
 - `onChange`、`onPageSizeChange`: `event`
 
 ## 6. regions 与 slot 约定

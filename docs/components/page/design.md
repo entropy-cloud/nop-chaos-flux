@@ -191,7 +191,7 @@
       }
     ]
   },
-  "body": { "type": "container", "body": "/* 当前页内容 */" }
+  "body": { "type": "container", "body": [{ "type": "text", "text": "当前页内容" }] }
 }
 ```
 
@@ -233,7 +233,7 @@
       }
     ]
   },
-  "body": { "type": "container", "body": "/* */" }
+  "body": { "type": "container", "body": [{ "type": "text", "text": "context" }] }
 }
 ```
 
@@ -285,7 +285,7 @@
       }
     ]
   },
-  "body": { "type": "container", "body": "/* 商品详情 */" }
+  "body": { "type": "container", "body": [{ "type": "text", "text": "商品详情" }] }
 }
 ```
 
@@ -321,7 +321,7 @@
       }
     ]
   },
-  "body": { "type": "container", "body": "/* 购物车列表 */" }
+  "body": { "type": "container", "body": [{ "type": "text", "text": "购物车列表" }] }
 }
 ```
 

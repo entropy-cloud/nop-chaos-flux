@@ -201,6 +201,12 @@ function validateParsed(parsed, label, errs, warns) {
       : null);
   if (!toValidate) return;
 
+  // Skip roots whose type is not a known renderer (e.g. condition-builder field configs)
+  if (!Array.isArray(toValidate) && !registry.get(toValidate.type)) return;
+
+  // Skip blocks demonstrating runtime-only $slot references (cannot be statically verified)
+  if (JSON.stringify(toValidate).includes('$slot.')) return;
+
   try {
     const diags = validateSchema({ schema: toValidate, registry });
     for (const d of diags) {
@@ -273,6 +279,31 @@ function main() {
     }
     nodes++;
     validateParsed(parsed, rel, errs, warns);
+  }
+
+  // ── docs/components/*/design.md blocks ──
+  for (const fp of findMdFiles('docs/components')) {
+    const rel = relative(REPO_ROOT, fp);
+    const dirName = rel.split('/')[2]; // docs/components/<name>/design.md
+    if (skipPackages.has(dirName)) continue;
+
+    for (const block of extractMdBlocks(fp)) {
+      blocks++;
+      const cleaned = jsoncToJSON(block.raw).trim();
+      if (/\.\.\.\s*[}\]]/.test(cleaned)) continue;
+
+      for (const seg of splitValues(cleaned)) {
+        let parsed;
+        try { parsed = JSON.parse(seg); }
+        catch (e) {
+          console.log(`  PARSE ERROR: ${rel}:${block.line} ${e.message}`);
+          errs.n++;
+          continue;
+        }
+        nodes++;
+        validateParsed(parsed, `${rel}:${block.line}`, errs, warns);
+      }
+    }
   }
 
   console.log(`\nResults:  blocks=${blocks}  nodes=${nodes}  errors=${errs.n}  warnings=${warns.n}`);
