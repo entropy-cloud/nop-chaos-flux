@@ -27,20 +27,23 @@
 ## 条件激活 (when)
 
 ```json
-{
-  "type": "fragment",
-  "when": "${showAdvanced}",
-  "body": [
-    { "type": "input-text", "name": "adminCode", "label": "管理员代码" },
-    {
-      "type": "select",
-      "name": "permissions",
-      "label": "权限",
-      "multiple": true,
-      "source": "/api/permissions"
-    }
-  ]
-}
+[
+  { "type": "data-source", "name": "permissionOptions", "action": "ajax", "args": { "url": "/api/permissions" } },
+  {
+    "type": "fragment",
+    "when": "${showAdvanced}",
+    "body": [
+      { "type": "input-text", "name": "adminCode", "label": "管理员代码" },
+      {
+        "type": "select",
+        "name": "permissions",
+        "label": "权限",
+        "multiple": true,
+        "options": "${permissionOptions}"
+      }
+    ]
+  }
+]
 ```
 
 > `visible` 隐藏的字段仍参与验证；`when=false` 的子树整体不激活、不参与生命周期。
@@ -71,6 +74,7 @@
 
 ```json
 [
+  { "type": "data-source", "name": "cities", "action": "ajax", "args": { "url": "/api/cities?province=${province}" }, "sendOn": "${province}" },
   {
     "type": "select",
     "name": "province",
@@ -84,7 +88,7 @@
     "type": "select",
     "name": "city",
     "label": "城市",
-    "source": "/api/cities?province=${province}",
+    "options": "${cities}",
     "visible": "${province}"
   }
 ]

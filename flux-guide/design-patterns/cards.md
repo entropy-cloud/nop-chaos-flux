@@ -1,44 +1,27 @@
 # 卡片列表
 
+> `cards` 用 `items`（表达式绑定数据）+ `card`（每张卡片模板 region，运行在 item/index 作用域）。**没有** `source`/`itemSchema` 字段。数据由 `data-source` 节点准备。
+
 ## 基础卡片列表
 
 ```json
-{
-  "type": "cards",
-  "source": "/api/products",
-  "itemSchema": {
-    "type": "card",
-    "header": { "type": "text", "text": "${name}" },
-    "body": [
-      { "type": "image", "src": "${image}" },
-      { "type": "text", "text": "${description}" },
-      { "type": "text", "text": "价格: ¥${price}" }
-    ],
-    "footer": [{ "type": "button", "label": "购买", "level": "primary" }]
+[
+  { "type": "data-source", "name": "products", "action": "ajax", "args": { "url": "/api/products" } },
+  {
+    "type": "cards",
+    "items": "${products}",
+    "card": {
+      "type": "card",
+      "header": { "type": "text", "text": "${$slot.item.name}" },
+      "body": [
+        { "type": "image", "src": "${$slot.item.image}" },
+        { "type": "text", "text": "${$slot.item.description}" },
+        { "type": "text", "text": "价格: ¥${$slot.item.price}" }
+      ],
+      "footer": [{ "type": "button", "label": "购买", "variant": "default" }]
+    }
   }
-}
-```
-
-## 带数据源的卡片
-
-```json
-{
-  "type": "data-source",
-  "name": "products",
-  "action": {"action": "ajax", "args": {"url": "/api/products"}}
-},
-{
-  "type": "cards",
-  "source": "${products}",
-  "itemSchema": {
-    "type": "card",
-    "header": {"type": "text", "text": "${item.name}"},
-    "body": [
-      {"type": "text", "text": "分类: ${item.category}"},
-      {"type": "text", "text": "库存: ${item.stock}"}
-    ]
-  }
-}
+]
 ```
 
 ## 带搜索的卡片列表
@@ -55,30 +38,28 @@
         {
           "type": "button",
           "label": "搜索",
-          "level": "primary",
-          "onClick": {
-            "action": "refreshSource",
-            "args": { "targetId": "productList" }
-          }
+          "variant": "default",
+          "onClick": { "action": "refreshSource", "targetId": "productList" }
         }
       ]
     },
     {
       "type": "data-source",
       "name": "productList",
-      "action": { "action": "ajax", "args": { "url": "/api/products?keyword=${keyword}" } }
+      "action": "ajax",
+      "args": { "url": "/api/products?keyword=${keyword}" }
     },
     {
       "type": "cards",
-      "source": "${productList}",
-      "itemSchema": {
+      "items": "${productList}",
+      "card": {
         "type": "card",
-        "header": { "type": "text", "text": "${item.name}" },
-        "body": [{ "type": "text", "text": "${item.description}" }]
+        "header": { "type": "text", "text": "${$slot.item.name}" },
+        "body": [{ "type": "text", "text": "${$slot.item.description}" }]
       }
     }
   ]
 }
 ```
 
-**关键点**：`cards` 是集合展示组件，通过 `source` 接收数据，通过 `itemSchema` 定义每张卡片的结构。
+**关键点**：`cards` 经 `items` 接收集合数据，`card` 定义每张卡片结构（region 参数 `item`/`index`，绑定用 `${$slot.item.xxx}`）。请求下沉到 `data-source` 节点。

@@ -52,7 +52,7 @@ interface SwipeCellEvents {
     {
       "type": "button",
       "label": "删除",
-      "level": "danger",
+      "variant": "destructive",
       "onClick": { "action": "ajax", "args": { "url": "/api/delete/${id}", "method": "delete" } }
     },
     {
@@ -82,7 +82,7 @@ interface SwipeCellEvents {
     {
       "type": "button",
       "label": "置顶",
-      "level": "primary",
+      "variant": "default",
       "onClick": { "action": "setValue", "args": { "path": "item.pinned", "value": true } }
     }
   ],
@@ -90,7 +90,7 @@ interface SwipeCellEvents {
     {
       "type": "button",
       "label": "删除",
-      "level": "danger",
+      "variant": "destructive",
       "onClick": { "action": "ajax", "args": { "url": "/api/delete/${id}", "method": "delete" } }
     }
   ],
@@ -104,7 +104,7 @@ interface SwipeCellEvents {
 {
   "type": "swipe-cell",
   "direction": "right",
-  "right": [{ "type": "button", "label": "删除", "level": "danger" }],
+  "right": [{ "type": "button", "label": "删除", "variant": "destructive" }],
   "body": [{ "type": "text", "text": "仅支持右滑" }]
 }
 ```
@@ -123,7 +123,7 @@ interface SwipeCellEvents {
         {
           "type": "button",
           "label": "删除",
-          "level": "danger",
+          "variant": "destructive",
           "onClick": {
             "action": "ajax",
             "args": { "url": "/api/delete/${item.id}", "method": "delete" }

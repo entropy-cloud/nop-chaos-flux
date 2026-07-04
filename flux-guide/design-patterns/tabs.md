@@ -1,11 +1,13 @@
 # Tab 导航布局
 
+> Tabs 用 `items` 数组（非 `tabs`），激活态用 `value`/`valueOwnership`/`valueStatePath`（非 `activeKey*`）。
+
 ## 基础 Tabs
 
 ```json
 {
   "type": "tabs",
-  "tabs": [
+  "items": [
     {
       "title": "基本信息",
       "body": [
@@ -24,17 +26,17 @@
 }
 ```
 
-## 受控 Tabs
+## 受控 Tabs（scope 持久化）
 
 ```json
 {
   "type": "tabs",
-  "activeKey": "${currentTab}",
-  "activeKeyOwnership": "scope",
-  "activeKeyStatePath": "currentTab",
-  "tabs": [
-    { "title": "列表", "body": [{ "type": "table", "api": "/api/list" }] },
-    { "title": "图表", "body": [{ "type": "chart", "source": "/api/chart" }] }
+  "value": "${currentTab}",
+  "valueOwnership": "scope",
+  "valueStatePath": "currentTab",
+  "items": [
+    { "title": "列表", "body": [{ "type": "table", "source": "${rows}" }] },
+    { "title": "图表", "body": [{ "type": "chart", "source": "${chartData}" }] }
   ]
 }
 ```
@@ -44,7 +46,7 @@
 ```json
 {
   "type": "tabs",
-  "tabs": [
+  "items": [
     { "title": "首页", "icon": "home", "body": [{ "type": "text", "text": "首页内容" }] },
     { "title": "设置", "icon": "settings", "body": [{ "type": "text", "text": "设置内容" }] }
   ]
@@ -56,7 +58,7 @@
 ```json
 {
   "type": "tabs",
-  "tabs": [
+  "items": [
     { "title": "普通用户", "body": [{ "type": "text", "text": "用户视图" }] },
     {
       "title": "管理员",
@@ -72,11 +74,11 @@
 ```json
 {
   "type": "tabs",
-  "tabs": [
+  "items": [
     { "title": "可访问", "body": [{ "type": "text", "text": "内容" }] },
     { "title": "不可访问", "disabled": true, "body": [] }
   ]
 }
 ```
 
-**关键点**：Tabs 是 interaction owner，管理互斥面板和激活状态。可通过 `activeKeyOwnership` 控制状态归属（local/controlled/scope）。
+**关键点**：Tabs 是 interaction owner，管理互斥面板和激活状态。可通过 `valueOwnership` 控制状态归属（local/controlled/scope）。

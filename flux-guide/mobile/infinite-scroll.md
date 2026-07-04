@@ -74,7 +74,7 @@ normal → loading → finished / error
     "action": "ajax",
     "args": { "url": "/api/list?page=${page}" },
     "then": {
-      "action": "setValues",
+      "action": "setValue",
       "args": { "path": "list", "value": "${list.concat(result.items)}" }
     }
   },
@@ -94,9 +94,12 @@ normal → loading → finished / error
       "loading": "${crud.loading}",
       "onLoadMore": {
         "action": "component:loadMore",
-        "args": { "_target": "crud1" }
+        "componentId": "crud1"
       },
-      "body": [{ "type": "crud", "name": "crud1", "api": "/api/users" }]
+      "body": [
+        { "type": "data-source", "name": "pagedUsers", "action": "ajax", "args": { "url": "/api/users" } },
+        { "type": "crud", "id": "crud1", "source": "${pagedUsers}" }
+      ]
     }
   ]
 }

@@ -12,48 +12,72 @@
 
 ## 2. 页面带数据请求
 
+> Page 没有 `initApi`。请求下沉到 `data-source` 节点（兄弟节点消费其结果）。
+
 ```json
 {
   "type": "page",
-  "initApi": "/api/init",
-  "body": { "type": "text", "text": "用户: ${name}, 角色: ${role}" }
+  "body": [
+    { "type": "data-source", "name": "profile", "action": "ajax", "args": { "url": "/api/init" } },
+    { "type": "text", "text": "用户: ${profile.name}, 角色: ${profile.role}" }
+  ]
 }
 ```
 
 ## 3. CRUD 表格
 
+> CRUD 没有 `api`/`perPage` 字段。取数走 `source`（消费 data-source 结果，推荐）或 `loadAction`（自带取数）。详见 `design-patterns/crud.md`。
+
 ```json
 {
-  "type": "crud",
-  "name": "table1",
-  "api": "/api/users",
-  "columns": [
-    { "name": "id", "label": "ID" },
-    { "name": "name", "label": "姓名" }
-  ],
-  "toolbar": [
+  "type": "page",
+  "body": [
     {
-      "type": "button",
-      "label": "新增",
-      "level": "primary",
-      "onClick": {
-        "action": "openDialog",
-        "args": {
-          "title": "新增",
-          "body": {
-            "type": "form",
-            "id": "createForm",
-            "submitAction": {
-              "action": "ajax",
-              "args": { "url": "/api/users/create", "method": "post" }
-            },
-            "body": [{ "type": "input-text", "name": "name", "label": "姓名" }]
+      "type": "data-source",
+      "id": "users-source",
+      "name": "pagedUsers",
+      "action": "ajax",
+      "args": { "url": "/api/users" }
+    },
+    {
+      "type": "crud",
+      "id": "users-crud",
+      "source": "${pagedUsers}",
+      "rowKey": "id",
+      "onRefresh": { "action": "refreshSource", "targetId": "pagedUsers" },
+      "columns": [
+        { "name": "id", "label": "ID" },
+        { "name": "name", "label": "姓名" }
+      ],
+      "toolbar": [
+        {
+          "type": "button",
+          "label": "新增",
+          "variant": "default",
+          "onClick": {
+            "action": "openDialog",
+            "args": {
+              "title": "新增",
+              "body": {
+                "type": "form",
+                "id": "createForm",
+                "submitAction": {
+                  "action": "ajax",
+                  "args": { "url": "/api/users/create", "method": "post" }
+                },
+                "onSubmitSuccess": {
+                  "action": "closeSurface",
+                  "then": { "action": "refreshSource", "targetId": "pagedUsers" }
+                },
+                "body": [{ "type": "input-text", "name": "name", "label": "姓名" }]
+              }
+            }
           }
         }
-      }
+      ],
+      "footerToolbar": [{ "type": "statistics" }, { "type": "pagination" }]
     }
-  ],
-  "footerToolbar": ["statistics", "pagination"]
+  ]
 }
 ```
 
@@ -74,7 +98,7 @@
     {
       "type": "button",
       "label": "提交",
-      "onClick": { "action": "component:submit", "args": { "_target": "myForm" } }
+      "onClick": { "action": "component:submit", "componentId": "myForm" }
     }
   ]
 }
@@ -113,11 +137,9 @@
   "type": "combo",
   "name": "items",
   "label": "明细",
-  "multiple": true,
   "addable": true,
   "removable": true,
-  "draggable": true,
-  "scaffold": { "product": "", "quantity": 1 },
+  "reorderable": true,
   "items": [
     { "type": "input-text", "name": "product", "placeholder": "商品" },
     { "type": "input-number", "name": "quantity", "label": "数量" }
@@ -162,19 +184,19 @@
 
 ## 9. Data Source 数据容器
 
+> `data-source` 节点自身**不渲染**（return null），其结果经 `name` 发布到 scope，由**兄弟节点**消费。`action` 是字符串，`args` 同级。
+
 ```json
-{
-  "type": "data-source",
-  "name": "dashboard",
-  "action": { "action": "ajax", "args": { "url": "/api/dashboard" } },
-  "body": [
-    { "type": "text", "text": "用户数: ${dashboard.userCount}" },
-    {
-      "type": "chart",
-      "source": { "type": "source", "action": "ajax", "args": { "url": "/api/chart/data" } }
-    }
-  ]
-}
+[
+  {
+    "type": "data-source",
+    "name": "dashboard",
+    "action": "ajax",
+    "args": { "url": "/api/dashboard" }
+  },
+  { "type": "text", "text": "用户数: ${dashboard.userCount}" },
+  { "type": "chart", "source": "${dashboard.chartData}" }
+]
 ```
 
 ## 10. Wizard 多步骤
@@ -190,7 +212,8 @@
     },
     { "title": "第二步", "body": [{ "type": "input-text", "name": "address", "label": "地址" }] }
   ],
-  "submitAction": { "action": "ajax", "args": { "url": "/api/submit", "method": "post" } }
+  "onStepCommit": { "action": "ajax", "args": { "url": "/api/step", "method": "post" } },
+  "onComplete": { "action": "showToast", "args": { "level": "success", "message": "完成" } }
 }
 ```
 
@@ -199,7 +222,7 @@
 ```json
 {
   "type": "tabs",
-  "tabs": [
+  "items": [
     {
       "title": "基本信息",
       "body": [
@@ -217,14 +240,19 @@
 
 ## 12. Select 远程数据源
 
+> `select` 没有 `source` 字段；远程选项用 `data-source` 节点准备，再绑定到 `options`。
+
 ```json
-{
-  "type": "select",
-  "name": "city",
-  "label": "城市",
-  "source": "/api/cities?province=${province}",
-  "visible": "${province}"
-}
+[
+  { "type": "data-source", "name": "cities", "action": "ajax", "args": { "url": "/api/cities", "params": { "province": "${province}" } } },
+  {
+    "type": "select",
+    "name": "city",
+    "label": "城市",
+    "options": "${cities}",
+    "visible": "${province}"
+  }
+]
 ```
 
 ## 13. Loop 循环渲染
@@ -253,11 +281,13 @@
 
 ## 15. 文件上传
 
+> `input-file` 没有 `maxSize`；数量上限用 `maxFiles`。实际上传靠字段上的 `uploadAction`（host 上传动作），表单 `submitAction` 只提交已上传后的字段值。
+
 ```json
 {
   "type": "form",
   "id": "uploadForm",
-  "submitAction": { "action": "ajax", "args": { "url": "/api/upload", "method": "post" } },
+  "submitAction": { "action": "ajax", "args": { "url": "/api/save", "method": "post" } },
   "body": [
     { "type": "input-text", "name": "title", "label": "标题", "required": true },
     {
@@ -265,12 +295,13 @@
       "name": "file",
       "label": "文件",
       "accept": ".pdf,.doc",
-      "maxSize": 10485760
+      "maxFiles": 5,
+      "uploadAction": { "action": "ajax", "args": { "url": "/api/upload", "method": "post" } }
     },
     {
       "type": "button",
-      "label": "上传",
-      "onClick": { "action": "component:submit", "args": { "_target": "uploadForm" } }
+      "label": "提交",
+      "onClick": { "action": "component:submit", "componentId": "uploadForm" }
     }
   ]
 }

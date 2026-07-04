@@ -65,12 +65,15 @@ normal → pulling → loosing → loading → success → normal
 
 ```json
 {
-  "type": "pull-refresh",
-  "onRefresh": {
-    "action": "refreshTable",
-    "args": { "target": "list1" }
-  },
-  "body": [{ "type": "list", "name": "list1", "api": "/api/list" }]
+  "type": "page",
+  "body": [
+    { "type": "data-source", "name": "listData", "action": "ajax", "args": { "url": "/api/list" } },
+    {
+      "type": "pull-refresh",
+      "onRefresh": { "action": "refreshSource", "targetId": "listData" },
+      "body": [{ "type": "list", "items": "${listData}", "item": [{ "type": "text", "text": "${$slot.item.name}" }] }]
+    }
+  ]
 }
 ```
 
@@ -95,7 +98,7 @@ normal → pulling → loosing → loading → success → normal
 {
   "type": "pull-refresh",
   "disabled": "${isLoading}",
-  "onRefresh": { "action": "refreshSource", "args": { "sourceName": "data" } },
+  "onRefresh": { "action": "refreshSource", "targetId": "data" },
   "body": [{ "type": "text", "text": "${data}" }]
 }
 ```

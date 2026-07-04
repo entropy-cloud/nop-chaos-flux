@@ -22,8 +22,8 @@ ${a && b}                            → 与
 ${a || b}                            → 或
 ${!a}                                → 非
 ${a ? 'yes' : 'no'}                  → 三元
-${arr | includes:'x'}                → 包含
-${phone | match:/^1[3-9]/}           → 正则
+${arr | ARRAYINCLUDES:'x'}           → 数组包含元素
+${s | CONTAINS:'sub'}                → 字符串包含子串
 ```
 
 ### 常用过滤器
@@ -37,11 +37,15 @@ ${phone | match:/^1[3-9]/}           → 正则
 | `LOWER`       | 小写     | `${s \| LOWER}`                         |
 | `LEN`         | 长度     | `${s \| LEN}`                           |
 | `INT`         | 取整     | `${n \| INT}`                           |
+| `MOD`         | 取模     | `${n \| MOD:3}`                         |
+| `CONCAT`      | 数组拼接 | `${arr \| CONCAT}`                      |
 | `CONCATENATE` | 拼接     | `${a \| CONCATENATE:b}`                 |
 | `REPLACE`     | 替换     | `${s \| REPLACE:old:new}`               |
 | `SPLIT`       | 分割     | `${s \| SPLIT:delimiter}`               |
 | `JOIN`        | 数组连接 | `${arr \| JOIN:,}`                      |
 | `CONTAINS`    | 包含子串 | `${s \| CONTAINS:sub}`                  |
+| `ARRAYINCLUDES` | 数组含元素 | `${arr \| ARRAYINCLUDES:'x'}`        |
+| `ISARRAY`     | 是否数组 | `${x \| ISARRAY}`                       |
 | `ISEMPTY`     | 是否为空 | `${x \| ISEMPTY}`                       |
 | `SUM`         | 求和     | `${arr \| SUM}`                         |
 | `AVG`         | 平均值   | `${arr \| AVG}`                         |
@@ -69,28 +73,28 @@ ${$JSON.stringify(obj)}
 
 ## 2. API 配置
 
-### 简洁版
+> Flux **没有**组件级顶层 `api` 字段（那是 amis 简写）。请求一律经 `ajax` action，API 配置作为 action 的 `args`（`ApiSchema`）。下列配置对象就是 `ajax` action 的 `args` 内容。
+
+### 作为 action args
 
 ```json
-{"api": "/api/users"}
-{"api": "post:/api/save"}        // 指定方法
-{"api": "delete:/api/users/1"}   // DELETE 请求
+{ "action": "ajax", "args": "/api/users" }
+{ "action": "ajax", "args": "post:/api/save" }
+{ "action": "ajax", "args": { "url": "/api/save", "method": "post", "data": { "name": "${name}" } } }
 ```
 
-### 完整版 (看 `ApiSchema`)
+### 完整字段 (看 `ApiSchema` / `ApiSchemaObject`)
 
 ```json
 {
-  "api": {
-    "url": "/api/save",
-    "method": "post",
-    "data": { "name": "${name}" },
-    "headers": { "Authorization": "Bearer ${token}" },
-    "includeScope": ["userId", "token"],
-    "params": { "page": "${page}" },
-    "responseAdaptor": "return { ...payload, data: payload.data.list }",
-    "requestAdaptor": "api.data.timestamp = Date.now(); return api;"
-  }
+  "url": "/api/save",
+  "method": "post",
+  "data": { "name": "${name}" },
+  "headers": { "Authorization": "Bearer ${token}" },
+  "includeScope": ["userId", "token"],
+  "params": { "page": "${page}" },
+  "responseAdaptor": "return { ...payload, data: payload.data.list }",
+  "requestAdaptor": "api.data.timestamp = Date.now(); return api;"
 }
 ```
 
@@ -203,7 +207,7 @@ dialog 输出 → ${result} (形态: {confirmed, value})
 ### 数据域 (ScopeRef)
 
 ```
-Page {data: {x:1}}              ← initApi 或 data 字段
+Page {data: {x:1}}              ← data 字段（请求走 data-source 兄弟节点）
   └── Form {name: "${x}"}       ← 继承 Page 的数据
       └── InputText              ← 继承 Form 的数据
 ```
@@ -212,50 +216,58 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 
 ### 数据来源
 
-| 方式           | 适用组件                    | 说明             |
-| -------------- | --------------------------- | ---------------- |
-| `data`         | page, form, dialog, drawer  | 静态初始数据     |
-| `initApi`      | page, form, dialog, service | 初始化请求       |
-| `submitAction` | form                        | 提交 API         |
-| `source`       | 选项类控件, table, cards    | 数据源           |
-| `data-source`  | data-source                 | 命名数据源节点   |
-| `service`      | service                     | 可视数据组合容器 |
+| 方式           | 适用组件                    | 说明                              |
+| -------------- | --------------------------- | --------------------------------- |
+| `data`         | page, form, dialog, drawer  | 静态初始数据                      |
+| `initAction`   | form                        | 表单初始化请求                    |
+| `submitAction` | form                        | 提交 API                          |
+| `source`       | table, crud                 | 数据源（crud 消费 `{items,total}`） |
+| `loadAction`   | crud                        | CRUD 自带取数编排入口（接收分页/查询绑定） |
+| `data-source`  | data-source                 | 命名数据源节点（请求下沉，推荐）  |
+| `service`      | service                     | 可视数据组合容器                  |
+
+> CRUD **没有** `api` 字段。Page/Dialog 无请求字段，取数一律下沉 `data-source` 节点。选项类控件（select 等）用 `options`（非 `source`）。
 
 ### 组件间通信
 
 ```json
-// Form 提交后刷新 CRUD
-{"type":"form","id":"form1","body":[...],
- "onSubmitSuccess":{"action":"refreshTable","args":{"target":"table1"}}}
-{"type":"crud","name":"table1","api":"/api/list"}
+// data-source + CRUD：Form 提交后刷新上游数据源
+[
+  { "type": "data-source", "id": "users-src", "name": "pagedUsers", "action": "ajax", "args": { "url": "/api/users" } },
+  { "type": "crud", "id": "crud1", "source": "${pagedUsers}", "onRefresh": { "action": "refreshSource", "targetId": "pagedUsers" } },
+  { "type": "form", "id": "form1", "body": [],
+    "onSubmitSuccess": { "action": "refreshSource", "targetId": "pagedUsers" } }
+]
 
-// 按钮刷新指定组件
-{"type":"button","label":"刷新","onClick":{"action":"refreshTable","args":{"target":"table1"}}}
+// 按钮刷新 CRUD（触发其 onRefresh）
+{ "type": "button", "label": "刷新", "onClick": { "action": "component:refresh", "componentId": "crud1" } }
 
 // 调用组件实例方法
-{"type":"button","label":"提交","onClick":{"action":"component:submit","args":{"_target":"form1"}}}
+{ "type": "button", "label": "提交", "onClick": { "action": "component:submit", "componentId": "form1" } }
 ```
 
 ### Data Source (命名数据源)
 
+> `data-source` 节点自身不渲染；`action` 是字符串，`args` 同级。结果经 `name` 发布，由兄弟节点消费。
+
 ```json
 // 命名 data-source 节点
 {"type":"data-source","name":"countries",
- "action":{"action":"ajax","args":{"url":"/api/countries"}},
+ "action":"ajax","args":{"url":"/api/countries"},
  "mergeToScope":true}
 
 // 轮询 + 条件停止
 {"type":"data-source","name":"status",
- "action":{"action":"ajax","args":{"url":"/api/status"}},
+ "action":"ajax","args":{"url":"/api/status"},
  "interval":3000,"stopWhen":"${status.complete}"}
 
-// 公式派生
+// 公式派生（formula，与 action 互斥）
 {"type":"data-source","name":"summary",
- "formula":"{ total: users.length, active: users.filter(u => u.active).length }"}
+ "formula":"${{ total: users.length, active: users.filter(u => u.active).length }}"}
 
 // 条件发送
 {"type":"data-source","name":"details",
- "action":{"action":"ajax","args":{"url":"/api/details?id=${id}"}},
+ "action":"ajax","args":{"url":"/api/details?id=${id}"},
  "sendOn":"${id}"}
 ```
 
@@ -273,7 +285,8 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 {
   "type": "data-source",
   "name": "list",
-  "action": { "action": "ajax", "args": { "url": "/api/more" } },
+  "action": "ajax",
+  "args": { "url": "/api/more" },
   "mergeStrategy": "append",
   "mergeKey": "id"
 }
@@ -292,30 +305,45 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 
 ### 校验规则
 
+Flux 校验分两层：**字段级**用字段自身的属性声明；**跨字段**用表单 `rules`。**没有** amis 式的 `validations` map。
+
+字段级（写在字段上）：
+
 ```json
 {
-  "type": "input-text",
+  "type": "input-email",
   "name": "email",
   "label": "邮箱",
   "required": true,
-  "validations": {
-    "isEmail": true,
-    "maxLength": 100
-  }
+  "minLength": 5,
+  "maxLength": 100,
+  "pattern": "^[^@]+@[^@]+\\.[^@]+$"
 }
 ```
 
-### 常用校验规则
+跨字段（写在 form 的 `rules` 上）：
 
-| 规则                      | 说明     |
-| ------------------------- | -------- |
-| `required`                | 必填     |
-| `isEmail`                 | 邮箱格式 |
-| `isUrl`                   | URL 格式 |
-| `isNumeric`               | 数字     |
-| `minLength` / `maxLength` | 长度范围 |
-| `minimum` / `maximum`     | 数值范围 |
-| `pattern`                 | 正则匹配 |
+```json
+{
+  "type": "form",
+  "rules": [
+    { "rule": "equalsField", "field": "password", "target": "passwordConfirm", "message": "两次密码不一致" }
+  ],
+  "body": [ ... ]
+}
+```
+
+异步校验（字段级 `validate`）：
+
+```json
+{ "type": "input-text", "name": "username", "validate": { "action": "ajax", "args": { "url": "/api/check-username" }, "debounce": 500, "message": "用户名已存在" } }
+```
+
+### 可用校验 kind
+
+字段属性：`required`、`pattern`、`minLength`/`maxLength`（文本）、`minItems`/`maxItems`（数组）。`input-email`/`input-url` 等类型自带格式校验。
+
+表单 `rules` 的 `rule` 取值：`equalsField`、`notEqualsField`（仅这两种；`requiredWhen`/`uniqueBy`/`minItems` 等属于内部 `ValidationRule.kind`，由字段级/数组级声明引入，不经表单 `rules`）。
 
 ### 表单提交回调
 
@@ -398,7 +426,7 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 ```json
 {
   "type": "tabs",
-  "tabs": [
+  "items": [
     { "title": "Tab 1", "body": [{ "type": "text", "text": "内容 1" }] },
     { "title": "Tab 2", "body": [{ "type": "text", "text": "内容 2" }] }
   ]
@@ -410,10 +438,10 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 ```json
 {
   "type": "tabs",
-  "activeKey": "${currentTab}",
-  "activeKeyOwnership": "scope",
-  "activeKeyStatePath": "currentTab",
-  "tabs": [
+  "value": "${currentTab}",
+  "valueOwnership": "scope",
+  "valueStatePath": "currentTab",
+  "items": [
     { "title": "列表", "body": [{ "type": "table" }] },
     { "title": "图表", "body": [{ "type": "chart" }] }
   ]
@@ -432,7 +460,7 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 
 ## 8. 组件实例方法
 
-通过 `component:method` 动作调用组件实例方法：
+通过 `component:method` 动作调用组件实例方法（目标用顶层 `componentId`，不是 `args._target`）：
 
 | 方法                 | 说明                        |
 | -------------------- | --------------------------- |
@@ -447,7 +475,7 @@ Page {data: {x:1}}              ← initApi 或 data 字段
 {
   "type": "button",
   "label": "提交",
-  "onClick": { "action": "component:submit", "args": { "_target": "myForm" } }
+  "onClick": { "action": "component:submit", "componentId": "myForm" }
 }
 ```
 

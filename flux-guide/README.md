@@ -22,7 +22,7 @@ JSON Schema (含 type 字段)
 
 ## 类型定义位置
 
-**所有组件的 TypeScript 接口定义在 `flux-types/*.d.ts`，这是绝对准确的知识源。** 需要查组件字段时直接看对应文件：
+**所有组件的 TypeScript 接口定义在 `flux-types/*.d.ts`，这是绝对准确的知识源。** 修改 `packages/` 下任一 schema 时，须同步更新对应 `flux-types/*.d.ts` 以保持一致（定期维护）。需要查组件字段时直接看对应文件：
 
 | 文件          | 内容                                                                                                      |
 | ------------- | --------------------------------------------------------------------------------------------------------- |
@@ -30,7 +30,7 @@ JSON Schema (含 type 字段)
 | `schema.d.ts` | 所有组件 Schema 接口（Page/Form/Table/Dialog/Mobile 等）                                                  |
 | `index.ts`    | `FluxSchema`（所有组件的联合类型）+ `FluxSchemaByType`（type→接口映射）                                   |
 
-> 看 TypeScript 接口即知 JSON 怎么写：接口的属性名就是 JSON key，类型就是值的类型。
+> 看 TypeScript 接口即知 JSON 怎么写：接口的属性名就是 JSON key，类型就是值的类型。CRUD 等复杂控件字段较多，详见 `design-patterns/crud.md`。
 
 ## 跨组件共性
 

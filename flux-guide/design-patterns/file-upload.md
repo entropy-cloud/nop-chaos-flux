@@ -1,5 +1,7 @@
 # 文件上传
 
+> `input-file`/`input-image` 没有 `maxSize` 字段；数量上限用 `maxFiles`。实际文件上传靠字段上的 `uploadAction`（host 上传动作），表单 `submitAction` 只提交上传后的字段值（文件引用）。
+
 ## 基础文件上传
 
 ```json
@@ -8,8 +10,8 @@
   "name": "attachment",
   "label": "附件",
   "accept": ".pdf,.doc,.docx",
-  "maxSize": 10485760,
-  "maxCount": 3
+  "maxFiles": 3,
+  "uploadAction": { "action": "ajax", "args": { "url": "/api/upload", "method": "post" } }
 }
 ```
 
@@ -21,7 +23,8 @@
   "name": "avatar",
   "label": "头像",
   "accept": "image/*",
-  "maxSize": 2097152
+  "uploadAction": { "action": "ajax", "args": { "url": "/api/upload", "method": "post" } },
+  "previewMode": "thumbnail"
 }
 ```
 
@@ -34,7 +37,8 @@
   "label": "多文件",
   "multiple": true,
   "accept": ".pdf,.doc,.docx,.xls,.xlsx",
-  "maxCount": 10
+  "maxFiles": 10,
+  "uploadAction": { "action": "ajax", "args": { "url": "/api/upload", "method": "post" } }
 }
 ```
 
@@ -44,18 +48,21 @@
 {
   "type": "form",
   "id": "uploadForm",
-  "submitAction": { "action": "ajax", "args": { "url": "/api/upload", "method": "post" } },
+  "submitAction": { "action": "ajax", "args": { "url": "/api/save", "method": "post" } },
   "body": [
     { "type": "input-text", "name": "title", "label": "标题", "required": true },
-    { "type": "input-file", "name": "file", "label": "文件", "required": true },
+    {
+      "type": "input-file",
+      "name": "file",
+      "label": "文件",
+      "required": true,
+      "uploadAction": { "action": "ajax", "args": { "url": "/api/upload", "method": "post" } }
+    },
     {
       "type": "button",
-      "label": "上传",
-      "level": "primary",
-      "onClick": {
-        "action": "component:submit",
-        "args": { "_target": "uploadForm" }
-      }
+      "label": "提交",
+      "variant": "default",
+      "onClick": { "action": "component:submit", "componentId": "uploadForm" }
     }
   ]
 }
@@ -70,9 +77,9 @@
   "label": "图片集",
   "multiple": true,
   "accept": "image/*",
-  "maxCount": 9,
-  "maxSize": 5242880
+  "maxFiles": 9,
+  "uploadAction": { "action": "ajax", "args": { "url": "/api/upload", "method": "post" } }
 }
 ```
 
-**关键点**：`input-file` 和 `input-image` 是表单字段，文件上传后值存储为文件引用，由 `submitAction` 统一提交。
+**关键点**：`uploadAction` 是字段级的实际上传入口（请求下沉到 action）。`valueMode`（`url`/`object`/`array`）决定字段值形态；`multiple` 为真或 `valueMode:'array'` 时值为数组。

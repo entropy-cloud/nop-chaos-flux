@@ -28,7 +28,7 @@
 
 // 正确: 通过事件驱动 action
 {"type":"pull-refresh","onRefresh":{
-  "action":"refreshTable","args":{"target":"list1"}
+  "action":"refreshSource","targetId":"listData"
 }}
 ```
 
