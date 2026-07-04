@@ -28,6 +28,8 @@ export const BUILT_IN_ACTION_REGISTRY = {
   refreshSource: { canonicalName: 'refreshSource' },
   submitForm: { canonicalName: 'submitForm', compatibilityAliases: ['submit'] },
   navigate: { canonicalName: 'navigate' },
+  confirm: { canonicalName: 'confirm' },
+  alert: { canonicalName: 'alert' },
 } as const satisfies Readonly<Record<string, BuiltInActionDescriptor>>;
 
 const builtInActionDescriptors = Object.values(BUILT_IN_ACTION_REGISTRY) as readonly BuiltInActionDescriptor[];

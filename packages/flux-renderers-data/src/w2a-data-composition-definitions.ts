@@ -1,6 +1,7 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { PaginationRenderer } from './pagination-renderer.js';
 import { ServiceRenderer } from './service-renderer.js';
+import { StatisticsRenderer } from './statistics-renderer.js';
 
 /**
  * W2a data-composition renderer definitions (service + pagination).
@@ -146,6 +147,24 @@ export const w2aDataCompositionDefinitions: RendererDefinition[] = [
       { key: 'statusPath', kind: 'prop' },
       { key: 'onChange', kind: 'event' },
       { key: 'onPageSizeChange', kind: 'event' },
+    ],
+  },
+  {
+    type: 'statistics',
+    displayName: 'Statistics',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    component: StatisticsRenderer,
+    propContracts: {
+      total: {
+        shape: { kind: 'number' },
+        displayName: 'Total',
+        description: 'Total item count to display.',
+        editorType: 'expression',
+      },
+    },
+    fields: [
+      { key: 'total', kind: 'prop' },
     ],
   },
 ];

@@ -7,7 +7,7 @@
 ## 1. 最简页面
 
 ```json
-{ "type": "page", "title": "首页", "body": "Hello" }
+{ "type": "page", "title": "首页", "body": [{ "type": "text", "text": "Hello" }] }
 ```
 
 ## 2. 页面带数据请求
@@ -75,7 +75,10 @@
           }
         }
       ],
-      "footerToolbar": [{ "type": "statistics" }, { "type": "pagination" }]
+      "footerToolbar": [
+        { "type": "statistics", "total": "${$crud.total}" },
+        { "type": "pagination" }
+      ]
     }
   ]
 }
@@ -244,7 +247,12 @@
 
 ```json
 [
-  { "type": "data-source", "name": "cities", "action": "ajax", "args": { "url": "/api/cities", "params": { "province": "${province}" } } },
+  {
+    "type": "data-source",
+    "name": "cities",
+    "action": "ajax",
+    "args": { "url": "/api/cities", "params": { "province": "${province}" } }
+  },
   {
     "type": "select",
     "name": "city",

@@ -6,7 +6,12 @@
 
 ```json
 [
-  { "type": "data-source", "name": "provinces", "action": "ajax", "args": { "url": "/api/provinces" } },
+  {
+    "type": "data-source",
+    "name": "provinces",
+    "action": "ajax",
+    "args": { "url": "/api/provinces" }
+  },
   {
     "type": "select",
     "name": "province",
@@ -19,7 +24,7 @@
     "name": "cities",
     "action": "ajax",
     "args": { "url": "/api/cities?province=${province}" },
-    "sendOn": "${province}"
+    "sendOn": "province"
   },
   {
     "type": "select",
@@ -35,7 +40,12 @@
 
 ```json
 [
-  { "type": "data-source", "name": "roleOptions", "action": "ajax", "args": { "url": "/api/roles" } },
+  {
+    "type": "data-source",
+    "name": "roleOptions",
+    "action": "ajax",
+    "args": { "url": "/api/roles" }
+  },
   { "type": "select", "name": "role", "label": "角色", "options": "${roleOptions}" }
 ]
 ```
@@ -49,7 +59,7 @@
     "name": "permissions",
     "action": "ajax",
     "args": { "url": "/api/permissions?role=${role}" },
-    "sendOn": "${role}"
+    "sendOn": "role"
   },
   {
     "type": "select",

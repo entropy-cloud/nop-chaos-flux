@@ -97,7 +97,10 @@ export function createSchemaCompiler(input: {
       plugins: input.plugins,
     });
 
-    if (diagnostics.enabled) {
+    // Only analyze at the root level (depth === 0) to preserve componentTargets
+    // across the full tree. Child region compilations skip analyzeSchemaInput
+    // since the root pass already validated all descendants.
+    if (diagnostics.enabled && depth === 0) {
       analyzeSchemaInput(
         canonicalPrepared,
         options.basePath ?? '$',

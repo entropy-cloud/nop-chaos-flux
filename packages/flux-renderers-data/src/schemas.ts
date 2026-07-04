@@ -289,4 +289,10 @@ export interface PaginationSchema extends BaseSchema {
   onPageSizeChange?: BaseSchema;
 }
 
+export interface StatisticsSchema extends BaseSchema {
+  type: 'statistics';
+  /** 总条数 */
+  total?: number;
+}
+
 export * from './chart-schemas.js';

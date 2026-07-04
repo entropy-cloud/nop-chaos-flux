@@ -28,7 +28,12 @@
 
 ```json
 [
-  { "type": "data-source", "name": "permissionOptions", "action": "ajax", "args": { "url": "/api/permissions" } },
+  {
+    "type": "data-source",
+    "name": "permissionOptions",
+    "action": "ajax",
+    "args": { "url": "/api/permissions" }
+  },
   {
     "type": "fragment",
     "when": "${showAdvanced}",
@@ -74,7 +79,13 @@
 
 ```json
 [
-  { "type": "data-source", "name": "cities", "action": "ajax", "args": { "url": "/api/cities?province=${province}" }, "sendOn": "${province}" },
+  {
+    "type": "data-source",
+    "name": "cities",
+    "action": "ajax",
+    "args": { "url": "/api/cities?province=${province}" },
+    "sendOn": "province"
+  },
   {
     "type": "select",
     "name": "province",

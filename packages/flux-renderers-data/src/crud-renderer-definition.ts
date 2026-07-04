@@ -390,6 +390,12 @@ export const crudRendererDefinition: RendererDefinition = {
         'Toggle a single row key in the CRUD-owned selectionStatePath (used by non-table carrier templates to express selection).',
       args: { kind: 'object', fields: { key: { kind: 'string' } } },
     },
+    {
+      handle: 'loadMore',
+      displayName: 'Load More',
+      description:
+        'Load the next page of data when the CRUD pagination mode is "infinite". Triggers the loadAction or source refresh.',
+    },
   ],
   deepFields: [
     {
@@ -439,6 +445,11 @@ export const crudRendererDefinition: RendererDefinition = {
         visibleColumnNames: { kind: 'array', item: { kind: 'string' } },
       },
       optional: ['total', 'query', 'pagination', 'sort', 'filters', 'visibleColumnNames'],
+    },
+  },
+  injectedLocals: {
+    $crud: {
+      kind: 'injected-local',
     },
   },
   component: CrudRenderer,
