@@ -1,6 +1,6 @@
 {
   "type": "cards",
-  "rowKey": "id",
+  "keyField": "id",
   "items": [
     {
       "id": "p-1001",

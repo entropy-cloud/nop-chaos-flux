@@ -147,9 +147,9 @@ function splitValues(cleaned) {
   return results;
 }
 
-// ─── Find markdown files ────────────────────────────────────────────────────
+// ─── File finders ───────────────────────────────────────────────────────────
 
-function findMarkdownFiles() {
+function findMdFiles(dir) {
   const results = [];
   function walk(dir) {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -159,11 +159,25 @@ function findMarkdownFiles() {
       else if (entry.name.endsWith('.md')) results.push(full);
     }
   }
-  walk(resolve(REPO_ROOT, 'flux-guide'));
+  walk(resolve(REPO_ROOT, dir));
   return results;
 }
 
-function extractBlocks(filePath) {
+function findExampleJsonFiles() {
+  const results = [];
+  function walk(dir) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.name === 'node_modules') continue;
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name === 'example.json') results.push(full);
+    }
+  }
+  walk(resolve(REPO_ROOT, 'docs/components'));
+  return results;
+}
+
+function extractMdBlocks(filePath) {
   const content = readFileSync(filePath, 'utf-8');
   const blocks = [];
   const re = /```(jsonc?)\s*\n([\s\S]*?)```/g;
@@ -177,17 +191,42 @@ function extractBlocks(filePath) {
   return blocks;
 }
 
+// ─── Validate one parsed JSON value ─────────────────────────────────────────
+
+function validateParsed(parsed, label, errs, warns) {
+  const toValidate = Array.isArray(parsed) && parsed.length > 1
+    ? { type: 'page', body: parsed }
+    : (Array.isArray(parsed) ? parsed
+      : (parsed && typeof parsed === 'object' && typeof parsed.type === 'string') ? parsed
+      : null);
+  if (!toValidate) return;
+
+  try {
+    const diags = validateSchema({ schema: toValidate, registry });
+    for (const d of diags) {
+      const tag = d.severity === 'error' ? 'ERR' : d.severity === 'warning' ? 'WARN' : 'INFO';
+      if (d.severity === 'error') errs.n++;
+      else if (d.severity === 'warning') warns.n++;
+      console.log(`  ${tag}: ${label} ${d.path || '/'} ${d.message}`);
+    }
+  } catch (e) {
+    console.log(`  THROW: ${label} ${e.message}`);
+    errs.n++;
+  }
+}
+
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 function main() {
   console.log(`Registry: ${registry.list().length} renderer types`);
 
-  let blocks = 0, nodes = 0, errs = 0, warns = 0;
-  const files = findMarkdownFiles();
+  let blocks = 0, nodes = 0;
+  const errs = { n: 0 }, warns = { n: 0 };
 
-  for (const fp of files) {
+  // ── flux-guide markdown blocks ──
+  for (const fp of findMdFiles('flux-guide')) {
     const rel = relative(REPO_ROOT, fp);
-    for (const block of extractBlocks(fp)) {
+    for (const block of extractMdBlocks(fp)) {
       blocks++;
       const cleaned = jsoncToJSON(block.raw).trim();
       if (/\.\.\.\s*[}\]]/.test(cleaned)) continue;
@@ -197,39 +236,47 @@ function main() {
         try { parsed = JSON.parse(seg); }
         catch (e) {
           console.log(`  PARSE ERROR: ${rel}:${block.line} ${e.message}`);
-          errs++;
+          errs.n++;
           continue;
         }
-
-        // Wrap multi-element arrays in a page so all siblings share a tree
-        // and componentTargets can resolve across them.
-        // Single objects with a type are validated directly.
-        const toValidate = Array.isArray(parsed) && parsed.length > 1
-          ? { type: 'page', body: parsed }
-          : (Array.isArray(parsed) ? parsed
-            : (parsed && typeof parsed === 'object' && typeof parsed.type === 'string') ? parsed
-            : null);
-        if (!toValidate) continue;
         nodes++;
-
-        try {
-          const diags = validateSchema({ schema: toValidate, registry });
-          for (const d of diags) {
-            const tag = d.severity === 'error' ? 'ERR' : d.severity === 'warning' ? 'WARN' : 'INFO';
-            if (d.severity === 'error') errs++;
-            else if (d.severity === 'warning') warns++;
-            console.log(`  ${tag}: ${rel}:${block.line} ${d.path || '/'} ${d.message}`);
-          }
-        } catch (e) {
-          console.log(`  THROW: ${rel}:${block.line} ${e.message}`);
-          errs++;
-        }
+        validateParsed(parsed, `${rel}:${block.line}`, errs, warns);
       }
     }
   }
 
-  console.log(`\nResults:  blocks=${blocks}  nodes=${nodes}  errors=${errs}  warnings=${warns}`);
-  if (errs > 0) process.exit(1);
+  // ── docs/components/*/example.json ──
+  // Skip packages whose renderers aren't registered in this script
+  const skipPackages = new Set([
+    'designer-canvas', 'designer-edge-row', 'designer-field',
+    'designer-node-card', 'designer-page', 'designer-palette',
+    'report-designer-page', 'report-field-panel', 'report-inspector',
+    'report-inspector-shell', 'report-toolbar',
+    'spreadsheet-page', 'word-editor-page',
+    'code-editor',
+  ]);
+
+  for (const fp of findExampleJsonFiles()) {
+    blocks++;
+    const rel = relative(REPO_ROOT, fp);
+    const dirName = rel.split('/')[2]; // docs/components/<name>/example.json
+    if (skipPackages.has(dirName)) {
+      continue;
+    }
+
+    let parsed;
+    try { parsed = JSON.parse(readFileSync(fp, 'utf-8')); }
+    catch (e) {
+      console.log(`  PARSE ERROR: ${rel} ${e.message}`);
+      errs.n++;
+      continue;
+    }
+    nodes++;
+    validateParsed(parsed, rel, errs, warns);
+  }
+
+  console.log(`\nResults:  blocks=${blocks}  nodes=${nodes}  errors=${errs.n}  warnings=${warns.n}`);
+  if (errs.n > 0) process.exit(1);
 }
 
 main();

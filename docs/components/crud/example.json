@@ -73,7 +73,7 @@
               "args": {
                 "url": "/api/users",
                 "method": "post",
-                "data": "${$form.values}"
+                "data": { "name": "${name}", "email": "${email}" }
               }
             },
             "onSubmitSuccess": {

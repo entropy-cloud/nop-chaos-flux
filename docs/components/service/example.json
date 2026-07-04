@@ -1,14 +1,7 @@
 {
   "type": "service",
+  "items": "${userProfile}",
   "statusPath": "userProfileStatus",
-  "source": {
-    "type": "source",
-    "action": "ajax",
-    "api": {
-      "url": "/api/profile/${userId}",
-      "includeScope": ["userId"]
-    }
-  },
   "body": [
     {
       "type": "text",

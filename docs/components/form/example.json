@@ -47,7 +47,8 @@
       "label": "提交",
       "variant": "default",
       "onClick": {
-        "action": "component:submit"
+        "action": "component:submit",
+        "componentId": "profile-form"
       }
     }
   ]
