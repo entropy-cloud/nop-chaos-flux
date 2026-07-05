@@ -463,6 +463,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     eyebrow: 'Mechanism Test',
     description: 'Minimal data-source + fetcher + loop mechanism verification.',
   },
+  {
+    id: 'crud-demo',
+    title: 'Standard CRUD',
+    eyebrow: 'Data Workflow',
+    description:
+      'Complete create/read/update/delete page driven by a single JSON schema: data-source list load, crud query/pagination/selection, dialog form for add/edit, confirm-gated delete and bulk delete, refreshSource after mutations. Backend mocked via env.fetcher.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

@@ -142,7 +142,7 @@ export function createManagedSurfaceRuntime(
         ownerNodeInstance: options?.ownerNodeInstance,
         title: options?.title ?? (typeof surface.title === 'string' ? surface.title : surface.title || undefined),
         body: options?.body ?? (surface.body || undefined),
-        actions: options?.actions,
+        actions: options?.actions ?? (surface.actions || undefined),
         meta: options?.meta,
         regionHandles: options?.regionHandles,
         controlledOpen: options?.controlledOpen,

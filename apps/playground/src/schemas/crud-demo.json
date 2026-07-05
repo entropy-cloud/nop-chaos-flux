@@ -1,0 +1,297 @@
+{
+  "type": "page",
+  "testid": "crud-demo-page",
+  "bodyClassName": "p-6 space-y-4",
+  "body": [
+    {
+      "type": "text",
+      "text": "用户管理（CRUD）",
+      "className": "text-2xl font-bold"
+    },
+    {
+      "type": "text",
+      "text": "完整增删改查示例：data-source 加载列表 → crud 展示 → dialog 表单新增/编辑 → confirm 确认删除 → refreshSource 刷新。后端由 env.fetcher mock。",
+      "className": "text-sm text-muted-foreground"
+    },
+    {
+      "type": "data-source",
+      "id": "ds-users",
+      "name": "ds_users",
+      "action": "ajax",
+      "args": { "url": "/api/users", "method": "get" },
+      "silent": true
+    },
+    {
+      "type": "crud",
+      "id": "user-crud",
+      "testid": "user-crud",
+      "source": "${ds_users}",
+      "rowKey": "id",
+      "selection": {},
+      "onRefresh": { "action": "refreshSource", "targetId": "ds_users" },
+      "filterTogglable": { "defaultCollapsed": false },
+      "queryForm": {
+        "body": [
+          {
+            "type": "input-text",
+            "name": "keyword",
+            "label": "关键字",
+            "placeholder": "姓名 / 邮箱"
+          }
+        ]
+      },
+      "toolbarLayout": {
+        "header": ["listActions", "statistics", "pagination"],
+        "footer": ["statistics", "switch-per-page"]
+      },
+      "toolbar": [
+        {
+          "type": "button",
+          "label": "新增",
+          "variant": "primary",
+          "testid": "btn-add",
+          "onClick": {
+            "action": "openDialog",
+            "args": {
+              "title": "新增用户",
+              "testid": "user-add-dialog",
+              "body": [
+                {
+                  "type": "form",
+                  "id": "user-add-form",
+                  "testid": "user-add-form",
+                  "data": { "name": "", "email": "", "role": "user", "status": "active" },
+                  "submitAction": {
+                    "action": "ajax",
+                    "args": { "url": "/api/users", "method": "post", "includeScope": "*" },
+                    "then": [
+                      { "action": "component:refresh", "componentId": "user-crud" },
+                      { "action": "closeSurface" },
+                      {
+                        "action": "showToast",
+                        "args": { "level": "success", "message": "新增成功" }
+                      }
+                    ]
+                  },
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "name",
+                      "label": "姓名",
+                      "required": true,
+                      "placeholder": "请输入姓名"
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "email",
+                      "label": "邮箱",
+                      "required": true,
+                      "placeholder": "请输入邮箱"
+                    },
+                    {
+                      "type": "select",
+                      "name": "role",
+                      "label": "角色",
+                      "required": true,
+                      "options": [
+                        { "label": "管理员", "value": "admin" },
+                        { "label": "用户", "value": "user" },
+                        { "label": "访客", "value": "guest" }
+                      ]
+                    },
+                    {
+                      "type": "select",
+                      "name": "status",
+                      "label": "状态",
+                      "required": true,
+                      "options": [
+                        { "label": "启用", "value": "active" },
+                        { "label": "禁用", "value": "disabled" }
+                      ]
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "type": "button",
+                      "label": "保存",
+                      "variant": "primary",
+                      "onClick": { "action": "component:submit", "componentId": "user-add-form" }
+                    },
+                    {
+                      "type": "button",
+                      "label": "取消",
+                      "variant": "outline",
+                      "onClick": { "action": "closeSurface" }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "listActions": [
+        {
+          "type": "button",
+          "label": "批量删除",
+          "variant": "destructive",
+          "testid": "btn-bulk-delete",
+          "disabled": "${!$crud.hasSelection}",
+          "onClick": {
+            "action": "confirm",
+            "args": { "message": "确认删除选中的 ${$crud.selectionCount} 条记录？" },
+            "then": {
+              "action": "ajax",
+              "when": "${result.data.confirmed}",
+              "args": {
+                "url": "/api/users",
+                "method": "delete",
+                "data": { "ids": "${$crud.selectedRowKeys}" }
+              },
+              "then": [
+                { "action": "component:refresh", "componentId": "user-crud" },
+                { "action": "showToast", "args": { "level": "success", "message": "批量删除成功" } }
+              ]
+            }
+          }
+        }
+      ],
+      "footerToolbar": [
+        { "type": "text", "text": "共 ${$crud.total} 条 · 选中 ${$crud.selectionCount} 条" }
+      ],
+      "columns": [
+        { "name": "id", "label": "ID", "width": 80 },
+        { "name": "name", "label": "姓名", "sortable": true, "width": 140 },
+        { "name": "email", "label": "邮箱", "width": 220 },
+        { "name": "role", "label": "角色", "width": 120 },
+        { "name": "status", "label": "状态", "width": 100 },
+        { "name": "createTime", "label": "创建时间", "sortable": true, "width": 180 },
+        {
+          "type": "operation",
+          "label": "操作",
+          "fixed": "right",
+          "width": 160,
+          "buttons": [
+            {
+              "type": "button",
+              "label": "编辑",
+              "testid": "btn-edit",
+              "onClick": {
+                "action": "openDialog",
+                "args": {
+                  "title": "编辑用户",
+                  "testid": "user-edit-dialog",
+                  "data": {
+                    "id": "${$slot.record.id}",
+                    "name": "${$slot.record.name}",
+                    "email": "${$slot.record.email}",
+                    "role": "${$slot.record.role}",
+                    "status": "${$slot.record.status}",
+                    "createTime": "${$slot.record.createTime}"
+                  },
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "user-edit-form",
+                      "testid": "user-edit-form",
+                      "data": {
+                        "id": "${id}",
+                        "name": "${name}",
+                        "email": "${email}",
+                        "role": "${role}",
+                        "status": "${status}",
+                        "createTime": "${createTime}"
+                      },
+                      "submitAction": {
+                        "action": "ajax",
+                        "args": { "url": "/api/users", "method": "put", "includeScope": "*" },
+                        "then": [
+                          { "action": "component:refresh", "componentId": "user-crud" },
+                          { "action": "closeSurface" },
+                          {
+                            "action": "showToast",
+                            "args": { "level": "success", "message": "更新成功" }
+                          }
+                        ]
+                      },
+                      "body": [
+                        { "type": "input-text", "name": "name", "label": "姓名", "required": true },
+                        {
+                          "type": "input-text",
+                          "name": "email",
+                          "label": "邮箱",
+                          "required": true
+                        },
+                        {
+                          "type": "select",
+                          "name": "role",
+                          "label": "角色",
+                          "required": true,
+                          "options": [
+                            { "label": "管理员", "value": "admin" },
+                            { "label": "用户", "value": "user" },
+                            { "label": "访客", "value": "guest" }
+                          ]
+                        },
+                        {
+                          "type": "select",
+                          "name": "status",
+                          "label": "状态",
+                          "required": true,
+                          "options": [
+                            { "label": "启用", "value": "active" },
+                            { "label": "禁用", "value": "disabled" }
+                          ]
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "保存",
+                          "variant": "primary",
+                          "onClick": {
+                            "action": "component:submit",
+                            "componentId": "user-edit-form"
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "取消",
+                          "variant": "outline",
+                          "onClick": { "action": "closeSurface" }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "button",
+              "label": "删除",
+              "variant": "destructive",
+              "testid": "btn-delete",
+              "onClick": {
+                "action": "confirm",
+                "args": { "message": "确认删除该用户？" },
+                "then": {
+                  "action": "ajax",
+                  "when": "${result.data.confirmed}",
+                  "args": {
+                    "url": "/api/users",
+                    "method": "delete",
+                    "data": { "id": "${$slot.record.id}" }
+                  },
+                  "then": [
+                    { "action": "component:refresh", "componentId": "user-crud" },
+                    { "action": "showToast", "args": { "level": "success", "message": "删除成功" } }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

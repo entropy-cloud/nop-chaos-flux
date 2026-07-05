@@ -42,6 +42,7 @@ import { M2TouchDemoPage } from './pages/m2-touch-demo';
 import { M3LayoutDemoPage } from './pages/m3-layout-demo';
 import { M4DataDisplayDemoPage } from './pages/m4-data-display-demo';
 import { M5MobileShowcaseDemoPage } from './pages/m5-mobile-showcase-demo';
+import { CrudDemoPage } from './pages/crud-demo-page';
 import { DataVerifyPage } from './pages/data-verify-page';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
@@ -214,6 +215,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <M5MobileShowcaseDemoPage onBack={goHome} />;
         case 'data-verify':
           return <DataVerifyPage onBack={goHome} />;
+        case 'crud-demo':
+          return <CrudDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }
