@@ -359,6 +359,8 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'data', kind: 'prop' },
     { key: 'autoInit', kind: 'prop', valueType: 'boolean' },
     { key: 'initAction', kind: 'event' },
+    { key: 'loadAction', kind: 'event' },
+    { key: 'autoLoad', kind: 'prop', valueType: 'boolean' },
     { key: 'submitAction', kind: 'event' },
     { key: 'onSubmitSuccess', kind: 'event' },
     { key: 'onSubmitError', kind: 'event' },

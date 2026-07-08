@@ -1,7 +1,6 @@
 {
   "type": "page",
   "testid": "crud-demo-page",
-  "bodyClassName": "p-6 space-y-4",
   "body": [
     {
       "type": "text",
@@ -10,7 +9,7 @@
     },
     {
       "type": "text",
-      "text": "完整增删改查示例：crud 通过 loadAction 自主加载 → dialog 表单新增/编辑 → messages 自动反馈 → confirmText 确认删除 → component:refresh 刷新。后端由 env.fetcher mock。",
+      "text": "完整增删改查示例：crud loadAction 按 nop 规范 /r/User__find + selection 取数 → edit 对话框 form loadAction 按 id 拉 /r/User__get 详情 → messages/confirmText 内置反馈 → component:refresh 刷新。字典字段(role/status)通过 GraphQL selection role{value,label} 返回对象，列表列用 role.label 点路径显示标签。",
       "className": "text-sm text-muted-foreground"
     },
     {
@@ -18,7 +17,14 @@
       "id": "user-crud",
       "testid": "user-crud",
       "rowKey": "id",
-      "loadAction": { "action": "ajax", "args": { "url": "/api/users", "method": "get" } },
+      "loadAction": {
+        "action": "ajax",
+        "args": {
+          "url": "/r/User__find",
+          "method": "get",
+          "selection": "id,name,email,role{value,label},status{value,label},createTime"
+        }
+      },
       "loadAllData": true,
       "selection": {},
       "filterTogglable": { "defaultCollapsed": false },
@@ -55,7 +61,7 @@
                   "data": { "name": "", "email": "", "role": "user", "status": "active" },
                   "submitAction": {
                     "action": "ajax",
-                    "args": { "url": "/api/users", "method": "post", "includeScope": "*" },
+                    "args": { "url": "/r/User__save", "method": "post", "includeScope": "*" },
                     "messages": { "success": "新增成功" },
                     "then": [
                       { "action": "component:refresh", "componentId": "user-crud" },
@@ -129,8 +135,8 @@
           "onClick": {
             "action": "ajax",
             "args": {
-              "url": "/api/users",
-              "method": "delete",
+              "url": "/r/User__delete",
+              "method": "post",
               "data": { "ids": "${$crud.selectedRowKeys}" }
             },
             "confirmText": "确认删除选中的 ${$crud.selectionCount} 条记录？",
@@ -146,8 +152,8 @@
         { "name": "id", "label": "ID", "width": 80 },
         { "name": "name", "label": "姓名", "sortable": true, "width": 140 },
         { "name": "email", "label": "邮箱", "width": 220 },
-        { "name": "role", "label": "角色", "width": 120 },
-        { "name": "status", "label": "状态", "width": 100 },
+        { "name": "role.label", "label": "角色", "width": 120 },
+        { "name": "status.label", "label": "状态", "width": 100 },
         { "name": "createTime", "label": "创建时间", "sortable": true, "width": 180 },
         {
           "type": "operation",
@@ -164,30 +170,24 @@
                 "args": {
                   "title": "编辑用户",
                   "testid": "user-edit-dialog",
-                  "data": {
-                    "id": "${$slot.record.id}",
-                    "name": "${$slot.record.name}",
-                    "email": "${$slot.record.email}",
-                    "role": "${$slot.record.role}",
-                    "status": "${$slot.record.status}",
-                    "createTime": "${$slot.record.createTime}"
-                  },
+                  "data": { "id": "${$slot.record.id}" },
                   "body": [
                     {
                       "type": "form",
                       "id": "user-edit-form",
                       "testid": "user-edit-form",
-                      "data": {
-                        "id": "${id}",
-                        "name": "${name}",
-                        "email": "${email}",
-                        "role": "${role}",
-                        "status": "${status}",
-                        "createTime": "${createTime}"
+                      "loadAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/User__get",
+                          "method": "get",
+                          "data": { "id": "${id}" },
+                          "selection": "id,name,email,role,status,createTime"
+                        }
                       },
                       "submitAction": {
                         "action": "ajax",
-                        "args": { "url": "/api/users", "method": "put", "includeScope": "*" },
+                        "args": { "url": "/r/User__save", "method": "post", "includeScope": "*" },
                         "messages": { "success": "更新成功" },
                         "then": [
                           { "action": "component:refresh", "componentId": "user-crud" },
@@ -251,8 +251,8 @@
               "onClick": {
                 "action": "ajax",
                 "args": {
-                  "url": "/api/users",
-                  "method": "delete",
+                  "url": "/r/User__delete",
+                  "method": "post",
                   "data": { "id": "${$slot.record.id}" }
                 },
                 "confirmText": "确认删除该用户？",

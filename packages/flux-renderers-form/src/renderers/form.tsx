@@ -371,9 +371,18 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     };
   }, [activationKey, autoInit, importsReady, initAction, lifecycleScope, ownedForm, props.path, runtime]);
 
-  const loadAction = (props.props as FormSchema).loadAction;
+  const loadAction = props.events['loadAction'];
   const autoLoad = (props.props as FormSchema).autoLoad !== false;
   const loadActionKeyRef = useRef<string | undefined>(undefined);
+  // latest instances via refs so the load action effect does not re-run (and
+  // abort the in-flight request) on every render — only on activation/action
+  // change. `lifecycleScope`/`ownedForm` identities are volatile across renders.
+  const loadLifecycleScopeRef = useRef(lifecycleScope);
+  const loadOwnedFormRef = useRef(ownedForm);
+  useEffect(() => {
+    loadLifecycleScopeRef.current = lifecycleScope;
+    loadOwnedFormRef.current = ownedForm;
+  });
 
   useEffect(() => {
     if (!loadAction || !autoLoad || !importsReady) {
@@ -385,39 +394,20 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     }
 
     loadActionKeyRef.current = activationKey;
-    const controller = new AbortController();
-    let cancelled = false;
 
-    void props.helpers
-      .dispatch(loadAction, {
-        scope: lifecycleScope,
-        form: ownedForm,
-        signal: controller.signal,
-      })
+    void loadAction(undefined, {
+      scope: loadLifecycleScopeRef.current,
+      form: loadOwnedFormRef.current,
+    })
       .then((result) => {
-        if (cancelled || controller.signal.aborted) {
-          return;
-        }
         if (result.ok && !result.cancelled && result.data != null) {
-          ownedForm.setValues(result.data as Record<string, unknown>);
+          loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
         }
       })
-      .catch((error) => {
-        if (
-          cancelled ||
-          controller.signal.aborted ||
-          (error instanceof Error && error.name === 'AbortError') ||
-          ((error as { name?: string } | null | undefined)?.name === 'AbortError')
-        ) {
-          return;
-        }
+      .catch(() => {
+        // best-effort; load failures surface through the runtime toast channel
       });
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [activationKey, autoLoad, importsReady, loadAction, lifecycleScope, ownedForm, props.helpers]);
+  }, [activationKey, autoLoad, importsReady, loadAction]);
 
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;

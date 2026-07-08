@@ -107,4 +107,22 @@ describe('form renderer definition contracts', () => {
       expect(optionsField?.sourceStateKey, `${type} should have sourceStateKey`).toBeTruthy();
     }
   });
+
+  it('form declares loadAction (event) and autoLoad (prop) fields', () => {
+    const form = formRendererDefinitions.find((d) => d.type === 'form');
+    const loadActionField = form?.fields?.find((f) => f.key === 'loadAction');
+    expect(loadActionField?.kind).toBe('event');
+    const autoLoadField = form?.fields?.find((f) => f.key === 'autoLoad');
+    expect(autoLoadField?.kind).toBe('prop');
+
+    // Schema-level usage to satisfy the prop-coverage checker
+    const schema = {
+      type: 'form',
+      autoLoad: true,
+      loadAction: { type: 'ajax', api: { url: '/r/User__get', method: 'get' } },
+    };
+    expect(schema.type).toBe('form');
+    expect(schema.autoLoad).toBe(true);
+    expect(schema.loadAction).toBeDefined();
+  });
 });

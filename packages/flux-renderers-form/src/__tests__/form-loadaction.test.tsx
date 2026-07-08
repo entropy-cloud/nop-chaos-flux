@@ -39,11 +39,7 @@ vi.mock('@nop-chaos/ui', () => ({
 
 import { FormRenderer } from '../renderers/form.js';
 
-const FORM_LOADACTION_SCHEMA = {
-  type: 'form' as const,
-  loadAction: { action: 'ajax', args: { url: '/api/me' } },
-  autoLoad: true,
-};
+const FORM_AUTOLOAD_PROPS = { name: 'profile', autoLoad: true };
 
 afterEach(() => {
   cleanup();
@@ -151,8 +147,8 @@ describe('FormRenderer loadAction', () => {
     render(
       <FormRenderer
         {...buildProps({
-          props: { name: 'profile', ...FORM_LOADACTION_SCHEMA },
-          helpers: { dispatch },
+          props: { ...FORM_AUTOLOAD_PROPS },
+          events: { loadAction: dispatch },
         })}
       />,
     );
@@ -177,12 +173,8 @@ describe('FormRenderer loadAction', () => {
     render(
       <FormRenderer
         {...buildProps({
-          props: {
-            name: 'profile',
-            loadAction: { action: 'ajax', args: { url: '/api/me' } },
-            autoLoad: false,
-          },
-          helpers: { dispatch },
+          props: { name: 'profile', autoLoad: false },
+          events: { loadAction: dispatch },
         })}
       />,
     );
@@ -204,7 +196,6 @@ describe('FormRenderer loadAction', () => {
       <FormRenderer
         {...buildProps({
           props: { name: 'profile' },
-          helpers: { dispatch },
         })}
       />,
     );
@@ -229,8 +220,8 @@ describe('FormRenderer loadAction', () => {
     render(
       <FormRenderer
         {...buildProps({
-          props: { name: 'profile', loadAction: { action: 'ajax', args: { url: '/api/me' } } },
-          helpers: { dispatch },
+          props: { ...FORM_AUTOLOAD_PROPS },
+          events: { loadAction: dispatch },
         })}
       />,
     );
@@ -258,8 +249,8 @@ describe('FormRenderer loadAction', () => {
     render(
       <FormRenderer
         {...buildProps({
-          props: { name: 'profile', loadAction: { action: 'ajax', args: { url: '/api/me' } } },
-          helpers: { dispatch },
+          props: { ...FORM_AUTOLOAD_PROPS },
+          events: { loadAction: dispatch },
         })}
       />,
     );

@@ -67,46 +67,71 @@ function deepClone<T>(value: T): T {
     : (JSON.parse(JSON.stringify(value)) as T);
 }
 
+const ROLE_LABELS: Record<string, string> = { admin: '管理员', user: '用户', guest: '访客' };
+const STATUS_LABELS: Record<string, string> = { active: '启用', disabled: '禁用' };
+
+// List endpoint returns dict fields as `{value,label}` objects (mirrors a
+// GraphQL selection like `role{value,label}`) so the table can display labels
+// via dotted column paths (`role.label`). The detail endpoint returns flat
+// codes so the form select can bind a scalar value.
+function toListRecord(record: UserRecord) {
+  return {
+    id: record.id,
+    name: record.name,
+    email: record.email,
+    role: { value: record.role, label: ROLE_LABELS[record.role] ?? record.role },
+    status: { value: record.status, label: STATUS_LABELS[record.status] ?? record.status },
+    createTime: record.createTime,
+  };
+}
+
 const env: RendererEnv = {
   fetcher: async function fetcher<T>(api: {
     url?: string;
     method?: string;
     data?: unknown;
-  }): Promise<{ ok: boolean; status: number; data: T }> {
+  }): Promise<{ status: number; data: T }> {
     const url = api.url ?? '';
     const method = (api.method ?? 'get').toLowerCase();
+    const body = (api.data ?? {}) as Record<string, unknown>;
 
-    if (url.includes('/api/users') && method === 'get') {
-      return { ok: true, status: 200, data: deepClone({ items: db, total: db.length }) as T };
+    // /r/User__find — paged list (dict fields carry labels for display)
+    if (url.includes('/r/User__find') && method === 'get') {
+      return { status: 0, data: deepClone({ items: db.map(toListRecord), total: db.length }) as T };
     }
 
-    if (url.includes('/api/users') && method === 'post') {
-      const body = (api.data ?? {}) as Partial<UserRecord>;
-      db.push({
-        id: nextId++,
-        name: String(body.name ?? ''),
-        email: String(body.email ?? ''),
-        role: (body.role as UserRecord['role']) ?? 'user',
-        status: (body.status as UserRecord['status']) ?? 'active',
-        createTime: now(),
-      });
-      return { ok: true, status: 200, data: { success: true } as T };
+    // /r/User__get — single record by id (flat codes for form editing)
+    if (url.includes('/r/User__get') && method === 'get') {
+      const id = Number(body.id);
+      const target = db.find((item) => item.id === id);
+      return { status: 0, data: deepClone(target ?? null) as T };
     }
 
-    if (url.includes('/api/users') && method === 'put') {
-      const body = (api.data ?? {}) as Partial<UserRecord>;
-      const target = db.find((item) => item.id === Number(body.id));
-      if (target) {
-        if (body.name !== undefined) target.name = String(body.name);
-        if (body.email !== undefined) target.email = String(body.email);
-        if (body.role !== undefined) target.role = body.role as UserRecord['role'];
-        if (body.status !== undefined) target.status = body.status as UserRecord['status'];
+    // /r/User__save — create (no id) or update (with id)
+    if (url.includes('/r/User__save')) {
+      if (body.id != null && body.id !== '') {
+        const target = db.find((item) => item.id === Number(body.id));
+        if (target) {
+          if (body.name !== undefined) target.name = String(body.name);
+          if (body.email !== undefined) target.email = String(body.email);
+          if (body.role !== undefined) target.role = body.role as UserRecord['role'];
+          if (body.status !== undefined) target.status = body.status as UserRecord['status'];
+        }
+      } else {
+        db.push({
+          id: nextId++,
+          name: String(body.name ?? ''),
+          email: String(body.email ?? ''),
+          role: (body.role as UserRecord['role']) ?? 'user',
+          status: (body.status as UserRecord['status']) ?? 'active',
+          createTime: now(),
+        });
       }
-      return { ok: true, status: 200, data: { success: true } as T };
+      return { status: 0, data: { success: true } as T };
     }
 
-    if (url.includes('/api/users') && method === 'delete') {
-      const body = (api.data ?? {}) as { id?: unknown; ids?: unknown };
+    // /r/User__delete — delete by id or batch ids
+    if (url.includes('/r/User__delete')) {
       if (Array.isArray(body.ids)) {
         const idSet = new Set(body.ids.map((value) => Number(value)));
         for (let i = db.length - 1; i >= 0; i -= 1) {
@@ -119,10 +144,10 @@ const env: RendererEnv = {
         const index = db.findIndex((item) => item.id === targetId);
         if (index >= 0) db.splice(index, 1);
       }
-      return { ok: true, status: 200, data: { success: true } as T };
+      return { status: 0, data: { success: true } as T };
     }
 
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
   notify: (level, message) => {
     const text = typeof message === 'string' ? message : String(message ?? '');
