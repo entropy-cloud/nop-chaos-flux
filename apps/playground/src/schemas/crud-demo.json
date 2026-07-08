@@ -9,7 +9,7 @@
     },
     {
       "type": "text",
-      "text": "完整增删改查示例：crud loadAction 按 nop 规范 /r/User__find + selection 取数 → edit 对话框 form loadAction 按 id 拉 /r/User__get 详情 → messages/confirmText 内置反馈 → component:refresh 刷新。字典字段(role/status)通过 GraphQL selection role{value,label} 返回对象，列表列用 role.label 点路径显示标签。",
+      "text": "完整增删改查示例：crud loadAction 按 nop 规范 /r/User__findPage + selection 取数 → edit 对话框 form loadAction 按 id 拉 /r/User__get 详情 → messages/confirmText 内置反馈 → component:refresh 刷新。字典字段(如 status)自动生成 status_label 扁平字段，列表列直接显示 status_label；角色字段为 relatedRoleList{roleName}。",
       "className": "text-sm text-muted-foreground"
     },
     {
@@ -20,9 +20,9 @@
       "loadAction": {
         "action": "ajax",
         "args": {
-          "url": "/r/User__find",
+          "url": "/r/User__findPage",
           "method": "get",
-          "selection": "id,name,email,role{value,label},status{value,label},createTime"
+          "selection": "id,name,email,status,status_label,createTime"
         }
       },
       "loadAllData": true,
@@ -39,7 +39,7 @@
         ]
       },
       "toolbarLayout": {
-        "header": ["listActions", "statistics", "pagination"],
+        "header": ["listActions", "pagination"],
         "footer": ["statistics", "switch-per-page"]
       },
       "toolbar": [
@@ -58,7 +58,7 @@
                   "type": "form",
                   "id": "user-add-form",
                   "testid": "user-add-form",
-                  "data": { "name": "", "email": "", "role": "user", "status": "active" },
+                  "data": { "name": "", "email": "", "gender": "", "status": "1" },
                   "submitAction": {
                     "action": "ajax",
                     "args": { "url": "/r/User__save", "method": "post", "includeScope": "*" },
@@ -68,6 +68,7 @@
                       { "action": "closeSurface" }
                     ]
                   },
+                  "columnCount": 2,
                   "body": [
                     {
                       "type": "input-text",
@@ -85,32 +86,45 @@
                     },
                     {
                       "type": "select",
-                      "name": "role",
-                      "label": "角色",
+                      "name": "gender",
+                      "label": "性别",
                       "required": true,
-                      "dict": "role"
+                      "options": [
+                        { "label": "男", "value": "1" },
+                        { "label": "女", "value": "0" }
+                      ]
                     },
                     {
                       "type": "select",
                       "name": "status",
                       "label": "状态",
                       "required": true,
-                      "dict": "status"
+                      "options": [
+                        { "label": "启用", "value": "1" },
+                        { "label": "禁用", "value": "0" }
+                      ]
                     },
                     {
                       "type": "picker",
-                      "name": "department",
+                      "name": "departmentId",
                       "label": "部门（弹出选择）",
-                      "pickerDialog": { "title": "选择部门" },
+                      "className": "col-span-2",
+                      "valueKey": "id",
+                      "labelKey": "name",
+                      "multiple": false,
                       "searchable": true,
-                      "options": [
-                        { "label": "技术部", "value": "tech" },
-                        { "label": "产品部", "value": "product" },
-                        { "label": "设计部", "value": "design" },
-                        { "label": "市场部", "value": "marketing" },
-                        { "label": "人力资源部", "value": "hr" },
-                        { "label": "财务部", "value": "finance" },
-                        { "label": "运营部", "value": "operations" }
+                      "pickerDialog": { "title": "选择部门" },
+                      "loadAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/Department__findPage",
+                          "method": "get",
+                          "selection": "id,name"
+                        }
+                      },
+                      "columns": [
+                        { "name": "id", "label": "编码", "width": 120 },
+                        { "name": "name", "label": "部门名称", "width": 200 }
                       ]
                     }
                   ],
@@ -161,8 +175,7 @@
         { "name": "id", "label": "ID", "width": 80 },
         { "name": "name", "label": "姓名", "sortable": true, "width": 140 },
         { "name": "email", "label": "邮箱", "width": 220 },
-        { "name": "role.label", "label": "角色", "width": 120 },
-        { "name": "status.label", "label": "状态", "width": 100 },
+        { "name": "status_label", "label": "状态", "width": 100 },
         { "name": "createTime", "label": "创建时间", "sortable": true, "width": 180 },
         {
           "type": "operation",
@@ -191,7 +204,7 @@
                           "url": "/r/User__get",
                           "method": "get",
                           "data": { "id": "${id}" },
-                          "selection": "id,name,email,role,status,createTime"
+                          "selection": "id,name,email,gender,status,departmentId,createTime"
                         }
                       },
                       "submitAction": {
@@ -203,6 +216,7 @@
                           { "action": "closeSurface" }
                         ]
                       },
+                      "columnCount": 2,
                       "body": [
                         { "type": "input-text", "name": "name", "label": "姓名", "required": true },
                         {
@@ -213,32 +227,45 @@
                         },
                         {
                           "type": "select",
-                          "name": "role",
-                          "label": "角色",
+                          "name": "gender",
+                          "label": "性别",
                           "required": true,
-                          "dict": "role"
+                          "options": [
+                            { "label": "男", "value": "1" },
+                            { "label": "女", "value": "0" }
+                          ]
                         },
                         {
                           "type": "select",
                           "name": "status",
                           "label": "状态",
                           "required": true,
-                          "dict": "status"
+                          "options": [
+                            { "label": "启用", "value": "1" },
+                            { "label": "禁用", "value": "0" }
+                          ]
                         },
                         {
                           "type": "picker",
-                          "name": "department",
+                          "name": "departmentId",
                           "label": "部门（弹出选择）",
-                          "pickerDialog": { "title": "选择部门" },
+                          "className": "col-span-2",
+                          "valueKey": "id",
+                          "labelKey": "name",
+                          "multiple": false,
                           "searchable": true,
-                          "options": [
-                            { "label": "技术部", "value": "tech" },
-                            { "label": "产品部", "value": "product" },
-                            { "label": "设计部", "value": "design" },
-                            { "label": "市场部", "value": "marketing" },
-                            { "label": "人力资源部", "value": "hr" },
-                            { "label": "财务部", "value": "finance" },
-                            { "label": "运营部", "value": "operations" }
+                          "pickerDialog": { "title": "选择部门" },
+                          "loadAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/Department__findPage",
+                              "method": "get",
+                              "selection": "id,name"
+                            }
+                          },
+                          "columns": [
+                            { "name": "id", "label": "编码", "width": 120 },
+                            { "name": "name", "label": "部门名称", "width": 200 }
                           ]
                         }
                       ],

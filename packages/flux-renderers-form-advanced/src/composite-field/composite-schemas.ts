@@ -2,6 +2,7 @@ import type {
   ActionSchema,
   BaseSchema,
   BoundFieldSchemaBase,
+  ReactiveActionSchema,
   SchemaObject,
   SchemaValue,
 } from '@nop-chaos/flux-core';
@@ -169,7 +170,7 @@ export interface PickerDialogConfig extends SchemaObject {
 export interface PickerSchema extends BoundFieldSchemaBase {
   type: 'picker';
   options?: SchemaValue;
-  loadAction?: ActionSchema | ActionSchema[];
+  loadAction?: ReactiveActionSchema;
   labelResolveAction?: ActionSchema | ActionSchema[];
   valueKey?: string;
   labelKey?: string;

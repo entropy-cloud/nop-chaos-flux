@@ -167,12 +167,10 @@ body {
 
 [data-slot='dialog-overlay'] {
   background-color: var(--nop-dialog-backdrop);
-  backdrop-filter: blur(2px);
 }
 
 [data-slot='drawer-overlay'] {
   background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(2px);
 }
 
 .report-designer-demo {

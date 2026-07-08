@@ -157,6 +157,14 @@ export function DialogHost() {
     return null;
   }
 
+  let topmostDialogId: string | undefined;
+  for (let i = surfaces.length - 1; i >= 0; i--) {
+    if (surfaces[i].kind === 'dialog') {
+      topmostDialogId = surfaces[i].id;
+      break;
+    }
+  }
+
   return (
     <>
       {surfaces.map((surface: SurfaceEntry) =>
@@ -166,6 +174,7 @@ export function DialogHost() {
             surface={surface}
             surfaceRuntime={surfaceRuntime}
             modalContainer={modalContainer}
+            isTopmost={surface.id === topmostDialogId}
           />
         ) : (
           <DrawerView
@@ -184,8 +193,9 @@ function DialogView(props: {
   surface: SurfaceEntry;
   surfaceRuntime: SurfaceRuntime;
   modalContainer?: string;
+  isTopmost: boolean;
 }) {
-  const { surface, surfaceRuntime } = props;
+  const { surface, surfaceRuntime, isTopmost } = props;
   const isMobile = useIsMobile();
   const handleDeclarativeOpenChange = surface.surface.__handleOpenChange as
     | ((nextOpen: boolean) => void)
@@ -278,6 +288,7 @@ function DialogView(props: {
       containerElement={containerElement}
       noOverlay={!showMask}
       closeOnOutsideClick={closeOnOutsideClick}
+      modal={isTopmost}
     >
       <DialogContent
         className={cn('nop-dialog', surface.meta?.className)}

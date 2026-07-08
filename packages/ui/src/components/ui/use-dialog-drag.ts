@@ -154,13 +154,17 @@ export function useDialogDrag(
 
   const handlePointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('[data-slot="dialog-header"]')) {
+      const el = internalRef.current;
+      if (!el) {
         return;
       }
 
-      const el = internalRef.current;
-      if (!el) {
+      if (!el.contains(e.target as Node)) {
+        return;
+      }
+
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-slot="dialog-header"]')) {
         return;
       }
 
