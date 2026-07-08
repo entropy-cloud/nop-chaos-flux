@@ -584,23 +584,45 @@ createScopeRef(input: { id; path; initialData?; parent?; store?; isolate?; updat
 
 ## Action Types Quick Reference
 
-| Action type        | Schema interface            | Key args                  |
-| ------------------ | --------------------------- | ------------------------- |
-| `ajax`             | `AjaxActionSchema`          | api, adaptor              |
-| `submit`           | `SubmitFormActionSchema`    | formId, validate          |
-| `openDialog`       | `OpenDialogActionSchema`    | title, body               |
-| `openDrawer`       | `OpenDrawerActionSchema`    | title, body               |
-| `closeDialog`      | `CloseDialogActionSchema`   | surfaceId                 |
-| `closeDrawer`      | `CloseDrawerActionSchema`   | surfaceId                 |
-| `closeSurface`     | `CloseSurfaceActionSchema`  | surfaceId                 |
-| `refreshTable`     | `RefreshTableActionSchema`  | target                    |
-| `refreshSource`    | `RefreshSourceActionSchema` | sourceName                |
-| `setValue`         | `SetValueActionSchema`      | path, value               |
-| `setValues`        | `SetValuesActionSchema`     | path, values              |
-| `showToast`        | `ShowToastActionSchema`     | level, message            |
-| `navigate`         | `NavigateActionSchema`      | url, replace, back        |
-| `component:method` | `ComponentActionSchema`     | \_targetCid, method, args |
-| `ns:method`        | `NamespacedActionSchema`    | namespace, method, args   |
+| Action type                 | Schema interface            | Key args                      |
+| --------------------------- | --------------------------- | ----------------------------- |
+| `ajax`                      | `AjaxActionSchema`          | api, adaptor                  |
+| `submitForm`                | `SubmitFormActionSchema`    | (none — nearest form)         |
+| `openDialog`                | `OpenDialogActionSchema`    | title, body                   |
+| `openDrawer`                | `OpenDrawerActionSchema`    | title, body                   |
+| `closeSurface`              | `CloseSurfaceActionSchema`  | surfaceId? (default: current) |
+| `closeDialog`/`closeDrawer` | alias of `closeSurface`     | surfaceId?                    |
+| `refreshTable`              | `RefreshTableActionSchema`  | target                        |
+| `refreshSource`             | `RefreshSourceActionSchema` | sourceName                    |
+| `setValue`                  | `SetValueActionSchema`      | path, value                   |
+| `setValues`                 | `SetValuesActionSchema`     | path, values                  |
+| `showToast`                 | `ShowToastActionSchema`     | level, message                |
+| `navigate`                  | `NavigateActionSchema`      | url, replace, back            |
+| `component:method`          | `ComponentActionSchema`     | \_targetCid, method, args     |
+| `ns:method`                 | `NamespacedActionSchema`    | namespace, method, args       |
+
+### Targeting: prefer nearest-ancestor over `componentId`/`componentName`
+
+These **contextual** built-ins resolve to the nearest enclosing owner automatically — do **not** add `componentId`/`componentName` when the target is the ancestor that already wraps the action site:
+
+| Built-in               | Resolves to                          | How                                            |
+| ---------------------- | ------------------------------------ | ---------------------------------------------- |
+| `submitForm`           | nearest form (`ctx.form`)            | `useCurrentForm()` walks up to the owning form |
+| `closeSurface`         | current surface (`ctx.dialogId`/top) | `ctx.surfaceRuntime.closeTop()` when no id     |
+| `setValue`/`setValues` | current dispatch scope               | writes `ctx.scope`                             |
+
+A button inside a form's `actions` region just uses `{ "action": "submitForm" }` — the runtime knows which form owns it. A dialog body close button uses `{ "action": "closeSurface" }`.
+
+Use `component:<method>` + `componentId`/`componentName` **only for cross-tree targets** that are not the enclosing owner — e.g. refreshing a sibling/ancestor CRUD after a dialog mutation:
+
+```jsonc
+// ✅ nearest form (button is inside the form)
+{ "action": "submitForm" }
+// ✅ current surface (button is inside the dialog)
+{ "action": "closeSurface" }
+// ✅ cross-tree: refresh the CRUD that opened this dialog (not an enclosing owner)
+{ "action": "component:refresh", "componentId": "user-crud" }
+```
 
 ---
 

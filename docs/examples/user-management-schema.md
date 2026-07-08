@@ -6,8 +6,7 @@ This example is intentionally small but complete.
 
 - each important capability appears once
 - form business flow is owned by the `form` node
-- submit buttons stay thin and trigger `component:submit`
-- the `component:submit` target (`searchForm`) resolves to a `form` renderer that publishes a `submit` capability contract, so compile-time validation passes cleanly with no diagnostics
+- submit buttons stay thin and trigger `submitForm` (resolves to the nearest enclosing form — no `componentId` needed)
 - inside a form subtree, pending UI reads the readonly `$form` binding
 - `closeSurface` uses the default current-surface behavior
 - page data updates rely on current `ajax` plus explicit follow-up write actions instead of outdated top-level write-field assumptions
@@ -23,7 +22,7 @@ Covered capabilities:
 - `setValues.args.path`
 - `openDialog`
 - form-owned `submitAction`
-- `component:submit`
+- `submitForm`
 - `$form`
 - `closeSurface`
 - `component:refresh`
@@ -83,10 +82,7 @@ Covered capabilities:
               "type": "button",
               "label": "查询",
               "disabled": "${$form.submitting}",
-              "onClick": {
-                "action": "component:submit",
-                "componentId": "searchForm"
-              }
+              "onClick": { "action": "submitForm" }
             },
             {
               "type": "button",
@@ -165,10 +161,7 @@ Covered capabilities:
                         "type": "button",
                         "label": "提交",
                         "disabled": "${$form.submitting}",
-                        "onClick": {
-                          "action": "component:submit",
-                          "componentId": "createUserForm"
-                        }
+                        "onClick": { "action": "submitForm" }
                       }
                     ]
                   }

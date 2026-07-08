@@ -683,7 +683,7 @@ amis `reload` → Flux mapping (NOT-ADOPTED 字面 `reload`):
 Compatibility carriers:
 
 - built-in `setValue` / `setValues` belong to the lexical scope-write family, not the component-targeting family. Their canonical baseline is to write the current dispatch scope only. If schema needs to target a concrete form or component instance, prefer `component:setValue` / `component:setValues`.
-- `submitForm` remains the semantic built-in for submitting the current form only. If schema needs to target a concrete form instance, use `component:submit`.
+- **Contextual built-ins resolve to the nearest enclosing owner — prefer them over `componentId`/`componentName`.** `submitForm` submits `ctx.form` (the nearest form, resolved via `useCurrentForm()`); `closeSurface`/`closeDialog`/`closeDrawer` close `ctx.dialogId` or the top surface. A button inside a form's `actions` region should use `{ "action": "submitForm" }`, not `{ "action": "component:submit", "componentId": "..." }`. Reserve `component:<method>` + `componentId`/`componentName` for **cross-tree** targets that are not the enclosing owner — e.g. refreshing a sibling/ancestor CRUD from inside a dialog (`component:refresh`). When the target genuinely is the current form/surface, explicit targeting is redundant and brittle (it breaks if the id is renamed or the fragment is reused).
 - overloaded path-style targeting fields such as `componentPath` are not the preferred authoring baseline for new schema when stable instance targeting by `componentId` or `componentName` is available
 
 ## Action Scope Ownership
