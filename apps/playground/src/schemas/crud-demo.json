@@ -10,25 +10,17 @@
     },
     {
       "type": "text",
-      "text": "完整增删改查示例：data-source 加载列表 → crud 展示 → dialog 表单新增/编辑 → confirm 确认删除 → refreshSource 刷新。后端由 env.fetcher mock。",
+      "text": "完整增删改查示例：crud 通过 loadAction 自主加载 → dialog 表单新增/编辑 → messages 自动反馈 → confirmText 确认删除 → component:refresh 刷新。后端由 env.fetcher mock。",
       "className": "text-sm text-muted-foreground"
-    },
-    {
-      "type": "data-source",
-      "id": "ds-users",
-      "name": "ds_users",
-      "action": "ajax",
-      "args": { "url": "/api/users", "method": "get" },
-      "silent": true
     },
     {
       "type": "crud",
       "id": "user-crud",
       "testid": "user-crud",
-      "source": "${ds_users}",
       "rowKey": "id",
+      "loadAction": { "action": "ajax", "args": { "url": "/api/users", "method": "get" } },
+      "loadAllData": true,
       "selection": {},
-      "onRefresh": { "action": "refreshSource", "targetId": "ds_users" },
       "filterTogglable": { "defaultCollapsed": false },
       "queryForm": {
         "body": [
@@ -64,13 +56,10 @@
                   "submitAction": {
                     "action": "ajax",
                     "args": { "url": "/api/users", "method": "post", "includeScope": "*" },
+                    "messages": { "success": "新增成功" },
                     "then": [
                       { "action": "component:refresh", "componentId": "user-crud" },
-                      { "action": "closeSurface" },
-                      {
-                        "action": "showToast",
-                        "args": { "level": "success", "message": "新增成功" }
-                      }
+                      { "action": "closeSurface" }
                     ]
                   },
                   "body": [
@@ -138,21 +127,15 @@
           "testid": "btn-bulk-delete",
           "disabled": "${!$crud.hasSelection}",
           "onClick": {
-            "action": "confirm",
-            "args": { "message": "确认删除选中的 ${$crud.selectionCount} 条记录？" },
-            "then": {
-              "action": "ajax",
-              "when": "${result.data.confirmed}",
-              "args": {
-                "url": "/api/users",
-                "method": "delete",
-                "data": { "ids": "${$crud.selectedRowKeys}" }
-              },
-              "then": [
-                { "action": "component:refresh", "componentId": "user-crud" },
-                { "action": "showToast", "args": { "level": "success", "message": "批量删除成功" } }
-              ]
-            }
+            "action": "ajax",
+            "args": {
+              "url": "/api/users",
+              "method": "delete",
+              "data": { "ids": "${$crud.selectedRowKeys}" }
+            },
+            "confirmText": "确认删除选中的 ${$crud.selectionCount} 条记录？",
+            "messages": { "success": "批量删除成功" },
+            "then": [{ "action": "component:refresh", "componentId": "user-crud" }]
           }
         }
       ],
@@ -205,13 +188,10 @@
                       "submitAction": {
                         "action": "ajax",
                         "args": { "url": "/api/users", "method": "put", "includeScope": "*" },
+                        "messages": { "success": "更新成功" },
                         "then": [
                           { "action": "component:refresh", "componentId": "user-crud" },
-                          { "action": "closeSurface" },
-                          {
-                            "action": "showToast",
-                            "args": { "level": "success", "message": "更新成功" }
-                          }
+                          { "action": "closeSurface" }
                         ]
                       },
                       "body": [
@@ -272,21 +252,15 @@
               "variant": "destructive",
               "testid": "btn-delete",
               "onClick": {
-                "action": "confirm",
-                "args": { "message": "确认删除该用户？" },
-                "then": {
-                  "action": "ajax",
-                  "when": "${result.data.confirmed}",
-                  "args": {
-                    "url": "/api/users",
-                    "method": "delete",
-                    "data": { "id": "${$slot.record.id}" }
-                  },
-                  "then": [
-                    { "action": "component:refresh", "componentId": "user-crud" },
-                    { "action": "showToast", "args": { "level": "success", "message": "删除成功" } }
-                  ]
-                }
+                "action": "ajax",
+                "args": {
+                  "url": "/api/users",
+                  "method": "delete",
+                  "data": { "id": "${$slot.record.id}" }
+                },
+                "confirmText": "确认删除该用户？",
+                "messages": { "success": "删除成功" },
+                "then": [{ "action": "component:refresh", "componentId": "user-crud" }]
               }
             }
           ]

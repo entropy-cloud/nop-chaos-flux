@@ -499,11 +499,16 @@ export function useCrudLoadAction(args: {
   const [error, setError] = useState<Error | undefined>(undefined);
 
   const loadedAllRef = useRef(false);
+  // reload() re-triggers the imperative dispatch in the load effect below (the
+  // only path that captures the result into rows/total). force() alone fires the
+  // reaction's ajax but its result is not captured, so a nonce state is bumped
+  // to make the effect re-run and re-dispatch.
+  const [reloadNonce, setReloadNonce] = useState(0);
 
   const reload = useCallback(() => {
     loadedAllRef.current = false;
-    loadReaction?.force();
-  }, [loadReaction]);
+    setReloadNonce((value) => value + 1);
+  }, []);
 
   const reportError = useCallback(
     (err: Error, evaluationBindings: Record<string, unknown>) => {
@@ -653,6 +658,7 @@ export function useCrudLoadAction(args: {
     filters,
     selection,
     paginationStatePath,
+    reloadNonce,
   ]);
 
   return useMemo(

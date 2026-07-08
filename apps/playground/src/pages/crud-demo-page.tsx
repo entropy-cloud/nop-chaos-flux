@@ -61,11 +61,6 @@ const db: UserRecord[] = [
 
 let nextId = db.length + 1;
 
-const initialSeed: { items: UserRecord[]; total: number } = {
-  items: db.map((record) => ({ ...record })),
-  total: db.length,
-};
-
 function deepClone<T>(value: T): T {
   return typeof structuredClone === 'function'
     ? structuredClone(value)
@@ -201,7 +196,6 @@ export function CrudDemoPage({ onBack }: CrudDemoPageProps) {
           registry={registry as React.ComponentProps<typeof SchemaRenderer>['registry']}
           env={env}
           formulaCompiler={formulaCompiler}
-          data={{ ds_users: initialSeed }}
         />
       </div>
 
