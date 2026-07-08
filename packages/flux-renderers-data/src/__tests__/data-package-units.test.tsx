@@ -28,6 +28,7 @@ describe('data package units', () => {
       'list',
       'service',
       'pagination',
+      'statistics',
       'crud',
     ]);
     expect(registry.get('table')?.type).toBe('table');

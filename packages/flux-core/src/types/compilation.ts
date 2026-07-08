@@ -365,3 +365,56 @@ export interface CompiledReaction {
   /** Fire only once then auto-dispose */
   once?: boolean;
 }
+
+/**
+ * Base registration returned by `registerReaction`. Existing callers
+ * (`<reaction>` renderer, `<data-source>` registration, test helpers) consume
+ * only `{ id, dispose }`. The canonical implementation lives in
+ * `packages/flux-runtime/src/async-data/reaction-runtime.ts`; the type is
+ * owned by `flux-core` to keep all compiled-node-level contracts in one place.
+ *
+ * NOTE: do not add methods to this base type. New capabilities go on
+ * `ForceableReactionRegistration` (or another extension) so existing callers
+ * keep matching this narrow contract.
+ */
+export interface ReactionRegistration {
+  id: string;
+  dispose(): void;
+}
+
+/**
+ * Extended registration that supports imperative forcing. Returned by
+ * `registerRendererReaction` (the renderer-owned wrapper) but NOT by vanilla
+ * `registerReaction`. Keeping `force` off the base type preserves backward
+ * compatibility for existing callers.
+ *
+ * `force(paths?)` asks the underlying reaction to fire as if a scope change
+ * touched `paths` (or, when omitted, as if all declared dependency roots
+ * changed). It is a no-op when the reaction is paused or already disposed.
+ */
+export interface ForceableReactionRegistration extends ReactionRegistration {
+  force(paths?: readonly string[]): void;
+}
+
+/**
+ * Compiled plan for a `kind: 'reaction'` field on a renderer (e.g. CRUD
+ * `loadAction`). Produced by `flux-compiler` from a `ReactiveActionSchema` and
+ * stored on `TemplateNode.reactionPlans[key]`.
+ *
+ * Distinct from `CompiledReaction` because renderer-owned reactions:
+ *  - have no schema-declared `watch` expression (the runtime wrapper
+ *    synthesises a static watch and triggers via `force()` instead),
+ *  - are not allowed to set `immediate` (the renderer owns initial-fire gating
+ *    via `ReactionHandle.ready()`),
+ *  - do not surface `when` / `debounce` / `once` / `control` in v1.
+ *
+ * @see docs/plans/2026-07-07-loadAction-reaction-kind-plan.md
+ */
+export interface CompiledReactionPlan {
+  /** Compiled action program executed when the reaction fires. */
+  action: CompiledActionProgram;
+  /** Root-level scope paths that trigger a re-fire. Always non-empty. */
+  dependsOn: readonly string[];
+  /** Optional root-level paths whose writes should not re-trigger this reaction. */
+  ignoreWritesTo?: readonly string[];
+}

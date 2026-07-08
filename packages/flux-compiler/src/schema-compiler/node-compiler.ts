@@ -5,6 +5,7 @@ import type {
   ActionSchema,
   BaseSchema,
   CompiledActionProgram,
+  CompiledReactionPlan,
   CompiledRuntimeValue,
   CompileNodeOptions,
   CompileSchemaOptions,
@@ -13,6 +14,7 @@ import type {
   FieldCompileContext,
   PreparedImportSpec,
   ReactionSchema,
+  ReactiveActionSchema,
   RendererDefinition,
   SchemaInput,
   ScopePlan,
@@ -202,6 +204,7 @@ export function createCompileSingleNode(
     const regions: Record<string, TemplateRegion> = {};
     const rawLifecycleActions = extractLifecycleActions(schema);
     const rawEventPlans: Record<string, ActionSchema | ActionSchema[]> = {};
+    const rawReactionPlans: Record<string, ReactiveActionSchema> = {};
     const nodeImports = Array.isArray(fieldInspection.extensions?.['xui:imports'])
       ? (fieldInspection.extensions?.['xui:imports'] as unknown[]).filter(isImportSpecCandidate)
       : undefined;
@@ -274,6 +277,11 @@ export function createCompileSingleNode(
 
       if (rule.kind === 'event') {
         rawEventPlans[key] = value as ActionSchema | ActionSchema[];
+        continue;
+      }
+
+      if (rule.kind === 'reaction') {
+        rawReactionPlans[key] = value as ReactiveActionSchema;
         continue;
       }
 
@@ -510,6 +518,28 @@ export function createCompileSingleNode(
       });
     }
 
+    let reactionPlans: Record<string, CompiledReactionPlan> | undefined;
+    if (Object.keys(rawReactionPlans).length > 0) {
+      reactionPlans = {};
+      for (const [key, rawPlan] of Object.entries(rawReactionPlans)) {
+        const dependsOn = Array.isArray(rawPlan.dependsOn)
+          ? (rawPlan.dependsOn as readonly string[])
+          : undefined;
+        const ignoreWritesTo = Array.isArray(rawPlan.ignoreWritesTo)
+          ? (rawPlan.ignoreWritesTo as readonly string[])
+          : undefined;
+        const compiledAction = compileActions(rawPlan, expressionCompiler, {
+          ...compileOptions,
+          basePath: `${path}.${key}`,
+        });
+        reactionPlans[key] = {
+          action: compiledAction,
+          dependsOn: dependsOn ?? [],
+          ...(ignoreWritesTo ? { ignoreWritesTo } : {}),
+        };
+      }
+    }
+
     const lifecycleActions:
       | {
           onMount?: CompiledActionProgram;
@@ -639,6 +669,7 @@ export function createCompileSingleNode(
       structuralWhen,
       structuralFields: Object.keys(structuralFields).length > 0 ? structuralFields : undefined,
       eventPlans,
+      ...(reactionPlans ? { reactionPlans } : {}),
       lifecycleActions,
       regions,
       providerPlan,

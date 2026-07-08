@@ -122,6 +122,15 @@ export interface ShowToastActionArgs extends SchemaObject {
   message?: SchemaValue;
 }
 
+/**
+ * Author-declared toast messages for ajax/submit actions. Processed by the
+ * runtime ajax handler after the request completes, independent of `then`/`onError`.
+ */
+export interface MessagesConfig extends SchemaObject {
+  success?: string;
+  failed?: string;
+}
+
 export interface ActionShapeFields extends SchemaObject {
   action?: string;
   _targetCid?: number;
@@ -144,6 +153,8 @@ export interface ActionShapeFields extends SchemaObject {
   then?: ActionSchema | ActionSchema[];
   onError?: ActionSchema | ActionSchema[];
   onSettled?: ActionSchema | ActionSchema[];
+  messages?: MessagesConfig;
+  confirmText?: string;
 }
 
 export interface AjaxActionSchema extends ActionShapeFields {

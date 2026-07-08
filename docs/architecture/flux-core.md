@@ -204,6 +204,7 @@ Current declarative lowering rule:
 - compiler may still perform renderer-specific lowering when a renderer requires compile-time artifacts that runtime consumes from `TemplateNode`
 - however, the trigger must come from declarative renderer metadata, not from hardcoded `schema.type === '...'` dispatch in compiler core
 - current baseline example: `data-source` and `reaction` declare compile-artifact requirements, and compiler lowers them into `TemplateNode.compiledSources` / `TemplateNode.compiledReactions`
+- `SchemaFieldRule` fields declared as `kind: 'reaction'` compile into `TemplateNode.reactionPlans[key]` (`CompiledReactionPlan`), parallel to `compiledSources`/`compiledReactions`. Each plan carries the compiled action body plus `dependsOn: readonly string[]` (root-level paths) and optional `ignoreWritesTo?: readonly string[]` (root-level self-write filter). At runtime the React layer activates one `ReactionHandle` per plan (surfaced as `props.reactions[key]`); v1 does not support `immediate`/`debounce`/`once`/`control` on `ReactiveActionSchema`. See `docs/plans/2026-07-07-loadAction-reaction-kind-plan.md`.
 
 Current internal-id baseline:
 

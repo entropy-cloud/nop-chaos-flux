@@ -110,5 +110,12 @@ export function reportReactionFireLimit(args: {
 export type OwnedReactionRegistration = {
   id: string;
   dispose(): void;
+  /**
+   * Delegate to the underlying `ForceableReactionRegistration.force`. Present
+   * on the implementation so the renderer-reaction wrapper can call it; hidden
+   * from the `ReactionRegistration`-typed return path so existing callers are
+   * unaffected.
+   */
+  force?(paths?: readonly string[]): void;
   getDebugEntry(): ReactionRegistryDebugSnapshot['reactions'][number];
 };

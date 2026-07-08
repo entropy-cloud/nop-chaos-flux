@@ -17,6 +17,7 @@ import {
   validateActionShape,
   validateApiSchemaShape,
   validateDependsOnRoots,
+  validateReactionFieldShape,
   validateReactionShape,
   validateSourceShape,
 } from './shape-validation-rules.js';
@@ -261,6 +262,11 @@ export function inspectSchemaNodeFields(
 
     if (rule.kind === 'event') {
       validateActionShape(value, keyPath, diagnostics, enabled, actionContext);
+      continue;
+    }
+
+    if (rule.kind === 'reaction') {
+      validateReactionFieldShape(value, keyPath, diagnostics, enabled, actionContext);
       continue;
     }
 

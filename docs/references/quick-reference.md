@@ -75,19 +75,23 @@ interface RendererComponentProps<S = BaseSchema, P = RendererResolvedProps<S>> {
   meta: ResolvedNodeMeta; // RESOLVED meta state
   regions: Readonly<Record<string, RenderRegionHandle>>; // precompiled child regions
   events: Readonly<Record<string, RendererEventHandler>>; // event handlers from schema
+  reactions: Readonly<Record<string, ReactionHandle>>; // kind: 'reaction' field handles
   helpers: RendererHelpers; // render, evaluate, dispatch, createScope
 }
 ```
 
+`SchemaFieldKind` = `'meta' | 'prop' | 'region' | 'value-or-region' | 'event' | 'reaction' | 'ignored'`. The `kind: 'reaction'` field compiles into `TemplateNode.reactionPlans[key]` (`CompiledReactionPlan`) and is surfaced as `props.reactions[key]` (`ReactionHandle`); it is both reactive (auto-fires on declared `dependsOn` root changes) and imperative (renderer calls `dispatch()`/`force()`), with renderer-owned timing via `ready()`/`pause()`/`resume()`. See `docs/plans/2026-07-07-loadAction-reaction-kind-plan.md`.
+
 ### How to read data from props
 
-| Source          | What it provides                                       | When to use                               |
-| --------------- | ------------------------------------------------------ | ----------------------------------------- |
-| `props.props`   | Resolved runtime values (label, variant, placeholder…) | Reading schema-driven values              |
-| `props.meta`    | Resolved meta (disabled, visible, className, testid)   | Checking control state                    |
-| `props.regions` | Precompiled child render handles                       | Rendering child fragments via `.render()` |
-| `props.events`  | Runtime event handlers from schema                     | Attaching click/change/submit handlers    |
-| `props.helpers` | Stable runtime helpers                                 | render, evaluate, dispatch                |
+| Source            | What it provides                                       | When to use                                                                                                  |
+| ----------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `props.props`     | Resolved runtime values (label, variant, placeholder…) | Reading schema-driven values                                                                                 |
+| `props.meta`      | Resolved meta (disabled, visible, className, testid)   | Checking control state                                                                                       |
+| `props.regions`   | Precompiled child render handles                       | Rendering child fragments via `.render()`                                                                    |
+| `props.events`    | Runtime event handlers from schema                     | Attaching click/change/submit handlers                                                                       |
+| `props.reactions` | `ReactionHandle` map from `kind: 'reaction'` fields    | Hybrid reactive + imperative actions (call `dispatch()`/`force()`, gate with `ready()`/`pause()`/`resume()`) |
+| `props.helpers`   | Stable runtime helpers                                 | render, evaluate, dispatch                                                                                   |
 
 ### Field lifecycle: schema type → field rule → runtime channel
 
@@ -118,6 +122,7 @@ Layer 2 — Renderer definition field rules (compiler directive)
     { key: 'title',   kind: 'prop' },
     { key: 'body',    kind: 'region' },
     { key: 'onClose', kind: 'event' },
+    { key: 'loadAction', kind: 'reaction' }, // hybrid reactive + imperative
   ]
 
   The compiler reads the field rule, then pre-compiles the raw schema

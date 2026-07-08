@@ -69,6 +69,7 @@ describe('defaults and auto renderer', () => {
         events={{ onClick: click as RendererComponentProps['events'][string] }}
         helpers={{} as any}
         regions={{}}
+        reactions={{}}
         templateNode={{} as any}
         node={{} as any}
       />,
@@ -141,6 +142,7 @@ describe('defaults and auto renderer', () => {
         events={{ onClick: undefined }}
         helpers={{} as any}
         regions={{}}
+        reactions={{}}
         templateNode={{} as any}
         node={{} as any}
       />,

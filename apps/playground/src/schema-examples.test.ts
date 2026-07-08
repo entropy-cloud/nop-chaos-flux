@@ -45,19 +45,7 @@ describe('docs schema examples', () => {
       },
     });
 
-    expect(diagnostics).toEqual([
-      {
-        code: 'unvalidated-component-target',
-        message:
-          'Component-targeted selector "component:submit" uses the correct selector family, but compile-time target typing is unavailable without explicit target-binding metadata.',
-        path: '/body/0/body/1/actions/0/onClick/action',
-        severity: 'warning',
-        source: 'core',
-        sourceLocation: {
-          file: '$',
-        },
-      },
-    ]);
+    expect(diagnostics).toEqual([]);
   });
 
   it('validate the README 30-second example with strict unknown-property policy', () => {

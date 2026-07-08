@@ -1,6 +1,7 @@
 import type {
   ActionSchema,
   BaseSchema,
+  ReactiveActionSchema,
   SchemaInput,
   SchemaObject,
   SchemaValue,
@@ -190,7 +191,7 @@ export interface CrudSchema extends BaseSchema {
   onRowClick?: ActionSchema;
   onSelectionChange?: ActionSchema;
   onRefresh?: ActionSchema;
-  loadAction?: ActionSchema;
+  loadAction?: ReactiveActionSchema;
   loadAllData?: boolean;
   onError?: ActionSchema;
   dataStatePath?: string;

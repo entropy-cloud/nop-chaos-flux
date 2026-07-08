@@ -247,6 +247,7 @@ function InfiniteScrollDemoHost() {
     },
     events: { onLoadMore: handleLoadMore as never },
     helpers: {} as RendererComponentProps<InfiniteScrollSchema>['helpers'],
+    reactions: {},
   };
 
   return <InfiniteScrollRenderer {...rendererProps} />;

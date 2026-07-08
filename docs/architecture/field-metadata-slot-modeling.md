@@ -99,9 +99,19 @@ Today the active field rule model already supports:
 - `region`
 - `value-or-region`
 - `event`
+- `reaction`
 - `ignored`
 
 Each `SchemaFieldRule` also supports optional `params?: readonly string[]` (parameter names for scoped slot regions), `isolate?: boolean` (isolation policy for the region), and `lazyEval?: boolean` (deferred evaluation into `structuralFields`).
+
+### Action-bearing field kinds: `event` versus `reaction`
+
+`event` and `reaction` are the two action-bearing field kinds: both compile a schema-declared `ActionSchema` body, but they differ in **trigger mode** and **renderer consumption**:
+
+- `event` is **pure imperative**. The renderer calls the handler when the user interacts (click, submit, change). Compiled into `TemplateNode.eventPlans[key]` and surfaced to renderers as `props.events[key]` (`RendererEventHandler`).
+- `reaction` is **hybrid reactive + imperative**. It auto-fires when its declared `dependsOn` root bindings change, the renderer may also call `dispatch()`/`force()` imperatively, and the renderer controls timing via `ready()`/`pause()`/`resume()`. Compiled into `TemplateNode.reactionPlans[key]` (`CompiledReactionPlan`) and surfaced to renderers as `props.reactions[key]` (`ReactionHandle`).
+
+`prop` remains eager + reactive and is unchanged. See `docs/plans/2026-07-07-loadAction-reaction-kind-plan.md` for the source design.
 
 That means the repository has already moved beyond the older `meta / prop / region / ignored` split.
 
@@ -167,6 +177,8 @@ Recommended semantic categories:
   - field accepts either a plain value or a renderable schema fragment
 - `event`
   - event-like field that carries action intent rather than a JavaScript callback
+- `reaction`
+  - hybrid action field that is both reactive (auto-fires on declared `dependsOn` root changes) and imperative (renderer calls `dispatch()`/`force()`); renderer owns firing timing via `ready()`/`pause()`/`resume()`
 - `ignored`
   - compiler skips the field entirely
 

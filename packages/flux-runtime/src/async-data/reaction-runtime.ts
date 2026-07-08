@@ -5,7 +5,9 @@ import {
   type CompiledReaction,
   type CompiledRuntimeValue,
   type DynamicRuntimeValue,
+  type ForceableReactionRegistration,
   type ReactionRegistryDebugSnapshot,
+  type ReactionRegistration,
   type RendererHelpers,
   type RendererRuntime,
   type ScopeDependencySet,
@@ -35,10 +37,17 @@ function toReactionFailureError(result: import('@nop-chaos/flux-core').ActionRes
   return new Error(message, { cause: result });
 }
 
-export interface ReactionRegistration {
-  id: string;
-  dispose(): void;
-}
+/**
+ * NOTE: The canonical `ReactionRegistration` type lives in
+ * `@nop-chaos/flux-core` (`types/compilation.ts`). It is re-exported from here
+ * for backwards compatibility with existing callers that imported it from the
+ * runtime package.
+ *
+ * The renderer-owned wrapper (`registerRendererReaction`, see
+ * `renderer-reaction-handle.ts`) returns the extended
+ * `ForceableReactionRegistration` that adds `force(paths?)`.
+ */
+export type { ReactionRegistration };
 
 interface ReactionCascadeState {
   depth: number;
@@ -458,10 +467,23 @@ export function registerReaction(input: {
     scheduleReaction(change.paths);
   });
 
-  return {
+  const registration: ForceableReactionRegistration = {
     id: input.id,
     dispose,
+    /**
+     * Force the reaction to fire as if a scope change touched `paths`. Not
+     * part of the public `ReactionRegistration` type — the renderer-owned
+     * wrapper (`registerRendererReaction`) consumes this via the
+     * `ForceableReactionRegistration` view. No-op when already disposed.
+     */
+    force(paths?: readonly string[]): void {
+      if (abortController.signal.aborted) {
+        return;
+      }
+      void runReaction(paths ?? [], true);
+    },
   };
+  return registration;
 }
 
 export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
@@ -537,6 +559,14 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
         if (currentBucket.size === 0) {
           scopeEntries.delete(ownerScopeId);
         }
+      },
+      force(paths?: readonly string[]): void {
+        if (registryAbort.signal.aborted) {
+          return;
+        }
+        // Delegate to the underlying registration's force (exposed via the
+        // ForceableReactionRegistration view of registerReaction's result).
+        (registration as ForceableReactionRegistration).force(paths);
       },
       getDebugEntry() {
         return {

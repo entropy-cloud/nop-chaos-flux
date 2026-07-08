@@ -487,6 +487,10 @@ export function createScopeRef(input: {
       }
 
       const snapshot = ownStore.getSnapshot();
+      const oldValue = path ? getIn(snapshot, path) : snapshot;
+      if (Object.is(oldValue, value)) {
+        return;
+      }
       ownStore.setSnapshot(setIn(snapshot, path, value), {
         paths: [path || '*'],
         sourceScopeId: input.id,

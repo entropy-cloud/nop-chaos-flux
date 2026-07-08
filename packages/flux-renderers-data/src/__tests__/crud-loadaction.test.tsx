@@ -56,7 +56,7 @@ describe('CRUD loadAction', () => {
             {
               type: 'crud',
               id: 'load-crud',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },
@@ -100,7 +100,7 @@ describe('CRUD loadAction', () => {
             {
               type: 'crud',
               id: 'load-crud',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },
@@ -150,7 +150,7 @@ describe('CRUD loadAction', () => {
             {
               type: 'crud',
               id: 'load-crud',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
               footerToolbar: [
@@ -196,7 +196,7 @@ describe('CRUD loadAction', () => {
             {
               type: 'crud',
               id: 'load-crud',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               loadAllData: true,
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
@@ -246,7 +246,7 @@ describe('CRUD loadAction', () => {
             {
               type: 'crud',
               id: 'load-crud',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },
@@ -297,7 +297,7 @@ describe('CRUD loadAction', () => {
             {
               type: 'crud',
               id: 'load-crud',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               onError: { action: 'probe:recordError', args: { msg: 'custom-error' } },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',

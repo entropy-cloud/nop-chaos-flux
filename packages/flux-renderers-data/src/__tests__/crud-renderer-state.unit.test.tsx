@@ -36,8 +36,8 @@ function StatusProbe(props: { scope?: any; statusPath?: string; summary: any }) 
   return null;
 }
 
-function HandleProbe(props: { inputProps: any; selectedRowKeys: unknown[]; clearSelection: () => void; handleRefresh: () => void; toggleSelection: (key: unknown) => void }) {
-  useCrudHandle(props.inputProps, props.selectedRowKeys, props.clearSelection, props.handleRefresh, props.toggleSelection);
+function HandleProbe(props: { inputProps: any; selectedRowKeys: unknown[]; clearSelection: () => void; handleRefresh: () => void; toggleSelection: (key: unknown) => void; handleLoadMore: () => void }) {
+  useCrudHandle(props.inputProps, props.selectedRowKeys, props.clearSelection, props.handleRefresh, props.toggleSelection, props.handleLoadMore);
   return null;
 }
 
@@ -275,6 +275,7 @@ describe('useCrudHandle', () => {
     const clearSelection = vi.fn();
     const selectedRowKeys = ['r1'];
     const toggleSelection = vi.fn();
+    const handleLoadMore = vi.fn();
 
     const { unmount } = render(
       <HandleProbe
@@ -283,6 +284,7 @@ describe('useCrudHandle', () => {
         clearSelection={clearSelection}
         handleRefresh={handleRefresh}
         toggleSelection={toggleSelection}
+        handleLoadMore={handleLoadMore}
       />,
     );
 
@@ -297,6 +299,7 @@ describe('useCrudHandle', () => {
       'getSelection',
       'clearSelection',
       'toggleSelection',
+      'loadMore',
     ]);
     await expect(handle.capabilities.invoke('refresh')).resolves.toEqual({ ok: true });
     expect(handleRefresh).toHaveBeenCalled();
@@ -327,6 +330,7 @@ describe('useCrudHandle', () => {
         clearSelection={() => {}}
         handleRefresh={() => {}}
         toggleSelection={() => {}}
+        handleLoadMore={() => {}}
       />,
     );
 
@@ -340,6 +344,7 @@ describe('useCrudHandle', () => {
         clearSelection={() => {}}
         handleRefresh={() => {}}
         toggleSelection={() => {}}
+        handleLoadMore={() => {}}
       />,
     );
     expect(register).not.toHaveBeenCalled();

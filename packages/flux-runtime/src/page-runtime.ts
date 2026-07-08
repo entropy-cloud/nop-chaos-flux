@@ -5,6 +5,7 @@ import type {
   ScopeRef,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
+import { getIn } from '@nop-chaos/flux-core';
 import { createPageStore } from './page-store.js';
 import { createScopeRef } from './scope.js';
 
@@ -71,6 +72,11 @@ export function createManagedPageRuntime(
         },
       },
       update: (path, value) => {
+        const currentData = store.getState().data;
+        const oldValue = path ? getIn(currentData, path) : currentData;
+        if (Object.is(oldValue, value)) {
+          return;
+        }
         setLastChange({
           paths: [path || '*'],
           sourceScopeId: 'page',

@@ -28,7 +28,7 @@ describe('executeApiSchema error path', () => {
 
     await expect(
       executeApiSchema({ url: '/api/fail', type: 'test' }, scope, env, expressionCompiler),
-    ).rejects.toThrow('Request failed with status 500');
+    ).rejects.toThrow('Request failed (status=500)');
   });
 
   it('throws with message from response data', async () => {
@@ -60,10 +60,10 @@ describe('executeApiSchema error path', () => {
 
     await expect(
       executeApiSchema({ url: '/api/fail', type: 'test' }, scope, missingDataEnv, expressionCompiler),
-    ).rejects.toThrow('Request failed with status 404');
+    ).rejects.toThrow('Request failed (status=404)');
     await expect(
       executeApiSchema({ url: '/api/fail', type: 'test' }, scope, nullDataEnv, expressionCompiler),
-    ).rejects.toThrow('Request failed with status 500');
+    ).rejects.toThrow('Request failed (status=500)');
   });
 
   it('preserves retry metadata on fetcher-thrown errors', async () => {

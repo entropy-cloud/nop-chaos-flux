@@ -371,6 +371,54 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     };
   }, [activationKey, autoInit, importsReady, initAction, lifecycleScope, ownedForm, props.path, runtime]);
 
+  const loadAction = (props.props as FormSchema).loadAction;
+  const autoLoad = (props.props as FormSchema).autoLoad !== false;
+  const loadActionKeyRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!loadAction || !autoLoad || !importsReady) {
+      return;
+    }
+
+    if (loadActionKeyRef.current === activationKey) {
+      return;
+    }
+
+    loadActionKeyRef.current = activationKey;
+    const controller = new AbortController();
+    let cancelled = false;
+
+    void props.helpers
+      .dispatch(loadAction, {
+        scope: lifecycleScope,
+        form: ownedForm,
+        signal: controller.signal,
+      })
+      .then((result) => {
+        if (cancelled || controller.signal.aborted) {
+          return;
+        }
+        if (result.ok && !result.cancelled && result.data != null) {
+          ownedForm.setValues(result.data as Record<string, unknown>);
+        }
+      })
+      .catch((error) => {
+        if (
+          cancelled ||
+          controller.signal.aborted ||
+          (error instanceof Error && error.name === 'AbortError') ||
+          ((error as { name?: string } | null | undefined)?.name === 'AbortError')
+        ) {
+          return;
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [activationKey, autoLoad, importsReady, loadAction, lifecycleScope, ownedForm, props.helpers]);
+
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;
   const formLabelWidth = (props.props as FormSchema).labelWidth;

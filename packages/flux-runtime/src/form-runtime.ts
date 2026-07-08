@@ -15,6 +15,7 @@ import {
   getCompiledValidationField,
   getCompiledValidationTraversalOrder,
   getCompiledValidationNode,
+  getIn,
 } from '@nop-chaos/flux-core';
 import { createFormStore } from './form-store.js';
 import { createOwnedFormStore } from './form-store-owned.js';
@@ -166,6 +167,11 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         },
       },
       update: (path, value) => {
+        const currentValues = store.getState().values;
+        const oldValue = path ? getIn(currentValues, path) : currentValues;
+        if (Object.is(oldValue, value)) {
+          return;
+        }
         setLastChange({
           paths: [path || '*'],
           sourceScopeId: formId,

@@ -46,6 +46,7 @@ import { createHostProjectionScope } from './runtime-host-projection-scope.js';
 import { createNodeRuntime } from './node-runtime.js';
 import { createRuntimeNodeResolver } from './node-resolver.js';
 import { createRuntimeReactionRegistry } from './async-data/reaction-runtime.js';
+import { createRendererReactionHandle } from './renderer-reaction-handle.js';
 import { createApiRequestExecutor } from './async-data/request-runtime.js';
 import { createRuntimeEvalHelpers } from './runtime-eval-helpers.js';
 import { createRuntimeOwnedFactories } from './runtime-owned-factories.js';
@@ -493,6 +494,26 @@ export function createRendererRuntime(input: {
         helpers: {
           dispatch: inputValue.dispatch,
         },
+      });
+    },
+    registerRendererReaction(inputValue: {
+      id: string;
+      compiledReactionPlan: import('@nop-chaos/flux-core').CompiledReactionPlan;
+      scope: ScopeRef;
+      dispatch: (
+        action:
+          | import('@nop-chaos/flux-core').ActionSchema
+          | import('@nop-chaos/flux-core').ActionSchema[]
+          | import('@nop-chaos/flux-core').CompiledActionProgram,
+        ctx?: Partial<import('@nop-chaos/flux-core').ActionContext>,
+      ) => Promise<import('@nop-chaos/flux-core').ActionResult>;
+    }) {
+      return createRendererReactionHandle({
+        id: inputValue.id,
+        compiledReactionPlan: inputValue.compiledReactionPlan,
+        scope: inputValue.scope,
+        dispatch: inputValue.dispatch,
+        runtime,
       });
     },
     getSourceDebugSnapshot() {

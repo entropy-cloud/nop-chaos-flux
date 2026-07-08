@@ -485,7 +485,7 @@ export const crudRendererDefinition: RendererDefinition = {
     { key: 'pagination', kind: 'prop' },
     { key: 'quickSaveAction', kind: 'prop' },
     { key: 'quickSaveItemAction', kind: 'prop' },
-    { key: 'loadAction', kind: 'prop' },
+    { key: 'loadAction', kind: 'reaction' },
     { key: 'loadAllData', kind: 'prop' },
     { key: 'dataStatePath', kind: 'prop' },
     { key: 'queryForm', kind: 'prop' },

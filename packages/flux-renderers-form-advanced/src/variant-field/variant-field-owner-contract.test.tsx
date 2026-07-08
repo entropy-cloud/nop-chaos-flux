@@ -141,6 +141,7 @@ describe('variant-field generic owner contracts', () => {
           evaluateCompiled: vi.fn(),
           executeSource: vi.fn(),
         } as any}
+        reactions={{}}
       />,
     );
 
@@ -228,6 +229,7 @@ describe('variant-field generic owner contracts', () => {
           evaluateCompiled: vi.fn(),
           executeSource: vi.fn(),
         } as any}
+        reactions={{}}
       />,
     );
 
@@ -281,6 +283,7 @@ describe('variant-field generic owner contracts', () => {
           evaluateCompiled: vi.fn(),
           executeSource: vi.fn(),
         } as any}
+        reactions={{}}
       />,
     );
 
@@ -399,6 +402,7 @@ describe('variant-field generic owner contracts', () => {
           evaluateCompiled: vi.fn(),
           executeSource: vi.fn(),
         } as any}
+        reactions={{}}
       />,
     );
 

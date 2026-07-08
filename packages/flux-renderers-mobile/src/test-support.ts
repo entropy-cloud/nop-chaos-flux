@@ -41,5 +41,6 @@ export function createMockRendererProps<S extends BaseSchema = BaseSchema>(
     regions,
     events: (options.events ?? {}) as RendererComponentProps<S>['events'],
     helpers: (options.helpers ?? {}) as RendererHelpers,
+    reactions: {},
   };
 }

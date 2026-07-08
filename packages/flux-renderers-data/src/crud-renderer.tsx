@@ -87,6 +87,7 @@ function delegateTableRendererProps(
     },
     regions: source.regions as RendererComponentProps<TableSchema>['regions'],
     events: source.events as RendererComponentProps<TableSchema>['events'],
+    reactions: source.reactions as RendererComponentProps<TableSchema>['reactions'],
     helpers: source.helpers,
   };
 }
@@ -156,8 +157,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     sortState,
   ]);
 
-  const loadActionConfig = normalizedSchema.loadAction;
-  const useLoadAction = Boolean(loadActionConfig);
+  const loadReaction = props.reactions.loadAction;
+  const useLoadAction = Boolean(loadReaction);
   const loadAllData = normalizedSchema.loadAllData === true;
   const dataStatePath = normalizedSchema.dataStatePath;
 
@@ -170,7 +171,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
   const loadResult = useCrudLoadAction({
     enabled: useLoadAction,
-    loadAction: loadActionConfig,
+    loadReaction,
     loadAllData,
     onError: props.events.onError,
     helpers: props.helpers,
@@ -183,6 +184,10 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     filters: filterState,
     selection: selectedRowKeys,
     paginationStatePath,
+    queryStatePath,
+    sortStatePath,
+    filterStatePath,
+    selectionStatePath,
   });
 
   const clientSideQueryFiltering =
@@ -486,10 +491,11 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     scope.update(selectionStatePath, next);
   };
 
-  useCrudHandle(props, selectedRowKeys, handleClearSelection, handleRefresh, handleToggleSelection);
+  useCrudHandle(props, selectedRowKeys, handleClearSelection, handleRefresh, handleToggleSelection, handleLoadMore);
 
   const handleToolbarPageChange = (page: number) => {
-    scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });
+    const newPagination = { currentPage: page, pageSize: paginationState.pageSize };
+    scope?.update(paginationStatePath, newPagination);
     if (!useLoadAction) {
       handleRefresh();
     }

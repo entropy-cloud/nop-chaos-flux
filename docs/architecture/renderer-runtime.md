@@ -214,6 +214,7 @@ interface RendererComponentProps<
   meta: ResolvedNodeMeta;
   regions: Readonly<Record<string, RenderRegionHandle>>;
   events: Readonly<Record<string, RendererEventHandler | undefined>>;
+  reactions: Readonly<Record<string, ReactionHandle>>;
   helpers: RendererHelpers;
 }
 ```
@@ -231,6 +232,7 @@ Meaning:
 - `schema.frameWrap` is the per-instance override for `RendererDefinition.wrap`; it can suppress wrapping or switch wrap-compatible renderers to grouped `<fieldset>` layout
 - `regions` is the map of precompiled child render handles
 - `events` is the map of runtime event handlers derived from declarative event fields
+- `reactions` is the map of `ReactionHandle` entries derived from `kind: 'reaction'` fields; it is a new channel parallel to `events` and `regions`, used for fields that are both reactive (auto-fire on declared `dependsOn` root changes) and imperative (renderer calls `dispatch()`/`force()`) with renderer-owned timing via `ready()`/`pause()`/`resume()`. A `ReactionHandle` starts in the `initial-paused` phase; the renderer must call `ready()` to enable firing.
 - `helpers` exposes stable imperative runtime helpers
 - `templateNode.lifecycleActions` carries compiled `onMount` / `onUnmount` actions when the schema declares them
 - `templateNode.structuralWhen` is the compiled structural-activation guard for node-local `when`; React/runtime code owns executing this guard before renderer render and lifecycle/effect participation
@@ -745,6 +747,44 @@ The sync ordering is what makes `preventDefault: true` able to actually block fo
 - `stopImmediatePropagation` (same-element listener ordering) — deferred; add only when a concrete use case appears.
 - Per-renderer hardcoded `preventDefault()` migrations (e.g. `input-number` ArrowUp/ArrowDown step, `tree` keyboard navigation, `chart` resize) — those are renderer-internal UX decisions, separate from author-facing schema declaration.
 - amis `rendererEvent` compatibility shim — explicitly rejected (see `docs/components/existing-components-improvement-analysis.md` §2.8).
+
+## Reaction Handles (`props.reactions`)
+
+`kind: 'reaction'` fields compile to `CompiledReactionPlan` on `TemplateNode.reactionPlans[key]` and are surfaced to renderers as `props.reactions[key]`, a `ReactionHandle`.
+
+```ts
+interface ReactionHandle {
+  dispatch(ctx?: Partial<ActionContext>): Promise<ActionResult>;
+  force(paths?: readonly string[]): void;
+  ready(): void;
+  pause(): void;
+  resume(): void;
+  dispose(): void;
+  getDebugState(): ReactionHandleDebugState;
+}
+
+interface ReactionHandleDebugState {
+  phase: 'initial-paused' | 'ready' | 'explicit-paused' | 'disposed';
+  fireCount: number;
+  pauseCount: number;
+  pendingChange: boolean;
+  pendingChangedPaths: readonly string[];
+  disposed: boolean;
+}
+```
+
+Method semantics:
+
+- `dispatch(ctx?)` — imperative fire. The handle injects `evaluationBindings`, owns the per-fire `AbortController` chain (a new `dispatch()` aborts an in-flight one), and resolves to `{ ok: false, cancelled: true }` after `dispose()`.
+- `force(paths?)` — force a reactive fire as if `dependsOn` roots changed, without requiring a real scope write. Used by renderer-owned refresh paths.
+- `ready()` — transition out of `initial-paused`; required for the handle to fire at all. Pending change accumulated before `ready()` is flushed once.
+- `pause()` / `resume()` — counter-based nested gating. While paused, `dependsOn` hits accumulate into `pendingChange`; `resume()` flushes once when the counter returns to zero.
+- `dispose()` — makes the handle inert; pending `dispatch()` promises resolve to the canonical cancelled result.
+- `getDebugState()` — readonly diagnostic snapshot of phase, counters, and pending change.
+
+Lazy activation: `flux-react` constructs one stable `ReactionHandle` proxy per `reactionPlans` entry in `useMemo`, activates it against `runtime.registerRendererReaction(...)` in a `useLayoutEffect` (so child `useEffect`s calling `dispatch()` find a real handle), and disposes on cleanup. The proxy buffers pre-activation calls and drains them on activation, and is StrictMode-safe across the dispose → reactivate sequence.
+
+Source design: `docs/plans/2026-07-07-loadAction-reaction-kind-plan.md`.
 
 ## Lifecycle Actions
 

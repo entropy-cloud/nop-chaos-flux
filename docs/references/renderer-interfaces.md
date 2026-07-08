@@ -205,6 +205,7 @@ Key contracts:
 - `RendererComponentProps`
 - `RendererHelpers`
 - `RendererEventHandler`
+- `ReactionHandle`
 - `RenderRegionHandle`
 - `RenderFragmentOptions`
 - `RenderNodeInput`
@@ -214,7 +215,8 @@ Role summary:
 
 - `RendererComponentProps` is the concrete renderer boundary
 - `RendererHelpers` exposes stable runtime helpers such as `render`, `evaluate`, `createScope`, `dispatch`, and `executeSource`
-- `RendererEventHandler` is the runtime callback shape used for declarative event fields
+- `RendererEventHandler` is the runtime callback shape used for declarative event fields (`kind: 'event'`)
+- `ReactionHandle` is the renderer-facing handle for `kind: 'reaction'` fields (parallel to `events`); it is both reactive (auto-fires on declared `dependsOn` root changes) and imperative (renderer calls `dispatch()`/`force()`)
 - `RenderRegionHandle` gives components an easy way to render declared child regions
 - `ComponentHandle` may optionally expose `ref?: HTMLElement | null` alongside explicit imperative capabilities
 
@@ -223,6 +225,42 @@ Current typing baseline:
 - `RendererComponentProps<S, P>` lets a renderer declare both its authored schema shape `S` and its resolved runtime prop bag `P`.
 - `RendererResolvedProps<S>` defaults to `Record<string, any> & Partial<S>` so runtime prop bags stay honest for low-code dynamic fields without forcing every schema-only field into `props`.
 - `RendererDefinition.component`, `RendererHelpers.render`, and `RenderRegionHandle.render` share a host-neutral render-result alias in `flux-core`; React element typing stays in `@nop-chaos/flux-react` aliases rather than flowing back into core.
+
+### `ReactionHandle` interface
+
+`kind: 'reaction'` fields compile into `TemplateNode.reactionPlans[key]` (`CompiledReactionPlan`) and are surfaced as `props.reactions[key]` (`ReactionHandle`). The handle starts in the `initial-paused` phase; the renderer must call `ready()` to enable firing.
+
+```ts
+interface ReactionHandle {
+  dispatch(ctx?: Partial<ActionContext>): Promise<ActionResult>;
+  force(paths?: readonly string[]): void;
+  ready(): void;
+  pause(): void;
+  resume(): void;
+  dispose(): void;
+  getDebugState(): ReactionHandleDebugState;
+}
+
+interface ReactionHandleDebugState {
+  phase: 'initial-paused' | 'ready' | 'explicit-paused' | 'disposed';
+  fireCount: number;
+  pauseCount: number;
+  pendingChange: boolean;
+  pendingChangedPaths: readonly string[];
+  disposed: boolean;
+}
+```
+
+Method semantics:
+
+- `dispatch(ctx?)` — imperative fire; injects `evaluationBindings`, owns the per-fire `AbortController` chain (new fire aborts in-flight), resolves to `{ ok: false, cancelled: true }` after `dispose()`.
+- `force(paths?)` — force a reactive fire as if `dependsOn` roots changed, without a real scope write.
+- `ready()` — leave `initial-paused`; required for firing. Pending change accumulated before `ready()` is flushed once.
+- `pause()` / `resume()` — counter-based nested gating; `dependsOn` hits accumulate into `pendingChange` while paused, flushed once on counter return to zero.
+- `dispose()` — handle becomes inert; pending `dispatch()` promises resolve to the canonical cancelled result.
+- `getDebugState()` — readonly diagnostic snapshot.
+
+`ReactiveActionSchema extends ActionSchema` requires `dependsOn: string[]` (root-level paths) and supports optional `ignoreWritesTo?: string[]` (root-level self-write filter). v1 does not support `immediate`/`debounce`/`once`/`control`. Source design: `docs/plans/2026-07-07-loadAction-reaction-kind-plan.md`.
 
 ## Runtime Family Contracts
 

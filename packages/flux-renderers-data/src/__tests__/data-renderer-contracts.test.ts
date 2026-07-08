@@ -13,6 +13,7 @@ describe('data renderer static contracts', () => {
       'getSelection',
       'clearSelection',
       'toggleSelection',
+      'loadMore',
     ]);
     expect(crud?.eventContracts?.onSelectionChange?.payload?.kind).toBe('object');
   });

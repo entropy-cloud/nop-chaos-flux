@@ -98,8 +98,8 @@ describe('data renderer definition contracts', () => {
     expect(crudRendererDefinition.eventContracts?.onSelectionChange?.payload?.kind).toBe('object');
   });
 
-  it('crud exposes loadAction/loadAllData as props and onError as an event only', () => {
-    expect(crudRendererDefinition.fields?.find((field) => field.key === 'loadAction')?.kind).toBe('prop');
+  it('crud exposes loadAction as a reaction field, loadAllData as a prop, and onError as an event only', () => {
+    expect(crudRendererDefinition.fields?.find((field) => field.key === 'loadAction')?.kind).toBe('reaction');
     expect(crudRendererDefinition.fields?.find((field) => field.key === 'loadAllData')?.kind).toBe('prop');
     expect(crudRendererDefinition.fields?.filter((field) => field.key === 'onError')).toEqual([
       expect.objectContaining({ key: 'onError', kind: 'event' }),

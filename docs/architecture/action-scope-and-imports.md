@@ -513,6 +513,16 @@ Examples:
 - workbook/report editing commands for report-designer
 - imported library capabilities such as `demo:open`
 
+### Action-Bearing Field Kinds
+
+There are three action-bearing `SchemaFieldRule` kinds, distinguished by trigger mode:
+
+- `event` — pure imperative. The renderer fires the compiled action when the user interacts. Surfaced as `props.events[key]` (`RendererEventHandler`).
+- `prop` — eager + reactive (existing, unchanged). The compiled value is resolved into `props` ahead of renderer render; no action dispatch.
+- `reaction` — hybrid reactive + imperative. Auto-fires on declared `dependsOn` root changes, the renderer may also call `dispatch()`/`force()`, and timing is renderer-owned via `ready()`/`pause()`/`resume()`. Surfaced as `props.reactions[key]` (`ReactionHandle`). `ReactiveActionSchema` requires `dependsOn: string[]` (root-level paths) and supports optional `ignoreWritesTo?: string[]` self-write filtering; v1 does not support `immediate`/`debounce`/`once`/`control` on this schema.
+
+See `docs/plans/2026-07-07-loadAction-reaction-kind-plan.md` for the source design.
+
 ## Schema Shape
 
 The current `ActionSchema` contract uses `action: string` and structured fields, not a separate `type` union.

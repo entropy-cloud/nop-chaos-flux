@@ -392,6 +392,15 @@ interface ReactionSchema extends BaseSchema {
 
 This is intentionally simpler than "declared hints + static extraction + runtime union". The point of an explicit declaration is to let the author or compiler choose the dependency boundary directly.
 
+### 3.3.1 `kind: 'reaction'` field dependency contract
+
+`SchemaFieldRule` fields declared as `kind: 'reaction'` (compiled into `TemplateNode.reactionPlans`, surfaced as `props.reactions[key]` of type `ReactionHandle`) follow the same explicit-roots-first baseline as sources and reactions, with two refinements:
+
+- **`dependsOn: string[]` is required** on `ReactiveActionSchema`. The renderer-reaction handle self-subscribes to scope changes on exactly those root bindings; there is no runtime fallback collection. Authors declare `user`, not `user.name` (deep paths trigger `invalid-reaction-deep-path` and are folded to their root at compile time).
+- **`ignoreWritesTo?: string[]`** is the self-write filter for reaction fields. The handle folds matching root paths out of the incoming `ScopeChange` before dependency matching, so an action that writes back to one of its own observed roots does not re-trigger itself. Entries are also root-level paths.
+
+See `docs/plans/2026-07-07-loadAction-reaction-kind-plan.md` for the source design.
+
 ### 3.4 Change Normalization And Matching
 
 Source target: `packages/flux-runtime/src/scope-change.ts`

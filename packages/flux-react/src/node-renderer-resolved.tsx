@@ -1,6 +1,7 @@
 import {
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   memo,
 } from 'react';
@@ -9,6 +10,7 @@ import type {
   ActionScope,
   ComponentHandleRegistry,
   NodeRuntimeState,
+  ReactionHandle,
   RenderFragmentOptions,
   RenderNodeInput,
   RendererComponentProps,
@@ -39,6 +41,7 @@ import { useNodeSourceProps } from './use-node-source-props.js';
 import { useNodeLifecycleActions, useRenderMonitor } from './node-renderer-effects.js';
 import { NodeRendererProviders } from './node-renderer-providers.js';
 import { createNormalizedActionEvent, applySchemaDrivenPrevention, createRendererHelpers } from './renderer-helpers.js';
+import { createReactionHandleProxy, type ReactionHandleProxy } from './reaction-handle-proxy.js';
 import { buildSlotFrame, readSlotFrame, SLOT_KEY } from './slot-frame.js';
 import { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';
 
@@ -47,6 +50,9 @@ function isCompiledActionProgram(
 ): action is import('@nop-chaos/flux-core').CompiledActionProgram {
   return Boolean(action);
 }
+
+const EMPTY_REACTIONS: Readonly<Record<string, import('@nop-chaos/flux-core').ReactionHandle>> = {};
+const EMPTY_REACTION_PROXY_ENTRIES: { key: string; proxy: ReactionHandleProxy }[] = [];
 
 export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   node: TemplateNode;
@@ -232,6 +238,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   );
   const lifecycleActions = templateNode.lifecycleActions;
   const eventPlans = templateNode.eventPlans;
+  const reactionPlans = templateNode.reactionPlans;
   const nodeRegions = templateNode.regions;
 
   const events = useMemo(() => {
@@ -310,6 +317,64 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     );
   }, [activeActionScope, activeComponentRegistry, nodeRegions, nodeInstance, renderFragment, renderScope]);
 
+  // Reaction channel: one lazy proxy per `kind: 'reaction'` field. Proxy
+  // identity is stable across re-renders; `useLayoutEffect` activates (creating
+  // the real handle via `runtime.registerRendererReaction`) and cleanup
+  // disposes. The layout-effect timing guarantees that by the time child
+  // components' `useEffect` runs (and may call `handle.dispatch()`), the real
+  // handle already exists. StrictMode mount→unmount→mount is handled by
+  // `__activate` re-creating the real handle and draining buffered calls.
+  const reactionProxyEntries = useMemo<{
+    key: string;
+    proxy: ReactionHandleProxy;
+  }[]>(() => {
+    if (!reactionPlans) {
+      return EMPTY_REACTION_PROXY_ENTRIES;
+    }
+    return Object.keys(reactionPlans).map((key) => ({
+      key,
+      proxy: createReactionHandleProxy(),
+    }));
+  }, [reactionPlans]);
+
+  const reactions = useMemo<Readonly<Record<string, ReactionHandle>>>(() => {
+    if (reactionProxyEntries.length === 0) {
+      return EMPTY_REACTIONS;
+    }
+    const entries: Record<string, ReactionHandle> = {};
+    for (const entry of reactionProxyEntries) {
+      entries[entry.key] = entry.proxy;
+    }
+    return entries;
+  }, [reactionProxyEntries]);
+
+  useLayoutEffect(() => {
+    if (reactionProxyEntries.length === 0) {
+      return;
+    }
+    for (const entry of reactionProxyEntries) {
+      const plan = reactionPlans![entry.key];
+      entry.proxy.__activate(() =>
+        runtime.registerRendererReaction({
+          id: `${templateNode.id}:${entry.key}`,
+          compiledReactionPlan: plan,
+          scope: nodeInstance.scope,
+          dispatch: (action, ctx) =>
+            helpers.dispatch(action, {
+              ...ctx,
+              scope: ctx?.scope ?? nodeInstance.scope,
+              nodeInstance: ctx?.nodeInstance ?? nodeInstance,
+            }),
+        }),
+      );
+    }
+    return () => {
+      for (const entry of reactionProxyEntries) {
+        entry.proxy.__dispose();
+      }
+    };
+  }, [reactionProxyEntries, reactionPlans, runtime, helpers, nodeInstance, templateNode.id]);
+
   const componentProps: RendererComponentProps = {
     id: templateNode.id,
     path: templateNode.templatePath,
@@ -320,6 +385,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     meta: finalResolvedMeta,
     regions,
     events,
+    reactions,
     helpers,
   };
 

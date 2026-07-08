@@ -47,7 +47,14 @@ export interface FieldCompileSchemaOptions {
 export type ValidationTrigger = 'change' | 'blur' | 'submit';
 export type ValidationVisibilityTrigger = 'touched' | 'dirty' | 'visited' | 'submit';
 export type ScopePolicy = 'inherit' | 'form';
-export type SchemaFieldKind = 'meta' | 'prop' | 'region' | 'value-or-region' | 'event' | 'ignored';
+export type SchemaFieldKind =
+  | 'meta'
+  | 'prop'
+  | 'region'
+  | 'value-or-region'
+  | 'event'
+  | 'reaction'
+  | 'ignored';
 export type FrameWrapMode = boolean | 'label' | 'group' | 'none';
 
 export interface ActionShapeLikeFields extends SchemaObject {
@@ -245,6 +252,31 @@ export interface ReactionSchema extends BaseSchema {
   debounce?: number;
   once?: boolean;
   actions: ActionSchemaLike;
+}
+
+/**
+ * Schema shape for a `kind: 'reaction'` field (e.g. CRUD `loadAction`).
+ *
+ * Distinct from `ReactionSchema`: `ReactionSchema` is the standalone
+ * `<reaction>` renderer schema; `ReactiveActionSchema` is a field-level action
+ * that combines imperative dispatch (renderer controls timing) with reactive
+ * triggering (re-fires when `dependsOn` roots change).
+ *
+ * - `dependsOn`: REQUIRED. Root-level scope paths that should trigger a re-fire.
+ *   Per `docs/architecture/dependency-tracking.md` §3.3 authors declare roots
+ *   (`user`, not `user.name`); deep paths are folded to the root at runtime
+ *   and emit a compile-time warning.
+ * - `ignoreWritesTo`: OPTIONAL. Root-level paths whose writes this reaction
+ *   should not re-trigger itself on (e.g. server-pagination corrections).
+ *
+ * v1 does not support `immediate` / `debounce` / `once` / `control` on this
+ * schema; the renderer owns initial-fire gating via `ReactionHandle.ready()`.
+ *
+ * @see docs/plans/2026-07-07-loadAction-reaction-kind-plan.md
+ */
+export interface ReactiveActionSchema extends ActionSchema {
+  dependsOn: string[];
+  ignoreWritesTo?: string[];
 }
 
 export interface DynamicRendererSchema extends BaseSchema {

@@ -92,6 +92,8 @@ export interface FormSchema extends BaseSchema {
   valuesPath?: string;
   autoInit?: boolean;
   initAction?: ActionSchema | ActionSchema[];
+  loadAction?: ActionSchema | ActionSchema[];
+  autoLoad?: boolean;
   submitAction?: ActionSchema | ActionSchema[];
   onSubmitSuccess?: ActionSchema | ActionSchema[];
   onSubmitError?: ActionSchema | ActionSchema[];

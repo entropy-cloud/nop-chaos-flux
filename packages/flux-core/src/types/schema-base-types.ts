@@ -32,6 +32,7 @@ export interface ApiSchema extends SchemaObject {
   params?: SchemaValue;
   headers?: Record<string, string>;
   includeScope?: '*' | string[];
+  selection?: string;
   responseAdaptor?: string;
   requestAdaptor?: string;
 }
@@ -41,6 +42,7 @@ export interface ExecutableApiRequest extends SchemaObject {
   method?: string;
   data?: SchemaValue;
   headers?: Record<string, string>;
+  selection?: string;
   params?: never;
   includeScope?: never;
   responseAdaptor?: never;

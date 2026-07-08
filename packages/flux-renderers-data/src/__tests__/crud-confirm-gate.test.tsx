@@ -55,7 +55,7 @@ describe('CRUD confirm-gated delete (schema contract for playground crud-demo)',
   });
 
   it('runs the delete ajax when confirm resolves true', async () => {
-    const fetcher = vi.fn(async <T,>(): Promise<{ ok: boolean; status: number; data: T }> => ({
+    const fetcher = vi.fn(async <T,>(_api: unknown): Promise<{ ok: boolean; status: number; data: T }> => ({
       ok: true,
       status: 200,
       data: null as T,
@@ -90,7 +90,7 @@ describe('CRUD confirm-gated delete (schema contract for playground crud-demo)',
   });
 
   it('skips the delete ajax when confirm resolves false', async () => {
-    const fetcher = vi.fn(async <T,>(): Promise<{ ok: boolean; status: number; data: T }> => ({
+    const fetcher = vi.fn(async <T,>(_api: unknown): Promise<{ ok: boolean; status: number; data: T }> => ({
       ok: true,
       status: 200,
       data: null as T,

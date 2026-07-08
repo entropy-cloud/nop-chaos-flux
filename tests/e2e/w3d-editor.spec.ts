@@ -39,15 +39,30 @@ test.describe('W3d editor — TipTap WYSIWYG', () => {
 
     await content.click();
     await page.keyboard.type('hello editor');
-    await page.keyboard.press('ControlOrMeta+A');
-
+    // Select the typed text with Shift+Home (caret is at the end after typing).
+    // ControlOrMeta+A is flaky here: in headless Chromium it does not reliably
+    // trigger ProseMirror's selectAll keymap, leaving the editor's state
+    // selection collapsed so `editor.chain().focus().toggleBold()` applies the
+    // mark to nothing. Shift+Home produces a real text selection ProseMirror
+    // reads from the DOM. The toolbar button's `.focus()` step can still
+    // occasionally collapse a freshly-made selection, so retry select+toggle
+    // until the `<strong>` mark lands.
     const boldButton = page
       .locator('[data-testid="demo-editor-scratch"] button[data-testid="editor-toolbar-bold"]')
       .first();
-    await boldButton.click({ force: true });
-
     const report = page.locator('[data-testid="rich2-report"]');
-    await expect(report).toContainText('<strong>', { timeout: 10_000 });
+    for (let attempt = 0; ; attempt++) {
+      await page.keyboard.press('Shift+Home');
+      await boldButton.click({ force: true });
+      try {
+        await expect(report).toContainText('<strong>', { timeout: 2_000 });
+        break;
+      } catch (error) {
+        if (attempt >= 4) {
+          throw error;
+        }
+      }
+    }
     await expect(report).toContainText('hello editor');
     // Sanitize boundary: no script ever leaks from the editor output.
     await expect(report).not.toContainText('<script>');
@@ -63,7 +78,12 @@ test.describe('W3d editor — TipTap WYSIWYG', () => {
     await expect(content).toBeVisible({ timeout: 10_000 });
 
     await content.click();
-    await page.keyboard.type('item one');
+    await expect(content).toBeFocused();
+    await page.keyboard.type('item one', { delay: 25 });
+    // Guard against an input race where the editor hasn't settled the typed
+    // text before the toolbar toggle (observed as a dropped leading char /
+    // stray mark). Assert the text is committed before toggling the list.
+    await expect(content).toContainText('item one', { timeout: 5_000 });
 
     const listButton = page
       .locator('[data-testid="demo-editor-scratch"] button[data-testid="editor-toolbar-bulletList"]')

@@ -40,6 +40,10 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     });
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
   },
+  'crud-demo': async (page) => {
+    await expect(page.getByRole('heading', { name: /用户管理/ })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: /Back to Home/ })).toBeVisible();
+  },
   'condition-builder-formula': async (page) => {
     await expect(
       page.getByRole('heading', { name: '条件构建器 Formula 集成', level: 1 }),

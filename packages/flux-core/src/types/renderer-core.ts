@@ -9,11 +9,13 @@ import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-gove
 import type {
   CompiledDataSource,
   CompiledReaction,
+  CompiledReactionPlan,
   CompiledRuntimeValue,
   ExpressionCompiler,
   ImportStack,
   ModuleCache,
   PreparedImportSpec,
+  ReactionRegistration,
 } from './compilation.js';
 import type {
   NodeRuntimeState,
@@ -178,6 +180,75 @@ export type RendererEventHandler = (
   ctx?: Partial<ActionContext>,
 ) => Promise<ActionResult>;
 
+/**
+ * Debug snapshot returned by `ReactionHandle.getDebugState()`. Diagnostic only;
+ * external consumers should treat `phase` as `'ready' | 'paused'` even though
+ * the runtime distinguishes initial-paused vs explicit-paused internally.
+ */
+export interface ReactionHandleDebugState {
+  phase: 'initial-paused' | 'ready' | 'explicit-paused' | 'disposed';
+  fireCount: number;
+  pauseCount: number;
+  pendingChange: boolean;
+  pendingChangedPaths: readonly string[];
+  disposed: boolean;
+}
+
+/**
+ * Imperative + reactive handle exposed to renderers for a `kind: 'reaction'`
+ * field. The runtime wrapper (flux-runtime `renderer-reaction-handle.ts`)
+ * subscribes to scope changes on `dependsOn` roots and uses `force()` to fire;
+ * renderers own initial-fire timing via `ready()` and may temporarily suspend
+ * firing via `pause()` / `resume()`.
+ *
+ * After dispose, `dispatch` resolves to a canonical cancelled result and
+ * `force`/`ready`/`pause`/`resume` are silent no-ops; `getDebugState()` keeps
+ * returning a snapshot with `phase: 'disposed'`.
+ *
+ * @see docs/plans/2026-07-07-loadAction-reaction-kind-plan.md
+ */
+export interface ReactionHandle {
+  /**
+   * Dispatch the underlying action program imperatively. Renderers use this for
+   * renderer-internal triggers (page change, sort change, etc.). The wrapper
+   * injects `evaluationBindings` and per-fire `AbortController` before reaching
+   * the action dispatcher. Returns the full `ActionResult` so renderers can
+   * consume `data`, `error`, etc.
+   */
+  dispatch(ctx?: {
+    signal?: AbortSignal;
+    evaluationBindings?: Record<string, unknown>;
+  }): Promise<ActionResult>;
+  /**
+   * Force the reaction to fire as if a scope change touched `paths` (or all
+   * declared dependency roots when omitted). No-op when paused or disposed.
+   */
+  force(paths?: readonly string[]): void;
+  /**
+   * Transition from the initial paused state to ready. Required for the
+   * reaction to fire on initial mount. No-op after the first call.
+   */
+  ready(): void;
+  /**
+   * Pause firing. Nested pauses are tracked via a counter; only the matching
+   * number of `resume()` calls resume firing. Pending changes accumulated
+   * during pause are flushed once on the final resume.
+   */
+  pause(): void;
+  /** Resume firing (counter-based). See `pause()`. */
+  resume(): void;
+  /**
+   * Dispose the handle and underlying registration. Aborts any in-flight
+   * dispatch (per-fire AbortController chain), unsubscribes from scope changes,
+   * and transitions the handle to `phase: 'disposed'`. After dispose, all
+   * methods become no-ops and `dispatch()` resolves to a canonical cancelled
+   * result. Idempotent.
+   */
+  dispose(): void;
+  /** Snapshot for debug tooling. */
+  getDebugState(): ReactionHandleDebugState;
+}
+
 export interface RendererComponentProps<
   S extends BaseSchema = BaseSchema,
   P extends Record<string, unknown> = RendererResolvedProps<S>,
@@ -191,6 +262,14 @@ export interface RendererComponentProps<
   meta: ResolvedNodeMeta;
   regions: Readonly<Record<string, RenderRegionHandle<RendererRenderOutput>>>;
   events: Readonly<Record<string, RendererEventHandler | undefined>>;
+  /**
+   * `kind: 'reaction'` field handles. Each handle is a lazy proxy: the
+   * underlying registration is created on first activation (during the
+   * layout-effect mount) and disposed on unmount. Renderers default to
+   * `props.reactions[key]` being absent (`{}`) when the schema declares no
+   * reaction fields. Channel parallels `events` and `regions`.
+   */
+  reactions: Readonly<Record<string, ReactionHandle>>;
   helpers: RendererHelpers;
 }
 
@@ -331,7 +410,30 @@ export interface RendererRuntime {
       action: ActionSchema | ActionSchema[] | CompiledActionProgram,
       ctx?: Partial<ActionContext>,
     ) => Promise<ActionResult>;
-  }): { id: string; dispose(): void };
+  }): ReactionRegistration;
+  /**
+   * Register a renderer-owned reaction for a `kind: 'reaction'` field. Returns
+   * a full `ReactionHandle` (the renderer-facing abstraction with
+   * dispatch/force/ready/pause/resume). Internally the wrapper synthesises a
+   * static watch (no schema-declared watch), self-subscribes to scope changes
+   * on `dependsOn` roots, applies `ignoreWritesTo` filtering, maintains the
+   * ready/pause state machine, and triggers fires via the underlying
+   * `ForceableReactionRegistration.force(paths?)` (obtained from
+   * `registerReaction`'s result via internal cast).
+   *
+   * Distinct from `registerReaction`: this entry point never fires on the
+   * runtime's own scope-subscription — all firing goes through the wrapper's
+   * explicit `force()` or the renderer's `dispatch()`.
+   */
+  registerRendererReaction(input: {
+    id: string;
+    scope: ScopeRef;
+    compiledReactionPlan: CompiledReactionPlan;
+    dispatch: (
+      action: ActionSchema | ActionSchema[] | CompiledActionProgram,
+      ctx?: Partial<ActionContext>,
+    ) => Promise<ActionResult>;
+  }): ReactionHandle;
   getSourceDebugSnapshot?(): SourceRegistryDebugSnapshot;
   getReactionDebugSnapshot?(): ReactionRegistryDebugSnapshot;
   getAsyncOwnerDebugSnapshot?(): AsyncOwnerDebugSnapshot;

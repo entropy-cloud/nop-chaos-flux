@@ -69,14 +69,8 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
   const componentRegistry = useCurrentComponentRegistry();
   const autoLoad = props.props.autoLoad !== false;
-  // C-02: `loadAction` is declared `kind: 'prop'`, so the compiler pre-compiles its
-  // `${}` templates into the node's propsProgram exactly once and the prop channel
-  // reactively resolves them against the current scope. Consuming the resolved
-  // value from `props.props.loadAction` replaces the former raw-schema re-evaluation
-  // path (helpers.evaluate against the schema-defined loadAction), which re-compiled
-  // the action expressions on every load / scope change and bypassed the compile
-  // pipeline. Reload reactivity is preserved because the prop channel re-resolves
-  // whenever the scope data feeding the action changes.
+  // Read the compiled action plan from eventPlans (kind:'event'). The action is
+  // dispatched at the right time with proper evaluationBindings by the component.
   const loadAction = props.props.loadAction as DynamicRendererSchema['loadAction'] | undefined;
   const loadActionKey = getLoadActionKey(loadAction);
   const loadActionRef = useRef(loadAction);

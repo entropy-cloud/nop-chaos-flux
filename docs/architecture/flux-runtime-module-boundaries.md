@@ -277,6 +277,12 @@ Runtime compiler ownership rule:
   - reaction debug snapshot ownership
   - uses `helpers.dispatch` port to consume action-core dispatcher
   - migrated from `let disposed = false` to `AbortController` for async cancellation
+  - `registerReaction(input)` now returns a `ReactionRegistration` whose concrete object is a `ForceableReactionRegistration` (extends base with `force(paths?)`); the `force` closure is hidden behind the base return type so existing callers stay transparent
+- `packages/flux-runtime/src/renderer-reaction-handle.ts`
+  - `createRendererReactionHandle(...)` builds a `ReactionHandle` from a `CompiledReactionPlan` for `kind: 'reaction'` fields
+  - synthesizes a static watch, self-subscribes to scope changes on `dependsOn` roots, applies `filterScopeChangeByIgnoredRoots` for `ignoreWritesTo`, and maintains the ready/pause state machine
+  - per-fire `AbortController` chain (new fire aborts in-flight) composed via `composeAbortSignals(...)` in `abort-signal-helpers.ts`
+- `runtime-factory.ts` exposes `registerRendererReaction(input)` on `RendererRuntime`, parallel to `registerReaction`; it returns a `ReactionHandle` (not the internal `ForceableReactionRegistration`) because the React lazy proxy needs `dispatch`/`force`/`ready`/`pause`/`resume`
 - `runtime-factory.ts` still uses the boolean `disposed` pattern for synchronous dispose gating (by design)
 - `packages/flux-runtime/src/surface-runtime.ts`
   - shared dialog/drawer surface ownership

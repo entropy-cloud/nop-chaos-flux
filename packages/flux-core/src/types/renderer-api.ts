@@ -2,6 +2,7 @@ import type { ExpressionExecutionEnv } from './expression-env-types.js';
 import type { ActionMonitorPayload, ActionResult, ImportedLibraryLoader } from './actions.js';
 import type { ScopeRef } from './scope.js';
 import type { ExecutableApiRequest, SchemaPath } from './schema-base-types.js';
+import type { SchemaInput } from './schema.js';
 
 export interface ApiRequestContext {
   scope: ScopeRef;
@@ -12,11 +13,45 @@ export interface ApiRequestContext {
 }
 
 export interface ApiResponse<T = unknown> {
-  ok: boolean;
+  /**
+   * Computed property: `status === 0`, mirroring the backend
+   * `ApiResponse.isOk()`. Optional on the type because the raw envelope
+   * returned by fetchers does not contain `ok`; the runtime normalization
+   * layer sets it before any consumer reads it.
+   */
+  ok?: boolean;
   status: number;
   data: T;
+  /** Error code (mirrors backend `ApiResponse.code`). */
+  code?: string;
+  /** Human-readable error message (mirrors backend `ApiResponse.msg`, a top-level field). */
+  msg?: string;
+  /** Field-level validation errors (mirrors backend `ApiResponse.errors`). */
+  errors?: Record<string, string>;
   headers?: Record<string, string>;
   raw?: unknown;
+}
+
+/**
+ * A dictionary bean as returned by `DictProvider__getDict` in nop-entropy.
+ * `options` is the canonical option list consumed by select-like controls.
+ */
+export interface DictBean {
+  name: string;
+  label?: string;
+  locale?: string;
+  valueType?: string;
+  options: Array<{ label: string; value: string; code?: string; description?: string }>;
+}
+
+/** Resolves a page path to a raw schema JSON (backed by `PageProvider__getPage`). */
+export interface FluxPageProvider {
+  getPage(path: string, signal?: AbortSignal): Promise<SchemaInput>;
+}
+
+/** Resolves a dict name to a `DictBean` (backed by `DictProvider__getDict`). */
+export interface FluxDictProvider {
+  getDict(dictName: string, signal?: AbortSignal): Promise<DictBean>;
 }
 
 export type ApiFetcher = <T = unknown>(
@@ -66,4 +101,13 @@ export interface RendererEnv extends ExpressionExecutionEnv {
   importLoader?: ImportedLibraryLoader;
   resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
   monitor?: RendererMonitor;
+
+  /** Resolve a page path to a raw schema JSON. Backed by `PageProvider__getPage`. */
+  pageProvider?: FluxPageProvider;
+  /** Resolve a dict name to a `DictBean`. Backed by `DictProvider__getDict`. */
+  dictProvider?: FluxDictProvider;
+  /** Permission check for `xui:roles` filtering. Returns true (allow-all) when absent. */
+  hasRole?(role: string): boolean;
+  /** Current locale, used as a cache key segment for page/dict caches. */
+  locale?: string;
 }

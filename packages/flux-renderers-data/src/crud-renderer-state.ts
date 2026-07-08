@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   getIn,
   type ActionContext,
-  type ActionSchema,
   type ActionResult,
+  type ReactionHandle,
   type RendererEnv,
   type RendererHelpers,
   type RendererComponentProps,
@@ -301,6 +301,7 @@ export function useCrudHandle(
   clearSelection: () => void,
   handleRefresh: (ctx?: Partial<ActionContext>) => void,
   toggleSelection: (key: unknown) => void,
+  handleLoadMore: () => Promise<unknown> | void,
 ) {
   const componentRegistry = useCurrentComponentRegistry();
   const cid = props.meta.cid;
@@ -319,10 +320,10 @@ export function useCrudHandle(
         type: 'crud',
         capabilities: {
           hasMethod(method) {
-            return ['refresh', 'getSelection', 'clearSelection', 'toggleSelection'].includes(method);
+            return ['refresh', 'getSelection', 'clearSelection', 'toggleSelection', 'loadMore'].includes(method);
           },
           listMethods() {
-            return ['refresh', 'getSelection', 'clearSelection', 'toggleSelection'];
+            return ['refresh', 'getSelection', 'clearSelection', 'toggleSelection', 'loadMore'];
           },
           async invoke(method, payload, ctx) {
             switch (method) {
@@ -337,6 +338,9 @@ export function useCrudHandle(
               case 'toggleSelection':
                 toggleSelection((payload as { key?: unknown } | undefined)?.key);
                 return { ok: true };
+              case 'loadMore':
+                handleLoadMore();
+                return { ok: true };
               default:
                 return { ok: false, error: new Error(`Unknown method: ${method}`) };
             }
@@ -345,7 +349,7 @@ export function useCrudHandle(
       },
       { cid },
     );
-  }, [clearSelection, componentRegistry, cid, handleRefresh, id, name, selectedRowKeys, toggleSelection]);
+  }, [clearSelection, componentRegistry, cid, handleRefresh, id, name, selectedRowKeys, toggleSelection, handleLoadMore]);
 }
 
 export function useCrudRuntimeState(args: {
@@ -441,21 +445,6 @@ export function useCrudRuntimeState(args: {
   );
 }
 
-function serializeCrudRequest(args: {
-  pagination: CrudPaginationState;
-  query: Record<string, unknown>;
-  sort: CrudSortState;
-  filters: CrudFilterState;
-}): string {
-  return JSON.stringify({
-    page: args.pagination.currentPage,
-    pageSize: args.pagination.pageSize,
-    query: args.query,
-    sort: { column: args.sort.column, direction: args.sort.direction },
-    filters: args.filters,
-  });
-}
-
 export interface CrudLoadActionResult {
   rows: unknown[];
   total: number | undefined;
@@ -466,7 +455,7 @@ export interface CrudLoadActionResult {
 
 export function useCrudLoadAction(args: {
   enabled: boolean;
-  loadAction: ActionSchema | undefined;
+  loadReaction: ReactionHandle | undefined;
   loadAllData: boolean;
   onError: RendererComponentProps<CrudSchema>['events']['onError'];
   helpers: RendererHelpers;
@@ -479,13 +468,16 @@ export function useCrudLoadAction(args: {
   filters: CrudFilterState;
   selection: string[];
   paginationStatePath: string;
+  queryStatePath: string;
+  sortStatePath: string;
+  filterStatePath: string;
+  selectionStatePath: string;
 }): CrudLoadActionResult {
   const {
     enabled,
-    loadAction,
+    loadReaction,
     loadAllData,
     onError,
-    helpers,
     env,
     scope,
     nodeScope,
@@ -495,6 +487,10 @@ export function useCrudLoadAction(args: {
     filters,
     selection,
     paginationStatePath,
+    queryStatePath,
+    sortStatePath,
+    filterStatePath,
+    selectionStatePath,
   } = args;
 
   const [rows, setRows] = useState<unknown[]>(EMPTY_ROWS);
@@ -502,20 +498,12 @@ export function useCrudLoadAction(args: {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | undefined>(undefined);
 
-  const lastRequestKeyRef = useRef<string | undefined>(undefined);
   const loadedAllRef = useRef(false);
-  const abortRef = useRef<AbortController | undefined>(undefined);
-  const [reloadNonce, setReloadNonce] = useState(0);
 
   const reload = useCallback(() => {
-    lastRequestKeyRef.current = undefined;
     loadedAllRef.current = false;
-    setReloadNonce((n) => n + 1);
-  }, []);
-
-  const requestKey = enabled
-    ? serializeCrudRequest({ pagination, query, sort, filters })
-    : undefined;
+    loadReaction?.force();
+  }, [loadReaction]);
 
   const reportError = useCallback(
     (err: Error, evaluationBindings: Record<string, unknown>) => {
@@ -536,8 +524,45 @@ export function useCrudLoadAction(args: {
     [env, nodeScope, onError, scope],
   );
 
+  // Activate the reaction handle on mount and register a bindings provider
+  // so that reactive triggers (external binding changes) and manual refresh
+  // (force/reload) inject CRUD internal state into the action's
+  // evaluationBindings — same context as imperative dispatch.
   useEffect(() => {
-    if (!enabled || !loadAction) {
+    if (!enabled || !loadReaction) {
+      return;
+    }
+
+    // Register bindings provider: reads current CRUD state directly from scope
+    // (NOT from React state closures) to avoid stale-data issues during
+    // synchronous scope-change notification.
+    const proxyHandle = loadReaction as ReactionHandle & {
+      __setBindingsProvider?(fn: (() => Record<string, unknown>) | undefined): void;
+    };
+    proxyHandle.__setBindingsProvider?.(() => {
+      const activeScope = scope ?? nodeScope;
+      const snapshot = activeScope?.readVisible() ?? {};
+      return createCrudEvaluationBindings({
+        pagination: normalizePagination(
+          getIn(snapshot, paginationStatePath),
+          pagination.pageSize,
+        ),
+        query: (getIn(snapshot, queryStatePath) as Record<string, unknown>) ?? {},
+        sort: (getIn(snapshot, sortStatePath) as CrudSortState) ?? {},
+        filters: (getIn(snapshot, filterStatePath) as CrudFilterState) ?? {},
+        selection: toStringArray(getIn(snapshot, selectionStatePath)),
+      });
+    });
+
+    loadReaction.ready();
+
+    return () => {
+      proxyHandle.__setBindingsProvider?.(undefined);
+    };
+  }, [enabled, loadReaction, scope, nodeScope, paginationStatePath, queryStatePath, sortStatePath, filterStatePath, selectionStatePath, pagination.pageSize]);
+
+  useEffect(() => {
+    if (!enabled || !loadReaction) {
       return;
     }
 
@@ -545,14 +570,7 @@ export function useCrudLoadAction(args: {
       return;
     }
 
-    if (requestKey === lastRequestKeyRef.current) {
-      return;
-    }
-
-    lastRequestKeyRef.current = requestKey;
-
-    const controller = new AbortController();
-    abortRef.current = controller;
+    let cancelled = false;
 
     const evaluationBindings = createCrudEvaluationBindings({
       pagination,
@@ -566,17 +584,13 @@ export function useCrudLoadAction(args: {
       setLoading(true);
       setError(undefined);
       try {
-        const result: ActionResult = await helpers.dispatch(loadAction, {
-          signal: controller.signal,
-          scope: scope ?? nodeScope,
-          evaluationBindings,
-        });
+        const result: ActionResult = await loadReaction.dispatch({ evaluationBindings });
 
-        if (controller.signal.aborted) {
+        if (cancelled || result.cancelled) {
           return;
         }
 
-        if (!result.ok || result.cancelled) {
+        if (!result.ok) {
           const err =
             result.error instanceof Error
               ? result.error
@@ -595,13 +609,9 @@ export function useCrudLoadAction(args: {
         if (normalized.serverPagination && (scope ?? nodeScope)) {
           const correctedPage = normalized.serverPagination.currentPage ?? pagination.currentPage;
           const correctedPageSize = normalized.serverPagination.pageSize ?? pagination.pageSize;
-          const corrected = { currentPage: correctedPage, pageSize: correctedPageSize };
-          (scope ?? nodeScope)!.update(paginationStatePath, corrected);
-          lastRequestKeyRef.current = serializeCrudRequest({
-            pagination: corrected,
-            query,
-            sort,
-            filters,
+          (scope ?? nodeScope)!.update(paginationStatePath, {
+            currentPage: correctedPage,
+            pageSize: correctedPageSize,
           });
         }
 
@@ -611,7 +621,7 @@ export function useCrudLoadAction(args: {
 
         setLoading(false);
       } catch (err) {
-        if (controller.signal.aborted) {
+        if (cancelled) {
           return;
         }
         const error = err instanceof Error ? err : new Error(String(err));
@@ -621,16 +631,20 @@ export function useCrudLoadAction(args: {
     })();
 
     return () => {
-      controller.abort();
+      cancelled = true;
     };
+    // Note: all CRUD internal state (pagination/query/sort/filters/selection)
+    // is intentionally in deps. In table mode, pagination/pageSize changes
+    // bypass CRUD handlers — TableRenderer writes directly to scope, and the
+    // CRUD detects the change via useScopeSelector → re-render → this effect.
+    // Server-correction loop prevention relies on scope.update value
+    // comparison (Fix 3) once implemented; until then, the loop is
+    // self-stabilizing (at most 1 extra fetch).
   }, [
-    requestKey,
     enabled,
+    loadReaction,
     loadAllData,
-    reloadNonce,
     reportError,
-    loadAction,
-    helpers,
     scope,
     nodeScope,
     pagination,

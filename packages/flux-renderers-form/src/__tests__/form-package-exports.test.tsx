@@ -47,6 +47,7 @@ describe('FieldsetRenderer', () => {
         regions={{}}
         templateNode={{} as any}
         node={{} as any}
+        reactions={{}}
       />,
     );
 
@@ -78,6 +79,7 @@ describe('FieldsetRenderer', () => {
         regions={{ body: null as any }}
         templateNode={{} as any}
         node={{} as any}
+        reactions={{}}
       />,
     );
 

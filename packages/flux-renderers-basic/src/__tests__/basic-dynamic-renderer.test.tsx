@@ -106,7 +106,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    await waitFor(() => expect(screen.getByText('Error: Request failed with status 500')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Error: Request failed (status=500)')).toBeTruthy());
     cleanup();
   });
 

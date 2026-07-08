@@ -3,6 +3,7 @@ import type {
   RuntimeValueState,
   CompiledDataSource,
   CompiledReaction,
+  CompiledReactionPlan,
 } from './compilation.js';
 import type {
   CompiledRendererContract,
@@ -142,6 +143,15 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   structuralWhen?: CompiledRuntimeValue<boolean | unknown>;
   structuralFields?: Readonly<Record<string, CompiledRuntimeValue<unknown>>>;
   eventPlans: Readonly<Record<string, TemplateCompiledActionProgram>>;
+  /**
+   * Compiled plans for `kind: 'reaction'` fields (e.g. CRUD `loadAction`).
+   * Parallel to `eventPlans`; each entry pairs a compiled action program with
+   * its declared root-level dependencies. Optional because most renderers have
+   * no reaction fields.
+   *
+   * @see docs/plans/2026-07-07-loadAction-reaction-kind-plan.md
+   */
+  reactionPlans?: Readonly<Record<string, CompiledReactionPlan>>;
   lifecycleActions?: Readonly<{
     onMount?: TemplateCompiledActionProgram;
     onUnmount?: TemplateCompiledActionProgram;

@@ -33,7 +33,10 @@ export type SchemaDiagnosticCode =
   | 'slot-used-outside-region'
   | 'unknown-builtin-member'
   | 'ambient-dollar-reference'
-  | 'unhandled-compilation-error';
+  | 'unhandled-compilation-error'
+  | 'invalid-reaction-deps'
+  | 'invalid-reaction-deep-path'
+  | 'invalid-reaction-immediate';
 
 export interface SchemaDiagnosticSourceLocation {
   readonly file?: string;

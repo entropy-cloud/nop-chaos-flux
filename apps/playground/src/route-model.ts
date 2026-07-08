@@ -203,6 +203,13 @@ export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
     sourcePackage: '@nop-chaos/flux-renderers-data',
     description: 'Recharts-based chart driven by source data, configured axes, and series.',
   },
+  {
+    id: 'statistics',
+    title: 'Statistics',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    description: 'Compact numeric statistics display (total/count) for dashboards and summaries.',
+  },
 ];
 
 export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
