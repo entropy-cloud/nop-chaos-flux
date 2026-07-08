@@ -1,7 +1,8 @@
 # 451 flux Page/Dict Loading And Pre-Compile (@dict / @page / xui:roles)
 
-> Plan Status: completed
-> Last Reviewed: 2026-07-06
+> Plan Status: superseded
+> Last Reviewed: 2026-07-08
+> Superseded by: `docs/plans/2026-07-08-dict-page-loading-refactor-plan.md` (reverses Phase 2-4: caches + @dict dispatch moved out of flux-runtime; provider interfaces flattened to env functions)
 > Source: `docs/architecture/flux-page-dict-loading-and-precompile.md`; analysis of `nop-chaos-next` `amis-core` special-URL pipeline vs flux integration gap
 > Related: design doc `docs/architecture/flux-page-dict-loading-and-precompile.md`; `docs/architecture/renderer-runtime.md`, `module-cache-and-import-stack.md`, `flux-runtime-module-boundaries.md`
 

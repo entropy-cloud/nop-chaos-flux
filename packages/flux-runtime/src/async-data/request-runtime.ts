@@ -1,6 +1,5 @@
 import type {
   ApiResponse,
-  ApiRequestContext,
   ExecutableApiRequest,
   ExpressionCompiler,
   ApiSchema,
@@ -14,8 +13,6 @@ import { isPlainObject } from '@nop-chaos/flux-core';
 import { withRetry, withTimeout, type RetryResult } from '@nop-chaos/flux-action-core';
 import { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor.js';
 import { stableStringify } from './api-cache.js';
-import { splitSpecialPrefix } from '../special-url/dispatch.js';
-import { loadDict } from '../special-url/loaders.js';
 
 export { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor.js';
 
@@ -499,27 +496,6 @@ export async function executeApiSchema(
 
 export const executeApiObject = executeApiSchema;
 
-/**
- * Special-URL dispatch wrapper installed at executor construction time. For
- * `@dict:` URLs it resolves the dictionary through `loadDict` (env.dictProvider +
- * global TTL cache) and returns `{ status: 0, data: dict.options }` so select
- * sources need no `responseAdaptor`. All other URLs (including unknown `@`
- * schemes and plain HTTP) pass through to `env.fetcher` unchanged — sync-first,
- * so non-`@dict` fetcher timing is byte-for-byte identical.
- */
-function fetchWithSpecialUrlDispatch<T>(
-  api: ExecutableApiRequest,
-  ctx: ApiRequestContext,
-): Promise<ApiResponse<T>> {
-  const prefix = splitSpecialPrefix(api.url);
-  if (prefix && prefix[0] === 'dict') {
-    return loadDict(prefix[1], { env: ctx.env, signal: ctx.signal }).then(
-      (dict): ApiResponse<T> => ({ ok: true, status: 0, data: dict.options as T }),
-    );
-  }
-  return ctx.env.fetcher<T>(api, ctx);
-}
-
 export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestExecutor {
   const activeControllers = new Map<string, AbortController>();
   const activePromises = new Map<string, Promise<ApiResponse<unknown>>>();
@@ -577,7 +553,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
       }
     }
 
-    const requestPromise = fetchWithSpecialUrlDispatch<T>(executableApi, {
+    const requestPromise = env.fetcher<T>(executableApi, {
       scope,
       env,
       signal: controller.signal,

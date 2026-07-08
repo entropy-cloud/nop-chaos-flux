@@ -507,6 +507,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      { key: 'dict', kind: 'prop' },
       { key: 'groups', kind: 'prop' },
       { key: 'multiple', kind: 'prop', valueType: 'boolean' },
       { key: 'searchable', kind: 'prop', valueType: 'boolean' },

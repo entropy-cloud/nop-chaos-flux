@@ -44,16 +44,6 @@ export interface DictBean {
   options: Array<{ label: string; value: string; code?: string; description?: string }>;
 }
 
-/** Resolves a page path to a raw schema JSON (backed by `PageProvider__getPage`). */
-export interface FluxPageProvider {
-  getPage(path: string, signal?: AbortSignal): Promise<SchemaInput>;
-}
-
-/** Resolves a dict name to a `DictBean` (backed by `DictProvider__getDict`). */
-export interface FluxDictProvider {
-  getDict(dictName: string, signal?: AbortSignal): Promise<DictBean>;
-}
-
 export type ApiFetcher = <T = unknown>(
   api: ExecutableApiRequest,
   ctx: ApiRequestContext,
@@ -102,10 +92,10 @@ export interface RendererEnv extends ExpressionExecutionEnv {
   resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
   monitor?: RendererMonitor;
 
-  /** Resolve a page path to a raw schema JSON. Backed by `PageProvider__getPage`. */
-  pageProvider?: FluxPageProvider;
-  /** Resolve a dict name to a `DictBean`. Backed by `DictProvider__getDict`. */
-  dictProvider?: FluxDictProvider;
+  /** Load a page schema by path. App provides caching, URL resolution, role filtering. */
+  loadPage?: (path: string, signal?: AbortSignal) => Promise<SchemaInput>;
+  /** Load a dict by name. App provides caching, URL resolution. Returns a DictBean. */
+  loadDict?: (name: string, signal?: AbortSignal) => Promise<DictBean>;
   /** Permission check for `xui:roles` filtering. Returns true (allow-all) when absent. */
   hasRole?(role: string): boolean;
   /** Current locale, used as a cache key segment for page/dict caches. */

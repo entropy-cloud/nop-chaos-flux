@@ -115,6 +115,7 @@ export type { FieldsetSchema } from './renderers/fieldset.js';
 export interface SelectSchema extends InputSchema {
   options?: SelectOptionsValue;
   groups?: SelectOptionGroup[];
+  dict?: string;
   multiple?: boolean;
   searchable?: boolean;
   clearable?: boolean;

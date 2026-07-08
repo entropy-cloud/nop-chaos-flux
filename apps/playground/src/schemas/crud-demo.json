@@ -88,20 +88,29 @@
                       "name": "role",
                       "label": "角色",
                       "required": true,
-                      "options": [
-                        { "label": "管理员", "value": "admin" },
-                        { "label": "用户", "value": "user" },
-                        { "label": "访客", "value": "guest" }
-                      ]
+                      "dict": "role"
                     },
                     {
                       "type": "select",
                       "name": "status",
                       "label": "状态",
                       "required": true,
+                      "dict": "status"
+                    },
+                    {
+                      "type": "picker",
+                      "name": "department",
+                      "label": "部门（弹出选择）",
+                      "pickerDialog": { "title": "选择部门" },
+                      "searchable": true,
                       "options": [
-                        { "label": "启用", "value": "active" },
-                        { "label": "禁用", "value": "disabled" }
+                        { "label": "技术部", "value": "tech" },
+                        { "label": "产品部", "value": "product" },
+                        { "label": "设计部", "value": "design" },
+                        { "label": "市场部", "value": "marketing" },
+                        { "label": "人力资源部", "value": "hr" },
+                        { "label": "财务部", "value": "finance" },
+                        { "label": "运营部", "value": "operations" }
                       ]
                     }
                   ],
@@ -207,20 +216,29 @@
                           "name": "role",
                           "label": "角色",
                           "required": true,
-                          "options": [
-                            { "label": "管理员", "value": "admin" },
-                            { "label": "用户", "value": "user" },
-                            { "label": "访客", "value": "guest" }
-                          ]
+                          "dict": "role"
                         },
                         {
                           "type": "select",
                           "name": "status",
                           "label": "状态",
                           "required": true,
+                          "dict": "status"
+                        },
+                        {
+                          "type": "picker",
+                          "name": "department",
+                          "label": "部门（弹出选择）",
+                          "pickerDialog": { "title": "选择部门" },
+                          "searchable": true,
                           "options": [
-                            { "label": "启用", "value": "active" },
-                            { "label": "禁用", "value": "disabled" }
+                            { "label": "技术部", "value": "tech" },
+                            { "label": "产品部", "value": "product" },
+                            { "label": "设计部", "value": "design" },
+                            { "label": "市场部", "value": "marketing" },
+                            { "label": "人力资源部", "value": "hr" },
+                            { "label": "财务部", "value": "finance" },
+                            { "label": "运营部", "value": "operations" }
                           ]
                         }
                       ],

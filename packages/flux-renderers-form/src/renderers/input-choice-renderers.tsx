@@ -10,6 +10,7 @@ import {
 } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useDictOptions } from './use-dict-options.js';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Checkbox,
@@ -182,15 +183,20 @@ export type OptionTemplateRenderer = (
 export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const name = String(props.props.name ?? '');
   const multiple = Boolean(props.props.multiple);
+  const dictName = props.props.dict as string | undefined;
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: multiple ? selectMultipleAdapter : stringValueAdapter,
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
   });
-  const rawOptions = sanitizeChoiceOptions(props.props.options);
+  const dictState = useDictOptions(dictName);
+  const hasDict = !!dictName;
+  const rawOptions = hasDict
+    ? dictState.options
+    : sanitizeChoiceOptions(props.props.options);
   const groups = sanitizeChoiceGroups(props.props.groups);
-  const useGroups = groups.length > 0;
+  const useGroups = groups.length > 0 && !hasDict;
   const allOptions = useGroups ? groups.flatMap((group) => group.options) : rawOptions;
 
   const searchable = Boolean(props.props.searchable);
@@ -204,7 +210,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const ariaLabel = String(props.props.label ?? name);
-  const loading = optionsSourceState?.loading === true;
+  const loading = hasDict ? dictState.loading : optionsSourceState?.loading === true;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
   const errorId = errorMessage && name ? `${name}-source-error` : undefined;
   const placeholder = props.props.placeholder ? String(props.props.placeholder) : undefined;

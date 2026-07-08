@@ -157,6 +157,20 @@ const env: RendererEnv = {
     else toast.info?.(text || 'Info');
   },
   confirm: (message, title) => confirmBridge.confirm(message, title),
+  loadDict: async (name: string) => {
+    const MOCK_DICTS: Record<string, Array<{ label: string; value: string }>> = {
+      role: [
+        { label: '管理员', value: 'admin' },
+        { label: '用户', value: 'user' },
+        { label: '访客', value: 'guest' },
+      ],
+      status: [
+        { label: '启用', value: 'active' },
+        { label: '禁用', value: 'disabled' },
+      ],
+    };
+    return { name, options: MOCK_DICTS[name] ?? [] };
+  },
 };
 
 interface ConfirmRequest {
