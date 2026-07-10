@@ -1,7 +1,67 @@
 # 自定义渲染器 React Hooks 速查
 
 > 编写自定义渲染器时，从 `@nop-chaos/flux-react` 导入标准 Hooks。**禁止**直接访问 store 或自建 Context 传递这些数据。
-> 注册示例见 `design-patterns/custom.md`，完整类型签名见 `docs/references/quick-reference.md`。
+> 注册示例见 `design-patterns/custom.md`。核心类型签名已内联在下方「核心类型签名」一节，无需再翻源码。
+
+---
+
+## 核心类型签名
+
+以下为自定义渲染器最常用的类型（源：`packages/flux-core/src/types/renderer-core.ts` 等）。
+
+```ts
+// 渲染器函数签名
+type RendererComponent<S> = (props: RendererComponentProps<S>) => ReactNode;
+
+interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
+  id: string;
+  path: SchemaPath;
+  schema: S; // 原始 schema 节点
+  node: NodeInstance<S>; // 节点实例
+  props: Readonly<RendererResolvedProps<S>>; // 已解析的 schema 值
+  meta: ResolvedNodeMeta; // 已解析的元状态
+  regions: Readonly<Record<string, RenderRegionHandle>>; // 子区域句柄
+  events: Readonly<Record<string, RendererEventHandler | undefined>>;
+  reactions: Readonly<Record<string, ReactionHandle>>; // kind:'reaction' 字段句柄
+  helpers: RendererHelpers; // 稳定运行时工具
+}
+
+interface ResolvedNodeMeta {
+  id?: string;
+  className?: string;
+  frameClassName?: string;
+  when?: boolean;
+  visible: boolean;
+  hidden: boolean;
+  disabled: boolean;
+  testid?: string;
+  changed: boolean;
+  cid?: number;
+}
+
+interface RenderRegionHandle<R = unknown> {
+  key: string;
+  templateNode: TemplateNode | readonly TemplateNode[] | null;
+  params?: readonly string[];
+  render(options?: { scope?: ScopeRef; bindings?: Record<string, unknown> }): R;
+}
+
+interface RendererHelpers {
+  render: (input, options?) => RendererRenderOutput;
+  evaluate: <T>(target: unknown, scope?: ScopeRef) => T;
+  createScope: (patch?: object, options?) => ScopeRef;
+  disposeScope: (scopeId: string) => void;
+  dispatch: (action: ActionSchema | ActionSchema[], ctx?) => Promise<ActionResult>;
+  executeSource: (source: SourceSchema, options?) => Promise<ActionResult>;
+}
+
+interface RendererRegistry {
+  register(definition: RendererDefinition, options?: { override?: boolean }): void;
+  get(type: string): RendererDefinition | undefined;
+  has(type: string): boolean;
+  list(): RendererDefinition[];
+}
+```
 
 ---
 

@@ -1,8 +1,8 @@
 # 复合字段 (Composite Fields)
 
-> `object-field`、`variant-field`、`detail-field`、`detail-view` 是四种复合字段，用于编辑结构化对象值。它们共享 **projected scope**（投影作用域）模式：在父表单内创建子表单上下文，子字段的值组合成一个对象写回父表单。
+> `object-field`、`variant-field`、`detail-field`、`detail-view` 是四种复合字段，用于编辑结构化对象值。它们共享 **projected scope**（投影作用域）模式：在父表单内创建子表单上下文，子字段的值组合成一个对象写回父表单。`array-field`（本文第 5 节）则用同类模式编辑数组值。
 >
-> 所有字段定义见 `flux-types/schema.d.ts` 的 `ObjectFieldSchema`、`VariantFieldSchema`、`DetailFieldSchema`、`DetailViewSchema`。
+> 所有字段定义见 `flux-types/schema.d.ts` 的 `ObjectFieldSchema`、`VariantFieldSchema`、`DetailFieldSchema`、`DetailViewSchema`、`ArrayFieldSchema`。
 
 ---
 
@@ -224,9 +224,38 @@
 
 ---
 
+## 5. ArrayField：对象/标量数组子表单
+
+`array-field` 编辑**数组**值，每项由 `item` 定义的子字段构成。`itemKind: 'object'` 时每项是对象子表单；标量数组用 `itemKind: 'scalar'`。与 `array-editor`（仅标量、单输入框）的区别见 `form-advanced-fields.md` 选型说明。
+
+```jsonc
+{
+  "type": "form",
+  "data": { "contacts": [{ "name": "Alice", "email": "alice@example.com" }] },
+  "body": [
+    {
+      "type": "array-field",
+      "name": "contacts",
+      "label": "联系人",
+      "itemKind": "object",
+      "addable": true,
+      "removable": true,
+      "item": [
+        { "type": "input-text", "name": "name", "label": "姓名" },
+        { "type": "input-email", "name": "email", "label": "邮箱" },
+      ],
+    },
+  ],
+}
+```
+
+> 每项子字段用**相对 name**（`name`/`email`），运行时组合为 `contacts[i]` 的对象。对象数组也可用 `combo` / `input-table`（表格化编辑，见 `combo-input-table.md`）。
+
+---
+
 ## 共享能力
 
-四种复合字段都支持：
+以下四种复合字段（`object-field`/`variant-field`/`detail-field`/`detail-view`）都支持：
 
 - **`transformInAction`**：值进入编辑界面时的转换（raw → draft）
 - **`transformOutAction`**：编辑确认时的转换（draft → committed）

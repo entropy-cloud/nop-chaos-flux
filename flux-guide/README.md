@@ -22,15 +22,17 @@ JSON Schema (含 type 字段)
 
 ## 类型定义位置
 
-**所有组件的 TypeScript 接口定义在 `flux-types/*.d.ts`，这是绝对准确的知识源。** 修改 `packages/` 下任一 schema 时，须同步更新对应 `flux-types/*.d.ts` 以保持一致（定期维护）。需要查组件字段时直接看对应文件：
+**所有组件的 TypeScript 接口定义在 `flux-types/*.d.ts`，这是查字段的首选知识源。** 该文件由 `scripts/generate-types.mjs` **从已注册的运行时定义（`dist` 内存注册表）自动生成**——执行 `register*Renderers` 后读取每个 `RendererDefinition` 的 `fields`/`propContracts`/`eventContracts`，因此 helper 函数、`...spread`、`.concat` 的字段都能完整解析。修改渲染器后运行 `pnpm --dir flux-guide generate-types` 重新生成（需先 `pnpm build`）。
 
 | 文件          | 内容                                                                                                      |
 | ------------- | --------------------------------------------------------------------------------------------------------- |
 | `common.d.ts` | `BaseSchema`, `BoundFieldSchemaBase`, `ActionShapeFields`, `ApiSchema`, `SchemaInput`, `SchemaExpression` |
-| `schema.d.ts` | 所有组件 Schema 接口（Page/Form/Table/Dialog/Mobile 等）                                                  |
+| `schema.d.ts` | 所有组件 Schema 接口（Page/Form/Table/Dialog/Mobile/CodeEditor 等，共 93 个 type）                        |
 | `index.ts`    | `FluxSchema`（所有组件的联合类型）+ `FluxSchemaByType`（type→接口映射）                                   |
 
 > 看 TypeScript 接口即知 JSON 怎么写：接口的属性名就是 JSON key，类型就是值的类型。CRUD 等复杂控件字段较多，详见 `design-patterns/crud.md`。
+>
+> **已知局限**：少数纯输入控件（`input-number`/`checkbox`/`switch`/`tag-list`/`key-value`/`array-editor`/`condition-builder`/`badge`）的接口只列出继承字段——它们的专有属性（如 input-number 的 `min`/`max`/`step`）在运行时经通用 prop 通道解析（未在 `RendererDefinition.fields` 显式声明），故不出现在生成类型里。这些属性的权威定义见对应包的 `packages/flux-renderers-*/src/schemas.ts`，用法见 `design-patterns/` 对应文件。
 
 ## 跨组件共性
 
@@ -44,30 +46,48 @@ JSON Schema (含 type 字段)
 
 ### 最小集成
 
-```typescript
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
+> **API 要点**：`createSchemaRenderer()` **不接收 registry**（可选参数是 `RendererDefinition[]`）。registry 用 `createDefaultRegistry()` 构建，`register*Renderers(registry)` 填充，再作为 **prop** 传给渲染器。`schemaUrl` 与 `formulaCompiler` 是必填 prop。
+
+```tsx
+import {
+  createSchemaRenderer,
+  createDefaultRegistry,
+  createDefaultEnv,
+} from '@nop-chaos/flux-react';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 
-const registry = createRendererRegistry();
+const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
-const SchemaRenderer = createSchemaRenderer(registry);
 
-const env = {
-  fetcher: (config) => fetch(config.url, config).then((r) => r.json()),
-  notify: (type, msg) => alert(msg),
-  confirm: (msg) => window.confirm(msg),
-  navigate: (to) => (window.location.href = to),
-};
+const SchemaRenderer = createSchemaRenderer();
+const formulaCompiler = createFormulaCompiler();
+
+// env 至少提供 fetcher + notify（见 10-react-integration.md 的完整 RendererEnv 契约）
+const env = createDefaultEnv({
+  fetcher: (api) => fetch(api.url, api).then((r) => r.json()),
+  notify: (level, message) => alert(`[${level}] ${message}`),
+  confirm: (message, title) =>
+    Promise.resolve(window.confirm(title ? `${title}\n${message}` : message)),
+  alert: (message) => window.alert(message),
+  navigate: (to) => (window.location.href = String(to)),
+});
 
 const schema = { type: 'page', title: '首页', body: [{ type: 'text', text: 'Hello' }] };
-<SchemaRenderer schema={schema} env={env} />;
+
+<SchemaRenderer
+  schemaUrl="app://home"
+  schema={schema}
+  registry={registry}
+  env={env}
+  formulaCompiler={formulaCompiler}
+/>;
 ```
 
 ### 完整集成（注册所有渲染器）
 
-```typescript
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { createRendererRegistry } from '@nop-chaos/flux-core';
+```tsx
+import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
@@ -75,8 +95,9 @@ import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-ad
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
+import { registerCodeEditorRenderers } from '@nop-chaos/flux-code-editor';
 
-const registry = createRendererRegistry();
+const registry = createDefaultRegistry();
 registerBasicRenderers(registry); // page, text, button, icon, ...
 registerLayoutRenderers(registry); // container, flex, grid, tabs, ...
 registerFormRenderers(registry); // form, input-text, select, table, ...
@@ -84,9 +105,13 @@ registerFormAdvancedRenderers(registry); // combo, input-table, object-field, ..
 registerDataRenderers(registry); // crud, data-source, chart, tree, ...
 registerContentRenderers(registry); // card, alert, status, mapping, ...
 registerMobileRenderers(registry); // pull-refresh, infinite-scroll, ...
+registerCodeEditorRenderers(registry); // code-editor（懒加载 CodeMirror）
 
-const SchemaRenderer = createSchemaRenderer(registry);
+// registry 作为 prop 传入（见最小集成示例）
+const SchemaRenderer = createSchemaRenderer();
 ```
+
+> 宿主能力（`env` 契约、字典 `loadDict`、动态页面 `loadPage`、角色过滤 `xui:roles`、命名空间导入 `xui:imports`、`plugins`/`moduleCache`/`strictValidation`）详见 `11-host-integration.md`。
 
 ## 文件索引
 
@@ -101,7 +126,8 @@ const SchemaRenderer = createSchemaRenderer(registry);
 | `07-structural-nodes.md`  | 结构节点（fragment/loop/recurse/reaction）+ 组件实例方法                                                          |
 | `08-tabs-state.md`        | Tabs 状态管理（受控/非受控/scope 持久化）                                                                         |
 | `09-amis-migration.md`    | 与 AMIS 的主要差异                                                                                                |
-| `10-react-integration.md` | 自定义渲染器 React Hooks 速查（runtime/scope/form/page/context）                                                  |
+| `10-react-integration.md` | 自定义渲染器 React Hooks 速查（runtime/scope/form/page/context）+ 核心类型签名                                    |
+| `11-host-integration.md`  | 宿主集成：`env` 契约、`loadDict`/`loadPage`、`xui:roles`、`xui:imports`、`plugins`、表达式扩展                    |
 | `flux-types/`             | 所有组件的 TypeScript 接口（字段知识源）。入口见 `flux-types/index.ts`                                            |
 | `design-patterns/`        | 常见业务场景的完整解法 cookbook                                                                                   |
 | `mobile/`                 | 移动端原生组件专题（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）                                |

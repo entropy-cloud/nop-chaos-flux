@@ -174,8 +174,15 @@
 | 字符串标签选择   | `tag-list`                                               |
 | 键值对配置       | `key-value`                                              |
 | 简单字符串列表   | `array-editor`                                           |
+| 对象数组子表单   | `array-field`（见 composite-fields.md）                  |
 | 树形层级选择     | `input-tree`                                             |
 | 复杂规则表达式   | `condition-builder`                                      |
 | 结构化对象子表单 | `object-field`（见 composite-fields.md）                 |
 | 多态值切换       | `variant-field`（见 composite-fields.md）                |
 | 弹窗编辑详情     | `detail-field` / `detail-view`（见 composite-fields.md） |
+
+> **易混淆区分**：
+>
+> - `array-editor` = 编辑**标量数组**（如 `string[]` / `number[]`），每项一个输入框。
+> - `array-field` = 编辑**对象数组**（`Array<{...}>`），每项是一组子字段构成的子表单（见 `composite-fields.md`）。对象数组也可用 `combo` / `input-table`（见 `combo-input-table.md`）。
+> - `markdown-editor`（表单字段，`flux-renderers-form`）= 表单里编辑 markdown 文本并写回字段值；不要与展示型 `markdown`（只读渲染，`flux-renderers-content`）或通用 `code-editor`（`flux-code-editor`，代码/SQL/表达式）混淆。

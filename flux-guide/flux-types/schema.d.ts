@@ -130,6 +130,60 @@ export interface ReactionSchema extends BaseSchema {
   actions?: SchemaValue;
 }
 
+export interface DialogSchema extends BaseSchema {
+  type: 'dialog';
+  body?: SchemaInput;
+  actions?: SchemaInput;
+  header?: SchemaInput;
+  footer?: SchemaInput;
+  onOpen?: ActionSchema | ActionSchema[];
+  onClose?: ActionSchema | ActionSchema[];
+  onConfirm?: ActionSchema | ActionSchema[];
+  open?: SchemaValue;
+  defaultOpen?: boolean;
+  statusPath?: SchemaValue;
+  container?: SchemaValue;
+  showMask?: boolean;
+  closeOnEsc?: boolean;
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "full";
+  width?: string | number;
+  height?: string | number;
+  showCloseButton?: boolean;
+  confirm?: boolean | string;
+  bodyClassName?: string;
+  headerClassName?: string;
+  footerClassName?: string;
+  closeOnOutsideClick?: boolean;
+}
+
+export interface DrawerSchema extends BaseSchema {
+  type: 'drawer';
+  body?: SchemaInput;
+  actions?: SchemaInput;
+  header?: SchemaInput;
+  footer?: SchemaInput;
+  onOpen?: ActionSchema | ActionSchema[];
+  onClose?: ActionSchema | ActionSchema[];
+  onConfirm?: ActionSchema | ActionSchema[];
+  open?: SchemaValue;
+  defaultOpen?: boolean;
+  statusPath?: SchemaValue;
+  container?: SchemaValue;
+  showMask?: boolean;
+  closeOnEsc?: boolean;
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "full";
+  width?: string | number;
+  height?: string | number;
+  showCloseButton?: boolean;
+  confirm?: boolean | string;
+  bodyClassName?: string;
+  headerClassName?: string;
+  footerClassName?: string;
+  side?: SchemaValue;
+  closeOnOutside?: boolean;
+  resizable?: boolean;
+}
+
 export interface TabsSchema extends BaseSchema {
   type: 'tabs';
   toolbar?: SchemaInput;
@@ -146,14 +200,6 @@ export interface TabsSchema extends BaseSchema {
   sidePosition?: SchemaValue;
   contentClassName?: SchemaValue;
   toolbarClassName?: SchemaValue;
-}
-
-export interface DialogSchema extends BaseSchema {
-  type: 'dialog';
-}
-
-export interface DrawerSchema extends BaseSchema {
-  type: 'drawer';
 }
 
 // ============================================================================
@@ -272,24 +318,114 @@ export interface FormSchema extends BoundFieldSchemaBase {
   rules?: unknown[];
 }
 
+export interface FieldsetSchema extends BoundFieldSchemaBase {
+  type: 'fieldset';
+  collapsible?: boolean;
+  collapsed?: boolean;
+  body?: SchemaInput;
+}
+
 export interface InputTextSchema extends BoundFieldSchemaBase {
   type: 'input-text';
+  prefix?: SchemaValue;
+  suffix?: SchemaValue;
+  clearable?: boolean;
+  trimContents?: boolean;
+  showCounter?: boolean;
+  nativeAutoComplete?: SchemaValue;
+  inputMode?: SchemaValue;
+  revealPassword?: boolean;
+  placeholder?: SchemaValue;
+  minLength?: SchemaValue;
+  maxLength?: SchemaValue;
+  pattern?: SchemaValue;
+  validate?: SchemaValue;
+  hiddenFieldPolicy?: SchemaValue;
+  suggestSource?: SchemaValue;
+  suggestDebounce?: SchemaValue;
+  suggestTrigger?: SchemaValue;
+  suggestMinInputLength?: SchemaValue;
+  suggestTemplate?: SchemaInput;
+  suggestEmpty?: SchemaValue;
 }
 
 export interface InputEmailSchema extends BoundFieldSchemaBase {
   type: 'input-email';
+  prefix?: SchemaValue;
+  suffix?: SchemaValue;
+  clearable?: boolean;
+  trimContents?: boolean;
+  showCounter?: boolean;
+  nativeAutoComplete?: SchemaValue;
+  inputMode?: SchemaValue;
+  revealPassword?: boolean;
+  placeholder?: SchemaValue;
+  minLength?: SchemaValue;
+  maxLength?: SchemaValue;
+  pattern?: SchemaValue;
+  validate?: SchemaValue;
+  hiddenFieldPolicy?: SchemaValue;
+  suggestSource?: SchemaValue;
+  suggestDebounce?: SchemaValue;
+  suggestTrigger?: SchemaValue;
+  suggestMinInputLength?: SchemaValue;
+  suggestTemplate?: SchemaInput;
+  suggestEmpty?: SchemaValue;
 }
 
 export interface InputPasswordSchema extends BoundFieldSchemaBase {
   type: 'input-password';
+  prefix?: SchemaValue;
+  suffix?: SchemaValue;
+  clearable?: boolean;
+  trimContents?: boolean;
+  showCounter?: boolean;
+  nativeAutoComplete?: SchemaValue;
+  inputMode?: SchemaValue;
+  revealPassword?: boolean;
+  placeholder?: SchemaValue;
+  minLength?: SchemaValue;
+  maxLength?: SchemaValue;
+  pattern?: SchemaValue;
+  validate?: SchemaValue;
+  hiddenFieldPolicy?: SchemaValue;
+  suggestSource?: SchemaValue;
+  suggestDebounce?: SchemaValue;
+  suggestTrigger?: SchemaValue;
+  suggestMinInputLength?: SchemaValue;
+  suggestTemplate?: SchemaInput;
+  suggestEmpty?: SchemaValue;
 }
 
 export interface SelectSchema extends BoundFieldSchemaBase {
   type: 'select';
+  options?: SchemaValue;
+  dict?: SchemaValue;
+  groups?: SchemaValue;
+  multiple?: boolean;
+  searchable?: boolean;
+  clearable?: boolean;
+  filterOption?: SchemaValue;
+  searchPlaceholder?: SchemaValue;
+  noResultsText?: SchemaValue;
+  virtual?: boolean;
+  optionTemplate?: SchemaInput;
 }
 
 export interface TextareaSchema extends BoundFieldSchemaBase {
   type: 'textarea';
+  rows?: SchemaValue;
+  minRows?: SchemaValue;
+  maxRows?: SchemaValue;
+  clearable?: boolean;
+  trimContents?: boolean;
+  showCounter?: boolean;
+  placeholder?: SchemaValue;
+  minLength?: SchemaValue;
+  maxLength?: SchemaValue;
+  pattern?: SchemaValue;
+  validate?: SchemaValue;
+  hiddenFieldPolicy?: SchemaValue;
 }
 
 export interface CheckboxSchema extends BoundFieldSchemaBase {
@@ -302,10 +438,15 @@ export interface SwitchSchema extends BoundFieldSchemaBase {
 
 export interface RadioGroupSchema extends BoundFieldSchemaBase {
   type: 'radio-group';
+  options?: SchemaValue;
 }
 
 export interface CheckboxGroupSchema extends BoundFieldSchemaBase {
   type: 'checkbox-group';
+  options?: SchemaValue;
+  checkAll?: boolean;
+  maxSelected?: SchemaValue;
+  minSelected?: SchemaValue;
 }
 
 export interface InputNumberSchema extends BoundFieldSchemaBase {
@@ -314,49 +455,111 @@ export interface InputNumberSchema extends BoundFieldSchemaBase {
 
 export interface InputDateSchema extends BoundFieldSchemaBase {
   type: 'input-date';
+  valueFormat?: SchemaValue;
+  displayFormat?: SchemaValue;
+  utc?: boolean;
+  clearable?: boolean;
+  placeholder?: SchemaValue;
+  minDate?: SchemaValue;
+  maxDate?: SchemaValue;
 }
 
 export interface InputDatetimeSchema extends BoundFieldSchemaBase {
   type: 'input-datetime';
+  valueFormat?: SchemaValue;
+  displayFormat?: SchemaValue;
+  timeFormat?: SchemaValue;
+  utc?: boolean;
+  clearable?: boolean;
+  placeholder?: SchemaValue;
+  minDate?: SchemaValue;
+  maxDate?: SchemaValue;
 }
 
 export interface InputTimeSchema extends BoundFieldSchemaBase {
   type: 'input-time';
+  valueFormat?: SchemaValue;
+  displayFormat?: SchemaValue;
+  clearable?: boolean;
+  placeholder?: SchemaValue;
+  minTime?: SchemaValue;
+  maxTime?: SchemaValue;
 }
 
 export interface DateRangeSchema extends BoundFieldSchemaBase {
   type: 'date-range';
+  rangeKind?: SchemaValue;
+  valueFormat?: SchemaValue;
+  displayFormat?: SchemaValue;
+  delimiter?: SchemaValue;
+  utc?: boolean;
+  clearable?: boolean;
+  placeholder?: SchemaValue;
+  minDate?: SchemaValue;
+  maxDate?: SchemaValue;
+  shortcuts?: SchemaValue;
 }
 
 export interface InputMonthSchema extends BoundFieldSchemaBase {
   type: 'input-month';
+  selectionMode?: SchemaValue;
+  valueFormat?: SchemaValue;
+  displayFormat?: SchemaValue;
+  delimiter?: SchemaValue;
+  clearable?: boolean;
+  placeholder?: SchemaValue;
+  minDate?: SchemaValue;
+  maxDate?: SchemaValue;
+  shortcuts?: SchemaValue;
 }
 
 export interface InputQuarterSchema extends BoundFieldSchemaBase {
   type: 'input-quarter';
+  selectionMode?: SchemaValue;
+  valueFormat?: SchemaValue;
+  displayFormat?: SchemaValue;
+  delimiter?: SchemaValue;
+  clearable?: boolean;
+  placeholder?: SchemaValue;
+  minDate?: SchemaValue;
+  maxDate?: SchemaValue;
+  shortcuts?: SchemaValue;
 }
 
 export interface InputYearSchema extends BoundFieldSchemaBase {
   type: 'input-year';
-}
-
-export interface FieldsetSchema extends BoundFieldSchemaBase {
-  type: 'fieldset';
-  collapsible?: boolean;
-  collapsed?: boolean;
-  body?: SchemaInput;
+  selectionMode?: SchemaValue;
+  valueFormat?: SchemaValue;
+  displayFormat?: SchemaValue;
+  delimiter?: SchemaValue;
+  clearable?: boolean;
+  placeholder?: SchemaValue;
+  minDate?: SchemaValue;
+  maxDate?: SchemaValue;
+  shortcuts?: SchemaValue;
 }
 
 export interface MarkdownEditorSchema extends BoundFieldSchemaBase {
   type: 'markdown-editor';
+  placeholder?: SchemaValue;
+  viewMode?: SchemaValue;
+  toolbar?: boolean;
 }
 
 export interface InputTreeSchema extends BoundFieldSchemaBase {
   type: 'input-tree';
+  options?: SchemaValue;
+  virtualThreshold?: SchemaValue;
+  childrenSource?: SchemaValue;
+  searchSource?: SchemaValue;
 }
 
 export interface TreeSelectSchema extends BoundFieldSchemaBase {
   type: 'tree-select';
+  options?: SchemaValue;
+  virtualThreshold?: SchemaValue;
+  childrenSource?: SchemaValue;
+  searchSource?: SchemaValue;
 }
 
 export interface TagListSchema extends BoundFieldSchemaBase {
@@ -377,50 +580,145 @@ export interface ConditionBuilderSchema extends BoundFieldSchemaBase {
 
 export interface ObjectFieldSchema extends BoundFieldSchemaBase {
   type: 'object-field';
+  body?: SchemaInput;
+  transformInAction?: SchemaValue;
+  transformOutAction?: SchemaValue;
 }
 
 export interface ArrayFieldSchema extends BoundFieldSchemaBase {
   type: 'array-field';
+  itemKind?: SchemaValue;
+  itemKey?: SchemaValue;
+  addable?: SchemaValue;
+  removable?: SchemaValue;
+  removeWhen?: SchemaValue;
+  scalarItemValidation?: SchemaValue;
+  item?: SchemaInput;
 }
 
 export interface VariantFieldSchema extends BoundFieldSchemaBase {
   type: 'variant-field';
+  variants?: SchemaValue;
+  selector?: SchemaValue;
+  selectorMode?: SchemaValue;
+  defaultVariant?: SchemaValue;
+  detectVariantAction?: ActionSchema | ActionSchema[];
+  transformInAction?: SchemaValue;
+  transformOutAction?: SchemaValue;
+  validateValueAction?: SchemaValue;
 }
 
 export interface DetailFieldSchema extends BoundFieldSchemaBase {
   type: 'detail-field';
+  viewer?: SchemaInput;
+  content?: SchemaInput;
+  triggerLabel?: SchemaValue;
+  surface?: SchemaValue;
+  transformInAction?: SchemaValue;
+  validateValueAction?: SchemaValue;
+  transformOutAction?: SchemaValue;
 }
 
 export interface DetailViewSchema extends BoundFieldSchemaBase {
   type: 'detail-view';
+  viewer?: SchemaInput;
+  content?: SchemaInput;
+  scopePath?: SchemaValue;
+  triggerLabel?: SchemaValue;
+  surface?: SchemaValue;
+  transformInAction?: SchemaValue;
+  validateValueAction?: SchemaValue;
+  transformOutAction?: SchemaValue;
 }
 
 export interface EditorSchema extends BoundFieldSchemaBase {
   type: 'editor';
+  placeholder?: SchemaValue;
+  toolbar?: SchemaValue;
+  outputFormat?: SchemaValue;
 }
 
 export interface InputFileSchema extends BoundFieldSchemaBase {
   type: 'input-file';
+  placeholder?: SchemaValue;
+  multiple?: boolean;
+  accept?: SchemaValue;
+  maxFiles?: SchemaValue;
+  uploadAction?: SchemaValue;
+  valueMode?: SchemaValue;
+  buttonText?: SchemaValue;
 }
 
 export interface InputImageSchema extends BoundFieldSchemaBase {
   type: 'input-image';
+  placeholder?: SchemaValue;
+  multiple?: boolean;
+  accept?: SchemaValue;
+  maxFiles?: SchemaValue;
+  uploadAction?: SchemaValue;
+  valueMode?: SchemaValue;
+  buttonText?: SchemaValue;
+  previewMode?: SchemaValue;
+  crop?: SchemaValue;
 }
 
 export interface ComboSchema extends BoundFieldSchemaBase {
   type: 'combo';
+  addable?: boolean;
+  removable?: boolean;
+  reorderable?: boolean;
+  minItems?: SchemaValue;
+  maxItems?: SchemaValue;
+  itemKey?: SchemaValue;
+  removeWhen?: SchemaValue;
+  onAdd?: ActionSchema | ActionSchema[];
+  onRemove?: ActionSchema | ActionSchema[];
+  onReorder?: ActionSchema | ActionSchema[];
+  items?: SchemaInput;
 }
 
 export interface InputTableSchema extends BoundFieldSchemaBase {
   type: 'input-table';
+  columns?: SchemaValue;
+  rowKey?: SchemaValue;
+  addable?: boolean;
+  removable?: boolean;
+  reorderable?: boolean;
+  minItems?: SchemaValue;
+  maxItems?: SchemaValue;
+  onAdd?: ActionSchema | ActionSchema[];
+  onRemove?: ActionSchema | ActionSchema[];
+  onReorder?: ActionSchema | ActionSchema[];
+  item?: SchemaInput;
 }
 
 export interface TransferSchema extends BoundFieldSchemaBase {
   type: 'transfer';
+  options?: SchemaValue;
+  multiple?: boolean;
+  valueKey?: SchemaValue;
+  labelKey?: SchemaValue;
+  searchable?: boolean;
+  searchOnly?: boolean;
+  searchPlaceholder?: SchemaValue;
+  onAdd?: ActionSchema | ActionSchema[];
+  onRemove?: ActionSchema | ActionSchema[];
+  onChange?: ActionSchema | ActionSchema[];
 }
 
 export interface PickerSchema extends BoundFieldSchemaBase {
   type: 'picker';
+  options?: SchemaValue;
+  loadAction?: SchemaValue;
+  labelResolveAction?: SchemaValue;
+  valueKey?: SchemaValue;
+  labelKey?: SchemaValue;
+  columns?: SchemaValue;
+  searchable?: SchemaValue;
+  autoFill?: SchemaValue;
+  pickerDialog?: SchemaValue;
+  multiple?: boolean;
+  onPick?: ActionSchema | ActionSchema[];
 }
 
 // ============================================================================
@@ -547,6 +845,23 @@ export interface ListSchema extends BaseSchema {
   empty?: SchemaValue | SchemaInput;
 }
 
+export interface PaginationSchema extends BaseSchema {
+  type: 'pagination';
+  currentPage?: number;
+  pageSize?: number;
+  total?: number;
+  pageSizeOptions?: number[];
+  mode?: "simple" | "with-page-size";
+  statusPath?: string;
+  onChange?: ActionSchema | ActionSchema[];
+  onPageSizeChange?: ActionSchema | ActionSchema[];
+}
+
+export interface StatisticsSchema extends BaseSchema {
+  type: 'statistics';
+  total?: number;
+}
+
 export interface CrudSchema extends BaseSchema {
   type: 'crud';
   statusPath?: string;
@@ -597,23 +912,6 @@ export interface CrudSchema extends BaseSchema {
   onRefresh?: ActionSchema | ActionSchema[];
   onError?: ActionSchema | ActionSchema[];
   toolbarLayout?: Record<string, unknown>;
-}
-
-export interface PaginationSchema extends BaseSchema {
-  type: 'pagination';
-  currentPage?: number;
-  pageSize?: number;
-  total?: number;
-  pageSizeOptions?: number[];
-  mode?: "simple" | "with-page-size";
-  statusPath?: string;
-  onChange?: ActionSchema | ActionSchema[];
-  onPageSizeChange?: ActionSchema | ActionSchema[];
-}
-
-export interface StatisticsSchema extends BaseSchema {
-  type: 'statistics';
-  total?: number;
 }
 
 // ============================================================================
@@ -853,4 +1151,40 @@ export interface NoticeBarSchema extends BaseSchema {
   variant?: SchemaValue;
   onClick?: ActionSchema | ActionSchema[];
   onClose?: ActionSchema | ActionSchema[];
+}
+
+// ============================================================================
+// Code Editor — flux-code-editor (lazy-loaded CodeMirror)
+// ============================================================================
+
+export interface CodeEditorSchema extends BaseSchema {
+  type: 'code-editor';
+  hint?: SchemaValue | SchemaInput;
+  description?: SchemaValue | SchemaInput;
+  remark?: SchemaValue;
+  labelRemark?: SchemaValue;
+  labelAlign?: SchemaValue;
+  labelWidth?: SchemaValue;
+  value?: string;
+  diffValue?: string;
+  colorize?: boolean;
+  language?: string;
+  mode?: string;
+  placeholder?: string;
+  readOnly?: boolean;
+  required?: boolean;
+  expressionConfig?: Record<string, unknown>;
+  sqlConfig?: Record<string, unknown>;
+  editorTheme?: string;
+  lineNumbers?: boolean;
+  folding?: boolean;
+  autoHeight?: boolean;
+  allowFullscreen?: boolean;
+  options?: Record<string, unknown>;
+  height?: unknown;
+  width?: unknown;
+  onChange?: ActionSchema | ActionSchema[];
+  onFocus?: ActionSchema | ActionSchema[];
+  onBlur?: ActionSchema | ActionSchema[];
+  onEditorMount?: ActionSchema | ActionSchema[];
 }

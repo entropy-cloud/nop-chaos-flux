@@ -15,6 +15,7 @@ import type {
   ChartSchema,
   CheckboxGroupSchema,
   CheckboxSchema,
+  CodeEditorSchema,
   CollapseSchema,
   ComboSchema,
   ConditionBuilderSchema,
@@ -110,9 +111,9 @@ export type FluxSchema =
   | ScopeDebugSchema
   | DynamicRendererSchema
   | ReactionSchema
-  | TabsSchema
   | DialogSchema
   | DrawerSchema
+  | TabsSchema
   | WizardSchema
   | GridSchema
   | CollapseSchema
@@ -121,6 +122,7 @@ export type FluxSchema =
   | StepsSchema
   | TimelineSchema
   | FormSchema
+  | FieldsetSchema
   | InputTextSchema
   | InputEmailSchema
   | InputPasswordSchema
@@ -138,7 +140,6 @@ export type FluxSchema =
   | InputMonthSchema
   | InputQuarterSchema
   | InputYearSchema
-  | FieldsetSchema
   | MarkdownEditorSchema
   | InputTreeSchema
   | TreeSelectSchema
@@ -163,9 +164,9 @@ export type FluxSchema =
   | ChartSchema
   | TreeSchema
   | ListSchema
-  | CrudSchema
   | PaginationSchema
   | StatisticsSchema
+  | CrudSchema
   | SeparatorSchema
   | SpinnerSchema
   | ProgressSchema
@@ -188,7 +189,8 @@ export type FluxSchema =
   | InfiniteScrollSchema
   | SwipeCellSchema
   | CountdownSchema
-  | NoticeBarSchema;
+  | NoticeBarSchema
+  | CodeEditorSchema;
 
 export interface FluxSchemaByType {
   'page': PageSchema;
@@ -204,9 +206,9 @@ export interface FluxSchemaByType {
   'scope-debug': ScopeDebugSchema;
   'dynamic-renderer': DynamicRendererSchema;
   'reaction': ReactionSchema;
-  'tabs': TabsSchema;
   'dialog': DialogSchema;
   'drawer': DrawerSchema;
+  'tabs': TabsSchema;
   'wizard': WizardSchema;
   'grid': GridSchema;
   'collapse': CollapseSchema;
@@ -215,6 +217,7 @@ export interface FluxSchemaByType {
   'steps': StepsSchema;
   'timeline': TimelineSchema;
   'form': FormSchema;
+  'fieldset': FieldsetSchema;
   'input-text': InputTextSchema;
   'input-email': InputEmailSchema;
   'input-password': InputPasswordSchema;
@@ -232,7 +235,6 @@ export interface FluxSchemaByType {
   'input-month': InputMonthSchema;
   'input-quarter': InputQuarterSchema;
   'input-year': InputYearSchema;
-  'fieldset': FieldsetSchema;
   'markdown-editor': MarkdownEditorSchema;
   'input-tree': InputTreeSchema;
   'tree-select': TreeSelectSchema;
@@ -257,9 +259,9 @@ export interface FluxSchemaByType {
   'chart': ChartSchema;
   'tree': TreeSchema;
   'list': ListSchema;
-  'crud': CrudSchema;
   'pagination': PaginationSchema;
   'statistics': StatisticsSchema;
+  'crud': CrudSchema;
   'separator': SeparatorSchema;
   'spinner': SpinnerSchema;
   'progress': ProgressSchema;
@@ -283,6 +285,7 @@ export interface FluxSchemaByType {
   'swipe-cell': SwipeCellSchema;
   'countdown': CountdownSchema;
   'notice-bar': NoticeBarSchema;
+  'code-editor': CodeEditorSchema;
 }
 
 export type {
@@ -299,6 +302,7 @@ export type {
   ChartSchema,
   CheckboxGroupSchema,
   CheckboxSchema,
+  CodeEditorSchema,
   CollapseSchema,
   ComboSchema,
   ConditionBuilderSchema,

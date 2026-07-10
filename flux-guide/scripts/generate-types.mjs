@@ -1,19 +1,24 @@
 /**
  * generate-types.mjs
  *
- * Reads RendererDefinition objects from the renderer package source files
- * and generates:
+ * Reads RendererDefinition objects from the *registered in-memory* registry
+ * (built dist/, via loadRegisteredDefinitions) and generates:
  *   1. flux-guide/flux-types/schema.d.ts  — TypeScript type definitions
  *   2. flux-guide/flux-types/index.ts      — exports + FluxSchema union & map
  *
- * Usage: node flux-guide/scripts/generate-types.mjs
+ * Uses the executed registry (not source-text parsing), so helper-function
+ * prop contracts, spreads, and .concat field lists are fully resolved.
+ *
+ * Prerequisite: `pnpm build` so each package's dist/ exists.
+ * Usage: node --experimental-loader ./scripts/css-stub.mjs scripts/generate-types.mjs
+ *        (or: pnpm --dir flux-guide generate-types)
  */
 
-import { writeFileSync, readFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  loadAllDefinitions,
+  loadRegisteredDefinitions,
   resolveFieldType,
   shapeToTS,
   toPascalCase,
@@ -34,6 +39,7 @@ const PACKAGE_CATEGORY = {
   'flux-renderers-data': 'data',
   'flux-renderers-content': 'content',
   'flux-renderers-mobile': 'mobile',
+  'flux-code-editor': 'code-editor',
 };
 
 const CATEGORY_COMMENTS = {
@@ -44,6 +50,7 @@ const CATEGORY_COMMENTS = {
   'data': 'Data — flux-renderers-data',
   'content': 'Content/Display — flux-renderers-content',
   'mobile': 'Mobile — flux-renderers-mobile',
+  'code-editor': 'Code Editor — flux-code-editor (lazy-loaded CodeMirror)',
 };
 
 // ─── Name overrides for TS interface names ──────────────────────────────────
@@ -191,9 +198,9 @@ function categorizeDef(def) {
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-function main() {
-  console.log('Loading renderer definitions...');
-  const defs = loadAllDefinitions();
+async function main() {
+  console.log('Loading registered renderer definitions from dist...');
+  const defs = await loadRegisteredDefinitions();
   console.log(`  Loaded ${defs.length} definition(s)`);
 
   // Generate interfaces
@@ -233,7 +240,7 @@ function main() {
   lines.push('} from \'./common\';');
   lines.push('');
 
-  const catOrder = ['basic', 'layout', 'form', 'form-advanced', 'data', 'content', 'mobile'];
+  const catOrder = ['basic', 'layout', 'form', 'form-advanced', 'data', 'content', 'mobile', 'code-editor'];
 
   for (const cat of catOrder) {
     const catDefs = grouped[cat];
@@ -290,4 +297,7 @@ ${schemaTypeNames.map(n => `  ${n},`).join('\n')}
   console.log(`  Wrote ${INDEX_TS_PATH}`);
 }
 
-main();
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

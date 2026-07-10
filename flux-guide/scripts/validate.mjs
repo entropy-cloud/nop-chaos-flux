@@ -44,6 +44,9 @@ const { registerContentRenderers } = await import(
 const { registerMobileRenderers } = await import(
   resolve(REPO_ROOT, 'packages/flux-renderers-mobile/dist/index.js')
 );
+const { registerCodeEditorRenderers } = await import(
+  resolve(REPO_ROOT, 'packages/flux-code-editor/dist/index.js')
+);
 
 // ─── Setup full registry ────────────────────────────────────────────────────
 
@@ -55,6 +58,7 @@ registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
 registerContentRenderers(registry);
 registerMobileRenderers(registry);
+registerCodeEditorRenderers(registry);
 
 // ─── JSONC → JSON (comments, single quotes, trailing commas, unquoted keys) ─
 
@@ -206,6 +210,10 @@ function validateParsed(parsed, label, errs, warns) {
 
   // Skip blocks demonstrating runtime-only $slot references (cannot be statically verified)
   if (JSON.stringify(toValidate).includes('$slot.')) return;
+
+  // Skip blocks demonstrating plugin-processed convention keys that are not
+  // compiler-known renderer properties (e.g. xui:roles handled by a beforeCompile plugin).
+  if (JSON.stringify(toValidate).includes('xui:roles')) return;
 
   try {
     const diags = validateSchema({ schema: toValidate, registry });
