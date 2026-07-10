@@ -22,6 +22,14 @@ docs/testing/
 
 ## Index (Reverse Chronological)
 
+### 2026-07
+
+- [07-10](2026/07-10.md) — Input-Number 显示原生上下按钮；Select 控件箭头位置不正确
+
+### 2026-06
+
+- [06-12](2026/06-12.md) — flux basic key-value demo submit wiring reports debugger failure without page feedback；condition-builder AND/OR 切换看起来有明显延迟
+
 ### 2026-05
 
 - [05-26](2026/05-26.md) — input-tree 点击条目会意外切换整节点展开状态；Report Designer 按钮区被拆成多行窄按钮排布

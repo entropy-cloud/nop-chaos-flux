@@ -19,11 +19,11 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxPrimitive.Tr
   return (
     <ComboboxPrimitive.Trigger
       data-slot="combobox-trigger"
-      className={cn("[&_svg:not([class*='size-'])]:size-4", className)}
+      className={cn("flex items-center justify-between gap-1.5 [&_svg:not([class*='size-'])]:size-4", className)}
       {...props}
     >
       {children}
-      <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
+      <ChevronDownIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground" />
     </ComboboxPrimitive.Trigger>
   );
 }
