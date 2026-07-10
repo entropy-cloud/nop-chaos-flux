@@ -93,9 +93,13 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
         return (
             <WrappedFieldAction
               key={tag}
-              variant={active ? 'secondary' : 'outline'}
+              variant="outline"
               size="sm"
               disabled={presentation.effectiveDisabled || presentation.readOnly}
+              className={cn(
+                active &&
+                  'bg-primary/10 text-primary border-primary/30 hover:bg-primary/15',
+              )}
                 onFocus={() => {
                   if (currentForm && name) {
                     currentForm.visitField(name);

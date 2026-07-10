@@ -133,7 +133,7 @@ function ComboItemView(props: ComboItemProps) {
   return (
     <div className="rounded-lg border border-border bg-card p-3" data-slot="combo-item">
       <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1" data-slot="combo-item-body">
+        <div className="flex min-w-0 flex-1 flex-col gap-2" data-slot="combo-item-body">
           <FormContext.Provider value={itemForm ?? undefined}>
             <ScopeContext.Provider value={itemScope}>
               <ValidationContext.Provider value={itemValidationOwner}>{itemContent}</ValidationContext.Provider>
