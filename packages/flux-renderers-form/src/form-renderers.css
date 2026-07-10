@@ -32,10 +32,12 @@
   font-weight: 600;
 }
 
-.nop-form [data-slot='radio-group-wrapper'],
-.nop-form [data-slot='checkbox-group-wrapper'] {
+.nop-form [data-slot='radio-group-wrapper'] {
   display: grid;
   gap: 0.625rem;
+}
+
+.nop-form [data-slot='checkbox-group-wrapper'] {
 }
 
 .nop-form [data-slot='radio-group-wrapper'] [data-slot='radio-group-loading'],
@@ -48,8 +50,6 @@
 }
 
 .nop-form [data-slot='radio-group-wrapper'] [data-slot='radio-group-options'] {
-  display: grid;
-  gap: 0.625rem;
 }
 
 .nop-form [data-slot='radio-group-wrapper'] [data-slot='radio-group-item'],

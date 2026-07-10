@@ -135,6 +135,7 @@ export interface TextareaSchema extends InputSchema {
 
 export interface RadioGroupSchema extends InputSchema {
   options?: SelectOptionsValue;
+  direction?: 'horizontal' | 'vertical';
 }
 
 export interface CheckboxGroupSchema extends InputSchema {
@@ -142,6 +143,7 @@ export interface CheckboxGroupSchema extends InputSchema {
   checkAll?: boolean;
   maxSelected?: number;
   minSelected?: number;
+  direction?: 'horizontal' | 'vertical';
 }
 
 export interface InputTreeSchema extends InputSchema {

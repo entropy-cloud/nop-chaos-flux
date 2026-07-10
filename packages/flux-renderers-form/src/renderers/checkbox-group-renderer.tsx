@@ -27,6 +27,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
   });
   const selectedValues = value as unknown[];
   const options = sanitizeChoiceOptions(props.props.options);
+  const horizontal = props.props.direction === 'horizontal';
   const mobileStack = shouldStackChoicesVertically(isMobile, options.length);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = optionsSourceState?.loading === true;
@@ -121,7 +122,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
       ref={wrapperRef}
       className={cn(
         'nop-checkbox-group-wrapper',
-        mobileStack && 'flex flex-col gap-1',
+        mobileStack ? 'flex flex-col gap-1' : horizontal ? 'flex flex-wrap items-center gap-3' : 'flex flex-col gap-2.5',
         props.meta.className,
       )}
       data-slot="checkbox-group-wrapper"

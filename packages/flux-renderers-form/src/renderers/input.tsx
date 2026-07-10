@@ -559,6 +559,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      { key: 'direction', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -575,6 +576,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'checkAll', kind: 'prop', valueType: 'boolean' },
       { key: 'maxSelected', kind: 'prop' },
       { key: 'minSelected', kind: 'prop' },
+      { key: 'direction', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
