@@ -126,7 +126,7 @@ describe('input-quarter', () => {
   it('renders the initial quarter via year input + quarter select', () => {
     renderSchema(buildForm('input-quarter', 'q', '2024-Q3'));
     const host = screen.getByTestId('period-input-quarter');
-    const yearInput = host.querySelector('input[type="number"]') as HTMLInputElement;
+    const yearInput = host.querySelector('input[type="text"]') as HTMLInputElement;
     const select = host.querySelector('select') as HTMLSelectElement;
     expect(yearInput.value).toBe('2024');
     expect(select.value).toBe('3');
