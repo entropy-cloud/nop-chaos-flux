@@ -265,6 +265,7 @@ export function TreeOptionList(props: TreeOptionListProps) {
   const shouldVirtualize =
     threshold > 0 && visibleOptions.length >= threshold && !props.disabled;
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual returns non-memoizable functions; React Compiler auto-skips this component
   const virtualizer = useVirtualizer({
     count: shouldVirtualize ? visibleOptions.length : 0,
     getScrollElement: () => treeRef.current,

@@ -264,7 +264,6 @@ function NonVirtualBody({
   return <TableBody>{rows}</TableBody>;
 }
 
-/* eslint-disable react-hooks/incompatible-library */
 function VirtualBody({
   props,
   columns,
@@ -323,6 +322,7 @@ function VirtualBody({
     ],
   );
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual returns non-memoizable functions; React Compiler auto-skips this component
   const rowVirtualizer = useVirtualizer({
     count: flattenedItems.length,
     getScrollElement: () => parentRef?.current ?? null,

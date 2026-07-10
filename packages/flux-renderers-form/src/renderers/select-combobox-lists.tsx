@@ -84,6 +84,7 @@ export function VirtualizedComboboxList(props: {
   const flatItems: ChoiceOption[] = props.renderGroups
     ? props.groups.flatMap((group) => group.options)
     : props.flatOptions;
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual returns non-memoizable functions; React Compiler auto-skips this component
   const virtualizer = useVirtualizer({
     count: flatItems.length,
     getScrollElement: () => scrollRef.current,
