@@ -1,0 +1,140 @@
+{
+  "type": "page",
+  "testid": "form-wizard-page",
+  "body": [
+    {
+      "type": "form",
+      "id": "wizard-form",
+      "testid": "wizard-form",
+      "data": {
+        "name": "",
+        "email": "",
+        "role": "user",
+        "deptId": "",
+        "budget": 0,
+        "notify": true,
+        "bio": ""
+      },
+      "submitAction": {
+        "action": "ajax",
+        "args": {
+          "url": "/r/User__save",
+          "method": "post",
+          "includeScope": "*"
+        },
+        "messages": { "success": "提交成功" },
+        "then": [{ "action": "setValue", "args": { "path": "wizardSubmitted", "value": true } }]
+      },
+      "body": [
+        {
+          "type": "wizard",
+          "testid": "demo-wizard",
+          "statusPath": "wizardStatus",
+          "mountOnEnter": true,
+          "steps": [
+            {
+              "key": "basic",
+              "title": "基本信息",
+              "description": "填写账号基础信息",
+              "body": [
+                {
+                  "type": "fieldset",
+                  "title": "账号信息",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "name",
+                      "label": "姓名",
+                      "required": true,
+                      "placeholder": "请输入姓名"
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "email",
+                      "label": "邮箱",
+                      "required": true,
+                      "placeholder": "请输入邮箱"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "key": "detail",
+              "title": "详细信息",
+              "description": "补充角色与部门",
+              "body": [
+                {
+                  "type": "fieldset",
+                  "title": "角色与部门",
+                  "body": [
+                    {
+                      "type": "select",
+                      "name": "role",
+                      "label": "角色",
+                      "dict": "role"
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "deptId",
+                      "label": "部门 ID",
+                      "placeholder": "如 d1-1-1"
+                    },
+                    {
+                      "type": "input-number",
+                      "name": "budget",
+                      "label": "预算额度(万)",
+                      "min": 0
+                    },
+                    {
+                      "type": "switch",
+                      "name": "notify",
+                      "label": "接收通知"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "key": "confirm",
+              "title": "确认提交",
+              "description": "核对信息并提交",
+              "body": [
+                {
+                  "type": "fieldset",
+                  "title": "信息确认",
+                  "body": [
+                    { "type": "text", "text": "姓名：${name || \"-\"}", "className": "text-sm" },
+                    { "type": "text", "text": "邮箱：${email || \"-\"}", "className": "text-sm" },
+                    { "type": "text", "text": "角色：${role || \"-\"}", "className": "text-sm" },
+                    { "type": "text", "text": "部门：${deptId || \"-\"}", "className": "text-sm" },
+                    { "type": "text", "text": "预算：${budget ?? 0} 万", "className": "text-sm" },
+                    {
+                      "type": "text",
+                      "text": "通知：${notify ? \"开启\" : \"关闭\"}",
+                      "className": "text-sm"
+                    },
+                    { "type": "textarea", "name": "bio", "label": "备注", "placeholder": "可留空" }
+                  ]
+                },
+                {
+                  "type": "alert",
+                  "level": "info",
+                  "body": "点击\"完成\"将提交表单。",
+                  "className": "mt-2"
+                }
+              ]
+            }
+          ],
+          "onComplete": { "action": "submitForm" }
+        },
+        {
+          "type": "text",
+          "testid": "wizard-submit-report",
+          "text": "提交状态：${wizardSubmitted ? \"已完成 ✓\" : \"未提交\"}",
+          "className": "text-sm mt-3"
+        }
+      ]
+    }
+  ]
+}

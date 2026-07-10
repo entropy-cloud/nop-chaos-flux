@@ -4,33 +4,13 @@ async function openW2a(page: import('@playwright/test').Page) {
   await page.goto('#/w2a-data-composition', { waitUntil: 'commit' });
   await expect(
     page.getByRole('heading', {
-      name: '数据组合组 — service / pagination / cards / alert / wizard',
+      name: '数据组合组 — pagination / cards / alert / wizard',
       level: 1,
     }),
   ).toBeVisible({ timeout: 20_000 });
 }
 
-test.describe('W2a data composition family — service/pagination/cards/alert/wizard', () => {
-  test('service renders body from items expression and reports status (request-sink contract)', async ({
-    page,
-  }) => {
-    await openW2a(page);
-
-    // service reads tasksData.items (loaded into scope), not own request.
-    const service = page.locator('[data-testid="demo-service"]');
-    await expect(service).toBeVisible({ timeout: 10_000 });
-    // Wait for async data resolution to flip status to ready.
-    await expect(service).toHaveAttribute('data-status', 'ready', { timeout: 10_000 });
-    await expect(service).toHaveAttribute('data-item-count', '3');
-
-    // Body region renders once items resolve (request-sink contract: service reads
-    // scope via items expression, no own HTTP).
-    await expect(page.locator('[data-testid="service-body-text"]')).toContainText(
-      '3 tasks available',
-      { timeout: 10_000 },
-    );
-  });
-
+test.describe('W2a data composition family — pagination/cards/alert/wizard', () => {
   test('pagination switches pages via Next and reports onChange', async ({ page }) => {
     await openW2a(page);
 

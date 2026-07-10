@@ -1,0 +1,87 @@
+{
+  "type": "page",
+  "testid": "advanced-query-page",
+  "body": [
+    {
+      "type": "crud",
+      "id": "adv-query-crud",
+      "testid": "adv-query-crud",
+      "rowKey": "id",
+      "loadAllData": true,
+      "loadAction": {
+        "action": "ajax",
+        "dependsOn": ["__advq__"],
+        "args": {
+          "url": "/r/User__findPage",
+          "method": "get",
+          "data": {
+            "keyword": "${query.keyword ?? \"\"}",
+            "status": "${query.status ?? \"\"}",
+            "role": "${query.role ?? \"\"}",
+            "minId": "${query.minId ?? \"\"}",
+            "maxId": "${query.maxId ?? \"\"}",
+            "dateRange": "${query.dateRange ?? \"\"}"
+          }
+        }
+      },
+      "filterTogglable": { "defaultCollapsed": false },
+      "queryForm": {
+        "body": [
+          {
+            "type": "input-text",
+            "name": "keyword",
+            "label": "关键字",
+            "placeholder": "姓名 / 邮箱"
+          },
+          {
+            "type": "select",
+            "name": "status",
+            "label": "状态",
+            "dict": "userStatus",
+            "clearable": true,
+            "placeholder": "全部状态"
+          },
+          {
+            "type": "select",
+            "name": "role",
+            "label": "角色",
+            "dict": "role",
+            "clearable": true,
+            "placeholder": "全部角色"
+          },
+          {
+            "type": "date-range",
+            "name": "dateRange",
+            "label": "创建时间",
+            "placeholder": "选择日期范围"
+          },
+          {
+            "type": "input-number",
+            "name": "minId",
+            "label": "最小 ID",
+            "placeholder": "ID ≥"
+          },
+          {
+            "type": "input-number",
+            "name": "maxId",
+            "label": "最大 ID",
+            "placeholder": "ID ≤"
+          }
+        ]
+      },
+      "toolbarLayout": {
+        "header": ["listActions", "pagination"],
+        "footer": ["statistics", "switch-per-page"]
+      },
+      "columns": [
+        { "name": "id", "label": "ID", "width": 70, "sortable": true },
+        { "name": "name", "label": "姓名", "width": 120, "sortable": true },
+        { "name": "email", "label": "邮箱", "width": 230 },
+        { "name": "role.label", "label": "角色", "width": 100 },
+        { "name": "status_label", "label": "状态", "width": 90 },
+        { "name": "deptId", "label": "部门", "width": 110 },
+        { "name": "createTime", "label": "创建时间", "width": 170, "sortable": true }
+      ]
+    }
+  ]
+}

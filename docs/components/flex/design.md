@@ -73,6 +73,7 @@
 ## 11. 与其他容器的边界
 
 - 与 `container`：需要纯布局控制时用 `flex`；需要普通内容壳层或三段式 slot 时用 `container`。
+  - 关键差异：`flex` 是单层 DOM（`nop-flex` 根节点），`className` 直接控制根节点布局；`container` 是双层 DOM（外层 `nop-container` + 内层 `data-slot="container-body"`），`className` 挂在外层不影响布局，需用 `bodyClassName` 或 semantic prop 控制内层。
 - 与 `fragment`：需要无 UI 结构分组时用 `fragment`；需要真实布局盒模型时用 `flex`。
 - 与 `fieldset`：`fieldset` 是表单语义分组；`flex` 只负责布局，可作为 `fieldset.body` 内部的行布局工具。
 

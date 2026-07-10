@@ -1,59 +1,14 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { PaginationRenderer } from './pagination-renderer.js';
-import { ServiceRenderer } from './service-renderer.js';
 import { StatisticsRenderer } from './statistics-renderer.js';
 
 /**
- * W2a data-composition renderer definitions (service + pagination).
+ * W2a data-composition renderer definitions (pagination + statistics).
  *
  * Extracted from `data-renderer-definitions.ts` to keep that file under the
- * 700-line lint cap. Both renderers belong to the data package per roadmap §95
- * (service/pagination → flux-renderers-data).
- *
- * Request-sink gate: `service` owns NO request protocol — all of
- * api/initFetch/interval/sendOn/source belong to <data-source>. `service`
- * reads already-loaded data from scope via the `items` expression.
+ * 700-line lint cap.
  */
 export const w2aDataCompositionDefinitions: RendererDefinition[] = [
-  {
-    type: 'service',
-    displayName: 'Service',
-    category: 'data',
-    sourcePackage: '@nop-chaos/flux-renderers-data',
-    component: ServiceRenderer,
-    propContracts: {
-      items: {
-        shape: { kind: 'unknown' },
-        displayName: 'Items',
-        description:
-          'Expression-bound value: reads already-loaded data from scope (loaded by an external or nested <data-source>). Service reads scope only and does NOT trigger HTTP.',
-        editorType: 'expression',
-      },
-      data: {
-        shape: { kind: 'unknown' },
-        displayName: 'Data',
-        description:
-          'Optional local data injection (compiled-time evaluated expression). Same semantics as form.data.',
-        editorType: 'expression',
-      },
-      statusPath: {
-        shape: { kind: 'string' },
-        displayName: 'Status Path',
-        description:
-          'Publishes a service visual-layer status summary (idle/ready/error + itemCount). Derived from items resolution, NOT a request mirror.',
-        editorType: 'expression',
-      },
-    },
-    fields: [
-      { key: 'items', kind: 'prop' },
-      { key: 'data', kind: 'prop' },
-      { key: 'statusPath', kind: 'prop' },
-      { key: 'body', kind: 'region' },
-      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-      { key: 'error', kind: 'value-or-region', regionKey: 'error' },
-      { key: 'loading', kind: 'value-or-region', regionKey: 'loading' },
-    ],
-  },
   {
     type: 'pagination',
     displayName: 'Pagination',

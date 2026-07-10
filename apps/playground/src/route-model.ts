@@ -174,14 +174,6 @@ export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
       'Ordered collection renderer with an item region, empty state, and local controlled selection (single/multiple/none).',
   },
   {
-    id: 'service',
-    title: 'Service',
-    category: 'data',
-    sourcePackage: '@nop-chaos/flux-renderers-data',
-    description:
-      'Visual data-composition shell that reads already-loaded data from scope via the items expression. Owns NO request protocol (request-sink contract: api/initFetch/interval/sendOn belong to <data-source>).',
-  },
-  {
     id: 'pagination',
     title: 'Pagination',
     category: 'data',
@@ -489,7 +481,9 @@ export type RouteSpec =
   | { kind: 'home' }
   | { kind: 'lab' }
   | { kind: 'lab-renderer'; rendererId: string }
-  | { kind: 'domain'; domainId: string };
+  | { kind: 'domain'; domainId: string }
+  | { kind: 'showcase' }
+  | { kind: 'showcase-page'; pageId: string };
 
 export function readDiagnosticsEnabled(search: string): boolean {
   const normalized = search.startsWith('?') ? search.slice(1) : search;
@@ -511,6 +505,13 @@ export function parseRoute(hash: string): RouteSpec {
     return { kind: 'lab' };
   }
 
+  if (segments[0] === 'complex-pages') {
+    if (segments.length >= 2) {
+      return { kind: 'showcase-page', pageId: segments[1] };
+    }
+    return { kind: 'showcase' };
+  }
+
   const domainIds = DOMAIN_RENDERER_ROUTES.map((r) => r.id);
   if (segments[0] && domainIds.includes(segments[0])) {
     return { kind: 'domain', domainId: segments[0] };
@@ -529,5 +530,9 @@ export function buildRoute(spec: RouteSpec): string {
       return `#/lab/${spec.rendererId}`;
     case 'domain':
       return `#/${spec.domainId}`;
+    case 'showcase':
+      return '#/complex-pages';
+    case 'showcase-page':
+      return `#/complex-pages/${spec.pageId}`;
   }
 }

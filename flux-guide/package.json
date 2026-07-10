@@ -1,0 +1,9 @@
+{
+  "name": "flux-guide-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "node --experimental-loader ./scripts/css-stub.mjs scripts/validate.mjs",
+    "generate-types": "node scripts/generate-types.mjs"
+  }
+}

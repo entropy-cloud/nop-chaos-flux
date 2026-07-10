@@ -2,14 +2,25 @@
 
 常见业务场景的标准解法。每个模式是一个自包含的完整 JSON，可直接参考。
 
-| #   | 模式                  | 场景                                     |
-| --- | --------------------- | ---------------------------------------- |
-| 1   | `crud.md`             | 标准 CRUD + 搜索 + 新增/编辑/删除        |
-| 2   | `form.md`             | 表单提交 + 校验 + 嵌套表单               |
-| 3   | `data-source.md`      | 命名数据源 + 轮询 + 公式派生             |
-| 4   | `conditional.md`      | 显隐 + 条件激活 + loop 集合展开          |
-| 5   | `custom.md`           | 自定义渲染器 / 自定义表单项 / 自定义动作 |
-| 6   | `tabs.md`             | Tab 导航布局 + 受控/非受控切换           |
-| 7   | `cascading-select.md` | 远程选项联动（省市区级联）               |
-| 8   | `file-upload.md`      | 文件/图片上传                            |
-| 9   | `cards.md`            | 卡片列表展示                             |
+| #   | 模式                   | 场景                                     |
+| --- | ---------------------- | ---------------------------------------- |
+| 1   | `crud.md`              | 标准 CRUD + 搜索 + 新增/编辑/删除        |
+| 2   | `form.md`              | 表单提交 + 校验 + 嵌套表单               |
+| 3   | `data-source.md`       | 命名数据源 + 轮询 + 公式派生             |
+| 4   | `conditional.md`       | 显隐 + 条件激活 + loop 集合展开          |
+| 5   | `custom.md`            | 自定义渲染器 / 自定义表单项 / 自定义动作 |
+| 6   | `tabs.md`              | Tab 导航布局 + 受控/非受控切换           |
+| 7   | `cascading-select.md`  | 远程选项联动（省市区级联）               |
+| 8   | `file-upload.md`       | 文件/图片上传                            |
+| 9   | `cards.md`             | 卡片列表展示                             |
+| 10  | `layout.md`            | 布局容器选型（container/flex/grid）      |
+| 11  | `wizard.md`            | Wizard 多步骤向导                        |
+| 12  | `chart.md`             | Chart 图表（bar/line/pie/area）          |
+| 13  | `dynamic-renderer.md`  | DynamicRenderer 动态加载 schema          |
+| 14  | `tree.md`              | Tree & TreeSelect 树形组件               |
+| 15  | `collapse.md`          | Collapse 折叠面板                        |
+| 16  | `content-display.md`   | Card / Alert / Status / Mapping 内容展示 |
+| 17  | `combo-input-table.md` | Combo & InputTable 可编辑集合            |
+| 18  | `button-group.md`      | ButtonGroup & DropdownButton 按钮组合    |
+| 19  | `steps-timeline.md`    | Steps & Timeline 过程展示                |
+| 20  | `picker-transfer.md`   | Picker & Transfer 选择类控件             |

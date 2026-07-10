@@ -121,11 +121,36 @@ interface ContainerSchema extends BaseSchema {
 
 - 根节点保留 `nop-container` marker。
 - renderer 只负责输出最小语义类；默认 spacing 基线来自 package CSS，不来自 renderer 组件代码内硬编码 Tailwind。
-- root `className` 作用于 `.nop-container` 本身；body/header/footer 的内层样式应优先通过对应 slot `className` 控制。
-- `container.align` 在当前 live 实现中是内容整体摆放语义，不是 `flex` 的完整双轴模型：
-  - `center` 同时映射内容的水平/垂直居中
-  - `start` / `end` 是内容整体靠起始/结束侧
-  - 若需要主轴与交叉轴精细分离控制，应改用 `flex`
+- `container` 的 DOM 结构有两层，理解这一层对 className 路由至关重要：
+
+```html
+<div class="nop-container [schema-className]" data-testid="...">
+  <!-- header region（可选） -->
+  <div data-slot="container-header" class="[headerClassName]">...</div>
+
+  <!-- body region（使用 flex-child 时带 data-flex） -->
+  <div
+    data-slot="container-body"
+    class="[flex + direction + wrap + align + gap 等语义字段] [bodyClassName]"
+  >
+    ...children...
+  </div>
+
+  <!-- footer region（可选） -->
+  <div data-slot="container-footer" class="[footerClassName]">...</div>
+</div>
+```
+
+- **`schema-className` → 外层 `nop-container`**，仅标记容器本身，不影响子节点排列
+- **`bodyClassName` / `headerClassName` / `footerClassName` → 对应 `data-slot` 内层**，控制各 region 的布局
+- **semantic props**（`direction`/`wrap`/`gap`/`align`）→ 作用于 `data-slot="container-body"`，**与 `bodyClassName` 同一层级**
+- 需要给 body 加 flex 布局时，用 semantic prop 或 `bodyClassName`，**不要使用 `schema-className`**（挂错层级）
+
+`container.align` 在当前 live 实现中是内容整体摆放语义，不是 `flex` 的完整双轴模型：
+
+- `center` 同时映射内容的水平/垂直居中
+- `start` / `end` 是内容整体靠起始/结束侧
+- 若需要主轴与交叉轴精细分离控制，应改用 `flex`
 
 ## 13. 与其他容器的边界
 

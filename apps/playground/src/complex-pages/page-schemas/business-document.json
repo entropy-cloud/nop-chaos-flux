@@ -1,0 +1,127 @@
+{
+  "type": "page",
+  "testid": "business-document-page",
+  "body": [
+    {
+      "type": "form",
+      "id": "purchase-order-form",
+      "testid": "purchase-order-form",
+      "data": {
+        "supplier": "",
+        "orderDate": "",
+        "discountRate": 0,
+        "taxRate": 13,
+        "items": [
+          { "name": "服务器（标准型）", "qty": 2, "price": 18000 },
+          { "name": "交换机（24 口）", "qty": 1, "price": 6800 }
+        ]
+      },
+      "submitAction": {
+        "action": "ajax",
+        "args": { "url": "/r/PurchaseOrder__save", "method": "post", "includeScope": "*" },
+        "messages": { "success": "采购单已提交" },
+        "then": [{ "action": "setValue", "args": { "path": "orderSaved", "value": true } }]
+      },
+      "body": [
+        {
+          "type": "fieldset",
+          "title": "表头信息",
+          "body": [
+            {
+              "type": "input-text",
+              "name": "supplier",
+              "label": "供应商",
+              "required": true,
+              "placeholder": "必填"
+            },
+            { "type": "input-date", "name": "orderDate", "label": "订单日期" },
+            {
+              "type": "input-number",
+              "name": "discountRate",
+              "label": "折扣率(%)",
+              "min": 0,
+              "max": 100
+            },
+            { "type": "input-number", "name": "taxRate", "label": "税率(%)", "min": 0, "max": 100 }
+          ]
+        },
+        {
+          "type": "input-table",
+          "name": "items",
+          "testid": "order-items-table",
+          "label": "采购明细",
+          "rowKey": "name",
+          "addable": true,
+          "removable": true,
+          "columns": [
+            { "label": "商品名称", "width": 240 },
+            { "label": "数量", "width": 110 },
+            { "label": "单价(元)", "width": 130 },
+            { "label": "金额(元)", "width": 130 }
+          ],
+          "item": [
+            { "type": "input-text", "name": "name", "placeholder": "商品名称", "required": true },
+            { "type": "input-number", "name": "qty", "min": 0, "placeholder": "数量" },
+            { "type": "input-number", "name": "price", "min": 0, "placeholder": "单价" },
+            { "type": "text", "text": "${(qty ?? 0) * (price ?? 0)}", "testid": "row-amount" }
+          ]
+        },
+        {
+          "type": "fieldset",
+          "title": "金额合计",
+          "body": [
+            {
+              "type": "text",
+              "testid": "total-qty",
+              "text": "数量合计：${$Arr.sumField(items, \"qty\")}",
+              "className": "text-sm"
+            },
+            {
+              "type": "text",
+              "testid": "subtotal",
+              "text": "小计：${$Arr.sumProducts(items, \"qty\", \"price\")} 元",
+              "className": "text-sm"
+            },
+            {
+              "type": "text",
+              "testid": "discount",
+              "text": "折扣额：${$Math.round($Arr.sumProducts(items, \"qty\", \"price\") * (discountRate ?? 0) / 100)} 元",
+              "className": "text-sm"
+            },
+            {
+              "type": "text",
+              "testid": "net",
+              "text": "折后小计：${$Math.round($Arr.sumProducts(items, \"qty\", \"price\") * (1 - (discountRate ?? 0) / 100))} 元",
+              "className": "text-sm"
+            },
+            {
+              "type": "text",
+              "testid": "tax",
+              "text": "税额：${$Math.round($Arr.sumProducts(items, \"qty\", \"price\") * (1 - (discountRate ?? 0) / 100) * (taxRate ?? 0) / 100)} 元",
+              "className": "text-sm"
+            },
+            {
+              "type": "text",
+              "testid": "grand-total",
+              "text": "应付合计：${$Math.round($Arr.sumProducts(items, \"qty\", \"price\") * (1 - (discountRate ?? 0) / 100) * (1 + (taxRate ?? 0) / 100))} 元",
+              "className": "text-base font-bold"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "label": "提交采购单",
+          "variant": "primary",
+          "testid": "order-submit",
+          "onClick": { "action": "submitForm" }
+        },
+        {
+          "type": "text",
+          "testid": "order-save-report",
+          "text": "提交状态：${orderSaved ? \"已提交 ✓\" : \"未提交\"}",
+          "className": "text-sm mt-2"
+        }
+      ]
+    }
+  ]
+}

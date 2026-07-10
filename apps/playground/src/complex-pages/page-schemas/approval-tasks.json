@@ -1,0 +1,185 @@
+{
+  "type": "page",
+  "testid": "approval-tasks-page",
+  "body": [
+    {
+      "type": "crud",
+      "id": "approval-crud",
+      "testid": "approval-crud",
+      "rowKey": "id",
+      "loadAllData": true,
+      "loadAction": {
+        "action": "ajax",
+        "dependsOn": ["__approval_load__"],
+        "args": { "url": "/r/ApprovalTask__findPage", "method": "get" }
+      },
+      "filterTogglable": { "defaultCollapsed": false },
+      "queryForm": {
+        "body": [
+          {
+            "type": "input-text",
+            "name": "keyword",
+            "label": "关键字",
+            "placeholder": "标题 / 申请人"
+          },
+          {
+            "type": "select",
+            "name": "status",
+            "label": "状态",
+            "clearable": true,
+            "placeholder": "全部状态",
+            "options": [
+              { "label": "待审批", "value": "pending" },
+              { "label": "已通过", "value": "approved" },
+              { "label": "已驳回", "value": "rejected" }
+            ]
+          }
+        ]
+      },
+      "toolbarLayout": { "header": ["listActions", "pagination"], "footer": ["statistics"] },
+      "columns": [
+        { "name": "title", "label": "申请标题", "width": 240 },
+        { "name": "applicant", "label": "申请人", "width": 100 },
+        { "name": "department", "label": "部门", "width": 120 },
+        { "name": "amount", "label": "金额(元)", "width": 110 },
+        { "name": "status_label", "label": "状态", "width": 100 },
+        { "name": "submitTime", "label": "提交时间", "width": 170 },
+        {
+          "type": "operation",
+          "label": "操作",
+          "fixed": "right",
+          "width": 110,
+          "buttons": [
+            {
+              "type": "button",
+              "label": "处理",
+              "testid": "btn-handle",
+              "onClick": {
+                "action": "openDialog",
+                "args": {
+                  "title": "审批处理",
+                  "testid": "approval-dialog",
+                  "data": { "id": "${$slot.record.id}" },
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "approval-form",
+                      "testid": "approval-form",
+                      "loadAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/ApprovalTask__get",
+                          "method": "get",
+                          "data": { "id": "${id}" }
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "fieldset",
+                          "title": "申请详情",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "标题：${title ?? \"-\"}",
+                              "className": "text-sm"
+                            },
+                            {
+                              "type": "text",
+                              "text": "申请人：${applicant ?? \"-\"}（${department ?? \"-\"}）",
+                              "className": "text-sm"
+                            },
+                            {
+                              "type": "text",
+                              "text": "金额：${amount ?? 0} 元",
+                              "className": "text-sm"
+                            },
+                            {
+                              "type": "text",
+                              "text": "事由：${reason ?? \"-\"}",
+                              "className": "text-sm"
+                            },
+                            {
+                              "type": "text",
+                              "text": "当前状态：${status_label ?? \"-\"}",
+                              "className": "text-sm"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "fieldset",
+                          "title": "审批意见",
+                          "visible": "${status === \"pending\"}",
+                          "body": [
+                            {
+                              "type": "textarea",
+                              "name": "comment",
+                              "label": "意见",
+                              "placeholder": "填写审批意见（可选）"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "container",
+                          "className": "flex gap-2",
+                          "body": [
+                            {
+                              "type": "button",
+                              "label": "通过",
+                              "variant": "primary",
+                              "testid": "btn-approve",
+                              "visible": "${status === \"pending\"}",
+                              "onClick": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/ApprovalTask__approve",
+                                  "method": "post",
+                                  "data": { "id": "${id}", "comment": "${comment ?? \"\"}" }
+                                },
+                                "messages": { "success": "已通过" },
+                                "then": [
+                                  { "action": "component:refresh", "componentId": "approval-crud" },
+                                  { "action": "closeSurface" }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "label": "驳回",
+                              "variant": "destructive",
+                              "testid": "btn-reject",
+                              "visible": "${status === \"pending\"}",
+                              "onClick": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/ApprovalTask__reject",
+                                  "method": "post",
+                                  "data": { "id": "${id}", "comment": "${comment ?? \"\"}" }
+                                },
+                                "confirmText": "确认驳回该申请？",
+                                "messages": { "success": "已驳回" },
+                                "then": [
+                                  { "action": "component:refresh", "componentId": "approval-crud" },
+                                  { "action": "closeSurface" }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "text",
+                              "text": "该任务已处理",
+                              "className": "text-sm text-muted-foreground self-center",
+                              "visible": "${status !== \"pending\"}"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

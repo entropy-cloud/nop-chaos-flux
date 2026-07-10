@@ -1,0 +1,158 @@
+{
+  "type": "page",
+  "testid": "complex-form-page",
+  "body": [
+    {
+      "type": "form",
+      "id": "complex-form",
+      "testid": "complex-form",
+      "columnCount": 2,
+      "data": {
+        "name": "",
+        "email": "",
+        "userType": "personal",
+        "notify": true,
+        "phone": "",
+        "company": "",
+        "taxId": "",
+        "province": "",
+        "city": "",
+        "advanced": false,
+        "budget": 0,
+        "remark": "",
+        "agreed": false
+      },
+      "submitAction": {
+        "action": "ajax",
+        "args": { "url": "/r/User__save", "method": "post", "includeScope": "*" },
+        "messages": { "success": "保存成功" },
+        "then": [{ "action": "setValue", "args": { "path": "formSaved", "value": true } }]
+      },
+      "body": [
+        {
+          "type": "fieldset",
+          "title": "基本信息",
+          "body": [
+            {
+              "type": "input-text",
+              "name": "name",
+              "label": "姓名",
+              "required": true,
+              "placeholder": "必填"
+            },
+            {
+              "type": "input-text",
+              "name": "email",
+              "label": "邮箱",
+              "required": true,
+              "placeholder": "必填"
+            },
+            {
+              "type": "select",
+              "name": "userType",
+              "label": "用户类型",
+              "options": [
+                { "label": "个人", "value": "personal" },
+                { "label": "企业", "value": "enterprise" }
+              ]
+            },
+            {
+              "type": "switch",
+              "name": "notify",
+              "label": "接收通知"
+            }
+          ]
+        },
+        {
+          "type": "fieldset",
+          "title": "联系方式",
+          "body": [
+            {
+              "type": "input-text",
+              "name": "phone",
+              "label": "电话",
+              "placeholder": "开启通知时必填",
+              "required": "${notify}"
+            },
+            {
+              "type": "input-text",
+              "name": "company",
+              "label": "公司名称",
+              "visible": "${userType === \"enterprise\"}",
+              "required": "${userType === \"enterprise\"}"
+            },
+            {
+              "type": "input-text",
+              "name": "taxId",
+              "label": "税号",
+              "visible": "${userType === \"enterprise\"}"
+            },
+            {
+              "type": "select",
+              "name": "province",
+              "label": "省份",
+              "clearable": true,
+              "options": "${provinceOptions}",
+              "placeholder": "选择省份"
+            },
+            {
+              "type": "select",
+              "name": "city",
+              "label": "城市",
+              "clearable": true,
+              "options": "${cityMap[province] ?? []}",
+              "placeholder": "请先选择省份",
+              "disabled": "${!province}"
+            }
+          ]
+        },
+        {
+          "type": "fieldset",
+          "title": "高级设置",
+          "body": [
+            {
+              "type": "switch",
+              "name": "advanced",
+              "label": "展开高级选项",
+              "className": "col-span-2"
+            },
+            {
+              "type": "input-number",
+              "name": "budget",
+              "label": "预算额度(万)",
+              "min": 0,
+              "visible": "${advanced}"
+            },
+            {
+              "type": "textarea",
+              "name": "remark",
+              "label": "备注",
+              "visible": "${advanced}"
+            },
+            {
+              "type": "checkbox",
+              "name": "agreed",
+              "label": "我已阅读并同意相关条款",
+              "className": "col-span-2"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "label": "保存",
+          "variant": "primary",
+          "testid": "complex-form-submit",
+          "disabled": "${!agreed}",
+          "onClick": { "action": "submitForm" },
+          "className": "col-span-2"
+        },
+        {
+          "type": "text",
+          "testid": "complex-form-report",
+          "text": "保存状态：${formSaved ? \"已保存 ✓\" : \"未保存\"}",
+          "className": "text-sm col-span-2"
+        }
+      ]
+    }
+  ]
+}

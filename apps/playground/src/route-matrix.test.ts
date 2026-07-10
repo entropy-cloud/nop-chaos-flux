@@ -37,6 +37,17 @@ describe('Route model - parseRoute', () => {
     });
   });
 
+  it('parses #/complex-pages as showcase', () => {
+    expect(parseRoute('#/complex-pages')).toEqual({ kind: 'showcase' });
+  });
+
+  it('parses #/complex-pages/dashboard as showcase-page with pageId=dashboard', () => {
+    expect(parseRoute('#/complex-pages/dashboard')).toEqual({
+      kind: 'showcase-page',
+      pageId: 'dashboard',
+    });
+  });
+
   it('parses #/flow-designer as domain route', () => {
     expect(parseRoute('#/flow-designer')).toEqual({ kind: 'domain', domainId: 'flow-designer' });
   });
@@ -70,6 +81,13 @@ describe('Route model - buildRoute', () => {
     );
   });
 
+  it('builds showcase routes', () => {
+    expect(buildRoute({ kind: 'showcase' })).toBe('#/complex-pages');
+    expect(buildRoute({ kind: 'showcase-page', pageId: 'dashboard' })).toBe(
+      '#/complex-pages/dashboard',
+    );
+  });
+
   it('builds domain routes', () => {
     expect(buildRoute({ kind: 'domain', domainId: 'flow-designer' })).toBe('#/flow-designer');
     expect(buildRoute({ kind: 'domain', domainId: 'debugger-lab' })).toBe('#/debugger-lab');
@@ -86,6 +104,9 @@ describe('Route model - round-trip stability', () => {
     { kind: 'domain', domainId: 'report-designer' },
     { kind: 'domain', domainId: 'debugger-lab' },
     { kind: 'domain', domainId: 'performance-table' },
+    { kind: 'showcase' },
+    { kind: 'showcase-page', pageId: 'dashboard' },
+    { kind: 'showcase-page', pageId: 'master-detail' },
   ];
 
   for (const spec of specs) {

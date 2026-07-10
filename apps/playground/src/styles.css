@@ -471,3 +471,43 @@ body {
   background: rgb(248, 250, 252);
   border-color: rgb(203, 213, 225);
 }
+
+/* Dashboard stat card hover effects */
+.dash-card {
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+  cursor: default;
+}
+.dash-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+.dash-card .dash-icon-bg {
+  transition: background-color 0.3s ease;
+}
+.dash-card .dash-icon-el {
+  transition: color 0.3s ease;
+}
+.dash-card:hover .dash-icon-el {
+  color: #fff !important;
+}
+
+[data-testid='dash-stat-total']:hover .dash-icon-bg {
+  background-color: #2563eb !important;
+}
+[data-testid='dash-stat-today']:hover .dash-icon-bg {
+  background-color: #059669 !important;
+}
+[data-testid='dash-stat-active']:hover .dash-icon-bg {
+  background-color: #7c3aed !important;
+}
+[data-testid='dash-stat-pending']:hover .dash-icon-bg {
+  background-color: #d97706 !important;
+}
+[data-testid='dash-stat-revenue']:hover .dash-icon-bg {
+  background-color: #0891b2 !important;
+}
+[data-testid='dash-stat-growth']:hover .dash-icon-bg {
+  background-color: #e11d48 !important;
+}

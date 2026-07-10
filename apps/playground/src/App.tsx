@@ -11,6 +11,7 @@ import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { HomePage } from './pages/home-page';
 import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
+import { ComplexPagesShowcase } from './complex-pages';
 import { CodeEditorPage } from './pages/code-editor-page';
 import { FlowDesignerPage } from './pages/flow-designer-page';
 import { TaskFlowDesignerPage } from './pages/taskflow-designer-page';
@@ -109,6 +110,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           onNavigate={(pageId) => {
             if (pageId === 'component-lab') {
               navigate({ kind: 'lab' });
+            } else if (pageId === 'complex-pages') {
+              navigate({ kind: 'showcase' });
             } else {
               navigate({ kind: 'domain', domainId: pageId });
             }
@@ -128,6 +131,22 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         <ComponentLabPage
           activeRendererId={route.rendererId}
           onSelectRenderer={(id) => navigate({ kind: 'lab-renderer', rendererId: id })}
+          onBack={goHome}
+        />
+      );
+    case 'showcase':
+      return (
+        <ComplexPagesShowcase
+          activePageId={null}
+          onSelectPage={(id) => navigate({ kind: 'showcase-page', pageId: id })}
+          onBack={goHome}
+        />
+      );
+    case 'showcase-page':
+      return (
+        <ComplexPagesShowcase
+          activePageId={route.pageId}
+          onSelectPage={(id) => navigate({ kind: 'showcase-page', pageId: id })}
           onBack={goHome}
         />
       );

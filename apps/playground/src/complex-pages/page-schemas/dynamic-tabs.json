@@ -1,0 +1,51 @@
+{
+  "type": "container",
+  "body": [
+    {
+      "type": "text",
+      "text": "远程标签页",
+      "className": "text-lg mb-2"
+    },
+    {
+      "type": "tabs",
+      "testid": "dynamic-tabs",
+      "defaultValue": "overview",
+      "items": [
+        {
+          "key": "overview",
+          "title": "概览",
+          "body": [
+            {
+              "type": "card",
+              "testid": "static-tab-card",
+              "header": [
+                { "type": "text", "text": "静态内容", "className": "text-base font-medium" }
+              ],
+              "body": [
+                {
+                  "type": "text",
+                  "text": "该标签页内容为预定义 schema。点击\"远程数据\"标签页时，DynamicRenderer 才会初始化并触发 loadAction 获取 schema。"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "remote",
+          "title": "远程数据",
+          "mountOnEnter": true,
+          "body": [
+            {
+              "type": "dynamic-renderer",
+              "testid": "remote-tab-loader",
+              "loadAction": {
+                "action": "ajax",
+                "args": { "url": "/r/RemoteTabContent", "method": "post" }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

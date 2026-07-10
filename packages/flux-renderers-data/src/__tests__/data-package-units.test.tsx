@@ -26,7 +26,6 @@ describe('data package units', () => {
       'chart',
       'tree',
       'list',
-      'service',
       'pagination',
       'statistics',
       'crud',
@@ -34,7 +33,6 @@ describe('data package units', () => {
     expect(registry.get('table')?.type).toBe('table');
     expect(registry.get('list')?.type).toBe('list');
     expect(registry.get('crud')?.type).toBe('crud');
-    expect(registry.get('service')?.type).toBe('service');
     expect(registry.get('pagination')?.type).toBe('pagination');
   });
 

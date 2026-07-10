@@ -65,40 +65,7 @@ export function W2aDataCompositionDemoPage({ onBack }: W2aDataCompositionDemoPag
           direction: 'column',
           gap: 16,
           body: [
-            // 1. service request-sink demo: reads tasksData.items via expression,
-            // does NOT own a request protocol (request-sink contract).
-            // statusText is a DIRECT sibling of service (same flex scope) so it
-            // sees the statusPath publication via shared parent scope.
-            {
-              type: 'text',
-              text: 'service status: ${serviceStatus?.status ?? "idle"} (count=${serviceStatus?.itemCount ?? 0})',
-              testid: 'service-status-text',
-            },
-            {
-              type: 'service',
-              testid: 'demo-service',
-              items: '${tasksData?.items}',
-              statusPath: 'serviceStatus',
-              empty: { type: 'text', text: 'No tasks loaded yet (request-sink)' },
-              loading: { type: 'text', text: 'Loading tasks…' },
-              error: { type: 'text', text: 'Failed to load tasks' },
-              body: [
-                {
-                  type: 'flex',
-                  direction: 'column',
-                  gap: 4,
-                  body: [
-                    {
-                      type: 'text',
-                      text: 'Service body — ${tasksData?.items?.length ?? 0} tasks available via items expression (request-sink: service reads scope, does not own HTTP).',
-                      testid: 'service-body-text',
-                    },
-                  ],
-                },
-              ],
-            },
-
-            // 2. pagination
+            // 1. pagination
             {
               type: 'pagination',
               testid: 'demo-pagination',
@@ -217,7 +184,7 @@ export function W2aDataCompositionDemoPage({ onBack }: W2aDataCompositionDemoPag
         Data Composition Family (W2a)
       </p>
       <h1 className="m-0 mb-6">
-        数据组合组 — service / pagination / cards / alert / wizard
+        数据组合组 — pagination / cards / alert / wizard
       </h1>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -227,10 +194,10 @@ export function W2aDataCompositionDemoPage({ onBack }: W2aDataCompositionDemoPag
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-sm">
             <p>
-              5 个数据组合族组件通过 <code>SchemaRenderer</code> 真实挂载到 3 个包：
-              <code>flux-renderers-data</code>（service/pagination）、
+              4 个数据组合族组件通过 <code>SchemaRenderer</code> 真实挂载：
+              <code>flux-renderers-data</code>（pagination）、
               <code>flux-renderers-content</code>（cards/alert）、
-              <code>flux-renderers-layout</code>（wizard — 首次 bootstrap）。
+              <code>flux-renderers-layout</code>（wizard）。
             </p>
             <div
               data-testid="w2a-renderer-host"
@@ -242,15 +209,7 @@ export function W2aDataCompositionDemoPage({ onBack }: W2aDataCompositionDemoPag
                 env={env}
                 formulaCompiler={formulaCompiler}
                 registry={registry as React.ComponentProps<typeof SchemaRenderer>['registry']}
-                data={{
-                  tasksData: {
-                    items: [
-                      { id: 1, title: 'Design schema contract', status: 'done' },
-                      { id: 2, title: 'Wire playground demo', status: 'doing' },
-                      { id: 3, title: 'Add e2e coverage', status: 'todo' },
-                    ],
-                  },
-                }}
+                data={{}}
               />
             </div>
           </CardContent>
@@ -262,9 +221,6 @@ export function W2aDataCompositionDemoPage({ onBack }: W2aDataCompositionDemoPag
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-sm">
             <ul className="space-y-2">
-              <li>
-                <strong>service</strong> — 局部数据装配可视壳；只读 scope（items 表达式），请求归 <code>&lt;data-source&gt;</code>（请求下沉约束）。
-              </li>
               <li>
                 <strong>pagination</strong> — 独立分页交互 owner；复用 ui <code>Pagination</code>；边界归一 + 页大小重置到第 1 页。
               </li>

@@ -1,5 +1,6 @@
 type NavigationTarget =
   | 'component-lab'
+  | 'complex-pages'
   | 'flux-basic'
   | 'flow-designer'
   | 'taskflow-designer'
@@ -28,6 +29,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'All Renderers',
     description:
       'Route-backed gallery for every live Flux renderer. Left-side navigation, focused scenarios, and per-renderer verification.',
+  },
+  {
+    id: 'complex-pages',
+    title: 'Complex Pages',
+    eyebrow: 'Real-World Scenarios',
+    description:
+      'Real-world business page gallery: standard CRUD, tree-driven table, inline edit, advanced query, master-detail with multiple sub-tables, multi-step wizard, multi-fieldset linked form, and dashboard. Left category menu, right per-page demo.',
   },
   {
     id: 'flux-basic',

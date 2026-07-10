@@ -1,0 +1,71 @@
+{
+  "type": "page",
+  "testid": "inline-edit-page",
+  "body": [
+    {
+      "type": "alert",
+      "level": "info",
+      "title": "行内编辑说明",
+      "body": "点击季度额度单元格直接修改，每行修改后点击行末\"保存\"按钮提交该行（quickSaveItemAction）。",
+      "className": "mb-3"
+    },
+    {
+      "type": "crud",
+      "id": "budget-crud",
+      "testid": "budget-crud",
+      "rowKey": "id",
+      "loadAllData": true,
+      "loadAction": {
+        "action": "ajax",
+        "dependsOn": ["__budget_load__"],
+        "args": { "url": "/r/Budget__find", "method": "get" }
+      },
+      "quickSaveItemAction": {
+        "action": "ajax",
+        "args": {
+          "url": "/r/Budget__save",
+          "method": "post",
+          "includeScope": "*"
+        },
+        "messages": { "success": "保存成功" },
+        "then": [{ "action": "component:refresh", "componentId": "budget-crud" }]
+      },
+      "columns": [
+        { "name": "department", "label": "部门", "width": 160 },
+        {
+          "name": "q1",
+          "label": "Q1 预算(万)",
+          "width": 130,
+          "quickEdit": {
+            "body": { "type": "input-number", "name": "record.q1", "min": 0, "frameWrap": false }
+          }
+        },
+        {
+          "name": "q2",
+          "label": "Q2 预算(万)",
+          "width": 130,
+          "quickEdit": {
+            "body": { "type": "input-number", "name": "record.q2", "min": 0, "frameWrap": false }
+          }
+        },
+        {
+          "name": "q3",
+          "label": "Q3 预算(万)",
+          "width": 130,
+          "quickEdit": {
+            "body": { "type": "input-number", "name": "record.q3", "min": 0, "frameWrap": false }
+          }
+        },
+        {
+          "name": "q4",
+          "label": "Q4 预算(万)",
+          "width": 130,
+          "quickEdit": {
+            "body": { "type": "input-number", "name": "record.q4", "min": 0, "frameWrap": false }
+          }
+        },
+        { "name": "total", "label": "年度合计", "width": 120 }
+      ]
+    }
+  ]
+}

@@ -6,6 +6,7 @@ const rendererSnapshots: Array<{ env: unknown; data: Record<string, unknown> | u
 
 vi.mock('@nop-chaos/flux-formula', () => ({
   createFormulaCompiler: () => ({}),
+  createFormulaRegistry: () => ({ registerNamespace: () => undefined }),
 }));
 
 vi.mock('@nop-chaos/flux-renderers-basic', () => ({

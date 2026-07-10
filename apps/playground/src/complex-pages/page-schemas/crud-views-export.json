@@ -1,0 +1,122 @@
+{
+  "type": "page",
+  "testid": "crud-views-export-page",
+  "body": [
+    {
+      "type": "container",
+      "className": "flex items-center gap-3 mb-3",
+      "body": [
+        {
+          "type": "button",
+          "label": "导出 CSV（后台生成）",
+          "variant": "outline",
+          "testid": "btn-export",
+          "onClick": {
+            "action": "ajax",
+            "args": { "url": "/r/User__export", "method": "post" },
+            "messages": { "success": "导出成功，后台已生成文件" },
+            "then": [
+              {
+                "action": "setValue",
+                "args": { "path": "exportUrl", "value": "${result.data.url}" }
+              },
+              {
+                "action": "setValue",
+                "args": { "path": "exportName", "value": "${result.data.filename}" }
+              },
+              {
+                "action": "setValue",
+                "args": { "path": "exportCount", "value": "${result.data.count}" }
+              }
+            ]
+          }
+        },
+        {
+          "type": "text",
+          "testid": "export-report",
+          "visible": "${exportUrl ? true : false}",
+          "text": "已生成 ${exportName}（共 ${exportCount} 条）→",
+          "className": "text-sm"
+        },
+        {
+          "type": "link",
+          "testid": "export-download",
+          "visible": "${exportUrl ? true : false}",
+          "href": "${exportUrl}",
+          "target": "_blank",
+          "label": "点击下载"
+        }
+      ]
+    },
+    {
+      "type": "tabs",
+      "testid": "view-tabs",
+      "items": [
+        {
+          "key": "table",
+          "title": "表格视图",
+          "body": [
+            {
+              "type": "crud",
+              "id": "view-crud-table",
+              "testid": "view-crud-table",
+              "rowKey": "id",
+              "loadAllData": true,
+              "loadAction": {
+                "action": "ajax",
+                "dependsOn": ["__views_table_load__"],
+                "args": { "url": "/r/User__findPage", "method": "get" }
+              },
+              "columns": [
+                { "name": "id", "label": "ID", "width": 60 },
+                { "name": "name", "label": "姓名", "width": 110 },
+                { "name": "email", "label": "邮箱", "width": 220 },
+                { "name": "role.label", "label": "角色", "width": 100 },
+                { "name": "status_label", "label": "状态", "width": 90 }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "cards",
+          "title": "卡片视图",
+          "body": [
+            {
+              "type": "crud",
+              "id": "view-crud-cards",
+              "testid": "view-crud-cards",
+              "rowKey": "id",
+              "listMode": "cards",
+              "loadAllData": true,
+              "loadAction": {
+                "action": "ajax",
+                "dependsOn": ["__views_cards_load__"],
+                "args": { "url": "/r/User__findPage", "method": "get" }
+              },
+              "card": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 4,
+                  "body": [
+                    { "type": "text", "text": "${$slot.item.name}", "className": "font-semibold" },
+                    {
+                      "type": "text",
+                      "text": "${$slot.item.email}",
+                      "className": "text-sm text-muted-foreground"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${$slot.item.role.label} · ${$slot.item.status_label}",
+                      "className": "text-xs"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

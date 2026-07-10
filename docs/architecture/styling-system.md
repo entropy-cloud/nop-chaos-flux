@@ -482,6 +482,37 @@ This rule is about semantic boundary clarity, not raw DOM performance. Replacing
 
 When a schema author writes `"direction": "column"`, `"direction": "row"`, `"gap": "md"`, or alignment props, these are **explicit** declarations visible in the schema. The renderer may convert these to Tailwind classes because the author chose them. The rule only forbids **implicit** styles the author did not request. This applies to layout renderers; widget renderers already include styling as part of their design.
 
+### Layout Renderer 选型决策
+
+Container、Flex、Grid 是三种不同层次的布局渲染器，选择取决于需要的结构复杂度：
+
+| 场景                                                      | 推荐                       | 理由                                                     |
+| --------------------------------------------------------- | -------------------------- | -------------------------------------------------------- |
+| 需要 header/body/footer 三段式壳层                        | `container`                | 支持 regions                                             |
+| 需要纯 flex 布局（justify/alignContent/baseline/reverse） | `flex`                     | 原生 prop 直接映射，单层 DOM                             |
+| 需要 CSS Grid 布局（colSpan/rowSpan）                     | `grid`                     | 在 `flux-renderers-layout`，columns/colSpan/rowSpan prop |
+| 简单 flex 行/列，仅 direction/gap/align，无 header/footer | `container` 或 `flex` 均可 | container 更轻量（但需了解 className 路由）              |
+
+#### Container 的 className 路由（关键差异）
+
+```html
+<!-- type: "container" 的 DOM 结构 -->
+<div class="nop-container [schema-className]">
+  ← className 挂在外层，不控制布局
+  <div data-slot="container-body" class="flex [bodyClassName]">← 内层 flex 容器 ...children...</div>
+</div>
+```
+
+- **`className`** → 外层 `nop-container`，不影响子节点排列
+- **`bodyClassName`** → 内层 `data-slot="container-body"`，实际控制子节点布局
+- **semantic props**（`direction`/`wrap`/`gap`/`align`）→ 同样作用于内层 body div
+
+因此：
+
+- 不想引入外层 wrapper → 用 `type: "flex"`（单层 `nop-flex` 根节点）
+- 已有 `container` 想加 flex → 用 semantic prop（`direction`/`wrap`/`gap`）或 `bodyClassName: "flex flex-row gap-4"`，**不可用** `className: "flex flex-row"`（挂错层级）
+- 需要自适应换行 → `wrap: true`（flex 和 container 均支持）
+
 ## Spacing Conventions
 
 ### Context-Based Spacing Guide

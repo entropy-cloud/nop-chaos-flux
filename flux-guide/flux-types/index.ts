@@ -76,7 +76,6 @@ import type {
   ScopeDebugSchema,
   SelectSchema,
   SeparatorSchema,
-  ServiceSchema,
   SpinnerSchema,
   StatisticsSchema,
   StatusSchema,
@@ -165,7 +164,6 @@ export type FluxSchema =
   | TreeSchema
   | ListSchema
   | CrudSchema
-  | ServiceSchema
   | PaginationSchema
   | StatisticsSchema
   | SeparatorSchema
@@ -260,7 +258,6 @@ export interface FluxSchemaByType {
   'tree': TreeSchema;
   'list': ListSchema;
   'crud': CrudSchema;
-  'service': ServiceSchema;
   'pagination': PaginationSchema;
   'statistics': StatisticsSchema;
   'separator': SeparatorSchema;
@@ -363,7 +360,6 @@ export type {
   ScopeDebugSchema,
   SelectSchema,
   SeparatorSchema,
-  ServiceSchema,
   SpinnerSchema,
   StatisticsSchema,
   StatusSchema,

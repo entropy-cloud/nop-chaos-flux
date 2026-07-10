@@ -1,0 +1,93 @@
+{
+  "type": "page",
+  "testid": "tree-crud-page",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "row",
+      "gap": 12,
+      "body": [
+        {
+          "type": "container",
+          "className": "w-[240px] shrink-0 border rounded-lg p-2 bg-muted/30",
+          "body": [
+            {
+              "type": "text",
+              "text": "部门导航",
+              "className": "text-sm font-semibold mb-2"
+            },
+            {
+              "type": "data-source",
+              "name": "deptTree",
+              "action": "ajax",
+              "args": { "url": "/r/Dept__tree", "method": "get" },
+              "silent": true,
+              "testid": "tree-crud-dept-source"
+            },
+            {
+              "type": "form",
+              "valuesPath": "treeFilter",
+              "data": { "deptId": "" },
+              "testid": "tree-crud-tree-form",
+              "bodyClassName": "p-0",
+              "body": [
+                {
+                  "type": "input-tree",
+                  "name": "deptId",
+                  "testid": "tree-crud-tree",
+                  "options": "${deptTree?.items}",
+                  "treeMode": "radio",
+                  "valueField": "value",
+                  "labelField": "label",
+                  "childrenKey": "children",
+                  "placeholder": "选择部门筛选"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "当前过滤：${treeFilter?.deptId ? treeFilter.deptId : \"全部部门\"}",
+              "className": "text-xs text-muted-foreground mt-2",
+              "testid": "tree-crud-filter-report"
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "className": "flex-1 min-w-0",
+          "body": [
+            {
+              "type": "data-source",
+              "name": "usersDS",
+              "dependsOn": ["treeFilter"],
+              "action": "ajax",
+              "args": {
+                "url": "/r/User__findPage",
+                "method": "get",
+                "data": { "deptId": "${treeFilter?.deptId ?? \"\"}" }
+              },
+              "testid": "tree-crud-users-source"
+            },
+            {
+              "type": "crud",
+              "id": "tree-crud",
+              "testid": "tree-crud-table",
+              "rowKey": "id",
+              "source": "${usersDS}",
+              "selection": {},
+              "columns": [
+                { "name": "id", "label": "ID", "width": 60 },
+                { "name": "name", "label": "姓名", "width": 120 },
+                { "name": "email", "label": "邮箱", "width": 220 },
+                { "name": "role.label", "label": "角色", "width": 100 },
+                { "name": "status_label", "label": "状态", "width": 90 },
+                { "name": "deptId", "label": "部门ID", "width": 100 },
+                { "name": "createTime", "label": "创建时间", "width": 170 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

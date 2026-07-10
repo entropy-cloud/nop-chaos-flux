@@ -252,23 +252,6 @@ export interface ListSchema extends BaseSchema {
 
 // ───────────────────────────── W2a 数据组合组 ─────────────────────────────
 
-export interface ServiceSchema extends BaseSchema {
-  type: 'service';
-  body?: SchemaInput;
-  /** 局部数据初始值注入（表达式，编译期求值） */
-  data?: SchemaValue;
-  /** 表达式值绑定：从 scope 读已加载数据（由外部或内部 `<data-source>` 加载）。只读 scope，不触发 HTTP */
-  items?: SchemaValue;
-  /** 发布 service 可视层状态摘要的 scope 路径 */
-  statusPath?: string;
-  /** 空态（value-or-region）—— items 解析为空/null 时显示 */
-  empty?: SchemaInput | string;
-  /** 错误态（value-or-region）—— items 解析显式 error 时显示 */
-  error?: SchemaInput | string;
-  /** 加载态（value-or-region）—— 基于 items 解析派生，非请求镜像 */
-  loading?: SchemaInput | string;
-}
-
 export type PaginationMode = 'simple' | 'with-page-size';
 
 export interface PaginationSchema extends BaseSchema {

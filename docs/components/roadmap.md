@@ -251,7 +251,6 @@ graph TD
 | `list`               | W1c       | `flux-renderers-data`          | `docs/components/list/design.md`               |
 | `pull-refresh`       | W1d       | `flux-renderers-mobile`        | `docs/components/pull-refresh/design.md`       |
 | `infinite-scroll`    | W1d       | `flux-renderers-mobile`        | `docs/components/infinite-scroll/design.md`    |
-| `service`            | W2a       | `flux-renderers-data`          | `docs/components/service/design.md`            |
 | `pagination`         | W2a       | `flux-renderers-data`          | `docs/components/pagination/design.md`         |
 | `cards`              | W2a       | `flux-renderers-content`       | `docs/components/cards/design.md`              |
 | `wizard`             | W2a       | `flux-renderers-layout`        | `docs/components/wizard/design.md`             |

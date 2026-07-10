@@ -65,27 +65,45 @@ const schema = { type: 'page', title: '首页', body: 'Hello' };
 
 ## 文件索引
 
-| 文件               | 解决什么问题                                                                                                      |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `01-quickstart.md` | 17 个最常用代码段速查（page/CRUD/form/dialog/combo/action/source/wizard/tabs/loop/relation/upload/confirm/alert） |
-| `02-reference.md`  | 表达式语法、API 配置、事件系统、数据流、Action Algebra、表单校验、结构节点、Tabs 状态管理                         |
-| `flux-types/`      | 所有组件的 TypeScript 接口（字段知识源）。入口见 `flux-types/index.ts`                                            |
-| `design-patterns/` | 常见业务场景的完整解法 cookbook                                                                                   |
-| `mobile/`          | 移动端原生组件专题（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）                                |
+| 文件                      | 解决什么问题                                                                                                      |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `01-quickstart.md`        | 17 个最常用代码段速查（page/CRUD/form/dialog/combo/action/source/wizard/tabs/loop/relation/upload/confirm/alert） |
+| `02-expression-syntax.md` | 模板语法、过滤器、条件表达式                                                                                      |
+| `03-api-config.md`        | API 配置格式（ajax action args）                                                                                  |
+| `04-action-system.md`     | Action Algebra 事件与动作系统（链式、并行、条件）                                                                 |
+| `05-data-flow.md`         | 数据源、数据域、组件间通信（data-source / scope / service）                                                       |
+| `06-form-validation.md`   | 表单校验系统（字段级校验、跨字段 rules、异步校验）                                                                |
+| `07-structural-nodes.md`  | 结构节点（fragment/loop/recurse/reaction）+ 组件实例方法                                                          |
+| `08-tabs-state.md`        | Tabs 状态管理（受控/非受控/scope 持久化）                                                                         |
+| `09-amis-migration.md`    | 与 AMIS 的主要差异                                                                                                |
+| `flux-types/`             | 所有组件的 TypeScript 接口（字段知识源）。入口见 `flux-types/index.ts`                                            |
+| `design-patterns/`        | 常见业务场景的完整解法 cookbook                                                                                   |
+| `mobile/`                 | 移动端原生组件专题（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）                                |
 
 ### `design-patterns/` 清单
 
-| 文件                                  | 场景                                     |
-| ------------------------------------- | ---------------------------------------- |
-| `design-patterns/crud.md`             | 标准 CRUD + 搜索 + 新增/编辑/删除        |
-| `design-patterns/form.md`             | 表单提交 + 校验 + 嵌套表单               |
-| `design-patterns/data-source.md`      | 命名数据源 + 轮询 + 公式派生             |
-| `design-patterns/conditional.md`      | 显隐 + 条件激活 + loop 集合展开          |
-| `design-patterns/custom.md`           | 自定义渲染器 / 自定义表单项 / 自定义动作 |
-| `design-patterns/tabs.md`             | Tab 导航布局 + 受控/非受控切换           |
-| `design-patterns/cascading-select.md` | 远程选项联动（省市区级联）               |
-| `design-patterns/file-upload.md`      | 文件/图片上传                            |
-| `design-patterns/cards.md`            | 卡片列表展示                             |
+| 文件                                   | 场景                                     |
+| -------------------------------------- | ---------------------------------------- |
+| `design-patterns/crud.md`              | 标准 CRUD + 搜索 + 新增/编辑/删除        |
+| `design-patterns/form.md`              | 表单提交 + 校验 + 嵌套表单               |
+| `design-patterns/data-source.md`       | 命名数据源 + 轮询 + 公式派生             |
+| `design-patterns/conditional.md`       | 显隐 + 条件激活 + loop 集合展开          |
+| `design-patterns/custom.md`            | 自定义渲染器 / 自定义表单项 / 自定义动作 |
+| `design-patterns/tabs.md`              | Tab 导航布局 + 受控/非受控切换           |
+| `design-patterns/cascading-select.md`  | 远程选项联动（省市区级联）               |
+| `design-patterns/file-upload.md`       | 文件/图片上传                            |
+| `design-patterns/cards.md`             | 卡片列表展示                             |
+| `design-patterns/layout.md`            | 布局容器选型（container/flex/grid）      |
+| `design-patterns/wizard.md`            | Wizard 多步骤向导                        |
+| `design-patterns/chart.md`             | Chart 图表（bar/line/pie/area）          |
+| `design-patterns/dynamic-renderer.md`  | DynamicRenderer 动态加载 schema          |
+| `design-patterns/tree.md`              | Tree & TreeSelect 树形组件               |
+| `design-patterns/collapse.md`          | Collapse 折叠面板                        |
+| `design-patterns/content-display.md`   | Card / Alert / Status / Mapping 内容展示 |
+| `design-patterns/combo-input-table.md` | Combo & InputTable 可编辑集合            |
+| `design-patterns/button-group.md`      | ButtonGroup & DropdownButton 按钮组合    |
+| `design-patterns/steps-timeline.md`    | Steps & Timeline 过程展示                |
+| `design-patterns/picker-transfer.md`   | Picker & Transfer 选择类控件             |
 
 ### `mobile/` 清单
 

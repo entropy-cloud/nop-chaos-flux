@@ -1,0 +1,352 @@
+{
+  "type": "page",
+  "testid": "master-detail-page",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "row",
+      "gap": 12,
+      "body": [
+        {
+          "type": "container",
+          "className": "w-[280px] shrink-0 border rounded-lg p-2 bg-muted/30",
+          "body": [
+            { "type": "text", "text": "订单列表", "className": "text-sm font-semibold mb-2" },
+            {
+              "type": "data-source",
+              "name": "orderPicker",
+              "action": "ajax",
+              "args": { "url": "/r/Order__pickerOptions", "method": "get" },
+              "testid": "md-orders-source"
+            },
+            {
+              "type": "form",
+              "valuesPath": "mdFilter",
+              "data": { "orderId": "" },
+              "testid": "md-order-picker-form",
+              "bodyClassName": "p-0",
+              "body": [
+                {
+                  "type": "radio-group",
+                  "name": "orderId",
+                  "testid": "md-order-radio",
+                  "options": "${orderPicker?.items}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "className": "flex-1 min-w-0",
+          "body": [
+            {
+              "type": "data-source",
+              "name": "orderDetail",
+              "dependsOn": ["mdFilter"],
+              "sendOn": "mdFilter?.orderId",
+              "action": "ajax",
+              "args": {
+                "url": "/r/Order__get",
+                "method": "get",
+                "data": { "id": "${mdFilter?.orderId}" }
+              },
+              "testid": "md-detail-source"
+            },
+            {
+              "type": "data-source",
+              "name": "orderLogs",
+              "dependsOn": ["mdFilter"],
+              "sendOn": "mdFilter?.orderId",
+              "action": "ajax",
+              "args": {
+                "url": "/r/OrderLog__find",
+                "method": "get",
+                "data": { "orderId": "${mdFilter?.orderId}" }
+              },
+              "testid": "md-logs-source"
+            },
+            {
+              "type": "data-source",
+              "name": "orderAddresses",
+              "dependsOn": ["mdFilter"],
+              "sendOn": "mdFilter?.orderId",
+              "action": "ajax",
+              "args": {
+                "url": "/r/Address__find",
+                "method": "get",
+                "data": { "orderId": "${mdFilter?.orderId}" }
+              },
+              "testid": "md-addresses-source"
+            },
+            {
+              "type": "container",
+              "className": "border rounded-lg p-4 mb-3 bg-background",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "${mdFilter?.orderId ? \"订单详情\" : \"请选择左侧订单查看详情\"}",
+                  "className": "text-base font-semibold mb-2",
+                  "testid": "md-detail-title"
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 16,
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "单号：${orderDetail?.orderNo ?? \"-\"}",
+                      "className": "text-sm"
+                    },
+                    {
+                      "type": "text",
+                      "text": "客户：${orderDetail?.customer ?? \"-\"}",
+                      "className": "text-sm"
+                    },
+                    {
+                      "type": "text",
+                      "text": "金额：${orderDetail?.amount ?? \"-\"}",
+                      "className": "text-sm"
+                    },
+                    {
+                      "type": "text",
+                      "text": "状态：${orderDetail?.status_label ?? \"-\"}",
+                      "className": "text-sm"
+                    },
+                    {
+                      "type": "text",
+                      "text": "渠道：${orderDetail?.channel_label ?? \"-\"}",
+                      "className": "text-sm"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tabs",
+              "testid": "md-sub-tabs",
+              "className": "mb-3",
+              "items": [
+                {
+                  "key": "items",
+                  "title": "订单明细",
+                  "body": [
+                    {
+                      "type": "crud",
+                      "id": "md-items-crud",
+                      "testid": "md-items-table",
+                      "rowKey": "id",
+                      "loadAction": {
+                        "action": "ajax",
+                        "dependsOn": ["mdFilter"],
+                        "args": {
+                          "url": "/r/OrderItem__findPage",
+                          "method": "post",
+                          "data": { "orderId": "${mdFilter?.orderId}" }
+                        }
+                      },
+                      "quickSaveItemAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/OrderItem__save",
+                          "method": "post",
+                          "includeScope": "*"
+                        },
+                        "messages": { "success": "保存成功" },
+                        "then": [{ "action": "component:refresh", "componentId": "md-items-crud" }]
+                      },
+                      "columns": [
+                        { "name": "sku", "label": "SKU", "width": 140 },
+                        {
+                          "name": "name",
+                          "label": "商品",
+                          "width": 200,
+                          "quickEdit": {
+                            "body": {
+                              "type": "input-text",
+                              "name": "record.name",
+                              "frameWrap": false
+                            }
+                          }
+                        },
+                        {
+                          "name": "qty",
+                          "label": "数量",
+                          "width": 80,
+                          "quickEdit": {
+                            "body": {
+                              "type": "input-number",
+                              "name": "record.qty",
+                              "min": 1,
+                              "frameWrap": false
+                            }
+                          }
+                        },
+                        {
+                          "name": "price",
+                          "label": "单价",
+                          "width": 100,
+                          "quickEdit": {
+                            "body": {
+                              "type": "input-number",
+                              "name": "record.price",
+                              "min": 0,
+                              "step": 0.01,
+                              "frameWrap": false
+                            }
+                          }
+                        },
+                        { "name": "subtotal", "label": "小计", "width": 120 },
+                        {
+                          "type": "operation",
+                          "label": "操作",
+                          "width": 160,
+                          "buttons": [
+                            {
+                              "label": "保存",
+                              "testid": "btn-save-item",
+                              "actionType": "quickSaveItem"
+                            },
+                            {
+                              "label": "删除",
+                              "testid": "btn-delete-item",
+                              "onClick": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/OrderItem__delete",
+                                  "method": "post",
+                                  "data": { "id": "${record?.id}" }
+                                },
+                                "confirmText": "确定删除该明细？",
+                                "messages": { "success": "删除成功" },
+                                "then": [
+                                  { "action": "component:refresh", "componentId": "md-items-crud" }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "toolbar": [
+                        {
+                          "type": "button",
+                          "label": "新增",
+                          "testid": "btn-add-item",
+                          "variant": "default",
+                          "onClick": {
+                            "action": "openDialog",
+                            "args": {
+                              "title": "新增明细",
+                              "testid": "add-item-dialog",
+                              "body": [
+                                {
+                                  "type": "form",
+                                  "testid": "add-item-form",
+                                  "data": { "sku": "", "name": "", "qty": 1, "price": 0 },
+                                  "submitAction": {
+                                    "action": "ajax",
+                                    "args": {
+                                      "url": "/r/OrderItem__save",
+                                      "method": "post",
+                                      "data": {
+                                        "sku": "${sku}",
+                                        "name": "${name}",
+                                        "qty": "${qty}",
+                                        "price": "${price}",
+                                        "orderId": "${mdFilter?.orderId}"
+                                      }
+                                    },
+                                    "messages": { "success": "新增成功" },
+                                    "then": [
+                                      {
+                                        "action": "component:refresh",
+                                        "componentId": "md-items-crud"
+                                      },
+                                      { "action": "closeSurface" }
+                                    ]
+                                  },
+                                  "body": [
+                                    {
+                                      "type": "input-text",
+                                      "name": "sku",
+                                      "label": "SKU",
+                                      "required": true
+                                    },
+                                    {
+                                      "type": "input-text",
+                                      "name": "name",
+                                      "label": "商品名称",
+                                      "required": true
+                                    },
+                                    {
+                                      "type": "input-number",
+                                      "name": "qty",
+                                      "label": "数量",
+                                      "required": true,
+                                      "min": 1
+                                    },
+                                    {
+                                      "type": "input-number",
+                                      "name": "price",
+                                      "label": "单价",
+                                      "required": true,
+                                      "min": 0,
+                                      "step": 0.01
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "key": "logs",
+                  "title": "操作日志",
+                  "body": [
+                    {
+                      "type": "table",
+                      "testid": "md-logs-table",
+                      "source": "${orderLogs?.items}",
+                      "rowKey": "id",
+                      "empty": { "type": "text", "text": "暂无日志" },
+                      "columns": [
+                        { "name": "time", "label": "时间", "width": 180 },
+                        { "name": "action", "label": "操作", "width": 140 },
+                        { "name": "operator", "label": "操作人", "width": 120 }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "className": "border rounded-lg p-3 bg-background",
+              "body": [
+                { "type": "text", "text": "收货地址", "className": "text-sm font-semibold mb-2" },
+                {
+                  "type": "table",
+                  "testid": "md-addresses-table",
+                  "source": "${orderAddresses?.items}",
+                  "rowKey": "id",
+                  "empty": { "type": "text", "text": "暂无收货地址" },
+                  "columns": [
+                    { "name": "recipient", "label": "收件人", "width": 120 },
+                    { "name": "phone", "label": "电话", "width": 150 },
+                    { "name": "address", "label": "地址", "width": 320 },
+                    { "name": "isDefaultLabel", "label": "默认", "width": 80 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

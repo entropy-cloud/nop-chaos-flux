@@ -111,13 +111,14 @@ The canonicalization rules below explain why the same AMIS source type may appea
 | `reaction`         | declarative side-effect watcher         | no single AMIS top-level type; absorbs local linkage and reaction-style patterns       | `runtime` | `docs/components/reaction/design.md`         | landed              |
 | `dynamic-renderer` | runtime renderer switching              | no single AMIS top-level type; absorbs dynamic schema indirection scenes               | `runtime` | `docs/components/dynamic-renderer/design.md` | landed              |
 | `data-source`      | non-visual named source owner           | part of AMIS `service` data-loading semantics plus the Flux source/runtime model       | `runtime` | `docs/components/data-source/design.md`      | landed              |
-| `service`          | visual data-composition container       | `service`                                                                              | `runtime` | `docs/components/service/design.md`          | wave 2              |
 | `table`            | structured table renderer               | `table`, `static-table`, `table2`                                                      | `runtime` | `docs/components/table/design.md`            | landed              |
 | `crud`             | composite data-workflow renderer        | `crud`, `crud2`                                                                        | `runtime` | `docs/components/crud/design.md`             | landed              |
 | `list`             | ordered collection renderer             | `list`, `static-list`                                                                  | `runtime` | `docs/components/list/design.md`             | wave 1              |
 | `pagination`       | standalone pagination interaction owner | `pagination`                                                                           | `runtime` | `docs/components/pagination/design.md`       | wave 2              |
 | `tree`             | hierarchical display renderer           | no direct audited AMIS top-level display tree type; Flux canonical tree display family | `runtime` | `docs/components/tree/design.md`             | landed              |
 | `chart`            | chart renderer                          | `chart`                                                                                | `runtime` | `docs/components/chart/design.md`            | landed              |
+
+> **`service` removed** — AMIS `service` 的"数据加载 + body/empty/error/loading 状态切换"能力，在 Flux 中由 `data-source`（负责数据请求与状态发布）+ `container`/`dynamic-renderer`（负责条件渲染）组合替代。Flux 不提供 `type:'service'` 组件。
 
 ### 4. Form Core
 

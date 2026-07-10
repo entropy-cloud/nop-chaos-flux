@@ -1,0 +1,75 @@
+{
+  "type": "page",
+  "testid": "combo-editor-page",
+  "body": [
+    {
+      "type": "form",
+      "id": "contacts-form",
+      "testid": "contacts-form",
+      "data": {
+        "contacts": [
+          { "name": "张三", "relation": "manager", "phone": "13800000001" },
+          { "name": "李四", "relation": "colleague", "phone": "13800000002" }
+        ]
+      },
+      "submitAction": {
+        "action": "ajax",
+        "args": { "url": "/r/User__save", "method": "post", "includeScope": "*" },
+        "messages": { "success": "联系人已保存" },
+        "then": [{ "action": "setValue", "args": { "path": "contactsSaved", "value": true } }]
+      },
+      "body": [
+        {
+          "type": "fieldset",
+          "title": "联系人列表",
+          "body": [
+            {
+              "type": "combo",
+              "name": "contacts",
+              "testid": "contacts-combo",
+              "label": "联系人",
+              "addable": true,
+              "removable": true,
+              "reorderable": true,
+              "minItems": 1,
+              "items": [
+                {
+                  "type": "input-text",
+                  "name": "name",
+                  "label": "姓名",
+                  "required": true,
+                  "placeholder": "必填"
+                },
+                {
+                  "type": "select",
+                  "name": "relation",
+                  "label": "关系",
+                  "options": [
+                    { "label": "上级", "value": "manager" },
+                    { "label": "同事", "value": "colleague" },
+                    { "label": "客户", "value": "customer" },
+                    { "label": "其他", "value": "other" }
+                  ]
+                },
+                { "type": "input-text", "name": "phone", "label": "电话", "placeholder": "手机号" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "label": "保存联系人",
+          "variant": "primary",
+          "testid": "contacts-submit",
+          "onClick": { "action": "submitForm" }
+        },
+        {
+          "type": "text",
+          "testid": "contacts-save-report",
+          "text": "保存状态：${contactsSaved ? \"已保存 ✓\" : \"未保存\"}（共 ${$Arr.count(contacts)} 位）",
+          "className": "text-sm mt-2"
+        }
+      ]
+    }
+  ]
+}

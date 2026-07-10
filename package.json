@@ -48,6 +48,8 @@
     "check:audit-hardcoded-type-dispatch": "node scripts/audit/find-hardcoded-type-dispatch.mjs",
     "check:duplicates": "node scripts/check-duplicates.mjs",
     "check:duplicates:detail": "jscpd packages/ --config .jscpd.json",
+    "flux-guide:validate": "pnpm build && node --experimental-loader ./flux-guide/scripts/css-stub.mjs flux-guide/scripts/validate.mjs",
+    "flux-guide:generate-types": "node flux-guide/scripts/generate-types.mjs",
     "lint": "node scripts/clean-src-artifacts.mjs && node scripts/verify-no-src-artifacts.mjs && node scripts/check-react19-legacy-apis.mjs && node scripts/check-active-doc-code-anchors.mjs && node scripts/check-package-css-exports.mjs && node scripts/check-renderer-definition-fields-only.mjs && node scripts/check-finite-prop-contracts.mjs && node scripts/check-i18n-keys.mjs && node scripts/check-schema-prop-coverage.mjs && turbo run lint",
     "clean:cache": "rimraf --glob .turbo \"packages/*/node_modules/.cache\" \"apps/*/node_modules/.cache\" node_modules/.cache .vite",
     "clean": "pnpm -r exec npx rimraf node_modules dist && npx rimraf node_modules",

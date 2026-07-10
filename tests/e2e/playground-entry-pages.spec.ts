@@ -233,7 +233,6 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       }),
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
-    await expect(page.locator('[data-testid="demo-service"]')).toBeVisible({ timeout: 15_000 });
   },
   'w2b-date-family': async (page) => {
     await expect(

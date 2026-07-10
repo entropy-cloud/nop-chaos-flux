@@ -249,6 +249,8 @@ export interface FormSchema extends BoundFieldSchemaBase {
   actions?: SchemaInput;
   autoInit?: boolean;
   initAction?: ActionSchema | ActionSchema[];
+  loadAction?: ActionSchema | ActionSchema[];
+  autoLoad?: boolean;
   submitAction?: ActionSchema | ActionSchema[];
   onSubmitSuccess?: ActionSchema | ActionSchema[];
   onSubmitError?: ActionSchema | ActionSchema[];
@@ -579,7 +581,7 @@ export interface CrudSchema extends BaseSchema {
   };
   quickSaveAction?: SchemaValue;
   quickSaveItemAction?: SchemaValue;
-  loadAction?: unknown;
+  loadAction?: SchemaValue;
   loadAllData?: boolean;
   dataStatePath?: SchemaValue;
   queryForm?: Record<string, unknown>;
@@ -595,16 +597,6 @@ export interface CrudSchema extends BaseSchema {
   onRefresh?: ActionSchema | ActionSchema[];
   onError?: ActionSchema | ActionSchema[];
   toolbarLayout?: Record<string, unknown>;
-}
-
-export interface ServiceSchema extends BaseSchema {
-  type: 'service';
-  items?: unknown;
-  statusPath?: string;
-  body?: SchemaInput;
-  empty?: SchemaValue | SchemaInput;
-  error?: SchemaValue | SchemaInput;
-  loading?: SchemaValue | SchemaInput;
 }
 
 export interface PaginationSchema extends BaseSchema {
