@@ -142,7 +142,7 @@ export function PeriodRenderer(
 
   return (
     <div
-      className={cn(periodMarker(kind), 'flex flex-wrap items-center gap-2', props.meta.className)}
+      className={cn(periodMarker(kind), 'flex items-center gap-2', props.meta.className)}
       data-slot="period-control"
       data-period-kind={kind}
       data-selection-mode={selectionMode}
@@ -271,6 +271,7 @@ function PeriodPicker(props: PeriodPickerProps) {
         aria-invalid={showError ? true : undefined}
         aria-describedby={showError ? errorId : undefined}
         data-testid={`period-input-${kind}`}
+        className="w-auto"
         onFocus={onFocus}
         onBlur={onBlur}
         onChange={(event) => onChange(event.target.value || undefined)}
@@ -284,26 +285,26 @@ function PeriodPicker(props: PeriodPickerProps) {
         ref={(node: HTMLInputElement | null) => {
           attachRef(node);
         }}
-        type="number"
+        type="text"
         inputMode="numeric"
-        value={yearValue}
+        value={value ?? ''}
         disabled={!interactive}
-        min={1}
+        maxLength={4}
         placeholder={placeholder ?? 'YYYY'}
         aria-label={ariaLabel}
         aria-invalid={showError ? true : undefined}
         aria-describedby={showError ? errorId : undefined}
         data-testid={`period-input-${kind}`}
+        className="w-24"
         onFocus={onFocus}
         onBlur={onBlur}
         onChange={(event) => {
-          const raw = event.target.value;
-          const yr = Number(raw);
-          if (!raw || !Number.isFinite(yr)) {
+          const digits = event.target.value.replace(/\D/g, '').slice(0, 4);
+          if (!digits) {
             onChange(undefined);
             return;
           }
-          onChange(String(yr));
+          onChange(digits);
         }}
       />
     );
@@ -317,11 +318,11 @@ function PeriodPicker(props: PeriodPickerProps) {
         ref={(node: HTMLInputElement | null) => {
           attachRef(node);
         }}
-        type="number"
+        type="text"
         inputMode="numeric"
         value={yearValue}
         disabled={!interactive}
-        min={1}
+        maxLength={4}
         placeholder={placeholder ?? 'YYYY'}
         aria-label={ariaLabel ? `${ariaLabel} year` : 'Quarter year'}
         aria-invalid={showError ? true : undefined}
@@ -330,13 +331,12 @@ function PeriodPicker(props: PeriodPickerProps) {
         onFocus={onFocus}
         onBlur={onBlur}
         onChange={(event) => {
-          const raw = event.target.value;
-          const yr = Number(raw);
-          if (!raw || !Number.isFinite(yr) || currentQuarter === 0) {
+          const digits = event.target.value.replace(/\D/g, '').slice(0, 4);
+          if (!digits || currentQuarter === 0) {
             onChange(undefined);
             return;
           }
-          onChange(`${yr}-Q${currentQuarter}`);
+          onChange(`${digits}-Q${currentQuarter}`);
         }}
       />
       <NativeSelect
