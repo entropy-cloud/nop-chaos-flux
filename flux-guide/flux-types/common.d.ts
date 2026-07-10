@@ -18,26 +18,24 @@ export interface SchemaObject {
   [key: string]: SchemaValue;
 }
 
-/** CSS 类名 */
-export type SchemaClassName = string | Record<string, boolean | string>;
-
 /** 表达式字符串，语法 ${xxx} */
 export type SchemaExpression = string;
 
 /** 模板字符串，支持 ${xxx} */
 export type SchemaTpl = string;
 
-/** API 配置 */
-export type ApiSchema = string | ApiSchemaObject;
+/** 容器排版模式 */
+export type FrameWrapMode = boolean | 'label' | 'group' | 'none';
 
-/** API 对象配置 */
-export interface ApiSchemaObject {
+/** API 配置 */
+export interface ApiSchema extends SchemaObject {
   url: string;
   method?: string;
   data?: SchemaValue;
   params?: SchemaValue;
   headers?: Record<string, string>;
   includeScope?: '*' | string[];
+  selection?: string;
   responseAdaptor?: string;
   requestAdaptor?: string;
 }
@@ -97,6 +95,12 @@ export interface OperationControlConfig {
 /** Action Schema (声明式动作描述) */
 export type ActionSchema = ActionShapeFields & { action: string };
 
+/** 内置 Toast 消息配置，用于 ajax/submit 自动反馈 */
+export interface MessagesConfig {
+  success?: string;
+  failed?: string;
+}
+
 /** Action 基础字段 */
 export interface ActionShapeFields {
   action?: string;
@@ -117,6 +121,8 @@ export interface ActionShapeFields {
   stopPropagation?: boolean | string;
   parallel?: ActionSchema[];
   continueOnError?: boolean;
+  messages?: MessagesConfig;
+  confirmText?: string;
   then?: ActionSchema | ActionSchema[];
   onError?: ActionSchema | ActionSchema[];
   onSettled?: ActionSchema | ActionSchema[];
@@ -239,7 +245,7 @@ export interface BaseSchema extends SchemaObject {
   hidden?: boolean | string;
   disabled?: boolean | string;
   testid?: string;
-  frameWrap?: string;
+  frameWrap?: FrameWrapMode;
   validateOn?: string | string[];
   showErrorOn?: string | string[];
   onMount?: ActionSchema | ActionSchema[];

@@ -64,7 +64,7 @@
   "type": "transfer",
   "name": "permissions",
   "label": "权限",
-  "source": "${availablePermissions}",
+  "options": "${availablePermissions}",
   "labelField": "label",
   "valueField": "key"
 }
@@ -88,7 +88,6 @@
 | 字段           | 类型                 | 说明         |
 | -------------- | -------------------- | ------------ |
 | `options`      | `SelectOptionsValue` | 选项数据     |
-| `source`       | `SchemaValue`        | 数据源绑定   |
 | `labelField`   | `string`             | 显示标签字段 |
 | `valueField`   | `string`             | 提交值字段   |
 | `searchable`   | `boolean`            | 可搜索       |

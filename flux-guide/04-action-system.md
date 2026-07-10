@@ -45,27 +45,29 @@
 
 ## ActionShapeFields 完整字段
 
-| 字段              | 类型                             | 说明                                   |
-| ----------------- | -------------------------------- | -------------------------------------- |
-| `action`          | `string`                         | 动作类型                               |
-| `args`            | `Record<string, SchemaValue>`    | 动作参数                               |
-| `when`            | `boolean \| string`              | 条件守卫                               |
-| `then`            | `ActionSchema \| ActionSchema[]` | 成功后执行                             |
-| `onError`         | `ActionSchema \| ActionSchema[]` | 失败后执行                             |
-| `onSettled`       | `ActionSchema \| ActionSchema[]` | 完成后执行（无论成功失败）             |
-| `parallel`        | `ActionSchema[]`                 | 并行执行                               |
-| `timeout`         | `number`                         | 超时时间（ms）                         |
-| `retry`           | `{ times, delay, strategy }`     | 重试配置                               |
-| `debounce`        | `number`                         | 防抖时间（ms）                         |
-| `control`         | `OperationControlConfig`         | 控制配置（含 retry/debounce/dedup 等） |
-| `preventDefault`  | `boolean \| string`              | 阻止默认事件                           |
-| `stopPropagation` | `boolean \| string`              | 阻止事件冒泡                           |
-| `continueOnError` | `boolean`                        | 失败后继续执行                         |
-| `targetId`        | `string`                         | 目标组件 ID                            |
-| `componentId`     | `string`                         | 目标组件 ID（兼容）                    |
-| `componentName`   | `string`                         | 目标组件名称                           |
-| `dialogId`        | `string`                         | 目标弹窗 ID                            |
-| `surfaceId`       | `string`                         | 目标 surface ID                        |
+| 字段              | 类型                             | 说明                                                                |
+| ----------------- | -------------------------------- | ------------------------------------------------------------------- |
+| `action`          | `string`                         | 动作类型                                                            |
+| `args`            | `Record<string, SchemaValue>`    | 动作参数                                                            |
+| `when`            | `boolean \| string`              | 条件守卫                                                            |
+| `then`            | `ActionSchema \| ActionSchema[]` | 成功后执行                                                          |
+| `onError`         | `ActionSchema \| ActionSchema[]` | 失败后执行                                                          |
+| `onSettled`       | `ActionSchema \| ActionSchema[]` | 完成后执行（无论成功失败）                                          |
+| `parallel`        | `ActionSchema[]`                 | 并行执行                                                            |
+| `timeout`         | `number`                         | 超时时间（ms）                                                      |
+| `retry`           | `{ times, delay, strategy }`     | 重试配置                                                            |
+| `debounce`        | `number`                         | 防抖时间（ms）                                                      |
+| `control`         | `OperationControlConfig`         | 控制配置（含 retry/debounce/dedup 等）                              |
+| `messages`        | `MessagesConfig`                 | 内置 Toast 消息（`{ success, failed }`），用于 ajax/submit 自动反馈 |
+| `confirmText`     | `string`                         | 执行前确认提示文案                                                  |
+| `preventDefault`  | `boolean \| string`              | 阻止默认事件                                                        |
+| `stopPropagation` | `boolean \| string`              | 阻止事件冒泡                                                        |
+| `continueOnError` | `boolean`                        | 失败后继续执行                                                      |
+| `targetId`        | `string`                         | 目标组件 ID                                                         |
+| `componentId`     | `string`                         | 目标组件 ID（兼容）                                                 |
+| `componentName`   | `string`                         | 目标组件名称                                                        |
+| `dialogId`        | `string`                         | 目标弹窗 ID                                                         |
+| `surfaceId`       | `string`                         | 目标 surface ID                                                     |
 
 ## 可用动作
 
@@ -85,6 +87,14 @@
 | `navigate`                    | 页面跳转         |
 | `component:method`            | 调用组件实例方法 |
 | `namespace:method`            | 调用命名空间方法 |
+
+## 目标标识字段
+
+| 字段            | 适用场景                                                    | 示例                                                              |
+| --------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| `componentId`   | 调用组件实例方法（`component:submit`、`component:refresh`） | `{ "action": "component:submit", "componentId": "myForm" }`       |
+| `targetId`      | 刷新数据源（`refreshSource`）或指定动作目标                 | `{ "action": "refreshSource", "targetId": "pagedUsers" }`         |
+| `componentName` | 按组件名称查找（多个同类型组件时使用）                      | `{ "action": "component:refresh", "componentName": "userTable" }` |
 
 ## 事件数据流
 

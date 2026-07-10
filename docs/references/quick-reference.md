@@ -42,7 +42,7 @@ Code source of truth: `packages/flux-core/src/types/`, `packages/flux-react/src/
 | tailwind-preset                                      | @nop-chaos/tailwind-preset              | -     |
 | theme-tokens                                         | @nop-chaos/theme-tokens                 | -     |
 
-Renderer packages use `{feature}-renderers` naming, NOT `flux-renderers-{feature}`.
+Renderer packages use `flux-renderers-{feature}` naming (e.g. `flux-renderers-basic`, `flux-renderers-form`); only designer/editor packages follow `{feature}-core` / `{feature}-renderers`.
 
 ---
 

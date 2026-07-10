@@ -9,7 +9,7 @@
     {
       "type": "button",
       "label": "保存",
-      "variant": "primary",
+      "variant": "default",
       "onClick": { "action": "component:submit", "componentId": "form1" }
     },
     { "type": "button", "label": "取消", "onClick": { "action": "closeSurface" } }
@@ -26,7 +26,7 @@
     {
       "type": "button",
       "label": "审核通过",
-      "variant": "primary",
+      "variant": "default",
       "disabled": "${status !== 'pending'}"
     },
     { "type": "button", "label": "驳回", "disabled": "${status !== 'pending'}" }

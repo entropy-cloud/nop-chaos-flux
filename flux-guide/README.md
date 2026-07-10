@@ -42,15 +42,16 @@ JSON Schema (含 type 字段)
 
 ## 如何用
 
+### 最小集成
+
 ```typescript
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { pageRenderer } from '@nop-chaos/flux-renderers-basic';
-import { textRenderer } from '@nop-chaos/flux-renderers-basic';
+import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 
-// 创建 SchemaRenderer 组件
-const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer]);
+const registry = createRendererRegistry();
+registerBasicRenderers(registry);
+const SchemaRenderer = createSchemaRenderer(registry);
 
-// 配置 env
 const env = {
   fetcher: (config) => fetch(config.url, config).then((r) => r.json()),
   notify: (type, msg) => alert(msg),
@@ -58,9 +59,33 @@ const env = {
   navigate: (to) => (window.location.href = to),
 };
 
-// render 返回 ReactNode
-const schema = { type: 'page', title: '首页', body: 'Hello' };
-<SchemaRenderer schema={schema} schemaUrl="local" env={env} />;
+const schema = { type: 'page', title: '首页', body: [{ type: 'text', text: 'Hello' }] };
+<SchemaRenderer schema={schema} env={env} />;
+```
+
+### 完整集成（注册所有渲染器）
+
+```typescript
+import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
+import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
+import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
+import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
+import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
+import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
+
+const registry = createRendererRegistry();
+registerBasicRenderers(registry); // page, text, button, icon, ...
+registerLayoutRenderers(registry); // container, flex, grid, tabs, ...
+registerFormRenderers(registry); // form, input-text, select, table, ...
+registerFormAdvancedRenderers(registry); // combo, input-table, object-field, ...
+registerDataRenderers(registry); // crud, data-source, chart, tree, ...
+registerContentRenderers(registry); // card, alert, status, mapping, ...
+registerMobileRenderers(registry); // pull-refresh, infinite-scroll, ...
+
+const SchemaRenderer = createSchemaRenderer(registry);
 ```
 
 ## 文件索引
@@ -71,39 +96,50 @@ const schema = { type: 'page', title: '首页', body: 'Hello' };
 | `02-expression-syntax.md` | 模板语法、过滤器、条件表达式                                                                                      |
 | `03-api-config.md`        | API 配置格式（ajax action args）                                                                                  |
 | `04-action-system.md`     | Action Algebra 事件与动作系统（链式、并行、条件）                                                                 |
-| `05-data-flow.md`         | 数据源、数据域、组件间通信（data-source / scope / service）                                                       |
+| `05-data-flow.md`         | 数据源、数据域、组件间通信（data-source / scope）                                                                 |
 | `06-form-validation.md`   | 表单校验系统（字段级校验、跨字段 rules、异步校验）                                                                |
 | `07-structural-nodes.md`  | 结构节点（fragment/loop/recurse/reaction）+ 组件实例方法                                                          |
 | `08-tabs-state.md`        | Tabs 状态管理（受控/非受控/scope 持久化）                                                                         |
 | `09-amis-migration.md`    | 与 AMIS 的主要差异                                                                                                |
+| `10-react-integration.md` | 自定义渲染器 React Hooks 速查（runtime/scope/form/page/context）                                                  |
 | `flux-types/`             | 所有组件的 TypeScript 接口（字段知识源）。入口见 `flux-types/index.ts`                                            |
 | `design-patterns/`        | 常见业务场景的完整解法 cookbook                                                                                   |
 | `mobile/`                 | 移动端原生组件专题（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）                                |
 
 ### `design-patterns/` 清单
 
-| 文件                                   | 场景                                     |
-| -------------------------------------- | ---------------------------------------- |
-| `design-patterns/crud.md`              | 标准 CRUD + 搜索 + 新增/编辑/删除        |
-| `design-patterns/form.md`              | 表单提交 + 校验 + 嵌套表单               |
-| `design-patterns/data-source.md`       | 命名数据源 + 轮询 + 公式派生             |
-| `design-patterns/conditional.md`       | 显隐 + 条件激活 + loop 集合展开          |
-| `design-patterns/custom.md`            | 自定义渲染器 / 自定义表单项 / 自定义动作 |
-| `design-patterns/tabs.md`              | Tab 导航布局 + 受控/非受控切换           |
-| `design-patterns/cascading-select.md`  | 远程选项联动（省市区级联）               |
-| `design-patterns/file-upload.md`       | 文件/图片上传                            |
-| `design-patterns/cards.md`             | 卡片列表展示                             |
-| `design-patterns/layout.md`            | 布局容器选型（container/flex/grid）      |
-| `design-patterns/wizard.md`            | Wizard 多步骤向导                        |
-| `design-patterns/chart.md`             | Chart 图表（bar/line/pie/area）          |
-| `design-patterns/dynamic-renderer.md`  | DynamicRenderer 动态加载 schema          |
-| `design-patterns/tree.md`              | Tree & TreeSelect 树形组件               |
-| `design-patterns/collapse.md`          | Collapse 折叠面板                        |
-| `design-patterns/content-display.md`   | Card / Alert / Status / Mapping 内容展示 |
-| `design-patterns/combo-input-table.md` | Combo & InputTable 可编辑集合            |
-| `design-patterns/button-group.md`      | ButtonGroup & DropdownButton 按钮组合    |
-| `design-patterns/steps-timeline.md`    | Steps & Timeline 过程展示                |
-| `design-patterns/picker-transfer.md`   | Picker & Transfer 选择类控件             |
+| 文件                                            | 场景                                                                                                                                                                                          |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `design-patterns/crud.md`                       | 标准 CRUD + 搜索 + 新增/编辑/删除                                                                                                                                                             |
+| `design-patterns/form.md`                       | 表单提交 + 校验 + 嵌套表单                                                                                                                                                                    |
+| `design-patterns/data-source.md`                | 命名数据源 + 轮询 + 公式派生                                                                                                                                                                  |
+| `design-patterns/conditional.md`                | 显隐 + 条件激活 + loop 集合展开                                                                                                                                                               |
+| `design-patterns/custom.md`                     | 自定义渲染器 / 自定义表单项 / 自定义动作                                                                                                                                                      |
+| `design-patterns/tabs.md`                       | Tab 导航布局 + 受控/非受控切换                                                                                                                                                                |
+| `design-patterns/cascading-select.md`           | 远程选项联动（省市区级联）                                                                                                                                                                    |
+| `design-patterns/file-upload.md`                | 文件/图片上传                                                                                                                                                                                 |
+| `design-patterns/cards.md`                      | 卡片列表展示                                                                                                                                                                                  |
+| `design-patterns/layout.md`                     | 布局容器选型（container/flex/grid）                                                                                                                                                           |
+| `design-patterns/wizard.md`                     | Wizard 多步骤向导                                                                                                                                                                             |
+| `design-patterns/chart.md`                      | Chart 图表（bar/line/pie/area）                                                                                                                                                               |
+| `design-patterns/dynamic-renderer.md`           | DynamicRenderer 动态加载 schema                                                                                                                                                               |
+| `design-patterns/tree.md`                       | Tree & TreeSelect 树形组件                                                                                                                                                                    |
+| `design-patterns/collapse.md`                   | Collapse 折叠面板                                                                                                                                                                             |
+| `design-patterns/content-display.md`            | Card / Alert / Status / Mapping 内容展示                                                                                                                                                      |
+| `design-patterns/combo-input-table.md`          | Combo & InputTable 可编辑集合                                                                                                                                                                 |
+| `design-patterns/button-group.md`               | ButtonGroup & DropdownButton 按钮组合                                                                                                                                                         |
+| `design-patterns/steps-timeline.md`             | Steps & Timeline 过程展示                                                                                                                                                                     |
+| `design-patterns/picker-transfer.md`            | Picker & Transfer 选择类控件                                                                                                                                                                  |
+| `design-patterns/form-advanced-fields.md`       | TagList / KeyValue / ArrayEditor / InputTree / ConditionBuilder                                                                                                                               |
+| `design-patterns/composite-fields.md`           | ObjectField / VariantField / DetailField / DetailView 复合字段                                                                                                                                |
+| `design-patterns/table.md`                      | Table 数据表格（列配置/排序/筛选/行选择/虚拟滚动）                                                                                                                                            |
+| `design-patterns/list.md`                       | List 列表展示（卡片式/选择/分页/无限滚动）                                                                                                                                                    |
+| `design-patterns/form-basic-fields.md`          | Textarea / Checkbox / Switch / RadioGroup / CheckboxGroup / InputNumber / InputDate / Fieldset                                                                                                |
+| `design-patterns/date-fields.md`                | InputDate / InputDatetime / InputTime / InputMonth / InputQuarter / InputYear / DateRange                                                                                                     |
+| `design-patterns/page-dialog-drawer.md`         | Page / Dialog / Drawer 容器组件                                                                                                                                                               |
+| `design-patterns/pagination-separator.md`       | Pagination 分页 / Separator 分隔线                                                                                                                                                            |
+| `design-patterns/content-display-components.md` | Icon / Badge / Link / Image / HTML / JSON View / Markdown / Statistics / Empty / Spinner / Progress                                                                                           |
+| `design-patterns/remaining-components.md`       | Transfer / Picker / DropdownButton / ScopeDebug / Audio / Video / Carousel / QrCode / TreeSelect / InputTree / TagList / KeyValue / ArrayEditor / ConditionBuilder / DetailField / DetailView |
 
 ### `mobile/` 清单
 
