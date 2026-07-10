@@ -142,6 +142,66 @@
 - 手势：Sheet 遮罩点击关闭（base-ui 默认），无下滑手势关闭（归 Non-Blocking Follow-up）。
 - 软键盘：search input 聚焦时 Sheet 内容区可滚动（`overflow-y-auto`），不被键盘遮挡。
 
-## 14. 风险、取舍与后续阶段（合并）
+## 14. base-ui Combobox 集成注意事项
+
+### 内部过滤机制
+
+base-ui Combobox 的 `ComboboxRoot` 有内部 `filteredItems` 状态，可能导致下拉框显示"no results found"。
+
+**问题根因**：
+
+- `ComboboxRoot` 内部维护 `filteredItems` 状态
+- 当 `items` prop 为空或未正确传递时，内部过滤会返回空数组
+- `ComboboxEmpty` 组件根据 `filteredItems.length === 0` 显示"无匹配项"
+
+**解决方案**：
+
+1. **方案 A**：通过 `filteredItems` prop 覆盖内部过滤（推荐）
+   ```tsx
+   <Combobox
+     filteredItems={visibleOptions}  // 传递已过滤的选项
+   >
+   ```
+2. **方案 B**：使用 `filter: null` 禁用内部过滤
+3. **方案 C**：将选项作为 `items` prop 传递给 `ComboboxRoot`
+
+### 数据绑定机制对比
+
+| 方面         | amis-react19                                        | Flux                                             |
+| ------------ | --------------------------------------------------- | ------------------------------------------------ |
+| **数据获取** | 命令式 `loadOptions` 函数调用                       | 声明式 `optionsSourceState` 绑定                 |
+| **状态同步** | 组件内部 `inputValue` state                         | `SourceTransientState` 观察者模式                |
+| **触发时机** | 输入变化时手动调用                                  | 数据源变化自动响应                               |
+| **典型代码** | `loadOptions && loadOptions(this.state.inputValue)` | `const options = optionsSourceState?.data ?? []` |
+
+**Flux 优势**：
+
+- 声明式数据绑定，无需手动管理加载状态
+- 通过 `SourceTransientState` 自动处理 loading/error 状态
+- 与 flux 运行时的数据源系统深度集成
+
+### Combobox vs Select 原语选择
+
+**选用 Combobox 的理由**：
+
+- 支持内置过滤（`filteredItems`/`filter`）
+- 支持 multiple chips（`ComboboxChips`/`ComboboxChip`）
+- 支持 searchable input（`ComboboxInput`）
+- 支持 clearable（`ComboboxClear`）
+
+**代价**：
+
+- 需处理 `filteredItems` 内部状态
+- 更复杂的配置（`itemToStringLabel`/`isItemEqualToValue`）
+- 需要理解 base-ui Combobox 的生命周期
+
+## 15. 风险、取舍与后续阶段（合并）
 
 原 §12 内容向上合并到本节后续维护。响应式 mobile 分支不引入新 schema surface；mobile 虚拟化（> 100 option 时 mobile Sheet 内是否虚拟化）归 Non-Blocking Follow-up。
+
+### 已知问题
+
+1. **"no results found" 显示问题**：base-ui Combobox 内部过滤导致下拉框显示空结果，需通过 `filteredItems` + `filter: null` 解决（详见 `docs/plans/select-improvement-plan.md` Phase 1）
+2. **搜索过滤质量**：当前使用简单 `String.includes()` 匹配，不支持模糊搜索； amis-react19 使用 `match-sorter` 库（详见 Phase 2）
+3. **缺少高亮**：搜索结果没有关键词高亮（详见 Phase 3）
+4. **无远程搜索**：没有 `loadOptions` 类似的异步搜索机制（但 flux 有数据绑定机制，通过 `optionsSourceState` + `data-source` 组合）

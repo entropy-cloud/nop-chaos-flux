@@ -36,7 +36,7 @@ const inlineRadioGroup = {
           name: 'priority',
           label: 'Priority',
           required: true,
-          layout: 'horizontal',
+          direction: 'horizontal',
           options: [
             { label: 'Low', value: 'low' },
             { label: 'Medium', value: 'medium' },

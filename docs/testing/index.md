@@ -24,7 +24,7 @@ docs/testing/
 
 ### 2026-07
 
-- [07-10](2026/07-10.md) — Input-Number 显示原生上下按钮；Select 控件箭头位置不正确
+- [07-10](2026/07-10.md) — Input-Number 显示原生上下按钮；Select 控件箭头位置不正确；Tag-list 选中态不明显；Combo item 内字段无间距
 
 ### 2026-06
 

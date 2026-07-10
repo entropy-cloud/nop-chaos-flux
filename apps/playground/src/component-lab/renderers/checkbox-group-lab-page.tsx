@@ -35,6 +35,7 @@ const withMinMaxValidation = {
           type: 'checkbox-group',
           name: 'skills',
           label: 'Top Skills (choose 2 to 4)',
+          direction: 'horizontal',
           minSelect: 2,
           maxSelect: 4,
           options: [
