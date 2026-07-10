@@ -9,6 +9,29 @@ import {
   getChoiceOptionKey,
 } from './input-choice-renderers.js';
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightText(text: string, query: string): ReactNode {
+  if (!query) {
+    return text;
+  }
+
+  const escapedQuery = escapeRegex(query);
+  const parts = text.split(new RegExp(`(${escapedQuery})`, 'gi'));
+
+  return parts.map((part) =>
+    part.toLowerCase() === query.toLowerCase() ? (
+      <mark key={part} className="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
+}
+
 const VIRTUAL_ITEM_ESTIMATE = 32;
 const VIRTUAL_OVERSCAN = 6;
 
@@ -16,6 +39,7 @@ function renderComboboxItem(
   option: ChoiceOption,
   index: number,
   renderOptionTemplate?: OptionTemplateRenderer,
+  query?: string,
 ) {
   let content: ReactNode = option.label;
   if (renderOptionTemplate) {
@@ -32,6 +56,8 @@ function renderComboboxItem(
         );
       }
     }
+  } else if (query) {
+    content = highlightText(option.label, query);
   }
   return (
     <ComboboxItem
@@ -49,6 +75,7 @@ export function StaticComboboxList(props: {
   groups: SelectOptionGroup[];
   flatOptions: ChoiceOption[];
   renderOptionTemplate?: OptionTemplateRenderer;
+  query?: string;
 }) {
   if (props.renderGroups) {
     return (
@@ -57,7 +84,7 @@ export function StaticComboboxList(props: {
           <ComboboxGroup key={group.label}>
             <ComboboxLabel>{group.label}</ComboboxLabel>
             {group.options.map((option, index) =>
-              renderComboboxItem(option, index, props.renderOptionTemplate),
+              renderComboboxItem(option, index, props.renderOptionTemplate, props.query),
             )}
           </ComboboxGroup>
         ))}
@@ -68,7 +95,7 @@ export function StaticComboboxList(props: {
   return (
     <ComboboxList>
       {props.flatOptions.map((option, index) =>
-        renderComboboxItem(option, index, props.renderOptionTemplate),
+        renderComboboxItem(option, index, props.renderOptionTemplate, props.query),
       )}
     </ComboboxList>
   );
@@ -79,6 +106,7 @@ export function VirtualizedComboboxList(props: {
   groups: SelectOptionGroup[];
   flatOptions: ChoiceOption[];
   renderOptionTemplate?: OptionTemplateRenderer;
+  query?: string;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const flatItems: ChoiceOption[] = props.renderGroups
@@ -118,7 +146,7 @@ export function VirtualizedComboboxList(props: {
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
-              {renderComboboxItem(option, virtualItem.index, props.renderOptionTemplate)}
+              {renderComboboxItem(option, virtualItem.index, props.renderOptionTemplate, props.query)}
             </div>
           );
         })}

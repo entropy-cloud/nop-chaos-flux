@@ -170,9 +170,26 @@ function matchChoiceLabel(label: string, query: string, ignoreCase: boolean): bo
   if (!query) {
     return true;
   }
-  return ignoreCase
-    ? label.toLowerCase().includes(query.toLowerCase())
-    : label.includes(query);
+
+  const lowerLabel = ignoreCase ? label.toLowerCase() : label;
+  const lowerQuery = ignoreCase ? query.toLowerCase() : query;
+
+  // 精确匹配（最高优先级）
+  if (lowerLabel === lowerQuery) {
+    return true;
+  }
+
+  // 前缀匹配
+  if (lowerLabel.startsWith(lowerQuery)) {
+    return true;
+  }
+
+  // 子串匹配
+  if (lowerLabel.includes(lowerQuery)) {
+    return true;
+  }
+
+  return false;
 }
 
 export type OptionTemplateRenderer = (
@@ -200,7 +217,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const allOptions = useGroups ? groups.flatMap((group) => group.options) : rawOptions;
 
   const searchable = Boolean(props.props.searchable);
-  const clearable = Boolean(props.props.clearable);
+  const clearable = props.props.clearable !== undefined ? Boolean(props.props.clearable) : !props.props.required;
   const filterOptionSpec = props.props.filterOption;
   const filterEnabled = searchable && filterOptionSpec !== false;
   const ignoreCase =
@@ -415,7 +432,12 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
       ) : (
         <Combobox
           open={menuOpen}
-          onOpenChange={setMenuOpen}
+          onOpenChange={(open) => {
+            setMenuOpen(open);
+            if (!open) {
+              setInputValue('');
+            }
+          }}
           value={comboboxValue as ChoiceOption | ChoiceOption[] | null}
           onValueChange={interactive ? handleValueChange : undefined}
           multiple={multiple}
@@ -423,6 +445,8 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           itemToStringLabel={(option: ChoiceOption) => option.label}
           isItemEqualToValue={(a: ChoiceOption, b: ChoiceOption) => Object.is(a.value, b.value)}
           onInputValueChange={(nextQuery: string) => setInputValue(nextQuery)}
+          filteredItems={visibleOptions}
+          filter={null}
         >
           {multiple ? (
             <ComboboxChips className="w-full min-h-9">
@@ -449,10 +473,12 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
             <div className="flex w-full items-center gap-1">
               <ComboboxTrigger
                 {...controlProps}
-                className="flex-1 justify-between"
+                className="flex-1 h-8 rounded-lg border border-input bg-transparent px-2.5 pr-2 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive data-placeholder:text-muted-foreground"
                 disabled={effectiveDisabled}
               >
-                <ComboboxValue placeholder={triggerPlaceholder} />
+                <span className="flex-1 truncate text-left">
+                  <ComboboxValue placeholder={triggerPlaceholder} />
+                </span>
               </ComboboxTrigger>
               {clearable && comboboxValue ? (
                 <ComboboxClear disabled={effectiveDisabled} aria-label={t('flux.common.clear')} />
@@ -467,6 +493,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
                 groups={visibleGroups}
                 flatOptions={visibleOptions}
                 renderOptionTemplate={renderOptionTemplate}
+                query={query}
               />
             ) : (
               <StaticComboboxList
@@ -474,6 +501,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
                 groups={visibleGroups}
                 flatOptions={visibleOptions}
                 renderOptionTemplate={renderOptionTemplate}
+                query={query}
               />
             )}
           </ComboboxContent>
@@ -606,6 +634,7 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
     readOnly: props.props.readOnly,
   });
   const options = sanitizeChoiceOptions(props.props.options);
+  const horizontal = props.props.direction === 'horizontal';
   const mobileStack = shouldStackChoicesVertically(isMobile, options.length);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = optionsSourceState?.loading === true;
@@ -642,7 +671,7 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
       ) : null}
       <RadioGroup
         data-slot="radio-group-options"
-        className={mobileStack ? 'flex flex-col gap-1' : undefined}
+        className={mobileStack ? 'flex flex-col gap-1' : horizontal ? 'flex flex-wrap items-center gap-3' : undefined}
         value={selectedValue}
         disabled={loading || presentation.effectiveDisabled}
         aria-readonly={presentation.readOnly ? true : undefined}
