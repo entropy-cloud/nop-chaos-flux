@@ -320,6 +320,8 @@ export function finalizeApiRequest(api: ApiSchema): PreparedApiRequest {
     data: api.data,
     headers: api.headers,
     selection: api.selection,
+    responseType: api.responseType,
+    downloadFileName: api.downloadFileName,
   };
 
   return {
@@ -342,6 +344,8 @@ export function materializeApiRequest(api: ApiSchema, scope: ScopeRef): Prepared
     method: api.method,
     headers: api.headers,
     selection: api.selection,
+    responseType: api.responseType,
+    downloadFileName: api.downloadFileName,
   };
 
   return {

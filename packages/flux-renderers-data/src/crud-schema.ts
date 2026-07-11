@@ -121,6 +121,10 @@ export interface CrudSelectionConfig extends SchemaObject {
   keepOnPageChange?: boolean;
   maxSelectionLength?: number;
   checkableWhen?: string;
+  /** Click a row (outside interactive controls) to toggle its selection. amis: checkOnItemClick. */
+  toggleOnRowClick?: boolean;
+  /** Display template for selected items (e.g. summary chips). amis: labelTpl. */
+  labelTpl?: string;
 }
 
 export interface CrudMigrationHints extends SchemaObject {
@@ -195,10 +199,18 @@ export interface CrudSchema extends BaseSchema {
   loadAllData?: boolean;
   onError?: ActionSchema;
   dataStatePath?: string;
+  /** Scroll the table container to the top when the page changes. amis: autoJumpToTopOnPagerChange. */
+  autoJumpToTopOnPagerChange?: boolean;
+  /** Response data field name for the total count (default 'total'). amis: totalField. */
+  totalField?: string;
+  /** Globally hide the quick-save button. amis: hideQuickSaveBtn. */
+  hideQuickSaveBtn?: boolean;
 }
 
 export interface CrudPaginationConfig extends SchemaObject {
   mode?: 'pages' | 'infinite';
+  /** Always show the pagination bar even when there is only one page. amis: alwaysShowPagination. */
+  alwaysShow?: boolean;
 }
 
 export interface CrudStatusSummary {

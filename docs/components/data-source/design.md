@@ -21,7 +21,8 @@
 - 基础字段：`name`、`formula`、`action`（如 `"ajax"`）、`args`（HTTP 配置）、`interval`、`stopWhen`、`silent`、`statusPath`、`dependsOn`、`initialData`、`mergeStrategy`、`mergeKey`。
 - 请求编排字段（X4）：`sendOn`、`initFetch`、`onSuccess`、`onError`。
 - 当使用 API 模式时，HTTP 请求配置（`url`、`method`、`data`、`params`、`headers`）位于 `args` 内的 `ApiSchema` 中，不提升为 renderer 顶层字段。
-- 具体契约以 `packages/flux-core/src/types/schema.ts` 为实现基线。
+- **二进制下载**（`responseType: 'blob'` + `downloadFileName`）：Flux schema 层暴露这两个字段，请求准备管线（`finalizeApiRequest`/`materializeApiRequest`）将其传播到 `ExecutableApiRequest`，使宿主 fetcher 可从 `api.responseType` 读取并决定调用 `response.blob()` 还是 `response.json()`。Flux runtime 另提供可选工具函数 `normalizeBlobResponse`/`downloadBlob`/`resolveDownloadFilename`（`@nop-chaos/flux-runtime`）供宿主 fetcher 处理 content-disposition 文件名提取 + 下载触发（object URL 40s 后 revoke）+ JSON-in-blob 错误恢复；宿主不是必须使用此工具。
+- 具体契约以 `packages/flux-core/src/types/schema-base-types.ts`（`ApiSchema`/`ExecutableApiRequest`）为实现基线。
 
 ### 层级职责划分（X4 与 ApiSchema 的关系）
 

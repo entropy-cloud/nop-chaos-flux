@@ -19,6 +19,36 @@ export type { FlattenedItem, FlattenedRow, FlattenedExpandedRow } from './table-
 export { buildFlattenedItems } from './table-flattened-items.js';
 export { renderExpandedRow } from './table-expanded-row.js';
 
+/**
+ * Whether a row click landed on an interactive control and therefore must NOT
+ * trigger selection toggle. Mirrors amis `isClickOnInput`.
+ */
+function isClickOnInput(event: React.MouseEvent): boolean {
+  const target = event.target as HTMLElement | null;
+  if (!target) return false;
+  const tag = target.tagName;
+  if (
+    tag === 'INPUT' ||
+    tag === 'TEXTAREA' ||
+    tag === 'SELECT' ||
+    tag === 'BUTTON' ||
+    tag === 'A'
+  ) {
+    return true;
+  }
+  // Checkbox/Switch/Radio rendered as role-based widgets.
+  const role = target.getAttribute('role');
+  if (role === 'checkbox' || role === 'switch' || role === 'radio') {
+    return true;
+  }
+  // Closest interactive ancestor covers icon spans nested inside buttons.
+  if (target.closest('button, a, input, textarea, select, [role="checkbox"], [role="switch"], [role="radio"]')) {
+    return true;
+  }
+  return false;
+}
+
+
 type DataRowRenderProps = {
   item: FlattenedRow;
   schemaProps: TableSchema;
@@ -66,7 +96,8 @@ function DataRowView({
 }: DataRowRenderProps) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
   const hasRowClickHandler = Boolean(parentProps.events.onRowClick);
-  const isRowClickable = hasRowClickHandler || expandRowByClick;
+  const toggleOnRowClick = schemaProps.rowSelection?.toggleOnRowClick === true;
+  const isRowClickable = hasRowClickHandler || expandRowByClick || toggleOnRowClick;
 
   const treeEntry = treeMode ? (entry as TreeRowEntry) : undefined;
   const treeLevel = treeEntry?.level ?? 0;
@@ -81,12 +112,28 @@ function DataRowView({
     (isAtMaxSelection === true && !isSelected);
 
   const handleRowClick = (event: React.MouseEvent<HTMLTableRowElement>) => {
+    // Selection toggle chain (toggleOnRowClick): skip clicks on interactive controls,
+    // respect maxSelectionLength, then preventDefault only when a toggle actually happened
+    // (improves amis which always preventDefaults and blocks text selection).
+    let toggled = false;
+    if (toggleOnRowClick && !isClickOnInput(event)) {
+      const atMax = isAtMaxSelection === true && !isSelected;
+      if (!atMax) {
+        onSelectRow(rowKey, !isSelected);
+        toggled = true;
+      }
+    }
+
     if (hasRowClickHandler) {
       void parentProps.events.onRowClick?.(event, { scope: rowScope });
     }
 
     if (expandRowByClick) {
       onToggleExpand(rowKey);
+    }
+
+    if (toggled) {
+      event.preventDefault();
     }
   };
 
@@ -109,6 +156,7 @@ function DataRowView({
   return (
     <TableRow
       data-slot="table-row"
+      data-row-toggleable={toggleOnRowClick || undefined}
       data-interactive={isRowClickable || undefined}
       data-expanded={isExpanded || undefined}
       data-striped={isStriped && isEven ? true : undefined}
@@ -144,24 +192,41 @@ function DataRowView({
           className={fixedColumnLayout.getExpandCellProps().className}
           style={fixedColumnLayout.getExpandCellProps().style}
         >
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggleExpand(rowKey);
-            }}
-            className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded"
-            aria-label={isExpanded ? t('flux.table.collapse') : t('flux.table.expand')}
-            aria-expanded={isExpanded}
-          >
-            {isExpanded ? (
-              <ChevronDownIcon className="size-4" />
-            ) : (
-              <ChevronRightIcon className="size-4" />
-            )}
-          </Button>
+          {(() => {
+            // expandableWhen: a raw expression (no `${}`) evaluated per-row. Falsy → no toggle button.
+            const expandableWhenExpr = schemaProps.expandable?.expandableWhen;
+            let canExpand = true;
+            if (typeof expandableWhenExpr === 'string' && expandableWhenExpr.length > 0) {
+              try {
+                const wrapped = `\${${expandableWhenExpr}}`;
+                canExpand = Boolean(helpers.evaluate(wrapped, rowScope));
+              } catch {
+                // expr-eval-error Failure Path: degrade to expandable (do not block rendering).
+                canExpand = true;
+              }
+            }
+            if (!canExpand) return null;
+            return (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleExpand(rowKey);
+                }}
+                className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded"
+                aria-label={isExpanded ? t('flux.table.collapse') : t('flux.table.expand')}
+                aria-expanded={isExpanded}
+              >
+                {isExpanded ? (
+                  <ChevronDownIcon className="size-4" />
+                ) : (
+                  <ChevronRightIcon className="size-4" />
+                )}
+              </Button>
+            );
+          })()}
         </TableCell>
       ) : null}
 
@@ -379,6 +444,7 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.item.isEven === next.item.isEven &&
     Boolean(prev.schemaProps.rowSelection) === Boolean(next.schemaProps.rowSelection) &&
     prev.schemaProps.rowSelection?.type === next.schemaProps.rowSelection?.type &&
+    prev.schemaProps.rowSelection?.toggleOnRowClick === next.schemaProps.rowSelection?.toggleOnRowClick &&
     prev.schemaProps.quickSaveAction === next.schemaProps.quickSaveAction &&
     prev.schemaProps.quickSaveItemAction === next.schemaProps.quickSaveItemAction &&
     prev.combinePlan === next.combinePlan &&

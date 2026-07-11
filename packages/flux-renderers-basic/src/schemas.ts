@@ -33,6 +33,14 @@ export interface PageSchema extends BaseSchema {
   footer?: BaseSchema[];
   aside?: BaseSchema[];
   asidePosition?: 'left' | 'right';
+  /** Draggable aside resizer (pointer events). amis: asideResizor. */
+  asideResizable?: boolean;
+  /** Minimum aside width in px (default 200). */
+  asideMinWidth?: number | string;
+  /** Maximum aside width in px (default 600). */
+  asideMaxWidth?: number | string;
+  /** Sticky aside (position: sticky; top: 0; max-height: 100vh; overflow-y: auto). */
+  asideSticky?: boolean;
   modalContainer?: string;
   bodyClassName?: string;
   headerClassName?: string;
@@ -62,6 +70,10 @@ export interface DialogSchema extends BaseSchema {
   footer?: BaseSchema[];
   confirm?: boolean | string;
   onConfirm?: ActionSchema | ActionSchema[];
+  /** Whether the dialog window can be dragged by its header. amis draggable. */
+  draggable?: boolean;
+  /** Whether the dialog supports a fullscreen toggle. amis allowFullscreen. */
+  allowFullscreen?: boolean;
   bodyClassName?: string;
   headerClassName?: string;
   footerClassName?: string;
@@ -105,6 +117,8 @@ export interface TabsItemSchema extends SchemaObject {
   icon?: string;
   mountOnEnter?: boolean;
   unmountOnExit?: boolean;
+  /** Whether this tab can be closed (removed). amis closable. */
+  closable?: boolean;
   titleRegionKey?: string;
   bodyRegionKey?: string;
   toolbarRegionKey?: string;
@@ -135,6 +149,12 @@ export interface TabsSchema extends BaseSchema {
   variant?: 'default' | 'line';
   tabsMode?: TabsMode;
   sidePosition?: 'left' | 'right';
+  /** Whether tabs can be closed (removed). amis closable. */
+  closable?: boolean;
+  /** Whether tabs can be reordered via drag. amis draggable. */
+  draggable?: boolean;
+  /** Whether new tabs can be added. amis addable. */
+  addable?: boolean;
   contentClassName?: string;
   toolbarClassName?: string;
 }
@@ -208,8 +228,21 @@ export interface ButtonSchema extends BaseSchema {
   loading?: boolean | string;
   tooltip?: string;
   disabledTip?: string;
+  /** Tooltip placement. `side` defaults to 'top'. */
+  tooltipPlacement?: {
+    side?: 'top' | 'right' | 'bottom' | 'left';
+    align?: 'start' | 'center' | 'end';
+  };
   block?: boolean;
   active?: boolean | string;
+  /** Countdown seconds started after the onClick action succeeds. amis: countDown. */
+  countDown?: number;
+  /** Countdown label template (supports `{timeLeft}` token); defaults to "{timeLeft}s". amis: countDownTpl. */
+  countDownTpl?: string;
+  /** When set, renders an `<a href>` instead of a `<button>`. */
+  href?: string;
+  /** Anchor target attribute (used with `href`). */
+  target?: string;
 }
 
 export interface IconSchema extends BaseSchema {

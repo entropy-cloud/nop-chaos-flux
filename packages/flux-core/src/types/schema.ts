@@ -125,6 +125,12 @@ export interface BoundFieldSchemaBase extends BaseSchema {
   description?: string;
   remark?: FieldRemarkSchema;
   labelRemark?: FieldRemarkSchema;
+  /** className applied to the label element. amis: labelClassName. */
+  labelClassName?: string;
+  /** className applied to the input control wrapper. amis: inputClassName. */
+  inputClassName?: string;
+  /** className applied to the description element. amis: descriptionClassName. */
+  descriptionClassName?: string;
 }
 
 export interface SchemaFieldRule {

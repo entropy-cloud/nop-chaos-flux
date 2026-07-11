@@ -49,6 +49,7 @@ import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cach
 import { useColumnResize } from './table-renderer/use-column-resize.js';
 import { useTableTree } from './table-renderer/use-table-tree.js';
 import { useRowDragSort } from './table-renderer/use-row-drag-sort.js';
+import { useAutoFillHeight } from './table-renderer/use-auto-fill-height.js';
 import { extractLeafColumns, hasNestedColumns } from './table-renderer/table-header-tree.js';
 import type { TableResponsiveConfig } from './schemas.js';
 
@@ -407,6 +408,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const virtualEnabled =
     !paginationEnabled && typeof virtualThreshold === 'number' && source.length > virtualThreshold;
 
+  const autoFill = useAutoFillHeight(schemaProps.autoFillHeight, isLoading);
+  const autoFillActive = schemaProps.autoFillHeight !== undefined && schemaProps.autoFillHeight !== false;
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -532,13 +536,24 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       ) : null}
 
       <div
-        ref={virtualEnabled ? scrollRef : undefined}
+        ref={autoFillActive ? autoFill.containerRef : virtualEnabled ? scrollRef : undefined}
         className={cn(
-          virtualEnabled ? 'overflow-auto' : 'relative',
+          autoFillActive
+            ? 'overflow-auto'
+            : virtualEnabled
+              ? 'overflow-auto'
+              : 'relative',
           fixedColumnLayout.hasStickyColumns ? 'overflow-x-auto' : undefined,
         )}
-        style={virtualEnabled && scrollHeight ? { maxHeight: scrollHeight } : undefined}
+        style={
+          autoFillActive
+            ? autoFill.heightStyle
+            : virtualEnabled && scrollHeight
+              ? { maxHeight: scrollHeight }
+              : undefined
+        }
         data-slot="table-container"
+        data-auto-fill-height={autoFillActive ? 'true' : undefined}
       >
         <Table data-striped={isStriped || undefined} data-bordered={isBordered || undefined}>
           <TableHeader data-slot="table-header">

@@ -77,6 +77,10 @@ export interface TableColumnSchema extends BaseSchema {
   hidden?: boolean;
   toggled?: boolean;
   align?: 'left' | 'center' | 'right';
+  /** Header cell horizontal alignment (overrides column align for the header only). amis: headerAlign. */
+  headerAlign?: 'left' | 'center' | 'right';
+  /** Cell vertical alignment. amis: vAlign. */
+  vAlign?: 'top' | 'middle' | 'bottom';
   sortable?: boolean;
   searchable?: boolean | SchemaInput;
   filterable?: boolean | TableColumnFilterConfig;
@@ -88,6 +92,8 @@ export interface TableColumnSchema extends BaseSchema {
   children?: TableColumnSchema[];
   copyable?: boolean;
   popOver?: TableColumnPopOverConfig;
+  /** Cell-level conditional className expression (raw, no `${}`). amis: classNameExpr. */
+  classNameExpr?: string;
 }
 
 export interface TableSummaryCell extends SchemaObject {
@@ -129,13 +135,25 @@ export interface TableSchema extends BaseSchema {
   bordered?: boolean;
   virtualThreshold?: number;
   scrollHeight?: number;
+  /**
+   * Fill the table container to the remaining viewport height of its parent.
+   * `true` computes the height via ResizeObserver (parent height minus table top
+   * offset minus following siblings); `{ height: N }` uses a fixed N px;
+   * `{ maxHeight: N }` uses maxHeight N px. Coexists with `affixHeader` (header
+   * becomes sticky inside the scroll container rather than being disabled).
+   */
+  autoFillHeight?: boolean | { height?: number; maxHeight?: number };
   columnSettings?: TableColumnSettingsConfig;
   responsive?: TableResponsiveConfig;
   columnResize?: boolean;
   affixHeader?: boolean;
+  /** Show/hide the table header row (default true). amis: showHeader. */
+  showHeader?: boolean;
   prefixRow?: TableSummaryRow;
   affixRow?: TableSummaryRow;
   combineNum?: number;
+  /** Start column index for cell merging (companion to combineNum). amis: combineFromIndex. */
+  combineFromIndex?: number;
   draggable?: boolean;
   orderField?: string;
   orderOwnership?: 'local' | 'controlled' | 'scope';
@@ -160,12 +178,16 @@ export interface TableSchema extends BaseSchema {
     keepOnPageChange?: boolean;
     maxSelectionLength?: number;
     checkableWhen?: string;
+    /** Click a row (outside interactive controls) to toggle its selection. amis: checkOnItemClick. */
+    toggleOnRowClick?: boolean;
   };
   expandable?: {
     expandedRowKeys?: string[];
     expandRowByClick?: boolean;
     expandedRow?: SchemaInput;
     expandedRowRegionKey?: string;
+    /** Per-row expand eligibility expression (raw, no `${}`). amis: expandableOn. */
+    expandableWhen?: string;
   };
   quickSaveAction?: ActionSchema;
   quickSaveItemAction?: ActionSchema;

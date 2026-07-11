@@ -390,6 +390,10 @@ interface BoundFieldSchemaBase extends BaseSchema {
   hint?: string;
   remark?: FieldRemarkSchema;
   labelRemark?: FieldRemarkSchema;
+  // amis 对齐 className 插槽（schema 暴露，由各 field renderer 组件逻辑消费）
+  labelClassName?: string;
+  inputClassName?: string;
+  descriptionClassName?: string;
 }
 
 interface FieldRemarkSchema {

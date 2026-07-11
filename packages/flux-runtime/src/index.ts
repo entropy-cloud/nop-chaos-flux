@@ -28,4 +28,10 @@ export { publishOwnerStatus } from './status-owner.js';
 export { createReadonlyScopeBinding } from './status-owner.js';
 export { createProjectedScopeStore } from './projected-scope-store.js';
 export { executeApiObject } from './async-data/request-runtime.js';
+export {
+  extractFilenameFromContentDisposition,
+  resolveDownloadFilename,
+  downloadBlob,
+  normalizeBlobResponse,
+} from './async-data/blob-download.js';
 export { buildFormStatusSummary } from './form-runtime-status.js';

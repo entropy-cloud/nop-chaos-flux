@@ -455,6 +455,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         keepOnPageChange: normalizedSchema.selection.keepOnPageChange,
         maxSelectionLength: normalizedSchema.selection.maxSelectionLength,
         checkableWhen: normalizedSchema.selection.checkableWhen,
+        toggleOnRowClick: normalizedSchema.selection.toggleOnRowClick,
       };
     }
 

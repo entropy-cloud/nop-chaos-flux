@@ -38,6 +38,8 @@ export interface WizardSchema extends BaseSchema {
   defaultValue?: string | number;
   /** Scope path publishing the read-only wizard status summary */
   statusPath?: string;
+  /** Layout orientation of the step indicator (default horizontal). amis mode. */
+  mode?: 'vertical' | 'horizontal';
   /** Linear mode (default true): uncommitted steps cannot be jumped to unless `allowStepJump` is set */
   linear?: boolean;
   /** Allow non-linear step jumping even when `linear=true` */
@@ -46,6 +48,14 @@ export interface WizardSchema extends BaseSchema {
   mountOnEnter?: boolean;
   /** Unmount step body when it exits */
   unmountOnExit?: boolean;
+  /** Label for the finish action button. amis actionFinishLabel. */
+  actionFinishLabel?: string;
+  /** Label for the next action button. amis actionNextLabel. */
+  actionNextLabel?: string;
+  /** Label for the previous action button. amis actionPrevLabel. */
+  actionPrevLabel?: string;
+  /** Label for the next-and-save action button. amis actionNextSaveLabel. */
+  actionNextSaveLabel?: string;
   onChange?: ActionSchema;
   onStepCommit?: ActionSchema | ActionSchema[];
   onComplete?: ActionSchema | ActionSchema[];

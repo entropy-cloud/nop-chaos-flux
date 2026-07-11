@@ -35,6 +35,12 @@ export interface ApiSchema extends SchemaObject {
   selection?: string;
   responseAdaptor?: string;
   requestAdaptor?: string;
+  /** Expected response body type. `'blob'` signals a binary download (host fetcher responsibility). Defaults to `'json'`. */
+  responseType?: 'json' | 'blob' | 'text';
+  /** Overrides the server-provided filename for blob downloads. */
+  downloadFileName?: string;
+  /** Request body encoding. `'json'` (default), `'form-data'` (multipart), `'form'` (urlencoded). */
+  dataType?: 'json' | 'form-data' | 'form';
 }
 
 export interface ExecutableApiRequest extends SchemaObject {
@@ -47,6 +53,10 @@ export interface ExecutableApiRequest extends SchemaObject {
   includeScope?: never;
   responseAdaptor?: never;
   requestAdaptor?: never;
+  /** Propagated from ApiSchema so the host fetcher can read `api.responseType`. */
+  responseType?: 'json' | 'blob' | 'text';
+  /** Propagated from ApiSchema so the host fetcher can read `api.downloadFileName`. */
+  downloadFileName?: string;
 }
 
 export interface PreparedApiRequest {

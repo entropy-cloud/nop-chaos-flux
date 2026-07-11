@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { PageStatusSummary, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
@@ -24,6 +24,15 @@ import { useFixedFooterVisualViewport } from './use-fixed-footer-visual-viewport
 
 const InfoIcon = resolveLucideIconStrict('info');
 const MenuIcon = resolveLucideIconStrict('menu');
+
+function resolveAsideSize(value: number | string | undefined, fallback: number): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
 
 export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
@@ -77,9 +86,70 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const footerStyle =
     footerOffset > 0 ? { bottom: `${footerOffset}px` } : undefined;
 
+  const asideResizable = slotProps.asideResizable === true;
+  const asideSticky = slotProps.asideSticky === true;
+  const asideMinWidth = resolveAsideSize(slotProps.asideMinWidth, 200);
+  const asideMaxWidth = resolveAsideSize(slotProps.asideMaxWidth, 600);
+  const [asideWidth, setAsideWidth] = useState<number>(asideMinWidth);
+  const resizeStartRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const handleResizePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.button === 2) return; // ignore right-click
+    event.currentTarget.setPointerCapture(event.pointerId);
+    resizeStartRef.current = { startX: event.clientX, startWidth: asideWidth };
+  };
+
+  const handleResizePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!resizeStartRef.current) return;
+    const dx = event.clientX - resizeStartRef.current.startX;
+    // When the aside is on the right, dragging left widens it.
+    const effectiveDx = asidePosition === 'right' ? -dx : dx;
+    const next = resizeStartRef.current.startWidth + effectiveDx;
+    setAsideWidth(Math.min(Math.max(next, asideMinWidth), asideMaxWidth));
+  };
+
+  const handleResizePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (resizeStartRef.current) {
+      resizeStartRef.current = null;
+    }
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // pointer may already be released
+    }
+  };
+
   const asideNode = showInlineAside ? (
-    <aside data-slot="page-aside" className={cn(slotProps.asideClassName)}>
+    <aside
+      data-slot="page-aside"
+      data-aside-resizable={asideResizable || undefined}
+      data-aside-sticky={asideSticky || undefined}
+      className={cn('relative', slotProps.asideClassName)}
+      style={{
+        ...(asideResizable ? { width: `${asideWidth}px`, flexShrink: 0 } : undefined),
+        ...(asideSticky
+          ? { position: 'sticky', top: 0, maxHeight: '100vh', overflowY: 'auto' }
+          : undefined),
+      }}
+    >
       {asideContent}
+      {asideResizable ? (
+        <div
+          data-slot="page-aside-resize-handle"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize aside"
+          className={cn(
+            'absolute top-0 bottom-0 w-1 cursor-col-resize bg-transparent hover:bg-border transition-colors',
+            asidePosition === 'right' ? 'left-0 -ml-1' : 'right-0 -mr-1',
+          )}
+          style={{ touchAction: 'none' }}
+          onPointerDown={handleResizePointerDown}
+          onPointerMove={handleResizePointerMove}
+          onPointerUp={handleResizePointerUp}
+          onPointerCancel={handleResizePointerUp}
+        />
+      ) : null}
     </aside>
   ) : null;
 

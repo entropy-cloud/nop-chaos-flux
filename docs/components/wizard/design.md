@@ -35,6 +35,11 @@ interface WizardSchema extends BaseSchema {
   allowStepJump?: boolean;
   mountOnEnter?: boolean;
   unmountOnExit?: boolean;
+  mode?: 'vertical' | 'horizontal'; // 步骤指示器方向（amis mode），schema 暴露
+  actionFinishLabel?: string; // 完成按钮文案（amis actionFinishLabel），schema 暴露
+  actionNextLabel?: string; // 下一步按钮文案（amis actionNextLabel），schema 暴露
+  actionPrevLabel?: string; // 上一步按钮文案（amis actionPrevLabel），schema 暴露
+  actionNextSaveLabel?: string; // 下一步并保存按钮文案（amis actionNextSaveLabel），schema 暴露
   onChange?: ActionSchema;
   onStepCommit?: ActionSchema | ActionSchema[];
   onComplete?: ActionSchema | ActionSchema[];
