@@ -577,7 +577,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
                         type="search"
                         value={query}
                         placeholder={t('flux.picker.search', { defaultValue: 'Search' })}
-                        className="pl-8"
+                        style={{ paddingLeft: '2rem' }}
                         onChange={(event) => setQuery(event.target.value)}
                       />
                     </div>
