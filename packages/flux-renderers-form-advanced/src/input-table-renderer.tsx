@@ -143,7 +143,7 @@ function InputTableRowView(props: InputTableRowProps) {
         <FormContext.Provider value={itemForm ?? undefined}>
           <ScopeContext.Provider value={itemScope}>
             <ValidationContext.Provider value={itemValidationOwner}>
-              <div className="contents" data-slot="input-table-row-body">
+              <div className="flex items-center gap-2" data-slot="input-table-row-body">
                 {itemContent}
               </div>
             </ValidationContext.Provider>

@@ -221,7 +221,11 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           min={min}
           max={max}
           step={step}
-          className={cn(prefix && 'pl-8', suffix && 'pr-8', showStepper && 'pr-16')}
+          style={{
+            ...(prefix ? { paddingLeft: '2rem' } : {}),
+            ...(suffix ? { paddingRight: '2rem' } : {}),
+            ...(showStepper ? { paddingRight: '4rem' } : {}),
+          }}
           onFocus={() => {
             handlers.onFocus();
             scrollRefIntoViewOnMobile(isMobile, inputRef);
