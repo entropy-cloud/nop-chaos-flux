@@ -151,9 +151,15 @@ export interface TransferSchema extends BoundFieldSchemaBase {
   searchable?: boolean;
   searchOnly?: boolean;
   searchPlaceholder?: string;
+  checkAll?: boolean;
+  checkAllLabel?: string;
+  clearable?: boolean;
+  selectTitle?: string;
+  resultTitle?: string;
   onAdd?: ActionSchema | ActionSchema[];
   onRemove?: ActionSchema | ActionSchema[];
   onChange?: ActionSchema | ActionSchema[];
+  onSelectAll?: ActionSchema | ActionSchema[];
 }
 
 /**

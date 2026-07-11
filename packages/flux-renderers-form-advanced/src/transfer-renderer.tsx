@@ -71,6 +71,10 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
   const valueKey = typeof props.props.valueKey === 'string' ? props.props.valueKey : undefined;
   const labelKey = typeof props.props.labelKey === 'string' ? props.props.labelKey : undefined;
   const searchPlaceholder = typeof props.props.searchPlaceholder === 'string' ? props.props.searchPlaceholder : '';
+  const checkAllEnabled = props.props.checkAll !== false;
+  const clearable = props.props.clearable !== false;
+  const selectTitle = typeof props.props.selectTitle === 'string' ? props.props.selectTitle : undefined;
+  const resultTitle = typeof props.props.resultTitle === 'string' ? props.props.resultTitle : undefined;
 
   const presentation = useFieldPresentation(name, validationOwner, {
     disabled: props.props.disabled === true,
@@ -152,6 +156,30 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
 
   const interactionDisabled = presentation.effectiveDisabled || presentation.readOnly;
 
+  const allCandidateValues = filteredCandidates.map((o) => o.value);
+  const allCandidateChecked = allCandidateValues.length > 0 && allCandidateValues.every((v) => candidateChecked.has(v));
+  const someCandidateChecked = allCandidateValues.some((v) => candidateChecked.has(v));
+
+  const toggleAllCandidates = React.useCallback(() => {
+    if (interactionDisabled || allCandidateValues.length === 0) {
+      return;
+    }
+    if (allCandidateChecked) {
+      setCandidateChecked(new Set());
+    } else {
+      setCandidateChecked(new Set(allCandidateValues));
+    }
+  }, [allCandidateChecked, allCandidateValues, interactionDisabled]);
+
+  const clearAll = React.useCallback(() => {
+    if (interactionDisabled) {
+      return;
+    }
+    writeValue(multiple ? [] : undefined);
+    setSelectedChecked(new Set());
+    void props.events.onChange?.();
+  }, [interactionDisabled, multiple, props.events, writeValue]);
+
   const toggleCandidate = React.useCallback(
     (value: string | number | boolean) => {
       setCandidateChecked((current) => {
@@ -231,10 +259,15 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
     >
       <TransferPane
         kind="candidate"
-        title={t('flux.transfer.candidates', { defaultValue: 'Candidates' })}
+        title={selectTitle || t('flux.transfer.candidates', { defaultValue: 'Candidates' })}
+        totalCount={candidateOptions.length}
         options={filteredCandidates}
         checked={candidateChecked}
         onToggle={toggleCandidate}
+        checkAllEnabled={checkAllEnabled}
+        allChecked={allCandidateChecked}
+        someChecked={someCandidateChecked}
+        onToggleAll={toggleAllCandidates}
         searchable={searchable}
         query={candidateQuery}
         onQueryChange={setCandidateQuery}
@@ -270,7 +303,8 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
 
       <TransferPane
         kind="selected"
-        title={t('flux.transfer.selected', { defaultValue: 'Selected' })}
+        title={resultTitle || t('flux.transfer.selected', { defaultValue: 'Selected' })}
+        totalCount={selectedEntries.length}
         options={filteredSelected.map((entry) => ({
           label: entry.label,
           value: entry.value,
@@ -278,6 +312,8 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
         }))}
         checked={selectedChecked}
         onToggle={toggleSelected}
+        clearable={clearable && selectedEntries.length > 0}
+        onClearAll={clearAll}
         searchable={searchable}
         query={selectedQuery}
         onQueryChange={setSelectedQuery}
@@ -299,9 +335,16 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
 interface TransferPaneProps {
   kind: 'candidate' | 'selected';
   title: string;
+  totalCount: number;
   options: NormalizedOption[];
   checked: Set<string | number | boolean>;
   onToggle: (value: string | number | boolean) => void;
+  checkAllEnabled?: boolean;
+  allChecked?: boolean;
+  someChecked?: boolean;
+  onToggleAll?: () => void;
+  clearable?: boolean;
+  onClearAll?: () => void;
   searchable: boolean;
   query: string;
   onQueryChange: (next: string) => void;
@@ -317,18 +360,47 @@ function TransferPane(props: TransferPaneProps) {
       data-slot={`transfer-pane-${props.kind}`}
     >
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-        <span className="text-sm font-medium">{props.title}</span>
-        <span className="text-xs text-muted-foreground">{props.options.length}</span>
+        <div className="flex items-center gap-2">
+          {props.checkAllEnabled && props.onToggleAll && (
+            <Checkbox
+              checked={props.allChecked}
+              data-indeterminate={props.someChecked && !props.allChecked}
+              disabled={props.interactionDisabled || props.options.length === 0}
+              onCheckedChange={() => props.onToggleAll?.()}
+              data-slot="transfer-toggle-all"
+              aria-label="Select all"
+            />
+          )}
+          <span className="text-sm font-medium">{props.title}</span>
+          <span className="text-xs text-muted-foreground">
+            （{props.options.length}/{props.totalCount}）
+          </span>
+        </div>
+        {props.clearable && props.onClearAll && (
+          <button
+            type="button"
+            className={cn(
+              'text-xs text-muted-foreground hover:text-foreground transition-colors',
+              props.interactionDisabled && 'pointer-events-none opacity-50',
+            )}
+            disabled={props.interactionDisabled}
+            onClick={() => props.onClearAll?.()}
+            data-slot="transfer-clear-all"
+          >
+            {t('flux.transfer.clear', { defaultValue: 'Clear' })}
+          </button>
+        )}
       </div>
       {props.searchable && (
         <div className="border-b border-border px-2 py-2">
-          <div className="relative">
+          <div className="relative flex items-center">
             <SearchIcon className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
               value={props.query}
               placeholder={props.searchPlaceholder}
-              className="pl-8"
+              className="flex-1"
+              style={{ paddingLeft: '2rem' }}
               onChange={(event) => props.onQueryChange(event.target.value)}
             />
           </div>
@@ -380,13 +452,19 @@ export const transferRendererDefinition: RendererDefinition = {
     { key: 'multiple', kind: 'prop', valueType: 'boolean' },
     { key: 'valueKey', kind: 'prop' },
     { key: 'labelKey', kind: 'prop' },
-      { key: 'searchable', kind: 'prop', valueType: 'boolean' },
-      { key: 'searchOnly', kind: 'prop', valueType: 'boolean' },
-      { key: 'searchPlaceholder', kind: 'prop' },
+    { key: 'searchable', kind: 'prop', valueType: 'boolean' },
+    { key: 'searchOnly', kind: 'prop', valueType: 'boolean' },
+    { key: 'searchPlaceholder', kind: 'prop' },
+    { key: 'checkAll', kind: 'prop', valueType: 'boolean' },
+    { key: 'checkAllLabel', kind: 'prop' },
+    { key: 'clearable', kind: 'prop', valueType: 'boolean' },
+    { key: 'selectTitle', kind: 'prop' },
+    { key: 'resultTitle', kind: 'prop' },
     { key: 'readOnly', kind: 'prop' },
     { key: 'onAdd', kind: 'event' },
     { key: 'onRemove', kind: 'event' },
     { key: 'onChange', kind: 'event' },
+    { key: 'onSelectAll', kind: 'event' },
   ],
   validation: {
     kind: 'field',
