@@ -24,7 +24,7 @@ docs/testing/
 
 ### 2026-07
 
-- [07-12](2026/07-12.md) — CRUD listActions/toolbarLayout 重复渲染；footer 统计重复；分页器和选择器重复渲染；query form 不必要包裹；查询表单字段少；Cards view 初始空内容；分页器缺少首页/末页按钮；Picker CRUD 确认按钮无法点击；Picker 初始显示 ID 而非名称；表单操作按钮未右对齐
+- [07-12](2026/07-12.md) — CRUD listActions/toolbarLayout 重复渲染；footer 统计重复；分页器和选择器重复渲染；query form 不必要包裹；查询表单字段少；Cards view 初始空内容；分页器缺少首页/末页按钮；Picker CRUD 确认按钮无法点击；Picker 初始显示 ID 而非名称；表单操作按钮未右对齐；Picker CRUD 翻页失效
 - [07-10](2026/07-10.md) — Input-Number 显示原生上下按钮；Select 控件箭头位置不正确；Tag-list 选中态不明显；Combo item 内字段无间距
 
 ### 2026-06
