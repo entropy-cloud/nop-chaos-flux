@@ -111,17 +111,19 @@
           ]
         },
         {
+          "type": "text",
+          "testid": "order-save-report",
+          "text": "提交状态：${orderSaved ? \"已提交 ✓\" : \"未提交\"}",
+          "className": "text-sm"
+        }
+      ],
+      "actions": [
+        {
           "type": "button",
           "label": "提交采购单",
           "variant": "primary",
           "testid": "order-submit",
           "onClick": { "action": "submitForm" }
-        },
-        {
-          "type": "text",
-          "testid": "order-save-report",
-          "text": "提交状态：${orderSaved ? \"已提交 ✓\" : \"未提交\"}",
-          "className": "text-sm mt-2"
         }
       ]
     }
