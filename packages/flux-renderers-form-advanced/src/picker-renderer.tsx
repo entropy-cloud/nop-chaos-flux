@@ -45,12 +45,28 @@ import { useCurrentValidationScope } from '@nop-chaos/flux-react';
 
 type PickerValue = string | number | boolean;
 
-function normalizeFieldValues(rawFieldValue: unknown): PickerValue[] {
+function normalizeFieldValues(rawFieldValue: unknown, valueKey?: string): PickerValue[] {
+  if (isRecord(rawFieldValue) && valueKey) {
+    const v = rawFieldValue[valueKey];
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+      return [v];
+    }
+  }
   if (Array.isArray(rawFieldValue)) {
-    return rawFieldValue.filter(
-      (item): item is PickerValue =>
-        typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean',
-    );
+    const result: PickerValue[] = [];
+    for (const item of rawFieldValue) {
+      if (isRecord(item) && valueKey) {
+        const v = item[valueKey];
+        if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+          result.push(v);
+          continue;
+        }
+      }
+      if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
+        result.push(item);
+      }
+    }
+    return result;
   }
   if (rawFieldValue === undefined || rawFieldValue === null || rawFieldValue === '') {
     return [];
@@ -206,6 +222,9 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   };
   const dialogTitle = dialogConfig.title ?? t('flux.picker.select', { defaultValue: 'Select' });
 
+  const loadAction = schemaProps.loadAction;
+  const crudMode = Boolean(loadAction);
+
   const presentation = useFieldPresentation(name, validationOwner, {
     disabled: schemaProps.disabled === true,
     required: schemaProps.required === true,
@@ -223,12 +242,27 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     { enabled: Boolean(!currentForm && hasName), fallback: undefined, paths: hasName ? [name] : undefined },
   );
   const rawFieldValue = currentForm ? formValue : scopeValue;
+  const crudSelection = useScopeSelector(
+    (scopeData) => {
+      const raw = getIn(scopeData, `$_picker.${props.id}.selection`);
+      return Array.isArray(raw) ? raw : [];
+    },
+    (a, b) =>
+      Array.isArray(a) &&
+      Array.isArray(b) &&
+      a.length === b.length &&
+      a.every((v, i) => v === b[i]),
+    { enabled: crudMode, fallback: [], paths: crudMode ? [`$_picker.${props.id}.selection`] : undefined },
+  );
 
   const options = React.useMemo<NormalizedOption[]>(
     () => normalizeOptions(schemaProps.options, valueKey, labelKey),
     [schemaProps.options, valueKey, labelKey],
   );
-  const selectedValues = React.useMemo(() => normalizeFieldValues(rawFieldValue), [rawFieldValue]);
+  const selectedValues = React.useMemo(
+    () => normalizeFieldValues(rawFieldValue, valueKey),
+    [rawFieldValue, valueKey],
+  );
   const optionLabelMap = React.useMemo(() => getOptionLabelMap(options), [options]);
 
   const [open, setOpen] = React.useState(false);
@@ -242,8 +276,6 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   const labelResolveRequestedRef = React.useRef<string | null>(null);
 
   const interactionDisabled = presentation.effectiveDisabled || presentation.readOnly;
-  const loadAction = schemaProps.loadAction;
-  const crudMode = Boolean(loadAction);
   const labelResolveAction = schemaProps.labelResolveAction;
   const searchable = schemaProps.searchable !== false;
   const autoFillProgram = props.templateNode.structuralFields?.autoFill as
@@ -251,6 +283,20 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     | undefined;
 
   const selectedLabel = React.useMemo(() => {
+    if (!multiple && isRecord(rawFieldValue) && labelKey) {
+      const rawLabel = rawFieldValue[labelKey];
+      if (typeof rawLabel === 'string' || typeof rawLabel === 'number') {
+        return String(rawLabel);
+      }
+    }
+    if (multiple && Array.isArray(rawFieldValue)) {
+      const rawLabels = rawFieldValue
+        .filter(isRecord)
+        .map((item) => item[labelKey ?? 'name'])
+        .filter((v): v is string | number => typeof v === 'string' || typeof v === 'number')
+        .map(String);
+      if (rawLabels.length > 0) return rawLabels.join(', ');
+    }
     const cachedValues = selectedValues.map(
       (value) => resolvedLabelCache[String(value)] ?? optionLabelMap.get(value),
     );
@@ -269,7 +315,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
       options,
       t('flux.picker.placeholder', { defaultValue: 'Not selected' }),
     );
-  }, [multiple, optionLabelMap, options, resolvedLabelCache, selectedValues]);
+  }, [labelKey, multiple, optionLabelMap, options, rawFieldValue, resolvedLabelCache, selectedValues]);
 
   const writeValue = React.useCallback(
     (next: unknown) => {
@@ -319,7 +365,8 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   );
 
   React.useEffect(() => {
-    if (!labelResolveAction || selectedValues.length === 0) {
+    const resolver = labelResolveAction ?? loadAction;
+    if (!resolver || selectedValues.length === 0) {
       return;
     }
     const uncached = selectedValues.filter(
@@ -334,7 +381,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     }
     labelResolveRequestedRef.current = requestKey;
     void props.helpers
-      .dispatch(labelResolveAction as ActionSchema, {
+      .dispatch(resolver as ActionSchema, {
         scope,
         evaluationBindings: {
           value: multiple ? uncached : uncached[0],
@@ -354,6 +401,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     cacheLabelsForValues,
     labelKey,
     labelResolveAction,
+    loadAction,
     multiple,
     optionLabelMap,
     props.helpers,
@@ -645,7 +693,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
             <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
               {t('flux.common.cancel', { defaultValue: 'Cancel' })}
             </Button>
-            <Button type="button" size="sm" data-slot="picker-confirm" disabled={!multiple && pending.size === 0} onClick={confirmSelection}>
+            <Button type="button" size="sm" data-slot="picker-confirm" disabled={crudMode ? !multiple && crudSelection.length === 0 : !multiple && pending.size === 0} onClick={confirmSelection}>
               {t('flux.common.confirm', { defaultValue: 'Confirm' })}
             </Button>
           </DialogFooter>
