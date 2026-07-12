@@ -6,10 +6,11 @@
       "type": "flex",
       "direction": "row",
       "gap": 12,
+      "className": "flex-1 min-h-0",
       "body": [
         {
           "type": "container",
-          "className": "w-[280px] shrink-0 border rounded-lg p-2 bg-muted/30",
+          "className": "w-[280px] shrink-0 border rounded-lg p-2 bg-muted/30 overflow-y-auto min-h-0",
           "body": [
             { "type": "text", "text": "订单列表", "className": "text-sm font-semibold mb-2" },
             {
@@ -38,7 +39,7 @@
         },
         {
           "type": "container",
-          "className": "flex-1 min-w-0",
+          "className": "flex-1 min-w-0 overflow-y-auto min-h-0",
           "body": [
             {
               "type": "data-source",
@@ -266,6 +267,20 @@
                                       { "action": "closeSurface" }
                                     ]
                                   },
+                                  "actions": [
+                                    {
+                                      "type": "button",
+                                      "label": "取消",
+                                      "variant": "outline",
+                                      "onClick": { "action": "closeSurface" }
+                                    },
+                                    {
+                                      "type": "button",
+                                      "label": "保存",
+                                      "variant": "primary",
+                                      "onClick": { "action": "submitForm" }
+                                    }
+                                  ],
                                   "body": [
                                     {
                                       "type": "input-text",

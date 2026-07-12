@@ -1,5 +1,16 @@
 @import './flow-designer-nodes.css';
 
+/* Complex Pages: make nop-page and page-body fill their Card container
+   so that master-detail and similar layouts can use pure flex height chains. */
+.nop-card > .nop-page {
+  flex: 1;
+  min-height: 0;
+}
+.nop-card > .nop-page > [data-slot='page-body'] {
+  flex: 1;
+  min-height: 0;
+}
+
 @layer base {
   * {
     border-color: hsl(var(--border));

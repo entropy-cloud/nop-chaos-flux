@@ -6,10 +6,11 @@
       "type": "flex",
       "direction": "row",
       "gap": 12,
+      "className": "flex-1 min-h-0",
       "body": [
         {
           "type": "container",
-          "className": "w-[240px] shrink-0 border rounded-lg p-2 bg-muted/30",
+          "className": "w-[240px] shrink-0 border rounded-lg p-2 bg-muted/30 overflow-y-auto min-h-0",
           "body": [
             {
               "type": "text",
@@ -54,7 +55,7 @@
         },
         {
           "type": "container",
-          "className": "flex-1 min-w-0",
+          "className": "flex-1 min-w-0 min-h-0 overflow-y-auto",
           "body": [
             {
               "type": "data-source",

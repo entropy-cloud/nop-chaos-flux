@@ -122,28 +122,9 @@
                         },
                         {
                           "type": "container",
-                          "className": "flex gap-2",
+                          "direction": "row",
+                          "gap": "sm",
                           "body": [
-                            {
-                              "type": "button",
-                              "label": "通过",
-                              "variant": "primary",
-                              "testid": "btn-approve",
-                              "visible": "${status === \"pending\"}",
-                              "onClick": {
-                                "action": "ajax",
-                                "args": {
-                                  "url": "/r/ApprovalTask__approve",
-                                  "method": "post",
-                                  "data": { "id": "${id}", "comment": "${comment ?? \"\"}" }
-                                },
-                                "messages": { "success": "已通过" },
-                                "then": [
-                                  { "action": "component:refresh", "componentId": "approval-crud" },
-                                  { "action": "closeSurface" }
-                                ]
-                              }
-                            },
                             {
                               "type": "button",
                               "label": "驳回",
@@ -159,6 +140,26 @@
                                 },
                                 "confirmText": "确认驳回该申请？",
                                 "messages": { "success": "已驳回" },
+                                "then": [
+                                  { "action": "component:refresh", "componentId": "approval-crud" },
+                                  { "action": "closeSurface" }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "label": "通过",
+                              "variant": "primary",
+                              "testid": "btn-approve",
+                              "visible": "${status === \"pending\"}",
+                              "onClick": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/ApprovalTask__approve",
+                                  "method": "post",
+                                  "data": { "id": "${id}", "comment": "${comment ?? \"\"}" }
+                                },
+                                "messages": { "success": "已通过" },
                                 "then": [
                                   { "action": "component:refresh", "componentId": "approval-crud" },
                                   { "action": "closeSurface" }

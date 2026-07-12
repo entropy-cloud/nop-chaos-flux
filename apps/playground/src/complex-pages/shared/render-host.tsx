@@ -91,6 +91,9 @@ export function ShowcaseSchemaHost({
           env={env}
           formulaCompiler={showcaseFormulaCompiler}
           data={data}
+          onActionError={(error) => {
+            console.error('[showcase] action error:', error);
+          }}
         />
       </div>
       {children}

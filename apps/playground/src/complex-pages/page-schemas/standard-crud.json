@@ -130,11 +130,7 @@
                         "args": {
                           "url": "/r/Department__findPage",
                           "method": "get",
-                          "selection": "id,name",
-                          "params": {
-                            "page": "${pagination.currentPage}",
-                            "perPage": "${pagination.pageSize}"
-                          }
+                          "selection": "id,name"
                         }
                       },
                       "columns": [
@@ -157,11 +153,7 @@
                         "args": {
                           "url": "/r/Tag__findPage",
                           "method": "get",
-                          "selection": "id,name,category",
-                          "params": {
-                            "page": "${pagination.currentPage}",
-                            "perPage": "${pagination.pageSize}"
-                          }
+                          "selection": "id,name,category"
                         }
                       },
                       "columns": [
@@ -300,11 +292,7 @@
                             "args": {
                               "url": "/r/Department__findPage",
                               "method": "get",
-                              "selection": "id,name",
-                              "params": {
-                                "page": "${pagination.currentPage}",
-                                "perPage": "${pagination.pageSize}"
-                              }
+                              "selection": "id,name"
                             }
                           },
                           "columns": [
@@ -327,11 +315,7 @@
                             "args": {
                               "url": "/r/Tag__findPage",
                               "method": "get",
-                              "selection": "id,name,category",
-                              "params": {
-                                "page": "${pagination.currentPage}",
-                                "perPage": "${pagination.pageSize}"
-                              }
+                              "selection": "id,name,category"
                             }
                           },
                           "columns": [

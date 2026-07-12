@@ -432,6 +432,7 @@
               "testid": "dash-recent-table",
               "source": "${recentOrders?.items}",
               "rowKey": "id",
+              "pagination": { "enabled": false },
               "empty": { "type": "text", "text": "暂无订单" },
               "columns": [
                 { "name": "orderNo", "label": "订单号", "width": 180 },
@@ -454,6 +455,7 @@
               "testid": "dash-approvals-table",
               "source": "${approvals?.items}",
               "rowKey": "id",
+              "pagination": { "enabled": false },
               "empty": { "type": "text", "text": "暂无待审批" },
               "columns": [
                 { "name": "title", "label": "标题", "width": 200 },

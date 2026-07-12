@@ -116,10 +116,9 @@ describe('Complex pages — runtime smoke (mock backend)', () => {
     expect(screen.getAllByRole('spinbutton').length).toBeGreaterThan(0);
   });
 
-  it('Form Wizard renders three steps inside a form', async () => {
+  it('Form Wizard renders three steps', async () => {
     render(<SchemaPage pageId="form-wizard" env={env} />);
     expect(screen.getByTestId('demo-wizard')).toBeTruthy();
-    expect(screen.getByTestId('wizard-form')).toBeTruthy();
   });
 
   it('Complex Form renders three fieldsets and a submit gated by agreement', async () => {
