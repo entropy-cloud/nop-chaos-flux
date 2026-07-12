@@ -10,6 +10,7 @@ export interface FieldsetSchema extends BaseSchema {
   title?: string;
   collapsible?: boolean;
   collapsed?: boolean;
+  columnCount?: number;
   gap?: number | string;
   body?: BaseSchema[];
   bodyClassName?: string;
@@ -23,8 +24,17 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
   const collapsible = slotProps.collapsible === true;
   const [collapsed, setCollapsed] = useState(slotProps.collapsed === true && collapsible);
   const fieldsetGap = resolveGap(slotProps.gap as number | string | undefined);
+  const resolvedColumnCount =
+    slotProps.columnCount !== undefined && Number.isFinite(slotProps.columnCount)
+      ? Math.max(1, Math.floor(slotProps.columnCount))
+      : undefined;
+  const showGrid = resolvedColumnCount !== undefined && resolvedColumnCount > 1;
 
-  const bodyStyle = collapsed ? { display: 'none', ...fieldsetGap.style } : fieldsetGap.style;
+  const bodyStyle = collapsed
+    ? { display: 'none', ...fieldsetGap.style }
+    : showGrid
+      ? { display: 'grid', gridTemplateColumns: `repeat(${resolvedColumnCount}, minmax(0, 1fr))`, ...fieldsetGap.style }
+      : fieldsetGap.style;
 
   return (
     <fieldset
@@ -106,6 +116,7 @@ export const fieldsetRendererDefinition: RendererDefinition = {
   fields: [
     { key: 'collapsible', kind: 'prop', valueType: 'boolean' },
     { key: 'collapsed', kind: 'prop', valueType: 'boolean' },
+    { key: 'columnCount', kind: 'prop' },
     { key: 'body', kind: 'region', regionKey: 'body' },
   ],
 };

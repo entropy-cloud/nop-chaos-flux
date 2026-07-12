@@ -26,6 +26,7 @@
         {
           "type": "fieldset",
           "title": "表头信息",
+          "columnCount": 2,
           "body": [
             {
               "type": "input-text",
