@@ -14,6 +14,11 @@ import {
   areColumnsRenderEquivalent,
   type FlattenedRow,
 } from './table-flattened-items.js';
+import {
+  RowQuickEditDraftContext,
+  RowQuickEditSaveBar,
+  useRowQuickEditDraft,
+} from './use-row-quick-edit-draft.js';
 
 export type { FlattenedItem, FlattenedRow, FlattenedExpandedRow } from './table-flattened-items.js';
 export { buildFlattenedItems } from './table-flattened-items.js';
@@ -107,6 +112,19 @@ function DataRowView({
     ? rowDragSortApi.dragHandleProps(rowKey, rowIndex)
     : null;
 
+  const rowDraft = useRowQuickEditDraft({
+    record: entry.record,
+    rowScope,
+    helpers,
+    saveAction: schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction,
+  });
+  const hasQuickEditColumns = columns.some((col) => {
+    const cfg = resolveTableQuickEditConfig(col);
+    return cfg && cfg.saveImmediately !== true && cfg.mode !== 'dialog';
+  });
+  const rowSaveAction = schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction;
+  const rowDraftEnabled = hasQuickEditColumns && Boolean(rowSaveAction);
+
   const rowCheckboxDisabled =
     (isRowCheckable ? !isRowCheckable(rowKey) : false) ||
     (isAtMaxSelection === true && !isSelected);
@@ -153,7 +171,7 @@ function DataRowView({
     }
   };
 
-  return (
+  const rowContent = (
     <TableRow
       data-slot="table-row"
       data-row-toggleable={toggleOnRowClick || undefined}
@@ -420,8 +438,27 @@ function DataRowView({
           </TableCell>
         );
       })}
+      {rowDraftEnabled ? (
+        <TableCell
+          key="__row_save_bar__"
+          data-slot="table-row-save-bar-cell"
+          className="w-32 whitespace-nowrap"
+        >
+          <RowQuickEditSaveBar rowDraft={rowDraft} />
+        </TableCell>
+      ) : null}
     </TableRow>
   );
+
+  if (rowDraftEnabled) {
+    return (
+      <RowQuickEditDraftContext.Provider value={rowDraft}>
+        {rowContent}
+      </RowQuickEditDraftContext.Provider>
+    );
+  }
+
+  return rowContent;
 }
 
 // H10: row-level bailout is load-bearing for the table single-row locality

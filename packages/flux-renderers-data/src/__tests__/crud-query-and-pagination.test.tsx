@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ActionContext } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
@@ -78,10 +78,8 @@ describe('CRUD query and pagination', () => {
     expect(input).toBeTruthy();
     fireEvent.change(input!, { target: { value: 'Ali' } });
 
-    const queryControls = document.querySelector('[data-slot="crud-query-controls"]');
-    expect(queryControls).toBeTruthy();
     fireEvent.click(
-      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }),
+      screen.getByRole('button', { name: t('flux.common.search') }),
     );
     await waitFor(() => {
       expect(screen.getByText('Query: Ali')).toBeTruthy();
@@ -90,7 +88,7 @@ describe('CRUD query and pagination', () => {
     });
 
     fireEvent.click(
-      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.reset') }),
+      screen.getByRole('button', { name: t('flux.common.reset') }),
     );
     await waitFor(() => {
       expect(screen.getByText('Query: none')).toBeTruthy();
@@ -129,12 +127,10 @@ describe('CRUD query and pagination', () => {
     );
 
     const input = screen.getByLabelText('Keyword') as HTMLInputElement;
-    const queryControls = document.querySelector('[data-slot="crud-query-controls"]');
-    expect(queryControls).toBeTruthy();
 
     fireEvent.change(input, { target: { value: 'Ali' } });
     fireEvent.click(
-      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }),
+      screen.getByRole('button', { name: t('flux.common.search') }),
     );
 
     await waitFor(() => {
@@ -145,7 +141,7 @@ describe('CRUD query and pagination', () => {
 
     fireEvent.change(input, { target: { value: '' } });
     fireEvent.click(
-      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }),
+      screen.getByRole('button', { name: t('flux.common.search') }),
     );
 
     await waitFor(() => {
@@ -234,12 +230,10 @@ describe('CRUD query and pagination', () => {
     );
 
     const input = screen.getByLabelText('Keyword') as HTMLInputElement;
-    const queryControls = document.querySelector('[data-slot="crud-query-controls"]');
-    expect(queryControls).toBeTruthy();
 
     fireEvent.change(input, { target: { value: 'Ali' } });
     fireEvent.click(
-      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }),
+      screen.getByRole('button', { name: t('flux.common.search') }),
     );
 
     await waitFor(() => expect(screen.getByText('Active query: Ali')).toBeTruthy());
@@ -255,7 +249,7 @@ describe('CRUD query and pagination', () => {
     });
 
     fireEvent.click(
-      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.reset') }),
+      screen.getByRole('button', { name: t('flux.common.reset') }),
     );
 
     await waitFor(() => expect(screen.getByText('Active query: none')).toBeTruthy());
@@ -318,11 +312,9 @@ describe('CRUD query and pagination', () => {
       />,
     );
 
-    const queryControls = document.querySelector('[data-slot="crud-query-controls"]');
-    expect(queryControls).toBeTruthy();
 
     fireEvent.click(
-      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }),
+      screen.getByRole('button', { name: t('flux.common.search') }),
     );
 
     await waitFor(() => {

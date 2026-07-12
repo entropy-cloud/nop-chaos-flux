@@ -96,7 +96,7 @@ export function useCrudPolling(args: UseCrudPollingArgs): UseCrudPollingResult {
   const enabledSpec = polling?.enabled;
   const sourceId = polling?.sourceId;
 
-  const schemaEnabled = enabledSpec !== false && enabledSpec !== 'false';
+  const schemaEnabled = polling ? enabledSpec !== false && enabledSpec !== 'false' : false;
   const [userToggle, setUserToggleState] = useState<boolean>(true);
   const effectiveEnabled = schemaEnabled && userToggle;
 

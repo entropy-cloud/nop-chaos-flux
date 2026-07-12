@@ -130,6 +130,12 @@ export function createComponentHandleRegistry(input: {
       return;
     }
 
+    // Skip names containing dots — they're field data paths (e.g. "record.q3")
+    // that legitimately appear in every row of an inline-edit table.
+    if (name.includes('.')) {
+      return;
+    }
+
     const existing = nameIndex.get(name);
     if (existing && existing.size > 0) {
       console.warn(

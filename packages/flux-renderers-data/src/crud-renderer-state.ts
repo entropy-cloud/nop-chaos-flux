@@ -302,6 +302,8 @@ export function useCrudHandle(
   handleRefresh: (ctx?: Partial<ActionContext>) => void,
   toggleSelection: (key: unknown) => void,
   handleLoadMore: () => Promise<unknown> | void,
+  querySubmit?: () => Promise<void>,
+  queryReset?: () => void,
 ) {
   const componentRegistry = useCurrentComponentRegistry();
   const cid = props.meta.cid;
@@ -313,6 +315,10 @@ export function useCrudHandle(
       return;
     }
 
+    const methods = ['refresh', 'getSelection', 'clearSelection', 'toggleSelection', 'loadMore'];
+    if (querySubmit) methods.push('querySubmit');
+    if (queryReset) methods.push('queryReset');
+
     return componentRegistry.register(
       {
         id,
@@ -320,10 +326,10 @@ export function useCrudHandle(
         type: 'crud',
         capabilities: {
           hasMethod(method) {
-            return ['refresh', 'getSelection', 'clearSelection', 'toggleSelection', 'loadMore'].includes(method);
+            return methods.includes(method);
           },
           listMethods() {
-            return ['refresh', 'getSelection', 'clearSelection', 'toggleSelection', 'loadMore'];
+            return methods;
           },
           async invoke(method, payload, ctx) {
             switch (method) {
@@ -341,6 +347,18 @@ export function useCrudHandle(
               case 'loadMore':
                 handleLoadMore();
                 return { ok: true };
+              case 'querySubmit':
+                if (querySubmit) {
+                  await querySubmit();
+                  return { ok: true };
+                }
+                return { ok: false, error: new Error('querySubmit not available') };
+              case 'queryReset':
+                if (queryReset) {
+                  queryReset();
+                  return { ok: true };
+                }
+                return { ok: false, error: new Error('queryReset not available') };
               default:
                 return { ok: false, error: new Error(`Unknown method: ${method}`) };
             }
@@ -349,7 +367,7 @@ export function useCrudHandle(
       },
       { cid },
     );
-  }, [clearSelection, componentRegistry, cid, handleRefresh, id, name, selectedRowKeys, toggleSelection, handleLoadMore]);
+  }, [clearSelection, componentRegistry, cid, handleRefresh, id, name, selectedRowKeys, toggleSelection, handleLoadMore, querySubmit, queryReset]);
 }
 
 export function useCrudRuntimeState(args: {

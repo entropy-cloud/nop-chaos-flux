@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { t } from '@nop-chaos/flux-i18n';
 import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
@@ -50,13 +50,9 @@ describe('CRUD renderer source-owned baseline', () => {
     expect(screen.getByText('Rows: 2/42; Query: none')).toBeTruthy();
 
     const input = screen.getByLabelText('Keyword') as HTMLInputElement;
-    const queryControls = document.querySelector(
-      '[data-slot="crud-query-controls"]',
-    ) as HTMLElement | null;
-    expect(queryControls).toBeTruthy();
 
     fireEvent.change(input, { target: { value: 'Ali' } });
-    fireEvent.click(within(queryControls!).getByRole('button', { name: t('flux.common.search') }));
+    fireEvent.click(screen.getByRole('button', { name: t('flux.common.search') }));
 
     await waitFor(() => {
       expect(screen.getByText('Rows: 1/42; Query: Ali')).toBeTruthy();

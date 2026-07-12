@@ -13,6 +13,8 @@ export interface CrudQueryFormConfig extends SchemaObject {
   actions?: SchemaInput;
   statusPath?: string;
   layout?: 'horizontal' | 'vertical' | 'inline';
+  columnCount?: number;
+  gap?: number | string;
   mode?: 'manual' | 'auto';
   syncLocation?: boolean;
   defaultParams?: Record<string, SchemaValue>;

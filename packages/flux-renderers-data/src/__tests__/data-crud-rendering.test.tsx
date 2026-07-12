@@ -172,8 +172,7 @@ describe('CRUD renderer', () => {
 
     expect(screen.getByText('Query filters')).toBeTruthy();
     expect(document.querySelector('[data-slot="form-actions"]')).toBeTruthy();
-    expect(document.querySelector('[data-slot="crud-query-controls"]')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: t('flux.common.search') })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
   });
 
   it('renders footer toolbar and toolbar layout blocks', async () => {
@@ -206,8 +205,7 @@ describe('CRUD renderer', () => {
     );
 
     expect(document.querySelector('[data-slot="crud-list-actions"]')).toBeTruthy();
-    expect(document.querySelector('[data-slot="header-toolbar-list-actions"]')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Bulk Delete' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Bulk Delete' })).toHaveLength(1);
     expect(screen.getByText('Footer region')).toBeTruthy();
     expect(document.querySelector('[data-slot="header-toolbar-pagination"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="footer-toolbar-statistics"]')).toBeTruthy();

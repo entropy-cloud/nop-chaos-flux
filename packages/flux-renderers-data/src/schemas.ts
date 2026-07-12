@@ -171,6 +171,7 @@ export interface TableSchema extends BaseSchema {
     mode?: 'pages' | 'infinite';
     serverPaged?: boolean;
     total?: number;
+    hideBar?: boolean;
   };
   rowSelection?: {
     type?: 'checkbox' | 'radio';

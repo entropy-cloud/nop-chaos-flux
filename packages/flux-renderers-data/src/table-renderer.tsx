@@ -642,7 +642,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         {isLoading ? <TableLoadingOverlay loadingContent={loadingContent} /> : null}
       </div>
 
-      {paginationEnabled && treeFlattenedData.length > 0 ? (
+      {paginationEnabled && !schemaProps.pagination?.hideBar && treeFlattenedData.length > 0 ? (
         <TablePaginationBar
           currentPage={resolvedCurrentPage}
           pageSize={pageSize}

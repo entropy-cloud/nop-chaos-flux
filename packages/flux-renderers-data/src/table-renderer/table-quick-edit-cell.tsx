@@ -15,6 +15,7 @@ import {
 } from '@nop-chaos/ui';
 import type { TableColumnQuickEditConfig, TableColumnSchema, TableSchema } from '../schemas.js';
 import { useTableQuickEditController } from './table-quick-edit-controller.js';
+import { useRowQuickEditDraftContext } from './use-row-quick-edit-draft.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -75,26 +76,19 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
     typeof column.quickEditBodyRegionKey === 'string' ? regions[column.quickEditBodyRegionKey] : undefined;
   const hasCustomBody = Boolean(quickEditBodyRegion);
 
+  const rowDraft = useRowQuickEditDraftContext();
   const saveAction = quickSaveItemAction ?? quickSaveAction;
   const mode = config?.mode ?? 'inline';
-  const {
-    draftValue,
-    draftRowScope,
-    saving,
-    dialogOpen,
-    dirty,
-    markBodyDirty,
-    closeDialog,
-    openDialog,
-    handleInlineValueChange,
-    handleDialogOpenChange,
-    runSave,
-  } = useTableQuickEditController({
+  const isSaveImmediately = config?.saveImmediately === true;
+  const isDialogMode = mode === 'dialog';
+  const hasRowLevelSave = rowDraft !== null && !isSaveImmediately && !isDialogMode;
+
+  const ownCtrl = useTableQuickEditController({
     field,
     record,
     rowScope,
     helpers,
-    saveAction,
+    saveAction: hasRowLevelSave ? undefined : saveAction,
     hasCustomBody,
     onSaveError(error) {
       env.notify?.(
@@ -103,6 +97,18 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
       );
     },
   });
+
+  const draftValue = rowDraft && field ? rowDraft.getFieldValue(field) : ownCtrl.draftValue;
+  const draftRowScope = hasRowLevelSave && rowDraft ? rowDraft.draftRowScope : ownCtrl.draftRowScope;
+  const saving = rowDraft && !isSaveImmediately ? rowDraft.saving : ownCtrl.saving;
+  const dialogOpen = ownCtrl.dialogOpen;
+  const dirty = rowDraft && field ? rowDraft.isFieldDirty(field) : ownCtrl.dirty;
+
+  const handleInlineValueChange = rowDraft && field
+    ? (value: string) => rowDraft.setFieldValue(field, value)
+    : ownCtrl.handleInlineValueChange;
+
+  const runSave = rowDraft ? rowDraft.runSave : ownCtrl.runSave;
 
   const editorNode = hasCustomBody ? (
     quickEditBodyRegion
@@ -129,8 +135,8 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
         data-slot="table-quick-edit"
         onClick={(event) => event.stopPropagation()}
       >
-        <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
-          <Button type="button" variant="outline" size="sm" onClick={openDialog}>
+        <Dialog open={dialogOpen} onOpenChange={ownCtrl.handleDialogOpenChange}>
+          <Button type="button" variant="outline" size="sm" onClick={ownCtrl.openDialog}>
             {typeof column.label === 'string' ? column.label : t('flux.common.edit')}
           </Button>
           <DialogContent data-slot="table-quick-edit-dialog">
@@ -139,7 +145,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
                 {typeof column.label === 'string' ? column.label : (field ?? t('flux.common.edit'))}
               </DialogTitle>
             </DialogHeader>
-            <DialogBody data-slot="table-quick-edit-dialog-body" onChangeCapture={markBodyDirty}>
+            <DialogBody data-slot="table-quick-edit-dialog-body" onChangeCapture={ownCtrl.markBodyDirty}>
               {editorNode}
               {saving ? (
                 <div
@@ -154,7 +160,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
               ) : null}
             </DialogBody>
             <DialogFooter showCloseButton={false}>
-              <Button type="button" variant="outline" onClick={closeDialog} disabled={saving}>
+              <Button type="button" variant="outline" onClick={ownCtrl.closeDialog} disabled={saving}>
                 {t('flux.common.close')}
               </Button>
               {saveAction ? (
@@ -177,7 +183,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
       className="flex items-center gap-2"
       data-slot="table-quick-edit"
       onClick={(event) => event.stopPropagation()}
-      onChangeCapture={markBodyDirty}
+      onChangeCapture={ownCtrl.markBodyDirty}
       onBlurCapture={(event) => {
         if (!config?.saveImmediately || mode !== 'inline') {
           return;
@@ -203,7 +209,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
           <span>{t('flux.common.saving')}</span>
         </div>
       ) : null}
-      {!config?.saveImmediately && saveAction ? (
+      {!hasRowLevelSave && !config?.saveImmediately && saveAction ? (
         <Button
           type="button"
           variant="outline"

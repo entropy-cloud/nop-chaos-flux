@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
@@ -10,7 +10,8 @@ import {
   useSchemaProps,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, PaginationNext, PaginationPrevious, Separator, cn, useIsMobile } from '@nop-chaos/ui';
+import { Button, Separator, cn, useIsMobile } from '@nop-chaos/ui';
+import { ChevronDownIcon } from 'lucide-react';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
 import type { TableSchema } from './schemas.js';
 import { normalizeCrudSchema } from './crud-schema.js';
@@ -38,59 +39,16 @@ import {
   useCrudVisibleColumnNames,
 } from './crud-renderer-ownership.js';
 import { useCrudPolling } from './use-crud-polling.js';
-import { CrudQueryRegion, resolvePaginationMode, isAtLastPage } from './crud-query-region.js';
+import { resolvePaginationMode, isAtLastPage } from './crud-query-region.js';
 import { useInfiniteScroll } from './use-infinite-scroll.js';
+import { asReactNode, delegateTableRendererProps, resolveCrudSlotContent } from './crud-renderer-delegate.js';
+import { useCrudFilterToggle } from './use-crud-filter-toggle.js';
+import { CrudListPagination } from './crud-list-pagination.js';
+import { CrudInfiniteScrollArea } from './crud-infinite-scroll-area.js';
 
 type CrudRefreshContext = Parameters<NonNullable<RendererComponentProps<CrudSchema>['events']['onRefresh']>>[1];
 
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
-/**
- * AUDIT-03: the single, documented cast seam for CRUD→Table renderer delegation.
- *
- * The CRUD composes a `TableRenderer` from a CRUD-derived `tableSchema` plus the
- * CRUD's own `regions` / `events` / `helpers` / `node` / `templateNode`. These are
- * structurally compatible — the table only reads the region keys, event names, and
- * helpers it declares — but they are typed under different schema generics
- * (`CrudSchema` vs `TableSchema`), so a cast is unavoidable. Centralizing it here
- * keeps the unsafe surface to one audited location instead of scattered
- * `as unknown as` at each field. Only the genuinely cross-generic fields are cast;
- * `props`/`meta`/`helpers`/`schema` are assigned without any cast.
- */
-function delegateTableRendererProps(
-  source: RendererComponentProps<CrudSchema>,
-  tableSchema: TableSchema,
-  tableResolvedProps: RendererComponentProps<TableSchema>['props'],
-  crudScope: ReturnType<typeof createReadonlyScopeBinding>,
-): RendererComponentProps<TableSchema> {
-  return {
-    id: `${source.id}-table`,
-    path: `${source.path}.table`,
-    schema: tableSchema,
-    // `templateNode` / `node` carry the CrudSchema generic; the table only consumes
-    // their structural shape (instance path / scope), so they cross the generic
-    // boundary here — the single audited `as unknown as` seam for this delegation.
-    templateNode:
-      source.templateNode as unknown as RendererComponentProps<TableSchema>['templateNode'],
-    node: {
-      ...source.node,
-      scope: crudScope,
-    } as unknown as RendererComponentProps<TableSchema>['node'],
-    props: tableResolvedProps,
-    meta: {
-      ...source.meta,
-      cid: undefined,
-      className: undefined,
-      testid: undefined,
-    },
-    regions: source.regions as RendererComponentProps<TableSchema>['regions'],
-    events: source.events as RendererComponentProps<TableSchema>['events'],
-    reactions: source.reactions as RendererComponentProps<TableSchema>['reactions'],
-    helpers: source.helpers,
-  };
-}
 
 export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const defaultEmptyLabel = t('flux.common.noData');
@@ -134,6 +92,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       defaultQuery,
       fallbackPageSize: DEFAULT_PAGE_SIZE,
     });
+
+  const filterToggle = useCrudFilterToggle(normalizedSchema, queryState);
 
   useEffect(() => {
     if (!scope) {
@@ -346,38 +306,14 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     onLoadMore: handleLoadMore,
   });
 
-  function resolveCrudSlotContent(
-    slotKey: string,
-    options?: { metaKey?: string; fallback?: React.ReactNode },
-  ) {
-    const regionContent = props.regions[slotKey]?.render({ scope: crudScope });
-    if (regionContent !== undefined && regionContent !== null) {
-      return regionContent;
-    }
-
-    const propValue = (props.props as Record<string, unknown>)[slotKey] as
-      | React.ReactNode
-      | undefined;
-    if (propValue !== undefined && propValue !== null) {
-      return propValue;
-    }
-
-    if (options?.metaKey) {
-      const metaValue = (props.meta as unknown as Record<string, unknown>)[options.metaKey] as
-        | React.ReactNode
-        | undefined;
-      if (metaValue !== undefined && metaValue !== null) {
-        return metaValue;
-      }
-    }
-
-    return options?.fallback;
-  }
-
-  const toolbarContent = resolveCrudSlotContent('toolbar');
-  const listActionsContent = resolveCrudSlotContent('listActions');
-  const footerToolbarContent = resolveCrudSlotContent('footerToolbar');
+  const toolbarContent = resolveCrudSlotContent('toolbar', props, crudScope);
+  const listActionsContent = resolveCrudSlotContent('listActions', props, crudScope);
+  const footerToolbarContent = resolveCrudSlotContent('footerToolbar', props, crudScope);
   const tableEmptyContent = normalizedSchema.empty ?? defaultEmptyLabel;
+
+  const hasToolbar = hasRendererSlotContent(asReactNode(toolbarContent));
+  const hasListActions = hasRendererSlotContent(asReactNode(listActionsContent));
+  const hasFooterToolbar = hasRendererSlotContent(asReactNode(footerToolbarContent));
 
   const headerBlocksRaw = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header');
   const footerBlocksRaw = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer');
@@ -395,14 +331,18 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     if (isMobile) {
       resolved = resolved.filter((block) => block.type !== 'switch-per-page');
     }
+    if (hasListActions) {
+      resolved = resolved.filter((block) => block.type !== 'listActions');
+    }
     return resolved;
   }
 
   const headerBlocks = resolveToolbarBlocks(headerBlocksRaw, paginationMode);
   const footerBlocks = resolveToolbarBlocks(footerBlocksRaw, paginationMode);
-  const hasToolbar = hasRendererSlotContent(asReactNode(toolbarContent));
-  const hasListActions = hasRendererSlotContent(asReactNode(listActionsContent));
-  const hasFooterToolbar = hasRendererSlotContent(asReactNode(footerToolbarContent));
+
+  const hasExternalPaginationControl =
+    headerBlocksRaw.some((b) => b.type === 'pagination' || b.type === 'switch-per-page') ||
+    footerBlocksRaw.some((b) => b.type === 'pagination' || b.type === 'switch-per-page');
 
   const pollingToggleBlockVisible =
     headerBlocks.some((block) => block.type === 'polling-toggle') ||
@@ -442,6 +382,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         pageSizeOptions: DEFAULT_PAGE_SIZE_OPTIONS,
         showSizeChanger: paginationMode === 'pages',
         mode: paginationMode,
+        hideBar: hasExternalPaginationControl || undefined,
       },
       empty: tableEmptyContent,
       quickSaveAction: normalizedSchema.quickSaveAction,
@@ -508,7 +449,28 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     scope.update(selectionStatePath, next);
   };
 
-  useCrudHandle(props, selectedRowKeys, handleClearSelection, handleRefresh, handleToggleSelection, handleLoadMore);
+  const handleQuerySubmitForHandle = useCallback(async () => {
+    try {
+      await handleQuerySubmit();
+    } catch (error) {
+      const fallback = new Error(t('flux.common.queryFailed'), { cause: error });
+      env.notify?.(
+        'warning',
+        error instanceof Error && error.message ? error.message : fallback.message,
+      );
+    }
+  }, [handleQuerySubmit, env]);
+
+  useCrudHandle(
+    props,
+    selectedRowKeys,
+    handleClearSelection,
+    handleRefresh,
+    handleToggleSelection,
+    handleLoadMore,
+    handleQuerySubmitForHandle,
+    handleQueryReset,
+  );
 
   const handleToolbarPageChange = (page: number) => {
     const newPagination = { currentPage: page, pageSize: paginationState.pageSize };
@@ -525,26 +487,17 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     }
   };
 
-  const handleQuerySubmitWithFeedback = () => {
-    void handleQuerySubmit().catch((error) => {
-      const fallback = new Error(t('flux.common.queryFailed'), {
-        cause: error,
-      });
-      env.notify?.(
-        'warning',
-        error instanceof Error && error.message ? error.message : fallback.message,
-      );
-    });
-  };
-
   const listMode = normalizedSchema.listMode ?? 'table';
   const nonTableMode = listMode === 'cards' || listMode === 'list';
   const listTotalPages = Math.max(1, Math.ceil(filteredRows.length / paginationState.pageSize));
   const listAtLastPage = paginationState.currentPage >= listTotalPages;
 
   // Build the nested carrier schema (list/cards) inline. The React Compiler auto-memoizes this,
-  // and the carrier wrapper below is keyed on pagination/selection state so the nested
-  // `helpers.render` subtree remounts (and re-evaluates template bindings) when that state changes.
+  // and the carrier wrapper below is keyed on pagination/selection state AND data version so the
+  // nested `helpers.render` subtree remounts (and re-evaluates template bindings) when data loads
+  // or pagination/selection changes. Without the data-version segment, the initial load (0→N rows)
+  // re-renders with memoized stale empty items — only pagination changes would force remount,
+  // causing the "cards empty until next page" bug.
   const carrierSchema: BaseSchema | null = nonTableMode
     ? (() => {
         const carrierRows =
@@ -589,28 +542,56 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
   return (
     <div
-      className={cn('nop-crud', props.meta.className)}
+      className={cn('nop-crud flex flex-col gap-4', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-responsive={isMobile ? 'narrow' : undefined}
     >
       {hasQueryForm ? (
-        <CrudQueryRegion
-          filterTogglable={normalizedSchema.filterTogglable}
-          queryState={queryState}
-          defaultQuery={defaultQuery}
-          isMobile={isMobile}
-          queryFormRegionRender={() =>
-            asReactNode(
-              props.regions.queryFormRegion?.render({
-                pathSuffix: 'queryForm',
-                scope: crudScope,
-              }),
-            )
-          }
-          onSubmit={handleQuerySubmitWithFeedback}
-          onReset={handleQueryReset}
-        />
+        <div
+          className={cn(
+            'nop-crud-query rounded-lg border bg-muted/30',
+            filterToggle.collapsed && filterToggle.enabled ? 'px-3 py-2' : 'p-4',
+          )}
+          data-slot="crud-query"
+        >
+          {filterToggle.enabled ? (
+            <div
+              className={cn('flex items-center', filterToggle.collapsed ? 'justify-between' : 'justify-end')}
+              data-slot="crud-query-collapse"
+              data-collapsed={filterToggle.collapsed || undefined}
+            >
+              {filterToggle.collapsed ? (
+                <span className="text-sm text-muted-foreground">
+                  {filterToggle.activeFilterCount > 0
+                    ? t('flux.crud.activeFilters', { count: filterToggle.activeFilterCount })
+                    : t('flux.crud.collapseQuery')}
+                </span>
+              ) : null}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => filterToggle.setCollapsed(!filterToggle.collapsed)}
+                aria-expanded={!filterToggle.collapsed}
+                aria-label={filterToggle.collapsed ? t('flux.crud.expandQuery') : t('flux.crud.collapseQuery')}
+              >
+                <ChevronDownIcon
+                  className={cn('size-4 transition-transform', !filterToggle.collapsed && 'rotate-180')}
+                />
+              </Button>
+            </div>
+          ) : null}
+          {!filterToggle.collapsed || !filterToggle.enabled ? (
+            <div className={filterToggle.enabled ? 'mt-3' : ''}>
+              {asReactNode(
+                props.regions.queryFormRegion?.render({
+                  pathSuffix: 'queryForm',
+                  scope: crudScope,
+                }),
+              )}
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       {hasToolbar || hasListActions || headerBlocks.length > 0 || pollingToggleProps ? (
@@ -644,38 +625,18 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
           data-list-mode={listMode}
         >
           <div
-            key={`carrier-${paginationState.currentPage}-${paginationState.pageSize}`}
+            key={`carrier-${paginationState.currentPage}-${paginationState.pageSize}-${filteredRows.length}`}
             data-slot="crud-list-carrier"
           >
             {asReactNode(carrierNode)}
           </div>
           {paginationMode === 'pages' ? (
-            <div
-              className="nop-crud-list-pagination mt-3 flex flex-wrap items-center justify-end gap-2"
-              data-slot="crud-list-pagination"
-              data-list-mode={listMode}
-            >
-              <PaginationPrevious
-                text={t('flux.pagination.previous')}
-                aria-label={t('flux.pagination.previous')}
-                onClick={() => handleToolbarPageChange(Math.max(1, paginationState.currentPage - 1))}
-                className={paginationState.currentPage <= 1 ? 'pointer-events-none opacity-50' : undefined}
-                aria-disabled={paginationState.currentPage <= 1 || undefined}
-              />
-              <span className="text-sm text-muted-foreground">
-                {t('flux.pagination.page', {
-                  current: paginationState.currentPage,
-                  total: listTotalPages,
-                })}
-              </span>
-              <PaginationNext
-                text={t('flux.pagination.next')}
-                aria-label={t('flux.pagination.next')}
-                onClick={() => handleToolbarPageChange(paginationState.currentPage + 1)}
-                className={listAtLastPage ? 'pointer-events-none opacity-50' : undefined}
-                aria-disabled={listAtLastPage || undefined}
-              />
-            </div>
+            <CrudListPagination
+              paginationState={paginationState}
+              listTotalPages={listTotalPages}
+              listAtLastPage={listAtLastPage}
+              onPageChange={handleToolbarPageChange}
+            />
           ) : null}
         </div>
       ) : (
@@ -685,39 +646,14 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       )}
 
       {paginationMode === 'infinite' ? (
-        <div className="nop-crud-infinite" data-slot="crud-infinite">
-          <div data-slot="crud-infinite-status">
-            {loadDataOnce
-              ? t('flux.crud.loadedAll', { count: filteredRows.length })
-              : atLastPage
-                ? t('flux.crud.noMoreData')
-                : infiniteState.error
-                  ? t('flux.crud.loadFailed')
-                  : infiniteState.loading
-                    ? t('flux.crud.loadingMore')
-                    : ''}
-          </div>
-          {infiniteSentinelEnabled ? (
-            <div
-              ref={infiniteSentinelRef}
-              data-slot="crud-infinite-sentinel"
-              style={{ height: 1 }}
-              aria-hidden
-            />
-          ) : null}
-          {infiniteState.error ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                infiniteState.setError(undefined);
-                handleLoadMore();
-              }}
-            >
-              {t('flux.common.retry')}
-            </Button>
-          ) : null}
-        </div>
+        <CrudInfiniteScrollArea
+          loadDataOnce={loadDataOnce}
+          filteredRowCount={filteredRows.length}
+          atLastPage={atLastPage}
+          infiniteState={infiniteState}
+          infiniteSentinelRef={infiniteSentinelEnabled ? infiniteSentinelRef : null}
+          onRetry={handleLoadMore}
+        />
       ) : null}
 
       {hasFooterToolbar || footerBlocks.length > 0 || pollingToggleProps ? (

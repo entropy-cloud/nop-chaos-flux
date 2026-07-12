@@ -80,7 +80,7 @@ describe('CRUD responsive — toolbar simplification (M4a)', () => {
     expect(document.querySelector('[data-slot="footer-toolbar-page-size"]')).toBeNull();
 
     expect(document.querySelector('[data-slot="header-toolbar-pagination"]')).toBeTruthy();
-    expect(document.querySelector('[data-slot="header-toolbar-list-actions"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="crud-list-actions"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="header-toolbar-statistics"]')).toBeTruthy();
   });
 

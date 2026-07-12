@@ -2,8 +2,10 @@ import {
   createNodeId,
   parsePath,
   type BaseSchema,
+  type SchemaInput,
   type RendererSchemaValidationContext,
 } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { CrudSchema } from './crud-schema.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
 import type { TableSchema } from './schemas.js';
@@ -19,10 +21,45 @@ function createCrudQueryFormRegion(schema: CrudSchema, path: string) {
     id: createCrudQueryFormId(createNodeId(path, schema), path),
     body: queryForm.body,
     mode: queryForm.layout === 'horizontal' ? 'horizontal' : 'normal',
+    actionsClassName: 'flex justify-end gap-2',
   };
+
+  if (queryForm.columnCount !== undefined) {
+    region.columnCount = queryForm.columnCount;
+  }
+
+  if (queryForm.gap !== undefined) {
+    region.gap = queryForm.gap;
+  }
+
+  if (queryForm.labelWidth !== undefined) {
+    region.labelWidth = queryForm.labelWidth;
+  }
+
+  if (queryForm.labelAlign !== undefined) {
+    region.labelAlign = queryForm.labelAlign;
+  }
 
   if (queryForm.actions !== undefined) {
     region.actions = queryForm.actions;
+  } else {
+    const crudComponentId = schema.id ?? schema.name;
+    if (crudComponentId !== undefined) {
+      region.actions = [
+        {
+          type: 'button',
+          label: t('flux.common.search'),
+          variant: 'primary',
+          onClick: { action: 'component:querySubmit', componentId: String(crudComponentId) },
+        },
+        {
+          type: 'button',
+          label: t('flux.common.reset'),
+          variant: 'outline',
+          onClick: { action: 'component:queryReset', componentId: String(crudComponentId) },
+        },
+      ] as SchemaInput;
+    }
   }
 
   if (queryForm.statusPath !== undefined) {

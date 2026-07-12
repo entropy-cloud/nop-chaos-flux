@@ -487,7 +487,7 @@ describe('CRUD selection and features', () => {
       expect(bodyRows[1].querySelectorAll('td')[0].textContent).toBe('2');
       expect(bodyRows[1].querySelectorAll('td')[1].textContent).toBe('Beta');
 
-      expect(document.querySelector('[data-slot="table-pagination"]')).toBeTruthy();
+      expect(document.querySelector('[data-slot="header-toolbar-pagination"]')).toBeTruthy();
     });
 
     it('renders table body with checkbox selection and field values', async () => {
