@@ -1,0 +1,313 @@
+{
+  "type": "page",
+  "testid": "crud-demo-page",
+  "body": [
+    {
+      "type": "text",
+      "text": "用户管理（CRUD）",
+      "className": "text-2xl font-bold"
+    },
+    {
+      "type": "text",
+      "text": "完整增删改查示例：crud loadAction 按 nop 规范 /r/User__findPage + selection 取数 → edit 对话框 form loadAction 按 id 拉 /r/User__get 详情 → messages/confirmText 内置反馈 → component:refresh 刷新。字典字段(如 status)自动生成 status_label 扁平字段，列表列直接显示 status_label；角色字段为 relatedRoleList{roleName}。",
+      "className": "text-sm text-muted-foreground"
+    },
+    {
+      "type": "crud",
+      "id": "user-crud",
+      "testid": "user-crud",
+      "rowKey": "id",
+      "loadAction": {
+        "action": "ajax",
+        "args": {
+          "url": "/r/User__findPage",
+          "method": "get",
+          "selection": "id,name,email,status,status_label,createTime"
+        }
+      },
+      "loadAllData": true,
+      "selection": {},
+      "filterTogglable": { "defaultCollapsed": false },
+      "queryForm": {
+        "body": [
+          {
+            "type": "input-text",
+            "name": "keyword",
+            "label": "关键字",
+            "placeholder": "姓名 / 邮箱"
+          }
+        ]
+      },
+      "toolbarLayout": {
+        "header": ["listActions", "pagination"],
+        "footer": ["statistics", "switch-per-page"]
+      },
+      "toolbar": [
+        {
+          "type": "button",
+          "label": "新增",
+          "variant": "primary",
+          "testid": "btn-add",
+          "onClick": {
+            "action": "openDialog",
+            "args": {
+              "title": "新增用户",
+              "testid": "user-add-dialog",
+              "body": [
+                {
+                  "type": "form",
+                  "id": "user-add-form",
+                  "testid": "user-add-form",
+                  "data": { "name": "", "email": "", "gender": "", "status": "1" },
+                  "submitAction": {
+                    "action": "ajax",
+                    "args": { "url": "/r/User__save", "method": "post", "includeScope": "*" },
+                    "messages": { "success": "新增成功" },
+                    "then": [
+                      { "action": "component:refresh", "componentId": "user-crud" },
+                      { "action": "closeSurface" }
+                    ]
+                  },
+                  "columnCount": 2,
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "name",
+                      "label": "姓名",
+                      "required": true,
+                      "placeholder": "请输入姓名"
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "email",
+                      "label": "邮箱",
+                      "required": true,
+                      "placeholder": "请输入邮箱"
+                    },
+                    {
+                      "type": "select",
+                      "name": "gender",
+                      "label": "性别",
+                      "required": true,
+                      "options": [
+                        { "label": "男", "value": "1" },
+                        { "label": "女", "value": "0" }
+                      ]
+                    },
+                    {
+                      "type": "select",
+                      "name": "status",
+                      "label": "状态",
+                      "required": true,
+                      "options": [
+                        { "label": "启用", "value": "1" },
+                        { "label": "禁用", "value": "0" }
+                      ]
+                    },
+                    {
+                      "type": "picker",
+                      "name": "departmentId",
+                      "label": "部门（弹出选择）",
+                      "className": "col-span-2",
+                      "valueKey": "id",
+                      "labelKey": "name",
+                      "multiple": false,
+                      "searchable": true,
+                      "pickerDialog": { "title": "选择部门" },
+                      "loadAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/Department__findPage",
+                          "method": "get",
+                          "selection": "id,name"
+                        }
+                      },
+                      "columns": [
+                        { "name": "id", "label": "编码", "width": 120 },
+                        { "name": "name", "label": "部门名称", "width": 200 }
+                      ]
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "type": "button",
+                      "label": "保存",
+                      "variant": "primary",
+                      "onClick": { "action": "submitForm" }
+                    },
+                    {
+                      "type": "button",
+                      "label": "取消",
+                      "variant": "outline",
+                      "onClick": { "action": "closeSurface" }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "listActions": [
+        {
+          "type": "button",
+          "label": "批量删除",
+          "variant": "destructive",
+          "testid": "btn-bulk-delete",
+          "disabled": "${!$crud.hasSelection}",
+          "onClick": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/User__delete",
+              "method": "post",
+              "data": { "ids": "${$crud.selectedRowKeys}" }
+            },
+            "confirmText": "确认删除选中的 ${$crud.selectionCount} 条记录？",
+            "messages": { "success": "批量删除成功" },
+            "then": [{ "action": "component:refresh", "componentId": "user-crud" }]
+          }
+        }
+      ],
+      "footerToolbar": [
+        { "type": "text", "text": "共 ${$crud.total} 条 · 选中 ${$crud.selectionCount} 条" }
+      ],
+      "columns": [
+        { "name": "id", "label": "ID", "width": 80 },
+        { "name": "name", "label": "姓名", "sortable": true, "width": 140 },
+        { "name": "email", "label": "邮箱", "width": 220 },
+        { "name": "status_label", "label": "状态", "width": 100 },
+        { "name": "createTime", "label": "创建时间", "sortable": true, "width": 180 },
+        {
+          "type": "operation",
+          "label": "操作",
+          "fixed": "right",
+          "width": 160,
+          "buttons": [
+            {
+              "type": "button",
+              "label": "编辑",
+              "testid": "btn-edit",
+              "onClick": {
+                "action": "openDialog",
+                "args": {
+                  "title": "编辑用户",
+                  "testid": "user-edit-dialog",
+                  "data": { "id": "${$slot.record.id}" },
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "user-edit-form",
+                      "testid": "user-edit-form",
+                      "loadAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/User__get",
+                          "method": "get",
+                          "data": { "id": "${id}" },
+                          "selection": "id,name,email,gender,status,departmentId,createTime"
+                        }
+                      },
+                      "submitAction": {
+                        "action": "ajax",
+                        "args": { "url": "/r/User__save", "method": "post", "includeScope": "*" },
+                        "messages": { "success": "更新成功" },
+                        "then": [
+                          { "action": "component:refresh", "componentId": "user-crud" },
+                          { "action": "closeSurface" }
+                        ]
+                      },
+                      "columnCount": 2,
+                      "body": [
+                        { "type": "input-text", "name": "name", "label": "姓名", "required": true },
+                        {
+                          "type": "input-text",
+                          "name": "email",
+                          "label": "邮箱",
+                          "required": true
+                        },
+                        {
+                          "type": "select",
+                          "name": "gender",
+                          "label": "性别",
+                          "required": true,
+                          "options": [
+                            { "label": "男", "value": "1" },
+                            { "label": "女", "value": "0" }
+                          ]
+                        },
+                        {
+                          "type": "select",
+                          "name": "status",
+                          "label": "状态",
+                          "required": true,
+                          "options": [
+                            { "label": "启用", "value": "1" },
+                            { "label": "禁用", "value": "0" }
+                          ]
+                        },
+                        {
+                          "type": "picker",
+                          "name": "departmentId",
+                          "label": "部门（弹出选择）",
+                          "className": "col-span-2",
+                          "valueKey": "id",
+                          "labelKey": "name",
+                          "multiple": false,
+                          "searchable": true,
+                          "pickerDialog": { "title": "选择部门" },
+                          "loadAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/Department__findPage",
+                              "method": "get",
+                              "selection": "id,name"
+                            }
+                          },
+                          "columns": [
+                            { "name": "id", "label": "编码", "width": 120 },
+                            { "name": "name", "label": "部门名称", "width": 200 }
+                          ]
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "保存",
+                          "variant": "primary",
+                          "onClick": { "action": "submitForm" }
+                        },
+                        {
+                          "type": "button",
+                          "label": "取消",
+                          "variant": "outline",
+                          "onClick": { "action": "closeSurface" }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "button",
+              "label": "删除",
+              "variant": "destructive",
+              "testid": "btn-delete",
+              "onClick": {
+                "action": "ajax",
+                "args": {
+                  "url": "/r/User__delete",
+                  "method": "post",
+                  "data": { "id": "${$slot.record.id}" }
+                },
+                "confirmText": "确认删除该用户？",
+                "messages": { "success": "删除成功" },
+                "then": [{ "action": "component:refresh", "componentId": "user-crud" }]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

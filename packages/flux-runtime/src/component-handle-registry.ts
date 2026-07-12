@@ -138,6 +138,23 @@ export function createComponentHandleRegistry(input: {
 
     const existing = nameIndex.get(name);
     if (existing && existing.size > 0) {
+      const existingHandles = handlesByName.get(name);
+      if (existingHandles && existingHandles.size > 0) {
+        const newHandle = handlesByCid.get(cid);
+        if (newHandle) {
+          const allSameType = Array.from(existingHandles).every(
+            (h) => h.type === newHandle.type,
+          );
+          if (allSameType) {
+            // All handles with this name share the same type — they come from
+            // template repetition (e.g. input-table/array rows), not a genuine
+            // duplicate. Skip the warning to avoid noise.
+            existing.add(cid);
+            return;
+          }
+        }
+      }
+
       console.warn(
         `[ComponentRegistry] Duplicate component name "${name}" in scope "${input.id}". Existing cids: [${Array.from(existing).join(', ')}], new cid: ${cid}`,
       );
