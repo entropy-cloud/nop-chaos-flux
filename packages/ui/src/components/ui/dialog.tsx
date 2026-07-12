@@ -93,7 +93,7 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
-      className={cn(
+      className={cn('nop-dialog ',
         'isolate bg-surface-overlay duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
         isContained ? 'absolute inset-0' : 'fixed inset-0',
         className,
@@ -110,7 +110,7 @@ const DialogContent = React.forwardRef<
     showCloseButton?: boolean;
     offsetRef?: React.MutableRefObject<{ x: number; y: number }>;
     baseTransform?: string;
-    size?: 'sm' | 'default' | 'lg';
+    size?: 'sm' | 'default' | 'lg' | 'xl';
   }
 >(function DialogContent(
   {
@@ -157,10 +157,10 @@ const DialogContent = React.forwardRef<
           ref={contentRef}
           data-slot="dialog-content"
           data-size={size}
-          className={cn(
+          className={cn('nop-dialog ',
             'flex w-full max-w-[calc(100%-2rem)] flex-col rounded-xl bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
             'max-h-[calc(100dvh-2rem)]',
-            'data-[size=sm]:sm:max-w-sm data-[size=default]:sm:max-w-lg data-[size=lg]:sm:max-w-2xl',
+            'data-[size=sm]:sm:max-w-sm data-[size=default]:sm:max-w-lg data-[size=lg]:sm:max-w-2xl data-[size=xl]:sm:max-w-4xl',
             isContained ? 'absolute' : 'fixed',
             noCenter ? '' : 'top-[50%] left-[50%]',
             !draggable &&
@@ -243,7 +243,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn(
+      className={cn('nop-dialog ',
         'relative flex shrink-0 flex-col gap-2 p-4 pb-0',
         draggable && 'pl-12',
         draggable && 'cursor-grab select-none',
@@ -274,7 +274,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
 
 function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div data-slot="dialog-body" className={cn('flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4', className)} {...props} />
+    <div data-slot="dialog-body" className={cn('nop-dialog ','flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4', className)} {...props} />
   );
 }
 
@@ -289,7 +289,7 @@ function DialogFooter({
   return (
     <div
       data-slot="dialog-footer"
-      className={cn(
+      className={cn('nop-dialog ',
         'mt-auto flex shrink-0 flex-col-reverse gap-2 border-t bg-muted/50 p-4 sm:flex-row sm:justify-end',
         className,
       )}
@@ -309,7 +309,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('font-heading text-base leading-none font-medium', className)}
+      className={cn('nop-dialog ','font-heading text-base leading-none font-medium', className)}
       {...props}
     />
   );
@@ -319,7 +319,7 @@ function DialogDescription({ className, ...props }: DialogPrimitive.Description.
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn(
+      className={cn('nop-dialog ',
         'text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground',
         className,
       )}

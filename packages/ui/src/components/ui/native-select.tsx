@@ -10,7 +10,7 @@ type NativeSelectProps = Omit<React.ComponentProps<'select'>, 'size'> & {
 function NativeSelect({ className, size = 'default', ...props }: NativeSelectProps) {
   return (
     <div
-      className={cn(
+      className={cn('nop-native-select ',
         'group/native-select relative w-fit has-[select:disabled]:opacity-50',
         className,
       )}
@@ -37,7 +37,7 @@ function NativeSelectOption({ ...props }: React.ComponentProps<'option'>) {
 }
 
 function NativeSelectOptGroup({ className, ...props }: React.ComponentProps<'optgroup'>) {
-  return <optgroup data-slot="native-select-optgroup" className={cn(className)} {...props} />;
+  return <optgroup data-slot="native-select-optgroup" className={cn('nop-native-select ',className)} {...props} />;
 }
 
 export { NativeSelect, NativeSelectOptGroup, NativeSelectOption };

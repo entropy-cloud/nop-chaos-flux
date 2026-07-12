@@ -10,7 +10,7 @@ function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
     <nav
       aria-label="pagination"
       data-slot="pagination"
-      className={cn('mx-auto flex w-full justify-center', className)}
+      className={cn('nop-pagination ','mx-auto flex w-full justify-center', className)}
       {...props}
     />
   );
@@ -20,7 +20,7 @@ function PaginationContent({ className, ...props }: React.ComponentProps<'ul'>) 
   return (
     <ul
       data-slot="pagination-content"
-      className={cn('flex items-center gap-0.5', className)}
+      className={cn('nop-pagination ','flex items-center gap-0.5', className)}
       {...props}
     />
   );
@@ -40,7 +40,7 @@ function PaginationLink({ className, isActive, size = 'icon', ...props }: Pagina
     <Button
       variant={isActive ? 'outline' : 'ghost'}
       size={size}
-      className={cn(className)}
+      className={cn('nop-pagination ',className)}
       nativeButton={false}
       render={
         <a
@@ -63,7 +63,7 @@ function PaginationPrevious({
     <PaginationLink
       aria-label="Go to previous page"
       size="default"
-      className={cn('pl-1.5!', className)}
+      className={cn('nop-pagination ','pl-1.5!', className)}
       {...props}
     >
       <ChevronLeftIcon data-icon="inline-start" />
@@ -81,7 +81,7 @@ function PaginationFirst({
     <PaginationLink
       aria-label="Go to first page"
       size="default"
-      className={cn('pl-1.5!', className)}
+      className={cn('nop-pagination ','pl-1.5!', className)}
       {...props}
     >
       <ChevronsLeftIcon data-icon="inline-start" />
@@ -99,7 +99,7 @@ function PaginationLast({
     <PaginationLink
       aria-label="Go to last page"
       size="default"
-      className={cn('pr-1.5!', className)}
+      className={cn('nop-pagination ','pr-1.5!', className)}
       {...props}
     >
       <span className="hidden sm:block">{text}</span>
@@ -117,7 +117,7 @@ function PaginationNext({
     <PaginationLink
       aria-label="Go to next page"
       size="default"
-      className={cn('pr-1.5!', className)}
+      className={cn('nop-pagination ','pr-1.5!', className)}
       {...props}
     >
       <span className="hidden sm:block">{text}</span>
@@ -131,7 +131,7 @@ function PaginationEllipsis({ className, ...props }: React.ComponentProps<'span'
     <span
       aria-hidden
       data-slot="pagination-ellipsis"
-      className={cn(
+      className={cn('nop-pagination ',
         "flex size-8 items-center justify-center [&_svg:not([class*='size-'])]:size-4",
         className,
       )}

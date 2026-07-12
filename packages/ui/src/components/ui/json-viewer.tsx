@@ -25,7 +25,7 @@ function JsonViewer({
         ? allExpanded
         : (level: number) => level === 0;
   return (
-    <div className={cn('json-viewer', className)}>
+    <div className={cn('nop-json-viewer json-viewer', className)}>
       <JsonView
         data={data}
         shouldExpandNode={shouldExpandNode as never}

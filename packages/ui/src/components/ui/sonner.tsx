@@ -29,7 +29,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       {...props}
       theme={props.theme ?? 'light'}
-      className={cn('toaster group', props.className)}
+      className={cn('nop-toaster toaster group', props.className)}
       icons={props.icons ?? defaultIcons}
       style={
         {

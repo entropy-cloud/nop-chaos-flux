@@ -85,7 +85,7 @@ function ChartContainer({
       <div
         data-slot="chart"
         data-chart={chartId}
-        className={cn(
+        className={cn('nop-chart ',
           "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_[stroke]]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke]]:stroke-background [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke]]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke]]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke]]:stroke-background [&_.recharts-surface]:outline-hidden",
           className,
         )}
@@ -179,7 +179,7 @@ function ChartTooltipContent({
 
     if (labelFormatter) {
       return (
-        <div className={cn('font-medium', labelClassName)}>{labelFormatter(value, payload)}</div>
+        <div className={cn('nop-chart ','font-medium', labelClassName)}>{labelFormatter(value, payload)}</div>
       );
     }
 
@@ -187,7 +187,7 @@ function ChartTooltipContent({
       return null;
     }
 
-    return <div className={cn('font-medium', labelClassName)}>{value}</div>;
+    return <div className={cn('nop-chart ','font-medium', labelClassName)}>{value}</div>;
   }, [label, labelFormatter, payload, hideLabel, labelClassName, config, labelKey]);
 
   if (!active || !payload?.length) {
@@ -198,7 +198,7 @@ function ChartTooltipContent({
 
   return (
     <div
-      className={cn(
+      className={cn('nop-chart ',
         'grid min-w-32 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl',
         className,
       )}
@@ -215,7 +215,7 @@ function ChartTooltipContent({
             return (
               <div
                 key={payloadItemKey(item)}
-                className={cn(
+                className={cn('nop-chart ',
                   'flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground',
                   indicator === 'dot' && 'items-center',
                 )}
@@ -229,7 +229,7 @@ function ChartTooltipContent({
                     ) : (
                       !hideIndicator && (
                         <div
-                          className={cn(
+                          className={cn('nop-chart ',
                             'shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)',
                             {
                               'h-2.5 w-2.5': indicator === 'dot',
@@ -249,7 +249,7 @@ function ChartTooltipContent({
                       )
                     )}
                     <div
-                      className={cn(
+                      className={cn('nop-chart ',
                         'flex flex-1 justify-between leading-none',
                         nestLabel ? 'items-end' : 'items-center',
                       )}
@@ -298,7 +298,7 @@ function ChartLegendContent({
 
   return (
     <div
-      className={cn(
+      className={cn('nop-chart ',
         'flex items-center justify-center gap-4',
         verticalAlign === 'top' ? 'pb-3' : 'pt-3',
         className,
@@ -313,7 +313,7 @@ function ChartLegendContent({
           return (
             <div
               key={payloadItemKey(item)}
-              className={cn(
+              className={cn('nop-chart ',
                 'flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground',
               )}
             >
