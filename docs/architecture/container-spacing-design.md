@@ -110,12 +110,13 @@ File: `packages/flux-react/src/default-spacing.css`
 
 ### FieldFrame
 
-| Selector                                   | Rules                                                                               |
-| ------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `.nop-field`                               | `display: flex; flex-direction: column; gap: var(--space-field-internal)`           |
-| `.nop-field[data-label-align="top"]`       | `flex-direction: column; gap: var(--space-field-label-gap)`                         |
-| `.nop-field[data-label-align="left"]`      | `flex-direction: row; align-items: flex-start; gap: var(--space-field-label-h-gap)` |
-| `.nop-field > [data-slot="field-control"]` | `display: flex; flex-direction: column; gap: var(--space-field-internal)`           |
+| Selector                                   | Rules                                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `.nop-field`                               | `display: flex; flex-direction: column; gap: var(--space-field-internal)`            |
+| `.nop-field[data-label-align="top"]`       | `flex-direction: column; gap: var(--space-field-label-gap)`                          |
+| `.nop-field[data-label-align="left"]`      | `flex-direction: row; align-items: flex-start; gap: var(--space-field-label-h-gap)`  |
+| `.nop-field[data-label-align="right"]`     | Same row layout as `left`; label gets `justify-content: flex-end; text-align: right` |
+| `.nop-field > [data-slot="field-control"]` | `display: flex; flex-direction: column; gap: var(--space-field-internal)`            |
 
 ### Field label/error/hint styling
 

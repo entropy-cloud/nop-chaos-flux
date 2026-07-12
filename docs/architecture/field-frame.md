@@ -115,23 +115,23 @@ interface FieldFrameProps {
 
 Key props:
 
-| Prop                 | Type                                  | Purpose                                                                                                                                       |
-| -------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`               | `string?`                             | Field name used to select current form state, aggregate errors, and compiled validation behavior.                                             |
-| `label`              | `ReactNode?`                          | Resolved field label content. In the common path this already comes from normalized `props.label` / `regions.label` via `NodeFrameWrapper`.   |
-| `required`           | `boolean?`                            | Explicit required override. The final required marker may also come from compiled validation rules such as `requiredWhen` / `requiredUnless`. |
-| `hint`               | `ReactNode?`                          | Hint text shown when no error is present and the control is focused.                                                                          |
-| `description`        | `ReactNode?`                          | Fallback helper text shown when no error is present and the hint is not currently visible.                                                    |
-| `remark`             | `FieldRemarkProps?`                   | Icon tooltip rendered next to the control. Always visible, independent of error/hint/description priority.                                    |
-| `labelRemark`        | `FieldRemarkProps?`                   | Icon tooltip rendered next to the label. Always visible, independent of error/hint/description priority.                                      |
-| `layout`             | `'default' \| 'checkbox' \| 'radio'?` | Layout mode. `checkbox`/`radio` render a `<fieldset>` + `<legend>` wrapper; `default` renders `<label>` + `<span>`.                           |
-| `labelAlign`         | `'top' \| 'left' \| 'right'?`         | Override label alignment for this field. Falls back to form-level `labelAlign`.                                                               |
-| `labelWidth`         | `string \| number?`                   | Override label column width for this field in horizontal mode. Falls back to form-level `labelWidth`.                                         |
-| `validationBehavior` | `CompiledValidationBehavior?`         | Override the per-field validation behavior (controls when errors become visible). Falls back to form-level behavior.                          |
-| `className`          | `string?`                             | Additional CSS classes on the semantic root marker.                                                                                           |
-| `testid`             | `string?`                             | Test anchoring attribute, rendered as `data-testid`.                                                                                          |
-| `cid`                | `number?`                             | Mounted node id published as `data-cid` for debugger/inspection tooling.                                                                      |
-| `children`           | `ReactNode`                           | The actual form control.                                                                                                                      |
+| Prop                 | Type                                  | Purpose                                                                                                                                                    |
+| -------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`               | `string?`                             | Field name used to select current form state, aggregate errors, and compiled validation behavior.                                                          |
+| `label`              | `ReactNode?`                          | Resolved field label content. In the common path this already comes from normalized `props.label` / `regions.label` via `NodeFrameWrapper`.                |
+| `required`           | `boolean?`                            | Explicit required override. The final required marker may also come from compiled validation rules such as `requiredWhen` / `requiredUnless`.              |
+| `hint`               | `ReactNode?`                          | Hint text shown when no error is present and the control is focused.                                                                                       |
+| `description`        | `ReactNode?`                          | Fallback helper text shown when no error is present and the hint is not currently visible.                                                                 |
+| `remark`             | `FieldRemarkProps?`                   | Icon tooltip rendered next to the control. Always visible, independent of error/hint/description priority.                                                 |
+| `labelRemark`        | `FieldRemarkProps?`                   | Icon tooltip rendered next to the label. Always visible, independent of error/hint/description priority.                                                   |
+| `layout`             | `'default' \| 'checkbox' \| 'radio'?` | Layout mode. `checkbox`/`radio` render a `<fieldset>` + `<legend>` wrapper; `default` renders `<label>` + `<span>`.                                        |
+| `labelAlign`         | `'top' \| 'left' \| 'right'?`         | Override label alignment for this field. Falls back to form-level `labelAlign`. Default: `'top'` when `mode='normal'`, `'right'` when `mode='horizontal'`. |
+| `labelWidth`         | `string \| number?`                   | Override label column width for this field in horizontal mode. Falls back to form-level `labelWidth`.                                                      |
+| `validationBehavior` | `CompiledValidationBehavior?`         | Override the per-field validation behavior (controls when errors become visible). Falls back to form-level behavior.                                       |
+| `className`          | `string?`                             | Additional CSS classes on the semantic root marker.                                                                                                        |
+| `testid`             | `string?`                             | Test anchoring attribute, rendered as `data-testid`.                                                                                                       |
+| `cid`                | `number?`                             | Mounted node id published as `data-cid` for debugger/inspection tooling.                                                                                   |
+| `children`           | `ReactNode`                           | The actual form control.                                                                                                                                   |
 
 Related schema contract:
 
