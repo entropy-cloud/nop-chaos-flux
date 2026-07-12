@@ -73,6 +73,7 @@ When creating, revising, executing, or auditing a file under `docs/plans/`, you 
 | Look up types, hooks, store APIs, or renderer patterns        | `docs/references/quick-reference.md`                                          | Source files only if quick-reference lacks the detail                                                         |
 | Modify any renderer component (JSX, props, hooks)             | `docs/references/quick-reference.md`, `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md`                                                                      |
 | Add or change a renderer's styling, className, or layout      | `docs/architecture/styling-system.md`                                         | `docs/architecture/theme-compatibility.md`                                                                    |
+| Choose the right layout component (page vs container vs flex) | `docs/architecture/layout-selection-guide.md`                                 | `docs/components/page/design.md`, `docs/components/container/design.md`                                       |
 | Change CSS, Tailwind utilities, or design tokens              | `docs/architecture/styling-system.md` → "Renderer Styling Contract" section   | `docs/architecture/renderer-markers-and-selectors.md`                                                         |
 | Work on Flow Designer canvas, nodes, edges, or interactions   | `docs/architecture/flow-designer/design.md`                                   | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md`      |
 | Work on Report Designer or Spreadsheet Editor                 | `docs/architecture/report-designer/design.md`                                 | `docs/architecture/report-designer/config-schema.md`, `docs/architecture/report-designer/inspector-design.md` |
@@ -87,16 +88,16 @@ When creating, revising, executing, or auditing a file under `docs/plans/`, you 
 
 ### By Code Location
 
-| When touching this code                                            | Read this                                                                                     |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| `packages/flux-core/src/`                                          | `docs/architecture/flux-core.md`, `docs/references/terminology.md`                            |
-| `packages/flux-runtime/src/`                                       | `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/form-validation.md` |
-| `packages/flux-react/src/`                                         | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md`  |
-| `packages/flux-renderers-*/src/`                                   | `docs/architecture/styling-system.md`, `docs/architecture/renderer-runtime.md`                |
-| `packages/ui/src/`                                                 | `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`  |
-| `packages/flow-designer-*/src/`                                    | `docs/architecture/flow-designer/` (start with `design.md`)                                   |
-| `packages/spreadsheet-*/src/` or `packages/report-designer-*/src/` | `docs/architecture/report-designer/` (start with `design.md`)                                 |
-| `apps/playground/src/`                                             | `docs/architecture/playground-experience.md`                                                  |
+| When touching this code                                            | Read this                                                                                                                     |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `packages/flux-core/src/`                                          | `docs/architecture/flux-core.md`, `docs/references/terminology.md`                                                            |
+| `packages/flux-runtime/src/`                                       | `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/form-validation.md`                                 |
+| `packages/flux-react/src/`                                         | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md`                                  |
+| `packages/flux-renderers-*/src/`                                   | `docs/architecture/styling-system.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/layout-selection-guide.md` |
+| `packages/ui/src/`                                                 | `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`                                  |
+| `packages/flow-designer-*/src/`                                    | `docs/architecture/flow-designer/` (start with `design.md`)                                                                   |
+| `packages/spreadsheet-*/src/` or `packages/report-designer-*/src/` | `docs/architecture/report-designer/` (start with `design.md`)                                                                 |
+| `apps/playground/src/`                                             | `docs/architecture/playground-experience.md`                                                                                  |
 
 ### Key Principles
 
