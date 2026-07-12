@@ -124,6 +124,7 @@ export const enUS: Resource = {
       search: 'Search',
       select: 'Select',
       deselect: 'Deselect',
+      clear: 'Clear',
       noCandidates: 'No candidates',
       noSelection: 'No selection',
     },

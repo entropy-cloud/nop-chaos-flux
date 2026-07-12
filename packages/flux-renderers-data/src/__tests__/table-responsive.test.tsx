@@ -46,10 +46,12 @@ describe('table renderer — responsive expand (M1b)', () => {
       />,
     );
 
-    const tableRoot = await screen.findByText('Alice').then((cell) =>
-      cell.closest('.nop-table'),
-    );
-    expect(tableRoot?.getAttribute('data-responsive-expand')).toBe('true');
+    setViewportWidth(MOBILE_WIDTH);
+
+    await waitFor(() => {
+      const tableRoot = document.querySelector('.nop-table');
+      expect(tableRoot?.getAttribute('data-responsive-expand')).toBe('true');
+    });
   });
 
   it('does not activate responsive expand on desktop', async () => {

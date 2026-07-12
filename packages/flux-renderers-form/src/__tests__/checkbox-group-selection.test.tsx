@@ -459,4 +459,29 @@ describe('checkbox-group schema property coverage (E2c)', () => {
       screen.getByRole('checkbox', { name: /Select All/ }).getAttribute('data-slot'),
     ).toBe('checkbox-group-checkall');
   });
+
+  it('renders with direction property on the schema', () => {
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formStateProbeRenderer]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/checkbox-group-direction"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'checkbox-group',
+              name: 'opts',
+              label: 'Options',
+              direction: 'vertical',
+              options: TAG_OPTIONS,
+            },
+          ],
+        } as React.ComponentProps<typeof SchemaRenderer>['schema']}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    expect(screen.getByRole('checkbox', { name: /Stable/ })).toBeTruthy();
+  });
 });

@@ -16,7 +16,7 @@ The exhibit validates three claims:
 - `apps/playground/src/complex-pages/complex-pages-model.ts` — entry/category definitions
 - `apps/playground/src/complex-pages/schema-page.tsx` — `import.meta.glob` JSON loader
 - `apps/playground/src/complex-pages/shared/render-host.tsx` — `ShowcaseSchemaHost`
-- `apps/playground/src/complex-pages/shared/showcase-env.tsx` — mock `RendererEnv` (fetcher, notify, confirm, loadDict)
+- `apps/playground/src/complex-pages/shared/showcase-env.ts` — mock `RendererEnv` (fetcher, notify, confirm, loadDict)
 - `apps/playground/src/complex-pages/shared/mock-backend.ts` — in-memory database + routing
 - `apps/playground/src/complex-pages/complex-pages.test.tsx` — 16 focused tests
 

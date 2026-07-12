@@ -705,4 +705,4 @@ nop-crud (div)
 | flux CRUD schema       | `packages/flux-renderers-data/src/crud-schema.ts`                                  |
 | flux array-field       | `packages/flux-renderers-form-advanced/src/composite-field/array-field.tsx`        |
 | flux detail-view       | `packages/flux-renderers-form-advanced/src/detail-view/detail-view.tsx`            |
-| flux crud-demo         | `apps/playground/src/schemas/crud-demo.json`                                       |
+| flux crud-demo         | `apps/playground/src/complex-pages/page-schemas/standard-crud.json`                |

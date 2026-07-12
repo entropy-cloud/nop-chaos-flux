@@ -221,4 +221,24 @@ describe('checkbox / switch / radio touch adaptation (M2b)', () => {
       expect((item as HTMLElement).className).not.toContain('min-h-11');
     });
   });
+
+  it('radio-group renders with direction property', () => {
+    mobileState.isMobile = false;
+    renderForm([
+      {
+        type: 'radio-group',
+        name: 'color',
+        label: 'Color',
+        direction: 'vertical',
+        options: [
+          { label: 'Red', value: 'red' },
+          { label: 'Green', value: 'green' },
+        ],
+      },
+    ]);
+    const wrapper = document.querySelector(
+      '[data-slot="radio-group-wrapper"]',
+    ) as HTMLElement;
+    expect(wrapper).toBeTruthy();
+  });
 });

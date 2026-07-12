@@ -124,6 +124,7 @@ export const zhCN: Resource = {
       search: '搜索',
       select: '选择',
       deselect: '移除',
+      clear: '清除',
       noCandidates: '暂无候选项',
       noSelection: '暂无已选项',
     },

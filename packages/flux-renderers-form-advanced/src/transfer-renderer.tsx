@@ -464,7 +464,6 @@ export const transferRendererDefinition: RendererDefinition = {
     { key: 'onAdd', kind: 'event' },
     { key: 'onRemove', kind: 'event' },
     { key: 'onChange', kind: 'event' },
-    { key: 'onSelectAll', kind: 'event' },
   ],
   validation: {
     kind: 'field',
