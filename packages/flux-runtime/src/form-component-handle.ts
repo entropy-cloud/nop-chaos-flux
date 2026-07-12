@@ -43,6 +43,7 @@ export function createFormComponentHandle(form: FormRuntime): ComponentHandle {
                   : undefined,
             });
           case 'validate': {
+            form.store.setSubmitAttempted(true);
             const result = await form.validateForm();
             return {
               ok: result.ok,

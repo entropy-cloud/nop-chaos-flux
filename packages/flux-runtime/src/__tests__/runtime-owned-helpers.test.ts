@@ -517,7 +517,7 @@ describe('createFormComponentHandle', () => {
     const form = {
       id: 'form-1',
       name: 'profile',
-      store: { getState: () => ({ values: { name: 'Alice' } }) },
+      store: { getState: () => ({ values: { name: 'Alice' } }), setSubmitAttempted: vi.fn() },
       submit: vi.fn().mockResolvedValue({ ok: true }),
       validateForm: vi.fn().mockResolvedValue({ ok: false, errors: [{ message: 'required' }] }),
       reset: vi.fn(),
