@@ -85,7 +85,7 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
             keepMounted
             id={`${props.meta.cid}-body`}
             data-slot="fieldset-body"
-            className={cn(fieldsetGap.className, slotProps.bodyClassName)}
+            className={cn('nop-fieldset-body', fieldsetGap.className, slotProps.bodyClassName)}
             style={bodyStyle}
           >
             {hasRendererSlotContent(bodyContent) ? bodyContent : null}
@@ -93,7 +93,7 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
         ) : (
           <div
             data-slot="fieldset-body"
-            className={cn(fieldsetGap.className, slotProps.bodyClassName)}
+            className={cn('nop-fieldset-body', fieldsetGap.className, slotProps.bodyClassName)}
             style={bodyStyle}
           >
             {hasRendererSlotContent(bodyContent) ? bodyContent : null}
