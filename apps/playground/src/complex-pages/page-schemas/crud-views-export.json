@@ -51,6 +51,7 @@
     {
       "type": "tabs",
       "testid": "view-tabs",
+      "mountOnEnter": true,
       "items": [
         {
           "key": "table",
@@ -64,7 +65,6 @@
               "loadAllData": true,
               "loadAction": {
                 "action": "ajax",
-                "dependsOn": ["__views_table_load__"],
                 "args": { "url": "/r/User__findPage", "method": "get" }
               },
               "columns": [
@@ -90,14 +90,13 @@
               "loadAllData": true,
               "loadAction": {
                 "action": "ajax",
-                "dependsOn": ["__views_cards_load__"],
                 "args": { "url": "/r/User__findPage", "method": "get" }
               },
               "card": [
                 {
                   "type": "flex",
                   "direction": "column",
-                  "gap": 4,
+                  "gap": 2,
                   "body": [
                     { "type": "text", "text": "${$slot.item.name}", "className": "font-semibold" },
                     {

@@ -87,8 +87,8 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
     title: '行内编辑（逐行保存）',
     category: 'data-lists',
     description:
-      '表格行内可直接编辑季度额度（quickEdit 自定义 input-number），每行独立保存（quickSaveItemAction，includeScope 提交行数据），保存后 component:refresh 刷新合计。flux 的行内编辑为逐行保存范式。',
-    features: ['quickEdit.body', 'quickSaveItemAction', 'includeScope', '逐行保存', 'input-number'],
+      '表格行内可直接编辑季度额度（quickEdit 自定义 input-number），行级共享 draft，每行一个保存按钮（per-row save），支持同时修改多个字段一次性保存（quickSaveItemAction，includeScope 提交行数据），保存后 component:refresh 刷新合计。',
+    features: ['quickEdit.body', 'quickSaveItemAction', 'includeScope', 'per-row save', 'input-number'],
   },
   {
     id: 'advanced-query',

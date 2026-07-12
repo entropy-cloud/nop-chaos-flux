@@ -15,6 +15,9 @@
       },
       "filterTogglable": { "defaultCollapsed": false },
       "queryForm": {
+        "layout": "horizontal",
+        "columnCount": 3,
+        "gap": "sm",
         "body": [
           {
             "type": "input-text",
@@ -36,7 +39,6 @@
           }
         ]
       },
-      "toolbarLayout": { "header": ["listActions", "pagination"], "footer": ["statistics"] },
       "columns": [
         { "name": "title", "label": "申请标题", "width": 240 },
         { "name": "applicant", "label": "申请人", "width": 100 },

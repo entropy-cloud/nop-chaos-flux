@@ -30,9 +30,9 @@ describe('Complex pages — runtime smoke (mock backend)', () => {
 
   it('Dashboard renders stat numbers and recent orders table from data-sources', async () => {
     render(<SchemaPage pageId="dashboard" env={env} />);
-    // summary totalOrders = 7 in the mock DB
+    // summary totalOrders = 30 in the mock DB
     await waitFor(() => {
-      expect(screen.getByTestId('dash-stat-total').textContent).toMatch(/7/);
+      expect(screen.getByTestId('dash-stat-total').textContent).toMatch(/30/);
     });
     expect(screen.getByTestId('dash-stat-revenue').textContent).toMatch(/\d/);
     // new stat cards render
@@ -55,27 +55,27 @@ describe('Complex pages — runtime smoke (mock backend)', () => {
   it('Tree+CRUD loads all users initially and filters when a department is selected', async () => {
     render(<SchemaPage pageId="tree-crud" env={env} />);
     await waitFor(() => {
-      // 8 mock users → table shows at least one known name
-      expect(screen.getByTestId('tree-crud-table').textContent).toMatch(/zhangsan@example.com/);
+      // 30 mock users → table shows at least one known name
+      expect(screen.getByTestId('tree-crud-table').textContent).toMatch(/张三@example\.com/);
     });
     expect(screen.getByTestId('tree-crud-tree')).toBeTruthy();
 
-    // Select a department node (华南分公司 d2 → users Bob & Eve) and verify the
+    // Select a department node (华南分公司 d2 → users David, Eve, etc.) and verify the
     // table re-fetches via loadAction dependsOn=['treeFilter'].
     fireEvent.click(screen.getByRole('treeitem', { name: '华南分公司' }));
     await waitFor(() => {
       const tableText = screen.getByTestId('tree-crud-table').textContent ?? '';
-      expect(tableText).toMatch(/bob@example\.com/);
+      expect(tableText).toMatch(/david@example\.com/);
       // 总公司 users (张三) should be filtered out
-      expect(tableText).not.toMatch(/zhangsan@example\.com/);
+      expect(tableText).not.toMatch(/张三@example\.com/);
     });
   });
 
   it('Master-Detail: selecting an order loads detail + tabbed + stacked sub-tables', async () => {
     render(<SchemaPage pageId="master-detail" env={env} />);
     // wait for the order radio list to render and pick the first order
-    await screen.findByText(/NO-20240701-0001/);
-    const firstRadio = screen.getByRole('radio', { name: /NO-20240701-0001/ });
+    await screen.findByText(/NO-20240701\b/);
+    const firstRadio = screen.getByRole('radio', { name: /NO-20240701\b/ });
     fireEvent.click(firstRadio);
     // detail card title switches from placeholder to "订单详情"
     await waitFor(() => {
@@ -103,7 +103,7 @@ describe('Complex pages — runtime smoke (mock backend)', () => {
   it('Advanced Query loads users and supports query submission', async () => {
     render(<SchemaPage pageId="advanced-query" env={env} />);
     await waitFor(() => {
-      expect(screen.getByTestId('adv-query-crud').textContent).toMatch(/zhangsan@example.com/);
+      expect(screen.getByTestId('adv-query-crud').textContent).toMatch(/张三@example\.com/);
     });
   });
 
@@ -133,7 +133,7 @@ describe('Complex pages — runtime smoke (mock backend)', () => {
   it('Standard CRUD reuses the existing schema and loads users', async () => {
     render(<SchemaPage pageId="standard-crud" env={env} />);
     await waitFor(() => {
-      expect(screen.getByTestId('user-crud').textContent).toMatch(/zhangsan@example.com/);
+      expect(screen.getByTestId('user-crud').textContent).toMatch(/张三@example\.com/);
     });
   });
 
@@ -141,7 +141,7 @@ describe('Complex pages — runtime smoke (mock backend)', () => {
     render(<SchemaPage pageId="crud-views-export" env={env} />);
     // table view (default tab) loads users
     await waitFor(() => {
-      expect(screen.getByTestId('view-crud-table').textContent).toMatch(/zhangsan@example.com/);
+      expect(screen.getByTestId('view-crud-table').textContent).toMatch(/张三@example\.com/);
     });
     // switch to cards view via tab
     fireEvent.click(screen.getByRole('tab', { name: '卡片视图' }));
@@ -162,7 +162,7 @@ describe('Complex pages — runtime smoke (mock backend)', () => {
   it('Approval Tasks: list loads; handle → approve flow hides buttons after status changes', async () => {
     render(<SchemaPage pageId="approval-tasks" env={env} />);
     await waitFor(() => {
-      expect(screen.getByTestId('approval-crud').textContent).toMatch(/采购申请 — 服务器扩容/);
+      expect(screen.getByTestId('approval-crud').textContent).toMatch(/采购申请 — 服务器/);
     });
     // open the first pending task's handler dialog
     const handleButtons = screen.getAllByTestId('btn-handle');

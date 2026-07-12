@@ -5,14 +5,20 @@
  * conventions used by the standalone crud-demo so that pages can drive a
  * realistic loadAction / submitAction data flow without a server.
  *
- * Datasets are intentionally small but rich enough to demonstrate filtering,
- * pagination, master-detail linkage and multi-sub-table composition.
+ * Datasets are sized so that paginated tables have at least 3 pages
+ * with the default page size of 10.
  */
 
 export interface DeptNode {
   id: string;
   name: string;
   parentId: string | null;
+}
+
+export interface TagRecord {
+  id: string;
+  name: string;
+  category: string;
 }
 
 export interface UserRecord {
@@ -24,6 +30,7 @@ export interface UserRecord {
   deptId: string;
   role: 'admin' | 'user' | 'guest';
   createTime: string;
+  tagIds?: string[];
 }
 
 export interface OrderRecord {
@@ -156,6 +163,7 @@ export function toOrderListRecord(record: OrderRecord) {
 
 export interface MockDatabase {
   depts: DeptNode[];
+  tags: TagRecord[];
   users: UserRecord[];
   orders: OrderRecord[];
   orderItems: OrderItem[];
@@ -165,6 +173,35 @@ export interface MockDatabase {
   payments: PaymentRecord[];
   shipments: ShipmentRecord[];
   approvalTasks: ApprovalTask[];
+}
+
+const DEPARTMENT_NAMES = '研发中心,产品中心,运营中心,华南分公司,前端组,后端组,深圳研发,采购部,财务部,人力资源,市场部,客服中心,质量管理,仓储物流,行政管理,信息技术'.split(',');
+const ORDER_STATUSES: OrderRecord['status'][] = ['pending', 'paid', 'shipped', 'done', 'cancelled'];
+const CHANNELS: OrderRecord['channel'][] = ['web', 'app', 'store'];
+const COMPANIES = '上海示例科技,北京示例贸易,深圳示例零售,广州示例电商,杭州示例传媒,成都示例教育,武汉示例物流,南京示例金融,苏州示例制造,重庆示例医药,天津示例能源,厦门示例航空'.split(',');
+const USER_NAMES = '张三,李四,王五,Alice,Bob,Carol,David,Eve,赵六,孙七,周八,吴九,郑十,冯十一,陈十二,林十三,何十四,黄十五,刘十六,杨十七,朱十八,马十九,罗二十,梁廿一,宋廿二,唐廿三,韩廿四,曹廿五,许廿六,邓廿七,彭廿八,曾廿九,萧三十'.split(',');
+const SKUS = [
+  { sku: 'SKU-A01', name: '示例商品 A', price: 440.25 },
+  { sku: 'SKU-A02', name: '示例商品 B', price: 400 },
+  { sku: 'SKU-B01', name: '示例商品 C', price: 1120 },
+  { sku: 'SKU-C01', name: '示例商品 D', price: 2450 },
+  { sku: 'SKU-D01', name: '示例商品 E', price: 180 },
+  { sku: 'SKU-D02', name: '示例商品 F', price: 560 },
+];
+const TASK_TEMPLATES = [
+  { title: '采购申请 — %s', reason: '季度采购计划，预算内执行' },
+  { title: '差旅报销 — %s', reason: '客户现场对接及差旅费用报销' },
+  { title: '合同用印 — %s', reason: '业务合同用印审批' },
+  { title: '活动预算 — %s', reason: '市场活动预算申请' },
+  { title: '招聘申请 — %s', reason: '团队编制扩充招聘' },
+  { title: '固定资产 — %s', reason: '固定资产采购申请' },
+];
+const APPLICANTS = '张三,李四,王五,Alice,Bob,赵六,孙七,周八'.split(',');
+
+function pad2(n: number) { return String(n).padStart(2, '0'); }
+
+function ts(day: number, hour: number, min: number) {
+  return `2024-07-${pad2((day % 31) + 1)} ${pad2(8 + (hour % 12))}:${pad2(min % 60)}:00`;
 }
 
 export function createMockDatabase(): MockDatabase {
@@ -177,88 +214,156 @@ export function createMockDatabase(): MockDatabase {
     { id: 'd1-3', name: '运营中心', parentId: 'd1' },
     { id: 'd2', name: '华南分公司', parentId: null },
     { id: 'd2-1', name: '深圳研发', parentId: 'd2' },
+    { id: 'd3', name: '华北分公司', parentId: null },
+    { id: 'd3-1', name: '北京研发', parentId: 'd3' },
+    { id: 'd3-2', name: '天津销售', parentId: 'd3' },
+    { id: 'd4', name: '西南分公司', parentId: null },
+    { id: 'd4-1', name: '成都研发', parentId: 'd4' },
+    { id: 'd4-2', name: '重庆运营', parentId: 'd4' },
+    { id: 'd5', name: '华东分公司', parentId: null },
+    { id: 'd5-1', name: '上海研发', parentId: 'd5' },
+    { id: 'd5-2', name: '杭州产品', parentId: 'd5' },
+    { id: 'd5-3', name: '南京销售', parentId: 'd5' },
+    { id: 'd5-4', name: '苏州制造', parentId: 'd5' },
+    { id: 'd6', name: '华中分公司', parentId: null },
+    { id: 'd6-1', name: '武汉物流', parentId: 'd6' },
+    { id: 'd6-2', name: '长沙客服', parentId: 'd6' },
+    { id: 'd7', name: '东北分公司', parentId: null },
+    { id: 'd7-1', name: '沈阳制造', parentId: 'd7' },
+    { id: 'd7-2', name: '大连港口', parentId: 'd7' },
+    { id: 'd8', name: '西北分公司', parentId: null },
+    { id: 'd8-1', name: '西安研发', parentId: 'd8' },
+    { id: 'd8-2', name: '兰州能源', parentId: 'd8' },
+    { id: 'd9', name: '海外事业部', parentId: null },
+    { id: 'd9-1', name: '北美区', parentId: 'd9' },
+    { id: 'd9-2', name: '欧洲区', parentId: 'd9' },
+    { id: 'd9-3', name: '东南亚区', parentId: 'd9' },
+    { id: 'd10', name: '采购中心', parentId: null },
+    { id: 'd11', name: '财务管理部', parentId: null },
+    { id: 'd12', name: '人力资源部', parentId: null },
   ];
+  const deptIds = depts.map((d) => d.id);
 
-  const users: UserRecord[] = [
-    { id: 1, name: '张三', email: 'zhangsan@example.com', gender: '1', status: '1', deptId: 'd1-1-1', role: 'admin', createTime: '2024-01-05 09:30:00' },
-    { id: 2, name: '李四', email: 'lisi@example.com', gender: '1', status: '1', deptId: 'd1-1-2', role: 'user', createTime: '2024-02-12 14:20:00' },
-    { id: 3, name: '王五', email: 'wangwu@example.com', gender: '0', status: '0', deptId: 'd1-2', role: 'user', createTime: '2024-03-08 11:05:00' },
-    { id: 4, name: 'Alice', email: 'alice@example.com', gender: '0', status: '1', deptId: 'd1-1-1', role: 'admin', createTime: '2024-06-03 09:00:00' },
-    { id: 5, name: 'Bob', email: 'bob@example.com', gender: '1', status: '1', deptId: 'd2-1', role: 'user', createTime: '2024-06-19 15:25:00' },
-    { id: 6, name: 'Carol', email: 'carol@example.com', gender: '0', status: '1', deptId: 'd1-3', role: 'guest', createTime: '2024-07-01 08:40:00' },
-    { id: 7, name: 'David', email: 'david@example.com', gender: '1', status: '0', deptId: 'd1-1-2', role: 'user', createTime: '2024-08-22 10:10:00' },
-    { id: 8, name: 'Eve', email: 'eve@example.com', gender: '0', status: '1', deptId: 'd2-1', role: 'admin', createTime: '2024-09-15 16:30:00' },
-  ];
+  const TAG_NAMES = 'VIP客户,高活跃,待跟进,已签约,流失风险,潜在用户,企业版,个人版,试用中,已过期,北区,南区,东区,西区,重点客户,战略伙伴,供应商,分销商,内部员工,外部合作,技术导向,业务导向,管理岗,一线员工,新入职,老员工,远程办公,常驻办公,合同制,实习生'.split(',');
+  const TAG_CATEGORIES = '客户属性,状态,区域,等级,角色'.split(',');
+  const tags: TagRecord[] = TAG_NAMES.map((name, i) => ({
+    id: `t${i + 1}`,
+    name,
+    category: TAG_CATEGORIES[i % TAG_CATEGORIES.length],
+  }));
 
-  const orders: OrderRecord[] = [
-    { id: 'o1', orderNo: 'NO-20240701-0001', customer: '上海示例科技', amount: 1280.5, status: 'done', channel: 'web', createTime: '2024-07-01 10:15:00' },
-    { id: 'o2', orderNo: 'NO-20240703-0002', customer: '北京示例贸易', amount: 5600, status: 'shipped', channel: 'app', createTime: '2024-07-03 09:42:00' },
-    { id: 'o3', orderNo: 'NO-20240705-0003', customer: '深圳示例零售', amount: 320.8, status: 'paid', channel: 'store', createTime: '2024-07-05 14:05:00' },
-    { id: 'o4', orderNo: 'NO-20240708-0004', customer: '广州示例电商', amount: 9800, status: 'pending', channel: 'web', createTime: '2024-07-08 18:20:00' },
-    { id: 'o5', orderNo: 'NO-20240710-0005', customer: '杭州示例传媒', amount: 1500, status: 'cancelled', channel: 'app', createTime: '2024-07-10 11:30:00' },
-    { id: 'o6', orderNo: 'NO-20240712-0006', customer: '成都示例教育', amount: 760, status: 'done', channel: 'store', createTime: '2024-07-12 08:55:00' },
-    { id: 'o7', orderNo: 'NO-20240715-0007', customer: '武汉示例物流', amount: 4300, status: 'paid', channel: 'web', createTime: '2024-07-15 13:10:00' },
-  ];
+  const users: UserRecord[] = USER_NAMES.map((name, i) => ({
+    id: i + 1,
+    name,
+    email: `${name.toLowerCase()}@example.com`,
+    gender: i % 2 === 0 ? '1' : '0',
+    status: i % 4 === 3 ? '0' : '1',
+    deptId: deptIds[i % deptIds.length],
+    role: (['admin', 'user', 'guest'] as const)[i % 3],
+    createTime: `2024-${pad2((i % 12) + 1)}-${pad2((i % 28) + 1)} ${pad2(8 + (i % 9))}:${pad2((i * 7) % 60)}:00`,
+    tagIds: [`t${(i % 30) + 1}`, `t${((i + 5) % 30) + 1}`],
+  }));
 
-  const orderItems: OrderItem[] = [
-    { id: 'i1', orderId: 'o1', sku: 'SKU-A01', name: '示例商品 A', qty: 2, price: 440.25 },
-    { id: 'i2', orderId: 'o1', sku: 'SKU-A02', name: '示例商品 B', qty: 1, price: 400 },
-    { id: 'i3', orderId: 'o2', sku: 'SKU-B01', name: '示例商品 C', qty: 5, price: 1120 },
-    { id: 'i4', orderId: 'o3', sku: 'SKU-A01', name: '示例商品 A', qty: 1, price: 320.8 },
-    { id: 'i5', orderId: 'o4', sku: 'SKU-C01', name: '示例商品 D', qty: 4, price: 2450 },
-    { id: 'i6', orderId: 'o6', sku: 'SKU-B01', name: '示例商品 C', qty: 2, price: 380 },
-  ];
+  const orders: OrderRecord[] = [];
+  const orderItems: OrderItem[] = [];
+  const orderLogs: OrderLog[] = [];
+  const addresses: AddressRecord[] = [];
+  const payments: PaymentRecord[] = [];
+  const shipments: ShipmentRecord[] = [];
 
-  const orderLogs: OrderLog[] = [
-    { id: 'l1', orderId: 'o1', action: '创建订单', operator: '系统', time: '2024-07-01 10:15:00' },
-    { id: 'l2', orderId: 'o1', action: '支付成功', operator: '张三', time: '2024-07-01 10:30:00' },
-    { id: 'l3', orderId: 'o1', action: '发货', operator: '李四', time: '2024-07-02 09:00:00' },
-    { id: 'l4', orderId: 'o1', action: '完成', operator: '系统', time: '2024-07-04 12:00:00' },
-    { id: 'l5', orderId: 'o2', action: '创建订单', operator: '系统', time: '2024-07-03 09:42:00' },
-    { id: 'l6', orderId: 'o2', action: '支付成功', operator: '王五', time: '2024-07-03 10:00:00' },
-    { id: 'l7', orderId: 'o2', action: '发货', operator: '李四', time: '2024-07-04 08:20:00' },
-    { id: 'l8', orderId: 'o4', action: '创建订单', operator: '系统', time: '2024-07-08 18:20:00' },
-  ];
+  for (let i = 0; i < 30; i++) {
+    const oid = `o${i + 1}`;
+    const status = ORDER_STATUSES[i % ORDER_STATUSES.length];
+    const channel = CHANNELS[i % CHANNELS.length];
+    const day = i;
+    orders.push({
+      id: oid,
+      orderNo: `NO-202407${pad2(i + 1)}`,
+      customer: COMPANIES[i % COMPANIES.length],
+      amount: +(1280.5 + i * 312.7).toFixed(2),
+      status,
+      channel,
+      createTime: ts(day, i, i * 7),
+    });
 
-  const addresses: AddressRecord[] = [
-    { id: 'a1', orderId: 'o1', recipient: '张三', phone: '13800000001', address: '上海市浦东新区示例路 1 号', isDefault: true },
-    { id: 'a2', orderId: 'o2', recipient: '王五', phone: '13800000003', address: '深圳市南山区示例大道 88 号', isDefault: false },
-    { id: 'a3', orderId: 'o4', recipient: '赵六', phone: '13800000004', address: '广州市天河区示例街 12 号', isDefault: true },
-  ];
+    const itemCount = (i % 3) + 1;
+    for (let j = 0; j < itemCount; j++) {
+      const sku = SKUS[(i + j) % SKUS.length];
+      orderItems.push({
+        id: `i${i * 3 + j + 1}`,
+        orderId: oid,
+        sku: sku.sku,
+        name: sku.name,
+        qty: ((i + j) % 5) + 1,
+        price: sku.price,
+      });
+    }
 
-  const budgets: BudgetRow[] = [
-    { id: 'b1', department: '研发中心', q1: 120, q2: 150, q3: 130, q4: 160 },
-    { id: 'b2', department: '产品中心', q1: 80, q2: 90, q3: 85, q4: 100 },
-    { id: 'b3', department: '运营中心', q1: 60, q2: 70, q3: 65, q4: 80 },
-    { id: 'b4', department: '华南分公司', q1: 40, q2: 55, q3: 50, q4: 60 },
-  ];
+    orderLogs.push({
+      id: `l${i * 2 + 1}`,
+      orderId: oid,
+      action: '创建订单',
+      operator: '系统',
+      time: ts(day, i, i * 7),
+    });
 
-  const payments: PaymentRecord[] = [
-    { id: 'p1', orderId: 'o1', method: 'alipay', amount: 1280.5, status: 'success', time: '2024-07-01 10:30:00' },
-    { id: 'p2', orderId: 'o2', method: 'wechat', amount: 5600, status: 'success', time: '2024-07-03 10:00:00' },
-    { id: 'p3', orderId: 'o3', method: 'card', amount: 320.8, status: 'success', time: '2024-07-05 14:30:00' },
-    { id: 'p4', orderId: 'o4', method: 'balance', amount: 9800, status: 'pending', time: '2024-07-08 18:25:00' },
-    { id: 'p5', orderId: 'o6', method: 'alipay', amount: 760, status: 'success', time: '2024-07-12 09:10:00' },
-  ];
+    addresses.push({
+      id: `a${i + 1}`,
+      orderId: oid,
+      recipient: USER_NAMES[i % USER_NAMES.length],
+      phone: `138${pad2(i)}${pad2(i * 7 % 10000)}`,
+      address: `${COMPANIES[i % COMPANIES.length]}大厦`,
+      isDefault: true,
+    });
 
-  const shipments: ShipmentRecord[] = [
-    { id: 's1', orderId: 'o1', station: '上海转运中心', description: '已揽收', time: '2024-07-01 16:00:00' },
-    { id: 's2', orderId: 'o1', station: '上海浦东', description: '已出库', time: '2024-07-01 20:30:00' },
-    { id: 's3', orderId: 'o1', station: '目的地城市', description: '已到达', time: '2024-07-03 09:00:00' },
-    { id: 's4', orderId: 'o1', station: '派送站点', description: '派送中', time: '2024-07-04 08:00:00' },
-    { id: 's5', orderId: 'o2', station: '深圳转运中心', description: '已揽收', time: '2024-07-04 08:30:00' },
-    { id: 's6', orderId: 'o2', station: '途中', description: '运输中', time: '2024-07-05 10:00:00' },
-  ];
+    if (status !== 'pending' && status !== 'cancelled') {
+      payments.push({
+        id: `p${i + 1}`,
+        orderId: oid,
+        method: (['alipay', 'wechat', 'card', 'balance'] as const)[i % 4],
+        amount: orders[i].amount,
+        status: status === 'paid' ? 'pending' : 'success' as const,
+        time: ts(day + 1, i + 2, i * 13),
+      });
+    }
 
-  const approvalTasks: ApprovalTask[] = [
-    { id: 't1', title: '采购申请 — 服务器扩容', applicant: '张三', department: '研发中心', amount: 86000, status: 'pending', submitTime: '2024-07-08 09:15:00', reason: 'Q3 流量增长，需扩容 4 台服务器' },
-    { id: 't2', title: '差旅报销 — 客户拜访', applicant: '李四', department: '产品中心', amount: 3200, status: 'pending', submitTime: '2024-07-08 11:40:00', reason: '北京客户现场对接 3 天' },
-    { id: 't3', title: '合同用印 — 销售合同', applicant: '王五', department: '运营中心', amount: 120000, status: 'pending', submitTime: '2024-07-07 16:20:00', reason: '年度框架合同用印审批' },
-    { id: 't4', title: '采购申请 — 办公耗材', applicant: 'Alice', department: '研发中心', amount: 5400, status: 'approved', submitTime: '2024-07-05 10:00:00', reason: '季度耗材补充' },
-    { id: 't5', title: '活动预算 — 产品发布会', applicant: 'Bob', department: '运营中心', amount: 45000, status: 'rejected', submitTime: '2024-07-04 14:30:00', reason: '发布会场地与物料预算' },
-  ];
+    if (status === 'shipped' || status === 'done') {
+      shipments.push({
+        id: `s${i + 1}`,
+        orderId: oid,
+        station: `${['上海', '北京', '深圳', '广州'][i % 4]}转运中心`,
+        description: '已揽收',
+        time: ts(day + 2, i + 3, i * 17),
+      });
+    }
+  }
 
-  return { depts, users, orders, orderItems, orderLogs, addresses, budgets, payments, shipments, approvalTasks };
+  const budgets: BudgetRow[] = Array.from({ length: 30 }, (_, i) => ({
+    id: `b${i + 1}`,
+    department: DEPARTMENT_NAMES[i % DEPARTMENT_NAMES.length],
+    q1: 40 + i * 20,
+    q2: 55 + i * 18,
+    q3: 50 + i * 15,
+    q4: 60 + i * 22,
+  }));
+
+  const approvalTasks: ApprovalTask[] = [];
+  for (let i = 0; i < 30; i++) {
+    const tmpl = TASK_TEMPLATES[i % TASK_TEMPLATES.length];
+    const applicant = APPLICANTS[i % APPLICANTS.length];
+    approvalTasks.push({
+      id: `t${i + 1}`,
+      title: tmpl.title.replace('%s', ['服务器', '办公耗材', '软件授权', '网络设备', '办公家具', '云服务'][i % 6]),
+      applicant,
+      department: DEPARTMENT_NAMES[i % DEPARTMENT_NAMES.length],
+      amount: +(3200 + i * 850).toFixed(2),
+      status: (['pending', 'pending', 'pending', 'approved', 'rejected'] as const)[i % 5],
+      submitTime: ts(i, i + 1, i * 11),
+      reason: tmpl.reason,
+    });
+  }
+
+  return { depts, tags, users, orders, orderItems, orderLogs, addresses, budgets, payments, shipments, approvalTasks };
 }
 
 export interface FetcherApi {

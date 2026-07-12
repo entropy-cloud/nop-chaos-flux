@@ -12,7 +12,7 @@ type NavigationTarget =
   | 'word-editor'
   | 'performance-table'
   | 'm5-showcase'
-  | 'crud-demo';
+  ;
 import { Button } from '@nop-chaos/ui';
 
 interface NavCard {
@@ -113,13 +113,6 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'M1–M5 All Mobile',
     description:
       'Comprehensive mobile component showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers.',
-  },
-  {
-    id: 'crud-demo',
-    title: 'Standard CRUD',
-    eyebrow: 'Data Workflow',
-    description:
-      'Complete create/read/update/delete page driven by a single JSON schema: list load via data-source, crud query/pagination/selection, dialog form for add/edit, confirm-gated delete and bulk delete. Backend mocked via env.fetcher.',
   },
 ];
 

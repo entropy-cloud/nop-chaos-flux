@@ -26,6 +26,10 @@
       },
       "filterTogglable": { "defaultCollapsed": false },
       "queryForm": {
+        "layout": "horizontal",
+        "labelWidth": 80,
+        "columnCount": 2,
+        "gap": "sm",
         "body": [
           {
             "type": "input-text",
@@ -68,10 +72,6 @@
             "placeholder": "ID ≤"
           }
         ]
-      },
-      "toolbarLayout": {
-        "header": ["listActions", "pagination"],
-        "footer": ["statistics", "switch-per-page"]
       },
       "columns": [
         { "name": "id", "label": "ID", "width": 70, "sortable": true },

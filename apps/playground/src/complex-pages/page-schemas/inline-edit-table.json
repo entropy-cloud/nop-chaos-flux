@@ -6,7 +6,7 @@
       "type": "alert",
       "level": "info",
       "title": "行内编辑说明",
-      "body": "点击季度额度单元格直接修改，每行修改后点击行末\"保存\"按钮提交该行（quickSaveItemAction）。",
+      "body": "点击季度额度单元格直接修改，每行修改后点击行末\"保存\"按钮提交该行（quickSaveItemAction）。支持同时修改多个字段一次性保存（per-row save）。",
       "className": "mb-3"
     },
     {

@@ -29,18 +29,29 @@
       "selection": {},
       "filterTogglable": { "defaultCollapsed": false },
       "queryForm": {
+        "layout": "horizontal",
+        "labelWidth": 80,
+        "columnCount": 3,
+        "gap": "sm",
         "body": [
           {
             "type": "input-text",
             "name": "keyword",
             "label": "关键字",
             "placeholder": "姓名 / 邮箱"
+          },
+          {
+            "type": "select",
+            "name": "status",
+            "label": "状态",
+            "clearable": true,
+            "placeholder": "全部状态",
+            "options": [
+              { "label": "启用", "value": "1" },
+              { "label": "禁用", "value": "0" }
+            ]
           }
         ]
-      },
-      "toolbarLayout": {
-        "header": ["listActions", "pagination"],
-        "footer": ["statistics", "switch-per-page"]
       },
       "toolbar": [
         {
@@ -58,7 +69,7 @@
                   "type": "form",
                   "id": "user-add-form",
                   "testid": "user-add-form",
-                  "data": { "name": "", "email": "", "gender": "", "status": "1" },
+                  "data": { "name": "", "email": "", "gender": "", "status": "1", "tagIds": [] },
                   "submitAction": {
                     "action": "ajax",
                     "args": { "url": "/r/User__save", "method": "post", "includeScope": "*" },
@@ -119,27 +130,59 @@
                         "args": {
                           "url": "/r/Department__findPage",
                           "method": "get",
-                          "selection": "id,name"
+                          "selection": "id,name",
+                          "params": {
+                            "page": "${pagination.currentPage}",
+                            "perPage": "${pagination.pageSize}"
+                          }
                         }
                       },
                       "columns": [
                         { "name": "id", "label": "编码", "width": 120 },
                         { "name": "name", "label": "部门名称", "width": 200 }
                       ]
+                    },
+                    {
+                      "type": "picker",
+                      "name": "tagIds",
+                      "label": "标签（多选）",
+                      "className": "col-span-2",
+                      "valueKey": "id",
+                      "labelKey": "name",
+                      "multiple": true,
+                      "searchable": true,
+                      "pickerDialog": { "title": "选择标签" },
+                      "loadAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/Tag__findPage",
+                          "method": "get",
+                          "selection": "id,name,category",
+                          "params": {
+                            "page": "${pagination.currentPage}",
+                            "perPage": "${pagination.pageSize}"
+                          }
+                        }
+                      },
+                      "columns": [
+                        { "name": "id", "label": "编码", "width": 100 },
+                        { "name": "name", "label": "标签名称", "width": 160 },
+                        { "name": "category", "label": "分类", "width": 120 }
+                      ]
                     }
                   ],
                   "actions": [
                     {
                       "type": "button",
-                      "label": "保存",
-                      "variant": "primary",
-                      "onClick": { "action": "submitForm" }
-                    },
-                    {
-                      "type": "button",
                       "label": "取消",
                       "variant": "outline",
                       "onClick": { "action": "closeSurface" }
+                    },
+                    {
+                      "type": "button",
+                      "label": "保存",
+                      "variant": "primary",
+                      "onClick": { "action": "submitForm" }
                     }
                   ]
                 }
@@ -167,9 +210,6 @@
             "then": [{ "action": "component:refresh", "componentId": "user-crud" }]
           }
         }
-      ],
-      "footerToolbar": [
-        { "type": "text", "text": "共 ${$crud.total} 条 · 选中 ${$crud.selectionCount} 条" }
       ],
       "columns": [
         { "name": "id", "label": "ID", "width": 80 },
@@ -204,7 +244,7 @@
                           "url": "/r/User__get",
                           "method": "get",
                           "data": { "id": "${id}" },
-                          "selection": "id,name,email,gender,status,departmentId,createTime"
+                          "selection": "id,name,email,gender,status,departmentId,tagIds,createTime"
                         }
                       },
                       "submitAction": {
@@ -260,27 +300,59 @@
                             "args": {
                               "url": "/r/Department__findPage",
                               "method": "get",
-                              "selection": "id,name"
+                              "selection": "id,name",
+                              "params": {
+                                "page": "${pagination.currentPage}",
+                                "perPage": "${pagination.pageSize}"
+                              }
                             }
                           },
                           "columns": [
                             { "name": "id", "label": "编码", "width": 120 },
                             { "name": "name", "label": "部门名称", "width": 200 }
                           ]
+                        },
+                        {
+                          "type": "picker",
+                          "name": "tagIds",
+                          "label": "标签（多选）",
+                          "className": "col-span-2",
+                          "valueKey": "id",
+                          "labelKey": "name",
+                          "multiple": true,
+                          "searchable": true,
+                          "pickerDialog": { "title": "选择标签" },
+                          "loadAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/Tag__findPage",
+                              "method": "get",
+                              "selection": "id,name,category",
+                              "params": {
+                                "page": "${pagination.currentPage}",
+                                "perPage": "${pagination.pageSize}"
+                              }
+                            }
+                          },
+                          "columns": [
+                            { "name": "id", "label": "编码", "width": 100 },
+                            { "name": "name", "label": "标签名称", "width": 160 },
+                            { "name": "category", "label": "分类", "width": 120 }
+                          ]
                         }
                       ],
                       "actions": [
                         {
                           "type": "button",
-                          "label": "保存",
-                          "variant": "primary",
-                          "onClick": { "action": "submitForm" }
-                        },
-                        {
-                          "type": "button",
                           "label": "取消",
                           "variant": "outline",
                           "onClick": { "action": "closeSurface" }
+                        },
+                        {
+                          "type": "button",
+                          "label": "保存",
+                          "variant": "primary",
+                          "onClick": { "action": "submitForm" }
                         }
                       ]
                     }

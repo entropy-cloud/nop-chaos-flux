@@ -106,7 +106,20 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       return { status: 0, data: clone({ items: options, total: options.length }) as T };
     }
     if (url.includes('/r/Department__findPage') && method === 'get') {
-      return { status: 0, data: clone({ items: db.depts, total: db.depts.length }) as T };
+      const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
+      const page = Math.max(1, asNumber(qs.get('page')) ?? 1);
+      const pageSize = Math.max(1, asNumber(qs.get('perPage')) ?? 10);
+      const start = (page - 1) * pageSize;
+      const paged = db.depts.slice(start, start + pageSize);
+      return { status: 0, data: clone({ items: paged, total: db.depts.length }) as T };
+    }
+    if (url.includes('/r/Tag__findPage') && method === 'get') {
+      const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
+      const page = Math.max(1, asNumber(qs.get('page')) ?? 1);
+      const pageSize = Math.max(1, asNumber(qs.get('perPage')) ?? 10);
+      const start = (page - 1) * pageSize;
+      const paged = db.tags.slice(start, start + pageSize);
+      return { status: 0, data: clone({ items: paged, total: db.tags.length }) as T };
     }
 
     // ----- Users -----
@@ -124,7 +137,7 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       const target = db.users.find((u) => u.id === id) ?? null;
       // Expose deptId under both names so schemas that use either field
       // (e.g. the reused crud-demo.json uses `departmentId`) bind correctly.
-      const adapted = target ? { ...target, departmentId: target.deptId } : null;
+      const adapted = target ? { ...target, departmentId: target.deptId, tagIds: target.tagIds ?? [] } : null;
       return { status: 0, data: clone(adapted) as T };
     }
     if (url.includes('/r/User__save')) {
@@ -139,6 +152,7 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
           if (body.deptId !== undefined) target.deptId = String(body.deptId);
           else if (body.departmentId !== undefined) target.deptId = String(body.departmentId);
           if (body.role !== undefined) target.role = body.role as UserRecord['role'];
+          if (body.tagIds !== undefined) target.tagIds = Array.isArray(body.tagIds) ? body.tagIds as string[] : [];
         }
       } else {
         const nextId = db.users.reduce((max, u) => Math.max(max, u.id), 0) + 1;
@@ -151,6 +165,7 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
           deptId: typeof body.deptId === 'string' ? body.deptId : 'd1',
           role: (body.role as UserRecord['role']) ?? 'user',
           createTime: nowStamp(),
+          tagIds: Array.isArray(body.tagIds) ? body.tagIds as string[] : [],
         });
       }
       return { status: 0, data: clone({ success: true }) as T };
