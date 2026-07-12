@@ -591,7 +591,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
               </div>
             ) : null}
             {hasRendererSlotContent(actionsContent) ? (
-              <div data-slot="form-actions" className={cn(slotProps.actionsClassName)}>
+              <div data-slot="form-actions" className={cn('flex justify-end gap-2', slotProps.actionsClassName)}>
                 {actionsContent}
               </div>
             ) : null}

@@ -3,7 +3,7 @@ import { t } from '../../lib/i18n.js';
 
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
-import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon, MoreHorizontalIcon } from 'lucide-react';
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
   return (
@@ -72,6 +72,42 @@ function PaginationPrevious({
   );
 }
 
+function PaginationFirst({
+  className,
+  text = t('flux.pagination.first'),
+  ...props
+}: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  return (
+    <PaginationLink
+      aria-label="Go to first page"
+      size="default"
+      className={cn('pl-1.5!', className)}
+      {...props}
+    >
+      <ChevronsLeftIcon data-icon="inline-start" />
+      <span className="hidden sm:block">{text}</span>
+    </PaginationLink>
+  );
+}
+
+function PaginationLast({
+  className,
+  text = t('flux.pagination.last'),
+  ...props
+}: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  return (
+    <PaginationLink
+      aria-label="Go to last page"
+      size="default"
+      className={cn('pr-1.5!', className)}
+      {...props}
+    >
+      <span className="hidden sm:block">{text}</span>
+      <ChevronsRightIcon data-icon="inline-end" />
+    </PaginationLink>
+  );
+}
+
 function PaginationNext({
   className,
   text = t('flux.pagination.next'),
@@ -111,7 +147,9 @@ export {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
+  PaginationFirst,
   PaginationItem,
+  PaginationLast,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,

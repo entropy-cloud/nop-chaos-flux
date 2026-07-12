@@ -68,7 +68,7 @@ describe('FieldFrame — form layout context', () => {
     expect(field?.getAttribute('data-field-mode')).toBe('normal');
   });
 
-  it('uses data-label-align="left" when form context sets horizontal mode', () => {
+  it('uses data-label-align="right" by default when form context sets horizontal mode', () => {
     const { container } = render(
       <FormContext.Provider value={createMockForm()}>
         <FormLayoutContext.Provider value={{ mode: 'horizontal' }}>
@@ -79,7 +79,7 @@ describe('FieldFrame — form layout context', () => {
       </FormContext.Provider>,
     );
     const field = container.querySelector('.nop-field');
-    expect(field?.getAttribute('data-label-align')).toBe('left');
+    expect(field?.getAttribute('data-label-align')).toBe('right');
     expect(field?.getAttribute('data-field-mode')).toBe('horizontal');
   });
 

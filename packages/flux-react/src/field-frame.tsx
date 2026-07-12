@@ -211,12 +211,17 @@ export function FieldFrame(props: FieldFrameProps) {
   const labelStyle = effectiveLabelWidth != null ? { width: effectiveLabelWidth } : undefined;
   const isLabelTop =
     effectiveLabelAlign === 'top' || (formMode === 'normal' && !effectiveLabelAlign);
+  const resolvedLabelAlign = isLabelTop
+    ? 'top'
+    : effectiveLabelAlign === 'left'
+      ? 'left'
+      : 'right';
 
   return (
     <Tag
       {...rootProps}
       className={cn('nop-field', className)}
-      data-label-align={isLabelTop ? 'top' : 'left'}
+      data-label-align={resolvedLabelAlign}
       data-testid={testid || undefined}
       data-cid={cid != null ? cid : undefined}
       data-field-visited={fieldState.visited ? '' : undefined}

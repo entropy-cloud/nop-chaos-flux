@@ -10,6 +10,8 @@ const messages: Record<string, string> = {
   'flux.drawer.close': 'Close drawer',
   'flux.drawer.resize': 'Resize drawer',
   'flux.pagination.morePages': 'More pages',
+  'flux.pagination.first': 'First',
+  'flux.pagination.last': 'Last',
   'flux.sheet.close': 'Close sheet',
   'flux.sidebar.title': 'Sidebar',
   'flux.sidebar.description': 'Sidebar navigation',
