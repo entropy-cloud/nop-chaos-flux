@@ -28,6 +28,7 @@
           "title": "表头信息",
           "columnCount": 2,
           "gap": "md",
+          "bodyClassName": "p-4",
           "body": [
             {
               "type": "input-text",
