@@ -27,6 +27,7 @@
           "type": "fieldset",
           "title": "表头信息",
           "columnCount": 2,
+          "gap": "md",
           "body": [
             {
               "type": "input-text",

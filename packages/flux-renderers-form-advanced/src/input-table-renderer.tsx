@@ -166,7 +166,7 @@ function InputTableRowView(props: InputTableRowProps) {
 
   const canRemove = totalCount > minItems;
 
-  function renderColumnCells() {
+  const columnCells = React.useMemo(() => {
     const templateNodes = Array.isArray(itemRegion?.templateNode)
       ? itemRegion.templateNode
       : itemRegion?.templateNode
@@ -185,7 +185,6 @@ function InputTableRowView(props: InputTableRowProps) {
     return templateNodes.map((node, i) => {
       const rendered = helpers.render(node, {
         scope: itemScope,
-        bindings: { index, value: item },
         instancePath: itemInstancePath,
       });
       const colWidth = columns[i]?.width;
@@ -200,7 +199,7 @@ function InputTableRowView(props: InputTableRowProps) {
         </TableCell>
       );
     });
-  }
+  }, [itemRegion, helpers, itemScope, itemInstancePath, columns, itemContent]);
   const canMoveUp = index > 0;
   const canMoveDown = index < totalCount - 1;
 
@@ -210,7 +209,7 @@ function InputTableRowView(props: InputTableRowProps) {
         <ScopeContext.Provider value={itemScope}>
           <ValidationContext.Provider value={itemValidationOwner}>
             <ComponentRegistryContext.Provider value={itemComponentRegistry}>
-              {renderColumnCells()}
+              {columnCells}
             </ComponentRegistryContext.Provider>
           </ValidationContext.Provider>
         </ScopeContext.Provider>
