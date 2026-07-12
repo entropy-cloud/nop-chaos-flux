@@ -82,11 +82,7 @@ function normalizeFieldValues(rawFieldValue: unknown, valueKey?: string): Picker
 }
 
 function getOptionLabelMap(options: NormalizedOption[]): Map<PickerValue, string> {
-  const labels = new Map<PickerValue, string>();
-  for (const option of options) {
-    labels.set(option.value, option.label);
-  }
-  return labels;
+  return new Map(options.map((o) => [o.value, o.label]));
 }
 
 function extractRowsFromActionResult(value: unknown): Record<string, unknown>[] {
@@ -219,11 +215,13 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   const hasPickerDialog = pickerDialog !== undefined && pickerDialog !== false;
   const dialogConfig = (hasPickerDialog && typeof pickerDialog === 'object' ? pickerDialog : {}) as {
     title?: string;
+    size?: 'sm' | 'default' | 'lg' | 'xl';
   };
   const dialogTitle = dialogConfig.title ?? t('flux.picker.select', { defaultValue: 'Select' });
 
   const loadAction = schemaProps.loadAction;
   const crudMode = Boolean(loadAction);
+  const dialogSize = dialogConfig.size ?? (crudMode ? 'xl' : 'default');
 
   const presentation = useFieldPresentation(name, validationOwner, {
     disabled: schemaProps.disabled === true,
@@ -608,7 +606,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent data-slot="picker-dialog-content">
+        <DialogContent data-slot="picker-dialog-content" size={dialogSize}>
           <DialogHeader>
             <DialogTitle>{dialogTitle}</DialogTitle>
           </DialogHeader>
