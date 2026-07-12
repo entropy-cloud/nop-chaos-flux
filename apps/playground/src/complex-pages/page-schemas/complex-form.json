@@ -7,6 +7,7 @@
       "id": "complex-form",
       "testid": "complex-form",
       "columnCount": 2,
+      "gap": "md",
       "data": {
         "name": "",
         "email": "",
@@ -138,19 +139,20 @@
           ]
         },
         {
+          "type": "text",
+          "testid": "complex-form-report",
+          "text": "保存状态：${formSaved ? \"已保存 ✓\" : \"未保存\"}",
+          "className": "text-sm col-span-2"
+        }
+      ],
+      "actions": [
+        {
           "type": "button",
           "label": "保存",
           "variant": "primary",
           "testid": "complex-form-submit",
           "disabled": "${!agreed}",
-          "onClick": { "action": "submitForm" },
-          "className": "col-span-2"
-        },
-        {
-          "type": "text",
-          "testid": "complex-form-report",
-          "text": "保存状态：${formSaved ? \"已保存 ✓\" : \"未保存\"}",
-          "className": "text-sm col-span-2"
+          "onClick": { "action": "submitForm" }
         }
       ]
     }
