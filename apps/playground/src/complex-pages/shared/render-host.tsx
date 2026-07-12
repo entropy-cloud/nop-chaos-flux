@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Toaster } from '@nop-chaos/ui';
+import { cn, Toaster } from '@nop-chaos/ui';
 import { createFormulaCompiler, createFormulaRegistry } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -83,7 +83,7 @@ export function ShowcaseSchemaHost({
 }: ShowcaseSchemaHostProps) {
   return (
     <>
-      <div className={className}>
+      <div className={cn('contents', className)}>
         <ShowcaseSchemaRenderer
           schemaUrl={schemaUrl}
           schema={schema}

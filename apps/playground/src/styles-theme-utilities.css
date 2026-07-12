@@ -1,12 +1,15 @@
 @import './flow-designer-nodes.css';
 
 /* Complex Pages: make nop-page and page-body fill their Card container
-   so that master-detail and similar layouts can use pure flex height chains. */
-.nop-card > .nop-page {
+   so that master-detail and similar layouts can use pure flex height chains.
+   Use descendant combinators (not > child) because schema-renderer.tsx wraps
+   the page tree in <div class="contents"> (display:contents), which is
+   transparent for layout but still present in the DOM tree. */
+.nop-card .nop-page {
   flex: 1;
   min-height: 0;
 }
-.nop-card > .nop-page > [data-slot='page-body'] {
+.nop-card .nop-page > [data-slot='page-body'] {
   flex: 1;
   min-height: 0;
 }
