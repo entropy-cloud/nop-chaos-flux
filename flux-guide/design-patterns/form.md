@@ -9,8 +9,14 @@
   "type": "form",
   "id": "userForm",
   "submitAction": { "action": "ajax", "args": { "url": "/api/users", "method": "post" } },
-  "onSubmitSuccess": { "action": "showToast", "args": { "level": "success", "message": "保存成功" } },
-  "onSubmitError": { "action": "showToast", "args": { "level": "error", "message": "${error.message}" } },
+  "onSubmitSuccess": {
+    "action": "showToast",
+    "args": { "level": "success", "message": "保存成功" }
+  },
+  "onSubmitError": {
+    "action": "showToast",
+    "args": { "level": "error", "message": "${error.message}" }
+  },
   "body": [
     { "type": "input-text", "name": "name", "label": "姓名", "required": true },
     { "type": "input-email", "name": "email", "label": "邮箱", "required": true },
@@ -83,7 +89,10 @@
       "body": {
         "type": "form",
         "id": "editForm",
-        "submitAction": { "action": "ajax", "args": { "url": "/api/users/${id}", "method": "put" } },
+        "submitAction": {
+          "action": "ajax",
+          "args": { "url": "/api/users/${id}", "method": "put" }
+        },
         "onSubmitSuccess": {
           "action": "closeSurface",
           "then": { "action": "refreshSource", "targetId": "pagedUsers" }
@@ -99,3 +108,55 @@
 ```
 
 **关键点**：按钮是 `component:submit` 的薄触发器（目标用顶层 `componentId`），验证→提交→分支全部由表单节点拥有。
+
+---
+
+## 子作用域分区 (valuesPath)
+
+表单的 `valuesPath` 把本表单的数据**发布到 scope 的一个命名子路径**下，而不是平铺到父 scope。常用于：
+
+- 把一组筛选字段收拢成一个对象（供 `data-source` 的 `dependsOn` 监听）；
+- wizard 里每步表单各占一个子路径，最后 `onComplete` 汇总；
+- 主从联动里把"当前选中"写成一个过滤对象。
+
+```jsonc
+{
+  "type": "form",
+  "id": "treeFilterForm",
+  "valuesPath": "treeFilter", // 表单值 → scope.treeFilter
+  "bodyClassName": "p-0",
+  "body": [
+    {
+      "type": "input-tree",
+      "name": "deptId",
+      "treeMode": "radio",
+      "options": "${deptTree?.items}",
+    },
+  ],
+}
+```
+
+兄弟节点即可监听该路径：
+
+```jsonc
+{
+  "type": "data-source",
+  "name": "usersDS",
+  "dependsOn": ["treeFilter"], // treeFilter 变化即重跑
+  "sendOn": "treeFilter?.deptId", // 有值才发请求
+  "action": "ajax",
+  "args": {
+    "url": "/api/users",
+    "method": "get",
+    "data": { "deptId": "${treeFilter?.deptId ?? \"\"}" },
+  },
+}
+```
+
+**关键点**：
+
+- `valuesPath` 写的是 scope 相对路径（如 `treeFilter`、`wizardData.step1`、`mdFilter`）；表单内字段值会落到该路径下，父 scope 通过 `${treeFilter.deptId}` 读取。
+- 多个表单用不同 `valuesPath` 即可把数据分区隔离，互不覆盖。
+- 与 `valueStatePath`（状态所有权三档中的 `scope` 档，见 `08-tabs-state.md`）不同：`valuesPath` 管的是**表单数据落点**，`valueStatePath` 管的是**控件受控状态落点**。
+
+> 完整真实范例：树过滤 `apps/playground/src/complex-pages/page-schemas/tree-crud.json`、wizard 分步 `form-wizard.json`、主从联动 `master-detail.json`。组合示例见 `examples/master-detail.md` 与 `examples/wizard-values-path.md`。

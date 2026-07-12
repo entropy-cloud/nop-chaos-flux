@@ -137,6 +137,8 @@
 
 ## 6. 操作列
 
+> 操作列按钮的求值 scope 是**当前行**，因此可直接 `${id}`、`${name}` 读行字段。需要显式取行上下文时用 `${$slot.record.<字段>}`（`$slot.record` 指向当前行记录）。`$slot.record` 与 cards/list 的 `$slot.item`（见 `crud.md` §5）对应，区别是 table 操作列用 `record` 命名。
+
 ```jsonc
 {
   "type": "table",
@@ -153,7 +155,12 @@
           "size": "sm",
           "onClick": {
             "action": "openDialog",
-            "args": { "title": "编辑", "body": { "type": "form", "id": "editForm", "body": [] } },
+            // 显式取行记录：$slot.record.id 等价于裸 ${id}
+            "args": {
+              "title": "编辑 ${$slot.record.name}",
+              "data": { "id": "${$slot.record.id}" },
+              "body": { "type": "form", "id": "editForm", "body": [] },
+            },
           },
         },
         {
@@ -172,6 +179,8 @@
   ],
 }
 ```
+
+**关键点**：操作列按钮既可用裸字段 `${id}`（行 scope 直读），也可用 `${$slot.record.id}`（显式行上下文，可读性更好、避免与外层同名字段混淆）。
 
 ---
 

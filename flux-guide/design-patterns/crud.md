@@ -244,19 +244,81 @@ CRUD 把只读摘要发布到 scope 的 `$crud`，可在任意子节点表达式
 
 ---
 
-## 6. 常用补充能力
+## 6. 行内编辑（quickEdit + quickSaveItemAction）
 
-| 能力       | 字段                                                                      | 说明                             |
-| ---------- | ------------------------------------------------------------------------- | -------------------------------- |
-| 列排序     | `columns[].sortable`                                                      | 排序状态所有权 `sortOwnership`   |
-| 列筛选     | `columns[].filterable` / `filterOptions`                                  | 过滤状态所有权 `filterOwnership` |
-| 行内快编   | `columns[].quickEdit` + `quickSaveAction`                                 | `mode: "inline"` / `"dialog"`    |
-| 列显隐管理 | `columnSettings: { enabled: true }`                                       | 支持拖序（runtime 部分待补）     |
-| 响应式展开 | `responsive: { mode: "expand", breakpoint: "sm" }`                        | 窄屏展开为卡片                   |
-| 前端全量   | `clientMode: { loadDataOnce: true }`                                      | 一次拉全，分页/过滤前端完成      |
-| 轮询       | `polling: { enabled: true, sourceId: "pagedUsers", stopWhen: "${done}" }` | toggle 上游 data-source 启停     |
-| 折叠查询区 | `filterTogglable: { defaultCollapsed: true }`                             | 折叠态显示激活筛选摘要           |
-| 无限滚动   | `pagination: { mode: "infinite" }`                                        | 底部 sentinel 触发下一页         |
-| 自定义空态 | `empty: { "type": "empty", "description": "暂无数据" }`                   | value-or-region                  |
+逐行就地编辑：列上挂 `quickEdit.body` 声明该列的编辑控件，CRUD 顶部声明 `quickSaveItemAction` 决定单行如何保存。每行可独立保存，无需弹窗。
+
+```jsonc
+{
+  "type": "crud",
+  "id": "budget-crud",
+  "rowKey": "id",
+  "loadAllData": true,
+  "loadAction": {
+    "action": "ajax",
+    "dependsOn": ["__budget_load__"], // 挂载即触发一次（见 data-source.md）
+    "args": { "url": "/api/budget", "method": "get" },
+  },
+  "quickSaveItemAction": {
+    "action": "ajax",
+    "args": { "url": "/api/budget/save", "method": "post", "includeScope": "*" },
+    "messages": { "success": "保存成功" },
+    "then": [{ "action": "component:refresh", "componentId": "budget-crud" }],
+  },
+  "columns": [
+    { "name": "department", "label": "部门", "width": 160 },
+    {
+      "name": "q1",
+      "label": "Q1 预算(万)",
+      "width": 130,
+      "quickEdit": {
+        // 编辑控件的 name 必须以 `record.` 前缀写入行草稿
+        "body": { "type": "input-number", "name": "record.q1", "min": 0, "frameWrap": false },
+      },
+    },
+    {
+      "name": "q2",
+      "label": "Q2 预算(万)",
+      "quickEdit": {
+        "body": { "type": "input-number", "name": "record.q2", "min": 0, "frameWrap": false },
+      },
+    },
+    {
+      "type": "operation",
+      "label": "操作",
+      "buttons": [
+        // 行内保存按钮：CRUD 专用的 actionType（裸 spec，无需 type:"button"）
+        { "label": "保存", "actionType": "quickSaveItem" },
+      ],
+    },
+  ],
+}
+```
+
+**关键点**：
+
+- `quickEdit.body` 是一个**内联的渲染器 spec**（通常是 `input-number`/`input-text`/`select`），其 `name` 用 `record.<字段>` 形式把编辑值写回该行草稿。
+- `frameWrap: false` 去掉表单项的外框，让控件直接铺在单元格里。
+- 行内保存按钮用 `actionType: "quickSaveItem"` 触发 CRUD 的 `quickSaveItemAction`；该 action 默认以当前行 scope 求值，`includeScope: "*"` 把整行草稿一起提交。
+- 保存成功后通常 `then: component:refresh` 刷新本 CRUD。
+
+> 完整真实范例见 `apps/playground/src/complex-pages/page-schemas/inline-edit-table.json` 与 `examples/inline-quick-edit.md`。
+
+---
+
+## 7. 常用补充能力
+
+| 能力       | 字段                                                                                    | 说明                             |
+| ---------- | --------------------------------------------------------------------------------------- | -------------------------------- |
+| 列排序     | `columns[].sortable`                                                                    | 排序状态所有权 `sortOwnership`   |
+| 列筛选     | `columns[].filterable` / `filterOptions`                                                | 过滤状态所有权 `filterOwnership` |
+| 行内快编   | `columns[].quickEdit` + `quickSaveItemAction`（行按钮用 `actionType: "quickSaveItem"`） | 见上文 §6                        |
+| 列显隐管理 | `columnSettings: { enabled: true }`                                                     | 支持拖序（runtime 部分待补）     |
+| 响应式展开 | `responsive: { mode: "expand", breakpoint: "sm" }`                                      | 窄屏展开为卡片                   |
+| 前端全量   | `clientMode: { loadDataOnce: true }`                                                    | 一次拉全，分页/过滤前端完成      |
+| 轮询       | `polling: { enabled: true, sourceId: "pagedUsers", stopWhen: "${done}" }`               | toggle 上游 data-source 启停     |
+| 折叠查询区 | `filterTogglable: { defaultCollapsed: true }`                                           | 折叠态显示激活筛选摘要           |
+| 无限滚动   | `pagination: { mode: "infinite" }`                                                      | 底部 sentinel 触发下一页         |
+| 自定义空态 | `empty: { "type": "empty", "description": "暂无数据" }`                                 | value-or-region                  |
 
 > 状态所有权统一三档：`local`（缺省，组件内部）/ `controlled`（外部受控）/ `scope`（持久化到 `xxxStatePath`）。

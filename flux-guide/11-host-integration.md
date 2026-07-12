@@ -242,3 +242,31 @@ const env = {
 ```
 
 > 领域聚合类 helper 更推荐注册到 formula registry 命名空间（`registry.registerNamespace('$Arr', {...})`），见 `apps/playground/src/complex-pages/shared/render-host.tsx`。
+
+注册后即可在任意 `${}` 表达式中调用。典型用法是行项目聚合（数量合计、金额合计）：
+
+```ts
+// 宿主注册（build 时一次性）
+formulaRegistry.registerNamespace('$Arr', {
+  sum: (vals: number[]) => vals.reduce((a, b) => a + b, 0),
+  sumField: (records: any[], field: string) =>
+    records.reduce((a, r) => a + (Number(r?.[field]) || 0), 0),
+  sumProducts: (records: any[], fa: string, fb: string) =>
+    records.reduce((a, r) => a + (Number(r?.[fa]) || 0) * (Number(r?.[fb]) || 0), 0),
+  count: (records: any[]) => records?.length ?? 0,
+});
+```
+
+```jsonc
+// schema 中直接用
+[
+  { "type": "text", "text": "数量合计：${$Arr.sumField(items, \"qty\")}" },
+  { "type": "text", "text": "小计：${$Arr.sumProducts(items, \"qty\", \"price\")} 元" },
+  {
+    "type": "text",
+    "text": "税额：${$Math.round($Arr.sumProducts(items, \"qty\", \"price\") * (taxRate ?? 0) / 100)} 元",
+  },
+]
+```
+
+> 内置命名空间见 `02-expression-syntax.md`（`$Math`/`$Date`/`$JSON`）；`$Arr` 这类领域命名空间由宿主按需注册。完整范例见 `examples/business-document-formula.md`。

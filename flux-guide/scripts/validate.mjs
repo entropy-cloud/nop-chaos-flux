@@ -208,8 +208,11 @@ function validateParsed(parsed, label, errs, warns) {
   // Skip roots whose type is not a known renderer (e.g. condition-builder field configs)
   if (!Array.isArray(toValidate) && !registry.get(toValidate.type)) return;
 
-  // Skip blocks demonstrating runtime-only $slot references (cannot be statically verified)
-  if (JSON.stringify(toValidate).includes('$slot.')) return;
+  // Skip blocks demonstrating runtime-only references (cannot be statically verified):
+  //  - $slot.* : row/card context, resolved by regions at render time
+  //  - $Arr.*  : host-registered aggregation namespace (see 11-host-integration.md)
+  const refs = JSON.stringify(toValidate);
+  if (refs.includes('$slot.') || refs.includes('$Arr.')) return;
 
   // Skip blocks demonstrating plugin-processed convention keys that are not
   // compiler-known renderer properties (e.g. xui:roles handled by a beforeCompile plugin).

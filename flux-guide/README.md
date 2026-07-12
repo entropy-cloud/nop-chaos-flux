@@ -129,7 +129,8 @@ const SchemaRenderer = createSchemaRenderer();
 | `10-react-integration.md` | 自定义渲染器 React Hooks 速查（runtime/scope/form/page/context）+ 核心类型签名                                    |
 | `11-host-integration.md`  | 宿主集成：`env` 契约、`loadDict`/`loadPage`、`xui:roles`、`xui:imports`、`plugins`、表达式扩展                    |
 | `flux-types/`             | 所有组件的 TypeScript 接口（字段知识源）。入口见 `flux-types/index.ts`                                            |
-| `design-patterns/`        | 常见业务场景的完整解法 cookbook                                                                                   |
+| `design-patterns/`        | 常见业务场景的完整解法 cookbook（单组件/单特性）                                                                  |
+| `examples/`               | 多技术组合的端到端页面范例（主从联动 / 行内编辑 / 业务单据公式 / 分步向导）                                       |
 | `mobile/`                 | 移动端原生组件专题（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）                                |
 
 ### `design-patterns/` 清单
@@ -176,3 +177,12 @@ const SchemaRenderer = createSchemaRenderer();
 | `mobile/swipe-cell.md`      | 左滑操作单元格 |
 | `mobile/countdown.md`       | 倒计时组件     |
 | `mobile/notice-bar.md`      | 通知栏组件     |
+
+### `examples/` 清单（端到端组合范例）
+
+| 文件                                    | 场景                                                                              |
+| --------------------------------------- | --------------------------------------------------------------------------------- |
+| `examples/master-detail.md`             | 主从联动：`valuesPath` 过滤器 + `dependsOn`/`sendOn` 级联 + `$slot.record` 行按钮 |
+| `examples/inline-quick-edit.md`         | 行内编辑：`quickEdit.body` + `quickSaveItemAction` + 挂载 marker                  |
+| `examples/business-document-formula.md` | 业务单据：`input-table` 逐行公式 + `$Arr` 聚合 + `$Math` 折扣税额                 |
+| `examples/wizard-values-path.md`        | 分步向导：每步 `valuesPath` 分区 + 确认步跨步读取 + `onComplete` 汇总提交         |

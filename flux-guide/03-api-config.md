@@ -135,3 +135,17 @@ ajax action 支持 `onError` 分支处理请求失败：
 
 - `status: 0` → 成功；非 0 → 失败
 - CRUD 的 data 必须是 `{"items": [...], "total": N}`
+
+## selection：服务端字段投影
+
+`args` 里的 `selection` 是一个**逗号分隔的字段名串**，约定由后端按此清单裁剪返回字段（类似 GraphQL 的字段选择）。常用于列表/详情接口避免拉回大字段。
+
+```jsonc
+// 列表只取需要的几列
+{ "url": "/api/users", "method": "get", "selection": "id,name,email,status,status_label,createTime" }
+
+// 详情按 id 取 + 字段投影
+{ "url": "/api/users/get", "method": "get", "data": { "id": "${id}" }, "selection": "id,name,email,role" }
+```
+
+> `selection` 是约定字段，需后端配合解析；它出现在请求参数里，由宿主/后端决定如何投影。`*_label` 这类带后缀的字段通常是后端把码值 join 成可读文本后返回的"展示字段"。
