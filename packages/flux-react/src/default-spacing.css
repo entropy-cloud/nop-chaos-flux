@@ -36,14 +36,15 @@
   .nop-fieldset {
     display: flex;
     flex-direction: column;
+    gap: var(--space-field-label-gap);
     min-inline-size: 0;
     border: 1px solid hsl(var(--border));
     border-radius: var(--radius-sm);
-    padding: 0 var(--space-form-item-gap) var(--space-form-item-gap);
+    padding: var(--space-field-label-gap) var(--space-form-item-gap) var(--space-form-item-gap);
   }
 
   .nop-fieldset > legend {
-    padding: 0 var(--space-field-label-gap);
+    padding: 4px var(--space-field-label-gap);
     font-weight: 500;
     font-size: 0.875rem;
   }
