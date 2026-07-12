@@ -17,6 +17,8 @@ export interface WizardStepSchema extends SchemaObject {
   visible?: SchemaValue;
   /** Step disabled (expression) — disabled steps cannot be entered */
   disabled?: SchemaValue;
+  /** Component ID of the form to validate before leaving this step. When set, the wizard resolves the form and calls its validate() capability; advancement is blocked if validation fails. */
+  formId?: string;
   /** Lifecycle action fired before entering this step */
   beforeEnter?: ActionSchema | ActionSchema[];
   /** Lifecycle action fired before leaving this step */

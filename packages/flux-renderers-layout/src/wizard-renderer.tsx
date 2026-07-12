@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { unwrapBooleanLiteral, useStatusPathPublication } from '@nop-chaos/flux-react';
+import { unwrapBooleanLiteral, useCurrentComponentRegistry, useStatusPathPublication } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, XIcon } from 'lucide-react';
 import type {
   WizardLastCommitStatus,
   WizardSchema,
@@ -146,6 +146,7 @@ function WizardStepBody(props: WizardStepBodyProps) {
       data-step-index={index}
       data-active={isActive || undefined}
       hidden={!isActive ? true : undefined}
+      className="flex flex-col gap-4"
     >
       {content}
     </div>
@@ -165,6 +166,21 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
   const allowStepJump = schemaProps.allowStepJump === true;
   const mountOnEnter = schemaProps.mountOnEnter === true;
   const unmountOnExit = schemaProps.unmountOnExit === true;
+  const mode = schemaProps.mode === 'vertical' ? 'vertical' : 'horizontal';
+  const componentRegistry = useCurrentComponentRegistry();
+
+  const prevLabel =
+    typeof schemaProps.actionPrevLabel === 'string'
+      ? schemaProps.actionPrevLabel
+      : t('flux.wizard.previous');
+  const nextLabel =
+    typeof schemaProps.actionNextLabel === 'string'
+      ? schemaProps.actionNextLabel
+      : t('flux.wizard.next');
+  const finishLabel =
+    typeof schemaProps.actionFinishLabel === 'string'
+      ? schemaProps.actionFinishLabel
+      : t('flux.wizard.complete');
 
   const statusPath =
     typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
@@ -317,6 +333,39 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
     });
 
     try {
+      // ─── Step form validation (if step.formId is configured) ───
+      const stepFormId = typeof currentStep?.formId === 'string' ? currentStep.formId : undefined;
+      if (stepFormId && componentRegistry) {
+        const formHandle = componentRegistry.resolve({ componentId: stepFormId });
+        if (formHandle?.capabilities?.hasMethod?.('validate')) {
+          setLifecycle((prev) => ({ ...prev, validating: true }));
+          const validateResult = (await Promise.resolve(
+            formHandle.capabilities.invoke('validate', undefined, {} as never),
+          )) as { ok?: boolean };
+          setLifecycle((prev) => ({ ...prev, validating: false }));
+
+          if (!validateResult?.ok) {
+            setLifecycle({
+              committing: false,
+              validating: false,
+              lastCommitStatus: 'validationError',
+              stepError: 'Validation failed',
+            });
+            void props.events.onStepError?.(
+              {
+                type: 'wizard:step-error',
+                currentStepKey,
+                currentStepIndex,
+                reason: 'validation-failed',
+              },
+              { scope: props.node.scope },
+            );
+            return;
+          }
+        }
+      }
+
+      // ─── User-defined commit action ───
       const result = await props.events.onStepCommit?.(
         {
           type: 'wizard:step-commit',
@@ -390,6 +439,8 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
 
   // ─────────── Step nav rendering ───────────
 
+  const currentStepHasError = lifecycle.lastCommitStatus === 'error';
+
   const stepNav = steps.map((step, index) => {
     const stepKey = resolveStepKey(step, index);
     const isActive = index === currentStepIndex;
@@ -408,6 +459,16 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       (typeof step.title === 'string' ? step.title : null) ??
       (typeof titleContent === 'string' ? titleContent : null) ??
       toStepKeyString(stepKey);
+    const descText =
+      typeof step.description === 'string' ? step.description : null;
+
+    const stepStatus = isActive && currentStepHasError
+      ? 'error'
+      : isActive
+        ? 'process' as const
+        : isPast
+          ? 'finish' as const
+          : 'wait' as const;
 
     const clickable = reachable && !isActive && !isStepDisabled(step);
     const handleStepClick = clickable
@@ -418,7 +479,12 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       : undefined;
 
     return (
-      <li key={toStepKeyString(stepKey)} data-slot="wizard-step-nav-item" data-step-index={index}>
+      <li
+        key={toStepKeyString(stepKey)}
+        data-slot="wizard-step-nav-item"
+        data-step-index={index}
+        data-status={stepStatus}
+      >
         <Button
           type="button"
           variant="ghost"
@@ -429,32 +495,54 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           data-past={isPast || undefined}
           data-reachable={reachable || undefined}
           data-disabled={isStepDisabled(step) || undefined}
+          data-status={stepStatus}
           aria-current={isActive ? 'step' : undefined}
           disabled={!clickable && !isActive}
           onClick={handleStepClick}
           className={cn(
-            'gap-1.5 px-2 py-1 text-sm',
+            'h-auto gap-1.5 px-3 py-2 text-sm',
             isActive
               ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
-              : reachable
-                ? 'text-foreground hover:bg-muted'
-                : 'text-muted-foreground cursor-not-allowed',
+              : stepStatus === 'error'
+                ? 'text-destructive hover:bg-destructive/10'
+                : reachable
+                  ? 'text-foreground hover:bg-muted'
+                  : 'text-muted-foreground cursor-not-allowed',
+            mode === 'vertical' && 'w-full justify-start',
           )}
         >
           <span
             data-slot="wizard-step-nav-marker"
             className={cn(
-              'inline-flex size-5 items-center justify-center rounded-full text-xs',
-              isActive
+              'inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs',
+              stepStatus === 'process'
                 ? 'bg-primary-foreground/20'
-                : isPast
-                  ? 'bg-primary/20'
-                  : 'bg-muted',
+                : stepStatus === 'finish'
+                  ? 'bg-primary/20 text-primary'
+                  : stepStatus === 'error'
+                    ? 'bg-destructive/20 text-destructive'
+                    : 'bg-muted',
             )}
           >
-            {isPast ? <CheckIcon className="size-3" /> : index + 1}
+            {stepStatus === 'finish' ? (
+              <CheckIcon className="size-3" />
+            ) : stepStatus === 'error' ? (
+              <XIcon className="size-3" />
+            ) : (
+              index + 1
+            )}
           </span>
-          <span data-slot="wizard-step-nav-title">{titleText}</span>
+          <span className="flex flex-col items-start text-left">
+            <span data-slot="wizard-step-nav-title">{titleText}</span>
+            {descText ? (
+              <span
+                data-slot="wizard-step-nav-description"
+                className="text-xs font-normal opacity-70"
+              >
+                {descText}
+              </span>
+            ) : null}
+          </span>
         </Button>
       </li>
     );
@@ -478,14 +566,26 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       data-step-count={stepCount}
       data-committing={lifecycle.committing || undefined}
       data-last-commit-status={lifecycle.lastCommitStatus}
+      data-mode={mode}
     >
       {stepCount > 0 ? (
         <nav data-slot="wizard-step-nav" aria-label={t('flux.wizard.stepNav')}>
-          <ol className="flex flex-wrap items-center gap-1">{stepNav}</ol>
+          <ol
+            className={cn(
+              mode === 'vertical'
+                ? 'flex flex-col gap-1'
+                : 'flex flex-wrap items-center gap-1',
+            )}
+          >
+            {stepNav}
+          </ol>
         </nav>
       ) : null}
 
-      <div data-slot="wizard-body-region" className="mt-4">
+      <div
+        data-slot="wizard-body-region"
+        className={mode === 'vertical' ? 'mt-4' : 'mt-4'}
+      >
         {stepCount === 0 ? (
           <div data-slot="wizard-empty">{t('flux.wizard.noSteps')}</div>
         ) : (
@@ -525,7 +625,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
               disabled={!canGoPrev}
             >
               <ChevronLeftIcon className="size-4" />
-              <span>{t('flux.wizard.previous')}</span>
+              <span>{prevLabel}</span>
             </Button>
             <Button
               type="button"
@@ -538,7 +638,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
             >
               {lifecycle.committing ? <span>{t('flux.wizard.committing')}</span> : null}
               {!lifecycle.committing ? (
-                <span>{isLastStep ? t('flux.wizard.complete') : t('flux.wizard.next')}</span>
+                <span>{isLastStep ? finishLabel : nextLabel}</span>
               ) : null}
               {!lifecycle.committing && !isLastStep ? (
                 <ChevronRightIcon className="size-4" />
