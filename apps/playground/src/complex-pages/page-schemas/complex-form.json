@@ -7,7 +7,6 @@
       "id": "complex-form",
       "testid": "complex-form",
       "columnCount": 2,
-      "gap": "md",
       "data": {
         "name": "",
         "email": "",
