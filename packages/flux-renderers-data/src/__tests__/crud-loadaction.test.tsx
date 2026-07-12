@@ -121,7 +121,7 @@ describe('CRUD loadAction', () => {
       expect(screen.getByText('Item 1')).toBeTruthy();
     });
 
-    const nextButton = document.querySelector('[aria-label="Go to next page"]');
+    const nextButton = document.querySelector('[aria-label="Next page"]');
     expect(nextButton).toBeTruthy();
     fireEvent.click(nextButton as Element);
 
@@ -219,7 +219,7 @@ describe('CRUD loadAction', () => {
     const initialLoadCount = calls.filter((c) => c.method === 'load').length;
     expect(initialLoadCount).toBe(1);
 
-    const nextButton = screen.getByRole('button', { name: 'Go to next page' });
+    const nextButton = screen.getByRole('button', { name: 'Next page' });
     fireEvent.click(nextButton);
 
     await waitFor(() => {

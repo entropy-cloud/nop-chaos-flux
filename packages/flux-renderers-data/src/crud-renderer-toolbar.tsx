@@ -126,8 +126,6 @@ export function CrudToolbarBlocks(props: {
             className="flex items-center gap-2"
           >
             <PaginationPrevious
-              text={t('flux.pagination.previous')}
-              aria-label={t('flux.pagination.previous')}
               onClick={() => onPageChange(Math.max(1, pagination.currentPage - 1))}
               className={pagination.currentPage <= 1 ? 'pointer-events-none opacity-50' : undefined}
             />
@@ -138,8 +136,6 @@ export function CrudToolbarBlocks(props: {
               })}
             </span>
             <PaginationNext
-              text={t('flux.pagination.next')}
-              aria-label={t('flux.pagination.next')}
               onClick={() => onPageChange(pagination.currentPage + 1)}
               className={
                 summary.total != null && pagination.currentPage >= Math.ceil(summary.total / pagination.pageSize)

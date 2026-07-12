@@ -79,8 +79,8 @@ describe('table internal components', () => {
 
     fireEvent.click(screen.getByText('1'));
     fireEvent.click(screen.getByText('3'));
-    fireEvent.click(document.querySelector('[aria-label="Go to next page"]')!);
-    fireEvent.click(document.querySelector('[aria-label="Go to previous page"]')!);
+    fireEvent.click(document.querySelector('[aria-label="Next page"]')!);
+    fireEvent.click(document.querySelector('[aria-label="Previous page"]')!);
     fireEvent.change(document.querySelector('[data-slot="native-select"]')!, {
       target: { value: '20' },
     });
@@ -107,8 +107,8 @@ describe('table internal components', () => {
       />,
     );
 
-    expect(document.querySelector('[aria-label="Go to previous page"]')).toBeTruthy();
-    expect(document.querySelector('[aria-label="Go to next page"]')).toBeTruthy();
+    expect(document.querySelector('[aria-label="Previous page"]')).toBeTruthy();
+    expect(document.querySelector('[aria-label="Next page"]')).toBeTruthy();
   });
 
   it('renders empty non-virtual table body', () => {

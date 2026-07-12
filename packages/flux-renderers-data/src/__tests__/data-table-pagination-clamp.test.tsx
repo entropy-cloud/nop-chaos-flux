@@ -4,7 +4,7 @@ import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '
 
 function nextPageButton(): HTMLElement {
   return document.querySelector(
-    '.nop-table [data-slot="table-pagination"] [aria-label="Go to next page"]',
+    '.nop-table [data-slot="table-pagination"] [aria-label="Next page"]',
   ) as HTMLElement;
 }
 

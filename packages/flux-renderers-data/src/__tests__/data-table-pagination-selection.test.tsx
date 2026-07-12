@@ -30,7 +30,7 @@ describe('dataRendererDefinitions table pagination and selection', () => {
     );
     expect(screen.getByText('Alice')).toBeTruthy();
     fireEvent.click(
-      document.querySelector('[data-slot="table-pagination"] [aria-label="Go to next page"]')!,
+      document.querySelector('[data-slot="table-pagination"] [aria-label="Next page"]')!,
     );
     await waitFor(() => expect(screen.getByText('Bob')).toBeTruthy());
   });
@@ -65,7 +65,7 @@ describe('dataRendererDefinitions table pagination and selection', () => {
       />,
     );
     fireEvent.click(
-      document.querySelector('[data-slot="table-pagination"] [aria-label="Go to next page"]')!,
+      document.querySelector('[data-slot="table-pagination"] [aria-label="Next page"]')!,
     );
     rerender(
       <SchemaRenderer
@@ -109,7 +109,7 @@ describe('dataRendererDefinitions table pagination and selection', () => {
       />,
     );
     fireEvent.click(
-      document.querySelector('[data-slot="table-pagination"] [aria-label="Go to next page"]')!,
+      document.querySelector('[data-slot="table-pagination"] [aria-label="Next page"]')!,
     );
     await waitFor(() => {
       expect(screen.getByText('Bob')).toBeTruthy();

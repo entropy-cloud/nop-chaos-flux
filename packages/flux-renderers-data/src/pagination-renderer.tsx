@@ -212,7 +212,6 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
-              text={t('flux.pagination.previous')}
               data-testid="pagination-prev"
               aria-disabled={!canGoPrev}
               data-disabled={!canGoPrev || undefined}
@@ -287,7 +286,6 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
 
           <PaginationItem>
             <PaginationNext
-              text={t('flux.pagination.next')}
               data-testid="pagination-next"
               aria-disabled={!canGoNext}
               data-disabled={!canGoNext || undefined}

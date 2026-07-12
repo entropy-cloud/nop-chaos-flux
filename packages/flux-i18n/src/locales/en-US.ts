@@ -39,8 +39,10 @@ export const enUS: Resource = {
       page: 'Page {{current}} of {{total}}',
       goto: 'Go to',
       total: 'Total {{count}}',
-      previous: 'Previous',
-      next: 'Next',
+      first: 'First page',
+      last: 'Last page',
+      previous: 'Previous page',
+      next: 'Next page',
     },
     wizard: {
       previous: 'Previous',

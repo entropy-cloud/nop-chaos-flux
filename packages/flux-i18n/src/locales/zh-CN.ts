@@ -39,6 +39,8 @@ export const zhCN: Resource = {
       page: '第 {{current}} 页，共 {{total}} 页',
       goto: '跳至',
       total: '共 {{count}} 条',
+      first: '首页',
+      last: '末页',
       previous: '上一页',
       next: '下一页',
     },

@@ -167,7 +167,7 @@ describe('B3.3 T24 — sibling cruds with distinct ids keep independent state (r
 
     const crudARoot = document.querySelectorAll('.nop-crud')[0]!;
     fireEvent.click(
-      crudARoot.querySelector('[data-slot="table-pagination"] [aria-label="Go to next page"]')!,
+      crudARoot.querySelector('[data-slot="table-pagination"] [aria-label="Next page"]')!,
     );
 
     // Crud A advances to page 2 (Alpha2 + its own $crud summary reports page 2).

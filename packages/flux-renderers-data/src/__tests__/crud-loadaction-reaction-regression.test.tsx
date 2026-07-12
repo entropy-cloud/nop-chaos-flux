@@ -221,7 +221,7 @@ describe('CRUD loadAction kind:reaction regression (Phase 6)', () => {
     });
 
     // Rapid page change — per-fire abort should cancel the previous in-flight.
-    const nextButton = document.querySelector('[aria-label="Go to next page"]');
+    const nextButton = document.querySelector('[aria-label="Next page"]');
     if (nextButton) {
       fireEvent.click(nextButton as Element);
     }

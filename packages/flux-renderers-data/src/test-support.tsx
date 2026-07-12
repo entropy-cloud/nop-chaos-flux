@@ -14,7 +14,11 @@ import {
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { dataRendererDefinitions } from './index.js';
+
+resetFluxI18n();
+initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 export const env: RendererEnv = {
   fetcher: async function <T>() {

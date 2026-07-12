@@ -87,8 +87,8 @@ describe('data package units', () => {
     fireEvent.change(document.querySelector('[data-slot="native-select"]')!, {
       target: { value: '50' },
     });
-    fireEvent.click(screen.getByText('Previous'));
-    fireEvent.click(screen.getByText('Next'));
+    fireEvent.click(document.querySelector('[aria-label="Previous page"]')!);
+    fireEvent.click(document.querySelector('[aria-label="Next page"]')!);
 
     expect(onPageSizeChange).toHaveBeenCalledWith(50);
     expect(onPageChange).toHaveBeenCalledWith(1);
@@ -111,7 +111,7 @@ describe('data package units', () => {
       />,
     );
 
-    const next = screen.getByRole('button', { name: 'Next' });
+    const next = screen.getByRole('button', { name: 'Next page' });
     expect(next.getAttribute('aria-disabled')).toBe('true');
     expect(next.className).toContain('pointer-events-none');
     expect(next.className).toContain('opacity-50');

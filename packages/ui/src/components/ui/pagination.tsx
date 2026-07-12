@@ -56,53 +56,56 @@ function PaginationLink({ className, isActive, size = 'icon', ...props }: Pagina
 
 function PaginationPrevious({
   className,
+  title,
   text = t('flux.pagination.previous'),
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
-      aria-label="Go to previous page"
+      aria-label={text}
+      title={title ?? text}
       size="default"
       className={cn('nop-pagination ','pl-1.5!', className)}
       {...props}
     >
       <ChevronLeftIcon data-icon="inline-start" />
-      <span className="hidden sm:block">{text}</span>
     </PaginationLink>
   );
 }
 
 function PaginationFirst({
   className,
+  title,
   text = t('flux.pagination.first'),
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
-      aria-label="Go to first page"
+      aria-label={text}
+      title={title ?? text}
       size="default"
       className={cn('nop-pagination ','pl-1.5!', className)}
       {...props}
     >
       <ChevronsLeftIcon data-icon="inline-start" />
-      <span className="hidden sm:block">{text}</span>
     </PaginationLink>
   );
 }
 
 function PaginationLast({
   className,
+  title,
   text = t('flux.pagination.last'),
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
-      aria-label="Go to last page"
+      aria-label={text}
+      title={title ?? text}
       size="default"
       className={cn('nop-pagination ','pr-1.5!', className)}
       {...props}
     >
-      <span className="hidden sm:block">{text}</span>
       <ChevronsRightIcon data-icon="inline-end" />
     </PaginationLink>
   );
@@ -110,17 +113,18 @@ function PaginationLast({
 
 function PaginationNext({
   className,
+  title,
   text = t('flux.pagination.next'),
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
-      aria-label="Go to next page"
+      aria-label={text}
+      title={title ?? text}
       size="default"
       className={cn('nop-pagination ','pr-1.5!', className)}
       {...props}
     >
-      <span className="hidden sm:block">{text}</span>
       <ChevronRightIcon data-icon="inline-end" />
     </PaginationLink>
   );
