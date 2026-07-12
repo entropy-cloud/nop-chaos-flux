@@ -113,6 +113,24 @@ export async function executeRuntimeAjaxAction(
   },
 ): Promise<ActionResult> {
   const env = helpers.getEnv();
+  // Auto-inject pagination params from CRUD evaluation bindings when
+  // server-paginated loadAction doesn't specify them in the schema. This avoids
+  // requiring schema authors to write `${pagination.currentPage}` expressions
+  // that can fail in nested scope contexts (dialog form scope, etc.).
+  const autoPagination = ctx.evaluationBindings?.__autoPagination as
+    | Record<string, number>
+    | undefined;
+  if (autoPagination) {
+    api = {
+      ...api,
+      params: {
+        ...(typeof api.params === 'object' && api.params != null && !Array.isArray(api.params)
+          ? (api.params as Record<string, unknown>)
+          : {}),
+        ...autoPagination,
+      } as ApiSchema['params'],
+    };
+  }
   const messages = action.source?.messages;
   const confirmText = action.source?.confirmText;
 

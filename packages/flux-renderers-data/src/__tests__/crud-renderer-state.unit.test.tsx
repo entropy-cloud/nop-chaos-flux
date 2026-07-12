@@ -189,6 +189,7 @@ describe('createCrudEvaluationBindings', () => {
       sort: { column: 'name', direction: 'asc' },
       filters: { status: { filters: ['active'] } },
       selection: ['r1', 'r2'],
+      __autoPagination: { page: 2, perPage: 20 },
     });
   });
 

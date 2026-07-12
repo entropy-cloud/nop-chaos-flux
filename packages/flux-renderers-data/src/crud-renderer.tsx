@@ -148,6 +148,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     sortStatePath,
     filterStatePath,
     selectionStatePath,
+    pageField: normalizedSchema.pageField,
+    pageSizeField: normalizedSchema.pageSizeField,
   });
 
   const clientSideQueryFiltering =

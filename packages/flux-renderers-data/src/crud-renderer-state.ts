@@ -285,6 +285,8 @@ export function createCrudEvaluationBindings(args: {
   sort: CrudSortState;
   filters: CrudFilterState;
   selection: string[];
+  pageField?: string;
+  pageSizeField?: string;
 }): Record<string, unknown> {
   return {
     pagination: { currentPage: args.pagination.currentPage, pageSize: args.pagination.pageSize },
@@ -292,6 +294,10 @@ export function createCrudEvaluationBindings(args: {
     sort: { column: args.sort.column, direction: args.sort.direction },
     filters: { ...args.filters },
     selection: [...args.selection],
+    __autoPagination: {
+      [args.pageField ?? 'page']: args.pagination.currentPage,
+      [args.pageSizeField ?? 'perPage']: args.pagination.pageSize,
+    },
   };
 }
 
@@ -490,6 +496,8 @@ export function useCrudLoadAction(args: {
   sortStatePath: string;
   filterStatePath: string;
   selectionStatePath: string;
+  pageField?: string;
+  pageSizeField?: string;
 }): CrudLoadActionResult {
   const {
     enabled,
@@ -509,6 +517,8 @@ export function useCrudLoadAction(args: {
     sortStatePath,
     filterStatePath,
     selectionStatePath,
+    pageField,
+    pageSizeField,
   } = args;
 
   const [rows, setRows] = useState<unknown[]>(EMPTY_ROWS);
@@ -574,6 +584,8 @@ export function useCrudLoadAction(args: {
         sort: (getIn(snapshot, sortStatePath) as CrudSortState) ?? {},
         filters: (getIn(snapshot, filterStatePath) as CrudFilterState) ?? {},
         selection: toStringArray(getIn(snapshot, selectionStatePath)),
+        pageField,
+        pageSizeField,
       });
     });
 
@@ -582,7 +594,7 @@ export function useCrudLoadAction(args: {
     return () => {
       proxyHandle.__setBindingsProvider?.(undefined);
     };
-  }, [enabled, loadReaction, scope, nodeScope, paginationStatePath, queryStatePath, sortStatePath, filterStatePath, selectionStatePath, pagination.pageSize]);
+  }, [enabled, loadReaction, scope, nodeScope, paginationStatePath, queryStatePath, sortStatePath, filterStatePath, selectionStatePath, pagination.pageSize, pageField, pageSizeField]);
 
   useEffect(() => {
     if (!enabled || !loadReaction) {
@@ -601,6 +613,8 @@ export function useCrudLoadAction(args: {
       sort,
       filters,
       selection,
+      pageField,
+      pageSizeField,
     });
 
     void (async () => {
@@ -677,6 +691,8 @@ export function useCrudLoadAction(args: {
     selection,
     paginationStatePath,
     reloadNonce,
+    pageField,
+    pageSizeField,
   ]);
 
   return useMemo(
