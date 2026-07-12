@@ -72,7 +72,7 @@ const CASES: DirectRenderCase[] = [
   {
     label: 'input-table',
     Component: InputTableRow as unknown as AnyItemComponent,
-    extraProps: () => ({ columnCount: 1 }),
+    extraProps: () => ({ columns: [{ label: 'Value' }] }),
   },
 ];
 
@@ -97,11 +97,13 @@ function buildStableBaseProps(extra: Record<string, unknown>, region: SpyRegion)
     parentScope: fakeParentScope,
     parentForm: undefined,
     parentValidationOwner: undefined,
+    helpers: { render: () => null } as unknown as import('@nop-chaos/flux-core').RendererHelpers,
     readOnly: false,
     removable: true,
     reorderable: true,
     totalCount: 1,
     minItems: 0,
+    columns: [],
     onRemove,
     onMoveUp,
     onMoveDown,

@@ -6,6 +6,7 @@ import type {
   InstanceFrame,
   RendererComponentProps,
   RendererDefinition,
+  RendererHelpers,
   RendererRuntime,
   ScopeRef,
   ValidationRule,
@@ -71,12 +72,13 @@ type InputTableRowProps = {
   parentValidationOwner: import('@nop-chaos/flux-core').ValidationScopeRuntime | undefined;
   runtime: RendererRuntime;
   parentComponentRegistry: ComponentHandleRegistry | undefined;
+  helpers: RendererHelpers;
   readOnly: boolean;
   removable: boolean;
   reorderable: boolean;
   totalCount: number;
   minItems: number;
-  columnCount: number;
+  columns: readonly InputTableColumn[];
   onRemove: (index: number) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
@@ -95,12 +97,13 @@ function InputTableRowView(props: InputTableRowProps) {
     parentValidationOwner,
     runtime,
     parentComponentRegistry,
+    helpers,
     readOnly,
     removable,
     reorderable,
     totalCount,
     minItems,
-    columnCount,
+    columns,
     onRemove,
     onMoveUp,
     onMoveDown,
@@ -162,24 +165,56 @@ function InputTableRowView(props: InputTableRowProps) {
   );
 
   const canRemove = totalCount > minItems;
+
+  function renderColumnCells() {
+    const templateNodes = Array.isArray(itemRegion?.templateNode)
+      ? itemRegion.templateNode
+      : itemRegion?.templateNode
+        ? [itemRegion.templateNode]
+        : null;
+
+    if (!templateNodes || templateNodes.length === 0) {
+      const columnCount = Math.max(1, columns.length);
+      return (
+        <TableCell key="fallback" colSpan={columnCount} data-slot="input-table-row-body">
+          {itemContent}
+        </TableCell>
+      );
+    }
+
+    return templateNodes.map((node, i) => {
+      const rendered = helpers.render(node, {
+        scope: itemScope,
+        bindings: { index, value: item },
+        instancePath: itemInstancePath,
+      });
+      const colWidth = columns[i]?.width;
+      const colKey = columns[i]?.label ?? `col-${i}`;
+      return (
+        <TableCell
+          key={colKey}
+          data-slot="input-table-row-body"
+          style={colWidth != null ? { width: colWidth } : undefined}
+        >
+          {asReactNode(rendered)}
+        </TableCell>
+      );
+    });
+  }
   const canMoveUp = index > 0;
   const canMoveDown = index < totalCount - 1;
 
   return (
     <TableRow data-slot="input-table-row" data-row-index={index}>
-      <TableCell>
-        <FormContext.Provider value={itemForm ?? undefined}>
-          <ScopeContext.Provider value={itemScope}>
-            <ValidationContext.Provider value={itemValidationOwner}>
-              <ComponentRegistryContext.Provider value={itemComponentRegistry}>
-                <div className="flex items-center gap-2" data-slot="input-table-row-body">
-                  {itemContent}
-                </div>
-              </ComponentRegistryContext.Provider>
-            </ValidationContext.Provider>
-          </ScopeContext.Provider>
-        </FormContext.Provider>
-      </TableCell>
+      <FormContext.Provider value={itemForm ?? undefined}>
+        <ScopeContext.Provider value={itemScope}>
+          <ValidationContext.Provider value={itemValidationOwner}>
+            <ComponentRegistryContext.Provider value={itemComponentRegistry}>
+              {renderColumnCells()}
+            </ComponentRegistryContext.Provider>
+          </ValidationContext.Provider>
+        </ScopeContext.Provider>
+      </FormContext.Provider>
       {(reorderable || removable) && !readOnly && (
         <TableCell className="w-px whitespace-nowrap">
           <div className="flex items-center gap-1" data-slot="input-table-row-actions">
@@ -226,11 +261,6 @@ function InputTableRowView(props: InputTableRowProps) {
           </div>
         </TableCell>
       )}
-      {/* columnCount reserves invisible grid tracks so the row body's cell grid
-          aligns with the header even when action buttons are absent. */}
-      {Array.from({ length: Math.max(0, columnCount - 1) }, (_, i) => (
-        <React.Fragment key={i} />
-      ))}
     </TableRow>
   );
 }
@@ -244,12 +274,13 @@ export const InputTableRow = React.memo(InputTableRowView, (prev, next) =>
   prev.parentValidationOwner === next.parentValidationOwner &&
   prev.runtime === next.runtime &&
   prev.parentComponentRegistry === next.parentComponentRegistry &&
+  prev.helpers === next.helpers &&
   prev.readOnly === next.readOnly &&
   prev.removable === next.removable &&
   prev.reorderable === next.reorderable &&
   prev.totalCount === next.totalCount &&
   prev.minItems === next.minItems &&
-  prev.columnCount === next.columnCount &&
+  prev.columns === next.columns &&
   prev.onRemove === next.onRemove &&
   prev.onMoveUp === next.onMoveUp &&
   prev.onMoveDown === next.onMoveDown &&
@@ -547,12 +578,13 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
                   parentValidationOwner={parentValidationOwner}
                   runtime={runtime}
                   parentComponentRegistry={parentComponentRegistry}
+                  helpers={props.helpers}
                   readOnly={interactionDisabled}
                   removable={removable}
                   reorderable={reorderable}
                   totalCount={itemsArray.length}
                   minItems={minItems}
-                  columnCount={headerColumnCount}
+                  columns={columns}
                   onRemove={handleRemove}
                   onMoveUp={handleMoveUp}
                   onMoveDown={handleMoveDown}
