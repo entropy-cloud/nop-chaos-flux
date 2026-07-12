@@ -43,13 +43,13 @@
     padding: var(--space-field-label-gap) var(--space-form-item-gap) var(--space-form-item-gap);
   }
 
-  .nop-fieldset > legend {
+  .nop-fieldset legend {
     padding: 4px var(--space-field-label-gap);
     font-weight: 500;
     font-size: 0.875rem;
   }
 
-  .nop-fieldset > [data-slot='fieldset-body'] {
+  .nop-fieldset [data-slot='fieldset-body'] {
     display: flex;
     flex-direction: column;
     gap: var(--space-fieldset-body-gap);

@@ -88,11 +88,12 @@ File: `packages/flux-react/src/default-spacing.css`
 
 ### FieldSet
 
-| Selector                                      | Rules                                                                                                                                                                                                |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.nop-fieldset`                               | `display: flex; flex-direction: column; min-inline-size: 0; border: 1px solid hsl(var(--border)); border-radius: var(--radius-sm); padding: 0 var(--space-form-item-gap) var(--space-form-item-gap)` |
-| `.nop-fieldset > legend`                      | `padding: 0 var(--space-field-label-gap); font-weight: 500; font-size: 0.875rem`                                                                                                                     |
-| `.nop-fieldset > [data-slot="fieldset-body"]` | `display: flex; flex-direction: column; gap: var(--space-fieldset-body-gap)`                                                                                                                         |
+| Selector               | Rules                                                                                                                                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.nop-fieldset`        | `display: flex; flex-direction: column; min-inline-size: 0; border: 1px solid hsl(var(--border)); border-radius: var(--radius-sm); padding: 0 var(--space-form-item-gap) var(--space-form-item-gap)` |
+| `.nop-fieldset legend` | `padding: 4px var(--space-field-label-gap); font-weight: 500; font-size: 0.875rem` (descendant — <legend> is inside <Collapsible>)                                                                   |
+
+| `.nop-fieldset [data-slot="fieldset-body"]` | `display: flex; flex-direction: column; gap: var(--space-fieldset-body-gap)` (descendant — body div is inside <Collapsible>) |
 
 ### Container
 
