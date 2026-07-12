@@ -198,9 +198,18 @@ function reportUnhandledFailureClass(
     handledByOnError ||
     !isFailureClass(result) ||
     result.failureHandled ||
-    syntheticBranchEvent ||
-    caughtFailureResults.has(result)
+    syntheticBranchEvent
   ) {
+    return;
+  }
+
+  // "Caught" results (errors converted to {ok:false} by runSingleAction's catch
+  // block) still need a user-visible notification — the catch block only calls
+  // onActionError (which may be undefined). Without this notify, action-arg
+  // expression failures (e.g. unresolved ${pagination.currentPage} in a dialog
+  // scope) are completely silent: no toast, no console message.
+  const hasDiagnosticChannel = ctx.onActionError !== undefined || (ctx.plugins?.length ?? 0) > 0;
+  if (hasDiagnosticChannel && caughtFailureResults.has(result)) {
     return;
   }
 
