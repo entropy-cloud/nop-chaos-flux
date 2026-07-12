@@ -578,6 +578,37 @@ A global default gap would reduce boilerplate but creates the exact problem we a
 
 No single default is correct for all contexts. The `stack-*` alias convention reduces boilerplate while keeping the intent visible.
 
+## Dialog / Form Action Button Convention
+
+All dialog and form action buttons follow a fixed ordering rule:
+
+| Position  | Role                | `variant`                 | Examples         |
+| --------- | ------------------- | ------------------------- | ---------------- |
+| **Left**  | Secondary / dismiss | `outline` / `destructive` | 取消, 关闭, 驳回 |
+| **Right** | Primary / confirm   | `primary` / `default`     | 保存, 确定, 通过 |
+
+**Rule**: `actions` array MUST be `[secondary, primary]`. This aligns with Ant Design, shadcn/ui Dialog, and macOS HIG conventions.
+
+**Alignment**: Action buttons are right-aligned via `actionsClassName: "flex justify-end gap-2"` (set as default on form `form-actions`).
+
+**Examples**:
+
+```json
+// Dialog form actions — correct order
+"actions": [
+  { "type": "button", "label": "取消", "variant": "outline", "onClick": { "action": "closeSurface" } },
+  { "type": "button", "label": "保存", "variant": "primary", "onClick": { "action": "submitForm" } }
+]
+
+// Approval dialog with destructive secondary
+"actions": [
+  { "type": "button", "label": "驳回", "variant": "destructive", "onClick": { ... } },
+  { "type": "button", "label": "通过", "variant": "primary", "onClick": { ... } }
+]
+```
+
+This convention is enforced by review — there is no runtime validation of button order.
+
 ## Current Implementation
 
 ### Container Schema
