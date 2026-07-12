@@ -99,6 +99,7 @@ export interface DetailFieldSchema extends BoundFieldSchemaBase {
 export interface ComboSchema extends BoundFieldSchemaBase {
   type: 'combo';
   items: SchemaInput;
+  columnCount?: number;
   addable?: boolean;
   removable?: boolean;
   reorderable?: boolean;
@@ -169,7 +170,7 @@ export interface TransferSchema extends BoundFieldSchemaBase {
  */
 export interface PickerDialogConfig extends SchemaObject {
   title?: string;
-  size?: string;
+  size?: 'sm' | 'default' | 'lg' | 'xl';
   placement?: string;
 }
 

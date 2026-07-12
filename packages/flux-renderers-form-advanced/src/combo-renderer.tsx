@@ -68,6 +68,7 @@ type ComboItemProps = {
   item: unknown;
   itemInstancePath: readonly InstanceFrame[];
   itemRegion: RendererComponentProps<ComboSchema>['regions']['items'];
+  columnCount?: number;
 };
 
 function ComboItemView(props: ComboItemProps) {
@@ -130,10 +131,22 @@ function ComboItemView(props: ComboItemProps) {
   const canMoveUp = index > 0;
   const canMoveDown = index < totalCount - 1;
 
+  const resolvedColumnCount =
+    props.columnCount !== undefined && Number.isFinite(props.columnCount)
+      ? Math.max(1, Math.floor(props.columnCount))
+      : undefined;
+  const showGrid = resolvedColumnCount !== undefined && resolvedColumnCount > 1;
+  const bodyClassName = showGrid
+    ? `min-w-0 flex-1 grid gap-2`
+    : 'flex min-w-0 flex-1 flex-col gap-2';
+  const bodyStyle = showGrid
+    ? { display: 'grid', gridTemplateColumns: `repeat(${resolvedColumnCount}, minmax(0, 1fr))` }
+    : undefined;
+
   return (
     <div className="rounded-lg border border-border bg-card p-3" data-slot="combo-item">
       <div className="flex items-start gap-2">
-        <div className="flex min-w-0 flex-1 flex-col gap-2" data-slot="combo-item-body">
+        <div className={cn(bodyClassName)} style={bodyStyle} data-slot="combo-item-body">
           <FormContext.Provider value={itemForm ?? undefined}>
             <ScopeContext.Provider value={itemScope}>
               <ValidationContext.Provider value={itemValidationOwner}>{itemContent}</ValidationContext.Provider>
@@ -485,6 +498,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
   }
 
   const interactionDisabled = presentation.effectiveDisabled || presentation.readOnly;
+  const comboColumnCount = props.props.columnCount;
 
   return (
     <div className={cn('nop-combo', 'flex flex-col gap-2', props.meta.className)} data-slot="field-control">
@@ -493,6 +507,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
           {t('flux.form.noItems', { defaultValue: 'No items' })}
         </p>
       )}
+
       {itemEntries.map(({ item, index, itemIdentity, itemInstancePath }) => (
         <ComboItem
           key={itemIdentity}
@@ -514,6 +529,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
           item={item}
           itemInstancePath={itemInstancePath}
           itemRegion={props.regions.items}
+          columnCount={comboColumnCount}
         />
       ))}
       {addable && !interactionDisabled && (
@@ -542,6 +558,7 @@ export const comboRendererDefinition: RendererDefinition = {
   fields: [
     { key: 'name', kind: 'prop' },
     ...formFieldRules,
+    { key: 'columnCount', kind: 'prop' },
     { key: 'addable', kind: 'prop', valueType: 'boolean' },
     { key: 'removable', kind: 'prop', valueType: 'boolean' },
     { key: 'reorderable', kind: 'prop', valueType: 'boolean' },
