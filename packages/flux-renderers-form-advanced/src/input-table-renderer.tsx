@@ -1,24 +1,29 @@
 import React from 'react';
 import type {
   BaseSchema,
+  ComponentHandleRegistry,
   FormRuntime,
   InstanceFrame,
   RendererComponentProps,
   RendererDefinition,
+  RendererRuntime,
   ScopeRef,
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
+  ComponentRegistryContext,
   FormContext,
   ScopeContext,
   ValidationContext,
   useCompositeFieldHandle,
+  useCurrentComponentRegistry,
   useCurrentForm,
   useCurrentFormState,
   useCurrentValidationScope,
   useRenderInstancePath,
   useRenderScope,
+  useRendererRuntime,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -64,6 +69,8 @@ type InputTableRowProps = {
   parentScope: ScopeRef;
   parentForm: FormRuntime | undefined;
   parentValidationOwner: import('@nop-chaos/flux-core').ValidationScopeRuntime | undefined;
+  runtime: RendererRuntime;
+  parentComponentRegistry: ComponentHandleRegistry | undefined;
   readOnly: boolean;
   removable: boolean;
   reorderable: boolean;
@@ -86,6 +93,8 @@ function InputTableRowView(props: InputTableRowProps) {
     parentScope,
     parentForm,
     parentValidationOwner,
+    runtime,
+    parentComponentRegistry,
     readOnly,
     removable,
     reorderable,
@@ -121,6 +130,25 @@ function InputTableRowView(props: InputTableRowProps) {
     });
   }, [arrayPath, index, parentValidationOwner]);
 
+  const itemComponentRegistry = React.useMemo(() => {
+    if (!parentComponentRegistry) {
+      return undefined;
+    }
+    return runtime.createComponentHandleRegistry({
+      id: `${arrayPath}.${index}:input-table-row:component-registry`,
+      parent: parentComponentRegistry,
+    });
+  }, [runtime, parentComponentRegistry, arrayPath, index]);
+
+  React.useEffect(() => {
+    const registry = itemComponentRegistry;
+    return () => {
+      queueMicrotask(() => {
+        registry?.dispose?.();
+      });
+    };
+  }, [itemComponentRegistry]);
+
   const itemContent = React.useMemo(
     () =>
       asReactNode(
@@ -143,9 +171,11 @@ function InputTableRowView(props: InputTableRowProps) {
         <FormContext.Provider value={itemForm ?? undefined}>
           <ScopeContext.Provider value={itemScope}>
             <ValidationContext.Provider value={itemValidationOwner}>
-              <div className="flex items-center gap-2" data-slot="input-table-row-body">
-                {itemContent}
-              </div>
+              <ComponentRegistryContext.Provider value={itemComponentRegistry}>
+                <div className="flex items-center gap-2" data-slot="input-table-row-body">
+                  {itemContent}
+                </div>
+              </ComponentRegistryContext.Provider>
             </ValidationContext.Provider>
           </ScopeContext.Provider>
         </FormContext.Provider>
@@ -212,6 +242,8 @@ export const InputTableRow = React.memo(InputTableRowView, (prev, next) =>
   prev.parentScope === next.parentScope &&
   prev.parentForm === next.parentForm &&
   prev.parentValidationOwner === next.parentValidationOwner &&
+  prev.runtime === next.runtime &&
+  prev.parentComponentRegistry === next.parentComponentRegistry &&
   prev.readOnly === next.readOnly &&
   prev.removable === next.removable &&
   prev.reorderable === next.reorderable &&
@@ -227,9 +259,11 @@ export const InputTableRow = React.memo(InputTableRowView, (prev, next) =>
 );
 
 export function InputTableRenderer(props: RendererComponentProps<InputTableSchema>) {
+  const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
   const parentForm = useCurrentForm();
   const parentValidationOwner = useCurrentValidationScope();
+  const parentComponentRegistry = useCurrentComponentRegistry();
   const parentInstancePath = useRenderInstancePath();
   const name = String(props.props.name ?? '');
   const hasName = name.length > 0;
@@ -511,6 +545,8 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
                   parentScope={parentScope}
                   parentForm={parentForm}
                   parentValidationOwner={parentValidationOwner}
+                  runtime={runtime}
+                  parentComponentRegistry={parentComponentRegistry}
                   readOnly={interactionDisabled}
                   removable={removable}
                   reorderable={reorderable}
