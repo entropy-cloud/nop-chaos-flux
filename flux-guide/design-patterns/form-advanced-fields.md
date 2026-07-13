@@ -1,6 +1,6 @@
 # 表单高级字段
 
-> `tag-list`、`key-value`、`array-editor`、`input-tree`、`condition-builder` 是五种常用表单高级字段。所有字段定义见 `flux-types/schema.d.ts`。
+> `tag-list`、`key-value`、`array-editor`、`input-tree`、`condition-builder`、`icon-picker` 是常用表单高级字段。所有字段定义见 `flux-types/schema.d.ts`。
 
 ---
 
@@ -167,6 +167,34 @@
 
 ---
 
+## 6. IconPicker：图标选择
+
+弹层图标选择字段，基于 Lucide 图标集，支持搜索过滤和 Ant Design 名称兼容。
+
+```jsonc
+{
+  "type": "form",
+  "body": [
+    {
+      "type": "icon-picker",
+      "name": "menuIcon",
+      "label": "菜单图标",
+      "placeholder": "选择图标",
+      "searchable": true,
+      "clearable": true,
+    },
+  ],
+}
+```
+
+**值结构**：`string`（Lucide kebab-case 名，如 `"settings"`、`"check-circle"`）
+
+**Ant Design 兼容**：值经 `resolveLucideIcon()` 解析，自动支持 `ant-design:*` 前缀名。
+
+**字段**：`placeholder`（缺省 "选择图标"）、`searchable`（缺省 true）、`clearable`（缺省 true）、`disabled`、`readOnly`、`required`
+
+---
+
 ## 与其他字段的选型
 
 | 场景             | 推荐字段                                                 |
@@ -177,6 +205,7 @@
 | 对象数组子表单   | `array-field`（见 composite-fields.md）                  |
 | 树形层级选择     | `input-tree`                                             |
 | 复杂规则表达式   | `condition-builder`                                      |
+| 图标选择         | `icon-picker`                                            |
 | 结构化对象子表单 | `object-field`（见 composite-fields.md）                 |
 | 多态值切换       | `variant-field`（见 composite-fields.md）                |
 | 弹窗编辑详情     | `detail-field` / `detail-view`（见 composite-fields.md） |

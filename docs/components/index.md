@@ -324,7 +324,7 @@ UI primitive 对齐补充规则：
 
 **复合 / 高级字段（`flux-renderers-form-advanced`）**
 
-- `input-tree`、`tree-select`、`tag-list`、`key-value`、`array-editor`、`condition-builder`、`object-field`、`array-field`、`variant-field`、`detail-field`、`detail-view`、`editor`、`input-file`、`input-image`、`combo`、`input-table`、`transfer`、`picker`
+- `input-tree`、`tree-select`、`tag-list`、`key-value`、`array-editor`、`condition-builder`、`object-field`、`array-field`、`variant-field`、`detail-field`、`detail-view`、`editor`、`input-file`、`input-image`、`combo`、`input-table`、`transfer`、`picker`、`icon-picker`
 
 **代码编辑器（`flux-code-editor`）**
 
@@ -503,6 +503,7 @@ UI primitive 对齐补充规则：
 - `input-image/`
 - `combo/`
 - `picker/`
+- `icon-picker/`
 - `transfer/`
 - `input-table/`
 

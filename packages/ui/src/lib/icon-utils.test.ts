@@ -127,3 +127,43 @@ describe('resolveLucideIcon', () => {
     expect(houseResult).toBe(homeResult);
   });
 });
+
+describe('Ant Design icon mapping', () => {
+  it('resolves ant-design:setting-outlined to settings', () => {
+    expect(normalizeIconName('ant-design:setting-outlined')).toBe('settings');
+  });
+
+  it('resolves ant-design:robot-filled to bot', () => {
+    expect(normalizeIconName('ant-design:robot-filled')).toBe('bot');
+  });
+
+  it('resolves ant-design:dashboard-twotone to gauge', () => {
+    expect(normalizeIconName('ant-design:dashboard-twotone')).toBe('gauge');
+  });
+
+  it('resolves ant-design:check-circle-outlined to circle-check-big', () => {
+    expect(normalizeIconName('ant-design:check-circle-outlined')).toBe('circle-check-big');
+  });
+
+  it('resolves ant-design:close to x', () => {
+    expect(normalizeIconName('ant-design:close')).toBe('x');
+  });
+
+  it('resolves bare antd name (no prefix) via mapping table', () => {
+    expect(normalizeIconName('setting')).toBe('settings');
+  });
+
+  it('resolves bare antd name robot via mapping table', () => {
+    expect(normalizeIconName('robot')).toBe('bot');
+  });
+
+  it('passes through unknown antd icon as-is', () => {
+    expect(normalizeIconName('ant-design:unknown-icon')).toBe('unknown-icon');
+  });
+
+  it('resolveLucideIcon resolves ant-design:setting-outlined', () => {
+    const result = resolveLucideIcon('ant-design:setting-outlined');
+    const directResult = resolveLucideIcon('settings');
+    expect(result).toBe(directResult);
+  });
+});

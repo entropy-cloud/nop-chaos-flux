@@ -35,6 +35,7 @@ export { ComboLabPage } from './combo-lab-page';
 export { InputTableLabPage } from './input-table-lab-page';
 export { TransferLabPage } from './transfer-lab-page';
 export { PickerLabPage } from './picker-lab-page';
+export { IconPickerLabPage } from './icon-picker-lab-page';
 export { ConditionBuilderLabPage } from './condition-builder-lab-page';
 export { ObjectFieldLabPage } from './object-field-lab-page';
 export { ArrayFieldLabPage } from './array-field-lab-page';

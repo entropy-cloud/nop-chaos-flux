@@ -1,0 +1,19 @@
+{
+  "type": "form",
+  "body": [
+    {
+      "type": "icon-picker",
+      "name": "menuIcon",
+      "label": "菜单图标",
+      "placeholder": "选择图标",
+      "searchable": true,
+      "clearable": true
+    },
+    {
+      "type": "icon-picker",
+      "name": "buttonIcon",
+      "label": "按钮图标",
+      "defaultValue": "settings"
+    }
+  ]
+}

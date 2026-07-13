@@ -27,6 +27,10 @@ export interface PageSchema extends BaseSchema {
   subTitle?: SchemaValue;
   remark?: SchemaValue;
   asidePosition?: SchemaValue;
+  asideResizable?: boolean;
+  asideMinWidth?: SchemaValue;
+  asideMaxWidth?: SchemaValue;
+  asideSticky?: boolean;
   modalContainer?: SchemaValue;
   statusPath?: SchemaValue;
 }
@@ -91,6 +95,11 @@ export interface ButtonSchema extends BaseSchema {
   rightIcon?: string;
   tooltip?: string;
   disabledTip?: string;
+  tooltipPlacement?: SchemaValue;
+  countDown?: SchemaValue;
+  countDownTpl?: SchemaValue;
+  href?: SchemaValue;
+  target?: SchemaValue;
   block?: boolean;
   active?: boolean;
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
@@ -198,6 +207,9 @@ export interface TabsSchema extends BaseSchema {
   variant?: "default" | "line";
   tabsMode?: SchemaValue;
   sidePosition?: SchemaValue;
+  closable?: boolean;
+  draggable?: boolean;
+  addable?: boolean;
   contentClassName?: SchemaValue;
   toolbarClassName?: SchemaValue;
 }
@@ -212,10 +224,15 @@ export interface WizardSchema extends BaseSchema {
   value?: string | number;
   defaultValue?: string | number;
   statusPath?: string;
+  mode?: SchemaValue;
   linear?: boolean;
   allowStepJump?: boolean;
   mountOnEnter?: boolean;
   unmountOnExit?: boolean;
+  actionFinishLabel?: SchemaValue;
+  actionNextLabel?: SchemaValue;
+  actionPrevLabel?: SchemaValue;
+  actionNextSaveLabel?: SchemaValue;
   onChange?: ActionSchema | ActionSchema[];
   onStepCommit?: ActionSchema | ActionSchema[];
   onComplete?: ActionSchema | ActionSchema[];
@@ -322,6 +339,7 @@ export interface FieldsetSchema extends BoundFieldSchemaBase {
   type: 'fieldset';
   collapsible?: boolean;
   collapsed?: boolean;
+  columnCount?: SchemaValue;
   body?: SchemaInput;
 }
 
@@ -439,6 +457,7 @@ export interface SwitchSchema extends BoundFieldSchemaBase {
 export interface RadioGroupSchema extends BoundFieldSchemaBase {
   type: 'radio-group';
   options?: SchemaValue;
+  direction?: SchemaValue;
 }
 
 export interface CheckboxGroupSchema extends BoundFieldSchemaBase {
@@ -447,6 +466,7 @@ export interface CheckboxGroupSchema extends BoundFieldSchemaBase {
   checkAll?: boolean;
   maxSelected?: SchemaValue;
   minSelected?: SchemaValue;
+  direction?: SchemaValue;
 }
 
 export interface InputNumberSchema extends BoundFieldSchemaBase {
@@ -664,6 +684,7 @@ export interface InputImageSchema extends BoundFieldSchemaBase {
 
 export interface ComboSchema extends BoundFieldSchemaBase {
   type: 'combo';
+  columnCount?: SchemaValue;
   addable?: boolean;
   removable?: boolean;
   reorderable?: boolean;
@@ -701,6 +722,11 @@ export interface TransferSchema extends BoundFieldSchemaBase {
   searchable?: boolean;
   searchOnly?: boolean;
   searchPlaceholder?: SchemaValue;
+  checkAll?: boolean;
+  checkAllLabel?: SchemaValue;
+  clearable?: boolean;
+  selectTitle?: SchemaValue;
+  resultTitle?: SchemaValue;
   onAdd?: ActionSchema | ActionSchema[];
   onRemove?: ActionSchema | ActionSchema[];
   onChange?: ActionSchema | ActionSchema[];
@@ -719,6 +745,14 @@ export interface PickerSchema extends BoundFieldSchemaBase {
   pickerDialog?: SchemaValue;
   multiple?: boolean;
   onPick?: ActionSchema | ActionSchema[];
+}
+
+export interface IconPickerSchema extends BoundFieldSchemaBase {
+  type: 'icon-picker';
+  placeholder?: SchemaValue;
+  searchable?: boolean;
+  clearable?: boolean;
+  defaultValue?: SchemaValue;
 }
 
 // ============================================================================
@@ -745,13 +779,16 @@ export interface TableSchema extends BaseSchema {
   bordered?: SchemaValue;
   virtualThreshold?: SchemaValue;
   scrollHeight?: SchemaValue;
+  autoFillHeight?: SchemaValue;
   columnSettings?: SchemaValue;
   responsive?: SchemaValue;
   columnResize?: boolean;
   affixHeader?: boolean;
+  showHeader?: boolean;
   prefixRow?: SchemaValue;
   affixRow?: SchemaValue;
   combineNum?: SchemaValue;
+  combineFromIndex?: SchemaValue;
   draggable?: boolean;
   orderField?: SchemaValue;
   orderOwnership?: SchemaValue;
@@ -899,6 +936,9 @@ export interface CrudSchema extends BaseSchema {
   loadAction?: SchemaValue;
   loadAllData?: boolean;
   dataStatePath?: SchemaValue;
+  autoJumpToTopOnPagerChange?: boolean;
+  totalField?: SchemaValue;
+  hideQuickSaveBtn?: boolean;
   queryForm?: Record<string, unknown>;
   queryFormRegion?: SchemaInput;
   toolbar?: SchemaInput;

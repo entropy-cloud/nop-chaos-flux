@@ -1,4 +1,5 @@
 import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
+import { iconPickerRendererDefinition } from './icon-picker.js';
 import { arrayEditorRendererDefinition } from './array-editor.js';
 import { arrayFieldRendererDefinition } from './composite-field/array-field.js';
 import { comboRendererDefinition } from './combo-renderer.js';
@@ -17,6 +18,7 @@ import { transferRendererDefinition } from './transfer-renderer.js';
 import { treeControlRendererDefinitions } from './tree-controls.js';
 import { variantFieldRendererDefinition } from './variant-field/variant-field.js';
 
+export { IconPickerRenderer, iconPickerRendererDefinition } from './icon-picker.js';
 export { ArrayEditorRenderer, arrayEditorRendererDefinition } from './array-editor.js';
 export { ArrayFieldRenderer, arrayFieldRendererDefinition } from './composite-field/array-field.js';
 export { ComboRenderer, comboRendererDefinition } from './combo-renderer.js';
@@ -74,6 +76,7 @@ export const formAdvancedRendererDefinitions = [
   inputTableRendererDefinition,
   transferRendererDefinition,
   pickerRendererDefinition,
+  iconPickerRendererDefinition,
 ] as RendererDefinition[];
 
 export function registerFormAdvancedRenderers(registry: RendererRegistry) {

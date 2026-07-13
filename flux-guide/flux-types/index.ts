@@ -38,6 +38,7 @@ import type {
   FragmentSchema,
   GridSchema,
   HtmlSchema,
+  IconPickerSchema,
   IconSchema,
   ImageSchema,
   InfiniteScrollSchema,
@@ -159,6 +160,7 @@ export type FluxSchema =
   | InputTableSchema
   | TransferSchema
   | PickerSchema
+  | IconPickerSchema
   | TableSchema
   | DataSourceSchema
   | ChartSchema
@@ -254,6 +256,7 @@ export interface FluxSchemaByType {
   'input-table': InputTableSchema;
   'transfer': TransferSchema;
   'picker': PickerSchema;
+  'icon-picker': IconPickerSchema;
   'table': TableSchema;
   'data-source': DataSourceSchema;
   'chart': ChartSchema;
@@ -325,6 +328,7 @@ export type {
   FragmentSchema,
   GridSchema,
   HtmlSchema,
+  IconPickerSchema,
   IconSchema,
   ImageSchema,
   InfiniteScrollSchema,

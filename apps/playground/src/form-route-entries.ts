@@ -214,6 +214,14 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
       'Dialog-layer selection field. Reuses dialog surface + valueKey/labelKey normalization; open/clear via useInputComponentHandle.',
   },
   {
+    id: 'icon-picker',
+    title: 'Icon Picker',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
+    description:
+      'Popover-based Lucide icon picker with search and grid layout.',
+  },
+  {
     id: 'condition-builder',
     title: 'Condition Builder',
     category: 'form',
