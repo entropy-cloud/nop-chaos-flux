@@ -40,6 +40,7 @@ const TYPES = [
   'video',
   'carousel',
   'qrcode',
+  'diff-view',
 ] as const;
 
 describe('contentRendererDefinitions', () => {

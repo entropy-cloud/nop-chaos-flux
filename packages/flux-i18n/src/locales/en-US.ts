@@ -653,6 +653,22 @@ export const enUS: Resource = {
     dynamicRenderer: {
       error: 'Error: ',
     },
+    diff: {
+      collapsedLines: 'Collapsed {{count}} lines',
+      collapse: 'Collapse',
+      newPane: 'New',
+      noChanges: 'No changes',
+      oldPane: 'Old',
+      splitView: 'Split View',
+      unifiedView: 'Unified View',
+    },
+    cameraUnavailable: 'Camera unavailable',
+    openingCamera: 'Opening camera...',
+    alignBarcode: 'Align barcode with frame',
+    offlineQueueMessage: 'Offline — scans will auto-submit when reconnected',
+    itemsScanned: '{{count}} item(s) scanned',
+    batchConfirm: 'Batch Confirm',
+    clear: 'Clear',
     email: 'Email',
     validation: {
       required: '{{label}} is required',

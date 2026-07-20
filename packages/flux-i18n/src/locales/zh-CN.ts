@@ -652,6 +652,22 @@ export const zhCN: Resource = {
     dynamicRenderer: {
       error: '错误: ',
     },
+    diff: {
+      collapsedLines: '已折叠 {{count}} 行',
+      collapse: '折叠',
+      newPane: '新版',
+      noChanges: '无变化',
+      oldPane: '旧版',
+      splitView: '分栏视图',
+      unifiedView: '统一视图',
+    },
+    cameraUnavailable: '摄像头不可用',
+    openingCamera: '正在打开摄像头...',
+    alignBarcode: '将条码对准扫描框',
+    offlineQueueMessage: '离线 — 重新连接后将自动提交扫描结果',
+    itemsScanned: '已扫描 {{count}} 项',
+    batchConfirm: '批量确认',
+    clear: '清除',
     email: '邮箱',
     validation: {
       required: '{{label}}不能为空',

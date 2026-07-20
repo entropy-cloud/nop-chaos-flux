@@ -46,6 +46,7 @@ import { M4DataDisplayDemoPage } from './pages/m4-data-display-demo';
 import { M5MobileShowcaseDemoPage } from './pages/m5-mobile-showcase-demo';
 import { GanttDemoPage } from './pages/gantt-demo';
 import { KanbanDemoPage } from './pages/kanban-demo';
+import { DiffDemoPage } from './pages/diff-demo';
 import { CalendarDemoPage } from './pages/calendar-demo';
 import { BarcodeDemoPage } from './pages/barcode-demo';
 import { DataVerifyPage } from './pages/data-verify-page';
@@ -245,6 +246,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <M5MobileShowcaseDemoPage onBack={goHome} />;
         case 'barcode-input':
           return <BarcodeDemoPage onBack={goHome} />;
+        case 'diff-view':
+          return <DiffDemoPage onBack={goHome} />;
         case 'data-verify':
           return <DataVerifyPage onBack={goHome} />;
         default:

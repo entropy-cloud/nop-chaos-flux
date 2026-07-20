@@ -4,6 +4,7 @@ import { AudioRenderer } from './audio.js';
 import { CardRenderer } from './card.js';
 import { CardsRenderer } from './cards-renderer.js';
 import { CarouselRenderer } from './carousel.js';
+import { DiffViewRenderer } from './diff-view/diff-view-renderer.js';
 import { EmptyRenderer } from './empty.js';
 import { HtmlRenderer } from './html.js';
 import { ImageRenderer } from './image.js';
@@ -23,6 +24,7 @@ import type {
   CardSchema,
   CardsSchema,
   CarouselSchema,
+  DiffViewSchema,
   EmptySchema,
   HtmlSchema,
   ImageSchema,
@@ -485,6 +487,26 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'onLoadError', kind: 'event' },
     ],
   },
+  {
+    type: 'diff-view',
+    displayName: 'Diff View',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'diff-view', viewType: 'split', showLineNumbers: true },
+    component: DiffViewRenderer,
+    fields: [
+      { key: 'oldContent', kind: 'prop' },
+      { key: 'newContent', kind: 'prop' },
+      { key: 'language', kind: 'prop' },
+      { key: 'viewType', kind: 'prop' },
+      { key: 'showLineNumbers', kind: 'prop', valueType: 'boolean' },
+      { key: 'showInlineDiff', kind: 'prop', valueType: 'boolean' },
+      { key: 'defaultCollapsedLines', kind: 'prop' },
+      { key: 'wrapLines', kind: 'prop', valueType: 'boolean' },
+      { key: 'onLineClick', kind: 'event' },
+      { key: 'onHunkExpand', kind: 'event' },
+    ],
+  },
 ];
 
 export type ContentRendererSchema =
@@ -505,4 +527,5 @@ export type ContentRendererSchema =
   | AudioSchema
   | VideoSchema
   | CarouselSchema
-  | QrCodeSchema;
+  | QrCodeSchema
+  | DiffViewSchema;

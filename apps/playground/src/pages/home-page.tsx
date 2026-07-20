@@ -7,6 +7,7 @@ type NavigationTarget =
   | 'kanban'
   | 'scheduling-calendar'
   | 'barcode-input'
+  | 'diff-view'
   | 'taskflow-designer'
   | 'dingtalk-flow-demo'
   | 'report-designer'
@@ -82,6 +83,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Scheduling',
     description:
       'Barcode scanner input component with camera scan overlay, batch scan queue, torch control, and offline degradation.',
+  },
+  {
+    id: 'diff-view',
+    title: 'Diff View',
+    eyebrow: 'Scheduling',
+    description:
+      'Two-pane text diff comparison with split/unified views, syntax highlighting, inline diffs, hunk folding, and virtual scrolling.',
   },
   {
     id: 'taskflow-designer',

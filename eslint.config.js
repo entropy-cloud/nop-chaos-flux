@@ -165,6 +165,13 @@ module.exports = [
       'jsx-a11y/label-has-associated-control': 'error',
     },
   },
+  // i18n locale files are data not logic; exempt from line-count limits
+  {
+    files: ['**/locales/*.ts'],
+    rules: {
+      'max-lines': 'off',
+    },
+  },
   // a11y: relax rules in test files
   {
     files: ['**/*.test.{ts,tsx}', '**/__tests__/**', '**/test-support*.{ts,tsx}', '**/*.spec.{ts,tsx}'],

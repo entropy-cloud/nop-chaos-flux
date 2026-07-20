@@ -1,5 +1,27 @@
 import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
 
+export interface DiffViewSchema extends BaseSchema {
+  type: 'diff-view';
+  /** 旧版本内容字符串 */
+  oldContent?: string;
+  /** 新版本内容字符串 */
+  newContent?: string;
+  /** 语法高亮语言标识 */ 
+  language?: string;
+  /** 视图模式 split/unified，默认 split */  
+  viewType?: 'split' | 'unified';
+  /** 是否显示行号 */
+  showLineNumbers?: boolean;
+  /** 是否显示字符级内联差异高亮 */
+  showInlineDiff?: boolean;
+  /** 长 hunk 折叠阈值 */
+  defaultCollapsedLines?: number;
+  /** 是否自动换行 */
+  wrapLines?: boolean;
+  onLineClick?: ActionSchema;
+  onHunkExpand?: ActionSchema;
+}
+
 export interface SeparatorSchema extends BaseSchema {
   type: 'separator';
   /** 分隔方向，默认 'horizontal' */
