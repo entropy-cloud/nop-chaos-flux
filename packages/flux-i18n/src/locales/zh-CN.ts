@@ -575,6 +575,12 @@ export const zhCN: Resource = {
       codeType: '编码类型',
       barcode: '条形码',
       qrcode: '二维码',
+      cameraUnavailable: '摄像头不可用',
+      openingCamera: '正在打开摄像头...',
+      alignBarcode: '将条码对准扫描框',
+      offlineQueueMessage: '离线 — 重新连接后将自动提交扫描结果',
+      itemsScanned: '已扫描 {{count}} 项',
+      batchConfirm: '批量确认',
       valueField: '值字段',
       name: '名称',
       description: '描述',
@@ -698,4 +704,3 @@ export const zhCN: Resource = {
   },
 };
 
-export default zhCN;

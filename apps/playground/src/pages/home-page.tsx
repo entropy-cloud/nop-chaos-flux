@@ -6,6 +6,7 @@ type NavigationTarget =
   | 'gantt'
   | 'kanban'
   | 'scheduling-calendar'
+  | 'barcode-input'
   | 'taskflow-designer'
   | 'dingtalk-flow-demo'
   | 'report-designer'
@@ -74,6 +75,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Scheduling',
     description:
       'Interactive Calendar with month/week/day views, drag-and-drop shift swapping, drag-to-create events, cross-day connectors, batch scheduling, and timezone selector.',
+  },
+  {
+    id: 'barcode-input',
+    title: 'Barcode Input',
+    eyebrow: 'Scheduling',
+    description:
+      'Barcode scanner input component with camera scan overlay, batch scan queue, torch control, and offline degradation.',
   },
   {
     id: 'taskflow-designer',

@@ -6,8 +6,8 @@ describe('schedulingRendererDefinitions', () => {
     expect(Array.isArray(schedulingRendererDefinitions)).toBe(true);
   });
 
-  it('should contain exactly 3 definitions (gantt, kanban, calendar)', () => {
-    expect(schedulingRendererDefinitions).toHaveLength(3);
+  it('should contain exactly 4 definitions (gantt, kanban, calendar, barcode-input)', () => {
+    expect(schedulingRendererDefinitions).toHaveLength(4);
   });
 
   it('each definition should have required fields', () => {
@@ -29,6 +29,7 @@ describe('schedulingRendererDefinitions', () => {
     expect(types).toContain('gantt');
     expect(types).toContain('kanban');
     expect(types).toContain('calendar');
+    expect(types).toContain('barcode-input');
   });
 
   it('each definition should have sourcePackage set to @nop-chaos/flux-renderers-scheduling', () => {

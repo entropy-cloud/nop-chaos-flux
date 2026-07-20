@@ -11,6 +11,7 @@ export type {
   CalendarSchema,
   CalendarEvent,
   CalendarResource,
+  BarcodeInputSchema,
 } from './schemas.js';
 
 export { schedulingRendererDefinitions } from './scheduling-renderer-definitions.js';

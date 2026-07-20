@@ -111,6 +111,7 @@ export interface GanttSchema extends BaseSchema {
 }
 
 export type { KanbanSchema, KanbanColumnConfig, KanbanCardConfig, KanbanEvents, BoardData, BoardItem } from './kanban/kanban.types.js';
+export type { BarcodeInputSchema } from './barcode-input/barcode-input.types.js';
 
 export type CalendarView = 'month' | 'week' | 'day';
 

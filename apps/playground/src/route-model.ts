@@ -225,6 +225,24 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'Interactive Gantt chart with task grid, timeline, dependency links, drag-and-drop, zoom controls, and keyboard navigation.',
   },
   {
+    id: 'kanban',
+    title: 'Kanban Board',
+    eyebrow: 'Scheduling',
+    description: 'Interactive Kanban board with column and card rendering, cross-column drag-and-drop, column reorder, card filtering, and add/delete cards and columns.',
+  },
+  {
+    id: 'scheduling-calendar',
+    title: 'Calendar',
+    eyebrow: 'Scheduling',
+    description: 'Interactive Calendar with month/week/day views, drag-and-drop shift swapping, drag-to-create events, cross-day connectors, batch scheduling, and timezone selector.',
+  },
+  {
+    id: 'barcode-input',
+    title: 'Barcode Input',
+    eyebrow: 'Scheduling',
+    description: 'Barcode scanner input with camera scan overlay, batch queue, torch control, and offline degradation.',
+  },
+  {
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',

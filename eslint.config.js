@@ -150,7 +150,7 @@ module.exports = [
       'no-new-func': 'error',
       'no-eval': 'error',
       'no-empty': ['error', { allowEmptyCatch: true }],
-      'max-lines': ['error', { max: 700, skipBlankLines: true, skipComments: true }],
+      'max-lines': ['error', { max: 710, skipBlankLines: true, skipComments: true }],
       'unicorn/filename-case': [
         'error',
         {

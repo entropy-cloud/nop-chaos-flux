@@ -1,8 +1,10 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import type { GanttSchema, KanbanSchema, CalendarSchema } from './schemas.js';
+import type { GanttSchema, KanbanSchema, CalendarSchema, BarcodeInputSchema } from './schemas.js';
 import { Calendar } from './calendar/calendar.js';
 import { Gantt } from './gantt/gantt.js';
 import { KanbanBoard } from './kanban/kanban-board.js';
+import { BarcodeInputRenderer } from './barcode-input/barcode-input-renderer.js';
+import { barcodeInputFieldRules } from './barcode-input/barcode-input-schemas.js';
 
 export const schedulingRendererDefinitions: RendererDefinition[] = [
   {
@@ -138,6 +140,16 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'component:exportToICal', kind: 'reaction' },
     ],
   },
+  {
+    type: 'barcode-input',
+    displayName: 'Barcode Input',
+    category: 'scheduling',
+    sourcePackage: '@nop-chaos/flux-renderers-scheduling',
+    defaultSchema: { type: 'barcode-input', name: 'barcode' },
+    component: BarcodeInputRenderer as any,
+    fields: barcodeInputFieldRules,
+    wrap: true,
+  },
 ];
 
-export type SchedulingRendererSchema = GanttSchema | KanbanSchema | CalendarSchema;
+export type SchedulingRendererSchema = GanttSchema | KanbanSchema | CalendarSchema | BarcodeInputSchema;
