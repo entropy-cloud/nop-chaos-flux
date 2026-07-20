@@ -517,6 +517,8 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'noResultsText', kind: 'prop' },
       { key: 'virtual', kind: 'prop', valueType: 'boolean' },
       { key: 'optionTemplate', kind: 'region', params: ['option', 'index'] },
+      { key: 'searchSource', kind: 'prop' },
+      { key: 'searchMergeMode', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,

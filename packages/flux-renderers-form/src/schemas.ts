@@ -125,6 +125,16 @@ export interface SelectSchema extends InputSchema {
   noMatchText?: string;
   virtual?: boolean;
   optionTemplate?: BaseSchema[];
+  /** On-demand action schema for remote search. When `searchable` AND `searchSource`
+   * are both set, typing triggers a debounced (300ms) action dispatch with
+   * `${searchQuery}` available in scope/args. Results merge with local options
+   * per `searchMergeMode`. When undefined, `searchable` falls back to local
+   * substring filtering (backward compatible). */
+  searchSource?: ActionSchema;
+  /** How remote search results merge with local options:
+   * `'append'` (default) — remote results are appended to local options;
+   * `'replace'` — remote results replace local options entirely while search is active. */
+  searchMergeMode?: 'append' | 'replace';
 }
 
 export interface TextareaSchema extends InputSchema {

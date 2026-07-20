@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import {
   booleanMappingAdapter,
   stringAdapter,
+  type ActionSchema,
   type RendererComponentProps,
   type RenderRegionHandle,
   type SchemaValue,
@@ -11,6 +12,7 @@ import {
 import type { SourceTransientState } from '@nop-chaos/flux-react';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { useDictOptions } from './use-dict-options.js';
+import { useSelectRemoteSearch } from './use-select-remote-search.js';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Checkbox,
@@ -225,6 +227,8 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const virtual = Boolean(props.props.virtual);
   const virtualThreshold = 100;
 
+  const searchSource = props.props.searchSource as ActionSchema | undefined;
+  const searchMergeMode = (props.props.searchMergeMode as 'append' | 'replace' | undefined) ?? 'append';
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const ariaLabel = String(props.props.label ?? name);
   const loading = hasDict ? dictState.loading : optionsSourceState?.loading === true;
@@ -238,8 +242,6 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     ? String(props.props.noResultsText)
     : t('flux.common.noResults');
   const loadingText = t('flux.common.loading');
-  const effectiveDisabled = loading || presentation.effectiveDisabled;
-  const interactive = presentation.interactive && !loading;
   const virtualEnabled = virtual && allOptions.length > virtualThreshold;
 
   const optionTemplateRegion = props.regions.optionTemplate as
@@ -259,21 +261,42 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const selectWrapperRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile();
   const query = filterEnabled ? inputValue : '';
-  const visibleOptions = query
-    ? rawOptions.filter((option) => matchChoiceLabel(option.label, query, ignoreCase))
-    : rawOptions;
-  const visibleGroups = useGroups
-    ? (query
-        ? groups
-            .map((group) => ({
-              label: group.label,
-              options: group.options.filter((option) =>
-                matchChoiceLabel(option.label, query, ignoreCase),
-              ),
-            }))
-            .filter((group) => group.options.length > 0)
-        : groups)
-    : [];
+  const {
+    remoteOptions,
+    loading: remoteLoading,
+    error: remoteError,
+  } = useSelectRemoteSearch({
+    query,
+    searchSource,
+    searchable,
+    helpers: props.helpers,
+    disabled: presentation.effectiveDisabled,
+  });
+  const loadingWithRemote = loading || remoteLoading;
+  const effectiveDisabled = loadingWithRemote || presentation.effectiveDisabled;
+  const effectiveInteractive = presentation.interactive && !loadingWithRemote;
+  const remoteSearchActive = remoteOptions !== null;
+  const visibleOptions = remoteSearchActive
+    ? searchMergeMode === 'replace'
+      ? remoteOptions
+      : [...rawOptions, ...remoteOptions]
+    : query
+      ? rawOptions.filter((option) => matchChoiceLabel(option.label, query, ignoreCase))
+      : rawOptions;
+  const visibleGroups = remoteSearchActive
+    ? []
+    : useGroups
+      ? (query
+          ? groups
+              .map((group) => ({
+                label: group.label,
+                options: group.options.filter((option) =>
+                  matchChoiceLabel(option.label, query, ignoreCase),
+                ),
+              }))
+              .filter((group) => group.options.length > 0)
+          : groups)
+      : [];
 
   const noMatchText = props.props.noMatchText ? String(props.props.noMatchText) : undefined;
   const valueArray = Array.isArray(value) ? (value as unknown[]) : [];
@@ -298,7 +321,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           : null));
 
   const handleValueChange = (next: unknown) => {
-    if (!interactive) {
+    if (!effectiveInteractive) {
       return;
     }
     if (multiple) {
@@ -322,7 +345,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const mobileHasSelection = multiple ? valueArray.length > 0 : hasEchoValue;
 
   const toggleMobileOption = (option: ChoiceOption) => {
-    if (!interactive || option.disabled) {
+    if (!effectiveInteractive || option.disabled) {
       return;
     }
     if (multiple) {
@@ -338,7 +361,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   };
 
   const mobileClear = () => {
-    if (!interactive) {
+    if (!effectiveInteractive) {
       return;
     }
     if (multiple) {
@@ -359,7 +382,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     onBlur: handlers.onBlur,
   };
 
-  const triggerPlaceholder = loading ? loadingText : placeholder;
+  const triggerPlaceholder = loadingWithRemote ? loadingText : placeholder;
 
   useInputComponentHandle({
     id: props.id,
@@ -371,7 +394,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
       selectWrapperRef.current?.querySelector<HTMLElement>(
         '[data-slot="combobox-trigger"], [data-slot="combobox-input"], [data-slot="select-mobile-trigger"], input',
       ) ?? null,
-    isInteractive: () => interactive,
+    isInteractive: () => effectiveInteractive,
     isVisible: () => props.meta.visible !== false,
     clearValue: () => {
       if (multiple) {
@@ -406,7 +429,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           mobileTriggerText={mobileTriggerText}
           mobileHasSelection={mobileHasSelection}
           effectiveDisabled={effectiveDisabled}
-          interactive={interactive}
+          interactive={effectiveInteractive}
           sheetOpen={sheetOpen}
           setSheetOpen={setSheetOpen}
           searchable={searchable}
@@ -415,7 +438,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           useGroups={useGroups}
           visibleGroups={visibleGroups}
           visibleOptions={visibleOptions}
-          loading={loading}
+          loading={loadingWithRemote}
           loadingText={loadingText}
           errorMessage={errorMessage}
           noResultsText={noResultsText}
@@ -439,7 +462,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
             }
           }}
           value={comboboxValue as ChoiceOption | ChoiceOption[] | null}
-          onValueChange={interactive ? handleValueChange : undefined}
+          onValueChange={effectiveInteractive ? handleValueChange : undefined}
           multiple={multiple}
           disabled={effectiveDisabled}
           itemToStringLabel={(option: ChoiceOption) => option.label}
@@ -465,7 +488,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
             <ComboboxInput
               {...controlProps}
               className="w-full"
-              placeholder={loading ? loadingText : (searchPlaceholder ?? triggerPlaceholder)}
+              placeholder={loadingWithRemote ? loadingText : (searchPlaceholder ?? triggerPlaceholder)}
               showClear={clearable}
               disabled={effectiveDisabled}
             />
@@ -507,7 +530,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           </ComboboxContent>
         </Combobox>
       )}
-      {loading ? (
+      {loadingWithRemote ? (
         <span
           data-slot="select-loading"
           role="status"
@@ -518,9 +541,9 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           <span>{loadingText}</span>
         </span>
       ) : null}
-      {errorMessage ? (
+      {errorMessage || remoteError ? (
         <span data-slot="select-error" id={errorId} role="alert">
-          {errorMessage}
+          {remoteError ?? errorMessage}
         </span>
       ) : null}
     </div>
