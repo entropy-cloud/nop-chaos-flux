@@ -41,15 +41,26 @@ const NEW_CONTENT = `姓名：张三
 入职日期：2023-01-15
 离职日期：2026-07-20`;
 
+const MIDDLE_CONTENT = `姓名：张三
+年龄：30
+地址：上海市浦东新区
+电话：13800138000
+邮箱：zhangsan@example.com
+职位：高级工程师
+部门：研发中心
+入职日期：2023-01-15`;
+
 export function DiffDemoPage({ onBack }: DiffDemoPageProps) {
   const [viewType, setViewType] = useState<'split' | 'unified'>('split');
   const [showInlineDiff, setShowInlineDiff] = useState(true);
   const [showLineNumbers, setShowLineNumbers] = useState(true);
+  const [useThreeColumn, setUseThreeColumn] = useState(false);
 
   const schema = {
     type: 'diff-view',
     oldContent: OLD_CONTENT,
     newContent: NEW_CONTENT,
+    middleContent: useThreeColumn ? MIDDLE_CONTENT : undefined,
     language: 'plaintext',
     viewType,
     showLineNumbers,
@@ -93,6 +104,14 @@ export function DiffDemoPage({ onBack }: DiffDemoPageProps) {
             onChange={(e) => setShowLineNumbers(e.target.checked)}
           />
           Line Numbers
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={useThreeColumn}
+            onChange={(e) => setUseThreeColumn(e.target.checked)}
+          />
+          Three-Column Compare
         </label>
       </div>
       <div className="flex-1 min-h-0">

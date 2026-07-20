@@ -6,6 +6,8 @@ export interface DiffViewSchema extends BaseSchema {
   oldContent?: string;
   /** 新版本内容字符串 */
   newContent?: string;
+  /** 基版本内容字符串（三栏对比时必需） */
+  middleContent?: string;
   /** 语法高亮语言标识 */ 
   language?: string;
   /** 视图模式 split/unified，默认 split */  

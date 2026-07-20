@@ -8,6 +8,7 @@ import { computeDiffStats } from './utils/diff-stats.js';
 import { DiffHeader } from './components/diff-header.js';
 import { DiffSplitView } from './components/diff-split-view.js';
 import { DiffUnifiedView } from './components/diff-unified-view.js';
+import { DiffThreeColumnView } from './components/diff-three-column-view.js';
 
 const DEBOUNCE_MS = 150;
 
@@ -17,6 +18,7 @@ export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) 
   const {
     oldContent = '',
     newContent = '',
+    middleContent,
     language,
     showLineNumbers = true,
     showInlineDiff = true,
@@ -24,8 +26,11 @@ export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) 
     wrapLines,
   } = resolved;
 
+  const isThreeColumn = middleContent != null && middleContent !== '';
+
   const [debouncedOld, setDebouncedOld] = useState(oldContent);
   const [debouncedNew, setDebouncedNew] = useState(newContent);
+  const [debouncedMid, setDebouncedMid] = useState(middleContent ?? '');
   const [debouncedLang, setDebouncedLang] = useState(language);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -34,12 +39,13 @@ export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) 
     debounceTimer.current = setTimeout(() => {
       setDebouncedOld(oldContent);
       setDebouncedNew(newContent);
+      setDebouncedMid(middleContent ?? '');
       setDebouncedLang(language);
     }, DEBOUNCE_MS);
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [oldContent, newContent, language]);
+  }, [oldContent, newContent, middleContent, language]);
 
   const schemaViewType = resolved.viewType || 'split';
   const [viewType, setViewType] = useState<'split' | 'unified'>(schemaViewType as 'split' | 'unified');
@@ -67,6 +73,29 @@ export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) 
   );
 
   if (!meta.visible) return null;
+
+  if (isThreeColumn) {
+    return (
+      <div
+        data-testid={meta.testid}
+        className={cn('nop-diff-view nop-diff-view-three-column', meta.className)}
+        data-view="three-column"
+        style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}
+      >
+        <DiffHeader
+          stats={stats}
+          viewType="split"
+          onToggleView={toggleViewType}
+        />
+        <DiffThreeColumnView
+          oldContent={debouncedOld}
+          middleContent={debouncedMid}
+          newContent={debouncedNew}
+          showLineNumbers={showLineNumbers}
+        />
+      </div>
+    );
+  }
 
   const isEmpty = stats.added === 0 && stats.removed === 0;
 

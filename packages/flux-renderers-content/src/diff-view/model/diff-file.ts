@@ -1,4 +1,4 @@
-export type DiffLineType = 'add' | 'delete' | 'context' | 'hunk';
+export type DiffLineType = 'add' | 'delete' | 'context' | 'hunk' | 'conflict-start' | 'conflict-separator' | 'conflict-end';
 
 export interface DiffLine {
   type: DiffLineType;
