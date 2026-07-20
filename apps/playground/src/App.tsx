@@ -44,6 +44,7 @@ import { M2TouchDemoPage } from './pages/m2-touch-demo';
 import { M3LayoutDemoPage } from './pages/m3-layout-demo';
 import { M4DataDisplayDemoPage } from './pages/m4-data-display-demo';
 import { M5MobileShowcaseDemoPage } from './pages/m5-mobile-showcase-demo';
+import { GanttDemoPage } from './pages/gantt-demo';
 import { DataVerifyPage } from './pages/data-verify-page';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
@@ -157,6 +158,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <FluxBasicPage debuggerController={debuggerController} onBack={goHome} />;
         case 'flow-designer':
           return <FlowDesignerPage debuggerController={debuggerController} onBack={goHome} />;
+        case 'gantt':
+          return <GanttDemoPage onBack={goHome} />;
         case 'taskflow-designer':
           return <TaskFlowDesignerPage debuggerController={debuggerController} onBack={goHome} />;
         case 'dingtalk-flow-demo':

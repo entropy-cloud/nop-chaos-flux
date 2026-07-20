@@ -1,5 +1,4 @@
 import type { Resource } from 'i18next';
-
 export const enUS: Resource = {
   flux: {
     common: {
@@ -669,6 +668,7 @@ export const enUS: Resource = {
     scheduling: {
       today: 'Today',
       noScheduleData: 'No schedule data',
+      gantt: { zoomFit: 'Fit', editTask: 'Edit Task', cancel: 'Cancel', save: 'Save', name: 'Name', start: 'Start', end: 'End', duration: 'Duration', progress: 'Progress (%)' },
     },
     mobile: {
       pullRefresh: {
@@ -688,5 +688,4 @@ export const enUS: Resource = {
     },
   },
 };
-
 export default enUS;

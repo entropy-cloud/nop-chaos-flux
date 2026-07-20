@@ -667,6 +667,17 @@ export const zhCN: Resource = {
     scheduling: {
       today: '今日',
       noScheduleData: '暂无排班数据',
+      gantt: {
+        zoomFit: '适应',
+        editTask: '编辑任务',
+        cancel: '取消',
+        save: '保存',
+        name: '名称',
+        start: '开始',
+        end: '结束',
+        duration: '工期',
+        progress: '进度 (%)',
+      },
     },
     mobile: {
       pullRefresh: {

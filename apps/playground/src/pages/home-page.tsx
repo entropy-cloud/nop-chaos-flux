@@ -3,6 +3,7 @@ type NavigationTarget =
   | 'complex-pages'
   | 'flux-basic'
   | 'flow-designer'
+  | 'gantt'
   | 'taskflow-designer'
   | 'dingtalk-flow-demo'
   | 'report-designer'
@@ -50,6 +51,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Visual Workflow',
     description:
       'DingTalk approval flow, action flow, and general workflow editors with toolbar, palette, inspector, and canvas.',
+  },
+  {
+    id: 'gantt',
+    title: 'Gantt Chart',
+    eyebrow: 'Scheduling',
+    description:
+      'Interactive Gantt chart with task grid, timeline, dependency links, drag-and-drop, zoom controls, and keyboard navigation.',
   },
   {
     id: 'taskflow-designer',

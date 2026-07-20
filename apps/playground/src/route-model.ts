@@ -219,6 +219,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'designer-page, toolbar, inspector, canvas, node palette, edge connections.',
   },
   {
+    id: 'gantt',
+    title: 'Gantt Chart',
+    eyebrow: 'Scheduling',
+    description: 'Interactive Gantt chart with task grid, timeline, dependency links, drag-and-drop, zoom controls, and keyboard navigation.',
+  },
+  {
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',
