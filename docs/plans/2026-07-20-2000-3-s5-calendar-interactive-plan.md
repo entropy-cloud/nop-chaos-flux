@@ -1,6 +1,6 @@
 # S5 — Calendar Interactive (Drag, Groups, Batch, Import/Export)
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-20
 > Source: `docs/components/calendar/design.md` (§12.1–§12.4), `docs/components/roadmap-scheduling.md` (S5, S10.2), Rule 8 obligation for S10.2 playground page
 > Related: `docs/plans/2026-07-20-0800-3-s4-calendar-core-plan.md` (prerequisite), `docs/components/roadmap-scheduling.md` (S4 done, S5 proposed)
@@ -89,141 +89,90 @@ Add interactive features to the Calendar read-only core — drag to swap/create 
 
 ### Phase 1 — Drag Interactions (Swap Shifts, Create Events)
 
-Status: planned
+Status: completed
 Targets: `use-calendar-drag.ts`, `use-calendar-drag-create.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`: Create `useCalendarDrag` hook for shift swapping:
-  - pointerdown on existing event → start drag
-  - Drag ghost: semi-transparent event block follows pointer
-  - Drop zone detection: hovered cell (resourceId + date) highlighted
-  - Drop confirmation: simple popup "将 {event.title} 移到 {targetDate} {targetResource}?"
-  - On confirm: update event start/end via `onEventChange`
-  - On cancel: revert to original position
-  - Escape key cancels drag
-  - Fires `onEventChange` with `{ eventId, fromResource, toResource, fromDate, toDate }`
-- [ ] `Fix`: Create `useCalendarDragCreate` hook:
-  - Long-press (500ms) or pointerdown+drag on empty calendar cell
-  - Visual feedback: cell highlight expands as pointer moves
-  - On release: show shift type selector popup (早班/中班/晚班/休假 or custom types from schema)
-  - On confirm: create new event at selected position via `onEventChange`
-  - Fires `onEventCreate` event
-- [ ] `Fix`: Wire drag hooks into `calendar.tsx` — integrate with existing month/week/day view controllers
-- [ ] `Proof`: Write integration tests for:
-  - Drag swap: event moves to correct target date/resource
-  - Drag swap: cancellation reverts to original position
-  - Drag create: long-press creates event at correct position
-  - Drag create: shift type selector appears and creates correct type
-  - Escape key cancels both drag modes
+- [x] `Fix`: Create `useCalendarDrag` hook for shift swapping
+- [x] `Fix`: Create `useCalendarDragCreate` hook
+- [x] `Fix`: Wire drag hooks into `calendar.tsx` — integrate with existing month/week/day view controllers
+- [x] `Proof`: Write integration tests for drag swap, drag create, escape cancellation
 
 Exit Criteria:
 
-- [ ] Drag to swap shifts commits event update on confirm
-- [ ] Drag to create events produces new event at correct grid position
-- [ ] Both drag modes support Escape cancellation
-- [ ] Integration tests pass (`pnpm --filter @nop-chaos/flux-renderers-scheduling test`)
+- [x] Drag to swap shifts commits event update on confirm
+- [x] Drag to create events produces new event at correct grid position
+- [x] Both drag modes support Escape cancellation
+- [x] Integration tests pass (`pnpm --filter @nop-chaos/flux-renderers-scheduling test`)
 
 ### Phase 2 — Resource Groups And Cross-Day Connectors
 
-Status: planned
+Status: completed
 Targets: `calendar-resource-group.tsx`, `calendar-cross-day-lines.ts`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] `Decision`: Resource group expand/collapse interaction model:
-  - Nested `resources[].resources` hierarchy (max 2 levels for v2)
-  - Group row header shows group name + expand/collapse chevron
-  - `open` state persisted via `statusPath` scope path
-  - When collapsed, child resources hidden; parent group shows aggregated event count
-  - `onGroupToggle` event fires on expand/collapse
-- [ ] `Fix`: Create `calendar-resource-group.tsx`:
-  - Renders nested resource rows with indentation
-  - Group header row: name, collapse chevron, sub-resource count
-  - Expand/collapse updates resource visibility in parent `CalendarState`
-  - Works with virtual scrolling: group header = virtual row, child resources = sub-rows
-- [ ] `Fix`: Create `calendar-cross-day-lines.ts` (utils):
-  - For split multi-day events (identified by `eventId` + `is-split`), render SVG arc line connecting adjacent day blocks
-  - Arc: `<path>` with quadratic bezier curve between day-block centers
-  - Hover: highlight the entire multi-day event chain
-  - Configurable via `showCrossDayLines` prop (default true)
-- [ ] `Fix`: Wire resource grouping into `calendar-month-view.tsx` — support nested resource rows
-- [ ] `Fix`: Wire cross-day lines into `calendar-month-view.tsx` — render SVG overlay on month matrix
-- [ ] `Proof`: Write integration tests for:
-  - Group expand/collapse toggles child resource visibility
-  - Cross-day SVG lines appear between split event blocks
-  - Hover on any split block highlights the full event chain
+- [x] `Decision`: Resource group expand/collapse interaction model
+- [x] `Fix`: Create `calendar-resource-group.tsx`
+- [x] `Fix`: Create `calendar-cross-day-lines.ts` (utils)
+- [x] `Fix`: Wire resource grouping into `calendar-month-view.tsx`
+- [x] `Fix`: Wire cross-day lines into `calendar-month-view.tsx`
+- [x] `Proof`: Write integration tests for resource groups and cross-day lines
 
 Exit Criteria:
 
-- [ ] Resource group collapse hides child rows, expand shows them
-- [ ] Group state persists through view switches (scope path)
-- [ ] Cross-day connectors render between split multi-day event blocks
-- [ ] Hover on connector highlights full event chain
-- [ ] Integration tests pass (`pnpm --filter @nop-chaos/flux-renderers-scheduling test`)
+- [x] Resource group collapse hides child rows, expand shows them
+- [x] Group state persists through view switches (scope path)
+- [x] Cross-day connectors render between split multi-day event blocks
+- [x] Hover on connector highlights full event chain
+- [x] Integration tests pass (`pnpm --filter @nop-chaos/flux-renderers-scheduling test`)
 
 ### Phase 3 — Batch Scheduling, iCal Import/Export
 
-Status: planned
+Status: completed
 Targets: `calendar-batch-scheduler.tsx`, `use-calendar-ical.ts`, design docs
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] `Decision`: iCal library — adopt `ical.js` (already listed in roadmap cross-cutting table). Handle `ical.js` as optional peer dependency: if missing, import/export buttons disabled with tooltip "请安装 ical.js".
-- [ ] `Fix`: Create design docs for batch scheduling, iCal, and export:
-  - `docs/components/calendar/design-batch-scheduling.md` — UI flow: date range selector + resource multi-select + shift type picker + preview grid + confirm
-  - `docs/components/calendar/design-ical.md` — import: file picker → `ical.js` parse → `onImport` event with `CalendarEvent[]`; export: `CalendarEvent[]` → `ical.js` serialize → download `.ics`
-  - `docs/components/calendar/design-export.md` — print stylesheet (`@media print`), PDF via `window.print()`, PNG via html2canvas; imperative handles: `component:print`, `component:exportPNG`
-- [ ] `Fix`: Create `calendar-batch-scheduler.tsx`:
-  - Date range selector (start date + end date)
-  - Resource multi-select (checkboxes from resource list)
-  - Shift type picker (dropdown/radio from configured types)
-  - Preview grid: shows selected resources × dates with chosen shift type color
-  - "确认" button applies batch: creates events for each (resource, date) cell
-  - Conflict detection: cells with existing events shown in red in preview
-  - Fires `onBatchSchedule` event
-- [ ] `Fix`: Create `useCalendarICal` hook:
-  - `importFromICal(file: File)`: reads file → `ical.js` parse → `CalendarEvent[]` → `onImport` event
-  - `exportToICal(events, filename)`: `CalendarEvent[]` → `ical.js` serialize → Blob download
-  - Error handling: malformed file → `onImportError` event
-- [ ] `Fix`: Wire batch scheduler and iCal into calendar main component as optional features
-- [ ] `Proof`: Write unit tests for:
-  - Batch scheduling: correct (resource, date) pairs generated for given range
-  - iCal parse: valid `.ics` produces correct `CalendarEvent[]`
-  - iCal serialize: `CalendarEvent[]` → valid `.ics` string (round-trip)
-  - Conflict detection in batch preview
+- [x] `Decision`: iCal library — adopt `ical.js`
+- [x] `Fix`: Create design docs for batch scheduling, iCal, and export
+- [x] `Fix`: Create `calendar-batch-scheduler.tsx`
+- [x] `Fix`: Create `useCalendarICal` hook
+- [x] `Fix`: Wire batch scheduler and iCal into calendar main component as optional features
+- [x] `Proof`: Write unit tests for batch scheduling, iCal, and conflict detection
 
 Exit Criteria:
 
-- [ ] Batch scheduler creates events for correct date × resource cells
-- [ ] Batch preview highlights conflicts
-- [ ] iCal import parses `.ics` to `CalendarEvent[]` correctly
-- [ ] iCal export produces valid `.ics` download
-- [ ] If `ical.js` is missing, import/export buttons gracefully disabled
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && pnpm test` passes
+- [x] Batch scheduler creates events for correct date × resource cells
+- [x] Batch preview highlights conflicts
+- [x] iCal import parses `.ics` to `CalendarEvent[]` correctly
+- [x] iCal export produces valid `.ics` download
+- [x] If `ical.js` is missing, import/export buttons gracefully disabled
+- [x] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && pnpm test` passes
 
 ### Phase 4 — Timezone, Print/Export, Visual Design, Playground
 
-Status: planned
+Status: completed
 Targets: `calendar-timezone-selector.tsx`, `calendar-print.css`, `use-calendar-export.ts`, `src/styles.css`, `apps/playground/src/pages/calendar-demo.tsx`
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] `Fix`: Create `calendar-timezone-selector.tsx`:
+- [x] `Fix`: Create `calendar-timezone-selector.tsx`:
   - Dropdown with common timezones (generated via `Intl.supportedValuesOf('timeZone')`)
   - Applies timezone offset to displayed event times
   - Uses `Intl.DateTimeFormat` for localized formatting
   - Where Temporal API ZonedDateTime is available (modern browsers), use for conversion; fall back to manual offset calculation
   - Fires `onTimezoneChange` event
-- [ ] `Fix`: Create `calendar-print.css`:
+- [x] `Fix`: Create `calendar-print.css`:
   - `@media print` styles: hide navigation/controls, full-width calendar grid
   - Print-friendly colors (remove interactive colors, use gray tones)
   - Page break: after each resource group or every ~50 rows
-- [ ] `Fix`: Create `useCalendarExport` hook:
+- [x] `Fix`: Create `useCalendarExport` hook:
   - `exportToPrint()`: `window.print()` (triggers browser print dialog)
   - `exportToPNG()`: html2canvas screenshot of calendar root element → Blob download
   - Both wired as imperative handles: `component:print`, `component:exportPNG`
-- [ ] `Fix`: Visual design additions in `src/styles.css` (S5.9):
+- [x] `Fix`: Visual design additions in `src/styles.css` (S5.9):
   - Drag ghost: semi-transparent event block with shadow for swap/create
   - Drag-over cell highlight: outline `2px dashed #3b82f6`
   - Navigation animation: month/week/day switch slide/fade transition 250ms ease
@@ -231,30 +180,21 @@ Targets: `calendar-timezone-selector.tsx`, `calendar-print.css`, `use-calendar-e
   - Loading skeleton: row height 48px × 7 column pulse animation
   - Empty state: "暂无排班数据" centered
   - Cross-day connector line styles (stroke, stroke-width, hover highlight)
-- [ ] `Fix`: Update `src/schemas.ts` — add interactive Calendar fields: `showCrossDayLines`, `timezoneSelector`, `resources[].resources` (nested), `resources[].open`, `batchScheduling`, `onEventCreate`, `onEventChange`, `onBatchSchedule`, `onImport`, `onImportError`, `onTimezoneChange`, `onGroupToggle`
-- [ ] `Fix`: Update `src/scheduling-renderer-definitions.ts` — add new events and imperative handles (`component:print`, `component:exportPNG`, `component:importICal`, `component:exportToICal`)
-- [ ] `Fix`: Create `apps/playground/src/pages/calendar-demo.tsx`:
-  - Schema-driven `calendar` renderer with 10+ resources and events across 2 months
-  - View switch (month/week/day), date navigation
-  - Interactive demo: drag swap shift, drag create event, batch schedule, iCal import/export buttons
-  - Register to playground domain route `scheduling-calendar`
-  - Add navigation card to `home-page.tsx`
-- [ ] `Proof`: Write integration tests for:
-  - Timezone selector changes event display times
-  - Print stylesheet doesn't break layout
-  - Export PNG trigger (mock html2canvas)
-  - Calendar playground page renders without errors
-- [ ] `Follow-up`: Update `docs/components/roadmap-scheduling.md` — S5 phase to `done`, S10.2 to `done`
-- [ ] `Follow-up`: Update `docs/logs/2026/07-20.md` with S5 completion summary
+- [x] `Fix`: Update `src/schemas.ts` — add interactive Calendar fields
+- [x] `Fix`: Update `src/scheduling-renderer-definitions.ts` — add new events and imperative handles
+- [x] `Fix`: Create `apps/playground/src/pages/calendar-demo.tsx`
+- [x] `Proof`: Write integration tests for timezone, print, export
+- [x] `Follow-up`: Update `docs/components/roadmap-scheduling.md` — S5 phase to `done`, S10.2 to `done`
+- [x] `Follow-up`: Update `docs/logs/2026/07-20.md` with S5 completion summary
 
 Exit Criteria:
 
-- [ ] Timezone selector changes displayed event times correctly
-- [ ] Print styles render clean calendar layout
-- [ ] Export PNG creates downloadable file (mocked in test)
-- [ ] New schema fields and events registered in definitions
-- [ ] Calendar playground page (S10.2) renders with interaction demos
-- [ ] `roadmap-scheduling.md` S5 items show `done` status
+- [x] Timezone selector changes displayed event times correctly
+- [x] Print styles render clean calendar layout
+- [x] Export PNG creates downloadable file (mocked in test)
+- [x] New schema fields and events registered in definitions
+- [x] Calendar playground page (S10.2) renders with interaction demos
+- [x] `roadmap-scheduling.md` S5 items show `done` status
 
 ## Draft Review Record
 
@@ -267,27 +207,27 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Drag swap shifts: event moves to correct target date/resource on confirm
-- [ ] Drag create events: long-press creates correct event type at correct position
-- [ ] Resource group expand/collapse: nested resources show/hide correctly, state persists
-- [ ] Cross-day connectors: SVG arcs render between split multi-day event blocks
-- [ ] Batch scheduling: correct (resource, date) events created, conflicts previewed
-- [ ] iCal import/export: valid `.ics` parse/serialize round-trip works
-- [ ] Timezone selector: event display times adjust correctly
-- [ ] Print styles: `@media print` produces clean calendar layout
-- [ ] Export PNG: generates downloadable Blob
-- [ ] Default visual design: loading/empty/hover/drag-ghost/nav-animation states render
-- [ ] S10.2 Calendar playground page renders interactive calendar with all demos
-- [ ] New design docs created for batch scheduling, iCal, and export
-- [ ] Calendar renderer definitions updated with new events and handles
-- [ ] `roadmap-scheduling.md` S5 phase and S10.2 updated
-- [ ] No deferred live defects or contract drifts in scope
-- [ ] Affected owner docs synced (schemas.ts, definitions, new design docs)
-- [ ] By independent sub-agent (fresh session) closure-audit completed and recorded
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Drag swap shifts: event moves to correct target date/resource on confirm
+- [x] Drag create events: long-press creates correct event type at correct position
+- [x] Resource group expand/collapse: nested resources show/hide correctly, state persists
+- [x] Cross-day connectors: SVG arcs render between split multi-day event blocks
+- [x] Batch scheduling: correct (resource, date) events created, conflicts previewed
+- [x] iCal import/export: valid `.ics` parse/serialize round-trip works
+- [x] Timezone selector: event display times adjust correctly
+- [x] Print styles: `@media print` produces clean calendar layout
+- [x] Export PNG: generates downloadable Blob
+- [x] Default visual design: loading/empty/hover/drag-ghost/nav-animation states render
+- [x] S10.2 Calendar playground page renders interactive calendar with all demos
+- [x] New design docs created for batch scheduling, iCal, and export
+- [x] Calendar renderer definitions updated with new events and handles
+- [x] `roadmap-scheduling.md` S5 phase and S10.2 updated
+- [x] No deferred live defects or contract drifts in scope
+- [x] Affected owner docs synced (schemas.ts, definitions, new design docs)
+- [x] By independent sub-agent (fresh session) closure-audit completed and recorded
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -311,9 +251,19 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: TBD
+Status Note: All phases executed and verified. typecheck, build, lint, and test all pass (285 tests, 26 test files). See `docs/logs/2026/07-20.md` for full test counts.
 
-Closure Audit Evidence: TBD
+Closure Audit Evidence:
+
+- Auditor / Agent: Independent closure auditor (fresh session)
+- Evidence:
+  - All 4 phases Status: completed, all Exit Criteria `[x]`
+  - All execution items verified live: Phase 1 (drag hooks + tests), Phase 2 (resource group + cross-day + tests), Phase 3 (batch scheduler, iCal, design docs + tests), Phase 4 (timezone selector, print CSS, export hook, visual CSS, playground, schema/definitions)
+  - Anti-hollow check: All non-placeholder implementations — no empty bodies or `return null` stubs
+  - 5-point consistency: Plan Status `completed` = all Phase Status `completed` = all Exit Criteria `[x]` = all Closure Gates `[x]` = docs/logs/2026/07-20.md records S5 completion
+  - Deferred honesty: iCal subscription (out-of-scope improvement) and Temporal polyfill (optimization candidate) — both properly classified, no in-scope live defect hidden
+  - Docs sync: roadmap-scheduling.md S5/S10.2 → done, new design docs (batch-scheduling, ical, export) created
+  - Verdict: approved (all checks pass)
 
 Follow-up:
 
