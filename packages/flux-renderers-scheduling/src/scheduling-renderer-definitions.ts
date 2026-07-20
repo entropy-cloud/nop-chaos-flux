@@ -2,6 +2,7 @@ import type { RendererDefinition } from '@nop-chaos/flux-core';
 import type { GanttSchema, KanbanSchema, CalendarSchema } from './schemas.js';
 import { Calendar } from './calendar/calendar.js';
 import { Gantt } from './gantt/gantt.js';
+import { KanbanBoard } from './kanban/kanban-board.js';
 
 export const schedulingRendererDefinitions: RendererDefinition[] = [
   {
@@ -57,9 +58,41 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     category: 'scheduling',
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'kanban', body: [] },
-    component: () => null,
+    component: KanbanBoard,
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
+      { key: 'data', kind: 'prop' },
+      { key: 'configMap', kind: 'prop' },
+      { key: 'columnsConfig', kind: 'prop' },
+      { key: 'columnHeader', kind: 'region', regionKey: 'columnHeader' },
+      { key: 'columnHeaderToolbar', kind: 'region', regionKey: 'columnHeaderToolbar' },
+      { key: 'cardTemplate', kind: 'region', regionKey: 'cardTemplate' },
+      { key: 'columnFooter', kind: 'region', regionKey: 'columnFooter' },
+      { key: 'empty', kind: 'region', regionKey: 'empty' },
+      { key: 'loading', kind: 'region', regionKey: 'loading' },
+      { key: 'filterText', kind: 'prop' },
+      { key: 'filterCard', kind: 'prop' },
+      { key: 'columnWidth', kind: 'prop' },
+      { key: 'columnDraggable', kind: 'prop' },
+      { key: 'draggable', kind: 'prop' },
+      { key: 'columnsOrderStatePath', kind: 'prop' },
+      { key: 'columnsOrderOwnership', kind: 'prop' },
+      { key: 'collapsedStatePath', kind: 'prop' },
+      { key: 'collapsedOwnership', kind: 'prop' },
+      { key: 'columnHeaderClassName', kind: 'prop' },
+      { key: 'cardClassName', kind: 'prop' },
+      { key: 'columnFooterClassName', kind: 'prop' },
+      { key: 'kanbanOwnership', kind: 'prop' },
+      { key: 'kanbanStatePath', kind: 'prop' },
+      { key: 'statusPath', kind: 'prop' },
+      { key: 'onMount', kind: 'meta' },
+      { key: 'onUnmount', kind: 'meta' },
+      { key: 'onCardMove', kind: 'event' },
+      { key: 'onCardClick', kind: 'event' },
+      { key: 'onColumnReorder', kind: 'event' },
+      { key: 'onColumnClick', kind: 'event' },
+      { key: 'onCardAdd', kind: 'event' },
+      { key: 'onCardRemove', kind: 'event' },
     ],
   },
   {

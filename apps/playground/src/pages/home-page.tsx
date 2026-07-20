@@ -4,6 +4,7 @@ type NavigationTarget =
   | 'flux-basic'
   | 'flow-designer'
   | 'gantt'
+  | 'kanban'
   | 'taskflow-designer'
   | 'dingtalk-flow-demo'
   | 'report-designer'
@@ -58,6 +59,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Scheduling',
     description:
       'Interactive Gantt chart with task grid, timeline, dependency links, drag-and-drop, zoom controls, and keyboard navigation.',
+  },
+  {
+    id: 'kanban',
+    title: 'Kanban Board',
+    eyebrow: 'Scheduling',
+    description:
+      'Interactive Kanban board with column and card rendering, cross-column drag-and-drop, column reorder, card filtering, and add/delete cards and columns.',
   },
   {
     id: 'taskflow-designer',

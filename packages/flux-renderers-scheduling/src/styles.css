@@ -160,6 +160,120 @@
   background-color: rgba(0, 0, 0, 0.02);
 }
 
+/* ===== Kanban styles ===== */
+
+.nop-kanban {
+  @apply flex flex-col h-full min-h-0 bg-white;
+}
+
+.nop-kanban-columns {
+  @apply flex-1 overflow-x-auto overflow-y-hidden;
+}
+
+.nop-kanban-column {
+  @apply flex flex-col bg-gray-50 rounded-lg border border-gray-200;
+  min-width: 280px;
+  max-width: 360px;
+}
+
+.nop-kanban-column-collapsed {
+  @apply w-auto;
+  min-width: 60px;
+}
+
+.nop-kanban-column-header {
+  @apply flex items-center gap-2 px-3 py-2 border-b border-gray-200;
+}
+
+.nop-kanban-column-drag-handle {
+  @apply cursor-grab text-gray-400 hover:text-gray-600;
+}
+
+.nop-kanban-column-body {
+  @apply flex-1 overflow-y-auto p-2 space-y-2;
+  min-height: 60px;
+}
+
+.nop-kanban-column-empty {
+  @apply border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-sm text-gray-400;
+  min-height: 60px;
+}
+
+.nop-kanban-column-footer {
+  @apply px-2 py-1.5 border-t border-gray-200;
+}
+
+.nop-kanban-card {
+  @apply bg-white rounded-lg border border-gray-200 p-3 cursor-pointer;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.nop-kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.nop-kanban-card-content {
+  @apply text-sm font-medium text-gray-900 truncate;
+}
+
+.nop-kanban-card-color-dot {
+  @apply w-2 h-2 rounded-full mb-1.5;
+}
+
+/* Kanban drag ghost */
+[data-dragging='true'] .nop-kanban-card {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+/* Kanban drop target highlight */
+[data-drop-target='true'] {
+  @apply ring-2 ring-blue-400;
+}
+
+/* Drag ghost */
+.nop-kanban-card.nop-kanban-dragging {
+  opacity: 0.8;
+  transform: scale(0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Drop indicator line */
+.nop-kanban-drop-indicator {
+  height: 2px;
+  background-color: #3b82f6;
+  margin: 4px 0;
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* Kanban loading skeleton */
+.nop-kanban-skeleton {
+  @apply bg-gray-100 rounded-lg;
+  min-width: 280px;
+  height: 16rem;
+}
+
+/* Kanban empty state */
+.nop-kanban-empty {
+  @apply flex items-center justify-center py-12 text-gray-400 text-sm;
+}
+
+/* Kanban adder button */
+.nop-kanban-adder {
+  @apply shrink-0;
+}
+
+/* Column collapse width transition */
+.nop-kanban-column {
+  transition: width 200ms ease;
+}
+
 /* Chevron expand/collapse */
 .nop-gantt-grid [data-task-id] button {
   transition: transform 150ms ease;

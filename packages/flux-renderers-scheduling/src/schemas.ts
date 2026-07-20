@@ -110,10 +110,7 @@ export interface GanttSchema extends BaseSchema {
   body?: SchemaInput;
 }
 
-export interface KanbanSchema extends BaseSchema {
-  type: 'kanban';
-  body?: SchemaInput;
-}
+export type { KanbanSchema, KanbanColumnConfig, KanbanCardConfig, KanbanEvents, BoardData, BoardItem } from './kanban/kanban.types.js';
 
 export type CalendarView = 'month' | 'week' | 'day';
 
