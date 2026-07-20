@@ -111,6 +111,7 @@ export const enUS: Resource = {
       clear: 'Clear',
       cancel: 'Cancel',
       uploadFailed: 'Upload failed',
+      fileTooLarge: 'File exceeds maximum size',
       uploadActionMissing: 'uploadAction is not configured — cannot upload.',
       uploadNoResult: 'Upload action did not return a usable result',
       addRow: 'Add row',

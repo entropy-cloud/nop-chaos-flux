@@ -1,3 +1,4 @@
+import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import type { MappingSchema } from './schemas.js';
@@ -8,6 +9,16 @@ function isEmptyValue(value: unknown): boolean {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergeMaps(staticMap: unknown, sourceMap: unknown): Record<string, unknown> {
+  const base: Record<string, unknown> = isPlainObject(staticMap) ? { ...staticMap } : {};
+  if (isPlainObject(sourceMap)) {
+    for (const key of Object.keys(sourceMap)) {
+      base[key] = sourceMap[key];
+    }
+  }
+  return base;
 }
 
 function lookupMap(map: unknown, value: unknown): unknown {
@@ -28,7 +39,6 @@ function toTextNode(value: unknown): React.ReactNode {
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
   }
-  // Object/array hit results: render as a stable string rather than throwing.
   try {
     return JSON.stringify(value);
   } catch {
@@ -39,7 +49,8 @@ function toTextNode(value: unknown): React.ReactNode {
 export function MappingRenderer(props: RendererComponentProps<MappingSchema>) {
   const slotProps = props.props;
   const value = slotProps.value;
-  const map = slotProps.map;
+  const staticMap = slotProps.map;
+  const source = slotProps.source;
   const placeholder =
     typeof slotProps.placeholder === 'string' && slotProps.placeholder.length > 0
       ? slotProps.placeholder
@@ -49,11 +60,17 @@ export function MappingRenderer(props: RendererComponentProps<MappingSchema>) {
       ? slotProps.defaultLabel
       : null;
 
+  const resolvedSource = isPlainObject(source) ? source : undefined;
+  const effectiveMap = React.useMemo(
+    () => mergeMaps(staticMap, resolvedSource),
+    [staticMap, resolvedSource],
+  );
+
   const itemRegion = props.regions.item;
   const hasItemRegion = Boolean(itemRegion);
 
   const empty = isEmptyValue(value);
-  const hit = empty ? undefined : lookupMap(map, value);
+  const hit = empty ? undefined : lookupMap(effectiveMap, value);
   const isHit = hit !== undefined;
 
   let content: React.ReactNode;
@@ -69,7 +86,6 @@ export function MappingRenderer(props: RendererComponentProps<MappingSchema>) {
       : toTextNode(hit);
   } else {
     state = 'miss';
-    // 未命中：defaultLabel 优先，否则 placeholder 兜底。
     content = defaultLabel ?? placeholder ?? null;
   }
 
@@ -79,6 +95,7 @@ export function MappingRenderer(props: RendererComponentProps<MappingSchema>) {
       data-cid={props.meta.cid || undefined}
       data-slot="mapping-root"
       data-state={state}
+      data-source={resolvedSource ? 'loaded' : undefined}
       className={cn('nop-mapping', props.meta.className)}
     >
       {content !== null && content !== undefined ? (

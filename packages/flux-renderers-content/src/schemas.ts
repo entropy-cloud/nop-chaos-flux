@@ -130,6 +130,10 @@ export interface ImageSchema extends BaseSchema {
   height?: number | string;
   /** 原生懒加载 loading="lazy"（旧浏览器 IntersectionObserver fallback） */
   lazy?: boolean;
+  /** Fetcher action schema for auth-protected image sources. When present, the image
+   * is loaded by dispatching this action; the response is converted to a data URI
+   * and used as the img src, enabling auth-protected access without exposing tokens. */
+  fetcher?: ActionSchema;
   onClick?: ActionSchema;
   /** 加载失败回调（触发后显示回退占位） */
   onLoadError?: ActionSchema;
@@ -151,6 +155,9 @@ export interface MarkdownSchema extends BaseSchema {
   type: 'markdown';
   /** Markdown 源文本（可来自表达式/source） */
   content?: string;
+  /** Remote markdown source URL or expression. When present and `content` is absent,
+   * the markdown content is fetched from this URL before rendering. */
+  src?: string;
   /** 是否允许内嵌 HTML（默认 false 转义；开启时同样过 sanitize 门禁） */
   allowHtml?: boolean;
   /** 空态（value-or-region） */
@@ -233,6 +240,10 @@ export interface MappingSchema extends BaseSchema {
   defaultLabel?: string;
   /** 值为空或未命中且无 defaultLabel 时的占位文本 */
   placeholder?: string;
+  /** Dynamically-loaded map source. When an expression resolves to a map object
+   * (Record<string, unknown>), its entries merge with the static `map` array,
+   * with source entries winning on key conflict ("loader wins" precedence). */
+  source?: import('@nop-chaos/flux-core').SchemaValue;
   /** 命中项的可选模板区（命中时经 item region 渲染，替代 map 查找的纯文本） */
   item?: SchemaInput;
 }

@@ -112,6 +112,7 @@ export const zhCN: Resource = {
       clear: '清空',
       cancel: '取消',
       uploadFailed: '上传失败',
+      fileTooLarge: '文件超过最大尺寸',
       uploadActionMissing: '未配置 uploadAction —— 无法上传。',
       uploadNoResult: '上传动作未返回可用结果',
       addRow: '新增行',

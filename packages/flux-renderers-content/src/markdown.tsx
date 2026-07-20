@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -14,9 +15,63 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
     typeof slotProps.content === 'string' && slotProps.content.length > 0
       ? slotProps.content
       : '';
+  const src =
+    typeof slotProps.src === 'string' && slotProps.src.length > 0
+      ? slotProps.src
+      : undefined;
   const allowHtml = slotProps.allowHtml === true;
 
-  if (raw.length === 0) {
+  const [fetchedContent, setFetchedContent] = React.useState<string | undefined>(undefined);
+  const [fetchError, setFetchError] = React.useState(false);
+  const [fetchLoading, setFetchLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!src || raw.length > 0) {
+      setFetchedContent(undefined);
+      setFetchError(false);
+      setFetchLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setFetchLoading(true);
+    setFetchError(false);
+    fetch(src)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
+      .then((text) => {
+        if (!cancelled) {
+          setFetchedContent(text);
+          setFetchLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFetchError(true);
+          setFetchLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
+  }, [src, raw]);
+
+  const effectiveContent = raw.length > 0 ? raw : (fetchedContent ?? '');
+
+  if (fetchLoading) {
+    return (
+      <div
+        data-testid={props.meta.testid || undefined}
+        data-cid={props.meta.cid || undefined}
+        data-slot="markdown"
+        data-state="loading"
+        className={cn('nop-markdown', props.meta.className)}
+      >
+        {t('flux.common.loading')}
+      </div>
+    );
+  }
+
+  if (effectiveContent.length === 0) {
     const emptyContent = resolveRendererSlotContent(props, 'empty');
     const hasEmpty = hasRendererSlotContent(emptyContent);
     return (
@@ -24,10 +79,10 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
         data-slot="markdown"
-        data-state="empty"
+        data-state={fetchError ? 'error' : 'empty'}
         className={cn('nop-markdown', props.meta.className)}
       >
-        {hasEmpty ? emptyContent : null}
+        {fetchError ? 'Failed to load markdown content' : (hasEmpty ? emptyContent : null)}
       </div>
     );
   }
@@ -37,7 +92,7 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
   // source is first run through the DOMPurify gate (strips <script>/event
   // handlers/javascript: URIs; preserves markdown punctuation as text), then
   // rehype-raw renders the surviving safe tags.
-  const source = allowHtml ? sanitizeHtml(raw) : raw;
+  const source = allowHtml ? sanitizeHtml(effectiveContent) : effectiveContent;
   const rehypePlugins = allowHtml ? [rehypeRaw] : [];
 
   return (
@@ -46,6 +101,7 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
       data-cid={props.meta.cid || undefined}
       data-slot="markdown"
       data-allow-html={allowHtml ? 'true' : undefined}
+      data-src-loaded={src && raw.length === 0 ? 'true' : undefined}
       className={cn('nop-markdown', props.meta.className)}
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={rehypePlugins}>

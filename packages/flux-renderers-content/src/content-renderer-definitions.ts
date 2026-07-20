@@ -146,6 +146,7 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'width', kind: 'prop' },
       { key: 'height', kind: 'prop' },
       { key: 'lazy', kind: 'prop', valueType: 'boolean' },
+      { key: 'fetcher', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
       { key: 'onLoadError', kind: 'event' },
     ],
@@ -173,6 +174,7 @@ export const contentRendererDefinitions: RendererDefinition[] = [
     component: MarkdownRenderer,
     fields: [
       { key: 'content', kind: 'prop' },
+      { key: 'src', kind: 'prop' },
       { key: 'allowHtml', kind: 'prop', valueType: 'boolean' },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],
@@ -360,6 +362,7 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'map', kind: 'prop' },
       { key: 'defaultLabel', kind: 'prop' },
       { key: 'placeholder', kind: 'prop' },
+      { key: 'source', kind: 'prop' },
       { key: 'item', kind: 'region', regionKey: 'item' },
     ],
   },
