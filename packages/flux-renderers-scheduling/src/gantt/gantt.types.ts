@@ -6,6 +6,15 @@ export interface GanttSegment {
   progress?: number;
 }
 
+export interface GanttBaseline {
+  id: GanttId;
+  taskId: GanttId;
+  baseStart: string;
+  baseEnd: string;
+  baseDuration: number;
+  baseProgress?: number;
+}
+
 export interface GanttTaskData {
   id: GanttId;
   text: string;
@@ -19,6 +28,7 @@ export interface GanttTaskData {
   children?: GanttTaskData[];
   calendar?: string;
   segments?: GanttSegment[];
+  baselines?: GanttBaseline[];
 }
 
 export interface GanttTask extends GanttTaskData {
