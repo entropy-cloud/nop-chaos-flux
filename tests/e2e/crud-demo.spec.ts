@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures.js';
 
 async function openCrudDemo(page: import('@playwright/test').Page) {
-  await page.goto('#/crud-demo', { waitUntil: 'commit' });
+  await page.goto('#/complex-pages/standard-crud', { waitUntil: 'commit' });
   await expect(
     page.getByRole('heading', { name: /用户管理/, level: 1 }),
   ).toBeVisible({ timeout: 15_000 });

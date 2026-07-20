@@ -46,10 +46,7 @@
             "label": "状态",
             "clearable": true,
             "placeholder": "全部状态",
-            "options": [
-              { "label": "启用", "value": "1" },
-              { "label": "禁用", "value": "0" }
-            ]
+            "dict": "userStatus"
           }
         ]
       },
@@ -110,10 +107,7 @@
                       "name": "status",
                       "label": "状态",
                       "required": true,
-                      "options": [
-                        { "label": "启用", "value": "1" },
-                        { "label": "禁用", "value": "0" }
-                      ]
+                      "dict": "userStatus"
                     },
                     {
                       "type": "picker",
@@ -272,10 +266,7 @@
                           "name": "status",
                           "label": "状态",
                           "required": true,
-                          "options": [
-                            { "label": "启用", "value": "1" },
-                            { "label": "禁用", "value": "0" }
-                          ]
+                          "dict": "userStatus"
                         },
                         {
                           "type": "picker",
