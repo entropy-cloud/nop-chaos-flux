@@ -57,7 +57,9 @@
     "report-designer-page",
     "report-toolbar",
     "spreadsheet-page",
-    "word-editor-page"
+    "word-editor-page",
+    "barcode-input",
+    "diff-view"
   ],
   "targetContract": [
     "alert",
