@@ -21,7 +21,7 @@ export function DiffUnifiedView({
   showLineNumbers,
   showInlineDiff,
   language,
-  onLineClick: _onLineClick,
+  onLineClick,
   onHunkExpand,
 }: DiffUnifiedViewProps) {
   const inlineTokensMaps = useMemo(() => {
@@ -74,6 +74,10 @@ export function DiffUnifiedView({
           inlineTokensMap={inlineTokensMaps?.get(hunkIdx)}
           highlightedHtmlMap={highlightedHtmlMaps?.get(hunkIdx)}
           onHunkExpand={onHunkExpand}
+          onLineClick={onLineClick ? (lineNumber, type) => {
+            const side = type === 'add' ? 'new' : 'old';
+            onLineClick(lineNumber, side, type);
+          } : undefined}
         />
       ))}
     </div>

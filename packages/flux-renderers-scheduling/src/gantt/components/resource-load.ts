@@ -70,9 +70,8 @@ export function computeResourceLoads(input: ResourceLoadInput): ResourceLoadResu
         const taskEnd = new Date(task.end);
         if (currentDate < taskStart || currentDate > taskEnd) continue;
 
-        const taskDurMins = diffInDays(taskEnd, taskStart) * workMins;
         const units = assignment.units ?? 100;
-        totalUnits += (units / 100) * taskDurMins;
+        totalUnits += (units / 100) * workMins;
         dayTaskIds.push(task.id);
       }
 

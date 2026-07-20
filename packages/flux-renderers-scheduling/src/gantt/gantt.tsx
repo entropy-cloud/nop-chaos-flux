@@ -1,4 +1,4 @@
-import React, { useRef, useImperativeHandle, useState } from 'react';
+import React, { useRef, useImperativeHandle, useState, useCallback } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import type { GanttSchema } from '../schemas.js';
 import { GanttStore } from './gantt-store.js';
@@ -16,6 +16,7 @@ import { useGanttDrag } from './hooks/use-gantt-drag.js';
 import { useGanttLinkDraw } from './hooks/use-gantt-link-draw.js';
 import { useGanttScroll } from './hooks/use-gantt-scroll.js';
 import { useGanttKeyboard } from './hooks/use-gantt-keyboard.js';
+import { dateToPixel } from './utils/layout.js';
 
 export interface GanttHandle {
   zoomIn: () => void;
@@ -46,6 +47,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const timelineRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<SVGSVGElement>(null);
     const [selectedTaskId, setSelectedTaskId] = useState<string | number | null>(null);
+    const [editingTaskId, setEditingTaskId] = useState<string | number | null>(null);
 
     const [store] = useState(() => createInitialStore(resolved));
 
@@ -56,8 +58,34 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       containerRef,
       selectedTaskId,
       onSelectTask: setSelectedTaskId,
-      onOpenEditor: (id) => setSelectedTaskId(id),
+      onOpenEditor: (id) => setEditingTaskId(id),
     });
+
+    const scrollToToday = useCallback(() => {
+      const today = new Date();
+      const x = dateToPixel(today, store.scaleRange, store.cellWidth);
+      const container = gridRef.current;
+      if (container) {
+        container.scrollLeft = Math.max(0, x - container.clientWidth / 2);
+      }
+      if (timelineRef.current) {
+        timelineRef.current.scrollLeft = container?.scrollLeft ?? 0;
+      }
+    }, [store, gridRef, timelineRef]);
+
+    const scrollToTask = useCallback((taskId: string | number) => {
+      const task = store.tasks.get(taskId);
+      if (task) {
+        const x = dateToPixel(new Date(task.start), store.scaleRange, store.cellWidth);
+        const container = gridRef.current;
+        if (container) {
+          container.scrollLeft = Math.max(0, x - container.clientWidth / 2);
+        }
+        if (timelineRef.current) {
+          timelineRef.current.scrollLeft = container?.scrollLeft ?? 0;
+        }
+      }
+    }, [store, gridRef, timelineRef]);
 
     useImperativeHandle(ref, () => ({
       zoomIn: () => {
@@ -70,16 +98,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         const idx = zooms.findIndex((z) => z.key === store.currentZoom);
         if (idx > 0) store.setZoom(zooms[idx - 1].key);
       },
-      scrollToToday: () => {
-        store.emit('change');
-      },
-      scrollToTask: (taskId: string | number) => {
-        const task = store.tasks.get(taskId);
-        if (task) {
-          store.emit('change');
-        }
-      },
-    }), [store]);
+      scrollToToday,
+      scrollToTask,
+    }), [store, scrollToToday, scrollToTask]);
 
     if (!meta.visible) return null;
 
@@ -90,7 +111,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     return (
       <GanttStoreProvider store={store}>
         <div ref={containerRef} className="nop-gantt flex flex-col h-full" data-testid={meta.testid || undefined}>
-          <GanttHeader toolbarRegion={regions.toolbar as any} />
+          <GanttHeader toolbarRegion={regions.toolbar as any} onScrollToToday={scrollToToday} />
           <GanttLayout
             grid={
               <div ref={gridRef} className="h-full overflow-auto">
@@ -109,6 +130,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                   <GanttBars
                       onBarPointerDown={onDragPointerDown as any}
                       onLinkHandlePointerDown={onLinkHandlePointerDown as any}
+                      onBarDoubleClick={(id) => setEditingTaskId(id)}
                     />
                   <svg ref={svgRef} className="absolute inset-0 pointer-events-none overflow-visible" style={{ zIndex: 5 }}>
                     <GanttLinks />
@@ -119,7 +141,12 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
             }
             header={null}
           />
-          <GanttEditor editorRegion={regions.editor as any} />
+          <GanttEditor
+            editorRegion={regions.editor as any}
+            editingTaskId={editingTaskId}
+            onClose={() => setEditingTaskId(null)}
+            onBarDoubleClick={(id) => setEditingTaskId(id)}
+          />
         </div>
       </GanttStoreProvider>
     );

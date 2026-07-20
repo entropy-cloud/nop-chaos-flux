@@ -57,6 +57,15 @@ describe('BarcodeQueue', () => {
     expect(flushedAgain.length).toBe(0);
   });
 
+  it('should deduplicate across all statuses, not just pending', () => {
+    queue.enqueue('1234567890', 'ean_13');
+    queue.flush();
+    const countBefore = queue.getCount();
+    const reEnqueued = queue.enqueue('1234567890', 'ean_13');
+    expect(reEnqueued.rawValue).toBe('1234567890');
+    expect(queue.getCount()).toBe(countBefore);
+  });
+
   it('should clear all items', () => {
     queue.enqueue('a', 'code_128');
     queue.enqueue('b', 'ean_13');

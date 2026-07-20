@@ -22,7 +22,7 @@ export function DiffSplitView({
   showLineNumbers,
   showInlineDiff,
   language,
-  onLineClick: _onLineClick,
+  onLineClick,
   onHunkExpand,
 }: DiffSplitViewProps) {
   const inlineTokensMaps = useMemo(() => {
@@ -62,7 +62,7 @@ export function DiffSplitView({
     return maps;
   }, [file, language]);
 
-  return (
+    return (
     <div data-view="split" className="nop-diff-split-view">
       <div className="nop-diff-split-pane nop-diff-split-old">
         <div className="nop-diff-pane-header">{t('flux.diff.oldPane')}</div>
@@ -77,6 +77,7 @@ export function DiffSplitView({
             inlineTokensMap={inlineTokensMaps?.get(hunkIdx)}
             highlightedHtmlMap={highlightedHtmlMaps?.get(hunkIdx)}
             onHunkExpand={onHunkExpand}
+            onLineClick={onLineClick ? (lineNumber, type) => onLineClick(lineNumber, 'old', type) : undefined}
           />
         ))}
       </div>
@@ -93,6 +94,7 @@ export function DiffSplitView({
             inlineTokensMap={inlineTokensMaps?.get(hunkIdx)}
             highlightedHtmlMap={highlightedHtmlMaps?.get(hunkIdx)}
             onHunkExpand={onHunkExpand}
+            onLineClick={onLineClick ? (lineNumber, type) => onLineClick(lineNumber, 'new', type) : undefined}
           />
         ))}
       </div>

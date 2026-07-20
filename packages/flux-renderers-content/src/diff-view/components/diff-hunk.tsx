@@ -13,6 +13,7 @@ interface DiffHunkProps {
   inlineTokensMap?: Map<number, InlineToken[]>;
   highlightedHtmlMap?: Map<number, string>;
   onHunkExpand?: (hunkIndex: number, expanded: boolean) => void;
+  onLineClick?: (lineNumber: number, type: string) => void;
 }
 
 export const DiffHunkComponent = memo(function DiffHunkComponent({
@@ -24,6 +25,7 @@ export const DiffHunkComponent = memo(function DiffHunkComponent({
   inlineTokensMap,
   highlightedHtmlMap,
   onHunkExpand,
+  onLineClick,
 }: DiffHunkProps) {
   const [isHidden, setIsHidden] = useState(() => {
     if (defaultCollapsedLines <= 0) return false;
@@ -82,6 +84,7 @@ export const DiffHunkComponent = memo(function DiffHunkComponent({
             newLineNum={line.newLineNum}
             showLineNumbers={showLineNumbers}
             isUnified={isUnified}
+            onLineClick={onLineClick}
           />
         );
       })}
@@ -98,6 +101,7 @@ function areHunkPropsEqual(prev: DiffHunkProps, next: DiffHunkProps): boolean {
     prev.showLineNumbers === next.showLineNumbers &&
     prev.hunk === next.hunk &&
     prev.inlineTokensMap === next.inlineTokensMap &&
-    prev.highlightedHtmlMap === next.highlightedHtmlMap
+    prev.highlightedHtmlMap === next.highlightedHtmlMap &&
+    prev.onLineClick === next.onLineClick
   );
 }

@@ -230,7 +230,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   if (!meta.visible) return null;
 
-  if (resolved.loading || meta.disabled === undefined) {
+  if (resolved.loading) {
     const skeletonRegion = regions.loading;
     if (skeletonRegion) {
       return <div data-slot="kanban">{(skeletonRegion as { render: () => React.ReactNode }).render()}</div>;

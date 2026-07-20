@@ -71,6 +71,17 @@ export function calculateCriticalPath(
 
   const projectEnd = Math.max(...Array.from(earliestFinish.values()), 0);
 
+  const revAdj = new Map<GanttId, { source: GanttId; lag: number }[]>();
+  for (const id of taskIds) {
+    revAdj.set(id, []);
+  }
+  for (const link of links.values()) {
+    const preds = revAdj.get(link.target);
+    if (preds) {
+      preds.push({ source: link.source, lag: link.lag ?? 0 });
+    }
+  }
+
   const latestStart = new Map<GanttId, number>();
   const latestFinish = new Map<GanttId, number>();
 
@@ -85,13 +96,10 @@ export function calculateCriticalPath(
     const ls = lf - dur;
     latestStart.set(id, ls);
 
-    for (const [srcId, edges] of adj) {
-      for (const edge of edges) {
-        if (edge.target === id) {
-          const predLf = Math.min(latestFinish.get(srcId) ?? projectEnd, ls - edge.lag * 86400000);
-          latestFinish.set(srcId, predLf);
-        }
-      }
+    for (const pred of revAdj.get(id) ?? []) {
+      const predCandidate = ls - pred.lag * 86400000;
+      const currentLf = latestFinish.get(pred.source) ?? projectEnd;
+      latestFinish.set(pred.source, Math.min(currentLf, predCandidate));
     }
   }
 

@@ -59,7 +59,8 @@ export function useGanttKeyboard({
       case 'Backspace': {
         if (!selectedTaskId) break;
         e.preventDefault();
-        store.updateTask(selectedTaskId, {});
+        store.deleteTask(selectedTaskId);
+        onSelectTask(null);
         break;
       }
       case 'z':

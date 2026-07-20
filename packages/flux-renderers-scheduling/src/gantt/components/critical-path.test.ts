@@ -82,6 +82,24 @@ describe('calculateCriticalPath', () => {
     expect(isCriticalTask('t2', result)).toBe(false);
   });
 
+  it('correct backward pass: multiple successors constraint the predecessor correctly', () => {
+    const t = new Map<GanttId, GanttTask>();
+    t.set('t1', makeTask('t1', '2026-01-01', '2026-01-02'));
+    t.set('t2', makeTask('t2', '2026-01-02', '2026-01-04'));
+    t.set('t3', makeTask('t3', '2026-01-02', '2026-01-05'));
+    t.set('t4', makeTask('t4', '2026-01-05', '2026-01-06'));
+    const l = new Map<GanttId, GanttLink>();
+    l.set('l1', makeLink('l1', 't1', 't2'));
+    l.set('l2', makeLink('l2', 't1', 't3'));
+    l.set('l3', makeLink('l3', 't2', 't4'));
+    l.set('l4', makeLink('l4', 't3', 't4'));
+    const result = calculateCriticalPath(t, l);
+    expect(isCriticalTask('t1', result)).toBe(true);
+    expect(isCriticalTask('t3', result)).toBe(true);
+    expect(isCriticalTask('t4', result)).toBe(true);
+    expect(isCriticalTask('t2', result)).toBe(false);
+  });
+
   it('handles links with lag', () => {
     const t = new Map<GanttId, GanttTask>();
     t.set('t1', makeTask('t1', '2026-01-01', '2026-01-02'));

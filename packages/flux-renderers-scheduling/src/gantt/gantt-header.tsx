@@ -6,9 +6,10 @@ import { useGanttStore } from './gantt-context.js';
 interface GanttHeaderProps {
   toolbarRegion?: { render: (opts?: any) => React.ReactNode };
   className?: string;
+  onScrollToToday?: () => void;
 }
 
-export function GanttHeader({ toolbarRegion, className }: GanttHeaderProps) {
+export function GanttHeader({ toolbarRegion, className, onScrollToToday }: GanttHeaderProps) {
   const store = useGanttStore();
 
   const handleZoomIn = useCallback(() => {
@@ -35,8 +36,12 @@ export function GanttHeader({ toolbarRegion, className }: GanttHeaderProps) {
   }, [store]);
 
   const handleScrollToToday = useCallback(() => {
-    store.emit('change');
-  }, [store]);
+    if (onScrollToToday) {
+      onScrollToToday();
+    } else {
+      store.emit('change');
+    }
+  }, [store, onScrollToToday]);
 
   if (toolbarRegion) {
     return <div className={cn('nop-gantt-toolbar flex items-center gap-2 p-2 border-b', className)} data-slot="gantt-toolbar">{toolbarRegion.render()}</div>;

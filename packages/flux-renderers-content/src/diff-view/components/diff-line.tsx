@@ -11,6 +11,7 @@ interface DiffLineProps {
   newLineNum?: number;
   isUnified?: boolean;
   highlightedHtml?: string;
+  onLineClick?: (lineNumber: number, type: string) => void;
 }
 
 export const DiffLineComponent = memo(function DiffLineComponent({
@@ -20,13 +21,13 @@ export const DiffLineComponent = memo(function DiffLineComponent({
   newLineNum,
   isUnified,
   highlightedHtml,
+  onLineClick,
 }: DiffLineProps) {
   const contentHtml = highlightedHtml || generateLineContentHtml(line.content, line.type, inlineTokens);
-  return (
-    <div
-      data-diff-type={line.type}
-      className={`nop-diff-line nop-diff-line-${line.type}`}
-    >
+  const lineNumber = oldLineNum ?? newLineNum ?? 0;
+
+  const lineContent = (
+    <>
       <span
         data-slot="diff-gutter"
         data-diff-gutter="old"
@@ -47,6 +48,36 @@ export const DiffLineComponent = memo(function DiffLineComponent({
         className="nop-diff-content"
         dangerouslySetInnerHTML={{ __html: contentHtml }}
       />
+    </>
+  );
+
+  if (onLineClick) {
+    const handleClick = () => onLineClick(lineNumber, line.type);
+    return (
+      <div
+        data-diff-type={line.type}
+        className={`nop-diff-line nop-diff-line-${line.type} nop-diff-line-clickable`}
+        role="button"
+        tabIndex={0}
+        onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
+      >
+        {lineContent}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      data-diff-type={line.type}
+      className={`nop-diff-line nop-diff-line-${line.type}`}
+    >
+      {lineContent}
     </div>
   );
 }, areDiffLinePropsEqual);
@@ -60,7 +91,8 @@ function areDiffLinePropsEqual(prev: DiffLineProps, next: DiffLineProps): boolea
     prev.showLineNumbers === next.showLineNumbers &&
     prev.isUnified === next.isUnified &&
     prev.inlineTokens === next.inlineTokens &&
-    prev.highlightedHtml === next.highlightedHtml
+    prev.highlightedHtml === next.highlightedHtml &&
+    prev.onLineClick === next.onLineClick
   );
 }
 

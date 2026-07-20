@@ -12,10 +12,12 @@ export class BarcodeQueue {
 
   enqueue(rawValue: string, format: string): BarcodeQueueItem {
     const existing = this.items.find(
-      (i) => i.rawValue === rawValue && i.status === 'pending',
+      (i) => i.rawValue === rawValue,
     );
     if (existing) {
-      existing.status = 'duplicate';
+      if (existing.status === 'pending') {
+        existing.status = 'duplicate';
+      }
       return existing;
     }
 

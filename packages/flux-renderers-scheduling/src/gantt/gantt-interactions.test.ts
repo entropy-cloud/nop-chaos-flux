@@ -87,12 +87,12 @@ describe('Gantt interaction primitives', () => {
       expect(store.scrollLeft).toBe(100);
     });
 
-    it('should emit change when scroll emits', () => {
+    it('should emit events and trigger subscribed handlers', () => {
       const store = new GanttStore();
       store.parse([makeTask({ id: 't1' })], []);
       let emitted = false;
-      store.on('change', () => { emitted = true; });
-      store.emit('change');
+      store.on('layoutChange', () => { emitted = true; });
+      store.emit('layoutChange');
       expect(emitted).toBe(true);
     });
   });

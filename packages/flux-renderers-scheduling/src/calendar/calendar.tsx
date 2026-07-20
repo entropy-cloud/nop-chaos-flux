@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, useCallback, useRef, useState } from 'react';
+import React, { useImperativeHandle, useCallback, useRef, useState, useEffect } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import type { CalendarSchema, CalendarView, CalendarEvent, CalendarResource } from '../schemas.js';
@@ -115,6 +115,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       resourceId: payload.resourceId,
       color: DEFAULT_SHIFT_TYPES.find(t => t.type === payload.type)?.color,
     };
+    events.onEventCreate?.({ event: newEvent });
     events.onEventChange?.({ event: newEvent, type: 'create' });
   }, [events]);
 
@@ -136,12 +137,22 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     initialView: activeView,
     firstDayOfWeek,
     onDateChange: (date: Date) => {
-      events.onDateChange?.({ date: date.toISOString(), view: activeView });
+      events.onDateChange?.({ date: date.toISOString(), view: activeViewRef.current });
     },
     onViewChange: (view: CalendarView) => {
-      events.onViewChange?.({ view, date: currentDate.toISOString() });
+      events.onViewChange?.({ view, date: currentDateRef.current.toISOString() });
     },
   });
+
+  const activeViewRef = useRef(activeView);
+  const currentDateRef = useRef(currentDate);
+
+  useEffect(() => {
+    activeViewRef.current = activeView;
+  }, [activeView]);
+  useEffect(() => {
+    currentDateRef.current = currentDate;
+  }, [currentDate]);
 
   const navigation = useCalendarNavigation({
     currentDate,

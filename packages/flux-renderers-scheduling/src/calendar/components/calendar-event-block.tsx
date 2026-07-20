@@ -73,7 +73,10 @@ export function CalendarEventBlock({
           className="absolute inset-0 cursor-pointer"
           style={{ left: `${left}%`, width: `${width}%` }}
           onClick={handleClick}
-          onPointerDown={onPointerDown}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            onPointerDown?.(e);
+          }}
           onKeyDown={handleKeyDown}
           title={overlap ? '时间冲突' : undefined}
         >
@@ -105,7 +108,10 @@ export function CalendarEventBlock({
         color: '#fff',
       }}
       onClick={handleClick}
-      onPointerDown={onPointerDown}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        onPointerDown?.(e);
+      }}
       onKeyDown={handleKeyDown}
       title={overlap ? '时间冲突' : event.title}
     >

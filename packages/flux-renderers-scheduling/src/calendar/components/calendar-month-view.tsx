@@ -2,10 +2,11 @@ import React, { useMemo } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
-import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import type { CalendarDateRange } from '../calendar.types.js';
+import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import { getMonthDays, isToday, isWeekend, toISODateString } from '../utils/calendar-date-utils.js';
-import { positionEventsInMonth, detectConflicts } from '../utils/calendar-layout-utils.js';
+import { positionEventsInMonth, detectConflicts, splitMultiDayEvents } from '../utils/calendar-layout-utils.js';
+import { computeCrossDayLines, createSVGPath, type CellPosition } from '../utils/calendar-cross-day-lines.js';
 import { CalendarEventBlock } from './calendar-event-block.js';
 
 export interface CalendarMonthViewProps {
@@ -93,9 +94,9 @@ export function CalendarMonthView({
     </div>
   ));
 
-  const displayResources = resources.length === 0
+  const displayResources = useMemo(() => resources.length === 0
     ? [{ id: '_default', text: '', title: '' }]
-    : resources;
+    : resources, [resources]);
 
   const resourceRows = (virtualItems ?? displayResources.map((_, i) => ({ index: i, start: i * 48, size: 48 }))).map(
     (vItem) => {
@@ -196,6 +197,34 @@ export function CalendarMonthView({
     },
   );
 
+  const splitEvents = useMemo(() => splitMultiDayEvents(events), [events]);
+
+  const cellPositions = useMemo(() => {
+    const positions = new Map<string, CellPosition>();
+    const cellWidth = 100 / days.length;
+    for (let ri = 0; ri < displayResources.length; ri++) {
+      const resource = displayResources[ri];
+      for (let di = 0; di < days.length; di++) {
+        const dateStr = toISODateString(days[di]);
+        const key = `${resource.id}:${dateStr}`;
+        positions.set(key, {
+          x: di * cellWidth,
+          y: ri * 48,
+          width: cellWidth,
+          height: 48,
+        });
+      }
+    }
+    return positions;
+  }, [days, displayResources]);
+
+  const crossDayLines = useMemo(() => {
+    if (!showCrossDayLines) return [];
+    return computeCrossDayLines(splitEvents, cellPositions);
+  }, [showCrossDayLines, splitEvents, cellPositions]);
+
+  const totalHeight = totalSize ?? displayResources.length * 48;
+
   return (
     <div data-slot="calendar-matrix" className="flex flex-col">
       <div className="flex">
@@ -204,10 +233,10 @@ export function CalendarMonthView({
       </div>
       <div
         className="relative"
-        style={totalSize ? { height: `${totalSize}px` } : undefined}
+        style={{ height: `${totalHeight}px` }}
       >
         {resourceRows}
-        {showCrossDayLines && (
+        {showCrossDayLines && crossDayLines.length > 0 && (
           <svg
             className="nop-calendar-cross-day-lines"
             style={{
@@ -219,6 +248,17 @@ export function CalendarMonthView({
               zIndex: 5,
             }}
           >
+            {crossDayLines.map((line) => (
+              <path
+                key={line.eventId}
+                d={createSVGPath(line)}
+                fill="none"
+                stroke={line.color}
+                strokeWidth={2}
+                strokeDasharray="4 2"
+                opacity={0.6}
+              />
+            ))}
           </svg>
         )}
       </div>

@@ -112,10 +112,10 @@ describe('GanttStore', () => {
       expect(t2.$target).toEqual(['t1']);
     });
 
-    it('should emit change event after parse', () => {
+    it('should emit dataChange event after parse', () => {
       const store = new GanttStore();
       let emitted = false;
-      store.on('change', () => { emitted = true; });
+      store.on('dataChange', () => { emitted = true; });
       store.parse([makeTask({ id: 't1' })], []);
       expect(emitted).toBe(true);
     });
@@ -138,16 +138,13 @@ describe('GanttStore', () => {
       expect(after).toBeGreaterThan(before);
     });
 
-    it('should emit taskChange and change events', () => {
+    it('should emit taskChange event', () => {
       const store = new GanttStore();
       store.parse([makeTask({ id: 't1' })], []);
       let taskChanged = false;
-      let changed = false;
       store.on('taskChange', () => { taskChanged = true; });
-      store.on('change', () => { changed = true; });
       store.updateTask('t1', { text: 'New' });
       expect(taskChanged).toBe(true);
-      expect(changed).toBe(true);
     });
 
     it('should do nothing for non-existent task', () => {
@@ -179,14 +176,17 @@ describe('GanttStore', () => {
       expect(store.tasks.get('t2')!.$target).toEqual([]);
     });
 
-    it('should emit change on add/remove', () => {
+    it('should emit linkAdd and linkDelete events', () => {
       const store = new GanttStore();
       store.parse([makeTask({ id: 't1' }), makeTask({ id: 't2' })], []);
-      let addCount = 0;
-      store.on('change', () => { addCount++; });
+      let addFired = false;
+      let deleteFired = false;
+      store.on('linkAdd', () => { addFired = true; });
+      store.on('linkDelete', () => { deleteFired = true; });
       store.addLink('t1', 't2', 'finish_to_start');
       store.removeLink('t1');
-      expect(addCount).toBeGreaterThanOrEqual(2);
+      expect(addFired).toBe(true);
+      expect(deleteFired).toBe(true);
     });
   });
 
@@ -195,10 +195,10 @@ describe('GanttStore', () => {
       const store = new GanttStore();
       let count = 0;
       const handler = () => { count++; };
-      store.on('change', handler);
+      store.on('dataChange', handler);
       store.parse([makeTask({ id: 't1' })], []);
       expect(count).toBe(1);
-      store.off('change', handler);
+      store.off('dataChange', handler);
       store.parse([makeTask({ id: 't2' })], []);
       expect(count).toBe(1);
     });
@@ -207,8 +207,8 @@ describe('GanttStore', () => {
       const store = new GanttStore();
       let a = 0;
       let b = 0;
-      store.on('change', () => { a++; });
-      store.on('change', () => { b++; });
+      store.on('dataChange', () => { a++; });
+      store.on('dataChange', () => { b++; });
       store.parse([makeTask({ id: 't1' })], []);
       expect(a).toBe(1);
       expect(b).toBe(1);
@@ -302,6 +302,44 @@ describe('GanttStore', () => {
       store.updateTask('t1', { duration: 3 });
       const task = store.tasks.get('t1')!;
       expect(task.end).toBe('2026-01-07');
+    });
+  });
+
+  describe('deleteTask', () => {
+    it('should remove the task from the store', () => {
+      const store = new GanttStore();
+      store.parse([makeTask({ id: 't1' }), makeTask({ id: 't2' })], []);
+      store.deleteTask('t1');
+      expect(store.tasks.has('t1')).toBe(false);
+      expect(store.tasks.has('t2')).toBe(true);
+    });
+
+    it('should remove child tasks and associated links', () => {
+      const store = new GanttStore();
+      store.parse([
+        makeTask({ id: 'p1', children: [makeTask({ id: 'c1' })] }),
+        makeTask({ id: 't2' }),
+      ], [makeLink({ id: 'l1', source: 'c1', target: 't2' })]);
+      store.deleteTask('p1');
+      expect(store.tasks.has('p1')).toBe(false);
+      expect(store.tasks.has('c1')).toBe(false);
+      expect(store.links.has('l1')).toBe(false);
+      expect(store.tasks.has('t2')).toBe(true);
+    });
+
+    it('should do nothing for non-existent task', () => {
+      const store = new GanttStore();
+      store.parse([makeTask({ id: 't1' })], []);
+      expect(() => store.deleteTask('nonexistent')).not.toThrow();
+    });
+
+    it('should emit taskDelete event', () => {
+      const store = new GanttStore();
+      store.parse([makeTask({ id: 't1' })], []);
+      let taskDeleted = false;
+      store.on('taskDelete', () => { taskDeleted = true; });
+      store.deleteTask('t1');
+      expect(taskDeleted).toBe(true);
     });
   });
 

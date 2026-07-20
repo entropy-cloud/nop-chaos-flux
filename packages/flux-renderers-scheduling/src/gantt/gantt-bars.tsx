@@ -1,16 +1,19 @@
 import React, { useRef, useEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
-import { useGanttStore, useGanttStoreSnapshot } from './gantt-context.js';
+import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
 
 interface GanttBarsProps {
   className?: string;
   onBarPointerDown?: (e: PointerEvent, taskId: string | number, mode: 'move' | 'resize-start' | 'resize-end') => void;
   onLinkHandlePointerDown?: (e: PointerEvent, taskId: string | number) => void;
+  onBarDoubleClick?: (taskId: string | number) => void;
 }
 
-export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown }: GanttBarsProps) {
+export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick }: GanttBarsProps) {
   const store = useGanttStore();
-  useGanttStoreSnapshot();
+  useGanttTaskSnapshot();
+  useGanttLayoutSnapshot();
+  useGanttTreeSnapshot();
   const tasks = store.getVisibleTasks();
   const barsRef = useRef<HTMLDivElement>(null);
 
@@ -46,6 +49,20 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
     barsEl.addEventListener('pointerdown', handler);
     return () => barsEl.removeEventListener('pointerdown', handler);
   }, [onBarPointerDown, onLinkHandlePointerDown]);
+
+  useEffect(() => {
+    const barsEl = barsRef.current;
+    if (!barsEl || !onBarDoubleClick) return;
+    const dblHandler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const barEl = target.closest('[data-task-id]') as HTMLElement | null;
+      if (!barEl) return;
+      const taskId = barEl.getAttribute('data-task-id');
+      if (taskId) onBarDoubleClick(taskId);
+    };
+    barsEl.addEventListener('dblclick', dblHandler);
+    return () => barsEl.removeEventListener('dblclick', dblHandler);
+  }, [onBarDoubleClick]);
 
   return (
     <div ref={barsRef} className={cn('nop-gantt-bars absolute inset-0', className)} data-slot="gantt-bars">

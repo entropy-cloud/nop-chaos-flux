@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState, useRef, useCallback, useSyncExternalStore } from 'react';
+import { useEffect, useState, useRef, useCallback, useSyncExternalStore, useMemo } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { X, Flashlight, FlashlightOff, ScanLine, Check, XCircle, Trash2 } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -23,8 +23,6 @@ interface BarcodeScannerOverlayProps {
   children?: ReactNode;
 }
 
-const queue = new BarcodeQueue();
-
 export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   const {
     open,
@@ -37,6 +35,8 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     wasmUrl,
     batchMode,
   } = props;
+
+  const queue = useMemo(() => new BarcodeQueue(), []);
 
   const [phase, setPhase] = useState<'loading' | 'scanning' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -107,7 +107,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
         onClose();
       }
     }
-  }, [detect.result, batchMode, onScan, onClose]);
+  }, [detect.result, batchMode, onScan, onClose, queue]);
 
   useEffect(() => {
     if (detect.error) {

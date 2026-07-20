@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentForm } from '@nop-chaos/flux-react';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, cn } from '@nop-chaos/ui';
@@ -16,6 +16,13 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const [inputValue, setInputValue] = useState('');
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    events.onMount?.({});
+    return () => {
+      events.onUnmount?.({});
+    };
+  }, [events]);
 
   const scanButton = resolved.scanButton !== false;
   const batchMode = resolved.batchMode === true;
@@ -88,6 +95,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
           value={inputValue}
           placeholder={resolved.placeholder ? String(resolved.placeholder) : undefined}
           disabled={meta.disabled}
+          readOnly={resolved.readOnly}
           onChange={handleChange}
           aria-label={String(resolved.label ?? name ?? '') || undefined}
         />

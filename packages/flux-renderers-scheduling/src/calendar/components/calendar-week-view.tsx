@@ -46,23 +46,28 @@ export function CalendarWeekView({
     [dayStartHour, totalHours],
   );
 
+  const displayResources = useMemo(() => resources.length === 0
+    ? [{ id: '_default', text: '', title: '' }]
+    : resources, [resources]);
+
   const positionedByDay = useMemo(() => {
-    const result = new Map<string, ReturnType<typeof allocateConcurrentWidths>>();
-    for (const day of days) {
-      const dateStr = toISODateString(day);
-      const dayEvents = events.filter((evt) => {
-        const evtDate = evt.start.split('T')[0] ?? evt.start;
-        return evtDate === dateStr && (evt.resourceId ?? '') === (resources[0]?.id ?? '');
-      });
-      result.set(dateStr, allocateConcurrentWidths(dayEvents, dayStartHour, dayEndHour, maxConcurrent));
+    const result = new Map<string, Map<string, ReturnType<typeof allocateConcurrentWidths>>>();
+    for (const resource of displayResources) {
+      const resourceMap = new Map<string, ReturnType<typeof allocateConcurrentWidths>>();
+      for (const day of days) {
+        const dateStr = toISODateString(day);
+        const dayEvents = events.filter((evt) => {
+          const evtDate = evt.start.split('T')[0] ?? evt.start;
+          return evtDate === dateStr && (evt.resourceId ?? '_default') === (resource.id ?? '_default');
+        });
+        resourceMap.set(dateStr, allocateConcurrentWidths(dayEvents, dayStartHour, dayEndHour, maxConcurrent));
+      }
+      result.set(resource.id, resourceMap);
     }
     return result;
-  }, [events, days, resources, dayStartHour, dayEndHour, maxConcurrent]);
+  }, [events, days, displayResources, dayStartHour, dayEndHour, maxConcurrent]);
 
   const displayDays = showWeekends ? days : days.filter((d) => d.getUTCDay() !== 0 && d.getUTCDay() !== 6);
-  const displayResources = resources.length === 0
-    ? [{ id: '_default', text: '', title: '' }]
-    : resources;
 
   return (
     <div data-slot="calendar-matrix" className="flex flex-col overflow-auto">
@@ -106,8 +111,8 @@ export function CalendarWeekView({
 
             {displayDays.map((day) => {
               const dateStr = toISODateString(day);
-              const positioned = positionedByDay.get(dateStr) ?? [];
-              const resourceLabel = resource.title || resource.text;
+              const resourceMap = positionedByDay.get(resource.id);
+              const positioned = resourceMap?.get(dateStr) ?? [];
 
               return (
                 <div
@@ -125,7 +130,6 @@ export function CalendarWeekView({
                     />
                   ))}
                   {positioned
-                    .filter((pe) => pe.event.resourceId === resource.id || (!pe.event.resourceId && resourceLabel))
                     .map((pe) => (
                       <CalendarEventBlock
                         key={pe.eventId}
