@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getIn, normalizeRootPath, normalizeRootPaths, parsePath, setIn } from './path.js';
+import { getIn, normalizeRootPath, normalizeRootPaths, parsePath, resolveRelativePath, setIn } from './path.js';
 
 describe('parsePath contract', () => {
   it('returns empty array for empty string', () => {
@@ -40,6 +40,30 @@ describe('parsePath contract', () => {
 
   it('handles leading dot', () => {
     expect(parsePath('.a')).toEqual(['a']);
+  });
+
+  it('parses double-quoted bracket key as literal segment', () => {
+    expect(parsePath('a["b"]')).toEqual(['a', 'b']);
+  });
+
+  it('parses single-quoted bracket key as literal segment', () => {
+    expect(parsePath("a['b']")).toEqual(['a', 'b']);
+  });
+
+  it('treats dot inside bracket quotes as literal (not nested)', () => {
+    expect(parsePath('["a.b"]')).toEqual(['a.b']);
+  });
+
+  it('parses mixed bracket quote with dots', () => {
+    expect(parsePath('obj["a.b"].value')).toEqual(['obj', 'a.b', 'value']);
+  });
+
+  it('parses numeric bracket mixed with quoted bracket', () => {
+    expect(parsePath('arr[0]["key.with.dots"]')).toEqual(['arr', '0', 'key.with.dots']);
+  });
+
+  it('parses multiple quoted brackets', () => {
+    expect(parsePath('a["b"]["c.d"]')).toEqual(['a', 'b', 'c.d']);
   });
 });
 
@@ -110,6 +134,21 @@ describe('getIn contract', () => {
 
   it('does not access array length via path', () => {
     expect(getIn([1, 2, 3], 'length')).toBe(3);
+  });
+
+  it('reads value via quoted bracket key with literal dots', () => {
+    const data = { 'a.b': 42 };
+    expect(getIn(data, '["a.b"]')).toBe(42);
+  });
+
+  it('reads nested value via mixed bracket and dot syntax', () => {
+    const data = { obj: { 'key.with.dots': 'value' } };
+    expect(getIn(data, 'obj["key.with.dots"]')).toBe('value');
+  });
+
+  it('reads array index with bracket key after', () => {
+    const data = { arr: [{ 'x.y': 10 }, { 'x.y': 20 }] };
+    expect(getIn(data, 'arr[0]["x.y"]')).toBe(10);
   });
 });
 
@@ -187,6 +226,63 @@ describe('setIn contract', () => {
     const result = setIn(input, 'items.0.x', 99);
     expect(result.items[1].x).toBe(2);
     expect(result.items[0].x).toBe(99);
+  });
+
+  it('sets value via quoted bracket key with literal dots', () => {
+    const result = setIn({}, '["a.b"]', 42);
+    expect(result).toEqual({ 'a.b': 42 });
+  });
+
+  it('sets nested value via mixed bracket and dot syntax', () => {
+    const result = setIn({}, 'obj["key.with.dots"]', 'value');
+    expect(result).toEqual({ obj: { 'key.with.dots': 'value' } });
+  });
+
+  it('sets array item via bracket key syntax', () => {
+    const result = setIn({}, 'arr[0]["x.y"]', 10);
+    expect(result).toEqual({ arr: [{ 'x.y': 10 }] });
+  });
+});
+
+describe('resolveRelativePath contract', () => {
+  it('returns the path unchanged when there is no ../ prefix', () => {
+    expect(resolveRelativePath('items.0', 'name')).toBe('name');
+  });
+
+  it('resolves ../fieldName to sibling of current path', () => {
+    expect(resolveRelativePath('items.0', '../other')).toBe('items.other');
+  });
+
+  it('resolves ../../fieldName two levels up', () => {
+    expect(resolveRelativePath('nested.items.0', '../../other')).toBe('nested.other');
+  });
+
+  it('resolves ../sibling.nested relative path', () => {
+    expect(resolveRelativePath('items.0', '../sibling.nested')).toBe('items.sibling.nested');
+  });
+
+  it('handles root-relative ../ by returning remaining path', () => {
+    expect(resolveRelativePath('field', '../other')).toBe('other');
+  });
+
+  it('handles out-of-bounds ../../ from single-segment path by stripping excess ../', () => {
+    expect(resolveRelativePath('only', '../../target')).toBe('target');
+  });
+
+  it('handles ../../../ excess above root', () => {
+    expect(resolveRelativePath('a.b', '../../../x')).toBe('x');
+  });
+
+  it('resolves ../ alone (just parent)', () => {
+    expect(resolveRelativePath('items.0', '..')).toBe('items');
+  });
+
+  it('resolves ../../ alone (two levels up)', () => {
+    expect(resolveRelativePath('a.b.c', '../..')).toBe('a');
+  });
+
+  it('resolves mixed ../ with bracket-key syntax', () => {
+    expect(resolveRelativePath('items.0', '../["key.with.dots"]')).toBe('items.["key.with.dots"]');
   });
 });
 

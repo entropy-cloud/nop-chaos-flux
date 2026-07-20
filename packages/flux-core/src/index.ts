@@ -26,7 +26,7 @@ export {
   shallowEqualRecords,
   shallowEqual,
 } from './utils/object.js';
-export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn } from './utils/path.js';
+export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn, resolveRelativePath } from './utils/path.js';
 export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema.js';
 export { decorateRendererEnv } from './utils/renderer-env.js';
 export {

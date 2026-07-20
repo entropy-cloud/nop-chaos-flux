@@ -34,13 +34,74 @@ export function parsePath(path: string): string[] {
     return [...cached];
   }
 
-  const normalized = path.replace(/\[(\d+)\]/g, '.$1');
-  const result = Object.freeze(
-    normalized
-      .split('.')
-      .map((segment) => segment.trim())
-      .filter(Boolean),
-  );
+  const segments: string[] = [];
+  let current = '';
+  let i = 0;
+
+  while (i < path.length) {
+    const ch = path[i];
+
+    if (ch === '[') {
+      // Quoted bracket: ["..."] or ['...']
+      if (i + 1 < path.length && (path[i + 1] === '"' || path[i + 1] === "'")) {
+        const quote = path[i + 1];
+        const closePos = path.indexOf(quote + ']', i + 2);
+
+        if (closePos !== -1) {
+          if (current) {
+            segments.push(current.trim());
+            current = '';
+          }
+
+          segments.push(path.slice(i + 2, closePos));
+          i = closePos + 2;
+          continue;
+        }
+      }
+
+      // Numeric bracket: [0], [1], etc.
+      const closeBracket = path.indexOf(']', i + 1);
+
+      if (closeBracket !== -1) {
+        const content = path.slice(i + 1, closeBracket);
+
+        if (/^\d+$/.test(content)) {
+          if (current) {
+            segments.push(current.trim());
+            current = '';
+          }
+
+          segments.push(content);
+          i = closeBracket + 1;
+          continue;
+        }
+      }
+
+      // Unrecognized bracket pattern — treat '[' as regular character
+      current += ch;
+      i++;
+      continue;
+    }
+
+    if (ch === '.') {
+      if (current) {
+        segments.push(current.trim());
+        current = '';
+      }
+
+      i++;
+      continue;
+    }
+
+    current += ch;
+    i++;
+  }
+
+  if (current) {
+    segments.push(current.trim());
+  }
+
+  const result = Object.freeze(segments.filter(Boolean));
 
   rememberParsedPath(path, result);
 
@@ -81,6 +142,34 @@ export function normalizeRootPaths(paths: readonly string[]): string[] {
   }
 
   return wildcard ? ['*'] : Array.from(roots).sort();
+}
+
+export function resolveRelativePath(currentPath: string, relativePath: string): string {
+  if (!relativePath.startsWith('../') && relativePath !== '..') {
+    return relativePath;
+  }
+
+  const segments = parsePath(currentPath);
+  let remaining = relativePath;
+
+  while (remaining.startsWith('../') || remaining === '..') {
+    if (segments.length > 0) {
+      segments.pop();
+    }
+
+    if (remaining === '..') {
+      remaining = '';
+      break;
+    }
+
+    remaining = remaining.slice(3);
+  }
+
+  if (segments.length === 0) {
+    return remaining;
+  }
+
+  return `${segments.join('.')}${remaining ? `.${remaining}` : ''}`;
 }
 
 export function getIn(input: unknown, path: string): unknown {

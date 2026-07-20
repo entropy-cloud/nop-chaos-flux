@@ -6,6 +6,7 @@ import type {
   CompiledValidationNodeKind,
   HiddenFieldPolicy,
 } from './types.js';
+import { resolveRelativePath } from './utils/path.js';
 
 const DEFAULT_HIDDEN_FIELD_POLICY: HiddenFieldPolicy = {
   validateWhenHidden: false,
@@ -98,9 +99,12 @@ export function buildCompiledValidationDependentMap(
   for (const [path, node] of Object.entries(nodes)) {
     for (const compiledRule of node.rules) {
       for (const dependencyPath of compiledRule.dependencyPaths) {
-        const nextDependents = dependents.get(dependencyPath) ?? new Set<string>();
+        const resolvedPath = dependencyPath.startsWith('../')
+          ? resolveRelativePath(path, dependencyPath)
+          : dependencyPath;
+        const nextDependents = dependents.get(resolvedPath) ?? new Set<string>();
         nextDependents.add(path);
-        dependents.set(dependencyPath, nextDependents);
+        dependents.set(resolvedPath, nextDependents);
       }
     }
   }
