@@ -390,7 +390,7 @@ export interface RendererRuntime {
     action: ActionSchema | ActionSchema[] | CompiledActionProgram;
     scope: ScopeRef;
     targetPath?: string;
-    interval?: number;
+    interval?: number | { base: number; jitter?: number };
     stopWhen?: CompiledRuntimeValue<boolean>;
     silent?: boolean;
     initialData?: unknown;

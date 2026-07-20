@@ -280,8 +280,11 @@ export interface CompiledDataSource {
   /** Path to publish loading/error status */
   statusPath?: CompiledRuntimeValue<string>;
 
-  /** Polling interval in milliseconds */
-  interval?: CompiledRuntimeValue<number>;
+  /**
+   * Polling interval in milliseconds, or `{ base, jitter }` where `base` is the
+   * target interval and `jitter` is a max random offset (±) applied per cycle.
+   */
+  interval?: CompiledRuntimeValue<number | { base: number; jitter?: number }>;
 
   /** Expression to stop polling when true */
   stopWhen?: CompiledRuntimeValue<boolean>;
