@@ -1,5 +1,4 @@
-import type { BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
-import type { ActionSchema } from '@nop-chaos/flux-core';
+import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
 
 export interface TableColumnFilterOption extends SchemaObject {
   label: string;
@@ -159,6 +158,11 @@ export interface TableSchema extends BaseSchema {
   orderOwnership?: 'local' | 'controlled' | 'scope';
   orderStatePath?: string;
   rowChildrenField?: string;
+  /** On-demand action schema for lazy child loading in tree mode. When a tree
+   * node with `childrenSource` is expanded and no cached children exist, the
+   * action is dispatched with the row record available in scope. Results are
+   * cached per node and reused on subsequent collapse/expand. */
+  childrenSource?: ActionSchema;
   columnWidthsOwnership?: 'local' | 'controlled' | 'scope';
   columnWidthsStatePath?: string;
   multiSort?: boolean;

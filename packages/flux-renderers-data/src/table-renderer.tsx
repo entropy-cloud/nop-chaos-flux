@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
@@ -47,7 +47,8 @@ import {
 import { useTableHandle } from './table-renderer/use-table-handle.js';
 import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache.js';
 import { useColumnResize } from './table-renderer/use-column-resize.js';
-import { useTableTree } from './table-renderer/use-table-tree.js';
+import { isDevRuntime, readChildren, useTableTree } from './table-renderer/use-table-tree.js';
+import { useTableLazyChildren } from './table-renderer/use-table-lazy-children.js';
 import { useRowDragSort } from './table-renderer/use-row-drag-sort.js';
 import { useAutoFillHeight } from './table-renderer/use-auto-fill-height.js';
 import { extractLeafColumns, hasNestedColumns } from './table-renderer/table-header-tree.js';
@@ -153,11 +154,32 @@ function createTableOwnerKey(
   return `${runtimeId}:${props.node.scope.id}:${props.node.templateNode.templateNodeId ?? props.meta.cid ?? props.id}:${serializeInstancePath(props.node.instancePath)}`;
 }
 
+function isValidColumnArray(value: unknown): value is TableColumnSchema[] {
+  return Array.isArray(value) && value.every((col) => col !== null && typeof col === 'object');
+}
+
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const runtime = useRendererRuntime();
   const schemaProps = useSchemaProps(props);
   const tableSchemaProps = schemaProps as TableSchema;
-  const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : EMPTY_TABLE_COLUMNS;
+  const rawColumns = schemaProps.columns;
+  const [stableColumns, setStableColumns] = useState<TableColumnSchema[]>(() =>
+    isValidColumnArray(rawColumns) ? rawColumns : EMPTY_TABLE_COLUMNS,
+  );
+  const prevRawRef = useRef(rawColumns);
+  // Sync external prop to stable state
+  useEffect(() => {
+    if (rawColumns === prevRawRef.current) return;
+    prevRawRef.current = rawColumns;
+    if (isValidColumnArray(rawColumns)) {
+      startTransition(() => setStableColumns(rawColumns));
+    } else if (isDevRuntime()) {
+      console.warn(
+        `[TableRenderer] Dynamic columns expression returned invalid format. Falling back to previous columns.`,
+      );
+    }
+  }, [rawColumns]);
+  const columns = stableColumns;
   const source = Array.isArray(schemaProps.source)
     ? (schemaProps.source as Array<Record<string, any>>)
     : EMPTY_TABLE_ROWS;
@@ -243,6 +265,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     () => processTableData(source, schemaProps.rowKey, sortEntries.length > 0 ? sortEntries : sortState, filterState),
     [source, schemaProps.rowKey, sortState, sortEntries, filterState],
   );
+  // Lazy children loading for tree table (T11): when a tree node with
+  // childrenSource is expanded, trigger an action dispatch to fetch children.
+  const { lazyChildrenMap, loadChildren } = useTableLazyChildren({
+    childrenSource: tableSchemaProps.childrenSource,
+    helpers,
+  });
   // Flatten the tree BEFORE building selection so selection's row-key set covers
   // expanded nested children (G2). Previously selection consumed the top-level
   // filteredData, so currentRowKeySet lacked child keys and the render-time
@@ -253,7 +281,28 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     treeRows: treeFlattenedData,
     expandedTreeRowKeys,
     handleToggleTreeExpand,
-  } = useTableTree(tableSchemaProps, filteredData);
+  } = useTableTree(tableSchemaProps, filteredData, lazyChildrenMap);
+  // Auto-trigger lazy children load when a tree node is expanded.
+  const prevExpandedRef = useRef(expandedTreeRowKeys);
+  useEffect(() => {
+    if (!treeMode || !tableSchemaProps.childrenSource) return;
+    const prev = prevExpandedRef.current;
+    const next = expandedTreeRowKeys;
+    for (const key of next) {
+      if (!prev.has(key) && !lazyChildrenMap.has(key)) {
+        const row = filteredData.find((r) => (r.cacheKey ?? r.rowKey) === key);
+        if (row && row.record && !readChildren(row.record, tableSchemaProps.rowChildrenField!)) {
+          loadChildren(key, row.record);
+        }
+      }
+    }
+    for (const key of prev) {
+      if (!next.has(key)) {
+        // Node collapsed — keep cached children for next expand
+      }
+    }
+    prevExpandedRef.current = next;
+  }, [treeMode, tableSchemaProps, expandedTreeRowKeys, lazyChildrenMap, filteredData, loadChildren]);
   const {
     selectedRowKeys,
     allSelected,
@@ -620,6 +669,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             treeMode={treeMode}
             expandedTreeRowKeys={expandedTreeRowKeys}
             onToggleTreeExpand={handleToggleTreeExpand}
+            lazyChildrenMap={lazyChildrenMap}
             rowDragSortApi={rowDragSortApi}
             draggable={schemaProps.draggable === true}
           />

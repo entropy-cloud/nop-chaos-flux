@@ -7,6 +7,7 @@ import type { TableSchema, TableColumnSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell.js';
 import type { TreeRowEntry } from './use-table-tree.js';
+import type { LazyChildrenState } from './use-table-lazy-children.js';
 import type { RowDragSortApi } from './use-row-drag-sort.js';
 import { getCellRowSpan, type CombinePlan } from './combine-cells.js';
 import { asReactNode, indentStyle, CellContentWithPopOver } from './table-cell-chrome.js';
@@ -73,6 +74,7 @@ type DataRowRenderProps = {
   treeMode?: boolean;
   expandedTreeRowKeys?: Set<string>;
   onToggleTreeExpand?: (rowKey: string) => void;
+  lazyChildrenMap?: ReadonlyMap<string, LazyChildrenState>;
   draggable?: boolean;
   rowDragSortApi?: RowDragSortApi | null;
 };
@@ -96,6 +98,7 @@ function DataRowView({
   treeMode,
   expandedTreeRowKeys,
   onToggleTreeExpand,
+  lazyChildrenMap,
   draggable,
   rowDragSortApi,
 }: DataRowRenderProps) {
@@ -108,6 +111,7 @@ function DataRowView({
   const treeLevel = treeEntry?.level ?? 0;
   const treeHasChildren = treeEntry?.hasChildren ?? false;
   const isTreeExpanded = treeEntry ? expandedTreeRowKeys?.has(rowKey) === true : false;
+  const lazyState = lazyChildrenMap?.get(rowKey);
   const dragHandleProps = draggable && rowDragSortApi
     ? rowDragSortApi.dragHandleProps(rowKey, rowIndex)
     : null;
@@ -300,10 +304,29 @@ function DataRowView({
               onToggleTreeExpand?.(rowKey);
             }}
             className="mr-1 inline-flex h-5 w-5 items-center justify-center rounded hover:bg-accent"
-            aria-label={isTreeExpanded ? t('flux.table.collapse') : t('flux.table.expand')}
+            aria-label={
+              lazyState?.loading
+                ? t('flux.common.loading')
+                : lazyState?.error
+                  ? t('flux.table.retry')
+                  : isTreeExpanded
+                    ? t('flux.table.collapse')
+                    : t('flux.table.expand')
+            }
             aria-expanded={isTreeExpanded}
+            title={
+              lazyState?.error
+                ? lazyState.error
+                : lazyState?.children && lazyState.children.length === 0 && isTreeExpanded
+                  ? t('flux.table.noChildren')
+                  : undefined
+            }
           >
-            {isTreeExpanded ? (
+            {lazyState?.loading ? (
+              <span className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : lazyState?.error ? (
+              <ChevronRightIcon className="size-3 text-destructive" />
+            ) : isTreeExpanded ? (
               <ChevronDownIcon className="size-3" />
             ) : (
               <ChevronRightIcon className="size-3" />
@@ -501,6 +524,7 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.treeMode === next.treeMode &&
     prev.expandedTreeRowKeys === next.expandedTreeRowKeys &&
     prev.onToggleTreeExpand === next.onToggleTreeExpand &&
+    prev.lazyChildrenMap === next.lazyChildrenMap &&
     prev.draggable === next.draggable &&
     prev.rowDragSortApi === next.rowDragSortApi
   );
@@ -525,6 +549,7 @@ export function renderDataRow(
   treeMode?: boolean,
   expandedTreeRowKeys?: Set<string>,
   onToggleTreeExpand?: (rowKey: string) => void,
+  lazyChildrenMap?: ReadonlyMap<string, LazyChildrenState>,
   draggable?: boolean,
   rowDragSortApi?: RowDragSortApi | null,
 ) {
@@ -548,6 +573,7 @@ export function renderDataRow(
       treeMode={treeMode}
       expandedTreeRowKeys={expandedTreeRowKeys}
       onToggleTreeExpand={onToggleTreeExpand}
+      lazyChildrenMap={lazyChildrenMap}
       draggable={draggable}
       rowDragSortApi={rowDragSortApi}
     />

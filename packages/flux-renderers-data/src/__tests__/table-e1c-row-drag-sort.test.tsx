@@ -218,6 +218,7 @@ describe('renderDataRow draggable rendering', () => {
               false,
               undefined,
               undefined,
+              undefined,
               true,
               api,
             )}

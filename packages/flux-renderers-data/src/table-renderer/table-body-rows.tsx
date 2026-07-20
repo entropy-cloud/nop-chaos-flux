@@ -37,6 +37,7 @@ interface TableBodyRowsProps {
   treeMode?: boolean;
   expandedTreeRowKeys?: Set<string>;
   onToggleTreeExpand?: (rowKey: string) => void;
+  lazyChildrenMap?: ReadonlyMap<string, import('./use-table-lazy-children.js').LazyChildrenState>;
   rowDragSortApi?: RowDragSortApi | null;
   draggable?: boolean;
 }
@@ -66,6 +67,7 @@ export function TableBodyRows({
   treeMode,
   expandedTreeRowKeys,
   onToggleTreeExpand,
+  lazyChildrenMap,
   rowDragSortApi,
   draggable,
 }: TableBodyRowsProps) {
@@ -94,6 +96,7 @@ export function TableBodyRows({
         treeMode={treeMode}
         expandedTreeRowKeys={expandedTreeRowKeys}
         onToggleTreeExpand={onToggleTreeExpand}
+        lazyChildrenMap={lazyChildrenMap}
         rowDragSortApi={rowDragSortApi}
         draggable={draggable}
       />
@@ -125,6 +128,7 @@ export function TableBodyRows({
       treeMode={treeMode}
       expandedTreeRowKeys={expandedTreeRowKeys}
       onToggleTreeExpand={onToggleTreeExpand}
+      lazyChildrenMap={lazyChildrenMap}
       rowDragSortApi={rowDragSortApi}
       draggable={draggable}
     />
@@ -154,6 +158,7 @@ function NonVirtualBody({
   treeMode,
   expandedTreeRowKeys,
   onToggleTreeExpand,
+  lazyChildrenMap,
   rowDragSortApi,
   draggable,
 }: TableBodyRowsProps) {
@@ -219,6 +224,7 @@ function NonVirtualBody({
               treeMode,
               expandedTreeRowKeys,
               onToggleTreeExpand,
+              lazyChildrenMap,
               draggable,
               rowDragSortApi,
             )}
@@ -288,6 +294,7 @@ function VirtualBody({
   treeMode,
   expandedTreeRowKeys,
   onToggleTreeExpand,
+  lazyChildrenMap,
   rowDragSortApi,
   draggable,
 }: TableBodyRowsProps) {
@@ -391,6 +398,7 @@ function VirtualBody({
                     treeMode,
                     expandedTreeRowKeys,
                     onToggleTreeExpand,
+                    lazyChildrenMap,
                     draggable,
                     rowDragSortApi,
                   )}

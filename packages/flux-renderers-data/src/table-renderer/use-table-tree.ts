@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { TableSchema } from '../schemas.js';
 import type { TableRowEntry } from './types.js';
+import type { LazyChildrenState } from './use-table-lazy-children.js';
 
 export interface TreeRowEntry extends TableRowEntry {
   level: number;
@@ -13,7 +14,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function readChildren(record: Record<string, unknown>, field: string): unknown[] | undefined {
+export function readChildren(record: Record<string, unknown>, field: string): unknown[] | undefined {
   const value = record[field];
   if (Array.isArray(value) && value.length > 0) {
     return value;
@@ -31,13 +32,15 @@ export interface FlattenTreeRowsOptions {
   expandedTreeRowKeys: Set<string>;
   defaultExpanded?: boolean;
   maxDepth?: number;
+  lazyChildrenMap?: ReadonlyMap<string, LazyChildrenState>;
+  hasChildrenSource?: boolean;
 }
 
 export function flattenTreeRows(
   rows: readonly TableRowEntry[],
   options: FlattenTreeRowsOptions,
 ): TreeRowEntry[] {
-  const { rowChildrenField, expandedTreeRowKeys, defaultExpanded = false, maxDepth } = options;
+  const { rowChildrenField, expandedTreeRowKeys, defaultExpanded = false, maxDepth, lazyChildrenMap, hasChildrenSource } = options;
   const result: TreeRowEntry[] = [];
   const visited = new Set<string>();
 
@@ -59,8 +62,11 @@ export function flattenTreeRows(
       }
       visited.add(rowKey);
 
-      const children = readChildren(entry.record, rowChildrenField);
-      const hasChildren = Boolean(children);
+      const syncChildren = readChildren(entry.record, rowChildrenField);
+      const lazyState = lazyChildrenMap?.get(rowKey);
+      const lazyChildren = lazyState?.children;
+      const children = syncChildren ?? lazyChildren;
+      const hasChildren = Boolean(children) || Boolean(lazyChildrenMap?.has(rowKey) && lazyState !== undefined && lazyState.loading) || Boolean(hasChildrenSource);
       const treePath: string[] = [...parentPath, rowKey];
       const isRoot = level === 0;
 
@@ -77,8 +83,8 @@ export function flattenTreeRows(
         ? defaultExpanded || expandedTreeRowKeys.has(rowKey)
         : expandedTreeRowKeys.has(rowKey);
 
-      if (hasChildren && isExpanded && (maxDepth === undefined || level + 1 <= maxDepth)) {
-        const childEntries: TableRowEntry[] = children!.map((child, index) => {
+      if (children && isExpanded && (maxDepth === undefined || level + 1 <= maxDepth)) {
+        const childEntries: TableRowEntry[] = children.map((child, index) => {
           if (isRecord(child)) {
             const childRowKey = String(
               child.__rowKey ?? child.id ?? `${rowKey}::child:${index}`,
@@ -118,9 +124,11 @@ export interface UseTableTreeApi {
 export function useTableTree(
   schemaProps: TableSchema,
   processedData: TableRowEntry[],
+  lazyChildrenMap?: ReadonlyMap<string, LazyChildrenState>,
 ): UseTableTreeApi {
   const rowChildrenField = schemaProps.rowChildrenField;
   const treeMode = typeof rowChildrenField === 'string' && rowChildrenField.length > 0;
+  const hasChildrenSource = treeMode && Boolean(schemaProps.childrenSource);
   const [expandedTreeRowKeys, setExpandedTreeRowKeys] = useState<Set<string>>(new Set());
 
   const handleToggleTreeExpand = useCallback((rowKey: string) => {
@@ -142,8 +150,10 @@ export function useTableTree(
     return flattenTreeRows(processedData, {
       rowChildrenField: rowChildrenField!,
       expandedTreeRowKeys,
+      lazyChildrenMap: treeMode ? lazyChildrenMap : undefined,
+      hasChildrenSource,
     });
-  }, [processedData, treeMode, rowChildrenField, expandedTreeRowKeys]);
+  }, [processedData, treeMode, rowChildrenField, expandedTreeRowKeys, lazyChildrenMap, hasChildrenSource]);
 
   return {
     treeMode,

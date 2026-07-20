@@ -358,6 +358,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'orderOwnership', kind: 'prop' },
       { key: 'orderStatePath', kind: 'prop' },
       { key: 'rowChildrenField', kind: 'prop' },
+      { key: 'childrenSource', kind: 'prop' },
       { key: 'columnWidthsOwnership', kind: 'prop' },
       { key: 'columnWidthsStatePath', kind: 'prop' },
       { key: 'multiSort', kind: 'prop', valueType: 'boolean' },
