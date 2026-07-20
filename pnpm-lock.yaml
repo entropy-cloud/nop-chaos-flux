@@ -786,6 +786,9 @@ importers:
       '@tanstack/react-virtual':
         specifier: ^3.13.24
         version: 3.13.24(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      ical.js:
+        specifier: ^2.2.1
+        version: 2.2.1
     devDependencies:
       lucide-react:
         specifier: ^1.17.0
@@ -4089,6 +4092,9 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  ical.js@2.2.1:
+    resolution: {integrity: sha512-yK/UlPbEs316igb/tjRgbFA8ZV75rCsBJp/hWOatpyaPNlgw0dGDmU+FoicOcwX4xXkeXOkYiOmCqNPFpNPkQg==}
 
   iconv-lite@0.7.2:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
@@ -9339,6 +9345,8 @@ snapshots:
       '@babel/runtime': 7.29.2
     optionalDependencies:
       typescript: 6.0.2
+
+  ical.js@2.2.1: {}
 
   iconv-lite@0.7.2:
     dependencies:

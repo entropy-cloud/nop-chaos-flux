@@ -10,6 +10,7 @@ export interface CalendarEventBlockProps {
   dateStr: string;
   eventTemplate?: RenderRegionHandle;
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
+  onPointerDown?: (e: React.PointerEvent) => void;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -31,6 +32,7 @@ export function CalendarEventBlock({
   dateStr,
   eventTemplate,
   onEventClick,
+  onPointerDown,
 }: CalendarEventBlockProps) {
   const { event, left, width, top, height, isSplit, concurrentIndex, maxConcurrent, overlap } = positionedEvent;
   const color = resolveColor(event);
@@ -71,6 +73,7 @@ export function CalendarEventBlock({
           className="absolute inset-0 cursor-pointer"
           style={{ left: `${left}%`, width: `${width}%` }}
           onClick={handleClick}
+          onPointerDown={onPointerDown}
           onKeyDown={handleKeyDown}
           title={overlap ? '时间冲突' : undefined}
         >
@@ -102,6 +105,7 @@ export function CalendarEventBlock({
         color: '#fff',
       }}
       onClick={handleClick}
+      onPointerDown={onPointerDown}
       onKeyDown={handleKeyDown}
       title={overlap ? '时间冲突' : event.title}
     >

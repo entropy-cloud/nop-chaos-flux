@@ -18,6 +18,7 @@ export interface CalendarWeekViewProps {
   dayEndHour: number;
   eventTemplate?: RenderRegionHandle;
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
+  onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
 }
 
 const HOUR_HEIGHT = 48;
@@ -33,6 +34,7 @@ export function CalendarWeekView({
   dayEndHour = 20,
   eventTemplate,
   onEventClick,
+  onDragStart,
 }: CalendarWeekViewProps) {
   const { start, end } = getWeekStartEnd(currentDate, firstDayOfWeek);
   const days = useMemo(() => getDateRange(start, end), [start, end]);
@@ -132,6 +134,7 @@ export function CalendarWeekView({
                         dateStr={dateStr}
                         eventTemplate={eventTemplate}
                         onEventClick={onEventClick}
+                        onPointerDown={(e) => onDragStart?.(pe.event, e)}
                       />
                     ))}
                 </div>

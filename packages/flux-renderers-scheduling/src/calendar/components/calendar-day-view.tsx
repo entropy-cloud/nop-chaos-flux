@@ -16,6 +16,7 @@ export interface CalendarDayViewProps {
   dayEndHour: number;
   eventTemplate?: RenderRegionHandle;
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
+  onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
 }
 
 const HOUR_HEIGHT = 64;
@@ -29,6 +30,7 @@ export function CalendarDayView({
   dayEndHour = 20,
   eventTemplate,
   onEventClick,
+  onDragStart,
 }: CalendarDayViewProps) {
   const dateStr = toISODateString(currentDate);
   const today = isToday(currentDate);
@@ -100,6 +102,7 @@ export function CalendarDayView({
                     dateStr={dateStr}
                     eventTemplate={eventTemplate}
                     onEventClick={onEventClick}
+                    onPointerDown={(e) => onDragStart?.(pe.event, e)}
                   />
                 ))}
               </div>

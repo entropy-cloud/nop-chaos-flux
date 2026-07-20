@@ -54,3 +54,16 @@ export interface CalendarDayCell {
   isToday: boolean;
   isWeekend: boolean;
 }
+
+export interface DragOverCell {
+  date: string;
+  resourceId: string;
+  x: number;
+  y: number;
+}
+
+export interface ResourceGroupState {
+  id: string;
+  open: boolean;
+  children: string[];
+}

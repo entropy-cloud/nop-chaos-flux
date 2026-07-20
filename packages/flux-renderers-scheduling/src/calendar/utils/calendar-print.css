@@ -1,0 +1,78 @@
+/* Calendar print stylesheet */
+
+@media print {
+  /* Hide navigation and controls */
+  .nop-calendar [data-slot='calendar-header'] {
+    display: none !important;
+  }
+
+  .nop-calendar-drag-ghost,
+  .nop-calendar-type-selector-overlay,
+  .nop-calendar-confirm-overlay,
+  .nop-batch-scheduler-overlay,
+  .nop-timezone-selector {
+    display: none !important;
+  }
+
+  /* Full-width calendar grid */
+  .nop-calendar {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  [data-slot='calendar-matrix'] {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Remove scrollable regions */
+  .overflow-auto,
+  .nop-calendar-virtual-scroll {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Grayscale event colors */
+  [data-slot='calendar-event'] {
+    filter: grayscale(1) !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  /* Print-friendly resource rows */
+  [data-slot='calendar-resource-row'] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Page break after every 50 rows */
+  [data-slot='calendar-resource-row']:nth-child(50n) {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  /* Resource group page break */
+  [data-slot='calendar-resource-group'] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Increase font size for readability */
+  [data-slot='calendar-cell'] {
+    font-size: 11pt !important;
+  }
+
+  /* Print margins */
+  @page {
+    margin: 0.5in;
+  }
+
+  /* Remove background colors from cells for print */
+  [data-slot='calendar-cell'] {
+    background-color: #fff !important;
+  }
+
+  [data-slot='calendar-cell'][data-empty='true'] {
+    background-color: #f9fafb !important;
+  }
+}

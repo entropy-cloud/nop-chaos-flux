@@ -133,6 +133,8 @@ export interface CalendarResource extends SchemaObject {
   parent?: string;
   color?: string;
   avatar?: string;
+  resources?: CalendarResource[];
+  open?: boolean;
 }
 
 export interface CalendarSchema extends BaseSchema {
@@ -144,6 +146,9 @@ export interface CalendarSchema extends BaseSchema {
   firstDayOfWeek?: 0 | 1;
   showWeekends?: boolean;
   maxConcurrent?: number;
+  showCrossDayLines?: boolean;
+  timezoneSelector?: boolean;
+  batchScheduling?: boolean;
   eventTemplate?: SchemaInput;
   loading?: SchemaInput;
   empty?: SchemaInput;
@@ -158,6 +163,12 @@ export interface CalendarSchema extends BaseSchema {
   onDateChange?: ActionSchema;
   onViewChange?: ActionSchema;
   onEventChange?: ActionSchema;
+  onEventCreate?: ActionSchema;
+  onBatchSchedule?: ActionSchema;
+  onImport?: ActionSchema;
+  onImportError?: ActionSchema;
+  onTimezoneChange?: ActionSchema;
+  onGroupToggle?: ActionSchema;
   onMount?: ActionSchema;
   onUnmount?: ActionSchema;
   headerClassName?: string;

@@ -288,3 +288,92 @@
 [data-bar-type='project'] {
   @apply border border-dashed;
 }
+
+/* ===== Calendar Interactive States (S5.9) ===== */
+
+/* Drag ghost */
+.nop-calendar-drag-ghost {
+  opacity: 0.85;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Drag-over cell highlight */
+[data-slot='calendar-cell'].nop-calendar-drag-over {
+  outline: 2px dashed #3b82f6;
+  outline-offset: -2px;
+}
+
+/* Navigation view switch animation */
+.nop-calendar [data-slot='calendar-matrix'] {
+  transition:
+    opacity 250ms ease,
+    transform 250ms ease;
+}
+
+/* Loading skeleton pulse */
+.nop-calendar-skeleton-matrix {
+  @apply animate-pulse;
+}
+
+.nop-calendar-skeleton-cell {
+  @apply h-12 bg-gray-100 rounded;
+}
+
+/* Empty state */
+.nop-calendar-empty-state {
+  @apply flex items-center justify-center py-12 text-gray-400 text-sm;
+}
+
+/* Cross-day connector line */
+.nop-calendar-cross-day-lines path {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.4;
+  transition: opacity 150ms ease;
+}
+
+.nop-calendar-cross-day-lines path:hover {
+  opacity: 0.8;
+  stroke-width: 3;
+}
+
+/* Hover highlight for full event chain */
+.nop-calendar-cross-day-lines path.nop-cross-day-highlight {
+  opacity: 0.8;
+  stroke-width: 3;
+}
+
+/* Batch scheduler styles */
+.nop-batch-preview-grid {
+  font-size: 11px;
+}
+
+/* Type selector styles */
+.nop-calendar-type-selector-overlay {
+  animation: nopFadeIn 150ms ease;
+}
+
+@keyframes nopFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Confirm overlay animation */
+.nop-calendar-confirm-overlay {
+  animation: nopFadeIn 150ms ease;
+}
+
+/* Timezone selector hover */
+[data-slot='calendar-timezone-option']:hover {
+  background-color: #f9fafb;
+}
+
+/* Print styles import - will be applied via @media print in calendar-print.css */

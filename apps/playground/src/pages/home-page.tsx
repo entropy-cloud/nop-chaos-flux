@@ -5,6 +5,7 @@ type NavigationTarget =
   | 'flow-designer'
   | 'gantt'
   | 'kanban'
+  | 'scheduling-calendar'
   | 'taskflow-designer'
   | 'dingtalk-flow-demo'
   | 'report-designer'
@@ -66,6 +67,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Scheduling',
     description:
       'Interactive Kanban board with column and card rendering, cross-column drag-and-drop, column reorder, card filtering, and add/delete cards and columns.',
+  },
+  {
+    id: 'scheduling-calendar',
+    title: 'Calendar',
+    eyebrow: 'Scheduling',
+    description:
+      'Interactive Calendar with month/week/day views, drag-and-drop shift swapping, drag-to-create events, cross-day connectors, batch scheduling, and timezone selector.',
   },
   {
     id: 'taskflow-designer',

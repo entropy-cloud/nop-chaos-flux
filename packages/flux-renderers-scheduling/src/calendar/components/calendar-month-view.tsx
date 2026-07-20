@@ -20,6 +20,9 @@ export interface CalendarMonthViewProps {
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
   virtualItems?: readonly { index: number; start: number; size: number; key?: unknown }[];
   totalSize?: number;
+  onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
+  onCellDragStart?: (date: string, resourceId: string, pointerEvent: React.PointerEvent) => void;
+  showCrossDayLines?: boolean;
 }
 
 const WEEKDAY_LABELS: Record<string, string[]> = {
@@ -46,6 +49,9 @@ export function CalendarMonthView({
   onEventClick,
   virtualItems,
   totalSize,
+  onDragStart,
+  onCellDragStart,
+  showCrossDayLines = true,
 }: CalendarMonthViewProps) {
   const days = useMemo(
     () => getMonthDays(currentDate, firstDayOfWeek),
@@ -98,6 +104,17 @@ export function CalendarMonthView({
 
       const resource = displayResources[resourceIndex];
 
+      const handleEventPointerDown = (event: CalendarEvent, pe: React.PointerEvent) => {
+        if (pe.button !== 0) return;
+        pe.preventDefault();
+        onDragStart?.(event, pe);
+      };
+
+      const handleCellPointerDown = (dateStr: string, resourceId: string, pe: React.PointerEvent) => {
+        if (pe.button !== 0) return;
+        onCellDragStart?.(dateStr, resourceId, pe);
+      };
+
       return (
         <div
           key={resource.id}
@@ -148,6 +165,7 @@ export function CalendarMonthView({
                     today && 'bg-blue-50',
                     weekend && 'bg-gray-50/50',
                   )}
+                  onPointerDown={(pe) => handleCellPointerDown(dateStr, resource.id, pe)}
                 >
                   {dayEvents.length === 0 ? (
                     <div className="text-[10px] text-gray-300 flex items-center justify-center h-full">
@@ -165,6 +183,7 @@ export function CalendarMonthView({
                         dateStr={dateStr}
                         eventTemplate={eventTemplate}
                         onEventClick={onEventClick}
+                        onPointerDown={(e) => handleEventPointerDown(pe.event, e)}
                       />
                     ))
                   )}
@@ -188,6 +207,20 @@ export function CalendarMonthView({
         style={totalSize ? { height: `${totalSize}px` } : undefined}
       >
         {resourceRows}
+        {showCrossDayLines && (
+          <svg
+            className="nop-calendar-cross-day-lines"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 5,
+            }}
+          >
+          </svg>
+        )}
       </div>
       {resources.length === 0 && (
         <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
