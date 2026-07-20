@@ -51,6 +51,10 @@
       "@nop-chaos/flux-renderers-layout/styles.css": [
         "./packages/flux-renderers-layout/src/styles.css"
       ],
+      "@nop-chaos/flux-renderers-scheduling": ["./packages/flux-renderers-scheduling/src/index.ts"],
+      "@nop-chaos/flux-renderers-scheduling/styles.css": [
+        "./packages/flux-renderers-scheduling/src/styles.css"
+      ],
       "@nop-chaos/flux-code-editor": ["./packages/flux-code-editor/src/index.ts"],
       "@nop-chaos/flux-code-editor/code-editor-styles.css": [
         "./packages/flux-code-editor/src/code-editor-styles.css"

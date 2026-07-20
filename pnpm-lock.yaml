@@ -769,6 +769,25 @@ importers:
         specifier: ^19.0.0
         version: 19.2.4
 
+  packages/flux-renderers-scheduling:
+    dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
+      '@nop-chaos/flux-i18n':
+        specifier: workspace:*
+        version: link:../flux-i18n
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+
   packages/flux-runtime:
     dependencies:
       '@nop-chaos/flux-action-core':

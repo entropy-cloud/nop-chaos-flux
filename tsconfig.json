@@ -16,6 +16,7 @@
     { "path": "./packages/flux-renderers-mobile" },
     { "path": "./packages/flux-renderers-content" },
     { "path": "./packages/flux-renderers-layout" },
+    { "path": "./packages/flux-renderers-scheduling" },
     { "path": "./packages/flux-code-editor" },
     { "path": "./packages/tailwind-preset" },
     { "path": "./packages/theme-tokens" },

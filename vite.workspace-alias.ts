@@ -85,6 +85,12 @@ export const workspacePackageAliases = {
   '@nop-chaos/theme-tokens': fileURLToPath(
     new URL('./packages/theme-tokens/src/index.ts', import.meta.url),
   ),
+  '@nop-chaos/flux-renderers-scheduling/styles.css': fileURLToPath(
+    new URL('./packages/flux-renderers-scheduling/src/styles.css', import.meta.url),
+  ),
+  '@nop-chaos/flux-renderers-scheduling': fileURLToPath(
+    new URL('./packages/flux-renderers-scheduling/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-code-editor': fileURLToPath(
     new URL('./packages/flux-code-editor/src/index.ts', import.meta.url),
   ),

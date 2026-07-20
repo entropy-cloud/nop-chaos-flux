@@ -8,6 +8,7 @@ import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
+import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import { HomePage } from './pages/home-page';
 import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
@@ -72,6 +73,7 @@ registerDataRenderers(registry);
 registerMobileRenderers(registry);
 registerContentRenderers(registry);
 registerLayoutRenderers(registry);
+registerSchedulingRenderers(registry);
 
 if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefined') {
   window.__NOP_DEBUGGER__ = {
