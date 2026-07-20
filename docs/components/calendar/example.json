@@ -1,0 +1,180 @@
+{
+  "type": "page",
+  "body": [
+    { "//": "v1 示例避免冲突数据（冲突检测推迟至 v3）。" },
+    {
+      "type": "calendar",
+      "id": "shift-calendar",
+      "view": "month",
+      "date": "2026-07-20",
+      "firstDayOfWeek": 1,
+      "showWeekends": true,
+      "maxConcurrent": 2,
+      "data": [
+        {
+          "id": "evt-1",
+          "title": "早班",
+          "start": "2026-07-01",
+          "end": "2026-07-01",
+          "type": "shift",
+          "resourceId": "emp-001",
+          "color": "#4ade80",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-2",
+          "title": "中班",
+          "start": "2026-07-01",
+          "end": "2026-07-01",
+          "type": "shift",
+          "resourceId": "emp-002",
+          "color": "#facc15",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-3",
+          "title": "年假",
+          "start": "2026-07-02",
+          "end": "2026-07-03",
+          "type": "leave",
+          "resourceId": "emp-001",
+          "color": "#f87171",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-4",
+          "title": "早班",
+          "start": "2026-07-02",
+          "end": "2026-07-02",
+          "type": "shift",
+          "resourceId": "emp-002",
+          "color": "#4ade80",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-5",
+          "title": "早班",
+          "start": "2026-07-03",
+          "end": "2026-07-03",
+          "type": "shift",
+          "resourceId": "emp-001",
+          "color": "#4ade80",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-6",
+          "title": "中班",
+          "start": "2026-07-03",
+          "end": "2026-07-03",
+          "type": "shift",
+          "resourceId": "emp-002",
+          "color": "#facc15",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-7",
+          "title": "早班",
+          "start": "2026-07-04",
+          "end": "2026-07-04",
+          "type": "shift",
+          "resourceId": "emp-002",
+          "color": "#4ade80",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-8",
+          "title": "病假",
+          "start": "2026-07-05",
+          "end": "2026-07-05",
+          "type": "leave",
+          "resourceId": "emp-001",
+          "color": "#fb923c",
+          "status": "scheduled"
+        },
+        {
+          "id": "evt-9",
+          "title": "早班",
+          "start": "2026-07-05",
+          "end": "2026-07-05",
+          "type": "shift",
+          "resourceId": "emp-002",
+          "color": "#4ade80",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-10",
+          "title": "晚班",
+          "start": "2026-07-06",
+          "end": "2026-07-06",
+          "type": "shift",
+          "resourceId": "emp-001",
+          "color": "#a78bfa",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-11",
+          "title": "中班",
+          "start": "2026-07-06",
+          "end": "2026-07-06",
+          "type": "shift",
+          "resourceId": "emp-002",
+          "color": "#facc15",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-12",
+          "title": "早班",
+          "start": "2026-07-07",
+          "end": "2026-07-07",
+          "type": "shift",
+          "resourceId": "emp-001",
+          "color": "#4ade80",
+          "status": "confirmed"
+        },
+        {
+          "id": "evt-13",
+          "title": "早班",
+          "start": "2026-07-07",
+          "end": "2026-07-07",
+          "type": "shift",
+          "resourceId": "emp-002",
+          "color": "#4ade80",
+          "status": "confirmed"
+        }
+      ],
+      "resources": [
+        {
+          "id": "emp-001",
+          "title": "张三",
+          "type": "employee",
+          "avatar": "/avatars/zhangsan.png"
+        },
+        {
+          "id": "emp-002",
+          "title": "李四",
+          "type": "employee",
+          "avatar": "/avatars/lisi.png"
+        }
+      ],
+      "onEventClick": {
+        "action": "openDialog",
+        "args": {
+          "title": "班次详情",
+          "body": {
+            "type": "form",
+            "body": [
+              { "type": "text", "text": "员工：${event.resourceId}" },
+              { "type": "text", "text": "日期：${event.start}" },
+              { "type": "text", "text": "班次：${event.title}" },
+              { "type": "text", "text": "状态：${event.status}" }
+            ]
+          }
+        }
+      },
+      "onDateChange": {
+        "action": "showToast",
+        "args": { "msg": "日期已切换至 ${date}（${view}视图）", "level": "info" }
+      }
+    }
+  ]
+}

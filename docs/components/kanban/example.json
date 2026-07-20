@@ -1,0 +1,169 @@
+{
+  "type": "kanban",
+  "id": "recruitment-kanban",
+  "name": "recruitmentKanban",
+  "data": "${recruitmentBoardData}",
+  "columnWidth": "equal",
+  "columnDraggable": true,
+  "columnsConfig": {
+    "col-applied": {
+      "title": "已投递",
+      "color": "#94a3b8"
+    },
+    "col-interview": {
+      "title": "面试中",
+      "color": "#3b82f6"
+    },
+    "col-offered": {
+      "title": "已发 Offer",
+      "color": "#22c55e"
+    }
+  },
+  "columnHeader": [
+    {
+      "type": "text",
+      "text": "${$slot.column.title}",
+      "className": "font-semibold text-base"
+    },
+    {
+      "type": "badge",
+      "text": "${$slot.column.children.length}"
+    }
+  ],
+  "columnHeaderToolbar": [
+    {
+      "type": "button",
+      "icon": "plus",
+      "size": "sm",
+      "variant": "ghost",
+      "onClick": {
+        "action": "component:addCard",
+        "args": {
+          "columnId": "${$slot.column.id}"
+        }
+      }
+    }
+  ],
+  "columnFooter": [
+    {
+      "type": "button",
+      "label": "添加卡片",
+      "variant": "ghost",
+      "size": "sm",
+      "className": "w-full",
+      "onClick": {
+        "action": "dialog",
+        "args": {
+          "title": "新建卡片",
+          "body": {
+            "type": "form",
+            "body": [
+              {
+                "type": "input-text",
+                "name": "title",
+                "label": "标题",
+                "required": true
+              },
+              {
+                "type": "input-text",
+                "name": "description",
+                "label": "描述"
+              }
+            ],
+            "submitAction": {
+              "action": "component:addCard",
+              "componentId": "recruitment-kanban",
+              "args": {
+                "columnId": "${$slot.column.id}",
+                "card": {
+                  "title": "${title}",
+                  "content": {
+                    "description": "${description}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "configMap": {
+    "card": {
+      "render": [
+        {
+          "type": "text",
+          "text": "${$slot.card.title}",
+          "className": "text-sm font-medium"
+        }
+      ],
+      "isDraggable": true
+    },
+    "divider": {
+      "render": [
+        {
+          "type": "separator",
+          "className": "my-2"
+        }
+      ],
+      "isDraggable": false
+    }
+  },
+  "events": {
+    "onCardMove": {
+      "action": "ajax",
+      "args": {
+        "url": "/api/recruitment/card/move",
+        "method": "put",
+        "data": {
+          "cardId": "${event.cardId}",
+          "toColumnId": "${event.toColumnId}",
+          "toIndex": "${event.toIndex}"
+        }
+      }
+    },
+    "onCardClick": {
+      "action": "dialog",
+      "args": {
+        "title": "卡片详情",
+        "body": {
+          "type": "form",
+          "mode": "readonly",
+          "body": [
+            {
+              "type": "input-text",
+              "name": "title",
+              "label": "标题",
+              "value": "${event.card.title}"
+            },
+            {
+              "type": "input-text",
+              "name": "description",
+              "label": "描述",
+              "value": "${event.card.content.description}"
+            }
+          ]
+        }
+      }
+    },
+    "onColumnReorder": {
+      "action": "ajax",
+      "args": {
+        "url": "/api/recruitment/column/reorder",
+        "method": "put",
+        "data": {
+          "columnId": "${event.columnId}",
+          "fromIndex": "${event.fromIndex}",
+          "toIndex": "${event.toIndex}"
+        }
+      }
+    }
+  },
+  "empty": [
+    {
+      "type": "text",
+      "text": "暂无看板数据，请先创建列",
+      "className": "text-muted-foreground"
+    }
+  ]
+}

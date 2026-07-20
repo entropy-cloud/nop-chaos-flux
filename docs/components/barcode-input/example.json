@@ -1,0 +1,122 @@
+{
+  "type": "form",
+  "mode": "horizontal",
+  "labelAlign": "right",
+  "id": "barcode-form",
+  "data": {
+    "materialCode": "",
+    "batchNo": "202607-001",
+    "warehouseBin": ""
+  },
+  "body": [
+    {
+      "type": "fieldset",
+      "title": "条码扫描",
+      "body": [
+        {
+          "type": "barcode-input",
+          "name": "materialCode",
+          "label": "物料条码",
+          "placeholder": "扫码或手动输入条码",
+          "required": true,
+          "formats": ["ean_13", "code_128", "qr_code"],
+          "continuousScan": true,
+          "clearable": true,
+          "trimContents": true,
+          "events": {
+            "onScan": {
+              "action": "showToast",
+              "args": {
+                "level": "success",
+                "message": "扫码成功"
+              },
+              "then": {
+                "action": "ajax",
+                "args": {
+                  "url": "/api/material/query",
+                  "method": "post",
+                  "data": {
+                    "barcode": "${event.barcode}"
+                  }
+                },
+                "then": {
+                  "action": "setValues",
+                  "args": {
+                    "values": {
+                      "batchNo": "${response.batchNo}",
+                      "warehouseBin": "${response.defaultBin}"
+                    }
+                  }
+                }
+              }
+            },
+            "onScanError": {
+              "action": "showToast",
+              "args": {
+                "level": "warning",
+                "message": "扫码失败，请重试"
+              }
+            }
+          }
+        },
+        {
+          "type": "barcode-input",
+          "name": "warehouseBin",
+          "label": "库位码",
+          "placeholder": "扫码或手动输入库位",
+          "continuousScan": false,
+          "formats": ["code_39", "code_128"],
+          "events": {
+            "onScan": {
+              "action": "showToast",
+              "args": {
+                "level": "info",
+                "message": "库位: ${event.barcode}"
+              }
+            }
+          }
+        },
+        {
+          "type": "barcode-input",
+          "name": "batchNo",
+          "label": "批号",
+          "placeholder": "扫码或手动输入批号",
+          "continuousScan": false,
+          "scanOnFocus": true,
+          "clearable": true
+        }
+      ]
+    },
+    {
+      "type": "flex",
+      "direction": "row",
+      "gap": "md",
+      "items": [
+        {
+          "type": "button",
+          "label": "清除全部",
+          "variant": "outline",
+          "onClick": {
+            "action": "component:setValues",
+            "args": {
+              "values": {
+                "materialCode": "",
+                "batchNo": "",
+                "warehouseBin": ""
+              }
+            }
+          }
+        },
+        {
+          "type": "button",
+          "label": "提交",
+          "variant": "default",
+          "onClick": {
+            "action": "component:submit",
+            "componentId": "barcode-form"
+          }
+        }
+      ]
+    }
+  ]
+}

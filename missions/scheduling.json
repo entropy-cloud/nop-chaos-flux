@@ -1,0 +1,23 @@
+{
+  "name": "scheduling",
+  "description": "Build the complex scheduling/workflow component renderers (gantt, kanban, calendar) for ERP/enterprise use cases. Also delivers lightweight companion inputs (barcode-input, diff-view). Driven by roadmap-scheduling.md. Research complete: 10 open-source projects analyzed, 5 design docs written. Implements `@nop-chaos/flux-renderers-scheduling` as a new package.",
+  "roadmapPath": "docs/components/roadmap-scheduling.md",
+  "model": "opencode-go/deepseek-v4-flash",
+  "variant": "max",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": "packages",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "feat(scheduling): <description>"
+}

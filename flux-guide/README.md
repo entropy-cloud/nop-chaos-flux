@@ -112,26 +112,36 @@ const SchemaRenderer = createSchemaRenderer();
 ```
 
 > 宿主能力（`env` 契约、字典 `loadDict`、动态页面 `loadPage`、角色过滤 `xui:roles`、命名空间导入 `xui:imports`、`plugins`/`moduleCache`/`strictValidation`）详见 `11-host-integration.md`。
+>
+> 三项**生产环境必备**的额外集成（上述最小示例未体现）：
+>
+> - **i18n 初始化**：`initFluxI18n()` 在 `ReactDOM.createRoot` 之前调用一次，否则 `${t('key')}` 与渲染器内部文案不生效（详见 `12-i18n.md`）。
+> - **主题样式 import**：`import '@nop-chaos/theme-tokens/styles.css'`，并把渲染子树挂到 `.nop-theme-root`（详见 `14-theming.md`）。
+> - **错误监控**：传 `<SchemaRenderer onActionError={(err, ctx) => ...}>` + `env.monitor.onError` 上报动作异常（详见 `15-error-handling.md`）。
 
 ## 文件索引
 
-| 文件                      | 解决什么问题                                                                                                      |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `01-quickstart.md`        | 17 个最常用代码段速查（page/CRUD/form/dialog/combo/action/source/wizard/tabs/loop/relation/upload/confirm/alert） |
-| `02-expression-syntax.md` | 模板语法、过滤器、条件表达式                                                                                      |
-| `03-api-config.md`        | API 配置格式（ajax action args）                                                                                  |
-| `04-action-system.md`     | Action Algebra 事件与动作系统（链式、并行、条件）                                                                 |
-| `05-data-flow.md`         | 数据源、数据域、组件间通信（data-source / scope）                                                                 |
-| `06-form-validation.md`   | 表单校验系统（字段级校验、跨字段 rules、异步校验）                                                                |
-| `07-structural-nodes.md`  | 结构节点（fragment/loop/recurse/reaction）+ 组件实例方法                                                          |
-| `08-tabs-state.md`        | Tabs 状态管理（受控/非受控/scope 持久化）                                                                         |
-| `09-amis-migration.md`    | 与 AMIS 的主要差异                                                                                                |
-| `10-react-integration.md` | 自定义渲染器 React Hooks 速查（runtime/scope/form/page/context）+ 核心类型签名                                    |
-| `11-host-integration.md`  | 宿主集成：`env` 契约、`loadDict`/`loadPage`、`xui:roles`、`xui:imports`、`plugins`、表达式扩展                    |
-| `flux-types/`             | 所有组件的 TypeScript 接口（字段知识源）。入口见 `flux-types/index.ts`                                            |
-| `design-patterns/`        | 常见业务场景的完整解法 cookbook（单组件/单特性）                                                                  |
-| `examples/`               | 多技术组合的端到端页面范例（主从联动 / 行内编辑 / 业务单据公式 / 分步向导）                                       |
-| `mobile/`                 | 移动端原生组件专题（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）                                |
+| 文件                      | 解决什么问题                                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `01-quickstart.md`        | 17 个最常用代码段速查（page/CRUD/form/dialog/combo/action/source/wizard/tabs/loop/relation/upload/confirm/alert）  |
+| `02-expression-syntax.md` | 模板语法、过滤器、条件表达式                                                                                       |
+| `03-api-config.md`        | API 配置格式（ajax action args）                                                                                   |
+| `04-action-system.md`     | Action Algebra 事件与动作系统（链式、并行、条件）                                                                  |
+| `05-data-flow.md`         | 数据源、数据域、组件间通信（data-source / scope）                                                                  |
+| `06-form-validation.md`   | 表单校验系统（字段级校验、跨字段 rules、异步校验）                                                                 |
+| `07-structural-nodes.md`  | 结构节点（fragment/loop/recurse/reaction）+ 组件实例方法                                                           |
+| `08-tabs-state.md`        | Tabs 状态管理（受控/非受控/scope 持久化）                                                                          |
+| `09-amis-migration.md`    | 与 AMIS 的主要差异                                                                                                 |
+| `10-react-integration.md` | 自定义渲染器 React Hooks 速查（runtime/scope/form/page/context）+ 核心类型签名                                     |
+| `11-host-integration.md`  | 宿主集成：`env` 契约、`loadDict`/`loadPage`、`xui:roles`、`xui:imports`、`plugins`、表达式扩展                     |
+| `12-i18n.md`              | 国际化：`initFluxI18n`/`t`/`useFluxTranslation`/`changeLanguage`/`addResources`，内置 zh-CN/en-US bundle，重要限制 |
+| `13-testing.md`           | 测试栈（Vitest + Playwright）、mock helper 清单、渲染 schema 标准做法、3 个推荐参考范例                            |
+| `14-theming.md`           | 主题与样式：纯 CSS 契约（无 ThemeProvider）、三层 CSS、4 主题变体、`data-slot` 协议、`className`/`frameClassName`  |
+| `15-error-handling.md`    | 错误处理三层（编译/action/渲染）、Error Boundary、`onActionError`、链式恢复、默认 notify、已知缺口                 |
+| `flux-types/`             | 所有组件的 TypeScript 接口（字段知识源）。入口见 `flux-types/index.ts`                                             |
+| `design-patterns/`        | 常见业务场景的完整解法 cookbook（单组件/单特性）                                                                   |
+| `examples/`               | 多技术组合的端到端页面范例（主从联动 / 行内编辑 / 业务单据公式 / 分步向导）                                        |
+| `mobile/`                 | 移动端原生组件专题（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）                                 |
 
 ### `design-patterns/` 清单
 

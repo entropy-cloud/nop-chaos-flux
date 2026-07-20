@@ -1,0 +1,242 @@
+{
+  "type": "gantt",
+  "defaultZoom": "week",
+  "initiallyExpanded": true,
+  "draggable": true,
+  "editable": true,
+  "linkable": true,
+  "showWeekends": true,
+  "showToday": true,
+  "columns": [
+    {
+      "name": "text",
+      "label": "任务名称",
+      "width": 240,
+      "fixed": "left"
+    },
+    {
+      "name": "assignee",
+      "label": "负责人",
+      "width": 100
+    },
+    {
+      "name": "progress",
+      "label": "进度",
+      "width": 80,
+      "align": "center"
+    }
+  ],
+  "scales": [
+    {
+      "unit": "day",
+      "step": 1,
+      "format": "%d"
+    },
+    {
+      "unit": "month",
+      "format": "%Y/%m"
+    }
+  ],
+  "zoomLevels": [
+    {
+      "key": "day",
+      "label": "日",
+      "minCellWidth": 40,
+      "maxCellWidth": 80,
+      "scales": [
+        { "unit": "hour", "step": 6, "format": "%H:00" },
+        { "unit": "day", "format": "%m/%d" }
+      ]
+    },
+    {
+      "key": "week",
+      "label": "周",
+      "minCellWidth": 20,
+      "maxCellWidth": 50,
+      "scales": [
+        { "unit": "day", "step": 1, "format": "%d" },
+        { "unit": "week", "format": "第%W周" }
+      ]
+    },
+    {
+      "key": "month",
+      "label": "月",
+      "minCellWidth": 15,
+      "maxCellWidth": 40,
+      "scales": [
+        { "unit": "week", "step": 1, "format": "W%W" },
+        { "unit": "month", "format": "%Y/%m" }
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": 1,
+      "text": "APS 排产系统",
+      "type": "project",
+      "start": "2026-07-01",
+      "end": "2026-08-31",
+      "progress": 0,
+      "open": true,
+      "children": [
+        {
+          "id": 2,
+          "text": "需求分析",
+          "start": "2026-07-01",
+          "end": "2026-07-10",
+          "progress": 100,
+          "assignee": "张三"
+        },
+        {
+          "id": 3,
+          "text": "系统设计",
+          "start": "2026-07-11",
+          "end": "2026-07-25",
+          "progress": 60,
+          "assignee": "李四"
+        },
+        {
+          "id": 4,
+          "text": "后端开发",
+          "type": "project",
+          "start": "2026-07-26",
+          "end": "2026-08-20",
+          "progress": 0,
+          "open": true,
+          "children": [
+            {
+              "id": 5,
+              "text": "数据模型",
+              "start": "2026-07-26",
+              "end": "2026-08-02",
+              "progress": 30,
+              "assignee": "王五"
+            },
+            {
+              "id": 6,
+              "text": "排程算法",
+              "start": "2026-08-03",
+              "end": "2026-08-10",
+              "progress": 0,
+              "assignee": "李四"
+            },
+            {
+              "id": 7,
+              "text": "API 开发",
+              "start": "2026-08-05",
+              "end": "2026-08-16",
+              "progress": 0,
+              "assignee": "王五"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "text": "前端集成",
+          "start": "2026-08-17",
+          "end": "2026-08-25",
+          "progress": 0,
+          "assignee": "赵六"
+        },
+        {
+          "id": 9,
+          "text": "测试上线",
+          "start": "2026-08-26",
+          "end": "2026-08-31",
+          "progress": 0,
+          "assignee": "张三"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "text": "里程碑：设计评审",
+      "type": "milestone",
+      "start": "2026-07-25",
+      "end": "2026-07-25",
+      "progress": 100
+    }
+  ],
+  "links": [
+    {
+      "id": 1,
+      "source": 2,
+      "target": 3,
+      "type": "finish_to_start"
+    },
+    {
+      "id": 2,
+      "source": 3,
+      "target": 4,
+      "type": "finish_to_start"
+    },
+    {
+      "id": 3,
+      "source": 5,
+      "target": 6,
+      "type": "finish_to_start"
+    },
+    {
+      "id": 4,
+      "source": 6,
+      "target": 7,
+      "type": "start_to_start",
+      "lag": 2
+    },
+    {
+      "id": 5,
+      "source": 6,
+      "target": 8,
+      "type": "finish_to_start"
+    },
+    {
+      "id": 6,
+      "source": 7,
+      "target": 8,
+      "type": "finish_to_start"
+    },
+    {
+      "id": 7,
+      "source": 8,
+      "target": 9,
+      "type": "finish_to_start"
+    }
+  ],
+  "onTaskClick": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "点击任务: ${event.taskId}"
+    }
+  },
+  "onTaskDoubleClick": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "双击任务: ${event.taskId}"
+    }
+  },
+  "onTaskDragEnd": {
+    "action": "showToast",
+    "args": {
+      "level": "success",
+      "message": "任务 ${event.taskId} 已更新"
+    }
+  },
+  "zoomIn": {
+    "action": "zoomIn"
+  },
+  "zoomOut": {
+    "action": "zoomOut"
+  },
+  "scrollToToday": {
+    "action": "scrollToToday"
+  },
+  "taskBar": [
+    {
+      "type": "text",
+      "text": "${task.text}"
+    }
+  ],
+  "empty": "暂无排程数据"
+}
