@@ -403,6 +403,7 @@ interface DesignerPageSchema {
   treeDocument?: TreeDocumentInput; // tree 模式（新增）
 
   config: DesignerConfig;
+  readOnly?: boolean;
   toolbar?: SchemaInput;
   inspector?: SchemaInput;
 }

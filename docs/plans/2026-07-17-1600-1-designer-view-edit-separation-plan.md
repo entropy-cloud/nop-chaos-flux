@@ -1,7 +1,7 @@
 # Designer View/Edit 分离实现计划
 
-> Plan Status: active
-> Last Reviewed: 2026-07-17
+> Plan Status: completed
+> Last Reviewed: 2026-07-20
 > Source: `docs/architecture/designer-view-vs-edit.md`
 > Related: `docs/architecture/designer-workbench-shell.md`, `docs/architecture/spreadsheet/design.md`, `docs/architecture/flow-designer/design.md`, `docs/architecture/report-designer/design.md`
 
@@ -80,126 +80,126 @@
 
 ### Phase 0 — Spreadsheet Core 修正 + 文档固化
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-core/src/command-handlers/index.ts`, `packages/spreadsheet-renderers/src/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: 从 `READ_ONLY_COMMANDS` 白名单中移除 `spreadsheet:undo` 和 `spreadsheet:redo`
-- [ ] Proof: 确认现有 readonly 模式测试（`core-advanced.test.ts` 的 `readonly mode` describe block）不受影响
-- [ ] Fix: 更新白名单的代码注释说明"这是一份 view-safe commands 白名单"
-- [ ] Proof: 在 `core-advanced.test.ts` 中增加验证——readonly 模式下 `spreadsheet:undo`/`spreadsheet:redo` 被拒绝
+- [x] Fix: 从 `READ_ONLY_COMMANDS` 白名单中移除 `spreadsheet:undo` 和 `spreadsheet:redo`
+- [x] Proof: 确认现有 readonly 模式测试（`core-advanced.test.ts` 的 `readonly mode` describe block）不受影响
+- [x] Fix: 更新白名单的代码注释说明"这是一份 view-safe commands 白名单"
+- [x] Proof: 在 `core-advanced.test.ts` 中增加验证——readonly 模式下 `spreadsheet:undo`/`spreadsheet:redo` 被拒绝
 
 Exit Criteria:
 
-- [ ] `READ_ONLY_COMMANDS` 白名单中不再包含 `spreadsheet:undo` 和 `spreadsheet:redo`
-- [ ] `pnpm test -- --filter=@nop-chaos/spreadsheet-core` 通过
-- [ ] 新增 focused 测试：readonly 模式下 undo/redo 命令被拒绝
+- [x] `READ_ONLY_COMMANDS` 白名单中不再包含 `spreadsheet:undo` 和 `spreadsheet:redo`
+- [x] `pnpm test -- --filter=@nop-chaos/spreadsheet-core` 通过
+- [x] 新增 focused 测试：readonly 模式下 undo/redo 命令被拒绝
 
 ### Phase 1 — Flow Designer readOnly 支持
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-core/src/`, `packages/flow-designer-renderers/src/`, `docs/architecture/flow-designer/`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Decision: `createDesignerCore()` 从位置参数改为 options 对象 `{ document, config, readonly? }`，或保持位置参数但增加第三个参数 `options?: { readonly?: boolean }`。推荐后者以最小化 break change
-- [ ] Fix: `DesignerCore` 接口增加 `readonly` 参数支持。每个 mutation 方法入口加 `readonly` 守卫（选项 A）
-- [ ] Fix: `DesignerSnapshot` 增加 `readonly: boolean` 字段
-- [ ] Fix: `autoLayout` 在 View 模式下走只读路径——执行布局算法但不 push 历史、不设 dirty 标志、不触发 `documentChanged` 事件。需要将 layout 与历史/脏状态解耦
-- [ ] Fix: `DesignerPageSchemaInput` 增加 `readOnly?: boolean` 字段
-- [ ] Fix: designer-page renderer 根据 `readOnly` 选择默认 toolbar（viewToolbar vs editToolbar）
-- [ ] Fix: designer-page renderer 在 View 模式下隐藏 palette
-- [ ] Fix: designer-page renderer 在 View 模式下 inspector 降级为只读（或隐藏，取决于 config 是否提供只读版 inspector.body）
-- [ ] Fix: View 模式下快捷键仅保留方向键平移 + Ctrl+滚轮缩放
-- [ ] Fix: renderer 层 toolbar item 自动过滤——View 模式下不渲染 mutation action buttons
-- [ ] Proof: 新增 focused 测试——view 模式下 method rejection、toolbar filter、palette visibility、shortcut isolation
-- [ ] Proof: 更新 `docs/architecture/flow-designer/design.md` — DesignerPageSchema 增加 readOnly 字段
-- [ ] Proof: 更新 `docs/architecture/flow-designer/config-schema.md` — DesignerPageSchemaInput 增加 readOnly
+- [x] Decision: `createDesignerCore()` 从位置参数改为 options 对象 `{ document, config, readonly? }`，或保持位置参数但增加第三个参数 `options?: { readonly?: boolean }`。推荐后者以最小化 break change
+- [x] Fix: `DesignerCore` 接口增加 `readonly` 参数支持。每个 mutation 方法入口加 `readonly` 守卫（选项 A）
+- [x] Fix: `DesignerSnapshot` 增加 `readonly: boolean` 字段
+- [x] Fix: `autoLayout` 在 View 模式下走只读路径——执行布局算法但不 push 历史、不设 dirty 标志、不触发 `documentChanged` 事件。需要将 layout 与历史/脏状态解耦
+- [x] Fix: `DesignerPageSchemaInput` 增加 `readOnly?: boolean` 字段
+- [x] Fix: designer-page renderer 根据 `readOnly` 选择默认 toolbar（viewToolbar vs editToolbar）
+- [x] Fix: designer-page renderer 在 View 模式下隐藏 palette
+- [x] Fix: designer-page renderer 在 View 模式下 inspector 降级为只读（或隐藏，取决于 config 是否提供只读版 inspector.body）
+- [x] Fix: View 模式下快捷键仅保留方向键平移 + Ctrl+滚轮缩放
+- [x] Fix: renderer 层 toolbar item 自动过滤——View 模式下不渲染 mutation action buttons
+- [x] Proof: 新增 focused 测试——view 模式下 method rejection、toolbar filter、palette visibility、shortcut isolation
+- [x] Proof: 更新 `docs/architecture/flow-designer/design.md` — DesignerPageSchema 增加 readOnly 字段
+- [x] Proof: 更新 `docs/architecture/flow-designer/config-schema.md` — DesignerPageSchemaInput 增加 readOnly
 
 Exit Criteria:
 
-- [ ] `DesignerCore` 所有 mutation 方法在 `readonly: true` 时返回 `{ ok: false, error: 'Document is readonly' }`
-- [ ] `DesignerSnapshot.readonly` 在 `readonly: true` 时为 `true`
-- [ ] View 模式下 toolbar 不包含 undo/redo/save 按钮
-- [ ] View 模式下 toolbar 仍显示 `fitView`/`export`/`toggleGrid`/`toggleMinimap` 等 view-safe 按钮
-- [ ] View 模式下 palette 隐藏
-- [ ] View 模式下快捷键不能触发 mutation
-- [ ] `pnpm test -- --filter=@nop-chaos/flow-designer-core` 通过
-- [ ] `pnpm test -- --filter=@nop-chaos/flow-designer-renderers` 通过
-- [ ] 受影响的 owner docs 已同步
+- [x] `DesignerCore` 所有 mutation 方法在 `readonly: true` 时返回 `{ ok: false, error: 'Document is readonly' }`
+- [x] `DesignerSnapshot.readonly` 在 `readonly: true` 时为 `true`
+- [x] View 模式下 toolbar 不包含 undo/redo/save 按钮
+- [x] View 模式下 toolbar 仍显示 `fitView`/`export`/`toggleGrid`/`toggleMinimap` 等 view-safe 按钮
+- [x] View 模式下 palette 隐藏
+- [x] View 模式下快捷键不能触发 mutation
+- [x] `pnpm test -- --filter=@nop-chaos/flow-designer-core` 通过
+- [x] `pnpm test -- --filter=@nop-chaos/flow-designer-renderers` 通过
+- [x] 受影响的 owner docs 已同步
 
 ### Phase 2 — Report Designer readOnly 支持
 
-Status: planned
+Status: completed
 Targets: `packages/report-designer-core/src/`, `packages/report-designer-renderers/src/`, `docs/architecture/report-designer/`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Decision: `CreateReportDesignerCoreOptions` 增加 `readonly?: boolean`
-- [ ] Fix: Report Designer Core 初始化时透传 `readonly` 到 `createSpreadsheetCore()`
-- [ ] Fix: `ReportDesignerPageSchemaInput` 增加 `readOnly?: boolean` 字段
-- [ ] Fix: report-designer-page renderer 根据 `readOnly` 选择默认 toolbar
-- [ ] Fix: View 模式下隐藏字段面板
-- [ ] Fix: View 模式下 inspector 降级为只读（或隐藏，取决于 config 是否提供只读版 inspector.body）
-- [ ] Fix: View 模式下字段拖拽不可用（含 use-field-drop 的 readOnly 守卫——已有实现，确认即可）
-- [ ] Fix: View 模式下 `report-designer:preview`/`stopPreview`/`exportTemplate` 可调用，`dropFieldToTarget`/`updateMeta`/`importTemplate` 被拒绝
-- [ ] Proof: 新增 focused 测试——view 模式下 command rejection、toolbar filter、panel visibility
-- [ ] Proof: 更新 `docs/architecture/report-designer/design.md`
-- [ ] Proof: 更新 `docs/architecture/report-designer/config-schema.md`
+- [x] Decision: `CreateReportDesignerCoreOptions` 增加 `readonly?: boolean`
+- [x] Fix: Report Designer Core 初始化时透传 `readonly` 到 `createSpreadsheetCore()`
+- [x] Fix: `ReportDesignerPageSchemaInput` 增加 `readOnly?: boolean` 字段
+- [x] Fix: report-designer-page renderer 根据 `readOnly` 选择默认 toolbar
+- [x] Fix: View 模式下隐藏字段面板
+- [x] Fix: View 模式下 inspector 降级为只读（或隐藏，取决于 config 是否提供只读版 inspector.body）
+- [x] Fix: View 模式下字段拖拽不可用（含 use-field-drop 的 readOnly 守卫——已有实现，确认即可）
+- [x] Fix: View 模式下 `report-designer:preview`/`stopPreview`/`exportTemplate` 可调用，`dropFieldToTarget`/`updateMeta`/`importTemplate` 被拒绝
+- [x] Proof: 新增 focused 测试——view 模式下 command rejection、toolbar filter、panel visibility
+- [x] Proof: 更新 `docs/architecture/report-designer/design.md`
+- [x] Proof: 更新 `docs/architecture/report-designer/config-schema.md`
 
 Exit Criteria:
 
-- [ ] `readonly: true` 时 spreadsheet core 初始化为 `readonly: true`
-- [ ] View 模式下字段面板隐藏
-- [ ] View 模式下字段拖拽不可用
-- [ ] View 模式下 preview 可正常触发
-- [ ] View 模式下 `exportTemplate` 被允许，`importTemplate` 被拒绝
-- [ ] `pnpm test -- --filter=@nop-chaos/report-designer-core` 通过
-- [ ] `pnpm test -- --filter=@nop-chaos/report-designer-renderers` 通过
-- [ ] 受影响的 owner docs 已同步
+- [x] `readonly: true` 时 spreadsheet core 初始化为 `readonly: true`
+- [x] View 模式下字段面板隐藏
+- [x] View 模式下字段拖拽不可用
+- [x] View 模式下 preview 可正常触发
+- [x] View 模式下 `exportTemplate` 被允许，`importTemplate` 被拒绝
+- [x] `pnpm test -- --filter=@nop-chaos/report-designer-core` 通过
+- [x] `pnpm test -- --filter=@nop-chaos/report-designer-renderers` 通过
+- [x] 受影响的 owner docs 已同步
 
 ### Phase 3 — Word Editor readOnly 支持
 
-Status: planned
+Status: completed
 Targets: `packages/word-editor-core/src/`, `packages/word-editor-renderers/src/`, `docs/architecture/word-editor/`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Decision: 确认 Word Editor Core 的当前架构——是否使用命令调度模式还是直接方法。若使用直接方法，参考 Flow Designer 选项 A（方法级守卫）；若使用命令调度，参考 Spreadsheet Core 模式
-- [ ] Fix: Word Editor Core 工厂函数增加 `readonly?: boolean` 参数
-- [ ] Fix: Word Editor Core 实现 READ_ONLY_COMMANDS 白名单（如适用），或在 mutation 方法入口加守卫
-- [ ] Fix: `WordEditorPageSchemaInput` 增加 `readOnly?: boolean` 字段
-- [ ] Fix: word-editor-page renderer 根据 `readOnly` 调整 UI（隐藏编辑工具栏按钮、只读文档渲染）
-- [ ] Proof: 新增 focused 测试——view 模式下 command rejection
-- [ ] Proof: 更新 `docs/architecture/word-editor/design.md`
+- [x] Decision: 确认 Word Editor Core 的当前架构——是否使用命令调度模式还是直接方法。若使用直接方法，参考 Flow Designer 选项 A（方法级守卫）；若使用命令调度，参考 Spreadsheet Core 模式
+- [x] Fix: Word Editor Core 工厂函数增加 `readonly?: boolean` 参数
+- [x] Fix: Word Editor Core 实现 READ_ONLY_COMMANDS 白名单（如适用），或在 mutation 方法入口加守卫
+- [x] Fix: `WordEditorPageSchemaInput` 增加 `readOnly?: boolean` 字段
+- [x] Fix: word-editor-page renderer 根据 `readOnly` 调整 UI（隐藏编辑工具栏按钮、只读文档渲染）
+- [x] Proof: 新增 focused 测试——view 模式下 command rejection
+- [x] Proof: 更新 `docs/architecture/word-editor/design.md`
 
 Exit Criteria:
 
-- [ ] Word Editor 支持 `readOnly: true` 初始化
-- [ ] View 模式下不渲染编辑 UI
-- [ ] View 模式下大纲面板保持可见（导航用途）
-- [ ] `pnpm test -- --filter=@nop-chaos/word-editor-core` 通过
-- [ ] `pnpm test -- --filter=@nop-chaos/word-editor-renderers` 通过
-- [ ] 受影响的 owner docs 已同步
+- [x] Word Editor 支持 `readOnly: true` 初始化
+- [x] View 模式下不渲染编辑 UI
+- [x] View 模式下大纲面板保持可见（导航用途）
+- [x] `pnpm test -- --filter=@nop-chaos/word-editor-core` 通过
+- [x] `pnpm test -- --filter=@nop-chaos/word-editor-renderers` 通过
+- [x] 受影响的 owner docs 已同步
 
 ### Phase 4 — 跨设计器文档同步
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: 更新 `docs/architecture/designer-workbench-shell.md`——补充 View/Edit 模式下侧面板可见性规则（View 模式隐藏左侧编辑面板，保留右侧只读导航面板）
-- [ ] Proof: 在 `docs/architecture/designer-view-vs-edit.md` 中添加本次实现的 closure note（可选，主题设计文档不记录历史）
-- [ ] Fix: 确认所有 owner doc 中的 `readOnly`/`readonly` 字段已添加（§6 清单逐项核对）
-- [ ] Fix: 检查 `docs/architecture/spreadsheet/design.md`（如存在）是否固化 spreadsheet readonly 行为
-- [ ] Proof: 运行 `pnpm test` 全量通过
+- [x] Fix: 更新 `docs/architecture/designer-workbench-shell.md`——补充 View/Edit 模式下侧面板可见性规则（View 模式隐藏左侧编辑面板，保留右侧只读导航面板）
+- [x] Proof: 在 `docs/architecture/designer-view-vs-edit.md` 中添加本次实现的 closure note（可选，主题设计文档不记录历史）
+- [x] Fix: 确认所有 owner doc 中的 `readOnly`/`readonly` 字段已添加（§6 清单逐项核对）
+- [x] Fix: 检查 `docs/architecture/spreadsheet/design.md`（如存在）是否固化 spreadsheet readonly 行为
+- [x] Proof: 运行 `pnpm test` 全量通过
 
 Exit Criteria:
 
-- [ ] `docs/architecture/designer-workbench-shell.md` 包含 View/Edit 侧面板规则
-- [ ] 所有 owner doc 的 readOnly 字段已同步
+- [x] `docs/architecture/designer-workbench-shell.md` 包含 View/Edit 侧面板规则
+- [x] 所有 owner doc 的 readOnly 字段已同步
 
 ## Draft Review Record
 
@@ -210,20 +210,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope 设计器 core 的 readonly 守卫已实现并通过测试
-- [ ] 所有 in-scope design page schema 已增加 `readOnly` 字段
-- [ ] View 模式下 toolbar 不包含 mutation action
-- [ ] View 模式下 palette/字段面板隐藏
-- [ ] View 模式下 inspector 不渲染编辑控件
-- [ ] View 模式下 dirty/canUndo/canRedo 正确
-- [ ] `readOnly: false`（缺省）行为与现有 Edit 模式完全一致，零回归
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步到 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope 设计器 core 的 readonly 守卫已实现并通过测试
+- [x] 所有 in-scope design page schema 已增加 `readOnly` 字段
+- [x] View 模式下 toolbar 不包含 mutation action
+- [x] View 模式下 palette/字段面板隐藏
+- [x] View 模式下 inspector 不渲染编辑控件
+- [x] View 模式下 dirty/canUndo/canRedo 正确
+- [x] `readOnly: false`（缺省）行为与现有 Edit 模式完全一致，零回归
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect
+- [x] 受影响的 owner docs 已同步到 live baseline
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -248,11 +248,25 @@ Exit Criteria:
 
 ## Closure
 
-Status Note:
+Status Note: All 4 phases completed. Every design core has readonly guards, every page schema has readOnly field, renderers hide edit UI in View mode, owner docs updated. Full `pnpm typecheck`/`build`/`lint`/`test` pass with zero failures. Closure audit by fresh independent sub-agent confirms all items landed.
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
+- Auditor / Agent: fresh independent sub-agent (closure audit session)
 - Evidence:
+  - Spreadsheet core: `packages/spreadsheet-core/src/command-handlers/index.ts` — READ_ONLY_COMMANDS no longer contains undo/redo (confirmed: only view-safe commands `setActiveSheet`, `setSelection`, `copyCells`, `selectAll`, `selectRow`, `selectColumn`, `find`, `findNext`)
+  - Flow designer core: `packages/flow-designer-core/src/core.ts` — methods guarded by `assertReadonly()` returning `'Document is readonly'` error; `DesignerSnapshot.readonly` field at snapshot.ts:32/64
+  - Flow designer renderers: `packages/flow-designer-renderers/src/schemas.ts:18` — `readOnly?: boolean` in `DesignerPageSchemaInput`; toolbar filter at `designer-toolbar.tsx:114`; shortcut isolation at `use-designer-shortcuts.ts:45`; palette hiding at `designer-page-body.tsx:134`
+  - Report designer core: `packages/report-designer-core/src/core.ts:119` — `readonly` pass-through to `createSpreadsheetCore`; method guards at `core.ts:370`
+  - Report designer renderers: `packages/report-designer-renderers/src/types.ts:31` — `readOnly?: boolean`; field panel hiding at `page-renderer.tsx:523`; toolbar filter at `page-renderer.tsx:274`
+  - Word editor core: `packages/word-editor-core/src/canvas-editor-bridge.ts` — `_readonly` field and guards at lines 107, 138, 199, 204
+  - Word editor renderers: `packages/word-editor-renderers/src/types.ts:25` — `readOnly?: boolean`; UI hiding at `word-editor-page.tsx:142,167,258`
+  - All docs updated: `docs/architecture/flow-designer/design.md`, `config-schema.md`, `tree-mode.md`, `api.md` — `readOnly` field added; `docs/architecture/report-designer/design.md`, `config-schema.md`, `api.md` — `readOnly` field added; `docs/architecture/designer-workbench-shell.md` — View/Edit panel rules added
+  - `pnpm typecheck`: 55/55 tasks pass
+  - `pnpm build`: 29/29 tasks pass
+  - `pnpm lint`: 29/29 tasks pass
+  - `pnpm test`: 55/55 test files, 110/110 tests pass
 
 Follow-up:
+
+- no remaining plan-owned work

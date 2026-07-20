@@ -73,6 +73,7 @@ interface DesignerPageSchema {
   treeDocument?: TreeDocumentInput;
   config: DesignerConfig;
   statusPath?: string;
+  readOnly?: boolean;
   toolbar?: SchemaInput;
   inspector?: SchemaInput;
   dialogs?: SchemaInput;

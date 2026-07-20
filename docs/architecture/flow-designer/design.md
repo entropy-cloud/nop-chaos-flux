@@ -154,6 +154,7 @@ interface DesignerPageSchema {
   document: GraphDocumentInput;
   config: DesignerConfig;
   statusPath?: string;
+  readOnly?: boolean;
   toolbar?: SchemaInput;
   inspector?: SchemaInput;
   dialogs?: SchemaInput;

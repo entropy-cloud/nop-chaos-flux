@@ -136,6 +136,7 @@ Current minimal side-panel config contract:
 
 ```ts
 interface WordEditorConfig {
+  readOnly?: boolean;
   leftPanel?: { generator?: 'default' };
   rightPanel?: { generator?: 'default' };
 }

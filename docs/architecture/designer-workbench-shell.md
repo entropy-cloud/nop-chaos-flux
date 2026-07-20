@@ -94,6 +94,23 @@ Responsive priority rules:
 - today's dataset/field panel and outline panel are the default generators selected by that `WordEditorConfig`, not renderer-private permanent UI
 - `toolbar` / `leftPanel` / `rightPanel` page regions remain explicit override surfaces
 
+## View / Edit Mode Panel Rules
+
+When a designer operates in View mode (`readOnly: true`), the workbench shell adjusts side panel visibility per the following rules:
+
+| Designer        | Left Panel                    | Right Panel                       |
+| --------------- | ----------------------------- | --------------------------------- |
+| Flow Designer   | ❌ Palette hidden             | ✅ Inspector shown (read-only)    |
+| Report Designer | ❌ Field panel hidden         | ✅ Inspector shown (read-only)    |
+| Word Editor     | ❌ Dataset/field panel hidden | ✅ Outline panel shown (navigate) |
+
+General rules:
+
+- View mode hides left-side editing panels (palette, field panel, dataset panel) unconditionally
+- View mode preserves right-side navigation/inspection panels (outline, inspector) when the config provides them
+- The collapsed-rail contract is unchanged in View mode — panels that remain visible can still be collapsed or expanded per user preference
+- View mode does not introduce any new panel state; it only removes panels whose sole purpose is editing
+
 ## Output Ownership
 
 The shared workbench shell does not own the final business JSON format.

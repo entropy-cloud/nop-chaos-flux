@@ -17,6 +17,7 @@ interface DesignerPageSchema {
   document: GraphDocumentInput;
   config: DesignerConfig;
   statusPath?: string;
+  readOnly?: boolean;
   toolbar?: SchemaInput;
   inspector?: SchemaInput;
   dialogs?: SchemaInput;
@@ -40,6 +41,7 @@ interface DesignerPageSchema {
 ```ts
 interface DesignerPageSchema {
   // ... 现有字段 ...
+  readOnly?: boolean;
   treeDocument?: TreeDocument;
 }
 ```
