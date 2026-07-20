@@ -204,6 +204,18 @@ describe('readonly mode', () => {
   it('should report readonly in snapshot', () => {
     expect(core.getSnapshot().readonly).toBe(true);
   });
+
+  it('should reject undo in readonly mode', async () => {
+    const result = await core.dispatch({ type: 'spreadsheet:undo' });
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe('Document is readonly');
+  });
+
+  it('should reject redo in readonly mode', async () => {
+    const result = await core.dispatch({ type: 'spreadsheet:redo' });
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe('Document is readonly');
+  });
 });
 
 describe('replaceDocument/exportDocument', () => {

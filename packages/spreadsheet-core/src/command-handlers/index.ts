@@ -23,6 +23,8 @@ export function createCommandHandlerRegistry(): CommandHandlerRegistry {
   return registry;
 }
 
+// View-safe commands whitelist — only these commands are allowed in readonly mode.
+// Commands that mutate state (including undo/redo, which modify history) are rejected.
 export const READ_ONLY_COMMANDS = new Set([
   'spreadsheet:setActiveSheet',
   'spreadsheet:setSelection',
@@ -30,8 +32,6 @@ export const READ_ONLY_COMMANDS = new Set([
   'spreadsheet:selectAll',
   'spreadsheet:selectRow',
   'spreadsheet:selectColumn',
-  'spreadsheet:undo',
-  'spreadsheet:redo',
   'spreadsheet:find',
   'spreadsheet:findNext',
 ]);
