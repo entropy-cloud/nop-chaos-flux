@@ -1,6 +1,6 @@
 # S1 — Gantt Core Engine (Pure Logic Layer)
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-20
 > Source: `docs/components/gantt/design.md` (§4, §11), `docs/components/roadmap-scheduling.md` (S1)
 > Related: `docs/plans/2026-07-20-0800-1-s0-scheduling-infrastructure-plan.md` (prerequisite)
@@ -70,13 +70,13 @@ Not applicable — pure data layer with no external API contracts or auth.
 
 ### Phase 1 — Types And GanttStore
 
-Status: planned
+Status: completed
 Targets: `src/gantt/gantt.types.ts`, `src/gantt/gantt-store.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`: Create `src/gantt/gantt.types.ts` — all type interfaces (`GanttTask`, `GanttLink`, `GanttResource`, `GanttAssignment`, `GanttSegment`, `GanttColumn`, `GanttScale`, `GanttZoomLevel`) matching design doc §4, including computed property fields (`$x`, `$y`, `$w`, `$h`, `$level`, `$source`, `$target`, `$p`)
-- [ ] `Fix`: Create `src/gantt/gantt-store.ts` — `GanttStore` class with:
+- [x] `Fix`: Create `src/gantt/gantt.types.ts` — all type interfaces (`GanttTask`, `GanttLink`, `GanttResource`, `GanttAssignment`, `GanttSegment`, `GanttColumn`, `GanttScale`, `GanttZoomLevel`) matching design doc §4, including computed property fields (`$x`, `$y`, `$w`, `$h`, `$level`, `$source`, `$target`, `$p`)
+- [x] `Fix`: Create `src/gantt/gantt-store.ts` — `GanttStore` class with:
   - `tasks: Map<ID, GanttTask>`, `links: Map<ID, GanttLink>`, `resources: Map<ID, GanttResource>`, `assignments: Map<ID, GanttAssignment>`
   - `parse(tasks, links, resources?, assignments?)`: ingest external data → fill computed properties
   - `recalcLayout()`: recompute all pixel coordinates and link polyline points
@@ -84,7 +84,7 @@ Targets: `src/gantt/gantt.types.ts`, `src/gantt/gantt-store.ts`
   - `getVisibleTasks()`: return visible tasks based on expand/collapse state + filters
   - `addLink(source, target, type)`, `removeLink(id)`
   - Simple event emitter (`on`/`off`/`emit`)
-- [ ] `Proof`: Write unit tests for:
+- [x] `Proof`: Write unit tests for:
   - Data parsing and computed property population
   - Task update propagation
   - Link add/remove
@@ -92,29 +92,29 @@ Targets: `src/gantt/gantt.types.ts`, `src/gantt/gantt-store.ts`
 
 Exit Criteria:
 
-- [ ] `GanttStore` class compiles and all type interfaces are consistent with design doc §4
-- [ ] Unit tests verify: parse populates computed properties, updateTask recalculates dependent fields, link lifecycle works
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck` passes
+- [x] `GanttStore` class compiles and all type interfaces are consistent with design doc §4
+- [x] Unit tests verify: parse populates computed properties, updateTask recalculates dependent fields, link lifecycle works
+- [x] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck` passes
 
 ### Phase 2 — WBS Tree And Time Scale Engine
 
-Status: planned
+Status: completed
 Targets: `src/gantt/gantt-utils.ts`, `src/gantt/utils/scale.ts`, `src/gantt/utils/date.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`: Create `src/gantt/utils/date.ts` — date utility functions (diff in days, add days, format using strftime-style patterns, month/week start/end computation)
-- [ ] `Fix`: Create `src/gantt/utils/scale.ts` — time scale engine:
+- [x] `Fix`: Create `src/gantt/utils/date.ts` — date utility functions (diff in days, add days, format using strftime-style patterns, month/week start/end computation)
+- [x] `Fix`: Create `src/gantt/utils/scale.ts` — time scale engine:
   - `computeScaleRange(tasks, startDate?, endDate?)`: determine visible date range
   - `computeScaleIntervals(scaleRange, scales, cellWidth)`: generate labeled grid cells for each scale row
   - `smartScaling(visibleRange, totalWidth)`: clip cells to visible viewport
   - Support six units: hour/day/week/month/quarter/year
-- [ ] `Fix`: Extend `gantt-utils.ts` with WBS tree management:
+- [x] `Fix`: Extend `gantt-utils.ts` with WBS tree management:
   - `flattenTree(tasks, openSet, rootTaskIds?)`: flat list with `$level`/`$branches`
   - `buildParentIndex(tasks)`: parent → children map
   - `toggleOpen(taskId)`, `expandAll()`, `collapseAll()`
   - `getVisibleDescendantCount(taskId)`: for tree-grid chevron display
-- [ ] `Proof`: Write unit tests for:
+- [x] `Proof`: Write unit tests for:
   - Scale range computation with various task date spreads
   - Scale interval generation for each unit type
   - Smart scaling viewport clipping
@@ -123,28 +123,28 @@ Targets: `src/gantt/gantt-utils.ts`, `src/gantt/utils/scale.ts`, `src/gantt/util
 
 Exit Criteria:
 
-- [ ] All six zoom units produce correct grid intervals
-- [ ] Tree flattening correctly filters collapsed children
-- [ ] Unit tests verify boundary conditions (single task, no tasks, cross-year ranges)
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && pnpm test` passes for these modules
+- [x] All six zoom units produce correct grid intervals
+- [x] Tree flattening correctly filters collapsed children
+- [x] Unit tests verify boundary conditions (single task, no tasks, cross-year ranges)
+- [x] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && pnpm test` passes for these modules
 
 ### Phase 3 — Zoom Engine And Layout Computation
 
-Status: planned
+Status: completed
 Targets: `src/gantt/utils/layout.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`: Create `src/gantt/utils/layout.ts` — pixel coordinate computation:
+- [x] `Fix`: Create `src/gantt/utils/layout.ts` — pixel coordinate computation:
   - `taskToPixels(task, scaleRange, cellWidth, taskBarHeight, rowPadding)`: compute `$x`, `$y`, `$w`, `$h`
   - `linkToPolyline(source, target, cellWidth, taskBarHeight, rowPadding)`: compute `$p` polyline points
   - `dateToPixel(date, scaleRange, cellWidth)`: date → x offset
   - `pixelToDate(x, scaleRange, cellWidth)`: x offset → date
-- [ ] `Fix`: Implement zoom engine within GanttStore:
+- [x] `Fix`: Implement zoom engine within GanttStore:
   - `setZoom(zoomLevelKey)`: switch zoom level, recalculate cellWidth, reflow coordinates
   - `getAvailableZooms()`: return list of configured zoom levels
   - Scroll anchoring: after zoom change, maintain visual center date
-- [ ] `Proof`: Write unit tests for:
+- [x] `Proof`: Write unit tests for:
   - Task → pixel mapping with various date ranges and zoom levels
   - Link polyline point generation
   - Round-trip date ↔ pixel conversion
@@ -153,30 +153,30 @@ Targets: `src/gantt/utils/layout.ts`
 
 Exit Criteria:
 
-- [ ] Task pixel coordinates change proportionally across zoom levels
-- [ ] Link polylines connect task start/end edges correctly
-- [ ] Round-trip conversion is idempotent within pixel precision
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && pnpm test` passes
+- [x] Task pixel coordinates change proportionally across zoom levels
+- [x] Link polylines connect task start/end edges correctly
+- [x] Round-trip conversion is idempotent within pixel precision
+- [x] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && pnpm test` passes
 
 ### Phase 4 — WorkCalendar Engine
 
-Status: planned
+Status: completed
 Targets: `src/gantt/utils/worktime.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`: Create `WorkCalendar` interface:
+- [x] `Fix`: Create `WorkCalendar` interface:
   - `isWorkingDay(date)`, `addWorkDays(from, days)`, `subtractWorkDays(from, days)`, `countWorkDays(from, to)`, `getWorkMinutes(date)`
-- [ ] `Fix`: Create concrete `DefaultWorkCalendar` implementation:
+- [x] `Fix`: Create concrete `DefaultWorkCalendar` implementation:
   - `weekHours: Record<number, number>` (0=Sun … 6=Sat)
   - `holidays: Set<string>` (ISO date strings)
   - `extraWorkDays: Set<string>` (make-up work days)
-- [ ] `Fix`: Create `CalendarManager` strategy class:
+- [x] `Fix`: Create `CalendarManager` strategy class:
   - `registerCalendar(id, calendar)`, `getCalendar(id?)`: three-level lookup (resource → task → global)
-- [ ] `Fix`: Integrate WorkCalendar into GanttStore:
+- [x] `Fix`: Integrate WorkCalendar into GanttStore:
   - Store accepts `calendars` in `parse()`
   - `updateTask()` recalculates dates if WorkCalendar is available
-- [ ] `Proof`: Write unit tests for:
+- [x] `Proof`: Write unit tests for:
   - Working day detection with custom week hours
   - Holiday and extra-work-day handling
   - `addWorkDays`/`subtractWorkDays` with non-working day skips
@@ -186,10 +186,10 @@ Targets: `src/gantt/utils/worktime.ts`
 
 Exit Criteria:
 
-- [ ] `WorkCalendar` correctly skips weekends and holidays in date arithmetic
-- [ ] Three-level calendar lookup falls back as: resource → task → global
-- [ ] Unit tests cover edge cases (all-weekend schedule, consecutive holidays, month boundaries)
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && pnpm test` passes
+- [x] `WorkCalendar` correctly skips weekends and holidays in date arithmetic
+- [x] Three-level calendar lookup falls back as: resource → task → global
+- [x] Unit tests cover edge cases (all-weekend schedule, consecutive holidays, month boundaries)
+- [x] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && pnpm test` passes
 
 ## Draft Review Record
 
@@ -202,20 +202,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `GanttStore` with flat Map storage, coordinate precomputation, zoom management, and event emitter exists and is tested
-- [ ] Task/link/resource data models with all computed properties are typed and tested
-- [ ] WBS tree flattening with expand/collapse filtering works and is tested
-- [ ] Time scale engine produces correct intervals for all six zoom units and is tested
-- [ ] Pixel coordinate mapping (task → `$x`/`$y`/`$w`/`$h`, link → `$p`, round-trip date↔pixel) is tested
-- [ ] Zoom engine switches levels, reflows coordinates, anchors scroll center, and is tested
-- [ ] WorkCalendar with three-level fallback, `addWorkDays`/`subtractWorkDays`/`countWorkDays` is tested
-- [ ] No deferred live defects or contract drifts in scope
-- [ ] Affected owner docs synced (schemas.ts updated, definitions registered)
-- [ ] By independent sub-agent (fresh session) closure-audit completed and recorded
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `GanttStore` with flat Map storage, coordinate precomputation, zoom management, and event emitter exists and is tested
+- [x] Task/link/resource data models with all computed properties are typed and tested
+- [x] WBS tree flattening with expand/collapse filtering works and is tested
+- [x] Time scale engine produces correct intervals for all six zoom units and is tested
+- [x] Pixel coordinate mapping (task → `$x`/`$y`/`$w`/`$h`, link → `$p`, round-trip date↔pixel) is tested
+- [x] Zoom engine switches levels, reflows coordinates, anchors scroll center, and is tested
+- [x] WorkCalendar with three-level fallback, `addWorkDays`/`subtractWorkDays`/`countWorkDays` is tested
+- [x] No deferred live defects or contract drifts in scope
+- [x] Affected owner docs synced (schemas.ts updated, definitions registered)
+- [x] By independent sub-agent (fresh session) closure-audit completed and recorded
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -232,9 +232,20 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: TBD
+Status Note: All 4 phases completed. 114 unit tests pass. GanttStore, types, WBS tree, time scale engine (6 zoom units), layout computation (date↔pixel round-trip, task→pixel, link polyline), zoom with scroll anchoring, and WorkCalendar with three-level fallback are implemented and tested. S1 complete, ready for S2 rendering layer.
 
-Closure Audit Evidence: TBD
+Closure Audit Evidence:
+
+- Auditor / Agent: fresh sub-agent session (mission-driver closure-audit, 2026-07-20)
+- Evidence:
+  - Phase 1 (Types + GanttStore): `src/gantt/gantt.types.ts` (85 lines, all interfaces + computed properties), `src/gantt/gantt-store.ts` (400 lines, full store class). Tests: 114/114 pass (7 test files). `GanttStore` with flat Maps, parse, recalcLayout, updateTask, link lifecycle, event emitter verified.
+  - Phase 2 (WBS + Time Scale): `src/gantt/utils/date.ts` (diff/addDays/format/unit boundaries), `src/gantt/utils/scale.ts` (scale range, 6-unit intervals, smart scaling), `src/gantt/gantt-utils.ts` (flattenTree, parent index, toggle/expand/collapse). Tests confirm all six zoom units, tree flattening with expand/collapse, cross-year boundaries.
+  - Phase 3 (Zoom + Layout): `src/gantt/utils/layout.ts` — date↔pixel round-trip (idempotent), task→pixels with minimum width, link polyline generation, zoom switching with scroll anchoring.
+  - Phase 4 (WorkCalendar): `src/gantt/utils/worktime.ts` — DefaultWorkCalendar (isWorkingDay, addWorkDays, subtractWorkDays, countWorkDays), CalendarManager three-level fallback (resource→task→global). Integration with GanttStore updateTask via duration.
+  - Full verification: `pnpm typecheck` (56/56), `pnpm build` (30/30), `pnpm lint` (30/30), `pnpm test` (114/114, 7 files).
+  - Docs sync: `src/schemas.ts` updated with Gantt/Kanban/Calendar schemas. `src/scheduling-renderer-definitions.ts` with 3 renderer definitions. `docs/components/roadmap-scheduling.md` S1 items all `done`. `docs/logs/2026/07-20.md` updated with S1 completion.
+  - Deferred items honest: WorkCalendar multi-timezone is `out-of-scope improvement` (valid classification). No live defects or contract drifts hidden.
+  - Anti-hollow: All functions have real implementations (no empty bodies, no `return null` placeholders, no swallowed errors). All exports wired through `src/gantt/index.ts`.
 
 Follow-up:
 
