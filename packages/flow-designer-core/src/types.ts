@@ -302,6 +302,7 @@ export interface DesignerSnapshot {
   canUndo: boolean;
   canRedo: boolean;
   isDirty: boolean;
+  readonly: boolean;
   gridEnabled: boolean;
   paletteCollapsed: boolean;
   inspectorCollapsed: boolean;

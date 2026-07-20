@@ -109,6 +109,7 @@ export function DesignerPageBody({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const env = useRendererEnv();
   const statusSnapshot = useDesignerSnapshot(core);
+  const isReadOnly = statusSnapshot.readonly;
   const uiSnapshot = useMemo(
     () => ({
       paletteCollapsed: statusSnapshot.paletteCollapsed,
@@ -119,6 +120,7 @@ export function DesignerPageBody({
       activeNode: statusSnapshot.activeNode,
       activeEdge: statusSnapshot.activeEdge,
       selection: statusSnapshot.selection,
+      readonly: statusSnapshot.readonly,
     }),
     [
       statusSnapshot.activeEdge,
@@ -129,6 +131,7 @@ export function DesignerPageBody({
       statusSnapshot.isDirty,
       statusSnapshot.paletteCollapsed,
       statusSnapshot.selection,
+      statusSnapshot.readonly,
     ],
   );
   const statusPath =
@@ -336,7 +339,7 @@ export function DesignerPageBody({
     return actionScope.registerNamespace('designer', mergedDesignerProvider);
   }, [actionScope, mergedDesignerProvider]);
 
-  useDesignerShortcuts({ core, rootRef, dispatch });
+  useDesignerShortcuts({ core, rootRef, dispatch, readOnly: isReadOnly });
 
   const toolbarSlot = props.regions.toolbar?.render({
     scope: designerScope,
@@ -362,7 +365,7 @@ export function DesignerPageBody({
     },
     [actionScope, designerScope, props.helpers],
   );
-  const showPalettePanel = hasPalettePanel(config);
+  const showPalettePanel = hasPalettePanel(config) && !isReadOnly;
   const showInspectorPanel = hasInspectorPanel(config);
   const nodeClassAliases = props.node.templateNode.classAliasesPlan?.aliases;
   const mergedClassAliases = useMemo(
@@ -385,6 +388,7 @@ export function DesignerPageBody({
       onExportToggle={() => setJsonOpen((value) => !value)}
       onAutoLayout={handleAutoLayout}
       autoLayoutBusy={layoutBusy}
+      readOnly={isReadOnly}
     />
   );
   const header = resolvedTitle ? (

@@ -75,6 +75,7 @@ export function DesignerCanvasContent(props: {
       canUndo: state.canUndo,
       canRedo: state.canRedo,
       isDirty: state.isDirty,
+      readonly: state.readonly,
       gridEnabled: state.gridEnabled,
       paletteCollapsed: state.paletteCollapsed,
       inspectorCollapsed: state.inspectorCollapsed,
@@ -89,6 +90,7 @@ export function DesignerCanvasContent(props: {
       left.canUndo === right.canUndo &&
       left.canRedo === right.canRedo &&
       left.isDirty === right.isDirty &&
+      left.readonly === right.readonly &&
       left.gridEnabled === right.gridEnabled &&
       left.paletteCollapsed === right.paletteCollapsed &&
       left.inspectorCollapsed === right.inspectorCollapsed &&

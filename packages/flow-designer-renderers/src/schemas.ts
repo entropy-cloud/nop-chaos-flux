@@ -15,6 +15,7 @@ export interface DesignerPageSchemaInput {
   document?: GraphDocument;
   treeDocument?: TreeDocument;
   statusPath?: string;
+  readOnly?: boolean;
   toolbar?: SchemaInput;
   inspector?: SchemaInput;
   dialogs?: SchemaInput;

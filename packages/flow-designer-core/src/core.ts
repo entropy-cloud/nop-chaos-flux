@@ -49,10 +49,16 @@ import {
   deleteEdgeCommand,
   type EdgeCommandContext,
 } from './core-edge-commands.js';
+export interface CreateDesignerCoreOptions {
+  readonly?: boolean;
+}
+
 export function createDesignerCore(
   initialDoc: GraphDocument,
   config: DesignerConfig,
+  options?: CreateDesignerCoreOptions,
 ): DesignerCore {
+  const isReadonly = options?.readonly ?? false;
   function cloneTreeDocument(tree: TreeDocument | undefined): TreeDocument | undefined {
     return tree ? (JSON.parse(JSON.stringify(tree)) as TreeDocument) : undefined;
   }
@@ -79,6 +85,7 @@ export function createDesignerCore(
     canUndo: canUndo(),
     canRedo: canRedo(),
     isDirty: isDirty(),
+    readonly: isReadonly,
   });
 
   let transactionStack: DesignerTransaction[] = [];
@@ -92,6 +99,14 @@ export function createDesignerCore(
   });
 
   const maxHistorySize = 50;
+
+  function assertReadonly(methodName: string): boolean {
+    if (isReadonly) {
+      emit({ type: 'lifecycleHookError', hook: methodName, error: new Error('Document is readonly') });
+      return true;
+    }
+    return false;
+  }
 
   function emit(event: DesignerEvent) {
     for (const listener of listeners) {
@@ -159,6 +174,7 @@ export function createDesignerCore(
       canUndo: canUndo(),
       canRedo: canRedo(),
       isDirty: isDirty(),
+      readonly: isReadonly,
     });
   }
 
@@ -239,18 +255,22 @@ export function createDesignerCore(
     position: { x: number; y: number },
     data?: Record<string, unknown>,
   ): GraphNode | null {
+    if (assertReadonly('addNode')) return null;
     return addNodeCommand(buildNodeCtx(), type, position, data);
   }
 
   function updateNode(nodeId: string, data: Record<string, unknown>): void {
+    if (assertReadonly('updateNode')) return;
     updateNodeCommand(buildNodeCtx(), nodeId, data);
   }
 
   function moveNode(nodeId: string, position: { x: number; y: number }): void {
+    if (assertReadonly('moveNode')) return;
     moveNodeCommand(buildNodeCtx(), nodeId, position);
   }
 
   function duplicateNode(nodeId: string): GraphNode | null {
+    if (assertReadonly('duplicateNode')) return null;
     const source = doc.nodes.find((n) => n.id === nodeId);
     if (!source) {
       return null;
@@ -278,6 +298,7 @@ export function createDesignerCore(
   }
 
   function deleteNode(nodeId: string): void {
+    if (assertReadonly('deleteNode')) return;
     deleteNodeCommand(buildNodeCtx(), nodeId);
   }
 
@@ -288,6 +309,7 @@ export function createDesignerCore(
     sourcePort?: string,
     targetPort?: string,
   ): GraphEdge | null {
+    if (assertReadonly('addEdge')) return null;
     return addEdgeCommand(buildEdgeCtx(), source, target, data, sourcePort, targetPort);
   }
 
@@ -298,14 +320,17 @@ export function createDesignerCore(
     sourcePort?: string,
     targetPort?: string,
   ): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string } {
+    if (assertReadonly('reconnectEdge')) return { ok: false, error: 'Document is readonly' };
     return reconnectEdgeCommand(buildEdgeCtx(), edgeId, source, target, sourcePort, targetPort);
   }
 
   function updateEdge(edgeId: string, data: Record<string, unknown>): void {
+    if (assertReadonly('updateEdge')) return;
     updateEdgeCommand(buildEdgeCtx(), edgeId, data);
   }
 
   function deleteEdge(edgeId: string): void {
+    if (assertReadonly('deleteEdge')) return;
     deleteEdgeCommand(buildEdgeCtx(), edgeId);
   }
 
@@ -334,14 +359,17 @@ export function createDesignerCore(
   }
 
   function moveNodes(deltas: Record<string, { dx: number; dy: number }>): void {
+    if (assertReadonly('moveNodes')) return;
     moveNodesCommand(buildNodeCtx(), deltas);
   }
 
   function updateMultipleNodes(updates: Array<{ nodeId: string; data: Partial<GraphNode> }>): void {
+    if (assertReadonly('updateMultipleNodes')) return;
     updateMultipleNodesCommand(buildNodeCtx(), updates);
   }
 
   function undo(): void {
+    if (assertReadonly('undo')) return;
     const result = undoHistory(historyState);
     if (!result) {
       return;
@@ -360,6 +388,7 @@ export function createDesignerCore(
   }
 
   function redo(): void {
+    if (assertReadonly('redo')) return;
     const result = redoHistory(historyState);
     if (!result) {
       return;
@@ -378,10 +407,12 @@ export function createDesignerCore(
   }
 
   function copySelection(): void {
+    if (assertReadonly('copySelection')) return;
     shellControls.copySelection(selectionState.selectedNodeIds[0] ?? null);
   }
 
   function pasteClipboard(): void {
+    if (assertReadonly('pasteClipboard')) return;
     shellControls.pasteClipboard(addNode);
   }
 
@@ -414,6 +445,7 @@ export function createDesignerCore(
   }
 
   function replaceDocumentFromHost(nextDoc: GraphDocument, treeDocument?: TreeDocument): void {
+    if (assertReadonly('replaceDocumentFromHost')) return;
     if (treeOwner && treeDocument) {
       treeOwner.setTreeDocument(treeDocument);
     }
@@ -421,6 +453,7 @@ export function createDesignerCore(
   }
 
   function replaceDocumentWithHistory(nextDoc: GraphDocument, treeDocument?: TreeDocument): void {
+    if (assertReadonly('replaceDocument')) return;
     if (!setDocument(cloneDocument(nextDoc))) {
       return;
     }
@@ -451,6 +484,7 @@ export function createDesignerCore(
   }
 
   function save(): void {
+    if (assertReadonly('save')) return;
     savedDoc = cloneDocument(doc);
     savedTreeDocument = cloneTreeDocument(treeOwner?.getTreeDocument());
     savedRevision = docRevision;
@@ -458,6 +492,7 @@ export function createDesignerCore(
   }
 
   function restore(): void {
+    if (assertReadonly('restore')) return;
     if (!savedDoc) {
       return;
     }
@@ -487,6 +522,12 @@ export function createDesignerCore(
       return;
     }
 
+    if (isReadonly) {
+      doc = nextDoc;
+      emit({ type: 'viewportChanged', viewport: shellState.viewport });
+      return;
+    }
+
     setDocument(nextDoc);
     if (transactionStack.length === 0) {
       pushHistory();
@@ -500,6 +541,7 @@ export function createDesignerCore(
   }
 
   function beginTransaction(label?: string, transactionId?: string): string {
+    if (assertReadonly('beginTransaction')) return '';
     const nextState = beginTransactionState(
       transactionStack,
       doc,
@@ -518,6 +560,7 @@ export function createDesignerCore(
     transactionId?: string;
     reason?: 'unavailable' | 'missing-transaction';
   } {
+    if (assertReadonly('commitTransaction')) return { ok: false, reason: 'unavailable' };
     const result = commitTransactionState(transactionStack, transactionId);
     if (!result?.committedId) {
       return {
@@ -539,6 +582,7 @@ export function createDesignerCore(
     transactionId?: string;
     reason?: 'unavailable' | 'missing-transaction';
   } {
+    if (assertReadonly('rollbackTransaction')) return { ok: false, reason: 'unavailable' };
     const result = rollbackTransactionState(transactionStack, transactionId);
     if (!result) {
       return {

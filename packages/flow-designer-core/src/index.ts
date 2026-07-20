@@ -1,5 +1,6 @@
 export * from './types.js';
 export { createDesignerCore } from './core.js';
+export type { CreateDesignerCoreOptions } from './core.js';
 export type { DesignerCore } from './designer-core-types.js';
 export { normalizeConfig } from './core/config.js';
 export { createElkLayoutOwner, layoutWithElk } from './elk-layout.js';

@@ -29,6 +29,7 @@ export function createDesignerSnapshotCache(input: {
   canUndo: boolean;
   canRedo: boolean;
   isDirty: boolean;
+  readonly: boolean;
 }): DesignerSnapshotCache {
   const selection = getSelectionSummary(input.selectionState);
 
@@ -43,6 +44,7 @@ export function createDesignerSnapshotCache(input: {
       canUndo: input.canUndo,
       canRedo: input.canRedo,
       isDirty: input.isDirty,
+      readonly: input.readonly,
       gridEnabled: input.shell.gridEnabled,
       paletteCollapsed: input.shell.paletteCollapsed,
       inspectorCollapsed: input.shell.inspectorCollapsed,
@@ -59,6 +61,7 @@ export function getDesignerSnapshot(input: {
   canUndo: boolean;
   canRedo: boolean;
   isDirty: boolean;
+  readonly: boolean;
 }) {
   const selection = getSelectionSummary(input.selectionState);
   const activeNodeId = selection.activeNodeId;
@@ -87,6 +90,7 @@ export function getDesignerSnapshot(input: {
     input.cache.snapshot.canUndo === input.canUndo &&
     input.cache.snapshot.canRedo === input.canRedo &&
     input.cache.snapshot.isDirty === input.isDirty &&
+    input.cache.snapshot.readonly === input.readonly &&
     input.cache.snapshot.gridEnabled === input.shell.gridEnabled &&
     input.cache.snapshot.paletteCollapsed === input.shell.paletteCollapsed &&
     input.cache.snapshot.inspectorCollapsed === input.shell.inspectorCollapsed &&
@@ -105,6 +109,7 @@ export function getDesignerSnapshot(input: {
     canUndo: input.canUndo,
     canRedo: input.canRedo,
     isDirty: input.isDirty,
+    readonly: input.readonly,
     gridEnabled: input.shell.gridEnabled,
     paletteCollapsed: input.shell.paletteCollapsed,
     inspectorCollapsed: input.shell.inspectorCollapsed,

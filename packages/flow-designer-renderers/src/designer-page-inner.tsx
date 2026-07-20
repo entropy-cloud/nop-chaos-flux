@@ -21,6 +21,13 @@ interface DesignerPageInnerProps {
   };
 }
 
+function readDesignerResolvedProp<T>(
+  props: RendererComponentProps<DesignerPageSchema>,
+  key: string,
+): T | undefined {
+  return props.props[key] as T | undefined;
+}
+
 export function DesignerPageInner({
   rendererProps: props,
   document,
@@ -30,6 +37,7 @@ export function DesignerPageInner({
   treeOwner,
 }: DesignerPageInnerProps) {
   const env = useRendererEnv();
+  const readOnly = readDesignerResolvedProp<boolean>(props, 'readOnly') ?? false;
   const core = useMemo(() => {
     if (providedCore) {
       return providedCore;
@@ -37,8 +45,8 @@ export function DesignerPageInner({
     if (!document) {
       throw new Error('DesignerPageInner requires document when core is not provided.');
     }
-    return createDesignerCore(document, config);
-  }, [config, document, providedCore]);
+    return createDesignerCore(document, config, { readonly: readOnly });
+  }, [config, document, providedCore, readOnly]);
   const commandAdapter = useMemo(
     () =>
       createDesignerCommandAdapter(

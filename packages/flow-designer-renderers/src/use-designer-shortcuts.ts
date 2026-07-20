@@ -9,8 +9,9 @@ export function useDesignerShortcuts(args: {
   core: DesignerCoreLike;
   rootRef: React.RefObject<HTMLDivElement | null>;
   dispatch: (command: DesignerCommand) => unknown;
+  readOnly?: boolean;
 }) {
-  const { core, rootRef, dispatch } = args;
+  const { core, rootRef, dispatch, readOnly = false } = args;
 
   useEffect(() => {
     if (!core.getConfig().features.shortcuts) {
@@ -38,6 +39,10 @@ export function useDesignerShortcuts(args: {
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (isEditableTarget(event.target) || !isInsideDesigner(event.target)) {
+        return;
+      }
+
+      if (readOnly) {
         return;
       }
 
@@ -74,5 +79,5 @@ export function useDesignerShortcuts(args: {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [core, dispatch, rootRef]);
+  }, [core, dispatch, rootRef, readOnly]);
 }

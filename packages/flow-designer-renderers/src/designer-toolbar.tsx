@@ -25,11 +25,29 @@ function normalizeTemplateSource(template: string | undefined) {
   return template.replace(/\{\{([^}]+)\}\}/g, '${$1}');
 }
 
+const MUTATION_ACTIONS = new Set([
+  'undo', 'redo', 'save', 'designer:undo', 'designer:redo', 'designer:save',
+  'deleteSelection', 'copySelection', 'pasteClipboard',
+]);
+
+const VIEW_SAFE_ACTIONS = new Set([
+  'fitView', 'export', 'toggleGrid', 'toggleMinimap',
+  'designer:fitView', 'designer:export', 'designer:toggleGrid', 'designer:toggleMinimap',
+  'designer:autoLayout', 'autoLayout', 'designer:navigate-back',
+]);
+
+function isMutationAction(action: string | undefined): boolean {
+  if (!action) return false;
+  if (VIEW_SAFE_ACTIONS.has(action)) return false;
+  return MUTATION_ACTIONS.has(action) || action.startsWith('designer:');
+}
+
 export function DesignerToolbarContent(props: {
   onExportToggle?: () => void;
   exportActive?: boolean;
   onAutoLayout?: () => void;
   autoLayoutBusy?: boolean;
+  readOnly?: boolean;
 }) {
   const { config, designerScope } = useDesignerContext();
   useDesignerSnapshotSelector<ToolbarSnapshot>((state) => ({
@@ -92,7 +110,14 @@ export function DesignerToolbarContent(props: {
   );
 
   const items = useMemo(() => {
-    return (config.toolbar?.items ?? []).map((item, index) => {
+    const allItems = config.toolbar?.items ?? [];
+    const filteredItems = props.readOnly
+      ? allItems.filter((item) => {
+          if (item.type !== 'button' && item.type !== 'switch') return true;
+          return !isMutationAction(item.action);
+        })
+      : allItems;
+    return filteredItems.map((item, index) => {
       const key = `${item.type}:${index}`;
       if (item.type === 'title') {
         return { key, item: { ...item, body: String(resolveToolbarValue(item.body) ?? '') } };
@@ -132,7 +157,7 @@ export function DesignerToolbarContent(props: {
       }
       return { key, item };
     });
-  }, [config.toolbar?.items, resolveToolbarValue]);
+  }, [config.toolbar?.items, resolveToolbarValue, props.readOnly]);
 
   if (items.length === 0) {
     return null;
