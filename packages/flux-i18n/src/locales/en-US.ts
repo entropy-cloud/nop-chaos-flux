@@ -88,6 +88,8 @@ export const enUS: Resource = {
       loading: 'Loading',
       copy: 'Copy to clipboard',
       copied: 'Copied',
+      retry: 'Retry',
+      noChildren: 'No children',
     },
     form: {
       required: 'Required',

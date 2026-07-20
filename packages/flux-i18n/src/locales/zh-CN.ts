@@ -89,6 +89,8 @@ export const zhCN: Resource = {
       loading: '加载中',
       copy: '复制到剪贴板',
       copied: '已复制',
+      retry: '重试',
+      noChildren: '暂无子节点',
     },
     form: {
       required: '必填',
