@@ -17,6 +17,7 @@ export interface KanbanColumnConfig {
   id: string;
   title?: string;
   cardLimit?: number;
+  wipStrict?: boolean;
   collapsed?: boolean;
   width?: number | string;
 }
@@ -34,6 +35,7 @@ export interface KanbanEvents {
   onColumnClick?: ActionSchema;
   onCardAdd?: ActionSchema;
   onCardRemove?: ActionSchema;
+  onCardUpdate?: ActionSchema;
 }
 
 export interface KanbanSchema extends BaseSchema {
@@ -50,6 +52,8 @@ export interface KanbanSchema extends BaseSchema {
   body?: SchemaInput;
   filterText?: string;
   filterCard?: string;
+  filterTags?: string[];
+  wipStrict?: boolean;
   columnWidth?: number | 'auto' | 'equal';
   columnDraggable?: boolean;
   draggable?: boolean;

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useRef, useMemo } from 'react';
 import { cn } from '@nop-chaos/ui';
 import type { BoardData, BoardItem, KanbanCardConfig } from './kanban.types.js';
 import { KanbanColumnHeader } from './kanban-column-header.js';
 import { KanbanCard } from './kanban-card.js';
+import { useKanbanVirtualizer } from './hooks/use-kanban-virtualizer.js';
 
 export interface KanbanColumnProps {
   column: BoardItem;
@@ -19,6 +20,11 @@ export interface KanbanColumnProps {
   filterText?: string;
   draggable?: boolean;
   className?: string;
+  columnWidth?: number;
+  onResizeStart?: (e: React.PointerEvent) => void;
+  virtualize?: boolean;
+  wipWarning?: boolean;
+  wipText?: string;
 }
 
 export function KanbanColumn({
@@ -36,23 +42,49 @@ export function KanbanColumn({
   filterText,
   draggable,
   className,
+  columnWidth,
+  onResizeStart,
+  virtualize,
+  wipWarning,
+  wipText,
 }: KanbanColumnProps) {
   const cardIds = column.children;
-  const cards = cardIds
-    .map((id) => board[id])
-    .filter((item): item is BoardItem => item != null && item.type === 'card');
+  const cards = useMemo(
+    () => cardIds
+      .map((id) => board[id])
+      .filter((item): item is BoardItem => item != null && item.type === 'card'),
+    [cardIds, board],
+  );
 
-  const filteredCards = filterText
-    ? cards.filter((card) => {
-        const title = ((card.data?.title as string) || '').toLowerCase();
-        const description = ((card.data?.description as string) || '').toLowerCase();
-        const text = filterText.toLowerCase();
-        return title.includes(text) || description.includes(text);
-      })
-    : cards;
+  const filteredCards = useMemo(() => {
+    if (!filterText) return cards;
+    const text = filterText.toLowerCase();
+    return cards.filter((card) => {
+      const title = ((card.data?.title as string) || '').toLowerCase();
+      const description = ((card.data?.description as string) || '').toLowerCase();
+      return title.includes(text) || description.includes(text);
+    });
+  }, [cards, filterText]);
 
   const displayCards = collapsed ? [] : filteredCards;
   const showEmptyZone = !collapsed && filteredCards.length === 0;
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const { virtualItems, totalSize } = useKanbanVirtualizer({
+    cardCount: displayCards.length,
+    overscan: 5,
+    estimatedCardHeight: 80,
+    gap: 8,
+    scrollContainerRef: virtualize ? scrollContainerRef : { current: null },
+  });
+
+  const columnStyle: React.CSSProperties = {};
+  if (columnWidth != null) {
+    columnStyle.width = columnWidth;
+    columnStyle.minWidth = undefined;
+    columnStyle.maxWidth = undefined;
+  }
 
   return (
     <div
@@ -63,8 +95,10 @@ export function KanbanColumn({
       className={cn(
         'nop-kanban-column flex flex-col bg-gray-50 rounded-lg border border-gray-200 min-w-[280px] max-w-[360px]',
         collapsed && 'nop-kanban-column-collapsed',
+        wipWarning && 'border-red-400',
         className,
       )}
+      style={columnStyle}
     >
       <KanbanColumnHeader
         column={column}
@@ -74,21 +108,61 @@ export function KanbanColumn({
         columnHeaderRegion={columnHeaderRegion}
         columnHeaderToolbarRegion={columnHeaderToolbarRegion}
         dndEnabled={draggable}
+        onResizeStart={onResizeStart}
+        wipWarning={wipWarning}
+        wipText={wipText}
       />
 
       {!collapsed && (
-        <div data-slot="kanban-column-body" className="nop-kanban-column-body flex-1 overflow-y-auto p-2 space-y-2 min-h-[60px]">
-          {displayCards.map((card, idx) => (
-            <KanbanCard
-              key={card.id}
-              card={card}
-              column={column}
-              index={idx}
-              configMap={configMap}
-              cardTemplateRegion={cardTemplateRegion}
-              onCardClick={onCardClick}
-            />
-          ))}
+        <div
+          ref={virtualize ? scrollContainerRef : undefined}
+          data-slot="kanban-column-body"
+          className="nop-kanban-column-body flex-1 overflow-y-auto p-2 min-h-[60px]"
+          style={virtualize ? { overflowY: 'auto', maxHeight: '100%' } : undefined}
+        >
+          {virtualize && displayCards.length > 0 ? (
+            <div style={{ height: totalSize, position: 'relative' }}>
+              {virtualItems.map((virtualItem) => {
+                const card = displayCards[virtualItem.index];
+                if (!card) return null;
+                return (
+                  <div
+                    key={card.id}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                  >
+                    <KanbanCard
+                      card={card}
+                      column={column}
+                      index={cardIds.indexOf(card.id)}
+                      configMap={configMap}
+                      cardTemplateRegion={cardTemplateRegion}
+                      onCardClick={onCardClick}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {displayCards.map((card, _idx) => (
+                <KanbanCard
+                  key={card.id}
+                  card={card}
+                  column={column}
+                  index={cardIds.indexOf(card.id)}
+                  configMap={configMap}
+                  cardTemplateRegion={cardTemplateRegion}
+                  onCardClick={onCardClick}
+                />
+              ))}
+            </div>
+          )}
           {showEmptyZone && (
             <div
               data-slot="kanban-column-empty"

@@ -23,7 +23,10 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@tanstack/react-virtual": "^3.13.24",
-    "ical.js": "^2.2.1"
+    "html2canvas": "^1.4.1",
+    "ical.js": "^2.2.1",
+    "jspdf": "^2.5.2",
+    "xlsx": "^0.18.5"
   },
   "peerDependencies": {
     "lucide-react": "^1.17.0",

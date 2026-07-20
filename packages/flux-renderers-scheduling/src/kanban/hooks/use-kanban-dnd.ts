@@ -24,10 +24,12 @@ export interface UseKanbanDndOptions {
     toColumnId: string;
     fromIndex: number;
     toIndex: number;
+    overLimit?: boolean;
   }) => void;
+  wipOverLimitColumns?: Set<string>;
 }
 
-export function useKanbanDnd({ boardData, onBoardChange, onCardMove }: UseKanbanDndOptions) {
+export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimitColumns }: UseKanbanDndOptions) {
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
     draggingCardId: null,
@@ -38,11 +40,11 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove }: UseKanban
     closestEdge: null,
   });
 
-  const stateRef = useRef({ boardData, onBoardChange, onCardMove });
+  const stateRef = useRef({ boardData, onBoardChange, onCardMove, wipOverLimitColumns });
 
   useEffect(() => {
-    stateRef.current = { boardData, onBoardChange, onCardMove };
-  }, [boardData, onBoardChange, onCardMove]);
+    stateRef.current = { boardData, onBoardChange, onCardMove, wipOverLimitColumns };
+  }, [boardData, onBoardChange, onCardMove, wipOverLimitColumns]);
 
   useEffect(() => {
     return monitorForElements({
@@ -71,7 +73,7 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove }: UseKanban
         if (toColumnId == null || toIndex == null) return;
         if (fromColumnId === toColumnId && (targetData.cardIndex as number) === (source.data.cardIndex as number)) return;
 
-        const { boardData: currentBoard, onBoardChange: changeBoard, onCardMove: moveEvent } = stateRef.current;
+        const { boardData: currentBoard, onBoardChange: changeBoard, onCardMove: moveEvent, wipOverLimitColumns: wipSet } = stateRef.current;
         const newBoard = moveCard(currentBoard, cardId, toColumnId, toIndex);
 
         changeBoard(newBoard);
@@ -79,7 +81,8 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove }: UseKanban
         if (moveEvent) {
           const fromCol = currentBoard[fromColumnId];
           const fromIndex = fromCol ? fromCol.children.indexOf(cardId) : -1;
-          moveEvent({ cardId, fromColumnId, toColumnId, fromIndex, toIndex });
+          const overLimit = wipSet?.has(toColumnId) ?? false;
+          moveEvent({ cardId, fromColumnId, toColumnId, fromIndex, toIndex, overLimit });
         }
       },
     });
@@ -125,7 +128,9 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove }: UseKanban
           dropIndex: cardCount,
         }),
         canDrop({ source }) {
-          return source.data.type === 'kanban-card';
+          if (source.data.type !== 'kanban-card') return false;
+          if (wipOverLimitColumns?.has(columnId)) return false;
+          return true;
         },
         onDragEnter() {
           setDropState((prev) => ({ ...prev, targetColumnId: columnId }));
@@ -137,7 +142,7 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove }: UseKanban
         },
       });
     },
-    [],
+    [wipOverLimitColumns],
   );
 
   return {

@@ -1,6 +1,8 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
 import type { BoardItem, KanbanCardConfig } from './kanban.types.js';
+import { KanbanCardTags } from './components/kanban-card-tags.js';
+import type { KanbanTag, KanbanMember } from './components/kanban-card-tags.js';
 
 export interface KanbanCardProps {
   card: BoardItem;
@@ -24,6 +26,8 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
   const title = (card.data?.title as string) || '';
   const description = (card.data?.description as string) || '';
   const color = (card.meta?.color as string) || '';
+  const tags = (card.meta?.tags as KanbanTag[]) || [];
+  const members = (card.meta?.members as KanbanMember[]) || [];
 
   const config = configMap?.[cardType];
   const clickFn = () => onCardClick?.(card.id, column.id, index);
@@ -47,6 +51,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
         className={cn('nop-kanban-card', config.className, className)}
       >
         {cardTemplateRegion?.render({ card, column, index })}
+        <KanbanCardTags color={color} tags={tags} members={members} />
       </div>
     );
   }
@@ -58,6 +63,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
         className={cn('nop-kanban-card', className)}
       >
         {cardTemplateRegion.render({ card, column, index })}
+        <KanbanCardTags color={color} tags={tags} members={members} />
       </div>
     );
   }
@@ -70,13 +76,8 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
         className,
       )}
     >
-      {color && (
-        <div
-          className="nop-kanban-card-color-dot w-2 h-2 rounded-full mb-1.5"
-          style={{ backgroundColor: color }}
-        />
-      )}
-      <div className="nop-kanban-card-content text-sm font-medium text-gray-900 truncate">
+      <KanbanCardTags color={color} tags={tags} members={members} />
+      <div className="nop-kanban-card-content text-sm font-medium text-gray-900 truncate mt-1">
         {title}
       </div>
       {description && (
