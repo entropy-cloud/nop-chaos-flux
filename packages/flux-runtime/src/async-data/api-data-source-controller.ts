@@ -12,6 +12,18 @@ import {
 } from './api-data-source-controller-runtime.js';
 import type { CreateApiDataSourceControllerInput } from './api-data-source-controller-types.js';
 
+function getIntervalMs(interval: NonNullable<CreateApiDataSourceControllerInput['interval']>): number {
+  return typeof interval === 'number' ? interval : interval.base;
+}
+
+function resolveInterval(interval: NonNullable<CreateApiDataSourceControllerInput['interval']>): number {
+  if (typeof interval === 'number') return interval;
+  const { base, jitter = 0 } = interval;
+  if (jitter <= 0) return base;
+  const offset = Math.random() * jitter * (Math.random() > 0.5 ? 1 : -1);
+  return Math.max(1, Math.round(base + offset));
+}
+
 function resolveInitFetch(input: CreateApiDataSourceControllerInput): boolean {
   if (!input.initFetch) {
     return true;
@@ -41,10 +53,11 @@ export function createDataSourceController(
   };
 
   function schedulePoll(): void {
-    if (mutable.stopped || !input.interval || input.interval <= 0) {
+    if (mutable.stopped || !input.interval || getIntervalMs(input.interval) <= 0) {
       return;
     }
 
+    const delay = resolveInterval(input.interval);
     mutable.pollTimer = setTimeout(() => {
       const allowed = evaluateSendOnGate(input);
       void (allowed ? runRequest() : Promise.resolve())
@@ -54,7 +67,7 @@ export function createDataSourceController(
             schedulePoll();
           }
         });
-    }, input.interval);
+    }, delay);
   }
 
   function activateController(publishInitialData: boolean): void {
@@ -105,7 +118,7 @@ export function createDataSourceController(
       void runRequest().catch(reportRunRequestError);
     }
 
-    if (input.interval && input.interval > 0) {
+    if (input.interval && getIntervalMs(input.interval) > 0) {
       schedulePoll();
     }
   }
@@ -120,7 +133,7 @@ export function createDataSourceController(
       if (!mutable.started || mutable.stopped) {
         activateController(false);
 
-        if (input.interval && input.interval > 0) {
+        if (input.interval && getIntervalMs(input.interval) > 0) {
           schedulePoll();
         }
       }

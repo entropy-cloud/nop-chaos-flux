@@ -30,7 +30,8 @@ export interface CreateApiDataSourceControllerInput {
   mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
   mergeKey?: string;
   statusPath?: string;
-  interval?: number;
+  /** Polling interval in ms or `{ base, jitter? }` for jittered polling */
+  interval?: number | { base: number; jitter?: number };
   stopWhen?: CompiledRuntimeValue<boolean>;
   silent?: boolean;
   initialData?: unknown;

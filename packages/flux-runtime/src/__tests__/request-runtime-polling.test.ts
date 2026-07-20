@@ -246,6 +246,159 @@ describe('createDataSourceController', () => {
     controller.stop();
   });
 
+  it('A10: accepts interval as { base, jitter } and applies jitter within range', async () => {
+    vi.useFakeTimers();
+    const callTimes: number[] = [];
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env: {
+        fetcher: vi.fn(async () => {
+          callTimes.push(Date.now());
+          return { ok: true, status: 200, data: { ok: true } };
+        }),
+        notify: vi.fn(),
+      } as RendererEnv,
+    });
+    const page = runtime.createPageRuntime({});
+    const base = 100;
+    const jitter = 20;
+    const controller = runtime.createDataSourceController({
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/jitter' } },
+        runtime.expressionCompiler,
+      ),
+      scope: page.scope,
+      targetPath: 'jitterTarget',
+      interval: { base, jitter },
+    });
+
+    controller.start();
+
+    await vi.advanceTimersByTimeAsync(base + jitter + 10);
+    expect(callTimes.length).toBeGreaterThanOrEqual(1);
+
+    for (let i = 1; i < callTimes.length; i++) {
+      const delta = callTimes[i] - callTimes[i - 1];
+      expect(delta).toBeGreaterThanOrEqual(base - jitter - 5);
+      expect(delta).toBeLessThanOrEqual(base + jitter + 5);
+    }
+
+    controller.stop();
+    vi.useRealTimers();
+  });
+
+  it('A10: plain number interval works unchanged', async () => {
+    vi.useFakeTimers();
+    const callTimes: number[] = [];
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env: {
+        fetcher: vi.fn(async () => {
+          callTimes.push(Date.now());
+          return { ok: true, status: 200, data: { ok: true } };
+        }),
+        notify: vi.fn(),
+      } as RendererEnv,
+    });
+    const page = runtime.createPageRuntime({});
+    const controller = runtime.createDataSourceController({
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/plain' } },
+        runtime.expressionCompiler,
+      ),
+      scope: page.scope,
+      targetPath: 'plainTarget',
+      interval: 50,
+    });
+
+    controller.start();
+
+    await vi.advanceTimersByTimeAsync(120);
+    expect(callTimes.length).toBeGreaterThanOrEqual(2);
+
+    for (let i = 1; i < callTimes.length; i++) {
+      const delta = callTimes[i] - callTimes[i - 1];
+      expect(delta).toBeGreaterThanOrEqual(45);
+    }
+
+    controller.stop();
+    vi.useRealTimers();
+  });
+
+  it('A10: zero jitter produces no randomization', async () => {
+    vi.useFakeTimers();
+    const callTimes: number[] = [];
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env: {
+        fetcher: vi.fn(async () => {
+          callTimes.push(Date.now());
+          return { ok: true, status: 200, data: { ok: true } };
+        }),
+        notify: vi.fn(),
+      } as RendererEnv,
+    });
+    const page = runtime.createPageRuntime({});
+    const base = 100;
+    const controller = runtime.createDataSourceController({
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/nojitter' } },
+        runtime.expressionCompiler,
+      ),
+      scope: page.scope,
+      targetPath: 'noJitterTarget',
+      interval: { base, jitter: 0 },
+    });
+
+    controller.start();
+    await vi.advanceTimersByTimeAsync(250);
+
+    for (let i = 1; i < callTimes.length; i++) {
+      const delta = callTimes[i] - callTimes[i - 1];
+      expect(delta).toBe(base);
+    }
+
+    controller.stop();
+    vi.useRealTimers();
+  });
+
+  it('A10: interval { base } without jitter defaults to no jitter', async () => {
+    vi.useFakeTimers();
+    const callTimes: number[] = [];
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env: {
+        fetcher: vi.fn(async () => {
+          callTimes.push(Date.now());
+          return { ok: true, status: 200, data: { ok: true } };
+        }),
+        notify: vi.fn(),
+      } as RendererEnv,
+    });
+    const page = runtime.createPageRuntime({});
+    const base = 100;
+    const controller = runtime.createDataSourceController({
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/baseonly' } },
+        runtime.expressionCompiler,
+      ),
+      scope: page.scope,
+      targetPath: 'baseOnlyTarget',
+      interval: { base },
+    });
+
+    controller.start();
+    await vi.advanceTimersByTimeAsync(250);
+
+    for (let i = 1; i < callTimes.length; i++) {
+      const delta = callTimes[i] - callTimes[i - 1];
+      expect(delta).toBe(base);
+    }
+
+    controller.stop();
+    vi.useRealTimers();
+  });
+
   it('reuses cache for equivalent final executable requests after params canonicalization', async () => {
     const fetcher = vi.fn(async () => ({
       ok: true,
