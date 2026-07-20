@@ -783,13 +783,20 @@ Compiled expression dependencies may only create reactive edges within the curre
 
 If a rule needs data originating from another owner, that data must be projected into the current owner as an explicit input value rather than modeled as a cross-owner reactive dependency edge.
 
-### Array Row-Local Relative Cross-Field Addressing (V6 adjudication)
+### Array Row-Local Relative Cross-Field Addressing (V6)
 
-Cross-field rules (`equalsField`, `requiredWhen`, ...) resolve their `rule.path` against the **absolute** owner scope (`scope.get(rule.path)`), and their `dependencyPaths` are absolute owner paths. There is **no** row-local relative addressing mechanism that lets a rule inside one array row reference a sibling field of the _same row_ via a relative path.
+Cross-field rules (`equalsField`, `requiredWhen`, ...) now support row-local relative addressing via `../` prefix syntax in `rule.path`. A rule inside one array row can reference a sibling field of the same row using a relative path, which is resolved at validation time against the field's own path.
 
-`array-field`'s `validation.getChildFieldPathPrefix()` returns `false` by design: array item children are **not** collected into the parent owner's static compiled validation graph. Item field validation instead flows through the projected per-item form runtime registration. Consequently a relative cross-field rule authored on an array item field is not modeled as a per-row sibling check; authors must use absolute index-addressed paths (`items.${i}.x`) for any cross-row or row-targeting rule. `path-binding.ts` `toAbsolute` / `toRelative` / `owns` only serve the projected-owner subtree (detail / object / variant rebasing) against a fixed `ownerRootPath`; they do not represent dynamic per-index row instances and there is no row-instance path-binding context.
+**Resolution mechanism:**
 
-This is an adjudicated gap (roadmap B3.2 裁定 B = `DESIGN-ACK-NOT-IMPL`). Row-local relative addressing is an amis-parity feature that Flux has never claimed; it would require architectural changes across validation-collection, path-binding, and the projected validation runtime. It is recorded as a candidate successor under roadmap B7. Non-array projected-owner path rebasing is covered by `docs/architecture/value-adaptation-and-detail-field.md`.
+1. `resolveRelativePath(currentPath, relativePath)` in `packages/flux-core/src/utils/path.ts` resolves `../`-style paths: `resolveRelativePath('items.0.age', '../name')` → `items.0.name`.
+2. The function strips one path segment per `../` prefix, then appends the remaining path. Out-of-bounds `../` beyond the root are stripped silently.
+3. Validators (`equalsField`, `notEqualsField`, `requiredWhen`, `requiredUnless`) call `resolveRelativePath(field.path, rule.path)` before reading the peer value from scope.
+4. The dependency graph (`buildCompiledValidationDependentMap`) also resolves relative `dependencyPaths` against the node's own path, so relative-path dependencies trigger correct revalidation cascading.
+
+**Row scope invariance:** Since `array-field`'s `validation.getChildFieldPathPrefix()` returns `false`, array item fields are not in the parent owner's static validation graph. Item validation flows through projected per-item form runtime registrations. Within an item (e.g., path `items.0`), `../fieldName` resolves to the parent array — i.e., a sibling of all row items. For same-row sibling references, use `../fieldName` (or just `fieldName` if the validator's rule path resolves directly).
+
+Non-array projected-owner path rebasing is covered by `docs/architecture/value-adaptation-and-detail-field.md`.
 
 Dependency closure must be cycle-safe.
 
@@ -878,15 +885,16 @@ Current live participation baseline:
 - `clearValueWhenHidden` now cascades across descendant compiled fields inside the hidden subtree rather than only clearing the exact path passed to `notifyFieldHidden(...)`
 - renderer-triggered validation entry points on advanced composite controls must preserve the actual owner reason (`change`, `blur`, etc.) and must not silently fall back to manual/no-reason validation after already consulting `shouldValidateOn(...)`
 
-### Hidden Field Value And Submit Payload (C10 adjudication)
+### Hidden Field Value And Submit Payload (C10)
 
-The submit flow reads the form store values directly (`store.getState().values`) and applies **no** hidden-field projection. The Flux contract (roadmap B3.2 裁定 B) is therefore:
+The submit flow (`packages/flux-runtime/src/form-runtime-submit-flow.ts`) now applies a **submit-payload projection** that excludes hidden fields from the default submit payload by default. The current contract:
 
-1. by default, a field hidden through `when`/`visible` **keeps its value** in the store and that value **is included** in the submitted payload — "hide ≠ clear"
-2. the only built-in mechanism that removes a hidden field's value is `clearValueWhenHidden` (opt-in, defaults to `false`), which clears the stored value when the field becomes hidden; a cleared value is consequently absent from the submitted payload
-3. there is **no** "exclude from submit payload but keep in store" mechanism modeled today; that is a distinct submit-payload-projection semantics recorded as a candidate successor (roadmap B7), not a claimed-and-live property
+1. by default, a field hidden through `when`/`visible` **keeps its value** in the store (see §clearValueWhenHidden below) but is **excluded from the submit payload** — "hide ≠ expose in payload"
+2. `clearValueWhenHidden: true` (opt-in, defaults to `false`) remains a separate path: the value is cleared when the field becomes hidden, but the key **remains** in the submitted payload (value will be `undefined`). This preserves the existing contract for authors who explicitly opted into value clearing.
+3. the projection filter (`excludeHiddenFieldPaths` in `form-runtime-submit-flow.ts`) walks the store values tree recursively, skipping any path present in the excluded set. The exclusion set is built from `sharedState.hiddenFields` minus any paths whose field has `hiddenFieldPolicy.clearValueWhenHidden === true`.
+4. custom `submitAction` lifecycle handlers receive the raw unfiltered values and are responsible for their own projection if needed.
 
-This default is intentional: silently stripping hidden values from every existing form's submit payload would be a high blast-radius behavioral change, and Flux already provides the explicit `clearValueWhenHidden` opt-out. (Note: validation-participation exclusion of hidden fields is a separate concern already covered by the participation rules above and by `hiddenFieldPolicy.validateWhenHidden`; it does not imply submit-payload exclusion.)
+This approach is intentionally narrow: only hidden fields without `clearValueWhenHidden` are excluded. Authors who previously relied on the old behavior (hidden fields included in payload) can use `hiddenFieldPolicy: { clearValueWhenHidden: false }` to keep the value exposed while ensuring the field remains hidden from the UI. (Note: validation-participation exclusion of hidden fields is a separate concern covered by the participation rules above and by `hiddenFieldPolicy.validateWhenHidden`.)
 
 Refresh baseline note:
 

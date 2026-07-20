@@ -452,6 +452,17 @@ Priority order:
 - more compiler-described composite validation in place of runtime registration
 - further reduction of duplicated validation projections where it can be done safely
 
+## Path Resolution Utilities
+
+`packages/flux-core/src/utils/path.ts` provides the core path resolution functions used across all packages:
+
+- **`parsePath(path)`** — tokenizes a dot/bracket path string into segments. Supports numeric bracket syntax (`items[0].name` → `['items', '0', 'name']`) and quoted bracket-key syntax (`obj["key.with.dots"]` → `['obj', 'key.with.dots']`). Dots inside quoted brackets are treated as literal characters, not separators. Results are LRU-cached (max 1000 entries).
+- **`getIn(input, path)`** — immutable nested value lookup via `parsePath`. Guards against `__proto__`/`constructor`/`prototype` access.
+- **`setIn(input, path, value)`** — immutable nested value assignment with automatic intermediate object/array creation. Numeric intermediate segments create arrays.
+- **`resolveRelativePath(currentPath, relativePath)`** — resolves `../`-style relative paths against a current path. `resolveRelativePath('items.0.field', '../sibling')` → `'items.0.sibling'`. Handles out-of-bounds and root-relative edge cases.
+- **`normalizeRootPath(path)`** / **`normalizeRootPaths(paths)`** — extract first path segment(s) for dependency tracking. `*` acts as wildcard.
+- **`createPathBinding`** (`packages/flux-core/src/utils/path-binding.ts`) — creates a path-binding service for projected-owner subtree rebasing, mapping between relative (owner-local) and absolute (parent-scope) coordinates.
+
 ## Designs No Longer Preferred
 
 - prototype-chain objects used directly as the expression execution context
