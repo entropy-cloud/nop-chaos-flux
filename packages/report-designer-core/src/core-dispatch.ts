@@ -32,6 +32,7 @@ export interface ReportDesignerInternalState {
     mode?: string;
     lastResult?: unknown;
   };
+  readonly: boolean;
   undoStack: ReportTemplateDocument[];
   redoStack: ReportTemplateDocument[];
 }

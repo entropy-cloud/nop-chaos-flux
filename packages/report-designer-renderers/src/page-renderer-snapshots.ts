@@ -5,6 +5,7 @@ export interface ReportPageSnapshotSlice {
   document: ReportTemplateDocument;
   spreadsheetSyncSource?: ReportTemplateDocument['spreadsheet'];
   dirty: boolean;
+  readonly: boolean;
   canUndo: boolean;
   canRedo: boolean;
   selectionTarget: ReturnType<ReportDesignerCore['getSnapshot']>['selectionTarget'];
@@ -22,6 +23,7 @@ export function selectReportPageSnapshot(
     document: snapshot.document,
     spreadsheetSyncSource: snapshot.spreadsheetSyncSource,
     dirty: snapshot.dirty,
+    readonly: snapshot.readonly,
     canUndo: snapshot.canUndo,
     canRedo: snapshot.canRedo,
     selectionTarget: snapshot.selectionTarget,
@@ -38,6 +40,7 @@ export function equalReportPageSnapshot(a: ReportPageSnapshotSlice, b: ReportPag
     a.document === b.document &&
     a.spreadsheetSyncSource === b.spreadsheetSyncSource &&
     a.dirty === b.dirty &&
+    a.readonly === b.readonly &&
     a.canUndo === b.canUndo &&
     a.canRedo === b.canRedo &&
     a.selectionTarget === b.selectionTarget &&

@@ -28,6 +28,7 @@ export interface ReportDesignerPageSchemaInput {
   profile?: ReportDesignerProfile;
   adapters?: Partial<ReportDesignerAdapterRegistry>;
   statusPath?: string;
+  readOnly?: boolean;
   toolbar?: BaseSchema | BaseSchema[];
   fieldPanel?: BaseSchema | BaseSchema[];
   inspector?: BaseSchema | BaseSchema[];

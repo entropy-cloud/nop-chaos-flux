@@ -271,13 +271,14 @@ export function ReportDesignerPageRenderer(
     () => resolveReportDesignerProfile(props.props.profile),
     [props.props.profile],
   );
+  const readOnly = props.props.readOnly ?? false;
   const resolvedAdapters = useMemo(
     () => resolveReportDesignerAdapters(props.props.adapters),
     [props.props.adapters],
   );
   const spreadsheetCore = useMemo(
-    () => createSpreadsheetCore({ document: resolvedDocument.spreadsheet }),
-    [resolvedDocument],
+    () => createSpreadsheetCore({ document: resolvedDocument.spreadsheet, readonly: readOnly }),
+    [resolvedDocument, readOnly],
   );
   const spreadsheetProvider = useMemo(
     () => createSpreadsheetActionProvider(spreadsheetCore.dispatch),
@@ -294,8 +295,9 @@ export function ReportDesignerPageRenderer(
         config: resolvedDesigner,
         profile: resolvedProfile,
         adapters: resolvedAdapters ?? createEmptyAdapterRegistry(),
+        readonly: readOnly,
       }),
-    [resolvedAdapters, resolvedDesigner, resolvedDocument, resolvedProfile],
+    [resolvedAdapters, resolvedDesigner, resolvedDocument, resolvedProfile, readOnly],
   );
   const reportDesignerProvider = useMemo(
     () =>
@@ -518,7 +520,7 @@ export function ReportDesignerPageRenderer(
 
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
-  const showFieldPanel = hasConfiguredFieldPanel({
+  const showFieldPanel = !readOnly && hasConfiguredFieldPanel({
     config: resolvedDesigner,
     adapters: resolvedAdapters,
     resolvedFieldSources: snapshot.fieldSources,

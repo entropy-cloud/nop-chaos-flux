@@ -50,6 +50,7 @@ export interface CreateReportDesignerCoreOptions {
   config: ReportDesignerConfig;
   adapters?: Partial<ReportDesignerAdapterRegistry>;
   profile?: ReportDesignerProfile;
+  readonly?: boolean;
   onError?: (error: unknown, context: { phase: 'refresh-derived-state'; selectionTarget?: ReportSelectionTarget }) => void;
 }
 
@@ -62,6 +63,7 @@ function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntim
     document: state.document,
     spreadsheetSyncSource: state.spreadsheetSyncSource,
     dirty: state.document !== state.savedDocument,
+    readonly: state.readonly,
     selectionTarget: state.selectionTarget,
     activeMeta: meta,
     inspector: state.inspector,
@@ -76,7 +78,7 @@ function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntim
 export function createReportDesignerCore(
   options: CreateReportDesignerCoreOptions,
 ): ReportDesignerCore {
-  const { document, config, adapters: providedAdapters, profile, onError } = options;
+  const { document, config, adapters: providedAdapters, profile, readonly: isReadonly = false, onError } = options;
   const registry = resolveRegistry(providedAdapters);
 
   const initialDocument = cloneDocument(document);
@@ -114,6 +116,7 @@ export function createReportDesignerCore(
     fieldSources: [],
     fieldDrag: { active: false },
     preview: { running: false },
+    readonly: isReadonly,
     undoStack: [],
     redoStack: [],
   }));
@@ -350,7 +353,23 @@ export function createReportDesignerCore(
     isCurrentPreviewRun,
   };
 
+  const MUTATION_COMMAND_TYPES = new Set([
+    'report-designer:dropFieldToTarget',
+    'report-designer:updateMeta',
+    'report-designer:replaceMeta',
+    'report-designer:importTemplate',
+    'report-designer:undo',
+    'report-designer:redo',
+    'report-designer:save',
+    'report-designer:openInspector',
+    'report-designer:closeInspector',
+  ]);
+
   async function dispatch(command: ReportDesignerCommand): Promise<ReportDesignerCommandResult> {
+    if (isReadonly && MUTATION_COMMAND_TYPES.has(command.type)) {
+      return { ok: false, changed: false, error: 'Document is readonly' };
+    }
+
     return dispatchReportDesignerCommand(dispatchCtx, command);
   }
 
@@ -430,6 +449,7 @@ export function createReportDesignerCore(
     },
 
     setMetadata(target: ReportSelectionTarget, nextMeta: MetadataBag): void {
+      if (isReadonly) return;
       const result = updateMetadata(store.getState().document, target, nextMeta);
       if (!result.changed) {
         return;
@@ -439,6 +459,7 @@ export function createReportDesignerCore(
     },
 
     syncSpreadsheetDocument(nextDocument) {
+      if (isReadonly) return;
       const currentDocument = store.getState().document;
       const changed = applyDocumentChange({
         ...currentDocument,
