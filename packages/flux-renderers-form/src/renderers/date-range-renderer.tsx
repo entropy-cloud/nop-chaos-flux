@@ -17,6 +17,7 @@ import {
   normalizeRange,
   parseDate,
   parseDateRange,
+  resolveRelativeDate,
   toCalendarDate,
   toStorageDate,
 } from './date/date-utils.js';
@@ -116,7 +117,7 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
 
   const minDate = toCalendarDate(
     parseDate(
-      typeof props.props.minDate === 'string' ? props.props.minDate : undefined,
+      resolveRelativeDate(typeof props.props.minDate === 'string' ? props.props.minDate : undefined),
       valueFormat,
       options,
     ),
@@ -124,7 +125,7 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
   );
   const maxDate = toCalendarDate(
     parseDate(
-      typeof props.props.maxDate === 'string' ? props.props.maxDate : undefined,
+      resolveRelativeDate(typeof props.props.maxDate === 'string' ? props.props.maxDate : undefined),
       valueFormat,
       options,
     ),

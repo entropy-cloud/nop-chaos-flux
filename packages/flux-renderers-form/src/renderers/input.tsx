@@ -589,7 +589,10 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-number',
     sourcePackage: '@nop-chaos/flux-renderers-form',
-    fields: formFieldRules,
+    fields: [
+      ...formFieldRules,
+      { key: 'precisionMode', kind: 'prop' },
+    ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     componentCapabilityContracts: [

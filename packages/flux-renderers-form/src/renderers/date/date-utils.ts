@@ -312,6 +312,47 @@ export function compareDates(a: Date | undefined, b: Date | undefined): number {
   return 0;
 }
 
+export function resolveRelativeDate(value: string | undefined): string | undefined {
+  if (value == null || value === '') {
+    return value;
+  }
+  const str = String(value).trim();
+  const nowMatch = /^now$/i.exec(str);
+  if (nowMatch) {
+    return new Date().toISOString();
+  }
+  const todayMatch = /^today$/i.exec(str);
+  if (todayMatch) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString();
+  }
+  const nowOffset = /^now([+-])([1-9]\d*)([dhms])$/i.exec(str);
+  if (nowOffset) {
+    const sign = nowOffset[1];
+    const amount = Number(sign + nowOffset[2]);
+    const unit = nowOffset[3].toLowerCase();
+    const d = new Date();
+    switch (unit) {
+      case 'd': d.setDate(d.getDate() + amount); break;
+      case 'h': d.setHours(d.getHours() + amount); break;
+      case 'm': d.setMinutes(d.getMinutes() + amount); break;
+      case 's': d.setSeconds(d.getSeconds() + amount); break;
+    }
+    return d.toISOString();
+  }
+  const todayOffset = /^today([+-])([1-9]\d*)d$/i.exec(str);
+  if (todayOffset) {
+    const sign = todayOffset[1];
+    const amount = Number(sign + todayOffset[2]);
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + amount);
+    return d.toISOString();
+  }
+  return value;
+}
+
 export interface NormalizedRange {
   start: string | undefined;
   end: string | undefined;

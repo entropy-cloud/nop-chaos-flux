@@ -20,10 +20,27 @@ function clamp(value: number, min: number | undefined, max: number | undefined):
   return result;
 }
 
-function applyPrecision(value: number, precision: number | undefined): number {
+function applyPrecision(value: number, precision: number | undefined, mode?: 'round' | 'truncate' | 'ceil' | 'floor'): number {
   if (precision === undefined || precision < 0) return value;
   const factor = Math.pow(10, precision);
-  return Math.round(value * factor) / factor;
+  const scaled = value * factor;
+  let rounded: number;
+  switch (mode) {
+    case 'truncate':
+      rounded = scaled < 0 ? Math.ceil(scaled) : Math.floor(scaled);
+      break;
+    case 'ceil':
+      rounded = Math.ceil(scaled);
+      break;
+    case 'floor':
+      rounded = Math.floor(scaled);
+      break;
+    case 'round':
+    default:
+      rounded = Math.round(scaled);
+      break;
+  }
+  return rounded / factor;
 }
 
 export function InputNumberRenderer(props: RendererComponentProps<InputNumberSchema>) {
@@ -33,6 +50,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
   const max = typeof props.props.max === 'number' ? props.props.max : undefined;
   const step = typeof props.props.step === 'number' ? props.props.step : 1;
   const precision = typeof props.props.precision === 'number' ? props.props.precision : undefined;
+  const precisionMode = props.props.precisionMode as 'round' | 'truncate' | 'ceil' | 'floor' | undefined;
   const prefix = typeof props.props.prefix === 'string' ? props.props.prefix : undefined;
   const suffix = typeof props.props.suffix === 'string' ? props.props.suffix : undefined;
   const showStepper = props.props.showStepper !== false;
@@ -97,7 +115,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
     cancelLongPress();
     if (numericValue !== undefined) {
       const clamped = clamp(numericValue, min, max);
-      const withPrecision = applyPrecision(clamped, precision);
+      const withPrecision = applyPrecision(clamped, precision, precisionMode);
       if (withPrecision !== numericValue) {
         handlers.onChange(withPrecision);
       }
@@ -113,7 +131,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
     const current = latestValueRef.current ?? 0;
     let next = current + direction * step;
     next = clamp(next, min, max);
-    next = applyPrecision(next, precision);
+    next = applyPrecision(next, precision, precisionMode);
 
     if (next === current) {
       return false;

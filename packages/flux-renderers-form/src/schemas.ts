@@ -167,6 +167,8 @@ export interface InputTreeSchema extends InputSchema {
   searchable?: boolean;
   onlyLeaf?: boolean;
   showPathLabel?: boolean;
+  enableNodePath?: boolean;
+  pathSeparator?: string;
   /**
    * Number of visible (flattened) tree options at which to switch from full
    * rendering to virtualised rendering via `@tanstack/react-virtual`. Defaults
@@ -203,6 +205,8 @@ export interface TreeSelectSchema extends InputSchema {
   searchable?: boolean;
   onlyLeaf?: boolean;
   showPathLabel?: boolean;
+  enableNodePath?: boolean;
+  pathSeparator?: string;
   clearable?: boolean;
   placeholder?: string;
   /** @see InputTreeSchema.virtualThreshold */
@@ -267,6 +271,7 @@ export interface InputNumberSchema extends BoundFieldSchemaBase {
   max?: number;
   step?: number;
   precision?: number;
+  precisionMode?: 'round' | 'truncate' | 'ceil' | 'floor';
   prefix?: string;
   suffix?: string;
   showStepper?: boolean;

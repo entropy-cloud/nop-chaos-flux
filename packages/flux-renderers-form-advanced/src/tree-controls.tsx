@@ -26,6 +26,7 @@ import type { InputTreeSchema, TreeSelectSchema } from '@nop-chaos/flux-renderer
 import {
   buildTreeOptionMetaList,
   getTreeOptionConfig,
+  type TreeOptionMeta,
 } from './tree-options.js';
 import {
   getSourceErrorMessage,
@@ -47,6 +48,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
+  const enableNodePath = props.props.enableNodePath === true;
   const {
     childrenKey,
     labelField,
@@ -66,6 +68,19 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
     () => buildTreeOptionMetaList(treeOptions, treeConfig),
     [treeOptions, treeConfig],
   );
+  const valuePathMap = React.useMemo(() => {
+    const map = new Map<unknown, string>();
+    function walk(options: TreeOptionMeta[]) {
+      for (const opt of options) {
+        map.set(opt.value, opt.valuePath);
+        if (opt.children.length > 0) {
+          walk(opt.children);
+        }
+      }
+    }
+    walk(baseOptions);
+    return map;
+  }, [baseOptions]);
   const [query, setQuery] = React.useState('');
   const remoteSearchActive =
     props.props.searchable === true && Boolean(props.props.searchSource);
@@ -147,7 +162,17 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
             presentation.readOnly ||
             optionsSourceState?.loading === true
           }
-          onChange={(nextValue) => handlers.onChange(nextValue)}
+          onChange={(nextValue) => {
+            if (enableNodePath) {
+              if (multiple && Array.isArray(nextValue)) {
+                handlers.onChange(nextValue.map((v: unknown) => valuePathMap.get(v) ?? String(v)));
+              } else {
+                handlers.onChange(valuePathMap.get(nextValue) ?? String(nextValue));
+              }
+            } else {
+              handlers.onChange(nextValue);
+            }
+          }}
           ariaLabel={fieldLabel}
           searchLabel={searchLabel}
           describedBy={sourceError ? sourceErrorId : undefined}
@@ -192,6 +217,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
+  const enableNodePath = props.props.enableNodePath === true;
   const {
     childrenKey: selectChildrenKey,
     labelField: selectLabelField,
@@ -215,6 +241,19 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
     () => buildTreeOptionMetaList(selectTreeOptions, treeConfig),
     [selectTreeOptions, treeConfig],
   );
+  const valuePathMap = React.useMemo(() => {
+    const map = new Map<unknown, string>();
+    function walk(options: TreeOptionMeta[]) {
+      for (const opt of options) {
+        map.set(opt.value, opt.valuePath);
+        if (opt.children.length > 0) {
+          walk(opt.children);
+        }
+      }
+    }
+    walk(baseOptions);
+    return map;
+  }, [baseOptions]);
   const [query, setQuery] = React.useState('');
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const isMobile = useIsMobile();
@@ -291,7 +330,17 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
       showPathLabel={props.props.showPathLabel === true}
       searchable={props.props.searchable === true}
       disabled={triggerDisabled}
-      onChange={(nextValue) => handlers.onChange(nextValue)}
+      onChange={(nextValue) => {
+        if (enableNodePath) {
+          if (multiple && Array.isArray(nextValue)) {
+            handlers.onChange(nextValue.map((v: unknown) => valuePathMap.get(v) ?? String(v)));
+          } else {
+            handlers.onChange(valuePathMap.get(nextValue) ?? String(nextValue));
+          }
+        } else {
+          handlers.onChange(nextValue);
+        }
+      }}
       ariaLabel={fieldLabel}
       searchLabel={searchLabel}
       describedBy={sourceError ? sourceErrorId : undefined}
@@ -436,6 +485,8 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
       { key: 'virtualThreshold', kind: 'prop' },
       { key: 'childrenSource', kind: 'prop' },
       { key: 'searchSource', kind: 'prop' },
+      { key: 'enableNodePath', kind: 'prop', valueType: 'boolean' },
+      { key: 'pathSeparator', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -464,6 +515,8 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
       { key: 'virtualThreshold', kind: 'prop' },
       { key: 'childrenSource', kind: 'prop' },
       { key: 'searchSource', kind: 'prop' },
+      { key: 'enableNodePath', kind: 'prop', valueType: 'boolean' },
+      { key: 'pathSeparator', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,

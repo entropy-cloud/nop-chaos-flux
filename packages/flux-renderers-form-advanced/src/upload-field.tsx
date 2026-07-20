@@ -109,6 +109,10 @@ export function UploadFieldRenderer(
     typeof props.props.maxFiles === 'number' && props.props.maxFiles > 0
       ? Math.floor(props.props.maxFiles)
       : undefined;
+  const maxSize =
+    typeof props.props.maxSize === 'number' && props.props.maxSize > 0
+      ? props.props.maxSize
+      : undefined;
   const valueMode = resolveValueMode(props.props.valueMode, multiple);
   const buttonText =
     typeof props.props.buttonText === 'string' && props.props.buttonText
@@ -117,6 +121,7 @@ export function UploadFieldRenderer(
         ? t('flux.form.uploadFiles')
         : t('flux.form.uploadFile');
   const uploadAction = props.props.uploadAction as ActionSchema | ActionSchema[] | undefined;
+  const deleteAction = props.props.deleteAction as ActionSchema | ActionSchema[] | undefined;
   const placeholder =
     typeof props.props.placeholder === 'string' && props.props.placeholder
       ? props.props.placeholder
@@ -295,11 +300,41 @@ export function UploadFieldRenderer(
     }
   }
 
+  function rejectFile(file: File, reason: string) {
+    void props.events.onReject?.({
+      type: 'reject',
+      file: { name: file.name, size: file.size, type: file.type },
+      reason,
+    });
+  }
+
   async function handleFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) {
       return;
     }
     let selected = Array.from(fileList);
+
+    // Client-side maxSize validation (U6).
+    if (maxSize !== undefined) {
+      const oversized: File[] = [];
+      const valid: File[] = [];
+      for (const file of selected) {
+        if (file.size > maxSize) {
+          oversized.push(file);
+          rejectFile(file, t('flux.form.fileTooLarge', { defaultValue: 'File exceeds maximum size' }));
+        } else {
+          valid.push(file);
+        }
+      }
+      selected = valid;
+      if (selected.length === 0) {
+        if (inputRef.current) {
+          try { inputRef.current.value = ''; } catch { /* best-effort */ }
+        }
+        return;
+      }
+    }
+
     if (!multiple) {
       selected = selected.slice(0, 1);
       setItems([]);
@@ -330,7 +365,45 @@ export function UploadFieldRenderer(
     }
   }
 
-  function removeExisting(index: number) {
+  async function removeExisting(index: number) {
+    const item = committedItems()[index];
+
+    void props.events.onDelete?.({
+      type: 'delete',
+      file: item ? { name: item.name, url: item.url, size: item.size } : undefined,
+    });
+
+    if (deleteAction && item) {
+      const deleteScope = runtime.createChildScope(parentScope, {
+        __deleteFile: { name: item.name, url: item.url, size: item.size },
+      });
+      try {
+        const result: ActionResult = await props.helpers.dispatch(deleteAction, {
+          scope: deleteScope,
+        });
+        if (result.ok) {
+          void props.events.onDeleteSuccess?.({
+            type: 'delete-success',
+            file: { name: item.name, url: item.url, size: item.size },
+          });
+        } else {
+          void props.events.onDeleteFail?.({
+            type: 'delete-fail',
+            file: { name: item.name, url: item.url, size: item.size },
+            error: typeof result.error === 'string' ? result.error : 'Delete failed',
+          });
+        }
+      } catch (error) {
+        void props.events.onDeleteFail?.({
+          type: 'delete-fail',
+          file: { name: item.name, url: item.url, size: item.size },
+          error: error instanceof Error ? error.message : 'Delete failed',
+        });
+      } finally {
+        runtime.disposeScope(deleteScope.id);
+      }
+    }
+
     // H26: read from the committed-value ref (consistent with commitItems) so a
     // removal landing in the commit→re-render window does not operate on a stale
     // reactive `value` snapshot and lose/revive a just-completed upload.

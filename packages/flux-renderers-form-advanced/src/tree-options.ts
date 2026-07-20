@@ -9,6 +9,7 @@ export interface TreeOptionMeta {
   label: string;
   value: unknown;
   valueKey: string;
+  valuePath: string;
   depth: number;
   pathLabel: string;
   parentNode?: TreeOptionRecord;
@@ -58,6 +59,7 @@ function buildTreeOptionMeta(input: {
   depth: number;
   parentNode?: TreeOptionRecord;
   parentPathLabel?: string;
+  parentValuePath?: string;
   config: ReturnType<typeof getTreeOptionConfig>;
 }): TreeOptionMeta {
   const labelValue = getIn(input.node, input.config.labelField);
@@ -67,6 +69,10 @@ function buildTreeOptionMeta(input: {
     value !== undefined && value !== null && value !== ''
       ? String(value)
       : `${label}:${input.index}`;
+  const valueStr = value !== undefined && value !== null && value !== '' ? String(value) : '';
+  const valuePath = input.parentValuePath
+    ? `${input.parentValuePath}/${valueStr}`
+    : valueStr;
   const pathLabel = input.parentPathLabel ? `${input.parentPathLabel} / ${label}` : label;
   const rawChildren = toTreeOptionArray(getIn(input.node, input.config.childrenKey));
   const hasRawChildren = rawChildren.length > 0;
@@ -79,6 +85,7 @@ function buildTreeOptionMeta(input: {
           depth: input.depth + 1,
           parentNode: input.node,
           parentPathLabel: pathLabel,
+          parentValuePath: valuePath,
           config: input.config,
         }),
       )
@@ -89,6 +96,7 @@ function buildTreeOptionMeta(input: {
     label,
     value,
     valueKey,
+    valuePath,
     depth: input.depth,
     pathLabel,
     parentNode: input.parentNode,
@@ -326,6 +334,7 @@ export function mergeChildOptions(
             depth: entry.depth + 1,
             parentNode: entry.node,
             parentPathLabel: entry.pathLabel,
+            parentValuePath: entry.valuePath,
             config: resolvedConfig,
           }),
         );

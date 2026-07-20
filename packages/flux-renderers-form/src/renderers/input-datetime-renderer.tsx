@@ -2,7 +2,7 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { useFormFieldController } from '../field-utils.js';
 import type { InputDatetimeSchema } from '../schemas.js';
-import { DEFAULT_DATETIME_FORMAT, parseDate, toCalendarDate } from './date/date-utils.js';
+import { DEFAULT_DATETIME_FORMAT, parseDate, resolveRelativeDate, toCalendarDate } from './date/date-utils.js';
 import { DateFieldControl } from './date/date-field-control.js';
 
 export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetimeSchema>) {
@@ -33,7 +33,7 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
 
   const minDate = toCalendarDate(
     parseDate(
-      typeof props.props.minDate === 'string' ? props.props.minDate : undefined,
+      resolveRelativeDate(typeof props.props.minDate === 'string' ? props.props.minDate : undefined),
       valueFormat,
       { utc },
     ),
@@ -41,7 +41,7 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
   );
   const maxDate = toCalendarDate(
     parseDate(
-      typeof props.props.maxDate === 'string' ? props.props.maxDate : undefined,
+      resolveRelativeDate(typeof props.props.maxDate === 'string' ? props.props.maxDate : undefined),
       valueFormat,
       { utc },
     ),

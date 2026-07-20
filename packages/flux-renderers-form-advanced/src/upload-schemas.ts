@@ -32,10 +32,22 @@ export interface InputFileSchema extends BoundFieldSchemaBase {
   multiple?: boolean;
   accept?: string;
   maxFiles?: number;
+  /** Max file size in bytes for client-side validation. Files exceeding this are rejected before upload. */
+  maxSize?: number;
   /** Host action reference that performs the actual upload (request sink). */
   uploadAction?: ActionSchema | ActionSchema[];
+  /** Action dispatched to delete an uploaded file on the server. The file identity is available in scope. */
+  deleteAction?: ActionSchema | ActionSchema[];
   valueMode?: UploadValueMode;
   buttonText?: string;
+  /** Action triggered when a file is rejected (e.g. exceeds maxSize). Receives rejection reason in payload. */
+  onReject?: ActionSchema;
+  /** Action triggered when the user removes an existing file from the list. */
+  onDelete?: ActionSchema;
+  /** Action triggered after a server-side delete succeeds. */
+  onDeleteSuccess?: ActionSchema;
+  /** Action triggered after a server-side delete fails. */
+  onDeleteFail?: ActionSchema;
 }
 
 export interface InputImageSchema extends BoundFieldSchemaBase {
@@ -44,7 +56,11 @@ export interface InputImageSchema extends BoundFieldSchemaBase {
   multiple?: boolean;
   accept?: string;
   maxFiles?: number;
+  /** Max file size in bytes for client-side validation. */
+  maxSize?: number;
   uploadAction?: ActionSchema | ActionSchema[];
+  /** Action dispatched to delete an uploaded file on the server. */
+  deleteAction?: ActionSchema | ActionSchema[];
   valueMode?: UploadValueMode;
   previewMode?: 'thumbnail' | 'fill';
   /**
@@ -53,6 +69,14 @@ export interface InputImageSchema extends BoundFieldSchemaBase {
    */
   crop?: SchemaObject;
   buttonText?: string;
+  /** Action triggered when a file is rejected (e.g. exceeds maxSize). */
+  onReject?: ActionSchema;
+  /** Action triggered when the user removes an existing file from the list. */
+  onDelete?: ActionSchema;
+  /** Action triggered after a server-side delete succeeds. */
+  onDeleteSuccess?: ActionSchema;
+  /** Action triggered after a server-side delete fails. */
+  onDeleteFail?: ActionSchema;
 }
 
 export const uploadFieldRules: SchemaFieldRule[] = [
@@ -60,9 +84,15 @@ export const uploadFieldRules: SchemaFieldRule[] = [
   { key: 'multiple', kind: 'prop', valueType: 'boolean' },
   { key: 'accept', kind: 'prop' },
   { key: 'maxFiles', kind: 'prop' },
+  { key: 'maxSize', kind: 'prop' },
   { key: 'uploadAction', kind: 'prop' },
+  { key: 'deleteAction', kind: 'prop' },
   { key: 'valueMode', kind: 'prop' },
   { key: 'buttonText', kind: 'prop' },
+  { key: 'onReject', kind: 'event' },
+  { key: 'onDelete', kind: 'event' },
+  { key: 'onDeleteSuccess', kind: 'event' },
+  { key: 'onDeleteFail', kind: 'event' },
 ];
 
 export const imageFieldRules: SchemaFieldRule[] = [
