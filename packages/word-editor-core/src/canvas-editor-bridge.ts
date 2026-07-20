@@ -12,6 +12,7 @@ export interface CanvasEditorBridgeOptions {
   onRangeStyleChange?: (payload: WordEditorRangeStyle) => void;
   onPageSizeChange?: (payload: number) => void;
   onPageScaleChange?: (payload: number) => void;
+  readonly?: boolean;
 }
 
 export type { WordEditorRangeStyle };
@@ -19,9 +20,18 @@ export type { WordEditorRangeStyle };
 export class CanvasEditorBridge {
   private instance: Editor | null = null;
   private contentChangeSubscribers = new Set<() => void>();
+  private _readonly: boolean;
+
+  constructor(readonly?: boolean) {
+    this._readonly = readonly ?? false;
+  }
 
   get command() {
     return this.instance?.command;
+  }
+
+  get isReadonly(): boolean {
+    return this._readonly;
   }
 
   get listener() {
@@ -94,6 +104,7 @@ export class CanvasEditorBridge {
   }
 
   setValue(data: WordEditorData): void {
+    if (this._readonly) return;
     this.instance?.command.executeSetValue(data);
   }
 
@@ -124,6 +135,7 @@ export class CanvasEditorBridge {
   }
 
   insertTemplateExpression(expr: TemplateExpr): void {
+    if (this._readonly) return;
     const url = exprToUrl(expr);
     const displayText =
       expr.kind === 'el'
@@ -184,10 +196,12 @@ export class CanvasEditorBridge {
   }
 
   undo(): void {
+    if (this._readonly) return;
     this.instance?.command.executeUndo();
   }
 
   redo(): void {
+    if (this._readonly) return;
     this.instance?.command.executeRedo();
   }
 

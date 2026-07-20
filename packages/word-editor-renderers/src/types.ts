@@ -22,6 +22,7 @@ export interface WordEditorPageSchemaInput {
   disabled?: boolean | string;
   statusPath?: string;
   config?: WordEditorConfig;
+  readOnly?: boolean;
   onBack?: ActionSchema;
   onSave?: ActionSchema;
   initialDocument?: WordDocument;

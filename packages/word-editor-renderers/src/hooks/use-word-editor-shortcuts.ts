@@ -6,10 +6,11 @@ interface UseWordEditorShortcutsOptions {
   bridge: CanvasEditorBridge | null;
   onSave?: () => void;
   scopeRef?: RefObject<HTMLElement | null>;
+  readOnly?: boolean;
 }
 
 export function useWordEditorShortcuts(options: UseWordEditorShortcutsOptions): void {
-  const { bridge, onSave, scopeRef } = options;
+  const { bridge, onSave, scopeRef, readOnly = false } = options;
 
   useEffect(() => {
     function isEditableTarget(target: EventTarget | null): boolean {
@@ -33,6 +34,8 @@ export function useWordEditorShortcuts(options: UseWordEditorShortcutsOptions): 
       if (isEditableTarget(event.target) || !isInsideScope(event.target)) {
         return;
       }
+
+      if (readOnly) return;
 
       const mod = event.metaKey || event.ctrlKey;
       if (!mod) return;
@@ -103,5 +106,5 @@ export function useWordEditorShortcuts(options: UseWordEditorShortcutsOptions): 
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [bridge, onSave, scopeRef]);
+  }, [bridge, onSave, scopeRef, readOnly]);
 }

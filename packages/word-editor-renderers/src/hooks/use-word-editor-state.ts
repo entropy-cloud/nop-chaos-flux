@@ -71,7 +71,8 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
     () => loadRecoveredState(initialDatasets),
     [initialDatasets],
   );
-  const bridge = useMemo(() => new CanvasEditorBridge(), []);
+  const readOnly = props.props.readOnly ?? false;
+  const bridge = useMemo(() => new CanvasEditorBridge(readOnly ? true : undefined), [readOnly]);
   const editorStore = useMemo(() => createEditorStore(), []);
   const datasetStore = useMemo(() => createDatasetStore(), []);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -247,6 +248,7 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
 
   return {
     bridge,
+    readOnly,
     editorStore,
     datasetStore,
     initialDocument,

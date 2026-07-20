@@ -61,6 +61,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     isSaving,
     leftCollapsed,
     mountedRef,
+    readOnly,
     recoveredState,
     rightCollapsed,
     rootRef,
@@ -107,7 +108,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       | undefined,
   });
 
-  useWordEditorShortcuts({ bridge, onSave: handleSave, scopeRef: rootRef });
+  useWordEditorShortcuts({ bridge, onSave: handleSave, scopeRef: rootRef, readOnly });
 
   const headerSlot = (
     <div className="flex flex-col">
@@ -138,17 +139,19 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
             </span>
           </div>
         </div>
-        <Button
-          type="button"
-          variant={isDirty || isSaving ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => void handleSave()}
-          className="rounded-full"
-          disabled={isSaving}
-        >
-          <Save className="w-4 h-4" />
-          {saveMessage || t('flux.wordEditor.save')}
-        </Button>
+        {!readOnly && (
+          <Button
+            type="button"
+            variant={isDirty || isSaving ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => void handleSave()}
+            className="rounded-full"
+            disabled={isSaving}
+          >
+            <Save className="w-4 h-4" />
+            {saveMessage || t('flux.wordEditor.save')}
+          </Button>
+        )}
       </div>
       <div className="flex items-center justify-between gap-3 border-b border-border/70 bg-[var(--nop-nav-surface)] px-4 py-2 text-xs text-muted-foreground">
         <div className="min-w-0 flex-1">
@@ -161,7 +164,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           {saveMessage || (isSaving ? t('flux.common.saving') : isDirty ? t('flux.common.unsaved') : t('flux.wordEditor.saved'))}
         </span>
       </div>
-      {props.regions.toolbar ? (
+      {readOnly ? null : props.regions.toolbar ? (
         asReactNode(
           props.regions.toolbar.render({
             scope: hostScope,
@@ -252,7 +255,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   );
 
   const panelConfig = props.props.config;
-  const showLeftPanel = panelConfig?.leftPanel !== undefined;
+  const showLeftPanel = !readOnly && panelConfig?.leftPanel !== undefined;
   const showRightPanel = panelConfig?.rightPanel !== undefined;
   const renderedLeftPanel = props.regions.leftPanel
     ? asReactNode(
