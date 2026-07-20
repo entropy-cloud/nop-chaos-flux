@@ -1,5 +1,6 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import type { GanttSchema, KanbanSchema, CalendarSchema } from './schemas.js';
+import { Calendar } from './calendar/calendar.js';
 
 export const schedulingRendererDefinitions: RendererDefinition[] = [
   {
@@ -65,12 +66,26 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     displayName: 'Calendar',
     category: 'scheduling',
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
-    defaultSchema: { type: 'calendar', body: [] },
-    component: () => null,
+    defaultSchema: { type: 'calendar', view: 'month' },
+    component: Calendar,
     fields: [
-      { key: 'body', kind: 'region', regionKey: 'body' },
+      { key: 'view', kind: 'prop' },
+      { key: 'date', kind: 'prop' },
       { key: 'events', kind: 'prop' },
       { key: 'resources', kind: 'prop' },
+      { key: 'firstDayOfWeek', kind: 'prop' },
+      { key: 'showWeekends', kind: 'prop' },
+      { key: 'maxConcurrent', kind: 'prop' },
+      { key: 'eventTemplate', kind: 'region', regionKey: 'eventTemplate' },
+      { key: 'loading', kind: 'region', regionKey: 'loading' },
+      { key: 'empty', kind: 'region', regionKey: 'empty' },
+      { key: 'body', kind: 'region', regionKey: 'body' },
+      { key: 'headerClassName', kind: 'prop' },
+      { key: 'eventClassName', kind: 'prop' },
+      { key: 'emptyClassName', kind: 'prop' },
+      { key: 'onEventClick', kind: 'event' },
+      { key: 'onDateChange', kind: 'event' },
+      { key: 'onViewChange', kind: 'event' },
       { key: 'onEventChange', kind: 'event' },
     ],
   },

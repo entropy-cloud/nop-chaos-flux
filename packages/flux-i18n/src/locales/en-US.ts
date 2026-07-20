@@ -666,6 +666,10 @@ export const enUS: Resource = {
       notEqualsField: '{{label}} must not match {{field}}',
       async: '{{label}} failed async validation',
     },
+    scheduling: {
+      today: 'Today',
+      noScheduleData: 'No schedule data',
+    },
     mobile: {
       pullRefresh: {
         pulling: 'Pull to refresh',

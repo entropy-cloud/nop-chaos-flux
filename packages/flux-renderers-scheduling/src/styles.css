@@ -1,1 +1,79 @@
-/* flux-renderers-scheduling package styles. Placeholder for future scheduling component styles. */
+/* Calendar renderer styles */
+
+.nop-calendar {
+  @apply flex flex-col h-full min-h-0;
+}
+
+/* Event block type colors */
+.nop-calendar [data-event-type='shift'] {
+  @apply bg-green-400;
+}
+
+.nop-calendar [data-event-type='leave'] {
+  @apply bg-red-400;
+}
+
+.nop-calendar [data-event-type='appointment'] {
+  @apply bg-blue-400;
+}
+
+.nop-calendar [data-event-type='maintenance'] {
+  @apply bg-yellow-400;
+}
+
+/* Event block hover */
+[data-slot='calendar-event']:hover {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: -2px;
+  filter: brightness(1.1);
+  cursor: pointer;
+}
+
+/* Cell hover */
+[data-slot='calendar-cell']:hover {
+  background-color: #f8fafc;
+}
+
+/* Navigation button hover */
+[data-slot='calendar-header'] button:hover {
+  background-color: #f1f5f9;
+}
+
+/* Conflict indicator */
+[data-slot='calendar-event'][data-overlap='true'] {
+  @apply ring-2 ring-red-500;
+}
+
+/* Split event marker */
+[data-slot='calendar-event'].is-split {
+  @apply border-l-2 border-l-white/40;
+}
+
+/* Current month cell styling */
+[data-slot='calendar-cell'][data-empty='true'] {
+  @apply text-gray-300;
+}
+
+/* Weekend column styling */
+[data-slot='calendar-cell']:has([data-weekend='true']) {
+  @apply bg-gray-50;
+}
+
+/* Virtual scroll container */
+.nop-calendar-virtual-scroll {
+  @apply overflow-auto flex-1;
+}
+
+/* Loading skeleton */
+.nop-calendar-skeleton {
+  @apply animate-pulse;
+}
+
+.nop-calendar-skeleton-row {
+  @apply h-12 bg-gray-100 rounded mb-1;
+}
+
+/* Empty state */
+.nop-calendar-empty {
+  @apply flex items-center justify-center py-12 text-gray-400 text-sm;
+}

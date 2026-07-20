@@ -780,6 +780,9 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
+      '@tanstack/react-virtual':
+        specifier: ^3.13.24
+        version: 3.13.24(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       lucide-react:
         specifier: ^1.17.0

@@ -115,25 +115,55 @@ export interface KanbanSchema extends BaseSchema {
   body?: SchemaInput;
 }
 
+export type CalendarView = 'month' | 'week' | 'day';
+
 export interface CalendarEvent extends SchemaObject {
   id: string;
   title: string;
   start: string;
   end: string;
+  type?: string;
   resourceId?: string;
   color?: string;
+  status?: 'scheduled' | 'confirmed' | 'cancelled';
 }
 
 export interface CalendarResource extends SchemaObject {
   id: string;
+  title?: string;
   text: string;
+  type?: string;
+  parent?: string;
   color?: string;
+  avatar?: string;
 }
 
 export interface CalendarSchema extends BaseSchema {
   type: 'calendar';
+  view?: CalendarView;
+  date?: string;
   events?: CalendarEvent[];
   resources?: CalendarResource[];
+  firstDayOfWeek?: 0 | 1;
+  showWeekends?: boolean;
+  maxConcurrent?: number;
+  eventTemplate?: SchemaInput;
+  loading?: SchemaInput;
+  empty?: SchemaInput;
   body?: SchemaInput;
+  loadAction?: ActionSchema;
+  viewOwnership?: 'local' | 'controlled' | 'scope';
+  viewStatePath?: string;
+  dateOwnership?: 'local' | 'controlled' | 'scope';
+  dateStatePath?: string;
+  statusPath?: string;
+  onEventClick?: ActionSchema;
+  onDateChange?: ActionSchema;
+  onViewChange?: ActionSchema;
   onEventChange?: ActionSchema;
+  onMount?: ActionSchema;
+  onUnmount?: ActionSchema;
+  headerClassName?: string;
+  eventClassName?: string;
+  emptyClassName?: string;
 }

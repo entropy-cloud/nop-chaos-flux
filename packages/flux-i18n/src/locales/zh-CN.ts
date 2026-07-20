@@ -664,6 +664,10 @@ export const zhCN: Resource = {
       notEqualsField: '{{label}}不能与{{field}}相同',
       async: '{{label}}异步验证失败',
     },
+    scheduling: {
+      today: '今日',
+      noScheduleData: '暂无排班数据',
+    },
     mobile: {
       pullRefresh: {
         pulling: '下拉刷新',
