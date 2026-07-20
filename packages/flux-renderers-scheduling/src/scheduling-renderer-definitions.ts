@@ -1,6 +1,7 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import type { GanttSchema, KanbanSchema, CalendarSchema } from './schemas.js';
 import { Calendar } from './calendar/calendar.js';
+import { Gantt } from './gantt/gantt.js';
 
 export const schedulingRendererDefinitions: RendererDefinition[] = [
   {
@@ -9,7 +10,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     category: 'scheduling',
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'gantt', body: [] },
-    component: () => null,
+    component: Gantt,
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'tasks', kind: 'prop' },

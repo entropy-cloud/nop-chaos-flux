@@ -77,3 +77,100 @@
 .nop-calendar-empty {
   @apply flex items-center justify-center py-12 text-gray-400 text-sm;
 }
+
+/* ===== Gantt styles ===== */
+
+.nop-gantt {
+  @apply flex flex-col h-full min-h-0 bg-white text-sm;
+}
+
+/* Grid row hover */
+.nop-gantt-grid [data-slot='gantt-grid-row']:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Grid cell */
+.nop-gantt-grid [data-slot='gantt-grid-cell'] {
+  @apply overflow-hidden text-ellipsis whitespace-nowrap;
+}
+
+/* Bar hover */
+[data-slot='gantt-bar']:hover {
+  filter: brightness(1.1);
+}
+
+/* Bar ghost (drag) */
+.nop-gantt-bar-ghost {
+  opacity: 0.8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Drop indicator */
+.nop-gantt-drop-indicator {
+  position: absolute;
+  width: 2px;
+  background-color: #3b82f6;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* Today line */
+[data-slot='gantt-today'] {
+  z-index: 20;
+}
+
+/* Link hover */
+[data-slot='gantt-link']:hover polyline {
+  stroke: #3b82f6;
+  stroke-width: 2;
+}
+
+/* Zoom transition */
+.nop-gantt [data-slot='gantt-bar'] {
+  transition:
+    left 300ms ease,
+    width 300ms ease;
+}
+
+/* Scroll bounce */
+.nop-gantt .overflow-auto {
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+/* Loading skeleton */
+.nop-gantt-skeleton {
+  @apply animate-pulse;
+}
+
+.nop-gantt-skeleton-row {
+  @apply h-10 bg-gray-100 rounded mb-1;
+}
+
+/* Empty state */
+.nop-gantt-empty {
+  @apply flex items-center justify-center py-12 text-gray-400 text-sm;
+}
+
+/* Weekend column shading */
+[data-slot='gantt-weekend'][data-weekend='true'] {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Chevron expand/collapse */
+.nop-gantt-grid [data-task-id] button {
+  transition: transform 150ms ease;
+}
+
+/* Milestone diamond */
+[data-bar-type='milestone'] {
+  z-index: 10;
+}
+
+/* Project bar */
+[data-bar-type='project'] {
+  @apply border border-dashed;
+}

@@ -1,0 +1,53 @@
+import React, { useCallback } from 'react';
+import { Button, cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
+import { useGanttStore } from './gantt-context.js';
+
+interface GanttHeaderProps {
+  toolbarRegion?: { render: (opts?: any) => React.ReactNode };
+  className?: string;
+}
+
+export function GanttHeader({ toolbarRegion, className }: GanttHeaderProps) {
+  const store = useGanttStore();
+
+  const handleZoomIn = useCallback(() => {
+    const zooms = store.getAvailableZooms();
+    const idx = zooms.findIndex((z) => z.key === store.currentZoom);
+    if (idx < zooms.length - 1) {
+      store.setZoom(zooms[idx + 1].key);
+    }
+  }, [store]);
+
+  const handleZoomOut = useCallback(() => {
+    const zooms = store.getAvailableZooms();
+    const idx = zooms.findIndex((z) => z.key === store.currentZoom);
+    if (idx > 0) {
+      store.setZoom(zooms[idx - 1].key);
+    }
+  }, [store]);
+
+  const handleZoomToFit = useCallback(() => {
+    const zooms = store.getAvailableZooms();
+    if (zooms.length > 0) {
+      store.setZoom(zooms[Math.floor(zooms.length / 2)].key);
+    }
+  }, [store]);
+
+  const handleScrollToToday = useCallback(() => {
+    store.emit('change');
+  }, [store]);
+
+  if (toolbarRegion) {
+    return <div className={cn('nop-gantt-toolbar flex items-center gap-2 p-2 border-b', className)} data-slot="gantt-toolbar">{toolbarRegion.render()}</div>;
+  }
+
+  return (
+    <div className={cn('nop-gantt-toolbar flex items-center gap-1 p-2 border-b bg-gray-50', className)} data-slot="gantt-toolbar">
+      <Button variant="ghost" size="sm" onClick={handleZoomOut}>−</Button>
+      <Button variant="ghost" size="sm" onClick={handleZoomIn}>+</Button>
+      <Button variant="ghost" size="sm" onClick={handleZoomToFit}>{t('scheduling.gantt.zoomFit')}</Button>
+      <Button variant="ghost" size="sm" onClick={handleScrollToToday}>{t('scheduling.today')}</Button>
+    </div>
+  );
+}
