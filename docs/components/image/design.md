@@ -20,7 +20,7 @@
 
 ## 5. 字段分类
 
-- `src`、`alt`、`title`、`preview`、`fit`、`width`、`height`、`lazy`: `value`
+- `src`、`alt`、`title`、`preview`、`fit`、`width`、`height`、`lazy`、`fetcher`: `value`
 
 ## 6. regions 与 slot 约定
 
@@ -38,6 +38,7 @@
 ## 9. 数据源、表达式、导入能力接入点
 
 - `src` 可来自表达式或 source-enabled value。
+- **Fetcher-backed 模式（DD7）**：新增 `fetcher: ActionSchema` 字段。当声明 `fetcher` 时，renderer 在挂载时通过 `helpers.dispatch(fetcher)` 获取受保护图片资源；action 返回的 `data.url` 被用作 `<img src>`。此模式适用于 auth-protected 图片源，避免在 DOM 中暴露鉴权 token。fetcher 加载过程中显示 loading 态，失败时显示 error fallback。`fetcher` 与 `src` 互斥——`fetcher` 存在时忽略 `src`。
 
 ## 10. 样式与 DOM marker 约定
 

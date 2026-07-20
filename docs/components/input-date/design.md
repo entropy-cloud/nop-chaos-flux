@@ -20,6 +20,17 @@
 
 - 建议正式字段为 `name`、`label`、`valueFormat`、`displayFormat`、`minDate`、`maxDate`、`utc`、`clearable`、`required`。
 
+### 4.0 相对日期表达式（D10）
+
+`minDate`、`maxDate` 及 `value` 字段支持相对日期表达式，在现有绝对日期解析之前求值：
+
+- `now` — 当前日期时间（ISO string）
+- `today` — 今日零点
+- `now[+-]N[d|h|m|s]` — 相对当前时间偏移 N 天/小时/分钟/秒
+- `today[+-]Nd` — 相对今日零点偏移 N 天
+
+表达式不匹配时按原值传递（保持绝对日期向后兼容）。相对日期在 `parseDate` 调用前经 `resolveRelativeDate()` 转换，不影响 token 格式解析。
+
 ### 4.1 format / utc / 边界语义契约（D1 / D2 / D9 / D12）
 
 - **valueFormat vs displayFormat 分离（D1）**：commit 路径用 `valueFormat`（`formatDate(toStorageDate(next, utc), valueFormat, options)`），display 路径用 `displayFormat`（`formatDate(selected, displayFormat)`，**无** utc option），`selected` 以 `valueFormat` 解析。两路完全解耦——可 `valueFormat:"YYYYMMDD"` + `displayFormat:"DD/MM/YYYY"` 同时成立。token grammar 仅 `YYYY/YY/MM/DD/HH/mm/ss`（unix `"X"` 等 token 不支持，归 candidate future i18n 扩展）。

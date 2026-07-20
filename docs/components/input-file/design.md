@@ -22,8 +22,8 @@
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `name`、`multiple`、`accept`、`maxFiles`、`uploadAction`、`valueMode`、`required`: `value`
-- `onUploadSuccess`、`onUploadError`: `event`
+- `name`、`multiple`、`accept`、`maxFiles`、`maxSize`、`uploadAction`、`deleteAction`、`valueMode`、`required`: `value`
+- `onUploadSuccess`、`onUploadError`、`onReject`、`onDelete`、`onDeleteSuccess`、`onDeleteFail`: `event`
 
 ## 6. regions 与 slot 约定
 
@@ -49,15 +49,13 @@
   - `error`：失败（action `!ok`/`cancelled` 除外）转 `error`，携带 `message`；触发 `onUploadError`（payload `{ type:'upload-error', file:{…}, error }`，error 来自 server `result.error.message` / thrown Error / 末路兜底 i18n，**非** hardcoded）。
 - **form `onChange` 仅在 success 写值（刻意契约）**：字段值（`commitItems`）只在 `done` 时写回；`pending`/`error` **不**触发 form `onChange`、不污染字段值。这是刻意的「form 值保持干净」契约——失败的上传不留半值。无 `onChange`-at-pending（如需跟踪上传中态，用 `onUploadSuccess`/`onUploadError` 或 future tracked-operation surface，不在本契约）。
 
-### 8.2 deleteAction 裁定（U5）
+### 8.2 deleteAction 裁定（U5 — 已实现）
 
-- **裁定 B（non-goal for B4.2）**：当前移除已上传文件是**纯本地操作**（`removeExisting` → filter → `commitItems`），**无** backend 通知；schema **无** `deleteAction` 字段，**无** `onDeleteSuccess`/`onDeleteError` 事件。
-- 这不是「已声称但未测试」的契约漂移——backend 删除通知是 distinct server-contract feature。如产品判断需要，须以独立 feature plan 实现 `deleteAction` action-ref（镜像 `uploadAction` 桥接，用户点击驱动 pattern #3 + scope 携带 `__deletedFile`）为 successor（roadmap B7）。
+- **实现**（B7 successor plan）：`InputFileSchema` 新增 `deleteAction: ActionSchema` 字段。当用户点击已上传文件的移除按钮时，若声明了 `deleteAction`，renderer 先派发该 action（携带 `__deleteFile: { name, url, size }` scope），再本地移除。删除过程通过 `onDelete`/`onDeleteSuccess`/`onDeleteFail` 事件暴露生命周期。action 失败时文件仍从本地列表移除（本地优先），但事件通知调用方失败详情。
 
-### 8.3 maxSize 客户端拒绝 裁定（U6）
+### 8.3 maxSize 客户端拒绝 裁定（U6 — 已实现）
 
-- **裁定 B（non-goal for B4.2）**：当前**无** `maxSize` 字段；`handleFiles` **无** JS 级 size/accept 校验（`accept` 仅透传 native `<input>`，弱约束）；拒绝文件不滤出 pending；**无** `onReject`/`onFileRejected` 事件。
-- 这是 distinct feature（非契约漂移）。如产品判断需要，须以独立 feature plan 实现 `maxSize` + `onReject`（拒绝文件不入 pending、不占 `maxFiles`，payload 带 file+reason）为 successor（roadmap B7）。
+- **实现**（B7 successor plan）：`InputFileSchema` 新增 `maxSize: number`（字节）字段。`handleFiles` 在文件进入 pending 前进行客户端 size 校验：超限文件被滤出上传队列，同时触发 `onReject` 事件（payload `{ file: { name, size, type }, reason }`）。超限文件不占用 `maxFiles` 配额。新增 `onReject`（拒绝回调）、`onDelete`/`onDeleteSuccess`/`onDeleteFail`（删除生命周期事件）。
 
 ### 8.4 upload 行为契约（U2 / U3 / U4）
 

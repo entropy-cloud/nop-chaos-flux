@@ -11,25 +11,26 @@
 - Flux 正式契约优先对齐当前 field 体系与 UI primitive 命名，不保留历史 `readOnlyMode` 一类兼容噪音作为首版主轴。
 - 列主语为 Flux 自身能力（不以 AMIS 为标尺），裁决记入下表。
 
-| 能力                                                     | 首版决定       | 理由                                                                                                                                                  |
-| -------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `min` / `max`                                            | **实现**       | 数字字段标配范围约束。                                                                                                                                |
-| `step`                                                   | **实现**       | 步进器标配。                                                                                                                                          |
-| `precision`                                              | **实现**       | 控制小数精度，数值字段必备。                                                                                                                          |
-| `showStepper`（AMIS `showSteps`）                        | **实现**       | 步进按钮开关；命名对齐 shadcn/ui 风格（`showStepper` 而非 `showSteps`）。                                                                             |
-| `prefix` / `suffix`                                      | **实现**       | 单位展示（如 "¥"、"$"、"%"、"px"）。                                                                                                                  |
-| `keyboard`                                               | **实现**       | 键盘上下键单步，交互标配。                                                                                                                            |
-| `placeholder`                                            | **实现**       | 继承自通用字段行为。                                                                                                                                  |
-| `readOnly`                                               | **实现**       | 继承自 `BoundFieldSchemaBase`。                                                                                                                       |
-| **长按连续步进**（stepper 按钮按住不放 → 连续递增/递减） | **实现**（E3） | 数字输入刚需；amis `rc-input-number` 内建能力。复用 `handleStep` 的 clamp+precision，不绕过 min/max。时序见下方 Decision。                            |
-| `borderMode`                                             | 不采纳         | AMIS 皮肤变体，与 shadcn/ui 风格不匹配。                                                                                                              |
-| `unitOptions`                                            | 不采纳         | 单位选择复杂，与 select 组件重叠，可用 `suffix` + `select` 组合替代。                                                                                 |
-| `big`                                                    | 不采纳         | JS BigInt 场景窄；Flux 数值字段以 `number` 为契约，需 BigInt 时另立 `input-big` renderer，不在本字段透传。后续按需加。                                |
-| `kilobitSeparator`                                       | 不采纳         | 千分位格式化属于 formatter 层，可由表达式或后处理完成；混入会破坏 `number` 值契约。                                                                   |
-| `displayMode`（AMIS `'enhance'` 增强视觉）               | 不采纳         | AMIS 特有增强视觉风格，与 shadcn/ui 美学冲突。                                                                                                        |
-| `showAsPercent`                                          | 不采纳         | 百分比是 `suffix` 的特化形式，用 `suffix: "%"` 替代；不引入平行字段以避免双真值源。                                                                   |
-| `clearValueOnEmpty`                                      | 不采纳         | 通用字段行为，由 form 层统一处理（空输入统一归一为 `undefined`）。                                                                                    |
-| `formatter` / `parser`                                   | 不采纳（后续） | 自定义格式化/解析会引入 display value 与 form value 双轨，需独立 adapter 协议；当前 `number` + `precision` 已覆盖数值字段核心，formatter 归后续评估。 |
+| 能力                                                     | 首版决定        | 理由                                                                                                                                                  |
+| -------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `min` / `max`                                            | **实现**        | 数字字段标配范围约束。                                                                                                                                |
+| `step`                                                   | **实现**        | 步进器标配。                                                                                                                                          |
+| `precision`                                              | **实现**        | 控制小数精度，数值字段必备。                                                                                                                          |
+| `precisionMode: round\|truncate\|ceil\|floor`            | **实现**（I10） | 控制精度舍入模式：`round`（默认，四舍五入）、`truncate`（向零截断）、`ceil`（向上取整）、`floor`（向下取整）。默认 `round` 向后兼容。                 |
+| `showStepper`（AMIS `showSteps`）                        | **实现**        | 步进按钮开关；命名对齐 shadcn/ui 风格（`showStepper` 而非 `showSteps`）。                                                                             |
+| `prefix` / `suffix`                                      | **实现**        | 单位展示（如 "¥"、"$"、"%"、"px"）。                                                                                                                  |
+| `keyboard`                                               | **实现**        | 键盘上下键单步，交互标配。                                                                                                                            |
+| `placeholder`                                            | **实现**        | 继承自通用字段行为。                                                                                                                                  |
+| `readOnly`                                               | **实现**        | 继承自 `BoundFieldSchemaBase`。                                                                                                                       |
+| **长按连续步进**（stepper 按钮按住不放 → 连续递增/递减） | **实现**（E3）  | 数字输入刚需；amis `rc-input-number` 内建能力。复用 `handleStep` 的 clamp+precision，不绕过 min/max。时序见下方 Decision。                            |
+| `borderMode`                                             | 不采纳          | AMIS 皮肤变体，与 shadcn/ui 风格不匹配。                                                                                                              |
+| `unitOptions`                                            | 不采纳          | 单位选择复杂，与 select 组件重叠，可用 `suffix` + `select` 组合替代。                                                                                 |
+| `big`                                                    | 不采纳          | JS BigInt 场景窄；Flux 数值字段以 `number` 为契约，需 BigInt 时另立 `input-big` renderer，不在本字段透传。后续按需加。                                |
+| `kilobitSeparator`                                       | 不采纳          | 千分位格式化属于 formatter 层，可由表达式或后处理完成；混入会破坏 `number` 值契约。                                                                   |
+| `displayMode`（AMIS `'enhance'` 增强视觉）               | 不采纳          | AMIS 特有增强视觉风格，与 shadcn/ui 美学冲突。                                                                                                        |
+| `showAsPercent`                                          | 不采纳          | 百分比是 `suffix` 的特化形式，用 `suffix: "%"` 替代；不引入平行字段以避免双真值源。                                                                   |
+| `clearValueOnEmpty`                                      | 不采纳          | 通用字段行为，由 form 层统一处理（空输入统一归一为 `undefined`）。                                                                                    |
+| `formatter` / `parser`                                   | 不采纳（后续）  | 自定义格式化/解析会引入 display value 与 form value 双轨，需独立 adapter 协议；当前 `number` + `precision` 已覆盖数值字段核心，formatter 归后续评估。 |
 
 **Decision（长按连续步进时序，E3）**：stepper 按钮 `onPointerDown` → 启动**初始延迟 `400ms`** timer → 延迟到达后切换为**重复间隔 `80ms`** 的间隔 timer，每次复用 `handleStep(direction)`（含 clamp+precision，不绕过 min/max）；越界（clamp 到 min/max）后**立即停止连续步进**（不溢出，Failure Path `longpress-clamp`）。取消路径：`onPointerUp` / `onPointerLeave` / `onBlur` / `ESC` 清理 timer（Failure Path `longpress-cancel`）。短按（pointer-up 在初始延迟内）保持 `onClick` 单步兼容；若 pointer-up 发生在连续步进已启动之后，用 `steppedViaLongPressRef` 守卫抑制后续 `onClick` 的多余单步。`onPointerDown` 调 `event.preventDefault()` 避免 text selection。时序常数（400ms/80ms）参考业界 input-number 控件默认值（amis/antd 一致区间），可在不破坏契约前提下调整。
 
@@ -49,6 +50,7 @@ interface InputNumberSchema extends BoundFieldSchemaBase {
   max?: number;
   step?: number;
   precision?: number;
+  precisionMode?: 'round' | 'truncate' | 'ceil' | 'floor';
   prefix?: string;
   suffix?: string;
   showStepper?: boolean;

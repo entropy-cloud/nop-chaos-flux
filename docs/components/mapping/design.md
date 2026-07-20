@@ -21,7 +21,7 @@
 
 ## 5. 字段分类
 
-- `value`、`map`、`placeholder`、`defaultLabel`: `value`
+- `value`、`map`、`placeholder`、`defaultLabel`、`source`: `value`
 - `item`: `region`
 
 ## 6. regions 与 slot 约定
@@ -51,11 +51,11 @@
 - `map:{}` + 有 value → miss → 落 `defaultLabel ?? placeholder ?? null`。
 - `lookupMap` 逐字 key 匹配（`hasOwnProperty(String(value))`），**无 `*` 通配 fallback**：即使 `map` 含 `'*'` 键，未命中 value 也不会命中该键。`'*'` 仅作为字面 key，当 value 本身等于字符串 `"*"` 时才命中。
 
-### 9.3 loader-sourced map + 「loader wins」precedence —— DESIGN-ACK-NOT-IMPL
+### 9.3 loader-sourced map + 「loader wins」precedence —— 已实现（MP2）
 
-- Flux 当前无 mapping loader/source 机制。loader-sourced map + 「loader wins」precedence 是**独立 feature**（Flux 从未声称）。
-- 裁定：`DESIGN-ACK-NOT-IMPL` + successor B7。如产品判断需要，开独立 feature plan，评估为 loader/组装层职责（`map` 经 loader 注入 scope 或表达式），而非在 mapping renderer 内加 `api`/`source`。
-- 当前 vacuously 满足「无 precedence 冲突」（无 loader → 无 loader-vs-static 冲突）。详见 `docs/plans/2026-06-26-2016-1-b62-button-mapping-toast-styling-contract-plan.md` 的 `Deferred But Adjudicated` 节。
+- `MappingSchema` 新增 `source` 字段。当 `source` 解析为 `Record<string, unknown>` 对象时，其键值通过 `mergeMaps` 与静态 `map` 合并，source 同名键覆盖静态 `map`（"loader wins" 优先级）。source 为非对象类型（如字符串）时忽略，退化纯静态 `map`。
+- 适用于 data-source/表达式驱动的动态覆盖场景。mapping 通过 `sliceProps.source` 读取 source 值，不感知 loader 的存在。
+- 字段分类已更新：`source: value`。
 
 ## 10. 样式与 DOM marker 约定
 

@@ -17,11 +17,13 @@
 
 ## 4. schema 设计
 
-- 建议字段为 `content`、`allowHtml`、`empty`。
+- 建议字段为 `content`、`src`、`allowHtml`、`empty`。
+- `src`（string | Expression）：远程 Markdown 源 URL。当 `content` 为空时，renderer 从 `src` 的 resolved URL fetch 内容；当 `content` 非空时忽略 `src`。fetch 过程中显示 loading 态，失败时显示 error 态。
 
 ## 5. 字段分类
 
-- `content`: `value`，可允许 source-enabled value（指 `content:"${...}"` 经 loader/表达式注入，**非 renderer 持有远程 src**，见 §9 内容契约）
+- `content`: `value`，可允许 source-enabled value
+- `src`: `value`，远程 Markdown 源 URL（表达式或字面量）
 - `empty`: `value-or-region`
 
 ## 6. regions 与 slot 约定
