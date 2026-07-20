@@ -604,3 +604,121 @@ describe('V18: async/validator failure at the validateForm (submit) entry routes
   });
 });
 
+describe('V6: row-local relative cross-field addressing (../)', () => {
+  it('equalsField resolves ../path against the field path (same row sibling)', () => {
+    const ctx: SyncValidationContext<{ kind: 'equalsField'; path: string }> = {
+      compiledRule: makeCompiledRule({ kind: 'equalsField', path: '../target' }),
+      value: 'abc',
+      field: makeField({ path: 'items.0.source' }),
+      scope: makeScope({ items: [{ target: 'abc' }] }),
+      rule: { kind: 'equalsField', path: '../target' },
+    };
+    const error = builtInValidators.equalsField(ctx as any);
+    expect(error).toBeUndefined();
+  });
+
+  it('equalsField with ../path produces error when siblings differ', () => {
+    const ctx: SyncValidationContext<{ kind: 'equalsField'; path: string }> = {
+      compiledRule: makeCompiledRule({ kind: 'equalsField', path: '../target' }),
+      value: 'abc',
+      field: makeField({ path: 'items.0.source' }),
+      scope: makeScope({ items: [{ target: 'xyz' }] }),
+      rule: { kind: 'equalsField', path: '../target' },
+    };
+    const error = builtInValidators.equalsField(ctx as any);
+    expect(error).toBeDefined();
+    expect(error!.relatedPaths).toEqual(['items.0.target']);
+  });
+
+  it('notEqualsField resolves ../path against the field path (same row sibling)', () => {
+    const ctx: SyncValidationContext<{ kind: 'notEqualsField'; path: string }> = {
+      compiledRule: makeCompiledRule({ kind: 'notEqualsField', path: '../other' }),
+      value: 'abc',
+      field: makeField({ path: 'items.0.source' }),
+      scope: makeScope({ items: [{ other: 'xyz' }, { other: 'abc' }] }),
+      rule: { kind: 'notEqualsField', path: '../other' },
+    };
+    const error = builtInValidators.notEqualsField(ctx as any);
+    expect(error).toBeUndefined();
+  });
+
+  it('requiredWhen resolves ../path against the field path', () => {
+    const ctx: SyncValidationContext<{ kind: 'requiredWhen'; path: string; equals: unknown }> = {
+      compiledRule: makeCompiledRule({ kind: 'requiredWhen', path: '../mode', equals: 'edit' }),
+      value: '',
+      field: makeField({ path: 'items.0.fieldA' }),
+      scope: makeScope({ items: [{ mode: 'edit' }] }),
+      rule: { kind: 'requiredWhen', path: '../mode', equals: 'edit' },
+    };
+    const error = builtInValidators.requiredWhen(ctx as any);
+    expect(error).toBeDefined();
+    expect(error!.relatedPaths).toEqual(['items.0.mode']);
+  });
+
+  it('requiredUnless resolves ../path against the field path', () => {
+    const ctx: SyncValidationContext<{ kind: 'requiredUnless'; path: string; equals: unknown }> = {
+      compiledRule: makeCompiledRule({ kind: 'requiredUnless', path: '../flag', equals: true }),
+      value: '',
+      field: makeField({ path: 'items.0.fieldB' }),
+      scope: makeScope({ items: [{ flag: false }] }),
+      rule: { kind: 'requiredUnless', path: '../flag', equals: true },
+    };
+    const error = builtInValidators.requiredUnless(ctx as any);
+    expect(error).toBeDefined();
+    expect(error!.relatedPaths).toEqual(['items.0.flag']);
+  });
+
+  it('resolves ../path in compiled validation dependency map to same-row sibling', () => {
+    const nodeA: CompiledValidationNode = makeNode('items.0.a', {
+      rules: [
+        {
+          id: 'items.0.a#0:equalsField',
+          rule: { kind: 'equalsField', path: '../b' },
+          dependencyPaths: ['../b'],
+        },
+      ],
+    });
+    const nodeB: CompiledValidationNode = makeNode('items.0.b');
+
+    const model = makeFormModel({ 'items.0.a': nodeA, 'items.0.b': nodeB });
+
+    expect(model.dependents['items.0.b']).toBeDefined();
+    expect(model.dependents['items.0.b']).toContain('items.0.a');
+  });
+});
+
+describe('V6 integration: relative cross-field addressing in array items', () => {
+  it('validates equalsField with ../target between sibling fields in array items', async () => {
+    const model = makeFormModel({
+      'items.0.email': makeNode('items.0.email', { parent: 'items.0' }),
+      'items.0.confirm': makeNode('items.0.confirm', {
+        parent: 'items.0',
+        rules: [
+          {
+            id: 'items.0.confirm#0:equalsField',
+            rule: { kind: 'equalsField', path: '../email' },
+            dependencyPaths: ['../email'],
+          },
+        ],
+      }),
+    });
+
+    const runtime = createManagedFormRuntime({
+      id: 'v6-form',
+      parentScope: createStubScope({ items: [{ email: 'a@b.com', confirm: 'wrong' }] }),
+      initialValues: { items: [{ email: 'a@b.com', confirm: 'wrong' }] },
+      validation: model,
+      validateRule: realValidateRule,
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const result = await runtime.submit();
+    expect(result.ok).toBe(false);
+    expect(runtime.getFieldState('items.0.confirm').errors.some((e) => e.rule === 'equalsField')).toBe(true);
+
+    runtime.setValue('items.0.confirm', 'a@b.com');
+    const okResult = await runtime.submit();
+    expect(okResult.ok).toBe(true);
+  });
+});
+

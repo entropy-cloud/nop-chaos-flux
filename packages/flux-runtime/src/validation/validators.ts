@@ -5,7 +5,7 @@ import type {
   ValidationError,
   ValidationRule,
 } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
+import { getIn, resolveRelativePath } from '@nop-chaos/flux-core';
 import { createValidationError } from './errors.js';
 import { buildValidationMessage } from './message.js';
 
@@ -206,7 +206,10 @@ export const builtInValidators: SyncValidatorMap = {
       : undefined;
   },
   equalsField(input) {
-    const peerValue = input.scope.get(input.rule.path);
+    const targetPath = input.rule.path?.startsWith('../')
+      ? resolveRelativePath(input.field.path, input.rule.path)
+      : input.rule.path;
+    const peerValue = input.scope.get(targetPath);
 
     if (isEmptyValue(input.value) && isEmptyValue(peerValue)) {
       return undefined;
@@ -214,12 +217,15 @@ export const builtInValidators: SyncValidatorMap = {
 
     return !Object.is(input.value, peerValue)
       ? createBuiltInError(input, {
-          relatedPaths: [input.rule.path],
+          relatedPaths: [targetPath],
         })
       : undefined;
   },
   notEqualsField(input) {
-    const peerValue = input.scope.get(input.rule.path);
+    const targetPath = input.rule.path?.startsWith('../')
+      ? resolveRelativePath(input.field.path, input.rule.path)
+      : input.rule.path;
+    const peerValue = input.scope.get(targetPath);
 
     if (isEmptyValue(input.value) && isEmptyValue(peerValue)) {
       return undefined;
@@ -227,27 +233,33 @@ export const builtInValidators: SyncValidatorMap = {
 
     return Object.is(input.value, peerValue)
       ? createBuiltInError(input, {
-          relatedPaths: [input.rule.path],
+          relatedPaths: [targetPath],
         })
       : undefined;
   },
   requiredWhen(input) {
-    const dependencyValue = input.scope.get(input.rule.path);
+    const targetPath = input.rule.path?.startsWith('../')
+      ? resolveRelativePath(input.field.path, input.rule.path)
+      : input.rule.path;
+    const dependencyValue = input.scope.get(targetPath);
     const shouldRequire = Object.is(dependencyValue, input.rule.equals);
 
     return shouldRequire && isEmptyValue(input.value)
       ? createBuiltInError(input, {
-          relatedPaths: [input.rule.path],
+          relatedPaths: [targetPath],
         })
       : undefined;
   },
   requiredUnless(input) {
-    const dependencyValue = input.scope.get(input.rule.path);
+    const targetPath = input.rule.path?.startsWith('../')
+      ? resolveRelativePath(input.field.path, input.rule.path)
+      : input.rule.path;
+    const dependencyValue = input.scope.get(targetPath);
     const shouldRequire = !Object.is(dependencyValue, input.rule.equals);
 
     return shouldRequire && isEmptyValue(input.value)
       ? createBuiltInError(input, {
-          relatedPaths: [input.rule.path],
+          relatedPaths: [targetPath],
         })
       : undefined;
   },

@@ -528,6 +528,94 @@ describe('clearValueWhenHidden behavior', () => {
   });
 });
 
+describe('C10: submit-payload hidden field projection', () => {
+  it('excludes hidden fields from default submit payload when clearValueWhenHidden is not set', async () => {
+    const model = makeFormModel({
+      visible: makeNode('visible'),
+      hiddenField: makeNode('hiddenField', {}),
+    });
+    const { runtime } = makeRuntime(model, { visible: 'shown', hiddenField: 'secret' });
+
+    runtime.notifyFieldHidden('hiddenField', true);
+    const result = await runtime.submit();
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ visible: 'shown' });
+  });
+
+  it('keeps hidden field key in payload when clearValueWhenHidden is true', async () => {
+    const model = makeFormModel({
+      visible: makeNode('visible'),
+      clearedHidden: makeNode('clearedHidden', {
+        hiddenFieldPolicy: { clearValueWhenHidden: true },
+      }),
+    });
+    const { runtime } = makeRuntime(model, { visible: 'shown', clearedHidden: 'value' });
+
+    runtime.notifyFieldHidden('clearedHidden', true);
+    const result = await runtime.submit();
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({ visible: 'shown', clearedHidden: undefined });
+  });
+
+  it('excludes hidden fields nested under an object parent', async () => {
+    const model = makeFormModel({
+      profile: {
+        path: 'profile',
+        kind: 'object',
+        rules: [],
+        behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+        children: ['profile.name', 'profile.ssn'],
+        parent: '',
+      },
+      'profile.name': makeNode('profile.name', { parent: 'profile' }),
+      'profile.ssn': makeNode('profile.ssn', { parent: 'profile' }),
+    });
+    const { runtime } = makeRuntime(model, { profile: { name: 'Alice', ssn: '123-45-6789' } });
+
+    runtime.notifyFieldHidden('profile.ssn', true);
+    const result = await runtime.submit();
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ profile: { name: 'Alice' } });
+  });
+
+  it('excludes entire hidden array item from submit payload', async () => {
+    const model = makeFormModel({
+      items: {
+        path: 'items',
+        kind: 'array',
+        rules: [],
+        behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+        children: ['items.0', 'items.1'],
+        parent: '',
+      },
+      'items.0': makeNode('items.0', { parent: 'items' }),
+      'items.1': makeNode('items.1', { parent: 'items' }),
+    });
+    const { runtime } = makeRuntime(model, { items: ['first', 'second'] });
+
+    runtime.notifyFieldHidden('items.1', true);
+    const result = await runtime.submit();
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ items: ['first', undefined] });
+  });
+
+  it('excludes nothing when no fields are hidden', async () => {
+    const model = makeFormModel({
+      a: makeNode('a'),
+      b: makeNode('b'),
+    });
+    const { runtime } = makeRuntime(model, { a: 'alpha', b: 'beta' });
+
+    const result = await runtime.submit();
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ a: 'alpha', b: 'beta' });
+  });
+});
+
 describe('notifyFieldHidden idempotency', () => {
   it('calling notifyFieldHidden with same state twice does not trigger extra clears', () => {
     const model = makeFormModel({

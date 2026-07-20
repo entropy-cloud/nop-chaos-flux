@@ -3,8 +3,10 @@ import type {
   FormValidationResult,
   ActionResult,
   ValidationReason,
+  CompiledFormValidationModel,
 } from '@nop-chaos/flux-core';
 import { buildSubmitTouchedState, classifySubmitResult } from './form-runtime-submit.js';
+import { getCompiledValidationField } from '@nop-chaos/flux-core';
 import { isAbortError } from './error-utils.js';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
@@ -159,6 +161,69 @@ async function awaitWithAbort<T>(promise: Promise<T>, signal?: AbortSignal): Pro
       },
     );
   });
+}
+
+function computeExcludedHiddenPaths(
+  hiddenFields: Set<string> | undefined,
+  validation: CompiledFormValidationModel | undefined,
+): Set<string> {
+  if (!hiddenFields || hiddenFields.size === 0) {
+    return new Set();
+  }
+
+  const exclude = new Set<string>();
+
+  for (const path of hiddenFields) {
+    const field = getCompiledValidationField(validation, path);
+
+    if (!field?.hiddenFieldPolicy.clearValueWhenHidden) {
+      exclude.add(path);
+    }
+  }
+
+  return exclude;
+}
+
+function excludeHiddenFieldPaths(
+  obj: Record<string, unknown>,
+  hiddenFields: Set<string>,
+): Record<string, unknown> {
+  function walk(current: unknown, path: string): unknown {
+    if (current == null || typeof current !== 'object') {
+      return current;
+    }
+
+    if (Array.isArray(current)) {
+      return current.map((item, index) => {
+        const itemPath = `${path}.${index}`;
+        if (hiddenFields.has(itemPath)) {
+          return undefined;
+        }
+        return walk(item, itemPath);
+      });
+    }
+
+    const record = current as Record<string, unknown>;
+    const result: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(record)) {
+      const childPath = path ? `${path}.${key}` : key;
+
+      if (hiddenFields.has(childPath)) {
+        continue;
+      }
+
+      const processed = walk(value, childPath);
+
+      if (processed !== undefined) {
+        result[key] = processed;
+      }
+    }
+
+    return result;
+  }
+
+  return walk(obj, '') as Record<string, unknown>;
 }
 
 export async function executeFormSubmit(
@@ -357,7 +422,17 @@ export async function executeFormSubmit(
     const submitLifecycleAction = lifecycleHandlers?.submitAction;
     const executeSubmit = submitLifecycleAction
       ? () => submitLifecycleAction(options)
-      : () => Promise.resolve({ ok: true, data: store.getState().values });
+      : () => {
+          const rawValues = store.getState().values;
+          const excludedPaths = computeExcludedHiddenPaths(
+            sharedState.hiddenFields,
+            currentValidation,
+          );
+          const data = excludedPaths.size > 0
+            ? excludeHiddenFieldPaths(rawValues, excludedPaths)
+            : rawValues;
+          return Promise.resolve({ ok: true, data });
+        };
 
     if (options?.signal?.aborted) {
       return createSubmitAbortedResult(options.signal);
