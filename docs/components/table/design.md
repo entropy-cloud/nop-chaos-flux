@@ -73,6 +73,7 @@
   - 表级 `multiSort?: boolean`：多列排序总开关，缺省 false（严格单列，向后兼容）。详见 §7 sort ownership。
   - 表级 `draggable?: boolean` + `orderField?: string`：行拖拽排序。drag handle `data-slot="table-row-drag-handle"`；排序按 `orderField` 写回。详见 §7 行排序 ownership。
   - 表级 `rowChildrenField?: string`（默认 `children`）：树表模式，按该字段递归展开为带层级 flat 渲染列表。详见 §7 树表 ownership。
+  - 表级 `childrenSource?: ActionSchema`：树表模式下的懒加载子节点来源。节点展开时若无同步子节点且声明了 `childrenSource`，dispatch 配置的 action（scope 含 `record`/`rowKey`）。结果缓存复用。详见 §7 树表 ownership。
   - 表级 `columnWidthsOwnership?: 'local' | 'controlled' | 'scope'` + `columnWidthsStatePath?: string`：列宽 scope-level 持久化（吸收 E1b deferred successor）。详见 §7 列宽 ownership。
   - 列级 `children?: TableColumnSchema[]`：多级表头嵌套列定义；叶子列 = 数据列。详见 §11 拆分。
   - 列级 `copyable?: boolean`：cell 旁渲染复制按钮 `data-slot="table-cell-copy-button"`。详见 §10 DOM marker。
@@ -108,9 +109,11 @@
 
 ## 5. 字段分类
 
-- `columns`、`pagination`、`rowSelection`、`expandable`、`data`、`rowData`: `value`
+- `columns` 支持普通静态数组和 `"${expr}"` 表达式字符串（动态列）。动态列在编译期跳过 deep-field 区域提取（`normalizeTableColumns` 遇非数组原样返回）。运行期求值结果必须是合法 `TableColumnSchema[]`；不合法时 fallback 到上次有效列 + dev warning。动态列的 label 和 cell 使用纯字符串显示（不编译为 region），不支持自定义 `cell`/`buttons`/`body` 区域。
+- `pagination`、`rowSelection`、`expandable`、`data`、`rowData`: `value`
 - `columnResize`、`affixHeader`、`prefixRow`、`affixRow`、`combineNum`：`value`（声明式 schema surface，非 region/event）
-- `multiSort`、`draggable`、`orderField`、`rowChildrenField`、`columnWidthsOwnership`、`columnWidthsStatePath`：`value`（E1c 声明式 schema surface）
+- `multiSort`、`draggable`、`orderField`、`rowChildrenField`、`childrenSource`、`columnWidthsOwnership`、`columnWidthsStatePath`：`value`（E1c 声明式 schema surface）
+- `columns` 现支持 `"${expr}"` 表达式字符串：编译期检测为非数组时跳过 deep-field 区域提取；运行期求值，结果必须是合法 `TableColumnSchema[]`；不合法时保留上次有效列 + dev warning。参见 §4 动态列。
 - 列级 `popOver`（含 `trigger`/`placement`/`icon`/`content`/`title`/`showOnOverflow`/`onEmpty`/`emptyText`）：`value`（E3 successor 声明式 schema surface；`content` 子字段在编译期提取为 nestedRegion，运行时通过 `popOver.contentRegionKey` 引用，参见 §6）
 - `empty`: `value-or-region`
 - 各类 `onXxx`: `event`
@@ -161,7 +164,7 @@
 
 > 来源：`docs/plans/2026-06-26-0830-1-b33-table-advanced-tree-aggregate-perf-plan.md`。下列裁定与 live code 一致，非叙事。
 
-- **T11 树表 lazy-children 裁定（裁定 B：DESIGN-ACK-NOT-IMPL + doc）**：table 树模式按设计即预加载递归 flatten——`use-table-tree.ts` 的 `flattenTreeRows` 同步读 `record[rowChildrenField]`（`:62`），`handleToggleTreeExpand`（`:126-136`）仅翻本地 `expandedTreeRowKeys` `Set`，**无** per-node lazy / on-expand fetch 契约（无 `childrenSource`/`deferApi`/`hasChildrenField`，grep 零命中）。因此 lazy-children 是 **feature 缺口非「Flux 已声称但未测试/未文档化属性」**。本 roadmap 是测试/文档边界债，不重建 runtime。当前仅消费预加载 `rowChildrenField` 子节点展开/收起（已锁定回归锚 `table-e1c-tree-table.test.tsx` + B3.3 T11 锚：展开翻本地 Set、无 fetch）。per-node lazy / on-expand fetch **未实现，记为 candidate future**（镜像 `input-tree`/`tree-select` 的 `childrenSource` + `loadChildren`→`executeTreeSource`，用户交互驱动 pattern #3，successor 归 B7 或独立 feature plan）。
+- **T11 树表 lazy-children（已实现，`childrenSource`）**：table 树模式现支持 per-node on-expand 懒加载（镜像 `input-tree`/`tree-select` 的 `childrenSource` 模式）。表级 `childrenSource?: ActionSchema` 声明懒加载动作；展开无同步子节点（`record[rowChildrenField]` 不存在）的树节点时，dispatch 该 action，scope 含 `record`/`rowKey`。结果缓存于 `LazyChildrenState` Map，后续展开复用。加载态显示 spinner（`animate-spin`），失败显示 error 图标 + tooltip。`useTableLazyChildren`（`use-table-lazy-children.ts`）管理 per-node 生命周期。`useTableTree` 接受 `lazyChildrenMap` 参数驱动 `flattenTreeRows` 整合懒加载子节点。后退：无 `childrenSource` 时行为不变（预加载 flatten）。验证：`table-t11-lazy-children.test.tsx`。
 - **T18 summary 运行时切列重对齐（已落地，显式化）**：`TableSummaryRowView`（`table-summary-row.tsx`）遍历传入 `columns`（= `effectiveMainColumns`，经 `use-table-visible-columns.ts` 的 `tableColumns` `useMemo` 派生）。运行时 `toggleColumn` 触发可见列重算 → summary 响应式重对齐到当前可见叶列（隐藏列不再产生 spacer cell）。B3.3 T18 锚（`table-b33-advanced-boundary.test.tsx`）：列 A/B/C 中 B 运行时 toggle hidden → summary 由 3 cell（B 空）重对齐为 2 cell（A/C），无残留 B spacer。
 - **T9 fixed-left + 选择列组合（已落地，显式化）**：`createFixedColumnLayout`（`fixed-columns.ts`）：有左固定数据列时，选择控制列前置 offset 0、宽 `CONTROL_COLUMN_WIDTH=40`、sticky `left:0`；首个左固定数据列 offset = 40（无 expand 列）或 80（expand+选择合成）。选择控制列 sticky 行为属当前基线：选择列 `data-slot="table-select-cell"` sticky `left:0`，其后左固定数据列 sticky `left:40px`（纯选择列变体）。B3.3 T9 锚（`table-b33-advanced-boundary.test.tsx`）：`rowSelection` + `fixed:'left'` 数据列（无 expand）→ 选择列 `left:0`、数据列 `left:40px`。多级表头 + fixed 列 pixel-perfect 对齐仍归 follow-up（见 §12）。
 - **T29 hover/focus 行本地渲染契约（已落地，显式化）**：`DataRowView` 无 hover/focus state——交互样式纯 CSS（`table-body-row-rendering.tsx` 行 className `focus-visible:ring-2 …`，`data-interactive`/`data-striped` 静态属性），hover/focus 触发**零** React commit、零兄弟行重渲染。行级 `React.memo`（`table-body-row-rendering.tsx` `MemoizedDataRow`）+ 稳定 row-scope（`use-table-row-scope-cache.ts`）进一步保证父级重渲染时未变行不重渲染。B3.3 T29 锚（`table-b33-advanced-boundary.test.tsx`）：`<Profiler>` 计 commit，focus/mouseOver 中间行 cell → commit 计数不变（CSS-only）。**附带 Non-Blocking Follow-up**（非本信号）：`handleSelectRow` 的 `useCallback` 依赖 `selectedRowKeys`（`use-table-selection.ts`），选择变更使 `onSelectRow` identity 变 → 破坏所有行 memo → 选一行重渲染兄弟行。此为 selection-cascade 性能项，归 B7 perf backlog。

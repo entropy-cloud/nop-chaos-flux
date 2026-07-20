@@ -1,6 +1,6 @@
 # F2 — Table & Data Component Enhancement Portfolio
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-21
 > Source: `docs/plans/2026-06-26-2100-1-b7-p2p3-signal-triage-residual-adjudication-plan.md` (T11, T28, S4, A10), `docs/plans/2026-06-26-0830-1-b33-table-advanced-tree-aggregate-perf-plan.md` (T11), `docs/plans/2026-06-26-0830-2-b41-select-input-controlled-value-echo-event-plan.md` (S4)
 > Related: `docs/plans/2026-07-21-0800-1-form-runtime-path-projection-plan.md` (F1, sibling plan)
@@ -56,95 +56,95 @@ Implement four deferred data-display and data-source enhancements: tree-table la
 
 ### Phase 1 — Data-Source Polling Jitter (A10)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/async-data/` (data-source runtime)
 
 - Item Types: `Fix | Proof`
 
-- [ ] Extend `interval` type: accept `number | { base: number; jitter?: number }` with runtime validation
-- [ ] Implement jitter application: each polling cycle adds `Math.random() * jitter * (Math.random() > 0.5 ? 1 : -1)` ms to the base interval
-- [ ] Ensure existing `interval: number` consumers continue to work unchanged
-- [ ] Write focused tests: static interval unchanged, jitter applied within expected range, min interval floor clamped, zero jitter = no randomization
+- [x] Extend `interval` type: accept `number | { base: number; jitter?: number }` with runtime validation
+- [x] Implement jitter application: each polling cycle adds `Math.random() * jitter * (Math.random() > 0.5 ? 1 : -1)` ms to the base interval
+- [x] Ensure existing `interval: number` consumers continue to work unchanged
+- [x] Write focused tests: static interval unchanged, jitter applied within expected range, min interval floor clamped, zero jitter = no randomization
 
 Exit Criteria:
 
-- [ ] `pnpm --filter @nop-chaos/flux-runtime test` passes with new A10 tests
-- [ ] Existing polling tests unchanged and still pass
+- [x] `pnpm --filter @nop-chaos/flux-runtime test` passes with new A10 tests
+- [x] Existing polling tests unchanged and still pass
 
 ### Phase 2 — Select Remote Search (S4)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/` (select renderer location)
 
 - Item Types: `Fix | Proof`
 
-- [ ] Design and add `searchSource: ActionSchema` prop to select schema
-- [ ] Implement debounced search: 300ms debounce on search input, dispatch search action, receive results
-- [ ] Implement AbortController cancellation: cancel in-flight search when new search triggers or component unmounts
-- [ ] Merge remote results with local `options`: remote results append to / replace local options based on `searchMergeMode: 'append' | 'replace'` (default 'append')
-- [ ] Write focused tests: debounce timing, AbortController cancellation, result merging, empty search returns to local options, loading state
+- [x] Design and add `searchSource: ActionSchema` prop to select schema
+- [x] Implement debounced search: 300ms debounce on search input, dispatch search action, receive results
+- [x] Implement AbortController cancellation: cancel in-flight search when new search triggers or component unmounts
+- [x] Merge remote results with local `options`: remote results append to / replace local options based on `searchMergeMode: 'append' | 'replace'` (default 'append')
+- [x] Write focused tests: debounce timing, AbortController cancellation, result merging, empty search returns to local options, loading state
 
 Exit Criteria:
 
-- [ ] Select with `searchSource` performs remote search and displays results
-- [ ] Backward compatible: select without `searchSource` behaves exactly as before
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data typecheck` passes
+- [x] Select with `searchSource` performs remote search and displays results
+- [x] Backward compatible: select without `searchSource` behaves exactly as before
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data typecheck` passes
 
 ### Phase 3 — Tree-Table Lazy Children (T11)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/` (table tree module)
 
 - Item Types: `Fix | Proof`
 
-- [ ] Add `childrenSource: ActionSchema` prop to table schema (tree mode only)
-- [ ] Implement on-expand fetch: when a tree node is expanded, if it has `childrenSource` and no cached children, dispatch fetch action
-- [ ] Handle loading state (spinner in expand indicator), error state (retry icon + tooltip), empty state ("no children" indicator)
-- [ ] Cache fetched children per node; re-fetch on explicit `refreshNode` action
-- [ ] Write focused tests: expand triggers fetch, children cached on subsequent collapse/expand, error state rendering, `refreshNode` re-fetch
-- [ ] Verify backward compatibility: table tree without `childrenSource` uses existing preloaded flattening
+- [x] Add `childrenSource: ActionSchema` prop to table schema (tree mode only)
+- [x] Implement on-expand fetch: when a tree node is expanded, if it has `childrenSource` and no cached children, dispatch fetch action
+- [x] Handle loading state (spinner in expand indicator), error state (retry icon + tooltip), empty state ("no children" indicator)
+- [x] Cache fetched children per node; re-fetch on explicit `refreshNode` action
+- [x] Write focused tests: expand triggers fetch, children cached on subsequent collapse/expand, error state rendering, `refreshNode` re-fetch
+- [x] Verify backward compatibility: table tree without `childrenSource` uses existing preloaded flattening
 
 Exit Criteria:
 
-- [ ] Tree-table with `childrenSource` loads children on expand
-- [ ] Existing preloaded tree behavior unchanged without `childrenSource`
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data typecheck` passes
+- [x] Tree-table with `childrenSource` loads children on expand
+- [x] Existing preloaded tree behavior unchanged without `childrenSource`
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data typecheck` passes
 
 ### Phase 4 — Dynamic Column Recompilation (T28)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/`, `packages/flux-react/src/`, `packages/flux-renderers-data/src/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Design API: `columns: "${expr}"` — expression string evaluated against current scope, must resolve to a valid column array
-- [ ] Add compile-time detection: when `columns` is an expression string (not static array), mark column group as dynamic
-- [ ] Implement runtime re-evaluation: when scope data changes, re-evaluate the column expression; if result differs from previous, trigger column recompilation
-- [ ] Handle edge cases: expression returns invalid format (fall back to previous columns + dev warning), expression changes identity but not value (no-op)
-- [ ] Write focused tests: dynamic column switching on scope change, invalid expression fallback, identity comparison avoid re-render, mixed static + dynamic column parts
+- [x] Design API: `columns: "${expr}"` — expression string evaluated against current scope, must resolve to a valid column array
+- [x] Add compile-time detection: when `columns` is an expression string (not static array), mark column group as dynamic
+- [x] Implement runtime re-evaluation: when scope data changes, re-evaluate the column expression; if result differs from previous, trigger column recompilation
+- [x] Handle edge cases: expression returns invalid format (fall back to previous columns + dev warning), expression changes identity but not value (no-op)
+- [x] Write focused tests: dynamic column switching on scope change, invalid expression fallback, identity comparison avoid re-render, mixed static + dynamic column parts
 
 Exit Criteria:
 
-- [ ] `columns: "${expr}"` re-evaluates and re-renders when scope data changes
-- [ ] Static `columns` array behavior entirely unchanged
-- [ ] `pnpm typecheck` passes
+- [x] `columns: "${expr}"` re-evaluates and re-renders when scope data changes
+- [x] Static `columns` array behavior entirely unchanged
+- [x] `pnpm typecheck` passes
 
 ### Phase 5 — Owner-Doc Sync
 
-Status: planned
+Status: completed
 Targets: `docs/components/table/design.md`, `docs/components/select/design.md`, `docs/architecture/api-data-source.md`, `docs/logs/2026/07-21.md`
 
 - Item Types: `Follow-up`
 
-- [ ] Update `docs/components/table/design.md` — document `childrenSource` tree lazy loading and `columns` dynamic recompilation
-- [ ] Update `docs/components/select/design.md` — document `searchSource` remote search
-- [ ] Update `docs/architecture/api-data-source.md` — document `interval` jitter option
-- [ ] Update `docs/logs/2026/07-21.md`
+- [x] Update `docs/components/table/design.md` — document `childrenSource` tree lazy loading and `columns` dynamic recompilation
+- [x] Update `docs/components/select/design.md` — document `searchSource` remote search
+- [x] Update `docs/architecture/api-data-source.md` — document `interval` jitter option
+- [x] Update `docs/logs/2026/07-21.md`
 
 Exit Criteria:
 
-- [ ] Owner docs reflect current live baseline for all four features
-- [ ] Daily log written
+- [x] Owner docs reflect current live baseline for all four features
+- [x] Daily log written
 
 ## Draft Review Record
 
@@ -155,18 +155,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] A10 polling jitter implemented and tested (backward compatible)
-- [ ] S4 select remote search implemented and tested (backward compatible)
-- [ ] T11 tree-table lazy children implemented and tested (backward compatible)
-- [ ] T28 dynamic column recompilation implemented and tested (backward compatible)
-- [ ] All focused tests pass; existing tests not regressed
-- [ ] No deferred live defects or contract drifts
-- [ ] Affected owner docs synced (table, select, api-data-source)
-- [ ] By independent sub-agent (fresh session) closure-audit completed and recorded
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] A10 polling jitter implemented and tested (backward compatible)
+- [x] S4 select remote search implemented and tested (backward compatible)
+- [x] T11 tree-table lazy children implemented and tested (backward compatible)
+- [x] T28 dynamic column recompilation implemented and tested (backward compatible)
+- [x] All focused tests pass; existing tests not regressed
+- [x] No deferred live defects or contract drifts
+- [x] Affected owner docs synced (table, select, api-data-source)
+- [x] By independent sub-agent (fresh session) closure-audit completed and recorded
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 

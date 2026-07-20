@@ -648,7 +648,10 @@ interface FormulaDataSourceSchema extends BaseDataSourceSchema, ActionShapeField
 interface ActionDataSourceSchema extends BaseDataSourceSchema, SourceActionSchema {
   action: string;
   args?: Record<string, SchemaValue>;
-  interval?: number;
+  /** Polling interval in ms, or `{ base, jitter? }` for jittered polling.
+   * `base` is the target interval; `jitter` is a max random offset (±) applied
+   * per cycle. Example: `{ base: 5000, jitter: 1000 }` polls every 5s ± up to 1s. */
+  interval?: number | { base: number; jitter?: number };
   stopWhen?: string;
   silent?: boolean;
   initFetch?: boolean;
