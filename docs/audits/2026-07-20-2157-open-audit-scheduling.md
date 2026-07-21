@@ -1,96 +1,61 @@
 > Audit Status: planned
+> Remediation Plan 1: `docs/plans/2026-07-21-1830-1-scheduling-reactivity-cross-instance-fix-plan.md` (draft — F-31, F-32, F-33, F-37)
+> Remediation Plan 2: `docs/plans/2026-07-21-1830-2-scheduling-contract-test-build-integrity-plan.md` (draft — F-34, F-35, F-36, F-38)
 > Audit Type: open-ended
 > Mission: scheduling
 
-# Open-Ended Adversarial Audit: `@nop-chaos/flux-renderers-scheduling`
+## Execution
 
-**Date**: 2026-07-20
-**Package**: `packages/flux-renderers-scheduling/`
-**Result files**: `docs/analysis/2026-07-20-2157-open-audit-scheduling/round-{01,02,03}.md`
-**Previous audit**: `docs/audits/2026-07-20-2157-multi-audit-scheduling.md` (116 items, 12 dimensions)
+This audit followed the `docs/skills/open-ended-adversarial-review-prompt.md` protocol.
+Rounds 1-4 were executed against the current HEAD of `packages/flux-renderers-scheduling/`
+and related packages (`flux-i18n`, `flux-core`, etc.).
 
-## Executive Summary
+Individual round findings are saved at:
 
-This open-ended adversarial review found **30 novel issues** not covered by the previous
-116-item multi-dimensional audit. The key blind spots in the previous audit were:
-**functional correctness** (completely broken features in "done" items), **i18n gaps**
-(entire sub-domains with no translation support), **cross-instance state leaks**
-(module-level singletons), and **architecture convention violations** (EventEmitter
-vs Zustand).
+- `docs/analysis/2026-07-20-2157-open-audit-scheduling/round-01.md` (13 findings)
+- `docs/analysis/2026-07-20-2157-open-audit-scheduling/round-02.md` (13 findings)
+- `docs/analysis/2026-07-20-2157-open-audit-scheduling/round-03.md` (4 findings)
+- `docs/analysis/2026-07-20-2157-open-audit-scheduling/round-04.md` (8 findings — this session's new findings)
 
-### Severity Distribution
+## Aggregate Totals
 
-| Severity | Count | Category                                                      |
-| -------- | ----- | ------------------------------------------------------------- |
-| P0       | 4     | Functional correctness — broken interactions, dead components |
-| P1       | 13    | High — multi-resource broken, i18n gap, cross-instance leaks  |
-| P2       | 13    | Medium — dead code, stale closures, schema-runtime mismatch   |
+| Metric                | Count |
+| --------------------- | ----- |
+| Total findings        | 38    |
+| Novel to this session | 8     |
+| Duplicate-free        | 38    |
 
-### Top 5 Findings (by impact)
+### Severity Distribution (this session)
 
-| ID        | Severity | Finding                                                                                             |
-| --------- | -------- | --------------------------------------------------------------------------------------------------- |
-| F-02      | P0       | Gantt keyboard Delete/Backspace passes empty update `{}` — no-op, no task deletion                  |
-| F-01/F-29 | P0       | Scroll stubs (3 instances) — imperative handle + toolbar button promise scroll but only emit change |
-| F-14      | P0       | GanttEditor completely dead — `useState(false)` never set to true, always returns null              |
-| F-07      | P0       | Resource load calculation multiplies `totalDays × todayMinutes` — grossly overcounts                |
-| F-04      | P1       | Kanban loading condition treats `meta.disabled === undefined` as loading — skeleton forever         |
+| Severity | Count | IDs           |
+| -------- | ----- | ------------- |
+| P0       | 1     | F-31          |
+| P1       | 1     | F-33          |
+| P2       | 6     | F-32, F-34-38 |
 
-### Key Patterns
+### Most Critical Finding
 
-1. **Stub syndrome**: 3+ functions named with action semantics that are no-ops
-2. **Dead "done" status**: 3 roadmap items marked complete but completely non-functional
-3. **i18n gap**: 3 of 4 sub-domains have zero internationalization; locale keys exist but
-   are never consumed
-4. **Cross-instance leaks**: Module-level BarcodeQueue, DOM ID-based queries
-5. **Architecture drift**: GanttStore is a vanilla EventEmitter, not Zustand
-6. **Contract-runtime asymmetry**: 4 schema events declared but never dispatched
-7. **Reactivity misfit**: Coarse subscription causes missed AND excessive re-renders
+**F-31: GanttStore revision NOT bumped on `parse`, `setZoom`, or `recalcLayout` (P0)**
 
-### Blind Spots (uncovered areas for next round)
+The Gantt store's revision-based subscription model (`gantt-context.tsx`) depends on
+revision counters to trigger React re-renders via `useSyncExternalStore`. Three key
+store methods — `parse()`, `setZoom()`, and `recalcLayout()` — update Zustand state
+but never increment `revision`, `taskRevision`, or `layoutRevision`. This means:
 
-- Build-time bundling and tree-shaking integration
-- Cross-package type contract verification (flux-core generic constraints)
-- Performance benchmark execution
-- E2E test suite run
-- Bundle size analysis
-- Error boundary behavior
-- AMIS schema compatibility
+- Schema data changes (re-parse via useEffect) are invisible to UI components
+- Zoom changes leave bars/timeline at the old pixel coordinates
+- Any layout recalculation after non-interactive updates produces stale rendering
 
-### Per-File Hotspot Map
+12 of the 30 findings from previous rounds have been verified as fixed in the current
+codebase, but the reactivity model gap (F-31) is the most impactful remaining defect.
 
-| File                                            | Findings               | Severities |
-| ----------------------------------------------- | ---------------------- | ---------- |
-| `gantt-editor.tsx`                              | F-14, F-23             | P0, P2     |
-| `gantt.tsx`                                     | F-01                   | P0         |
-| `use-gantt-keyboard.ts`                         | F-02                   | P0         |
-| `resource-load.ts`                              | F-07                   | P1         |
-| `kanban-board.tsx`                              | F-03, F-04             | P1         |
-| `gantt-context.tsx`                             | F-05, F-11             | P1, P2     |
-| `gantt-header.tsx`                              | F-29                   | P0         |
-| `calendar-week-view.tsx`                        | F-16                   | P1         |
-| `calendar-month-view.tsx`                       | F-18                   | P1         |
-| `calendar.tsx`                                  | F-13, F-17, F-26, F-19 | P1, P2     |
-| `barcode-scanner-overlay.tsx`                   | F-21, F-22             | P1, P2     |
-| `barcode-input-renderer.tsx`                    | F-24, F-25             | P2         |
-| `diff-split-view.tsx` + `diff-unified-view.tsx` | F-15                   | P1         |
-| `diff-view/` (CSS)                              | F-20                   | P1         |
-| `gantt/` + `calendar/` + `kanban/` (i18n)       | F-27, F-28, F-30       | P1, P2     |
-| `undo-stack.ts` vs `kanban-undo-stack.ts`       | F-06                   | P1         |
-| `critical-path.ts`                              | F-12                   | P2         |
+### Round 4 — Key Cross-Cutting Pattern
 
-## Conclusion
-
-The scheduling package has significant feature completeness gaps that the ongoing S-phase
-work items claim as "done". Three non-functional features (GanttEditor, cross-day SVG lines,
-diff-view CSS) and three stub behaviors (scroll, delete) point to either incomplete
-implementation or lack of integration testing. The i18n gap across 3/4 sub-domains is the
-largest silent risk — all user-facing text is hardcoded Chinese or English with no migration
-path to translations.
-
-The previous 12-dimension multi-audit focused on per-dimension property checks
-(accessibility, styling, test quality) and did not discover any of the 30 issues found here.
-This confirms the methodology note in the open-ended adversarial review prompt:
-cross-cutting functional misbehavior requires open-ended exploration, not dimensional decomposition.
+**Store reactivity model has both dead code and missing code**: The `GanttStore`
+carries a manual EventEmitter (8 event types, zero runtime subscribers — F-32) AND
+a revision-based subscription system where 3 out of 6 revision-emitting entry points
+forget to actually bump the revision (F-31). This suggests the reactivity model was
+refactored (from EventEmitter to revision counters) mid-development, leaving both
+the old dead path and the new incomplete path.
 
 <AI_STEP_RESULT>issues</AI_STEP_RESULT>
