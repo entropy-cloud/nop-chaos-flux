@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { GanttStore } from '../gantt-store.js';
-import type { GanttTaskData, GanttLinkData } from '../gantt.types.js';
+import { GanttStore } from './gantt-store.js';
+import type { GanttTaskData, GanttLinkData } from './gantt.types.js';
 
 function makeTask(overrides: Partial<GanttTaskData> & { id: string | number }): GanttTaskData {
   return {

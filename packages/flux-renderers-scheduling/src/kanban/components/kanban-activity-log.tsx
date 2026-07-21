@@ -80,7 +80,12 @@ export function KanbanActivityLog({
     const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
     const previouslyFocused = document.activeElement as HTMLElement | null;
 
-    const trapFocus = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
       if (e.key !== 'Tab') return;
       const focusable = panel.querySelectorAll<HTMLElement>(focusableSelector);
       if (focusable.length === 0) return;
@@ -101,13 +106,13 @@ export function KanbanActivityLog({
 
     const firstFocusable = panel.querySelector<HTMLElement>(focusableSelector);
     firstFocusable?.focus();
-    panel.addEventListener('keydown', trapFocus);
+    panel.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      panel.removeEventListener('keydown', trapFocus);
+      panel.removeEventListener('keydown', handleKeyDown);
       previouslyFocused?.focus();
     };
-  }, [open]);
+  }, [open, onClose]);
 
   if (!open) return null;
 

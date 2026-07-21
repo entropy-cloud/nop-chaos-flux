@@ -51,8 +51,8 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   useEffect(() => { eventsRef.current = events; }, [events]);
 
   useEffect(() => {
-    eventsRef.current.onMount?.({});
-    return () => { eventsRef.current.onUnmount?.({}); };
+    void eventsRef.current.onMount?.({});
+    return () => { void eventsRef.current.onUnmount?.({}); };
   }, []);
 
   const initialDate = resolved.date
@@ -106,7 +106,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const executeSwap = () => {
     if (!confirmDialog) return;
-    events.onEventChange?.({
+    void events.onEventChange?.({
       eventId: confirmDialog.event.id,
       fromResource: confirmDialog.event.resourceId ?? '',
       toResource: confirmDialog.targetResource,
@@ -137,7 +137,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       resourceId: payload.resourceId,
       color: DEFAULT_SHIFT_TYPES.find(t => t.type === payload.type)?.color,
     };
-    events.onEventCreate?.({ event: newEvent });
+    void events.onEventCreate?.({ event: newEvent });
   };
 
   const [keyboardDragEventId, setKeyboardDragEventId] = useState<string | null>(null);
@@ -167,7 +167,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         const resourceIdx = resourcesData.findIndex((r) => r.id === event.resourceId);
         if (resourceIdx > 0) {
           const prevResource = resourcesData[resourceIdx - 1];
-          events.onEventChange?.({
+          void events.onEventChange?.({
             eventId: event.id,
             fromResource: event.resourceId ?? '',
             toResource: prevResource.id,
@@ -182,7 +182,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         const resourceIdx = resourcesData.findIndex((r) => r.id === event.resourceId);
         if (resourceIdx < resourcesData.length - 1) {
           const nextResource = resourcesData[resourceIdx + 1];
-          events.onEventChange?.({
+          void events.onEventChange?.({
             eventId: event.id,
             fromResource: event.resourceId ?? '',
             toResource: nextResource.id,
@@ -194,7 +194,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         return;
       }
     }
-    events.onEventChange?.({
+    void events.onEventChange?.({
       eventId: event.id,
       fromResource: event.resourceId ?? '',
       toResource: event.resourceId ?? '',
@@ -262,10 +262,10 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     initialView: activeView,
     firstDayOfWeek,
     onDateChange: (date: Date) => {
-      events.onDateChange?.({ date: date.toISOString(), view: activeViewRef.current });
+      void events.onDateChange?.({ date: date.toISOString(), view: activeViewRef.current });
     },
     onViewChange: (view: CalendarView) => {
-      events.onViewChange?.({ view, date: currentDateRef.current.toISOString() });
+      void events.onViewChange?.({ view, date: currentDateRef.current.toISOString() });
     },
   });
 
@@ -311,7 +311,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   if (!meta.visible) return null;
 
   const onEventClick = (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => {
-    events.onEventClick?.(payload);
+    void events.onEventClick?.(payload);
   };
 
   return (

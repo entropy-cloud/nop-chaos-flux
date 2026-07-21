@@ -44,38 +44,18 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
     onKeyDown: (e: React.KeyboardEvent) => handleCardKeyDown(e, clickFn),
   };
 
-  if (config?.render) {
-    return (
-      <div
-        {...sharedAttributes}
-        className={cn('nop-kanban-card', config.className, className)}
-      >
-        {cardTemplateRegion?.render({ card, column, index })}
-        <KanbanCardTags color={color} tags={tags} members={members} />
-      </div>
-    );
-  }
-
-  if (cardTemplateRegion) {
-    return (
-      <div
-        {...sharedAttributes}
-        className={cn('nop-kanban-card', className)}
-      >
-        {cardTemplateRegion.render({ card, column, index })}
-        <KanbanCardTags color={color} tags={tags} members={members} />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      {...sharedAttributes}
-      className={cn(
-        'nop-kanban-card bg-white rounded-lg border border-gray-200 p-3',
-        className,
-      )}
-    >
+  const innerContent = config?.render ? (
+    <>
+      {cardTemplateRegion?.render({ card, column, index })}
+      <KanbanCardTags color={color} tags={tags} members={members} />
+    </>
+  ) : cardTemplateRegion ? (
+    <>
+      {cardTemplateRegion.render({ card, column, index })}
+      <KanbanCardTags color={color} tags={tags} members={members} />
+    </>
+  ) : (
+    <>
       <KanbanCardTags color={color} tags={tags} members={members} />
       <div className="nop-kanban-card-content text-sm font-medium text-gray-900 truncate mt-1">
         {title}
@@ -85,7 +65,19 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
           {description}
         </div>
       )}
-    </div>
+    </>
+  );
+
+  const cardClass = config?.render
+    ? cn('nop-kanban-card', config.className, className)
+    : cardTemplateRegion
+      ? cn('nop-kanban-card', className)
+      : cn('nop-kanban-card bg-white rounded-lg border border-gray-200 p-3', className);
+
+  return (
+    <li {...sharedAttributes} className={cardClass}>
+      {innerContent}
+    </li>
   );
 }
 

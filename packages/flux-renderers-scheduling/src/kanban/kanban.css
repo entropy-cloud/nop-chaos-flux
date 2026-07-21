@@ -1,0 +1,118 @@
+.nop-kanban {
+  @apply flex flex-col h-full min-h-0 bg-white;
+}
+
+.nop-kanban-columns {
+  @apply flex-1 overflow-x-auto overflow-y-hidden;
+}
+
+.nop-kanban-column {
+  @apply flex flex-col bg-gray-50 rounded-lg border border-gray-200;
+  min-width: 280px;
+  max-width: 360px;
+}
+
+.nop-kanban-column-collapsed {
+  @apply w-auto;
+  min-width: 60px;
+}
+
+.nop-kanban-column-header {
+  @apply flex items-center gap-2 px-3 py-2 border-b border-gray-200;
+}
+
+.nop-kanban-column-drag-handle {
+  @apply cursor-grab text-gray-400 hover:text-gray-600;
+}
+
+.nop-kanban-column-body {
+  @apply flex-1 overflow-y-auto p-2 space-y-2;
+  min-height: 60px;
+}
+
+.nop-kanban-column-empty {
+  @apply border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-sm text-gray-400;
+  min-height: 60px;
+}
+
+.nop-kanban-column-footer {
+  @apply px-2 py-1.5 border-t border-gray-200;
+}
+
+.nop-kanban-card {
+  @apply bg-white rounded-lg border border-gray-200 p-3 cursor-pointer;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.nop-kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.nop-kanban-card-content {
+  @apply text-sm font-medium text-gray-900 truncate;
+}
+
+.nop-kanban-card-color-dot {
+  @apply w-2 h-2 rounded-full mb-1.5;
+}
+
+.nop-kanban [data-dragging='true'] .nop-kanban-card {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.nop-kanban [data-drop-target='true'] {
+  @apply ring-2 ring-blue-400;
+}
+
+.nop-kanban-card.nop-kanban-dragging {
+  opacity: 0.8;
+  transform: scale(0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.nop-kanban-drop-indicator {
+  height: 2px;
+  background-color: var(--color-primary);
+  margin: 4px 0;
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.nop-kanban-skeleton {
+  @apply bg-gray-100 rounded-lg;
+  min-width: 280px;
+  height: 16rem;
+}
+
+.nop-kanban-empty {
+  @apply flex items-center justify-center py-12 text-gray-400 text-sm;
+}
+
+.nop-kanban-adder {
+  @apply shrink-0;
+}
+
+.nop-kanban-column {
+  transition: width 200ms ease;
+}
+
+.nop-kanban-search {
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  outline: none;
+  background-color: var(--color-card);
+  color: var(--color-card-foreground);
+}
+
+.nop-kanban-search:focus {
+  border-color: var(--color-ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-ring) 20%, transparent);
+}

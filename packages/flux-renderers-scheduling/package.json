@@ -53,7 +53,7 @@
     "react": "^19.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css src/calendar/utils/calendar-print.css dist/calendar/utils/calendar-print.css",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css src/calendar/utils/calendar-print.css dist/calendar/utils/calendar-print.css src/calendar/calendar.css dist/calendar/calendar.css src/gantt/gantt.css dist/gantt/gantt.css src/kanban/kanban.css dist/kanban/kanban.css src/barcode-input/barcode-input.css dist/barcode-input/barcode-input.css",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests --coverage",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

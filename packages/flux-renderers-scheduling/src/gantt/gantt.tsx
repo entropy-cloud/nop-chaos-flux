@@ -1,4 +1,5 @@
 import React, { useRef, useImperativeHandle, useState, useEffect, useCallback } from 'react';
+import { cn } from '@nop-chaos/ui';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttSchema } from '../schemas.js';
@@ -56,9 +57,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     useEffect(() => { eventsRef.current = events; }, [events]);
 
     useEffect(() => {
-      eventsRef.current.onMount?.({});
+      void eventsRef.current.onMount?.({});
       return () => {
-        eventsRef.current.onUnmount?.({});
+        void eventsRef.current.onUnmount?.({});
         store.destroy();
       };
     }, [store]);
@@ -179,7 +180,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
 
     return (
       <GanttStoreProvider store={store}>
-        <div ref={containerRef} className="nop-gantt flex flex-col h-full" data-testid={meta.testid || undefined}>
+        <div ref={containerRef} className={cn('nop-gantt flex flex-col h-full', meta.className)} data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>
           <div aria-live="polite" aria-atomic="true" className="sr-only">
             {`${store.getVisibleTasks().length} tasks visible`}
           </div>

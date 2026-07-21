@@ -9,7 +9,7 @@
  */
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { cn, Button, Input } from '@nop-chaos/ui';
+import { cn, Button, Input, Label } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Undo2, Redo2, History } from 'lucide-react';
 import type { BoardData, BoardItem, KanbanSchema, KanbanCardConfig } from './kanban.types.js';
@@ -284,10 +284,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   if (resolved.loading) {
     const skeletonRegion = regions.loading;
     if (skeletonRegion) {
-      return <div data-slot="kanban">{skeletonRegion.render() as React.ReactNode}</div>;
+      return <div data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>{skeletonRegion.render() as React.ReactNode}</div>;
     }
     return (
-      <div data-slot="kanban" className="nop-kanban flex gap-4 p-4 animate-pulse">
+      <div data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban flex gap-4 p-4 animate-pulse', meta.className)}>
         {[1, 2, 3].map((i) => (
           <div key={i} className="nop-kanban-skeleton bg-gray-100 rounded-lg min-w-[280px] h-64" />
         ))}
@@ -298,10 +298,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   if (columns.length === 0) {
     const emptyRegion = regions.empty;
     if (emptyRegion) {
-      return <div data-slot="kanban">{emptyRegion.render() as React.ReactNode}</div>;
+      return <div data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>{emptyRegion.render() as React.ReactNode}</div>;
     }
     return (
-      <div data-slot="kanban-empty" className="nop-kanban-empty flex items-center justify-center py-12 text-gray-400 text-sm">
+      <div data-slot="kanban-empty" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban-empty flex items-center justify-center py-12 text-gray-400 text-sm', meta.className)}>
         {t('flux.common.noData')}
       </div>
     );
@@ -311,12 +311,14 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const canRedoNow = canRedo(undoStackState);
 
   return (
-    <div ref={boardRef} data-slot="kanban" className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}>
+    <div ref={boardRef} data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}>
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {`${columns.length} columns, ${columns.reduce((sum, col) => sum + col.children.length, 0)} cards`}
       </div>
       <div className="flex items-center gap-2 px-4 py-2">
+        <Label htmlFor="kanban-search" className="sr-only">{t('scheduling.kanban.searchCards')}</Label>
         <Input
+          id="kanban-search"
           type="text"
           value={filter.filterText}
           onChange={(e) => filter.setFilterText(e.target.value)}

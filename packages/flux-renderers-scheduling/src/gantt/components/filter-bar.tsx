@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, cn } from '@nop-chaos/ui';
+import { Input, Button, NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { GanttColumn } from '../gantt.types.js';
 
@@ -66,16 +66,16 @@ export function FilterBar({
         className="h-7 text-xs w-40"
       />
       {groupBy !== undefined && (
-        <select
+        <NativeSelect
           value={groupBy}
+          size="sm"
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onGroupByChange(e.target.value || undefined)}
-          className="h-7 text-xs rounded border border-input bg-background px-2"
         >
-          <option value="">{t('scheduling.gantt.noGroup')}</option>
+          <NativeSelectOption value="">{t('scheduling.gantt.noGroup')}</NativeSelectOption>
           {sortableColumns.map((col) => (
-            <option key={col.name} value={col.name}>{col.label}</option>
+            <NativeSelectOption key={col.name} value={col.name}>{col.label}</NativeSelectOption>
           ))}
-        </select>
+        </NativeSelect>
       )}
       {sortableColumns.map((col) => (
         <Button

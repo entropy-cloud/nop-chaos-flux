@@ -1,0 +1,122 @@
+.nop-gantt {
+  @apply flex flex-col h-full min-h-0 bg-white text-sm;
+}
+
+.nop-gantt-grid [data-slot='gantt-grid-row']:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+
+.nop-gantt-grid [data-slot='gantt-grid-cell'] {
+  @apply overflow-hidden text-ellipsis whitespace-nowrap;
+}
+
+.nop-gantt [data-slot='gantt-bar']:hover {
+  filter: brightness(1.1);
+}
+
+.nop-gantt-bar-ghost {
+  opacity: 0.8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.nop-gantt-drop-indicator {
+  position: absolute;
+  width: 2px;
+  background-color: var(--color-primary);
+  z-index: 50;
+  pointer-events: none;
+}
+
+.nop-gantt [data-slot='gantt-today'] {
+  z-index: 20;
+}
+
+.nop-gantt [data-slot='gantt-link']:hover polyline {
+  stroke: var(--color-primary);
+  stroke-width: 2;
+}
+
+.nop-gantt [data-slot='gantt-bar'] {
+  transition:
+    left 300ms ease,
+    width 300ms ease;
+}
+
+.nop-gantt .overflow-auto {
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+.nop-gantt-skeleton {
+  @apply animate-pulse;
+}
+
+.nop-gantt-skeleton-row {
+  @apply h-10 bg-gray-100 rounded mb-1;
+}
+
+.nop-gantt-empty {
+  @apply flex items-center justify-center py-12 text-gray-400 text-sm;
+}
+
+.nop-gantt [data-slot='gantt-weekend'][data-weekend='true'] {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.nop-gantt-grid [data-task-id] button {
+  transition: transform 150ms ease;
+}
+
+.nop-gantt [data-bar-type='milestone'] {
+  z-index: 10;
+}
+
+.nop-gantt [data-bar-type='project'] {
+  @apply border border-dashed;
+}
+
+.nop-gantt-bar-task {
+  background-color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 80%, black);
+}
+
+.nop-gantt-bar-project {
+  background-color: color-mix(in srgb, var(--color-accent) 60%, white);
+  border-color: color-mix(in srgb, var(--color-accent) 80%, black);
+}
+
+.nop-gantt-bar-milestone-fill {
+  fill: var(--color-warning);
+}
+
+.nop-gantt-bar-milestone-stroke {
+  stroke: color-mix(in srgb, var(--color-warning) 80%, black);
+}
+
+.nop-gantt-bar-progress {
+  background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.nop-gantt-bar-text {
+  color: var(--color-primary-foreground);
+}
+
+.nop-gantt-link-arrow {
+  fill: var(--color-muted-foreground);
+}
+
+.nop-gantt-link-line {
+  stroke: var(--color-muted-foreground);
+}
+
+.nop-gantt-link-line.hovered {
+  stroke: var(--color-primary);
+}
+
+.nop-gantt-link-delete-btn {
+  background-color: var(--color-destructive);
+  color: white;
+}

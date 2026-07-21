@@ -2,7 +2,7 @@ import type { ChangeEvent } from 'react';
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentForm, useInputComponentHandle } from '@nop-chaos/flux-react';
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, cn } from '@nop-chaos/ui';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, Label, cn } from '@nop-chaos/ui';
 import { ScanLine } from 'lucide-react';
 import { BarcodeScannerOverlay } from './barcode-scanner-overlay.js';
 import { checkCameraAvailability } from './utils/camera-utils.js';
@@ -27,9 +27,9 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const [cameraAvailable, setCameraAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
-    events.onMount?.({});
+    void events.onMount?.({});
     return () => {
-      events.onUnmount?.({});
+      void events.onUnmount?.({});
     };
   }, [events]);
 
@@ -91,11 +91,11 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
     if (name && form) {
       form.setValue(name, val);
     }
-    events.onScan?.({ barcode: result.barcode, format: result.format });
+    void events.onScan?.({ barcode: result.barcode, format: result.format });
   };
 
   const handleScanError = (error: string) => {
-    events.onScanError?.({ error: { message: error } });
+    void events.onScanError?.({ error: { message: error } });
   };
 
   const handleOverlayClose = () => {
@@ -144,12 +144,16 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   if (!meta.visible) return null;
 
   const showClearButton = resolved.clearable && inputValue.length > 0;
+  const labelText = resolved.label ? String(resolved.label) : undefined;
+  const inputId = `${props.id || name}-input`;
 
   return (
-    <div data-slot="barcode-input" className={cn('nop-barcode-input nop-input-text', meta.className)}>
+    <div data-slot="barcode-input" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-barcode-input nop-input-text', meta.className)}>
+      {labelText && <Label htmlFor={inputId}>{labelText}</Label>}
       <InputGroup className="nop-input-group">
         <InputGroupInput
           ref={inputRef}
+          id={inputId}
           type="text"
           name={name || undefined}
           value={inputValue}

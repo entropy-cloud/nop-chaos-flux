@@ -127,13 +127,14 @@ export function KanbanColumn({
           style={virtualize ? { overflowY: 'auto', maxHeight: '100%' } : undefined}
         >
           {virtualize && displayCards.length > 0 ? (
-            <div style={{ height: totalSize, position: 'relative' }}>
+            <ul style={{ height: totalSize, position: 'relative', listStyle: 'none', margin: 0, padding: 0 }}>
               {virtualItems.map((virtualItem) => {
                 const card = displayCards[virtualItem.index];
                 if (!card) return null;
                 return (
                   <div
                     key={card.id}
+                    role="none"
                     style={{
                       position: 'absolute',
                       top: 0,
@@ -153,9 +154,9 @@ export function KanbanColumn({
                   </div>
                 );
               })}
-            </div>
+            </ul>
           ) : (
-            <div className="space-y-2">
+            <ul className="space-y-2" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {displayCards.map((card, _idx) => (
                 <KanbanCard
                   key={card.id}
@@ -167,7 +168,7 @@ export function KanbanColumn({
                   onCardClick={onCardClick}
                 />
               ))}
-            </div>
+            </ul>
           )}
           {showEmptyZone && (
             <div

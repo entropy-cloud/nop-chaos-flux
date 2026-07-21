@@ -170,7 +170,12 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
     const previouslyFocused = document.activeElement as HTMLElement | null;
 
-    const trapFocus = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
       if (e.key !== 'Tab') return;
       const focusable = overlay.querySelectorAll<HTMLElement>(focusableSelector);
       if (focusable.length === 0) return;
@@ -191,13 +196,13 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
 
     const firstFocusable = overlay.querySelector<HTMLElement>(focusableSelector);
     firstFocusable?.focus();
-    overlay.addEventListener('keydown', trapFocus);
+    overlay.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      overlay.removeEventListener('keydown', trapFocus);
+      overlay.removeEventListener('keydown', handleKeyDown);
       previouslyFocused?.focus();
     };
-  }, [open]);
+  }, [open, onClose]);
 
   if (!open) return null;
 
