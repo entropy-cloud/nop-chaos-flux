@@ -10,6 +10,7 @@
  */
 import React, { useImperativeHandle, useRef, useState, useEffect } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { CalendarSchema, CalendarView, CalendarEvent, CalendarResource } from '../schemas.js';
@@ -45,7 +46,9 @@ const DEFAULT_SHIFT_TYPES = [
 ];
 
 export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?: React.Ref<CalendarHandle> }) {
-  const { ref, props: resolved, meta, regions, events } = props;
+  const { ref, props: resolved, meta, regions, events, helpers: _helpers } = props;
+  const _runtime = useRendererRuntime();
+  const _scope = useRenderScope();
 
   const eventsRef = useRef(events);
   useEffect(() => { eventsRef.current = events; }, [events]);

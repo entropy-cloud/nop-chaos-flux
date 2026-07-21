@@ -1,7 +1,7 @@
 import type { ChangeEvent } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useCurrentForm, useCurrentFormState, useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useCurrentForm, useCurrentFormState, useInputComponentHandle, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, Label, cn } from '@nop-chaos/ui';
 import { ScanLine } from 'lucide-react';
 import { BarcodeScannerOverlay } from './barcode-scanner-overlay.js';
@@ -10,7 +10,9 @@ import { resetWasmPromise as resetWasm } from './utils/prepare-wasm.js';
 import type { BarcodeInputSchema, BarcodeDetectResult } from './barcode-input.types.js';
 
 export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputSchema>) {
-  const { props: resolved, meta, events } = props;
+  const { props: resolved, meta, events, helpers: _helpers } = props;
+  const _runtime = useRendererRuntime();
+  const _scope = useRenderScope();
   const form = useCurrentForm();
 
   const name = String(resolved.name ?? '');

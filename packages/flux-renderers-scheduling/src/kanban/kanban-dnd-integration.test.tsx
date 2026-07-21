@@ -4,6 +4,11 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { KanbanBoard } from './kanban-board.js';
 import type { BoardData } from './kanban.types.js';
 
+vi.mock('@nop-chaos/flux-react', () => ({
+  useRendererRuntime: () => ({ dispatch: vi.fn() }),
+  useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
+}));
+
 vi.mock('./hooks/use-kanban-virtualizer.js', () => ({
   useKanbanVirtualizer: (options: any) => ({
     virtualizer: { scrollToIndex: vi.fn() },

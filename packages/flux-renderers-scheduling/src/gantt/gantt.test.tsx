@@ -3,6 +3,11 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { Gantt } from './gantt.js';
 
+vi.mock('@nop-chaos/flux-react', () => ({
+  useRendererRuntime: () => ({ dispatch: vi.fn() }),
+  useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
+}));
+
 vi.mock('./gantt-context.js', () => ({
   GanttStoreProvider: ({ children }: any) => React.createElement('div', { 'data-testid': 'gantt-store-provider' }, children),
   useGanttStore: () => ({

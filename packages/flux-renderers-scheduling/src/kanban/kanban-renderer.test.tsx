@@ -3,6 +3,11 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import type { BoardData } from './kanban.types.js';
 
+vi.mock('@nop-chaos/flux-react', () => ({
+  useRendererRuntime: () => ({ dispatch: vi.fn() }),
+  useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
+}));
+
 afterEach(cleanup);
 import { KanbanBoard } from './kanban-board.js';
 import { KanbanColumn } from './kanban-column.js';

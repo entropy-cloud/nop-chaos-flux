@@ -29,6 +29,7 @@ function notifyFormStore() {
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
+  useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useCurrentForm: () => ({ store: mockFormStore, setValue: vi.fn() }),
   useInputComponentHandle: mockUseInputComponentHandle,
   useCurrentFormState: (selector: (state: { values?: Record<string, unknown> }) => string) => {

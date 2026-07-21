@@ -9,6 +9,7 @@
  */
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { cn, Button, Input, Label } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Undo2, Redo2, History } from 'lucide-react';
@@ -53,7 +54,9 @@ function collectAllTags(board: BoardData, columns: BoardItem[]): KanbanFilterTag
 }
 
 export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
-  const { props: resolved, meta, regions, events } = props;
+  const { props: resolved, meta, regions, events, helpers: _helpers } = props;
+  const _runtime = useRendererRuntime();
+  const _scope = useRenderScope();
 
   const rawData = resolved.data as BoardData | undefined;
   const configMap = resolved.configMap as Record<string, KanbanCardConfig> | undefined;

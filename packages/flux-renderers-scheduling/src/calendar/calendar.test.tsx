@@ -3,6 +3,11 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { Calendar } from './calendar.js';
 
+vi.mock('@nop-chaos/flux-react', () => ({
+  useRendererRuntime: () => ({ dispatch: vi.fn() }),
+  useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
+}));
+
 const mockDragCreate = vi.hoisted(() => ({
   triggerCreate: null as ((payload: { title: string; type: string; start: string; end: string; resourceId: string }) => void) | null,
 }));
