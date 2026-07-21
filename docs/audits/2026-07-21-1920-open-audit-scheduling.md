@@ -1,132 +1,214 @@
-> Audit Status: closed
+> Audit Status: planned
 > Audit Type: open-ended
 > Mission: scheduling
+> Remediation Plans: `docs/plans/2026-07-21-2100-1-dead-module-cleanup-scheduling-content.md` (F-51, F-52, F-53, F-59), `docs/plans/2026-07-21-2100-2-scheduling-package-hardening.md` (F-55, F-56), `docs/plans/2026-07-21-2100-3-convention-alignment-scheduling-content.md` (F-54, F-57, F-58)
+> Date: 2026-07-21
+> Source perspectives: Dead code cleaner + contract archaeologist + React 19 enforcer + CSS auditor + cross-boundary messenger
 
-## Pre-check Context
+## Pre-check: Prior Audit Coverage
 
-This audit builds on two previous adversarial review executions for the scheduling mission:
+Verified against 50 prior findings across 6 audit rounds (2026-07-20 rounds 1-4: F-01–F-38; 2026-07-21 round 001: F-39–F-45; 2026-07-21 round 1920: F-46–F-50). 33 of 38 from the first batch resolved; 6 of 7 from 001 resolved; all 5 from 1920 unresolved.
 
-- `docs/analysis/2026-07-20-2157-open-audit-scheduling/` (4 rounds, 38 findings: F-01 through F-38)
-- `docs/analysis/2026-07-21-001-open-audit-scheduling/` (1 round, 7 findings: F-39 through F-45)
-
-**Fix rate**: 33 of 38 from the first execution and 6 of 7 from the second are now resolved in HEAD. The codebase shows active, fast maintenance.
-
-This round reports 5 novel findings (F-46 through F-50) not previously reported.
+Additionally ran the full test suite: **855/855 tests pass** (627 scheduling + 228 content/diff-view), zero failures, zero skipped, zero flaky indicators. The codebase is in a healthy "all tests green" state despite the issues below.
 
 ---
 
-## F-46: `useOfflineDetection` is dead code — zero production imports; also implements wrong React pattern
+## F-51: `gantt/gantt-search.ts` is completely dead — zero imports anywhere in the codebase
 
-**Location**: `packages/flux-renderers-scheduling/src/barcode-input/utils/barcode-queue.ts:81-106`
+**Location**: `packages/flux-renderers-scheduling/src/gantt/gantt-search.ts` (entire file, 11 lines)
 
-**What**: The function `useOfflineDetection` is exported from the public utility module but imported by zero production files across the entire monorepo. A grep returns exactly 2 files: the definition and its own test file.
+**What**: The file exports a single function `searchTasks(tasks: GanttTask[], query: string): GanttTask[]`. A codebase-wide search for any import of `gantt-search` returns zero results — not even a test file imports it. The file compiles and ships as part of the package, but its function is never called.
 
-Beyond being dead, the pattern is wrong for React 19:
+**Why care**: Dead code in the production source tree creates:
 
-- It registers `window` event listeners at call time (render phase if called in a component), not through `useEffect` or `useSyncExternalStore`
-- Returns `{ isOnline, cleanup }` — callers must manually invoke `cleanup()` in an effect lifecycle
-- The project already demonstrates the CORRECT pattern at `barcode-scanner-overlay.tsx:50-61` using `useSyncExternalStore`
-
-**Why care**: Dead export creates maintenance burden. If a future developer imports it expecting a correct hook, they get a buggy pattern that leaks event listeners across renders.
-
-**Source perspective**: Dead code cleaner
+1. Misleading API surface — a future developer searching for "how does Gantt search work" finds this module and assumes it's the active implementation, wasting time understanding dead code
+2. Bundled dead weight — the 11 lines are minimal but set a precedent; no automated check prevents more dead code from accumulating
+3. Missing feature — the Gantt UI has a filter/search bar (`filter-bar.tsx`), but it doesn't use `gantt-search.ts`. Either the filter bar's search implementation was replaced and the old file was left behind, or the file was pre-written in anticipation of a feature that was never wired
 
 **Confidence**: Certain
 
 ---
 
-## F-47: Gantt `createInitialStore` captures schema config only at mount — `cellWidth`/`defaultZoom`/`taskBarHeight` changes silently ignored
+## F-52: `gantt/components/multi-select.tsx` is dead — only imported by its own test file
 
-**Location**: `packages/flux-renderers-scheduling/src/gantt/gantt.tsx:29-41,53`
+**Location**: `packages/flux-renderers-scheduling/src/gantt/components/multi-select.tsx` (entire component)
 
-**What**: The store is created once via `useState(() => createInitialStore(resolved))`. Inside, `resolved.cellWidth`, `resolved.defaultZoom`, and `resolved.taskBarHeight` are read once and written to Zustand store state via the `GanttStoreConfig` constructor. A separate `useEffect` syncs task/link/resource/assignment data via `store.parse()`, but config changes are never re-synced.
+**What**: The component exports `createMultiSelectState`, `handleMultiSelectClick`, `clearSelection`, `selectAll` — a multi-select interaction model for Gantt. The only production import of anything from this module is in `multi-select.test.ts` (its test file). Zero renderers, hooks, or other modules reference it.
 
-If a parent dynamically changes `cellWidth: 60` to `cellWidth: 120`, the Gantt continues using the original value. `store.setZoom()` handles zoom levels independently, but the base `cellWidth` is permanent.
+S3.9 in `roadmap-scheduling.md` claims multi-select (Shift+Click range selection, batch drag) is "done", but the implementation code is entirely disconnected from the Gantt render pipeline.
 
-**Why care**: Affects any Gantt instance where config props are fed from dynamic schema data (API response, state-managed schema, user preference). While uncommon in static schema scenarios, it's a silent contract violation: the schema declares these as reactive `prop` fields (`scheduling-renderer-definitions.ts:27-31`), but they behave as one-time initializers.
+**Why care**: This is an entire feature module that compiles, is tested, but is never wired to the UI. It represents:
 
-**Source perspective**: Contract archaeologist
-
-**Confidence**: Likely
-
----
-
-## F-48: `as any` on barcode event dispatch — type safety bypass on production core path
-
-**Location**: `packages/flux-renderers-scheduling/src/barcode-input/barcode-input-renderer.tsx:106-107,116-117`
-
-**What**: Three `as any` casts on the event dispatch core path:
-
-```typescript
-helpers.dispatch(events.onScan as any, {
-  ...(events.onScan as any)?.__ctx,
-  barcode: result.barcode,
-  format: result.format,
-});
-helpers.dispatch(events.onScanError as any, {
-  ...(events.onScanError as any)?.__ctx,
-  error: { message: error },
-});
-```
-
-`events.onScan` and `events.onScanError` are typed `ActionSchema | undefined`. The casts erase this guard. If `__ctx` doesn't exist on `onScan`, the spread silently produces `{}`. Any malformed payload keys pass through unchecked.
-
-**Why care**: This is production code on the event dispatch core path, not test mock setup. The identical pattern in `UpdateTaskCommand` was flagged as F-40 and has been fixed (now uses `Partial<GanttTaskData>`), but barcode-input's dispatch was never caught because it lives in a different sub-domain. The scheduling package now has an inconsistent type safety baseline across sub-domains.
-
-**Source perspective**: Contract archaeologist
+1. **Delivered-but-unreachable feature** — work was done (code written, tested) but the integration step (connecting it to Gantt's keyboard handler, selection state, and drag system) was never completed
+2. **Roadmap misrepresentation** — S3.9 claims "done" but the multi-select interaction is completely absent from the shipped component
+3. **Maintenance burden** — tests may fail if the module API changes during refactoring, forcing unnecessary test fixes for dead code
 
 **Confidence**: Certain
 
 ---
 
-## F-49: Deprecated `GanttTask`/`GanttLink` still required by `GanttSchema` — deprecation creates a contradiction
+## F-53: `diff-view/components/diff-virtual-list.tsx` is dead — zero production imports
 
-**Location**: `packages/flux-renderers-scheduling/src/schemas.ts:4-26,66-69`
+**Location**: `packages/flux-renderers-content/src/diff-view/components/diff-virtual-list.tsx` (entire file)
 
-**What**: `GanttTask` (line 4) and `GanttLink` (line 19) are marked `@deprecated` with JSDoc telling consumers to use types from `./gantt/gantt.types.js`. But `GanttSchema` (lines 68-69) still references them:
+**What**: Exports `DiffVirtualList` (a `FixedSizeList` wrapper) and `shouldVirtualize` (threshold check). A codebase-wide search finds zero production imports. The diff-view renderer and split/unified view components handle virtual scrolling via `@tanstack/react-virtual`'s `useVirtualizer` directly, not through this module.
 
-```typescript
-export interface GanttSchema extends BaseSchema {
-  type: 'gantt';
-  tasks?: GanttTask[];   // uses deprecated type
-  links?: GanttLink[];   // uses deprecated type
-```
+S9.6 in `roadmap-scheduling.md` claims "大文件虚拟滚动：virtualizationThreshold: 500" is "done". The code exists but is completely disconnected from the render pipeline.
 
-The index.ts barrel now correctly exports `GanttTaskData`/`GanttLinkData` (F-45 fix). But any consumer who writes `tasks: GanttTaskData[]` gets a type error if they also use `GanttSchema` — because `GanttSchema.tasks` requires `GanttTask`. The `GanttTaskData` type has `children` (same as `GanttTask`) plus `segments`/`baselines` that shouldn't appear in schema data.
-
-The deprecation creates a deadlock: `GanttSchema` can't stop using `GanttTask` until all consumers migrate, but consumers can't migrate because `GanttSchema` still requires `GanttTask`.
-
-**Why care**: Schema consumers see a `@deprecated` warning on `GanttTask` when authoring Gantt schema data, but the stated replacement (`GanttTaskData`) is incompatible with the only type (`GanttSchema`) that accepts it. The deprecation is unfollowable.
-
-**Source perspective**: Contract archaeologist
+**Why care**: Same pattern as F-51/F-52 — the module is compiled, exported, and tested but never instantiated. Three instances of this pattern across two packages suggest a systemic gap in the delivery process: code is written to meet work-item checkboxes, but integration is not verified.
 
 **Confidence**: Certain
 
 ---
 
-## F-50: BarcodeScannerOverlay effect depends on unstable `start`/`stop` closures — camera lifecycle effect re-runs on every render
+## F-54: Zero scheduling renderers use standard `@nop-chaos/flux-react` hooks — convention violation
 
-**Location**: `packages/flux-renderers-scheduling/src/barcode-input/barcode-scanner-overlay.tsx:104-108`
+**Location**: All 5 renderers across scheduling and content/diff-view packages
 
-**What**: The camera effect dependency array includes `stop` and `start`:
+| Renderer     | File                     | flux-react hooks used                       | Standard hooks mandated by AGENTS.md                                                                                                                             |
+| ------------ | ------------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Gantt        | `gantt.tsx`              | `RenderRegionHandle` (type only)            | `useRendererRuntime`, `useRenderScope`, `useScopeSelector`, `useActionDispatcher`, `useCurrentForm`, `useCurrentPage`, `useRenderFragment`, `useCurrentNodeMeta` |
+| KanbanBoard  | `kanban-board.tsx`       | NONE                                        | Same 8 hooks                                                                                                                                                     |
+| Calendar     | `calendar.tsx`           | NONE                                        | Same 8 hooks                                                                                                                                                     |
+| BarcodeInput | `barcode-input.tsx`      | `useCurrentForm`, `useInputComponentHandle` | Same 8 hooks (2/8)                                                                                                                                               |
+| DiffView     | `diff-view-renderer.tsx` | NONE                                        | Same 8 hooks                                                                                                                                                     |
+
+**What**: AGENTS.md explicitly mandates: "**NEVER** access stores directly in renderers. Use the standard hooks" and lists 8 hooks. Only barcode-input uses any (2 of 8). The other three scheduling renderers and the diff-view renderer use zero flux-react hooks. They rely entirely on direct `props.props`/`props.meta`/`props.events`/`props.meta` destructuring and custom local hooks.
+
+Additionally, ALL five renderers miss the `helpers` property in their destructuring — `helpers` provides `render()`, `evaluate()`, `dispatch()` for runtime operations:
 
 ```typescript
-const camera = useBarcodeCamera({ videoRef });
-const { stop, start } = camera;
+// Current pattern (gantt.tsx:46)
+const { props: resolved, meta, regions, events } = props; // missing helpers
 
-useEffect(() => {
-  // init camera
-  return () => {
-    stop();
-  };
-}, [open, wasmUrl, onScanError, stop, start]);
+// Mandated pattern
+const { props: resolved, meta, regions, events, helpers } = props;
 ```
 
-`useBarcodeCamera` returns `start` and `stop` as fresh closures created in the hook body each render. Since they're new object references each time, the effect re-runs on every parent render — even when `open`, `wasmUrl`, and `onScanError` are unchanged. The cleanup calls `stop()`, which stops the camera stream; the effect re-runs and calls `start()`, which re-initializes `getUserMedia()`.
+**Why care**: This is an explicit convention violation. The project's AGENTS.md says "NEVER create ad-hoc React contexts or prop-drilling chains for data these hooks already provide." The scheduling renderers don't create ad-hoc contexts (that was fixed), but they also don't use the standard hooks — meaning they can't access runtime, scope, dispatch, or form data through the established patterns.
 
-**Why care**: For a camera, this causes the video feed to briefly cut out on every parent re-render. The `sessionRef` guard prevents data races, but users see a visual flicker. Repeated `getUserMedia()` calls may trigger browser permission UI or throttling.
+This creates two problems:
 
-**Source perspective**: React 19 enforcer
+1. **Portability**: If the runtime changes how `props.props`/`meta`/etc. are provided, all scheduling renderers break silently. Renderers using standard hooks are insulated by the hook abstraction.
+2. **Maintenance inconsistency**: Every other renderer package follows the convention (basic, form, form-advanced, data, layout, mobile). Scheduling and content are outliers.
+
+**Confidence**: Certain
+
+---
+
+## F-55: 6 CSS classes used in TSX have no definition in any stylesheet
+
+**Location**: Multiple files
+
+| Missing class                     | Used in                    | Line(s) |
+| --------------------------------- | -------------------------- | ------- |
+| `nop-kanban-column-resize-handle` | `kanban-column-header.tsx` | 44, 66  |
+| `nop-kanban-card-tag`             | `kanban-card-tags.tsx`     | 51      |
+| `nop-kanban-card-members`         | `kanban-card-tags.tsx`     | 64      |
+| `nop-kanban-card-member`          | `kanban-card-tags.tsx`     | 69      |
+| `nop-input-text`                  | `barcode-input.tsx`        | 151     |
+| `nop-input-group`                 | `barcode-input.tsx`        | 153     |
+
+**What**: These classes are applied to DOM elements via `className={...}` but have no corresponding CSS rule in any stylesheet in the entire `packages/` tree. They render as bare class names with zero visual effect.
+
+**Why care**:
+
+- `nop-kanban-column-resize-handle`: The column resize feature (S7.1, claimed "done") has a drag handle with no visible styling — users see no resize affordance. It may appear as an invisible 1px-wide hot zone.
+- `nop-kanban-card-tag`/`nop-kanban-card-members`/`nop-kanban-card-member`: Card tag pills and member avatars render without any visual distinction — they appear as plain unstyled text, not pills or chips.
+- `nop-input-text`/`nop-input-group`: These classes are expected from the form renderer's styling system. The barcode-input expects inherited CSS from form renderers that may not be loaded in all contexts. If used outside a form context (standalone), the input is completely un styled.
+
+**Confidence**: Certain
+
+---
+
+## F-56: 21 CSS definitions in scheduling stylesheets are dead — zero TSX usage
+
+**Location**: `calendar.css`, `gantt.css`, `kanban.css`
+
+**Breakdown by sub-domain**:
+
+**Calendar (13 dead definitions)**:
+
+- `.nop-calendar-virtual-scroll`, `.nop-calendar-skeleton`, `.nop-calendar-skeleton-row`, `.nop-calendar-empty`, `.nop-calendar-skeleton-matrix`, `.nop-calendar-skeleton-cell`, `.nop-calendar-empty-state`, `.nop-batch-preview-grid`, `.nop-calendar-type-selector-overlay`, `.nop-calendar-confirm-overlay`, `.nop-batch-scheduler-date-input`, `.nop-calendar-drag-over`, `.nop-cross-day-highlight`
+
+**Gantt (4 dead definitions)**:
+
+- `.nop-gantt-bar-ghost`, `.nop-gantt-drop-indicator`, `.nop-gantt-empty`, `.nop-gantt-bar-milestone-stroke`
+
+**Kanban (4 dead definitions)**:
+
+- `.nop-kanban-dragging`, `.nop-kanban-drop-indicator`, `.nop-kanban-search`, `.nop-kanban-search:focus`
+
+**What**: These CSS rules are defined in the stylesheet but no TSX/TS file applies them via `className`. They serve zero visual purpose at runtime.
+
+**Why care**:
+
+1. **Bundle bloat**: An estimated ~2-3 KB of CSS is shipped but never applied. The scheduling CSS totals ~713 lines; ~8-10% is dead.
+2. **Maintenance confusion**: A future developer adding a skeleton loader might write duplicate CSS not realizing `.nop-calendar-skeleton` already exists and is unused. Or they might refactor skeleton handling and break the dead-but-still-present CSS, wasting debugging time.
+3. **Feature ambiguity**: `.nop-gantt-drop-indicator` shows intent for drag-and-drop visual feedback, but the actual drag system (`useGanttDrag`) doesn't apply this class. Either the CSS was written pre-emptively (and drag indicators are missing) or the feature was removed but CSS was not cleaned up.
+
+**Confidence**: Certain
+
+---
+
+## F-57: `diff-line.tsx` uses `dangerouslySetInnerHTML` on user-supplied content — safe today, fragile pattern
+
+**Location**: `packages/flux-renderers-content/src/diff-view/components/diff-line.tsx:47-50`
+
+**What**: The `DiffLineComponent` renders user-supplied diff content via `dangerouslySetInnerHTML`:
+
+```tsx
+<span className="nop-diff-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />
+```
+
+where `contentHtml` comes from `highlightedHtml` (prop from parent) or `generateLineContentHtml(content, type, inlineTokens)`.
+
+**Current safety audit**: Both code paths properly escape HTML. `escapeHtml()` in `syntax-highlight.ts` escapes `&<>"'`. `generateLineContentHtml` calls `escapeHtml()` first, then wraps with known-safe `<span>` tags. The `highlight()` function only produces safe HTML by passing all user text through `escapeHtml()`. **Not currently exploitable.**
+
+**Why care**: The pattern is fragile for three reasons:
+
+1. **Single-point-of-failure**: If any future change to `generateLineContentHtml` or the `highlight()` / `syntax-highlight.ts` code removes the `escapeHtml` call (e.g., to "optimize" by assuming input is always trusted), the diff-view becomes a stored XSS vector. There is no runtime CSP or sanitizer as a second layer.
+2. **Data flow opacity**: The `contentHtml` prop is passed in from parent components (`diff-split-view.tsx`, `diff-unified-view.tsx`). A reader cannot tell from `diff-line.tsx` alone whether the HTML is safe — they must trace through two layers of function calls to verify escaping.
+3. **Schema data source**: Diff content comes from the schema (`oldContent`/`newContent`), which in a low-code platform may come from untrusted remote sources. The current code handles this correctly, but the pattern invites regression.
+
+**Contrast with F-53 in prior audit**: The diff-view F-20 reported "zero CSS class definitions" — this is a different class of issue (security-sensitive pattern, not CSS) and was not covered.
+
+**Recommended fix**: Add an explicit comment on line 49 explaining why `dangerouslySetInnerHTML` is safe here (both paths escape), so future maintainers know not to remove escaping. Better: centralize the sanitized HTML construction and ban raw `dangerouslySetInnerHTML` in code review.
+
+**Confidence**: Likely (the risk is in future regressions, not current exploitability)
+
+---
+
+## F-58: `diff-line.tsx` uses `React.memo` — violates React 19 / React Compiler convention (P3 - convention)
+
+**Location**: `packages/flux-renderers-content/src/diff-view/components/diff-line.tsx:17`
+
+**What**: The `DiffLineComponent` is wrapped in `React.memo` with a custom comparison function `areDiffLinePropsEqual`. The project's React 19 baseline (AGENTS.md, `react19-best-practices-review.md`) states:
+
+- "React Compiler automatically handles memoization"
+- "Do **not** add `useCallback` or `useMemo` by default"
+- "Hand-written memoization is redundant unless accompanied by `eslint-disable-next-line react-compiler/react-compiler`"
+
+This file has no `eslint-disable` annotation for the compiler. The custom comparator is 12 lines and manually compares 8 props — exactly the type of work React Compiler handles automatically.
+
+**Why care**: While functionally harmless (React Compiler treats redundant wrappers as identity-stable no-ops), this contradicts published coding conventions. Combined with F-44 (45+ useCallback/useMemo in scheduling), it shows the scheduling and content packages were written without React Compiler awareness. The diff-view `React.memo` is just one additional instance.
+
+**Confidence**: Certain
+
+---
+
+## F-59: 855 tests pass — but this masks dead code coverage gaps
+
+**Location**: Entire `@nop-chaos/flux-renderers-scheduling` and `@nop-chaos/flux-renderers-content` test suites
+
+**What**: All 627 scheduling tests + 228 content/diff-view tests pass. However:
+
+- `gantt-search.ts` has zero tests (dead code with no coverage)
+- `multi-select.tsx` tests exist but only test the module in isolation — no integration test verifies it's connected to the Gantt UI
+- `diff-virtual-list.tsx` has no tests (dead code with no coverage)
+- The coverage threshold in `vitest.config.ts` is now enforced via `--coverage` flag (F-38 fixed), but the threshold is 80%, which permits the dead code to be uncovered
+
+**Why care**: The all-green test suite creates a false sense of completeness. Three entire modules (`gantt-search.ts`, `multi-select.tsx`, `diff-virtual-list.tsx`) are untested or tested-only-in-isolation. Combined with the `--passWithNoTests` flag, empty or dead module test files would silently pass. The 80% threshold doesn't guard against modules that are compiled but never wired.
 
 **Confidence**: Certain
 
@@ -134,33 +216,47 @@ useEffect(() => {
 
 ## Cross-Round Summary
 
-| ID   | Severity | File                                       | Issue                                                                                                 |
-| ---- | -------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| F-46 | P2       | barcode-queue.ts:81-106                    | Dead export `useOfflineDetection` — zero production imports + wrong render-time listener registration |
-| F-47 | P2       | gantt.tsx:29-41,53                         | Store config (cellWidth/defaultZoom/taskBarHeight) captured once; schema prop changes ignored         |
-| F-48 | P2       | barcode-input-renderer.tsx:106-107,116-117 | `as any` on event dispatch bypasses type safety — production core path                                |
-| F-49 | P2       | schemas.ts:4-26,68-69                      | Deprecated GanttTask/GanttLink still used by GanttSchema — deprecation unfollowable                   |
-| F-50 | P3       | barcode-scanner-overlay.tsx:104-108        | Unstable start/stop refs cause camera stop/start cycle on every render                                |
+| ID   | Severity | File                                                                    | Issue                                                                                    |
+| ---- | -------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| F-51 | P2       | `gantt/gantt-search.ts` (entire)                                        | Completely dead file — zero imports across codebase                                      |
+| F-52 | P2       | `gantt/components/multi-select.tsx` (entire)                            | Feature component only imported by its own test — S3.9 "done" but unwired                |
+| F-53 | P2       | `diff-view/components/diff-virtual-list.tsx` (entire)                   | Dead virtual-list wrapper — S9.6 "done" but unwired                                      |
+| F-54 | P2       | All 5 renderer entry files                                              | Zero standard `@nop-chaos/flux-react` hooks used; all miss `helpers` destructuring       |
+| F-55 | P2       | `kanban-column-header.tsx`, `kanban-card-tags.tsx`, `barcode-input.tsx` | 6 CSS classes used in TSX but no CSS definition exists                                   |
+| F-56 | P2       | `calendar.css`, `gantt.css`, `kanban.css`                               | 21 CSS definitions with zero TSX usage (dead CSS)                                        |
+| F-57 | P3       | `diff-view/components/diff-line.tsx:47-50`                              | `dangerouslySetInnerHTML` on user content — safe today via `escapeHtml`, fragile pattern |
+| F-58 | P3       | `diff-view/components/diff-line.tsx:17`                                 | `React.memo` with custom comparator — redundant with React Compiler                      |
+| F-59 | P3       | Full test suite                                                         | 855 tests pass but 3 dead modules flow through the test gap                              |
 
-**Total this round**: 5 new findings (0 P0, 4 P2, 1 P3)
+**Totals**: 9 new findings (0 P0, 4 P2, 3 P3)
+
+**Cumulative (all scheduling audit rounds)**: 59 findings (50 prior + 9 new). 39 resolved, 20 open.
 
 ### Key Patterns Detected
 
-1. **Inconsistent type safety elimination**: `UpdateTaskCommand` `as any` was fixed (F-40) but barcode-input dispatch `as any` persists (F-48). Same pattern, different sub-domain, suggesting no cross-sub-domain review gate.
+1. **Dead/stub module syndrome** (F-51, F-52, F-53): Three modules across two packages that are compiled, sometimes tested, but never wired to any renderer. The common cause: work items were completed at the module level but integration was never verified. The roadmap reports these as "done". Only F-14 (GanttEditor dead) was previously caught — three more instances have now been found through import-graph analysis.
 
-2. **Deprecation not reconciled with schema**: `GanttSchema` makes the `GanttTask` deprecation unfollowable (F-49). The deprecation was mechanically applied without checking whether the schema type itself could migrate.
+2. **CSS class asymmetry** (F-55, F-56): 6 classes used but not defined (missing visual features), 21 classes defined but not used (dead CSS). The scheduling package's CSS has drifted from its TSX code — features were added to JSX without corresponding CSS, and CSS was written for features that were never wired.
 
-3. **Fast fix cycle, uneven depth**: 39 of 45 prior findings are resolved in HEAD. But some fixes (like `useOfflineDetection` being dead) and type safety gaps (F-48) persist because they're in less-scrutinized sub-domains.
+3. **Hook convention isolation** (F-54): The scheduling and content packages are the ONLY renderer packages that don't use `@nop-chaos/flux-react` hooks. Every other package (basic, form, form-advanced, data, layout, mobile) follows the convention. This is not a random oversight — it suggests these packages were created when the hook API was still being defined, or by a developer unfamiliar with the convention.
 
 ### Blindness Self-Assessment
 
+This round found the above issues by:
+
+- Import-graph scanning (grep for import paths) — caught 3 dead modules
+- CSS cross-reference (TSX class names vs. stylesheet definitions) — caught 6 missing + 21 dead definitions
+- Import list analysis — caught missing flux-react hooks
+- Security pattern review — caught dangerous innerHTML pattern
+
 What this round likely missed:
 
-- E2E test execution (no test suite run; unknown which tests fail/flake)
-- Performance profiling (no measurement of Gantt render cost, Calendar virtualizer, or Kanban undo memory)
-- Bundle size analysis (no tree-shaking verification for dead code like F-46)
-- Security audit (no XSS probing in task/event text rendering)
-- Accessibility audit (no screen-reader or keyboard-only testing)
-- Cross-package type contracts (no verification of generic narrowing at `flux-core`/`flux-react`/`flux-renderers-scheduling` boundary)
+1. **Bundle composition**: Did not run `vite build --mode analyze` again to measure whether tree-shaking removes the 3 dead modules from production bundles
+2. **Accessibility**: Did not audit keyboard navigation, ARIA roles, or screen reader output for any scheduling component
+3. **Edge case testing**: Did not test calendar with zero resources, Gantt with circular dependency links, or Kanban with 10,000 cards
+4. **Cross-package type safety**: Did not verify `RendererComponentProps<GanttSchema>` generic narrowing at the boundary between flux-core, flux-react, and scheduling
+5. **i18n coverage of recently added keys**: Did not verify that the i18n fixes for Calendar shift types (reported as partially fixed in F-19) are complete and cover all user-facing strings
+6. **Error boundary coverage**: Did not verify that error boundaries exist for each scheduling sub-domain
+7. **Performance profiling at scale**: Did not run the O(n²) critical-path algorithm or Gantt store revision system under realistic load
 
-Best starting point for next round: run the actual test suite and check for failures, then audit i18n key consistency across all four sub-domains.
+Best starting point for next round: E2E browser test execution measuring actual rendering correctness + performance profiling of Gantt store reactivity + bundle composition analysis confirming tree-shaking removes the 3 dead modules.

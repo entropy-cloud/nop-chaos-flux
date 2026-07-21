@@ -51,7 +51,9 @@ Provide multi-task selection and batch operations for the Gantt chart, enabling 
 
 ## Implementation
 
-File: `packages/flux-renderers-scheduling/src/gantt/components/multi-select.tsx`
+> ⚠️ Implementation removed (see `docs/plans/2026-07-21-2100-1-dead-module-cleanup-scheduling-content.md`). The multi-select model was never wired into the render pipeline; the file was identified as dead code and removed. This design doc is retained as reference for future re-implementation.
+
+> Design reference only — no live source file.
 
 ```typescript
 interface MultiSelectState {
