@@ -212,4 +212,40 @@ describe('useGanttLinkDraw', () => {
     const { unmount } = renderHook(() => useGanttLinkDraw(svgRef));
     expect(unmount).not.toThrow();
   });
+
+  it('should cleanup document listeners on unmount during active link drawing', () => {
+    const addSpy = vi.spyOn(document, 'addEventListener');
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svgEl.setAttribute('width', '800');
+    svgEl.setAttribute('height', '600');
+    document.body.appendChild(svgEl);
+    const svgRef = { current: svgEl };
+    const { result, unmount } = renderHook(() => useGanttLinkDraw(svgRef));
+
+    const handle = document.createElement('div');
+    handle.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onLinkHandlePointerDown(e, 't1');
+    });
+    document.body.appendChild(handle);
+
+    act(() => {
+      handle.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 100, bubbles: true }));
+    });
+
+    expect(addSpy).toHaveBeenCalledWith('pointermove', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('pointerup', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+
+    addSpy.mockClear();
+
+    unmount();
+
+    expect(removeSpy).toHaveBeenCalledWith('pointermove', expect.any(Function));
+    expect(removeSpy).toHaveBeenCalledWith('pointerup', expect.any(Function));
+    expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
+  });
 });

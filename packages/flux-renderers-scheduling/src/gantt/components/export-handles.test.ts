@@ -73,6 +73,14 @@ describe('exportToPdf', () => {
     const { exportToPdf } = await getModule();
     await expect(exportToPdf(null)).resolves.toBeUndefined();
   });
+
+  it('rejects with AbortError when signal is aborted', async () => {
+    const { exportToPdf } = await getModule();
+    const el = document.createElement('div');
+    const controller = new AbortController();
+    controller.abort();
+    await expect(exportToPdf(el, { signal: controller.signal })).rejects.toThrow('Aborted');
+  });
 });
 
 describe('exportToExcel', () => {

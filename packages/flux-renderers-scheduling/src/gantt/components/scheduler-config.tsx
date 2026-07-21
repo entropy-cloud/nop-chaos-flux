@@ -4,7 +4,7 @@ import { t } from '@nop-chaos/flux-i18n';
 
 interface SchedulerConfigProps {
   className?: string;
-  onScheduleAction?: (config: SchedulingConfig) => void;
+  onScheduleAction?: (config: SchedulingConfig) => void | Promise<void>;
 }
 
 export interface SchedulingConfig {
@@ -22,7 +22,7 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
 
   const hasInvalidConstraint = constraintDate !== '' && new Date(constraintDate).toString() === 'Invalid Date';
 
-  const handleSchedule = () => {
+  const handleSchedule = async () => {
     if (hasInvalidConstraint) return;
 
     setStatus('scheduling');
@@ -35,7 +35,21 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
     };
 
     if (onScheduleAction) {
-      onScheduleAction(config);
+      try {
+        const result = onScheduleAction(config);
+        if (result instanceof Promise) {
+          const timeout = new Promise<void>((_, reject) =>
+            setTimeout(() => reject(new Error('Schedule timed out')), 30000),
+          );
+          await Promise.race([result, timeout]);
+        }
+        setStatus('done');
+      } catch (err: any) {
+        setStatus('error');
+        setErrorMsg(err?.message ?? 'Scheduling failed');
+      }
+    } else {
+      setStatus('done');
     }
   };
 

@@ -23,15 +23,16 @@ export async function exportToPng(
   if (!element) return;
   if (exportingFlag) return;
   exportingFlag = true;
+  const effectiveSignal = options?.signal ?? AbortSignal.timeout(60000);
   const scale = options?.scale ?? 2;
-  const signal = options?.signal;
+  const guardTimer = setTimeout(() => { exportingFlag = false; }, 65000);
   try {
-    checkAborted(signal);
+    checkAborted(effectiveSignal);
     const html2canvasMod: any = await import('html2canvas');
-    checkAborted(signal);
+    checkAborted(effectiveSignal);
     const h2c: (el: HTMLElement, opts?: any) => Promise<HTMLCanvasElement> = html2canvasMod.default ?? html2canvasMod;
     const canvas = await h2c(element, { scale, useCORS: true });
-    checkAborted(signal);
+    checkAborted(effectiveSignal);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new Error('Failed to create PNG blob');
     const url = URL.createObjectURL(blob);
@@ -44,6 +45,7 @@ export async function exportToPng(
     console.error('PNG export failed:', e);
     throw e;
   } finally {
+    clearTimeout(guardTimer);
     exportingFlag = false;
   }
 }
@@ -55,18 +57,19 @@ export async function exportToPdf(
   if (!element) return;
   if (exportingFlag) return;
   exportingFlag = true;
+  const effectiveSignal = options?.signal ?? AbortSignal.timeout(60000);
   const scale = options?.scale ?? 2;
-  const signal = options?.signal;
+  const guardTimer = setTimeout(() => { exportingFlag = false; }, 65000);
   try {
-    checkAborted(signal);
+    checkAborted(effectiveSignal);
     const html2canvasMod: any = await import('html2canvas');
-    checkAborted(signal);
+    checkAborted(effectiveSignal);
     const h2c = html2canvasMod.default ?? html2canvasMod;
     const jsPDFMod: any = await import('jspdf');
-    checkAborted(signal);
+    checkAborted(effectiveSignal);
     const JSPDF = jsPDFMod.default ?? jsPDFMod;
     const canvas = await h2c(element, { scale, useCORS: true });
-    checkAborted(signal);
+    checkAborted(effectiveSignal);
     const imgData = canvas.toDataURL('image/png');
     const pdf = new JSPDF('landscape', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -77,6 +80,7 @@ export async function exportToPdf(
     console.error('PDF export failed:', e);
     throw e;
   } finally {
+    clearTimeout(guardTimer);
     exportingFlag = false;
   }
 }
@@ -87,11 +91,12 @@ export async function exportToExcel(
 ): Promise<void> {
   if (exportingFlag) return;
   exportingFlag = true;
-  const signal = options?.signal;
+  const effectiveSignal = options?.signal ?? AbortSignal.timeout(60000);
+  const guardTimer = setTimeout(() => { exportingFlag = false; }, 65000);
   try {
-    checkAborted(signal);
+    checkAborted(effectiveSignal);
     const XLSX: any = await import('xlsx');
-    checkAborted(signal);
+    checkAborted(effectiveSignal);
     const data = Array.from(tasks.values()).map((task) => ({
       id: String(task.id),
       text: task.text,
@@ -110,6 +115,7 @@ export async function exportToExcel(
     console.error('Excel export failed:', e);
     throw e;
   } finally {
+    clearTimeout(guardTimer);
     exportingFlag = false;
   }
 }

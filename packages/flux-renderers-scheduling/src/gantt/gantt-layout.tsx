@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
 
 const MIN_GRID_WIDTH = 200;
@@ -16,6 +16,7 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
   const [gridWidth, setGridWidth] = useState(320);
   const containerRef = useRef<HTMLDivElement>(null);
   const resizingRef = useRef(false);
+  const resizeCleanupRef = useRef<(() => void) | null>(null);
 
   const clampWidth = (width: number) => {
     if (!containerRef.current) return width;
@@ -45,6 +46,15 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
       document.removeEventListener('pointerup', onPointerUp);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      resizeCleanupRef.current = null;
+    };
+
+    resizeCleanupRef.current = () => {
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      resizingRef.current = false;
     };
 
     document.addEventListener('pointermove', onPointerMove);
@@ -52,6 +62,12 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   };
+
+  useEffect(() => {
+    return () => {
+      resizeCleanupRef.current?.();
+    };
+  }, []);
 
   const handleResizeKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') {

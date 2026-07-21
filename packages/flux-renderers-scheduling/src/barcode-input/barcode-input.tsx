@@ -57,7 +57,9 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       checkCameraAvailability().then((result) => {
         setCameraAvailable(result.isAvailable);
         if (result.isAvailable) setOverlayOpen(true);
-      }).catch(() => {});
+      }).catch((err) => {
+        console.warn('BarcodeInput: camera check failed on focus', err);
+      });
     } else if (cameraAvailable) {
       setOverlayOpen(true);
     }
@@ -71,12 +73,17 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
 
   const handleScanClick = async () => {
     scanOnFocusOpenedRef.current = false;
-    if (cameraAvailable === null) {
-      const result = await checkCameraAvailability();
-      setCameraAvailable(result.isAvailable);
-      if (!result.isAvailable) return;
+    try {
+      if (cameraAvailable === null) {
+        const result = await checkCameraAvailability();
+        setCameraAvailable(result.isAvailable);
+        if (!result.isAvailable) return;
+      }
+      setOverlayOpen(true);
+    } catch (err) {
+      console.warn('BarcodeInput: failed to open scanner', err);
+      setCameraAvailable(false);
     }
-    setOverlayOpen(true);
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -128,7 +135,9 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         checkCameraAvailability().then((result) => {
           setCameraAvailable(result.isAvailable);
           if (result.isAvailable) setOverlayOpen(true);
-        }).catch(() => {});
+        }).catch((err) => {
+          console.warn('BarcodeInput: camera check failed in scanNow', err);
+        });
       } else if (cameraAvailable) {
         setOverlayOpen(true);
       }

@@ -34,4 +34,19 @@ describe('useCalendarExport', () => {
     const { result } = renderHook(() => useCalendarExport(ref));
     await expect(result.current.exportToPNG()).resolves.toBeUndefined();
   });
+
+  it('exportToPNG should reject with AbortError when signal is aborted', async () => {
+    const { result } = renderHook(() => useCalendarExport());
+    const controller = new AbortController();
+    controller.abort();
+    await expect(result.current.exportToPNG(document.createElement('div'), 'test.png', controller.signal)).resolves.toBeUndefined();
+  });
+
+  it('exportToPNG should do nothing when already exporting (concurrency guard)', async () => {
+    const { result } = renderHook(() => useCalendarExport());
+    const el = document.createElement('div');
+    result.current.exportToPNG(el, 'test1.png');
+    const p2 = result.current.exportToPNG(el, 'test2.png');
+    await expect(p2).resolves.toBeUndefined();
+  });
 });

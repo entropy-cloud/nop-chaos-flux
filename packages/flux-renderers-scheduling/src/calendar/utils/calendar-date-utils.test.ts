@@ -6,6 +6,7 @@ import {
   getDateRange,
   isSameDay,
   isWeekend,
+  isToday,
   addDays,
   addMonths,
   diffInDays,
@@ -121,6 +122,26 @@ describe('calendar-date-utils', () => {
 
     it('should return false for Wednesday', () => {
       expect(isWeekend(date(2026, 7, 22))).toBe(false);
+    });
+  });
+
+  describe('isToday', () => {
+    it('should return true for today (UTC-based)', () => {
+      const now = new Date();
+      const utcToday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+      expect(isToday(utcToday)).toBe(true);
+    });
+
+    it('should return false for yesterday', () => {
+      const now = new Date();
+      const utcYesterday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+      expect(isToday(utcYesterday)).toBe(false);
+    });
+
+    it('should return false for tomorrow', () => {
+      const now = new Date();
+      const utcTomorrow = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+      expect(isToday(utcTomorrow)).toBe(false);
     });
   });
 

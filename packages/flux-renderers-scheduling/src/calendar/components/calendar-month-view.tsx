@@ -161,8 +161,8 @@ export function CalendarMonthView({
                 );
               }
 
-              const weekendIndicator = weekend && !today ? 'weekend' : '';
-              const todayIndicator = today ? 'today' : '';
+              const weekendAttr = weekend && !today ? 'true' : undefined;
+              const todayAttr = today ? 'true' : undefined;
 
               return (
                 <div
@@ -174,8 +174,8 @@ export function CalendarMonthView({
                   data-date={dateStr}
                   data-resource={resource.id}
                   data-empty={!isCurrentMonth ? 'true' : undefined}
-                  data-weekend={weekendIndicator || undefined}
-                  data-today={todayIndicator || undefined}
+                  data-weekend={weekendAttr}
+                  data-today={todayAttr}
                   className={cn(
                     'flex-1 min-w-0 relative border-r last:border-r-0',
                     today && 'bg-blue-50 ring-2 ring-inset ring-blue-400 font-semibold',

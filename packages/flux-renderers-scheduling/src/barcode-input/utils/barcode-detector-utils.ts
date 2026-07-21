@@ -48,11 +48,13 @@ export async function detectWithSkewRetry(
   video: HTMLVideoElement,
   canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
+  signal?: AbortSignal,
 ): Promise<BarcodeDetectResult | null> {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
 
   ctx.drawImage(video, 0, 0);
+  if (signal?.aborted) return null;
 
   const results = await detect(canvas);
   if (results.length > 0) {
@@ -60,6 +62,7 @@ export async function detectWithSkewRetry(
   }
 
   for (const angle of SKEW_ANGLES) {
+    if (signal?.aborted) return null;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);

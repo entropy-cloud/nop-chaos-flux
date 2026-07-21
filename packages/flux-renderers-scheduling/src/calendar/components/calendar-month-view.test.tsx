@@ -54,7 +54,25 @@ describe('CalendarMonthView', () => {
     const { container } = render(
       React.createElement(CalendarMonthView, { ...baseProps, showWeekends: false }),
     );
-    const weekendCells = container.querySelectorAll('[data-weekend="weekend"]');
+    const weekendCells = container.querySelectorAll('[data-weekend="true"]');
     expect(weekendCells.length).toBe(0);
+  });
+
+  it('should set data-weekend="true" for weekend days and undefined for weekdays', () => {
+    const july2026 = new Date('2026-07-01');
+    const props = {
+      ...baseProps,
+      currentDate: july2026,
+      dateRange: { start: new Date('2026-07-01'), end: new Date('2026-07-31') },
+    };
+    const { container } = render(React.createElement(CalendarMonthView, props));
+    const allCells = container.querySelectorAll<HTMLElement>('[data-slot="calendar-cell"]');
+    const weekendAttrValues = new Set<string>();
+    allCells.forEach((cell) => {
+      const val = cell.getAttribute('data-weekend');
+      if (val !== null) weekendAttrValues.add(val);
+    });
+    expect(weekendAttrValues.has('true')).toBe(true);
+    expect(weekendAttrValues.has('weekend')).toBe(false);
   });
 });

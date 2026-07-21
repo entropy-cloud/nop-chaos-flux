@@ -50,4 +50,30 @@ describe('prepareWasm', () => {
     const p2 = prepareWasm('https://example.com/same.wasm');
     expect(p1).toBe(p2);
   });
+
+  it('should clear cached promise on abort, enabling retry', async () => {
+    const abortController = new AbortController();
+    const fetchSpy = vi.fn().mockImplementation(async (_url, opts) => {
+      if (opts?.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      // Delay to allow abort to occur before fetch completes
+      await new Promise((r) => setTimeout(r, 10));
+      if (opts?.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      return { ok: true, arrayBuffer: async () => new ArrayBuffer(0) };
+    });
+    globalThis.fetch = fetchSpy;
+
+    const p1 = prepareWasm('https://example.com/retry.wasm', abortController.signal);
+    abortController.abort();
+    await expect(p1).rejects.toThrow();
+
+    const p2 = prepareWasm('https://example.com/retry.wasm');
+    expect(p2).not.toBe(p1);
+    await expect(p2).resolves.toBeUndefined();
+  });
+
+  it('should throw AbortError when signal is already aborted at entry', () => {
+    const abortController = new AbortController();
+    abortController.abort();
+    expect(() => prepareWasm('https://example.com/aborted.wasm', abortController.signal)).toThrow('Aborted');
+  });
 });

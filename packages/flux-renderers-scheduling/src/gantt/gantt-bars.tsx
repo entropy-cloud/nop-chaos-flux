@@ -4,7 +4,7 @@ import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot, useGanttTr
 
 interface GanttBarsProps {
   className?: string;
-  onBarPointerDown?: (e: PointerEvent, taskId: string | number, mode: 'move' | 'resize-start' | 'resize-end') => void;
+  onBarPointerDown?: (e: PointerEvent, taskId: string | number, mode: 'move' | 'resize-start' | 'resize-end', barElement: HTMLElement) => void;
   onLinkHandlePointerDown?: (e: PointerEvent, taskId: string | number) => void;
   onBarDoubleClick?: (taskId: string | number) => void;
   onBarKeyAction?: (taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => void;
@@ -44,7 +44,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
       if (x < edgeThreshold) mode = 'resize-start';
       else if (x > barRect.width - edgeThreshold) mode = 'resize-end';
       else mode = 'move';
-      onBarPointerDown(e, taskId, mode);
+      onBarPointerDown(e, taskId, mode, barEl);
     };
 
     barsEl.addEventListener('pointerdown', handler);

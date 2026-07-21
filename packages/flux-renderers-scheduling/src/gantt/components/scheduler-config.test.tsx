@@ -23,10 +23,13 @@ describe('SchedulerConfig', () => {
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 
-  it('disables button during scheduling', () => {
-    render(<SchedulerConfig />);
+  it('disables button during scheduling', async () => {
+    let resolveAction!: () => void;
+    const onAction = vi.fn(() => new Promise<void>((resolve) => { resolveAction = resolve; }));
+    render(<SchedulerConfig onScheduleAction={onAction} />);
     fireEvent.click(getTriggerButton());
     const items = screen.getAllByText('排程中...');
     expect(items.length).toBeGreaterThanOrEqual(1);
+    resolveAction();
   });
 });

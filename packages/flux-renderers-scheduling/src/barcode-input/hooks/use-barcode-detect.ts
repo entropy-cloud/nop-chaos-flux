@@ -68,7 +68,7 @@ export function useBarcodeDetect(
           return rawResults;
         };
 
-        const decoded = await detectWithSkewRetry(detectFn, currentVideo, canvas, ctx);
+        const decoded = await detectWithSkewRetry(detectFn, currentVideo, canvas, ctx, signal);
 
         if (signal.aborted) return;
 

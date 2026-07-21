@@ -18,11 +18,12 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
   const store = useGanttStore();
   const dragRef = useRef<DragState | null>(null);
   const ghostRef = useRef<HTMLElement | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
-  const onPointerDown = (e: PointerEvent, taskId: string | number, mode: GanttDragMode) => {
+  const onPointerDown = (e: PointerEvent, taskId: string | number, mode: GanttDragMode, barElement?: HTMLElement) => {
     if (!mode) return;
     e.preventDefault();
-    const target = e.currentTarget as HTMLElement;
+    const target = barElement ?? (e.currentTarget as HTMLElement);
     const rect = target.getBoundingClientRect();
     const ghost = (() => {
       const g = target.cloneNode(true) as HTMLElement;
@@ -113,7 +114,10 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
         ghostRef.current = null;
       }
       dragRef.current = null;
+      cleanupRef.current = null;
     };
+
+    cleanupRef.current = cleanup;
 
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
@@ -122,6 +126,7 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
 
   useEffect(() => {
     return () => {
+      cleanupRef.current?.();
       if (ghostRef.current) ghostRef.current.remove();
     };
   }, []);

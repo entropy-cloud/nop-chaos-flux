@@ -23,11 +23,15 @@ async function fetchWithRetry(url: string, retries: number, signal?: AbortSignal
 
 export function prepareWasm(wasmUrl?: string, signal?: AbortSignal): Promise<void> {
   const url = wasmUrl ?? DEFAULT_WASM_URL;
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   if (!wasmPromises.has(url)) {
     wasmPromises.set(url, (async () => {
       const response = await fetchWithRetry(url, MAX_RETRIES, signal);
       await response.arrayBuffer();
-    })());
+    })().catch((err) => {
+      wasmPromises.delete(url);
+      throw err;
+    }));
   }
   return wasmPromises.get(url)!;
 }

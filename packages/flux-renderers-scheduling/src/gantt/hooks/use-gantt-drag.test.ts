@@ -173,4 +173,32 @@ describe('useGanttDrag', () => {
     const { unmount } = renderHook(() => useGanttDrag(containerRef));
     expect(unmount).not.toThrow();
   });
+
+  it('should cleanup document listeners on unmount during active drag', () => {
+    const addSpy = vi.spyOn(document, 'addEventListener');
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    const containerRef = { current: document.createElement('div') };
+    const { result, unmount } = renderHook(() => useGanttDrag(containerRef));
+
+    const target = createTarget();
+    target.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onPointerDown(e, 't1', 'move');
+    });
+    target.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 200, bubbles: true }));
+
+    expect(addSpy).toHaveBeenCalledWith('pointermove', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('pointerup', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+
+    addSpy.mockClear();
+
+    unmount();
+
+    expect(removeSpy).toHaveBeenCalledWith('pointermove', expect.any(Function));
+    expect(removeSpy).toHaveBeenCalledWith('pointerup', expect.any(Function));
+    expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
+  });
 });

@@ -84,6 +84,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const setBoardDataRef = useRef(setBoardData);
   useEffect(() => { setBoardDataRef.current = setBoardData; }, [setBoardData]);
 
+  const prevBoardRef = useRef<BoardData>(boardData);
+  useEffect(() => { prevBoardRef.current = boardData; }, [boardData]);
+
   const [undoStackState, setUndoStackState] = useState<UndoStack>(() => createUndoStack(1000));
   const [activityLogOpen, setActivityLogOpen] = useState(false);
   const [actions, setActions] = useState<KanbanAction[]>([]);
@@ -100,37 +103,44 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   };
 
   const handleSetBoardData = (newBoard: BoardData) => {
-    setBoardData((prev) => {
-      setUndoStackState((s) => pushCommand(s, {
-        type: 'moveCard',
-        timestamp: Date.now(),
-        boardSnapshot: prev,
-        metadata: {},
-      }));
-      return newBoard;
-    });
+    const snapshot = prevBoardRef.current;
+    setBoardData(() => newBoard);
+    setUndoStackState((s) => pushCommand(s, {
+      type: 'moveCard',
+      timestamp: Date.now(),
+      boardSnapshot: snapshot,
+      metadata: {},
+    }));
   };
 
   const handleUndo = useCallback(() => {
+    let restoredBoard: BoardData | null = null;
     setUndoStackState((s) => {
       const result = undoStack(s);
       if (result) {
-        setBoardData(result.board);
+        restoredBoard = result.board;
         return result.stack;
       }
       return s;
     });
+    if (restoredBoard) {
+      setBoardData(restoredBoard);
+    }
   }, [setBoardData]);
 
   const handleRedo = useCallback(() => {
+    let restoredBoard: BoardData | null = null;
     setUndoStackState((s) => {
       const result = redoStack(s);
       if (result) {
-        setBoardData(result.board);
+        restoredBoard = result.board;
         return result.stack;
       }
       return s;
     });
+    if (restoredBoard) {
+      setBoardData(restoredBoard);
+    }
   }, [setBoardData]);
 
   useEffect(() => {

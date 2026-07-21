@@ -10,6 +10,7 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
     tempLine: SVGLineElement | null;
   } | null>(null);
   const [isLinking, setIsLinking] = useState(false);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   const cleanup = () => {
     if (drawingRef.current?.tempLine) {
@@ -17,6 +18,7 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
     }
     drawingRef.current = null;
     setIsLinking(false);
+    cleanupRef.current = null;
   };
 
   const onLinkHandlePointerDown = (e: PointerEvent, taskId: string | number) => {
@@ -71,6 +73,13 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
     document.addEventListener('keydown', onKeyDown);
+
+    cleanupRef.current = () => {
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('keydown', onKeyDown);
+      cleanup();
+    };
   };
 
   const startKeyboardLink = (sourceTaskId: string | number) => {
@@ -107,6 +116,7 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
 
   useEffect(() => {
     return () => {
+      cleanupRef.current?.();
       if (drawingRef.current?.tempLine) {
         drawingRef.current.tempLine.remove();
       }
