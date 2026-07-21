@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, act, waitFor } from '@testing-library/react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { BarcodeInputRenderer } from './barcode-input-renderer.js';
+import { BarcodeInputRenderer } from './barcode-input.js';
 import type { BarcodeInputSchema } from './barcode-input.types.js';
 
 const mockUseInputComponentHandle = vi.hoisted(() => vi.fn());

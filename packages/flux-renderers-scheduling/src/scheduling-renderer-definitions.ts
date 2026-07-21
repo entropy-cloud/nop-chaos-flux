@@ -3,7 +3,7 @@ import type { GanttSchema, KanbanSchema, CalendarSchema, BarcodeInputSchema } fr
 import { Calendar } from './calendar/calendar.js';
 import { Gantt } from './gantt/gantt.js';
 import { KanbanBoard } from './kanban/kanban-board.js';
-import { BarcodeInputRenderer } from './barcode-input/barcode-input-renderer.js';
+import { BarcodeInputRenderer } from './barcode-input/barcode-input.js';
 import { barcodeInputFieldRules } from './barcode-input/barcode-input-schemas.js';
 
 export const schedulingRendererDefinitions: RendererDefinition[] = [

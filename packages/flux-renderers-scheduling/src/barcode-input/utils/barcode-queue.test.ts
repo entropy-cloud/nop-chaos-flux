@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { BarcodeQueue, useOfflineDetection } from './barcode-queue.js';
+import { BarcodeQueue } from './barcode-queue.js';
 
 describe('BarcodeQueue', () => {
   let queue: BarcodeQueue;
@@ -96,11 +96,3 @@ describe('BarcodeQueue', () => {
   });
 });
 
-describe('useOfflineDetection', () => {
-  it('should return isOnline when called in browser context', () => {
-    const result = useOfflineDetection();
-    expect(typeof result.isOnline).toBe('boolean');
-    expect(typeof result.cleanup).toBe('function');
-    result.cleanup();
-  });
-});

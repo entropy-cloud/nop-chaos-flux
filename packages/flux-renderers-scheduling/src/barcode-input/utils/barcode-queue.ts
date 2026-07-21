@@ -1,11 +1,4 @@
-export interface BarcodeQueueItem {
-  id: string;
-  rawValue: string;
-  timestamp: number;
-  format: string;
-  status: 'pending' | 'submitted' | 'duplicate' | 'error';
-  errorMessage?: string;
-}
+import type { BarcodeQueueItem } from '../barcode-input.types.js';
 
 export class BarcodeQueue {
   private items: BarcodeQueueItem[] = [];
@@ -78,29 +71,4 @@ export class BarcodeQueue {
   }
 }
 
-export function useOfflineDetection(onOnline?: () => void, onOffline?: () => void) {
-  if (typeof window === 'undefined') {
-    return { isOnline: true, cleanup: () => {} };
-  }
 
-  const isOnline = navigator.onLine;
-
-  const handleOnline = () => {
-    onOnline?.();
-  };
-
-  const handleOffline = () => {
-    onOffline?.();
-  };
-
-  window.addEventListener('online', handleOnline);
-  window.addEventListener('offline', handleOffline);
-
-  return {
-    isOnline,
-    cleanup: () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    },
-  };
-}
