@@ -18,6 +18,9 @@ export interface UseInputComponentHandleOptions {
   clearValue?: () => void;
   resetValue?: () => { fellBackToDefault: boolean };
   openMenu?: () => void;
+  scanNow?: () => void;
+  stopScan?: () => void;
+  resetWasmPromise?: () => void;
 }
 
 const NOOP_BINDINGS: InputHandleBindings = {
@@ -38,6 +41,9 @@ export function useInputComponentHandle(options: UseInputComponentHandleOptions)
       clearValue: options.clearValue,
       resetValue: options.resetValue,
       openMenu: options.openMenu,
+      scanNow: options.scanNow,
+      stopScan: options.stopScan,
+      resetWasmPromise: options.resetWasmPromise,
     };
   });
 

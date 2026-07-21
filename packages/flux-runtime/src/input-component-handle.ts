@@ -1,6 +1,6 @@
 import type { ComponentHandle } from '@nop-chaos/flux-core';
 
-export type InputHandleMethod = 'clear' | 'reset' | 'focus' | 'open';
+export type InputHandleMethod = 'clear' | 'reset' | 'focus' | 'open' | 'scanNow' | 'stopScan' | 'resetWasmPromise';
 
 export interface InputHandleResetResult {
   fellBackToDefault: boolean;
@@ -13,6 +13,9 @@ export interface InputHandleBindings {
   clearValue?(): void;
   resetValue?(): InputHandleResetResult;
   openMenu?(): void;
+  scanNow?(): void;
+  stopScan?(): void;
+  resetWasmPromise?(): void;
 }
 
 export interface InputHandleBindingsHolder {
@@ -77,6 +80,18 @@ export function createInputComponentHandle(
             }
             target.focus();
             bindings.openMenu?.();
+            return { ok: true };
+          }
+          case 'scanNow': {
+            bindings.scanNow?.();
+            return { ok: true };
+          }
+          case 'stopScan': {
+            bindings.stopScan?.();
+            return { ok: true };
+          }
+          case 'resetWasmPromise': {
+            bindings.resetWasmPromise?.();
             return { ok: true };
           }
           default:
