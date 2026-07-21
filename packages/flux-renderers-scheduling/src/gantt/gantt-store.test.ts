@@ -112,12 +112,13 @@ describe('GanttStore', () => {
       expect(t2.$target).toEqual(['t1']);
     });
 
-    it('should emit dataChange event after parse', () => {
+    it('should increment revision after parse', () => {
       const store = new GanttStore();
-      let emitted = false;
-      store.on('dataChange', () => { emitted = true; });
+      const r0 = store.revision;
+      const tr0 = store.taskRevision;
       store.parse([makeTask({ id: 't1' })], []);
-      expect(emitted).toBe(true);
+      expect(store.revision).toBe(r0 + 1);
+      expect(store.taskRevision).toBe(tr0 + 1);
     });
   });
 
@@ -138,13 +139,14 @@ describe('GanttStore', () => {
       expect(after).toBeGreaterThan(before);
     });
 
-    it('should emit taskChange event', () => {
+    it('should increment revision and taskRevision on update', () => {
       const store = new GanttStore();
       store.parse([makeTask({ id: 't1' })], []);
-      let taskChanged = false;
-      store.on('taskChange', () => { taskChanged = true; });
+      const r0 = store.revision;
+      const tr0 = store.taskRevision;
       store.updateTask('t1', { text: 'New' });
-      expect(taskChanged).toBe(true);
+      expect(store.revision).toBe(r0 + 1);
+      expect(store.taskRevision).toBe(tr0 + 1);
     });
 
     it('should do nothing for non-existent task', () => {
@@ -176,42 +178,40 @@ describe('GanttStore', () => {
       expect(store.tasks.get('t2')!.$target).toEqual([]);
     });
 
-    it('should emit linkAdd and linkDelete events', () => {
+    it('should increment linkRevision on add and remove', () => {
       const store = new GanttStore();
       store.parse([makeTask({ id: 't1' }), makeTask({ id: 't2' })], []);
-      let addFired = false;
-      let deleteFired = false;
-      store.on('linkAdd', () => { addFired = true; });
-      store.on('linkDelete', () => { deleteFired = true; });
+      const lr0 = store.linkRevision;
       store.addLink('t1', 't2', 'finish_to_start');
+      expect(store.linkRevision).toBe(lr0 + 1);
       store.removeLink('t1');
-      expect(addFired).toBe(true);
-      expect(deleteFired).toBe(true);
+      expect(store.linkRevision).toBe(lr0 + 2);
     });
   });
 
-  describe('event subscription', () => {
-    it('should allow on/off subscription', () => {
+  describe('zustand subscription', () => {
+    it('should notify subscribers on state change', () => {
       const store = new GanttStore();
-      let count = 0;
-      const handler = () => { count++; };
-      store.on('dataChange', handler);
       store.parse([makeTask({ id: 't1' })], []);
-      expect(count).toBe(1);
-      store.off('dataChange', handler);
-      store.parse([makeTask({ id: 't2' })], []);
-      expect(count).toBe(1);
+      let callCount = 0;
+      const unsub = store.subscribe(() => { callCount++; });
+      store.updateTask('t1', { text: 'V2' });
+      expect(callCount).toBeGreaterThanOrEqual(1);
+      unsub();
     });
 
-    it('should support multiple handlers on same event', () => {
+    it('should support multiple subscribers', () => {
       const store = new GanttStore();
+      store.parse([makeTask({ id: 't1' })], []);
       let a = 0;
       let b = 0;
-      store.on('dataChange', () => { a++; });
-      store.on('dataChange', () => { b++; });
-      store.parse([makeTask({ id: 't1' })], []);
-      expect(a).toBe(1);
-      expect(b).toBe(1);
+      const unsub1 = store.subscribe(() => { a++; });
+      const unsub2 = store.subscribe(() => { b++; });
+      store.updateTask('t1', { text: 'V2' });
+      expect(a).toBeGreaterThanOrEqual(1);
+      expect(b).toBeGreaterThanOrEqual(1);
+      unsub1();
+      unsub2();
     });
   });
 
@@ -333,13 +333,14 @@ describe('GanttStore', () => {
       expect(() => store.deleteTask('nonexistent')).not.toThrow();
     });
 
-    it('should emit taskDelete event', () => {
+    it('should increment revision and taskRevision on delete', () => {
       const store = new GanttStore();
       store.parse([makeTask({ id: 't1' })], []);
-      let taskDeleted = false;
-      store.on('taskDelete', () => { taskDeleted = true; });
+      const r0 = store.revision;
+      const tr0 = store.taskRevision;
       store.deleteTask('t1');
-      expect(taskDeleted).toBe(true);
+      expect(store.revision).toBe(r0 + 1);
+      expect(store.taskRevision).toBe(tr0 + 1);
     });
   });
 

@@ -1,4 +1,4 @@
-let wasmPromise: Promise<void> | null = null;
+const wasmPromises = new Map<string, Promise<void>>();
 
 const DEFAULT_WASM_URL = 'https://unpkg.com/@zxing/library@0.21.3/umd/zxing_reader.wasm';
 const MAX_RETRIES = 3;
@@ -22,16 +22,20 @@ async function fetchWithRetry(url: string, retries: number): Promise<Response> {
 }
 
 export function prepareWasm(wasmUrl?: string): Promise<void> {
-  if (!wasmPromise) {
-    wasmPromise = (async () => {
-      const url = wasmUrl ?? DEFAULT_WASM_URL;
+  const url = wasmUrl ?? DEFAULT_WASM_URL;
+  if (!wasmPromises.has(url)) {
+    wasmPromises.set(url, (async () => {
       const response = await fetchWithRetry(url, MAX_RETRIES);
       await response.arrayBuffer();
-    })();
+    })());
   }
-  return wasmPromise;
+  return wasmPromises.get(url)!;
 }
 
-export function resetWasmPromise(): void {
-  wasmPromise = null;
+export function resetWasmPromise(url?: string): void {
+  if (url) {
+    wasmPromises.delete(url);
+  } else {
+    wasmPromises.clear();
+  }
 }

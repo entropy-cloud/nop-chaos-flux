@@ -192,12 +192,37 @@ describe('Zustand GanttStore proof', () => {
     unsub2();
   });
 
-  it('event emitter backward compat still works', () => {
+  it('parse increments revision', () => {
     const store = new GanttStore({ cellWidth: 40 });
+    const r0 = store.revision;
+    const tr0 = store.taskRevision;
     store.parse([makeTask({ id: 't1' })], []);
-    let emitted = false;
-    store.on('dataChange', () => { emitted = true; });
-    store.parse([makeTask({ id: 't2' })], []);
-    expect(emitted).toBe(true);
+    expect(store.revision).toBe(r0 + 1);
+    expect(store.taskRevision).toBe(tr0 + 1);
+  });
+
+  it('recalcLayout increments layoutRevision', () => {
+    const store = new GanttStore({ cellWidth: 40 });
+    store.parse([makeTask({ id: 't1', start: '2026-01-01', end: '2026-01-10' })], []);
+    const lr0 = store.layoutRevision;
+    store.recalcLayout();
+    expect(store.layoutRevision).toBe(lr0 + 1);
+  });
+
+  it('setZoom increments revision and layoutRevision', () => {
+    const store = new GanttStore({
+      cellWidth: 40,
+      zoomLevels: [
+        { key: 'day', label: 'Day', minCellWidth: 40, scales: [{ unit: 'day' as const }] },
+        { key: 'week', label: 'Week', minCellWidth: 20, scales: [{ unit: 'week' as const }] },
+      ],
+      defaultZoom: 'day',
+    });
+    store.parse([makeTask({ id: 't1', start: '2026-01-01', end: '2026-01-10' })], []);
+    const r0 = store.revision;
+    const lr0 = store.layoutRevision;
+    store.setZoom('week');
+    expect(store.revision).toBeGreaterThan(r0);
+    expect(store.layoutRevision).toBeGreaterThan(lr0);
   });
 });

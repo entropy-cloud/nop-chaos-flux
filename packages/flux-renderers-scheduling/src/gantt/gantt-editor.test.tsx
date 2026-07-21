@@ -49,4 +49,36 @@ describe('GanttEditor', () => {
     ]);
     expect(store.tasks.get('t1')!.text).toBe('Original');
   });
+
+  it('should use unique IDs per instance for cross-instance safety', () => {
+    const storeA = createStore([
+      { id: 't1', text: 'Task A', start: '2026-01-01', end: '2026-01-10' },
+    ]);
+    const storeB = createStore([
+      { id: 't1', text: 'Task B', start: '2026-01-05', end: '2026-01-15' },
+    ]);
+
+    render(
+      <div>
+        <GanttStoreProvider store={storeA}>
+          <GanttEditor editingTaskId="t1" />
+        </GanttStoreProvider>
+        <GanttStoreProvider store={storeB}>
+          <GanttEditor editingTaskId="t1" />
+        </GanttStoreProvider>
+      </div>,
+    );
+
+    const inputs = document.querySelectorAll<HTMLInputElement>('input[id$="-edit-text"]');
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0].id).not.toBe(inputs[1].id);
+
+    const startInputs = document.querySelectorAll<HTMLInputElement>('input[id$="-edit-start"]');
+    expect(startInputs).toHaveLength(2);
+    expect(startInputs[0].id).not.toBe(startInputs[1].id);
+
+    const labels = document.querySelectorAll<HTMLLabelElement>('label[for$="-edit-text"]');
+    expect(labels).toHaveLength(2);
+    expect(labels[0].getAttribute('for')).not.toBe(labels[1].getAttribute('for'));
+  });
 });

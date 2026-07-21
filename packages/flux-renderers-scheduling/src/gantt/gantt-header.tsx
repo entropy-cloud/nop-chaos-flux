@@ -36,12 +36,8 @@ export function GanttHeader({ toolbarRegion, className, onScrollToToday }: Gantt
   }, [store]);
 
   const handleScrollToToday = useCallback(() => {
-    if (onScrollToToday) {
-      onScrollToToday();
-    } else {
-      store.emit('change');
-    }
-  }, [store, onScrollToToday]);
+    onScrollToToday?.();
+  }, [onScrollToToday]);
 
   if (toolbarRegion) {
     return <div className={cn('nop-gantt-toolbar flex items-center gap-2 p-2 border-b', className)} data-slot="gantt-toolbar">{toolbarRegion.render()}</div>;

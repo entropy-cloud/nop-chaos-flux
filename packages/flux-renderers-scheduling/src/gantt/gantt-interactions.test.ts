@@ -87,13 +87,22 @@ describe('Gantt interaction primitives', () => {
       expect(store.scrollLeft).toBe(100);
     });
 
-    it('should emit events and trigger subscribed handlers', () => {
+    it('should notify Zustand subscribers on recalcLayout', () => {
       const store = new GanttStore();
       store.parse([makeTask({ id: 't1' })], []);
-      let emitted = false;
-      store.on('layoutChange', () => { emitted = true; });
-      store.emit('layoutChange');
-      expect(emitted).toBe(true);
+      let callCount = 0;
+      const unsub = store.subscribe(() => { callCount++; });
+      store.recalcLayout();
+      expect(callCount).toBeGreaterThanOrEqual(1);
+      unsub();
+    });
+
+    it('should increment layoutRevision on recalcLayout', () => {
+      const store = new GanttStore({ cellWidth: 40 });
+      store.parse([makeTask({ id: 't1', start: '2026-01-01', end: '2026-01-10' })], []);
+      const lr0 = store.layoutRevision;
+      store.recalcLayout();
+      expect(store.layoutRevision).toBe(lr0 + 1);
     });
   });
 
