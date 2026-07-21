@@ -1,9 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { prepareWasm, resetWasmPromise } from './prepare-wasm.js';
 
 describe('prepareWasm', () => {
   beforeEach(() => {
     resetWasmPromise();
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
     vi.restoreAllMocks();
   });
 

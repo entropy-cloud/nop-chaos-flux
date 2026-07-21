@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, act, waitFor } from '@testing-library/react';
+import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { BarcodeInputRenderer } from './barcode-input.js';
 import type { BarcodeInputSchema } from './barcode-input.types.js';
@@ -30,6 +31,14 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useCurrentForm: () => ({ store: mockFormStore, setValue: vi.fn() }),
   useInputComponentHandle: mockUseInputComponentHandle,
+  useCurrentFormState: (selector: (state: { values?: Record<string, unknown> }) => string) => {
+    const useSyncExternalStore = React.useSyncExternalStore;
+    return useSyncExternalStore(
+      mockFormStore.subscribe,
+      () => selector(mockFormStoreState),
+      () => selector(mockFormStoreState),
+    );
+  },
 }));
 
 vi.mock('./hooks/use-barcode-camera.js', () => ({

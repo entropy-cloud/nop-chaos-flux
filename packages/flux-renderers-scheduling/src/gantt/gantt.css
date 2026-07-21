@@ -22,14 +22,6 @@
   z-index: 1000;
 }
 
-.nop-gantt-drop-indicator {
-  position: absolute;
-  width: 2px;
-  background-color: var(--color-primary);
-  z-index: 50;
-  pointer-events: none;
-}
-
 .nop-gantt [data-slot='gantt-today'] {
   z-index: 20;
 }
@@ -56,10 +48,6 @@
 
 .nop-gantt-skeleton-row {
   @apply h-10 bg-gray-100 rounded mb-1;
-}
-
-.nop-gantt-empty {
-  @apply flex items-center justify-center py-12 text-gray-400 text-sm;
 }
 
 .nop-gantt [data-slot='gantt-weekend'][data-weekend='true'] {
@@ -90,10 +78,6 @@
 
 .nop-gantt-bar-milestone-fill {
   fill: var(--color-warning);
-}
-
-.nop-gantt-bar-milestone-stroke {
-  stroke: color-mix(in srgb, var(--color-warning) 80%, black);
 }
 
 .nop-gantt-bar-progress {

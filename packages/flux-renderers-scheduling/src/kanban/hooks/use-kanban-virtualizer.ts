@@ -15,6 +15,7 @@ export function useKanbanVirtualizer({
   gap = 8,
   scrollContainerRef,
 }: UseKanbanVirtualizerOptions) {
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack React Virtual API returns functions incompatible with compiler memoization
   const virtualizer = useVirtualizer({
     count: cardCount,
     getScrollElement: () => scrollContainerRef.current,

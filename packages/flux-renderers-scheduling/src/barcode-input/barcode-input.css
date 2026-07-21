@@ -2,3 +2,13 @@
   display: inline-flex;
   align-items: center;
 }
+
+.nop-input-text {
+  width: 100%;
+}
+
+.nop-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}

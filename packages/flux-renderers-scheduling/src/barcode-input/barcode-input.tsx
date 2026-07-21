@@ -1,7 +1,7 @@
 import type { ChangeEvent } from 'react';
-import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useCurrentForm, useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useCurrentForm, useCurrentFormState, useInputComponentHandle } from '@nop-chaos/flux-react';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, Label, cn } from '@nop-chaos/ui';
 import { ScanLine } from 'lucide-react';
 import { BarcodeScannerOverlay } from './barcode-scanner-overlay.js';
@@ -14,14 +14,12 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const form = useCurrentForm();
 
   const name = String(resolved.name ?? '');
-  const inputValue = useSyncExternalStore(
-    form?.store?.subscribe ?? (() => () => {}),
-    () => {
-      if (!name || !form?.store) return '';
-      const state = form.store.getState() as { values?: Record<string, unknown> };
-      return (state.values?.[name] as string) ?? '';
+  const inputValue = useCurrentFormState(
+    (state) => {
+      if (!name) return '';
+      const val = state.values?.[name];
+      return val != null ? String(val) : '';
     },
-    () => '',
   );
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState<boolean | null>(null);

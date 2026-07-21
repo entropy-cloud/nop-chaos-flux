@@ -49,22 +49,6 @@
   @apply bg-gray-50;
 }
 
-.nop-calendar-virtual-scroll {
-  @apply overflow-auto flex-1;
-}
-
-.nop-calendar-skeleton {
-  @apply animate-pulse;
-}
-
-.nop-calendar-skeleton-row {
-  @apply h-12 bg-gray-100 rounded mb-1;
-}
-
-.nop-calendar-empty {
-  @apply flex items-center justify-center py-12 text-gray-400 text-sm;
-}
-
 .nop-calendar-drag-ghost {
   opacity: 0.85;
   box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
@@ -79,27 +63,10 @@
   height: 40px;
 }
 
-.nop-calendar [data-slot='calendar-cell'].nop-calendar-drag-over {
-  outline: 2px dashed var(--color-primary);
-  outline-offset: -2px;
-}
-
 .nop-calendar [data-slot='calendar-matrix'] {
   transition:
     opacity 250ms ease,
     transform 250ms ease;
-}
-
-.nop-calendar-skeleton-matrix {
-  @apply animate-pulse;
-}
-
-.nop-calendar-skeleton-cell {
-  @apply h-12 bg-gray-100 rounded;
-}
-
-.nop-calendar-empty-state {
-  @apply flex items-center justify-center py-12 text-gray-400 text-sm;
 }
 
 .nop-calendar-cross-day-lines path {
@@ -113,32 +80,6 @@
 .nop-calendar-cross-day-lines path:hover {
   opacity: 0.8;
   stroke-width: 3;
-}
-
-.nop-calendar-cross-day-lines path.nop-cross-day-highlight {
-  opacity: 0.8;
-  stroke-width: 3;
-}
-
-.nop-batch-preview-grid {
-  font-size: 11px;
-}
-
-.nop-calendar-type-selector-overlay {
-  animation: nopFadeIn 150ms ease;
-}
-
-@keyframes nopFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.nop-calendar-confirm-overlay {
-  animation: nopFadeIn 150ms ease;
 }
 
 .nop-calendar [data-slot='calendar-timezone-option']:hover {
@@ -266,16 +207,6 @@
   display: flex;
   gap: 8px;
   align-items: center;
-}
-
-.nop-batch-scheduler-date-input {
-  flex: 1;
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--color-border);
-  font-size: 13px;
-  background-color: var(--color-card);
-  color: var(--color-card-foreground);
 }
 
 .nop-batch-scheduler-date-sep {
