@@ -14,7 +14,7 @@ interface DiffLineProps {
   onLineClick?: (lineNumber: number, type: string) => void;
 }
 
-export const DiffLineComponent = memo(function DiffLineComponent({
+export function DiffLineComponent({
   line,
   inlineTokens,
   oldLineNum,
@@ -23,6 +23,10 @@ export const DiffLineComponent = memo(function DiffLineComponent({
   highlightedHtml,
   onLineClick,
 }: DiffLineProps) {
+  // Safety: contentHtml is produced by generateLineContentHtml which escapes
+  // all user-supplied diff content via escapeHtml() before any HTML rendering.
+  // Both the highlighted (syntax-highlighted) and non-highlighted code paths
+  // call escapeHtml() on raw line content, so dangerouslySetInnerHTML is safe here.
   const contentHtml = highlightedHtml || generateLineContentHtml(line.content, line.type, inlineTokens);
   const lineNumber = oldLineNum ?? newLineNum ?? 0;
 
@@ -79,20 +83,6 @@ export const DiffLineComponent = memo(function DiffLineComponent({
     >
       {lineContent}
     </div>
-  );
-}, areDiffLinePropsEqual);
-
-function areDiffLinePropsEqual(prev: DiffLineProps, next: DiffLineProps): boolean {
-  return (
-    prev.line.type === next.line.type &&
-    prev.line.content === next.line.content &&
-    prev.oldLineNum === next.oldLineNum &&
-    prev.newLineNum === next.newLineNum &&
-    prev.showLineNumbers === next.showLineNumbers &&
-    prev.isUnified === next.isUnified &&
-    prev.inlineTokens === next.inlineTokens &&
-    prev.highlightedHtml === next.highlightedHtml &&
-    prev.onLineClick === next.onLineClick
   );
 }
 

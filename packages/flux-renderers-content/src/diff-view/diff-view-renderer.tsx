@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef, type CSSProperties } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffViewSchema, DiffFileMeta } from '../schemas.js';
@@ -192,7 +193,9 @@ function SingleFileDiff({
 }
 
 export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) {
-  const { props: resolved, meta, events } = props;
+  const { props: resolved, meta, events, helpers: _helpers } = props;
+  const _runtime = useRendererRuntime();
+  const _scope = useRenderScope();
 
   const {
     files,
