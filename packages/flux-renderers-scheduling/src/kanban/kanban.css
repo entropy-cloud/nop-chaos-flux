@@ -101,3 +101,9 @@
 .nop-kanban-column {
   transition: width 200ms ease;
 }
+
+.nop-kanban-card[data-keyboard-dragging='true'] {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}

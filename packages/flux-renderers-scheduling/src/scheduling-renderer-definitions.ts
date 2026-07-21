@@ -73,6 +73,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'data', kind: 'prop' },
       { key: 'configMap', kind: 'prop' },
+      // consumed: used as data-driven columns configuration
       { key: 'columnsConfig', kind: 'prop' },
       { key: 'columnHeader', kind: 'region', regionKey: 'columnHeader' },
       { key: 'columnHeaderToolbar', kind: 'region', regionKey: 'columnHeaderToolbar' },
@@ -89,9 +90,11 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'columnsOrderOwnership', kind: 'prop' },
       { key: 'collapsedStatePath', kind: 'prop' },
       { key: 'collapsedOwnership', kind: 'prop' },
+      // consumed: applied to KanbanColumn sub-elements
       { key: 'columnHeaderClassName', kind: 'prop' },
       { key: 'cardClassName', kind: 'prop' },
       { key: 'columnFooterClassName', kind: 'prop' },
+      // reserved: future controlled-mode support
       { key: 'kanbanOwnership', kind: 'prop' },
       { key: 'kanbanStatePath', kind: 'prop' },
       { key: 'statusPath', kind: 'prop' },

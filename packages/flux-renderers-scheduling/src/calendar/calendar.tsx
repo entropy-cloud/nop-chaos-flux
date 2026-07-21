@@ -55,6 +55,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   useEffect(() => {
     void eventsRef.current.onMount?.({});
+    void eventsRef.current.loadAction?.({});
     return () => { void eventsRef.current.onUnmount?.({}); };
   }, []);
 
@@ -313,14 +314,33 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   if (!meta.visible) return null;
 
+  if (resolved.loading) {
+    const loadingRegion = regions.loading;
+    if (loadingRegion) {
+      return <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>{loadingRegion.render() as React.ReactNode}</div>;
+    }
+  }
+
+  if (!resolved.loading && eventsData.length === 0 && !resourcesData.length) {
+    const emptyRegion = regions.empty;
+    if (emptyRegion) {
+      return <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn(meta.className, resolved.emptyClassName as string | undefined)}>{emptyRegion.render() as React.ReactNode}</div>;
+    }
+  }
+
   const onEventClick = (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => {
     void events.onEventClick?.(payload);
   };
 
+  const bodyRegion = regions.body;
+  if (bodyRegion) {
+    return <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-calendar flex flex-col', meta.className)}>{bodyRegion.render() as React.ReactNode}</div>;
+  }
+
   return (
     <div
       ref={calendarRef}
-      className={cn('nop-calendar flex flex-col', meta.className)}
+      className={cn('nop-calendar flex flex-col', meta.className, resolved.emptyClassName as string | undefined)}
       data-view={activeView}
       data-date={currentDate.toISOString().split('T')[0]}
       data-testid={meta.testid || undefined}
@@ -355,6 +375,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
             onCellDragStart={dragCreate.startCellDrag}
             showCrossDayLines={showCrossDayLines}
             onEventKeyDown={handleEventKeyDown}
+            eventClassName={resolved.eventClassName as string | undefined}
           />
         </div>
       )}

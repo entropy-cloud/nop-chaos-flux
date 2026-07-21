@@ -37,4 +37,58 @@ describe('schedulingRendererDefinitions', () => {
       expect(def.sourcePackage).toBe('@nop-chaos/flux-renderers-scheduling');
     }
   });
+
+  describe('kanban field consumption', () => {
+    const kanbanDef = schedulingRendererDefinitions.find(d => d.type === 'kanban')!;
+    const knownConsumedOrReserved = new Set([
+      'body', 'data', 'configMap', 'columnsConfig',
+      'columnHeader', 'columnHeaderToolbar', 'cardTemplate', 'columnFooter',
+      'empty', 'loading',
+      'filterText', 'filterCard',
+      'columnWidth', 'columnDraggable', 'draggable',
+      'columnsOrderStatePath', 'columnsOrderOwnership',
+      'collapsedStatePath', 'collapsedOwnership',
+      'columnHeaderClassName', 'cardClassName', 'columnFooterClassName',
+      'kanbanOwnership', 'kanbanStatePath', 'statusPath',
+      'onMount', 'onUnmount',
+      'onCardMove', 'onCardClick', 'onColumnReorder', 'onColumnClick',
+      'onCardAdd', 'onCardRemove',
+    ]);
+
+    it('every registered kanban field is either consumed or documented as reserved', () => {
+      const fields = kanbanDef.fields ?? [];
+      for (const field of fields) {
+        expect(knownConsumedOrReserved.has(field.key)).toBe(true);
+      }
+    });
+  });
+
+  describe('calendar field consumption', () => {
+    const calendarDef = schedulingRendererDefinitions.find(d => d.type === 'calendar')!;
+    const knownConsumedOrReserved = new Set([
+      'view', 'date', 'events', 'resources',
+      'firstDayOfWeek', 'showWeekends', 'maxConcurrent',
+      'showCrossDayLines', 'timezoneSelector', 'batchScheduling',
+      'resources[].resources', 'resources[].open',
+      'eventTemplate', 'loading', 'empty', 'body',
+      'headerClassName', 'eventClassName', 'emptyClassName',
+      'onEventClick', 'onDateChange', 'onViewChange',
+      'onEventChange', 'onEventCreate',
+      'onBatchSchedule', 'onImport', 'onImportError',
+      'onTimezoneChange', 'onGroupToggle',
+      'viewOwnership', 'viewStatePath',
+      'dateOwnership', 'dateStatePath',
+      'statusPath', 'loadAction',
+      'onMount', 'onUnmount',
+      'component:print', 'component:exportPNG',
+      'component:importICal', 'component:exportToICal',
+    ]);
+
+    it('every registered calendar field is either consumed or documented as reserved', () => {
+      const fields = calendarDef.fields ?? [];
+      for (const field of fields) {
+        expect(knownConsumedOrReserved.has(field.key)).toBe(true);
+      }
+    });
+  });
 });

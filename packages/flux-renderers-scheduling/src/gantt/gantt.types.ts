@@ -57,20 +57,20 @@ export interface GanttLink extends GanttLinkData {
   $p: string;
 }
 
-export interface GanttResource {
+export interface GanttResource extends SchemaObject {
   id: GanttId;
   text: string;
   calendar?: string;
 }
 
-export interface GanttAssignment {
+export interface GanttAssignment extends SchemaObject {
   id: GanttId;
   taskId: GanttId;
   resourceId: GanttId;
   units?: number;
 }
 
-export interface GanttColumn {
+export interface GanttColumn extends SchemaObject {
   name: string;
   label: string;
   width?: number;
@@ -82,13 +82,13 @@ export interface GanttColumn {
   maxWidth?: number;
 }
 
-export interface GanttScale {
+export interface GanttScale extends SchemaObject {
   unit: 'hour' | 'day' | 'week' | 'month' | 'quarter' | 'year';
   step?: number;
   format?: string;
 }
 
-export interface GanttZoomLevel {
+export interface GanttZoomLevel extends SchemaObject {
   key: string;
   label: string;
   minCellWidth?: number;

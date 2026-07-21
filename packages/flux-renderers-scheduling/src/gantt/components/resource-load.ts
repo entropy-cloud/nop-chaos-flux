@@ -46,7 +46,6 @@ export function computeResourceLoads(input: ResourceLoadInput): ResourceLoadResu
     const resourceAssignments = assignmentByResource.get(resource.id) ?? [];
     const dayLoads: DayLoad[] = [];
     let totalLoadSum = 0;
-    let totalDaysWithWork = 0;
 
     for (let d = 0; d < totalDays; d++) {
       const currentDate = new Date(startDate);
@@ -78,10 +77,9 @@ export function computeResourceLoads(input: ResourceLoadInput): ResourceLoadResu
       const unitLoad = workMins > 0 ? (totalUnits / workMins) * 100 : 0;
       dayLoads.push({ date: dateStr, unitLoad: Math.min(unitLoad, 100), taskIds: dayTaskIds });
       totalLoadSum += unitLoad;
-      if (unitLoad > 0) totalDaysWithWork++;
     }
 
-    const avgTotalLoad = totalDaysWithWork > 0 ? totalLoadSum / totalDaysWithWork : 0;
+    const avgTotalLoad = totalDays > 0 ? totalLoadSum / totalDays : 0;
 
     results.push({
       resourceId: resource.id,

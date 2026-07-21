@@ -14,6 +14,7 @@ export interface KanbanColumnHeaderProps {
   dndEnabled?: boolean;
   onResizeStart?: (e: React.PointerEvent) => void;
   onDragHandleKeyDown?: (e: React.KeyboardEvent, columnId: string) => void;
+  onClick?: () => void;
   wipWarning?: boolean;
   wipText?: string;
 }
@@ -29,6 +30,7 @@ export function KanbanColumnHeader({
   dndEnabled,
   onResizeStart,
   onDragHandleKeyDown,
+  onClick,
   wipWarning,
   wipText,
 }: KanbanColumnHeaderProps) {
@@ -36,7 +38,7 @@ export function KanbanColumnHeader({
 
   if (columnHeaderRegion) {
     return (
-      <div data-slot="kanban-column-header" data-dnd-column-header={dndEnabled ? 'true' : undefined} data-column-id={column.id} className={cn('nop-kanban-column-header', className)}>
+      <div data-slot="kanban-column-header" data-dnd-column-header={dndEnabled ? 'true' : undefined} data-column-id={column.id} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }} className={cn('nop-kanban-column-header', className)}>
         {columnHeaderRegion.render()}
         {onResizeStart && (
           <div
@@ -54,6 +56,10 @@ export function KanbanColumnHeader({
       data-slot="kanban-column-header"
       data-dnd-column-header={dndEnabled ? 'true' : undefined}
       data-column-id={column.id}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
       className={cn(
         'nop-kanban-column-header flex items-center gap-2 px-3 py-2 border-b relative',
         wipWarning && 'border-red-400 bg-red-50',

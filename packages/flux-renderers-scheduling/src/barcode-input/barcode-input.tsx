@@ -87,8 +87,19 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
+    let val = e.target.value;
+    if (resolved.trimContents) {
+      val = val.trim();
+    }
     if (name && form) {
+      if (resolved.minLength != null && val.length < Number(resolved.minLength)) return;
+      if (resolved.maxLength != null && val.length > Number(resolved.maxLength)) return;
+      if (resolved.pattern && val) {
+        try {
+          const regex = new RegExp(String(resolved.pattern));
+          if (!regex.test(val)) return;
+        } catch { /* invalid regex, allow */ }
+      }
       form.setValue(name, val);
     }
   };
@@ -210,6 +221,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         torchButton={resolved.torchButton}
         wasmUrl={resolved.wasmUrl}
         batchMode={batchMode}
+        continuousScan={resolved.continuousScan === true}
         autoSubmit={autoSubmit}
         onSubmitForm={handleSubmitForm}
       />

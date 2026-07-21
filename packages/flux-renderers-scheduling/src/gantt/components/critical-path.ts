@@ -1,4 +1,5 @@
 import type { GanttId, GanttTask, GanttLink } from '../gantt.types.js';
+import type { WorkCalendar } from '../utils/worktime.js';
 
 export interface CriticalPathResult {
   criticalTaskIds: Set<GanttId>;
@@ -8,6 +9,7 @@ export interface CriticalPathResult {
 export function calculateCriticalPath(
   tasks: Map<GanttId, GanttTask>,
   links: Map<GanttId, GanttLink>,
+  workCalendar?: WorkCalendar,
 ): CriticalPathResult {
   const taskIds = Array.from(tasks.keys());
   const n = taskIds.length;
@@ -49,9 +51,13 @@ export function calculateCriticalPath(
   const earliestStart = new Map<GanttId, number>();
   const earliestFinish = new Map<GanttId, number>();
 
+  function taskDur(task: GanttTask): number {
+    return workCalendar ? diffWorkingMs(task.end, task.start, workCalendar) : diffMs(task.end, task.start);
+  }
+
   for (const id of taskIds) {
     const task = tasks.get(id)!;
-    const dur = diffMs(task.end, task.start);
+    const dur = taskDur(task);
     earliestStart.set(id, 0);
     earliestFinish.set(id, dur);
   }
@@ -63,7 +69,7 @@ export function calculateCriticalPath(
       earliestStart.set(edge.target, targetEs);
       const targetTask = tasks.get(edge.target);
       if (targetTask) {
-        const targetDur = diffMs(targetTask.end, targetTask.start);
+        const targetDur = taskDur(targetTask);
         earliestFinish.set(edge.target, targetEs + targetDur);
       }
     }
@@ -92,7 +98,7 @@ export function calculateCriticalPath(
   for (const id of sorted.slice().reverse()) {
     const lf = latestFinish.get(id) ?? projectEnd;
     const task = tasks.get(id)!;
-    const dur = diffMs(task.end, task.start);
+    const dur = taskDur(task);
     const ls = lf - dur;
     latestStart.set(id, ls);
 
@@ -118,6 +124,13 @@ export function calculateCriticalPath(
 
 function diffMs(end: string, start: string): number {
   return new Date(end).getTime() - new Date(start).getTime();
+}
+
+function diffWorkingMs(end: string, start: string, calendar: WorkCalendar): number {
+  const from = new Date(start);
+  const to = new Date(end);
+  const workDays = Math.max(0, calendar.countWorkDays(from, to) - 1);
+  return workDays * 86400000;
 }
 
 export function isCriticalTask(taskId: GanttId, criticalPathResult: CriticalPathResult): boolean {

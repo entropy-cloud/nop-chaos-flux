@@ -39,11 +39,6 @@ export interface UndoStack {
   maxSize: number;
 }
 
-// FIXME: Inconsistent undo pattern — Kanban uses snapshot-based undo (this file)
-// while Gantt (undo-stack.ts) uses command-based undo.
-// These should be unified in a future refactor. The snapshot approach was chosen
-// for Kanban because board state is a single JSON blob that's easy to clone.
-// See gantt/undo-stack.ts for the alternative command pattern.
 export function createUndoStack(maxSize = 1000): UndoStack {
   return { undoStack: [], redoStack: [], maxSize };
 }
@@ -95,12 +90,7 @@ export function shouldMerge(prevCommand: UndoCommand, newCommand: UndoCommand): 
 }
 
 function deepCloneBoard(board: BoardData): BoardData {
-  const cloned: BoardData = {};
-  for (const key of Object.keys(board)) {
-    const item = board[key];
-    cloned[key] = { ...item, children: [...item.children], data: { ...item.data }, meta: { ...item.meta } };
-  }
-  return cloned;
+  return structuredClone(board);
 }
 
 export type { BoardData };

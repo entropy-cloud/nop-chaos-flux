@@ -17,6 +17,7 @@ export interface KanbanColumnProps {
   cardTemplateRegion?: { render: (params: { card: BoardItem; column: BoardItem; index: number }) => React.ReactNode } | null;
   columnFooterRegion?: { render: () => React.ReactNode } | null;
   onCardClick?: (cardId: string, columnId: string, index: number) => void;
+  onColumnClick?: (columnId: string) => void;
   onAddCard?: (columnId: string) => void;
   filterText?: string;
   draggable?: boolean;
@@ -27,6 +28,9 @@ export interface KanbanColumnProps {
   wipWarning?: boolean;
   wipText?: string;
   onDragHandleKeyDown?: (e: React.KeyboardEvent, columnId: string) => void;
+  columnHeaderClassName?: string;
+  cardClassName?: string;
+  columnFooterClassName?: string;
 }
 
 export function KanbanColumn({
@@ -40,6 +44,7 @@ export function KanbanColumn({
   cardTemplateRegion,
   columnFooterRegion,
   onCardClick,
+  onColumnClick,
   onAddCard,
   filterText,
   draggable,
@@ -50,6 +55,9 @@ export function KanbanColumn({
   wipWarning,
   wipText,
   onDragHandleKeyDown,
+  columnHeaderClassName,
+  cardClassName,
+  columnFooterClassName,
 }: KanbanColumnProps) {
   const cardIds = column.children;
   const cardIndexMap = new Map<string, number>(cardIds.map((id, idx) => [id, idx]));
@@ -117,6 +125,8 @@ export function KanbanColumn({
         wipWarning={wipWarning}
         wipText={wipText}
         onDragHandleKeyDown={onDragHandleKeyDown}
+        onClick={() => onColumnClick?.(column.id)}
+        className={columnHeaderClassName}
       />
 
       {!collapsed && (
@@ -150,6 +160,7 @@ export function KanbanColumn({
                       configMap={configMap}
                       cardTemplateRegion={cardTemplateRegion}
                       onCardClick={onCardClick}
+                      className={cardClassName}
                     />
                   </div>
                 );
@@ -166,6 +177,7 @@ export function KanbanColumn({
                   configMap={configMap}
                   cardTemplateRegion={cardTemplateRegion}
                   onCardClick={onCardClick}
+                  className={cardClassName}
                 />
               ))}
             </ul>
@@ -181,7 +193,7 @@ export function KanbanColumn({
         </div>
       )}
 
-      <div data-slot="kanban-column-footer" className="nop-kanban-column-footer px-2 py-1.5 border-t border-gray-200">
+      <div data-slot="kanban-column-footer" className={cn('nop-kanban-column-footer px-2 py-1.5 border-t border-gray-200', columnFooterClassName)}>
         <Button
           variant="ghost"
           size="sm"

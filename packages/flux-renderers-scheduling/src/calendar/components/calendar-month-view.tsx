@@ -25,6 +25,7 @@ export interface CalendarMonthViewProps {
   onCellDragStart?: (date: string, resourceId: string, pointerEvent: React.PointerEvent) => void;
   showCrossDayLines?: boolean;
   onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
+  eventClassName?: string;
 }
 
 const WEEKDAY_LABELS: Record<string, string[]> = {
@@ -56,6 +57,7 @@ export function CalendarMonthView({
   onCellDragStart,
   showCrossDayLines = true,
   onEventKeyDown,
+  eventClassName,
   locale = 'en-US',
 }: CalendarMonthViewProps & { locale?: string }) {
   const days = useMemo(
@@ -201,6 +203,7 @@ export function CalendarMonthView({
                         onEventClick={onEventClick}
                         onPointerDown={(e) => handleEventPointerDown(pe.event, e)}
                         onKeyDown={onEventKeyDown}
+                        className={eventClassName}
                       />
                     ))
                   )}

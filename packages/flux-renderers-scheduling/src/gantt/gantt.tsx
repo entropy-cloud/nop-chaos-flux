@@ -14,6 +14,7 @@ import { GanttCellGrid } from './gantt-cellgrid.js';
 import { GanttBars } from './gantt-bars.js';
 import { GanttLinks } from './gantt-links.js';
 import { GanttMarkers } from './gantt-markers.js';
+import { BaselineBars } from './components/baseline-bars.js';
 import { GanttEditor } from './gantt-editor.js';
 import { useGanttDrag } from './hooks/use-gantt-drag.js';
 import { useGanttLinkDraw } from './hooks/use-gantt-link-draw.js';
@@ -211,6 +212,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                     />
                   <svg ref={svgRef} className="absolute inset-0 pointer-events-none overflow-visible" style={{ zIndex: 5 }}>
                     <GanttLinks />
+                    {store.getVisibleTasks().filter(t => t.baselines?.length).map(task => (
+                      <BaselineBars key={String(task.id)} task={task} scaleRange={store.scaleRange} cellWidth={store.cellWidth} taskBarHeight={store.taskBarHeight} />
+                    ))}
                   </svg>
                   <GanttMarkers showToday={showToday} />
                 </div>

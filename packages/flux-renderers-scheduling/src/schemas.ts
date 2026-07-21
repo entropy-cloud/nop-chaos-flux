@@ -1,6 +1,6 @@
 import type { BaseSchema, SchemaInput, SchemaObject } from '@nop-chaos/flux-core';
 import type { ActionSchema } from '@nop-chaos/flux-core';
-import type { GanttTaskData, GanttLinkData } from './gantt/gantt.types.js';
+import type { GanttTaskData, GanttLinkData, GanttResource, GanttAssignment, GanttColumn, GanttScale, GanttZoomLevel } from './gantt/gantt.types.js';
 
 /** @deprecated Use `GanttTaskData` from `./gantt/gantt.types.js` instead (runtime data type without computed layout fields). `GanttTask` extends `GanttTaskData` with computed layout fields (`$x`, `$y`, etc.) and should only be used internally by the gantt renderer. */
 export interface GanttTask extends SchemaObject {
@@ -26,43 +26,7 @@ export interface GanttLink extends SchemaObject {
   lag?: number;
 }
 
-export interface GanttResource extends SchemaObject {
-  id: string;
-  text: string;
-}
-
-export interface GanttAssignment extends SchemaObject {
-  id: string;
-  taskId: string;
-  resourceId: string;
-  units?: number;
-}
-
-export interface GanttColumn extends SchemaObject {
-  name: string;
-  label: string;
-  width?: number;
-  align?: 'left' | 'center' | 'right';
-  fixed?: 'left' | 'right';
-  sortable?: boolean;
-  resizable?: boolean;
-  minWidth?: number;
-  maxWidth?: number;
-}
-
-export interface GanttScale extends SchemaObject {
-  unit: 'hour' | 'day' | 'week' | 'month' | 'quarter' | 'year';
-  step?: number;
-  format?: string;
-}
-
-export interface GanttZoomLevel extends SchemaObject {
-  key: string;
-  label: string;
-  minCellWidth?: number;
-  maxCellWidth?: number;
-  scales: GanttScale[];
-}
+export type { GanttResource, GanttAssignment, GanttColumn, GanttScale, GanttZoomLevel };
 
 export interface GanttSchema extends BaseSchema {
   type: 'gantt';

@@ -20,6 +20,7 @@ interface BarcodeScannerOverlayProps {
   torchButton?: boolean;
   wasmUrl?: string;
   batchMode?: boolean;
+  continuousScan?: boolean;
   autoSubmit?: boolean;
   onSubmitForm?: () => void;
   children?: ReactNode;
@@ -36,6 +37,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     torchButton: showTorch,
     wasmUrl,
     batchMode,
+    continuousScan,
     autoSubmit,
     onSubmitForm,
   } = props;
@@ -124,6 +126,8 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
           }
           setQueueItems(queue.getAll());
         }
+      } else if (continuousScan) {
+        onScan(detect.result);
       } else {
         onScan(detect.result);
         if (autoSubmit) {
@@ -132,7 +136,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
         onClose();
       }
     }
-  }, [detect.result, batchMode, autoSubmit, onScan, onClose, onSubmitForm, queue]);
+  }, [detect.result, batchMode, continuousScan, autoSubmit, onScan, onClose, onSubmitForm, queue]);
 
   useEffect(() => {
     if (detect.error) {

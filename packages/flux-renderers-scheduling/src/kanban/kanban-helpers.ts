@@ -1,12 +1,7 @@
 import type { BoardData, BoardItem } from './kanban.types.js';
 
 function cloneBoard(board: BoardData): BoardData {
-  const cloned: BoardData = {};
-  for (const key of Object.keys(board)) {
-    const item = board[key];
-    cloned[key] = { ...item, children: [...item.children], data: { ...item.data }, meta: { ...item.meta } };
-  }
-  return cloned;
+  return structuredClone(board);
 }
 
 export function moveCard(board: BoardData, cardId: string, targetColumnId: string, targetIndex: number): BoardData {
