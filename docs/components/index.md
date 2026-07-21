@@ -336,7 +336,7 @@ UI primitive 对齐补充规则：
 
 **AI 对话（`flux-renderers-ai`，设计中）**
 
-- `ai-chat`、`ai-message-list`、`ai-bubble`、`ai-sender`、`ai-conversations`、`ai-welcome`、`ai-prompts`、`ai-feedback`、`ai-attachments`、`ai-tool-call`、`ai-suggestions`、`ai-mcp-manager`（详见 `docs/components/flux-renderers-ai/design.md`）
+- `ai-chat`、`ai-message-list`、`ai-bubble`、`ai-sender`、`ai-conversations`、`ai-welcome`、`ai-prompts`、`ai-feedback`、`ai-attachments`、`ai-tool-call`、`ai-suggestions`、`ai-mcp-manager`（详见 `docs/components/flux-renderers-ai/design.md`，引擎设计见 `engine.md`）
 
 ### 当前仓库已注册的领域 renderer
 

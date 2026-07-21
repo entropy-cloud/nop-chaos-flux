@@ -8,13 +8,13 @@
 
 ## 审计摘要
 
-| Invariant                  | 结论               | 关键问题                                                                                       |
-| -------------------------- | ------------------ | ---------------------------------------------------------------------------------------------- |
-| INV-1（IO 经 env）         | **FAIL**           | `src/providers/` + `src/sse/` + `src/storage/` 三处直调 `fetch`/SSE/`localStorage`/`IndexedDB` |
-| INV-2（新 IO 扩 env 评审） | **NEEDS-DECISION** | 流式 IO 没走评审，默认"包内直调"是违规路径                                                     |
-| INV-3（复用 flux runtime） | **PARTIAL**        | 持久化与 provider 自带，违反"不重造"原则                                                       |
-| INV-4（内部 state 边界）   | **PARTIAL**        | `conversations` 归属矛盾；持久化策略自相矛盾                                                   |
-| INV-5（契约边界）          | **PASS（小瑕疵）** | `useMessage` export 定位需明确                                                                 |
+| Invariant                  | 结论                     | 关键问题                                                                                                          |
+| -------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| INV-1（IO 经 env）         | **FAIL（v2 已修正）**    | `src/providers/` + `src/sse/` + `src/storage/` 三处直调 `fetch`/SSE/`localStorage`/`IndexedDB`（v2 目录树已移除） |
+| INV-2（新 IO 扩 env 评审） | **已解决**               | 流式 IO 经评审通过（`docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`）                         |
+| INV-3（复用 flux runtime） | **PARTIAL（v2 已修正）** | 持久化与 provider 自带，违反"不重造"原则（v2 已删实现、留接口）                                                   |
+| INV-4（内部 state 边界）   | **PARTIAL（v2 已修正）** | `conversations` 归属矛盾；持久化策略自相矛盾（v2 统一为 scope-owned + state ownership 表）                        |
+| INV-5（契约边界）          | **PASS（小瑕疵）**       | `useMessage` export 定位需明确                                                                                    |
 
 | Checklist          | 结论            |
 | ------------------ | --------------- |
@@ -32,22 +32,22 @@
 
 ### 列出组件所有外部 IO
 
-| IO 类型              | 当前位置（design.md 引用）                | 是否经 env？                                       |
-| -------------------- | ----------------------------------------- | -------------------------------------------------- |
-| HTTP 一次性请求      | 未明确                                    | —                                                  |
-| HTTP 流式响应（SSE） | `src/providers/openai-compatible.ts` §9.2 | ❌ 直调                                            |
-| SSE 字节流解析       | `src/sse/sse-stream-to-generator.ts` §6   | ❌ 直调 `ReadableStream`/`getReader`/`TextDecoder` |
-| 本地持久化（小数据） | `src/storage/local-storage.ts` §6         | ❌ 直调 `localStorage`                             |
-| 本地持久化（大数据） | `src/storage/indexed-db.ts` §6            | ❌ 直调 `IndexedDB`（经 `idb` 库）                 |
-| 动态 fetch 注入      | `OpenAICompatibleConfig.fetch` §9.2       | ❌ 业务方"注入 fetch"绕开 `env.fetcher`            |
-| 通知                 | 渲染器内部                                | ✅ 未直调 toast，应走 `env.notify`                 |
-| 路由                 | 未涉及                                    | —                                                  |
-| 权限                 | 未涉及                                    | —                                                  |
-| 业务能力注入         | `xui:imports` §12 示例                    | ✅ 合规                                            |
+| IO 类型              | 当前位置（design.md 引用）                            | 是否经 env？                                       |
+| -------------------- | ----------------------------------------------------- | -------------------------------------------------- |
+| HTTP 一次性请求      | 未明确                                                | —                                                  |
+| HTTP 流式响应（SSE） | `src/providers/openai-compatible.ts` `engine.md` §9.2 | ❌ 直调                                            |
+| SSE 字节流解析       | `src/sse/sse-stream-to-generator.ts` §6               | ❌ 直调 `ReadableStream`/`getReader`/`TextDecoder` |
+| 本地持久化（小数据） | `src/storage/local-storage.ts` §6                     | ❌ 直调 `localStorage`                             |
+| 本地持久化（大数据） | `src/storage/indexed-db.ts` §6                        | ❌ 直调 `IndexedDB`（经 `idb` 库）                 |
+| 动态 fetch 注入      | `OpenAICompatibleConfig.fetch` `engine.md` §9.2       | ❌ 业务方"注入 fetch"绕开 `env.fetcher`            |
+| 通知                 | 渲染器内部                                            | ✅ 未直调 toast，应走 `env.notify`                 |
+| 路由                 | 未涉及                                                | —                                                  |
+| 权限                 | 未涉及                                                | —                                                  |
+| 业务能力注入         | `xui:imports` §12 示例                                | ✅ 合规                                            |
 
 ### 违规详情
 
-**违规 1：`src/providers/openai-compatible.ts`**（design.md §6、§9.2）
+**违规 1：`src/providers/openai-compatible.ts`**（design.md §6、`engine.md` §9.2）
 
 ```ts
 export interface OpenAICompatibleConfig {
@@ -89,11 +89,14 @@ export { localStorageStrategyFactory, indexedDbStrategyFactory } from './storage
 
 ---
 
-## INV-2：新 IO 类型扩 env 评审 —— **NEEDS-DECISION**
+## INV-2：新 IO 类型扩 env 评审 —— **已解决**（讨论通过）
+
+> 状态更新 2026-07-21：见 `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`（3 轮讨论后最终裁定）。
+> DECISION-1（SSE → C 档）、DECISION-2（WebSocket → C 档）、DECISION-3（本地持久化 → B 档）均已闭环。
 
 ### 当前状态
 
-design.md 默认"包内自带 SSE 解析 + fetch 调用"，这相当于选了一条**非合规路径**——既不是 INV-2 的 A（组合现有 env），也不是 B（import 注入），也不是 C（评审扩 env）。这是"包内硬编码新 IO 类型"，绕开了评审流程。
+`env.stream` 与 `env.openSocket` 的接口签名、自动处理规范、host 实现责任已全部裁定（讨论 doc §第 3 轮 "最终裁定" 表）。
 
 ### 必须裁定的核心问题
 
@@ -113,13 +116,13 @@ design.md 默认"包内自带 SSE 解析 + fetch 调用"，这相当于选了一
 - **B 档**：host 提供 storage adapter 经 import 注入；渲染器内部只持有 `ConversationStorageStrategy` 接口。**推荐**。
 - **C 档**：扩 `env.storage?: StorageStrategy`。**不推荐**——业务相关性强、通用性弱（不是所有 host 都需要本地持久化）。
 
-### 修订要求
+### 修订要求（已解决）
 
-design.md 必须新增一节"IO 边界裁定"，对 Q1/Q2/Q3 明确选择 A/B/C 之一，并说明理由。若选 C，必须起草评审提案（`docs/discussions/`）并链接到本审计。
+design.md v2 已新增 §11 "IO 边界裁定" 明确选择。评审提案见 `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`（3 轮讨论后最终裁定，见该 doc §第 3 轮"最终裁定"表）。
 
-**推荐裁定**（待 design.md 作者确认）：
+**最终裁定**（落地于讨论 doc）：
 
-| IO 类型          | 推荐档位             | 理由                                                          |
+| IO 类型          | 最终档位             | 理由                                                          |
 | ---------------- | -------------------- | ------------------------------------------------------------- |
 | HTTP 流式（SSE） | **C（评审扩 env）**  | 通用系统调用，3+ 场景（AI/日志/推送）需要，跨 host 可统一抽象 |
 | WebSocket        | **C（评审扩 env）**  | 同上，更通用                                                  |
@@ -168,10 +171,10 @@ design.md 没明确，**待裁定**。建议 (b)：MCP 是业务能力，不是�
 ### 合规项 ✓
 
 - §10.2 `AiChatProvider` + `useAiChatContext` 作为渲染器**内部** React Context
-- §8 MessageEngine + `useSyncExternalStore` 桥接
+- `engine.md` §8 MessageEngine + `useSyncExternalStore` 桥接
 - §11.3 默认"engine 不持久化"
 - §11.2 `engine.messages` / `isProcessing` 经 engine 订阅
-- §8.5 `useRef` lazy init 持有 engine，符合"env 引用变化不重建"
+- `engine.md` §8.5 `useRef` lazy init 持有 engine，符合"env 引用变化不重建"
 
 ### 矛盾项
 
@@ -186,7 +189,7 @@ design.md 没明确，**待裁定**。建议 (b)：MCP 是业务能力，不是�
 **矛盾 2：`conversations` 归属不清**
 
 - §11.2："conversations 列表 → useScopeSelector 读 schema 表达式（host 层管理）"
-- §8.6：`useConversation` 返回 `conversations: AiConversationInfo[]`（包内持有）
+- `engine.md` §8.6：`useConversation` 返回 `conversations: AiConversationInfo[]`（包内持有）
 - §5.1 `ai-conversations` 渲染器："消费 schema 注入的 conversations 数组"
 
 到底是 scope-owned 还是域内部？必须选定。**建议**：`conversations` 列表是 **scope-owned**（host 提供），`active conversationId` 是 **scope-owned**，单会话的 `engine` 是**域内部**（每个会话独占 engine）。
@@ -207,9 +210,9 @@ design.md 没明确，**待裁定**。建议 (b)：MCP 是业务能力，不是�
 
 ### 修订要求
 
-1. design.md §7.2 / §11.2 加一节"state ownership 清单"，按上表格式列出所有 state
+1. `engine.md` §7.2 + design.md §11.2 加一节"state ownership 清单"，按上表格式列出所有 state
 2. §11.3 删除"包内 storage"相关描述
-3. §8.6 明确 `useConversation` 是**host helper**（不是渲染器内部用），导出位置应该在包的"host utilities"分组下，不与渲染器混在一起
+3. `engine.md` §8.6 明确 `useConversation` 是**host helper**（不是渲染器内部用），导出位置应该在包的"host utilities"分组下，不与渲染器混在一起
 
 ---
 
@@ -248,7 +251,7 @@ design.md §6.1 加注释明确 host utilities 与 renderer API 的分组。
 - [ ] **A2** 每个 IO 都已归位 —— **FAIL**（fetch/SSE/localStorage/IndexedDB 未归位）
 - [ ] **A3** 渲染器代码内没有直接调用 fetch/WebSocket/EventSource/localStorage/IndexedDB —— **FAIL**
 - [ ] **A4** 没有硬编码 API key / baseURL / endpoint / model name —— **FAIL**（`OpenAICompatibleConfig.baseURL/apiKey`）
-- [ ] **A5** 新 IO 类型按 INV-2 走评审或退化为 import —— **未做**
+- [ ] **A5** 新 IO 类型按 INV-2 走评审或退化为 import —— **已做**（讨论 doc 完成，3 轮裁定，见 `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`）
 
 ### B. 复用边界 —— **PARTIAL**
 
@@ -303,16 +306,16 @@ design.md §6.1 加注释明确 host utilities 与 renderer API 的分组。
 
 ## 例外与未决项
 
-### 必须解决（阻塞 design.md 通过审计）
+### 已解决
 
-1. **【DECISION-1】** SSE / 流式 IO 走 INV-2 的 A/B/C 哪一档？（推荐 C：评审扩 env）
-2. **【DECISION-2】** WebSocket 长连接走 A/B/C 哪一档？（推荐 C：同上）
-3. **【DECISION-3】** 本地持久化走 A/B/C 哪一档？（推荐 B：import 注入）
-4. **【FIX-1】** 删除 `src/providers/`、`src/sse/`、`src/storage/` 下的具体实现
-5. **【FIX-2】** 引入 `AiConnector` 接口（替代 `AiResponseProvider`），命名更准确
-6. **【FIX-3】** 统一 `conversations` 归属（建议 scope-owned）
-7. **【FIX-4】** 补充 state ownership 清单表
-8. **【FIX-5】** index.ts 分组（renderers / host utilities / types）
+1. **【DECISION-1 ✅】** SSE / 流式 IO → C 档（评审扩 env）—— 见 `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`
+2. **【DECISION-2 ✅】** WebSocket 长连接 → C 档（评审扩 env）—— 同上
+3. **【DECISION-3 ✅】** 本地持久化 → B 档（import 注入）—— 同上
+4. **【FIX-1 ✅】** 已删除 `src/providers/`、`src/sse/`、`src/storage/` 下的具体实现（design.md v2 目录树已移除）
+5. **【FIX-2 ✅】** 已引入 `AiConnector` 接口（替代 `AiResponseProvider`），命名已统一
+6. **【FIX-3 ✅】** 已统一 `conversations` 归属为 scope-owned（design.md §11.5）
+7. **【FIX-4 ✅】** 已补充 state ownership 清单表（design.md §11.5 / `engine.md` §7.2）
+8. **【FIX-5 ✅】** index.ts 已分组（renderers / host utilities / types），设计文档标注明确
 
 ### 待评审（不阻塞 design.md 通过，但需在 P1 前裁定）
 
@@ -331,9 +334,11 @@ design.md §6.1 加注释明确 host utilities 与 renderer API 的分组。
 
 按 `docs/references/new-renderer-introduction-audit.md` §INV-2 与 `docs/plans/00-plan-authoring-and-execution-guide.md`：
 
-1. **起草评审提案**：在 `docs/discussions/` 起草 SSE / WebSocket 扩 env 的评审提案（覆盖 DECISION-1/2）
-2. **修订 design.md v2**：解决所有 FIX-\* 项 + 嵌入 DECISION 结果
-3. **独立复审**：design.md v2 必须由**独立 fresh session** 复审（不可由本次审计 session 复审）
+1. ~~起草评审提案~~ → ✅ **已完成**：`docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`（3 轮讨论后最终裁定）
+2. ~~修订 design.md v2~~ → ✅ **已完成**：解决所有 FIX-\* 项，嵌入 DECISION 结果，补充 state ownership 清单、改进路线指引
+3. **独立复审**：design.md v2 必须由**独立 fresh session** 复审（不可由本次审计/修订 session 复审）
 4. **复审通过后**：design.md 才能进入 P0 实现阶段，按 `docs/plans/00-plan-authoring-and-execution-guide.md` 起草 P0 plan
+
+> **当前阻塞点**：process step 3（independent fresh-session review of design.md v2）。在此之前不进入 P0 实现。
 
 **本审计 session 不得**：自审 design.md v2、勾选 closure gate、标记 design.md 为"通过"。

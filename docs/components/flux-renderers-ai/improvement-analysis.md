@@ -284,7 +284,7 @@ export function useAutoScroll(
 - 审批态通过 `message.state.toolCall[id].approval` 控制：`pending / approved / rejected`
 - 确认/拒绝按钮触发 `onAction: 'approve' | 'reject'` event → host action handler 决策
 
-**引擎影响**：此方案需要扩展 `ChatToolCallUIState`（design.md §7.1），增加可选的 `approval` 字段。这是对 engine 状态类型的变更，不是纯 UI 变更。但 engine 的流程逻辑（暂停/等待/恢复）**不**在 engine 内实现 — engine 只负责提供状态字段和触发 `onAction` event；暂停/恢复工作流由 host 的 action handler 管理。这与 flux 纯渲染引擎的定位一致。
+**引擎影响**：此方案需要扩展 `ChatToolCallUIState`（`engine.md` §7.1），增加可选的 `approval` 字段。这是对 engine 状态类型的变更，不是纯 UI 变更。但 engine 的流程逻辑（暂停/等待/恢复）**不**在 engine 内实现 — engine 只负责提供状态字段和触发 `onAction` event；暂停/恢复工作流由 host 的 action handler 管理。这与 flux 纯渲染引擎的定位一致。
 
 **不引入 engine 内暂停机制**的原因：flux 不负责工作流编排。工具调用的暂停/审批/恢复是业务逻辑决策，由 host 在 action handler 中实现（例如：点击拒绝后，host 调用 `engine.send(...)` 发送一条 tool 结果消息表示拒绝）。
 

@@ -72,9 +72,16 @@
 | P1         | `ai-prompts`       | Widget | 推荐提示词卡片列表（垂直/水平/折行）                              |
 | P1         | `ai-feedback`      | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）               |
 | P2         | `ai-attachments`   | Widget | 附件上传/预览（图片模式 / 卡片模式）                              |
-| P2         | `ai-tool-call`     | Widget | 工具调用卡片（状态、展开、JSON 高亮）                             |
-| P2         | `ai-suggestions`   | Widget | 建议气泡（Popover / Pills 两种形态）                              |
-| P7（可选） | `ai-mcp-manager`   | Widget | MCP server 管理（启用/禁用/添加），需 `@modelcontextprotocol/sdk` |
+| P2         | `ai-tool-call`     | Widget | 工具调用卡片（状态、展开、JSON 高亮、按工具名注册专用渲染器）     |
+| P3         | `ai-citations`     | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                  |
+| P3         | HITL 审批          | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮           |
+| P4         | `ai-voice-input`   | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）                   |
+| P4         | `ai-token-usage`   | Widget | Token / 成本 / 上下文占比显示（数据由 connector 填充 metadata）   |
+| P4         | 消息分支           | 增强   | 重新生成时分支切换（branches 由 host 管理）                       |
+| P4         | `ai-suggestions`   | Widget | 建议气泡（Popover / Pills）— 从 P2 降至 P4（`ai-prompts` 已覆盖） |
+| P7（可选） | `ai-mcp-manager`   | Widget | MCP server 管理（启用/禁用/添加），需 host 注入 MCP 客户端        |
+
+> 详细的组件级改进（流式光标 / 时间戳 / 代码块复制按钮 / 工具状态颜色 / 拖放附件 / 消息编辑 / LaTeX 评估等）见 [`improvement-analysis.md`](./improvement-analysis.md) §4。Phase 路线与改进项 ID 映射见 [`implementation.md`](./implementation.md) §2。
 
 ### 5.2 与现有 renderer 的协作
 
@@ -115,6 +122,7 @@ packages/flux-renderers-ai/
     │   ├── react-adapter.ts         # createReactMessageAdapter（useSyncExternalStore 桥接）
     │   ├── use-message.ts           # useMessage(options) hook（host utility）
     │   ├── use-conversation.ts      # useConversation(options) hook（host utility）
+    │   ├── use-auto-scroll.ts       # useAutoScroll hook（P2 公开为 host utility）
     │   ├── ai-connector-factory.ts  # createStreamBasedAiConnector(env) —— host helper，把 env.stream 输出组装成 AiConnector（env.stream 已自动处理 SSE 切分+JSON 解析）
     │   └── ai-chat-context.tsx      # AiChatProvider / useAiChatContext（渲染器内部 Context）
     │
@@ -234,366 +242,17 @@ export function registerAiRenderers(registry: RendererRegistry) {
 4. `apps/playground/src/styles.css`：加 `@import '@nop-chaos/flux-renderers-ai/styles.css';`
 5. `apps/playground/src/App.tsx` 及各 multi-scenario host 文件：调用 `registerAiRenderers(registry)`
 
-## 7. 数据模型
+## 7. 数据模型 → `engine.md`
 
-### 7.1 ChatMessage（统一一处定义，消除 tiny-robot 的三处重复）
+数据模型（`ChatMessage`、`ChatMessageContentPart`、`ChatToolCall`、`ChatToolCallUIState`、消息状态机、`AiConversationInfo`）详见 [`engine.md §7`](./engine.md#7-数据模型)。
 
-```ts
-// src/engine/types.ts
-export type ChatRole = 'system' | 'user' | 'assistant' | 'tool';
+## 8. 引擎与适配器 → `engine.md`
 
-export type ChatMessageContentPart =
-  | { type: 'text'; text: string }
-  | { type: 'image_url'; image_url: { url: string; detail?: 'auto' | 'low' | 'high' } }
-  | { type: 'file'; file: { url: string; name?: string; contentType?: string } };
+引擎核心（`MessageEngine` 接口、`MessageStateAdapter` 抽象、插件链生命周期、流式累积算法、`useMessage` hook、`useConversation` hook）详见 [`engine.md §8`](./engine.md#8-引擎与适配器)。
 
-export interface ChatToolCallFunction {
-  name: string;
-  arguments: string; // JSON string（流式逐字累积）
-}
+## 9. Connector 抽象 → `engine.md`
 
-export interface ChatToolCall {
-  index: number;
-  id: string;
-  type: 'function';
-  function: ChatToolCallFunction;
-}
-
-export interface ChatMessageMetadata {
-  createdAt?: number;
-  updatedAt?: number;
-  model?: string;
-  finishReason?: string;
-  [key: string]: unknown;
-}
-
-export interface ChatToolCallUIState {
-  status: 'running' | 'success' | 'failed' | 'cancelled';
-  open?: boolean;
-  result?: string;
-}
-
-export interface ChatMessageUIState {
-  thinking?: { open: boolean };
-  toolCall?: Record<string, ChatToolCallUIState>;
-  [key: string]: unknown;
-}
-
-export interface ChatMessage<
-  M extends ChatMessageMetadata = ChatMessageMetadata,
-  S extends ChatMessageUIState = ChatMessageUIState,
-> {
-  id: string; // flux 必需（React key 与 scope 绑定），tiny-robot 缺失
-  role: ChatRole;
-  content: string | ChatMessageContentPart[]; // OpenAI 多模态
-  reasoning_content?: string; // DeepSeek/Anthropic 风格
-  tool_calls?: ChatToolCall[];
-  tool_call_id?: string; // role='tool' 时关联
-  name?: string;
-  loading?: boolean; // engine 写入：true 表示等待首个 chunk
-  metadata?: M;
-  state?: S;
-}
-```
-
-> 不再使用 `extends ChatCompletionMessageParam`（避免对 `openai/resources` 类型的硬依赖，按 tiny-robot 调研报告 §10.2 第 7 条改进）。结构等价于 OpenAI Chat Completion message。
-
-### 7.2 消息状态机
-
-| 状态              | 字段位置                            | 取值                                               | 含义                                |
-| ----------------- | ----------------------------------- | -------------------------------------------------- | ----------------------------------- |
-| 请求级（turn 级） | `engine.requestState`               | `idle / processing / completed / aborted / error`  | 整个对话轮的生命周期                |
-| 请求处理子状态    | `engine.processingState`            | `requesting / completing / calling-tools / string` | 流式细分                            |
-| 消息级            | `message.loading`                   | `boolean / undefined`                              | 单条 assistant 消息是否在等首 chunk |
-| 工具调用子状态    | `message.state.toolCall[id].status` | `running / success / failed / cancelled`           | 单个工具调用                        |
-
-`engine.requestState` 通过 `engine.subscribe('requestState', fn)` 订阅，React adapter 用 `useSyncExternalStore` 桥接。
-
-### 7.3 AiConversationInfo
-
-```ts
-export interface AiConversationInfo {
-  id: string;
-  title?: string;
-  createdAt: number;
-  updatedAt: number;
-  metadata?: Record<string, unknown>;
-}
-```
-
-会话本身是 schema 驱动的（参见 §10 `ai-conversations` 渲染器）；每个会话独占一个 engine 实例（双层模型：列表轻量 + engine 惰性创建 + 切走时清理空闲引擎，保留运行中的）。
-
-## 8. 引擎与适配器
-
-### 8.1 MessageEngine 接口（移植自 tiny-robot `kit/src/message/core/engine.ts`）
-
-```ts
-export interface MessageEngine {
-  getState(): MessageEngineState;
-  subscribe(listener: (state) => void): () => void; // 全量订阅
-  subscribe(kind: 'messages' | 'requestState', listener): () => void; // 分通道
-  sendMessage(content: string | ChatMessageContentPart[]): Promise<void>;
-  send(...msgs: ChatMessage[]): Promise<void>;
-  abort(): Promise<void>;
-  setConnector(connector: AiConnector): void; /**
-   * 热替换 connector（如切换模型 / provider）。
-   * 进行中的请求继续使用旧 connector；下一条 sendMessage 用新 connector。
-   * 这避免了"半句响应分裂"问题（旧请求用旧协议完成，新请求用新协议开始）。
-   */
-  registerPlugin(plugin: MessageEnginePlugin): () => void; // 返回 unsubscribe
-}
-
-export interface MessageEngineState {
-  messages: ChatMessage[];
-  requestState: RequestState;
-  processingState?: RequestProcessingState;
-  isProcessing: boolean;
-}
-```
-
-引擎自身是纯 TS（无 React / Vue / DOM 依赖），可独立单测。
-
-### 8.2 MessageStateAdapter 抽象（移植关键解耦点）
-
-```ts
-export interface MessageStateAdapter {
-  initialize(initialState: InternalMessageState): void;
-  getState(): PublicMessageState;
-  createMessage<T extends ChatMessage>(message: T): T; // 让 adapter 决定是否包装
-  mutate(kind: MessageUpdateKinds, recipe: (draft) => void): void;
-  subscribe(listener): () => void;
-  subscribe(kind, listener): () => void;
-}
-```
-
-两种实现：
-
-- `createNativeMessageAdapter()`：纯 TS，闭包持有 state，测试用。
-- `createReactMessageAdapter()`：内部用 module-level store + `Set<listener>`，配合 `useSyncExternalStore`。`mutate` 跑完 recipe 后通知订阅者；不依赖 React，但**为 React 订阅模型优化**（state 引用替换、按 kind 分通道通知）。
-
-### 8.3 插件链生命周期
-
-| 钩子                         | 调用时机                    | 典型用途                                                                               |
-| ---------------------------- | --------------------------- | -------------------------------------------------------------------------------------- |
-| `onTurnStart(context)`       | `sendMessage` / `send` 入口 | skill 注入 system prompt                                                               |
-| `onBeforeRequest(context)`   | 发请求前                    | `toolPlugin.resolveTools` 聚合工具 + 写入 `requestBody.tools`                          |
-| `onCompletionChunk(context)` | 每个流式 chunk              | `combineDeltaData` 累积；`thinkingPlugin` 检测 `reasoning_content` 写 `state.thinking` |
-| `onAfterRequest(context)`    | 单轮请求结束                | `toolPlugin` 处理 `finish_reason: 'tool_calls'`，发起工具调用，再 `requestNext()`      |
-| `onTurnEnd(context)`         | 整个对话轮结束              | 兜底重置 thinking 状态                                                                 |
-| `onError(context)`           | abort 或异常                | 区分 `aborted` 与 `error`，写 `requestState`                                           |
-
-### 8.4 流式累积算法（移植 `combineDeltaData`）
-
-`src/engine/utils.ts:combineDeltaData(target, source)` 处理：
-
-- string + string → 字符串拼接（除非字段是 `type`，已存在不覆盖）
-- array + array：两边都有 `index` 字段 → **按 index 合并**（OpenAI tool_calls 流式 chunk 格式）；否则直接拼接
-- object + object → 递归合并
-- 新字段 → 直接赋值
-
-这是引擎最关键的算法，必须有单元测试覆盖所有分支（参考 tiny-robot 的 `message/utils.test.ts`）。
-
-### 8.5 React 适配：useMessage hook
-
-```ts
-export interface UseMessageOptions {
-  connector: AiConnector;
-  initialMessages?: ChatMessage[];
-  plugins?: MessageEnginePlugin[];
-}
-
-export interface UseMessageReturn {
-  messages: ChatMessage[];
-  requestState: RequestState;
-  processingState?: RequestProcessingState;
-  isProcessing: boolean;
-  sendMessage: (content: string | ChatMessageContentPart[]) => Promise<void>;
-  send: (...msgs: ChatMessage[]) => Promise<void>;
-  abortRequest: () => Promise<void>;
-  engine: MessageEngine; // 暴露给高级用法
-}
-
-export function useMessage(options: UseMessageOptions): UseMessageReturn;
-```
-
-实现要点：
-
-- `useRef` 持有 engine 实例（lazy init，deps 含 `options.connector` 引用变化时调 `engine.setConnector`）
-- `useSyncExternalStore(engine.subscribe, engine.getSnapshot)` 订阅状态
-- React 19 默认不加 `useMemo` / `useCallback`，按 AGENTS.md React 19 章节
-
-### 8.6 useConversation hook
-
-```ts
-export interface UseConversationOptions {
-  storage?: ConversationStorageStrategy;
-  autoSaveMessages?: boolean;
-  connector: AiConnector;
-  createEngineOptions?: Omit<UseMessageOptions, 'connector'>;
-}
-
-export interface UseConversationReturn {
-  conversations: AiConversationInfo[];
-  activeConversationId: string | null;
-  activeEngine: MessageEngine | null;
-  createConversation(params?): AiConversationInfo;
-  switchConversation(id: string): Promise<void>;
-  deleteConversation(id: string): Promise<void>;
-  renameConversation(id: string, title: string): void;
-  clearAll(): void;
-}
-```
-
-照搬 tiny-robot 双层模型：`conversations` 数组始终全量内存；`engines: Map` 惰性创建，切走时清理非活跃非 processing 的 engine，保留正在流式的会话后台运行。
-
-## 9. Connector 抽象（替代 v1 的 Provider 抽象）
-
-### 9.1 命名变更说明
-
-v1 用 `AiResponseProvider` 命名，v2 改为 **`AiConnector`**。理由：
-
-- "Provider" 与 React Context Provider、`BaseModelProvider`（tiny-robot 已废弃抽象）容易混淆
-- "Connector" 更准确反映其职责：**把 engine 接到具体 AI 后端的连接器**
-- 与 `env.stream` / `env.openSocket` 的"连接能力"语义对齐
-
-### 9.2 `AiConnector` 接口（包内只定义契约，不含实现）
-
-```ts
-// src/engine/types.ts
-export type AiConnectorStreamResult =
-  | AsyncGenerator<AiConnectorChunk>
-  | Promise<AsyncGenerator<AiConnectorChunk>>;
-
-export interface AiConnectorChunk {
-  /** 增量 delta（OpenAI ChatCompletionChunk 结构等价；不直接 import SDK 类型） */
-  delta?: {
-    role?: ChatRole;
-    content?: string;
-    reasoning_content?: string;
-    tool_calls?: ChatToolCall[];
-  };
-  /** 整体快照（某些后端按 snapshot 而非 delta 推送时使用） */
-  snapshot?: Partial<ChatMessage>;
-  /** chunk 元信息 */
-  finishReason?: string;
-  metadata?: ChatMessageMetadata;
-}
-
-export interface AiConnectorRequest {
-  messages: ChatMessage[];
-  tools?: AiToolSchema[]; // 结构等价于 OpenAI ChatCompletionTool
-  signal: AbortSignal;
-  /** 其他 OpenAI 兼容参数（temperature / top_p / max_tokens 等） */
-  [key: string]: unknown;
-}
-
-export interface AiConnector {
-  /** 流式调用：返回增量 chunk 的 AsyncGenerator */
-  stream(request: AiConnectorRequest): AiConnectorStreamResult;
-  /** 可选：非流式调用 */
-  complete?(request: AiConnectorRequest): Promise<ChatMessage>;
-}
-```
-
-> `AiConnector` 是 **engine 与 host 之间的契约**。engine 调 `connector.stream(...)`，对返回的 AsyncGenerator 做累积（`combineDeltaData`）；engine 自身不知道也不关心后端是 OpenAI / DeepSeek / 自家网关 / mock。
-
-### 9.3 包内不提供任何具体 Connector 实现
-
-- ❌ **不**内置 `createOpenAICompatibleProvider`（v1 错误）
-- ❌ **不**内置 `createMockProvider`（v1 错误）
-- ❌ **不**直调 `fetch` / `EventSource` / `ReadableStream` / `WebSocket`
-
-具体实现由 **host** 提供。host 有两种组装方式：
-
-**方式 A（推荐）：用 `env.stream` 组装**
-
-由于 `env.stream` 已自动处理 SSE 切分 + JSON 解析（参见 `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md` §第 2 轮），组装 Connector 非常简洁：
-
-```ts
-// host 应用代码示例（apps/playground/src/ai-connectors.ts）
-import { createStreamBasedAiConnector, type AiConnector } from '@nop-chaos/flux-renderers-ai';
-
-export function createOpenAIConnector(
-  env: RendererEnv,
-  config: { baseURL: string; apiKey: string; model: string },
-): AiConnector {
-  return createStreamBasedAiConnector({
-    env,
-    buildRequest: (req) => ({
-      url: `${config.baseURL}/chat/completions`,
-      method: 'POST',
-      headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
-      body: { model: config.model, messages: req.messages, tools: req.tools, stream: true },
-      // env.stream 默认就是 streamProtocol: 'sse' + streamChunkType: 'json'，无需显式指定
-    }),
-  });
-}
-```
-
-`createStreamBasedAiConnector` 是**包提供的 host helper**（在 `src/adapters/ai-connector-factory.ts`），它：
-
-- 接收 `env` + 用户提供的 `buildRequest` 回调
-- 内部调 `env.stream(api, ctx)` —— streamFetcher 自动完成 URL 拼接、body 序列化、SSE 切分、JSON.parse
-- 把 chunks 中的 OpenAI chunk 结构映射为 `AiConnectorChunk`（包内类型转换，无协议解析）
-- **不含**任何 baseURL / apiKey / model 硬编码
-- **不含**任何 SSE 协议解析代码（已下沉到 `env.stream`）
-
-**方式 B：完全自定义 Connector**
-
-```ts
-// host 应用代码示例（用 env.fetcher / env.openSocket / 自有 SDK 都行）
-import type { AiConnector } from '@nop-chaos/flux-renderers-ai';
-
-export const myCustomConnector: AiConnector = {
-  async stream(req) {
-    // 业务方自由实现：可以用 env.stream、env.openSocket、env.fetcher
-    // （但若不用 env，违反 INV-1，应在 host 内部评审）
-  },
-};
-```
-
-### 9.4 注入到 schema
-
-host 在 `xui:imports` 注册 connector 实例：
-
-```ts
-// host 应用启动代码
-runtime.registerImport('ai', {
-  connectors: {
-    openai: createOpenAIConnector(env, { baseURL: '...', apiKey: '...', model: 'gpt-4' }),
-    deepseek: createOpenAIConnector(env, { baseURL: 'https://api.deepseek.com/v1', ... }),
-  }
-});
-```
-
-schema 通过表达式引用：
-
-```json
-{
-  "type": "ai-chat",
-  "connector": "${$ai.connectors.openai}"
-}
-```
-
-### 9.5 `useMessage` 接口变更
-
-```ts
-export interface UseMessageOptions {
-  connector: AiConnector;
-  initialMessages?: ChatMessage[];
-  plugins?: MessageEnginePlugin[];
-}
-```
-
-engine 在内部调 `connector.stream({ messages, tools, signal })`；不再有 `setResponseProvider` 这种方法，改为 `setConnector(connector)` 支持热替换。
-
-### 9.6 不保留的旧抽象（继承自 v1）
-
-- ❌ 不实现 `BaseModelProvider` / `OpenAIProvider` / `AIClient`（tiny-robot 已废弃）
-- ❌ 不实现 `handleSSEStream` 回调式（SSE 切分由 `env.stream` 内部完成）
-- ❌ 不实现 `formatMessages` / `extractTextFromResponse`
-- ❌ 不内置 `createOpenAICompatibleProvider` / `createMockProvider`（v1 错误，已删除）
-- ❌ 不内置任何 SSE/流式协议解析模块（v1 的 `src/sse/sse-stream-to-generator.ts` 已删除，协议解析下沉到 `env.stream`）
+Connector 契约（`AiConnector` 接口、包内不提供具体实现、host 注入方式、`useMessage` 接口变更、不保留的旧抽象）详见 [`engine.md §9`](./engine.md#9-connector-抽象替代-v1-的-provider-抽象)。
 
 ## 10. 渲染器设计
 
@@ -633,6 +292,13 @@ export interface BubbleContentRendererMatch {
   priority?: number;
 }
 
+// P2 新增：按工具名匹配（host 可注册专用工具卡片，如 ai-tool-bash / ai-tool-edit）
+export interface BubbleToolRendererMatch {
+  toolName: string | RegExp; // 匹配 tool_call.function.name
+  renderer: React.ComponentType<BubbleToolRendererProps>;
+  priority?: number;
+}
+
 export const BubbleRendererMatchPriority = {
   LOADING: -1,
   NORMAL: 0,
@@ -643,7 +309,24 @@ export const BubbleRendererMatchPriority = {
 
 默认 content renderers：`loading` / `markdown`（复用 `flux-renderers-content/sanitize`）/ `image` / `reasoning` / `tools`。业务方通过 `xui:imports` 注册自定义渲染器到 `BubbleProvider` 覆盖默认。
 
-### 10.4 响应式 connector 切换
+P2 增强：默认注册 `*` 通用 fallback；包内**不**提供任何专用工具渲染器（保持体积最小）；专用实现（如 bash / edit / search）由 host 经 `xui:imports` 注入，参照 Agent Elements 的 `tool-<Name>` 命名约定。
+
+### 10.4 流式 Markdown 渲染（P1 关键增强）
+
+**问题**：v2 默认用 `react-markdown` + `remark-gfm` + `rehype-raw` + DOMPurify，**非流式安全**——流式 chunk 累积时会出现：
+
+- 不完整 CJK 字符渲染为乱码
+- 未闭合代码 fence 导致后续内容全被当代码高亮
+- 未闭合 `$$` / `\(` 公式导致后续内容渲染失败
+- 整体闪烁感强（每 chunk 重新解析全文档）
+
+**P1 路径 C（推荐）**：在 `react-markdown` 外包一层轻量缓冲（~2KB gzip），仅处理 CJK 缓冲 + 代码 fence 缓冲；其他 Markdown 解析仍走现有 sanitize pipeline。
+
+**P2 评估路径 B**：适配 streamdown/core（~8KB gzip，排除 mermaid/shiki）；CJK + code + math 完整支持。
+
+**不引入 mermaid / shiki**：体积过大（mermaid ~120KB / shiki ~50KB gzip），与 flux 纯前端渲染定位不符；如需，host 经 region 注入。详见 `improvement-analysis.md` §3.2、§6。
+
+### 10.5 响应式 connector 切换
 
 `connector` 表达式求值结果变化（例如用户切换模型 / 切换 provider）时，engine 通过 `setConnector` 热替换，下一条 `sendMessage` 用新 connector；进行中的请求不中断（避免半句响应分裂）。
 
@@ -749,7 +432,7 @@ export const BubbleRendererMatchPriority = {
 
 ### 11.4 IO 边界裁定（按 audit.md DECISION-1/2/3 落地）
 
-本节是 `audit.md` 三个 DECISION 的最终裁定结果。详见 `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`。
+本节是 `audit.md` 三个 DECISION 的最终裁定结果。完整评审过程、接口签名、host 实现规范详见 `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`；env 字段 owner doc 见 `docs/architecture/renderer-env.md` §3.2/§3.3。
 
 | IO 类型                                | 裁定                  | 落地方式                                                              |
 | -------------------------------------- | --------------------- | --------------------------------------------------------------------- |
@@ -757,96 +440,32 @@ export const BubbleRendererMatchPriority = {
 | WebSocket 长连接                       | **C 档：扩 env**      | 新增 `RendererEnv.openSocket?: WebSocketOpener`（通用连接能力）       |
 | 本地持久化（localStorage / IndexedDB） | **B 档：import 注入** | 不扩 env；host 经 `xui:imports` 提供实现                              |
 
-#### 通用性约束（关键）
+**通用性硬约束**：`env.stream` / `env.openSocket` 与 AI 消息格式**完全无关**，仅提供"建立连接 + 流式收发 + 协议切分 + chunk 解析"语义；可承载 AI 对话 / 实时日志 / IM / 行情 / 协作编辑等所有流式场景。
 
-`env.stream` 与 `env.openSocket` 是**通用连接能力**：
+**`env.stream` 抽象层次**：与 `env.fetcher` 同构（高层次抽象），不是低层字节管道。自动处理 URL/body 序列化、chunk 切分（按 `streamProtocol`）、chunk 解析（按 `streamChunkType`）、SSE `[DONE]` 识别。调用方拿到的 chunks 已是"切分好 + 解析好"的对象。
 
-- 与 AI 消息格式**完全无关**（不出现 `ChatMessage` / `tool_calls` / `reasoning_content` 等字段）
-- 后续可承载其他流式场景：实时日志推送、服务器事件通知、IM 客服、股票行情、协作编辑等
-- 仅提供"建立连接 + 流式收发 + 协议切分 + chunk 解析"的语义
-- 协议选择（SSE / NDJSON / JSON-lines / raw）通过请求参数 `streamProtocol` 指定（类似 fetcher 的 `responseType`）
-- chunk 数据类型通过 `streamChunkType` 指定（默认 json，自动 `JSON.parse`）
+**本包消费模式**：`createStreamBasedAiConnector({ env, buildRequest })` 是 host helper（在 `src/adapters/ai-connector-factory.ts`）。它调 `env.stream` 拿到已切分+已解析的 chunks，仅做 OpenAI chunk 结构 → `AiConnectorChunk` 的纯字段映射。包内**不**直调 fetch / EventSource / ReadableStream，**不**实现 SSE 协议解析。完整代码示例见 discussion §第 2 轮。
 
-#### `env.stream` 的抽象层次（关键）
-
-`env.stream` 是**高层次抽象**（与 `env.fetcher` 同构），不是低层字节管道：
-
-- 自动 URL 拼接 / body 序列化（复用 fetcher 的逻辑）
-- 自动 chunk 切分（按 `streamProtocol`：SSE 按 `\n\n` 切 event，NDJSON 按 `\n` 切行）
-- 自动 chunk 解析（按 `streamChunkType`：`json` 自动 `JSON.parse`，`text` 返回字符串等）
-- 自动处理 `[DONE]` 等 SSE 特殊标记（结束迭代，不 yield）
-- envelope 同构：`{ response: Omit<ApiResponse, 'data'>, chunks: AsyncGenerator<T> }`
-
-这意味着调用方拿到的 chunks 已经是"切分好 + 解析好"的对象，不需要自己处理协议。
-
-#### 本包如何消费 env.stream
-
-```ts
-// src/adapters/ai-connector-factory.ts（host helper）
-export function createStreamBasedAiConnector(options: {
-  env: RendererEnv;
-  buildRequest: (req: AiConnectorRequest) => StreamApiRequest;
-}): AiConnector {
-  if (!options.env.stream) {
-    throw new Error('env.stream is not available; host must provide stream capability');
-  }
-  return {
-    async stream(req) {
-      const api = options.buildRequest(req);
-      // env.stream 自动按 SSE 切分、自动 JSON.parse、自动处理 [DONE]
-      const { response, chunks } = await options.env.stream<OpenAIChatCompletionChunk>(
-        { ...api, streamProtocol: 'sse', streamChunkType: 'json' },
-        { scope: dummyScope, env: options.env, signal: req.signal },
-      );
-      if (response.status !== 200) {
-        throw new Error(`AI connector request failed: ${response.status} ${response.msg ?? ''}`);
-      }
-      // chunks 已是 OpenAI ChatCompletionChunk 结构；转换为 AiConnectorChunk
-      return (async function* () {
-        for await (const chunk of chunks) {
-          yield toAiConnectorChunk(chunk);
-        }
-      })();
-    },
-  };
-}
-```
-
-注意：
-
-- 包内**不直调** `fetch` / `EventSource` / `ReadableStream` —— 全部经 `env.stream`
-- 包内**不实现** SSE 协议解析 —— 已下沉到 `env.stream` 内部
-- `toAiConnectorChunk` 只是 OpenAI chunk 结构 → `AiConnectorChunk` 的纯字段映射（无协议解析）
-
-#### Capability check
-
-渲染器使用 `env.stream` 前必须检查（由 `ai-connector-factory` 强制）：
-
-```ts
-if (!env.stream) {
-  // 抛错或降级（host 未提供流式能力）
-}
-```
-
-#### 等 env 扩充评审完成后才能进 P0
-
-本包的 P0 实现依赖 `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md` 的评审通过 + `packages/flux-core` 扩充 `RendererEnv.stream` 接口 + `apps/playground` 提供默认实现。
+**前置依赖**：P0 必须先完成 `env.stream` 评审 + `packages/flux-core` 扩接口 + `apps/playground` 默认实现。
 
 ### 11.5 State ownership 清单（按 audit.md FIX-4 落地）
 
-| State                                             | Ownership                     | 持有方                            | 投影通道（如需对外暴露）                                          |
-| ------------------------------------------------- | ----------------------------- | --------------------------------- | ----------------------------------------------------------------- |
-| `engine.messages`                                 | **域内部**                    | `MessageEngine`                   | P2 ComponentHandle `getMessages()` 只读快照                       |
-| `engine.requestState` / `processingState`         | **域内部**                    | `MessageEngine`                   | P1 `$ai.isProcessing` 表达式 helper                               |
-| `engine.isProcessing`                             | **域内部**                    | `MessageEngine`（派生）           | 同上                                                              |
-| `draft text`（输入框）                            | **local**                     | `useState`                        | 不投影                                                            |
-| **`conversations` 列表**                          | **scope-owned**               | host 经 scope 提供                | 直接走 schema 表达式（`conversations: "${$page.conversations}"`） |
-| **`activeConversationId`**                        | **scope-owned**               | host 经 scope 提供                | 同上                                                              |
-| 单会话 `engine` 实例                              | **域内部**                    | `useConversation` 内部 Map        | 不可进 scope（含函数/handler）                                    |
-| `tool_calls` 状态（`message.state.toolCall[id]`） | **域内部**                    | `toolPlugin` 写入 `message.state` | 不投影（消息级跟随 messages 快照）                                |
-| 自动滚动位置                                      | **local**                     | `useState` / `useRef`             | 不投影                                                            |
-| 折叠态（thinking / tool 展开）                    | **域内部**（`message.state`） | engine 管                         | 不投影                                                            |
-| 输入框当前 attachment 列表                        | **local**（或 controlled）    | `useState`                        | 可选 controlled（schema 绑定）                                    |
+| State                                                                 | Ownership                           | 持有方                            | 投影通道（如需对外暴露）                                           |
+| --------------------------------------------------------------------- | ----------------------------------- | --------------------------------- | ------------------------------------------------------------------ |
+| `engine.messages`                                                     | **域内部**                          | `MessageEngine`                   | P2 ComponentHandle `getMessages()` 只读快照                        |
+| `engine.requestState` / `processingState`                             | **域内部**                          | `MessageEngine`                   | P1 `$ai.isProcessing` 表达式 helper                                |
+| `engine.isProcessing`                                                 | **域内部**                          | `MessageEngine`（派生）           | 同上                                                               |
+| `draft text`（输入框）                                                | **local**                           | `useState`                        | 不投影                                                             |
+| **`conversations` 列表**                                              | **scope-owned**                     | host 经 scope 提供                | 直接走 schema 表达式（`conversations: "${$page.conversations}"`）  |
+| **`activeConversationId`**                                            | **scope-owned**                     | host 经 scope 提供                | 同上                                                               |
+| 单会话 `engine` 实例                                                  | **域内部**                          | `useConversation` 内部 Map        | 不可进 scope（含函数/handler）                                     |
+| `tool_calls` 状态（`message.state.toolCall[id]`）                     | **域内部**                          | `toolPlugin` 写入 `message.state` | 不投影（消息级跟随 messages 快照）                                 |
+| `tool_calls` 审批态（`message.state.toolCall[id].approval`，P3 HITL） | **域内部**                          | engine 持有字段                   | 通过 `onAction: 'approve'/'reject'` event 触发 host action handler |
+| 消息编辑态（`message.state.editing`，P2 增强项）                      | **域内部**                          | engine 持有                       | 通过 `onAction: 'edit'/'resubmit'` event 触发                      |
+| 消息 metadata.usage（P4 token 用量）                                  | **域内部**（跟随 message.metadata） | connector 填充                    | 不投影（消息级跟随 messages 快照）                                 |
+| 自动滚动位置                                                          | **local**                           | `useState` / `useRef`             | 不投影                                                             |
+| 折叠态（thinking / tool 展开）                                        | **域内部**（`message.state`）       | engine 管                         | 不投影                                                             |
+| 输入框当前 attachment 列表                                            | **local**（或 controlled）          | `useState`                        | 可选 controlled（schema 绑定）                                     |
 
 **关键裁定（按 audit.md FIX-3）**：`conversations` 列表是 **scope-owned**（host 管理），不是域内部。
 
@@ -854,7 +473,7 @@ if (!env.stream) {
 - host 用 `useConversation` hook 在应用层管理列表 + scope 同步
 - 单会话的 `engine` 实例（含 messages / requestState）仍是域内部（高频流式不写 scope）
 
-**与 v1 的矛盾消除**：v1 §11.2 写"conversations useScopeSelector 读 schema 表达式（host 管理）"，但 §8.6 `useConversation` 又返回 `conversations: AiConversationInfo[]`（包内持有）—— v2 统一为"host 管理 + scope-owned，渲染器读 schema 表达式"。`useConversation` 退化为 **host helper**（不是渲染器内部 API），文档明确标注。
+**与 v1 的矛盾消除**：v1 §11.2 写"conversations useScopeSelector 读 schema 表达式（host 管理）"，但 `engine.md` §8.6 `useConversation` 又返回 `conversations: AiConversationInfo[]`（包内持有）—— v2 统一为"host 管理 + scope-owned，渲染器读 schema 表达式"。`useConversation` 退化为 **host helper**（不是渲染器内部 API），文档明确标注。
 
 ## 12. Schema 示例（端到端）
 
@@ -982,3 +601,21 @@ tiny-robot 用 `--tr-*` 前缀。flux-renderers-ai **不引入** `--tr-*` 或 `-
 ## 19. 参考文档 / v1→v2 变更摘要 / 复审记录
 
 v1→v2 变更摘要（§4）、第 1 轮 fresh-session 复审记录（§5）、Host 集成示例（§6）、参考文档列表（§7）详见 `implementation.md`。
+
+## 20. 改进路线（基于外部库对照）
+
+`improvement-analysis.md` 基于 7 个外部 React AI 组件库（assistant-ui / AI Elements / CopilotKit / Chat UI / AIKit / Agent Elements / VLLNT UI）对照分析，提出 18 项改进（A-1~A-18，按 P1/P2/P3/P4/P7 分级）。本设计已采纳的架构级改进：
+
+| 改进                                                           | 来源                          | 落地位置                                                         |
+| -------------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------------- |
+| `ChatMessageDataPart` 通用 data part（A-1）                    | Chat UI                       | `engine.md` §7.1 ChatMessageContentPart 加 `data-${string}` 类型 |
+| `ChatToolCallUIState.approval` HITL（A-14）                    | Agent Elements / assistant-ui | `engine.md` §7.1 + §11.5 state ownership                         |
+| `BubbleToolRendererMatch` 工具类型化（A-6）                    | Agent Elements                | §10.3 ai-bubble 渲染器注册制                                     |
+| 流式 Markdown 缓冲层（A-2 / A-7）                              | Streamdown                    | §10.4 流式 Markdown 渲染                                         |
+| `useAutoScroll` hook 公开（A-9）                               | AIKit                         | §6 目录结构 + §11.5 state ownership                              |
+| 新渲染器：`ai-citations` / `ai-voice-input` / `ai-token-usage` | AI Elements / VLLNT UI        | §5.1 渲染器清单                                                  |
+| 消息分支（A-16）                                               | assistant-ui / AI Elements    | §5.1 渲染器清单                                                  |
+
+**组件级细节增强**（时间戳 / 流式光标 / 代码块复制 / 工具状态颜色 / 拖放附件 / 消息编辑 / LaTeX 评估 / a11y `aria-live` / 虚拟滚动等）见 `improvement-analysis.md` §3-§7。Phase 路线与改进项 ID 映射见 `implementation.md` §2。
+
+**已明确不引入**：mermaid / shiki / Babel standalone / MCP SDK 包内依赖 / LLM 提供商 SDK（理由见 `improvement-analysis.md` §6）。
