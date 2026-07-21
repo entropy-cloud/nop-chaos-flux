@@ -1,6 +1,6 @@
 # {2} Scheduling Contract, Test & Build Integrity
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-21
 > Source: `docs/audits/2026-07-20-2157-open-audit-scheduling.md` (Round 4 findings F-34, F-35, F-36, F-38), `docs/analysis/2026-07-20-2157-open-audit-scheduling/round-04.md`
 > Related: `docs/plans/2026-07-21-1830-1-scheduling-reactivity-cross-instance-fix-plan.md`, `docs/plans/2026-07-21-0800-3-scheduling-architecture-quality-plan.md` (completed)
@@ -57,64 +57,64 @@ Each fix must include or update a corresponding test. The lifecycle test asserti
 
 ### Phase 1 - Calendar Schema/Runtime Contract & Build Artifacts
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/calendar/calendar.tsx`, `packages/flux-renderers-scheduling/src/calendar/utils/calendar-print.css`, `packages/flux-renderers-scheduling/package.json`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] F-34: Import `calendar-print.css` from a `.ts`/`.tsx` entry point (e.g., `calendar.tsx` or the package-level `index.ts` that bundles styles). Ensure the build script copies it alongside `styles.css` — update `package.json` build config if needed.
-- [ ] F-34: Verify the CSS is loaded at runtime — add a test that asserts a print-specific CSS property is applied or that the CSS file is bundled (e.g., check `dist/` for the file).
-- [ ] F-35: Decide contract — either (a) remove the `onEventChange` call from the create path (`calendar.tsx:126`), leaving `onEventCreate` as the sole creation channel; or (b) keep both but add a discriminator field (e.g., `{ event, type: 'create' }`) and document on which event contract the creation is primarily delivered.
-- [ ] F-35: Implement the chosen strategy and update the schema docstring or `scheduling-renderer-definitions.ts` event description to reflect the actual contract.
-- [ ] F-35: Add a regression test: render Calendar, simulate drag-create, assert `onEventCreate` fires exactly once and `onEventChange` either does not fire (strategy a) or fires with the correct discriminator (strategy b).
+- [x] F-34: Import `calendar-print.css` from a `.ts`/`.tsx` entry point (e.g., `calendar.tsx` or the package-level `index.ts` that bundles styles). Ensure the build script copies it alongside `styles.css` — update `package.json` build config if needed.
+- [x] F-34: Verify the CSS is loaded at runtime — add a test that asserts a print-specific CSS property is applied or that the CSS file is bundled (e.g., check `dist/` for the file).
+- [x] F-35: Decide contract — either (a) remove the `onEventChange` call from the create path (`calendar.tsx:126`), leaving `onEventCreate` as the sole creation channel; or (b) keep both but add a discriminator field (e.g., `{ event, type: 'create' }`) and document on which event contract the creation is primarily delivered.
+- [x] F-35: Implement the chosen strategy and update the schema docstring or `scheduling-renderer-definitions.ts` event description to reflect the actual contract.
+- [x] F-35: Add a regression test: render Calendar, simulate drag-create, assert `onEventCreate` fires exactly once and `onEventChange` does not fire (strategy a).
 
 Exit Criteria:
 
-- [ ] `calendar-print.css` is imported and bundled — print output is styled.
-- [ ] Calendar event creation fires events according to a single, documented contract — no duplicate or ambiguous firing.
-- [ ] Regression test verifies correct event firing count on creation.
+- [x] `calendar-print.css` is imported and bundled — print output is styled.
+- [x] Calendar event creation fires events according to a single, documented contract — no duplicate or ambiguous firing.
+- [x] Regression test verifies correct event firing count on creation.
 
 ### Phase 2 - Test Assertion Quality & Coverage Enforcement
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/calendar/calendar.test.tsx`, `packages/flux-renderers-scheduling/vitest.config.ts`, `packages/flux-renderers-scheduling/package.json`
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] F-36: Update `calendar.test.tsx:118-125` lifecycle test to assert `expect(onMount).toHaveBeenCalledTimes(1)` and `expect(onUnmount).toHaveBeenCalledTimes(1)` — and assert the event payload shape if applicable.
-- [ ] F-36: Also add a verification that `onMount` is called before render completes and `onUnmount` is called during unmount (order assertion via `vi.fn()` call order tracking).
-- [ ] F-38: Either (a) add `--coverage` flag to `package.json` test script AND ensure vitest config thresholds pass for current coverage, or (b) remove thresholds from `vitest.config.ts` and add an explanatory comment documenting that thresholds are not currently enforced.
-- [ ] F-38: If strategy (a) is chosen, run `pnpm test --coverage` and fix any current threshold violations (add minimal coverage to fall below 80% if needed, or adjust thresholds to match reality).
-- [ ] F-38: If strategy (b) is chosen, add a note in `docs/plans/` or the scheduling roadmap that coverage enforcement setup is pending.
+- [x] F-36: Update `calendar.test.tsx:118-125` lifecycle test to assert `expect(onMount).toHaveBeenCalledTimes(1)` and `expect(onUnmount).toHaveBeenCalledTimes(1)` — and assert the event payload shape if applicable.
+- [x] F-36: Also add a verification that `onMount` is called before render completes and `onUnmount` is called during unmount (order assertion via `vi.fn()` call order tracking).
+- [x] F-38: Either (a) add `--coverage` flag to `package.json` test script AND ensure vitest config thresholds pass for current coverage, or (b) remove thresholds from `vitest.config.ts` and add an explanatory comment documenting that thresholds are not currently enforced.
+- [x] F-38: If strategy (a) is chosen, run `pnpm test --coverage` and fix any current threshold violations (add minimal coverage to fall below 80% if needed, or adjust thresholds to match reality).
+- [x] F-38: Strategy (a) was chosen (coverage enforced via `--coverage` flag + adjusted thresholds); strategy (b) not applicable — no deferred note needed.
 
 Exit Criteria:
 
-- [ ] Calendar lifecycle test fails if `onMount`/`onUnmount` are not dispatched — no false confidence.
-- [ ] Coverage thresholds either enforced (test command includes `--coverage`, config passes current coverage) or honestly documented as not enforced.
+- [x] Calendar lifecycle test fails if `onMount`/`onUnmount` are not dispatched — no false confidence.
+- [x] Coverage thresholds either enforced (test command includes `--coverage`, config passes current coverage) or honestly documented as not enforced.
 
 ## Draft Review Record
 
-> To be filled by independent sub-agent review.
+> Review completed by independent sub-agent (fresh session).
 
-- Reviewer / Agent:
-- Verdict:
-- Rounds:
-- Findings addressed:
+- Reviewer / Agent: `opencode` (independent audit session `ses_07d729526ffeLx5jyM6ln6bAR0`)
+- Verdict: PASS
+- Rounds: 1
+- Findings addressed: All 6 verification items pass — F-34 (CSS import/build), F-35 (event contract fix), F-36 (lifecycle assertions), F-38 (coverage enforcement), test suite, regression test.
 
 ## Closure Gates
 
-- [ ] `calendar-print.css` imported and bundled — verified by build output or import chain.
-- [ ] Calendar event creation contract is unambiguous — verified by regression test.
-- [ ] Calendar lifecycle test asserts mock function calls — verified by test execution.
-- [ ] Coverage thresholds enforced or config honestly reflects non-enforcement.
-- [ ] Full scheduling test suite passes.
-- [ ] No in-scope finding deferrable without explicit adjudication.
-- [ ] Relevant owner docs updated (scheduling schema docstrings, calendar design.md events section, vitest config comment).
-- [ ] By independent sub-agent (fresh session) executed closure audit.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `calendar-print.css` imported and bundled — verified by build output or import chain.
+- [x] Calendar event creation contract is unambiguous — verified by regression test.
+- [x] Calendar lifecycle test asserts mock function calls — verified by test execution.
+- [x] Coverage thresholds enforced or config honestly reflects non-enforcement.
+- [x] Full scheduling test suite passes.
+- [x] No in-scope finding deferrable without explicit adjudication.
+- [x] Relevant owner docs updated (scheduling schema docstrings, calendar design.md events section, vitest config comment).
+- [x] By independent sub-agent (fresh session) executed closure audit.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -131,13 +131,22 @@ Exit Criteria:
 
 ## Closure
 
-Status Note:
+Status Note: All Phase items and exit criteria completed. Independent closure audit completed and passed.
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
+- Auditor / Agent: `opencode` (independent audit session `ses_07d729526ffeLx5jyM6ln6bAR0`)
 - Evidence:
+  - F-34: `calendar.tsx:6` imports `./utils/calendar-print.css`; build copies `src/calendar/utils/calendar-print.css` → `dist/calendar/utils/calendar-print.css` (verified in build output)
+  - F-35: `calendar.tsx:125` only calls `events.onEventCreate` (removed `onEventChange` call); scheduling-renderer-definitions.ts documents `onEventCreate` as sole creation channel via comment
+  - F-36: `calendar.test.tsx:164-179` asserts `onMount`/`onUnmount` called once with correct payload and call order
+  - F-38: `package.json` test script includes `--coverage`; vitest.config.ts thresholds adjusted to match current reality (branches:50, functions:60, lines:63, statements:60)
+  - `pnpm typecheck`: 56/56 tasks pass
+  - `pnpm build`: 30/30 tasks pass, calendar-print.css copied to dist
+  - `pnpm lint`: 30/30 tasks pass (0 errors, 2 pre-existing warnings)
+  - `pnpm test`: 56/56 tasks pass; scheduling: 69 test files, 580 tests pass with coverage
 
 Follow-up:
 
 - No remaining plan-owned work after all Closure Gates checked.
+- All closure gates verified, including independent sub-agent audit.
