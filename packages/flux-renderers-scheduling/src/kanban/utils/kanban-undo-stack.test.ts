@@ -49,7 +49,7 @@ describe('UndoStack', () => {
       metadata: { cardId: 'card1', targetColumnId: 'col2' },
     };
     const s1 = pushCommand(stack, cmd);
-    const result = undo(board, s1);
+    const result = undo(s1);
     expect(result).not.toBeNull();
     expect(result!.board.col1.children).toEqual(['card1', 'card2']);
     expect(canUndo(result!.stack)).toBe(false);
@@ -66,23 +66,21 @@ describe('UndoStack', () => {
       metadata: { cardId: 'card1', targetColumnId: 'col2' },
     };
     const s1 = pushCommand(stack, cmd);
-    const afterUndo = undo(board, s1);
-    const afterRedo = redo(afterUndo!.board, afterUndo!.stack);
+    const afterUndo = undo(s1);
+    const afterRedo = redo(afterUndo!.stack);
     expect(afterRedo).not.toBeNull();
     expect(canUndo(afterRedo!.stack)).toBe(true);
     expect(canRedo(afterRedo!.stack)).toBe(false);
   });
 
   it('undo returns null when stack is empty', () => {
-    const board = createSampleBoard();
     const stack = createUndoStack();
-    expect(undo(board, stack)).toBeNull();
+    expect(undo(stack)).toBeNull();
   });
 
   it('redo returns null when stack is empty', () => {
-    const board = createSampleBoard();
     const stack = createUndoStack();
-    expect(redo(board, stack)).toBeNull();
+    expect(redo(stack)).toBeNull();
   });
 
   it('creates stack with custom maxSize', () => {

@@ -27,6 +27,11 @@ export function useBarcodeDetect(
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const activeRef = useRef(true);
+  const enabledRef = useRef(enabled);
+
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
 
   useEffect(() => {
     activeRef.current = true;
@@ -55,7 +60,7 @@ export function useBarcodeDetect(
     const ctx = ctxRef.current;
 
     async function poll() {
-      if (!activeRef.current || !enabled) {
+      if (!activeRef.current || !enabledRef.current) {
         return;
       }
 
@@ -92,7 +97,7 @@ export function useBarcodeDetect(
         setError(err.message ?? 'Decode error');
       }
 
-      if (activeRef.current && enabled) {
+      if (activeRef.current && enabledRef.current) {
         timerRef.current = setTimeout(poll, interval);
       }
     }

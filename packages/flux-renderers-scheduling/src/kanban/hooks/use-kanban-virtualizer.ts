@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 export interface UseKanbanVirtualizerOptions {
@@ -23,12 +22,9 @@ export function useKanbanVirtualizer({
     overscan,
   });
 
-  const scrollToIndex = useCallback(
-    (index: number) => {
-      virtualizer.scrollToIndex(index, { align: 'center' });
-    },
-    [virtualizer],
-  );
+  const scrollToIndex = (index: number) => {
+    virtualizer.scrollToIndex(index, { align: 'center' });
+  };
 
   return {
     virtualizer,

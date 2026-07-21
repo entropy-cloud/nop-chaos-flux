@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { useGanttStore, useGanttStoreSnapshot } from './gantt-context.js';
 import type { GanttTask, GanttColumn } from './gantt.types.js';
@@ -25,26 +25,26 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
 
   const tasks = store.getVisibleTasks();
 
-  const handleToggle = useCallback((taskId: string | number) => {
+  const handleToggle = (taskId: string | number) => {
     store.toggleOpen(taskId);
-  }, [store]);
+  };
 
-  const handleCellClick = useCallback((taskId: string | number, column: string) => {
+  const handleCellClick = (taskId: string | number, column: string) => {
     if (column === 'text') {
       onSelectTask?.(taskId);
     }
-  }, [onSelectTask]);
+  };
 
-  const handleCellDoubleClick = useCallback((taskId: string | number, column: string) => {
+  const handleCellDoubleClick = (taskId: string | number, column: string) => {
     if (column === 'text') {
       setEditingCell({ taskId, column });
     }
-  }, []);
+  };
 
-  const handleCellCommit = useCallback((taskId: string | number, column: string, value: string) => {
+  const handleCellCommit = (taskId: string | number, column: string, value: string) => {
     store.updateTask(taskId, { [column]: value });
     setEditingCell(null);
-  }, [store]);
+  };
 
   const getCellValue = (task: GanttTask, column: GanttColumn): string => {
     switch (column.name) {

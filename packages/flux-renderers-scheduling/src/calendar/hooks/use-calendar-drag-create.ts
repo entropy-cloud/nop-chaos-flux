@@ -133,6 +133,15 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
     }
   }, [dragCreateState.active, handlePointerMove, handlePointerUp]);
 
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    };
+  }, []);
+
   const startCellDrag = useCallback((date: string, resourceId: string, pointerEvent: React.PointerEvent) => {
     pointerDownPos.current = { x: pointerEvent.clientX, y: pointerEvent.clientY, date, resourceId };
 

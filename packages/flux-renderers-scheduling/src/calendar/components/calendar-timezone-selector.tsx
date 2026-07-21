@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { cn } from '@nop-chaos/ui';
 
 export interface CalendarTimezoneSelectorProps {
   selectedTimezone: string;
@@ -64,74 +65,33 @@ export function CalendarTimezoneSelector({
   const selectedLabel = timezones.find((tz) => tz.value === selectedTimezone)?.label ?? selectedTimezone;
 
   return (
-    <div className="nop-timezone-selector" style={{ position: 'relative', display: 'inline-block' }}>
+    <div className="nop-timezone-selector">
       <button
         type="button"
         data-slot="calendar-timezone-toggle"
+        className="nop-timezone-toggle"
         onClick={() => setOpen(!open)}
-        style={{
-          border: '1px solid #d0d5dd',
-          borderRadius: 4,
-          padding: '4px 8px',
-          fontSize: 12,
-          cursor: 'pointer',
-          backgroundColor: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-        }}
       >
         <span style={{ fontSize: 12 }}>🌐</span>
         {selectedLabel}
       </button>
 
       {open && (
-        <div
-          data-slot="calendar-timezone-dropdown"
-          style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            marginTop: 4,
-            backgroundColor: '#fff',
-            border: '1px solid #e5e7eb',
-            borderRadius: 6,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            zIndex: 100,
-            maxHeight: 240,
-            overflow: 'auto',
-            minWidth: 220,
-          }}
-        >
+        <div data-slot="calendar-timezone-dropdown" className="nop-timezone-dropdown">
           {timezones.map((tz) => (
             <button
               type="button"
               key={tz.value}
               data-slot="calendar-timezone-option"
+              className={cn(
+                'nop-timezone-option',
+                selectedTimezone === tz.value && 'selected',
+              )}
               onClick={() => handleSelect(tz.value)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-                padding: '6px 12px',
-                border: 'none',
-                background: selectedTimezone === tz.value ? '#eff6ff' : 'transparent',
-                cursor: 'pointer',
-                fontSize: 13,
-                textAlign: 'left',
-                color: selectedTimezone === tz.value ? '#1d4ed8' : '#333',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f9fafb';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = selectedTimezone === tz.value ? '#eff6ff' : 'transparent';
-              }}
             >
               <span>{tz.label}</span>
               {tz.offset && (
-                <span style={{ fontSize: 11, color: '#9ca3af', marginLeft: 8 }}>{tz.offset}</span>
+                <span className="nop-timezone-offset">{tz.offset}</span>
               )}
             </button>
           ))}

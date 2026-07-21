@@ -1,6 +1,7 @@
 import type { BaseSchema, SchemaInput, SchemaObject } from '@nop-chaos/flux-core';
 import type { ActionSchema } from '@nop-chaos/flux-core';
 
+/** @deprecated Use `GanttTask` from `./gantt/gantt.types.js` instead (runtime type with computed layout fields). */
 export interface GanttTask extends SchemaObject {
   id: string;
   text: string;
@@ -15,6 +16,7 @@ export interface GanttTask extends SchemaObject {
   calendar?: string;
 }
 
+/** @deprecated Use `GanttLink` from `./gantt/gantt.types.js` instead (runtime type with computed polyline field). */
 export interface GanttLink extends SchemaObject {
   id: string;
   source: string;

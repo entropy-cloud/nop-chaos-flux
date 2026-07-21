@@ -44,8 +44,8 @@ function connectImpl(
       try {
         const msg = JSON.parse(event.data) as CollabMessage;
         onMessage?.(msg);
-      } catch {
-        console.warn('[kanban-collab] Failed to parse message');
+      } catch (err) {
+        console.warn('[kanban-collab] Failed to parse message:', err);
       }
     };
 
@@ -59,9 +59,11 @@ function connectImpl(
 
     ws.onerror = () => {
       if (!mountedRef.current) return;
+      console.error('[kanban-collab] WebSocket connection error');
       updateStatus('disconnected');
     };
-  } catch {
+  } catch (err) {
+    console.error('[kanban-collab] WebSocket connection failed:', err);
     updateStatus('disconnected');
   }
 }

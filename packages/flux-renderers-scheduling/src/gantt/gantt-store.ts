@@ -189,7 +189,7 @@ export class GanttStore {
         for (const childId of children) {
           const task = this.tasks.get(childId);
           if (task) {
-            task.$level = level;
+            this.tasks.set(childId, { ...task, $level: level });
             queue.push({ parent: childId, level: level + 1 });
           }
         }
@@ -198,18 +198,17 @@ export class GanttStore {
   }
 
   private computeSourceTarget(): void {
-    for (const task of this.tasks.values()) {
-      task.$source = [];
-      task.$target = [];
+    for (const [id, task] of this.tasks) {
+      this.tasks.set(id, { ...task, $source: [], $target: [] });
     }
     for (const link of this.links.values()) {
       const sourceTask = this.tasks.get(link.source);
       const targetTask = this.tasks.get(link.target);
       if (sourceTask) {
-        sourceTask.$source.push(link.target);
+        this.tasks.set(link.source, { ...sourceTask, $source: [...sourceTask.$source, link.target] });
       }
       if (targetTask) {
-        targetTask.$target.push(link.source);
+        this.tasks.set(link.target, { ...targetTask, $target: [...targetTask.$target, link.source] });
       }
     }
   }
@@ -273,16 +272,17 @@ export class GanttStore {
     if (!task) return;
     const { children: _c, ...rest } = partial;
     void _c;
-    Object.assign(task, rest);
+    let updated = { ...task, ...rest } as GanttTask;
 
-    const calendar = this.calendarManager.resolveCalendar(task.calendar);
+    const calendar = this.calendarManager.resolveCalendar(updated.calendar);
     if (calendar && (partial.start || partial.end || partial.duration !== undefined)) {
-      if (task.duration !== undefined && task.start) {
-        const from = new Date(task.start);
-        task.end = calendar.addWorkDays(from, task.duration).toISOString().slice(0, 10);
+      if (updated.duration !== undefined && updated.start) {
+        const from = new Date(updated.start);
+        updated = { ...updated, end: calendar.addWorkDays(from, updated.duration).toISOString().slice(0, 10) };
       }
     }
 
+    this.tasks.set(id, updated);
     this.computeComputedPropertiesInternal();
     this.emitTaskChange(id);
   }
@@ -290,7 +290,7 @@ export class GanttStore {
   updateLink(id: GanttId, partial: Partial<GanttLink>): void {
     const link = this.links.get(id);
     if (!link) return;
-    Object.assign(link, partial);
+    this.links.set(id, { ...link, ...partial });
     this.computeLinkPolylines();
     this.emitLinkChange(id);
   }

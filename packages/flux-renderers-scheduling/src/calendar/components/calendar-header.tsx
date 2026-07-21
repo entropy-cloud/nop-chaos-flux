@@ -10,9 +10,10 @@ export interface CalendarHeaderProps {
   navigation: CalendarNavigationResult;
   onViewChange: (view: CalendarView) => void;
   className?: string;
+  locale?: string;
 }
 
-function formatPeriodLabel(date: Date, view: CalendarView, locale: string = 'zh-CN'): string {
+function formatPeriodLabel(date: Date, view: CalendarView, locale: string = 'en-US'): string {
   switch (view) {
     case 'month':
       return date.toLocaleDateString(locale, { year: 'numeric', month: 'long' });
@@ -23,10 +24,10 @@ function formatPeriodLabel(date: Date, view: CalendarView, locale: string = 'zh-
   }
 }
 
-const VIEW_OPTIONS: { value: CalendarView; label: string }[] = [
-  { value: 'month', label: '月' },
-  { value: 'week', label: '周' },
-  { value: 'day', label: '日' },
+const VIEW_OPTIONS: { value: CalendarView; labelKey: string }[] = [
+  { value: 'month', labelKey: 'scheduling.calendar.viewMonth' },
+  { value: 'week', labelKey: 'scheduling.calendar.viewWeek' },
+  { value: 'day', labelKey: 'scheduling.calendar.viewDay' },
 ];
 
 export function CalendarHeader({
@@ -35,6 +36,7 @@ export function CalendarHeader({
   navigation,
   onViewChange,
   className,
+  locale = 'en-US',
 }: CalendarHeaderProps) {
   return (
     <div
@@ -69,7 +71,7 @@ export function CalendarHeader({
           ›
         </Button>
         <h2 className="text-base font-semibold ml-2">
-          {formatPeriodLabel(currentDate, activeView)}
+          {formatPeriodLabel(currentDate, activeView, locale)}
         </h2>
       </div>
 
@@ -85,7 +87,7 @@ export function CalendarHeader({
               activeView === opt.value ? '' : 'hover:bg-gray-200',
             )}
           >
-            {opt.label}
+            {t(opt.labelKey)}
           </Button>
         ))}
       </div>

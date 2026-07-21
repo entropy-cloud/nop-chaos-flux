@@ -22,18 +22,30 @@
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
-    "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "@tanstack/react-virtual": "^3.13.24",
-    "@zxing/library": "^0.21.3",
+    "@tanstack/react-virtual": "^3.13.24"
+  },
+  "peerDependencies": {
     "html2canvas": "^1.4.1",
     "ical.js": "^2.2.1",
     "jspdf": "^2.5.2",
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0",
     "xlsx": "^0.18.5"
   },
-  "peerDependencies": {
-    "lucide-react": "^1.17.0",
-    "react": "^19.0.0"
+  "peerDependenciesMeta": {
+    "html2canvas": {
+      "optional": true
+    },
+    "ical.js": {
+      "optional": true
+    },
+    "jspdf": {
+      "optional": true
+    },
+    "xlsx": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "lucide-react": "^1.17.0",

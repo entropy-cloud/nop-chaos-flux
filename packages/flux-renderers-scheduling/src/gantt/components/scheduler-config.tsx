@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Button, Label, Input, cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 
 interface SchedulerConfigProps {
   className?: string;
@@ -40,23 +41,23 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
 
   return (
     <div className={cn('nop-gantt-scheduler-config p-3 border rounded-md bg-white', className)} data-slot="gantt-scheduler-config">
-      <div className="text-sm font-semibold mb-2">{'Scheduling Configuration'}</div>
+      <div className="text-sm font-semibold mb-2">{t('scheduling.gantt.schedulingTitle')}</div>
 
       <div className="grid gap-2">
         <div>
-          <Label>{'Direction'}</Label>
+          <Label>{t('scheduling.gantt.direction')}</Label>
           <select
             value={direction}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDirection(e.target.value as 'forward' | 'backward')}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="forward">{'Forward'}</option>
-            <option value="backward">{'Backward'}</option>
+            <option value="forward">{t('scheduling.gantt.forward')}</option>
+            <option value="backward">{t('scheduling.gantt.backward')}</option>
           </select>
         </div>
 
         <div>
-          <Label>{'Constraint Type'}</Label>
+          <Label>{t('scheduling.gantt.constraintType')}</Label>
           <select
             value={constraintType}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setConstraintType(e.target.value as 'SNET' | 'SNLT' | 'FNET' | 'FNLT')}
@@ -70,7 +71,7 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
         </div>
 
         <div>
-          <Label>{'Constraint Date'}</Label>
+          <Label>{t('scheduling.gantt.constraintDate')}</Label>
           <Input
             type="date"
             value={constraintDate}
@@ -78,7 +79,7 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
             className={hasInvalidConstraint ? 'border-red-500' : ''}
           />
           {hasInvalidConstraint && (
-            <p className="text-xs text-red-500 mt-0.5">{'Invalid date'}</p>
+            <p className="text-xs text-red-500 mt-0.5">{t('scheduling.gantt.invalidDate')}</p>
           )}
         </div>
 
@@ -88,15 +89,15 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
           className="mt-1"
           aria-describedby={status === 'done' ? 'schedule-status-done' : status === 'error' ? 'schedule-status-error' : undefined}
         >
-          {status === 'scheduling' ? 'Scheduling...' : 'Trigger Re-schedule'}
+          {status === 'scheduling' ? t('scheduling.gantt.schedulingInProgress') : t('scheduling.gantt.triggerSchedule')}
         </Button>
 
         {status === 'done' && (
-          <p id="schedule-status-done" className="text-xs text-green-600">{'Schedule applied'}</p>
+          <p id="schedule-status-done" className="text-xs text-green-600">{t('scheduling.gantt.scheduleApplied')}</p>
         )}
 
         {status === 'error' && (
-          <p id="schedule-status-error" className="text-xs text-red-500">{errorMsg || 'Scheduling failed'}</p>
+          <p id="schedule-status-error" className="text-xs text-red-500">{errorMsg || t('scheduling.gantt.schedulingFailed')}</p>
         )}
       </div>
     </div>

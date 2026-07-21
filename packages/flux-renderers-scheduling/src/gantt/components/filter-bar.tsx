@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Input, cn } from '@nop-chaos/ui';
+import { Input, Button, cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { GanttColumn } from '../gantt.types.js';
 
 interface FilterBarProps {
@@ -57,7 +58,7 @@ export function FilterBar({
   return (
     <div className={cn('nop-gantt-filter-bar flex items-center gap-2 p-1', className)} data-slot="gantt-filter-bar">
       <Input
-        placeholder={'Filter tasks...'}
+        placeholder={t('scheduling.gantt.filterTasks')}
         value={localText}
         onChange={handleTextChange}
         className="h-7 text-xs w-40"
@@ -68,22 +69,18 @@ export function FilterBar({
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onGroupByChange(e.target.value || undefined)}
           className="h-7 text-xs rounded border border-input bg-background px-2"
         >
-          <option value="">{'No group'}</option>
+          <option value="">{t('scheduling.gantt.noGroup')}</option>
           {sortableColumns.map((col) => (
             <option key={col.name} value={col.name}>{col.label}</option>
           ))}
         </select>
       )}
       {sortableColumns.map((col) => (
-        <button
+        <Button
           key={col.name}
-          type="button"
-          className={cn(
-            'h-7 px-1.5 text-xs rounded border cursor-pointer',
-            sortState.field === col.name
-              ? 'bg-blue-50 border-blue-300 text-blue-700'
-              : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50',
-          )}
+          variant={sortState.field === col.name ? 'default' : 'ghost'}
+          size="sm"
+          className={cn('h-7 px-1.5 text-xs')}
           onClick={() => handleSortToggle(col.name)}
           aria-sort={
             sortState.field === col.name
@@ -100,7 +97,7 @@ export function FilterBar({
           {sortState.field === col.name && sortState.direction !== null && (
             <span className="ml-0.5">{sortState.direction === 'asc' ? '▲' : '▼'}</span>
           )}
-        </button>
+        </Button>
       ))}
     </div>
   );

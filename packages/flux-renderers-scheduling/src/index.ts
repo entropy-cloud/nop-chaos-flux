@@ -14,7 +14,6 @@ export type {
   BarcodeInputSchema,
 } from './schemas.js';
 
-export { schedulingRendererDefinitions } from './scheduling-renderer-definitions.js';
 export type { SchedulingRendererSchema } from './scheduling-renderer-definitions.js';
 
 export function registerSchedulingRenderers(registry: RendererRegistry) {

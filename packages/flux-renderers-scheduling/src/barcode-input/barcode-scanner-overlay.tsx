@@ -67,7 +67,10 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
 
   const { stop, start } = camera;
 
+  const mountedRef = useRef(true);
+
   useEffect(() => {
+    mountedRef.current = true;
     if (!open) {
       stop();
       return;
@@ -79,9 +82,12 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
         if (wasmUrl) {
           await prepareWasm(wasmUrl);
         }
+        if (!mountedRef.current) return;
         await start();
+        if (!mountedRef.current) return;
         setPhase('scanning');
       } catch (err: any) {
+        if (!mountedRef.current) return;
         setPhase('error');
         const msg = err?.message ?? t('flux.cameraUnavailable');
         setErrorMessage(msg);
@@ -92,6 +98,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     init();
 
     return () => {
+      mountedRef.current = false;
       stop();
     };
   }, [open, wasmUrl, onScanError, stop, start]);

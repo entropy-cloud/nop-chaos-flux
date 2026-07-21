@@ -1,5 +1,6 @@
 import React, { useRef, useMemo } from 'react';
-import { cn } from '@nop-chaos/ui';
+import { cn, Button } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData, BoardItem, KanbanCardConfig } from './kanban.types.js';
 import { KanbanColumnHeader } from './kanban-column-header.js';
 import { KanbanCard } from './kanban-card.js';
@@ -51,6 +52,10 @@ export function KanbanColumn({
   onDragHandleKeyDown,
 }: KanbanColumnProps) {
   const cardIds = column.children;
+  const cardIndexMap = useMemo(
+    () => new Map<string, number>(cardIds.map((id, idx) => [id, idx])),
+    [cardIds],
+  );
   const cards = useMemo(
     () => cardIds
       .map((id) => board[id])
@@ -146,7 +151,7 @@ export function KanbanColumn({
                     <KanbanCard
                       card={card}
                       column={column}
-                      index={cardIds.indexOf(card.id)}
+                      index={cardIndexMap.get(card.id) ?? 0}
                       configMap={configMap}
                       cardTemplateRegion={cardTemplateRegion}
                       onCardClick={onCardClick}
@@ -162,7 +167,7 @@ export function KanbanColumn({
                   key={card.id}
                   card={card}
                   column={column}
-                  index={cardIds.indexOf(card.id)}
+                  index={cardIndexMap.get(card.id) ?? 0}
                   configMap={configMap}
                   cardTemplateRegion={cardTemplateRegion}
                   onCardClick={onCardClick}
@@ -175,20 +180,22 @@ export function KanbanColumn({
               data-slot="kanban-column-empty"
               className="nop-kanban-column-empty border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-sm text-gray-400 min-h-[60px] flex items-center justify-center"
             >
-              拖拽卡片到此处
+              {t('scheduling.kanban.dragCardHere')}
             </div>
           )}
         </div>
       )}
 
       <div data-slot="kanban-column-footer" className="nop-kanban-column-footer px-2 py-1.5 border-t border-gray-200">
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           type="button"
           onClick={() => onAddCard?.(column.id)}
           className="w-full text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded py-1 transition-colors"
         >
-          + 添加卡片
-        </button>
+          {t('scheduling.kanban.addCard')}
+        </Button>
         {columnFooterRegion?.render()}
       </div>
     </div>

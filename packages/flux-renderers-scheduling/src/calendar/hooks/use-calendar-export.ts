@@ -36,8 +36,8 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
         a.click();
         URL.revokeObjectURL(url);
       }, 'image/png');
-    } catch {
-      console.warn('[Calendar] PNG export failed: html2canvas not available');
+    } catch (err) {
+      console.warn('[Calendar] PNG export failed:', err);
     }
   }, [calendarRef]);
 

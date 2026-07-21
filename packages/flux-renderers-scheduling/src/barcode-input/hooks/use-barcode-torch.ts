@@ -50,7 +50,8 @@ export function useBarcodeTorch(options?: UseBarcodeTorchOptions): UseBarcodeTor
         advanced: [{ torch: newState }] as any,
       });
       setIsOn(newState);
-    } catch {
+    } catch (err) {
+      console.error('[useBarcodeTorch] Torch toggle failed:', err);
       setIsOn(false);
     }
   }, [getStream, isOn]);

@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
+import { Button, Input, cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import { toISODateString, getDateRange } from '../utils/calendar-date-utils.js';
 import { useFocusTrap } from '../hooks/use-focus-trap.js';
@@ -108,78 +110,49 @@ export function CalendarBatchScheduler({
       aria-modal="true"
       tabIndex={-1}
       onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 2000,
-      }}
       onClick={onClose}
     >
       <div
         className="nop-batch-scheduler"
         role="presentation"
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: 8,
-          padding: 20,
-          minWidth: 400,
-          maxWidth: 600,
-          maxHeight: '80vh',
-          overflow: 'auto',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 600 }}>
-          批量排班
+        <h3 className="nop-batch-scheduler-title">
+          {t('scheduling.calendar.batchSchedule')}
         </h3>
 
-        <div style={{ marginBottom: 12 }}>
-          <span style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
-            日期范围
+        <div className="nop-batch-scheduler-section">
+          <span className="nop-batch-scheduler-label">
+            {t('scheduling.calendar.dateRange')}
           </span>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
+          <div className="nop-batch-scheduler-date-row">
+            <Input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              style={{ flex: 1, padding: '6px 8px', borderRadius: 4, border: '1px solid #d0d5dd', fontSize: 13 }}
+              className="flex-1 text-sm"
             />
-            <span style={{ fontSize: 13, color: '#666' }}>至</span>
-            <input
+            <span className="nop-batch-scheduler-date-sep">{t('scheduling.calendar.to')}</span>
+            <Input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              style={{ flex: 1, padding: '6px 8px', borderRadius: 4, border: '1px solid #d0d5dd', fontSize: 13 }}
+              className="flex-1 text-sm"
             />
           </div>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <span style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
-            选择资源
+        <div className="nop-batch-scheduler-section">
+          <span className="nop-batch-scheduler-label">
+            {t('scheduling.calendar.selectResource')}
           </span>
-          <div style={{ maxHeight: 150, overflow: 'auto', border: '1px solid #e5e7eb', borderRadius: 4, padding: 4 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', fontSize: 13, cursor: 'pointer' }}>
+          <div className="nop-batch-scheduler-resource-list">
+            <label className="nop-batch-scheduler-resource-item">
               <input type="checkbox" checked={selectAll} onChange={toggleSelectAll} />
-              全选/取消全选
+              {t('scheduling.calendar.selectAllNone')}
             </label>
             {resources.map((r) => (
-              <label
-                key={r.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '4px 8px',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
-              >
+              <label key={r.id} className="nop-batch-scheduler-resource-item">
                 <input
                   type="checkbox"
                   checked={selectedResources.has(r.id)}
@@ -191,24 +164,21 @@ export function CalendarBatchScheduler({
           </div>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <span style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
-            班次类型
+        <div className="nop-batch-scheduler-section">
+          <span className="nop-batch-scheduler-label">
+            {t('scheduling.calendar.shiftType')}
           </span>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="nop-batch-scheduler-shift-grid">
             {shiftTypes.map((st) => (
               <label
                 key={st.type}
+                className={cn(
+                  'nop-batch-scheduler-shift-chip',
+                  selectedShiftType === st.type && 'selected',
+                )}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '4px 10px',
-                  borderRadius: 4,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  backgroundColor: selectedShiftType === st.type ? st.color + '30' : '#f9fafb',
-                  border: selectedShiftType === st.type ? `2px solid ${st.color}` : '1px solid #e5e7eb',
+                  backgroundColor: selectedShiftType === st.type ? st.color + '30' : undefined,
+                  borderColor: selectedShiftType === st.type ? st.color : undefined,
                 }}
               >
                 <input
@@ -219,13 +189,7 @@ export function CalendarBatchScheduler({
                   onChange={() => setSelectedShiftType(st.type)}
                   className="sr-only"
                 />
-                <span style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  backgroundColor: st.color,
-                  display: 'inline-block',
-                }} />
+                <span className="nop-batch-scheduler-shift-dot" style={{ backgroundColor: st.color }} />
                 {st.label}
               </label>
             ))}
@@ -233,29 +197,21 @@ export function CalendarBatchScheduler({
         </div>
 
         {dateRange.length > 0 && selectedResources.size > 0 && (
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
-              预览 ({cellCount} 个单元格)
+          <div className="nop-batch-scheduler-preview-section">
+            <div className="nop-batch-scheduler-preview-title">
+              {t('scheduling.calendar.preview', { count: cellCount })}
             </div>
             <div
-              className="nop-batch-preview-grid"
+              className="nop-batch-scheduler-preview-grid"
               style={{
-                display: 'grid',
                 gridTemplateColumns: `80px repeat(${dateRange.length}, 1fr)`,
-                gap: 1,
-                backgroundColor: '#e5e7eb',
-                border: '1px solid #e5e7eb',
-                borderRadius: 4,
-                overflow: 'auto',
-                maxHeight: 200,
-                fontSize: 11,
               }}
             >
-              <div style={{ backgroundColor: '#fff', padding: 4, fontWeight: 500 }}>
-                资源/日期
+              <div className="nop-batch-scheduler-preview-header">
+                {t('scheduling.calendar.resourceAndDate')}
               </div>
               {dateRange.map((day) => (
-                <div key={day.getTime()} style={{ backgroundColor: '#fff', padding: 4, textAlign: 'center', fontWeight: 500 }}>
+                <div key={day.getTime()} className="nop-batch-scheduler-preview-cell" style={{ fontWeight: 500 }}>
                   {day.getUTCDate()}
                 </div>
               ))}
@@ -263,7 +219,7 @@ export function CalendarBatchScheduler({
                 const res = resources.find((r) => r.id === rid);
                 return (
                   <React.Fragment key={rid}>
-                    <div style={{ backgroundColor: '#fff', padding: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div className="nop-batch-scheduler-preview-resource">
                       {res?.title || res?.text || rid}
                     </div>
                     {dateRange.map((day) => {
@@ -272,14 +228,14 @@ export function CalendarBatchScheduler({
                       return (
                         <div
                           key={dateStr}
+                          className={cn(
+                            'nop-batch-scheduler-preview-cell',
+                            isConflict ? 'conflict' : 'ok',
+                          )}
                           style={{
                             backgroundColor: isConflict ? '#fef2f2' : (selectedShiftType ? (shiftTypes.find(st => st.type === selectedShiftType)?.color ?? '#e5e7eb') : '#e5e7eb'),
-                            padding: 4,
-                            textAlign: 'center',
-                            color: isConflict ? '#dc2626' : '#fff',
-                            fontSize: 10,
                           }}
-                          title={isConflict ? '此单元格已有排班' : undefined}
+                          title={isConflict ? t('scheduling.calendar.conflict') : undefined}
                         >
                           {isConflict ? '⚠' : '✓'}
                         </div>
@@ -293,41 +249,22 @@ export function CalendarBatchScheduler({
         )}
 
         {exceedsLimit && (
-          <div style={{ color: '#dc2626', fontSize: 12, marginBottom: 8 }}>
-            批量操作最多支持 100 个单元格
+          <div className="nop-batch-scheduler-error">
+            {t('scheduling.calendar.exceedsLimit')}
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              border: '1px solid #d0d5dd',
-              borderRadius: 4,
-              padding: '6px 16px',
-              cursor: 'pointer',
-              fontSize: 13,
-            }}
-          >
-            取消
-          </button>
-          <button
+        <div className="nop-batch-scheduler-actions">
+          <Button variant="outline" type="button" onClick={onClose}>
+            {t('flux.common.cancel')}
+          </Button>
+          <Button
             type="button"
             onClick={handleConfirm}
             disabled={!startDate || !endDate || !selectedShiftType || selectedResources.size === 0 || exceedsLimit}
-            style={{
-              backgroundColor: !startDate || !endDate || !selectedShiftType || selectedResources.size === 0 || exceedsLimit ? '#9ca3af' : '#3b82f6',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 4,
-              padding: '6px 16px',
-              cursor: !startDate || !endDate || !selectedShiftType || selectedResources.size === 0 || exceedsLimit ? 'not-allowed' : 'pointer',
-              fontSize: 13,
-            }}
           >
-            确认 ({cellCount} 条)
-          </button>
+            {t('scheduling.calendar.confirmCount', { count: cellCount })}
+          </Button>
         </div>
       </div>
     </div>

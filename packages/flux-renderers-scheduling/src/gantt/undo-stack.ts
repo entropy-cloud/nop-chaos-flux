@@ -142,6 +142,11 @@ export class RemoveLinkCommand implements Command {
   }
 }
 
+// FIXME: Inconsistent undo pattern — Gantt uses command-based undo (this file)
+// while Kanban (kanban-undo-stack.ts) uses snapshot-based undo.
+// These should be unified in a future refactor. The command pattern was chosen
+// for Gantt because task operations are fine-grained and mergeable.
+// See kanban-undo-stack.ts for the alternative snapshot approach.
 export class UndoStack {
   private commands: Command[] = [];
   private pointer = -1;

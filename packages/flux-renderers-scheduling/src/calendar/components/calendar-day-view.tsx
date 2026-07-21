@@ -59,7 +59,7 @@ export function CalendarDayView({
           today && 'bg-blue-50',
         )}
       >
-        {currentDate.toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' })}
+        {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
       </div>
 
       <div className="flex">

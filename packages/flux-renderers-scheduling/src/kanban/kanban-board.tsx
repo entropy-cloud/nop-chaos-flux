@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { cn, Button } from '@nop-chaos/ui';
+import { cn, Button, Input } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import { Undo2, Redo2, History } from 'lucide-react';
 import type { BoardData, BoardItem, KanbanSchema, KanbanCardConfig } from './kanban.types.js';
 
@@ -53,6 +54,17 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const initialBoard = rawData ?? { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } };
   const [boardData, setBoardData] = useState<BoardData>(initialBoard);
+
+  const rawDataRef = useRef(rawData);
+  useEffect(() => {
+    if (rawData !== rawDataRef.current) {
+      rawDataRef.current = rawData;
+      if (rawData) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setBoardData(rawData);
+      }
+    }
+  }, [rawData]);
   const columns = useMemo(() => getColumns(boardData), [boardData]);
   const [collapsedMap, setCollapsedMap] = useState<Record<string, boolean>>({});
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
@@ -86,27 +98,25 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const handleUndo = useCallback(() => {
     setUndoStackState((s) => {
-      const currentBoard = boardData;
-      const result = undoStack(currentBoard, s);
+      const result = undoStack(s);
       if (result) {
         setBoardData(result.board);
         return result.stack;
       }
       return s;
     });
-  }, [boardData]);
+  }, []);
 
   const handleRedo = useCallback(() => {
     setUndoStackState((s) => {
-      const currentBoard = boardData;
-      const result = redoStack(currentBoard, s);
+      const result = redoStack(s);
       if (result) {
         setBoardData(result.board);
         return result.stack;
       }
       return s;
     });
-  }, [boardData]);
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -150,7 +160,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       const card = boardData[payload.cardId];
       recordAction({
         type: 'cardMove',
-        actor: { id: 'local', name: '当前用户' },
+        actor: { id: 'local', name: t('scheduling.kanban.currentUser') },
         detail: {
           cardId: (card?.data?.title as string) || payload.cardId,
           fromColumnId: payload.fromColumnId,
@@ -169,11 +179,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     onColumnReorder: (payload) => events.onColumnReorder?.(payload),
   });
 
-  const handleToggleCollapse = useCallback((columnId: string) => {
+  const handleToggleCollapse = (columnId: string) => {
     setCollapsedMap((prev) => ({ ...prev, [columnId]: !prev[columnId] }));
-  }, []);
+  };
 
-  const handleDragHandleKeyDown = useCallback((e: React.KeyboardEvent, columnId: string) => {
+  const handleDragHandleKeyDown = (e: React.KeyboardEvent, columnId: string) => {
     const root = boardData['root'];
     if (!root) return;
     const idx = root.children.indexOf(columnId);
@@ -196,20 +206,17 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
         }
         break;
     }
-  }, [boardData, handleSetBoardData, events]);
+  };
 
-  const handleCardClick = useCallback(
-    (cardId: string, columnId: string, index: number) => {
-      events.onCardClick?.({ cardId, columnId, index });
-    },
-    [events],
-  );
+  const handleCardClick = (cardId: string, columnId: string, index: number) => {
+    events.onCardClick?.({ cardId, columnId, index });
+  };
 
-  const handleToggleTag = useCallback((tagId: string) => {
+  const handleToggleTag = (tagId: string) => {
     setSelectedTagIds((prev) =>
       prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId],
     );
-  }, []);
+  };
 
   const boardRef = useRef<HTMLDivElement>(null);
 
@@ -277,7 +284,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     }
     return (
       <div data-slot="kanban-empty" className="nop-kanban-empty flex items-center justify-center py-12 text-gray-400 text-sm">
-        暂无数据
+        {t('flux.common.noData')}
       </div>
     );
   }
@@ -291,12 +298,12 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
         {`${columns.length} columns, ${columns.reduce((sum, col) => sum + col.children.length, 0)} cards`}
       </div>
       <div className="flex items-center gap-2 px-4 py-2">
-        <input
+        <Input
           type="text"
           value={filter.filterText}
           onChange={(e) => filter.setFilterText(e.target.value)}
-          placeholder="搜索卡片..."
-          aria-label="搜索卡片"
+          placeholder={t('scheduling.kanban.searchCards')}
+          aria-label={t('scheduling.kanban.searchCards')}
           className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-48"
         />
         <div className="flex items-center gap-1 ml-auto">
@@ -305,7 +312,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
             size="sm"
             disabled={!canUndoNow}
             onClick={handleUndo}
-            title="撤销 (Ctrl+Z)"
+            title={t('scheduling.kanban.undo')}
           >
             <Undo2 className="w-4 h-4" />
           </Button>
@@ -314,7 +321,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
             size="sm"
             disabled={!canRedoNow}
             onClick={handleRedo}
-            title="重做 (Ctrl+Shift+Z)"
+            title={t('scheduling.kanban.redo')}
           >
             <Redo2 className="w-4 h-4" />
           </Button>
@@ -322,7 +329,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
             variant="ghost"
             size="sm"
             onClick={() => setActivityLogOpen((v) => !v)}
-            title="活动日志"
+            title={t('scheduling.kanban.activityLog')}
           >
             <History className="w-4 h-4" />
           </Button>
@@ -365,12 +372,12 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
             );
           })}
           <div className="nop-kanban-adder shrink-0 self-start mt-2">
-            <button
-              type="button"
+            <Button
+              variant="outline"
               className="flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 min-w-[280px] justify-center transition-colors"
             >
-              + 添加列
-            </button>
+              {t('scheduling.kanban.addColumn')}
+            </Button>
           </div>
         </div>
       </div>

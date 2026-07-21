@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { CalendarEvent } from '../../schemas.js';
 
 export interface UseCalendarICalOptions {
@@ -15,13 +15,17 @@ export interface UseCalendarICalResult {
 export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalendarICalResult {
   const { onImport, onImportError } = options;
   const [isAvailable, setIsAvailable] = useState(false);
+  const genRef = useRef(0);
 
   useEffect(() => {
     const check = async () => {
       try {
         await import('ical.js');
-        setIsAvailable(true);
-      } catch {
+        if (genRef.current === 0) {
+          setIsAvailable(true);
+        }
+      } catch (err) {
+        console.error('[useCalendarICal] Failed to load ical.js:', err);
         setIsAvailable(false);
       }
     };
@@ -29,8 +33,10 @@ export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalend
   }, []);
 
   const importFromICal = useCallback(async (file: File) => {
+    const gen = ++genRef.current;
     try {
       const ical = await import('ical.js');
+      if (gen !== genRef.current) return;
       const text = await file.text();
       const jcalData = ical.default.parse(text);
       const comp = new ical.default.Component(jcalData);
@@ -56,8 +62,10 @@ export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalend
         };
       });
 
+      if (gen !== genRef.current) return;
       onImport?.(events);
     } catch (err) {
+      console.error('[useCalendarICal] importFromICal failed:', err);
       const msg = err instanceof Error ? err.message : '导入失败：文件格式错误';
       onImportError?.(msg);
     }
@@ -69,8 +77,10 @@ export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalend
       return;
     }
 
+    const gen = ++genRef.current;
     try {
       const ical = await import('ical.js');
+      if (gen !== genRef.current) return;
 
       const comp = new ical.default.Component('vcalendar');
       comp.updatePropertyWithValue('prodid', '-//NopChaos//Calendar//CN');
@@ -88,6 +98,8 @@ export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalend
         comp.addSubcomponent(vevent);
       }
 
+      if (gen !== genRef.current) return;
+
       const icalString = comp.toString();
       const blob = new Blob([icalString], { type: 'text/calendar;charset=utf-8' });
       const url = URL.createObjectURL(blob);
@@ -97,6 +109,7 @@ export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalend
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
+      console.error('[useCalendarICal] exportToICal failed:', err);
       const msg = err instanceof Error ? err.message : '导出失败';
       onImportError?.(msg);
     }

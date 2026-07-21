@@ -1,6 +1,7 @@
 import React, { useImperativeHandle, useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { cn } from '@nop-chaos/ui';
+import { cn, Button } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import { useFocusTrap } from './hooks/use-focus-trap.js';
 import type { CalendarSchema, CalendarView, CalendarEvent, CalendarResource } from '../schemas.js';
 import { useCalendarState } from './hooks/use-calendar-state.js';
@@ -25,14 +26,19 @@ export interface CalendarHandle {
 }
 
 const DEFAULT_SHIFT_TYPES = [
-  { type: 'shift', label: '早班', color: '#4ade80' },
-  { type: 'leave', label: '休假', color: '#f87171' },
-  { type: 'appointment', label: '预约', color: '#60a5fa' },
-  { type: 'maintenance', label: '维保', color: '#fbbf24' },
+  { type: 'shift', label: t('scheduling.calendar.morningShift'), color: 'var(--color-calendar-shift, #4ade80)' },
+  { type: 'leave', label: t('scheduling.calendar.leave'), color: 'var(--color-calendar-leave, #f87171)' },
+  { type: 'appointment', label: t('scheduling.calendar.appointment'), color: 'var(--color-calendar-appointment, #60a5fa)' },
+  { type: 'maintenance', label: t('scheduling.calendar.maintenance'), color: 'var(--color-calendar-maintenance, #fbbf24)' },
 ];
 
 export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?: React.Ref<CalendarHandle> }) {
   const { ref, props: resolved, meta, regions, events } = props;
+
+  useEffect(() => {
+    events.onMount?.({});
+    return () => { events.onUnmount?.({}); };
+  }, [events]);
 
   const initialDate = resolved.date
     ? (parseISODate(resolved.date as string) ?? new Date())
@@ -265,6 +271,30 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     onDateChange: setCurrentDate,
   });
 
+  const prevDateRef = useRef<string | undefined>(resolved.date as string | undefined);
+  useEffect(() => {
+    const dateStr = resolved.date as string | undefined;
+    if (dateStr && dateStr !== prevDateRef.current) {
+      prevDateRef.current = dateStr;
+      const parsed = parseISODate(dateStr);
+      if (parsed && parsed.getTime() !== currentDateRef.current.getTime()) {
+        setCurrentDate(parsed);
+      }
+    }
+  }, [resolved.date, setCurrentDate]);
+
+  const prevViewRef = useRef<string | undefined>(resolved.view as string | undefined);
+  useEffect(() => {
+    const viewStr = resolved.view as string | undefined;
+    if (viewStr && viewStr !== prevViewRef.current) {
+      prevViewRef.current = viewStr;
+      const view = viewStr as CalendarView;
+      if (view !== activeViewRef.current) {
+        setActiveView(view);
+      }
+    }
+  }, [resolved.view, setActiveView]);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -375,17 +405,6 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
             position: 'fixed',
             left: dragSwap.dragState.currentX - 60,
             top: dragSwap.dragState.currentY - 20,
-            width: 120,
-            height: 40,
-            pointerEvents: 'none',
-            zIndex: 1000,
-            opacity: 0.85,
-            backgroundColor: '#3b82f6',
-            color: '#fff',
-            borderRadius: 4,
-            padding: '4px 8px',
-            fontSize: 12,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           }}
         >
           {dragSwap.dragState.sourceEvent?.title ?? ''}
@@ -396,60 +415,38 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         <CalendarOverlay
           onEscape={dragCreate.dismissTypeSelector}
           onClick={dragCreate.dismissTypeSelector}
-          ariaLabel="选择班次类型"
+          ariaLabel={t('scheduling.calendar.selectType')}
         >
           <div
             className="nop-calendar-type-selector"
             role="presentation"
-            style={{
-              backgroundColor: '#fff',
-              borderRadius: 8,
-              padding: 16,
-              minWidth: 200,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-            }}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => { if (e.key === 'Escape') dragCreate.dismissTypeSelector(); e.stopPropagation(); }}
           >
-            <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>
-              选择班次类型
+            <div className="nop-calendar-type-selector-title">
+              {t('scheduling.calendar.selectType')}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="nop-calendar-type-selector-list">
               {DEFAULT_SHIFT_TYPES.map((st) => (
-                <button
-                  type="button"
+                <Button
                   key={st.type}
-                  style={{
-                    backgroundColor: st.color,
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 4,
-                    padding: '8px 16px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                  }}
+                  type="button"
+                  className="nop-calendar-type-selector-btn"
+                  style={{ backgroundColor: st.color }}
                   onClick={() => dragCreate.selectType(st.type)}
                 >
                   {st.label}
-                </button>
+                </Button>
               ))}
             </div>
-            <button
+            <Button
+              variant="ghost"
               type="button"
-              style={{
-                marginTop: 12,
-                border: 'none',
-                background: 'none',
-                color: '#666',
-                cursor: 'pointer',
-                width: '100%',
-                padding: 8,
-                fontSize: 13,
-              }}
+              className="nop-calendar-type-selector-cancel"
               onClick={dragCreate.dismissTypeSelector}
             >
-              取消
-            </button>
+              {t('flux.common.cancel')}
+            </Button>
           </div>
         </CalendarOverlay>
       )}
@@ -458,55 +455,31 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         <CalendarOverlay
           onEscape={cancelSwap}
           onClick={cancelSwap}
-          ariaLabel="确认移动排班"
+          ariaLabel={t('scheduling.calendar.confirmMove')}
         >
           <div
+            className="nop-calendar-confirm-dialog"
             role="presentation"
-            style={{
-              backgroundColor: '#fff',
-              borderRadius: 8,
-              padding: 16,
-              minWidth: 280,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-            }}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => { if (e.key === 'Escape') cancelSwap(); e.stopPropagation(); }}
           >
-            <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>
-              确认移动排班
+            <div className="nop-calendar-confirm-title">
+              {t('scheduling.calendar.confirmMove')}
             </div>
-            <div style={{ fontSize: 13, marginBottom: 16, color: '#333' }}>
-              将 {confirmDialog.event.title} 移到 {confirmDialog.targetDate} {confirmDialog.targetResource}?
+            <div className="nop-calendar-confirm-body">
+              {t('scheduling.calendar.moveConfirm', {
+                title: confirmDialog.event.title,
+                date: confirmDialog.targetDate,
+                resource: confirmDialog.targetResource,
+              })}
             </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                style={{
-                  border: '1px solid #d0d5dd',
-                  borderRadius: 4,
-                  padding: '6px 16px',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                }}
-                onClick={cancelSwap}
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                style={{
-                  backgroundColor: '#3b82f6',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 4,
-                  padding: '6px 16px',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                }}
-                onClick={executeSwap}
-              >
-                确认
-              </button>
+            <div className="nop-calendar-confirm-actions">
+              <Button variant="outline" type="button" onClick={cancelSwap}>
+                {t('flux.common.cancel')}
+              </Button>
+              <Button type="button" onClick={executeSwap}>
+                {t('flux.common.confirm')}
+              </Button>
             </div>
           </div>
         </CalendarOverlay>
@@ -536,15 +509,6 @@ function CalendarOverlay({ children, onEscape, onClick, ariaLabel }: CalendarOve
       onKeyDown={(e) => {
         if (e.key === 'Escape') onEscape();
         if (e.key === 'Enter' || e.key === ' ') onClick();
-      }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 2000,
       }}
       onClick={onClick}
     >

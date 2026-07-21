@@ -24,6 +24,11 @@ export interface CalendarWeekViewProps {
 
 const HOUR_HEIGHT = 48;
 
+const WEEKDAY_SHORT: Record<string, string[]> = {
+  'zh-CN': ['日', '一', '二', '三', '四', '五', '六'],
+  'en-US': ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+};
+
 export function CalendarWeekView({
   events,
   resources,
@@ -37,7 +42,8 @@ export function CalendarWeekView({
   onEventClick,
   onDragStart,
   onEventKeyDown,
-}: CalendarWeekViewProps) {
+  locale = 'en-US',
+}: CalendarWeekViewProps & { locale?: string }) {
   const { start, end } = getWeekStartEnd(currentDate, firstDayOfWeek);
   const days = useMemo(() => getDateRange(start, end), [start, end]);
 
@@ -69,6 +75,7 @@ export function CalendarWeekView({
     return result;
   }, [events, days, displayResources, dayStartHour, dayEndHour, maxConcurrent]);
 
+  const weekdayShort = WEEKDAY_SHORT[locale] ?? WEEKDAY_SHORT['en-US']!;
   const displayDays = showWeekends ? days : days.filter((d) => d.getUTCDay() !== 0 && d.getUTCDay() !== 6);
 
   return (
@@ -81,7 +88,7 @@ export function CalendarWeekView({
             <div
               key={toISODateString(day)}
               role="columnheader"
-              aria-label={day.toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' })}
+              aria-label={day.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}
               aria-current={today ? 'date' : undefined}
               data-slot="calendar-cell"
               data-date={toISODateString(day)}
@@ -92,7 +99,7 @@ export function CalendarWeekView({
             >
               <div>{day.getUTCDate()}</div>
               <div className="text-muted-foreground">
-                {['日', '一', '二', '三', '四', '五', '六'][day.getUTCDay()]}
+                {weekdayShort[day.getUTCDay()]}
               </div>
             </div>
           );

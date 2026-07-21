@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { CalendarResource } from '../../schemas.js';
 
 export interface CalendarResourceGroupProps {
@@ -34,14 +35,14 @@ export function CalendarResourceGroup({
           data-slot="calendar-group-toggle"
           className="w-5 h-5 flex items-center justify-center text-xs text-gray-500 hover:text-gray-700 mr-1"
           onClick={() => onToggle(group.id)}
-          aria-label={open ? '折叠' : '展开'}
+          aria-label={open ? t('flux.common.collapse') : t('flux.common.expand')}
         >
           {open ? '▼' : '▶'}
         </button>
         <span className="text-sm font-medium truncate">{group.title || group.text}</span>
         {group.resources && (
           <span className="ml-2 text-xs text-gray-400">
-            ({group.resources.length} 个子组)
+            {t('scheduling.calendar.subGroupCount', { count: group.resources.length })}
           </span>
         )}
       </div>

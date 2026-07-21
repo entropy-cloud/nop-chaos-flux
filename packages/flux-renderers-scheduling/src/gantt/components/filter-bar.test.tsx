@@ -32,7 +32,7 @@ describe('FilterBar', () => {
         onGroupByChange={vi.fn()}
       />,
     );
-    const inputs = screen.getAllByPlaceholderText('Filter tasks...');
+    const inputs = screen.getAllByPlaceholderText('筛选任务...');
     expect(inputs.length).toBeGreaterThanOrEqual(1);
     expect(getSortButton(container, 'Task')).toBeTruthy();
     expect(getSortButton(container, 'Type')).toBeTruthy();
@@ -52,7 +52,7 @@ describe('FilterBar', () => {
         onGroupByChange={vi.fn()}
       />,
     );
-    const inputs = screen.getAllByPlaceholderText('Filter tasks...');
+    const inputs = screen.getAllByPlaceholderText('筛选任务...');
     const input = inputs[inputs.length - 1];
     fireEvent.change(input, { target: { value: 'test' } });
     expect(onFilter).not.toHaveBeenCalled();
@@ -88,6 +88,6 @@ describe('FilterBar', () => {
         onGroupByChange={vi.fn()}
       />,
     );
-    expect(screen.getByText('No group')).toBeTruthy();
+    expect(screen.getByText('不分组')).toBeTruthy();
   });
 });

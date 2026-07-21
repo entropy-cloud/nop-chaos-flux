@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { useGanttStore, useGanttLinkSnapshot, useGanttLayoutSnapshot, useGanttTaskSnapshot } from './gantt-context.js';
 import { diffInDays } from './utils/date.js';
@@ -25,9 +25,9 @@ export function GanttLinks({ className }: GanttLinksProps) {
   const links = Array.from(store.links.values());
   const hasLinks = links.length > 0;
 
-  const handleDelete = useCallback((linkId: string | number) => {
+  const handleDelete = (linkId: string | number) => {
     store.removeLink(linkId);
-  }, [store]);
+  };
 
   if (!hasLinks) return null;
 
@@ -39,7 +39,7 @@ export function GanttLinks({ className }: GanttLinksProps) {
     >
       <defs>
         <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-          <polygon points="0 0, 8 3, 0 6" fill="#6b7280" />
+          <polygon points="0 0, 8 3, 0 6" className="nop-gantt-link-arrow" />
         </marker>
       </defs>
       {links.map((link) => {
@@ -49,10 +49,12 @@ export function GanttLinks({ className }: GanttLinksProps) {
             <polyline
               points={link.$p}
               fill="none"
-              stroke={isHovered ? '#3b82f6' : '#9ca3af'}
+              className={cn(
+                'nop-gantt-link-line transition-colors duration-150',
+                isHovered && 'hovered',
+              )}
               strokeWidth={isHovered ? 2.5 : 1.5}
               markerEnd="url(#arrowhead)"
-              className="transition-colors duration-150"
             />
             <polyline
               points={link.$p}
@@ -84,7 +86,7 @@ export function GanttLinks({ className }: GanttLinksProps) {
                 height={20}
               >
                 <div
-                  className="flex items-center justify-center w-5 h-5 bg-red-500 text-white rounded-full text-xs cursor-pointer shadow"
+                  className="flex items-center justify-center w-5 h-5 nop-gantt-link-delete-btn rounded-full text-xs cursor-pointer shadow"
                   onClick={() => handleDelete(link.id)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleDelete(link.id); }}
                   role="button"

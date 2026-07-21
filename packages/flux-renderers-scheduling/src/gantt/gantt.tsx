@@ -1,4 +1,4 @@
-import React, { useRef, useImperativeHandle, useState, useCallback } from 'react';
+import React, { useRef, useImperativeHandle, useState, useCallback, useEffect } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import type { GanttSchema } from '../schemas.js';
 import { GanttStore } from './gantt-store.js';
@@ -41,7 +41,7 @@ function createInitialStore(resolved: Record<string, unknown>): GanttStore {
 
 export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttSchema>>(
   function Gantt(props, ref) {
-    const { props: resolved, meta, regions } = props;
+    const { props: resolved, meta, regions, events } = props;
     const containerRef = useRef<HTMLDivElement>(null);
     const gridRef = useRef<HTMLDivElement>(null);
     const timelineRef = useRef<HTMLDivElement>(null);
@@ -50,6 +50,19 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const [editingTaskId, setEditingTaskId] = useState<string | number | null>(null);
 
     const [store] = useState(() => createInitialStore(resolved));
+
+    useEffect(() => {
+      events.onMount?.({});
+      return () => { events.onUnmount?.({}); };
+    }, [events]);
+
+    useEffect(() => {
+      const taskData = (resolved.tasks as any[]) ?? [];
+      const linkData = (resolved.links as any[]) ?? [];
+      const resourceData = (resolved.resources as any[]) ?? undefined;
+      const assignmentData = (resolved.assignments as any[]) ?? undefined;
+      store.parse(taskData, linkData, resourceData, assignmentData);
+    }, [store, resolved.tasks, resolved.links, resolved.resources, resolved.assignments]);
 
     const { onPointerDown: onDragPointerDown } = useGanttDrag(containerRef);
     const { onLinkHandlePointerDown } = useGanttLinkDraw(svgRef);

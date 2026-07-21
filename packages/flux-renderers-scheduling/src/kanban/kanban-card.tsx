@@ -89,4 +89,4 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
   );
 }
 
-export const KanbanCard = React.memo(KanbanCardInner);
+export const KanbanCard = KanbanCardInner;

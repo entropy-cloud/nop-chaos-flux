@@ -15,16 +15,16 @@ export interface CalendarEventBlockProps {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  shift: '#4ade80',
-  leave: '#f87171',
-  appointment: '#60a5fa',
-  maintenance: '#fbbf24',
+  shift: 'var(--color-calendar-shift, #4ade80)',
+  leave: 'var(--color-calendar-leave, #f87171)',
+  appointment: 'var(--color-calendar-appointment, #60a5fa)',
+  maintenance: 'var(--color-calendar-maintenance, #fbbf24)',
 };
 
 function resolveColor(event: CalendarEvent): string {
   if (event.color) return event.color;
   if (event.type && TYPE_COLORS[event.type]) return TYPE_COLORS[event.type];
-  return '#94a3b8';
+  return 'var(--color-muted-foreground, #94a3b8)';
 }
 
 export function CalendarEventBlock({

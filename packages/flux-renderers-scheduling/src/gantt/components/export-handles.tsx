@@ -1,5 +1,7 @@
 import type { GanttTask, GanttId } from '../gantt.types.js';
 
+let exportingFlag = false;
+
 export interface ExportOptions {
   fileName?: string;
   scale?: number;
@@ -14,6 +16,8 @@ export async function exportToPng(
   options?: ExportOptions,
 ): Promise<void> {
   if (!element) return;
+  if (exportingFlag) return;
+  exportingFlag = true;
   const scale = options?.scale ?? 2;
   try {
     const html2canvasMod: any = await import('html2canvas');
@@ -30,6 +34,8 @@ export async function exportToPng(
   } catch (e) {
     console.error('PNG export failed:', e);
     throw e;
+  } finally {
+    exportingFlag = false;
   }
 }
 
@@ -38,6 +44,8 @@ export async function exportToPdf(
   options?: ExportOptions,
 ): Promise<void> {
   if (!element) return;
+  if (exportingFlag) return;
+  exportingFlag = true;
   const scale = options?.scale ?? 2;
   try {
     const html2canvasMod: any = await import('html2canvas');
@@ -54,6 +62,8 @@ export async function exportToPdf(
   } catch (e) {
     console.error('PDF export failed:', e);
     throw e;
+  } finally {
+    exportingFlag = false;
   }
 }
 
@@ -61,6 +71,8 @@ export async function exportToExcel(
   tasks: Map<GanttId, GanttTask>,
   options?: ExportOptions,
 ): Promise<void> {
+  if (exportingFlag) return;
+  exportingFlag = true;
   try {
     const XLSX: any = await import('xlsx');
     const data = Array.from(tasks.values()).map((task) => ({
@@ -80,5 +92,7 @@ export async function exportToExcel(
   } catch (e) {
     console.error('Excel export failed:', e);
     throw e;
+  } finally {
+    exportingFlag = false;
   }
 }

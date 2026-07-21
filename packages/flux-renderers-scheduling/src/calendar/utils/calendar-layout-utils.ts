@@ -150,18 +150,38 @@ export function detectConflicts(input: ConflictInput): ConflictInfo | undefined 
 
   if (resourceDateEvents.length < 2) return undefined;
 
+  const parsed = resourceDateEvents
+    .map((evt) => ({
+      event: evt,
+      start: parseISODateTime(evt.start),
+      end: parseISODateTime(evt.end),
+    }))
+    .filter((p): p is { event: CalendarEvent; start: Date; end: Date } => p.start != null && p.end != null);
+
+  parsed.sort((a, b) => a.start.getTime() - b.start.getTime());
+
   const overlapping: CalendarEvent[] = [];
-  for (let i = 0; i < resourceDateEvents.length; i++) {
-    for (let j = i + 1; j < resourceDateEvents.length; j++) {
-      if (eventsTimeOverlap(resourceDateEvents[i], resourceDateEvents[j])) {
-        if (!overlapping.includes(resourceDateEvents[i])) {
-          overlapping.push(resourceDateEvents[i]);
-        }
-        if (!overlapping.includes(resourceDateEvents[j])) {
-          overlapping.push(resourceDateEvents[j]);
+  const active: { event: CalendarEvent; end: Date }[] = [];
+
+  for (const item of parsed) {
+    for (let i = active.length - 1; i >= 0; i--) {
+      if (active[i].end <= item.start) {
+        active.splice(i, 1);
+      }
+    }
+
+    if (active.length > 0) {
+      if (!overlapping.includes(item.event)) {
+        overlapping.push(item.event);
+      }
+      for (const a of active) {
+        if (!overlapping.includes(a.event)) {
+          overlapping.push(a.event);
         }
       }
     }
+
+    active.push({ event: item.event, end: item.end });
   }
 
   if (overlapping.length === 0) return undefined;
@@ -189,12 +209,4 @@ function dateOverlapsOnDay(event: CalendarEvent, dateStr: string): boolean {
   return eventDateStart <= dateStr && eventDateEnd >= dateStr;
 }
 
-function eventsTimeOverlap(a: CalendarEvent, b: CalendarEvent): boolean {
-  const aStart = parseISODateTime(a.start);
-  const aEnd = parseISODateTime(a.end);
-  const bStart = parseISODateTime(b.start);
-  const bEnd = parseISODateTime(b.end);
-  if (!aStart || !aEnd || !bStart || !bEnd) return false;
 
-  return aStart < bEnd && aEnd > bStart;
-}

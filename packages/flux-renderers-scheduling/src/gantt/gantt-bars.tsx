@@ -113,8 +113,8 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
               >
                 <polygon
                   points={`${size / 2},0 ${size},${size / 2} ${size / 2},${size} 0,${size / 2}`}
-                  fill="#f59e0b"
-                  stroke="#d97706"
+                  className="nop-gantt-bar-milestone-fill"
+                  stroke="var(--color-gantt-milestone-stroke, #d97706)"
                   strokeWidth={1}
                 />
               </svg>
@@ -134,7 +134,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
             aria-roledescription="gantt bar"
             className={cn(
               'absolute rounded-sm group cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400',
-              isProject ? 'bg-blue-200 border-blue-400' : 'bg-blue-500 border-blue-600',
+              isProject ? 'nop-gantt-bar-project' : 'nop-gantt-bar-task',
             )}
             style={{
               left: task.$x,
@@ -147,11 +147,11 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
             {task.progress != null && task.progress > 0 && (
               <div
                 data-slot="gantt-bar-progress"
-                className="absolute left-0 top-0 h-full bg-blue-700/30 rounded-l-sm"
+                className="absolute left-0 top-0 h-full nop-gantt-bar-progress rounded-l-sm"
                 style={{ width: `${Math.min(task.progress, 100)}%` }}
               />
             )}
-            <span className="absolute left-1 top-0 text-[10px] leading-[28px] text-white truncate max-w-[calc(100%-8px)]">
+            <span className="nop-gantt-bar-text absolute left-1 top-0 text-[10px] leading-[28px] truncate max-w-[calc(100%-8px)]">
               {task.text}
             </span>
             <div

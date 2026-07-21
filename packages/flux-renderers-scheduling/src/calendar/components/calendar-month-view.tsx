@@ -29,10 +29,11 @@ export interface CalendarMonthViewProps {
 
 const WEEKDAY_LABELS: Record<string, string[]> = {
   'zh-CN': ['日', '一', '二', '三', '四', '五', '六'],
+  'en-US': ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 };
 
 function getWeekdayLabels(locale: string, firstDayOfWeek: 0 | 1): string[] {
-  const labels = WEEKDAY_LABELS[locale] ?? WEEKDAY_LABELS['zh-CN']!;
+  const labels = WEEKDAY_LABELS[locale] ?? WEEKDAY_LABELS['en-US']!;
   if (firstDayOfWeek === 1) {
     return [...labels.slice(1), labels[0]];
   }
@@ -55,7 +56,8 @@ export function CalendarMonthView({
   onCellDragStart,
   showCrossDayLines = true,
   onEventKeyDown,
-}: CalendarMonthViewProps) {
+  locale = 'en-US',
+}: CalendarMonthViewProps & { locale?: string }) {
   const days = useMemo(
     () => getMonthDays(currentDate, firstDayOfWeek),
     [currentDate, firstDayOfWeek],
@@ -84,7 +86,7 @@ export function CalendarMonthView({
     return map;
   }, [events, resources, days]);
 
-  const weekdayLabels = getWeekdayLabels('zh-CN', firstDayOfWeek);
+  const weekdayLabels = getWeekdayLabels(locale, firstDayOfWeek);
 
   const headerCells = days.slice(0, 7).map((day, i) => (
     <div
@@ -163,7 +165,7 @@ export function CalendarMonthView({
                 <div
                   key={dateStr}
                   role="gridcell"
-                  aria-label={`${day.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}${today ? ', today' : ''}${weekend ? ', weekend' : ''}`}
+                  aria-label={`${day.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}${today ? ', today' : ''}${weekend ? ', weekend' : ''}`}
                   aria-current={today ? 'date' : undefined}
                   data-slot="calendar-cell"
                   data-date={dateStr}

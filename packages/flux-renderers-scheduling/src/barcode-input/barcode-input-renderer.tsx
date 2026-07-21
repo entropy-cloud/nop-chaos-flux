@@ -13,7 +13,13 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const form = useCurrentForm();
 
   const name = String(resolved.name ?? '');
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(() => {
+    if (name && form && form.store) {
+      const state = form.store.getState();
+      return (state.values[name] as string) ?? '';
+    }
+    return '';
+  });
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState<boolean | null>(null);
 

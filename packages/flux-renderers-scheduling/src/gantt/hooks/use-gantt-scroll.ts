@@ -26,13 +26,12 @@ export function useGanttScroll(
     });
   }, [gridRef, timelineRef]);
 
-  const onGridScroll = useCallback(() => syncScroll('grid'), [syncScroll]);
-  const onTimelineScroll = useCallback(() => syncScroll('timeline'), [syncScroll]);
-
   useEffect(() => {
     const grid = gridRef.current;
     const timeline = timelineRef.current;
     if (!grid || !timeline) return;
+    const onGridScroll = () => syncScroll('grid');
+    const onTimelineScroll = () => syncScroll('timeline');
     grid.addEventListener('scroll', onGridScroll, { passive: true });
     timeline.addEventListener('scroll', onTimelineScroll, { passive: true });
     return () => {
@@ -40,5 +39,5 @@ export function useGanttScroll(
       timeline.removeEventListener('scroll', onTimelineScroll);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [gridRef, timelineRef, onGridScroll, onTimelineScroll]);
+  }, [gridRef, timelineRef, syncScroll]);
 }

@@ -18,25 +18,23 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
   const dragRef = useRef<DragState | null>(null);
   const ghostRef = useRef<HTMLElement | null>(null);
 
-  const createGhost = useCallback((barEl: HTMLElement) => {
-    const ghost = barEl.cloneNode(true) as HTMLElement;
-    ghost.classList.add('nop-gantt-bar-ghost');
-    ghost.style.position = 'fixed';
-    ghost.style.opacity = '0.8';
-    ghost.style.pointerEvents = 'none';
-    ghost.style.zIndex = '1000';
-    ghost.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-    ghost.style.transition = 'none';
-    document.body.appendChild(ghost);
-    return ghost;
-  }, []);
-
   const onPointerDown = useCallback((e: PointerEvent, taskId: string | number, mode: DragMode) => {
     if (!mode) return;
     e.preventDefault();
     const target = e.currentTarget as HTMLElement;
     const rect = target.getBoundingClientRect();
-    const ghost = createGhost(target);
+    const ghost = (() => {
+      const g = target.cloneNode(true) as HTMLElement;
+      g.classList.add('nop-gantt-bar-ghost');
+      g.style.position = 'fixed';
+      g.style.opacity = '0.8';
+      g.style.pointerEvents = 'none';
+      g.style.zIndex = '1000';
+      g.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+      g.style.transition = 'none';
+      document.body.appendChild(g);
+      return g;
+    })();
     ghost.style.width = rect.width + 'px';
     ghost.style.height = rect.height + 'px';
     ghost.style.left = rect.left + 'px';
@@ -119,7 +117,7 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
     document.addEventListener('keydown', onKeyDown);
-  }, [store, createGhost]);
+  }, [store]);
 
   useEffect(() => {
     return () => {

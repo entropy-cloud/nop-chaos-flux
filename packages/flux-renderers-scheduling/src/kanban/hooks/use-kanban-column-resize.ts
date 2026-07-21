@@ -26,14 +26,11 @@ export function useKanbanColumnResize({
   const currentWidths = externalWidths ?? internalWidths;
   const resizeStartRef = useRef<{ columnId: string; startX: number; startWidth: number } | null>(null);
 
-  const getWidth = useCallback(
-    (columnId: string) => {
-      const w = currentWidths[columnId];
-      if (w != null) return Math.max(minWidth, Math.min(maxWidth, w));
-      return defaultWidth;
-    },
-    [currentWidths, minWidth, maxWidth, defaultWidth],
-  );
+  const getWidth = (columnId: string) => {
+    const w = currentWidths[columnId];
+    if (w != null) return Math.max(minWidth, Math.min(maxWidth, w));
+    return defaultWidth;
+  };
 
   const handleResizeStart = useCallback((e: React.PointerEvent, columnId: string) => {
     e.preventDefault();

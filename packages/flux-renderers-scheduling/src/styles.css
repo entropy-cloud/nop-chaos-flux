@@ -22,7 +22,7 @@
 }
 
 /* Event block hover */
-[data-slot='calendar-event']:hover {
+.nop-calendar [data-slot='calendar-event']:hover {
   outline: 2px solid rgba(255, 255, 255, 0.8);
   outline-offset: -2px;
   filter: brightness(1.1);
@@ -30,32 +30,32 @@
 }
 
 /* Cell hover */
-[data-slot='calendar-cell']:hover {
-  background-color: #f8fafc;
+.nop-calendar [data-slot='calendar-cell']:hover {
+  background-color: var(--color-muted);
 }
 
 /* Navigation button hover */
-[data-slot='calendar-header'] button:hover {
-  background-color: #f1f5f9;
+.nop-calendar [data-slot='calendar-header'] button:hover {
+  background-color: var(--color-muted);
 }
 
 /* Conflict indicator */
-[data-slot='calendar-event'][data-overlap='true'] {
+.nop-calendar [data-slot='calendar-event'][data-overlap='true'] {
   @apply ring-2 ring-red-500;
 }
 
 /* Split event marker */
-[data-slot='calendar-event'].is-split {
+.nop-calendar [data-slot='calendar-event'].is-split {
   @apply border-l-2 border-l-white/40;
 }
 
 /* Current month cell styling */
-[data-slot='calendar-cell'][data-empty='true'] {
+.nop-calendar [data-slot='calendar-cell'][data-empty='true'] {
   @apply text-gray-300;
 }
 
 /* Weekend column styling */
-[data-slot='calendar-cell']:has([data-weekend='true']) {
+.nop-calendar [data-slot='calendar-cell']:has([data-weekend='true']) {
   @apply bg-gray-50;
 }
 
@@ -86,7 +86,7 @@
 
 /* Grid row hover */
 .nop-gantt-grid [data-slot='gantt-grid-row']:hover {
-  background-color: rgba(59, 130, 246, 0.05);
+  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
 }
 
 /* Grid cell */
@@ -95,7 +95,7 @@
 }
 
 /* Bar hover */
-[data-slot='gantt-bar']:hover {
+.nop-gantt [data-slot='gantt-bar']:hover {
   filter: brightness(1.1);
 }
 
@@ -112,19 +112,19 @@
 .nop-gantt-drop-indicator {
   position: absolute;
   width: 2px;
-  background-color: #3b82f6;
+  background-color: var(--color-primary);
   z-index: 50;
   pointer-events: none;
 }
 
 /* Today line */
-[data-slot='gantt-today'] {
+.nop-gantt [data-slot='gantt-today'] {
   z-index: 20;
 }
 
 /* Link hover */
-[data-slot='gantt-link']:hover polyline {
-  stroke: #3b82f6;
+.nop-gantt [data-slot='gantt-link']:hover polyline {
+  stroke: var(--color-primary);
   stroke-width: 2;
 }
 
@@ -156,7 +156,7 @@
 }
 
 /* Weekend column shading */
-[data-slot='gantt-weekend'][data-weekend='true'] {
+.nop-gantt [data-slot='gantt-weekend'][data-weekend='true'] {
   background-color: rgba(0, 0, 0, 0.02);
 }
 
@@ -224,13 +224,13 @@
 }
 
 /* Kanban drag ghost */
-[data-dragging='true'] .nop-kanban-card {
+.nop-kanban [data-dragging='true'] .nop-kanban-card {
   opacity: 0.5;
   transform: scale(0.95);
 }
 
 /* Kanban drop target highlight */
-[data-drop-target='true'] {
+.nop-kanban [data-drop-target='true'] {
   @apply ring-2 ring-blue-400;
 }
 
@@ -246,7 +246,7 @@
 /* Drop indicator line */
 .nop-kanban-drop-indicator {
   height: 2px;
-  background-color: #3b82f6;
+  background-color: var(--color-primary);
   margin: 4px 0;
   border-radius: 1px;
   pointer-events: none;
@@ -280,29 +280,36 @@
 }
 
 /* Milestone diamond */
-[data-bar-type='milestone'] {
+.nop-gantt [data-bar-type='milestone'] {
   z-index: 10;
 }
 
 /* Project bar */
-[data-bar-type='project'] {
+.nop-gantt [data-bar-type='project'] {
   @apply border border-dashed;
 }
 
-/* ===== Calendar Interactive States (S5.9) ===== */
+/* ===== Calendar Interactive States ===== */
 
 /* Drag ghost */
 .nop-calendar-drag-ghost {
   opacity: 0.85;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
   border-radius: 4px;
   pointer-events: none;
   z-index: 1000;
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  padding: 4px 8px;
+  font-size: 12px;
+  width: 120px;
+  height: 40px;
+  /* position:fixed etc set inline for dynamic positioning */
 }
 
 /* Drag-over cell highlight */
-[data-slot='calendar-cell'].nop-calendar-drag-over {
-  outline: 2px dashed #3b82f6;
+.nop-calendar [data-slot='calendar-cell'].nop-calendar-drag-over {
+  outline: 2px dashed var(--color-primary);
   outline-offset: -2px;
 }
 
@@ -372,8 +379,397 @@
 }
 
 /* Timezone selector hover */
-[data-slot='calendar-timezone-option']:hover {
-  background-color: #f9fafb;
+.nop-calendar [data-slot='calendar-timezone-option']:hover {
+  background-color: var(--color-muted);
 }
 
-/* Print styles import - will be applied via @media print in calendar-print.css */
+/* ===== Phase 2 Additions ===== */
+
+/* Calendar overlay / dialog backdrop */
+.nop-calendar-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+/* Type selector dialog content */
+.nop-calendar-type-selector {
+  background-color: var(--color-card);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 200px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.nop-calendar-type-selector-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--color-card-foreground);
+}
+
+.nop-calendar-type-selector-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nop-calendar-type-selector-btn {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #fff;
+}
+
+.nop-calendar-type-selector-cancel {
+  margin-top: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  padding: 8px;
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+}
+
+/* Confirm dialog content */
+.nop-calendar-confirm-dialog {
+  background-color: var(--color-card);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 280px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.nop-calendar-confirm-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--color-card-foreground);
+}
+
+.nop-calendar-confirm-body {
+  font-size: 13px;
+  margin-bottom: 16px;
+  color: var(--color-foreground);
+}
+
+.nop-calendar-confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Batch scheduler */
+.nop-batch-scheduler-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.nop-batch-scheduler {
+  background-color: var(--color-card);
+  border-radius: 8px;
+  padding: 20px;
+  min-width: 400px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.nop-batch-scheduler-title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-card-foreground);
+}
+
+.nop-batch-scheduler-section {
+  margin-bottom: 12px;
+}
+
+.nop-batch-scheduler-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--color-foreground);
+}
+
+.nop-batch-scheduler-date-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.nop-batch-scheduler-date-input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+  background-color: var(--color-card);
+  color: var(--color-card-foreground);
+}
+
+.nop-batch-scheduler-date-sep {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+}
+
+.nop-batch-scheduler-resource-list {
+  max-height: 150px;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.nop-batch-scheduler-resource-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--color-foreground);
+}
+
+.nop-batch-scheduler-resource-item:hover {
+  background-color: var(--color-muted);
+}
+
+.nop-batch-scheduler-shift-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nop-batch-scheduler-shift-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  background-color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  color: var(--color-foreground);
+}
+
+.nop-batch-scheduler-shift-chip.selected {
+  border-width: 2px;
+}
+
+.nop-batch-scheduler-shift-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.nop-batch-scheduler-preview-section {
+  margin-bottom: 12px;
+}
+
+.nop-batch-scheduler-preview-title {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--color-foreground);
+}
+
+.nop-batch-scheduler-preview-grid {
+  display: grid;
+  gap: 1px;
+  background-color: var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: auto;
+  max-height: 200px;
+  font-size: 11px;
+}
+
+.nop-batch-scheduler-preview-header {
+  background-color: var(--color-card);
+  padding: 4px;
+  font-weight: 500;
+  color: var(--color-card-foreground);
+}
+
+.nop-batch-scheduler-preview-cell {
+  background-color: var(--color-card);
+  padding: 4px;
+  text-align: center;
+  color: var(--color-card-foreground);
+}
+
+.nop-batch-scheduler-preview-cell.conflict {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.nop-batch-scheduler-preview-cell.ok {
+  color: #fff;
+}
+
+.nop-batch-scheduler-preview-resource {
+  background-color: var(--color-card);
+  padding: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-card-foreground);
+}
+
+.nop-batch-scheduler-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.nop-batch-scheduler-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* Timezone selector */
+.nop-timezone-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.nop-timezone-toggle {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  background-color: var(--color-card);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-card-foreground);
+}
+
+.nop-timezone-toggle:hover {
+  background-color: var(--color-muted);
+}
+
+.nop-timezone-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  max-height: 240px;
+  overflow: auto;
+  min-width: 220px;
+}
+
+.nop-timezone-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+  color: var(--color-foreground);
+}
+
+.nop-timezone-option:hover {
+  background-color: var(--color-muted);
+}
+
+.nop-timezone-option.selected {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.nop-timezone-offset {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+  margin-left: 8px;
+}
+
+/* Kanban search input */
+.nop-kanban-search {
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  outline: none;
+  background-color: var(--color-card);
+  color: var(--color-card-foreground);
+}
+
+.nop-kanban-search:focus {
+  border-color: var(--color-ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-ring) 20%, transparent);
+}
+
+/* Gantt bar style classes (replaces inline hardcoded colors) */
+.nop-gantt-bar-task {
+  background-color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 80%, black);
+}
+
+.nop-gantt-bar-project {
+  background-color: #bfdbfe;
+  border-color: #60a5fa;
+}
+
+.nop-gantt-bar-milestone-fill {
+  fill: #f59e0b;
+}
+
+.nop-gantt-bar-milestone-stroke {
+  stroke: #d97706;
+}
+
+.nop-gantt-bar-progress {
+  background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.nop-gantt-bar-text {
+  color: var(--color-primary-foreground);
+}
+
+.nop-gantt-link-arrow {
+  fill: #6b7280;
+}
+
+.nop-gantt-link-line {
+  stroke: #9ca3af;
+}
+
+.nop-gantt-link-line.hovered {
+  stroke: var(--color-primary);
+}
+
+.nop-gantt-link-delete-btn {
+  background-color: #ef4444;
+  color: white;
+}

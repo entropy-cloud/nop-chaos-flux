@@ -28,6 +28,11 @@ export interface UndoStack {
   maxSize: number;
 }
 
+// FIXME: Inconsistent undo pattern — Kanban uses snapshot-based undo (this file)
+// while Gantt (undo-stack.ts) uses command-based undo.
+// These should be unified in a future refactor. The snapshot approach was chosen
+// for Kanban because board state is a single JSON blob that's easy to clone.
+// See gantt/undo-stack.ts for the alternative command pattern.
 export function createUndoStack(maxSize = 1000): UndoStack {
   return { undoStack: [], redoStack: [], maxSize };
 }
@@ -40,7 +45,7 @@ export function pushCommand(stack: UndoStack, command: UndoCommand): UndoStack {
   return { ...stack, undoStack: newUndo, redoStack: [] };
 }
 
-export function undo(currentBoard: BoardData, stack: UndoStack): { board: BoardData; stack: UndoStack } | null {
+export function undo(stack: UndoStack): { board: BoardData; stack: UndoStack } | null {
   if (stack.undoStack.length === 0) return null;
   const command = stack.undoStack[stack.undoStack.length - 1];
   const newUndo = stack.undoStack.slice(0, -1);
@@ -51,7 +56,7 @@ export function undo(currentBoard: BoardData, stack: UndoStack): { board: BoardD
   };
 }
 
-export function redo(currentBoard: BoardData, stack: UndoStack): { board: BoardData; stack: UndoStack } | null {
+export function redo(stack: UndoStack): { board: BoardData; stack: UndoStack } | null {
   if (stack.redoStack.length === 0) return null;
   const command = stack.redoStack[stack.redoStack.length - 1];
   const newRedo = stack.redoStack.slice(0, -1);
