@@ -204,6 +204,139 @@ describe('addColumn', () => {
   });
 });
 
+describe('moveCard snapshot — complete board structure', () => {
+  it('preserves full board structure when moving card across columns', () => {
+    const board = createSampleBoard();
+    const result = moveCard(board, 'card1', 'col2', 0);
+    expect(result).toEqual({
+      root: { id: 'root', type: 'root', children: ['col1', 'col2'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: ['card2'], data: { title: 'To Do' }, meta: {} },
+      col2: { id: 'col2', type: 'column', parentId: 'root', children: ['card1', 'card3'], data: { title: 'Done' }, meta: {} },
+      card1: { id: 'card1', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 1' }, meta: { priority: 1 } },
+      card2: { id: 'card2', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 2' }, meta: {} },
+      card3: { id: 'card3', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 3' }, meta: {} },
+    });
+  });
+
+  it('preserves full board when moving card to empty column', () => {
+    const board = createSampleBoard();
+    board.col2.children = [];
+    const result = moveCard(board, 'card1', 'col2', 0);
+    expect(result).toEqual({
+      root: { id: 'root', type: 'root', children: ['col1', 'col2'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: ['card2'], data: { title: 'To Do' }, meta: {} },
+      col2: { id: 'col2', type: 'column', parentId: 'root', children: ['card1'], data: { title: 'Done' }, meta: {} },
+      card1: { id: 'card1', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 1' }, meta: { priority: 1 } },
+      card2: { id: 'card2', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 2' }, meta: {} },
+      card3: { id: 'card3', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 3' }, meta: {} },
+    });
+  });
+
+  it('preserves full board when moving card to column with existing cards at end', () => {
+    const board = createSampleBoard();
+    const result = moveCard(board, 'card1', 'col2', 10);
+    expect(result).toEqual({
+      root: { id: 'root', type: 'root', children: ['col1', 'col2'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: ['card2'], data: { title: 'To Do' }, meta: {} },
+      col2: { id: 'col2', type: 'column', parentId: 'root', children: ['card3', 'card1'], data: { title: 'Done' }, meta: {} },
+      card1: { id: 'card1', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 1' }, meta: { priority: 1 } },
+      card2: { id: 'card2', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 2' }, meta: {} },
+      card3: { id: 'card3', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 3' }, meta: {} },
+    });
+  });
+
+  it('preserves full board when moving within same column', () => {
+    const board = createSampleBoard();
+    const result = moveCard(board, 'card1', 'col1', 1);
+    expect(result).toEqual({
+      root: { id: 'root', type: 'root', children: ['col1', 'col2'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: ['card2', 'card1'], data: { title: 'To Do' }, meta: {} },
+      col2: { id: 'col2', type: 'column', parentId: 'root', children: ['card3'], data: { title: 'Done' }, meta: {} },
+      card1: { id: 'card1', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 1' }, meta: { priority: 1 } },
+      card2: { id: 'card2', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 2' }, meta: {} },
+      card3: { id: 'card3', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 3' }, meta: {} },
+    });
+  });
+
+  it('preserves full board when moving from single-card column', () => {
+    const board = createSampleBoard();
+    const result = moveCard(board, 'card3', 'col1', 0);
+    expect(result).toEqual({
+      root: { id: 'root', type: 'root', children: ['col1', 'col2'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: ['card3', 'card1', 'card2'], data: { title: 'To Do' }, meta: {} },
+      col2: { id: 'col2', type: 'column', parentId: 'root', children: [], data: { title: 'Done' }, meta: {} },
+      card1: { id: 'card1', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 1' }, meta: { priority: 1 } },
+      card2: { id: 'card2', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 2' }, meta: {} },
+      card3: { id: 'card3', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 3' }, meta: {} },
+    });
+  });
+});
+
+describe('moveColumn snapshot — complete board structure', () => {
+  it('preserves full board when reordering columns', () => {
+    const board = createSampleBoard();
+    const result = moveColumn(board, 'col2', 0);
+    expect(result).toEqual({
+      root: { id: 'root', type: 'root', children: ['col2', 'col1'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: ['card1', 'card2'], data: { title: 'To Do' }, meta: {} },
+      col2: { id: 'col2', type: 'column', parentId: 'root', children: ['card3'], data: { title: 'Done' }, meta: {} },
+      card1: { id: 'card1', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 1' }, meta: { priority: 1 } },
+      card2: { id: 'card2', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 2' }, meta: {} },
+      card3: { id: 'card3', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 3' }, meta: {} },
+    });
+  });
+
+  it('preserves full board when column stays in place (no-op move)', () => {
+    const board = createSampleBoard();
+    const result = moveColumn(board, 'col1', 0);
+    expect(result).toEqual({
+      root: { id: 'root', type: 'root', children: ['col1', 'col2'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: ['card1', 'card2'], data: { title: 'To Do' }, meta: {} },
+      col2: { id: 'col2', type: 'column', parentId: 'root', children: ['card3'], data: { title: 'Done' }, meta: {} },
+      card1: { id: 'card1', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 1' }, meta: { priority: 1 } },
+      card2: { id: 'card2', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 2' }, meta: {} },
+      card3: { id: 'card3', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 3' }, meta: {} },
+    });
+  });
+});
+
+describe('moveCard edge cases — boundary indices', () => {
+  it('handles sibling-at-boundary: move to index 0 of same column (no-op)', () => {
+    const board = createSampleBoard();
+    const result = moveCard(board, 'card1', 'col1', 0);
+    expect(result.col1.children).toEqual(['card1', 'card2']);
+    expect(result.card1.parentId).toBe('col1');
+  });
+
+  it('handles sibling-at-boundary: move to last index of same column', () => {
+    const board = createSampleBoard();
+    const result = moveCard(board, 'card1', 'col1', 1);
+    expect(result.col1.children).toEqual(['card2', 'card1']);
+  });
+
+  it('handles sibling-at-boundary: move card to index 0 of target with other cards', () => {
+    const board = createSampleBoard();
+    const result = moveCard(board, 'card2', 'col2', 0);
+    expect(result.col1.children).toEqual(['card1']);
+    expect(result.col2.children).toEqual(['card2', 'card3']);
+    expect(result.card2.parentId).toBe('col2');
+  });
+
+  it('handles card to column that only has this card source (moving within empty column)', () => {
+    const emptyBoard: BoardData = {
+      root: { id: 'root', type: 'root', children: ['col1', 'col2'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: ['card1'], data: { title: 'To Do' }, meta: {} },
+      col2: { id: 'col2', type: 'column', parentId: 'root', children: ['card2'], data: { title: 'Done' }, meta: {} },
+      card1: { id: 'card1', type: 'card', parentId: 'col1', children: [], data: { title: 'Task 1' }, meta: {} },
+      card2: { id: 'card2', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 2' }, meta: {} },
+    };
+    const result = moveCard(emptyBoard, 'card1', 'col2', 0);
+    expect(result.col1.children).toEqual([]);
+    expect(result.col2.children).toEqual(['card1', 'card2']);
+    expect(result.card1.parentId).toBe('col2');
+  });
+});
+
 describe('removeColumn', () => {
   it('removes column and its children', () => {
     const board = createSampleBoard();
