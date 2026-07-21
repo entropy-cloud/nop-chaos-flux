@@ -1,6 +1,6 @@
 # Diff-view CSS Definition & Style Hygiene
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-21
 > Source: `docs/plans/2026-07-21-0800-3-scheduling-architecture-quality-plan.md` (F-20 deferred item), `docs/components/diff-view/design.md`, `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`
 > Related: `docs/plans/2026-07-21-0200-1-diff-view-core-implementation.md` (parent plan), `docs/plans/2026-07-21-0200-2-diff-view-three-column-compare.md`
@@ -58,57 +58,57 @@ The plan adds CSS only — no behavioral code changes. Verification is via visua
 
 ### Phase 1 — Audit & Design
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/styles.css`, `docs/components/diff-view/design.md §10`
 
 - Item Types: `Decision | Follow-up`
 
-- [ ] Audit: scan all `.tsx` files in `packages/flux-renderers-content/src/diff-view/` for `nop-diff-*` class names, `data-*` attributes, `data-slot` values, and any inline styles. Compile a complete selector inventory grouped by component.
-- [ ] Audit: identify categories of visual styling needed (line backgrounds, gutter, hunk headers, code foreground, borders, transitions, spacing) and confirm no inline color styles exist.
-- [ ] Design: define CSS custom property tokens for all diff-view color needs (add/del/conflict/hunk/gutter) using `oklch()` values, following the color naming convention from `docs/architecture/theme-compatibility.md`.
+- [x] Audit: scan all `.tsx` files in `packages/flux-renderers-content/src/diff-view/` for `nop-diff-*` class names, `data-*` attributes, `data-slot` values, and any inline styles. Compile a complete selector inventory grouped by component.
+- [x] Audit: identify categories of visual styling needed (line backgrounds, gutter, hunk headers, code foreground, borders, transitions, spacing) and confirm no inline color styles exist.
+- [x] Design: define CSS custom property tokens for all diff-view color needs (add/del/conflict/hunk/gutter) using `oklch()` values, following the color naming convention from `docs/architecture/theme-compatibility.md`.
 
 Exit Criteria:
 
-- [ ] Complete selector inventory filed (class names, data attributes, data-slot values, grouped by component).
-- [ ] Color token design documented (CSS custom property name → oklch value for each visual need).
+- [x] Complete selector inventory filed (class names, data attributes, data-slot values, grouped by component).
+- [x] Color token design documented (CSS custom property name → oklch value for each visual need).
 
 ### Phase 2 — CSS Implementation
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/styles.css`
 
 - Item Types: `Fix`
 
-- [ ] Write root container styles: `.nop-diff-view`, `.nop-diff-view-three-column`, `.nop-diff-wrap`, plus view-mode attribute selectors `.nop-diff-view[data-view="split"]` / `[data-view="unified"]` / `[data-view="three-column"]`.
-- [ ] Write view-panel component styles: `.nop-diff-split-view`, `.nop-diff-split-pane`, `.nop-diff-split-old`, `.nop-diff-split-new`, `.nop-diff-unified-view`, `.nop-diff-three-column-view`, `.nop-diff-three-col-grid`, `.nop-diff-three-col-pane`, `.nop-diff-three-col-old`, `.nop-diff-three-col-mid`, `.nop-diff-three-col-new`.
-- [ ] Write line-level styles using `[data-diff-type]` attribute selectors for each type: `"add"`, `"delete"`, `"context"`, `"hunk"`, `"conflict"`, `"change-old"`, `"change-new"`, `"equal"`. Also style conflict markers: `.nop-diff-line-conflict`, `.nop-diff-line-conflict-marker`.
-- [ ] Write inline diff styles via `[data-diff-inline="insert"]` and `[data-diff-inline="delete"]`.
-- [ ] Write hunk component styles: `.nop-diff-hunk`, `.nop-diff-hunk-collapsed`, `.nop-diff-hunk-expanded`, `.nop-diff-hunk-expand-btn`, `.nop-diff-hunk-collapse-btn`, `.nop-diff-hunk-header-row`, `.nop-diff-hunk-header-text`, plus expand/collapse transitions per design doc §10.
-- [ ] Write gutter and content styles: `.nop-diff-gutter`, `.nop-diff-gutter-cell`, `.nop-diff-gutter-new`, `.nop-diff-content`, with `[data-diff-gutter="old"|"new"|"mid"]` differentiation.
-- [ ] Write header and navigation styles: `.nop-diff-header`, `.nop-diff-header-files`, `.nop-diff-header-stats`, `.nop-diff-stat-added`, `.nop-diff-stat-removed`, `.nop-diff-view-toggle`, `.nop-diff-three-col-nav`, `.nop-diff-three-col-line`.
-- [ ] Write `[data-slot]` scoped selectors: `.nop-diff-view [data-slot="diff-header"]`, `.nop-diff-view [data-slot="diff-gutter"]`, `.nop-diff-view [data-slot="diff-hunk-header"]`.
-- [ ] Write responsive styles: `@media (max-width: 640px)` single-column fallback for split view.
-- [ ] Define all color tokens via CSS custom properties on `.nop-diff-view` root, covering add/del/conflict/hunk/gutter backgrounds, line number styling, code foreground, and hover states per design doc §10.
+- [x] Write root container styles: `.nop-diff-view`, `.nop-diff-view-three-column`, `.nop-diff-wrap`, plus view-mode attribute selectors `.nop-diff-view[data-view="split"]` / `[data-view="unified"]` / `[data-view="three-column"]`.
+- [x] Write view-panel component styles: `.nop-diff-split-view`, `.nop-diff-split-pane`, `.nop-diff-split-old`, `.nop-diff-split-new`, `.nop-diff-unified-view`, `.nop-diff-three-column-view`, `.nop-diff-three-col-grid`, `.nop-diff-three-col-pane`, `.nop-diff-three-col-old`, `.nop-diff-three-col-mid`, `.nop-diff-three-col-new`.
+- [x] Write line-level styles using `[data-diff-type]` attribute selectors for each type: `"add"`, `"delete"`, `"context"`, `"hunk"`, `"conflict"`, `"change-old"`, `"change-new"`, `"equal"`. Also style conflict markers: `.nop-diff-line-conflict`, `.nop-diff-line-conflict-marker`.
+- [x] Write inline diff styles via `[data-diff-inline="insert"]` and `[data-diff-inline="delete"]`.
+- [x] Write hunk component styles: `.nop-diff-hunk`, `.nop-diff-hunk-collapsed`, `.nop-diff-hunk-expanded`, `.nop-diff-hunk-expand-btn`, `.nop-diff-hunk-collapse-btn`, `.nop-diff-hunk-header-row`, `.nop-diff-hunk-header-text`, plus expand/collapse transitions per design doc §10.
+- [x] Write gutter and content styles: `.nop-diff-gutter`, `.nop-diff-gutter-cell`, `.nop-diff-gutter-new`, `.nop-diff-content`, with `[data-diff-gutter="old"|"new"|"mid"]` differentiation.
+- [x] Write header and navigation styles: `.nop-diff-header`, `.nop-diff-header-files`, `.nop-diff-header-stats`, `.nop-diff-stat-added`, `.nop-diff-stat-removed`, `.nop-diff-view-toggle`, `.nop-diff-three-col-nav`, `.nop-diff-three-col-line`.
+- [x] Write `[data-slot]` scoped selectors: `.nop-diff-view [data-slot="diff-header"]`, `.nop-diff-view [data-slot="diff-gutter"]`, `.nop-diff-view [data-slot="diff-hunk-header"]`.
+- [x] Write responsive styles: `@media (max-width: 640px)` single-column fallback for split view.
+- [x] Define all color tokens via CSS custom properties on `.nop-diff-view` root, covering add/del/conflict/hunk/gutter backgrounds, line number styling, code foreground, and hover states per design doc §10.
 
 Exit Criteria:
 
-- [ ] All inventory classes and attribute selectors from Phase 1 have CSS definitions in `styles.css`.
-- [ ] All color values in `styles.css` use CSS custom properties (no hardcoded `oklch()` values outside variable definitions).
-- [ ] All `[data-slot]` selectors are scoped under `.nop-diff-view` or a specific child class.
+- [x] All inventory classes and attribute selectors from Phase 1 have CSS definitions in `styles.css`.
+- [x] All color values in `styles.css` use CSS custom properties (no hardcoded `oklch()` values outside variable definitions).
+- [x] All `[data-slot]` selectors are scoped under `.nop-diff-view` or a specific child class.
 
 ### Phase 3 — Verification & Documentation
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/styles.css`, `apps/playground/src/pages/diff-demo.tsx`
 
 - Item Types: `Proof | Follow-up`
 
-- [ ] Verify playground CSS imports content-package styles (or that diff-view CSS is available at runtime). If missing, add `@import '@nop-chaos/flux-renderers-content/styles.css'` in `apps/playground/src/styles.css`.
-- [ ] Manually verify in playground: diff-view demo page renders correct add/del colors, hunk fold arrows, split/unified spacing, line numbers, three-column navigation, and responsive breakpoint.
+- [x] Verify playground CSS imports content-package styles (or that diff-view CSS is available at runtime). If missing, add `@import '@nop-chaos/flux-renderers-content/styles.css'` in `apps/playground/src/styles.css`.
+- [x] Manually verify in playground: diff-view demo page renders correct add/del colors, hunk fold arrows, split/unified spacing, line numbers, three-column navigation, and responsive breakpoint.
 
 Exit Criteria:
 
-- [ ] Playground diff-view demo page renders correctly with the new CSS (visual check across split, unified, and three-column modes).
+- [x] Playground diff-view demo page renders correctly with the new CSS (visual check across split, unified, and three-column modes).
 
 ## Draft Review Record
 
@@ -121,18 +121,18 @@ Exit Criteria:
 
 > All Phase Exit Criteria must be met. The full workspace verification is run here once.
 
-- [ ] All diff-view class names and attribute selectors have CSS definitions in `styles.css` with proper scoping.
-- [ ] All color values use CSS custom properties (no hardcoded oklch/literals outside variable definitions).
-- [ ] `[data-slot]` selectors scoped under root marker class.
-- [ ] Responsive breakpoint (640px) single-column fallback implemented.
-- [ ] Playground diff-view demo renders correctly.
-- [ ] No in-scope live defect or contract drift silently deferred.
-- [ ] Affected owner docs updated: `docs/logs/` daily log entry.
-- [ ] By independent sub-agent (fresh session) closure-audit completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All diff-view class names and attribute selectors have CSS definitions in `styles.css` with proper scoping.
+- [x] All color values use CSS custom properties (no hardcoded oklch/literals outside variable definitions).
+- [x] `[data-slot]` selectors scoped under root marker class.
+- [x] Responsive breakpoint (640px) single-column fallback implemented.
+- [x] Playground diff-view demo renders correctly.
+- [x] No in-scope live defect or contract drift silently deferred.
+- [x] Affected owner docs updated: `docs/logs/` daily log entry.
+- [x] By independent sub-agent (fresh session) closure-audit completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -144,12 +144,12 @@ _(No deferred items — this is a small, self-contained CSS-only plan.)_
 
 ## Closure
 
-Status Note: _(to be filled on completion)_
+Status Note: All phases executed. Closure audit completed, 2 findings remediated and re-verified.
 
 Closure Audit Evidence:
 
-- Auditor / Agent: _(to be filled by independent sub-agent)_
-- Evidence:
+- Auditor / Agent: independent `general` sub-agent (task `ses_07dad0725ffem2l6Vjodahos6N`)
+- Evidence: Audit found 2 remediation items: (1) 4 marker classes without explicit CSS definitions (`nop-diff-split-new`, `nop-diff-three-col-old`, `nop-diff-three-col-mid`, `nop-diff-three-col-new`) added with `min-width`/`overflow` rules; (2) 5 hardcoded `#fff` backgrounds replaced with `var(--nop-diff-root-bg)`. Both remediated and re-verified via `pnpm typecheck` (56/56), `pnpm build` (30/30), `pnpm lint` (30/30), `pnpm test` (all tests pass).
 
 Follow-up:
 

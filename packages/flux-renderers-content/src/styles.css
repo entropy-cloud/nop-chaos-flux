@@ -29,3 +29,613 @@
 .nop-progress[data-variant='danger'] [data-slot='progress-indicator'] {
   background-color: oklch(58% 0.22 27);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Diff-view — self-styled widget renderer
+   CSS custom property tokens (oklch color space) scoped to root.
+   All color values use variables; no hardcoded oklch outside defs.
+   ═══════════════════════════════════════════════════════════════ */
+
+.nop-diff-view {
+  /* Add (insertion) colors */
+  --nop-diff-add-bg: oklch(96% 0.03 145);
+  --nop-diff-add-bg-hover: oklch(94% 0.05 145);
+  --nop-diff-add-gutter-bg: oklch(92% 0.06 145);
+  --nop-diff-inline-insert-bg: oklch(86% 0.1 145);
+
+  /* Delete (removal) colors */
+  --nop-diff-del-bg: oklch(96% 0.03 25);
+  --nop-diff-del-bg-hover: oklch(94% 0.05 25);
+  --nop-diff-del-gutter-bg: oklch(92% 0.06 25);
+  --nop-diff-inline-delete-bg: oklch(86% 0.1 25);
+
+  /* Context colors */
+  --nop-diff-context-bg: transparent;
+  --nop-diff-context-gutter-bg: oklch(97% 0.005 250);
+
+  /* Conflict colors */
+  --nop-diff-conflict-bg: oklch(97% 0.04 85);
+  --nop-diff-conflict-marker-bg: oklch(92% 0.1 85);
+  --nop-diff-conflict-marker-text: oklch(45% 0.14 45);
+
+  /* Three-column change-highlight */
+  --nop-diff-change-old-bg: oklch(96% 0.03 25);
+  --nop-diff-change-new-bg: oklch(96% 0.03 145);
+
+  /* Gutter */
+  --nop-diff-gutter-bg: oklch(97% 0.005 250);
+  --nop-diff-gutter-text: oklch(62% 0.01 250);
+  --nop-diff-gutter-border: oklch(92% 0.005 250);
+
+  /* Hunk header */
+  --nop-diff-hunk-bg: oklch(94% 0.01 250);
+  --nop-diff-hunk-hover-bg: oklch(92% 0.02 250);
+  --nop-diff-hunk-text: oklch(40% 0.02 250);
+
+  /* Header bar */
+  --nop-diff-header-bg: oklch(98% 0.002 250);
+  --nop-diff-header-border: oklch(92% 0.005 250);
+  --nop-diff-header-text: oklch(30% 0.01 250);
+
+  /* Stat badges */
+  --nop-diff-stat-added-text: oklch(48% 0.16 145);
+  --nop-diff-stat-removed-text: oklch(52% 0.2 25);
+
+  /* View toggle */
+  --nop-diff-toggle-bg: oklch(95% 0.005 250);
+  --nop-diff-toggle-hover-bg: oklch(90% 0.01 250);
+  --nop-diff-toggle-text: oklch(40% 0.02 250);
+  --nop-diff-toggle-border: oklch(88% 0.005 250);
+
+  /* Pane header */
+  --nop-diff-pane-header-bg: oklch(97% 0.003 250);
+  --nop-diff-pane-header-text: oklch(45% 0.01 250);
+  --nop-diff-pane-header-border: oklch(92% 0.005 250);
+
+  /* Borders */
+  --nop-diff-border: oklch(90% 0.005 250);
+
+  /* Three-column nav */
+  --nop-diff-nav-bg: oklch(98% 0.002 250);
+  --nop-diff-nav-border: oklch(92% 0.005 250);
+
+  /* Flash animation */
+  --nop-diff-flash-bg: oklch(88% 0.06 85);
+
+  /* Code text */
+  --nop-diff-code-text: inherit;
+
+  /* Root background */
+  --nop-diff-root-bg: oklch(100% 0 0);
+
+  /* Empty state */
+  --nop-diff-empty-text: oklch(60% 0.01 250);
+
+  /* Font */
+  font-family: ui-monospace, SFMono-Regular, 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--nop-diff-code-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Root container & view-mode variants ─── */
+
+.nop-diff-view[data-view='split'] {
+  border: 1px solid var(--nop-diff-border);
+  border-radius: 6px;
+  background: var(--nop-diff-root-bg);
+}
+
+.nop-diff-view[data-view='unified'] {
+  border: 1px solid var(--nop-diff-border);
+  border-radius: 6px;
+  background: var(--nop-diff-root-bg);
+}
+
+.nop-diff-view[data-view='three-column'] {
+  border: 1px solid var(--nop-diff-border);
+  border-radius: 6px;
+  background: var(--nop-diff-root-bg);
+}
+
+.nop-diff-view-three-column {
+  border: 1px solid var(--nop-diff-border);
+  border-radius: 6px;
+  background: var(--nop-diff-root-bg);
+}
+
+.nop-diff-view-empty {
+  border: 1px solid var(--nop-diff-border);
+  border-radius: 6px;
+  background: var(--nop-diff-root-bg);
+}
+
+.nop-diff-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  color: var(--nop-diff-empty-text);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+/* ─── View panel / layout components ─── */
+
+.nop-diff-split-view {
+  display: contents;
+}
+
+.nop-diff-split-pane {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.nop-diff-unified-view {
+  min-width: 0;
+}
+
+.nop-diff-three-column-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nop-diff-three-col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+.nop-diff-three-col-pane {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.nop-diff-three-col-pane.border-r {
+  border-right: 1px solid var(--nop-diff-border);
+}
+
+.nop-diff-split-old,
+.nop-diff-split-new {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.nop-diff-three-col-old,
+.nop-diff-three-col-mid,
+.nop-diff-three-col-new {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.nop-diff-pane-header {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--nop-diff-pane-header-bg);
+  color: var(--nop-diff-pane-header-text);
+  border-bottom: 1px solid var(--nop-diff-pane-header-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* ─── Line-level styles via [data-diff-type] ─── */
+
+.nop-diff-line {
+  display: flex;
+  align-items: stretch;
+  min-height: 24px;
+  border-bottom: none;
+  transition: background-color 120ms ease;
+}
+
+.nop-diff-line-clickable {
+  cursor: pointer;
+}
+
+.nop-diff-line-clickable:hover {
+  outline: none;
+}
+
+/* add */
+.nop-diff-line[data-diff-type='add'],
+.nop-diff-line-add {
+  background-color: var(--nop-diff-add-bg);
+}
+.nop-diff-line[data-diff-type='add']:hover,
+.nop-diff-line-add:hover {
+  background-color: var(--nop-diff-add-bg-hover);
+}
+
+/* delete */
+.nop-diff-line[data-diff-type='delete'],
+.nop-diff-line-delete {
+  background-color: var(--nop-diff-del-bg);
+}
+.nop-diff-line[data-diff-type='delete']:hover,
+.nop-diff-line-delete:hover {
+  background-color: var(--nop-diff-del-bg-hover);
+}
+
+/* context */
+.nop-diff-line[data-diff-type='context'],
+.nop-diff-line-context {
+  background-color: var(--nop-diff-context-bg);
+}
+
+/* hunk */
+.nop-diff-line[data-diff-type='hunk'],
+.nop-diff-line-hunk {
+  background-color: var(--nop-diff-hunk-bg);
+  color: var(--nop-diff-hunk-text);
+}
+
+/* conflict line types (three-column) */
+.nop-diff-line[data-diff-type='conflict'],
+.nop-diff-line-conflict {
+  background-color: var(--nop-diff-conflict-bg);
+}
+
+.nop-diff-line[data-diff-type='conflict-start'],
+.nop-diff-line[data-diff-type='conflict-separator'],
+.nop-diff-line[data-diff-type='conflict-end'],
+.nop-diff-line-conflict-marker {
+  background-color: var(--nop-diff-conflict-marker-bg);
+  color: var(--nop-diff-conflict-marker-text);
+  font-weight: 700;
+  text-align: center;
+}
+
+.nop-diff-line-change-old {
+  background-color: var(--nop-diff-change-old-bg);
+}
+
+.nop-diff-line-change-new {
+  background-color: var(--nop-diff-change-new-bg);
+}
+
+/* three-column line */
+.nop-diff-three-col-line {
+  display: flex;
+  align-items: stretch;
+  min-height: 24px;
+  transition: background-color 120ms ease;
+}
+
+.nop-diff-three-col-line[data-diff-type='context'] {
+  background-color: var(--nop-diff-context-bg);
+}
+
+/* ─── Inline diff styles ─── */
+
+.nop-diff-content [data-diff-inline='insert'] {
+  background-color: var(--nop-diff-inline-insert-bg);
+  border-radius: 2px;
+}
+
+.nop-diff-content [data-diff-inline='delete'] {
+  background-color: var(--nop-diff-inline-delete-bg);
+  border-radius: 2px;
+}
+
+/* ─── Hunk component styles ─── */
+
+.nop-diff-hunk {
+  border-bottom: 1px solid var(--nop-diff-border);
+}
+
+.nop-diff-hunk:last-child {
+  border-bottom: none;
+}
+
+.nop-diff-hunk-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  background: var(--nop-diff-hunk-bg);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.nop-diff-hunk-collapsed:hover {
+  background: var(--nop-diff-hunk-hover-bg);
+}
+
+.nop-diff-hunk-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--nop-diff-hunk-text);
+  background: transparent;
+  border: 1px solid var(--nop-diff-toggle-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.nop-diff-hunk-expand-btn:hover {
+  background: var(--nop-diff-toggle-hover-bg);
+}
+
+.nop-diff-hunk-expanded {
+  background: transparent;
+}
+
+.nop-diff-hunk-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: var(--nop-diff-hunk-bg);
+  border-bottom: 1px solid var(--nop-diff-border);
+}
+
+.nop-diff-hunk-header-text {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--nop-diff-hunk-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nop-diff-hunk-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--nop-diff-hunk-text);
+  background: transparent;
+  border: 1px solid var(--nop-diff-toggle-border);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.nop-diff-hunk-collapse-btn:hover {
+  background: var(--nop-diff-toggle-hover-bg);
+}
+
+/* ─── Gutter & content styles ─── */
+
+.nop-diff-gutter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 48px;
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--nop-diff-gutter-text);
+  background: var(--nop-diff-context-gutter-bg);
+  border-right: 1px solid var(--nop-diff-gutter-border);
+  user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
+}
+
+/* gutter in add lines */
+.nop-diff-line[data-diff-type='add'] .nop-diff-gutter {
+  background: var(--nop-diff-add-gutter-bg);
+}
+
+/* gutter in delete lines */
+.nop-diff-line[data-diff-type='delete'] .nop-diff-gutter {
+  background: var(--nop-diff-del-gutter-bg);
+}
+
+/* gutter for new-column in unified view */
+.nop-diff-gutter-new {
+  border-left: 1px solid var(--nop-diff-gutter-border);
+}
+
+.nop-diff-gutter-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 48px;
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--nop-diff-gutter-text);
+  background: var(--nop-diff-context-gutter-bg);
+  user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
+}
+
+.nop-diff-content {
+  flex: 1;
+  padding: 2px 12px;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.nop-diff-wrap .nop-diff-content {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ─── Header & navigation styles ─── */
+
+.nop-diff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--nop-diff-header-bg);
+  border-bottom: 1px solid var(--nop-diff-header-border);
+  gap: 12px;
+}
+
+.nop-diff-header-files {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.nop-diff-file-old {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--nop-diff-stat-removed-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nop-diff-file-new {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--nop-diff-stat-added-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nop-diff-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.nop-diff-stat-added {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--nop-diff-stat-added-text);
+}
+
+.nop-diff-stat-removed {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--nop-diff-stat-removed-text);
+}
+
+.nop-diff-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--nop-diff-toggle-text);
+  background: var(--nop-diff-toggle-bg);
+  border: 1px solid var(--nop-diff-toggle-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+  flex-shrink: 0;
+}
+
+.nop-diff-view-toggle:hover {
+  background: var(--nop-diff-toggle-hover-bg);
+}
+
+/* Three-column navigation bar */
+.nop-diff-three-col-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--nop-diff-nav-bg);
+  border-bottom: 1px solid var(--nop-diff-nav-border);
+}
+
+/* Three-column nav button overrides for compactness */
+.nop-diff-three-col-nav button {
+  font-family: inherit;
+}
+
+/* ─── data-slot scoped selectors ─── */
+
+.nop-diff-view [data-slot='diff-header'] {
+  /* header styles already applied via .nop-diff-header */
+}
+
+.nop-diff-view [data-slot='diff-gutter'] {
+  /* gutter styles already applied via .nop-diff-gutter */
+}
+
+.nop-diff-view [data-slot='diff-hunk-header'] {
+  /* hunk-header styles already applied via .nop-diff-hunk */
+}
+
+/* ─── Virtual list ─── */
+
+.nop-diff-virtual-list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Flash animation (scroll-to) ─── */
+
+.nop-diff-line-flash {
+  animation: nop-diff-flash 0.5s ease-out;
+}
+
+@keyframes nop-diff-flash {
+  0% {
+    background-color: var(--nop-diff-flash-bg);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* ─── Responsive: single-column fallback below 640px ─── */
+
+@media (max-width: 640px) {
+  .nop-diff-view[data-view='split'] {
+    /* Force switch to unified-like single column */
+  }
+
+  .nop-diff-view[data-view='split'] .nop-diff-split-view {
+    display: block;
+  }
+
+  .nop-diff-view[data-view='split'] .nop-diff-split-pane {
+    width: 100%;
+  }
+
+  .nop-diff-view[data-view='split'] .nop-diff-split-old {
+    border-bottom: 1px solid var(--nop-diff-border);
+  }
+
+  /* Force three-column to stack vertically */
+  .nop-diff-three-col-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .nop-diff-three-col-pane.border-r {
+    border-right: none;
+    border-bottom: 1px solid var(--nop-diff-border);
+  }
+
+  .nop-diff-header {
+    flex-wrap: wrap;
+  }
+
+  .nop-diff-gutter,
+  .nop-diff-gutter-cell {
+    min-width: 36px;
+    padding: 0 4px;
+  }
+}
