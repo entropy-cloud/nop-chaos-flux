@@ -368,6 +368,8 @@ graph TD
 
 ### 性能基线
 
+#### 目标 Baseline
+
 | 组件      | 目标                                    | 测量方法               |
 | --------- | --------------------------------------- | ---------------------- |
 | Gantt     | 500 任务 + 2000 依赖，60fps 滚动 + 拖拽 | Chrome Performance tab |
@@ -376,15 +378,34 @@ graph TD
 | Barcode   | 扫码延迟 < 500ms（frame → result）      | performance.now()      |
 | Diff-view | 1000 行 diff 首屏 < 200ms               | Chromium flamegraph    |
 
+#### 当前实测值
+
+> 以下数据由 `tests/e2e/kanban-perf.spec.ts` 和 `tests/e2e/calendar-perf.spec.ts` 在 Playwright headless Chromium 环境中采集，2026-07-21。
+
+| 组件     | 场景                   | 实测值                         | 目标值         | 达标？  | 备注                                                                                 |
+| -------- | ---------------------- | ------------------------------ | -------------- | ------- | ------------------------------------------------------------------------------------ |
+| Kanban   | 默认 demo 页面空载 FPS | avg 75fps, min 32.3fps         | 60fps 拖拽目标 | 待验证ⁱ | 仅 idle 基线，非 20×300 规格拖拽                                                     |
+| Calendar | 默认 demo 页面首次加载 | 11,168ms（含 Playwright 等待） | 首屏 < 500ms   | ❌      | 测量含 `waitUntil: 'load'` + 断言等待，不代表纯渲染时间。300×31 场景需专用测试页面。 |
+
+> ⁱ Kanban 20 列 × 300 卡片规格需要专用测试页面（通过 `page.evaluate` 注入大数据后再挂载 SchemaRenderer），当前 idle FPS 仅作为空白基线参考。Calendar 300 资源 × 31 天规格同需要专用测试页面。相关优化归入后续专项计划。
+
+#### 性能测量脚本
+
+- `tests/e2e/helpers/measure-perf.ts` — FPS 捕获（`requestAnimationFrame` delta）和 timing 工具函数
+- `tests/e2e/kanban-perf.spec.ts` — Kanban idle FPS 基线
+- `tests/e2e/calendar-perf.spec.ts` — Calendar 首次加载时间
+
 ### 测试策略
 
-| 组件      | 单元测试                          | 集成测试                | E2E                       | Playground 测试页面   |
-| --------- | --------------------------------- | ----------------------- | ------------------------- | --------------------- |
-| Gantt     | store + 坐标 + 缩放 + 日历 + redo | 渲染 + 拖拽 + editor    | Playwright 拖拽/缩放/键盘 | S10.1 `gantt-demo`    |
-| Kanban    | 纯函数 helpers + 过滤             | 渲染 + 拖拽 + configMap | Playwright 拖拽跨列       | S10.3 `kanban-demo`   |
-| Calendar  | 日期 + 定位 + 冲突检测            | 渲染 + 虚拟滚动         | Playwright 视图切换       | S10.2 `calendar-demo` |
-| Barcode   | WASM + 相机 mock + 解码           | 渲染 + overlay          | —（需摄像头 mock）        | S10.4 `barcode-demo`  |
-| Diff-view | 解析 + inline-diff + 高亮         | 渲染 + 虚拟滚动         | Playwright split/unified  | S10.5 `diff-demo`     |
+| 组件      | 单元测试                          | 集成测试                | E2E                       | Playground 测试页面   | E2E 测试文件                                |
+| --------- | --------------------------------- | ----------------------- | ------------------------- | --------------------- | ------------------------------------------- |
+| Gantt     | store + 坐标 + 缩放 + 日历 + redo | 渲染 + 拖拽 + editor    | Playwright 拖拽/缩放/键盘 | S10.1 `gantt-demo`    | —                                           |
+| Kanban    | 纯函数 helpers + 过滤             | 渲染 + 拖拽 + configMap | Playwright 拖拽跨列 ✅    | S10.3 `kanban-demo`   | `tests/e2e/kanban-demo.spec.ts` (6 tests)   |
+| Calendar  | 日期 + 定位 + 冲突检测            | 渲染 + 虚拟滚动         | Playwright 视图切换 ✅    | S10.2 `calendar-demo` | `tests/e2e/calendar-demo.spec.ts` (6 tests) |
+| Barcode   | WASM + 相机 mock + 解码           | 渲染 + overlay          | —（需摄像头 mock）        | S10.4 `barcode-demo`  | —                                           |
+| Diff-view | 解析 + inline-diff + 高亮         | 渲染 + 虚拟滚动         | Playwright split/unified  | S10.5 `diff-demo`     | —                                           |
+
+**Test coverage status (2026-07-21):** Kanban 和 Calendar 的 Playwright E2E 测试已通过，覆盖搜索、过滤、视图切换、导航、事件渲染等。Kanban 纯函数 helper 新增快照式测试。性能基线脚本已创建。参见 `docs/plans/2026-07-21-2100-1-scheduling-test-coverage-plan.md`。
 
 ### 需补充设计文档
 
