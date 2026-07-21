@@ -4,6 +4,7 @@ import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-rea
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { RendererEnv } from '@nop-chaos/flux-core';
+import type { DiffFileMeta } from '@nop-chaos/flux-renderers-content';
 import { ArrowLeft } from 'lucide-react';
 
 interface DiffDemoPageProps {
@@ -50,17 +51,92 @@ const MIDDLE_CONTENT = `姓名：张三
 部门：研发中心
 入职日期：2023-01-15`;
 
+const CROSS_FILE_FILES: DiffFileMeta[] = [
+  {
+    fileName: 'src/user/profile.ts',
+    status: 'modified',
+    oldContent: `export function getDisplayName(user: User): string {
+  return user.name;
+}
+
+export function formatPhone(phone: string): string {
+  return phone.replace(/(\\d{3})(\\d{4})(\\d{4})/, '$1****$3');
+}`,
+    newContent: `export function getDisplayName(user: User): string {
+  return user.nickname ?? user.name;
+}
+
+export function formatPhone(phone: string): string {
+  return phone.replace(/(\\d{3})(\\d{4})(\\d{4})/, '$1****$3');
+}
+
+export function formatEmail(email: string): string {
+  return email.toLowerCase();
+}`,
+    language: 'typescript',
+  },
+  {
+    fileName: 'src/user/constants.ts',
+    status: 'added',
+    oldContent: '',
+    newContent: `export const DEFAULT_PAGE_SIZE = 20;
+export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
+export const SUPPORTED_LOCALES = ['zh-CN', 'en-US'] as const;
+`,
+    language: 'typescript',
+  },
+  {
+    fileName: 'src/legacy/utils.js',
+    status: 'deleted',
+    oldContent: `function legacyFormat(input) {
+  return input.toString().padStart(2, '0');
+}
+
+module.exports = { legacyFormat };`,
+    newContent: '',
+    language: 'javascript',
+  },
+  {
+    fileName: 'config/api-endpoints.json',
+    status: 'modified',
+    oldContent: `{
+  "baseUrl": "http://old-api.example.com",
+  "timeout": 5000,
+  "retryCount": 0
+}`,
+    newContent: `{
+  "baseUrl": "https://api.example.com",
+  "timeout": 10000,
+  "retryCount": 3,
+  "enableCompression": true
+}`,
+    language: 'json',
+  },
+  {
+    fileName: 'README.md',
+    status: 'added',
+    oldContent: '',
+    newContent: `# User Service
+
+## Getting Started
+Run \`pnpm install\` then \`pnpm dev\`.
+
+## API Documentation
+See \`docs/api.md\` for details.
+`,
+  },
+];
+
 export function DiffDemoPage({ onBack }: DiffDemoPageProps) {
   const [viewType, setViewType] = useState<'split' | 'unified'>('split');
   const [showInlineDiff, setShowInlineDiff] = useState(true);
   const [showLineNumbers, setShowLineNumbers] = useState(true);
-  const [useThreeColumn, setUseThreeColumn] = useState(false);
+  const [mode, setMode] = useState<'single' | 'three-column' | 'cross-file'>('single');
 
-  const schema = {
+  const singleSchema = {
     type: 'diff-view',
     oldContent: OLD_CONTENT,
     newContent: NEW_CONTENT,
-    middleContent: useThreeColumn ? MIDDLE_CONTENT : undefined,
     language: 'plaintext',
     viewType,
     showLineNumbers,
@@ -68,6 +144,28 @@ export function DiffDemoPage({ onBack }: DiffDemoPageProps) {
     defaultCollapsedLines: 15,
     wrapLines: false,
   };
+
+  const threeColumnSchema = {
+    ...singleSchema,
+    oldContent: OLD_CONTENT,
+    newContent: NEW_CONTENT,
+    middleContent: MIDDLE_CONTENT,
+  };
+
+  const crossFileSchema = {
+    type: 'diff-view',
+    files: CROSS_FILE_FILES,
+    activeFileIndex: 0,
+    viewType,
+    showLineNumbers,
+    showInlineDiff,
+    defaultCollapsedLines: 15,
+    wrapLines: false,
+  };
+
+  const schema = mode === 'cross-file' ? crossFileSchema
+    : mode === 'three-column' ? threeColumnSchema
+    : singleSchema;
 
   return (
     <div className="h-screen flex flex-col">
@@ -78,6 +176,18 @@ export function DiffDemoPage({ onBack }: DiffDemoPageProps) {
         <h1 className="text-lg font-semibold">Diff View Demo</h1>
       </div>
       <div className="flex items-center gap-4 px-4 py-2 border-b bg-gray-50 shrink-0">
+        <label className="flex items-center gap-2 text-sm">
+          Mode:
+          <select
+            className="border rounded px-2 py-1 text-sm"
+            value={mode}
+            onChange={(e) => setMode(e.target.value as typeof mode)}
+          >
+            <option value="single">Single File</option>
+            <option value="three-column">Three-Column Compare</option>
+            <option value="cross-file">Cross-File</option>
+          </select>
+        </label>
         <label className="flex items-center gap-2 text-sm">
           View Type:
           <select
@@ -104,14 +214,6 @@ export function DiffDemoPage({ onBack }: DiffDemoPageProps) {
             onChange={(e) => setShowLineNumbers(e.target.checked)}
           />
           Line Numbers
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={useThreeColumn}
-            onChange={(e) => setUseThreeColumn(e.target.checked)}
-          />
-          Three-Column Compare
         </label>
       </div>
       <div className="flex-1 min-h-0">

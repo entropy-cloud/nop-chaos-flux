@@ -30,6 +30,7 @@ export type {
   QrCodeSchema,
   QrCodeLevel,
   DiffViewSchema,
+  DiffFileMeta,
 } from './schemas.js';
 
 export { SeparatorRenderer } from './separator.js';

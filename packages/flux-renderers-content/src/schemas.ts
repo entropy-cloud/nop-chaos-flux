@@ -1,13 +1,30 @@
 import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
 
-export interface DiffViewSchema extends BaseSchema {
-  type: 'diff-view';
+export interface DiffFileMeta extends SchemaObject {
+  /** 文件名（含路径） */
+  fileName: string;
   /** 旧版本内容字符串 */
   oldContent?: string;
   /** 新版本内容字符串 */
   newContent?: string;
-  /** 基版本内容字符串（三栏对比时必需） */
+  /** 语法高亮语言标识 */
+  language?: string;
+  /** 文件变更状态 */
+  status: 'added' | 'modified' | 'deleted';
+}
+
+export interface DiffViewSchema extends BaseSchema {
+  type: 'diff-view';
+  /** 旧版本内容字符串。与 files 字段互斥，提供 files 时忽略此字段 */
+  oldContent?: string;
+  /** 新版本内容字符串。与 files 字段互斥，提供 files 时忽略此字段 */
+  newContent?: string;
+  /** 基版本内容字符串（三栏对比时必需）。与 files 字段互斥 */
   middleContent?: string;
+  /** 多文件变更列表。与 oldContent/newContent 互斥——提供 files 时忽略旧/新内容字段 */
+  files?: DiffFileMeta[];
+  /** 当前查看的文件索引，默认 0 */
+  activeFileIndex?: number;
   /** 语法高亮语言标识 */ 
   language?: string;
   /** 视图模式 split/unified，默认 split */  
