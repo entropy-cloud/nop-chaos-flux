@@ -49,6 +49,8 @@ import { KanbanDemoPage } from './pages/kanban-demo';
 import { DiffDemoPage } from './pages/diff-demo';
 import { CalendarDemoPage } from './pages/calendar-demo';
 import { BarcodeDemoPage } from './pages/barcode-demo';
+import { CalendarPerfScaleDemoPage } from './pages/calendar-perf-scale-demo';
+import { KanbanPerfScaleDemoPage } from './pages/kanban-perf-scale-demo';
 import { DataVerifyPage } from './pages/data-verify-page';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
@@ -248,6 +250,10 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <BarcodeDemoPage onBack={goHome} />;
         case 'diff-view':
           return <DiffDemoPage onBack={goHome} />;
+        case 'calendar-perf-scale':
+          return <CalendarPerfScaleDemoPage onBack={goHome} />;
+        case 'kanban-perf-scale':
+          return <KanbanPerfScaleDemoPage onBack={goHome} />;
         case 'data-verify':
           return <DataVerifyPage onBack={goHome} />;
         default:

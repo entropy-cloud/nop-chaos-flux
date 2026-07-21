@@ -7,7 +7,7 @@
  * Gantt uses Zustand + Context (deeper tree, more inter-component subscriptions).
  * Calendar uses custom hooks (view state localized to scroll/navigation hooks).
  */
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn, Button, Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -74,12 +74,12 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     },
     [isControlled],
   );
-  const columns = getColumns(boardData);
+  const columns = useMemo(() => getColumns(boardData), [boardData]);
   const [collapsedMap, setCollapsedMap] = useState<Record<string, boolean>>({});
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const setBoardDataRef = useRef(setBoardData);
-  setBoardDataRef.current = setBoardData;
+  useEffect(() => { setBoardDataRef.current = setBoardData; }, [setBoardData]);
 
   const [undoStackState, setUndoStackState] = useState<UndoStack>(() => createUndoStack(1000));
   const [activityLogOpen, setActivityLogOpen] = useState(false);
@@ -90,7 +90,6 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     actionCounterRef.current += 1;
     const entry: KanbanAction = {
       ...action,
-      // eslint-disable-next-line react-hooks/purity
       id: `act-${Date.now()}-${actionCounterRef.current}`,
       timestamp: new Date().toISOString(),
     };
