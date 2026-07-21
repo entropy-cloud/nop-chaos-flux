@@ -132,6 +132,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const el = boardRef.current;
+      if (!el) return;
+      if (!el.contains(document.activeElement)) return;
       const target = e.target as HTMLElement | null;
       const isEditable = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
       if (isEditable) return;
@@ -274,7 +277,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     }
 
     return () => cleanups.forEach((fn) => fn());
-  }, [boardData, draggable, registerCard, registerColumn, registerColumnHeader]);
+  }, [draggable, registerCard, registerColumn, registerColumnHeader]);
 
   if (!meta.visible) return null;
 

@@ -5,7 +5,7 @@ import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import type { CalendarDateRange } from '../calendar.types.js';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import { getMonthDays, isToday, isWeekend, toISODateString } from '../utils/calendar-date-utils.js';
-import { positionEventsInMonth, detectConflicts, splitMultiDayEvents } from '../utils/calendar-layout-utils.js';
+import { positionEventsInMonth, splitMultiDayEvents } from '../utils/calendar-layout-utils.js';
 import { computeCrossDayLines, createSVGPath, type CellPosition } from '../utils/calendar-cross-day-lines.js';
 import { CalendarEventBlock } from './calendar-event-block.js';
 
@@ -70,26 +70,23 @@ export function CalendarMonthView({
 
   const conflictMap = useMemo(() => {
     const map = new Map<string, Set<string>>();
-    for (const resource of resources) {
-      for (const day of days) {
-        const dateStr = toISODateString(day);
-        const conflict = detectConflicts({ events, resourceId: resource.id, date: dateStr });
-        if (conflict) {
-          const key = `${resource.id}:${dateStr}`;
-          if (!map.has(key)) map.set(key, new Set());
-          for (const evt of conflict.overlappingEvents) {
-            map.get(key)!.add(evt.id);
-          }
+    for (const [resourceId, dayMap] of positionedMap) {
+      for (const [dateStr, dayEvents] of dayMap) {
+        if (dayEvents.length <= 1) continue;
+        const key = `${resourceId}:${dateStr}`;
+        const ids = new Set<string>();
+        for (const pe of dayEvents) {
+          ids.add(pe.eventId);
+        }
+        if (ids.size > 1) {
+          map.set(key, ids);
         }
       }
     }
     return map;
-  }, [events, resources, days]);
+  }, [positionedMap]);
 
-  const weekdayLabels = useMemo(
-    () => getWeekdayLabels(locale, firstDayOfWeek),
-    [locale, firstDayOfWeek],
-  );
+  const weekdayLabels = getWeekdayLabels(locale, firstDayOfWeek);
 
   const headerCells = days.slice(0, 7).map((day, i) => (
     <div

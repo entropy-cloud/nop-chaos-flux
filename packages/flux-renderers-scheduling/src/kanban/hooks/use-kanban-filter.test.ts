@@ -74,7 +74,7 @@ describe('useKanbanFilter', () => {
     expect(filterCard).toHaveBeenCalled();
   });
 
-  it('syncs filterText reactively when external filterText prop changes - F-41', () => {
+  it('ignores external filterText prop changes (04-08, one-directional)', () => {
     const { result, rerender } = renderHook(
       ({ filterText }: UseKanbanFilterOptions) => useKanbanFilter({ filterText }),
       { initialProps: { filterText: 'initial' } },
@@ -87,7 +87,7 @@ describe('useKanbanFilter', () => {
       vi.advanceTimersByTime(300);
     });
 
-    expect(result.current.filterText).toBe('updated');
-    expect(result.current.activeFilterText).toBe('updated');
+    expect(result.current.filterText).toBe('initial');
+    expect(result.current.activeFilterText).toBe('initial');
   });
 });

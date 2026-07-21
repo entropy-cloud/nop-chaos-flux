@@ -1,21 +1,28 @@
 
+import { useState } from 'react';
 
 export interface UseCalendarExportResult {
   exportToPrint: () => void;
   exportToPNG: (element?: HTMLElement | null, fileName?: string) => Promise<void>;
+  exportError: string | null;
+  clearExportError: () => void;
 }
 
 export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement | null>): UseCalendarExportResult {
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const clearExportError = () => setExportError(null);
+
   const exportToPrint = () => {
     window.print();
   };
 
   const exportToPNG = async (element?: HTMLElement | null, fileName = 'calendar-export.png') => {
+    setExportError(null);
     const target = element ?? calendarRef?.current;
     if (!target) return;
 
     try {
-      // html2canvas is optional - dynamic import with fallback
       const html2canvas = (window as any).html2canvas;
       if (!html2canvas) {
         throw new Error('html2canvas not available');
@@ -28,7 +35,10 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
       });
 
       canvas.toBlob((blob: Blob | null) => {
-        if (!blob) return;
+        if (!blob) {
+          setExportError('Failed to generate PNG image');
+          return;
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -37,9 +47,10 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
         URL.revokeObjectURL(url);
       }, 'image/png');
     } catch (err) {
-      console.warn('[Calendar] PNG export failed:', err);
+      const msg = err instanceof Error ? err.message : 'PNG export failed';
+      setExportError(msg);
     }
   };
 
-  return { exportToPrint, exportToPNG };
+  return { exportToPrint, exportToPNG, exportError, clearExportError };
 }

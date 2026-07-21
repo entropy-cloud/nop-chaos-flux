@@ -61,6 +61,29 @@ describe('FilterBar', () => {
     vi.useRealTimers();
   });
 
+  it('clears debounce timer on unmount (06-01)', () => {
+    vi.useFakeTimers();
+    const onFilter = vi.fn();
+    const { unmount } = render(
+      <FilterBar
+        columns={columns}
+        filterText=""
+        onFilterChange={onFilter}
+        sortState={{ field: '', direction: null }}
+        onSortChange={vi.fn()}
+        groupBy={undefined}
+        onGroupByChange={vi.fn()}
+      />,
+    );
+    const inputs = screen.getAllByPlaceholderText('筛选任务...');
+    const input = inputs[inputs.length - 1];
+    fireEvent.change(input, { target: { value: 'should-not-fire' } });
+    unmount();
+    vi.advanceTimersByTime(300);
+    expect(onFilter).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
   it('calls onSortChange when sort button clicked', () => {
     const { container } = render(
       <FilterBar

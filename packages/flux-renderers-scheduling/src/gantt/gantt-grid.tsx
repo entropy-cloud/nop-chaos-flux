@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@nop-chaos/ui';
-import { useGanttStore, useGanttStoreSnapshot } from './gantt-context.js';
+import { useGanttStore, useGanttLayoutSnapshot } from './gantt-context.js';
 import type { GanttTask, GanttColumn } from './gantt.types.js';
 
 const DEFAULT_COLUMNS: GanttColumn[] = [
@@ -20,7 +20,7 @@ interface GanttGridProps {
 
 export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTaskId, className }: GanttGridProps) {
   const store = useGanttStore();
-  useGanttStoreSnapshot();
+  useGanttLayoutSnapshot();
   const [editingCell, setEditingCell] = useState<{ taskId: string | number; column: string } | null>(null);
 
   const tasks = store.getVisibleTasks();

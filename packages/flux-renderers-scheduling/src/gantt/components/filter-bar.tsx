@@ -28,8 +28,13 @@ export function FilterBar({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setLocalText(filterText);
-  }, [filterText]);
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+    };
+  }, []);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -38,9 +43,6 @@ export function FilterBar({
     debounceRef.current = setTimeout(() => {
       onFilterChange(value);
     }, 300);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
   };
 
   const handleSortToggle = (field: string) => {

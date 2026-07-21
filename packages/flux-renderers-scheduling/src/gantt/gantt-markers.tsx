@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { useGanttStore, useGanttStoreSnapshot } from './gantt-context.js';
+import { useGanttStore, useGanttLayoutSnapshot } from './gantt-context.js';
 import { dateToPixel } from './utils/layout.js';
 
 interface GanttMarkersProps {
@@ -11,7 +11,7 @@ interface GanttMarkersProps {
 
 export function GanttMarkers({ showToday = true, className }: GanttMarkersProps) {
   const store = useGanttStore();
-  useGanttStoreSnapshot();
+  useGanttLayoutSnapshot();
 
   const tasks = store.getVisibleTasks();
   const totalHeight = tasks.length > 0

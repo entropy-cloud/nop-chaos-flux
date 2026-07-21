@@ -52,20 +52,24 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
 
     const [store] = useState(() => createInitialStore(resolved));
 
-    useEffect(() => {
-      events.onMount?.({});
-      return () => {
-        events.onUnmount?.({});
-        store.destroy();
-      };
-    }, [events, store]);
+    const eventsRef = useRef(events);
+    useEffect(() => { eventsRef.current = events; }, [events]);
 
     useEffect(() => {
-      const taskData = (resolved.tasks as any[]) ?? [];
-      const linkData = (resolved.links as any[]) ?? [];
-      const resourceData = (resolved.resources as any[]) ?? undefined;
-      const assignmentData = (resolved.assignments as any[]) ?? undefined;
-      store.parse(taskData, linkData, resourceData, assignmentData);
+      eventsRef.current.onMount?.({});
+      return () => {
+        eventsRef.current.onUnmount?.({});
+        store.destroy();
+      };
+    }, [store]);
+
+    const dataFingerprintRef = useRef('');
+    useEffect(() => {
+      const newData = { tasks: resolved.tasks, links: resolved.links, resources: resolved.resources, assignments: resolved.assignments };
+      const fp = JSON.stringify(newData);
+      if (fp === dataFingerprintRef.current) return;
+      dataFingerprintRef.current = fp;
+      store.parse(newData.tasks ?? [], newData.links ?? [], newData.resources, newData.assignments);
     }, [store, resolved.tasks, resolved.links, resolved.resources, resolved.assignments]);
 
     const { onPointerDown: onDragPointerDown } = useGanttDrag(containerRef);

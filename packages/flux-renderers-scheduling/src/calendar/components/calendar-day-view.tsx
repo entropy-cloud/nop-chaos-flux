@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
@@ -40,9 +40,24 @@ export function CalendarDayView({
 
   const hours = Array.from({ length: totalHours }, (_, i) => dayStartHour + i);
 
-  const displayResources = resources.length === 0
-    ? [{ id: '_default', text: '', title: '' }]
-    : resources;
+  const displayResources = useMemo(
+    () => resources.length === 0
+      ? [{ id: '_default', text: '', title: '' }]
+      : resources,
+    [resources],
+  );
+
+  const dayEventsByResource = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>();
+    for (const resource of displayResources) {
+      const filtered = events.filter((evt) => {
+        const evtDate = evt.start.split('T')[0] ?? evt.start;
+        return evtDate === dateStr && (evt.resourceId ?? '') === resource.id;
+      });
+      map.set(resource.id, filtered);
+    }
+    return map;
+  }, [events, displayResources, dateStr]);
 
   return (
     <div data-slot="calendar-matrix" role="grid" aria-label="Calendar day view" className="flex flex-col overflow-auto">
@@ -76,10 +91,7 @@ export function CalendarDayView({
 
         <div role="rowgroup" className="flex-1">
           {displayResources.map((resource) => {
-            const dayEvents = events.filter((evt) => {
-              const evtDate = evt.start.split('T')[0] ?? evt.start;
-              return evtDate === dateStr && (evt.resourceId ?? '') === resource.id;
-            });
+            const dayEvents = dayEventsByResource.get(resource.id) ?? [];
             const positioned = allocateConcurrentWidths(dayEvents, dayStartHour, dayEndHour, maxConcurrent);
 
             return (

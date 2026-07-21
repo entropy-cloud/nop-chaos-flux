@@ -26,22 +26,14 @@ export function useBarcodeDetect(
   const [result, setResult] = useState<BarcodeDetectResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const activeRef = useRef(true);
-  const enabledRef = useRef(enabled);
-
-  useEffect(() => {
-    enabledRef.current = enabled;
-  }, [enabled]);
-
-  useEffect(() => {
-    activeRef.current = true;
-    return () => {
-      activeRef.current = false;
-    };
-  }, []);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const signal = controller.signal;
 
     const video = getVideoElement();
     if (!video) return;
@@ -60,14 +52,10 @@ export function useBarcodeDetect(
     const ctx = ctxRef.current;
 
     async function poll() {
-      if (!activeRef.current || !enabledRef.current) {
-        return;
-      }
+      if (signal.aborted) return;
 
       const currentVideo = getVideoElement();
-      if (!currentVideo || !ctx) {
-        return;
-      }
+      if (!currentVideo || !ctx) return;
 
       if (currentVideo.readyState < 2 || currentVideo.videoWidth === 0) {
         timerRef.current = setTimeout(poll, interval);
@@ -80,24 +68,19 @@ export function useBarcodeDetect(
           return rawResults;
         };
 
-        const decoded = await detectWithSkewRetry(
-          detectFn,
-          currentVideo,
-          canvas,
-          ctx,
-        );
+        const decoded = await detectWithSkewRetry(detectFn, currentVideo, canvas, ctx);
 
-        if (!activeRef.current) return;
+        if (signal.aborted) return;
 
         if (decoded) {
           setResult(decoded);
         }
       } catch (err: any) {
-        if (!activeRef.current) return;
+        if (signal.aborted) return;
         setError(err.message ?? 'Decode error');
       }
 
-      if (activeRef.current && enabledRef.current) {
+      if (!signal.aborted) {
         timerRef.current = setTimeout(poll, interval);
       }
     }
@@ -109,6 +92,7 @@ export function useBarcodeDetect(
     }, interval);
 
     return () => {
+      controller.abort();
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;

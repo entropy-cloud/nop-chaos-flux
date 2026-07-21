@@ -47,10 +47,13 @@ const DEFAULT_SHIFT_TYPES = [
 export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?: React.Ref<CalendarHandle> }) {
   const { ref, props: resolved, meta, regions, events } = props;
 
+  const eventsRef = useRef(events);
+  useEffect(() => { eventsRef.current = events; }, [events]);
+
   useEffect(() => {
-    events.onMount?.({});
-    return () => { events.onUnmount?.({}); };
-  }, [events]);
+    eventsRef.current.onMount?.({});
+    return () => { eventsRef.current.onUnmount?.({}); };
+  }, []);
 
   const initialDate = resolved.date
     ? (parseISODate(resolved.date as string) ?? new Date())
@@ -281,30 +284,6 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     activeView,
     onDateChange: setCurrentDate,
   });
-
-  const prevDateRef = useRef<string | undefined>(resolved.date as string | undefined);
-  useEffect(() => {
-    const dateStr = resolved.date as string | undefined;
-    if (dateStr && dateStr !== prevDateRef.current) {
-      prevDateRef.current = dateStr;
-      const parsed = parseISODate(dateStr);
-      if (parsed && parsed.getTime() !== currentDateRef.current.getTime()) {
-        setCurrentDate(parsed);
-      }
-    }
-  }, [resolved.date, setCurrentDate]);
-
-  const prevViewRef = useRef<string | undefined>(resolved.view as string | undefined);
-  useEffect(() => {
-    const viewStr = resolved.view as string | undefined;
-    if (viewStr && viewStr !== prevViewRef.current) {
-      prevViewRef.current = viewStr;
-      const view = viewStr as CalendarView;
-      if (view !== activeViewRef.current) {
-        setActiveView(view);
-      }
-    }
-  }, [resolved.view, setActiveView]);
 
   useImperativeHandle(
     ref,

@@ -5,10 +5,15 @@ let exportingFlag = false;
 export interface ExportOptions {
   fileName?: string;
   scale?: number;
+  signal?: AbortSignal;
 }
 
 function getFileName(prefix: string, ext: string): string {
   return `${prefix}-${new Date().toISOString().slice(0, 10)}.${ext}`;
+}
+
+function checkAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 }
 
 export async function exportToPng(
@@ -19,10 +24,14 @@ export async function exportToPng(
   if (exportingFlag) return;
   exportingFlag = true;
   const scale = options?.scale ?? 2;
+  const signal = options?.signal;
   try {
+    checkAborted(signal);
     const html2canvasMod: any = await import('html2canvas');
+    checkAborted(signal);
     const h2c: (el: HTMLElement, opts?: any) => Promise<HTMLCanvasElement> = html2canvasMod.default ?? html2canvasMod;
     const canvas = await h2c(element, { scale, useCORS: true });
+    checkAborted(signal);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new Error('Failed to create PNG blob');
     const url = URL.createObjectURL(blob);
@@ -47,12 +56,17 @@ export async function exportToPdf(
   if (exportingFlag) return;
   exportingFlag = true;
   const scale = options?.scale ?? 2;
+  const signal = options?.signal;
   try {
+    checkAborted(signal);
     const html2canvasMod: any = await import('html2canvas');
+    checkAborted(signal);
     const h2c = html2canvasMod.default ?? html2canvasMod;
     const jsPDFMod: any = await import('jspdf');
+    checkAborted(signal);
     const JSPDF = jsPDFMod.default ?? jsPDFMod;
     const canvas = await h2c(element, { scale, useCORS: true });
+    checkAborted(signal);
     const imgData = canvas.toDataURL('image/png');
     const pdf = new JSPDF('landscape', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -73,8 +87,11 @@ export async function exportToExcel(
 ): Promise<void> {
   if (exportingFlag) return;
   exportingFlag = true;
+  const signal = options?.signal;
   try {
+    checkAborted(signal);
     const XLSX: any = await import('xlsx');
+    checkAborted(signal);
     const data = Array.from(tasks.values()).map((task) => ({
       id: String(task.id),
       text: task.text,

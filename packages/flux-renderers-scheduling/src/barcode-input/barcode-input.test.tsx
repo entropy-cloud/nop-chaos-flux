@@ -205,6 +205,12 @@ describe('BarcodeInputRenderer', () => {
       act(() => { lastCall.stopScan(); });
       expect(true).toBe(true);
     });
+
+    it('scanNow handles rejection gracefully (06-02)', () => {
+      render(<BarcodeInputRenderer {...createMockProps()} />);
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      expect(() => lastCall.scanNow()).not.toThrow();
+    });
   });
 
   describe('Phase 2 — autoSubmit Mode', () => {

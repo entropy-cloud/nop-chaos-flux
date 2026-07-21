@@ -23,9 +23,11 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
   const videoRef = options?.videoRef ?? internalRef;
   const streamRef = useRef<MediaStream | null>(null);
   const sessionRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
   const [state, setState] = useState<BarcodeCameraState>({ isActive: false, error: null });
 
   const stop = () => {
+    abortRef.current?.abort();
     sessionRef.current += 1;
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
@@ -38,6 +40,11 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
   };
 
   const start = async () => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const signal = controller.signal;
+
     const session = sessionRef.current + 1;
     sessionRef.current = session;
 
@@ -48,7 +55,7 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
         streamRef.current.getTracks().forEach((t) => t.stop());
       }
 
-      if (session !== sessionRef.current) return;
+      if (signal.aborted) return;
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: options?.videoConstraints ?? {
@@ -58,7 +65,7 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
         },
       });
 
-      if (session !== sessionRef.current) {
+      if (signal.aborted) {
         stream.getTracks().forEach((t) => t.stop());
         return;
       }
@@ -71,14 +78,14 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
         await videoRef.current.play();
       }
 
-      if (session !== sessionRef.current) {
+      if (signal.aborted) {
         stop();
         return;
       }
 
       setState({ isActive: true, error: null });
     } catch (err: any) {
-      if (session !== sessionRef.current) return;
+      if (signal.aborted) return;
       const message = err.name === 'NotAllowedError'
         ? 'Camera permission denied'
         : err.name === 'NotFoundError'

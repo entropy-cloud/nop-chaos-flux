@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
-import { useGanttStore, useGanttStoreSnapshot } from './gantt-context.js';
+import { useGanttStore, useGanttLayoutSnapshot } from './gantt-context.js';
 import { computeScaleIntervals } from './utils/scale.js';
 
 interface GanttCellGridProps {
@@ -10,7 +10,7 @@ interface GanttCellGridProps {
 
 export function GanttCellGrid({ showWeekends = true, className }: GanttCellGridProps) {
   const store = useGanttStore();
-  useGanttStoreSnapshot();
+  useGanttLayoutSnapshot();
 
   const tasks = store.getVisibleTasks();
   const totalHeight = tasks.length * store.rowHeight;

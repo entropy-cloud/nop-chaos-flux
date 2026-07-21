@@ -24,7 +24,7 @@ function connectImpl(
   onMessage: ((msg: CollabMessage) => void) | undefined,
   wsRef: MutableRefObject<WebSocket | null>,
   reconnectTimerRef: MutableRefObject<ReturnType<typeof setTimeout> | null>,
-  mountedRef: MutableRefObject<boolean>,
+  signal: AbortSignal,
   connectFn: () => void,
 ): void {
   if (!wsUrl || !boardId) return;
@@ -35,12 +35,12 @@ function connectImpl(
     wsRef.current = ws;
 
     ws.onopen = () => {
-      if (!mountedRef.current) return;
+      if (signal.aborted) return;
       updateStatus('connected');
     };
 
     ws.onmessage = (event) => {
-      if (!mountedRef.current) return;
+      if (signal.aborted) return;
       try {
         const msg = JSON.parse(event.data) as CollabMessage;
         onMessage?.(msg);
@@ -50,15 +50,15 @@ function connectImpl(
     };
 
     ws.onclose = () => {
-      if (!mountedRef.current) return;
+      if (signal.aborted) return;
       updateStatus('reconnecting');
       reconnectTimerRef.current = setTimeout(() => {
-        if (mountedRef.current) connectFn();
+        if (!signal.aborted) connectFn();
       }, 3000);
     };
 
     ws.onerror = () => {
-      if (!mountedRef.current) return;
+      if (signal.aborted) return;
       console.error('[kanban-collab] WebSocket connection error');
       updateStatus('disconnected');
     };
@@ -77,7 +77,7 @@ export function useKanbanCollab({
   const [status, setStatus] = useState<CollabConnectionStatus>('disconnected');
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountedRef = useRef(true);
+  const abortRef = useRef<AbortController | null>(null);
 
   const connectFnRef = useRef<() => void>(() => {});
   const disconnectFnRef = useRef<() => void>(() => {});
@@ -91,7 +91,9 @@ export function useKanbanCollab({
     };
 
     const connect = () => {
-      connectImpl(wsUrl, boardId, updateStatus, onMessage, wsRef, reconnectTimerRef, mountedRef, connect);
+      const controller = new AbortController();
+      abortRef.current = controller;
+      connectImpl(wsUrl, boardId, updateStatus, onMessage, wsRef, reconnectTimerRef, controller.signal, connect);
     };
     connectFnRef.current = connect;
   }, [wsUrl, boardId, onMessage, onStatusChange]);
@@ -105,6 +107,7 @@ export function useKanbanCollab({
     };
 
     const disconnect = () => {
+      abortRef.current?.abort();
       if (reconnectTimerRef.current) {
         clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
@@ -115,9 +118,7 @@ export function useKanbanCollab({
     };
     disconnectFnRef.current = disconnect;
 
-    mountedRef.current = true;
     return () => {
-      mountedRef.current = false;
       disconnect();
     };
   }, [onStatusChange]);

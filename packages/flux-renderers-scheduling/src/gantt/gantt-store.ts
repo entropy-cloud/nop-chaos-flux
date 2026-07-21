@@ -56,6 +56,7 @@ export class GanttStore {
   private parentIndex: Map<GanttId | null, GanttId[]> = new Map();
   _scrollLeft: number;
   calendarManager: CalendarManager;
+  _dirty: boolean = false;
 
   constructor(config?: GanttStoreConfig) {
     this._scrollLeft = config?.scrollLeft ?? 0;
@@ -115,6 +116,8 @@ export class GanttStore {
     assignments?: GanttAssignment[],
     calendars?: CalendarEntry[],
   ): void {
+    if (this._dirty) return;
+    this._dirty = false;
     if (calendars) {
       for (const entry of calendars) {
         this.calendarManager.registerCalendar(entry.id, entry.calendar);
@@ -326,6 +329,7 @@ export class GanttStore {
   }
 
   updateTask(id: GanttId, partial: Partial<GanttTaskData>): void {
+    this._dirty = true;
     const state = this.store.getState();
     const task = state.tasks.get(id);
     if (!task) return;
@@ -353,6 +357,7 @@ export class GanttStore {
   }
 
   updateLink(id: GanttId, partial: Partial<GanttLink>): void {
+    this._dirty = true;
     const state = this.store.getState();
     const link = state.links.get(id);
     if (!link) return;
@@ -392,6 +397,7 @@ export class GanttStore {
   }
 
   toggleOpen(taskId: GanttId): void {
+    this._dirty = true;
     const state = this.store.getState();
     const task = state.tasks.get(taskId);
     if (!task) return;
@@ -443,6 +449,7 @@ export class GanttStore {
   }
 
   deleteTask(id: GanttId): void {
+    this._dirty = true;
     const state = this.store.getState();
     const task = state.tasks.get(id);
     if (!task) return;
@@ -483,6 +490,7 @@ export class GanttStore {
   }
 
   addLink(source: GanttId, target: GanttId, type: GanttLinkType): GanttLink {
+    this._dirty = true;
     const state = this.store.getState();
     const id = `link_${String(source)}_${String(target)}_${Date.now()}`;
     const link: GanttLink = { id, source, target, type, $p: '' };
@@ -499,6 +507,7 @@ export class GanttStore {
   }
 
   removeLink(id: GanttId): void {
+    this._dirty = true;
     const state = this.store.getState();
     const newLinks = new Map(state.links);
     newLinks.delete(id);

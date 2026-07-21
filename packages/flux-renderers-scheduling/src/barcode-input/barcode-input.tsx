@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentForm, useInputComponentHandle } from '@nop-chaos/flux-react';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, cn } from '@nop-chaos/ui';
@@ -14,13 +14,15 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const form = useCurrentForm();
 
   const name = String(resolved.name ?? '');
-  const [inputValue, setInputValue] = useState(() => {
-    if (name && form && form.store) {
-      const state = form.store.getState();
-      return (state.values[name] as string) ?? '';
-    }
-    return '';
-  });
+  const inputValue = useSyncExternalStore(
+    form?.store?.subscribe ?? (() => () => {}),
+    () => {
+      if (!name || !form?.store) return '';
+      const state = form.store.getState() as { values?: Record<string, unknown> };
+      return (state.values?.[name] as string) ?? '';
+    },
+    () => '',
+  );
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState<boolean | null>(null);
 
@@ -30,16 +32,6 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       events.onUnmount?.({});
     };
   }, [events]);
-
-  useEffect(() => {
-    if (!name || !form || !form.store) return;
-    const unsub = form.store.subscribe(() => {
-      const state = form.store.getState() as { values?: Record<string, unknown> };
-      const newVal = (state.values?.[name] as string) ?? '';
-      setInputValue((prev) => (prev !== newVal ? newVal : prev));
-    });
-    return unsub;
-  }, [name, form]);
 
   const scanButton = resolved.scanButton !== false;
   const batchMode = resolved.batchMode === true;
@@ -53,7 +45,6 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const scanOnFocusOpenedRef = useRef(false);
 
   const handleClear = () => {
-    setInputValue('');
     if (name && form) {
       form.setValue(name, '');
     }
@@ -66,7 +57,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       checkCameraAvailability().then((result) => {
         setCameraAvailable(result.isAvailable);
         if (result.isAvailable) setOverlayOpen(true);
-      });
+      }).catch(() => {});
     } else if (cameraAvailable) {
       setOverlayOpen(true);
     }
@@ -90,7 +81,6 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setInputValue(val);
     if (name && form) {
       form.setValue(name, val);
     }
@@ -98,7 +88,6 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
 
   const handleScanResult = (result: BarcodeDetectResult) => {
     const val = result.barcode;
-    setInputValue(val);
     if (name && form) {
       form.setValue(name, val);
     }
@@ -139,7 +128,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         checkCameraAvailability().then((result) => {
           setCameraAvailable(result.isAvailable);
           if (result.isAvailable) setOverlayOpen(true);
-        });
+        }).catch(() => {});
       } else if (cameraAvailable) {
         setOverlayOpen(true);
       }

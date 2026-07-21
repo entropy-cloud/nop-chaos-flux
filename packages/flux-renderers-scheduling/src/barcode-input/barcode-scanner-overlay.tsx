@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState, useRef, useMemo, useSyncExternalStore } from 'react';
+import { useEffect, useState, useRef, useMemo, useSyncExternalStore, useCallback } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { X, Flashlight, FlashlightOff, ScanLine, Check, XCircle, Trash2 } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -47,8 +47,8 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   const [queueItems, setQueueItems] = useState<BarcodeQueueItem[]>([]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  const isOnline = useSyncExternalStore(
-    (onStoreChange) => {
+  const subscribeOnline = useCallback(
+    (onStoreChange: () => void) => {
       window.addEventListener('online', onStoreChange);
       window.addEventListener('offline', onStoreChange);
       return () => {
@@ -56,12 +56,15 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
         window.removeEventListener('offline', onStoreChange);
       };
     },
-    () => navigator.onLine,
-    () => true,
+    [],
   );
+
+  const getOnlineSnapshot = useCallback(() => navigator.onLine, []);
+
+  const isOnline = useSyncExternalStore(subscribeOnline, getOnlineSnapshot, () => true);
   const camera = useBarcodeCamera({ videoRef });
 
-  const getVideoElement = () => videoRef.current;
+  const getVideoElement = useCallback(() => videoRef.current, []);
 
   const detect = useBarcodeDetect(getVideoElement, {
     enabled: open && camera.isActive,
@@ -71,10 +74,10 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
 
   const { stop, start } = camera;
 
-  const mountedRef = useRef(true);
-
   useEffect(() => {
-    mountedRef.current = true;
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     if (!open) {
       stop();
       return;
@@ -84,14 +87,14 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
       setPhase('loading');
       try {
         if (wasmUrl) {
-          await prepareWasm(wasmUrl);
+          await prepareWasm(wasmUrl, signal);
         }
-        if (!mountedRef.current) return;
+        if (signal.aborted) return;
         await start();
-        if (!mountedRef.current) return;
+        if (signal.aborted) return;
         setPhase('scanning');
       } catch (err: any) {
-        if (!mountedRef.current) return;
+        if (signal.aborted) return;
         setPhase('error');
         const msg = err?.message ?? t('flux.cameraUnavailable');
         setErrorMessage(msg);
@@ -102,7 +105,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     init();
 
     return () => {
-      mountedRef.current = false;
+      controller.abort();
       stop();
     };
   }, [open, wasmUrl, onScanError, stop, start]);
