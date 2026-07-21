@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import type { PositionedEvent } from '../calendar.types.js';
 
@@ -80,8 +81,11 @@ export function CalendarEventBlock({
             onPointerDown?.(e);
           }}
           onKeyDown={handleKeyDown}
-          title={overlap ? '时间冲突' : undefined}
+          title={overlap ? t('scheduling.calendar.timeConflict') : undefined}
         >
+          {overlap && (
+            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white" aria-label={t('scheduling.calendar.timeConflict')} />
+          )}
           {templateContent as React.ReactNode}
         </div>
       );
@@ -116,8 +120,11 @@ export function CalendarEventBlock({
         onPointerDown?.(e);
       }}
       onKeyDown={handleKeyDown}
-      title={overlap ? '时间冲突' : event.title}
+      title={overlap ? t('scheduling.calendar.timeConflict') : event.title}
     >
+      {overlap && (
+        <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white" aria-label={t('scheduling.calendar.timeConflict')} />
+      )}
       {event.title}
     </div>
   );

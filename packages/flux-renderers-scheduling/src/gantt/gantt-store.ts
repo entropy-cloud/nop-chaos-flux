@@ -19,7 +19,7 @@ interface GanttStoreState {
   scaleRange: { start: Date; end: Date }; cellWidth: number; currentZoom: string;
   zoomLevels: Map<string, GanttZoomLevel>; taskBarHeight: number; rowHeight: number;
   containerWidth: number; revision: number; taskRevision: number; linkRevision: number;
-  treeRevision: number; layoutRevision: number; dataRevision: number;
+  treeRevision: number; layoutRevision: number;
   expandedSet: Set<GanttId>;
 }
 
@@ -38,7 +38,7 @@ export class GanttStore {
       zoomLevels: new Map(config?.zoomLevels?.map((zl) => [zl.key, zl]) ?? []),
       taskBarHeight: config?.taskBarHeight ?? 28, rowHeight: config?.rowHeight ?? 40,
       containerWidth: config?.containerWidth ?? 800,
-      revision: 0, taskRevision: 0, linkRevision: 0, treeRevision: 0, layoutRevision: 0, dataRevision: 0,
+      revision: 0, taskRevision: 0, linkRevision: 0, treeRevision: 0, layoutRevision: 0,
       expandedSet: new Set(),
     }));
   }
@@ -65,7 +65,6 @@ export class GanttStore {
   get linkRevision(): number { return this.gs().linkRevision; }
   get treeRevision(): number { return this.gs().treeRevision; }
   get layoutRevision(): number { return this.gs().layoutRevision; }
-  get dataRevision(): number { return this.gs().dataRevision; }
   get scrollLeft(): number { return this._scrollLeft; }
   set scrollLeft(v: number) { this._scrollLeft = v; }
 

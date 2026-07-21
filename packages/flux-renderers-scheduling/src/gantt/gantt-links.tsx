@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@nop-chaos/ui';
-import { useGanttStore, useGanttLinkSnapshot, useGanttLayoutSnapshot, useGanttTaskSnapshot } from './gantt-context.js';
+import { useGanttStore, useGanttLinkSnapshot, useGanttLayoutSnapshot } from './gantt-context.js';
 import { diffInDays } from './utils/date.js';
 
 interface GanttLinksProps {
@@ -11,7 +11,6 @@ export function GanttLinks({ className }: GanttLinksProps) {
   const store = useGanttStore();
   useGanttLinkSnapshot();
   useGanttLayoutSnapshot();
-  useGanttTaskSnapshot();
   const [hoveredLink, setHoveredLink] = useState<string | number | null>(null);
 
   const tasks = store.getVisibleTasks();

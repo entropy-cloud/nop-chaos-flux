@@ -86,6 +86,7 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
       setState({ isActive: true, error: null });
     } catch (err: any) {
       if (signal.aborted) return;
+      console.warn('[useBarcodeCamera] getUserMedia failed:', err.name, err.message);
       const message = err.name === 'NotAllowedError'
         ? 'Camera permission denied'
         : err.name === 'NotFoundError'

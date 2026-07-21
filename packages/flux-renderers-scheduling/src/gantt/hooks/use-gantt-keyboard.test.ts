@@ -17,6 +17,15 @@ const mockStore = {
   deleteTask: vi.fn(),
 };
 
+vi.mock('@nop-chaos/flux-i18n', () => ({
+  t: (key: string) => {
+    const map: Record<string, string> = {
+      'scheduling.gantt.chartLabel': 'Gantt Chart',
+    };
+    return map[key] ?? key;
+  },
+}));
+
 vi.mock('../gantt-context.js', () => ({
   useGanttStore: () => mockStore,
 }));
@@ -55,7 +64,7 @@ describe('useGanttKeyboard', () => {
     );
     expect(addEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
     expect(container.getAttribute('tabindex')).toBe('0');
-    expect(container.getAttribute('role')).toBe('treegrid');
+    expect(container.getAttribute('role')).toBe('grid');
     expect(container.getAttribute('aria-label')).toBe('Gantt Chart');
   });
 

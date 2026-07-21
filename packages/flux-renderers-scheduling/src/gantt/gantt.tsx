@@ -81,7 +81,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const { onLinkHandlePointerDown } = useGanttLinkDraw(svgRef);
     useGanttScroll(gridRef, timelineRef);
 
-    const handleBarKeyAction = (taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => {
+    const openEditor = useCallback((id: string | number) => setEditingTaskId(id), []);
+
+    const handleBarKeyAction = useCallback((taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => {
       const task = store.tasks.get(taskId);
       if (!task) return;
       const oldStart = new Date(task.start);
@@ -122,13 +124,13 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           break;
         }
       }
-    };
+    }, [store]);
 
     useGanttKeyboard({
       containerRef,
       selectedTaskId,
       onSelectTask: setSelectedTaskId,
-      onOpenEditor: (id) => setEditingTaskId(id),
+      onOpenEditor: openEditor,
     });
 
     const scrollToToday = useCallback(() => {
@@ -207,7 +209,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                   <GanttBars
                       onBarPointerDown={onDragPointerDown}
                       onLinkHandlePointerDown={onLinkHandlePointerDown}
-                      onBarDoubleClick={(id) => setEditingTaskId(id)}
+                      onBarDoubleClick={openEditor}
                       onBarKeyAction={handleBarKeyAction}
                     />
                   <svg ref={svgRef} className="absolute inset-0 pointer-events-none overflow-visible" style={{ zIndex: 5 }}>

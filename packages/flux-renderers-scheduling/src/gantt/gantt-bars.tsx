@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
-import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
+import { t } from '@nop-chaos/flux-i18n';
+import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot } from './gantt-context.js';
 
 interface GanttBarsProps {
   className?: string;
@@ -14,7 +15,6 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
   const store = useGanttStore();
   useGanttTaskSnapshot();
   useGanttLayoutSnapshot();
-  useGanttTreeSnapshot();
   const tasks = store.getVisibleTasks();
   const barsRef = useRef<HTMLDivElement>(null);
 
@@ -130,7 +130,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
             data-slot="gantt-bar"
             tabIndex={0}
             role="button"
-            aria-label={task.text ? `Task: ${task.text}` : `Gantt bar task`}
+            aria-label={task.text ? t('scheduling.gantt.taskBarLabel', { text: task.text }) : t('scheduling.gantt.barLabel')}
             aria-roledescription="gantt bar"
             className={cn(
               'absolute rounded-sm group cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400',

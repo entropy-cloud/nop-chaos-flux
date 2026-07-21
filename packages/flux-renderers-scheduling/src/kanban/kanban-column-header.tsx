@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import { ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
 import type { BoardItem } from './kanban.types.js';
 
@@ -78,7 +79,7 @@ export function KanbanColumnHeader({
         className="nop-kanban-column-drag-handle cursor-grab text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
         tabIndex={dndEnabled ? 0 : -1}
         role="button"
-        aria-label={`Drag to reorder column ${title}`}
+        aria-label={t('scheduling.kanban.dragColumnLabel', { title })}
         aria-roledescription="drag handle"
         onKeyDown={(e) => onDragHandleKeyDown?.(e, column.id)}
       >
@@ -95,7 +96,7 @@ export function KanbanColumnHeader({
         type="button"
         onClick={onToggleCollapse}
         className="p-0.5 rounded hover:bg-gray-100 text-gray-400"
-        aria-label={collapsed ? 'Expand column' : 'Collapse column'}
+        aria-label={collapsed ? t('scheduling.kanban.expandColumn') : t('scheduling.kanban.collapseColumn')}
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
       </button>

@@ -530,12 +530,12 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
             );
           })}
           <div className="nop-kanban-adder shrink-0 self-start mt-2">
-            <Button
-              variant="outline"
-              className="flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 min-w-[280px] justify-center transition-colors"
+            <div
+              className="flex items-center gap-1 px-3 py-2 text-sm text-gray-400 rounded-lg border-2 border-dashed border-gray-300 min-w-[280px] justify-center"
+              aria-hidden="true"
             >
               {t('scheduling.kanban.addColumn')}
-            </Button>
+            </div>
           </div>
         </div>
       </div>

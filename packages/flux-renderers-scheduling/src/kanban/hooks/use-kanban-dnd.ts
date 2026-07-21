@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { draggable, dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import type { BoardData } from '../kanban.types.js';
@@ -88,7 +88,7 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
     });
   }, []);
 
-  const registerCard = (
+  const registerCard = useCallback((
     element: HTMLElement, cardId: string, columnId: string, index: number,
   ) => {
     return combine(
@@ -115,9 +115,9 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
         },
       }),
     );
-  };
+  }, []);
 
-  const registerColumn = (
+  const registerColumn = useCallback((
     element: HTMLElement, columnId: string, cardCount: number,
   ) => {
     return dropTargetForElements({
@@ -141,7 +141,7 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
         );
       },
     });
-  };
+  }, [wipOverLimitColumns]);
 
   const moveCardKeyboard = (
     boardData: BoardData,

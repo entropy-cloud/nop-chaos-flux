@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useGanttStore } from '../gantt-context.js';
+import { t } from '@nop-chaos/flux-i18n';
 
 interface UseGanttKeyboardOptions {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -79,8 +80,8 @@ export function useGanttKeyboard({
     if (!el) return;
     el.addEventListener('keydown', handleKeyDown);
     el.setAttribute('tabindex', '0');
-    el.setAttribute('role', 'treegrid');
-    el.setAttribute('aria-label', 'Gantt Chart');
+    el.setAttribute('role', 'grid');
+    el.setAttribute('aria-label', t('scheduling.gantt.chartLabel'));
     return () => {
       el.removeEventListener('keydown', handleKeyDown);
     };

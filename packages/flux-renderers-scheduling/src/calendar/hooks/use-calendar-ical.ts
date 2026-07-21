@@ -66,7 +66,7 @@ export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalend
       onImport?.(events);
     } catch (err) {
       console.error('[useCalendarICal] importFromICal failed:', err);
-      const msg = err instanceof Error ? err.message : '导入失败：文件格式错误';
+      const msg = err instanceof Error ? err.message : String(err) || '导入失败：文件格式错误';
       onImportError?.(msg);
     }
   };
@@ -110,7 +110,7 @@ export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalend
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('[useCalendarICal] exportToICal failed:', err);
-      const msg = err instanceof Error ? err.message : '导出失败';
+      const msg = err instanceof Error ? err.message : String(err) || '导出失败';
       onImportError?.(msg);
     }
   };

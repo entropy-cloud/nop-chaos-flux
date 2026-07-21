@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
@@ -89,10 +89,58 @@ export function CalendarMonthView({
   }, [positionedMap]);
 
   const weekdayLabels = getWeekdayLabels(locale, firstDayOfWeek);
+  const [focusedCell, setFocusedCell] = useState<{ resourceId: string; dateStr: string } | null>(null);
+
+  const handleDateCellKeyDown = useCallback((e: React.KeyboardEvent, dateStr: string, resourceId: string) => {
+    if (!showWeekends && isWeekend(new Date(dateStr))) return;
+    const grid = e.currentTarget.closest('[role="grid"]');
+    if (!grid) return;
+    const cells = Array.from(grid.querySelectorAll('[data-slot="calendar-cell"]:not([data-empty])')) as HTMLElement[];
+    const currentIdx = cells.indexOf(e.currentTarget as HTMLElement);
+    let nextIdx = currentIdx;
+    switch (e.key) {
+      case 'ArrowRight':
+        e.preventDefault();
+        nextIdx = Math.min(currentIdx + 1, cells.length - 1);
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        nextIdx = Math.max(currentIdx - 1, 0);
+        break;
+      case 'ArrowDown': {
+        e.preventDefault();
+        const daysCount = days.slice(0, 7).length;
+        nextIdx = Math.min(currentIdx + daysCount, cells.length - 1);
+        break;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        const daysCount = days.slice(0, 7).length;
+        nextIdx = Math.max(currentIdx - daysCount, 0);
+        break;
+      }
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        onCellDragStart?.(dateStr, resourceId, e as unknown as React.PointerEvent);
+        return;
+      default:
+        return;
+    }
+    if (nextIdx !== currentIdx && nextIdx >= 0 && nextIdx < cells.length) {
+      cells[nextIdx]?.focus();
+      const nextDate = cells[nextIdx]?.getAttribute('data-date');
+      const nextResource = cells[nextIdx]?.getAttribute('data-resource');
+      if (nextDate && nextResource) {
+        setFocusedCell({ resourceId: nextResource, dateStr: nextDate });
+      }
+    }
+  }, [days, showWeekends, onCellDragStart]);
 
   const headerCells = days.slice(0, 7).map((day, i) => (
     <div
       key={weekdayLabels[i]}
+      role="columnheader"
       data-slot="calendar-cell"
       className="flex-1 text-center text-xs font-medium text-muted-foreground py-1 border-b"
     >
@@ -166,10 +214,17 @@ export function CalendarMonthView({
               const weekendAttr = weekend && !today ? 'true' : undefined;
               const todayAttr = today ? 'true' : undefined;
 
+              const isFirstResource = resourceIndex === 0;
+              const isFirstDay = days.indexOf(day) === 0;
+              const cellTabIndex = focusedCell
+                ? (focusedCell.resourceId === resource.id && focusedCell.dateStr === dateStr ? 0 : -1)
+                : (isFirstResource && isFirstDay ? 0 : -1);
+
               return (
                 <div
                   key={dateStr}
                   role="gridcell"
+                  tabIndex={cellTabIndex}
                   aria-label={`${day.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}${today ? ', today' : ''}${weekend ? ', weekend' : ''}`}
                   aria-current={today ? 'date' : undefined}
                   data-slot="calendar-cell"
@@ -184,6 +239,7 @@ export function CalendarMonthView({
                     weekend && 'bg-gray-50/50',
                   )}
                   onPointerDown={(pe) => handleCellPointerDown(dateStr, resource.id, pe)}
+                  onKeyDown={(e) => handleDateCellKeyDown(e, dateStr, resource.id)}
                 >
                   {dayEvents.length === 0 ? (
                     <div className="text-[10px] text-gray-300 flex items-center justify-center h-full">

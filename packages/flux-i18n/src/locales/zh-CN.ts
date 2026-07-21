@@ -732,6 +732,11 @@ export const zhCN: Resource = {
         undo: '撤销 (Ctrl+Z)',
         redo: '重做 (Ctrl+Shift+Z)',
         activityLog: '活动日志',
+        filterLabel: '标签:',
+        clearFilter: '清除',
+        collapseColumn: '折叠列',
+        expandColumn: '展开列',
+        dragColumnLabel: '拖拽重新排序列 {{title}}',
       },
       gantt: {
         zoomFit: '适应',
@@ -756,6 +761,11 @@ export const zhCN: Resource = {
         schedulingInProgress: '排程中...',
         scheduleApplied: '排程已应用',
         schedulingFailed: '排程失败',
+        chartLabel: '甘特图',
+        collapseTask: '折叠任务{{text}}',
+        expandTask: '展开任务{{text}}',
+        taskBarLabel: '任务: {{text}}',
+        barLabel: '甘特条任务',
       },
     },
     mobile: {

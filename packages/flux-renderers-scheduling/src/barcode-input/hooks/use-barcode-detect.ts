@@ -77,7 +77,7 @@ export function useBarcodeDetect(
         }
       } catch (err: any) {
         if (signal.aborted) return;
-        setError(err.message ?? 'Decode error');
+        setError(err instanceof Error ? err.message : `Decode error: ${String(err)}`);
       }
 
       if (!signal.aborted) {

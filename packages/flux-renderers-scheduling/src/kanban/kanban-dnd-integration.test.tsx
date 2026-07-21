@@ -9,6 +9,33 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
 }));
 
+vi.mock('@nop-chaos/flux-i18n', () => ({
+  t: (key: string, params?: Record<string, unknown>) => {
+    const map: Record<string, string> = {
+      'scheduling.kanban.expandColumn': 'Expand column',
+      'scheduling.kanban.collapseColumn': 'Collapse column',
+      'scheduling.kanban.filterLabel': '标签:',
+      'scheduling.kanban.clearFilter': '清除',
+      'scheduling.kanban.searchCards': '搜索卡片...',
+      'scheduling.kanban.addColumn': '+ 添加列',
+      'scheduling.kanban.dragColumnLabel': 'Drag to reorder column {{title}}',
+      'scheduling.kanban.currentUser': '当前用户',
+      'scheduling.kanban.undo': '撤销 (Ctrl+Z)',
+      'scheduling.kanban.redo': '重做 (Ctrl+Shift+Z)',
+      'scheduling.kanban.activityLog': '活动日志',
+      'scheduling.kanban.dragCardHere': '拖拽卡片到此处',
+      'scheduling.kanban.addCard': '+ 添加卡片',
+      'flux.common.noData': '暂无数据',
+      'flux.common.cancel': '取消',
+      'flux.common.confirm': '确认',
+    };
+    if (params && map[key]) {
+      return Object.entries(params).reduce((s, [k, v]) => s.replace(`{{${k}}}`, String(v)), map[key]!);
+    }
+    return map[key] ?? key;
+  },
+}));
+
 vi.mock('./hooks/use-kanban-virtualizer.js', () => ({
   useKanbanVirtualizer: (options: any) => ({
     virtualizer: { scrollToIndex: vi.fn() },

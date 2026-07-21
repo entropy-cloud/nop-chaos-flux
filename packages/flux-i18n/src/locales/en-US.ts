@@ -733,6 +733,11 @@ export const enUS: Resource = {
         undo: 'Undo (Ctrl+Z)',
         redo: 'Redo (Ctrl+Shift+Z)',
         activityLog: 'Activity Log',
+        filterLabel: 'Tags:',
+        clearFilter: 'Clear',
+        collapseColumn: 'Collapse column',
+        expandColumn: 'Expand column',
+        dragColumnLabel: 'Drag to reorder column {{title}}',
       },
       gantt: {
         zoomFit: 'Fit',
@@ -757,6 +762,11 @@ export const enUS: Resource = {
         schedulingInProgress: 'Scheduling...',
         scheduleApplied: 'Schedule applied',
         schedulingFailed: 'Scheduling failed',
+        chartLabel: 'Gantt Chart',
+        collapseTask: 'Collapse task {{text}}',
+        expandTask: 'Expand task {{text}}',
+        taskBarLabel: 'Task: {{text}}',
+        barLabel: 'Gantt bar task',
       },
     },
     mobile: {

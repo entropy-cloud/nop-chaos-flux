@@ -21,7 +21,6 @@ export function CalendarOverlay({ children, onEscape, onClick, ariaLabel }: Cale
       className="nop-calendar-overlay"
       onKeyDown={(e) => {
         if (e.key === 'Escape') onEscape();
-        if (e.key === 'Enter' || e.key === ' ') onClick();
       }}
       onClick={onClick}
     >

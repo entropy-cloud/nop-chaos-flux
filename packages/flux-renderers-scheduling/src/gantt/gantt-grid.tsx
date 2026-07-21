@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import { useGanttStore, useGanttLayoutSnapshot } from './gantt-context.js';
 import type { GanttTask, GanttColumn } from './gantt.types.js';
 
@@ -106,7 +107,7 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
                         <button
                           type="button"
                           aria-expanded={store.isOpen(task.id)}
-                          aria-label={`${store.isOpen(task.id) ? 'Collapse' : 'Expand'} task ${task.text}`}
+                          aria-label={store.isOpen(task.id) ? t('scheduling.gantt.collapseTask', { text: task.text }) : t('scheduling.gantt.expandTask', { text: task.text })}
                           className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-700 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
                           onClick={(e) => { e.stopPropagation(); handleToggle(task.id); }}
                         >

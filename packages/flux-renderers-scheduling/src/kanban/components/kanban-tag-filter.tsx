@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface KanbanFilterTag {
   id: string;
@@ -24,7 +25,7 @@ export function KanbanTagFilter({
 
   return (
     <div className={cn('nop-kanban-tag-filter flex items-center gap-1.5 flex-wrap px-4 py-2', className)}>
-      <span className="text-xs text-gray-500 mr-1">标签:</span>
+      <span className="text-xs text-gray-500 mr-1">{t('scheduling.kanban.filterLabel')}</span>
       {tags.map((tag) => {
         const selected = selectedTagIds.includes(tag.id);
         return (
@@ -51,7 +52,7 @@ export function KanbanTagFilter({
           onClick={() => selectedTagIds.forEach((id) => onToggleTag(id))}
           className="text-xs text-gray-400 hover:text-gray-600 ml-1"
         >
-          清除
+          {t('scheduling.kanban.clearFilter')}
         </button>
       )}
     </div>

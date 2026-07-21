@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { draggable, dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import type { BoardData } from '../kanban.types.js';
 import { moveColumn } from '../kanban-helpers.js';
@@ -49,7 +49,7 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder }: UseC
     });
   }, []);
 
-  const registerColumnHeader = (
+  const registerColumnHeader = useCallback((
     element: HTMLElement, columnId: string,
   ) => {
     return draggable({
@@ -59,7 +59,7 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder }: UseC
         columnId,
       }),
     });
-  };
+  }, []);
 
   const registerBoardDropZone = (
     element: HTMLElement, columnIndex: number,

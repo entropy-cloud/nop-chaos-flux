@@ -49,17 +49,18 @@ function connectImpl(
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (ev: CloseEvent) => {
       if (signal.aborted) return;
+      console.error('[kanban-collab] WebSocket closed:', { code: ev.code, reason: ev.reason, wasClean: ev.wasClean });
       updateStatus('reconnecting');
       reconnectTimerRef.current = setTimeout(() => {
         if (!signal.aborted) connectFn();
       }, 3000);
     };
 
-    ws.onerror = () => {
+    ws.onerror = (ev: Event) => {
       if (signal.aborted) return;
-      console.error('[kanban-collab] WebSocket connection error');
+      console.error('[kanban-collab] WebSocket connection error:', ev);
       updateStatus('disconnected');
     };
   } catch (err) {

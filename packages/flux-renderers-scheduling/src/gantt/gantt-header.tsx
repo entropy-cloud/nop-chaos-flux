@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
-import { useGanttStore, useGanttLayoutSnapshot } from './gantt-context.js';
+import { useGanttStore } from './gantt-context.js';
 
 interface GanttHeaderProps {
   toolbarRegion?: RenderRegionHandle;
@@ -12,7 +12,6 @@ interface GanttHeaderProps {
 
 export function GanttHeader({ toolbarRegion, className, onScrollToToday }: GanttHeaderProps) {
   const store = useGanttStore();
-  useGanttLayoutSnapshot();
 
   const handleZoomIn = () => {
     const zooms = store.getAvailableZooms();
