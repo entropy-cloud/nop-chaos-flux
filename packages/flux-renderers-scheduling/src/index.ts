@@ -1,6 +1,5 @@
 import { registerRendererDefinitions, type RendererRegistry } from '@nop-chaos/flux-core';
 import { schedulingRendererDefinitions } from './scheduling-renderer-definitions.js';
-import type { GanttTaskData, GanttLinkData } from './gantt/gantt.types.js';
 
 export type {
   GanttSchema,
@@ -17,8 +16,6 @@ export type {
   CalendarResource,
   BarcodeInputSchema,
 } from './schemas.js';
-
-export type { GanttTaskData, GanttLinkData };
 
 export type { SchedulingRendererSchema } from './scheduling-renderer-definitions.js';
 
