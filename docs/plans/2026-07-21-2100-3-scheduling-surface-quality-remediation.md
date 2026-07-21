@@ -1,6 +1,6 @@
 # Scheduling — Surface Quality: Style, A11y, Tests, Docs & Code Organization
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-21
 > Source: `docs/audits/2026-07-21-1920-multi-audit-scheduling.md` (02-02, 02-04, 02-06, 09-Gantt, 09-Kanban, 09-Calendar, 09-BarcodeInput, 10-04, 10-05, 11-05, 14-02, 16-01, 16-03, 16-04, 20-01, 20-02, 20-04, 20-06, 20-07)
 > Related: `docs/plans/2026-07-21-2100-1-scheduling-type-contract-remediation.md`, `docs/plans/2026-07-21-2100-2-scheduling-runtime-lifecycle-remediation.md`
@@ -85,130 +85,130 @@ Fix non-runtime surface-quality findings: CSS organization and theme compliance,
 
 ### Phase 1 — Code organization
 
-Status: planned
+Status: completed
 Targets: `styles.css`, `gantt/gantt-store.ts`, `gantt/__tests__/`, `gantt/`
 
 - Item Types: `Fix`
 
-- [ ] **02-02**: Split `styles.css` into sub-module files (`calendar.css`, `gantt.css`, `kanban.css`, `barcode-input.css`) in `src/` or organized under each sub-module. Update imports.
-- [ ] **02-04**: Extract tree utilities from `gantt-store.ts` into `gantt/gantt-tree-utils.ts` (`flattenTasks`, `buildParentIndex`, `getVisibleTasks`, expand/collapse). Extract `searchTasks` into `gantt/gantt-search.ts`.
-- [ ] **02-06**: Move `gantt/__tests__/gantt-store-proof.test.ts` to `gantt/gantt-store-proof.test.ts` (colocate with other gantt tests), or migrate all gantt tests to `__tests__/` for consistency. Pick one convention, apply, document.
+- [x] **02-02**: Split `styles.css` into sub-module files (`calendar.css`, `gantt.css`, `kanban.css`, `barcode-input.css`) in `src/` or organized under each sub-module. Update imports.
+- [x] **02-04**: Extract tree utilities from `gantt-store.ts` into `gantt/gantt-tree-utils.ts` (`flattenTasks`, `buildParentIndex`, `getVisibleTasks`, expand/collapse). Extract `searchTasks` into `gantt/gantt-search.ts`.
+- [x] **02-06**: Move `gantt/__tests__/gantt-store-proof.test.ts` to `gantt/gantt-store-proof.test.ts` (colocate with other gantt tests), or migrate all gantt tests to `__tests__/` for consistency. Pick one convention, apply, document.
 
 Exit Criteria:
 
-- [ ] CSS split into sub-module files; each sub-module imports only its own CSS.
-- [ ] `gantt-store.ts` under 300 lines; tree utilities and search extracted.
-- [ ] Consistent test file placement across gantt sub-module.
+- [x] CSS split into sub-module files; each sub-module imports only its own CSS.
+- [x] `gantt-store.ts` under 300 lines; tree utilities and search extracted.
+- [x] Consistent test file placement across gantt sub-module.
 
 ### Phase 2 — Renderer contract compliance
 
-Status: planned
+Status: completed
 Targets: `gantt/gantt.tsx`, `kanban/kanban-board.tsx`, `calendar/calendar.tsx`, `barcode-input/barcode-input-renderer.tsx`
 
 - Item Types: `Fix`
 
-- [ ] **09-Gantt**: Add `cn()` on container with `meta.className`. Add `data-cid={meta.cid}`. Add `void` prefix to event calls in effects.
-- [ ] **09-Kanban**: Add `data-testid` and `data-cid` on main container, loading skeleton, and empty state. Add `cn(meta.className)` to loading skeleton.
-- [ ] **09-Calendar**: Add `void` prefix to all event calls.
-- [ ] **09-BarcodeInput**: Add `data-testid` and `data-cid` on root element. Add `void` prefix to event calls in effects.
+- [x] **09-Gantt**: Add `cn()` on container with `meta.className`. Add `data-cid={meta.cid}`. Add `void` prefix to event calls in effects.
+- [x] **09-Kanban**: Add `data-testid` and `data-cid` on main container, loading skeleton, and empty state. Add `cn(meta.className)` to loading skeleton.
+- [x] **09-Calendar**: Add `void` prefix to all event calls.
+- [x] **09-BarcodeInput**: Add `data-testid` and `data-cid` on root element. Add `void` prefix to event calls in effects.
 
 Exit Criteria:
 
-- [ ] All 4 renderers have `data-cid` from `meta` on root container.
-- [ ] Gantt, Kanban, BarcodeInput have `data-testid` on root container.
-- [ ] Gantt, Kanban use `cn(meta.className)` on their root containers.
-- [ ] All event calls in effects are prefixed with `void`.
+- [x] All 4 renderers have `data-cid` from `meta` on root container.
+- [x] Gantt, Kanban, BarcodeInput have `data-testid` on root container.
+- [x] Gantt, Kanban use `cn(meta.className)` on their root containers.
+- [x] All event calls in effects are prefixed with `void`.
 
 ### Phase 3 — Styling system compliance
 
-Status: planned
+Status: completed
 Targets: `styles.css` (or sub-module CSS files), `calendar/utils/calendar-print.css`
 
 - Item Types: `Fix`
 
-- [ ] **10-05**: Replace ~10 hardcoded hex color values with CSS variable equivalents:
-  - `#fef2f2` → `var(--color-destructive-100)` or equivalent
+- [x] **10-05**: Replace ~10 hardcoded hex color values with CSS variable equivalents:
+  - `#fef2f2` → `color-mix(in srgb, var(--color-destructive) 10%, white)`
   - `#dc2626` → `var(--color-destructive)`
-  - `#eff6ff` → `var(--color-primary-50)` or equivalent
+  - `#eff6ff` → `color-mix(in srgb, var(--color-primary) 10%, white)`
   - `#1d4ed8` → `var(--color-primary)`
-  - `#bfdbfe` → `var(--color-accent)` or equivalent
-  - `#60a5fa` → `var(--color-accent-400)` or equivalent
+  - `#bfdbfe` → `color-mix(in srgb, var(--color-accent) 60%, white)`
+  - `#60a5fa` → `color-mix(in srgb, var(--color-accent) 80%, black)`
   - `#f59e0b` → `var(--color-warning)`
   - `#6b7280`, `#9ca3af` → `var(--color-muted-foreground)`
   - `#ef4444` → `var(--color-destructive)`
-  - `rgba(0,0,0,0.3)` → `var(--color-overlay)` or equivalent
-- [ ] **10-04**: Scope calendar-print.css `[data-slot]` selectors under `.nop-calendar`.
+  - `rgba(0,0,0,0.3)` → `var(--surface-overlay)`
+- [x] **10-04**: Scope calendar-print.css `[data-slot]` selectors under `.nop-calendar`.
 
 Exit Criteria:
 
-- [ ] Zero hardcoded hex colors that have CSS variable equivalents (verify with grep).
-- [ ] All calendar-print selectors scoped under `.nop-calendar`.
+- [x] Zero hardcoded hex colors that have CSS variable equivalents (verify with grep).
+- [x] All calendar-print selectors scoped under `.nop-calendar`.
 
 ### Phase 4 — UI component compliance
 
-Status: planned
+Status: completed
 Targets: `gantt/components/filter-bar.tsx`
 
 - Item Types: `Fix`
 
-- [ ] **11-05**: Replace raw `<select>` with `<NativeSelect>` from `@nop-chaos/ui`.
+- [x] **11-05**: Replace raw `<select>` with `<NativeSelect>` from `@nop-chaos/ui`.
 
 Exit Criteria:
 
-- [ ] No raw `<select>` elements in `flux-renderers-scheduling/src/` (excluding `<table>` in grid which is acceptable).
+- [x] No raw `<select>` elements in `flux-renderers-scheduling/src/` (excluding `<table>` in grid which is acceptable).
 
 ### Phase 5 — Test coverage for priority gaps
 
-Status: planned
+Status: completed
 Targets: `gantt/gantt-context.tsx`, `gantt/components/export-handles.tsx`
 
 - Item Types: `Proof`
 
-- [ ] **14-02**: Add unit tests for `gantt-context.tsx` (store context + subscription hooks).
-- [ ] **14-02**: Add unit tests for `export-handles.tsx` (business-critical export logic).
+- [x] **14-02**: Add unit tests for `gantt-context.tsx` (store context + subscription hooks).
+- [x] **14-02**: Add unit tests for `export-handles.tsx` (business-critical export logic).
 
 Exit Criteria:
 
-- [ ] `gantt-context.tsx` has test coverage for subscription hook behavior.
-- [ ] `export-handles.tsx` has test coverage for export lifecycle (success and error paths).
+- [x] `gantt-context.tsx` has test coverage for subscription hook behavior.
+- [x] `export-handles.tsx` has test coverage for export lifecycle (success and error paths).
 
 ### Phase 6 — Documentation gaps
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/README.md`, `AGENTS.md`, `docs/index.md`
 
 - Item Types: `Fix`
 
-- [ ] **16-01**: Add scheduling entry in `docs/architecture/README.md` pointing to component design docs (e.g., `docs/components/roadmap-scheduling.md`, `docs/components/calendar/design.md`).
-- [ ] **16-03**: Add `flux-renderers-scheduling` to the package enum in `AGENTS.md`.
-- [ ] **16-04**: Add scheduling routing entries to `docs/index.md` "By Code Location" table matching the existing pattern.
+- [x] **16-01**: Add scheduling entry in `docs/architecture/README.md` pointing to component design docs (e.g., `docs/components/roadmap-scheduling.md`, `docs/components/calendar/design.md`).
+- [x] **16-03**: Add `flux-renderers-scheduling` to the package enum in `AGENTS.md`.
+- [x] **16-04**: Add scheduling routing entries to `docs/index.md` "By Code Location" table matching the existing pattern.
 
 Exit Criteria:
 
-- [ ] `docs/architecture/README.md` has a scheduling entry.
-- [ ] `AGENTS.md` package enum includes `flux-renderers-scheduling`.
-- [ ] `docs/index.md` routing table includes `packages/flux-renderers-scheduling/src/` entries.
+- [x] `docs/architecture/README.md` has a scheduling entry.
+- [x] `AGENTS.md` package enum includes `flux-renderers-scheduling`.
+- [x] `docs/index.md` routing table includes `packages/flux-renderers-scheduling/src/` entries.
 
 ### Phase 7 — Accessibility
 
-Status: planned
+Status: completed
 Targets: `barcode-input/barcode-input-renderer.tsx`, `kanban/kanban-board.tsx`, `kanban/components/kanban-activity-log.tsx`, `kanban/kanban-column.tsx`, `barcode-input/barcode-scanner-overlay.tsx`
 
 - Item Types: `Fix`
 
-- [ ] **20-01**: Add `<Label>` from `@nop-chaos/ui` with `htmlFor`/`id` association for BarcodeInput and Kanban search inputs.
-- [ ] **20-02**: Add `aria-live="polite"` regions for dynamic content changes (calendar overlap, barcode errors).
-- [ ] **20-04**: Add Escape key handler to Kanban activity log panel to close it.
-- [ ] **20-06**: Change Kanban card container from `<div>` to `<ul>` and individual cards from `<div>` to `<li>` (retaining `role="button"`).
-- [ ] **20-07**: Add Escape key handler to barcode scanner overlay.
+- [x] **20-01**: Add `<Label>` from `@nop-chaos/ui` with `htmlFor`/`id` association for BarcodeInput and Kanban search inputs.
+- [x] **20-02**: Add `aria-live="polite"` regions for dynamic content changes (calendar overlap, barcode errors).
+- [x] **20-04**: Add Escape key handler to Kanban activity log panel to close it.
+- [x] **20-06**: Change Kanban card container from `<div>` to `<ul>` and individual cards from `<div>` to `<li>` (retaining `role="button"`).
+- [x] **20-07**: Add Escape key handler to barcode scanner overlay.
 
 Exit Criteria:
 
-- [ ] BarcodeInput and Kanban search use `<Label>` when `label` schema prop provided.
-- [ ] `aria-live="polite"` present on dynamic content regions.
-- [ ] Kanban activity log closes on Escape key press.
-- [ ] Kanban cards use `<ul>`/`<li>` semantic structure.
-- [ ] Barcode scanner overlay closes on Escape key press.
+- [x] BarcodeInput and Kanban search use `<Label>` when `label` schema prop provided.
+- [x] `aria-live="polite"` present on dynamic content regions.
+- [x] Kanban activity log closes on Escape key press.
+- [x] Kanban cards use `<ul>`/`<li>` semantic structure.
+- [x] Barcode scanner overlay closes on Escape key press.
 
 ## Draft Review Record
 
@@ -221,27 +221,40 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] All Phase exit criteria satisfied.
-- [ ] CSS split into sub-module files.
-- [ ] `gantt-store.ts` under 300 lines with extracted utilities.
-- [ ] Consistent test file placement.
-- [ ] All 4 renderers compliant with marker/styling contract.
-- [ ] Zero hardcoded hex colors with CSS variable equivalents.
-- [ ] calendar-print.css selectors scoped.
-- [ ] Raw `<select>` replaced with `<NativeSelect>`.
-- [ ] Priority test coverage added for `export-handles.tsx` and `gantt-context.tsx`.
-- [ ] Documentation routes updated.
-- [ ] All 5 a11y findings resolved.
-- [ ] Independent sub-agent (fresh session) closure-audit passes, evidence recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All Phase exit criteria satisfied.
+- [x] CSS split into sub-module files.
+- [x] `gantt-store.ts` under 300 lines with extracted utilities.
+- [x] Consistent test file placement.
+- [x] All 4 renderers compliant with marker/styling contract.
+- [x] Zero hardcoded hex colors with CSS variable equivalents.
+- [x] calendar-print.css selectors scoped.
+- [x] Raw `<select>` replaced with `<NativeSelect>`.
+- [x] Priority test coverage added for `export-handles.tsx` and `gantt-context.tsx`.
+- [x] Documentation routes updated.
+- [x] All 5 a11y findings resolved.
+- [x] Independent sub-agent (fresh session) closure-audit passes, evidence recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
 (none)
 
 ## Non-Blocking Follow-ups
+
+- 14-02 (24 source files without tests): Only priority 2 gaps addressed; remaining 22+ files are watch-only residual for future coverage initiatives.
+
+## Closure
+
+Status Note: All 7 phases completed. Surface quality findings resolved: CSS organization, renderer contract markers, styling system compliance, UI component compliance, test coverage for priority gaps, documentation updates, and accessibility fixes.
+
+Closure Audit Evidence:
+
+- Auditor / Agent: independent closure auditor (fresh session)
+- Evidence: Closure audit conducted via independent fresh session. All exit criteria verified against live repo. All 7 Phases marked completed with all checklist items [x]. Closure gate audit item ticked by independent auditor.
+
+Follow-up:
 
 - 14-02 (24 source files without tests): Only priority 2 gaps addressed; remaining 22+ files are watch-only residual for future coverage initiatives.
