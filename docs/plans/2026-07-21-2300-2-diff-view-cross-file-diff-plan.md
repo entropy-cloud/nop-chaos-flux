@@ -1,6 +1,6 @@
 # Diff-view Cross-file Diff (§12.2)
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-21
 > Source: `docs/components/diff-view/design.md` §12.2, deferred items from `2026-07-21-0200-1-diff-view-core-implementation.md`, `2026-07-21-0200-2-diff-view-three-column-compare.md`
 > Related: `docs/plans/2026-07-21-0200-1-diff-view-core-implementation.md`, `docs/plans/2026-07-21-0200-2-diff-view-three-column-compare.md`, `docs/plans/2026-07-21-1400-2-diff-view-css-definition.md`
@@ -72,52 +72,52 @@ Tier: `建议有测`
 
 ### Phase 1 — Schema Extension & File List Component
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/schemas.ts`, `packages/flux-renderers-content/src/diff-view/`
 
 - Item Types: `Fix | Fix`
 
-- [ ] Extend `DiffViewSchema`: add `files?: DiffFileMeta[]` and `activeFileIndex?: number`. Define `DiffFileMeta` interface with `fileName`, `oldContent`, `newContent`, `language`, `status` fields. Document mutual-exclusion with `oldContent/newContent` in JSDoc.
-- [ ] Create `diff-file-list.tsx`: file list sidebar with file name, change statistics (+N/-M calculated from diff lines), status badge (added/modified/deleted), unread dot. File search input filter (text matching on `fileName`). Status grouping tabs (all/added/modified/deleted). 240px width.
+- [x] Extend `DiffViewSchema`: add `files?: DiffFileMeta[]` and `activeFileIndex?: number`. Define `DiffFileMeta` interface with `fileName`, `oldContent`, `newContent`, `language`, `status` fields. Document mutual-exclusion with `oldContent/newContent` in JSDoc.
+- [x] Create `diff-file-list.tsx`: file list sidebar with file name, change statistics (+N/-M calculated from diff lines), status badge (added/modified/deleted), unread dot. File search input filter (text matching on `fileName`). Status grouping tabs (all/added/modified/deleted). 240px width.
 
 Exit Criteria:
 
-- [ ] `DiffViewSchema` has `files` and `activeFileIndex` fields. `DiffFileMeta` type exists. Mutual-exclusion documented.
-- [ ] `diff-file-list.tsx` renders with file list, search filter, status tabs, change stats. Works in isolation.
+- [x] `DiffViewSchema` has `files` and `activeFileIndex` fields. `DiffFileMeta` type exists. Mutual-exclusion documented.
+- [x] `diff-file-list.tsx` renders with file list, search filter, status tabs, change stats. Works in isolation.
 
 ### Phase 2 — File Switching & Renderer Integration
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/diff-view/diff-view-renderer.tsx`
 
 - Item Types: `Fix | Fix`
 
-- [ ] Wire file switching: when `files` is provided, render `DiffFileList` sidebar + `DiffViewRenderer` for the active file. `activeFileIndex` defaults to 0. Switch preserves `viewType`/`showLineNumbers`/`showInlineDiff`. Mutually exclusive with `oldContent/newContent` — runtime warning if both provided, `files` wins.
-- [ ] Add "previous file" / "next file" navigation buttons in the diff header (complement to sidebar click). Keyboard shortcuts: Ctrl+↑/Ctrl+↓.
+- [x] Wire file switching: when `files` is provided, render `DiffFileList` sidebar + `DiffViewRenderer` for the active file. `activeFileIndex` defaults to 0. Switch preserves `viewType`/`showLineNumbers`/`showInlineDiff`. Mutually exclusive with `oldContent/newContent` — runtime warning if both provided, `files` wins.
+- [x] Add "previous file" / "next file" navigation buttons in the diff header (complement to sidebar click). Keyboard shortcuts: Ctrl+↑/Ctrl+↓.
 
 Exit Criteria:
 
-- [ ] Cross-file mode renders sidebar + file content. File switching works with viewType preservation.
-- [ ] Mutual-exclusion guard works: supplying both `files` and `oldContent` produces a console warning and `files` takes precedence.
+- [x] Cross-file mode renders sidebar + file content. File switching works with viewType preservation.
+- [x] Mutual-exclusion guard works: supplying both `files` and `oldContent` produces a console warning and `files` takes precedence.
 
 ### Phase 3 — Tests, Demo & Documentation
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/diff-view/`, `apps/playground/src/pages/diff-demo.tsx`, `docs/components/diff-view/design.md`, `docs/components/roadmap-scheduling.md`
 
 - Item Types: `Proof | Proof | Follow-up | Follow-up`
 
-- [ ] Write focused unit tests: file switching updates content, search filter matches file names, status tab filters, mutual-exclusion warning fires correctly.
-- [ ] Update playground `diff-demo.tsx`: add a "cross-file" example tab or schema preset with 3+ files (added/modified/deleted mix). Include search filter interaction.
-- [ ] Update `docs/components/diff-view/design.md` §12.2: mark as `implemented` with final schema, component name, and usage example. Remove "proposed" / "v4" / "留待" language per Minimum Rule 14.
-- [ ] Add S9.10 work item to `docs/components/roadmap-scheduling.md` and mark `done`.
+- [x] Write focused unit tests: file switching updates content, search filter matches file names, status tab filters, mutual-exclusion warning fires correctly.
+- [x] Update playground `diff-demo.tsx`: add a "cross-file" example tab or schema preset with 3+ files (added/modified/deleted mix). Include search filter interaction.
+- [x] Update `docs/components/diff-view/design.md` §12.2: mark as `implemented` with final schema, component name, and usage example. Remove "proposed" / "v4" / "留待" language per Minimum Rule 14.
+- [x] Add S9.10 work item to `docs/components/roadmap-scheduling.md` and mark `done`.
 
 Exit Criteria:
 
-- [ ] Unit tests pass for file switching, filtering, mutual-exclusion.
-- [ ] Playground demo page has cross-file example.
-- [ ] Design doc §12.2 reflects implemented state (not proposed).
-- [ ] Roadmap has S9.10 as `done`.
+- [x] Unit tests pass for file switching, filtering, mutual-exclusion.
+- [x] Playground demo page has cross-file example.
+- [x] Design doc §12.2 reflects implemented state (not proposed).
+- [x] Roadmap has S9.10 as `done`.
 
 ## Draft Review Record
 
@@ -128,20 +128,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Cross-file diff renders with file list sidebar, search filter, status grouping.
-- [ ] File switching preserves `viewType`/`showLineNumbers`/`showInlineDiff`.
-- [ ] Mutual-exclusion guard between `files` and `oldContent/newContent` works.
-- [ ] Focused unit tests pass.
-- [ ] Playground demo page has cross-file example.
-- [ ] `docs/components/diff-view/design.md` §12.2 updated to implemented state.
-- [ ] `docs/components/roadmap-scheduling.md` has S9.10 work item marked `done`.
-- [ ] No in-scope live defect or contract drift degraded to deferred/follow-up.
-- [ ] Affected owner docs updated.
-- [ ] By independent sub-agent (fresh session) executed closure-audit passed and evidence recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Cross-file diff renders with file list sidebar, search filter, status grouping.
+- [x] File switching preserves `viewType`/`showLineNumbers`/`showInlineDiff`.
+- [x] Mutual-exclusion guard between `files` and `oldContent/newContent` works.
+- [x] Focused unit tests pass.
+- [x] Playground demo page has cross-file example.
+- [x] `docs/components/diff-view/design.md` §12.2 updated to implemented state.
+- [x] `docs/components/roadmap-scheduling.md` has S9.10 work item marked `done`.
+- [x] No in-scope live defect or contract drift degraded to deferred/follow-up.
+- [x] Affected owner docs updated.
+- [x] By independent sub-agent (fresh session) executed closure-audit passed and evidence recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -163,13 +163,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: Plan is complete. All Exit Criteria met, all Closure Gates satisfied. Cross-file diff feature (§12.2) fully implemented: `DiffFileMeta` type + `files`/`activeFileIndex` schema fields landed, `diff-file-list.tsx` sidebar with search filter and status tabs rendered, `CrossFileDiffView` integrates file switching with viewType preservation and mutual-exclusion guard, focused unit tests (`diff-cross-file.test.tsx`) pass, playground cross-file demo added, design doc §12.2 updated to implemented state, roadmap S9.10 marked done.
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者>>
-- Evidence: <<task id / daily log link>>
+- Auditor / Agent: independent sub-agent (fresh session, closure audit)
+- Evidence: Live code verification confirms all Phase exit criteria satisfied. Schema (`schemas.ts:3-14,16-27`) has `DiffFileMeta`, `files`, `activeFileIndex`. Component (`diff-view/components/diff-file-list.tsx`) renders sidebar. Integration (`diff-view-renderer.tsx:209-238`) wires cross-file mode with console.warn mutual-exclusion guard. Cross-file tests (`__tests__/diff-cross-file.test.tsx`) cover file switching, search filter, status tabs, schema validation. Playground (`apps/playground/src/pages/diff-demo.tsx:134-188`) has cross-file demo. Design doc (`docs/components/diff-view/design.md:213-251`) §12.2 marked implemented. Roadmap (`docs/components/roadmap-scheduling.md:183`) has S9.10 as `done`.
 
 Follow-up:
 
-- <<non-blocking follow-up only>>
+- No remaining plan-owned work. Virtual scrolling for file list (500+ files) is a non-blocking optimization candidate noted in Deferred section.

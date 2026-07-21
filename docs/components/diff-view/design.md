@@ -210,34 +210,35 @@ interface DiffViewSchema extends BaseSchema {
 
 **实现参考**：架构参考 `git-diff-view` + `react-diff-view`，冲突标记渲染参考 Git 的合并冲突格式标准。DiffLine 类型增加 `conflict-start` / `conflict-separator` / `conflict-end` 三种新行类型。
 
-### §12.2 跨文件 diff 引用设计要点（v4）
+### §12.2 跨文件 diff 实现
 
-当 diff 涉及多个文件时（如版本发布涉及多个配置变更、合同版本包），提供文件级导航和切换。
+当 diff 涉及多个文件时（如版本发布涉及多个配置变更、合同版本包），提供文件级导航和切换。**已实现。**
 
 **布局结构**：
 
 ```
-[文件列表侧栏] [当前文件 diff 主区域]
+[文件列表侧栏~240px] [当前文件 diff 主区域]
 ```
 
-文件列表侧栏（~240px 宽）：
+文件列表侧栏：
 
-- 列出所有 DiffFile，每项显示：文件名 + 变更统计（+N / -M）
-- 文件名支持搜索过滤（通过文件名字段 `input-filter`）
-- 按变更类型分组：全部 / 新增 / 删除 / 修改
-- 未读变更标记（蓝色圆点），点击后变灰
+- 列出所有文件，每项显示：状态徽标（A/M/D）+ 文件名 + 变更统计（+N/-M）
+- 文件名 `input` 搜索过滤
+- 按变更类型标签切换：全部 / Added / Modified / Deleted
+- 未读蓝色圆点，点击后标记已读
 
-**Schema 扩展**：
+**文件切换**：点击文件列表项时主区域切换到对应文件的 diff 视图。`viewType`/`showLineNumbers`/`showInlineDiff` 跨文件保持。前后文件导航按钮 + Ctrl+↑/Ctrl+↓ 快捷键。
+
+**组件实现**：
+
+- `packages/flux-renderers-content/src/diff-view/components/diff-file-list.tsx` — 文件列表侧栏
+- `packages/flux-renderers-content/src/diff-view/diff-view-renderer.tsx` — `CrossFileDiffView` 内部组件处理跨文件渲染
+
+**Schema**：
 
 ```typescript
-interface DiffViewSchema extends BaseSchema {
-  // ... 既有字段
-  files?: DiffFileMeta[]; // 多文件列表
-  activeFileIndex?: number; // 当前查看的文件索引
-}
-
-interface DiffFileMeta {
-  fileName: string; // 文件名（含路径）
+interface DiffFileMeta extends SchemaObject {
+  fileName: string;
   oldContent?: string;
   newContent?: string;
   language?: string;
@@ -245,10 +246,6 @@ interface DiffFileMeta {
 }
 ```
 
-**文件切换**：点击文件列表项时，主区域切换到对应文件的 diff 视图。切换时 viewType（split/unified）、行号显示等配置保持不变。切换动画使用水平滑动过渡 200ms。
+`files` 字段与 `oldContent/newContent` 互斥——同时提供时 `files` 优先并发出 console.warn 警告。
 
-**参考**：GitHub PR files changed 模式的实现思路——文件列表作树形导航，diff 内容按文件分组渲染，每个文件独立计算差异。Flux 版本简化为平铺文件列表（不支持目录树展开/折叠），但预留 tree 模式扩展空间。
-
-跨文件 diff 引用需在 roadmap-scheduling.md 中补充对应 work item（当前 S9 未包含此功能）。此处的设计供后续扩展参考。
-
-`files` 字段与 `oldContent/newContent` 互斥——当提供 `files` 时忽略 `oldContent/newContent`，反之亦然。
+**Work item**: S9.10 (`done`)
