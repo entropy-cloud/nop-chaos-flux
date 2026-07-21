@@ -238,7 +238,7 @@ Exit Criteria:
 - Classification: `out-of-scope improvement`
 - Why Not Blocking Closure: GanttStore EventEmitter → Zustand migration affects 30+ files across the Gantt sub-domain. The current patterns work (with the fine-grained subscription fix in Plan {1} Phase 1 and the immutable update fix in this plan Phase 4). The migration is a significant refactor that should be a successor plan with its own dedicated scope, not merged into this quality cleanup plan.
 - Successor Required: `yes`
-- Successor Path: Not filed yet — proposed as follow-up.
+- Successor Path: `docs/plans/2026-07-21-1400-1-ganttstore-zustand-migration.md` — completed 2026-07-21.
 
 ### Diff-view CSS Implementation (F-20)
 
@@ -256,7 +256,7 @@ Exit Criteria:
 ## Non-Blocking Follow-ups
 
 - Reconciling the 5+ `[data-slot]` scoping issues identified in Dim10-07 across the package.
-- Tracking the GanttStore Zustand migration as a separate successor plan.
+- Tracking the GanttStore Zustand migration as a separate successor plan — DONE (closed 2026-07-21).
 - Filing a content-package plan for diff-view CSS definitions.
 - Bundle size analysis and tree-shaking verification.
 
