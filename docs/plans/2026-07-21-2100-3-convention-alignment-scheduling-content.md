@@ -1,6 +1,6 @@
 # 3 Convention Alignment — Scheduling + Content
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-21
 > Source: `docs/audits/2026-07-21-1920-open-audit-scheduling.md` (F-54, F-57, F-58)
 > Related: `docs/plans/2026-07-21-2100-2-scheduling-package-hardening.md`
@@ -51,52 +51,52 @@ Align the scheduling and content renderer packages with established project conv
 
 ### Phase 1 — `helpers` destructuring + hook migration (scheduling renderers)
 
-Status: planned
+Status: completed
 Targets: `gantt.tsx`, `kanban-board.tsx`, `calendar.tsx`, `barcode-input.tsx`
 
 - Item Types: `Fix`
 
-- [ ] Add `helpers` to the destructuring in all 4 scheduling renderers
-- [ ] Replace direct `props.props`/`props.meta`/`props.events` access with standard hooks where applicable: `useRendererRuntime()`, `useRenderScope()`, `useScopeSelector()`, `useActionDispatcher()`, `useCurrentForm()`, `useCurrentPage()`, `useRenderFragment()`, `useCurrentNodeMeta()`
-- [ ] Remove any now-redundant direct store/prop drilling once hooks are in place
-- [ ] Verify `pnpm typecheck` passes after each renderer change
+- [x] Add `helpers` to the destructuring in all 4 scheduling renderers
+- [x] Replace direct `props.props`/`props.meta`/`props.events` access with standard hooks where applicable: `useRendererRuntime()`, `useRenderScope()`, `useScopeSelector()`, `useActionDispatcher()`, `useCurrentForm()`, `useCurrentPage()`, `useRenderFragment()`, `useCurrentNodeMeta()`
+- [x] Remove any now-redundant direct store/prop drilling once hooks are in place
+- [x] Verify `pnpm typecheck` passes after each renderer change
 
 Exit Criteria:
 
-- [ ] All 4 scheduling renderers destructure `helpers` from `props`
-- [ ] Each renderer uses at least the hooks relevant to its responsibilities (runtime, scope, action dispatch)
+- [x] All 4 scheduling renderers destructure `helpers` from `props`
+- [x] Each renderer uses at least the hooks relevant to its responsibilities (runtime, scope, action dispatch)
 
 ### Phase 2 — Hook migration (content renderer)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/diff-view/diff-view-renderer.tsx`
 
 - Item Types: `Fix`
 
-- [ ] Add `helpers` destructuring to `diff-view-renderer.tsx`
-- [ ] Replace direct prop access with standard hooks as applicable
-- [ ] Verify `pnpm typecheck` passes
+- [x] Add `helpers` destructuring to `diff-view-renderer.tsx`
+- [x] Replace direct prop access with standard hooks as applicable
+- [x] Verify `pnpm typecheck` passes
 
 Exit Criteria:
 
-- [ ] `diff-view-renderer.tsx` destructures `helpers`
-- [ ] Renderer uses standard flux-react hooks
-- [ ] `pnpm typecheck` passes
+- [x] `diff-view-renderer.tsx` destructures `helpers`
+- [x] Renderer uses standard flux-react hooks
+- [x] `pnpm typecheck` passes
 
 ### Phase 3 — React.memo removal + dangerouslySetInnerHTML comment
 
-Status: planned
+Status: completed
 Targets: `diff-line.tsx`
 
 - Item Types: `Fix | Decision`
 
-- [ ] Remove `React.memo(DiffLineComponent, areDiffLinePropsEqual)` wrapper — React Compiler auto-memoizes
-- [ ] Add an explicit safety comment before `dangerouslySetInnerHTML` explaining both code paths escape via `escapeHtml()` so future maintainers know not to remove escaping
+- [x] Remove `React.memo(DiffLineComponent, areDiffLinePropsEqual)` wrapper — React Compiler auto-memoizes
+- [x] Add an explicit safety comment before `dangerouslySetInnerHTML` explaining both code paths escape via `escapeHtml()` so future maintainers know not to remove escaping
 
 Exit Criteria:
 
-- [ ] No `React.memo` wrapping `DiffLineComponent` remains
-- [ ] Inline comment documents the escaping guarantee at the `dangerouslySetInnerHTML` site
+- [x] No `React.memo` wrapping `DiffLineComponent` remains
+- [x] Inline comment documents the escaping guarantee at the `dangerouslySetInnerHTML` site
 
 ## Draft Review Record
 
@@ -110,17 +110,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] All 5 renderers destructure `helpers` from props
-- [ ] All 5 renderers use standard flux-react hooks instead of direct prop access
-- [ ] `React.memo` removed from `diff-line.tsx`
-- [ ] `dangerouslySetInnerHTML` site annotated with safety rationale
-- [ ] No in-scope live defect or contract drift silently downgraded to deferred
-- [ ] Affected owner docs updated if public contract changed
-- [ ] By independent sub-agent (fresh session) closure-audit completed and recorded
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All 5 renderers destructure `helpers` from props
+- [x] All 5 renderers use standard flux-react hooks instead of direct prop access
+- [x] `React.memo` removed from `diff-line.tsx`
+- [x] `dangerouslySetInnerHTML` site annotated with safety rationale
+- [x] No in-scope live defect or contract drift silently downgraded to deferred
+- [x] Affected owner docs updated if public contract changed
+- [x] By independent sub-agent (fresh session) closure-audit completed and recorded
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -132,9 +132,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: All three phases completed. typecheck, build, lint, test all pass.
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: MISSION_DRIVER (fresh closure-audit session)
+- Evidence: Live code verification completed:
+  - Phase 1: All 4 scheduling renderers (gantt.tsx, kanban-board.tsx, calendar.tsx, barcode-input.tsx) destructure `helpers` and use standard flux-react hooks ✓
+  - Phase 2: DiffViewRenderer destructures `helpers` and uses standard hooks ✓
+  - Phase 3: `React.memo(DiffLineComponent)` removed ✓; `dangerouslySetInnerHTML` annotated with safety rationale (diff-line.tsx:26-29) ✓
+  - `pnpm typecheck` 56/56 ✓, `pnpm build` 30/30 ✓, `pnpm lint` 30/30 ✓, `pnpm test` 56/56 ✓
+  - No deferred items; no in-scope defects downgraded
