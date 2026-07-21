@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 interface UseBarcodeTorchOptions {
   getStream?: () => MediaStream | null;
@@ -38,7 +38,7 @@ export function useBarcodeTorch(options?: UseBarcodeTorchOptions): UseBarcodeTor
     setIsAvailable(available);
   }, [getStream]);
 
-  const toggle = useCallback(async () => {
+  const toggle = async () => {
     const stream = getStream?.() ?? null;
     if (!stream) return;
     const track = stream.getVideoTracks()[0];
@@ -54,7 +54,7 @@ export function useBarcodeTorch(options?: UseBarcodeTorchOptions): UseBarcodeTor
       console.error('[useBarcodeTorch] Torch toggle failed:', err);
       setIsOn(false);
     }
-  }, [getStream, isOn]);
+  };
 
   return { isAvailable, isOn, toggle };
 }

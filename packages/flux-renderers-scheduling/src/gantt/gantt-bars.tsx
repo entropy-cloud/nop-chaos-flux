@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
 
@@ -51,7 +51,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
     return () => barsEl.removeEventListener('pointerdown', handler);
   }, [onBarPointerDown, onLinkHandlePointerDown]);
 
-  const handleBarKeyDown = useCallback((e: React.KeyboardEvent, taskId: string | number) => {
+  const handleBarKeyDown = (e: React.KeyboardEvent, taskId: string | number) => {
     switch (e.key) {
       case 'ArrowLeft':
         e.preventDefault();
@@ -79,7 +79,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
         onBarDoubleClick?.(taskId);
         break;
     }
-  }, [onBarKeyAction, onBarDoubleClick]);
+  };
 
   useEffect(() => {
     const barsEl = barsRef.current;

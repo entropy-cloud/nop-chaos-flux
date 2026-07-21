@@ -1,8 +1,17 @@
-import React, { useImperativeHandle, useCallback, useRef, useState, useEffect, useMemo } from 'react';
+/**
+ * State management rationale for Calendar (hooks-based):
+ * Calendar state is highly localized — view selection (month/week/day), date
+ * navigation, drag interaction, and virtual scrolling each belong to isolated
+ * concerns. Custom hooks (useCalendarState, useCalendarDrag, etc.) keep each
+ * concern self-contained without a global store or Context. This avoids
+ * unnecessary re-renders when only one axis of state changes.
+ * Gantt uses Zustand + Context (deeper tree, cross-component subscriptions).
+ * Kanban uses useState + imperative callbacks (flatter tree, snapshot undo).
+ */
+import React, { useImperativeHandle, useRef, useState, useEffect } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { cn, Button } from '@nop-chaos/ui';
+import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { useFocusTrap } from './hooks/use-focus-trap.js';
 import type { CalendarSchema, CalendarView, CalendarEvent, CalendarResource } from '../schemas.js';
 import { useCalendarState } from './hooks/use-calendar-state.js';
 import { useCalendarNavigation } from './hooks/use-calendar-navigation.js';
@@ -13,6 +22,8 @@ import { CalendarHeader } from './components/calendar-header.js';
 import { CalendarMonthView } from './components/calendar-month-view.js';
 import { CalendarWeekView } from './components/calendar-week-view.js';
 import { CalendarDayView } from './components/calendar-day-view.js';
+import { CalendarConfirmDialog } from './components/calendar-confirm-dialog.js';
+import { CalendarDragTypeSelector } from './components/calendar-drag-type-selector.js';
 import { parseISODate } from './utils/calendar-date-utils.js';
 import './utils/calendar-print.css';
 
@@ -50,8 +61,8 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   const maxConcurrent = (resolved.maxConcurrent as number) ?? 4;
   const showCrossDayLines = resolved.showCrossDayLines !== false;
 
-  const eventsData = useMemo(() => (resolved.events as CalendarSchema['events']) ?? [], [resolved.events]);
-  const resourcesData = useMemo(() => (resolved.resources as CalendarSchema['resources']) ?? [], [resolved.resources]);
+  const eventsData = (resolved.events as CalendarSchema['events']) ?? [];
+  const resourcesData = (resolved.resources as CalendarSchema['resources']) ?? [];
 
   const dayStartHour = 8;
   const dayEndHour = 20;
@@ -64,7 +75,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const calendarRef = useRef<HTMLDivElement | null>(null);
 
-  const getCellFromPoint = useCallback((x: number, y: number) => {
+  const getCellFromPoint = (x: number, y: number) => {
     const el = document.elementFromPoint(x, y);
     if (!el) return null;
     const cell = el.closest('[data-slot="calendar-cell"]');
@@ -73,9 +84,9 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     const resourceId = cell.getAttribute('data-resource');
     if (!date || !resourceId) return null;
     return { date, resourceId };
-  }, []);
+  };
 
-  const handleSwapConfirm = useCallback((payload: {
+  const handleSwapConfirm = (payload: {
     eventId: string;
     fromResource: string;
     toResource: string;
@@ -88,9 +99,9 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       targetDate: payload.toDate,
       targetResource: payload.toResource,
     });
-  }, []);
+  };
 
-  const executeSwap = useCallback(() => {
+  const executeSwap = () => {
     if (!confirmDialog) return;
     events.onEventChange?.({
       eventId: confirmDialog.event.id,
@@ -101,13 +112,13 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       event: confirmDialog.event,
     });
     setConfirmDialog(null);
-  }, [confirmDialog, events]);
+  };
 
-  const cancelSwap = useCallback(() => {
+  const cancelSwap = () => {
     setConfirmDialog(null);
-  }, []);
+  };
 
-  const handleDragCreateEvent = useCallback((payload: {
+  const handleDragCreateEvent = (payload: {
     title: string;
     type: string;
     start: string;
@@ -124,11 +135,11 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       color: DEFAULT_SHIFT_TYPES.find(t => t.type === payload.type)?.color,
     };
     events.onEventCreate?.({ event: newEvent });
-  }, [events]);
+  };
 
   const [keyboardDragEventId, setKeyboardDragEventId] = useState<string | null>(null);
 
-  const handleKeyboardMoveEvent = useCallback((eventId: string, direction: 'up' | 'down' | 'left' | 'right') => {
+  const handleKeyboardMoveEvent = (eventId: string, direction: 'up' | 'down' | 'left' | 'right') => {
     const event = eventsData.find((e) => e.id === eventId);
     if (!event) return;
     const dayDelta = 1;
@@ -188,7 +199,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       toDate: newStart.toISOString().slice(0, 10),
       event,
     });
-  }, [eventsData, resourcesData, events]);
+  };
 
   const dragSwap = useCalendarDrag({
     events: eventsData,
@@ -198,7 +209,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     onKeyboardMoveEvent: handleKeyboardMoveEvent,
   });
 
-  const handleEventKeyDown = useCallback((e: React.KeyboardEvent, event: CalendarEvent) => {
+  const handleEventKeyDown = (e: React.KeyboardEvent, event: CalendarEvent) => {
     if (keyboardDragEventId) {
       switch (e.key) {
         case 'ArrowUp':
@@ -235,7 +246,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         setKeyboardDragEventId(event.id);
       }
     }
-  }, [keyboardDragEventId, dragSwap]);
+  };
 
   const dragCreate = useCalendarDragCreate({
     onEventCreate: handleDragCreateEvent,
@@ -412,107 +423,20 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       )}
 
       {dragCreate.showTypeSelector && (
-        <CalendarOverlay
-          onEscape={dragCreate.dismissTypeSelector}
-          onClick={dragCreate.dismissTypeSelector}
-          ariaLabel={t('scheduling.calendar.selectType')}
-        >
-          <div
-            className="nop-calendar-type-selector"
-            role="presentation"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => { if (e.key === 'Escape') dragCreate.dismissTypeSelector(); e.stopPropagation(); }}
-          >
-            <div className="nop-calendar-type-selector-title">
-              {t('scheduling.calendar.selectType')}
-            </div>
-            <div className="nop-calendar-type-selector-list">
-              {DEFAULT_SHIFT_TYPES.map((st) => (
-                <Button
-                  key={st.type}
-                  type="button"
-                  className="nop-calendar-type-selector-btn"
-                  style={{ backgroundColor: st.color }}
-                  onClick={() => dragCreate.selectType(st.type)}
-                >
-                  {st.label}
-                </Button>
-              ))}
-            </div>
-            <Button
-              variant="ghost"
-              type="button"
-              className="nop-calendar-type-selector-cancel"
-              onClick={dragCreate.dismissTypeSelector}
-            >
-              {t('flux.common.cancel')}
-            </Button>
-          </div>
-        </CalendarOverlay>
+        <CalendarDragTypeSelector
+          shiftTypes={DEFAULT_SHIFT_TYPES}
+          onSelectType={dragCreate.selectType}
+          onDismiss={dragCreate.dismissTypeSelector}
+        />
       )}
 
       {confirmDialog && (
-        <CalendarOverlay
-          onEscape={cancelSwap}
-          onClick={cancelSwap}
-          ariaLabel={t('scheduling.calendar.confirmMove')}
-        >
-          <div
-            className="nop-calendar-confirm-dialog"
-            role="presentation"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => { if (e.key === 'Escape') cancelSwap(); e.stopPropagation(); }}
-          >
-            <div className="nop-calendar-confirm-title">
-              {t('scheduling.calendar.confirmMove')}
-            </div>
-            <div className="nop-calendar-confirm-body">
-              {t('scheduling.calendar.moveConfirm', {
-                title: confirmDialog.event.title,
-                date: confirmDialog.targetDate,
-                resource: confirmDialog.targetResource,
-              })}
-            </div>
-            <div className="nop-calendar-confirm-actions">
-              <Button variant="outline" type="button" onClick={cancelSwap}>
-                {t('flux.common.cancel')}
-              </Button>
-              <Button type="button" onClick={executeSwap}>
-                {t('flux.common.confirm')}
-              </Button>
-            </div>
-          </div>
-        </CalendarOverlay>
+        <CalendarConfirmDialog
+          confirmDialog={confirmDialog}
+          onCancel={cancelSwap}
+          onConfirm={executeSwap}
+        />
       )}
-    </div>
-  );
-}
-
-interface CalendarOverlayProps {
-  children: React.ReactNode;
-  onEscape: () => void;
-  onClick: () => void;
-  ariaLabel: string;
-}
-
-function CalendarOverlay({ children, onEscape, onClick, ariaLabel }: CalendarOverlayProps) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(overlayRef, true);
-
-  return (
-    <div
-      ref={overlayRef}
-      role="dialog"
-      aria-modal="true"
-      aria-label={ariaLabel}
-      className="nop-calendar-overlay"
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onEscape();
-        if (e.key === 'Enter' || e.key === ' ') onClick();
-      }}
-      onClick={onClick}
-    >
-      {children}
     </div>
   );
 }

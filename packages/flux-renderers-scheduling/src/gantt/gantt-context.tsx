@@ -1,3 +1,11 @@
+/**
+ * State management rationale for Gantt (Zustand + Context):
+ * Gantt has a deeply nested component tree (header, grid, timeline, bars, links,
+ * timescale, editor) where prop drilling would be impractical. Zustand provides
+ * efficient per-component subscriptions without full re-render on every store change.
+ * Kanban uses useState + imperative callbacks instead (fewer nested component layers).
+ * Calendar uses custom hooks (self-contained view state managed via local refs/hooks).
+ */
 import React, { createContext, useContext, useSyncExternalStore } from 'react';
 import { GanttStore } from './gantt-store.js';
 

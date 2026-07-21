@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useGanttStore } from '../gantt-context.js';
 
 interface UseGanttKeyboardOptions {
@@ -18,63 +18,63 @@ export function useGanttKeyboard({
 }: UseGanttKeyboardOptions) {
   const store = useGanttStore();
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!containerRef.current) return;
-
-    switch (e.key) {
-      case 'ArrowDown':
-      case 'ArrowUp': {
-        e.preventDefault();
-        const tasks = store.getVisibleTasks();
-        if (tasks.length === 0) return;
-        let idx = selectedTaskId ? tasks.findIndex((t) => t.id === selectedTaskId) : -1;
-        if (e.key === 'ArrowDown') idx = Math.min(idx + 1, tasks.length - 1);
-        else idx = Math.max(idx - 1, 0);
-        if (idx >= 0) onSelectTask(tasks[idx].id);
-        break;
-      }
-      case 'ArrowLeft':
-      case 'ArrowRight': {
-        if (!selectedTaskId) break;
-        e.preventDefault();
-        const task = store.tasks.get(selectedTaskId);
-        if (!task) break;
-        if (e.key === 'ArrowLeft' && store.tasks.has(selectedTaskId)) {
-          const children = store.getVisibleDescendantCount(selectedTaskId);
-          if (children > 0) store.toggleOpen(selectedTaskId);
-        } else if (e.key === 'ArrowRight' && store.tasks.has(selectedTaskId)) {
-          const children = store.getVisibleDescendantCount(selectedTaskId);
-          if (children > 0) store.toggleOpen(selectedTaskId);
-        }
-        break;
-      }
-      case 'Enter': {
-        e.preventDefault();
-        if (selectedTaskId && onOpenEditor) {
-          onOpenEditor(selectedTaskId);
-        }
-        break;
-      }
-      case 'Delete':
-      case 'Backspace': {
-        if (!selectedTaskId) break;
-        e.preventDefault();
-        store.deleteTask(selectedTaskId);
-        onSelectTask(null);
-        break;
-      }
-      case 'z':
-      case 'Z': {
-        if ((e.ctrlKey || e.metaKey) && onUndo) {
-          e.preventDefault();
-          onUndo();
-        }
-        break;
-      }
-    }
-  }, [store, containerRef, selectedTaskId, onSelectTask, onOpenEditor, onUndo]);
-
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!containerRef.current) return;
+
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'ArrowUp': {
+          e.preventDefault();
+          const tasks = store.getVisibleTasks();
+          if (tasks.length === 0) return;
+          let idx = selectedTaskId ? tasks.findIndex((t) => t.id === selectedTaskId) : -1;
+          if (e.key === 'ArrowDown') idx = Math.min(idx + 1, tasks.length - 1);
+          else idx = Math.max(idx - 1, 0);
+          if (idx >= 0) onSelectTask(tasks[idx].id);
+          break;
+        }
+        case 'ArrowLeft':
+        case 'ArrowRight': {
+          if (!selectedTaskId) break;
+          e.preventDefault();
+          const task = store.tasks.get(selectedTaskId);
+          if (!task) break;
+          if (e.key === 'ArrowLeft' && store.tasks.has(selectedTaskId)) {
+            const children = store.getVisibleDescendantCount(selectedTaskId);
+            if (children > 0) store.toggleOpen(selectedTaskId);
+          } else if (e.key === 'ArrowRight' && store.tasks.has(selectedTaskId)) {
+            const children = store.getVisibleDescendantCount(selectedTaskId);
+            if (children > 0) store.toggleOpen(selectedTaskId);
+          }
+          break;
+        }
+        case 'Enter': {
+          e.preventDefault();
+          if (selectedTaskId && onOpenEditor) {
+            onOpenEditor(selectedTaskId);
+          }
+          break;
+        }
+        case 'Delete':
+        case 'Backspace': {
+          if (!selectedTaskId) break;
+          e.preventDefault();
+          store.deleteTask(selectedTaskId);
+          onSelectTask(null);
+          break;
+        }
+        case 'z':
+        case 'Z': {
+          if ((e.ctrlKey || e.metaKey) && onUndo) {
+            e.preventDefault();
+            onUndo();
+          }
+          break;
+        }
+      }
+    };
+
     const el = containerRef.current;
     if (!el) return;
     el.addEventListener('keydown', handleKeyDown);
@@ -84,9 +84,9 @@ export function useGanttKeyboard({
     return () => {
       el.removeEventListener('keydown', handleKeyDown);
     };
-  }, [containerRef, handleKeyDown]);
+  }, [containerRef, store, selectedTaskId, onSelectTask, onOpenEditor, onUndo]);
 
-  const updateRowAria = useCallback((taskId: string | number, isSelected: boolean) => {
+  const updateRowAria = (taskId: string | number, isSelected: boolean) => {
     const container = containerRef.current;
     if (!container) return;
     const row = container.querySelector(`[data-task-id="${String(taskId)}"]`);
@@ -96,7 +96,7 @@ export function useGanttKeyboard({
       row.setAttribute('tabindex', isSelected ? '0' : '-1');
       if (isSelected) (row as HTMLElement).focus();
     }
-  }, [containerRef]);
+  };
 
-  return { handleKeyDown, updateRowAria };
+  return { updateRowAria };
 }

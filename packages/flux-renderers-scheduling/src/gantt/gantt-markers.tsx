@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useGanttStore, useGanttStoreSnapshot } from './gantt-context.js';
@@ -18,10 +18,10 @@ export function GanttMarkers({ showToday = true, className }: GanttMarkersProps)
     ? tasks.reduce((max, t) => Math.max(max, t.$y + t.$h), 0)
     : tasks.length * 40;
 
-  const todayX = useMemo(() => {
+  const todayX = (() => {
     if (!showToday) return -1;
     return dateToPixel(new Date(), store.scaleRange, store.cellWidth);
-  }, [showToday, store.scaleRange, store.cellWidth]);
+  })();
 
   return (
     <div className={cn('nop-gantt-markers absolute inset-0 pointer-events-none', className)} data-slot="gantt-markers">

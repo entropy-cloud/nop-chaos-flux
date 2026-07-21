@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentForm } from '@nop-chaos/flux-react';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, cn } from '@nop-chaos/ui';
@@ -46,22 +46,22 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
 
   const showScanButton = scanButton && (cameraAvailable !== false);
 
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInputValue(val);
     if (name && form) {
       form.setValue(name, val);
     }
-  }, [name, form]);
+  };
 
-  const handleClear = useCallback(() => {
+  const handleClear = () => {
     setInputValue('');
     if (name && form) {
       form.setValue(name, '');
     }
-  }, [name, form]);
+  };
 
-  const handleScanResult = useCallback((result: BarcodeDetectResult) => {
+  const handleScanResult = (result: BarcodeDetectResult) => {
     const val = result.barcode;
     setInputValue(val);
     if (name && form) {
@@ -74,29 +74,29 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         format: result.format,
       });
     }
-  }, [name, form, events.onScan, helpers]);
+  };
 
-  const handleScanError = useCallback((error: string) => {
+  const handleScanError = (error: string) => {
     if (events.onScanError) {
       helpers.dispatch(events.onScanError as any, {
         ...(events.onScanError as any)?.__ctx,
         error: { message: error },
       });
     }
-  }, [events.onScanError, helpers]);
+  };
 
-  const handleScanClick = useCallback(async () => {
+  const handleScanClick = async () => {
     if (cameraAvailable === null) {
       const result = await checkCameraAvailability();
       setCameraAvailable(result.isAvailable);
       if (!result.isAvailable) return;
     }
     setOverlayOpen(true);
-  }, [cameraAvailable]);
+  };
 
-  const handleOverlayClose = useCallback(() => {
+  const handleOverlayClose = () => {
     setOverlayOpen(false);
-  }, []);
+  };
 
   if (!meta.visible) return null;
 

@@ -1,3 +1,14 @@
+/**
+ * Kanban uses a snapshot-based undo pattern:
+ * Each mutation captures the full `BoardData` snapshot before applying changes.
+ * This is appropriate for Kanban because the board state is a flat map of items
+ * where full-snapshot capture is cheap (O(columns + cards)) and the snapshot
+ * approach simplifies diff-free undo/redo without complex command composition.
+ * Gantt uses a command-based pattern instead (see gantt/undo-stack.ts) because
+ * Gantt tasks are deeply interlinked via constraints, dependencies, and layout
+ * data, making full-state snapshots more expensive and command-based undo
+ * more precise for task-level operations.
+ */
 import type { BoardData } from '../kanban.types.js';
 
 export type UndoCommandType =

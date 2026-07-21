@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState, useRef, useCallback, useSyncExternalStore, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useSyncExternalStore } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { X, Flashlight, FlashlightOff, ScanLine, Check, XCircle, Trash2 } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -57,7 +57,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   );
   const camera = useBarcodeCamera({ videoRef });
 
-  const getVideoElement = useCallback(() => videoRef.current, []);
+  const getVideoElement = () => videoRef.current;
 
   const detect = useBarcodeDetect(getVideoElement, {
     enabled: open && camera.isActive,
@@ -122,7 +122,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     }
   }, [detect.error, onScanError]);
 
-  const getStream = useCallback(() => videoRef.current?.srcObject as MediaStream | null, []);
+  const getStream = () => videoRef.current?.srcObject as MediaStream | null;
   const torch = useBarcodeTorch({ getStream });
 
   function handleQueueSubmit() {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export interface UseKanbanFilterOptions {
   filterText?: string;
@@ -23,19 +23,18 @@ export function useKanbanFilter({ filterText: externalFilterText, filterCard, de
     setActiveText(debouncedValue);
   }, [debouncedValue]);
 
-  const matches = useCallback(
-    (card: Record<string, any>, text: string): boolean => {
-      if (!text) return true;
-      if (filterCard) {
-        return filterCard(card, text);
-      }
-      const title = ((card.title as string) || '').toLowerCase();
-      const description = ((card.description as string) || '').toLowerCase();
-      const query = text.toLowerCase();
-      return title.includes(query) || description.includes(query);
-    },
-    [filterCard],
-  );
+  const matches = (
+    card: Record<string, any>, text: string,
+  ): boolean => {
+    if (!text) return true;
+    if (filterCard) {
+      return filterCard(card, text);
+    }
+    const title = ((card.title as string) || '').toLowerCase();
+    const description = ((card.description as string) || '').toLowerCase();
+    const query = text.toLowerCase();
+    return title.includes(query) || description.includes(query);
+  };
 
   return {
     filterText: localText,

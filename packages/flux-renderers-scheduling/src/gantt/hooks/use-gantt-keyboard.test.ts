@@ -25,7 +25,7 @@ describe('useGanttKeyboard', () => {
     vi.clearAllMocks();
   });
 
-  it('should return handleKeyDown and updateRowAria', () => {
+  it('should return updateRowAria', () => {
     const containerRef = { current: document.createElement('div') };
     const { result } = renderHook(() =>
       useGanttKeyboard({
@@ -34,7 +34,6 @@ describe('useGanttKeyboard', () => {
         onSelectTask: vi.fn(),
       }),
     );
-    expect(typeof result.current.handleKeyDown).toBe('function');
     expect(typeof result.current.updateRowAria).toBe('function');
   });
 

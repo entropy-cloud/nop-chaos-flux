@@ -1,10 +1,11 @@
-import React, { useCallback, useId, useRef } from 'react';
+import React, { useId, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, Label, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import { useGanttStore } from './gantt-context.js';
 
 interface GanttEditorProps {
-  editorRegion?: { render: (opts?: any) => React.ReactNode };
+  editorRegion?: RenderRegionHandle;
   className?: string;
   editingTaskId?: string | number | null;
   onClose?: () => void;
@@ -21,13 +22,13 @@ export function GanttEditor({ editorRegion, className, editingTaskId, onClose }:
   const durationRef = useRef<HTMLInputElement>(null);
   const progressRef = useRef<HTMLInputElement>(null);
 
-  const closeEditor = useCallback(() => {
+  const closeEditor = () => {
     onClose?.();
-  }, [onClose]);
+  };
 
   const editingTask = editingTaskId ? store.tasks.get(editingTaskId) : null;
 
-  const handleSave = useCallback(() => {
+  const handleSave = () => {
     if (!editingTaskId || !textRef.current) return;
     const partial: Record<string, unknown> = { text: textRef.current.value };
     if (startRef.current?.value) partial.start = startRef.current.value;
@@ -36,7 +37,7 @@ export function GanttEditor({ editorRegion, className, editingTaskId, onClose }:
     if (progressRef.current?.value) partial.progress = parseInt(progressRef.current.value, 10);
     store.updateTask(editingTaskId, partial);
     closeEditor();
-  }, [editingTaskId, store, closeEditor]);
+  };
 
   const open = editingTaskId != null;
 

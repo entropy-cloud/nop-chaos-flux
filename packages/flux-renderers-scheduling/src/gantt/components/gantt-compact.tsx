@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 
 interface GanttCompactProps {
@@ -43,7 +43,7 @@ export function GanttCompact({
     return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
-  const toggleFullscreen = useCallback(async () => {
+  const toggleFullscreen = async () => {
     const el = containerRef.current;
     if (!el) return;
     try {
@@ -70,7 +70,7 @@ export function GanttCompact({
       }
       setIsFullscreen(!isFullscreen);
     }
-  }, [isFullscreen]);
+  };
 
   const fullscreenSupported = typeof document !== 'undefined' && 'fullscreenEnabled' in document;
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
@@ -58,17 +58,11 @@ export function CalendarMonthView({
   onEventKeyDown,
   locale = 'en-US',
 }: CalendarMonthViewProps & { locale?: string }) {
-  const days = useMemo(
-    () => getMonthDays(currentDate, firstDayOfWeek),
-    [currentDate, firstDayOfWeek],
-  );
+  const days = getMonthDays(currentDate, firstDayOfWeek);
 
-  const positionedMap = useMemo(
-    () => positionEventsInMonth({ events, resources, dateRange, maxConcurrent }),
-    [events, resources, dateRange, maxConcurrent],
-  );
+  const positionedMap = positionEventsInMonth({ events, resources, dateRange, maxConcurrent });
 
-  const conflictMap = useMemo(() => {
+  const conflictMap = (() => {
     const map = new Map<string, Set<string>>();
     for (const resource of resources) {
       for (const day of days) {
@@ -84,7 +78,7 @@ export function CalendarMonthView({
       }
     }
     return map;
-  }, [events, resources, days]);
+  })();
 
   const weekdayLabels = getWeekdayLabels(locale, firstDayOfWeek);
 
@@ -98,9 +92,9 @@ export function CalendarMonthView({
     </div>
   ));
 
-  const displayResources = useMemo(() => resources.length === 0
+  const displayResources = resources.length === 0
     ? [{ id: '_default', text: '', title: '' }]
-    : resources, [resources]);
+    : resources;
 
   const resourceRows = (virtualItems ?? displayResources.map((_, i) => ({ index: i, start: i * 48, size: 48 }))).map(
     (vItem) => {
@@ -210,9 +204,9 @@ export function CalendarMonthView({
     },
   );
 
-  const splitEvents = useMemo(() => splitMultiDayEvents(events), [events]);
+  const splitEvents = splitMultiDayEvents(events);
 
-  const cellPositions = useMemo(() => {
+  const cellPositions = (() => {
     const positions = new Map<string, CellPosition>();
     const cellWidth = 100 / days.length;
     for (let ri = 0; ri < displayResources.length; ri++) {
@@ -229,12 +223,12 @@ export function CalendarMonthView({
       }
     }
     return positions;
-  }, [days, displayResources]);
+  })();
 
-  const crossDayLines = useMemo(() => {
+  const crossDayLines = (() => {
     if (!showCrossDayLines) return [];
     return computeCrossDayLines(splitEvents, cellPositions);
-  }, [showCrossDayLines, splitEvents, cellPositions]);
+  })();
 
   const totalHeight = totalSize ?? displayResources.length * 48;
 

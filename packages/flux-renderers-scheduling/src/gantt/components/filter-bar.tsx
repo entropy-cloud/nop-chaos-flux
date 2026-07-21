@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Input, Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { GanttColumn } from '../gantt.types.js';
@@ -31,7 +31,7 @@ export function FilterBar({
     setLocalText(filterText);
   }, [filterText]);
 
-  const handleTextChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocalText(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -41,9 +41,9 @@ export function FilterBar({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [onFilterChange]);
+  };
 
-  const handleSortToggle = useCallback((field: string) => {
+  const handleSortToggle = (field: string) => {
     if (sortState.field === field) {
       if (sortState.direction === 'asc') onSortChange(field, 'desc');
       else if (sortState.direction === 'desc') onSortChange(field, null);
@@ -51,7 +51,7 @@ export function FilterBar({
     } else {
       onSortChange(field, 'asc');
     }
-  }, [sortState, onSortChange]);
+  };
 
   const sortableColumns = columns.filter((c) => c.sortable);
 

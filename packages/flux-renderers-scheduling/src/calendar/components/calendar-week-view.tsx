@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
@@ -45,20 +45,17 @@ export function CalendarWeekView({
   locale = 'en-US',
 }: CalendarWeekViewProps & { locale?: string }) {
   const { start, end } = getWeekStartEnd(currentDate, firstDayOfWeek);
-  const days = useMemo(() => getDateRange(start, end), [start, end]);
+  const days = getDateRange(start, end);
 
   const totalHours = dayEndHour - dayStartHour;
 
-  const hours = useMemo(
-    () => Array.from({ length: totalHours }, (_, i) => dayStartHour + i),
-    [dayStartHour, totalHours],
-  );
+  const hours = Array.from({ length: totalHours }, (_, i) => dayStartHour + i);
 
-  const displayResources = useMemo(() => resources.length === 0
+  const displayResources = resources.length === 0
     ? [{ id: '_default', text: '', title: '' }]
-    : resources, [resources]);
+    : resources;
 
-  const positionedByDay = useMemo(() => {
+  const positionedByDay = (() => {
     const result = new Map<string, Map<string, ReturnType<typeof allocateConcurrentWidths>>>();
     for (const resource of displayResources) {
       const resourceMap = new Map<string, ReturnType<typeof allocateConcurrentWidths>>();
@@ -73,7 +70,7 @@ export function CalendarWeekView({
       result.set(resource.id, resourceMap);
     }
     return result;
-  }, [events, days, displayResources, dayStartHour, dayEndHour, maxConcurrent]);
+  })();
 
   const weekdayShort = WEEKDAY_SHORT[locale] ?? WEEKDAY_SHORT['en-US']!;
   const displayDays = showWeekends ? days : days.filter((d) => d.getUTCDay() !== 0 && d.getUTCDay() !== 6);

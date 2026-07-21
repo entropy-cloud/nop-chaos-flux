@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useGanttStore } from '../gantt-context.js';
 
 export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) {
@@ -11,15 +11,15 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
   } | null>(null);
   const [isLinking, setIsLinking] = useState(false);
 
-  const cleanup = useCallback(() => {
+  const cleanup = () => {
     if (drawingRef.current?.tempLine) {
       drawingRef.current.tempLine.remove();
     }
     drawingRef.current = null;
     setIsLinking(false);
-  }, []);
+  };
 
-  const onLinkHandlePointerDown = useCallback((e: PointerEvent, taskId: string | number) => {
+  const onLinkHandlePointerDown = (e: PointerEvent, taskId: string | number) => {
     e.preventDefault();
     e.stopPropagation();
     const task = store.tasks.get(taskId);
@@ -71,9 +71,9 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
     document.addEventListener('keydown', onKeyDown);
-  }, [store, svgRef, cleanup]);
+  };
 
-  const startKeyboardLink = useCallback((sourceTaskId: string | number) => {
+  const startKeyboardLink = (sourceTaskId: string | number) => {
     const task = store.tasks.get(sourceTaskId);
     if (!task || !svgRef.current) return;
 
@@ -91,19 +91,19 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
       tempLine,
     };
     setIsLinking(true);
-  }, [store, svgRef]);
+  };
 
-  const completeKeyboardLink = useCallback((targetTaskId: string | number) => {
+  const completeKeyboardLink = (targetTaskId: string | number) => {
     if (!drawingRef.current) return;
     if (targetTaskId !== String(drawingRef.current.sourceId)) {
       store.addLink(drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
     }
     cleanup();
-  }, [store, cleanup]);
+  };
 
-  const cancelLink = useCallback(() => {
+  const cancelLink = () => {
     cleanup();
-  }, [cleanup]);
+  };
 
   useEffect(() => {
     return () => {

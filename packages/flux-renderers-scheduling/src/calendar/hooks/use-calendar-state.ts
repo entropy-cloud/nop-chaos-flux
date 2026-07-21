@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState } from 'react';
 import type { CalendarView } from '../../schemas.js';
 import type { CalendarDateRange } from '../calendar.types.js';
 import { getMonthStartEnd, getWeekStartEnd, getDayStartEnd } from '../utils/calendar-date-utils.js';
@@ -31,7 +31,7 @@ export function useCalendarState(options: CalendarStateOptions = {}): CalendarSt
   const [currentDate, setInternalDate] = useState<Date>(initialDate);
   const [activeView, setInternalView] = useState<CalendarView>(initialView);
 
-  const dateRange = useMemo<CalendarDateRange>(() => {
+  const dateRange = ((): CalendarDateRange => {
     switch (activeView) {
       case 'week':
         return getWeekStartEnd(currentDate, firstDayOfWeek);
@@ -41,23 +41,17 @@ export function useCalendarState(options: CalendarStateOptions = {}): CalendarSt
       default:
         return getMonthStartEnd(currentDate);
     }
-  }, [currentDate, activeView, firstDayOfWeek]);
+  })();
 
-  const setCurrentDate = useCallback(
-    (date: Date) => {
-      setInternalDate(date);
-      onDateChange?.(date);
-    },
-    [onDateChange],
-  );
+  const setCurrentDate = (date: Date) => {
+    setInternalDate(date);
+    onDateChange?.(date);
+  };
 
-  const setActiveView = useCallback(
-    (view: CalendarView) => {
-      setInternalView(view);
-      onViewChange?.(view);
-    },
-    [onViewChange],
-  );
+  const setActiveView = (view: CalendarView) => {
+    setInternalView(view);
+    onViewChange?.(view);
+  };
 
   return {
     currentDate,

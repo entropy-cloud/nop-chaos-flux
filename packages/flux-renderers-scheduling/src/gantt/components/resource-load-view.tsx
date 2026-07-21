@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import type { GanttId, GanttResource, GanttAssignment, GanttTask } from '../gantt.types.js';
 import type { WorkCalendar } from '../utils/worktime.js';
 import { ResourceLoadGrid } from './resource-load-grid.js';
@@ -18,11 +18,9 @@ interface ResourceLoadViewProps {
 export function ResourceLoadView({
   resources, assignments, tasks, startDate, endDate, cellWidth, calendar,
 }: ResourceLoadViewProps) {
-  const loadResults: ResourceLoadResult[] = useMemo(() => {
-    return computeResourceLoads({
-      resources, assignments, tasks, startDate, endDate, calendar,
-    });
-  }, [resources, assignments, tasks, startDate, endDate, calendar]);
+  const loadResults: ResourceLoadResult[] = computeResourceLoads({
+    resources, assignments, tasks, startDate, endDate, calendar,
+  });
 
   if (resources.size === 0) {
     return (

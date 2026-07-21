@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { draggable, dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import type { BoardData } from '../kanban.types.js';
@@ -88,64 +88,62 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
     });
   }, []);
 
-  const registerCard = useCallback(
-    (element: HTMLElement, cardId: string, columnId: string, index: number) => {
-      return combine(
-        draggable({
-          element,
-          getInitialData: () => ({
-            type: 'kanban-card',
-            cardId,
-            columnId,
-            cardIndex: index,
-          }),
+  const registerCard = (
+    element: HTMLElement, cardId: string, columnId: string, index: number,
+  ) => {
+    return combine(
+      draggable({
+        element,
+        getInitialData: () => ({
+          type: 'kanban-card',
+          cardId,
+          columnId,
+          cardIndex: index,
         }),
-        dropTargetForElements({
-          element,
-          getData: () => ({
-            type: 'kanban-card-target',
-            columnId,
-            cardIndex: index,
-            dropIndex: index,
-          }),
-          canDrop({ source }) {
-            if (source.data.type !== 'kanban-card') return false;
-            return true;
-          },
-        }),
-      );
-    },
-    [],
-  );
-
-  const registerColumn = useCallback(
-    (element: HTMLElement, columnId: string, cardCount: number) => {
-      return dropTargetForElements({
+      }),
+      dropTargetForElements({
         element,
         getData: () => ({
-          type: 'kanban-column',
+          type: 'kanban-card-target',
           columnId,
-          dropIndex: cardCount,
+          cardIndex: index,
+          dropIndex: index,
         }),
         canDrop({ source }) {
           if (source.data.type !== 'kanban-card') return false;
-          if (wipOverLimitColumns?.has(columnId)) return false;
           return true;
         },
-        onDragEnter() {
-          setDropState((prev) => ({ ...prev, targetColumnId: columnId }));
-        },
-        onDragLeave() {
-          setDropState((prev) =>
-            prev.targetColumnId === columnId ? { ...prev, targetColumnId: null } : prev,
-          );
-        },
-      });
-    },
-    [wipOverLimitColumns],
-  );
+      }),
+    );
+  };
 
-  const moveCardKeyboard = useCallback((
+  const registerColumn = (
+    element: HTMLElement, columnId: string, cardCount: number,
+  ) => {
+    return dropTargetForElements({
+      element,
+      getData: () => ({
+        type: 'kanban-column',
+        columnId,
+        dropIndex: cardCount,
+      }),
+      canDrop({ source }) {
+        if (source.data.type !== 'kanban-card') return false;
+        if (wipOverLimitColumns?.has(columnId)) return false;
+        return true;
+      },
+      onDragEnter() {
+        setDropState((prev) => ({ ...prev, targetColumnId: columnId }));
+      },
+      onDragLeave() {
+        setDropState((prev) =>
+          prev.targetColumnId === columnId ? { ...prev, targetColumnId: null } : prev,
+        );
+      },
+    });
+  };
+
+  const moveCardKeyboard = (
     boardData: BoardData,
     cardId: string,
     fromColumnId: string,
@@ -166,7 +164,7 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
       toIndex,
       overLimit: wipOverLimitColumns?.has(toColumnId) ?? false,
     });
-  }, [onBoardChange, onCardMove, wipOverLimitColumns]);
+  };
 
   return {
     dragState,

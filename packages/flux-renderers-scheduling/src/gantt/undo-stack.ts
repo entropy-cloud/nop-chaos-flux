@@ -1,3 +1,12 @@
+/**
+ * Gantt uses a command-based undo pattern:
+ * Each mutation is recorded as a Command object with execute/undo/redo.
+ * This is appropriate for Gantt because tasks have interlinked constraints
+ * (dependencies, resource assignments, layout positions) where selective
+ * command reversal is more precise than full-state restoration.
+ * Kanban uses a snapshot-based pattern instead (see kanban/utils/kanban-undo-stack.ts)
+ * because its flat BoardData structure makes full-state capture inexpensive.
+ */
 import type { GanttId, GanttTaskData, GanttLinkType, GanttLinkData } from './gantt.types.js';
 import { GanttStore } from './gantt-store.js';
 

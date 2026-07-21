@@ -93,6 +93,7 @@ export interface GanttSchema extends BaseSchema {
   onLinkDragEnd?: ActionSchema;
   onEmptyCellClick?: ActionSchema;
   onZoomChange?: ActionSchema;
+  /** Fires on scroll — fire-and-forget semantic. The action is dispatched on every scroll event; consumers should debounce or throttle in the action handler if needed. */
   onScroll?: ActionSchema;
   zoomIn?: ActionSchema;
   zoomOut?: ActionSchema;

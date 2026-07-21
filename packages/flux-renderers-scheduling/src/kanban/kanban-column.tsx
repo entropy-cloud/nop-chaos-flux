@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef } from 'react';
 import { cn, Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData, BoardItem, KanbanCardConfig } from './kanban.types.js';
@@ -52,18 +52,12 @@ export function KanbanColumn({
   onDragHandleKeyDown,
 }: KanbanColumnProps) {
   const cardIds = column.children;
-  const cardIndexMap = useMemo(
-    () => new Map<string, number>(cardIds.map((id, idx) => [id, idx])),
-    [cardIds],
-  );
-  const cards = useMemo(
-    () => cardIds
-      .map((id) => board[id])
-      .filter((item): item is BoardItem => item != null && item.type === 'card'),
-    [cardIds, board],
-  );
+  const cardIndexMap = new Map<string, number>(cardIds.map((id, idx) => [id, idx]));
+  const cards = cardIds
+    .map((id) => board[id])
+    .filter((item): item is BoardItem => item != null && item.type === 'card');
 
-  const filteredCards = useMemo(() => {
+  const filteredCards = (() => {
     if (!filterText) return cards;
     const text = filterText.toLowerCase();
     return cards.filter((card) => {
@@ -71,7 +65,7 @@ export function KanbanColumn({
       const description = ((card.data?.description as string) || '').toLowerCase();
       return title.includes(text) || description.includes(text);
     });
-  }, [cards, filterText]);
+  })();
 
   const displayCards = collapsed ? [] : filteredCards;
   const showEmptyZone = !collapsed && filteredCards.length === 0;

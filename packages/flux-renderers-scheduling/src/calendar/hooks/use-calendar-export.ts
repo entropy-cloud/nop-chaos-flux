@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+
 
 export interface UseCalendarExportResult {
   exportToPrint: () => void;
@@ -6,11 +6,11 @@ export interface UseCalendarExportResult {
 }
 
 export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement | null>): UseCalendarExportResult {
-  const exportToPrint = useCallback(() => {
+  const exportToPrint = () => {
     window.print();
-  }, []);
+  };
 
-  const exportToPNG = useCallback(async (element?: HTMLElement | null, fileName = 'calendar-export.png') => {
+  const exportToPNG = async (element?: HTMLElement | null, fileName = 'calendar-export.png') => {
     const target = element ?? calendarRef?.current;
     if (!target) return;
 
@@ -39,7 +39,7 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
     } catch (err) {
       console.warn('[Calendar] PNG export failed:', err);
     }
-  }, [calendarRef]);
+  };
 
   return { exportToPrint, exportToPNG };
 }

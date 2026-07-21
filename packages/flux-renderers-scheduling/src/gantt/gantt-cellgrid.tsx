@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { cn } from '@nop-chaos/ui';
 import { useGanttStore, useGanttStoreSnapshot } from './gantt-context.js';
 import { computeScaleIntervals } from './utils/scale.js';
@@ -16,12 +16,12 @@ export function GanttCellGrid({ showWeekends = true, className }: GanttCellGridP
   const totalHeight = tasks.length * store.rowHeight;
 
   const zoom = store.zoomLevels.get(store.currentZoom);
-  const dayScale = useMemo(() => {
+  const dayScale = (() => {
     if (!zoom) return [];
     const dayScales = zoom.scales.filter((s) => s.unit === 'day');
     if (dayScales.length === 0) return [];
     return computeScaleIntervals(store.scaleRange, dayScales, store.cellWidth);
-  }, [store.scaleRange, zoom, store.cellWidth]);
+  })();
 
   const dayCells = dayScale.length > 0 ? dayScale[0].cells : [];
 

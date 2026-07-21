@@ -1,5 +1,6 @@
-import React, { useRef, useImperativeHandle, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useImperativeHandle, useState, useEffect, useCallback } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttSchema } from '../schemas.js';
 import { GanttStore } from './gantt-store.js';
 import { GanttStoreProvider } from './gantt-context.js';
@@ -71,7 +72,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const { onLinkHandlePointerDown } = useGanttLinkDraw(svgRef);
     useGanttScroll(gridRef, timelineRef);
 
-    const handleBarKeyAction = useCallback((taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => {
+    const handleBarKeyAction = (taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => {
       const task = store.tasks.get(taskId);
       if (!task) return;
       const oldStart = new Date(task.start);
@@ -112,7 +113,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           break;
         }
       }
-    }, [store]);
+    };
 
     useGanttKeyboard({
       containerRef,
@@ -147,20 +148,24 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       }
     }, [store, gridRef, timelineRef]);
 
-    useImperativeHandle(ref, () => ({
-      zoomIn: () => {
-        const zooms = store.getAvailableZooms();
-        const idx = zooms.findIndex((z) => z.key === store.currentZoom);
-        if (idx < zooms.length - 1) store.setZoom(zooms[idx + 1].key);
-      },
-      zoomOut: () => {
-        const zooms = store.getAvailableZooms();
-        const idx = zooms.findIndex((z) => z.key === store.currentZoom);
-        if (idx > 0) store.setZoom(zooms[idx - 1].key);
-      },
-      scrollToToday,
-      scrollToTask,
-    }), [store, scrollToToday, scrollToTask]);
+    useImperativeHandle(
+      ref,
+      () => ({
+        zoomIn: () => {
+          const zooms = store.getAvailableZooms();
+          const idx = zooms.findIndex((z) => z.key === store.currentZoom);
+          if (idx < zooms.length - 1) store.setZoom(zooms[idx + 1].key);
+        },
+        zoomOut: () => {
+          const zooms = store.getAvailableZooms();
+          const idx = zooms.findIndex((z) => z.key === store.currentZoom);
+          if (idx > 0) store.setZoom(zooms[idx - 1].key);
+        },
+        scrollToToday,
+        scrollToTask,
+      }),
+      [store, scrollToToday, scrollToTask],
+    );
 
     if (!meta.visible) return null;
 
@@ -174,12 +179,12 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           <div aria-live="polite" aria-atomic="true" className="sr-only">
             {`${store.getVisibleTasks().length} tasks visible`}
           </div>
-          <GanttHeader toolbarRegion={regions.toolbar as any} onScrollToToday={scrollToToday} />
+          <GanttHeader toolbarRegion={regions.toolbar as RenderRegionHandle} onScrollToToday={scrollToToday} />
           <GanttLayout
             grid={
               <div ref={gridRef} className="h-full overflow-auto">
                 <GanttGrid
-                  columns={columns as any}
+                  columns={columns}
                   selectedTaskId={selectedTaskId}
                   onSelectTask={setSelectedTaskId}
                 />
@@ -191,8 +196,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                 <div className="relative">
                   <GanttCellGrid showWeekends={showWeekends} />
                   <GanttBars
-                      onBarPointerDown={onDragPointerDown as any}
-                      onLinkHandlePointerDown={onLinkHandlePointerDown as any}
+                      onBarPointerDown={onDragPointerDown}
+                      onLinkHandlePointerDown={onLinkHandlePointerDown}
                       onBarDoubleClick={(id) => setEditingTaskId(id)}
                       onBarKeyAction={handleBarKeyAction}
                     />
@@ -206,7 +211,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
             header={null}
           />
           <GanttEditor
-            editorRegion={regions.editor as any}
+            editorRegion={regions.editor as RenderRegionHandle}
             editingTaskId={editingTaskId}
             onClose={() => setEditingTaskId(null)}
             onBarDoubleClick={(id) => setEditingTaskId(id)}

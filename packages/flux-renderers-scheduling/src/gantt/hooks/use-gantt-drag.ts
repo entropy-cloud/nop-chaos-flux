@@ -1,7 +1,8 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useGanttStore } from '../gantt-context.js';
 
-type DragMode = 'move' | 'resize-start' | 'resize-end' | null;
+export type GanttDragMode = 'move' | 'resize-start' | 'resize-end';
+type DragMode = GanttDragMode | null;
 
 interface DragState {
   mode: DragMode;
@@ -18,7 +19,7 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
   const dragRef = useRef<DragState | null>(null);
   const ghostRef = useRef<HTMLElement | null>(null);
 
-  const onPointerDown = useCallback((e: PointerEvent, taskId: string | number, mode: DragMode) => {
+  const onPointerDown = (e: PointerEvent, taskId: string | number, mode: GanttDragMode) => {
     if (!mode) return;
     e.preventDefault();
     const target = e.currentTarget as HTMLElement;
@@ -117,7 +118,7 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
     document.addEventListener('keydown', onKeyDown);
-  }, [store]);
+  };
 
   useEffect(() => {
     return () => {

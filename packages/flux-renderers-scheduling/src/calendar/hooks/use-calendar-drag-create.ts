@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export interface DragCreatePayload {
   title: string;
@@ -58,7 +58,7 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
   const activeRef = useRef(false);
   const startInfoRef = useRef<{ date: string; resourceId: string } | null>(null);
 
-  const dismissTypeSelector = useCallback(() => {
+  const dismissTypeSelector = () => {
     setShowTypeSelector(false);
     activeRef.current = false;
     startInfoRef.current = null;
@@ -71,58 +71,58 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
       currentX: 0,
       currentY: 0,
     });
-  }, []);
-
-  const clearLongPressTimer = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  }, []);
-
-  const handlePointerMove = useCallback((e: PointerEvent) => {
-    if (!activeRef.current) return;
-
-    setDragCreateState((prev) => ({
-      ...prev,
-      currentX: e.clientX,
-      currentY: e.clientY,
-    }));
-
-    if (getCellFromPoint) {
-      const cell = getCellFromPoint(e.clientX, e.clientY);
-      if (cell) {
-        setDragCreateState((prev) => ({
-          ...prev,
-          currentDate: cell.date,
-          currentResource: cell.resourceId,
-        }));
-      }
-    }
-  }, [getCellFromPoint]);
-
-  const handlePointerUp = useCallback((_e: PointerEvent) => {
-    clearLongPressTimer();
-    if (!activeRef.current) return;
-
-    const start = startInfoRef.current;
-    if (start) {
-      setShowTypeSelector(true);
-    } else {
-      activeRef.current = false;
-      setDragCreateState({
-        active: false,
-        startDate: null,
-        startResource: null,
-        currentDate: null,
-        currentResource: null,
-        currentX: 0,
-        currentY: 0,
-      });
-    }
-  }, [clearLongPressTimer]);
+  };
 
   useEffect(() => {
+    const clearTimer = () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!activeRef.current) return;
+
+      setDragCreateState((prev) => ({
+        ...prev,
+        currentX: e.clientX,
+        currentY: e.clientY,
+      }));
+
+      if (getCellFromPoint) {
+        const cell = getCellFromPoint(e.clientX, e.clientY);
+        if (cell) {
+          setDragCreateState((prev) => ({
+            ...prev,
+            currentDate: cell.date,
+            currentResource: cell.resourceId,
+          }));
+        }
+      }
+    };
+
+    const handlePointerUp = (_e: PointerEvent) => {
+      clearTimer();
+      if (!activeRef.current) return;
+
+      const start = startInfoRef.current;
+      if (start) {
+        setShowTypeSelector(true);
+      } else {
+        activeRef.current = false;
+        setDragCreateState({
+          active: false,
+          startDate: null,
+          startResource: null,
+          currentDate: null,
+          currentResource: null,
+          currentX: 0,
+          currentY: 0,
+        });
+      }
+    };
+
     if (dragCreateState.active) {
       window.addEventListener('pointermove', handlePointerMove);
       window.addEventListener('pointerup', handlePointerUp);
@@ -131,7 +131,7 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
         window.removeEventListener('pointerup', handlePointerUp);
       };
     }
-  }, [dragCreateState.active, handlePointerMove, handlePointerUp]);
+  }, [dragCreateState.active, getCellFromPoint]);
 
   useEffect(() => {
     return () => {
@@ -142,7 +142,7 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
     };
   }, []);
 
-  const startCellDrag = useCallback((date: string, resourceId: string, pointerEvent: React.PointerEvent) => {
+  const startCellDrag = (date: string, resourceId: string, pointerEvent: React.PointerEvent) => {
     pointerDownPos.current = { x: pointerEvent.clientX, y: pointerEvent.clientY, date, resourceId };
 
     longPressTimer.current = setTimeout(() => {
@@ -158,10 +158,13 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
         currentY: pointerEvent.clientY,
       });
     }, longPressMs);
-  }, [longPressMs]);
+  };
 
-  const cancelCreate = useCallback(() => {
-    clearLongPressTimer();
+  const cancelCreate = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
     activeRef.current = false;
     startInfoRef.current = null;
     pointerDownPos.current = null;
@@ -175,9 +178,9 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
       currentX: 0,
       currentY: 0,
     });
-  }, [clearLongPressTimer]);
+  };
 
-  const confirmCreate = useCallback((shiftType: string, title?: string) => {
+  const confirmCreate = (shiftType: string, title?: string) => {
     const start = startInfoRef.current;
     if (!start) return;
 
@@ -203,11 +206,11 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
       currentX: 0,
       currentY: 0,
     });
-  }, [onEventCreate]);
+  };
 
-  const selectType = useCallback((type: string) => {
+  const selectType = (type: string) => {
     confirmCreate(type);
-  }, [confirmCreate]);
+  };
 
   return {
     dragCreateState,

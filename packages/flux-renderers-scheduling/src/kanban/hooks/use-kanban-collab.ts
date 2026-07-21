@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, type MutableRefObject } from 'react';
+import { useState, useRef, useEffect, type MutableRefObject } from 'react';
 
 export type CollabConnectionStatus = 'connected' | 'reconnecting' | 'disconnected';
 
@@ -79,54 +79,63 @@ export function useKanbanCollab({
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
 
-  const updateStatus = useCallback(
-    (newStatus: CollabConnectionStatus) => {
+  const connectFnRef = useRef<() => void>(() => {});
+  const disconnectFnRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    const updateStatus = (
+      newStatus: CollabConnectionStatus,
+    ) => {
       setStatus(newStatus);
       onStatusChange?.(newStatus);
-    },
-    [onStatusChange],
-  );
+    };
 
-  const connectFnRef = useRef<() => void>(() => {});
-
-  const connect = useCallback(() => {
-    connectImpl(wsUrl, boardId, updateStatus, onMessage, wsRef, reconnectTimerRef, mountedRef, connectFnRef.current);
-  }, [wsUrl, boardId, updateStatus, onMessage]);
-
-  useEffect(() => {
+    const connect = () => {
+      connectImpl(wsUrl, boardId, updateStatus, onMessage, wsRef, reconnectTimerRef, mountedRef, connect);
+    };
     connectFnRef.current = connect;
-  }, [connect]);
-
-  const disconnect = useCallback(() => {
-    if (reconnectTimerRef.current) {
-      clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
-    }
-    wsRef.current?.close();
-    wsRef.current = null;
-    updateStatus('disconnected');
-  }, [updateStatus]);
-
-  const sendMessage = useCallback(
-    (msg: Omit<CollabMessage, 'timestamp' | 'version'>) => {
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-      const fullMsg: CollabMessage = {
-        ...msg,
-        timestamp: Date.now(),
-        version: 1,
-      };
-      wsRef.current.send(JSON.stringify(fullMsg));
-    },
-    [],
-  );
+  }, [wsUrl, boardId, onMessage, onStatusChange]);
 
   useEffect(() => {
+    const updateStatus = (
+      newStatus: CollabConnectionStatus,
+    ) => {
+      setStatus(newStatus);
+      onStatusChange?.(newStatus);
+    };
+
+    const disconnect = () => {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      wsRef.current?.close();
+      wsRef.current = null;
+      updateStatus('disconnected');
+    };
+    disconnectFnRef.current = disconnect;
+
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
       disconnect();
     };
-  }, [disconnect]);
+  }, [onStatusChange]);
+
+  const sendMessage = (
+    msg: Omit<CollabMessage, 'timestamp' | 'version'>,
+  ) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    const fullMsg: CollabMessage = {
+      ...msg,
+      timestamp: Date.now(),
+      version: 1,
+    };
+    wsRef.current.send(JSON.stringify(fullMsg));
+  };
+
+  const connect = () => connectFnRef.current();
+  const disconnect = () => disconnectFnRef.current();
 
   return {
     status,

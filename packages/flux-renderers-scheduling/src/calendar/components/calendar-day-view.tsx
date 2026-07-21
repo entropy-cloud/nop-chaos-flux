@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
@@ -38,10 +38,7 @@ export function CalendarDayView({
   const today = isToday(currentDate);
   const totalHours = dayEndHour - dayStartHour;
 
-  const hours = useMemo(
-    () => Array.from({ length: totalHours }, (_, i) => dayStartHour + i),
-    [dayStartHour, totalHours],
-  );
+  const hours = Array.from({ length: totalHours }, (_, i) => dayStartHour + i);
 
   const displayResources = resources.length === 0
     ? [{ id: '_default', text: '', title: '' }]

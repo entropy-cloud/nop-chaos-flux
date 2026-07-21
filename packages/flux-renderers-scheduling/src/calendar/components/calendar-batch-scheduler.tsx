@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
@@ -36,7 +36,7 @@ export function CalendarBatchScheduler({
   const [selectedShiftType, setSelectedShiftType] = useState('');
   const [selectAll, setSelectAll] = useState(false);
 
-  const toggleResource = useCallback((resourceId: string) => {
+  const toggleResource = (resourceId: string) => {
     setSelectedResources((prev) => {
       const next = new Set(prev);
       if (next.has(resourceId)) {
@@ -46,9 +46,9 @@ export function CalendarBatchScheduler({
       }
       return next;
     });
-  }, []);
+  };
 
-  const toggleSelectAll = useCallback(() => {
+  const toggleSelectAll = () => {
     setSelectAll((prev) => {
       const next = !prev;
       if (next) {
@@ -58,20 +58,20 @@ export function CalendarBatchScheduler({
       }
       return next;
     });
-  }, [resources]);
+  };
 
-  const dateRange = useMemo(() => {
+  const dateRange = (() => {
     if (!startDate || !endDate) return [];
     const start = new Date(startDate + 'T00:00:00');
     const end = new Date(endDate + 'T00:00:00');
     if (start > end) return [];
     return getDateRange(start, end);
-  }, [startDate, endDate]);
+  })();
 
   const cellCount = dateRange.length * selectedResources.size;
   const exceedsLimit = cellCount > 100;
 
-  const conflictCells = useMemo(() => {
+  const conflictCells = (() => {
     const conflicts = new Set<string>();
     for (const rid of selectedResources) {
       for (const day of dateRange) {
@@ -85,9 +85,9 @@ export function CalendarBatchScheduler({
       }
     }
     return conflicts;
-  }, [selectedResources, dateRange, events]);
+  })();
 
-  const handleConfirm = useCallback(() => {
+  const handleConfirm = () => {
     if (!startDate || !endDate || !selectedShiftType || selectedResources.size === 0) return;
     if (exceedsLimit) return;
 
@@ -98,7 +98,7 @@ export function CalendarBatchScheduler({
     });
 
     onClose();
-  }, [startDate, endDate, selectedShiftType, selectedResources, exceedsLimit, onBatchSchedule, onClose]);
+  };
 
   if (!open) return null;
 

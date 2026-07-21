@@ -1,4 +1,13 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+/**
+ * State management rationale for Kanban (useState + imperative):
+ * Kanban has a flatter component tree (board → columns → cards) compared to Gantt,
+ * making direct useState + imperative callbacks sufficient and simpler than Zustand.
+ * Board state is centralized in `boardData` (useState) with controlled/uncontrolled
+ * branching. Undo uses snapshot-based pattern (full BoardData copies).
+ * Gantt uses Zustand + Context (deeper tree, more inter-component subscriptions).
+ * Calendar uses custom hooks (view state localized to scroll/navigation hooks).
+ */
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn, Button, Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -65,26 +74,30 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     },
     [isControlled],
   );
-  const columns = useMemo(() => getColumns(boardData), [boardData]);
+  const columns = getColumns(boardData);
   const [collapsedMap, setCollapsedMap] = useState<Record<string, boolean>>({});
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+
+  const setBoardDataRef = useRef(setBoardData);
+  setBoardDataRef.current = setBoardData;
 
   const [undoStackState, setUndoStackState] = useState<UndoStack>(() => createUndoStack(1000));
   const [activityLogOpen, setActivityLogOpen] = useState(false);
   const [actions, setActions] = useState<KanbanAction[]>([]);
   const actionCounterRef = useRef(0);
 
-  const recordAction = useCallback((action: Omit<KanbanAction, 'id' | 'timestamp'>) => {
+  const recordAction = (action: Omit<KanbanAction, 'id' | 'timestamp'>) => {
     actionCounterRef.current += 1;
     const entry: KanbanAction = {
       ...action,
+      // eslint-disable-next-line react-hooks/purity
       id: `act-${Date.now()}-${actionCounterRef.current}`,
       timestamp: new Date().toISOString(),
     };
     setActions((prev) => [entry, ...prev].slice(0, 500));
-  }, []);
+  };
 
-  const handleSetBoardData = useCallback((newBoard: BoardData) => {
+  const handleSetBoardData = (newBoard: BoardData) => {
     setBoardData((prev) => {
       setUndoStackState((s) => pushCommand(s, {
         type: 'moveCard',
@@ -94,7 +107,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       }));
       return newBoard;
     });
-  }, [setBoardData]);
+  };
 
   const handleUndo = useCallback(() => {
     setUndoStackState((s) => {
@@ -135,11 +148,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     return () => window.removeEventListener('keydown', handler);
   }, [handleUndo, handleRedo]);
 
-  const allTags = useMemo(() => collectAllTags(boardData, columns), [boardData, columns]);
+  const allTags = collectAllTags(boardData, columns);
 
   const filter = useKanbanFilter({ filterText: resolved.filterText as string | undefined });
 
-  const wipOverLimitColumns = useMemo(() => {
+  const wipOverLimitColumns = (() => {
     const overLimit = new Set<string>();
     for (const col of columns) {
       const colData = boardData[col.id];
@@ -153,7 +166,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       }
     }
     return overLimit;
-  }, [columns, boardData, wipStrictGlobal]);
+  })();
 
   const { registerCard, registerColumn } = useKanbanDnd({
     boardData,
@@ -269,7 +282,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   if (resolved.loading) {
     const skeletonRegion = regions.loading;
     if (skeletonRegion) {
-      return <div data-slot="kanban">{(skeletonRegion as { render: () => React.ReactNode }).render()}</div>;
+      return <div data-slot="kanban">{skeletonRegion.render() as React.ReactNode}</div>;
     }
     return (
       <div data-slot="kanban" className="nop-kanban flex gap-4 p-4 animate-pulse">
@@ -283,7 +296,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   if (columns.length === 0) {
     const emptyRegion = regions.empty;
     if (emptyRegion) {
-      return <div data-slot="kanban">{(emptyRegion as { render: () => React.ReactNode }).render()}</div>;
+      return <div data-slot="kanban">{emptyRegion.render() as React.ReactNode}</div>;
     }
     return (
       <div data-slot="kanban-empty" className="nop-kanban-empty flex items-center justify-center py-12 text-gray-400 text-sm">

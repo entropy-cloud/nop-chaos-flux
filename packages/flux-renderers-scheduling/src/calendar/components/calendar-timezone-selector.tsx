@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@nop-chaos/ui';
 
 export interface CalendarTimezoneSelectorProps {
@@ -46,21 +46,16 @@ export function CalendarTimezoneSelector({
 }: CalendarTimezoneSelectorProps) {
   const [open, setOpen] = useState(false);
 
-  const timezones = useMemo(() => {
-    return COMMON_TIMEZONES.map((tz) => ({
-      value: tz,
-      label: tz.replace('_', ' '),
-      offset: formatTimezoneOffset(tz),
-    }));
-  }, []);
+  const timezones = COMMON_TIMEZONES.map((tz) => ({
+    value: tz,
+    label: tz.replace('_', ' '),
+    offset: formatTimezoneOffset(tz),
+  }));
 
-  const handleSelect = useCallback(
-    (tz: string) => {
-      onTimezoneChange(tz);
-      setOpen(false);
-    },
-    [onTimezoneChange],
-  );
+  const handleSelect = (tz: string) => {
+    onTimezoneChange(tz);
+    setOpen(false);
+  };
 
   const selectedLabel = timezones.find((tz) => tz.value === selectedTimezone)?.label ?? selectedTimezone;
 

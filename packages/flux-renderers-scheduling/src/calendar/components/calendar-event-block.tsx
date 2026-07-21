@@ -39,20 +39,17 @@ export function CalendarEventBlock({
   const { event, left, width, top, height, isSplit, concurrentIndex, maxConcurrent, overlap } = positionedEvent;
   const color = resolveColor(event);
 
-  const handleClick = React.useCallback(() => {
+  const handleClick = () => {
     onEventClick?.({ event, resource, date: dateStr });
-  }, [event, resource, dateStr, onEventClick]);
+  };
 
-  const handleKeyDown = React.useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleClick();
-      }
-      onKeyDown?.(e, event);
-    },
-    [handleClick, onKeyDown, event],
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    }
+    onKeyDown?.(e, event);
+  };
 
   if (eventTemplate) {
     const templateContent = eventTemplate.render({

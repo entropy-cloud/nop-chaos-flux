@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { draggable, dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import type { BoardData } from '../kanban.types.js';
 import { moveColumn } from '../kanban-helpers.js';
@@ -49,34 +49,32 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder }: UseC
     });
   }, []);
 
-  const registerColumnHeader = useCallback(
-    (element: HTMLElement, columnId: string) => {
-      return draggable({
-        element,
-        getInitialData: () => ({
-          type: 'kanban-column-header',
-          columnId,
-        }),
-      });
-    },
-    [],
-  );
+  const registerColumnHeader = (
+    element: HTMLElement, columnId: string,
+  ) => {
+    return draggable({
+      element,
+      getInitialData: () => ({
+        type: 'kanban-column-header',
+        columnId,
+      }),
+    });
+  };
 
-  const registerBoardDropZone = useCallback(
-    (element: HTMLElement, columnIndex: number) => {
-      return dropTargetForElements({
-        element,
-        getData: () => ({
-          type: 'kanban-column-drop-zone',
-          columnIndex,
-        }),
-        canDrop({ source }) {
-          return source.data.type === 'kanban-column-header';
-        },
-      });
-    },
-    [],
-  );
+  const registerBoardDropZone = (
+    element: HTMLElement, columnIndex: number,
+  ) => {
+    return dropTargetForElements({
+      element,
+      getData: () => ({
+        type: 'kanban-column-drop-zone',
+        columnIndex,
+      }),
+      canDrop({ source }) {
+        return source.data.type === 'kanban-column-header';
+      },
+    });
+  };
 
   return {
     registerColumnHeader,

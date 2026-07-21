@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { cn } from '@nop-chaos/ui';
 import { useGanttStore, useGanttStoreSnapshot } from './gantt-context.js';
 import { computeScaleIntervals } from './utils/scale.js';
@@ -11,12 +11,12 @@ export function GanttTimeScale({ className }: GanttTimeScaleProps) {
   const store = useGanttStore();
   useGanttStoreSnapshot();
 
-  const rows = useMemo(() => {
+  const rows = (() => {
     const zoom = store.zoomLevels.get(store.currentZoom);
     const scales = zoom?.scales ?? [];
     if (scales.length === 0) return [];
     return computeScaleIntervals(store.scaleRange, scales, store.cellWidth);
-  }, [store.zoomLevels, store.currentZoom, store.scaleRange, store.cellWidth]);
+  })();
 
   return (
     <div className={cn('nop-gantt-scale flex-shrink-0', className)} data-slot="gantt-scale">

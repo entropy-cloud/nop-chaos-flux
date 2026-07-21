@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Button, Label, Input, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
@@ -22,7 +22,7 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
 
   const hasInvalidConstraint = constraintDate !== '' && new Date(constraintDate).toString() === 'Invalid Date';
 
-  const handleSchedule = useCallback(() => {
+  const handleSchedule = () => {
     if (hasInvalidConstraint) return;
 
     setStatus('scheduling');
@@ -37,7 +37,7 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
     if (onScheduleAction) {
       onScheduleAction(config);
     }
-  }, [direction, constraintType, constraintDate, hasInvalidConstraint, onScheduleAction]);
+  };
 
   return (
     <div className={cn('nop-gantt-scheduler-config p-3 border rounded-md bg-white', className)} data-slot="gantt-scheduler-config">

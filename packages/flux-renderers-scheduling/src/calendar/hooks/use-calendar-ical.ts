@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { CalendarEvent } from '../../schemas.js';
 
 export interface UseCalendarICalOptions {
@@ -32,7 +32,7 @@ export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalend
     check();
   }, []);
 
-  const importFromICal = useCallback(async (file: File) => {
+  const importFromICal = async (file: File) => {
     const gen = ++genRef.current;
     try {
       const ical = await import('ical.js');
@@ -69,9 +69,9 @@ export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalend
       const msg = err instanceof Error ? err.message : '导入失败：文件格式错误';
       onImportError?.(msg);
     }
-  }, [onImport, onImportError]);
+  };
 
-  const exportToICal = useCallback(async (events: CalendarEvent[], filename = 'calendar-export.ics') => {
+  const exportToICal = async (events: CalendarEvent[], filename = 'calendar-export.ics') => {
     if (events.length === 0) {
       onImportError?.('没有可导出的排班数据');
       return;
@@ -113,7 +113,7 @@ export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalend
       const msg = err instanceof Error ? err.message : '导出失败';
       onImportError?.(msg);
     }
-  }, [onImportError]);
+  };
 
   return { importFromICal, exportToICal, isAvailable };
 }

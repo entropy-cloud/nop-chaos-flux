@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 
 export interface ColumnWidthMap {
   [columnId: string]: number;
@@ -32,7 +32,7 @@ export function useKanbanColumnResize({
     return defaultWidth;
   };
 
-  const handleResizeStart = useCallback((e: React.PointerEvent, columnId: string) => {
+  const handleResizeStart = (e: React.PointerEvent, columnId: string) => {
     e.preventDefault();
     const currentWidth = currentWidths[columnId] ?? defaultWidth;
     resizeStartRef.current = { columnId, startX: e.clientX, startWidth: currentWidth };
@@ -71,7 +71,7 @@ export function useKanbanColumnResize({
 
     document.addEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointerup', handlePointerUp);
-  }, [currentWidths, defaultWidth, minWidth, maxWidth, onWidthsChange, externalWidths]);
+  };
 
   const isResizing = resizing != null;
 
