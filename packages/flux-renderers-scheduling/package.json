@@ -23,7 +23,8 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "@tanstack/react-virtual": "^3.13.24"
+    "@tanstack/react-virtual": "^3.13.24",
+    "zustand": "^5.0.12"
   },
   "peerDependencies": {
     "html2canvas": "^1.4.1",

@@ -3,19 +3,6 @@ import { GanttStore } from './gantt-store.js';
 
 const GanttStoreContext = createContext<GanttStore | null>(null);
 
-const ALL_EVENTS = ['taskChange', 'linkChange', 'treeChange', 'layoutChange', 'dataChange', 'taskDelete', 'linkAdd', 'linkDelete'] as const;
-
-function subscribeToEvents(store: GanttStore, events: readonly string[], callback: () => void) {
-  for (const event of events) {
-    store.on(event, callback);
-  }
-  return () => {
-    for (const event of events) {
-      store.off(event, callback);
-    }
-  };
-}
-
 export function GanttStoreProvider({ store, children }: { store: GanttStore; children: React.ReactNode }) {
   return <GanttStoreContext.Provider value={store}>{children}</GanttStoreContext.Provider>;
 }
@@ -28,45 +15,40 @@ export function useGanttStore(): GanttStore {
 
 export function useGanttStoreSnapshot(): number {
   const store = useGanttStore();
-  const getSnapshot = () => store.revision;
   return useSyncExternalStore(
-    (cb) => subscribeToEvents(store, ALL_EVENTS, cb),
-    getSnapshot,
+    store.subscribe,
+    () => store.revision,
   );
 }
 
 export function useGanttTaskSnapshot(): number {
   const store = useGanttStore();
-  const getSnapshot = () => store.taskRevision;
   return useSyncExternalStore(
-    (cb) => subscribeToEvents(store, ['taskChange', 'taskDelete'], cb),
-    getSnapshot,
+    store.subscribe,
+    () => store.taskRevision,
   );
 }
 
 export function useGanttLinkSnapshot(): number {
   const store = useGanttStore();
-  const getSnapshot = () => store.linkRevision;
   return useSyncExternalStore(
-    (cb) => subscribeToEvents(store, ['linkChange', 'linkAdd', 'linkDelete'], cb),
-    getSnapshot,
+    store.subscribe,
+    () => store.linkRevision,
   );
 }
 
 export function useGanttLayoutSnapshot(): number {
   const store = useGanttStore();
-  const getSnapshot = () => store.layoutRevision;
   return useSyncExternalStore(
-    (cb) => subscribeToEvents(store, ['layoutChange'], cb),
-    getSnapshot,
+    store.subscribe,
+    () => store.layoutRevision,
   );
 }
 
 export function useGanttTreeSnapshot(): number {
   const store = useGanttStore();
-  const getSnapshot = () => store.treeRevision;
   return useSyncExternalStore(
-    (cb) => subscribeToEvents(store, ['treeChange'], cb),
-    getSnapshot,
+    store.subscribe,
+    () => store.treeRevision,
   );
 }

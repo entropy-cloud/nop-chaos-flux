@@ -11,6 +11,8 @@ import type {
 } from './gantt.types.js';
 import { computeTaskLayout, computeLinkPolylines, pixelToDate, dateToPixel } from './utils/layout.js';
 import { CalendarManager, type WorkCalendar } from './utils/worktime.js';
+import { createStore } from 'zustand/vanilla';
+import type { StoreApi } from 'zustand/vanilla';
 
 interface CalendarEntry {
   id: string;
@@ -30,7 +32,7 @@ export interface GanttStoreConfig {
   globalCalendarId?: string;
 }
 
-export class GanttStore {
+interface GanttStoreState {
   tasks: Map<GanttId, GanttTask>;
   links: Map<GanttId, GanttLink>;
   resources: Map<GanttId, GanttResource>;
@@ -41,48 +43,87 @@ export class GanttStore {
   zoomLevels: Map<string, GanttZoomLevel>;
   taskBarHeight: number;
   rowHeight: number;
-  scrollLeft: number;
   containerWidth: number;
-  calendarManager: CalendarManager;
   revision: number;
   taskRevision: number;
   linkRevision: number;
   treeRevision: number;
   layoutRevision: number;
   dataRevision: number;
+  expandedSet: Set<GanttId>;
+}
 
-  private expandedSet: Set<GanttId>;
-  private parentIndex: Map<GanttId | null, GanttId[]>;
-  private listeners: Map<string, Set<EventHandler>>;
+export class GanttStore {
+  private store: StoreApi<GanttStoreState>;
+  private parentIndex: Map<GanttId | null, GanttId[]> = new Map();
+  private listeners: Map<string, Set<EventHandler>> = new Map();
+  _scrollLeft: number;
+  calendarManager: CalendarManager;
 
   constructor(config?: GanttStoreConfig) {
-    this.tasks = new Map();
-    this.links = new Map();
-    this.resources = new Map();
-    this.assignments = new Map();
-    this.scaleRange = { start: new Date(), end: new Date() };
-    this.cellWidth = config?.cellWidth ?? 40;
-    this.expandedSet = new Set();
-    this.parentIndex = new Map();
-    this.listeners = new Map();
-    this.currentZoom = config?.defaultZoom ?? 'week';
-    this.zoomLevels = new Map();
-    this.taskBarHeight = config?.taskBarHeight ?? 28;
-    this.rowHeight = config?.rowHeight ?? 40;
-    this.scrollLeft = config?.scrollLeft ?? 0;
-    this.containerWidth = config?.containerWidth ?? 800;
-    this.revision = 0;
-    this.taskRevision = 0;
-    this.linkRevision = 0;
-    this.treeRevision = 0;
-    this.layoutRevision = 0;
-    this.dataRevision = 0;
+    this._scrollLeft = config?.scrollLeft ?? 0;
     this.calendarManager = new CalendarManager(config?.globalCalendarId);
-    if (config?.zoomLevels) {
-      for (const zl of config.zoomLevels) {
-        this.zoomLevels.set(zl.key, zl);
-      }
+
+    this.store = createStore<GanttStoreState>(() => ({
+      tasks: new Map(),
+      links: new Map(),
+      resources: new Map(),
+      assignments: new Map(),
+      scaleRange: { start: new Date(), end: new Date() },
+      cellWidth: config?.cellWidth ?? 40,
+      currentZoom: config?.defaultZoom ?? 'week',
+      zoomLevels: new Map(config?.zoomLevels?.map((zl) => [zl.key, zl]) ?? []),
+      taskBarHeight: config?.taskBarHeight ?? 28,
+      rowHeight: config?.rowHeight ?? 40,
+      containerWidth: config?.containerWidth ?? 800,
+      revision: 0,
+      taskRevision: 0,
+      linkRevision: 0,
+      treeRevision: 0,
+      layoutRevision: 0,
+      dataRevision: 0,
+      expandedSet: new Set(),
+    }));
+  }
+
+  subscribe = (listener: () => void): (() => void) => this.store.subscribe(listener);
+
+  get tasks(): Map<GanttId, GanttTask> { return this.store.getState().tasks; }
+  get links(): Map<GanttId, GanttLink> { return this.store.getState().links; }
+  get resources(): Map<GanttId, GanttResource> { return this.store.getState().resources; }
+  get assignments(): Map<GanttId, GanttAssignment> { return this.store.getState().assignments; }
+  get scaleRange(): { start: Date; end: Date } { return this.store.getState().scaleRange; }
+  get cellWidth(): number { return this.store.getState().cellWidth; }
+  set cellWidth(v: number) { this.store.setState({ cellWidth: v }); }
+  get currentZoom(): string { return this.store.getState().currentZoom; }
+  set currentZoom(v: string) { this.store.setState({ currentZoom: v }); }
+  get zoomLevels(): Map<string, GanttZoomLevel> { return this.store.getState().zoomLevels; }
+  get taskBarHeight(): number { return this.store.getState().taskBarHeight; }
+  get rowHeight(): number { return this.store.getState().rowHeight; }
+  get containerWidth(): number { return this.store.getState().containerWidth; }
+  set containerWidth(v: number) { this.store.setState({ containerWidth: v }); }
+  get revision(): number { return this.store.getState().revision; }
+  get taskRevision(): number { return this.store.getState().taskRevision; }
+  get linkRevision(): number { return this.store.getState().linkRevision; }
+  get treeRevision(): number { return this.store.getState().treeRevision; }
+  get layoutRevision(): number { return this.store.getState().layoutRevision; }
+  get dataRevision(): number { return this.store.getState().dataRevision; }
+  get scrollLeft(): number { return this._scrollLeft; }
+  set scrollLeft(v: number) { this._scrollLeft = v; }
+
+  on(event: string, handler: EventHandler): void {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set());
     }
+    this.listeners.get(event)!.add(handler);
+  }
+
+  off(event: string, handler: EventHandler): void {
+    this.listeners.get(event)?.delete(handler);
+  }
+
+  emit(event: string, ...args: unknown[]): void {
+    this.listeners.get(event)?.forEach((h) => h(...args));
   }
 
   parse(
@@ -92,20 +133,15 @@ export class GanttStore {
     assignments?: GanttAssignment[],
     calendars?: CalendarEntry[],
   ): void {
-    this.tasks.clear();
-    this.links.clear();
-    this.resources.clear();
-    this.assignments.clear();
-    this.expandedSet.clear();
-
     if (calendars) {
       for (const entry of calendars) {
         this.calendarManager.registerCalendar(entry.id, entry.calendar);
       }
     }
 
+    const newTasks = new Map<GanttId, GanttTask>();
     for (const t of this.flattenTasks(tasks, null)) {
-      this.tasks.set(t.id, {
+      newTasks.set(t.id, {
         ...t,
         $x: 0,
         $y: 0,
@@ -117,23 +153,34 @@ export class GanttStore {
       });
     }
 
+    const newLinks = new Map<GanttId, GanttLink>();
     if (links) {
       for (const l of links) {
-        this.links.set(l.id, { ...l, $p: '' });
+        newLinks.set(l.id, { ...l, $p: '' });
       }
     }
 
+    const newResources = new Map<GanttId, GanttResource>();
     if (resources) {
       for (const r of resources) {
-        this.resources.set(r.id, { ...r });
+        newResources.set(r.id, { ...r });
       }
     }
 
+    const newAssignments = new Map<GanttId, GanttAssignment>();
     if (assignments) {
       for (const a of assignments) {
-        this.assignments.set(a.id, { ...a });
+        newAssignments.set(a.id, { ...a });
       }
     }
+
+    this.store.setState({
+      tasks: newTasks,
+      links: newLinks,
+      resources: newResources,
+      assignments: newAssignments,
+      expandedSet: new Set(),
+    });
 
     this.computeComputedPropertiesInternal(true);
     this.emitDataChange();
@@ -162,16 +209,20 @@ export class GanttStore {
   }
 
   private seedExpandedSet(): void {
-    for (const task of this.tasks.values()) {
+    const state = this.store.getState();
+    const newExpanded = new Set(state.expandedSet);
+    for (const task of state.tasks.values()) {
       if (task.open ?? true) {
-        this.expandedSet.add(task.id);
+        newExpanded.add(task.id);
       }
     }
+    this.store.setState({ expandedSet: newExpanded });
   }
 
   private buildParentIndex(): void {
     this.parentIndex.clear();
-    for (const task of this.tasks.values()) {
+    const state = this.store.getState();
+    for (const task of state.tasks.values()) {
       const p: GanttId | null = task.parent ?? null;
       if (!this.parentIndex.has(p)) {
         this.parentIndex.set(p, []);
@@ -181,36 +232,42 @@ export class GanttStore {
   }
 
   private computeLevels(): void {
+    const state = this.store.getState();
+    const newTasks = new Map(state.tasks);
     const queue: Array<{ parent: GanttId | null; level: number }> = [{ parent: null, level: 0 }];
     while (queue.length > 0) {
       const { parent, level } = queue.shift()!;
       const children = this.parentIndex.get(parent);
       if (children) {
         for (const childId of children) {
-          const task = this.tasks.get(childId);
+          const task = newTasks.get(childId);
           if (task) {
-            this.tasks.set(childId, { ...task, $level: level });
+            newTasks.set(childId, { ...task, $level: level });
             queue.push({ parent: childId, level: level + 1 });
           }
         }
       }
     }
+    this.store.setState({ tasks: newTasks });
   }
 
   private computeSourceTarget(): void {
-    for (const [id, task] of this.tasks) {
-      this.tasks.set(id, { ...task, $source: [], $target: [] });
+    const state = this.store.getState();
+    const newTasks = new Map(state.tasks);
+    for (const [id, task] of newTasks) {
+      newTasks.set(id, { ...task, $source: [], $target: [] });
     }
-    for (const link of this.links.values()) {
-      const sourceTask = this.tasks.get(link.source);
-      const targetTask = this.tasks.get(link.target);
+    for (const link of state.links.values()) {
+      const sourceTask = newTasks.get(link.source);
+      const targetTask = newTasks.get(link.target);
       if (sourceTask) {
-        this.tasks.set(link.source, { ...sourceTask, $source: [...sourceTask.$source, link.target] });
+        newTasks.set(link.source, { ...sourceTask, $source: [...sourceTask.$source, link.target] });
       }
       if (targetTask) {
-        this.tasks.set(link.target, { ...targetTask, $target: [...targetTask.$target, link.source] });
+        newTasks.set(link.target, { ...targetTask, $target: [...targetTask.$target, link.source] });
       }
     }
+    this.store.setState({ tasks: newTasks });
   }
 
   recalcLayout(): void {
@@ -221,18 +278,21 @@ export class GanttStore {
   }
 
   private computeScaleRange(): void {
-    if (this.tasks.size === 0) {
+    const state = this.store.getState();
+    if (state.tasks.size === 0) {
       const now = new Date();
-      this.scaleRange = {
-        start: new Date(now.getFullYear(), now.getMonth(), 1),
-        end: new Date(now.getFullYear(), now.getMonth() + 1, 1),
-      };
+      this.store.setState({
+        scaleRange: {
+          start: new Date(now.getFullYear(), now.getMonth(), 1),
+          end: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+        },
+      });
       return;
     }
 
     let minMs = Infinity;
     let maxMs = -Infinity;
-    for (const task of this.tasks.values()) {
+    for (const task of state.tasks.values()) {
       const s = new Date(task.start).getTime();
       const e = new Date(task.end).getTime();
       if (s < minMs) minMs = s;
@@ -244,31 +304,39 @@ export class GanttStore {
     }
 
     const pad = Math.max((maxMs - minMs) * 0.1, 86400000);
-    this.scaleRange = {
-      start: new Date(minMs - pad),
-      end: new Date(maxMs + pad),
-    };
+    this.store.setState({
+      scaleRange: {
+        start: new Date(minMs - pad),
+        end: new Date(maxMs + pad),
+      },
+    });
   }
 
   private computeCoordinates(): void {
+    const state = this.store.getState();
     const visibleTasks = this.getVisibleTasks();
     const visibleIds = visibleTasks.map((t) => t.id);
-    computeTaskLayout(
-      visibleTasks,
-      visibleIds,
-      this.scaleRange,
-      this.cellWidth,
-      this.taskBarHeight,
-      this.rowHeight,
-    );
+    computeTaskLayout(visibleTasks, visibleIds, state.scaleRange, state.cellWidth, state.taskBarHeight, state.rowHeight);
+    const newTasks = new Map(state.tasks);
+    for (const task of visibleTasks) {
+      newTasks.set(task.id, task);
+    }
+    this.store.setState({ tasks: newTasks });
   }
 
   private computeLinkPolylines(): void {
-    computeLinkPolylines(this.tasks, this.links);
+    const state = this.store.getState();
+    computeLinkPolylines(state.tasks, state.links);
+    const newLinks = new Map(state.links);
+    for (const [id, link] of state.links) {
+      newLinks.set(id, link);
+    }
+    this.store.setState({ links: newLinks });
   }
 
   updateTask(id: GanttId, partial: Partial<GanttTaskData>): void {
-    const task = this.tasks.get(id);
+    const state = this.store.getState();
+    const task = state.tasks.get(id);
     if (!task) return;
     const { children: _c, ...rest } = partial;
     void _c;
@@ -282,15 +350,29 @@ export class GanttStore {
       }
     }
 
-    this.tasks.set(id, updated);
+    const newTasks = new Map(state.tasks);
+    newTasks.set(id, updated);
+    this.store.setState({
+      tasks: newTasks,
+      revision: state.revision + 1,
+      taskRevision: state.taskRevision + 1,
+    });
+
     this.computeComputedPropertiesInternal();
     this.emitTaskChange(id);
   }
 
   updateLink(id: GanttId, partial: Partial<GanttLink>): void {
-    const link = this.links.get(id);
+    const state = this.store.getState();
+    const link = state.links.get(id);
     if (!link) return;
-    this.links.set(id, { ...link, ...partial });
+    const newLinks = new Map(state.links);
+    newLinks.set(id, { ...link, ...partial });
+    this.store.setState({
+      links: newLinks,
+      revision: state.revision + 1,
+      linkRevision: state.linkRevision + 1,
+    });
     this.computeLinkPolylines();
     this.emitLinkChange(id);
   }
@@ -304,43 +386,63 @@ export class GanttStore {
   private collectVisible(parent: GanttId | null, result: GanttTask[]): void {
     const children = this.parentIndex.get(parent);
     if (!children) return;
+    const state = this.store.getState();
     for (const childId of children) {
-      const task = this.tasks.get(childId);
+      const task = state.tasks.get(childId);
       if (!task) continue;
       result.push(task);
       const hasChildren = this.parentIndex.has(childId);
-      if (hasChildren && this.expandedSet.has(childId)) {
+      if (hasChildren && state.expandedSet.has(childId)) {
         this.collectVisible(childId, result);
       }
     }
   }
 
   isOpen(taskId: GanttId): boolean {
-    return this.expandedSet.has(taskId);
+    return this.store.getState().expandedSet.has(taskId);
   }
 
   toggleOpen(taskId: GanttId): void {
-    const task = this.tasks.get(taskId);
+    const state = this.store.getState();
+    const task = state.tasks.get(taskId);
     if (!task) return;
-    if (this.expandedSet.has(taskId)) {
-      this.expandedSet.delete(taskId);
+    const newExpanded = new Set(state.expandedSet);
+    if (newExpanded.has(taskId)) {
+      newExpanded.delete(taskId);
     } else {
-      this.expandedSet.add(taskId);
+      newExpanded.add(taskId);
     }
+    this.store.setState({
+      expandedSet: newExpanded,
+      revision: state.revision + 1,
+      treeRevision: state.treeRevision + 1,
+    });
     this.emitTreeChange();
   }
 
   expandAll(): void {
-    for (const task of this.tasks.values()) {
+    const state = this.store.getState();
+    const newExpanded = new Set(state.expandedSet);
+    for (const task of state.tasks.values()) {
       if (this.parentIndex.has(task.id)) {
-        this.expandedSet.add(task.id);
+        newExpanded.add(task.id);
       }
     }
+    this.store.setState({
+      expandedSet: newExpanded,
+      revision: state.revision + 1,
+      treeRevision: state.treeRevision + 1,
+    });
     this.emitTreeChange();
   }
 
   collapseAll(): void {
-    this.expandedSet.clear();
+    const state = this.store.getState();
+    this.store.setState({
+      expandedSet: new Set(),
+      revision: state.revision + 1,
+      treeRevision: state.treeRevision + 1,
+    });
     this.emitTreeChange();
   }
 
@@ -355,21 +457,32 @@ export class GanttStore {
   }
 
   deleteTask(id: GanttId): void {
-    const task = this.tasks.get(id);
+    const state = this.store.getState();
+    const task = state.tasks.get(id);
     if (!task) return;
 
     const childIds: GanttId[] = [];
     this.collectDescendantIds(id, childIds);
     const allIds = [id, ...childIds];
 
+    const newTasks = new Map(state.tasks);
+    const newLinks = new Map(state.links);
+
     for (const deleteId of allIds) {
-      for (const [linkId, link] of this.links) {
+      for (const [linkId, link] of newLinks) {
         if (link.source === deleteId || link.target === deleteId) {
-          this.links.delete(linkId);
+          newLinks.delete(linkId);
         }
       }
-      this.tasks.delete(deleteId);
+      newTasks.delete(deleteId);
     }
+
+    this.store.setState({
+      tasks: newTasks,
+      links: newLinks,
+      revision: state.revision + 1,
+      taskRevision: state.taskRevision + 1,
+    });
 
     this.computeComputedPropertiesInternal();
     this.emitTaskDelete(id);
@@ -385,9 +498,16 @@ export class GanttStore {
   }
 
   addLink(source: GanttId, target: GanttId, type: GanttLinkType): GanttLink {
+    const state = this.store.getState();
     const id = `link_${String(source)}_${String(target)}_${Date.now()}`;
     const link: GanttLink = { id, source, target, type, $p: '' };
-    this.links.set(id, link);
+    const newLinks = new Map(state.links);
+    newLinks.set(id, link);
+    this.store.setState({
+      links: newLinks,
+      revision: state.revision + 1,
+      linkRevision: state.linkRevision + 1,
+    });
     this.computeSourceTarget();
     this.computeLinkPolylines();
     this.emitLinkAdd(link);
@@ -395,101 +515,77 @@ export class GanttStore {
   }
 
   removeLink(id: GanttId): void {
-    this.links.delete(id);
+    const state = this.store.getState();
+    const newLinks = new Map(state.links);
+    newLinks.delete(id);
+    this.store.setState({
+      links: newLinks,
+      revision: state.revision + 1,
+      linkRevision: state.linkRevision + 1,
+    });
     this.computeSourceTarget();
     this.emitLinkDelete(id);
   }
 
-  on(event: string, handler: EventHandler): void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
-    }
-    this.listeners.get(event)!.add(handler);
-  }
-
-  off(event: string, handler: EventHandler): void {
-    this.listeners.get(event)?.delete(handler);
-  }
-
-  emit(event: string, ...args: unknown[]): void {
-    this.listeners.get(event)?.forEach((h) => h(...args));
-  }
-
   private emitTaskChange(id: GanttId): void {
-    this.revision++;
-    this.taskRevision++;
     this.emit('taskChange', { id });
   }
 
   private emitLinkChange(id: GanttId): void {
-    this.revision++;
-    this.linkRevision++;
     this.emit('linkChange', { id });
   }
 
   private emitTreeChange(): void {
-    this.revision++;
-    this.treeRevision++;
     this.emit('treeChange');
   }
 
   private emitLayoutChange(): void {
-    this.revision++;
-    this.layoutRevision++;
     this.emit('layoutChange');
   }
 
   private emitDataChange(): void {
-    this.revision++;
-    this.taskRevision++;
-    this.linkRevision++;
-    this.treeRevision++;
-    this.layoutRevision++;
-    this.dataRevision++;
     this.emit('dataChange');
   }
 
   private emitLinkAdd(link: GanttLink): void {
-    this.revision++;
-    this.linkRevision++;
     this.emit('linkAdd', link);
   }
 
   private emitLinkDelete(id: GanttId): void {
-    this.revision++;
-    this.linkRevision++;
     this.emit('linkDelete', { id });
   }
 
   private emitTaskDelete(id: GanttId): void {
-    this.revision++;
-    this.taskRevision++;
     this.emit('taskDelete', { id });
   }
 
   setZoom(zoomKey: string, anchorScrollLeft?: number, anchorContainerWidth?: number): void {
-    if (!this.zoomLevels.has(zoomKey)) return;
+    const state = this.store.getState();
+    if (!state.zoomLevels.has(zoomKey)) return;
 
-    const oldCellWidth = this.cellWidth;
+    const oldCellWidth = state.cellWidth;
+    const zoom = state.zoomLevels.get(zoomKey)!;
+    const newCellWidth = zoom.minCellWidth ?? oldCellWidth;
 
-    const zoom = this.zoomLevels.get(zoomKey)!;
-    this.currentZoom = zoomKey;
-    this.cellWidth = zoom.minCellWidth ?? oldCellWidth;
+    this.store.setState({
+      currentZoom: zoomKey,
+      cellWidth: newCellWidth,
+    });
 
-    const sl = anchorScrollLeft ?? this.scrollLeft;
-    const cw = anchorContainerWidth ?? this.containerWidth;
+    const sl = anchorScrollLeft ?? this._scrollLeft;
+    const cw = anchorContainerWidth ?? state.containerWidth;
 
     if (sl > 0 && cw > 0) {
-      const centerDate = pixelToDate(sl + cw / 2, this.scaleRange, oldCellWidth);
+      const centerDate = pixelToDate(sl + cw / 2, state.scaleRange, oldCellWidth);
       this.recalcLayout();
-      const newCenterX = dateToPixel(centerDate, this.scaleRange, this.cellWidth);
-      this.scrollLeft = Math.max(0, newCenterX - cw / 2);
+      const newCenterX = dateToPixel(centerDate, this.store.getState().scaleRange, this.store.getState().cellWidth);
+      this._scrollLeft = Math.max(0, newCenterX - cw / 2);
     } else {
       this.recalcLayout();
     }
   }
 
   getAvailableZooms(): GanttZoomLevel[] {
-    return Array.from(this.zoomLevels.values());
+    return Array.from(this.store.getState().zoomLevels.values());
   }
 }
