@@ -539,4 +539,15 @@ export class GanttStore {
   getAvailableZooms(): GanttZoomLevel[] {
     return Array.from(this.store.getState().zoomLevels.values());
   }
+
+  destroy(): void {
+    this.parentIndex.clear();
+    this.store.setState({
+      tasks: new Map(),
+      links: new Map(),
+      resources: new Map(),
+      assignments: new Map(),
+      expandedSet: new Set(),
+    });
+  }
 }

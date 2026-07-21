@@ -1,4 +1,4 @@
-import type { GanttId, GanttLinkType, GanttLinkData } from './gantt.types.js';
+import type { GanttId, GanttTaskData, GanttLinkType, GanttLinkData } from './gantt.types.js';
 import { GanttStore } from './gantt-store.js';
 
 export interface Command {
@@ -13,11 +13,11 @@ export interface Command {
 export class UpdateTaskCommand implements Command {
   type = 'updateTask';
   private taskId: GanttId;
-  private before: Record<string, unknown>;
-  private after: Record<string, unknown>;
+  private before: Partial<GanttTaskData>;
+  private after: Partial<GanttTaskData>;
   private store: GanttStore;
 
-  constructor(store: GanttStore, taskId: GanttId, before: Record<string, unknown>, after: Record<string, unknown>) {
+  constructor(store: GanttStore, taskId: GanttId, before: Partial<GanttTaskData>, after: Partial<GanttTaskData>) {
     this.store = store;
     this.taskId = taskId;
     this.before = { ...before };
@@ -25,15 +25,15 @@ export class UpdateTaskCommand implements Command {
   }
 
   execute(): void {
-    this.store.updateTask(this.taskId, this.after as any);
+    this.store.updateTask(this.taskId, this.after);
   }
 
   undo(): void {
-    this.store.updateTask(this.taskId, this.before as any);
+    this.store.updateTask(this.taskId, this.before);
   }
 
   redo(): void {
-    this.store.updateTask(this.taskId, this.after as any);
+    this.store.updateTask(this.taskId, this.after);
   }
 
   mergeable(other: Command): boolean {
@@ -99,7 +99,8 @@ export class AddLinkCommand implements Command {
 
   redo(): void {
     if (this.linkId != null) {
-      this.store.addLink(this.source, this.target, this.linkType);
+      const link = this.store.addLink(this.source, this.target, this.linkType);
+      this.linkId = link.id;
     }
   }
 
@@ -129,7 +130,8 @@ export class RemoveLinkCommand implements Command {
 
   undo(): void {
     if (this.linkData) {
-      this.store.addLink(this.linkData.source, this.linkData.target, this.linkData.type);
+      const link = this.store.addLink(this.linkData.source, this.linkData.target, this.linkData.type);
+      this.linkId = link.id;
     }
   }
 

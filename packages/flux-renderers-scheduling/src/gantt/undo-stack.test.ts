@@ -166,4 +166,50 @@ describe('UndoStack', () => {
     expect(store.tasks.get('t1')!.text).toBe('Task 1');
     expect(stack.canUndo).toBe(false);
   });
+
+  it('undo -> redo -> undo link identity - F-39', () => {
+    const addCmd = new AddLinkCommand(store, 't1', 't2', 'finish_to_start');
+    addCmd.execute();
+    const firstLinkId = addCmd['linkId'];
+    expect(store.links.size).toBe(1);
+    expect(firstLinkId).not.toBeNull();
+
+    stack.push(addCmd);
+
+    stack.undo();
+    expect(store.links.size).toBe(0);
+
+    stack.redo();
+    expect(store.links.size).toBe(1);
+    const redoLinkId = addCmd['linkId'];
+    expect(redoLinkId).not.toBeNull();
+    expect(store.links.has(redoLinkId!)).toBe(true);
+
+    const linkAfterRedo = Array.from(store.links.values())[0];
+    expect(linkAfterRedo.id).toBe(redoLinkId);
+
+    stack.undo();
+    expect(store.links.size).toBe(0);
+    expect(store.links.has(redoLinkId!)).toBe(false);
+  });
+
+  it('UpdateTaskCommand uses typed Partial<GanttTaskData> - F-40', () => {
+    const task = store.tasks.get('t1')!;
+    const before: Partial<import('./gantt.types.js').GanttTaskData> = { text: task.text, start: task.start, end: task.end };
+    const after: Partial<import('./gantt.types.js').GanttTaskData> = { text: 'Typed Update', start: '2026-02-01', end: '2026-02-05' };
+
+    const cmd = new UpdateTaskCommand(store, 't1', before, after);
+    cmd.execute();
+
+    expect(store.tasks.get('t1')!.text).toBe('Typed Update');
+    expect(store.tasks.get('t1')!.start).toBe('2026-02-01');
+
+    cmd.undo();
+    expect(store.tasks.get('t1')!.text).toBe('Task 1');
+    expect(store.tasks.get('t1')!.start).toBe('2026-01-01');
+
+    cmd.redo();
+    expect(store.tasks.get('t1')!.text).toBe('Typed Update');
+    expect(store.tasks.get('t1')!.start).toBe('2026-02-01');
+  });
 });

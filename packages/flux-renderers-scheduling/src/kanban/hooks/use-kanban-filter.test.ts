@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useKanbanFilter } from './use-kanban-filter.js';
+import { useKanbanFilter, type UseKanbanFilterOptions } from './use-kanban-filter.js';
 
 describe('useKanbanFilter', () => {
   beforeEach(() => {
@@ -72,5 +72,22 @@ describe('useKanbanFilter', () => {
     expect(result.current.matchesCard({ title: 'High', priority: 5 })).toBe(true);
     expect(result.current.matchesCard({ title: 'Low', priority: 1 })).toBe(false);
     expect(filterCard).toHaveBeenCalled();
+  });
+
+  it('syncs filterText reactively when external filterText prop changes - F-41', () => {
+    const { result, rerender } = renderHook(
+      ({ filterText }: UseKanbanFilterOptions) => useKanbanFilter({ filterText }),
+      { initialProps: { filterText: 'initial' } },
+    );
+
+    expect(result.current.filterText).toBe('initial');
+
+    rerender({ filterText: 'updated' });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(result.current.filterText).toBe('updated');
+    expect(result.current.activeFilterText).toBe('updated');
   });
 });

@@ -52,19 +52,19 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const columnWidthMode = resolved.columnWidth;
   const wipStrictGlobal = resolved.wipStrict === true;
 
-  const initialBoard = rawData ?? { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } };
-  const [boardData, setBoardData] = useState<BoardData>(initialBoard);
+  const fallbackBoard = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
+  const isControlled = rawData != null;
+  const [localBoardData, setLocalBoardData] = useState<BoardData>(rawData ?? fallbackBoard);
 
-  const rawDataRef = useRef(rawData);
-  useEffect(() => {
-    if (rawData !== rawDataRef.current) {
-      rawDataRef.current = rawData;
-      if (rawData) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setBoardData(rawData);
+  const boardData: BoardData = isControlled ? rawData : localBoardData;
+  const setBoardData = useCallback(
+    (updater: BoardData | ((prev: BoardData) => BoardData)) => {
+      if (!isControlled) {
+        setLocalBoardData(updater);
       }
-    }
-  }, [rawData]);
+    },
+    [isControlled],
+  );
   const columns = useMemo(() => getColumns(boardData), [boardData]);
   const [collapsedMap, setCollapsedMap] = useState<Record<string, boolean>>({});
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
@@ -94,7 +94,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       }));
       return newBoard;
     });
-  }, []);
+  }, [setBoardData]);
 
   const handleUndo = useCallback(() => {
     setUndoStackState((s) => {
@@ -105,7 +105,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       }
       return s;
     });
-  }, []);
+  }, [setBoardData]);
 
   const handleRedo = useCallback(() => {
     setUndoStackState((s) => {
@@ -116,10 +116,13 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       }
       return s;
     });
-  }, []);
+  }, [setBoardData]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isEditable = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
+      if (isEditable) return;
       if (e.ctrlKey && e.shiftKey && e.key === 'z') {
         e.preventDefault();
         handleRedo();

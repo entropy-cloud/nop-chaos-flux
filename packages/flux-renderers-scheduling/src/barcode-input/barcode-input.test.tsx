@@ -1,12 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { BarcodeInputRenderer } from './barcode-input-renderer.js';
 import type { BarcodeInputSchema } from './barcode-input.types.js';
 
+type FormStore = {
+  getState: () => { values?: Record<string, unknown> };
+  subscribe: (listener: () => void) => () => void;
+};
+
+const mockFormStoreState = { values: {} as Record<string, unknown> };
+const mockFormListeners = new Set<() => void>();
+const mockFormStore: FormStore = {
+  getState: () => mockFormStoreState,
+  subscribe: (l: () => void) => { mockFormListeners.add(l); return () => mockFormListeners.delete(l); },
+};
+
+function notifyFormStore() {
+  mockFormListeners.forEach((l) => l());
+}
+
 vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
-  useCurrentForm: () => ({ setValue: vi.fn() }),
+  useCurrentForm: () => ({ store: mockFormStore, setValue: vi.fn() }),
 }));
 
 vi.mock('./hooks/use-barcode-camera.js', () => ({
@@ -68,6 +84,8 @@ function createMockProps(overrides?: Partial<RendererComponentProps<BarcodeInput
 describe('BarcodeInputRenderer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFormStoreState.values = {};
+    mockFormListeners.clear();
   });
 
   it('should render barcode-input with scan button', () => {
@@ -117,5 +135,17 @@ describe('BarcodeInputRenderer', () => {
     });
     render(<BarcodeInputRenderer {...props} />);
     expect(true).toBe(true);
+  });
+
+  it('syncs inputValue from form store reactively - 04-01', () => {
+    mockFormStoreState.values = { barcode: 'initial-value' };
+    const props = createMockProps();
+    const { container } = render(<BarcodeInputRenderer {...props} />);
+    const input = container.querySelector('input') as HTMLInputElement;
+    expect(input?.value).toBe('initial-value');
+
+    mockFormStoreState.values = { barcode: 'updated-value' };
+    act(() => { notifyFormStore(); });
+    expect(input?.value).toBe('updated-value');
   });
 });

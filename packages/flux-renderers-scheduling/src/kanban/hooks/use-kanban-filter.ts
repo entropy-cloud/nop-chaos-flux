@@ -8,6 +8,14 @@ export interface UseKanbanFilterOptions {
 
 export function useKanbanFilter({ filterText: externalFilterText, filterCard, debounceMs = 300 }: UseKanbanFilterOptions) {
   const [localText, setLocalText] = useState(externalFilterText ?? '');
+
+  useEffect(() => {
+    setLocalText((prev) => {
+      const next = externalFilterText ?? '';
+      return prev !== next ? next : prev;
+    });
+  }, [externalFilterText]);
+
   const debouncedValue = useDebounce(localText, debounceMs);
   const [activeText, setActiveText] = useState('');
 

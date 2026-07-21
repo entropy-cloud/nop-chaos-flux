@@ -53,8 +53,11 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
 
     useEffect(() => {
       events.onMount?.({});
-      return () => { events.onUnmount?.({}); };
-    }, [events]);
+      return () => {
+        events.onUnmount?.({});
+        store.destroy();
+      };
+    }, [events, store]);
 
     useEffect(() => {
       const taskData = (resolved.tasks as any[]) ?? [];

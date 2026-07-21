@@ -1,8 +1,38 @@
-import { describe, it, expect, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
 import type { BoardData } from '../kanban.types.js';
 import { useKanbanDnd } from './use-kanban-dnd.js';
 import { moveCard } from '../kanban-helpers.js';
+
+const mocks = vi.hoisted(() => {
+  return {
+    monitorForElements: vi.fn(),
+    draggable: vi.fn(() => () => {}),
+    dropTargetForElements: vi.fn(() => () => {}),
+    combine: vi.fn((...fns: (() => void)[]) => () => fns.forEach((fn) => fn())),
+  };
+});
+
+vi.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
+  monitorForElements: mocks.monitorForElements,
+  draggable: mocks.draggable,
+  dropTargetForElements: mocks.dropTargetForElements,
+}));
+
+vi.mock('@atlaskit/pragmatic-drag-and-drop/combine', () => ({
+  combine: mocks.combine,
+}));
+
+let capturedMonitor: { onDragStart?: (data: any) => void; onDrop?: (data: any) => void } = {};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  capturedMonitor = {};
+  mocks.monitorForElements.mockImplementation((args: { onDragStart?: (data: any) => void; onDrop?: (data: any) => void }) => {
+    capturedMonitor = args;
+    return () => {};
+  });
+});
 
 const sampleBoard: BoardData = {
   root: { id: 'root', type: 'root', children: ['col1', 'col2'], data: {}, meta: {} },
@@ -57,5 +87,100 @@ describe('useKanbanDnd callbacks', () => {
 
     const newBoard = moveCard(sampleBoard, 'card1', 'col2', 0);
     expect(newBoard.card1.parentId).toBe('col2');
+  });
+});
+
+describe('useKanbanDnd lifecycle - 14-02', () => {
+  it('monitors DnD events on mount and cleans up on unmount', () => {
+    const onBoardChange = vi.fn();
+    const { unmount } = renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange }),
+    );
+
+    expect(mocks.monitorForElements).toHaveBeenCalledTimes(1);
+
+    unmount();
+  });
+
+  it('transitions dragState from idle to dragging on onDragStart', () => {
+    const onBoardChange = vi.fn();
+    const { result } = renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange }),
+    );
+
+    expect(result.current.dragState.isDragging).toBe(false);
+    expect(result.current.dragState.draggingCardId).toBeNull();
+
+    act(() => {
+      capturedMonitor.onDragStart?.({
+        source: { data: { type: 'kanban-card', cardId: 'card1', columnId: 'col1' } },
+      });
+    });
+
+    expect(result.current.dragState.isDragging).toBe(true);
+    expect(result.current.dragState.draggingCardId).toBe('card1');
+    expect(result.current.dragState.sourceColumnId).toBe('col1');
+  });
+
+  it('transitions dragState back to idle and calls onBoardChange on onDrop', () => {
+    const onBoardChange = vi.fn();
+    const { result } = renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange }),
+    );
+
+    act(() => {
+      capturedMonitor.onDragStart?.({
+        source: { data: { type: 'kanban-card', cardId: 'card1', columnId: 'col1' } },
+      });
+    });
+    expect(result.current.dragState.isDragging).toBe(true);
+
+    act(() => {
+      capturedMonitor.onDrop?.({
+        source: { data: { type: 'kanban-card', cardId: 'card1', columnId: 'col1' } },
+        location: {
+          current: {
+            dropTargets: [
+              { data: { columnId: 'col2', dropIndex: 0, type: 'kanban-card-target' } },
+            ],
+          },
+        },
+      });
+    });
+
+    expect(result.current.dragState.isDragging).toBe(false);
+    expect(result.current.dragState.draggingCardId).toBeNull();
+    expect(onBoardChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onCardMove when provided during onDrop', () => {
+    const onBoardChange = vi.fn();
+    const onCardMove = vi.fn();
+    renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange, onCardMove }),
+    );
+
+    act(() => {
+      capturedMonitor.onDrop?.({
+        source: { data: { type: 'kanban-card', cardId: 'card1', columnId: 'col1' } },
+        location: {
+          current: {
+            dropTargets: [
+              { data: { columnId: 'col2', dropIndex: 0, type: 'kanban-card-target' } },
+            ],
+          },
+        },
+      });
+    });
+
+    expect(onCardMove).toHaveBeenCalledTimes(1);
+    expect(onCardMove).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cardId: 'card1',
+        fromColumnId: 'col1',
+        toColumnId: 'col2',
+        toIndex: 0,
+      }),
+    );
   });
 });

@@ -9,8 +9,6 @@ export interface CalendarStateOptions {
   firstDayOfWeek?: 0 | 1;
   onDateChange?: (date: Date) => void;
   onViewChange?: (view: CalendarView) => void;
-  controlledDate?: Date;
-  controlledView?: CalendarView;
 }
 
 export interface CalendarStateResult {
@@ -28,15 +26,10 @@ export function useCalendarState(options: CalendarStateOptions = {}): CalendarSt
     firstDayOfWeek = 0,
     onDateChange,
     onViewChange,
-    controlledDate,
-    controlledView,
   } = options;
 
-  const [internalDate, setInternalDate] = useState<Date>(initialDate);
-  const [internalView, setInternalView] = useState<CalendarView>(initialView);
-
-  const currentDate = controlledDate ?? internalDate;
-  const activeView = controlledView ?? internalView;
+  const [currentDate, setInternalDate] = useState<Date>(initialDate);
+  const [activeView, setInternalView] = useState<CalendarView>(initialView);
 
   const dateRange = useMemo<CalendarDateRange>(() => {
     switch (activeView) {

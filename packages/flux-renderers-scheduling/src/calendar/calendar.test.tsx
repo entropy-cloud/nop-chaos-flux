@@ -136,8 +136,9 @@ describe('Calendar', () => {
     mockDragCreate.triggerCreate = null;
   });
 
-  it('imports print CSS module without error', () => {
-    expect(() => import('./utils/calendar-print.css')).not.toThrow();
+  it('imports print CSS module with loadable content', async () => {
+    const mod = await import('./utils/calendar-print.css');
+    expect(mod).toBeDefined();
   });
 
   it('fires onEventCreate once and not onEventChange on drag-create', () => {

@@ -63,15 +63,4 @@ describe('useCalendarState', () => {
     expect(result.current.dateRange.end).toBeInstanceOf(Date);
   });
 
-  it('should use controlledDate when provided', () => {
-    const controlled = new Date('2026-01-01');
-    const initial = new Date('2026-07-21');
-    const { result } = renderHook(() => useCalendarState({ initialDate: initial, controlledDate: controlled }));
-    expect(result.current.currentDate).toEqual(controlled);
-  });
-
-  it('should use controlledView when provided', () => {
-    const { result } = renderHook(() => useCalendarState({ initialView: 'month', controlledView: 'day' }));
-    expect(result.current.activeView).toBe('day');
-  });
 });

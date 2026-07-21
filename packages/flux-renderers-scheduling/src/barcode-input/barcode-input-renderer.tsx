@@ -30,6 +30,16 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
     };
   }, [events]);
 
+  useEffect(() => {
+    if (!name || !form || !form.store) return;
+    const unsub = form.store.subscribe(() => {
+      const state = form.store.getState() as { values?: Record<string, unknown> };
+      const newVal = (state.values?.[name] as string) ?? '';
+      setInputValue((prev) => (prev !== newVal ? newVal : prev));
+    });
+    return unsub;
+  }, [name, form]);
+
   const scanButton = resolved.scanButton !== false;
   const batchMode = resolved.batchMode === true;
   const scanInterval = typeof resolved.scanInterval === 'number' ? resolved.scanInterval : 300;
