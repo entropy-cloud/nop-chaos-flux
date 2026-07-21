@@ -115,13 +115,14 @@ type BarcodeFormat =
 
 ### 组件句柄（`component:<method>`）
 
-| 方法       | 语义                                                        | 失败路径                                            |
-| ---------- | ----------------------------------------------------------- | --------------------------------------------------- |
-| `scanNow`  | 编程触发扫码（打开摄像头覆盖层，开始解码）                  | `not-available`（摄像头不可用或权限被拒）           |
-| `stopScan` | 停止扫码，关闭摄像头                                        | `not-mounted`、`not-visible`、`scanning-not-active` |
-| `clear`    | 清空字段值（继承 input-text，disabled/readOnly 时 skipped） | `skipped`                                           |
-| `reset`    | 还原字段到 initial value（继承 input-text）                 | `fellBackToDefault`                                 |
-| `focus`    | focus 底层输入框                                            | `not-mounted` / `not-visible`                       |
+| 方法               | 语义                                                        | 失败路径                                            |
+| ------------------ | ----------------------------------------------------------- | --------------------------------------------------- |
+| `scanNow`          | 编程触发扫码（打开摄像头覆盖层，开始解码）                  | `not-available`（摄像头不可用或权限被拒）           |
+| `stopScan`         | 停止扫码，关闭摄像头                                        | `not-mounted`、`not-visible`、`scanning-not-active` |
+| `resetWasmPromise` | 清除缓存的 WASM 加载 Promise，下次扫码重新加载              | —                                                   |
+| `clear`            | 清空字段值（继承 input-text，disabled/readOnly 时 skipped） | `skipped`                                           |
+| `reset`            | 还原字段到 initial value（继承 input-text）                 | `fellBackToDefault`                                 |
+| `focus`            | focus 底层输入框                                            | `not-mounted` / `not-visible`                       |
 
 `scanNow` 的典型使用场景：作者在按钮的 `onClick` 中通过 `component:scanNow` 触发扫码，而非依赖用户点击 input 内的扫码图标。
 
@@ -224,14 +225,16 @@ src/
 | 继承关系     | 复用 input-text 基线  | 独立实现                   | 减少重复代码，共享校验/clear/reset等行为                 |
 | codec 加载   | 运行时懒加载 WASM     | 打包时内联 WASM            | 减小主包体积；CDN 缓存支持                               |
 
-### 后续阶段
+### 后续阶段（历史归档）
 
-- **P1**：core hook（`useBarcodeCamera` + `useBarcodeDetect`）+ 基础 renderer + 全屏覆盖层 UI
-- **P2**：`onScan`/`onScanError` 事件 + `scanNow`/`stopScan` 句柄
-- **P3**：`continuousScan` 模式 + `scanInterval` 配置
-- **P4**：闪光灯控制（`useBarcodeTorch`）+ 扫码振动反馈（移动端原生体验）
-- **P5**：`scanOnFocus`（PDA 设备自动对焦扫描）
-- **P6**：`autoSubmit`（扫码即提交，适用于单一扫码场景）
+以下为原始发布计划。目前 **P1-P6** 已全部交付。
+
+- **P1**：core hook（`useBarcodeCamera` + `useBarcodeDetect`）+ 基础 renderer + 全屏覆盖层 UI ✅
+- **P2**：`onScan`/`onScanError` 事件 + `scanNow`/`stopScan` 句柄 ✅
+- **P3**：`continuousScan` 模式 + `scanInterval` 配置 ✅
+- **P4**：闪光灯控制（`useBarcodeTorch`）+ 扫码振动反馈（移动端原生体验）✅
+- **P5**：`scanOnFocus`（PDA 设备自动对焦扫描）✅
+- **P6**：`autoSubmit`（扫码即提交，适用于单一扫码场景）✅
 
 ### §12.1 批量扫描队列设计要点（v2）
 
@@ -313,3 +316,44 @@ navigator.mediaDevices?.getUserMedia 不可用
 降级后 UI 变化：扫码按钮隐藏，input 宽度恢复正常（不加扫码按钮的 addon）。预留 `scanButton` schema 字段为 `true` 时按钮依然显示，但点击时显示 tooltip "扫码不可用"。
 
 **"connection" 事件监听**：使用 `window.addEventListener('online'/'offline')` 监听网络状态变化。离线时在输入框下方显示黄色提示条 "当前离线，扫码结果将在恢复网络后自动提交"，上线后自动触发队列提交并在完成后显示绿色提示 "已自动提交 N 条扫码记录"。
+
+## 13. Flux 决策表
+
+### 新增 Props
+
+| Prop          | 类型      | 默认值  | 说明                                |
+| ------------- | --------- | ------- | ----------------------------------- |
+| `autoSubmit`  | `boolean` | `false` | 扫码成功后自动提交所在表单          |
+| `scanOnFocus` | `boolean` | `false` | focus 时自动打开扫码（PDA 场景）    |
+| `wasmUrl`     | `string`  | 见下方  | 自定义 @zxing/library WASM CDN 地址 |
+
+- `wasmUrl` 默认值：`https://unpkg.com/@zxing/library@0.21.3/umd/zxing_reader.wasm`
+- `wasmUrl` 支持表达式，允许按环境动态切换 CDN 路径。
+
+### 新增组件句柄
+
+| Handle                       | 语义                                       | 实现位置                  |
+| ---------------------------- | ------------------------------------------ | ------------------------- |
+| `component:scanNow`          | 编程触发扫码（打开摄像头覆盖层，开始解码） | `useInputComponentHandle` |
+| `component:stopScan`         | 停止扫码，关闭摄像头                       | `useInputComponentHandle` |
+| `component:resetWasmPromise` | 清除 WASM 缓存，下次扫码重新加载           | `useInputComponentHandle` |
+
+### 基础设施变更
+
+| 文件                                             | 变更内容                                                                                                    |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `flux-runtime/input-component-handle.ts`         | 新增 `scanNow`、`stopScan`、`resetWasmPromise` 到 `InputHandleMethod` 联合类型和 `InputHandleBindings` 接口 |
+| `flux-react/hooks/use-input-component-handle.ts` | 新增 `scanNow`、`stopScan`、`resetWasmPromise` 回调槽到 `UseInputComponentHandleOptions`                    |
+| `flux-renderers-scheduling/src/barcode-input/`   | 渲染器实现句柄回调、autoSubmit、scanOnFocus 逻辑                                                            |
+
+### 行为决策
+
+| 场景                          | 行为                                         | 依据                      |
+| ----------------------------- | -------------------------------------------- | ------------------------- |
+| `autoSubmit` + 单次扫码       | 自动写入值 → 提交表单 → 关闭覆盖层           | PDA 效率优先              |
+| `autoSubmit` + 批量模式       | 扫码入队 → 自动提交已扫条目 → 继续下一扫     | 入库盘点连续操作          |
+| `scanOnFocus` + input focus   | 自动打开摄像头覆盖层                         | PDA 自动对焦扫描          |
+| `scanOnFocus` + blur          | 仅当覆盖层未打开时忽略；覆盖层已打开时不关闭 | 避免与覆盖层焦点管理冲突  |
+| `scanNow` 重复调用            | 幂等，二次调用不重复打开                     | 防止多次触发 getUserMedia |
+| `stopScan` 无活动扫描时调用   | 幂等，无操作                                 | 安全容错                  |
+| `resetWasmPromise` 扫描中调用 | 当前扫描继续，下次扫码重新初始化 WASM        | 不中断用户操作            |
