@@ -30,7 +30,7 @@ export function GanttEditor({ editorRegion, className, editingTaskId, onClose }:
 
   const handleSave = () => {
     if (!editingTaskId || !textRef.current) return;
-    const partial: Record<string, unknown> = { text: textRef.current.value };
+    const partial: Partial<import('./gantt.types.js').GanttTaskData> = { text: textRef.current.value };
     if (startRef.current?.value) partial.start = startRef.current.value;
     if (endRef.current?.value) partial.end = endRef.current.value;
     if (durationRef.current?.value) partial.duration = parseInt(durationRef.current.value, 10);

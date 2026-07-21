@@ -1,12 +1,14 @@
+import type { SchemaObject } from '@nop-chaos/flux-core';
+
 export type GanttId = string | number;
 
-export interface GanttSegment {
+export interface GanttSegment extends SchemaObject {
   start: string;
   end: string;
   progress?: number;
 }
 
-export interface GanttBaseline {
+export interface GanttBaseline extends SchemaObject {
   id: GanttId;
   taskId: GanttId;
   baseStart: string;
@@ -15,7 +17,7 @@ export interface GanttBaseline {
   baseProgress?: number;
 }
 
-export interface GanttTaskData {
+export interface GanttTaskData extends SchemaObject {
   id: GanttId;
   text: string;
   type?: 'task' | 'project' | 'milestone';
@@ -43,7 +45,7 @@ export interface GanttTask extends GanttTaskData {
 
 export type GanttLinkType = 'finish_to_start' | 'start_to_start' | 'finish_to_finish' | 'start_to_finish';
 
-export interface GanttLinkData {
+export interface GanttLinkData extends SchemaObject {
   id: GanttId;
   source: GanttId;
   target: GanttId;

@@ -10,7 +10,7 @@ import { resetWasmPromise as resetWasm } from './utils/prepare-wasm.js';
 import type { BarcodeInputSchema, BarcodeDetectResult } from './barcode-input.types.js';
 
 export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputSchema>) {
-  const { props: resolved, meta, events, helpers } = props;
+  const { props: resolved, meta, events } = props;
   const form = useCurrentForm();
 
   const name = String(resolved.name ?? '');
@@ -102,22 +102,11 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
     if (name && form) {
       form.setValue(name, val);
     }
-    if (events.onScan) {
-      helpers.dispatch(events.onScan as any, {
-        ...(events.onScan as any)?.__ctx,
-        barcode: result.barcode,
-        format: result.format,
-      });
-    }
+    events.onScan?.({ barcode: result.barcode, format: result.format });
   };
 
   const handleScanError = (error: string) => {
-    if (events.onScanError) {
-      helpers.dispatch(events.onScanError as any, {
-        ...(events.onScanError as any)?.__ctx,
-        error: { message: error },
-      });
-    }
+    events.onScanError?.({ error: { message: error } });
   };
 
   const handleOverlayClose = () => {

@@ -1,7 +1,8 @@
 import type { BaseSchema, SchemaInput, SchemaObject } from '@nop-chaos/flux-core';
 import type { ActionSchema } from '@nop-chaos/flux-core';
+import type { GanttTaskData, GanttLinkData } from './gantt/gantt.types.js';
 
-/** @deprecated Use `GanttTask` from `./gantt/gantt.types.js` instead (runtime type with computed layout fields). */
+/** @deprecated Use `GanttTaskData` from `./gantt/gantt.types.js` instead (runtime data type without computed layout fields). `GanttTask` extends `GanttTaskData` with computed layout fields (`$x`, `$y`, etc.) and should only be used internally by the gantt renderer. */
 export interface GanttTask extends SchemaObject {
   id: string;
   text: string;
@@ -16,7 +17,7 @@ export interface GanttTask extends SchemaObject {
   calendar?: string;
 }
 
-/** @deprecated Use `GanttLink` from `./gantt/gantt.types.js` instead (runtime type with computed polyline field). */
+/** @deprecated Use `GanttLinkData` from `./gantt/gantt.types.js` instead (runtime data type without computed polyline field). `GanttLink` extends `GanttLinkData` with computed layout fields (`$p`) and should only be used internally by the gantt renderer. */
 export interface GanttLink extends SchemaObject {
   id: string;
   source: string;
@@ -65,8 +66,8 @@ export interface GanttZoomLevel extends SchemaObject {
 
 export interface GanttSchema extends BaseSchema {
   type: 'gantt';
-  tasks?: GanttTask[];
-  links?: GanttLink[];
+  tasks?: GanttTaskData[];
+  links?: GanttLinkData[];
   resources?: GanttResource[];
   assignments?: GanttAssignment[];
   columns?: GanttColumn[];
