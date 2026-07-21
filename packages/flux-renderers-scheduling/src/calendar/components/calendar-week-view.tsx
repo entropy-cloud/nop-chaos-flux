@@ -19,6 +19,7 @@ export interface CalendarWeekViewProps {
   eventTemplate?: RenderRegionHandle;
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
   onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
+  onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
 }
 
 const HOUR_HEIGHT = 48;
@@ -35,6 +36,7 @@ export function CalendarWeekView({
   eventTemplate,
   onEventClick,
   onDragStart,
+  onEventKeyDown,
 }: CalendarWeekViewProps) {
   const { start, end } = getWeekStartEnd(currentDate, firstDayOfWeek);
   const days = useMemo(() => getDateRange(start, end), [start, end]);
@@ -70,14 +72,17 @@ export function CalendarWeekView({
   const displayDays = showWeekends ? days : days.filter((d) => d.getUTCDay() !== 0 && d.getUTCDay() !== 6);
 
   return (
-    <div data-slot="calendar-matrix" className="flex flex-col overflow-auto">
-      <div className="flex border-b sticky top-0 bg-background z-10">
+    <div data-slot="calendar-matrix" role="grid" aria-label="Calendar week view" className="flex flex-col overflow-auto">
+      <div role="row" className="flex border-b sticky top-0 bg-background z-10">
         <div className="w-12 shrink-0" />
         {displayDays.map((day) => {
           const today = isToday(day);
           return (
             <div
               key={toISODateString(day)}
+              role="columnheader"
+              aria-label={day.toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' })}
+              aria-current={today ? 'date' : undefined}
               data-slot="calendar-cell"
               data-date={toISODateString(day)}
               className={cn(
@@ -94,15 +99,18 @@ export function CalendarWeekView({
         })}
       </div>
 
+      <div role="rowgroup">
       {displayResources.map((resource) => (
-        <div key={resource.id} data-slot="calendar-resource-row" data-resource-id={resource.id}>
+        <div key={resource.id} role="row" data-slot="calendar-resource-row" data-resource-id={resource.id}>
           <div className="flex" style={{ minHeight: `${totalHours * HOUR_HEIGHT}px` }}>
             <div className="w-12 shrink-0 border-r">
               {hours.map((hour) => (
                 <div
                   key={hour}
+                  role="rowheader"
                   className="text-[10px] text-muted-foreground text-right pr-1"
                   style={{ height: `${HOUR_HEIGHT}px`, lineHeight: `${HOUR_HEIGHT}px` }}
+                  aria-label={`${String(hour).padStart(2, '0')}:00`}
                 >
                   {String(hour).padStart(2, '0')}:00
                 </div>
@@ -117,6 +125,8 @@ export function CalendarWeekView({
               return (
                 <div
                   key={dateStr}
+                  role="gridcell"
+                  aria-label={`${dateStr} ${resource.title || resource.text}`}
                   data-slot="calendar-cell"
                   data-date={dateStr}
                   data-resource={resource.id}
@@ -125,6 +135,8 @@ export function CalendarWeekView({
                   {hours.map((hour) => (
                     <div
                       key={hour}
+                      role="gridcell"
+                      aria-label={`${dateStr} ${String(hour).padStart(2, '0')}:00`}
                       className="border-b border-gray-100"
                       style={{ height: `${HOUR_HEIGHT}px` }}
                     />
@@ -139,6 +151,7 @@ export function CalendarWeekView({
                         eventTemplate={eventTemplate}
                         onEventClick={onEventClick}
                         onPointerDown={(e) => onDragStart?.(pe.event, e)}
+                        onKeyDown={onEventKeyDown}
                       />
                     ))}
                 </div>
@@ -147,6 +160,7 @@ export function CalendarWeekView({
           </div>
         </div>
       ))}
+      </div>
 
       {resources.length === 0 && (
         <div className="flex items-center justify-center py-12 text-gray-400 text-sm">

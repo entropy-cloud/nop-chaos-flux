@@ -13,6 +13,7 @@ export interface KanbanColumnHeaderProps {
   columnHeaderToolbarRegion?: { render: () => React.ReactNode } | null;
   dndEnabled?: boolean;
   onResizeStart?: (e: React.PointerEvent) => void;
+  onDragHandleKeyDown?: (e: React.KeyboardEvent, columnId: string) => void;
   wipWarning?: boolean;
   wipText?: string;
 }
@@ -27,6 +28,7 @@ export function KanbanColumnHeader({
   columnHeaderToolbarRegion,
   dndEnabled,
   onResizeStart,
+  onDragHandleKeyDown,
   wipWarning,
   wipText,
 }: KanbanColumnHeaderProps) {
@@ -65,7 +67,15 @@ export function KanbanColumnHeader({
           onPointerDown={onResizeStart}
         />
       )}
-      <div data-slot="kanban-column-drag-handle" className="nop-kanban-column-drag-handle cursor-grab text-gray-400 hover:text-gray-600">
+      <div
+        data-slot="kanban-column-drag-handle"
+        className="nop-kanban-column-drag-handle cursor-grab text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+        tabIndex={dndEnabled ? 0 : -1}
+        role="button"
+        aria-label={`Drag to reorder column ${title}`}
+        aria-roledescription="drag handle"
+        onKeyDown={(e) => onDragHandleKeyDown?.(e, column.id)}
+      >
         <GripVertical className="w-4 h-4" />
       </div>
       <span className="font-semibold text-sm flex-1 truncate">{title}</span>

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
 
@@ -7,9 +7,10 @@ interface GanttBarsProps {
   onBarPointerDown?: (e: PointerEvent, taskId: string | number, mode: 'move' | 'resize-start' | 'resize-end') => void;
   onLinkHandlePointerDown?: (e: PointerEvent, taskId: string | number) => void;
   onBarDoubleClick?: (taskId: string | number) => void;
+  onBarKeyAction?: (taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => void;
 }
 
-export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick }: GanttBarsProps) {
+export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction }: GanttBarsProps) {
   const store = useGanttStore();
   useGanttTaskSnapshot();
   useGanttLayoutSnapshot();
@@ -49,6 +50,36 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
     barsEl.addEventListener('pointerdown', handler);
     return () => barsEl.removeEventListener('pointerdown', handler);
   }, [onBarPointerDown, onLinkHandlePointerDown]);
+
+  const handleBarKeyDown = useCallback((e: React.KeyboardEvent, taskId: string | number) => {
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        onBarKeyAction?.(taskId, 'resize-left');
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        onBarKeyAction?.(taskId, 'resize-right');
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        onBarKeyAction?.(taskId, 'move-up');
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        onBarKeyAction?.(taskId, 'move-down');
+        break;
+      case ' ':
+      case 'Space':
+        e.preventDefault();
+        onBarKeyAction?.(taskId, 'select');
+        break;
+      case 'Enter':
+        e.preventDefault();
+        onBarDoubleClick?.(taskId);
+        break;
+    }
+  }, [onBarKeyAction, onBarDoubleClick]);
 
   useEffect(() => {
     const barsEl = barsRef.current;
@@ -97,8 +128,12 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
             data-task-id={String(task.id)}
             data-bar-type={task.type ?? 'task'}
             data-slot="gantt-bar"
+            tabIndex={0}
+            role="button"
+            aria-label={task.text ? `Task: ${task.text}` : `Gantt bar task`}
+            aria-roledescription="gantt bar"
             className={cn(
-              'absolute rounded-sm group cursor-pointer',
+              'absolute rounded-sm group cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400',
               isProject ? 'bg-blue-200 border-blue-400' : 'bg-blue-500 border-blue-600',
             )}
             style={{
@@ -107,6 +142,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
               width: Math.max(task.$w, 4),
               height: task.$h,
             }}
+            onKeyDown={(e) => handleBarKeyDown(e, task.id)}
           >
             {task.progress != null && task.progress > 0 && (
               <div

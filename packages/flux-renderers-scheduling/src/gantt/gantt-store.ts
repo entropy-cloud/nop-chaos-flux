@@ -315,6 +315,10 @@ export class GanttStore {
     }
   }
 
+  isOpen(taskId: GanttId): boolean {
+    return this.expandedSet.has(taskId);
+  }
+
   toggleOpen(taskId: GanttId): void {
     const task = this.tasks.get(taskId);
     if (!task) return;

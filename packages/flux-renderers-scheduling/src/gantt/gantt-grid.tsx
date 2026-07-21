@@ -83,6 +83,9 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
               data-task-id={String(task.id)}
               data-depth={task.$level}
               data-slot="gantt-grid-row"
+              role="row"
+              aria-selected={selectedTaskId === task.id}
+              tabIndex={selectedTaskId === task.id ? 0 : -1}
               className={cn(
                 'border-b border-gray-100 hover:bg-blue-50/50',
                 selectedTaskId === task.id && 'bg-blue-50',
@@ -102,7 +105,9 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
                       {task.$level > 0 && (
                         <button
                           type="button"
-                          className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-700 text-xs"
+                          aria-expanded={store.isOpen(task.id)}
+                          aria-label={`${store.isOpen(task.id) ? 'Collapse' : 'Expand'} task ${task.text}`}
+                          className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-700 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
                           onClick={(e) => { e.stopPropagation(); handleToggle(task.id); }}
                         >
                           {'>'}

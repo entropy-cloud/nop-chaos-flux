@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import { toISODateString, getDateRange } from '../utils/calendar-date-utils.js';
+import { useFocusTrap } from '../hooks/use-focus-trap.js';
 
 export interface BatchSchedulePayload {
   resources: string[];
@@ -25,6 +26,8 @@ export function CalendarBatchScheduler({
   onClose,
   onBatchSchedule,
 }: CalendarBatchSchedulerProps) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(overlayRef, open);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedResources, setSelectedResources] = useState<Set<string>>(new Set());
@@ -99,8 +102,10 @@ export function CalendarBatchScheduler({
 
   return (
     <div
+      ref={overlayRef}
       className="nop-batch-scheduler-overlay"
       role="dialog"
+      aria-modal="true"
       tabIndex={-1}
       onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       style={{
@@ -212,7 +217,7 @@ export function CalendarBatchScheduler({
                   value={st.type}
                   checked={selectedShiftType === st.type}
                   onChange={() => setSelectedShiftType(st.type)}
-                  style={{ display: 'none' }}
+                  className="sr-only"
                 />
                 <span style={{
                   width: 10,

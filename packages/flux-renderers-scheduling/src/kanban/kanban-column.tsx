@@ -25,6 +25,7 @@ export interface KanbanColumnProps {
   virtualize?: boolean;
   wipWarning?: boolean;
   wipText?: string;
+  onDragHandleKeyDown?: (e: React.KeyboardEvent, columnId: string) => void;
 }
 
 export function KanbanColumn({
@@ -47,6 +48,7 @@ export function KanbanColumn({
   virtualize,
   wipWarning,
   wipText,
+  onDragHandleKeyDown,
 }: KanbanColumnProps) {
   const cardIds = column.children;
   const cards = useMemo(
@@ -86,12 +88,16 @@ export function KanbanColumn({
     columnStyle.maxWidth = undefined;
   }
 
+  const columnTitle = (column.data?.title as string) || '';
+
   return (
     <div
       data-slot="kanban-column"
       data-dnd-column="true"
       data-column-id={column.id}
       data-card-count={filteredCards.length}
+      role="region"
+      aria-label={`Column: ${columnTitle}`}
       className={cn(
         'nop-kanban-column flex flex-col bg-gray-50 rounded-lg border border-gray-200 min-w-[280px] max-w-[360px]',
         collapsed && 'nop-kanban-column-collapsed',
@@ -111,6 +117,7 @@ export function KanbanColumn({
         onResizeStart={onResizeStart}
         wipWarning={wipWarning}
         wipText={wipText}
+        onDragHandleKeyDown={onDragHandleKeyDown}
       />
 
       {!collapsed && (

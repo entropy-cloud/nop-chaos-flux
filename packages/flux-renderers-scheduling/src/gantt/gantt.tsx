@@ -54,6 +54,50 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const { onPointerDown: onDragPointerDown } = useGanttDrag(containerRef);
     const { onLinkHandlePointerDown } = useGanttLinkDraw(svgRef);
     useGanttScroll(gridRef, timelineRef);
+
+    const handleBarKeyAction = useCallback((taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => {
+      const task = store.tasks.get(taskId);
+      if (!task) return;
+      const oldStart = new Date(task.start);
+      const oldEnd = new Date(task.end);
+      switch (action) {
+        case 'move-up': {
+          const newStart = new Date(oldStart);
+          newStart.setDate(newStart.getDate() - 1);
+          const newEnd = new Date(oldEnd);
+          newEnd.setDate(newEnd.getDate() - 1);
+          store.updateTask(taskId, { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) });
+          break;
+        }
+        case 'move-down': {
+          const newStart = new Date(oldStart);
+          newStart.setDate(newStart.getDate() + 1);
+          const newEnd = new Date(oldEnd);
+          newEnd.setDate(newEnd.getDate() + 1);
+          store.updateTask(taskId, { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) });
+          break;
+        }
+        case 'resize-left': {
+          const newEnd = new Date(oldEnd);
+          newEnd.setDate(newEnd.getDate() - 1);
+          if (newEnd > oldStart) {
+            store.updateTask(taskId, { end: newEnd.toISOString().slice(0, 10) });
+          }
+          break;
+        }
+        case 'resize-right': {
+          const newEnd = new Date(oldEnd);
+          newEnd.setDate(newEnd.getDate() + 1);
+          store.updateTask(taskId, { end: newEnd.toISOString().slice(0, 10) });
+          break;
+        }
+        case 'select': {
+          setSelectedTaskId(taskId);
+          break;
+        }
+      }
+    }, [store]);
+
     useGanttKeyboard({
       containerRef,
       selectedTaskId,
@@ -111,6 +155,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     return (
       <GanttStoreProvider store={store}>
         <div ref={containerRef} className="nop-gantt flex flex-col h-full" data-testid={meta.testid || undefined}>
+          <div aria-live="polite" aria-atomic="true" className="sr-only">
+            {`${store.getVisibleTasks().length} tasks visible`}
+          </div>
           <GanttHeader toolbarRegion={regions.toolbar as any} onScrollToToday={scrollToToday} />
           <GanttLayout
             grid={
@@ -131,6 +178,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                       onBarPointerDown={onDragPointerDown as any}
                       onLinkHandlePointerDown={onLinkHandlePointerDown as any}
                       onBarDoubleClick={(id) => setEditingTaskId(id)}
+                      onBarKeyAction={handleBarKeyAction}
                     />
                   <svg ref={svgRef} className="absolute inset-0 pointer-events-none overflow-visible" style={{ zIndex: 5 }}>
                     <GanttLinks />

@@ -86,16 +86,17 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
           onClick={handleSchedule}
           disabled={status === 'scheduling' || hasInvalidConstraint}
           className="mt-1"
+          aria-describedby={status === 'done' ? 'schedule-status-done' : status === 'error' ? 'schedule-status-error' : undefined}
         >
           {status === 'scheduling' ? 'Scheduling...' : 'Trigger Re-schedule'}
         </Button>
 
         {status === 'done' && (
-          <p className="text-xs text-green-600">{'Schedule applied'}</p>
+          <p id="schedule-status-done" className="text-xs text-green-600">{'Schedule applied'}</p>
         )}
 
         {status === 'error' && (
-          <p className="text-xs text-red-500">{errorMsg || 'Scheduling failed'}</p>
+          <p id="schedule-status-error" className="text-xs text-red-500">{errorMsg || 'Scheduling failed'}</p>
         )}
       </div>
     </div>

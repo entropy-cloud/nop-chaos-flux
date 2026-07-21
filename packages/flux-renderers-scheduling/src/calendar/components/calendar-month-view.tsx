@@ -24,6 +24,7 @@ export interface CalendarMonthViewProps {
   onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
   onCellDragStart?: (date: string, resourceId: string, pointerEvent: React.PointerEvent) => void;
   showCrossDayLines?: boolean;
+  onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
 }
 
 const WEEKDAY_LABELS: Record<string, string[]> = {
@@ -53,6 +54,7 @@ export function CalendarMonthView({
   onDragStart,
   onCellDragStart,
   showCrossDayLines = true,
+  onEventKeyDown,
 }: CalendarMonthViewProps) {
   const days = useMemo(
     () => getMonthDays(currentDate, firstDayOfWeek),
@@ -154,16 +156,24 @@ export function CalendarMonthView({
                 );
               }
 
+              const weekendIndicator = weekend && !today ? 'weekend' : '';
+              const todayIndicator = today ? 'today' : '';
+
               return (
                 <div
                   key={dateStr}
+                  role="gridcell"
+                  aria-label={`${day.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}${today ? ', today' : ''}${weekend ? ', weekend' : ''}`}
+                  aria-current={today ? 'date' : undefined}
                   data-slot="calendar-cell"
                   data-date={dateStr}
                   data-resource={resource.id}
                   data-empty={!isCurrentMonth ? 'true' : undefined}
+                  data-weekend={weekendIndicator || undefined}
+                  data-today={todayIndicator || undefined}
                   className={cn(
                     'flex-1 min-w-0 relative border-r last:border-r-0',
-                    today && 'bg-blue-50',
+                    today && 'bg-blue-50 ring-2 ring-inset ring-blue-400 font-semibold',
                     weekend && 'bg-gray-50/50',
                   )}
                   onPointerDown={(pe) => handleCellPointerDown(dateStr, resource.id, pe)}
@@ -185,6 +195,7 @@ export function CalendarMonthView({
                         eventTemplate={eventTemplate}
                         onEventClick={onEventClick}
                         onPointerDown={(e) => handleEventPointerDown(pe.event, e)}
+                        onKeyDown={onEventKeyDown}
                       />
                     ))
                   )}
@@ -226,12 +237,13 @@ export function CalendarMonthView({
   const totalHeight = totalSize ?? displayResources.length * 48;
 
   return (
-    <div data-slot="calendar-matrix" className="flex flex-col">
-      <div className="flex">
+    <div data-slot="calendar-matrix" role="grid" aria-label="Calendar month view" className="flex flex-col">
+      <div role="row" className="flex">
         <div className="w-24 shrink-0 border-r" />
         <div className="flex flex-1">{headerCells}</div>
       </div>
       <div
+        role="rowgroup"
         className="relative"
         style={{ height: `${totalHeight}px` }}
       >

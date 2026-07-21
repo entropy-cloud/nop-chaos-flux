@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { History, X } from 'lucide-react';
 
@@ -72,6 +72,43 @@ export function KanbanActivityLog({
   filterType,
   className,
 }: KanbanActivityLogProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || !panelRef.current) return;
+    const panel = panelRef.current;
+    const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const trapFocus = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const focusable = panel.querySelectorAll<HTMLElement>(focusableSelector);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    const firstFocusable = panel.querySelector<HTMLElement>(focusableSelector);
+    firstFocusable?.focus();
+    panel.addEventListener('keydown', trapFocus);
+
+    return () => {
+      panel.removeEventListener('keydown', trapFocus);
+      previouslyFocused?.focus();
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const filtered = actions.filter((a) => {
@@ -88,6 +125,10 @@ export function KanbanActivityLog({
 
   return (
     <div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Activity log"
       data-slot="kanban-activity-log"
       className={cn(
         'nop-kanban-activity-log fixed right-0 top-0 bottom-0 w-80 bg-white shadow-lg border-l border-gray-200 z-50 flex flex-col',

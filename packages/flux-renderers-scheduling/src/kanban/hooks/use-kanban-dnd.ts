@@ -145,10 +145,34 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
     [wipOverLimitColumns],
   );
 
+  const moveCardKeyboard = useCallback((
+    boardData: BoardData,
+    cardId: string,
+    fromColumnId: string,
+    toColumnId: string,
+    fromIndex: number,
+    toIndex: number,
+  ) => {
+    const newBoard = moveCard(boardData, cardId, toColumnId, toIndex);
+    onBoardChange(newBoard);
+
+    const fromCol = boardData[fromColumnId];
+    const finalFromIndex = fromCol ? fromCol.children.indexOf(cardId) : -1;
+    onCardMove?.({
+      cardId,
+      fromColumnId,
+      toColumnId,
+      fromIndex: finalFromIndex,
+      toIndex,
+      overLimit: wipOverLimitColumns?.has(toColumnId) ?? false,
+    });
+  }, [onBoardChange, onCardMove, wipOverLimitColumns]);
+
   return {
     dragState,
     dropState,
     registerCard,
     registerColumn,
+    moveCardKeyboard,
   };
 }

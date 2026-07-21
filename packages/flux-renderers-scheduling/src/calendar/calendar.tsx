@@ -1,6 +1,7 @@
-import React, { useImperativeHandle, useCallback, useRef, useState, useEffect } from 'react';
+import React, { useImperativeHandle, useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
+import { useFocusTrap } from './hooks/use-focus-trap.js';
 import type { CalendarSchema, CalendarView, CalendarEvent, CalendarResource } from '../schemas.js';
 import { useCalendarState } from './hooks/use-calendar-state.js';
 import { useCalendarNavigation } from './hooks/use-calendar-navigation.js';
@@ -42,8 +43,8 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   const maxConcurrent = (resolved.maxConcurrent as number) ?? 4;
   const showCrossDayLines = resolved.showCrossDayLines !== false;
 
-  const eventsData = (resolved.events as CalendarSchema['events']) ?? [];
-  const resourcesData = (resolved.resources as CalendarSchema['resources']) ?? [];
+  const eventsData = useMemo(() => (resolved.events as CalendarSchema['events']) ?? [], [resolved.events]);
+  const resourcesData = useMemo(() => (resolved.resources as CalendarSchema['resources']) ?? [], [resolved.resources]);
 
   const dayStartHour = 8;
   const dayEndHour = 20;
@@ -119,12 +120,116 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     events.onEventChange?.({ event: newEvent, type: 'create' });
   }, [events]);
 
+  const [keyboardDragEventId, setKeyboardDragEventId] = useState<string | null>(null);
+
+  const handleKeyboardMoveEvent = useCallback((eventId: string, direction: 'up' | 'down' | 'left' | 'right') => {
+    const event = eventsData.find((e) => e.id === eventId);
+    if (!event) return;
+    const dayDelta = 1;
+    const oldStart = new Date(event.start.split('T')[0]);
+    const oldEnd = new Date((event.end || event.start).split('T')[0]);
+    let newStart: Date;
+    let newEnd: Date;
+    switch (direction) {
+      case 'left':
+        newStart = new Date(oldStart);
+        newStart.setDate(newStart.getDate() - dayDelta);
+        newEnd = new Date(oldEnd);
+        newEnd.setDate(newEnd.getDate() - dayDelta);
+        break;
+      case 'right':
+        newStart = new Date(oldStart);
+        newStart.setDate(newStart.getDate() + dayDelta);
+        newEnd = new Date(oldEnd);
+        newEnd.setDate(newEnd.getDate() + dayDelta);
+        break;
+      case 'up': {
+        const resourceIdx = resourcesData.findIndex((r) => r.id === event.resourceId);
+        if (resourceIdx > 0) {
+          const prevResource = resourcesData[resourceIdx - 1];
+          events.onEventChange?.({
+            eventId: event.id,
+            fromResource: event.resourceId ?? '',
+            toResource: prevResource.id,
+            fromDate: event.start.split('T')[0] ?? event.start,
+            toDate: event.start.split('T')[0] ?? event.start,
+            event,
+          });
+        }
+        return;
+      }
+      case 'down': {
+        const resourceIdx = resourcesData.findIndex((r) => r.id === event.resourceId);
+        if (resourceIdx < resourcesData.length - 1) {
+          const nextResource = resourcesData[resourceIdx + 1];
+          events.onEventChange?.({
+            eventId: event.id,
+            fromResource: event.resourceId ?? '',
+            toResource: nextResource.id,
+            fromDate: event.start.split('T')[0] ?? event.start,
+            toDate: event.start.split('T')[0] ?? event.start,
+            event,
+          });
+        }
+        return;
+      }
+    }
+    events.onEventChange?.({
+      eventId: event.id,
+      fromResource: event.resourceId ?? '',
+      toResource: event.resourceId ?? '',
+      fromDate: event.start.split('T')[0] ?? event.start,
+      toDate: newStart.toISOString().slice(0, 10),
+      event,
+    });
+  }, [eventsData, resourcesData, events]);
+
   const dragSwap = useCalendarDrag({
     events: eventsData,
     resources: resourcesData,
     onEventChange: handleSwapConfirm,
     getCellFromPoint,
+    onKeyboardMoveEvent: handleKeyboardMoveEvent,
   });
+
+  const handleEventKeyDown = useCallback((e: React.KeyboardEvent, event: CalendarEvent) => {
+    if (keyboardDragEventId) {
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          dragSwap.moveKeyboardDrag('up');
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          dragSwap.moveKeyboardDrag('down');
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          dragSwap.moveKeyboardDrag('left');
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          dragSwap.moveKeyboardDrag('right');
+          break;
+        case 'Escape':
+          e.preventDefault();
+          dragSwap.cancelKeyboardDrag();
+          setKeyboardDragEventId(null);
+          break;
+        case 'Enter':
+          e.preventDefault();
+          dragSwap.confirmKeyboardDrop();
+          setKeyboardDragEventId(null);
+          break;
+      }
+    } else {
+      if (e.key === ' ' || e.key === 'Space') {
+        e.preventDefault();
+        dragSwap.startKeyboardDrag(event);
+        setKeyboardDragEventId(event.id);
+      }
+    }
+  }, [keyboardDragEventId, dragSwap]);
 
   const dragCreate = useCalendarDragCreate({
     onEventCreate: handleDragCreateEvent,
@@ -198,6 +303,9 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       data-testid={meta.testid || undefined}
       data-cid={meta.cid || undefined}
     >
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {`Viewing ${activeView} view, ${eventsData.length} events`}
+      </div>
       <CalendarHeader
         currentDate={currentDate}
         activeView={activeView}
@@ -223,6 +331,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
             onDragStart={dragSwap.startDrag}
             onCellDragStart={dragCreate.startCellDrag}
             showCrossDayLines={showCrossDayLines}
+            onEventKeyDown={handleEventKeyDown}
           />
         </div>
       )}
@@ -240,6 +349,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
           eventTemplate={regions.eventTemplate ?? undefined}
           onEventClick={onEventClick}
           onDragStart={dragSwap.startDrag}
+          onEventKeyDown={handleEventKeyDown}
         />
       )}
 
@@ -254,6 +364,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
           eventTemplate={regions.eventTemplate ?? undefined}
           onEventClick={onEventClick}
           onDragStart={dragSwap.startDrag}
+          onEventKeyDown={handleEventKeyDown}
         />
       )}
 
@@ -282,21 +393,10 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       )}
 
       {dragCreate.showTypeSelector && (
-        <div
-          className="nop-calendar-type-selector-overlay"
-          role="dialog"
-          tabIndex={-1}
-          onKeyDown={(e) => { if (e.key === 'Escape') dragCreate.dismissTypeSelector(); }}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000,
-          }}
+        <CalendarOverlay
+          onEscape={dragCreate.dismissTypeSelector}
           onClick={dragCreate.dismissTypeSelector}
+          ariaLabel="选择班次类型"
         >
           <div
             className="nop-calendar-type-selector"
@@ -309,6 +409,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
               boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
             }}
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => { if (e.key === 'Escape') dragCreate.dismissTypeSelector(); e.stopPropagation(); }}
           >
             <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>
               选择班次类型
@@ -350,25 +451,14 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
               取消
             </button>
           </div>
-        </div>
+        </CalendarOverlay>
       )}
 
       {confirmDialog && (
-        <div
-          className="nop-calendar-confirm-overlay"
-          role="dialog"
-          tabIndex={-1}
-          onKeyDown={(e) => { if (e.key === 'Escape') cancelSwap(); }}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000,
-          }}
+        <CalendarOverlay
+          onEscape={cancelSwap}
           onClick={cancelSwap}
+          ariaLabel="确认移动排班"
         >
           <div
             role="presentation"
@@ -380,6 +470,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
               boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
             }}
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => { if (e.key === 'Escape') cancelSwap(); e.stopPropagation(); }}
           >
             <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>
               确认移动排班
@@ -418,8 +509,46 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
               </button>
             </div>
           </div>
-        </div>
+        </CalendarOverlay>
       )}
+    </div>
+  );
+}
+
+interface CalendarOverlayProps {
+  children: React.ReactNode;
+  onEscape: () => void;
+  onClick: () => void;
+  ariaLabel: string;
+}
+
+function CalendarOverlay({ children, onEscape, onClick, ariaLabel }: CalendarOverlayProps) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(overlayRef, true);
+
+  return (
+    <div
+      ref={overlayRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={ariaLabel}
+      className="nop-calendar-overlay"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onEscape();
+        if (e.key === 'Enter' || e.key === ' ') onClick();
+      }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000,
+      }}
+      onClick={onClick}
+    >
+      {children}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { KanbanActivityLog } from './components/kanban-activity-log.js';
 import type { KanbanAction } from './components/kanban-activity-log.js';
 import { createUndoStack, pushCommand, undo as undoStack, redo as redoStack, canUndo, canRedo } from './utils/kanban-undo-stack.js';
 import type { UndoStack } from './utils/kanban-undo-stack.js';
+import { moveColumn } from './kanban-helpers.js';
 
 function getColumns(board: BoardData): BoardItem[] {
   const root = board['root'];
@@ -172,6 +173,31 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     setCollapsedMap((prev) => ({ ...prev, [columnId]: !prev[columnId] }));
   }, []);
 
+  const handleDragHandleKeyDown = useCallback((e: React.KeyboardEvent, columnId: string) => {
+    const root = boardData['root'];
+    if (!root) return;
+    const idx = root.children.indexOf(columnId);
+    if (idx === -1) return;
+    switch (e.key) {
+      case 'ArrowLeft':
+        if (idx > 0) {
+          e.preventDefault();
+          const newBoard = moveColumn(boardData, columnId, idx - 1);
+          handleSetBoardData(newBoard);
+          events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: idx - 1 });
+        }
+        break;
+      case 'ArrowRight':
+        if (idx < root.children.length - 1) {
+          e.preventDefault();
+          const newBoard = moveColumn(boardData, columnId, idx + 1);
+          handleSetBoardData(newBoard);
+          events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: idx + 1 });
+        }
+        break;
+    }
+  }, [boardData, handleSetBoardData, events]);
+
   const handleCardClick = useCallback(
     (cardId: string, columnId: string, index: number) => {
       events.onCardClick?.({ cardId, columnId, index });
@@ -261,12 +287,16 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   return (
     <div ref={boardRef} data-slot="kanban" className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}>
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {`${columns.length} columns, ${columns.reduce((sum, col) => sum + col.children.length, 0)} cards`}
+      </div>
       <div className="flex items-center gap-2 px-4 py-2">
         <input
           type="text"
           value={filter.filterText}
           onChange={(e) => filter.setFilterText(e.target.value)}
           placeholder="搜索卡片..."
+          aria-label="搜索卡片"
           className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-48"
         />
         <div className="flex items-center gap-1 ml-auto">
@@ -330,6 +360,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
                 virtualize
                 wipWarning={overLimit}
                 wipText={wipText}
+                onDragHandleKeyDown={handleDragHandleKeyDown}
               />
             );
           })}

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import { useGanttStore } from '../gantt-context.js';
 
 export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) {
@@ -9,6 +9,15 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
     startY: number;
     tempLine: SVGLineElement | null;
   } | null>(null);
+  const [isLinking, setIsLinking] = useState(false);
+
+  const cleanup = useCallback(() => {
+    if (drawingRef.current?.tempLine) {
+      drawingRef.current.tempLine.remove();
+    }
+    drawingRef.current = null;
+    setIsLinking(false);
+  }, []);
 
   const onLinkHandlePointerDown = useCallback((e: PointerEvent, taskId: string | number) => {
     e.preventDefault();
@@ -29,6 +38,7 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
       startY: task.$y + task.$h / 2,
       tempLine,
     };
+    setIsLinking(true);
 
     const onPointerMove = (ev: PointerEvent) => {
       if (!drawingRef.current || !svgRef.current) return;
@@ -58,20 +68,42 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
       if (ev.key === 'Escape') cleanup();
     };
 
-    const cleanup = () => {
-      if (drawingRef.current?.tempLine) {
-        drawingRef.current.tempLine.remove();
-      }
-      drawingRef.current = null;
-      document.removeEventListener('pointermove', onPointerMove);
-      document.removeEventListener('pointerup', onPointerUp);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
     document.addEventListener('keydown', onKeyDown);
+  }, [store, svgRef, cleanup]);
+
+  const startKeyboardLink = useCallback((sourceTaskId: string | number) => {
+    const task = store.tasks.get(sourceTaskId);
+    if (!task || !svgRef.current) return;
+
+    const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    tempLine.setAttribute('stroke', '#3b82f6');
+    tempLine.setAttribute('stroke-width', '2');
+    tempLine.setAttribute('stroke-dasharray', '5,3');
+    tempLine.setAttribute('pointer-events', 'none');
+    svgRef.current.appendChild(tempLine);
+
+    drawingRef.current = {
+      sourceId: sourceTaskId,
+      startX: task.$x + task.$w,
+      startY: task.$y + task.$h / 2,
+      tempLine,
+    };
+    setIsLinking(true);
   }, [store, svgRef]);
+
+  const completeKeyboardLink = useCallback((targetTaskId: string | number) => {
+    if (!drawingRef.current) return;
+    if (targetTaskId !== String(drawingRef.current.sourceId)) {
+      store.addLink(drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
+    }
+    cleanup();
+  }, [store, cleanup]);
+
+  const cancelLink = useCallback(() => {
+    cleanup();
+  }, [cleanup]);
 
   useEffect(() => {
     return () => {
@@ -81,5 +113,5 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
     };
   }, []);
 
-  return { onLinkHandlePointerDown };
+  return { onLinkHandlePointerDown, startKeyboardLink, completeKeyboardLink, cancelLink, isLinking };
 }

@@ -11,6 +11,7 @@ export interface CalendarEventBlockProps {
   eventTemplate?: RenderRegionHandle;
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
   onPointerDown?: (e: React.PointerEvent) => void;
+  onKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -33,6 +34,7 @@ export function CalendarEventBlock({
   eventTemplate,
   onEventClick,
   onPointerDown,
+  onKeyDown,
 }: CalendarEventBlockProps) {
   const { event, left, width, top, height, isSplit, concurrentIndex, maxConcurrent, overlap } = positionedEvent;
   const color = resolveColor(event);
@@ -47,8 +49,9 @@ export function CalendarEventBlock({
         e.preventDefault();
         handleClick();
       }
+      onKeyDown?.(e, event);
     },
-    [handleClick],
+    [handleClick, onKeyDown, event],
   );
 
   if (eventTemplate) {

@@ -17,6 +17,7 @@ export interface CalendarDayViewProps {
   eventTemplate?: RenderRegionHandle;
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
   onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
+  onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
 }
 
 const HOUR_HEIGHT = 64;
@@ -31,6 +32,7 @@ export function CalendarDayView({
   eventTemplate,
   onEventClick,
   onDragStart,
+  onEventKeyDown,
 }: CalendarDayViewProps) {
   const dateStr = toISODateString(currentDate);
   const today = isToday(currentDate);
@@ -46,10 +48,12 @@ export function CalendarDayView({
     : resources;
 
   return (
-    <div data-slot="calendar-matrix" className="flex flex-col overflow-auto">
+    <div data-slot="calendar-matrix" role="grid" aria-label="Calendar day view" className="flex flex-col overflow-auto">
       <div
+        role="rowheader"
         data-slot="calendar-cell"
         data-date={dateStr}
+        aria-current={today ? 'date' : undefined}
         className={cn(
           'sticky top-0 bg-background z-10 text-center text-sm font-medium py-2 border-b',
           today && 'bg-blue-50',
@@ -63,15 +67,17 @@ export function CalendarDayView({
           {hours.map((hour) => (
             <div
               key={hour}
+              role="rowheader"
               className="text-[10px] text-muted-foreground text-right pr-1"
               style={{ height: `${HOUR_HEIGHT}px`, lineHeight: `${HOUR_HEIGHT}px` }}
+              aria-label={`${String(hour).padStart(2, '0')}:00`}
             >
               {String(hour).padStart(2, '0')}:00
             </div>
           ))}
         </div>
 
-        <div className="flex-1">
+        <div role="rowgroup" className="flex-1">
           {displayResources.map((resource) => {
             const dayEvents = events.filter((evt) => {
               const evtDate = evt.start.split('T')[0] ?? evt.start;
@@ -82,14 +88,18 @@ export function CalendarDayView({
             return (
               <div
                 key={resource.id}
+                role="row"
                 data-slot="calendar-resource-row"
                 data-resource-id={resource.id}
+                aria-label={`${resource.title || resource.text} schedule for ${dateStr}`}
                 className="relative border-b last:border-b-0"
                 style={{ minHeight: `${totalHours * HOUR_HEIGHT}px` }}
               >
                 {hours.map((hour) => (
                   <div
                     key={hour}
+                    role="gridcell"
+                    aria-label={`${String(hour).padStart(2, '0')}:00 for ${resource.title || resource.text}`}
                     className="border-b border-gray-50"
                     style={{ height: `${HOUR_HEIGHT}px` }}
                   />
@@ -103,6 +113,7 @@ export function CalendarDayView({
                     eventTemplate={eventTemplate}
                     onEventClick={onEventClick}
                     onPointerDown={(e) => onDragStart?.(pe.event, e)}
+                    onKeyDown={onEventKeyDown}
                   />
                 ))}
               </div>

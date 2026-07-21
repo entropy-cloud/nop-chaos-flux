@@ -31,6 +31,7 @@ export function KanbanTagFilter({
           <button
             key={tag.id}
             type="button"
+            aria-pressed={selected}
             onClick={() => onToggleTag(tag.id)}
             className={cn(
               'inline-flex items-center px-2 py-0.5 text-xs rounded-full border transition-colors',

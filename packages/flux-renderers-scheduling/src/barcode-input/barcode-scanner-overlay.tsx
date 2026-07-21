@@ -137,17 +137,61 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     setQueueItems([]);
   }
 
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || !overlayRef.current) return;
+    const overlay = overlayRef.current;
+    const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const trapFocus = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const focusable = overlay.querySelectorAll<HTMLElement>(focusableSelector);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    const firstFocusable = overlay.querySelector<HTMLElement>(focusableSelector);
+    firstFocusable?.focus();
+    overlay.addEventListener('keydown', trapFocus);
+
+    return () => {
+      overlay.removeEventListener('keydown', trapFocus);
+      previouslyFocused?.focus();
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
     <div
+      ref={overlayRef}
       data-slot="barcode-scanner-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Barcode scanner"
       className={cn(
         'fixed inset-0 z-50 flex flex-col',
         'bg-black/80 backdrop-blur-sm',
         'animate-in fade-in duration-200',
       )}
     >
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {phase === 'scanning' ? 'Scanner is active' : phase === 'error' ? `Scanner error: ${errorMessage}` : 'Initializing scanner'}
+      </div>
       <div className="relative flex-1 flex items-center justify-center">
         {phase === 'loading' && (
           <div data-slot="barcode-scanner-loading" className="flex flex-col items-center gap-3 text-white">
@@ -170,6 +214,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
             className="w-full h-full object-contain"
             playsInline
             muted
+            aria-label="Camera feed for barcode scanning"
           />
         )}
 
