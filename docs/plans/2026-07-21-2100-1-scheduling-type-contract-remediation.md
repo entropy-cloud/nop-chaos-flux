@@ -1,6 +1,6 @@
 # Scheduling — Type System, Contract Surface & Dead Code Remediation
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-21
 > Source: `docs/audits/2026-07-21-1920-open-audit-scheduling.md` (F-46, F-48, F-49), `docs/audits/2026-07-21-1920-multi-audit-scheduling.md` (03-01, 03-02, 03-03, 03-04, 17-03, 17-04)
 > Related: `docs/plans/2026-07-21-2100-2-scheduling-runtime-lifecycle-remediation.md`, `docs/plans/2026-07-21-2100-3-scheduling-surface-quality-remediation.md`
@@ -79,39 +79,39 @@ Exit Criteria:
 
 ### Phase 2 — Type duplication, missing exports & event wiring
 
-Status: planned
+Status: completed
 Targets: `barcode-input.types.ts`, `barcode-queue.ts`, `index.ts`, `kanban/kanban.types.ts`, `scheduling-renderer-definitions.ts`
 
 - Item Types: `Fix | Decision`
 
-- [ ] Remove duplicated `BarcodeQueueItem` from `barcode-queue.ts`; import from `barcode-input.types.ts`.
-- [ ] Add `KanbanEvents`, `KanbanColumnConfig`, `KanbanCardConfig`, `BoardData`, `BoardItem` to `index.ts` exports.
-- [ ] Decide: wire `onCardUpdate` into `KanbanSchema` fields/renderer or remove from `KanbanEvents`. Execute chosen path.
+- [x] Remove duplicated `BarcodeQueueItem` from `barcode-queue.ts`; import from `barcode-input.types.ts`.
+- [x] Add `KanbanEvents`, `KanbanColumnConfig`, `KanbanCardConfig`, `BoardData`, `BoardItem` to `index.ts` exports.
+- [x] Decide: wire `onCardUpdate` into `KanbanSchema` fields/renderer or remove from `KanbanEvents`. Execute chosen path.
 
 Exit Criteria:
 
-- [ ] `BarcodeQueueItem` defined in exactly one canonical location.
-- [ ] All five Kanban auxiliary types reachable via `@nop-chaos/flux-renderers-scheduling` barrel import.
-- [ ] `onCardUpdate` either wired (present in schema fields + connected in renderer) or removed from `KanbanEvents` type.
+- [x] `BarcodeQueueItem` defined in exactly one canonical location.
+- [x] All five Kanban auxiliary types reachable via `@nop-chaos/flux-renderers-scheduling` barrel import.
+- [x] `onCardUpdate` either wired (present in schema fields + connected in renderer) or removed from `KanbanEvents` type.
 
 ### Phase 3 — Schema deprecation resolution & `as any` elimination
 
-Status: planned
+Status: completed
 Targets: `schemas.ts`, `barcode-input.tsx` (formerly `barcode-input-renderer.tsx`), `scheduling-renderer-definitions.ts`
 
 - Item Types: `Fix`
 
-- [ ] Change `GanttSchema.tasks` from `GanttTask[]` to `GanttTaskData[]` and `.links` from `GanttLink[]` to `GanttLinkData[]`.
-- [ ] Update `@deprecated` JSDoc on `GanttTask`/`GanttLink` to reference correct migration target: `GanttTaskData` from `./gantt/gantt.types.js`.
-- [ ] If `scheduling-renderer-definitions.ts` field config references `GanttTask`/`GanttLink`, update to `GanttTaskData`/`GanttLinkData`.
-- [ ] Replace four `as any` casts on `helpers.dispatch(events.onScan as any, ...)` and `events.onScanError as any` with typed payloads (e.g., typed dispatch helper that accepts `Partial<ActionContext>`).
+- [x] Change `GanttSchema.tasks` from `GanttTask[]` to `GanttTaskData[]` and `.links` from `GanttLink[]` to `GanttLinkData[]`.
+- [x] Update `@deprecated` JSDoc on `GanttTask`/`GanttLink` to reference correct migration target: `GanttTaskData` from `./gantt/gantt.types.js`.
+- [x] If `scheduling-renderer-definitions.ts` field config references `GanttTask`/`GanttLink`, update to `GanttTaskData`/`GanttLinkData`.
+- [x] Replace four `as any` casts on `helpers.dispatch(events.onScan as any, ...)` and `events.onScanError as any` with typed payloads (e.g., typed dispatch helper that accepts `Partial<ActionContext>`).
 
 Exit Criteria:
 
-- [ ] `GanttSchema.tasks` accepts `GanttTaskData[]`; no type error when consumers pass runtime task data.
-- [ ] Zero `as any` casts remain on barcode event dispatch path.
-- [ ] `pnpm typecheck --filter @nop-chaos/flux-renderers-scheduling` passes.
-- [ ] `@deprecated` JSDoc points to correct replacement type.
+- [x] `GanttSchema.tasks` accepts `GanttTaskData[]`; no type error when consumers pass runtime task data.
+- [x] Zero `as any` casts remain on barcode event dispatch path.
+- [x] `pnpm typecheck --filter @nop-chaos/flux-renderers-scheduling` passes.
+- [x] `@deprecated` JSDoc points to correct replacement type.
 
 ## Draft Review Record
 
@@ -123,20 +123,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] All Phase exit criteria satisfied.
-- [ ] Dead code `useOfflineDetection` no longer exported.
-- [ ] `GanttSchema` migrated from deprecated types; deprecation followable.
-- [ ] `BarcodeQueueItem` deduplicated.
-- [ ] All Kanban auxiliary types publicly exported.
-- [ ] `onCardUpdate` resolved (wired or removed).
-- [ ] File renamed to `barcode-input.tsx`; no stale references.
-- [ ] Zero `as any` on barcode event dispatch.
-- [ ] Affected owner docs (`docs/audits/`, `docs/logs/`) synced.
-- [ ] Independent sub-agent (fresh session) closure-audit passes, evidence recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All Phase exit criteria satisfied.
+- [x] Dead code `useOfflineDetection` no longer exported.
+- [x] `GanttSchema` migrated from deprecated types; deprecation followable.
+- [x] `BarcodeQueueItem` deduplicated.
+- [x] All Kanban auxiliary types publicly exported.
+- [x] `onCardUpdate` resolved (wired or removed).
+- [x] File renamed to `barcode-input.tsx`; no stale references.
+- [x] Zero `as any` on barcode event dispatch.
+- [x] Affected owner docs (`docs/audits/`, `docs/logs/`) synced.
+- [x] Independent sub-agent (fresh session) closure-audit passes, evidence recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -145,3 +145,20 @@ Exit Criteria:
 ## Non-Blocking Follow-ups
 
 (none)
+
+## Closure
+
+Status Note: All type-system, API-surface, dead-code, and naming findings resolved. Code changes verified against live repo. All phase exit criteria and closure gates satisfied.
+
+Closure Audit Evidence:
+
+- Auditor / Agent: `closure-auditor` (independent sub-agent, fresh session)
+- Evidence: Verified all 3 phases against live codebase:
+  - Phase 1: `useOfflineDetection` not found in scheduling source; `barcode-input.tsx` exists (renamed from `barcode-input-renderer.tsx`); all consumer imports updated.
+  - Phase 2: `BarcodeQueueItem` defined only in `barcode-input.types.ts` (line 46), imported by `barcode-queue.ts`; 5 Kanban types exported from `index.ts` (lines 10-14); `onCardUpdate` absent from `KanbanEvents` (removed).
+  - Phase 3: `GanttSchema.tasks` typed as `GanttTaskData[]` (schemas.ts:69), `links` as `GanttLinkData[]` (schemas.ts:70); `@deprecated` JSDoc points to correct replacement types; zero `as any` on barcode event dispatch path (lines 105,109 use typed `?()` calls).
+  - 2 Closure Gates items ticked: docs synced (log entry added at `docs/logs/2026/07-21.md`), independent closure audit passes (this record).
+
+Follow-up:
+
+- No remaining plan-owned work.
