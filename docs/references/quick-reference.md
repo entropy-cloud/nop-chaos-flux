@@ -224,6 +224,52 @@ interface RendererRuntime {
   runtimeId: string;
   registry: RendererRegistry;
   env: RendererEnv;
+  // ...
+}
+```
+
+**`RendererEnv` 字段速查**（完整定义见 `docs/architecture/renderer-env.md`）：
+
+| 字段                                | 必填？   | 用途                                                                                                           |
+| ----------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| `fetcher`                           | ✅       | HTTP 一次性请求（`Promise<ApiResponse<T>>`）                                                                   |
+| `stream`                            | optional | HTTP 流式响应（SSE/NDJSON/text/raw 自动切分+解析，返回 `AsyncGenerator<T>`）；2026-07-21 评审通过，待 P-1 实施 |
+| `openSocket`                        | optional | WebSocket 长连接（类浏览器接口）；2026-07-21 评审通过，待 P-1 实施                                             |
+| `notify`                            | ✅       | Toast 通知                                                                                                     |
+| `confirm` / `alert`                 | optional | 确认/警告框                                                                                                    |
+| `navigate`                          | optional | 路由跳转                                                                                                       |
+| `loadPage` / `loadDict`             | optional | 资源加载                                                                                                       |
+| `hasRole`                           | optional | 权限检查                                                                                                       |
+| `importLoader` / `resolveImportUrl` | optional | `xui:imports` 解析                                                                                             |
+| `monitor`                           | optional | 监控钩子                                                                                                       |
+| `functions` / `filters`             | optional | 表达式扩展                                                                                                     |
+| `locale`                            | optional | i18n                                                                                                           |
+
+调用示例：
+
+```ts
+const env = useRendererEnv();
+// 一次性请求
+const { data } = await env.fetcher<MyType>(api, ctx);
+// 流式响应（P-1 实施后）
+if (env.stream) {
+  const { response, chunks } = await env.stream<MyChunk>(
+    { url, streamProtocol: 'sse', streamChunkType: 'json' },
+    ctx,
+  );
+  for await (const chunk of chunks) {
+    /* chunk 已切分+解析 */
+  }
+}
+```
+
+完整 `RendererRuntime` 方法：
+
+```ts
+interface RendererRuntime {
+  runtimeId: string;
+  registry: RendererRegistry;
+  env: RendererEnv;
   expressionCompiler: ExpressionCompiler;
   schemaCompiler: SchemaCompiler;
   plugins: readonly RendererPlugin[];

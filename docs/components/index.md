@@ -334,6 +334,10 @@ UI primitive 对齐补充规则：
 
 - `pull-refresh`、`infinite-scroll`、`swipe-cell`、`countdown`、`notice-bar`
 
+**AI 对话（`flux-renderers-ai`，设计中）**
+
+- `ai-chat`、`ai-message-list`、`ai-bubble`、`ai-sender`、`ai-conversations`、`ai-welcome`、`ai-prompts`、`ai-feedback`、`ai-attachments`、`ai-tool-call`、`ai-suggestions`、`ai-mcp-manager`（详见 `docs/components/flux-renderers-ai/design.md`）
+
 ### 当前仓库已注册的领域 renderer
 
 这些 renderer 已在各自 package 中注册；是否在某个具体宿主或 playground 场景里可直接运行，还取决于该宿主是否装配了对应 registry。
