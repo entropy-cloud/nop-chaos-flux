@@ -131,6 +131,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'onDateChange', kind: 'event' },
       { key: 'onViewChange', kind: 'event' },
       { key: 'onEventChange', kind: 'event' },
+      // Sole creation channel for drag-create; onEventChange is NOT fired during creation.
       { key: 'onEventCreate', kind: 'event' },
       { key: 'onBatchSchedule', kind: 'event' },
       { key: 'onImport', kind: 'event' },

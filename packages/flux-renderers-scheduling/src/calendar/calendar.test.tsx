@@ -1,7 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render } from '@testing-library/react';
 import { Calendar } from './calendar.js';
+
+const mockDragCreate = vi.hoisted(() => ({
+  triggerCreate: null as ((payload: { title: string; type: string; start: string; end: string; resourceId: string }) => void) | null,
+}));
 
 vi.mock('./hooks/use-calendar-state.js', () => ({
   useCalendarState: () => ({
@@ -42,16 +46,29 @@ vi.mock('./hooks/use-calendar-drag.js', () => ({
 }));
 
 vi.mock('./hooks/use-calendar-drag-create.js', () => ({
-  useCalendarDragCreate: () => ({
-    dragCreateState: { active: false, startDate: null, startResource: null, currentDate: null, currentResource: null, currentX: 0, currentY: 0 },
-    startCellDrag: vi.fn(),
-    cancelCreate: vi.fn(),
-    confirmCreate: vi.fn(),
-    showTypeSelector: false,
-    availableTypes: [],
-    selectType: vi.fn(),
-    dismissTypeSelector: vi.fn(),
-  }),
+  useCalendarDragCreate: (options: any) => {
+    mockDragCreate.triggerCreate = (payload) => {
+      options.onEventCreate?.(payload);
+    };
+    return {
+      dragCreateState: { active: false, startDate: null, startResource: null, currentDate: null, currentResource: null, currentX: 0, currentY: 0 },
+      startCellDrag: vi.fn(),
+      cancelCreate: vi.fn(),
+      confirmCreate: vi.fn(),
+      showTypeSelector: false,
+      availableTypes: [],
+      selectType: (type: string) => {
+        options.onEventCreate?.({
+          title: type,
+          type,
+          start: '2026-07-21T09:00:00',
+          end: '2026-07-21T17:00:00',
+          resourceId: 'r1',
+        });
+      },
+      dismissTypeSelector: vi.fn(),
+    };
+  },
 }));
 
 vi.mock('./hooks/use-calendar-ical.js', () => ({
@@ -115,12 +132,49 @@ describe('Calendar', () => {
     expect(el).toBeTruthy();
   });
 
-  it('should call onMount and onUnmount events', () => {
+  beforeEach(() => {
+    mockDragCreate.triggerCreate = null;
+  });
+
+  it('imports print CSS module without error', () => {
+    expect(() => import('./utils/calendar-print.css')).not.toThrow();
+  });
+
+  it('fires onEventCreate once and not onEventChange on drag-create', () => {
+    const onEventCreate = vi.fn();
+    const onEventChange = vi.fn();
+    render(
+      <Calendar {...baseProps} events={{ onEventCreate, onEventChange } as any} />,
+    );
+
+    expect(mockDragCreate.triggerCreate).not.toBeNull();
+    mockDragCreate.triggerCreate!({
+      title: 'Test Shift',
+      type: 'shift',
+      start: '2026-07-21T09:00:00',
+      end: '2026-07-21T17:00:00',
+      resourceId: 'r1',
+    });
+
+    expect(onEventCreate).toHaveBeenCalledTimes(1);
+    expect(onEventCreate).toHaveBeenCalledWith({ event: expect.objectContaining({ title: 'Test Shift', type: 'shift' }) });
+    expect(onEventChange).not.toHaveBeenCalled();
+  });
+
+  it('should call onMount and onUnmount events with correct call order', () => {
     const onMount = vi.fn();
     const onUnmount = vi.fn();
     const { unmount } = render(
       <Calendar {...baseProps} events={{ onMount, onUnmount } as any} />,
     );
+    expect(onMount).toHaveBeenCalledTimes(1);
+    expect(onMount).toHaveBeenCalledWith({});
+
     unmount();
+
+    expect(onUnmount).toHaveBeenCalledTimes(1);
+    expect(onUnmount).toHaveBeenCalledWith({});
+
+    expect(onMount.mock.invocationCallOrder[0]).toBeLessThan(onUnmount.mock.invocationCallOrder[0]);
   });
 });

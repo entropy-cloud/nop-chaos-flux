@@ -14,6 +14,7 @@ import { CalendarMonthView } from './components/calendar-month-view.js';
 import { CalendarWeekView } from './components/calendar-week-view.js';
 import { CalendarDayView } from './components/calendar-day-view.js';
 import { parseISODate } from './utils/calendar-date-utils.js';
+import './utils/calendar-print.css';
 
 export interface CalendarHandle {
   goNext: () => void;
@@ -123,7 +124,6 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       color: DEFAULT_SHIFT_TYPES.find(t => t.type === payload.type)?.color,
     };
     events.onEventCreate?.({ event: newEvent });
-    events.onEventChange?.({ event: newEvent, type: 'create' });
   }, [events]);
 
   const [keyboardDragEventId, setKeyboardDragEventId] = useState<string | null>(null);
