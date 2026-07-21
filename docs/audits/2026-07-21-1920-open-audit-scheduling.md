@@ -1,262 +1,338 @@
-> Audit Status: closed
+> Audit Status: planned
 > Audit Type: open-ended
 > Mission: scheduling
-> Remediation Plans: `docs/plans/2026-07-21-2100-1-dead-module-cleanup-scheduling-content.md` (F-51, F-52, F-53, F-59), `docs/plans/2026-07-21-2100-2-scheduling-package-hardening.md` (F-55, F-56), `docs/plans/2026-07-21-2100-3-convention-alignment-scheduling-content.md` (F-54, F-57, F-58)
 > Date: 2026-07-21
-> Source perspectives: Dead code cleaner + contract archaeologist + React 19 enforcer + CSS auditor + cross-boundary messenger
+> Round: 2 (follows round-01 which reported F-46 through F-50)
+> Source perspectives: Dead-code cleaner, contract archaeologist, React 19 enforcer, cross-boundary messenger, 10x-scale operator, abnormal-path detective
 
-## Pre-check: Prior Audit Coverage
+## Pre-check: Deduplication Against Round-01
 
-Verified against 50 prior findings across 6 audit rounds (2026-07-20 rounds 1-4: F-01–F-38; 2026-07-21 round 001: F-39–F-45; 2026-07-21 round 1920: F-46–F-50). 33 of 38 from the first batch resolved; 6 of 7 from 001 resolved; all 5 from 1920 unresolved.
-
-Additionally ran the full test suite: **855/855 tests pass** (627 scheduling + 228 content/diff-view), zero failures, zero skipped, zero flaky indicators. The codebase is in a healthy "all tests green" state despite the issues below.
-
----
-
-## F-51: `gantt/gantt-search.ts` is completely dead — zero imports anywhere in the codebase
-
-**Location**: `packages/flux-renderers-scheduling/src/gantt/gantt-search.ts` (entire file, 11 lines)
-
-**What**: The file exports a single function `searchTasks(tasks: GanttTask[], query: string): GanttTask[]`. A codebase-wide search for any import of `gantt-search` returns zero results — not even a test file imports it. The file compiles and ships as part of the package, but its function is never called.
-
-**Why care**: Dead code in the production source tree creates:
-
-1. Misleading API surface — a future developer searching for "how does Gantt search work" finds this module and assumes it's the active implementation, wasting time understanding dead code
-2. Bundled dead weight — the 11 lines are minimal but set a precedent; no automated check prevents more dead code from accumulating
-3. Missing feature — the Gantt UI has a filter/search bar (`filter-bar.tsx`), but it doesn't use `gantt-search.ts`. Either the filter bar's search implementation was replaced and the old file was left behind, or the file was pre-written in anticipation of a feature that was never wired
-
-**Confidence**: Certain
+Round-01 (F-46 to F-50) found: `useOfflineDetection` dead code, Gantt `createInitialStore` config capture, barcode `as any` dispatch, GanttTask/GanttLink deprecation deadlock, barcode-scanner-overlay effect start/stop instability. All 5 are distinct from this round's findings.
 
 ---
 
-## F-52: `gantt/components/multi-select.tsx` is dead — only imported by its own test file
+## Findings
 
-**Location**: `packages/flux-renderers-scheduling/src/gantt/components/multi-select.tsx` (entire component)
+### F-51: Gantt drag ghost is positioned at container coordinates, not bar coordinates [Certain]
 
-**What**: The component exports `createMultiSelectState`, `handleMultiSelectClick`, `clearSelection`, `selectAll` — a multi-select interaction model for Gantt. The only production import of anything from this module is in `multi-select.test.ts` (its test file). Zero renderers, hooks, or other modules reference it.
+**Location**: `src/gantt/hooks/use-gantt-drag.ts:25-26`
 
-S3.9 in `roadmap-scheduling.md` claims multi-select (Shift+Click range selection, batch drag) is "done", but the implementation code is entirely disconnected from the Gantt render pipeline.
+**What**: `useGanttDrag.onPointerDown` reads `e.currentTarget.getBoundingClientRect()` to position the drag ghost. The pointerdown event originates from `gantt-bars.tsx:50` where `barsEl.addEventListener('pointerdown', handler)` is bound — `barsEl` is the **container** (`.nop-gantt-bars`), not the individual bar. The inner handler calls `onBarPointerDown(e, taskId, mode)` passing the original DOM event whose `currentTarget` is the container. The ghost clone is therefore positioned at the container's top-left instead of the bar's.
 
-**Why care**: This is an entire feature module that compiles, is tested, but is never wired to the UI. It represents:
+**Why care**: Drag visual feedback is broken. The ghost element appears offset from the actual bar by the container's scroll/offset. Users see a phantom bar in the wrong position when dragging.
 
-1. **Delivered-but-unreachable feature** — work was done (code written, tested) but the integration step (connecting it to Gantt's keyboard handler, selection state, and drag system) was never completed
-2. **Roadmap misrepresentation** — S3.9 claims "done" but the multi-select interaction is completely absent from the shipped component
-3. **Maintenance burden** — tests may fail if the module API changes during refactoring, forcing unnecessary test fixes for dead code
-
-**Confidence**: Certain
+**Contrast with F-01/F-29 (prior rounds)**: Those were stubs doing nothing. This is the opposite — it runs, positions incorrectly, and produces a misleading visual result that looks like it works to a casual observer.
 
 ---
 
-## F-53: `diff-view/components/diff-virtual-list.tsx` is dead — zero production imports
+### F-52: Document-level event listeners leak on unmount during drag/link-draw/resize [Certain]
 
-**Location**: `packages/flux-renderers-content/src/diff-view/components/diff-virtual-list.tsx` (entire file)
+**Location**: `src/gantt/hooks/use-gantt-drag.ts:118-120`, `src/gantt/hooks/use-gantt-link-draw.ts:71-73`, `src/gantt/gantt-layout.tsx:50-53`
 
-**What**: Exports `DiffVirtualList` (a `FixedSizeList` wrapper) and `shouldVirtualize` (threshold check). A codebase-wide search finds zero production imports. The diff-view renderer and split/unified view components handle virtual scrolling via `@tanstack/react-virtual`'s `useVirtualizer` directly, not through this module.
+**What**: All three hooks register `document.addEventListener('pointermove')`, `document.addEventListener('pointerup')`, `document.addEventListener('keydown')` only during active interactions (pointerdown). They are removed in `cleanup()` called from `onPointerUp` or Escape key. But if the component unmounts while a drag/link-draw/resize is in progress:
 
-S9.6 in `roadmap-scheduling.md` claims "大文件虚拟滚动：virtualizationThreshold: 500" is "done". The code exists but is completely disconnected from the render pipeline.
+- The useEffect cleanup in `use-gantt-drag.ts:123-127` only removes `ghostRef.current` — not the document listeners.
+- The useEffect cleanup in `use-gantt-link-draw.ts:108-113` only removes `tempLine` — not the document listeners.
+- `gantt-layout.tsx` has no useEffect cleanup at all for its resize handle.
 
-**Why care**: Same pattern as F-51/F-52 — the module is compiled, exported, and tested but never instantiated. Three instances of this pattern across two packages suggest a systemic gap in the delivery process: code is written to meet work-item checkboxes, but integration is not verified.
-
-**Confidence**: Certain
+**Why care**: Memory leak — stale closures hold references to the store and DOM elements. After unmount, `store.updateTask()` calls become no-ops against a destroyed store. Ghost DOM element also leaks into `document.body`.
 
 ---
 
-## F-54: Zero scheduling renderers use standard `@nop-chaos/flux-react` hooks — convention violation
+### F-53: `scheduler-config.tsx` status stuck at `'scheduling'` — button permanently disabled [Certain]
 
-**Location**: All 5 renderers across scheduling and content/diff-view packages
+**Location**: `src/gantt/components/scheduler-config.tsx:28`
 
-| Renderer     | File                     | flux-react hooks used                       | Standard hooks mandated by AGENTS.md                                                                                                                             |
-| ------------ | ------------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Gantt        | `gantt.tsx`              | `RenderRegionHandle` (type only)            | `useRendererRuntime`, `useRenderScope`, `useScopeSelector`, `useActionDispatcher`, `useCurrentForm`, `useCurrentPage`, `useRenderFragment`, `useCurrentNodeMeta` |
-| KanbanBoard  | `kanban-board.tsx`       | NONE                                        | Same 8 hooks                                                                                                                                                     |
-| Calendar     | `calendar.tsx`           | NONE                                        | Same 8 hooks                                                                                                                                                     |
-| BarcodeInput | `barcode-input.tsx`      | `useCurrentForm`, `useInputComponentHandle` | Same 8 hooks (2/8)                                                                                                                                               |
-| DiffView     | `diff-view-renderer.tsx` | NONE                                        | Same 8 hooks                                                                                                                                                     |
+**What**: `handleSchedule()` calls `setStatus('scheduling')` on line 28 and then `onScheduleAction(config)` synchronously. `setStatus` is **never called again**. The button `disabled` check (`status === 'scheduling'`) remains `true` forever. The `done`/`error` status messages (lines 95-101) are never rendered.
 
-**What**: AGENTS.md explicitly mandates: "**NEVER** access stores directly in renderers. Use the standard hooks" and lists 8 hooks. Only barcode-input uses any (2 of 8). The other three scheduling renderers and the diff-view renderer use zero flux-react hooks. They rely entirely on direct `props.props`/`props.meta`/`props.events`/`props.meta` destructuring and custom local hooks.
+**Why care**: This scheduling feature is completely broken — user clicks "Schedule", button disables permanently, no feedback ever shown. The entire `SchedulerConfig` component is a dead UX surface.
 
-Additionally, ALL five renderers miss the `helpers` property in their destructuring — `helpers` provides `render()`, `evaluate()`, `dispatch()` for runtime operations:
+---
+
+### F-54: Kanban side effect inside `setState` updater — undo stack corruption in Strict Mode [Certain]
+
+**Location**: `src/kanban/kanban-board.tsx:102-112`, `114-123`, `125-134`
+
+**What**: `handleSetBoardData` calls `setUndoStackState()` inside `setBoardData()`'s updater function. `handleUndo`/`handleRedo` do the reverse — calling `setBoardData()` inside `setUndoStackState()`'s updater. React's `setState` updaters must be pure; nested state updates inside an updater are an anti-pattern. In React 19 Strict Mode, updaters are invoked twice, creating **duplicate undo stack entries**.
 
 ```typescript
-// Current pattern (gantt.tsx:46)
-const { props: resolved, meta, regions, events } = props; // missing helpers
-
-// Mandated pattern
-const { props: resolved, meta, regions, events, helpers } = props;
+const handleSetBoardData = (newBoard: BoardData) => {
+  setBoardData((prev) => {                    // updater — must be pure
+    setUndoStackState((s) => pushCommand(...)); // side effect! double in Strict Mode
+    return newBoard;
+  });
+};
 ```
 
-**Why care**: This is an explicit convention violation. The project's AGENTS.md says "NEVER create ad-hoc React contexts or prop-drilling chains for data these hooks already provide." The scheduling renderers don't create ad-hoc contexts (that was fixed), but they also don't use the standard hooks — meaning they can't access runtime, scope, dispatch, or form data through the established patterns.
-
-This creates two problems:
-
-1. **Portability**: If the runtime changes how `props.props`/`meta`/etc. are provided, all scheduling renderers break silently. Renderers using standard hooks are insulated by the hook abstraction.
-2. **Maintenance inconsistency**: Every other renderer package follows the convention (basic, form, form-advanced, data, layout, mobile). Scheduling and content are outliers.
-
-**Confidence**: Certain
+**Why care**: Every board mutation creates two undo entries in dev (Strict Mode), corrupting the undo history. Users navigating undo will skip one mutation per step. This is not a theoretical concern — React 19 Strict Mode double-invokes updaters by design.
 
 ---
 
-## F-55: 6 CSS classes used in TSX have no definition in any stylesheet
+### F-55: Kanban `filterCard` prop is completely inert — schema type mismatch [Certain]
 
-**Location**: Multiple files
+**Location**: `scheduling-renderer-definitions.ts:84`, `kanban.types.ts:53`, `use-kanban-filter.ts:5`, `kanban-board.tsx:158`
 
-| Missing class                     | Used in                    | Line(s) |
-| --------------------------------- | -------------------------- | ------- |
-| `nop-kanban-column-resize-handle` | `kanban-column-header.tsx` | 44, 66  |
-| `nop-kanban-card-tag`             | `kanban-card-tags.tsx`     | 51      |
-| `nop-kanban-card-members`         | `kanban-card-tags.tsx`     | 64      |
-| `nop-kanban-card-member`          | `kanban-card-tags.tsx`     | 69      |
-| `nop-input-text`                  | `barcode-input.tsx`        | 151     |
-| `nop-input-group`                 | `barcode-input.tsx`        | 153     |
+**What**: Three-way inconsistency:
 
-**What**: These classes are applied to DOM elements via `className={...}` but have no corresponding CSS rule in any stylesheet in the entire `packages/` tree. They render as bare class names with zero visual effect.
+1. `scheduling-renderer-definitions.ts:84` registers `filterCard` as a `kind: 'prop'`
+2. `kanban.types.ts:53` types it as `filterCard?: string`
+3. `use-kanban-filter.ts:5` expects `filterCard?: (card: BoardItem, text: string) => boolean`
+4. `kanban-board.tsx:158` calls `useKanbanFilter(data, searchText)` — **never passes `filterCard`**
 
-**Why care**:
+The board component ignores the prop entirely. Even if wired, the runtime would pass a string (from JSON schema), while the hook expects a function. The `filterCard` feature is non-functional.
 
-- `nop-kanban-column-resize-handle`: The column resize feature (S7.1, claimed "done") has a drag handle with no visible styling — users see no resize affordance. It may appear as an invisible 1px-wide hot zone.
-- `nop-kanban-card-tag`/`nop-kanban-card-members`/`nop-kanban-card-member`: Card tag pills and member avatars render without any visual distinction — they appear as plain unstyled text, not pills or chips.
-- `nop-input-text`/`nop-input-group`: These classes are expected from the form renderer's styling system. The barcode-input expects inherited CSS from form renderers that may not be loaded in all contexts. If used outside a form context (standalone), the input is completely un styled.
-
-**Confidence**: Certain
+**Why care**: API surface lies to consumers. Setting `filterCard` in JSON has zero effect. The renderer contract promises a feature that doesn't exist.
 
 ---
 
-## F-56: 21 CSS definitions in scheduling stylesheets are dead — zero TSX usage
+### F-56: Kanban 16 registered schema props never consumed [Certain]
 
-**Location**: `calendar.css`, `gantt.css`, `kanban.css`
+**Location**: `scheduling-renderer-definitions.ts:72-106` (fields registered), `kanban-board.tsx` (none referenced)
 
-**Breakdown by sub-domain**:
+Affected: `columnsConfig`, `columnDraggable`, `columnsOrderStatePath`, `columnsOrderOwnership`, `collapsedStatePath`, `collapsedOwnership`, `kanbanOwnership`, `kanbanStatePath`, `statusPath`, `onColumnClick`, `onCardAdd`, `onCardRemove`, `filterCard`, `columnHeaderClassName`, `cardClassName`, `columnFooterClassName`.
 
-**Calendar (13 dead definitions)**:
+Plus: `onMount` and `onUnmount` are declared as `kind: 'meta'` but never invoked in the component (no useEffect lifecycle dispatch).
 
-- `.nop-calendar-virtual-scroll`, `.nop-calendar-skeleton`, `.nop-calendar-skeleton-row`, `.nop-calendar-empty`, `.nop-calendar-skeleton-matrix`, `.nop-calendar-skeleton-cell`, `.nop-calendar-empty-state`, `.nop-batch-preview-grid`, `.nop-calendar-type-selector-overlay`, `.nop-calendar-confirm-overlay`, `.nop-batch-scheduler-date-input`, `.nop-calendar-drag-over`, `.nop-cross-day-highlight`
-
-**Gantt (4 dead definitions)**:
-
-- `.nop-gantt-bar-ghost`, `.nop-gantt-drop-indicator`, `.nop-gantt-empty`, `.nop-gantt-bar-milestone-stroke`
-
-**Kanban (4 dead definitions)**:
-
-- `.nop-kanban-dragging`, `.nop-kanban-drop-indicator`, `.nop-kanban-search`, `.nop-kanban-search:focus`
-
-**What**: These CSS rules are defined in the stylesheet but no TSX/TS file applies them via `className`. They serve zero visual purpose at runtime.
-
-**Why care**:
-
-1. **Bundle bloat**: An estimated ~2-3 KB of CSS is shipped but never applied. The scheduling CSS totals ~713 lines; ~8-10% is dead.
-2. **Maintenance confusion**: A future developer adding a skeleton loader might write duplicate CSS not realizing `.nop-calendar-skeleton` already exists and is unused. Or they might refactor skeleton handling and break the dead-but-still-present CSS, wasting debugging time.
-3. **Feature ambiguity**: `.nop-gantt-drop-indicator` shows intent for drag-and-drop visual feedback, but the actual drag system (`useGanttDrag`) doesn't apply this class. Either the CSS was written pre-emptively (and drag indicators are missing) or the feature was removed but CSS was not cleaned up.
-
-**Confidence**: Certain
+**Why care**: 33% of the Kanban field definitions are non-functional. Consumers setting `columnsOrderStatePath`, `statusPath`, or class name props receive no visual or behavioral effect.
 
 ---
 
-## F-57: `diff-line.tsx` uses `dangerouslySetInnerHTML` on user-supplied content — safe today, fragile pattern
+### F-57: Kanban drag-and-drop visual feedback entirely dead [Certain]
 
-**Location**: `packages/flux-renderers-content/src/diff-view/components/diff-line.tsx:47-50`
+**Location**: `kanban.css:78-85`, `kanban-board.tsx:176`, `useKanbanDnd` return values
 
-**What**: The `DiffLineComponent` renders user-supplied diff content via `dangerouslySetInnerHTML`:
+**What**: `kanban.css` defines `[data-dragging='true']` and `[data-drop-target='true']` CSS selectors for drag opacity and drop-target highlighting. But:
 
-```tsx
-<span className="nop-diff-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />
+1. `kanban-board.tsx:176` destructures only `{ registerCard, registerColumn }` from `useKanbanDnd`, ignoring `dragState`, `dropState`, and `moveCardKeyboard`.
+2. No JSX in the component tree sets `data-dragging` or `data-drop-target` attributes.
+
+The DnD hook computes all the visual state needed, but the board component never applies it to the DOM.
+
+**Why care**: All drag-and-drop visual feedback (card opacity on drag, column highlight on hover) is non-functional. Users see no visual indication during drag operations. The `moveCardKeyboard` accessibility feature is also unimplemented.
+
+---
+
+### F-58: Calendar `data-weekend="weekend"` vs CSS `data-weekend="true"` — weekend styling broken [Certain]
+
+**Location**: `src/calendar/calendar.css:48`, `src/calendar/components/calendar-month-view.tsx:164,177`
+
+**What**: CSS selector reads `[data-weekend='true']`, but JSX emits `data-weekend={weekendIndicator || undefined}` where `weekendIndicator` is the string `'weekend'` (line 164: `'weekend' : ''`). The CSS rule never matches.
+
+Contrast with Gantt where `gantt-cellgrid.tsx:44` correctly emits `data-weekend={isWeekend ? 'true' : undefined}` matching `gantt.css:53` which also uses `true`.
+
+**Why care**: Weekend background styling is completely non-functional in Calendar month view. The code demonstrates the correct pattern (Gantt) was implemented 2 files away but Calendar did not follow it.
+
+---
+
+### F-59: Calendar `isToday()` uses local time for dates that are UTC — near-midnight date mismatch [Certain]
+
+**Location**: `src/calendar/utils/calendar-date-utils.ts:49-51`
+
+```typescript
+export function isToday(date: Date): boolean {
+  return isSameDay(date, new Date()); // new Date() is local time
+}
 ```
 
-where `contentHtml` comes from `highlightedHtml` (prop from parent) or `generateLineContentHtml(content, type, inlineTokens)`.
+Calendar dates are constructed with `Date.UTC()` calls throughout the view layer. Comparing a UTC date (e.g., 2026-07-22T00:00:00.000Z which is 2026-07-21 in UTC-5) against `new Date()` (local time) will produce wrong results for users near midnight.
 
-**Current safety audit**: Both code paths properly escape HTML. `escapeHtml()` in `syntax-highlight.ts` escapes `&<>"'`. `generateLineContentHtml` calls `escapeHtml()` first, then wraps with known-safe `<span>` tags. The `highlight()` function only produces safe HTML by passing all user text through `escapeHtml()`. **Not currently exploitable.**
-
-**Why care**: The pattern is fragile for three reasons:
-
-1. **Single-point-of-failure**: If any future change to `generateLineContentHtml` or the `highlight()` / `syntax-highlight.ts` code removes the `escapeHtml` call (e.g., to "optimize" by assuming input is always trusted), the diff-view becomes a stored XSS vector. There is no runtime CSP or sanitizer as a second layer.
-2. **Data flow opacity**: The `contentHtml` prop is passed in from parent components (`diff-split-view.tsx`, `diff-unified-view.tsx`). A reader cannot tell from `diff-line.tsx` alone whether the HTML is safe — they must trace through two layers of function calls to verify escaping.
-3. **Schema data source**: Diff content comes from the schema (`oldContent`/`newContent`), which in a low-code platform may come from untrusted remote sources. The current code handles this correctly, but the pattern invites regression.
-
-**Contrast with F-53 in prior audit**: The diff-view F-20 reported "zero CSS class definitions" — this is a different class of issue (security-sensitive pattern, not CSS) and was not covered.
-
-**Recommended fix**: Add an explicit comment on line 49 explaining why `dangerouslySetInnerHTML` is safe here (both paths escape), so future maintainers know not to remove escaping. Better: centralize the sanitized HTML construction and ban raw `dangerouslySetInnerHTML` in code review.
-
-**Confidence**: Likely (the risk is in future regressions, not current exploitability)
+**Why care**: `isToday()` determines visual highlighting (`todayIndicator`, `aria-current="date"`, `bg-blue-50` ring). Users in negative UTC offsets near midnight will see "today" highlighting on the wrong date.
 
 ---
 
-## F-58: `diff-line.tsx` uses `React.memo` — violates React 19 / React Compiler convention (P3 - convention)
+### F-60: Calendar 15+ registered schema props/events never consumed [Certain]
 
-**Location**: `packages/flux-renderers-content/src/diff-view/components/diff-line.tsx:17`
+**Location**: `scheduling-renderer-definitions.ts:108-158` (Calendar fields), `calendar/calendar.tsx` (implementation)
 
-**What**: The `DiffLineComponent` is wrapped in `React.memo` with a custom comparison function `areDiffLinePropsEqual`. The project's React 19 baseline (AGENTS.md, `react19-best-practices-review.md`) states:
+Unconsumed props: `timezoneSelector`, `batchScheduling`, `viewOwnership`, `viewStatePath`, `dateOwnership`, `dateStatePath`, `statusPath`, `showCrossDayLines`, `maxConcurrent`, `eventClassName`, `emptyClassName`.
 
-- "React Compiler automatically handles memoization"
-- "Do **not** add `useCallback` or `useMemo` by default"
-- "Hand-written memoization is redundant unless accompanied by `eslint-disable-next-line react-compiler/react-compiler`"
+Unconsumed events: `onBatchSchedule`, `onImport`, `onImportError`, `onTimezoneChange`, `onGroupToggle`, `loadAction`.
 
-This file has no `eslint-disable` annotation for the compiler. The custom comparator is 12 lines and manually compares 8 props — exactly the type of work React Compiler handles automatically.
+Unconsumed regions: `loading`, `empty`, `body`.
 
-**Why care**: While functionally harmless (React Compiler treats redundant wrappers as identity-stable no-ops), this contradicts published coding conventions. Combined with F-44 (45+ useCallback/useMemo in scheduling), it shows the scheduling and content packages were written without React Compiler awareness. The diff-view `React.memo` is just one additional instance.
+Unconsumed reactions: `component:print`, `component:exportPNG`, `component:importICal`, `component:exportToICal`.
 
-**Confidence**: Certain
+Corresponding dead components: `CalendarBatchScheduler`, `CalendarTimezoneSelector`, `CalendarResourceGroup`, `CalendarResourceHeader`, `useCalendarICal`, `useCalendarExport`.
+
+**Why care**: ~25% of Calendar's schema contract is non-functional. Components exist (`CalendarBatchScheduler.tsx`, `CalendarTimezoneSelector.tsx`) with full test suites but are never instantiated. This represents significant dead code weight (~15KB estimated).
 
 ---
 
-## F-59: 855 tests pass — but this masks dead code coverage gaps
+### F-61: BarcodeInput ignores validation schema props — form validation bypassed [Certain]
 
-**Location**: Entire `@nop-chaos/flux-renderers-scheduling` and `@nop-chaos/flux-renderers-content` test suites
+**Location**: `barcode-input/barcode-input-schemas.ts:3-16`, `barcode-input/barcode-input.tsx`
 
-**What**: All 627 scheduling tests + 228 content/diff-view tests pass. However:
+Unconsumed: `required`, `trimContents`, `minLength`, `maxLength`, `pattern`, `validate`, `continuousScan`.
 
-- `gantt-search.ts` has zero tests (dead code with no coverage)
-- `multi-select.tsx` tests exist but only test the module in isolation — no integration test verifies it's connected to the Gantt UI
-- `diff-virtual-list.tsx` has no tests (dead code with no coverage)
-- The coverage threshold in `vitest.config.ts` is now enforced via `--coverage` flag (F-38 fixed), but the threshold is 80%, which permits the dead code to be uncovered
+**Why care**: A `barcode-input` field inside a form accepts any value, regardless of `required`, `pattern`, or `minLength`/`maxLength` constraints declared in the schema. Form validation is silently bypassed.
 
-**Why care**: The all-green test suite creates a false sense of completeness. Three entire modules (`gantt-search.ts`, `multi-select.tsx`, `diff-virtual-list.tsx`) are untested or tested-only-in-isolation. Combined with the `--passWithNoTests` flag, empty or dead module test files would silently pass. The 80% threshold doesn't guard against modules that are compiled but never wired.
+---
 
-**Confidence**: Certain
+### F-62: `prepareWasm` caches rejected promise — scanner permanently dead after abort [Certain]
+
+**Location**: `src/barcode-input/utils/prepare-wasm.ts:24-33`
+
+```typescript
+const wasmPromises = new Map<string, Promise<void>>();
+
+export function prepareWasm(wasmUrl?: string, signal?: AbortSignal): Promise<void> {
+  const url = wasmUrl ?? DEFAULT_WASM_URL;
+  if (!wasmPromises.has(url)) {
+    wasmPromises.set(
+      url,
+      (async () => {
+        const response = await fetchWithRetry(url, MAX_RETRIES, signal);
+        await response.arrayBuffer();
+      })(),
+    );
+  }
+  return wasmPromises.get(url)!; // cached — even if rejected
+}
+```
+
+If the first fetch fails (aborted via signal, network error, 404), the rejected promise is cached forever. All subsequent calls with the same URL return the already-rejected promise. A `resetWasmPromise()` function exists but is only exposed through a component handle that consumers must know to call.
+
+**Why care**: User opens scanner → WASM fails to load (e.g., network blip) → closes scanner → reopens → scanner silently fails again because the cached promise is already rejected. The scanner is permanently dead until the page is reloaded or consumer calls `resetWasmPromise()`.
+
+---
+
+### F-63: `handleScanClick` async event handler has no catch — unhandled rejection [Certain]
+
+**Location**: `src/barcode-input/barcode-input.tsx:72-80`
+
+```typescript
+const handleScanClick = async () => {
+  scanOnFocusOpenedRef.current = false;
+  if (cameraAvailable === null) {
+    const result = await checkCameraAvailability();
+    setCameraAvailable(result.isAvailable);
+    if (!result.isAvailable) return;
+  }
+  setOverlayOpen(true);
+  // no try/catch — if checkCameraAvailability() rejects, it's an unhandled rejection
+};
+```
+
+`checkCameraAvailability()` calls `getUserMedia()` which can reject with `NotAllowedError`, `NotFoundError`, or `NotReadableError`. React does not catch async rejections from DOM event handlers.
+
+**Why care**: Unhandled promise rejection in production. On some browsers this triggers the global `unhandledrejection` event, causing noisy error reporting and potentially crashing the page.
+
+---
+
+### F-64: Critical path algorithm ignores work calendar — calculates in calendar days [Likely]
+
+**Location**: `src/gantt/components/critical-path.ts:119-121`
+
+```typescript
+function diffMs(end: string, start: string): number {
+  return new Date(end).getTime() - new Date(start).getTime();
+}
+```
+
+The Gantt supports work calendars (`WorkCalendar` in `worktime.ts`) but the critical path calculation ignores them entirely. Lag is multiplied by `86400000` (calendar ms per day) without considering working-day semantics.
+
+**Why care**: Critical path durations are wrong when non-working days (weekends, holidays) are configured. Tasks that appear on the critical path may have slack in real working-day terms.
+
+---
+
+### F-65: Resource load average uses misleading denominator [Likely]
+
+**Location**: `src/gantt/components/resource-load.ts:84`
+
+```typescript
+const avgTotalLoad = totalDaysWithWork > 0 ? totalLoadSum / totalDaysWithWork : 0;
+```
+
+Divides by `totalDaysWithWork` (days where `unitLoad > 0`) instead of `totalDays`. A resource working 100% on 1 day out of 100 shows 100% average load instead of 1%.
+
+**Why care**: Resource load metric misleading for capacity planning. A lightly used resource with one busy day appears fully loaded.
+
+---
+
+### F-66: Type duplication with drift between `schemas.ts` and `gantt.types.ts` [Certain]
+
+**Location**: `src/schemas.ts:29-67`, `src/gantt/gantt.types.ts:60-97`
+
+`GanttResource`, `GanttAssignment`, `GanttColumn`, `GanttScale`, `GanttZoomLevel` are duplicated between the two files with type drift:
+
+- `schemas.ts` `GanttResource.id: string` vs `gantt.types.ts` `GanttResource.id: GanttId` (= `string | number`)
+- `gantt.types.ts` `GanttResource` has extra `calendar?: string` field
+- `GanttSchema` uses `GanttTaskData` from `gantt.types.ts` for tasks/links but its own copies for resources/assignments
+
+**Why care**: Consumers reading `GanttSchema.resources[].id` see `string` but the runtime store expects `string | number`. Latent type safety hole.
+
+---
+
+### F-67: `BaselineBars` component is dead — never imported [Certain]
+
+**Location**: `src/gantt/components/baseline-bars.tsx` (entire file, 30+ lines)
+
+Exported component with full test coverage, but never imported anywhere in the codebase. The baseline data (`GanttTaskData.baselines`) is stored in task data but never visually rendered.
+
+**Why care**: 2.5 KB dead component. Stale feature — if someone adds baseline rendering, they'll find this component but it may be out of sync with the current layout system.
+
+---
+
+### F-68: Kanban undo stack hard-codes all mutations as `'moveCard'` [Certain]
+
+**Location**: `src/kanban/kanban-board.tsx:105`
+
+```typescript
+type: 'moveCard',  // always — even for column reorder, card add/remove
+```
+
+The undo command type is hard-coded to `'moveCard'` regardless of what actually changed. The type is exported metadata for consumers to examine undo history.
+
+**Why care**: Undo stack metadata is semantically wrong — column reorders and adds appear as card moves. Any consumer inspecting undo history sees meaningless command types.
+
+---
+
+### F-69: Kanban `deepCloneBoard` only shallow-clones nested `data`/`meta` — undo snapshot corruption [Likely]
+
+**Location**: `src/kanban/kanban-undo-stack.ts:97-104`, `src/kanban/kanban-helpers.ts:3-10`
+
+Both `deepCloneBoard` and `cloneBoard` do `{ ...item, data: { ...item.data }, meta: { ...item.meta } }`. For nested values within `data` or `meta` (e.g., `data.tags: [{ id, text, color }]`), the clone shares references.
+
+**Why care**: Any external mutation of nested objects within card `data`/`meta` after an undo snapshot corrupts the undo state. If a collaborator updates `card.data.tags[0].text`, all snapshots sharing that reference tree are mutated.
+
+---
+
+### F-70: `Missing react-dom` peer dependency [Low]
+
+**Location**: `package.json:29-35`
+
+`react-dom` is not declared as a peer dependency. The package exports React components that render to DOM (Gantt, Kanban, Calendar, BarcodeInput). Standard practice for React DOM component libraries is to peer-depend on both `react` and `react-dom`.
 
 ---
 
 ## Cross-Round Summary
 
-| ID   | Severity | File                                                                    | Issue                                                                                    |
-| ---- | -------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| F-51 | P2       | `gantt/gantt-search.ts` (entire)                                        | Completely dead file — zero imports across codebase                                      |
-| F-52 | P2       | `gantt/components/multi-select.tsx` (entire)                            | Feature component only imported by its own test — S3.9 "done" but unwired                |
-| F-53 | P2       | `diff-view/components/diff-virtual-list.tsx` (entire)                   | Dead virtual-list wrapper — S9.6 "done" but unwired                                      |
-| F-54 | P2       | All 5 renderer entry files                                              | Zero standard `@nop-chaos/flux-react` hooks used; all miss `helpers` destructuring       |
-| F-55 | P2       | `kanban-column-header.tsx`, `kanban-card-tags.tsx`, `barcode-input.tsx` | 6 CSS classes used in TSX but no CSS definition exists                                   |
-| F-56 | P2       | `calendar.css`, `gantt.css`, `kanban.css`                               | 21 CSS definitions with zero TSX usage (dead CSS)                                        |
-| F-57 | P3       | `diff-view/components/diff-line.tsx:47-50`                              | `dangerouslySetInnerHTML` on user content — safe today via `escapeHtml`, fragile pattern |
-| F-58 | P3       | `diff-view/components/diff-line.tsx:17`                                 | `React.memo` with custom comparator — redundant with React Compiler                      |
-| F-59 | P3       | Full test suite                                                         | 855 tests pass but 3 dead modules flow through the test gap                              |
-
-**Totals**: 9 new findings (0 P0, 4 P2, 3 P3)
-
-**Cumulative (all scheduling audit rounds)**: 59 findings (50 prior + 9 new). 39 resolved, 20 open.
+| Round          | Findings              | Novel  | Overlap with prior |
+| -------------- | --------------------- | ------ | ------------------ |
+| Round-01       | 5 (F-46 to F-50)      | 5      | 0                  |
+| **This round** | **20 (F-51 to F-70)** | **20** | **0**              |
 
 ### Key Patterns Detected
 
-1. **Dead/stub module syndrome** (F-51, F-52, F-53): Three modules across two packages that are compiled, sometimes tested, but never wired to any renderer. The common cause: work items were completed at the module level but integration was never verified. The roadmap reports these as "done". Only F-14 (GanttEditor dead) was previously caught — three more instances have now been found through import-graph analysis.
+1. **Massive contract drift (3 sub-domains)**: Calendar (~15 unused props), Kanban (16 unused props + missing lifecycle), BarcodeInput (7 validation props ignored). The renderer definitions file promises far more than the components deliver. ~25-33% of each component's schema contract is non-functional.
 
-2. **CSS class asymmetry** (F-55, F-56): 6 classes used but not defined (missing visual features), 21 classes defined but not used (dead CSS). The scheduling package's CSS has drifted from its TSX code — features were added to JSX without corresponding CSS, and CSS was written for features that were never wired.
+2. **Dead-but-tested components (3 sub-domains)**: `BaselineBars`, `CalendarBatchScheduler`, `CalendarTimezoneSelector`, `CalendarResourceGroup`, `CalendarResourceHeader`, `useCalendarICal`, `useCalendarExport`. Each has a test file but zero production imports. ~15 KB of dead renderer code.
 
-3. **Hook convention isolation** (F-54): The scheduling and content packages are the ONLY renderer packages that don't use `@nop-chaos/flux-react` hooks. Every other package (basic, form, form-advanced, data, layout, mobile) follows the convention. This is not a random oversight — it suggests these packages were created when the hook API was still being defined, or by a developer unfamiliar with the convention.
+3. **setState updater impurity pattern** (Kanban): Undo stack nested inside updater — React 19 Strict Mode creates double entries. This is the exact class of bug the React 19 docs warn about.
+
+4. **CSS/JSX attribute mismatch** (Calendar `data-weekend`): A bug class where one file (Gantt) gets it right and a sibling file (Calendar) gets it wrong 2 directories away, suggesting no shared CSS convention was enforced.
+
+---
+
+## Overall Assessment
+
+The scheduling package has strong test coverage in isolated units but suffers from systemic contract drift between the schema definitions and their actual wiring. The dead component pattern (fully implemented and tested but never instantiated) suggests features were built speculatively or migrated away without removing the old implementation. The worst bugs are user-visible: Gantt drag ghost at wrong coordinates (F-51), Scanner WASM permanent failure (F-62), SchedulerConfig permanent disable (F-53), and Calendar weekend styling broken (F-58).
 
 ### Blindness Self-Assessment
 
-This round found the above issues by:
-
-- Import-graph scanning (grep for import paths) — caught 3 dead modules
-- CSS cross-reference (TSX class names vs. stylesheet definitions) — caught 6 missing + 21 dead definitions
-- Import list analysis — caught missing flux-react hooks
-- Security pattern review — caught dangerous innerHTML pattern
-
-What this round likely missed:
-
-1. **Bundle composition**: Did not run `vite build --mode analyze` again to measure whether tree-shaking removes the 3 dead modules from production bundles
-2. **Accessibility**: Did not audit keyboard navigation, ARIA roles, or screen reader output for any scheduling component
-3. **Edge case testing**: Did not test calendar with zero resources, Gantt with circular dependency links, or Kanban with 10,000 cards
-4. **Cross-package type safety**: Did not verify `RendererComponentProps<GanttSchema>` generic narrowing at the boundary between flux-core, flux-react, and scheduling
-5. **i18n coverage of recently added keys**: Did not verify that the i18n fixes for Calendar shift types (reported as partially fixed in F-19) are complete and cover all user-facing strings
-6. **Error boundary coverage**: Did not verify that error boundaries exist for each scheduling sub-domain
-7. **Performance profiling at scale**: Did not run the O(n²) critical-path algorithm or Gantt store revision system under realistic load
-
-Best starting point for next round: E2E browser test execution measuring actual rendering correctness + performance profiling of Gantt store reactivity + bundle composition analysis confirming tree-shaking removes the 3 dead modules.
+1. **E2E test execution**: Did not run the test suite — some findings may have existing test coverage.
+2. **Performance profiling**: Did not profile Kanban undo memory at 1000 cards, Gantt store cascading setState, or Calendar virtualizer efficiency.
+3. **Security**: Did not probe XSS vectors through task/event text rendering or prototype pollution through schema data.
+4. **Accessibility**: Did not screen-reader-test keyboard navigation patterns or ARIA semantics.
+5. **Internationalization**: Did not verify locale handling beyond the Calendar `isToday()` timezone bug.
+6. **Next round starting point**: E2E test execution to surface which findings produce visible failures, followed by security audit of schema-driven rendering (task/event `text` and `title` fields).
