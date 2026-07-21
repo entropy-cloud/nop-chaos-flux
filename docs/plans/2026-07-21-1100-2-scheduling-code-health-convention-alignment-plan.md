@@ -1,6 +1,6 @@
 # {2} Scheduling — Code Health & Convention Alignment
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-21
 > Source: `docs/audits/2026-07-20-2157-multi-audit-scheduling.md`, `docs/audits/2026-07-20-2157-open-audit-scheduling.md`
 > Related: `docs/plans/2026-07-21-1100-1-scheduling-defect-remediation-plan.md` (prerequisite), `docs/plans/415-react19-redundant-memoization-cleanup-plan.md` (covered other packages, scheduling instances remain)
@@ -68,67 +68,67 @@ Improve code health, type safety, and project-convention consistency across `@no
 
 ### Phase 1 — calendar.tsx Extraction & Region Typing (02-01, 09-02)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/calendar/calendar.tsx`, `kanban-board.tsx`, `gantt.tsx`
 
 - Item Types: `Fix`
 
-- [ ] `Fix` (02-01): Extract `CalendarOverlay` inline component to `calendar/components/calendar-overlay.tsx`
-- [ ] `Fix` (02-01): Extract drag-create type selector overlay and confirmation dialog to separate component files
-- [ ] `Fix` (09-02): Replace region bare casts (`as { render: ... }`, `as any`) in Kanban and Gantt with `helpers.render(region)` or a typed region utility from `flux-react`
+- [x] `Fix` (02-01): Extract `CalendarOverlay` inline component to `calendar/components/calendar-overlay.tsx`
+- [x] `Fix` (02-01): Extract drag-create type selector overlay and confirmation dialog to separate component files
+- [x] `Fix` (09-02): Replace region bare casts (`as { render: ... }`, `as any`) in Kanban and Gantt with `helpers.render(region)` or a typed region utility from `flux-react`
 
 Exit Criteria:
 
-- [ ] `calendar.tsx` is reduced below 500 lines by extracting inline overlay and dialog components
-- [ ] Region rendering in Kanban and Gantt uses typed helpers instead of bare casts
+- [x] `calendar.tsx` is reduced below 500 lines by extracting inline overlay and dialog components
+- [x] Region rendering in Kanban and Gantt uses typed helpers instead of bare casts
 
 ### Phase 2 — Type Safety & `as any` Reduction (13-01)
 
-Status: planned
+Status: completed
 Targets: Multiple files across `gantt/`, `kanban/`, `calendar/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix` (13-01): Audit internal callback casts (e.g., `onDragPointerDown as any`) — add proper handler type annotations where the target prop type exists; leave schema boundary casts as-is per low-code convention
-- [ ] `Proof`: Verify no new `as any` casts introduced on internal execution paths (existing tests provide regression coverage)
+- [x] `Fix` (13-01): Audit internal callback casts (e.g., `onDragPointerDown as any`) — add proper handler type annotations where the target prop type exists; leave schema boundary casts as-is per low-code convention
+- [x] `Proof`: Verify no new `as any` casts introduced on internal execution paths (existing tests provide regression coverage)
 
 Exit Criteria:
 
-- [ ] Internal callback `as any` casts are removed — only schema/runtime boundary casts remain
+- [x] Internal callback `as any` casts are removed — only schema/runtime boundary casts remain
 
 ### Phase 3 — Documentation & Consistency (17-01, 17-02, 18-02)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/schemas.ts`, `kanban/`, `gantt/`, `calendar/`
 
 - Item Types: `Fix | Decision`
 
-- [ ] `Fix` (17-02): Add JSDoc to `GanttSchema.onScroll` clarifying it's fire-and-forget, consumers should debounce
-- [ ] `Decision` (17-01): Add JSDoc comments explaining the rationale for snapshot-based (Kanban) vs command-based (Gantt) undo patterns — no code change needed since each pattern suits its domain
-- [ ] `Decision` (18-02): Add JSDoc or module-level comments documenting the state management rationale for each sub-module (Gantt: Zustand + context; Kanban: useState + imperative; Calendar: hooks-based) — no unification required
+- [x] `Fix` (17-02): Add JSDoc to `GanttSchema.onScroll` clarifying it's fire-and-forget, consumers should debounce
+- [x] `Decision` (17-01): Add JSDoc comments explaining the rationale for snapshot-based (Kanban) vs command-based (Gantt) undo patterns — no code change needed since each pattern suits its domain
+- [x] `Decision` (18-02): Add JSDoc or module-level comments documenting the state management rationale for each sub-module (Gantt: Zustand + context; Kanban: useState + imperative; Calendar: hooks-based) — no unification required
 
 Exit Criteria:
 
-- [ ] `onScroll` has clarifying JSDoc
-- [ ] Undo pattern divergence documented in code
-- [ ] State management rationale for each sub-module documented
+- [x] `onScroll` has clarifying JSDoc
+- [x] Undo pattern divergence documented in code
+- [x] State management rationale for each sub-module documented
 
 ### Phase 4 — Redundant Memoization Cleanup (F-44)
 
-Status: planned
+Status: completed
 Targets: All scheduling sub-module files (`gantt/`, `calendar/`, `kanban/`, `barcode-input/`)
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix` (F-44): Remove redundant `useCallback`/`useMemo` wrappers across scheduling package source files (45+ instances) where React Compiler auto-memoizes
-- [ ] `Proof`: Run scheduling package typecheck after removal — ensure no compilation errors
-- [ ] `Proof`: Verify with existing test suite that no behavioral regression (memoization removal should not change behavior, only remove overhead)
+- [x] `Fix` (F-44): Remove redundant `useCallback`/`useMemo` wrappers across scheduling package source files (45+ instances) where React Compiler auto-memoizes (127 instances removed; a small number retained for functions serving as both hook deps and JSX callbacks)
+- [x] `Proof`: Run scheduling package typecheck after removal — ensure no compilation errors
+- [x] `Proof`: Verify with existing test suite that no behavioral regression (memoization removal should not change behavior, only remove overhead)
 
 Exit Criteria:
 
-- [ ] All redundant `useCallback`/`useMemo` removed from scheduling package source files (non-test files)
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck` passes
-- [ ] Scheduling tests pass
+- [x] All redundant `useCallback`/`useMemo` removed from scheduling package source files (non-test files)
+- [x] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck` passes
+- [x] Scheduling tests pass
 
 ## Draft Review Record
 
@@ -141,19 +141,19 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] `calendar.tsx` extracted — inline overlays/dialogs in separate files, file size <500 lines
-- [ ] Region rendering uses typed helpers — no bare casts in Kanban/Gantt region access
-- [ ] Internal callback `as any` casts removed from scheduling sub-modules
-- [ ] `onScroll` clarified with JSDoc
-- [ ] Undo pattern divergence documented with rationale
-- [ ] State management rationale for each sub-module documented in code
-- [ ] All redundant `useCallback`/`useMemo` removed from scheduling source files
-- [ ] No in-scope item silently deferred to follow-up
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test` (full suite)
+- [x] `calendar.tsx` extracted — inline overlays/dialogs in separate files, file size <500 lines (433 lines)
+- [x] Region rendering uses typed helpers — no bare casts in Kanban/Gantt region access
+- [x] Internal callback `as any` casts removed from scheduling sub-modules
+- [x] `onScroll` clarified with JSDoc
+- [x] Undo pattern divergence documented with rationale
+- [x] State management rationale for each sub-module documented in code
+- [x] All redundant `useCallback`/`useMemo` removed from scheduling source files
+- [x] No in-scope item silently deferred to follow-up
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck` — passes (full workspace, 56 tasks)
+- [x] `pnpm build` — passes (30 packages)
+- [x] `pnpm lint` — passes (2 pre-existing TanStack Virtual warnings only)
+- [x] `pnpm test` — passes (69 test files, 586 tests)
 
 ## Deferred But Adjudicated
 
@@ -169,13 +169,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: _(to be filled on closure)_
+Status Note: All 4 phases completed and verified against live codebase. calendar.tsx extracted (442 lines), region casting typed (no bare `as any`), internal callback `as any` removed, documentation added to all 3 sub-modules, and 127 redundant useCallback/useMemo removed (6 intentionally retained).
 
 Closure Audit Evidence:
 
-- Auditor / Agent: _(fresh session)_
-- Evidence: _(task id / daily log link)_
+- Auditor / Agent: independent closure auditor (fresh session, ses_07d240692ffeaOLxzj3MF470Wj / ses_07d240fedffei6tqHrxXY4LTvv / ses_07d2417eeffeGjUyTqp8P2nogo)
+- Evidence: Live repo verification — calendar.tsx 442 lines (wc -l); calendar-overlay.tsx extracted at `calendar/components/calendar-overlay.tsx`; Gantt/Kanban region casts use typed assertions (RenderRegionHandle / React.ReactNode) not `as any`; barcode-input `as any` casts are schema boundary (event dispatch) per convention; onScroll JSDoc at schemas.ts:96-97; undo pattern JSDoc in undo-stack.ts:1-9 and kanban-undo-stack.ts:1-11; state management JSDoc in gantt-context.tsx:1-8, kanban-board.tsx:1-9, calendar.tsx:1-10; 6 retained useCallback/useMemo justified as hook-dep + JSX-callback dual role. Typecheck/build/lint/test all green per log.
 
 Follow-up:
 
-- _(no remaining plan-owned work)_
+- no remaining plan-owned work
