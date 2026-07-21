@@ -29,6 +29,8 @@ export interface BarcodeInputSchema extends BaseSchema {
   torchButton?: boolean;
   wasmUrl?: string;
   scanButtonClassName?: string;
+  autoSubmit?: boolean;
+  scanOnFocus?: boolean;
 
   onMount?: ActionSchema;
   onUnmount?: ActionSchema;

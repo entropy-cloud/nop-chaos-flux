@@ -20,6 +20,8 @@ interface BarcodeScannerOverlayProps {
   torchButton?: boolean;
   wasmUrl?: string;
   batchMode?: boolean;
+  autoSubmit?: boolean;
+  onSubmitForm?: () => void;
   children?: ReactNode;
 }
 
@@ -34,6 +36,8 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     torchButton: showTorch,
     wasmUrl,
     batchMode,
+    autoSubmit,
+    onSubmitForm,
   } = props;
 
   const queue = useMemo(() => new BarcodeQueue(), []);
@@ -109,12 +113,23 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
         queue.enqueue(detect.result.barcode, detect.result.format);
         // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: sync queue state when scan result arrives
         setQueueItems(queue.getAll());
+        if (autoSubmit) {
+          const pending = queue.getPending();
+          for (const item of pending) {
+            onScan({ barcode: item.rawValue, format: item.format });
+            queue.markSubmitted(item.id);
+          }
+          setQueueItems(queue.getAll());
+        }
       } else {
         onScan(detect.result);
+        if (autoSubmit) {
+          onSubmitForm?.();
+        }
         onClose();
       }
     }
-  }, [detect.result, batchMode, onScan, onClose, queue]);
+  }, [detect.result, batchMode, autoSubmit, onScan, onClose, onSubmitForm, queue]);
 
   useEffect(() => {
     if (detect.error) {

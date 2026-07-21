@@ -25,6 +25,8 @@ export const barcodeInputFieldRules: SchemaFieldRule[] = [
   { key: 'torchButton', kind: 'prop', valueType: 'boolean' },
   { key: 'wasmUrl', kind: 'prop' },
   { key: 'scanButtonClassName', kind: 'prop' },
+  { key: 'autoSubmit', kind: 'prop', valueType: 'boolean' },
+  { key: 'scanOnFocus', kind: 'prop', valueType: 'boolean' },
   { key: 'onMount', kind: 'meta' },
   { key: 'onUnmount', kind: 'meta' },
   { key: 'onScan', kind: 'event' },

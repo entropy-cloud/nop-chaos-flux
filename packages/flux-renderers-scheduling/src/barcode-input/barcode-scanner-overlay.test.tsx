@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { BarcodeScannerOverlay } from './barcode-scanner-overlay.js';
 
+const mockUseBarcodeDetect = vi.hoisted(() => vi.fn<any>(() => ({
+  result: null,
+  isScanning: false,
+  error: null,
+})));
+
 vi.mock('./hooks/use-barcode-camera.js', () => ({
   useBarcodeCamera: () => ({
     videoRef: { current: null },
@@ -13,11 +19,7 @@ vi.mock('./hooks/use-barcode-camera.js', () => ({
 }));
 
 vi.mock('./hooks/use-barcode-detect.js', () => ({
-  useBarcodeDetect: () => ({
-    result: null,
-    isScanning: false,
-    error: null,
-  }),
+  useBarcodeDetect: mockUseBarcodeDetect,
 }));
 
 vi.mock('./hooks/use-barcode-torch.js', () => ({
@@ -103,5 +105,97 @@ describe('BarcodeScannerOverlay', () => {
       />,
     );
     expect(true).toBe(true);
+  });
+
+  describe('Phase 2 — autoSubmit', () => {
+    it('calls onSubmitForm when autoSubmit is true and scan result arrives (non-batch)', () => {
+      const onScan = vi.fn();
+      const onSubmitForm = vi.fn();
+      const onClose = vi.fn();
+
+      mockUseBarcodeDetect.mockReturnValue({
+        result: { barcode: 'ABC123', format: 'code_128' } as any,
+        isScanning: false,
+        error: null,
+      });
+
+      render(
+        <BarcodeScannerOverlay
+          open={true}
+          onClose={onClose}
+          onScan={onScan}
+          onScanError={vi.fn()}
+          autoSubmit={true}
+          onSubmitForm={onSubmitForm}
+        />,
+      );
+
+      expect(onScan).toHaveBeenCalledWith({ barcode: 'ABC123', format: 'code_128' });
+      expect(onSubmitForm).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it('does not call onSubmitForm when autoSubmit is false', () => {
+      const onScan = vi.fn();
+      const onSubmitForm = vi.fn();
+
+      mockUseBarcodeDetect.mockReturnValue({
+        result: { barcode: 'DEF456', format: 'ean_13' } as any,
+        isScanning: false,
+        error: null,
+      });
+
+      render(
+        <BarcodeScannerOverlay
+          open={true}
+          onClose={vi.fn()}
+          onScan={onScan}
+          onScanError={vi.fn()}
+          autoSubmit={false}
+          onSubmitForm={onSubmitForm}
+        />,
+      );
+
+      expect(onScan).toHaveBeenCalledWith({ barcode: 'DEF456', format: 'ean_13' });
+      expect(onSubmitForm).not.toHaveBeenCalled();
+    });
+
+    it('auto-submits all pending items in batch mode', () => {
+      const onScan = vi.fn();
+      const onClose = vi.fn();
+
+      // Render in batch mode with autoSubmit
+      const { rerender } = render(
+        <BarcodeScannerOverlay
+          open={true}
+          onClose={onClose}
+          onScan={onScan}
+          onScanError={vi.fn()}
+          autoSubmit={true}
+          batchMode={true}
+        />,
+      );
+
+      // Trigger first scan result
+      mockUseBarcodeDetect.mockReturnValue({
+        result: { barcode: 'ITEM1', format: 'code_128' } as any,
+        isScanning: false,
+        error: null,
+      });
+
+      rerender(
+        <BarcodeScannerOverlay
+          open={true}
+          onClose={onClose}
+          onScan={onScan}
+          onScanError={vi.fn()}
+          autoSubmit={true}
+          batchMode={true}
+        />,
+      );
+
+      // In batch autoSubmit, enqueue + submit = onScan called with item
+      expect(onScan).toHaveBeenCalled();
+    });
   });
 });

@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, act } from '@testing-library/react';
+import { render, act, waitFor } from '@testing-library/react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { BarcodeInputRenderer } from './barcode-input-renderer.js';
 import type { BarcodeInputSchema } from './barcode-input.types.js';
+
+const mockUseInputComponentHandle = vi.hoisted(() => vi.fn());
+
+vi.mock('./utils/camera-utils.js', () => ({
+  checkCameraAvailability: vi.fn().mockResolvedValue({ isAvailable: true }),
+}));
 
 type FormStore = {
   getState: () => { values?: Record<string, unknown> };
@@ -23,6 +29,7 @@ function notifyFormStore() {
 vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useCurrentForm: () => ({ store: mockFormStore, setValue: vi.fn() }),
+  useInputComponentHandle: mockUseInputComponentHandle,
 }));
 
 vi.mock('./hooks/use-barcode-camera.js', () => ({
@@ -148,4 +155,114 @@ describe('BarcodeInputRenderer', () => {
     act(() => { notifyFormStore(); });
     expect(input?.value).toBe('updated-value');
   });
+
+  describe('Phase 1 — Imperative handles (scanNow / stopScan)', () => {
+    it('registers useInputComponentHandle with scanNow and stopScan methods', () => {
+      render(<BarcodeInputRenderer {...createMockProps()} />);
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      expect(lastCall).toBeTruthy();
+      expect(lastCall.methods).toContain('scanNow');
+      expect(lastCall.methods).toContain('stopScan');
+    });
+
+    it('scanNow opens overlay when camera is available', async () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps()} />);
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      act(() => { lastCall.scanNow(); });
+      await waitFor(() => {
+        expect(container.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
+      });
+    });
+
+    it('stopScan closes overlay when previously opened', async () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps()} />);
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      act(() => { lastCall.scanNow(); });
+      await waitFor(() => {
+        expect(container.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
+      });
+      act(() => { lastCall.stopScan(); });
+      await waitFor(() => {
+        expect(container.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeFalsy();
+      });
+    });
+
+    it('scanNow is idempotent — second call does not throw', async () => {
+      render(<BarcodeInputRenderer {...createMockProps()} />);
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      act(() => { lastCall.scanNow(); });
+      await waitFor(() => {
+        const overlay = document.querySelector('[data-slot="barcode-scanner-overlay"]');
+        expect(overlay).toBeTruthy();
+      });
+      act(() => { lastCall.scanNow(); });
+      expect(true).toBe(true);
+    });
+
+    it('stopScan is idempotent — calling when already closed does not throw', () => {
+      render(<BarcodeInputRenderer {...createMockProps()} />);
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      act(() => { lastCall.stopScan(); });
+      expect(true).toBe(true);
+    });
+  });
+
+  describe('Phase 2 — autoSubmit Mode', () => {
+    it('accepts autoSubmit prop and renders without error', () => {
+      const props = createMockProps({ props: { name: 'barcode', autoSubmit: true } });
+      const { container } = render(<BarcodeInputRenderer {...props} />);
+      expect(container.querySelector('[data-slot="barcode-input"]')).toBeTruthy();
+    });
+  });
+
+  describe('Phase 3 — scanOnFocus PDA Mode', () => {
+    it('accepts scanOnFocus prop and renders without error', () => {
+      const props = createMockProps({ props: { name: 'barcode', scanOnFocus: true } });
+      const { container } = render(<BarcodeInputRenderer {...props} />);
+      expect(container.querySelector('[data-slot="barcode-input"]')).toBeTruthy();
+    });
+
+    it('focus opens overlay when scanOnFocus is enabled', async () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', scanOnFocus: true },
+      })} />);
+
+      const input = container.querySelector('input')!;
+      act(() => { input.focus(); });
+      await waitFor(() => {
+        expect(container.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
+      });
+    });
+
+    it('focus does not open overlay when scanOnFocus is disabled', () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps()} />);
+      const input = container.querySelector('input')!;
+      act(() => { input.focus(); });
+      const overlay = container.querySelector('[data-slot="barcode-scanner-overlay"]');
+      expect(overlay).toBeFalsy();
+    });
+
+    it('scan button renders when scanOnFocus is enabled', () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', scanOnFocus: true },
+      })} />);
+      const scanBtn = container.querySelector('[data-slot="barcode-scan-button"]');
+      expect(scanBtn).toBeTruthy();
+    });
+  });
+
+  describe('Phase 4 — resetWasmPromise Handle', () => {
+    it('registers resetWasmPromise handle method', () => {
+      render(<BarcodeInputRenderer {...createMockProps()} />);
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      expect(lastCall.methods).toContain('resetWasmPromise');
+      expect(typeof lastCall.resetWasmPromise).toBe('function');
+    });
+
+    it('resetWasmPromise handle does not throw when called', () => {
+      render(<BarcodeInputRenderer {...createMockProps()} />);
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      expect(() => lastCall.resetWasmPromise()).not.toThrow();
+    });
+});
 });
