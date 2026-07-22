@@ -45,6 +45,14 @@ function normalizeLinkType(type: string): GanttLinkType {
 export class GanttStore {
   private store: StoreApi<GanttStoreState>;
   private parentIndex: Map<GanttId | null, GanttId[]> = new Map();
+  private _cachedVisibleTasks: GanttTask[] = [];
+  private _visibleTasksCacheDirty = true;
+  /**
+   * Scroll state lives on the store instance (not Zustand state) because scroll
+   * updates fire rapidly per frame and must not trigger React re-renders via
+   * useSyncExternalStore subscriptions. The plain property is read/written
+   * directly by scroll handlers and consumed by zoom/imperative actions.
+   */
   _scrollLeft: number; calendarManager: CalendarManager;
 
   constructor(config?: GanttStoreConfig) {
@@ -124,6 +132,7 @@ export class GanttStore {
 
   private computeComputedPropertiesInternal(seedExpand = false): void {
     this.parentIndex = buildParentIndex(this.gs().tasks);
+    this._visibleTasksCacheDirty = true;
     this.computeLevels();
     this.computeSourceTarget();
     if (seedExpand) {
@@ -224,8 +233,27 @@ export class GanttStore {
   }
 
   getVisibleTasks(): GanttTask[] {
-    const state = this.gs();
-    return getVisibleTasks(state.tasks, this.parentIndex, state.expandedSet);
+    if (this._visibleTasksCacheDirty) {
+      const state = this.gs();
+      this._cachedVisibleTasks = getVisibleTasks(state.tasks, this.parentIndex, state.expandedSet);
+      this._visibleTasksCacheDirty = false;
+    }
+    return this._cachedVisibleTasks;
+  }
+
+  getVisibleTaskWindow(scrollTop: number, viewportHeight: number, overscan = 5): { tasks: GanttTask[]; totalHeight: number } {
+    const tasks = this.getVisibleTasks();
+    const rowHeight = this.gs().rowHeight;
+    const buffer = overscan * rowHeight;
+    const viewBottom = scrollTop + viewportHeight;
+    const windowed = tasks.filter((t) => {
+      const tEnd = t.$y + t.$h;
+      return tEnd >= scrollTop - buffer && t.$y <= viewBottom + buffer;
+    });
+    const totalHeight = tasks.length > 0
+      ? tasks.reduce((max, t) => Math.max(max, t.$y + t.$h), 0)
+      : tasks.length * rowHeight;
+    return { tasks: windowed, totalHeight };
   }
 
   isOpen(taskId: GanttId): boolean { return this.gs().expandedSet.has(taskId); }
@@ -236,6 +264,7 @@ export class GanttStore {
     if (!state.tasks.get(taskId)) return;
     const newExpanded = new Set(state.expandedSet);
     if (newExpanded.has(taskId)) newExpanded.delete(taskId); else newExpanded.add(taskId);
+    this._visibleTasksCacheDirty = true;
     this.store.setState({ expandedSet: newExpanded, revision: state.revision + 1, treeRevision: state.treeRevision + 1 });
     this.computeCoordinates();
     this.computeLinkPolylines();
@@ -247,11 +276,13 @@ export class GanttStore {
     const state = this.gs();
     const newExpanded = new Set(state.expandedSet);
     for (const task of state.tasks.values()) { if (this.parentIndex.has(task.id)) newExpanded.add(task.id); }
+    this._visibleTasksCacheDirty = true;
     this.store.setState({ expandedSet: newExpanded, revision: state.revision + 1, treeRevision: state.treeRevision + 1 });
   }
 
   collapseAll(): void {
     const state = this.gs();
+    this._visibleTasksCacheDirty = true;
     this.store.setState({ expandedSet: new Set(), revision: state.revision + 1, treeRevision: state.treeRevision + 1 });
   }
 

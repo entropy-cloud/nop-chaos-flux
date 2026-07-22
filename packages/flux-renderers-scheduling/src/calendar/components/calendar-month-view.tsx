@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
@@ -298,7 +298,7 @@ export function CalendarMonthView({
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const [svgPixelDims, setSvgPixelDims] = useState({ width: 0, height: 0 });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = svgContainerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();

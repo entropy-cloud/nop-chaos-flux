@@ -1,13 +1,13 @@
 import { useRef, useEffect, useState } from 'react';
-import { useGanttStore } from '../gantt-context.js';
+import type { GanttStore } from '../gantt-store.js';
 import type { GanttLinkType } from '../gantt.types.js';
 
 export function useGanttLinkDraw(
+  store: GanttStore,
   svgRef: React.RefObject<SVGSVGElement | null>,
   onCommit?: (sourceId: string | number, targetId: string | number, linkType: string) => void,
   enabled?: boolean,
 ) {
-  const store = useGanttStore();
   const drawingRef = useRef<{
     sourceId: string | number;
     sourceSide: 'start' | 'end';

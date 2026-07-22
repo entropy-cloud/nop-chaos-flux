@@ -1,8 +1,9 @@
 import { useEffect, useCallback } from 'react';
-import { useGanttStore } from '../gantt-context.js';
+import type { GanttStore } from '../gantt-store.js';
 import { t } from '@nop-chaos/flux-i18n';
 
 interface UseGanttKeyboardOptions {
+  store: GanttStore;
   containerRef: React.RefObject<HTMLElement | null>;
   selectedTaskId: string | number | null;
   onSelectTask: (id: string | number | null) => void;
@@ -11,13 +12,13 @@ interface UseGanttKeyboardOptions {
 }
 
 export function useGanttKeyboard({
+  store,
   containerRef,
   selectedTaskId,
   onSelectTask,
   onOpenEditor,
   onUndo,
 }: UseGanttKeyboardOptions) {
-  const store = useGanttStore();
 
   const updateRowAria = useCallback((taskId: string | number, isSelected: boolean) => {
     const container = containerRef.current;

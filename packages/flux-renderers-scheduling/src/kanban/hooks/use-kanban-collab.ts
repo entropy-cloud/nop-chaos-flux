@@ -18,15 +18,18 @@ export interface UseKanbanCollabOptions {
 }
 
 function connectImpl(
-  wsUrl: string | undefined,
-  boardId: string | undefined,
+  wsUrlRef: MutableRefObject<string | undefined>,
+  boardIdRef: MutableRefObject<string | undefined>,
   updateStatus: (status: CollabConnectionStatus) => void,
-  onMessage: ((msg: CollabMessage) => void) | undefined,
+  onMessageRef: MutableRefObject<((msg: CollabMessage) => void) | undefined>,
   wsRef: MutableRefObject<WebSocket | null>,
   reconnectTimerRef: MutableRefObject<ReturnType<typeof setTimeout> | null>,
   signal: AbortSignal,
   connectFn: () => void,
+  retryCountRef: MutableRefObject<number>,
 ): void {
+  const wsUrl = wsUrlRef.current;
+  const boardId = boardIdRef.current;
   if (!wsUrl || !boardId) return;
   if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
@@ -36,6 +39,7 @@ function connectImpl(
 
     ws.onopen = () => {
       if (signal.aborted) return;
+      retryCountRef.current = 0;
       updateStatus('connected');
     };
 
@@ -43,7 +47,7 @@ function connectImpl(
       if (signal.aborted) return;
       try {
         const msg = JSON.parse(event.data) as CollabMessage;
-        onMessage?.(msg);
+        onMessageRef.current?.(msg);
       } catch (err) {
         console.warn('[kanban-collab] Failed to parse message:', err);
       }
@@ -53,9 +57,11 @@ function connectImpl(
       if (signal.aborted) return;
       console.error('[kanban-collab] WebSocket closed:', { code: ev.code, reason: ev.reason, wasClean: ev.wasClean });
       updateStatus('reconnecting');
+      const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000);
+      retryCountRef.current++;
       reconnectTimerRef.current = setTimeout(() => {
         if (!signal.aborted) connectFn();
-      }, 3000);
+      }, delay);
     };
 
     ws.onerror = (ev: Event) => {
@@ -81,6 +87,17 @@ export function useKanbanCollab({
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  const wsUrlRef = useRef(wsUrl);
+  const boardIdRef = useRef(boardId);
+  const onMessageRef = useRef(onMessage);
+  const onStatusChangeRef = useRef(onStatusChange);
+  const retryCountRef = useRef(0);
+
+  useEffect(() => { wsUrlRef.current = wsUrl; }, [wsUrl]);
+  useEffect(() => { boardIdRef.current = boardId; }, [boardId]);
+  useEffect(() => { onMessageRef.current = onMessage; }, [onMessage]);
+  useEffect(() => { onStatusChangeRef.current = onStatusChange; }, [onStatusChange]);
+
   const connectFnRef = useRef<() => void>(() => {});
   const disconnectFnRef = useRef<() => void>(() => {});
 
@@ -89,23 +106,23 @@ export function useKanbanCollab({
       newStatus: CollabConnectionStatus,
     ) => {
       setStatus(newStatus);
-      onStatusChange?.(newStatus);
+      onStatusChangeRef.current?.(newStatus);
     };
 
     const connect = () => {
       const controller = new AbortController();
       abortRef.current = controller;
-      connectImpl(wsUrl, boardId, updateStatus, onMessage, wsRef, reconnectTimerRef, controller.signal, connect);
+      connectImpl(wsUrlRef, boardIdRef, updateStatus, onMessageRef, wsRef, reconnectTimerRef, controller.signal, connect, retryCountRef);
     };
     connectFnRef.current = connect;
-  }, [wsUrl, boardId, onMessage, onStatusChange]);
+  }, []);
 
   useEffect(() => {
     const updateStatus = (
       newStatus: CollabConnectionStatus,
     ) => {
       setStatus(newStatus);
-      onStatusChange?.(newStatus);
+      onStatusChangeRef.current?.(newStatus);
     };
 
     const disconnect = () => {
@@ -123,7 +140,7 @@ export function useKanbanCollab({
     return () => {
       disconnect();
     };
-  }, [onStatusChange]);
+  }, []);
 
   const sendMessage = (
     msg: Omit<CollabMessage, 'timestamp' | 'version'>,

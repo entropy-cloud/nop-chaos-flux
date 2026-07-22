@@ -3,7 +3,7 @@ import { expect, test } from './fixtures.js';
 async function openCrudDemo(page: import('@playwright/test').Page) {
   await page.goto('#/complex-pages/standard-crud', { waitUntil: 'commit' });
   await expect(
-    page.getByRole('heading', { name: /用户管理/, level: 1 }),
+    page.getByText('用户管理（CRUD）'),
   ).toBeVisible({ timeout: 15_000 });
 }
 
@@ -20,8 +20,8 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
     await openCrudDemo(page);
 
     await expect(page.getByText('张三').first()).toBeVisible({ timeout: 10_000 });
-    await expect(bodyRows(page)).toHaveCount(5);
-    await expect(page.locator('[data-slot="crud-footer-toolbar"]')).toContainText('共 5 条');
+    await expect(bodyRows(page)).toHaveCount(10);
+    await expect(page.getByText('1-10 of 33')).toBeVisible();
   });
 
   test('filters rows by keyword and resets back to the full list', async ({ page }) => {
@@ -43,7 +43,7 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
   test('creates a user via the add dialog and appends a new row', async ({ page }) => {
     await openCrudDemo(page);
 
-    await expect(bodyRows(page)).toHaveCount(5, { timeout: 10_000 });
+    await expect(bodyRows(page)).toHaveCount(10, { timeout: 10_000 });
 
     await page.getByTestId('btn-add').click();
     const dialog = page.locator('[data-slot="dialog-surface"]');
@@ -54,7 +54,7 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
 
     await expect(page.getByText('新增成功')).toBeVisible({ timeout: 10_000 });
     await expect(dialog).toHaveCount(0);
-    await expect(bodyRows(page)).toHaveCount(6, { timeout: 10_000 });
+    await expect(bodyRows(page)).toHaveCount(11, { timeout: 10_000 });
     await expect(page.getByText('tester@example.com')).toBeVisible();
   });
 
@@ -67,7 +67,7 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
     const dialog = page.locator('[data-slot="dialog-surface"]');
     await expect(dialog).toBeVisible({ timeout: 5_000 });
     await expect(dialog.getByLabel('姓名')).toHaveValue('张三');
-    await expect(dialog.getByLabel('邮箱')).toHaveValue('zhangsan@example.com');
+    await expect(dialog.getByLabel('邮箱')).toHaveValue('张三@example.com');
 
     await dialog.getByLabel('姓名').fill('张三丰');
     await dialog.getByRole('button', { name: '保存' }).click();
@@ -81,7 +81,7 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
   test('deletes a row after confirming and is a no-op when cancelled', async ({ page }) => {
     await openCrudDemo(page);
 
-    await expect(bodyRows(page)).toHaveCount(5, { timeout: 10_000 });
+    await expect(bodyRows(page)).toHaveCount(10, { timeout: 10_000 });
     await expect(page.getByText('张三').first()).toBeVisible();
 
     await page.getByTestId('btn-delete').first().click();
@@ -90,7 +90,7 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
 
     await confirmDialog.getByRole('button', { name: '取消' }).click();
     await expect(confirmDialog).toHaveCount(0, { timeout: 5_000 });
-    await expect(bodyRows(page)).toHaveCount(5);
+    await expect(bodyRows(page)).toHaveCount(10);
     await expect(page.getByText('张三').first()).toBeVisible();
 
     await page.getByTestId('btn-delete').first().click();
@@ -99,13 +99,13 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
 
     await expect(page.getByText('删除成功')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText('张三', { exact: true })).toHaveCount(0);
-    await expect(bodyRows(page)).toHaveCount(4, { timeout: 10_000 });
+    await expect(bodyRows(page)).toHaveCount(9, { timeout: 10_000 });
   });
 
   test('bulk-deletes selected rows after confirming', async ({ page }) => {
     await openCrudDemo(page);
 
-    await expect(bodyRows(page)).toHaveCount(5, { timeout: 10_000 });
+    await expect(bodyRows(page)).toHaveCount(10, { timeout: 10_000 });
 
     const bulkDelete = page.getByTestId('btn-bulk-delete').first();
     await expect(bulkDelete).toBeDisabled();
@@ -122,6 +122,6 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
     await confirmDialog.getByRole('button', { name: '确认' }).click();
 
     await expect(page.getByText('批量删除成功')).toBeVisible({ timeout: 10_000 });
-    await expect(bodyRows(page)).toHaveCount(3, { timeout: 10_000 });
+    await expect(bodyRows(page)).toHaveCount(8, { timeout: 10_000 });
   });
 });

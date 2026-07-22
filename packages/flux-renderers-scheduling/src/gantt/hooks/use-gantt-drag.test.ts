@@ -10,10 +10,6 @@ const mockStore = {
   updateTask: vi.fn(),
 };
 
-vi.mock('../gantt-context.js', () => ({
-  useGanttStore: () => mockStore,
-}));
-
 function createTarget() {
   const el = document.createElement('div');
   el.style.width = '100px';
@@ -39,20 +35,20 @@ describe('useGanttDrag', () => {
 
   it('should return dragRef and onPointerDown', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     expect(result.current.dragRef).toBeDefined();
     expect(typeof result.current.onPointerDown).toBe('function');
   });
 
   it('should not start drag when mode is falsy', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     expect(typeof result.current.onPointerDown).toBe('function');
   });
 
   it('should create ghost element on pointer down with move mode', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     const target = createTarget();
 
     target.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -68,7 +64,7 @@ describe('useGanttDrag', () => {
 
   it('should follow pointer on move', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     const target = createTarget();
 
     target.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -85,7 +81,7 @@ describe('useGanttDrag', () => {
 
   it('should move task on pointer up (move mode)', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     const target = createTarget();
 
     target.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -104,7 +100,7 @@ describe('useGanttDrag', () => {
 
   it('should not call updateTask when dayDelta is 0', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     const target = createTarget();
 
     target.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -120,7 +116,7 @@ describe('useGanttDrag', () => {
 
   it('should handle resize-end mode', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     const target = createTarget();
 
     target.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -136,7 +132,7 @@ describe('useGanttDrag', () => {
 
   it('should handle resize-start mode', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     const target = createTarget();
 
     target.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -152,7 +148,7 @@ describe('useGanttDrag', () => {
 
   it('should cancel drag on Escape key', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     const target = createTarget();
 
     target.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -170,7 +166,7 @@ describe('useGanttDrag', () => {
 
   it('should cleanup ghost on unmount', () => {
     const containerRef = { current: document.createElement('div') };
-    const { unmount } = renderHook(() => useGanttDrag(containerRef));
+    const { unmount } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     expect(unmount).not.toThrow();
   });
 
@@ -178,7 +174,7 @@ describe('useGanttDrag', () => {
     const addSpy = vi.spyOn(document, 'addEventListener');
     const removeSpy = vi.spyOn(document, 'removeEventListener');
     const containerRef = { current: document.createElement('div') };
-    const { result, unmount } = renderHook(() => useGanttDrag(containerRef));
+    const { result, unmount } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
 
     const target = createTarget();
     target.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -205,7 +201,7 @@ describe('useGanttDrag', () => {
   it('should call onCommit on pointer up with changes', () => {
     const containerRef = { current: document.createElement('div') };
     const onCommit = vi.fn();
-    const { result } = renderHook(() => useGanttDrag(containerRef, onCommit));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef, onCommit));
     const target = createTarget();
 
     target.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -224,7 +220,7 @@ describe('useGanttDrag', () => {
 
   it('should use translateX only (no vertical drift)', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     const target = createTarget();
 
     target.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -241,7 +237,7 @@ describe('useGanttDrag', () => {
 
   it('should reduce original bar opacity to 0.3 during drag', () => {
     const containerRef = { current: document.createElement('div') };
-    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef));
     const target = createTarget();
 
     target.addEventListener('pointerdown', (e: PointerEvent) => {

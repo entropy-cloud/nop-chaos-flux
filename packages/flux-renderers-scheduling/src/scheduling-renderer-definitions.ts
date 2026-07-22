@@ -20,20 +20,15 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'resources', kind: 'prop' },
       { key: 'assignments', kind: 'prop' },
       { key: 'columns', kind: 'prop' },
-      { key: 'scales', kind: 'prop' }, // @deprecated — scales are defined within zoomLevels; this standalone prop is unused
       { key: 'zoomLevels', kind: 'prop' },
       { key: 'defaultZoom', kind: 'prop' },
       { key: 'cellWidth', kind: 'prop' },
-      { key: 'startDate', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
-      { key: 'endDate', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
       { key: 'taskBarHeight', kind: 'prop' },
-      { key: 'progressBarHeight', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
       { key: 'showWeekends', kind: 'prop' },
       { key: 'showToday', kind: 'prop' },
       { key: 'draggable', kind: 'prop' },
       { key: 'editable', kind: 'prop' },
       { key: 'linkable', kind: 'prop' },
-      { key: 'calendar', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
       { key: 'taskBar', kind: 'region', regionKey: 'taskBar' },
       { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
       { key: 'editor', kind: 'region', regionKey: 'editor' },
@@ -49,8 +44,6 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'onScroll', kind: 'event' },
       { key: 'onMount', kind: 'meta' },
       { key: 'onUnmount', kind: 'meta' },
-      { key: 'childrenField', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
-      { key: 'initiallyExpanded', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
       { key: 'toolbarClassName', kind: 'prop' },
       { key: 'taskBarClassName', kind: 'prop' },
       { key: 'editorClassName', kind: 'prop' },
@@ -85,8 +78,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'columnWidth', kind: 'prop' },
       { key: 'columnDraggable', kind: 'prop' },
       { key: 'draggable', kind: 'prop' },
-      { key: 'columnsOrderStatePath', kind: 'prop' },
-      { key: 'columnsOrderOwnership', kind: 'prop' },
+
       { key: 'collapsedStatePath', kind: 'prop' },
       { key: 'collapsedOwnership', kind: 'prop' },
       // consumed: applied to KanbanColumn sub-elements

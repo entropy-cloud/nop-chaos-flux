@@ -6,6 +6,11 @@
  * command reversal is more precise than full-state restoration.
  * Kanban uses a snapshot-based pattern instead (see kanban/utils/kanban-undo-stack.ts)
  * because its flat BoardData structure makes full-state capture inexpensive.
+ *
+ * Trade-off vs structuredClone snapshots:
+ * Command-based undo avoids O(n) deep-clone per mutation (n = total task graph),
+ * which would be expensive for large Gantt datasets with cross-linked tasks.
+ * The cost is more complex command implementations that must store only deltas.
  */
 import type { GanttId, GanttTaskData, GanttLinkType, GanttLinkData } from './gantt.types.js';
 import { GanttStore } from './gantt-store.js';

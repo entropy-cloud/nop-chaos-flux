@@ -53,7 +53,7 @@ export function GanttCompact({
         await document.exitFullscreen();
       }
     } catch (err) {
-      console.warn('[gantt-compact] Fullscreen API failed, falling back to CSS fullscreen:', err instanceof Error ? err.message : String(err) || 'Unknown error');
+      console.warn('[gantt-compact] Fullscreen API failed, falling back to CSS fullscreen:', err instanceof Error ? err.message : String(err));
       const styles = el.style;
       if (isFullscreen) {
         styles.position = '';

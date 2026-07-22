@@ -57,8 +57,6 @@ export interface KanbanSchema extends BaseSchema {
   columnWidth?: number | 'auto' | 'equal';
   columnDraggable?: boolean;
   draggable?: boolean;
-  columnsOrderStatePath?: string;
-  columnsOrderOwnership?: 'local' | 'controlled' | 'scope';
   collapsedStatePath?: string;
   collapsedOwnership?: 'local' | 'controlled' | 'scope';
   columnHeaderClassName?: string;

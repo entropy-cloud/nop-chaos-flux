@@ -70,10 +70,6 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const kanbanStatePath = resolved.kanbanStatePath as string | undefined;
   const collapsedOwnership = (resolved.collapsedOwnership as string) || 'local';
   const collapsedStatePath = resolved.collapsedStatePath as string | undefined;
-  const columnsOrderOwnership = (resolved.columnsOrderOwnership as string) || 'local';
-  const columnsOrderStatePath = resolved.columnsOrderStatePath as string | undefined;
-  void columnsOrderOwnership;
-  void columnsOrderStatePath;
 
   const fallbackBoard = useMemo(() => ({ root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData), []);
 
@@ -168,9 +164,6 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     void events.onMount?.({});
     return () => { void events.onUnmount?.({}); };
   }, [events]);
-
-  const prevBoardRef = useRef<BoardData>(boardData);
-  useEffect(() => { prevBoardRef.current = boardData; }, [boardData]);
 
   const [undoStackState, setUndoStackState] = useState<UndoStack>(() => createUndoStack(1000));
   const [activityLogOpen, setActivityLogOpen] = useState(false);

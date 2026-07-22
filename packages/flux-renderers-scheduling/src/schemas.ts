@@ -2,30 +2,6 @@ import type { BaseSchema, SchemaInput, SchemaObject } from '@nop-chaos/flux-core
 import type { ActionSchema } from '@nop-chaos/flux-core';
 import type { GanttTaskData, GanttLinkData, GanttResource, GanttAssignment, GanttColumn, GanttScale, GanttZoomLevel } from './gantt/gantt.types.js';
 
-/** @deprecated Use `GanttTaskData` from `./gantt/gantt.types.js` instead (runtime data type without computed layout fields). `GanttTask` extends `GanttTaskData` with computed layout fields (`$x`, `$y`, etc.) and should only be used internally by the gantt renderer. */
-export interface GanttTask extends SchemaObject {
-  id: string;
-  text: string;
-  start: string;
-  end: string;
-  duration?: number;
-  progress?: number;
-  type?: 'task' | 'project' | 'milestone';
-  parent?: string;
-  open?: boolean;
-  children?: GanttTask[];
-  calendar?: string;
-}
-
-/** @deprecated Use `GanttLinkData` from `./gantt/gantt.types.js` instead (runtime data type without computed polyline field). `GanttLink` extends `GanttLinkData` with computed layout fields (`$p`) and should only be used internally by the gantt renderer. */
-export interface GanttLink extends SchemaObject {
-  id: string;
-  source: string;
-  target: string;
-  type: 'FS' | 'SS' | 'FF' | 'SF';
-  lag?: number;
-}
-
 export type { GanttResource, GanttAssignment, GanttColumn, GanttScale, GanttZoomLevel };
 
 export interface GanttSchema extends BaseSchema {
@@ -35,19 +11,26 @@ export interface GanttSchema extends BaseSchema {
   resources?: GanttResource[];
   assignments?: GanttAssignment[];
   columns?: GanttColumn[];
+  /** @deprecated */
   scales?: GanttScale[];
   zoomLevels?: GanttZoomLevel[];
   defaultZoom?: string;
   cellWidth?: number;
+  /** @deprecated */
   startDate?: string;
+  /** @deprecated */
   endDate?: string;
+  /** @deprecated */
   childrenField?: string;
+  /** @deprecated */
   initiallyExpanded?: boolean;
   draggable?: boolean;
   editable?: boolean;
   linkable?: boolean;
   taskBarHeight?: number;
+  /** @deprecated */
   progressBarHeight?: number;
+  /** @deprecated */
   calendar?: string;
   showWeekends?: boolean;
   showToday?: boolean;
@@ -75,7 +58,6 @@ export interface GanttSchema extends BaseSchema {
   onUnmount?: ActionSchema;
   empty?: SchemaInput;
   loading?: SchemaInput;
-  body?: SchemaInput;
 }
 
 export type { KanbanSchema, KanbanColumnConfig, KanbanCardConfig, KanbanEvents, BoardData, BoardItem } from './kanban/kanban.types.js';

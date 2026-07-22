@@ -62,7 +62,7 @@ describe('gantt field consumption verification', () => {
 
   const ganttPropFields = fields.filter(f => f.kind === 'prop').map(f => f.key);
   it('gantt consumes all declared props', () => {
-    const expectedProps = ['draggable', 'editable', 'linkable', 'calendar', 'progressBarHeight', 'childrenField', 'initiallyExpanded', 'startDate', 'endDate',
+    const expectedProps = ['draggable', 'editable', 'linkable',
       'toolbarClassName', 'taskBarClassName', 'editorClassName', 'emptyClassName'];
     for (const prop of expectedProps) {
       expect(ganttPropFields).toContain(prop);

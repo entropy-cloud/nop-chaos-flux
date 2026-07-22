@@ -10,10 +10,6 @@ const mockStore = {
   addLink: vi.fn(),
 };
 
-vi.mock('../gantt-context.js', () => ({
-  useGanttStore: () => mockStore,
-}));
-
 describe('useGanttLinkDraw', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -25,7 +21,7 @@ describe('useGanttLinkDraw', () => {
 
   it('should return link drawing functions', () => {
     const svgRef = { current: document.createElementNS('http://www.w3.org/2000/svg', 'svg') };
-    const { result } = renderHook(() => useGanttLinkDraw(svgRef));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
     expect(typeof result.current.onLinkHandlePointerDown).toBe('function');
     expect(typeof result.current.startKeyboardLink).toBe('function');
     expect(typeof result.current.completeKeyboardLink).toBe('function');
@@ -39,7 +35,7 @@ describe('useGanttLinkDraw', () => {
     svgEl.setAttribute('height', '600');
     document.body.appendChild(svgEl);
     const svgRef = { current: svgEl };
-    const { result } = renderHook(() => useGanttLinkDraw(svgRef));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -61,7 +57,7 @@ describe('useGanttLinkDraw', () => {
     svgEl.setAttribute('height', '600');
     document.body.appendChild(svgEl);
     const svgRef = { current: svgEl };
-    const { result } = renderHook(() => useGanttLinkDraw(svgRef));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -98,7 +94,7 @@ describe('useGanttLinkDraw', () => {
     svgEl.setAttribute('height', '600');
     document.body.appendChild(svgEl);
     const svgRef = { current: svgEl };
-    const { result } = renderHook(() => useGanttLinkDraw(svgRef));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -127,7 +123,7 @@ describe('useGanttLinkDraw', () => {
 
   it('should cancel link via cancelLink', () => {
     const svgRef = { current: document.createElementNS('http://www.w3.org/2000/svg', 'svg') };
-    const { result } = renderHook(() => useGanttLinkDraw(svgRef));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
     result.current.cancelLink();
     expect(result.current.isLinking).toBe(false);
   });
@@ -138,7 +134,7 @@ describe('useGanttLinkDraw', () => {
     svgEl.setAttribute('height', '600');
     document.body.appendChild(svgEl);
     const svgRef = { current: svgEl };
-    const { result } = renderHook(() => useGanttLinkDraw(svgRef));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -165,7 +161,7 @@ describe('useGanttLinkDraw', () => {
     svgEl.setAttribute('height', '600');
     document.body.appendChild(svgEl);
     const svgRef = { current: svgEl };
-    const { result } = renderHook(() => useGanttLinkDraw(svgRef));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
 
     act(() => {
       result.current.startKeyboardLink('t1');
@@ -187,7 +183,7 @@ describe('useGanttLinkDraw', () => {
     svgEl.setAttribute('height', '600');
     document.body.appendChild(svgEl);
     const svgRef = { current: svgEl };
-    const { result } = renderHook(() => useGanttLinkDraw(svgRef));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
 
     act(() => {
       result.current.startKeyboardLink('t1');
@@ -202,7 +198,7 @@ describe('useGanttLinkDraw', () => {
   });
 
   it('should do nothing when svgRef is null', () => {
-    const { result } = renderHook(() => useGanttLinkDraw({ current: null }));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, { current: null }));
     result.current.startKeyboardLink('t1');
     expect(result.current.isLinking).toBe(false);
   });
@@ -214,7 +210,7 @@ describe('useGanttLinkDraw', () => {
     document.body.appendChild(svgEl);
     const onCommit = vi.fn();
     const svgRef = { current: svgEl };
-    const { result } = renderHook(() => useGanttLinkDraw(svgRef, onCommit));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef, onCommit));
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -248,7 +244,7 @@ describe('useGanttLinkDraw', () => {
     document.body.appendChild(svgEl);
     const onCommit = vi.fn();
     const svgRef = { current: svgEl };
-    const { result } = renderHook(() => useGanttLinkDraw(svgRef, onCommit));
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef, onCommit));
 
     act(() => {
       result.current.startKeyboardLink('t1');
@@ -265,7 +261,7 @@ describe('useGanttLinkDraw', () => {
 
   it('should clean up temp line on unmount', () => {
     const svgRef = { current: document.createElementNS('http://www.w3.org/2000/svg', 'svg') };
-    const { unmount } = renderHook(() => useGanttLinkDraw(svgRef));
+    const { unmount } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
     expect(unmount).not.toThrow();
   });
 
@@ -277,7 +273,7 @@ describe('useGanttLinkDraw', () => {
     svgEl.setAttribute('height', '600');
     document.body.appendChild(svgEl);
     const svgRef = { current: svgEl };
-    const { result, unmount } = renderHook(() => useGanttLinkDraw(svgRef));
+    const { result, unmount } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {

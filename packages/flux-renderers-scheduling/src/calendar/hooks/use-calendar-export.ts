@@ -1,4 +1,4 @@
-
+import html2canvas from 'html2canvas';
 import { useState, useRef } from 'react';
 
 export interface UseCalendarExportResult {
@@ -31,10 +31,6 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
     try {
       if (effectiveSignal.aborted) throw new DOMException('Aborted', 'AbortError');
 
-      const html2canvas = (window as any).html2canvas;
-      if (!html2canvas) {
-        throw new Error('html2canvas not available');
-      }
       if (effectiveSignal.aborted) throw new DOMException('Aborted', 'AbortError');
 
       const canvas: any = await html2canvas(target, {

@@ -21,7 +21,7 @@ import { useGanttLinkDraw } from './hooks/use-gantt-link-draw.js';
 import { useGanttScroll } from './hooks/use-gantt-scroll.js';
 import { useGanttKeyboard } from './hooks/use-gantt-keyboard.js';
 import { dateToPixel } from './utils/layout.js';
-import { UndoStack } from './undo-stack.js';
+import { UndoStack, UpdateTaskCommand } from './undo-stack.js';
 
 export interface GanttHandle {
   zoomIn: () => void;
@@ -82,6 +82,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       prevDataRef.current = newData;
       dataFingerprintRef.current++;
       store.parse(newData.tasks ?? [], newData.links ?? [], newData.resources, newData.assignments);
+      undoStackRef.current.clear();
     }, [store, resolved.tasks, resolved.links, resolved.resources, resolved.assignments]);
 
     const handleTaskDragCommit = useCallback((taskId: string | number, changes: Record<string, string>) => {
@@ -96,8 +97,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const editable = resolved.editable !== false;
     const linkable = resolved.linkable !== false;
 
-    const { onPointerDown: onDragPointerDown } = useGanttDrag(containerRef, draggable ? handleTaskDragCommit : undefined);
-    const { onLinkHandlePointerDown } = useGanttLinkDraw(svgRef, linkable ? handleLinkDragCommit : undefined, linkable);
+    const { onPointerDown: onDragPointerDown } = useGanttDrag(store, containerRef, draggable ? handleTaskDragCommit : undefined);
+    const { onLinkHandlePointerDown } = useGanttLinkDraw(store, svgRef, linkable ? handleLinkDragCommit : undefined, linkable);
     useGanttScroll(gridRef, timelineRef, (scrollLeft, scrollTop) => {
       void eventsRef.current.onScroll?.({ scrollLeft, scrollTop });
     });
@@ -109,41 +110,53 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const handleBarKeyAction = useCallback((taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => {
       const task = store.tasks.get(taskId);
       if (!task) return;
-      const oldStart = new Date(task.start);
-      const oldEnd = new Date(task.end);
+      const oldStart = task.start;
+      const oldEnd = task.end;
+      const oldStartDt = new Date(oldStart);
+      const oldEndDt = new Date(oldEnd);
       switch (action) {
         case 'move-up': {
-          const newStart = new Date(oldStart);
+          const newStart = new Date(oldStartDt);
           newStart.setUTCDate(newStart.getUTCDate() - 1);
-          const newEnd = new Date(oldEnd);
+          const newEnd = new Date(oldEndDt);
           newEnd.setUTCDate(newEnd.getUTCDate() - 1);
-          void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) } }, { scope: scopeRef.current });
-          store.updateTask(taskId, { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) });
+          const startVal = newStart.toISOString().slice(0, 10);
+          const endVal = newEnd.toISOString().slice(0, 10);
+          void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { start: startVal, end: endVal } }, { scope: scopeRef.current });
+          store.updateTask(taskId, { start: startVal, end: endVal });
+          undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
           break;
         }
         case 'move-down': {
-          const newStart = new Date(oldStart);
+          const newStart = new Date(oldStartDt);
           newStart.setUTCDate(newStart.getUTCDate() + 1);
-          const newEnd = new Date(oldEnd);
+          const newEnd = new Date(oldEndDt);
           newEnd.setUTCDate(newEnd.getUTCDate() + 1);
-          void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) } }, { scope: scopeRef.current });
-          store.updateTask(taskId, { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) });
+          const startVal = newStart.toISOString().slice(0, 10);
+          const endVal = newEnd.toISOString().slice(0, 10);
+          void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { start: startVal, end: endVal } }, { scope: scopeRef.current });
+          store.updateTask(taskId, { start: startVal, end: endVal });
+          undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
           break;
         }
         case 'resize-left': {
-          const newEnd = new Date(oldEnd);
+          const newEnd = new Date(oldEndDt);
           newEnd.setUTCDate(newEnd.getUTCDate() - 1);
-          if (newEnd > oldStart) {
-            void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { end: newEnd.toISOString().slice(0, 10) } }, { scope: scopeRef.current });
-            store.updateTask(taskId, { end: newEnd.toISOString().slice(0, 10) });
+          if (newEnd > oldStartDt) {
+            const endVal = newEnd.toISOString().slice(0, 10);
+            void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { end: endVal } }, { scope: scopeRef.current });
+            store.updateTask(taskId, { end: endVal });
+            undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { end: oldEnd }, { end: endVal }));
           }
           break;
         }
         case 'resize-right': {
-          const newEnd = new Date(oldEnd);
+          const newEnd = new Date(oldEndDt);
           newEnd.setUTCDate(newEnd.getUTCDate() + 1);
-          void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { end: newEnd.toISOString().slice(0, 10) } }, { scope: scopeRef.current });
-          store.updateTask(taskId, { end: newEnd.toISOString().slice(0, 10) });
+          const endVal = newEnd.toISOString().slice(0, 10);
+          void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { end: endVal } }, { scope: scopeRef.current });
+          store.updateTask(taskId, { end: endVal });
+          undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { end: oldEnd }, { end: endVal }));
           break;
         }
         case 'select': {
@@ -160,6 +173,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     }, []);
 
     useGanttKeyboard({
+      store,
       containerRef,
       selectedTaskId: store.selectedTaskId,
       onSelectTask: (id) => { store.selectTask(id); },
@@ -232,13 +246,6 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       void eventsRef.current.onEmptyCellClick?.({});
     }, []);
 
-    const _progressBarHeight = resolved.progressBarHeight as number | undefined;
-    const _childrenField = resolved.childrenField as string | undefined;
-    const _initiallyExpanded = resolved.initiallyExpanded as boolean | undefined;
-    const _calendar = resolved.calendar as string | undefined;
-    const _startDate = resolved.startDate as string | undefined;
-    const _endDate = resolved.endDate as string | undefined;
-
     if (!meta.visible) return null;
 
     if (resolved.loading) {
@@ -297,6 +304,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                   onTaskDoubleClick={handleTaskDoubleClick}
                   onEmptyCellClick={handleEmptyCellClick}
                   editable={editable}
+                  scrollContainerRef={gridRef}
                 />
               </div>
             }
@@ -314,6 +322,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                     taskBarClassName={resolved.taskBarClassName as string | undefined}
                     onBarClick={handleTaskClick}
                     onBarDoubleClickEvent={handleTaskDoubleClick}
+                    scrollContainerRef={timelineRef}
                   />
                   <svg ref={svgRef} className="absolute inset-0 pointer-events-none overflow-visible" style={{ zIndex: 5 }}>
                     <GanttLinks onLinkClick={handleLinkClick} />

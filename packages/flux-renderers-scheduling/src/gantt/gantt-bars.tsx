@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
@@ -14,15 +14,34 @@ interface GanttBarsProps {
   onBarClick?: (taskId: string | number) => void;
   onBarDoubleClickEvent?: (taskId: string | number) => void;
   taskBarClassName?: string;
+  scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction, taskBarRegion, onBarClick, onBarDoubleClickEvent, taskBarClassName }: GanttBarsProps) {
+export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction, taskBarRegion, onBarClick, onBarDoubleClickEvent, taskBarClassName, scrollContainerRef }: GanttBarsProps) {
   const store = useGanttStore();
   useGanttTaskSnapshot();
   useGanttLayoutSnapshot();
   useGanttTreeSnapshot();
-  const tasks = store.getVisibleTasks();
   const barsRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(-1);
+  const [viewportHeight, setViewportHeight] = useState(0);
+
+  useEffect(() => {
+    const el = scrollContainerRef?.current;
+    if (!el) return;
+    const handleScroll = () => {
+      setScrollTop(el.scrollTop);
+      setViewportHeight(el.clientHeight);
+    };
+    handleScroll();
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [scrollContainerRef]);
+
+  const allTasks = store.getVisibleTasks();
+  const { tasks: visibleTasks, totalHeight } = scrollTop >= 0
+    ? store.getVisibleTaskWindow(scrollTop, viewportHeight || 800, 5)
+    : { tasks: allTasks, totalHeight: allTasks.length * store.rowHeight };
 
   useEffect(() => {
     const barsEl = barsRef.current;
@@ -58,7 +77,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
     return () => barsEl.removeEventListener('pointerdown', handler);
   }, [onBarPointerDown, onLinkHandlePointerDown]);
 
-  const handleBarKeyDown = (e: React.KeyboardEvent, taskId: string | number) => {
+  const handleBarKeyDownEvent = (e: React.KeyboardEvent, taskId: string | number) => {
     switch (e.key) {
       case 'ArrowUp':
       case 'ArrowDown':
@@ -91,8 +110,8 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
   }, [onBarDoubleClick]);
 
   return (
-    <div ref={barsRef} className={cn('nop-gantt-bars absolute inset-0', className)} data-slot="gantt-bars">
-      {tasks.map((task) => {
+    <div ref={barsRef} className={cn('nop-gantt-bars absolute left-0 top-0', className)} data-slot="gantt-bars" style={{ width: '100%', height: Math.max(totalHeight, 1) }}>
+      {visibleTasks.map((task) => {
         const isMilestone = task.type === 'milestone';
         const isProject = task.type === 'project';
 
@@ -156,7 +175,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
             }}
             onClick={() => onBarClick?.(task.id)}
             onDoubleClick={() => onBarDoubleClickEvent?.(task.id)}
-            onKeyDown={(e) => handleBarKeyDown(e, task.id)}
+            onKeyDown={(e) => handleBarKeyDownEvent(e, task.id)}
           >
             {task.progress != null && task.progress > 0 && (
               <div
@@ -174,7 +193,6 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
               data-slot="gantt-bar-link-handle"
               data-handle-side="start"
               className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
-              style={{ left: 0 }}
             />
             <div
               data-slot="gantt-bar-link-handle"

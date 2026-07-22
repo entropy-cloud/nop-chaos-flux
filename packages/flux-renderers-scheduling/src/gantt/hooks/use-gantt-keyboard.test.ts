@@ -27,10 +27,6 @@ vi.mock('@nop-chaos/flux-i18n', () => ({
   },
 }));
 
-vi.mock('../gantt-context.js', () => ({
-  useGanttStore: () => mockStore,
-}));
-
 describe('useGanttKeyboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -43,7 +39,7 @@ describe('useGanttKeyboard', () => {
   it('should return updateRowAria', () => {
     const containerRef = { current: document.createElement('div') };
     const { result } = renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: null,
         onSelectTask: vi.fn(),
@@ -57,7 +53,7 @@ describe('useGanttKeyboard', () => {
     const addEventListenerSpy = vi.spyOn(container, 'addEventListener');
     const containerRef = { current: container };
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: null,
         onSelectTask: vi.fn(),
@@ -73,7 +69,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: null };
     expect(() => {
       renderHook(() =>
-        useGanttKeyboard({
+        useGanttKeyboard({ store: mockStore as any,
           containerRef,
           selectedTaskId: null,
           onSelectTask: vi.fn(),
@@ -87,7 +83,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: container };
     const onSelectTask = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't1',
         onSelectTask,
@@ -104,7 +100,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: container };
     const onSelectTask = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't1',
         onSelectTask,
@@ -122,7 +118,7 @@ describe('useGanttKeyboard', () => {
     mockStore.getVisibleDescendantCount = vi.fn(() => 1);
     mockStore.isOpen = vi.fn(() => true);
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't1',
         onSelectTask: vi.fn(),
@@ -139,7 +135,7 @@ describe('useGanttKeyboard', () => {
     mockStore.getVisibleDescendantCount = vi.fn(() => 3);
     mockStore.isOpen = vi.fn(() => false);
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't1',
         onSelectTask: vi.fn(),
@@ -156,7 +152,7 @@ describe('useGanttKeyboard', () => {
     mockStore.getVisibleDescendantCount = vi.fn(() => 0);
     mockStore.toggleOpen.mockClear();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't1',
         onSelectTask: vi.fn(),
@@ -175,7 +171,7 @@ describe('useGanttKeyboard', () => {
     container.appendChild(row);
     const onSelectTask = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't2',
         onSelectTask,
@@ -191,7 +187,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: container };
     const onSelectTask = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't1',
         onSelectTask,
@@ -207,7 +203,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: container };
     const onSelectTask = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't2',
         onSelectTask,
@@ -223,7 +219,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: container };
     const onSelectTask = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: null,
         onSelectTask,
@@ -239,7 +235,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: container };
     const onSelectTask = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't2',
         onSelectTask,
@@ -256,7 +252,7 @@ describe('useGanttKeyboard', () => {
     const onSelectTask = vi.fn();
     const onOpenEditor = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't1',
         onSelectTask,
@@ -273,7 +269,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: container };
     const onOpenEditor = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: null,
         onSelectTask: vi.fn(),
@@ -290,7 +286,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: container };
     const onUndo = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't1',
         onSelectTask: vi.fn(),
@@ -307,7 +303,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: container };
     const onUndo = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't1',
         onSelectTask: vi.fn(),
@@ -324,7 +320,7 @@ describe('useGanttKeyboard', () => {
     const containerRef = { current: container };
     const onUndo = vi.fn();
     renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: 't1',
         onSelectTask: vi.fn(),
@@ -340,7 +336,7 @@ describe('useGanttKeyboard', () => {
     const container = document.createElement('div');
     const containerRef = { current: container };
     const { result } = renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: null,
         onSelectTask: vi.fn(),
@@ -358,7 +354,7 @@ describe('useGanttKeyboard', () => {
   it('should not throw for updateRowAria with null container', () => {
     const containerRef = { current: null };
     const { result } = renderHook(() =>
-      useGanttKeyboard({
+      useGanttKeyboard({ store: mockStore as any,
         containerRef,
         selectedTaskId: null,
         onSelectTask: vi.fn(),

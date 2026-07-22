@@ -54,7 +54,7 @@ async function tryLoadHtml2canvas(signal?: AbortSignal): Promise<Html2CanvasFn |
     const mod = await import('html2canvas');
     return (mod.default || mod) as unknown as Html2CanvasFn;
   } catch (err) {
-    console.warn('[kanban-export] Failed to load html2canvas:', err instanceof Error ? err.message : String(err) || 'Unknown error');
+    console.warn('[kanban-export] Failed to load html2canvas:', err instanceof Error ? err.message : String(err));
     return null;
   }
 }

@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { useGanttStore } from '../gantt-context.js';
+import type { GanttStore } from '../gantt-store.js';
 
 export type GanttDragMode = 'move' | 'resize-start' | 'resize-end';
 type DragMode = GanttDragMode | null;
@@ -17,10 +17,10 @@ interface DragState {
 }
 
 export function useGanttDrag(
+  store: GanttStore,
   _containerRef: React.RefObject<HTMLElement | null>,
   onCommit?: (taskId: string | number, changes: Record<string, string>) => void,
 ) {
-  const store = useGanttStore();
   const dragRef = useRef<DragState | null>(null);
   const ghostRef = useRef<HTMLElement | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -152,7 +152,7 @@ export function useGanttDrag(
         ghostRef.current.remove();
         ghostRef.current = null;
       }
-      if (dropIndicatorRef.current) {
+      if (dropIndicatorRef.current && document.contains(dropIndicatorRef.current)) {
         dropIndicatorRef.current.style.display = 'none';
       }
       if (dragRef.current?.originalBar) {
@@ -173,7 +173,7 @@ export function useGanttDrag(
     return () => {
       cleanupRef.current?.();
       if (ghostRef.current) ghostRef.current.remove();
-      if (dropIndicatorRef.current) {
+      if (dropIndicatorRef.current && document.contains(dropIndicatorRef.current)) {
         dropIndicatorRef.current.remove();
         dropIndicatorRef.current = null;
       }
