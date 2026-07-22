@@ -1,226 +1,157 @@
-> Audit Status: closed
+> Audit Status: planned
 > Audit Type: open-ended
 > Mission: scheduling
 
-# Open-Ended Adversarial Audit — Scheduling Mission
+# Open-Ended Adversarial Audit — Scheduling Package
 
-**Date**: 2026-07-22 (second pass)
-**Examiner**: AI agent following `docs/skills/open-ended-adversarial-review-prompt.md`
-**Scope**: `packages/flux-renderers-scheduling/` — Gantt, Kanban, Calendar, BarcodeInput
-**Prior reports read**: `docs/audits/2026-07-22-0908-open-audit-scheduling.md` (prior first pass, 12 findings), `docs/analysis/2026-07-21-1920-open-audit-scheduling/round-01.md` + `round-02.md` (F-46→F-70), `docs/analysis/2026-07-22-deep-audit-scheduling/` summaries (126 findings)
+**Date**: 2026-07-22, starting 09:08
+**Method**: Code reading + cross-referencing prior audits (2026-07-22-0908 rounds 1-3, 2026-07-22-deep-audit dimensions 1-23, 2026-07-20/21 historical reviews) + parallel content search
+**Pre-read**: AGENTS.md, react19-best-practices-review.md, reopened-design-decisions.md, docs/index.md
 
-**Deduplication**: This round found 10 new findings (F-71→F-80) not present in any prior report.
+## Duplication strategy
 
----
+All reported findings below have been cross-checked against the following prior reports to ensure novelty:
 
-## F-71: `critical-path.ts` Dead Production Code with Deprecated Type Imports
-
-**Location**: `packages/flux-renderers-scheduling/src/gantt/components/critical-path.ts` (138 lines)
-
-**Problem**: `calculateCriticalPath()` and `isCriticalTask()` are imported by zero production files. Only `critical-path.test.ts` references them. Line 1 imports `GanttTask`/`GanttLink` (internal types with computed layout fields `$x`, `$y`, `$w`, `$p`) rather than `GanttTaskData`/`GanttLinkData`, creating a stale type dependency if the old types are removed.
-
-**Why care**: Dead production code that bundles with Gantt. Test creates false-positive coverage signal. Stale type imports create maintenance risk.
-
-**Confidence**: Certain
+- `docs/analysis/2026-07-22-0908/` rounds 01-03 (convention violations, contract drift, dead code, error handling, test quality)
+- `docs/analysis/2026-07-22-deep-audit-scheduling/` dimensions 01-23 (dependency graph, module boundaries, API surface, state ownership, reactive precision, async safety, lifecycle, validation, renderer contract, security/performance, display/positioning, integration/wiring, test effectiveness)
+- `docs/analysis/2026-07-21-1920-open-audit-scheduling/` and earlier scheduling audits
+- Relevant entries in `docs/references/reopened-design-decisions-and-audit-adjudications.md`
 
 ---
 
-## F-72: Kanban Explicitly Voids `columnsOrderOwnership` and `columnsOrderStatePath` — Promised Feature Not Implemented
+## Finding 1 — `dataFingerprintRef`: Dead Ref Across Two Components
 
-**Location**: `packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx:73-76`
+**Where**:
 
-**Problem**: These two props are:
+- `packages/flux-renderers-scheduling/src/gantt/gantt.tsx:76,83`
+- `packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx:150,157`
 
-- Registered in `scheduling-renderer-definitions.ts:88-89`
-- Declared in `KanbanSchema` (kanban.types.ts:60-61)
-- Read from `resolved` at lines 73-74
-- Immediately suppressed with `void` at lines 75-76
+**What**: Both `Gantt` and `KanbanBoard` create a `useRef<number>(0)` called `dataFingerprintRef`, increment it (`dataFingerprintRef.current++`) when their primary data props change, but **never read the value** anywhere in the codebase. No dependency, no subscription, no conditional — pure write-only side effect.
 
-A consumer who reads the schema type and sets `columnsOrderOwnership: 'scope'` with a valid `columnsOrderStatePath` gets silently ignored. This contrasts with `collapsedStatePath`/`collapsedOwnership` which ARE fully implemented (lines 91-137).
+Gantt (lines 76-86):
 
-**Why care**: Schema contract promises controlled column ordering; component silently ignores it. The `void` expressions exist only to suppress TypeScript's `no-unused-vars` — they conceal an incomplete feature.
-
-**Confidence**: Certain
-
----
-
-## F-73: Calendar Weekend CSS Selector Still Broken (F-58 Repair Incomplete)
-
-**Location**: `packages/flux-renderers-scheduling/src/calendar/calendar.css:48`
-
-**Problem**: Previous round-02 reported `data-weekend="weekend"` vs CSS selector `[data-weekend="true"]`. The fix corrected the attribute value (now emits `'true'` at `calendar-month-view.tsx:223`), but the CSS selector `.nop-calendar [data-slot='calendar-cell']:has([data-weekend='true'])` still uses `:has()` which selects descendants only. Since `data-weekend` is on the **same element** as `data-slot="calendar-cell"`, the `:has()` pseudo-class never matches. A weekend cell receives no gray background.
-
-A developer inspecting `data-weekend="true"` in DevTools would see the correct attribute and assume the CSS works — silent failure.
-
-**Why care**: Weekend visual styling in the month view is entirely broken since initial implementation. The prior fix addressed only half the problem.
-
-**Confidence**: Certain
-
----
-
-## F-74: Calendar Month View `locale` Parameter Inaccessible from Schema
-
-**Location**: `packages/flux-renderers-scheduling/src/calendar/components/calendar-month-view.tsx:12-62`
-
-**Problem**: Function signature includes `locale = 'en-US'` (line 61) but `CalendarMonthViewProps` interface (lines 12-29) doesn't declare it. The `WEEKDAY_LABELS` map (lines 31-34) supports `zh-CN` and `en-US`, but the default is always `en-US` with no schema field to control it.
-
-The calendar's schema system provides `statusPath`, `viewOwnership`, `dateStatePath` etc. but not `locale`.
-
-**Why care**: Non-English users get English weekday labels with no way to change them. The i18n system (`t()` from `@nop-chaos/flux-i18n`) is used for status messages but weekday labels use a separate hardcoded mechanism.
-
-**Confidence**: Certain
-
----
-
-## F-75: Calendar Hardcoded Emoji Violates Project Convention
-
-**Location**: `packages/flux-renderers-scheduling/src/calendar/calendar.tsx:454`
-
-**Problem**: Empty-state fallback renders `📅`. AGENTS.md explicitly states: "Only use emojis if the user explicitly requests it. Avoid adding emojis to files unless asked."
-
-**Why care**: Emoji rendering is platform-inconsistent and inaccessible (screen readers may read "calendar" or ignore it). A `Calendar` icon from `lucide-react` (already a dependency) should be used instead.
-
-**Confidence**: Certain
-
----
-
-## F-76: `GanttSchema.body` Declared in Type But Never Registered or Consumed
-
-**Location**: `packages/flux-renderers-scheduling/src/schemas.ts:78` vs `scheduling-renderer-definitions.ts:9-63`
-
-**Problem**: `GanttSchema` declares `body?: SchemaInput`, but:
-
-1. `scheduling-renderer-definitions.ts` has no `{ key: 'body', kind: 'region' }`
-2. `gantt.tsx` never reads `regions.body`
-
-Contrast with `CalendarSchema.body` which IS registered and consumed (calendar.tsx:465-468). This is not marked as deprecated or reserved — it appears as a regular, usable field in the type.
-
-**Why care**: Schema authors who write `"body": [...]` in their Gantt JSON get silently ignored. No error, no warning, no rendering.
-
-**Confidence**: Certain
-
----
-
-## F-77: Deprecated Fields in Renderer Definitions Are Invisible to Schema Authors
-
-**Location**: `packages/flux-renderers-scheduling/src/scheduling-renderer-definitions.ts:23,27,28,30,36,52,53`
-
-**Problem**: Seven Gantt fields are marked `// @deprecated` in comments. The `GanttSchema` type does NOT have `@deprecated` JSDoc on any of these fields:
-
-- `scales`, `startDate`, `endDate`, `progressBarHeight`, `calendar`, `childrenField`, `initiallyExpanded`
-
-Similarly, `component:print`/`component:exportPNG`/`component:importICal`/`component:exportToICal` are marked `// @reserved` but visible as regular reaction keys.
-
-These are plain `//` comments, not JSDoc `/** @deprecated */`. The compiler framework does not surface renderer-definition comments to consumers.
-
-**Why care**: The deprecation exists only in the implementation, invisible to both JSON and TypeScript consumers. A TypeScript user sees `GanttSchema.scales` as valid with no indication it's dead. The deprecation is one-sided — maintainers know but can't communicate to consumers.
-
-**Confidence**: Certain
-
----
-
-## F-78: Gantt Undo Stack Persists Across Schema-Driven Task Replacement
-
-**Location**: `packages/flux-renderers-scheduling/src/gantt/gantt.tsx:156` + `undo-stack.ts:161-213`
-
-**Problem**: `undoStackRef` stores an `UndoStack` instance created once at line 156. When `store.parse()` re-runs (lines 78-85) on task/link/resource/assignment prop changes, the undo stack is NOT cleared. Commands captured during the previous task set reference task IDs from the old data.
-
-**Scenario**: Schema-driven Gantt loads tasks A → user drags → undo stack records `UpdateTaskCommand` → schema changes to tasks B (API refresh) → user hits undo → command tries to update a task ID that no longer exists in the store. The `updateTask` call (`gantt-store.ts:204`) does `this.store.setState` successfully (it's a no-op on `Map.set` with an existing key if the key is present, but it will add a spurious entry if the key is MISSING — actually, `Map.set` adds if key is missing). Wait: `newTasks.set(id, { ...existingTask, ...rest })` — if `id` doesn't exist in `newTasks` (which was cloned from `state.tasks`), it would ADD the task back. So the undo command would resurrect a deleted task.
-
-Actually, looking at `updateTask` in `gantt-store.ts`:
-
-```ts
-const state = this.gs();
-const task = state.tasks.get(id);
-if (!task) return;
-const newTasks = new Map(state.tasks);
-let updated = { ...task, ...rest } as GanttTask;
-newTasks.set(id, updated);
+```typescript
+const dataFingerprintRef = useRef<number>(0);
+const prevDataRef = useRef<...>({});
+useEffect(() => {
+  const newData = { tasks: resolved.tasks, ... };
+  const prev = prevDataRef.current;
+  if (newData.tasks === prev.tasks && ...) return;
+  prevDataRef.current = newData;
+  dataFingerprintRef.current++;   // ← written but never read
+  store.parse(...);
+}, [store, resolved.tasks, ...]);
 ```
 
-It returns early if the task doesn't exist. So no spurious addition. But the command references a stale `before` state. If the same task ID happens to exist in the new data, the undo would restore stale values.
+Kanban (lines 150-161):
 
-**Why care**: Cross-data-set undo corruption. Low probability if task IDs are truly ephemeral, but a correctness bug when IDs are stable across schema refreshes.
+```typescript
+const dataFingerprintRef = useRef<number>(0);
+const prevDataRef = useRef<BoardData | undefined>(undefined);
+useEffect(() => {
+  if (kanbanOwnership !== 'local') return;
+  const newData = resolved.data as BoardData | undefined;
+  if (newData === prevDataRef.current) return;
+  prevDataRef.current = newData;
+  dataFingerprintRef.current++; // ← written but never read
+  if (newData) setLocalBoardData(newData);
+}, [resolved.data, kanbanOwnership, setLocalBoardData]);
+```
 
-**Confidence**: Likely
+**Why this is worth caring about**:
+
+1. **Pattern, not isolated instance**: The deep audit's D01-03 flagged dead variable assignments for deprecated Gantt props (`_progressBarHeight`, `_childrenField`, etc.), and Round 3 Finding 3.2 flagged the `_dirty` flag in `gantt-store.ts`. But neither report caught the `dataFingerprintRef` in both components. This is the same class of problem (write-only state) spread across two components — a pattern, not a one-off.
+
+2. **Prior audit blind spot**: Deep audit dimension 04 (`04-state-ownership.md`) explicitly reviewed `dataFingerprintRef` and described it as "Correct". This is incorrect — the ref is dead code. The reviewer likely conflated `dataFingerprintRef` with the `prevDataRef` guard that does the actual comparison, assuming the fingerprint was consumed elsewhere.
+
+3. **Maintenance signal**: The ref was clearly intended to be used (name suggests a fingerprint for change detection, similar to how Gantt's `_dirty` flag was meant to track dirtiness). The fact that both components independently introduced and left this incomplete pattern suggests a recurring blind spot: authors add a dirty-tracking ref but forget to wire the consumption side.
+
+**Confidence**: Determinate — code analysis confirms zero reads of `dataFingerprintRef.current` across the entire package.
 
 ---
 
-## F-79: `useGanttDrag` Drop Indicator Element Can Leak into DOM
+## Finding 2 — i18n Gap: Untranslated ARIA Labels in BarcodeInput
 
-**Location**: `packages/flux-renderers-scheduling/src/gantt/hooks/use-gantt-drag.ts:31-41,172-181`
+**Where**: `packages/flux-renderers-scheduling/src/barcode-input/barcode-input.tsx:209,219`
 
-**Problem**: `ensureDropIndicator()` lazily appends a `<div>` to `document.body`. The cleanup effect (line 172) removes it on unmount. But if a stale pointer event calls `onPointerDown` after cleanup has run (e.g., during unmount timing), `ensureDropIndicator()` creates a new element that no cleanup path can remove.
+**What**: Two ARIA labels are hardcoded English strings:
 
-**Why care**: DOM node leak in a SPA with frequent Gantt mount/unmount cycles. Each stale event adds one orphaned `<div>` to `<body>`.
+```typescript
+aria-label="Clear"           // line 209
+aria-label="Scan barcode"    // line 219
+```
 
-**Confidence**: Likely (edge case)
+The same package (`@nop-chaos/flux-renderers-scheduling`) already depends on `@nop-chaos/flux-i18n` and uses it extensively:
+
+- `calendar.tsx` — `t('scheduling.calendar.morningShift')`, `t('scheduling.noScheduleData')`, etc.
+- `kanban-board.tsx` — `t('scheduling.kanban.searchCards')`, `t('scheduling.kanban.undo')`, etc.
+- `barcode-scanner-overlay.tsx` — `t('flux.barcode.recognizing')`, `t('flux.cameraUnavailable')`, etc.
+
+The barcode-input main component is the only UI in the scheduling package with zero `t()` calls.
+
+**Why care**: ARIA labels are exposed to assistive technology. Screen reader users experience the UI in English regardless of the application's locale. For a low-code platform with a Chinese-first positioning (evidenced by `locale: 'zh-CN'` default in `calendar.tsx:78`), this creates an inconsistent accessibility experience.
+
+**Root cause**: The barcode-input renderer was likely developed before the i18n conventions were applied to Calendar and Kanban, and was never retrofitted.
+
+**Confidence**: Determinate — code shows no `t()` usage in `barcode-input.tsx`, only in the sibling `barcode-scanner-overlay.tsx`.
 
 ---
 
-## F-80: Calendar `isToday()` Uses Local `new Date()` Against UTC Date — Midnigh Boundary Wrong Highlight
+## Finding 3 — `@apply` Directives in Copy-Assembled CSS (Tailwind v4 Build Risk)
 
-**Location**: `packages/flux-renderers-scheduling/src/calendar/utils/calendar-date-utils.ts:56-59`
+**Where**: `packages/flux-renderers-scheduling/src/calendar/calendar.css:2,6,10,14,18` (and other lines)
 
-**Problem** (re-reported — previously F-59, check for fix):
+**What**: Calendar's CSS uses Tailwind v4 `@apply` directives:
 
-```ts
-export function isToday(date: Date): boolean {
-  const now = new Date();
-  const utcToday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  return isSameDay(date, utcToday);
+```css
+.nop-calendar {
+  @apply flex flex-col h-full min-h-0;
+}
+.nop-calendar [data-event-type='shift'] {
+  @apply bg-green-400;
 }
 ```
 
-`now` is a local-time `new Date()`. If the local time is 11 PM on July 21 and the calendar is viewing July 22 in UTC (because all calendar date math uses `getUTCFullYear`/`getUTCMonth`/`getUTCDate`), then `now.getFullYear()/getMonth()/getDate()` return July 21 local while the calendar cell represents July 22 UTC. The cell highlighted as "today" differs from the user's actual local today.
+These files are **copy-assembled** to `dist/` by the build script without Tailwind processing:
 
-The rest of `calendar-date-utils.ts` consistently uses UTC methods (`getUTCFullYear`, `setUTCDate`, etc.). Only `isToday()` mixes local and UTC — it creates `utcToday` from `now`'s local date components, then compares against the UTC-based `date`.
+```
+# package.json build script (line 58):
+"build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css src/calendar/calendar.css dist/calendar/calendar.css ..."
+```
 
-**Why care**: Users near the midnight timezone boundary will see the wrong cell highlighted as "today". The calendar is UTC-consistent everywhere except this one function.
+The `copy-build-assets.mjs` script copies CSS files as-is. `postcss`/`lightningcss` processing happens in the consumer's Vite pipeline, not during `pnpm build` for this package.
 
-**Confidence**: Certain
+**Why care**: If a consumer imports the pre-built CSS (`@nop-chaos/flux-renderers-scheduling/styles.css` → `dist/styles.css`), the `@apply` directives reach the browser if the consumer's build tool does not process Tailwind directives in `node_modules`. In Tailwind v4 specifically:
 
----
+- `@apply` is processed by the Tailwind CSS plugin during Vite compilation
+- CSS files under `node_modules/` or workspace `dist/` are typically excluded from Tailwind's content scanning
+- The `@source` directive in the playground's `styles.css` sources the `packages/` **source tree**, not the `dist/` output — the `@apply` directives in built output would not be processed
 
-## Total Assessment
+**Evidence of the issue**: The playground `apps/playground/src/styles.css` uses `@source "../../../packages"` which tells Tailwind to scan the source packages. But consumers importing from `dist/styles.css` would load files that have `@apply` already baked in but unresolved.
 
-| ID   | Severity | File                                                      | Issue                                                                                |
-| ---- | -------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| F-71 | P3       | `critical-path.ts`                                        | Dead production code (138 lines), deprecated type imports                            |
-| F-72 | P2       | `kanban-board.tsx:73-76`                                  | `columnsOrderOwnership`/`columnsOrderStatePath` explicitly voided — promised feature |
-| F-73 | P2       | `calendar.css:48`                                         | Weekend selector `:has()` never matches — F-58 half-fixed                            |
-| F-74 | P2       | `calendar-month-view.tsx:61-62`                           | `locale` param inaccessible from schema; hardcoded `en-US`                           |
-| F-75 | P3       | `calendar.tsx:454`                                        | Hardcoded emoji violates AGENTS.md convention                                        |
-| F-76 | P2       | `schemas.ts:78`                                           | `GanttSchema.body` declared but never registered or consumed                         |
-| F-77 | P2       | `scheduling-renderer-definitions.ts:23,27,28,30,36,52,53` | Deprecated fields invisible to consumers                                             |
-| F-78 | P2       | `gantt.tsx:156`, `undo-stack.ts:161-213`                  | Undo stack not cleared on schema data refresh                                        |
-| F-79 | P3       | `use-gantt-drag.ts:31-41,172-181`                         | Drop indicator DOM leak on stale pointer events                                      |
-| F-80 | P2       | `calendar-date-utils.ts:56-59`                            | `isToday()` mixes local/UTC — near-midnight wrong highlight                          |
-
-### Key Patterns Detected
-
-1. **Half-repaired bugs** (2 findings): F-73 (weekend CSS selector attribute fixed but selector broken) and F-80 (`isToday()` still broken — not verified if F-59 was actually fixed). The prior F-58 fix was incomplete.
-
-2. **Silent contract drift** (3 findings): F-72 (void expressions concealing unfinished feature), F-76 (unregistered `body` field), F-77 (deprecation invisible to consumers). All three create a gap between what the type/definition promises and what the component delivers.
-
-3. **Dead code with maintenance risk** (1 finding): F-71 (`critical-path.ts`). Clearable with a single deletion.
-
-### Blind Spots Self-Assessment
-
-What this round likely missed:
-
-1. **Actual test execution**: Did not run `pnpm test --filter @nop-chaos/flux-renderers-scheduling` to verify which prior findings would fail and whether the current round-02 fixes actually pass. Some findings (F-63) appeared fixed by code inspection but test confirmation would be stronger.
-
-2. **Cross-package contract audit**: Did not verify whether `RendererComponentProps` generic narrowing works correctly across the `flux-core` → `flux-react` → `flux-renderers-scheduling` boundary for `GanttSchema`, `KanbanSchema`, etc. Type narrowing issues could exist at the `RendererDefinition.component` generic parameter.
-
-3. **CSS-in-JS conflicts**: Did not check whether Tailwind v4 `@source` directive effectively picks up `*.css` files from this package (known monorepo issue #14).
-
-4. **Dynamic import paths for Calendar `component:exportPNG`/`component:print`**: Did not verify whether the optional peer deps (`html2canvas`, `jspdf`) are imported correctly and not bundled into the main chunk.
-
-5. **Kanban undo stack memory pressure**: Did not test with 10,000+ cards to verify the 1000-entry undo limit (kanban-undo-stack.ts) doesn't cause OOM or jank.
-
-Best starting point for next round: **run the scheduling test suite** against HEAD, confirm which prior findings surface as test failures, then do a cross-package type narrowing audit at the `scheduling-renderer-definitions.ts` → `flux-core` `registerRendererDefinitions()` boundary.
+**Confidence**: Likely — depends on how the CSS is consumed. For the playground and Vite-based consumers in the monorepo, CSS goes through the Tailwind pipeline and `@apply` is resolved. But for direct CSS import consumers or non-Vite setups, the `@apply` directives will be left as invalid CSS.
 
 ---
 
-<AI_STEP_RESULT>issues</AI_STEP_RESULT>
+## Overall Assessment
+
+### Most interesting direction
+
+The three findings share a common theme: **partial implementation left behind after a conscious design choice changed**:
+
+- `dataFingerprintRef` suggests a planned fingerprint-based change detection that was replaced by direct reference comparison + `prevDataRef`. The ref stub was left as a write-only artifact.
+- Barcode-input's i18n gap suggests the i18n convention was applied to Calendar and Kanban (the more complex renderers) but missed BarcodeInput (the simpler, earlier, or less-visited renderer).
+- The `@apply` + copy-assembly pattern suggests the build pipeline was designed for a workflow where CSS processing happens at the consumer level, but `@apply` directives were introduced into files that are also published independently.
+
+These aren't isolated bugs — they're **completeness gaps** at the boundary between a design decision and its execution sweep.
+
+### Blind spot self-assessment
+
+This review likely missed:
+
+1. **Runtime behavior verification** — I didn't run the tests or the application. There could be runtime failures, flaky tests, or memory leaks that are invisible from code reading alone.
+2. **The `gantt-grid.tsx` raw `<table>`/`<button>` elements** — Round 1 Finding 1.3 already covered these comprehensively. I verified the list but didn't look for additional instances.
+3. **Cross-package contract drift** — I focused entirely on the scheduling package. The interface between scheduling definitions and the `RendererRegistry`/compiler layer could have type-level mismatches I didn't probe.
+4. **Accessibility beyond i18n** — Keyboard navigation patterns, focus management, and screen reader announcements need manual testing.
+
+If a next round is done, the highest-value entry point would be: **run `pnpm build` for the scheduling package and inspect the built CSS output** to confirm whether `@apply` directives survive to production, then verify the playground renders correctly with the built scheduling styles.
