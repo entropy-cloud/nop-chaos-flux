@@ -243,6 +243,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'Barcode scanner input with camera scan overlay, batch queue, torch control, and offline degradation.',
   },
   {
+    id: 'diff-view',
+    title: 'Diff View',
+    eyebrow: 'Scheduling',
+    description: 'Two-pane text diff comparison with split/unified views, syntax highlighting, inline diffs, hunk folding, and virtual scrolling.',
+  },
+  {
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',
@@ -479,6 +485,18 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     eyebrow: 'All Mobile (M1–M5)',
     description:
       'Comprehensive mobile showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers — all in one page.',
+  },
+  {
+    id: 'calendar-perf-scale',
+    title: 'Calendar Performance Scale',
+    eyebrow: 'Performance',
+    description: 'High-scale calendar performance test with 300 resources × 31 days.',
+  },
+  {
+    id: 'kanban-perf-scale',
+    title: 'Kanban Performance Scale',
+    eyebrow: 'Performance',
+    description: 'High-scale kanban performance test with 20 columns × 300 cards.',
   },
   {
     id: 'data-verify',

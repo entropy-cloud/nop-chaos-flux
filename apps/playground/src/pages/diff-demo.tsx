@@ -131,7 +131,8 @@ export function DiffDemoPage({ onBack }: DiffDemoPageProps) {
   const [viewType, setViewType] = useState<'split' | 'unified'>('split');
   const [showInlineDiff, setShowInlineDiff] = useState(true);
   const [showLineNumbers, setShowLineNumbers] = useState(true);
-  const [mode, setMode] = useState<'single' | 'three-column' | 'cross-file'>('single');
+  const initialMode = (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('mode') : null) as 'single' | 'three-column' | 'cross-file' | null;
+  const [mode, setMode] = useState<'single' | 'three-column' | 'cross-file'>(initialMode ?? 'single');
 
   const singleSchema = {
     type: 'diff-view',
