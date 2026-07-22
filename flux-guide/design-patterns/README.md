@@ -2,35 +2,42 @@
 
 常见业务场景的标准解法。每个模式是一个自包含的完整 JSON，可直接参考。
 
-| #   | 模式                            | 场景                                                                                                                                                                                          |
-| --- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `crud.md`                       | 标准 CRUD + 搜索 + 新增/编辑/删除                                                                                                                                                             |
-| 2   | `form.md`                       | 表单提交 + 校验 + 嵌套表单                                                                                                                                                                    |
-| 3   | `data-source.md`                | 命名数据源 + 轮询 + 公式派生                                                                                                                                                                  |
-| 4   | `conditional.md`                | 显隐 + 条件激活 + loop 集合展开                                                                                                                                                               |
-| 5   | `custom.md`                     | 自定义渲染器 / 自定义表单项 / 自定义动作                                                                                                                                                      |
-| 6   | `tabs.md`                       | Tab 导航布局 + 受控/非受控切换                                                                                                                                                                |
-| 7   | `cascading-select.md`           | 远程选项联动（省市区级联）                                                                                                                                                                    |
-| 8   | `file-upload.md`                | 文件/图片上传                                                                                                                                                                                 |
-| 9   | `cards.md`                      | 卡片列表展示                                                                                                                                                                                  |
-| 10  | `layout.md`                     | 布局容器选型（container/flex/grid）                                                                                                                                                           |
-| 11  | `wizard.md`                     | Wizard 多步骤向导                                                                                                                                                                             |
-| 12  | `chart.md`                      | Chart 图表（bar/line/pie/area）                                                                                                                                                               |
-| 13  | `dynamic-renderer.md`           | DynamicRenderer 动态加载 schema                                                                                                                                                               |
-| 14  | `tree.md`                       | Tree & TreeSelect 树形组件                                                                                                                                                                    |
-| 15  | `collapse.md`                   | Collapse 折叠面板                                                                                                                                                                             |
-| 16  | `content-display.md`            | Card / Alert / Status / Mapping 内容展示                                                                                                                                                      |
-| 17  | `combo-input-table.md`          | Combo & InputTable 可编辑集合                                                                                                                                                                 |
-| 18  | `button-group.md`               | ButtonGroup & DropdownButton 按钮组合                                                                                                                                                         |
-| 19  | `steps-timeline.md`             | Steps & Timeline 过程展示                                                                                                                                                                     |
-| 20  | `picker-transfer.md`            | Picker & Transfer 选择类控件                                                                                                                                                                  |
-| 21  | `form-advanced-fields.md`       | TagList / KeyValue / ArrayEditor / InputTree / ConditionBuilder                                                                                                                               |
-| 22  | `composite-fields.md`           | ObjectField / VariantField / DetailField / DetailView 复合字段                                                                                                                                |
-| 23  | `table.md`                      | Table 数据表格（列配置/排序/筛选/行选择/虚拟滚动）                                                                                                                                            |
-| 24  | `list.md`                       | List 列表展示（卡片式/选择/分页/无限滚动）                                                                                                                                                    |
-| 25  | `form-basic-fields.md`          | Textarea / Checkbox / Switch / RadioGroup / CheckboxGroup / InputNumber / InputDate / Fieldset                                                                                                |
-| 26  | `date-fields.md`                | InputDate / InputDatetime / InputTime / InputMonth / InputQuarter / InputYear / DateRange                                                                                                     |
-| 27  | `page-dialog-drawer.md`         | Page / Dialog / Drawer 容器组件                                                                                                                                                               |
-| 28  | `pagination-separator.md`       | Pagination 分页 / Separator 分隔线                                                                                                                                                            |
-| 29  | `content-display-components.md` | Icon / Badge / Link / Image / HTML / JSON View / Markdown / Statistics / Empty / Spinner / Progress                                                                                           |
-| 30  | `remaining-components.md`       | Transfer / Picker / DropdownButton / ScopeDebug / Audio / Video / Carousel / QrCode / TreeSelect / InputTree / TagList / KeyValue / ArrayEditor / ConditionBuilder / DetailField / DetailView |
+| #   | 模式                            | 场景                                                                                                                                                      |
+| --- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `crud.md`                       | 标准 CRUD + 搜索 + 新增/编辑/删除                                                                                                                         |
+| 2   | `form.md`                       | 表单提交 + 校验 + 嵌套表单                                                                                                                                |
+| 3   | `data-source.md`                | 命名数据源 + 轮询 + 公式派生                                                                                                                              |
+| 4   | `conditional.md`                | 显隐 + 条件激活 + loop 集合展开                                                                                                                           |
+| 5   | `custom.md`                     | 自定义渲染器 / 自定义表单项 / 自定义动作                                                                                                                  |
+| 6   | `tabs.md`                       | Tab 导航布局 + 受控/非受控切换                                                                                                                            |
+| 7   | `cascading-select.md`           | 远程选项联动（省市区级联）                                                                                                                                |
+| 8   | `file-upload.md`                | 文件/图片上传                                                                                                                                             |
+| 9   | `cards.md`                      | 卡片列表展示                                                                                                                                              |
+| 10  | `layout.md`                     | 布局容器选型（container/flex/grid）                                                                                                                       |
+| 11  | `wizard.md`                     | Wizard 多步骤向导                                                                                                                                         |
+| 12  | `chart.md`                      | Chart 图表（bar/line/pie/area）                                                                                                                           |
+| 13  | `dynamic-renderer.md`           | DynamicRenderer 动态加载 schema                                                                                                                           |
+| 14  | `tree.md`                       | Tree & TreeSelect 树形组件                                                                                                                                |
+| 15  | `collapse.md`                   | Collapse 折叠面板                                                                                                                                         |
+| 16  | `content-display.md`            | Card / Alert / Status / Mapping 内容展示                                                                                                                  |
+| 17  | `combo-input-table.md`          | Combo & InputTable 可编辑集合                                                                                                                             |
+| 18  | `button-group.md`               | ButtonGroup & DropdownButton 按钮组合                                                                                                                     |
+| 19  | `steps-timeline.md`             | Steps & Timeline 过程展示                                                                                                                                 |
+| 20  | `picker-transfer.md`            | Picker & Transfer 选择类控件                                                                                                                              |
+| 21  | `form-advanced-fields.md`       | TagList / KeyValue / ArrayEditor / InputTree / ConditionBuilder                                                                                           |
+| 22  | `composite-fields.md`           | ObjectField / VariantField / DetailField / DetailView 复合字段                                                                                            |
+| 23  | `table.md`                      | Table 数据表格（列配置/排序/筛选/行选择/虚拟滚动）                                                                                                        |
+| 24  | `list.md`                       | List 列表展示（卡片式/选择/分页/无限滚动）                                                                                                                |
+| 25  | `form-basic-fields.md`          | Textarea / Checkbox / Switch / RadioGroup / CheckboxGroup / InputNumber / InputDate / Fieldset                                                            |
+| 26  | `date-fields.md`                | InputDate / InputDatetime / InputTime / InputMonth / InputQuarter / InputYear / DateRange                                                                 |
+| 27  | `page-dialog-drawer.md`         | Page / Dialog / Drawer 容器组件                                                                                                                           |
+| 28  | `pagination-separator.md`       | Pagination 分页 / Separator 分隔线                                                                                                                        |
+| 29  | `content-display-components.md` | Icon / Badge / Link / Image / HTML / JSON View / Markdown / Statistics / Empty / Spinner / Progress                                                       |
+| 30  | `media.md`                      | Audio / Video / Carousel 媒体组件                                                                                                                         |
+| 31  | `qrcode.md`                     | QR Code 二维码                                                                                                                                            |
+| 32  | `diff-view.md`                  | Diff View 差异对比（单文件/多文件 split/unified）                                                                                                         |
+| 33  | `gantt.md`                      | Gantt 甘特图（任务层级/依赖链接/基线/可拖拽）                                                                                                             |
+| 34  | `kanban.md`                     | Kanban 看板（拖拽列与卡片/过滤）                                                                                                                          |
+| 35  | `calendar.md`                   | Calendar 日历（月/周/日视图/资源分组/事件编辑）                                                                                                           |
+| 36  | `barcode-input.md`              | Barcode Input 条码输入（摄像头扫码/连续扫码/批量模式）                                                                                                    |
+| 37  | `remaining-components.md`       | Transfer / Picker / DropdownButton / ScopeDebug / TreeSelect / InputTree / TagList / KeyValue / ArrayEditor / ConditionBuilder / DetailField / DetailView |

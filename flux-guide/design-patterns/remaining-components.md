@@ -1,6 +1,8 @@
 # 其他组件
 
-> 低频/调试/媒体类组件速查。所有字段定义见 `flux-types/schema.d.ts`。
+> 低频/调试类组件速查。所有字段定义见 `flux-types/schema.d.ts`。
+>
+> 媒体组件（Audio / Video / Carousel）见 `media.md`、二维码见 `qrcode.md`。
 
 ---
 
@@ -66,61 +68,7 @@
 
 ---
 
-## 5. Audio 音频
-
-```jsonc
-{
-  "type": "audio",
-  "src": "${audioUrl}",
-  "controls": true,
-}
-```
-
----
-
-## 6. Video 视频
-
-```jsonc
-{
-  "type": "video",
-  "src": "${videoUrl}",
-  "controls": true,
-  "width": 640,
-  "height": 360,
-}
-```
-
----
-
-## 7. Carousel 轮播图
-
-```jsonc
-{
-  "type": "carousel",
-  "items": [
-    { "image": "/img/1.jpg", "title": "图片1" },
-    { "image": "/img/2.jpg", "title": "图片2" },
-  ],
-  "autoPlay": true,
-  "interval": 3000,
-}
-```
-
----
-
-## 8. QrCode 二维码
-
-```jsonc
-{
-  "type": "qrcode",
-  "value": "https://example.com",
-  "size": 200,
-}
-```
-
----
-
-## 9. TreeSelect 树选择
+## 5. TreeSelect 树选择
 
 ```jsonc
 {
@@ -134,7 +82,7 @@
 
 ---
 
-## 10. InputTree 输入树
+## 6. InputTree 输入树
 
 ```jsonc
 {
@@ -148,7 +96,7 @@
 
 ---
 
-## 11. TagList 标签列表
+## 7. TagList 标签列表
 
 ```jsonc
 {
@@ -161,7 +109,7 @@
 
 ---
 
-## 12. KeyValue 键值对
+## 8. KeyValue 键值对
 
 ```jsonc
 {
@@ -173,7 +121,7 @@
 
 ---
 
-## 13. ArrayEditor 数组编辑器
+## 9. ArrayEditor 数组编辑器
 
 ```jsonc
 {
@@ -186,7 +134,7 @@
 
 ---
 
-## 14. ConditionBuilder 条件构建器
+## 10. ConditionBuilder 条件构建器
 
 ```jsonc
 {
@@ -199,7 +147,7 @@
 
 ---
 
-## 15. DetailField 详情字段
+## 11. DetailField 详情字段
 
 ```jsonc
 {
@@ -214,7 +162,7 @@
 
 ---
 
-## 16. DetailView 详情视图
+## 12. DetailView 详情视图
 
 ```jsonc
 {
