@@ -1,6 +1,6 @@
 # 复杂交互组件显示与可操作性审计 Skill
 
-> 用途：对 gantt / kanban / calendar / scheduler / 任意 designer 等"复杂交互渲染器"做**事后功能正确性验证**——确认它真的"显示正确且可操作"，而非"能跑就行"。
+> 用途：对复杂度超过阈值的交互渲染器做**事后功能正确性验证**——确认它真的"显示正确且可操作"，而非"能跑就行"。
 > 审查对象：已实现的渲染器组件 + 其 design.md + playground demo + 单测。
 > 前置阅读：`docs/components/index.md`、`docs/architecture/renderer-runtime.md`、被审组件的 `docs/components/<type>/design.md`、（若有）`~/sources/complex-controls/` 下对应开源参考
 > 与其他 skill 的关系：
@@ -8,7 +8,28 @@
 > - 本 skill 是**事后验证**；`flux-component-design-review-prompt.md` 是**事前设计审查**（审 design.md 合规性）。两者互补：设计审查过了不代表实现渲染正确。
 > - 本 skill 是 `deep-audit-prompts.md` 维度 21/22/23 的**轻量单 pass 独立版**。**若本次审计已在跑 deep-audit 的 G 组（维度 21/22/23），勿重复跑本 skill**——二者检查项同源，重复执行纯属浪费。
 >   触发词：组件显示不对、渲染错位、交互失灵、拖拽无效、视图切换无效、组件操作不了、显示效果差、complex component audit、display operability audit
->   起源：`docs/bugs/71-scheduling-deep-audit-blind-spot-display-operability-test-effectiveness.md`——scheduling 包曾通过多维度审计（维度 05/06/19/20）+ 600+ 单测全绿却带 12 个 P0 发布。
+>   起源：`docs/bugs/71-scheduling-deep-audit-blind-spot-display-operability-test-effectiveness.md`——scheduling 包曾通过多维度审计（维度 05/06/19/20）+ 600+ 单测全绿却带 12 个 P0 发布。**该盲区不局限于特定组件类型**，而是所有满足复杂度阈值（≥3 项 C1-C10）的组件共有的风险。
+
+---
+
+## 适用范围：复杂度阈值
+
+本 skill **不限定组件类型**，而是按复杂度阈值判断是否适用。满足以下 **任意 3 项及以上**的组件应接受本审计：
+
+| #   | 复杂度特征                                                                   | 示例                                                                |
+| --- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| C1  | **多视图/多模式切换**（split/unified、月/周/日、grid/timeline）              | diff-view 视图切换、calendar 视图切换、gantt 缩放级别               |
+| C2  | **定位算法**（数据→坐标/尺寸的纯函数，非简单 flex 布局）                     | gantt 任务条定位、calendar 事件定位、diff 行号 gutter               |
+| C3  | **拖拽/指针交互**（pointer 事件、自定义拖拽、DnD 库集成）                    | gantt 任务拖拽、kanban 卡片拖拽、calendar 班次交换                  |
+| C4  | **虚拟滚动/大列表**（@tanstack/react-virtual 或自建虚拟化）                  | calendar 行虚拟化、kanban 卡片虚拟化、diff 大文件虚拟滚动           |
+| C5  | **语法高亮/富内容渲染**（dangerouslySetInnerHTML、预渲染 HTML）              | diff-view 语法高亮、code-editor                                     |
+| C6  | **跨组件/跨文件协调**（文件列表+主视图、多面板联动）                         | diff-view 跨文件导航、gantt grid↔timeline 滚动同步                  |
+| C7  | **状态机/阶段管理**（loading→ready→error、phase 管理）                       | barcode-overlay 相机生命周期、service 数据加载                      |
+| C8  | **外部库深度集成**（DnD 库、解码库、diff 库、虚拟化库）                      | kanban 用 pragmatic-dnd、barcode 用 zxing、diff 用 diff-match-patch |
+| C9  | **键盘导航/无障碍**（roving tabindex、方向键语义、ARIA）                     | gantt 键盘导航、kanban 键盘移动、diff 行点击                        |
+| C10 | **事件/句柄/region 复杂接线**（onXxx 事件、component:xxx 句柄、region 模板） | gantt onTaskDragEnd、kanban columnHeader region、diff onLineClick   |
+
+**判断规则**：若组件满足 ≥3 项 C1-C10，且已有实现代码（非纯设计文档），则本审计适用。简单展示组件（text、badge、icon）或纯布局容器（flex、container）不适用。
 
 ---
 
