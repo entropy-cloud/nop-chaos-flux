@@ -1,221 +1,225 @@
-> Audit Status: closed
+> Audit Status: planned
 > Audit Type: open-ended
 > Mission: scheduling
 
 # Open-Ended Adversarial Audit — Scheduling Mission
 
-**Date**: 2026-07-22
+**Date**: 2026-07-22 (second pass)
 **Examiner**: AI agent following `docs/skills/open-ended-adversarial-review-prompt.md`
 **Scope**: `packages/flux-renderers-scheduling/` — Gantt, Kanban, Calendar, BarcodeInput
+**Prior reports read**: `docs/audits/2026-07-22-0908-open-audit-scheduling.md` (prior first pass, 12 findings), `docs/analysis/2026-07-21-1920-open-audit-scheduling/round-01.md` + `round-02.md` (F-46→F-70), `docs/analysis/2026-07-22-deep-audit-scheduling/` summaries (126 findings)
 
-**Prior analysis consulted**: None (`docs/analysis/` directory did not exist prior to this execution)
-**Reopened decisions consulted**: `docs/references/reopened-design-decisions-and-audit-adjudications.md` — no overlaps found; the scheduling package issues do not match previously adjudicated patterns (declarative surface double-state, wrapped secondary actions, or scope-projection chain interruption).
-
----
-
-## 1. Gantt — Ad-hoc React Context (Explicit Convention Violation)
-
-**Location**: `packages/flux-renderers-scheduling/src/gantt/gantt-context.tsx:12`
-
-**Problem**: `createContext<GanttStore | null>(null)` creates an ad-hoc React Context.
-AGENTS.md states: **"NEVER create ad-hoc React contexts."**
-
-The file includes a rationale comment (lines 1-8) explaining "Gantt has a deeply nested component tree where prop drilling would be impractical." This is a deliberate override of a hard project rule.
-
-**Impact**: This creates a second data-access convention alongside the sanctioned `@nop-chaos/flux-react` hooks (`useRendererRuntime()`, `useRenderScope()`, `useScopeSelector()`). The pattern is copyable — next renderer author will legitimately ask: "Gantt uses context, why can't I?" The Context-based subscription also bypasses the fine-grained selector-based reactivity that Zustand + `useSyncExternalStore` enables; `u`seGanttStoreSnapshot` subscribes to any state change (`store.subscribe` fires unconditionally), so all consumers re-render together.
-
-**Confidence**: Determinate
+**Deduplication**: This round found 10 new findings (F-71→F-80) not present in any prior report.
 
 ---
 
-## 2. Pattern: Unused Standard Hook Calls Across All Renderers
+## F-71: `critical-path.ts` Dead Production Code with Deprecated Type Imports
 
-**Locations**:
+**Location**: `packages/flux-renderers-scheduling/src/gantt/components/critical-path.ts` (138 lines)
 
-- `gantt/gantt.tsx:54` — `const _runtime = useRendererRuntime()` (unused)
-- `calendar/calendar.tsx:51` — `const _runtime = useRendererRuntime()` (unused)
-- `calendar/calendar.tsx:52` — `const _scope = useRenderScope()` (unused; then called again at line 95)
-- `barcode-input/barcode-input.tsx:14-15` — Both `_runtime` and `_scope` unused
+**Problem**: `calculateCriticalPath()` and `isCriticalTask()` are imported by zero production files. Only `critical-path.test.ts` references them. Line 1 imports `GanttTask`/`GanttLink` (internal types with computed layout fields `$x`, `$y`, `$w`, `$p`) rather than `GanttTaskData`/`GanttLinkData`, creating a stale type dependency if the old types are removed.
 
-**Impact**: These are dead store subscriptions that still cause re-renders when the scope changes. In calendar.tsx, `useRenderScope()` is called twice (once dead, once live) — unnecessary overhead. The pattern suggests copy-paste boilerplate rather than intentional hook usage. `_helpers` is also destructured but unused in `gantt.tsx:53`, `calendar.tsx:50`, and `barcode-input.tsx:13`.
+**Why care**: Dead production code that bundles with Gantt. Test creates false-positive coverage signal. Stale type imports create maintenance risk.
 
-**Confidence**: Determinate
+**Confidence**: Certain
 
 ---
 
-## 3. Pattern: Raw HTML Elements Instead of `@nop-chaos/ui` Components
+## F-72: Kanban Explicitly Voids `columnsOrderOwnership` and `columnsOrderStatePath` — Promised Feature Not Implemented
 
-**Scope**: 17 locations across all 4 sub-packages. Summary:
+**Location**: `packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx:73-76`
 
-| Renderer                   | Raw HTML                                                                       | Should use                                                                                   |
-| -------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| Gantt grid                 | `<table>`, `<thead>`, `<tr>`, `<th>`, `<tbody>`, `<td>`, `<button>`, `<input>` | `Table`, `TableHeader`, `TableRow`, `TableHead`, `TableBody`, `TableCell`, `Button`, `Input` |
-| Gantt scheduler-config     | `<select>` (×2)                                                                | `NativeSelect`                                                                               |
-| Kanban column-header       | `<button>`                                                                     | `Button`                                                                                     |
-| Kanban activity-log        | `<button>`                                                                     | `Button`                                                                                     |
-| Kanban tag-filter          | `<button>` (×2)                                                                | `Button`                                                                                     |
-| Kanban card-tags           | `<img>`                                                                        | `Avatar`                                                                                     |
-| Calendar batch-scheduler   | `<input type="checkbox">`, `<input type="radio">`, `<label>`                   | `Checkbox`, `RadioGroup`/`RadioGroupItem`, `Label`                                           |
-| Calendar overlay           | `<div role="dialog">`                                                          | `Dialog`                                                                                     |
-| Calendar timezone-selector | `<button>` (×2)                                                                | `Button`                                                                                     |
-| Calendar resource-group    | `<button>`                                                                     | `Button`                                                                                     |
-| Barcode input              | `<span>×</span>`, `<div>` spinner                                              | lucide `X` icon, `Spinner`                                                                   |
+**Problem**: These two props are:
 
-**Impact**: AGENTS.md mandates checking `packages/ui/src/index.ts` before writing raw HTML. The UI package provides theme-compatible, accessible, keyboard-enabled components. This pattern of raw HTML bypasses the entire design system. The kanban board (`kanban-board.tsx`) proves the imports work — it already uses `Button`, `Input`, `Label` correctly — but sub-components don't follow suit.
+- Registered in `scheduling-renderer-definitions.ts:88-89`
+- Declared in `KanbanSchema` (kanban.types.ts:60-61)
+- Read from `resolved` at lines 73-74
+- Immediately suppressed with `void` at lines 75-76
 
-**Confidence**: Determinate
+A consumer who reads the schema type and sets `columnsOrderOwnership: 'scope'` with a valid `columnsOrderStatePath` gets silently ignored. This contrasts with `collapsedStatePath`/`collapsedOwnership` which ARE fully implemented (lines 91-137).
+
+**Why care**: Schema contract promises controlled column ordering; component silently ignores it. The `void` expressions exist only to suppress TypeScript's `no-unused-vars` — they conceal an incomplete feature.
+
+**Confidence**: Certain
 
 ---
 
-## 4. Pattern: `useCallback`/`useMemo` Overuse (React Compiler Redundancy)
+## F-73: Calendar Weekend CSS Selector Still Broken (F-58 Repair Incomplete)
 
-**Scope**: 15+ memoization sites across the package (Gantt: 6 `useCallback`, Kanban: 2 `useCallback` + 3 `useMemo`, Calendar: 7 `useMemo` + 1 `useCallback`, Barcode scanner: 5 `useCallback`/`useMemo`).
+**Location**: `packages/flux-renderers-scheduling/src/calendar/calendar.css:48`
 
-**Impact**: Per `docs/skills/react19-best-practices-review.md` §"React Compiler 自动记忆化": React Compiler at error level handles all memoization automatically. Manual `useCallback`/`useMemo` are redundant. They add dependency-array maintenance burden and signal pre-React-19 coding patterns. The project guideline specifically says: "不要为新代码引入手写 useCallback" and "禁止为了'显式表达意图'而手写 memo."
+**Problem**: Previous round-02 reported `data-weekend="weekend"` vs CSS selector `[data-weekend="true"]`. The fix corrected the attribute value (now emits `'true'` at `calendar-month-view.tsx:223`), but the CSS selector `.nop-calendar [data-slot='calendar-cell']:has([data-weekend='true'])` still uses `:has()` which selects descendants only. Since `data-weekend` is on the **same element** as `data-slot="calendar-cell"`, the `:has()` pseudo-class never matches. A weekend cell receives no gray background.
 
-Not a correctness issue, but a code-style convergence concern across the whole scheduling package.
+A developer inspecting `data-weekend="true"` in DevTools would see the correct attribute and assume the CSS works — silent failure.
 
-**Confidence**: Determinate
+**Why care**: Weekend visual styling in the month view is entirely broken since initial implementation. The prior fix addressed only half the problem.
 
----
-
-## 5. Gantt: 15+ Declared Fields Not Implemented (Contract Drift)
-
-**Location**: `scheduling-renderer-definitions.ts:9-63` vs `gantt/gantt.tsx`
-
-**Unwired events**: `onTaskClick`, `onTaskDoubleClick`, `onLinkClick`, `onEmptyCellClick`, `onZoomChange`, `onScroll`
-**Unwired props**: `draggable`, `editable`, `linkable`, `progressBarHeight`, `childrenField`, `initiallyExpanded`, `calendar`, `startDate`, `endDate`
-**Unwired regions**: `body`, `empty`, `loading`
-**Unapplied className props**: `toolbarClassName`, `taskBarClassName`, `editorClassName`, `emptyClassName`
-
-**Impact**: Roughly one-third of the Gantt's declared public API is non-functional. Most critically, `draggable`/`editable`/`linkable` are silently ignored — there is no programmatic way to disable Gantt interaction. Events like `onZoomChange` and `onScroll` are declared for schema authors but never fire. The `loading` and `empty` regions are declared but never rendered.
-
-**Confidence**: Determinate
+**Confidence**: Certain
 
 ---
 
-## 6. Kanban: `columnDraggable` Silently Ignored (Bug)
+## F-74: Calendar Month View `locale` Parameter Inaccessible from Schema
 
-**Location**: `scheduling-renderer-definitions.ts:88`, `kanban/kanban.types.ts:59`, `kanban/kanban-board.tsx:63`
+**Location**: `packages/flux-renderers-scheduling/src/calendar/components/calendar-month-view.tsx:12-62`
 
-**Problem**: The schema declares `columnDraggable` as a separate prop, allowing independent control of column vs. card drag. The renderer only reads `draggable`. A user configuring `columnDraggable: false, draggable: true` gets no column-drag disabling — the setting is silently ignored.
+**Problem**: Function signature includes `locale = 'en-US'` (line 61) but `CalendarMonthViewProps` interface (lines 12-29) doesn't declare it. The `WEEKDAY_LABELS` map (lines 31-34) supports `zh-CN` and `en-US`, but the default is always `en-US` with no schema field to control it.
 
-Additionally, 7 state-path fields (`columnsOrderStatePath`, `collapsedStatePath`, `kanbanOwnership`, `statusPath`, etc.) are declared but never consumed — planned controlled-mode support that never landed.
+The calendar's schema system provides `statusPath`, `viewOwnership`, `dateStatePath` etc. but not `locale`.
 
-**Impact**: An actual user-facing bug: the schema accepts configuration that has no effect.
+**Why care**: Non-English users get English weekday labels with no way to change them. The i18n system (`t()` from `@nop-chaos/flux-i18n`) is used for status messages but weekday labels use a separate hardcoded mechanism.
 
-**Confidence**: Determinate
-
----
-
-## 7. Calendar: `statusPath` Unwired + `exportToPrint` Missing from `useImperativeHandle`
-
-**Location**: `scheduling-renderer-definitions.ts:154`, `calendar/calendar.tsx:32-40,167-181`
-
-**Problems**:
-
-1. `statusPath` is registered in definitions but never read by any calendar code
-2. `CalendarHandle` interface promises `exportToPrint?: () => void` but `useImperativeHandle` doesn't expose it — callers who type against `CalendarHandle` will see `exportToPrint` at compile time but calling it does nothing
-3. Deprecated components (`CalendarBatchScheduler`, `CalendarTimezoneSelector`, `CalendarResourceGroup`, `useCalendarICal`) still have their events registered in definitions, creating a cluttered API surface
-
-**Confidence**: Determinate
+**Confidence**: Certain
 
 ---
 
-## 8. BarcodeInput: onMount/onUnmount `kind` Mismatch
+## F-75: Calendar Hardcoded Emoji Violates Project Convention
 
-**Location**: `barcode-input-schemas.ts:30-31` (declares `kind: 'meta'`) vs `barcode-input.tsx:29-34` (reads from `events`)
+**Location**: `packages/flux-renderers-scheduling/src/calendar/calendar.tsx:454`
 
-**Problem**: Field rules declare `onMount`/`onUnmount` as `kind: 'meta'` but the renderer accesses them via `events.onMount?.({})`. If the framework enforces kind-based routing, these lifecycle hooks silently fail.
+**Problem**: Empty-state fallback renders `📅`. AGENTS.md explicitly states: "Only use emojis if the user explicitly requests it. Avoid adding emojis to files unless asked."
 
-**Confidence**: Likely (depends on framework enforcement)
+**Why care**: Emoji rendering is platform-inconsistent and inaccessible (screen readers may read "calendar" or ignore it). A `Calendar` icon from `lucide-react` (already a dependency) should be used instead.
+
+**Confidence**: Certain
 
 ---
 
-## 9. Global Mutable State Across Kanban Instances
+## F-76: `GanttSchema.body` Declared in Type But Never Registered or Consumed
 
-**Location**: `packages/flux-renderers-scheduling/src/kanban/hooks/use-kanban-adder.ts:14`
+**Location**: `packages/flux-renderers-scheduling/src/schemas.ts:78` vs `scheduling-renderer-definitions.ts:9-63`
 
-```typescript
-let idCounter = 0; // module-level — shared across ALL Kanban boards
+**Problem**: `GanttSchema` declares `body?: SchemaInput`, but:
+
+1. `scheduling-renderer-definitions.ts` has no `{ key: 'body', kind: 'region' }`
+2. `gantt.tsx` never reads `regions.body`
+
+Contrast with `CalendarSchema.body` which IS registered and consumed (calendar.tsx:465-468). This is not marked as deprecated or reserved — it appears as a regular, usable field in the type.
+
+**Why care**: Schema authors who write `"body": [...]` in their Gantt JSON get silently ignored. No error, no warning, no rendering.
+
+**Confidence**: Certain
+
+---
+
+## F-77: Deprecated Fields in Renderer Definitions Are Invisible to Schema Authors
+
+**Location**: `packages/flux-renderers-scheduling/src/scheduling-renderer-definitions.ts:23,27,28,30,36,52,53`
+
+**Problem**: Seven Gantt fields are marked `// @deprecated` in comments. The `GanttSchema` type does NOT have `@deprecated` JSDoc on any of these fields:
+
+- `scales`, `startDate`, `endDate`, `progressBarHeight`, `calendar`, `childrenField`, `initiallyExpanded`
+
+Similarly, `component:print`/`component:exportPNG`/`component:importICal`/`component:exportToICal` are marked `// @reserved` but visible as regular reaction keys.
+
+These are plain `//` comments, not JSDoc `/** @deprecated */`. The compiler framework does not surface renderer-definition comments to consumers.
+
+**Why care**: The deprecation exists only in the implementation, invisible to both JSON and TypeScript consumers. A TypeScript user sees `GanttSchema.scales` as valid with no indication it's dead. The deprecation is one-sided — maintainers know but can't communicate to consumers.
+
+**Confidence**: Certain
+
+---
+
+## F-78: Gantt Undo Stack Persists Across Schema-Driven Task Replacement
+
+**Location**: `packages/flux-renderers-scheduling/src/gantt/gantt.tsx:156` + `undo-stack.ts:161-213`
+
+**Problem**: `undoStackRef` stores an `UndoStack` instance created once at line 156. When `store.parse()` re-runs (lines 78-85) on task/link/resource/assignment prop changes, the undo stack is NOT cleared. Commands captured during the previous task set reference task IDs from the old data.
+
+**Scenario**: Schema-driven Gantt loads tasks A → user drags → undo stack records `UpdateTaskCommand` → schema changes to tasks B (API refresh) → user hits undo → command tries to update a task ID that no longer exists in the store. The `updateTask` call (`gantt-store.ts:204`) does `this.store.setState` successfully (it's a no-op on `Map.set` with an existing key if the key is present, but it will add a spurious entry if the key is MISSING — actually, `Map.set` adds if key is missing). Wait: `newTasks.set(id, { ...existingTask, ...rest })` — if `id` doesn't exist in `newTasks` (which was cloned from `state.tasks`), it would ADD the task back. So the undo command would resurrect a deleted task.
+
+Actually, looking at `updateTask` in `gantt-store.ts`:
+
+```ts
+const state = this.gs();
+const task = state.tasks.get(id);
+if (!task) return;
+const newTasks = new Map(state.tasks);
+let updated = { ...task, ...rest } as GanttTask;
+newTasks.set(id, updated);
 ```
 
-**Impact**: Two Kanban boards on the same page share `idCounter` for ID generation. While `Date.now()` in the prefix makes collisions unlikely, this is a cross-instance state leak that would be catastrophic in SSR. The counter should use `useRef` per-hook-instance instead.
+It returns early if the task doesn't exist. So no spurious addition. But the command references a stale `before` state. If the same task ID happens to exist in the new data, the undo would restore stale values.
 
-Additionally, `useKanbanAdder` and `useKanbanCollab` are exported from the kanban index but never used by the main renderer — dead exports that still have bugs.
+**Why care**: Cross-data-set undo corruption. Low probability if task IDs are truly ephemeral, but a correctness bug when IDs are stable across schema refreshes.
 
-**Confidence**: Determinate
-
----
-
-## 10. Dead Code
-
-**Gantt**:
-
-- `gantt-store.ts:29` — `_dirty` flag set in every mutation method but never read
-- `gantt-utils.ts` — `flattenTree`, `toggleOpen`, `expandAll`, `collapseAll` exported but unused (gantt-tree-utils.ts provides equivalent functions)
-
-**Kanban**:
-
-- `kanban-board.tsx:289-296` — `_handleCardRemove` defined but never called
-- `kanban-undo-stack.ts:84-90` — `shouldMerge` exported, tested, but never invoked by any command
-- `useKanbanAdder` and `useKanbanCollab` hooks exported from index but unused by main renderer
-
-**Calendar**:
-
-- `calendar-month-view.tsx:252` — `{!isCurrentMonth ? null : null}` — dead ternary that always renders null
-
-**Confidence**: Determinate
+**Confidence**: Likely
 
 ---
 
-## 11. Error Handling Gaps
+## F-79: `useGanttDrag` Drop Indicator Element Can Leak into DOM
 
-**Kanban silent catch**: `kanban-board.tsx:179-181` — `catch { /* bad expression */ }` silently swallows expression compilation errors. User provides malformed `filterCard` → no warning, no console, no error event. In a low-code platform where schema is often AI-generated or hand-authored, silent expression failure makes debugging extremely hard.
+**Location**: `packages/flux-renderers-scheduling/src/gantt/hooks/use-gantt-drag.ts:31-41,172-181`
 
-**Test false positive**: `barcode-scanner-overlay.test.tsx:86-97` — test "should call onClose when close button clicked" creates mock, queries button, but never clicks it and never asserts it was called — passes vacuously.
+**Problem**: `ensureDropIndicator()` lazily appends a `<div>` to `document.body`. The cleanup effect (line 172) removes it on unmount. But if a stale pointer event calls `onPointerDown` after cleanup has run (e.g., during unmount timing), `ensureDropIndicator()` creates a new element that no cleanup path can remove.
 
-**Confidence**: Determinate
+**Why care**: DOM node leak in a SPA with frequent Gantt mount/unmount cycles. Each stale event adds one orphaned `<div>` to `<body>`.
+
+**Confidence**: Likely (edge case)
 
 ---
 
-## 12. Framework Anti-Patterns
+## F-80: Calendar `isToday()` Uses Local `new Date()` Against UTC Date — Midnigh Boundary Wrong Highlight
 
-**Gantt Zustand class wrapper** (`gantt-store.ts:26`): `GanttStore` is a class wrapping a Zustand vanilla store. The class exposes getters that call `this.store.getState()` on every access, preventing fine-grained subscriptions. The revision-counter pattern (`revision`, `taskRevision`, `linkRevision`, `layoutRevision`, `treeRevision`) is a manual reactivity system duplicating what Zustand's selector-based subscriptions provide.
+**Location**: `packages/flux-renderers-scheduling/src/calendar/utils/calendar-date-utils.ts:56-59`
 
-**Gantt keyboard effect deps** (`use-gantt-keyboard.ts:110`): The dependency array includes `store` (the full GanttStore class instance). As a class, it's a new reference after every mutation, causing the keyboard listener to be re-registered on every store change — a performance bug.
+**Problem** (re-reported — previously F-59, check for fix):
 
-**Calendar hardcoded locale**: All calendar views default to `locale = 'en-US'`. `CalendarSchema` has no `locale` field. Non-English users cannot localize the calendar.
+```ts
+export function isToday(date: Date): boolean {
+  const now = new Date();
+  const utcToday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  return isSameDay(date, utcToday);
+}
+```
+
+`now` is a local-time `new Date()`. If the local time is 11 PM on July 21 and the calendar is viewing July 22 in UTC (because all calendar date math uses `getUTCFullYear`/`getUTCMonth`/`getUTCDate`), then `now.getFullYear()/getMonth()/getDate()` return July 21 local while the calendar cell represents July 22 UTC. The cell highlighted as "today" differs from the user's actual local today.
+
+The rest of `calendar-date-utils.ts` consistently uses UTC methods (`getUTCFullYear`, `setUTCDate`, etc.). Only `isToday()` mixes local and UTC — it creates `utcToday` from `now`'s local date components, then compares against the UTC-based `date`.
+
+**Why care**: Users near the midnight timezone boundary will see the wrong cell highlighted as "today". The calendar is UTC-consistent everywhere except this one function.
+
+**Confidence**: Certain
 
 ---
 
 ## Total Assessment
 
-**Total unique findings**: 12
+| ID   | Severity | File                                                      | Issue                                                                                |
+| ---- | -------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| F-71 | P3       | `critical-path.ts`                                        | Dead production code (138 lines), deprecated type imports                            |
+| F-72 | P2       | `kanban-board.tsx:73-76`                                  | `columnsOrderOwnership`/`columnsOrderStatePath` explicitly voided — promised feature |
+| F-73 | P2       | `calendar.css:48`                                         | Weekend selector `:has()` never matches — F-58 half-fixed                            |
+| F-74 | P2       | `calendar-month-view.tsx:61-62`                           | `locale` param inaccessible from schema; hardcoded `en-US`                           |
+| F-75 | P3       | `calendar.tsx:454`                                        | Hardcoded emoji violates AGENTS.md convention                                        |
+| F-76 | P2       | `schemas.ts:78`                                           | `GanttSchema.body` declared but never registered or consumed                         |
+| F-77 | P2       | `scheduling-renderer-definitions.ts:23,27,28,30,36,52,53` | Deprecated fields invisible to consumers                                             |
+| F-78 | P2       | `gantt.tsx:156`, `undo-stack.ts:161-213`                  | Undo stack not cleared on schema data refresh                                        |
+| F-79 | P3       | `use-gantt-drag.ts:31-41,172-181`                         | Drop indicator DOM leak on stale pointer events                                      |
+| F-80 | P2       | `calendar-date-utils.ts:56-59`                            | `isToday()` mixes local/UTC — near-midnight wrong highlight                          |
 
-| Category                           | Count | Critical items                                                                                     |
-| ---------------------------------- | ----- | -------------------------------------------------------------------------------------------------- |
-| Convention violations (hard rules) | 3     | Ad-hoc Context, raw HTML elements, unused hook calls                                               |
-| React 19/Compiler redundancy       | 1     | 15+ useCallback/useMemo sites                                                                      |
-| Contract drift                     | 4     | Gantt 15+ fields, Kanban columnDraggable, Calendar statusPath/exportToPrint, Barcode kind mismatch |
-| Dead code                          | 4     | `_dirty`, `_handleCardRemove`, `shouldMerge`, dead ternary                                         |
-| Concrete bugs                      | 2     | Global idCounter, columnDraggable silently ignored                                                 |
-| Error handling                     | 2     | Silent catch, false-positive test                                                                  |
-| Framework anti-patterns            | 3     | Zustand class wrapper, store-in-keyboard-deps, no locale                                           |
+### Key Patterns Detected
 
----
+1. **Half-repaired bugs** (2 findings): F-73 (weekend CSS selector attribute fixed but selector broken) and F-80 (`isToday()` still broken — not verified if F-59 was actually fixed). The prior F-58 fix was incomplete.
 
-## Blind Spots Self-Assessment
+2. **Silent contract drift** (3 findings): F-72 (void expressions concealing unfinished feature), F-76 (unregistered `body` field), F-77 (deprecation invisible to consumers). All three create a gap between what the type/definition promises and what the component delivers.
 
-This audit focused on source-code patterns, convention compliance, and contract consistency. It did NOT:
+3. **Dead code with maintenance risk** (1 finding): F-71 (`critical-path.ts`). Clearable with a single deletion.
 
-1. **Run the test suite** — Some findings (like the false-positive test) were identified statically, but a full test run might reveal additional failures or confirm that contract-drifted code has compensating tests elsewhere.
-2. **Test runtime behavior** — Could not confirm whether `kind: 'meta'` vs. reading from `events` actually fails; depends on framework enforcement not visible in source alone.
-3. **Check build artifacts** — Did not verify whether `dist/` contains stale outputs from earlier builds.
-4. **Accessibility audit beyond code patterns** — Did not test with screen reader or keyboard navigation.
-5. **Performance profiling** — Did not measure whether the Zustand class-wrapper pattern or the full-subscription issue causes actual user-perceptible lag.
+### Blind Spots Self-Assessment
 
-The highest-leverage next audit would be: **run `pnpm test` + `pnpm lint` on the scheduling package and verify which of these findings match lint-level detection vs. requiring code changes.** Second priority: a runtime audit of the Gantt's store subscription model to measure re-render overhead.
+What this round likely missed:
+
+1. **Actual test execution**: Did not run `pnpm test --filter @nop-chaos/flux-renderers-scheduling` to verify which prior findings would fail and whether the current round-02 fixes actually pass. Some findings (F-63) appeared fixed by code inspection but test confirmation would be stronger.
+
+2. **Cross-package contract audit**: Did not verify whether `RendererComponentProps` generic narrowing works correctly across the `flux-core` → `flux-react` → `flux-renderers-scheduling` boundary for `GanttSchema`, `KanbanSchema`, etc. Type narrowing issues could exist at the `RendererDefinition.component` generic parameter.
+
+3. **CSS-in-JS conflicts**: Did not check whether Tailwind v4 `@source` directive effectively picks up `*.css` files from this package (known monorepo issue #14).
+
+4. **Dynamic import paths for Calendar `component:exportPNG`/`component:print`**: Did not verify whether the optional peer deps (`html2canvas`, `jspdf`) are imported correctly and not bundled into the main chunk.
+
+5. **Kanban undo stack memory pressure**: Did not test with 10,000+ cards to verify the 1000-entry undo limit (kanban-undo-stack.ts) doesn't cause OOM or jank.
+
+Best starting point for next round: **run the scheduling test suite** against HEAD, confirm which prior findings surface as test failures, then do a cross-package type narrowing audit at the `scheduling-renderer-definitions.ts` → `flux-core` `registerRendererDefinitions()` boundary.
 
 ---
 
