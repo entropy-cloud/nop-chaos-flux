@@ -12,6 +12,7 @@ export interface UseCalendarICalResult {
   isAvailable: boolean;
 }
 
+/** @deprecated Unwired — retained for future connection per design §12.6. Not used by the main Calendar renderer. */
 export function useCalendarICal(options: UseCalendarICalOptions = {}): UseCalendarICalResult {
   const { onImport, onImportError } = options;
   const [isAvailable, setIsAvailable] = useState(false);

@@ -40,6 +40,7 @@ function formatTimezoneOffset(timezone: string): string {
   }
 }
 
+/** @deprecated Unwired — retained for future connection per design §12.7. Not used by the main Calendar renderer. */
 export function CalendarTimezoneSelector({
   selectedTimezone,
   onTimezoneChange,

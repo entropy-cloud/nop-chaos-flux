@@ -95,6 +95,104 @@ describe('useCalendarDragCreate', () => {
     expect(result.current.showTypeSelector).toBe(false);
   });
 
+  it('should use currentDate as end when dragged across range (C-OPS-02)', () => {
+    const onEventCreate = vi.fn();
+    const mockGetCell = vi.fn();
+    mockGetCell.mockReturnValue({ date: '2026-07-20', resourceId: 'r1' });
+
+    const { result } = renderHook(() =>
+      useCalendarDragCreate({
+        onEventCreate,
+        getCellFromPoint: mockGetCell,
+        longPressMs: 500,
+      }),
+    );
+
+    const pe = createPointerEvent(100, 200);
+
+    act(() => {
+      result.current.startCellDrag('2026-07-20', 'r1', pe);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(result.current.dragCreateState.active).toBe(true);
+
+    mockGetCell.mockReturnValue({ date: '2026-07-25', resourceId: 'r1' });
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointermove', { clientX: 300, clientY: 200 }));
+    });
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointerup', { clientX: 300, clientY: 200 }));
+    });
+
+    expect(result.current.showTypeSelector).toBe(true);
+
+    act(() => {
+      result.current.selectType('shift');
+    });
+
+    expect(onEventCreate).toHaveBeenCalledWith({
+      title: 'shift',
+      type: 'shift',
+      start: '2026-07-20',
+      end: '2026-07-25',
+      resourceId: 'r1',
+    });
+  });
+
+  it('should handle reverse drag (end before start) with min/max (C-OPS-02)', () => {
+    const onEventCreate = vi.fn();
+    const mockGetCell = vi.fn();
+    mockGetCell.mockReturnValue({ date: '2026-07-25', resourceId: 'r1' });
+
+    const { result } = renderHook(() =>
+      useCalendarDragCreate({
+        onEventCreate,
+        getCellFromPoint: mockGetCell,
+        longPressMs: 500,
+      }),
+    );
+
+    const pe = createPointerEvent(100, 200);
+
+    act(() => {
+      result.current.startCellDrag('2026-07-25', 'r1', pe);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(result.current.dragCreateState.active).toBe(true);
+
+    mockGetCell.mockReturnValue({ date: '2026-07-20', resourceId: 'r1' });
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointermove', { clientX: 50, clientY: 200 }));
+    });
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointerup', { clientX: 50, clientY: 200 }));
+    });
+
+    expect(result.current.showTypeSelector).toBe(true);
+
+    act(() => {
+      result.current.selectType('leave');
+    });
+
+    expect(onEventCreate).toHaveBeenCalledWith({
+      title: 'leave',
+      type: 'leave',
+      start: '2026-07-20',
+      end: '2026-07-25',
+      resourceId: 'r1',
+    });
+  });
+
   it('should cancel on cancelCreate', () => {
     const { result } = renderHook(() =>
       useCalendarDragCreate({ getCellFromPoint: () => null, longPressMs: 500 }),

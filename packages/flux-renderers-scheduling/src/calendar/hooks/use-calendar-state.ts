@@ -9,6 +9,8 @@ export interface CalendarStateOptions {
   firstDayOfWeek?: 0 | 1;
   onDateChange?: (date: Date) => void;
   onViewChange?: (view: CalendarView) => void;
+  controlledView?: CalendarView;
+  controlledDate?: Date;
 }
 
 export interface CalendarStateResult {
@@ -26,10 +28,18 @@ export function useCalendarState(options: CalendarStateOptions = {}): CalendarSt
     firstDayOfWeek = 0,
     onDateChange,
     onViewChange,
+    controlledView,
+    controlledDate,
   } = options;
 
-  const [currentDate, setInternalDate] = useState<Date>(initialDate);
-  const [activeView, setInternalView] = useState<CalendarView>(initialView);
+  const isControlledView = controlledView !== undefined;
+  const isControlledDate = controlledDate !== undefined;
+
+  const [localDate, setLocalDate] = useState<Date>(initialDate);
+  const [localView, setLocalView] = useState<CalendarView>(initialView);
+
+  const currentDate = isControlledDate ? controlledDate : localDate;
+  const activeView = isControlledView ? controlledView : localView;
 
   const dateRange = ((): CalendarDateRange => {
     switch (activeView) {
@@ -44,12 +54,16 @@ export function useCalendarState(options: CalendarStateOptions = {}): CalendarSt
   })();
 
   const setCurrentDate = (date: Date) => {
-    setInternalDate(date);
+    if (!isControlledDate) {
+      setLocalDate(date);
+    }
     onDateChange?.(date);
   };
 
   const setActiveView = (view: CalendarView) => {
-    setInternalView(view);
+    if (!isControlledView) {
+      setLocalView(view);
+    }
     onViewChange?.(view);
   };
 

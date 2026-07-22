@@ -52,7 +52,7 @@ export function CalendarDayView({
     for (const resource of displayResources) {
       const filtered = events.filter((evt) => {
         const evtDate = evt.start.split('T')[0] ?? evt.start;
-        return evtDate === dateStr && (evt.resourceId ?? '') === resource.id;
+        return evtDate === dateStr && (evt.resourceId ?? '_default') === resource.id;
       });
       map.set(resource.id, filtered);
     }

@@ -35,9 +35,9 @@ export function getDateRange(start: Date, end: Date): Date[] {
 
 export function isSameDay(d1: Date, d2: Date): boolean {
   return (
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate()
+    d1.getUTCFullYear() === d2.getUTCFullYear() &&
+    d1.getUTCMonth() === d2.getUTCMonth() &&
+    d1.getUTCDate() === d2.getUTCDate()
   );
 }
 
@@ -87,7 +87,7 @@ export function diffInDays(d1: Date, d2: Date): number {
 }
 
 export function toISODateString(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 }
 
 export function parseISODate(dateStr: string): Date | undefined {

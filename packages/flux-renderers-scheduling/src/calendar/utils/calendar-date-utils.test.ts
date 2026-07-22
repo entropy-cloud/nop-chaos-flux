@@ -98,7 +98,7 @@ describe('calendar-date-utils', () => {
   });
 
   describe('isSameDay', () => {
-    it('should return true for same date', () => {
+    it('should return true for same UTC date', () => {
       expect(isSameDay(date(2026, 7, 20), date(2026, 7, 20))).toBe(true);
     });
 
@@ -108,6 +108,18 @@ describe('calendar-date-utils', () => {
 
     it('should return false for different months', () => {
       expect(isSameDay(date(2026, 7, 20), date(2026, 8, 20))).toBe(false);
+    });
+
+    it('should use UTC getters for comparison', () => {
+      const d1 = new Date(Date.UTC(2026, 6, 22, 0, 0, 0));
+      const d2 = new Date(Date.UTC(2026, 6, 22, 23, 59, 59));
+      expect(isSameDay(d1, d2)).toBe(true);
+    });
+
+    it('should correctly differentiate adjacent UTC days at midnight boundary', () => {
+      const d1 = new Date(Date.UTC(2026, 6, 22, 23, 59, 59));
+      const d2 = new Date(Date.UTC(2026, 6, 23, 0, 0, 0));
+      expect(isSameDay(d1, d2)).toBe(false);
     });
   });
 
@@ -201,6 +213,22 @@ describe('calendar-date-utils', () => {
   describe('toISODateString', () => {
     it('should format date as YYYY-MM-DD', () => {
       expect(toISODateString(date(2026, 7, 20))).toBe('2026-07-20');
+    });
+
+    it('should use UTC getters regardless of local timezone offset', () => {
+      const utcMidnight = new Date(Date.UTC(2026, 6, 22));
+      const result = toISODateString(utcMidnight);
+      expect(result).toBe('2026-07-22');
+    });
+
+    it('should return correct date at UTC midnight for negative timezone offsets', () => {
+      const d = new Date('2026-07-22T00:00:00Z');
+      expect(toISODateString(d)).toBe('2026-07-22');
+    });
+
+    it('should handle month boundary', () => {
+      expect(toISODateString(date(2026, 12, 1))).toBe('2026-12-01');
+      expect(toISODateString(date(2026, 1, 1))).toBe('2026-01-01');
     });
   });
 

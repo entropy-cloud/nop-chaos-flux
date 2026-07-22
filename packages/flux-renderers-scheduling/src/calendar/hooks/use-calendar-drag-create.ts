@@ -57,11 +57,13 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeRef = useRef(false);
   const startInfoRef = useRef<{ date: string; resourceId: string } | null>(null);
+  const currentDragRef = useRef<{ date: string; resourceId: string } | null>(null);
 
   const dismissTypeSelector = () => {
     setShowTypeSelector(false);
     activeRef.current = false;
     startInfoRef.current = null;
+    currentDragRef.current = null;
     setDragCreateState({
       active: false,
       startDate: null,
@@ -93,6 +95,7 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
       if (getCellFromPoint) {
         const cell = getCellFromPoint(e.clientX, e.clientY);
         if (cell) {
+          currentDragRef.current = { date: cell.date, resourceId: cell.resourceId };
           setDragCreateState((prev) => ({
             ...prev,
             currentDate: cell.date,
@@ -167,6 +170,7 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
     }
     activeRef.current = false;
     startInfoRef.current = null;
+    currentDragRef.current = null;
     pointerDownPos.current = null;
     setShowTypeSelector(false);
     setDragCreateState({
@@ -184,18 +188,22 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
     const start = startInfoRef.current;
     if (!start) return;
 
+    const endDate = currentDragRef.current?.date ?? start.date;
+    const [startDate, finalEndDate] = start.date <= endDate ? [start.date, endDate] : [endDate, start.date];
+
     if (onEventCreate) {
       onEventCreate({
         title: title ?? shiftType,
         type: shiftType,
-        start: start.date,
-        end: start.date,
+        start: startDate,
+        end: finalEndDate,
         resourceId: start.resourceId,
       });
     }
 
     activeRef.current = false;
     startInfoRef.current = null;
+    currentDragRef.current = null;
     setShowTypeSelector(false);
     setDragCreateState({
       active: false,

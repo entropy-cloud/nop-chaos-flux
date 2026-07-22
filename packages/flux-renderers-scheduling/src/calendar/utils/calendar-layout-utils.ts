@@ -47,16 +47,25 @@ export function splitMultiDayEvents(events: CalendarEvent[]): SplitEventBlock[] 
   return result;
 }
 
+function normalizeResourceId(resourceId: string, resources: { id: string }[]): string {
+  if (resources.length === 1 && resources[0].id === '_default' && (resourceId === '' || resourceId === '_default')) {
+    return '_default';
+  }
+  return resourceId || '_default';
+}
+
 function groupEventsByResourceDate(
   splitEvents: SplitEventBlock[],
+  resources: { id: string }[],
 ): Map<string, Map<string, SplitEventBlock[]>> {
   const groups = new Map<string, Map<string, SplitEventBlock[]>>();
 
   for (const block of splitEvents) {
-    if (!groups.has(block.resourceId)) {
-      groups.set(block.resourceId, new Map());
+    const normalizedId = normalizeResourceId(block.resourceId, resources);
+    if (!groups.has(normalizedId)) {
+      groups.set(normalizedId, new Map());
     }
-    const dateMap = groups.get(block.resourceId)!;
+    const dateMap = groups.get(normalizedId)!;
     if (!dateMap.has(block.date)) {
       dateMap.set(block.date, []);
     }
@@ -86,7 +95,7 @@ export function positionEventsInMonth(
   const result = new Map<string, Map<string, PositionedEvent[]>>();
 
   const splitEvents = splitMultiDayEvents(events);
-  const groups = groupEventsByResourceDate(splitEvents);
+  const groups = groupEventsByResourceDate(splitEvents, resources);
 
   const effectiveMax = maxConcurrent > 0 ? maxConcurrent : 4;
 

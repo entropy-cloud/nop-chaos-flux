@@ -5,6 +5,7 @@ export interface CalendarResourceHeaderProps {
   resource: CalendarResource;
 }
 
+/** @deprecated Unused — calendar-month-view inlines its own resource header. Retained for future migration when avatar/type display is needed. */
 export function CalendarResourceHeader({ resource }: CalendarResourceHeaderProps) {
   return (
     <div data-slot="calendar-resource-header" className="flex items-center gap-2 px-2 py-1">

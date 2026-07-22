@@ -11,6 +11,7 @@ export interface CalendarResourceGroupProps {
   children?: React.ReactNode;
 }
 
+/** @deprecated Unwired — retained for future connection per design §12.3. Not used by the main Calendar renderer. */
 export function CalendarResourceGroup({
   group,
   level,

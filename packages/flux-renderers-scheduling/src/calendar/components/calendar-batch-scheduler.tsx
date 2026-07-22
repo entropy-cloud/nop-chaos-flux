@@ -20,6 +20,7 @@ export interface CalendarBatchSchedulerProps {
   onBatchSchedule: (payload: BatchSchedulePayload) => void;
 }
 
+/** @deprecated Unwired — retained for future connection per design §12.5. Not used by the main Calendar renderer. */
 export function CalendarBatchScheduler({
   resources,
   events,

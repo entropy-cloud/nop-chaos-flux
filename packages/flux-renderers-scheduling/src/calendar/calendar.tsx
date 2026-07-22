@@ -10,7 +10,7 @@
  */
 import React, { useImperativeHandle, useRef, useState, useEffect } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
+import { useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { CalendarSchema, CalendarView, CalendarEvent, CalendarResource } from '../schemas.js';
@@ -25,6 +25,7 @@ import { CalendarWeekView } from './components/calendar-week-view.js';
 import { CalendarDayView } from './components/calendar-day-view.js';
 import { CalendarConfirmDialog } from './components/calendar-confirm-dialog.js';
 import { CalendarDragTypeSelector } from './components/calendar-drag-type-selector.js';
+import { useCalendarExport } from './hooks/use-calendar-export.js';
 import { parseISODate } from './utils/calendar-date-utils.js';
 import './utils/calendar-print.css';
 
@@ -34,7 +35,7 @@ export interface CalendarHandle {
   goToday: () => void;
   setView: (view: CalendarView) => void;
   scrollToDate: (date: string) => void;
-  exportToPNG?: () => void;
+  exportToPNG?: (element?: HTMLElement | null, fileName?: string, signal?: AbortSignal) => Promise<void>;
   exportToPrint?: () => void;
 }
 
@@ -68,8 +69,11 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   const maxConcurrent = (resolved.maxConcurrent as number) ?? 4;
   const showCrossDayLines = resolved.showCrossDayLines !== false;
 
-  const eventsData = (resolved.events as CalendarSchema['events']) ?? [];
+  const eventsData = (resolved.events as CalendarSchema['events']) ?? (resolved as any).data as CalendarEvent[] ?? [];
   const resourcesData = (resolved.resources as CalendarSchema['resources']) ?? [];
+  if ((resolved as any).data != null && resolved.events == null && typeof console !== 'undefined') {
+    console.warn('Calendar: `data` field is deprecated, use `events` instead');
+  }
 
   const dayStartHour = 8;
   const dayEndHour = 20;
@@ -81,6 +85,100 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   } | null>(null);
 
   const calendarRef = useRef<HTMLDivElement | null>(null);
+  const calendarExport = useCalendarExport(calendarRef);
+
+  const viewOwnership = (resolved.viewOwnership as string) ?? 'local';
+  const dateOwnership = (resolved.dateOwnership as string) ?? 'local';
+  const viewStatePath = resolved.viewStatePath as string | undefined;
+  const dateStatePath = resolved.dateStatePath as string | undefined;
+
+  const scope = useRenderScope();
+
+  const isScopeView = viewOwnership === 'scope' && !!viewStatePath;
+  const isScopeDate = dateOwnership === 'scope' && !!dateStatePath;
+
+  const scopeViewRaw = useScopeSelector((s: Record<string, unknown>) => {
+    if (!isScopeView || !viewStatePath) return undefined;
+    const keys = viewStatePath.split('.');
+    let val: unknown = s;
+    for (const k of keys) { if (val && typeof val === 'object') val = (val as Record<string, unknown>)[k]; else return undefined; }
+    return val as CalendarView | undefined;
+  });
+
+  const scopeDateRaw = useScopeSelector((s: Record<string, unknown>) => {
+    if (!isScopeDate || !dateStatePath) return undefined;
+    const keys = dateStatePath.split('.');
+    let val: unknown = s;
+    for (const k of keys) { if (val && typeof val === 'object') val = (val as Record<string, unknown>)[k]; else return undefined; }
+    return val as string | undefined;
+  });
+
+  const scopeView = isScopeView ? scopeViewRaw : undefined;
+  const scopeDate = isScopeDate ? scopeDateRaw : undefined;
+
+  const controlledView = viewOwnership === 'controlled'
+    ? (resolved.view as CalendarView) ?? 'month'
+    : viewOwnership === 'scope' && scopeView
+      ? scopeView
+      : undefined;
+
+  const controlledDate = dateOwnership === 'controlled'
+    ? (resolved.date ? (parseISODate(resolved.date as string) ?? undefined) : undefined)
+    : dateOwnership === 'scope' && scopeDate
+      ? parseISODate(scopeDate)
+      : undefined;
+
+  const latestViewRef = useRef(controlledView ?? initialView);
+  const latestDateRef = useRef(controlledDate ?? initialDate);
+
+  const { currentDate, dateRange, activeView, setCurrentDate, setActiveView } = useCalendarState({
+    initialDate,
+    initialView,
+    firstDayOfWeek,
+    controlledView,
+    controlledDate,
+    onDateChange: (date: Date) => {
+      if (dateOwnership === 'scope' && dateStatePath && scope) {
+        scope.merge({ [dateStatePath]: date.toISOString().split('T')[0] });
+      }
+      void events.onDateChange?.({ date: date.toISOString(), view: latestViewRef.current });
+    },
+    onViewChange: (view: CalendarView) => {
+      if (viewOwnership === 'scope' && viewStatePath && scope) {
+        scope.merge({ [viewStatePath]: view });
+      }
+      void events.onViewChange?.({ view, date: latestDateRef.current.toISOString() });
+    },
+  });
+
+  const navigation = useCalendarNavigation({
+    currentDate,
+    activeView,
+    onDateChange: setCurrentDate,
+  });
+
+  useEffect(() => {
+    latestViewRef.current = activeView;
+  }, [activeView]);
+  useEffect(() => {
+    latestDateRef.current = currentDate;
+  }, [currentDate]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      goNext: navigation.goNext,
+      goPrev: navigation.goPrev,
+      goToday: navigation.goToday,
+      setView: (view: CalendarView) => setActiveView(view),
+      scrollToDate: (date: string) => {
+        const parsed = parseISODate(date);
+        if (parsed) setCurrentDate(parsed);
+      },
+      exportToPNG: calendarExport.exportToPNG,
+    }),
+    [navigation, setActiveView, setCurrentDate, calendarExport],
+  );
 
   const getCellFromPoint = (x: number, y: number) => {
     const el = document.elementFromPoint(x, y);
@@ -260,49 +358,6 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     getCellFromPoint,
     longPressMs: 500,
   });
-
-  const { currentDate, dateRange, activeView, setCurrentDate, setActiveView } = useCalendarState({
-    initialDate,
-    initialView,
-    firstDayOfWeek,
-    onDateChange: (date: Date) => {
-      void events.onDateChange?.({ date: date.toISOString(), view: activeViewRef.current });
-    },
-    onViewChange: (view: CalendarView) => {
-      void events.onViewChange?.({ view, date: currentDateRef.current.toISOString() });
-    },
-  });
-
-  const activeViewRef = useRef(initialView);
-  const currentDateRef = useRef(currentDate);
-
-  useEffect(() => {
-    activeViewRef.current = activeView;
-  }, [activeView]);
-  useEffect(() => {
-    currentDateRef.current = currentDate;
-  }, [currentDate]);
-
-  const navigation = useCalendarNavigation({
-    currentDate,
-    activeView,
-    onDateChange: setCurrentDate,
-  });
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      goNext: navigation.goNext,
-      goPrev: navigation.goPrev,
-      goToday: navigation.goToday,
-      setView: (view: CalendarView) => setActiveView(view),
-      scrollToDate: (date: string) => {
-        const parsed = parseISODate(date);
-        if (parsed) setCurrentDate(parsed);
-      },
-    }),
-    [navigation, setActiveView, setCurrentDate],
-  );
 
   const displayResources = resourcesData.length === 0
     ? [{ id: '_default', text: '', title: '' } as CalendarResource]
