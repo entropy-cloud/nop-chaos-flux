@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { cn, Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData, BoardItem, KanbanCardConfig } from './kanban.types.js';
@@ -19,6 +19,7 @@ export interface KanbanColumnProps {
   onCardClick?: (cardId: string, columnId: string, index: number) => void;
   onColumnClick?: (columnId: string) => void;
   onAddCard?: (columnId: string) => void;
+  onCardRemove?: (cardId: string) => void;
   filterText?: string;
   draggable?: boolean;
   className?: string;
@@ -36,6 +37,10 @@ export interface KanbanColumnProps {
   helpers?: any;
   dropTargetCardIndex?: number | null;
   dropClosestEdge?: 'before' | 'after' | null;
+  registerColumn?: (el: HTMLElement, columnId: string, cardCount: number) => () => void;
+  registerBoardDropZone?: (el: HTMLElement, columnIndex: number) => () => void;
+  registerCard?: (el: HTMLElement, cardId: string, columnId: string, index: number) => () => void;
+  registerColumnHeader?: (el: HTMLElement, columnId: string) => () => void;
 }
 
 export function KanbanColumn({
@@ -51,6 +56,7 @@ export function KanbanColumn({
   onCardClick,
   onColumnClick,
   onAddCard,
+  onCardRemove,
   filterText,
   draggable,
   className,
@@ -68,7 +74,13 @@ export function KanbanColumn({
   helpers,
   dropTargetCardIndex,
   dropClosestEdge,
+  registerColumn,
+  registerBoardDropZone,
+  registerCard,
+  registerColumnHeader,
 }: KanbanColumnProps) {
+  const columnRef = useRef<HTMLDivElement>(null);
+
   const cardIds = column.children;
   const cardIndexMap = new Map<string, number>(cardIds.map((id, idx) => [id, idx]));
   const cards = cardIds
@@ -98,6 +110,18 @@ export function KanbanColumn({
     return result;
   }, [cards, filterText, selectedTagIds, filterCardFn]);
 
+  useEffect(() => {
+    if (!registerColumn || !columnRef.current) return;
+    const r1 = registerColumn(columnRef.current, column.id, filteredCards.length);
+    const root = board['root'];
+    const colIndex = root ? root.children.indexOf(column.id) : -1;
+    const r2 = registerBoardDropZone && colIndex >= 0 ? registerBoardDropZone(columnRef.current, colIndex) : undefined;
+    return () => {
+      r1();
+      r2?.();
+    };
+  }, [registerColumn, column.id, filteredCards.length, registerBoardDropZone, board]);
+
   const displayCards = collapsed ? [] : filteredCards;
   const showEmptyZone = !collapsed && filteredCards.length === 0;
 
@@ -122,6 +146,7 @@ export function KanbanColumn({
 
   return (
     <div
+      ref={columnRef}
       data-slot="kanban-column"
       data-dnd-column="true"
       data-column-id={column.id}
@@ -150,6 +175,7 @@ export function KanbanColumn({
         onDragHandleKeyDown={onDragHandleKeyDown}
         onClick={() => onColumnClick?.(column.id)}
         className={columnHeaderClassName}
+        registerColumnHeader={registerColumnHeader}
       />
 
       {!collapsed && (
@@ -183,8 +209,10 @@ export function KanbanColumn({
                       configMap={configMap}
                       cardTemplateRegion={cardTemplateRegion}
                       onCardClick={onCardClick}
+                      onCardRemove={onCardRemove}
                       className={cardClassName}
                       helpers={helpers}
+                      registerCard={registerCard}
                     />
                   </div>
                 );
@@ -204,8 +232,10 @@ export function KanbanColumn({
                     configMap={configMap}
                     cardTemplateRegion={cardTemplateRegion}
                     onCardClick={onCardClick}
+                    onCardRemove={onCardRemove}
                     className={cardClassName}
                     helpers={helpers}
+                    registerCard={registerCard}
                   />
                   {dropTargetCardIndex === idx && dropClosestEdge === 'after' && (
                     <div className="nop-kanban-drop-indicator" />

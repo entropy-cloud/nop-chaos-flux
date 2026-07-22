@@ -43,6 +43,13 @@ export interface UseCalendarDragResult {
 export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDragResult {
   const { onEventChange, getCellFromPoint, onKeyboardMoveEvent } = options;
 
+  const onEventChangeRef = useRef(onEventChange);
+  useEffect(() => { onEventChangeRef.current = onEventChange; }, [onEventChange]);
+  const getCellFromPointRef = useRef(getCellFromPoint);
+  useEffect(() => { getCellFromPointRef.current = getCellFromPoint; }, [getCellFromPoint]);
+  const onKeyboardMoveEventRef = useRef(onKeyboardMoveEvent);
+  useEffect(() => { onKeyboardMoveEventRef.current = onKeyboardMoveEvent; }, [onKeyboardMoveEvent]);
+
   const [dragState, setDragState] = useState<DragSwapState>({
     active: false,
     sourceEvent: null,
@@ -81,8 +88,8 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
     const target = pendingTargetRef.current;
     if ((!activeRef.current && !keyboardActiveRef.current) || !target || !source) return;
 
-    if (onEventChange) {
-      onEventChange({
+    if (onEventChangeRef.current) {
+      onEventChangeRef.current({
         eventId: source.id,
         fromResource: source.resourceId ?? '',
         toResource: target.resourceId,
@@ -105,8 +112,8 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
         currentY: e.clientY,
       }));
 
-      if (getCellFromPoint) {
-        const cell = getCellFromPoint(e.clientX, e.clientY);
+      if (getCellFromPointRef.current) {
+        const cell = getCellFromPointRef.current(e.clientX, e.clientY);
         if (cell) {
           pendingTargetRef.current = cell;
           setDragState((prev) => ({
@@ -131,8 +138,8 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
       const source = sourceEventRef.current;
       const target = pendingTargetRef.current;
 
-      if (target && source && onEventChange) {
-        onEventChange({
+      if (target && source && onEventChangeRef.current) {
+        onEventChangeRef.current({
           eventId: source.id,
           fromResource: source.resourceId ?? '',
           toResource: target.resourceId,
@@ -153,7 +160,7 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
         window.removeEventListener('pointerup', handlePointerUp);
       };
     }
-  }, [dragState.active, getCellFromPoint, onEventChange]);
+  }, [dragState.active]);
 
   const startDrag = (event: CalendarEvent, pointerEvent: React.PointerEvent) => {
     activeRef.current = true;
@@ -195,7 +202,7 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
   const moveKeyboardDrag = (direction: 'up' | 'down' | 'left' | 'right') => {
     if (!keyboardActiveRef.current || !sourceEventRef.current) return;
 
-    onKeyboardMoveEvent?.(sourceEventRef.current.id, direction);
+    onKeyboardMoveEventRef.current?.(sourceEventRef.current.id, direction);
   };
 
   const cancelKeyboardDrag = () => {

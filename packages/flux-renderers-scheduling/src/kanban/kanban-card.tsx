@@ -11,18 +11,22 @@ export interface KanbanCardProps {
   configMap?: Record<string, KanbanCardConfig>;
   cardTemplateRegion?: { render: (params: { card: BoardItem; column: BoardItem; index: number }) => React.ReactNode } | null;
   onCardClick?: (cardId: string, columnId: string, index: number) => void;
+  onCardRemove?: (cardId: string) => void;
   className?: string;
   helpers?: any;
+  registerCard?: (el: HTMLElement, cardId: string, columnId: string, index: number) => () => void;
 }
 
-function handleCardKeyDown(e: React.KeyboardEvent, fn?: () => void) {
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault();
-    fn?.();
-  }
-}
+function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, onCardClick, onCardRemove, className, helpers, registerCard }: KanbanCardProps) {
+  const cardRef = React.useRef<HTMLLIElement>(null);
+  const registeredRef = React.useRef(false);
 
-function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, onCardClick, className, helpers }: KanbanCardProps) {
+  React.useEffect(() => {
+    if (!registerCard || !cardRef.current) return;
+    registeredRef.current = true;
+    return registerCard(cardRef.current, card.id, column.id, index);
+  }, [registerCard, card.id, column.id, index]);
+
   const cardType = (card.data?.type as string) || '';
   const title = (card.title || card.data?.title || '') as string;
   const content = (card.content || card.data?.content || '') as string;
@@ -33,6 +37,18 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
 
   const config = configMap?.[cardType];
   const clickFn = () => onCardClick?.(card.id, column.id, index);
+  const removeFn = () => onCardRemove?.(card.id);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      clickFn();
+    }
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      removeFn();
+    }
+  };
 
   const sharedAttributes = {
     'data-slot': 'kanban-card' as const,
@@ -43,7 +59,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
     role: 'button',
     tabIndex: 0,
     onClick: clickFn,
-    onKeyDown: (e: React.KeyboardEvent) => handleCardKeyDown(e, clickFn),
+    onKeyDown: handleKeyDown,
   };
 
   const innerContent = config?.render ? (
@@ -77,7 +93,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
       : cn('nop-kanban-card bg-white rounded-lg border border-gray-200 p-3', className);
 
   return (
-    <li {...sharedAttributes} className={cardClass}>
+    <li ref={cardRef} {...sharedAttributes} className={cardClass}>
       {innerContent}
     </li>
   );

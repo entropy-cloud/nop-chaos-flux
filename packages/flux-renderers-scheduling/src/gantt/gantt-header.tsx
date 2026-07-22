@@ -8,16 +8,19 @@ interface GanttHeaderProps {
   toolbarRegion?: RenderRegionHandle;
   className?: string;
   onScrollToToday?: () => void;
+  onZoomChange?: (zoomKey: string) => void;
 }
 
-export function GanttHeader({ toolbarRegion, className, onScrollToToday }: GanttHeaderProps) {
+export function GanttHeader({ toolbarRegion, className, onScrollToToday, onZoomChange }: GanttHeaderProps) {
   const store = useGanttStore();
 
   const handleZoomIn = () => {
     const zooms = store.getAvailableZooms();
     const idx = zooms.findIndex((z) => z.key === store.currentZoom);
     if (idx < zooms.length - 1) {
-      store.setZoom(zooms[idx + 1].key);
+      const next = zooms[idx + 1];
+      store.setZoom(next.key);
+      onZoomChange?.(next.key);
     }
   };
 
@@ -25,14 +28,18 @@ export function GanttHeader({ toolbarRegion, className, onScrollToToday }: Gantt
     const zooms = store.getAvailableZooms();
     const idx = zooms.findIndex((z) => z.key === store.currentZoom);
     if (idx > 0) {
-      store.setZoom(zooms[idx - 1].key);
+      const prev = zooms[idx - 1];
+      store.setZoom(prev.key);
+      onZoomChange?.(prev.key);
     }
   };
 
   const handleZoomToFit = () => {
     const zooms = store.getAvailableZooms();
     if (zooms.length > 0) {
-      store.setZoom(zooms[Math.floor(zooms.length / 2)].key);
+      const fit = zooms[Math.floor(zooms.length / 2)];
+      store.setZoom(fit.key);
+      onZoomChange?.(fit.key);
     }
   };
 

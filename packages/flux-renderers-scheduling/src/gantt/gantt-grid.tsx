@@ -19,9 +19,13 @@ interface GanttGridProps {
   selectedTaskId?: string | number | null;
   className?: string;
   columnRegions?: Record<string, RenderRegionHandle>;
+  onTaskClick?: (taskId: string | number) => void;
+  onTaskDoubleClick?: (taskId: string | number) => void;
+  onEmptyCellClick?: () => void;
+  editable?: boolean;
 }
 
-export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTaskId, className, columnRegions }: GanttGridProps) {
+export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTaskId, className, columnRegions, onTaskClick, onTaskDoubleClick, onEmptyCellClick, editable }: GanttGridProps) {
   const store = useGanttStore();
   useGanttLayoutSnapshot();
   useGanttTreeSnapshot();
@@ -34,13 +38,15 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
   };
 
   const handleCellClick = (taskId: string | number, column: string) => {
+    onTaskClick?.(taskId);
     if (column === 'text') {
       onSelectTask?.(taskId);
     }
   };
 
   const handleCellDoubleClick = (taskId: string | number, column: string) => {
-    if (column === 'text') {
+    onTaskDoubleClick?.(taskId);
+    if (column === 'text' && editable !== false) {
       setEditingCell({ taskId, column });
     }
   };
@@ -64,7 +70,7 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
   const getColumnWidth = (column: GanttColumn): number => column.width ?? 100;
 
   return (
-    <div className={cn('nop-gantt-grid h-full overflow-auto', className)} data-slot="gantt-grid">
+    <div className={cn('nop-gantt-grid h-full overflow-auto', className)} data-slot="gantt-grid" role="grid" onClick={(e) => { if (e.target === e.currentTarget) onEmptyCellClick?.(); }} onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onEmptyCellClick?.(); }}>
       <table className="w-full border-collapse table-fixed">
         <thead data-slot="gantt-grid-header">
           <tr>
@@ -96,6 +102,7 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
               )}
               style={{ height: store.rowHeight }}
               onClick={() => handleCellClick(task.id, 'text')}
+              onDoubleClick={() => handleCellDoubleClick(task.id, 'text')}
             >
               {columns.map((col) => (
                 <td

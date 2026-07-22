@@ -11,9 +11,12 @@ interface GanttBarsProps {
   onBarDoubleClick?: (taskId: string | number) => void;
   onBarKeyAction?: (taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => void;
   taskBarRegion?: RenderRegionHandle;
+  onBarClick?: (taskId: string | number) => void;
+  onBarDoubleClickEvent?: (taskId: string | number) => void;
+  taskBarClassName?: string;
 }
 
-export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction, taskBarRegion }: GanttBarsProps) {
+export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction, taskBarRegion, onBarClick, onBarDoubleClickEvent, taskBarClassName }: GanttBarsProps) {
   const store = useGanttStore();
   useGanttTaskSnapshot();
   useGanttLayoutSnapshot();
@@ -140,6 +143,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
             className={cn(
               'absolute rounded-sm group cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400',
               isProject ? 'nop-gantt-bar-project' : 'nop-gantt-bar-task',
+              taskBarClassName,
             )}
             style={{
               left: task.$x,
@@ -147,6 +151,8 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
               width: Math.max(task.$w, 4),
               height: task.$h,
             }}
+            onClick={() => onBarClick?.(task.id)}
+            onDoubleClick={() => onBarDoubleClickEvent?.(task.id)}
             onKeyDown={(e) => handleBarKeyDown(e, task.id)}
           >
             {task.progress != null && task.progress > 0 && (
@@ -157,7 +163,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
               />
             )}
             {taskBarRegion ? taskBarRegion.render({ bindings: { task } }) : (
-              <span className="nop-gantt-bar-text absolute left-1 top-0 text-[10px] leading-[28px] truncate max-w-[calc(100%-8px)]">
+              <span className={cn('nop-gantt-bar-text absolute left-1 top-0 text-[10px] leading-[28px] truncate max-w-[calc(100%-8px)]', taskBarClassName)}>
                 {task.text}
               </span>
             )}

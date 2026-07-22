@@ -24,13 +24,11 @@ describe('UndoStack', () => {
   });
 
   it('pushCommand adds to undo stack and clears redo', () => {
-    const board = createSampleBoard();
     const stack = createUndoStack();
     const cmd: UndoCommand = {
       type: 'moveCard',
       timestamp: Date.now(),
-      boardSnapshot: board,
-      metadata: { cardId: 'card1', targetColumnId: 'col2' },
+      params: { cardId: 'card1', fromColumnId: 'col1', toColumnId: 'col2', fromIndex: 0, toIndex: 1 },
     };
     const s1 = pushCommand(stack, cmd);
     expect(canUndo(s1)).toBe(true);
@@ -39,48 +37,48 @@ describe('UndoStack', () => {
     expect(s1.redoStack).toHaveLength(0);
   });
 
-  it('undo restores board snapshot', () => {
+  it('undo reverses moveCard', () => {
     const board = createSampleBoard();
     const stack = createUndoStack();
     const cmd: UndoCommand = {
       type: 'moveCard',
       timestamp: Date.now(),
-      boardSnapshot: board,
-      metadata: { cardId: 'card1', targetColumnId: 'col2' },
+      params: { cardId: 'card1', fromColumnId: 'col1', toColumnId: 'col2', fromIndex: 0, toIndex: 1 },
     };
     const s1 = pushCommand(stack, cmd);
-    const result = undo(s1);
+    const result = undo(s1, board);
     expect(result).not.toBeNull();
     expect(result!.board.col1.children).toEqual(['card1', 'card2']);
     expect(canUndo(result!.stack)).toBe(false);
     expect(canRedo(result!.stack)).toBe(true);
   });
 
-  it('redo restores command', () => {
+  it('redo re-applies moveCard', () => {
     const board = createSampleBoard();
     const stack = createUndoStack();
     const cmd: UndoCommand = {
       type: 'moveCard',
       timestamp: Date.now(),
-      boardSnapshot: board,
-      metadata: { cardId: 'card1', targetColumnId: 'col2' },
+      params: { cardId: 'card1', fromColumnId: 'col1', toColumnId: 'col2', fromIndex: 0, toIndex: 1 },
     };
     const s1 = pushCommand(stack, cmd);
-    const afterUndo = undo(s1);
-    const afterRedo = redo(afterUndo!.stack);
+    const afterUndo = undo(s1, board);
+    const afterRedo = redo(afterUndo!.stack, afterUndo!.board);
     expect(afterRedo).not.toBeNull();
     expect(canUndo(afterRedo!.stack)).toBe(true);
     expect(canRedo(afterRedo!.stack)).toBe(false);
   });
 
   it('undo returns null when stack is empty', () => {
+    const board = createSampleBoard();
     const stack = createUndoStack();
-    expect(undo(stack)).toBeNull();
+    expect(undo(stack, board)).toBeNull();
   });
 
   it('redo returns null when stack is empty', () => {
+    const board = createSampleBoard();
     const stack = createUndoStack();
-    expect(redo(stack)).toBeNull();
+    expect(redo(stack, board)).toBeNull();
   });
 
   it('creates stack with custom maxSize', () => {
@@ -89,14 +87,12 @@ describe('UndoStack', () => {
   });
 
   it('evicts oldest command when exceeding maxSize', () => {
-    const board = createSampleBoard();
     let stack = createUndoStack(3);
     for (let i = 0; i < 5; i++) {
       const cmd: UndoCommand = {
         type: 'moveCard',
         timestamp: Date.now(),
-        boardSnapshot: board,
-        metadata: { cardId: `card${i}` },
+        params: { cardId: `card${i}` },
       };
       stack = pushCommand(stack, cmd);
     }
@@ -107,50 +103,50 @@ describe('UndoStack', () => {
 describe('shouldMerge', () => {
   it('merges consecutive moveCard on same card', () => {
     const cmd1: UndoCommand = {
-      type: 'moveCard', timestamp: 1, boardSnapshot: {}, metadata: { cardId: 'card1' },
+      type: 'moveCard', timestamp: 1, params: { cardId: 'card1' },
     };
     const cmd2: UndoCommand = {
-      type: 'moveCard', timestamp: 2, boardSnapshot: {}, metadata: { cardId: 'card1' },
+      type: 'moveCard', timestamp: 2, params: { cardId: 'card1' },
     };
     expect(shouldMerge(cmd1, cmd2)).toBe(true);
   });
 
   it('does not merge moveCard on different cards', () => {
     const cmd1: UndoCommand = {
-      type: 'moveCard', timestamp: 1, boardSnapshot: {}, metadata: { cardId: 'card1' },
+      type: 'moveCard', timestamp: 1, params: { cardId: 'card1' },
     };
     const cmd2: UndoCommand = {
-      type: 'moveCard', timestamp: 2, boardSnapshot: {}, metadata: { cardId: 'card2' },
+      type: 'moveCard', timestamp: 2, params: { cardId: 'card2' },
     };
     expect(shouldMerge(cmd1, cmd2)).toBe(false);
   });
 
   it('does not merge different command types', () => {
     const cmd1: UndoCommand = {
-      type: 'moveCard', timestamp: 1, boardSnapshot: {}, metadata: {},
+      type: 'moveCard', timestamp: 1, params: {},
     };
     const cmd2: UndoCommand = {
-      type: 'addCard', timestamp: 2, boardSnapshot: {}, metadata: {},
+      type: 'addCard', timestamp: 2, params: {},
     };
     expect(shouldMerge(cmd1, cmd2)).toBe(false);
   });
 
   it('does not merge moveColumn with moveCard', () => {
     const cmd1: UndoCommand = {
-      type: 'moveColumn', timestamp: 1, boardSnapshot: {}, metadata: {},
+      type: 'moveColumn', timestamp: 1, params: {},
     };
     const cmd2: UndoCommand = {
-      type: 'moveCard', timestamp: 2, boardSnapshot: {}, metadata: {},
+      type: 'moveCard', timestamp: 2, params: {},
     };
     expect(shouldMerge(cmd1, cmd2)).toBe(false);
   });
 
-  it('handles empty metadata', () => {
+  it('handles empty params', () => {
     const cmd1: UndoCommand = {
-      type: 'moveCard', timestamp: 1, boardSnapshot: {}, metadata: {},
+      type: 'moveCard', timestamp: 1, params: {},
     };
     const cmd2: UndoCommand = {
-      type: 'moveCard', timestamp: 2, boardSnapshot: {}, metadata: {},
+      type: 'moveCard', timestamp: 2, params: {},
     };
     expect(shouldMerge(cmd1, cmd2)).toBe(true);
   });

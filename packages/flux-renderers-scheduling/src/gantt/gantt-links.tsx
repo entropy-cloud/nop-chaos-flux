@@ -5,9 +5,10 @@ import { diffInDays } from './utils/date.js';
 
 interface GanttLinksProps {
   className?: string;
+  onLinkClick?: (linkId: string | number) => void;
 }
 
-export function GanttLinks({ className }: GanttLinksProps) {
+export function GanttLinks({ className, onLinkClick }: GanttLinksProps) {
   const store = useGanttStore();
   useGanttLinkSnapshot();
   useGanttLayoutSnapshot();
@@ -26,6 +27,10 @@ export function GanttLinks({ className }: GanttLinksProps) {
 
   const handleDelete = (linkId: string | number) => {
     store.removeLink(linkId);
+  };
+
+  const handleLinkClick = (linkId: string | number) => {
+    onLinkClick?.(linkId);
   };
 
   if (!hasLinks) return null;
@@ -62,9 +67,9 @@ export function GanttLinks({ className }: GanttLinksProps) {
               strokeWidth={10}
               className="cursor-pointer"
               onMouseEnter={() => setHoveredLink(link.id)}
-              onMouseLeave={() => setHoveredLink(null)}
-              onClick={() => setHoveredLink(link.id === hoveredLink ? null : link.id)}
-              onKeyDown={(e) => { if (e.key === 'Enter') setHoveredLink(link.id === hoveredLink ? null : link.id); }}
+              onMouseLeave={() => { setHoveredLink(null); }}
+              onClick={() => { handleLinkClick(link.id); setHoveredLink(link.id === hoveredLink ? null : link.id); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { handleLinkClick(link.id); setHoveredLink(link.id === hoveredLink ? null : link.id); } }}
               role="button"
               tabIndex={0}
               aria-label={`Link ${link.id}`}

@@ -5,11 +5,12 @@ import { moveColumn } from '../kanban-helpers.js';
 
 export interface UseColumnDndOptions {
   boardData: BoardData;
-  onBoardChange: (board: BoardData) => void;
+  onBoardChange: (board: BoardData, columnId?: string, fromIndex?: number, toIndex?: number) => void;
   onColumnReorder?: (payload: { columnId: string; fromIndex: number; toIndex: number }) => void;
+  enabled?: boolean;
 }
 
-export function useColumnDnd({ boardData, onBoardChange, onColumnReorder }: UseColumnDndOptions) {
+export function useColumnDnd({ boardData, onBoardChange, onColumnReorder, enabled }: UseColumnDndOptions) {
   const stateRef = useRef({ boardData, onBoardChange, onColumnReorder });
 
   useEffect(() => {
@@ -17,6 +18,7 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder }: UseC
   }, [boardData, onBoardChange, onColumnReorder]);
 
   useEffect(() => {
+    if (enabled === false) return;
     return monitorForElements({
       canMonitor({ source }) {
         return source.data.type === 'kanban-column-header';
@@ -40,18 +42,19 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder }: UseC
         if (fromIndex === -1 || fromIndex === targetIndex) return;
 
         const newBoard = moveColumn(currentBoard, columnId, targetIndex);
-        changeBoard(newBoard);
+        changeBoard(newBoard, columnId, fromIndex, targetIndex);
 
         if (reorderEvent) {
           reorderEvent({ columnId, fromIndex, toIndex: targetIndex });
         }
       },
     });
-  }, []);
+  }, [enabled]);
 
   const registerColumnHeader = useCallback((
     element: HTMLElement, columnId: string,
   ) => {
+    if (enabled === false) return () => {};
     return draggable({
       element,
       getInitialData: () => ({
@@ -59,7 +62,7 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder }: UseC
         columnId,
       }),
     });
-  }, []);
+  }, [enabled]);
 
   const registerBoardDropZone = (
     element: HTMLElement, columnIndex: number,

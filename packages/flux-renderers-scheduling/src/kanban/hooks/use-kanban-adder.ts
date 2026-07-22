@@ -1,4 +1,4 @@
-
+import { useRef } from 'react';
 import type { BoardData } from '../kanban.types.js';
 import { addCard, addColumn, removeCard, removeColumn } from '../kanban-helpers.js';
 
@@ -11,13 +11,6 @@ export interface UseKanbanAdderOptions {
   onColumnRemove?: (payload: { columnId: string }) => void;
 }
 
-let idCounter = 0;
-
-function generateId(prefix: string): string {
-  idCounter += 1;
-  return `${prefix}-${Date.now()}-${idCounter}`;
-}
-
 export function useKanbanAdder({
   boardData,
   onBoardChange,
@@ -26,6 +19,12 @@ export function useKanbanAdder({
   onColumnAdd,
   onColumnRemove,
 }: UseKanbanAdderOptions) {
+  const idCounterRef = useRef(0);
+
+  const generateId = (prefix: string): string => {
+    idCounterRef.current += 1;
+    return `${prefix}-${Date.now()}-${idCounterRef.current}`;
+  };
   const handleAddCard = (
     columnId: string, cardData?: Record<string, any>, index?: number,
   ) => {

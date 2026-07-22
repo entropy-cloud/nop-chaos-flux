@@ -3,9 +3,12 @@ import { useRef, useEffect } from 'react';
 export function useGanttScroll(
   gridRef: React.RefObject<HTMLElement | null>,
   timelineRef: React.RefObject<HTMLElement | null>,
+  onScroll?: (scrollLeft: number, scrollTop: number) => void,
 ) {
   const rafRef = useRef<number | null>(null);
   const syncRef = useRef(false);
+  const onScrollRef = useRef(onScroll);
+  useEffect(() => { onScrollRef.current = onScroll; }, [onScroll]);
 
   useEffect(() => {
     const syncScroll = (source: 'grid' | 'timeline') => {
@@ -30,8 +33,14 @@ export function useGanttScroll(
     const grid = gridRef.current;
     const timeline = timelineRef.current;
     if (!grid || !timeline) return;
-    const onGridScroll = () => syncScroll('grid');
-    const onTimelineScroll = () => syncScroll('timeline');
+    const onGridScroll = () => {
+      syncScroll('grid');
+      onScrollRef.current?.(grid.scrollLeft, grid.scrollTop);
+    };
+    const onTimelineScroll = () => {
+      syncScroll('timeline');
+      onScrollRef.current?.(timeline.scrollLeft, timeline.scrollTop);
+    };
     grid.addEventListener('scroll', onGridScroll, { passive: true });
     timeline.addEventListener('scroll', onTimelineScroll, { passive: true });
     return () => {

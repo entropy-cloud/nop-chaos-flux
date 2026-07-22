@@ -18,7 +18,7 @@ export interface DropState {
 
 export interface UseKanbanDndOptions {
   boardData: BoardData;
-  onBoardChange: (board: BoardData) => void;
+  onBoardChange: (board: BoardData, cardId?: string, fromColumnId?: string, toColumnId?: string, fromIndex?: number, toIndex?: number) => void;
   onCardMove?: (payload: {
     cardId: string;
     fromColumnId: string;
@@ -78,11 +78,12 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
         const { boardData: currentBoard, onBoardChange: changeBoard, onCardMove: moveEvent, wipOverLimitColumns: wipSet } = stateRef.current;
         const newBoard = moveCard(currentBoard, cardId, toColumnId, toIndex);
 
-        changeBoard(newBoard);
+        const fromCol = currentBoard[fromColumnId];
+        const fromIndex = fromCol ? fromCol.children.indexOf(cardId) : -1;
+
+        changeBoard(newBoard, cardId, fromColumnId, toColumnId, fromIndex, toIndex);
 
         if (moveEvent) {
-          const fromCol = currentBoard[fromColumnId];
-          const fromIndex = fromCol ? fromCol.children.indexOf(cardId) : -1;
           const overLimit = wipSet?.has(toColumnId) ?? false;
           moveEvent({ cardId, fromColumnId, toColumnId, fromIndex, toIndex, overLimit });
         }
@@ -169,7 +170,7 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
     toIndex: number,
   ) => {
     const newBoard = moveCard(boardData, cardId, toColumnId, toIndex);
-    onBoardChange(newBoard);
+    onBoardChange(newBoard, cardId, fromColumnId, toColumnId, fromIndex, toIndex);
 
     const fromCol = boardData[fromColumnId];
     const finalFromIndex = fromCol ? fromCol.children.indexOf(cardId) : -1;

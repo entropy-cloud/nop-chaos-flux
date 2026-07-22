@@ -21,6 +21,7 @@ interface GanttStoreState {
   containerWidth: number; revision: number; taskRevision: number; linkRevision: number;
   treeRevision: number; layoutRevision: number;
   expandedSet: Set<GanttId>;
+  selectedTaskId: GanttId | null; editingTaskId: GanttId | null;
 }
 
 export class GanttStore {
@@ -40,6 +41,7 @@ export class GanttStore {
       containerWidth: config?.containerWidth ?? 800,
       revision: 0, taskRevision: 0, linkRevision: 0, treeRevision: 0, layoutRevision: 0,
       expandedSet: new Set(),
+      selectedTaskId: null, editingTaskId: null,
     }));
   }
 
@@ -67,6 +69,23 @@ export class GanttStore {
   get layoutRevision(): number { return this.gs().layoutRevision; }
   get scrollLeft(): number { return this._scrollLeft; }
   set scrollLeft(v: number) { this._scrollLeft = v; }
+
+  get selectedTaskId(): GanttId | null { return this.gs().selectedTaskId; }
+  selectTask(v: GanttId | null): void { this.store.setState({ selectedTaskId: v }); }
+
+  get editingTaskId(): GanttId | null { return this.gs().editingTaskId; }
+  editTask(v: GanttId | null): void { this.store.setState({ editingTaskId: v }); }
+
+  revertTask(id: GanttId, previousData: Partial<GanttTaskData>): void {
+    const state = this.gs();
+    const task = state.tasks.get(id);
+    if (!task) return;
+    const reverted = { ...task, ...previousData } as GanttTask;
+    const newTasks = new Map(state.tasks);
+    newTasks.set(id, reverted);
+    this.store.setState({ tasks: newTasks, revision: state.revision + 1, taskRevision: state.taskRevision + 1 });
+    this.computeComputedPropertiesInternal();
+  }
 
   parse(tasks: GanttTaskData[], links: GanttLinkData[], resources?: GanttResource[], assignments?: GanttAssignment[], calendars?: CalendarEntry[]): void {
     this._dirty = false;

@@ -444,6 +444,8 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'loop', kind: 'prop', valueType: 'boolean' },
       { key: 'controls', kind: 'prop', valueType: 'boolean' },
       { key: 'muted', kind: 'prop', valueType: 'boolean' },
+      { key: 'width', kind: 'prop' },
+      { key: 'height', kind: 'prop' },
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'onLoadError', kind: 'event' },
     ],

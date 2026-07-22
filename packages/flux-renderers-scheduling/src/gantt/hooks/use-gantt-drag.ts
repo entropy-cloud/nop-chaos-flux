@@ -25,6 +25,8 @@ export function useGanttDrag(
   const ghostRef = useRef<HTMLElement | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   const dropIndicatorRef = useRef<HTMLElement | null>(null);
+  const onCommitRef = useRef(onCommit);
+  useEffect(() => { onCommitRef.current = onCommit; }, [onCommit]);
 
   const ensureDropIndicator = (): HTMLElement => {
     let el = dropIndicatorRef.current;
@@ -111,16 +113,16 @@ export function useGanttDrag(
             start: newStart.toISOString().slice(0, 10),
             end: newEnd.toISOString().slice(0, 10),
           };
+          onCommitRef.current?.(task.id, changes);
           store.updateTask(task.id, changes);
-          onCommit?.(task.id, changes);
         } else if (dragRef.current.mode === 'resize-end' && dayDelta !== 0) {
           const oldEnd = new Date(task.end);
           const newEnd = new Date(oldEnd);
           newEnd.setDate(newEnd.getDate() + dayDelta);
           if (newEnd > new Date(task.start)) {
             const changes = { end: newEnd.toISOString().slice(0, 10) };
+            onCommitRef.current?.(task.id, changes);
             store.updateTask(task.id, changes);
-            onCommit?.(task.id, changes);
           }
         } else if (dragRef.current.mode === 'resize-start' && dayDelta !== 0) {
           const oldStart = new Date(task.start);
@@ -128,8 +130,8 @@ export function useGanttDrag(
           newStart.setDate(newStart.getDate() + dayDelta);
           if (newStart < new Date(task.end)) {
             const changes = { start: newStart.toISOString().slice(0, 10) };
+            onCommitRef.current?.(task.id, changes);
             store.updateTask(task.id, changes);
-            onCommit?.(task.id, changes);
           }
         }
       }

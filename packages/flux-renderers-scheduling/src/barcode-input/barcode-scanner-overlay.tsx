@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState, useRef, useMemo, useSyncExternalStore, useCallback, useEffectEvent } from 'react';
+import { useEffect, useState, useRef, useSyncExternalStore, useCallback, useEffectEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, cn } from '@nop-chaos/ui';
 import { X, Flashlight, FlashlightOff, ScanLine, Check, XCircle, Trash2 } from 'lucide-react';
@@ -8,8 +8,8 @@ import { useBarcodeCamera } from './hooks/use-barcode-camera.js';
 import { useBarcodeDetect } from './hooks/use-barcode-detect.js';
 import { useBarcodeTorch } from './hooks/use-barcode-torch.js';
 import { prepareWasm } from './utils/prepare-wasm.js';
-import { BarcodeQueue } from './utils/barcode-queue.js';
-import type { BarcodeFormat, BarcodeDetectResult, BarcodeQueueItem } from './barcode-input.types.js';
+import { createBarcodeQueueStore, enqueueItem, dequeueItem, clearQueue, markSubmitted, getPending, getAllItems } from './utils/barcode-queue.js';
+import type { BarcodeFormat, BarcodeDetectResult } from './barcode-input.types.js';
 
 interface BarcodeScannerOverlayProps {
   open: boolean;
@@ -43,11 +43,13 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     onSubmitForm,
   } = props;
 
-  const queue = useMemo(() => new BarcodeQueue(), []);
+  const [queueStore] = useState(() => createBarcodeQueueStore());
+  const getSnapshot = useCallback(() => getAllItems(queueStore), [queueStore]);
+  const subscribe = useCallback((onStoreChange: () => void) => queueStore.subscribe(onStoreChange), [queueStore]);
+  const queueItems = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   const [phase, setPhase] = useState<'loading' | 'scanning' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [queueItems, setQueueItems] = useState<BarcodeQueueItem[]>([]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const subscribeOnline = useCallback(
@@ -128,16 +130,13 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   useEffect(() => {
     if (detect.result) {
       if (batchMode) {
-        queue.enqueue(detect.result.barcode, detect.result.format);
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: sync queue state when scan result arrives
-        setQueueItems(queue.getAll());
+        enqueueItem(queueStore, detect.result.barcode, detect.result.format);
         if (autoSubmit) {
-          const pending = queue.getPending();
+          const pending = getPending(queueStore);
           for (const item of pending) {
             onScan({ barcode: item.rawValue, format: item.format });
-            queue.markSubmitted(item.id);
+            markSubmitted(queueStore, item.id);
           }
-          setQueueItems(queue.getAll());
         }
       } else if (continuousScan) {
         onScan(detect.result);
@@ -149,7 +148,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
         onClose();
       }
     }
-  }, [detect.result, batchMode, continuousScan, autoSubmit, onScan, onClose, onSubmitForm, queue]);
+  }, [detect.result, batchMode, continuousScan, autoSubmit, onScan, onClose, onSubmitForm, queueStore]);
 
   useEffect(() => {
     if (detect.error) {
@@ -167,22 +166,19 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   const torch = useBarcodeTorch({ getStream, onRestartStream: restartCamera });
 
   function handleQueueSubmit() {
-    const pending = queue.getPending();
+    const pending = getPending(queueStore);
     for (const item of pending) {
       onScan({ barcode: item.rawValue, format: item.format });
-      queue.markSubmitted(item.id);
+      markSubmitted(queueStore, item.id);
     }
-    setQueueItems(queue.getAll());
   }
 
   function handleQueueDelete(id: string) {
-    queue.dequeue(id);
-    setQueueItems(queue.getAll());
+    dequeueItem(queueStore, id);
   }
 
   function handleQueueClear() {
-    queue.clear();
-    setQueueItems([]);
+    clearQueue(queueStore);
   }
 
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -322,7 +318,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
                 data-slot="barcode-queue-submit"
                 className="text-xs text-white/80 hover:text-white"
                 onClick={handleQueueSubmit}
-                disabled={queue.getPending().length === 0}
+                disabled={getPending(queueStore).length === 0}
               >
                 {t('flux.batchConfirm')}
               </Button>

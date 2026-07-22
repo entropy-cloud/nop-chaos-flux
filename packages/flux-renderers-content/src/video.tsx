@@ -16,6 +16,16 @@ export function VideoRenderer(props: RendererComponentProps<VideoSchema>) {
   const loop = slotProps.loop === true;
   const controls = slotProps.controls !== false;
   const muted = slotProps.muted === true;
+  const rawWidth = slotProps.width;
+  const rawHeight = slotProps.height;
+  const widthStyle = typeof rawWidth === 'number' ? `${rawWidth}px` : rawWidth;
+  const heightStyle = typeof rawHeight === 'number' ? `${rawHeight}px` : rawHeight;
+  const videoStyle: React.CSSProperties = {
+    maxWidth: '100%',
+    borderRadius: '0.375rem',
+    ...(widthStyle ? { width: widthStyle } : {}),
+    ...(heightStyle ? { height: heightStyle } : {}),
+  };
   const titleContent = resolveRendererSlotContent(props, 'title');
   const hasTitle = hasRendererSlotContent(titleContent);
   const onLoadError = props.events.onLoadError;
@@ -66,7 +76,7 @@ export function VideoRenderer(props: RendererComponentProps<VideoSchema>) {
         controls={controls}
         muted={muted}
         onError={handleError}
-        className="max-w-full rounded-md"
+        style={videoStyle}
       />
       {hasTitle ? (
         <figcaption data-slot="video-title" className="text-sm text-muted-foreground">

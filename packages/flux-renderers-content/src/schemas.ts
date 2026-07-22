@@ -321,6 +321,10 @@ export interface VideoSchema extends BaseSchema {
   controls?: boolean;
   /** 静音播放（仅 video：autoplay 场景常需 muted 才能生效） */
   muted?: boolean;
+  /** 视频宽度（数字单位 px，字符串支持任意 CSS 单位） */
+  width?: number | string;
+  /** 视频高度（数字单位 px，字符串支持任意 CSS 单位） */
+  height?: number | string;
   // `title` 继承 BaseSchema（string）；renderer definition 用 value-or-region 规则。
   onLoadError?: ActionSchema;
 }

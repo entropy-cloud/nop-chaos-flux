@@ -27,8 +27,8 @@ export const barcodeInputFieldRules: SchemaFieldRule[] = [
   { key: 'scanButtonClassName', kind: 'prop' },
   { key: 'autoSubmit', kind: 'prop', valueType: 'boolean' },
   { key: 'scanOnFocus', kind: 'prop', valueType: 'boolean' },
-  { key: 'onMount', kind: 'meta' },
-  { key: 'onUnmount', kind: 'meta' },
+  { key: 'onMount', kind: 'event' },
+  { key: 'onUnmount', kind: 'event' },
   { key: 'onScan', kind: 'event' },
   { key: 'onScanError', kind: 'event' },
 ];

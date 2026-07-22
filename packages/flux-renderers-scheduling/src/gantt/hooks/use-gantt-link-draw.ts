@@ -4,6 +4,7 @@ import { useGanttStore } from '../gantt-context.js';
 export function useGanttLinkDraw(
   svgRef: React.RefObject<SVGSVGElement | null>,
   onCommit?: (sourceId: string | number, targetId: string | number, linkType: string) => void,
+  enabled?: boolean,
 ) {
   const store = useGanttStore();
   const drawingRef = useRef<{
@@ -14,6 +15,8 @@ export function useGanttLinkDraw(
   } | null>(null);
   const [isLinking, setIsLinking] = useState(false);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const onCommitRef = useRef(onCommit);
+  useEffect(() => { onCommitRef.current = onCommit; }, [onCommit]);
 
   const cleanup = () => {
     if (drawingRef.current?.tempLine) {
@@ -25,6 +28,7 @@ export function useGanttLinkDraw(
   };
 
   const onLinkHandlePointerDown = (e: PointerEvent, taskId: string | number) => {
+    if (enabled === false) return;
     e.preventDefault();
     e.stopPropagation();
     const task = store.tasks.get(taskId);
@@ -63,8 +67,8 @@ export function useGanttLinkDraw(
       if (taskBarEl) {
         const targetId = taskBarEl.getAttribute('data-task-id');
         if (targetId && targetId !== String(drawingRef.current.sourceId)) {
+          onCommitRef.current?.(drawingRef.current.sourceId, targetId, 'finish_to_start');
           store.addLink(drawingRef.current.sourceId, targetId, 'finish_to_start');
-          onCommit?.(drawingRef.current.sourceId, targetId, 'finish_to_start');
         }
       }
       cleanup();
@@ -109,8 +113,8 @@ export function useGanttLinkDraw(
   const completeKeyboardLink = (targetTaskId: string | number) => {
     if (!drawingRef.current) return;
     if (targetTaskId !== String(drawingRef.current.sourceId)) {
+      onCommitRef.current?.(drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
       store.addLink(drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
-      onCommit?.(drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
     }
     cleanup();
   };

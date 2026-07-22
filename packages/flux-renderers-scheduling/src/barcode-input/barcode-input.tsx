@@ -50,11 +50,17 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
     }
   };
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const handleFocus = () => {
     if (!scanOnFocus || overlayOpen) return;
     scanOnFocusOpenedRef.current = true;
     if (cameraAvailable === null) {
       checkCameraAvailability().then((result) => {
+        if (!mountedRef.current) return;
         setCameraAvailable(result.isAvailable);
         if (result.isAvailable) setOverlayOpen(true);
       }).catch((err) => {
@@ -71,20 +77,32 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
     scanOnFocusOpenedRef.current = false;
   };
 
+  const scanAbortRef = useRef<AbortController | null>(null);
+
   const handleScanClick = async () => {
     scanOnFocusOpenedRef.current = false;
+    scanAbortRef.current?.abort();
+    const ac = new AbortController();
+    scanAbortRef.current = ac;
     try {
       if (cameraAvailable === null) {
         const result = await checkCameraAvailability();
+        if (ac.signal.aborted || !mountedRef.current) return;
         setCameraAvailable(result.isAvailable);
         if (!result.isAvailable) return;
       }
+      if (ac.signal.aborted || !mountedRef.current) return;
       setOverlayOpen(true);
     } catch (err) {
+      if (ac.signal.aborted) return;
       console.warn('BarcodeInput: failed to open scanner', err);
       setCameraAvailable(false);
     }
   };
+
+  useEffect(() => {
+    return () => { scanAbortRef.current?.abort(); };
+  }, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;

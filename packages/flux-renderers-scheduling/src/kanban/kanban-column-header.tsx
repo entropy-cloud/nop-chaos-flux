@@ -18,6 +18,7 @@ export interface KanbanColumnHeaderProps {
   onClick?: () => void;
   wipWarning?: boolean;
   wipText?: string;
+  registerColumnHeader?: (el: HTMLElement, columnId: string) => () => void;
 }
 
 export function KanbanColumnHeader({
@@ -34,12 +35,20 @@ export function KanbanColumnHeader({
   onClick,
   wipWarning,
   wipText,
+  registerColumnHeader,
 }: KanbanColumnHeaderProps) {
+  const headerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!registerColumnHeader || !headerRef.current) return;
+    return registerColumnHeader(headerRef.current, column.id);
+  }, [registerColumnHeader, column.id]);
+
   const title = (column.title || column.data?.title || '') as string;
 
   if (columnHeaderRegion) {
     return (
-      <div data-slot="kanban-column-header" data-dnd-column-header={dndEnabled ? 'true' : undefined} data-column-id={column.id} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }} className={cn('nop-kanban-column-header', className)}>
+      <div ref={headerRef} data-slot="kanban-column-header" data-dnd-column-header={dndEnabled ? 'true' : undefined} data-column-id={column.id} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }} className={cn('nop-kanban-column-header', className)}>
         {columnHeaderRegion.render()}
         {onResizeStart && (
           <div
@@ -54,6 +63,7 @@ export function KanbanColumnHeader({
 
   return (
     <div
+      ref={headerRef}
       data-slot="kanban-column-header"
       data-dnd-column-header={dndEnabled ? 'true' : undefined}
       data-column-id={column.id}

@@ -1,74 +1,67 @@
+import { createStore } from 'zustand/vanilla';
 import type { BarcodeQueueItem } from '../barcode-input.types.js';
 
-export class BarcodeQueue {
-  private items: BarcodeQueueItem[] = [];
+interface BarcodeQueueState {
+  items: BarcodeQueueItem[];
+}
 
-  enqueue(rawValue: string, format: string): BarcodeQueueItem {
-    const existing = this.items.find(
-      (i) => i.rawValue === rawValue,
-    );
-    if (existing) {
-      if (existing.status === 'pending') {
-        existing.status = 'duplicate';
-      }
-      return existing;
+export function createBarcodeQueueStore() {
+  return createStore<BarcodeQueueState>(() => ({
+    items: [],
+  }));
+}
+
+export type BarcodeQueueStore = ReturnType<typeof createBarcodeQueueStore>;
+
+export function enqueueItem(store: BarcodeQueueStore, rawValue: string, format: string): BarcodeQueueItem {
+  const state = store.getState();
+  const existing = state.items.find((i) => i.rawValue === rawValue);
+  if (existing) {
+    if (existing.status === 'pending') {
+      store.setState({
+        items: state.items.map((i) => i.id === existing.id ? { ...i, status: 'duplicate' as const } : i),
+      });
     }
-
-    const item: BarcodeQueueItem = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      rawValue,
-      timestamp: Date.now(),
-      format,
-      status: 'pending',
-    };
-    this.items.push(item);
-    return item;
+    return store.getState().items.find((i) => i.id === existing.id)!;
   }
 
-  dequeue(id: string): BarcodeQueueItem | undefined {
-    const idx = this.items.findIndex((i) => i.id === id);
-    if (idx === -1) return undefined;
-    return this.items.splice(idx, 1)[0];
-  }
+  const item: BarcodeQueueItem = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    rawValue,
+    timestamp: Date.now(),
+    format,
+    status: 'pending',
+  };
+  store.setState({ items: [...state.items, item] });
+  return item;
+}
 
-  flush(): BarcodeQueueItem[] {
-    const pending = this.items.filter((i) => i.status === 'pending');
-    pending.forEach((i) => {
-      i.status = 'submitted';
-    });
-    return pending;
-  }
+export function dequeueItem(store: BarcodeQueueStore, id: string): BarcodeQueueItem | undefined {
+  const state = store.getState();
+  const idx = state.items.findIndex((i) => i.id === id);
+  if (idx === -1) return undefined;
+  const item = state.items[idx];
+  store.setState({ items: state.items.filter((i) => i.id !== id) });
+  return item;
+}
 
-  clear(): void {
-    this.items = [];
-  }
+export function clearQueue(store: BarcodeQueueStore): void {
+  store.setState({ items: [] });
+}
 
-  getAll(): BarcodeQueueItem[] {
-    return [...this.items];
-  }
+export function markSubmitted(store: BarcodeQueueStore, id: string): void {
+  const state = store.getState();
+  store.setState({
+    items: state.items.map((i) => i.id === id ? { ...i, status: 'submitted' as const } : i),
+  });
+}
 
-  getPending(): BarcodeQueueItem[] {
-    return this.items.filter((i) => i.status === 'pending');
-  }
+export function getPending(store: BarcodeQueueStore): BarcodeQueueItem[] {
+  return store.getState().items.filter((i) => i.status === 'pending');
+}
 
-  getCount(): number {
-    return this.items.length;
-  }
-
-  markSubmitted(id: string): void {
-    const item = this.items.find((i) => i.id === id);
-    if (item) {
-      item.status = 'submitted';
-    }
-  }
-
-  markError(id: string, message: string): void {
-    const item = this.items.find((i) => i.id === id);
-    if (item) {
-      item.status = 'error';
-      item.errorMessage = message;
-    }
-  }
+export function getAllItems(store: BarcodeQueueStore): BarcodeQueueItem[] {
+  return store.getState().items;
 }
 
 

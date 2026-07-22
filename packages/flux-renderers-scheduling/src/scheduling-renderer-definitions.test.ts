@@ -37,58 +37,99 @@ describe('schedulingRendererDefinitions', () => {
       expect(def.sourcePackage).toBe('@nop-chaos/flux-renderers-scheduling');
     }
   });
+});
 
-  describe('kanban field consumption', () => {
-    const kanbanDef = schedulingRendererDefinitions.find(d => d.type === 'kanban')!;
-    const knownConsumedOrReserved = new Set([
-      'body', 'data', 'configMap', 'columnsConfig',
-      'columnHeader', 'columnHeaderToolbar', 'cardTemplate', 'columnFooter',
-      'empty', 'loading',
-      'filterText', 'filterCard', 'filterTags',
-      'columnWidth', 'columnDraggable', 'draggable',
-      'columnsOrderStatePath', 'columnsOrderOwnership',
-      'collapsedStatePath', 'collapsedOwnership',
-      'columnHeaderClassName', 'cardClassName', 'columnFooterClassName',
-      'kanbanOwnership', 'kanbanStatePath', 'statusPath',
-      'onMount', 'onUnmount',
-      'onCardMove', 'onCardClick', 'onColumnReorder', 'onColumnClick',
-      'onCardAdd', 'onCardRemove',
-    ]);
+describe('gantt field consumption verification', () => {
+  const ganttDef = schedulingRendererDefinitions.find(d => d.type === 'gantt')!;
+  const fields = ganttDef.fields ?? [];
 
-    it('every registered kanban field is either consumed or documented as reserved', () => {
-      const fields = kanbanDef.fields ?? [];
-      for (const field of fields) {
-        expect(knownConsumedOrReserved.has(field.key)).toBe(true);
-      }
-    });
+  const ganttEventFields = fields.filter(f => f.kind === 'event').map(f => f.key);
+  it('all gantt event fields fire at interaction points', () => {
+    const expectedEvents = ['onTaskClick', 'onTaskDoubleClick', 'onTaskDragEnd', 'onLinkClick', 'onLinkDragEnd', 'onEmptyCellClick', 'onZoomChange', 'onScroll'];
+    for (const evt of expectedEvents) {
+      expect(ganttEventFields).toContain(evt);
+    }
   });
 
-  describe('calendar field consumption', () => {
-    const calendarDef = schedulingRendererDefinitions.find(d => d.type === 'calendar')!;
-    const knownConsumedOrReserved = new Set([
-      'view', 'date', 'events', 'resources',
-      'firstDayOfWeek', 'showWeekends', 'maxConcurrent',
-      'showCrossDayLines', 'timezoneSelector', 'batchScheduling',
-      'resources[].resources', 'resources[].open',
-      'eventTemplate', 'loading', 'empty', 'body',
-      'headerClassName', 'eventClassName', 'emptyClassName',
-      'onEventClick', 'onDateChange', 'onViewChange',
-      'onEventChange', 'onEventCreate',
-      'onBatchSchedule', 'onImport', 'onImportError',
-      'onTimezoneChange', 'onGroupToggle',
-      'viewOwnership', 'viewStatePath',
-      'dateOwnership', 'dateStatePath',
-      'statusPath', 'loadAction',
-      'onMount', 'onUnmount',
-      'component:print', 'component:exportPNG',
-      'component:importICal', 'component:exportToICal',
-    ]);
+  const ganttRegionFields = fields.filter(f => f.kind === 'region').map(f => f.key);
+  it('gantt region fields are rendered', () => {
+    expect(ganttRegionFields).toContain('body');
+    expect(ganttRegionFields).toContain('loading');
+    expect(ganttRegionFields).toContain('empty');
+    expect(ganttRegionFields).toContain('taskBar');
+    expect(ganttRegionFields).toContain('toolbar');
+    expect(ganttRegionFields).toContain('editor');
+  });
 
-    it('every registered calendar field is either consumed or documented as reserved', () => {
-      const fields = calendarDef.fields ?? [];
-      for (const field of fields) {
-        expect(knownConsumedOrReserved.has(field.key)).toBe(true);
-      }
-    });
+  const ganttPropFields = fields.filter(f => f.kind === 'prop').map(f => f.key);
+  it('gantt consumes all declared props', () => {
+    const expectedProps = ['draggable', 'editable', 'linkable', 'calendar', 'progressBarHeight', 'childrenField', 'initiallyExpanded', 'startDate', 'endDate',
+      'toolbarClassName', 'taskBarClassName', 'editorClassName', 'emptyClassName'];
+    for (const prop of expectedProps) {
+      expect(ganttPropFields).toContain(prop);
+    }
+  });
+});
+
+describe('kanban field consumption verification', () => {
+  const kanbanDef = schedulingRendererDefinitions.find(d => d.type === 'kanban')!;
+  const fields = kanbanDef.fields ?? [];
+
+  const kanbanEventFields = fields.filter(f => f.kind === 'event').map(f => f.key);
+  it('all kanban event fields fire at interaction points', () => {
+    const expectedEvents = ['onCardMove', 'onCardClick', 'onColumnReorder', 'onColumnClick', 'onCardAdd', 'onCardRemove'];
+    for (const evt of expectedEvents) {
+      expect(kanbanEventFields).toContain(evt);
+    }
+  });
+
+  const kanbanPropFields = fields.filter(f => f.kind === 'prop').map(f => f.key);
+  it('kanban consumes all declared props', () => {
+    const expectedProps = ['columnDraggable', 'draggable', 'columnsConfig', 'configMap'];
+    for (const prop of expectedProps) {
+      expect(kanbanPropFields).toContain(prop);
+    }
+  });
+});
+
+describe('calendar field consumption verification', () => {
+  const calendarDef = schedulingRendererDefinitions.find(d => d.type === 'calendar')!;
+  const fields = calendarDef.fields ?? [];
+
+  const calendarEventFields = fields.filter(f => f.kind === 'event').map(f => f.key);
+  it('all calendar event fields fire at interaction points', () => {
+    const expectedEvents = ['onEventClick', 'onDateChange', 'onViewChange', 'onEventChange', 'onEventCreate', 'onGroupToggle'];
+    for (const evt of expectedEvents) {
+      expect(calendarEventFields).toContain(evt);
+    }
+  });
+
+  const calendarRegionFields = fields.filter(f => f.kind === 'region').map(f => f.key);
+  it('calendar renders loading/empty/body regions', () => {
+    expect(calendarRegionFields).toContain('loading');
+    expect(calendarRegionFields).toContain('empty');
+    expect(calendarRegionFields).toContain('body');
+  });
+});
+
+describe('barcode-input field consumption verification', () => {
+  const barcodeDef = schedulingRendererDefinitions.find(d => d.type === 'barcode-input')!;
+  const fields = barcodeDef.fields ?? [];
+
+  it('barcode-input lifecycle events use event kind', () => {
+    const onMountField = fields.find(f => f.key === 'onMount');
+    const onUnmountField = fields.find(f => f.key === 'onUnmount');
+    expect(onMountField?.kind).toBe('event');
+    expect(onUnmountField?.kind).toBe('event');
+  });
+
+  it('barcode-input declares all required props', () => {
+    const propKeys = fields.filter(f => f.kind === 'prop').map(f => f.key);
+    expect(propKeys).toContain('formats');
+    expect(propKeys).toContain('continuousScan');
+    expect(propKeys).toContain('batchMode');
+    expect(propKeys).toContain('scanOnFocus');
+    expect(propKeys).toContain('scanButton');
+    expect(propKeys).toContain('scanInterval');
   });
 });

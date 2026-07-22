@@ -29,6 +29,17 @@ import { useCalendarExport } from './hooks/use-calendar-export.js';
 import { parseISODate } from './utils/calendar-date-utils.js';
 import './utils/calendar-print.css';
 
+function flattenResources(resources: CalendarResource[]): CalendarResource[] {
+  const result: CalendarResource[] = [];
+  for (const r of resources) {
+    result.push(r);
+    if (r.resources && r.resources.length > 0) {
+      result.push(...flattenResources(r.resources));
+    }
+  }
+  return result;
+}
+
 export interface CalendarHandle {
   goNext: () => void;
   goPrev: () => void;
@@ -53,6 +64,8 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const eventsRef = useRef(events);
   useEffect(() => { eventsRef.current = events; }, [events]);
+  const reactionsRef = useRef(props.reactions);
+  useEffect(() => { reactionsRef.current = props.reactions; }, [props.reactions]);
 
   useEffect(() => {
     void eventsRef.current.onMount?.({});
@@ -176,6 +189,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         if (parsed) setCurrentDate(parsed);
       },
       exportToPNG: calendarExport.exportToPNG,
+      exportToPrint: calendarExport.exportToPrint,
     }),
     [navigation, setActiveView, setCurrentDate, calendarExport],
   );
@@ -359,9 +373,25 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     longPressMs: 500,
   });
 
+  const [_resourceOpenMap, _setResourceOpenMap] = useState<Record<string, boolean>>(() => {
+    const map: Record<string, boolean> = {};
+    for (const r of resourcesData) {
+      map[r.id] = r.open !== false;
+    }
+    return map;
+  });
+
+  const _handleGroupToggle = (groupId: string) => {
+    _setResourceOpenMap((prev) => {
+      const next = { ...prev, [groupId]: !prev[groupId] };
+      void eventsRef.current.onGroupToggle?.({ groupId, open: next[groupId] });
+      return next;
+    });
+  };
+
   const displayResources = resourcesData.length === 0
     ? [{ id: '_default', text: '', title: '' } as CalendarResource]
-    : resourcesData;
+    : flattenResources(resourcesData);
 
   const { scrollRef, virtualItems, totalSize } = useCalendarVirtualizer({
     count: displayResources.length,

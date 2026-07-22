@@ -137,9 +137,12 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'onEventChange', kind: 'event' },
       // Sole creation channel for drag-create; onEventChange is NOT fired during creation.
       { key: 'onEventCreate', kind: 'event' },
+      // @reserved — batch scheduling wired in future design (§12.5)
       { key: 'onBatchSchedule', kind: 'event' },
+      // @reserved — iCal import wired in future design (§12.6)
       { key: 'onImport', kind: 'event' },
       { key: 'onImportError', kind: 'event' },
+      // @reserved — timezone selector wired in future design (§12.7)
       { key: 'onTimezoneChange', kind: 'event' },
       { key: 'onGroupToggle', kind: 'event' },
       { key: 'showCrossDayLines', kind: 'prop' },
@@ -157,6 +160,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'onUnmount', kind: 'meta' },
       { key: 'component:print', kind: 'reaction' },
       { key: 'component:exportPNG', kind: 'reaction' },
+      // @reserved — iCal import/export wired in future design (§12.6)
       { key: 'component:importICal', kind: 'reaction' },
       { key: 'component:exportToICal', kind: 'reaction' },
     ],
