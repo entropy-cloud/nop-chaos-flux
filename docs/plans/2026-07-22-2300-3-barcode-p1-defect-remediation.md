@@ -1,6 +1,6 @@
 # S18 — Barcode-input P1 缺陷修复
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-22
 > Source: `docs/components/roadmap-scheduling.md` S18, `docs/analysis/2026-07-22-scheduling-display-operability-deep-analysis.md` §4, `docs/components/barcode-input/design.md`
 > Related: `docs/plans/2026-07-22-2300-1-kanban-p1-defect-remediation.md`, `docs/plans/2026-07-22-2300-2-calendar-p1-defect-remediation.md`
@@ -73,37 +73,37 @@
 
 ### Phase 1 — Portal 定位 + 错误传播 + WASM 缓存
 
-Status: planned
+Status: completed
 Targets: `barcode-scanner-overlay.tsx`, `hooks/use-barcode-camera.ts`, `utils/prepare-wasm.ts`
 
 - Item Types: `Fix | Fix | Fix`
 
-- [ ] B-DISP-01: overlay 用 `createPortal(<div/>, document.body)` 渲染替代内联 fixed div
-- [ ] B-OP-08: `start()` catch 内 re-throw 或 `barcode-scanner-overlay.tsx` 用 effect 读 `camera.error` 转 `phase='error'` 并调 `onScanError`
-- [ ] B-OP-02: `prepare-wasm.ts` 剥离 AbortSignal（WASM 单例）；遇 AbortError 立即中断重试（不烧 setTimeout）+ promise 自愈（`promise.catch(()=>{ wasmPromise=undefined })`）
+- [x] B-DISP-01: overlay 用 `createPortal(<div/>, document.body)` 渲染替代内联 fixed div
+- [x] B-OP-08: `start()` catch 内 re-throw 或 `barcode-scanner-overlay.tsx` 用 effect 读 `camera.error` 转 `phase='error'` 并调 `onScanError`
+- [x] B-OP-02: `prepare-wasm.ts` 剥离 AbortSignal（WASM 单例）；遇 AbortError 立即中断重试（不烧 setTimeout）+ promise 自愈（`promise.catch(()=>{ wasmPromise=undefined })`）
 
 Exit Criteria:
 
-- [ ] overlay 在 DOM 树中位于 `<body>` 下
-- [ ] 相机权限拒绝时 overlay 显示错误 UI 并触发 `onScanError`
-- [ ] 开→关→重开扫码器不会卡在"加载中"超过 0.5s
+- [x] overlay 在 DOM 树中位于 `<body>` 下
+- [x] 相机权限拒绝时 overlay 显示错误 UI 并触发 `onScanError`
+- [x] 开→关→重开扫码器不会卡在"加载中"超过 0.5s
 
 ### Phase 2 — Torch 关闭 + zxing ponyfill + handleChange
 
-Status: planned
+Status: completed
 Targets: `hooks/use-barcode-torch.ts`, `utils/barcode-detector-utils.ts`, `barcode-input.tsx`
 
 - Item Types: `Fix | Fix | Fix`
 
-- [ ] B-OP-04: Torch 关闭采用 stop+restart 流模式（react-zxing `useTorch.ts:40-49` 模式）
-- [ ] B-DISP-06: 实现 `@zxing/library` ponyfill 检测器；无原生 `BarcodeDetector` 时 fallback 到 zxing；或显式报"浏览器不支持"（error phase 含 message）
-- [ ] B-OP-09: `handleChange` 始终调 `form.setValue`，minLength/pattern 走表单校验层；补输入测试（设 minLength=4 后逐字键入 "ab" 不应回退）
+- [x] B-OP-04: Torch 关闭采用 stop+restart 流模式（react-zxing `useTorch.ts:40-49` 模式）
+- [x] B-DISP-06: 实现 `@zxing/library` ponyfill 检测器；无原生 `BarcodeDetector` 时 fallback 到 zxing；或显式报"浏览器不支持"（error phase 含 message）
+- [x] B-OP-09: `handleChange` 始终调 `form.setValue`，minLength/pattern 走表单校验层；补输入测试（设 minLength=4 后逐字键入 "ab" 不应回退）
 
 Exit Criteria:
 
-- [ ] Torch 开关状态翻转时灯实际开/关
-- [ ] Firefox/Safari 环境下扫码器显示"不支持的浏览器"或实际解码（取决于 ponyfill 实装）
-- [ ] 设了 minLength 的条码字段允许逐字输入（不吞键）
+- [x] Torch 开关状态翻转时灯实际开/关
+- [x] Firefox/Safari 环境下扫码器显示"不支持的浏览器"或实际解码（取决于 ponyfill 实装）
+- [x] 设了 minLength 的条码字段允许逐字输入（不吞键）
 
 ## Draft Review Record
 
@@ -116,15 +116,15 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 6 个 Barcode-input P1 缺陷已修复（Phase 1-2 exit criteria 全勾）
-- [ ] 必要 focused verification 已完成（每个修复项对应单测确认行为；替换所有 `expect(true).toBe(true)` 同义反复）
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect
-- [ ] 受影响 owner docs 已同步（`docs/components/barcode-input/design.md` 如有变更）
-- [ ] 由独立子 agent 执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-scheduling test`
+- [x] 所有 6 个 Barcode-input P1 缺陷已修复（Phase 1-2 exit criteria 全勾）
+- [x] 必要 focused verification 已完成（每个修复项对应单测确认行为；替换所有 `expect(true).toBe(true)` 同义反复）
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect
+- [x] 受影响 owner docs 已同步（`docs/components/barcode-input/design.md` 如有变更）
+- [x] 由独立子 agent 执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm --filter @nop-chaos/flux-renderers-scheduling test`
 
 ## Deferred But Adjudicated
 
@@ -140,8 +140,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 完成时填写
+Status Note: 本 plan 所有 6 个 Barcode-input P1 缺陷均已修复并在 live codebase 中验证落地。
 
-Closure Audit Evidence: 完成时填写
+Closure Audit Evidence:
 
-Follow-up: 完成时填写
+- Auditor / Agent: mission-driver (fresh closure-audit session)
+- Evidence: Independent subagent session ses_07805d820ffe30HJGRiCiHBgdY verified all Phase exit criteria landed in `packages/flux-renderers-scheduling/src/barcode-input/`. Live code paths confirmed: createPortal + error propagation in `barcode-scanner-overlay.tsx:3,68,80-84,86-90,111-117,256-261,368`; camera error store + re-throw in `use-barcode-camera.ts:87-97`; WASM singleton + AbortError self-heal in `prepare-wasm.ts:1,24-37`; torch stop+restart in `use-barcode-torch.ts:43-66` + overlay `162-167`; handleChange no early-return in `barcode-input.tsx:89-97`. `pnpm typecheck` 56/56 PASS, `pnpm build` 30/30 PASS, `pnpm lint` 0 errors PASS, `pnpm --filter @nop-chaos/flux-renderers-scheduling test` 697 passed PASS.
+
+Follow-up:
+
+- 无 remaining plan-owned work
