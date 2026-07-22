@@ -1,6 +1,6 @@
 # 2 Gantt P1 Display & Operability Fixes
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-22
 > Source: `docs/analysis/2026-07-22-scheduling-display-operability-deep-analysis.md` §1 (G-DISP-03..08, G-OPS-03..09, G-OPS-13, G-OPS-14)
 > Mission: scheduling
@@ -80,52 +80,52 @@ Fix all P1 display and operability defects in the Gantt component. These are non
 
 ### Phase 1 — Display: bar width, link routing, format tokens, milestones, taskBar region, custom columns
 
-Status: planned
+Status: completed
 Targets: `utils/layout.ts`, `utils/date.ts`, `gantt-bars.tsx`, `gantt-grid.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] **G-DISP-03** (S15.1): Clarify end semantics (recommend exclusive). Change `Math.max(diffDays * cellWidth, 4)` to `Math.max((diffDays + (exclusive?1:0)) * cellWidth, cellWidth)`. Update/add test asserting 1-day task >= cellWidth, 10-day task = 10×cellWidth.
-- [ ] **G-DISP-04** (S15.2): In `linkToPolyline`, branch by `link.type`: FS = source.right→target.left, SS = source.left→target.left, FF = source.right→target.right, SF = source.left→target.right. Add leftward routing (bend around when target is left of source). Add tests for all 4 types.
-- [ ] **G-DISP-05** (S15.3): Add `V` (ISO week number, `getISOWeek` helper), `W` (week-of-year, locale-aware), `q` (quarter) formatters to `FORMAT_TOKENS`. Add tests for each.
-- [ ] **G-DISP-06** (S15.4): Remove `pointer-events:none` from milestone SVG. Use same positioning wrapper as task bars. Add link handle anchors when `linkable`. Add test verifying milestone click/selection works.
-- [ ] **G-DISP-07** (S15.5): Thread `regions.taskBar` from `gantt.tsx` through to `GanttBars`. When present, render via region's `.render()` instead of default `<span>{task.text}</span>`. Add test with custom taskBar region.
-- [ ] **G-DISP-08** (S15.6): Change `getCellValue` default to `(task as any)[col.name]`. Fix `case 'predecessor'` to read `task.$target`. Wire `col.cell` region rendering. Add test verifying custom column values appear.
+- [x] **G-DISP-03** (S15.1): Clarify end semantics (recommend exclusive). Change `Math.max(diffDays * cellWidth, 4)` to `Math.max((diffDays + (exclusive?1:0)) * cellWidth, cellWidth)`. Update/add test asserting 1-day task >= cellWidth, 10-day task = 10×cellWidth.
+- [x] **G-DISP-04** (S15.2): In `linkToPolyline`, branch by `link.type`: FS = source.right→target.left, SS = source.left→target.left, FF = source.right→target.right, SF = source.left→target.right. Add leftward routing (bend around when target is left of source). Add tests for all 4 types.
+- [x] **G-DISP-05** (S15.3): Add `V` (ISO week number, `getISOWeek` helper), `W` (week-of-year, locale-aware), `q` (quarter) formatters to `FORMAT_TOKENS`. Add tests for each.
+- [x] **G-DISP-06** (S15.4): Remove `pointer-events:none` from milestone SVG. Use same positioning wrapper as task bars. Add link handle anchors when `linkable`. Add test verifying milestone click/selection works.
+- [x] **G-DISP-07** (S15.5): Thread `regions.taskBar` from `gantt.tsx` through to `GanttBars`. When present, render via region's `.render()` instead of default `<span>{task.text}</span>`. Add test with custom taskBar region.
+- [x] **G-DISP-08** (S15.6): Change `getCellValue` default to `(task as any)[col.name]`. Fix `case 'predecessor'` to read `task.$target`. Wire `col.cell` region rendering. Add test verifying custom column values appear.
 
 Exit Criteria:
 
-- [ ] Bar width is correct (same-day task = 1 cell; 10-day = 10 cells); existing bug-asserting test corrected
-- [ ] All 4 link types produce correct polylines with correct anchor points
-- [ ] `%V`/`%W`/`%q` render as week number, week number, quarter number respectively
-- [ ] Milestone bars clickable, positioned correctly, have link handles when linkable
-- [ ] Schema-defined `taskBar` region renders in place of default text
-- [ ] Grid columns render `col.name` values; `predecessor` shows predecessor task IDs; `col.cell` region renders when provided
+- [x] Bar width is correct (same-day task = 1 cell; 10-day = 10 cells); existing bug-asserting test corrected
+- [x] All 4 link types produce correct polylines with correct anchor points
+- [x] `%V`/`%W`/`%q` render as week number, week number, quarter number respectively
+- [x] Milestone bars clickable, positioned correctly, have link handles when linkable
+- [x] Schema-defined `taskBar` region renders in place of default text
+- [x] Grid columns render `col.name` values; `predecessor` shows predecessor task IDs; `col.cell` region renders when provided
 
 ### Phase 2 — Operability: drag visual feedback, event dispatch, keyboard fixes, chevron, layoutRevision bump
 
-Status: planned
+Status: completed
 Targets: `hooks/use-gantt-drag.ts`, `hooks/use-gantt-link-draw.ts`, `hooks/use-gantt-keyboard.ts`, `gantt-bars.tsx`, `gantt-grid.tsx`, `gantt-store.ts`, `gantt.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] **G-OPS-03** (S15.7): Change ghost to `translateX(dx)` only (no vertical drift). Set original bar `opacity:0.3` during drag. Render drop indicator (`gantt-drop-indicator` class, 2px blue line) at target position.
-- [ ] **G-OPS-04** (S15.8): Pass `onCommit(taskId, changes)` callback to `useGanttDrag` and `useGanttLinkDraw`. On drag end / link draw end, call `helpers.dispatch(events.onTaskDragEnd, ...)` / `helpers.dispatch(events.onLinkDragEnd, ...)`. Add test verifying event fires.
-- [ ] **G-OPS-06** (S15.9): Change ArrowLeft to collapse/scroll-left, ArrowRight to expand/scroll-right (consistent semantics). Remove per-bar ArrowLeft/Right→resize mapping (conflicts with keyboard handler).
-- [ ] **G-OPS-07** (S15.10): On ArrowUp/Down selection change, call `row.focus()` on the newly selected row's DOM element. Wire `updateRowAria` into production keyboard handler.
-- [ ] **G-OPS-08** (S15.11): Change chevron condition from `task.$level > 0` to `store.getVisibleDescendantCount(task.id) > 0` (or equivalent). Top-level parents with children show chevron.
-- [ ] **G-OPS-13** (S15.12): In `updateTask`, bump `layoutRevision` after `computeComputedPropertiesInternal()`, or have `computeComputedPropertiesInternal` bump it consistently. Verify grid/timeline/today-line/links update after task drag.
-- [ ] **G-OPS-14** (S15.13): Add `event.stopPropagation()` to per-bar ArrowUp/ArrowDown handlers in `gantt-bars.tsx`, or remove per-bar date-move binding entirely (retain only container-level select-navigation).
+- [x] **G-OPS-03** (S15.7): Change ghost to `translateX(dx)` only (no vertical drift). Set original bar `opacity:0.3` during drag. Render drop indicator (`gantt-drop-indicator` class, 2px blue line) at target position.
+- [x] **G-OPS-04** (S15.8): Pass `onCommit(taskId, changes)` callback to `useGanttDrag` and `useGanttLinkDraw`. On drag end / link draw end, call `helpers.dispatch(events.onTaskDragEnd, ...)` / `helpers.dispatch(events.onLinkDragEnd, ...)`. Add test verifying event fires.
+- [x] **G-OPS-06** (S15.9): Change ArrowLeft to collapse/scroll-left, ArrowRight to expand/scroll-right (consistent semantics). Remove per-bar ArrowLeft/Right→resize mapping (conflicts with keyboard handler).
+- [x] **G-OPS-07** (S15.10): On ArrowUp/Down selection change, call `row.focus()` on the newly selected row's DOM element. Wire `updateRowAria` into production keyboard handler.
+- [x] **G-OPS-08** (S15.11): Change chevron condition from `task.$level > 0` to `store.getVisibleDescendantCount(task.id) > 0` (or equivalent). Top-level parents with children show chevron.
+- [x] **G-OPS-13** (S15.12): In `updateTask`, bump `layoutRevision` after `computeComputedPropertiesInternal()`, or have `computeComputedPropertiesInternal` bump it consistently. Verify grid/timeline/today-line/links update after task drag.
+- [x] **G-OPS-14** (S15.13): Add `event.stopPropagation()` to per-bar ArrowUp/ArrowDown handlers in `gantt-bars.tsx`, or remove per-bar date-move binding entirely (retain only container-level select-navigation).
 
 Exit Criteria:
 
-- [ ] Drag ghost stays at same vertical position as bar; original bar at 0.3 opacity; drop indicator visible
-- [ ] `onTaskDragEnd` fires with correct payload after drag; `onLinkDragEnd` fires after link draw
-- [ ] ArrowLeft collapses parent, ArrowRight expands parent (or scrolls); no per-bar resize conflict
-- [ ] ArrowUp/Down moves DOM focus to adjacent row
-- [ ] Top-level parent tasks with visible children show expand/collapse chevron
-- [ ] After dragging a task to change dates, grid background, time scale, today line, and links update
-- [ ] Per-bar ArrowUp/Down does not also trigger container-level select-navigation
-- [ ] Focused tests for each fix (7+ new or corrected tests)
+- [x] Drag ghost stays at same vertical position as bar; original bar at 0.3 opacity; drop indicator visible
+- [x] `onTaskDragEnd` fires with correct payload after drag; `onLinkDragEnd` fires after link draw
+- [x] ArrowLeft collapses parent, ArrowRight expands parent (or scrolls); no per-bar resize conflict
+- [x] ArrowUp/Down moves DOM focus to adjacent row
+- [x] Top-level parent tasks with visible children show expand/collapse chevron
+- [x] After dragging a task to change dates, grid background, time scale, today line, and links update
+- [x] Per-bar ArrowUp/Down does not also trigger container-level select-navigation
+- [x] Focused tests for each fix (7+ new or corrected tests)
 
 ## Draft Review Record
 
@@ -136,16 +136,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] All 13 in-scope P1 defects fixed and verified with focused tests
-- [ ] Any previously bug-asserting test corrected to expect correct values
-- [ ] Gantt P0s from Plan 1 remain intact (no regression)
-- [ ] No in-scope P1 defect silently downgraded to deferred/follow-up
-- [ ] Affected owner docs updated if public contract changed
-- [ ] By independent sub-agent (fresh session) closure-audit completed with evidence recorded
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All 13 in-scope P1 defects fixed and verified with focused tests
+- [x] Any previously bug-asserting test corrected to expect correct values
+- [x] Gantt P0s from Plan 1 remain intact (no regression)
+- [x] No in-scope P1 defect silently downgraded to deferred/follow-up
+- [x] Affected owner docs updated if public contract changed (`docs/components/gantt/design.md` already documents `onTaskDragEnd`/`onLinkDragEnd` events)
+- [x] By independent sub-agent (fresh session) closure-audit completed with evidence recorded
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -160,11 +160,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note:
+Status Note: Plan complete. All 13 P1 Gantt display & operability defects fixed, verified by live code audit (all code paths confirmed present in `packages/flux-renderers-scheduling/src/gantt/`). Typecheck/build/lint pass; all 684 scheduling tests pass. Daily log updated at `docs/logs/2026/07-22.md`.
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: closure-audit (fresh sub-agent session `ses_0787026c3ffe3x4lMDE8q70agQ`)
+- Evidence: Live code audit confirmed all 13 fixes landed with full semantic behavior (not just type signatures). Key verification: bar width ≥ cellWidth (layout.ts:45), link routing by 4 types (layout.ts:93-111), format tokens %V/%W/%q (date.ts:60-87), milestone pointer-events removed (gantt-bars.tsx:107), taskBar region consumed (gantt-bars.tsx:159), custom columns via getCellValue (gantt-grid.tsx:53-62), drag ghost horizontal-only (use-gantt-drag.ts:83), onTaskDragEnd/onLinkDragEnd dispatched (gantt.tsx:88,92), ArrowLeft/ArrowRight separate (use-gantt-keyboard.ts:53-73), focus via updateRowAria (use-gantt-keyboard.ts:22-32), chevron uses getVisibleDescendantCount (gantt-grid.tsx:110-119), layoutRevision bumped in updateTask (gantt-store.ts:186-187), stopPropagation on per-bar handlers (gantt-bars.tsx:61-62). All 3 P0 items from Plan 1 remain intact (confirmed by typecheck/build/test green). No in-scope P1 defect deferred.
 
 Follow-up:
+
+- No remaining plan-owned work. `gantt-store.ts` `recalcLayout` vs `computeComputedPropertiesInternal` duplication tracked in Non-Blocking Follow-ups section.
