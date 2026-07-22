@@ -72,7 +72,7 @@ test.describe('Exploratory run-02: performance table deep state', () => {
     await expect(selectedKeysText).not.toContainText('none');
     await expect(pageSummaryText).toContainText('Selected: 1 | Page: 1');
 
-    await pagination.getByLabel('Go to next page').click();
+    await pagination.getByLabel('Next page').click();
     await expect(pageSummaryText).toContainText('Selected: 1 | Page: 2');
 
     const pageSizeSelect = pagination.getByRole('combobox').first();
@@ -80,7 +80,7 @@ test.describe('Exploratory run-02: performance table deep state', () => {
     await expect(pageSizeText).toContainText('25');
     await expect(pageSummaryText).toContainText('Selected: 1 | Page: 1');
 
-    await pagination.getByLabel('Go to next page').click();
+    await pagination.getByLabel('Next page').click();
     await expect(pageSummaryText).toContainText('Selected: 1 | Page: 2');
 
     await assertDebuggerHealthy(page);

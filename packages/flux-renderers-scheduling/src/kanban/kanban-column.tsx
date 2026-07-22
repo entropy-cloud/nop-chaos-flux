@@ -133,6 +133,7 @@ export function KanbanColumn({
     estimatedCardHeight: 80,
     gap: 8,
     scrollContainerRef: virtualize ? scrollContainerRef : { current: null },
+    virtualizationEnabled: virtualize,
   });
 
   const columnStyle: React.CSSProperties = {};

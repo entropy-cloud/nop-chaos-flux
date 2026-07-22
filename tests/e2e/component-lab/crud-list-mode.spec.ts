@@ -38,7 +38,7 @@ test.describe('crud listMode carrier rendering', () => {
     await expect(stage.getByText('Selected: 1 / Total: 25')).toBeVisible();
 
     // Advancing pagination re-slices carrier items to the second page.
-    await pagination.locator('[data-slot="pagination-link"]').last().click();
+    await pagination.getByLabel('Next page').click();
     await expect(cardItems.filter({ hasText: 'Record-11 ·' })).toHaveCount(1);
     await expect(cardItems).toHaveCount(10);
   });
@@ -68,7 +68,7 @@ test.describe('crud listMode carrier rendering', () => {
     await expect(stage.getByText('Selected: 1 / Total: 25')).toBeVisible();
 
     // Footer pagination writes to CRUD paginationStatePath; the list (scope-owned) reacts.
-    await pagination.locator('[data-slot="pagination-link"]').last().click();
+    await pagination.getByLabel('Next page').click();
     await expect(listItems.filter({ hasText: 'Record-11 ·' })).toHaveCount(1);
     await expect(listItems.filter({ hasText: 'Record-1 ·' })).toHaveCount(0);
   });

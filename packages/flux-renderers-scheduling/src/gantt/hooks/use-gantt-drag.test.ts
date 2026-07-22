@@ -247,4 +247,80 @@ describe('useGanttDrag', () => {
 
     expect(target.style.opacity).toBe('0.3');
   });
+
+  it('should not call updateTask when task not found in store', () => {
+    const containerRef = { current: document.createElement('div') };
+    const unknownStore = {
+      cellWidth: 40,
+      tasks: new Map(),
+      updateTask: vi.fn(),
+    };
+    const { result } = renderHook(() => useGanttDrag(unknownStore as any, containerRef));
+    const target = createTarget();
+
+    target.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onPointerDown(e, 'unknown-task', 'move');
+    });
+    target.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 200, bubbles: true }));
+
+    document.dispatchEvent(new PointerEvent('pointermove', { clientX: 180, clientY: 200 }));
+    document.dispatchEvent(new PointerEvent('pointerup', { clientX: 180, clientY: 200 }));
+
+    expect(unknownStore.updateTask).not.toHaveBeenCalled();
+  });
+
+  it('should not apply resize-end when end would be <= start', () => {
+    const store = {
+      cellWidth: 40,
+      tasks: new Map([
+        ['t1', { id: 't1', text: 'Task', start: '2026-01-05', end: '2026-01-05', $x: 0, $y: 0, $w: 100, $h: 20 }],
+      ]),
+      updateTask: vi.fn(),
+    };
+    const containerRef = { current: document.createElement('div') };
+    const { result } = renderHook(() => useGanttDrag(store as any, containerRef));
+    const target = createTarget();
+
+    target.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onPointerDown(e, 't1', 'resize-end');
+    });
+    target.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 200, bubbles: true }));
+
+    document.dispatchEvent(new PointerEvent('pointermove', { clientX: 100 - 40, clientY: 200 }));
+    document.dispatchEvent(new PointerEvent('pointerup', { clientX: 100 - 40, clientY: 200 }));
+
+    expect(store.updateTask).not.toHaveBeenCalled();
+  });
+
+  it('should not apply resize-start when start would be >= end', () => {
+    const store = {
+      cellWidth: 40,
+      tasks: new Map([
+        ['t1', { id: 't1', text: 'Task', start: '2026-01-05', end: '2026-01-10', $x: 0, $y: 0, $w: 100, $h: 20 }],
+      ]),
+      updateTask: vi.fn(),
+    };
+    const containerRef = { current: document.createElement('div') };
+    const { result } = renderHook(() => useGanttDrag(store as any, containerRef));
+    const target = createTarget();
+
+    target.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onPointerDown(e, 't1', 'resize-start');
+    });
+    target.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 200, bubbles: true }));
+
+    document.dispatchEvent(new PointerEvent('pointermove', { clientX: 100 + 200, clientY: 200 }));
+    document.dispatchEvent(new PointerEvent('pointerup', { clientX: 100 + 200, clientY: 200 }));
+
+    expect(store.updateTask).not.toHaveBeenCalled();
+  });
+
+  it('should guard pointerMove with null dragRef', () => {
+    const containerRef = { current: document.createElement('div') };
+    renderHook(() => useGanttDrag(mockStore as any, containerRef));
+
+    document.dispatchEvent(new PointerEvent('pointermove', { clientX: 180, clientY: 200 }));
+
+    expect(document.querySelector('.nop-gantt-bar-ghost')).toBeNull();
+  });
 });

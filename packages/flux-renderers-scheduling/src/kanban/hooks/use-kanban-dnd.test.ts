@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => {
   return {
     monitorForElements: vi.fn(),
     draggable: vi.fn(() => () => {}),
-    dropTargetForElements: vi.fn(() => () => {}),
+    dropTargetForElements: vi.fn(),
     combine: vi.fn((...fns: (() => void)[]) => () => fns.forEach((fn) => fn())),
   };
 });
@@ -23,13 +23,19 @@ vi.mock('@atlaskit/pragmatic-drag-and-drop/combine', () => ({
   combine: mocks.combine,
 }));
 
-let capturedMonitor: { onDragStart?: (data: any) => void; onDrop?: (data: any) => void } = {};
+let capturedMonitor: { onDragStart?: (data: any) => void; onDrop?: (data: any) => void; canMonitor?: (data: any) => boolean } = {};
+let capturedDropTargets: { canDrop?: (data: any) => boolean; onDrag?: (data: any) => void; onDragLeave?: () => void; onDragEnter?: () => void; getData?: () => Record<string, unknown> }[] = [];
 
 beforeEach(() => {
   vi.clearAllMocks();
   capturedMonitor = {};
-  mocks.monitorForElements.mockImplementation((args: { onDragStart?: (data: any) => void; onDrop?: (data: any) => void }) => {
-    capturedMonitor = args;
+  capturedDropTargets = [];
+  mocks.monitorForElements.mockImplementation((args: Record<string, unknown>) => {
+    capturedMonitor = args as any;
+    return () => {};
+  });
+  mocks.dropTargetForElements.mockImplementation((args: Record<string, unknown>) => {
+    capturedDropTargets.push(args as any);
     return () => {};
   });
 });
@@ -180,6 +186,147 @@ describe('useKanbanDnd lifecycle - 14-02', () => {
         fromColumnId: 'col1',
         toColumnId: 'col2',
         toIndex: 0,
+      }),
+    );
+  });
+
+  it('handles drop with no target (drag cancellation)', () => {
+    const onBoardChange = vi.fn();
+    const { result } = renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange }),
+    );
+
+    act(() => {
+      capturedMonitor.onDrop?.({
+        source: { data: { type: 'kanban-card', cardId: 'card1', columnId: 'col1' } },
+        location: { current: { dropTargets: [] } },
+      });
+    });
+
+    expect(result.current.dragState.isDragging).toBe(false);
+    expect(onBoardChange).not.toHaveBeenCalled();
+  });
+
+  it('handles drop with missing target columnId or dropIndex', () => {
+    const onBoardChange = vi.fn();
+    renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange }),
+    );
+
+    act(() => {
+      capturedMonitor.onDrop?.({
+        source: { data: { type: 'kanban-card', cardId: 'card1', columnId: 'col1' } },
+        location: {
+          current: {
+            dropTargets: [
+              { data: { columnId: null, dropIndex: null, type: 'kanban-card-target' } },
+            ],
+          },
+        },
+      });
+    });
+
+    expect(onBoardChange).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when dropping on the same position', () => {
+    const onBoardChange = vi.fn();
+    renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange }),
+    );
+
+    act(() => {
+      capturedMonitor.onDrop?.({
+        source: { data: { type: 'kanban-card', cardId: 'card1', columnId: 'col1', cardIndex: 0 } },
+        location: {
+          current: {
+            dropTargets: [
+              { data: { columnId: 'col1', dropIndex: 0, cardIndex: 0, type: 'kanban-card-target' } },
+            ],
+          },
+        },
+      });
+    });
+
+    expect(onBoardChange).not.toHaveBeenCalled();
+  });
+
+  it('prevents column drop when wipOverLimitColumns contains the target column', () => {
+    const onBoardChange = vi.fn();
+    const wipOverLimitColumns = new Set(['col2']);
+    const { result } = renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange, wipOverLimitColumns }),
+    );
+
+    act(() => {
+      const el = document.createElement('div');
+      const cleanup = result.current.registerColumn(el, 'col2', 3);
+      cleanup();
+    });
+
+    const colDropTarget = capturedDropTargets.find(
+      (dt) => dt.getData?.().type === 'kanban-column',
+    );
+    expect(colDropTarget).toBeDefined();
+    expect(colDropTarget!.canDrop?.({ source: { data: { type: 'kanban-card' } } })).toBe(false);
+  });
+
+  it('allows column drop when wipOverLimitColumns does not contain target', () => {
+    const onBoardChange = vi.fn();
+    const wipOverLimitColumns = new Set(['col1']);
+    const { result } = renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange, wipOverLimitColumns }),
+    );
+
+    act(() => {
+      const el = document.createElement('div');
+      const cleanup = result.current.registerColumn(el, 'col2', 3);
+      cleanup();
+    });
+
+    const colDropTarget = capturedDropTargets.find(
+      (dt) => dt.getData?.().type === 'kanban-column',
+    );
+    expect(colDropTarget).toBeDefined();
+    expect(colDropTarget!.canDrop?.({ source: { data: { type: 'kanban-card' } } })).toBe(true);
+  });
+
+  it('handles registerCard onDragLeave for active card target index', () => {
+    const onBoardChange = vi.fn();
+    const { result } = renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange }),
+    );
+
+    act(() => {
+      const el = document.createElement('div');
+      const cleanup = result.current.registerCard(el, 'card1', 'col1', 0);
+      cleanup();
+    });
+
+    const cardTarget = capturedDropTargets.find(
+      (dt) => dt.getData?.().type === 'kanban-card-target',
+    );
+    expect(cardTarget).toBeDefined();
+  });
+
+  it('moveCardKeyboard triggers onCardMove with correct overLimit flag', () => {
+    const onBoardChange = vi.fn();
+    const onCardMove = vi.fn();
+    const { result } = renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange, onCardMove, wipOverLimitColumns: new Set(['col2']) }),
+    );
+
+    act(() => {
+      result.current.moveCardKeyboard(sampleBoard, 'card1', 'col1', 'col2', 0, 0);
+    });
+
+    expect(onBoardChange).toHaveBeenCalled();
+    expect(onCardMove).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cardId: 'card1',
+        fromColumnId: 'col1',
+        toColumnId: 'col2',
+        overLimit: true,
       }),
     );
   });

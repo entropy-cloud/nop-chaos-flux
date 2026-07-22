@@ -1,21 +1,24 @@
 .nop-calendar {
-  @apply flex flex-col h-full min-h-0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 .nop-calendar [data-event-type='shift'] {
-  @apply bg-green-400;
+  background-color: #4ade80;
 }
 
 .nop-calendar [data-event-type='leave'] {
-  @apply bg-red-400;
+  background-color: #f87171;
 }
 
 .nop-calendar [data-event-type='appointment'] {
-  @apply bg-blue-400;
+  background-color: #60a5fa;
 }
 
 .nop-calendar [data-event-type='maintenance'] {
-  @apply bg-yellow-400;
+  background-color: #fbbf24;
 }
 
 .nop-calendar [data-slot='calendar-event']:hover {
@@ -34,19 +37,20 @@
 }
 
 .nop-calendar [data-slot='calendar-event'][data-overlap='true'] {
-  @apply ring-2 ring-red-500;
+  box-shadow: 0 0 0 2px #ef4444;
 }
 
 .nop-calendar [data-slot='calendar-event'].is-split {
-  @apply border-l-2 border-l-white/40;
+  border-left-width: 2px;
+  border-left-color: rgba(255, 255, 255, 0.4);
 }
 
 .nop-calendar [data-slot='calendar-cell'][data-empty='true'] {
-  @apply text-gray-300;
+  color: #d1d5db;
 }
 
 .nop-calendar [data-slot='calendar-cell'][data-weekend='true'] {
-  @apply bg-gray-50;
+  background-color: #f9fafb;
 }
 
 .nop-calendar-drag-ghost {

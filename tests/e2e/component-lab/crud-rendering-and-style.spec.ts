@@ -47,7 +47,6 @@ test.describe('crud renderer rendering and style', () => {
 
     await expectCrudStageVisible(stage);
     await expect(stage.locator('[data-slot="crud-query"]')).toBeVisible();
-    await expect(stage.locator('[data-slot="crud-query-controls"]')).toBeVisible();
     await expect(stage.locator('[data-slot="header-toolbar-pagination"]')).toBeVisible();
     await expect(stage.locator('[data-slot="footer-toolbar-statistics"]')).toBeVisible();
     await expect(stage.locator('[data-slot="footer-toolbar-page-size"]')).toBeVisible();

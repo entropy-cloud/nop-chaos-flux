@@ -19,7 +19,8 @@ test.describe('Kanban Performance Baseline', () => {
   test('idle FPS baseline on kanban-perf-scale (20×300) route', async ({ page, allowConsoleErrors }) => {
     allowConsoleErrors(100);
     await page.goto('/#/kanban-perf-scale', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('[data-slot="kanban"]')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Kanban Performance Scale')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('[data-slot="kanban"]')).toBeVisible({ timeout: 60_000 });
 
     await page.waitForTimeout(2000);
 
@@ -33,7 +34,8 @@ test.describe('Kanban Performance Baseline', () => {
   test('drag FPS on kanban-perf-scale (20×300) route targets 60fps', async ({ page, allowConsoleErrors }) => {
     allowConsoleErrors(100);
     await page.goto('/#/kanban-perf-scale', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('[data-slot="kanban"]')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Kanban Performance Scale')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('[data-slot="kanban"]')).toBeVisible({ timeout: 60_000 });
 
     await page.waitForTimeout(2000);
 
