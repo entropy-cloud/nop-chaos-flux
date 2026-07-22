@@ -50,27 +50,21 @@
 扁平字典结构（参考 RKK BoardData）：
 
 ```typescript
-interface KanbanData {
-  root?: KanbanItem;
-  [id: string]: KanbanItem;
+import type { SchemaObject } from '@nop-chaos/flux-core';
+
+interface BoardData {
+  [id: string]: BoardItem;
 }
 
-interface KanbanItem {
+interface BoardItem extends SchemaObject {
   id: string;
   type: 'root' | 'column' | 'card' | 'divider';
-  title?: string;
   parentId?: string;
   children: string[];
-  content?: Record<string, unknown>;
-  meta?: {
-    color?: string;
-    priority?: number;
-    icon?: string;
-    badge?: string | number;
-    tags?: string[];
-    members?: { id: string; name: string; avatarUrl?: string }[];
-  };
-  isDraggable?: boolean;
+  data: Record<string, any>;
+  meta: Record<string, any>;
+  title?: string;
+  content?: string;
 }
 ```
 
@@ -114,6 +108,9 @@ interface KanbanSchema extends BaseSchema {
 
   /** 自定义过滤函数表达式（row scope 下求值） */
   filterCard?: string;
+
+  /** 标签筛选 ID 数组 */
+  filterTags?: string[];
 
   /** 列宽度策略 */
   columnWidth?: number | 'auto' | 'equal';
@@ -190,7 +187,7 @@ interface KanbanEvents {
   toColumnId: string;
   fromIndex: number;
   toIndex: number;
-  card: KanbanItem;
+  card: BoardItem;
 }
 
 // onColumnReorder payload
@@ -205,7 +202,7 @@ interface KanbanEvents {
   cardId: string;
   columnId: string;
   index: number;
-  card: KanbanItem;
+  card: BoardItem;
 }
 ```
 
@@ -223,6 +220,7 @@ interface KanbanEvents {
 | `columnsConfig`                                    | props                  | 列元配置（静态/表达式）                       |
 | `filterText`                                       | props                  | 搜索关键词（表达式绑定）                      |
 | `filterCard`                                       | props                  | 过滤函数表达式                                |
+| `filterTags`                                       | props                  | 标签筛选 ID 数组                              |
 | `columnWidth`                                      | props                  | 列宽策略                                      |
 | `columnDraggable`                                  | props                  | 列拖拽开关                                    |
 | `draggable`                                        | props                  | 全局拖拽开关                                  |
@@ -287,11 +285,11 @@ interface KanbanEvents {
 
 - `component:scrollToCard(cardId: string)`：滚动到指定卡片位置。失败路径：`not-mounted`、`not-visible`、`card-not-found`
 - `component:scrollToColumn(columnId: string)`：滚动到指定列。失败路径：`not-mounted`、`not-visible`、`column-not-found`
-- `component:addCard(columnId: string, card: KanbanItem, options?: { index?: number })`：（P2）新增卡片到指定列。失败路径：`not-mounted`、`not-visible`、`column-full`（WIP 限制时）
+- `component:addCard(columnId: string, card: BoardItem, options?: { index?: number })`：（P2）新增卡片到指定列。失败路径：`not-mounted`、`not-visible`、`column-full`（WIP 限制时）
 - `component:removeCard(cardId: string)`：（P2）移除卡片。失败路径：`not-mounted`、`not-visible`、`card-not-found`
 - `component:moveCard(cardId: string, toColumnId: string, toIndex: number)`：程序式移动卡片。失败路径：`not-mounted`、`not-visible`、`card-not-found`、`column-not-found`、`column-full`
 - `component:collapseColumn(columnId: string, collapsed: boolean)`：切换列折叠。失败路径：`not-mounted`、`not-visible`、`column-not-found`
-- `component:getData(): KanbanData`：获取当前看板数据快照。失败路径：`not-mounted`、`not-visible`
+- `component:getData(): BoardData`：获取当前看板数据快照。失败路径：`not-mounted`、`not-visible`
 
 ## 9. 数据源、表达式、导入能力接入点
 
@@ -336,7 +334,7 @@ interface KanbanEvents {
 src/kanban/
 ├── index.ts                       # 导出 KanbanRenderer
 ├── kanban.tsx                     # 主渲染器：装配 KanbanContext + 区域编排
-├── kanban.types.ts                # KanbanData/KanbanItem/KanbanSchema 类型
+├── kanban.types.ts                # BoardData/BoardItem/KanbanSchema 类型
 ├── schemas.ts                     # schema 定义 + 注册
 ├── components/
 │   ├── kanban-board.tsx           # 看板容器：水平滚动、列集合
@@ -367,24 +365,24 @@ src/kanban/
 ### 11.2 Hook 职责
 
 - **useKanbanDnd**：封装 `@atlaskit/pragmatic-drag-and-drop` 的 `draggable`/`dropTargetForElements`/`attachClosestEdge` 注册。暴露 `isDragging`、`isDraggingOver`、`closestEdge` 等响应式状态。管理拖拽开始→拖拽结束的完整生命周期。KanbanCard 组件使用 React.memo（比较 card.content + column.id + index），拖拽过程中通过 CSS pointer-events: none 减少非活跃卡片的渲染触发。KanbanColumn 使用 React.memo 按 column.id + children.length + 折叠状态 决定是否重渲染。
-- **useKanbanStore**：接收 `data` prop → 归一化为 `KanbanData`。管理列顺序（`columnsOrderStatePath`）和折叠状态（`collapsedStatePath`）。提供列和卡片的只读访问方法。
+- **useKanbanStore**：接收 `data` prop → 归一化为 `BoardData`。管理列顺序（`columnsOrderStatePath`）和折叠状态（`collapsedStatePath`）。提供列和卡片的只读访问方法。
 
 ### 11.3 纯函数 utils
 
 - **kanban-reorder.ts**：
-  - `moveCard(data: KanbanData, cardId, toColumnId, toIndex): KanbanData` — 返回新 KanbanData
-  - `moveColumn(data: KanbanData, fromIndex, toIndex): KanbanData`
-  - `addCard(data: KanbanData, columnId, card): KanbanData`
-  - `removeCard(data: KanbanData, cardId): KanbanData`
-  - `changeCard(data: KanbanData, cardId, changes): KanbanData`
-  - `addColumn(data: KanbanData, column, afterIndex?): KanbanData`
-  - `removeColumn(data: KanbanData, columnId): KanbanData`
+  - `moveCard(data: BoardData, cardId, toColumnId, toIndex): BoardData` — 返回新 BoardData
+  - `moveColumn(data: BoardData, fromIndex, toIndex): BoardData`
+  - `addCard(data: BoardData, columnId, card): BoardData`
+  - `removeCard(data: BoardData, cardId): BoardData`
+  - `changeCard(data: BoardData, cardId, changes): BoardData`
+  - `addColumn(data: BoardData, column, afterIndex?): BoardData`
+  - `removeColumn(data: BoardData, columnId): BoardData`
 - **kanban-filter.ts**：
-  - `filterCards(data: KanbanData, filterText: string, filterCard?: string): KanbanData` — 过滤卡片但保留列结构。filterText 变更时 300ms debounce 触发 filterCards 重计算，避免每次按键重排列内卡片。
+  - `filterCards(data: BoardData, filterText: string, filterCard?: string): BoardData` — 过滤卡片但保留列结构。filterText 变更时 300ms debounce 触发 filterCards 重计算，避免每次按键重排列内卡片。
 - **kanban-data.ts**：
-  - `normalizeKanbanData(rawData): KanbanData` — 输入归一化
-  - `getColumnCards(data: KanbanData, columnId): KanbanItem[]` — 获取列内卡片列表
-  - `getColumns(data: KanbanData): KanbanItem[]` — 获取所有列
+  - `normalizeKanbanData(rawData): BoardData` — 输入归一化
+  - `getColumnCards(data: BoardData, columnId): BoardItem[]` — 获取列内卡片列表
+  - `getColumns(data: BoardData): BoardItem[]` — 获取所有列
 
 ### 11.4 实现顺序
 
@@ -503,7 +501,7 @@ interface KanbanColumnConfig {
 **数据模型扩展**：
 
 ```typescript
-interface KanbanItem {
+interface BoardItem {
   // ... 既有字段
   meta?: {
     color?: string; // 卡片标题左侧颜色圆点
@@ -533,8 +531,6 @@ interface KanbanMember {
 **成员头像**：卡片右下角展示成员头像层叠（类似 GitHub 评论头像栈）。最多显示 3 个头像，超出显示 "+N" 计数。头像使用 `img` 标签，fallback 为姓名首字母圆形。支持 `.nop-kanban-card-member` marker。
 
 **按标签筛选**：`filterTags: string[]` 字段声明激活标签筛选模式。看板顶部显示所有标签作为可点击的筛选 pill。选中标签时仅显示包含该标签的卡片（多选或关系）。
-
-按标签筛选字段 `filterTags?: string[]` 应在实施前补充到 KanbanSchema 的 §4.2。
 
 ### 12.10 活动日志设计要点（P3）
 
