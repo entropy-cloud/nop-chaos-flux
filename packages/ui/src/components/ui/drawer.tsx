@@ -139,12 +139,13 @@ function DrawerContent({
     direction === 'bottom' && 'top-0 left-0 w-full h-1 cursor-ns-resize',
   );
 
+  const resolvedStyle = typeof style === 'function' ? undefined : style;
   const resizeStyle: React.CSSProperties = resizeController.sizeVar
     ? ({
         ['--drawer-resize-size' as string]: resizeController.sizeVar,
-        ...style,
+        ...resolvedStyle,
       } as React.CSSProperties)
-    : style ?? {};
+    : resolvedStyle ?? {};
 
   const layers = (
     <DrawerZIndexContext.Provider value={zIndex}>
