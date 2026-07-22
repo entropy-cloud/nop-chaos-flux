@@ -23,6 +23,13 @@ export function getDayStartEnd(date: Date): CalendarDateRange {
   return { start, end };
 }
 
+/**
+ * Returns an array of dates from `start` to `end` inclusive.
+ * Multi-day end inclusivity: both `start` and `end` are included in the range.
+ * For example, if start=2026-07-01 and end=2026-07-03, the result includes
+ * July 1, July 2, and July 3 (3 days total). This means all date-range
+ * operations in the calendar treat the end date as **inclusive**.
+ */
 export function getDateRange(start: Date, end: Date): Date[] {
   const dates: Date[] = [];
   const current = new Date(start);

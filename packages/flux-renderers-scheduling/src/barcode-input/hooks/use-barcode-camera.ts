@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import { checkCameraAvailability } from '../utils/camera-utils.js';
 
 interface BarcodeCameraState {
   isActive: boolean;
@@ -96,6 +97,10 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
       throw err;
     }
   };
+
+  useEffect(() => {
+    checkCameraAvailability();
+  }, []);
 
   useEffect(() => {
     const el = videoRef.current;

@@ -7,7 +7,7 @@ import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot, useGanttTr
 interface GanttBarsProps {
   className?: string;
   onBarPointerDown?: (e: PointerEvent, taskId: string | number, mode: 'move' | 'resize-start' | 'resize-end', barElement: HTMLElement) => void;
-  onLinkHandlePointerDown?: (e: PointerEvent, taskId: string | number) => void;
+  onLinkHandlePointerDown?: (e: PointerEvent, taskId: string | number, side: 'start' | 'end') => void;
   onBarDoubleClick?: (taskId: string | number) => void;
   onBarKeyAction?: (taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => void;
   taskBarRegion?: RenderRegionHandle;
@@ -38,7 +38,8 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
 
       const linkHandle = target.closest('[data-slot="gantt-bar-link-handle"]');
       if (linkHandle && onLinkHandlePointerDown) {
-        onLinkHandlePointerDown(e, taskId);
+        const side = (linkHandle as HTMLElement).getAttribute('data-handle-side') as 'start' | 'end' || 'end';
+        onLinkHandlePointerDown(e, taskId, side);
         return;
       }
 
@@ -120,10 +121,12 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
               </svg>
               <div
                 data-slot="gantt-bar-link-handle"
+                data-handle-side="start"
                 className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
               />
               <div
                 data-slot="gantt-bar-link-handle"
+                data-handle-side="end"
                 className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
               />
             </div>
@@ -169,11 +172,13 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
             )}
             <div
               data-slot="gantt-bar-link-handle"
+              data-handle-side="start"
               className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
               style={{ left: 0 }}
             />
             <div
               data-slot="gantt-bar-link-handle"
+              data-handle-side="end"
               className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
             />
           </div>

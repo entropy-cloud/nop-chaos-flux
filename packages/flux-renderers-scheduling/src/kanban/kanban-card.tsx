@@ -1,5 +1,6 @@
 import React from 'react';
-import { cn } from '@nop-chaos/ui';
+import { cn, Button } from '@nop-chaos/ui';
+import { X } from 'lucide-react';
 import type { BoardItem, KanbanCardConfig } from './kanban.types.js';
 import { KanbanCardTags } from './components/kanban-card-tags.js';
 import type { KanbanTag, KanbanMember } from './components/kanban-card-tags.js';
@@ -15,10 +16,12 @@ export interface KanbanCardProps {
   className?: string;
   helpers?: any;
   registerCard?: (el: HTMLElement, cardId: string, columnId: string, index: number) => () => void;
+  tabIndex?: number;
+  onRovingKeyDown?: (e: React.KeyboardEvent, index: number) => void;
 }
 
-function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, onCardClick, onCardRemove, className, helpers, registerCard }: KanbanCardProps) {
-  const cardRef = React.useRef<HTMLLIElement>(null);
+function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, onCardClick, onCardRemove, className, helpers, registerCard, tabIndex = 0, onRovingKeyDown }: KanbanCardProps) {
+  const cardRef = React.useRef<HTMLDivElement>(null);
   const registeredRef = React.useRef(false);
 
   React.useEffect(() => {
@@ -43,11 +46,14 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       clickFn();
+      return;
     }
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault();
       removeFn();
+      return;
     }
+    onRovingKeyDown?.(e, index);
   };
 
   const sharedAttributes = {
@@ -57,7 +63,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
     'data-column-id': column.id,
     'data-card-index': index,
     role: 'button',
-    tabIndex: 0,
+    tabIndex,
     onClick: clickFn,
     onKeyDown: handleKeyDown,
   };
@@ -87,15 +93,27 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
   );
 
   const cardClass = config?.render
-    ? cn('nop-kanban-card', config.className, className)
+    ? cn('nop-kanban-card group relative', config.className, className)
     : cardTemplateRegion
-      ? cn('nop-kanban-card', className)
-      : cn('nop-kanban-card bg-white rounded-lg border border-gray-200 p-3', className);
+      ? cn('nop-kanban-card group relative', className)
+      : cn('nop-kanban-card group relative bg-white rounded-lg border border-gray-200 p-3', className);
 
   return (
-    <li ref={cardRef} {...sharedAttributes} className={cardClass}>
+    <div ref={cardRef} {...sharedAttributes} className={cardClass}>
+      <div className="nop-kanban-card-actions absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          variant="ghost"
+          size="sm"
+          type="button"
+          onClick={(e) => { e.stopPropagation(); removeFn(); }}
+          aria-label="Remove card"
+          className="h-5 w-5 p-0 text-gray-400 hover:text-red-500"
+        >
+          <X className="w-3 h-3" />
+        </Button>
+      </div>
       {innerContent}
-    </li>
+    </div>
   );
 }
 

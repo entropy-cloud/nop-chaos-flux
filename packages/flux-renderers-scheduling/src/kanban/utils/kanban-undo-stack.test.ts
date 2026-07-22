@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createUndoStack, pushCommand, undo, redo, canUndo, canRedo, shouldMerge } from './kanban-undo-stack.js';
 import type { BoardData } from '../kanban.types.js';
 import type { UndoCommand } from './kanban-undo-stack.js';
@@ -79,6 +79,24 @@ describe('UndoStack', () => {
     const board = createSampleBoard();
     const stack = createUndoStack();
     expect(redo(stack, board)).toBeNull();
+  });
+
+  it('warns on undo when no commands exist', () => {
+    const board = createSampleBoard();
+    const stack = createUndoStack();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(undo(stack, board)).toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith('[kanban-undo] No undo commands available');
+    warnSpy.mockRestore();
+  });
+
+  it('warns on redo when no commands exist', () => {
+    const board = createSampleBoard();
+    const stack = createUndoStack();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(redo(stack, board)).toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith('[kanban-undo] No redo commands available');
+    warnSpy.mockRestore();
   });
 
   it('creates stack with custom maxSize', () => {

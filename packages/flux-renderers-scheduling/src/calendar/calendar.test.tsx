@@ -77,14 +77,6 @@ vi.mock('./hooks/use-calendar-drag-create.js', () => ({
   },
 }));
 
-vi.mock('./hooks/use-calendar-ical.js', () => ({
-  useCalendarICal: () => ({
-    importFromICal: vi.fn(),
-    exportToICal: vi.fn(),
-    isAvailable: false,
-  }),
-}));
-
 vi.mock('./hooks/use-calendar-export.js', () => ({
   useCalendarExport: () => ({
     exportToPrint: vi.fn(),
@@ -125,7 +117,7 @@ describe('Calendar', () => {
   });
 
   it('should render with data-view attribute', () => {
-    const { container } = render(<Calendar {...baseProps} />);
+    const { container } = render(<Calendar {...baseProps} props={{ resources: [{ id: 'r1', text: 'R1' }] } as any} />);
     const root = container.querySelector('[data-view]');
     expect(root).toBeTruthy();
   });
@@ -139,7 +131,7 @@ describe('Calendar', () => {
   });
 
   it('renders month view with real view components', () => {
-    const { container } = render(<Calendar {...baseProps} />);
+    const { container } = render(<Calendar {...baseProps} props={{ resources: [{ id: 'r1', text: 'R1' }] } as any} />);
     expect(container.querySelector('[data-view="month"]') || container.querySelector('[data-view]')).toBeTruthy();
   });
 

@@ -11,6 +11,7 @@ export interface UseKanbanAdderOptions {
   onColumnRemove?: (payload: { columnId: string }) => void;
 }
 
+/** @deprecated Use board-level addCard/handleCardAdd callback instead. */
 export function useKanbanAdder({
   boardData,
   onBoardChange,

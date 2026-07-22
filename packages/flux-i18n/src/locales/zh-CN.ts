@@ -784,6 +784,14 @@ export const zhCN: Resource = {
       noticeBar: {
         close: '关闭',
       },
+      barcode: {
+        recognizing: '识别中...',
+        recognitionFailed: '识别失败，请重试',
+      },
+    },
+    barcode: {
+      recognizing: '识别中...',
+      recognitionFailed: '识别失败，请重试',
     },
   },
 };

@@ -1,5 +1,6 @@
 import type { GanttId, GanttTask, GanttTaskData, GanttLink, GanttLinkData, GanttLinkType, GanttResource, GanttAssignment, GanttZoomLevel } from './gantt.types.js';
 import { computeTaskLayout, computeLinkPolylines, pixelToDate, dateToPixel } from './utils/layout.js';
+import { computeScaleRange } from './utils/scale.js';
 import { CalendarManager, type WorkCalendar } from './utils/worktime.js';
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
@@ -22,6 +23,23 @@ export interface GanttStoreState {
   treeRevision: number; layoutRevision: number;
   expandedSet: Set<GanttId>;
   selectedTaskId: GanttId | null; editingTaskId: GanttId | null;
+}
+
+const LINK_SHORT_TO_LONG: Record<string, GanttLinkType> = {
+  FS: 'finish_to_start',
+  SS: 'start_to_start',
+  FF: 'finish_to_finish',
+  SF: 'start_to_finish',
+};
+const LINK_LONG_TO_SHORT: Record<string, string> = {
+  finish_to_start: 'FS',
+  start_to_start: 'SS',
+  finish_to_finish: 'FF',
+  start_to_finish: 'SF',
+};
+
+function normalizeLinkType(type: string): GanttLinkType {
+  return LINK_SHORT_TO_LONG[type] ?? (LINK_LONG_TO_SHORT[type] ? (type as GanttLinkType) : 'finish_to_start');
 }
 
 export class GanttStore {
@@ -93,7 +111,7 @@ export class GanttStore {
     const newTasks = new Map<GanttId, GanttTask>();
     for (const t of flattenTasks(tasks, null)) newTasks.set(t.id, { ...t, $x: 0, $y: 0, $w: 0, $h: 0, $level: 0, $source: [], $target: [] });
     const newLinks = new Map<GanttId, GanttLink>();
-    if (links) for (const l of links) newLinks.set(l.id, { ...l, $p: '' });
+    if (links) for (const l of links) newLinks.set(l.id, { ...l, type: normalizeLinkType(l.type), $p: '' });
     const newResources = new Map<GanttId, GanttResource>();
     if (resources) for (const r of resources) newResources.set(r.id, { ...r });
     const newAssignments = new Map<GanttId, GanttAssignment>();
@@ -154,19 +172,9 @@ export class GanttStore {
 
   private computeScaleRange(): void {
     const state = this.gs();
-    if (state.tasks.size === 0) {
-      const now = new Date();
-      this.store.setState({ scaleRange: { start: new Date(now.getFullYear(), now.getMonth(), 1), end: new Date(now.getFullYear(), now.getMonth() + 1, 1) } });
-      return;
-    }
-    let minMs = Infinity, maxMs = -Infinity;
-    for (const task of state.tasks.values()) {
-      const s = new Date(task.start).getTime(), e = new Date(task.end).getTime();
-      if (s < minMs) minMs = s; if (e > maxMs) maxMs = e;
-    }
-    if (minMs >= maxMs) maxMs = minMs + 86400000;
-    const pad = Math.max((maxMs - minMs) * 0.1, 86400000);
-    this.store.setState({ scaleRange: { start: new Date(minMs - pad), end: new Date(maxMs + pad) } });
+    const tasks = Array.from(state.tasks.values());
+    const range = computeScaleRange(tasks);
+    this.store.setState({ scaleRange: range });
   }
 
   private computeCoordinates(): void {

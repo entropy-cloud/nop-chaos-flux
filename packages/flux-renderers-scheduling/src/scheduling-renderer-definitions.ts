@@ -10,31 +10,30 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
   {
     type: 'gantt',
     displayName: 'Gantt',
-    category: 'scheduling',
+    category: 'data',
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
-    defaultSchema: { type: 'gantt', body: [] },
+    defaultSchema: { type: 'gantt' },
     component: Gantt,
     fields: [
-      { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'tasks', kind: 'prop' },
       { key: 'links', kind: 'prop' },
       { key: 'resources', kind: 'prop' },
       { key: 'assignments', kind: 'prop' },
       { key: 'columns', kind: 'prop' },
-      { key: 'scales', kind: 'prop' },
+      { key: 'scales', kind: 'prop' }, // @deprecated — scales are defined within zoomLevels; this standalone prop is unused
       { key: 'zoomLevels', kind: 'prop' },
       { key: 'defaultZoom', kind: 'prop' },
       { key: 'cellWidth', kind: 'prop' },
-      { key: 'startDate', kind: 'prop' },
-      { key: 'endDate', kind: 'prop' },
+      { key: 'startDate', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
+      { key: 'endDate', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
       { key: 'taskBarHeight', kind: 'prop' },
-      { key: 'progressBarHeight', kind: 'prop' },
+      { key: 'progressBarHeight', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
       { key: 'showWeekends', kind: 'prop' },
       { key: 'showToday', kind: 'prop' },
       { key: 'draggable', kind: 'prop' },
       { key: 'editable', kind: 'prop' },
       { key: 'linkable', kind: 'prop' },
-      { key: 'calendar', kind: 'prop' },
+      { key: 'calendar', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
       { key: 'taskBar', kind: 'region', regionKey: 'taskBar' },
       { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
       { key: 'editor', kind: 'region', regionKey: 'editor' },
@@ -50,8 +49,8 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'onScroll', kind: 'event' },
       { key: 'onMount', kind: 'meta' },
       { key: 'onUnmount', kind: 'meta' },
-      { key: 'childrenField', kind: 'prop' },
-      { key: 'initiallyExpanded', kind: 'prop' },
+      { key: 'childrenField', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
+      { key: 'initiallyExpanded', kind: 'prop' }, // @deprecated — unused, will be removed in a future version
       { key: 'toolbarClassName', kind: 'prop' },
       { key: 'taskBarClassName', kind: 'prop' },
       { key: 'editorClassName', kind: 'prop' },
@@ -67,13 +66,12 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     displayName: 'Kanban',
     category: 'scheduling',
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
-    defaultSchema: { type: 'kanban', body: [] },
+    defaultSchema: { type: 'kanban' },
     component: KanbanBoard,
     fields: [
-      { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'data', kind: 'prop' },
       { key: 'configMap', kind: 'prop' },
-      // consumed: used as data-driven columns configuration
+      // consumed: used in collapsedMap for controlled collapsed state
       { key: 'columnsConfig', kind: 'prop' },
       { key: 'columnHeader', kind: 'region', regionKey: 'columnHeader' },
       { key: 'columnHeaderToolbar', kind: 'region', regionKey: 'columnHeaderToolbar' },
@@ -169,6 +167,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     type: 'barcode-input',
     displayName: 'Barcode Input',
     category: 'scheduling',
+    // verified: sourcePackage aligns with scheduling package per B-CD-01
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'barcode-input', name: 'barcode' },
     component: BarcodeInputRenderer,

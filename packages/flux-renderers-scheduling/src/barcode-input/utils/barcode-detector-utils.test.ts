@@ -45,7 +45,7 @@ describe('detectWithSkewRetry', () => {
     const ctx = createMockContext();
     const video = document.createElement('video');
     const detect = vi.fn().mockResolvedValue([]);
-    const result = await detectWithSkewRetry(detect, video, canvas, ctx, controller.signal);
+    const result = await detectWithSkewRetry(detect, video, canvas, ctx, undefined, controller.signal);
     expect(result).toBeNull();
     expect(detect).not.toHaveBeenCalled();
   });
@@ -59,7 +59,7 @@ describe('detectWithSkewRetry', () => {
     Object.defineProperty(video, 'videoHeight', { value: 100 });
     const detect = vi.fn().mockResolvedValue([]);
     setTimeout(() => controller.abort(), 0);
-    const result = await detectWithSkewRetry(detect, video, canvas, ctx, controller.signal);
+    const result = await detectWithSkewRetry(detect, video, canvas, ctx, undefined, controller.signal);
     expect(result).toBeNull();
   });
 });

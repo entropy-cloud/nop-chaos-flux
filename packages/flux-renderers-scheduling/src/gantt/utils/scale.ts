@@ -1,5 +1,5 @@
 import type { GanttTask, GanttScale as GanttScaleConfig } from '../gantt.types.js';
-import { unitStart, addUnit, formatDate, diffInDays } from './date.js';
+import { unitStart, unitEnd, addUnit, formatDate, diffInDays } from './date.js';
 
 export interface ScaleRange {
   start: Date;
@@ -21,7 +21,7 @@ export interface ScaleRow {
 
 export function computeScaleRange(tasks: GanttTask[], startDate?: string, endDate?: string): ScaleRange {
   if (startDate && endDate) {
-    return { start: new Date(startDate), end: new Date(endDate) };
+    return { start: unitStart(new Date(startDate), 'day'), end: unitEnd(new Date(endDate), 'day') };
   }
 
   if (tasks.length === 0) {
@@ -56,8 +56,8 @@ export function computeScaleRange(tasks: GanttTask[], startDate?: string, endDat
   const pad = Math.max((maxMs - minMs) * 0.1, 86400000);
 
   return {
-    start: new Date(minMs - pad),
-    end: new Date(maxMs + pad),
+    start: unitStart(new Date(minMs - pad), 'day'),
+    end: unitEnd(new Date(maxMs + pad), 'day'),
   };
 }
 

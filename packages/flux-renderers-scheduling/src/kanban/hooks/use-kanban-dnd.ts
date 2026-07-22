@@ -42,11 +42,11 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
     closestEdge: null,
   });
 
-  const stateRef = useRef({ boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState });
+  const stateRef = useRef({ boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState, dragState });
 
   useEffect(() => {
-    stateRef.current = { boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState };
-  }, [boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState]);
+    stateRef.current = { boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState, dragState };
+  }, [boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState, dragState]);
 
   useEffect(() => {
     return monitorForElements({
@@ -161,7 +161,7 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
     });
   }, [wipOverLimitColumns]);
 
-  const moveCardKeyboard = (
+  const moveCardKeyboard = useCallback((
     boardData: BoardData,
     cardId: string,
     fromColumnId: string,
@@ -169,20 +169,21 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
     fromIndex: number,
     toIndex: number,
   ) => {
+    const { onBoardChange: changeBoard, onCardMove: moveEvent, wipOverLimitColumns: wipSet } = stateRef.current;
     const newBoard = moveCard(boardData, cardId, toColumnId, toIndex);
-    onBoardChange(newBoard, cardId, fromColumnId, toColumnId, fromIndex, toIndex);
+    changeBoard(newBoard, cardId, fromColumnId, toColumnId, fromIndex, toIndex);
 
     const fromCol = boardData[fromColumnId];
     const finalFromIndex = fromCol ? fromCol.children.indexOf(cardId) : -1;
-    onCardMove?.({
+    moveEvent?.({
       cardId,
       fromColumnId,
       toColumnId,
       fromIndex: finalFromIndex,
       toIndex,
-      overLimit: wipOverLimitColumns?.has(toColumnId) ?? false,
+      overLimit: wipSet?.has(toColumnId) ?? false,
     });
-  };
+  }, []);
 
   return {
     dragState,

@@ -69,6 +69,7 @@ function connectImpl(
   }
 }
 
+/** @deprecated Collaboration feature not yet integrated. Will be re-enabled in a future release. */
 export function useKanbanCollab({
   boardId,
   wsUrl,

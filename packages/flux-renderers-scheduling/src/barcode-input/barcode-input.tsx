@@ -153,16 +153,23 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       if (cameraAvailable === null) {
         checkCameraAvailability().then((result) => {
           setCameraAvailable(result.isAvailable);
-          if (result.isAvailable) setOverlayOpen(true);
+          if (result.isAvailable) {
+            setOverlayOpen(true);
+          }
         }).catch((err) => {
           console.warn('BarcodeInput: camera check failed in scanNow', err);
         });
-      } else if (cameraAvailable) {
-        setOverlayOpen(true);
+        return { success: false, pending: true };
       }
+      if (cameraAvailable) {
+        setOverlayOpen(true);
+        return { success: true };
+      }
+      return { success: false, error: 'Camera unavailable' };
     },
     stopScan: () => {
       setOverlayOpen(false);
+      return { success: true };
     },
     resetWasmPromise: () => {
       resetWasm();

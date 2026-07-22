@@ -37,7 +37,8 @@ describe('scale utils', () => {
       const tasks = [makeTask({ id: 't1' })];
       const range = computeScaleRange(tasks, '2026-02-01', '2026-02-28');
       expect(range.start.toISOString().slice(0, 10)).toBe('2026-02-01');
-      expect(range.end.toISOString().slice(0, 10)).toBe('2026-02-28');
+      // end is snapped to unitEnd (exclusive boundary) — March 1 for inclusive Feb 28
+      expect(range.end.toISOString().slice(0, 10)).toBe('2026-03-01');
     });
 
     it('should return default range for empty tasks', () => {

@@ -64,7 +64,7 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder, enable
     });
   }, [enabled]);
 
-  const registerBoardDropZone = (
+  const registerBoardDropZone = useCallback((
     element: HTMLElement, columnIndex: number,
   ) => {
     return dropTargetForElements({
@@ -77,7 +77,7 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder, enable
         return source.data.type === 'kanban-column-header';
       },
     });
-  };
+  }, []);
 
   return {
     registerColumnHeader,

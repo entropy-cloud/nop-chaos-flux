@@ -785,6 +785,14 @@ export const enUS: Resource = {
       noticeBar: {
         close: 'Close',
       },
+      barcode: {
+        recognizing: 'Recognizing...',
+        recognitionFailed: 'Recognition failed, please retry',
+      },
+    },
+    barcode: {
+      recognizing: 'Recognizing...',
+      recognitionFailed: 'Recognition failed, please retry',
     },
   },
 };

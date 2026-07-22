@@ -1,11 +1,11 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import type { CalendarDateRange } from '../calendar.types.js';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import { getDateRange, getMonthStartEnd, isToday, isWeekend, toISODateString } from '../utils/calendar-date-utils.js';
-import { positionEventsInMonth, splitMultiDayEvents } from '../utils/calendar-layout-utils.js';
+import { positionEventsInMonth, splitMultiDayEvents, detectConflicts } from '../utils/calendar-layout-utils.js';
 import { computeCrossDayLines, createSVGPath, type CellPosition } from '../utils/calendar-cross-day-lines.js';
 import { CalendarEventBlock } from './calendar-event-block.js';
 
@@ -72,21 +72,18 @@ export function CalendarMonthView({
 
   const conflictMap = useMemo(() => {
     const map = new Map<string, Set<string>>();
-    for (const [resourceId, dayMap] of positionedMap) {
-      for (const [dateStr, dayEvents] of dayMap) {
-        if (dayEvents.length <= 1) continue;
-        const key = `${resourceId}:${dateStr}`;
-        const ids = new Set<string>();
-        for (const pe of dayEvents) {
-          ids.add(pe.eventId);
-        }
-        if (ids.size > 1) {
-          map.set(key, ids);
+    for (const resource of resources) {
+      for (const day of days) {
+        const dateStr = toISODateString(day);
+        const conflict = detectConflicts({ events, resourceId: resource.id, date: dateStr });
+        if (conflict) {
+          const ids = new Set(conflict.overlappingEvents.map(e => e.id));
+          map.set(`${resource.id}:${dateStr}`, ids);
         }
       }
     }
     return map;
-  }, [positionedMap]);
+  }, [events, resources, days]);
 
   const weekdayLabels = getWeekdayLabels(locale, firstDayOfWeek);
   const [focusedCell, setFocusedCell] = useState<{ resourceId: string; dateStr: string } | null>(null);
@@ -122,7 +119,14 @@ export function CalendarMonthView({
       case 'Enter':
       case ' ':
         e.preventDefault();
-        onCellDragStart?.(dateStr, resourceId, e as unknown as React.PointerEvent);
+        {
+          const target = e.currentTarget as HTMLElement;
+          const rect = target.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const syntheticEvent = { clientX: centerX, clientY: centerY, button: 0 } as React.PointerEvent;
+          onCellDragStart?.(dateStr, resourceId, syntheticEvent);
+        }
         return;
       default:
         return;
@@ -141,8 +145,7 @@ export function CalendarMonthView({
     <div
       key={weekdayLabels[i]}
       role="columnheader"
-      data-slot="calendar-cell"
-      className="flex-1 text-center text-xs font-medium text-muted-foreground py-1 border-b"
+      className="flex-1 text-center text-xs font-medium text-muted-foreground py-1 border-b calendar-weekday-header"
     >
       {weekdayLabels[i]}
     </div>
@@ -291,9 +294,22 @@ export function CalendarMonthView({
 
   const splitEvents = useMemo(() => splitMultiDayEvents(events), [events]);
 
+  const svgContainerRef = useRef<HTMLDivElement>(null);
+  const [svgPixelDims, setSvgPixelDims] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const el = svgContainerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setSvgPixelDims({ width: rect.width, height: rect.height });
+  }, [totalSize, displayResources.length, days.length]);
+
   const cellPositions = useMemo(() => {
     const positions = new Map<string, CellPosition>();
-    const cellWidth = 100 / days.length;
+    const { width: svgW, height: svgH } = svgPixelDims;
+    if (svgW === 0 || svgH === 0) return positions;
+    const cellWidth = svgW / days.length;
+    const cellHeight = svgH / displayResources.length;
     for (let ri = 0; ri < displayResources.length; ri++) {
       const resource = displayResources[ri];
       for (let di = 0; di < days.length; di++) {
@@ -301,14 +317,14 @@ export function CalendarMonthView({
         const key = `${resource.id}:${dateStr}`;
         positions.set(key, {
           x: di * cellWidth,
-          y: ri * 48,
+          y: ri * cellHeight,
           width: cellWidth,
-          height: 48,
+          height: cellHeight,
         });
       }
     }
     return positions;
-  }, [displayResources, days]);
+  }, [displayResources, days, svgPixelDims]);
 
   const crossDayLines = useMemo(() => {
     if (!showCrossDayLines) return [];
@@ -330,29 +346,28 @@ export function CalendarMonthView({
       >
         {resourceRows}
         {showCrossDayLines && crossDayLines.length > 0 && (
-          <svg
-            className="nop-calendar-cross-day-lines"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              pointerEvents: 'none',
-              zIndex: 5,
-            }}
-          >
-            {crossDayLines.map((line) => (
-              <path
-                key={line.eventId}
-                d={createSVGPath(line)}
-                fill="none"
-                stroke={line.color}
-                strokeWidth={2}
-                strokeDasharray="4 2"
-                opacity={0.6}
-              />
-            ))}
-          </svg>
+          <div ref={svgContainerRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
+            <svg
+              className="nop-calendar-cross-day-lines"
+              viewBox={`0 0 ${svgPixelDims.width} ${svgPixelDims.height}`}
+              style={{
+                width: '100%',
+                height: '100%',
+              }}
+            >
+              {crossDayLines.map((line) => (
+                <path
+                  key={line.eventId}
+                  d={createSVGPath(line)}
+                  fill="none"
+                  stroke={line.color}
+                  strokeWidth={2}
+                  strokeDasharray="4 2"
+                  opacity={0.6}
+                />
+              ))}
+            </svg>
+          </div>
         )}
       </div>
       {resources.length === 0 && (

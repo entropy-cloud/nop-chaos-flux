@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   diffInDays,
   addDays,
@@ -154,6 +154,20 @@ describe('date utils', () => {
       const end = unitEnd(d, 'month');
       expect(end.getUTCMonth()).toBe(2);
       expect(end.getUTCDate()).toBe(1);
+    });
+  });
+
+  describe('getUTCDay timezone mock (via vi.stubEnv)', () => {
+    it('should return consistent week start regardless of system timezone', () => {
+      const timezones = ['America/New_York', 'Asia/Shanghai', 'Europe/London'];
+      for (const tz of timezones) {
+        vi.stubEnv('TZ', tz);
+        const d = new Date('2026-01-07T12:00:00');
+        const start = getWeekStart(d);
+        expect(start.getUTCDay()).toBe(1);
+        expect(start.toISOString().slice(0, 10)).toBe('2026-01-05');
+        vi.unstubAllEnvs();
+      }
     });
   });
 

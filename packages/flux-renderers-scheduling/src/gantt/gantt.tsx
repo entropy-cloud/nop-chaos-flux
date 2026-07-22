@@ -260,11 +260,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       if (emptyRegion) {
         return <div data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn(meta.className, resolved.emptyClassName as string | undefined)}>{emptyRegion.render() as React.ReactNode}</div>;
       }
-    }
-
-    const bodyRegion = regions.body;
-    if (bodyRegion) {
-      return <div data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-gantt flex flex-col h-full', meta.className)}>{bodyRegion.render() as React.ReactNode}</div>;
+      return (
+        <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-gantt', meta.className)} />
+      );
     }
 
     const columns = resolved.columns as any[] | undefined;

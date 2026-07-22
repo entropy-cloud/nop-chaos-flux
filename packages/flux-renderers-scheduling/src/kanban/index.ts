@@ -13,6 +13,10 @@ export { useColumnDnd } from './hooks/use-column-dnd.js';
 export type { UseColumnDndOptions } from './hooks/use-column-dnd.js';
 export { useKanbanFilter } from './hooks/use-kanban-filter.js';
 export type { UseKanbanFilterOptions } from './hooks/use-kanban-filter.js';
+/** @deprecated Use board-level addCard/handleCardAdd callback instead. */
+export { useKanbanAdder } from './hooks/use-kanban-adder.js';
+/** @deprecated Collaboration feature not yet integrated. Will be re-enabled in a future release. */
+export { useKanbanCollab } from './hooks/use-kanban-collab.js';
 
 export { useKanbanColumnResize } from './hooks/use-kanban-column-resize.js';
 export type { ColumnWidthMap, UseKanbanColumnResizeOptions } from './hooks/use-kanban-column-resize.js';

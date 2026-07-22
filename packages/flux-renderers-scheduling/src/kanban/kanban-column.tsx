@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useEffect } from 'react';
+import React, { useRef, useState, useMemo, useEffect, useCallback } from 'react';
 import { cn, Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData, BoardItem, KanbanCardConfig } from './kanban.types.js';
@@ -122,7 +122,7 @@ export function KanbanColumn({
     };
   }, [registerColumn, column.id, filteredCards.length, registerBoardDropZone, board]);
 
-  const displayCards = collapsed ? [] : filteredCards;
+  const displayCards = useMemo(() => collapsed ? [] : filteredCards, [collapsed, filteredCards]);
   const showEmptyZone = !collapsed && filteredCards.length === 0;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -144,6 +144,44 @@ export function KanbanColumn({
 
   const columnTitle = (column.title || column.data?.title || '') as string;
 
+  const [rovingIndex, setRovingIndex] = useState<number | null>(null);
+
+  const handleCardKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
+    const cards = displayCards;
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const next = Math.min(idx + 1, cards.length - 1);
+        setRovingIndex(next);
+        break;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        const prev = Math.max(idx - 1, 0);
+        setRovingIndex(prev);
+        break;
+      }
+      case 'Home': {
+        e.preventDefault();
+        setRovingIndex(0);
+        break;
+      }
+      case 'End': {
+        e.preventDefault();
+        setRovingIndex(cards.length - 1);
+        break;
+      }
+    }
+  }, [displayCards]);
+
+  const cardContainerRef = useRef<HTMLUListElement>(null);
+
+  useEffect(() => {
+    if (rovingIndex == null || !cardContainerRef.current) return;
+    const cardEl = cardContainerRef.current.querySelector(`[data-card-index="${rovingIndex}"]`) as HTMLElement | null;
+    cardEl?.focus();
+  }, [rovingIndex]);
+
   return (
     <div
       ref={columnRef}
@@ -154,7 +192,7 @@ export function KanbanColumn({
       role="region"
       aria-label={`Column: ${columnTitle}`}
       className={cn(
-        'nop-kanban-column flex flex-col bg-gray-50 rounded-lg border border-gray-200 min-w-[280px] max-w-[360px]',
+        'nop-kanban-column flex flex-col bg-gray-50 rounded-lg border border-gray-200 flex-1 min-w-[200px]',
         collapsed && 'nop-kanban-column-collapsed',
         wipWarning && 'border-red-400',
         className,
@@ -186,7 +224,7 @@ export function KanbanColumn({
           style={virtualize ? { overflowY: 'auto', maxHeight: '100%' } : undefined}
         >
           {virtualize && displayCards.length > 0 ? (
-            <ul style={{ height: totalSize, position: 'relative', listStyle: 'none', margin: 0, padding: 0 }}>
+            <ul ref={cardContainerRef} style={{ height: totalSize, position: 'relative', listStyle: 'none', margin: 0, padding: 0 }}>
               {virtualItems.map((virtualItem) => {
                 const card = displayCards[virtualItem.index];
                 if (!card) return null;
@@ -213,13 +251,15 @@ export function KanbanColumn({
                       className={cardClassName}
                       helpers={helpers}
                       registerCard={registerCard}
+                      tabIndex={virtualItem.index === (rovingIndex ?? 0) ? 0 : -1}
+                      onRovingKeyDown={handleCardKeyDown}
                     />
                   </div>
                 );
               })}
             </ul>
           ) : (
-            <ul className="space-y-2" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            <ul ref={cardContainerRef} className="space-y-2" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {displayCards.map((card, idx) => (
                 <React.Fragment key={card.id}>
                   {dropTargetCardIndex === idx && dropClosestEdge === 'before' && (
@@ -236,6 +276,8 @@ export function KanbanColumn({
                     className={cardClassName}
                     helpers={helpers}
                     registerCard={registerCard}
+                    tabIndex={idx === (rovingIndex ?? 0) ? 0 : -1}
+                    onRovingKeyDown={handleCardKeyDown}
                   />
                   {dropTargetCardIndex === idx && dropClosestEdge === 'after' && (
                     <div className="nop-kanban-drop-indicator" />

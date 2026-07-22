@@ -3,38 +3,35 @@ export interface CameraAvailabilityResult {
   error?: string;
 }
 
+let cachedAvailability: CameraAvailabilityResult | null = null;
+
 export function checkCameraAvailability(): Promise<CameraAvailabilityResult> {
-  const isSecureContext = typeof window !== 'undefined' && (
-    window.location.protocol === 'https:' ||
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-  );
+  if (cachedAvailability) return Promise.resolve(cachedAvailability);
 
-  if (!isSecureContext) {
-    return Promise.resolve({
-      isAvailable: false,
-      error: 'Camera requires HTTPS or localhost',
-    });
+  if (typeof window === 'undefined' || !window.isSecureContext) {
+    cachedAvailability = { isAvailable: false, error: 'Camera requires HTTPS or localhost' };
+    return Promise.resolve(cachedAvailability);
   }
 
-  if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-    return Promise.resolve({
-      isAvailable: false,
-      error: 'getUserMedia not supported',
-    });
+  if (typeof navigator === 'undefined' || !navigator.mediaDevices?.enumerateDevices) {
+    cachedAvailability = { isAvailable: false, error: 'enumerateDevices not supported' };
+    return Promise.resolve(cachedAvailability);
   }
 
-  return navigator.mediaDevices.getUserMedia({ video: true })
-    .then((stream) => {
-      stream.getTracks().forEach((t) => t.stop());
-      return { isAvailable: true };
+  return navigator.mediaDevices.enumerateDevices()
+    .then((devices) => {
+      const hasVideoInput = devices.some((d) => d.kind === 'videoinput');
+      cachedAvailability = hasVideoInput
+        ? { isAvailable: true }
+        : { isAvailable: false, error: 'No camera found' };
+      return cachedAvailability;
     })
-    .catch((err: DOMException) => {
-      const message = err.name === 'NotAllowedError'
-        ? 'Camera permission denied'
-        : err.name === 'NotFoundError'
-          ? 'No camera found'
-          : `Camera error: ${err.message}`;
-      return { isAvailable: false, error: message };
+    .catch(() => {
+      cachedAvailability = { isAvailable: false, error: 'Camera permission denied' };
+      return cachedAvailability;
     });
+}
+
+export function clearCameraAvailabilityCache(): void {
+  cachedAvailability = null;
 }

@@ -97,7 +97,8 @@ export interface CalendarEvent extends SchemaObject {
 export interface CalendarResource extends SchemaObject {
   id: string;
   title?: string;
-  text: string;
+  /** @deprecated Use `title` instead. Will be removed in a future version. */
+  text?: string;
   type?: string;
   parent?: string;
   color?: string;
@@ -140,6 +141,10 @@ export interface CalendarSchema extends BaseSchema {
   onGroupToggle?: ActionSchema;
   onMount?: ActionSchema;
   onUnmount?: ActionSchema;
+  print?: ActionSchema;
+  exportPNG?: ActionSchema;
+  importICal?: ActionSchema;
+  exportToICal?: ActionSchema;
   headerClassName?: string;
   eventClassName?: string;
   emptyClassName?: string;

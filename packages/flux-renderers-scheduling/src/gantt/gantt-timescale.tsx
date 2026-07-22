@@ -20,7 +20,7 @@ export function GanttTimeScale({ className }: GanttTimeScaleProps) {
   })();
 
   return (
-    <div className={cn('nop-gantt-scale flex-shrink-0', className)} data-slot="gantt-scale">
+    <div className={cn('nop-gantt-scale flex-shrink-0', className)} style={{ position: 'sticky', top: 0, zIndex: 10 }} data-slot="gantt-scale">
       {rows.map((row) => (
         <div key={`row-${row.unit}`} className="flex border-b" style={{ height: 24 }}>
           {row.cells.map((cell) => (

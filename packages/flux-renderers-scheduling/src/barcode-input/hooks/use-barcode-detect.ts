@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { createBarcodeDetector, detectWithSkewRetry, type BarcodeDetectResult, type BarcodeFormat } from '../utils/barcode-detector-utils.js';
+import { createBarcodeDetector, detectWithSkewRetry, SKEW_ANGLES, type BarcodeDetectResult, type BarcodeFormat } from '../utils/barcode-detector-utils.js';
 
 interface UseBarcodeDetectOptions {
   interval?: number;
@@ -17,29 +17,41 @@ export function useBarcodeDetect(
   getVideoElement: () => HTMLVideoElement | null,
   options?: UseBarcodeDetectOptions,
 ): UseBarcodeDetectReturn {
-  const interval = options?.interval ?? 300;
-  const enabled = options?.enabled ?? true;
+  const optionsRef = useRef(options);
+  useEffect(() => { optionsRef.current = options; }, [options]);
+  const getVideoRef = useRef(getVideoElement);
+  useEffect(() => { getVideoRef.current = getVideoElement; }, [getVideoElement]);
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const detectorRef = useRef<ReturnType<typeof createBarcodeDetector> | null>(null);
+  const skewIndexRef = useRef(0);
+  const lastResultRef = useRef<string | null>(null);
   const [result, setResult] = useState<BarcodeDetectResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!enabled) return;
+    const currentOptions = optionsRef.current;
+    const enabled = currentOptions?.enabled ?? true;
+    const interval = currentOptions?.interval ?? 300;
+
+    if (!enabled) {
+      lastResultRef.current = null;
+      return;
+    }
 
     const controller = new AbortController();
     abortRef.current = controller;
     const signal = controller.signal;
 
-    const video = getVideoElement();
+    const video = getVideoRef.current();
     if (!video) return;
 
     if (!detectorRef.current) {
-      detectorRef.current = createBarcodeDetector(options?.formats);
+      detectorRef.current = createBarcodeDetector(currentOptions?.formats);
     }
 
     if (!canvasRef.current) {
@@ -51,10 +63,13 @@ export function useBarcodeDetect(
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
 
+    lastResultRef.current = null;
+    skewIndexRef.current = 0;
+
     async function poll() {
       if (signal.aborted) return;
 
-      const currentVideo = getVideoElement();
+      const currentVideo = getVideoRef.current();
       if (!currentVideo || !ctx) return;
 
       if (currentVideo.readyState < 2 || currentVideo.videoWidth === 0) {
@@ -68,12 +83,18 @@ export function useBarcodeDetect(
           return rawResults;
         };
 
-        const decoded = await detectWithSkewRetry(detectFn, currentVideo, canvas, ctx, signal);
+        const currentAngle = SKEW_ANGLES[skewIndexRef.current % SKEW_ANGLES.length];
+        skewIndexRef.current += 1;
+
+        const decoded = await detectWithSkewRetry(detectFn, currentVideo, canvas, ctx, currentAngle, signal);
 
         if (signal.aborted) return;
 
         if (decoded) {
-          setResult(decoded);
+          if (decoded.barcode !== lastResultRef.current) {
+            lastResultRef.current = decoded.barcode;
+            setResult(decoded);
+          }
         }
       } catch (err: any) {
         if (signal.aborted) return;
@@ -98,8 +119,10 @@ export function useBarcodeDetect(
         timerRef.current = null;
       }
       setIsScanning(false);
+      setResult(null);
+      lastResultRef.current = null;
     };
-  }, [enabled, interval, getVideoElement, options?.formats]);
+  }, []);
 
   return { result, isScanning, error };
 }

@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { useGanttStore } from '../gantt-context.js';
+import type { GanttLinkType } from '../gantt.types.js';
 
 export function useGanttLinkDraw(
   svgRef: React.RefObject<SVGSVGElement | null>,
@@ -9,6 +10,7 @@ export function useGanttLinkDraw(
   const store = useGanttStore();
   const drawingRef = useRef<{
     sourceId: string | number;
+    sourceSide: 'start' | 'end';
     startX: number;
     startY: number;
     tempLine: SVGLineElement | null;
@@ -27,7 +29,14 @@ export function useGanttLinkDraw(
     cleanupRef.current = null;
   };
 
-  const onLinkHandlePointerDown = (e: PointerEvent, taskId: string | number) => {
+  function inferLinkType(sourceSide: 'start' | 'end', targetSide: 'start' | 'end'): GanttLinkType {
+    if (sourceSide === 'end' && targetSide === 'start') return 'finish_to_start';
+    if (sourceSide === 'start' && targetSide === 'start') return 'start_to_start';
+    if (sourceSide === 'end' && targetSide === 'end') return 'finish_to_finish';
+    return 'start_to_finish';
+  }
+
+  const onLinkHandlePointerDown = (e: PointerEvent, taskId: string | number, side: 'start' | 'end') => {
     if (enabled === false) return;
     e.preventDefault();
     e.stopPropagation();
@@ -43,6 +52,7 @@ export function useGanttLinkDraw(
 
     drawingRef.current = {
       sourceId: taskId,
+      sourceSide: side,
       startX: task.$x + task.$w,
       startY: task.$y + task.$h / 2,
       tempLine,
@@ -67,8 +77,11 @@ export function useGanttLinkDraw(
       if (taskBarEl) {
         const targetId = taskBarEl.getAttribute('data-task-id');
         if (targetId && targetId !== String(drawingRef.current.sourceId)) {
-          onCommitRef.current?.(drawingRef.current.sourceId, targetId, 'finish_to_start');
-          store.addLink(drawingRef.current.sourceId, targetId, 'finish_to_start');
+          const targetHandle = target?.closest('[data-slot="gantt-bar-link-handle"]');
+          const targetSide = (targetHandle as HTMLElement)?.getAttribute('data-handle-side') as 'start' | 'end' || 'start';
+          const linkType = inferLinkType(drawingRef.current.sourceSide, targetSide);
+          onCommitRef.current?.(drawingRef.current.sourceId, targetId, linkType);
+          store.addLink(drawingRef.current.sourceId, targetId, linkType);
         }
       }
       cleanup();
@@ -103,6 +116,7 @@ export function useGanttLinkDraw(
 
     drawingRef.current = {
       sourceId: sourceTaskId,
+      sourceSide: 'end',
       startX: task.$x + task.$w,
       startY: task.$y + task.$h / 2,
       tempLine,

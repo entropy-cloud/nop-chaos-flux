@@ -6,6 +6,7 @@ export interface UseKanbanVirtualizerOptions {
   estimatedCardHeight: number;
   gap: number;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  virtualizationEnabled?: boolean;
 }
 
 export function useKanbanVirtualizer({
@@ -14,13 +15,14 @@ export function useKanbanVirtualizer({
   estimatedCardHeight = 80,
   gap = 8,
   scrollContainerRef,
+  virtualizationEnabled = false,
 }: UseKanbanVirtualizerOptions) {
-  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack React Virtual API returns functions incompatible with compiler memoization
   const virtualizer = useVirtualizer({
-    count: cardCount,
+    count: virtualizationEnabled ? cardCount : 0,
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => estimatedCardHeight + gap,
     overscan,
+    measureElement: (element) => element.getBoundingClientRect().height,
   });
 
   const scrollToIndex = (index: number) => {

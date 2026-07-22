@@ -50,7 +50,6 @@ export interface KanbanSchema extends BaseSchema {
   columnFooter?: SchemaInput;
   empty?: SchemaInput;
   loading?: SchemaInput;
-  body?: SchemaInput;
   filterText?: string;
   filterCard?: string;
   filterTags?: string[];

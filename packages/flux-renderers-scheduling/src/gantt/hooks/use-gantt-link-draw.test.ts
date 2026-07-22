@@ -43,7 +43,7 @@ describe('useGanttLinkDraw', () => {
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
-      result.current.onLinkHandlePointerDown(e, 't1');
+      result.current.onLinkHandlePointerDown(e, 't1', 'end');
     });
     document.body.appendChild(handle);
 
@@ -65,7 +65,7 @@ describe('useGanttLinkDraw', () => {
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
-      result.current.onLinkHandlePointerDown(e, 't1');
+      result.current.onLinkHandlePointerDown(e, 't1', 'end');
     });
     document.body.appendChild(handle);
 
@@ -102,7 +102,7 @@ describe('useGanttLinkDraw', () => {
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
-      result.current.onLinkHandlePointerDown(e, 't1');
+      result.current.onLinkHandlePointerDown(e, 't1', 'end');
     });
     document.body.appendChild(handle);
 
@@ -142,7 +142,7 @@ describe('useGanttLinkDraw', () => {
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
-      result.current.onLinkHandlePointerDown(e, 't1');
+      result.current.onLinkHandlePointerDown(e, 't1', 'end');
     });
     document.body.appendChild(handle);
 
@@ -218,7 +218,7 @@ describe('useGanttLinkDraw', () => {
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
-      result.current.onLinkHandlePointerDown(e, 't1');
+      result.current.onLinkHandlePointerDown(e, 't1', 'end');
     });
     document.body.appendChild(handle);
 
@@ -281,7 +281,7 @@ describe('useGanttLinkDraw', () => {
 
     const handle = document.createElement('div');
     handle.addEventListener('pointerdown', (e: PointerEvent) => {
-      result.current.onLinkHandlePointerDown(e, 't1');
+      result.current.onLinkHandlePointerDown(e, 't1', 'end');
     });
     document.body.appendChild(handle);
 

@@ -44,7 +44,10 @@ export function pushCommand(stack: UndoStack, command: UndoCommand): UndoStack {
 }
 
 export function undo(stack: UndoStack, currentBoard: BoardData): { board: BoardData; stack: UndoStack } | null {
-  if (stack.undoStack.length === 0) return null;
+  if (stack.undoStack.length === 0) {
+    console.warn('[kanban-undo] No undo commands available');
+    return null;
+  }
   const command = stack.undoStack[stack.undoStack.length - 1];
   const newUndo = stack.undoStack.slice(0, -1);
   const newRedo = [...stack.redoStack, command];
@@ -77,7 +80,10 @@ export function undo(stack: UndoStack, currentBoard: BoardData): { board: BoardD
 }
 
 export function redo(stack: UndoStack, currentBoard: BoardData): { board: BoardData; stack: UndoStack } | null {
-  if (stack.redoStack.length === 0) return null;
+  if (stack.redoStack.length === 0) {
+    console.warn('[kanban-undo] No redo commands available');
+    return null;
+  }
   const command = stack.redoStack[stack.redoStack.length - 1];
   const newRedo = stack.redoStack.slice(0, -1);
   const newUndo = [...stack.undoStack, command];

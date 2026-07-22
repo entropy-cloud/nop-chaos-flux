@@ -25,7 +25,9 @@ export interface BarcodeInputSchema extends BaseSchema {
   continuousScan?: boolean;
   scanButton?: boolean;
   scanInterval?: number;
+  /** When true, accumulates scanned barcodes in a queue for batch submission instead of firing onScan immediately. */
   batchMode?: boolean;
+  /** When true, shows a torch/flashlight toggle button on the scanner overlay (if the device camera supports it). */
   torchButton?: boolean;
   wasmUrl?: string;
   scanButtonClassName?: string;

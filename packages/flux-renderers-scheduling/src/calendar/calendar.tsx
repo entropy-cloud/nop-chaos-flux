@@ -65,17 +65,11 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   const reactionsRef = useRef(props.reactions);
   useEffect(() => { reactionsRef.current = props.reactions; }, [props.reactions]);
 
-  useEffect(() => {
-    void eventsRef.current.onMount?.({});
-    void eventsRef.current.loadAction?.({});
-    return () => { void eventsRef.current.onUnmount?.({}); };
-  }, []);
-
   const initialDate = resolved.date
     ? (parseISODate(resolved.date as string) ?? new Date())
     : new Date();
   const initialView = (resolved.view as CalendarView) ?? 'month';
-  const firstDayOfWeek = (resolved.firstDayOfWeek as 0 | 1) ?? 0;
+  const firstDayOfWeek = (resolved.firstDayOfWeek as 0 | 1) ?? 1;
   const showWeekends = resolved.showWeekends !== false;
   const maxConcurrent = (resolved.maxConcurrent as number) ?? 4;
   const showCrossDayLines = resolved.showCrossDayLines !== false;
@@ -174,6 +168,15 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   useEffect(() => {
     latestDateRef.current = currentDate;
   }, [currentDate]);
+
+  useEffect(() => {
+    const ev = eventsRef.current;
+    void ev.onMount?.({});
+    void ev.loadAction?.({});
+    return () => {
+      void ev.onUnmount?.({});
+    };
+  }, []);
 
   useImperativeHandle(
     ref,
@@ -365,6 +368,36 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     }
   };
 
+  const prevTargetRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const prevKey = prevTargetRef.current;
+    if (prevKey) {
+      const [prevDate, prevRes] = prevKey.split(':');
+      const prevEl = document.querySelector(`[data-slot="calendar-cell"][data-date="${prevDate}"][data-resource="${prevRes}"]`);
+      if (prevEl) {
+        prevEl.removeAttribute('data-drop-target');
+        prevEl.removeAttribute('data-drop-valid');
+        prevEl.classList.remove('drag-ok', 'drag-conflict');
+      }
+    }
+    const { targetDate, targetResource, active, sourceEvent } = dragSwap.dragState;
+    if (!active || !targetDate || !targetResource) {
+      prevTargetRef.current = null;
+      return;
+    }
+    const key = `${targetDate}:${targetResource}`;
+    prevTargetRef.current = key;
+    const el = document.querySelector(`[data-slot="calendar-cell"][data-date="${targetDate}"][data-resource="${targetResource}"]`);
+    if (el) {
+      el.setAttribute('data-drop-target', 'true');
+      const isValid = targetDate !== sourceEvent?.start.split('T')[0] || targetResource !== sourceEvent?.resourceId;
+      el.setAttribute('data-drop-valid', String(isValid));
+      el.classList.add(isValid ? 'drag-ok' : 'drag-conflict');
+      el.classList.remove(isValid ? 'drag-conflict' : 'drag-ok');
+    }
+  }, [dragSwap.dragState.targetDate, dragSwap.dragState.targetResource, dragSwap.dragState.active]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const dragCreate = useCalendarDragCreate({
     onEventCreate: handleDragCreateEvent,
     getCellFromPoint,
@@ -415,6 +448,14 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     if (emptyRegion) {
       return <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn(meta.className, resolved.emptyClassName as string | undefined)}>{emptyRegion.render() as React.ReactNode}</div>;
     }
+    return (
+      <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-calendar flex flex-col', meta.className, resolved.emptyClassName as string | undefined)}>
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <div className="text-4xl mb-4 opacity-30">📅</div>
+          <p className="text-sm">{t('scheduling.noScheduleData')}</p>
+        </div>
+      </div>
+    );
   }
 
   const onEventClick = (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => {
@@ -506,8 +547,9 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
           className="nop-calendar-drag-ghost"
           style={{
             position: 'fixed',
-            left: dragSwap.dragState.currentX - 60,
-            top: dragSwap.dragState.currentY - 20,
+            left: dragSwap.dragState.currentX,
+            top: dragSwap.dragState.currentY,
+            transform: 'translate(-50%, -50%)',
           }}
         >
           {dragSwap.dragState.sourceEvent?.title ?? ''}

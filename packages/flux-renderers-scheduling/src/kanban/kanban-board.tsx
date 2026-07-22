@@ -61,8 +61,6 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const rawData = resolved.data as BoardData | undefined;
   const configMap = resolved.configMap as Record<string, KanbanCardConfig> | undefined;
   const columnsConfig = resolved.columnsConfig as Record<string, any> | undefined;
-  const _columnsConfig = columnsConfig;
-  void _columnsConfig;
   const draggable = resolved.draggable !== false;
   const columnDraggable = resolved.columnDraggable !== false;
   const columnWidthMode = resolved.columnWidth;
@@ -176,6 +174,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const [undoStackState, setUndoStackState] = useState<UndoStack>(() => createUndoStack(1000));
   const [activityLogOpen, setActivityLogOpen] = useState(false);
+  const [addingColumn, setAddingColumn] = useState(false);
+  const [newColumnTitle, setNewColumnTitle] = useState('');
+  const newColumnInputRef = useRef<HTMLInputElement>(null);
   const [actions, setActions] = useState<KanbanAction[]>([]);
   const actionCounterRef = useRef(0);
 
@@ -399,6 +400,30 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     setSelectedTagIds((prev) =>
       prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId],
     );
+  };
+
+  const startAddColumn = () => {
+    setAddingColumn(true);
+    setNewColumnTitle('');
+    setTimeout(() => newColumnInputRef.current?.focus(), 0);
+  };
+
+  const confirmAddColumn = () => {
+    const title = newColumnTitle.trim() || 'New Column';
+    lastCommandTypeRef.current = 'moveColumn';
+    const columnId = `col-${Date.now()}`;
+    const newColumn = { id: columnId, title, children: [], data: { title }, meta: {} } as any;
+    const rootChildren = boardData['root']?.children ? [...boardData['root'].children] : [];
+    const newBoard: BoardData = { ...boardData, [columnId]: newColumn, root: { ...boardData['root'], children: [...rootChildren, columnId] } as any };
+    handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: -1, toIndex: rootChildren.length });
+    events.onColumnAdd?.({ columnId, index: rootChildren.length });
+    setAddingColumn(false);
+    setNewColumnTitle('');
+  };
+
+  const cancelAddColumn = () => {
+    setAddingColumn(false);
+    setNewColumnTitle('');
   };
 
   const boardRef = useRef<HTMLDivElement>(null);
@@ -629,13 +654,58 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
               />
             );
           })}
-          <div className="nop-kanban-adder shrink-0 self-start mt-2">
-            <div
-              className="flex items-center gap-1 px-3 py-2 text-sm text-gray-400 rounded-lg border-2 border-dashed border-gray-300 min-w-[280px] justify-center"
-              aria-hidden="true"
-            >
-              {t('scheduling.kanban.addColumn')}
-            </div>
+          <div className="nop-kanban-adder shrink-0 self-start mt-2 min-w-[280px]">
+            {addingColumn ? (
+              <div className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-blue-400 rounded-lg bg-blue-50">
+                <Input
+                  ref={newColumnInputRef}
+                  type="text"
+                  value={newColumnTitle}
+                  onChange={(e) => setNewColumnTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      confirmAddColumn();
+                    }
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      cancelAddColumn();
+                    }
+                  }}
+                  placeholder="Column title"
+                  className="flex-1 text-sm px-2 py-1"
+                  aria-label="Column title"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={confirmAddColumn}
+                  className="text-xs text-blue-600 hover:text-blue-800 px-1"
+                >
+                  {t('flux.common.confirm')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={cancelAddColumn}
+                  className="text-xs text-gray-500 hover:text-gray-700 px-1"
+                >
+                  {t('flux.common.cancel')}
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                type="button"
+                onClick={() => startAddColumn()}
+                className="w-full flex items-center gap-1 px-3 py-2 text-sm text-gray-400 rounded-lg border-2 border-dashed border-gray-300 justify-center hover:text-gray-600 hover:border-gray-400"
+              >
+                {t('scheduling.kanban.addColumn')}
+              </Button>
+            )}
           </div>
         </div>
       </div>

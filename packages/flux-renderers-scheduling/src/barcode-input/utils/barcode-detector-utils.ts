@@ -45,11 +45,27 @@ export function createBarcodeDetector(formats?: BarcodeFormat[]): {
 
 export const SKEW_ANGLES = [-20, -15, -10, -5, 5, 10, 15, 20];
 
+export const BARCODE_FORMAT_TO_ZXING: Record<string, string> = {
+  aztec: 'AZTEC',
+  code_39: 'CODE_39',
+  code_93: 'CODE_93',
+  code_128: 'CODE_128',
+  data_matrix: 'DATA_MATRIX',
+  ean_8: 'EAN_8',
+  ean_13: 'EAN_13',
+  itf: 'ITF',
+  pdf_417: 'PDF_417',
+  qr_code: 'QR_CODE',
+  upc_a: 'UPC_A',
+  upc_e: 'UPC_E',
+};
+
 export async function detectWithSkewRetry(
   detect: (source: HTMLCanvasElement) => Promise<BarcodeDetectResult[]>,
   video: HTMLVideoElement,
   canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
+  skewAngle?: number,
   signal?: AbortSignal,
 ): Promise<BarcodeDetectResult | null> {
   canvas.width = video.videoWidth;
@@ -63,13 +79,13 @@ export async function detectWithSkewRetry(
     return results[0];
   }
 
-  for (const angle of SKEW_ANGLES) {
+  if (skewAngle != null && skewAngle !== 0) {
     if (signal?.aborted) return null;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate((angle * Math.PI) / 180);
-    ctx.drawImage(video, -canvas.width / 2, -canvas.height / 2);
+    ctx.rotate((skewAngle * Math.PI) / 180);
+    ctx.drawImage(video, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
     ctx.restore();
 
     const skewedResults = await detect(canvas);

@@ -53,7 +53,6 @@ describe('gantt field consumption verification', () => {
 
   const ganttRegionFields = fields.filter(f => f.kind === 'region').map(f => f.key);
   it('gantt region fields are rendered', () => {
-    expect(ganttRegionFields).toContain('body');
     expect(ganttRegionFields).toContain('loading');
     expect(ganttRegionFields).toContain('empty');
     expect(ganttRegionFields).toContain('taskBar');

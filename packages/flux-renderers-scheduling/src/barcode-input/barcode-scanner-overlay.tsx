@@ -11,6 +11,11 @@ import { prepareWasm } from './utils/prepare-wasm.js';
 import { createBarcodeQueueStore, enqueueItem, dequeueItem, clearQueue, markSubmitted, getPending, getAllItems } from './utils/barcode-queue.js';
 import type { BarcodeFormat, BarcodeDetectResult } from './barcode-input.types.js';
 
+const statusMessages = {
+  recognizing: t('flux.barcode.recognizing'),
+  retry: t('flux.barcode.recognitionFailed'),
+};
+
 interface BarcodeScannerOverlayProps {
   open: boolean;
   onClose: () => void;
@@ -250,7 +255,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
         )}
 
         {phase === 'error' && (
-          <div data-slot="barcode-scanner-status" className="flex flex-col items-center gap-3 text-white/70">
+          <div data-slot="barcode-scanner-error" className="flex flex-col items-center gap-3 text-white/70">
             <ScanLine className="w-12 h-12 opacity-40" />
             <span className="text-sm">{errorMessage ?? t('flux.cameraUnavailable')}</span>
           </div>
@@ -288,13 +293,13 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
         )}
 
         <div
-          data-slot="barcode-scanner-status"
+          data-slot="barcode-scanner-status-text"
           className={cn(
             'absolute bottom-20 left-1/2 -translate-x-1/2 text-sm text-white/60',
             detect.isScanning ? 'opacity-100' : 'opacity-0',
           )}
         >
-          {detect.isScanning ? t('flux.alignBarcode') : ''}
+          {detect.isScanning ? statusMessages.recognizing : detect.error ? statusMessages.retry : ''}
         </div>
       </div>
 
