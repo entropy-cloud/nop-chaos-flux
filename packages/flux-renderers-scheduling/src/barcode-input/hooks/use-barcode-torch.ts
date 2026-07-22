@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 
 interface UseBarcodeTorchOptions {
   getStream?: () => MediaStream | null;
+  onRestartStream?: () => Promise<void>;
 }
 
 interface UseBarcodeTorchReturn {
@@ -15,6 +16,7 @@ export function useBarcodeTorch(options?: UseBarcodeTorchOptions): UseBarcodeTor
   const [isAvailable, setIsAvailable] = useState(false);
   const checkedRef = useRef(false);
   const getStream = options?.getStream;
+  const onRestartStream = options?.onRestartStream;
 
   useEffect(() => {
     if (checkedRef.current) return;
@@ -45,14 +47,21 @@ export function useBarcodeTorch(options?: UseBarcodeTorchOptions): UseBarcodeTor
     if (!track) return;
 
     const newState = !isOn;
-    try {
-      await track.applyConstraints({
-        advanced: [{ torch: newState }] as any,
-      });
-      setIsOn(newState);
-    } catch (err) {
-      console.error('[useBarcodeTorch] Torch toggle failed:', err);
-      setIsOn(false);
+    if (newState) {
+      try {
+        await track.applyConstraints({
+          advanced: [{ torch: true }] as any,
+        });
+        setIsOn(true);
+      } catch (err) {
+        console.error('[useBarcodeTorch] Torch toggle failed:', err);
+        setIsOn(false);
+      }
+    } else {
+      if (onRestartStream) {
+        await onRestartStream();
+        setIsOn(false);
+      }
     }
   };
 

@@ -4,11 +4,11 @@ const DEFAULT_WASM_URL = 'https://unpkg.com/@zxing/library@0.21.3/umd/zxing_read
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
-async function fetchWithRetry(url: string, retries: number, signal?: AbortSignal): Promise<Response> {
+async function fetchWithRetry(url: string, retries: number): Promise<Response> {
   let lastErr: unknown;
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      const response = await fetch(url, { signal });
+      const response = await fetch(url);
       if (response.ok) return response;
       lastErr = new Error(`HTTP ${response.status}`);
     } catch (err) {
@@ -26,7 +26,7 @@ export function prepareWasm(wasmUrl?: string, signal?: AbortSignal): Promise<voi
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   if (!wasmPromises.has(url)) {
     wasmPromises.set(url, (async () => {
-      const response = await fetchWithRetry(url, MAX_RETRIES, signal);
+      const response = await fetchWithRetry(url, MAX_RETRIES);
       await response.arrayBuffer();
     })().catch((err) => {
       wasmPromises.delete(url);

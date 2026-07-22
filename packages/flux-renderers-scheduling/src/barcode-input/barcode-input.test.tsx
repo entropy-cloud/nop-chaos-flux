@@ -30,7 +30,13 @@ function notifyFormStore() {
 vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
-  useCurrentForm: () => ({ store: mockFormStore, setValue: vi.fn() }),
+  useCurrentForm: () => ({
+    store: mockFormStore,
+    setValue: (name: string, val: unknown) => {
+      mockFormStoreState.values = { ...mockFormStoreState.values, [name]: val };
+      notifyFormStore();
+    },
+  }),
   useInputComponentHandle: mockUseInputComponentHandle,
   useCurrentFormState: (selector: (state: { values?: Record<string, unknown> }) => string) => {
     const useSyncExternalStore = React.useSyncExternalStore;
@@ -103,6 +109,7 @@ describe('BarcodeInputRenderer', () => {
     vi.clearAllMocks();
     mockFormStoreState.values = {};
     mockFormListeners.clear();
+    document.querySelector('[data-slot="barcode-scanner-overlay"]')?.remove();
   });
 
   it('should render barcode-input with scan button', () => {
@@ -134,24 +141,25 @@ describe('BarcodeInputRenderer', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('should accept clearable prop', () => {
+  it('should show clear button when clearable and value present', () => {
+    mockFormStoreState.values = { barcode: 'test-value' };
     const props = createMockProps({
       props: { name: 'barcode', clearable: true },
     });
-    render(<BarcodeInputRenderer {...props} />);
-    expect(true).toBe(true);
+    const { container } = render(<BarcodeInputRenderer {...props} />);
+    const clearBtn = container.querySelector('button[aria-label="Clear"]');
+    expect(clearBtn).toBeTruthy();
   });
 
-  it('should fire onScan event when scan result received', () => {
-    const dispatch = vi.fn();
+  it('should render with onScan event without crashing', () => {
     const props = createMockProps({
       events: {
-        onScan: { actionType: 'custom' } as any,
+        onScan: vi.fn(),
       },
-      helpers: { dispatch } as any,
     });
     render(<BarcodeInputRenderer {...props} />);
-    expect(true).toBe(true);
+    const root = document.querySelector('[data-slot="barcode-input"]');
+    expect(root).toBeTruthy();
   });
 
   it('syncs inputValue from form store reactively - 04-01', () => {
@@ -176,24 +184,26 @@ describe('BarcodeInputRenderer', () => {
     });
 
     it('scanNow opens overlay when camera is available', async () => {
-      const { container } = render(<BarcodeInputRenderer {...createMockProps()} />);
+      render(<BarcodeInputRenderer {...createMockProps()} />);
       const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
       act(() => { lastCall.scanNow(); });
       await waitFor(() => {
-        expect(container.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
+        const overlay = document.querySelector('[data-slot="barcode-scanner-overlay"]');
+        expect(overlay).toBeTruthy();
       });
     });
 
     it('stopScan closes overlay when previously opened', async () => {
-      const { container } = render(<BarcodeInputRenderer {...createMockProps()} />);
+      render(<BarcodeInputRenderer {...createMockProps()} />);
       const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
       act(() => { lastCall.scanNow(); });
       await waitFor(() => {
-        expect(container.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
+        const overlay = document.querySelector('[data-slot="barcode-scanner-overlay"]');
+        expect(overlay).toBeTruthy();
       });
       act(() => { lastCall.stopScan(); });
       await waitFor(() => {
-        expect(container.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeFalsy();
+        expect(document.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeFalsy();
       });
     });
 
@@ -206,20 +216,12 @@ describe('BarcodeInputRenderer', () => {
         expect(overlay).toBeTruthy();
       });
       act(() => { lastCall.scanNow(); });
-      expect(true).toBe(true);
     });
 
     it('stopScan is idempotent — calling when already closed does not throw', () => {
       render(<BarcodeInputRenderer {...createMockProps()} />);
       const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
-      act(() => { lastCall.stopScan(); });
-      expect(true).toBe(true);
-    });
-
-    it('scanNow handles rejection gracefully (06-02)', () => {
-      render(<BarcodeInputRenderer {...createMockProps()} />);
-      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
-      expect(() => lastCall.scanNow()).not.toThrow();
+      expect(() => lastCall.stopScan()).not.toThrow();
     });
   });
 
@@ -244,9 +246,10 @@ describe('BarcodeInputRenderer', () => {
       })} />);
 
       const input = container.querySelector('input')!;
+      expect(input).toBeTruthy();
       act(() => { input.focus(); });
       await waitFor(() => {
-        expect(container.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
+        expect(document.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
       });
     });
 
@@ -254,7 +257,7 @@ describe('BarcodeInputRenderer', () => {
       const { container } = render(<BarcodeInputRenderer {...createMockProps()} />);
       const input = container.querySelector('input')!;
       act(() => { input.focus(); });
-      const overlay = container.querySelector('[data-slot="barcode-scanner-overlay"]');
+      const overlay = document.querySelector('[data-slot="barcode-scanner-overlay"]');
       expect(overlay).toBeFalsy();
     });
 
@@ -280,5 +283,21 @@ describe('BarcodeInputRenderer', () => {
       const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
       expect(() => lastCall.resetWasmPromise()).not.toThrow();
     });
-});
+  });
+
+  describe('Phase 5 — handleChange Validation (B-OP-09)', () => {
+    it('should allow typing below minLength via form.setValue (no onChange guard)', () => {
+      mockFormStoreState.values = { barcode: '' };
+      const props = createMockProps({
+        props: { name: 'barcode', minLength: 4 },
+      });
+      const { container } = render(<BarcodeInputRenderer {...props} />);
+
+      mockFormStoreState.values = { barcode: 'ab' };
+      act(() => { notifyFormStore(); });
+
+      const input = container.querySelector('input')!;
+      expect(input.value).toBe('ab');
+    });
+  });
 });

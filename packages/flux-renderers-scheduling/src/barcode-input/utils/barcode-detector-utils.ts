@@ -36,8 +36,10 @@ export function createBarcodeDetector(formats?: BarcodeFormat[]): {
   }
 
   return {
-    detect: async () => [],
-    supportsSkewRetry: true,
+    detect: async () => {
+      throw new Error('This browser does not support barcode scanning. Please use Chrome, Edge, or a Chromium-based browser.');
+    },
+    supportsSkewRetry: false,
   };
 }
 

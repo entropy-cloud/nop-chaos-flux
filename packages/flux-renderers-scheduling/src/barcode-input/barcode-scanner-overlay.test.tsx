@@ -56,6 +56,7 @@ describe('BarcodeScannerOverlay', () => {
     );
     const overlay = document.querySelector('[data-slot="barcode-scanner-overlay"]');
     expect(overlay).toBeTruthy();
+    expect(overlay?.parentElement).toBe(document.body);
   });
 
   it('should render close button when open', () => {
@@ -95,16 +96,18 @@ describe('BarcodeScannerOverlay', () => {
     expect(closeBtn).toBeTruthy();
   });
 
-  it('should accept scanInterval prop', () => {
+  it('should render overlay under document.body via portal', () => {
     render(
       <BarcodeScannerOverlay
-        open={false}
+        open={true}
         onClose={vi.fn()}
         onScan={vi.fn()}
         scanInterval={500}
       />,
     );
-    expect(true).toBe(true);
+    const overlay = document.querySelector('[data-slot="barcode-scanner-overlay"]');
+    expect(overlay).toBeTruthy();
+    expect(overlay?.parentElement).toBe(document.body);
   });
 
   describe('Phase 2 — autoSubmit', () => {

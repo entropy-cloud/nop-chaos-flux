@@ -93,6 +93,7 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
           ? 'No camera found'
           : `Camera error: ${err.message}`;
       setState({ isActive: false, error: message });
+      throw err;
     }
   };
 

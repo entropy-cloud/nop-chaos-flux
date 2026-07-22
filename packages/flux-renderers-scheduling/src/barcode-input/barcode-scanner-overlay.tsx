@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState, useRef, useMemo, useSyncExternalStore, useCallback } from 'react';
+import { useEffect, useState, useRef, useMemo, useSyncExternalStore, useCallback, useEffectEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, cn } from '@nop-chaos/ui';
 import { X, Flashlight, FlashlightOff, ScanLine, Check, XCircle, Trash2 } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -76,6 +77,18 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
 
   const { stop, start } = camera;
 
+  const onCameraError = useEffectEvent((error: string) => {
+    setPhase('error');
+    setErrorMessage(error);
+    onScanError?.(error);
+  });
+
+  useEffect(() => {
+    if (camera.error && open) {
+      onCameraError(camera.error);
+    }
+  }, [camera.error, open]);
+
   useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
@@ -145,7 +158,13 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   }, [detect.error, onScanError]);
 
   const getStream = () => videoRef.current?.srcObject as MediaStream | null;
-  const torch = useBarcodeTorch({ getStream });
+
+  const restartCamera = useCallback(async () => {
+    stop();
+    await start();
+  }, [stop, start]);
+
+  const torch = useBarcodeTorch({ getStream, onRestartStream: restartCamera });
 
   function handleQueueSubmit() {
     const pending = queue.getPending();
@@ -210,7 +229,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
 
   if (!open) return null;
 
-  return (
+  const overlay = (
     <div
       ref={overlayRef}
       data-slot="barcode-scanner-overlay"
@@ -345,4 +364,6 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
       {props.children}
     </div>
   );
+
+  return createPortal(overlay, document.body);
 }

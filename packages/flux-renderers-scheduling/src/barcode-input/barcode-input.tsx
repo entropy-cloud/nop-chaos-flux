@@ -92,14 +92,6 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       val = val.trim();
     }
     if (name && form) {
-      if (resolved.minLength != null && val.length < Number(resolved.minLength)) return;
-      if (resolved.maxLength != null && val.length > Number(resolved.maxLength)) return;
-      if (resolved.pattern && val) {
-        try {
-          const regex = new RegExp(String(resolved.pattern));
-          if (!regex.test(val)) return;
-        } catch { /* invalid regex, allow */ }
-      }
       form.setValue(name, val);
     }
   };
