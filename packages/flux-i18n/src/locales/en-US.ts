@@ -793,6 +793,8 @@ export const enUS: Resource = {
     barcode: {
       recognizing: 'Recognizing...',
       recognitionFailed: 'Recognition failed, please retry',
+      clearLabel: 'Clear',
+      scanBarcodeLabel: 'Scan barcode',
     },
   },
 };

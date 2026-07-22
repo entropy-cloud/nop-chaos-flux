@@ -792,6 +792,8 @@ export const zhCN: Resource = {
     barcode: {
       recognizing: '识别中...',
       recognitionFailed: '识别失败，请重试',
+      clearLabel: '清除',
+      scanBarcodeLabel: '扫描条码',
     },
   },
 };

@@ -8,6 +8,64 @@ export interface BarcodeDetectResult {
   format: string;
 }
 
+function createZxingDetector(formats?: BarcodeFormat[]): {
+  detect: (source: HTMLVideoElement | HTMLCanvasElement) => Promise<BarcodeDetectResult[]>;
+  supportsSkewRetry: boolean;
+} {
+  let zxingModule: Promise<any> | null = null;
+
+  return {
+    detect: async (source) => {
+      if (!zxingModule) {
+        zxingModule = (async () => {
+          const { BrowserMultiFormatReader, BarcodeFormat: ZXingFormat, DecodeHintType } = await import('@zxing/library');
+          let formatHints: Map<any, any> | undefined;
+          if (formats && formats.length > 0) {
+            const possibleFormats = formats
+              .map((f) => {
+                const zxingName = BARCODE_FORMAT_TO_ZXING[f];
+                if (!zxingName) return null;
+                return (ZXingFormat as any)[zxingName] ?? null;
+              })
+              .filter((f): f is NonNullable<typeof f> => f != null);
+            if (possibleFormats.length > 0) {
+              formatHints = new Map<any, any>();
+              formatHints.set(DecodeHintType.POSSIBLE_FORMATS, possibleFormats);
+            }
+          }
+          return new BrowserMultiFormatReader(formatHints);
+        })().catch(() => null);
+      }
+
+      const reader = await zxingModule;
+      if (!reader) {
+        throw new Error('ZXing module failed to load');
+      }
+
+      try {
+        let canvas: HTMLCanvasElement;
+        if (source instanceof HTMLCanvasElement) {
+          canvas = source;
+        } else {
+          canvas = document.createElement('canvas');
+          canvas.width = source.videoWidth;
+          canvas.height = source.videoHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) ctx.drawImage(source, 0, 0);
+        }
+        const result = await reader.decodeFromCanvas(canvas);
+        return [{
+          barcode: result.getText(),
+          format: String(result.getBarcodeFormat()).toLowerCase(),
+        }];
+      } catch {
+        return [];
+      }
+    },
+    supportsSkewRetry: true,
+  };
+}
+
 export function createBarcodeDetector(formats?: BarcodeFormat[]): {
   detect: (source: HTMLVideoElement | HTMLCanvasElement) => Promise<BarcodeDetectResult[]>;
   supportsSkewRetry: boolean;
@@ -35,11 +93,16 @@ export function createBarcodeDetector(formats?: BarcodeFormat[]): {
     };
   }
 
+  const zxingFallback = createZxingDetector(formats);
   return {
-    detect: async () => {
-      throw new Error('This browser does not support barcode scanning. Please use Chrome, Edge, or a Chromium-based browser.');
+    detect: async (source) => {
+      try {
+        return await zxingFallback.detect(source);
+      } catch {
+        throw new Error('This browser does not support barcode scanning. Please use Chrome, Edge, or a Chromium-based browser.');
+      }
     },
-    supportsSkewRetry: false,
+    supportsSkewRetry: zxingFallback.supportsSkewRetry,
   };
 }
 

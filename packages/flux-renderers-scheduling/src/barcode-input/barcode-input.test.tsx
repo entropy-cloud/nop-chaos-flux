@@ -7,6 +7,12 @@ import type { BarcodeInputSchema } from './barcode-input.types.js';
 
 const mockUseInputComponentHandle = vi.hoisted(() => vi.fn());
 
+const mockI18nT = vi.hoisted(() => vi.fn((key: string) => key));
+vi.mock('@nop-chaos/flux-i18n', () => ({
+  useFluxTranslation: () => ({ t: mockI18nT }),
+  t: mockI18nT,
+}));
+
 vi.mock('./utils/camera-utils.js', () => ({
   checkCameraAvailability: vi.fn().mockResolvedValue({ isAvailable: true }),
 }));
@@ -147,7 +153,7 @@ describe('BarcodeInputRenderer', () => {
       props: { name: 'barcode', clearable: true },
     });
     const { container } = render(<BarcodeInputRenderer {...props} />);
-    const clearBtn = container.querySelector('button[aria-label="Clear"]');
+    const clearBtn = container.querySelector('button[aria-label="flux.barcode.clearLabel"]');
     expect(clearBtn).toBeTruthy();
   });
 
@@ -298,6 +304,42 @@ describe('BarcodeInputRenderer', () => {
 
       const input = container.querySelector('input')!;
       expect(input.value).toBe('ab');
+    });
+  });
+
+  describe('Phase 6 — i18n ARIA labels', () => {
+    it('should render clear button with correct i18n aria-label key', () => {
+      mockFormStoreState.values = { barcode: 'test-value' };
+      const props = createMockProps({
+        props: { name: 'barcode', clearable: true },
+      });
+      const { container } = render(<BarcodeInputRenderer {...props} />);
+      const clearBtn = container.querySelector('button[aria-label="flux.barcode.clearLabel"]');
+      expect(clearBtn).toBeTruthy();
+    });
+
+    it('should render scan button with correct i18n aria-label key', () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps()} />);
+      const scanBtn = container.querySelector('button[aria-label="flux.barcode.scanBarcodeLabel"]');
+      expect(scanBtn).toBeTruthy();
+    });
+
+    it('should use resolved translation when t returns localized string', () => {
+      mockI18nT.mockImplementation((key: string) => {
+        if (key === 'flux.barcode.clearLabel') return '清除';
+        return key;
+      });
+
+      mockFormStoreState.values = { barcode: 'test-value' };
+      const props = createMockProps({
+        props: { name: 'barcode', clearable: true },
+      });
+      const { container } = render(<BarcodeInputRenderer {...props} />);
+      const clearBtn = container.querySelector('button[aria-label="清除"]');
+      expect(clearBtn).toBeTruthy();
+      expect(mockI18nT).toHaveBeenCalledWith('flux.barcode.clearLabel');
+
+      mockI18nT.mockImplementation((key: string) => key);
     });
   });
 });

@@ -13,7 +13,7 @@ export function crudStage(lab: ComponentLabHelper, title: string): Locator {
 }
 
 export function crudTable(stage: Locator): Locator {
-  return stage.locator('[data-slot="crud-table"] .nop-table');
+  return stage.locator('[data-slot="crud-table"] .nop-table').first();
 }
 
 export function crudFooter(stage: Locator): Locator {

@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentForm, useCurrentFormState, useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, Label, cn } from '@nop-chaos/ui';
 import { ScanLine } from 'lucide-react';
 import { BarcodeScannerOverlay } from './barcode-scanner-overlay.js';
@@ -11,6 +12,7 @@ import type { BarcodeInputSchema, BarcodeDetectResult } from './barcode-input.ty
 
 export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputSchema>) {
   const { props: resolved, meta, events, helpers: _helpers } = props;
+  const { t } = useFluxTranslation();
   const form = useCurrentForm();
 
   const name = String(resolved.name ?? '');
@@ -205,7 +207,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
             <InputGroupButton
               size="icon-xs"
               variant="ghost"
-              aria-label="Clear"
+              aria-label={t('flux.barcode.clearLabel')}
               onClick={handleClear}
             >
               <span className="pointer-events-none text-muted-foreground">×</span>
@@ -216,7 +218,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
               size="icon-xs"
               variant="ghost"
               data-slot="barcode-scan-button"
-              aria-label="Scan barcode"
+              aria-label={t('flux.barcode.scanBarcodeLabel')}
               className={resolved.scanButtonClassName}
               onClick={handleScanClick}
             >
