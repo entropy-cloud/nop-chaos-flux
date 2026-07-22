@@ -94,8 +94,13 @@ export function allocateConcurrentWidths(
 
   for (const event of sorted) {
     let placed = false;
+    const eventIsDateOnly = !event.start.includes('T') && !event.end.includes('T');
     for (let col = 0; col < columns.length; col++) {
       const lastInCol = columns[col][columns[col].length - 1];
+      const lastIsDateOnly = !lastInCol.end.includes('T') && !lastInCol.start.includes('T');
+      if (eventIsDateOnly || lastIsDateOnly) {
+        continue;
+      }
       const lastEnd = new Date(lastInCol.end);
       const eventStart = new Date(event.start);
       if (lastEnd <= eventStart) {

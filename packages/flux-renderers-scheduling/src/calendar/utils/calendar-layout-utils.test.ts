@@ -106,7 +106,7 @@ describe('calendar-layout-utils', () => {
       expect(dayEvents![1].left).toBe(50);
     });
 
-    it('should cap events at maxConcurrent', () => {
+    it('should cap events at maxConcurrent with overflow indicator', () => {
       const events = Array.from({ length: 6 }, (_, i) =>
         makeEvent({ id: `${i}`, title: `E${i}`, start: '2026-07-20', end: '2026-07-20', resourceId: 'r1' }),
       );
@@ -115,8 +115,12 @@ describe('calendar-layout-utils', () => {
       const result = positionEventsInMonth({ events, resources, dateRange, maxConcurrent: 3 });
 
       const row = result.get('r1');
-      const dayEvents = row!.get('2026-07-20');
-      expect(dayEvents).toHaveLength(3);
+      const dayEvents = row!.get('2026-07-20')!;
+      const visibleEvents = dayEvents.filter(pe => !pe.overflowCount);
+      const overflowEvents = dayEvents.filter(pe => pe.overflowCount);
+      expect(visibleEvents).toHaveLength(3);
+      expect(overflowEvents).toHaveLength(1);
+      expect(overflowEvents[0].overflowCount).toBe(3);
     });
 
     it('should distribute events across resources independently', () => {

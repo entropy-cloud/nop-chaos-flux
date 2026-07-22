@@ -51,8 +51,9 @@ export function CalendarDayView({
     const map = new Map<string, CalendarEvent[]>();
     for (const resource of displayResources) {
       const filtered = events.filter((evt) => {
-        const evtDate = evt.start.split('T')[0] ?? evt.start;
-        return evtDate === dateStr && (evt.resourceId ?? '_default') === resource.id;
+        const evtStart = evt.start.split('T')[0] ?? evt.start;
+        const evtEnd = evt.end.split('T')[0] ?? evt.end;
+        return dateStr >= evtStart && dateStr <= evtEnd && (evt.resourceId ?? '_default') === resource.id;
       });
       map.set(resource.id, filtered);
     }

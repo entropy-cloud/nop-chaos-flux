@@ -1,8 +1,8 @@
 const MS_PER_DAY = 86400000;
 
 export function diffInDays(a: Date, b: Date): number {
-  const aUtc = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
-  const bUtc = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+  const aUtc = Date.UTC(a.getUTCFullYear(), a.getUTCMonth(), a.getUTCDate());
+  const bUtc = Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate());
   return Math.round((aUtc - bUtc) / MS_PER_DAY);
 }
 
@@ -32,33 +32,33 @@ export function getWeekEnd(date: Date): Date {
 }
 
 export function getMonthStart(date: Date): Date {
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
 }
 
 export function getMonthEnd(date: Date): Date {
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0));
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0));
 }
 
 export function getQuarterStart(date: Date): Date {
-  const q = Math.floor(date.getMonth() / 3);
-  return new Date(Date.UTC(date.getFullYear(), q * 3, 1));
+  const q = Math.floor(date.getUTCMonth() / 3);
+  return new Date(Date.UTC(date.getUTCFullYear(), q * 3, 1));
 }
 
 export function getQuarterEnd(date: Date): Date {
-  const q = Math.floor(date.getMonth() / 3) + 1;
-  return new Date(Date.UTC(date.getFullYear(), q * 3, 0));
+  const q = Math.floor(date.getUTCMonth() / 3) + 1;
+  return new Date(Date.UTC(date.getUTCFullYear(), q * 3, 0));
 }
 
 export function getYearStart(date: Date): Date {
-  return new Date(Date.UTC(date.getFullYear(), 0, 1));
+  return new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
 }
 
 export function getYearEnd(date: Date): Date {
-  return new Date(Date.UTC(date.getFullYear(), 11, 31));
+  return new Date(Date.UTC(date.getUTCFullYear(), 11, 31));
 }
 
 function getISOWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));

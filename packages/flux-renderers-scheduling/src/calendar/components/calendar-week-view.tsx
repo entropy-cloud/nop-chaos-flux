@@ -65,8 +65,9 @@ export function CalendarWeekView({
       for (const day of days) {
         const dateStr = toISODateString(day);
         const dayEvents = events.filter((evt) => {
-          const evtDate = evt.start.split('T')[0] ?? evt.start;
-          return evtDate === dateStr && (evt.resourceId ?? '_default') === (resource.id ?? '_default');
+          const evtStart = evt.start.split('T')[0] ?? evt.start;
+          const evtEnd = evt.end.split('T')[0] ?? evt.end;
+          return dateStr >= evtStart && dateStr <= evtEnd && (evt.resourceId ?? '_default') === (resource.id ?? '_default');
         });
         resourceMap.set(dateStr, allocateConcurrentWidths(dayEvents, dayStartHour, dayEndHour, maxConcurrent));
       }

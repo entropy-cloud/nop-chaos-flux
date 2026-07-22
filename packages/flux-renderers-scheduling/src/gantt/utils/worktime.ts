@@ -23,7 +23,7 @@ export const DEFAULT_WEEK_HOURS: Record<number, number> = {
 };
 
 function toDateKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 }
 
 export class DefaultWorkCalendar implements WorkCalendar {
@@ -41,7 +41,7 @@ export class DefaultWorkCalendar implements WorkCalendar {
     const key = toDateKey(date);
     if (this.extraWorkDays.has(key)) return true;
     if (this.holidays.has(key)) return false;
-    const dayOfWeek = date.getDay();
+    const dayOfWeek = date.getUTCDay();
     return (this.weekHours[dayOfWeek] ?? 0) > 0;
   }
 
@@ -49,7 +49,7 @@ export class DefaultWorkCalendar implements WorkCalendar {
     const result = new Date(from);
     let remaining = days;
     while (remaining > 0) {
-      result.setDate(result.getDate() + 1);
+      result.setUTCDate(result.getUTCDate() + 1);
       if (this.isWorkingDay(result)) {
         remaining--;
       }
@@ -61,7 +61,7 @@ export class DefaultWorkCalendar implements WorkCalendar {
     const result = new Date(from);
     let remaining = days;
     while (remaining > 0) {
-      result.setDate(result.getDate() - 1);
+      result.setUTCDate(result.getUTCDate() - 1);
       if (this.isWorkingDay(result)) {
         remaining--;
       }
@@ -79,13 +79,13 @@ export class DefaultWorkCalendar implements WorkCalendar {
       if (this.isWorkingDay(cursor)) {
         count++;
       }
-      cursor.setDate(cursor.getDate() + direction);
+      cursor.setUTCDate(cursor.getUTCDate() + direction);
     }
     return count;
   }
 
   getWorkMinutes(date: Date): number {
-    const dayOfWeek = date.getDay();
+    const dayOfWeek = date.getUTCDay();
     return (this.weekHours[dayOfWeek] ?? 0) * 60;
   }
 }

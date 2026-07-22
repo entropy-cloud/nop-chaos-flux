@@ -97,7 +97,7 @@ export function positionEventsInMonth(
   const splitEvents = splitMultiDayEvents(events);
   const groups = groupEventsByResourceDate(splitEvents, resources);
 
-  const effectiveMax = maxConcurrent > 0 ? maxConcurrent : 4;
+  const effectiveMax = maxConcurrent <= 0 ? Infinity : maxConcurrent;
 
   for (const resource of resources) {
     const resourceId = resource.id;
@@ -115,7 +115,12 @@ export function positionEventsInMonth(
       if (dayBlocks && dayBlocks.length > 0) {
         sortEventsByStartAndDuration(dayBlocks);
 
-        const visibleCount = Math.min(dayBlocks.length, effectiveMax);
+        const visibleCount = effectiveMax === Infinity
+          ? dayBlocks.length
+          : Math.min(dayBlocks.length, effectiveMax);
+        const overflowCount = effectiveMax === Infinity
+          ? 0
+          : Math.max(0, dayBlocks.length - effectiveMax);
         const widthPerEvent = 100 / visibleCount;
 
         const positioned: PositionedEvent[] = [];
@@ -130,6 +135,18 @@ export function positionEventsInMonth(
             eventId: block.eventId,
             concurrentIndex: i,
             maxConcurrent: visibleCount,
+          });
+        }
+
+        if (overflowCount > 0) {
+          positioned.push({
+            event: dayBlocks[0].originalEvent,
+            left: 0,
+            width: widthPerEvent,
+            eventId: `overflow-${dateStr}-${resourceId}`,
+            concurrentIndex: visibleCount,
+            maxConcurrent: visibleCount,
+            overflowCount,
           });
         }
 

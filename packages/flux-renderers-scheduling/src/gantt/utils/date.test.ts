@@ -50,19 +50,19 @@ describe('date utils', () => {
   describe('week boundaries', () => {
     it('should get week start (Monday) for a Wednesday', () => {
       const result = getWeekStart(new Date('2026-01-07'));
-      expect(result.getDay()).toBe(1);
+      expect(result.getUTCDay()).toBe(1);
       expect(result.toISOString().slice(0, 10)).toBe('2026-01-05');
     });
 
     it('should get week start (Monday) for a Sunday', () => {
       const result = getWeekStart(new Date('2026-01-11'));
-      expect(result.getDay()).toBe(1);
+      expect(result.getUTCDay()).toBe(1);
       expect(result.toISOString().slice(0, 10)).toBe('2026-01-05');
     });
 
     it('should get week end (Sunday)', () => {
       const result = getWeekEnd(new Date('2026-01-07'));
-      expect(result.getDay()).toBe(0);
+      expect(result.getUTCDay()).toBe(0);
       expect(result.toISOString().slice(0, 10)).toBe('2026-01-11');
     });
   });
@@ -152,25 +152,25 @@ describe('date utils', () => {
     it('should get month end', () => {
       const d = new Date('2026-02-15');
       const end = unitEnd(d, 'month');
-      expect(end.getMonth()).toBe(2);
-      expect(end.getDate()).toBe(1);
+      expect(end.getUTCMonth()).toBe(2);
+      expect(end.getUTCDate()).toBe(1);
     });
   });
 
   describe('addUnit', () => {
     it('should add months', () => {
       const result = addUnit(new Date('2026-01-15'), 'month', 2);
-      expect(result.getMonth()).toBe(2);
+      expect(result.getUTCMonth()).toBe(2);
     });
 
     it('should add quarters', () => {
       const result = addUnit(new Date('2026-01-15'), 'quarter', 1);
-      expect(result.getMonth()).toBe(3);
+      expect(result.getUTCMonth()).toBe(3);
     });
 
     it('should add years', () => {
       const result = addUnit(new Date('2026-01-15'), 'year', 2);
-      expect(result.getFullYear()).toBe(2028);
+      expect(result.getUTCFullYear()).toBe(2028);
     });
   });
 });

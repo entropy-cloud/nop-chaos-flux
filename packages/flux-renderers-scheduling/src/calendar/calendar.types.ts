@@ -18,6 +18,7 @@ export interface PositionedEvent {
   concurrentIndex: number;
   maxConcurrent: number;
   overlap?: boolean;
+  overflowCount?: number;
 }
 
 export interface CalendarResourceRow {

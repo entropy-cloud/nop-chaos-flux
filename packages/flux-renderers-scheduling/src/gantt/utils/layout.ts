@@ -23,11 +23,11 @@ export function dateToPixel(date: Date, scaleRange: ScaleLayoutRange, cellWidth:
   return Math.max(relDays * cellWidth, 0);
 }
 
+const MS_PER_DAY = 86400000;
+
 export function pixelToDate(x: number, scaleRange: ScaleLayoutRange, cellWidth: number): Date {
-  const days = x / cellWidth;
-  const result = new Date(scaleRange.start);
-  result.setUTCDate(result.getUTCDate() + days);
-  return result;
+  const ms = (x / cellWidth) * MS_PER_DAY;
+  return new Date(scaleRange.start.getTime() + ms);
 }
 
 export function taskToPixels(

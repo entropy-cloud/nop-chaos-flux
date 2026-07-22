@@ -29,7 +29,7 @@ export function GanttCellGrid({ showWeekends = true, className }: GanttCellGridP
   return (
     <div className={cn('nop-gantt-cell-grid absolute inset-0 pointer-events-none', className)} data-slot="gantt-cell-grid">
       {dayCells.map((cell) => {
-        const isWeekend = showWeekends && (cell.start.getDay() === 0 || cell.start.getDay() === 6);
+        const isWeekend = showWeekends && (cell.start.getUTCDay() === 0 || cell.start.getUTCDay() === 6);
         return (
           <div
             key={`cell-${cell.start.getTime()}`}

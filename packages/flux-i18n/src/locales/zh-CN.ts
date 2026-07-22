@@ -722,6 +722,7 @@ export const zhCN: Resource = {
         resourceAndDate: '资源/日期',
         subGroupCount: '({{count}} 个子组)',
         timeConflict: '时间冲突',
+        more: '更多',
       },
       kanban: {
         searchCards: '搜索卡片...',

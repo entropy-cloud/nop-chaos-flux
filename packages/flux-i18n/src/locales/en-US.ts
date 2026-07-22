@@ -723,6 +723,7 @@ export const enUS: Resource = {
         resourceAndDate: 'Resource / Date',
         subGroupCount: '({{count}} sub-groups)',
         timeConflict: 'Time Conflict',
+        more: 'more',
       },
       kanban: {
         searchCards: 'Search cards...',

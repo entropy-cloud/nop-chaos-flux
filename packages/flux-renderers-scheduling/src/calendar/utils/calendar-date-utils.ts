@@ -3,23 +3,23 @@ import type { CalendarDateRange } from '../calendar.types.js';
 const MS_PER_DAY = 86400000;
 
 export function getMonthStartEnd(date: Date): CalendarDateRange {
-  const start = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
-  const end = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999));
+  const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 23, 59, 59, 999));
   return { start, end };
 }
 
 export function getWeekStartEnd(date: Date, firstDayOfWeek: 0 | 1 = 0): CalendarDateRange {
-  const day = date.getDay();
+  const day = date.getUTCDay();
   const diff = (day < firstDayOfWeek ? 7 : 0) + day - firstDayOfWeek;
-  const start = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate() - diff));
+  const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - diff));
   const end = new Date(start.getTime() + 6 * MS_PER_DAY);
   end.setUTCHours(23, 59, 59, 999);
   return { start, end };
 }
 
 export function getDayStartEnd(date: Date): CalendarDateRange {
-  const start = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const end = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999));
+  const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const end = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
   return { start, end };
 }
 
@@ -42,7 +42,7 @@ export function isSameDay(d1: Date, d2: Date): boolean {
 }
 
 export function isWeekend(date: Date): boolean {
-  const day = date.getDay();
+  const day = date.getUTCDay();
   return day === 0 || day === 6;
 }
 
@@ -81,8 +81,8 @@ export function addWeeks(date: Date, weeks: number): Date {
 }
 
 export function diffInDays(d1: Date, d2: Date): number {
-  const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
-  const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+  const utc1 = Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth(), d1.getUTCDate());
+  const utc2 = Date.UTC(d2.getUTCFullYear(), d2.getUTCMonth(), d2.getUTCDate());
   return Math.floor((utc2 - utc1) / MS_PER_DAY);
 }
 
@@ -97,12 +97,12 @@ export function parseISODate(dateStr: string): Date | undefined {
 }
 
 export function getDaysInMonth(date: Date): number {
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
 }
 
 export function getMonthDays(date: Date, firstDayOfWeek: 0 | 1 = 0): Date[] {
-  const monthStart = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
-  const monthEnd = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0));
+  const monthStart = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  const monthEnd = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0));
   const startDay = monthStart.getUTCDay();
   const diff = (startDay < firstDayOfWeek ? 7 : 0) + startDay - firstDayOfWeek;
   const gridStart = addDays(monthStart, -diff);

@@ -247,27 +247,39 @@ export function CalendarMonthView({
                   onPointerDown={(pe) => handleCellPointerDown(dateStr, resource.id, pe)}
                   onKeyDown={(e) => handleDateCellKeyDown(e, dateStr, resource.id)}
                 >
-                  {dayEvents.length === 0 ? (
+                  {dayEvents.length === 0 || (dayEvents.length === 1 && dayEvents[0].overflowCount) ? (
                     <div className="text-[10px] text-gray-300 flex items-center justify-center h-full">
                       {!isCurrentMonth ? null : null}
                     </div>
                   ) : (
-                    dayEvents.map((pe) => (
-                      <CalendarEventBlock
-                        key={`${pe.eventId}-${dateStr}`}
-                        positionedEvent={{
-                          ...pe,
-                          overlap: conflictedEventIds?.has(pe.eventId),
-                        }}
-                        resource={resource}
-                        dateStr={dateStr}
-                        eventTemplate={eventTemplate}
-                        onEventClick={onEventClick}
-                        onPointerDown={(e) => handleEventPointerDown(pe.event, e)}
-                        onKeyDown={onEventKeyDown}
-                        className={eventClassName}
-                      />
-                    ))
+                    <>
+                      {dayEvents.filter(pe => !pe.overflowCount).map((pe) => (
+                        <CalendarEventBlock
+                          key={`${pe.eventId}-${dateStr}`}
+                          positionedEvent={{
+                            ...pe,
+                            overlap: conflictedEventIds?.has(pe.eventId),
+                          }}
+                          resource={resource}
+                          dateStr={dateStr}
+                          eventTemplate={eventTemplate}
+                          onEventClick={onEventClick}
+                          onPointerDown={(e) => handleEventPointerDown(pe.event, e)}
+                          onKeyDown={onEventKeyDown}
+                          className={eventClassName}
+                        />
+                      ))}
+                      {dayEvents.filter(pe => pe.overflowCount).map((pe) => (
+                        <div
+                          key={`overflow-${dateStr}`}
+                          data-slot="calendar-event-overflow"
+                          className="absolute bottom-0 left-0 right-0 text-[10px] text-muted-foreground text-center cursor-pointer hover:underline"
+                          style={{ bottom: 0 }}
+                        >
+                          +{pe.overflowCount} {t('scheduling.calendar.more')}
+                        </div>
+                      ))}
+                    </>
                   )}
                 </div>
               );

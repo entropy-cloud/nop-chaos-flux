@@ -20,7 +20,9 @@ export function GanttMarkers({ showToday = true, className }: GanttMarkersProps)
 
   const todayX = (() => {
     if (!showToday) return -1;
-    return dateToPixel(new Date(), store.scaleRange, store.cellWidth);
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    return dateToPixel(today, store.scaleRange, store.cellWidth);
   })();
 
   return (
