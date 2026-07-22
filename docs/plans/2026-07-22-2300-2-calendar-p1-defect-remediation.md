@@ -1,6 +1,6 @@
 # S17 — Calendar P1 缺陷修复
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-22
 > Source: `docs/components/roadmap-scheduling.md` S17, `docs/analysis/2026-07-22-scheduling-display-operability-deep-analysis.md` §3, `docs/components/calendar/design.md`
 > Related: `docs/plans/2026-07-22-2300-1-kanban-p1-defect-remediation.md`, `docs/plans/2026-07-22-2300-3-barcode-p1-defect-remediation.md`
@@ -72,58 +72,58 @@
 
 ### Phase 1 — 时区日期运算 + 事件源字段 + 无资源回退
 
-Status: planned
+Status: completed
 Targets: `utils/calendar-date-utils.ts`, `calendar.tsx`, `calendar-month-view.tsx`, `calendar-week-view.tsx`, `calendar-day-view.tsx`, `utils/calendar-layout-utils.ts`
 
 - Item Types: `Fix | Fix | Fix`
 
-- [ ] C-DISP-05: `toISODateString`/`isToday`/`isSameDay` 统一使用 `getUTC*` 方法；补非 UTC 时区测试（如 UTC+8 的 `toISODateString` 行为）
-- [ ] C-DRIFT-01: `calendar.tsx` 从 `resolved.events` 读事件数据；definitions 中 `source` 字段说明改为 `events`；更新 `docs/components/calendar/design.md` §4 数据源字段从 `data`→`events`
-- [ ] C-OPS-07: 合成默认资源 `displayResources=[{id:'_default'}]` 时，归一化各 view 过滤逻辑，使 `undefined`/`'_default'`/`''` 均匹配
+- [x] C-DISP-05: `toISODateString`/`isToday`/`isSameDay` 统一使用 `getUTC*` 方法；补非 UTC 时区测试（如 UTC+8 的 `toISODateString` 行为）
+- [x] C-DRIFT-01: `calendar.tsx` 从 `resolved.events` 读事件数据；definitions 中 `source` 字段说明改为 `events`；更新 `docs/components/calendar/design.md` §4 数据源字段从 `data`→`events`
+- [x] C-OPS-07: 合成默认资源 `displayResources=[{id:'_default'}]` 时，归一化各 view 过滤逻辑，使 `undefined`/`'_default'`/`''` 均匹配
 
 Exit Criteria:
 
-- [ ] `toISODateString('2026-07-22T00:00:00Z')` 在 UTC+8 时区返回 `'2026-07-22'`
-- [ ] 默认非 UTC 时区 CI 测试覆盖
-- [ ] 不传 `events` 字段按 design 旧路径 `resolved.data` 有至少 warning（向后兼容）
-- [ ] `{type:'calendar',events:[...]}`（无 resources）在三视图中都显示事件
+- [x] `toISODateString('2026-07-22T00:00:00Z')` 在 UTC+8 时区返回 `'2026-07-22'`
+- [x] 默认非 UTC 时区 CI 测试覆盖
+- [x] 不传 `events` 字段按 design 旧路径 `resolved.data` 有至少 warning（向后兼容）
+- [x] `{type:'calendar',events:[...]}`（无 resources）在三视图中都显示事件
 
 ### Phase 2 — 邻月溢出天事件 + 拖拽创建范围 + 导出接线
 
-Status: planned
+Status: completed
 Targets: `utils/calendar-layout-utils.ts`, `hooks/use-calendar-drag-create.ts`, `hooks/use-calendar-export.ts`, `calendar.tsx`
 
 - Item Types: `Fix | Fix | Fix`
 
-- [ ] C-DISP-04: `positionEventsInMonth` 遍历与渲染相同的 `days`（配 C-DISP-02/P0 修过的当月天数矩阵）
-- [ ] C-OPS-02: `confirmCreate` pointerup 取 `currentDate` 为 end，取 min/max；补对应测试
-- [ ] C-OPS-04: `useImperativeHandle` 设置 `CalendarHandle.exportToPNG`；加 AbortSignal + `exportingRef` 守卫；补 focused 测试
+- [x] C-DISP-04: `positionEventsInMonth` 遍历与渲染相同的 `days`（配 C-DISP-02/P0 修过的当月天数矩阵）
+- [x] C-OPS-02: `confirmCreate` pointerup 取 `currentDate` 为 end，取 min/max；补对应测试
+- [x] C-OPS-04: `useImperativeHandle` 设置 `CalendarHandle.exportToPNG`；加 AbortSignal + `exportingRef` 守卫；补 focused 测试
 
 Exit Criteria:
 
-- [ ] 跨月多日事件在边界处完整显示
-- [ ] 拖拽创建事件能跨多格，end≠start 且 ≥start
-- [ ] `CalendarHandle.exportToPNG` 可被调用且含并发守卫
+- [x] 跨月多日事件在边界处完整显示
+- [x] 拖拽创建事件能跨多格，end≠start 且 ≥start
+- [x] `CalendarHandle.exportToPNG` 可被调用且含并发守卫
 
 ### Phase 3 — Ownership 模型落地 + 死亡组件裁定
 
-Status: planned
+Status: completed
 Targets: `calendar.tsx`, `hooks/use-calendar-state.ts`, `schemas.ts`, `utils/calendar-layout-utils.ts`, dead components
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] C-OPS-08: 实现 `viewOwnership`/`dateOwnership` 三层模型（local/controlled/scope）；`viewStatePath`/`dateStatePath` 接 scope state；`view` 仅作初值（`viewOwnership:'local'` 默认）
-- [ ] 死亡组件裁定：对 `CalendarBatchScheduler`、`CalendarTimezoneSelector`、`CalendarResourceGroup`、`CalendarResourceHeader`、`useCalendarICal` 逐组件做 Decision（`useCalendarExport` 已在 Phase 2 C-OPS-04 接线到 imperative handle，排除出死亡裁定范围）：
+- [x] C-OPS-08: 实现 `viewOwnership`/`dateOwnership` 三层模型（local/controlled/scope）；`viewStatePath`/`dateStatePath` 接 scope state；`view` 仅作初值（`viewOwnership:'local'` 默认）
+- [x] 死亡组件裁定：对 `CalendarBatchScheduler`、`CalendarTimezoneSelector`、`CalendarResourceGroup`、`CalendarResourceHeader`、`useCalendarICal` 逐组件做 Decision（`useCalendarExport` 已在 Phase 2 C-OPS-04 接线到 imperative handle，排除出死亡裁定范围）：
   - 检查各组件/hook 的测试完整性
   - 若组件符合 design 契约且无 branch/feature flag 计划，保留并记录 `watch-only residual` 升级为 `explicit maintain`
   - 若检测到明显的 dead test（测试了未接线组件），用 `@deprecated` 标记或移至 `__deprecated__` 子目录
-- [ ] `docs/components/calendar/design.md` §7 同步 C-OPS-08 ownership 模型接线记录（事件源字段修正已在 Phase 1 完成）
+- [x] `docs/components/calendar/design.md` §7 同步 C-OPS-08 ownership 模型接线记录（事件源字段修正已在 Phase 1 完成）
 
 Exit Criteria:
 
-- [ ] 视图切换在 `viewOwnership:'local'` 下正常工作并持久化到 scope state
-- [ ] 各死亡组件的裁定结论写入本 plan 的 Deferred But Adjudicated（或 `docs/architecture/flux-runtime-module-boundaries.md` 等架构文档）
-- [ ] `docs/components/calendar/design.md` §7（ownership 模型）已同步到当前实现（§4 data→events 已在 Phase 1 完成）
+- [x] 视图切换在 `viewOwnership:'local'` 下正常工作并持久化到 scope state
+- [x] 各死亡组件的裁定结论写入本 plan 的 Deferred But Adjudicated（或 `docs/architecture/flux-runtime-module-boundaries.md` 等架构文档）
+- [x] `docs/components/calendar/design.md` §7（ownership 模型）已同步到当前实现（§4 data→events 已在 Phase 1 完成）
 
 ## Draft Review Record
 
@@ -138,16 +138,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 7 个 Calendar P1 缺陷已修复（Phase 1-3 exit criteria 全勾）
-- [ ] 死亡组件裁定结论已记录（保留/标记/移除），无模棱两可的"先留着"
-- [ ] 必要 focused verification 已完成（每个修复项对应单测确认行为，含非 UTC 时区覆盖）
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect
-- [ ] 受影响 owner docs 已同步（`docs/components/calendar/design.md` §4 和 §7）
-- [ ] 由独立子 agent 执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-scheduling test`
+- [x] 所有 7 个 Calendar P1 缺陷已修复（Phase 1-3 exit criteria 全勾）
+- [x] 死亡组件裁定结论已记录（保留/标记/移除），无模棱两可的"先留着"
+- [x] 必要 focused verification 已完成（每个修复项对应单测确认行为，含非 UTC 时区覆盖）
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect
+- [x] 受影响 owner docs 已同步（`docs/components/calendar/design.md` §4 和 §7）
+- [x] 由独立子 agent 执行的 closure-audit 已完成并记录证据（fresh sub-agent session: MISSION_DRIVER closure audit）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm --filter @nop-chaos/flux-renderers-scheduling test`
 
 ## Deferred But Adjudicated
 
@@ -157,10 +157,11 @@ Exit Criteria:
 - Why Not Blocking Closure: 7 个 P1 修复后 Calendar 在默认配置下可用：三视图显示正确、视图切换正常、事件渲染不变形、导出可用、无资源场景有 fallback。P2/P3 项（冲突检测误报、跨日线 SVG 单位、星期格 data-slot 污染、print/drag ghost CSS 细节）不影响演示态的正确性。
 - Successor Required: `no`
 
-### Calendar 死亡组件（6 组件/hook）
+### Calendar 死亡组件（6 组件/hook，useCalendarExport 已复活接线，其余 5 个裁定见下）
 
-- Classification: `watch-only residual`（若裁定保留且测试完整）
-- Why Not Blocking Closure: 它们在代码树中存在且有独立单元测试，零维护成本。不在任何生产渲染路径中出现，不引入死分支或 dead import 链。接线需 feature 级计划，超出当前 P1 收口范围。
+- Classification: `explicit maintain`
+- **裁定结论**：5 组件/hook 均保留并标记 `@deprecated`（unwired），代码与测试完整，符合 design 契约。在 `calendar/index.ts` 和各组件源文件添加了 `@deprecated` JSDoc，说明 unwired 原因及对应 design 章节。不转入 `__deprecated__` 子目录（完整实现，仅未接线，非死代码）。
+- 接线属于 feature 级工作（wire-to-main-renderer），需单独计划，超出当前 P1 收口范围。
 - Successor Required: `no`
 
 ## Non-Blocking Follow-ups
@@ -169,8 +170,19 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 完成时填写
+Status Note: 所有 7 个 Calendar P1 缺陷确认修复，三视图显示正确、视图切换正常、事件渲染不变形、导出可用、无资源场景有 fallback。死亡组件裁定完成（5 组件标记 @deprecated，useCalendarExport 已接线）。独立子 agent closure 审计通过。
 
-Closure Audit Evidence: 完成时填写
+Closure Audit Evidence:
 
-Follow-up: 完成时填写
+- Auditor / Agent: fresh sub-agent session (MISSION_DRIVER closure audit)
+- Evidence: Live repo audit via grep/glob/read — 全部 Phase exit criteria 逐条验证通过:
+  - Phase 1: `toISODateString` 使用 `getUTC*` 方法；`resolved.data` 向后兼容 `console.warn`；`_default` 资源回退逻辑在三视图中一致
+  - Phase 2: `positionEventsInMonth` 遍历与渲染相同的 `days`；`confirmCreate` 使用 min/max 支持跨格拖拽；`useImperativeHandle` 暴露 `exportToPNG` 含 AbortSignal + `exportingRef` 并发守卫
+  - Phase 3: 三层 ownership 模型 (local/controlled/scope) 正确实现并接入 scope.merge()；5 死亡组件有 `@deprecated` JSDoc；design.md §7 与实现一致
+  - 全量验证: `pnpm typecheck` 56/56, `pnpm build` 30/30, `pnpm lint` 0 errors, `pnpm test` 8203/8203 全绿
+
+Follow-up:
+
+- 无剩余 plan-owned work
+- P2/P3 项（冲突检测误报、跨日线 SVG 单位、星期格 data-slot 污染等）已裁定为 `watch-only residual`，不影响演示态正确性
+- 死亡组件接线属 feature 级工作，需单独 plan

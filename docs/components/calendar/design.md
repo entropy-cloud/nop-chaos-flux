@@ -64,7 +64,7 @@ interface CalendarSchema extends BaseSchema {
   type: 'calendar';
   view?: CalendarView; // 当前视图，默认 month
   date?: string; // 焦点日期，ISO "2026-07-20"
-  data: SchemaValue<CalendarEvent[]>; // 事件数组或表达式
+  events: SchemaValue<CalendarEvent[]>; // 事件数组或表达式
   resources?: SchemaValue<CalendarResource[]>; // 资源数组或表达式
   firstDayOfWeek?: 0 | 1; // 0=周日, 1=周一
   showWeekends?: boolean;
@@ -95,7 +95,7 @@ interface CalendarSchema extends BaseSchema {
 | -------------------------------------------------- | ------------------------ | --------------------------------------- |
 | `view`                                             | `props`                  | 当前视图模式，支持表达式                |
 | `date`                                             | `props`                  | 焦点日期                                |
-| `data`                                             | `props (source-enabled)` | 事件源，由外部 data-source 或表达式提供 |
+| `events`                                           | `props (source-enabled)` | 事件源，由外部 data-source 或表达式提供 |
 | `resources`                                        | `props (source-enabled)` | 资源源，由外部 data-source 或表达式提供 |
 | `firstDayOfWeek`                                   | `props`                  | 周起始日                                |
 | `showWeekends`                                     | `props`                  | 是否显示周末列                          |
@@ -123,13 +123,18 @@ interface CalendarSchema extends BaseSchema {
 
 ## 7. 运行期状态归属
 
-- **当前视图**（`view`）、**焦点日期**（`date`）：归 scope-level state，由 schema 值或 `onDateChange`/`onViewChange` 事件外部维护。Calendar renderer 内部提供临时本地状态用于动画过渡，但不作为持久 owner。
-- **事件数据**（`data`）：归外部 data-source 或 scope expression，Calendar 只消费不持有。
-- **资源数据**（`resources`）：同事件数据，归外部 data-source。
+Calendar 使用三层 ownership 模型控制 `view` 和 `date` 状态：
+
+| 模式            | 说明                                                                                                                                | 配置                                                   |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `local`（默认） | 组件内部 React state，schema `view`/`date` 仅作初值。视图切换/日期导航由 `useCalendarState` 管理                                    | `viewOwnership:'local'` 或不设                         |
+| `controlled`    | schema `view`/`date` 为唯一数据源，组件内部不维护对应状态。外部通过 schema 动态值控制                                               | `viewOwnership:'controlled'`                           |
+| `scope`         | 通过 `viewStatePath`/`dateStatePath` 读写 scope-level state。`useScopeSelector` 响应式读取，setActiveView/setCurrentDate 写入 scope | `viewOwnership:'scope', viewStatePath:'calendar.view'` |
+
 - **视图计算期状态**：renderer 内部持有当前显示的日期范围（月/周/日的起止日期）、事件定位计算结果，这些不暴露到 schema，纯实现细节。
-- **视图 ownership**：`viewOwnership`、`viewStatePath` 控制视图状态的归属和持久化路径。
-- **日期 ownership**：`dateOwnership`、`dateStatePath` 控制焦点日期的归属和持久化路径，与视图状态独立。
-- **交互状态**：`statusPath` 用于交互状态的 scope-level 持久化。
+- **事件数据**（`events`）：归外部 data-source 或 scope expression，Calendar 只消费不持有。
+- **资源数据**（`resources`）：同事件数据，归外部 data-source。
+- **交互状态**：`statusPath` 用于交互状态的 scope-level 持久化（预留，当前未接入）。
 
 ## 8. 事件、动作与组件句柄能力
 
@@ -149,7 +154,7 @@ interface CalendarSchema extends BaseSchema {
 ## 9. 数据源、表达式、导入能力接入点
 
 - **`loadAction?: ActionSchema`** — schema 层数据加载主入口，走 runtime.dispatch() 而非独立 fetch。复杂数据场景通过 data-source 节点声明。
-- **`data` 和 `resources`**：接入标准 data-source 管道。`data` 结果为 `CalendarEvent[]`，`resources` 结果为 `CalendarResource[]`。
+- **`events` 和 `resources`**：接入标准 data-source 管道。`events` 结果为 `CalendarEvent[]`，`resources` 结果为 `CalendarResource[]`。
 - **表达式接入**：`view`、`date`、`firstDayOfWeek`、`showWeekends` 可接表达式动态取值。
 - **事件筛选**：通过表达式在 data-source 层或 scope 层筛选（如 `${ shiftEvents.where(e => e.resourceId === selectedResource) }`），Calendar 内部不做二次筛选。
 - **日期计算**：使用 Flux 已有的原生 Date + Intl 架构（`date-utils.ts` 模式），不引入 Temporal polyfill。日期计算使用 Unix 时间戳毫秒数 + UTC Date 进行跨时区计算，显示时通过 Intl.DateTimeFormat 本地化。对外 schema 只接受 ISO 字符串，不暴露日期库依赖。
