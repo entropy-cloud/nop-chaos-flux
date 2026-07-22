@@ -778,6 +778,20 @@ See `docs/architecture/report-designer/spreadsheet-canvas-css.md` for the comple
 
 CSS file: `packages/spreadsheet-renderers/src/canvas-styles.css`
 
+### Copy-Assembled CSS: No `@apply` in Build Output
+
+Packages that copy-assemble `.css` files to `dist/` via `copy-build-assets.mjs` (e.g., `flux-renderers-scheduling`) must not use Tailwind `@apply` directives in those CSS files. The copy step performs no Tailwind/PostCSS processing — `@apply` reaches consumers unresolved, creating invalid CSS in Tailwind v4 builds.
+
+**Rule**: Any `.css` file listed in a `copy-build-assets.mjs` command must contain only standard CSS. Replace `@apply` with its expanded CSS properties before merging:
+
+| `@apply` shorthand                    | Standard CSS equivalent                                               |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| `@apply flex flex-col h-full min-h-0` | `display: flex; flex-direction: column; height: 100%; min-height: 0;` |
+| `@apply bg-green-400`                 | `background-color: #4ade80;`                                          |
+| `@apply ring-2 ring-red-500`          | `box-shadow: 0 0 0 2px #ef4444;`                                      |
+
+If a package does need Tailwind-processed CSS, add a PostCSS build step with `tailwindcss` as a devDependency rather than using `copy-build-assets.mjs`. Currently no package does this; `calendar.css` in `flux-renderers-scheduling` was the last `@apply` user and has been resolved to standard CSS.
+
 ## Non-Goals
 
 - NOT a CSS-in-JS solution - aliases resolve to plain Tailwind classes
