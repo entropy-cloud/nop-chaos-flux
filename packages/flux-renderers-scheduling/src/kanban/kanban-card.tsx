@@ -42,6 +42,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
   const clickFn = () => onCardClick?.(card.id, column.id, index);
   const removeFn = () => onCardRemove?.(card.id);
 
+  const cardLabel = title || description || card.id;
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -64,6 +65,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
     'data-card-index': index,
     role: 'button',
     tabIndex,
+    'aria-label': cardLabel,
     onClick: clickFn,
     onKeyDown: handleKeyDown,
   };
@@ -100,7 +102,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
 
   return (
     <div ref={cardRef} {...sharedAttributes} className={cardClass}>
-      <div className="nop-kanban-card-actions absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="nop-kanban-card-actions absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
         <Button
           variant="ghost"
           size="sm"

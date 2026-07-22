@@ -89,6 +89,8 @@ export function GanttCompact({
               variant="ghost"
               size="sm"
               onClick={toggleFullscreen}
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              aria-pressed={isFullscreen}
               className="h-6 text-xs"
             >
               {isFullscreen ? 'Exit' : 'Fullscreen'}

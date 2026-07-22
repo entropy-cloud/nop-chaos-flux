@@ -22,20 +22,24 @@ export function ResourceLoadTimeline({ loadResults, cellWidth, className }: Reso
           data-slot="gantt-load-row"
           data-resource-id={String(result.resourceId)}
         >
-          {result.timelineLoad.map((dayLoad: DayLoad) => (
-            <div
-              key={dayLoad.date}
-              className={cn(
-                'flex-shrink-0 border-r border-gray-100',
-                getUnitLoadColor(dayLoad.unitLoad),
-              )}
-              style={{ width: Math.max(cellWidth, 4), height: '100%' }}
-              title={`${dayLoad.date}: ${getUnitLoadTooltip(dayLoad.unitLoad)}`}
-              data-slot="gantt-load-cell"
-              data-date={dayLoad.date}
-              data-load={Math.round(dayLoad.unitLoad)}
-            />
-          ))}
+          {result.timelineLoad.map((dayLoad: DayLoad) => {
+            const loadLabel = `${dayLoad.date}: ${getUnitLoadTooltip(dayLoad.unitLoad)}`;
+            return (
+              <div
+                key={dayLoad.date}
+                className={cn(
+                  'flex-shrink-0 border-r border-gray-100',
+                  getUnitLoadColor(dayLoad.unitLoad),
+                )}
+                style={{ width: Math.max(cellWidth, 4), height: '100%' }}
+                title={loadLabel}
+                aria-label={loadLabel}
+                data-slot="gantt-load-cell"
+                data-date={dayLoad.date}
+                data-load={Math.round(dayLoad.unitLoad)}
+              />
+            );
+          })}
         </div>
       ))}
     </div>

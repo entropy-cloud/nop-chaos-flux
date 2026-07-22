@@ -63,6 +63,7 @@ export function FilterBar({
         placeholder={t('scheduling.gantt.filterTasks')}
         value={localText}
         onChange={handleTextChange}
+        aria-label={t('scheduling.gantt.filterTasks')}
         className="h-7 text-xs w-40"
       />
       {groupBy !== undefined && (
@@ -84,15 +85,7 @@ export function FilterBar({
           size="sm"
           className={cn('h-7 px-1.5 text-xs')}
           onClick={() => handleSortToggle(col.name)}
-          aria-sort={
-            sortState.field === col.name
-              ? sortState.direction === 'asc'
-                ? 'ascending'
-                : sortState.direction === 'desc'
-                  ? 'descending'
-                  : 'none'
-              : 'none'
-          }
+          aria-label={`${col.label}${sortState.field === col.name && sortState.direction !== null ? `, ${sortState.direction === 'asc' ? 'ascending' : 'descending'}` : ''}`}
           data-slot="gantt-sort-button"
         >
           {col.label}

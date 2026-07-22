@@ -12,7 +12,7 @@ export function ResourceLoadGrid({ resources, loadResults }: ResourceLoadGridPro
 
   return (
     <div className="nop-gantt-resource-grid h-full overflow-auto border-r border-gray-200" data-slot="gantt-resource-grid">
-      <table className="w-full border-collapse table-fixed">
+      <table className="w-full border-collapse table-fixed" aria-label="Resource load">
         <thead>
           <tr>
             <th className="sticky top-0 z-10 bg-gray-100 border-b px-2 py-1.5 text-left text-xs font-semibold text-gray-600">

@@ -225,7 +225,7 @@ export function KanbanColumn({
           style={virtualize ? { overflowY: 'auto', maxHeight: '100%' } : undefined}
         >
           {virtualize && displayCards.length > 0 ? (
-            <ul ref={cardContainerRef} style={{ height: totalSize, position: 'relative', listStyle: 'none', margin: 0, padding: 0 }}>
+            <div ref={cardContainerRef} role="list" style={{ height: totalSize, position: 'relative' }}>
               {virtualItems.map((virtualItem) => {
                 const card = displayCards[virtualItem.index];
                 if (!card) return null;
@@ -258,9 +258,9 @@ export function KanbanColumn({
                   </div>
                 );
               })}
-            </ul>
+            </div>
           ) : (
-            <ul ref={cardContainerRef} className="space-y-2" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            <div ref={cardContainerRef} role="list" className="space-y-2">
               {displayCards.map((card, idx) => (
                 <React.Fragment key={card.id}>
                   {dropTargetCardIndex === idx && dropClosestEdge === 'before' && (
@@ -288,7 +288,7 @@ export function KanbanColumn({
               {dropTargetCardIndex === displayCards.length && dropClosestEdge === 'after' && (
                 <div className="nop-kanban-drop-indicator" />
               )}
-            </ul>
+            </div>
           )}
           {showEmptyZone && (
             <div

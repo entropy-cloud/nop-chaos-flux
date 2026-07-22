@@ -165,6 +165,10 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       undoStackRef.current.undo();
     };
 
+    const handleRedo = () => {
+      undoStackRef.current.redo();
+    };
+
     useGanttKeyboard({
       store,
       containerRef,
@@ -172,6 +176,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       onSelectTask: (id) => { store.selectTask(id); },
       onOpenEditor: openEditor,
       onUndo: handleUndo,
+      onRedo: handleRedo,
     });
 
     const scrollToToday = useCallback(() => {

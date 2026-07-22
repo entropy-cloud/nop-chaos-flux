@@ -41,6 +41,7 @@ export function CalendarEventBlock({
 }: CalendarEventBlockProps) {
   const { event, left, width, top, height, isSplit, concurrentIndex, maxConcurrent, overlap } = positionedEvent;
   const color = resolveColor(event);
+  const eventTypeLabel = event.type ? TYPE_COLORS[event.type] ? event.type : null : null;
 
   const handleClick = () => {
     onEventClick?.({ event, resource, date: dateStr });
@@ -86,6 +87,9 @@ export function CalendarEventBlock({
           {overlap && (
             <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white" aria-label={t('scheduling.calendar.timeConflict')} />
           )}
+          {eventTypeLabel && (
+            <span className="sr-only">{eventTypeLabel}</span>
+          )}
           {templateContent as React.ReactNode}
         </div>
       );
@@ -124,6 +128,9 @@ export function CalendarEventBlock({
     >
       {overlap && (
         <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white" aria-label={t('scheduling.calendar.timeConflict')} />
+      )}
+      {eventTypeLabel && (
+        <span className="sr-only">{eventTypeLabel}</span>
       )}
       {event.title}
     </div>

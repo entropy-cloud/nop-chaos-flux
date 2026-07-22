@@ -131,6 +131,7 @@ export function CalendarWeekView({
                 <div
                   key={dateStr}
                   role="gridcell"
+                  tabIndex={0}
                   aria-label={`${dateStr} ${resource.title || resource.text}`}
                   data-slot="calendar-cell"
                   data-date={dateStr}
@@ -140,7 +141,6 @@ export function CalendarWeekView({
                   {hours.map((hour) => (
                     <div
                       key={hour}
-                      role="gridcell"
                       aria-label={`${dateStr} ${String(hour).padStart(2, '0')}:00`}
                       className="border-b border-gray-100"
                       style={{ height: `${HOUR_HEIGHT}px` }}

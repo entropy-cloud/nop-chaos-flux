@@ -106,6 +106,7 @@ export function CalendarDayView({
                   <div
                     key={hour}
                     role="gridcell"
+                    tabIndex={0}
                     aria-label={`${String(hour).padStart(2, '0')}:00 for ${resource.title || resource.text}`}
                     className="border-b border-gray-50"
                     style={{ height: `${HOUR_HEIGHT}px` }}

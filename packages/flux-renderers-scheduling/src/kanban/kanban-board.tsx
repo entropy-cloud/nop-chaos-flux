@@ -339,6 +339,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
           lastCommandTypeRef.current = 'moveColumn';
           handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: idx, toIndex: idx - 1 });
           events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: idx - 1 });
+          setDndAnnouncement(`Column moved from position ${idx + 1} to position ${idx}`);
         }
         break;
       case 'ArrowRight':
@@ -348,6 +349,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
           lastCommandTypeRef.current = 'moveColumn';
           handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: idx, toIndex: idx + 1 });
           events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: idx + 1 });
+          setDndAnnouncement(`Column moved from position ${idx + 1} to position ${idx + 2}`);
         }
         break;
     }
@@ -414,6 +416,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const boardRef = useRef<HTMLDivElement>(null);
   const [keyboardMoveCard, setKeyboardMoveCard] = useState<{ cardId: string; columnId: string } | null>(null);
+  const [dndAnnouncement, setDndAnnouncement] = useState('');
 
   useEffect(() => {
     const el = boardRef.current;
@@ -432,6 +435,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
           e.preventDefault();
           setKeyboardMoveCard({ cardId, columnId: colId });
           cardEl.setAttribute('data-keyboard-dragging', 'true');
+          cardEl.setAttribute('aria-grabbed', 'true');
+          const cardTitle = cardEl.getAttribute('aria-label') || boardData[cardId]?.data?.title || cardId;
+          setDndAnnouncement(`Picked up card: ${cardTitle}. Use arrow keys to move, Escape to cancel.`);
         }
         return;
       }
@@ -447,6 +453,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
             const targetColId = cols[curColIdx - 1].id;
             moveCardKeyboard(boardData, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
             setKeyboardMoveCard({ cardId, columnId: targetColId });
+            const targetTitle = cols[curColIdx - 1]?.title || targetColId;
+            setDndAnnouncement(`Card moved to column: ${targetTitle}`);
           }
           break;
         }
@@ -458,13 +466,17 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
             const targetColId = cols[curColIdx + 1].id;
             moveCardKeyboard(boardData, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
             setKeyboardMoveCard({ cardId, columnId: targetColId });
+            const targetTitle = cols[curColIdx + 1]?.title || targetColId;
+            setDndAnnouncement(`Card moved to column: ${targetTitle}`);
           }
           break;
         }
         case 'Escape': {
           e.preventDefault();
           cardEl.removeAttribute('data-keyboard-dragging');
+          cardEl.removeAttribute('aria-grabbed');
           setKeyboardMoveCard(null);
+          setDndAnnouncement('Card drag cancelled.');
           break;
         }
       }
@@ -498,12 +510,18 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     if (!boardRef.current) return;
     boardRef.current.querySelectorAll('[data-dnd-card]').forEach((el) => {
       el.removeAttribute('data-dragging');
+      el.removeAttribute('aria-grabbed');
     });
     if (dragState.isDragging && dragState.draggingCardId) {
       const cardEl = boardRef.current.querySelector(`[data-card-id="${dragState.draggingCardId}"]`) as HTMLElement | null;
       cardEl?.setAttribute('data-dragging', 'true');
+      cardEl?.setAttribute('aria-grabbed', 'true');
+      const cardTitle = cardEl?.getAttribute('aria-label') || boardData[dragState.draggingCardId]?.data?.title || dragState.draggingCardId;
+      setDndAnnouncement(`Dragging card: ${cardTitle}`);
+    } else if (!dragState.isDragging && dragState.draggingCardId === null) {
+      setDndAnnouncement('');
     }
-  }, [dragState.isDragging, dragState.draggingCardId]);
+  }, [dragState.isDragging, dragState.draggingCardId, boardData]);
 
   if (!meta.visible) return null;
 
@@ -543,7 +561,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   return (
     <div ref={boardRef} data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}>
       <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {`${columns.length} columns, ${columns.reduce((sum, col) => sum + col.children.length, 0)} cards`}
+        {dndAnnouncement || `${columns.length} columns, ${columns.reduce((sum, col) => sum + col.children.length, 0)} cards`}
       </div>
       <div className="flex items-center gap-2 px-4 py-2">
         <Label htmlFor="kanban-search" className="sr-only">{t('scheduling.kanban.searchCards')}</Label>

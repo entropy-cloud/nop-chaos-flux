@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import { Button, Label, Input, NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
@@ -14,6 +14,9 @@ export interface SchedulingConfig {
 }
 
 export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfigProps) {
+  const uid = useId();
+  const statusDoneId = `${uid}-schedule-status-done`;
+  const statusErrorId = `${uid}-schedule-status-error`;
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const [constraintType, setConstraintType] = useState<'SNET' | 'SNLT' | 'FNET' | 'FNLT'>('SNET');
   const [constraintDate, setConstraintDate] = useState('');
@@ -99,18 +102,20 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
           onClick={handleSchedule}
           disabled={status === 'scheduling' || hasInvalidConstraint}
           className="mt-1"
-          aria-describedby={status === 'done' ? 'schedule-status-done' : status === 'error' ? 'schedule-status-error' : undefined}
+          aria-describedby={status === 'done' ? statusDoneId : status === 'error' ? statusErrorId : undefined}
         >
           {status === 'scheduling' ? t('scheduling.gantt.schedulingInProgress') : t('scheduling.gantt.triggerSchedule')}
         </Button>
 
-        {status === 'done' && (
-          <p id="schedule-status-done" className="text-xs text-green-600">{t('scheduling.gantt.scheduleApplied')}</p>
-        )}
+        <div aria-live="polite" aria-atomic="true">
+          {status === 'done' && (
+            <p id={statusDoneId} className="text-xs text-green-600">{t('scheduling.gantt.scheduleApplied')}</p>
+          )}
 
-        {status === 'error' && (
-          <p id="schedule-status-error" className="text-xs text-red-500">{errorMsg || t('scheduling.gantt.schedulingFailed')}</p>
-        )}
+          {status === 'error' && (
+            <p id={statusErrorId} className="text-xs text-red-500">{errorMsg || t('scheduling.gantt.schedulingFailed')}</p>
+          )}
+        </div>
       </div>
     </div>
   );

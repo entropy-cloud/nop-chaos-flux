@@ -39,20 +39,14 @@ test.describe('W3d editor — TipTap WYSIWYG', () => {
 
     await content.click();
     await page.keyboard.type('hello editor');
-    // Select the typed text with Shift+Home (caret is at the end after typing).
-    // ControlOrMeta+A is flaky here: in headless Chromium it does not reliably
-    // trigger ProseMirror's selectAll keymap, leaving the editor's state
-    // selection collapsed so `editor.chain().focus().toggleBold()` applies the
-    // mark to nothing. Shift+Home produces a real text selection ProseMirror
-    // reads from the DOM. The toolbar button's `.focus()` step can still
-    // occasionally collapse a freshly-made selection, so retry select+toggle
-    // until the `<strong>` mark lands.
     const boldButton = page
       .locator('[data-testid="demo-editor-scratch"] button[data-testid="editor-toolbar-bold"]')
       .first();
     const report = page.locator('[data-testid="rich2-report"]');
     for (let attempt = 0; ; attempt++) {
-      await page.keyboard.press('Shift+Home');
+      await content.focus();
+      await page.keyboard.press('ControlOrMeta+a');
+      await page.waitForTimeout(100);
       await boldButton.click({ force: true });
       try {
         await expect(report).toContainText('<strong>', { timeout: 2_000 });

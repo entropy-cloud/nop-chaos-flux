@@ -9,6 +9,7 @@ interface UseGanttKeyboardOptions {
   onSelectTask: (id: string | number | null) => void;
   onOpenEditor?: (id: string | number) => void;
   onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 export function useGanttKeyboard({
@@ -18,6 +19,7 @@ export function useGanttKeyboard({
   onSelectTask,
   onOpenEditor,
   onUndo,
+  onRedo,
 }: UseGanttKeyboardOptions) {
 
   const updateRowAria = (taskId: string | number, isSelected: boolean) => {
@@ -84,15 +86,21 @@ export function useGanttKeyboard({
         case 'Backspace': {
           if (!selectedTaskId) break;
           e.preventDefault();
+          const tasks = store.getVisibleTasks();
+          const _deletedIdx = tasks.findIndex((t) => t.id === selectedTaskId);
           store.deleteTask(selectedTaskId);
           onSelectTask(null);
+          containerRef.current?.focus();
           break;
         }
         case 'z':
         case 'Z': {
-          if ((e.ctrlKey || e.metaKey) && onUndo) {
+          if ((e.ctrlKey || e.metaKey) && !e.shiftKey && onUndo) {
             e.preventDefault();
             onUndo();
+          } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && onRedo) {
+            e.preventDefault();
+            onRedo();
           }
           break;
         }
@@ -109,7 +117,7 @@ export function useGanttKeyboard({
       el.removeEventListener('keydown', handleKeyDown);
     };
   /* eslint-disable react-hooks/exhaustive-deps, react-compiler/react-compiler */
-  }, [containerRef, selectedTaskId, onSelectTask, onOpenEditor, onUndo, updateRowAria]);
+  }, [containerRef, selectedTaskId, onSelectTask, onOpenEditor, onUndo, onRedo, updateRowAria]);
   /* eslint-enable react-hooks/exhaustive-deps, react-compiler/react-compiler */
 
   return { updateRowAria };
