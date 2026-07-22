@@ -21,6 +21,10 @@
       "types": "./dist/lib/utils.d.ts",
       "default": "./dist/lib/utils.js"
     },
+    "./lib/i18n": {
+      "types": "./dist/lib/i18n.d.ts",
+      "default": "./dist/lib/i18n.js"
+    },
     "./base.css": "./dist/styles/base.css",
     "./styles.css": "./dist/styles/index.css"
   },

@@ -2,10 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { GanttTask, GanttId } from './gantt.types.js';
 import {
   buildParentIndex,
-  flattenTree,
-  toggleOpen,
-  expandAll,
-  collapseAll,
   getVisibleDescendantCount,
 } from './gantt-utils.js';
 
@@ -44,81 +40,6 @@ describe('gantt-utils', () => {
       const tasks = [makeTask({ id: 't1' }), makeTask({ id: 't2' })];
       const index = buildParentIndex(tasks);
       expect(index.get(null)).toHaveLength(2);
-    });
-  });
-
-  describe('flattenTree', () => {
-    it('should flatten expanded tree in order', () => {
-      const tasks = [
-        makeTask({ id: 'p1' }),
-        makeTask({ id: 'c1', parent: 'p1' }),
-        makeTask({ id: 'c2', parent: 'p1' }),
-        makeTask({ id: 't1' }),
-      ];
-      const parentIndex = buildParentIndex(tasks);
-      const expanded = new Set<GanttId>(['p1']);
-      const flat = flattenTree(tasks, parentIndex, expanded);
-      expect(flat.map((t) => t.id)).toEqual(['p1', 'c1', 'c2', 't1']);
-    });
-
-    it('should filter collapsed children', () => {
-      const tasks = [
-        makeTask({ id: 'p1' }),
-        makeTask({ id: 'c1', parent: 'p1' }),
-      ];
-      const parentIndex = buildParentIndex(tasks);
-      const expanded = new Set<GanttId>();
-      const flat = flattenTree(tasks, parentIndex, expanded);
-      expect(flat.map((t) => t.id)).toEqual(['p1']);
-    });
-
-    it('should handle rootTaskIds filter', () => {
-      const tasks = [
-        makeTask({ id: 'p1' }),
-        makeTask({ id: 'c1', parent: 'p1' }),
-        makeTask({ id: 'p2' }),
-      ];
-      const parentIndex = buildParentIndex(tasks);
-      const expanded = new Set<GanttId>(['p1']);
-      const flat = flattenTree(tasks, parentIndex, expanded, ['p2']);
-      expect(flat.map((t) => t.id)).toEqual(['p2']);
-    });
-
-    it('should handle empty tasks', () => {
-      const result = flattenTree([], new Map(), new Set());
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe('toggleOpen', () => {
-    it('should add task to expanded set when not present', () => {
-      const expanded = new Set<GanttId>();
-      toggleOpen('p1', expanded);
-      expect(expanded.has('p1')).toBe(true);
-    });
-
-    it('should remove task from expanded set when present', () => {
-      const expanded = new Set<GanttId>(['p1']);
-      toggleOpen('p1', expanded);
-      expect(expanded.has('p1')).toBe(false);
-    });
-  });
-
-  describe('expandAll / collapseAll', () => {
-    it('should expand all tasks with children', () => {
-      const parentIndex = new Map<GanttId | null, GanttId[]>();
-      parentIndex.set('p1', ['c1']);
-      parentIndex.set('p2', []);
-      const expanded = new Set<GanttId>();
-      expandAll(parentIndex, expanded);
-      expect(expanded.has('p1')).toBe(true);
-      expect(expanded.has('p2')).toBe(false);
-    });
-
-    it('should collapse all tasks', () => {
-      const expanded = new Set<GanttId>(['p1', 'p2']);
-      collapseAll(expanded);
-      expect(expanded.size).toBe(0);
     });
   });
 

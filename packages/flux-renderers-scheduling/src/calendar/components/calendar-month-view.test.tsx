@@ -3,11 +3,6 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { CalendarMonthView } from './calendar-month-view.js';
 
-vi.mock('./calendar-event-block.js', () => ({
-  CalendarEventBlock: ({ positionedEvent }: any) =>
-    React.createElement('div', { 'data-testid': 'calendar-event-block' }, positionedEvent.event.title),
-}));
-
 describe('CalendarMonthView', () => {
   const baseProps = {
     events: [
@@ -35,6 +30,11 @@ describe('CalendarMonthView', () => {
     const { container } = render(React.createElement(CalendarMonthView, baseProps));
     const cells = container.querySelectorAll('[data-slot="calendar-cell"]');
     expect(cells.length).toBeGreaterThan(0);
+  });
+
+  it('should render events with real CalendarEventBlock', () => {
+    const { container } = render(React.createElement(CalendarMonthView, baseProps));
+    expect(container.textContent).toContain('Event 1');
   });
 
   it('should render resource rows', () => {

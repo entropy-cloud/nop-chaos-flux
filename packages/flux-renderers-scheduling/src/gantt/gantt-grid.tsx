@@ -70,7 +70,7 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
   const getColumnWidth = (column: GanttColumn): number => column.width ?? 100;
 
   return (
-    <div className={cn('nop-gantt-grid h-full overflow-auto', className)} data-slot="gantt-grid" role="grid" onClick={(e) => { if (e.target === e.currentTarget) onEmptyCellClick?.(); }} onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onEmptyCellClick?.(); }}>
+    <div className={cn('nop-gantt-grid h-full overflow-auto min-h-[400px]', className)} data-slot="gantt-grid" role="grid" onClick={(e) => { if (e.target === e.currentTarget) onEmptyCellClick?.(); }} onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onEmptyCellClick?.(); }}>
       <table className="w-full border-collapse table-fixed">
         <thead data-slot="gantt-grid-header">
           <tr>

@@ -34,6 +34,8 @@ describe('useCalendarNavigation', () => {
     );
     act(() => result.current.goNext());
     expect(onDateChange).toHaveBeenCalled();
+    const newDate = onDateChange.mock.calls[0][0] as Date;
+    expect(newDate.getTime()).toBe(baseDate.getTime() + 7 * 24 * 60 * 60 * 1000);
   });
 
   it('should go to previous week', () => {
@@ -43,6 +45,8 @@ describe('useCalendarNavigation', () => {
     );
     act(() => result.current.goPrev());
     expect(onDateChange).toHaveBeenCalled();
+    const newDate = onDateChange.mock.calls[0][0] as Date;
+    expect(newDate.getTime()).toBe(baseDate.getTime() - 7 * 24 * 60 * 60 * 1000);
   });
 
   it('should go to next day', () => {
@@ -52,6 +56,8 @@ describe('useCalendarNavigation', () => {
     );
     act(() => result.current.goNext());
     expect(onDateChange).toHaveBeenCalled();
+    const newDate = onDateChange.mock.calls[0][0] as Date;
+    expect(newDate.getTime()).toBe(baseDate.getTime() + 24 * 60 * 60 * 1000);
   });
 
   it('should go to previous day', () => {
@@ -61,6 +67,8 @@ describe('useCalendarNavigation', () => {
     );
     act(() => result.current.goPrev());
     expect(onDateChange).toHaveBeenCalled();
+    const newDate = onDateChange.mock.calls[0][0] as Date;
+    expect(newDate.getTime()).toBe(baseDate.getTime() - 24 * 60 * 60 * 1000);
   });
 
   it('should go to today', () => {
@@ -70,6 +78,11 @@ describe('useCalendarNavigation', () => {
     );
     act(() => result.current.goToday());
     expect(onDateChange).toHaveBeenCalled();
+    const newDate = onDateChange.mock.calls[0][0] as Date;
+    const now = new Date();
+    expect(newDate.getFullYear()).toBe(now.getFullYear());
+    expect(newDate.getMonth()).toBe(now.getMonth());
+    expect(newDate.getDate()).toBe(now.getDate());
   });
 
   it('should go to specific date', () => {

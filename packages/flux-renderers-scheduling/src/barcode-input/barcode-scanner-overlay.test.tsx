@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { BarcodeScannerOverlay } from './barcode-scanner-overlay.js';
 
 const mockUseBarcodeDetect = vi.hoisted(() => vi.fn<any>(() => ({
@@ -83,17 +83,37 @@ describe('BarcodeScannerOverlay', () => {
     expect(loading).toBeTruthy();
   });
 
-  it('should call onClose when close button clicked', () => {
+  it('should render close button with correct data attributes', () => {
+    render(
+      <BarcodeScannerOverlay
+        open={true}
+        onClose={vi.fn()}
+        onScan={vi.fn()}
+      />,
+    );
+    const closeBtn = document.querySelector('[data-slot="barcode-scanner-close"]');
+    expect(closeBtn).toBeTruthy();
+    expect(closeBtn!.tagName).toBe('BUTTON');
+  });
+
+  it('calls onClose when close button is clicked', () => {
     const onClose = vi.fn();
+    // Render directly into document.body so portal and root share the same
+    // container, allowing React event delegation to catch portal events
+    // in happy-dom.
     render(
       <BarcodeScannerOverlay
         open={true}
         onClose={onClose}
         onScan={vi.fn()}
       />,
+      { container: document.body },
     );
-    const closeBtn = document.querySelector('[data-slot="barcode-scanner-close"]');
+    const closeBtn = document.querySelector('button[data-slot="barcode-scanner-close"]') as HTMLButtonElement;
     expect(closeBtn).toBeTruthy();
+    expect(closeBtn.disabled).toBe(false);
+    fireEvent.click(closeBtn);
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('should render overlay under document.body via portal', () => {

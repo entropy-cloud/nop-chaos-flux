@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import React from 'react';
+import { render } from '@testing-library/react';
 import { GanttStore } from './gantt-store.js';
+import { GanttStoreProvider } from './gantt-context.js';
+import { GanttEditor } from './gantt-editor.js';
 import type { GanttTaskData } from './gantt.types.js';
 
 function makeTask(overrides: Partial<GanttTaskData> & { id: string | number }): GanttTaskData {
@@ -144,6 +148,24 @@ describe('Gantt interaction primitives', () => {
       expect(store.getVisibleTasks()).toHaveLength(2);
       store.toggleOpen('p1');
       expect(store.getVisibleTasks()).toHaveLength(1);
+    });
+  });
+
+  describe('keyboard event simulations on GanttEditor', () => {
+    it('renders editor inputs when editing task is set', () => {
+      const store = new GanttStore({ cellWidth: 40 });
+      store.parse([
+        { id: 't1', text: 'Test Task', start: '2026-01-01', end: '2026-01-10' },
+      ], []);
+      store.editTask('t1');
+      render(
+        <GanttStoreProvider store={store}>
+          <GanttEditor editingTaskId="t1" />
+        </GanttStoreProvider>,
+      );
+      const textInput = document.querySelector<HTMLInputElement>('input[id$="-edit-text"]');
+      expect(textInput).toBeTruthy();
+      expect(textInput!.value).toBe('Test Task');
     });
   });
 });

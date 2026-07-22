@@ -13,7 +13,7 @@ export interface GanttStoreConfig {
   containerWidth?: number; globalCalendarId?: string;
 }
 
-interface GanttStoreState {
+export interface GanttStoreState {
   tasks: Map<GanttId, GanttTask>; links: Map<GanttId, GanttLink>;
   resources: Map<GanttId, GanttResource>; assignments: Map<GanttId, GanttAssignment>;
   scaleRange: { start: Date; end: Date }; cellWidth: number; currentZoom: string;
@@ -27,7 +27,7 @@ interface GanttStoreState {
 export class GanttStore {
   private store: StoreApi<GanttStoreState>;
   private parentIndex: Map<GanttId | null, GanttId[]> = new Map();
-  _scrollLeft: number; calendarManager: CalendarManager; _dirty = false;
+  _scrollLeft: number; calendarManager: CalendarManager;
 
   constructor(config?: GanttStoreConfig) {
     this._scrollLeft = config?.scrollLeft ?? 0;
@@ -46,6 +46,7 @@ export class GanttStore {
   }
 
   subscribe = (l: () => void): (() => void) => this.store.subscribe(l);
+  getSnapshot = (): GanttStoreState => this.store.getState();
   private gs() { return this.store.getState(); }
 
   get tasks() { return this.gs().tasks; }
@@ -88,7 +89,6 @@ export class GanttStore {
   }
 
   parse(tasks: GanttTaskData[], links: GanttLinkData[], resources?: GanttResource[], assignments?: GanttAssignment[], calendars?: CalendarEntry[]): void {
-    this._dirty = false;
     if (calendars) for (const e of calendars) this.calendarManager.registerCalendar(e.id, e.calendar);
     const newTasks = new Map<GanttId, GanttTask>();
     for (const t of flattenTasks(tasks, null)) newTasks.set(t.id, { ...t, $x: 0, $y: 0, $w: 0, $h: 0, $level: 0, $source: [], $target: [] });
@@ -188,7 +188,7 @@ export class GanttStore {
   }
 
   updateTask(id: GanttId, partial: Partial<GanttTaskData>): void {
-    this._dirty = true;
+    
     const state = this.gs();
     const task = state.tasks.get(id);
     if (!task) return;
@@ -207,7 +207,7 @@ export class GanttStore {
   }
 
   updateLink(id: GanttId, partial: Partial<GanttLink>): void {
-    this._dirty = true;
+    
     const state = this.gs();
     const link = state.links.get(id); if (!link) return;
     const newLinks = new Map(state.links); newLinks.set(id, { ...link, ...partial });
@@ -223,7 +223,7 @@ export class GanttStore {
   isOpen(taskId: GanttId): boolean { return this.gs().expandedSet.has(taskId); }
 
   toggleOpen(taskId: GanttId): void {
-    this._dirty = true;
+    
     const state = this.gs();
     if (!state.tasks.get(taskId)) return;
     const newExpanded = new Set(state.expandedSet);
@@ -250,7 +250,7 @@ export class GanttStore {
   getVisibleDescendantCount(taskId: GanttId): number { return getVisibleDescendantCount(taskId, this.parentIndex); }
 
   deleteTask(id: GanttId): void {
-    this._dirty = true;
+    
     const state = this.gs();
     if (!state.tasks.get(id)) return;
     const childIds: GanttId[] = [];
@@ -272,7 +272,7 @@ export class GanttStore {
   }
 
   addLink(source: GanttId, target: GanttId, type: GanttLinkType): GanttLink {
-    this._dirty = true;
+    
     const state = this.gs();
     const id = `link_${String(source)}_${String(target)}_${Date.now()}`;
     const link: GanttLink = { id, source, target, type, $p: '' };
@@ -284,7 +284,7 @@ export class GanttStore {
   }
 
   removeLink(id: GanttId): void {
-    this._dirty = true;
+    
     const state = this.gs();
     const newLinks = new Map(state.links); newLinks.delete(id);
     this.store.setState({ links: newLinks, revision: state.revision + 1, linkRevision: state.linkRevision + 1 });

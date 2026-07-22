@@ -272,8 +272,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
             }
           };
         }
-      } catch {
-        /* bad expression — fall through to no-op */
+      } catch (err) {
+        console.warn('[kanban] Failed to compile filter expression:', err);
       }
     }
     return undefined;

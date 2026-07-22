@@ -6,49 +6,7 @@ import { Gantt } from './gantt.js';
 vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
-}));
-
-vi.mock('./gantt-context.js', () => ({
-  GanttStoreProvider: ({ children }: any) => React.createElement('div', { 'data-testid': 'gantt-store-provider' }, children),
-  useGanttStore: () => ({
-    tasks: new Map(),
-    links: new Map(),
-    resources: new Map(),
-    assignments: new Map(),
-    cellWidth: 40,
-    currentZoom: 'day',
-    scaleRange: { start: new Date('2026-01-01'), end: new Date('2026-01-31') },
-    revision: 0,
-    taskRevision: 0,
-    linkRevision: 0,
-    layoutRevision: 0,
-    treeRevision: 0,
-    getVisibleTasks: () => [],
-    getAvailableZooms: () => [{ key: 'day', label: 'Day' }, { key: 'week', label: 'Week' }],
-    setZoom: vi.fn(),
-    parse: vi.fn(),
-    updateTask: vi.fn(),
-    deleteTask: vi.fn(),
-    addLink: vi.fn(),
-    removeLink: vi.fn(),
-    toggleOpen: vi.fn(),
-    getVisibleDescendantCount: () => 0,
-    on: vi.fn(),
-    off: vi.fn(),
-    scrollLeft: 0,
-  }),
-}));
-
-vi.mock('./gantt-header.js', () => ({
-  GanttHeader: () => React.createElement('div', { 'data-testid': 'gantt-header' }),
-}));
-
-vi.mock('./gantt-layout.js', () => ({
-  GanttLayout: () => React.createElement('div', { 'data-testid': 'gantt-layout' }),
-}));
-
-vi.mock('./gantt-editor.js', () => ({
-  GanttEditor: () => React.createElement('div', { 'data-testid': 'gantt-editor' }),
+  useScopeSelector: () => undefined,
 }));
 
 vi.mock('./hooks/use-gantt-drag.js', () => ({
@@ -83,7 +41,7 @@ describe('Gantt', () => {
     schema: { type: 'gantt' as const },
     templateNode: {} as any,
     node: {} as any,
-    props: {} as any,
+    props: { tasks: [], links: [] } as any,
     meta: { visible: true, disabled: false } as any,
     regions: {} as any,
     events: {} as any,
@@ -98,7 +56,7 @@ describe('Gantt', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('should render gantt container when visible', () => {
+  it('should render gantt container with real GanttHeader and GanttLayout', () => {
     const { container } = render(React.createElement(Gantt, baseProps));
     expect(container.querySelector('.nop-gantt')).toBeTruthy();
   });
@@ -110,12 +68,49 @@ describe('Gantt', () => {
     expect(container.querySelector('[data-testid="my-gantt"]')).toBeTruthy();
   });
 
+  it('should render loading state with skeleton when loading prop is set', () => {
+    const { container } = render(
+      React.createElement(Gantt, { ...baseProps, props: { loading: true, tasks: [], links: [] } as any }),
+    );
+    expect(container.querySelector('.nop-gantt')).toBeTruthy();
+  });
+
+  it('should render empty region when provided with no tasks', () => {
+    const emptyRegion = {
+      type: 'region',
+      render: () => React.createElement('div', { 'data-testid': 'empty-region' }, 'Custom empty'),
+    };
+    const { container } = render(
+      React.createElement(Gantt, {
+        ...baseProps,
+        props: { tasks: [], links: [] } as any,
+        regions: { empty: emptyRegion } as any,
+      }),
+    );
+    expect(container.querySelector('[data-testid="empty-region"]')).toBeTruthy();
+  });
+
   it('should call onMount and onUnmount events', () => {
     const onMount = vi.fn();
     const onUnmount = vi.fn();
     const { unmount } = render(
       React.createElement(Gantt, { ...baseProps, events: { onMount, onUnmount } as any }),
     );
+    expect(onMount).toHaveBeenCalledWith({});
     unmount();
+    expect(onUnmount).toHaveBeenCalledWith({});
+  });
+
+  it('should render with tasks and show real components', () => {
+    const { container } = render(
+      React.createElement(Gantt, {
+        ...baseProps,
+        props: {
+          tasks: [{ id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' }],
+          links: [],
+        } as any,
+      }),
+    );
+    expect(container.querySelector('.nop-gantt')).toBeTruthy();
   });
 });

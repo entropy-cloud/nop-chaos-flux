@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useKanbanColumnResize } from './use-kanban-column-resize.js';
 
 describe('useKanbanColumnResize', () => {
@@ -50,8 +50,14 @@ describe('useKanbanColumnResize', () => {
     const { result } = renderHook(() =>
       useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280 }),
     );
-    const mockEvent = { preventDefault: vi.fn(), clientX: 100 } as unknown as React.PointerEvent;
-    result.current.handleResizeStart(mockEvent, 'col1');
+    expect(result.current.isResizing).toBe(false);
+    expect(result.current.resizing).toBeNull();
+    const mockEvent = { preventDefault: vi.fn(), clientX: 100, pointerId: 1 } as unknown as React.PointerEvent;
+    act(() => {
+      result.current.handleResizeStart(mockEvent, 'col1');
+    });
+    expect(result.current.isResizing).toBe(true);
+    expect(result.current.resizing).toBe('col1');
   });
 
   it('works with minWidth = maxWidth for fixed columns', () => {
@@ -76,7 +82,33 @@ describe('useKanbanColumnResize', () => {
     const { result } = renderHook(() =>
       useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280, onWidthsChange, columnWidths: { col1: 300 } }),
     );
-    const mockEvent = { preventDefault: vi.fn(), clientX: 100 } as unknown as React.PointerEvent;
-    result.current.handleResizeStart(mockEvent, 'col1');
+    const mockEvent = { preventDefault: vi.fn(), clientX: 100, pointerId: 1 } as unknown as React.PointerEvent;
+    act(() => {
+      result.current.handleResizeStart(mockEvent, 'col1');
+    });
+    expect(result.current.isResizing).toBe(true);
+    expect(result.current.resizing).toBe('col1');
+
+    act(() => {
+      document.dispatchEvent(new PointerEvent('pointerup'));
+    });
+    expect(result.current.isResizing).toBe(false);
+    expect(onWidthsChange).toHaveBeenCalled();
+    expect(onWidthsChange.mock.calls[0][0]).toEqual({ col1: 300 });
+  });
+
+  it('calls onWidthsChange during pointer move when using external widths', () => {
+    const onWidthsChange = vi.fn();
+    const { result } = renderHook(() =>
+      useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280, onWidthsChange, columnWidths: { col1: 300 } }),
+    );
+    const mockEvent = { preventDefault: vi.fn(), clientX: 100, pointerId: 1 } as unknown as React.PointerEvent;
+    act(() => {
+      result.current.handleResizeStart(mockEvent, 'col1');
+    });
+    act(() => {
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 150 }));
+    });
+    expect(onWidthsChange).toHaveBeenCalledWith({ col1: 350 });
   });
 });

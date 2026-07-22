@@ -1,7 +1,7 @@
 import React, { useRef, useImperativeHandle, useState, useEffect, useCallback } from 'react';
 import { cn } from '@nop-chaos/ui';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
+import { useRenderScope } from '@nop-chaos/flux-react';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttSchema } from '../schemas.js';
 import { GanttStore } from './gantt-store.js';
@@ -52,7 +52,6 @@ function createInitialStore(resolved: Record<string, unknown>): GanttStore {
 export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttSchema>>(
   function Gantt(props, ref) {
     const { props: resolved, meta, regions, events, helpers: _helpers } = props;
-    const _runtime = useRendererRuntime();
     const scope = useRenderScope();
     const containerRef = useRef<HTMLDivElement>(null);
     const gridRef = useRef<HTMLDivElement>(null);

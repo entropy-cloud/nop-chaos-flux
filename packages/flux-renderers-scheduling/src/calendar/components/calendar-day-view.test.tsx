@@ -3,10 +3,6 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { CalendarDayView } from './calendar-day-view.js';
 
-vi.mock('./calendar-event-block.js', () => ({
-  CalendarEventBlock: () => React.createElement('div', { 'data-testid': 'calendar-event-block' }),
-}));
-
 describe('CalendarDayView', () => {
   const baseProps = {
     events: [],
@@ -23,6 +19,17 @@ describe('CalendarDayView', () => {
   it('should render day view matrix', () => {
     const { container } = render(React.createElement(CalendarDayView, baseProps));
     expect(container.querySelector('[data-slot="calendar-matrix"]')).toBeTruthy();
+  });
+
+  it('should render events with real CalendarEventBlock when events provided', () => {
+    const propsWithEvents = {
+      ...baseProps,
+      events: [
+        { id: 'e1', title: 'Standup', start: '2026-07-21T09:00:00', end: '2026-07-21T09:30:00', type: 'shift', resourceId: 'r1' },
+      ],
+    };
+    const { container } = render(React.createElement(CalendarDayView, propsWithEvents));
+    expect(container.textContent).toContain('Standup');
   });
 
   it('should render date header', () => {

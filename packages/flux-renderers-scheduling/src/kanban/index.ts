@@ -13,14 +13,12 @@ export { useColumnDnd } from './hooks/use-column-dnd.js';
 export type { UseColumnDndOptions } from './hooks/use-column-dnd.js';
 export { useKanbanFilter } from './hooks/use-kanban-filter.js';
 export type { UseKanbanFilterOptions } from './hooks/use-kanban-filter.js';
-export { useKanbanAdder } from './hooks/use-kanban-adder.js';
-export type { UseKanbanAdderOptions } from './hooks/use-kanban-adder.js';
+
 export { useKanbanColumnResize } from './hooks/use-kanban-column-resize.js';
 export type { ColumnWidthMap, UseKanbanColumnResizeOptions } from './hooks/use-kanban-column-resize.js';
 export { useKanbanVirtualizer } from './hooks/use-kanban-virtualizer.js';
 export type { UseKanbanVirtualizerOptions } from './hooks/use-kanban-virtualizer.js';
-export { KanbanWipBadge } from './components/kanban-wip-badge.js';
-export type { KanbanWipBadgeProps } from './components/kanban-wip-badge.js';
+
 export { KanbanCardTags } from './components/kanban-card-tags.js';
 export type { KanbanTag, KanbanMember, KanbanCardTagsProps } from './components/kanban-card-tags.js';
 export { KanbanTagFilter } from './components/kanban-tag-filter.js';
@@ -30,5 +28,4 @@ export type { KanbanAction, KanbanActivityLogProps } from './components/kanban-a
 export { createUndoStack, pushCommand, undo, redo, canUndo, canRedo, shouldMerge } from './utils/kanban-undo-stack.js';
 export type { UndoCommand, UndoCommandType, UndoStack } from './utils/kanban-undo-stack.js';
 export { boardDataToJson, boardDataFromJson, exportBoardToPng, downloadBlob } from './utils/kanban-export.js';
-export { useKanbanCollab } from './hooks/use-kanban-collab.js';
-export type { CollabConnectionStatus, CollabMessage, UseKanbanCollabOptions } from './hooks/use-kanban-collab.js';
+

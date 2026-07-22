@@ -13,6 +13,7 @@ const mockStore = {
     { id: 't2', text: 'Task 2' },
   ]),
   getVisibleDescendantCount: vi.fn(() => 0),
+  isOpen: vi.fn(() => false),
   toggleOpen: vi.fn(),
   deleteTask: vi.fn(),
 };
@@ -115,10 +116,45 @@ describe('useGanttKeyboard', () => {
     expect(onSelectTask).toHaveBeenCalledWith(null);
   });
 
-  it('should use separate ArrowLeft (collapse) and ArrowRight (expand) semantics', () => {
+  it('should collapse task on ArrowLeft when expanded', () => {
+    const container = document.createElement('div');
+    const containerRef = { current: container };
+    mockStore.getVisibleDescendantCount = vi.fn(() => 1);
+    mockStore.isOpen = vi.fn(() => true);
+    renderHook(() =>
+      useGanttKeyboard({
+        containerRef,
+        selectedTaskId: 't1',
+        onSelectTask: vi.fn(),
+      }),
+    );
+    const event = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true });
+    expect(() => container.dispatchEvent(event)).not.toThrow();
+    expect(mockStore.toggleOpen).toHaveBeenCalledWith('t1');
+  });
+
+  it('should expand task on ArrowRight when collapsed', () => {
+    const container = document.createElement('div');
+    const containerRef = { current: container };
+    mockStore.getVisibleDescendantCount = vi.fn(() => 3);
+    mockStore.isOpen = vi.fn(() => false);
+    renderHook(() =>
+      useGanttKeyboard({
+        containerRef,
+        selectedTaskId: 't1',
+        onSelectTask: vi.fn(),
+      }),
+    );
+    const event = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true });
+    expect(() => container.dispatchEvent(event)).not.toThrow();
+    expect(mockStore.toggleOpen).toHaveBeenCalledWith('t1');
+  });
+
+  it('should not toggle on ArrowLeft when no visible descendants', () => {
     const container = document.createElement('div');
     const containerRef = { current: container };
     mockStore.getVisibleDescendantCount = vi.fn(() => 0);
+    mockStore.toggleOpen.mockClear();
     renderHook(() =>
       useGanttKeyboard({
         containerRef,

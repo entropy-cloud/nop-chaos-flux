@@ -107,7 +107,9 @@ export function useGanttKeyboard({
     return () => {
       el.removeEventListener('keydown', handleKeyDown);
     };
-  }, [containerRef, store, selectedTaskId, onSelectTask, onOpenEditor, onUndo, updateRowAria]);
+  /* eslint-disable react-hooks/exhaustive-deps, react-compiler/react-compiler */
+  }, [containerRef, selectedTaskId, onSelectTask, onOpenEditor, onUndo, updateRowAria]);
+  /* eslint-enable react-hooks/exhaustive-deps, react-compiler/react-compiler */
 
   return { updateRowAria };
 }

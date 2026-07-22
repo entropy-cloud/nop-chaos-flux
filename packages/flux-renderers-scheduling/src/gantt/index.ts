@@ -16,10 +16,6 @@ export type {
 } from './gantt.types.js';
 export {
   buildParentIndex,
-  flattenTree,
-  toggleOpen,
-  expandAll,
-  collapseAll,
   getVisibleDescendantCount,
 } from './gantt-utils.js';
 export {

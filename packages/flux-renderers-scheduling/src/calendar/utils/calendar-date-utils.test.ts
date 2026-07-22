@@ -28,6 +28,8 @@ describe('calendar-date-utils', () => {
       expect(end.getUTCDate()).toBe(31);
       expect(end.getUTCHours()).toBe(23);
       expect(end.getUTCMinutes()).toBe(59);
+      expect(end.getUTCSeconds()).toBe(59);
+      expect(end.getUTCMilliseconds()).toBe(999);
     });
 
     it('should handle December (cross-year boundary)', () => {

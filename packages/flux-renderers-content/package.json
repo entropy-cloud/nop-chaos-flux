@@ -36,6 +36,7 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@nop-chaos/flux-formula": "workspace:*",
     "@types/diff-match-patch": "^1.0.7",
     "@types/qrcode": "^1.5.6",
     "dompurify": "^3.4.11",

@@ -249,7 +249,6 @@ export function CalendarMonthView({
                 >
                   {dayEvents.length === 0 || (dayEvents.length === 1 && dayEvents[0].overflowCount) ? (
                     <div className="text-[10px] text-gray-300 flex items-center justify-center h-full">
-                      {!isCurrentMonth ? null : null}
                     </div>
                   ) : (
                     <>

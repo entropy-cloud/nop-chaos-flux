@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render } from '@testing-library/react';
 import { Calendar } from './calendar.js';
@@ -138,13 +138,9 @@ describe('Calendar', () => {
     expect(el).toBeTruthy();
   });
 
-  beforeEach(() => {
-    mockDragCreate.triggerCreate = null;
-  });
-
-  it('imports print CSS module with loadable content', async () => {
-    const mod = await import('./utils/calendar-print.css');
-    expect(mod).toBeDefined();
+  it('renders month view with real view components', () => {
+    const { container } = render(<Calendar {...baseProps} />);
+    expect(container.querySelector('[data-view="month"]') || container.querySelector('[data-view]')).toBeTruthy();
   });
 
   it('fires onEventCreate once and not onEventChange on drag-create', () => {
@@ -178,7 +174,6 @@ describe('Calendar', () => {
     expect(onMount).toHaveBeenCalledWith({});
 
     unmount();
-
     expect(onUnmount).toHaveBeenCalledTimes(1);
     expect(onUnmount).toHaveBeenCalledWith({});
 

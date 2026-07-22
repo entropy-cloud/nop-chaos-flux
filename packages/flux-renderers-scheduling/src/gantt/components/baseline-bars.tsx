@@ -60,7 +60,7 @@ export function BaselineBars({ task, scaleRange, cellWidth, taskBarHeight }: Bas
                 />
                 <text
                   x={(task.$x + task.$w / 2 + bx + bw / 2) / 2}
-                  y={Math.min(task.$y, by) - 4}
+                  y={Math.max(Math.min(task.$y, by) - 4, 8)}
                   textAnchor="middle"
                   fill={deviationDays > 0 ? '#ef4444' : '#f59e0b'}
                   fontSize={9}

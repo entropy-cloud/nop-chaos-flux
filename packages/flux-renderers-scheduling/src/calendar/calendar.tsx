@@ -10,7 +10,7 @@
  */
 import React, { useImperativeHandle, useRef, useState, useEffect } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { CalendarSchema, CalendarView, CalendarEvent, CalendarResource } from '../schemas.js';
@@ -59,8 +59,6 @@ const DEFAULT_SHIFT_TYPES = [
 
 export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?: React.Ref<CalendarHandle> }) {
   const { ref, props: resolved, meta, regions, events, helpers: _helpers } = props;
-  const _runtime = useRendererRuntime();
-  const _scope = useRenderScope();
 
   const eventsRef = useRef(events);
   useEffect(() => { eventsRef.current = events; }, [events]);
@@ -404,6 +402,12 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     if (loadingRegion) {
       return <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>{loadingRegion.render() as React.ReactNode}</div>;
     }
+    return (
+      <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-calendar flex flex-col h-full animate-pulse', meta.className)}>
+        <div className="flex gap-2 p-4"><div className="h-8 bg-gray-100 rounded w-32" /><div className="h-8 bg-gray-100 rounded w-24" /></div>
+        <div className="flex-1 bg-gray-50 m-2 rounded" />
+      </div>
+    );
   }
 
   if (!resolved.loading && eventsData.length === 0 && !resourcesData.length) {

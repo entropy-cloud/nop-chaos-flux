@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { KanbanBoard } from './kanban-board.js';
 import type { BoardData } from './kanban.types.js';
 
@@ -48,13 +48,6 @@ vi.mock('./hooks/use-kanban-virtualizer.js', () => ({
       key: String(i),
     })),
   }),
-}));
-
-vi.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
-  draggable: () => () => {},
-  dropTargetForElements: () => () => {},
-  monitorForElements: () => () => {},
-  combine: (...args: any[]) => () => args.forEach((fn: any) => fn()),
 }));
 
 afterEach(cleanup);
@@ -150,5 +143,73 @@ describe('Kanban DnD Integration', () => {
     expect(toDoCol).toBeTruthy();
     const cardsInCol = toDoCol!.querySelectorAll('[data-slot="kanban-card"]');
     expect(cardsInCol.length).toBe(2);
+  });
+
+  it('moves card between columns via keyboard (Space then ArrowRight)', () => {
+    const { container } = render(React.createElement(KanbanBoard, defaultProps));
+    const cardEl = container.querySelector('[data-card-id="card1"]') as HTMLElement;
+    expect(cardEl).toBeTruthy();
+
+    fireEvent.keyDown(cardEl, { key: ' ' });
+    expect(cardEl.getAttribute('data-keyboard-dragging')).toBe('true');
+
+    fireEvent.keyDown(cardEl, { key: 'ArrowRight' });
+
+    const doneCol = container.querySelector('[data-column-id="col2"]');
+    expect(doneCol).toBeTruthy();
+    const cardsInDone = doneCol!.querySelectorAll('[data-slot="kanban-card"]');
+    expect(cardsInDone.length).toBe(1);
+  });
+
+  it('cancels keyboard card move on Escape', () => {
+    const { container } = render(React.createElement(KanbanBoard, defaultProps));
+    const cardEl = container.querySelector('[data-card-id="card1"]') as HTMLElement;
+    expect(cardEl).toBeTruthy();
+
+    fireEvent.keyDown(cardEl, { key: 'Enter' });
+    expect(cardEl.getAttribute('data-keyboard-dragging')).toBe('true');
+
+    fireEvent.keyDown(cardEl, { key: 'Escape' });
+    expect(cardEl.getAttribute('data-keyboard-dragging')).toBeNull();
+
+    const toDoCol = container.querySelector('[data-column-id="col1"]');
+    const cardsInToDo = toDoCol!.querySelectorAll('[data-slot="kanban-card"]');
+    expect(cardsInToDo.length).toBe(2);
+  });
+
+  it('moves card to previous column via keyboard (Space then ArrowLeft)', () => {
+    const boardWithCardsInSecond: BoardData = {
+      root: { id: 'root', type: 'root', children: ['col1', 'col2'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: [], data: { title: 'To Do' }, meta: {} },
+      col2: { id: 'col2', type: 'column', parentId: 'root', children: ['card1'], data: { title: 'Done' }, meta: {} },
+      card1: { id: 'card1', type: 'card', parentId: 'col2', children: [], data: { title: 'Task 1' }, meta: {} },
+    };
+    const props = { ...defaultProps, props: { ...defaultProps.props, data: boardWithCardsInSecond } };
+    const { container } = render(React.createElement(KanbanBoard, props));
+    const cardEl = container.querySelector('[data-card-id="card1"]') as HTMLElement;
+    expect(cardEl).toBeTruthy();
+
+    fireEvent.keyDown(cardEl, { key: ' ' });
+    expect(cardEl.getAttribute('data-keyboard-dragging')).toBe('true');
+
+    fireEvent.keyDown(cardEl, { key: 'ArrowLeft' });
+
+    const toDoCol = container.querySelector('[data-column-id="col1"]');
+    const cardsInToDo = toDoCol!.querySelectorAll('[data-slot="kanban-card"]');
+    expect(cardsInToDo.length).toBe(1);
+  });
+
+  it('reorders columns via keyboard (drag handle ArrowLeft/ArrowRight)', () => {
+    const { container } = render(React.createElement(KanbanBoard, defaultProps));
+    const col1 = container.querySelector('[data-column-id="col1"]') as HTMLElement;
+    expect(col1).toBeTruthy();
+
+    const dragHandle = col1.querySelector('[data-slot="column-drag-handle"]') as HTMLElement;
+    if (dragHandle) {
+      fireEvent.keyDown(dragHandle, { key: 'ArrowRight' });
+
+      const columns = container.querySelectorAll('[data-slot="kanban-column"]');
+      expect(columns.length).toBe(2);
+    }
   });
 });

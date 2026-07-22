@@ -3,10 +3,6 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { CalendarWeekView } from './calendar-week-view.js';
 
-vi.mock('./calendar-event-block.js', () => ({
-  CalendarEventBlock: () => React.createElement('div', { 'data-testid': 'calendar-event-block' }),
-}));
-
 describe('CalendarWeekView', () => {
   const baseProps = {
     events: [],
@@ -25,6 +21,17 @@ describe('CalendarWeekView', () => {
   it('should render week view matrix', () => {
     const { container } = render(React.createElement(CalendarWeekView, baseProps));
     expect(container.querySelector('[data-slot="calendar-matrix"]')).toBeTruthy();
+  });
+
+  it('should render events with real CalendarEventBlock when events provided', () => {
+    const propsWithEvents = {
+      ...baseProps,
+      events: [
+        { id: 'e1', title: 'Meeting', start: '2026-07-21T10:00:00', end: '2026-07-21T11:00:00', type: 'shift', resourceId: 'r1' },
+      ],
+    };
+    const { container } = render(React.createElement(CalendarWeekView, propsWithEvents));
+    expect(container.textContent).toContain('Meeting');
   });
 
   it('should render time slots', () => {
