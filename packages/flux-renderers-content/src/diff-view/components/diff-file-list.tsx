@@ -195,6 +195,10 @@ function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
   );
 }
 
+/**
+ * @deprecated Use `<DiffFileList>` directly instead. This function wrapper
+ * will be removed in a future version.
+ */
 export function renderFileListSidebar(
   files: DiffFileMeta[],
   activeIndex: number,

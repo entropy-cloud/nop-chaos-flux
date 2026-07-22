@@ -500,6 +500,9 @@ export const contentRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'oldContent', kind: 'prop' },
       { key: 'newContent', kind: 'prop' },
+      { key: 'middleContent', kind: 'prop' },
+      { key: 'files', kind: 'prop' },
+      { key: 'activeFileIndex', kind: 'prop' },
       { key: 'language', kind: 'prop' },
       { key: 'viewType', kind: 'prop' },
       { key: 'showLineNumbers', kind: 'prop', valueType: 'boolean' },
@@ -508,6 +511,10 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'wrapLines', kind: 'prop', valueType: 'boolean' },
       { key: 'onLineClick', kind: 'event' },
       { key: 'onHunkExpand', kind: 'event' },
+      { key: 'toggleViewType', kind: 'reaction' },
+      { key: 'setViewType', kind: 'reaction' },
+      { key: 'expandAll', kind: 'reaction' },
+      { key: 'collapseAll', kind: 'reaction' },
     ],
   },
 ];

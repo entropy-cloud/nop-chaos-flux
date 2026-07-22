@@ -4,7 +4,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import type { ThreeWayRowType } from '../model/diff-3way.js';
 import { computeThreeWayDiff } from '../model/diff-3way.js';
 import { generateConflictMarkerHtml } from '../utils/diff-template.js';
-import { escapeHtml } from '../adapters/syntax-highlight.js';
+import { highlight } from '../adapters/syntax-highlight.js';
 
 interface DiffThreeColumnViewProps {
   oldContent: string;
@@ -18,6 +18,7 @@ export function DiffThreeColumnView({
   oldContent,
   middleContent,
   newContent,
+  language,
   showLineNumbers = true,
 }: DiffThreeColumnViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -124,7 +125,7 @@ export function DiffThreeColumnView({
                   dangerouslySetInnerHTML={{
                     __html: isMarker
                       ? generateConflictMarkerHtml(row.type as ThreeWayRowType)
-                      : escapeHtml(row.oldContent),
+                      : highlight(row.oldContent, language || 'plaintext'),
                   }}
                 />
               </div>
@@ -157,7 +158,7 @@ export function DiffThreeColumnView({
                   dangerouslySetInnerHTML={{
                     __html: isMarker
                       ? generateConflictMarkerHtml(row.type as ThreeWayRowType)
-                      : escapeHtml(row.middleContent),
+                      : highlight(row.middleContent, language || 'plaintext'),
                   }}
                 />
               </div>
@@ -191,7 +192,7 @@ export function DiffThreeColumnView({
                   dangerouslySetInnerHTML={{
                     __html: isMarker
                       ? generateConflictMarkerHtml(row.type as ThreeWayRowType)
-                      : escapeHtml(row.newContent),
+                      : highlight(row.newContent, language || 'plaintext'),
                   }}
                 />
               </div>

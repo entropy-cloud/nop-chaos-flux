@@ -198,21 +198,49 @@ export function computeThreeWayDiff(
   }
 
   const finalRows: ThreeWayRow[] = [];
-  let insertOffset = 0;
-  for (const zone of conflictZones) {
-    const adjustedStart = zone.startLine + insertOffset;
-    const adjustedEnd = zone.endLine + insertOffset;
-    const before = finalRows.slice(0, adjustedStart - 1);
-    const zonePart = rows.slice(adjustedStart - 1, adjustedEnd);
-    const after = rows.slice(adjustedEnd);
+  let finalRowNum = 0;
 
-    const startRow: ThreeWayRow = { type: 'conflict-start', oldContent: '', middleContent: '', newContent: '', lineNum: before.length + 1 };
-    const sepRow: ThreeWayRow = { type: 'conflict-separator', oldContent: '', middleContent: '', newContent: '', lineNum: before.length + zonePart.length + 2 };
-    const endRow: ThreeWayRow = { type: 'conflict-end', oldContent: '', middleContent: '', newContent: '', lineNum: before.length + zonePart.length * 2 + 3 };
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const lineNum = row.lineNum;
+    const enteringZone = conflictZones.find((z) => z.startLine === lineNum);
+    const leavingZone = conflictZones.find((z) => z.endLine === lineNum);
 
-    finalRows.length = 0;
-    finalRows.push(...before, startRow, ...zonePart, sepRow, ...zonePart.map(r => ({ ...r, oldLineNum: r.oldLineNum, middleLineNum: undefined, newLineNum: r.newLineNum })), endRow, ...after);
-    insertOffset += zonePart.length + 3;
+    if (enteringZone) {
+      finalRowNum++;
+      finalRows.push({
+        type: 'conflict-start', oldContent: '', middleContent: '', newContent: '',
+        lineNum: finalRowNum,
+      });
+    }
+
+    finalRowNum++;
+    finalRows.push({ ...row, lineNum: finalRowNum });
+
+    if (leavingZone) {
+      finalRowNum++;
+      finalRows.push({
+        type: 'conflict-separator', oldContent: '', middleContent: '', newContent: '',
+        lineNum: finalRowNum,
+      });
+
+      const zoneStartIdx = leavingZone.startLine - 1;
+      const zoneEndIdx = leavingZone.endLine - 1;
+      for (let j = zoneStartIdx; j <= zoneEndIdx; j++) {
+        finalRowNum++;
+        finalRows.push({
+          ...rows[j],
+          lineNum: finalRowNum,
+          middleLineNum: undefined,
+        });
+      }
+
+      finalRowNum++;
+      finalRows.push({
+        type: 'conflict-end', oldContent: '', middleContent: '', newContent: '',
+        lineNum: finalRowNum,
+      });
+    }
   }
 
   if (finalRows.length === 0) finalRows.push(...rows);

@@ -82,9 +82,9 @@ describe('DiffFileList', () => {
   });
 
   it('shows unread dot for unvisited files', () => {
-    render(<DiffFileList files={sampleFiles} activeIndex={0} onFileSelect={onFileSelect} />);
-    const fileItems = screen.getAllByRole('button');
-    expect(fileItems.length).toBeGreaterThan(0);
+    const { container } = render(<DiffFileList files={sampleFiles} activeIndex={0} onFileSelect={onFileSelect} />);
+    const fileItems = container.querySelectorAll('[role="button"]');
+    expect(fileItems.length).toBeGreaterThanOrEqual(4);
   });
 
   it('shows "No files match" when search yields no results', () => {
@@ -94,11 +94,10 @@ describe('DiffFileList', () => {
     expect(screen.getByText('无匹配文件')).toBeTruthy();
   });
 
-  it('marks file as visited after click', () => {
-    const { container } = render(<DiffFileList files={sampleFiles} activeIndex={0} onFileSelect={onFileSelect} />);
-    fireEvent.click(screen.getByText('src/utils.ts'));
-    const items = container.querySelectorAll('[role="button"]');
-    expect(items.length).toBeGreaterThan(0);
+  it('fires onFileSelect with correct index for every file', () => {
+    render(<DiffFileList files={sampleFiles} activeIndex={0} onFileSelect={onFileSelect} />);
+    fireEvent.click(screen.getByText('README.md'));
+    expect(onFileSelect).toHaveBeenCalledWith(3);
   });
 });
 

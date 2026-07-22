@@ -2,8 +2,7 @@ import type { InlineToken as InlineTokenType } from '../model/diff-inline.js';
 import { escapeHtml } from '../adapters/syntax-highlight.js';
 import type { ThreeWayRowType } from '../model/diff-3way.js';
 
-function buildInlineHtml(content: string, tokens: InlineTokenType[]): string {
-  if (!content) return '';
+function buildInlineHtml(tokens: InlineTokenType[]): string {
   let result = '';
   for (const token of tokens) {
     const escaped = escapeHtml(token.text);
@@ -25,7 +24,7 @@ export function generateLineContentHtml(
   if (!inlineTokens || inlineTokens.length === 0 || type === 'context' || type === 'hunk') {
     return escaped;
   }
-  return buildInlineHtml(escaped, inlineTokens);
+  return buildInlineHtml(inlineTokens);
 }
 
 export function generateConflictMarkerHtml(rowType: ThreeWayRowType): string {

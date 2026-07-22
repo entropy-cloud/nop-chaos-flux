@@ -1,5 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
+import React from 'react';
 import { contentRendererDefinitions } from './content-renderer-definitions.js';
 import { createMockRendererProps } from './test-support.js';
 import type {
@@ -56,7 +57,7 @@ describe('contentRendererDefinitions', () => {
 
   it('every definition has a component', () => {
     for (const def of contentRendererDefinitions) {
-      expect(typeof def.component).toBe('function');
+      expect(def.component).toBeTruthy();
     }
   });
 

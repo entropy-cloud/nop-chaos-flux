@@ -1,6 +1,5 @@
-import { useState, useMemo, useCallback, useEffect, useRef, type CSSProperties } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef, useImperativeHandle, type CSSProperties, type Ref } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffViewSchema, DiffFileMeta } from '../schemas.js';
@@ -13,6 +12,15 @@ import { DiffThreeColumnView } from './components/diff-three-column-view.js';
 import { DiffFileList } from './components/diff-file-list.js';
 
 const DEBOUNCE_MS = 150;
+
+export interface DiffViewHandle {
+  toggleViewType: () => void;
+  setViewType: (type: 'split' | 'unified') => void;
+  expandAll: () => void;
+  collapseAll: () => void;
+}
+
+type ExpansionState = 'normal' | 'all-expanded' | 'all-collapsed';
 
 interface SingleFileDiffProps {
   oldContent: string;
@@ -36,6 +44,7 @@ interface SingleFileDiffProps {
   hasNextFile?: boolean;
   onPrevFile?: () => void;
   onNextFile?: () => void;
+  expansionState?: ExpansionState;
 }
 
 function SingleFileDiff({
@@ -60,6 +69,7 @@ function SingleFileDiff({
   hasNextFile,
   onPrevFile,
   onNextFile,
+  expansionState,
 }: SingleFileDiffProps) {
   const [debouncedOld, setDebouncedOld] = useState(oldContent);
   const [debouncedNew, setDebouncedNew] = useState(newContent);
@@ -82,11 +92,13 @@ function SingleFileDiff({
 
   const file = useMemo(() => computeDiffFile(debouncedOld, debouncedNew), [debouncedOld, debouncedNew]);
   const stats = useMemo(() => computeDiffStats(file), [file]);
-  const isThreeColumn = middleContent != null && middleContent !== '';
+  const hasMiddleContent = middleContent != null && middleContent !== '';
+  const effectiveCollapsedLines =
+    expansionState === 'all-expanded' ? 0 : expansionState === 'all-collapsed' ? -1 : defaultCollapsedLines;
 
   if (!visible) return null;
 
-  if (isThreeColumn) {
+  if (hasMiddleContent && viewType === 'split') {
     return (
       <div
         data-testid={testid}
@@ -109,6 +121,7 @@ function SingleFileDiff({
           oldContent={debouncedOld}
           middleContent={debouncedMid}
           newContent={debouncedNew}
+          language={debouncedLang}
           showLineNumbers={showLineNumbers}
         />
       </div>
@@ -169,7 +182,7 @@ function SingleFileDiff({
         {viewType === 'split' ? (
           <DiffSplitView
             file={file}
-            defaultCollapsedLines={defaultCollapsedLines}
+            defaultCollapsedLines={effectiveCollapsedLines}
             showLineNumbers={showLineNumbers}
             showInlineDiff={showInlineDiff}
             language={debouncedLang}
@@ -179,7 +192,7 @@ function SingleFileDiff({
         ) : (
           <DiffUnifiedView
             file={file}
-            defaultCollapsedLines={defaultCollapsedLines}
+            defaultCollapsedLines={effectiveCollapsedLines}
             showLineNumbers={showLineNumbers}
             showInlineDiff={showInlineDiff}
             language={debouncedLang}
@@ -192,10 +205,8 @@ function SingleFileDiff({
   );
 }
 
-export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) {
-  const { props: resolved, meta, events, helpers: _helpers } = props;
-  const _runtime = useRendererRuntime();
-  const _scope = useRenderScope();
+export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema> & { ref?: Ref<DiffViewHandle> }) {
+  const { ref, props: resolved, meta, events } = allProps;
 
   const {
     files,
@@ -213,9 +224,33 @@ export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) 
 
   const schemaViewType = (resolved.viewType || 'split') as 'split' | 'unified';
   const [singleViewType, setSingleViewType] = useState<'split' | 'unified'>(schemaViewType);
+  const [expansionState, setExpansionState] = useState<ExpansionState>('normal');
+  const [remountKey, setRemountKey] = useState(0);
+
   const toggleViewType = useCallback(() => {
     setSingleViewType((prev) => (prev === 'split' ? 'unified' : 'split'));
   }, []);
+
+  const handleExpandAll = useCallback(() => {
+    setExpansionState('all-expanded');
+    setRemountKey((k) => k + 1);
+  }, []);
+
+  const handleCollapseAll = useCallback(() => {
+    setExpansionState('all-collapsed');
+    setRemountKey((k) => k + 1);
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      toggleViewType,
+      setViewType: setSingleViewType,
+      expandAll: handleExpandAll,
+      collapseAll: handleCollapseAll,
+    }),
+    [toggleViewType, setSingleViewType, handleExpandAll, handleCollapseAll],
+  );
 
   if (!meta.visible) return null;
 
@@ -225,6 +260,7 @@ export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) 
     }
     return (
       <CrossFileDiffView
+        key={remountKey}
         files={files ?? []}
         activeFileIndex={resolved.activeFileIndex ?? 0}
         language={language}
@@ -233,6 +269,9 @@ export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) 
         defaultCollapsedLines={defaultCollapsedLines}
         wrapLines={wrapLines}
         schemaViewType={schemaViewType}
+        viewType={singleViewType}
+        onToggleView={toggleViewType}
+        expansionState={expansionState}
         testid={meta.testid}
         className={meta.className}
         onLineClick={(lineNumber, side, type) => events.onLineClick?.({ lineNumber, side, type })}
@@ -243,6 +282,7 @@ export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) 
 
   return (
     <SingleFileDiff
+      key={remountKey}
       oldContent={oldContent}
       newContent={newContent}
       middleContent={middleContent}
@@ -256,6 +296,7 @@ export function DiffViewRenderer(props: RendererComponentProps<DiffViewSchema>) 
       visible={meta.visible}
       testid={meta.testid}
       className={meta.className}
+      expansionState={expansionState}
       onLineClick={(lineNumber, side, type) => events.onLineClick?.({ lineNumber, side, type })}
       onHunkExpand={(hunkIndex, expanded) => events.onHunkExpand?.({ hunkIndex, expanded })}
     />
@@ -281,6 +322,9 @@ interface CrossFileDiffViewProps {
   defaultCollapsedLines: number;
   wrapLines?: boolean;
   schemaViewType: 'split' | 'unified';
+  viewType: 'split' | 'unified';
+  onToggleView: () => void;
+  expansionState?: ExpansionState;
   testid?: string;
   className?: string;
   onLineClick?: (lineNumber: number, side: 'old' | 'new', type: string) => void;
@@ -295,19 +339,17 @@ function CrossFileDiffView({
   showInlineDiff,
   defaultCollapsedLines,
   wrapLines,
-  schemaViewType,
+  viewType,
+  onToggleView,
+  expansionState,
   testid,
   className,
   onLineClick: onLineClickProp,
   onHunkExpand: onHunkExpandProp,
 }: CrossFileDiffViewProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const clampedIndex = Math.min(initialIndex, files.length - 1);
   const [activeIndex, setActiveIndex] = useState(clampedIndex);
-  const [viewType, setViewType] = useState<'split' | 'unified'>((schemaViewType || 'split') as 'split' | 'unified');
-
-  const toggleViewType = useCallback(() => {
-    setViewType((prev) => (prev === 'split' ? 'unified' : 'split'));
-  }, []);
 
   const handleFileSelect = useCallback((index: number) => {
     setActiveIndex(index);
@@ -323,6 +365,8 @@ function CrossFileDiffView({
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      const el = containerRef.current;
+      if (!el || !el.contains(e.target as Node)) return;
       if (e.ctrlKey && e.key === 'ArrowUp') {
         e.preventDefault();
         handlePrevFile();
@@ -354,7 +398,9 @@ function CrossFileDiffView({
 
   return (
     <div
+      ref={containerRef}
       data-testid={testid}
+      data-shortcuts="diff-view"
       className={cn('nop-diff-view nop-diff-view-cross-file', className)}
       style={{ display: 'flex', flexDirection: 'row', minHeight: 0, overflow: 'hidden', height: '100%' }}
     >
@@ -374,7 +420,8 @@ function CrossFileDiffView({
           defaultCollapsedLines={defaultCollapsedLines}
           wrapLines={wrapLines}
           viewType={viewType}
-          onToggleView={toggleViewType}
+          onToggleView={onToggleView}
+          expansionState={expansionState}
           onLineClick={handleLineClick}
           onHunkExpand={handleHunkExpand}
           visible={true}

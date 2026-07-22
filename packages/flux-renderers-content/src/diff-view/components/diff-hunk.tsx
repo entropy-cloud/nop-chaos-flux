@@ -28,7 +28,8 @@ export const DiffHunkComponent = memo(function DiffHunkComponent({
   onLineClick,
 }: DiffHunkProps) {
   const [isHidden, setIsHidden] = useState(() => {
-    if (defaultCollapsedLines <= 0) return false;
+    if (defaultCollapsedLines < 0) return true;
+    if (defaultCollapsedLines === 0) return false;
     const contextLines = hunk.lines.filter((l) => l.type === 'context').length;
     return contextLines > defaultCollapsedLines;
   });
@@ -102,6 +103,7 @@ function areHunkPropsEqual(prev: DiffHunkProps, next: DiffHunkProps): boolean {
     prev.hunk === next.hunk &&
     prev.inlineTokensMap === next.inlineTokensMap &&
     prev.highlightedHtmlMap === next.highlightedHtmlMap &&
-    prev.onLineClick === next.onLineClick
+    prev.onLineClick === next.onLineClick &&
+    prev.onHunkExpand === next.onHunkExpand
   );
 }
