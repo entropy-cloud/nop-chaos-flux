@@ -790,7 +790,7 @@ Packages that copy-assemble `.css` files to `dist/` via `copy-build-assets.mjs` 
 | `@apply bg-green-400`                 | `background-color: #4ade80;`                                          |
 | `@apply ring-2 ring-red-500`          | `box-shadow: 0 0 0 2px #ef4444;`                                      |
 
-If a package does need Tailwind-processed CSS, add a PostCSS build step with `tailwindcss` as a devDependency rather than using `copy-build-assets.mjs`. Currently no package does this; `calendar.css` in `flux-renderers-scheduling` was the last `@apply` user and has been resolved to standard CSS.
+If a package does need Tailwind-processed CSS, add a PostCSS build step with `tailwindcss` as a devDependency rather than using `copy-build-assets.mjs`. Currently no package does this; `calendar.css`, `kanban.css`, and `gantt.css` in `flux-renderers-scheduling` have all been resolved to standard CSS (audited 2026-07-23 — zero `@apply` across the entire monorepo).
 
 ## Non-Goals
 
