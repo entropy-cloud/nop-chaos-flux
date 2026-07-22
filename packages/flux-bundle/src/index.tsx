@@ -3,8 +3,11 @@ import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createDefaultEnv, createSchemaRenderer } from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
+import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form/definitions';
+import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import './style.css';
 
 import type {
@@ -33,7 +36,10 @@ export const FLUX_ROOT_CLASS = 'nop-flux-root';
 export function registerDefaultFluxRenderers(registry: FluxRendererRegistry): FluxRendererRegistry {
   registerBasicRenderers(registry);
   registerFormRenderers(registry);
+  registerFormAdvancedRenderers(registry);
   registerDataRenderers(registry);
+  registerContentRenderers(registry);
+  registerLayoutRenderers(registry);
   return registry;
 }
 
