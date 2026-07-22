@@ -227,7 +227,7 @@ src/
 
 ### 后续阶段（历史归档）
 
-以下为原始发布计划。目前 **P1-P6** 已全部交付。
+以下为原始发布计划。目前 **P1-P6** 已全部交付。**ZXing ponyfill** 已于 2026-07-22 交付，参见 `docs/plans/2026-07-22-0945-2-barcode-design-drift-completion.md`。
 
 - **P1**：core hook（`useBarcodeCamera` + `useBarcodeDetect`）+ 基础 renderer + 全屏覆盖层 UI ✅
 - **P2**：`onScan`/`onScanError` 事件 + `scanNow`/`stopScan` 句柄 ✅

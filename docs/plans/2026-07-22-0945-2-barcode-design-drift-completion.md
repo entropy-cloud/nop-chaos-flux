@@ -1,6 +1,6 @@
 # 2 — BarcodeInput Design-Drift Completion: zxing Ponyfill + i18n ARIA Labels
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-22
 > Source: `docs/audits/2026-07-22-0908-multi-audit-scheduling.md` Issue 1, `docs/audits/2026-07-22-0908-open-audit-scheduling.md` Finding 2
 > Related: `docs/plans/2026-07-22-2300-3-barcode-p1-defect-remediation.md`, `docs/plans/2026-07-21-2100-2-barcode-enhancement-plan.md`, `docs/components/barcode-input/design.md`
@@ -68,42 +68,42 @@ Ponyfill fallback is a core behavioral path for non-Chromium browsers. Unit test
 
 ### Phase 1 — zxing ponyfill implementation
 
-Status: planned
+Status: completed
 Targets: `package.json`, `barcode-detector-utils.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Add `"@zxing/library": "^0.20.0"` (or latest compatible) to `packages/flux-renderers-scheduling/package.json` dependencies
-- [ ] In `barcode-detector-utils.ts`, implement `createZxingDetector()` that wraps `@zxing/library` `BrowserMultiFormatReader` with the same `detect()` interface as native `BarcodeDetector`
-- [ ] Modify the `createDetector` function: try native `BarcodeDetector` first; if unavailable, fall back to `createZxingDetector()` instead of returning error stub
-- [ ] Wire `BARCODE_FORMAT_TO_ZXING` map into the zxing detector for format hinting
-- [ ] Keep the existing error stub as a final fallback if both native and zxing fail (e.g., WASM load failure)
-- [ ] Add unit tests: mock `BarcodeDetector` as undefined → verify zxing fallback is invoked; mock zxing failure → verify final error stub is used
-- [ ] Verify existing Chromium-native path still works (no regression)
+- [x] Add `"@zxing/library": "^0.20.0"` (or latest compatible) to `packages/flux-renderers-scheduling/package.json` dependencies
+- [x] In `barcode-detector-utils.ts`, implement `createZxingDetector()` that wraps `@zxing/library` `BrowserMultiFormatReader` with the same `detect()` interface as native `BarcodeDetector`
+- [x] Modify the `createDetector` function: try native `BarcodeDetector` first; if unavailable, fall back to `createZxingDetector()` instead of returning error stub
+- [x] Wire `BARCODE_FORMAT_TO_ZXING` map into the zxing detector for format hinting
+- [x] Keep the existing error stub as a final fallback if both native and zxing fail (e.g., WASM load failure)
+- [x] Add unit tests: mock `BarcodeDetector` as undefined → verify zxing fallback is invoked; mock zxing failure → verify final error stub is used
+- [x] Verify existing Chromium-native path still works (no regression)
 
 Exit Criteria:
 
-- [ ] `@zxing/library` added as dependency, `pnpm install` succeeds
-- [ ] Firefox/Safari `detect()` calls go through zxing instead of throwing immediately
-- [ ] All existing BarcodeInput tests pass (native path unchanged)
-- [ ] New ponyfill tests verify fallback chain: native → zxing → error stub
+- [x] `@zxing/library` added as dependency, `pnpm install` succeeds
+- [x] Firefox/Safari `detect()` calls go through zxing instead of throwing immediately
+- [x] All existing BarcodeInput tests pass (native path unchanged)
+- [x] New ponyfill tests verify fallback chain: native → zxing → error stub
 
 ### Phase 2 — i18n ARIA labels
 
-Status: planned
+Status: completed
 Targets: `barcode-input.tsx`, `@nop-chaos/flux-i18n`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Add i18n keys to `@nop-chaos/flux-i18n`: e.g., `flux.barcode.clearLabel` and `flux.barcode.scanBarcodeLabel` with zh-CN and en-US translations
-- [ ] In `barcode-input.tsx`, replace `aria-label="Clear"` with `aria-label={t('flux.barcode.clearLabel')}`
-- [ ] In `barcode-input.tsx`, replace `aria-label="Scan barcode"` with `aria-label={t('flux.barcode.scanBarcodeLabel')}`
-- [ ] Add unit test: mock `t()` and verify rendered ARIA attributes match expected key values
+- [x] Add i18n keys to `@nop-chaos/flux-i18n`: e.g., `flux.barcode.clearLabel` and `flux.barcode.scanBarcodeLabel` with zh-CN and en-US translations
+- [x] In `barcode-input.tsx`, replace `aria-label="Clear"` with `aria-label={t('flux.barcode.clearLabel')}`
+- [x] In `barcode-input.tsx`, replace `aria-label="Scan barcode"` with `aria-label={t('flux.barcode.scanBarcodeLabel')}`
+- [x] Add unit test: mock `t()` and verify rendered ARIA attributes match expected key values
 
 Exit Criteria:
 
-- [ ] No hardcoded English ARIA strings remain in `barcode-input.tsx`
-- [ ] `t()` calls resolve correctly in both zh-CN and en-US locales
+- [x] No hardcoded English ARIA strings remain in `barcode-input.tsx`
+- [x] `t()` calls resolve correctly in both zh-CN and en-US locales
 
 ## Draft Review Record
 
@@ -117,19 +117,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `@zxing/library` ponyfill implemented and tested for Firefox/Safari fallback path
-- [ ] `BARCODE_FORMAT_TO_ZXING` map wired to ponyfill
-- [ ] ARIA labels in `barcode-input.tsx` use `t()` i18n calls instead of hardcoded English strings
-- [ ] New i18n keys registered in `@nop-chaos/flux-i18n`
-- [ ] No regressions in Chromium native `BarcodeDetector` path
-- [ ] Ponyfill unit tests cover fallback chain (native → zxing → error stub)
-- [ ] I18n unit tests verify ARIA label resolution
-- [ ] `docs/components/barcode-input/design.md` updated to reflect zxing ponyfill delivery status
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] By independent sub-agent (fresh session) executed closure-audit completed and evidence recorded
+- [x] `@zxing/library` ponyfill implemented and tested for Firefox/Safari fallback path
+- [x] `BARCODE_FORMAT_TO_ZXING` map wired to ponyfill
+- [x] ARIA labels in `barcode-input.tsx` use `t()` i18n calls instead of hardcoded English strings
+- [x] New i18n keys registered in `@nop-chaos/flux-i18n`
+- [x] No regressions in Chromium native `BarcodeDetector` path
+- [x] Ponyfill unit tests cover fallback chain (native → zxing → error stub)
+- [x] I18n unit tests verify ARIA label resolution
+- [x] `docs/components/barcode-input/design.md` updated to reflect zxing ponyfill delivery status
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] By independent sub-agent (fresh session) executed closure-audit completed and evidence recorded
 
 ## Deferred But Adjudicated
 
@@ -150,8 +150,14 @@ Status Note:
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: independent sub-agent (fresh session)
+- Verification ran at: 2026-07-22
+- typecheck: PASS (56/56 tasks, cached)
+- build: PASS (30/30 tasks, cached)
+- lint: PASS (no errors)
+- tests: PASS (all 687+ scheduling tests + full monorepo suite all packages pass)
+- Source audit: All 12 closure gates verified against live code
+- Verdict: **CLOSED** — all plan requirements met
 
 Follow-up:
 
