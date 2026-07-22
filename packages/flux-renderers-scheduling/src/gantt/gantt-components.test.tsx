@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { GanttStore } from './gantt-store.js';
-import { GanttStoreProvider } from './gantt-context.js';
 import { GanttGrid } from './gantt-grid.js';
 import { GanttBars } from './gantt-bars.js';
 import { GanttLinks } from './gantt-links.js';
@@ -12,7 +11,6 @@ import { GanttCellGrid } from './gantt-cellgrid.js';
 import { GanttHeader } from './gantt-header.js';
 import { GanttLayout } from './gantt-layout.js';
 import type { GanttTaskData, GanttLinkData } from './gantt.types.js';
-
 import type { GanttZoomLevel } from './gantt.types.js';
 
 const DEFAULT_ZOOM_LEVELS: GanttZoomLevel[] = [
@@ -27,17 +25,13 @@ function createStore(tasks: GanttTaskData[], links: GanttLinkData[] = []) {
   return store;
 }
 
-function renderWithStore(ui: React.ReactElement, store: GanttStore) {
-  return render(<GanttStoreProvider store={store}>{ui}</GanttStoreProvider>);
-}
-
 describe('GanttGrid', () => {
   it('should render correct number of rows from task data', () => {
     const store = createStore([
       { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
       { id: 't2', text: 'Task 2', start: '2026-01-05', end: '2026-01-15' },
     ]);
-    const { container } = renderWithStore(<GanttGrid />, store);
+    const { container } = render(<GanttGrid store={store} />);
     const rows = container.querySelectorAll('[data-slot="gantt-grid-row"]');
     expect(rows.length).toBe(2);
   });
@@ -46,7 +40,7 @@ describe('GanttGrid', () => {
     const store = createStore([
       { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    const { container } = renderWithStore(<GanttGrid />, store);
+    const { container } = render(<GanttGrid store={store} />);
     const headers = container.querySelectorAll('[data-slot="gantt-grid-header"] th');
     expect(headers.length).toBeGreaterThanOrEqual(3);
   });
@@ -55,7 +49,7 @@ describe('GanttGrid', () => {
     const store = createStore([
       { id: 't1', text: 'My Task', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    renderWithStore(<GanttGrid />, store);
+    render(<GanttGrid store={store} />);
     expect(screen.getByText('My Task')).toBeTruthy();
   });
 
@@ -64,7 +58,7 @@ describe('GanttGrid', () => {
       { id: 'p1', text: 'Parent', start: '2026-01-01', end: '2026-01-10' },
       { id: 'c1', text: 'Child', start: '2026-01-02', end: '2026-01-08', parent: 'p1' },
     ], []);
-    const { container } = renderWithStore(<GanttGrid />, store);
+    const { container } = render(<GanttGrid store={store} />);
     const rows = container.querySelectorAll('[data-slot="gantt-grid-row"]');
     expect(rows.length).toBe(2);
   });
@@ -75,7 +69,7 @@ describe('GanttBars', () => {
     const store = createStore([
       { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    const { container } = renderWithStore(<GanttBars />, store);
+    const { container } = render(<GanttBars store={store} />);
     const bars = container.querySelectorAll('[data-slot="gantt-bar"]');
     expect(bars.length).toBe(1);
     const task = store.tasks.get('t1')!;
@@ -88,7 +82,7 @@ describe('GanttBars', () => {
     const store = createStore([
       { id: 't1', text: 'M1', start: '2026-01-05', end: '2026-01-05', type: 'milestone' },
     ]);
-    const { container } = renderWithStore(<GanttBars />, store);
+    const { container } = render(<GanttBars store={store} />);
     const milestones = container.querySelectorAll('[data-bar-type="milestone"]');
     expect(milestones.length).toBe(1);
   });
@@ -97,7 +91,7 @@ describe('GanttBars', () => {
     const store = createStore([
       { id: 't1', text: 'Task', start: '2026-01-01', end: '2026-01-10', progress: 50 },
     ]);
-    const { container } = renderWithStore(<GanttBars />, store);
+    const { container } = render(<GanttBars store={store} />);
     const progress = container.querySelectorAll('[data-slot="gantt-bar-progress"]');
     expect(progress.length).toBe(1);
   });
@@ -112,7 +106,7 @@ describe('GanttLinks', () => {
       ],
       [{ id: 'l1', source: 't1', target: 't2', type: 'finish_to_start' }],
     );
-    const { container } = renderWithStore(<svg><GanttLinks /></svg>, store);
+    const { container } = render(<svg><GanttLinks store={store} /></svg>);
     const polylines = container.querySelectorAll('polyline');
     expect(polylines.length).toBeGreaterThanOrEqual(1);
   });
@@ -121,7 +115,7 @@ describe('GanttLinks', () => {
     const store = createStore([
       { id: 't1', text: 'Task', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    const { container } = renderWithStore(<svg><GanttLinks /></svg>, store);
+    const { container } = render(<svg><GanttLinks store={store} /></svg>);
     const polylines = container.querySelectorAll('polyline');
     expect(polylines.length).toBe(0);
   });
@@ -132,7 +126,7 @@ describe('GanttMarkers', () => {
     const store = createStore([
       { id: 't1', text: 'Task', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    const { container } = renderWithStore(<GanttMarkers showToday={true} />, store);
+    const { container } = render(<GanttMarkers store={store} showToday={true} />);
     const todayLine = container.querySelector('[data-slot="gantt-today"]');
     expect(todayLine).toBeTruthy();
   });
@@ -141,7 +135,7 @@ describe('GanttMarkers', () => {
     const store = createStore([
       { id: 't1', text: 'Task', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    const { container } = renderWithStore(<GanttMarkers showToday={false} />, store);
+    const { container } = render(<GanttMarkers store={store} showToday={false} />);
     const todayLine = container.querySelector('[data-slot="gantt-today"]');
     expect(todayLine).toBeNull();
   });
@@ -152,7 +146,7 @@ describe('GanttTimeScale', () => {
     const store = createStore([
       { id: 't1', text: 'Task', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    const { container } = renderWithStore(<GanttTimeScale />, store);
+    const { container } = render(<GanttTimeScale store={store} />);
     const cells = container.querySelectorAll('[data-slot="gantt-scale-cell"]');
     expect(cells.length).toBeGreaterThan(0);
   });
@@ -163,7 +157,7 @@ describe('GanttCellGrid', () => {
     const store = createStore([
       { id: 't1', text: 'Task', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    const { container } = renderWithStore(<GanttCellGrid showWeekends={true} />, store);
+    const { container } = render(<GanttCellGrid store={store} showWeekends={true} />);
     const cells = container.querySelectorAll('[data-slot="gantt-weekend"]');
     expect(cells.length).toBeGreaterThan(0);
   });
@@ -174,7 +168,7 @@ describe('GanttHeader', () => {
     const store = createStore([
       { id: 't1', text: 'Task', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    const { container } = renderWithStore(<GanttHeader />, store);
+    const { container } = render(<GanttHeader store={store} />);
     const toolbar = container.querySelector('[data-slot="gantt-toolbar"]');
     expect(toolbar).toBeTruthy();
   });
@@ -182,16 +176,12 @@ describe('GanttHeader', () => {
 
 describe('GanttLayout', () => {
   it('should render grid and timeline panels', () => {
-    const store = createStore([
-      { id: 't1', text: 'Task', start: '2026-01-01', end: '2026-01-10' },
-    ]);
-    renderWithStore(
+    render(
       <GanttLayout
         grid={<div data-testid="grid-panel">Grid</div>}
         timeline={<div data-testid="timeline-panel">Timeline</div>}
         header={<div data-testid="header-panel">Header</div>}
       />,
-      store,
     );
     expect(screen.getByTestId('grid-panel')).toBeTruthy();
     expect(screen.getByTestId('timeline-panel')).toBeTruthy();

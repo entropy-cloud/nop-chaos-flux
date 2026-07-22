@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { cn, Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData, BoardItem, KanbanCardConfig } from './kanban.types.js';
@@ -87,7 +87,7 @@ export function KanbanColumn({
     .map((id) => board[id])
     .filter((item): item is BoardItem => item != null && item.type === 'card');
 
-  const filteredCards = useMemo(() => {
+  const filteredCards = (() => {
     let result = cards;
     if (filterText) {
       const text = filterText.toLowerCase();
@@ -108,7 +108,7 @@ export function KanbanColumn({
       result = result.filter(filterCardFn);
     }
     return result;
-  }, [cards, filterText, selectedTagIds, filterCardFn]);
+  })();
 
   useEffect(() => {
     if (!registerColumn || !columnRef.current) return;
@@ -122,7 +122,7 @@ export function KanbanColumn({
     };
   }, [registerColumn, column.id, filteredCards.length, registerBoardDropZone, board]);
 
-  const displayCards = useMemo(() => collapsed ? [] : filteredCards, [collapsed, filteredCards]);
+  const displayCards = collapsed ? [] : filteredCards;
   const showEmptyZone = !collapsed && filteredCards.length === 0;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -147,7 +147,7 @@ export function KanbanColumn({
 
   const [rovingIndex, setRovingIndex] = useState<number | null>(null);
 
-  const handleCardKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
+  const handleCardKeyDown = (e: React.KeyboardEvent, idx: number) => {
     const cards = displayCards;
     switch (e.key) {
       case 'ArrowDown': {
@@ -173,7 +173,7 @@ export function KanbanColumn({
         break;
       }
     }
-  }, [displayCards]);
+  };
 
   const cardContainerRef = useRef<HTMLUListElement>(null);
 

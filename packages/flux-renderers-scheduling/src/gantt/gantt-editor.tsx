@@ -2,9 +2,10 @@ import React, { useId, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, Label, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
-import { useGanttStore } from './gantt-context.js';
+import type { GanttStoreApi } from './gantt.types.js';
 
 interface GanttEditorProps {
+  store: GanttStoreApi;
   editorRegion?: RenderRegionHandle;
   className?: string;
   editingTaskId?: string | number | null;
@@ -12,8 +13,7 @@ interface GanttEditorProps {
   onBarDoubleClick?: (taskId: string | number) => void;
 }
 
-export function GanttEditor({ editorRegion, className, editingTaskId, onClose }: GanttEditorProps) {
-  const store = useGanttStore();
+export function GanttEditor({ store, editorRegion, className, editingTaskId, onClose }: GanttEditorProps) {
   const instanceId = useId();
 
   const textRef = useRef<HTMLInputElement>(null);

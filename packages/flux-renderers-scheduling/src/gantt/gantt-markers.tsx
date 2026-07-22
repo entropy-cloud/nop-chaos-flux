@@ -1,17 +1,17 @@
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { useGanttStore, useGanttLayoutSnapshot } from './gantt-context.js';
+import type { GanttStoreApi } from './gantt.types.js';
 import { dateToPixel } from './utils/layout.js';
 
 interface GanttMarkersProps {
+  store: GanttStoreApi;
   showToday?: boolean;
   className?: string;
 }
 
-export function GanttMarkers({ showToday = true, className }: GanttMarkersProps) {
-  const store = useGanttStore();
-  useGanttLayoutSnapshot();
+export function GanttMarkers({ store, showToday = true, className }: GanttMarkersProps) {
+  useSyncExternalStore(store.subscribe, () => store.layoutRevision);
 
   const tasks = store.getVisibleTasks();
   const totalHeight = tasks.length > 0

@@ -7,7 +7,7 @@
  * Gantt uses Zustand + Context (deeper tree, more inter-component subscriptions).
  * Calendar uses custom hooks (view state localized to scroll/navigation hooks).
  */
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { cn, Button, Input, Label } from '@nop-chaos/ui';
@@ -71,7 +71,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const collapsedOwnership = (resolved.collapsedOwnership as string) || 'local';
   const collapsedStatePath = resolved.collapsedStatePath as string | undefined;
 
-  const fallbackBoard = useMemo(() => ({ root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData), []);
+  const fallbackBoard = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
 
   const scopeBoardData = useScopeSelector(
     (data: Record<string, unknown>) => {
@@ -98,15 +98,13 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const [localBoardData, setLocalBoardData] = useState<BoardData>(rawData ?? fallbackBoard);
   const [localCollapsedData, setLocalCollapsedData] = useState<Record<string, boolean>>({});
 
-  const boardData = useMemo(() => {
-    if (kanbanOwnership === 'controlled') return rawData ?? fallbackBoard;
-    if (kanbanOwnership === 'scope' && scopeBoardData) return scopeBoardData;
-    return localBoardData;
-  }, [kanbanOwnership, rawData, fallbackBoard, scopeBoardData, localBoardData]);
+  const boardData = (kanbanOwnership === 'controlled')
+    ? (rawData ?? fallbackBoard)
+    : (kanbanOwnership === 'scope' && scopeBoardData ? scopeBoardData : localBoardData);
 
-  const columns = useMemo(() => getColumns(boardData), [boardData]);
+  const columns = getColumns(boardData);
 
-  const collapsedMap = useMemo(() => {
+  const collapsedMap = (() => {
     if (collapsedOwnership === 'controlled') {
       const map: Record<string, boolean> = {};
       if (columnsConfig) {
@@ -120,9 +118,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     }
     if (collapsedOwnership === 'scope' && scopeCollapsedValue) return scopeCollapsedValue;
     return localCollapsedData;
-  }, [collapsedOwnership, columnsConfig, scopeCollapsedValue, localCollapsedData]);
+  })();
 
-  const setCollapsedMap = useCallback((updater: React.SetStateAction<Record<string, boolean>>) => {
+  const setCollapsedMap = (updater: React.SetStateAction<Record<string, boolean>>) => {
     if (collapsedOwnership === 'controlled') return;
     const current = typeof updater === 'function' ? updater(collapsedMap) : updater;
     if (collapsedOwnership === 'scope' && collapsedStatePath) {
@@ -130,7 +128,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       return;
     }
     setLocalCollapsedData(current);
-  }, [collapsedOwnership, collapsedStatePath, rootScope, collapsedMap, setLocalCollapsedData]);
+  };
 
   const setBoardData = useCallback((newBoard: BoardData) => {
     if (kanbanOwnership === 'controlled') return;
@@ -205,7 +203,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     if (restoredBoard) {
       setBoardData(restoredBoard);
     }
-  }, [setBoardData, boardData]);
+  }, [boardData, setBoardData]);
 
   const handleRedo = useCallback(() => {
     let restoredBoard: BoardData | null = null;
@@ -220,7 +218,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     if (restoredBoard) {
       setBoardData(restoredBoard);
     }
-  }, [setBoardData, boardData]);
+  }, [boardData, setBoardData]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -244,7 +242,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const allTags = collectAllTags(boardData, columns);
 
-  const filterCardFn = useMemo(() => {
+  const filterCardFn = (() => {
     const raw = resolved.filterCard;
     if (!raw) return undefined;
     if (typeof raw === 'function') return raw as (card: Record<string, any>, text: string) => boolean;
@@ -266,11 +264,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       }
     }
     return undefined;
-  }, [resolved.filterCard, runtime, rootScope]);
+  })();
 
   const filter = useKanbanFilter({ filterText: resolved.filterText as string | undefined, filterCard: filterCardFn });
 
-  const wipOverLimitColumns = useMemo(() => {
+  const wipOverLimitColumns = (() => {
     const overLimit = new Set<string>();
     for (const col of columns) {
       const colData = boardData[col.id];
@@ -284,7 +282,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       }
     }
     return overLimit;
-  }, [boardData, columns, wipStrictGlobal]);
+  })();
 
   const handleCardMoveBoardChange = (newBoard: BoardData, cardId?: string, fromColumnId?: string, toColumnId?: string, fromIndex?: number, toIndex?: number) => {
     lastCommandTypeRef.current = 'moveCard';

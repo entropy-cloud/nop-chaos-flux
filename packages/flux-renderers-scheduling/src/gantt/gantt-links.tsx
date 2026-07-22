@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { cn } from '@nop-chaos/ui';
-import { useGanttStore, useGanttLinkSnapshot, useGanttLayoutSnapshot } from './gantt-context.js';
+import type { GanttStoreApi } from './gantt.types.js';
 import { diffInDays } from './utils/date.js';
 
 interface GanttLinksProps {
+  store: GanttStoreApi;
   className?: string;
   onLinkClick?: (linkId: string | number) => void;
 }
 
-export function GanttLinks({ className, onLinkClick }: GanttLinksProps) {
-  const store = useGanttStore();
-  useGanttLinkSnapshot();
-  useGanttLayoutSnapshot();
+export function GanttLinks({ store, className, onLinkClick }: GanttLinksProps) {
+  useSyncExternalStore(store.subscribe, () => store.linkRevision);
+  useSyncExternalStore(store.subscribe, () => store.layoutRevision);
   const [hoveredLink, setHoveredLink] = useState<string | number | null>(null);
 
   const tasks = store.getVisibleTasks();
@@ -97,7 +97,7 @@ export function GanttLinks({ className, onLinkClick }: GanttLinksProps) {
                   tabIndex={0}
                   aria-label="Delete link"
                 >
-                  ×
+                  &times;
                 </div>
               </foreignObject>
             )}

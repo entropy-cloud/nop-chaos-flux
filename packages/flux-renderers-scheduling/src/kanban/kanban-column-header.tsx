@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
 import type { BoardItem } from './kanban.types.js';
@@ -102,14 +102,15 @@ export function KanbanColumnHeader({
       )}>
         {wipText ?? cardCount}
       </span>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={onToggleCollapse}
-        className="p-0.5 rounded hover:bg-gray-100 text-gray-400"
+        className="p-0.5 h-auto text-gray-400"
         aria-label={collapsed ? t('scheduling.kanban.expandColumn') : t('scheduling.kanban.collapseColumn')}
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-      </button>
+      </Button>
       {columnHeaderToolbarRegion?.render()}
     </div>
   );

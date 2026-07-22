@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { render } from '@testing-library/react';
 import { GanttStore } from './gantt-store.js';
-import { GanttStoreProvider } from './gantt-context.js';
 import { GanttEditor } from './gantt-editor.js';
 import type { GanttTaskData } from './gantt.types.js';
 
@@ -159,9 +158,7 @@ describe('Gantt interaction primitives', () => {
       ], []);
       store.editTask('t1');
       render(
-        <GanttStoreProvider store={store}>
-          <GanttEditor editingTaskId="t1" />
-        </GanttStoreProvider>,
+        <GanttEditor store={store} editingTaskId="t1" />,
       );
       const textInput = document.querySelector<HTMLInputElement>('input[id$="-edit-text"]');
       expect(textInput).toBeTruthy();

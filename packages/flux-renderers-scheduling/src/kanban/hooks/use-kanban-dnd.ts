@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { draggable, dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import type { BoardData } from '../kanban.types.js';
@@ -91,7 +91,7 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
     });
   }, []);
 
-  const registerCard = useCallback((
+  const registerCard = (
     element: HTMLElement, cardId: string, columnId: string, index: number,
   ) => {
     return combine(
@@ -133,9 +133,9 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
         },
       }),
     );
-  }, []);
+  };
 
-  const registerColumn = useCallback((
+  const registerColumn = (
     element: HTMLElement, columnId: string, cardCount: number,
   ) => {
     return dropTargetForElements({
@@ -159,9 +159,9 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
         );
       },
     });
-  }, [wipOverLimitColumns]);
+  };
 
-  const moveCardKeyboard = useCallback((
+  const moveCardKeyboard = (
     boardData: BoardData,
     cardId: string,
     fromColumnId: string,
@@ -183,7 +183,7 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
       toIndex,
       overLimit: wipSet?.has(toColumnId) ?? false,
     });
-  }, []);
+  };
 
   return {
     dragState,

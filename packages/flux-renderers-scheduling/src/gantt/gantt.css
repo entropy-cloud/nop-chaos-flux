@@ -1,5 +1,17 @@
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .nop-gantt {
-  @apply flex flex-col h-full min-h-0 bg-white text-sm;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background-color: #fff;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
 .nop-gantt-grid [data-slot='gantt-grid-row']:hover {
@@ -7,7 +19,9 @@
 }
 
 .nop-gantt-grid [data-slot='gantt-grid-cell'] {
-  @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nop-gantt [data-slot='gantt-bar']:hover {
@@ -43,11 +57,14 @@
 }
 
 .nop-gantt-skeleton {
-  @apply animate-pulse;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .nop-gantt-skeleton-row {
-  @apply h-10 bg-gray-100 rounded mb-1;
+  height: 2.5rem;
+  background-color: #f3f4f6;
+  border-radius: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 
 .nop-gantt [data-slot='gantt-weekend'][data-weekend='true'] {
@@ -63,7 +80,8 @@
 }
 
 .nop-gantt [data-bar-type='project'] {
-  @apply border border-dashed;
+  border-width: 1px;
+  border-style: dashed;
 }
 
 .nop-gantt-bar-task {

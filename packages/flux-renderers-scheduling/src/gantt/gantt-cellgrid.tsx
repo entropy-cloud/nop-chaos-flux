@@ -1,17 +1,17 @@
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { cn } from '@nop-chaos/ui';
-import { useGanttStore, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
+import type { GanttStoreApi } from './gantt.types.js';
 import { computeScaleIntervals } from './utils/scale.js';
 
 interface GanttCellGridProps {
+  store: GanttStoreApi;
   showWeekends?: boolean;
   className?: string;
 }
 
-export function GanttCellGrid({ showWeekends = true, className }: GanttCellGridProps) {
-  const store = useGanttStore();
-  useGanttLayoutSnapshot();
-  useGanttTreeSnapshot();
+export function GanttCellGrid({ store, showWeekends = true, className }: GanttCellGridProps) {
+  useSyncExternalStore(store.subscribe, () => store.layoutRevision);
+  useSyncExternalStore(store.subscribe, () => store.treeRevision);
 
   const tasks = store.getVisibleTasks();
   const totalHeight = tasks.length * store.rowHeight;

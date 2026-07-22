@@ -1,16 +1,16 @@
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { cn } from '@nop-chaos/ui';
-import { useGanttStore, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
+import type { GanttStoreApi } from './gantt.types.js';
 import { computeScaleIntervals } from './utils/scale.js';
 
 interface GanttTimeScaleProps {
+  store: GanttStoreApi;
   className?: string;
 }
 
-export function GanttTimeScale({ className }: GanttTimeScaleProps) {
-  const store = useGanttStore();
-  useGanttLayoutSnapshot();
-  useGanttTreeSnapshot();
+export function GanttTimeScale({ store, className }: GanttTimeScaleProps) {
+  useSyncExternalStore(store.subscribe, () => store.layoutRevision);
+  useSyncExternalStore(store.subscribe, () => store.treeRevision);
 
   const rows = (() => {
     const zoom = store.zoomLevels.get(store.currentZoom);

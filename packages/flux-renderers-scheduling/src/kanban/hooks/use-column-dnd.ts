@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { draggable, dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import type { BoardData } from '../kanban.types.js';
 import { moveColumn } from '../kanban-helpers.js';
@@ -51,7 +51,7 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder, enable
     });
   }, [enabled]);
 
-  const registerColumnHeader = useCallback((
+  const registerColumnHeader = (
     element: HTMLElement, columnId: string,
   ) => {
     if (enabled === false) return () => {};
@@ -62,9 +62,9 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder, enable
         columnId,
       }),
     });
-  }, [enabled]);
+  };
 
-  const registerBoardDropZone = useCallback((
+  const registerBoardDropZone = (
     element: HTMLElement, columnIndex: number,
   ) => {
     return dropTargetForElements({
@@ -77,7 +77,7 @@ export function useColumnDnd({ boardData, onBoardChange, onColumnReorder, enable
         return source.data.type === 'kanban-column-header';
       },
     });
-  }, []);
+  };
 
   return {
     registerColumnHeader,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Label, Input, cn } from '@nop-chaos/ui';
+import { Button, Label, Input, NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
 interface SchedulerConfigProps {
@@ -60,28 +60,26 @@ export function SchedulerConfig({ className, onScheduleAction }: SchedulerConfig
       <div className="grid gap-2">
         <div>
           <Label>{t('scheduling.gantt.direction')}</Label>
-          <select
+          <NativeSelect
             value={direction}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDirection(e.target.value as 'forward' | 'backward')}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="forward">{t('scheduling.gantt.forward')}</option>
-            <option value="backward">{t('scheduling.gantt.backward')}</option>
-          </select>
+            <NativeSelectOption value="forward">{t('scheduling.gantt.forward')}</NativeSelectOption>
+            <NativeSelectOption value="backward">{t('scheduling.gantt.backward')}</NativeSelectOption>
+          </NativeSelect>
         </div>
 
         <div>
           <Label>{t('scheduling.gantt.constraintType')}</Label>
-          <select
+          <NativeSelect
             value={constraintType}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setConstraintType(e.target.value as 'SNET' | 'SNLT' | 'FNET' | 'FNLT')}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="SNET">{'Start No Earlier Than'}</option>
-            <option value="SNLT">{'Start No Later Than'}</option>
-            <option value="FNET">{'Finish No Earlier Than'}</option>
-            <option value="FNLT">{'Finish No Later Than'}</option>
-          </select>
+            <NativeSelectOption value="SNET">{'Start No Earlier Than'}</NativeSelectOption>
+            <NativeSelectOption value="SNLT">{'Start No Later Than'}</NativeSelectOption>
+            <NativeSelectOption value="FNET">{'Finish No Earlier Than'}</NativeSelectOption>
+            <NativeSelectOption value="FNLT">{'Finish No Later Than'}</NativeSelectOption>
+          </NativeSelect>
         </div>
 
         <div>

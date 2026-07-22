@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState, useRef, useSyncExternalStore, useCallback, useEffectEvent } from 'react';
+import { useEffect, useState, useRef, useSyncExternalStore, useEffectEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, cn } from '@nop-chaos/ui';
 import { X, Flashlight, FlashlightOff, ScanLine, Check, XCircle, Trash2 } from 'lucide-react';
@@ -49,32 +49,29 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   } = props;
 
   const [queueStore] = useState(() => createBarcodeQueueStore());
-  const getSnapshot = useCallback(() => getAllItems(queueStore), [queueStore]);
-  const subscribe = useCallback((onStoreChange: () => void) => queueStore.subscribe(onStoreChange), [queueStore]);
+  const getSnapshot = () => getAllItems(queueStore);
+  const subscribe = (onStoreChange: () => void) => queueStore.subscribe(onStoreChange);
   const queueItems = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   const [phase, setPhase] = useState<'loading' | 'scanning' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  const subscribeOnline = useCallback(
-    (onStoreChange: () => void) => {
-      window.addEventListener('online', onStoreChange);
-      window.addEventListener('offline', onStoreChange);
-      return () => {
-        window.removeEventListener('online', onStoreChange);
-        window.removeEventListener('offline', onStoreChange);
-      };
-    },
-    [],
-  );
+  const subscribeOnline = (onStoreChange: () => void) => {
+    window.addEventListener('online', onStoreChange);
+    window.addEventListener('offline', onStoreChange);
+    return () => {
+      window.removeEventListener('online', onStoreChange);
+      window.removeEventListener('offline', onStoreChange);
+    };
+  };
 
-  const getOnlineSnapshot = useCallback(() => navigator.onLine, []);
+  const getOnlineSnapshot = () => navigator.onLine;
 
   const isOnline = useSyncExternalStore(subscribeOnline, getOnlineSnapshot, () => true);
   const camera = useBarcodeCamera({ videoRef });
 
-  const getVideoElement = useCallback(() => videoRef.current, []);
+  const getVideoElement = () => videoRef.current;
 
   const detect = useBarcodeDetect(getVideoElement, {
     enabled: open && camera.isActive,
@@ -163,10 +160,10 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
 
   const getStream = () => videoRef.current?.srcObject as MediaStream | null;
 
-  const restartCamera = useCallback(async () => {
+  const restartCamera = async () => {
     stop();
     await start();
-  }, [stop, start]);
+  };
 
   const torch = useBarcodeTorch({ getStream, onRestartStream: restartCamera });
 

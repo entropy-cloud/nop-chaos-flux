@@ -1,5 +1,4 @@
 
-import { useCallback } from 'react';
 import type { CalendarView } from '../../schemas.js';
 import { addMonths, addWeeks, addDays } from '../utils/calendar-date-utils.js';
 
@@ -19,7 +18,7 @@ export interface CalendarNavigationResult {
 export function useCalendarNavigation(options: CalendarNavigationOptions): CalendarNavigationResult {
   const { currentDate, activeView, onDateChange } = options;
 
-  const goNext = useCallback(() => {
+  const goNext = () => {
     switch (activeView) {
       case 'month':
         onDateChange(addMonths(currentDate, 1));
@@ -31,9 +30,9 @@ export function useCalendarNavigation(options: CalendarNavigationOptions): Calen
         onDateChange(addDays(currentDate, 1));
         break;
     }
-  }, [currentDate, activeView, onDateChange]);
+  };
 
-  const goPrev = useCallback(() => {
+  const goPrev = () => {
     switch (activeView) {
       case 'month':
         onDateChange(addMonths(currentDate, -1));
@@ -45,15 +44,15 @@ export function useCalendarNavigation(options: CalendarNavigationOptions): Calen
         onDateChange(addDays(currentDate, -1));
         break;
     }
-  }, [currentDate, activeView, onDateChange]);
+  };
 
-  const goToday = useCallback(() => {
+  const goToday = () => {
     onDateChange(new Date());
-  }, [onDateChange]);
+  };
 
-  const goToDate = useCallback((date: Date) => {
+  const goToDate = (date: Date) => {
     onDateChange(date);
-  }, [onDateChange]);
+  };
 
   return { goNext, goPrev, goToday, goToDate };
 }

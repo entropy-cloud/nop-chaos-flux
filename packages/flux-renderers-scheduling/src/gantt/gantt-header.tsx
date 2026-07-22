@@ -2,18 +2,17 @@ import React from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
-import { useGanttStore } from './gantt-context.js';
+import type { GanttStoreApi } from './gantt.types.js';
 
 interface GanttHeaderProps {
+  store: GanttStoreApi;
   toolbarRegion?: RenderRegionHandle;
   className?: string;
   onScrollToToday?: () => void;
   onZoomChange?: (zoomKey: string) => void;
 }
 
-export function GanttHeader({ toolbarRegion, className, onScrollToToday, onZoomChange }: GanttHeaderProps) {
-  const store = useGanttStore();
-
+export function GanttHeader({ store, toolbarRegion, className, onScrollToToday, onZoomChange }: GanttHeaderProps) {
   const handleZoomIn = () => {
     const zooms = store.getAvailableZooms();
     const idx = zooms.findIndex((z) => z.key === store.currentZoom);

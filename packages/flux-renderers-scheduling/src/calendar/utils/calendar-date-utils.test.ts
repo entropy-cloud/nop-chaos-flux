@@ -17,6 +17,7 @@ import {
   toISODateString,
   parseISODate,
   getDaysInMonth,
+  formatDate,
 } from './calendar-date-utils.js';
 
 function date(y: number, m: number, d: number): Date {
@@ -298,5 +299,25 @@ describe('calendar-date-utils', () => {
     });
   });
 
+  describe('formatDate', () => {
+    it('should format date with en-US locale', () => {
+      const d = date(2026, 7, 22);
+      const result = formatDate(d, 'en-US');
+      expect(result).toMatch(/07\/22\/2026|7\/22\/2026/);
+    });
+
+    it('should format date with zh-CN locale', () => {
+      const d = date(2026, 7, 22);
+      const result = formatDate(d, 'zh-CN');
+      expect(result).toMatch(/2026\/7\/22|2026\/07\/22/);
+    });
+
+    it('should fall back to browser locale when no locale provided', () => {
+      const d = date(2026, 7, 22);
+      const result = formatDate(d);
+      expect(result).toBeTruthy();
+      expect(typeof result).toBe('string');
+    });
+  });
 
 });

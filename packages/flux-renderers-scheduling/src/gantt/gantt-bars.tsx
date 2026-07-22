@@ -1,10 +1,11 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useSyncExternalStore } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
-import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
+import type { GanttStoreApi } from './gantt.types.js';
 
 interface GanttBarsProps {
+  store: GanttStoreApi;
   className?: string;
   onBarPointerDown?: (e: PointerEvent, taskId: string | number, mode: 'move' | 'resize-start' | 'resize-end', barElement: HTMLElement) => void;
   onLinkHandlePointerDown?: (e: PointerEvent, taskId: string | number, side: 'start' | 'end') => void;
@@ -17,11 +18,10 @@ interface GanttBarsProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction, taskBarRegion, onBarClick, onBarDoubleClickEvent, taskBarClassName, scrollContainerRef }: GanttBarsProps) {
-  const store = useGanttStore();
-  useGanttTaskSnapshot();
-  useGanttLayoutSnapshot();
-  useGanttTreeSnapshot();
+export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction, taskBarRegion, onBarClick, onBarDoubleClickEvent, taskBarClassName, scrollContainerRef }: GanttBarsProps) {
+  useSyncExternalStore(store.subscribe, () => store.taskRevision);
+  useSyncExternalStore(store.subscribe, () => store.layoutRevision);
+  useSyncExternalStore(store.subscribe, () => store.treeRevision);
   const barsRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(-1);
   const [viewportHeight, setViewportHeight] = useState(0);

@@ -1,11 +1,11 @@
 import React, { useRef, useImperativeHandle, useState, useEffect, useCallback } from 'react';
-import { cn } from '@nop-chaos/ui';
+import { Skeleton, cn } from '@nop-chaos/ui';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope } from '@nop-chaos/flux-react';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttSchema } from '../schemas.js';
-import { GanttStore } from './gantt-store.js';
-import { GanttStoreProvider } from './gantt-context.js';
+import { createGanttStore } from './gantt-store.js';
+import type { GanttStoreApi } from './gantt.types.js';
 import { GanttLayout } from './gantt-layout.js';
 import { GanttHeader } from './gantt-header.js';
 import { GanttGrid } from './gantt-grid.js';
@@ -30,8 +30,8 @@ export interface GanttHandle {
   scrollToTask: (taskId: string | number) => void;
 }
 
-function createInitialStore(resolved: Record<string, unknown>): GanttStore {
-  const s = new GanttStore({
+function createInitialStore(resolved: Record<string, unknown>): GanttStoreApi {
+  const s = createGanttStore({
     cellWidth: (resolved.cellWidth as number) ?? 40,
     defaultZoom: (resolved.defaultZoom as string) ?? 'week',
     taskBarHeight: (resolved.taskBarHeight as number) ?? 28,
@@ -78,13 +78,13 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       undoStackRef.current.clear();
     }, [store, resolved.tasks, resolved.links, resolved.resources, resolved.assignments]);
 
-    const handleTaskDragCommit = useCallback((taskId: string | number, changes: Record<string, string>) => {
+    const handleTaskDragCommit = (taskId: string | number, changes: Record<string, string>) => {
       void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes }, { scope: scopeRef.current });
-    }, []);
+    };
 
-    const handleLinkDragCommit = useCallback((sourceId: string | number, targetId: string | number, linkType: string) => {
+    const handleLinkDragCommit = (sourceId: string | number, targetId: string | number, linkType: string) => {
       void eventsRef.current.onLinkDragEnd?.({ _sourceId: sourceId, _targetId: targetId, _linkType: linkType }, { scope: scopeRef.current });
-    }, []);
+    };
 
     const draggable = resolved.draggable !== false;
     const editable = resolved.editable !== false;
@@ -96,11 +96,11 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       void eventsRef.current.onScroll?.({ scrollLeft, scrollTop });
     });
 
-    const openEditor = useCallback((id: string | number) => {
+    const openEditor = (id: string | number) => {
       store.editTask(id);
-    }, [store]);
+    };
 
-    const handleBarKeyAction = useCallback((taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => {
+    const handleBarKeyAction = (taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => {
       const task = store.tasks.get(taskId);
       if (!task) return;
       const oldStart = task.start;
@@ -157,13 +157,13 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           break;
         }
       }
-    }, [store]);
+    };
 
     const undoStackRef = useRef<UndoStack>(new UndoStack());
 
-    const handleUndo = useCallback(() => {
+    const handleUndo = () => {
       undoStackRef.current.undo();
-    }, []);
+    };
 
     useGanttKeyboard({
       store,
@@ -223,21 +223,21 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       [store, scrollToToday, scrollToTask, handleZoomChange],
     );
 
-    const handleTaskClick = useCallback((taskId: string | number) => {
+    const handleTaskClick = (taskId: string | number) => {
       void eventsRef.current.onTaskClick?.({ _taskId: taskId });
-    }, []);
+    };
 
-    const handleTaskDoubleClick = useCallback((taskId: string | number) => {
+    const handleTaskDoubleClick = (taskId: string | number) => {
       void eventsRef.current.onTaskDoubleClick?.({ _taskId: taskId });
-    }, []);
+    };
 
-    const handleLinkClick = useCallback((linkId: string | number) => {
+    const handleLinkClick = (linkId: string | number) => {
       void eventsRef.current.onLinkClick?.({ _linkId: linkId });
-    }, []);
+    };
 
-    const handleEmptyCellClick = useCallback(() => {
+    const handleEmptyCellClick = () => {
       void eventsRef.current.onEmptyCellClick?.({});
-    }, []);
+    };
 
     if (!meta.visible) return null;
 
@@ -247,9 +247,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         return <div data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>{loadingRegion.render() as React.ReactNode}</div>;
       }
       return (
-        <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-gantt flex flex-col h-full animate-pulse', meta.className)}>
-          <div className="flex gap-2 p-2"><div className="h-8 bg-gray-100 rounded w-32" /><div className="h-8 bg-gray-100 rounded w-24" /></div>
-          <div className="flex-1 bg-gray-50 m-2 rounded" />
+        <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-gantt flex flex-col h-full', meta.className)}>
+          <div className="flex gap-2 p-2"><Skeleton className="h-8 w-32" /><Skeleton className="h-8 w-24" /></div>
+          <Skeleton className="flex-1 m-2" />
         </div>
       );
     }
@@ -274,70 +274,72 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     );
 
     return (
-      <GanttStoreProvider store={store}>
-        <div ref={containerRef} className={cn('nop-gantt flex flex-col h-full', meta.className)} data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>
-          <div aria-live="polite" aria-atomic="true" className="sr-only">
-            {`${store.getVisibleTasks().length} tasks visible`}
-          </div>
-          <GanttHeader
-            toolbarRegion={regions.toolbar as RenderRegionHandle}
-            onScrollToToday={scrollToToday}
-            className={resolved.toolbarClassName as string | undefined}
-            onZoomChange={handleZoomChange}
-          />
-          <GanttLayout
-            grid={
-              <div ref={gridRef} className="h-full overflow-auto">
-                <GanttGrid
-                  columns={columns}
-                  selectedTaskId={store.selectedTaskId}
-                  onSelectTask={(id) => { store.selectTask(id); }}
-                  columnRegions={columnRegions}
-                  onTaskClick={handleTaskClick}
-                  onTaskDoubleClick={handleTaskDoubleClick}
-                  onEmptyCellClick={handleEmptyCellClick}
-                  editable={editable}
-                  scrollContainerRef={gridRef}
-                />
-              </div>
-            }
-            timeline={
-              <div ref={timelineRef} className="h-full overflow-auto">
-                <GanttTimeScale />
-                <div className="relative">
-                  <GanttCellGrid showWeekends={showWeekends} />
-                  <GanttBars
-                    onBarPointerDown={draggable ? onDragPointerDown : undefined}
-                    onLinkHandlePointerDown={linkable ? onLinkHandlePointerDown : undefined}
-                    onBarDoubleClick={openEditor}
-                    onBarKeyAction={handleBarKeyAction}
-                    taskBarRegion={regions.taskBar as RenderRegionHandle}
-                    taskBarClassName={resolved.taskBarClassName as string | undefined}
-                    onBarClick={handleTaskClick}
-                    onBarDoubleClickEvent={handleTaskDoubleClick}
-                    scrollContainerRef={timelineRef}
-                  />
-                  <svg ref={svgRef} className="absolute inset-0 pointer-events-none overflow-visible" style={{ zIndex: 5 }}>
-                    <GanttLinks onLinkClick={handleLinkClick} />
-                    {store.getVisibleTasks().filter(t => t.baselines?.length).map(task => (
-                      <BaselineBars key={String(task.id)} task={task} scaleRange={store.scaleRange} cellWidth={store.cellWidth} taskBarHeight={store.taskBarHeight} />
-                    ))}
-                  </svg>
-                  <GanttMarkers showToday={showToday} />
-                </div>
-              </div>
-            }
-            header={null}
-          />
-          <GanttEditor
-            editorRegion={regions.editor as RenderRegionHandle}
-            editingTaskId={store.editingTaskId}
-            onClose={() => { store.editTask(null); }}
-            onBarDoubleClick={(id) => { store.editTask(id); }}
-            className={resolved.editorClassName as string | undefined}
-          />
+      <div ref={containerRef} className={cn('nop-gantt flex flex-col h-full', meta.className)} data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {`${store.getVisibleTasks().length} tasks visible`}
         </div>
-      </GanttStoreProvider>
+        <GanttHeader
+          store={store}
+          toolbarRegion={regions.toolbar as RenderRegionHandle}
+          onScrollToToday={scrollToToday}
+          className={resolved.toolbarClassName as string | undefined}
+          onZoomChange={handleZoomChange}
+        />
+        <GanttLayout
+          grid={
+            <div ref={gridRef} className="h-full overflow-auto">
+              <GanttGrid
+                store={store}
+                columns={columns}
+                selectedTaskId={store.selectedTaskId}
+                onSelectTask={(id) => { store.selectTask(id); }}
+                columnRegions={columnRegions}
+                onTaskClick={handleTaskClick}
+                onTaskDoubleClick={handleTaskDoubleClick}
+                onEmptyCellClick={handleEmptyCellClick}
+                editable={editable}
+                scrollContainerRef={gridRef}
+              />
+            </div>
+          }
+          timeline={
+            <div ref={timelineRef} className="h-full overflow-auto">
+              <GanttTimeScale store={store} />
+              <div className="relative">
+                <GanttCellGrid store={store} showWeekends={showWeekends} />
+                <GanttBars
+                  store={store}
+                  onBarPointerDown={draggable ? onDragPointerDown : undefined}
+                  onLinkHandlePointerDown={linkable ? onLinkHandlePointerDown : undefined}
+                  onBarDoubleClick={openEditor}
+                  onBarKeyAction={handleBarKeyAction}
+                  taskBarRegion={regions.taskBar as RenderRegionHandle}
+                  taskBarClassName={resolved.taskBarClassName as string | undefined}
+                  onBarClick={handleTaskClick}
+                  onBarDoubleClickEvent={handleTaskDoubleClick}
+                  scrollContainerRef={timelineRef}
+                />
+                <svg ref={svgRef} className="absolute inset-0 pointer-events-none overflow-visible" style={{ zIndex: 5 }}>
+                  <GanttLinks store={store} onLinkClick={handleLinkClick} />
+                  {store.getVisibleTasks().filter(t => t.baselines?.length).map(task => (
+                    <BaselineBars key={String(task.id)} task={task} scaleRange={store.scaleRange} cellWidth={store.cellWidth} taskBarHeight={store.taskBarHeight} />
+                  ))}
+                </svg>
+                <GanttMarkers store={store} showToday={showToday} />
+              </div>
+            </div>
+          }
+          header={null}
+        />
+        <GanttEditor
+          store={store}
+          editorRegion={regions.editor as RenderRegionHandle}
+          editingTaskId={store.editingTaskId}
+          onClose={() => { store.editTask(null); }}
+          onBarDoubleClick={(id) => { store.editTask(id); }}
+          className={resolved.editorClassName as string | undefined}
+        />
+      </div>
     );
   },
 );

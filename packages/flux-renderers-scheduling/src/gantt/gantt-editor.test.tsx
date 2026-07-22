@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { render } from '@testing-library/react';
 import { GanttStore } from './gantt-store.js';
-import { GanttStoreProvider } from './gantt-context.js';
 import { GanttEditor } from './gantt-editor.js';
 import type { GanttTaskData } from './gantt.types.js';
 
@@ -17,7 +16,7 @@ describe('GanttEditor', () => {
     const store = createStore([
       { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    const { container } = render(<GanttStoreProvider store={store}><GanttEditor /></GanttStoreProvider>);
+    const { container } = render(<GanttEditor store={store} />);
     expect(container).toBeTruthy();
   });
 
@@ -25,7 +24,7 @@ describe('GanttEditor', () => {
     const store = createStore([
       { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
     ]);
-    render(<GanttStoreProvider store={store}><GanttEditor /></GanttStoreProvider>);
+    render(<GanttEditor store={store} />);
     expect(document.querySelector('input[id$="-edit-text"]')).toBeNull();
   });
 
@@ -34,7 +33,7 @@ describe('GanttEditor', () => {
       { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
     ]);
     store.editTask('t1');
-    render(<GanttStoreProvider store={store}><GanttEditor editingTaskId="t1" /></GanttStoreProvider>);
+    render(<GanttEditor store={store} editingTaskId="t1" />);
     const textInput = document.querySelector<HTMLInputElement>('input[id$="-edit-text"]');
     expect(textInput).toBeTruthy();
     expect(textInput!.value).toBe('Task 1');
@@ -50,12 +49,8 @@ describe('GanttEditor', () => {
 
     const { unmount } = render(
       <div>
-        <GanttStoreProvider store={storeA}>
-          <GanttEditor editingTaskId="t1" />
-        </GanttStoreProvider>
-        <GanttStoreProvider store={storeB}>
-          <GanttEditor editingTaskId="t1" />
-        </GanttStoreProvider>
+        <GanttEditor store={storeA} editingTaskId="t1" />
+        <GanttEditor store={storeB} editingTaskId="t1" />
       </div>,
     );
 

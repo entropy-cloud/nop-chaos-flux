@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { History, X } from 'lucide-react';
 
 export interface KanbanAction {
@@ -145,13 +145,14 @@ export function KanbanActivityLog({
           <History className="w-4 h-4 text-gray-500" />
           <span className="font-semibold text-sm">活动日志</span>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onClose}
-          className="p-1 rounded hover:bg-gray-100 text-gray-400"
+          className="p-1 h-auto text-gray-400"
         >
           <X className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {filtered.length === 0 && (

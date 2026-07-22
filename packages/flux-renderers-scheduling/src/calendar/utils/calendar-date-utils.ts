@@ -59,8 +59,9 @@ export function isToday(date: Date): boolean {
   return isSameDay(date, utcToday);
 }
 
-export function formatDate(date: Date, locale: string = 'zh-CN'): string {
-  return date.toLocaleDateString(locale, {
+export function formatDate(date: Date, locale?: string): string {
+  const resolvedLocale = locale ?? (typeof navigator !== 'undefined' ? navigator.language : 'en-US');
+  return date.toLocaleDateString(resolvedLocale, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

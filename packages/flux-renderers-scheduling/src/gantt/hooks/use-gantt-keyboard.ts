@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import type { GanttStore } from '../gantt-store.js';
 import { t } from '@nop-chaos/flux-i18n';
 
@@ -20,7 +20,7 @@ export function useGanttKeyboard({
   onUndo,
 }: UseGanttKeyboardOptions) {
 
-  const updateRowAria = useCallback((taskId: string | number, isSelected: boolean) => {
+  const updateRowAria = (taskId: string | number, isSelected: boolean) => {
     const container = containerRef.current;
     if (!container) return;
     const row = container.querySelector(`[data-task-id="${String(taskId)}"]`);
@@ -30,7 +30,7 @@ export function useGanttKeyboard({
       row.setAttribute('tabindex', isSelected ? '0' : '-1');
       if (isSelected) (row as HTMLElement).focus();
     }
-  }, [containerRef]);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

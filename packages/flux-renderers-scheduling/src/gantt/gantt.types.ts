@@ -95,3 +95,50 @@ export interface GanttZoomLevel extends SchemaObject {
   maxCellWidth?: number;
   scales: GanttScale[];
 }
+
+export interface CalendarEntry { id: string; calendar: import('./utils/worktime.js').WorkCalendar; }
+
+export interface GanttStoreApi {
+  subscribe: (l: () => void) => () => void;
+  getSnapshot: () => import('./gantt-store.js').GanttStoreState;
+  tasks: Map<GanttId, GanttTask>;
+  links: Map<GanttId, GanttLink>;
+  resources: Map<GanttId, GanttResource>;
+  assignments: Map<GanttId, GanttAssignment>;
+  scaleRange: { start: Date; end: Date };
+  cellWidth: number;
+  currentZoom: string;
+  zoomLevels: Map<string, GanttZoomLevel>;
+  taskBarHeight: number;
+  rowHeight: number;
+  containerWidth: number;
+  revision: number;
+  taskRevision: number;
+  linkRevision: number;
+  treeRevision: number;
+  layoutRevision: number;
+  scrollLeft: number;
+  selectedTaskId: GanttId | null;
+  selectTask: (v: GanttId | null) => void;
+  editingTaskId: GanttId | null;
+  editTask: (v: GanttId | null) => void;
+  calendarManager: import('./utils/worktime.js').CalendarManager;
+  revertTask: (id: GanttId, previousData: Partial<GanttTaskData>) => void;
+  parse: (tasks: GanttTaskData[], links: GanttLinkData[], resources?: GanttResource[], assignments?: GanttAssignment[], calendars?: CalendarEntry[]) => void;
+  recalcLayout: () => void;
+  updateTask: (id: GanttId, partial: Partial<GanttTaskData>) => void;
+  updateLink: (id: GanttId, partial: Partial<GanttLink>) => void;
+  getVisibleTasks: () => GanttTask[];
+  getVisibleTaskWindow: (scrollTop: number, viewportHeight: number, overscan?: number) => { tasks: GanttTask[]; totalHeight: number };
+  isOpen: (taskId: GanttId) => boolean;
+  toggleOpen: (taskId: GanttId) => void;
+  expandAll: () => void;
+  collapseAll: () => void;
+  getVisibleDescendantCount: (taskId: GanttId) => number;
+  deleteTask: (id: GanttId) => void;
+  addLink: (source: GanttId, target: GanttId, type: GanttLinkType) => GanttLink;
+  removeLink: (id: GanttId) => void;
+  setZoom: (zoomKey: string, anchorScrollLeft?: number, anchorContainerWidth?: number) => void;
+  getAvailableZooms: () => GanttZoomLevel[];
+  destroy: () => void;
+}

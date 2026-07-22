@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
@@ -40,14 +40,11 @@ export function CalendarDayView({
 
   const hours = Array.from({ length: totalHours }, (_, i) => dayStartHour + i);
 
-  const displayResources = useMemo(
-    () => resources.length === 0
-      ? [{ id: '_default', text: '', title: '' }]
-      : resources,
-    [resources],
-  );
+  const displayResources = resources.length === 0
+    ? [{ id: '_default', text: '', title: '' }]
+    : resources;
 
-  const dayEventsByResource = useMemo(() => {
+  const dayEventsByResource = (() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const resource of displayResources) {
       const filtered = events.filter((evt) => {
@@ -58,7 +55,7 @@ export function CalendarDayView({
       map.set(resource.id, filtered);
     }
     return map;
-  }, [events, displayResources, dateStr]);
+  })();
 
   return (
     <div data-slot="calendar-matrix" role="grid" aria-label="Calendar day view" className="flex flex-col overflow-auto">

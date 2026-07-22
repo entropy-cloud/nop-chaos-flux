@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { cn } from '@nop-chaos/ui';
+import { Button, Input, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
-import { useGanttStore, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
-import type { GanttTask, GanttColumn } from './gantt.types.js';
+import type { GanttTask, GanttColumn, GanttStoreApi } from './gantt.types.js';
 
 const DEFAULT_COLUMNS: GanttColumn[] = [
   { name: 'text', label: 'Task', width: 200, resizable: true },
@@ -15,6 +14,7 @@ const DEFAULT_COLUMNS: GanttColumn[] = [
 ];
 
 interface GanttGridProps {
+  store: GanttStoreApi;
   columns?: GanttColumn[];
   onSelectTask?: (taskId: string | number) => void;
   selectedTaskId?: string | number | null;
@@ -27,17 +27,15 @@ interface GanttGridProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTaskId, className, columnRegions, onTaskClick, onTaskDoubleClick, onEmptyCellClick, editable, scrollContainerRef }: GanttGridProps) {
-  const store = useGanttStore();
-  useGanttLayoutSnapshot();
-  useGanttTreeSnapshot();
+export function GanttGrid({ store, columns = DEFAULT_COLUMNS, onSelectTask, selectedTaskId, className, columnRegions, onTaskClick, onTaskDoubleClick, onEmptyCellClick, editable, scrollContainerRef }: GanttGridProps) {
+  useSyncExternalStore(store.subscribe, () => store.layoutRevision);
+  useSyncExternalStore(store.subscribe, () => store.treeRevision);
   const [editingCell, setEditingCell] = useState<{ taskId: string | number; column: string } | null>(null);
 
   const tasks = store.getVisibleTasks();
   const rowHeight = store.rowHeight;
 
   const [hasScrollContainer, setHasScrollContainer] = useState(false);
-  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual not yet React-Compiler-compatible; known gap.
   const virtualizer = useVirtualizer({
     count: hasScrollContainer ? tasks.length : 0,
     getScrollElement: () => scrollContainerRef?.current ?? null,
@@ -139,19 +137,20 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
                     {col.name === 'text' ? (
                       <div className="flex items-center gap-1" style={{ paddingLeft: task.$level * 16 }}>
                         {store.getVisibleDescendantCount(task.id) > 0 && (
-                          <button
-                            type="button"
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             aria-expanded={store.isOpen(task.id)}
                             aria-label={store.isOpen(task.id) ? t('scheduling.gantt.collapseTask', { text: task.text }) : t('scheduling.gantt.expandTask', { text: task.text })}
-                            className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-700 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-4 h-4 p-0 text-gray-400 hover:text-gray-700 text-xs"
                             onClick={(e) => { e.stopPropagation(); handleToggle(task.id); }}
                           >
                             {'>'}
-                          </button>
+                          </Button>
                         )}
                         {editingCell?.taskId === task.id && editingCell?.column === 'text' ? (
-                          <input
-                            className="w-full border border-blue-400 px-1 py-0.5 text-xs rounded"
+                          <Input
+                            className="w-full h-6 px-1 text-xs"
                             defaultValue={task.text}
                             onBlur={(e) => handleCellCommit(task.id, 'text', e.currentTarget.value)}
                             onKeyDown={(e) => {

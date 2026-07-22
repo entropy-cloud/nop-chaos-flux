@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useRef, useLayoutEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
@@ -61,17 +61,12 @@ export function CalendarMonthView({
   eventClassName,
   locale = 'en-US',
 }: CalendarMonthViewProps) {
-  const days = useMemo(() => {
-    const { start, end } = getMonthStartEnd(currentDate);
-    return getDateRange(start, end);
-  }, [currentDate]);
+  const { start, end } = getMonthStartEnd(currentDate);
+  const days = getDateRange(start, end);
 
-  const positionedMap = useMemo(
-    () => positionEventsInMonth({ events, resources, dateRange, maxConcurrent }),
-    [events, resources, dateRange, maxConcurrent],
-  );
+  const positionedMap = positionEventsInMonth({ events, resources, dateRange, maxConcurrent });
 
-  const conflictMap = useMemo(() => {
+  const conflictMap = (() => {
     const map = new Map<string, Set<string>>();
     for (const resource of resources) {
       for (const day of days) {
@@ -84,12 +79,12 @@ export function CalendarMonthView({
       }
     }
     return map;
-  }, [events, resources, days]);
+  })();
 
   const weekdayLabels = getWeekdayLabels(locale, firstDayOfWeek);
   const [focusedCell, setFocusedCell] = useState<{ resourceId: string; dateStr: string } | null>(null);
 
-  const handleDateCellKeyDown = useCallback((e: React.KeyboardEvent, dateStr: string, resourceId: string) => {
+  const handleDateCellKeyDown = (e: React.KeyboardEvent, dateStr: string, resourceId: string) => {
     if (!showWeekends && isWeekend(new Date(dateStr))) return;
     const grid = e.currentTarget.closest('[role="grid"]');
     if (!grid) return;
@@ -140,7 +135,7 @@ export function CalendarMonthView({
         setFocusedCell({ resourceId: nextResource, dateStr: nextDate });
       }
     }
-  }, [days, showWeekends, onCellDragStart]);
+  };
 
   const headerCells = days.slice(0, 7).map((day, i) => (
     <div
@@ -152,12 +147,9 @@ export function CalendarMonthView({
     </div>
   ));
 
-  const displayResources = useMemo(
-    () => resources.length === 0
-      ? [{ id: '_default', text: '', title: '' }]
-      : resources,
-    [resources],
-  );
+  const displayResources = resources.length === 0
+    ? [{ id: '_default', text: '', title: '' }]
+    : resources;
 
   const resourceRows = (virtualItems ?? displayResources.map((_, i) => ({ index: i, start: i * 48, size: 48 }))).map(
     (vItem) => {
@@ -293,7 +285,7 @@ export function CalendarMonthView({
     },
   );
 
-  const splitEvents = useMemo(() => splitMultiDayEvents(events), [events]);
+  const splitEvents = splitMultiDayEvents(events);
 
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const [svgPixelDims, setSvgPixelDims] = useState({ width: 0, height: 0 });
@@ -305,7 +297,7 @@ export function CalendarMonthView({
     setSvgPixelDims({ width: rect.width, height: rect.height });
   }, [totalSize, displayResources.length, days.length]);
 
-  const cellPositions = useMemo(() => {
+  const cellPositions = (() => {
     const positions = new Map<string, CellPosition>();
     const { width: svgW, height: svgH } = svgPixelDims;
     if (svgW === 0 || svgH === 0) return positions;
@@ -325,12 +317,9 @@ export function CalendarMonthView({
       }
     }
     return positions;
-  }, [displayResources, days, svgPixelDims]);
+  })();
 
-  const crossDayLines = useMemo(() => {
-    if (!showCrossDayLines) return [];
-    return computeCrossDayLines(splitEvents, cellPositions);
-  }, [showCrossDayLines, splitEvents, cellPositions]);
+  const crossDayLines = !showCrossDayLines ? [] : computeCrossDayLines(splitEvents, cellPositions);
 
   const totalHeight = totalSize ?? displayResources.length * 48;
 

@@ -1,5 +1,6 @@
-export { GanttStore } from './gantt-store.js';
+export { createGanttStore, GanttStore } from './gantt-store.js';
 export type { GanttStoreConfig } from './gantt-store.js';
+export type { GanttStoreApi } from './gantt.types.js';
 export type {
   GanttId,
   GanttTask,
@@ -49,7 +50,6 @@ export { DefaultWorkCalendar, CalendarManager } from './utils/worktime.js';
 export type { WorkCalendar, WorkCalendarConfig } from './utils/worktime.js';
 export { Gantt } from './gantt.js';
 export type { GanttHandle } from './gantt.js';
-export { GanttStoreProvider, useGanttStore, useGanttStoreSnapshot, useGanttTaskSnapshot, useGanttLinkSnapshot, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
 export { GanttLayout } from './gantt-layout.js';
 export { GanttHeader } from './gantt-header.js';
 export { GanttGrid } from './gantt-grid.js';

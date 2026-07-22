@@ -11,7 +11,7 @@
 import React, { useImperativeHandle, useRef, useState, useEffect } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
-import { cn } from '@nop-chaos/ui';
+import { Skeleton, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import type { CalendarSchema, CalendarView, CalendarEvent, CalendarResource } from '../schemas.js';
@@ -75,7 +75,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   const maxConcurrent = (resolved.maxConcurrent as number) ?? 4;
   const showCrossDayLines = resolved.showCrossDayLines !== false;
 
-  const locale = (resolved.locale as string) ?? 'zh-CN';
+  const locale = (resolved.locale as string) ?? (typeof navigator !== 'undefined' ? navigator.language : 'en-US');
 
   const eventsData = (resolved.events as CalendarSchema['events']) ?? (resolved as any).data as CalendarEvent[] ?? [];
   const resourcesData = (resolved.resources as CalendarSchema['resources']) ?? [];
@@ -439,9 +439,9 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       return <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>{loadingRegion.render() as React.ReactNode}</div>;
     }
     return (
-      <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-calendar flex flex-col h-full animate-pulse', meta.className)}>
-        <div className="flex gap-2 p-4"><div className="h-8 bg-gray-100 rounded w-32" /><div className="h-8 bg-gray-100 rounded w-24" /></div>
-        <div className="flex-1 bg-gray-50 m-2 rounded" />
+      <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-calendar flex flex-col h-full', meta.className)}>
+        <div className="flex gap-2 p-4"><Skeleton className="h-8 w-32" /><Skeleton className="h-8 w-24" /></div>
+        <Skeleton className="flex-1 m-2" />
       </div>
     );
   }

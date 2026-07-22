@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
 export interface KanbanFilterTag {
@@ -29,13 +29,14 @@ export function KanbanTagFilter({
       {tags.map((tag) => {
         const selected = selectedTagIds.includes(tag.id);
         return (
-          <button
+          <Button
             key={tag.id}
-            type="button"
+            variant="ghost"
+            size="sm"
             aria-pressed={selected}
             onClick={() => onToggleTag(tag.id)}
             className={cn(
-              'inline-flex items-center px-2 py-0.5 text-xs rounded-full border transition-colors',
+              'px-2 py-0.5 text-xs rounded-full border transition-colors',
               selected
                 ? 'border-transparent text-white font-medium'
                 : 'border-gray-300 text-gray-600 hover:bg-gray-100',
@@ -43,17 +44,18 @@ export function KanbanTagFilter({
             style={selected ? { backgroundColor: tag.color } : undefined}
           >
             {tag.text}
-          </button>
+          </Button>
         );
       })}
       {selectedTagIds.length > 0 && (
-        <button
-          type="button"
+        <Button
+          variant="link"
+          size="sm"
           onClick={() => selectedTagIds.forEach((id) => onToggleTag(id))}
-          className="text-xs text-gray-400 hover:text-gray-600 ml-1"
+          className="text-xs text-gray-400 hover:text-gray-600 ml-1 p-0 h-auto"
         >
           {t('scheduling.kanban.clearFilter')}
-        </button>
+        </Button>
       )}
     </div>
   );
