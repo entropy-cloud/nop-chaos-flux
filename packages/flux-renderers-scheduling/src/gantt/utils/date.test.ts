@@ -113,6 +113,25 @@ describe('date utils', () => {
     it('should handle plain text without tokens', () => {
       expect(formatDate(new Date('2026-01-01'), 'Today')).toBe('Today');
     });
+
+    it('should format %V as ISO week number', () => {
+      const d = new Date('2026-01-05');
+      const result = formatDate(d, '%V');
+      expect(result).toBe('02');
+    });
+
+    it('should format %q as quarter number', () => {
+      expect(formatDate(new Date('2026-03-15'), '%q')).toBe('1');
+      expect(formatDate(new Date('2026-04-01'), '%q')).toBe('2');
+      expect(formatDate(new Date('2026-07-01'), '%q')).toBe('3');
+      expect(formatDate(new Date('2026-10-01'), '%q')).toBe('4');
+    });
+
+    it('should format %W as week-of-year', () => {
+      const d = new Date('2026-01-05');
+      const result = formatDate(d, '%W');
+      expect(result.length).toBeGreaterThan(0);
+    });
   });
 
   describe('unitStart / unitEnd', () => {

@@ -57,6 +57,14 @@ export function getYearEnd(date: Date): Date {
   return new Date(Date.UTC(date.getFullYear(), 11, 31));
 }
 
+function getISOWeek(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
 const FORMAT_TOKENS: Record<string, (d: Date) => string> = {
   'Y': (d) => String(d.getUTCFullYear()).padStart(4, '0'),
   'y': (d) => String(d.getUTCFullYear()).slice(-2).padStart(2, '0'),
@@ -69,6 +77,13 @@ const FORMAT_TOKENS: Record<string, (d: Date) => string> = {
   'S': (d) => String(d.getUTCSeconds()).padStart(2, '0'),
   'b': (d) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()],
   'B': (d) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][d.getUTCMonth()],
+  'V': (d) => String(getISOWeek(d)).padStart(2, '0'),
+  'W': (d) => {
+    const start = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const diff = ((d.getTime() - start.getTime()) / 86400000 + start.getUTCDay() + 1) / 7;
+    return String(Math.ceil(diff)).padStart(2, '0');
+  },
+  'q': (d) => String(Math.floor(d.getUTCMonth() / 3) + 1),
 };
 
 export function formatDate(date: Date, format: string): string {

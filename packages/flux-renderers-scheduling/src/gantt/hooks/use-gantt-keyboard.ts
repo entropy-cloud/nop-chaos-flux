@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useGanttStore } from '../gantt-context.js';
 import { t } from '@nop-chaos/flux-i18n';
 
@@ -19,6 +19,18 @@ export function useGanttKeyboard({
 }: UseGanttKeyboardOptions) {
   const store = useGanttStore();
 
+  const updateRowAria = useCallback((taskId: string | number, isSelected: boolean) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const row = container.querySelector(`[data-task-id="${String(taskId)}"]`);
+    if (row) {
+      row.setAttribute('role', 'row');
+      row.setAttribute('aria-selected', String(isSelected));
+      row.setAttribute('tabindex', isSelected ? '0' : '-1');
+      if (isSelected) (row as HTMLElement).focus();
+    }
+  }, [containerRef]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!containerRef.current) return;
@@ -32,21 +44,31 @@ export function useGanttKeyboard({
           let idx = selectedTaskId ? tasks.findIndex((t) => t.id === selectedTaskId) : -1;
           if (e.key === 'ArrowDown') idx = Math.min(idx + 1, tasks.length - 1);
           else idx = Math.max(idx - 1, 0);
-          if (idx >= 0) onSelectTask(tasks[idx].id);
+          if (idx >= 0) {
+            onSelectTask(tasks[idx].id);
+            updateRowAria(tasks[idx].id, true);
+          }
           break;
         }
-        case 'ArrowLeft':
+        case 'ArrowLeft': {
+          if (!selectedTaskId) break;
+          e.preventDefault();
+          const task = store.tasks.get(selectedTaskId);
+          if (!task) break;
+          const children = store.getVisibleDescendantCount(selectedTaskId);
+          if (children > 0 && store.isOpen(selectedTaskId)) {
+            store.toggleOpen(selectedTaskId);
+          }
+          break;
+        }
         case 'ArrowRight': {
           if (!selectedTaskId) break;
           e.preventDefault();
           const task = store.tasks.get(selectedTaskId);
           if (!task) break;
-          if (e.key === 'ArrowLeft' && store.tasks.has(selectedTaskId)) {
-            const children = store.getVisibleDescendantCount(selectedTaskId);
-            if (children > 0) store.toggleOpen(selectedTaskId);
-          } else if (e.key === 'ArrowRight' && store.tasks.has(selectedTaskId)) {
-            const children = store.getVisibleDescendantCount(selectedTaskId);
-            if (children > 0) store.toggleOpen(selectedTaskId);
+          const children = store.getVisibleDescendantCount(selectedTaskId);
+          if (children > 0 && !store.isOpen(selectedTaskId)) {
+            store.toggleOpen(selectedTaskId);
           }
           break;
         }
@@ -85,19 +107,7 @@ export function useGanttKeyboard({
     return () => {
       el.removeEventListener('keydown', handleKeyDown);
     };
-  }, [containerRef, store, selectedTaskId, onSelectTask, onOpenEditor, onUndo]);
-
-  const updateRowAria = (taskId: string | number, isSelected: boolean) => {
-    const container = containerRef.current;
-    if (!container) return;
-    const row = container.querySelector(`[data-task-id="${String(taskId)}"]`);
-    if (row) {
-      row.setAttribute('role', 'row');
-      row.setAttribute('aria-selected', String(isSelected));
-      row.setAttribute('tabindex', isSelected ? '0' : '-1');
-      if (isSelected) (row as HTMLElement).focus();
-    }
-  };
+  }, [containerRef, store, selectedTaskId, onSelectTask, onOpenEditor, onUndo, updateRowAria]);
 
   return { updateRowAria };
 }

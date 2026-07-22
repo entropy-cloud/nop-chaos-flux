@@ -207,6 +207,62 @@ describe('useGanttLinkDraw', () => {
     expect(result.current.isLinking).toBe(false);
   });
 
+    it('should call onCommit when link is created via pointer', async () => {
+    const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svgEl.setAttribute('width', '800');
+    svgEl.setAttribute('height', '600');
+    document.body.appendChild(svgEl);
+    const onCommit = vi.fn();
+    const svgRef = { current: svgEl };
+    const { result } = renderHook(() => useGanttLinkDraw(svgRef, onCommit));
+
+    const handle = document.createElement('div');
+    handle.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onLinkHandlePointerDown(e, 't1');
+    });
+    document.body.appendChild(handle);
+
+    act(() => {
+      handle.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 100, bubbles: true }));
+    });
+
+    await waitFor(() => expect(result.current.isLinking).toBe(true));
+
+    const taskBar = document.createElement('div');
+    taskBar.setAttribute('data-task-id', 't2');
+    document.body.appendChild(taskBar);
+
+    vi.spyOn(document, 'elementFromPoint').mockReturnValue(taskBar);
+
+    act(() => {
+      document.dispatchEvent(new PointerEvent('pointerup', { clientX: 300, clientY: 100 }));
+    });
+
+    expect(onCommit).toHaveBeenCalledWith('t1', 't2', 'finish_to_start');
+  });
+
+  it('should call onCommit when link is created via keyboard', async () => {
+    const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svgEl.setAttribute('width', '800');
+    svgEl.setAttribute('height', '600');
+    document.body.appendChild(svgEl);
+    const onCommit = vi.fn();
+    const svgRef = { current: svgEl };
+    const { result } = renderHook(() => useGanttLinkDraw(svgRef, onCommit));
+
+    act(() => {
+      result.current.startKeyboardLink('t1');
+    });
+
+    await waitFor(() => expect(result.current.isLinking).toBe(true));
+
+    act(() => {
+      result.current.completeKeyboardLink('t2');
+    });
+
+    expect(onCommit).toHaveBeenCalledWith('t1', 't2', 'finish_to_start');
+  });
+
   it('should clean up temp line on unmount', () => {
     const svgRef = { current: document.createElementNS('http://www.w3.org/2000/svg', 'svg') };
     const { unmount } = renderHook(() => useGanttLinkDraw(svgRef));

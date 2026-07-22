@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
 
 interface GanttBarsProps {
@@ -9,9 +10,10 @@ interface GanttBarsProps {
   onLinkHandlePointerDown?: (e: PointerEvent, taskId: string | number) => void;
   onBarDoubleClick?: (taskId: string | number) => void;
   onBarKeyAction?: (taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => void;
+  taskBarRegion?: RenderRegionHandle;
 }
 
-export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction }: GanttBarsProps) {
+export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction, taskBarRegion }: GanttBarsProps) {
   const store = useGanttStore();
   useGanttTaskSnapshot();
   useGanttLayoutSnapshot();
@@ -54,21 +56,9 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
 
   const handleBarKeyDown = (e: React.KeyboardEvent, taskId: string | number) => {
     switch (e.key) {
-      case 'ArrowLeft':
-        e.preventDefault();
-        onBarKeyAction?.(taskId, 'resize-left');
-        break;
-      case 'ArrowRight':
-        e.preventDefault();
-        onBarKeyAction?.(taskId, 'resize-right');
-        break;
       case 'ArrowUp':
-        e.preventDefault();
-        onBarKeyAction?.(taskId, 'move-up');
-        break;
       case 'ArrowDown':
-        e.preventDefault();
-        onBarKeyAction?.(taskId, 'move-down');
+        e.stopPropagation();
         break;
       case ' ':
       case 'Space':
@@ -107,11 +97,17 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
           const cx = task.$x;
           const cy = task.$y + task.$h / 2;
           return (
-            <div key={String(task.id)} data-task-id={String(task.id)} data-bar-type="milestone">
-              <svg
-                className="absolute pointer-events-none"
-                style={{ left: cx - size / 2, top: cy - size / 2, width: size, height: size }}
-              >
+            <div
+              key={String(task.id)}
+              data-task-id={String(task.id)}
+              data-bar-type="milestone"
+              tabIndex={0}
+              role="button"
+              aria-label={task.text ? t('scheduling.gantt.taskBarLabel', { text: task.text }) : t('scheduling.gantt.barLabel')}
+              className="absolute cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400"
+              style={{ left: cx - size / 2, top: cy - size / 2, width: size, height: size }}
+            >
+              <svg className="w-full h-full" style={{ display: 'block' }}>
                 <polygon
                   points={`${size / 2},0 ${size},${size / 2} ${size / 2},${size} 0,${size / 2}`}
                   className="nop-gantt-bar-milestone-fill"
@@ -119,6 +115,14 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
                   strokeWidth={1}
                 />
               </svg>
+              <div
+                data-slot="gantt-bar-link-handle"
+                className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
+              />
+              <div
+                data-slot="gantt-bar-link-handle"
+                className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
+              />
             </div>
           );
         }
@@ -152,9 +156,11 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
                 style={{ width: `${Math.min(task.progress, 100)}%` }}
               />
             )}
-            <span className="nop-gantt-bar-text absolute left-1 top-0 text-[10px] leading-[28px] truncate max-w-[calc(100%-8px)]">
-              {task.text}
-            </span>
+            {taskBarRegion ? taskBarRegion.render({ bindings: { task } }) : (
+              <span className="nop-gantt-bar-text absolute left-1 top-0 text-[10px] leading-[28px] truncate max-w-[calc(100%-8px)]">
+                {task.text}
+              </span>
+            )}
             <div
               data-slot="gantt-bar-link-handle"
               className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"

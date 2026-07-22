@@ -52,7 +52,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
   function Gantt(props, ref) {
     const { props: resolved, meta, regions, events, helpers: _helpers } = props;
     const _runtime = useRendererRuntime();
-    const _scope = useRenderScope();
+    const scope = useRenderScope();
     const containerRef = useRef<HTMLDivElement>(null);
     const gridRef = useRef<HTMLDivElement>(null);
     const timelineRef = useRef<HTMLDivElement>(null);
@@ -64,6 +64,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
 
     const eventsRef = useRef(events);
     useEffect(() => { eventsRef.current = events; }, [events]);
+    const scopeRef = useRef(scope);
+    useEffect(() => { scopeRef.current = scope; }, [scope]);
 
     useEffect(() => {
       void eventsRef.current.onMount?.({});
@@ -82,8 +84,16 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       store.parse(newData.tasks ?? [], newData.links ?? [], newData.resources, newData.assignments);
     }, [store, resolved.tasks, resolved.links, resolved.resources, resolved.assignments]);
 
-    const { onPointerDown: onDragPointerDown } = useGanttDrag(containerRef);
-    const { onLinkHandlePointerDown } = useGanttLinkDraw(svgRef);
+    const handleTaskDragCommit = useCallback((taskId: string | number, changes: Record<string, string>) => {
+      void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes }, { scope: scopeRef.current });
+    }, []);
+
+    const handleLinkDragCommit = useCallback((sourceId: string | number, targetId: string | number, linkType: string) => {
+      void eventsRef.current.onLinkDragEnd?.({ _sourceId: sourceId, _targetId: targetId, _linkType: linkType }, { scope: scopeRef.current });
+    }, []);
+
+    const { onPointerDown: onDragPointerDown } = useGanttDrag(containerRef, handleTaskDragCommit);
+    const { onLinkHandlePointerDown } = useGanttLinkDraw(svgRef, handleLinkDragCommit);
     useGanttScroll(gridRef, timelineRef);
 
     const openEditor = useCallback((id: string | number) => setEditingTaskId(id), []);
@@ -182,6 +192,10 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const columns = resolved.columns as any[] | undefined;
     const showWeekends = resolved.showWeekends !== false;
     const showToday = resolved.showToday !== false;
+    const columnNames = columns?.map((c: any) => c.name as string) ?? ['text', 'start', 'end', 'duration', 'predecessor'];
+    const columnRegions = Object.fromEntries(
+      columnNames.map((name: string) => [name, regions[name] as RenderRegionHandle | undefined]).filter(([, r]) => r),
+    );
 
     return (
       <GanttStoreProvider store={store}>
@@ -197,6 +211,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                   columns={columns}
                   selectedTaskId={selectedTaskId}
                   onSelectTask={setSelectedTaskId}
+                  columnRegions={columnRegions}
                 />
               </div>
             }
@@ -210,6 +225,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                       onLinkHandlePointerDown={onLinkHandlePointerDown}
                       onBarDoubleClick={openEditor}
                       onBarKeyAction={handleBarKeyAction}
+                      taskBarRegion={regions.taskBar as RenderRegionHandle}
                     />
                   <svg ref={svgRef} className="absolute inset-0 pointer-events-none overflow-visible" style={{ zIndex: 5 }}>
                     <GanttLinks />

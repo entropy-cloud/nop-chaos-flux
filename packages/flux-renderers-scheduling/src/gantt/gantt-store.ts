@@ -183,6 +183,8 @@ export class GanttStore {
     const newTasks = new Map(state.tasks); newTasks.set(id, updated);
     this.store.setState({ tasks: newTasks, revision: state.revision + 1, taskRevision: state.taskRevision + 1 });
     this.computeComputedPropertiesInternal();
+    const s2 = this.gs();
+    this.store.setState({ layoutRevision: s2.layoutRevision + 1 });
   }
 
   updateLink(id: GanttId, partial: Partial<GanttLink>): void {

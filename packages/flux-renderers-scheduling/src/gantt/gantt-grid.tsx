@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import { useGanttStore, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
 import type { GanttTask, GanttColumn } from './gantt.types.js';
 
@@ -17,9 +18,10 @@ interface GanttGridProps {
   onSelectTask?: (taskId: string | number) => void;
   selectedTaskId?: string | number | null;
   className?: string;
+  columnRegions?: Record<string, RenderRegionHandle>;
 }
 
-export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTaskId, className }: GanttGridProps) {
+export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTaskId, className, columnRegions }: GanttGridProps) {
   const store = useGanttStore();
   useGanttLayoutSnapshot();
   useGanttTreeSnapshot();
@@ -54,8 +56,8 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
       case 'start': return task.start;
       case 'end': return task.end;
       case 'duration': return String(task.duration ?? '');
-      case 'predecessor': return task.$source?.join(', ') ?? '';
-      default: return '';
+      case 'predecessor': return task.$target?.join(', ') ?? '';
+      default: return (task as any)[column.name] ?? '';
     }
   };
 
@@ -105,7 +107,7 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
                 >
                   {col.name === 'text' ? (
                     <div className="flex items-center gap-1" style={{ paddingLeft: task.$level * 16 }}>
-                      {task.$level > 0 && (
+                      {store.getVisibleDescendantCount(task.id) > 0 && (
                         <button
                           type="button"
                           aria-expanded={store.isOpen(task.id)}
@@ -131,7 +133,7 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
                         <span className="truncate">{task.text}</span>
                       )}
                     </div>
-                  ) : (
+                    ) : columnRegions?.[col.name] ? columnRegions[col.name].render({ bindings: { task } }) : (
                     <span className="truncate block">{getCellValue(task, col)}</span>
                   )}
                 </td>

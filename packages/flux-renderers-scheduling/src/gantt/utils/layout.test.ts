@@ -52,7 +52,7 @@ describe('layout utils', () => {
       expect(result.$h).toBe(28);
     });
 
-    it('should have minimum width of 4px', () => {
+    it('should have minimum width of cellWidth', () => {
       const result = taskToPixels(
         { start: '2026-01-05', end: '2026-01-05' },
         scaleRange,
@@ -60,16 +60,67 @@ describe('layout utils', () => {
         28,
         12,
       );
-      expect(result.$w).toBe(4);
+      expect(result.$w).toBe(40);
+    });
+
+    it('should compute 10-day task as 10x cellWidth', () => {
+      const result = taskToPixels(
+        { start: '2026-01-05', end: '2026-01-15' },
+        scaleRange,
+        40,
+        28,
+        12,
+      );
+      expect(result.$w).toBe(400);
+    });
+
+    it('should compute 1-day task as cellWidth', () => {
+      const result = taskToPixels(
+        { start: '2026-01-05', end: '2026-01-06' },
+        scaleRange,
+        40,
+        28,
+        12,
+      );
+      expect(result.$w).toBe(40);
     });
   });
 
   describe('linkToPolyline', () => {
-    it('should generate polyline points', () => {
+    it('should generate FS polyline (source.right → target.left)', () => {
       const source = { $x: 0, $y: 0, $w: 200, $h: 24 };
       const target = { $x: 400, $y: 40, $w: 200, $h: 24 };
-      const polyline = linkToPolyline(source, target);
+      const polyline = linkToPolyline(source, target, 'finish_to_start');
       expect(polyline).toBe('200,12 300,12 300,52 400,52');
+    });
+
+    it('should generate SS polyline (source.left → target.left)', () => {
+      const source = { $x: 100, $y: 0, $w: 200, $h: 24 };
+      const target = { $x: 400, $y: 40, $w: 200, $h: 24 };
+      const polyline = linkToPolyline(source, target, 'start_to_start');
+      expect(polyline).toBe('100,12 250,12 250,52 400,52');
+    });
+
+    it('should generate FF polyline (source.right → target.right)', () => {
+      const source = { $x: 0, $y: 0, $w: 200, $h: 24 };
+      const target = { $x: 200, $y: 40, $w: 200, $h: 24 };
+      const polyline = linkToPolyline(source, target, 'finish_to_finish');
+      expect(polyline).toBe('200,12 300,12 300,52 400,52');
+    });
+
+    it('should generate SF polyline (source.left → target.right)', () => {
+      const source = { $x: 100, $y: 0, $w: 200, $h: 24 };
+      const target = { $x: 200, $y: 40, $w: 200, $h: 24 };
+      const polyline = linkToPolyline(source, target, 'start_to_finish');
+      expect(polyline).toBe('100,12 250,12 250,52 400,52');
+    });
+
+    it('should wrap leftward when target is left of source', () => {
+      const source = { $x: 400, $y: 0, $w: 200, $h: 24 };
+      const target = { $x: 0, $y: 40, $w: 200, $h: 24 };
+      const polyline = linkToPolyline(source, target, 'finish_to_start');
+      expect(polyline).toContain(',');
+      expect(polyline.split(' ').length).toBeGreaterThanOrEqual(4);
     });
   });
 

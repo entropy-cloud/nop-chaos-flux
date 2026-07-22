@@ -115,6 +115,41 @@ describe('useGanttKeyboard', () => {
     expect(onSelectTask).toHaveBeenCalledWith(null);
   });
 
+  it('should use separate ArrowLeft (collapse) and ArrowRight (expand) semantics', () => {
+    const container = document.createElement('div');
+    const containerRef = { current: container };
+    mockStore.getVisibleDescendantCount = vi.fn(() => 0);
+    renderHook(() =>
+      useGanttKeyboard({
+        containerRef,
+        selectedTaskId: 't1',
+        onSelectTask: vi.fn(),
+      }),
+    );
+    const event = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true });
+    expect(() => container.dispatchEvent(event)).not.toThrow();
+    expect(mockStore.toggleOpen).not.toHaveBeenCalled();
+  });
+
+  it('should call updateRowAria via ArrowDown navigation', () => {
+    const container = document.createElement('div');
+    const containerRef = { current: container };
+    const row = document.createElement('div');
+    row.setAttribute('data-task-id', 't1');
+    container.appendChild(row);
+    const onSelectTask = vi.fn();
+    renderHook(() =>
+      useGanttKeyboard({
+        containerRef,
+        selectedTaskId: 't2',
+        onSelectTask,
+      }),
+    );
+    const event = new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true });
+    container.dispatchEvent(event);
+    expect(onSelectTask).toHaveBeenCalledWith('t1');
+  });
+
   it('should select next task on ArrowDown', () => {
     const container = document.createElement('div');
     const containerRef = { current: container };

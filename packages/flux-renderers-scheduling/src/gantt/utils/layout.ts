@@ -1,4 +1,4 @@
-import type { GanttTask, GanttLink, GanttId } from '../gantt.types.js';
+import type { GanttTask, GanttLink, GanttId, GanttLinkType } from '../gantt.types.js';
 import { diffInDays } from './date.js';
 
 export interface TaskLayoutInput {
@@ -42,7 +42,7 @@ export function taskToPixels(
 
   const x = dateToPixel(taskStart, scaleRange, cellWidth);
   const durDays = diffInDays(taskEnd, taskStart);
-  const w = Math.max(durDays * cellWidth, 4);
+  const w = Math.max(durDays * cellWidth, cellWidth);
   const h = taskBarHeight;
   const y = rowPadding / 2;
 
@@ -83,17 +83,31 @@ export interface LinkPolylineInput {
   $h: number;
 }
 
+function getAnchor(input: LinkPolylineInput, side: 'left' | 'right'): { x: number; y: number } {
+  return {
+    x: side === 'left' ? input.$x : input.$x + input.$w,
+    y: input.$y + input.$h / 2,
+  };
+}
+
 export function linkToPolyline(
   source: LinkPolylineInput,
   target: LinkPolylineInput,
+  type: GanttLinkType = 'finish_to_start',
 ): string {
-  const sx = source.$x + source.$w;
-  const sy = source.$y + source.$h / 2;
-  const tx = target.$x;
-  const ty = target.$y + target.$h / 2;
-  const mx = (sx + tx) / 2;
+  const src = getAnchor(source, type === 'finish_to_start' || type === 'finish_to_finish' ? 'right' : 'left');
+  const tgt = getAnchor(target, type === 'finish_to_start' || type === 'start_to_start' ? 'left' : 'right');
+  const bend = 20;
 
-  return `${sx},${sy} ${mx},${sy} ${mx},${ty} ${tx},${ty}`;
+  if (tgt.x >= src.x + bend) {
+    const mx = (src.x + tgt.x) / 2;
+    return `${src.x},${src.y} ${mx},${src.y} ${mx},${tgt.y} ${tgt.x},${tgt.y}`;
+  }
+
+  const wrapX = Math.max(tgt.x - bend, 0);
+  const mx1 = (src.x + wrapX) / 2;
+  const mx2 = (wrapX + tgt.x) / 2;
+  return `${src.x},${src.y} ${mx1},${src.y} ${mx1},${src.y} ${wrapX},${src.y} ${wrapX},${tgt.y} ${mx2},${tgt.y} ${tgt.x},${tgt.y}`;
 }
 
 export function computeLinkPolylines(
@@ -104,7 +118,7 @@ export function computeLinkPolylines(
     const source = tasks.get(link.source);
     const target = tasks.get(link.target);
     if (source && target) {
-      link.$p = linkToPolyline(source, target);
+      link.$p = linkToPolyline(source, target, link.type);
     }
   }
 }

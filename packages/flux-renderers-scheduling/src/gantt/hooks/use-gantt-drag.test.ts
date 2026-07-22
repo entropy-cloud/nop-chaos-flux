@@ -80,7 +80,7 @@ describe('useGanttDrag', () => {
     expect(ghost).not.toBeNull();
 
     document.dispatchEvent(new PointerEvent('pointermove', { clientX: 180, clientY: 200 }));
-    expect(ghost.style.transform).toContain('translate(80px');
+    expect(ghost.style.transform).toContain('translateX(80px');
   });
 
   it('should move task on pointer up (move mode)', () => {
@@ -200,5 +200,55 @@ describe('useGanttDrag', () => {
 
     addSpy.mockRestore();
     removeSpy.mockRestore();
+  });
+
+  it('should call onCommit on pointer up with changes', () => {
+    const containerRef = { current: document.createElement('div') };
+    const onCommit = vi.fn();
+    const { result } = renderHook(() => useGanttDrag(containerRef, onCommit));
+    const target = createTarget();
+
+    target.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onPointerDown(e, 't1', 'move');
+    });
+    target.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 200, bubbles: true }));
+
+    document.dispatchEvent(new PointerEvent('pointermove', { clientX: 180, clientY: 200 }));
+    document.dispatchEvent(new PointerEvent('pointerup', { clientX: 180, clientY: 200 }));
+
+    expect(onCommit).toHaveBeenCalledWith('t1', expect.objectContaining({
+      start: expect.any(String),
+      end: expect.any(String),
+    }));
+  });
+
+  it('should use translateX only (no vertical drift)', () => {
+    const containerRef = { current: document.createElement('div') };
+    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const target = createTarget();
+
+    target.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onPointerDown(e, 't1', 'move');
+    });
+    target.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 200, bubbles: true }));
+
+    const ghost = document.querySelector('.nop-gantt-bar-ghost') as HTMLElement;
+    document.dispatchEvent(new PointerEvent('pointermove', { clientX: 180, clientY: 300 }));
+
+    expect(ghost.style.transform).not.toContain('translateY');
+    expect(ghost.style.transform).toContain('translateX');
+  });
+
+  it('should reduce original bar opacity to 0.3 during drag', () => {
+    const containerRef = { current: document.createElement('div') };
+    const { result } = renderHook(() => useGanttDrag(containerRef));
+    const target = createTarget();
+
+    target.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onPointerDown(e, 't1', 'move');
+    });
+    target.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 200, bubbles: true }));
+
+    expect(target.style.opacity).toBe('0.3');
   });
 });

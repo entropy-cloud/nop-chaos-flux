@@ -1,7 +1,10 @@
 import { useRef, useEffect, useState } from 'react';
 import { useGanttStore } from '../gantt-context.js';
 
-export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) {
+export function useGanttLinkDraw(
+  svgRef: React.RefObject<SVGSVGElement | null>,
+  onCommit?: (sourceId: string | number, targetId: string | number, linkType: string) => void,
+) {
   const store = useGanttStore();
   const drawingRef = useRef<{
     sourceId: string | number;
@@ -61,6 +64,7 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
         const targetId = taskBarEl.getAttribute('data-task-id');
         if (targetId && targetId !== String(drawingRef.current.sourceId)) {
           store.addLink(drawingRef.current.sourceId, targetId, 'finish_to_start');
+          onCommit?.(drawingRef.current.sourceId, targetId, 'finish_to_start');
         }
       }
       cleanup();
@@ -106,6 +110,7 @@ export function useGanttLinkDraw(svgRef: React.RefObject<SVGSVGElement | null>) 
     if (!drawingRef.current) return;
     if (targetTaskId !== String(drawingRef.current.sourceId)) {
       store.addLink(drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
+      onCommit?.(drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
     }
     cleanup();
   };

@@ -48,6 +48,14 @@ describe('Zustand GanttStore proof', () => {
     expect(store.getVisibleTasks()).toHaveLength(2);
   });
 
+  it('updateTask bumps layoutRevision', () => {
+    const store = new GanttStore({ cellWidth: 40 });
+    store.parse([makeTask({ id: 't1', start: '2026-01-01', end: '2026-01-10' })], []);
+    const lr0 = store.layoutRevision;
+    store.updateTask('t1', { end: '2026-02-01' });
+    expect(store.layoutRevision).toBe(lr0 + 1);
+  });
+
   it('recalcLayout produces consistent coordinates', () => {
     const store = new GanttStore({ cellWidth: 40 });
     store.parse([makeTask({ id: 't1', start: '2026-01-01', end: '2026-01-10' })], []);

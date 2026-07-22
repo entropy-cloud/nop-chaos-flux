@@ -12,19 +12,40 @@ interface DragState {
   originalX: number;
   originalW: number;
   ghostEl: HTMLElement | null;
+  originalBar: HTMLElement | null;
+  originalBarOpacity: string;
 }
 
-export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>) {
+export function useGanttDrag(
+  _containerRef: React.RefObject<HTMLElement | null>,
+  onCommit?: (taskId: string | number, changes: Record<string, string>) => void,
+) {
   const store = useGanttStore();
   const dragRef = useRef<DragState | null>(null);
   const ghostRef = useRef<HTMLElement | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const dropIndicatorRef = useRef<HTMLElement | null>(null);
+
+  const ensureDropIndicator = (): HTMLElement => {
+    let el = dropIndicatorRef.current;
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'gantt-drop-indicator';
+      el.style.cssText = 'position:fixed;height:2px;background:#3b82f6;pointer-events:none;z-index:999;display:none;';
+      document.body.appendChild(el);
+      dropIndicatorRef.current = el;
+    }
+    return el;
+  };
 
   const onPointerDown = (e: PointerEvent, taskId: string | number, mode: GanttDragMode, barElement?: HTMLElement) => {
     if (!mode) return;
     e.preventDefault();
     const target = barElement ?? (e.currentTarget as HTMLElement);
     const rect = target.getBoundingClientRect();
+    const originalBarOpacity = target.style.opacity || '1';
+    target.style.opacity = '0.3';
+
     const ghost = (() => {
       const g = target.cloneNode(true) as HTMLElement;
       g.classList.add('nop-gantt-bar-ghost');
@@ -51,15 +72,25 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
       originalX: rect.left,
       originalW: rect.width,
       ghostEl: ghost,
+      originalBar: target,
+      originalBarOpacity,
     };
 
     const onPointerMove = (ev: PointerEvent) => {
       if (!dragRef.current) return;
       const dx = ev.clientX - dragRef.current.startX;
-      const dy = ev.clientY - dragRef.current.startY;
       if (ghostRef.current) {
-        ghostRef.current.style.transform = `translate(${dx}px, ${dy}px)`;
+        ghostRef.current.style.transform = `translateX(${dx}px)`;
       }
+      const indicator = ensureDropIndicator();
+      const cellWidth = store.cellWidth;
+      const dayDelta = Math.round(dx / cellWidth);
+      const indicatorX = rect.left + dayDelta * cellWidth;
+      indicator.style.display = 'block';
+      indicator.style.left = indicatorX + 'px';
+      indicator.style.top = (rect.bottom + 4) + 'px';
+      indicator.style.width = rect.width + 'px';
+      indicator.style.height = '2px';
     };
 
     const onPointerUp = (ev: PointerEvent) => {
@@ -76,23 +107,29 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
           const oldEnd = new Date(task.end);
           const newEnd = new Date(oldEnd);
           newEnd.setDate(newEnd.getDate() + dayDelta);
-          store.updateTask(task.id, {
+          const changes = {
             start: newStart.toISOString().slice(0, 10),
             end: newEnd.toISOString().slice(0, 10),
-          });
+          };
+          store.updateTask(task.id, changes);
+          onCommit?.(task.id, changes);
         } else if (dragRef.current.mode === 'resize-end' && dayDelta !== 0) {
           const oldEnd = new Date(task.end);
           const newEnd = new Date(oldEnd);
           newEnd.setDate(newEnd.getDate() + dayDelta);
           if (newEnd > new Date(task.start)) {
-            store.updateTask(task.id, { end: newEnd.toISOString().slice(0, 10) });
+            const changes = { end: newEnd.toISOString().slice(0, 10) };
+            store.updateTask(task.id, changes);
+            onCommit?.(task.id, changes);
           }
         } else if (dragRef.current.mode === 'resize-start' && dayDelta !== 0) {
           const oldStart = new Date(task.start);
           const newStart = new Date(oldStart);
           newStart.setDate(newStart.getDate() + dayDelta);
           if (newStart < new Date(task.end)) {
-            store.updateTask(task.id, { start: newStart.toISOString().slice(0, 10) });
+            const changes = { start: newStart.toISOString().slice(0, 10) };
+            store.updateTask(task.id, changes);
+            onCommit?.(task.id, changes);
           }
         }
       }
@@ -113,6 +150,12 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
         ghostRef.current.remove();
         ghostRef.current = null;
       }
+      if (dropIndicatorRef.current) {
+        dropIndicatorRef.current.style.display = 'none';
+      }
+      if (dragRef.current?.originalBar) {
+        dragRef.current.originalBar.style.opacity = dragRef.current.originalBarOpacity;
+      }
       dragRef.current = null;
       cleanupRef.current = null;
     };
@@ -128,6 +171,10 @@ export function useGanttDrag(_containerRef: React.RefObject<HTMLElement | null>)
     return () => {
       cleanupRef.current?.();
       if (ghostRef.current) ghostRef.current.remove();
+      if (dropIndicatorRef.current) {
+        dropIndicatorRef.current.remove();
+        dropIndicatorRef.current = null;
+      }
     };
   }, []);
 
