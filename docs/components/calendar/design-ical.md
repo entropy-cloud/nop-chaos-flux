@@ -30,7 +30,7 @@ Allow schedule import from `.ics` files (email attachments, external system expo
 
 ## Implementation
 
-Hook: `packages/flux-renderers-scheduling/src/calendar/hooks/use-calendar-ical.ts`
+Hook: `useCalendarICal` (removed 2026-07-22 — marked `@deprecated`, deleted as part of Calendar P2/P3 residual fixes. The `component:importICal` / `component:exportToICal` reactions remain declared in the renderer definition for future wiring.)
 
 ```typescript
 interface UseCalendarICalResult {

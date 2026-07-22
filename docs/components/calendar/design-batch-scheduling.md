@@ -38,7 +38,7 @@ New events:
 
 ## Implementation
 
-Component: `packages/flux-renderers-scheduling/src/calendar/components/calendar-batch-scheduler.tsx`
+Component: `CalendarBatchScheduler` (removed 2026-07-22 — marked `@deprecated`, deleted as part of Calendar P2/P3 residual fixes. The `onBatchSchedule` event remains declared in the renderer definition for future wiring.)
 
 - Renders inside a modal/popover triggered from calendar toolbar
 - Uses native `<input type="date">` for date range
