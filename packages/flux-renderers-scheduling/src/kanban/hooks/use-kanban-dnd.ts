@@ -12,6 +12,7 @@ export interface DragState {
 
 export interface DropState {
   targetColumnId: string | null;
+  targetCardIndex: number | null;
   closestEdge: 'before' | 'after' | null;
 }
 
@@ -37,14 +38,15 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
   });
   const [dropState, setDropState] = useState<DropState>({
     targetColumnId: null,
+    targetCardIndex: null,
     closestEdge: null,
   });
 
-  const stateRef = useRef({ boardData, onBoardChange, onCardMove, wipOverLimitColumns });
+  const stateRef = useRef({ boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState });
 
   useEffect(() => {
-    stateRef.current = { boardData, onBoardChange, onCardMove, wipOverLimitColumns };
-  }, [boardData, onBoardChange, onCardMove, wipOverLimitColumns]);
+    stateRef.current = { boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState };
+  }, [boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState]);
 
   useEffect(() => {
     return monitorForElements({
@@ -58,7 +60,7 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
       },
       onDrop({ source, location }) {
         setDragState({ isDragging: false, draggingCardId: null, sourceColumnId: null });
-        setDropState({ targetColumnId: null, closestEdge: null });
+        setDropState({ targetColumnId: null, targetCardIndex: null, closestEdge: null });
 
         const cardId = source.data.cardId as string;
         const fromColumnId = source.data.columnId as string;
@@ -112,6 +114,21 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
         canDrop({ source }) {
           if (source.data.type !== 'kanban-card') return false;
           return true;
+        },
+        onDrag({ location, self }) {
+          const rect = self.element.getBoundingClientRect();
+          const clientY = location.current.input.clientY;
+          const midY = rect.top + rect.height / 2;
+          const edge = clientY < midY ? 'before' : 'after';
+          setDropState((prev) => {
+            if (prev.targetColumnId === columnId && prev.targetCardIndex === index && prev.closestEdge === edge) return prev;
+            return { targetColumnId: columnId, targetCardIndex: index, closestEdge: edge };
+          });
+        },
+        onDragLeave() {
+          setDropState((prev) =>
+            prev.targetCardIndex === index ? { targetColumnId: prev.targetColumnId, targetCardIndex: null, closestEdge: null } : prev,
+          );
         },
       }),
     );

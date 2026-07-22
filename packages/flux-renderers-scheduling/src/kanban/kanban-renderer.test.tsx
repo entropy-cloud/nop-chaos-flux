@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
-import type { BoardData } from './kanban.types.js';
+import type { BoardData, BoardItem } from './kanban.types.js';
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
@@ -100,6 +100,22 @@ describe('KanbanBoard', () => {
     render(<KanbanBoard {...defaultProps} />);
     expect(screen.getByPlaceholderText('搜索卡片...')).toBeTruthy();
   });
+
+  it('renders wip warning when cardLimit exceeded (K-OP-02)', () => {
+    const boardWithLimit: BoardData = {
+      root: { id: 'root', type: 'root', children: ['col1'], data: {}, meta: {} },
+      col1: {
+        id: 'col1', type: 'column', parentId: 'root',
+        children: ['c1', 'c2'],
+        data: { title: 'WIP Col', cardLimit: 1, wipStrict: true }, meta: {},
+      },
+      c1: { id: 'c1', type: 'card', parentId: 'col1', children: [], data: { title: 'Card 1' }, meta: {} },
+      c2: { id: 'c2', type: 'card', parentId: 'col1', children: [], data: { title: 'Card 2' }, meta: {} },
+    };
+    render(<KanbanBoard {...defaultProps} props={{ ...defaultProps.props, data: boardWithLimit, wipStrict: true }} />);
+    const colEl = document.querySelector('[data-column-id="col1"]');
+    expect(colEl?.className).toContain('border-red-400');
+  });
 });
 
 describe('KanbanColumn', () => {
@@ -116,6 +132,21 @@ describe('KanbanColumn', () => {
       />,
     );
     expect(screen.getByText('To Do')).toBeTruthy();
+  });
+
+  it('renders drop indicator when dropTargetCardIndex is set (K-DISP-04)', () => {
+    const { container } = render(
+      <KanbanColumn
+        column={column}
+        board={sampleBoard}
+        collapsed={false}
+        onToggleCollapse={() => {}}
+        dropTargetCardIndex={0}
+        dropClosestEdge="before"
+      />,
+    );
+    const indicators = container.querySelectorAll('.nop-kanban-drop-indicator');
+    expect(indicators.length).toBe(1);
   });
 
   it('renders cards within the column', () => {
@@ -156,6 +187,27 @@ describe('KanbanColumn', () => {
     expect(screen.getByText('拖拽卡片到此处')).toBeTruthy();
   });
 
+  it('filters cards by selectedTagIds (K-OP-04)', () => {
+    const boardWithTags: BoardData = {
+      root: { id: 'root', type: 'root', children: ['col1'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: ['c1', 'c2'], data: { title: 'Col' }, meta: {} },
+      c1: { id: 'c1', type: 'card', parentId: 'col1', children: [], data: { title: 'Card A' }, meta: { tags: [{ id: 't1', text: 'Tag1', color: 'red' }] } },
+      c2: { id: 'c2', type: 'card', parentId: 'col1', children: [], data: { title: 'Card B' }, meta: { tags: [{ id: 't2', text: 'Tag2', color: 'blue' }] } },
+    };
+    const col = boardWithTags['col1']!;
+    const { container } = render(
+      <KanbanColumn
+        column={col}
+        board={boardWithTags}
+        collapsed={false}
+        onToggleCollapse={() => {}}
+        selectedTagIds={['t1']}
+      />,
+    );
+    expect(container.querySelector('[data-card-id="c1"]')).toBeTruthy();
+    expect(container.querySelector('[data-card-id="c2"]')).toBeFalsy();
+  });
+
   it('renders add card button', () => {
     render(
       <KanbanColumn
@@ -178,6 +230,16 @@ describe('KanbanCard', () => {
     expect(screen.getByText('Task 1')).toBeTruthy();
   });
 
+  it('reads title from dual path (card.title || card.data?.title)', () => {
+    const cardWithTopTitle: BoardItem = { ...card, title: 'Top Title', data: { ...card.data } };
+    const { container } = render(<KanbanCard card={cardWithTopTitle} column={column} index={0} />);
+    expect(container.querySelector('.nop-kanban-card-content')?.textContent).toContain('Top Title');
+
+    const cardWithDataTitle: BoardItem = { ...card, title: undefined, data: { ...card.data, title: 'Data Title' } };
+    const { container: c2 } = render(<KanbanCard card={cardWithDataTitle} column={column} index={0} />);
+    expect(c2.querySelector('.nop-kanban-card-content')?.textContent).toContain('Data Title');
+  });
+
   it('triggers onCardClick handler', () => {
     const onClick = vi.fn();
     render(<KanbanCard card={card} column={column} index={0} onCardClick={onClick} />);
@@ -191,6 +253,16 @@ describe('KanbanCard', () => {
     expect(cardEl).toBeTruthy();
     expect(cardEl?.getAttribute('data-card-id')).toBe('card1');
     expect(cardEl?.getAttribute('data-column-id')).toBe('col1');
+  });
+
+  it('supports data-dragging attribute for drag visual (K-DISP-03)', () => {
+    const { container } = render(<KanbanCard card={card} column={column} index={0} />);
+    const cardEl = container.querySelector('[data-slot="kanban-card"]');
+    expect(cardEl).toBeTruthy();
+    cardEl?.setAttribute('data-dragging', 'true');
+    expect(cardEl?.getAttribute('data-dragging')).toBe('true');
+    cardEl?.removeAttribute('data-dragging');
+    expect(cardEl?.getAttribute('data-dragging')).toBeNull();
   });
 });
 

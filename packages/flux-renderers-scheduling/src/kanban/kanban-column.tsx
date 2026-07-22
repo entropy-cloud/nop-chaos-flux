@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { cn, Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData, BoardItem, KanbanCardConfig } from './kanban.types.js';
@@ -31,6 +31,11 @@ export interface KanbanColumnProps {
   columnHeaderClassName?: string;
   cardClassName?: string;
   columnFooterClassName?: string;
+  selectedTagIds?: string[];
+  filterCardFn?: (card: BoardItem) => boolean;
+  helpers?: any;
+  dropTargetCardIndex?: number | null;
+  dropClosestEdge?: 'before' | 'after' | null;
 }
 
 export function KanbanColumn({
@@ -58,6 +63,11 @@ export function KanbanColumn({
   columnHeaderClassName,
   cardClassName,
   columnFooterClassName,
+  selectedTagIds,
+  filterCardFn,
+  helpers,
+  dropTargetCardIndex,
+  dropClosestEdge,
 }: KanbanColumnProps) {
   const cardIds = column.children;
   const cardIndexMap = new Map<string, number>(cardIds.map((id, idx) => [id, idx]));
@@ -65,15 +75,28 @@ export function KanbanColumn({
     .map((id) => board[id])
     .filter((item): item is BoardItem => item != null && item.type === 'card');
 
-  const filteredCards = (() => {
-    if (!filterText) return cards;
-    const text = filterText.toLowerCase();
-    return cards.filter((card) => {
-      const title = ((card.data?.title as string) || '').toLowerCase();
-      const description = ((card.data?.description as string) || '').toLowerCase();
-      return title.includes(text) || description.includes(text);
-    });
-  })();
+  const filteredCards = useMemo(() => {
+    let result = cards;
+    if (filterText) {
+      const text = filterText.toLowerCase();
+      result = result.filter((card) => {
+        const title = ((card.title || card.data?.title || '') as string).toLowerCase();
+        const description = ((card.data?.description as string) || '').toLowerCase();
+        return title.includes(text) || description.includes(text);
+      });
+    }
+    if (selectedTagIds && selectedTagIds.length > 0) {
+      result = result.filter((card) => {
+        const tags = card.meta?.tags as Array<{ id: string }> | undefined;
+        if (!tags || tags.length === 0) return false;
+        return tags.some((t) => selectedTagIds.includes(t.id));
+      });
+    }
+    if (filterCardFn) {
+      result = result.filter(filterCardFn);
+    }
+    return result;
+  }, [cards, filterText, selectedTagIds, filterCardFn]);
 
   const displayCards = collapsed ? [] : filteredCards;
   const showEmptyZone = !collapsed && filteredCards.length === 0;
@@ -95,7 +118,7 @@ export function KanbanColumn({
     columnStyle.maxWidth = undefined;
   }
 
-  const columnTitle = (column.data?.title as string) || '';
+  const columnTitle = (column.title || column.data?.title || '') as string;
 
   return (
     <div
@@ -161,6 +184,7 @@ export function KanbanColumn({
                       cardTemplateRegion={cardTemplateRegion}
                       onCardClick={onCardClick}
                       className={cardClassName}
+                      helpers={helpers}
                     />
                   </div>
                 );
@@ -168,18 +192,29 @@ export function KanbanColumn({
             </ul>
           ) : (
             <ul className="space-y-2" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {displayCards.map((card, _idx) => (
-                <KanbanCard
-                  key={card.id}
-                  card={card}
-                  column={column}
-                  index={cardIndexMap.get(card.id) ?? 0}
-                  configMap={configMap}
-                  cardTemplateRegion={cardTemplateRegion}
-                  onCardClick={onCardClick}
-                  className={cardClassName}
-                />
+              {displayCards.map((card, idx) => (
+                <React.Fragment key={card.id}>
+                  {dropTargetCardIndex === idx && dropClosestEdge === 'before' && (
+                    <div className="nop-kanban-drop-indicator" />
+                  )}
+                  <KanbanCard
+                    card={card}
+                    column={column}
+                    index={cardIndexMap.get(card.id) ?? 0}
+                    configMap={configMap}
+                    cardTemplateRegion={cardTemplateRegion}
+                    onCardClick={onCardClick}
+                    className={cardClassName}
+                    helpers={helpers}
+                  />
+                  {dropTargetCardIndex === idx && dropClosestEdge === 'after' && (
+                    <div className="nop-kanban-drop-indicator" />
+                  )}
+                </React.Fragment>
               ))}
+              {dropTargetCardIndex === displayCards.length && dropClosestEdge === 'after' && (
+                <div className="nop-kanban-drop-indicator" />
+              )}
             </ul>
           )}
           {showEmptyZone && (

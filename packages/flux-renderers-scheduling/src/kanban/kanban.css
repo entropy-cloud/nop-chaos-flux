@@ -75,13 +75,21 @@
   @apply w-2 h-2 rounded-full mb-1.5;
 }
 
-.nop-kanban [data-dragging='true'] .nop-kanban-card {
+.nop-kanban-card[data-dragging='true'] {
   opacity: 0.5;
   transform: scale(0.95);
 }
 
 .nop-kanban [data-drop-target='true'] {
   @apply ring-2 ring-blue-400;
+}
+
+.nop-kanban-drop-indicator {
+  height: 2px;
+  background-color: #3b82f6;
+  border-radius: 1px;
+  margin: 4px 0;
+  flex-shrink: 0;
 }
 
 .nop-kanban-skeleton {

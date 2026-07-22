@@ -54,9 +54,9 @@ function collectAllTags(board: BoardData, columns: BoardItem[]): KanbanFilterTag
 }
 
 export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
-  const { props: resolved, meta, regions, events, helpers: _helpers } = props;
-  const _runtime = useRendererRuntime();
-  const _scope = useRenderScope();
+  const { props: resolved, meta, regions, events, helpers } = props;
+  const runtime = useRendererRuntime();
+  const rootScope = useRenderScope();
 
   const rawData = resolved.data as BoardData | undefined;
   const configMap = resolved.configMap as Record<string, KanbanCardConfig> | undefined;
@@ -68,7 +68,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const [boardData, setBoardData] = useState<BoardData>(rawData ?? fallbackBoard);
   const columns = useMemo(() => getColumns(boardData), [boardData]);
   const [collapsedMap, setCollapsedMap] = useState<Record<string, boolean>>({});
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const initialFilterTags = (resolved.filterTags as string[]) || [];
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilterTags);
 
   const setBoardDataRef = useRef(setBoardData);
   useEffect(() => { setBoardDataRef.current = setBoardData; }, [setBoardData]);
@@ -160,13 +161,31 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const filterCardFn = useMemo(() => {
     const raw = resolved.filterCard;
+    if (!raw) return undefined;
     if (typeof raw === 'function') return raw as (card: Record<string, any>, text: string) => boolean;
+    if (typeof raw === 'string') {
+      try {
+        const compiled = runtime.expressionCompiler.compileValue(raw);
+        if (compiled) {
+          return (cardData: Record<string, any>, text: string) => {
+            const evalScope = runtime.createChildScope(rootScope, { card: cardData, text });
+            try {
+              return !!(runtime.evaluateCompiled(compiled, evalScope));
+            } finally {
+              runtime.disposeScope(evalScope.id);
+            }
+          };
+        }
+      } catch {
+        /* bad expression — fall through to no-op */
+      }
+    }
     return undefined;
-  }, [resolved.filterCard]);
+  }, [resolved.filterCard, runtime, rootScope]);
 
   const filter = useKanbanFilter({ filterText: resolved.filterText as string | undefined, filterCard: filterCardFn });
 
-  const wipOverLimitColumns = (() => {
+  const wipOverLimitColumns = useMemo(() => {
     const overLimit = new Set<string>();
     for (const col of columns) {
       const colData = boardData[col.id];
@@ -180,7 +199,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       }
     }
     return overLimit;
-  })();
+  }, [boardData, columns, wipStrictGlobal]);
 
   const handleCardMoveBoardChange = (newBoard: BoardData) => {
     lastCommandTypeRef.current = 'moveCard';
@@ -213,7 +232,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     wipOverLimitColumns,
   });
 
-  const { registerColumnHeader } = useColumnDnd({
+  const { registerColumnHeader, registerBoardDropZone } = useColumnDnd({
     boardData,
     onBoardChange: handleColumnReorderBoardChange,
     onColumnReorder: (payload) => events.onColumnReorder?.(payload),
@@ -370,6 +389,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
         const count = parseInt(colEl.getAttribute('data-card-count') || '0', 10);
         if (colId) {
           cleanups.push(registerColumn(colEl as HTMLElement, colId, count));
+          const root = boardData['root'];
+          const colIndex = root ? root.children.indexOf(colId) : -1;
+          if (colIndex >= 0) {
+            cleanups.push(registerBoardDropZone(colEl as HTMLElement, colIndex));
+          }
         }
       });
 
@@ -382,7 +406,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     }
 
     return () => cleanups.forEach((fn) => fn());
-  }, [draggable, registerCard, registerColumn, registerColumnHeader]);
+  }, [draggable, registerCard, registerColumn, registerColumnHeader, registerBoardDropZone, boardData]);
 
   useEffect(() => {
     if (!boardRef.current) return;
@@ -396,6 +420,17 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       }
     });
   }, [dropState.targetColumnId]);
+
+  useEffect(() => {
+    if (!boardRef.current) return;
+    boardRef.current.querySelectorAll('[data-dnd-card]').forEach((el) => {
+      el.removeAttribute('data-dragging');
+    });
+    if (dragState.isDragging && dragState.draggingCardId) {
+      const cardEl = boardRef.current.querySelector(`[data-card-id="${dragState.draggingCardId}"]`) as HTMLElement | null;
+      cardEl?.setAttribute('data-dragging', 'true');
+    }
+  }, [dragState.isDragging, dragState.draggingCardId]);
 
   if (!meta.visible) return null;
 
@@ -433,7 +468,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const canRedoNow = canRedo(undoStackState);
 
   return (
-    <div ref={boardRef} data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} data-dragging={dragState.isDragging ? 'true' : undefined} className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}>
+    <div ref={boardRef} data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}>
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {`${columns.length} columns, ${columns.reduce((sum, col) => sum + col.children.length, 0)} cards`}
       </div>
@@ -515,6 +550,15 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
                 columnHeaderClassName={columnHeaderClassName}
                 cardClassName={cardClassName}
                 columnFooterClassName={columnFooterClassName}
+                columnHeaderRegion={regions.columnHeader as any}
+                columnHeaderToolbarRegion={regions.columnHeaderToolbar as any}
+                cardTemplateRegion={regions.cardTemplate as any}
+                columnFooterRegion={regions.columnFooter as any}
+                selectedTagIds={selectedTagIds}
+                filterCardFn={(card) => filter.matchesCard(card)} 
+                helpers={helpers}
+                dropTargetCardIndex={col.id === dropState.targetColumnId ? dropState.targetCardIndex : null}
+                dropClosestEdge={col.id === dropState.targetColumnId ? dropState.closestEdge : null}
               />
             );
           })}

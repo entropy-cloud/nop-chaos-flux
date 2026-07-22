@@ -12,6 +12,7 @@ export interface KanbanCardProps {
   cardTemplateRegion?: { render: (params: { card: BoardItem; column: BoardItem; index: number }) => React.ReactNode } | null;
   onCardClick?: (cardId: string, columnId: string, index: number) => void;
   className?: string;
+  helpers?: any;
 }
 
 function handleCardKeyDown(e: React.KeyboardEvent, fn?: () => void) {
@@ -21,10 +22,11 @@ function handleCardKeyDown(e: React.KeyboardEvent, fn?: () => void) {
   }
 }
 
-function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, onCardClick, className }: KanbanCardProps) {
+function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, onCardClick, className, helpers }: KanbanCardProps) {
   const cardType = (card.data?.type as string) || '';
-  const title = (card.data?.title as string) || '';
-  const description = (card.data?.description as string) || '';
+  const title = (card.title || card.data?.title || '') as string;
+  const content = (card.content || card.data?.content || '') as string;
+  const description = (card.data?.description || content) as string;
   const color = (card.meta?.color as string) || '';
   const tags = (card.meta?.tags as KanbanTag[]) || [];
   const members = (card.meta?.members as KanbanMember[]) || [];
@@ -46,7 +48,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
 
   const innerContent = config?.render ? (
     <>
-      {cardTemplateRegion?.render({ card, column, index })}
+      {helpers?.render(config.render) as React.ReactNode}
       <KanbanCardTags color={color} tags={tags} members={members} />
     </>
   ) : cardTemplateRegion ? (

@@ -35,7 +35,7 @@ export function KanbanColumnHeader({
   wipWarning,
   wipText,
 }: KanbanColumnHeaderProps) {
-  const title = (column.data?.title as string) || '';
+  const title = (column.title || column.data?.title || '') as string;
 
   if (columnHeaderRegion) {
     return (

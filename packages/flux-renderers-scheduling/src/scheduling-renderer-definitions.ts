@@ -83,6 +83,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'loading', kind: 'region', regionKey: 'loading' },
       { key: 'filterText', kind: 'prop' },
       { key: 'filterCard', kind: 'prop' },
+      { key: 'filterTags', kind: 'prop' },
       { key: 'columnWidth', kind: 'prop' },
       { key: 'columnDraggable', kind: 'prop' },
       { key: 'draggable', kind: 'prop' },

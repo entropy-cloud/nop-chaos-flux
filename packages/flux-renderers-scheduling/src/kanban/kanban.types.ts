@@ -7,6 +7,8 @@ export interface BoardItem extends SchemaObject {
   children: string[];
   data: Record<string, any>;
   meta: Record<string, any>;
+  title?: string;
+  content?: string;
 }
 
 export interface BoardData {

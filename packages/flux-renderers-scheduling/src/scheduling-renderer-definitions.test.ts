@@ -44,7 +44,7 @@ describe('schedulingRendererDefinitions', () => {
       'body', 'data', 'configMap', 'columnsConfig',
       'columnHeader', 'columnHeaderToolbar', 'cardTemplate', 'columnFooter',
       'empty', 'loading',
-      'filterText', 'filterCard',
+      'filterText', 'filterCard', 'filterTags',
       'columnWidth', 'columnDraggable', 'draggable',
       'columnsOrderStatePath', 'columnsOrderOwnership',
       'collapsedStatePath', 'collapsedOwnership',

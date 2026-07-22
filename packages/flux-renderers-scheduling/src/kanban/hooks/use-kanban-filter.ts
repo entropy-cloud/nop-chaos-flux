@@ -23,8 +23,8 @@ export function useKanbanFilter({ filterText: externalFilterText, filterCard, de
     if (filterCard) {
       return filterCard(card, text);
     }
-    const title = ((card.title as string) || '').toLowerCase();
-    const description = ((card.description as string) || '').toLowerCase();
+    const title = ((card.data?.title ?? card.title ?? '') as string).toLowerCase();
+    const description = ((card.data?.description ?? card.description ?? '') as string).toLowerCase();
     const query = text.toLowerCase();
     return title.includes(query) || description.includes(query);
   };

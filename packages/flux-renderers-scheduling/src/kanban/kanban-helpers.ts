@@ -53,6 +53,8 @@ export function addCard(board: BoardData, columnId: string, cardData: Record<str
     type: 'card',
     parentId: columnId,
     children: [],
+    title: cardData.title as string | undefined,
+    content: cardData.content as string | undefined,
     data: cardData,
     meta: {},
   };
