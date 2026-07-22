@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot } from './gantt-context.js';
+import { useGanttStore, useGanttTaskSnapshot, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
 
 interface GanttBarsProps {
   className?: string;
@@ -15,6 +15,7 @@ export function GanttBars({ className, onBarPointerDown, onLinkHandlePointerDown
   const store = useGanttStore();
   useGanttTaskSnapshot();
   useGanttLayoutSnapshot();
+  useGanttTreeSnapshot();
   const tasks = store.getVisibleTasks();
   const barsRef = useRef<HTMLDivElement>(null);
 

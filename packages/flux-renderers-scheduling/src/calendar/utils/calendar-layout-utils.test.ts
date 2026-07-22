@@ -84,7 +84,7 @@ describe('calendar-layout-utils', () => {
       const dayEvents = row!.get('2026-07-20');
       expect(dayEvents).toBeDefined();
       expect(dayEvents!).toHaveLength(1);
-      expect(dayEvents![0].width).toBe(25);
+      expect(dayEvents![0].width).toBe(100);
       expect(dayEvents![0].left).toBe(0);
     });
 
@@ -100,10 +100,10 @@ describe('calendar-layout-utils', () => {
       const row = result.get('r1');
       const dayEvents = row!.get('2026-07-20');
       expect(dayEvents).toHaveLength(2);
-      expect(dayEvents![0].width).toBe(25);
+      expect(dayEvents![0].width).toBe(50);
       expect(dayEvents![0].left).toBe(0);
-      expect(dayEvents![1].width).toBe(25);
-      expect(dayEvents![1].left).toBe(25);
+      expect(dayEvents![1].width).toBe(50);
+      expect(dayEvents![1].left).toBe(50);
     });
 
     it('should cap events at maxConcurrent', () => {

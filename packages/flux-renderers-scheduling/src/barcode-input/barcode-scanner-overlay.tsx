@@ -241,16 +241,14 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
           </div>
         )}
 
-        {phase === 'scanning' && (
-          <video
-            ref={videoRef}
-            data-slot="barcode-scanner-video"
-            className="w-full h-full object-contain"
-            playsInline
-            muted
-            aria-label="Camera feed for barcode scanning"
-          />
-        )}
+        <video
+          ref={videoRef}
+          data-slot="barcode-scanner-video"
+          className={cn('w-full h-full object-contain', phase !== 'scanning' && 'hidden')}
+          playsInline
+          muted
+          aria-label="Camera feed for barcode scanning"
+        />
 
         <Button
           variant="ghost"

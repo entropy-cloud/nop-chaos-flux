@@ -69,7 +69,6 @@ export class GanttStore {
   set scrollLeft(v: number) { this._scrollLeft = v; }
 
   parse(tasks: GanttTaskData[], links: GanttLinkData[], resources?: GanttResource[], assignments?: GanttAssignment[], calendars?: CalendarEntry[]): void {
-    if (this._dirty) return;
     this._dirty = false;
     if (calendars) for (const e of calendars) this.calendarManager.registerCalendar(e.id, e.calendar);
     const newTasks = new Map<GanttId, GanttTask>();
@@ -209,6 +208,10 @@ export class GanttStore {
     const newExpanded = new Set(state.expandedSet);
     if (newExpanded.has(taskId)) newExpanded.delete(taskId); else newExpanded.add(taskId);
     this.store.setState({ expandedSet: newExpanded, revision: state.revision + 1, treeRevision: state.treeRevision + 1 });
+    this.computeCoordinates();
+    this.computeLinkPolylines();
+    const s2 = this.gs();
+    this.store.setState({ layoutRevision: s2.layoutRevision + 1 });
   }
 
   expandAll(): void {

@@ -4,7 +4,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import type { CalendarDateRange } from '../calendar.types.js';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
-import { getMonthDays, isToday, isWeekend, toISODateString } from '../utils/calendar-date-utils.js';
+import { getDateRange, getMonthStartEnd, isToday, isWeekend, toISODateString } from '../utils/calendar-date-utils.js';
 import { positionEventsInMonth, splitMultiDayEvents } from '../utils/calendar-layout-utils.js';
 import { computeCrossDayLines, createSVGPath, type CellPosition } from '../utils/calendar-cross-day-lines.js';
 import { CalendarEventBlock } from './calendar-event-block.js';
@@ -60,10 +60,10 @@ export function CalendarMonthView({
   eventClassName,
   locale = 'en-US',
 }: CalendarMonthViewProps & { locale?: string }) {
-  const days = useMemo(
-    () => getMonthDays(currentDate, firstDayOfWeek),
-    [currentDate, firstDayOfWeek],
-  );
+  const days = useMemo(() => {
+    const { start, end } = getMonthStartEnd(currentDate);
+    return getDateRange(start, end);
+  }, [currentDate]);
 
   const positionedMap = useMemo(
     () => positionEventsInMonth({ events, resources, dateRange, maxConcurrent }),
@@ -179,7 +179,13 @@ export function CalendarMonthView({
           data-slot="calendar-resource-row"
           data-resource-id={resource.id}
           className="flex border-b"
-          style={{ height: `${vItem.size}px`, transform: `translateY(${vItem.start}px)` }}
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            height: `${vItem.size}px`,
+            transform: `translateY(${vItem.start}px)`,
+          }}
         >
           <div
             data-slot="calendar-resource-header"

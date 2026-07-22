@@ -65,18 +65,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const wipStrictGlobal = resolved.wipStrict === true;
 
   const fallbackBoard = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
-  const isControlled = rawData != null;
-  const [localBoardData, setLocalBoardData] = useState<BoardData>(rawData ?? fallbackBoard);
-
-  const boardData: BoardData = isControlled ? rawData : localBoardData;
-  const setBoardData = useCallback(
-    (updater: BoardData | ((prev: BoardData) => BoardData)) => {
-      if (!isControlled) {
-        setLocalBoardData(updater);
-      }
-    },
-    [isControlled],
-  );
+  const [boardData, setBoardData] = useState<BoardData>(rawData ?? fallbackBoard);
   const columns = useMemo(() => getColumns(boardData), [boardData]);
   const [collapsedMap, setCollapsedMap] = useState<Record<string, boolean>>({});
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);

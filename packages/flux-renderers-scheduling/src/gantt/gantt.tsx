@@ -34,6 +34,11 @@ function createInitialStore(resolved: Record<string, unknown>): GanttStore {
     cellWidth: (resolved.cellWidth as number) ?? 40,
     defaultZoom: (resolved.defaultZoom as string) ?? 'week',
     taskBarHeight: (resolved.taskBarHeight as number) ?? 28,
+    zoomLevels: (resolved.zoomLevels as any[]) ?? [
+      { key: 'day', label: 'Day', minCellWidth: 40, scales: [{ unit: 'day', step: 1, format: 'MM/DD' }] },
+      { key: 'week', label: 'Week', minCellWidth: 80, scales: [{ unit: 'week', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
+      { key: 'month', label: 'Month', minCellWidth: 60, scales: [{ unit: 'month', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
+    ],
   });
   const taskData = (resolved.tasks as any[]) ?? [];
   const linkData = (resolved.links as any[]) ?? [];
@@ -136,28 +141,22 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const scrollToToday = useCallback(() => {
       const today = new Date();
       const x = dateToPixel(today, store.scaleRange, store.cellWidth);
-      const container = gridRef.current;
+      const container = timelineRef.current;
       if (container) {
         container.scrollLeft = Math.max(0, x - container.clientWidth / 2);
       }
-      if (timelineRef.current) {
-        timelineRef.current.scrollLeft = container?.scrollLeft ?? 0;
-      }
-    }, [store, gridRef, timelineRef]);
+    }, [store, timelineRef]);
 
     const scrollToTask = useCallback((taskId: string | number) => {
       const task = store.tasks.get(taskId);
       if (task) {
         const x = dateToPixel(new Date(task.start), store.scaleRange, store.cellWidth);
-        const container = gridRef.current;
+        const container = timelineRef.current;
         if (container) {
           container.scrollLeft = Math.max(0, x - container.clientWidth / 2);
         }
-        if (timelineRef.current) {
-          timelineRef.current.scrollLeft = container?.scrollLeft ?? 0;
-        }
       }
-    }, [store, gridRef, timelineRef]);
+    }, [store, timelineRef]);
 
     useImperativeHandle(
       ref,

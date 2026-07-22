@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
-import { useGanttStore, useGanttLayoutSnapshot } from './gantt-context.js';
+import { useGanttStore, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
 import { computeScaleIntervals } from './utils/scale.js';
 
 interface GanttTimeScaleProps {
@@ -10,6 +10,7 @@ interface GanttTimeScaleProps {
 export function GanttTimeScale({ className }: GanttTimeScaleProps) {
   const store = useGanttStore();
   useGanttLayoutSnapshot();
+  useGanttTreeSnapshot();
 
   const rows = (() => {
     const zoom = store.zoomLevels.get(store.currentZoom);

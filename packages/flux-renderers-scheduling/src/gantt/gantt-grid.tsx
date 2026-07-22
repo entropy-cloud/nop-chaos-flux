@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { useGanttStore, useGanttLayoutSnapshot } from './gantt-context.js';
+import { useGanttStore, useGanttLayoutSnapshot, useGanttTreeSnapshot } from './gantt-context.js';
 import type { GanttTask, GanttColumn } from './gantt.types.js';
 
 const DEFAULT_COLUMNS: GanttColumn[] = [
@@ -22,6 +22,7 @@ interface GanttGridProps {
 export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTaskId, className }: GanttGridProps) {
   const store = useGanttStore();
   useGanttLayoutSnapshot();
+  useGanttTreeSnapshot();
   const [editingCell, setEditingCell] = useState<{ taskId: string | number; column: string } | null>(null);
 
   const tasks = store.getVisibleTasks();
@@ -91,6 +92,7 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
                 'border-b border-gray-100 hover:bg-blue-50/50',
                 selectedTaskId === task.id && 'bg-blue-50',
               )}
+              style={{ height: store.rowHeight }}
               onClick={() => handleCellClick(task.id, 'text')}
             >
               {columns.map((col) => (

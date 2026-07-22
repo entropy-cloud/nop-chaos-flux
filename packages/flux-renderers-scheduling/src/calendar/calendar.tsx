@@ -62,7 +62,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   const initialDate = resolved.date
     ? (parseISODate(resolved.date as string) ?? new Date())
     : new Date();
-  const activeView = (resolved.view as CalendarView) ?? 'month';
+  const initialView = (resolved.view as CalendarView) ?? 'month';
   const firstDayOfWeek = (resolved.firstDayOfWeek as 0 | 1) ?? 0;
   const showWeekends = resolved.showWeekends !== false;
   const maxConcurrent = (resolved.maxConcurrent as number) ?? 4;
@@ -261,9 +261,9 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     longPressMs: 500,
   });
 
-  const { currentDate, dateRange, setCurrentDate, setActiveView } = useCalendarState({
+  const { currentDate, dateRange, activeView, setCurrentDate, setActiveView } = useCalendarState({
     initialDate,
-    initialView: activeView,
+    initialView,
     firstDayOfWeek,
     onDateChange: (date: Date) => {
       void events.onDateChange?.({ date: date.toISOString(), view: activeViewRef.current });
@@ -273,7 +273,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     },
   });
 
-  const activeViewRef = useRef(activeView);
+  const activeViewRef = useRef(initialView);
   const currentDateRef = useRef(currentDate);
 
   useEffect(() => {

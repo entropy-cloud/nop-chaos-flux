@@ -89,7 +89,6 @@ export function positionEventsInMonth(
   const groups = groupEventsByResourceDate(splitEvents);
 
   const effectiveMax = maxConcurrent > 0 ? maxConcurrent : 4;
-  const widthPerEvent = 100 / effectiveMax;
 
   for (const resource of resources) {
     const resourceId = resource.id;
@@ -107,8 +106,10 @@ export function positionEventsInMonth(
       if (dayBlocks && dayBlocks.length > 0) {
         sortEventsByStartAndDuration(dayBlocks);
 
-        const positioned: PositionedEvent[] = [];
         const visibleCount = Math.min(dayBlocks.length, effectiveMax);
+        const widthPerEvent = 100 / visibleCount;
+
+        const positioned: PositionedEvent[] = [];
 
         for (let i = 0; i < visibleCount; i++) {
           const block = dayBlocks[i];
