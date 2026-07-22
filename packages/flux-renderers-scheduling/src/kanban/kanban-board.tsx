@@ -147,14 +147,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const initialFilterTags = (resolved.filterTags as string[]) || [];
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilterTags);
 
-  const dataFingerprintRef = useRef<number>(0);
-  const prevDataRef = useRef<BoardData | undefined>(undefined);
   useEffect(() => {
     if (kanbanOwnership !== 'local') return;
     const newData = resolved.data as BoardData | undefined;
-    if (newData === prevDataRef.current) return;
-    prevDataRef.current = newData;
-    dataFingerprintRef.current++;
     if (newData) {
       setLocalBoardData(newData);
     }

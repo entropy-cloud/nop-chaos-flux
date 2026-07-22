@@ -73,15 +73,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       };
     }, [store]);
 
-    const dataFingerprintRef = useRef<number>(0);
-    const prevDataRef = useRef<{ tasks?: any[]; links?: any[]; resources?: any[]; assignments?: any[] }>({});
     useEffect(() => {
-      const newData = { tasks: resolved.tasks, links: resolved.links, resources: resolved.resources, assignments: resolved.assignments };
-      const prev = prevDataRef.current;
-      if (newData.tasks === prev.tasks && newData.links === prev.links && newData.resources === prev.resources && newData.assignments === prev.assignments) return;
-      prevDataRef.current = newData;
-      dataFingerprintRef.current++;
-      store.parse(newData.tasks ?? [], newData.links ?? [], newData.resources, newData.assignments);
+      store.parse(resolved.tasks ?? [], resolved.links ?? [], resolved.resources, resolved.assignments);
       undoStackRef.current.clear();
     }, [store, resolved.tasks, resolved.links, resolved.resources, resolved.assignments]);
 

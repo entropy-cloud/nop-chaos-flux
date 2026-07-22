@@ -107,11 +107,4 @@ export function getDaysInMonth(date: Date): number {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
 }
 
-export function getMonthDays(date: Date, firstDayOfWeek: 0 | 1 = 0): Date[] {
-  const monthStart = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-  const monthEnd = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0));
-  const startDay = monthStart.getUTCDay();
-  const diff = (startDay < firstDayOfWeek ? 7 : 0) + startDay - firstDayOfWeek;
-  const gridStart = addDays(monthStart, -diff);
-  return getDateRange(gridStart, addDays(monthEnd, 6 - monthEnd.getUTCDay()));
-}
+

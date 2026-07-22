@@ -18,7 +18,6 @@ export {
   toISODateString,
   parseISODate,
   getDaysInMonth,
-  getMonthDays,
 } from './utils/calendar-date-utils.js';
 
 export {

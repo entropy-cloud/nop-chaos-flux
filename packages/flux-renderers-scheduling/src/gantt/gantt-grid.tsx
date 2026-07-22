@@ -37,6 +37,7 @@ export function GanttGrid({ columns = DEFAULT_COLUMNS, onSelectTask, selectedTas
   const rowHeight = store.rowHeight;
 
   const [hasScrollContainer, setHasScrollContainer] = useState(false);
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual not yet React-Compiler-compatible; known gap.
   const virtualizer = useVirtualizer({
     count: hasScrollContainer ? tasks.length : 0,
     getScrollElement: () => scrollContainerRef?.current ?? null,

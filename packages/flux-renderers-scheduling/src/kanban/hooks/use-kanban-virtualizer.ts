@@ -17,6 +17,7 @@ export function useKanbanVirtualizer({
   scrollContainerRef,
   virtualizationEnabled = false,
 }: UseKanbanVirtualizerOptions) {
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual not yet React-Compiler-compatible; known gap.
   const virtualizer = useVirtualizer({
     count: virtualizationEnabled ? cardCount : 0,
     getScrollElement: () => scrollContainerRef.current,

@@ -20,6 +20,7 @@ export function useCalendarVirtualizer(options: UseCalendarVirtualizerOptions): 
   const { count, overscan = DEFAULT_OVERSCAN, estimateSize } = options;
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual not yet React-Compiler-compatible; known gap.
   const rowVirtualizer = useVirtualizer({
     count,
     getScrollElement: () => scrollRef.current,

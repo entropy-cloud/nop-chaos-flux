@@ -17,7 +17,6 @@ import {
   toISODateString,
   parseISODate,
   getDaysInMonth,
-  getMonthDays,
 } from './calendar-date-utils.js';
 
 function date(y: number, m: number, d: number): Date {
@@ -299,21 +298,5 @@ describe('calendar-date-utils', () => {
     });
   });
 
-  describe('getMonthDays', () => {
-    it('should return correct number of days for month grid', () => {
-      const days = getMonthDays(date(2026, 7, 15), 0);
-      expect(days.length).toBeGreaterThanOrEqual(28);
-      expect(days.length).toBeLessThanOrEqual(42);
-    });
 
-    it('should start on correct weekday for firstDayOfWeek=0', () => {
-      const days = getMonthDays(date(2026, 7, 1), 0);
-      expect(days[0].getUTCDay()).toBe(0);
-    });
-
-    it('should start on correct weekday for firstDayOfWeek=1', () => {
-      const days = getMonthDays(date(2026, 7, 1), 1);
-      expect(days[0].getUTCDay()).toBe(1);
-    });
-  });
 });
