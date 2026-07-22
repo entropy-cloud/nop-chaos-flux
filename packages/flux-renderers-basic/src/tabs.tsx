@@ -381,12 +381,16 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
             data-slot="tabs-content"
             className={cn(schemaProps.contentClassName)}
           >
-            {toolbarRegion ? (
-              <div data-slot="tabs-item-toolbar">
-                {asReactNode(toolbarRegion.render(regionOptions))}
-              </div>
-            ) : null}
-            {bodyRegion ? asReactNode(bodyRegion.render(regionOptions)) : null}
+            {!keepMounted ? null : (
+              <>
+                {toolbarRegion ? (
+                  <div data-slot="tabs-item-toolbar">
+                    {asReactNode(toolbarRegion.render(regionOptions))}
+                  </div>
+                ) : null}
+                {bodyRegion ? asReactNode(bodyRegion.render(regionOptions)) : null}
+              </>
+            )}
           </TabsContent>
         );
       })}
