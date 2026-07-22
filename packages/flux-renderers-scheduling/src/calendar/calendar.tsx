@@ -13,6 +13,7 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import type { CalendarSchema, CalendarView, CalendarEvent, CalendarResource } from '../schemas.js';
 import { useCalendarState } from './hooks/use-calendar-state.js';
 import { useCalendarNavigation } from './hooks/use-calendar-navigation.js';
@@ -73,6 +74,8 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   const showWeekends = resolved.showWeekends !== false;
   const maxConcurrent = (resolved.maxConcurrent as number) ?? 4;
   const showCrossDayLines = resolved.showCrossDayLines !== false;
+
+  const locale = (resolved.locale as string) ?? 'zh-CN';
 
   const eventsData = (resolved.events as CalendarSchema['events']) ?? (resolved as any).data as CalendarEvent[] ?? [];
   const resourcesData = (resolved.resources as CalendarSchema['resources']) ?? [];
@@ -270,15 +273,15 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     switch (direction) {
       case 'left':
         newStart = new Date(oldStart);
-        newStart.setDate(newStart.getDate() - dayDelta);
+        newStart.setUTCDate(newStart.getUTCDate() - dayDelta);
         newEnd = new Date(oldEnd);
-        newEnd.setDate(newEnd.getDate() - dayDelta);
+        newEnd.setUTCDate(newEnd.getUTCDate() - dayDelta);
         break;
       case 'right':
         newStart = new Date(oldStart);
-        newStart.setDate(newStart.getDate() + dayDelta);
+        newStart.setUTCDate(newStart.getUTCDate() + dayDelta);
         newEnd = new Date(oldEnd);
-        newEnd.setDate(newEnd.getDate() + dayDelta);
+        newEnd.setUTCDate(newEnd.getUTCDate() + dayDelta);
         break;
       case 'up': {
         const resourceIdx = resourcesData.findIndex((r) => r.id === event.resourceId);
@@ -451,7 +454,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     return (
       <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-calendar flex flex-col', meta.className, resolved.emptyClassName as string | undefined)}>
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <div className="text-4xl mb-4 opacity-30">📅</div>
+          <CalendarIcon className="text-4xl mb-4 opacity-30" />
           <p className="text-sm">{t('scheduling.noScheduleData')}</p>
         </div>
       </div>
@@ -506,6 +509,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
             showCrossDayLines={showCrossDayLines}
             onEventKeyDown={handleEventKeyDown}
             eventClassName={resolved.eventClassName as string | undefined}
+            locale={locale}
           />
         </div>
       )}

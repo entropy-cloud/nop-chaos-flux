@@ -26,6 +26,7 @@ export interface CalendarMonthViewProps {
   showCrossDayLines?: boolean;
   onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
   eventClassName?: string;
+  locale?: string;
 }
 
 const WEEKDAY_LABELS: Record<string, string[]> = {
@@ -59,7 +60,7 @@ export function CalendarMonthView({
   onEventKeyDown,
   eventClassName,
   locale = 'en-US',
-}: CalendarMonthViewProps & { locale?: string }) {
+}: CalendarMonthViewProps) {
   const days = useMemo(() => {
     const { start, end } = getMonthStartEnd(currentDate);
     return getDateRange(start, end);

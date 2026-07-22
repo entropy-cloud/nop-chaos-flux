@@ -118,10 +118,10 @@ describe('Gantt interaction primitives', () => {
       const task = store.tasks.get('t1')!;
       const oldStart = new Date(task.start);
       const newStart = new Date(oldStart);
-      newStart.setDate(newStart.getDate() + dayDelta);
+      newStart.setUTCDate(newStart.getUTCDate() + dayDelta);
       const oldEnd = new Date(task.end);
       const newEnd = new Date(oldEnd);
-      newEnd.setDate(newEnd.getDate() + dayDelta);
+      newEnd.setUTCDate(newEnd.getUTCDate() + dayDelta);
       store.updateTask('t1', {
         start: newStart.toISOString().slice(0, 10),
         end: newEnd.toISOString().slice(0, 10),

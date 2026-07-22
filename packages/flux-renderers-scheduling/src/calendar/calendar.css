@@ -45,7 +45,7 @@
   @apply text-gray-300;
 }
 
-.nop-calendar [data-slot='calendar-cell']:has([data-weekend='true']) {
+.nop-calendar [data-slot='calendar-cell'][data-weekend='true'] {
   @apply bg-gray-50;
 }
 

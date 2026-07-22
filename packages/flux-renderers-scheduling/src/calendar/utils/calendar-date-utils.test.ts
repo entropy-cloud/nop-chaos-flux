@@ -1,4 +1,8 @@
 import { describe, it, expect } from 'vitest';
+
+declare const process: {
+  env: Record<string, string | undefined>;
+};
 import {
   getMonthStartEnd,
   getWeekStartEnd,
@@ -142,20 +146,56 @@ describe('calendar-date-utils', () => {
   describe('isToday', () => {
     it('should return true for today (UTC-based)', () => {
       const now = new Date();
-      const utcToday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+      const utcToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
       expect(isToday(utcToday)).toBe(true);
     });
 
     it('should return false for yesterday', () => {
       const now = new Date();
-      const utcYesterday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+      const utcYesterday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1));
       expect(isToday(utcYesterday)).toBe(false);
     });
 
     it('should return false for tomorrow', () => {
       const now = new Date();
-      const utcTomorrow = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+      const utcTomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
       expect(isToday(utcTomorrow)).toBe(false);
+    });
+
+    it('should return correct result near midnight boundary in non-UTC timezone', () => {
+      const origTz = process.env.TZ;
+      process.env.TZ = 'Asia/Shanghai';
+      try {
+        const now = new Date();
+        const utcToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        expect(isToday(utcToday)).toBe(true);
+        const utcYesterday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1));
+        expect(isToday(utcYesterday)).toBe(false);
+        const utcTomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+        expect(isToday(utcTomorrow)).toBe(false);
+      } finally {
+        process.env.TZ = origTz;
+      }
+    });
+
+    it('should use UTC date methods, not local date methods', () => {
+      const origTz = process.env.TZ;
+      process.env.TZ = 'Asia/Shanghai';
+      try {
+        const july22Utc = new Date(Date.UTC(2026, 6, 22));
+        const july23Utc = new Date(Date.UTC(2026, 6, 23));
+        const now = new Date('2026-07-22T22:00:00Z');
+        const origNow = Date.now;
+        Date.now = () => now.getTime();
+        try {
+          expect(isToday(july22Utc)).toBe(true);
+          expect(isToday(july23Utc)).toBe(false);
+        } finally {
+          Date.now = origNow;
+        }
+      } finally {
+        process.env.TZ = origTz;
+      }
     });
   });
 

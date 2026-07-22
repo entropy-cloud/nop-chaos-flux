@@ -114,25 +114,25 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       switch (action) {
         case 'move-up': {
           const newStart = new Date(oldStart);
-          newStart.setDate(newStart.getDate() - 1);
+          newStart.setUTCDate(newStart.getUTCDate() - 1);
           const newEnd = new Date(oldEnd);
-          newEnd.setDate(newEnd.getDate() - 1);
+          newEnd.setUTCDate(newEnd.getUTCDate() - 1);
           void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) } }, { scope: scopeRef.current });
           store.updateTask(taskId, { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) });
           break;
         }
         case 'move-down': {
           const newStart = new Date(oldStart);
-          newStart.setDate(newStart.getDate() + 1);
+          newStart.setUTCDate(newStart.getUTCDate() + 1);
           const newEnd = new Date(oldEnd);
-          newEnd.setDate(newEnd.getDate() + 1);
+          newEnd.setUTCDate(newEnd.getUTCDate() + 1);
           void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) } }, { scope: scopeRef.current });
           store.updateTask(taskId, { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) });
           break;
         }
         case 'resize-left': {
           const newEnd = new Date(oldEnd);
-          newEnd.setDate(newEnd.getDate() - 1);
+          newEnd.setUTCDate(newEnd.getUTCDate() - 1);
           if (newEnd > oldStart) {
             void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { end: newEnd.toISOString().slice(0, 10) } }, { scope: scopeRef.current });
             store.updateTask(taskId, { end: newEnd.toISOString().slice(0, 10) });
@@ -141,7 +141,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         }
         case 'resize-right': {
           const newEnd = new Date(oldEnd);
-          newEnd.setDate(newEnd.getDate() + 1);
+          newEnd.setUTCDate(newEnd.getUTCDate() + 1);
           void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { end: newEnd.toISOString().slice(0, 10) } }, { scope: scopeRef.current });
           store.updateTask(taskId, { end: newEnd.toISOString().slice(0, 10) });
           break;

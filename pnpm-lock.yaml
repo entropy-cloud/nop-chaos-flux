@@ -321,12 +321,21 @@ importers:
       '@nop-chaos/flux-renderers-basic':
         specifier: workspace:*
         version: link:../flux-renderers-basic
+      '@nop-chaos/flux-renderers-content':
+        specifier: workspace:*
+        version: link:../flux-renderers-content
       '@nop-chaos/flux-renderers-data':
         specifier: workspace:*
         version: link:../flux-renderers-data
       '@nop-chaos/flux-renderers-form':
         specifier: workspace:*
         version: link:../flux-renderers-form
+      '@nop-chaos/flux-renderers-form-advanced':
+        specifier: workspace:*
+        version: link:../flux-renderers-form-advanced
+      '@nop-chaos/flux-renderers-layout':
+        specifier: workspace:*
+        version: link:../flux-renderers-layout
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
@@ -574,6 +583,9 @@ importers:
         specifier: ^1.5.4
         version: 1.5.4
     devDependencies:
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../flux-formula
       '@types/diff-match-patch':
         specifier: ^1.0.7
         version: 1.0.36

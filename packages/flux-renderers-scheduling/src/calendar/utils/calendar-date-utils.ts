@@ -55,7 +55,7 @@ export function isWeekend(date: Date): boolean {
 
 export function isToday(date: Date): boolean {
   const now = new Date();
-  const utcToday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const utcToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   return isSameDay(date, utcToday);
 }
 
