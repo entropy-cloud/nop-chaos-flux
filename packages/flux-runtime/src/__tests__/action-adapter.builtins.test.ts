@@ -222,6 +222,41 @@ describe('createActionRuntimeAdapter direct branches', () => {
     ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
   });
 
+  it('logs console.error when surface body compilation fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const notify = vi.fn();
+      const createSurfaceScope = vi.fn();
+      const compileError = new Error('bad surface body');
+      const failingSurfaceRuntime = { open: vi.fn(), close: vi.fn() };
+      const failingAdapter = createActionRuntimeAdapter({
+        getEnv: () => ({ notify }) as any,
+        expressionCompiler: {} as any,
+        evaluate: <T>(target: unknown) => target as T,
+        executeApiRequest: vi.fn() as any,
+        runtime: {
+          env: { notify, monitor: { onError: vi.fn() } },
+          createChildScope: vi.fn(),
+          refreshDataSource: vi.fn(),
+          compile: vi.fn(() => { throw compileError; }),
+        } as any,
+        createSurfaceScope,
+      });
+
+      await failingAdapter.invokeBuiltInAction(
+        createBuiltInInvocation('openDialog', { title: 'Broken', body: [{ type: 'text' }] }),
+        createCtx({ surfaceRuntime: failingSurfaceRuntime }),
+      );
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to compile surface validation plan:',
+        compileError,
+      );
+    } finally {
+      consoleSpy.mockRestore();
+    }
+  });
+
   it('returns a cancelled result when ajax execution aborts', async () => {
     const adapter = createActionRuntimeAdapter({
       getEnv: () => ({ notify: vi.fn() }) as any,

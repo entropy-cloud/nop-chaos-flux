@@ -77,6 +77,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
       const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
       return { plan: root?.validationPlan };
     } catch (error) {
+      console.error('Failed to compile surface validation plan:', error);
       return {
         plan: undefined,
         error:
