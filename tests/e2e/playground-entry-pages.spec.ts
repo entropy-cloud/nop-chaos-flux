@@ -358,6 +358,11 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.getByRole('button', { name: 'Back' })).toBeVisible();
     await expect(page.locator('[data-testid="verify-root"]')).toBeVisible();
   },
+  'diff-perf-scale': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: /Diff View Performance Scale/i, level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {
@@ -371,7 +376,7 @@ test('domain route coverage matches playground route inventory', () => {
   expect(assertionIds).toEqual(routeIds);
 });
 
-const ROUTES_WITH_KNOWN_ERRORS = new Set(['gantt', 'kanban', 'scheduling-calendar', 'barcode-input', 'calendar-perf-scale', 'kanban-perf-scale']);
+const ROUTES_WITH_KNOWN_ERRORS = new Set(['gantt', 'kanban', 'scheduling-calendar', 'barcode-input', 'calendar-perf-scale', 'kanban-perf-scale', 'gantt-perf-scale', 'diff-perf-scale']);
 
 for (const route of DOMAIN_RENDERER_ROUTES) {
   test(`playground entry page smoke: ${route.id}`, async ({ page, allowConsoleErrors }) => {

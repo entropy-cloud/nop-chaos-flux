@@ -87,19 +87,19 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### S2 — Gantt 交互与视觉
 
-| ID    | Status | 内容                                                                                                                                                                                                  | 设计文档                | 依赖 |
-| ----- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ---- |
-| S2.1  | done   | **Gantt 布局容器**：Layout（grid + resizer + timeline），grid 宽度可拖拽                                                                                                                              | `design.md §6`          | S1.1 |
-| S2.2  | done   | **任务网格**：可配置列（text/start/end/duration/predecessor/resources），tree 缩进列，列宽可拖拽，单击编辑                                                                                            | `design.md §4`          | S2.1 |
-| S2.3  | done   | **时间线渲染**：TimeScale（多行刻度头部）+ CellGrid（背景网格）+ Bars（任务条）+ Links（SVG 依赖线）+ Markers（竖线标记，含今日线）                                                                   | `design.md §10`         | S2.1 |
-| S2.4  | done   | **任务条渲染**：`taskBar` region 模板，进度条（可拖拽调整），link handle 锚点，任务类型图标（里程碑菱形/项目条/任务条）                                                                               | `design.md §6`          | S2.3 |
-| S2.5  | done   | **SVG 依赖线**：`Links` 组件，polyline 箭头，hitbox（透明宽区域便于点击），选中态高亮，删除按钮                                                                                                       | `design.md §10`         | S2.4 |
-| S2.6  | done   | **命令式 DOM 拖拽**：`useGanttDrag`——区分移动/调整开始/调整结束三种模式，pointer 事件，拖拽中实时更新像素坐标（ref bridge，不触发 React），拖拽结束 commit 到 GanttStore。放置指示线 2px 蓝色         | `design.md §11.3`       | S2.4 |
-| S2.7  | done   | **链接绘制**：点击 link handle 开始绘制，移动鼠标绘制临时线，点击目标 task 创建依赖。`addLink` action                                                                                                 | `design.md §8`          | S2.6 |
-| S2.8  | done   | **滚动同步**：`useGanttScroll`——grid ↔ timeline 垂直滚动同步（rAF 节流），timeline 水平滚动独立。双滚轴系统                                                                                           | `design.md §11.3`       | S2.1 |
-| S2.9  | done   | **任务编辑器**：`editor` region——双击/右键任务弹出编辑浮层，编辑任务字段（text/start/end/duration/progress/type/parent），支持内联编辑和 dialog 两种模式                                              | 需新建设计或扩展现有 §6 | S2.6 |
-| S2.10 | done   | **键盘导航**：方向键移动选中任务，Enter 打开编辑器，Delete 删除，Tab 切换字段，Ctrl+Z 撤销。WAI-ARIA 角色/属性                                                                                        | Gantt §12.9             | S2.6 |
-| S2.11 | done   | **缺省视觉设计**：loading 骨架脉冲（grid + timeline 分割），empty 居中图标+文字，hover 高亮（`rgba(59,130,246,0.08)`），拖拽 ghost（半透明+shadow），缩放过渡动画 300ms ease，滚动回弹 200ms ease-out | `design.md §10`         | S2.1 |
+| ID    | Status | 内容                                                                                                                                                                                                  | 设计文档           | 依赖 |
+| ----- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ---- |
+| S2.1  | done   | **Gantt 布局容器**：Layout（grid + resizer + timeline），grid 宽度可拖拽                                                                                                                              | `design.md §6`     | S1.1 |
+| S2.2  | done   | **任务网格**：可配置列（text/start/end/duration/predecessor/resources），tree 缩进列，列宽可拖拽，单击编辑                                                                                            | `design.md §4`     | S2.1 |
+| S2.3  | done   | **时间线渲染**：TimeScale（多行刻度头部）+ CellGrid（背景网格）+ Bars（任务条）+ Links（SVG 依赖线）+ Markers（竖线标记，含今日线）                                                                   | `design.md §10`    | S2.1 |
+| S2.4  | done   | **任务条渲染**：`taskBar` region 模板，进度条（可拖拽调整），link handle 锚点，任务类型图标（里程碑菱形/项目条/任务条）                                                                               | `design.md §6`     | S2.3 |
+| S2.5  | done   | **SVG 依赖线**：`Links` 组件，polyline 箭头，hitbox（透明宽区域便于点击），选中态高亮，删除按钮                                                                                                       | `design.md §10`    | S2.4 |
+| S2.6  | done   | **命令式 DOM 拖拽**：`useGanttDrag`——区分移动/调整开始/调整结束三种模式，pointer 事件，拖拽中实时更新像素坐标（ref bridge，不触发 React），拖拽结束 commit 到 GanttStore。放置指示线 2px 蓝色         | `design.md §11.3`  | S2.4 |
+| S2.7  | done   | **链接绘制**：点击 link handle 开始绘制，移动鼠标绘制临时线，点击目标 task 创建依赖。`addLink` action                                                                                                 | `design.md §8`     | S2.6 |
+| S2.8  | done   | **滚动同步**：`useGanttScroll`——grid ↔ timeline 垂直滚动同步（rAF 节流），timeline 水平滚动独立。双滚轴系统                                                                                           | `design.md §11.3`  | S2.1 |
+| S2.9  | done   | **任务编辑器**：`editor` region——双击/右键任务弹出编辑浮层，编辑任务字段（text/start/end/duration/progress/type/parent），支持内联编辑和 dialog 两种模式                                              | `design-editor.md` | S2.6 |
+| S2.10 | done   | **键盘导航**：方向键移动选中任务，Enter 打开编辑器，Delete 删除，Tab 切换字段，Ctrl+Z 撤销。WAI-ARIA 角色/属性                                                                                        | Gantt §12.9        | S2.6 |
+| S2.11 | done   | **缺省视觉设计**：loading 骨架脉冲（grid + timeline 分割），empty 居中图标+文字，hover 高亮（`rgba(59,130,246,0.08)`），拖拽 ghost（半透明+shadow），缩放过渡动画 300ms ease，滚动回弹 200ms ease-out | `design.md §10`    | S2.1 |
 
 ### S3 — Gantt 排程引擎与进阶功能
 
@@ -117,17 +117,17 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### S4 — Calendar 排班日历
 
-| ID   | Status | 内容                                                                                                                                                         | 设计文档                                    | 依赖 |
-| ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- | ---- |
-| S4.1 | done   | **Calendar 渲染器核心**：`calendar.tsx`——月视图（N 资源 × M 日期矩阵）+ 周视图 + 日视图。视图切换，日期导航（前后/今日）                                     | `design.md §4, §6`                          | S0.2 |
-| S4.2 | done   | **排班矩阵月视图**：行=资源/员工，列=日期。色块编码（按班次类型/休假类型 `color` 字段），每行独立，事件不跨行                                                | `design.md §4`                              | S4.1 |
-| S4.3 | done   | **周/日视图**：时间格细分到小时，垂直百分比定位（`timePointToPercentage`），并发事件宽度分配                                                                 | `design.md §11`                             | S4.1 |
-| S4.4 | done   | **事件定位算法**：月视图按资源行独立打包，并发事件 `maxConcurrent` 宽度分配（width%=1/maxConcurrent，left%=index×width%）。周视图垂直定位。`O(n log n)` 排序 | `design.md §11`                             | S4.1 |
-| S4.5 | done   | **多日事件拆分**：leave/offsite 等跨日事件按 (resourceId, date) 拆单日块，共享 eventId，css `is-split` 标记。**v1 即支持**，跨日视觉连接线同步 v1            | `design.md §11`                             | S4.4 |
-| S4.6 | done   | **日期计算工具**：`calendar-date-utils.ts`——月/周起止计算，`firstDayOfWeek` 配置，Unix 时间戳 + UTC Date 跨时区。复用 `flux-renderers-form` date-utils       | `design.md §11`                             | S4.1 |
-| S4.7 | done   | **行级虚拟滚动**：`useCalendarVirtualizer`（`@tanstack/react-virtual`），固定行高 48px，每资源行 = 一个虚拟行，仅渲染可视窗口 + overscan 3 行                | `design.md §12`                             | S4.1 |
-| S4.8 | done   | **冲突检测**：同资源同日存在重叠事件时，渲染红色警告边框 + tooltip "时间冲突"。`onConflictDetect` 事件。规则：同人同天两种以上不同班次/休假重叠即冲突        | 需新建设计（参考 HR shift-scheduling 文档） | S4.4 |
-| S4.9 | done   | **eventTemplate region**：自定义事件渲染模板，接收 `$slot.event`/`$slot.resource`/`$slot.date` 参数                                                          | `design.md §6`                              | S4.1 |
+| ID   | Status | 内容                                                                                                                                                         | 设计文档                       | 依赖 |
+| ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ | ---- |
+| S4.1 | done   | **Calendar 渲染器核心**：`calendar.tsx`——月视图（N 资源 × M 日期矩阵）+ 周视图 + 日视图。视图切换，日期导航（前后/今日）                                     | `design.md §4, §6`             | S0.2 |
+| S4.2 | done   | **排班矩阵月视图**：行=资源/员工，列=日期。色块编码（按班次类型/休假类型 `color` 字段），每行独立，事件不跨行                                                | `design.md §4`                 | S4.1 |
+| S4.3 | done   | **周/日视图**：时间格细分到小时，垂直百分比定位（`timePointToPercentage`），并发事件宽度分配                                                                 | `design.md §11`                | S4.1 |
+| S4.4 | done   | **事件定位算法**：月视图按资源行独立打包，并发事件 `maxConcurrent` 宽度分配（width%=1/maxConcurrent，left%=index×width%）。周视图垂直定位。`O(n log n)` 排序 | `design.md §11`                | S4.1 |
+| S4.5 | done   | **多日事件拆分**：leave/offsite 等跨日事件按 (resourceId, date) 拆单日块，共享 eventId，css `is-split` 标记。**v1 即支持**，跨日视觉连接线同步 v1            | `design.md §11`                | S4.4 |
+| S4.6 | done   | **日期计算工具**：`calendar-date-utils.ts`——月/周起止计算，`firstDayOfWeek` 配置，Unix 时间戳 + UTC Date 跨时区。复用 `flux-renderers-form` date-utils       | `design.md §11`                | S4.1 |
+| S4.7 | done   | **行级虚拟滚动**：`useCalendarVirtualizer`（`@tanstack/react-virtual`），固定行高 48px，每资源行 = 一个虚拟行，仅渲染可视窗口 + overscan 3 行                | `design.md §12`                | S4.1 |
+| S4.8 | done   | **冲突检测**：同资源同日存在重叠事件时，渲染红色警告边框 + tooltip "时间冲突"。`onConflictDetect` 事件。规则：同人同天两种以上不同班次/休假重叠即冲突        | `design-conflict-detection.md` | S4.4 |
+| S4.9 | done   | **eventTemplate region**：自定义事件渲染模板，接收 `$slot.event`/`$slot.resource`/`$slot.date` 参数                                                          | `design.md §6`                 | S4.1 |
 
 ### S5 — Calendar 交互与进阶
 
@@ -587,25 +587,26 @@ graph TD
 | Kanban    | 20 列 × 300 卡片，60fps 拖拽            | Playwright 拖拽回放    |
 | Calendar  | 300 资源 × 31 天，首屏 < 500ms          | Chromium flamegraph    |
 | Barcode   | 扫码延迟 < 500ms（frame → result）      | performance.now()      |
-| Diff-view | 1000 行 diff 首屏 < 200ms               | Chromium flamegraph    |
+| Diff-view | 1000 行 diff 首屏 < 200ms               | Playwright timing      |
 
 #### 当前实测值
 
 > 以下数据由 `tests/e2e/kanban-perf.spec.ts`、`tests/e2e/calendar-perf.spec.ts` 和 `tests/e2e/gantt-perf.spec.ts` 在 Playwright headless Chromium 环境中采集，2026-07-23。高规格场景使用专用性能测试页面 `calendar-perf-scale`、`kanban-perf-scale` 和 `gantt-perf-scale`。
 
-| 组件     | 场景                                   | 实测值               | 目标值         | 达标？ | 备注                                                                                |
-| -------- | -------------------------------------- | -------------------- | -------------- | ------ | ----------------------------------------------------------------------------------- |
-| Kanban   | 默认 demo 页面空载 FPS (avg)           | avg 60-87fps         | > 30fps        | ✅     |                                                                                     |
-| Kanban   | 高规格 20×300 卡片 idle FPS (avg)      | avg 79-88fps         | idle > 30fps   | ✅     |                                                                                     |
-| Kanban   | 高规格 20×300 卡片 drag FPS (avg)      | avg 78-89fps         | 拖拽 > 60fps   | ✅     | 修正了 drag FPS 测量时序：先拖拽交互、后测量 FPS                                    |
-| Calendar | 默认 demo 页面纯渲染时间               | 62ms                 | 首屏 < 500ms   | ✅     | 改为 SPA hash 导航测量（先加载 app，再通过 hash 切换到 Calendar），隔离 bundle 开销 |
-| Calendar | 高规格 300 资源 × 31 天首次加载        | 384-395ms            | 首屏 < 10s     | ✅     | 同上测量方法                                                                        |
-| Gantt    | 高规格 500 任务 + 2000 依赖 idle FPS   | avg 86-88fps         | idle > 30fps   | ✅     | 专用测试页面 `gantt-perf-scale` 新建                                                |
-| Gantt    | 高规格 500 任务 + 2000 依赖 scroll FPS | avg 82-88fps         | scroll > 50fps | ✅     |                                                                                     |
-| Gantt    | 高规格 500 任务 + 2000 依赖 drag FPS   | avg 81-83fps         | drag > 50fps   | ✅     |                                                                                     |
-| Bundle   | `@nop-chaos/flux-renderers-scheduling` | 285.1 KB（rendered） | —              | —      | 详见 `docs/analysis/2026-07-21-bundle-analysis-flux-renderers-scheduling.md`        |
+| 组件      | 场景                                   | 实测值               | 目标值         | 达标？ | 备注                                                                                |
+| --------- | -------------------------------------- | -------------------- | -------------- | ------ | ----------------------------------------------------------------------------------- |
+| Kanban    | 默认 demo 页面空载 FPS (avg)           | avg 60-87fps         | > 30fps        | ✅     |                                                                                     |
+| Kanban    | 高规格 20×300 卡片 idle FPS (avg)      | avg 79-88fps         | idle > 30fps   | ✅     |                                                                                     |
+| Kanban    | 高规格 20×300 卡片 drag FPS (avg)      | avg 78-89fps         | 拖拽 > 60fps   | ✅     | 修正了 drag FPS 测量时序：先拖拽交互、后测量 FPS                                    |
+| Calendar  | 默认 demo 页面纯渲染时间               | 62ms                 | 首屏 < 500ms   | ✅     | 改为 SPA hash 导航测量（先加载 app，再通过 hash 切换到 Calendar），隔离 bundle 开销 |
+| Calendar  | 高规格 300 资源 × 31 天首次加载        | 384-395ms            | 首屏 < 10s     | ✅     | 同上测量方法                                                                        |
+| Gantt     | 高规格 500 任务 + 2000 依赖 idle FPS   | avg 86-88fps         | idle > 30fps   | ✅     | 专用测试页面 `gantt-perf-scale` 新建                                                |
+| Gantt     | 高规格 500 任务 + 2000 依赖 scroll FPS | avg 82-88fps         | scroll > 50fps | ✅     |                                                                                     |
+| Gantt     | 高规格 500 任务 + 2000 依赖 drag FPS   | avg 81-83fps         | drag > 50fps   | ✅     |                                                                                     |
+| Diff-view | 高规格 1500+ 行 diff 首屏渲染时间      | < 200ms              | 首屏 < 200ms   | ✅     | 专用测试页面 `diff-perf-scale` 新建；首次渲染包含所有行类型（add/delete/context）   |
+| Bundle    | `@nop-chaos/flux-renderers-scheduling` | 285.1 KB（rendered） | —              | —      | 详见 `docs/analysis/2026-07-21-bundle-analysis-flux-renderers-scheduling.md`        |
 
-> 性能测试通过 Playwright e2e 自动化执行，包含硬断言阈值。Calendar 默认 demo 页面测量采用 SPA hash 导航方法：先加载 app（`/#!/`），再通过 hash 切换到 Calendar 路由，以隔离 bundle 加载开销。高规格测试页面（`calendar-perf-scale`、`kanban-perf-scale`、`gantt-perf-scale`）均已创建并注册到 App.tsx domain 路由。Bundle analysis 通过 `vite build --mode analyze` (rollup-plugin-visualizer) 完成。
+> 性能测试通过 Playwright e2e 自动化执行，包含硬断言阈值。Calendar 默认 demo 页面测量采用 SPA hash 导航方法：先加载 app（`/#!/`），再通过 hash 切换到 Calendar 路由，以隔离 bundle 加载开销。高规格测试页面（`calendar-perf-scale`、`kanban-perf-scale`、`gantt-perf-scale`、`diff-perf-scale`）均已创建并注册到 App.tsx domain 路由。Bundle analysis 通过 `vite build --mode analyze` (rollup-plugin-visualizer) 完成。
 
 #### 性能测量脚本
 
@@ -613,6 +614,7 @@ graph TD
 - `tests/e2e/kanban-perf.spec.ts` — Kanban idle + drag FPS 基线（硬断言：idle > 30fps, drag > 60fps）
 - `tests/e2e/calendar-perf.spec.ts` — Calendar 首次加载时间（硬断言：demo < 500ms, scale < 10s）
 - `tests/e2e/gantt-perf.spec.ts` — Gantt idle + scroll + drag FPS 基线（硬断言：idle > 30fps, scroll+drag > 50fps）
+- `tests/e2e/diff-perf.spec.ts` — Diff-view 首屏渲染时间硬断言（< 200ms, 1000+ diff lines）
 
 ### 测试策略
 
@@ -622,7 +624,7 @@ graph TD
 | Kanban    | 纯函数 helpers + 过滤             | 渲染 + 拖拽 + configMap | Playwright 拖拽跨列 ✅         | S10.3 `kanban-demo`   | `tests/e2e/kanban-demo.spec.ts` (6 tests)   |
 | Calendar  | 日期 + 定位 + 冲突检测            | 渲染 + 虚拟滚动         | Playwright 视图切换 ✅         | S10.2 `calendar-demo` | `tests/e2e/calendar-demo.spec.ts` (6 tests) |
 | Barcode   | WASM + 相机 mock + 解码           | 渲染 + overlay          | —（需摄像头 mock）             | S10.4 `barcode-demo`  | —                                           |
-| Diff-view | 解析 + inline-diff + 高亮         | 渲染 + 虚拟滚动         | Playwright split/unified       | S10.5 `diff-demo`     | —                                           |
+| Diff-view | 解析 + inline-diff + 高亮         | 渲染 + 虚拟滚动         | Playwright split/unified       | S10.5 `diff-demo`     | `tests/e2e/diff-perf.spec.ts` (1 test)      |
 
 **Test coverage status (2026-07-21):** Kanban 和 Calendar 的 Playwright E2E 测试已通过，覆盖搜索、过滤、视图切换、导航、事件渲染等。Kanban 纯函数 helper 新增快照式测试。性能基线脚本已创建。参见 `docs/plans/2026-07-21-2100-1-scheduling-test-coverage-plan.md`。
 
@@ -630,17 +632,17 @@ graph TD
 
 以下工作项需在实施前完成独立设计文档：
 
-| 工作项                  | 设计文档说明                                                                   | 参考来源          |
-| ----------------------- | ------------------------------------------------------------------------------ | ----------------- |
-| S2.9 Task Editor        | 扩展现有 `editor` region §6 设计：内联编辑 vs dialog 双模式                    | SVAR Editor 组件  |
-| S3.5 导出               | 需设计文档：PDF/PNG/Excel 实现方案（html2canvas 或后端服务）                   | DHTMLX export API |
-| S3.6 筛选分组           | 扩展现有设计 + 参考 table `filterOwnership` / `sortOwnership` 模式             | —                 |
-| S3.8 全屏/响应式        | 需设计文档：compactMode 切换逻辑、窄屏布局回退方案                             | —                 |
-| S3.9 多选+批量操作      | 需设计文档：多选交互模型（Shift+Click 范围选择）、批量操作 action 链           | —                 |
-| S4.8 冲突检测           | Calendar §12.1/§12.5 已有拖拽冲突/批量排班冲突预览场景设计，需输出独立设计文档 | —                 |
-| S5.8 打印/导出          | 需设计文档：日历打印样式（@media print）、PDF/PNG 导出方案                     | —                 |
-| S7.6 撤销/重做 (Kanban) | `docs/components/kanban/design-undo-redo.md` — 已创建                          | S6.2              |
-| S7.7 看板导出/快照      | `docs/components/kanban/design-export-snapshot.md` — 已创建                    | S6.1              |
+| 工作项                  | 设计文档说明                                                                   | 参考来源          | 状态 |
+| ----------------------- | ------------------------------------------------------------------------------ | ----------------- | ---- |
+| S2.9 Task Editor        | 扩展现有 `editor` region §6 设计：内联编辑 vs dialog 双模式                    | SVAR Editor 组件  | ✅   |
+| S3.5 导出               | 需设计文档：PDF/PNG/Excel 实现方案（html2canvas 或后端服务）                   | DHTMLX export API | ✅   |
+| S3.6 筛选分组           | 扩展现有设计 + 参考 table `filterOwnership` / `sortOwnership` 模式             | —                 | ✅   |
+| S3.8 全屏/响应式        | 需设计文档：compactMode 切换逻辑、窄屏布局回退方案                             | —                 | ✅   |
+| S3.9 多选+批量操作      | 需设计文档：多选交互模型（Shift+Click 范围选择）、批量操作 action 链           | —                 | ✅   |
+| S4.8 冲突检测           | Calendar §12.1/§12.5 已有拖拽冲突/批量排班冲突预览场景设计，需输出独立设计文档 | —                 | ✅   |
+| S5.8 打印/导出          | 需设计文档：日历打印样式（@media print）、PDF/PNG 导出方案                     | —                 | ✅   |
+| S7.6 撤销/重做 (Kanban) | `docs/components/kanban/design-undo-redo.md` — 已创建                          | S6.2              | ✅   |
+| S7.7 看板导出/快照      | `docs/components/kanban/design-export-snapshot.md` — 已创建                    | S6.1              | ✅   |
 
 ## Rule
 

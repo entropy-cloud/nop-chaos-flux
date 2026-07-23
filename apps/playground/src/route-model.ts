@@ -505,6 +505,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'High-scale gantt performance test with 500 tasks + 2000 dependencies.',
   },
   {
+    id: 'diff-perf-scale',
+    title: 'Diff View Performance Scale',
+    eyebrow: 'Performance',
+    description: 'High-scale diff-view performance test with 1500+ lines of diff content.',
+  },
+  {
     id: 'data-verify',
     title: 'Data Source Verify',
     eyebrow: 'Mechanism Test',
