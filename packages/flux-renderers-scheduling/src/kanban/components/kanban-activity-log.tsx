@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { History, X } from 'lucide-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { useFocusTrap } from '../../calendar/hooks/use-focus-trap.js';
 
 export interface KanbanAction {
@@ -25,6 +26,7 @@ export interface KanbanActivityLogProps {
   filterColumnId?: string;
   filterType?: string;
   className?: string;
+  locale?: string;
 }
 
 function formatActionDescription(action: KanbanAction, columnNames: Record<string, string>): string {
@@ -35,34 +37,34 @@ function formatActionDescription(action: KanbanAction, columnNames: Record<strin
 
   switch (action.type) {
     case 'cardMove':
-      return `${actor} 将任务${cardId ? `「${cardId}」` : ''}从「${fromCol}」移至「${toCol}」`;
+      return t('scheduling.kanban.cardMoved', { actor, cardId, fromCol, toCol });
     case 'cardCreate':
-      return `${actor} 在「${toCol || fromCol}」创建了任务`;
+      return t('scheduling.kanban.cardCreated', { actor, column: toCol || fromCol });
     case 'cardDelete':
-      return `${actor} 从「${fromCol}」删除了任务`;
+      return t('scheduling.kanban.cardDeleted', { actor, column: fromCol });
     case 'cardUpdate':
-      return `${actor} 更新了任务`;
+      return t('scheduling.kanban.cardUpdated', { actor });
     case 'columnCreate':
-      return `${actor} 创建了新列「${toCol || ''}」`;
+      return t('scheduling.kanban.columnCreated', { actor, column: toCol || '' });
     case 'columnDelete':
-      return `${actor} 删除了列「${fromCol || ''}」`;
+      return t('scheduling.kanban.columnDeleted', { actor, column: fromCol || '' });
     default:
-      return `${actor} 执行了操作`;
+      return t('scheduling.kanban.defaultAction', { actor });
   }
 }
 
-function formatRelativeTime(isoTimestamp: string): string {
+function formatRelativeTime(isoTimestamp: string, locale?: string): string {
   const now = Date.now();
   const then = new Date(isoTimestamp).getTime();
   const diff = now - then;
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes}分钟前`;
+  if (minutes < 1) return t('scheduling.kanban.justNow');
+  if (minutes < 60) return t('scheduling.kanban.minutesAgo', { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}小时前`;
+  if (hours < 24) return t('scheduling.kanban.hoursAgo', { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}天前`;
-  return new Date(isoTimestamp).toLocaleDateString();
+  if (days < 30) return t('scheduling.kanban.daysAgo', { count: days });
+  return new Date(isoTimestamp).toLocaleDateString(locale);
 }
 
 export function KanbanActivityLog({
@@ -72,6 +74,7 @@ export function KanbanActivityLog({
   filterColumnId,
   filterType,
   className,
+  locale,
 }: KanbanActivityLogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -106,7 +109,7 @@ export function KanbanActivityLog({
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <History className="w-4 h-4 text-gray-500" />
-          <span className="font-semibold text-sm">活动日志</span>
+          <span className="font-semibold text-sm">{t('scheduling.kanban.activityLog')}</span>
         </div>
         <Button
           variant="ghost"
@@ -119,12 +122,12 @@ export function KanbanActivityLog({
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {filtered.length === 0 && (
-          <div className="text-sm text-gray-400 text-center py-8">暂无活动记录</div>
+          <div className="text-sm text-gray-400 text-center py-8">{t('scheduling.kanban.noActivity')}</div>
         )}
         {filtered.map((action) => (
           <div key={action.id} className="text-sm py-2 border-b border-gray-100 last:border-0">
             <div className="text-gray-800">{formatActionDescription(action, columnNames)}</div>
-            <div className="text-xs text-gray-400 mt-0.5">{formatRelativeTime(action.timestamp)}</div>
+            <div className="text-xs text-gray-400 mt-0.5">{formatRelativeTime(action.timestamp, locale)}</div>
           </div>
         ))}
       </div>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
-import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import { allocateConcurrentWidths } from '../utils/calendar-time-utils.js';
@@ -132,11 +131,6 @@ export function CalendarDayView({
         </div>
       </div>
 
-      {resources.length === 0 && (
-        <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
-          {t('scheduling.noScheduleData')}
-        </div>
-      )}
     </div>
   );
 }

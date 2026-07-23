@@ -50,11 +50,13 @@ describe('CalendarDayView', () => {
     expect(cells.length).toBeGreaterThan(0);
   });
 
-  it('should render no-schedule message when no resources', () => {
+  it('should render rows with default resource when resources is empty', () => {
     const { container } = render(
       React.createElement(CalendarDayView, { ...baseProps, resources: [] }),
     );
-    expect(container.textContent).toContain('暂无排班数据');
+    const rows = container.querySelectorAll('[data-slot="calendar-resource-row"]');
+    expect(rows.length).toBe(1);
+    expect(container.textContent).not.toContain('暂无排班数据');
   });
 
   it('should render hour labels', () => {

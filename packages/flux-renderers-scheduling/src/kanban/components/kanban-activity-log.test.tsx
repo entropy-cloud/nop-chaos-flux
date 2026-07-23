@@ -1,10 +1,20 @@
 import React from 'react';
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { KanbanActivityLog } from './kanban-activity-log.js';
+import { changeLanguage, getCurrentLanguage } from '@nop-chaos/flux-i18n';
 import type { KanbanAction } from './kanban-activity-log.js';
 
-afterEach(cleanup);
+let prevLang: string;
+
+beforeEach(() => {
+  prevLang = getCurrentLanguage();
+});
+
+afterEach(() => {
+  cleanup();
+  void changeLanguage(prevLang as any);
+});
 
 const sampleActions: KanbanAction[] = [
   {
@@ -77,5 +87,12 @@ describe('KanbanActivityLog', () => {
       />,
     );
     expect(screen.getByText(/张三.*Task 1/)).toBeTruthy();
+  });
+
+  it('renders English text with en-US locale', async () => {
+    await changeLanguage('en-US');
+    render(<KanbanActivityLog actions={sampleActions} open={true} onClose={vi.fn()} />);
+    expect(screen.getByText('Activity Log')).toBeTruthy();
+    expect(screen.queryByText('活动日志')).toBeNull();
   });
 });

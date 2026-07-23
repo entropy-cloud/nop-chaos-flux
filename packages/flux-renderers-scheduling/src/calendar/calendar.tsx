@@ -486,6 +486,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         navigation={navigation}
         onViewChange={setActiveView}
         className={resolved.headerClassName as string | undefined}
+        locale={locale}
       />
 
       {activeView === 'month' && (
@@ -526,6 +527,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
           onEventClick={onEventClick}
           onDragStart={dragSwap.startDrag}
           onEventKeyDown={handleEventKeyDown}
+          locale={locale}
         />
       )}
 

@@ -30,7 +30,7 @@ export function useKanbanAdder({
     columnId: string, cardData?: Record<string, any>, index?: number,
   ) => {
     const cardId = generateId('card');
-    const newCard = { id: cardId, title: cardData?.title || '新卡片', ...cardData };
+    const newCard = { id: cardId, title: cardData?.title || 'New card', ...cardData };
     const newBoard = addCard(boardData, columnId, newCard, index);
     onBoardChange(newBoard);
     onCardAdd?.({ cardId, columnId, index: index ?? -1 });
@@ -50,7 +50,7 @@ export function useKanbanAdder({
     columnData?: Record<string, any>, index?: number,
   ) => {
     const columnId = generateId('col');
-    const newColumn = { id: columnId, title: columnData?.title || '新列', ...columnData };
+    const newColumn = { id: columnId, title: columnData?.title || 'New column', ...columnData };
     const newBoard = addColumn(boardData, newColumn, index);
     onBoardChange(newBoard);
     onColumnAdd?.({ columnId, index: index ?? -1 });

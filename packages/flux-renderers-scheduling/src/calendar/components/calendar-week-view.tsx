@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
-import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import { getWeekStartEnd, getDateRange, isToday, toISODateString } from '../utils/calendar-date-utils.js';
@@ -23,11 +22,6 @@ export interface CalendarWeekViewProps {
 }
 
 const HOUR_HEIGHT = 48;
-
-const WEEKDAY_SHORT: Record<string, string[]> = {
-  'zh-CN': ['日', '一', '二', '三', '四', '五', '六'],
-  'en-US': ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-};
 
 export function CalendarWeekView({
   events,
@@ -73,7 +67,8 @@ export function CalendarWeekView({
     return result;
   })();
 
-  const weekdayShort = WEEKDAY_SHORT[locale] ?? WEEKDAY_SHORT['en-US']!;
+  const formatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+  const weekdayLabels = Array.from({ length: 7 }, (_, i) => formatter.format(new Date(2026, 0, 4 + i)));
   const displayDays = showWeekends ? days : days.filter((d) => d.getUTCDay() !== 0 && d.getUTCDay() !== 6);
 
   return (
@@ -97,7 +92,7 @@ export function CalendarWeekView({
             >
               <div>{day.getUTCDate()}</div>
               <div className="text-muted-foreground">
-                {weekdayShort[day.getUTCDay()]}
+                {weekdayLabels[day.getUTCDay()]}
               </div>
             </div>
           );
@@ -167,11 +162,6 @@ export function CalendarWeekView({
       ))}
       </div>
 
-      {resources.length === 0 && (
-        <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
-          {t('scheduling.noScheduleData')}
-        </div>
-      )}
     </div>
   );
 }

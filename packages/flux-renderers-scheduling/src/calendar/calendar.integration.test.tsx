@@ -88,4 +88,15 @@ describe('Calendar Integration', () => {
     );
     expect(container.querySelector('.nop-calendar')).toBeTruthy();
   });
+
+  it('renders with synthesized resources when resources empty — no contradictory empty state inside sub-view', () => {
+    const { container } = render(
+      React.createElement(Calendar, {
+        ...baseProps,
+        props: { events: mockEvents, resources: [] } as any,
+      }),
+    );
+    expect(container.querySelector('[data-view]')).toBeTruthy();
+    expect(container.textContent).not.toContain('暂无排班数据');
+  });
 });

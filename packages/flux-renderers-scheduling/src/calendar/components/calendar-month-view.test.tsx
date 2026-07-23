@@ -43,11 +43,14 @@ describe('CalendarMonthView', () => {
     expect(rows.length).toBeGreaterThan(0);
   });
 
-  it('should render no-schedule message when no resources', () => {
+  it('should render rows with default resource when resources is empty (parent handles empty state)', () => {
     const { container } = render(
       React.createElement(CalendarMonthView, { ...baseProps, resources: [] }),
     );
-    expect(container.textContent).toContain('暂无排班数据');
+    const rows = container.querySelectorAll('[data-slot="calendar-resource-row"]');
+    expect(rows.length).toBe(1);
+    expect(rows[0]?.getAttribute('data-resource-id')).toBe('_default');
+    expect(container.textContent).not.toContain('暂无排班数据');
   });
 
   it('should hide weekends when showWeekends is false', () => {
@@ -56,6 +59,24 @@ describe('CalendarMonthView', () => {
     );
     const weekendCells = container.querySelectorAll('[data-weekend="true"]');
     expect(weekendCells.length).toBe(0);
+  });
+
+  it('should render locale-dependent weekday labels (German)', () => {
+    const { container } = render(
+      React.createElement(CalendarMonthView, { ...baseProps, locale: 'de-DE' }),
+    );
+    const weekdayHeaders = container.querySelectorAll('.calendar-weekday-header');
+    const headerText = Array.from(weekdayHeaders).map((el) => el.textContent).join('|');
+    expect(headerText).toMatch(/So|Mo|Di|Mi|Do|Fr|Sa/);
+  });
+
+  it('should render locale-dependent weekday labels (Japanese)', () => {
+    const { container } = render(
+      React.createElement(CalendarMonthView, { ...baseProps, locale: 'ja-JP' }),
+    );
+    const weekdayHeaders = container.querySelectorAll('.calendar-weekday-header');
+    const headerText = Array.from(weekdayHeaders).map((el) => el.textContent).join(' ');
+    expect(headerText).toMatch(/日\s+月\s+火\s+水\s+木\s+金\s+土/);
   });
 
   it('should set data-weekend="true" for weekend days and undefined for weekdays', () => {

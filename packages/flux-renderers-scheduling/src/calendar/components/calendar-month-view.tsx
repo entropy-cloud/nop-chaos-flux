@@ -29,13 +29,11 @@ export interface CalendarMonthViewProps {
   locale?: string;
 }
 
-const WEEKDAY_LABELS: Record<string, string[]> = {
-  'zh-CN': ['日', '一', '二', '三', '四', '五', '六'],
-  'en-US': ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-};
-
 function getWeekdayLabels(locale: string, firstDayOfWeek: 0 | 1): string[] {
-  const labels = WEEKDAY_LABELS[locale] ?? WEEKDAY_LABELS['en-US']!;
+  const formatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+  const labels = Array.from({ length: 7 }, (_, i) => {
+    return formatter.format(new Date(2026, 0, 4 + i));
+  });
   if (firstDayOfWeek === 1) {
     return [...labels.slice(1), labels[0]];
   }
@@ -360,11 +358,6 @@ export function CalendarMonthView({
           </div>
         )}
       </div>
-      {resources.length === 0 && (
-        <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
-          {t('scheduling.noScheduleData')}
-        </div>
-      )}
     </div>
   );
 }

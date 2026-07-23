@@ -46,11 +46,31 @@ describe('CalendarWeekView', () => {
     expect(rows.length).toBe(1);
   });
 
-  it('should render no-schedule message when no resources', () => {
+  it('should render rows with default resource when resources is empty', () => {
     const { container } = render(
       React.createElement(CalendarWeekView, { ...baseProps, resources: [] }),
     );
-    expect(container.textContent).toContain('暂无排班数据');
+    const rows = container.querySelectorAll('[data-slot="calendar-resource-row"]');
+    expect(rows.length).toBe(1);
+    expect(container.textContent).not.toContain('暂无排班数据');
+  });
+
+  it('should render locale-dependent weekday labels on column headers (German)', () => {
+    const { container } = render(
+      React.createElement(CalendarWeekView, { ...baseProps, locale: 'de-DE' }),
+    );
+    const headers = container.querySelectorAll('[role="columnheader"]');
+    const headerText = Array.from(headers).map((el) => el.textContent).join('|');
+    expect(headerText).toMatch(/So|Mo|Di|Mi|Do|Fr|Sa/);
+  });
+
+  it('should render locale-dependent weekday labels (Japanese)', () => {
+    const { container } = render(
+      React.createElement(CalendarWeekView, { ...baseProps, locale: 'ja-JP' }),
+    );
+    const headers = container.querySelectorAll('[role="columnheader"]');
+    const headerText = Array.from(headers).map((el) => el.textContent).join('|');
+    expect(headerText).toMatch(/[日月火水木金土]/);
   });
 
   it('should render day headers with dates', () => {
