@@ -136,9 +136,6 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       ? parseISODate(scopeDate)
       : undefined;
 
-  const latestViewRef = useRef(controlledView ?? initialView);
-  const latestDateRef = useRef(controlledDate ?? initialDate);
-
   const { currentDate, dateRange, activeView, setCurrentDate, setActiveView } = useCalendarState({
     initialDate,
     initialView,
@@ -149,13 +146,13 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       if (dateOwnership === 'scope' && dateStatePath && scope) {
         scope.merge({ [dateStatePath]: date.toISOString().split('T')[0] });
       }
-      void events.onDateChange?.({ date: date.toISOString(), view: latestViewRef.current });
+      void events.onDateChange?.({ date: date.toISOString(), view: activeView });
     },
     onViewChange: (view: CalendarView) => {
       if (viewOwnership === 'scope' && viewStatePath && scope) {
         scope.merge({ [viewStatePath]: view });
       }
-      void events.onViewChange?.({ view, date: latestDateRef.current.toISOString() });
+      void events.onViewChange?.({ view, date: currentDate.toISOString() });
     },
   });
 
@@ -164,13 +161,6 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     activeView,
     onDateChange: setCurrentDate,
   });
-
-  useEffect(() => {
-    latestViewRef.current = activeView;
-  }, [activeView]);
-  useEffect(() => {
-    latestDateRef.current = currentDate;
-  }, [currentDate]);
 
   useEffect(() => {
     const ev = eventsRef.current;
@@ -200,7 +190,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const getCellFromPoint = (x: number, y: number) => {
     const el = document.elementFromPoint(x, y);
-    if (!el) return null;
+    if (!el || !calendarRef.current?.contains(el)) return null;
     const cell = el.closest('[data-slot="calendar-cell"]');
     if (!cell) return null;
     const date = cell.getAttribute('data-date');
@@ -374,10 +364,12 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   const prevTargetRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const container = calendarRef.current;
+    if (!container) return;
     const prevKey = prevTargetRef.current;
     if (prevKey) {
       const [prevDate, prevRes] = prevKey.split(':');
-      const prevEl = document.querySelector(`[data-slot="calendar-cell"][data-date="${prevDate}"][data-resource="${prevRes}"]`);
+      const prevEl = container.querySelector(`[data-slot="calendar-cell"][data-date="${prevDate}"][data-resource="${prevRes}"]`);
       if (prevEl) {
         prevEl.removeAttribute('data-drop-target');
         prevEl.removeAttribute('data-drop-valid');
@@ -391,7 +383,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     }
     const key = `${targetDate}:${targetResource}`;
     prevTargetRef.current = key;
-    const el = document.querySelector(`[data-slot="calendar-cell"][data-date="${targetDate}"][data-resource="${targetResource}"]`);
+    const el = container.querySelector(`[data-slot="calendar-cell"][data-date="${targetDate}"][data-resource="${targetResource}"]`);
     if (el) {
       el.setAttribute('data-drop-target', 'true');
       const isValid = targetDate !== sourceEvent?.start.split('T')[0] || targetResource !== sourceEvent?.resourceId;
@@ -399,7 +391,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       el.classList.add(isValid ? 'drag-ok' : 'drag-conflict');
       el.classList.remove(isValid ? 'drag-conflict' : 'drag-ok');
     }
-  }, [dragSwap.dragState.targetDate, dragSwap.dragState.targetResource, dragSwap.dragState.active]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dragSwap.dragState]);
 
   const dragCreate = useCalendarDragCreate({
     onEventCreate: handleDragCreateEvent,
@@ -424,7 +416,13 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   };
 
   const displayResources = resourcesData.length === 0
-    ? [{ id: '_default', text: '', title: '' } as CalendarResource]
+    ? (() => {
+        const uniqueIds = [...new Set(eventsData.map((e) => e.resourceId).filter(Boolean))];
+        if (uniqueIds.length > 0) {
+          return uniqueIds.map((id) => ({ id, text: id, title: id }) as CalendarResource);
+        }
+        return [{ id: '_default', text: '', title: '' } as CalendarResource];
+      })()
     : flattenResources(resourcesData);
 
   const { scrollRef, virtualItems, totalSize } = useCalendarVirtualizer({
@@ -543,6 +541,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
           onEventClick={onEventClick}
           onDragStart={dragSwap.startDrag}
           onEventKeyDown={handleEventKeyDown}
+          locale={locale}
         />
       )}
 

@@ -48,7 +48,7 @@ export function KanbanColumnHeader({
 
   if (columnHeaderRegion) {
     return (
-      <div ref={headerRef} data-slot="kanban-column-header" data-dnd-column-header={dndEnabled ? 'true' : undefined} data-column-id={column.id} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }} className={cn('nop-kanban-column-header', className)}>
+      <div ref={headerRef} data-slot="kanban-column-header" data-dnd-column-header={dndEnabled || undefined} data-column-id={column.id} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }} className={cn('nop-kanban-column-header', className)}>
         {columnHeaderRegion.render()}
         {onResizeStart && (
           <div
@@ -65,7 +65,7 @@ export function KanbanColumnHeader({
     <div
       ref={headerRef}
       data-slot="kanban-column-header"
-      data-dnd-column-header={dndEnabled ? 'true' : undefined}
+      data-dnd-column-header={dndEnabled || undefined}
       data-column-id={column.id}
       onClick={onClick}
       role="button"

@@ -1,6 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { History, X } from 'lucide-react';
+import { useFocusTrap } from '../../calendar/hooks/use-focus-trap.js';
 
 export interface KanbanAction {
   id: string;
@@ -74,45 +75,7 @@ export function KanbanActivityLog({
 }: KanbanActivityLogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open || !panelRef.current) return;
-    const panel = panelRef.current;
-    const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-      const focusable = panel.querySelectorAll<HTMLElement>(focusableSelector);
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-
-    const firstFocusable = panel.querySelector<HTMLElement>(focusableSelector);
-    firstFocusable?.focus();
-    panel.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      panel.removeEventListener('keydown', handleKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [open, onClose]);
+  useFocusTrap(panelRef, open);
 
   if (!open) return null;
 

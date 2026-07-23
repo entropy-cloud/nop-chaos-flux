@@ -37,6 +37,7 @@ export interface KanbanEvents {
   onColumnClick?: ActionSchema;
   onCardAdd?: ActionSchema;
   onCardRemove?: ActionSchema;
+  onColumnAdd?: ActionSchema;
 }
 
 export interface KanbanSchema extends BaseSchema {
@@ -73,4 +74,5 @@ export interface KanbanSchema extends BaseSchema {
   onColumnClick?: ActionSchema;
   onCardAdd?: ActionSchema;
   onCardRemove?: ActionSchema;
+  onColumnAdd?: ActionSchema;
 }

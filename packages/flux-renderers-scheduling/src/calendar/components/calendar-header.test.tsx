@@ -3,6 +3,10 @@ import React from 'react';
 import { render, screen, cleanup } from '@testing-library/react';
 import { CalendarHeader } from './calendar-header.js';
 
+vi.mock('@nop-chaos/flux-i18n', () => ({
+  t: (key: string) => key,
+}));
+
 afterEach(cleanup);
 
 describe('CalendarHeader', () => {
@@ -25,8 +29,8 @@ describe('CalendarHeader', () => {
 
   it('should render navigation buttons', () => {
     render(<CalendarHeader {...baseProps} />);
-    expect(screen.getByLabelText('Previous')).toBeTruthy();
-    expect(screen.getByLabelText('Next')).toBeTruthy();
+    expect(screen.getByLabelText('scheduling.previous')).toBeTruthy();
+    expect(screen.getByLabelText('scheduling.next')).toBeTruthy();
   });
 
   it('should render today button', () => {

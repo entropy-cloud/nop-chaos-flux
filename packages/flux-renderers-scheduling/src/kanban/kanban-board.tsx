@@ -102,6 +102,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     ? (rawData ?? fallbackBoard)
     : (kanbanOwnership === 'scope' && scopeBoardData ? scopeBoardData : localBoardData);
 
+  const boardDataRef = useRef(boardData);
+  useEffect(() => { boardDataRef.current = boardData; }, [boardData]);
+
   const columns = getColumns(boardData);
 
   const collapsedMap = (() => {
@@ -146,14 +149,6 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilterTags);
 
   useEffect(() => {
-    if (kanbanOwnership !== 'local') return;
-    const newData = resolved.data as BoardData | undefined;
-    if (newData) {
-      setLocalBoardData(newData);
-    }
-  }, [resolved.data, kanbanOwnership, setLocalBoardData]);
-
-  useEffect(() => {
     void events.onMount?.({});
     return () => { void events.onUnmount?.({}); };
   }, [events]);
@@ -190,10 +185,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     }));
   };
 
-  const handleUndo = useCallback(() => {
+  const handleUndo = () => {
     let restoredBoard: BoardData | null = null;
+    const bd = boardDataRef.current;
     setUndoStackState((s) => {
-      const result = undoStackOp(s, boardData);
+      const result = undoStackOp(s, bd);
       if (result) {
         restoredBoard = result.board;
         return result.stack;
@@ -203,12 +199,13 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     if (restoredBoard) {
       setBoardData(restoredBoard);
     }
-  }, [boardData, setBoardData]);
+  };
 
-  const handleRedo = useCallback(() => {
+  const handleRedo = () => {
     let restoredBoard: BoardData | null = null;
+    const bd = boardDataRef.current;
     setUndoStackState((s) => {
-      const result = redoStackOp(s, boardData);
+      const result = redoStackOp(s, bd);
       if (result) {
         restoredBoard = result.board;
         return result.stack;
@@ -218,10 +215,17 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     if (restoredBoard) {
       setBoardData(restoredBoard);
     }
-  }, [boardData, setBoardData]);
+  };
+
+  const handleUndoRef = useRef(handleUndo);
+  handleUndoRef.current = handleUndo;
+  const handleRedoRef = useRef(handleRedo);
+  handleRedoRef.current = handleRedo;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const undo = handleUndoRef.current;
+      const redo = handleRedoRef.current;
       const el = boardRef.current;
       if (!el) return;
       if (!el.contains(document.activeElement)) return;
@@ -230,15 +234,15 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       if (isEditable) return;
       if (e.ctrlKey && e.shiftKey && e.key === 'z') {
         e.preventDefault();
-        handleRedo();
+        redo();
       } else if (e.ctrlKey && e.key === 'z') {
         e.preventDefault();
-        handleUndo();
+        undo();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [handleUndo, handleRedo]);
+  }, []);
 
   const allTags = collectAllTags(boardData, columns);
 
@@ -298,7 +302,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     boardData,
     onBoardChange: handleCardMoveBoardChange,
     onCardMove: (payload) => {
-      events.onCardMove?.(payload);
+      void events.onCardMove?.(payload);
       const card = boardData[payload.cardId];
       recordAction({
         type: 'cardMove',
@@ -318,7 +322,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const { registerColumnHeader, registerBoardDropZone } = useColumnDnd({
     boardData,
     onBoardChange: handleColumnReorderBoardChange,
-    onColumnReorder: (payload) => events.onColumnReorder?.(payload),
+    onColumnReorder: (payload) => void events.onColumnReorder?.(payload),
     enabled: columnDraggable,
   });
 
@@ -338,7 +342,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
           const newBoard = moveColumn(boardData, columnId, idx - 1);
           lastCommandTypeRef.current = 'moveColumn';
           handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: idx, toIndex: idx - 1 });
-          events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: idx - 1 });
+          void events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: idx - 1 });
           setDndAnnouncement(`Column moved from position ${idx + 1} to position ${idx}`);
         }
         break;
@@ -348,7 +352,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
           const newBoard = moveColumn(boardData, columnId, idx + 1);
           lastCommandTypeRef.current = 'moveColumn';
           handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: idx, toIndex: idx + 1 });
-          events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: idx + 1 });
+          void events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: idx + 1 });
           setDndAnnouncement(`Column moved from position ${idx + 1} to position ${idx + 2}`);
         }
         break;
@@ -356,11 +360,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   };
 
   const handleCardClick = (cardId: string, columnId: string, index: number) => {
-    events.onCardClick?.({ cardId, columnId, index });
+    void events.onCardClick?.({ cardId, columnId, index });
   };
 
   const handleColumnClick = (columnId: string) => {
-    events.onColumnClick?.({ columnId });
+    void events.onColumnClick?.({ columnId });
   };
 
   const handleCardAdd = (columnId: string, cardData?: Record<string, any>) => {
@@ -369,7 +373,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     const newCard = { id: cardId, title: cardData?.title || 'New Card', ...cardData };
     const newBoard = addCard(boardData, columnId, newCard);
     handleSetBoardData(newBoard, 'addCard', { cardId, columnId, cardData: newCard, index: -1 });
-    events.onCardAdd?.({ cardId, columnId, index: -1 });
+    void events.onCardAdd?.({ cardId, columnId, index: -1 });
   };
 
   const handleCardRemove = (cardId: string) => {
@@ -381,7 +385,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     const index = colChildren.indexOf(cardId);
     const newBoard = removeCard(boardData, cardId);
     handleSetBoardData(newBoard, 'removeCard', { cardId, columnId, cardData, index });
-    events.onCardRemove?.({ cardId, columnId });
+    void events.onCardRemove?.({ cardId, columnId });
   };
 
   const handleToggleTag = (tagId: string) => {
@@ -401,10 +405,12 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     lastCommandTypeRef.current = 'moveColumn';
     const columnId = `col-${Date.now()}`;
     const newColumn = { id: columnId, title, children: [], data: { title }, meta: {} } as any;
+    const newBoard = structuredClone(boardData);
+    newBoard[columnId] = newColumn;
     const rootChildren = boardData['root']?.children ? [...boardData['root'].children] : [];
-    const newBoard: BoardData = { ...boardData, [columnId]: newColumn, root: { ...boardData['root'], children: [...rootChildren, columnId] } as any };
+    newBoard['root'] = { ...boardData['root'], children: [...rootChildren, columnId] } as any;
     handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: -1, toIndex: rootChildren.length });
-    events.onColumnAdd?.({ columnId, index: rootChildren.length });
+    void events.onColumnAdd?.({ columnId, index: rootChildren.length });
     setAddingColumn(false);
     setNewColumnTitle('');
   };
@@ -418,10 +424,18 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const [keyboardMoveCard, setKeyboardMoveCard] = useState<{ cardId: string; columnId: string } | null>(null);
   const [dndAnnouncement, setDndAnnouncement] = useState('');
 
+  const columnsRef = useRef(columns);
+  useEffect(() => { columnsRef.current = columns; }, [columns]);
+  const moveCardKeyboardRef = useRef(moveCardKeyboard);
+  useEffect(() => { moveCardKeyboardRef.current = moveCardKeyboard; }, [moveCardKeyboard]);
+
   useEffect(() => {
     const el = boardRef.current;
     if (!el || !draggable) return;
     const handler = (e: KeyboardEvent) => {
+      const currentBoard = boardDataRef.current;
+      const currentColumns = columnsRef.current;
+      const currentMoveCardKeyboard = moveCardKeyboardRef.current;
       const target = e.target as HTMLElement;
       const cardEl = target.closest('[data-dnd-card]') as HTMLElement | null;
       if (!cardEl) return;
@@ -436,7 +450,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
           setKeyboardMoveCard({ cardId, columnId: colId });
           cardEl.setAttribute('data-keyboard-dragging', 'true');
           cardEl.setAttribute('aria-grabbed', 'true');
-          const cardTitle = cardEl.getAttribute('aria-label') || boardData[cardId]?.data?.title || cardId;
+          const cardTitle = cardEl.getAttribute('aria-label') || currentBoard[cardId]?.data?.title || cardId;
           setDndAnnouncement(`Picked up card: ${cardTitle}. Use arrow keys to move, Escape to cancel.`);
         }
         return;
@@ -447,26 +461,24 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       switch (e.key) {
         case 'ArrowLeft': {
           e.preventDefault();
-          const cols = columns;
-          const curColIdx = cols.findIndex(c => c.id === keyboardMoveCard.columnId);
+          const curColIdx = currentColumns.findIndex(c => c.id === keyboardMoveCard.columnId);
           if (curColIdx > 0) {
-            const targetColId = cols[curColIdx - 1].id;
-            moveCardKeyboard(boardData, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
+            const targetColId = currentColumns[curColIdx - 1].id;
+            currentMoveCardKeyboard(currentBoard, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
             setKeyboardMoveCard({ cardId, columnId: targetColId });
-            const targetTitle = cols[curColIdx - 1]?.title || targetColId;
+            const targetTitle = currentColumns[curColIdx - 1]?.title || targetColId;
             setDndAnnouncement(`Card moved to column: ${targetTitle}`);
           }
           break;
         }
         case 'ArrowRight': {
           e.preventDefault();
-          const cols = columns;
-          const curColIdx = cols.findIndex(c => c.id === keyboardMoveCard.columnId);
-          if (curColIdx < cols.length - 1) {
-            const targetColId = cols[curColIdx + 1].id;
-            moveCardKeyboard(boardData, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
+          const curColIdx = currentColumns.findIndex(c => c.id === keyboardMoveCard.columnId);
+          if (curColIdx < currentColumns.length - 1) {
+            const targetColId = currentColumns[curColIdx + 1].id;
+            currentMoveCardKeyboard(currentBoard, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
             setKeyboardMoveCard({ cardId, columnId: targetColId });
-            const targetTitle = cols[curColIdx + 1]?.title || targetColId;
+            const targetTitle = currentColumns[curColIdx + 1]?.title || targetColId;
             setDndAnnouncement(`Card moved to column: ${targetTitle}`);
           }
           break;
@@ -483,7 +495,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     };
     el.addEventListener('keydown', handler);
     return () => el.removeEventListener('keydown', handler);
-  }, [draggable, keyboardMoveCard, boardData, columns, moveCardKeyboard]);
+  }, [draggable, keyboardMoveCard]);
 
   const resize = useKanbanColumnResize({
     minWidth: 200,

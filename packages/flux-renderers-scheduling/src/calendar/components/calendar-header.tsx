@@ -49,7 +49,7 @@ export function CalendarHeader({
           size="sm"
           onClick={navigation.goPrev}
           className="hover:bg-gray-100"
-          aria-label="Previous"
+          aria-label={t('scheduling.previous')}
         >
           ‹
         </Button>
@@ -66,7 +66,7 @@ export function CalendarHeader({
           size="sm"
           onClick={navigation.goNext}
           className="hover:bg-gray-100"
-          aria-label="Next"
+          aria-label={t('scheduling.next')}
         >
           ›
         </Button>

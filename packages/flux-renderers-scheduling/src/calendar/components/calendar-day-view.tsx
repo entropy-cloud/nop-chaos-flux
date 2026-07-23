@@ -18,6 +18,7 @@ export interface CalendarDayViewProps {
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
   onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
   onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
+  locale?: string;
 }
 
 const HOUR_HEIGHT = 64;
@@ -33,6 +34,7 @@ export function CalendarDayView({
   onEventClick,
   onDragStart,
   onEventKeyDown,
+  locale = 'en-US',
 }: CalendarDayViewProps) {
   const dateStr = toISODateString(currentDate);
   const today = isToday(currentDate);
@@ -69,7 +71,7 @@ export function CalendarDayView({
           today && 'bg-blue-50',
         )}
       >
-        {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        {currentDate.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}
       </div>
 
       <div className="flex">

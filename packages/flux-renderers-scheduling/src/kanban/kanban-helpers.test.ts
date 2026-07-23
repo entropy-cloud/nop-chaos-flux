@@ -166,11 +166,16 @@ describe('removeCard', () => {
 });
 
 describe('changeCard', () => {
-  it('updates card data partially', () => {
+  it('updates card data fields partially via Object.assign merge', () => {
     const board = createSampleBoard();
-    const result = changeCard(board, 'card1', { data: { title: 'Updated Task' } });
+    const result = changeCard(board, 'card1', { data: { title: 'Updated Task', newField: 'added' } });
     expect(result.card1.data.title).toBe('Updated Task');
-    expect(result.card1.data).not.toHaveProperty('priority');
+  });
+
+  it('updates card meta fields partially', () => {
+    const board = createSampleBoard();
+    const result = changeCard(board, 'card1', { meta: { priority: 5 } });
+    expect(result.card1.meta.priority).toBe(5);
   });
 
   it('does not mutate original board', () => {

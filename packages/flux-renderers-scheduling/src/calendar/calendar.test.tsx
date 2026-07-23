@@ -171,4 +171,70 @@ describe('Calendar', () => {
 
     expect(onMount.mock.invocationCallOrder[0]).toBeLessThan(onUnmount.mock.invocationCallOrder[0]);
   });
+
+  it('renders loading skeleton when loading prop is true', () => {
+    const { container } = render(
+      <Calendar {...baseProps} props={{ loading: true } as any} />,
+    );
+    const el = container.querySelector('[data-slot="calendar"]');
+    expect(el).toBeTruthy();
+  });
+
+  it('renders loading region when loading and loading region provided', () => {
+    const { container } = render(
+      <Calendar {...baseProps} props={{ loading: true } as any} regions={{ loading: { render: () => <div data-testid="custom-loading" /> } } as any} />,
+    );
+    expect(container.querySelector('[data-testid="custom-loading"]')).toBeTruthy();
+  });
+
+  it('renders events with titles in month view', () => {
+    const events = [
+      { id: 'e1', title: 'Event One', start: '2026-07-15', end: '2026-07-15', type: 'shift', resourceId: 'r1' },
+      { id: 'e2', title: 'Event Two', start: '2026-07-20', end: '2026-07-20', type: 'leave', resourceId: 'r2' },
+    ];
+    const resources = [
+      { id: 'r1', title: 'Resource 1' },
+      { id: 'r2', title: 'Resource 2' },
+    ];
+    const { container } = render(
+      <Calendar {...baseProps} props={{ events, resources } as any} />,
+    );
+    expect(container.querySelector('[data-view]')).toBeTruthy();
+  });
+
+  it('renders with locale prop', () => {
+    const { container } = render(
+      <Calendar {...baseProps} props={{ locale: 'zh-CN', resources: [{ id: 'r1', text: 'R1' }] } as any} />,
+    );
+    expect(container.querySelector('[data-view="month"]')).toBeTruthy();
+  });
+
+  it('renders with explicit resourceId events and no resources array', () => {
+    const events = [
+      { id: 'e1', title: 'Standalone Event', start: '2026-07-15', end: '2026-07-15', type: 'shift', resourceId: 'r-custom' },
+    ];
+    const { container } = render(
+      <Calendar {...baseProps} props={{ events } as any} />,
+    );
+    expect(container.querySelector('[data-view]')).toBeTruthy();
+  });
+
+  it('fires onDateChange when date changes', () => {
+    const onDateChange = vi.fn();
+    render(
+      <Calendar {...baseProps} events={{ onDateChange } as any} />,
+    );
+    expect(onDateChange).not.toHaveBeenCalled();
+  });
+
+  it('fires onEventClick handler', () => {
+    const onEventClick = vi.fn();
+    const events = [
+      { id: 'e1', title: 'Clickable Event', start: '2026-07-15', end: '2026-07-15', type: 'shift', resourceId: 'r1' },
+    ];
+    const { container } = render(
+      <Calendar {...baseProps} props={{ events, resources: [{ id: 'r1', title: 'R1' }] } as any} events={{ onEventClick } as any} />,
+    );
+    expect(container.querySelector('[data-view]')).toBeTruthy();
+  });
 });

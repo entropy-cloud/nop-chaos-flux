@@ -28,10 +28,12 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
     const guardTimer = setTimeout(() => { exportingRef.current = false; }, 65000);
     exportingRef.current = true;
 
-    try {
+    const throwIfAborted = () => {
       if (effectiveSignal.aborted) throw new DOMException('Aborted', 'AbortError');
+    };
 
-      if (effectiveSignal.aborted) throw new DOMException('Aborted', 'AbortError');
+    try {
+      throwIfAborted();
 
       const canvas: any = await html2canvas(target, {
         scale: 2,
@@ -40,13 +42,15 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
         backgroundColor: '#ffffff',
       });
 
-      if (effectiveSignal.aborted) throw new DOMException('Aborted', 'AbortError');
+      throwIfAborted();
 
       const blob = await new Promise<Blob | null>((resolve, reject) => {
+        const onAbort = () => reject(new DOMException('Aborted', 'AbortError'));
+        effectiveSignal.addEventListener('abort', onAbort, { once: true });
         canvas.toBlob((b: Blob | null) => {
+          effectiveSignal.removeEventListener('abort', onAbort);
           resolve(b);
         }, 'image/png');
-        if (effectiveSignal.aborted) reject(new DOMException('Aborted', 'AbortError'));
       });
 
       if (!blob) {

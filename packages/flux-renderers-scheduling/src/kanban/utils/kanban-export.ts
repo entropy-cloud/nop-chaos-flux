@@ -1,5 +1,7 @@
 import type { BoardData } from '../kanban.types.js';
 
+const exportInProgress = new WeakMap<HTMLElement, boolean>();
+
 export function boardDataToJson(board: BoardData): string {
   return JSON.stringify(board, null, 2);
 }
@@ -15,28 +17,36 @@ export function boardDataFromJson(json: string): BoardData {
 type Html2CanvasFn = (element: HTMLElement, options?: Record<string, unknown>) => Promise<HTMLCanvasElement>;
 
 export async function exportBoardToPng(boardElement: HTMLElement, signal?: AbortSignal): Promise<Blob> {
-  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-  const html2canvas = await tryLoadHtml2canvas(signal);
-  if (!html2canvas) {
-    throw new Error('html2canvas not available');
+  if (exportInProgress.get(boardElement)) {
+    throw new Error('Export already in progress for this board');
   }
-  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-  if (boardElement.scrollWidth > 4096 || boardElement.scrollHeight > 4096) {
-    throw new Error('Board too large for PNG export');
+  exportInProgress.set(boardElement, true);
+  try {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    const html2canvas = await tryLoadHtml2canvas(signal);
+    if (!html2canvas) {
+      throw new Error('html2canvas not available');
+    }
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    if (boardElement.scrollWidth > 4096 || boardElement.scrollHeight > 4096) {
+      throw new Error('Board too large for PNG export');
+    }
+    const canvas = await html2canvas(boardElement, {
+      useCORS: true,
+      allowTaint: false,
+      scale: 2,
+      backgroundColor: '#ffffff',
+    });
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob: Blob | null) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Canvas toBlob failed'));
+      }, 'image/png');
+    });
+  } finally {
+    exportInProgress.set(boardElement, false);
   }
-  const canvas = await html2canvas(boardElement, {
-    useCORS: true,
-    allowTaint: false,
-    scale: 2,
-    backgroundColor: '#ffffff',
-  });
-  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob: Blob | null) => {
-      if (blob) resolve(blob);
-      else reject(new Error('Canvas toBlob failed'));
-    }, 'image/png');
-  });
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

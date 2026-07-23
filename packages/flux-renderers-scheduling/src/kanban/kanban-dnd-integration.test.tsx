@@ -204,7 +204,7 @@ describe('Kanban DnD Integration', () => {
     const col1 = container.querySelector('[data-column-id="col1"]') as HTMLElement;
     expect(col1).toBeTruthy();
 
-    const dragHandle = col1.querySelector('[data-slot="column-drag-handle"]') as HTMLElement;
+    const dragHandle = col1.querySelector('[data-slot="kanban-column-drag-handle"]') as HTMLElement;
     if (dragHandle) {
       fireEvent.keyDown(dragHandle, { key: 'ArrowRight' });
 

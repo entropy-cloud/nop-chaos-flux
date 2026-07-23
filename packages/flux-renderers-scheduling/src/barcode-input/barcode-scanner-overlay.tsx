@@ -10,6 +10,7 @@ import { useBarcodeTorch } from './hooks/use-barcode-torch.js';
 import { prepareWasm } from './utils/prepare-wasm.js';
 import { createBarcodeQueueStore, enqueueItem, dequeueItem, clearQueue, markSubmitted, getPending, getAllItems } from './utils/barcode-queue.js';
 import type { BarcodeFormat, BarcodeDetectResult } from './barcode-input.types.js';
+import { useFocusTrap } from '../calendar/hooks/use-focus-trap.js';
 
 const statusMessages = {
   recognizing: t('flux.barcode.recognizing'),
@@ -185,45 +186,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
 
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open || !overlayRef.current) return;
-    const overlay = overlayRef.current;
-    const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-      const focusable = overlay.querySelectorAll<HTMLElement>(focusableSelector);
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-
-    const firstFocusable = overlay.querySelector<HTMLElement>(focusableSelector);
-    firstFocusable?.focus();
-    overlay.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      overlay.removeEventListener('keydown', handleKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [open, onClose]);
+  useFocusTrap(overlayRef, open);
 
   if (!open) return null;
 
