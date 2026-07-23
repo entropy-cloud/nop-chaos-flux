@@ -111,4 +111,113 @@ describe('useKanbanColumnResize', () => {
     });
     expect(onWidthsChange).toHaveBeenCalledWith({ col1: 350 });
   });
+
+  it('handleResizeKeyDown ArrowLeft decreases width', () => {
+    const { result } = renderHook(() =>
+      useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280 }),
+    );
+    act(() => {
+      result.current.setWidth?.('col1', 400);
+    });
+    const mockEvent = { preventDefault: vi.fn(), key: 'ArrowLeft' } as unknown as React.KeyboardEvent;
+    act(() => {
+      result.current.handleResizeKeyDown(mockEvent, 'col1');
+    });
+    expect(result.current.getWidth('col1')).toBe(380);
+  });
+
+  it('handleResizeKeyDown ArrowRight increases width', () => {
+    const { result } = renderHook(() =>
+      useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280 }),
+    );
+    act(() => {
+      result.current.setWidth?.('col1', 400);
+    });
+    const mockEvent = { preventDefault: vi.fn(), key: 'ArrowRight' } as unknown as React.KeyboardEvent;
+    act(() => {
+      result.current.handleResizeKeyDown(mockEvent, 'col1');
+    });
+    expect(result.current.getWidth('col1')).toBe(420);
+  });
+
+  it('handleResizeKeyDown ArrowLeft clamps at minWidth', () => {
+    const { result } = renderHook(() =>
+      useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280 }),
+    );
+    act(() => {
+      result.current.setWidth?.('col1', 110);
+    });
+    const mockEvent = { preventDefault: vi.fn(), key: 'ArrowLeft' } as unknown as React.KeyboardEvent;
+    act(() => {
+      result.current.handleResizeKeyDown(mockEvent, 'col1');
+    });
+    expect(result.current.getWidth('col1')).toBe(100);
+  });
+
+  it('handleResizeKeyDown ArrowRight clamps at maxWidth', () => {
+    const { result } = renderHook(() =>
+      useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280 }),
+    );
+    act(() => {
+      result.current.setWidth?.('col1', 790);
+    });
+    const mockEvent = { preventDefault: vi.fn(), key: 'ArrowRight' } as unknown as React.KeyboardEvent;
+    act(() => {
+      result.current.handleResizeKeyDown(mockEvent, 'col1');
+    });
+    expect(result.current.getWidth('col1')).toBe(800);
+  });
+
+  it('handleResizeKeyDown does nothing for other keys', () => {
+    const { result } = renderHook(() =>
+      useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280 }),
+    );
+    act(() => {
+      result.current.setWidth?.('col1', 400);
+    });
+    const mockEvent = { preventDefault: vi.fn(), key: 'Enter' } as unknown as React.KeyboardEvent;
+    act(() => {
+      result.current.handleResizeKeyDown(mockEvent, 'col1');
+    });
+    expect(result.current.getWidth('col1')).toBe(400);
+  });
+
+  it('exposes minWidth and maxWidth', () => {
+    const { result } = renderHook(() =>
+      useKanbanColumnResize({ minWidth: 150, maxWidth: 900, defaultWidth: 280 }),
+    );
+    expect(result.current.minWidth).toBe(150);
+    expect(result.current.maxWidth).toBe(900);
+  });
+
+  it('handleResizeKeyDown uses defaultWidth when no width set', () => {
+    const { result } = renderHook(() =>
+      useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280 }),
+    );
+    const mockEvent = { preventDefault: vi.fn(), key: 'ArrowLeft' } as unknown as React.KeyboardEvent;
+    act(() => {
+      result.current.handleResizeKeyDown(mockEvent, 'col1');
+    });
+    expect(result.current.getWidth('col1')).toBe(260);
+  });
+
+  it('setWidth clamps to minWidth', () => {
+    const { result } = renderHook(() =>
+      useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280 }),
+    );
+    act(() => {
+      result.current.setWidth?.('col1', 50);
+    });
+    expect(result.current.getWidth('col1')).toBe(100);
+  });
+
+  it('setWidth clamps to maxWidth', () => {
+    const { result } = renderHook(() =>
+      useKanbanColumnResize({ minWidth: 100, maxWidth: 800, defaultWidth: 280 }),
+    );
+    act(() => {
+      result.current.setWidth?.('col1', 1000);
+    });
+    expect(result.current.getWidth('col1')).toBe(800);
+  });
 });

@@ -43,6 +43,7 @@ function createMockTask(overrides: Partial<GanttTask> & { id: GanttId }): GanttT
     start: '2026-01-01',
     end: '2026-01-10',
     $x: 0, $y: 0, $w: 100, $h: 20, $level: 0, $source: [], $target: [],
+    $branchSize: 1, $posInBranch: 1,
     ...overrides,
   };
 }

@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
 
+const RESIZE_STEP = 20;
+
 export interface ColumnWidthMap {
   [columnId: string]: number;
 }
@@ -32,6 +34,15 @@ export function useKanbanColumnResize({
     return defaultWidth;
   };
 
+  const setWidth = (columnId: string, newWidth: number) => {
+    const clamped = Math.max(minWidth, Math.min(maxWidth, newWidth));
+    if (externalWidths) {
+      onWidthsChange?.({ ...externalWidths, [columnId]: clamped });
+    } else {
+      setInternalWidths((prev) => ({ ...prev, [columnId]: clamped }));
+    }
+  };
+
   const handleResizeStart = (e: React.PointerEvent, columnId: string) => {
     e.preventDefault();
     const currentWidth = currentWidths[columnId] ?? defaultWidth;
@@ -43,11 +54,7 @@ export function useKanbanColumnResize({
       const { startX, startWidth } = resizeStartRef.current;
       const delta = ev.clientX - startX;
       const newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + delta));
-      if (externalWidths) {
-        onWidthsChange?.({ ...externalWidths, [columnId]: newWidth });
-      } else {
-        setInternalWidths((prev) => ({ ...prev, [columnId]: newWidth }));
-      }
+      setWidth(columnId, newWidth);
     };
 
     const handlePointerUp = () => {
@@ -57,15 +64,8 @@ export function useKanbanColumnResize({
       if (resizeStartRef.current) {
         const { columnId: cId } = resizeStartRef.current;
         resizeStartRef.current = null;
-        const finalWidth = currentWidths[cId] ?? defaultWidth;
-        if (externalWidths) {
-          onWidthsChange?.({ ...externalWidths, [cId]: finalWidth });
-        } else {
-          setInternalWidths((prev) => {
-            onWidthsChange?.({ ...prev, [cId]: finalWidth });
-            return prev;
-          });
-        }
+        const finalWidth = getWidth(cId);
+        setWidth(cId, finalWidth);
       }
     };
 
@@ -73,13 +73,29 @@ export function useKanbanColumnResize({
     document.addEventListener('pointerup', handlePointerUp);
   };
 
+  const handleResizeKeyDown = (e: React.KeyboardEvent, columnId: string) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const current = currentWidths[columnId] ?? defaultWidth;
+      setWidth(columnId, current - RESIZE_STEP);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const current = currentWidths[columnId] ?? defaultWidth;
+      setWidth(columnId, current + RESIZE_STEP);
+    }
+  };
+
   const isResizing = resizing != null;
 
   return {
     columnWidths: currentWidths,
     getWidth,
+    setWidth,
     handleResizeStart,
+    handleResizeKeyDown,
     isResizing,
     resizing,
+    minWidth,
+    maxWidth,
   };
 }

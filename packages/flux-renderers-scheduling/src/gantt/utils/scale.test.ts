@@ -20,6 +20,8 @@ function makeTask(overrides: Partial<GanttTask> & { id: string }): GanttTask {
     $level: 0,
     $source: [],
     $target: [],
+    $branchSize: 1,
+    $posInBranch: 1,
     ...overrides,
   };
 }

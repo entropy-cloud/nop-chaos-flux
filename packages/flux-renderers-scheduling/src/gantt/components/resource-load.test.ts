@@ -9,6 +9,7 @@ function makeResource(id: GanttId, text: string): GanttResource {
 function makeTask(id: GanttId, start: string, end: string): GanttTask {
   return {
     id, text: `Task ${id}`, start, end, $x: 0, $y: 0, $w: 0, $h: 0, $level: 0, $source: [], $target: [],
+    $branchSize: 1, $posInBranch: 1,
   };
 }
 

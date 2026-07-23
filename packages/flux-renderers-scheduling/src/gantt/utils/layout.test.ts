@@ -131,6 +131,7 @@ describe('layout utils', () => {
           id: 't1', text: 'Task 1', start: '2026-01-05', end: '2026-01-15',
           type: 'task' as const, open: true, $x: 0, $y: 0, $w: 0, $h: 0,
           $level: 0, $source: [], $target: [],
+          $branchSize: 1, $posInBranch: 1,
         },
       ];
       computeTaskLayout(tasks, ['t1'], scaleRange, 40, 28, 40);
@@ -148,11 +149,13 @@ describe('layout utils', () => {
           id: 't1', text: 'A', start: '2026-01-01', end: '2026-01-10',
           type: 'task', open: true, $x: 0, $y: 0, $w: 360, $h: 28,
           $level: 0, $source: [], $target: [],
+          $branchSize: 1, $posInBranch: 1,
         }],
         ['t2', {
           id: 't2', text: 'B', start: '2026-01-11', end: '2026-01-20',
           type: 'task', open: true, $x: 400, $y: 40, $w: 360, $h: 28,
           $level: 0, $source: [], $target: [],
+          $branchSize: 1, $posInBranch: 1,
         }],
       ]);
       const links = new Map<string, GanttLink>([

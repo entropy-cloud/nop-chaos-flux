@@ -25,6 +25,9 @@ export interface KanbanColumnProps {
   className?: string;
   columnWidth?: number;
   onResizeStart?: (e: React.PointerEvent) => void;
+  onResizeKeyDown?: (e: React.KeyboardEvent) => void;
+  minWidth?: number;
+  maxWidth?: number;
   virtualize?: boolean;
   wipWarning?: boolean;
   wipText?: string;
@@ -62,6 +65,9 @@ export function KanbanColumn({
   className,
   columnWidth,
   onResizeStart,
+  onResizeKeyDown,
+  minWidth,
+  maxWidth,
   virtualize,
   wipWarning,
   wipText,
@@ -209,6 +215,10 @@ export function KanbanColumn({
         columnHeaderToolbarRegion={columnHeaderToolbarRegion}
         dndEnabled={draggable}
         onResizeStart={onResizeStart}
+        onResizeKeyDown={onResizeKeyDown}
+        columnWidth={columnWidth}
+        minWidth={minWidth}
+        maxWidth={maxWidth}
         wipWarning={wipWarning}
         wipText={wipText}
         onDragHandleKeyDown={onDragHandleKeyDown}

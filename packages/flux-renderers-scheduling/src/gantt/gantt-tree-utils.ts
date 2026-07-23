@@ -69,6 +69,20 @@ export function computeLevels(tasks: Map<GanttId, GanttTask>, parentIndex: Map<G
   return newTasks;
 }
 
+export function computeBranchInfo(tasks: Map<GanttId, GanttTask>, parentIndex: Map<GanttId | null, GanttId[]>): Map<GanttId, GanttTask> {
+  const newTasks = new Map(tasks);
+  for (const [, children] of parentIndex.entries()) {
+    const branchSize = children.length;
+    children.forEach((childId, idx) => {
+      const task = newTasks.get(childId);
+      if (task) {
+        newTasks.set(childId, { ...task, $branchSize: branchSize, $posInBranch: idx + 1 });
+      }
+    });
+  }
+  return newTasks;
+}
+
 export function computeSourceTarget(tasks: Map<GanttId, GanttTask>, links: Map<GanttId, GanttLink>): Map<GanttId, GanttTask> {
   const newTasks = new Map(tasks);
   for (const [, task] of newTasks) newTasks.set(task.id, { ...task, $source: [], $target: [] });

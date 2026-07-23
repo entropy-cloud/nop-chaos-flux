@@ -39,6 +39,8 @@ export interface GanttTask extends GanttTaskData {
   $w: number;
   $h: number;
   $level: number;
+  $branchSize: number;
+  $posInBranch: number;
   $source: GanttId[];
   $target: GanttId[];
 }

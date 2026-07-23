@@ -158,4 +158,95 @@ describe('Gantt', () => {
     const scaleCells = container.querySelectorAll('[data-slot="gantt-scale-cell"]');
     expect(scaleCells.length).toBeGreaterThan(0);
   });
+
+  it('should have treegrid role and tree ARIA attributes on rows', () => {
+    const tasks = [
+      {
+        id: 't1', text: 'Root 1', start: '2026-01-01', end: '2026-01-10',
+        children: [
+          { id: 't1a', text: 'Child 1', start: '2026-01-02', end: '2026-01-05' },
+          { id: 't1b', text: 'Child 2', start: '2026-01-03', end: '2026-01-08' },
+        ],
+      },
+      {
+        id: 't2', text: 'Root 2', start: '2026-01-05', end: '2026-01-15',
+        children: [
+          {
+            id: 't2a', text: 'Child 2a', start: '2026-01-06', end: '2026-01-10',
+            children: [
+              { id: 't2a1', text: 'Grandchild', start: '2026-01-07', end: '2026-01-09' },
+            ],
+          },
+        ],
+      },
+    ];
+    const { container } = render(
+      React.createElement(Gantt, { ...baseProps, props: { tasks, links: [] } as any }),
+    );
+
+    const grid = container.querySelector('[data-slot="gantt-grid"]');
+    expect(grid).toBeTruthy();
+    expect(grid!.getAttribute('role')).toBe('treegrid');
+
+    const rows = container.querySelectorAll('[data-slot="gantt-grid-row"]');
+    expect(rows.length).toBeGreaterThanOrEqual(5);
+
+    const t1Row = container.querySelector('[data-task-id="t1"]');
+    expect(t1Row?.getAttribute('aria-level')).toBe('1');
+    expect(t1Row?.getAttribute('aria-setsize')).toBe('2');
+    expect(t1Row?.getAttribute('aria-posinset')).toBe('1');
+
+    const t2Row = container.querySelector('[data-task-id="t2"]');
+    expect(t2Row?.getAttribute('aria-level')).toBe('1');
+    expect(t2Row?.getAttribute('aria-setsize')).toBe('2');
+    expect(t2Row?.getAttribute('aria-posinset')).toBe('2');
+
+    const t1aRow = container.querySelector('[data-task-id="t1a"]');
+    expect(t1aRow?.getAttribute('aria-level')).toBe('2');
+    expect(t1aRow?.getAttribute('aria-setsize')).toBe('2');
+    expect(t1aRow?.getAttribute('aria-posinset')).toBe('1');
+
+    const t1bRow = container.querySelector('[data-task-id="t1b"]');
+    expect(t1bRow?.getAttribute('aria-level')).toBe('2');
+    expect(t1bRow?.getAttribute('aria-setsize')).toBe('2');
+    expect(t1bRow?.getAttribute('aria-posinset')).toBe('2');
+
+    const t2a1Row = container.querySelector('[data-task-id="t2a1"]');
+    expect(t2a1Row?.getAttribute('aria-level')).toBe('3');
+    expect(t2a1Row?.getAttribute('aria-setsize')).toBe('1');
+    expect(t2a1Row?.getAttribute('aria-posinset')).toBe('1');
+  });
+
+  it('should have aria-expanded on toggle buttons matching collapse state', () => {
+    const tasks = [
+      {
+        id: 't1', text: 'Root 1', start: '2026-01-01', end: '2026-01-10', open: true,
+        children: [
+          { id: 't1a', text: 'Child 1', start: '2026-01-02', end: '2026-01-05' },
+        ],
+      },
+      {
+        id: 't2', text: 'Root 2', start: '2026-01-05', end: '2026-01-15', open: false,
+        children: [
+          { id: 't2a', text: 'Child 2a', start: '2026-01-06', end: '2026-01-10' },
+        ],
+      },
+    ];
+    const { container } = render(
+      React.createElement(Gantt, { ...baseProps, props: { tasks, links: [] } as any }),
+    );
+
+    const toggleButtons = container.querySelectorAll('button[aria-expanded]');
+    const t1Toggle = Array.from(toggleButtons).find(
+      (btn) => btn.getAttribute('aria-label')?.includes('Root 1'),
+    );
+    expect(t1Toggle).toBeTruthy();
+    expect(t1Toggle!.getAttribute('aria-expanded')).toBe('true');
+
+    const t2Toggle = Array.from(toggleButtons).find(
+      (btn) => btn.getAttribute('aria-label')?.includes('Root 2'),
+    );
+    expect(t2Toggle).toBeTruthy();
+    expect(t2Toggle!.getAttribute('aria-expanded')).toBe('false');
+  });
 });

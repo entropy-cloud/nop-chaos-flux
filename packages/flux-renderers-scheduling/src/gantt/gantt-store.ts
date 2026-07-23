@@ -3,7 +3,7 @@ import { computeTaskLayout, computeLinkPolylines, pixelToDate, dateToPixel } fro
 import { computeScaleRange } from './utils/scale.js';
 import { CalendarManager, type WorkCalendar } from './utils/worktime.js';
 import { createStore } from 'zustand/vanilla';
-import { flattenTasks, buildParentIndex, seedExpandedSet, getVisibleTasks, getVisibleDescendantCount, computeLevels, computeSourceTarget, collectDescendantIds } from './gantt-tree-utils.js';
+import { flattenTasks, buildParentIndex, seedExpandedSet, getVisibleTasks, getVisibleDescendantCount, computeLevels, computeBranchInfo, computeSourceTarget, collectDescendantIds } from './gantt-tree-utils.js';
 
 interface CalendarEntry { id: string; calendar: WorkCalendar; }
 
@@ -73,6 +73,8 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     _visibleTasksCacheDirty = true;
     const tasksAfterLevels = computeLevels(gs().tasks, parentIndex);
     store.setState({ tasks: tasksAfterLevels });
+    const tasksAfterBranchInfo = computeBranchInfo(gs().tasks, parentIndex);
+    store.setState({ tasks: tasksAfterBranchInfo });
     const tasksAfterSourceTarget = computeSourceTarget(gs().tasks, gs().links);
     store.setState({ tasks: tasksAfterSourceTarget });
     if (seedExpand) {
@@ -156,7 +158,7 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     parse(tasks: GanttTaskData[], links: GanttLinkData[], resources?: GanttResource[], assignments?: GanttAssignment[], calendars?: CalendarEntry[]): void {
       if (calendars) for (const e of calendars) calendarManager.registerCalendar(e.id, e.calendar);
       const newTasks = new Map<GanttId, GanttTask>();
-      for (const t of flattenTasks(tasks, null)) newTasks.set(t.id, { ...t, $x: 0, $y: 0, $w: 0, $h: 0, $level: 0, $source: [], $target: [] });
+      for (const t of flattenTasks(tasks, null)) newTasks.set(t.id, { ...t, $x: 0, $y: 0, $w: 0, $h: 0, $level: 0, $branchSize: 0, $posInBranch: 0, $source: [], $target: [] });
       const newLinks = new Map<GanttId, GanttLink>();
       if (links) for (const l of links) newLinks.set(l.id, { ...l, type: normalizeLinkType(l.type), $p: '' });
       const newResources = new Map<GanttId, GanttResource>();

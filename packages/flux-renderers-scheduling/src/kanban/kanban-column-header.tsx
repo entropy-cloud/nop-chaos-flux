@@ -14,6 +14,10 @@ export interface KanbanColumnHeaderProps {
   columnHeaderToolbarRegion?: { render: () => React.ReactNode } | null;
   dndEnabled?: boolean;
   onResizeStart?: (e: React.PointerEvent) => void;
+  onResizeKeyDown?: (e: React.KeyboardEvent) => void;
+  columnWidth?: number;
+  minWidth?: number;
+  maxWidth?: number;
   onDragHandleKeyDown?: (e: React.KeyboardEvent, columnId: string) => void;
   onClick?: () => void;
   wipWarning?: boolean;
@@ -31,6 +35,10 @@ export function KanbanColumnHeader({
   columnHeaderToolbarRegion,
   dndEnabled,
   onResizeStart,
+  onResizeKeyDown,
+  columnWidth = 280,
+  minWidth = 200,
+  maxWidth = 600,
   onDragHandleKeyDown,
   onClick,
   wipWarning,
@@ -53,8 +61,16 @@ export function KanbanColumnHeader({
         {onResizeStart && (
           <div
             data-slot="kanban-column-resize-handle"
+            role="separator"
+            tabIndex={0}
+            aria-valuenow={columnWidth}
+            aria-valuemin={minWidth}
+            aria-valuemax={maxWidth}
+            aria-orientation="vertical"
+            aria-label="Resize column"
             className="nop-kanban-column-resize-handle absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 hover:w-0.5 z-10"
             onPointerDown={onResizeStart}
+            onKeyDown={onResizeKeyDown}
           />
         )}
       </div>
@@ -80,8 +96,16 @@ export function KanbanColumnHeader({
       {onResizeStart && (
         <div
           data-slot="kanban-column-resize-handle"
+          role="separator"
+          tabIndex={0}
+          aria-valuenow={columnWidth}
+          aria-valuemin={minWidth}
+          aria-valuemax={maxWidth}
+          aria-orientation="vertical"
+          aria-label="Resize column"
           className="nop-kanban-column-resize-handle absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 hover:w-0.5 z-10"
           onPointerDown={onResizeStart}
+          onKeyDown={onResizeKeyDown}
         />
       )}
       <div

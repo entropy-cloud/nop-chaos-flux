@@ -647,6 +647,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
                 draggable={draggable}
                 columnWidth={columnWidthMode === 'auto' ? undefined : resize.getWidth(col.id)}
                 onResizeStart={(e) => resize.handleResizeStart(e, col.id)}
+                onResizeKeyDown={(e) => resize.handleResizeKeyDown(e, col.id)}
+                minWidth={resize.minWidth}
+                maxWidth={resize.maxWidth}
                 virtualize
                 wipWarning={overLimit}
                 wipText={wipText}

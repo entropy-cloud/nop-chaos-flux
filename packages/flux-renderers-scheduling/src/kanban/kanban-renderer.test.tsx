@@ -308,4 +308,29 @@ describe('KanbanColumnHeader', () => {
     const button = screen.getByLabelText('Expand column');
     expect(button).toBeTruthy();
   });
+
+  it('renders resize handle with all ARIA attributes', () => {
+    const { container } = render(
+      <KanbanColumnHeader
+        column={column}
+        cardCount={5}
+        collapsed={false}
+        onToggleCollapse={() => {}}
+        onResizeStart={vi.fn()}
+        onResizeKeyDown={vi.fn()}
+        columnWidth={300}
+        minWidth={200}
+        maxWidth={600}
+      />,
+    );
+    const handle = container.querySelector('[data-slot="kanban-column-resize-handle"]') as HTMLElement;
+    expect(handle).toBeTruthy();
+    expect(handle.getAttribute('role')).toBe('separator');
+    expect(handle.getAttribute('aria-valuenow')).toBe('300');
+    expect(handle.getAttribute('aria-valuemin')).toBe('200');
+    expect(handle.getAttribute('aria-valuemax')).toBe('600');
+    expect(handle.getAttribute('aria-orientation')).toBe('vertical');
+    expect(handle.getAttribute('aria-label')).toBe('Resize column');
+    expect(handle.tabIndex).toBe(0);
+  });
 });

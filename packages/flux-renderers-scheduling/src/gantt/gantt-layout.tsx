@@ -14,6 +14,7 @@ interface GanttLayoutProps {
 
 export function GanttLayout({ grid, timeline, header, className }: GanttLayoutProps) {
   const [gridWidth, setGridWidth] = useState(320);
+  const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const resizingRef = useRef(false);
   const resizeCleanupRef = useRef<(() => void) | null>(null);
@@ -69,6 +70,19 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
     };
   }, []);
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      setContainerWidth(rect.width);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const handleResizeKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
@@ -78,6 +92,8 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
       setGridWidth((prev) => clampWidth(prev + RESIZE_STEP));
     }
   };
+
+  const maxGridWidth = containerWidth > 0 ? Math.round(containerWidth * MAX_GRID_WIDTH_PERCENT) : MIN_GRID_WIDTH;
 
   return (
     <div ref={containerRef} className={cn('nop-gantt flex flex-col h-full', className)}>
@@ -92,6 +108,7 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
           aria-label="Resize grid panel"
           aria-valuenow={gridWidth}
           aria-valuemin={MIN_GRID_WIDTH}
+          aria-valuemax={maxGridWidth}
           aria-orientation="vertical"
           className="w-1.5 cursor-col-resize bg-gray-200 hover:bg-blue-400 active:bg-blue-500 shrink-0 relative z-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
           onPointerDown={onPointerDown}

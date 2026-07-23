@@ -188,6 +188,23 @@ describe('GanttLayout', () => {
     expect(screen.getByTestId('timeline-panel')).toBeTruthy();
     expect(screen.getByTestId('header-panel')).toBeTruthy();
   });
+
+  it('should have aria-valuemax on resize separator', () => {
+    const { container } = render(
+      <GanttLayout
+        grid={<div>Grid</div>}
+        timeline={<div>Timeline</div>}
+        header={<div>Header</div>}
+      />,
+    );
+    const separators = container.querySelectorAll('[role="separator"]');
+    expect(separators.length).toBe(1);
+    const separator = separators[0];
+    expect(separator.getAttribute('aria-valuemax')).toBeTruthy();
+    expect(Number(separator.getAttribute('aria-valuemax'))).toBeGreaterThanOrEqual(200);
+    expect(separator.getAttribute('aria-valuenow')).toBeTruthy();
+    expect(separator.getAttribute('aria-valuemin')).toBe('200');
+  });
 });
 
 describe('BaselineBars', () => {
@@ -195,7 +212,8 @@ describe('BaselineBars', () => {
     const task: GanttTask = {
       id: 't1', text: 'Task', start: '2026-01-05', end: '2026-01-10',
       type: 'task', duration: 5, progress: 0,
-      $x: 160, $y: 0, $w: 200, $h: 28, $level: 0, $source: [], $target: [],
+      $x: 0, $y: 0, $w: 200, $h: 28, $level: 0, $source: [], $target: [],
+      $branchSize: 1, $posInBranch: 1,
       baselines: [{ id: 'b1', taskId: 't1', baseStart: '2026-01-01', baseEnd: '2026-01-06', baseDuration: 6 }],
     };
     const scaleRange = { start: new Date('2026-01-01'), end: new Date('2026-01-31') };
@@ -213,6 +231,7 @@ describe('BaselineBars', () => {
       id: 't1', text: 'Task', start: '2026-01-05', end: '2026-01-10',
       type: 'task', duration: 5, progress: 0,
       $x: 160, $y: 0, $w: 200, $h: 28, $level: 0, $source: [], $target: [],
+      $branchSize: 1, $posInBranch: 1,
       baselines: [{ id: 'b1', taskId: 't1', baseStart: '2026-01-01', baseEnd: '2026-01-06', baseDuration: 6 }],
     };
     const scaleRange = { start: new Date('2026-01-01'), end: new Date('2026-01-31') };
@@ -229,7 +248,8 @@ describe('BaselineBars', () => {
     const task: GanttTask = {
       id: 't1', text: 'Task', start: '2026-01-05', end: '2026-01-10',
       type: 'task', duration: 5, progress: 0,
-      $x: 0, $y: 0, $w: 200, $h: 28, $level: 0, $source: [], $target: [],
+      $x: 160, $y: 0, $w: 200, $h: 28, $level: 0, $source: [], $target: [],
+      $branchSize: 1, $posInBranch: 1,
       baselines: [],
     };
     const scaleRange = { start: new Date('2026-01-01'), end: new Date('2026-01-31') };
