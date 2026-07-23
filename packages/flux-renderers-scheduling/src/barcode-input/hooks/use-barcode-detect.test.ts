@@ -41,4 +41,50 @@ describe('useBarcodeDetect', () => {
     }));
     expect(result.current.result).toBeNull();
   });
+
+  it('should not scan when enabled transitions to false', () => {
+    const getVideoElement = () => document.createElement('video');
+    const { result, rerender } = renderHook(
+      (opts) => useBarcodeDetect(getVideoElement, opts),
+      { initialProps: { enabled: true, interval: 300 } },
+    );
+    expect(result.current.isScanning).toBe(false);
+
+    rerender({ enabled: false, interval: 300 });
+    expect(result.current.isScanning).toBe(false);
+  });
+
+  it('should accept different interval values', () => {
+    const getVideoElement = () => document.createElement('video');
+    const { result, rerender } = renderHook(
+      (opts) => useBarcodeDetect(getVideoElement, opts),
+      { initialProps: { enabled: false, interval: 300 } },
+    );
+    expect(result.current.result).toBeNull();
+
+    rerender({ enabled: false, interval: 500 });
+    expect(result.current.result).toBeNull();
+  });
+
+  it('should reset result when options change', () => {
+    const getVideoElement = () => document.createElement('video');
+    const { result, rerender } = renderHook(
+      (opts) => useBarcodeDetect(getVideoElement, opts),
+      { initialProps: { enabled: false, interval: 300 } },
+    );
+    rerender({ enabled: false, interval: 300 });
+    expect(result.current.result).toBeNull();
+  });
+
+  it('should handle disabled state then enabled state changes gracefully', () => {
+    const getVideoElement = () => document.createElement('video');
+    const { result, rerender } = renderHook(
+      (opts) => useBarcodeDetect(getVideoElement, opts),
+      { initialProps: { enabled: false, interval: 300 } },
+    );
+    expect(result.current.isScanning).toBe(false);
+
+    rerender({ enabled: true, interval: 300 });
+    expect(result.current.isScanning).toBe(false);
+  });
 });

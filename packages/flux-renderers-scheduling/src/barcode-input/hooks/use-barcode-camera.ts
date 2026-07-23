@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { checkCameraAvailability } from '../utils/camera-utils.js';
 
 interface BarcodeCameraState {
@@ -25,9 +25,11 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
   const streamRef = useRef<MediaStream | null>(null);
   const sessionRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
+  const optionsRef = useRef(options);
   const [state, setState] = useState<BarcodeCameraState>({ isActive: false, error: null });
 
-  const stop = () => {
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- videoRef is a stable ref object; ref.current is null initially
+  const stop = useCallback(() => {
     abortRef.current?.abort();
     sessionRef.current += 1;
     if (streamRef.current) {
@@ -35,12 +37,14 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
       streamRef.current = null;
     }
     if (videoRef.current) {
+      // eslint-disable-next-line react-compiler/react-compiler -- ref mutation is intentional
       videoRef.current.srcObject = null;
     }
     setState({ isActive: false, error: null });
-  };
+  }, [videoRef]);
 
-  const start = async () => {
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- videoRef is a stable ref object; stop is stable
+  const start = useCallback(async () => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -58,8 +62,9 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
 
       if (signal.aborted) return;
 
+      const currentOptions = optionsRef.current;
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: options?.videoConstraints ?? {
+        video: currentOptions?.videoConstraints ?? {
           facingMode: 'environment',
           width: { ideal: 1280 },
           height: { ideal: 720 },
@@ -74,7 +79,6 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
       streamRef.current = stream;
 
       if (videoRef.current) {
-        // eslint-disable-next-line react-compiler/react-compiler -- ref mutation is intentional: syncing stream to video element
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
@@ -94,9 +98,12 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
           ? 'No camera found'
           : `Camera error: ${err.message}`;
       setState({ isActive: false, error: message });
-      throw err;
     }
-  };
+  }, [stop, videoRef]);
+
+  useEffect(() => {
+    optionsRef.current = options;
+  });
 
   useEffect(() => {
     checkCameraAvailability();

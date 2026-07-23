@@ -34,15 +34,6 @@ export function useBarcodeDetect(
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    const currentOptions = optionsRef.current;
-    const enabled = currentOptions?.enabled ?? true;
-    const interval = currentOptions?.interval ?? 300;
-
-    if (!enabled) {
-      lastResultRef.current = null;
-      return;
-    }
-
     const controller = new AbortController();
     abortRef.current = controller;
     const signal = controller.signal;
@@ -51,7 +42,7 @@ export function useBarcodeDetect(
     if (!video) return;
 
     if (!detectorRef.current) {
-      detectorRef.current = createBarcodeDetector(currentOptions?.formats);
+      detectorRef.current = createBarcodeDetector(optionsRef.current?.formats);
     }
 
     if (!canvasRef.current) {
@@ -69,13 +60,30 @@ export function useBarcodeDetect(
     async function poll() {
       if (signal.aborted) return;
 
-      const currentVideo = getVideoRef.current();
-      if (!currentVideo || !ctx) return;
+      const currentOptions = optionsRef.current;
+      const enabled = currentOptions?.enabled ?? true;
 
-      if (currentVideo.readyState < 2 || currentVideo.videoWidth === 0) {
-        timerRef.current = setTimeout(poll, interval);
+      if (!enabled) {
+        setIsScanning(false);
+        const currentInterval = currentOptions?.interval ?? 300;
+        timerRef.current = setTimeout(poll, currentInterval);
         return;
       }
+
+      const currentVideo = getVideoRef.current();
+      if (!currentVideo || !ctx) {
+        const currentInterval = optionsRef.current?.interval ?? 300;
+        timerRef.current = setTimeout(poll, currentInterval);
+        return;
+      }
+
+      if (currentVideo.readyState < 2 || currentVideo.videoWidth === 0) {
+        const currentInterval = optionsRef.current?.interval ?? 300;
+        timerRef.current = setTimeout(poll, currentInterval);
+        return;
+      }
+
+      setIsScanning(true);
 
       try {
         const detectFn = async (source: HTMLCanvasElement) => {
@@ -102,15 +110,15 @@ export function useBarcodeDetect(
       }
 
       if (!signal.aborted) {
-        timerRef.current = setTimeout(poll, interval);
+        const currentInterval = optionsRef.current?.interval ?? 300;
+        timerRef.current = setTimeout(poll, currentInterval);
       }
     }
 
-    timerRef.current = setTimeout(() => {
-      setIsScanning(true);
-      setError(null);
-      poll();
-    }, interval);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: initializing scanning state before first poll
+    setIsScanning(false);
+    setError(null);
+    poll();
 
     return () => {
       controller.abort();

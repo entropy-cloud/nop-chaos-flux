@@ -40,6 +40,6 @@ export function resetWasmPromise(url?: string): void {
   if (url) {
     wasmPromises.delete(url);
   } else {
-    wasmPromises.clear();
+    wasmPromises.delete(DEFAULT_WASM_URL);
   }
 }

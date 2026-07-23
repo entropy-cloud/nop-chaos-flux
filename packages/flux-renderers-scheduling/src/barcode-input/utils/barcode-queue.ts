@@ -21,6 +21,18 @@ export function enqueueItem(store: BarcodeQueueStore, rawValue: string, format: 
       store.setState({
         items: state.items.map((i) => i.id === existing.id ? { ...i, status: 'duplicate' as const } : i),
       });
+      return store.getState().items.find((i) => i.id === existing.id)!;
+    }
+    if (existing.status === 'submitted') {
+      const dupItem: BarcodeQueueItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        rawValue,
+        timestamp: Date.now(),
+        format,
+        status: 'duplicate',
+      };
+      store.setState({ items: [...state.items, dupItem] });
+      return dupItem;
     }
     return store.getState().items.find((i) => i.id === existing.id)!;
   }

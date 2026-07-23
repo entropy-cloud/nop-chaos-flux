@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentForm, useCurrentFormState, useInputComponentHandle } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
@@ -25,6 +25,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   );
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState<boolean | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     void events.onMount?.({});
@@ -56,6 +57,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   }, []);
 
   const handleFocus = () => {
+    if (resolved.readOnly) return;
     if (!scanOnFocus || overlayOpen) return;
     scanOnFocusOpenedRef.current = true;
     if (cameraAvailable === null) {
@@ -80,6 +82,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const scanAbortRef = useRef<AbortController | null>(null);
 
   const handleScanClick = async () => {
+    if (resolved.readOnly) return;
     scanOnFocusOpenedRef.current = false;
     scanAbortRef.current?.abort();
     const ac = new AbortController();
@@ -104,6 +107,34 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
     return () => { scanAbortRef.current?.abort(); };
   }, []);
 
+  const validateScanResult = useCallback((val: string): string | null => {
+    if (resolved.required && (!val || val.length === 0)) {
+      return resolved.required === true ? 'This field is required' : String(resolved.required);
+    }
+    const minL = resolved.minLength;
+    if (typeof minL === 'number' && val.length < minL) {
+      return `Minimum length is ${minL} characters`;
+    }
+    const maxL = resolved.maxLength;
+    if (typeof maxL === 'number' && val.length > maxL) {
+      return `Maximum length is ${maxL} characters`;
+    }
+    if (resolved.pattern) {
+      try {
+        const re = new RegExp(resolved.pattern);
+        if (!re.test(val)) {
+          return `Value does not match pattern: ${resolved.pattern}`;
+        }
+      } catch {
+        return `Invalid pattern: ${resolved.pattern}`;
+      }
+    }
+    if (resolved.validate?.message) {
+      return resolved.validate.message;
+    }
+    return null;
+  }, [resolved.required, resolved.minLength, resolved.maxLength, resolved.pattern, resolved.validate]);
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
     if (resolved.trimContents) {
@@ -112,10 +143,18 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
     if (name && form) {
       form.setValue(name, val);
     }
+    setValidationError(null);
   };
 
   const handleScanResult = (result: BarcodeDetectResult) => {
+    if (resolved.readOnly) return;
     const val = result.barcode;
+    const error = validateScanResult(val);
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+    setValidationError(null);
     if (name && form) {
       form.setValue(name, val);
     }
@@ -174,7 +213,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       return { success: true };
     },
     resetWasmPromise: () => {
-      resetWasm();
+      resetWasm(resolved.wasmUrl);
     },
   });
 
@@ -227,6 +266,10 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
           ) : null}
         </InputGroupAddon>
       </InputGroup>
+
+      {validationError && (
+        <div data-slot="barcode-validation-error" className="text-xs text-red-500 mt-1">{validationError}</div>
+      )}
 
       <BarcodeScannerOverlay
         open={overlayOpen}

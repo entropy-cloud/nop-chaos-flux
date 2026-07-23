@@ -62,4 +62,31 @@ describe('BarcodeQueue (Zustand)', () => {
     markSubmitted(store, item.id);
     expect(getPending(store).length).toBe(2);
   });
+
+  it('should add duplicate entry when same value scanned after submission', () => {
+    const item1 = enqueueItem(store, '1234567890', 'ean_13');
+    markSubmitted(store, item1.id);
+    const dupItem = enqueueItem(store, '1234567890', 'ean_13');
+    expect(dupItem.status).toBe('duplicate');
+    expect(dupItem.id).not.toBe(item1.id);
+    expect(getAllItems(store).length).toBe(2);
+  });
+
+  it('should keep original submitted item unchanged when duplicate is added after submission', () => {
+    const item1 = enqueueItem(store, '1234567890', 'ean_13');
+    markSubmitted(store, item1.id);
+    enqueueItem(store, '1234567890', 'ean_13');
+    const items = getAllItems(store);
+    const original = items.find((i) => i.id === item1.id);
+    expect(original?.status).toBe('submitted');
+  });
+
+  it('should allow multiple duplicates of the same submitted value', () => {
+    const item1 = enqueueItem(store, '1234567890', 'ean_13');
+    markSubmitted(store, item1.id);
+    enqueueItem(store, '1234567890', 'ean_13');
+    enqueueItem(store, '1234567890', 'ean_13');
+    const dups = getAllItems(store).filter((i) => i.status === 'duplicate');
+    expect(dups.length).toBe(2);
+  });
 });

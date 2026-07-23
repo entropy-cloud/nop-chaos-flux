@@ -58,4 +58,93 @@ describe('useBarcodeCamera', () => {
     expect(result.current.isActive).toBe(false);
     expect(result.current.error).toBeNull();
   });
+
+  it('should handle getUserMedia rejection gracefully without re-throwing', async () => {
+    const { getUserMedia } = setupGetUserMediaMock();
+    getUserMedia.mockRejectedValue(new DOMException('Permission denied', 'NotAllowedError'));
+    const { result } = renderHook(() => useBarcodeCamera());
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(result.current.isActive).toBe(false);
+    expect(result.current.error).toBe('Camera permission denied');
+  });
+
+  it('should handle NotFoundError', async () => {
+    const { getUserMedia } = setupGetUserMediaMock();
+    getUserMedia.mockRejectedValue(new DOMException('No camera', 'NotFoundError'));
+    const { result } = renderHook(() => useBarcodeCamera());
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(result.current.isActive).toBe(false);
+    expect(result.current.error).toBe('No camera found');
+  });
+
+  it('should support multiple start/stop cycles', async () => {
+    const { getUserMedia } = setupGetUserMediaMock();
+    const { result } = renderHook(() => useBarcodeCamera());
+    // First cycle
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(result.current.isActive).toBe(true);
+    act(() => { result.current.stop(); });
+    expect(result.current.isActive).toBe(false);
+    // Second cycle
+    getUserMedia.mockClear();
+    getUserMedia.mockResolvedValue({
+      getTracks: () => [{ stop: vi.fn(), kind: 'video' }],
+    });
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(result.current.isActive).toBe(true);
+  });
+
+  it('should provide stable start/stop references across renders', () => {
+    const { result, rerender } = renderHook(() => useBarcodeCamera());
+    const { start: s1, stop: st1 } = result.current;
+    rerender();
+    expect(result.current.start).toBe(s1);
+    expect(result.current.stop).toBe(st1);
+  });
+
+  it('should keep error state after multiple failed starts', async () => {
+    const { getUserMedia } = setupGetUserMediaMock();
+    getUserMedia.mockRejectedValue(new DOMException('Permission denied', 'NotAllowedError'));
+    const { result } = renderHook(() => useBarcodeCamera());
+
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(result.current.error).toBe('Camera permission denied');
+
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(result.current.error).toBe('Camera permission denied');
+  });
+
+  it('should not throw on stop when camera was never started', () => {
+    const { result } = renderHook(() => useBarcodeCamera());
+    expect(() => act(() => { result.current.stop(); })).not.toThrow();
+  });
+
+  it('should re-create stream on each start call', async () => {
+    const { getUserMedia } = setupGetUserMediaMock();
+    const { result } = renderHook(() => useBarcodeCamera());
+
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(getUserMedia).toHaveBeenCalledTimes(1);
+
+    act(() => { result.current.stop(); });
+
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+  });
 });

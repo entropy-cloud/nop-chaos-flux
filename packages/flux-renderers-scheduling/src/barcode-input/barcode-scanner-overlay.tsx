@@ -94,6 +94,9 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     }
   }, [camera.error, open]);
 
+  const onScanErrorRef = useRef(onScanError);
+  useEffect(() => { onScanErrorRef.current = onScanError; });
+
   useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
@@ -118,7 +121,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
         setPhase('error');
         const msg = err?.message ?? t('flux.cameraUnavailable');
         setErrorMessage(msg);
-        onScanError?.(msg);
+        onScanErrorRef.current?.(msg);
       }
     };
 
@@ -128,7 +131,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
       controller.abort();
       stop();
     };
-  }, [open, wasmUrl, onScanError, stop, start]);
+  }, [open, wasmUrl, stop, start]);
 
   useEffect(() => {
     if (detect.result) {

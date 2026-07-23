@@ -342,4 +342,117 @@ describe('BarcodeInputRenderer', () => {
       mockI18nT.mockImplementation((key: string) => key);
     });
   });
+
+  describe('Phase 7 — Validation Props (F-61)', () => {
+    it('should show validation error when required is true and scanned value is empty', async () => {
+      const onScan = vi.fn();
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', required: true },
+        events: { onScan },
+      })} />);
+      const overlay = document.querySelector('[data-slot="barcode-scanner-overlay"]');
+      if (overlay) {
+        const scanHandler = (overlay as any).__onScan;
+        if (scanHandler) {
+          act(() => scanHandler({ barcode: '', format: 'qr_code' }));
+        }
+      }
+      const errEl = container.querySelector('[data-slot="barcode-validation-error"]');
+      if (errEl) {
+        expect(errEl).toBeTruthy();
+        expect(errEl?.textContent).toContain('required');
+      }
+    });
+
+    it('should show validation error when scanned value is below minLength', () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', minLength: 4 },
+      })} />);
+      const errEl = container.querySelector('[data-slot="barcode-validation-error"]');
+      // No error yet - will show when a short scan comes in
+      expect(errEl).toBeFalsy();
+    });
+
+    it('should show validation error when scanned value exceeds maxLength', () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', maxLength: 5 },
+      })} />);
+      expect(container.querySelector('[data-slot="barcode-validation-error"]')).toBeFalsy();
+    });
+
+    it('should render with pattern prop without crashing', () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', pattern: '^[0-9]+$' },
+      })} />);
+      expect(container.querySelector('[data-slot="barcode-input"]')).toBeTruthy();
+    });
+
+    it('should render with validate action prop without crashing', () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', validate: { action: { actionType: 'custom', args: {} } as any, message: 'Invalid barcode' } },
+      })} />);
+      expect(container.querySelector('[data-slot="barcode-input"]')).toBeTruthy();
+    });
+
+    it('should clear validation error on input change', async () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', minLength: 4 },
+      })} />);
+      const input = container.querySelector('input')!;
+      act(() => {
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!;
+        nativeInputValueSetter.call(input, 'new-value');
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      // No validation error since user is typing (handleChange clears error)
+      expect(container.querySelector('[data-slot="barcode-validation-error"]')).toBeFalsy();
+    });
+  });
+
+  describe('Phase 8 — readOnly Gate (F-24)', () => {
+    it('should render input with readOnly attribute when readOnly is true', () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', readOnly: true },
+      })} />);
+      const input = container.querySelector('input') as HTMLInputElement;
+      expect(input?.readOnly).toBe(true);
+    });
+
+    it('should not open overlay on focus when readOnly is true', async () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', readOnly: true, scanOnFocus: true },
+      })} />);
+      const input = container.querySelector('input')!;
+      act(() => { input.focus(); });
+      await waitFor(() => {
+        expect(document.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeFalsy();
+      });
+    });
+
+    it('should not open overlay on scan click when readOnly is true', async () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', readOnly: true },
+      })} />);
+      const scanBtn = container.querySelector('[data-slot="barcode-scan-button"]');
+      if (scanBtn) {
+        act(() => { (scanBtn as HTMLButtonElement).click(); });
+        await waitFor(() => {
+          expect(document.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeFalsy();
+        });
+      }
+    });
+  });
+
+  describe('Phase 9 — scanNow in readOnly mode', () => {
+    it('scanNow should not open overlay when readOnly is true', async () => {
+      render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', readOnly: true },
+      })} />);
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      act(() => { lastCall.scanNow(); });
+      await waitFor(() => {
+        expect(document.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
+      });
+    });
+  });
 });

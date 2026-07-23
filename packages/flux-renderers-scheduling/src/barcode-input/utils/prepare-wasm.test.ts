@@ -65,4 +65,23 @@ describe('prepareWasm', () => {
     abortController.abort();
     expect(() => prepareWasm('https://example.com/aborted.wasm', abortController.signal)).toThrow('Aborted');
   });
+
+  it('should only clear default URL when resetWasmPromise is called without argument', () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(0) });
+
+    const p1 = prepareWasm('https://example.com/a.wasm');
+    const p2 = prepareWasm('https://unpkg.com/@zxing/library@0.21.3/umd/zxing_reader.wasm');
+    // Both URLs cached
+    expect(p1).toBeDefined();
+    expect(p2).toBeDefined();
+
+    resetWasmPromise();
+    // After reset without URL: default URL cleared, custom URL still cached
+    const p3 = prepareWasm('https://example.com/a.wasm');
+    const p4 = prepareWasm('https://unpkg.com/@zxing/library@0.21.3/umd/zxing_reader.wasm');
+    // p3 should be the same as p1 (custom URL still cached)
+    expect(p3).toBe(p1);
+    // p4 should be different from p2 (default URL was cleared)
+    expect(p4).not.toBe(p2);
+  });
 });

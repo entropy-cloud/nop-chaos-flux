@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 interface UseBarcodeTorchOptions {
   getStream?: () => MediaStream | null;
@@ -15,12 +15,17 @@ export function useBarcodeTorch(options?: UseBarcodeTorchOptions): UseBarcodeTor
   const [isOn, setIsOn] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
   const checkedRef = useRef(false);
-  const getStream = options?.getStream;
-  const onRestartStream = options?.onRestartStream;
+  const isOnRef = useRef(isOn);
+  const getStreamRef = useRef(options?.getStream);
+  const onRestartStreamRef = useRef(options?.onRestartStream);
+
+  useEffect(() => { isOnRef.current = isOn; });
+  useEffect(() => { getStreamRef.current = options?.getStream; }, [options?.getStream]);
+  useEffect(() => { onRestartStreamRef.current = options?.onRestartStream; }, [options?.onRestartStream]);
 
   useEffect(() => {
     if (checkedRef.current) return;
-    const stream = getStream?.() ?? null;
+    const stream = getStreamRef.current?.() ?? null;
     if (!stream) return;
     checkedRef.current = true;
 
@@ -38,16 +43,15 @@ export function useBarcodeTorch(options?: UseBarcodeTorchOptions): UseBarcodeTor
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: one-time torch capability check, no cascading risk
     setIsAvailable(available);
-  }, [getStream]);
+  }, [getStreamRef]);
 
-  const toggle = async () => {
-    const stream = getStream?.() ?? null;
+  const toggle = useCallback(async () => {
+    const stream = getStreamRef.current?.() ?? null;
     if (!stream) return;
     const track = stream.getVideoTracks()[0];
     if (!track) return;
 
-    const newState = !isOn;
-    if (newState) {
+    if (!isOnRef.current) {
       try {
         await track.applyConstraints({
           advanced: [{ torch: true }] as any,
@@ -58,12 +62,16 @@ export function useBarcodeTorch(options?: UseBarcodeTorchOptions): UseBarcodeTor
         setIsOn(false);
       }
     } else {
-      if (onRestartStream) {
-        await onRestartStream();
+      if (onRestartStreamRef.current) {
+        try {
+          await onRestartStreamRef.current();
+        } catch {
+          /* stream restart failed — torch is already transitioning off */
+        }
         setIsOn(false);
       }
     }
-  };
+  }, []);
 
   return { isAvailable, isOn, toggle };
 }
