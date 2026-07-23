@@ -96,15 +96,15 @@ Targets: Per-component findings from Phase 1
 - [x] (Proof) Add focused tests for each fixed defect — keyboard behavior, ARIA attribute presence, focus management verified via existing test suite (718/719 pass).
 - [x] (Decision) Adjudicate P2/P3 findings — classified as follows:
 
-| Component | Findings | Classification | Justification |
-|-----------|----------|---------------|---------------|
-| Gantt | F16, F17, F23 | `watch-only residual` | Known design-gap SVG labels, scale ARIA, progress ARIA — low impact, no regression |
-| Gantt | F18, F19 | `optimization candidate` | Landmarks, weekend color — non-blocking enhancement |
-| Gantt | F20, F21, F24 | `watch-only residual` | New component gaps (baselines, resource grid, live region richness) |
-| Gantt | F25, F26, F27, F28, F29, F30 | `watch-only residual` / `optimization candidate` | Minor ARIA/operability issues — non-blocking | 
-| Kanban | H6 (resize keyboard), M1-M10, L1-L2 | `watch-only residual` | Known gaps from absence of a11y design doc section; no regression |
-| Calendar | P2-5 through P2-9, P3-10/P3-11 | `optimization candidate` | Home/End/PageUp, focus management, grid counts — non-blocking enhancement |
-| Barcode | F8-F11, F12-F15 | `optimization candidate` | Contrast, keyboard shortcut, video alt — non-blocking |
+| Component | Findings                            | Classification                                   | Justification                                                                      |
+| --------- | ----------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Gantt     | F16, F17, F23                       | `watch-only residual`                            | Known design-gap SVG labels, scale ARIA, progress ARIA — low impact, no regression |
+| Gantt     | F18, F19                            | `optimization candidate`                         | Landmarks, weekend color — non-blocking enhancement                                |
+| Gantt     | F20, F21, F24                       | `watch-only residual`                            | New component gaps (baselines, resource grid, live region richness)                |
+| Gantt     | F25, F26, F27, F28, F29, F30        | `watch-only residual` / `optimization candidate` | Minor ARIA/operability issues — non-blocking                                       |
+| Kanban    | H6 (resize keyboard), M1-M10, L1-L2 | `watch-only residual`                            | Known gaps from absence of a11y design doc section; no regression                  |
+| Calendar  | P2-5 through P2-9, P3-10/P3-11      | `optimization candidate`                         | Home/End/PageUp, focus management, grid counts — non-blocking enhancement          |
+| Barcode   | F8-F11, F12-F15                     | `optimization candidate`                         | Contrast, keyboard shortcut, video alt — non-blocking                              |
 
 Exit Criteria:
 
@@ -150,7 +150,7 @@ Status Note: completed 2026-07-23
 
 Closure Audit Evidence:
 
-- Auditor / Agent: independent sub-agent (fresh session, ses_... — this closure audit session)
+- Auditor / Agent: independent sub-agent (fresh session, ses\_... — this closure audit session)
 - Evidence: Full plan re-read; live code verification via grep/glob/read of all Phase 2 fix targets in `packages/flux-renderers-scheduling/src/`; typecheck (56/56), build (30/30), test (718/719, 1 pre-existing failure in calendar-date-utils unrelated to plan), lint (pre-existing only) — all pass with no regression attributable to this plan.
 - All P0/P1 defects in Gantt (F6, F9, F10, F12, F15, F22), Kanban (H1-H5, H7), Calendar (P1-1 through P1-4, P2 items), Barcode-input (F1-F7) fixed — confirmed via code search for each ARIA attribute and keyboard handler.
 - Architectural items (Gantt treegrid role, roving tabindex) deferred as known design gaps — non-blocking per Deferred But Adjudicated section.
@@ -160,6 +160,7 @@ Closure Audit Evidence:
 - Five-point consistency verified: Plan Status (completed), Phase 1 Status (completed), Phase 2 Status (completed), Closure Gates (all [x]), Closure evidence (this entry) — all agree.
 
 Follow-up:
+
 - no remaining plan-owned work
 - Roadmap update: Dim20 work item → completed
 - Docs: `docs/context/project-context.md` freshness check recommended if referencing Dim20
