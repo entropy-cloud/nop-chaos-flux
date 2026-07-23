@@ -61,27 +61,27 @@
 
 ### 5.1 渲染器清单
 
-> **实现状态**（2026-07-23）：P0 的 4 个渲染器（`ai-chat` / `ai-message-list` / `ai-bubble` / `ai-sender`）已在 A1 落地并跑通 playground mock 流式闭环（✅）。P1+ 渲染器尚未实现（⬜）。
+> **实现状态**（2026-07-24）：P0 的 4 个渲染器（`ai-chat` / `ai-message-list` / `ai-bubble` / `ai-sender`）已在 A1 落地（✅）。P1 渲染器（`ai-conversations` / `ai-welcome` / `ai-prompts` / `ai-feedback`）已在 A2 落地（✅）。P2 渲染器（`ai-tool-call` / `ai-attachments`）已在 A3 落地（✅）——含 engine agentic 工具循环、Layer C ComponentHandle、`ai-bubble` tools/reasoning/image content renderer、A-6~A-12 深化项、消息编辑、虚拟滚动。P3+ 渲染器尚未实现（⬜）。
 
-| Phase      | type               | 类别   | 职责                                                              | 状态 |
-| ---------- | ------------------ | ------ | ----------------------------------------------------------------- | ---- |
-| P0         | `ai-chat`          | Layout | 完整对话面板（messages + sender + auto-scroll + 状态管理）        | ✅   |
-| P0         | `ai-message-list`  | Layout | 消息列表（分组、自动滚动、注册制渲染）                            | ✅   |
-| P0         | `ai-bubble`        | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown）              | ✅   |
-| P0         | `ai-sender`        | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                     | ✅   |
-| P1         | `ai-conversations` | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                           | ✅   |
-| P1         | `ai-welcome`       | Widget | 空状态欢迎页 + icon/title/description/footer                      | ✅   |
-| P1         | `ai-prompts`       | Widget | 推荐提示词卡片列表（垂直/水平/折行）                              | ✅   |
-| P1         | `ai-feedback`      | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）               | ✅   |
-| P2         | `ai-attachments`   | Widget | 附件上传/预览（图片模式 / 卡片模式）                              | ⬜   |
-| P2         | `ai-tool-call`     | Widget | 工具调用卡片（状态、展开、JSON 高亮、按工具名注册专用渲染器）     | ⬜   |
-| P3         | `ai-citations`     | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                  | ⬜   |
-| P3         | HITL 审批          | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮           | ⬜   |
-| P4         | `ai-voice-input`   | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）                   | ⬜   |
-| P4         | `ai-token-usage`   | Widget | Token / 成本 / 上下文占比显示（数据由 connector 填充 metadata）   | ⬜   |
-| P4         | 消息分支           | 增强   | 重新生成时分支切换（branches 由 host 管理）                       | ⬜   |
-| P4         | `ai-suggestions`   | Widget | 建议气泡（Popover / Pills）— 从 P2 降至 P4（`ai-prompts` 已覆盖） | ⬜   |
-| P7（可选） | `ai-mcp-manager`   | Widget | MCP server 管理（启用/禁用/添加），需 host 注入 MCP 客户端        | ⬜   |
+| Phase      | type               | 类别   | 职责                                                                             | 状态 |
+| ---------- | ------------------ | ------ | -------------------------------------------------------------------------------- | ---- |
+| P0         | `ai-chat`          | Layout | 完整对话面板（messages + sender + auto-scroll + 状态管理）                       | ✅   |
+| P0         | `ai-message-list`  | Layout | 消息列表（分组、自动滚动、注册制渲染、A-8 虚拟滚动）                             | ✅   |
+| P0         | `ai-bubble`        | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown / image / 消息编辑）          | ✅   |
+| P0         | `ai-sender`        | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                                    | ✅   |
+| P1         | `ai-conversations` | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                                          | ✅   |
+| P1         | `ai-welcome`       | Widget | 空状态欢迎页 + icon/title/description/footer                                     | ✅   |
+| P1         | `ai-prompts`       | Widget | 推荐提示词卡片列表（垂直/水平/折行）                                             | ✅   |
+| P1         | `ai-feedback`      | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）                              | ✅   |
+| P2         | `ai-attachments`   | Widget | 附件上传/预览（图片模式 / 卡片模式 / 拖放 / 多模态 image_url 发送）              | ✅   |
+| P2         | `ai-tool-call`     | Widget | 工具调用卡片（状态、展开、JSON 高亮、A-6 按工具名注册专用渲染器、A-12 状态颜色） | ✅   |
+| P3         | `ai-citations`     | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                                 | ⬜   |
+| P3         | HITL 审批          | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮                          | ⬜   |
+| P4         | `ai-voice-input`   | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）                                  | ⬜   |
+| P4         | `ai-token-usage`   | Widget | Token / 成本 / 上下文占比显示（数据由 connector 填充 metadata）                  | ⬜   |
+| P4         | 消息分支           | 增强   | 重新生成时分支切换（branches 由 host 管理）                                      | ⬜   |
+| P4         | `ai-suggestions`   | Widget | 建议气泡（Popover / Pills）— 从 P2 降至 P4（`ai-prompts` 已覆盖）                | ⬜   |
+| P7（可选） | `ai-mcp-manager`   | Widget | MCP server 管理（启用/禁用/添加），需 host 注入 MCP 客户端                       | ⬜   |
 
 > 详细的组件级改进（流式光标 / 时间戳 / 代码块复制按钮 / 工具状态颜色 / 拖放附件 / 消息编辑 / LaTeX 评估等）见 [`improvement-analysis.md`](./improvement-analysis.md) §4。Phase 路线与改进项 ID 映射见 [`implementation.md`](./implementation.md) §2。
 
@@ -324,7 +324,9 @@ P2 增强：默认注册 `*` 通用 fallback；包内**不**提供任何专用�
 
 **P1 路径 C（推荐）**：在 `react-markdown` 外包一层轻量缓冲（~2KB gzip），仅处理 CJK 缓冲 + 代码 fence 缓冲；其他 Markdown 解析仍走现有 sanitize pipeline。
 
-**P2 评估路径 B**：适配 streamdown/core（~8KB gzip，排除 mermaid/shiki）；CJK + code + math 完整支持。
+**P2 评估路径 B（已裁定）**：评估 streamdown/core（~8KB gzip，排除 mermaid/shiki；CJK + code + math 完整支持）。**裁定结论：不引入**。当前路径 C 缓冲（`markdown-buffer.ts`，A2 落地）已覆盖流式安全核心问题（CJK 代理对拆分、未闭合 ```/~~~ fence、未闭合 `$$`/`\(`）。streamdown 的增量收益（完整 math 渲染）依赖 LaTeX 决策（见下，亦裁定不内置），引入 ~8KB 体积换取的边际收益不足以让所有 host 承担。保留路径 C；streamdown 列为 optimization candidate，移出 A3 scope（host 若需可经 `xui:imports`注入自定义`BubbleContentRenderer`）。
+
+**LaTeX / KaTeX（已裁定）**：评估 `remark-math` + `rehype-katex`（~20KB gzip + KaTeX CSS）。**裁定结论：不内置**。LaTeX 公式渲染为高频必需场景的证据不足；内置会让所有 host 承担 ~20KB 体积 + CSS。改为 out-of-scope improvement：host 经自定义 `BubbleContentRenderer`（pre-process content 走 remark-math+rehype-katex）或 `xui:imports` 注入。
 
 **不引入 mermaid / shiki**：体积过大（mermaid ~120KB / shiki ~50KB gzip），与 flux 纯前端渲染定位不符；如需，host 经 region 注入。详见 `improvement-analysis.md` §3.2、§6。
 
@@ -368,8 +370,9 @@ P2 增强：默认注册 `*` 通用 fallback；包内**不**提供任何专用�
 
 **Layer C（P2 跨组件控制）**：
 
-- `ai-chat` 渲染器通过 `runtime.componentRegistry?.register(handle, { cid })` 注册 component handle。
-- handle 暴露 methods：`sendMessage(text)` / `abort()` / `clear()` / `getMessages()` / `setMessages(msgs)`。
+- `ai-chat` 渲染器经 `useCurrentComponentRegistry()` hook（`@nop-chaos/flux-react`，渲染器侧 live 访问器）取当前 `ComponentHandleRegistry`，再用 `registry.register(handle, { cid })` 注册 component handle（live API；**非** `runtime.componentRegistry?.register`）。注册在 `useEffect` 中完成，返回的反注册函数在 unmount 时调用；capability check：registry 为 `undefined` 时静默 skip（Failure Path `component-handle-no-registry`）。
+- handle 实现 `ComponentCapabilities.invoke(method, payload, ctx)` 分发模型（**非** flat methods）—— action 系统对 `component:<method>` action 经 `action-adapter.ts` 调 `invoke`。分发 5 个逻辑方法名：`sendMessage`（`{ text }` 或多模态 `{ parts }`）/ `abort` / `clear` / `getMessages`（只读快照，依赖 Phase 1 engine 扩展）/ `setMessages`（`{ messages }` 整体替换）。
+- handle 的 `id` 取 schema 显式 `componentId` 或 `props.meta.testid`/`props.id`；`name` 取 `componentName`（默认 `'ai-chat'`）。
 - schema 可写 `{ action: 'component:sendMessage', componentId: 'my-chat', args: { text: 'hello' } }`。
 - 适合"页面外按钮触发对话发送"场景。
 

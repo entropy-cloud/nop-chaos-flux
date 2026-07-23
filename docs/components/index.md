@@ -334,9 +334,9 @@ UI primitive 对齐补充规则：
 
 - `pull-refresh`、`infinite-scroll`、`swipe-cell`、`countdown`、`notice-bar`
 
-**AI 对话（`flux-renderers-ai`，P0 + P1 已落地）**
+**AI 对话（`flux-renderers-ai`，P0 + P1 + P2 已落地）**
 
-- `ai-chat`、`ai-message-list`、`ai-bubble`、`ai-sender`（P0 ✅）、`ai-conversations`、`ai-welcome`、`ai-prompts`、`ai-feedback`（P1 ✅ 已实现，含 ActionScope namespace `ai`（7 actions + `$ai` host scope projection）、流式 Markdown CJK/code-fence 缓冲、代码块复制、时间戳、错误态、`data-${string}` content part、`useConversation` host helper（双层模型）、a11y `role="log"` + `aria-live="polite"` + 焦点回输）、`ai-attachments`、`ai-tool-call`、`ai-citations`、`ai-voice-input`、`ai-token-usage`、`ai-suggestions`（P2+ 待实现）（详见 `docs/components/flux-renderers-ai/design.md`，引擎设计见 `engine.md`，开发路线见 `docs/components/roadmap-ai.md`）
+- `ai-chat`、`ai-message-list`、`ai-bubble`、`ai-sender`（P0 ✅）、`ai-conversations`、`ai-welcome`、`ai-prompts`、`ai-feedback`（P1 ✅ 已实现，含 ActionScope namespace `ai`（7 actions + `$ai` host scope projection）、流式 Markdown CJK/code-fence 缓冲、代码块复制、时间戳、错误态、`data-${string}` content part、`useConversation` host helper（双层模型）、a11y `role="log"` + `aria-live="polite"` + 焦点回输）、`ai-attachments`、`ai-tool-call`（P2 ✅ 已实现，含 engine agentic 工具循环（多轮 tool_calls→执行→requestNext）、Layer C ComponentHandle（`component:<method>` 跨组件命令式控制）、`ai-bubble` tools/reasoning/image content renderer、A-6 按工具名注册专用卡片、A-8 虚拟滚动（>200 消息）、A-9 useAutoScroll host-utility 契约、A-10 推理持续时间、A-11 流式光标、A-12 工具状态颜色、消息编辑（§4.7）、多模态 image_url 发送）、`ai-citations`、`ai-voice-input`、`ai-token-usage`、`ai-suggestions`（P3+ 待实现）（详见 `docs/components/flux-renderers-ai/design.md`，引擎设计见 `engine.md`，开发路线见 `docs/components/roadmap-ai.md`）
 
 ### 当前仓库已注册的领域 renderer
 
