@@ -466,6 +466,15 @@ interface KanbanColumnResizeConfig {
 
 **autofit 自适应模式**：声明 `columnWidth: 'auto'` 时，列宽根据列内最长卡片内容自动计算（`min-content` + padding 缓冲），忽略用户拖拽设置；切换回 `'equal'` 时恢复等宽分割。两种模式下 col-resize 手柄依然可拖拽临时覆盖。
 
+**无障碍 ARIA 合约**（Phase 2 实现）：
+
+- 调整手柄元素添加 `role="separator"`、`tabIndex={0}`，使其可键盘聚焦
+- `aria-valuenow` 绑定当前列宽像素值
+- `aria-valuemin` / `aria-valuemax` 绑定 `minWidth` / `maxWidth` 配置值
+- `aria-orientation="vertical"` 声明垂直拖拽方向
+- `aria-label="Resize column"` 提供手柄标识
+- 键盘交互：聚焦手柄时，←/→ 方向键以 20px 步长增减列宽，调用 `useKanbanColumnResize.handleResizeKeyDown` 处理
+
 ### 12.8 WIP 限制设计要点（P3）
 
 WIP（Work In Progress）限制用于约束每列最大卡片数量，防止在制品积压。

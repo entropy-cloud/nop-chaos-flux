@@ -12,6 +12,7 @@ This file intentionally does **not** track "what is being worked on right now". 
 - Product type: AMIS low-code renderer, modern rewrite (a schema-driven React rendering + compilation runtime)
 - Primary users: application builders consuming the Flux DSL; framework developers extending renderers/actions
 - Documentation freshness: `partially stale` <!-- fresh | partially stale | stale | unknown -->
+  - Scheduling package verified complete (S0-S21) as of 2026-07-23 — all P0/P1/P2/P3 defects fixed, Dim20 accessibility audit completed, all quality polish plans closed. `partially stale` retained because other packages' doc freshness has not been re-audited per human-confirmation policy.
 
 **Freshness gating:**
 
