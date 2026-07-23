@@ -544,3 +544,36 @@ P-1 实施 plan 时，host 实现必须遵守以下"自动处理"规范：
 - `flux-renderers-ai/design.md` v2：稳定，无需大改（设计已对齐本评审）
 - `flux-renderers-ai/audit.md`：DECISION-1/2/3 全部闭环
 - `docs/references/new-renderer-introduction-audit.md` INV-2 流程：首个真实用例走通，作为后续扩 env 提案的范例
+
+---
+
+## 第 4 轮：评审已落地总结（2026-07-23）
+
+> 本评审的所有接口裁定已于 2026-07-23 经 execution plan [`docs/plans/2026-07-23-2143-1-a0-env-stream-and-socket-extension.md`]（roadmap 工作项 A0）落地为代码。本节为收口证据。
+
+### 已落地内容
+
+1. **接口与类型**（`packages/flux-core/src/types/renderer-api.ts`）：新增 `StreamProtocol` / `StreamChunkType` / `StreamApiRequest` / `StreamFetchResult<T>` / `StreamFetcher` / `StreamChunkParseError`（`class extends Error`，含 `chunkIndex` / `rawChunk` / `cause`）/ `WebSocketOpener` / `WebSocketOptions` / `WebSocketConnection`；`RendererEnv` 增 `stream?: StreamFetcher` 与 `openSocket?: WebSocketOpener`（均 optional，向后兼容）。类型经 `types/renderer.ts:8` 自动 re-export 链从 `@nop-chaos/flux-core` 顶层可达。
+2. **Decorator hooks**（`packages/flux-core/src/utils/renderer-env.ts`）：`RendererEnvDecoratorHooks` 扩 `stream?` / `openSocket?`，`decorateRendererEnv` 串联逻辑同步——解 §8 监控盲区 TODO，debugger 可拦截流式调用与 WebSocket 连接。
+3. **playground 默认实现**：
+   - `env.stream` → `apps/playground/src/env/stream-impl.ts`（`fetch` + `ReadableStream` + `TextDecoder`；自动 sse/ndjson/json-lines/text/raw 切分 + json/text/blob/arraybuffer 解析；`[DONE]` 自动结束；`ctx.signal` abort `reader.cancel()`；连接级错误经 `response` 字段报告；`StreamChunkParseError` on parse 失败）。
+   - `env.openSocket` → `apps/playground/src/env/socket-impl.ts`（代理浏览器原生 `WebSocket`；结构化 event；`readyState` 映射；`options.signal` abort → `close()`）。
+   - 已接入 `apps/playground/src/pages/m5-showcase-shared.ts` 的 `createEnv()`。
+4. **示例页面**：`apps/playground/src/pages/env-stream-demo.tsx`，演示 SSE 与 NDJSON 接收 chunk，注册到 playground 路由 `#/env-stream`。
+
+### 验证
+
+- `pnpm typecheck` 56/56 ✓（含向后兼容：新字段 optional，所有 host env 构造点无破坏性 typecheck 错误）。
+- `pnpm build` 30/30 ✓。
+- `pnpm lint`（flux-core + playground）0 errors ✓。
+- focused 单测：`packages/flux-core/src/utils/env-stream-socket.test.ts`（12 tests，含 `StreamChunkParseError` 形状 + decorator 串联）；`apps/playground/src/env/stream-impl.test.ts`（24 tests，5 协议 × chunkType 矩阵 + `[DONE]` + `StreamChunkParseError` + abort）；`apps/playground/src/env/socket-impl.test.ts`（8 tests，事件映射 + signal abort）。
+
+### owner doc 状态同步
+
+- `docs/architecture/renderer-env.md`：§2 状态声明 / §3.2 / §3.3 / §4.3 历史表 / §5 host 责任表 / §8 decorator TODO 全部从"待实施"翻为"已实施/已落地"。
+- roadmap：`docs/components/roadmap-ai.md` 工作项 A0 `todo` → `done`。
+- dev log：`docs/logs/2026/07-23.md`。
+
+### 下游解锁
+
+A1（`flux-renderers-ai` P0 骨架）的硬前置（`env.stream` 可用）已满足；mock 流式对话可通过 `env.stream` 直接消费，无需 AI 渲染器包自实现 SSE 解析。

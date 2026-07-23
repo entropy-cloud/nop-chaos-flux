@@ -15,14 +15,14 @@
 
 > **状态声明**：以下展示**目标态全集**。当前 `master` 分支 `packages/flux-core/src/types/renderer-api.ts:83` 已实施字段为：`fetcher / notify / navigate / confirm / alert / functions / filters / importLoader / resolveImportUrl / monitor / loadPage / loadDict / hasRole / locale`。
 >
-> `stream` 与 `openSocket` 已于 2026-07-21 经 INV-2 评审通过（见 §4.3 历史记录），**待 P-1 实施 plan 落地代码**。在实施前，使用方应 capability check（`if (env.stream) ...`）。
+> `stream` 与 `openSocket` 已于 2026-07-21 经 INV-2 评审通过，并于 2026-07-23 **落地实施**（接口 + playground 默认实现 + decorator hooks，见 §4.3 历史记录）。两个字段均 optional，向后兼容。使用方应 capability check（`if (env.stream) ...`）。
 
 ```ts
 export interface RendererEnv extends ExpressionExecutionEnv {
   // ===== 网络 IO =====
   fetcher: ApiFetcher; // HTTP 一次性请求（必填，已实施）
-  stream?: StreamFetcher; // HTTP 流式响应（SSE/NDJSON/...，可选，2026-07-21 新增，待实施）
-  openSocket?: WebSocketOpener; // WebSocket 长连接（可选，2026-07-21 新增，待实施）
+  stream?: StreamFetcher; // HTTP 流式响应（SSE/NDJSON/...，可选，2026-07-23 已实施）
+  openSocket?: WebSocketOpener; // WebSocket 长连接（可选，2026-07-23 已实施）
 
   // ===== UI 反馈 =====
   notify: (level, message) => void; // Toast 通知（必填）
@@ -71,7 +71,7 @@ export type ApiFetcher = <T = unknown>(
 - **abort**：通过 `ctx.signal: AbortSignal`
 - **owner doc**：`docs/architecture/api-data-source.md`、`docs/architecture/api-response-envelope.md`
 
-### 3.2 `stream?: StreamFetcher`（可选，HTTP 流式响应）—— **2026-07-21 新增**
+### 3.2 `stream?: StreamFetcher`（可选，HTTP 流式响应）—— **2026-07-23 已实施**
 
 ```ts
 export type StreamFetcher = <T = unknown>(
@@ -116,7 +116,7 @@ export interface StreamFetchResult<T = unknown> {
 - 服务器事件通知（SSE）
 - 大文件分块下载（raw）
 
-### 3.3 `openSocket?: WebSocketOpener`（可选，WebSocket 长连接）—— **2026-07-21 新增**
+### 3.3 `openSocket?: WebSocketOpener`（可选，WebSocket 长连接）—— **2026-07-23 已实施**
 
 ```ts
 export type WebSocketOpener = (
@@ -251,29 +251,29 @@ locale?: string;
 
 ### 4.3 历史扩充记录
 
-| 日期       | 字段                               | 评审来源                                                            | 状态             |
-| ---------- | ---------------------------------- | ------------------------------------------------------------------- | ---------------- |
-| 2026-07-21 | `env.stream?: StreamFetcher`       | `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md` | 评审通过，待实施 |
-| 2026-07-21 | `env.openSocket?: WebSocketOpener` | 同上                                                                | 评审通过，待实施 |
+| 日期       | 字段                               | 评审来源                                                            | 状态   |
+| ---------- | ---------------------------------- | ------------------------------------------------------------------- | ------ |
+| 2026-07-23 | `env.stream?: StreamFetcher`       | `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md` | 已实施 |
+| 2026-07-23 | `env.openSocket?: WebSocketOpener` | 同上                                                                | 已实施 |
 
 ## 5. Host 实现责任
 
 每个 host 应用（`apps/playground` / SSR / test）必须为以下字段提供实现：
 
-| 字段                    | 必填？  | playground 默认实现                                   |
-| ----------------------- | ------- | ----------------------------------------------------- |
-| `fetcher`               | ✅ 必填 | mock / 真实后端                                       |
-| `stream`                | 可选    | **本次将同步落地**（基于 `fetch` + `ReadableStream`） |
-| `openSocket`            | 可选    | **本次将同步落地**（基于浏览器原生 `WebSocket`）      |
-| `notify`                | ✅ 必填 | `@nop-chaos/ui` 的 `toast()`                          |
-| `confirm` / `alert`     | 可选    | `@nop-chaos/ui` 的 Dialog                             |
-| `navigate`              | 可选    | 基于 `history` 或路由库                               |
-| `loadPage` / `loadDict` | 可选    | 后端 API 或本地 mock                                  |
-| `hasRole`               | 可选    | 缺省 allow-all                                        |
-| `importLoader`          | 可选    | 静态注册表或动态 `import()`                           |
-| `monitor`               | 可选    | `nop-debugger` 提供                                   |
-| `functions` / `filters` | 可选    | 静态注册表                                            |
-| `locale`                | 可选    | i18n 库                                               |
+| 字段                    | 必填？  | playground 默认实现                                                                                |
+| ----------------------- | ------- | -------------------------------------------------------------------------------------------------- |
+| `fetcher`               | ✅ 必填 | mock / 真实后端                                                                                    |
+| `stream`                | 可选    | **已落地**（`apps/playground/src/env/stream-impl.ts`：`fetch` + `ReadableStream` + `TextDecoder`） |
+| `openSocket`            | 可选    | **已落地**（`apps/playground/src/env/socket-impl.ts`：代理浏览器原生 `WebSocket`）                 |
+| `notify`                | ✅ 必填 | `@nop-chaos/ui` 的 `toast()`                                                                       |
+| `confirm` / `alert`     | 可选    | `@nop-chaos/ui` 的 Dialog                                                                          |
+| `navigate`              | 可选    | 基于 `history` 或路由库                                                                            |
+| `loadPage` / `loadDict` | 可选    | 后端 API 或本地 mock                                                                               |
+| `hasRole`               | 可选    | 缺省 allow-all                                                                                     |
+| `importLoader`          | 可选    | 静态注册表或动态 `import()`                                                                        |
+| `monitor`               | 可选    | `nop-debugger` 提供                                                                                |
+| `functions` / `filters` | 可选    | 静态注册表                                                                                         |
+| `locale`                | 可选    | i18n 库                                                                                            |
 
 ## 6. 渲染器/RUNTIME 使用规则（强制）
 
@@ -304,7 +304,7 @@ locale?: string;
 
 ## 8. env 装饰器（decorator）
 
-`decorateRendererEnv(env, hooks)`（`packages/flux-core/src/utils/renderer-env.ts:26`）允许在不替换 env 的情况下包装 `fetcher` / `notify` / `navigate`：
+`decorateRendererEnv(env, hooks)`（`packages/flux-core/src/utils/renderer-env.ts:26`）允许在不替换 env 的情况下包装 `fetcher` / `notify` / `navigate` / `stream` / `openSocket`：
 
 ```ts
 const decorated = decorateRendererEnv(env, {
@@ -317,7 +317,7 @@ const decorated = decorateRendererEnv(env, {
 
 用途：debugger 拦截 / 审计日志 / 错误转换 / A/B 测试。
 
-> **P-1 实施 TODO**：当前 `RendererEnvDecoratorHooks` 仅支持 `fetcher / notify / navigate` 三个 hook。P-1 实施 `env.stream` / `env.openSocket` 时，应同步扩 `RendererEnvDecoratorHooks`，新增 `stream?` / `openSocket?` hook，让 debugger 能拦截流式调用与 WebSocket 连接。否则流式调用将处于监控盲区。
+> **已解决（2026-07-23）**：`RendererEnvDecoratorHooks` 已扩 `stream?` / `openSocket?` hook（随 P-1 实施 `env.stream` / `env.openSocket` 同步落地）。debugger 现可拦截流式调用与 WebSocket 连接，监控盲区已消除。
 
 ## 9. 待裁定项
 
