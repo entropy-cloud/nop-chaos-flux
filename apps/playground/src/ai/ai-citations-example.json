@@ -1,0 +1,44 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "col",
+      "className": "max-w-3xl mx-auto p-6 gap-4",
+      "items": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "className": "items-center justify-between",
+          "items": [
+            { "type": "text", "text": "AI Citations (P3, A-13)" },
+            {
+              "type": "text",
+              "text": "[N] markers → hoverable <sup> source cards",
+              "className": "text-xs text-muted-foreground"
+            }
+          ]
+        },
+        {
+          "type": "ai-citations",
+          "testid": "ai-citations-widget",
+          "message": "${citationMessage}",
+          "sources": "${citationSources}",
+          "mode": "inline",
+          "className": "border rounded-md p-4 bg-muted/30"
+        },
+        {
+          "type": "text",
+          "text": "Sources list (mode: list):",
+          "className": "text-xs text-muted-foreground mt-2"
+        },
+        {
+          "type": "ai-citations",
+          "testid": "ai-citations-list",
+          "sources": "${citationSources}",
+          "mode": "list"
+        }
+      ]
+    }
+  ]
+}

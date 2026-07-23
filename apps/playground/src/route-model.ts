@@ -565,6 +565,27 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'A-8 perf demo: 1000 seeded messages trigger windowed @tanstack/react-virtual rendering in ai-message-list; only the viewport window is mounted in the DOM.',
   },
+  {
+    id: 'ai-persistence',
+    title: 'AI Persistence (P3)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P3 flux-renderers-ai: useConversation wired with a localStorage ConversationStorageStrategy + autoSaveMessages — conversations + messages survive a page refresh.',
+  },
+  {
+    id: 'ai-citations',
+    title: 'AI Citations (P3, A-13)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P3 flux-renderers-ai: ai-citations widget parses [N] / [N,M] markers in an assistant message and renders hoverable <sup> source cards (inline + list modes).',
+  },
+  {
+    id: 'ai-hitl',
+    title: 'AI HITL Approval (P3, A-14)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P3 flux-renderers-ai: ai-tool-call human-in-the-loop approval — approve/reject buttons, focus trap (Tab/Esc), and a decided-state badge. Engine holds state; host owns the workflow.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [
