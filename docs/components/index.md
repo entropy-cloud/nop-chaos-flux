@@ -334,9 +334,9 @@ UI primitive 对齐补充规则：
 
 - `pull-refresh`、`infinite-scroll`、`swipe-cell`、`countdown`、`notice-bar`
 
-**AI 对话（`flux-renderers-ai`，P0 已落地）**
+**AI 对话（`flux-renderers-ai`，P0 + P1 已落地）**
 
-- `ai-chat`、`ai-message-list`、`ai-bubble`、`ai-sender`（P0 ✅ 已实现，含框架无关消息引擎 + React adapter + mock 流式闭环）、`ai-conversations`、`ai-welcome`、`ai-prompts`、`ai-feedback`、`ai-attachments`、`ai-tool-call`、`ai-citations`、`ai-voice-input`、`ai-token-usage`、`ai-suggestions`（P1+ 待实现）（详见 `docs/components/flux-renderers-ai/design.md`，引擎设计见 `engine.md`，开发路线见 `docs/components/roadmap-ai.md`）
+- `ai-chat`、`ai-message-list`、`ai-bubble`、`ai-sender`（P0 ✅）、`ai-conversations`、`ai-welcome`、`ai-prompts`、`ai-feedback`（P1 ✅ 已实现，含 ActionScope namespace `ai`（7 actions + `$ai` host scope projection）、流式 Markdown CJK/code-fence 缓冲、代码块复制、时间戳、错误态、`data-${string}` content part、`useConversation` host helper（双层模型）、a11y `role="log"` + `aria-live="polite"` + 焦点回输）、`ai-attachments`、`ai-tool-call`、`ai-citations`、`ai-voice-input`、`ai-token-usage`、`ai-suggestions`（P2+ 待实现）（详见 `docs/components/flux-renderers-ai/design.md`，引擎设计见 `engine.md`，开发路线见 `docs/components/roadmap-ai.md`）
 
 ### 当前仓库已注册的领域 renderer
 

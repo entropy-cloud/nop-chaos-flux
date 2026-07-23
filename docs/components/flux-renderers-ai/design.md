@@ -69,10 +69,10 @@
 | P0         | `ai-message-list`  | Layout | 消息列表（分组、自动滚动、注册制渲染）                            | ✅   |
 | P0         | `ai-bubble`        | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown）              | ✅   |
 | P0         | `ai-sender`        | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                     | ✅   |
-| P1         | `ai-conversations` | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                           | ⬜   |
-| P1         | `ai-welcome`       | Widget | 空状态欢迎页 + icon/title/description/footer                      | ⬜   |
-| P1         | `ai-prompts`       | Widget | 推荐提示词卡片列表（垂直/水平/折行）                              | ⬜   |
-| P1         | `ai-feedback`      | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）               | ⬜   |
+| P1         | `ai-conversations` | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                           | ✅   |
+| P1         | `ai-welcome`       | Widget | 空状态欢迎页 + icon/title/description/footer                      | ✅   |
+| P1         | `ai-prompts`       | Widget | 推荐提示词卡片列表（垂直/水平/折行）                              | ✅   |
+| P1         | `ai-feedback`      | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）               | ✅   |
 | P2         | `ai-attachments`   | Widget | 附件上传/预览（图片模式 / 卡片模式）                              | ⬜   |
 | P2         | `ai-tool-call`     | Widget | 工具调用卡片（状态、展开、JSON 高亮、按工具名注册专用渲染器）     | ⬜   |
 | P3         | `ai-citations`     | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                  | ⬜   |
@@ -361,13 +361,9 @@ P2 增强：默认注册 `*` 通用 fallback；包内**不**提供任何专用�
 
 **Layer B（P1 增强）**：
 
-- `ai-chat` 渲染器在 `onMount` 通过 `runtime.actionScope?.registerNamespace('ai', aiActionProvider)` 注册命名空间（如果 host 提供 actionScope）。
-- `aiActionProvider` 实现：
-  - `send(args: { text: string })` → `engine.sendMessage(text)`
-  - `abort()` → `engine.abort()`
-  - `createConversation(args?)` → 委托给 conversation runtime
-  - `switchConversation(args: { id })` → 同上
-- `onUnmount` 反注册。生命周期由 NodeRenderer 集中管理（不自己写 mount hook，按 AGENTS.md "Lifecycle actions 不自己适配"）。
+- `ai-chat` 渲染器经 `useCurrentActionScope()`（`@nop-chaos/flux-react`）取当前 ActionScope，再用 `useNamespaceRegistration(actionScope, 'ai', aiActionProvider)` 注册命名空间（live API；capability check：`actionScope` 为 `undefined` 时跳过，host 无 actionScope 不崩溃）。`useNamespaceRegistration` 内部用 `useLayoutEffect` 管理注册/反注册生命周期。
+- `aiActionProvider` 实现 7 个 action：`send`/`abort`/`clear`/`createConversation`/`switchConversation`/`deleteConversation`/`renameConversation`（§14.2）。引擎级 action 委托 engine；会话级 action 委托 host 提供的 `AiConversationController`（经 `ai-chat.conversationController` prop 绑定）。
+- engine 状态投影：`ai-chat` 经 `useHostScope({ isProcessing, messages, activeConversationId }, path, 'ai')` 把响应式状态发布到 host scope，descendants 经 `useScopeSelector` 读取（`$ai.xxx` schema 表达式形式还需 host 经 `xui:imports` 别名配置）。
 - 保留命名空间 `$ai`（用于表达式，如 `${$ai.isProcessing}`）—— **避开保留别名** `$form/$page/$crud/$designer/$slot/$surface/$resource`（参见 `docs/architecture/action-scope-and-imports.md`）。
 
 **Layer C（P2 跨组件控制）**：

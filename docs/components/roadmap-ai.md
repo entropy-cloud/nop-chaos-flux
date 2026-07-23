@@ -20,7 +20,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 - **A0. env.stream 扩充（前置，不在本包内）**: `done`
 - **A1. P0 骨架 + 最小闭环**（4 renderer）: `done`
-- **A2. P1 真实 AI + 会话 + 流式 Markdown + a11y**（4 renderer + 5 改进项）: `todo`
+- **A2. P1 真实 AI + 会话 + 流式 Markdown + a11y**（4 renderer + 5 改进项）: `done`
 - **A3. P2 工具调用 + 附件 + 渲染器深化**（2 renderer + 7 改进项）: `todo`
 - **A4. P3 持久化 + 引用 + HITL**（1 renderer + 1 增强 + 2 改进项）: `todo`
 - **A5. P4 高级集成**（3 renderer + 1 增强 + 3 改进项）: `todo`
@@ -93,9 +93,9 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 > host 提供 OpenAI/DeepSeek connector；4 个辅助渲染器；ActionScope namespace `ai` 注册；流式 Markdown CJK 缓冲；基础 a11y。
 
-| ID  | Status | 内容                                                                                                                                                                                                                                                                                                                                                                                                                               | 设计文档                                                       | 依赖 |
-| --- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---- |
-| A2  | todo   | `ai-conversations`（会话列表侧边栏：新建/切换/重命名/删除）；`ai-welcome`（空状态欢迎页）；`ai-prompts`（推荐提示词卡片）；`ai-feedback`（消息底部操作条：copy/refresh/like/dislike）；ActionScope namespace `ai`（send/abort/createConversation）；**A-1** ChatMessageDataPart；**A-2** 流式 Markdown CJK + code fence 缓冲；**A-3** 代码块复制；**A-4** 消息时间戳；**A-5** 错误态组件；a11y `role="log"` + `aria-live="polite"` | `design.md §5.1`、`renderers.md`、`improvement-analysis.md §4` | A1   |
+| ID  | Status | 内容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | 设计文档                                                       | 依赖 |
+| --- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---- |
+| A2  | done   | `ai-conversations`（会话列表侧边栏：新建/切换/重命名/删除）；`ai-welcome`（空状态欢迎页）；`ai-prompts`（推荐提示词卡片）；`ai-feedback`（消息底部操作条：copy/refresh/like/dislike）；ActionScope namespace `ai`（send/abort/clear/createConversation/switchConversation/deleteConversation/renameConversation + `$ai` host scope projection）；**A-1** ChatMessageDataPart；**A-2** 流式 Markdown CJK + code fence 缓冲；**A-3** 代码块复制；**A-4** 消息时间戳；**A-5** 错误态组件；`useConversation` host helper（双层模型）；a11y `role="log"` + `aria-live="polite"` + 焦点回输 | `design.md §5.1`、`renderers.md`、`improvement-analysis.md §4` | A1   |
 
 **退出条件**：接 DeepSeek/OpenAI 真实 API 能对话；会话切换正常；外部按钮 `ai:send` 工作；流式 Markdown 不闪烁。
 
@@ -146,15 +146,15 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 > 静态映射：渲染器 → 工作项 → Phase。逐渲染器实现状态以本表为准。
 
 | type               | Phase | Work item | 类别   | 职责                                                          |
-| ------------------ | ----- | --------- | ------ | ------------------------------------------------------------- |
+| ------------------ | ----- | --------- | ------ | ------------------------------------------------------------- | --- |
 | `ai-chat`          | P0    | A1        | Layout | 完整对话面板（messages + sender + auto-scroll + 状态管理）    |
 | `ai-message-list`  | P0    | A1        | Layout | 消息列表（分组、自动滚动、注册制渲染）                        |
 | `ai-bubble`        | P0    | A1        | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown）          |
 | `ai-sender`        | P0    | A1        | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                 |
-| `ai-conversations` | P1    | A2        | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                       |
-| `ai-welcome`       | P1    | A2        | Widget | 空状态欢迎页 + icon/title/description/footer                  |
-| `ai-prompts`       | P1    | A2        | Widget | 推荐提示词卡片列表（垂直/水平/折行）                          |
-| `ai-feedback`      | P1    | A2        | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）           |
+| `ai-conversations` | P1    | A2        | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                       | ✅  |
+| `ai-welcome`       | P1    | A2        | Widget | 空状态欢迎页 + icon/title/description/footer                  | ✅  |
+| `ai-prompts`       | P1    | A2        | Widget | 推荐提示词卡片列表（垂直/水平/折行）                          | ✅  |
+| `ai-feedback`      | P1    | A2        | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）           | ✅  |
 | `ai-attachments`   | P2    | A3        | Widget | 附件上传/预览（图片模式 / 卡片模式）                          |
 | `ai-tool-call`     | P2    | A3        | Widget | 工具调用卡片（状态、展开、JSON 高亮、按工具名注册专用渲染器） |
 | `ai-citations`     | P3    | A4        | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）              |
