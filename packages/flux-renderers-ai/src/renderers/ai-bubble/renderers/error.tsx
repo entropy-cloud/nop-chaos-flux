@@ -1,13 +1,17 @@
 import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import type { ChatMessage } from '../../../engine/types.js';
 import type { BubbleContentRendererProps } from '../types.js';
 
 /**
  * A-5 error-state renderer. Shown when the engine `requestState === 'error'`
- * (design.md §5.1). Surfaces a retry entry; the actual retry action is the
- * host's job (re-send the last user message via `ai:send` or
- * `engine.sendMessage`). This renderer is informational + actionable — it
- * does not auto-retry.
+ * for the message associated with the failed turn (design.md §5.1). The
+ * `ai-bubble` index sets `data-error` when `isError` is true; this renderer
+ * additionally matches via `errorMatcher` so the error affordance appears
+ * inside the content stream. Surfaces a retry entry; the actual retry action
+ * is the host's job (re-send the last user message via `ai:send` or
+ * `engine.sendMessage`). This renderer is informational + actionable — it does
+ * not auto-retry.
  */
 export function ErrorContentRenderer({ message }: BubbleContentRendererProps) {
   const lastUserText = extractLastUserText(message);
@@ -39,7 +43,16 @@ export function ErrorContentRenderer({ message }: BubbleContentRendererProps) {
   );
 }
 
-function extractLastUserText(message: import('../../../engine/types.js').ChatMessage): string {
+function extractLastUserText(message: ChatMessage): string {
   void message;
   return '';
+}
+
+/**
+ * Match an assistant message flagged as the error carrier. The bubble view
+ * flips `message.metadata.isError` to `true` (see `AiBubbleView`) when the
+ * engine `requestState` is `error` for the in-flight assistant placeholder.
+ */
+export function errorMatcher(message: ChatMessage): boolean {
+  return message.metadata?.isError === true;
 }

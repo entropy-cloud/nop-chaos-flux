@@ -21,6 +21,22 @@ export interface AiChatSchema extends BaseSchema {
   conversationController?: SchemaValue;
   /** Optional scope-owned active conversation id (host manages via useConversation). */
   activeConversationId?: SchemaValue;
+  /**
+   * P2 agentic tool loop: expression resolving to `AiToolSchema[]` (host
+   * injects via xui:imports). When set with `toolExecutor`, the engine runs a
+   * multi-round tool_calls loop (design.md §engine §8.3).
+   */
+  tools?: SchemaValue;
+  /** Expression resolving to a `ToolExecutor` (host injects via xui:imports). */
+  toolExecutor?: SchemaValue;
+  /** Max consecutive tool rounds before the loop terminates (default 8). */
+  maxToolRounds?: number;
+  /**
+   * Layer C: explicit component identity for `component:<method>` actions.
+   * Defaults to the node id / testid when omitted (design.md §11.1/§14.3).
+   */
+  componentId?: string;
+  componentName?: string;
 
   header?: SchemaInput;
   footer?: SchemaInput;
@@ -126,4 +142,52 @@ export interface AiFeedbackSchema extends BaseSchema {
   actions?: SchemaValue;
 
   onAction?: ActionSchema;
+}
+
+// ---- P2 renderers (A3) ----
+
+export interface AiToolCallSchema extends BaseSchema {
+  type: 'ai-tool-call';
+  /** Expression resolving to a `ChatToolCall`. */
+  toolCall?: SchemaValue;
+  /** Expression resolving to `ChatToolCallUIState` (status / open / result). */
+  state?: SchemaValue;
+  /** Whether the args panel is open by default. */
+  defaultOpen?: boolean;
+}
+
+export interface AiAttachmentItem extends SchemaObject {
+  id: string;
+  /** Object URL or remote URL. */
+  url: string;
+  /** File name. */
+  name?: string;
+  /** MIME type. */
+  contentType?: string;
+  /** Size in bytes. */
+  size?: number;
+  /** Upload status (host-driven). */
+  status?: 'uploading' | 'success' | 'error';
+}
+
+export interface AiAttachmentsSchema extends BaseSchema {
+  type: 'ai-attachments';
+  /** Controlled attachment list (expression-resolved). */
+  value?: SchemaValue;
+  /** `image` (thumbnails) or `card` (file rows). Default auto-detects by MIME. */
+  mode?: 'image' | 'card' | 'auto';
+  /** Accepted file types (HTML `accept` attribute). */
+  accept?: string;
+  /** Allow multiple files (default true). */
+  multiple?: boolean;
+  /** Max bytes per file. */
+  maxSize?: number;
+  /** Max number of files. */
+  maxFiles?: number;
+  /** Enable drag-and-drop + paste (default true). */
+  enableDrop?: boolean;
+
+  onChange?: ActionSchema;
+  onError?: ActionSchema;
+  onUpload?: ActionSchema;
 }

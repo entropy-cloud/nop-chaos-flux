@@ -7,9 +7,12 @@ import type {
   AiConnector,
   AiConnectorChunk,
   AiConnectorRequest,
+  AiToolSchema,
   ChatMessage,
   ChatMessageContentPart,
   ChatMessageMetadata,
+  ChatToolCall,
+  ChatToolCallUIState,
   InternalMessageState,
   MessageEngine,
   MessageEngineContext,
@@ -17,6 +20,8 @@ import type {
   MessageEngineState,
   MessageStateAdapter,
   MessageStateSubscribe,
+  ToolExecutionResult,
+  ToolExecutor,
 } from './types.js';
 
 export interface CreateMessageEngineOptions {
@@ -28,6 +33,18 @@ export interface CreateMessageEngineOptions {
   extraRequestParams?: Record<string, unknown>;
   /** Optional system prompt prepended to every request (not added to history). */
   systemPrompt?: string;
+  /** Host-provided tool schemas (forwarded as `request.tools`). */
+  tools?: AiToolSchema[];
+  /**
+   * Host-provided tool executor. Invoked once per `tool_call` after a
+   * `finish_reason:'tool_calls'` turn, then a follow-up request is sent so the
+   * model can react to the result (engine.md §8.3). Omitting this makes
+   * `finish_reason:'tool_calls'` transition the engine to `error`
+   * (`tool-no-executor`).
+   */
+  toolExecutor?: ToolExecutor | null;
+  /** Max consecutive tool-calling rounds before the loop terminates (default 8). */
+  maxToolRounds?: number;
 }
 
 /**
@@ -45,6 +62,9 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   const plugins: MessageEnginePlugin[] = [...(options.plugins ?? [])];
   const extraRequestParams = options.extraRequestParams ?? {};
   const systemPrompt = options.systemPrompt;
+  const hostTools: AiToolSchema[] | undefined = options.tools;
+  const toolExecutor: ToolExecutor | null = options.toolExecutor ?? null;
+  const maxToolRounds = options.maxToolRounds ?? 8;
 
   adapter.initialize({
     messages: options.initialMessages ? options.initialMessages.map((m) => ({ ...m })) : [],
@@ -66,6 +86,8 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     clear,
     setConnector,
     registerPlugin,
+    getMessages,
+    setMessages,
   };
 
   function getState(): MessageEngineState {
@@ -89,6 +111,24 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       const idx = plugins.indexOf(plugin);
       if (idx >= 0) plugins.splice(idx, 1);
     };
+  }
+
+  function getMessages(): ChatMessage[] {
+    return adapter.getState().messages;
+  }
+
+  function setMessages(messages: ChatMessage[]): void {
+    // Reject replacement while a turn is in-flight: callers should `abort()`
+    // first (mirrors `clear`'s guard). Avoids racing the streaming accumulator.
+    if ((adapter as unknown as { state: InternalMessageState }).state.isProcessing) {
+      return;
+    }
+    adapter.mutate('full', (draft) => {
+      draft.messages = messages.map((m) => ({ ...m }));
+      draft.requestState = 'idle';
+      draft.isProcessing = false;
+      draft.processingState = undefined;
+    });
   }
 
   function isEmptyContent(content: string | ChatMessageContentPart[]): boolean {
@@ -131,7 +171,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
 
     const abortController = createAbortController();
 
-    // 1. Push incoming messages + assistant placeholder; enter processing.
+    // 1. Push incoming messages; enter processing.
     adapter.mutate('requestState', (draft) => {
       draft.messages.push(...incomingMessages);
       draft.requestState = 'processing';
@@ -140,6 +180,117 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       draft.abortController = abortController;
     });
 
+    // Fire onTurnStart once for the whole turn (NOT per round) so the plugin
+    // hook order stays: turnStart → (beforeRequest → chunks → afterRequest)* → turnEnd.
+    const turnCtx = buildContext(abortController);
+    for (const plugin of plugins) {
+      await plugin.onTurnStart?.(turnCtx);
+    }
+
+    try {
+      let rounds = 0;
+      // Prime the loop: the first request uses the full conversation history.
+      let needsFollowUp = true;
+      while (needsFollowUp) {
+        if (abortController.signal.aborted) break;
+        if (rounds >= maxToolRounds) {
+          // Failure Path `tool-loop-max`: terminate the loop, record cause.
+          const last = adapter.getState().messages.at(-1);
+          if (last) {
+            last.metadata = { ...last.metadata, toolLoopMaxReached: true };
+          }
+          adapter.mutate('messages', (draft) => {
+            const tail = draft.messages[draft.messages.length - 1];
+            if (tail) draft.messages[draft.messages.length - 1] = { ...tail };
+          });
+          break;
+        }
+        rounds += 1;
+        // runOnce performs one streaming request and appends/commits the
+        // assistant message for that round. Returns the finish reason of the
+        // produced assistant message so the loop can decide on tool follow-up.
+        const outcome = await runOnce(connector, abortController);
+        if (outcome.kind === 'error' || outcome.kind === 'aborted') {
+          // runOnce already set requestState accordingly.
+          return;
+        }
+        if (
+          outcome.finishReason === 'tool_calls' &&
+          outcome.assistantMessage.tool_calls &&
+          outcome.assistantMessage.tool_calls.length > 0
+        ) {
+          // If no executor is provided, transition to error and stop
+          // (Failure Path `tool-no-executor`).
+          if (!toolExecutor) {
+            adapter.mutate('requestState', (draft) => {
+              draft.requestState = 'error';
+              draft.isProcessing = false;
+              draft.processingState = undefined;
+            });
+            for (const plugin of plugins) {
+              plugin.onError?.(buildContext(abortController), new Error('tool-no-executor'));
+            }
+            return;
+          }
+          // Execute each tool_call, append role:'tool' result messages, then
+          // loop again to issue the follow-up request.
+          const shouldContinue = await executeToolCalls(
+            outcome.assistantMessage.tool_calls,
+            abortController,
+          );
+          if (!shouldContinue) {
+            // Abort signaled mid-execution.
+            return;
+          }
+          // Continue the loop → next runOnce will include the tool messages.
+          needsFollowUp = true;
+        } else {
+          needsFollowUp = false;
+        }
+      }
+
+      // Unless aborted, mark the turn completed.
+      adapter.mutate('requestState', (draft) => {
+        if (draft.requestState === 'aborted') return;
+        draft.requestState = 'completed';
+        draft.isProcessing = false;
+        draft.processingState = undefined;
+      });
+    } catch (error) {
+      const aborted = abortController.signal.aborted;
+      for (const plugin of plugins) {
+        plugin.onError?.(buildContext(abortController), error);
+      }
+      adapter.mutate('requestState', (draft) => {
+        draft.requestState = aborted ? 'aborted' : 'error';
+        draft.isProcessing = false;
+        draft.processingState = undefined;
+      });
+    } finally {
+      adapter.mutate('full', (draft) => {
+        draft.abortController = null;
+      });
+      for (const plugin of plugins) {
+        await plugin.onTurnEnd?.(buildContext(abortController));
+      }
+    }
+  }
+
+  /** Outcome of a single streaming round. */
+  type RunOnceOutcome =
+    | { kind: 'ok'; finishReason?: string; assistantMessage: ChatMessage }
+    | { kind: 'error' }
+    | { kind: 'aborted' };
+
+  /**
+   * Run one streaming request round: create an assistant placeholder, stream
+   * chunks into it, fire plugin hooks, and commit. The caller decides whether
+   * to follow up (tool_calls) based on the returned finish reason.
+   */
+  async function runOnce(
+    connector: AiConnector,
+    abortController: AbortController,
+  ): Promise<RunOnceOutcome> {
     let assistant: ChatMessage = adapter.createMessage({
       id: generateMessageId('ai'),
       role: 'assistant',
@@ -152,26 +303,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       draft.processingState = 'completing';
     });
 
-    const history = adapter.getState().messages.slice(0, -1);
-    const requestMessages: ChatMessage[] = systemPrompt
-      ? [{ id: 'system-prompt', role: 'system', content: systemPrompt }, ...history]
-      : history;
-
-    const request: AiConnectorRequest = {
-      messages: requestMessages,
-      signal: abortController.signal,
-      ...extraRequestParams,
-    };
-    const ctx: MessageEngineContext = {
-      engine,
-      state: adapter.getState(),
-      request,
-      signal: abortController.signal,
-    };
-
-    for (const plugin of plugins) {
-      await plugin.onTurnStart?.(ctx);
-    }
+    const ctx = buildContext(abortController);
     for (const plugin of plugins) {
       await plugin.onBeforeRequest?.(ctx);
     }
@@ -180,8 +312,6 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     function commitAssistant(): void {
       adapter.mutate('messages', (draft) => {
         const idx = draft.messages.lastIndexOf(assistant);
-        // Shallow-copy so subscribers get a new array + new message reference
-        // (React useSyncExternalStore identity check).
         draft.messages = draft.messages.slice();
         if (idx >= 0) {
           draft.messages[idx] = { ...assistant };
@@ -191,7 +321,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     }
 
     try {
-      const generator = await connector.stream(request);
+      const generator = await connector.stream(ctx.request);
       let firstChunkReceived = false;
       let lastFinishReason: string | undefined;
       let lastMetadata: ChatMessageMetadata | undefined;
@@ -225,13 +355,15 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       }
       commitAssistant();
 
-      // Unless aborted mid-stream, mark the turn completed.
-      adapter.mutate('requestState', (draft) => {
-        if (draft.requestState === 'aborted') return;
-        draft.requestState = 'completed';
-        draft.isProcessing = false;
-        draft.processingState = undefined;
-      });
+      if (abortController.signal.aborted) {
+        adapter.mutate('requestState', (draft) => {
+          draft.requestState = 'aborted';
+          draft.isProcessing = false;
+          draft.processingState = undefined;
+        });
+        return { kind: 'aborted' };
+      }
+      return { kind: 'ok', finishReason: lastFinishReason, assistantMessage: assistant };
     } catch (error) {
       assistant.loading = false;
       commitAssistant();
@@ -244,14 +376,104 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         draft.isProcessing = false;
         draft.processingState = undefined;
       });
-    } finally {
-      adapter.mutate('full', (draft) => {
-        draft.abortController = null;
-      });
-      for (const plugin of plugins) {
-        await plugin.onTurnEnd?.(ctx);
-      }
+      return aborted ? { kind: 'aborted' } : { kind: 'error' };
     }
+  }
+
+  /**
+   * Execute each `tool_call` via the host executor, append `role:'tool'`
+   * messages, and update `state.toolCall[id].status`. Returns `false` if the
+   * abort signal fired mid-execution (caller should stop the loop).
+   * (engine.md §8.3, Failure Path `tool-exec-failed`.)
+   */
+  async function executeToolCalls(
+    calls: ChatToolCall[],
+    abortController: AbortController,
+  ): Promise<boolean> {
+    adapter.mutate('requestState', (draft) => {
+      draft.processingState = 'calling-tools';
+    });
+    // Pull the assistant message that owns these tool_calls (last message).
+    const owner = adapter.getState().messages.at(-1);
+    for (const call of calls) {
+      if (abortController.signal.aborted) return false;
+      const key = call.id ?? `idx-${call.index}`;
+      let resultText = '';
+      let status: 'success' | 'failed' = 'success';
+      try {
+        const raw = await toolExecutor!({ toolCall: call, signal: abortController.signal });
+        const normalized = normalizeToolResult(raw);
+        if (normalized.ok) {
+          resultText = normalized.result ?? '';
+          status = 'success';
+        } else {
+          resultText = normalized.error ?? '';
+          status = 'failed';
+        }
+      } catch (err) {
+        resultText = err instanceof Error ? err.message : String(err);
+        status = 'failed';
+      }
+      // Update per-call UI state on the owning assistant message.
+      if (owner) {
+        if (!owner.state) owner.state = {};
+        const toolCallState = (owner.state.toolCall ?? {}) as Record<string, ChatToolCallUIState>;
+        toolCallState[key] = {
+          ...(toolCallState[key] ?? { status: 'running' }),
+          status,
+          result: resultText,
+        };
+        owner.state.toolCall = toolCallState;
+        // Commit a fresh reference so subscribers re-render.
+        adapter.mutate('messages', (draft) => {
+          const idx = draft.messages.lastIndexOf(owner);
+          if (idx >= 0) draft.messages[idx] = { ...owner };
+        });
+      }
+      // Append the role:'tool' result message so the next request carries it.
+      const toolMessage: ChatMessage = adapter.createMessage({
+        id: generateMessageId('tool'),
+        role: 'tool',
+        content: resultText,
+        tool_call_id: call.id,
+        name: call.function.name,
+        metadata: { createdAt: Date.now(), toolStatus: status },
+      });
+      adapter.mutate('messages', (draft) => {
+        draft.messages.push(toolMessage);
+      });
+    }
+    return true;
+  }
+
+  function buildContext(abortController: AbortController): MessageEngineContext {
+    const allMessages = adapter.getState().messages;
+    // Exclude the trailing in-progress assistant placeholder from the request
+    // payload (it carries empty content while being streamed). The original
+    // single-turn engine did `messages.slice(0, -1)`; this preserves that while
+    // also working for follow-up rounds where the last message is the freshly
+    // pushed placeholder of the current round.
+    const isPlaceholder = allMessages.length > 0 && isStreamingAssistantPlaceholder(allMessages[allMessages.length - 1]);
+    const history = isPlaceholder ? allMessages.slice(0, -1) : allMessages;
+    const requestMessages: ChatMessage[] = systemPrompt
+      ? [{ id: 'system-prompt', role: 'system', content: systemPrompt }, ...history]
+      : history;
+    const request: AiConnectorRequest = {
+      messages: requestMessages,
+      signal: abortController.signal,
+      ...(hostTools && hostTools.length > 0 ? { tools: hostTools } : {}),
+      ...extraRequestParams,
+    };
+    return {
+      engine,
+      state: adapter.getState(),
+      request,
+      signal: abortController.signal,
+    };
+  }
+
+  function isStreamingAssistantPlaceholder(message: ChatMessage): boolean {
+    return message.role === 'assistant' && message.content === '' && message.loading === true;
   }
 
   function applyChunk(message: ChatMessage, chunk: AiConnectorChunk): void {
@@ -302,4 +524,15 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
 /** Indirection so tests can inject a fake controller. */
 function createAbortController(): AbortController {
   return new AbortController();
+}
+
+/**
+ * Normalize a `ToolExecutor` return value into a `ToolExecutionResult`. The
+ * executor may return a plain string (success) or a structured result.
+ */
+function normalizeToolResult(raw: string | ToolExecutionResult): ToolExecutionResult {
+  if (typeof raw === 'string') {
+    return { ok: true, result: raw };
+  }
+  return raw;
 }

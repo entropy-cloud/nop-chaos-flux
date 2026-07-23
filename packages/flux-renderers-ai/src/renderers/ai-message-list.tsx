@@ -1,3 +1,4 @@
+import { useVirtualizer } from '@tanstack/react-virtual';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
@@ -13,10 +14,16 @@ export interface AiMessageListViewProps {
   emptyNode?: React.ReactNode;
 }
 
+/** A-8: message count above which windowed virtual rendering kicks in. */
+const VIRTUAL_SCROLL_THRESHOLD = 200;
+
 function messageContentSignature(message: ChatMessage): string {
   const content = message.content;
   if (typeof content === 'string') return content;
-  if (Array.isArray(content)) return content.map((p) => (p && typeof p === 'object' && 'text' in p ? String((p as { text: unknown }).text) : '')).join('');
+  if (Array.isArray(content))
+    return content
+      .map((p) => (p && typeof p === 'object' && 'text' in p ? String((p as { text: unknown }).text) : ''))
+      .join('');
   return '';
 }
 
@@ -25,12 +32,21 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
   const ctx = useAiChatContext();
   const messages = ctx?.messages ?? [];
   const autoScrollEnabled = props.autoScroll !== false;
+  const inError = ctx?.requestState === 'error';
 
-  // Trigger value changes whenever the message count or the streaming tail
-  // grows, so the auto-scroll hook can pin to bottom during streaming.
   const lastMessage = messages[messages.length - 1];
   const trigger = `${messages.length}:${lastMessage ? messageContentSignature(lastMessage).length : 0}`;
   const { containerRef, onScroll } = useAutoScroll(autoScrollEnabled ? trigger : null);
+
+  const enableVirtual = messages.length > VIRTUAL_SCROLL_THRESHOLD;
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual returns non-memoizable functions; React Compiler auto-skips this component
+  const virtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => 120,
+    overscan: 6,
+    enabled: enableVirtual,
+  });
 
   if (messages.length === 0) {
     return (
@@ -50,16 +66,48 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
   return (
     <div
       ref={containerRef}
-      className={cn('nop-ai-message-list', props.className)}
+      className={cn('nop-ai-message-list min-h-0 flex-1 overflow-auto', props.className)}
       data-slot="ai-message-list"
+      data-virtual={enableVirtual ? '' : undefined}
       role="log"
       aria-live="polite"
       aria-busy={ctx?.isProcessing ? 'true' : undefined}
       onScroll={onScroll}
     >
-      {messages.map((message) => (
-        <AiBubbleView key={message.id} message={message} />
-      ))}
+      {enableVirtual ? (
+        <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
+          {virtualizer.getVirtualItems().map((vi) => {
+            const message = messages[vi.index];
+            return (
+              <div
+                key={message.id}
+                data-index={vi.index}
+                ref={virtualizer.measureElement}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${vi.start}px)`,
+                }}
+              >
+                <AiBubbleView
+                  message={message}
+                  isError={inError && vi.index === messages.length - 1 && message.role === 'assistant'}
+                />
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        messages.map((message, idx) => (
+          <AiBubbleView
+            key={message.id}
+            message={message}
+            isError={inError && idx === messages.length - 1 && message.role === 'assistant'}
+          />
+        ))
+      )}
     </div>
   );
 }

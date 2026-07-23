@@ -23,10 +23,13 @@ import { safeMarkdownSlice } from '../markdown-buffer.js';
  * - Sanitizes via the shared `sanitizeHtml` (DOMPurify) so XSS protection is
  *   consistent with the content package (design.md §5.2).
  */
-export function MarkdownContentRenderer({ content }: BubbleContentRendererProps) {
+export function MarkdownContentRenderer({ message, content }: BubbleContentRendererProps) {
   const raw = extractContentText(content);
   const source = safeMarkdownSlice(raw);
   if (source.length === 0) return null;
+
+  // A-11: append a blinking cursor while the assistant message is streaming.
+  const streaming = message?.loading === true;
 
   // Security gate: sanitize first, then let rehype-raw render the safe subset.
   const safe = sanitizeHtml(source);
@@ -42,6 +45,7 @@ export function MarkdownContentRenderer({ content }: BubbleContentRendererProps)
       >
         {safe}
       </ReactMarkdown>
+      {streaming ? <span data-slot="ai-bubble-cursor" className="ai-bubble-cursor" aria-hidden="true">▍</span> : null}
     </div>
   );
 }

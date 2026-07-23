@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import type { ChatMessage } from '../../engine/types.js';
@@ -9,6 +10,7 @@ import {
 } from './types.js';
 import { defaultBubbleContentRenderers } from './renderers/default-renderers.js';
 import { TimestampContentRenderer } from './renderers/timestamp.js';
+import { UserMessageActions } from './user-edit.js';
 
 export interface AiBubbleViewProps {
   message: ChatMessage;
@@ -17,6 +19,13 @@ export interface AiBubbleViewProps {
   showAvatar?: boolean;
   showTimestamp?: boolean;
   contentRenderers?: BubbleContentRendererMatch[];
+  /**
+   * A-5 error wiring: when true, the bubble marks this message as the error
+   * carrier (sets `data-error` + `message.metadata.isError` projection so the
+   * `ErrorContentRenderer` matcher fires). Defaults to deriving from
+   * `message.metadata.isError`.
+   */
+  isError?: boolean;
   className?: string;
 }
 
@@ -44,30 +53,58 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
   } = props;
   const renderers = contentRenderers ?? defaultBubbleContentRenderers;
   const effectivePlacement = resolvePlacement(message, placement);
-  const slices = resolveContentSlices(message);
   const isStreaming = message.loading === true;
-  // A-5 error state: presence-only, omits when not in error.
-  const isError = false;
+  // A-5 error state: bind to engine error state via the explicit `isError`
+  // prop (passed by `ai-message-list` when `requestState==='error'` for the
+  // in-flight assistant placeholder), or fall back to a metadata flag already
+  // on the message. Presence-only: `data-error` omits when not in error.
+  const isError = props.isError ?? message.metadata?.isError === true;
+  // Project isError onto a derived message copy (do NOT mutate props) so the
+  // `ErrorContentRenderer` matcher — which reads `message.metadata.isError` —
+  // fires within the content stream.
+  const renderMessage: ChatMessage =
+    isError && message.metadata?.isError !== true
+      ? { ...message, metadata: { ...message.metadata, isError: true } }
+      : message;
+  const slices = resolveContentSlices(renderMessage);
+
+  // §4.7 message editing: user messages get an inline edit affordance; while
+  // editing the normal content slices are hidden and the editor takes over.
+  const isUser = renderMessage.role === 'user';
+  const [isEditing, setIsEditing] = useState(false);
 
   return (
     <article
       className={cn('nop-ai-bubble', props.className)}
       data-slot="ai-bubble"
-      data-role={message.role}
+      data-role={renderMessage.role}
       data-placement={effectivePlacement}
       data-shape={shape}
       data-streaming={isStreaming ? '' : undefined}
       data-error={isError ? '' : undefined}
+      data-editing={isUser && isEditing ? '' : undefined}
     >
       {showAvatar ? <div data-slot="ai-bubble-avatar" aria-hidden="true" /> : null}
       <div data-slot="ai-bubble-content" className="flex flex-col gap-2">
-        {slices.map((slice) => {
-          const match = pickRenderer(renderers, message, slice.content, slice.index);
-          if (!match) return null;
-          const Renderer = match.renderer;
-          return <Renderer key={slice.index} message={message} content={slice.content} contentIndex={slice.index} />;
-        })}
-        {showTimestamp ? <TimestampContentRenderer message={message} content="" contentIndex={-1} /> : null}
+        {!(isUser && isEditing)
+          ? slices.map((slice) => {
+              const match = pickRenderer(renderers, renderMessage, slice.content, slice.index);
+              if (!match) return null;
+              const Renderer = match.renderer;
+              return (
+                <Renderer
+                  key={slice.index}
+                  message={renderMessage}
+                  content={slice.content}
+                  contentIndex={slice.index}
+                />
+              );
+            })
+          : null}
+        {!(isUser && isEditing) && showTimestamp ? (
+          <TimestampContentRenderer message={renderMessage} content="" contentIndex={-1} />
+        ) : null}
+        {isUser ? <UserMessageActions message={renderMessage} onEditingChange={setIsEditing} /> : null}
       </div>
     </article>
   );

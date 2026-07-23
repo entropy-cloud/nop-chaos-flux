@@ -22,7 +22,9 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-renderers-content": "workspace:*",
-    "@nop-chaos/ui": "workspace:*"
+    "@nop-chaos/ui": "workspace:*",
+    "@tanstack/react-virtual": "^3.13.24",
+    "jsonrepair": "^3.13.0"
   },
   "peerDependencies": {
     "dompurify": "^3.4.11",
@@ -37,6 +39,7 @@
     "@nop-chaos/flux-runtime": "workspace:*",
     "dompurify": "^3.4.11",
     "jsdom": "^29.1.1",
+    "jsonrepair": "^3.13.0",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-markdown": "^10.1.0",

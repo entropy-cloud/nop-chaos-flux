@@ -7,6 +7,8 @@ import { AiConversationsRenderer } from './renderers/ai-conversations.js';
 import { AiWelcomeRenderer } from './renderers/ai-welcome.js';
 import { AiPromptsRenderer } from './renderers/ai-prompts.js';
 import { AiFeedbackRenderer } from './renderers/ai-feedback.js';
+import { AiToolCallRenderer } from './renderers/ai-tool-call.js';
+import { AiAttachmentsRenderer } from './renderers/ai-attachments.js';
 import type {
   AiChatSchema,
   AiMessageListSchema,
@@ -16,6 +18,8 @@ import type {
   AiWelcomeSchema,
   AiPromptsSchema,
   AiFeedbackSchema,
+  AiToolCallSchema,
+  AiAttachmentsSchema,
 } from './schemas.js';
 
 /**
@@ -169,6 +173,39 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'onAction', kind: 'event' },
     ],
   },
+  {
+    type: 'ai-tool-call',
+    displayName: 'AI Tool Call',
+    category: 'ai',
+    sourcePackage: '@nop-chaos/flux-renderers-ai',
+    defaultSchema: { type: 'ai-tool-call' },
+    component: AiToolCallRenderer,
+    fields: [
+      { key: 'toolCall', kind: 'prop' },
+      { key: 'state', kind: 'prop' },
+      { key: 'defaultOpen', kind: 'prop', valueType: 'boolean' },
+    ],
+  },
+  {
+    type: 'ai-attachments',
+    displayName: 'AI Attachments',
+    category: 'ai',
+    sourcePackage: '@nop-chaos/flux-renderers-ai',
+    defaultSchema: { type: 'ai-attachments' },
+    component: AiAttachmentsRenderer,
+    fields: [
+      { key: 'value', kind: 'prop' },
+      { key: 'mode', kind: 'prop' },
+      { key: 'accept', kind: 'prop' },
+      { key: 'multiple', kind: 'prop', valueType: 'boolean' },
+      { key: 'maxSize', kind: 'prop' },
+      { key: 'maxFiles', kind: 'prop' },
+      { key: 'enableDrop', kind: 'prop', valueType: 'boolean' },
+      { key: 'onChange', kind: 'event' },
+      { key: 'onError', kind: 'event' },
+      { key: 'onUpload', kind: 'event' },
+    ],
+  },
 ];
 
 export type AiRendererSchema =
@@ -179,4 +216,6 @@ export type AiRendererSchema =
   | AiConversationsSchema
   | AiWelcomeSchema
   | AiPromptsSchema
-  | AiFeedbackSchema;
+  | AiFeedbackSchema
+  | AiToolCallSchema
+  | AiAttachmentsSchema;

@@ -19,6 +19,9 @@ export type {
   AiWelcomeSchema,
   AiPromptsSchema,
   AiFeedbackSchema,
+  AiToolCallSchema,
+  AiAttachmentsSchema,
+  AiAttachmentItem,
   AiPromptItem,
   AiConversationMenuItem,
 } from './schemas.js';
@@ -32,6 +35,8 @@ export { AiConversationsRenderer } from './renderers/ai-conversations.js';
 export { AiWelcomeRenderer } from './renderers/ai-welcome.js';
 export { AiPromptsRenderer } from './renderers/ai-prompts.js';
 export { AiFeedbackRenderer } from './renderers/ai-feedback.js';
+export { AiToolCallRenderer, AiToolCallView, highlightJson } from './renderers/ai-tool-call.js';
+export { AiAttachmentsRenderer, buildImageContentParts, type AiAttachment } from './renderers/ai-attachments.js';
 
 // ---- Group 3: Host utilities (host app composition; NOT for use inside renderers) ----
 export type {
@@ -51,11 +56,13 @@ export type {
   AiConnector,
   AiConnectorChunk,
   AiConnectorRequest,
-  AiConnectorStreamResult,
   AiToolSchema,
   AiToolFunctionSchema,
+  MaybePromise,
   RequestState,
   RequestProcessingState,
+  ToolExecutor,
+  ToolExecutionResult,
 } from './engine/types.js';
 
 export { createMessageEngine, type CreateMessageEngineOptions } from './engine/create-engine.js';
@@ -83,6 +90,11 @@ export {
   AI_NAMESPACE_ACTIONS,
   type CreateAiActionProviderInput,
 } from './adapters/ai-action-provider.js';
+export {
+  createAiComponentHandle,
+  AI_COMPONENT_METHODS,
+  type AiComponentMethod,
+} from './adapters/ai-component-handle.js';
 export type {
   AiConversationController,
   MaybePromise as AiMaybePromise,

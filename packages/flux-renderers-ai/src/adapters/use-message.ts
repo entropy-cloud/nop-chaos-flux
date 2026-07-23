@@ -3,12 +3,14 @@ import { createMessageEngine } from '../engine/create-engine.js';
 import { createReactMessageAdapter } from './react-adapter.js';
 import type {
   AiConnector,
+  AiToolSchema,
   ChatMessage,
   MessageEngine,
   MessageEnginePlugin,
   MessageEngineState,
   RequestProcessingState,
   RequestState,
+  ToolExecutor,
 } from '../engine/types.js';
 import type { ChatMessageContentPart } from '../engine/types.js';
 
@@ -19,6 +21,12 @@ export interface UseMessageOptions {
   /** Extra OpenAI-compatible params forwarded on every request. */
   extraRequestParams?: Record<string, unknown>;
   systemPrompt?: string;
+  /** Host-provided tool schemas forwarded as `request.tools`. */
+  tools?: AiToolSchema[];
+  /** Host-provided tool executor (enables multi-round tool_calls loops). */
+  toolExecutor?: ToolExecutor | null;
+  /** Max consecutive tool-calling rounds (default 8). */
+  maxToolRounds?: number;
 }
 
 export interface UseMessageReturn {
@@ -50,6 +58,9 @@ export function useMessage(options: UseMessageOptions): UseMessageReturn {
       plugins: options.plugins,
       extraRequestParams: options.extraRequestParams,
       systemPrompt: options.systemPrompt,
+      tools: options.tools,
+      toolExecutor: options.toolExecutor,
+      maxToolRounds: options.maxToolRounds,
       adapter: createReactMessageAdapter(),
     }),
   );

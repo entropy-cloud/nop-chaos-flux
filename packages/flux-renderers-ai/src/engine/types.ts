@@ -53,7 +53,7 @@ export interface ChatToolCallUIState {
 }
 
 export interface ChatMessageUIState {
-  thinking?: { open: boolean };
+  thinking?: { open: boolean; startedAt?: number; endedAt?: number };
   toolCall?: Record<string, ChatToolCallUIState>;
   [key: string]: unknown;
 }
@@ -91,13 +91,15 @@ export interface AiConversationInfo {
 // State machine
 // ============================================
 
+/** Utility: a value that may be returned synchronously or as a Promise. */
+export type MaybePromise<T> = T | Promise<T>;
+
 export type RequestState = 'idle' | 'processing' | 'completed' | 'aborted' | 'error';
 
 export type RequestProcessingState =
   | 'requesting'
   | 'completing'
-  | 'calling-tools'
-  | 'string';
+  | 'calling-tools';
 
 export interface MessageEngineState {
   messages: ChatMessage[];
@@ -121,6 +123,30 @@ export interface AiToolSchema {
   type: 'function';
   function: AiToolFunctionSchema;
 }
+
+/**
+ * Result of a tool execution. `ok:true` carries the serialized result string;
+ * `ok:false` carries an error description. Either form is written as the
+ * `role:'tool'` message content so the model can react to failures.
+ */
+export interface ToolExecutionResult {
+  ok: boolean;
+  /** Serialized tool output (string — written verbatim as the tool message content). */
+  result?: string;
+  /** Error description when `ok:false`. */
+  error?: string;
+}
+
+/**
+ * Host-provided tool executor. Invoked once per `tool_call` after a
+ * `finish_reason:'tool_calls'` turn. The engine wraps this in try/catch and
+ * records `state.toolCall[id].status` accordingly (Failure Path
+ * `tool-exec-failed`). Framework-agnostic — must not import `react`/DOM.
+ */
+export type ToolExecutor = (input: {
+  toolCall: ChatToolCall;
+  signal: AbortSignal;
+}) => MaybePromise<string | ToolExecutionResult>;
 
 export interface AiConnectorChunk {
   /** Incremental delta (OpenAI ChatCompletionChunk-equivalent). */
@@ -236,4 +262,12 @@ export interface MessageEngine {
   clear(): void;
   setConnector(connector: AiConnector): void;
   registerPlugin(plugin: MessageEnginePlugin): () => void;
+  /** Read-only snapshot of the current messages (design.md §14.3, ComponentHandle). */
+  getMessages(): ChatMessage[];
+  /**
+   * Replace the entire message list. Used by the Layer C ComponentHandle
+   * `setMessages` method (design.md §14.3 line 556). Must not be called while a
+   * turn is in-flight; callers should `abort()` first.
+   */
+  setMessages(messages: ChatMessage[]): void;
 }

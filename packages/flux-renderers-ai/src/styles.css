@@ -1,1 +1,21 @@
-/* flux-renderers-ai marker styles (P0 placeholder). */
+/* flux-renderers-ai marker styles. */
+
+/* A-11: streaming cursor — appended to assistant markdown while loading. */
+.ai-bubble-cursor {
+  display: inline-block;
+  margin-left: 1px;
+  line-height: 1;
+  animation: flux-ai-cursor-blink 1s steps(2, start) infinite;
+}
+
+@keyframes flux-ai-cursor-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-bubble-cursor {
+    animation: none;
+  }
+}

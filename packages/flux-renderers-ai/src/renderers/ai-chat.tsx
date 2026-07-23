@@ -4,14 +4,17 @@ import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   useCurrentActionScope,
+  useCurrentComponentRegistry,
   useHostScope,
   useNamespaceRegistration,
 } from '@nop-chaos/flux-react';
 import { AiChatProvider } from '../adapters/ai-chat-context.js';
 import { useMessage } from '../adapters/use-message.js';
 import { createAiActionProvider } from '../adapters/ai-action-provider.js';
+import { createAiComponentHandle } from '../adapters/ai-component-handle.js';
 import type { AiConversationController } from '../adapters/ai-conversation-controller.js';
-import type { AiConnector, ChatMessage, RequestState } from '../engine/types.js';
+import type { AiConnector, ChatMessage, RequestState, ToolExecutor } from '../engine/types.js';
+import type { AiToolSchema } from '../engine/types.js';
 import { AiMessageListView } from './ai-message-list.js';
 import { AiSenderView } from './ai-sender.js';
 import type { AiChatSchema } from '../schemas.js';
@@ -43,10 +46,21 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
     | AiConversationController
     | undefined) ?? null;
 
+  // P2 agentic tool loop: forward host-injected tools / executor / round cap
+  // (schema expressions resolve to host objects via xui:imports).
+  const tools = Array.isArray(resolved.tools) ? (resolved.tools as unknown as AiToolSchema[]) : undefined;
+  const toolExecutor = (typeof resolved.toolExecutor === 'function'
+    ? (resolved.toolExecutor as ToolExecutor)
+    : undefined);
+  const maxToolRounds = typeof resolved.maxToolRounds === 'number' ? resolved.maxToolRounds : undefined;
+
   const { messages, requestState, processingState, isProcessing, sendMessage, abortRequest, engine } = useMessage({
     connector: connector ?? null,
     systemPrompt,
     initialMessages,
+    tools,
+    toolExecutor,
+    maxToolRounds,
   });
 
   // ---- Layer B: ActionScope namespace `ai` registration ----
@@ -58,6 +72,28 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // `useNamespaceRegistration` performs the capability check internally
   // (`actionScope` undefined → no-op). Returns the unregister fn on cleanup.
   useNamespaceRegistration(actionScope, 'ai', actionProvider);
+
+  // ---- Layer C: ComponentHandle registration (design.md §11.1/§14.3) ----
+  // Register an imperative handle so schema actions like
+  // `{ action:'component:sendMessage', componentId, args:{ text } }` can drive
+  // this chat from sibling components. Dispatch is via the live
+  // `ComponentCapabilities.invoke(method, payload, ctx)` model (NOT flat
+  // methods). Capability check: when no `componentRegistry` is provided the
+  // registration is silently skipped (Failure Path `component-handle-no-registry`).
+  const componentRegistry = useCurrentComponentRegistry();
+  const componentHandle = useMemo(
+    () =>
+      createAiComponentHandle({
+        engine,
+        id: (resolved.componentId as string | undefined) || props.meta.testid || props.id,
+        name: (resolved.componentName as string | undefined) ?? 'ai-chat',
+      }),
+    [engine, props.meta.testid, props.id, resolved.componentId, resolved.componentName],
+  );
+  useEffect(() => {
+    if (!componentRegistry) return;
+    return componentRegistry.register(componentHandle, { cid: props.meta.cid });
+  }, [componentRegistry, props.meta.cid, componentHandle]);
 
   // ---- Host scope projection: `$ai`-equivalent reactive state for descendants ----
   // Projected under scopeLabel 'ai' so descendants read via `useScopeSelector`
