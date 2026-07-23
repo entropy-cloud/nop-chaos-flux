@@ -1,6 +1,6 @@
 # 3 BarcodeInput Lifecycle, Validation & Queue Remediation
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-23
 > Source: `docs/audits/2026-07-23-0714-open-audit-scheduling.md` (F-24, F-50, F-61, F-81, F-82), `docs/audits/2026-07-23-0714-multi-audit-scheduling.md` (06-1, 06-5, 07-001, 07-002, 14-3, 14-11)
 > Related: Plans 1 (Gantt) and 2 (Kanban/Calendar)
@@ -67,83 +67,83 @@ Must automate: Camera lifecycle (stable deps, error paths, multiple start/stop),
 
 ### Phase 1 - Camera Lifecycle Stabilization
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/barcode-input/hooks/use-barcode-camera.ts`, `packages/flux-renderers-scheduling/src/barcode-input/barcode-scanner-overlay.tsx`, `packages/flux-renderers-scheduling/src/barcode-input/hooks/use-barcode-torch.ts`
 
 - Item Types: `Fix`
 
-- [ ] F-50 / 07-002: Stabilize `start`/`stop` functions with `useCallback` (or extract to stable ref-based closures) so they don't change identity on every render
-- [ ] 06-1: Fix `start()` — catch and handle errors with proper camera state transitions instead of re-throwing
-- [ ] 06-5: Fix torch-off path — handle unhandled promise rejection; stabilize `isOn` closure
+- [x] F-50 / 07-002: Stabilize `start`/`stop` functions with `useCallback` (or extract to stable ref-based closures) so they don't change identity on every render
+- [x] 06-1: Fix `start()` — catch and handle errors with proper camera state transitions instead of re-throwing
+- [x] 06-5: Fix torch-off path — handle unhandled promise rejection; stabilize `isOn` closure
 
 Exit Criteria:
 
-- [ ] Camera effect deps array in `barcode-scanner-overlay.tsx` no longer causes re-init on every render
-- [ ] `start()` errors handled gracefully (camera state reset, no uncaught exceptions)
-- [ ] Torch toggle has no unhandled promise rejections
+- [x] Camera effect deps array in `barcode-scanner-overlay.tsx` no longer causes re-init on every render
+- [x] `start()` errors handled gracefully (camera state reset, no uncaught exceptions)
+- [x] Torch toggle has no unhandled promise rejections
 
 ### Phase 2 - Validation Props & readOnly Enforcement
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/barcode-input/barcode-input.tsx`
 
 - Item Types: `Fix`
 
-- [ ] F-61: Implement validation for `required`, `minLength`, `maxLength`, `pattern`, `validate` — check each on scan result and display validation error
-- [ ] F-24: Gate scanner overlay opening on `readOnly` — if `readOnly` is true, don't open overlay on focus, and skip form write on scan result
+- [x] F-61: Implement validation for `required`, `minLength`, `maxLength`, `pattern`, `validate` — check each on scan result and display validation error
+- [x] F-24: Gate scanner overlay opening on `readOnly` — if `readOnly` is true, don't open overlay on focus, and skip form write on scan result
 
 Exit Criteria:
 
-- [ ] All 5 validation props produce correct validation errors when violated
-- [ ] When `readOnly` is true, scanning overlay does not open and scan results don't write to form
+- [x] All 5 validation props produce correct validation errors when violated
+- [x] When `readOnly` is true, scanning overlay does not open and scan results don't write to form
 
 ### Phase 3 - Batch Queue & WASM Isolation
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/barcode-input/utils/barcode-queue.ts`, `packages/flux-renderers-scheduling/src/barcode-input/utils/prepare-wasm.ts`
 
 - Item Types: `Fix`
 
-- [ ] F-81: Fix `enqueueItem` — when a `submitted`-status barcode is scanned again, provide user feedback (new queue entry with `duplicate` status or error message)
-- [ ] F-82: Fix `resetWasmPromise()` — when called without URL, only reset current instance's cached URL (add instance-scoped tracking); or remove the no-argument overload
+- [x] F-81: Fix `enqueueItem` — when a `submitted`-status barcode is scanned again, provide user feedback (new queue entry with `duplicate` status or error message)
+- [x] F-82: Fix `resetWasmPromise()` — when called without URL, only reset current instance's cached URL (add instance-scoped tracking); or remove the no-argument overload
 
 Exit Criteria:
 
-- [ ] Scanning a previously-submitted barcode produces visible feedback (new duplicate entry or error display)
-- [ ] `resetWasmPromise()` called without argument does not clear WASM cache for other instances
+- [x] Scanning a previously-submitted barcode produces visible feedback (new duplicate entry or error display)
+- [x] `resetWasmPromise()` called without argument does not clear WASM cache for other instances
 
 ### Phase 4 - Polling Loop & Effect Dependencies
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/barcode-input/hooks/use-barcode-detect.ts`
 
 - Item Types: `Fix`
 
-- [ ] 07-001: Add `enabled` and `interval` to effect deps (or restructure with refs + useCallback to handle dynamic interval changes without polling restart)
+- [x] 07-001: Add `enabled` and `interval` to effect deps (or restructure with refs + useCallback to handle dynamic interval changes without polling restart)
 
 Exit Criteria:
 
-- [ ] Detection polling responds to `enabled`/`interval` prop changes (stops/starts/reschedules correctly)
+- [x] Detection polling responds to `enabled`/`interval` prop changes (stops/starts/reschedules correctly)
 
 ### Phase 5 - Test Coverage
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/barcode-input/hooks/use-barcode-camera.test.ts`, `packages/flux-renderers-scheduling/src/barcode-input/hooks/use-barcode-detect.test.ts`, `packages/flux-renderers-scheduling/src/barcode-input/utils/camera-utils.test.ts`, `packages/flux-renderers-scheduling/src/barcode-input/utils/barcode-queue.test.ts`, `packages/flux-renderers-scheduling/src/barcode-input/utils/prepare-wasm.test.ts`
 
 - Item Types: `Proof`
 
-- [ ] 14-11: Expand camera lifecycle test — add error paths, multiple start/stop cycles
-- [ ] 14-3: Improve coverage for `use-barcode-camera` (>60%), `use-barcode-detect` (>60%), `camera-utils` (>60%)
-- [ ] Add tests for validation props (F-61), readOnly gate (F-24), batch queue submitted-duplicate (F-81), WASM cache isolation (F-82)
-- [ ] Add tests for polling loop dynamic deps (07-001)
+- [x] 14-11: Expand camera lifecycle test — add error paths, multiple start/stop cycles
+- [x] 14-3: Improve coverage for `use-barcode-camera` (>60%), `use-barcode-detect` (>60%), `camera-utils` (>60%)
+- [x] Add tests for validation props (F-61), readOnly gate (F-24), batch queue submitted-duplicate (F-81), WASM cache isolation (F-82)
+- [x] Add tests for polling loop dynamic deps (07-001)
 
 Exit Criteria:
 
-- [ ] `use-barcode-camera` coverage ≥60%
-- [ ] `use-barcode-detect` coverage ≥60%
-- [ ] `camera-utils` coverage ≥60%
-- [ ] Camera lifecycle tests include error paths and multiple start/stop
-- [ ] All new fix behaviors (validation, readOnly, queue, WASM, polling) have corresponding focused tests
+- [x] `use-barcode-camera` coverage ≥60%
+- [x] `use-barcode-detect` coverage ≥60%
+- [x] `camera-utils` coverage ≥60%
+- [x] Camera lifecycle tests include error paths and multiple start/stop
+- [x] All new fix behaviors (validation, readOnly, queue, WASM, polling) have corresponding focused tests
 
 ## Draft Review Record
 
@@ -154,17 +154,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] All in-scope confirmed live defects fixed (F-24, F-50, F-61, F-81, F-82, 06-1, 06-5, 07-001, 07-002)
-- [ ] No live defects silently downgraded to deferred/follow-up
-- [ ] Camera lifecycle stable; validation props enforced; queue provides feedback; WASM cache isolated
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] Coverage thresholds met for barcode modules (≥60% each)
-- [ ] All Phase Exit Criteria `[x]`
-- [ ] `docs/logs/` updated
-- [ ] `docs/architecture/` synced if public contract changed
-- [ ] Independent closure-audit by fresh sub-agent session completed
+- [x] All in-scope confirmed live defects fixed (F-24, F-50, F-61, F-81, F-82, 06-1, 06-5, 07-001, 07-002)
+- [x] No live defects silently downgraded to deferred/follow-up
+- [x] Camera lifecycle stable; validation props enforced; queue provides feedback; WASM cache isolated
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] Coverage thresholds met for barcode modules (≥60% each)
+- [x] All Phase Exit Criteria `[x]`
+- [x] `docs/logs/` updated (below)
+- [x] `docs/architecture/` synced if public contract changed
+- [x] Independent closure-audit by fresh sub-agent session completed (evidence in Closure section below)
 
 ## Deferred But Adjudicated
 
@@ -174,3 +174,16 @@ Exit Criteria:
 
 - Cross-instance resource management (only WASM cache needed isolation; camera streams already properly scoped)
 - Full e2e barcode scanning test (requires real camera or mock media stream in Playwright)
+
+## Closure
+
+Status Note: All 5 phases completed. All in-scope defects fixed. All exit criteria met. Independent closure audit completed by fresh sub-agent session.
+
+Closure Audit Evidence:
+
+- Auditor / Agent: Independent closure auditor (fresh session, no prior execution context) — MISSION_DRIVER closure audit via `docs/plans/2026-07-23-0714-3-barcode-remediation.md`
+- Evidence: Verified against live repo — all 5 phases confirmed landed (see daily log `docs/logs/2026/07-23.md` lines 57-63). Camera lifecycle stabilized (useCallback), validation props enforced (validateScanResult), readOnly gates focus/click/scan-result (scanNow imperative handle intentionally ungated for programmatic API access), batch queue handles submitted-duplicate (new `duplicate` status entry), WASM cache isolated (resetWasmPromise without URL only clears DEFAULT_WASM_URL), polling loop dynamically reads enabled/interval via refs. Coverage: `use-barcode-camera` 75%, `use-barcode-detect` 61.44%, `camera-utils` 76.47% — all ≥60%.
+
+Follow-up:
+
+- No remaining plan-owned work
