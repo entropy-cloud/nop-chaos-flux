@@ -523,6 +523,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'Interactive demo of the playground default env.stream (fetch + ReadableStream + TextDecoder, SSE/NDJSON auto-split + auto-parse) and env.openSocket (native WebSocket proxy).',
   },
+  {
+    id: 'ai-chat',
+    title: 'AI Chat (mock streaming)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P0 flux-renderers-ai skeleton: ai-chat + ai-message-list + ai-bubble + ai-sender running a mock OpenAI-style streaming connector end-to-end (send → stream → bubble render).',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

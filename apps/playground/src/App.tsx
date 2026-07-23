@@ -55,6 +55,7 @@ import { GanttPerfScaleDemoPage } from './pages/gantt-perf-scale-demo';
 import { DiffPerfScaleDemoPage } from './pages/diff-perf-scale-demo';
 import { DataVerifyPage } from './pages/data-verify-page';
 import { EnvStreamDemoPage } from './pages/env-stream-demo';
+import { AiChatDemoPage } from './pages/ai-chat-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -265,6 +266,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <DataVerifyPage onBack={goHome} />;
         case 'env-stream':
           return <EnvStreamDemoPage onBack={goHome} />;
+        case 'ai-chat':
+          return <AiChatDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

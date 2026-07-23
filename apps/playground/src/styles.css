@@ -5,6 +5,7 @@
 @import '@nop-chaos/flux-renderers-mobile/styles.css';
 @import '@nop-chaos/flux-renderers-content/styles.css';
 @import '@nop-chaos/flux-renderers-scheduling/styles.css';
+@import '@nop-chaos/flux-renderers-ai/styles.css';
 @import './styles-theme-utilities.css';
 @source "../../../packages";
 
