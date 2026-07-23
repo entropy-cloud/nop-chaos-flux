@@ -22,10 +22,16 @@ export type {
   AiToolCallSchema,
   AiAttachmentsSchema,
   AiCitationsSchema,
+  AiVoiceInputSchema,
+  AiTokenUsageSchema,
+  AiSuggestionsSchema,
   AiCitationSource,
   AiAttachmentItem,
   AiPromptItem,
   AiConversationMenuItem,
+  AiBranch,
+  AiTokenUsage,
+  AiSuggestionItem,
 } from './schemas.js';
 
 // ---- Group 2: Renderer components (registry registration only) ----
@@ -46,6 +52,13 @@ export {
   extractMessageText,
   resolveSources,
 } from './renderers/ai-citations.js';
+export { AiVoiceInputRenderer } from './renderers/ai-voice-input.js';
+export {
+  AiTokenUsageRenderer,
+  AiTokenUsageView,
+  resolveUsage,
+} from './renderers/ai-token-usage.js';
+export { AiSuggestionsRenderer, AiSuggestionsView } from './renderers/ai-suggestions.js';
 
 // ---- Group 3: Host utilities (host app composition; NOT for use inside renderers) ----
 export type {

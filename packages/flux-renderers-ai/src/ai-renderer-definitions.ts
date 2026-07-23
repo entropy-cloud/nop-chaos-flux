@@ -10,6 +10,9 @@ import { AiFeedbackRenderer } from './renderers/ai-feedback.js';
 import { AiToolCallRenderer } from './renderers/ai-tool-call.js';
 import { AiAttachmentsRenderer } from './renderers/ai-attachments.js';
 import { AiCitationsRenderer } from './renderers/ai-citations.js';
+import { AiVoiceInputRenderer } from './renderers/ai-voice-input.js';
+import { AiTokenUsageRenderer } from './renderers/ai-token-usage.js';
+import { AiSuggestionsRenderer } from './renderers/ai-suggestions.js';
 import type {
   AiChatSchema,
   AiMessageListSchema,
@@ -22,6 +25,9 @@ import type {
   AiToolCallSchema,
   AiAttachmentsSchema,
   AiCitationsSchema,
+  AiVoiceInputSchema,
+  AiTokenUsageSchema,
+  AiSuggestionsSchema,
 } from './schemas.js';
 
 /**
@@ -59,6 +65,9 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'onError', kind: 'event' },
       { key: 'onAbort', kind: 'event' },
       { key: 'onConversationChange', kind: 'event' },
+      { key: 'branches', kind: 'prop' },
+      { key: 'activeBranchId', kind: 'prop' },
+      { key: 'onBranchChange', kind: 'event' },
     ],
   },
   {
@@ -92,6 +101,9 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'showTimestamp', kind: 'prop', valueType: 'boolean' },
       { key: 'avatarRegion', kind: 'region', regionKey: 'avatarRegion' },
       { key: 'contentResolverName', kind: 'prop' },
+      { key: 'branches', kind: 'prop' },
+      { key: 'activeBranchId', kind: 'prop' },
+      { key: 'onBranchChange', kind: 'event' },
     ],
   },
   {
@@ -223,6 +235,51 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'onSourceClick', kind: 'event' },
     ],
   },
+  {
+    type: 'ai-voice-input',
+    displayName: 'AI Voice Input',
+    category: 'ai',
+    sourcePackage: '@nop-chaos/flux-renderers-ai',
+    defaultSchema: { type: 'ai-voice-input' },
+    component: AiVoiceInputRenderer,
+    fields: [
+      { key: 'lang', kind: 'prop' },
+      { key: 'continuous', kind: 'prop', valueType: 'boolean' },
+      { key: 'interimResults', kind: 'prop', valueType: 'boolean' },
+      { key: 'onResult', kind: 'event' },
+      { key: 'onError', kind: 'event' },
+    ],
+  },
+  {
+    type: 'ai-token-usage',
+    displayName: 'AI Token Usage',
+    category: 'ai',
+    sourcePackage: '@nop-chaos/flux-renderers-ai',
+    defaultSchema: { type: 'ai-token-usage' },
+    component: AiTokenUsageRenderer,
+    fields: [
+      { key: 'message', kind: 'prop' },
+      { key: 'usage', kind: 'prop' },
+      { key: 'contextLimit', kind: 'prop' },
+      { key: 'showCost', kind: 'prop', valueType: 'boolean' },
+      { key: 'onClick', kind: 'event' },
+    ],
+  },
+  {
+    type: 'ai-suggestions',
+    displayName: 'AI Suggestions',
+    category: 'ai',
+    sourcePackage: '@nop-chaos/flux-renderers-ai',
+    defaultSchema: { type: 'ai-suggestions' },
+    component: AiSuggestionsRenderer,
+    fields: [
+      { key: 'items', kind: 'prop' },
+      { key: 'overflowMode', kind: 'prop' },
+      { key: 'trigger', kind: 'prop' },
+      { key: 'maxVisible', kind: 'prop' },
+      { key: 'onSelect', kind: 'event' },
+    ],
+  },
 ];
 
 export type AiRendererSchema =
@@ -236,4 +293,7 @@ export type AiRendererSchema =
   | AiFeedbackSchema
   | AiToolCallSchema
   | AiAttachmentsSchema
-  | AiCitationsSchema;
+  | AiCitationsSchema
+  | AiVoiceInputSchema
+  | AiTokenUsageSchema
+  | AiSuggestionsSchema;

@@ -15,6 +15,7 @@ import { createAiComponentHandle } from '../adapters/ai-component-handle.js';
 import type { AiConversationController } from '../adapters/ai-conversation-controller.js';
 import type { AiConnector, ChatMessage, RequestState, ToolExecutor } from '../engine/types.js';
 import type { AiToolSchema } from '../engine/types.js';
+import type { AiBranch } from '../schemas.js';
 import { AiMessageListView } from './ai-message-list.js';
 import { AiSenderView } from './ai-sender.js';
 import type { AiChatSchema } from '../schemas.js';
@@ -103,6 +104,15 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // are explicitly given this scope so schema fragments inside header /
   // beforeMessages / afterMessages / footer / emptyState see the projection.
   const activeConversationId = (resolved.activeConversationId as string | null | undefined) ?? null;
+  // A-16: host-managed branch set + active id, projected into context so each
+  // bubble can render a prev/next picker for branch-point messages.
+  const branches = Array.isArray(resolved.branches) ? (resolved.branches as unknown as AiBranch[]) : undefined;
+  const activeBranchId = typeof resolved.activeBranchId === 'string' ? resolved.activeBranchId : undefined;
+  const onBranchChange = props.events.onBranchChange
+    ? (branchId: string) => {
+        void props.events.onBranchChange?.({ branchId });
+      }
+    : undefined;
   const hostScopeData = useMemo(
     () => ({
       isProcessing,
@@ -160,7 +170,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   }
 
   return (
-    <AiChatProvider value={{ engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest }}>
+    <AiChatProvider value={{ engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, branches, activeBranchId, onBranchChange }}>
       <section
         className={cn('nop-ai-chat', props.meta.className)}
         data-slot="ai-chat-root"

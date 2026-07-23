@@ -270,4 +270,15 @@ export interface MessageEngine {
    * turn is in-flight; callers should `abort()` first.
    */
   setMessages(messages: ChatMessage[]): void;
+  /**
+   * A-16 message branches: drop the trailing assistant turn (back to the last
+   * user message) and re-run the request, stamping the resulting assistant
+   * message's `metadata.branchId` so the host can build a branch picker. The
+   * engine stores NO branch set — the host owns full branch history; this
+   * method only records the new branch id (improvement §5.4).
+   *
+   * `branchId` is optional: when omitted the engine assigns an incrementing id.
+   * Must not be called while a turn is in-flight; callers should `abort()` first.
+   */
+  regenerate(branchId?: string): Promise<void>;
 }

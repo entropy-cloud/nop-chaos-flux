@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import type { ChatMessage } from '../../engine/types.js';
-import type { AiBubbleSchema } from '../../schemas.js';
+import type { AiBranch, AiBubbleSchema } from '../../schemas.js';
+import { useAiChatContext } from '../../adapters/ai-chat-context.js';
 import {
   BubbleRendererMatchPriority,
   resolveContentSlices,
@@ -26,6 +27,15 @@ export interface AiBubbleViewProps {
    * `message.metadata.isError`.
    */
   isError?: boolean;
+  /**
+   * A-16 message branches: the host-managed sibling set this message belongs
+   * to. When non-empty and the current message id appears in the set, a
+   * prev/next picker renders. Omitted/empty → no picker (Failure Path
+   * `branch-no-host-data`). Falls back to the `ai-chat` context.
+   */
+  branches?: AiBranch[];
+  activeBranchId?: string;
+  onBranchChange?: (branchId: string) => void;
   className?: string;
 }
 
@@ -73,6 +83,16 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
   const isUser = renderMessage.role === 'user';
   const [isEditing, setIsEditing] = useState(false);
 
+  // A-16 message branches: prefer explicit props, fall back to ai-chat context.
+  const ctx = useAiChatContext();
+  const branches = props.branches ?? ctx?.branches;
+  const activeBranchId = props.activeBranchId ?? ctx?.activeBranchId;
+  const onBranchChange = props.onBranchChange ?? ctx?.onBranchChange;
+  const isBranchPoint =
+    Array.isArray(branches) &&
+    branches.length > 0 &&
+    branches.some((b) => b.messageId === renderMessage.id);
+
   return (
     <article
       className={cn('nop-ai-bubble', props.className)}
@@ -104,9 +124,80 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
         {!(isUser && isEditing) && showTimestamp ? (
           <TimestampContentRenderer message={renderMessage} content="" contentIndex={-1} />
         ) : null}
+        {isBranchPoint ? (
+          <BranchPicker
+            branches={branches!}
+            activeBranchId={activeBranchId}
+            onBranchChange={onBranchChange}
+          />
+        ) : null}
         {isUser ? <UserMessageActions message={renderMessage} onEditingChange={setIsEditing} /> : null}
       </div>
     </article>
+  );
+}
+
+/**
+ * A-16 branch picker: prev / counter / next. Renders only when the host
+ * provides a non-empty `branches` set the current message belongs to
+ * (`branch-no-host-data` → picker omitted by the caller). Switching fires
+ * `onBranchChange({ branchId })`; the host loads that branch's messages via
+ * `component:setMessages` (or `engine.setMessages`).
+ */
+function BranchPicker({
+  branches,
+  activeBranchId,
+  onBranchChange,
+}: {
+  branches: AiBranch[];
+  activeBranchId?: string;
+  onBranchChange?: (branchId: string) => void;
+}): React.ReactElement {
+  const count = branches.length;
+  const activeIdx = Math.max(
+    0,
+    branches.findIndex((b) => b.id === activeBranchId),
+  );
+  const active = branches[activeIdx] ?? branches[0];
+  const go = (delta: number): void => {
+    const next = branches[(activeIdx + delta + count) % count];
+    if (next && next.id !== active?.id) onBranchChange?.(next.id);
+  };
+  return (
+    <div
+      data-slot="ai-bubble-branches"
+      className="nop-ai-bubble-branches inline-flex items-center gap-1 text-xs text-muted-foreground"
+      role="group"
+      aria-label="Message branches"
+    >
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-slot="ai-bubble-branch-prev"
+        aria-label="Previous branch"
+        disabled={count <= 1}
+        onClick={() => go(-1)}
+        className="h-6 px-1"
+      >
+        ‹
+      </Button>
+      <span data-slot="ai-bubble-branch-counter">
+        {activeIdx + 1}/{count}
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-slot="ai-bubble-branch-next"
+        aria-label="Next branch"
+        disabled={count <= 1}
+        onClick={() => go(1)}
+        className="h-6 px-1"
+      >
+        ›
+      </Button>
+    </div>
   );
 }
 
@@ -148,6 +239,15 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
       shape={resolved.shape ?? 'rounded'}
       showAvatar={resolved.showAvatar === true}
       showTimestamp={resolved.showTimestamp === true}
+      branches={Array.isArray(resolved.branches) ? (resolved.branches as unknown as AiBranch[]) : undefined}
+      activeBranchId={typeof resolved.activeBranchId === 'string' ? resolved.activeBranchId : undefined}
+      onBranchChange={
+        props.events?.onBranchChange
+          ? (branchId: string) => {
+              void props.events.onBranchChange?.({ branchId });
+            }
+          : undefined
+      }
       className={props.meta.className}
     />
   );

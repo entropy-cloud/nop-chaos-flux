@@ -13,6 +13,7 @@ export const AI_COMPONENT_METHODS = [
   'clear',
   'getMessages',
   'setMessages',
+  'regenerate',
 ] as const;
 
 export type AiComponentMethod = (typeof AI_COMPONENT_METHODS)[number];
@@ -73,6 +74,12 @@ export function createAiComponentHandle(input: {
               return { ok: false, error: new Error('component:setMessages requires { messages: ChatMessage[] }') };
             }
             engine.setMessages(messages as ChatMessage[]);
+            return { ok: true };
+          }
+          case 'regenerate': {
+            // A-16: optional explicit branch id; engine assigns one when omitted.
+            const branchId = typeof payload?.branchId === 'string' ? payload.branchId : undefined;
+            await engine.regenerate(branchId);
             return { ok: true };
           }
           default:

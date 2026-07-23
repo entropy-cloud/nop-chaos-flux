@@ -94,6 +94,9 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
                 <AiBubbleView
                   message={message}
                   isError={inError && vi.index === messages.length - 1 && message.role === 'assistant'}
+                  branches={ctx?.branches}
+                  activeBranchId={ctx?.activeBranchId}
+                  onBranchChange={ctx?.onBranchChange}
                 />
               </div>
             );
@@ -105,6 +108,9 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
             key={message.id}
             message={message}
             isError={inError && idx === messages.length - 1 && message.role === 'assistant'}
+            branches={ctx?.branches}
+            activeBranchId={ctx?.activeBranchId}
+            onBranchChange={ctx?.onBranchChange}
           />
         ))
       )}

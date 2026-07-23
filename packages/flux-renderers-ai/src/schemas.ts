@@ -49,6 +49,27 @@ export interface AiChatSchema extends BaseSchema {
   onError?: ActionSchema;
   onAbort?: ActionSchema;
   onConversationChange?: ActionSchema;
+  /**
+   * A-16 message branches: host-managed branch set + active id, projected into
+   * the `ai-chat` context so each `ai-bubble` can render a prev/next picker for
+   * messages that are branch points. The engine stores NO branch set; the host
+   * owns full branch history and loads a branch via `component:setMessages`
+   * (or `engine.setMessages`) on `onBranchChange`.
+   */
+  branches?: SchemaValue;
+  activeBranchId?: SchemaValue;
+
+  onBranchChange?: ActionSchema;
+}
+
+/**
+ * A-16: a single message branch. The host builds this list (e.g. keyed by the
+ * user message being regenerated) and the engine's `regenerate` stamps
+ * `metadata.branchId` on the assistant messages it produces.
+ */
+export interface AiBranch {
+  id: string;
+  messageId: string;
 }
 
 export interface AiMessageListSchema extends BaseSchema {
@@ -70,6 +91,16 @@ export interface AiBubbleSchema extends BaseSchema {
   showTimestamp?: boolean;
   avatarRegion?: SchemaInput;
   contentResolverName?: string;
+  /**
+   * A-16 message branches: the host-managed branch set this message belongs to.
+   * Each entry maps a branch id to a message id; the picker renders prev/next +
+   * a counter when the current message's id appears in the set. Omitting it
+   * (or an empty list) renders no picker (`branch-no-host-data`).
+   */
+  branches?: SchemaValue;
+  activeBranchId?: SchemaValue;
+
+  onBranchChange?: ActionSchema;
 }
 
 export interface AiSenderSchema extends BaseSchema {
@@ -225,4 +256,83 @@ export interface AiCitationsSchema extends BaseSchema {
   mode?: 'inline' | 'list';
 
   onSourceClick?: ActionSchema;
+}
+
+// ---- P4 renderers (A5) ----
+
+/**
+ * A-15: a standalone voice-input button widget. `SpeechRecognition` (Web Speech
+ * API) is called directly — it is a user-gesture-triggered browser API (mic
+ * input), NOT network IO, so per INV-1 adjudication (`improvement §5.3`) it does
+ * NOT go through `RendererEnv`. The recognized transcript is emitted via
+ * `onResult`; the host typically feeds it into `ai-sender` draft or
+ * `component:sendMessage`.
+ */
+export interface AiVoiceInputSchema extends BaseSchema {
+  type: 'ai-voice-input';
+  /** BCP-47 language tag passed to `SpeechRecognition.lang` (e.g. `en-US`). */
+  lang?: string;
+  /** Continuous recognition (default false — single utterance). */
+  continuous?: boolean;
+  /** Emit interim (non-final) results (default false). */
+  interimResults?: boolean;
+
+  onResult?: ActionSchema;
+  onError?: ActionSchema;
+}
+
+/**
+ * A-17: a pure-display widget that reads token usage from
+ * `message.metadata.usage` (populated by the connector) and renders a ring
+ * (used / context limit) plus textual counts. When no usage is present it
+ * degrades (`token-no-usage`). Cost accounting (rates / pricing) is a host
+ * concern — this widget only renders the raw `usage` fields.
+ */
+export interface AiTokenUsageSchema extends BaseSchema {
+  type: 'ai-token-usage';
+  /** Expression resolving to a `ChatMessage` whose `metadata.usage` is read. */
+  message?: SchemaValue;
+  /** Explicit usage (overrides `message.metadata.usage`). */
+  usage?: SchemaValue;
+  /**
+   * Context window cap (max tokens) used for the ring denominator. When
+   * omitted the ring renders full / is omitted and only textual counts show.
+   */
+  contextLimit?: number;
+  /** Render the cost field when present (default true). */
+  showCost?: boolean;
+
+  onClick?: ActionSchema;
+}
+
+/** OpenAI-compatible token usage shape (subset the widget renders). */
+export interface AiTokenUsage {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_tokens?: number;
+  /** Optional monetary cost (host/connector fills). */
+  cost?: number;
+}
+
+/**
+ * P4 `ai-suggestions` (demoted from P2 — `ai-prompts` already covers static
+ * recommendations). Renders a list of suggestion pills; overflow collapses into
+ * a Popover with a counter. `onSelect` fires `{ item, index }`.
+ */
+export interface AiSuggestionItem extends SchemaObject {
+  text: string;
+  icon?: string;
+}
+
+export interface AiSuggestionsSchema extends BaseSchema {
+  type: 'ai-suggestions';
+  items?: SchemaValue;
+  /** `expand` (show all) / `scroll` (horizontal scroll, default) / `popover` (collapse overflow into a Popover). */
+  overflowMode?: 'expand' | 'scroll' | 'popover';
+  /** Popover open trigger (popover mode only). */
+  trigger?: 'hover' | 'click' | 'manual';
+  /** Max visible pills before overflow kicks in (popover mode, default 3). */
+  maxVisible?: number;
+
+  onSelect?: ActionSchema;
 }

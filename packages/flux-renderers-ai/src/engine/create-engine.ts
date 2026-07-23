@@ -88,7 +88,15 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     registerPlugin,
     getMessages,
     setMessages,
+    regenerate,
   };
+
+  // A-16: branch-id sequence. The engine assigns `branch-<n>` when the host
+  // does not pass an explicit id; the host owns the full branch set.
+  let branchSeq = 0;
+  // Branch id pending-stamp for the next assistant message created in a turn
+  // (consumed once by `runOnce`). Undefined for normal turns (no branch).
+  let pendingBranchId: string | undefined;
 
   function getState(): MessageEngineState {
     return adapter.getState();
@@ -296,8 +304,16 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       role: 'assistant',
       content: '',
       loading: true,
-      metadata: { createdAt: Date.now() },
+      metadata: {
+        createdAt: Date.now(),
+        // A-16: stamp the turn's branch id onto the primary assistant message
+        // (consumed once per turn so tool-loop follow-ups stay untagged).
+        ...(pendingBranchId ? { branchId: pendingBranchId } : {}),
+      },
     });
+    // Consume the pending stamp regardless of the branch outcome (only the
+    // primary assistant message of a turn carries the branch id).
+    pendingBranchId = undefined;
     adapter.mutate('messages', (draft) => {
       draft.messages.push(assistant);
       draft.processingState = 'completing';
@@ -516,6 +532,58 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       draft.isProcessing = false;
       draft.processingState = undefined;
     });
+  }
+
+  /**
+   * A-16 message branches: drop the trailing assistant turn and re-run the
+   * request, stamping the new assistant message's `metadata.branchId`. The
+   * engine stores NO branch set; the host owns full branch history. The branch
+   * id advances from the prior assistant's branchId when the host omits one.
+   */
+  async function regenerate(branchId?: string): Promise<void> {
+    if ((adapter as unknown as { state: InternalMessageState }).state.isProcessing) {
+      return;
+    }
+    const current = adapter.getState().messages;
+    // Find the last user message — everything after it is the assistant turn to
+    // regenerate. If there is no preceding user message, there is nothing to
+    // re-request.
+    let lastUserIdx = -1;
+    for (let i = current.length - 1; i >= 0; i--) {
+      if (current[i].role === 'user') {
+        lastUserIdx = i;
+        break;
+      }
+    }
+    if (lastUserIdx < 0) return;
+
+    // Determine the branch id: explicit > advance prior > new sequence.
+    const priorAssistant = current
+      .slice(lastUserIdx + 1)
+      .find((m) => m.role === 'assistant' && typeof m.metadata?.branchId === 'string');
+    const nextBranchId =
+      branchId ?? advanceBranchId(priorAssistant?.metadata?.branchId as string | undefined);
+
+    // Truncate to [0..lastUserIdx] (keep the user prompt; drop the old turn).
+    adapter.mutate('messages', (draft) => {
+      draft.messages = draft.messages.slice(0, lastUserIdx + 1);
+    });
+
+    pendingBranchId = nextBranchId;
+    // Re-run the turn with no new incoming messages — runOnce streams a fresh
+    // assistant message using the existing (now user-terminated) history.
+    await runTurn([]);
+  }
+
+  function advanceBranchId(prev?: string): string {
+    if (!prev) {
+      branchSeq += 1;
+      return `branch-${branchSeq}`;
+    }
+    const m = /^(.*?)(\d+)$/.exec(prev);
+    if (m) return `${m[1]}${parseInt(m[2], 10) + 1}`;
+    branchSeq += 1;
+    return `branch-${branchSeq}`;
   }
 
   return engine;

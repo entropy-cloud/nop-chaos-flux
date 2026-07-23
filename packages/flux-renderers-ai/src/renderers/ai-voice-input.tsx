@@ -1,0 +1,217 @@
+import { useEffect, useRef, useState } from 'react';
+import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
+import type { AiVoiceInputSchema } from '../schemas.js';
+
+/**
+ * Minimal SpeechRecognition surface (TS ships no DOM lib types for it). Only
+ * the fields/methods this renderer touches are declared. Implementations are
+ * provided by the browser (`SpeechRecognition` / `webkitSpeechRecognition`).
+ */
+interface SpeechRecognitionLike {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+  onend: (() => void) | null;
+}
+
+interface SpeechRecognitionEventLike {
+  results: ArrayLike<ArrayLike<{ transcript: string }>> & {
+    [index: number]: { 0: { transcript: string }; isFinal: boolean };
+  };
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEventLike {
+  error: string;
+}
+
+type VoiceErrorReason = 'unsupported' | 'permission-denied' | 'no-result';
+
+interface SpeechRecognitionCtor {
+  new (): SpeechRecognitionLike;
+}
+
+function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
+  if (typeof window === 'undefined') return null;
+  const w = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionCtor;
+    webkitSpeechRecognition?: SpeechRecognitionCtor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
+
+/**
+ * ai-voice-input (Widget, P4, A-15): a microphone button that transcribes
+ * speech via the Web Speech API and emits the transcript through `onResult`.
+ *
+ * INV-1 adjudication (`improvement §5.3`): `SpeechRecognition` is a
+ * user-gesture browser API (mic input), not network IO, so it is called
+ * directly here — NOT routed through `RendererEnv`. The `MediaRecorder` fallback
+ * is out of scope (host customizes it).
+ *
+ * Marker `nop-ai-voice-input`; `data-slot="ai-voice-input"`. Failure Paths:
+ * `voice-unsupported` (disabled + tooltip), `voice-permission-denied`, and
+ * `voice-no-result` all surface via `onError({ reason })`.
+ */
+export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputSchema>): RendererRenderOutput {
+  const resolved = props.props;
+  const lang = typeof resolved.lang === 'string' ? resolved.lang : undefined;
+  const continuous = resolved.continuous === true;
+  const interimResults = resolved.interimResults === true;
+
+  const [status, setStatus] = useState<'idle' | 'listening'>('idle');
+  // Detect once synchronously during the first render (no effect churn).
+  const [unsupported] = useState<boolean>(() => !getSpeechRecognitionCtor());
+  const firedUnsupportedRef = useRef(false);
+
+  // Fire onError('unsupported') exactly once when the browser lacks the API.
+  useEffect(() => {
+    if (unsupported && !firedUnsupportedRef.current) {
+      firedUnsupportedRef.current = true;
+      void props.events.onError?.({ reason: 'unsupported' });
+    }
+  }, [unsupported, props.events]);
+
+  function fireError(reason: VoiceErrorReason): void {
+    void props.events.onError?.({ reason });
+  }
+
+  function handleStart(): void {
+    const Ctor = getSpeechRecognitionCtor();
+    if (!Ctor) {
+      // Detected at init (button is disabled); guard anyway.
+      fireError('unsupported');
+      return;
+    }
+    const recognition = new Ctor();
+    recognition.lang = lang ?? '';
+    recognition.continuous = continuous;
+    recognition.interimResults = interimResults;
+
+    let gotFinal = false;
+    recognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i] as { 0: { transcript: string }; isFinal: boolean };
+        transcript += result[0].transcript;
+        if (result.isFinal) gotFinal = true;
+      }
+      if (transcript.trim().length > 0) {
+        void props.events.onResult?.({ transcript });
+      }
+    };
+    recognition.onerror = (event) => {
+      const reason = event.error;
+      if (reason === 'not-allowed' || reason === 'service-not-allowed') {
+        fireError('permission-denied');
+      } else if (reason === 'no-speech') {
+        fireError('no-result');
+      } else {
+        fireError('no-result');
+      }
+    };
+    recognition.onend = () => {
+      setStatus('idle');
+      if (!gotFinal) {
+        // voice-no-result: emit so the host can show a hint (non-fatal).
+        fireError('no-result');
+      }
+    };
+
+    try {
+      recognition.start();
+      setStatus('listening');
+    } catch {
+      // start() throws if mic is unavailable or already started.
+      fireError('permission-denied');
+      setStatus('idle');
+    }
+  }
+
+  function handleClick(): void {
+    // Unsupported → button is disabled (clicks never arrive); the mount effect
+    // already emitted onError('unsupported').
+    if (status === 'listening') {
+      // Stop is handled by recognition.onend → setStatus('idle').
+      setStatus('idle');
+      return;
+    }
+    handleStart();
+  }
+
+  const button = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      data-slot="ai-voice-input"
+      data-state={status}
+      data-unsupported={unsupported ? '' : undefined}
+      data-testid={props.meta.testid || undefined}
+      disabled={unsupported}
+      aria-label={t('flux.ai.voiceInput')}
+      aria-pressed={status === 'listening'}
+      className={cn('nop-ai-voice-input', props.meta.className)}
+      onClick={handleClick}
+    >
+      {status === 'listening' ? (
+        <span
+          className="nop-ai-voice-input-wave inline-flex h-4 w-5 items-center justify-center text-primary"
+          aria-hidden="true"
+          data-testid={props.meta.testid ? `${props.meta.testid}-wave` : undefined}
+        >
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </span>
+      ) : (
+        <MicIcon />
+      )}
+      <span className="sr-only">
+        {status === 'listening' ? t('flux.ai.voiceListening') : t('flux.ai.voiceInput')}
+      </span>
+    </Button>
+  );
+
+  if (unsupported) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger render={button} />
+          <TooltipContent>{t('flux.ai.voiceUnsupported')}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return button;
+}
+
+function MicIcon(): React.ReactElement {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="2" width="6" height="12" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0" />
+      <line x1="12" y1="18" x2="12" y2="22" />
+    </svg>
+  );
+}
