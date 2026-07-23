@@ -697,6 +697,8 @@ export const zhCN: Resource = {
     },
     scheduling: {
       today: '今日',
+      previous: '上一个',
+      next: '下一个',
       noScheduleData: '暂无排班数据',
       calendar: {
         viewMonth: '月',

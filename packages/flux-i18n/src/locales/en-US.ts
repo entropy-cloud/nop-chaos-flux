@@ -698,6 +698,8 @@ export const enUS: Resource = {
     },
     scheduling: {
       today: 'Today',
+      previous: 'Previous',
+      next: 'Next',
       noScheduleData: 'No schedule data',
       calendar: {
         viewMonth: 'Month',
