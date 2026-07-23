@@ -1,0 +1,67 @@
+{
+  "type": "page",
+  "xui:imports": [{ "from": "ai", "as": "ai" }],
+  "body": [
+    {
+      "type": "flex",
+      "direction": "row",
+      "className": "h-[80vh] max-w-6xl mx-auto gap-2 p-4",
+      "items": [
+        {
+          "type": "ai-conversations",
+          "testid": "ai-conversations-panel",
+          "conversations": "${conversations}",
+          "activeId": "${activeConversationId}",
+          "className": "w-64 shrink-0 border rounded-md p-2",
+          "onItemClick": {
+            "action": "setValue",
+            "args": { "path": "activeConversationId", "value": "${event.id}" }
+          },
+          "onCreate": { "action": "ai:createConversation" },
+          "onItemDelete": { "action": "ai:deleteConversation", "args": { "id": "${event.id}" } },
+          "onItemRename": {
+            "action": "ai:renameConversation",
+            "args": { "id": "${event.id}", "title": "${event.title}" }
+          }
+        },
+        {
+          "type": "flex",
+          "direction": "col",
+          "className": "flex-1 min-w-0",
+          "items": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "className": "items-center justify-between p-2 border-b",
+              "items": [
+                { "type": "text", "text": "AI Conversations (P1 demo)" },
+                {
+                  "type": "button",
+                  "label": "External ai:send",
+                  "testid": "external-ai-send",
+                  "onClick": { "action": "ai:send", "args": { "text": "hi from external button" } }
+                }
+              ]
+            },
+            {
+              "type": "ai-chat",
+              "testid": "ai-conversations-chat",
+              "connector": "${$ai.connectors.mock}",
+              "conversationController": "${controller}",
+              "activeConversationId": "${activeConversationId}",
+              "placeholder": "Ask the mock AI…",
+              "submitType": "enter",
+              "className": "flex flex-col flex-1 min-h-0 gap-2",
+              "beforeMessages": {
+                "type": "ai-welcome",
+                "title": "Conversations + namespace ai",
+                "description": "ai-conversations + Layer B (ai:send via external button) + streaming markdown + a11y.",
+                "align": "center"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -530,6 +530,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'P0 flux-renderers-ai skeleton: ai-chat + ai-message-list + ai-bubble + ai-sender running a mock OpenAI-style streaming connector end-to-end (send → stream → bubble render).',
   },
+  {
+    id: 'ai-conversations',
+    title: 'AI Conversations (P1)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P1 flux-renderers-ai: ai-conversations sidebar + ai-chat with the `ai` ActionScope namespace (Layer B), external ai:send button, streaming markdown buffer, and a11y baseline. Uses mock connector unless VITE_OPENAI_API_KEY / VITE_DEEPSEEK_API_KEY is set.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

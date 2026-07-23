@@ -56,6 +56,7 @@ import { DiffPerfScaleDemoPage } from './pages/diff-perf-scale-demo';
 import { DataVerifyPage } from './pages/data-verify-page';
 import { EnvStreamDemoPage } from './pages/env-stream-demo';
 import { AiChatDemoPage } from './pages/ai-chat-demo';
+import { AiConversationsDemoPage } from './pages/ai-conversations-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -268,6 +269,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <EnvStreamDemoPage onBack={goHome} />;
         case 'ai-chat':
           return <AiChatDemoPage onBack={goHome} />;
+        case 'ai-conversations':
+          return <AiConversationsDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

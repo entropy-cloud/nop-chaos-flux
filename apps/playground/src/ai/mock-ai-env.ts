@@ -88,8 +88,9 @@ export function createMockAiEnv(): RendererEnv {
 
 /**
  * `xui:imports` loader exposing the `ai` namespace, so the schema can reference
- * the mock connector via `${$ai.connectors.mock}`. P0 ships no action
- * namespace (Layer B is A2).
+ * the mock connector via `${$ai.connectors.mock}`. P1 also exposes a
+ * conversation controller helper so hosts can bind `conversationController`
+ * through `${$ai.controller}` if desired.
  */
 export function createAiImportLoader(connector: AiConnector): {
   importLoader: { load(spec: XuiImportSpec): Promise<ImportedLibraryModule> };
