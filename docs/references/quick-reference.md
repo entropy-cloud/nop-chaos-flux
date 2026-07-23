@@ -653,7 +653,7 @@ interface ActionDataSourceSchema {
 
 ## Compilation Types Summary
 
-```ts
+````ts
 interface CompiledTemplate {
   nodes: TemplateNode[];
 }
@@ -664,4 +664,61 @@ interface CompiledStringTemplate { /* compiled template with interpolation */ }
 interface CompiledDataSource { /* fully compiled data source */ }
 interface CompiledReaction { watch; when; action; debounce; etc. */ }
 interface CompiledActionProgram { nodes: CompiledActionNode[]; isFullyStatic: boolean; }
+
+---
+
+## Scheduling Package — @nop-chaos/flux-renderers-scheduling
+
+### Component Registration
+
+```ts
+import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
+// registry: RendererRegistry
+registerSchedulingRenderers(registry);
+````
+
+Registers these renderer types: `gantt`, `kanban`, `calendar`, `barcode-input`.
+
+### Schema Types
+
+| Schema               | Import path                                                       |
+| -------------------- | ----------------------------------------------------------------- |
+| `GanttSchema`        | `flux-renderers-scheduling/src/gantt/gantt.types`                 |
+| `KanbanSchema`       | `flux-renderers-scheduling/src/kanban/kanban.types`               |
+| `CalendarSchema`     | `flux-renderers-scheduling/src/calendar/calendar.types`           |
+| `BarcodeInputSchema` | `flux-renderers-scheduling/src/barcode-input/barcode-input.types` |
+
+All schema types are re-exported from the package barrel via `schemas.ts`.
+
+### Key Hooks (internal to the package)
+
+| Hook                    | Location                                  | Purpose                               |
+| ----------------------- | ----------------------------------------- | ------------------------------------- |
+| `useKanbanDnd`          | `kanban/hooks/use-kanban-dnd`             | Drag & drop for cards                 |
+| `useColumnDnd`          | `kanban/hooks/use-column-dnd`             | Column reorder via drag               |
+| `useKanbanFilter`       | `kanban/hooks/use-kanban-filter`          | Card text/tag filtering               |
+| `useKanbanColumnResize` | `kanban/hooks/use-kanban-column-resize`   | Column resize with keyboard support   |
+| `useKanbanBoardEffects` | `kanban/hooks/use-kanban-board-effects`   | Board-level keyboard + DnD effects    |
+| `useFocusTrap`          | `shared/hooks/use-focus-trap`             | Focus trap for modal panels           |
+| `useGanttDrag`          | `gantt/hooks/use-gantt-drag`              | Gantt bar drag and resize             |
+| `useGanttLinkDraw`      | `gantt/hooks/use-gantt-link-draw`         | Gantt link drawing                    |
+| `useGanttScroll`        | `gantt/hooks/use-gantt-scroll`            | Synced horizontal/vertical scroll     |
+| `useGanttKeyboard`      | `gantt/hooks/use-gantt-keyboard`          | Keyboard navigation in Gantt grid     |
+| `useCalendarState`      | `calendar/hooks/use-calendar-state`       | Calendar view state (date, view mode) |
+| `useCalendarNavigation` | `calendar/hooks/use-calendar-navigation`  | Week/month/day navigation             |
+| `useCalendarDragCreate` | `calendar/hooks/use-calendar-drag-create` | Drag-create events on empty cells     |
+| `useCalendarDrag`       | `calendar/hooks/use-calendar-drag`        | Event drag and resize                 |
+| `useCalendarExport`     | `calendar/hooks/use-calendar-export`      | Export to CSV/PNG                     |
+| `useBarcodeCamera`      | `barcode-input/hooks/use-barcode-camera`  | Camera stream management              |
+| `useBarcodeDetect`      | `barcode-input/hooks/use-barcode-detect`  | Barcode detection (native/ZXing)      |
+| `useBarcodeTorch`       | `barcode-input/hooks/use-barcode-torch`   | Flashlight toggle on camera           |
+
+### Undo Patterns
+
+- **Gantt**: Class-based command pattern (`Command` interface with `execute/undo/redo` methods) — fine-grained mergeable commands for linked task graphs.
+- **Kanban**: Type-based command pattern — operations stored as type+params deltas, applied/reversed via kanban helpers.
+- Both are command-based; neither uses full-state snapshots.
+
+```
+
 ```

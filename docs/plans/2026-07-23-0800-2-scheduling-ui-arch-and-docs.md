@@ -1,6 +1,6 @@
 # 2 Remediation: Scheduling Package — UI Consistency, Architecture, and Documentation
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-23
 > Source: `docs/audits/2026-07-23-0714-multi-audit-scheduling.md`
 > Related: `docs/plans/2026-07-23-0715-1-scheduling-remediation.md` (completed), `docs/plans/2026-07-23-0745-1-scheduling-code-fixes-and-tests.md` (Plan 1)
@@ -66,75 +66,75 @@ Close all UI presentation (CSS variables, component compliance), architecture, a
 
 ### Phase 1 — CSS Variable Migration
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/gantt/gantt.css`, `calendar/components/calendar-event-block.tsx`
 
 Item Types: `Fix`
 
-- [ ] F02 + SCHED-24-01: gantt.css:71 — replace `background-color: rgba(0,0,0,0.02)` with `var(--color-muted)`
-- [ ] F02 + SCHED-24-01: gantt.css:123 — replace `color: white` with `var(--color-destructive-foreground)`
-- [ ] F02 + SCHED-24-01: calendar-event-block.tsx:119 — replace inline `'#fff'` with CSS variable via className or `var(--color-primary-foreground)`
+- [x] F02 + SCHED-24-01: gantt.css:71 — replace `background-color: rgba(0,0,0,0.02)` with `var(--color-muted)`
+- [x] F02 + SCHED-24-01: gantt.css:123 — replace `color: white` with `var(--color-destructive-foreground)`
+- [x] F02 + SCHED-24-01: calendar-event-block.tsx:119 — replace inline `'#fff'` with CSS variable via className or `var(--color-primary-foreground)`
 
 Exit Criteria:
 
-- [ ] No hardcoded `#[0-9a-fA-F]`, `rgba(`, or `rgb(` color values remain in scheduling package CSS or TSX files (verifiable via `rg '#[0-9a-fA-F]'` on scheduling CSS/TSX — expected matches only in third-party or print-only CSS)
+- [x] No hardcoded `#[0-9a-fA-F]`, `rgba(`, or `rgb(` color values remain in scheduling package CSS or TSX files (verifiable via `rg '#[0-9a-fA-F]'` on scheduling CSS/TSX — expected matches only in third-party or print-only CSS)
 
 ### Phase 2 — UI Component Compliance
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx`, `kanban/components/kanban-activity-log.tsx`
 
 Item Types: `Fix`
 
-- [ ] SCHED-24-02: Replace raw `<button type="button" className="ml-2 underline">` with `<Button variant="link" size="sm">` from `@nop-chaos/ui`
-- [ ] SCHED-24-03: Replace raw `<div ref={...} role="dialog" aria-modal="true">` with `<Sheet>`, `<SheetContent>`, `<SheetHeader>`, `<SheetTitle>`, `<SheetClose>` from `@nop-chaos/ui`
+- [x] SCHED-24-02: Replace raw `<button type="button" className="ml-2 underline">` with `<Button variant="link" size="sm">` from `@nop-chaos/ui`
+- [x] SCHED-24-03: Replace raw `<div ref={...} role="dialog" aria-modal="true">` with `<Sheet>`, `<SheetContent>`, `<SheetHeader>`, `<SheetTitle>`, `<SheetClose>` from `@nop-chaos/ui`
 
 Exit Criteria:
 
-- [ ] kanban-board.tsx imports and uses `<Button>` from `@nop-chaos/ui` for filter error dismiss
-- [ ] kanban-activity-log.tsx imports and uses `<Sheet>` family from `@nop-chaos/ui` with built-in focus trap, animations, keyboard handling
-- [ ] Raw `<button>` (non-UI-component) count in kanban/ directory is zero
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm test` passes (verify no test breakage from DOM structure change)
+- [x] kanban-board.tsx imports and uses `<Button>` from `@nop-chaos/ui` for filter error dismiss
+- [x] kanban-activity-log.tsx imports and uses `<Sheet>` family from `@nop-chaos/ui` with built-in focus trap, animations, keyboard handling
+- [x] Raw `<button>` (non-UI-component) count in kanban/ directory is zero
+- [x] `pnpm typecheck` passes
+- [x] `pnpm test` passes (verify no test breakage from DOM structure change)
 
 ### Phase 3 — Architecture & Dead Code Cleanup
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/`
 
 Item Types: `Fix`
 
-- [ ] F11: Remove deprecated dead code exports — `useKanbanAdder` and `GanttCompact` files and barrel exports
-- [ ] F15: Split kanban-board.tsx — extract reusable sub-components (toolbar, column-adder) to separate files; target <500 lines
-- [ ] F18: Normalize naming conventions in barcode-input/utils/ directory to single convention (`*-utils.ts` or as determined by existing pattern)
-- [ ] SCHED-24-04: Extract `useFocusTrap` hook to `src/shared/hooks/use-focus-trap.ts`; update imports in both calendar/ and barcode-input/
-- [ ] SCHED-24-07: Unify schema type definitions — either all four in `schemas.ts` or all in their respective `.types.ts` files
+- [x] F11: Remove deprecated dead code exports — `useKanbanAdder` and `GanttCompact` files and barrel exports
+- [x] F15: Split kanban-board.tsx — extract reusable sub-components (toolbar, column-adder) to separate files; target <500 lines
+- [x] F18: Normalize naming conventions in barcode-input/utils/ directory to single convention (`*-utils.ts` or as determined by existing pattern)
+- [x] SCHED-24-04: Extract `useFocusTrap` hook to `src/shared/hooks/use-focus-trap.ts`; update imports in both calendar/ and barcode-input/
+- [x] SCHED-24-07: Unify schema type definitions — either all four in `schemas.ts` or all in their respective `.types.ts` files
 
 Exit Criteria:
 
-- [ ] F11: `useKanbanAdder` and `GanttCompact` no longer exported from package barrel; related files removed
-- [ ] F15: kanban-board.tsx under 500 lines
-- [ ] F18: All files in barcode-input/utils/ use consistent naming
-- [ ] SCHED-24-04: `useFocusTrap` located at `src/shared/hooks/use-focus-trap.ts`; both calendar and barcode-input import from shared path
-- [ ] SCHED-24-07: All four component schemas (Gantt, Kanban, Calendar, BarcodeInput) follow the same definition pattern
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm test` passes
+- [x] F11: `useKanbanAdder` and `GanttCompact` no longer exported from package barrel; related files removed
+- [x] F15: kanban-board.tsx under 500 lines
+- [x] F18: All files in barcode-input/utils/ use consistent naming
+- [x] SCHED-24-04: `useFocusTrap` located at `src/shared/hooks/use-focus-trap.ts`; both calendar and barcode-input import from shared path
+- [x] SCHED-24-07: All four component schemas (Gantt, Kanban, Calendar, BarcodeInput) follow the same definition pattern
+- [x] `pnpm typecheck` passes
+- [x] `pnpm test` passes
 
 ### Phase 4 — Documentation
 
-Status: planned
+Status: completed
 Targets: `docs/references/quick-reference.md`, `packages/flux-renderers-scheduling/src/gantt/undo-stack.ts`
 
 Item Types: `Fix`
 
-- [ ] F12: Add `@nop-chaos/flux-renderers-scheduling` section to `quick-reference.md` — component registration, schema types, key hooks, and renderer patterns for Gantt, Kanban, Calendar, BarcodeInput
-- [ ] SCHED-24-05: Fix stale comments in `gantt/undo-stack.ts:7` (doc comment) and `:161-165` (FIXME) — correct "Kanban uses snapshot-based undo" to "Kanban also uses command-based undo"
+- [x] F12: Add `@nop-chaos/flux-renderers-scheduling` section to `quick-reference.md` — component registration, schema types, key hooks, and renderer patterns for Gantt, Kanban, Calendar, BarcodeInput
+- [x] SCHED-24-05: Fix stale comments in `gantt/undo-stack.ts:7` (doc comment) and `:161-165` (FIXME) — correct "Kanban uses snapshot-based undo" to "Kanban also uses command-based undo"
 
 Exit Criteria:
 
-- [ ] F12: `quick-reference.md` has a scheduling section with Package Directory Map entry, component registration names, schema types, and hook references
-- [ ] SCHED-24-05: `gantt/undo-stack.ts` comments accurately state "Kanban also uses command-based undo"
-- [ ] `pnpm lint` passes
+- [x] F12: `quick-reference.md` has a scheduling section with Package Directory Map entry, component registration names, schema types, and hook references
+- [x] SCHED-24-05: `gantt/undo-stack.ts` comments accurately state "Kanban also uses command-based undo"
+- [x] `pnpm lint` passes
 
 ## Draft Review Record
 
@@ -148,18 +148,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] All Phase 1-4 Exit Criteria satisfied
-- [ ] No hardcoded color values in scheduling package source files
-- [ ] No raw HTML where `@nop-chaos/ui` components should be used
-- [ ] Dead code removed, naming standardized, schemas unified
-- [ ] `quick-reference.md` synced to live baseline
-- [ ] No deferred in-scope live defect or contract drift
-- [ ] Affected owner-docs (styling-system.md, quick-reference.md) synced
-- [ ] Independent closure-audit by fresh sub-agent session completed
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All Phase 1-4 Exit Criteria satisfied
+- [x] No hardcoded color values in scheduling package source files
+- [x] No raw HTML where `@nop-chaos/ui` components should be used
+- [x] Dead code removed, naming standardized, schemas unified
+- [x] `quick-reference.md` synced to live baseline
+- [x] No deferred in-scope live defect or contract drift
+- [x] Affected owner-docs (styling-system.md, quick-reference.md) synced
+- [x] Independent closure-audit by fresh sub-agent session completed
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -168,3 +168,16 @@ Exit Criteria:
 ## Non-Blocking Follow-ups
 
 (To be filled during execution if any non-blocking residual remains)
+
+## Closure
+
+Status Note: All 11 confirmed findings (F02, SCHED-24-01 through SCHED-24-07, F11, F12, F15, F18) have been resolved. Hardcoded colors migrated to CSS variables, raw HTML replaced with `@nop-chaos/ui` components, dead code removed, kanban-board.tsx split under 500 lines, barcode-input/utils naming standardized, `useFocusTrap` extracted to shared location, stale comments corrected, schema type definitions unified, and `quick-reference.md` updated with scheduling package entry. All four phases completed with `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` passing.
+
+Closure Audit Evidence:
+
+- Auditor / Agent: `nop-chaos-flux` mission driver (fresh sub-agent session for closure audit)
+- Evidence: All Phase 1-4 exit criteria verified satisfied; Closure Gates fully checked including independent audit; `pnpm typecheck`/`build`/`lint`/`test` all green; no in-scope live defect or contract drift deferred.
+
+Follow-up:
+
+- No remaining plan-owned work
