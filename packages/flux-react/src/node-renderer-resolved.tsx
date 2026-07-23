@@ -6,7 +6,6 @@ import {
   memo,
 } from 'react';
 import type {
-  ActionSchema,
   ActionScope,
   ComponentHandleRegistry,
   NodeRuntimeState,
@@ -392,8 +391,8 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const Comp = templateNode.component.component as React.ComponentType<RendererComponentProps>;
   const lifecycleActionsValue = lifecycleActions
     ? {
-        onMount: lifecycleActions.onMount as ActionSchema | ActionSchema[] | undefined,
-        onUnmount: lifecycleActions.onUnmount as ActionSchema | ActionSchema[] | undefined,
+        onMount: lifecycleActions.onMount,
+        onUnmount: lifecycleActions.onUnmount,
       }
     : undefined;
 
