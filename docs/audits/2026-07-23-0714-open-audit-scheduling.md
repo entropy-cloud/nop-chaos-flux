@@ -395,3 +395,26 @@ F-39, F-40, F-41(claimed), F-42, F-43, F-36, F-45, F-31(revision model), F-32(Ev
 **Best starting point for next round**: Execute the actual test suite (unit + e2e) to identify regressions, then measure bundle composition and CSS selector coverage across all four scheduling sub-domains.
 
 <AI_STEP_RESULT>issues</AI_STEP_RESULT>
+
+---
+
+## Round 3 Findings (2026-07-23, 07:14 UTC)
+
+Continuing from Round 1. Full round-03 details at `docs/analysis/2026-07-23-0714-open-audit-scheduling/round-03.md`.
+
+### New Findings
+
+| ID   | Severity | File                                                           | Issue                                                                          |
+| ---- | -------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| F-91 | P0       | `barcode-input.tsx:195-212` + `barcode-input.test.tsx:446-457` | `scanNow` imperative handle bypasses `readOnly`; test assertion inverted       |
+| F-92 | P1       | `barcode-input.tsx:113-139`                                    | Validation error messages hardcoded English, not i18n                          |
+| F-93 | P1       | `kanban-board.tsx:128-131`                                     | Mount/unmount effect dep `[events]` — fires on every render (D09-04 unfixed)   |
+| F-94 | P1       | `barcode-input.tsx:32-37`                                      | Mount/unmount effect dep `[events]` — fires on every render (D09-05 unfixed)   |
+| F-95 | P2       | `kanban-board.tsx:275-359`                                     | 8 event dispatches use `events` directly, not `eventsRef` — stale handler risk |
+| F-96 | P3       | `barcode-scanner-overlay.tsx:13`, `kanban-activity-log.tsx:5`  | Cross-subdomain `useFocusTrap` import — fragile internal boundary              |
+
+### Blindness Self-Assessment
+
+**Likely missed this round**: E2E test validation, CSS coverage audit, performance profiling, security review.
+
+<AI_STEP_RESULT>issues</AI_STEP_RESULT>
