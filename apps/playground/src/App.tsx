@@ -64,6 +64,8 @@ import { AiVirtualScrollDemoPage } from './pages/ai-virtual-scroll-demo';
 import { AiPersistenceDemoPage } from './pages/ai-persistence-demo';
 import { AiCitationsDemoPage } from './pages/ai-citations-demo';
 import { AiHitlDemoPage } from './pages/ai-hitl-demo';
+import { AiP4WidgetsDemoPage } from './pages/ai-p4-widgets-demo';
+import { AiLinkageDemoPage } from './pages/ai-linkage-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -292,6 +294,10 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <AiCitationsDemoPage onBack={goHome} />;
         case 'ai-hitl':
           return <AiHitlDemoPage onBack={goHome} />;
+        case 'ai-p4':
+          return <AiP4WidgetsDemoPage onBack={goHome} />;
+        case 'ai-linkage':
+          return <AiLinkageDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

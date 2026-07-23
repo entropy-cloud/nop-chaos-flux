@@ -586,6 +586,20 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'P3 flux-renderers-ai: ai-tool-call human-in-the-loop approval — approve/reject buttons, focus trap (Tab/Esc), and a decided-state badge. Engine holds state; host owns the workflow.',
   },
+  {
+    id: 'ai-p4',
+    title: 'AI P4 Widgets (voice / token / suggestions)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P4 flux-renderers-ai: ai-voice-input (Web Speech API direct call, non-IO), ai-token-usage (reads metadata.usage, SVG ring), ai-suggestions (expand + popover overflow modes).',
+  },
+  {
+    id: 'ai-linkage',
+    title: 'AI P4 Advanced (branches + linkage)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P4 flux-renderers-ai: message branches (engine.regenerate stamps branchId, host loads branches via setMessages) + platform linkage (messages → form field + data-source reload off onResponseComplete).',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

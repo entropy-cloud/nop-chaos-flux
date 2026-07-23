@@ -389,6 +389,24 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
   'ai-virtual-scroll': async (page) => {
     await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
   },
+  'ai-persistence': async (page) => {
+    await expect(page.locator('[data-testid="ai-persistence-panel"]')).toBeVisible({ timeout: 15_000 });
+  },
+  'ai-citations': async (page) => {
+    await expect(page.locator('[data-testid="ai-citations-widget"]')).toBeVisible({ timeout: 15_000 });
+  },
+  'ai-hitl': async (page) => {
+    await expect(page.locator('[data-testid="hitl-reset"]')).toBeVisible({ timeout: 15_000 });
+  },
+  'ai-p4': async (page) => {
+    await expect(page.locator('[data-testid="p4-voice"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-testid="p4-token"]')).toBeVisible();
+    await expect(page.locator('[data-testid="p4-suggestions"]')).toBeVisible();
+  },
+  'ai-linkage': async (page) => {
+    await expect(page.locator('[data-testid="p4-branches"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-testid="p4-linkage"]')).toBeVisible();
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

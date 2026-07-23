@@ -1,0 +1,88 @@
+{
+  "type": "flex",
+  "direction": "col",
+  "className": "max-w-3xl mx-auto p-6 gap-6",
+  "items": [
+    {
+      "type": "flex",
+      "direction": "row",
+      "className": "items-center justify-between",
+      "items": [
+        { "type": "text", "text": "AI P4 Widgets (A-15 / A-17 / suggestions)" },
+        {
+          "type": "text",
+          "text": "voice / token / suggestions",
+          "className": "text-xs text-muted-foreground"
+        }
+      ]
+    },
+    {
+      "type": "flex",
+      "direction": "col",
+      "className": "gap-2 border rounded-md p-4",
+      "items": [
+        {
+          "type": "text",
+          "text": "Voice input (Web Speech API)",
+          "className": "text-sm font-medium"
+        },
+        {
+          "type": "ai-voice-input",
+          "testid": "p4-voice",
+          "lang": "en-US"
+        }
+      ]
+    },
+    {
+      "type": "flex",
+      "direction": "col",
+      "className": "gap-2 border rounded-md p-4",
+      "items": [
+        {
+          "type": "text",
+          "text": "Token usage (metadata.usage)",
+          "className": "text-sm font-medium"
+        },
+        {
+          "type": "ai-token-usage",
+          "testid": "p4-token",
+          "message": "${tokenMessage}",
+          "contextLimit": 4096
+        }
+      ]
+    },
+    {
+      "type": "flex",
+      "direction": "col",
+      "className": "gap-2 border rounded-md p-4",
+      "items": [
+        { "type": "text", "text": "Suggestions — expand", "className": "text-sm font-medium" },
+        {
+          "type": "ai-suggestions",
+          "testid": "p4-suggestions",
+          "items": "${suggestions}",
+          "overflowMode": "expand"
+        }
+      ]
+    },
+    {
+      "type": "flex",
+      "direction": "col",
+      "className": "gap-2 border rounded-md p-4",
+      "items": [
+        {
+          "type": "text",
+          "text": "Suggestions — popover (maxVisible 2)",
+          "className": "text-sm font-medium"
+        },
+        {
+          "type": "ai-suggestions",
+          "testid": "p4-suggestions-popover",
+          "items": "${suggestions}",
+          "overflowMode": "popover",
+          "maxVisible": 2
+        }
+      ]
+    }
+  ]
+}
