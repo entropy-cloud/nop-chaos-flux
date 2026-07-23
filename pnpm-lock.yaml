@@ -164,6 +164,9 @@ importers:
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../../packages/flux-react
+      '@nop-chaos/flux-renderers-ai':
+        specifier: workspace:*
+        version: link:../../packages/flux-renderers-ai
       '@nop-chaos/flux-renderers-basic':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-basic
@@ -524,6 +527,52 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.4
+
+  packages/flux-renderers-ai:
+    dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
+      '@nop-chaos/flux-i18n':
+        specifier: workspace:*
+        version: link:../flux-i18n
+      '@nop-chaos/flux-react':
+        specifier: workspace:*
+        version: link:../flux-react
+      '@nop-chaos/flux-renderers-content':
+        specifier: workspace:*
+        version: link:../flux-renderers-content
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../flux-formula
+      '@nop-chaos/flux-runtime':
+        specifier: workspace:*
+        version: link:../flux-runtime
+      dompurify:
+        specifier: ^3.4.11
+        version: 3.4.11
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.2.14)(react@19.2.4)
+      rehype-raw:
+        specifier: ^7.0.0
+        version: 7.0.0
+      remark-gfm:
+        specifier: ^4.0.1
+        version: 4.0.1
 
   packages/flux-renderers-basic:
     dependencies:

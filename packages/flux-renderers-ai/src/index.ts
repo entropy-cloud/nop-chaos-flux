@@ -1,0 +1,79 @@
+// ============================================
+// @nop-chaos/flux-renderers-ai — public entry (P0)
+// ============================================
+//
+// P0 scope: ai-chat / ai-message-list / ai-bubble / ai-sender renderers +
+// framework-agnostic message engine + React adapter + stream-based connector
+// host helper. A2 symbols (useConversation / ai-conversations / ...) are
+// intentionally NOT exported to avoid referencing not-yet-built modules.
+
+// ---- Group 1: Schema types (renderer authors) ----
+export type {
+  AiChatSchema,
+  AiMessageListSchema,
+  AiBubbleSchema,
+  AiSenderSchema,
+} from './schemas.js';
+
+// ---- Group 2: Renderer components (registry registration only) ----
+export { AiChatRenderer } from './renderers/ai-chat.js';
+export { AiMessageListRenderer } from './renderers/ai-message-list.js';
+export { AiBubbleRenderer } from './renderers/ai-bubble/index.js';
+export { AiSenderRenderer } from './renderers/ai-sender.js';
+
+// ---- Group 3: Host utilities (host app composition; NOT for use inside renderers) ----
+export type {
+  ChatRole,
+  ChatMessage,
+  ChatMessageContentPart,
+  ChatToolCall,
+  ChatToolCallFunction,
+  ChatToolCallUIState,
+  ChatMessageUIState,
+  ChatMessageMetadata,
+  AiConversationInfo,
+  MessageEngine,
+  MessageEngineState,
+  MessageEnginePlugin,
+  MessageEngineContext,
+  AiConnector,
+  AiConnectorChunk,
+  AiConnectorRequest,
+  AiConnectorStreamResult,
+  AiToolSchema,
+  AiToolFunctionSchema,
+  RequestState,
+  RequestProcessingState,
+} from './engine/types.js';
+
+export { createMessageEngine, type CreateMessageEngineOptions } from './engine/create-engine.js';
+export { combineDeltaData, generateMessageId } from './engine/utils.js';
+export { measureContentLength } from './engine/plugins/length-plugin.js';
+export { createThinkingPlugin } from './engine/plugins/thinking-plugin.js';
+export { createToolPlugin } from './engine/plugins/tool-plugin.js';
+export { createLengthPlugin } from './engine/plugins/length-plugin.js';
+export { createNativeMessageAdapter } from './engine/native-adapter.js';
+export { createReactMessageAdapter } from './adapters/react-adapter.js';
+export type { MessageStateAdapter, MessageUpdateKind } from './engine/types.js';
+
+export { useMessage, type UseMessageOptions, type UseMessageReturn } from './adapters/use-message.js';
+export { useAutoScroll, type UseAutoScrollOptions, type UseAutoScrollReturn } from './adapters/use-auto-scroll.js';
+export {
+  createStreamBasedAiConnector,
+  type CreateStreamBasedAiConnectorOptions,
+} from './adapters/ai-connector-factory.js';
+export { AiChatProvider, useAiChatContext, type AiChatContextValue } from './adapters/ai-chat-context.js';
+export type { ConversationStorageStrategy } from './storage/types.js';
+
+// ---- Group 4: Registry & registration (host startup) ----
+import { registerRendererDefinitions, type RendererRegistry } from '@nop-chaos/flux-core';
+import { aiRendererDefinitions } from './ai-renderer-definitions.js';
+
+export { aiRendererDefinitions } from './ai-renderer-definitions.js';
+export type { AiRendererSchema } from './ai-renderer-definitions.js';
+
+export function registerAiRenderers(registry: RendererRegistry) {
+  return registerRendererDefinitions(registry, aiRendererDefinitions);
+}
+
+export const AI_PACKAGE_VERSION = '0.1.0';

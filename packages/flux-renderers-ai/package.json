@@ -1,0 +1,53 @@
+{
+  "name": "@nop-chaos/flux-renderers-ai",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": [
+    "*.css"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": {
+      "default": "./dist/styles.css"
+    }
+  },
+  "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-i18n": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-renderers-content": "workspace:*",
+    "@nop-chaos/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "dompurify": "^3.4.11",
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-runtime": "workspace:*",
+    "dompurify": "^3.4.11",
+    "jsdom": "^29.1.1",
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "AI conversation renderers: ai-chat, ai-message-list, ai-bubble, ai-sender + framework-agnostic message engine."
+}

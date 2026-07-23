@@ -73,6 +73,12 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-renderers-content': fileURLToPath(
     new URL('./packages/flux-renderers-content/src/index.ts', import.meta.url),
   ),
+  '@nop-chaos/flux-renderers-ai/styles.css': fileURLToPath(
+    new URL('./packages/flux-renderers-ai/src/styles.css', import.meta.url),
+  ),
+  '@nop-chaos/flux-renderers-ai': fileURLToPath(
+    new URL('./packages/flux-renderers-ai/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-renderers-layout/styles.css': fileURLToPath(
     new URL('./packages/flux-renderers-layout/src/styles.css', import.meta.url),
   ),

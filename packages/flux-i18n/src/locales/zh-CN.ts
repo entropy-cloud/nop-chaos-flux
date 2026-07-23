@@ -45,6 +45,14 @@ export const zhCN: Resource = {
       previous: '上一页',
       next: '下一页',
     },
+    ai: {
+      send: '发送',
+      stop: '停止',
+      thinking: '思考中…',
+      placeholder: '发送消息…',
+      connectorMissing: '未配置 AI 连接器。',
+      requestFailed: 'AI 请求失败',
+    },
     wizard: {
       previous: '上一步',
       next: '下一步',

@@ -44,6 +44,14 @@ export const enUS: Resource = {
       previous: 'Previous page',
       next: 'Next page',
     },
+    ai: {
+      send: 'Send',
+      stop: 'Stop',
+      thinking: 'Thinking…',
+      placeholder: 'Send a message…',
+      connectorMissing: 'AI connector is not configured.',
+      requestFailed: 'AI request failed',
+    },
     wizard: {
       previous: 'Previous',
       next: 'Next',
