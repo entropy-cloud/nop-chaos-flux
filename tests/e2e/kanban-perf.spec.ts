@@ -4,7 +4,7 @@ import { measureFps } from './helpers/measure-perf.js';
 test.describe('Kanban Performance Baseline', () => {
   test.describe.configure({ timeout: 180_000 });
 
-  test('idle FPS baseline on demo page', async ({ page, allowConsoleErrors }) => {
+  test('idle FPS baseline on demo page targets 30fps avg', async ({ page, allowConsoleErrors }) => {
     allowConsoleErrors(10);
     await page.goto('/#/kanban', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('[data-slot="kanban"]')).toBeVisible({ timeout: 15_000 });
@@ -14,11 +14,10 @@ test.describe('Kanban Performance Baseline', () => {
     const fps = await measureFps(page, 2000);
     console.log(`[PERF] Kanban idle FPS: avg=${fps.avgFps}, min=${fps.minFps}, frames=${fps.totalFrames}, duration=${fps.durationMs}ms`);
 
-    expect(fps.avgFps).toBeGreaterThan(0);
-    expect(fps.totalFrames).toBeGreaterThan(10);
+    expect(fps.avgFps).toBeGreaterThan(30);
   });
 
-  test('idle FPS baseline on kanban-perf-scale (20×300) route', async ({ page, allowConsoleErrors }) => {
+  test('idle FPS baseline on kanban-perf-scale (20×300) route targets 30fps avg', async ({ page, allowConsoleErrors }) => {
     allowConsoleErrors(100);
     await page.goto('/#/kanban-perf-scale', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Kanban Performance Scale')).toBeVisible({ timeout: 120_000 });
@@ -29,11 +28,10 @@ test.describe('Kanban Performance Baseline', () => {
     const fps = await measureFps(page, 3000);
     console.log(`[PERF] Kanban 20×300 idle FPS: avg=${fps.avgFps}, min=${fps.minFps}, frames=${fps.totalFrames}, duration=${fps.durationMs}ms`);
 
-    expect(fps.avgFps).toBeGreaterThan(0);
-    expect(fps.totalFrames).toBeGreaterThan(10);
+    expect(fps.avgFps).toBeGreaterThan(30);
   });
 
-  test('drag FPS on kanban-perf-scale (20×300) route targets 60fps', async ({ page, allowConsoleErrors }) => {
+  test('drag FPS on kanban-perf-scale (20×300) route targets 60fps avg', async ({ page, allowConsoleErrors }) => {
     allowConsoleErrors(100);
     await page.goto('/#/kanban-perf-scale', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Kanban Performance Scale')).toBeVisible({ timeout: 120_000 });
@@ -50,7 +48,6 @@ test.describe('Kanban Performance Baseline', () => {
       return;
     }
 
-    const fps = await measureFps(page, 2000);
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
     for (let i = 0; i < 20; i++) {
@@ -58,9 +55,9 @@ test.describe('Kanban Performance Baseline', () => {
     }
     await page.mouse.up();
 
+    const fps = await measureFps(page, 2000);
     console.log(`[PERF] Kanban 20×300 drag FPS: avg=${fps.avgFps}, min=${fps.minFps}, frames=${fps.totalFrames}, duration=${fps.durationMs}ms`);
 
-    expect(fps.avgFps).toBeGreaterThan(0);
-    expect(fps.totalFrames).toBeGreaterThan(10);
+    expect(fps.avgFps).toBeGreaterThan(60);
   });
 });

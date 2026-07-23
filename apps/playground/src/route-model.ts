@@ -499,6 +499,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'High-scale kanban performance test with 20 columns × 300 cards.',
   },
   {
+    id: 'gantt-perf-scale',
+    title: 'Gantt Performance Scale',
+    eyebrow: 'Performance',
+    description: 'High-scale gantt performance test with 500 tasks + 2000 dependencies.',
+  },
+  {
     id: 'data-verify',
     title: 'Data Source Verify',
     eyebrow: 'Mechanism Test',

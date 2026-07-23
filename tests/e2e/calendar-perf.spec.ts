@@ -1,42 +1,48 @@
 import { test, expect } from './fixtures.js';
 
+async function measureCalendarScreen(page: import('@playwright/test').Page, hashRoute: string): Promise<number> {
+  return page.evaluate(async (hash) => {
+    const start = performance.now();
+    window.location.hash = hash;
+
+    return new Promise((resolve) => {
+      const check = () => {
+        if (document.querySelector('[data-view="month"]') && document.querySelector('[data-slot="calendar-matrix"]')) {
+          const elapsed = Math.round((performance.now() - start) * 10) / 10;
+          resolve(elapsed);
+        } else {
+          requestAnimationFrame(check);
+        }
+      };
+      requestAnimationFrame(check);
+    });
+  }, hashRoute);
+}
+
 test.describe('Calendar Performance Baseline', () => {
   test.describe.configure({ timeout: 180_000 });
 
-  test('first-screen pure render time on calendar demo page', async ({ page, allowConsoleErrors }) => {
+  test('first-screen render time on calendar demo page targets < 500ms', async ({ page, allowConsoleErrors }) => {
     allowConsoleErrors(100);
 
-    await page.goto('/#/scheduling-calendar', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('[data-view="month"]')).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator('[data-slot="calendar-matrix"]')).toBeVisible({ timeout: 15_000 });
+    await page.goto('/#/', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.querySelector('[class*="nop-hero"]') !== null, { timeout: 30_000 });
 
-    const renderTime = await page.evaluate(() => {
-      const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      performance.mark('calendar-visible');
-      const mark = performance.getEntriesByName('calendar-visible')[0];
-      return { durationMs: Math.round((mark.startTime - navEntry.startTime) * 10) / 10 };
-    });
+    const elapsed = await measureCalendarScreen(page, '#/scheduling-calendar');
+    console.log(`[PERF] Calendar demo first-screen render time: ${elapsed}ms`);
 
-    console.log(`[PERF] Calendar first-screen pure render time: ${renderTime.durationMs}ms`);
-    expect(renderTime.durationMs).toBeGreaterThan(0);
+    expect(elapsed).toBeLessThan(500);
   });
 
-  test('high-scale first-screen timing on calendar-perf-scale (300×31) route', async ({ page, allowConsoleErrors }) => {
+  test('high-scale first-screen timing on calendar-perf-scale (300×31) route targets < 10000ms', async ({ page, allowConsoleErrors }) => {
     allowConsoleErrors(100);
 
-    await page.goto('/#/calendar-perf-scale', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByText('Calendar Performance Scale')).toBeVisible({ timeout: 120_000 });
-    await expect(page.locator('[data-slot="calendar-matrix"]')).toBeVisible({ timeout: 120_000 });
+    await page.goto('/#/', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.querySelector('[class*="nop-hero"]') !== null, { timeout: 30_000 });
 
-    const renderTime = await page.evaluate(() => {
-      const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      performance.mark('calendar-scale-visible');
-      const mark = performance.getEntriesByName('calendar-scale-visible')[0];
-      return { durationMs: Math.round((mark.startTime - navEntry.startTime) * 10) / 10 };
-    });
+    const elapsed = await measureCalendarScreen(page, '#/calendar-perf-scale');
+    console.log(`[PERF] Calendar 300×31 first-screen render time: ${elapsed}ms`);
 
-    console.log(`[PERF] Calendar 300×31 first-screen render time: ${renderTime.durationMs}ms`);
-    expect(renderTime.durationMs).toBeGreaterThan(0);
-    expect(renderTime.durationMs).toBeLessThan(60000);
+    expect(elapsed).toBeLessThan(10000);
   });
 });

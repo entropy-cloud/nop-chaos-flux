@@ -51,6 +51,7 @@ import { CalendarDemoPage } from './pages/calendar-demo';
 import { BarcodeDemoPage } from './pages/barcode-demo';
 import { CalendarPerfScaleDemoPage } from './pages/calendar-perf-scale-demo';
 import { KanbanPerfScaleDemoPage } from './pages/kanban-perf-scale-demo';
+import { GanttPerfScaleDemoPage } from './pages/gantt-perf-scale-demo';
 import { DataVerifyPage } from './pages/data-verify-page';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
@@ -254,6 +255,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <CalendarPerfScaleDemoPage onBack={goHome} />;
         case 'kanban-perf-scale':
           return <KanbanPerfScaleDemoPage onBack={goHome} />;
+        case 'gantt-perf-scale':
+          return <GanttPerfScaleDemoPage onBack={goHome} />;
         case 'data-verify':
           return <DataVerifyPage onBack={goHome} />;
         default:
