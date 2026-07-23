@@ -98,8 +98,20 @@ export interface AiBubbleSchema extends BaseSchema {
   avatarRegion?: SchemaInput; // 自定义头像渲染
   contentResolverName?: string; // 注册的内容解析器名字（默认 'default'）
   // 业务方通过 xui:imports 注册自定义 boxRenderer / contentRenderer
+
+  // A-16 消息分支：host 注入的同级分支集 + 当前激活分支；当前消息 id 出现在
+  // 集合中时渲染 prev/next + 计数选择器（"2/3"）。切换触发 onBranchChange。
+  branches?: SchemaValue; // AiBranch[] = { id, messageId }[]
+  activeBranchId?: SchemaValue;
+  onBranchChange?: ActionSchema; // { branchId }
 }
 ```
+
+### 3.1b 消息分支（A-16）
+
+- **engine**：`engine.regenerate(branchId?)` 丢弃尾部 assistant 轮次并重新请求，把新 `metadata.branchId` 盖到产出的 assistant 消息上（`create-engine.ts`）。engine **不存** branches 全量；host 经 `component:setMessages`/`engine.setMessages` 载入分支消息。
+- **选择器**：`ai-bubble` 末位渲染 `data-slot="ai-bubble-branches"`（prev/计数/next）。`ai-chat` schema 的 `branches`/`activeBranchId` 经 `AiChatContext` 下发到每条 bubble；`branch-no-host-data`（空或当前消息不在集合中）不渲染。
+- **DOM**：`ai-bubble-branch-prev` / `ai-bubble-branch-counter` / `ai-bubble-branch-next`。
 
 ### 3.2 渲染器注册制（吸收 tiny-robot 设计）
 
@@ -396,15 +408,69 @@ export interface AiCitationsSchema extends BaseSchema {
 ## 11. ai-suggestions（Widget, P4）
 
 ```ts
+export interface AiSuggestionItem extends SchemaObject {
+  text: string;
+  icon?: string;
+}
+
 export interface AiSuggestionsSchema extends BaseSchema {
   type: 'ai-suggestions';
-  items?: Array<{ text: string; icon?: string }> | SchemaValue;
+  items?: Array<AiSuggestionItem> | SchemaValue;
   overflowMode?: 'expand' | 'scroll' | 'popover'; // 默认 'scroll'
   trigger?: 'hover' | 'click' | 'manual'; // 仅 popover 模式
+  maxVisible?: number; // popover 模式下内联可见数（默认 3）
 
   onSelect?: ActionSchema; // { item, index }
 }
 ```
+
+- **与 `ai-prompts` 区别**：`ai-prompts`（P1）是静态推荐卡片（vertical/horizontal/wrap）；`ai-suggestions`（P4）是对话内即时建议胶囊，强调溢出处理（`expand`/`scroll`/`popover`）。
+- **DOM**：marker `nop-ai-suggestions`，`data-slot="ai-suggestions"`，`data-overflow="expand|scroll|popover"`；每项 `data-slot="ai-suggestions-item"` + `data-index`；溢出触发 `data-slot="ai-suggestions-overflow"`（`+N`），展开后 `data-slot="ai-suggestions-overflow-list"`。
+- **Failure Path**：`suggestions-overflow` 按模式排布；`popover` 下超出 `maxVisible` 收进 Popover + 计数；空列表 `data-empty`。
+
+## 11c. ai-token-usage（Widget, P4, A-17）
+
+```ts
+export interface AiTokenUsage {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_tokens?: number;
+  cost?: number; // host/connector 填充（汇率/定价属 host 关注点）
+}
+
+export interface AiTokenUsageSchema extends BaseSchema {
+  type: 'ai-token-usage';
+  message?: SchemaValue; // ChatMessage（读 metadata.usage）
+  usage?: SchemaValue; // 显式 usage（覆盖 metadata.usage）
+  contextLimit?: number; // 上下文上限（环形分母）
+  showCost?: boolean; // 默认 true
+
+  onClick?: ActionSchema;
+}
+```
+
+- 纯展示，数据由 connector 填 `message.metadata.usage`（engine §9.2 `AiConnectorChunk.metadata`）。
+- 环形进度（SVG，零依赖）显示 `total / contextLimit`；`contextLimit` 缺省时只显示文本计数。
+- **Failure Path `token-no-usage`**：`metadata.usage` 缺失 → 渲染 muted 占位（`data-empty`，文案"用量未上报"），从不崩溃。
+- **DOM**：marker `nop-ai-token-usage`；`ai-token-usage-ring`（SVG）、`ai-token-usage-total`/`-prompt`/`-completion`/`-cost`。
+
+## 11b. ai-voice-input（Widget, P4, A-15）
+
+```ts
+export interface AiVoiceInputSchema extends BaseSchema {
+  type: 'ai-voice-input';
+  lang?: string; // BCP-47 tag → SpeechRecognition.lang
+  continuous?: boolean; // default false（单次发声）
+  interimResults?: boolean; // default false
+
+  onResult?: ActionSchema; // { transcript }
+  onError?: ActionSchema; // { reason: 'unsupported' | 'permission-denied' | 'no-result' }
+}
+```
+
+- **INV-1**：`SpeechRecognition` 是用户手势触发的浏览器 API（麦克风输入），非 network IO，**渲染器直呼，不经 env**（`improvement §5.3` 裁定）。`MediaRecorder` 回退留 host 自定义。
+- **DOM**：marker `nop-ai-voice-input`，`data-slot="ai-voice-input"`，`data-state="idle|listening"`，`data-unsupported`（仅不支持时出现）；录音态波形用 CSS（`styles.css` `@keyframes flux-ai-voice-wave`，零依赖）。
+- **Failure Path**：`voice-unsupported`（mount 检测 → 禁用按钮 + tooltip + `onError('unsupported')`）、`voice-permission-denied`（`onerror` `not-allowed` → `onError('permission-denied')`）、`voice-no-result`（`onend` 无 final transcript → `onError('no-result')`）。
 
 ## 12. ai-mcp-manager（Widget, P7 可选）
 

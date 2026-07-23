@@ -26,6 +26,9 @@
 - 不实现 Sender 的 Tiptap 富文本扩展（@提及、模板插入、Slash 命令）作为 P0；P0 用 `<Textarea>` + auto-resize + 键盘事件。Tiptap 集成是 Phase 6 可选项。
 - 不引入组件级 `api` 字段：所有 AI 请求通过 `ResponseProvider` 抽象注入，业务方在 host 层提供 provider 实现（封装自家后端 / 网关 / 鉴权），渲染器只接受已构造好的 provider 函数。
 - 不在 P0 接 flux form owner：消息状态由 engine 自持，不写回 form value（避免 form 验证、提交语义被污染）。Phase 5 再评估"把 messages 序列化进 scope 字段"的高级场景。
+
+> **Decision-A（P4 裁定，messages 进 form 字段）**：经 P4 Phase 1 评估裁定为 **落地 host 范式（路径 a）**，不扩 engine、不破 INV-17。host 在 `onResponseComplete`/按钮 handler 调 Layer C `component:getMessages` 取快照 → **序列化（深拷贝，如 `structuredClone`/JSON）** → `setValue` 写入 scope/form 字段。序列化步骤是 INV-17 的关键：`engine.messages` 仍是域内部唯一真源，host 持有独立副本（直接持有 engine 返回的引用会污染域内部，host 必须 copy）。proof 见 `packages/flux-renderers-ai/src/renderers/__tests__/phase4-platform-linkage.test.tsx`。本包无需新增 engine/handle 方法。
+
 - 不引入新的 RendererDefinition 字段、新的 field kind、新的 marker 命名规则——严守现有契约（参见 `docs/references/renderer-interfaces.md`、`docs/architecture/styling-system.md`）。
 
 ## 4. 与 tiny-robot 的对照
@@ -61,7 +64,7 @@
 
 ### 5.1 渲染器清单
 
-> **实现状态**（2026-07-24）：P0 的 4 个渲染器（`ai-chat` / `ai-message-list` / `ai-bubble` / `ai-sender`）已在 A1 落地（✅）。P1 渲染器（`ai-conversations` / `ai-welcome` / `ai-prompts` / `ai-feedback`）已在 A2 落地（✅）。P2 渲染器（`ai-tool-call` / `ai-attachments`）已在 A3 落地（✅）——含 engine agentic 工具循环、Layer C ComponentHandle、`ai-bubble` tools/reasoning/image content renderer、A-6~A-12 深化项、消息编辑、虚拟滚动。P3+ 渲染器尚未实现（⬜）。
+> **实现状态**（2026-07-24）：P0 的 4 个渲染器（`ai-chat` / `ai-message-list` / `ai-bubble` / `ai-sender`）已在 A1 落地（✅）。P1 渲染器（`ai-conversations` / `ai-welcome` / `ai-prompts` / `ai-feedback`）已在 A2 落地（✅）。P2 渲染器（`ai-tool-call` / `ai-attachments`）已在 A3 落地（✅）——含 engine agentic 工具循环、Layer C ComponentHandle、`ai-bubble` tools/reasoning/image content renderer、A-6~A-12 深化项、消息编辑、虚拟滚动。P3 渲染器（`ai-citations` / HITL）已在 A4 落地（✅）。P4 高级集成（`ai-voice-input` / `ai-token-usage` / 消息分支 / `ai-suggestions` + 两平台联动 Decision）已在 A5 落地（✅）。P7 尚未实现（⬜）。
 
 | Phase      | type               | 类别   | 职责                                                                             | 状态 |
 | ---------- | ------------------ | ------ | -------------------------------------------------------------------------------- | ---- |
@@ -77,10 +80,10 @@
 | P2         | `ai-tool-call`     | Widget | 工具调用卡片（状态、展开、JSON 高亮、A-6 按工具名注册专用渲染器、A-12 状态颜色） | ✅   |
 | P3         | `ai-citations`     | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                                 | ✅   |
 | P3         | HITL 审批          | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮                          | ✅   |
-| P4         | `ai-voice-input`   | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）                                  | ⬜   |
-| P4         | `ai-token-usage`   | Widget | Token / 成本 / 上下文占比显示（数据由 connector 填充 metadata）                  | ⬜   |
-| P4         | 消息分支           | 增强   | 重新生成时分支切换（branches 由 host 管理）                                      | ⬜   |
-| P4         | `ai-suggestions`   | Widget | 建议气泡（Popover / Pills）— 从 P2 降至 P4（`ai-prompts` 已覆盖）                | ⬜   |
+| P4         | `ai-voice-input`   | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）                                  | ✅   |
+| P4         | `ai-token-usage`   | Widget | Token / 成本 / 上下文占比显示（数据由 connector 填充 metadata）                  | ✅   |
+| P4         | 消息分支           | 增强   | 重新生成时分支切换（branches 由 host 管理）                                      | ✅   |
+| P4         | `ai-suggestions`   | Widget | 建议气泡（Popover / Pills）— 从 P2 降至 P4（`ai-prompts` 已覆盖）                | ✅   |
 | P7（可选） | `ai-mcp-manager`   | Widget | MCP server 管理（启用/禁用/添加），需 host 注入 MCP 客户端                       | ⬜   |
 
 > 详细的组件级改进（流式光标 / 时间戳 / 代码块复制按钮 / 工具状态颜色 / 拖放附件 / 消息编辑 / LaTeX 评估等）见 [`improvement-analysis.md`](./improvement-analysis.md) §4。Phase 路线与改进项 ID 映射见 [`implementation.md`](./implementation.md) §2。
@@ -387,6 +390,8 @@ P2 增强：默认注册 `*` 通用 fallback；包内**不**提供任何专用�
 | **`conversations` 列表**                  | **scope-owned**，`useScopeSelector` 读 schema 表达式（host 管理） | host 经 `useConversation` helper 同步到 scope |
 | **`activeConversationId`**                | 同上                                                              | 同上                                          |
 | 工具调用状态 `message.state.toolCall[id]` | engine 内部订阅                                                   | toolPlugin 写                                 |
+
+> **Decision-B（P4 裁定，data-source 联动）**：经 P4 Phase 1 评估裁定为 **无需新增 engine/handle 便捷方法**（路径 a）。`onResponseComplete` 事件 payload 已含末条 message（`ai-chat.tsx` 在 `processing→completed` 时触发），host 可直接在事件 handler 中触发 `data-source:reload/insert`（或调用 `component:getMessages` 取快照后联动）。playground 联动示例见 `apps/playground/src/pages/ai-linkage-demo.tsx`。
 
 **禁止**：在渲染器内直接调 `scope.get(path)` / `scope.materializeVisible()`（违反 `docs/architecture/renderer-runtime.md` 护栏 Bug-Derived Rule 1）。
 

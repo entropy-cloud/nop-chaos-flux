@@ -23,7 +23,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **A2. P1 真实 AI + 会话 + 流式 Markdown + a11y**（4 renderer + 5 改进项）: `done`
 - **A3. P2 工具调用 + 附件 + 渲染器深化**（2 renderer + 7 改进项）: `done`
 - **A4. P3 持久化 + 引用 + HITL**（1 renderer + 1 增强 + 2 改进项）: `done`
-- **A5. P4 高级集成**（3 renderer + 1 增强 + 3 改进项）: `todo`
+- **A5. P4 高级集成**（3 renderer + 1 增强 + 3 改进项 + 2 评估项）: `done`
 - **A6. P6 Tiptap 富文本（可选）**: `todo`
 
 ## Status Values
@@ -123,9 +123,9 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 > messages 序列化进 flux form 字段；data-source 联动；语音输入；消息分支；Token 用量；建议气泡。
 
-| ID  | Status | 内容                                                                                                                                                                                                                                                                                                                             | 设计文档                                            | 依赖 |
-| --- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ---- |
-| A5  | todo   | messages 序列化进 flux form 字段（Phase 5 评估项）；`onResponseComplete` 接 data-source 联动；**A-15** `ai-voice-input`（Web Speech API 直呼，非 IO 不经 env）；**A-16** 消息分支（重新生成时分支切换，branches 由 host 管理）；**A-17** `ai-token-usage`（Token / 成本 / 上下文占比）；`ai-suggestions`（建议气泡，从 P2 降级） | `design.md §5.1, §11`、`improvement-analysis.md §4` | A4   |
+| ID  | Status | 内容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | 设计文档                                            | 依赖 |
+| --- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ---- |
+| A5  | done   | messages 序列化进 flux form 字段（Decision-A 裁定 host 范式：`component:getMessages` → 序列化 → setValue，INV-17 保持）；`onResponseComplete` 接 data-source 联动（Decision-B 裁定无需新增方法）；**A-15** `ai-voice-input`（Web Speech API 直呼，非 IO 不经 env）；**A-16** 消息分支（`engine.regenerate` 记 branchId + host 管 branches + `onBranchChange` 选择器）；**A-17** `ai-token-usage`（Token / 成本 / 上下文占比 + SVG 环形）；`ai-suggestions`（建议气泡，expand/scroll/popover） | `design.md §5.1, §11`、`improvement-analysis.md §4` | A4   |
 
 **退出条件**：对话历史可进入表单提交流程；语音输入工作；分支可切换。
 
@@ -159,10 +159,10 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | `ai-tool-call`     | P2    | A3        | Widget | 工具调用卡片（状态、展开、JSON 高亮、按工具名注册专用渲染器） |
 | `ai-citations`     | P3    | A4        | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）              |
 | HITL 审批          | P3    | A4        | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮       |
-| `ai-voice-input`   | P4    | A5        | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）               |
-| `ai-token-usage`   | P4    | A5        | Widget | Token / 成本 / 上下文占比显示                                 |
-| 消息分支           | P4    | A5        | 增强   | 重新生成时分支切换（branches 由 host 管理）                   |
-| `ai-suggestions`   | P4    | A5        | Widget | 建议气泡（Popover / Pills）                                   |
+| `ai-voice-input`   | P4    | A5        | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）               | ✅  |
+| `ai-token-usage`   | P4    | A5        | Widget | Token / 成本 / 上下文占比显示                                 | ✅  |
+| 消息分支           | P4    | A5        | 增强   | 重新生成时分支切换（branches 由 host 管理）                   | ✅  |
+| `ai-suggestions`   | P4    | A5        | Widget | 建议气泡（Popover / Pills）                                   | ✅  |
 
 ---
 

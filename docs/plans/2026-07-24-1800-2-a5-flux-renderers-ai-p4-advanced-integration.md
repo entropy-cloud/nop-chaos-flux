@@ -1,6 +1,6 @@
 # A5 flux-renderers-ai P4 高级集成
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-24
 > Source: `docs/components/flux-renderers-ai/design.md`（§5.1 P4 行、§11 数据流、§11.2、§3 Phase 5 评估）、`renderers.md`（§11 ai-suggestions）、`improvement-analysis.md`（§5.3 A-15、§5.4 A-16、§5.5 A-17、§7 a11y）、`docs/components/roadmap-ai.md` A5
 > Mission: ai
@@ -92,86 +92,91 @@
 
 ### Phase 1 - 平台联动（两 Decision 裁定 + 落地）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-chat.tsx`、`adapters/ai-component-handle.ts`、`design.md` §11.2
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] **Decision-A（messages 进 form）**：核对 `ComponentHandle.getMessages()`（A3 落地）+ `onResponseComplete` 已能受控导出 messages；裁定路径：(a) 落地 host 范式（host 在 `onResponseComplete`/按钮 handler 调 `getMessages` → `setValue` 进 scope 字段），不改 engine 所有权；或 (b) 若需 engine 直写 scope 则裁定不引入（破坏 INV-17）。裁定结论写 Phase Exit + `design.md` §3（"Phase 5 评估"非目标 hook 所在处）。
-- [ ] **Decision-B（data-source 联动）**：基于已接线的 `onResponseComplete`，评估是否需 engine/handle 层便捷方法；裁定路径：(a) 事件 payload 已含末条 message，host 可直接 `data-source:reload/insert`，**无需**包内新增方法 → 落地 host 范式 + playground 示例；或 (b) 若核对发现缺口则补。裁定结论写 Phase Exit + `design.md` §11.2。
-- [ ] 落地两 Decision 的 proof（见 Exit Criteria）。
+- [x] **Decision-A（messages 进 form）**：核对 `ComponentHandle.getMessages()`（A3 落地）+ `onResponseComplete` 已能受控导出 messages；裁定路径：(a) 落地 host 范式（host 在 `onResponseComplete`/按钮 handler 调 `getMessages` → `setValue` 进 scope 字段），不改 engine 所有权；或 (b) 若需 engine 直写 scope 则裁定不引入（破坏 INV-17）。裁定结论写 Phase Exit + `design.md` §3（"Phase 5 评估"非目标 hook 所在处）。
+- [x] **Decision-B（data-source 联动）**：基于已接线的 `onResponseComplete`，评估是否需 engine/handle 层便捷方法；裁定路径：(a) 事件 payload 已含末条 message，host 可直接 `data-source:reload/insert`，**无需**包内新增方法 → 落地 host 范式 + playground 示例；或 (b) 若核对发现缺口则补。裁定结论写 Phase Exit + `design.md` §11.2。
+- [x] 落地两 Decision 的 proof（见 Exit Criteria）。
 
 Exit Criteria:
 
-- [ ] Decision-A/B 各有裁定结论（引入则附实现+依赖+proof，不引入则诚实移出 scope 并记理由，写入 `Deferred But Adjudicated`）。
-- [ ] proof（若落地 host 范式）：单测/抽查证明 `getMessages` 序列化进 scope 字段后 form 可读取，且 `engine.messages` 仍为域内部（INV-17 不破）。
-- [ ] `design.md` §3（Decision-A）/ §11.2（Decision-B）记录两 Decision 最终结论。
+- [x] Decision-A/B 各有裁定结论（引入则附实现+依赖+proof，不引入则诚实移出 scope 并记理由，写入 `Deferred But Adjudicated`）。
+- [x] proof（若落地 host 范式）：单测/抽查证明 `getMessages` 序列化进 scope 字段后 form 可读取，且 `engine.messages` 仍为域内部（INV-17 不破）。
+- [x] `design.md` §3（Decision-A）/ §11.2（Decision-B）记录两 Decision 最终结论。
+
+> **Decision 结论**：
+>
+> - **Decision-A（路径 a — 落地 host 范式）**：host 经 `component:getMessages` 取快照后**序列化（深拷贝）**再 `setValue` 进 form 字段；engine 不写 scope，INV-17 保持。proof: `phase4-platform-linkage.test.tsx`。
+> - **Decision-B（路径 a — 无需新增方法）**：`onResponseComplete` payload 已含末条 message，host 直挂 `data-source:reload/insert` 即可；playground 联动示例随 Phase 5 落地。
 
 ### Phase 2 - `ai-voice-input`（A-15）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-voice-input.tsx`、`schemas.ts`、`ai-renderer-definitions.ts`、`index.ts`、`renderers.md`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `AiVoiceInputSchema`：`lang?`、`continuous?`、`interimResults?`、`onResult`（`{ transcript }`）、`onError`（`{ reason }`）。
-- [ ] `ai-voice-input.tsx`（Widget marker `nop-ai-voice-input`，`data-slot="ai-voice-input"`）：`SpeechRecognition`/`webkitSpeechRecognition` 直呼（INV-1 裁定非 IO）；录音态波形动画（CSS，零依赖）；结果经 `onResult` 传出；`voice-unsupported`/`voice-permission-denied`/`voice-no-result` Failure Path。
-- [ ] 浏览器不支持：禁用按钮 + tooltip + `onError('unsupported')`。
-- [ ] 注册/导出/`renderers.md` schema。
+- [x] `AiVoiceInputSchema`：`lang?`、`continuous?`、`interimResults?`、`onResult`（`{ transcript }`）、`onError`（`{ reason }`）。
+- [x] `ai-voice-input.tsx`（Widget marker `nop-ai-voice-input`，`data-slot="ai-voice-input"`）：`SpeechRecognition`/`webkitSpeechRecognition` 直呼（INV-1 裁定非 IO）；录音态波形动画（CSS，零依赖）；结果经 `onResult` 传出；`voice-unsupported`/`voice-permission-denied`/`voice-no-result` Failure Path。
+- [x] 浏览器不支持：禁用按钮 + tooltip + `onError('unsupported')`。
+- [x] 注册/导出/`renderers.md` schema。
 
 Exit Criteria:
 
-- [ ] focused 单测（mock `SpeechRecognition`）：录音态切换；`onResult` 传 transcript；三 Failure Path（unsupported/permission/no-result）正确触发 `onError`。
-- [ ] INV-1 复核：voice 直呼浏览器 API 不经 env（符合 improvement §5.3 裁定），`contract-honesty.test.ts` 对 voice 渲染器不误报（若守卫把 `SpeechRecognition` 误判为 IO，需按裁定加白名单注释说明）。
+- [x] focused 单测（mock `SpeechRecognition`）：录音态切换；`onResult` 传 transcript；三 Failure Path（unsupported/permission/no-result）正确触发 `onError`。
+- [x] INV-1 复核：voice 直呼浏览器 API 不经 env（符合 improvement §5.3 裁定），`contract-honesty.test.ts` 对 voice 渲染器不误报（若守卫把 `SpeechRecognition` 误判为 IO，需按裁定加白名单注释说明）。
 
 ### Phase 3 - 消息分支（A-16）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/engine/`、`packages/flux-renderers-ai/src/renderers/ai-message-list.tsx`/`ai-bubble`、`schemas.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] engine：重新生成时记新分支 id（写 `message.metadata.branchId` 或 `state.branchId`）；engine **不**存 branches 全量（host 管理）。
-- [ ] 分支选择器（在 `ai-bubble` 或 message-list 末位）：读 host 注入 `branches`（`{ id, messageId }[]`）+ `activeBranchId`；渲染 prev/next + 计数（`2/3`）；`branch-no-host-data` 时不渲染。
-- [ ] 切换触发 `onBranchChange({ branchId })` event → host 载入对应分支 messages（经 `engine.setMessages`，A3 工具）。
+- [x] engine：重新生成时记新分支 id（写 `message.metadata.branchId` 或 `state.branchId`）；engine **不**存 branches 全量（host 管理）。
+- [x] 分支选择器（在 `ai-bubble` 或 message-list 末位）：读 host 注入 `branches`（`{ id, messageId }[]`）+ `activeBranchId`；渲染 prev/next + 计数（`2/3`）；`branch-no-host-data` 时不渲染。
+- [x] 切换触发 `onBranchChange({ branchId })` event → host 载入对应分支 messages（经 `engine.setMessages`，A3 工具）。
 
 Exit Criteria:
 
-- [ ] focused 单测：重新生成记新 branchId；分支选择器 prev/next 切换触发 `onBranchChange`；`branch-no-host-data` 不渲染。
-- [ ] 抽查：host 切换分支后 `engine.setMessages` 载入对应分支消息。
+- [x] focused 单测：重新生成记新 branchId；分支选择器 prev/next 切换触发 `onBranchChange`；`branch-no-host-data` 不渲染。
+- [x] 抽查：host 切换分支后 `engine.setMessages` 载入对应分支消息。
 
 ### Phase 4 - `ai-token-usage`（A-17）+ `ai-suggestions`
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-token-usage.tsx`、`ai-suggestions.tsx`、`schemas.ts`、`ai-renderer-definitions.ts`、`index.ts`、`renderers.md`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `AiTokenUsageSchema` + `ai-token-usage.tsx`（Widget marker `nop-ai-token-usage`）：读 `message.metadata.usage`（`prompt_tokens`/`completion_tokens`/`total_tokens`/`cost?` + 上下文上限）；环形进度（SVG，零依赖）+ 文本；`token-no-usage` 降级（隐藏/占位）。
-- [ ] `AiSuggestionsSchema`（renderers.md §11 已占位）+ `ai-suggestions.tsx`（Widget marker `nop-ai-suggestions`）：Pills/Popover；`overflowMode`（expand/scroll/popover）；`onSelect`；`suggestions-overflow` Failure Path。
-- [ ] 注册/导出/`renderers.md` schema。
+- [x] `AiTokenUsageSchema` + `ai-token-usage.tsx`（Widget marker `nop-ai-token-usage`）：读 `message.metadata.usage`（`prompt_tokens`/`completion_tokens`/`total_tokens`/`cost?` + 上下文上限）；环形进度（SVG，零依赖）+ 文本；`token-no-usage` 降级（隐藏/占位）。
+- [x] `AiSuggestionsSchema`（renderers.md §11 已占位）+ `ai-suggestions.tsx`（Widget marker `nop-ai-suggestions`）：Pills/Popover；`overflowMode`（expand/scroll/popover）；`onSelect`；`suggestions-overflow` Failure Path。
+- [x] 注册/导出/`renderers.md` schema。
 
 Exit Criteria:
 
-- [ ] focused 单测：token 用量渲染正确数值 + 环形进度；`token-no-usage` 降级；建议 Pills 选择触发 `onSelect`；三 `overflowMode` 排布正确。
-- [ ] 两渲染器注册进 `ai-renderer-definitions.ts` 且 `index.ts` 导出。
+- [x] focused 单测：token 用量渲染正确数值 + 环形进度；`token-no-usage` 降级；建议 Pills 选择触发 `onSelect`；三 `overflowMode` 排布正确。
+- [x] 两渲染器注册进 `ai-renderer-definitions.ts` 且 `index.ts` 导出。
 
 ### Phase 5 - playground + e2e + owner-doc
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/`、`tests/e2e/`、`docs/components/flux-renderers-ai/design.md`、`renderers.md`、`docs/components/index.md`、`docs/components/roadmap-ai.md`、`docs/logs/2026/`
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] playground：voice 录音示例（mock 或真实 SpeechRecognition）+ token 用量示例（mock connector 填 `metadata.usage`）+ 分支示例（mock 多轮重生成）+ 建议示例 + 联动示例（messages→form / response→data-source）+ 路由。
-- [ ] e2e：voice 录音态/unsupported 降级；token 显示；分支 prev/next；建议选择；联动抽查。禁截图诊断，用 `page.evaluate`/locator。
-- [ ] owner-doc 同步：`design.md` §5.1（P4 四行 ✅ + 两 Decision 结论）；`renderers.md`（三渲染器 schema + 分支段）；`docs/components/index.md`；roadmap A5 `todo`→`done`；dev log。
+- [x] playground：voice 录音示例（mock 或真实 SpeechRecognition）+ token 用量示例（mock connector 填 `metadata.usage`）+ 分支示例（mock 多轮重生成）+ 建议示例 + 联动示例（messages→form / response→data-source）+ 路由。
+- [x] e2e：voice 录音态/unsupported 降级；token 显示；分支 prev/next；建议选择；联动抽查。禁截图诊断，用 `page.evaluate`/locator。
+- [x] owner-doc 同步：`design.md` §5.1（P4 四行 ✅ + 两 Decision 结论）；`renderers.md`（三渲染器 schema + 分支段）；`docs/components/index.md`；roadmap A5 `todo`→`done`；dev log。
 
 Exit Criteria:
 
-- [ ] playground 五示例可交互 + 路由可达。
-- [ ] e2e 全过。
-- [ ] owner doc 与 live baseline 一致（无 drift）。
+- [x] playground 五示例可交互 + 路由可达。
+- [x] e2e 全过。
+- [x] owner doc 与 live baseline 一致（无 drift）。
 
 ## Draft Review Record
 
@@ -190,17 +195,17 @@ Exit Criteria:
 
 > 全量 `pnpm typecheck/build/lint/test` 在此跑一次（Minimum Rule 18）；Phase 内只做局部 focused 验证。
 
-- [ ] 两 Decision（messages 进 form / data-source 联动）已裁定（引入则实现+proof，不引入则诚实移出 scope）。
-- [ ] `ai-voice-input`（A-15）+ voice 三 Failure Path + INV-1 裁定保持（非 IO 直呼）。
-- [ ] 消息分支（A-16）+ engine 记 branchId + host 管理 branches + `onBranchChange` 契约。
-- [ ] `ai-token-usage`（A-17）+ `ai-suggestions` + 降级/overflow Failure Path。
-- [ ] INV-1 不变量保持（voice 直呼浏览器 API 经裁定；engine 零 React/DOM；渲染器零直连 fetch/WebSocket/localStorage），`contract-honesty.test.ts` 绿。
-- [ ] owner doc（design.md §5.1/§11.2、renderers.md、index.md、roadmap A5、dev log）同步到 live baseline。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 两 Decision（messages 进 form / data-source 联动）已裁定（引入则实现+proof，不引入则诚实移出 scope）。
+- [x] `ai-voice-input`（A-15）+ voice 三 Failure Path + INV-1 裁定保持（非 IO 直呼）。
+- [x] 消息分支（A-16）+ engine 记 branchId + host 管理 branches + `onBranchChange` 契约。
+- [x] `ai-token-usage`（A-17）+ `ai-suggestions` + 降级/overflow Failure Path。
+- [x] INV-1 不变量保持（voice 直呼浏览器 API 经裁定；engine 零 React/DOM；渲染器零直连 fetch/WebSocket/localStorage），`contract-honesty.test.ts` 绿。
+- [x] owner doc（design.md §5.1/§11.2、renderers.md、index.md、roadmap A5、dev log）同步到 live baseline。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`（58/58）
+- [x] `pnpm build`（31/31）
+- [x] `pnpm lint`（31/31）
+- [x] `pnpm test`（58/58 unit；e2e: 60 entry-pages + 6 新 P4 + 15 AI 全绿）
 
 ## Deferred But Adjudicated
 
@@ -214,13 +219,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: All 5 Phases executed; full-green verified (typecheck 58/58, build 31/31, lint 31/31, unit test 58/58; e2e 60 entry-pages + 6 P4 + 15 AI green). Two Decisions adjudicated (Decision-A host paradigm w/ serialization preserves INV-17; Decision-B no new method). Owner docs synced to live baseline.
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent（fresh session）—— ses_06eb82eb3ffeAnEBM4m3K0Bf3k（`PASS`，零 Blocker / 零 Major / 零 Minor）
+- Evidence: 独立核对 8 项（Phase item honesty、代码存在性与契约匹配、注册/导出、INV-1 honesty 跑 contract-honesty 绿、6 个新测试文件全绿、Decision 结论落地 design.md §3/§11.2、roadmap A5=done、§5.1 P4 四行 ✅ 无 drift）；独立跑 `pnpm --filter @nop-chaos/flux-renderers-ai typecheck` + `build` 双绿。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- `MediaRecorder` 语音回退留 host 自定义（improvement §5.3）。
+- 多轮 per-turn 分支管理属 host 业务逻辑（本包仅记 branchId + 渲染 host 注入的 branches）。
+- token 成本核算（汇率/模型定价表）属 host 关注点（包内只读 `metadata.usage`）。
