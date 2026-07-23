@@ -34,6 +34,8 @@ export function useGanttKeyboard({
     }
   };
 
+  const getSelectedId = (): string | number | null => store.selectedTaskId ?? selectedTaskId;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!containerRef.current) return;
@@ -44,7 +46,8 @@ export function useGanttKeyboard({
           e.preventDefault();
           const tasks = store.getVisibleTasks();
           if (tasks.length === 0) return;
-          let idx = selectedTaskId ? tasks.findIndex((t) => t.id === selectedTaskId) : -1;
+          const currentId = getSelectedId();
+          let idx = currentId ? tasks.findIndex((t) => t.id === currentId) : -1;
           if (e.key === 'ArrowDown') idx = Math.min(idx + 1, tasks.length - 1);
           else idx = Math.max(idx - 1, 0);
           if (idx >= 0) {
@@ -54,41 +57,41 @@ export function useGanttKeyboard({
           break;
         }
         case 'ArrowLeft': {
-          if (!selectedTaskId) break;
+          if (!getSelectedId()) break;
           e.preventDefault();
-          const task = store.tasks.get(selectedTaskId);
+          const task = store.tasks.get(getSelectedId()!);
           if (!task) break;
-          const children = store.getVisibleDescendantCount(selectedTaskId);
-          if (children > 0 && store.isOpen(selectedTaskId)) {
-            store.toggleOpen(selectedTaskId);
+          const children = store.getVisibleDescendantCount(getSelectedId()!);
+          if (children > 0 && store.isOpen(getSelectedId()!)) {
+            store.toggleOpen(getSelectedId()!);
           }
           break;
         }
         case 'ArrowRight': {
-          if (!selectedTaskId) break;
+          if (!getSelectedId()) break;
           e.preventDefault();
-          const task = store.tasks.get(selectedTaskId);
+          const task = store.tasks.get(getSelectedId()!);
           if (!task) break;
-          const children = store.getVisibleDescendantCount(selectedTaskId);
-          if (children > 0 && !store.isOpen(selectedTaskId)) {
-            store.toggleOpen(selectedTaskId);
+          const children = store.getVisibleDescendantCount(getSelectedId()!);
+          if (children > 0 && !store.isOpen(getSelectedId()!)) {
+            store.toggleOpen(getSelectedId()!);
           }
           break;
         }
         case 'Enter': {
           e.preventDefault();
-          if (selectedTaskId && onOpenEditor) {
-            onOpenEditor(selectedTaskId);
+          const id = getSelectedId();
+          if (id && onOpenEditor) {
+            onOpenEditor(id);
           }
           break;
         }
         case 'Delete':
         case 'Backspace': {
-          if (!selectedTaskId) break;
+          const id = getSelectedId();
+          if (!id) break;
           e.preventDefault();
-          const tasks = store.getVisibleTasks();
-          const _deletedIdx = tasks.findIndex((t) => t.id === selectedTaskId);
-          store.deleteTask(selectedTaskId);
+          store.deleteTask(id);
           onSelectTask(null);
           containerRef.current?.focus();
           break;

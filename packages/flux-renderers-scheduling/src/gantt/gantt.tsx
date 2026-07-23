@@ -1,4 +1,4 @@
-import React, { useRef, useImperativeHandle, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useImperativeHandle, useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { Skeleton, cn } from '@nop-chaos/ui';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope } from '@nop-chaos/flux-react';
@@ -59,6 +59,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const svgRef = useRef<SVGSVGElement>(null);
 
     const [store] = useState(() => createInitialStore(resolved));
+
+    const selectedTaskId = useSyncExternalStore(store.subscribe, () => store.selectedTaskId);
+    const editingTaskId = useSyncExternalStore(store.subscribe, () => store.editingTaskId);
 
     const eventsRef = useRef(events);
     useEffect(() => { eventsRef.current = events; }, [events]);
@@ -172,7 +175,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     useGanttKeyboard({
       store,
       containerRef,
-      selectedTaskId: store.selectedTaskId,
+      selectedTaskId,
       onSelectTask: (id) => { store.selectTask(id); },
       onOpenEditor: openEditor,
       onUndo: handleUndo,
@@ -296,7 +299,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
               <GanttGrid
                 store={store}
                 columns={columns}
-                selectedTaskId={store.selectedTaskId}
+                selectedTaskId={selectedTaskId}
                 onSelectTask={(id) => { store.selectTask(id); }}
                 columnRegions={columnRegions}
                 onTaskClick={handleTaskClick}
@@ -339,7 +342,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         <GanttEditor
           store={store}
           editorRegion={regions.editor as RenderRegionHandle}
-          editingTaskId={store.editingTaskId}
+          editingTaskId={editingTaskId}
           onClose={() => { store.editTask(null); }}
           onBarDoubleClick={(id) => { store.editTask(id); }}
           className={resolved.editorClassName as string | undefined}
