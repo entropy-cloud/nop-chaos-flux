@@ -516,6 +516,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     eyebrow: 'Mechanism Test',
     description: 'Minimal data-source + fetcher + loop mechanism verification.',
   },
+  {
+    id: 'env-stream',
+    title: 'env.stream / env.openSocket',
+    eyebrow: 'Env IO Extension',
+    description:
+      'Interactive demo of the playground default env.stream (fetch + ReadableStream + TextDecoder, SSE/NDJSON auto-split + auto-parse) and env.openSocket (native WebSocket proxy).',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

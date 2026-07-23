@@ -9,6 +9,8 @@ import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
+import { createDefaultStream } from '../env/stream-impl.js';
+import { createDefaultOpenSocket } from '../env/socket-impl.js';
 
 export const MOCK_PRODUCTS = [
   { id: '1', name: 'iPhone 15 Pro', price: '¥8,999', tag: '新品', img: 'https://picsum.photos/seed/p1/200/200' },
@@ -79,6 +81,8 @@ export function createMockFetcher() {
 export function createEnv(): RendererEnv {
   return {
     fetcher: createMockFetcher(),
+    stream: createDefaultStream(),
+    openSocket: createDefaultOpenSocket(),
     notify: (level, message) => {
       const text = typeof message === 'string' ? message : String(message ?? '');
       if (level === 'error') toast.error(text || 'Error');
