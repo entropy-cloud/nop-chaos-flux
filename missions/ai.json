@@ -1,0 +1,21 @@
+{
+  "name": "ai",
+  "description": "Build the AI conversation renderer package (@nop-chaos/flux-renderers-ai) — chat panel, message list, bubble, sender, conversations, tool calls, attachments, citations, HITL approval, voice input, token usage. Pure frontend component package. Engine ported from tiny-robot (Vue 3, MIT) and rewritten in React 19 + flux architecture. Driven by roadmap-ai.md. Design complete: tiny-robot deep analysis (912 lines), v2 design doc (audit resolved), engine/adapter/connector specs, 17 improvement items mapped to P1-P4 phases.",
+  "roadmapPath": "docs/components/roadmap-ai.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": "packages",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "feat(ai): <description>"
+}
