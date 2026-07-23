@@ -36,8 +36,6 @@ interface CompactModeConfig {
 }
 ```
 
-File: `packages/flux-renderers-scheduling/src/gantt/components/gantt-compact.tsx`
-
 ## Fullscreen
 
 ### Fullscreen API Integration
