@@ -9,7 +9,7 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  background-color: #fff;
+  background-color: var(--color-background);
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
@@ -62,7 +62,7 @@
 
 .nop-gantt-skeleton-row {
   height: 2.5rem;
-  background-color: #f3f4f6;
+  background-color: var(--color-muted);
   border-radius: 0.25rem;
   margin-bottom: 0.25rem;
 }

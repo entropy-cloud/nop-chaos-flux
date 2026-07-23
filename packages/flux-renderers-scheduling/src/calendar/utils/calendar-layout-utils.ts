@@ -187,7 +187,7 @@ export function detectConflicts(input: ConflictInput): ConflictInfo | undefined 
 
   parsed.sort((a, b) => a.start.getTime() - b.start.getTime());
 
-  const overlapping: CalendarEvent[] = [];
+  const overlappingSet: Set<CalendarEvent> = new Set();
   const active: { event: CalendarEvent; end: Date }[] = [];
 
   for (const item of parsed) {
@@ -198,25 +198,21 @@ export function detectConflicts(input: ConflictInput): ConflictInfo | undefined 
     }
 
     if (active.length > 0) {
-      if (!overlapping.includes(item.event)) {
-        overlapping.push(item.event);
-      }
+      overlappingSet.add(item.event);
       for (const a of active) {
-        if (!overlapping.includes(a.event)) {
-          overlapping.push(a.event);
-        }
+        overlappingSet.add(a.event);
       }
     }
 
     active.push({ event: item.event, end: item.end });
   }
 
-  if (overlapping.length === 0) return undefined;
+  if (overlappingSet.size === 0) return undefined;
 
   return {
     resourceId,
     date,
-    overlappingEvents: overlapping,
+    overlappingEvents: [...overlappingSet],
   };
 }
 

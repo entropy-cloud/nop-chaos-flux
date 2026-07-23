@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { prepareWasm, resetWasmPromise } from './prepare-wasm.js';
+import { prepareWasm, resetWasmPromise } from './prepare-wasm-utils.js';
 
 describe('prepareWasm', () => {
   beforeEach(() => {

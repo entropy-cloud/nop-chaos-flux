@@ -67,6 +67,7 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
       if ((err as DOMException)?.name === 'AbortError') return;
       const msg = err instanceof Error ? err.message : String(err) || 'PNG export failed';
       setExportError(msg);
+      throw err;
     } finally {
       clearTimeout(guardTimer);
       exportingRef.current = false;

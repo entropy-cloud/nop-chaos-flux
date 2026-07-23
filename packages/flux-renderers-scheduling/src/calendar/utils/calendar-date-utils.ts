@@ -108,4 +108,17 @@ export function getDaysInMonth(date: Date): number {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
 }
 
+import type { CalendarResource } from '../../schemas.js';
+
+export function flattenResources(resources: CalendarResource[]): CalendarResource[] {
+  const result: CalendarResource[] = [];
+  for (const r of resources) {
+    result.push(r);
+    if (r.resources && r.resources.length > 0) {
+      result.push(...flattenResources(r.resources));
+    }
+  }
+  return result;
+}
+
 

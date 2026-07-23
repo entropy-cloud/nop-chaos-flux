@@ -328,5 +328,6 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
   return api;
 }
 
+/** @deprecated Use `createGanttStore(config?)` instead of `new GanttStore(config?)`. The `new` syntax works via an intentional `as unknown as` type assertion — it always calls the same factory function. This type alias is kept for backward compatibility with existing constructors and will be removed in a future release. */
 export type GanttStore = GanttStoreApi;
 export const GanttStore: new (config?: GanttStoreConfig) => GanttStoreApi = createGanttStore as unknown as new (config?: GanttStoreConfig) => GanttStoreApi;

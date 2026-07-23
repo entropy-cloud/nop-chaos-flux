@@ -1,13 +1,13 @@
 import type { ChangeEvent } from 'react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentForm, useCurrentFormState, useInputComponentHandle } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, Label, cn } from '@nop-chaos/ui';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, cn } from '@nop-chaos/ui';
 import { ScanLine } from 'lucide-react';
 import { BarcodeScannerOverlay } from './barcode-scanner-overlay.js';
 import { checkCameraAvailability } from './utils/camera-utils.js';
-import { resetWasmPromise as resetWasm } from './utils/prepare-wasm.js';
+import { resetWasmPromise as resetWasm } from './utils/prepare-wasm-utils.js';
 import type { BarcodeInputSchema, BarcodeDetectResult } from './barcode-input.types.js';
 
 export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputSchema>) {
@@ -26,6 +26,8 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState<boolean | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [scannerError, setScannerError] = useState<string | null>(null);
+  const errorId = useId();
 
   useEffect(() => {
     void events.onMount?.({});
@@ -100,6 +102,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       if (ac.signal.aborted) return;
       console.warn('BarcodeInput: failed to open scanner', err);
       setCameraAvailable(false);
+      setScannerError('Camera unavailable');
     }
   };
 
@@ -220,12 +223,10 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   if (!meta.visible) return null;
 
   const showClearButton = resolved.clearable && inputValue.length > 0;
-  const labelText = resolved.label ? String(resolved.label) : undefined;
   const inputId = `${props.id || name}-input`;
 
   return (
     <div data-slot="barcode-input" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-barcode-input nop-input-text', meta.className)}>
-      {labelText && <Label htmlFor={inputId}>{labelText}</Label>}
       <InputGroup className="nop-input-group">
         <InputGroupInput
           ref={inputRef}
@@ -240,6 +241,8 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
           onFocus={handleFocus}
           onBlur={handleBlur}
           aria-label={String(resolved.label ?? name ?? '') || undefined}
+          aria-required={!!resolved.required || undefined}
+          aria-describedby={validationError ? errorId : undefined}
         />
         <InputGroupAddon align="inline-end">
           {showClearButton ? (
@@ -268,7 +271,11 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       </InputGroup>
 
       {validationError && (
-        <div data-slot="barcode-validation-error" className="text-xs text-red-500 mt-1">{validationError}</div>
+        <div id={errorId} data-slot="barcode-validation-error" className="text-xs text-destructive mt-1">{validationError}</div>
+      )}
+
+      {scannerError && (
+        <div className="text-xs text-destructive mt-1">{scannerError}</div>
       )}
 
       <BarcodeScannerOverlay

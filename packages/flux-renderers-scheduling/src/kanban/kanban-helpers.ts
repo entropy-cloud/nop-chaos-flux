@@ -168,3 +168,34 @@ export function removeColumn(board: BoardData, columnId: string): BoardData {
   delete result[columnId];
   return result;
 }
+
+export function getColumns(board: BoardData): BoardItem[] {
+  const root = board['root'];
+  if (!root) return [];
+  return root.children
+    .map((id) => board[id])
+    .filter((item): item is BoardItem => item != null && item.type === 'column');
+}
+
+export interface KanbanFilterTag {
+  id: string;
+  text: string;
+  color: string;
+}
+
+export function collectAllTags(board: BoardData, columns: BoardItem[]): KanbanFilterTag[] {
+  const tagMap = new Map<string, KanbanFilterTag>();
+  for (const col of columns) {
+    for (const childId of col.children) {
+      const card = board[childId];
+      if (card?.meta?.tags && Array.isArray(card.meta.tags)) {
+        for (const tag of card.meta.tags) {
+          if (!tagMap.has(tag.id)) {
+            tagMap.set(tag.id, { id: tag.id, text: tag.text, color: tag.color ?? '' });
+          }
+        }
+      }
+    }
+  }
+  return Array.from(tagMap.values());
+}

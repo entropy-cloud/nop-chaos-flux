@@ -8,9 +8,9 @@
  * Gantt uses Zustand + Context (deeper tree, cross-component subscriptions).
  * Kanban uses useState + imperative callbacks (flatter tree, snapshot undo).
  */
-import React, { useImperativeHandle, useRef, useState, useEffect } from 'react';
+import React, { useImperativeHandle, useRef, useState, useEffect, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useRenderScope } from '@nop-chaos/flux-react';
 import { Skeleton, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -27,19 +27,10 @@ import { CalendarDayView } from './components/calendar-day-view.js';
 import { CalendarConfirmDialog } from './components/calendar-confirm-dialog.js';
 import { CalendarDragTypeSelector } from './components/calendar-drag-type-selector.js';
 import { useCalendarExport } from './hooks/use-calendar-export.js';
-import { parseISODate } from './utils/calendar-date-utils.js';
+import { useCalendarOwnership } from './hooks/use-calendar-ownership.js';
+import { useCalendarConfirmDialog } from './hooks/use-calendar-confirm-dialog.js';
+import { parseISODate, flattenResources } from './utils/calendar-date-utils.js';
 import './utils/calendar-print.css';
-
-function flattenResources(resources: CalendarResource[]): CalendarResource[] {
-  const result: CalendarResource[] = [];
-  for (const r of resources) {
-    result.push(r);
-    if (r.resources && r.resources.length > 0) {
-      result.push(...flattenResources(r.resources));
-    }
-  }
-  return result;
-}
 
 export interface CalendarHandle {
   goNext: () => void;
@@ -78,19 +69,13 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   const locale = (resolved.locale as string) ?? (typeof navigator !== 'undefined' ? navigator.language : 'en-US');
 
   const eventsData = (resolved.events as CalendarSchema['events']) ?? (resolved as any).data as CalendarEvent[] ?? [];
-  const resourcesData = (resolved.resources as CalendarSchema['resources']) ?? [];
+  const resourcesData = useMemo(() => (resolved.resources as CalendarSchema['resources']) ?? [], [resolved.resources]);
   if ((resolved as any).data != null && resolved.events == null && typeof console !== 'undefined') {
     console.warn('Calendar: `data` field is deprecated, use `events` instead');
   }
 
   const dayStartHour = 8;
   const dayEndHour = 20;
-
-  const [confirmDialog, setConfirmDialog] = useState<{
-    event: CalendarEvent;
-    targetDate: string;
-    targetResource: string;
-  } | null>(null);
 
   const calendarRef = useRef<HTMLDivElement | null>(null);
   const calendarExport = useCalendarExport(calendarRef);
@@ -102,39 +87,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const scope = useRenderScope();
 
-  const isScopeView = viewOwnership === 'scope' && !!viewStatePath;
-  const isScopeDate = dateOwnership === 'scope' && !!dateStatePath;
-
-  const scopeViewRaw = useScopeSelector((s: Record<string, unknown>) => {
-    if (!isScopeView || !viewStatePath) return undefined;
-    const keys = viewStatePath.split('.');
-    let val: unknown = s;
-    for (const k of keys) { if (val && typeof val === 'object') val = (val as Record<string, unknown>)[k]; else return undefined; }
-    return val as CalendarView | undefined;
-  });
-
-  const scopeDateRaw = useScopeSelector((s: Record<string, unknown>) => {
-    if (!isScopeDate || !dateStatePath) return undefined;
-    const keys = dateStatePath.split('.');
-    let val: unknown = s;
-    for (const k of keys) { if (val && typeof val === 'object') val = (val as Record<string, unknown>)[k]; else return undefined; }
-    return val as string | undefined;
-  });
-
-  const scopeView = isScopeView ? scopeViewRaw : undefined;
-  const scopeDate = isScopeDate ? scopeDateRaw : undefined;
-
-  const controlledView = viewOwnership === 'controlled'
-    ? (resolved.view as CalendarView) ?? 'month'
-    : viewOwnership === 'scope' && scopeView
-      ? scopeView
-      : undefined;
-
-  const controlledDate = dateOwnership === 'controlled'
-    ? (resolved.date ? (parseISODate(resolved.date as string) ?? undefined) : undefined)
-    : dateOwnership === 'scope' && scopeDate
-      ? parseISODate(scopeDate)
-      : undefined;
+  const { controlledView, controlledDate } = useCalendarOwnership(resolved as Record<string, unknown>);
 
   const { currentDate, dateRange, activeView, setCurrentDate, setActiveView } = useCalendarState({
     initialDate,
@@ -188,6 +141,8 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     [navigation, setActiveView, setCurrentDate, calendarExport],
   );
 
+  const { confirmDialog, handleSwapConfirm, cancelSwap, setConfirmDialog } = useCalendarConfirmDialog();
+
   const getCellFromPoint = (x: number, y: number) => {
     const el = document.elementFromPoint(x, y);
     if (!el || !calendarRef.current?.contains(el)) return null;
@@ -197,21 +152,6 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     const resourceId = cell.getAttribute('data-resource');
     if (!date || !resourceId) return null;
     return { date, resourceId };
-  };
-
-  const handleSwapConfirm = (payload: {
-    eventId: string;
-    fromResource: string;
-    toResource: string;
-    fromDate: string;
-    toDate: string;
-    event: CalendarEvent;
-  }) => {
-    setConfirmDialog({
-      event: payload.event,
-      targetDate: payload.toDate,
-      targetResource: payload.toResource,
-    });
   };
 
   const executeSwap = () => {
@@ -227,91 +167,40 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     setConfirmDialog(null);
   };
 
-  const cancelSwap = () => {
-    setConfirmDialog(null);
-  };
-
-  const handleDragCreateEvent = (payload: {
-    title: string;
-    type: string;
-    start: string;
-    end: string;
-    resourceId: string;
-  }) => {
-    const newEvent: CalendarEvent = {
-      id: `new-${Date.now()}`,
-      title: payload.title,
-      start: payload.start,
-      end: payload.end,
-      type: payload.type,
-      resourceId: payload.resourceId,
-      color: DEFAULT_SHIFT_TYPES.find(t => t.type === payload.type)?.color,
-    };
+  const handleDragCreateEvent = (p: { title: string; type: string; start: string; end: string; resourceId: string }) => {
+    const newEvent: CalendarEvent = { id: `new-${Date.now()}`, title: p.title, start: p.start, end: p.end, type: p.type, resourceId: p.resourceId, color: DEFAULT_SHIFT_TYPES.find(t => t.type === p.type)?.color };
     void events.onEventCreate?.({ event: newEvent });
   };
 
   const [keyboardDragEventId, setKeyboardDragEventId] = useState<string | null>(null);
 
+  const moveCalendarEvent = (eventId: string, fromResource: string, toResource: string, fromDate: string, toDate: string) => {
+    const event = eventsData.find((e) => e.id === eventId);
+    if (event) void events.onEventChange?.({ eventId, fromResource, toResource, fromDate, toDate, event });
+  };
+
   const handleKeyboardMoveEvent = (eventId: string, direction: 'up' | 'down' | 'left' | 'right') => {
     const event = eventsData.find((e) => e.id === eventId);
     if (!event) return;
     const dayDelta = 1;
-    const oldStart = new Date(event.start.split('T')[0]);
-    const oldEnd = new Date((event.end || event.start).split('T')[0]);
-    let newStart: Date;
-    let newEnd: Date;
-    switch (direction) {
-      case 'left':
-        newStart = new Date(oldStart);
-        newStart.setUTCDate(newStart.getUTCDate() - dayDelta);
-        newEnd = new Date(oldEnd);
-        newEnd.setUTCDate(newEnd.getUTCDate() - dayDelta);
-        break;
-      case 'right':
-        newStart = new Date(oldStart);
-        newStart.setUTCDate(newStart.getUTCDate() + dayDelta);
-        newEnd = new Date(oldEnd);
-        newEnd.setUTCDate(newEnd.getUTCDate() + dayDelta);
-        break;
-      case 'up': {
-        const resourceIdx = resourcesData.findIndex((r) => r.id === event.resourceId);
-        if (resourceIdx > 0) {
-          const prevResource = resourcesData[resourceIdx - 1];
-          void events.onEventChange?.({
-            eventId: event.id,
-            fromResource: event.resourceId ?? '',
-            toResource: prevResource.id,
-            fromDate: event.start.split('T')[0] ?? event.start,
-            toDate: event.start.split('T')[0] ?? event.start,
-            event,
-          });
-        }
-        return;
-      }
-      case 'down': {
-        const resourceIdx = resourcesData.findIndex((r) => r.id === event.resourceId);
-        if (resourceIdx < resourcesData.length - 1) {
-          const nextResource = resourcesData[resourceIdx + 1];
-          void events.onEventChange?.({
-            eventId: event.id,
-            fromResource: event.resourceId ?? '',
-            toResource: nextResource.id,
-            fromDate: event.start.split('T')[0] ?? event.start,
-            toDate: event.start.split('T')[0] ?? event.start,
-            event,
-          });
-        }
-        return;
+    const oldStartStr = event.start.split('T')[0];
+    const oldEndStr = (event.end || event.start).split('T')[0];
+    const oldStart = new Date(oldStartStr);
+    if (direction === 'left' || direction === 'right') {
+      const sign = direction === 'left' ? -1 : 1;
+      const newStart = new Date(oldStart);
+      newStart.setUTCDate(newStart.getUTCDate() + sign * dayDelta);
+      const newEnd = new Date(oldEndStr);
+      newEnd.setUTCDate(newEnd.getUTCDate() + sign * dayDelta);
+      moveCalendarEvent(event.id, event.resourceId ?? '', event.resourceId ?? '', oldStartStr, newStart.toISOString().slice(0, 10));
+    } else {
+      const resourceIdx = resourcesData.findIndex((r) => r.id === event.resourceId);
+      const targetIdx = direction === 'up' ? resourceIdx - 1 : resourceIdx + 1;
+      if (targetIdx >= 0 && targetIdx < resourcesData.length) {
+        const targetResource = resourcesData[targetIdx];
+        moveCalendarEvent(event.id, event.resourceId ?? '', targetResource.id, oldStartStr, oldStartStr);
       }
     }
-    void events.onEventChange?.({
-      eventId: event.id,
-      fromResource: event.resourceId ?? '',
-      toResource: event.resourceId ?? '',
-      fromDate: event.start.split('T')[0] ?? event.start,
-      toDate: newStart.toISOString().slice(0, 10),
-      event,
-    });
   };
 
   const dragSwap = useCalendarDrag({
@@ -324,40 +213,20 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const handleEventKeyDown = (e: React.KeyboardEvent, event: CalendarEvent) => {
     if (keyboardDragEventId) {
-      switch (e.key) {
-        case 'ArrowUp':
-          e.preventDefault();
-          dragSwap.moveKeyboardDrag('up');
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          dragSwap.moveKeyboardDrag('down');
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          dragSwap.moveKeyboardDrag('left');
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          dragSwap.moveKeyboardDrag('right');
-          break;
-        case 'Escape':
-          e.preventDefault();
-          dragSwap.cancelKeyboardDrag();
-          setKeyboardDragEventId(null);
-          break;
-        case 'Enter':
-          e.preventDefault();
-          dragSwap.confirmKeyboardDrop();
-          setKeyboardDragEventId(null);
-          break;
-      }
-    } else {
-      if (e.key === ' ' || e.key === 'Space') {
-        e.preventDefault();
-        dragSwap.startKeyboardDrag(event);
-        setKeyboardDragEventId(event.id);
-      }
+      const dragActions: Record<string, () => void> = {
+        ArrowUp: () => dragSwap.moveKeyboardDrag('up'),
+        ArrowDown: () => dragSwap.moveKeyboardDrag('down'),
+        ArrowLeft: () => dragSwap.moveKeyboardDrag('left'),
+        ArrowRight: () => dragSwap.moveKeyboardDrag('right'),
+        Escape: () => { dragSwap.cancelKeyboardDrag(); setKeyboardDragEventId(null); },
+        Enter: () => { dragSwap.confirmKeyboardDrop(); setKeyboardDragEventId(null); },
+      };
+      const action = dragActions[e.key];
+      if (action) { e.preventDefault(); action(); }
+    } else if (e.key === ' ' || e.key === 'Space') {
+      e.preventDefault();
+      dragSwap.startKeyboardDrag(event);
+      setKeyboardDragEventId(event.id);
     }
   };
 
@@ -366,10 +235,9 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   useEffect(() => {
     const container = calendarRef.current;
     if (!container) return;
-    const prevKey = prevTargetRef.current;
-    if (prevKey) {
-      const [prevDate, prevRes] = prevKey.split(':');
-      const prevEl = container.querySelector(`[data-slot="calendar-cell"][data-date="${prevDate}"][data-resource="${prevRes}"]`);
+    if (prevTargetRef.current) {
+      const [pDate, pRes] = prevTargetRef.current.split(':');
+      const prevEl = container.querySelector(`[data-slot="calendar-cell"][data-date="${pDate}"][data-resource="${pRes}"]`);
       if (prevEl) {
         prevEl.removeAttribute('data-drop-target');
         prevEl.removeAttribute('data-drop-valid');
@@ -377,10 +245,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       }
     }
     const { targetDate, targetResource, active, sourceEvent } = dragSwap.dragState;
-    if (!active || !targetDate || !targetResource) {
-      prevTargetRef.current = null;
-      return;
-    }
+    if (!active || !targetDate || !targetResource) { prevTargetRef.current = null; return; }
     const key = `${targetDate}:${targetResource}`;
     prevTargetRef.current = key;
     const el = container.querySelector(`[data-slot="calendar-cell"][data-date="${targetDate}"][data-resource="${targetResource}"]`);
@@ -406,6 +271,17 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     }
     return map;
   });
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reconcile open/close state when resourcesData changes, no cascading risk
+    _setResourceOpenMap(() => {
+      const next: Record<string, boolean> = {};
+      for (const r of resourcesData) {
+        next[r.id] = r.open !== false;
+      }
+      return next;
+    });
+  }, [resourcesData]);
 
   const _handleGroupToggle = (groupId: string) => {
     _setResourceOpenMap((prev) => {
@@ -492,58 +368,33 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       {activeView === 'month' && (
         <div ref={scrollRef} className="overflow-auto flex-1">
           <CalendarMonthView
-            events={eventsData}
-            resources={displayResources}
-            dateRange={dateRange}
-            currentDate={currentDate}
-            firstDayOfWeek={firstDayOfWeek}
-            showWeekends={showWeekends}
-            maxConcurrent={maxConcurrent}
-            eventTemplate={regions.eventTemplate ?? undefined}
-            onEventClick={onEventClick}
-            virtualItems={virtualItems}
-            totalSize={totalSize}
-            onDragStart={dragSwap.startDrag}
-            onCellDragStart={dragCreate.startCellDrag}
-            showCrossDayLines={showCrossDayLines}
-            onEventKeyDown={handleEventKeyDown}
-            eventClassName={resolved.eventClassName as string | undefined}
-            locale={locale}
+            events={eventsData} resources={displayResources} currentDate={currentDate}
+            dateRange={dateRange} firstDayOfWeek={firstDayOfWeek} showWeekends={showWeekends}
+            maxConcurrent={maxConcurrent} eventTemplate={regions.eventTemplate ?? undefined}
+            onEventClick={onEventClick} virtualItems={virtualItems} totalSize={totalSize}
+            onDragStart={dragSwap.startDrag} onCellDragStart={dragCreate.startCellDrag}
+            showCrossDayLines={showCrossDayLines} onEventKeyDown={handleEventKeyDown}
+            eventClassName={resolved.eventClassName as string | undefined} locale={locale}
           />
         </div>
       )}
 
       {activeView === 'week' && (
         <CalendarWeekView
-          events={eventsData}
-          resources={displayResources}
-          currentDate={currentDate}
-          firstDayOfWeek={firstDayOfWeek}
-          showWeekends={showWeekends}
-          maxConcurrent={maxConcurrent}
-          dayStartHour={dayStartHour}
-          dayEndHour={dayEndHour}
-          eventTemplate={regions.eventTemplate ?? undefined}
-          onEventClick={onEventClick}
-          onDragStart={dragSwap.startDrag}
-          onEventKeyDown={handleEventKeyDown}
-          locale={locale}
+          events={eventsData} resources={displayResources} currentDate={currentDate}
+          firstDayOfWeek={firstDayOfWeek} showWeekends={showWeekends} maxConcurrent={maxConcurrent}
+          dayStartHour={dayStartHour} dayEndHour={dayEndHour}
+          eventTemplate={regions.eventTemplate ?? undefined} onEventClick={onEventClick}
+          onDragStart={dragSwap.startDrag} onEventKeyDown={handleEventKeyDown} locale={locale}
         />
       )}
 
       {activeView === 'day' && (
         <CalendarDayView
-          events={eventsData}
-          resources={displayResources}
-          currentDate={currentDate}
-          maxConcurrent={maxConcurrent}
-          dayStartHour={dayStartHour}
-          dayEndHour={dayEndHour}
-          eventTemplate={regions.eventTemplate ?? undefined}
-          onEventClick={onEventClick}
-          onDragStart={dragSwap.startDrag}
-          onEventKeyDown={handleEventKeyDown}
-          locale={locale}
+          events={eventsData} resources={displayResources} currentDate={currentDate}
+          maxConcurrent={maxConcurrent} dayStartHour={dayStartHour} dayEndHour={dayEndHour}
+          eventTemplate={regions.eventTemplate ?? undefined} onEventClick={onEventClick}
+          onDragStart={dragSwap.startDrag} onEventKeyDown={handleEventKeyDown} locale={locale}
         />
       )}
 

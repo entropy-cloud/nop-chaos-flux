@@ -6,6 +6,7 @@ export const enUS: Resource = {
       error: 'Error',
       chart: 'Chart',
       close: 'Close',
+      dismiss: 'Dismiss',
       cancel: 'Cancel',
       confirm: 'Confirm',
       delete: 'Delete',

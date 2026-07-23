@@ -9,6 +9,7 @@ import type {
   GanttSchema,
   KanbanSchema,
   CalendarSchema,
+  BarcodeInputSchema,
 } from './schemas.js';
 import type { SchedulingRendererSchema } from './scheduling-renderer-definitions.js';
 
@@ -81,6 +82,22 @@ describe('Phase 1: RendererComponentProps cross-package generic narrowing', () =
     expectTypeOf<Props>().toHaveProperty('locale');
     expectTypeOf<Props>().toHaveProperty('viewOwnership');
   });
+
+  it('RendererComponentProps<BarcodeInputSchema> schema is BarcodeInputSchema', () => {
+    expectTypeOf<RendererComponentProps<BarcodeInputSchema>['schema']>().toEqualTypeOf<BarcodeInputSchema>();
+  });
+
+  it('RendererComponentProps<BarcodeInputSchema> props includes BarcodeInputSchema fields', () => {
+    type Props = RendererComponentProps<BarcodeInputSchema>['props'];
+    expectTypeOf<Props>().toHaveProperty('name');
+    expectTypeOf<Props>().toHaveProperty('label');
+    expectTypeOf<Props>().toHaveProperty('placeholder');
+    expectTypeOf<Props>().toHaveProperty('required');
+    expectTypeOf<Props>().toHaveProperty('clearable');
+    expectTypeOf<Props>().toHaveProperty('formats');
+    expectTypeOf<Props>().toHaveProperty('scanButton');
+    expectTypeOf<Props>().toHaveProperty('batchMode');
+  });
 });
 
 describe('Phase 2: RendererResolvedProps meta key exclusion', () => {
@@ -122,6 +139,15 @@ describe('Phase 2: RendererResolvedProps meta key exclusion', () => {
     expectTypeOf<Resolved>().toHaveProperty('eventClassName');
     expectTypeOf<Resolved>().toHaveProperty('emptyClassName');
   });
+
+  it('RendererResolvedProps<BarcodeInputSchema> has BarcodeInputSchema fields', () => {
+    type Resolved = RendererResolvedProps<BarcodeInputSchema>;
+    expectTypeOf<Resolved>().toHaveProperty('name');
+    expectTypeOf<Resolved>().toHaveProperty('label');
+    expectTypeOf<Resolved>().toHaveProperty('placeholder');
+    expectTypeOf<Resolved>().toHaveProperty('required');
+    expectTypeOf<Resolved>().toHaveProperty('formats');
+  });
 });
 
 describe('Phase 3: SchedulingRendererSchema union type discrimination', () => {
@@ -155,6 +181,17 @@ describe('Phase 3: SchedulingRendererSchema union type discrimination', () => {
     const cal = { type: 'calendar' } as SchedulingRendererSchema;
     if (cal.type === 'calendar') {
       expectTypeOf(cal).toMatchTypeOf<CalendarSchema>();
+    }
+  });
+
+  it('BarcodeInputSchema is assignable to SchedulingRendererSchema', () => {
+    expectTypeOf<BarcodeInputSchema>().toMatchTypeOf<SchedulingRendererSchema>();
+  });
+
+  it('SchedulingRendererSchema discriminates barcode-input type', () => {
+    const bc = { type: 'barcode-input' } as SchedulingRendererSchema;
+    if (bc.type === 'barcode-input') {
+      expectTypeOf(bc).toMatchTypeOf<BarcodeInputSchema>();
     }
   });
 });

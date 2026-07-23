@@ -2,6 +2,16 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCalendarExport } from './use-calendar-export.js';
 
+vi.mock('html2canvas', () => {
+  const h2c = vi.fn(() => ({
+    toBlob: (cb: (b: Blob | null) => void) => cb(new Blob()),
+    toDataURL: () => 'data:image/png;base64,test',
+    width: 100,
+    height: 100,
+  }));
+  return { default: h2c };
+});
+
 describe('useCalendarExport', () => {
   beforeAll(() => {
     window.print = vi.fn();

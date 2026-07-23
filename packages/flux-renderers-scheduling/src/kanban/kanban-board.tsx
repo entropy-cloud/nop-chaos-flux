@@ -9,11 +9,11 @@
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { shallowEqual } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
-import { cn, Button, Input, Label } from '@nop-chaos/ui';
+import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { Undo2, Redo2, History } from 'lucide-react';
-import type { BoardData, BoardItem, KanbanSchema, KanbanCardConfig } from './kanban.types.js';
+import type { BoardData, KanbanSchema, KanbanCardConfig } from './kanban.types.js';
 
 import { KanbanColumn } from './kanban-column.js';
 import { useKanbanDnd } from './hooks/use-kanban-dnd.js';
@@ -21,37 +21,14 @@ import { useColumnDnd } from './hooks/use-column-dnd.js';
 import { useKanbanFilter } from './hooks/use-kanban-filter.js';
 import { useKanbanColumnResize } from './hooks/use-kanban-column-resize.js';
 import { KanbanTagFilter } from './components/kanban-tag-filter.js';
-import type { KanbanFilterTag } from './components/kanban-tag-filter.js';
+
+import { KanbanToolbar } from './components/kanban-toolbar.js';
+import { KanbanColumnAdder } from './components/kanban-column-adder.js';
 import { KanbanActivityLog } from './components/kanban-activity-log.js';
 import type { KanbanAction } from './components/kanban-activity-log.js';
 import { createUndoStack, pushCommand as pushUndoCommand, undo as undoStackOp, redo as redoStackOp, canUndo, canRedo } from './utils/kanban-undo-stack.js';
 import type { UndoStack, UndoCommandType } from './utils/kanban-undo-stack.js';
-import { addCard, removeCard, moveColumn } from './kanban-helpers.js';
-
-function getColumns(board: BoardData): BoardItem[] {
-  const root = board['root'];
-  if (!root) return [];
-  return root.children
-    .map((id) => board[id])
-    .filter((item): item is BoardItem => item != null && item.type === 'column');
-}
-
-function collectAllTags(board: BoardData, columns: BoardItem[]): KanbanFilterTag[] {
-  const tagMap = new Map<string, KanbanFilterTag>();
-  for (const col of columns) {
-    for (const childId of col.children) {
-      const card = board[childId];
-      if (card?.meta?.tags && Array.isArray(card.meta.tags)) {
-        for (const tag of card.meta.tags) {
-          if (!tagMap.has(tag.id)) {
-            tagMap.set(tag.id, { id: tag.id, text: tag.text, color: tag.color });
-          }
-        }
-      }
-    }
-  }
-  return Array.from(tagMap.values());
-}
+import { addCard, removeCard, moveColumn, getColumns, collectAllTags } from './kanban-helpers.js';
 
 export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const { props: resolved, meta, regions, events, helpers } = props;
@@ -81,7 +58,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       for (const p of parts) val = (val as Record<string, unknown>)?.[p];
       return val as BoardData | undefined;
     },
-    Object.is,
+     shallowEqual,
   );
 
   const scopeCollapsedValue = useScopeSelector(
@@ -157,7 +134,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const [activityLogOpen, setActivityLogOpen] = useState(false);
   const [addingColumn, setAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
-  const newColumnInputRef = useRef<HTMLInputElement>(null);
+  const [filterError, setFilterError] = useState<string | null>(null);
   const [actions, setActions] = useState<KanbanAction[]>([]);
   const actionCounterRef = useRef(0);
 
@@ -264,7 +241,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
           };
         }
       } catch (err) {
-        console.warn('[kanban] Failed to compile filter expression:', err);
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn('[kanban] Failed to compile filter expression:', msg);
+        setFilterError(msg);
       }
     }
     return undefined;
@@ -272,21 +251,12 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const filter = useKanbanFilter({ filterText: resolved.filterText as string | undefined, filterCard: filterCardFn });
 
-  const wipOverLimitColumns = (() => {
-    const overLimit = new Set<string>();
-    for (const col of columns) {
-      const colData = boardData[col.id];
-      const cardLimit = (colData?.data?.cardLimit as number) || 0;
-      const colWipStrict = (colData?.data?.wipStrict as boolean) ?? wipStrictGlobal;
-      if (cardLimit > 0 && colWipStrict) {
-        const cardCount = col.children.filter((id) => boardData[id]?.type === 'card').length;
-        if (cardCount >= cardLimit) {
-          overLimit.add(col.id);
-        }
-      }
-    }
-    return overLimit;
-  })();
+  const wipOverLimitColumns = new Set(columns.filter(col => {
+    const d = boardData[col.id]?.data;
+    const cardLimit = (d?.cardLimit as number) || 0;
+    const strict = (d?.wipStrict as boolean) ?? wipStrictGlobal;
+    return cardLimit > 0 && strict && col.children.filter(id => boardData[id]?.type === 'card').length >= cardLimit;
+  }).map(c => c.id));
 
   const handleCardMoveBoardChange = (newBoard: BoardData, cardId?: string, fromColumnId?: string, toColumnId?: string, fromIndex?: number, toIndex?: number) => {
     lastCommandTypeRef.current = 'moveCard';
@@ -335,44 +305,25 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     if (!root) return;
     const idx = root.children.indexOf(columnId);
     if (idx === -1) return;
-    switch (e.key) {
-      case 'ArrowLeft':
-        if (idx > 0) {
-          e.preventDefault();
-          const newBoard = moveColumn(boardData, columnId, idx - 1);
-          lastCommandTypeRef.current = 'moveColumn';
-          handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: idx, toIndex: idx - 1 });
-          void events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: idx - 1 });
-          setDndAnnouncement(`Column moved from position ${idx + 1} to position ${idx}`);
-        }
-        break;
-      case 'ArrowRight':
-        if (idx < root.children.length - 1) {
-          e.preventDefault();
-          const newBoard = moveColumn(boardData, columnId, idx + 1);
-          lastCommandTypeRef.current = 'moveColumn';
-          handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: idx, toIndex: idx + 1 });
-          void events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: idx + 1 });
-          setDndAnnouncement(`Column moved from position ${idx + 1} to position ${idx + 2}`);
-        }
-        break;
+    const dir = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
+    const targetIdx = idx + dir;
+    if (dir && targetIdx >= 0 && targetIdx < root.children.length) {
+      e.preventDefault();
+      const newBoard = moveColumn(boardData, columnId, targetIdx);
+      handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: idx, toIndex: targetIdx });
+      void events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: targetIdx });
+      setDndAnnouncement(`Column moved from position ${idx + 1} to position ${targetIdx + 1}`);
     }
   };
 
-  const handleCardClick = (cardId: string, columnId: string, index: number) => {
-    void events.onCardClick?.({ cardId, columnId, index });
-  };
-
-  const handleColumnClick = (columnId: string) => {
-    void events.onColumnClick?.({ columnId });
-  };
+  const handleCardClick = (cardId: string, columnId: string, index: number) => void events.onCardClick?.({ cardId, columnId, index });
+  const handleColumnClick = (columnId: string) => void events.onColumnClick?.({ columnId });
 
   const handleCardAdd = (columnId: string, cardData?: Record<string, any>) => {
     lastCommandTypeRef.current = 'addCard';
     const cardId = `card-${Date.now()}`;
     const newCard = { id: cardId, title: cardData?.title || 'New Card', ...cardData };
-    const newBoard = addCard(boardData, columnId, newCard);
-    handleSetBoardData(newBoard, 'addCard', { cardId, columnId, cardData: newCard, index: -1 });
+    handleSetBoardData(addCard(boardData, columnId, newCard), 'addCard', { cardId, columnId, cardData: newCard, index: -1 });
     void events.onCardAdd?.({ cardId, columnId, index: -1 });
   };
 
@@ -381,10 +332,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     const card = boardData[cardId];
     const columnId = card?.parentId || '';
     const cardData = boardData[cardId] ? { ...boardData[cardId].data } : {};
-    const colChildren = columnId && boardData[columnId] ? [...boardData[columnId].children] : [];
-    const index = colChildren.indexOf(cardId);
-    const newBoard = removeCard(boardData, cardId);
-    handleSetBoardData(newBoard, 'removeCard', { cardId, columnId, cardData, index });
+    const index = columnId && boardData[columnId] ? [...boardData[columnId].children].indexOf(cardId) : -1;
+    handleSetBoardData(removeCard(boardData, cardId), 'removeCard', { cardId, columnId, cardData, index });
     void events.onCardRemove?.({ cardId, columnId });
   };
 
@@ -397,28 +346,22 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const startAddColumn = () => {
     setAddingColumn(true);
     setNewColumnTitle('');
-    setTimeout(() => newColumnInputRef.current?.focus(), 0);
   };
 
   const confirmAddColumn = () => {
     const title = newColumnTitle.trim() || 'New Column';
-    lastCommandTypeRef.current = 'moveColumn';
     const columnId = `col-${Date.now()}`;
-    const newColumn = { id: columnId, title, children: [], data: { title }, meta: {} } as any;
-    const newBoard = structuredClone(boardData);
-    newBoard[columnId] = newColumn;
     const rootChildren = boardData['root']?.children ? [...boardData['root'].children] : [];
-    newBoard['root'] = { ...boardData['root'], children: [...rootChildren, columnId] } as any;
+    const newBoard = structuredClone(boardData);
+    newBoard[columnId] = { id: columnId, title, children: [], data: { title }, meta: {}, type: 'column' };
+    newBoard['root'] = { ...boardData['root'], children: [...rootChildren, columnId] };
     handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: -1, toIndex: rootChildren.length });
     void events.onColumnAdd?.({ columnId, index: rootChildren.length });
     setAddingColumn(false);
     setNewColumnTitle('');
   };
 
-  const cancelAddColumn = () => {
-    setAddingColumn(false);
-    setNewColumnTitle('');
-  };
+  const cancelAddColumn = () => { setAddingColumn(false); setNewColumnTitle(''); };
 
   const boardRef = useRef<HTMLDivElement>(null);
   const [keyboardMoveCard, setKeyboardMoveCard] = useState<{ cardId: string; columnId: string } | null>(null);
@@ -433,11 +376,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     const el = boardRef.current;
     if (!el || !draggable) return;
     const handler = (e: KeyboardEvent) => {
-      const currentBoard = boardDataRef.current;
-      const currentColumns = columnsRef.current;
-      const currentMoveCardKeyboard = moveCardKeyboardRef.current;
-      const target = e.target as HTMLElement;
-      const cardEl = target.closest('[data-dnd-card]') as HTMLElement | null;
+      const cardEl = (e.target as HTMLElement).closest('[data-dnd-card]') as HTMLElement | null;
       if (!cardEl) return;
       const cardId = cardEl.getAttribute('data-card-id');
       const colId = cardEl.getAttribute('data-column-id');
@@ -450,48 +389,41 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
           setKeyboardMoveCard({ cardId, columnId: colId });
           cardEl.setAttribute('data-keyboard-dragging', 'true');
           cardEl.setAttribute('aria-grabbed', 'true');
-          const cardTitle = cardEl.getAttribute('aria-label') || currentBoard[cardId]?.data?.title || cardId;
+          const cardTitle = cardEl.getAttribute('aria-label') || boardDataRef.current[cardId]?.data?.title || cardId;
           setDndAnnouncement(`Picked up card: ${cardTitle}. Use arrow keys to move, Escape to cancel.`);
         }
         return;
       }
-
       if (keyboardMoveCard.cardId !== cardId) return;
 
-      switch (e.key) {
-        case 'ArrowLeft': {
-          e.preventDefault();
-          const curColIdx = currentColumns.findIndex(c => c.id === keyboardMoveCard.columnId);
-          if (curColIdx > 0) {
-            const targetColId = currentColumns[curColIdx - 1].id;
-            currentMoveCardKeyboard(currentBoard, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
+      const dirActions: Record<string, () => void> = {
+        ArrowLeft: () => {
+          const curIdx = columnsRef.current.findIndex(c => c.id === keyboardMoveCard.columnId);
+          if (curIdx > 0) {
+            const targetColId = columnsRef.current[curIdx - 1].id;
+            moveCardKeyboardRef.current(boardDataRef.current, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
             setKeyboardMoveCard({ cardId, columnId: targetColId });
-            const targetTitle = currentColumns[curColIdx - 1]?.title || targetColId;
-            setDndAnnouncement(`Card moved to column: ${targetTitle}`);
+            setDndAnnouncement(`Card moved to column: ${columnsRef.current[curIdx - 1]?.title || targetColId}`);
           }
-          break;
-        }
-        case 'ArrowRight': {
-          e.preventDefault();
-          const curColIdx = currentColumns.findIndex(c => c.id === keyboardMoveCard.columnId);
-          if (curColIdx < currentColumns.length - 1) {
-            const targetColId = currentColumns[curColIdx + 1].id;
-            currentMoveCardKeyboard(currentBoard, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
+        },
+        ArrowRight: () => {
+          const curIdx = columnsRef.current.findIndex(c => c.id === keyboardMoveCard.columnId);
+          if (curIdx < columnsRef.current.length - 1) {
+            const targetColId = columnsRef.current[curIdx + 1].id;
+            moveCardKeyboardRef.current(boardDataRef.current, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
             setKeyboardMoveCard({ cardId, columnId: targetColId });
-            const targetTitle = currentColumns[curColIdx + 1]?.title || targetColId;
-            setDndAnnouncement(`Card moved to column: ${targetTitle}`);
+            setDndAnnouncement(`Card moved to column: ${columnsRef.current[curIdx + 1]?.title || targetColId}`);
           }
-          break;
-        }
-        case 'Escape': {
-          e.preventDefault();
+        },
+        Escape: () => {
           cardEl.removeAttribute('data-keyboard-dragging');
           cardEl.removeAttribute('aria-grabbed');
           setKeyboardMoveCard(null);
           setDndAnnouncement('Card drag cancelled.');
-          break;
-        }
-      }
+        },
+      };
+      const action = dirActions[e.key];
+      if (action) { e.preventDefault(); action(); }
     };
     el.addEventListener('keydown', handler);
     return () => el.removeEventListener('keydown', handler);
@@ -507,32 +439,21 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   useEffect(() => {
     if (!boardRef.current) return;
-    const targetColId = dropState.targetColumnId;
-    boardRef.current.querySelectorAll('[data-dnd-column]').forEach((colEl) => {
-      const cid = colEl.getAttribute('data-column-id');
-      if (cid === targetColId && targetColId) {
-        colEl.setAttribute('data-drop-target', 'true');
-      } else {
-        colEl.removeAttribute('data-drop-target');
-      }
+    const tc = dropState.targetColumnId;
+    boardRef.current.querySelectorAll('[data-dnd-column]').forEach((el) => {
+      if (el.getAttribute('data-column-id') === tc && tc) el.setAttribute('data-drop-target', 'true');
+      else el.removeAttribute('data-drop-target');
     });
   }, [dropState.targetColumnId]);
 
   useEffect(() => {
     if (!boardRef.current) return;
-    boardRef.current.querySelectorAll('[data-dnd-card]').forEach((el) => {
-      el.removeAttribute('data-dragging');
-      el.removeAttribute('aria-grabbed');
-    });
+    boardRef.current.querySelectorAll('[data-dnd-card]').forEach((el) => { el.removeAttribute('data-dragging'); el.removeAttribute('aria-grabbed'); });
     if (dragState.isDragging && dragState.draggingCardId) {
-      const cardEl = boardRef.current.querySelector(`[data-card-id="${dragState.draggingCardId}"]`) as HTMLElement | null;
-      cardEl?.setAttribute('data-dragging', 'true');
-      cardEl?.setAttribute('aria-grabbed', 'true');
-      const cardTitle = cardEl?.getAttribute('aria-label') || boardData[dragState.draggingCardId]?.data?.title || dragState.draggingCardId;
-      setDndAnnouncement(`Dragging card: ${cardTitle}`);
-    } else if (!dragState.isDragging && dragState.draggingCardId === null) {
-      setDndAnnouncement('');
-    }
+      const cardEl = boardRef.current.querySelector(`[data-card-id="${dragState.draggingCardId}"]`);
+      if (cardEl) { cardEl.setAttribute('data-dragging', 'true'); cardEl.setAttribute('aria-grabbed', 'true'); }
+      setDndAnnouncement(`Dragging card: ${boardData[dragState.draggingCardId]?.data?.title || dragState.draggingCardId}`);
+    } else if (!dragState.isDragging) { setDndAnnouncement(''); }
   }, [dragState.isDragging, dragState.draggingCardId, boardData]);
 
   if (!meta.visible) return null;
@@ -575,46 +496,23 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {dndAnnouncement || `${columns.length} columns, ${columns.reduce((sum, col) => sum + col.children.length, 0)} cards`}
       </div>
-      <div className="flex items-center gap-2 px-4 py-2">
-        <Label htmlFor="kanban-search" className="sr-only">{t('scheduling.kanban.searchCards')}</Label>
-        <Input
-          id="kanban-search"
-          type="text"
-          value={filter.filterText}
-          onChange={(e) => filter.setFilterText(e.target.value)}
-          placeholder={t('scheduling.kanban.searchCards')}
-          aria-label={t('scheduling.kanban.searchCards')}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-48"
-        />
-        <div className="flex items-center gap-1 ml-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={!canUndoNow}
-            onClick={handleUndo}
-            title={t('scheduling.kanban.undo')}
-          >
-            <Undo2 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={!canRedoNow}
-            onClick={handleRedo}
-            title={t('scheduling.kanban.redo')}
-          >
-            <Redo2 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setActivityLogOpen((v) => !v)}
-            title={t('scheduling.kanban.activityLog')}
-          >
-            <History className="w-4 h-4" />
-          </Button>
+
+      <KanbanToolbar
+        filterText={filter.filterText}
+        onFilterChange={(v) => filter.setFilterText(v)}
+        canUndo={canUndoNow}
+        canRedo={canRedoNow}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onToggleActivityLog={() => setActivityLogOpen((v) => !v)}
+      />
+
+      {filterError && (
+        <div className="px-4 py-1 text-xs text-destructive bg-destructive/10" role="alert">
+          {`Filter error: ${filterError}`}
+          <button type="button" className="ml-2 underline" onClick={() => setFilterError(null)}>{t('flux.common.dismiss')}</button>
         </div>
-      </div>
+      )}
 
       <KanbanTagFilter
         tags={allTags}
@@ -673,59 +571,14 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
               />
             );
           })}
-          <div className="nop-kanban-adder shrink-0 self-start mt-2 min-w-[280px]">
-            {addingColumn ? (
-              <div className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-blue-400 rounded-lg bg-blue-50">
-                <Input
-                  ref={newColumnInputRef}
-                  type="text"
-                  value={newColumnTitle}
-                  onChange={(e) => setNewColumnTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      confirmAddColumn();
-                    }
-                    if (e.key === 'Escape') {
-                      e.preventDefault();
-                      cancelAddColumn();
-                    }
-                  }}
-                  placeholder="Column title"
-                  className="flex-1 text-sm px-2 py-1"
-                  aria-label="Column title"
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onClick={confirmAddColumn}
-                  className="text-xs text-blue-600 hover:text-blue-800 px-1"
-                >
-                  {t('flux.common.confirm')}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onClick={cancelAddColumn}
-                  className="text-xs text-gray-500 hover:text-gray-700 px-1"
-                >
-                  {t('flux.common.cancel')}
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                type="button"
-                onClick={() => startAddColumn()}
-                className="w-full flex items-center gap-1 px-3 py-2 text-sm text-gray-400 rounded-lg border-2 border-dashed border-gray-300 justify-center hover:text-gray-600 hover:border-gray-400"
-              >
-                {t('scheduling.kanban.addColumn')}
-              </Button>
-            )}
-          </div>
+          <KanbanColumnAdder
+            adding={addingColumn}
+            title={newColumnTitle}
+            onTitleChange={(v) => setNewColumnTitle(v)}
+            onConfirm={confirmAddColumn}
+            onCancel={cancelAddColumn}
+            onStartAdd={startAddColumn}
+          />
         </div>
       </div>
 

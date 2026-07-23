@@ -6,19 +6,19 @@
 }
 
 .nop-calendar [data-event-type='shift'] {
-  background-color: #4ade80;
+  background-color: var(--color-success);
 }
 
 .nop-calendar [data-event-type='leave'] {
-  background-color: #f87171;
+  background-color: var(--color-destructive);
 }
 
 .nop-calendar [data-event-type='appointment'] {
-  background-color: #60a5fa;
+  background-color: var(--color-primary);
 }
 
 .nop-calendar [data-event-type='maintenance'] {
-  background-color: #fbbf24;
+  background-color: var(--color-warning);
 }
 
 .nop-calendar [data-slot='calendar-event']:hover {
@@ -37,7 +37,7 @@
 }
 
 .nop-calendar [data-slot='calendar-event'][data-overlap='true'] {
-  box-shadow: 0 0 0 2px #ef4444;
+  box-shadow: 0 0 0 2px var(--color-destructive);
 }
 
 .nop-calendar [data-slot='calendar-event'].is-split {
@@ -46,11 +46,11 @@
 }
 
 .nop-calendar [data-slot='calendar-cell'][data-empty='true'] {
-  color: #d1d5db;
+  color: var(--color-border);
 }
 
 .nop-calendar [data-slot='calendar-cell'][data-weekend='true'] {
-  background-color: #f9fafb;
+  background-color: var(--color-muted);
 }
 
 .nop-calendar-drag-ghost {
@@ -312,7 +312,7 @@
 }
 
 .nop-batch-scheduler-preview-cell.ok {
-  color: #fff;
+  color: var(--color-primary-foreground);
 }
 
 .nop-batch-scheduler-preview-resource {

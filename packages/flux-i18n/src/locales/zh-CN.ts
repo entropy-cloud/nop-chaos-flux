@@ -7,6 +7,7 @@ export const zhCN: Resource = {
       error: '错误',
       chart: '图表',
       close: '关闭',
+      dismiss: '关闭',
       cancel: '取消',
       confirm: '确认',
       delete: '删除',

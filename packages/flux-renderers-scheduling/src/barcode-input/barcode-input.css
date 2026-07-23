@@ -13,19 +13,19 @@
   gap: 0;
 }
 
-[data-slot='barcode-scan-button']:hover {
-  background-color: #f1f5f9;
+.nop-barcode-input [data-slot='barcode-scan-button']:hover {
+  background-color: var(--color-muted);
 }
 
-[data-slot='barcode-scan-button']:active {
+.nop-barcode-input [data-slot='barcode-scan-button']:active {
   transform: scale(0.95);
 }
 
-[data-slot='barcode-scanner-close']:hover {
+.nop-barcode-input [data-slot='barcode-scanner-close']:hover {
   opacity: 0.8;
 }
 
-[data-slot='barcode-scanner-overlay'] {
+.nop-barcode-input [data-slot='barcode-scanner-overlay'] {
   animation: backdrop-fade-in 200ms ease-out;
 }
 
@@ -38,6 +38,6 @@
   }
 }
 
-[data-slot='barcode-scanner-video'] {
+.nop-barcode-input [data-slot='barcode-scanner-video'] {
   transition: transform 200ms ease-out;
 }
