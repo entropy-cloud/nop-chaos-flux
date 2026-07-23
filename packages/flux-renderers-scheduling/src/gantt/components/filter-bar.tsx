@@ -28,6 +28,10 @@ export function FilterBar({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    setLocalText(filterText);
+  }, [filterText]);
+
+  useEffect(() => {
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);

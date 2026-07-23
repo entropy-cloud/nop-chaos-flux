@@ -23,7 +23,7 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
   useSyncExternalStore(store.subscribe, () => store.layoutRevision);
   useSyncExternalStore(store.subscribe, () => store.treeRevision);
   const barsRef = useRef<HTMLDivElement>(null);
-  const [scrollTop, setScrollTop] = useState(-1);
+  const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
 
   useEffect(() => {
@@ -38,10 +38,7 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
     return () => el.removeEventListener('scroll', handleScroll);
   }, [scrollContainerRef]);
 
-  const allTasks = store.getVisibleTasks();
-  const { tasks: visibleTasks, totalHeight } = scrollTop >= 0
-    ? store.getVisibleTaskWindow(scrollTop, viewportHeight || 800, 5)
-    : { tasks: allTasks, totalHeight: allTasks.length * store.rowHeight };
+  const { tasks: visibleTasks, totalHeight } = store.getVisibleTaskWindow(scrollTop, viewportHeight || 800, 5);
 
   useEffect(() => {
     const barsEl = barsRef.current;

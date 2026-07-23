@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 
+/** @deprecated This component is unused and kept only for reference. See docs/plans/2026-07-23-0714-1-gantt-remediation.md Phase 5. */
 interface GanttCompactProps {
   children: React.ReactNode;
   compactBreakpoint?: number;

@@ -10,7 +10,6 @@ interface GanttTimeScaleProps {
 
 export function GanttTimeScale({ store, className }: GanttTimeScaleProps) {
   useSyncExternalStore(store.subscribe, () => store.layoutRevision);
-  useSyncExternalStore(store.subscribe, () => store.treeRevision);
 
   const rows = (() => {
     const zoom = store.zoomLevels.get(store.currentZoom);

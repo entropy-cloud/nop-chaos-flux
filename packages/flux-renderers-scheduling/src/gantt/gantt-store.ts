@@ -93,17 +93,18 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     const state = gs();
     const visibleTasks = getVisibleTasks(state.tasks, parentIndex, state.expandedSet);
     const visibleIds = visibleTasks.map((t) => t.id);
-    computeTaskLayout(visibleTasks, visibleIds, state.scaleRange, state.cellWidth, state.taskBarHeight, state.rowHeight);
+    const clonedTasks = visibleTasks.map((t) => ({ ...t }));
+    computeTaskLayout(clonedTasks, visibleIds, state.scaleRange, state.cellWidth, state.taskBarHeight, state.rowHeight);
     const newTasks = new Map(state.tasks);
-    for (const task of visibleTasks) newTasks.set(task.id, task);
+    for (const task of clonedTasks) newTasks.set(task.id, task as GanttTask);
     store.setState({ tasks: newTasks });
   }
 
   function computeLinkPolylinesInternal(): void {
     const state = gs();
-    computeLinkPolylines(state.tasks, state.links);
     const newLinks = new Map(state.links);
-    for (const [id, link] of state.links) newLinks.set(id, link);
+    for (const [id, link] of newLinks) newLinks.set(id, { ...link });
+    computeLinkPolylines(state.tasks, newLinks);
     store.setState({ links: newLinks });
   }
 
@@ -245,12 +246,18 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
       for (const task of state.tasks.values()) { if (parentIndex.has(task.id)) newExpanded.add(task.id); }
       _visibleTasksCacheDirty = true;
       store.setState({ expandedSet: newExpanded, revision: state.revision + 1, treeRevision: state.treeRevision + 1 });
+      recomputeVisualLayout();
+      const s2 = gs();
+      store.setState({ layoutRevision: s2.layoutRevision + 1 });
     },
 
     collapseAll(): void {
       const state = gs();
       _visibleTasksCacheDirty = true;
       store.setState({ expandedSet: new Set(), revision: state.revision + 1, treeRevision: state.treeRevision + 1 });
+      recomputeVisualLayout();
+      const s2 = gs();
+      store.setState({ layoutRevision: s2.layoutRevision + 1 });
     },
 
     getVisibleDescendantCount(taskId: GanttId): number { return getVisibleDescendantCount(taskId, parentIndex); },
@@ -261,11 +268,12 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
       const childIds: GanttId[] = [];
       collectDescendantIds(id, parentIndex, childIds);
       const allIds = [id, ...childIds];
+      const deleteSet = new Set(allIds);
       const newTasks = new Map(state.tasks); const newLinks = new Map(state.links);
-      for (const deleteId of allIds) {
-        for (const [linkId, link] of newLinks) { if (link.source === deleteId || link.target === deleteId) newLinks.delete(linkId); }
-        newTasks.delete(deleteId);
+      for (const [linkId, link] of newLinks) {
+        if (deleteSet.has(link.source) || deleteSet.has(link.target)) newLinks.delete(linkId);
       }
+      for (const deleteId of allIds) newTasks.delete(deleteId);
       store.setState({ tasks: newTasks, links: newLinks, revision: state.revision + 1, taskRevision: state.taskRevision + 1 });
       computeComputedPropertiesInternal();
     },

@@ -113,4 +113,49 @@ describe('Gantt', () => {
     );
     expect(container.querySelector('.nop-gantt')).toBeTruthy();
   });
+
+  it('should render task text in grid rows', () => {
+    const { container } = render(
+      React.createElement(Gantt, {
+        ...baseProps,
+        props: {
+          tasks: [{ id: 't1', text: 'My Custom Task', start: '2026-01-01', end: '2026-01-10' }],
+          links: [],
+        } as any,
+      }),
+    );
+    expect(container.querySelector('[data-task-id="t1"]')).toBeTruthy();
+    expect(container.textContent).toContain('My Custom Task');
+  });
+
+  it('should render grid header cells', () => {
+    const { container } = render(
+      React.createElement(Gantt, {
+        ...baseProps,
+        props: {
+          tasks: [{ id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' }],
+          links: [],
+        } as any,
+      }),
+    );
+    const gridHeaderCells = container.querySelectorAll('[data-slot="gantt-grid-header-cell"]');
+    expect(gridHeaderCells.length).toBeGreaterThanOrEqual(4);
+    expect(container.textContent).toContain('Task');
+    expect(container.textContent).toContain('Start');
+    expect(container.textContent).toContain('End');
+  });
+
+  it('should render scale cells from time axis', () => {
+    const { container } = render(
+      React.createElement(Gantt, {
+        ...baseProps,
+        props: {
+          tasks: [{ id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' }],
+          links: [],
+        } as any,
+      }),
+    );
+    const scaleCells = container.querySelectorAll('[data-slot="gantt-scale-cell"]');
+    expect(scaleCells.length).toBeGreaterThan(0);
+  });
 });

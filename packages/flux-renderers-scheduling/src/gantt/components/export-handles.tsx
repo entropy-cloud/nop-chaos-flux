@@ -1,6 +1,7 @@
 import type { GanttTask, GanttId } from '../gantt.types.js';
 
-let exportingFlag = false;
+const _elementExportingFlags = new WeakMap<HTMLElement, number>();
+let _flagCounter = 0;
 
 export interface ExportOptions {
   fileName?: string;
@@ -21,18 +22,18 @@ export async function exportToPng(
   options?: ExportOptions,
 ): Promise<void> {
   if (!element) return;
-  if (exportingFlag) return;
-  exportingFlag = true;
-  const effectiveSignal = options?.signal ?? AbortSignal.timeout(60000);
-  const scale = options?.scale ?? 2;
-  const guardTimer = setTimeout(() => { exportingFlag = false; }, 65000);
+  const flagId = _flagCounter++;
+  _elementExportingFlags.set(element, flagId);
+  const guardTimer = setTimeout(() => {
+    if (_elementExportingFlags.get(element) === flagId) _elementExportingFlags.delete(element);
+  }, 65000);
   try {
-    checkAborted(effectiveSignal);
+    checkAborted(options?.signal);
     const html2canvasMod: any = await import('html2canvas');
-    checkAborted(effectiveSignal);
+    checkAborted(options?.signal);
     const h2c: (el: HTMLElement, opts?: any) => Promise<HTMLCanvasElement> = html2canvasMod.default ?? html2canvasMod;
-    const canvas = await h2c(element, { scale, useCORS: true });
-    checkAborted(effectiveSignal);
+    const canvas = await h2c(element, { scale: options?.scale ?? 2, useCORS: true });
+    checkAborted(options?.signal);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new Error('Failed to create PNG blob');
     const url = URL.createObjectURL(blob);
@@ -46,7 +47,7 @@ export async function exportToPng(
     throw e;
   } finally {
     clearTimeout(guardTimer);
-    exportingFlag = false;
+    if (_elementExportingFlags.get(element) === flagId) _elementExportingFlags.delete(element);
   }
 }
 
@@ -55,21 +56,21 @@ export async function exportToPdf(
   options?: ExportOptions,
 ): Promise<void> {
   if (!element) return;
-  if (exportingFlag) return;
-  exportingFlag = true;
-  const effectiveSignal = options?.signal ?? AbortSignal.timeout(60000);
-  const scale = options?.scale ?? 2;
-  const guardTimer = setTimeout(() => { exportingFlag = false; }, 65000);
+  const flagId = _flagCounter++;
+  _elementExportingFlags.set(element, flagId);
+  const guardTimer = setTimeout(() => {
+    if (_elementExportingFlags.get(element) === flagId) _elementExportingFlags.delete(element);
+  }, 65000);
   try {
-    checkAborted(effectiveSignal);
+    checkAborted(options?.signal);
     const html2canvasMod: any = await import('html2canvas');
-    checkAborted(effectiveSignal);
+    checkAborted(options?.signal);
     const h2c = html2canvasMod.default ?? html2canvasMod;
     const jsPDFMod: any = await import('jspdf');
-    checkAborted(effectiveSignal);
+    checkAborted(options?.signal);
     const JSPDF = jsPDFMod.default ?? jsPDFMod;
-    const canvas = await h2c(element, { scale, useCORS: true });
-    checkAborted(effectiveSignal);
+    const canvas = await h2c(element, { scale: options?.scale ?? 2, useCORS: true });
+    checkAborted(options?.signal);
     const imgData = canvas.toDataURL('image/png');
     const pdf = new JSPDF('landscape', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -81,7 +82,7 @@ export async function exportToPdf(
     throw e;
   } finally {
     clearTimeout(guardTimer);
-    exportingFlag = false;
+    if (_elementExportingFlags.get(element) === flagId) _elementExportingFlags.delete(element);
   }
 }
 
@@ -89,10 +90,7 @@ export async function exportToExcel(
   tasks: Map<GanttId, GanttTask>,
   options?: ExportOptions,
 ): Promise<void> {
-  if (exportingFlag) return;
-  exportingFlag = true;
   const effectiveSignal = options?.signal ?? AbortSignal.timeout(60000);
-  const guardTimer = setTimeout(() => { exportingFlag = false; }, 65000);
   try {
     checkAborted(effectiveSignal);
     const XLSX: any = await import('xlsx');
@@ -114,8 +112,5 @@ export async function exportToExcel(
   } catch (e) {
     console.error('Excel export failed:', e);
     throw e;
-  } finally {
-    clearTimeout(guardTimer);
-    exportingFlag = false;
   }
 }

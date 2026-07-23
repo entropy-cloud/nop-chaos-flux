@@ -82,8 +82,8 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
   return (
     <div ref={containerRef} className={cn('nop-gantt flex flex-col h-full', className)}>
       {header}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        <div className="overflow-hidden flex-shrink-0" style={{ width: gridWidth }}>
+      <div className="flex flex-1 min-h-0">
+        <div className="flex-shrink-0" style={{ width: gridWidth }}>
           {grid}
         </div>
         <div
@@ -97,7 +97,7 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
           onPointerDown={onPointerDown}
           onKeyDown={handleResizeKeyDown}
         />
-        <div className="flex-1 overflow-hidden min-w-0">
+        <div className="flex-1 min-w-0">
           {timeline}
         </div>
       </div>

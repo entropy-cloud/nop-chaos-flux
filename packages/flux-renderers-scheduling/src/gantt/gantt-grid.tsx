@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useSyncExternalStore } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -35,18 +35,13 @@ export function GanttGrid({ store, columns = DEFAULT_COLUMNS, onSelectTask, sele
   const tasks = store.getVisibleTasks();
   const rowHeight = store.rowHeight;
 
-  const [hasScrollContainer, setHasScrollContainer] = useState(false);
   const virtualizer = useVirtualizer({
-    count: hasScrollContainer ? tasks.length : 0,
+    count: tasks.length,
     getScrollElement: () => scrollContainerRef?.current ?? null,
     estimateSize: () => rowHeight,
     overscan: 5,
   });
   const virtualItems = virtualizer.getVirtualItems();
-
-  useEffect(() => {
-    setHasScrollContainer(!!scrollContainerRef?.current);
-  }, [scrollContainerRef]);
 
   const handleToggle = (taskId: string | number) => {
     store.toggleOpen(taskId);
@@ -83,12 +78,12 @@ export function GanttGrid({ store, columns = DEFAULT_COLUMNS, onSelectTask, sele
   };
 
   const getColumnWidth = (column: GanttColumn): number => column.width ?? 100;
-  const totalSize = hasScrollContainer ? virtualizer.getTotalSize() : tasks.length * rowHeight;
-  const renderTasks = hasScrollContainer
+  const totalSize = virtualItems.length > 0 ? virtualizer.getTotalSize() : tasks.length * rowHeight;
+  const renderTasks = virtualItems.length > 0
     ? virtualItems.map(vi => ({ task: tasks[vi.index] })).filter(x => x.task)
     : tasks.map((task) => ({ task }));
-  const paddingTop = hasScrollContainer && virtualItems.length > 0 ? virtualItems[0].start : 0;
-  const paddingBottom = hasScrollContainer && virtualItems.length > 0 ? totalSize - virtualItems[virtualItems.length - 1].end : 0;
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom = virtualItems.length > 0 ? totalSize - virtualItems[virtualItems.length - 1].end : 0;
 
   return (
     <div className={cn('nop-gantt-grid h-full overflow-auto min-h-[400px]', className)} data-slot="gantt-grid" role="grid" onClick={(e) => { if (e.target === e.currentTarget) onEmptyCellClick?.(); }} onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onEmptyCellClick?.(); }}>
@@ -108,7 +103,7 @@ export function GanttGrid({ store, columns = DEFAULT_COLUMNS, onSelectTask, sele
           </tr>
         </thead>
         <tbody>
-          {hasScrollContainer && paddingTop > 0 && <tr style={{ height: paddingTop, display: 'block' }} />}
+          {virtualItems.length > 0 && paddingTop > 0 && <tr style={{ height: paddingTop, display: 'block' }} />}
           {renderTasks.map(({ task }) => (
             <tr
               key={String(task.id)}
@@ -169,7 +164,7 @@ export function GanttGrid({ store, columns = DEFAULT_COLUMNS, onSelectTask, sele
                 ))}
               </tr>
           ))}
-          {hasScrollContainer && paddingBottom > 0 && <tr style={{ height: paddingBottom, display: 'block' }} />}
+          {virtualItems.length > 0 && paddingBottom > 0 && <tr style={{ height: paddingBottom, display: 'block' }} />}
         </tbody>
       </table>
     </div>

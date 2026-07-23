@@ -63,7 +63,7 @@ describe('layout utils', () => {
       expect(result.$w).toBe(40);
     });
 
-    it('should compute 10-day task as 10x cellWidth', () => {
+    it('should compute 11-day inclusive task as 11x cellWidth', () => {
       const result = taskToPixels(
         { start: '2026-01-05', end: '2026-01-15' },
         scaleRange,
@@ -71,10 +71,10 @@ describe('layout utils', () => {
         28,
         12,
       );
-      expect(result.$w).toBe(400);
+      expect(result.$w).toBe(440);
     });
 
-    it('should compute 1-day task as cellWidth', () => {
+    it('should compute 2-day inclusive task as 2x cellWidth', () => {
       const result = taskToPixels(
         { start: '2026-01-05', end: '2026-01-06' },
         scaleRange,
@@ -82,7 +82,7 @@ describe('layout utils', () => {
         28,
         12,
       );
-      expect(result.$w).toBe(40);
+      expect(result.$w).toBe(80);
     });
   });
 

@@ -76,10 +76,15 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       };
     }, [store]);
 
+    const initCalledRef = useRef(false);
+    const initDataRef = useRef({ tasks: resolved.tasks, links: resolved.links, resources: resolved.resources, assignments: resolved.assignments });
     useEffect(() => {
-      store.parse(resolved.tasks ?? [], resolved.links ?? [], resolved.resources, resolved.assignments);
+      if (initCalledRef.current) return;
+      initCalledRef.current = true;
+      const data = initDataRef.current;
+      store.parse(data.tasks ?? [], data.links ?? [], data.resources, data.assignments);
       undoStackRef.current.clear();
-    }, [store, resolved.tasks, resolved.links, resolved.resources, resolved.assignments]);
+    }, [store]);
 
     const handleTaskDragCommit = (taskId: string | number, changes: Record<string, string>) => {
       void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes }, { scope: scopeRef.current });
@@ -295,7 +300,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         />
         <GanttLayout
           grid={
-            <div ref={gridRef} className="h-full overflow-auto">
+            <div ref={gridRef} className="h-full">
               <GanttGrid
                 store={store}
                 columns={columns}

@@ -386,4 +386,68 @@ describe('GanttStore', () => {
       expect(store.scrollLeft).toBeGreaterThanOrEqual(0);
     });
   });
+
+  describe('behavioral invariants', () => {
+    it('expandAll bumps layoutRevision', () => {
+      const store = new GanttStore();
+      store.parse([makeTask({ id: 'p1', children: [makeTask({ id: 'c1' })] })], []);
+      const lr0 = store.layoutRevision;
+      store.expandAll();
+      expect(store.layoutRevision).toBe(lr0 + 1);
+    });
+
+    it('collapseAll bumps layoutRevision', () => {
+      const store = new GanttStore();
+      store.parse([makeTask({ id: 'p1', children: [makeTask({ id: 'c1' })] })], []);
+      const lr0 = store.layoutRevision;
+      store.collapseAll();
+      expect(store.layoutRevision).toBe(lr0 + 1);
+    });
+
+    it('deleteTask removes all links referencing the deleted task', () => {
+      const store = new GanttStore();
+      store.parse(
+        [makeTask({ id: 't1' }), makeTask({ id: 't2' }), makeTask({ id: 't3' })],
+        [
+          makeLink({ id: 'l1', source: 't1', target: 't2' }),
+          makeLink({ id: 'l2', source: 't2', target: 't3' }),
+          makeLink({ id: 'l3', source: 't3', target: 't1' }),
+        ],
+      );
+      store.deleteTask('t1');
+      expect(store.links.has('l1')).toBe(false);
+      expect(store.links.has('l3')).toBe(false);
+      expect(store.links.has('l2')).toBe(true);
+    });
+
+    it('deleteTask leaves unrelated links intact', () => {
+      const store = new GanttStore();
+      store.parse(
+        [makeTask({ id: 't1' }), makeTask({ id: 't2' }), makeTask({ id: 't3' })],
+        [
+          makeLink({ id: 'l1', source: 't1', target: 't2' }),
+          makeLink({ id: 'l2', source: 't2', target: 't3' }),
+        ],
+      );
+      store.deleteTask('t2');
+      expect(store.links.has('l1')).toBe(false);
+      expect(store.links.has('l2')).toBe(false);
+      expect(store.tasks.has('t3')).toBe(true);
+    });
+
+    it('bar width covers inclusive end date range', () => {
+      const store = new GanttStore({ cellWidth: 40 });
+      store.parse([makeTask({ id: 't1', start: '2026-01-01', end: '2026-01-10' })], []);
+      const task = store.tasks.get('t1')!;
+      expect(task.$w).toBe(10 * 40);
+      expect(task.$w).toBe(400);
+    });
+
+    it('single day task has at least one cell width', () => {
+      const store = new GanttStore({ cellWidth: 40 });
+      store.parse([makeTask({ id: 't1', start: '2026-01-01', end: '2026-01-01' })], []);
+      const task = store.tasks.get('t1')!;
+      expect(task.$w).toBe(40);
+    });
+  });
 });

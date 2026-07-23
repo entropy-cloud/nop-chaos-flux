@@ -2,6 +2,7 @@ import React from 'react';
 import type { GanttId, GanttResource } from '../gantt.types.js';
 import type { ResourceLoadResult } from './resource-load.js';
 
+/** @deprecated This component is unused and kept only for reference. See docs/plans/2026-07-23-0714-1-gantt-remediation.md Phase 5. */
 interface ResourceLoadGridProps {
   resources: Map<GanttId, GanttResource>;
   loadResults: ResourceLoadResult[];

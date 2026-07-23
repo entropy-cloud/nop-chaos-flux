@@ -5,6 +5,7 @@ import { ResourceLoadGrid } from './resource-load-grid.js';
 import { ResourceLoadTimeline } from './resource-load-timeline.js';
 import { computeResourceLoads, type ResourceLoadResult } from './resource-load.js';
 
+/** @deprecated This component is unused and kept only for reference. See docs/plans/2026-07-23-0714-1-gantt-remediation.md Phase 5. */
 interface ResourceLoadViewProps {
   resources: Map<GanttId, GanttResource>;
   assignments: Map<GanttId, GanttAssignment>;

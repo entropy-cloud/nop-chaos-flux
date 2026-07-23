@@ -10,7 +10,8 @@ import { GanttTimeScale } from './gantt-timescale.js';
 import { GanttCellGrid } from './gantt-cellgrid.js';
 import { GanttHeader } from './gantt-header.js';
 import { GanttLayout } from './gantt-layout.js';
-import type { GanttTaskData, GanttLinkData } from './gantt.types.js';
+import { BaselineBars } from './components/baseline-bars.js';
+import type { GanttTaskData, GanttLinkData, GanttTask } from './gantt.types.js';
 import type { GanttZoomLevel } from './gantt.types.js';
 
 const DEFAULT_ZOOM_LEVELS: GanttZoomLevel[] = [
@@ -186,5 +187,57 @@ describe('GanttLayout', () => {
     expect(screen.getByTestId('grid-panel')).toBeTruthy();
     expect(screen.getByTestId('timeline-panel')).toBeTruthy();
     expect(screen.getByTestId('header-panel')).toBeTruthy();
+  });
+});
+
+describe('BaselineBars', () => {
+  it('should render baseline bars with correct positioning', () => {
+    const task: GanttTask = {
+      id: 't1', text: 'Task', start: '2026-01-05', end: '2026-01-10',
+      type: 'task', duration: 5, progress: 0,
+      $x: 160, $y: 0, $w: 200, $h: 28, $level: 0, $source: [], $target: [],
+      baselines: [{ id: 'b1', taskId: 't1', baseStart: '2026-01-01', baseEnd: '2026-01-06', baseDuration: 6 }],
+    };
+    const scaleRange = { start: new Date('2026-01-01'), end: new Date('2026-01-31') };
+    const { container } = render(
+      <svg>
+        <BaselineBars task={task} scaleRange={scaleRange} cellWidth={40} taskBarHeight={28} />
+      </svg>,
+    );
+    expect(container.querySelector('[data-slot="gantt-baseline-bar"]')).toBeTruthy();
+    expect(container.querySelector('[data-baseline-id="b1"]')).toBeTruthy();
+  });
+
+  it('should render deviation line when baseline differs from actual', () => {
+    const task: GanttTask = {
+      id: 't1', text: 'Task', start: '2026-01-05', end: '2026-01-10',
+      type: 'task', duration: 5, progress: 0,
+      $x: 160, $y: 0, $w: 200, $h: 28, $level: 0, $source: [], $target: [],
+      baselines: [{ id: 'b1', taskId: 't1', baseStart: '2026-01-01', baseEnd: '2026-01-06', baseDuration: 6 }],
+    };
+    const scaleRange = { start: new Date('2026-01-01'), end: new Date('2026-01-31') };
+    const { container } = render(
+      <svg>
+        <BaselineBars task={task} scaleRange={scaleRange} cellWidth={40} taskBarHeight={28} />
+      </svg>,
+    );
+    expect(container.querySelector('[data-slot="gantt-baseline-deviation"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="gantt-baseline-label"]')).toBeTruthy();
+  });
+
+  it('should return null when task has no baselines', () => {
+    const task: GanttTask = {
+      id: 't1', text: 'Task', start: '2026-01-05', end: '2026-01-10',
+      type: 'task', duration: 5, progress: 0,
+      $x: 0, $y: 0, $w: 200, $h: 28, $level: 0, $source: [], $target: [],
+      baselines: [],
+    };
+    const scaleRange = { start: new Date('2026-01-01'), end: new Date('2026-01-31') };
+    const { container } = render(
+      <svg>
+        <BaselineBars task={task} scaleRange={scaleRange} cellWidth={40} taskBarHeight={28} />
+      </svg>,
+    );
+    expect(container.querySelector('[data-slot="gantt-baseline-bar"]')).toBeFalsy();
   });
 });

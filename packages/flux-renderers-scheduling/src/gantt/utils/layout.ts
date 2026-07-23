@@ -41,7 +41,7 @@ export function taskToPixels(
   const taskEnd = new Date(task.end);
 
   const x = dateToPixel(taskStart, scaleRange, cellWidth);
-  const durDays = diffInDays(taskEnd, taskStart);
+  const durDays = diffInDays(taskEnd, taskStart) + 1;
   const w = Math.max(durDays * cellWidth, cellWidth);
   const h = taskBarHeight;
   const y = rowPadding / 2;

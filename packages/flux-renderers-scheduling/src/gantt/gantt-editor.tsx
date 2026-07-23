@@ -55,7 +55,7 @@ export function GanttEditor({ store, editorRegion, className, editingTaskId, onC
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) closeEditor(); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" key={editingTaskId}>
         <DialogHeader>
           <DialogTitle>{t('scheduling.gantt.editTask')}</DialogTitle>
         </DialogHeader>
