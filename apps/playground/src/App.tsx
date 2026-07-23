@@ -57,6 +57,10 @@ import { DataVerifyPage } from './pages/data-verify-page';
 import { EnvStreamDemoPage } from './pages/env-stream-demo';
 import { AiChatDemoPage } from './pages/ai-chat-demo';
 import { AiConversationsDemoPage } from './pages/ai-conversations-demo';
+import { AiToolsDemoPage } from './pages/ai-tools-demo';
+import { AiAttachmentsDemoPage } from './pages/ai-attachments-demo';
+import { AiComponentHandleDemoPage } from './pages/ai-component-handle-demo';
+import { AiVirtualScrollDemoPage } from './pages/ai-virtual-scroll-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -271,6 +275,14 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <AiChatDemoPage onBack={goHome} />;
         case 'ai-conversations':
           return <AiConversationsDemoPage onBack={goHome} />;
+        case 'ai-tools':
+          return <AiToolsDemoPage onBack={goHome} />;
+        case 'ai-attachments':
+          return <AiAttachmentsDemoPage onBack={goHome} />;
+        case 'ai-component-handle':
+          return <AiComponentHandleDemoPage onBack={goHome} />;
+        case 'ai-virtual-scroll':
+          return <AiVirtualScrollDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

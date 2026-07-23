@@ -90,9 +90,13 @@ export function createMockAiEnv(): RendererEnv {
  * `xui:imports` loader exposing the `ai` namespace, so the schema can reference
  * the mock connector via `${$ai.connectors.mock}`. P1 also exposes a
  * conversation controller helper so hosts can bind `conversationController`
- * through `${$ai.controller}` if desired.
+ * through `${$ai.controller}` if desired. P2 optionally exposes
+ * `tools` / `toolExecutor` for the agentic tool-loop demo.
  */
-export function createAiImportLoader(connector: AiConnector): {
+export function createAiImportLoader(
+  connector: AiConnector,
+  extra?: { tools?: unknown; toolExecutor?: unknown },
+): {
   importLoader: { load(spec: XuiImportSpec): Promise<ImportedLibraryModule> };
   resolveImportUrl: (schemaUrl: string, from: string) => string;
 } {
@@ -101,7 +105,11 @@ export function createAiImportLoader(connector: AiConnector): {
       listMethods: () => [],
       invoke: () => ({ ok: true }),
     }),
-    createExpressionHelpers: () => ({ connectors: { mock: connector } }),
+    createExpressionHelpers: () => ({
+      connectors: { mock: connector },
+      tools: extra?.tools,
+      toolExecutor: extra?.toolExecutor,
+    }),
   };
   return {
     importLoader: {

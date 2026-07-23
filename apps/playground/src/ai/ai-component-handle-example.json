@@ -1,0 +1,40 @@
+{
+  "type": "page",
+  "xui:imports": [{ "from": "ai", "as": "ai" }],
+  "body": [
+    {
+      "type": "flex",
+      "direction": "col",
+      "className": "h-[80vh] max-w-3xl mx-auto gap-2 p-4",
+      "items": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "className": "items-center justify-between p-2 border-b",
+          "items": [
+            { "type": "text", "text": "AI ComponentHandle (Layer C)" },
+            {
+              "type": "button",
+              "label": "External component:sendMessage",
+              "testid": "external-component-send",
+              "onClick": {
+                "action": "component:sendMessage",
+                "componentId": "ai-handle-chat",
+                "args": { "text": "sent via component handle" }
+              }
+            }
+          ]
+        },
+        {
+          "type": "ai-chat",
+          "testid": "ai-handle-chat",
+          "componentId": "ai-handle-chat",
+          "connector": "${$ai.connectors.mock}",
+          "placeholder": "Type, or click the external button above (component:sendMessage)…",
+          "submitType": "enter",
+          "className": "flex flex-col flex-1 min-h-0 gap-2"
+        }
+      ]
+    }
+  ]
+}

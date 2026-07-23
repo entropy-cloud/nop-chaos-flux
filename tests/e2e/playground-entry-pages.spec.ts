@@ -363,6 +363,32 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       page.getByRole('heading', { name: /Diff View Performance Scale/i, level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
   },
+  'gantt-perf-scale': async (page) => {
+    await expect(page.getByRole('heading', { name: /Gantt Performance Scale/i })).toBeVisible({
+      timeout: 15_000,
+    });
+  },
+  'env-stream': async (page) => {
+    await expect(page.getByRole('heading', { name: /env\.stream/i })).toBeVisible({ timeout: 15_000 });
+  },
+  'ai-chat': async (page) => {
+    await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
+  },
+  'ai-conversations': async (page) => {
+    await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
+  },
+  'ai-tools': async (page) => {
+    await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
+  },
+  'ai-attachments': async (page) => {
+    await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
+  },
+  'ai-component-handle': async (page) => {
+    await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
+  },
+  'ai-virtual-scroll': async (page) => {
+    await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

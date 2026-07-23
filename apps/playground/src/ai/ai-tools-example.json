@@ -1,0 +1,29 @@
+{
+  "type": "page",
+  "xui:imports": [{ "from": "ai", "as": "ai" }],
+  "body": [
+    {
+      "type": "ai-chat",
+      "testid": "ai-tools-chat",
+      "connector": "${$ai.connectors.mock}",
+      "tools": "${$ai.tools}",
+      "toolExecutor": "${$ai.toolExecutor}",
+      "maxToolRounds": 5,
+      "placeholder": "Ask about the weather (the mock model always calls get_weather)…",
+      "submitType": "enter",
+      "header": {
+        "type": "hstack",
+        "className": "p-3 border-b items-center justify-between",
+        "items": [
+          { "type": "text", "text": "AI Tools (P2 agentic loop)" },
+          {
+            "type": "text",
+            "text": "mock model emits tool_calls → executor runs → result feeds the next round",
+            "className": "text-xs text-muted-foreground"
+          }
+        ]
+      },
+      "className": "flex flex-col h-[70vh] max-w-3xl mx-auto p-4 gap-3"
+    }
+  ]
+}

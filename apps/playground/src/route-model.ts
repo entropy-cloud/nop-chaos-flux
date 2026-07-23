@@ -537,6 +537,34 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'P1 flux-renderers-ai: ai-conversations sidebar + ai-chat with the `ai` ActionScope namespace (Layer B), external ai:send button, streaming markdown buffer, and a11y baseline. Uses mock connector unless VITE_OPENAI_API_KEY / VITE_DEEPSEEK_API_KEY is set.',
   },
+  {
+    id: 'ai-tools',
+    title: 'AI Tools (P2 agentic loop)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P2 flux-renderers-ai: end-to-end agentic tool loop — a mock model emits finish_reason:tool_calls, a host toolExecutor resolves get_weather/search, and the tool result feeds the follow-up round that streams a content reply. Also renders ai-tool-call cards.',
+  },
+  {
+    id: 'ai-attachments',
+    title: 'AI Attachments (P2 multimodal)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P2 flux-renderers-ai: ai-attachments widget (image/card preview, drag-drop + paste, maxSize/maxFiles validation) inside ai-chat, ready to send attachments as image_url content parts.',
+  },
+  {
+    id: 'ai-component-handle',
+    title: 'AI ComponentHandle (Layer C)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P2 flux-renderers-ai: ai-chat registers a Layer C ComponentHandle; an external sibling button dispatches component:sendMessage to drive the chat imperatively across components.',
+  },
+  {
+    id: 'ai-virtual-scroll',
+    title: 'AI Virtual Scroll (A-8)',
+    eyebrow: 'AI Renderers',
+    description:
+      'A-8 perf demo: 1000 seeded messages trigger windowed @tanstack/react-virtual rendering in ai-message-list; only the viewport window is mounted in the DOM.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [
