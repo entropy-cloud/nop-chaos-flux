@@ -389,15 +389,15 @@ DiffFile 模型、语法高亮、字符级差异、分栏/统一视图、展开�
 
 修复 Gantt ~13 个 P1 缺陷：条宽 off-by-one、依赖线 4 类型路由、周/季度刻度格式乱码、里程碑不可交互、taskBar region 未渲染、网格自定义列空、拖拽视觉反馈缺失、事件未派发、键盘语义冲突、焦点不移动、顶层无 chevron、updateTask 不 bump layoutRevision、ArrowUp/Down 冲突。
 
-### S16 Kanban P1 缺陷修复（todo）
+### S16 Kanban P1 缺陷修复（done）
 
 修复 Kanban ~9 个 P1 缺陷：BoardData 模型漂移、configMap 渲染路径失效、拖拽视觉 CSS 不命中、drop indicator 缺失、regions 未传递、DnD 适配器重建抖动、标签筛选无效、列拖拽重排失效、filterCard 不求值。
 
-### S17 Calendar P1 缺陷修复（todo）
+### S17 Calendar P1 缺陷修复（done）
 
 修复 Calendar ~7 个 P1 缺陷：时区日期运算 bug、拖拽创建范围忽略、导出未接线、无 resources 丢事件、ownership 不消费、邻月溢出天事件丢弃、拖拽移动视觉缺失。
 
-### S18 Barcode-input P1 缺陷修复（todo）
+### S18 Barcode-input P1 缺陷修复（done）
 
 修复 Barcode ~6 个 P1 缺陷：覆盖层未 portal 到 body、无 zxing ponyfill（FF/Safari 永不解码）、WASM 缓存毒化、torch 关闭无效、start() 吞相机错误、handleChange 阻断输入。
 
@@ -616,13 +616,13 @@ graph TD
 
 ### 测试策略
 
-| 组件      | 单元测试                          | 集成测试                | E2E                       | Playground 测试页面   | E2E 测试文件                                |
-| --------- | --------------------------------- | ----------------------- | ------------------------- | --------------------- | ------------------------------------------- |
-| Gantt     | store + 坐标 + 缩放 + 日历 + redo | 渲染 + 拖拽 + editor    | Playwright 拖拽/缩放/键盘 | S10.1 `gantt-demo`    | —                                           |
-| Kanban    | 纯函数 helpers + 过滤             | 渲染 + 拖拽 + configMap | Playwright 拖拽跨列 ✅    | S10.3 `kanban-demo`   | `tests/e2e/kanban-demo.spec.ts` (6 tests)   |
-| Calendar  | 日期 + 定位 + 冲突检测            | 渲染 + 虚拟滚动         | Playwright 视图切换 ✅    | S10.2 `calendar-demo` | `tests/e2e/calendar-demo.spec.ts` (6 tests) |
-| Barcode   | WASM + 相机 mock + 解码           | 渲染 + overlay          | —（需摄像头 mock）        | S10.4 `barcode-demo`  | —                                           |
-| Diff-view | 解析 + inline-diff + 高亮         | 渲染 + 虚拟滚动         | Playwright split/unified  | S10.5 `diff-demo`     | —                                           |
+| 组件      | 单元测试                          | 集成测试                | E2E                            | Playground 测试页面   | E2E 测试文件                                |
+| --------- | --------------------------------- | ----------------------- | ------------------------------ | --------------------- | ------------------------------------------- |
+| Gantt     | store + 坐标 + 缩放 + 日历 + redo | 渲染 + 拖拽 + editor    | Playwright 拖拽/缩放/键盘/同步 | S10.1 `gantt-demo`    | `tests/e2e/gantt-demo.spec.ts` (6 tests)    |
+| Kanban    | 纯函数 helpers + 过滤             | 渲染 + 拖拽 + configMap | Playwright 拖拽跨列 ✅         | S10.3 `kanban-demo`   | `tests/e2e/kanban-demo.spec.ts` (6 tests)   |
+| Calendar  | 日期 + 定位 + 冲突检测            | 渲染 + 虚拟滚动         | Playwright 视图切换 ✅         | S10.2 `calendar-demo` | `tests/e2e/calendar-demo.spec.ts` (6 tests) |
+| Barcode   | WASM + 相机 mock + 解码           | 渲染 + overlay          | —（需摄像头 mock）             | S10.4 `barcode-demo`  | —                                           |
+| Diff-view | 解析 + inline-diff + 高亮         | 渲染 + 虚拟滚动         | Playwright split/unified       | S10.5 `diff-demo`     | —                                           |
 
 **Test coverage status (2026-07-21):** Kanban 和 Calendar 的 Playwright E2E 测试已通过，覆盖搜索、过滤、视图切换、导航、事件渲染等。Kanban 纯函数 helper 新增快照式测试。性能基线脚本已创建。参见 `docs/plans/2026-07-21-2100-1-scheduling-test-coverage-plan.md`。
 
