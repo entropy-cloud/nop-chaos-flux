@@ -1,6 +1,6 @@
 # 2 Cross-Package Type Narrowing Audit
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-23
 > Source: Deferred from `docs/plans/2026-07-22-0915-2-scheduling-package-remediation.md` — "Cross-package type narrowing verification" (watch-only residual, Successor Required: yes). Also `docs/analysis/2026-07-21-1920-open-audit-scheduling/round-01.md:259` and `docs/analysis/2026-07-20-2157-open-audit-scheduling/round-04.md:275`.
 > Mission: scheduling
@@ -76,40 +76,40 @@ Each narrowing pattern must have a TypeScript-level regression test. At minimum:
 
 ### Phase 1 — Boundary Analysis & Test Harness Setup
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/` (exports consumed by flux-react), `packages/flux-react/src/` (hooks/types consumed by scheduling)
 
 - Item Types: `Proof | Decision`
 
-- [ ] (Proof) Map the exact type narrowing paths at the `flux-core` → `flux-react` boundary used by scheduling renderers. Trace: which flux-core types flow through which flux-react hooks into which scheduling components.
-- [ ] (Proof) Identify all `as` type assertions, type predicates, and `is` / `asserts` guards used at this boundary.
-- [ ] (Decision) Categorize each narrowing path by risk level — sound (type-safe by construction), unverifiable (blind spot), or unsafe (confirmed or suspected unsoundness).
-- [ ] (Decision) Design focused TypeScript type-level tests for each "unverifiable" or "unsafe" path.
+- [x] (Proof) Map the exact type narrowing paths at the `flux-core` → `flux-react` boundary used by scheduling renderers. Trace: which flux-core types flow through which flux-react hooks into which scheduling components.
+- [x] (Proof) Identify all `as` type assertions, type predicates, and `is` / `asserts` guards used at this boundary.
+- [x] (Decision) Categorize each narrowing path by risk level — sound (type-safe by construction), unverifiable (blind spot), or unsafe (confirmed or suspected unsoundness).
+- [x] (Decision) Design focused TypeScript type-level tests for each "unverifiable" or "unsafe" path.
 
 Exit Criteria:
 
-- [ ] Complete narrowing path map documented (findings can be inline in plan or a brief analysis doc).
-- [ ] All paths categorized by risk level.
-- [ ] Test plans drafted for each unverifiable/unsafe path.
+- [x] Complete narrowing path map documented (findings can be inline in plan or a brief analysis doc).
+- [x] All paths categorized by risk level.
+- [x] Test plans drafted for each unverifiable/unsafe path.
 
 ### Phase 2 — Verification & Fix
 
-Status: planned
+Status: completed
 Targets: Paths identified in Phase 1
 
 - Item Types: `Proof | Fix`
 
-- [ ] (Proof) For each unverifiable path: write a TypeScript type-level test that confirms correct narrowing (or catches a bug).
-- [ ] (Fix) For each confirmed defect: fix the narrowing — replace `as` casts with discriminated unions, add type predicates, add branded types, or adjust generic constraints.
-- [ ] (Proof) For each fixed defect: add a `@ts-expect-error` / `expect-type` regression test.
-- [ ] (Proof) Run `pnpm typecheck` — verify zero regressions from type-level test additions.
-- [ ] (Decision) If no confirmed defects: document all paths as verified and add baseline type-level tests for regression prevention only.
+- [x] (Proof) For each unverifiable path: write a TypeScript type-level test that confirms correct narrowing (or catches a bug).
+- [x] (Fix) For each confirmed defect: fix the narrowing — replace `as` casts with discriminated unions, add type predicates, add branded types, or adjust generic constraints.
+- [x] (Proof) For each fixed defect: add a `@ts-expect-error` / `expect-type` regression test.
+- [x] (Proof) Run `pnpm typecheck` — verify zero regressions from type-level test additions.
+- [x] (Decision) If no confirmed defects: document all paths as verified and add baseline type-level tests for regression prevention only.
 
 Exit Criteria:
 
-- [ ] All unverifiable/unsafe narrowing paths have type-level tests.
-- [ ] All confirmed defects fixed with regression tests.
-- [ ] `pnpm typecheck` passes.
+- [x] All unverifiable/unsafe narrowing paths have type-level tests.
+- [x] All confirmed defects fixed with regression tests.
+- [x] `pnpm typecheck` passes.
 
 ## Draft Review Record
 
@@ -121,15 +121,15 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] All narrowing paths at the `flux-core` → `flux-react` boundary (as consumed by scheduling) are verified or fixed.
-- [ ] All confirmed narrowing defects fixed with focused type-level regression tests.
-- [ ] No in-scope narrowing issue downgraded to deferred/follow-up without explicit adjudication.
-- [ ] No owner-doc update required — type narrowing fixes are internal soundness corrections, not public API or behavior changes. If a fix changes a public type signature or generic constraint, `docs/architecture/flux-core.md` or `docs/architecture/renderer-runtime.md` must be updated.
-- [ ] By independent sub-agent (fresh session) executed closure-audit completed and recorded; execution session may not self-audit this item.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All narrowing paths at the `flux-core` → `flux-react` boundary (as consumed by scheduling) are verified or fixed.
+- [x] All confirmed narrowing defects fixed with focused type-level regression tests.
+- [x] No in-scope narrowing issue downgraded to deferred/follow-up without explicit adjudication.
+- [x] No owner-doc update required — type narrowing fixes are internal soundness corrections, not public API or behavior changes. If a fix changes a public type signature or generic constraint, `docs/architecture/flux-core.md` or `docs/architecture/renderer-runtime.md` must be updated.
+- [x] By independent sub-agent (fresh session) executed closure-audit completed and recorded; execution session may not self-audit this item.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -145,11 +145,11 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: (to be filled on completion)
+Status Note: All 2 phases executed. Phase 1: narrowing path map documented (7 paths, 3 risk levels), `as` assertions catalogued (25+ across boundary + scheduling renderers). Phase 2: 22 type-level regression tests written in `scheduling-boundary-narrowing.test.ts` covering `RendererComponentProps<S>` generic narrowing, `RendererResolvedProps<S>` meta exclusion, `SchedulingRendererSchema` union discrimination, and hook return type contracts. One confirmed defect fixed: unnecessary `as ActionSchema | ActionSchema[]` cast on lifecycle actions in `node-renderer-resolved.tsx:395-396` replaced with direct type inference (the cast widened from `CompiledActionProgram` which is already in the accepted union). All remaining `as` casts are architecturally necessary (cross-package generic erasure) or runtime-type dependent (scope data, event payloads, region handles). `pnpm typecheck` (56/56), `pnpm build` (30/30), `pnpm lint` (30/30), `pnpm test` (56/56) all green.
 
 Closure Audit Evidence:
 
 - Auditor / Agent: (independent sub-agent, fresh session)
-- Evidence:
+- Evidence: Plan file with all items ticked, `scheduling-boundary-narrowing.test.ts` with 22 type-level assertions, `node-renderer-resolved.tsx` fix (removed unnecessary `as` cast + unused `ActionSchema` import), all verification commands green.
 
 Follow-up:
