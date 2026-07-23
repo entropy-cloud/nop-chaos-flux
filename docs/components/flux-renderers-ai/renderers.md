@@ -308,7 +308,7 @@ export interface AiAttachmentsSchema extends BaseSchema {
 }
 ```
 
-## 10. ai-tool-call（Widget, P2）
+## 10. ai-tool-call（Widget, P2 + P3 HITL）
 
 ### 10.1 Schema
 
@@ -316,11 +316,13 @@ export interface AiAttachmentsSchema extends BaseSchema {
 export interface AiToolCallSchema extends BaseSchema {
   type: 'ai-tool-call';
   toolCall?: SchemaValue; // ChatToolCall
-  state?: ChatToolCallUIState; // { status, open?, result? }
+  state?: ChatToolCallUIState; // { status, open?, result?, approval? }
   defaultOpen?: boolean;
   showResult?: boolean; // 默认 true
 
   onToggle?: ActionSchema; // { open, toolCall }
+  // P3 HITL (A-14):
+  onApproval?: ActionSchema; // { action: 'approve'|'reject', toolCall, toolCallId }
 }
 ```
 
@@ -336,6 +338,60 @@ export interface AiToolCallSchema extends BaseSchema {
 ### 10.3 结果展示
 
 工具结果（`function.arguments` 为 JSON 字符串）用 JSON 语法高亮渲染。流式截断的 JSON 用 `jsonrepair` 修复后 `JSON.stringify(parsed, null, 2)` 美化，再正则高亮（key/string/number/boolean/null）。
+
+### 10.4 HITL 审批（P3, A-14）
+
+`ChatToolCallUIState.approval?: 'pending' | 'approved' | 'rejected'`（engine 仅持字段，不实现暂停/恢复——工作流由 host action handler 决策）。
+
+- `approval === 'pending'`：卡片底部渲染 approve/reject 按钮（`@nop-chaos/ui` `Button`，绿色 approve / 中性 reject），根节点加 `data-requires-approval=""`（presence-only）与 `data-approval="pending"`；a11y 焦点陷阱——进入 pending 时聚焦 approve，Tab 在 approve/reject 间循环，Esc 还原先前焦点。
+- 点击触发 `onApproval` event，payload `{ action: 'approve'|'reject', toolCall, toolCallId }`；engine **不**改 `approval`（host 决策后写回）。
+- `approved`/`rejected`：按钮区隐藏，改为已决策徽标（✓ Approved 绿 / ✗ Rejected 红，复用 A-12 色板），`data-approval-decision`。
+- `hitl-no-handler`：host 未挂 handler 时按钮可点但 event 无效（flux action no-op），`approval` 不变。
+
+## 10b. ai-citations（Widget, P3, A-13）
+
+### 组成模型（Decision-C）
+
+`ai-citations` 是**独立 Widget**：host 在 `ai-chat` region（如 `afterMessages` 或 bubble footer）放置；它**重新渲染**一份 `message.content` 副本，把 `[N]` / `[N,M]` 解析为可悬停的 `<sup>` 标记。`ai-bubble` 内的 `[1]` 保持字面文本——二者不重叠渲染同一段（host 二选一放置）。in-bubble 内联变体（improvement §4.2）out-of-scope（host 自定义 `BubbleContentRenderer`）。
+
+### Schema
+
+```ts
+export interface AiCitationSource {
+  index: number; // 1-based [N]
+  title?: string;
+  url?: string;
+  snippet?: string;
+}
+
+export interface AiCitationsSchema extends BaseSchema {
+  type: 'ai-citations';
+  message?: SchemaValue; // ChatMessage（content 来源）
+  sources?: SchemaValue; // AiCitationSource[]（覆盖 metadata.sources）
+  mode?: 'inline' | 'list'; // 默认 inline：[N]→<sup>；list：底部来源列表
+  onSourceClick?: ActionSchema;
+}
+```
+
+### 来源优先级 + 安全
+
+来源读取顺序：显式 `sources` prop > `message.metadata.sources` > `data-sources` ChatMessageDataPart（A-1）。`citation-no-sources`：检测到 `[N]` 但无对应来源时，标记渲染但卡片显示空态文案。
+
+安全：content 先经共享 `sanitizeHtml`（与 `ai-bubble` markdown 同一 DOMPurify pipeline），再做 `[N]` 解析；标记渲染为**受控 React 元素**（非 `dangerouslySetInnerHTML`），防 XSS。
+
+### DOM 结构
+
+```html
+<div class="nop-ai-citations" data-slot="ai-citations" data-mode="inline">
+  …
+  <sup data-slot="ai-citation">
+    [<button data-slot="ai-citation-trigger" data-citation-index="1">1</button>]
+  </sup>
+  …
+</div>
+<!-- 卡片经 Popover Portal 渲染到 body -->
+<div data-slot="ai-citation-card">… 来源标题/url/片段 …</div>
+```
 
 ## 11. ai-suggestions（Widget, P4）
 
@@ -387,25 +443,26 @@ export interface AiMcpManagerSchema extends BaseSchema {
 
 ## 13. Events 总览
 
-| 渲染器           | event                                                                | payload                       |
-| ---------------- | -------------------------------------------------------------------- | ----------------------------- |
-| ai-chat          | `onSend`                                                             | `{ message: ChatMessage }`    |
-| ai-chat          | `onResponseComplete`                                                 | `{ message: ChatMessage }`    |
-| ai-chat          | `onError`                                                            | `{ error: Error }`            |
-| ai-chat          | `onAbort`                                                            | `{}`                          |
-| ai-chat          | `onConversationChange`                                               | `{ conversationId }`          |
-| ai-sender        | `onSubmit`                                                           | `{ text: string }`            |
-| ai-sender        | `onCancel`                                                           | `{}`                          |
-| ai-sender        | `onChange`                                                           | `{ text: string }`            |
-| ai-message-list  | `onScrollTop`                                                        | `{}`                          |
-| ai-bubble        | `onAction`                                                           | `{ action: string, message }` |
-| ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ id?, conversation? }`      |
-| ai-prompts       | `onSelect`                                                           | `{ item, index }`             |
-| ai-feedback      | `onAction`                                                           | `{ action, message }`         |
-| ai-attachments   | `onUpload` / `onRemove` / `onError`                                  | `{ file?, attachment? }`      |
-| ai-tool-call     | `onToggle`                                                           | `{ open, toolCall }`          |
-| ai-suggestions   | `onSelect`                                                           | `{ item, index }`             |
-| ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                          |
+| 渲染器           | event                                                                | payload                                    |
+| ---------------- | -------------------------------------------------------------------- | ------------------------------------------ | --------------------------------- |
+| ai-chat          | `onSend`                                                             | `{ message: ChatMessage }`                 |
+| ai-chat          | `onResponseComplete`                                                 | `{ message: ChatMessage }`                 |
+| ai-chat          | `onError`                                                            | `{ error: Error }`                         |
+| ai-chat          | `onAbort`                                                            | `{}`                                       |
+| ai-chat          | `onConversationChange`                                               | `{ conversationId }`                       |
+| ai-sender        | `onSubmit`                                                           | `{ text: string }`                         |
+| ai-sender        | `onCancel`                                                           | `{}`                                       |
+| ai-sender        | `onChange`                                                           | `{ text: string }`                         |
+| ai-message-list  | `onScrollTop`                                                        | `{}`                                       |
+| ai-bubble        | `onAction`                                                           | `{ action: string, message }`              |
+| ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ id?, conversation? }`                   |
+| ai-prompts       | `onSelect`                                                           | `{ item, index }`                          |
+| ai-feedback      | `onAction`                                                           | `{ action, message }`                      |
+| ai-attachments   | `onUpload` / `onRemove` / `onError`                                  | `{ file?, attachment? }`                   |
+| ai-tool-call     | `onToggle` / `onApproval` (P3 HITL)                                  | `{ open, toolCall }` / `{ action:'approve' | 'reject', toolCall, toolCallId }` |
+| ai-citations     | `onSourceClick`                                                      | `{ source, index }`                        |
+| ai-suggestions   | `onSelect`                                                           | `{ item, index }`                          |
+| ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                                       |
 
 ## 14. 端到端 Schema 示例
 

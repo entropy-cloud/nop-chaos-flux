@@ -75,8 +75,8 @@
 | P1         | `ai-feedback`      | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）                              | ✅   |
 | P2         | `ai-attachments`   | Widget | 附件上传/预览（图片模式 / 卡片模式 / 拖放 / 多模态 image_url 发送）              | ✅   |
 | P2         | `ai-tool-call`     | Widget | 工具调用卡片（状态、展开、JSON 高亮、A-6 按工具名注册专用渲染器、A-12 状态颜色） | ✅   |
-| P3         | `ai-citations`     | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                                 | ⬜   |
-| P3         | HITL 审批          | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮                          | ⬜   |
+| P3         | `ai-citations`     | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                                 | ✅   |
+| P3         | HITL 审批          | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮                          | ✅   |
 | P4         | `ai-voice-input`   | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）                                  | ⬜   |
 | P4         | `ai-token-usage`   | Widget | Token / 成本 / 上下文占比显示（数据由 connector 填充 metadata）                  | ⬜   |
 | P4         | 消息分支           | 增强   | 重新生成时分支切换（branches 由 host 管理）                                      | ⬜   |
@@ -423,7 +423,7 @@ P2 增强：默认注册 `*` 通用 fallback；包内**不**提供任何专用�
 
 - 渲染器默认**不持久化**（页面刷新清空）—— 符合"渲染器纯展示，存储是 host 关注点"
 - 若 schema 显式声明 `storage` 字段且 import 注入了实现，则启用持久化
-- `useConversation` hook 的 `storage` 参数变为**必填**（不再像 v1 那样默认 LocalStorage）—— 强制 host 做出选择
+- `useConversation` hook 的 `storage` 参数为 **optional**：host 必须选择——注入 `ConversationStorageStrategy` 实现以启用持久化（mount 引导 `loadConversations`、切换经 `engine.setMessages` 重水合、turn 完成按 `autoSaveMessages` 调 `saveMessages` 落盘），不注入则默认不持久化（与 live `storage?: ConversationStorageStrategy` 类型 + 本节"默认不持久化"一致）。storage 失败为非致命（`storage-load-error` / `storage-save-error`，不阻塞对话）。
 
 #### 理由
 

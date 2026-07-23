@@ -1,6 +1,6 @@
 # flux-renderers-ai Roadmap
 
-> 最后更新：2026-07-23
+> 最后更新：2026-07-24
 > 来源：`docs/components/flux-renderers-ai/design.md`、`implementation.md` §2、`docs/analysis/ai-survey/2026-07-21-tiny-robot-deep-analysis.md`
 > Mission：`missions/ai.json`
 > 目标：完整实现 `@nop-chaos/flux-renderers-ai` 包——AI 对话渲染器族（消息气泡、流式输出、会话管理、附件、工具调用、引用、HITL 审批、语音输入等），从 tiny-robot（Vue 3, MIT）移植引擎核心并用 React 19 + flux 架构重写。
@@ -22,7 +22,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **A1. P0 骨架 + 最小闭环**（4 renderer）: `done`
 - **A2. P1 真实 AI + 会话 + 流式 Markdown + a11y**（4 renderer + 5 改进项）: `done`
 - **A3. P2 工具调用 + 附件 + 渲染器深化**（2 renderer + 7 改进项）: `done`
-- **A4. P3 持久化 + 引用 + HITL**（1 renderer + 1 增强 + 2 改进项）: `todo`
+- **A4. P3 持久化 + 引用 + HITL**（1 renderer + 1 增强 + 2 改进项）: `done`
 - **A5. P4 高级集成**（3 renderer + 1 增强 + 3 改进项）: `todo`
 - **A6. P6 Tiptap 富文本（可选）**: `todo`
 
@@ -113,9 +113,9 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 > 会话持久化（host 实现）+ 引用气泡 + 人机审批（HITL）。
 
-| ID  | Status | 内容                                                                                                                                                                                                                                                                                | 设计文档                             | 依赖 |
-| --- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ---- |
-| A4  | todo   | host 提供 localStorage / IndexedDB `ConversationStorageStrategy` 实现；`useConversation` 在 host 层封装 storage 同步；**A-13** `ai-citations` 渲染器（`[N]` 检测 + 悬停卡片 + 来源列表）；**A-14** HITL 审批页脚（`ChatToolCallUIState.approval` + approve/reject 按钮 + 焦点陷阱） | `design.md §5.1, §11.3`、`engine.md` | A3   |
+| ID  | Status | 内容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | 设计文档                             | 依赖 |
+| --- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ---- |
+| A4  | done   | host 提供 localStorage / IndexedDB `ConversationStorageStrategy` 实现；`useConversation` 在 host 层封装 storage 同步（mount 引导 + 切换 `engine.setMessages` 重水合 + turn 完成 `autoSaveMessages` 落盘 + 三 Failure Path 非致命降级）；**A-13** `ai-citations` 渲染器（`[N]`/`[N,M]` 解析 + 悬停卡片 + 来源列表 + sanitize 安全）；**A-14** HITL 审批页脚（`ChatToolCallUIState.approval` + approve/reject 按钮 + `data-requires-approval` + 焦点陷阱 + 已决策徽标，engine 只持状态不实现暂停/恢复） | `design.md §5.1, §11.3`、`engine.md` | A3   |
 
 **退出条件**：刷新页面后历史会话恢复；引用来源可悬停查看；工具调用可审批/拒绝。
 
