@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createBarcodeQueueStore, enqueueItem, dequeueItem, clearQueue, markSubmitted, getPending, getAllItems } from './barcode-queue.js';
-import type { BarcodeQueueStore } from './barcode-queue.js';
+import { createBarcodeQueueStore, enqueueItem, dequeueItem, clearQueue, markSubmitted, getPending, getAllItems } from './barcode-queue-utils.js';
+import type { BarcodeQueueStore } from './barcode-queue-utils.js';
 
 describe('BarcodeQueue (Zustand)', () => {
   let store: BarcodeQueueStore;

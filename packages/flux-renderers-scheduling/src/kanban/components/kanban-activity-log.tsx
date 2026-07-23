@@ -1,8 +1,7 @@
-import React, { useRef } from 'react';
-import { Button, cn } from '@nop-chaos/ui';
-import { History, X } from 'lucide-react';
+import React from 'react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, cn } from '@nop-chaos/ui';
+import { History } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { useFocusTrap } from '../../calendar/hooks/use-focus-trap.js';
 
 export interface KanbanAction {
   id: string;
@@ -76,12 +75,6 @@ export function KanbanActivityLog({
   className,
   locale,
 }: KanbanActivityLogProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useFocusTrap(panelRef, open);
-
-  if (!open) return null;
-
   const filtered = actions.filter((a) => {
     if (filterColumnId && a.detail.fromColumnId !== filterColumnId && a.detail.toColumnId !== filterColumnId) return false;
     if (filterType && a.type !== filterType) return false;
@@ -95,42 +88,26 @@ export function KanbanActivityLog({
   }
 
   return (
-    <div
-      ref={panelRef}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Activity log"
-      data-slot="kanban-activity-log"
-      className={cn(
-        'nop-kanban-activity-log fixed right-0 top-0 bottom-0 w-80 bg-white shadow-lg border-l border-gray-200 z-50 flex flex-col',
-        className,
-      )}
-    >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <History className="w-4 h-4 text-gray-500" />
-          <span className="font-semibold text-sm">{t('scheduling.kanban.activityLog')}</span>
+    <Sheet open={open} onOpenChange={(openVal) => { if (!openVal) onClose(); }}>
+      <SheetContent side="right" className={cn('flex flex-col', className)} data-slot="kanban-activity-log">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2 font-semibold text-sm">
+            <History className="w-4 h-4 text-gray-500" />
+            {t('scheduling.kanban.activityLog')}
+          </SheetTitle>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {filtered.length === 0 && (
+            <div className="text-sm text-gray-400 text-center py-8">{t('scheduling.kanban.noActivity')}</div>
+          )}
+          {filtered.map((action) => (
+            <div key={action.id} className="text-sm py-2 border-b border-gray-100 last:border-0">
+              <div className="text-gray-800">{formatActionDescription(action, columnNames)}</div>
+              <div className="text-xs text-gray-400 mt-0.5">{formatRelativeTime(action.timestamp, locale)}</div>
+            </div>
+          ))}
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClose}
-          className="p-1 h-auto text-gray-400"
-        >
-          <X className="w-4 h-4" />
-        </Button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {filtered.length === 0 && (
-          <div className="text-sm text-gray-400 text-center py-8">{t('scheduling.kanban.noActivity')}</div>
-        )}
-        {filtered.map((action) => (
-          <div key={action.id} className="text-sm py-2 border-b border-gray-100 last:border-0">
-            <div className="text-gray-800">{formatActionDescription(action, columnNames)}</div>
-            <div className="text-xs text-gray-400 mt-0.5">{formatRelativeTime(action.timestamp, locale)}</div>
-          </div>
-        ))}
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

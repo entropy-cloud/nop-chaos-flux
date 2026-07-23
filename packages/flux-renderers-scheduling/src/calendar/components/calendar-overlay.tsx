@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { useFocusTrap } from '../hooks/use-focus-trap.js';
+import { useFocusTrap } from '../../shared/hooks/use-focus-trap.js';
 
 interface CalendarOverlayProps {
   children: React.ReactNode;

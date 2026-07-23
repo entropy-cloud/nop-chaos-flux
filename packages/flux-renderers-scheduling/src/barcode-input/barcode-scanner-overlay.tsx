@@ -8,9 +8,9 @@ import { useBarcodeCamera } from './hooks/use-barcode-camera.js';
 import { useBarcodeDetect } from './hooks/use-barcode-detect.js';
 import { useBarcodeTorch } from './hooks/use-barcode-torch.js';
 import { prepareWasm } from './utils/prepare-wasm-utils.js';
-import { createBarcodeQueueStore, enqueueItem, dequeueItem, clearQueue, markSubmitted, getPending, getAllItems } from './utils/barcode-queue.js';
+import { createBarcodeQueueStore, enqueueItem, dequeueItem, clearQueue, markSubmitted, getPending, getAllItems } from './utils/barcode-queue-utils.js';
 import type { BarcodeFormat, BarcodeDetectResult } from './barcode-input.types.js';
-import { useFocusTrap } from '../calendar/hooks/use-focus-trap.js';
+import { useFocusTrap } from '../shared/hooks/use-focus-trap.js';
 
 const statusMessages = {
   recognizing: t('flux.barcode.recognizing'),

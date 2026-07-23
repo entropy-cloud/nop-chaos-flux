@@ -84,7 +84,7 @@ vi.mock('./hooks/use-calendar-export.js', () => ({
   }),
 }));
 
-vi.mock('./hooks/use-focus-trap.js', () => ({
+vi.mock('../shared/hooks/use-focus-trap.js', () => ({
   useFocusTrap: vi.fn(),
 }));
 

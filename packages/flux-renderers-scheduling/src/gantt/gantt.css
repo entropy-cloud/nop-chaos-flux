@@ -68,7 +68,7 @@
 }
 
 .nop-gantt [data-slot='gantt-weekend'][data-weekend='true'] {
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: var(--color-muted);
 }
 
 .nop-gantt-grid [data-task-id] button {
@@ -120,5 +120,5 @@
 
 .nop-gantt-link-delete-btn {
   background-color: var(--color-destructive);
-  color: white;
+  color: var(--color-destructive-foreground);
 }

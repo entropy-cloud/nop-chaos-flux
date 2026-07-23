@@ -4,8 +4,8 @@
  * This is appropriate for Gantt because tasks have interlinked constraints
  * (dependencies, resource assignments, layout positions) where selective
  * command reversal is more precise than full-state restoration.
- * Kanban uses a snapshot-based pattern instead (see kanban/utils/kanban-undo-stack.ts)
- * because its flat BoardData structure makes full-state capture inexpensive.
+ * Kanban also uses a command-based pattern (see kanban/utils/kanban-undo-stack.ts)
+ * but at a higher granularity — operations are stored as type+params deltas applied via kanban helpers.
  *
  * Trade-off vs structuredClone snapshots:
  * Command-based undo avoids O(n) deep-clone per mutation (n = total task graph),
@@ -158,11 +158,10 @@ export class RemoveLinkCommand implements Command {
   }
 }
 
-// FIXME: Inconsistent undo pattern — Gantt uses command-based undo (this file)
-// while Kanban (kanban-undo-stack.ts) uses snapshot-based undo.
-// These should be unified in a future refactor. The command pattern was chosen
-// for Gantt because task operations are fine-grained and mergeable.
-// See kanban-undo-stack.ts for the alternative snapshot approach.
+// FIXME: Both Gantt and Kanban use command-based undo, but with different
+// granularity — Gantt commands are class-based with execute/undo/redo methods,
+// while Kanban stores typed operation deltas applied via helpers.
+// These could be unified in a future refactor.
 export class UndoStack {
   private commands: Command[] = [];
   private pointer = -1;

@@ -1,4 +1,4 @@
-import type { SchemaObject } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaInput, SchemaObject, ActionSchema } from '@nop-chaos/flux-core';
 
 export type GanttId = string | number;
 
@@ -143,4 +143,60 @@ export interface GanttStoreApi {
   setZoom: (zoomKey: string, anchorScrollLeft?: number, anchorContainerWidth?: number) => void;
   getAvailableZooms: () => GanttZoomLevel[];
   destroy: () => void;
+}
+
+export interface GanttSchema extends BaseSchema {
+  type: 'gantt';
+  tasks?: GanttTaskData[];
+  links?: GanttLinkData[];
+  resources?: GanttResource[];
+  assignments?: GanttAssignment[];
+  columns?: GanttColumn[];
+  /** @deprecated */
+  scales?: GanttScale[];
+  zoomLevels?: GanttZoomLevel[];
+  defaultZoom?: string;
+  cellWidth?: number;
+  /** @deprecated */
+  startDate?: string;
+  /** @deprecated */
+  endDate?: string;
+  /** @deprecated */
+  childrenField?: string;
+  /** @deprecated */
+  initiallyExpanded?: boolean;
+  draggable?: boolean;
+  editable?: boolean;
+  linkable?: boolean;
+  taskBarHeight?: number;
+  /** @deprecated */
+  progressBarHeight?: number;
+  /** @deprecated */
+  calendar?: string;
+  showWeekends?: boolean;
+  showToday?: boolean;
+  onTaskClick?: ActionSchema;
+  onTaskDoubleClick?: ActionSchema;
+  onTaskDragEnd?: ActionSchema;
+  onLinkClick?: ActionSchema;
+  onLinkDragEnd?: ActionSchema;
+  onEmptyCellClick?: ActionSchema;
+  onZoomChange?: ActionSchema;
+  /** Fires on scroll — fire-and-forget semantic. The action is dispatched on every scroll event; consumers should debounce or throttle in the action handler if needed. */
+  onScroll?: ActionSchema;
+  zoomIn?: ActionSchema;
+  zoomOut?: ActionSchema;
+  scrollToToday?: ActionSchema;
+  scrollToTask?: ActionSchema;
+  taskBar?: SchemaInput;
+  toolbar?: SchemaInput;
+  editor?: SchemaInput;
+  toolbarClassName?: string;
+  taskBarClassName?: string;
+  editorClassName?: string;
+  emptyClassName?: string;
+  onMount?: ActionSchema;
+  onUnmount?: ActionSchema;
+  empty?: SchemaInput;
+  loading?: SchemaInput;
 }

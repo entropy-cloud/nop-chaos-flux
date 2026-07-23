@@ -11,7 +11,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData, KanbanSchema, KanbanCardConfig } from './kanban.types.js';
 
@@ -21,7 +21,7 @@ import { useColumnDnd } from './hooks/use-column-dnd.js';
 import { useKanbanFilter } from './hooks/use-kanban-filter.js';
 import { useKanbanColumnResize } from './hooks/use-kanban-column-resize.js';
 import { KanbanTagFilter } from './components/kanban-tag-filter.js';
-
+import { useKanbanBoardEffects } from './hooks/use-kanban-board-effects.js';
 import { KanbanToolbar } from './components/kanban-toolbar.js';
 import { KanbanColumnAdder } from './components/kanban-column-adder.js';
 import { KanbanActivityLog } from './components/kanban-activity-log.js';
@@ -194,33 +194,6 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     }
   };
 
-  const handleUndoRef = useRef(handleUndo);
-  handleUndoRef.current = handleUndo;
-  const handleRedoRef = useRef(handleRedo);
-  handleRedoRef.current = handleRedo;
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const undo = handleUndoRef.current;
-      const redo = handleRedoRef.current;
-      const el = boardRef.current;
-      if (!el) return;
-      if (!el.contains(document.activeElement)) return;
-      const target = e.target as HTMLElement | null;
-      const isEditable = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
-      if (isEditable) return;
-      if (e.ctrlKey && e.shiftKey && e.key === 'z') {
-        e.preventDefault();
-        redo();
-      } else if (e.ctrlKey && e.key === 'z') {
-        e.preventDefault();
-        undo();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
   const allTags = collectAllTags(boardData, columns);
 
   const filterCardFn = (() => {
@@ -366,94 +339,27 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const [keyboardMoveCard, setKeyboardMoveCard] = useState<{ cardId: string; columnId: string } | null>(null);
   const [dndAnnouncement, setDndAnnouncement] = useState('');
 
-  const columnsRef = useRef(columns);
-  useEffect(() => { columnsRef.current = columns; }, [columns]);
-  const moveCardKeyboardRef = useRef(moveCardKeyboard);
-  useEffect(() => { moveCardKeyboardRef.current = moveCardKeyboard; }, [moveCardKeyboard]);
-
-  useEffect(() => {
-    const el = boardRef.current;
-    if (!el || !draggable) return;
-    const handler = (e: KeyboardEvent) => {
-      const cardEl = (e.target as HTMLElement).closest('[data-dnd-card]') as HTMLElement | null;
-      if (!cardEl) return;
-      const cardId = cardEl.getAttribute('data-card-id');
-      const colId = cardEl.getAttribute('data-column-id');
-      const cardIdx = parseInt(cardEl.getAttribute('data-card-index') || '0', 10);
-      if (!cardId || !colId) return;
-
-      if (!keyboardMoveCard) {
-        if (e.key === ' ' || e.key === 'Space' || e.key === 'Enter') {
-          e.preventDefault();
-          setKeyboardMoveCard({ cardId, columnId: colId });
-          cardEl.setAttribute('data-keyboard-dragging', 'true');
-          cardEl.setAttribute('aria-grabbed', 'true');
-          const cardTitle = cardEl.getAttribute('aria-label') || boardDataRef.current[cardId]?.data?.title || cardId;
-          setDndAnnouncement(`Picked up card: ${cardTitle}. Use arrow keys to move, Escape to cancel.`);
-        }
-        return;
-      }
-      if (keyboardMoveCard.cardId !== cardId) return;
-
-      const dirActions: Record<string, () => void> = {
-        ArrowLeft: () => {
-          const curIdx = columnsRef.current.findIndex(c => c.id === keyboardMoveCard.columnId);
-          if (curIdx > 0) {
-            const targetColId = columnsRef.current[curIdx - 1].id;
-            moveCardKeyboardRef.current(boardDataRef.current, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
-            setKeyboardMoveCard({ cardId, columnId: targetColId });
-            setDndAnnouncement(`Card moved to column: ${columnsRef.current[curIdx - 1]?.title || targetColId}`);
-          }
-        },
-        ArrowRight: () => {
-          const curIdx = columnsRef.current.findIndex(c => c.id === keyboardMoveCard.columnId);
-          if (curIdx < columnsRef.current.length - 1) {
-            const targetColId = columnsRef.current[curIdx + 1].id;
-            moveCardKeyboardRef.current(boardDataRef.current, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
-            setKeyboardMoveCard({ cardId, columnId: targetColId });
-            setDndAnnouncement(`Card moved to column: ${columnsRef.current[curIdx + 1]?.title || targetColId}`);
-          }
-        },
-        Escape: () => {
-          cardEl.removeAttribute('data-keyboard-dragging');
-          cardEl.removeAttribute('aria-grabbed');
-          setKeyboardMoveCard(null);
-          setDndAnnouncement('Card drag cancelled.');
-        },
-      };
-      const action = dirActions[e.key];
-      if (action) { e.preventDefault(); action(); }
-    };
-    el.addEventListener('keydown', handler);
-    return () => el.removeEventListener('keydown', handler);
-  }, [draggable, keyboardMoveCard]);
+  useKanbanBoardEffects({
+    boardRef,
+    draggable,
+    boardDataRef,
+    columns,
+    moveCardKeyboard,
+    keyboardMoveCard,
+    setKeyboardMoveCard,
+    setDndAnnouncement,
+    dragState,
+    dropState,
+    boardData,
+    handleUndo,
+    handleRedo,
+  });
 
   const resize = useKanbanColumnResize({
     minWidth: 200,
     maxWidth: 600,
     defaultWidth: columnWidthMode === 'auto' ? 280 : (typeof columnWidthMode === 'number' ? columnWidthMode : 280),
   });
-
-  // DnD registration now handled in subcomponents (KanbanColumn, KanbanCard, KanbanColumnHeader)
-
-  useEffect(() => {
-    if (!boardRef.current) return;
-    const tc = dropState.targetColumnId;
-    boardRef.current.querySelectorAll('[data-dnd-column]').forEach((el) => {
-      if (el.getAttribute('data-column-id') === tc && tc) el.setAttribute('data-drop-target', 'true');
-      else el.removeAttribute('data-drop-target');
-    });
-  }, [dropState.targetColumnId]);
-
-  useEffect(() => {
-    if (!boardRef.current) return;
-    boardRef.current.querySelectorAll('[data-dnd-card]').forEach((el) => { el.removeAttribute('data-dragging'); el.removeAttribute('aria-grabbed'); });
-    if (dragState.isDragging && dragState.draggingCardId) {
-      const cardEl = boardRef.current.querySelector(`[data-card-id="${dragState.draggingCardId}"]`);
-      if (cardEl) { cardEl.setAttribute('data-dragging', 'true'); cardEl.setAttribute('aria-grabbed', 'true'); }
-      setDndAnnouncement(`Dragging card: ${boardData[dragState.draggingCardId]?.data?.title || dragState.draggingCardId}`);
-    } else if (!dragState.isDragging) { setDndAnnouncement(''); }
-  }, [dragState.isDragging, dragState.draggingCardId, boardData]);
 
   if (!meta.visible) return null;
 
@@ -509,7 +415,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       {filterError && (
         <div className="px-4 py-1 text-xs text-destructive bg-destructive/10" role="alert">
           {`Filter error: ${filterError}`}
-          <button type="button" className="ml-2 underline" onClick={() => setFilterError(null)}>{t('flux.common.dismiss')}</button>
+          <Button variant="link" size="sm" onClick={() => setFilterError(null)}>{t('flux.common.dismiss')}</Button>
         </div>
       )}
 

@@ -116,7 +116,7 @@ export function CalendarEventBlock({
         top: top !== undefined ? `${top}%` : '2px',
         height: height !== undefined ? `${height}%` : 'calc(100% - 4px)',
         backgroundColor: color,
-        color: '#fff',
+        color: 'var(--color-primary-foreground)',
       }}
       onClick={handleClick}
       onPointerDown={(e) => {

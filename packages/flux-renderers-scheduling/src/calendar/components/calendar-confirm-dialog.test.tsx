@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { CalendarConfirmDialog } from './calendar-confirm-dialog.js';
 
-vi.mock('../hooks/use-focus-trap.js', () => ({
+vi.mock('../../shared/hooks/use-focus-trap.js', () => ({
   useFocusTrap: vi.fn(),
 }));
 

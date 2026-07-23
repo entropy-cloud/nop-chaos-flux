@@ -1,6 +1,4 @@
-import type { CalendarEvent, CalendarResource, CalendarView } from '../schemas.js';
-
-export type { CalendarView };
+import type { BaseSchema, SchemaInput, SchemaObject, ActionSchema } from '@nop-chaos/flux-core';
 
 export interface CalendarDateRange {
   start: Date;
@@ -67,4 +65,73 @@ export interface ResourceGroupState {
   id: string;
   open: boolean;
   children: string[];
+}
+
+export type CalendarView = 'month' | 'week' | 'day';
+
+export interface CalendarEvent extends SchemaObject {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  type?: string;
+  resourceId?: string;
+  color?: string;
+  status?: 'scheduled' | 'confirmed' | 'cancelled';
+}
+
+export interface CalendarResource extends SchemaObject {
+  id: string;
+  title?: string;
+  /** @deprecated Use `title` instead. Will be removed in a future version. */
+  text?: string;
+  type?: string;
+  parent?: string;
+  color?: string;
+  avatar?: string;
+  resources?: CalendarResource[];
+  open?: boolean;
+}
+
+export interface CalendarSchema extends BaseSchema {
+  type: 'calendar';
+  view?: CalendarView;
+  date?: string;
+  events?: CalendarEvent[];
+  resources?: CalendarResource[];
+  firstDayOfWeek?: 0 | 1;
+  showWeekends?: boolean;
+  maxConcurrent?: number;
+  showCrossDayLines?: boolean;
+  timezoneSelector?: boolean;
+  batchScheduling?: boolean;
+  eventTemplate?: SchemaInput;
+  loading?: SchemaInput;
+  empty?: SchemaInput;
+  body?: SchemaInput;
+  loadAction?: ActionSchema;
+  viewOwnership?: 'local' | 'controlled' | 'scope';
+  viewStatePath?: string;
+  dateOwnership?: 'local' | 'controlled' | 'scope';
+  dateStatePath?: string;
+  statusPath?: string;
+  onEventClick?: ActionSchema;
+  onDateChange?: ActionSchema;
+  onViewChange?: ActionSchema;
+  onEventChange?: ActionSchema;
+  onEventCreate?: ActionSchema;
+  onBatchSchedule?: ActionSchema;
+  onImport?: ActionSchema;
+  onImportError?: ActionSchema;
+  onTimezoneChange?: ActionSchema;
+  onGroupToggle?: ActionSchema;
+  onMount?: ActionSchema;
+  onUnmount?: ActionSchema;
+  print?: ActionSchema;
+  exportPNG?: ActionSchema;
+  importICal?: ActionSchema;
+  exportToICal?: ActionSchema;
+  headerClassName?: string;
+  eventClassName?: string;
+  emptyClassName?: string;
 }
