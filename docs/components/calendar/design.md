@@ -107,7 +107,7 @@ interface CalendarSchema extends BaseSchema {
 | `headerClassName`                                  | `props`                  | 导航头额外 CSS class                    |
 | `eventClassName`                                   | `props`                  | 事件色块额外 CSS class                  |
 | `emptyClassName`                                   | `props`                  | 空态区域额外 CSS class                  |
-| `onMount`、`onUnmount`                             | `meta`                   | 继承 BaseSchema 生命周期动作            |
+| `onMount`、`onUnmount`                             | `event`                  | 继承 BaseSchema 生命周期动作            |
 | `id`、`className`、`disabled`、`visible`、`hidden` | `meta`                   | 继承 BaseSchema 元数据通道              |
 | `onEventClick`                                     | `event`                  | 事件点击（ActionSchema）                |
 | `onDateChange`                                     | `event`                  | 日期/月导航变化（ActionSchema）         |

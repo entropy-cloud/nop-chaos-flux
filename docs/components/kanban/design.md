@@ -231,7 +231,7 @@ interface KanbanEvents {
 | `columnHeaderClassName`                            | props                  | 列头额外 CSS class                            |
 | `cardClassName`                                    | props                  | 卡片额外 CSS class                            |
 | `columnFooterClassName`                            | props                  | 列底部额外 CSS class                          |
-| `onMount`、`onUnmount`                             | meta                   | 继承 BaseSchema 生命周期动作                  |
+| `onMount`、`onUnmount`                             | event                  | 继承 BaseSchema 生命周期动作                  |
 | `kanbanOwnership`、`kanbanStatePath`、`statusPath` | props                  | 交互坐标 ownership 路径                       |
 | `id`、`className`、`disabled`、`visible`、`hidden` | meta                   | 继承 BaseSchema 元数据通道                    |
 | `loading`                                          | region                 | 加载态区域模板                                |
