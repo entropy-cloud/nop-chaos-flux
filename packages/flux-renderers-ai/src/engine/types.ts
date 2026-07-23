@@ -232,6 +232,8 @@ export interface MessageEngine {
   sendMessage(content: string | ChatMessageContentPart[]): Promise<void>;
   send(...messages: ChatMessage[]): Promise<void>;
   abort(): Promise<void>;
+  /** Drop every message and reset requestState to `idle` (design.md §14.2 `ai:clear`). */
+  clear(): void;
   setConnector(connector: AiConnector): void;
   registerPlugin(plugin: MessageEnginePlugin): () => void;
 }

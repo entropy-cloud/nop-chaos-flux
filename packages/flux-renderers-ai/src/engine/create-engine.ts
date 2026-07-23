@@ -63,6 +63,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     sendMessage,
     send,
     abort,
+    clear,
     setConnector,
     registerPlugin,
   };
@@ -277,6 +278,21 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     adapter.mutate('requestState', (draft) => {
       draft.requestState = 'aborted';
       draft.isProcessing = false;
+    });
+  }
+
+  function clear(): void {
+    // Reject clear while a turn is in-flight: callers should `abort()` first.
+    // This matches the design (`ai:clear` is a hard reset; clearing mid-stream
+    // would race the streaming accumulator).
+    if ((adapter as unknown as { state: InternalMessageState }).state.isProcessing) {
+      return;
+    }
+    adapter.mutate('full', (draft) => {
+      draft.messages = [];
+      draft.requestState = 'idle';
+      draft.isProcessing = false;
+      draft.processingState = undefined;
     });
   }
 

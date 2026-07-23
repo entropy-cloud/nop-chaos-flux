@@ -1,11 +1,13 @@
 // ============================================
-// @nop-chaos/flux-renderers-ai — public entry (P0)
+// @nop-chaos/flux-renderers-ai — public entry (P0 + P1)
 // ============================================
 //
-// P0 scope: ai-chat / ai-message-list / ai-bubble / ai-sender renderers +
+// P0: ai-chat / ai-message-list / ai-bubble / ai-sender renderers +
 // framework-agnostic message engine + React adapter + stream-based connector
-// host helper. A2 symbols (useConversation / ai-conversations / ...) are
-// intentionally NOT exported to avoid referencing not-yet-built modules.
+// host helper.
+// P1 (A2): ai-conversations / ai-welcome / ai-prompts / ai-feedback renderers
+// + useConversation host helper + ActionScope namespace `ai` (Layer B) +
+// streaming markdown buffer + a11y baseline.
 
 // ---- Group 1: Schema types (renderer authors) ----
 export type {
@@ -13,6 +15,12 @@ export type {
   AiMessageListSchema,
   AiBubbleSchema,
   AiSenderSchema,
+  AiConversationsSchema,
+  AiWelcomeSchema,
+  AiPromptsSchema,
+  AiFeedbackSchema,
+  AiPromptItem,
+  AiConversationMenuItem,
 } from './schemas.js';
 
 // ---- Group 2: Renderer components (registry registration only) ----
@@ -20,6 +28,10 @@ export { AiChatRenderer } from './renderers/ai-chat.js';
 export { AiMessageListRenderer } from './renderers/ai-message-list.js';
 export { AiBubbleRenderer } from './renderers/ai-bubble/index.js';
 export { AiSenderRenderer } from './renderers/ai-sender.js';
+export { AiConversationsRenderer } from './renderers/ai-conversations.js';
+export { AiWelcomeRenderer } from './renderers/ai-welcome.js';
+export { AiPromptsRenderer } from './renderers/ai-prompts.js';
+export { AiFeedbackRenderer } from './renderers/ai-feedback.js';
 
 // ---- Group 3: Host utilities (host app composition; NOT for use inside renderers) ----
 export type {
@@ -64,6 +76,25 @@ export {
 } from './adapters/ai-connector-factory.js';
 export { AiChatProvider, useAiChatContext, type AiChatContextValue } from './adapters/ai-chat-context.js';
 export type { ConversationStorageStrategy } from './storage/types.js';
+
+// ---- Group 3b: ActionScope namespace `ai` (Layer B, host wiring) ----
+export {
+  createAiActionProvider,
+  AI_NAMESPACE_ACTIONS,
+  type CreateAiActionProviderInput,
+} from './adapters/ai-action-provider.js';
+export type {
+  AiConversationController,
+  MaybePromise as AiMaybePromise,
+} from './adapters/ai-conversation-controller.js';
+
+// ---- Group 3c: Host-side conversation manager (P1) ----
+export {
+  useConversation,
+  type UseConversationOptions,
+  type UseConversationReturn,
+  type AiConversationControllerBridge,
+} from './adapters/use-conversation.js';
 
 // ---- Group 4: Registry & registration (host startup) ----
 import { registerRendererDefinitions, type RendererRegistry } from '@nop-chaos/flux-core';

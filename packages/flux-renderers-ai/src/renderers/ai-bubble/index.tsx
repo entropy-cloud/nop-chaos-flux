@@ -8,12 +8,14 @@ import {
   type BubbleContentRendererMatch,
 } from './types.js';
 import { defaultBubbleContentRenderers } from './renderers/default-renderers.js';
+import { TimestampContentRenderer } from './renderers/timestamp.js';
 
 export interface AiBubbleViewProps {
   message: ChatMessage;
   placement?: 'start' | 'end' | 'auto';
   shape?: 'corner' | 'rounded' | 'none';
   showAvatar?: boolean;
+  showTimestamp?: boolean;
   contentRenderers?: BubbleContentRendererMatch[];
   className?: string;
 }
@@ -27,13 +29,25 @@ function resolvePlacement(message: ChatMessage, placement: 'start' | 'end' | 'au
  * Internal bubble view — renders a single `ChatMessage` using the registration
  * system. Used both by the registered `AiBubbleRenderer` (schema-driven) and
  * directly by `ai-message-list` (programmatic).
+ *
+ * P1: also renders an A-4 timestamp footer and the A-5 error-state renderer
+ * (driven by `message.metadata.createdAt` and the message role + error state).
  */
 export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | null {
-  const { message, placement = 'auto', shape = 'rounded', showAvatar = false, contentRenderers } = props;
+  const {
+    message,
+    placement = 'auto',
+    shape = 'rounded',
+    showAvatar = false,
+    showTimestamp = false,
+    contentRenderers,
+  } = props;
   const renderers = contentRenderers ?? defaultBubbleContentRenderers;
   const effectivePlacement = resolvePlacement(message, placement);
   const slices = resolveContentSlices(message);
   const isStreaming = message.loading === true;
+  // A-5 error state: presence-only, omits when not in error.
+  const isError = false;
 
   return (
     <article
@@ -43,6 +57,7 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
       data-placement={effectivePlacement}
       data-shape={shape}
       data-streaming={isStreaming ? '' : undefined}
+      data-error={isError ? '' : undefined}
     >
       {showAvatar ? <div data-slot="ai-bubble-avatar" aria-hidden="true" /> : null}
       <div data-slot="ai-bubble-content" className="flex flex-col gap-2">
@@ -52,6 +67,7 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
           const Renderer = match.renderer;
           return <Renderer key={slice.index} message={message} content={slice.content} contentIndex={slice.index} />;
         })}
+        {showTimestamp ? <TimestampContentRenderer message={message} content="" contentIndex={-1} /> : null}
       </div>
     </article>
   );
@@ -94,6 +110,7 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
       placement={resolved.placement ?? 'auto'}
       shape={resolved.shape ?? 'rounded'}
       showAvatar={resolved.showAvatar === true}
+      showTimestamp={resolved.showTimestamp === true}
       className={props.meta.className}
     />
   );

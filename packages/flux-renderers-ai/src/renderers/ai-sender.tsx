@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react';
+import { useRef, useState, type KeyboardEvent } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { Button, Textarea, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -14,6 +14,8 @@ export interface AiSenderViewProps {
   className?: string;
   /** Override the loading state (defaults to engine.isProcessing). */
   loading?: boolean;
+  /** When true (default), focus returns to the input after each submit. */
+  refocusAfterSubmit?: boolean;
   onSubmit?: (text: string) => void;
   onCancel?: () => void;
   onChange?: (text: string) => void;
@@ -31,9 +33,11 @@ function shouldSubmit(event: KeyboardEvent<HTMLTextAreaElement>, mode: 'enter' |
 export function AiSenderView(props: AiSenderViewProps): React.ReactElement | null {
   const ctx = useAiChatContext();
   const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const submitType = props.submitType ?? 'enter';
   const maxLength = props.maxLength;
   const clearOnSubmit = props.clearOnSubmit !== false;
+  const refocusAfterSubmit = props.refocusAfterSubmit !== false;
   const loading = props.loading ?? ctx?.isProcessing ?? false;
 
   const overLimit = typeof maxLength === 'number' && draft.length > maxLength;
@@ -42,6 +46,14 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
     if (props.onSubmit) props.onSubmit(text);
     else void ctx?.sendMessage(text);
     if (clearOnSubmit) setDraft('');
+    // a11y: focus returns to the input so the user can immediately type the
+    // next message (Phase 4 baseline; avoids the focus falling through to
+    // the submit button or page body).
+    if (refocusAfterSubmit) {
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    }
   }
 
   function handleSubmit() {
@@ -66,6 +78,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
     <div className={cn('nop-ai-sender', props.className)} data-slot="ai-sender">
       <div data-slot="ai-sender-input" className="relative">
         <Textarea
+          ref={inputRef}
           value={draft}
           placeholder={props.placeholder ?? t('flux.ai.placeholder')}
           disabled={loading}

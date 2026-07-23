@@ -34,7 +34,14 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
 
   if (messages.length === 0) {
     return (
-      <div className={cn('nop-ai-message-list')} data-slot="ai-message-list" data-empty="">
+      <div
+        className={cn('nop-ai-message-list')}
+        data-slot="ai-message-list"
+        data-empty=""
+        role="log"
+        aria-live="polite"
+        aria-busy={ctx?.isProcessing ? 'true' : undefined}
+      >
         {props.emptyNode ?? null}
       </div>
     );
@@ -45,6 +52,9 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
       ref={containerRef}
       className={cn('nop-ai-message-list', props.className)}
       data-slot="ai-message-list"
+      role="log"
+      aria-live="polite"
+      aria-busy={ctx?.isProcessing ? 'true' : undefined}
       onScroll={onScroll}
     >
       {messages.map((message) => (

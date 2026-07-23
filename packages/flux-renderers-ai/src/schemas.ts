@@ -1,4 +1,4 @@
-import type { ActionSchema, BaseSchema, SchemaInput, SchemaValue } from '@nop-chaos/flux-core';
+import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
 import type { ChatRole } from './engine/types.js';
 
 export interface AiChatSchema extends BaseSchema {
@@ -13,6 +13,14 @@ export interface AiChatSchema extends BaseSchema {
   maxLength?: number;
   showWordLimit?: boolean;
   initialMessages?: SchemaValue;
+  /**
+   * Optional host-side conversation controller (expression-resolved, typically
+   * `${$ai.controller}`). When bound, the `ai` namespace's conversation actions
+   * delegate to it. P1 (design.md §14.2).
+   */
+  conversationController?: SchemaValue;
+  /** Optional scope-owned active conversation id (host manages via useConversation). */
+  activeConversationId?: SchemaValue;
 
   header?: SchemaInput;
   footer?: SchemaInput;
@@ -43,6 +51,7 @@ export interface AiBubbleSchema extends BaseSchema {
   placement?: 'start' | 'end' | 'auto';
   shape?: 'corner' | 'rounded' | 'none';
   showAvatar?: boolean;
+  showTimestamp?: boolean;
   avatarRegion?: SchemaInput;
   contentResolverName?: string;
 }
@@ -61,4 +70,60 @@ export interface AiSenderSchema extends BaseSchema {
   onSubmit?: ActionSchema;
   onCancel?: ActionSchema;
   onChange?: ActionSchema;
+}
+
+// ---- P1 renderers (A2) ----
+
+export interface AiConversationMenuItem extends SchemaObject {
+  key: string;
+  label?: string;
+}
+
+export interface AiConversationsSchema extends BaseSchema {
+  type: 'ai-conversations';
+  /** Expression resolving to `AiConversationInfo[]` (scope-owned, host manages). */
+  conversations?: SchemaValue;
+  /** Expression resolving to the active conversation id. */
+  activeId?: SchemaValue;
+  showRenameControls?: boolean;
+  menuItems?: SchemaValue;
+
+  onItemClick?: ActionSchema;
+  onItemRename?: ActionSchema;
+  onItemDelete?: ActionSchema;
+  onCreate?: ActionSchema;
+}
+
+export interface AiWelcomeSchema extends BaseSchema {
+  type: 'ai-welcome';
+  title?: string;
+  description?: string;
+  icon?: string;
+  align?: 'left' | 'center' | 'right';
+  footer?: SchemaInput;
+}
+
+export interface AiPromptItem extends SchemaObject {
+  label: string;
+  description?: string;
+  icon?: string;
+  badge?: string;
+}
+
+export interface AiPromptsSchema extends BaseSchema {
+  type: 'ai-prompts';
+  items?: SchemaValue;
+  layout?: 'vertical' | 'horizontal' | 'wrap';
+  size?: 'sm' | 'md' | 'lg';
+
+  onSelect?: ActionSchema;
+}
+
+export interface AiFeedbackSchema extends BaseSchema {
+  type: 'ai-feedback';
+  /** Expression resolving to a `ChatMessage` (content source for copy / refresh). */
+  message?: SchemaValue;
+  actions?: SchemaValue;
+
+  onAction?: ActionSchema;
 }
