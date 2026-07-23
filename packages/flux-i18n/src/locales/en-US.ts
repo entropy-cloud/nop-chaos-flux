@@ -790,12 +790,22 @@ export const enUS: Resource = {
         recognitionFailed: 'Recognition failed, please retry',
       },
     },
-    barcode: {
-      recognizing: 'Recognizing...',
-      recognitionFailed: 'Recognition failed, please retry',
-      clearLabel: 'Clear',
-      scanBarcodeLabel: 'Scan barcode',
-    },
+      barcode: {
+        recognizing: 'Recognizing...',
+        recognitionFailed: 'Recognition failed, please retry',
+        clearLabel: 'Clear',
+        scanBarcodeLabel: 'Scan barcode',
+        torchOnLabel: 'Turn torch on',
+        torchOffLabel: 'Turn torch off',
+        scannerDialogLabel: 'Barcode scanner',
+        scannerActive: 'Scanner is active',
+        scannerError: 'Scanner error',
+        initializingScanner: 'Initializing scanner',
+        scannedLabel: 'Scanned',
+        submittedLabel: 'Submitted',
+        errorLabel: 'Error',
+        deleteItemLabel: 'Remove item',
+      },
   },
 };
 export default enUS;

@@ -41,6 +41,8 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 - **S20. Diff-view——P2 修复与测试补充** (`completed` ✅)
 
+- **S21. Dim20 accessibility re-audit** (`completed` ✅) <!-- Dim20 无障碍深度审计维度，2026-07-23 完成 3-way 交叉审计、P0/P1 缺陷修复、P2/P3 裁定 -->
+
 ## Current Baseline
 
 ### 已完成
@@ -56,7 +58,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### 总览
 
-- 5 控件，共 **20 个工作阶段，108 个 work item**（S0-S10 完成 87 项；S11-S18 新增 8 项 P0+P1 缺陷修复；S19 新增 5 项 Diff-view P1 修复；S20 新增 8 项 Diff-view P2 修复与测试补充）
+- 5 控件，共 **21 个工作阶段**（S0-S10 完成 87 项；S11-S18 新增 8 项 P0+P1 缺陷修复；S19 新增 5 项 Diff-view P1 修复；S20 新增 8 项 Diff-view P2 修复与测试补充；S21 Dim20 无障碍深度审计维度）
 - 依赖新建 1 个包（`@nop-chaos/flux-renderers-scheduling`）
 - 增强 2 个现有包（`flux-renderers-form-advanced`、`flux-renderers-content`）
 
@@ -406,6 +408,10 @@ DiffFile 模型、语法高亮、字符级差异、分栏/统一视图、展开�
 ### S20 Diff-view P2 修复与测试补充（completed ✅）
 
 修复 Diff-view 8 个 P2 缺陷（含共识降级 1 条 + 新增 6 条 + 原报告 1 条）：清理未使用 hooks（DV-OPS-01 降级）、三栏语法高亮（DV-OPS-05）、areHunkPropsEqual 补全（DV-OPS-03）、跨文件快捷键作用域（DV-OPS-04）、3way 多冲突区逻辑（DV-DISP-06）、死代码导出清理（DV-DISP-04）、零断言测试重写（DV-TEST-03）、dead parameter 清理（DV-DISP-01）。
+
+### S21 Dim20 accessibility re-audit（completed ✅）
+
+执行 Dim20（无障碍深度审计维度），该维度在 2026-07-22 深度分析时因时间约束被推迟。本次使用相同 3 路交叉参考方法论（设计文档 ↔ 实现代码 ↔ 开源参考）对 Gantt/Kanban/Calendar/Barcode-input 四组件进行全面无障碍审计。识别并修复了确认的 P0/P1 无障碍缺陷：Gantt（色觉独立标签、筛选/排序语法标签、唯一 ID、删除后焦点管理、撤销/重做接线）、Kanban（列表语义、卡片标签、删除按钮可见性、拖放公告、列排序公告、拖放 ARIA 属性）、Calendar（网格标签索引、事件类型文本备选）、Barcode-input（缺失标签、扫描公告、国际化、状态图标文本、队列语义）。P2/P3 项目已裁定为 watch-only residual 或 optimization candidate。详见 `docs/plans/2026-07-23-0000-1-scheduling-accessibility-reaudit.md`。
 
 ---
 

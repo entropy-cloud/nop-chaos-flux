@@ -175,7 +175,7 @@ export function KanbanColumn({
     }
   };
 
-  const cardContainerRef = useRef<HTMLUListElement>(null);
+  const cardContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (rovingIndex == null || !cardContainerRef.current) return;

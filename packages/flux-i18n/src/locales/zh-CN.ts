@@ -789,12 +789,22 @@ export const zhCN: Resource = {
         recognitionFailed: '识别失败，请重试',
       },
     },
-    barcode: {
-      recognizing: '识别中...',
-      recognitionFailed: '识别失败，请重试',
-      clearLabel: '清除',
-      scanBarcodeLabel: '扫描条码',
-    },
+      barcode: {
+        recognizing: '识别中...',
+        recognitionFailed: '识别失败，请重试',
+        clearLabel: '清除',
+        scanBarcodeLabel: '扫描条码',
+        torchOnLabel: '打开手电筒',
+        torchOffLabel: '关闭手电筒',
+        scannerDialogLabel: '条码扫描器',
+        scannerActive: '扫描器已激活',
+        scannerError: '扫描器错误',
+        initializingScanner: '正在初始化扫描器',
+        scannedLabel: '已扫描',
+        submittedLabel: '已提交',
+        errorLabel: '错误',
+        deleteItemLabel: '移除条目',
+      },
   },
 };
 

@@ -227,13 +227,23 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
 
   if (!open) return null;
 
+  const scanAnnouncement = detect.result
+    ? `${t('flux.barcode.scannedLabel')}: ${detect.result.barcode} (${detect.result.format})`
+    : '';
+
+  const overlayAriaLabel = t('flux.barcode.scannerDialogLabel');
+  const liveRegionText = scanAnnouncement ||
+    (phase === 'scanning' ? t('flux.barcode.scannerActive') :
+     phase === 'error' ? `${t('flux.barcode.scannerError')}: ${errorMessage}` :
+     t('flux.barcode.initializingScanner'));
+
   const overlay = (
     <div
       ref={overlayRef}
       data-slot="barcode-scanner-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="Barcode scanner"
+      aria-label={overlayAriaLabel}
       className={cn(
         'fixed inset-0 z-50 flex flex-col',
         'bg-black/80 backdrop-blur-sm',
@@ -241,7 +251,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
       )}
     >
       <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {phase === 'scanning' ? 'Scanner is active' : phase === 'error' ? `Scanner error: ${errorMessage}` : 'Initializing scanner'}
+        {liveRegionText}
       </div>
       <div className="relative flex-1 flex items-center justify-center">
         {phase === 'loading' && (
@@ -273,6 +283,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
           data-slot="barcode-scanner-close"
           className="absolute top-4 right-4 text-white/70 hover:text-white hover:bg-white/20 rounded-full"
           onClick={onClose}
+          aria-label={t('flux.common.close')}
         >
           <X className="w-6 h-6" />
         </Button>
@@ -284,6 +295,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
             data-slot="barcode-scanner-torch"
             className="absolute top-4 left-4 text-white/70 hover:text-white hover:bg-white/20 rounded-full"
             onClick={torch.toggle}
+            aria-label={torch.isOn ? t('flux.barcode.torchOffLabel') : t('flux.barcode.torchOnLabel')}
           >
             {torch.isOn ? <FlashlightOff className="w-5 h-5" /> : <Flashlight className="w-5 h-5" />}
           </Button>
@@ -316,7 +328,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
             <div className="flex gap-2">
               <Button
                 variant="ghost"
-                size="icon-xs"
+                size="sm"
                 data-slot="barcode-queue-submit"
                 className="text-xs text-white/80 hover:text-white"
                 onClick={handleQueueSubmit}
@@ -326,23 +338,25 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
               </Button>
               <Button
                 variant="ghost"
-                size="icon-xs"
+                size="sm"
                 className="text-xs text-white/50 hover:text-white"
                 onClick={handleQueueClear}
               >
-                {t('flux.clear')}
+                {t('flux.common.clear')}
               </Button>
             </div>
           </div>
+          <div role="list">
           {queueItems.map((item) => (
             <div
               key={item.id}
+              role="listitem"
               className="flex items-center justify-between py-1 px-2 rounded hover:bg-white/5 text-sm"
             >
               <span className="flex-1 text-white/80 truncate mr-2">{item.rawValue}</span>
               <span className="text-[10px] text-white/40 uppercase mr-2">{item.format}</span>
-              {item.status === 'submitted' && <Check className="w-3.5 h-3.5 text-green-400 shrink-0" />}
-              {item.status === 'error' && <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />}
+              {item.status === 'submitted' && <><Check className="w-3.5 h-3.5 text-green-400 shrink-0" aria-hidden="true" /><span className="sr-only">{t('flux.barcode.submittedLabel')}</span></>}
+              {item.status === 'error' && <><XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" aria-hidden="true" /><span className="sr-only">{t('flux.barcode.errorLabel')}</span></>}
               {item.status === 'duplicate' && <span className="text-[10px] text-yellow-400 shrink-0">dup</span>}
               {item.status === 'pending' && (
                 <Button
@@ -350,12 +364,14 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
                   size="icon-xs"
                   className="text-white/40 hover:text-white/80"
                   onClick={() => handleQueueDelete(item.id)}
+                  aria-label={t('flux.barcode.deleteItemLabel')}
                 >
                   <Trash2 className="w-3 h-3" />
                 </Button>
               )}
             </div>
           ))}
+        </div>
         </div>
       )}
 

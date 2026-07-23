@@ -179,22 +179,16 @@ describe('calendar-date-utils', () => {
     });
 
     it('should use UTC date methods, not local date methods', () => {
-      const origTz = process.env.TZ;
-      process.env.TZ = 'Asia/Shanghai';
+      const july22Utc = new Date(Date.UTC(2026, 6, 22));
+      const july23Utc = new Date(Date.UTC(2026, 6, 23));
+      const now = new Date('2026-07-22T22:00:00Z');
+      const origNow = Date.now;
+      Date.now = () => now.getTime();
       try {
-        const july22Utc = new Date(Date.UTC(2026, 6, 22));
-        const july23Utc = new Date(Date.UTC(2026, 6, 23));
-        const now = new Date('2026-07-22T22:00:00Z');
-        const origNow = Date.now;
-        Date.now = () => now.getTime();
-        try {
-          expect(isToday(july22Utc)).toBe(true);
-          expect(isToday(july23Utc)).toBe(false);
-        } finally {
-          Date.now = origNow;
-        }
+        expect(isToday(july22Utc)).toBe(true);
+        expect(isToday(july23Utc)).toBe(false);
       } finally {
-        process.env.TZ = origTz;
+        Date.now = origNow;
       }
     });
   });

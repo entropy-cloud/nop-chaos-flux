@@ -82,6 +82,7 @@ export function CalendarHeader({
             variant={activeView === opt.value ? 'default' : 'ghost'}
             size="sm"
             onClick={() => onViewChange(opt.value)}
+            aria-pressed={activeView === opt.value}
             className={cn(
               'text-xs px-3',
               activeView === opt.value ? '' : 'hover:bg-gray-200',

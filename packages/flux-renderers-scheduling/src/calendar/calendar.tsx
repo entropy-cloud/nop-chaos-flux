@@ -480,7 +480,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       data-cid={meta.cid || undefined}
     >
       <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {`Viewing ${activeView} view, ${eventsData.length} events`}
+        {`Viewing ${activeView} view, ${currentDate.toISOString().slice(0, 10)}, ${eventsData.length} events`}
       </div>
       <CalendarHeader
         currentDate={currentDate}
