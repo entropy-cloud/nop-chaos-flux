@@ -19,7 +19,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 > 状态流转：`proposed`（pre-todo 初始状态）→ `todo` → `planned`（draft review 通过）→ `done`（closure audit 通过）。
 
 - **A0. env.stream 扩充（前置，不在本包内）**: `done`
-- **A1. P0 骨架 + 最小闭环**（4 renderer）: `todo`
+- **A1. P0 骨架 + 最小闭环**（4 renderer）: `done`
 - **A2. P1 真实 AI + 会话 + 流式 Markdown + a11y**（4 renderer + 5 改进项）: `todo`
 - **A3. P2 工具调用 + 附件 + 渲染器深化**（2 renderer + 7 改进项）: `todo`
 - **A4. P3 持久化 + 引用 + HITL**（1 renderer + 1 增强 + 2 改进项）: `todo`
@@ -85,7 +85,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 | ID  | Status | 内容                                                                                                                                                                                                                                                                                                                                                                                           | 设计文档                        | 依赖 |
 | --- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ---- |
-| A1  | todo   | 建 `flux-renderers-ai` 包（package.json、tsconfig、vitest、目录结构）；移植 `MessageEngine` + `combineDeltaData` + 插件链（thinking/tool/length）；React adapter（`useSyncExternalStore`）；`ai-connector-factory`；实现 `ai-chat` / `ai-message-list` / `ai-bubble`（仅 markdown + loading renderer）/ `ai-sender`；host 提供 mock connector 经 `xui:imports` 注入；playground 跑通 mock 对话 | `design.md §5-§10`、`engine.md` | A0   |
+| A1  | done   | 建 `flux-renderers-ai` 包（package.json、tsconfig、vitest、目录结构）；移植 `MessageEngine` + `combineDeltaData` + 插件链（thinking/tool/length）；React adapter（`useSyncExternalStore`）；`ai-connector-factory`；实现 `ai-chat` / `ai-message-list` / `ai-bubble`（仅 markdown + loading renderer）/ `ai-sender`；host 提供 mock connector 经 `xui:imports` 注入；playground 跑通 mock 对话 | `design.md §5-§10`、`engine.md` | A0   |
 
 **退出条件**：`pnpm typecheck/build/lint/test` 全过；playground 能发送并接收 mock 流式回复。
 

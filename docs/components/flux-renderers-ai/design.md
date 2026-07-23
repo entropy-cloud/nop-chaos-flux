@@ -61,25 +61,27 @@
 
 ### 5.1 渲染器清单
 
-| Phase      | type               | 类别   | 职责                                                              |
-| ---------- | ------------------ | ------ | ----------------------------------------------------------------- |
-| P0         | `ai-chat`          | Layout | 完整对话面板（messages + sender + auto-scroll + 状态管理）        |
-| P0         | `ai-message-list`  | Layout | 消息列表（分组、自动滚动、注册制渲染）                            |
-| P0         | `ai-bubble`        | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown）              |
-| P0         | `ai-sender`        | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                     |
-| P1         | `ai-conversations` | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                           |
-| P1         | `ai-welcome`       | Widget | 空状态欢迎页 + icon/title/description/footer                      |
-| P1         | `ai-prompts`       | Widget | 推荐提示词卡片列表（垂直/水平/折行）                              |
-| P1         | `ai-feedback`      | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）               |
-| P2         | `ai-attachments`   | Widget | 附件上传/预览（图片模式 / 卡片模式）                              |
-| P2         | `ai-tool-call`     | Widget | 工具调用卡片（状态、展开、JSON 高亮、按工具名注册专用渲染器）     |
-| P3         | `ai-citations`     | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                  |
-| P3         | HITL 审批          | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮           |
-| P4         | `ai-voice-input`   | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）                   |
-| P4         | `ai-token-usage`   | Widget | Token / 成本 / 上下文占比显示（数据由 connector 填充 metadata）   |
-| P4         | 消息分支           | 增强   | 重新生成时分支切换（branches 由 host 管理）                       |
-| P4         | `ai-suggestions`   | Widget | 建议气泡（Popover / Pills）— 从 P2 降至 P4（`ai-prompts` 已覆盖） |
-| P7（可选） | `ai-mcp-manager`   | Widget | MCP server 管理（启用/禁用/添加），需 host 注入 MCP 客户端        |
+> **实现状态**（2026-07-23）：P0 的 4 个渲染器（`ai-chat` / `ai-message-list` / `ai-bubble` / `ai-sender`）已在 A1 落地并跑通 playground mock 流式闭环（✅）。P1+ 渲染器尚未实现（⬜）。
+
+| Phase      | type               | 类别   | 职责                                                              | 状态 |
+| ---------- | ------------------ | ------ | ----------------------------------------------------------------- | ---- |
+| P0         | `ai-chat`          | Layout | 完整对话面板（messages + sender + auto-scroll + 状态管理）        | ✅   |
+| P0         | `ai-message-list`  | Layout | 消息列表（分组、自动滚动、注册制渲染）                            | ✅   |
+| P0         | `ai-bubble`        | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown）              | ✅   |
+| P0         | `ai-sender`        | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                     | ✅   |
+| P1         | `ai-conversations` | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                           | ⬜   |
+| P1         | `ai-welcome`       | Widget | 空状态欢迎页 + icon/title/description/footer                      | ⬜   |
+| P1         | `ai-prompts`       | Widget | 推荐提示词卡片列表（垂直/水平/折行）                              | ⬜   |
+| P1         | `ai-feedback`      | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）               | ⬜   |
+| P2         | `ai-attachments`   | Widget | 附件上传/预览（图片模式 / 卡片模式）                              | ⬜   |
+| P2         | `ai-tool-call`     | Widget | 工具调用卡片（状态、展开、JSON 高亮、按工具名注册专用渲染器）     | ⬜   |
+| P3         | `ai-citations`     | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                  | ⬜   |
+| P3         | HITL 审批          | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮           | ⬜   |
+| P4         | `ai-voice-input`   | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）                   | ⬜   |
+| P4         | `ai-token-usage`   | Widget | Token / 成本 / 上下文占比显示（数据由 connector 填充 metadata）   | ⬜   |
+| P4         | 消息分支           | 增强   | 重新生成时分支切换（branches 由 host 管理）                       | ⬜   |
+| P4         | `ai-suggestions`   | Widget | 建议气泡（Popover / Pills）— 从 P2 降至 P4（`ai-prompts` 已覆盖） | ⬜   |
+| P7（可选） | `ai-mcp-manager`   | Widget | MCP server 管理（启用/禁用/添加），需 host 注入 MCP 客户端        | ⬜   |
 
 > 详细的组件级改进（流式光标 / 时间戳 / 代码块复制按钮 / 工具状态颜色 / 拖放附件 / 消息编辑 / LaTeX 评估等）见 [`improvement-analysis.md`](./improvement-analysis.md) §4。Phase 路线与改进项 ID 映射见 [`implementation.md`](./implementation.md) §2。
 

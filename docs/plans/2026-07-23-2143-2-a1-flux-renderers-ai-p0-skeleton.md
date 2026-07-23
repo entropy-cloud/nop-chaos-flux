@@ -1,6 +1,6 @@
 # A1 flux-renderers-ai P0 骨架 + 最小闭环
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-23
 > Source: `docs/components/flux-renderers-ai/design.md`（§5-§10、§18 不变量）、`engine.md`（§7-§9）、`renderers.md`、`docs/analysis/ai-survey/2026-07-21-tiny-robot-deep-analysis.md`
 > Mission: ai
@@ -82,93 +82,93 @@
 
 ### Phase 1 - 包 bootstrap 与配置注册
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/{package.json,tsconfig.json,tsconfig.build.json,vitest.config.ts}`、root `tsconfig.json`、`tsconfig.base.json`、`vite.workspace-alias.ts`、`apps/playground/src/styles.css`
 
 - Item Types: `Fix | Proof`
 
-- [ ] 按 `design.md` §6.2 / §6.3 建 `package.json`（`sideEffects:["*.css"]`、`exports` 含 `/styles.css`、`private:true`、workspace 协议、`dependencies` 仅 `flux-core/flux-react/flux-i18n/ui`、`peerDependencies` react/lucide-react/react-markdown 等）。
-- [ ] 建 `tsconfig.json`（extends `../../tsconfig.base.json`、`noEmit`、含 `include: ["src", "../../types/**/*.d.ts"]` 以引入全局类型，照 `flux-renderers-content` 模板）、`tsconfig.build.json`（declaration、`outDir:dist`、exclude tests）、`vitest.config.ts`（复用 `../../vitest.shared.ts` 的 `createSharedVitestConfig`）。
-- [ ] 包外配置：root `tsconfig.json` references 加本包；`tsconfig.base.json` paths 加两条 alias；`vite.workspace-alias.ts` 加 `@nop-chaos/flux-renderers-ai` 与 `/styles.css`；`apps/playground/src/styles.css` 加 `@import`。
-- [ ] 建 `src/index.ts`（按 §6.1 分组占位：types / renderers / host utilities / registry）。**P0 仅导出 P0 符号**——`useConversation`（属 A2，`design.md` §6.1 列出但本计划 Non-Goal）暂不导出，避免盲抄 §6.1 导致缺失模块 typecheck 错误；`styles.css`（marker 占位）。
+- [x] 按 `design.md` §6.2 / §6.3 建 `package.json`（`sideEffects:["*.css"]`、`exports` 含 `/styles.css`、`private:true`、workspace 协议、`dependencies` 仅 `flux-core/flux-react/flux-i18n/ui`、`peerDependencies` react/lucide-react/react-markdown 等）。
+- [x] 建 `tsconfig.json`（extends `../../tsconfig.base.json`、`noEmit`、含 `include: ["src", "../../types/**/*.d.ts"]` 以引入全局类型，照 `flux-renderers-content` 模板）、`tsconfig.build.json`（declaration、`outDir:dist`、exclude tests）、`vitest.config.ts`（复用 `../../vitest.shared.ts` 的 `createSharedVitestConfig`）。
+- [x] 包外配置：root `tsconfig.json` references 加本包；`tsconfig.base.json` paths 加两条 alias；`vite.workspace-alias.ts` 加 `@nop-chaos/flux-renderers-ai` 与 `/styles.css`；`apps/playground/src/styles.css` 加 `@import`。
+- [x] 建 `src/index.ts`（按 §6.1 分组占位：types / renderers / host utilities / registry）。**P0 仅导出 P0 符号**——`useConversation`（属 A2，`design.md` §6.1 列出但本计划 Non-Goal）暂不导出，避免盲抄 §6.1 导致缺失模块 typecheck 错误；`styles.css`（marker 占位）。
 
 Exit Criteria:
 
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-ai typecheck` 通过（即便内容是占位，包可被 workspace 解析）。
-- [ ] playground `styles.css` 引入后 `pnpm --filter @nop-chaos/app-playground typecheck` 不报错（验证 alias 注册正确）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-ai typecheck` 通过（即便内容是占位，包可被 workspace 解析）。
+- [x] playground `styles.css` 引入后 `pnpm --filter @nop-chaos/app-playground typecheck` 不报错（验证 alias 注册正确）。
 
 ### Phase 2 - 引擎核心移植（框架无关）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/engine/**`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `types.ts`：`ChatRole` / `ChatMessageContentPart`（含 P1 占位 `data-${string}` 类型，参见 `engine.md` §7.1）/ `ChatToolCall` / `ChatMessage` / `ChatMessageUIState` / `AiConversationInfo` / `AiConnector`/`AiConnectorChunk`/`AiConnectorRequest`（`engine.md` §9.2）/ `MessageEngine` / `MessageEnginePlugin`。
-- [ ] `utils.ts`：移植 `combineDeltaData(target, source)`（string 拼接、按 `index` 合并数组、object 递归合并、`type` 字段不覆盖）。
-- [ ] `create-engine.ts`：`createMessageEngine`（`engine.md` §8.1 接口：`getState/subscribe(全量+分通道)/sendMessage/send/abort/setConnector/registerPlugin`）。
-- [ ] `state-adapter.ts` + `native-adapter.ts`：`MessageStateAdapter` 抽象 + `createNativeMessageAdapter`（纯 TS，闭包持 state，测试用）。
-- [ ] `plugins/`：`thinking-plugin` / `tool-plugin` / `length-plugin`（`engine.md` §8.3 钩子：onTurnStart/onBeforeRequest/onCompletionChunk/onAfterRequest/onTurnEnd/onError）。
+- [x] `types.ts`：`ChatRole` / `ChatMessageContentPart`（含 P1 占位 `data-${string}` 类型，参见 `engine.md` §7.1）/ `ChatToolCall` / `ChatMessage` / `ChatMessageUIState` / `AiConversationInfo` / `AiConnector`/`AiConnectorChunk`/`AiConnectorRequest`（`engine.md` §9.2）/ `MessageEngine` / `MessageEnginePlugin`。
+- [x] `utils.ts`：移植 `combineDeltaData(target, source)`（string 拼接、按 `index` 合并数组、object 递归合并、`type` 字段不覆盖）。
+- [x] `create-engine.ts`：`createMessageEngine`（`engine.md` §8.1 接口：`getState/subscribe(全量+分通道)/sendMessage/send/abort/setConnector/registerPlugin`）。
+- [x] `state-adapter.ts` + `native-adapter.ts`：`MessageStateAdapter` 抽象 + `createNativeMessageAdapter`（纯 TS，闭包持 state，测试用）。
+- [x] `plugins/`：`thinking-plugin` / `tool-plugin` / `length-plugin`（`engine.md` §8.3 钩子：onTurnStart/onBeforeRequest/onCompletionChunk/onAfterRequest/onTurnEnd/onError）。
 
 Exit Criteria:
 
-- [ ] `src/engine/` 下零 `import 'react'` / 零 DOM 全局引用（`design.md` §18.1 不变量 1）——INV-1 守卫测试覆盖。
-- [ ] focused 单测：`combineDeltaData` 全分支（string+string、按 index 合并数组、object 递归、`type` 不覆盖、新字段赋值）；engine 状态机流转（idle→processing→completed/aborted/error）；native adapter subscribe/notify。
+- [x] `src/engine/` 下零 `import 'react'` / 零 DOM 全局引用（`design.md` §18.1 不变量 1）——INV-1 守卫测试覆盖。
+- [x] focused 单测：`combineDeltaData` 全分支（string+string、按 index 合并数组、object 递归、`type` 不覆盖、新字段赋值）；engine 状态机流转（idle→processing→completed/aborted/error）；native adapter subscribe/notify。
 
 ### Phase 3 - React 适配与 host helper
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/adapters/**`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `react-adapter.ts`：`createReactMessageAdapter`（module-level store + `Set<listener>` + `useSyncExternalStore` 友好的 state 引用替换 + 按 kind 分通道通知）。
-- [ ] `use-message.ts`：`useMessage({connector,initialMessages,plugins})`（`useRef` lazy init engine；connector 引用变化调 `setConnector`；React 19 默认不加 `useMemo`/`useCallback`）。
-- [ ] `use-auto-scroll.ts`：`useAutoScroll` hook（P2 才公开为 host utility，P0 先内部用）。
-- [ ] `ai-connector-factory.ts`：`createStreamBasedAiConnector({env,buildRequest})`——调 `env.stream`（已自动 SSE 切分+JSON 解析），把 OpenAI chunk 结构映射为 `AiConnectorChunk`，**不含** baseURL/apiKey/model 硬编码、**不含**协议解析代码（`design.md` §18.2 不变量 14/15）。
-- [ ] `ai-chat-context.tsx`：`AiChatProvider` / `useAiChatContext`（engine 在 `ai-chat` 根节点传播；`ai-chat` 外用时返回 null）。
+- [x] `react-adapter.ts`：`createReactMessageAdapter`（module-level store + `Set<listener>` + `useSyncExternalStore` 友好的 state 引用替换 + 按 kind 分通道通知）。
+- [x] `use-message.ts`：`useMessage({connector,initialMessages,plugins})`（`useRef` lazy init engine；connector 引用变化调 `setConnector`；React 19 默认不加 `useMemo`/`useCallback`）。
+- [x] `use-auto-scroll.ts`：`useAutoScroll` hook（P2 才公开为 host utility，P0 先内部用）。
+- [x] `ai-connector-factory.ts`：`createStreamBasedAiConnector({env,buildRequest})`——调 `env.stream`（已自动 SSE 切分+JSON 解析），把 OpenAI chunk 结构映射为 `AiConnectorChunk`，**不含** baseURL/apiKey/model 硬编码、**不含**协议解析代码（`design.md` §18.2 不变量 14/15）。
+- [x] `ai-chat-context.tsx`：`AiChatProvider` / `useAiChatContext`（engine 在 `ai-chat` 根节点传播；`ai-chat` 外用时返回 null）。
 
 Exit Criteria:
 
-- [ ] `createStreamBasedAiConnector` focused 单测：mock `env.stream` 返回 canned OpenAI chunk generator → 验证映射为 `AiConnectorChunk`；`response.status !== 200` 抛错路径。
-- [ ] `useMessage` 行为抽查（react adapter 订阅 + connector 热替换不重建 engine 实例）。
+- [x] `createStreamBasedAiConnector` focused 单测：mock `env.stream` 返回 canned OpenAI chunk generator → 验证映射为 `AiConnectorChunk`；`response.status !== 200` 抛错路径。
+- [x] `useMessage` 行为抽查（react adapter 订阅 + connector 热替换不重建 engine 实例）。
 
 ### Phase 4 - P0 渲染器实现
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/**`、`src/{schemas.ts,ai-renderer-definitions.ts,test-support.ts}`、`src/__tests__/contract-honesty.test.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `schemas.ts`：P0 schema 类型（`AiChatSchema`/`AiMessageListSchema`/`AiBubbleSchema`/`AiSenderSchema`）。
-- [ ] `ai-chat.tsx`：Layout marker `nop-ai-chat` + `data-slot="ai-chat-root"`；`<AiChatProvider>` 包裹；渲染 header/beforeMessages/`AiMessageListRenderer`/`AiSenderRenderer`/footer region；Layer A 内部 Context 传播。
-- [ ] `ai-message-list.tsx`：Layout marker `nop-ai-message-list`；分组、注册制渲染调度（P0 简化）、auto-scroll 接入。
-- [ ] `ai-bubble/{index.tsx, types.ts, renderers/}`：Widget marker `nop-ai-bubble`；`BubbleContentRendererMatch` 注册制（`design.md` §10.3）；P0 默认渲染器 `loading` + `markdown`（复用 `@nop-chaos/flux-renderers-content` 包根导出的 `sanitizeHtml`）+ `text`。
-- [ ] `ai-sender.tsx`：Widget marker `nop-ai-sender`；`<Textarea>` + auto-resize + Enter 提交 + 字数 + submit/cancel；全部用 `@nop-chaos/ui` 组件，禁止裸 HTML。
-- [ ] `ai-renderer-definitions.ts`：4 个 `RendererDefinition` 主注册表；`test-support.ts`：`createMockRendererProps`。
-- [ ] `contract-honesty.test.ts`：INV-1 守卫（`src/engine`+`src/renderers` 零直调 `fetch`/`WebSocket`/`EventSource`/`localStorage`/`IndexedDB`/动态 `import()`）+ marker 存在 + UI 组件来自 `@nop-chaos/ui`。
+- [x] `schemas.ts`：P0 schema 类型（`AiChatSchema`/`AiMessageListSchema`/`AiBubbleSchema`/`AiSenderSchema`）。
+- [x] `ai-chat.tsx`：Layout marker `nop-ai-chat` + `data-slot="ai-chat-root"`；`<AiChatProvider>` 包裹；渲染 header/beforeMessages/`AiMessageListRenderer`/`AiSenderRenderer`/footer region；Layer A 内部 Context 传播。
+- [x] `ai-message-list.tsx`：Layout marker `nop-ai-message-list`；分组、注册制渲染调度（P0 简化）、auto-scroll 接入。
+- [x] `ai-bubble/{index.tsx, types.ts, renderers/}`：Widget marker `nop-ai-bubble`；`BubbleContentRendererMatch` 注册制（`design.md` §10.3）；P0 默认渲染器 `loading` + `markdown`（复用 `@nop-chaos/flux-renderers-content` 包根导出的 `sanitizeHtml`）+ `text`。
+- [x] `ai-sender.tsx`：Widget marker `nop-ai-sender`；`<Textarea>` + auto-resize + Enter 提交 + 字数 + submit/cancel；全部用 `@nop-chaos/ui` 组件，禁止裸 HTML。
+- [x] `ai-renderer-definitions.ts`：4 个 `RendererDefinition` 主注册表；`test-support.ts`：`createMockRendererProps`。
+- [x] `contract-honesty.test.ts`：INV-1 守卫（`src/engine`+`src/renderers` 零直调 `fetch`/`WebSocket`/`EventSource`/`localStorage`/`IndexedDB`/动态 `import()`）+ marker 存在 + UI 组件来自 `@nop-chaos/ui`。
 
 Exit Criteria:
 
-- [ ] 4 渲染器各有 focused 单测（marker 存在、关键交互：sender submit→engine.sendMessage、bubble markdown 渲染、message-list 渲染 messages）。
-- [ ] INV-1 守卫测试通过（`design.md` §18.2 不变量 11-15 全覆盖）。
-- [ ] 状态属性 presence-only（`data-streaming` false 时省略，不输出 `="false"`，`design.md` §13.2/§18.1 不变量 5）。
+- [x] 4 渲染器各有 focused 单测（marker 存在、关键交互：sender submit→engine.sendMessage、bubble markdown 渲染、message-list 渲染 messages）。
+- [x] INV-1 守卫测试通过（`design.md` §18.2 不变量 11-15 全覆盖）。
+- [x] 状态属性 presence-only（`data-streaming` false 时省略，不输出 `="false"`，`design.md` §13.2/§18.1 不变量 5）。
 
 ### Phase 5 - playground mock 闭环与 e2e
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/`、`tests/e2e/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] playground host helper：mock connector（`createStreamBasedAiConnector` + mock `env.stream` 产出 canned OpenAI SSE chunk，模拟逐字流式）；经 `xui:imports` 注册 `ai.connectors.mock`。
-- [ ] `example.json` + 示例页面 + 路由注册 + `registerAiRenderers(registry)` 接入。
-- [ ] e2e 测试：在 playground 页面输入文本 → 点发送 → 断言 mock 流式回复逐字出现在气泡里（用 `page.locator` 断言内容，**禁止**用截图诊断）。
+- [x] playground host helper：mock connector（`createStreamBasedAiConnector` + mock `env.stream` 产出 canned OpenAI SSE chunk，模拟逐字流式）；经 `xui:imports` 注册 `ai.connectors.mock`。
+- [x] `example.json` + 示例页面 + 路由注册 + `registerAiRenderers(registry)` 接入。
+- [x] e2e 测试：在 playground 页面输入文本 → 点发送 → 断言 mock 流式回复逐字出现在气泡里（用 `page.locator` 断言内容，**禁止**用截图诊断）。
 
 Exit Criteria:
 
-- [ ] playground `pnpm dev` 下能发送并接收 mock 流式回复（人工抽查记录 dev log）。
-- [ ] e2e mock 对话测试通过（`pnpm test:e2e` 对应文件绿）。
+- [x] playground `pnpm dev` 下能发送并接收 mock 流式回复（人工抽查记录 dev log）。
+- [x] e2e mock 对话测试通过（`pnpm test:e2e` 对应文件绿）。
 
 ## Draft Review Record
 
@@ -179,19 +179,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `flux-renderers-ai` 包已建并完成包外配置注册，workspace 可解析、playground styles.css 已 import。
-- [ ] 引擎核心框架无关（`src/engine` 零 React/DOM 依赖），`combineDeltaData` 全分支有单测。
-- [ ] P0 4 渲染器实现，遵守 renderer 契约（`props.props/meta/regions/events/helpers`）、marker、`@nop-chaos/ui` only、INV-1 守卫测试通过。
-- [ ] playground mock 流式对话闭环可跑通，e2e 测试通过。
-- [ ] 不内置任何具体 Connector 实现、不实现 SSE 协议解析、`src/storage` 只含接口（`design.md` §18 不变量 13-15）。
-- [ ] owner doc `docs/components/flux-renderers-ai/design.md` §5.1 渲染器清单状态 + `docs/components/index.md` 同步（P0 4 渲染器标已实现）。
-- [ ] roadmap `docs/components/roadmap-ai.md` A1 状态 `todo`→`done`，Phase Status A1 同步。
-- [ ] dev log `docs/logs/2026/07-23.md` 记录。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `flux-renderers-ai` 包已建并完成包外配置注册，workspace 可解析、playground styles.css 已 import。
+- [x] 引擎核心框架无关（`src/engine` 零 React/DOM 依赖），`combineDeltaData` 全分支有单测。
+- [x] P0 4 渲染器实现，遵守 renderer 契约（`props.props/meta/regions/events/helpers`）、marker、`@nop-chaos/ui` only、INV-1 守卫测试通过。
+- [x] playground mock 流式对话闭环可跑通，e2e 测试通过。
+- [x] 不内置任何具体 Connector 实现、不实现 SSE 协议解析、`src/storage` 只含接口（`design.md` §18 不变量 13-15）。
+- [x] owner doc `docs/components/flux-renderers-ai/design.md` §5.1 渲染器清单状态 + `docs/components/index.md` 同步（P0 4 渲染器标已实现）。
+- [x] roadmap `docs/components/roadmap-ai.md` A1 状态 `todo`→`done`，Phase Status A1 同步。
+- [x] dev log `docs/logs/2026/07-23.md` 记录。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -214,13 +214,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<关闭时填写>>
+Status Note: 全部 5 Phase 执行完成，`pnpm typecheck` 58/58、`pnpm build` 31/31、`pnpm lint` 31/31、`pnpm test` 58/58 全绿，ai-chat e2e 2/2 绿。roadmap A1 `done`、design.md §5.1 + docs/components/index.md 已同步。Closure-audit 由独立子 agent（fresh session）完成并通过。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link>>
+- Auditor / Agent: 独立子 agent（fresh closure-audit session）。
+- Evidence: fresh session 逐项核对 live repo：(1) 结构——`packages/flux-renderers-ai/`（engine/create-engine.ts + utils.ts + state-adapter.ts + native-adapter.ts + plugins/{thinking,tool,length}、adapters/{react-adapter,use-message,use-auto-scroll,ai-connector-factory,ai-chat-context}、renderers/{ai-chat,ai-message-list,ai-bubble/{index,types,renderers/{default,markdown,loading,text}},ai-sender}、storage/types.ts 仅接口）全部存在；(2) INV-1 不变量——`rg` engine 目录零 React/DOM 引用、engine+renderers 零 fetch/WebSocket/EventSource/localStorage/indexedDB/动态 import，`contract-honesty.test.ts` 6/6 绿；(3) Anti-hollow——engine 实际被调用：`ai-chat.tsx` → `useMessage` → `createMessageEngine` + `createReactMessageAdapter`，`apps/playground/src/ai/mock-ai-env.ts` → `createStreamBasedAiConnector` → `env.stream`，非空壳；(4) 包内单测 `pnpm --filter @nop-chaos/flux-renderers-ai test` 47/47 绿；(5) e2e `tests/e2e/ai-chat.spec.ts` fresh 复跑 2/2 绿（send→stream→bubble 渲染、多轮累积）；(6) 包外配置（root tsconfig references、tsconfig.base.json paths、vite.workspace-alias.ts、apps/playground/src/styles.css @import）+ 路由 `#/ai-chat`（App.tsx + route-model.ts）+ `registerAiRenderers(registry)` 齐全；(7) owner-doc 同步——`docs/logs/2026/07-23.md` 含 full-green 验证记录、`docs/components/flux-renderers-ai/design.md` §5.1 4 渲染器标 ✅、`docs/components/roadmap-ai.md` A1 `done`、`docs/components/index.md` 同步；(8) deferred 诚实——CJK/fence 缓冲（optimization candidate，A2 A-2 successor）、useAutoScroll 公开（out-of-scope，A2/A3）分类正确，均无 in-scope live defect 降级。五点一致性（Plan Status / 5 Phase Status / Phase Exit Criteria / Closure Gates / Closure evidence）全部一致。Verdict: approved。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up>>
+- 流式 Markdown CJK/代码 fence 缓冲（A2 A-2）。
+- `useAutoScroll` 公开为 host utility（A2/A3）。

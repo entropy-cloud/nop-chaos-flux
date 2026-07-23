@@ -334,9 +334,9 @@ UI primitive 对齐补充规则：
 
 - `pull-refresh`、`infinite-scroll`、`swipe-cell`、`countdown`、`notice-bar`
 
-**AI 对话（`flux-renderers-ai`，设计中）**
+**AI 对话（`flux-renderers-ai`，P0 已落地）**
 
-- `ai-chat`、`ai-message-list`、`ai-bubble`、`ai-sender`、`ai-conversations`、`ai-welcome`、`ai-prompts`、`ai-feedback`、`ai-attachments`、`ai-tool-call`、`ai-citations`、`ai-voice-input`、`ai-token-usage`、`ai-suggestions`（详见 `docs/components/flux-renderers-ai/design.md`，引擎设计见 `engine.md`，开发路线见 `docs/components/roadmap-ai.md`）
+- `ai-chat`、`ai-message-list`、`ai-bubble`、`ai-sender`（P0 ✅ 已实现，含框架无关消息引擎 + React adapter + mock 流式闭环）、`ai-conversations`、`ai-welcome`、`ai-prompts`、`ai-feedback`、`ai-attachments`、`ai-tool-call`、`ai-citations`、`ai-voice-input`、`ai-token-usage`、`ai-suggestions`（P1+ 待实现）（详见 `docs/components/flux-renderers-ai/design.md`，引擎设计见 `engine.md`，开发路线见 `docs/components/roadmap-ai.md`）
 
 ### 当前仓库已注册的领域 renderer
 
