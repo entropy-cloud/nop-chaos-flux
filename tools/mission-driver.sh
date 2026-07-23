@@ -12,7 +12,9 @@
 # Run './mission-driver.sh --help' for the full option list.
 
 MISSION_DRIVER_HOME="${MISSION_DRIVER_HOME:-../attractor-guided-engineering-template/tools/mission-driver}"
-DIR="$(cd "$(dirname "$0")" && pwd)"
+# Resolve symlinks so process.argv[1] matches import.meta.url (main.js:770)
+MISSION_DRIVER_HOME="$(cd "$MISSION_DRIVER_HOME" && pwd -P)"
+DIR="$(cd "$(dirname "$0")" && pwd -P)"
 
 exec node "$MISSION_DRIVER_HOME/src/main.js" \
   --dir "$DIR/.." \
