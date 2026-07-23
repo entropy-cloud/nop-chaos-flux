@@ -9,6 +9,7 @@ import { AiPromptsRenderer } from './renderers/ai-prompts.js';
 import { AiFeedbackRenderer } from './renderers/ai-feedback.js';
 import { AiToolCallRenderer } from './renderers/ai-tool-call.js';
 import { AiAttachmentsRenderer } from './renderers/ai-attachments.js';
+import { AiCitationsRenderer } from './renderers/ai-citations.js';
 import type {
   AiChatSchema,
   AiMessageListSchema,
@@ -20,6 +21,7 @@ import type {
   AiFeedbackSchema,
   AiToolCallSchema,
   AiAttachmentsSchema,
+  AiCitationsSchema,
 } from './schemas.js';
 
 /**
@@ -184,6 +186,7 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'toolCall', kind: 'prop' },
       { key: 'state', kind: 'prop' },
       { key: 'defaultOpen', kind: 'prop', valueType: 'boolean' },
+      { key: 'onApproval', kind: 'event' },
     ],
   },
   {
@@ -206,6 +209,20 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'onUpload', kind: 'event' },
     ],
   },
+  {
+    type: 'ai-citations',
+    displayName: 'AI Citations',
+    category: 'ai',
+    sourcePackage: '@nop-chaos/flux-renderers-ai',
+    defaultSchema: { type: 'ai-citations' },
+    component: AiCitationsRenderer,
+    fields: [
+      { key: 'message', kind: 'prop' },
+      { key: 'sources', kind: 'prop' },
+      { key: 'mode', kind: 'prop' },
+      { key: 'onSourceClick', kind: 'event' },
+    ],
+  },
 ];
 
 export type AiRendererSchema =
@@ -218,4 +235,5 @@ export type AiRendererSchema =
   | AiPromptsSchema
   | AiFeedbackSchema
   | AiToolCallSchema
-  | AiAttachmentsSchema;
+  | AiAttachmentsSchema
+  | AiCitationsSchema;

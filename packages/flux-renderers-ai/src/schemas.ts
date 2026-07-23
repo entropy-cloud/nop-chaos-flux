@@ -150,10 +150,17 @@ export interface AiToolCallSchema extends BaseSchema {
   type: 'ai-tool-call';
   /** Expression resolving to a `ChatToolCall`. */
   toolCall?: SchemaValue;
-  /** Expression resolving to `ChatToolCallUIState` (status / open / result). */
+  /** Expression resolving to `ChatToolCallUIState` (status / open / result / approval). */
   state?: SchemaValue;
   /** Whether the args panel is open by default. */
   defaultOpen?: boolean;
+  /**
+   * P3 HITL (A-14): fired when the user clicks approve/reject. Payload is
+   * `{ action: 'approve'|'reject', toolCall, toolCallId }`. The engine only
+   * holds `state.approval`; it does NOT mutate it — the host action handler
+   * decides the workflow outcome.
+   */
+  onApproval?: ActionSchema;
 }
 
 export interface AiAttachmentItem extends SchemaObject {
@@ -190,4 +197,32 @@ export interface AiAttachmentsSchema extends BaseSchema {
   onChange?: ActionSchema;
   onError?: ActionSchema;
   onUpload?: ActionSchema;
+}
+
+// ---- P3 renderers (A4) ----
+
+/**
+ * A single citation source (A-13). `index` is the 1-based `[N]` marker it
+ * resolves to; `title` / `url` / `snippet` populate the hover card.
+ */
+export interface AiCitationSource {
+  index: number;
+  title?: string;
+  url?: string;
+  snippet?: string;
+}
+
+export interface AiCitationsSchema extends BaseSchema {
+  type: 'ai-citations';
+  /** Expression resolving to a `ChatMessage` (content source for `[N]` parsing). */
+  message?: SchemaValue;
+  /** Explicit sources (overrides `metadata.sources` / `data-sources` part). */
+  sources?: SchemaValue;
+  /**
+   * `inline` (default): parse `[N]` in `message.content` and render hoverable
+   * `<sup>` markers. `list`: render the sources as a bottom reference list.
+   */
+  mode?: 'inline' | 'list';
+
+  onSourceClick?: ActionSchema;
 }

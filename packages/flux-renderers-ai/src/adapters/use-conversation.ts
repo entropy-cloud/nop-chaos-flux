@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { generateMessageId } from '../engine/utils.js';
 import { createMessageEngine } from '../engine/create-engine.js';
 import { createReactMessageAdapter } from './react-adapter.js';
@@ -8,6 +8,7 @@ import type {
   ChatMessage,
   MessageEngine,
   MessageEnginePlugin,
+  RequestState,
 } from '../engine/types.js';
 import type { UseMessageOptions } from './use-message.js';
 import type { ConversationStorageStrategy } from '../storage/types.js';
@@ -45,6 +46,13 @@ export interface UseConversationReturn {
  *   to bound memory; a conversation that is mid-stream keeps running in the
  *   background (Failure Path `switch-while-stream`).
  *
+ * Persistence (P3): when `storage` is injected the hook bootstraps the
+ * conversation list on mount, re-hydrates messages on switch via
+ * `engine.setMessages`, and auto-saves a snapshot when a turn completes
+ * (`requestState`: `processing` → `completed|aborted|error`). Storage
+ * failures are non-fatal (Failure Paths `storage-load-error` /
+ * `storage-save-error`).
+ *
  * This is a HOST HELPER (design.md §11.5 INV-16): it is NOT used inside
  * renderers. `ai-conversations` reads `conversations` / `activeConversationId`
  * from schema expressions (scope-owned, host-managed).
@@ -53,17 +61,24 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   const { connector, createEngineOptions, storage, autoSaveMessages = false, initialConversations } = options;
   const connectorRef = useMemo(() => ({ current: connector }), [connector]);
 
-  const [conversations, setConversations] = useState<AiConversationInfo[]>(
-    () => initialConversations ?? [],
+  // When storage is injected it owns the source of truth: the in-memory list
+  // is seeded empty and `loadConversations()` runs on mount. Without storage
+  // the host-provided `initialConversations` seeds the list.
+  const [conversations, setConversations] = useState<AiConversationInfo[]>(() =>
+    storage ? [] : (initialConversations ?? []),
   );
-  const [activeId, setActiveId] = useState<string | null>(
-    () => initialConversations?.[0]?.id ?? null,
+  const [activeId, setActiveId] = useState<string | null>(() =>
+    storage ? null : (initialConversations?.[0]?.id ?? null),
   );
 
   // Engine cache: id → engine. We keep this in a ref-like closure local so
   // updates don't trigger re-renders (the engine is read via subscribe).
   const [engineCache] = useState(() => new Map<string, MessageEngine>());
   const [activeEngine, setActiveEngine] = useState<MessageEngine | null>(null);
+
+  // Per-engine auto-save unsubscribe handles, kept alongside the engine cache
+  // so subscriptions are torn down on evict / delete / unmount.
+  const autoSaveUnsubsRef = useRef(new Map<string, () => void>());
 
   const buildEngine = useCallback((): MessageEngine => {
     const plugins = (createEngineOptions?.plugins ?? []) as MessageEnginePlugin[];
@@ -77,6 +92,100 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     });
   }, [connectorRef, createEngineOptions]);
 
+  /**
+   * Attach a `requestState` subscription that persists the engine snapshot
+   * when a turn completes. Returns the unsubscribe handle (no-op when storage
+   * or `autoSaveMessages` is disabled). Bound to the engine lifecycle: the
+   * caller evicts the handle together with the engine cache entry.
+   */
+  const attachAutoSave = useCallback(
+    (engine: MessageEngine, conversationId: string): (() => void) => {
+      const prev = autoSaveUnsubsRef.current.get(conversationId);
+      if (prev) prev();
+      if (!storage || !autoSaveMessages) {
+        autoSaveUnsubsRef.current.delete(conversationId);
+        return () => {};
+      }
+      let prevState: RequestState = engine.getState().requestState;
+      const unsub = engine.subscribe('requestState', (state) => {
+        const next = state.requestState;
+        const wasProcessing = prevState === 'processing';
+        const isDone = next === 'completed' || next === 'aborted' || next === 'error';
+        prevState = next;
+        if (wasProcessing && isDone) {
+          try {
+            Promise.resolve(storage.saveMessages(conversationId, engine.getMessages())).catch(() => {
+              // Failure Path `storage-save-error`: non-fatal, engine state
+              // is unaffected; the next turn retries.
+              if (typeof console !== 'undefined') {
+                console.warn('[useConversation] saveMessages failed');
+              }
+            });
+          } catch {
+            // Synchronous throw from a sync saveMessages: non-fatal.
+            if (typeof console !== 'undefined') {
+              console.warn('[useConversation] saveMessages threw');
+            }
+          }
+        }
+      });
+      autoSaveUnsubsRef.current.set(conversationId, unsub);
+      return unsub;
+    },
+    [storage, autoSaveMessages],
+  );
+
+  const buildEngineFor = useCallback(
+    (conversationId: string): MessageEngine => {
+      const engine = buildEngine();
+      attachAutoSave(engine, conversationId);
+      return engine;
+    },
+    [buildEngine, attachAutoSave],
+  );
+
+  function detachEngine(conversationId: string): void {
+    const unsub = autoSaveUnsubsRef.current.get(conversationId);
+    if (unsub) {
+      unsub();
+      autoSaveUnsubsRef.current.delete(conversationId);
+    }
+  }
+
+  // ---- Mount bootstrap: hydrate conversations from storage (P3) ----
+  useEffect(() => {
+    if (!storage) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const convs = await storage.loadConversations();
+        if (cancelled) return;
+        if (convs.length > 0) {
+          setConversations(convs);
+          // Select the first conversation as active when none is active yet.
+          setActiveId((current) => current ?? convs[0].id);
+        }
+      } catch {
+        // Failure Path `storage-load-error`: non-fatal, keep the empty list.
+        if (typeof console !== 'undefined') {
+          console.warn('[useConversation] loadConversations failed');
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [storage]);
+
+  // ---- Unmount: tear down every auto-save subscription ----
+  useEffect(() => {
+    const unsubs = autoSaveUnsubsRef.current;
+    return () => {
+      for (const unsub of unsubs.values()) unsub();
+      unsubs.clear();
+    };
+  }, []);
+
   const createConversation = useCallback(
     (params?: { title?: string; metadata?: Record<string, unknown> }): AiConversationInfo => {
       const now = Date.now();
@@ -89,13 +198,13 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       };
       setConversations((prev) => [info, ...prev]);
       setActiveId(info.id);
-      const engine = buildEngine();
+      const engine = buildEngineFor(info.id);
       engineCache.set(info.id, engine);
       setActiveEngine(engine);
       void storage?.saveConversation?.(info);
       return info;
     },
-    [buildEngine, engineCache, storage],
+    [buildEngineFor, engineCache, storage],
   );
 
   const switchConversation = useCallback(
@@ -106,17 +215,20 @@ export function useConversation(options: UseConversationOptions): UseConversatio
 
       let engine = engineCache.get(id);
       if (!engine) {
-        engine = buildEngine();
+        engine = buildEngineFor(id);
         engineCache.set(id, engine);
-        if (autoSaveMessages && storage) {
+        if (storage) {
           try {
             const stored = await storage.loadMessages(id);
             if (stored.length > 0) {
-              // Re-hydrate by sending the stored messages as initial state.
-              // The engine exposes `send` which sets the conversation.
+              // Re-hydrate via the A3 `setMessages` (whole-list replace).
+              engine.setMessages(stored);
             }
           } catch {
-            // Storage failures are non-fatal (Failure Path `storage-load-error`).
+            // Failure Path `storage-load-error`: non-fatal, empty messages.
+            if (typeof console !== 'undefined') {
+              console.warn('[useConversation] loadMessages failed');
+            }
           }
         }
       }
@@ -128,16 +240,18 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       for (const [cachedId, cachedEngine] of engineCache.entries()) {
         if (cachedId === id) continue;
         if (cachedEngine.getState().isProcessing) continue;
+        detachEngine(cachedId);
         engineCache.delete(cachedId);
       }
     },
-    [autoSaveMessages, buildEngine, conversations, engineCache, storage],
+    [buildEngineFor, conversations, engineCache, storage],
   );
 
   const deleteConversation = useCallback(
     async (id: string): Promise<void> => {
       setConversations((prev) => prev.filter((c) => c.id !== id));
       const removed = engineCache.get(id);
+      detachEngine(id);
       engineCache.delete(id);
       if (removed && removed.getState().isProcessing) {
         await removed.abort();
@@ -158,12 +272,11 @@ export function useConversation(options: UseConversationOptions): UseConversatio
 
   const renameConversation = useCallback(
     (id: string, title: string): void => {
-      setConversations((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, title, updatedAt: Date.now() } : c)),
-      );
+      const now = Date.now();
+      setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title, updatedAt: now } : c)));
       const updated = conversations.find((c) => c.id === id);
       if (updated) {
-        void storage?.saveConversation?.({ ...updated, title, updatedAt: Date.now() });
+        void storage?.saveConversation?.({ ...updated, title, updatedAt: now });
       }
     },
     [conversations, storage],
@@ -175,6 +288,7 @@ export function useConversation(options: UseConversationOptions): UseConversatio
         void engine.abort();
       }
     }
+    for (const id of engineCache.keys()) detachEngine(id);
     engineCache.clear();
     setConversations([]);
     setActiveId(null);

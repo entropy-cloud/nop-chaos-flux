@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button, Badge, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Check, Loader2, TriangleAlert, Ban, ChevronDown, ChevronRight } from 'lucide-react';
 import { jsonrepair } from 'jsonrepair';
@@ -9,6 +9,7 @@ import type { BubbleToolRendererProps } from './ai-bubble/types.js';
 import type { AiToolCallSchema } from '../schemas.js';
 
 export type ToolCallStatus = NonNullable<ChatToolCallUIState['status']>;
+export type ToolCallApproval = NonNullable<ChatToolCallUIState['approval']>;
 
 /**
  * ai-tool-call (Widget, P2): renders a single LLM tool invocation card.
@@ -19,9 +20,15 @@ export type ToolCallStatus = NonNullable<ChatToolCallUIState['status']>;
  * - `jsonrepair` fixes truncated streamed JSON (Failure Path
  *   `tool-args-truncated`); a regex highlighter colours keys / strings /
  *   numbers / booleans / null.
+ * - P3 HITL (A-14): when `state.approval === 'pending'` the card footer shows
+ *   approve/reject buttons + a focus trap (Tab cycles within the actions, Esc
+ *   restores prior focus). Clicking dispatches `onApproval`; the engine does
+ *   NOT mutate `approval` (host action handler owns the workflow). A decided
+ *   state (`approved`/`rejected`) renders a status badge instead.
  * - Root `aria-label` (roadmap P1 a11y, deferred from A2).
  *
- * Marker `nop-ai-tool-call`; `data-tool-status` exposes the status to host CSS.
+ * Marker `nop-ai-tool-call`; `data-tool-status` exposes the status to host CSS;
+ * `data-requires-approval` is presence-only when approval is pending.
  */
 export function AiToolCallView(props: {
   toolCall: ChatToolCall;
@@ -29,16 +36,69 @@ export function AiToolCallView(props: {
   defaultOpen?: boolean;
   className?: string;
   onToggle?: (open: boolean) => void;
+  /** P3 HITL: invoked with 'approve' | 'reject'. No-op when undefined. */
+  onApproval?: (action: 'approve' | 'reject') => void;
 }): React.ReactElement | null {
   const { toolCall, state } = props;
   const status: ToolCallStatus = state?.status ?? 'running';
+  const approval = state?.approval;
   const [internalOpen, setInternalOpen] = useState(props.defaultOpen ?? false);
   const open = state?.open ?? internalOpen;
+
+  // Focus trap for the pending-approval footer (a11y §7 P3).
+  const approvalFooterRef = useRef<HTMLDivElement | null>(null);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
+  const wasPendingRef = useRef(false);
+
+  useEffect(() => {
+    const pending = approval === 'pending';
+    if (pending && !wasPendingRef.current) {
+      // Entering pending: record prior focus and move focus to the approve action.
+      wasPendingRef.current = true;
+      const active = typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null;
+      if (active && approvalFooterRef.current && !approvalFooterRef.current.contains(active)) {
+        prevFocusRef.current = active;
+      }
+      const approveBtn = approvalFooterRef.current?.querySelector(
+        '[data-slot="ai-tool-call-approve"]',
+      );
+      if (approveBtn instanceof HTMLElement) approveBtn.focus();
+    } else if (!pending && wasPendingRef.current) {
+      wasPendingRef.current = false;
+    }
+  }, [approval]);
 
   function handleToggle() {
     const next = !open;
     setInternalOpen(next);
     props.onToggle?.(next);
+  }
+
+  function handleApprovalKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
+    if (approval !== 'pending') return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      prevFocusRef.current?.focus();
+      return;
+    }
+    if (event.key === 'Tab') {
+      const footer = approvalFooterRef.current;
+      if (!footer) return;
+      const actions = Array.from(
+        footer.querySelectorAll('button[data-slot="ai-tool-call-approve"], button[data-slot="ai-tool-call-reject"]'),
+      ) as HTMLElement[];
+      if (actions.length === 0) return;
+      const current = typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null;
+      const idx = current ? actions.indexOf(current) : -1;
+      event.preventDefault();
+      if (event.shiftKey) {
+        const target = idx <= 0 ? actions[actions.length - 1] : actions[idx - 1];
+        target.focus();
+      } else {
+        const target = idx === -1 || idx >= actions.length - 1 ? actions[0] : actions[idx + 1];
+        target.focus();
+      }
+    }
   }
 
   return (
@@ -47,6 +107,8 @@ export function AiToolCallView(props: {
       data-slot="ai-tool-call"
       data-tool-status={status}
       data-open={open ? '' : undefined}
+      data-requires-approval={approval === 'pending' ? '' : undefined}
+      data-approval={approval ?? undefined}
       aria-label={t('flux.ai.toolCall', { name: toolCall.function.name })}
       role="group"
     >
@@ -74,6 +136,86 @@ export function AiToolCallView(props: {
           <code dangerouslySetInnerHTML={{ __html: highlightJson(toolCall.function.arguments) }} />
         </pre>
       ) : null}
+      {approval ? (
+        <ApprovalFooter
+          approval={approval}
+          footerRef={approvalFooterRef}
+          onKeyDown={handleApprovalKeyDown}
+          onApproval={props.onApproval}
+          toolCallId={toolCall.id}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ApprovalFooter({
+  approval,
+  footerRef,
+  onKeyDown,
+  onApproval,
+  toolCallId,
+}: {
+  approval: ToolCallApproval;
+  footerRef: React.RefObject<HTMLDivElement | null>;
+  onKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) => void;
+  onApproval?: (action: 'approve' | 'reject') => void;
+  toolCallId: string;
+}): React.ReactElement {
+  if (approval === 'pending') {
+    return (
+      <div
+        ref={footerRef}
+        data-slot="ai-tool-call-approval"
+        role="group"
+        aria-label={t('flux.ai.approvalActions')}
+        className="mt-2 flex items-center justify-end gap-2 border-t pt-2"
+      >
+        <Button
+          type="button"
+          size="sm"
+          variant="default"
+          className="bg-green-600 hover:bg-green-700 text-white"
+          data-slot="ai-tool-call-approve"
+          data-tool-call-id={toolCallId}
+          aria-label={t('flux.ai.approve')}
+          onClick={() => onApproval?.('approve')}
+          onKeyDown={onKeyDown}
+        >
+          <Check className="h-3.5 w-3.5" />
+          {t('flux.ai.approve')}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          data-slot="ai-tool-call-reject"
+          data-tool-call-id={toolCallId}
+          aria-label={t('flux.ai.reject')}
+          onClick={() => onApproval?.('reject')}
+          onKeyDown={onKeyDown}
+        >
+          <Ban className="h-3.5 w-3.5" />
+          {t('flux.ai.reject')}
+        </Button>
+      </div>
+    );
+  }
+  // decided state — show a badge (A-12 palette: approved=green, rejected=red).
+  const approved = approval === 'approved';
+  return (
+    <div data-slot="ai-tool-call-approval" className="mt-2 flex items-center justify-end border-t pt-2">
+      <Badge
+        variant="outline"
+        className={cn(
+          'gap-1',
+          approved ? 'border-green-500/40 text-green-600 dark:text-green-500' : 'border-destructive/40 text-destructive',
+        )}
+        data-approval-decision={approval}
+      >
+        {approved ? <Check className="h-3 w-3" /> : <Ban className="h-3 w-3" />}
+        {approved ? t('flux.ai.approved') : t('flux.ai.rejected')}
+      </Badge>
     </div>
   );
 }
@@ -97,6 +239,16 @@ export function AiToolCallRenderer(props: RendererComponentProps<AiToolCallSchem
       state={resolved.state as ChatToolCallUIState | undefined}
       defaultOpen={resolved.defaultOpen}
       className={props.meta.className}
+      onApproval={
+        props.events?.onApproval
+          ? (action) =>
+              props.events.onApproval?.({
+                action,
+                toolCall,
+                toolCallId: toolCall.id,
+              })
+          : undefined
+      }
     />
   );
 }

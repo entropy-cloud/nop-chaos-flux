@@ -21,6 +21,8 @@ export type {
   AiFeedbackSchema,
   AiToolCallSchema,
   AiAttachmentsSchema,
+  AiCitationsSchema,
+  AiCitationSource,
   AiAttachmentItem,
   AiPromptItem,
   AiConversationMenuItem,
@@ -28,15 +30,22 @@ export type {
 
 // ---- Group 2: Renderer components (registry registration only) ----
 export { AiChatRenderer } from './renderers/ai-chat.js';
-export { AiMessageListRenderer } from './renderers/ai-message-list.js';
+export { AiMessageListRenderer, AiMessageListView } from './renderers/ai-message-list.js';
 export { AiBubbleRenderer } from './renderers/ai-bubble/index.js';
-export { AiSenderRenderer } from './renderers/ai-sender.js';
+export { AiSenderRenderer, AiSenderView } from './renderers/ai-sender.js';
 export { AiConversationsRenderer } from './renderers/ai-conversations.js';
 export { AiWelcomeRenderer } from './renderers/ai-welcome.js';
 export { AiPromptsRenderer } from './renderers/ai-prompts.js';
 export { AiFeedbackRenderer } from './renderers/ai-feedback.js';
 export { AiToolCallRenderer, AiToolCallView, highlightJson } from './renderers/ai-tool-call.js';
 export { AiAttachmentsRenderer, buildImageContentParts, type AiAttachment } from './renderers/ai-attachments.js';
+export {
+  AiCitationsRenderer,
+  AiCitationsView,
+  parseCitations,
+  extractMessageText,
+  resolveSources,
+} from './renderers/ai-citations.js';
 
 // ---- Group 3: Host utilities (host app composition; NOT for use inside renderers) ----
 export type {

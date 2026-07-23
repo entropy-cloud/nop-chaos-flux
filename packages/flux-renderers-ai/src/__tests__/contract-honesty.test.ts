@@ -60,6 +60,16 @@ describe('INV-1: engine + renderers do not touch external IO APIs', () => {
     }
   });
 
+  // Major-3: the FORBIDDEN_GLOBAL_IO scan must cover `adapters/` too so that
+  // host helpers like `useConversation` cannot bypass the storage injection
+  // invariant (INV-1) by touching `localStorage`/`fetch`/`IndexedDB` directly.
+  it('src/adapters/ never calls forbidden global IO APIs directly', () => {
+    for (const file of listSourceFiles(ADAPTERS_DIR, ['.ts', '.tsx'])) {
+      const src = readFileSync(file, 'utf8');
+      expect(src).not.toMatch(FORBIDDEN_GLOBAL_IO);
+    }
+  });
+
   it('src/adapters/ connector factory has no hardcoded backend config (baseURL/apiKey/model)', () => {
     const factory = readFileSync(join(ADAPTERS_DIR, 'ai-connector-factory.ts'), 'utf8');
     // The factory must not hardcode baseURL/apiKey/model literals.

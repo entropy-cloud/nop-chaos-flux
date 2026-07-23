@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useConversation } from '../use-conversation.js';
-import type { AiConnector, AiConnectorChunk, AiConnectorRequest } from '../../engine/types.js';
+import type {
+  AiConnector,
+  AiConnectorChunk,
+  AiConnectorRequest,
+  AiConversationInfo,
+  ChatMessage,
+} from '../../engine/types.js';
+import type { ConversationStorageStrategy } from '../../storage/types.js';
 
 function slowConnector(chunks: AiConnectorChunk[], delayMs = 5): AiConnector {
   return {
@@ -145,5 +152,208 @@ describe('useConversation — double-layer model', () => {
       await new Promise((r) => setTimeout(r, 200));
     });
     expect(aEngine.getState().requestState).toBe('completed');
+  });
+});
+
+// ============ P3 storage sync (mount bootstrap / re-hydrate / auto-save) ============
+
+interface MockStorageCalls {
+  loadConversations: number;
+  loadMessages: number;
+  saveConversation: number;
+  saveMessages: number;
+  deleteConversation: number;
+}
+
+function mockStorage(initial?: {
+  conversations?: AiConversationInfo[];
+  messages?: Record<string, ChatMessage[]>;
+}) {
+  const calls: MockStorageCalls = {
+    loadConversations: 0,
+    loadMessages: 0,
+    saveConversation: 0,
+    saveMessages: 0,
+    deleteConversation: 0,
+  };
+  const savedMessages: Record<string, ChatMessage[]> = {};
+  const strategy: ConversationStorageStrategy = {
+    async loadConversations() {
+      calls.loadConversations++;
+      return initial?.conversations ?? [];
+    },
+    async loadMessages(id: string) {
+      calls.loadMessages++;
+      return initial?.messages?.[id] ?? [];
+    },
+    async saveConversation() {
+      calls.saveConversation++;
+    },
+    async saveMessages(id: string, messages: ChatMessage[]) {
+      calls.saveMessages++;
+      savedMessages[id] = messages;
+    },
+    async deleteConversation() {
+      calls.deleteConversation++;
+    },
+  };
+  return { strategy, calls, savedMessages };
+}
+
+function wait(ms = 10): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+describe('useConversation — P3 storage sync', () => {
+  it('mount bootstraps the conversation list from storage and selects the first as active', async () => {
+    const convs: AiConversationInfo[] = [
+      { id: 'c1', title: 'One', createdAt: 1, updatedAt: 1 },
+      { id: 'c2', title: 'Two', createdAt: 2, updatedAt: 2 },
+    ];
+    const { strategy, calls } = mockStorage({ conversations: convs });
+    const connector = slowConnector(okChunks);
+    const { result } = renderHook(() =>
+      useConversation({ connector, storage: strategy }),
+    );
+
+    await act(async () => {
+      await wait();
+    });
+
+    expect(calls.loadConversations).toBe(1);
+    expect(result.current.conversations.map((c) => c.id)).toEqual(['c1', 'c2']);
+    expect(result.current.activeConversationId).toBe('c1');
+  });
+
+  it('switchConversation re-hydrates stored messages via engine.setMessages', async () => {
+    const stored: ChatMessage[] = [
+      { id: 'm1', role: 'user', content: 'hi' },
+      { id: 'm2', role: 'assistant', content: 'hello' },
+    ];
+    const convs: AiConversationInfo[] = [
+      { id: 'c1', title: 'One', createdAt: 1, updatedAt: 1 },
+    ];
+    const { strategy, calls } = mockStorage({
+      conversations: convs,
+      messages: { c1: stored },
+    });
+    const connector = slowConnector(okChunks);
+    const { result } = renderHook(() =>
+      useConversation({ connector, storage: strategy }),
+    );
+
+    await act(async () => {
+      await wait();
+    });
+    await act(async () => {
+      await result.current.switchConversation('c1');
+    });
+
+    expect(calls.loadMessages).toBe(1);
+    const engine = result.current.activeEngine!;
+    expect(engine).not.toBeNull();
+    expect(engine.getMessages().map((m) => m.id)).toEqual(['m1', 'm2']);
+  });
+
+  it('autoSaveMessages persists a snapshot when a turn completes', async () => {
+    const convs: AiConversationInfo[] = [
+      { id: 'c1', title: 'One', createdAt: 1, updatedAt: 1 },
+    ];
+    const { strategy, calls, savedMessages } = mockStorage({
+      conversations: convs,
+    });
+    const connector = slowConnector(okChunks, 5);
+    const { result } = renderHook(() =>
+      useConversation({ connector, storage: strategy, autoSaveMessages: true }),
+    );
+
+    await act(async () => {
+      await wait();
+    });
+    await act(async () => {
+      await result.current.switchConversation('c1');
+    });
+    const engine = result.current.activeEngine!;
+    await act(async () => {
+      await engine.sendMessage('hello');
+    });
+
+    expect(calls.saveMessages).toBeGreaterThanOrEqual(1);
+    expect(savedMessages.c1.some((m) => m.role === 'user' && m.content === 'hello')).toBe(true);
+  });
+
+  it('Failure Path storage-load-error: loadConversations reject → empty list, no throw', async () => {
+    const failing: ConversationStorageStrategy = {
+      ...mockStorage().strategy,
+      loadConversations: async () => {
+        throw new Error('boom');
+      },
+    };
+    const connector = slowConnector(okChunks);
+    const { result } = renderHook(() =>
+      useConversation({ connector, storage: failing }),
+    );
+
+    await act(async () => {
+      await wait();
+    });
+
+    expect(result.current.conversations).toEqual([]);
+    expect(result.current.activeConversationId).toBeNull();
+  });
+
+  it('Failure Path storage-load-error: loadMessages reject → empty messages, no throw', async () => {
+    const convs: AiConversationInfo[] = [
+      { id: 'c1', title: 'One', createdAt: 1, updatedAt: 1 },
+    ];
+    const failing: ConversationStorageStrategy = {
+      ...mockStorage({ conversations: convs }).strategy,
+      loadMessages: async () => {
+        throw new Error('boom');
+      },
+    };
+    const connector = slowConnector(okChunks);
+    const { result } = renderHook(() =>
+      useConversation({ connector, storage: failing }),
+    );
+
+    await act(async () => {
+      await wait();
+    });
+    await act(async () => {
+      await result.current.switchConversation('c1');
+    });
+
+    expect(result.current.activeEngine!.getMessages()).toEqual([]);
+  });
+
+  it('Failure Path storage-save-error: saveMessages reject → does not block the engine', async () => {
+    const convs: AiConversationInfo[] = [
+      { id: 'c1', title: 'One', createdAt: 1, updatedAt: 1 },
+    ];
+    const failing: ConversationStorageStrategy = {
+      ...mockStorage({ conversations: convs }).strategy,
+      saveMessages: async () => {
+        throw new Error('boom');
+      },
+    };
+    const connector = slowConnector(okChunks);
+    const { result } = renderHook(() =>
+      useConversation({ connector, storage: failing, autoSaveMessages: true }),
+    );
+
+    await act(async () => {
+      await wait();
+    });
+    await act(async () => {
+      await result.current.switchConversation('c1');
+    });
+    const engine = result.current.activeEngine!;
+    await act(async () => {
+      await engine.sendMessage('hello');
+    });
+
+    // The turn completed despite the persistence failure.
+    expect(engine.getState().requestState).toBe('completed');
   });
 });
