@@ -32,7 +32,7 @@
 | 列折叠                   | **P2 实现** | —                 | 列 header 折叠按钮，collapsed state 本地管理                                                           |
 | 列宽拖拽调整             | P3 deferred | —                 | 列宽度通过 `columnWidth` 配置，拖拽调整暂不做                                                          |
 | Column 渲染走 configMap  | —           | **不采纳**        | Column 是容器（含 header/可滚动卡片列表/footer），不是简单 render 函数；由 `KanbanColumn` 组件独立渲染 |
-| 活动日志                 | P3 deferred | —                 | 不内置活动日志实体，通过 `onCardMove` 事件消费方自行记录                                               |
+| 活动日志                 | **P2 实现** | —                 | 已实现内置活动日志面板；操作描述/相对时间通过 `t()` 实现 i18n，参考 §12.10 设计要点                    |
 | 实时同步                 | P3 deferred | —                 | 数据源层职责，不内置 WebSocket                                                                         |
 | amis 字符串脚本事件      | —           | **不采纳**        | Flux action schema 统一处理                                                                            |
 | 组件级 `api`（自带请求） | —           | **不采纳**        | 请求下沉 data-source（X3 原则）                                                                        |
@@ -532,7 +532,7 @@ interface KanbanMember {
 
 **按标签筛选**：`filterTags: string[]` 字段声明激活标签筛选模式。看板顶部显示所有标签作为可点击的筛选 pill。选中标签时仅显示包含该标签的卡片（多选或关系）。
 
-### 12.10 活动日志设计要点（P3）
+### 12.10 活动日志设计要点（已实现，P2）
 
 活动日志记录看板内所有卡片操作，参考 Planka Action 模型。
 
@@ -559,7 +559,8 @@ interface KanbanAction {
 
 - 日志面板可通过看板右上角"活动日志"按钮打开（浮层或侧边栏）
 - 日志按时间倒序排列，每条显示：头像 + 用户名 + 操作描述 + 相对时间
-- 操作描述使用模板："张三 将「需求评审」从「待办」移至「进行中」"
+- 操作描述使用 `t('scheduling.kanban.cardMoved', { actor, cardId, fromCol, toCol })` 等 i18n 键，支持多语言
+- 相对时间使用 `t('scheduling.kanban.justNow')` 等 i18n 键
 - 操作描述中的列名和卡片名可点击，点击后导航到对应列/卡片
 
 **筛选**：按列筛选（`filterColumnId`）、按卡片筛选（`filterCardId`）、按操作者筛选（`filterActorId`）。

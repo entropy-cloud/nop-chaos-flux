@@ -91,27 +91,28 @@ interface CalendarSchema extends BaseSchema {
 
 ## 5. 字段分类
 
-| 字段                                               | 分类                     | 说明                                    |
-| -------------------------------------------------- | ------------------------ | --------------------------------------- |
-| `view`                                             | `props`                  | 当前视图模式，支持表达式                |
-| `date`                                             | `props`                  | 焦点日期                                |
-| `events`                                           | `props (source-enabled)` | 事件源，由外部 data-source 或表达式提供 |
-| `resources`                                        | `props (source-enabled)` | 资源源，由外部 data-source 或表达式提供 |
-| `firstDayOfWeek`                                   | `props`                  | 周起始日                                |
-| `showWeekends`                                     | `props`                  | 是否显示周末列                          |
-| `maxConcurrent`                                    | `props`                  | 并发事件宽度上限                        |
-| `eventTemplate`                                    | `region`                 | 自定义事件渲染区域                      |
-| `viewOwnership`、`viewStatePath`                   | `props`                  | 视图 ownership 路径                     |
-| `dateOwnership`、`dateStatePath`                   | `props`                  | 日期 ownership 路径                     |
-| `statusPath`                                       | `props`                  | scope path 交互状态持久化               |
-| `headerClassName`                                  | `props`                  | 导航头额外 CSS class                    |
-| `eventClassName`                                   | `props`                  | 事件色块额外 CSS class                  |
-| `emptyClassName`                                   | `props`                  | 空态区域额外 CSS class                  |
-| `onMount`、`onUnmount`                             | `event`                  | 继承 BaseSchema 生命周期动作            |
-| `id`、`className`、`disabled`、`visible`、`hidden` | `meta`                   | 继承 BaseSchema 元数据通道              |
-| `onEventClick`                                     | `event`                  | 事件点击（ActionSchema）                |
-| `onDateChange`                                     | `event`                  | 日期/月导航变化（ActionSchema）         |
-| `onViewChange`                                     | `event`                  | 视图切换（ActionSchema）                |
+| 字段                                               | 分类                     | 说明                                                                                                   |
+| -------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `view`                                             | `props`                  | 当前视图模式，支持表达式                                                                               |
+| `date`                                             | `props`                  | 焦点日期                                                                                               |
+| `events`                                           | `props (source-enabled)` | 事件源，由外部 data-source 或表达式提供                                                                |
+| `resources`                                        | `props (source-enabled)` | 资源源，由外部 data-source 或表达式提供                                                                |
+| `firstDayOfWeek`                                   | `props`                  | 周起始日                                                                                               |
+| `showWeekends`                                     | `props`                  | 是否显示周末列                                                                                         |
+| `maxConcurrent`                                    | `props`                  | 并发事件宽度上限                                                                                       |
+| `eventTemplate`                                    | `region`                 | 自定义事件渲染区域                                                                                     |
+| `locale`                                           | `props`                  | 本地化语言代码，用于 `Intl.DateTimeFormat` 格式化日期/星期标签；不传时自动检测浏览器语言，默认 `en-US` |
+| `viewOwnership`、`viewStatePath`                   | `props`                  | 视图 ownership 路径                                                                                    |
+| `dateOwnership`、`dateStatePath`                   | `props`                  | 日期 ownership 路径                                                                                    |
+| `statusPath`                                       | `props`                  | scope path 交互状态持久化                                                                              |
+| `headerClassName`                                  | `props`                  | 导航头额外 CSS class                                                                                   |
+| `eventClassName`                                   | `props`                  | 事件色块额外 CSS class                                                                                 |
+| `emptyClassName`                                   | `props`                  | 空态区域额外 CSS class                                                                                 |
+| `onMount`、`onUnmount`                             | `event`                  | 继承 BaseSchema 生命周期动作                                                                           |
+| `id`、`className`、`disabled`、`visible`、`hidden` | `meta`                   | 继承 BaseSchema 元数据通道                                                                             |
+| `onEventClick`                                     | `event`                  | 事件点击（ActionSchema）                                                                               |
+| `onDateChange`                                     | `event`                  | 日期/月导航变化（ActionSchema）                                                                        |
+| `onViewChange`                                     | `event`                  | 视图切换（ActionSchema）                                                                               |
 
 ## 6. regions 与 slot 约定
 
