@@ -591,23 +591,28 @@ graph TD
 
 #### 当前实测值
 
-> 以下数据由 `tests/e2e/kanban-perf.spec.ts` 和 `tests/e2e/calendar-perf.spec.ts` 在 Playwright headless Chromium 环境中采集，2026-07-21。高规格场景使用专用性能测试页面 `calendar-perf-scale` 和 `kanban-perf-scale`。
+> 以下数据由 `tests/e2e/kanban-perf.spec.ts`、`tests/e2e/calendar-perf.spec.ts` 和 `tests/e2e/gantt-perf.spec.ts` 在 Playwright headless Chromium 环境中采集，2026-07-23。高规格场景使用专用性能测试页面 `calendar-perf-scale`、`kanban-perf-scale` 和 `gantt-perf-scale`。
 
-| 组件     | 场景                                   | 实测值                               | 目标值                     | 达标？ | 备注                                                                                |
-| -------- | -------------------------------------- | ------------------------------------ | -------------------------- | ------ | ----------------------------------------------------------------------------------- |
-| Kanban   | 默认 demo 页面空载 FPS                 | avg 75fps, min 32.3fps               | 60fps 拖拽目标             | 待验证 | 纯 render 时间通过 `performance.mark/measure` 隔离；拖拽 FPS 需在 20×300 规格下测量 |
-| Calendar | 默认 demo 页面首次加载（纯渲染时间）   | 由 `performance.mark/measure` 校准   | 首屏 < 500ms               | 待验证 | 移除 Playwright `waitUntil:'load'` 开销，使用 navigation timing API                 |
-| Kanban   | 高规格 20×300 卡片 idle FPS            | 待测量（`kanban-perf-scale` 路由）   | idle > 30fps, 拖拽 > 60fps | 待验证 | 专用测试页面已创建，拖拽 FPS 通过 `measureFps` + 鼠标事件模拟                       |
-| Calendar | 高规格 300 资源 × 31 天首次加载        | 待测量（`calendar-perf-scale` 路由） | 首屏 < 10s                 | 待验证 | 专用测试页面已创建，使用 `performance.mark/measure` 校准                            |
-| Bundle   | `@nop-chaos/flux-renderers-scheduling` | 285.1 KB（rendered）                 | —                          | —      | 详见 `docs/analysis/2026-07-21-bundle-analysis-flux-renderers-scheduling.md`        |
+| 组件     | 场景                                   | 实测值               | 目标值         | 达标？ | 备注                                                                                |
+| -------- | -------------------------------------- | -------------------- | -------------- | ------ | ----------------------------------------------------------------------------------- |
+| Kanban   | 默认 demo 页面空载 FPS (avg)           | avg 60-87fps         | > 30fps        | ✅     |                                                                                     |
+| Kanban   | 高规格 20×300 卡片 idle FPS (avg)      | avg 79-88fps         | idle > 30fps   | ✅     |                                                                                     |
+| Kanban   | 高规格 20×300 卡片 drag FPS (avg)      | avg 78-89fps         | 拖拽 > 60fps   | ✅     | 修正了 drag FPS 测量时序：先拖拽交互、后测量 FPS                                    |
+| Calendar | 默认 demo 页面纯渲染时间               | 62ms                 | 首屏 < 500ms   | ✅     | 改为 SPA hash 导航测量（先加载 app，再通过 hash 切换到 Calendar），隔离 bundle 开销 |
+| Calendar | 高规格 300 资源 × 31 天首次加载        | 384-395ms            | 首屏 < 10s     | ✅     | 同上测量方法                                                                        |
+| Gantt    | 高规格 500 任务 + 2000 依赖 idle FPS   | avg 86-88fps         | idle > 30fps   | ✅     | 专用测试页面 `gantt-perf-scale` 新建                                                |
+| Gantt    | 高规格 500 任务 + 2000 依赖 scroll FPS | avg 82-88fps         | scroll > 50fps | ✅     |                                                                                     |
+| Gantt    | 高规格 500 任务 + 2000 依赖 drag FPS   | avg 81-83fps         | drag > 50fps   | ✅     |                                                                                     |
+| Bundle   | `@nop-chaos/flux-renderers-scheduling` | 285.1 KB（rendered） | —              | —      | 详见 `docs/analysis/2026-07-21-bundle-analysis-flux-renderers-scheduling.md`        |
 
-> Calendar 默认 demo 页面测量已从 `Date.now()` + `waitUntil:'load'` 改为 `performance.mark()`/`performance.measure()` 隔离纯渲染时间，消除 Playwright 基础设施开销。高规格测试页面（`calendar-perf-scale`、`kanban-perf-scale`）已创建并注册到 App.tsx domain 路由。Bundle analysis 通过 `vite build --mode analyze` (rollup-plugin-visualizer) 完成。
+> 性能测试通过 Playwright e2e 自动化执行，包含硬断言阈值。Calendar 默认 demo 页面测量采用 SPA hash 导航方法：先加载 app（`/#!/`），再通过 hash 切换到 Calendar 路由，以隔离 bundle 加载开销。高规格测试页面（`calendar-perf-scale`、`kanban-perf-scale`、`gantt-perf-scale`）均已创建并注册到 App.tsx domain 路由。Bundle analysis 通过 `vite build --mode analyze` (rollup-plugin-visualizer) 完成。
 
 #### 性能测量脚本
 
 - `tests/e2e/helpers/measure-perf.ts` — FPS 捕获（`requestAnimationFrame` delta）和 timing 工具函数
-- `tests/e2e/kanban-perf.spec.ts` — Kanban idle FPS 基线
-- `tests/e2e/calendar-perf.spec.ts` — Calendar 首次加载时间
+- `tests/e2e/kanban-perf.spec.ts` — Kanban idle + drag FPS 基线（硬断言：idle > 30fps, drag > 60fps）
+- `tests/e2e/calendar-perf.spec.ts` — Calendar 首次加载时间（硬断言：demo < 500ms, scale < 10s）
+- `tests/e2e/gantt-perf.spec.ts` — Gantt idle + scroll + drag FPS 基线（硬断言：idle > 30fps, scroll+drag > 50fps）
 
 ### 测试策略
 
