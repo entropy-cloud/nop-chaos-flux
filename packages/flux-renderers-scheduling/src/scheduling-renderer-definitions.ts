@@ -166,7 +166,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     defaultSchema: { type: 'barcode-input', name: 'barcode' },
     component: BarcodeInputRenderer,
     fields: barcodeInputFieldRules,
-    wrap: true,
+    wrap: false,
   },
 ];
 

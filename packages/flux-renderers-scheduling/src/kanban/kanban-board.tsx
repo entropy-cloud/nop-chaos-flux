@@ -242,7 +242,6 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.warn('[kanban] Failed to compile filter expression:', msg);
         setFilterError(msg);
       }
     }

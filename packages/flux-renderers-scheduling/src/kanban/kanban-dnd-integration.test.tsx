@@ -205,11 +205,13 @@ describe('Kanban DnD Integration', () => {
     expect(col1).toBeTruthy();
 
     const dragHandle = col1.querySelector('[data-slot="kanban-column-drag-handle"]') as HTMLElement;
-    if (dragHandle) {
-      fireEvent.keyDown(dragHandle, { key: 'ArrowRight' });
+    expect(dragHandle).toBeTruthy();
 
-      const columns = container.querySelectorAll('[data-slot="kanban-column"]');
-      expect(columns.length).toBe(2);
-    }
+    fireEvent.keyDown(dragHandle!, { key: 'ArrowRight' });
+
+    const columns = container.querySelectorAll('[data-slot="kanban-column"]');
+    expect(columns.length).toBe(2);
+    expect(columns[0].getAttribute('data-column-id')).toBe('col2');
+    expect(columns[1].getAttribute('data-column-id')).toBe('col1');
   });
 });
