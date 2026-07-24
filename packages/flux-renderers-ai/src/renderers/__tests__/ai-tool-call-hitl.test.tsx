@@ -67,6 +67,7 @@ describe('ai-tool-call — HITL approval rendering (A-14)', () => {
     const { container } = render(
       <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} />,
     );
+    const root = container.querySelector('[data-slot="ai-tool-call"]') as HTMLElement;
     const approve = container.querySelector('[data-slot="ai-tool-call-approve"]') as HTMLButtonElement;
     const reject = container.querySelector('[data-slot="ai-tool-call-reject"]') as HTMLButtonElement;
     // P2 fix: dead-click removed — buttons are disabled when no handler is wired.
@@ -79,6 +80,20 @@ describe('ai-tool-call — HITL approval rendering (A-14)', () => {
         fireEvent.click(approve);
       });
     }).not.toThrow();
+
+    // 2151 P2 test hardening: assert `approval` stays `pending` after the
+    // dead click. The component is presentational (state flows in via props
+    // and the engine owns it), so a click with no handler must not flip the
+    // rendered `data-approval` attribute. This catches a regression where the
+    // click handler ever starts mutating local state on a no-handler click.
+    expect(root.getAttribute('data-approval')).toBe('pending');
+    expect(root.hasAttribute('data-requires-approval')).toBe(true);
+    act(() => {
+      fireEvent.click(reject);
+    });
+    // Still pending after clicking reject with no handler either.
+    expect(root.getAttribute('data-approval')).toBe('pending');
+    expect(root.hasAttribute('data-requires-approval')).toBe(true);
   });
 
   it('approval=approved shows a decided badge and no action buttons', () => {

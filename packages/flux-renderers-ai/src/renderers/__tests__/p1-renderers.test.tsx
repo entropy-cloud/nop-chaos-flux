@@ -281,6 +281,25 @@ describe('ai-bubble A-4 timestamp', () => {
     const time = container.querySelector('[data-slot="ai-bubble-timestamp"]');
     expect(time).not.toBeNull();
     expect(time?.tagName).toBe('TIME');
+
+    // 2151 P2 test hardening: assert the formatted label content, not just the
+    // tag name. The renderer formats via `date.toLocaleTimeString(undefined,
+    // {hour:'2-digit', minute:'2-digit'})` and writes the ISO timestamp to the
+    // `dateTime` attribute. Both carry the date's hour/minute, independent of
+    // the runner's local timezone — so assert against the same fixed Date.
+    const expected = new Date('2026-01-01T10:30Z');
+    const expectedLabel = expected.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    expect(time?.textContent).toBe(expectedLabel);
+    // `dateTime` attribute is the ISO string — verifies the value flowed
+    // through (not a hardcoded placeholder) and is timezone-stable.
+    expect(time?.getAttribute('datetime')).toBe(expected.toISOString());
+    // Sanity: the label must look like a time (contain a digit pair), not be
+    // empty or a raw millisecond number.
+    expect(/\d/.test(time?.textContent ?? '')).toBe(true);
+    expect(time?.textContent).not.toContain(String(message.metadata!.createdAt));
   });
 
   it('omits the timestamp when showTimestamp is false', () => {

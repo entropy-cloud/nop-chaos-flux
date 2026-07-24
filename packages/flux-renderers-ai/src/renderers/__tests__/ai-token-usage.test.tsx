@@ -93,11 +93,39 @@ describe('ai-token-usage — rendering', () => {
   });
 
   it('clamps the ring ratio above 1.0 (used > limit)', () => {
-    // No crash; ring still renders with full circumference.
+    // 2151 P2 test hardening: assert the actual clamped strokeDasharray, not
+    // just that the ring renders. Removing the `Math.min(1, …)` clamp would
+    // make `dash = ratio · circumference` overshoot circumference (ratio would
+    // be 5.0 here) and the gap would go negative — this test must turn red in
+    // that case.
     const { container } = render(
       <AiTokenUsageView usage={{ total_tokens: 5000 }} contextLimit={1000} />,
     );
-    expect(container.querySelector('[data-slot="ai-token-usage-ring"]')).not.toBeNull();
+    const ring = container.querySelector('[data-slot="ai-token-usage-ring"]') as unknown as SVGSVGElement | null;
+    expect(ring).not.toBeNull();
+    // The progress arc is the second <circle>; it carries strokeDasharray +
+    // strokeLinecap=round + a rotation transform (the first circle is the
+    // muted background track with no dash).
+    const circles = ring!.querySelectorAll('circle');
+    expect(circles.length).toBe(2);
+    const arc = circles[1] as unknown as SVGCircleElement;
+    const dashArray = arc.getAttribute('stroke-dasharray');
+    expect(dashArray).not.toBeNull();
+    const parts = dashArray!.split(/\s+/);
+    expect(parts.length).toBe(2);
+    const dash = Number(parts[0]);
+    const gap = Number(parts[1]);
+    // Geometry: size=28, stroke=3 → r=(28-3)/2=12.5 → circumference=2π·12.5.
+    const circumference = 2 * Math.PI * ((28 - 3) / 2);
+    // Clamp pins ratio at 1.0 → dash === circumference, gap === 0.
+    expect(dash).toBeCloseTo(circumference, 5);
+    expect(gap).toBeCloseTo(0, 5);
+    // Revert-sensitive invariants: dash stays within [0, circumference] and
+    // gap stays non-negative. Without the clamp, dash would be
+    // 5·circumference and gap would be -4·circumference.
+    expect(dash).toBeGreaterThanOrEqual(0);
+    expect(dash).toBeLessThanOrEqual(circumference);
+    expect(gap).toBeGreaterThanOrEqual(0);
   });
 });
 

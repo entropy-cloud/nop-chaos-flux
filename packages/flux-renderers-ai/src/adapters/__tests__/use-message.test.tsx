@@ -1,7 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useMessage } from '../use-message.js';
-import type { AiConnector, AiConnectorChunk, AiConnectorRequest } from '../../engine/types.js';
+import type {
+  AiConnector,
+  AiConnectorChunk,
+  AiConnectorRequest,
+  AiToolSchema,
+  ToolExecutor,
+} from '../../engine/types.js';
 
 function mockConnector(chunks: AiConnectorChunk[]): AiConnector {
   return {
@@ -171,5 +177,70 @@ describe('useMessage', () => {
     expect(externalEngine.getState().isProcessing).toBe(true);
     await externalEngine.abort();
     release!();
+  });
+
+  // 2151 P2 test hardening: verify the adapter forwards `toolExecutor` (and
+  // `tools`) into the self-built engine so the agentic tool loop actually
+  // fires. The engine-level loop is covered by `engine-tool-loop.test.ts`;
+  // this test guarantees the adapter wiring (`useMessage` → `createMessageEngine`
+  // → internal toolPlugin) is intact — removing the `toolExecutor` field from
+  // the `createMessageEngine({ ... })` call in `use-message.ts` turns this red.
+  it('forwards toolExecutor to the engine so a tool_calls turn invokes it', async () => {
+    const calls: AiConnectorRequest[] = [];
+    let round = 0;
+    const rounds: AiConnectorChunk[][] = [
+      [
+        {
+          delta: {
+            tool_calls: [
+              {
+                index: 0,
+                id: 'call_adapter_1',
+                type: 'function',
+                function: { name: 'get_weather', arguments: '{"city":"sf"}' },
+              },
+            ],
+          },
+        },
+        { finishReason: 'tool_calls' },
+      ],
+      [{ delta: { content: 'Sunny.' } }, { finishReason: 'stop' }],
+    ];
+    const connector: AiConnector = {
+      async stream(req: AiConnectorRequest) {
+        calls.push(req);
+        const chunks = rounds[Math.min(round, rounds.length - 1)];
+        round += 1;
+        async function* gen() {
+          for (const c of chunks) yield c;
+        }
+        return gen();
+      },
+    };
+    const tools: AiToolSchema[] = [
+      { type: 'function', function: { name: 'get_weather' } },
+    ];
+    const toolExecutor: ToolExecutor = vi.fn(async ({ toolCall }) => {
+      expect(toolCall.function.name).toBe('get_weather');
+      return { ok: true, result: 'sunny, 18C' };
+    });
+
+    const { result } = renderHook(() =>
+      useMessage({ connector, tools, toolExecutor }),
+    );
+
+    await act(async () => {
+      await result.current.sendMessage('weather?');
+    });
+
+    expect(toolExecutor).toHaveBeenCalledTimes(1);
+    expect(result.current.requestState).toBe('completed');
+    // Final message is the stop round's assistant text — proves the loop ran
+    // to completion (tool result fed back, second request issued).
+    const last = result.current.messages[result.current.messages.length - 1];
+    expect(last.role).toBe('assistant');
+    expect(last.content).toBe('Sunny.');
+    // Connector was called twice (initial tool_calls turn + follow-up).
+    expect(calls).toHaveLength(2);
   });
 });

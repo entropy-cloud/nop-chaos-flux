@@ -58,6 +58,16 @@ export type UseMessageReturn = UseEngineViewReturn;
  * Per AGENTS.md React 19 guidance: no `useMemo`/`useCallback` by default; the
  * stable bound `subscribe`/`getSnapshot` come from the engine closure (via the
  * shared `useEngineView` binding).
+ *
+ * Hot-swap scope (2151 P2 doc hardening): **only `connector` is hot-swapped.**
+ * `systemPrompt` / `tools` / `toolExecutor` / `maxToolRounds` /
+ * `extraRequestParams` / `plugins` are mount-time-only — they seed the engine
+ * in the lazy `useState` initializer and are NOT re-applied on subsequent
+ * renders, because `MessageEngine` exposes no setters for them (by design:
+ * changing tools/prompt mid-conversation is a host-level decision that should
+ * build a new engine). Mutating these option fields after mount is a silent
+ * no-op; hosts that need a different prompt/toolset must swap the engine
+ * (e.g. via `options.engine` from `useConversation.activeEngine`).
  */
 export function useMessage(options: UseMessageOptions): UseMessageReturn {
   const [selfEngine] = useState<MessageEngine>(() =>
