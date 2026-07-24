@@ -1,6 +1,6 @@
 # flux-renderers-ai Roadmap
 
-> 最后更新：2026-07-24
+> 最后更新：2026-07-25
 > 来源：`docs/components/flux-renderers-ai/design.md`、`implementation.md` §2、`docs/analysis/ai-survey/2026-07-21-tiny-robot-deep-analysis.md`
 > Mission：`missions/ai.json`
 > 目标：完整实现 `@nop-chaos/flux-renderers-ai` 包——AI 对话渲染器族（消息气泡、流式输出、会话管理、附件、工具调用、引用、HITL 审批、语音输入等），从 tiny-robot（Vue 3, MIT）移植引擎核心并用 React 19 + flux 架构重写。
@@ -58,6 +58,76 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 **Source: `docs/audits/2026-07-24-1757-open-audit-ai.md`**（P2）
 
 - ✅ O-4：`ai-attachments` 附件 id 由 `name-size-lastModified` 派生，重复文件 id 碰撞 → React key 重复 + `handleRemove` 误删全部同名件（`ai-attachments.tsx:99,243,125-137`）→ 改用 `generateAttachmentId()`（`crypto.randomUUID` + 回退 counter），同名文件各自唯一 id
+
+**Source: `docs/audits/2026-07-24-2151-multi-audit-ai.md`**（P2 批，32 条）+ **`docs/audits/2026-07-24-2151-open-audit-ai.md`**（P2 N-3..N-8，6 条）。✅ **P1（P1-1..P1-5 / N-1 / N-2）已由 `docs/plans/2026-07-25-0044-1-ai-p1-remediation.md` 收口**（7 条全部修复 + focused proof，全量 typecheck/build/lint/test 绿；两份源审计 `Audit Status: closed`）。
+
+_防御/交互守卫（silent-drop 家族）_
+
+- `ai-sender` 共享 `commit()` 无 `isProcessing` 守卫——host `senderExtensions` 组件不自禁用时 Enter 提交会静默丢 draft（`renderers/ai-sender.tsx:59-72,120-124`）
+- `ai-attachments` 上传按钮流式中不禁用；`handleUpload` 调 `ctx.sendMessage(parts)` 无守卫 → 多模态消息静默丢弃（`renderers/ai-attachments.tsx:165-175,222-231`）
+- `ai-tool-call` HITL approve/reject 在 host 未接 `onApproval` 时是死点击（无 disabled/tooltip，卡片永久 `pending`）（`renderers/ai-tool-call.tsx:241-272`）
+- 编辑态存在组件 `useState`（`ai-bubble/index.tsx:85`、`user-edit.tsx:36-37`）而 `design.md §11.5` 指派为引擎持有（`message.state.editing`）；影响仅限 >200 消息虚拟回收（design-doc 冲突）
+- `ai-prompts` item key 用 `label#index`；重排/插入丢失元素身份（`renderers/ai-prompts.tsx:47`）
+
+_错误传播/可观测性_
+
+- `tool-execution.ts:46-59` catch 把 tool error 压平为 `err.message`，丢原 Error（stack/cause/自定义字段）——host 无法结构化日志（`engine/tool-execution.ts:46-59`）
+- `ai-bubble` `pickRenderer` 用裸 `catch {}` 吞 host matcher 异常（无 warn/回调）——host 无法调试自定义 bubble renderer 为何不匹配（`renderers/ai-bubble/index.tsx:206-224`）
+- 后台（流式中切换）引擎 turn 转换未被 `ai-chat` 的 `[engine]`-keyed subscribe effect 观测 → `onResponseComplete` 对切换后完成的 turn 不触发（`renderers/ai-chat.tsx:231-259`）
+
+_Public API surface（calibration #6 零消费者）_
+
+- `MaybePromise as AiMaybePromise` 死公共别名（`index.ts:84`）
+- `MessageStateAdapter` 导出但其 aux 类型 `InternalMessageState`/`PublicMessageState` 未再导出（`index.ts:99` + `engine/types.ts:212-245`）
+- 引擎内部 `combineDeltaData`/`generateMessageId`/`measureContentLength` 泄漏到公共面（`index.ts:92-93`）
+
+_显示/定位正确性_
+
+- `parseCitations` 正则 `/\[(\d+(?:\s*,\s*\d+)*)\]/g` 误匹配代码块内的 `array[0]`/`[N]`；`byIndex` 1-based → index 0 空卡片（`renderers/ai-citations.tsx:203,224`）
+- `markdown-buffer` fence 计数混 ` ``` `/`~~~`，误数代码块内嵌 fence（`ai-bubble/markdown-buffer.ts:21`）
+
+_测试断言强度（非 fake-green，但偏弱）_
+
+- `ai-token-usage` clamp 测试仅断言 `.not.toBeNull()`（`renderers/__tests__/ai-token-usage.test.tsx:95-101`）
+- `safeMarkdownSlice` 已单测，但其接入 `MarkdownContentRenderer` 未 e2e 断言（`ai-bubble/renderers/markdown.tsx:28`）
+- `use-message.test.tsx` 未测 `toolExecutor` 转发到 engine（`adapters/__tests__/use-message.test.tsx`）
+- Timestamp 测试仅断言 `tagName === 'TIME'`（`renderers/__tests__/p1-renderers.test.tsx:273-284`）
+- `hitl-no-handler` 测试仅 `.not.toThrow()`（`renderers/__tests__/ai-tool-call-hitl.test.tsx:66-75`）
+- Markdown sanitize→`rehype-raw` 管线无 XSS 回归测试（`ai-bubble/renderers/markdown.tsx:34-47`）——下一轮 open-audit XSS 实证切入点
+
+_React-19/生命周期（churn 非正确性）_
+
+- `ai-chat` 每渲染重建 `componentHandle`（`renderers/ai-chat.tsx:155-163`）
+- `ai-chat` 每渲染重建 `actionProvider`（`renderers/ai-chat.tsx:141-145`）
+- `ai-chat` 每渲染新建 `hostScopeData` 字面量（`renderers/ai-chat.tsx:215-220`）
+- F3.1 残留：6 处手写 `useMemo`/`useCallback`（各带 justification 注释）（`tiptap-sender.tsx:81-83`、`ai-chat.tsx:181-183/274-277`、`use-conversation.ts:97-105`）
+
+_a11y polish_
+
+- `ai-sender` `<Textarea>` 仅 `placeholder`，无 `aria-label`/`<Label>`（`renderers/ai-sender.tsx:152-166`）
+- `ai-conversations` rename `<Input>` 无 `aria-label`（`renderers/ai-conversations.tsx:66-80`）
+- `ai-tool-call` `aria-label` 只含 tool name 不含 status（`renderers/ai-tool-call.tsx:129-130`）
+
+_文档/契约措辞 rot_
+
+- `design.md §74` 仍把 ai-message-list 能力列为「分组」，F1.4 已移除 groupStrategy（`docs/components/flux-renderers-ai/design.md:74`）
+- `design.md §13.1` marker 表漏 4 个已发 marker（`nop-ai-citations`/`nop-ai-voice-input`/`nop-ai-token-usage`/`nop-ai-suggestions`）（`docs/components/flux-renderers-ai/design.md:578-589`）
+- `terminology.md:511` 称 `createStreamBasedAiConnector` 桥接 `RendererEnv.fetcher`，代码用 `env.stream`（`docs/references/terminology.md:511`）
+- `useMessage` 仅热换 `connector`，其它 engine 选项 mount-time-only 无告警注记（`adapters/use-message.ts:62-92`）
+
+_渲染器契约 polish_
+
+- `ai-renderer-definitions.ts` 7 个 dead field-metadata（`itemRegion`/`avatarRegion`/sender `actions`/`menuItems`/`trigger`/`conversationId`/`onSend`）（`ai-renderer-definitions.ts:65,71,90,107,130,147,284`）
+- 3 个渲染器（`ai-tool-call`/`ai-suggestions`/`ai-citations`）dispatch event 缺 `void` 前缀（`ai-tool-call.tsx:259-269`、`ai-suggestions.tsx:150`、`ai-citations.tsx:97`）
+
+_Source: `docs/audits/2026-07-24-2151-open-audit-ai.md`（N-3..N-8）_
+
+- N-3：`PROMPTS_DEFAULT_LABEL` 死导出 + 模块加载期 `t()`（i18n 顺序陷阱）（`renderers/ai-prompts.tsx:94`）
+- N-4：mention query 正则含 `\s`，与「no whitespace」行内注释矛盾，候选框可跨空格常驻（`rich-text/extensions/mention.ts:27`）
+- N-5：`user-edit.tsx` 的 `onChange` 形参遮蔽引擎别名 `e`（`renderers/ai-bubble/user-edit.tsx:78`）
+- N-6：`ai-suggestions` 用 `item.text` 作 key，重复文案即碰撞（`renderers/ai-suggestions.tsx:93,114`）
+- N-7：`ai-feedback` like/dislike aria-label 是 emoji，`sources` 硬编码英文（`renderers/ai-feedback.tsx:86-90`）
+- N-8：`highlightJson` token 正则在含 `&`/`<`/`>`/`"` 的字符串上失配（高亮缺失，非 XSS）（`renderers/ai-tool-call.tsx:332-343`）
 
 ## Status Values
 
