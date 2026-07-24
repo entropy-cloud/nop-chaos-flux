@@ -110,12 +110,28 @@ export interface MessageEngine {
   sendMessage(content: string | ChatMessageContentPart[]): Promise<void>;
   send(...msgs: ChatMessage[]): Promise<void>;
   abort(): Promise<void>;
+  /** 丢弃所有消息并把 requestState 重置为 `idle`（design.md §14.2 `ai:clear`）。 */
+  clear(): void;
   setConnector(connector: AiConnector): void; /**
    * 热替换 connector（如切换模型 / provider）。
    * 进行中的请求继续使用旧 connector；下一条 sendMessage 用新 connector。
    * 这避免了"半句响应分裂"问题（旧请求用旧协议完成，新请求用新协议开始）。
    */
   registerPlugin(plugin: MessageEnginePlugin): () => void; // 返回 unsubscribe
+  /** 当前消息的只读快照（design.md §14.3, ComponentHandle）。 */
+  getMessages(): ChatMessage[];
+  /**
+   * 替换整个消息列表。由 Layer C ComponentHandle 的 `setMessages` 方法使用
+   * （design.md §14.3 line 556）。回合进行中不可调用；调用方应先 `abort()`。
+   */
+  setMessages(messages: ChatMessage[]): void;
+  /**
+   * A-16 消息分支：丢弃尾部 assistant 轮（回到最后一条 user 消息）并重发请求，
+   * 给新 assistant 消息盖 `metadata.branchId`。engine 不存分支集——host 拥有
+   * 完整分支历史；本方法只记录新分支 id。`branchId` 可选：省略时 engine 分配
+   * 递增 id。回合进行中不可调用；调用方应先 `abort()`。
+   */
+  regenerate(branchId?: string): Promise<void>;
 }
 
 export interface MessageEngineState {
@@ -123,8 +139,16 @@ export interface MessageEngineState {
   requestState: RequestState;
   processingState?: RequestProcessingState;
   isProcessing: boolean;
+  /** AI-19: 上一轮非 abort 的错误（connector 抛出 / 插件抛出 / tool-loop 失败）。
+   *  每轮回合开始时清空；renderer 读取它喂 `onError`。 */
+  lastError?: unknown;
 }
 ```
+
+> **AI-06 同步（2026-07-24）**：接口共 11 个方法（`getState` / `subscribe` /
+> `sendMessage` / `send` / `abort` / `clear` / `setConnector` / `registerPlugin` /
+> `getMessages` / `setMessages` / `regenerate`）。此前文档仅列 7 个，漏掉了
+> `clear` / `getMessages` / `setMessages` / `regenerate`（A3 / A16 扩展期加入）。
 
 引擎自身是纯 TS（无 React / Vue / DOM 依赖），可独立单测。
 
@@ -134,12 +158,21 @@ export interface MessageEngineState {
 export interface MessageStateAdapter {
   initialize(initialState: InternalMessageState): void;
   getState(): PublicMessageState;
+  getConnector(): AiConnector | null; // AI-08: 读访问器，避免穿透 cast
+  getAbortController(): AbortController | null; // AI-08: 同上
   createMessage<T extends ChatMessage>(message: T): T; // 让 adapter 决定是否包装
   mutate(kind: MessageUpdateKinds, recipe: (draft) => void): void;
   subscribe(listener): () => void;
   subscribe(kind, listener): () => void;
 }
 ```
+
+> **AI-08 决策（2026-07-24）**：engine 历史上用 `(adapter as unknown as { state: InternalMessageState }).state.*` 穿透读私有字段（connector / abortController / isProcessing）共 6 处。两种收敛方案：
+>
+> - **方案 A（采用）**：接口加 `getConnector()` / `getAbortController()` 读访问器，`isProcessing` 走已有的 `getState()`。保留扩展点——plain-object adapter（不继承 `BaseMessageStateAdapter`、闭包持有 state）可自行实现这两个方法。
+> - 方案 B（拒绝）：把 `CreateMessageEngineOptions.adapter` 收紧为 `BaseMessageStateAdapter` 类型。会破坏「直接实现接口」的扩展契约，且把抽象基类变成事实上的必经路径。
+>
+> 选 A 以保留 `MessageStateAdapter` 作为纯接口契约的语义。`BaseMessageStateAdapter` 内置默认实现，plain-object adapter 自行实现。收敛后 `create-engine.ts` 零穿透 cast（`rg "as unknown as \{ state: InternalMessageState \}"` 返回 0 匹配）。
 
 两种实现：
 
@@ -193,9 +226,17 @@ export function useMessage(options: UseMessageOptions): UseMessageReturn;
 
 实现要点：
 
-- `useRef` 持有 engine 实例（lazy init，deps 含 `options.connector` 引用变化时调 `engine.setConnector`）
-- `useSyncExternalStore(engine.subscribe, engine.getSnapshot)` 订阅状态
+- **AI-20 同步（2026-07-24）**：engine 实例通过 `useState` 的 lazy initializer
+  持有一次（`const [selfEngine] = useState(() => createMessageEngine({...}))`），
+  **不是** `useRef`。这样：rules-of-hooks 下 hook 总是无条件调用（条件落在值
+  上，不在调用上）；deps 含 `options.connector` 引用变化时调
+  `engine.setConnector`（idempotent on mount）。此前文档误写 `useRef`。
+- `useSyncExternalStore(engine.subscribe, engine.getState)` 订阅状态
 - React 19 默认不加 `useMemo` / `useCallback`，按 AGENTS.md React 19 章节
+- 当 `options.engine`（外部 engine，如 `useConversation.activeEngine`）被传入时，
+  绑定该外部 engine，自建 engine 保持 idle；外部 engine 的 connector 生命周期归
+  owner，热替换 effect 对它跳过（review m4: never touch an external engine's
+  connector）。自建 engine 在卸载时会 `abort()` 在途流（F2.2）。
 
 ### 8.6 useConversation hook
 
