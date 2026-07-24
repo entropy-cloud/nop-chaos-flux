@@ -8,7 +8,6 @@ import { AiBubbleView } from './ai-bubble/index.js';
 import type { AiMessageListSchema } from '../schemas.js';
 
 export interface AiMessageListViewProps {
-  groupStrategy?: 'consecutive' | 'divider' | 'none';
   autoScroll?: boolean;
   className?: string;
   emptyNode?: React.ReactNode;
@@ -125,7 +124,6 @@ export function AiMessageListRenderer(props: RendererComponentProps<AiMessageLis
 
   return (
     <AiMessageListView
-      groupStrategy={resolved.groupStrategy}
       autoScroll={resolved.autoScroll}
       className={props.meta.className}
       emptyNode={emptyNode}

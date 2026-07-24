@@ -1,5 +1,4 @@
 import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
-import type { ChatRole } from './engine/types.js';
 
 export interface AiChatSchema extends BaseSchema {
   type: 'ai-chat';
@@ -95,10 +94,7 @@ export interface AiBranch {
 
 export interface AiMessageListSchema extends BaseSchema {
   type: 'ai-message-list';
-  groupStrategy?: 'consecutive' | 'divider' | 'none';
-  dividerRole?: ChatRole;
   autoScroll?: boolean;
-  maxGroupSize?: number;
   itemRegion?: SchemaInput;
   emptyRegion?: SchemaInput;
 }

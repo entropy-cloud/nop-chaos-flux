@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -34,6 +34,23 @@ function isMessageEngine(value: unknown): value is MessageEngine {
     typeof (value as MessageEngine).getState === 'function' &&
     typeof (value as MessageEngine).sendMessage === 'function'
   );
+}
+
+/**
+ * Decision-A (design.md §3): the host scope projection and event handoffs MUST
+ * hand descendants/host independent copies — never the live `engine.messages`
+ * reference (mutating a projected array would otherwise pollute the engine's
+ * internal state). `structuredClone` is the primary path (deep, faithful to the
+ * "host 必须 copy" rule); the shallow fallback covers runtimes without it.
+ */
+function cloneMessages(messages: ChatMessage[]): ChatMessage[] {
+  if (typeof structuredClone === 'function') return structuredClone(messages);
+  return messages.map((m) => ({ ...m }));
+}
+
+function cloneMessage(message: ChatMessage): ChatMessage {
+  if (typeof structuredClone === 'function') return structuredClone(message);
+  return { ...message };
 }
 
 /**
@@ -160,15 +177,34 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
         void props.events.onBranchChange?.({ branchId });
       }
     : undefined;
+  // Decision-A (AI-02): project a SNAPSHOT of the engine messages, not the
+  // live internal array. Descendants that read `${messages}` (via
+  // `useScopeSelector`) receive an independent copy, so a host/descendant that
+  // mutates the projected array cannot pollute the engine's domain state. The
+  // memo recomputes on `isProcessing` transitions (turn boundaries) — the
+  // projected copy is intentionally a point-in-time snapshot, not a live feed
+  // (Decision-A: hosts needing the current set call `component:getMessages`).
   const hostScopeData = useMemo(
     () => ({
       isProcessing,
-      messages,
+      messages: cloneMessages(messages),
       activeConversationId,
     }),
     [isProcessing, messages, activeConversationId],
   );
   const hostScope = useHostScope(hostScopeData, props.path, 'ai');
+
+  // AI-12 (subscribe stability): read the latest events through a ref so the
+  // `requestState` subscription depends only on `[engine]`. Subscribing on
+  // `props.events` re-subscribed on every render (the runtime builds a fresh
+  // events object per render), which could drop a `processing→completed`
+  // transition when the re-subscribe landed mid-transition (Failure Path
+  // `subscribe-transition-not-dropped`). The latest-ref pattern keeps one
+  // persistent subscription per engine.
+  const eventsRef = useRef(props.events);
+  useEffect(() => {
+    eventsRef.current = props.events;
+  });
 
   // Fire schema events on turn transitions via a subscribe callback. The
   // previous state is tracked in a closure local (no ref read during render,
@@ -178,13 +214,22 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
     const unsubscribe = engine.subscribe('requestState', (state) => {
       const current = state.requestState;
       if (prev === 'processing' && current !== 'processing') {
-        const events = props.events;
+        const events = eventsRef.current;
         if (current === 'completed' && events.onResponseComplete) {
           const latest = engine.getState().messages;
           const last = latest[latest.length - 1];
-          void events.onResponseComplete({ message: last });
+          // AI-09: hand off a snapshot so a host that mutates the delivered
+          // message (e.g. on a later regenerate) cannot write back into the
+          // engine's internal message object.
+          void events.onResponseComplete({ message: last ? cloneMessage(last) : last });
         } else if (current === 'error' && events.onError) {
-          void events.onError({ error: new Error('AI request failed') });
+          // AI-19/F1.5: surface the engine's real error cause (written to
+          // `state.lastError` by the engine-half, Plan {1} Phase 4) instead of
+          // a placeholder. Non-Error causes are wrapped with `{ cause }`.
+          const cause = state.lastError;
+          const error =
+            cause instanceof Error ? cause : new Error(String(cause ?? 'AI request failed'), { cause: cause });
+          void events.onError({ error });
         } else if (current === 'aborted' && events.onAbort) {
           void events.onAbort();
         }
@@ -192,7 +237,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
       prev = current;
     });
     return unsubscribe;
-  }, [engine, props.events]);
+  }, [engine]);
 
   const headerNode = props.regions.header ? (props.regions.header.render({ scope: hostScope }) as React.ReactNode) : null;
   const beforeNode = props.regions.beforeMessages ? (props.regions.beforeMessages.render({ scope: hostScope }) as React.ReactNode) : null;

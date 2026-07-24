@@ -118,3 +118,29 @@ describe('INV-1: storage ships interface only', () => {
     expect(types).not.toMatch(/^\s*(function|class)\s+\w+/m);
   });
 });
+
+// ============================================================================
+// F1.4 (schema honesty): `groupStrategy` / `dividerRole` / `maxGroupSize` were
+// declared on `ai-message-list` but never implemented by `AiMessageListView`
+// (dead contract). They were adjudicated REMOVED (not implemented) so the
+// schema cannot promise grouping behaviour the renderer does not provide.
+// ============================================================================
+
+describe('F1.4: ai-message-list declares no unimplemented grouping contract', () => {
+  const DEAD_FIELDS = /\b(groupStrategy|dividerRole|maxGroupSize)\b/;
+
+  it('schemas.ts no longer declares groupStrategy/dividerRole/maxGroupSize', () => {
+    const src = readFileSync(join(__dirname, '..', 'schemas.ts'), 'utf8');
+    expect(src).not.toMatch(DEAD_FIELDS);
+  });
+
+  it('ai-renderer-definitions.ts no longer registers the three fields', () => {
+    const src = readFileSync(join(__dirname, '..', 'ai-renderer-definitions.ts'), 'utf8');
+    expect(src).not.toMatch(DEAD_FIELDS);
+  });
+
+  it('ai-message-list.tsx no longer threads groupStrategy through the view', () => {
+    const src = readFileSync(join(RENDERERS_DIR, 'ai-message-list.tsx'), 'utf8');
+    expect(src).not.toMatch(DEAD_FIELDS);
+  });
+});

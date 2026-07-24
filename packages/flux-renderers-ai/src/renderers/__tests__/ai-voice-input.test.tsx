@@ -181,3 +181,66 @@ describe('ai-voice-input — Failure Path: voice-no-result', () => {
 // INV-1 honesty for voice is enforced by `src/__tests__/contract-honesty.test.ts`,
 // whose FORBIDDEN_GLOBAL_IO scanner does NOT include SpeechRecognition (adjudicated
 // non-IO per improvement §5.3). The renderer calls the browser API directly.
+
+// ============================================================================
+// AI-04 (resource lifecycle): the microphone must be released on stop and on
+// unmount, and no stale callbacks may fire after unmount.
+// ============================================================================
+
+describe('ai-voice-input — AI-04 resource lifecycle (microphone release)', () => {
+  it('clicking stop while listening calls recognition.stop() (releases the mic)', () => {
+    const mock = installMockSpeechRecognition();
+    const props = makeProps();
+    const { container } = render(<Voice {...props} />);
+    const btn = container.querySelector('[data-slot="ai-voice-input"]') as HTMLElement;
+    act(() => {
+      fireEvent.click(btn);
+    });
+    expect(mock.instances[0].start).toHaveBeenCalled();
+    // Click again to stop.
+    act(() => {
+      fireEvent.click(btn);
+    });
+    expect(mock.instances[0].stop).toHaveBeenCalledTimes(1);
+    mock.remove();
+  });
+
+  it('unmounting while listening calls recognition.abort() (releases the mic)', () => {
+    const mock = installMockSpeechRecognition();
+    const props = makeProps();
+    const { container, unmount } = render(<Voice {...props} />);
+    const btn = container.querySelector('[data-slot="ai-voice-input"]') as HTMLElement;
+    act(() => {
+      fireEvent.click(btn);
+    });
+    unmount();
+    expect(mock.instances[0].abort).toHaveBeenCalledTimes(1);
+    mock.remove();
+  });
+
+  it('after unmount, recognition onresult/onerror no longer fire host callbacks', () => {
+    const mock = installMockSpeechRecognition();
+    const onResult = vi.fn();
+    const onError = vi.fn();
+    const props = makeProps({ events: { onResult, onError } });
+    const { container, unmount } = render(<Voice {...props} />);
+    const btn = container.querySelector('[data-slot="ai-voice-input"]') as HTMLElement;
+    act(() => {
+      fireEvent.click(btn);
+    });
+    const recognition = mock.instances[0];
+    unmount();
+    // Handlers were detached on unmount — invoking them is a no-op.
+    act(() => {
+      recognition.onresult?.({
+        resultIndex: 0,
+        results: { length: 1, 0: { 0: { transcript: 'ghost' }, isFinal: true } } as never,
+      });
+      recognition.onerror?.({ error: 'no-speech' });
+      recognition.onend?.();
+    });
+    expect(onResult).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+    mock.remove();
+  });
+});

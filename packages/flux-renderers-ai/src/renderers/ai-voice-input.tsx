@@ -70,6 +70,31 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
   // Detect once synchronously during the first render (no effect churn).
   const [unsupported] = useState<boolean>(() => !getSpeechRecognitionCtor());
   const firedUnsupportedRef = useRef(false);
+  // AI-04 (resource lifecycle): hold the live SpeechRecognition in a ref so the
+  // stop branch and unmount cleanup can release the microphone. Previously the
+  // recognition lived only inside the `handleStart` closure, so the stop button
+  // never called `stop()` and unmount left the mic + stale callbacks alive.
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+
+  // Release the microphone + detach callbacks on unmount (Failure Path
+  // `voice-mic-released-on-stop`). Nulling the handlers guarantees no stale
+  // `onresult`/`onerror`/`onend` fires after the component is gone (no
+  // setState-after-unmount).
+  useEffect(() => {
+    return () => {
+      const recognition = recognitionRef.current;
+      if (!recognition) return;
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      try {
+        recognition.abort();
+      } catch {
+        // abort() can throw if already stopped — swallow, mic is released.
+      }
+      recognitionRef.current = null;
+    };
+  }, []);
 
   // Fire onError('unsupported') exactly once when the browser lacks the API.
   useEffect(() => {
@@ -94,6 +119,7 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
     recognition.lang = lang ?? '';
     recognition.continuous = continuous;
     recognition.interimResults = interimResults;
+    recognitionRef.current = recognition;
 
     let gotFinal = false;
     recognition.onresult = (event) => {
@@ -139,7 +165,17 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
     // Unsupported → button is disabled (clicks never arrive); the mount effect
     // already emitted onError('unsupported').
     if (status === 'listening') {
-      // Stop is handled by recognition.onend → setStatus('idle').
+      // AI-04: actually stop the recognition (releases the microphone). The
+      // browser then fires `onend` → setStatus('idle'); we also flip the UI
+      // state immediately so the button reflects the stop without waiting.
+      const recognition = recognitionRef.current;
+      if (recognition) {
+        try {
+          recognition.stop();
+        } catch {
+          // stop() throws if not started — ignore; state still resets below.
+        }
+      }
       setStatus('idle');
       return;
     }

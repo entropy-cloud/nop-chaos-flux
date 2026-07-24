@@ -138,3 +138,43 @@ describe('buildImageContentParts', () => {
     expect(parts.every((p) => p.type === 'image_url')).toBe(true);
   });
 });
+
+// ============================================================================
+// AI-10 (resource lifecycle): object URLs created locally must be revoked on
+// remove and on unmount (no blob memory leak).
+// ============================================================================
+
+describe('AiAttachmentsRenderer — AI-10 object URL lifecycle', () => {
+  it('revokes the object URL when an attachment is removed', () => {
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL');
+    const { container } = harness();
+    const input = container.querySelector('[data-slot="ai-attachments-input"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [makeFile('a.png'), makeFile('b.png')] } });
+    expect(container.querySelectorAll('[data-slot="ai-attachments-thumb"]')).toHaveLength(2);
+
+    revokeSpy.mockClear();
+    const removeButtons = container.querySelectorAll('[data-slot="ai-attachments-remove"]');
+    fireEvent.click(removeButtons[0]);
+
+    expect(revokeObjectURLCallsFor(revokeSpy).length).toBeGreaterThanOrEqual(1);
+    revokeSpy.mockRestore();
+  });
+
+  it('revokes every locally-created object URL on unmount', () => {
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL');
+    const { container, unmount } = harness();
+    const input = container.querySelector('[data-slot="ai-attachments-input"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [makeFile('a.png'), makeFile('b.png'), makeFile('c.png')] } });
+    expect(container.querySelectorAll('[data-slot="ai-attachments-thumb"]')).toHaveLength(3);
+
+    revokeSpy.mockClear();
+    unmount();
+
+    expect(revokeObjectURLCallsFor(revokeSpy).length).toBe(3);
+    revokeSpy.mockRestore();
+  });
+});
+
+function revokeObjectURLCallsFor(spy: ReturnType<typeof vi.spyOn>): unknown[] {
+  return spy.mock.calls;
+}

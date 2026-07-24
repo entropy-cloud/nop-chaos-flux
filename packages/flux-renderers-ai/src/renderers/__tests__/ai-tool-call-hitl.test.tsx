@@ -174,3 +174,46 @@ describe('ai-tool-call — HITL focus trap (a11y §7 P3)', () => {
     document.body.removeChild(outside);
   });
 });
+
+// ============================================================================
+// AI-11 (resource lifecycle): focus captured by the approval trap must be
+// restored when the approval resolves and when the component unmounts while
+// still pending.
+// ============================================================================
+
+describe('ai-tool-call — AI-11 focus restore on resolve / unmount', () => {
+  it('restores focus to the prior element when approval resolves', () => {
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    outside.focus();
+    expect(document.activeElement).toBe(outside);
+
+    const { container, rerender } = render(
+      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} />,
+    );
+    const approve = container.querySelector('[data-slot="ai-tool-call-approve"]') as HTMLElement;
+    expect(document.activeElement).toBe(approve);
+
+    // Resolve the approval → focus returns to `outside`.
+    rerender(<AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'approved' })} />);
+    expect(document.activeElement).toBe(outside);
+    document.body.removeChild(outside);
+  });
+
+  it('restores focus when unmounted while still pending', () => {
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    outside.focus();
+    expect(document.activeElement).toBe(outside);
+
+    const { container, unmount } = render(
+      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} />,
+    );
+    const approve = container.querySelector('[data-slot="ai-tool-call-approve"]') as HTMLElement;
+    expect(document.activeElement).toBe(approve);
+
+    unmount();
+    expect(document.activeElement).toBe(outside);
+    document.body.removeChild(outside);
+  });
+});

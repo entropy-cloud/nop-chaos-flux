@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -54,6 +54,26 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   const [internalAttachments, setInternalAttachments] = useState<AiAttachment[]>([]);
   const [dragging, setDragging] = useState(false);
   const attachments = controlledValue ?? internalAttachments;
+  // AI-10 (resource lifecycle): object URLs created locally (via the picker /
+  // drop / paste) are tracked here so they can be revoked on remove and on
+  // unmount. Remote/controlled URLs (host-owned) are never revoked here.
+  const localUrlsRef = useRef<Set<string>>(new Set());
+
+  // Revoke every locally-created object URL on unmount so long sessions do not
+  // leak blob memory (Failure Path `object-url-revoked`).
+  useEffect(() => {
+    const localUrls = localUrlsRef.current;
+    return () => {
+      for (const url of localUrls) {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          // revokeObjectURL never throws in practice; guard anyway.
+        }
+      }
+      localUrls.clear();
+    };
+  }, []);
 
   const reportChange = useCallback(
     (next: AiAttachment[]) => {
@@ -78,6 +98,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
           continue;
         }
         const url = typeof URL !== 'undefined' && URL.createObjectURL ? URL.createObjectURL(file) : '';
+        if (url) localUrlsRef.current.add(url);
         accepted.push({
           id: `${file.name}-${file.size}-${file.lastModified}`,
           url,
@@ -113,6 +134,17 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
 
   const handleRemove = useCallback(
     (id: string) => {
+      // AI-10: revoke the object URL of a locally-created attachment when it is
+      // removed, releasing the underlying blob.
+      const removed = attachments.find((a) => a.id === id);
+      if (removed && localUrlsRef.current.has(removed.url)) {
+        try {
+          URL.revokeObjectURL(removed.url);
+        } catch {
+          // ignore
+        }
+        localUrlsRef.current.delete(removed.url);
+      }
       const next = attachments.filter((a) => a.id !== id);
       reportChange(next);
     },

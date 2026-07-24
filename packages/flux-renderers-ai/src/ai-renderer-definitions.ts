@@ -79,10 +79,7 @@ export const aiRendererDefinitions: RendererDefinition[] = [
     defaultSchema: { type: 'ai-message-list' },
     component: AiMessageListRenderer,
     fields: [
-      { key: 'groupStrategy', kind: 'prop' },
-      { key: 'dividerRole', kind: 'prop' },
       { key: 'autoScroll', kind: 'prop', valueType: 'boolean' },
-      { key: 'maxGroupSize', kind: 'prop' },
       { key: 'itemRegion', kind: 'region', regionKey: 'itemRegion' },
       { key: 'emptyRegion', kind: 'value-or-region', regionKey: 'emptyRegion' },
     ],

@@ -64,9 +64,26 @@ export function AiToolCallView(props: {
       );
       if (approveBtn instanceof HTMLElement) approveBtn.focus();
     } else if (!pending && wasPendingRef.current) {
+      // AI-11: leaving the pending state (resolved) — restore focus to the
+      // element that held it before the trap engaged, and clear the ref.
       wasPendingRef.current = false;
+      prevFocusRef.current?.focus();
+      prevFocusRef.current = null;
     }
   }, [approval]);
+
+  // AI-11: if the component unmounts while still pending, restore focus so
+  // keyboard / screen-reader users do not lose their place (Failure Path
+  // `focus-restored-after-approval`).
+  useEffect(() => {
+    return () => {
+      if (wasPendingRef.current) {
+        prevFocusRef.current?.focus();
+        prevFocusRef.current = null;
+        wasPendingRef.current = false;
+      }
+    };
+  }, []);
 
   function handleToggle() {
     const next = !open;
