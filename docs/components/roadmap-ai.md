@@ -26,6 +26,10 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **A5. P4 高级集成**（3 renderer + 1 增强 + 3 改进项 + 2 评估项）: `done`
 - **A6. P6 Tiptap 富文本（可选）**: `todo`
 
+### Follow-ups 已收口
+
+- ✅ **ai-chat ↔ useConversation 引擎统一**（A4 deferred 项，原标 "A5 host 集成时评估"）：已落地于 `docs/plans/2026-07-24-0751-1-ai-chat-external-engine-injection.md`。`ai-chat` 新增 `engine?: SchemaValue`，可绑定 host 注入的外部 `MessageEngine`（`useConversation.activeEngine`），公共 `useEngineView` hook 收口订阅逻辑；持久化示例页改用 `ai-chat`（移除手工拼装 + 私有 helper）。design.md §11.2/§11.5、renderers.md 已同步。
+
 ## Status Values
 
 | Status     | 含义                                                                                          |

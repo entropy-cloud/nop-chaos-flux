@@ -14,9 +14,10 @@
 export interface AiChatSchema extends BaseSchema {
   type: 'ai-chat';
   connector?: SchemaValue; // 表达式：返回 AiConnector 实例（host 经 xui:imports 注入）
+  engine?: SchemaValue; // 表达式：返回外部 MessageEngine（host 经 page-data 注入，典型 `${engine}` = useConversation.activeEngine）。提供时绑定外部 engine 而非自建，统一 ai-chat 与会话管理/持久化（design.md §11.2/§11.5）。未提供时自建 engine（零回归）。
   conversationId?: string; // 多会话标识（默认 'default'）
   placeholder?: string;
-  emptyState?: SchemaInput; // value-or-region：空消息态
+  emptyState?: SchemaInput; // value-or-region：空消息态；engine 为 null（会话切换瞬间）时也渲染此 region（engine-null-switch）
   systemPrompt?: string;
   autofocus?: boolean;
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
@@ -55,8 +56,9 @@ export interface AiChatSchema extends BaseSchema {
 ### 1.4 实现要点
 
 - 顶层创建 `<AiChatProvider engine={engine}>`，engine 由 `useMessage({ connector })` 创建。
+- **外部 engine 注入（design.md §11.2/§11.5）**：当 schema `engine` prop 解析为 `MessageEngine`（典型 `${engine}` = `useConversation.activeEngine`）时，`ai-chat` 经公共 `useEngineView` hook 绑定该外部 engine 而非自建——从而在会话管理/持久化场景下复用 `ai-chat` 全部能力（regions、`ai` namespace、ComponentHandle）。未提供时走自建路径（零回归）。Failure Paths：`engine-prop-not-engine`（非 engine 值 → console.warn + 回退自建）；`engine-null-switch`（`activeEngine` 切换瞬间为 null → 渲染 emptyState）。host 绑定示例见 `apps/playground/src/pages/ai-persistence-demo.tsx`（`engine: "${engine}"` 经 page-data 注入）。
 - 子渲染器（`ai-message-list` / `ai-sender`）通过 `useAiChatContext()` 拿 engine；在 ai-chat 外用时 `useAiChatContext()` 返回 null（让 ai-bubble 也能独立用于非对话场景）。
-- `connector` 表达式变化触发 `engine.setConnector(newConnector)`；进行中的请求不中断（避免半句响应分裂）。
+- `connector` 表达式变化触发 `engine.setConnector(newConnector)`；进行中的请求不中断（避免半句响应分裂）。外部 engine 自带 connector 生命周期，热替换仅作用于自建 engine。
 - marker：`nop-ai-chat`；Layout 类型，不硬编码 gap/padding；spacing 由 schema `className` 的 `stack-*` 别名表达。
 - `data-state` 反映 `engine.requestState`，便于 CSS 选择器做状态样式。
 
