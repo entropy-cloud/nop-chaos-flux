@@ -33,31 +33,31 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### Follow-up Backlog (P2 from audits)
 
-> 以下 P2 项来自 2026-07-24 两份 open 审计（multi-audit + open-audit），已裁定为 non-blocking polish，**不进入当前 remediation plan**（P1 已由 `docs/plans/2026-07-24-1757-1-*` 与 `2026-07-24-1757-2-*` 收口）。每条带来源审计路径以保持可追溯。按需处理，无强制排期。
+> 以下 P2 项来自 2026-07-24 两份 open 审计（multi-audit + open-audit）。**代码/行为类 P2 项已由 `docs/plans/2026-07-24-2300-1-ai-p2-code-and-behavior-remediation.md` 收口（✅）**；文档一致性类 P2 项由 `docs/plans/2026-07-24-2300-2-ai-p2-doc-consistency-remediation.md` 收口（待处理）。每条带来源审计路径以保持可追溯。
 
 **Source: `docs/audits/2026-07-24-1757-multi-audit-ai.md`**（P2 批）
 
-- `tool-no-executor` 失败路径不写 `state.lastError`（`create-engine.ts:235-245`）——与 connector-throw 路径（`:406`）不对齐
-- Clipboard copy 乐观显示"Copied"，写入失败静默（`ai-feedback.tsx:25-33,92-98`、`ai-bubble/renderers/markdown.tsx:102-107,143-153`）
-- `AiChatProvider` value 每渲染内联重建，跨 Provider 边界 Compiler 无法 memoize（`ai-chat.tsx:283`）
-- `MaybePromise<T>` 定义 3 处（`engine/types.ts:95`、`storage/types.ts:17`、`ai-conversation-controller.ts:26`），重复导出
-- `toActionError` 死 module-local 导出，无消费者（`ai-action-provider.ts:41-43,136`）
-- `engine.md:179` 标 `createNativeMessageAdapter` 为 "test-use only"，实为生产默认 + 公共导出
-- `markdown-buffer.ts` stateful API（`createMarkdownBuffer` 等）导出但生产未用（仅 `safeMarkdownSlice` 在用）
-- `nop-` 前缀泄到非根内部 region（8 元素：`ai-voice-input.tsx:202` 等）
-- `.ai-bubble-cursor` 裸全局 helper class，与文件自身 `data-slot` 约定不一致（`styles.css:4-21`）
-- 视觉布局规则直接挂 `.nop-ai-message-list` 根 marker（`styles.css:80-87`），应移至 `[data-slot='ai-message-list']`
-- `ai-voice-input.tsx:100-105` effect deps 含 `props.events`（应用 latest-ref 模式）
-- `clear()` while-in-flight guard 无测试（与 `setMessages` 不对称；`create-engine.ts:451-464`）
-- `component-handle-no-registry` skip 路径无测试（registry 缺失时的防御跳过）
-- `use-conversation.test.ts`（520 行）跨 4 domain，导航性优化候选
-- `renderers.md`/`design.md` reference-block line rot（批量：§3.2 phantom `BubbleBoxRendererMatch`、§13 phantom `onScrollTop`、§1.3 `<footer>` 包裹、§6 目录树漏 6 文件、§10.3 default renderer 计数、§13.1 marker 表缺 4）
-- `terminology.md` 无 AI 包核心词条（`MessageEngine`/`AiConnector`/`ChatMessage`/`MessageStateAdapter`）
-- `AGENTS.md:9` 包列表漏 `flux-renderers-ai`
+- ✅ `tool-no-executor` 失败路径不写 `state.lastError`（`create-engine.ts:235-245`）——与 connector-throw 路径（`:406`）不对齐 → 已写 `draft.lastError`，与 connector-throw shape 对齐
+- ✅ Clipboard copy 乐观显示"Copied"，写入失败静默（`ai-feedback.tsx:25-33,92-98`、`ai-bubble/renderers/markdown.tsx:102-107,143-153`）→ 改为 await + catch，失败不显示 "Copied"
+- ✅ `AiChatProvider` value 每渲染内联重建，跨 Provider 边界 Compiler 无法 memoize（`ai-chat.tsx:283`）→ `useMemo` 稳定引用
+- ✅ `MaybePromise<T>` 定义 3 处（`engine/types.ts:95`、`storage/types.ts:17`、`ai-conversation-controller.ts:26`），重复导出 → 收敛到 `engine/types.ts` 单一来源
+- ✅ `toActionError` 死 module-local 导出，无消费者（`ai-action-provider.ts:41-43,136`）→ 已移除
+- `engine.md:179` 标 `createNativeMessageAdapter` 为 "test-use only"，实为生产默认 + 公共导出（→ Plan 2 文档收口）
+- ✅ `markdown-buffer.ts` stateful API（`createMarkdownBuffer` 等）导出但生产未用（仅 `safeMarkdownSlice` 在用）→ 仅保留 `safeMarkdownSlice`
+- ✅ `nop-` 前缀泄到非根内部 region（8 元素：`ai-voice-input.tsx:202` 等）→ 内部 region 改用 `data-slot`；新增 marker 一致性静态测试
+- ✅ `.ai-bubble-cursor` 裸全局 helper class，与文件自身 `data-slot` 约定不一致（`styles.css:4-21`）→ 改为 `[data-slot='ai-bubble-cursor']`
+- ✅ 视觉布局规则直接挂 `.nop-ai-message-list` 根 marker（`styles.css:80-87`），应移至 `[data-slot='ai-message-list']` → 视觉规则移至 data-slot，marker class 仅做语义标识
+- ✅ `ai-voice-input.tsx:100-105` effect deps 含 `props.events`（应用 latest-ref 模式）→ eventsRef latest-ref，deps 收敛为 `[unsupported]`
+- ✅ `clear()` while-in-flight guard 无测试（与 `setMessages` 不对称；`create-engine.ts:451-464`）→ 新增 focused 测试
+- ✅ `component-handle-no-registry` skip 路径无测试（registry 缺失时的防御跳过）→ 新增 focused 测试
+- ✅ `use-conversation.test.ts`（520 行）跨 4 domain，导航性优化候选 → 拆为 create/switch/controller/storage 4 文件（断言零丢失）
+- `renderers.md`/`design.md` reference-block line rot（批量：§3.2 phantom `BubbleBoxRendererMatch`、§13 phantom `onScrollTop`、§1.3 `<footer>` 包裹、§6 目录树漏 6 文件、§10.3 default renderer 计数、§13.1 marker 表缺 4）（→ Plan 2 文档收口）
+- `terminology.md` 无 AI 包核心词条（`MessageEngine`/`AiConnector`/`ChatMessage`/`MessageStateAdapter`）（→ Plan 2 文档收口）
+- `AGENTS.md:9` 包列表漏 `flux-renderers-ai`（→ Plan 2 文档收口）
 
 **Source: `docs/audits/2026-07-24-1757-open-audit-ai.md`**（P2）
 
-- O-4：`ai-attachments` 附件 id 由 `name-size-lastModified` 派生，重复文件 id 碰撞 → React key 重复 + `handleRemove` 误删全部同名件（`ai-attachments.tsx:99,243,125-137`）
+- ✅ O-4：`ai-attachments` 附件 id 由 `name-size-lastModified` 派生，重复文件 id 碰撞 → React key 重复 + `handleRemove` 误删全部同名件（`ai-attachments.tsx:99,243,125-137`）→ 改用 `generateAttachmentId()`（`crypto.randomUUID` + 回退 counter），同名文件各自唯一 id
 
 ## Status Values
 
