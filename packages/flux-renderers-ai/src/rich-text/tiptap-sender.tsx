@@ -133,6 +133,13 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
           addKeyboardShortcuts() {
             return {
               Enter: ({ editor }) => {
+                // IME composition guard (O-3): while composing (CJK/JA/KO input
+                // method), Enter confirms the candidate — return false so
+                // ProseMirror lets the IME handle it instead of submitting.
+                // `addKeyboardShortcuts({ editor })` exposes only `editor`; the
+                // native event is unreachable here, so we read ProseMirror's
+                // `view.composing` flag instead of `isComposing`.
+                if (editor.view.composing) return false;
                 const mode = callbacksRef.current.submitMode;
                 if (mode === 'enter') {
                   callbacksRef.current.onSubmit();
@@ -184,6 +191,10 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
         handleKeyDown(_view, event) {
           const state = popupStateRef.current;
           if (state.kind === 'none') return false;
+          // IME composition guard (O-3): hand the key back to the input method
+          // (candidate navigation / confirm) instead of moving/confirming the
+          // popup. Covers Enter-confirm and Arrow-key candidate navigation.
+          if (event.isComposing || event.keyCode === 229) return false;
           const ctrl = popupControlsRef.current;
           if (event.key === 'ArrowDown') {
             ctrl.move(1);

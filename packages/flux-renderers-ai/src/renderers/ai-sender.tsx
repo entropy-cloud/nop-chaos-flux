@@ -30,6 +30,10 @@ export interface AiSenderViewProps {
 }
 
 function shouldSubmit(event: KeyboardEvent<HTMLTextAreaElement>, mode: 'enter' | 'ctrlEnter' | 'shiftEnter'): boolean {
+  // IME composition guard (O-3): while a CJK/Japanese/Korean input method is
+  // composing, Enter confirms the candidate — it must NOT submit the message.
+  // `keyCode === 229` is the legacy composition marker some browsers emit.
+  if (event.nativeEvent.isComposing || event.keyCode === 229) return false;
   if (event.key !== 'Enter') return false;
   if (mode === 'enter') return !event.shiftKey;
   if (mode === 'ctrlEnter') return event.ctrlKey || event.metaKey;
