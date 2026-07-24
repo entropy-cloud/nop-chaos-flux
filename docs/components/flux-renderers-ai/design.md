@@ -28,6 +28,8 @@
 - 不在 P0 接 flux form owner：消息状态由 engine 自持，不写回 form value（避免 form 验证、提交语义被污染）。Phase 5 再评估"把 messages 序列化进 scope 字段"的高级场景。
 
 > **Decision-A（P4 裁定，messages 进 form 字段）**：经 P4 Phase 1 评估裁定为 **落地 host 范式（路径 a）**，不扩 engine、不破 INV-17。host 在 `onResponseComplete`/按钮 handler 调 Layer C `component:getMessages` 取快照 → **序列化（深拷贝，如 `structuredClone`/JSON）** → `setValue` 写入 scope/form 字段。序列化步骤是 INV-17 的关键：`engine.messages` 仍是域内部唯一真源，host 持有独立副本（直接持有 engine 返回的引用会污染域内部，host 必须 copy）。proof 见 `packages/flux-renderers-ai/src/renderers/__tests__/phase4-platform-linkage.test.tsx`。本包无需新增 engine/handle 方法。
+>
+> **Decision-A renderer-side enforcement（Plan {2}，AI-02/AI-09）**：除 host 侧 copy 外，`ai-chat` 渲染器本身在投影与事件 handoff 处再做一次防御性快照，使「直接持有引用污染域内部」在渲染器边界即不可能发生：(1) `hostScopeData.messages`（descendant 经 `useScopeSelector`/`${messages}` 读到的投影）为 `structuredClone(messages)` 快照，非 engine 内部数组；(2) `onResponseComplete({ message })` 的 message 在发出前 `structuredClone`，host 在后续 turn/regenerate 改动该引用不会回写 engine。投影为 turn-boundary 快照（非 live feed）；host 需要当前全集仍走 `component:getMessages`。proof 见 `renderers/__tests__/ai-chat-projection.test.tsx`（AI-02/AI-09）。
 
 - 不引入新的 RendererDefinition 字段、新的 field kind、新的 marker 命名规则——严守现有契约（参见 `docs/references/renderer-interfaces.md`、`docs/architecture/styling-system.md`）。
 
@@ -584,6 +586,8 @@ tiny-robot 用 `--tr-*` 前缀。flux-renderers-ai **不引入** `--tr-*` 或 `-
 
 完整 events 总览见 [`renderers.md`](./renderers.md) §13。
 
+**回合过渡事件契约（Plan {2}）**：`ai-chat` 在 `requestState` 过渡（`processing→completed/error/aborted`）时触发 schema events。订阅 effect 仅依赖 `[engine]`（latest-events-ref 读最新 events，AI-12），保证过渡不丢且不每 render 重订。`onResponseComplete({ message })` 的 message 为快照（AI-09）；`onError({ error })` 透传 engine 真实 `state.lastError`（AI-19，依赖 Plan {1} engine-half），非 Error cause 包成 `new Error(String(cause), { cause })`。
+
 ### 14.2 ActionScope namespace（P1）
 
 `ai-chat` 渲染器自动注册 `ai` 命名空间到当前 ActionScope：
@@ -650,7 +654,7 @@ tiny-robot 用 `--tr-*` 前缀。flux-renderers-ai **不引入** `--tr-*` 或 `-
 ### 18.3 state 边界不变量（v2 新增，按 INV-4）
 
 16. **`conversations` / `activeConversationId` 是 scope-owned**：渲染器通过 `useScopeSelector` 读 schema 表达式，不在包内自持。`useConversation` hook 是 host helper（不在渲染器内部用）。
-17. **`engine.messages` 是域内部**：不写 scope；高频流式更新避免订阅风暴。
+17. **`engine.messages` 是域内部**：不写 scope；高频流式更新避免订阅风暴。`ai-chat` 投影到 host scope 的 `messages` 是 `structuredClone` 快照（AI-02），`onResponseComplete` 的 message payload 同样快照（AI-09）——descendant/host 持有的引用不会回写污染 engine 内部（Decision-A renderer-side enforcement，详见 §3）。
 18. **env 引用变化不重建内部 state**：engine 用 `useRef` lazy init，env 引用变化只触发 `setConnector` 等适配调用，不重建 engine 实例。
 
 ## 19. 参考文档 / v1→v2 变更摘要 / 复审记录
