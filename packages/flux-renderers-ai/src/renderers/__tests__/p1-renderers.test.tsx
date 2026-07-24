@@ -1,6 +1,7 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import type { ComponentType } from 'react';
+import { createNormalizedActionEvent } from '@nop-chaos/flux-react';
 import { createMockRendererProps } from '../../test-support.js';
 import { AiConversationsRenderer } from '../ai-conversations.js';
 import { AiWelcomeRenderer } from '../ai-welcome.js';
@@ -62,6 +63,32 @@ describe('ai-conversations (Widget)', () => {
     const { container } = render(<Conversations {...props} />);
     fireEvent.click(container.querySelector('[data-slot="ai-conversations-item-button"]')!);
     expect(onItemClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }));
+  });
+
+  it('onItemClick payload carries through ctx.event end-to-end (type + id preserved by normalizer)', () => {
+    const onItemClick = vi.fn();
+    const conversations: AiConversationInfo[] = [
+      { id: 'c1', title: 'First', createdAt: 1, updatedAt: 1 },
+    ];
+    const props = makeProps({
+      props: { type: 'ai-conversations', conversations: conversations as never, activeId: 'c1' },
+      events: { onItemClick },
+    });
+    const { container } = render(<Conversations {...props} />);
+    fireEvent.click(container.querySelector('[data-slot="ai-conversations-item-button"]')!);
+
+    // Capture the exact payload the renderer hands to the runtime event handler
+    // (the same value that flows into `createNormalizedActionEvent` inside
+    // node-renderer-resolved.tsx), then run it through the real normalizer to
+    // prove `${event.id}` / `${event.conversation}` resolve to real values.
+    const emitted = onItemClick.mock.calls[0]?.[0];
+    expect(emitted).toMatchObject({ type: 'ai:conversation-click', id: 'c1' });
+
+    const ctxEvent = createNormalizedActionEvent(emitted);
+    expect(ctxEvent).not.toBeUndefined();
+    expect(ctxEvent?.type).toBe('ai:conversation-click');
+    expect(ctxEvent?.id).toBe('c1');
+    expect(ctxEvent?.conversation).toMatchObject({ id: 'c1', title: 'First' });
   });
 
   it('the New button fires onCreate', () => {

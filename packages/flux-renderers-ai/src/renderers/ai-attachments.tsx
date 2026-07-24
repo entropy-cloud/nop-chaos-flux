@@ -77,7 +77,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
 
   function reportChange(next: AiAttachment[]) {
     if (!controlledValue) setInternalAttachments(next);
-    void props.events.onChange?.({ attachments: next });
+    void props.events.onChange?.({ type: 'ai:attachments-change', attachments: next });
   }
 
   function addFiles(incoming: File[]) {
@@ -109,10 +109,10 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
       reportChange([...attachments, ...accepted]);
     }
     if (tooLarge) {
-      void props.events.onError?.({ reason: 'attachment-too-large' });
+      void props.events.onError?.({ type: 'ai:attachments-error', reason: 'attachment-too-large' });
     }
     if (tooMany) {
-      void props.events.onError?.({ reason: 'attachment-too-many' });
+      void props.events.onError?.({ type: 'ai:attachments-error', reason: 'attachment-too-many' });
     }
   }
 
@@ -164,7 +164,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
 
   async function handleUpload() {
     const imageAttachments = attachments.filter((a) => isImageMime(a.contentType) || isImageExt(a.name));
-    void props.events.onUpload?.({ attachments });
+    void props.events.onUpload?.({ type: 'ai:attachments-upload', attachments });
     if (imageAttachments.length > 0 && ctx) {
       const parts: ChatMessageContentPart[] = imageAttachments.map((a) => ({
         type: 'image_url',

@@ -147,7 +147,7 @@ export function AiSuggestionsRenderer(props: RendererComponentProps<AiSuggestion
       testid={props.meta.testid}
       onSelect={
         props.events.onSelect
-          ? (item, index) => props.events.onSelect?.({ item, index })
+          ? (item, index) => props.events.onSelect?.({ type: 'ai:suggestion-select', item, index })
           : undefined
       }
     />

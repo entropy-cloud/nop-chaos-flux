@@ -167,7 +167,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   const activeBranchId = typeof resolved.activeBranchId === 'string' ? resolved.activeBranchId : undefined;
   const onBranchChange = props.events.onBranchChange
     ? (branchId: string) => {
-        void props.events.onBranchChange?.({ branchId });
+        void props.events.onBranchChange?.({ type: 'ai:branch-change', branchId });
       }
     : undefined;
   // Decision-A (AI-02): project a SNAPSHOT of the engine messages, not the

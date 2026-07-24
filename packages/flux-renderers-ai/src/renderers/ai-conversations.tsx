@@ -24,7 +24,7 @@ export function AiConversationsRenderer(
 
   function commitRename() {
     if (renamingId && draftTitle.trim().length > 0) {
-      void props.events.onItemRename?.({ id: renamingId, title: draftTitle.trim() });
+      void props.events.onItemRename?.({ type: 'ai:conversation-rename', id: renamingId, title: draftTitle.trim() });
     }
     setRenamingId(null);
     setDraftTitle('');
@@ -42,7 +42,7 @@ export function AiConversationsRenderer(
           variant="outline"
           size="sm"
           data-slot="ai-conversations-create"
-          onClick={() => void props.events.onCreate?.({})}
+          onClick={() => void props.events.onCreate?.({ type: 'ai:conversation-create' })}
         >
           {t('flux.ai.newConversation')}
         </Button>
@@ -83,7 +83,7 @@ export function AiConversationsRenderer(
                   variant="ghost"
                   data-slot="ai-conversations-item-button"
                   className="flex-1 justify-start text-left"
-                  onClick={() => void props.events.onItemClick?.({ id: conv.id, conversation: conv })}
+                  onClick={() => void props.events.onItemClick?.({ type: 'ai:conversation-click', id: conv.id, conversation: conv })}
                 >
                   {conv.title?.trim() || t('flux.ai.emptyConversationTitle')}
                 </Button>
@@ -110,7 +110,7 @@ export function AiConversationsRenderer(
                     size="sm"
                     data-slot="ai-conversations-delete"
                     aria-label={t('flux.ai.deleteConversation')}
-                    onClick={() => void props.events.onItemDelete?.({ id: conv.id })}
+                    onClick={() => void props.events.onItemDelete?.({ type: 'ai:conversation-delete', id: conv.id })}
                   >
                     ×
                   </Button>

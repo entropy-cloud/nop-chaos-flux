@@ -74,8 +74,37 @@ describe('createNormalizedActionEvent', () => {
     expect(createNormalizedActionEvent(42)).toBeUndefined();
   });
 
-  it('returns undefined for object without type string', () => {
-    expect(createNormalizedActionEvent({ type: 123 })).toBeUndefined();
+  it('preserves a malformed non-string type by coercing to "custom" (no silent drop)', () => {
+    const result = createNormalizedActionEvent({ type: 123, id: 'x' });
+    expect(result).not.toBeUndefined();
+    expect(result).toMatchObject({ type: 'custom', id: 'x' });
+  });
+
+  it('preserves a custom payload without a type field (id + conversation)', () => {
+    const payload = { id: 'c1', conversation: { x: 1 } };
+    const result = createNormalizedActionEvent(payload);
+    expect(result).not.toBeUndefined();
+    expect(result).toMatchObject({ type: 'custom', id: 'c1', conversation: { x: 1 } });
+    expect(result?.id).toBe('c1');
+    expect(result?.conversation).toEqual({ x: 1 });
+  });
+
+  it('preserves a single-field custom payload ({ reason })', () => {
+    const result = createNormalizedActionEvent({ reason: 'too-large' });
+    expect(result).toMatchObject({ type: 'custom', reason: 'too-large' });
+  });
+
+  it('preserves an empty custom payload, synthesizing type "custom"', () => {
+    const result = createNormalizedActionEvent({});
+    expect(result).toEqual({ type: 'custom' });
+  });
+
+  it('returns a new object and does not mutate the input payload', () => {
+    const payload = { id: 'c1', conversation: { x: 1 } };
+    const result = createNormalizedActionEvent(payload);
+    expect(result).not.toBe(payload);
+    expect(payload).toEqual({ id: 'c1', conversation: { x: 1 } });
+    expect(result).toMatchObject({ type: 'custom', id: 'c1' });
   });
 
   it('normalizes a DOM Event (returned as-is since it has string type)', () => {

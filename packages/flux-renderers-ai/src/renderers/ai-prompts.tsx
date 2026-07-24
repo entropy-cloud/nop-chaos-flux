@@ -56,7 +56,7 @@ export function AiPromptsRenderer(props: RendererComponentProps<AiPromptsSchema>
             sizeClass,
           )}
           onClick={() => {
-            void props.events.onSelect?.({ item, index });
+            void props.events.onSelect?.({ type: 'ai:prompt-select', item, index });
           }}
         >
           <div className="flex items-center gap-2">

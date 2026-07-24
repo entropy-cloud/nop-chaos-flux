@@ -246,7 +246,7 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
       onBranchChange={
         props.events?.onBranchChange
           ? (branchId: string) => {
-              void props.events.onBranchChange?.({ branchId });
+              void props.events.onBranchChange?.({ type: 'ai:branch-change', branchId });
             }
           : undefined
       }

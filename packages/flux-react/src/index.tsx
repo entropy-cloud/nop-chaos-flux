@@ -29,6 +29,7 @@ export { DialogHost } from './dialog-host.js';
 export { FieldFrame, toFieldRemarkProps } from './field-frame.js';
 export type { FieldFrameProps, FieldRemarkProps, FieldRemarkSchemaLike } from './field-frame.js';
 export { NodeRenderer } from './node-renderer.js';
+export { createNormalizedActionEvent } from './renderer-helpers.js';
 export {
   useRendererRuntime,
   useRenderScope,

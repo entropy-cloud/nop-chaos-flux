@@ -283,6 +283,17 @@ export interface ActionResult {
   settledError?: unknown;
 }
 
+/**
+ * Structured action event exposed on `ActionContext.event`.
+ *
+ * `type` is the only required field and is always a string. DOM `Event`
+ * instances, React synthetic events, and explicit renderer payloads that carry
+ * a string `type` are passed through unchanged. Custom renderer-emitted payloads
+ * lacking a string `type` (e.g. `{ id, conversation }`) are preserved with
+ * `type` synthesized as `'custom'` by `normalizeActionEvent` — they are NOT
+ * silently dropped. A meaningful renderer-supplied `type` remains recommended
+ * for self-describing, debuggable payloads.
+ */
 export interface FluxActionEvent {
   type: string;
   nativeEvent?: Event;

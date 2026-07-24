@@ -26,8 +26,30 @@ function isFluxActionEventCandidate(
   );
 }
 
+/**
+ * Normalize a raw renderer-emitted event into the structured `FluxActionEvent`
+ * shape exposed on `ActionContext.event`.
+ *
+ * Resolution order:
+ * 1. `null`/`undefined`/primitives → `undefined` (cannot be normalized).
+ * 2. Objects that already carry a string `type` — DOM `Event` instances, React
+ *    synthetic events, and `FluxActionEvent` payloads — are returned **as-is**
+ *    so the original event identity (and any `preventDefault`/`stopPropagation`
+ *    wiring) is preserved.
+ * 3. Custom renderer-emitted payloads that lack a string `type` (e.g.
+ *    `{ id, conversation }`, `{ reason }`, `{ item, index }`) are **preserved**
+ *    so schema expressions like `${event.id}` resolve to the real payload value;
+ *    `type` is synthesized as `'custom'` to honor the `FluxActionEvent` string
+ *    `type` contract. A meaningful renderer-supplied `type` remains recommended
+ *    for self-describing payloads. See `docs/architecture/renderer-runtime.md`
+ *    "Event Passthrough Contract".
+ */
 function normalizeActionEvent(event: unknown): ActionContext['event'] {
-  if (!event) {
+  if (event === null || event === undefined) {
+    return undefined;
+  }
+
+  if (typeof event !== 'object') {
     return undefined;
   }
 
@@ -35,43 +57,7 @@ function normalizeActionEvent(event: unknown): ActionContext['event'] {
     return event;
   }
 
-  const candidate = event as {
-    type?: unknown;
-    nativeEvent?: unknown;
-    currentTarget?: unknown;
-    target?: unknown;
-    preventDefault?: unknown;
-    stopPropagation?: unknown;
-  };
-
-  if (typeof candidate.type !== 'string') {
-    return undefined;
-  }
-
-  const nativeEvent =
-    candidate.nativeEvent instanceof Event
-      ? candidate.nativeEvent
-      : event instanceof Event
-        ? event
-        : undefined;
-  const currentTarget =
-    candidate.currentTarget instanceof HTMLElement ? candidate.currentTarget : null;
-  const target = candidate.target instanceof HTMLElement ? candidate.target : null;
-
-  return {
-    type: candidate.type,
-    nativeEvent,
-    currentTarget,
-    target,
-    preventDefault:
-      typeof candidate.preventDefault === 'function'
-        ? () => (candidate.preventDefault as () => void).call(event)
-        : undefined,
-    stopPropagation:
-      typeof candidate.stopPropagation === 'function'
-        ? () => (candidate.stopPropagation as () => void).call(event)
-        : undefined,
-  };
+  return { ...(event as Record<string, unknown>), type: 'custom' };
 }
 
 export function mergeActionContext(

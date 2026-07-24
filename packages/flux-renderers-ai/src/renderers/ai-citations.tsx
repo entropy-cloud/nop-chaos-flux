@@ -94,7 +94,7 @@ export function AiCitationsRenderer(props: RendererComponentProps<AiCitationsSch
       testid={props.meta.testid}
       onSourceClick={
         props.events?.onSourceClick
-          ? (source, index) => props.events.onSourceClick?.({ source, index })
+          ? (source, index) => props.events.onSourceClick?.({ type: 'ai:citation-click', source, index })
           : undefined
       }
     />

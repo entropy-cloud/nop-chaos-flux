@@ -260,6 +260,7 @@ export function AiToolCallRenderer(props: RendererComponentProps<AiToolCallSchem
         props.events?.onApproval
           ? (action) =>
               props.events.onApproval?.({
+                type: 'ai:tool-call-approval',
                 action,
                 toolCall,
                 toolCallId: toolCall.id,

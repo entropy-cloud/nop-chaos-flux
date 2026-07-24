@@ -100,12 +100,12 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
   useEffect(() => {
     if (unsupported && !firedUnsupportedRef.current) {
       firedUnsupportedRef.current = true;
-      void props.events.onError?.({ reason: 'unsupported' });
+      void props.events.onError?.({ type: 'ai:voice-error', reason: 'unsupported' });
     }
   }, [unsupported, props.events]);
 
   function fireError(reason: VoiceErrorReason): void {
-    void props.events.onError?.({ reason });
+    void props.events.onError?.({ type: 'ai:voice-error', reason });
   }
 
   function handleStart(): void {
@@ -130,7 +130,7 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
         if (result.isFinal) gotFinal = true;
       }
       if (transcript.trim().length > 0) {
-        void props.events.onResult?.({ transcript });
+        void props.events.onResult?.({ type: 'ai:voice-result', transcript });
       }
     };
     recognition.onerror = (event) => {

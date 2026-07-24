@@ -30,7 +30,7 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
     } else if (action === 'like' || action === 'dislike') {
       setVoted((prev) => (prev === action ? null : action));
     }
-    void props.events.onAction?.({ action, message });
+    void props.events.onAction?.({ type: 'ai:feedback-action', action, message });
   }
 
   return (
