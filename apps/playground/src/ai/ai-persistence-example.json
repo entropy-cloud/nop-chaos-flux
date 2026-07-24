@@ -1,0 +1,19 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "ai-chat",
+      "testid": "ai-persistence-chat",
+      "engine": "${engine}",
+      "conversationController": "${controller}",
+      "activeConversationId": "${activeConversationId}",
+      "placeholder": "Send a message, then refresh the page…",
+      "submitType": "enter",
+      "className": "flex flex-col flex-1 min-h-0 gap-2",
+      "emptyState": {
+        "type": "text",
+        "text": "Create or select a conversation to start."
+      }
+    }
+  ]
+}

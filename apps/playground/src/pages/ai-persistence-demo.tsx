@@ -1,16 +1,13 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Button, Toaster } from '@nop-chaos/ui';
-import {
-  AiChatProvider,
-  AiMessageListView,
-  AiSenderView,
-  useConversation,
-  type MessageEngine,
-  type MessageEngineState,
-} from '@nop-chaos/flux-renderers-ai';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
+import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
+import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
+import { registerAiRenderers, useConversation } from '@nop-chaos/flux-renderers-ai';
 import { createMockAiConnector, createMockAiEnv } from '../ai/mock-ai-env.js';
 import { createLocalStorageStorage } from '../ai/local-storage-storage.js';
+import exampleSchema from '../ai/ai-persistence-example.json';
 
 interface Props {
   onBack: () => void;
@@ -18,26 +15,34 @@ interface Props {
 
 const PERSISTENCE_STORAGE_KEY = 'nop-chaos-flux:ai-persistence-demo';
 
-const EMPTY_STATE: MessageEngineState = {
-  messages: [],
-  requestState: 'idle',
-  isProcessing: false,
-};
+const registry = createDefaultRegistry();
+registerBasicRenderers(registry);
+registerLayoutRenderers(registry);
+registerAiRenderers(registry);
+
+const SchemaRenderer = createSchemaRenderer();
+const formulaCompiler = createFormulaCompiler();
 
 /**
  * P3 demo: end-to-end persistence. `useConversation` is wired with a
  * localStorage-backed `ConversationStorageStrategy` + `autoSaveMessages`.
  *
- * The chat surface (`ai-message-list` + `ai-sender`) is bound to the
- * conversation manager's `activeEngine` — a SINGLE engine whose messages are
- * saved on turn completion and re-hydrated on switch. Reloading the page
- * bootstraps the conversation list from storage; clicking a conversation
- * re-hydrates its messages via `engine.setMessages`.
+ * The chat surface is the `ai-chat` renderer, bound to the conversation
+ * manager's `activeEngine` via the schema `engine` prop (design.md §11.2/§11.5)
+ * — a SINGLE engine whose messages are saved on turn completion and re-hydrated
+ * on switch. This unifies `ai-chat` with the conversation manager's engines,
+ * so the persistence scenario reuses all `ai-chat` capabilities (regions,
+ * ActionScope namespace `ai`, ComponentHandle) instead of the former manual
+ * `AiMessageListView` + `AiSenderView` assembly.
  *
- * NOTE: the `ai-chat` renderer currently owns its own engine (independent of
- * `useConversation`), so unifying `ai-chat` with the conversation manager's
- * engines is tracked as a host-level follow-up. This demo composes
- * `ai-message-list` + `ai-sender` directly to demonstrate real persistence.
+ * The sidebar stays in React and drives the manager directly
+ * (`conversations.create/switch/delete`) — the conversation mutations are
+ * host-owned, and the `engine` prop flows the active engine into `ai-chat`.
+ * Reloading the page bootstraps the conversation list from storage; the mount
+ * effect re-hydrates the active conversation's messages via `switchConversation`.
+ *
+ * `engine-null-switch`: before the first conversation is created/selected,
+ * `activeEngine` is null and `ai-chat` renders its emptyState region.
  */
 export function AiPersistenceDemoPage({ onBack }: Props) {
   const baseEnv = useMemo(() => createMockAiEnv(), []);
@@ -60,7 +65,16 @@ export function AiPersistenceDemoPage({ onBack }: Props) {
     }
   }, [activeId, conversations]);
 
-  const ctx = useEngineView(conversations.activeEngine);
+  const chatData = useMemo(
+    () => ({
+      // The active engine flows into `ai-chat` via the `engine` prop; the
+      // controller is bound so the `ai` namespace's conversation actions work.
+      engine: conversations.activeEngine,
+      controller: conversations.controller,
+      activeConversationId: conversations.activeConversationId,
+    }),
+    [conversations.activeEngine, conversations.controller, conversations.activeConversationId],
+  );
 
   return (
     <div className="nop-theme-root min-h-screen flex flex-col">
@@ -72,11 +86,16 @@ export function AiPersistenceDemoPage({ onBack }: Props) {
         <h1 className="text-lg font-semibold">AI Persistence — P3 (localStorage)</h1>
       </header>
       <main className="flex-1 flex max-w-6xl mx-auto w-full gap-2 p-4">
-        <aside className="w-64 shrink-0 border rounded-md p-2 flex flex-col gap-1" data-testid="ai-persistence-panel">
+        <aside
+          className="w-64 shrink-0 border rounded-md p-2 flex flex-col gap-1"
+          data-testid="ai-persistence-panel"
+        >
           <Button
             size="sm"
             data-testid="ai-persistence-create"
-            onClick={() => conversations.createConversation({ title: `Chat ${conversations.conversations.length + 1}` })}
+            onClick={() =>
+              conversations.createConversation({ title: `Chat ${conversations.conversations.length + 1}` })
+            }
           >
             + New conversation
           </Button>
@@ -113,43 +132,16 @@ export function AiPersistenceDemoPage({ onBack }: Props) {
           ) : null}
         </aside>
         <section className="flex-1 min-w-0 flex flex-col gap-2 border rounded-md p-2">
-          {ctx ? (
-            <AiChatProvider value={ctx}>
-              <AiMessageListView />
-              <AiSenderView placeholder="Send a message, then refresh the page…" submitType="enter" />
-            </AiChatProvider>
-          ) : (
-            <p className="text-sm text-muted-foreground p-4">Create or select a conversation to start.</p>
-          )}
+          <SchemaRenderer
+            schemaUrl="playground://pages/ai-persistence-demo"
+            schema={exampleSchema as never}
+            registry={registry}
+            env={baseEnv}
+            formulaCompiler={formulaCompiler}
+            data={chatData}
+          />
         </section>
       </main>
     </div>
   );
-}
-
-/**
- * Bind an existing `MessageEngine` to React via `useSyncExternalStore`,
- * producing the `AiChatContextValue` the message-list / sender consume.
- * Returns `null` while no engine is active.
- */
-function useEngineView(engine: MessageEngine | null) {
-  const subscribe = useCallback(
-    (cb: () => void) => (engine ? engine.subscribe(cb) : () => {}),
-    [engine],
-  );
-  const getSnapshot = useCallback(
-    () => (engine ? engine.getState() : EMPTY_STATE) as MessageEngineState,
-    [engine],
-  );
-  const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  if (!engine) return null;
-  return {
-    engine,
-    messages: state.messages,
-    requestState: state.requestState,
-    processingState: state.processingState,
-    isProcessing: state.isProcessing,
-    sendMessage: engine.sendMessage,
-    abortRequest: engine.abort,
-  };
 }
