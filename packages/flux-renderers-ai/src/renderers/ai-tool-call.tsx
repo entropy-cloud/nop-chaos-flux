@@ -130,7 +130,7 @@ export function AiToolCallView(props: {
       data-approval={approval ?? undefined}
       data-cid={props.cid || undefined}
       data-testid={props.testid || undefined}
-      aria-label={t('flux.ai.toolCall', { name: toolCall.function.name })}
+      aria-label={`${t('flux.ai.toolCall', { name: toolCall.function.name })} — ${toolStatusLabel(status)}`}
       role="group"
     >
       <div className="flex items-center gap-2">
@@ -184,6 +184,14 @@ function ApprovalFooter({
   toolCallId: string;
 }): React.ReactElement {
   if (approval === 'pending') {
+    // P2 HITL no-handler guard (FP `hitl-no-handler`): when the host did not
+    // wire `onApproval`, the engine never mutates `approval` (host owns the
+    // workflow). Buttons would be dead clicks with no feedback. Disable them
+    // and expose the reason via `title` (hostile-to-SR tooltip fallback —
+    // visible on hover, surfaced verbatim by SR via the title attribute).
+    // Approval state machine is unchanged (engine still only holds state).
+    const noHandler = !onApproval;
+    const noHandlerTitle = noHandler ? t('flux.ai.approvalNoHandler') : undefined;
     return (
       <div
         ref={footerRef}
@@ -200,6 +208,8 @@ function ApprovalFooter({
           data-slot="ai-tool-call-approve"
           data-tool-call-id={toolCallId}
           aria-label={t('flux.ai.approve')}
+          disabled={noHandler}
+          title={noHandlerTitle}
           onClick={() => onApproval?.('approve')}
           onKeyDown={onKeyDown}
         >
@@ -213,6 +223,8 @@ function ApprovalFooter({
           data-slot="ai-tool-call-reject"
           data-tool-call-id={toolCallId}
           aria-label={t('flux.ai.reject')}
+          disabled={noHandler}
+          title={noHandlerTitle}
           onClick={() => onApproval?.('reject')}
           onKeyDown={onKeyDown}
         >
@@ -266,7 +278,7 @@ export function AiToolCallRenderer(props: RendererComponentProps<AiToolCallSchem
       onApproval={
         props.events?.onApproval
           ? (action) =>
-              props.events.onApproval?.({
+              void props.events.onApproval?.({
                 type: 'ai:tool-call-approval',
                 action,
                 toolCall,
@@ -307,6 +319,27 @@ function StatusIcon({ status }: { status: ToolCallStatus }): React.ReactElement 
   return <Ban className="h-3.5 w-3.5 text-warning" aria-hidden="true" />;
 }
 
+/**
+ * Resolve the i18n key for a tool-call status. The locale file uses flat keys
+ * (`toolStatusRunning` / `toolStatusSuccess` …) rather than a nested
+ * `toolStatus.{status}` map; this helper centralizes the mapping so the
+ * StatusIcon visual signal is also reachable by screen readers via the
+ * root `aria-label` (P2 a11y收敛).
+ */
+function toolStatusLabel(status: ToolCallStatus): string {
+  switch (status) {
+    case 'success':
+      return t('flux.ai.toolStatusSuccess');
+    case 'failed':
+      return t('flux.ai.toolStatusFailed');
+    case 'cancelled':
+      return t('flux.ai.toolStatusCancelled');
+    case 'running':
+    default:
+      return t('flux.ai.toolStatusRunning');
+  }
+}
+
 /** A-12 status → Tailwind border/accent class (zero CSS asset). */
 function statusColorClass(status: ToolCallStatus): string {
   switch (status) {
@@ -326,6 +359,15 @@ function statusColorClass(status: ToolCallStatus): string {
  * Repair truncated streamed JSON (e.g. incomplete `function.arguments`) and
  * syntax-highlight it via a token regex. Falls back to the raw text when
  * `jsonrepair` cannot parse (Failure Path `tool-args-truncated`).
+ *
+ * P2 (FP `highlight-special-chars`): tokens are located on the **raw** pretty
+ * JSON *before* HTML-escaping. Each token is then escaped individually and
+ * re-emitted wrapped in its highlight span. This guarantees a string literal
+ * containing `&`/`<`/`>`/`"` is captured as a single token (the previous
+ * escape-then-regex approach fragmented on the first `&` of an entity).
+ * XSS safety is preserved: every token substring still passes through
+ * `escapeHtml` before reaching the output, and inter-token text is also
+ * escaped — no unescaped substring ever lands in the returned HTML.
  */
 export function highlightJson(raw: string): string {
   if (!raw) return '';
@@ -336,18 +378,93 @@ export function highlightJson(raw: string): string {
     return escapeHtml(raw);
   }
   const pretty = tryPretty(repaired);
-  return escapeHtml(pretty).replace(
-    /(&quot;(?:\\.|[^&]|(?:&quot;))*?&quot;(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
-    (match, _key, colon, word) => {
-      if (word) {
-        return `<span class="tok-bool">${match}</span>`;
+  return tokenizeJson(pretty)
+    .map((tok) => {
+      const escaped = escapeHtml(tok.text);
+      if (tok.kind === 'bool') return `<span class="tok-bool">${escaped}</span>`;
+      if (tok.kind === 'key') return `<span class="tok-key">${escaped}</span>`;
+      if (tok.kind === 'str') return `<span class="tok-str">${escaped}</span>`;
+      return escaped;
+    })
+    .join('');
+}
+
+interface JsonToken {
+  kind: 'bool' | 'key' | 'str' | 'other';
+  text: string;
+}
+
+/**
+ * Walk the pretty-printed JSON string and slice it into tokens. A string
+ * literal (double-quoted, with escape handling) immediately followed by
+ * optional whitespace + `:` is classified as a `key`; otherwise as a `str`.
+ * `true`/`false`/`null` and numbers fall into their own categories; all
+ * other punctuation/whitespace is `other`.
+ */
+function tokenizeJson(text: string): JsonToken[] {
+  const tokens: JsonToken[] = [];
+  let i = 0;
+  const len = text.length;
+  const push = (kind: JsonToken['kind'], start: number, end: number): void => {
+    if (end > start) tokens.push({ kind, text: text.slice(start, end) });
+  };
+  while (i < len) {
+    const ch = text[i];
+    if (ch === '"') {
+      // String literal — consume through the closing unescaped quote.
+      let j = i + 1;
+      while (j < len) {
+        const cj = text[j];
+        if (cj === '\\') {
+          j += 2;
+          continue;
+        }
+        if (cj === '"') {
+          j += 1;
+          break;
+        }
+        j += 1;
       }
-      if (colon) {
-        return `<span class="tok-key">${match}</span>`;
+      const strEnd = j;
+      // Peek ahead: optional whitespace then ':' → key, else str.
+      let k = strEnd;
+      while (k < len && (text[k] === ' ' || text[k] === '\t')) k += 1;
+      const isKey = text[k] === ':';
+      push(isKey ? 'key' : 'str', i, strEnd);
+      i = strEnd;
+      continue;
+    }
+    if (/[tfn]/.test(ch)) {
+      // Word boundary match for true/false/null.
+      const wordMatch = text.slice(i).match(/^(true|false|null)\b/);
+      if (wordMatch) {
+        push('bool', i, i + wordMatch[0].length);
+        i += wordMatch[0].length;
+        continue;
       }
-      return `<span class="tok-str">${match}</span>`;
-    },
-  );
+    }
+    if (ch === '-' || /[0-9]/.test(ch)) {
+      const numMatch = text.slice(i).match(/^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/);
+      if (numMatch) {
+        push('other', i, i + numMatch[0].length);
+        i += numMatch[0].length;
+        continue;
+      }
+    }
+    // Default: accumulate as `other` up to the next token-start character.
+    let j = i + 1;
+    while (
+      j < len &&
+      text[j] !== '"' &&
+      !/[0-9-]/.test(text[j]) &&
+      !/[tfn]/.test(text[j])
+    ) {
+      j += 1;
+    }
+    push('other', i, j);
+    i = j;
+  }
+  return tokens;
 }
 
 function tryPretty(json: string): string {

@@ -81,7 +81,7 @@ export function UserMessageActions({ message, onEditingChange }: UserMessageActi
           data-slot="ai-bubble-edit-input"
           value={draft}
           rows={2}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(ev) => setDraft(ev.target.value)}
           className="min-h-[60px]"
         />
         <div className="flex justify-end gap-2">

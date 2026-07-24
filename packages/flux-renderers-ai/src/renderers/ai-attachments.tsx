@@ -163,6 +163,11 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   }
 
   async function handleUpload() {
+    // P2 silent-drop guard (FP `attachments-upload-stream`): never call
+    // sendMessage while a turn is streaming — the engine drops it silently.
+    // The upload button is also disabled via `loading` below; this guards the
+    // imperatively-invoked path and any future trigger.
+    if (ctx?.isProcessing) return;
     const imageAttachments = attachments.filter((a) => isImageMime(a.contentType) || isImageExt(a.name));
     void props.events.onUpload?.({ type: 'ai:attachments-upload', attachments });
     if (imageAttachments.length > 0 && ctx) {
@@ -225,6 +230,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
             type="button"
             size="sm"
             data-slot="ai-attachments-upload"
+            disabled={ctx?.isProcessing ?? false}
             onClick={handleUpload}
           >
             {t('flux.ai.send')}

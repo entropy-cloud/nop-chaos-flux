@@ -130,6 +130,67 @@ describe('createMessageEngine — agentic tool execution loop', () => {
     expect(toolMsg.metadata?.toolStatus).toBe('failed');
   });
 
+  // P2 FP `tool-error-flattened`: the executor throws an Error with a `cause`
+  // chain / custom fields. The engine must preserve the original Error on the
+  // tool message's metadata so hosts can structurally log it, instead of
+  // collapsing to a bare message string. This guards the regression where a
+  // catch block did `resultText = err.message` and dropped everything else.
+  it('tool-error-flattened: thrown Error is preserved on metadata.toolError (cause + custom fields intact)', async () => {
+    const connector = scriptedConnector([
+      toolCallChunks('c_err', 'flaky', '{}'),
+      stopChunks('Recovered.'),
+    ]);
+    class ToolError extends Error {
+      readonly code = 'TOOL_503';
+      readonly extra = { retryable: true };
+      constructor(message: string, opts: { cause: unknown }) {
+        super(message, opts);
+        this.name = 'ToolError';
+      }
+    }
+    const rootCause = new Error('upstream timeout');
+    const executor: ToolExecutor = async () => {
+      throw new ToolError('flaky tool failed', { cause: rootCause });
+    };
+
+    const engine = createMessageEngine({ connector, toolExecutor: executor });
+    await engine.sendMessage('go');
+    const final = engine.getState();
+    const toolMsg = final.messages.find((m) => m.role === 'tool') as ChatMessage;
+
+    // Human-readable message still ships as the tool message content the model reads.
+    expect(toolMsg.content).toBe('flaky tool failed');
+    expect(toolMsg.metadata?.toolStatus).toBe('failed');
+    // Original Error preserved with full fidelity.
+    const preserved = toolMsg.metadata?.toolError;
+    expect(preserved).toBeInstanceOf(Error);
+    expect((preserved as Error).message).toBe('flaky tool failed');
+    expect((preserved as Error).name).toBe('ToolError');
+    // Custom fields survive (not flattened to a string).
+    expect((preserved as ToolError).code).toBe('TOOL_503');
+    expect((preserved as ToolError).extra).toEqual({ retryable: true });
+    // cause chain survives (not dropped).
+    expect((preserved as Error).cause).toBe(rootCause);
+  });
+
+  it('tool-error-flattened: non-Error throw is wrapped as Error on metadata.toolError', async () => {
+    const connector = scriptedConnector([
+      toolCallChunks('c_str', 'f', '{}'),
+      stopChunks('Recovered.'),
+    ]);
+    const executor: ToolExecutor = async () => {
+      // A plain string throw (not an Error instance).
+      throw 'plain string failure';
+    };
+    const engine = createMessageEngine({ connector, toolExecutor: executor });
+    await engine.sendMessage('go');
+    const toolMsg = engine.getState().messages.find((m) => m.role === 'tool') as ChatMessage;
+    expect(toolMsg.metadata?.toolStatus).toBe('failed');
+    const preserved = toolMsg.metadata?.toolError;
+    expect(preserved).toBeInstanceOf(Error);
+    expect((preserved as Error).message).toBe('plain string failure');
+  });
+
   it('tool-loop-max: terminates after maxToolRounds consecutive tool_calls', async () => {
     // Always return tool_calls — never stop. Cap at 2 rounds.
     const connector = scriptedConnector([

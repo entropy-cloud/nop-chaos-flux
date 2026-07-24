@@ -24,7 +24,10 @@ export function detectMentionQuery(editor: Editor | null): { query: string; from
   const { selection } = editor.state;
   const textBefore = editor.state.doc.textBetween(Math.max(0, selection.from - 50), selection.from, '\n', '\0');
   // Match the last `@` that is followed only by word characters (no whitespace).
-  const match = textBefore.match(new RegExp(`${MENTION_TRIGGER}([\\w\\s.-]*)$`));
+  // P2 (N-4): the previous `[\\w\\s.-]*` class included `\\s`, contradicting
+  // the adjacent comment and letting the candidate popup stay open across
+  // spaces. Drop `\\s` so typing a space closes the popup (兑现 no-whitespace 注释).
+  const match = textBefore.match(new RegExp(`${MENTION_TRIGGER}([\\w.-]*)$`));
   if (!match) return null;
   const from = selection.from - match[0].length;
   const to = selection.from;

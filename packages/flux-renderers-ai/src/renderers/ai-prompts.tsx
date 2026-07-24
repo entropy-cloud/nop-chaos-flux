@@ -1,6 +1,5 @@
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
-import { t } from '@nop-chaos/flux-i18n';
 import type { AiPromptItem, AiPromptsSchema } from '../schemas.js';
 
 /**
@@ -46,7 +45,11 @@ export function AiPromptsRenderer(props: RendererComponentProps<AiPromptsSchema>
       data-testid={props.meta.testid || undefined}
     >
       {items.map((item, index) => {
-        const stableKey = (item.label ?? `item`) + (item.badge ? `-${item.badge}` : '') + `#${index}`;
+        // P2 (N-6 family): derive the key from content only so reordering
+        // the same item keeps its React identity (no remount). Falls back to
+        // a synthetic placeholder when label is missing. Duplicate-content
+        // items are rare for static recommendation lists (audit note).
+        const stableKey = `${item.label ?? 'item'}${item.badge ? `#${item.badge}` : ''}`;
         return (
         <Button
           key={stableKey}
@@ -92,5 +95,3 @@ function normalizeItems(items: unknown): AiPromptItem[] {
     .filter((x): x is AiPromptItem => typeof x === 'object' && x !== null && 'label' in x)
     .map((x) => ({ ...x }));
 }
-
-export const PROMPTS_DEFAULT_LABEL = t('flux.ai.placeholder');

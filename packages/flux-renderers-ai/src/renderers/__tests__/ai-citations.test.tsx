@@ -213,3 +213,77 @@ describe('ai-citations — onSourceClick', () => {
     );
   });
 });
+
+// ============================================================================
+// P2 FP `citation-in-codeblock`: parseCitations must not match `[N]` inside
+// markdown code spans (fenced ``` / ~~~ or inline `code`), and index 0 (or any
+// non-positive integer) must not produce an empty citation card — citations
+// are 1-based.
+// ============================================================================
+
+describe('ai-citations — P2 code-block + non-positive index protection', () => {
+  it('does not parse [N] inside a fenced ``` code block', () => {
+    const segs = parseCitations('intro\n```\nconst a = array[0];\nconst b = [1];\n```\nafter [2]');
+    const citationSegs = segs.filter((s) => s.kind === 'citation');
+    // Only the trailing [2] is a citation; the [0] and [1] inside the block
+    // are emitted as literal text.
+    expect(citationSegs.length).toBe(1);
+    expect('indices' in citationSegs[0] ? citationSegs[0].indices : []).toEqual([2]);
+    // The literal code text survives verbatim.
+    const joinedText = segs.map((s) => ('text' in s ? s.text : `[${('indices' in s ? s.indices : []).join(',')}]`)).join('');
+    expect(joinedText).toContain('array[0]');
+    expect(joinedText).toContain('[1]');
+  });
+
+  it('does not parse [N] inside a fenced ~~~ code block', () => {
+    const segs = parseCitations('~~~\nlet x = data[3]\n~~~\nsee [4]');
+    const citationSegs = segs.filter((s) => s.kind === 'citation');
+    expect(citationSegs.length).toBe(1);
+    expect('indices' in citationSegs[0] ? citationSegs[0].indices : []).toEqual([4]);
+  });
+
+  it('CommonMark: ~~~ does NOT close a ``` fence (mismatched delimiters stay open)', () => {
+    // A ``` opener followed by a ~~~ should be treated as still-inside-code.
+    const segs = parseCitations('```\nstill code [5]\n~~~\nmore code [6]\n```\nafter [7]');
+    const citationSegs = segs.filter((s) => s.kind === 'citation');
+    // Only the post-block [7] becomes a citation.
+    expect(citationSegs.length).toBe(1);
+    expect('indices' in citationSegs[0] ? citationSegs[0].indices : []).toEqual([7]);
+  });
+
+  it('does not parse [N] inside an inline `code` span', () => {
+    const segs = parseCitations('Use `array[8]` and `data[9]` then see [10]');
+    const citationSegs = segs.filter((s) => s.kind === 'citation');
+    expect(citationSegs.length).toBe(1);
+    expect('indices' in citationSegs[0] ? citationSegs[0].indices : []).toEqual([10]);
+  });
+
+  it('index 0 (non-positive) is emitted as literal text, not a citation card', () => {
+    const segs = parseCitations('see [0] for context');
+    const citationSegs = segs.filter((s) => s.kind === 'citation');
+    expect(citationSegs.length).toBe(0);
+    // The literal `[0]` survives in the text run.
+    const joined = segs.map((s) => ('text' in s ? s.text : `[${('indices' in s ? s.indices : []).join(',')}]`)).join('');
+    expect(joined).toContain('[0]');
+  });
+
+  it('mixed valid + non-positive indices keep the valid ones only', () => {
+    const segs = parseCitations('cite [0,11,0,12]');
+    const citationSegs = segs.filter((s) => s.kind === 'citation');
+    expect(citationSegs.length).toBe(1);
+    expect('indices' in citationSegs[0] ? citationSegs[0].indices : []).toEqual([11, 12]);
+  });
+
+  it('renders code-block [N] markers as literal text (no popover, no empty card)', () => {
+    const message: ChatMessage = {
+      id: 'm',
+      role: 'assistant',
+      content: '```\narray[0]\n```\nreal [1]',
+    };
+    const { container } = render(<AiCitationsView message={message} sources={[{ index: 1, title: 'S' }]} />);
+    // Only the genuine [1] produces a citation trigger.
+    const triggers = container.querySelectorAll('[data-citation-index]');
+    expect(triggers.length).toBe(1);
+    expect(triggers[0].getAttribute('data-citation-index')).toBe('1');
+  });
+});

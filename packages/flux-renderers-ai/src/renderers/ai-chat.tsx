@@ -139,7 +139,15 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
 
   // ---- Layer B: ActionScope namespace `ai` registration ----
   const actionScope = useCurrentActionScope();
-  const actionProvider = createAiActionProvider({ engine, conversationController });
+  // AI-31: stabilize the provider so `useNamespaceRegistration` does not
+  // re-subscribe on every streaming chunk (it depends on the engine + the
+  // conversation controller; both are host-stable references). The renderer
+  // rebuilds `props.events` every render, but the provider closes over the
+  // engine directly (not events), so its identity is stable across chunks.
+  const actionProvider = useMemo(
+    () => createAiActionProvider({ engine, conversationController }),
+    [engine, conversationController],
+  );
   // `useNamespaceRegistration` performs the capability check internally
   // (`actionScope` undefined → no-op). Returns the unregister fn on cleanup.
   useNamespaceRegistration(actionScope, 'ai', actionProvider);
@@ -152,11 +160,18 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // methods). Capability check: when no `componentRegistry` is provided the
   // registration is silently skipped (Failure Path `component-handle-no-registry`).
   const componentRegistry = useCurrentComponentRegistry();
-  const componentHandle = createAiComponentHandle({
-    engine,
-    id: (resolved.componentId as string | undefined) || props.meta.testid || props.id,
-    name: (resolved.componentName as string | undefined) ?? 'ai-chat',
-  });
+  const componentIdResolved = (resolved.componentId as string | undefined) || props.meta.testid || props.id;
+  const componentNameResolved = (resolved.componentName as string | undefined) ?? 'ai-chat';
+  // AI-31: stabilize the handle so the register effect deps
+  // `[componentRegistry, props.meta.cid, componentHandle]` do not change every
+  // render → register/unregister only fires when the engine or id changes.
+  const componentHandle = useMemo(
+    () => createAiComponentHandle({ engine, id: componentIdResolved, name: componentNameResolved }),
+    // Rebuild when the engine reference or the resolved id/name strings change.
+    // `props.id` is a stable renderer instance id; `props.meta.testid` is
+    // schema-stable. The literal strings are stable across renders.
+    [engine, componentIdResolved, componentNameResolved],
+  );
   useEffect(() => {
     if (!componentRegistry) return;
     return componentRegistry.register(componentHandle, { cid: props.meta.cid });
@@ -212,11 +227,19 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
     });
   }
   const projectedMessages = projection.snap;
-  const hostScopeData = {
-    isProcessing,
-    messages: projectedMessages,
-    activeConversationId,
-  };
+  // AI-31: stabilize the projected scope data so `useHostScope` does not
+  // `scope.replace` on every streaming chunk. The snapshot is already gated
+  // to turn boundaries (above), so `projectedMessages` identity only changes
+  // across turn boundaries; bundle it with `isProcessing` and
+  // `activeConversationId` (both host-stable primitives) into a memoized bag.
+  const hostScopeData = useMemo(
+    () => ({
+      isProcessing,
+      messages: projectedMessages,
+      activeConversationId,
+    }),
+    [isProcessing, projectedMessages, activeConversationId],
+  );
   const hostScope = useHostScope(hostScopeData, props.path, 'ai');
 
   // AI-12 (subscribe stability): the `requestState` subscription below depends

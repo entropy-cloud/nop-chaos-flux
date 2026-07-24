@@ -94,7 +94,10 @@ export function AiSuggestionsView(props: {
       aria-label={t('flux.ai.suggestionsTitle')}
     >
       {renderPills.map((item, index) => (
-        <SuggestionPill key={item.text} item={item} index={index} onSelect={props.onSelect} />
+        // P2 (N-6): AiSuggestionItem has no stable id; pure `text` collides
+        // for duplicate copy. Append the index so each pill stays unique.
+        // eslint-disable-next-line react/no-array-index-key
+        <SuggestionPill key={`${item.text}#${index}`} item={item} index={index} onSelect={props.onSelect} />
       ))}
       {overflow.length > 0 ? (
         <Popover>
@@ -115,7 +118,7 @@ export function AiSuggestionsView(props: {
             <div data-slot="ai-suggestions-overflow-list" className="flex flex-col gap-1">
               {overflow.map((item, i) => (
                 <Button
-                  key={item.text}
+                  key={`${item.text}#${maxVisible + i}`}
                   variant="ghost"
                   size="xs"
                   data-slot="ai-suggestions-item"
@@ -152,7 +155,7 @@ export function AiSuggestionsRenderer(props: RendererComponentProps<AiSuggestion
       cid={props.meta.cid}
       onSelect={
         props.events.onSelect
-          ? (item, index) => props.events.onSelect?.({ type: 'ai:suggestion-select', item, index })
+          ? (item, index) => void props.events.onSelect?.({ type: 'ai:suggestion-select', item, index })
           : undefined
       }
     />

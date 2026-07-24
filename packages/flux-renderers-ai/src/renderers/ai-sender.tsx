@@ -58,6 +58,14 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
   const trimmedLength = draft.trim().length;
 
   function commit(text: string) {
+    // P2 silent-drop guard (FP `sender-commit-stream`): host `senderExtensions`
+    // components are responsible for their own disabled state, but if they
+    // don't gate on `loading` (or fire onSubmit imperatively), Enter-driven
+    // commit would silently drop the draft — engine.runTurn's isProcessing
+    // guard swallows the call. Mirror the user-edit guard: keep the draft
+    // intact and bail out. The built-in Textarea submit button self-disables
+    // (`disabled={loading || ...}`), so this is the host-extension path.
+    if (ctx?.isProcessing) return;
     if (props.onSubmit) props.onSubmit(text);
     else void ctx?.sendMessage(text);
     if (clearOnSubmit) setDraft('');
@@ -155,6 +163,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
           ref={inputRef}
           value={draft}
           placeholder={props.placeholder ?? t('flux.ai.placeholder')}
+          aria-label={props.placeholder ?? t('flux.ai.messageInput')}
           disabled={loading}
           rows={1}
           maxLength={maxLength}

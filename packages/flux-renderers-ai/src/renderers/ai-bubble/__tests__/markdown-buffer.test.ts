@@ -47,6 +47,38 @@ describe('A-2 safeMarkdownSlice — code fence balance', () => {
   it('handles ~~~ fences the same as ```', () => {
     expect(safeMarkdownSlice('~~~\nunfinished')).toBe('');
   });
+
+  // P2 (FP markdown-buffer fence parity): CommonMark says ``` and ~~~ are
+  // distinct fence kinds — a ``` opening cannot be closed by ~~~, and vice
+  // versa. The previous implementation counted both as the same "fence" token,
+  // so a ~~~ inside a ``` block falsely closed it (the held-back suffix was
+  // rendered as live markdown instead of staying inside the code block).
+  it('CommonMark: ~~~ does NOT close a ``` fence (mismatched fence stays open)', () => {
+    const safe = safeMarkdownSlice('```\ncode still open\n~~~\nwould-close-wrongly');
+    // The opening ``` is never closed by a matching ``` → cut at the fence
+    // start so the entire region after it is held back from rendering.
+    expect(safe).toBe('');
+  });
+
+  it('CommonMark: ``` does NOT close a ~~~ fence', () => {
+    const safe = safeMarkdownSlice('~~~\ncode still open\n```\nwould-close-wrongly');
+    expect(safe).toBe('');
+  });
+
+  it('CommonMark: same-kind fence closes correctly inside a code block', () => {
+    // Balanced ``` open/close with a stray ~~~ inside → balanced (the stray
+    // ~~~ is literal text inside the code block, not a fence).
+    const safe = safeMarkdownSlice('```\nstray ~~~ line\n```\nafter');
+    expect(safe).toBe('```\nstray ~~~ line\n```\nafter');
+  });
+
+  it('CommonMark: nested-different-kind fences — ``` around ~~~', () => {
+    // Outer ``` open / inner ~~~ open / inner ~~~ close / outer ``` close.
+    // The outer ``` is closed by the trailing ``` (same kind), so the whole
+    // span is balanced and renders fully.
+    const safe = safeMarkdownSlice('```\n~~~\ncode\n~~~\n```');
+    expect(safe).toBe('```\n~~~\ncode\n~~~\n```');
+  });
 });
 
 describe('A-2 safeMarkdownSlice — math delimiter balance', () => {

@@ -18,7 +18,6 @@
  * knowledge (INV-1). The `ai-bubble` markdown renderer wraps it.
  */
 
-const CODE_FENCE = /(^|\n)(`{3,}|~{3,})/g;
 const MATH_BLOCK = /\$\$/g;
 const MATH_INLINE_OPEN = /\\\(/g;
 const MATH_INLINE_CLOSE = /\\\)/g;
@@ -61,9 +60,26 @@ export function safeMarkdownSlice(raw: string): string {
 /**
  * Locate the index at which to cut so that an odd number of code fences is
  * avoided. Returns `undefined` when fences are balanced (safe to render all).
+ *
+ * P2 (CommonMark fence parity): ``` and ~~~ are distinct fence kinds and
+ * cannot close each other. A `````` ``` `````` opening must be closed by
+ * another ``` run; a `~~~` opening must be closed by another `~~~` run. We
+ * count each kind independently and cut at the last unclosed fence of
+ * whichever kind has an odd count.
  */
 function findUnclosedFenceCutoff(text: string): number | undefined {
-  const matches = [...text.matchAll(CODE_FENCE)];
+  const backtickCut = findUnclosedFenceCutoffForKind(text, '`');
+  // Only one of the two kinds can be "unclosed" at the end of a well-formed
+  // prefix; if both report a cutoff we take the earlier (more conservative).
+  const tildeCut = findUnclosedFenceCutoffForKind(text, '~');
+  if (backtickCut === undefined) return tildeCut;
+  if (tildeCut === undefined) return backtickCut;
+  return Math.min(backtickCut, tildeCut);
+}
+
+function findUnclosedFenceCutoffForKind(text: string, ch: '`' | '~'): number | undefined {
+  const fenceRe = new RegExp(`(^|\\n)(${ch}{3,})`, 'g');
+  const matches = [...text.matchAll(fenceRe)];
   if (matches.length === 0) return undefined;
   if (matches.length % 2 === 0) return undefined;
 

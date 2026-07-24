@@ -81,7 +81,6 @@ export type {
   AiToolSchema,
   AiToolFunctionSchema,
   MaybePromise,
-  MaybePromise as AiMaybePromise,
   RequestState,
   RequestProcessingState,
   ToolExecutor,
@@ -89,14 +88,17 @@ export type {
 } from './engine/types.js';
 
 export { createMessageEngine, type CreateMessageEngineOptions } from './engine/create-engine.js';
-export { combineDeltaData, generateMessageId } from './engine/utils.js';
-export { measureContentLength } from './engine/plugins/length-plugin.js';
 export { createThinkingPlugin } from './engine/plugins/thinking-plugin.js';
 export { createToolPlugin } from './engine/plugins/tool-plugin.js';
 export { createLengthPlugin } from './engine/plugins/length-plugin.js';
 export { createNativeMessageAdapter } from './engine/native-adapter.js';
 export { createReactMessageAdapter } from './adapters/react-adapter.js';
-export type { MessageStateAdapter, MessageUpdateKind } from './engine/types.js';
+export type {
+  MessageStateAdapter,
+  MessageUpdateKind,
+  InternalMessageState,
+  PublicMessageState,
+} from './engine/types.js';
 
 export { useMessage, type UseMessageOptions, type UseMessageReturn } from './adapters/use-message.js';
 export { useEngineView, type UseEngineViewReturn } from './adapters/use-engine-view.js';

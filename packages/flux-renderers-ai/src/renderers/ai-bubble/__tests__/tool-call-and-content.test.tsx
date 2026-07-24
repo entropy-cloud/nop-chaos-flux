@@ -89,6 +89,53 @@ describe('highlightJson — jsonrepair truncated args (tool-args-truncated)', ()
     const html = highlightJson('{"a":"<script>"}');
     expect(html).not.toContain('<script>');
   });
+
+  // P2 (FP `highlight-special-chars`): string literals containing `&`, `<`,
+  // `>`, `"` must be captured as a single token and wrapped in a single
+  // `tok-str` span. The previous escape-then-regex approach broke on the
+  // first `&` of an entity (e.g. `&quot;`), fragmenting the highlight.
+  it('wraps a string value containing & < > " in a single tok-str span', () => {
+    // String value `a&b<c>"d` (escaped quote in source JSON).
+    const html = highlightJson('{"u":"a&b<c>\\"d"}');
+    // The string token is wrapped exactly once as a string literal.
+    const strSpans = html.match(/<span class="tok-str">/g) ?? [];
+    // At least one tok-str exists; the value span is the one containing the
+    // special characters (now HTML-escaped inside the span).
+    expect(strSpans.length).toBeGreaterThanOrEqual(1);
+    // The escaped characters land INSIDE a tok-str span (not as inter-token
+    // text where they would be split by the old regex's `[^&]` boundary).
+    expect(html).toContain('<span class="tok-str">&quot;a&amp;b&lt;c&gt;');
+  });
+
+  it('wraps a key containing special characters in a single tok-key span', () => {
+    const html = highlightJson('{"a&b":"v"}');
+    // The key token is a single span with the escaped entity inside.
+    expect(html).toContain('<span class="tok-key">&quot;a&amp;b&quot;</span>');
+  });
+
+  it('still escapes dangerous characters (XSS gate, regression-protected)', () => {
+    const html = highlightJson('{"a":"<img src=x onerror=alert(1)>"}');
+    // P2 regression guard: no live `<img>` element / inline event handler can
+    // reach the DOM. The dangerous substring lands as escaped text inside a
+    // `tok-str` span — it is visible text only, never parsed as HTML markup.
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;img');
+    // Parse the produced HTML and assert no element carries an inline event
+    // handler attribute (the real XSS gate — escaped text is harmless).
+    const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
+    const withOnerror = doc.querySelectorAll('[onerror]');
+    expect(withOnerror.length).toBe(0);
+    expect(doc.querySelectorAll('img').length).toBe(0);
+    // The dangerous string is captured entirely inside one tok-str span.
+    expect(html).toContain('<span class="tok-str">&quot;&lt;img src=x onerror=alert(1)&gt;&quot;</span>');
+  });
+
+  it('renders tok-key / tok-str / tok-bool spans together (integration)', () => {
+    const html = highlightJson('{"k":"v","n":true}');
+    expect(html).toContain('<span class="tok-key">');
+    expect(html).toContain('<span class="tok-str">');
+    expect(html).toContain('<span class="tok-bool">');
+  });
 });
 
 describe('A-6 BubbleToolRendererMatch registry', () => {

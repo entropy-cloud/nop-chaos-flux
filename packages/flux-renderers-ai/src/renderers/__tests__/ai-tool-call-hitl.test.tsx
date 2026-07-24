@@ -63,13 +63,20 @@ describe('ai-tool-call — HITL approval rendering (A-14)', () => {
     expect(onApproval).toHaveBeenCalledWith('reject');
   });
 
-  it('hitl-no-handler: buttons are clickable but onApproval is a no-op (no throw)', () => {
+  it('hitl-no-handler: buttons are disabled and do not dispatch when onApproval is missing', () => {
     const { container } = render(
       <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} />,
     );
+    const approve = container.querySelector('[data-slot="ai-tool-call-approve"]') as HTMLButtonElement;
+    const reject = container.querySelector('[data-slot="ai-tool-call-reject"]') as HTMLButtonElement;
+    // P2 fix: dead-click removed — buttons are disabled when no handler is wired.
+    expect(approve.disabled).toBe(true);
+    expect(reject.disabled).toBe(true);
+    // Approval state machine is unchanged (engine still only holds state) and
+    // no event is dispatched (no-op without throwing).
     expect(() => {
       act(() => {
-        fireEvent.click(container.querySelector('[data-slot="ai-tool-call-approve"]')!);
+        fireEvent.click(approve);
       });
     }).not.toThrow();
   });
@@ -106,9 +113,15 @@ describe('ai-tool-call — HITL approval rendering (A-14)', () => {
 });
 
 describe('ai-tool-call — HITL focus trap (a11y §7 P3)', () => {
+  // P2 no-handler guard: the focus-trap tests below pass a no-op `onApproval`
+  // so the buttons are enabled and focusable. The trap is meaningful only
+  // when there is an actionable handler; with no handler the buttons are
+  // disabled (covered by the hitl-no-handler test above).
+  const noopHandler = (): void => {};
+
   it('moves focus to the approve action when approval becomes pending', () => {
     const { container } = render(
-      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} />,
+      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} onApproval={noopHandler} />,
     );
     const approve = container.querySelector('[data-slot="ai-tool-call-approve"]') as HTMLElement;
     expect(approve).not.toBeNull();
@@ -118,7 +131,7 @@ describe('ai-tool-call — HITL focus trap (a11y §7 P3)', () => {
 
   it('Tab cycles between approve and reject', () => {
     const { container } = render(
-      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} />,
+      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} onApproval={noopHandler} />,
     );
     const approve = container.querySelector('[data-slot="ai-tool-call-approve"]') as HTMLElement;
     const reject = container.querySelector('[data-slot="ai-tool-call-reject"]') as HTMLElement;
@@ -138,7 +151,7 @@ describe('ai-tool-call — HITL focus trap (a11y §7 P3)', () => {
 
   it('Shift+Tab wraps backwards', () => {
     const { container } = render(
-      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} />,
+      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} onApproval={noopHandler} />,
     );
     const approve = container.querySelector('[data-slot="ai-tool-call-approve"]') as HTMLElement;
     const reject = container.querySelector('[data-slot="ai-tool-call-reject"]') as HTMLElement;
@@ -162,7 +175,7 @@ describe('ai-tool-call — HITL focus trap (a11y §7 P3)', () => {
     expect(document.activeElement).toBe(outside);
 
     const { container } = render(
-      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} />,
+      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} onApproval={noopHandler} />,
     );
     // Pending moved focus to approve.
     const approve = container.querySelector('[data-slot="ai-tool-call-approve"]') as HTMLElement;
@@ -182,6 +195,8 @@ describe('ai-tool-call — HITL focus trap (a11y §7 P3)', () => {
 // ============================================================================
 
 describe('ai-tool-call — AI-11 focus restore on resolve / unmount', () => {
+  const noopHandler = (): void => {};
+
   it('restores focus to the prior element when approval resolves', () => {
     const outside = document.createElement('button');
     document.body.appendChild(outside);
@@ -189,13 +204,13 @@ describe('ai-tool-call — AI-11 focus restore on resolve / unmount', () => {
     expect(document.activeElement).toBe(outside);
 
     const { container, rerender } = render(
-      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} />,
+      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} onApproval={noopHandler} />,
     );
     const approve = container.querySelector('[data-slot="ai-tool-call-approve"]') as HTMLElement;
     expect(document.activeElement).toBe(approve);
 
     // Resolve the approval → focus returns to `outside`.
-    rerender(<AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'approved' })} />);
+    rerender(<AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'approved' })} onApproval={noopHandler} />);
     expect(document.activeElement).toBe(outside);
     document.body.removeChild(outside);
   });
@@ -207,7 +222,7 @@ describe('ai-tool-call — AI-11 focus restore on resolve / unmount', () => {
     expect(document.activeElement).toBe(outside);
 
     const { container, unmount } = render(
-      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} />,
+      <AiToolCallView toolCall={toolCall} state={stateWith({ approval: 'pending' })} onApproval={noopHandler} />,
     );
     const approve = container.querySelector('[data-slot="ai-tool-call-approve"]') as HTMLElement;
     expect(document.activeElement).toBe(approve);

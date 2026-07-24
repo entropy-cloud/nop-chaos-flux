@@ -218,8 +218,13 @@ function pickRenderer(
   for (const candidate of ordered) {
     try {
       if (candidate.find(message, content, contentIndex)) return candidate;
-    } catch {
-      // A faulty matcher must not break rendering; skip it.
+    } catch (err) {
+      // A faulty matcher must not break rendering; skip it. Surface the
+      // exception so hosts can debug custom matchers (the previous bare
+      // `catch {}` swallowed matcher throws silently).
+      if (typeof console !== 'undefined') {
+        console.warn('[ai-bubble] custom content matcher threw; skipping', err);
+      }
     }
   }
   return undefined;

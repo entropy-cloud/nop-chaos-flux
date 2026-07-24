@@ -84,11 +84,11 @@ function labelFor(action: FeedbackAction): string {
     case 'refresh':
       return t('flux.ai.retry');
     case 'like':
-      return '👍';
+      return t('flux.ai.like');
     case 'dislike':
-      return '👎';
+      return t('flux.ai.dislike');
     case 'sources':
-      return 'Sources';
+      return t('flux.ai.sources');
   }
 }
 

@@ -67,6 +67,7 @@ export function AiConversationsRenderer(
                 <Input
                   value={draftTitle}
                   data-slot="ai-conversations-rename-input"
+                  aria-label={t('flux.ai.renameConversation')}
                   // eslint-disable-next-line jsx-a11y/no-autofocus
                   autoFocus
                   onChange={(e) => setDraftTitle(e.target.value)}

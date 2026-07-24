@@ -98,7 +98,7 @@ export function AiCitationsRenderer(props: RendererComponentProps<AiCitationsSch
       cid={props.meta.cid}
       onSourceClick={
         props.events?.onSourceClick
-          ? (source, index) => props.events.onSourceClick?.({ type: 'ai:citation-click', source, index })
+          ? (source, index) => void props.events.onSourceClick?.({ type: 'ai:citation-click', source, index })
           : undefined
       }
     />
@@ -215,6 +215,12 @@ type CitationSegment =
  * captures a `[N]` or `[N,M,…]` marker and yields the parsed 1-based indices.
  * Each segment carries a stable `id` derived from its character offset (not an
  * array index) so it is a correct React key even when content repeats.
+ *
+ * P2 (FP `citation-in-codeblock`): markdown code spans — fenced (``` / ~~~)
+ * blocks and inline `` `…` `` — are stripped of citation parsing first, so a
+ * literal `array[0]` inside code never becomes an empty `[0]` citation card.
+ * Indices that are not 1-based positive integers (`0`, negatives) are also
+ * dropped: citations are 1-based per the schema contract.
  */
 export function parseCitations(text: string): CitationSegment[] {
   const segments: CitationSegment[] = [];
@@ -225,12 +231,134 @@ export function parseCitations(text: string): CitationSegment[] {
     const indices = match[1]
       .split(',')
       .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => Number.isFinite(n));
-    segments.push({ kind: 'citation', indices, id: `c@${start}` });
+      .filter((n) => Number.isFinite(n) && n > 0);
+    // If every index was filtered out (e.g. `[0]`), emit the raw text back
+    // instead of an empty citation group, so the marker stays as literal text.
+    if (indices.length === 0) {
+      segments.push({ kind: 'text', text: match[0], id: `t@${start}` });
+    } else {
+      segments.push({ kind: 'citation', indices, id: `c@${start}` });
+    }
     last = start + match[0].length;
   }
   if (last < text.length) segments.push({ kind: 'text', text: text.slice(last), id: `t@${last}` });
-  return segments;
+  return stripCitationsInsideCode(segments);
+}
+
+/**
+ * Walk the parsed segments and drop citation groups that fall inside a code
+ * region (fenced ``` / ~~~ block, or a paired inline `` ` `` span). The code
+ * runs themselves are kept as literal text so the visible output is unchanged
+ * — only the citation interpretation is suppressed.
+ *
+ * Streaming-incomplete input (unclosed fence) is treated conservatively: an
+ * unclosed fence makes everything from its opening to EOF "code", so no
+ * citations are parsed in the dangling tail.
+ */
+function stripCitationsInsideCode(segments: CitationSegment[]): CitationSegment[] {
+  const out: CitationSegment[] = [];
+  let fenceDelimiter: string | null = null; // '`' | '```' | '~~~' when inside a fenced block
+  let inlineOpen = false; // true when inside a single-backtick inline code span
+  for (const seg of segments) {
+    if (seg.kind === 'citation') {
+      if (fenceDelimiter || inlineOpen) {
+        // Inside code → emit the original marker text verbatim (no card).
+        out.push({ kind: 'text', text: citationMarkerText(seg.indices), id: seg.id });
+      } else {
+        out.push(seg);
+      }
+      continue;
+    }
+    // Text segment: scan for fence / inline-code delimiters and split it so we
+    // can keep tracking state across the whole stream.
+    const pieces = scanTextForCodeRegions(seg.text, fenceDelimiter, inlineOpen);
+    fenceDelimiter = pieces.nextFenceDelimiter;
+    inlineOpen = pieces.nextInlineOpen;
+    for (const piece of pieces.runs) {
+      out.push({ kind: 'text', text: piece.text, id: piece.id });
+    }
+  }
+  return out;
+}
+
+function citationMarkerText(indices: number[]): string {
+  return `[${indices.join(',')}]`;
+}
+
+interface TextRunScan {
+  text: string;
+  id: string;
+}
+
+interface CodeRegionScan {
+  runs: TextRunScan[];
+  nextFenceDelimiter: string | null;
+  nextInlineOpen: boolean;
+}
+
+/**
+ * Split a text segment at code-fence and inline-code delimiters. Returns the
+ * literal text runs (no transformation) plus the updated fence/inline state
+ * carried across segments.
+ */
+function scanTextForCodeRegions(
+  text: string,
+  fenceDelimiter: string | null,
+  inlineOpen: boolean,
+): CodeRegionScan {
+  const runs: TextRunScan[] = [];
+  // Match fence opens/closes OR an inline backtick toggle. A fence wins over
+  // a single backtick when 3+ backticks are contiguous.
+  // - Fence run: 3+ backticks or 3+ tildes at the start of a line.
+  // - Inline toggle: a single backtick not part of a fence run.
+  const tokenRe = /(?:^|\n)(`{3,}|~{3,})|`/g;
+  let last = 0;
+  let fence = fenceDelimiter;
+  let inline = inlineOpen;
+  let idCounter = 0;
+  const push = (str: string): void => {
+    if (str.length > 0) {
+      runs.push({ text: str, id: `t@${last}#${idCounter++}` });
+    }
+  };
+  for (const m of text.matchAll(tokenRe)) {
+    const start = m.index ?? 0;
+    const token = m[0];
+    const isFenceToken = Boolean(m[1]);
+    // Emit the text up to (but not including) the token. The leading `\n`
+    // capture of a fence token belongs to the literal text run (it precedes
+    // the fence marker), so we keep it in the run when present.
+    const fenceLeadNl = isFenceToken && token.startsWith('\n') ? 1 : 0;
+    const tokenTextStart = start + fenceLeadNl;
+    push(text.slice(last, tokenTextStart));
+    if (isFenceToken) {
+      const delim = m[1]; // the backtick/tilde run, length >= 3
+      const sameKind = (fence: string | null, ch: '`' | '~'): boolean =>
+        fence !== null && fence[0] === ch;
+      const ch = delim[0] === '~' ? '~' : '`';
+      if (fence === null) {
+        // Opening a fenced block. CommonMark: ``` cannot be closed by ~~~ and
+        // vice versa; we track the opening delimiter's character kind only.
+        fence = ch;
+      } else if (sameKind(fence, ch)) {
+        // Closing the current fenced block (same delimiter kind).
+        fence = null;
+      }
+      // If the delimiter kind mismatches the open fence, it is literal text
+      // inside the code block — keep it in the run by emitting it verbatim.
+      push(text.slice(tokenTextStart, start + token.length));
+    } else {
+      // Single backtick → toggles inline code (only meaningful outside a
+      // fenced block; inside a fence backticks are literal).
+      if (fence === null) {
+        inline = !inline;
+      }
+      push(text.slice(tokenTextStart, start + token.length));
+    }
+    last = start + token.length;
+  }
+  push(text.slice(last));
+  return { runs, nextFenceDelimiter: fence, nextInlineOpen: inline };
 }
 
 /** Extract plain text from a ChatMessage content (string or text parts). */

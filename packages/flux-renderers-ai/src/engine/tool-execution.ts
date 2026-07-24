@@ -43,6 +43,11 @@ export async function executeToolCalls(
     const key = call.id ?? `idx-${call.index}`;
     let resultText = '';
     let status: 'success' | 'failed' = 'success';
+    // P2 error fidelity: preserves the original Error (cause/stack/custom
+    // fields) when the executor throws. Written to the tool message's
+    // `metadata.toolError` so hosts can structurally log tool failures
+    // (FP `tool-error-flattened`). `undefined` on the success path.
+    let toolError: Error | undefined;
     try {
       const raw = await toolExecutor({ toolCall: call, signal: abortController.signal });
       const normalized = normalizeToolResult(raw);
@@ -54,8 +59,15 @@ export async function executeToolCalls(
         status = 'failed';
       }
     } catch (err) {
+      // P2 error fidelity (FP `tool-error-flattened`): keep `resultText` as
+      // the human-readable message (it ships as the `role:'tool'` message
+      // content the model reads), but preserve the original Error on the
+      // tool message's metadata (`toolError`) so hosts can structurally log
+      // stack / cause / custom fields instead of only getting a flat string.
+      // Non-Error throws are wrapped so `toolError` is always an Error.
       resultText = err instanceof Error ? err.message : String(err);
       status = 'failed';
+      toolError = err instanceof Error ? err : new Error(String(err));
     }
     // Update per-call UI state on the owning assistant message — entirely
     // inside the mutate recipe (read-old → build-new → replace) so the cached
@@ -88,7 +100,7 @@ export async function executeToolCalls(
       content: resultText,
       tool_call_id: call.id,
       name: call.function.name,
-      metadata: { createdAt: Date.now(), toolStatus: status },
+      metadata: { createdAt: Date.now(), toolStatus: status, ...(toolError ? { toolError } : {}) },
     });
     adapter.mutate('messages', (draft) => {
       draft.messages.push(toolMessage);
