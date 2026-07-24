@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export interface UseAutoScrollOptions {
   /** Distance from bottom (px) within which auto-scroll stays "pinned". */
@@ -32,21 +32,23 @@ export function useAutoScroll(trigger: unknown, options?: UseAutoScrollOptions):
   const pinnedRef = useRef(true);
   const threshold = options?.threshold ?? 80;
 
-  const onScroll = useCallback(() => {
+  function onScroll() {
     const el = containerRef.current;
     if (!el) return;
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
     pinnedRef.current = distanceFromBottom < threshold;
-  }, [threshold]);
+  }
 
-  const scrollToBottom = useCallback(() => {
+  function scrollToBottom() {
     const el = containerRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
     pinnedRef.current = true;
-  }, []);
+  }
 
-  const isAtBottom = useCallback(() => pinnedRef.current, []);
+  function isAtBottom() {
+    return pinnedRef.current;
+  }
 
   useEffect(() => {
     if (pinnedRef.current) {

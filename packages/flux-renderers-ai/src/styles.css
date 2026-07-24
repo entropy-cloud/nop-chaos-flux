@@ -20,8 +20,8 @@
   }
 }
 
-/* A-15: ai-voice-input waveform animation while listening (CSS, zero deps). */
-.nop-ai-voice-input-wave > span {
+/* AI-29: waveform animation keyed off [data-slot] (marker purity). */
+[data-slot='ai-voice-input-wave'] > span {
   display: inline-block;
   width: 2px;
   height: 100%;
@@ -31,16 +31,16 @@
   transform-origin: center;
   animation: flux-ai-voice-wave 900ms ease-in-out infinite;
 }
-.nop-ai-voice-input-wave > span:nth-child(2) {
+[data-slot='ai-voice-input-wave'] > span:nth-child(2) {
   animation-delay: 120ms;
 }
-.nop-ai-voice-input-wave > span:nth-child(3) {
+[data-slot='ai-voice-input-wave'] > span:nth-child(3) {
   animation-delay: 240ms;
 }
-.nop-ai-voice-input-wave > span:nth-child(4) {
+[data-slot='ai-voice-input-wave'] > span:nth-child(4) {
   animation-delay: 360ms;
 }
-.nop-ai-voice-input-wave > span:nth-child(5) {
+[data-slot='ai-voice-input-wave'] > span:nth-child(5) {
   animation-delay: 480ms;
 }
 
@@ -55,29 +55,69 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nop-ai-voice-input-wave > span {
+  [data-slot='ai-voice-input-wave'] > span {
     animation: none;
     transform: scaleY(0.6);
   }
 }
 
+/* AI-15: JSON syntax-highlight tokens (semantic, CSS-var driven).
+   Emitted by highlightJson() in ai-tool-call.tsx; consumed here via
+   .tok-* class names so the palette is theme-controlled, not hardcoded. */
+.nop-ai-tool-call .tok-key {
+  color: var(--primary, hsl(221 83% 53%));
+}
+.nop-ai-tool-call .tok-str {
+  color: var(--success, hsl(142 71% 45%));
+}
+.nop-ai-tool-call .tok-num {
+  color: var(--primary, hsl(221 83% 53%));
+}
+.nop-ai-tool-call .tok-bool {
+  color: var(--destructive, hsl(0 84% 60%));
+}
+
+/* AI-16: message-list layout utilities (moved out of JSX className).
+   The scroll container needs min-height:0 + flex-grow to fill the panel
+   and allow the virtual list to scroll within a flex column. */
+.nop-ai-message-list {
+  min-height: 0;
+  flex: 1 1 0%;
+  overflow: auto;
+}
+
+/* AI-16: ai-chat fallback visual states (moved out of JSX className). */
+[data-slot='ai-chat-empty'] {
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--muted-foreground);
+}
+[data-slot='ai-chat-error'] {
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--destructive);
+}
+
 /* P6 (A6): Tiptap rich-text sender — opt-in via `./rich-text` subpath.
    The placeholder pseudo-element is driven by the `data-placeholder`
    attribute the editor sets on its contenteditable root (mirrors the
-   `editor-renderer.tsx` convention). */
-.nop-ai-sender-tiptap-content[data-placeholder]:empty::before {
+   `editor-renderer.tsx` convention). AI-29: visual rules keyed off
+   [data-slot] to keep the .nop- marker pure. */
+[data-slot='ai-sender-tiptap-content'][data-placeholder]:empty::before {
   content: attr(data-placeholder);
   color: var(--muted-foreground, currentColor);
   opacity: 0.7;
   pointer-events: none;
 }
 
-.nop-ai-sender-tiptap-content {
+[data-slot='ai-sender-tiptap-content'] {
   min-height: 40px;
   padding: 6px 10px;
   line-height: 1.4;
 }
 
-.nop-ai-sender-tiptap-content p {
+[data-slot='ai-sender-tiptap-content'] p {
   margin: 0;
 }

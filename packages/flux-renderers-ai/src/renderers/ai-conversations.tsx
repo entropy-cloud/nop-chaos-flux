@@ -79,14 +79,14 @@ export function AiConversationsRenderer(
                   }}
                 />
               ) : (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   data-slot="ai-conversations-item-button"
-                  className="flex-1 text-left"
+                  className="flex-1 justify-start text-left"
                   onClick={() => void props.events.onItemClick?.({ id: conv.id, conversation: conv })}
                 >
                   {conv.title?.trim() || t('flux.ai.emptyConversationTitle')}
-                </button>
+                </Button>
               )}
 
               {showRenameControls && !isRenaming ? (

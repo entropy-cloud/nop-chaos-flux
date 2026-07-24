@@ -26,6 +26,7 @@ export interface AiSenderViewProps {
   onSubmit?: (text: string) => void;
   onCancel?: () => void;
   onChange?: (text: string) => void;
+  testid?: string;
 }
 
 function shouldSubmit(event: KeyboardEvent<HTMLTextAreaElement>, mode: 'enter' | 'ctrlEnter' | 'shiftEnter'): boolean {
@@ -104,7 +105,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
 
   if (ExtensionComponent) {
     return (
-      <div className={cn('nop-ai-sender', props.className)} data-slot="ai-sender" data-extension="">
+      <div className={cn('nop-ai-sender', props.className)} data-slot="ai-sender" data-extension="" data-testid={props.testid || undefined}>
         <div data-slot="ai-sender-input" className="relative">
           <ExtensionComponent
             value={draft}
@@ -142,7 +143,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
   }
 
   return (
-    <div className={cn('nop-ai-sender', props.className)} data-slot="ai-sender">
+    <div className={cn('nop-ai-sender', props.className)} data-slot="ai-sender" data-testid={props.testid || undefined}>
       <div data-slot="ai-sender-input" className="relative">
         <Textarea
           ref={inputRef}
@@ -194,6 +195,7 @@ export function AiSenderRenderer(props: RendererComponentProps<AiSenderSchema>):
       clearOnSubmit={resolved.clearOnSubmit}
       loading={resolved.loading as boolean | undefined}
       className={props.meta.className}
+      testid={props.meta.testid}
       extensionComponent={extensionComponent ?? null}
       onSubmit={(text) => {
         void ctx?.sendMessage(text);

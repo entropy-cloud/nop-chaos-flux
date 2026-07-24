@@ -192,7 +192,7 @@ function ApprovalFooter({
           type="button"
           size="sm"
           variant="default"
-          className="bg-green-600 hover:bg-green-700 text-white"
+          className="bg-success hover:bg-success/90 text-white"
           data-slot="ai-tool-call-approve"
           data-tool-call-id={toolCallId}
           aria-label={t('flux.ai.approve')}
@@ -226,7 +226,7 @@ function ApprovalFooter({
         variant="outline"
         className={cn(
           'gap-1',
-          approved ? 'border-green-500/40 text-green-600 dark:text-green-500' : 'border-destructive/40 text-destructive',
+          approved ? 'border-success/40 text-success' : 'border-destructive/40 text-destructive',
         )}
         data-approval-decision={approval}
       >
@@ -290,24 +290,24 @@ function StatusIcon({ status }: { status: ToolCallStatus }): React.ReactElement 
     return <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden="true" />;
   }
   if (status === 'success') {
-    return <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-500" aria-hidden="true" />;
+    return <Check className="h-3.5 w-3.5 text-success" aria-hidden="true" />;
   }
   if (status === 'failed') {
     return <TriangleAlert className="h-3.5 w-3.5 text-destructive" aria-hidden="true" />;
   }
   // cancelled
-  return <Ban className="h-3.5 w-3.5 text-amber-600 dark:text-amber-500" aria-hidden="true" />;
+  return <Ban className="h-3.5 w-3.5 text-warning" aria-hidden="true" />;
 }
 
 /** A-12 status → Tailwind border/accent class (zero CSS asset). */
 function statusColorClass(status: ToolCallStatus): string {
   switch (status) {
     case 'success':
-      return 'border-green-500/30';
+      return 'border-success/30';
     case 'failed':
       return 'border-destructive/40';
     case 'cancelled':
-      return 'border-amber-500/30';
+      return 'border-warning/30';
     case 'running':
     default:
       return 'border-border';
@@ -332,12 +332,12 @@ export function highlightJson(raw: string): string {
     /(&quot;(?:\\.|[^&]|(?:&quot;))*?&quot;(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
     (match, _key, colon, word) => {
       if (word) {
-        return `<span class="text-purple-600 dark:text-purple-400">${match}</span>`;
+        return `<span class="tok-bool">${match}</span>`;
       }
       if (colon) {
-        return `<span class="text-blue-600 dark:text-blue-400">${match}</span>`;
+        return `<span class="tok-key">${match}</span>`;
       }
-      return `<span class="text-green-600 dark:text-green-400">${match}</span>`;
+      return `<span class="tok-str">${match}</span>`;
     },
   );
 }

@@ -20,18 +20,19 @@ function SuggestionPill({
   onSelect?: (item: AiSuggestionItem, index: number) => void;
 }): React.ReactElement {
   return (
-    <button
-      type="button"
+    <Button
+      variant="outline"
+      size="xs"
       data-slot="ai-suggestions-item"
       data-index={index}
-      className="nop-ai-suggestions-item inline-flex items-center gap-1 rounded-full border bg-card px-3 py-1 text-xs text-card-foreground transition-colors hover:bg-accent whitespace-nowrap"
+      className="nop-ai-suggestions-item rounded-full whitespace-nowrap"
       onClick={() => onSelect?.(item, index)}
     >
       {typeof item.icon === 'string' && item.icon.length > 0 ? (
         <span aria-hidden="true">{item.icon}</span>
       ) : null}
       <span data-slot="ai-suggestions-item-text">{item.text}</span>
-    </button>
+    </Button>
   );
 }
 
@@ -109,12 +110,13 @@ export function AiSuggestionsView(props: {
           <PopoverContent align="start" className="w-fit p-1">
             <div data-slot="ai-suggestions-overflow-list" className="flex flex-col gap-1">
               {overflow.map((item, i) => (
-                <button
+                <Button
                   key={item.text}
-                  type="button"
+                  variant="ghost"
+                  size="xs"
                   data-slot="ai-suggestions-item"
                   data-index={maxVisible + i}
-                  className="rounded-md px-3 py-1 text-left text-xs hover:bg-accent"
+                  className="justify-start text-left"
                   onClick={() => props.onSelect?.(item, maxVisible + i)}
                 >
                   {typeof item.icon === 'string' && item.icon.length > 0 ? (
@@ -123,7 +125,7 @@ export function AiSuggestionsView(props: {
                     </span>
                   ) : null}
                   {item.text}
-                </button>
+                </Button>
               ))}
             </div>
           </PopoverContent>

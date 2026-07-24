@@ -1,5 +1,5 @@
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { AiPromptItem, AiPromptsSchema } from '../schemas.js';
 
@@ -46,13 +46,13 @@ export function AiPromptsRenderer(props: RendererComponentProps<AiPromptsSchema>
       {items.map((item, index) => {
         const stableKey = (item.label ?? `item`) + (item.badge ? `-${item.badge}` : '') + `#${index}`;
         return (
-        <button
+        <Button
           key={stableKey}
-          type="button"
+          variant="outline"
           data-slot="ai-prompts-item"
           data-index={index}
           className={cn(
-            'nop-ai-prompts-item rounded-md border bg-card text-card-foreground hover:bg-accent transition-colors text-left',
+            'nop-ai-prompts-item rounded-md bg-card text-card-foreground text-left',
             sizeClass,
           )}
           onClick={() => {
@@ -77,7 +77,7 @@ export function AiPromptsRenderer(props: RendererComponentProps<AiPromptsSchema>
               {item.description}
             </p>
           ) : null}
-        </button>
+        </Button>
         );
       })}
     </div>

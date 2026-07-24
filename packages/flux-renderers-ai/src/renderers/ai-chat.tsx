@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -130,10 +130,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
 
   // ---- Layer B: ActionScope namespace `ai` registration ----
   const actionScope = useCurrentActionScope();
-  const actionProvider = useMemo(
-    () => createAiActionProvider({ engine, conversationController }),
-    [engine, conversationController],
-  );
+  const actionProvider = createAiActionProvider({ engine, conversationController });
   // `useNamespaceRegistration` performs the capability check internally
   // (`actionScope` undefined → no-op). Returns the unregister fn on cleanup.
   useNamespaceRegistration(actionScope, 'ai', actionProvider);
@@ -146,15 +143,11 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // methods). Capability check: when no `componentRegistry` is provided the
   // registration is silently skipped (Failure Path `component-handle-no-registry`).
   const componentRegistry = useCurrentComponentRegistry();
-  const componentHandle = useMemo(
-    () =>
-      createAiComponentHandle({
-        engine,
-        id: (resolved.componentId as string | undefined) || props.meta.testid || props.id,
-        name: (resolved.componentName as string | undefined) ?? 'ai-chat',
-      }),
-    [engine, props.meta.testid, props.id, resolved.componentId, resolved.componentName],
-  );
+  const componentHandle = createAiComponentHandle({
+    engine,
+    id: (resolved.componentId as string | undefined) || props.meta.testid || props.id,
+    name: (resolved.componentName as string | undefined) ?? 'ai-chat',
+  });
   useEffect(() => {
     if (!componentRegistry) return;
     return componentRegistry.register(componentHandle, { cid: props.meta.cid });
@@ -184,14 +177,11 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // memo recomputes on `isProcessing` transitions (turn boundaries) — the
   // projected copy is intentionally a point-in-time snapshot, not a live feed
   // (Decision-A: hosts needing the current set call `component:getMessages`).
-  const hostScopeData = useMemo(
-    () => ({
-      isProcessing,
-      messages: cloneMessages(messages),
-      activeConversationId,
-    }),
-    [isProcessing, messages, activeConversationId],
-  );
+  const hostScopeData = {
+    isProcessing,
+    messages: cloneMessages(messages),
+    activeConversationId,
+  };
   const hostScope = useHostScope(hostScopeData, props.path, 'ai');
 
   // AI-12 (subscribe stability): read the latest events through a ref so the
@@ -262,7 +252,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
         {emptyNode ? (
           <div data-slot="ai-chat-empty">{emptyNode}</div>
         ) : (
-          <div data-slot="ai-chat-empty" className="p-4 text-sm text-muted-foreground">
+          <div data-slot="ai-chat-empty">
             {t('flux.ai.selectConversation')}
           </div>
         )}
@@ -282,7 +272,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
         data-state="error"
         data-testid={props.meta.testid || undefined}
       >
-        <div data-slot="ai-chat-error" className="p-4 text-sm text-destructive">
+        <div data-slot="ai-chat-error">
           {t('flux.ai.connectorMissing')}
         </div>
       </section>

@@ -35,31 +35,30 @@ export type {
   AiSenderExtensionProps,
 } from './schemas.js';
 
-// ---- Group 2: Renderer components (registry registration only) ----
+// ---- Group 2a: Renderer entry components (schema-driven; for registry registration) ----
 export { AiChatRenderer } from './renderers/ai-chat.js';
-export { AiMessageListRenderer, AiMessageListView } from './renderers/ai-message-list.js';
+export { AiMessageListRenderer } from './renderers/ai-message-list.js';
 export { AiBubbleRenderer } from './renderers/ai-bubble/index.js';
-export { AiSenderRenderer, AiSenderView } from './renderers/ai-sender.js';
+export { AiSenderRenderer } from './renderers/ai-sender.js';
 export { AiConversationsRenderer } from './renderers/ai-conversations.js';
 export { AiWelcomeRenderer } from './renderers/ai-welcome.js';
 export { AiPromptsRenderer } from './renderers/ai-prompts.js';
 export { AiFeedbackRenderer } from './renderers/ai-feedback.js';
-export { AiToolCallRenderer, AiToolCallView, highlightJson } from './renderers/ai-tool-call.js';
-export { AiAttachmentsRenderer, buildImageContentParts, type AiAttachment } from './renderers/ai-attachments.js';
-export {
-  AiCitationsRenderer,
-  AiCitationsView,
-  parseCitations,
-  extractMessageText,
-  resolveSources,
-} from './renderers/ai-citations.js';
+export { AiToolCallRenderer } from './renderers/ai-tool-call.js';
+export { AiAttachmentsRenderer, type AiAttachment } from './renderers/ai-attachments.js';
+export { AiCitationsRenderer } from './renderers/ai-citations.js';
 export { AiVoiceInputRenderer } from './renderers/ai-voice-input.js';
-export {
-  AiTokenUsageRenderer,
-  AiTokenUsageView,
-  resolveUsage,
-} from './renderers/ai-token-usage.js';
-export { AiSuggestionsRenderer, AiSuggestionsView } from './renderers/ai-suggestions.js';
+export { AiTokenUsageRenderer } from './renderers/ai-token-usage.js';
+export { AiSuggestionsRenderer } from './renderers/ai-suggestions.js';
+
+// ---- Group 2b: Programmatic view components (host composition / custom layouts) ----
+export { AiMessageListView } from './renderers/ai-message-list.js';
+export { AiBubbleView } from './renderers/ai-bubble/index.js';
+export { AiSenderView } from './renderers/ai-sender.js';
+export { AiToolCallView } from './renderers/ai-tool-call.js';
+export { AiCitationsView } from './renderers/ai-citations.js';
+export { AiTokenUsageView } from './renderers/ai-token-usage.js';
+export { AiSuggestionsView } from './renderers/ai-suggestions.js';
 
 // ---- Group 3: Host utilities (host app composition; NOT for use inside renderers) ----
 export type {

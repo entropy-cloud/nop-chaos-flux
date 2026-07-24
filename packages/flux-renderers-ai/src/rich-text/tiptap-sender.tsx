@@ -14,15 +14,14 @@
 // top (`./extensions/*`), driven by `TiptapSenderOptions.extensions`.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useEditor, EditorContent, type Editor } from '@tiptap/react';
+import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Extension } from '@tiptap/core';
-import { Button, cn } from '@nop-chaos/ui';
+import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { AiSenderExtensionProps } from '../schemas.js';
 import type {
   TiptapSenderOptions,
-  TiptapTemplateItem,
 } from './types.js';
 import {
   detectMentionQuery,
@@ -30,12 +29,14 @@ import {
   insertMention,
   MENTION_TRIGGER,
 } from './extensions/mention.js';
-import { insertTemplate } from './extensions/template.js';
 import {
   detectSlashQuery,
   filterSlashCommands,
   runSlashCommand,
 } from './extensions/slash-command.js';
+import { TemplateBar } from './components/template-bar.js';
+import { SuggestionPopup, type PopupItem } from './components/suggestion-popup.js';
+import { TiptapSenderSurface } from './components/tiptap-sender-surface.js';
 
 type SubmitMode = 'enter' | 'ctrlEnter' | 'shiftEnter';
 
@@ -74,7 +75,9 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
   const mentionEnabled = enabledExtensions.includes('mention');
   const templateEnabled = enabledExtensions.includes('template');
   const slashEnabled = enabledExtensions.includes('slash');
-  // Memoize data sources so the popupItems useMemo deps stay stable.
+  // useMemo required by react-hooks/exhaustive-deps: these feed the
+  // popupItems useMemo below; plain `?? []` would change identity every
+  // render and re-trigger the popupControls effect.
   const mentions = useMemo(() => options.mentions ?? [], [options.mentions]);
   const templates = useMemo(() => options.templates ?? [], [options.templates]);
   const slashCommands = useMemo(() => options.slashCommands ?? [], [options.slashCommands]);
@@ -167,7 +170,7 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
       immediatelyRender: true,
       editorProps: {
         attributes: {
-          class: 'nop-ai-sender-tiptap-content prose max-w-none focus:outline-none',
+          class: 'prose max-w-none focus:outline-none',
           'data-slot': 'ai-sender-tiptap-content',
           'data-placeholder': placeholder ?? t('flux.ai.placeholder'),
           'aria-label': placeholder ?? t('flux.ai.placeholder'),
@@ -287,35 +290,36 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
   // empty the popup is not rendered, and the editor's handleKeyDown returns
   // false (lets keys pass through) because popupItems.length === 0.
 
-  // Compute the filtered items for the active popup. Memoized so the
-  // popupControlsRef effect doesn't re-run every render.
-  const popupItems = useMemo<PopupItem[]>(() => {
-    if (popupState.kind === 'mention') {
-      return filterMentions(mentions, popupState.query).map((m) => ({
-        key: m.id,
-        label: `${MENTION_TRIGGER}${m.label}`,
-        onSelect: () => {
-          if (editor) {
-            insertMention(editor, m, { from: popupState.from, to: popupState.to });
-          }
-          setPopupState({ kind: 'none' });
-        },
-      }));
-    }
-    if (popupState.kind === 'slash') {
-      return filterSlashCommands(slashCommands, popupState.query).map((c) => ({
-        key: c.label,
-        label: c.label,
-        onSelect: () => {
-          if (editor) {
-            runSlashCommand(editor, c, { from: popupState.from, to: popupState.to });
-          }
-          setPopupState({ kind: 'none' });
-        },
-      }));
-    }
-    return [];
-  }, [popupState, mentions, slashCommands, editor]);
+  // Compute the filtered items for the active popup. useMemo is required by
+  // react-hooks/exhaustive-deps: the popupControlsRef effect depends on
+  // popupItems, and a plain ternary would change identity every render.
+  const popupItems = useMemo<PopupItem[]>(
+    () =>
+      popupState.kind === 'mention'
+        ? filterMentions(mentions, popupState.query).map((m) => ({
+            key: m.id,
+            label: `${MENTION_TRIGGER}${m.label}`,
+            onSelect: () => {
+              if (editor) {
+                insertMention(editor, m, { from: popupState.from, to: popupState.to });
+              }
+              setPopupState({ kind: 'none' });
+            },
+          }))
+        : popupState.kind === 'slash'
+          ? filterSlashCommands(slashCommands, popupState.query).map((c) => ({
+              key: c.label,
+              label: c.label,
+              onSelect: () => {
+                if (editor) {
+                  runSlashCommand(editor, c, { from: popupState.from, to: popupState.to });
+                }
+                setPopupState({ kind: 'none' });
+              },
+            }))
+          : [],
+    [popupState, mentions, slashCommands, editor],
+  );
 
   // Keep popupControlsRef fresh so the editor's handleKeyDown calls the
   // latest navigation handlers. Updated in an effect (not during render).
@@ -371,130 +375,8 @@ type PopupState =
   | { kind: 'mention'; query: string; from: number; to: number; activeIndex: number }
   | { kind: 'slash'; query: string; from: number; to: number; activeIndex: number };
 
-interface PopupItem {
-  key: string;
-  label: string;
-  onSelect: () => void;
-}
-
 interface PopupControls {
   move: (delta: number) => void;
   confirm: () => void;
   close: () => void;
-}
-
-/**
- * Template insertion toolbar — renders one button per `TiptapTemplateItem`.
- * Clicking inserts the template's `content` at the caret.
- */
-function TemplateBar({
-  templates,
-  editor,
-}: {
-  templates: TiptapTemplateItem[];
-  editor: Editor | null;
-}): React.ReactElement {
-  return (
-    <div
-      className="nop-ai-sender-tiptap-templates flex flex-wrap gap-1 pb-1"
-      data-slot="ai-sender-tiptap-templates"
-      role="toolbar"
-      aria-label="Insert template"
-    >
-      {templates.map((tpl) => (
-        <Button
-          key={tpl.label}
-          type="button"
-          variant="ghost"
-          size="sm"
-          data-testid={`ai-sender-template-${tpl.label}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => insertTemplate(editor, tpl)}
-          className="h-6 text-xs"
-        >
-          {tpl.label}
-        </Button>
-      ))}
-    </div>
-  );
-}
-
-/**
- * Suggestion popup (shared by @mention + slash). Renders a filtered list of
- * items anchored below the editor surface. Keyboard navigation is handled by
- * the editor's `handleKeyDown` (which calls the popup controls); clicking an
- * item selects it directly.
- */
-function SuggestionPopup({
-  kind,
-  items,
-  activeIndex,
-  onSelect,
-  onClose,
-}: {
-  kind: 'mention' | 'slash';
-  items: PopupItem[];
-  activeIndex: number;
-  onSelect: (idx: number) => void;
-  onClose: () => void;
-}): React.ReactElement {
-  return (
-    <div
-      className={cn(
-        'nop-ai-sender-tiptap-popup absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md',
-      )}
-      data-slot="ai-sender-tiptap-popup"
-      data-popup-kind={kind}
-      role="listbox"
-      aria-label={kind === 'mention' ? 'Mentions' : 'Slash commands'}
-    >
-      {items.map((item, idx) => (
-        <Button
-          key={item.key}
-          type="button"
-          variant="ghost"
-          size="sm"
-          role="option"
-          aria-selected={idx === activeIndex}
-          data-active={idx === activeIndex ? '' : undefined}
-          onMouseEnter={() => onSelect(idx)}
-          onClick={() => onSelect(idx)}
-          className={cn('h-7 w-full justify-start text-xs', idx === activeIndex && 'bg-accent text-accent-foreground')}
-        >
-          {item.label}
-        </Button>
-      ))}
-      <button
-        type="button"
-        aria-label="Close suggestions"
-        onClick={onClose}
-        className="sr-only"
-        tabIndex={-1}
-      />
-    </div>
-  );
-}
-
-/**
- * Thin presentational wrapper around `EditorContent`.
- */
-function TiptapSenderSurface({ editor }: { editor: Editor | null }): React.ReactElement {
-  if (!editor) {
-    return (
-      <div
-        className="nop-ai-sender-tiptap min-h-[40px] rounded-md border border-input bg-background"
-        data-slot="ai-sender-tiptap"
-        data-loading=""
-        aria-busy="true"
-      />
-    );
-  }
-  return (
-    <div
-      className="nop-ai-sender-tiptap rounded-md border border-input bg-background"
-      data-slot="ai-sender-tiptap"
-    >
-      <EditorContent editor={editor} />
-    </div>
-  );
 }

@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
+import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { sanitizeHtml } from '@nop-chaos/flux-renderers-content';
 import type { ChatMessage, ChatMessageContentPart } from '../engine/types.js';
@@ -121,15 +121,16 @@ function CitationGroup({
             <Popover>
               <PopoverTrigger
                 render={
-                  <button
-                    type="button"
+                  <Button
+                    variant="link"
+                    size="xs"
                     data-slot="ai-citation-trigger"
                     data-citation-index={n}
-                    className="align-super text-xs text-primary underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                    className="align-super px-0"
                     aria-label={t('flux.ai.citation', { n })}
                   >
                     {n}
-                  </button>
+                  </Button>
                 }
               />
               <PopoverContent
@@ -181,14 +182,15 @@ function CitationBody({
         </a>
       ) : null}
       {onClick && !source.url ? (
-        <button
-          type="button"
+        <Button
+          variant="link"
+          size="xs"
           data-slot="ai-citation-open"
-          className="text-primary hover:underline"
+          className="px-0"
           onClick={() => onClick(source, source.index)}
         >
           {t('flux.ai.openSource')}
-        </button>
+        </Button>
       ) : null}
     </article>
   );

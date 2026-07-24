@@ -1,5 +1,5 @@
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { ChatMessage } from '../engine/types.js';
 import type { AiTokenUsage, AiTokenUsageSchema } from '../schemas.js';
@@ -83,21 +83,8 @@ export function AiTokenUsageView(props: {
   const limit = typeof contextLimit === 'number' && contextLimit > 0 ? contextLimit : undefined;
   const ratio = limit ? Math.min(1, Math.max(0, total / limit)) : undefined;
 
-  const Tag = onClick ? 'button' : 'div';
-  const interactiveProps = onClick
-    ? { type: 'button' as const, onClick }
-    : { 'aria-hidden': true as const };
-
-  return (
-    <Tag
-      className={cn(
-        'nop-ai-token-usage inline-flex items-center gap-2 text-xs text-muted-foreground',
-        className,
-      )}
-      data-slot="ai-token-usage"
-      data-testid={testid || undefined}
-      {...interactiveProps}
-    >
+  const inner = (
+    <>
       {ratio !== undefined ? <UsageRing ratio={ratio} /> : null}
       <span data-slot="ai-token-usage-text" className="inline-flex flex-col leading-tight">
         <span>
@@ -116,7 +103,37 @@ export function AiTokenUsageView(props: {
           ) : null}
         </span>
       </span>
-    </Tag>
+    </>
+  );
+
+  const rootClass = cn(
+    'nop-ai-token-usage inline-flex items-center gap-2 text-xs text-muted-foreground',
+    className,
+  );
+
+  if (onClick) {
+    return (
+      <Button
+        variant="ghost"
+        className={rootClass}
+        data-slot="ai-token-usage"
+        data-testid={testid || undefined}
+        onClick={onClick}
+      >
+        {inner}
+      </Button>
+    );
+  }
+
+  return (
+    <div
+      className={rootClass}
+      data-slot="ai-token-usage"
+      data-testid={testid || undefined}
+      aria-hidden
+    >
+      {inner}
+    </div>
   );
 }
 

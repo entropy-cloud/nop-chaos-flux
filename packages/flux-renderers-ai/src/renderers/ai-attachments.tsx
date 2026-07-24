@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -75,116 +75,92 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
     };
   }, []);
 
-  const reportChange = useCallback(
-    (next: AiAttachment[]) => {
-      if (!controlledValue) setInternalAttachments(next);
-      void props.events.onChange?.({ attachments: next });
-    },
-    [controlledValue, props.events],
-  );
+  function reportChange(next: AiAttachment[]) {
+    if (!controlledValue) setInternalAttachments(next);
+    void props.events.onChange?.({ attachments: next });
+  }
 
-  const addFiles = useCallback(
-    (incoming: File[]) => {
-      const accepted: AiAttachment[] = [];
-      let tooLarge = false;
-      let tooMany = false;
-      for (const file of incoming) {
-        if (maxSize !== undefined && file.size > maxSize) {
-          tooLarge = true;
-          continue;
-        }
-        if (maxFiles !== undefined && attachments.length + accepted.length >= maxFiles) {
-          tooMany = true;
-          continue;
-        }
-        const url = typeof URL !== 'undefined' && URL.createObjectURL ? URL.createObjectURL(file) : '';
-        if (url) localUrlsRef.current.add(url);
-        accepted.push({
-          id: `${file.name}-${file.size}-${file.lastModified}`,
-          url,
-          name: file.name,
-          contentType: file.type,
-          size: file.size,
-          status: 'success',
-          file,
-        });
+  function addFiles(incoming: File[]) {
+    const accepted: AiAttachment[] = [];
+    let tooLarge = false;
+    let tooMany = false;
+    for (const file of incoming) {
+      if (maxSize !== undefined && file.size > maxSize) {
+        tooLarge = true;
+        continue;
       }
-      if (accepted.length > 0) {
-        reportChange([...attachments, ...accepted]);
+      if (maxFiles !== undefined && attachments.length + accepted.length >= maxFiles) {
+        tooMany = true;
+        continue;
       }
-      if (tooLarge) {
-        void props.events.onError?.({ reason: 'attachment-too-large' });
+      const url = typeof URL !== 'undefined' && URL.createObjectURL ? URL.createObjectURL(file) : '';
+      if (url) localUrlsRef.current.add(url);
+      accepted.push({
+        id: `${file.name}-${file.size}-${file.lastModified}`,
+        url,
+        name: file.name,
+        contentType: file.type,
+        size: file.size,
+        status: 'success',
+        file,
+      });
+    }
+    if (accepted.length > 0) {
+      reportChange([...attachments, ...accepted]);
+    }
+    if (tooLarge) {
+      void props.events.onError?.({ reason: 'attachment-too-large' });
+    }
+    if (tooMany) {
+      void props.events.onError?.({ reason: 'attachment-too-many' });
+    }
+  }
+
+  function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files ? Array.from(event.target.files) : [];
+    addFiles(files);
+    event.target.value = '';
+  }
+
+  function handleRemove(id: string) {
+    const removed = attachments.find((a) => a.id === id);
+    if (removed && localUrlsRef.current.has(removed.url)) {
+      try {
+        URL.revokeObjectURL(removed.url);
+      } catch {
+        // ignore
       }
-      if (tooMany) {
-        void props.events.onError?.({ reason: 'attachment-too-many' });
-      }
-    },
-    [attachments, maxSize, maxFiles, reportChange, props.events],
-  );
+      localUrlsRef.current.delete(removed.url);
+    }
+    const next = attachments.filter((a) => a.id !== id);
+    reportChange(next);
+  }
 
-  const handleInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = event.target.files ? Array.from(event.target.files) : [];
-      addFiles(files);
-      // Reset so the same file can be re-selected.
-      event.target.value = '';
-    },
-    [addFiles],
-  );
-
-  const handleRemove = useCallback(
-    (id: string) => {
-      // AI-10: revoke the object URL of a locally-created attachment when it is
-      // removed, releasing the underlying blob.
-      const removed = attachments.find((a) => a.id === id);
-      if (removed && localUrlsRef.current.has(removed.url)) {
-        try {
-          URL.revokeObjectURL(removed.url);
-        } catch {
-          // ignore
-        }
-        localUrlsRef.current.delete(removed.url);
-      }
-      const next = attachments.filter((a) => a.id !== id);
-      reportChange(next);
-    },
-    [attachments, reportChange],
-  );
-
-  const handleDrop = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      if (!enableDrop) return;
-      event.preventDefault();
-      setDragging(false);
-      const files = event.dataTransfer.files ? Array.from(event.dataTransfer.files) : [];
-      if (files.length > 0) addFiles(files);
-    },
-    [enableDrop, addFiles],
-  );
-
-  const handleDragOver = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      if (!enableDrop) return;
-      event.preventDefault();
-      setDragging(true);
-    },
-    [enableDrop],
-  );
-
-  const handleDragLeave = useCallback(() => {
+  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    if (!enableDrop) return;
+    event.preventDefault();
     setDragging(false);
-  }, []);
+    const files = event.dataTransfer.files ? Array.from(event.dataTransfer.files) : [];
+    if (files.length > 0) addFiles(files);
+  }
 
-  const handlePaste = useCallback(
-    (event: React.ClipboardEvent<HTMLDivElement>) => {
-      const files = event.clipboardData?.files ? Array.from(event.clipboardData.files) : [];
-      if (files.length > 0) {
-        event.preventDefault();
-        addFiles(files);
-      }
-    },
-    [addFiles],
-  );
+  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
+    if (!enableDrop) return;
+    event.preventDefault();
+    setDragging(true);
+  }
+
+  function handleDragLeave() {
+    setDragging(false);
+  }
+
+  function handlePaste(event: React.ClipboardEvent<HTMLDivElement>) {
+    const files = event.clipboardData?.files ? Array.from(event.clipboardData.files) : [];
+    if (files.length > 0) {
+      event.preventDefault();
+      addFiles(files);
+    }
+  }
 
   async function handleUpload() {
     const imageAttachments = attachments.filter((a) => isImageMime(a.contentType) || isImageExt(a.name));
@@ -198,15 +174,12 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
     }
   }
 
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        inputRef.current?.click();
-      }
-    },
-    [],
-  );
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      inputRef.current?.click();
+    }
+  }
 
   const effectiveMode = mode === 'auto' ? detectMode(attachments) : mode;
 

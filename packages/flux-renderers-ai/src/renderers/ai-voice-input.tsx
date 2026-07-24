@@ -201,6 +201,7 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
         <span
           className="nop-ai-voice-input-wave inline-flex h-4 w-5 items-center justify-center text-primary"
           aria-hidden="true"
+          data-slot="ai-voice-input-wave"
           data-testid={props.meta.testid ? `${props.meta.testid}-wave` : undefined}
         >
           <span />

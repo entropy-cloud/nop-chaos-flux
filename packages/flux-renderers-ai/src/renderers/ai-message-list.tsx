@@ -11,6 +11,7 @@ export interface AiMessageListViewProps {
   autoScroll?: boolean;
   className?: string;
   emptyNode?: React.ReactNode;
+  testid?: string;
 }
 
 /** A-8: message count above which windowed virtual rendering kicks in. */
@@ -53,6 +54,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
         className={cn('nop-ai-message-list')}
         data-slot="ai-message-list"
         data-empty=""
+        data-testid={props.testid || undefined}
         role="log"
         aria-live="polite"
         aria-busy={ctx?.isProcessing ? 'true' : undefined}
@@ -65,9 +67,10 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
   return (
     <div
       ref={containerRef}
-      className={cn('nop-ai-message-list min-h-0 flex-1 overflow-auto', props.className)}
+      className={cn('nop-ai-message-list', props.className)}
       data-slot="ai-message-list"
       data-virtual={enableVirtual ? '' : undefined}
+      data-testid={props.testid || undefined}
       role="log"
       aria-live="polite"
       aria-busy={ctx?.isProcessing ? 'true' : undefined}
@@ -127,6 +130,7 @@ export function AiMessageListRenderer(props: RendererComponentProps<AiMessageLis
       autoScroll={resolved.autoScroll}
       className={props.meta.className}
       emptyNode={emptyNode}
+      testid={props.meta.testid}
     />
   );
 }

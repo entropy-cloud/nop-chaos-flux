@@ -23,7 +23,7 @@ export function toPosixPath(filePath) {
 }
 
 export function isTestFile(filePath) {
-  return /(?:\.test\.|\.spec\.|__tests__)/.test(filePath);
+  return /(?:\.test\.|\.spec\.|__tests__|test-support)/.test(filePath);
 }
 
 export async function collectSourceFiles(dir) {

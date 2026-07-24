@@ -44,7 +44,7 @@ function AiScopeProbe() {
     }),
   );
   useEffect(() => {
-    capturedActionScope = actionScope;
+    capturedScopeHolder.current = actionScope;
   }, [actionScope]);
   return (
     <div data-testid="ai-scope-probe">
@@ -54,11 +54,17 @@ function AiScopeProbe() {
   );
 }
 
-/** Last ActionScope observed by an mounted `ai-scope-probe` (test-only). */
-export let capturedActionScope: import('@nop-chaos/flux-core').ActionScope | undefined;
+/** Holder for the last ActionScope observed by a mounted `ai-scope-probe` (test-only). */
+const capturedScopeHolder: { current: import('@nop-chaos/flux-core').ActionScope | undefined } = {
+  current: undefined,
+};
+
+export function getCapturedActionScope() {
+  return capturedScopeHolder.current;
+}
 
 export function resetCapturedActionScope(): void {
-  capturedActionScope = undefined;
+  capturedScopeHolder.current = undefined;
 }
 
 export const aiScopeProbeRenderer: RendererDefinition = {

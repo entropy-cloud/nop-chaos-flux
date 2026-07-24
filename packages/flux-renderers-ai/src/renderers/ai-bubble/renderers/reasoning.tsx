@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { ChatMessage } from '../../../engine/types.js';
 import type { BubbleContentRendererProps } from '../types.js';
@@ -44,16 +44,17 @@ export function ReasoningContentRenderer({ message }: BubbleContentRendererProps
       data-open={open ? '' : undefined}
       className="rounded-md border border-border bg-muted/30 text-xs text-muted-foreground"
     >
-      <button
-        type="button"
-        className="flex w-full items-center gap-1 px-2 py-1 text-left"
+      <Button
+        variant="ghost"
+        size="xs"
+        className="flex w-full justify-start gap-1 px-2 py-1 text-left"
         aria-expanded={open}
         onClick={toggle}
         disabled={controlled !== undefined}
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         <span>{label}</span>
-      </button>
+      </Button>
       {open ? (
         <div className={cn('border-t border-border px-2 py-1')}>
           <MarkdownContentRenderer message={message} content={reasoning} contentIndex={-1} />

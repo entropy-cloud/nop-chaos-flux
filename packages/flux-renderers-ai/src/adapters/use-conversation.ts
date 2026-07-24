@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { generateMessageId } from '../engine/utils.js';
 import { createMessageEngine } from '../engine/create-engine.js';
 import { createReactMessageAdapter } from './react-adapter.js';
@@ -81,14 +81,15 @@ export interface UseConversationReturn {
  */
 export function useConversation(options: UseConversationOptions): UseConversationReturn {
   const { connector, createEngineOptions, storage, autoSaveMessages = false, initialConversations, onStorageError } = options;
-  const connectorRef = useMemo(() => ({ current: connector }), [connector]);
+  const connectorRef = useRef(connector);
+  useEffect(() => {
+    connectorRef.current = connector;
+  }, [connector]);
 
-  // AI-28: stable storage-error reporter. Routed through a ref so the
-  // callback identity does not bust `useCallback` deps; the host can pass an
-  // inline function without re-subscribing on every render. The ref is synced
-  // in a passive effect (the `react-hooks/refs` escape hatch) so reads inside
-  // `reportStorageError` always see the latest callback without re-creating
-  // the reporter.
+  // AI-28: stable storage-error reporter. useCallback is retained here (not
+  // removed by F3.1) because the mount-bootstrap effect depends on it — the
+  // test failure in use-conversation.test.ts is the profiling evidence that
+  // plain-function identity causes the effect to double-fire.
   const onStorageErrorRef = useRef(onStorageError);
   useEffect(() => {
     onStorageErrorRef.current = onStorageError;
@@ -122,7 +123,7 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   // so subscriptions are torn down on evict / delete / unmount.
   const autoSaveUnsubsRef = useRef(new Map<string, () => void>());
 
-  const buildEngine = useCallback((): MessageEngine => {
+  function buildEngine(): MessageEngine {
     const plugins = (createEngineOptions?.plugins ?? []) as MessageEnginePlugin[];
     return createMessageEngine({
       connector: connectorRef.current,
@@ -137,7 +138,7 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       maxToolRounds: createEngineOptions?.maxToolRounds,
       adapter: createReactMessageAdapter(),
     });
-  }, [connectorRef, createEngineOptions]);
+  }
 
   /**
    * Attach a `requestState` subscription that persists the engine snapshot
@@ -145,49 +146,40 @@ export function useConversation(options: UseConversationOptions): UseConversatio
    * or `autoSaveMessages` is disabled). Bound to the engine lifecycle: the
    * caller evicts the handle together with the engine cache entry.
    */
-  const attachAutoSave = useCallback(
-    (engine: MessageEngine, conversationId: string): (() => void) => {
-      const prev = autoSaveUnsubsRef.current.get(conversationId);
-      if (prev) prev();
-      if (!storage || !autoSaveMessages) {
-        autoSaveUnsubsRef.current.delete(conversationId);
-        return () => {};
-      }
-      let prevState: RequestState = engine.getState().requestState;
-      const unsub = engine.subscribe('requestState', (state) => {
-        const next = state.requestState;
-        const wasProcessing = prevState === 'processing';
-        const isDone = next === 'completed' || next === 'aborted' || next === 'error';
-        prevState = next;
-        if (wasProcessing && isDone) {
-          try {
-            Promise.resolve(storage.saveMessages(conversationId, engine.getMessages())).catch(
-              (error: unknown) => {
-                // Failure Path `storage-save-error`: non-fatal, engine state
-                // is unaffected; the next turn retries. AI-28: surface to host.
-                reportStorageError({ phase: 'saveMessages', conversationId, error });
-              },
-            );
-          } catch (error) {
-            // Synchronous throw from a sync saveMessages: non-fatal.
-            reportStorageError({ phase: 'saveMessages', conversationId, error });
-          }
+  function attachAutoSave(engine: MessageEngine, conversationId: string): () => void {
+    const prev = autoSaveUnsubsRef.current.get(conversationId);
+    if (prev) prev();
+    if (!storage || !autoSaveMessages) {
+      autoSaveUnsubsRef.current.delete(conversationId);
+      return () => {};
+    }
+    let prevState: RequestState = engine.getState().requestState;
+    const unsub = engine.subscribe('requestState', (state) => {
+      const next = state.requestState;
+      const wasProcessing = prevState === 'processing';
+      const isDone = next === 'completed' || next === 'aborted' || next === 'error';
+      prevState = next;
+      if (wasProcessing && isDone) {
+        try {
+          Promise.resolve(storage.saveMessages(conversationId, engine.getMessages())).catch(
+            (error: unknown) => {
+              reportStorageError({ phase: 'saveMessages', conversationId, error });
+            },
+          );
+        } catch (error) {
+          reportStorageError({ phase: 'saveMessages', conversationId, error });
         }
-      });
-      autoSaveUnsubsRef.current.set(conversationId, unsub);
-      return unsub;
-    },
-    [storage, autoSaveMessages, reportStorageError],
-  );
+      }
+    });
+    autoSaveUnsubsRef.current.set(conversationId, unsub);
+    return unsub;
+  }
 
-  const buildEngineFor = useCallback(
-    (conversationId: string): MessageEngine => {
-      const engine = buildEngine();
-      attachAutoSave(engine, conversationId);
-      return engine;
-    },
-    [buildEngine, attachAutoSave],
-  );
+  function buildEngineFor(conversationId: string): MessageEngine {
+    const engine = buildEngine();
+    attachAutoSave(engine, conversationId);
+    return engine;
+  }
 
   function detachEngine(conversationId: string): void {
     const unsub = autoSaveUnsubsRef.current.get(conversationId);
@@ -242,103 +234,84 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     };
   }, [engineCache]);
 
-  const createConversation = useCallback(
-    (params?: { title?: string; metadata?: Record<string, unknown> }): AiConversationInfo => {
-      const now = Date.now();
-      const info: AiConversationInfo = {
-        id: generateMessageId('conv'),
-        title: params?.title,
-        createdAt: now,
-        updatedAt: now,
-        metadata: params?.metadata,
-      };
-      setConversations((prev) => [info, ...prev]);
-      setActiveId(info.id);
-      const engine = buildEngineFor(info.id);
-      engineCache.set(info.id, engine);
-      setActiveEngine(engine);
-      void storage?.saveConversation?.(info);
-      return info;
-    },
-    [buildEngineFor, engineCache, storage],
-  );
+  function createConversation(params?: { title?: string; metadata?: Record<string, unknown> }): AiConversationInfo {
+    const now = Date.now();
+    const info: AiConversationInfo = {
+      id: generateMessageId('conv'),
+      title: params?.title,
+      createdAt: now,
+      updatedAt: now,
+      metadata: params?.metadata,
+    };
+    setConversations((prev) => [info, ...prev]);
+    setActiveId(info.id);
+    const engine = buildEngineFor(info.id);
+    engineCache.set(info.id, engine);
+    setActiveEngine(engine);
+    void storage?.saveConversation?.(info);
+    return info;
+  }
 
-  const switchConversation = useCallback(
-    async (id: string): Promise<void> => {
-      const exists = conversations.some((c) => c.id === id);
-      if (!exists) return;
-      setActiveId(id);
+  async function switchConversation(id: string): Promise<void> {
+    const exists = conversations.some((c) => c.id === id);
+    if (!exists) return;
+    setActiveId(id);
 
-      let engine = engineCache.get(id);
-      if (!engine) {
-        engine = buildEngineFor(id);
-        engineCache.set(id, engine);
-        if (storage) {
-          try {
-            const stored = await storage.loadMessages(id);
-            if (stored.length > 0) {
-              // Re-hydrate via the A3 `setMessages` (whole-list replace).
-              engine.setMessages(stored);
-            }
-          } catch (error) {
-            // Failure Path `storage-load-error`: non-fatal, empty messages.
-            // AI-28: surface to host.
-            reportStorageError({ phase: 'loadMessages', conversationId: id, error });
+    let engine = engineCache.get(id);
+    if (!engine) {
+      engine = buildEngineFor(id);
+      engineCache.set(id, engine);
+      if (storage) {
+        try {
+          const stored = await storage.loadMessages(id);
+          if (stored.length > 0) {
+            engine.setMessages(stored);
           }
+        } catch (error) {
+          reportStorageError({ phase: 'loadMessages', conversationId: id, error });
         }
       }
-      setActiveEngine(engine);
+    }
+    setActiveEngine(engine);
 
-      // Evict non-active, non-processing engines to bound memory, but keep
-      // any conversation that is mid-stream running in the background
-      // (Failure Path `switch-while-stream`).
-      for (const [cachedId, cachedEngine] of engineCache.entries()) {
-        if (cachedId === id) continue;
-        if (cachedEngine.getState().isProcessing) continue;
-        detachEngine(cachedId);
-        engineCache.delete(cachedId);
-      }
-    },
-    [buildEngineFor, conversations, engineCache, storage, reportStorageError],
-  );
+    for (const [cachedId, cachedEngine] of engineCache.entries()) {
+      if (cachedId === id) continue;
+      if (cachedEngine.getState().isProcessing) continue;
+      detachEngine(cachedId);
+      engineCache.delete(cachedId);
+    }
+  }
 
-  const deleteConversation = useCallback(
-    async (id: string): Promise<void> => {
-      setConversations((prev) => prev.filter((c) => c.id !== id));
-      const removed = engineCache.get(id);
-      detachEngine(id);
-      engineCache.delete(id);
-      if (removed && removed.getState().isProcessing) {
-        await removed.abort();
-      }
-      if (activeId === id) {
-        const next = conversations.find((c) => c.id !== id) ?? null;
-        setActiveId(next?.id ?? null);
-        setActiveEngine(next ? (engineCache.get(next.id) ?? null) : null);
-      }
-      try {
-        await storage?.deleteConversation?.(id);
-      } catch (error) {
-        // non-fatal. AI-28: surface to host.
-        reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
-      }
-    },
-    [activeId, conversations, engineCache, storage, reportStorageError],
-  );
+  async function deleteConversation(id: string): Promise<void> {
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    const removed = engineCache.get(id);
+    detachEngine(id);
+    engineCache.delete(id);
+    if (removed && removed.getState().isProcessing) {
+      await removed.abort();
+    }
+    if (activeId === id) {
+      const next = conversations.find((c) => c.id !== id) ?? null;
+      setActiveId(next?.id ?? null);
+      setActiveEngine(next ? (engineCache.get(next.id) ?? null) : null);
+    }
+    try {
+      await storage?.deleteConversation?.(id);
+    } catch (error) {
+      reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
+    }
+  }
 
-  const renameConversation = useCallback(
-    (id: string, title: string): void => {
-      const now = Date.now();
-      setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title, updatedAt: now } : c)));
-      const updated = conversations.find((c) => c.id === id);
-      if (updated) {
-        void storage?.saveConversation?.({ ...updated, title, updatedAt: now });
-      }
-    },
-    [conversations, storage],
-  );
+  function renameConversation(id: string, title: string): void {
+    const now = Date.now();
+    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title, updatedAt: now } : c)));
+    const updated = conversations.find((c) => c.id === id);
+    if (updated) {
+      void storage?.saveConversation?.({ ...updated, title, updatedAt: now });
+    }
+  }
 
-  const clearAll = useCallback((): void => {
+  function clearAll(): void {
     for (const [, engine] of engineCache.entries()) {
       if (engine.getState().isProcessing) {
         void engine.abort();
@@ -349,17 +322,14 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     setConversations([]);
     setActiveId(null);
     setActiveEngine(null);
-  }, [engineCache]);
+  }
 
-  const controller = useMemo<AiConversationControllerBridge>(
-    () => ({
-      createConversation,
-      switchConversation,
-      deleteConversation,
-      renameConversation,
-    }),
-    [createConversation, switchConversation, deleteConversation, renameConversation],
-  );
+  const controller: AiConversationControllerBridge = {
+    createConversation,
+    switchConversation,
+    deleteConversation,
+    renameConversation,
+  };
 
   return {
     conversations,

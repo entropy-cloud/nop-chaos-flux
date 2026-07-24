@@ -37,6 +37,7 @@ export interface AiBubbleViewProps {
   activeBranchId?: string;
   onBranchChange?: (branchId: string) => void;
   className?: string;
+  testid?: string;
 }
 
 function resolvePlacement(message: ChatMessage, placement: 'start' | 'end' | 'auto'): 'start' | 'end' {
@@ -103,6 +104,7 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
       data-streaming={isStreaming ? '' : undefined}
       data-error={isError ? '' : undefined}
       data-editing={isUser && isEditing ? '' : undefined}
+      data-testid={props.testid || undefined}
     >
       {showAvatar ? <div data-slot="ai-bubble-avatar" aria-hidden="true" /> : null}
       <div data-slot="ai-bubble-content" className="flex flex-col gap-2">
@@ -249,6 +251,7 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
           : undefined
       }
       className={props.meta.className}
+      testid={props.meta.testid}
     />
   );
 }
