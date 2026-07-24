@@ -1,4 +1,5 @@
 import type {
+  AiConnector,
   ChatMessage,
   InternalMessageState,
   MessageStateAdapter,
@@ -27,8 +28,16 @@ export abstract class BaseMessageStateAdapter implements MessageStateAdapter {
   }
 
   getState(): PublicMessageState {
-    const { messages, requestState, processingState, isProcessing } = this.state;
-    return { messages, requestState, processingState, isProcessing };
+    const { messages, requestState, processingState, isProcessing, lastError } = this.state;
+    return { messages, requestState, processingState, isProcessing, lastError };
+  }
+
+  getConnector(): AiConnector | null {
+    return this.state.connector;
+  }
+
+  getAbortController(): AbortController | null {
+    return this.state.abortController;
   }
 
   createMessage<T extends ChatMessage>(message: T): T {

@@ -91,5 +91,21 @@ export function useMessage(options: UseMessageOptions): UseMessageReturn {
     }
   }, [selfEngine, connector, externalEngine]);
 
+  // F2.2: abort an in-flight stream on the SELF-BUILT engine when the host
+  // unmounts (route switch / component teardown) so no orphaned background
+  // stream keeps running. An EXTERNAL engine's lifecycle is owned by its
+  // provider (e.g. `useConversation`), so it is never aborted here. This does
+  // NOT affect the intentional "switch-while-stream" background keep-alive in
+  // `useConversation` — that path retains processing engines via its own cache.
+  useEffect(() => {
+    if (externalEngine) return;
+    const engine = selfEngine;
+    return () => {
+      if (engine.getState().isProcessing) {
+        void engine.abort();
+      }
+    };
+  }, [selfEngine, externalEngine]);
+
   return useEngineView(engine);
 }

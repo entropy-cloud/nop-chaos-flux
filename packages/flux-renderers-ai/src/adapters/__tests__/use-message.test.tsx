@@ -94,4 +94,82 @@ describe('useMessage', () => {
     expect(result.current.requestState).toBe('aborted');
     expect((result.current.messages[1].content as string).startsWith('partial')).toBe(true);
   });
+
+  // F2.2: a self-built engine must abort its in-flight stream on unmount so a
+  // route switch does not leave an orphaned background connection.
+  it('aborts the self-built engine in-flight stream on unmount (F2.2)', async () => {
+    let release: () => void;
+    const pending = new Promise<void>((r) => {
+      release = r;
+    });
+    const connector: AiConnector = {
+      async stream() {
+        async function* gen() {
+          yield { delta: { content: 'partial' } };
+          await pending;
+          yield { finishReason: 'stop' };
+        }
+        return gen();
+      },
+    };
+    const { result, unmount } = renderHook(() => useMessage({ connector }));
+    const engine = result.current.engine;
+
+    act(() => {
+      void engine.sendMessage('hi');
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(engine.getState().isProcessing).toBe(true);
+
+    unmount();
+
+    // The unmount cleanup aborted the self-built engine's in-flight stream.
+    expect(engine.getState().requestState).toBe('aborted');
+    expect(engine.getState().isProcessing).toBe(false);
+    release!();
+  });
+
+  // F2.2: an externally-injected engine is NOT aborted on unmount — its owner
+  // manages its lifecycle (e.g. `useConversation`).
+  it('does not abort an externally-injected engine on unmount (F2.2)', async () => {
+    let release: () => void;
+    const pending = new Promise<void>((r) => {
+      release = r;
+    });
+    const connector: AiConnector = {
+      async stream() {
+        async function* gen() {
+          yield { delta: { content: 'partial' } };
+          await pending;
+          yield { finishReason: 'stop' };
+        }
+        return gen();
+      },
+    };
+    // Build an external engine with a React adapter (stable snapshot identity
+    // for useSyncExternalStore — required by useEngineView).
+    const { createMessageEngine } = await import('../../engine/create-engine.js');
+    const { createReactMessageAdapter } = await import('../react-adapter.js');
+    const externalEngine = createMessageEngine({ connector, adapter: createReactMessageAdapter() });
+    const { unmount } = renderHook(() => useMessage({ connector, engine: externalEngine }));
+
+    act(() => {
+      void externalEngine.sendMessage('hi');
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(externalEngine.getState().isProcessing).toBe(true);
+
+    unmount();
+
+    // External engine lifecycle is owned by the caller — unmount did NOT abort.
+    expect(externalEngine.getState().isProcessing).toBe(true);
+    await externalEngine.abort();
+    release!();
+  });
 });

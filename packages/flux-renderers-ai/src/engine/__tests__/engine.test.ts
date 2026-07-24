@@ -214,3 +214,54 @@ describe('combineDeltaData re-export sanity', () => {
     expect(typeof combineDeltaData).toBe('function');
   });
 });
+
+describe('createMessageEngine — AI-19 lastError state', () => {
+  it('connector throw writes the real error onto state.lastError', async () => {
+    const connector = makeMockConnector([], { throw: new Error('boom') });
+    const engine = createMessageEngine({ connector });
+    await engine.sendMessage('hi');
+    const final = engine.getState();
+    expect(final.requestState).toBe('error');
+    expect(final.lastError).toBeInstanceOf(Error);
+    expect((final.lastError as Error).message).toBe('boom');
+  });
+
+  it('abort does NOT write lastError (abort is not an error)', async () => {
+    let resolveGate: () => void;
+    const gate = new Promise<void>((r) => {
+      resolveGate = r;
+    });
+    const connector: AiConnector = {
+      async stream() {
+        async function* gen() {
+          yield { delta: { content: 'partial' } };
+          await gate;
+          yield { finishReason: 'stop' };
+        }
+        return gen();
+      },
+    };
+    const engine = createMessageEngine({ connector });
+    const turn = engine.sendMessage('hi');
+    await Promise.resolve();
+    await Promise.resolve();
+    await engine.abort();
+    resolveGate!();
+    await turn;
+    expect(engine.getState().requestState).toBe('aborted');
+    expect(engine.getState().lastError).toBeUndefined();
+  });
+
+  it('lastError is cleared at the start of the next turn', async () => {
+    const errConnector = makeMockConnector([], { throw: new Error('first-boom') });
+    const engine = createMessageEngine({ connector: errConnector });
+    await engine.sendMessage('hi');
+    expect(engine.getState().lastError).toBeInstanceOf(Error);
+
+    // Hot-swap to a working connector and run a successful turn.
+    engine.setConnector(makeMockConnector(wordChunks));
+    await engine.sendMessage('again');
+    expect(engine.getState().requestState).toBe('completed');
+    expect(engine.getState().lastError).toBeUndefined();
+  });
+});

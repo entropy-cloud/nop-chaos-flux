@@ -13,6 +13,8 @@
  * - a source key absent from target is assigned directly (cloned)
  */
 
+import type { AiConnectorChunk, ChatMessage, ChatMessageContentPart } from './types.js';
+
 export type AnyRecord = Record<string, unknown>;
 
 function isPlainObject(value: unknown): value is AnyRecord {
@@ -121,4 +123,42 @@ export function generateMessageId(prefix = 'msg'): string {
 /** Reset the internal id counter (test-only). */
 export function _resetMessageIdCounterForTests(): void {
   messageSeq = 0;
+}
+
+/**
+ * True when `content` carries no sendable payload (whitespace-only string or
+ * empty parts). Used to no-op an empty `sendMessage` (AI-24: moved out of
+ * `create-engine.ts`).
+ */
+export function isEmptyContent(content: string | ChatMessageContentPart[]): boolean {
+  if (typeof content === 'string') return content.trim().length === 0;
+  if (Array.isArray(content)) return content.length === 0;
+  return true;
+}
+
+/**
+ * True for an assistant message that is the in-progress streaming placeholder
+ * (empty content + `loading`). `buildContext` excludes the trailing
+ * placeholder from the request payload.
+ */
+export function isStreamingAssistantPlaceholder(message: ChatMessage): boolean {
+  return message.role === 'assistant' && message.content === '' && message.loading === true;
+}
+
+/**
+ * Apply a streaming chunk's delta/snapshot to the accumulated assistant
+ * message via `combineDeltaData`.
+ */
+export function applyChunk(message: ChatMessage, chunk: AiConnectorChunk): void {
+  if (chunk.delta) {
+    combineDeltaData(message, chunk.delta);
+  }
+  if (chunk.snapshot) {
+    combineDeltaData(message, chunk.snapshot);
+  }
+}
+
+/** Indirection so tests can inject a fake controller. */
+export function createAbortController(): AbortController {
+  return new AbortController();
 }

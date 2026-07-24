@@ -58,6 +58,9 @@ export function createStreamBasedAiConnector(
 
       async function* generate(): AsyncGenerator<AiConnectorChunk> {
         for await (const raw of chunks) {
+          // F2.3: cheap abort guard so abort takes effect even when the host
+          // `env.stream` does not actively observe the signal between chunks.
+          if (request.signal.aborted) return;
           if (raw && typeof raw === 'object') {
             yield mapOpenAIChunk(raw);
           }

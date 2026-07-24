@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useConversation } from '../use-conversation.js';
 import type {
@@ -7,6 +7,7 @@ import type {
   AiConnectorRequest,
   AiConversationInfo,
   ChatMessage,
+  ToolExecutor,
 } from '../../engine/types.js';
 import type { ConversationStorageStrategy } from '../../storage/types.js';
 
@@ -20,6 +21,29 @@ function slowConnector(chunks: AiConnectorChunk[], delayMs = 5): AiConnector {
         }
       }
       void _req;
+      return gen();
+    },
+  };
+}
+
+/**
+ * Scripted connector for multi-round tool-loop tests: each `stream` call
+ * consumes the next scripted round.
+ */
+function scriptedConnector(rounds: AiConnectorChunk[][]): AiConnector & {
+  calls: AiConnectorRequest[];
+} {
+  const calls: AiConnectorRequest[] = [];
+  let round = 0;
+  return {
+    calls,
+    async stream(request: AiConnectorRequest) {
+      calls.push(request);
+      const chunks = rounds[Math.min(round, rounds.length - 1)];
+      round += 1;
+      async function* gen(): AsyncGenerator<AiConnectorChunk> {
+        for (const c of chunks) yield c;
+      }
       return gen();
     },
   };
@@ -354,6 +378,143 @@ describe('useConversation — P3 storage sync', () => {
     });
 
     // The turn completed despite the persistence failure.
+    expect(engine.getState().requestState).toBe('completed');
+  });
+});
+
+// ============ F1.2: useConversation tool-loop forwarding ============
+
+describe('useConversation — F1.2 buildEngine forwards tool triad', () => {
+  it('finish_reason:tool_calls executes the loop (not tool-no-executor error)', async () => {
+    const connector = scriptedConnector([
+      [
+        {
+          delta: {
+            tool_calls: [
+              { index: 0, id: 'call_1', type: 'function', function: { name: 'get_weather', arguments: '{}' } },
+            ],
+          },
+        },
+        { finishReason: 'tool_calls' },
+      ],
+      [{ delta: { content: 'sunny' } }, { finishReason: 'stop' }],
+    ]);
+    const executor: ToolExecutor = vi.fn(async () => 'sunny, 18C');
+
+    const { result } = renderHook(() =>
+      useConversation({
+        connector,
+        createEngineOptions: {
+          tools: [{ type: 'function', function: { name: 'get_weather' } }],
+          toolExecutor: executor,
+          maxToolRounds: 4,
+        },
+      }),
+    );
+
+    act(() => {
+      result.current.createConversation({ title: 'A' });
+    });
+    const engine = result.current.activeEngine!;
+    await act(async () => {
+      await engine.sendMessage('weather?');
+    });
+
+    // The executor ran (tool-loop active), and a follow-up request was issued.
+    expect(executor).toHaveBeenCalledTimes(1);
+    expect(connector.calls).toHaveLength(2);
+    expect(engine.getState().requestState).toBe('completed');
+  });
+});
+
+// ============ AI-28: storage failures are observable to the host ============
+
+describe('useConversation — AI-28 storage error observability', () => {
+  it('invokes onStorageError when loadConversations fails', async () => {
+    const failing: ConversationStorageStrategy = {
+      ...mockStorage().strategy,
+      loadConversations: async () => {
+        throw new Error('boom-load');
+      },
+    };
+    const onStorageError = vi.fn();
+    const connector = slowConnector(okChunks);
+    renderHook(() =>
+      useConversation({ connector, storage: failing, onStorageError }),
+    );
+
+    await act(async () => {
+      await wait();
+    });
+
+    expect(onStorageError).toHaveBeenCalledTimes(1);
+    const arg = onStorageError.mock.calls[0][0];
+    expect(arg.phase).toBe('loadConversations');
+    expect(arg.error).toBeInstanceOf(Error);
+  });
+
+  it('invokes onStorageError when loadMessages fails', async () => {
+    const convs: AiConversationInfo[] = [
+      { id: 'c1', title: 'One', createdAt: 1, updatedAt: 1 },
+    ];
+    const failing: ConversationStorageStrategy = {
+      ...mockStorage({ conversations: convs }).strategy,
+      loadMessages: async () => {
+        throw new Error('boom-msgs');
+      },
+    };
+    const onStorageError = vi.fn();
+    const connector = slowConnector(okChunks);
+    const { result } = renderHook(() =>
+      useConversation({ connector, storage: failing, onStorageError }),
+    );
+
+    await act(async () => {
+      await wait();
+    });
+    await act(async () => {
+      await result.current.switchConversation('c1');
+    });
+
+    const phases = onStorageError.mock.calls.map((c) => c[0].phase);
+    expect(phases).toContain('loadMessages');
+  });
+
+  it('invokes onStorageError when saveMessages fails (auto-save path)', async () => {
+    const convs: AiConversationInfo[] = [
+      { id: 'c1', title: 'One', createdAt: 1, updatedAt: 1 },
+    ];
+    const failing: ConversationStorageStrategy = {
+      ...mockStorage({ conversations: convs }).strategy,
+      saveMessages: async () => {
+        throw new Error('boom-save');
+      },
+    };
+    const onStorageError = vi.fn();
+    const connector = slowConnector(okChunks, 5);
+    const { result } = renderHook(() =>
+      useConversation({
+        connector,
+        storage: failing,
+        autoSaveMessages: true,
+        onStorageError,
+      }),
+    );
+
+    await act(async () => {
+      await wait();
+    });
+    await act(async () => {
+      await result.current.switchConversation('c1');
+    });
+    const engine = result.current.activeEngine!;
+    await act(async () => {
+      await engine.sendMessage('hello');
+    });
+
+    const phases = onStorageError.mock.calls.map((c) => c[0].phase);
+    expect(phases).toContain('saveMessages');
+    // The turn still completes (storage failure is non-fatal).
     expect(engine.getState().requestState).toBe('completed');
   });
 });

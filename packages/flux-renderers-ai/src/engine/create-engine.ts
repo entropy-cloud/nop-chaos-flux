@@ -1,26 +1,30 @@
 import {
-  combineDeltaData,
+  applyChunk,
+  createAbortController,
   generateMessageId,
+  isEmptyContent,
+  isStreamingAssistantPlaceholder,
 } from './utils.js';
 import { createNativeMessageAdapter } from './native-adapter.js';
+import {
+  createBranchSequencer,
+  findLastUserIndex,
+  findPriorAssistantBranchId,
+} from './branching.js';
+import { executeToolCalls } from './tool-execution.js';
 import type {
   AiConnector,
-  AiConnectorChunk,
   AiConnectorRequest,
   AiToolSchema,
   ChatMessage,
   ChatMessageContentPart,
   ChatMessageMetadata,
-  ChatToolCall,
-  ChatToolCallUIState,
-  InternalMessageState,
   MessageEngine,
   MessageEngineContext,
   MessageEnginePlugin,
   MessageEngineState,
   MessageStateAdapter,
   MessageStateSubscribe,
-  ToolExecutionResult,
   ToolExecutor,
 } from './types.js';
 
@@ -38,9 +42,7 @@ export interface CreateMessageEngineOptions {
   /**
    * Host-provided tool executor. Invoked once per `tool_call` after a
    * `finish_reason:'tool_calls'` turn, then a follow-up request is sent so the
-   * model can react to the result (engine.md §8.3). Omitting this makes
-   * `finish_reason:'tool_calls'` transition the engine to `error`
-   * (`tool-no-executor`).
+   * model can react to the result (engine.md §8.3). Omit → `tool-no-executor`.
    */
   toolExecutor?: ToolExecutor | null;
   /** Max consecutive tool-calling rounds before the loop terminates (default 8). */
@@ -50,11 +52,9 @@ export interface CreateMessageEngineOptions {
 /**
  * Create a framework-agnostic message engine. Ported from tiny-robot
  * `kit/src/message/core/engine.ts`, rewritten without Vue/React coupling.
- *
  * State lives in the injected `MessageStateAdapter` (native by default). The
  * engine owns the turn lifecycle: idle → processing → completed/aborted/error,
  * streaming accumulation via `combineDeltaData`, and plugin fan-out.
- *
  * MUST NOT import 'react' or DOM globals (INV-1, `design.md` §18.1).
  */
 export function createMessageEngine(options: CreateMessageEngineOptions = {}): MessageEngine {
@@ -76,8 +76,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
 
   const engine: MessageEngine = {
     getState,
-    // Bind so `engine.subscribe` is safe to pass directly to React's
-    // `useSyncExternalStore` (stable identity, correct `this`).
+    // Bind so `engine.subscribe` is safe to pass to `useSyncExternalStore`.
     subscribe: ((...args: Parameters<MessageStateSubscribe>) =>
       adapter.subscribe(...args)) as MessageStateSubscribe,
     sendMessage,
@@ -91,11 +90,11 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     regenerate,
   };
 
-  // A-16: branch-id sequence. The engine assigns `branch-<n>` when the host
-  // does not pass an explicit id; the host owns the full branch set.
-  let branchSeq = 0;
-  // Branch id pending-stamp for the next assistant message created in a turn
-  // (consumed once by `runOnce`). Undefined for normal turns (no branch).
+  // A-16: branch-id sequencer. The engine assigns `branch-<n>` when the host
+  // omits an explicit id; the host owns the full branch set.
+  const branchSeq = createBranchSequencer();
+  // Pending branch-id stamp for the next assistant message (consumed once by
+  // `runOnce`). Undefined for normal turns (no branch).
   let pendingBranchId: string | undefined;
 
   function getState(): MessageEngineState {
@@ -105,7 +104,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   function setConnector(connector: AiConnector): void {
     // Idempotent: skip when the same connector reference is re-assigned (avoids
     // a spurious notify when the host effect re-runs on mount).
-    if ((adapter as unknown as { state: InternalMessageState }).state.connector === connector) {
+    if (adapter.getConnector() === connector) {
       return;
     }
     adapter.mutate('full', (draft) => {
@@ -128,7 +127,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   function setMessages(messages: ChatMessage[]): void {
     // Reject replacement while a turn is in-flight: callers should `abort()`
     // first (mirrors `clear`'s guard). Avoids racing the streaming accumulator.
-    if ((adapter as unknown as { state: InternalMessageState }).state.isProcessing) {
+    if (adapter.getState().isProcessing) {
       return;
     }
     adapter.mutate('full', (draft) => {
@@ -137,12 +136,6 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       draft.isProcessing = false;
       draft.processingState = undefined;
     });
-  }
-
-  function isEmptyContent(content: string | ChatMessageContentPart[]): boolean {
-    if (typeof content === 'string') return content.trim().length === 0;
-    if (Array.isArray(content)) return content.length === 0;
-    return true;
   }
 
   async function sendMessage(content: string | ChatMessageContentPart[]): Promise<void> {
@@ -167,6 +160,14 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   }
 
   async function runTurn(incomingMessages: ChatMessage[]): Promise<void> {
+    // AI-01 (Bug 07 recurrence): serialise turns. A second send while a turn
+    // is in-flight would otherwise overwrite `draft.abortController` and start
+    // a competing stream, interleaving writes into `draft.messages`. Return
+    // silently — the host treats the second call as an ignored cancellation
+    // (mirrors the `submit()` guard in `docs/bugs/07-...`).
+    if (adapter.getState().isProcessing) {
+      return;
+    }
     const connector = adapterStateConnector();
     if (!connector) {
       adapter.mutate('requestState', (draft) => {
@@ -186,6 +187,8 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       draft.isProcessing = true;
       draft.processingState = 'requesting';
       draft.abortController = abortController;
+      // AI-19: clear any stale error from a prior turn.
+      draft.lastError = undefined;
     });
 
     // Fire onTurnStart once for the whole turn (NOT per round) so the plugin
@@ -245,6 +248,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
           const shouldContinue = await executeToolCalls(
             outcome.assistantMessage.tool_calls,
             abortController,
+            { adapter, toolExecutor },
           );
           if (!shouldContinue) {
             // Abort signaled mid-execution.
@@ -273,6 +277,9 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         draft.requestState = aborted ? 'aborted' : 'error';
         draft.isProcessing = false;
         draft.processingState = undefined;
+        // AI-19 (engine-half): expose the real caught error on state so the
+        // renderer can feed `onError({ error: state.lastError ?? ... })`.
+        if (!aborted) draft.lastError = error;
       });
     } finally {
       adapter.mutate('full', (draft) => {
@@ -293,7 +300,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   /**
    * Run one streaming request round: create an assistant placeholder, stream
    * chunks into it, fire plugin hooks, and commit. The caller decides whether
-   * to follow up (tool_calls) based on the returned finish reason.
+   * to follow up (tool_calls) from the returned finish reason.
    */
   async function runOnce(
     connector: AiConnector,
@@ -314,8 +321,12 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     // Consume the pending stamp regardless of the branch outcome (only the
     // primary assistant message of a turn carries the branch id).
     pendingBranchId = undefined;
+    // AI-23: cache the assistant placeholder's index once (O(1) commit per
+    // chunk instead of an O(n) `lastIndexOf` + `slice` scan per chunk).
+    let assistantIndex = -1;
     adapter.mutate('messages', (draft) => {
       draft.messages.push(assistant);
+      assistantIndex = draft.messages.length - 1;
       draft.processingState = 'completing';
     });
 
@@ -326,12 +337,11 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
 
     /** Commit the working `assistant` draft into state with a fresh reference. */
     function commitAssistant(): void {
+      if (assistantIndex < 0) return;
       adapter.mutate('messages', (draft) => {
-        const idx = draft.messages.lastIndexOf(assistant);
-        draft.messages = draft.messages.slice();
-        if (idx >= 0) {
-          draft.messages[idx] = { ...assistant };
-          assistant = draft.messages[idx];
+        if (assistantIndex < draft.messages.length) {
+          draft.messages[assistantIndex] = { ...assistant };
+          assistant = draft.messages[assistantIndex];
         }
       });
     }
@@ -391,84 +401,18 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         draft.requestState = aborted ? 'aborted' : 'error';
         draft.isProcessing = false;
         draft.processingState = undefined;
+        // AI-19 (engine-half): connector throws land here — write the real
+        // error to state (not just forward to plugin.onError).
+        if (!aborted) draft.lastError = error;
       });
       return aborted ? { kind: 'aborted' } : { kind: 'error' };
     }
   }
 
-  /**
-   * Execute each `tool_call` via the host executor, append `role:'tool'`
-   * messages, and update `state.toolCall[id].status`. Returns `false` if the
-   * abort signal fired mid-execution (caller should stop the loop).
-   * (engine.md §8.3, Failure Path `tool-exec-failed`.)
-   */
-  async function executeToolCalls(
-    calls: ChatToolCall[],
-    abortController: AbortController,
-  ): Promise<boolean> {
-    adapter.mutate('requestState', (draft) => {
-      draft.processingState = 'calling-tools';
-    });
-    // Pull the assistant message that owns these tool_calls (last message).
-    const owner = adapter.getState().messages.at(-1);
-    for (const call of calls) {
-      if (abortController.signal.aborted) return false;
-      const key = call.id ?? `idx-${call.index}`;
-      let resultText = '';
-      let status: 'success' | 'failed' = 'success';
-      try {
-        const raw = await toolExecutor!({ toolCall: call, signal: abortController.signal });
-        const normalized = normalizeToolResult(raw);
-        if (normalized.ok) {
-          resultText = normalized.result ?? '';
-          status = 'success';
-        } else {
-          resultText = normalized.error ?? '';
-          status = 'failed';
-        }
-      } catch (err) {
-        resultText = err instanceof Error ? err.message : String(err);
-        status = 'failed';
-      }
-      // Update per-call UI state on the owning assistant message.
-      if (owner) {
-        if (!owner.state) owner.state = {};
-        const toolCallState = (owner.state.toolCall ?? {}) as Record<string, ChatToolCallUIState>;
-        toolCallState[key] = {
-          ...(toolCallState[key] ?? { status: 'running' }),
-          status,
-          result: resultText,
-        };
-        owner.state.toolCall = toolCallState;
-        // Commit a fresh reference so subscribers re-render.
-        adapter.mutate('messages', (draft) => {
-          const idx = draft.messages.lastIndexOf(owner);
-          if (idx >= 0) draft.messages[idx] = { ...owner };
-        });
-      }
-      // Append the role:'tool' result message so the next request carries it.
-      const toolMessage: ChatMessage = adapter.createMessage({
-        id: generateMessageId('tool'),
-        role: 'tool',
-        content: resultText,
-        tool_call_id: call.id,
-        name: call.function.name,
-        metadata: { createdAt: Date.now(), toolStatus: status },
-      });
-      adapter.mutate('messages', (draft) => {
-        draft.messages.push(toolMessage);
-      });
-    }
-    return true;
-  }
-
   function buildContext(abortController: AbortController): MessageEngineContext {
     const allMessages = adapter.getState().messages;
-    // Exclude the trailing in-progress assistant placeholder from the request
-    // payload (it carries empty content while being streamed). The original
-    // single-turn engine did `messages.slice(0, -1)`; this preserves that while
-    // also working for follow-up rounds where the last message is the freshly
-    // pushed placeholder of the current round.
+    // Exclude the trailing in-progress assistant placeholder (empty content,
+    // loading) from the request payload; works for follow-up rounds too.
     const isPlaceholder = allMessages.length > 0 && isStreamingAssistantPlaceholder(allMessages[allMessages.length - 1]);
     const history = isPlaceholder ? allMessages.slice(0, -1) : allMessages;
     const requestMessages: ChatMessage[] = systemPrompt
@@ -488,31 +432,16 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     };
   }
 
-  function isStreamingAssistantPlaceholder(message: ChatMessage): boolean {
-    return message.role === 'assistant' && message.content === '' && message.loading === true;
-  }
-
-  function applyChunk(message: ChatMessage, chunk: AiConnectorChunk): void {
-    if (chunk.delta) {
-      combineDeltaData(message, chunk.delta);
-    }
-    if (chunk.snapshot) {
-      combineDeltaData(message, chunk.snapshot);
-    }
-  }
-
   function adapterStateConnector(): AiConnector | null {
-    return (adapter as unknown as { state: InternalMessageState }).state.connector;
+    return adapter.getConnector();
   }
 
   async function abort(): Promise<void> {
-    const controller = (adapter as unknown as { state: InternalMessageState }).state.abortController;
+    const controller = adapter.getAbortController();
     if (!controller) return;
     controller.abort();
-    adapter.mutate('requestState', () => {
-      // requestState is updated by the stream's catch block (aborted branch);
-      // set it here too so synchronous abort is observable immediately.
-    });
+    // F1.6: set requestState synchronously so callers observe `aborted`
+    // immediately (the stream's catch block also sets it after it unblocks).
     adapter.mutate('requestState', (draft) => {
       draft.requestState = 'aborted';
       draft.isProcessing = false;
@@ -523,7 +452,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     // Reject clear while a turn is in-flight: callers should `abort()` first.
     // This matches the design (`ai:clear` is a hard reset; clearing mid-stream
     // would race the streaming accumulator).
-    if ((adapter as unknown as { state: InternalMessageState }).state.isProcessing) {
+    if (adapter.getState().isProcessing) {
       return;
     }
     adapter.mutate('full', (draft) => {
@@ -541,28 +470,19 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
    * id advances from the prior assistant's branchId when the host omits one.
    */
   async function regenerate(branchId?: string): Promise<void> {
-    if ((adapter as unknown as { state: InternalMessageState }).state.isProcessing) {
+    if (adapter.getState().isProcessing) {
       return;
     }
     const current = adapter.getState().messages;
     // Find the last user message — everything after it is the assistant turn to
     // regenerate. If there is no preceding user message, there is nothing to
     // re-request.
-    let lastUserIdx = -1;
-    for (let i = current.length - 1; i >= 0; i--) {
-      if (current[i].role === 'user') {
-        lastUserIdx = i;
-        break;
-      }
-    }
+    const lastUserIdx = findLastUserIndex(current);
     if (lastUserIdx < 0) return;
 
     // Determine the branch id: explicit > advance prior > new sequence.
-    const priorAssistant = current
-      .slice(lastUserIdx + 1)
-      .find((m) => m.role === 'assistant' && typeof m.metadata?.branchId === 'string');
-    const nextBranchId =
-      branchId ?? advanceBranchId(priorAssistant?.metadata?.branchId as string | undefined);
+    const priorBranchId = findPriorAssistantBranchId(current, lastUserIdx + 1);
+    const nextBranchId = branchId ?? branchSeq.next(priorBranchId);
 
     // Truncate to [0..lastUserIdx] (keep the user prompt; drop the old turn).
     adapter.mutate('messages', (draft) => {
@@ -575,32 +495,5 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     await runTurn([]);
   }
 
-  function advanceBranchId(prev?: string): string {
-    if (!prev) {
-      branchSeq += 1;
-      return `branch-${branchSeq}`;
-    }
-    const m = /^(.*?)(\d+)$/.exec(prev);
-    if (m) return `${m[1]}${parseInt(m[2], 10) + 1}`;
-    branchSeq += 1;
-    return `branch-${branchSeq}`;
-  }
-
   return engine;
-}
-
-/** Indirection so tests can inject a fake controller. */
-function createAbortController(): AbortController {
-  return new AbortController();
-}
-
-/**
- * Normalize a `ToolExecutor` return value into a `ToolExecutionResult`. The
- * executor may return a plain string (success) or a structured result.
- */
-function normalizeToolResult(raw: string | ToolExecutionResult): ToolExecutionResult {
-  if (typeof raw === 'string') {
-    return { ok: true, result: raw };
-  }
-  return raw;
 }

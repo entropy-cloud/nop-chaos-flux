@@ -142,6 +142,37 @@ describe('createStreamBasedAiConnector', () => {
       })(),
     ).rejects.toBeInstanceOf(StreamChunkParseError);
   });
+
+  // F2.3: the generator must observe the request signal so abort takes effect
+  // even when the host `env.stream` does not actively cancel between chunks.
+  it('stops yielding once the request signal is aborted (F2.3)', async () => {
+    const fn = async (): Promise<StreamFetchResult<unknown>> => {
+      async function* slow() {
+        yield { choices: [{ delta: { content: 'a' }, finish_reason: null }] };
+        await new Promise((r) => setTimeout(r, 5));
+        yield { choices: [{ delta: { content: 'b' }, finish_reason: null }] };
+        await new Promise((r) => setTimeout(r, 5));
+        yield { choices: [{ delta: { content: 'c' }, finish_reason: null }] };
+      }
+      return { response: { ok: true, status: 200, headers: {} }, chunks: slow() };
+    };
+    const env = makeEnv(fn as unknown as StreamFetcher);
+    const connector = createStreamBasedAiConnector({ env, buildRequest: () => buildReq('x', {}) });
+
+    const controller = new AbortController();
+    const gen = await connector.stream(baseRequest(controller.signal));
+
+    const out: string[] = [];
+    for await (const c of gen) {
+      out.push(c.delta?.content ?? '');
+      // Abort right after the first chunk; the wrapper must observe the
+      // signal before pulling 'b'/'c' and return.
+      if (out.length === 1) controller.abort();
+    }
+    expect(out[0]).toBe('a');
+    // 'c' must NOT appear — the generator returns as soon as it observes abort.
+    expect(out).not.toContain('c');
+  });
 });
 
 describe('createStreamBasedAiConnector — buildRequest receives the connector request', () => {

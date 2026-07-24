@@ -21,7 +21,7 @@ export type AiComponentMethod = (typeof AI_COMPONENT_METHODS)[number];
 /**
  * Build the Layer C `ComponentHandle` for an `ai-chat` instance. The handle
  * implements `ComponentCapabilities.invoke(method, payload, ctx)` and dispatches
- * to the engine's 5 logical methods (design.md §11.1/§14.3). Dispatch goes
+ * to the engine's 6 logical methods (design.md §11.1/§14.3). Dispatch goes
  * through the live `invoke` model (not flat methods) — the action system calls
  * `component:<method>` which routes here via `action-adapter.ts`.
  *

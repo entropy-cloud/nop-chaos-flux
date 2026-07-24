@@ -106,6 +106,13 @@ export interface MessageEngineState {
   requestState: RequestState;
   processingState?: RequestProcessingState;
   isProcessing: boolean;
+  /**
+   * AI-19 (engine-half): the last non-abort error caught by the engine
+   * (connector throw, plugin throw, tool-loop failure). Cleared at the start
+   * of each turn. Renderers read this to feed `onError` (Plan {2}
+   * renderer-half). `undefined` while no error is outstanding.
+   */
+  lastError?: unknown;
 }
 
 // ============================================
@@ -217,6 +224,20 @@ export type MessageStateSubscribe = {
 export interface MessageStateAdapter {
   initialize(initialState: InternalMessageState): void;
   getState(): PublicMessageState;
+  /**
+   * Read the current connector (AI-08). The engine needs the connector to
+   * start a turn and to perform the idempotency check in `setConnector`.
+   * Exposing it as a read accessor (instead of casting to a private `.state`
+   * field) keeps the adapter contract self-sufficient: a plain-object adapter
+   * that holds state in a closure can implement this without inheriting from
+   * `BaseMessageStateAdapter`.
+   */
+  getConnector(): AiConnector | null;
+  /**
+   * Read the current in-flight abort controller (AI-08). Used by `abort()` to
+   * reach the controller started by `runTurn` without a private-field cast.
+   */
+  getAbortController(): AbortController | null;
   /** Let the adapter wrap a freshly created message (e.g. assign id / proxy). */
   createMessage<T extends ChatMessage>(message: T): T;
   mutate(kind: MessageUpdateKind, recipe: (draft: InternalMessageState) => void): void;

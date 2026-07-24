@@ -27,7 +27,7 @@ function mockEngine(overrides: Partial<MessageEngine> = {}): MessageEngine & {
 
 const ctx: ComponentCapabilityActionContext = {};
 
-describe('createAiComponentHandle — invoke dispatch (5 methods)', () => {
+describe('createAiComponentHandle — invoke dispatch (6 methods)', () => {
   it('sendMessage dispatches with { text }', async () => {
     const engine = mockEngine();
     const handle = createAiComponentHandle({ engine, id: 'chat1' });
@@ -115,7 +115,7 @@ describe('createAiComponentHandle — invoke dispatch (5 methods)', () => {
 });
 
 describe('createAiComponentHandle — capability metadata', () => {
-  it('hasMethod / listMethods cover all 5 logical methods', () => {
+  it('hasMethod / listMethods cover all 6 logical methods', () => {
     const engine = mockEngine();
     const handle = createAiComponentHandle({ engine, id: 'chat1' });
     for (const method of AI_COMPONENT_METHODS) {

@@ -51,6 +51,7 @@ class ReactMessageAdapter extends BaseMessageStateAdapter {
       requestState: this.state.requestState,
       processingState: this.state.processingState,
       isProcessing: this.state.isProcessing,
+      lastError: this.state.lastError,
     };
   }
 }

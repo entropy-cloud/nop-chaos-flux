@@ -20,6 +20,28 @@ export interface UseConversationOptions {
   autoSaveMessages?: boolean;
   /** Initial conversations to seed the list (ignored when `storage` is provided). */
   initialConversations?: AiConversationInfo[];
+  /**
+   * AI-28: host callback invoked when a storage operation fails. Storage
+   * failures remain non-fatal (the engine and conversation list are
+   * unaffected), but the host can now observe them to toast / retry / log —
+   * instead of the previous silent `console.warn`. Receives the failing
+   * phase, the optional conversation id, and the caught error.
+   */
+  onStorageError?: (event: ConversationStorageErrorEvent) => void;
+}
+
+export interface ConversationStorageErrorEvent {
+  /** Which storage operation failed. */
+  phase:
+    | 'loadConversations'
+    | 'loadMessages'
+    | 'saveConversation'
+    | 'saveMessages'
+    | 'deleteConversation';
+  /** Conversation id when applicable (absent for list-level operations). */
+  conversationId?: string;
+  /** The caught error (typed `unknown` to avoid assuming an Error subclass). */
+  error: unknown;
 }
 
 export interface UseConversationReturn {
@@ -58,8 +80,28 @@ export interface UseConversationReturn {
  * from schema expressions (scope-owned, host-managed).
  */
 export function useConversation(options: UseConversationOptions): UseConversationReturn {
-  const { connector, createEngineOptions, storage, autoSaveMessages = false, initialConversations } = options;
+  const { connector, createEngineOptions, storage, autoSaveMessages = false, initialConversations, onStorageError } = options;
   const connectorRef = useMemo(() => ({ current: connector }), [connector]);
+
+  // AI-28: stable storage-error reporter. Routed through a ref so the
+  // callback identity does not bust `useCallback` deps; the host can pass an
+  // inline function without re-subscribing on every render. The ref is synced
+  // in a passive effect (the `react-hooks/refs` escape hatch) so reads inside
+  // `reportStorageError` always see the latest callback without re-creating
+  // the reporter.
+  const onStorageErrorRef = useRef(onStorageError);
+  useEffect(() => {
+    onStorageErrorRef.current = onStorageError;
+  });
+  const reportStorageError = useCallback(
+    (event: ConversationStorageErrorEvent): void => {
+      onStorageErrorRef.current?.(event);
+      if (typeof console !== 'undefined') {
+        console.warn(`[useConversation] storage error: ${event.phase}`, event.error);
+      }
+    },
+    [],
+  );
 
   // When storage is injected it owns the source of truth: the in-memory list
   // is seeded empty and `loadConversations()` runs on mount. Without storage
@@ -88,6 +130,11 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       plugins,
       extraRequestParams: createEngineOptions?.extraRequestParams,
       systemPrompt: createEngineOptions?.systemPrompt,
+      // F1.2: forward the agentic tool triad so useConversation-built engines
+      // can run multi-round tool_calls loops (parity with use-message.ts).
+      tools: createEngineOptions?.tools,
+      toolExecutor: createEngineOptions?.toolExecutor,
+      maxToolRounds: createEngineOptions?.maxToolRounds,
       adapter: createReactMessageAdapter(),
     });
   }, [connectorRef, createEngineOptions]);
@@ -114,25 +161,23 @@ export function useConversation(options: UseConversationOptions): UseConversatio
         prevState = next;
         if (wasProcessing && isDone) {
           try {
-            Promise.resolve(storage.saveMessages(conversationId, engine.getMessages())).catch(() => {
-              // Failure Path `storage-save-error`: non-fatal, engine state
-              // is unaffected; the next turn retries.
-              if (typeof console !== 'undefined') {
-                console.warn('[useConversation] saveMessages failed');
-              }
-            });
-          } catch {
+            Promise.resolve(storage.saveMessages(conversationId, engine.getMessages())).catch(
+              (error: unknown) => {
+                // Failure Path `storage-save-error`: non-fatal, engine state
+                // is unaffected; the next turn retries. AI-28: surface to host.
+                reportStorageError({ phase: 'saveMessages', conversationId, error });
+              },
+            );
+          } catch (error) {
             // Synchronous throw from a sync saveMessages: non-fatal.
-            if (typeof console !== 'undefined') {
-              console.warn('[useConversation] saveMessages threw');
-            }
+            reportStorageError({ phase: 'saveMessages', conversationId, error });
           }
         }
       });
       autoSaveUnsubsRef.current.set(conversationId, unsub);
       return unsub;
     },
-    [storage, autoSaveMessages],
+    [storage, autoSaveMessages, reportStorageError],
   );
 
   const buildEngineFor = useCallback(
@@ -165,26 +210,37 @@ export function useConversation(options: UseConversationOptions): UseConversatio
           // Select the first conversation as active when none is active yet.
           setActiveId((current) => current ?? convs[0].id);
         }
-      } catch {
+      } catch (error) {
         // Failure Path `storage-load-error`: non-fatal, keep the empty list.
-        if (typeof console !== 'undefined') {
-          console.warn('[useConversation] loadConversations failed');
-        }
+        // AI-28: surface to host (callback may be undefined).
+        reportStorageError({ phase: 'loadConversations', error });
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [storage]);
+  }, [storage, reportStorageError]);
 
-  // ---- Unmount: tear down every auto-save subscription ----
+  // ---- Unmount: abort in-flight streams + tear down auto-save subscriptions ----
+  // F2.2: every engine in the cache is SELF-BUILT by this hook, so on full
+  // unmount (route switch / component teardown) we abort any in-flight stream
+  // so no orphaned background connection lingers. This is distinct from the
+  // intentional "switch-while-stream" background keep-alive handled in
+  // `switchConversation` (which retains processing engines between active
+  // switches, not on unmount).
   useEffect(() => {
     const unsubs = autoSaveUnsubsRef.current;
+    const cache = engineCache;
     return () => {
+      for (const engine of cache.values()) {
+        if (engine.getState().isProcessing) {
+          void engine.abort();
+        }
+      }
       for (const unsub of unsubs.values()) unsub();
       unsubs.clear();
     };
-  }, []);
+  }, [engineCache]);
 
   const createConversation = useCallback(
     (params?: { title?: string; metadata?: Record<string, unknown> }): AiConversationInfo => {
@@ -224,11 +280,10 @@ export function useConversation(options: UseConversationOptions): UseConversatio
               // Re-hydrate via the A3 `setMessages` (whole-list replace).
               engine.setMessages(stored);
             }
-          } catch {
+          } catch (error) {
             // Failure Path `storage-load-error`: non-fatal, empty messages.
-            if (typeof console !== 'undefined') {
-              console.warn('[useConversation] loadMessages failed');
-            }
+            // AI-28: surface to host.
+            reportStorageError({ phase: 'loadMessages', conversationId: id, error });
           }
         }
       }
@@ -244,7 +299,7 @@ export function useConversation(options: UseConversationOptions): UseConversatio
         engineCache.delete(cachedId);
       }
     },
-    [buildEngineFor, conversations, engineCache, storage],
+    [buildEngineFor, conversations, engineCache, storage, reportStorageError],
   );
 
   const deleteConversation = useCallback(
@@ -263,11 +318,12 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       }
       try {
         await storage?.deleteConversation?.(id);
-      } catch {
-        // non-fatal
+      } catch (error) {
+        // non-fatal. AI-28: surface to host.
+        reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
       }
     },
-    [activeId, conversations, engineCache, storage],
+    [activeId, conversations, engineCache, storage, reportStorageError],
   );
 
   const renameConversation = useCallback(
