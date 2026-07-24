@@ -86,6 +86,12 @@ const LazyConditionBuilderFormulaPage = lazy(() =>
 const LazyWordEditorPage = lazy(() =>
   import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })),
 );
+// Lazy-loaded: pulls in Tiptap/ProseMirror (~100KB) — only loaded when the
+// user navigates to #/ai-rich-text. Keeps the main bundle Tiptap-free (mirrors
+// the `./rich-text` opt-in subpath isolation at the app level).
+const LazyAiRichTextDemoPage = lazy(() =>
+  import('./pages/ai-rich-text-demo').then((m) => ({ default: m.AiRichTextDemoPage })),
+);
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
@@ -298,6 +304,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <AiP4WidgetsDemoPage onBack={goHome} />;
         case 'ai-linkage':
           return <AiLinkageDemoPage onBack={goHome} />;
+        case 'ai-rich-text':
+          return <LazyAiRichTextDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

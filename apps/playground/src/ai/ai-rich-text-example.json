@@ -1,0 +1,27 @@
+{
+  "type": "page",
+  "xui:imports": [{ "from": "ai", "as": "ai" }],
+  "body": [
+    {
+      "type": "ai-chat",
+      "testid": "ai-rich-text-chat",
+      "connector": "${$ai.connectors.mock}",
+      "senderExtensions": "${$ai.tiptapSender}",
+      "placeholder": "Type a message. Try @mention, /slash, or template buttons…",
+      "submitType": "enter",
+      "header": {
+        "type": "hstack",
+        "className": "p-3 border-b items-center justify-between",
+        "items": [
+          { "type": "text", "text": "AI Rich Text Sender (P6, A6)" },
+          {
+            "type": "text",
+            "text": "Tiptap editor injected via senderExtensions — @mention / template / slash",
+            "className": "text-xs text-muted-foreground"
+          }
+        ]
+      },
+      "className": "flex flex-col h-[70vh] max-w-3xl mx-auto p-4 gap-3"
+    }
+  ]
+}

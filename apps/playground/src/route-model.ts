@@ -600,6 +600,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'P4 flux-renderers-ai: message branches (engine.regenerate stamps branchId, host loads branches via setMessages) + platform linkage (messages → form field + data-source reload off onResponseComplete).',
   },
+  {
+    id: 'ai-rich-text',
+    title: 'AI Rich Text Sender (P6, A6)',
+    eyebrow: 'AI Renderers',
+    description:
+      'P6 flux-renderers-ai: host-injected Tiptap rich-text editor via ai-sender.senderExtensions (opt-in ./rich-text subpath) — @mention popup, template bar, slash commands, plain-text serialization to engine.sendMessage.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [
