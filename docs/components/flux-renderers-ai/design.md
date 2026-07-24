@@ -23,7 +23,7 @@
 
 - 不实现 MCP（Model Context Protocol）协议客户端本体（Phase 7 可选，需引入 `@modelcontextprotocol/sdk` 作为可选 peerDep）。
 - 不实现 Skills 系统（Anthropic 风格的 skill 文件夹加载）——非核心，按需再评估。
-- 不实现 Sender 的 Tiptap 富文本扩展（@提及、模板插入、Slash 命令）作为 P0；P0 用 `<Textarea>` + auto-resize + 键盘事件。Tiptap 集成是 Phase 6 可选项。
+- ~~不实现 Sender 的 Tiptap 富文本扩展（@提及、模板插入、Slash 命令）作为 P0；P0 用 `<Textarea>` + auto-resize + 键盘事件。Tiptap 集成是 Phase 6 可选项。~~ → **P6（A6）已落地**：`senderExtensions` schema 字段 + `./rich-text` 子路径导出 `createTiptapSender()` 工厂（含内置 @提及 / 模板 / Slash 扩展）。Tiptap 为可选 peerDep，host 未 import `./rich-text` 时 bundle 不含 Tiptap（bundle 隔离守卫见 `contract-honesty.test.ts`）。P0 `<Textarea>` 降级行为不变。
 - 不引入组件级 `api` 字段：所有 AI 请求通过 `ResponseProvider` 抽象注入，业务方在 host 层提供 provider 实现（封装自家后端 / 网关 / 鉴权），渲染器只接受已构造好的 provider 函数。
 - 不在 P0 接 flux form owner：消息状态由 engine 自持，不写回 form value（避免 form 验证、提交语义被污染）。Phase 5 再评估"把 messages 序列化进 scope 字段"的高级场景。
 
@@ -64,27 +64,28 @@
 
 ### 5.1 渲染器清单
 
-> **实现状态**（2026-07-24）：P0 的 4 个渲染器（`ai-chat` / `ai-message-list` / `ai-bubble` / `ai-sender`）已在 A1 落地（✅）。P1 渲染器（`ai-conversations` / `ai-welcome` / `ai-prompts` / `ai-feedback`）已在 A2 落地（✅）。P2 渲染器（`ai-tool-call` / `ai-attachments`）已在 A3 落地（✅）——含 engine agentic 工具循环、Layer C ComponentHandle、`ai-bubble` tools/reasoning/image content renderer、A-6~A-12 深化项、消息编辑、虚拟滚动。P3 渲染器（`ai-citations` / HITL）已在 A4 落地（✅）。P4 高级集成（`ai-voice-input` / `ai-token-usage` / 消息分支 / `ai-suggestions` + 两平台联动 Decision）已在 A5 落地（✅）。P7 尚未实现（⬜）。
+> **实现状态**（2026-07-24）：P0 的 4 个渲染器（`ai-chat` / `ai-message-list` / `ai-bubble` / `ai-sender`）已在 A1 落地（✅）。P1 渲染器（`ai-conversations` / `ai-welcome` / `ai-prompts` / `ai-feedback`）已在 A2 落地（✅）。P2 渲染器（`ai-tool-call` / `ai-attachments`）已在 A3 落地（✅）——含 engine agentic 工具循环、Layer C ComponentHandle、`ai-bubble` tools/reasoning/image content renderer、A-6~A-12 深化项、消息编辑、虚拟滚动。P3 渲染器（`ai-citations` / HITL）已在 A4 落地（✅）。P4 高级集成（`ai-voice-input` / `ai-token-usage` / 消息分支 / `ai-suggestions` + 两平台联动 Decision）已在 A5 落地（✅）。P6 Tiptap 富文本 sender（A6）已落地（✅）——`senderExtensions` schema 字段 + `./rich-text` 子路径 + `createTiptapSender` 工厂。P7 尚未实现（⬜）。
 
-| Phase      | type               | 类别   | 职责                                                                             | 状态 |
-| ---------- | ------------------ | ------ | -------------------------------------------------------------------------------- | ---- |
-| P0         | `ai-chat`          | Layout | 完整对话面板（messages + sender + auto-scroll + 状态管理）                       | ✅   |
-| P0         | `ai-message-list`  | Layout | 消息列表（分组、自动滚动、注册制渲染、A-8 虚拟滚动）                             | ✅   |
-| P0         | `ai-bubble`        | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown / image / 消息编辑）          | ✅   |
-| P0         | `ai-sender`        | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                                    | ✅   |
-| P1         | `ai-conversations` | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                                          | ✅   |
-| P1         | `ai-welcome`       | Widget | 空状态欢迎页 + icon/title/description/footer                                     | ✅   |
-| P1         | `ai-prompts`       | Widget | 推荐提示词卡片列表（垂直/水平/折行）                                             | ✅   |
-| P1         | `ai-feedback`      | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）                              | ✅   |
-| P2         | `ai-attachments`   | Widget | 附件上传/预览（图片模式 / 卡片模式 / 拖放 / 多模态 image_url 发送）              | ✅   |
-| P2         | `ai-tool-call`     | Widget | 工具调用卡片（状态、展开、JSON 高亮、A-6 按工具名注册专用渲染器、A-12 状态颜色） | ✅   |
-| P3         | `ai-citations`     | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                                 | ✅   |
-| P3         | HITL 审批          | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮                          | ✅   |
-| P4         | `ai-voice-input`   | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）                                  | ✅   |
-| P4         | `ai-token-usage`   | Widget | Token / 成本 / 上下文占比显示（数据由 connector 填充 metadata）                  | ✅   |
-| P4         | 消息分支           | 增强   | 重新生成时分支切换（branches 由 host 管理）                                      | ✅   |
-| P4         | `ai-suggestions`   | Widget | 建议气泡（Popover / Pills）— 从 P2 降至 P4（`ai-prompts` 已覆盖）                | ✅   |
-| P7（可选） | `ai-mcp-manager`   | Widget | MCP server 管理（启用/禁用/添加），需 host 注入 MCP 客户端                       | ⬜   |
+| Phase      | type                 | 类别   | 职责                                                                                                                            | 状态 |
+| ---------- | -------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| P0         | `ai-chat`            | Layout | 完整对话面板（messages + sender + auto-scroll + 状态管理）                                                                      | ✅   |
+| P0         | `ai-message-list`    | Layout | 消息列表（分组、自动滚动、注册制渲染、A-8 虚拟滚动）                                                                            | ✅   |
+| P0         | `ai-bubble`          | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown / image / 消息编辑）                                                         | ✅   |
+| P0         | `ai-sender`          | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                                                                                   | ✅   |
+| P1         | `ai-conversations`   | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                                                                                         | ✅   |
+| P1         | `ai-welcome`         | Widget | 空状态欢迎页 + icon/title/description/footer                                                                                    | ✅   |
+| P1         | `ai-prompts`         | Widget | 推荐提示词卡片列表（垂直/水平/折行）                                                                                            | ✅   |
+| P1         | `ai-feedback`        | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）                                                                             | ✅   |
+| P2         | `ai-attachments`     | Widget | 附件上传/预览（图片模式 / 卡片模式 / 拖放 / 多模态 image_url 发送）                                                             | ✅   |
+| P2         | `ai-tool-call`       | Widget | 工具调用卡片（状态、展开、JSON 高亮、A-6 按工具名注册专用渲染器、A-12 状态颜色）                                                | ✅   |
+| P3         | `ai-citations`       | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）                                                                                | ✅   |
+| P3         | HITL 审批            | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮                                                                         | ✅   |
+| P4         | `ai-voice-input`     | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）                                                                                 | ✅   |
+| P4         | `ai-token-usage`     | Widget | Token / 成本 / 上下文占比显示（数据由 connector 填充 metadata）                                                                 | ✅   |
+| P4         | 消息分支             | 增强   | 重新生成时分支切换（branches 由 host 管理）                                                                                     | ✅   |
+| P4         | `ai-suggestions`     | Widget | 建议气泡（Popover / Pills）— 从 P2 降至 P4（`ai-prompts` 已覆盖）                                                               | ✅   |
+| P6         | Tiptap 富文本 sender | 增强   | `ai-sender.senderExtensions` + `./rich-text` 子路径（`createTiptapSender` 工厂 + 内置 @提及 / 模板 / Slash 扩展，可选 peerDep） | ✅   |
+| P7（可选） | `ai-mcp-manager`     | Widget | MCP server 管理（启用/禁用/添加），需 host 注入 MCP 客户端                                                                      | ⬜   |
 
 > 详细的组件级改进（流式光标 / 时间戳 / 代码块复制按钮 / 工具状态颜色 / 拖放附件 / 消息编辑 / LaTeX 评估等）见 [`improvement-analysis.md`](./improvement-analysis.md) §4。Phase 路线与改进项 ID 映射见 [`implementation.md`](./implementation.md) §2。
 
@@ -149,6 +150,7 @@ packages/flux-renderers-ai/
         │   │   ├── image.tsx
         │   │   └── loading.tsx
         │   └── types.ts             # BubbleBoxRendererMatch / BubbleContentRendererMatch
+    │   └── types.ts             # BubbleBoxRendererMatch / BubbleContentRendererMatch
         ├── ai-sender.tsx
         ├── ai-conversations.tsx
         ├── ai-welcome.tsx
@@ -156,7 +158,17 @@ packages/flux-renderers-ai/
         ├── ai-feedback.tsx
         ├── ai-attachments.tsx
         └── ai-tool-call.tsx
+    └── rich-text/                 # P6 (A6): Tiptap 富文本 sender 子路径（OPT-IN）
+        ├── index.ts               # ./rich-text 子路径入口 — 导出 createTiptapSender + 类型
+        ├── types.ts               # TiptapSenderOptions / TiptapMentionItem / ...
+        ├── tiptap-sender.tsx      # Tiptap 编辑器组件（StarterKit + keymap + 内置扩展 popup）
+        └── extensions/            # 内置扩展逻辑
+            ├── mention.ts         # @提及：trigger 检测 + popup 数据过滤 + 插入
+            ├── template.ts        # 模板插入
+            └── slash-command.ts   # /slash 命令：trigger 检测 + popup + 执行
 ```
+
+> **P6 关键**：`src/rich-text/` 是**可选子路径**（`@nop-chaos/flux-renderers-ai/rich-text`）。Tiptap 是可选 peerDep（`peerDependenciesMeta.optional = true`）。host 未 import 此子路径时，bundle 不含任何 Tiptap 代码（`contract-honesty.test.ts` 自动化守卫扫描 `src/engine/` + `src/renderers/` + `src/adapters/` 不得 import `@tiptap/*`）。
 
 **关键变更（vs v1）**：
 
@@ -336,6 +348,42 @@ P2 增强：默认注册 `*` 通用 fallback；包内**不**提供任何专用�
 ### 10.5 响应式 connector 切换
 
 `connector` 表达式求值结果变化（例如用户切换模型 / 切换 provider）时，engine 通过 `setConnector` 热替换，下一条 `sendMessage` 用新 connector；进行中的请求不中断（避免半句响应分裂）。
+
+### 10.6 P6 Tiptap 富文本 sender（A6）
+
+`ai-sender` 的 `senderExtensions` schema 字段（`SchemaValue`）声明时，渲染 host 注入的富文本编辑器组件；未声明时保持现有 `<Textarea>` 降级。字段经 `xui:imports` 解析为 `React.ComponentType<AiSenderExtensionProps>`（host 经 import 注入）。
+
+**子路径注入模式**（bundle 隔离核心设计）：
+
+```ts
+// host page module（NOT inside renderers）
+import { createTiptapSender } from '@nop-chaos/flux-renderers-ai/rich-text';
+
+const tiptapSender = createTiptapSender({
+  extensions: ['mention', 'template', 'slash'],
+  mentions: [...], templates: [...], slashCommands: [...],
+});
+
+// 经 xui:imports 表达式 helpers 暴露给 schema
+createExpressionHelpers: () => ({ tiptapSender, ... });
+```
+
+```json
+{
+  "type": "ai-chat",
+  "senderExtensions": "${$ai.tiptapSender}",
+  "connector": "${$ai.connectors.mock}"
+}
+```
+
+**契约不变量**：
+
+- 编辑器输出经 `editor.getText()` 序列化为纯文本喂给 `engine.sendMessage(text)`——engine 契约不变。
+- Tiptap 为可选 peerDep（`peerDependenciesMeta."@tiptap/react".optional = true`）；host 未 import `./rich-text` 子路径时 bundle 不含 Tiptap（自动化守卫见 `contract-honesty.test.ts`）。
+- `AiSenderExtensionProps` 经 `export type` 从 `src/index.ts` 导出（编译时擦除，不拉 Tiptap 进主入口 runtime graph）。
+- `./rich-text` 子路径 export 配置：types → `./dist/rich-text/index.d.ts`、default → `./dist/rich-text/index.js`。
+
+**Failure Paths**：`sender-extension-fallback`（未声明 → Textarea 降级）、`tiptap-not-installed`（host import 子路径但未装 Tiptap → host 侧 import error）、`extension-data-missing`（扩展启用但无数据源 → popup 为空不弹出）、`tiptap-submit-empty`（空内容禁用 submit）。
 
 ## 11. 与 flux 的集成策略
 

@@ -188,10 +188,36 @@ export interface AiSenderSchema extends BaseSchema {
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
   clearOnSubmit?: boolean; // 默认 true
   actions?: SchemaInput; // 自定义按钮区（默认 SubmitButton + ClearButton）
+  /**
+   * P6 (A6): host-injected rich-text extension component (expression-resolved,
+   * typically `${$ai.tiptapSender}`). When present, delegates the input area to
+   * this component (Tiptap from `./rich-text` subpath); when absent, uses the
+   * built-in `<Textarea>`.
+   */
+  senderExtensions?: SchemaValue;
 
   onSubmit?: ActionSchema; // payload: { text: string }
   onCancel?: ActionSchema;
   onChange?: ActionSchema; // payload: { text: string }
+}
+
+/**
+ * Props the host-injected rich-text extension receives. The extension owns the
+ * editing surface (e.g. Tiptap); it serializes content to plain text before
+ * emitting onChange/onSubmit so the engine contract stays `sendMessage(string)`.
+ */
+export interface AiSenderExtensionProps {
+  value: string;
+  onChange: (text: string) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  loading?: boolean;
+  placeholder?: string;
+  maxLength?: number;
+  showWordLimit?: boolean;
+  submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
+  disabled?: boolean;
+  refocusAfterSubmit?: boolean;
 }
 ```
 
@@ -203,6 +229,20 @@ export interface AiSenderSchema extends BaseSchema {
 - Enter 提交 / Shift+Enter 换行按 `submitType` 处理。
 - 字数超限：禁用提交按钮 + 显示红色计数。
 - 取消（停止）按钮：`engine.abort()` + 触发 `onCancel` event。
+- **P6 Tiptap 扩展**（A6）：`senderExtensions` 字段声明时渲染 host 注入的组件（经 `xui:imports` 表达式解析为 `React.ComponentType<AiSenderExtensionProps>`），编辑器内容序列化为纯文本喂给 engine。host 经 `./rich-text` 子路径的 `createTiptapSender` 工厂创建编辑器：
+
+```ts
+import { createTiptapSender } from '@nop-chaos/flux-renderers-ai/rich-text';
+
+const tiptapSender = createTiptapSender({
+  extensions: ['mention', 'template', 'slash'],
+  mentions: [{ id: 'u1', label: 'alice' }],
+  templates: [{ label: 'Greeting', content: 'Hello!' }],
+  slashCommands: [{ label: 'summarize', insertText: 'Summarize:' }],
+});
+```
+
+未声明 `senderExtensions` 时保持现有 `<Textarea>` 降级行为（零回归）。Tiptap 为可选 peerDep，host 未 import `./rich-text` 时 bundle 不含 Tiptap（守卫见 `contract-honesty.test.ts`）。
 
 ## 5. ai-conversations（Widget, P1）
 

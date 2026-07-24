@@ -24,7 +24,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **A3. P2 工具调用 + 附件 + 渲染器深化**（2 renderer + 7 改进项）: `done`
 - **A4. P3 持久化 + 引用 + HITL**（1 renderer + 1 增强 + 2 改进项）: `done`
 - **A5. P4 高级集成**（3 renderer + 1 增强 + 3 改进项 + 2 评估项）: `done`
-- **A6. P6 Tiptap 富文本（可选）**: `todo`
+- **A6. P6 Tiptap 富文本（可选）**: `done`
 
 ### Follow-ups 已收口
 
@@ -139,7 +139,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 | ID  | Status | 内容                                                                                                                                  | 设计文档            | 依赖 |
 | --- | ------ | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ---- |
-| A6  | todo   | `@tiptap/react` 接入；@提及 / 模板插入 / Slash 命令；保持 `<Textarea>` 作为降级（`senderExtensions` 字段未声明时 bundle 不含 Tiptap） | `design.md §3, §10` | A2   |
+| A6  | done   | `@tiptap/react` 接入；@提及 / 模板插入 / Slash 命令；保持 `<Textarea>` 作为降级（`senderExtensions` 字段未声明时 bundle 不含 Tiptap） | `design.md §3, §10` | A2   |
 
 **退出条件**：富文本输入扩展通过 `senderExtensions` 字段注入。
 
