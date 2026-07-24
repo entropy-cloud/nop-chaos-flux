@@ -109,72 +109,87 @@ packages/flux-renderers-ai/
     ├── index.ts                     # 单一公开入口（分组：types / renderers / host utilities）
     ├── schemas.ts                   # 所有 Schema 类型集中
     ├── ai-renderer-definitions.ts   # RendererDefinition[] 主注册表
-    ├── ai-renderer-definitions.test.tsx
     ├── styles.css                   # marker 样式（起步仅占位）
     ├── test-support.ts              # createMockRendererProps
+    ├── ai-test-support.tsx          # 渲染器测试 fixture（tsx，含 React 组件 mock）
     ├── __tests__/
     │   └── contract-honesty.test.ts # 契约守卫
     │
     ├── engine/                      # 框架无关核心（移植自 tiny-robot）
+    │   ├── __tests__/               # engine 单测（engine.test.ts / adapter-contract / tool-loop / branches / utils / ...）
     │   ├── create-engine.ts         # createMessageEngine
     │   ├── types.ts                 # ChatMessage / MessageEngine / AiConnector / 插件接口
     │   ├── utils.ts                 # combineDeltaData / makeAbortable / ...
-    │   ├── state-adapter.ts         # MessageStateAdapter 接口
-    │   ├── native-adapter.ts        # createNativeMessageAdapter（测试用）
+    │   ├── state-adapter.ts         # MessageStateAdapter 接口 + BaseMessageStateAdapter
+    │   ├── native-adapter.ts        # createNativeMessageAdapter（公共默认 adapter，见 engine.md §8.2）
+    │   ├── branching.ts             # A-16 消息分支辅助（regenerate / branchId 盖章）
+    │   ├── tool-execution.ts        # P2 agentic 工具循环执行器（ToolExecutor 协议）
     │   └── plugins/
     │       ├── thinking-plugin.ts
     │       ├── tool-plugin.ts
     │       └── length-plugin.ts
     │
-    ├── adapters/                    # React 适配
+    ├── adapters/                    # React 适配 + host helpers
+    │   ├── __tests__/               # adapter 单测（use-message / use-conversation* / react-adapter / use-engine-view / ai-component-handle / ai-connector-factory）
     │   ├── react-adapter.ts         # createReactMessageAdapter（useSyncExternalStore 桥接）
     │   ├── use-message.ts           # useMessage(options) hook（host utility）
+    │   ├── use-engine-view.ts       # useEngineView hook（外部 engine 注入绑定，design.md §11.2）
     │   ├── use-conversation.ts      # useConversation(options) hook（host utility）
     │   ├── use-auto-scroll.ts       # useAutoScroll hook（P2 公开为 host utility）
-    │   ├── ai-connector-factory.ts  # createStreamBasedAiConnector(env) —— host helper，把 env.stream 输出组装成 AiConnector（env.stream 已自动处理 SSE 切分+JSON 解析）
-    │   └── ai-chat-context.tsx      # AiChatProvider / useAiChatContext（渲染器内部 Context）
+    │   ├── ai-connector-factory.ts  # createStreamBasedAiConnector(env) —— host helper
+    │   ├── ai-chat-context.tsx      # AiChatProvider / useAiChatContext（渲染器内部 Context）
+    │   ├── ai-action-provider.ts    # Layer B：createAiActionProvider（`ai` namespace 7 actions）
+    │   ├── ai-component-handle.ts   # Layer C：createAiComponentHandle（ComponentHandle 6 methods）
+    │   └── ai-conversation-controller.ts  # AiConversationController bridge（会话级 action 委托）
     │
     ├── storage/                     # 仅类型契约，不含具体实现
     │   └── types.ts                 # ConversationStorageStrategy 接口（host 经 import 注入实现）
     │
-    └── renderers/                   # flux 渲染器（每个一个 .tsx + .test.tsx）
-        ├── ai-chat.tsx
-        ├── ai-message-list.tsx
-        ├── ai-sender.tsx
-        ├── ai-conversations.tsx
-        ├── ai-welcome.tsx
-        ├── ai-prompts.tsx
-        ├── ai-feedback.tsx
-        ├── ai-attachments.tsx
-        ├── ai-tool-call.tsx
-        ├── ai-citations.tsx
-        ├── ai-token-usage.tsx
-        ├── ai-voice-input.tsx
-        ├── ai-suggestions.tsx
-        ├── ai-bubble/
-        │   ├── index.tsx            # AiBubbleRenderer 主组件
-        │   ├── markdown-buffer.ts   # 流式 markdown 缓冲（CJK / fence 安全）
-        │   ├── user-edit.tsx        # §4.7 用户消息编辑
-        │   ├── types.ts             # BubbleContentRendererMatch / BubbleToolRendererMatch
-        │   └── renderers/           # BubbleRenderers 注册制（参考 tiny-robot）
-        │       ├── default-renderers.ts
-        │       ├── text.tsx
-        │       ├── markdown.tsx
-        │       ├── reasoning.tsx
-        │       ├── tools.tsx
-        │       ├── image.tsx
-        │       ├── loading.tsx
-        │       ├── error.tsx
-        │       ├── data-part.tsx
-        │       └── timestamp.tsx
-    └── rich-text/                 # P6 (A6): Tiptap 富文本 sender 子路径（OPT-IN）
-        ├── index.ts               # ./rich-text 子路径入口 — 导出 createTiptapSender + 类型
-        ├── types.ts               # TiptapSenderOptions / TiptapMentionItem / ...
-        ├── tiptap-sender.tsx      # Tiptap 编辑器组件（StarterKit + keymap + 内置扩展 popup）
-        └── extensions/            # 内置扩展逻辑
-            ├── mention.ts         # @提及：trigger 检测 + popup 数据过滤 + 插入
-            ├── template.ts        # 模板插入
-            └── slash-command.ts   # /slash 命令：trigger 检测 + popup + 执行
+    ├── renderers/                   # flux 渲染器（每个一个 .tsx + .test.tsx）
+    │   ├── __tests__/               # 渲染器单测（renderers / a11y / component-handle / namespace-integration / ai-chat-* / ai-sender-* / ai-tool-call-hitl / phase4 / phase5 / ...）
+    │   ├── ai-chat.tsx
+    │   ├── ai-message-list.tsx
+    │   ├── ai-sender.tsx
+    │   ├── ai-conversations.tsx
+    │   ├── ai-welcome.tsx
+    │   ├── ai-prompts.tsx
+    │   ├── ai-feedback.tsx
+    │   ├── ai-attachments.tsx
+    │   ├── ai-tool-call.tsx
+    │   ├── ai-citations.tsx
+    │   ├── ai-token-usage.tsx
+    │   ├── ai-voice-input.tsx
+    │   ├── ai-suggestions.tsx
+    │   └── ai-bubble/
+    │       ├── __tests__/           # bubble 渲染器单测（bubble-renderers / markdown-and-data-part / markdown-buffer / tool-call-and-content）
+    │       ├── index.tsx            # AiBubbleRenderer 主组件
+    │       ├── markdown-buffer.ts   # 流式 markdown 缓冲（CJK / fence 安全）
+    │       ├── user-edit.tsx        # §4.7 用户消息编辑
+    │       ├── types.ts             # BubbleContentRendererMatch / BubbleToolRendererMatch
+    │       └── renderers/           # BubbleRenderers 注册制（参考 tiny-robot）
+    │           ├── default-renderers.ts
+    │           ├── text.tsx
+    │           ├── markdown.tsx
+    │           ├── reasoning.tsx
+    │           ├── tools.tsx
+    │           ├── image.tsx
+    │           ├── loading.tsx
+    │           ├── error.tsx
+    │           ├── data-part.tsx
+    │           └── timestamp.tsx
+    └── rich-text/                   # P6 (A6): Tiptap 富文本 sender 子路径（OPT-IN）
+        ├── __tests__/               # rich-text 单测（tiptap-sender / tiptap-extensions / tiptap-sender-ime）
+        ├── index.ts                 # ./rich-text 子路径入口 — 导出 createTiptapSender + 类型
+        ├── types.ts                 # TiptapSenderOptions / TiptapMentionItem / ...
+        ├── tiptap-sender.tsx        # Tiptap 编辑器组件（StarterKit + keymap + 内置扩展 popup）
+        ├── components/              # Tiptap sender 视觉组件
+        │   ├── suggestion-popup.tsx     # @提及 / /slash / 模板 popup
+        │   ├── template-bar.tsx         # 模板插入条
+        │   └── tiptap-sender-surface.tsx # 编辑器外壳（包裹 Tiptap 编辑器 + 工具栏）
+        └── extensions/              # 内置扩展逻辑
+            ├── mention.ts           # @提及：trigger 检测 + popup 数据过滤 + 插入
+            ├── template.ts          # 模板插入
+            └── slash-command.ts     # /slash 命令：trigger 检测 + popup + 执行
 ```
 
 > **P6 关键**：`src/rich-text/` 是**可选子路径**（`@nop-chaos/flux-renderers-ai/rich-text`）。Tiptap 是可选 peerDep（`peerDependenciesMeta.optional = true`）。host 未 import 此子路径时，bundle 不含任何 Tiptap 代码（`contract-honesty.test.ts` 自动化守卫扫描 `src/engine/` + `src/renderers/` + `src/adapters/` 不得 import `@tiptap/*`）。

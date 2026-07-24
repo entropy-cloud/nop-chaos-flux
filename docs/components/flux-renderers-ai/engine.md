@@ -176,8 +176,8 @@ export interface MessageStateAdapter {
 
 两种实现：
 
-- `createNativeMessageAdapter()`：纯 TS，闭包持有 state，测试用。
-- `createReactMessageAdapter()`：内部用 module-level store + `Set<listener>`，配合 `useSyncExternalStore`。`mutate` 跑完 recipe 后通知订阅者；不依赖 React，但**为 React 订阅模型优化**（state 引用替换、按 kind 分通道通知）。
+- `createNativeMessageAdapter()`：纯 TS，闭包持有 state。**生产默认 + 公共导出** —— 是 `createMessageEngine` 的默认 adapter 创建路径（`create-engine.ts` 中 `options.adapter ?? createNativeMessageAdapter()`），并经 `index.ts` 公共导出（`export { createNativeMessageAdapter }`）。无需 React / DOM 即可驱动 engine，亦用于 engine 单测。
+- `createReactMessageAdapter()`：内部用 module-level store + `Set<listener>`，配合 `useSyncExternalStore`。`mutate` 跑完 recipe 后通知订阅者；不依赖 React，但**为 React 订阅模型优化**（state 引用替换、按 kind 分通道通知）；同样经 `index.ts` 公共导出。
 
 ### 8.3 插件链生命周期
 

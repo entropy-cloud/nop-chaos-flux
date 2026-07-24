@@ -492,6 +492,50 @@ The hierarchical action namespace resolution chain used at runtime to look up na
 
 Defined in `flux-core` as an interface with `resolve()`, `registerNamespace()`, and `unregisterNamespace()` methods. Each scope node has an optional `parent` for chain-of-responsibility fallback. It is distinct from `ScopeRef` (data scope) and `ImportFrame` (expression helper alias scope); `ActionScope` carries imported capability providers for action resolution only.
 
+## AI Package Core Terms
+
+The following terms are the public contract types of `@nop-chaos/flux-renderers-ai`. They are framework-agnostic (the engine half MUST NOT import `react` or DOM globals) and are re-exported from `flux-renderers-ai/src/index.ts`. Full behavior and ownership live in `docs/components/flux-renderers-ai/engine.md` and `docs/components/flux-renderers-ai/design.md`.
+
+## `MessageEngine`
+
+The framework-agnostic AI conversation state machine that owns the turn lifecycle (idle → processing → completed/aborted/error), streaming accumulation, plugin fan-out, and the message list.
+
+Created via `createMessageEngine(options)`. It is pure TypeScript with no React/Vue/DOM dependency, so it can run in unit tests and non-UI hosts. State is delegated to an injected `MessageStateAdapter` rather than held directly.
+
+Defined in `flux-renderers-ai/src/engine/types.ts`; architecture in `docs/components/flux-renderers-ai/engine.md` §8.
+
+## `AiConnector`
+
+The host-provided IO boundary that the `MessageEngine` calls to reach an AI backend. All network IO is injected through it, keeping the engine host-neutral.
+
+It exposes a streaming `stream(request)` that returns an `AsyncGenerator<AiConnectorChunk>` and an optional non-streaming `complete(request)`. A reference implementation is `createStreamBasedAiConnector(env)`, which bridges `RendererEnv.fetcher` to the connector contract.
+
+Defined in `flux-renderers-ai/src/engine/types.ts`; architecture in `docs/components/flux-renderers-ai/engine.md` §8 and `docs/components/flux-renderers-ai/design.md`.
+
+## `ChatMessage`
+
+The OpenAI-compatible message record used throughout the AI package — the canonical unit stored in engine state, rendered by `ai-bubble`, and exchanged with the connector.
+
+It carries `id` (stable React key + scope binding), `role` (`system`/`user`/`assistant`/`tool`), multimodal `content` (string or `ChatMessageContentPart[]`), optional `reasoning_content`, `tool_calls`, host `metadata`, and renderer `state`.
+
+Defined in `flux-renderers-ai/src/engine/types.ts`; see `docs/components/flux-renderers-ai/engine.md` §7.
+
+## `MessageStateAdapter`
+
+The pure interface that decouples the `MessageEngine` from any specific view layer by owning message list, request state, and subscription fan-out.
+
+It is a pure interface (not an abstract base class requirement): a plain-object adapter holding state in a closure may implement it directly. Two public implementations ship: `createNativeMessageAdapter()` (production default, plain TS closure) and `createReactMessageAdapter()` (optimized for `useSyncExternalStore`). The engine reaches connector / abort controller through its `getConnector()` / `getAbortController()` read accessors (AI-08) rather than private-field casts.
+
+Defined in `flux-renderers-ai/src/engine/types.ts`; architecture in `docs/components/flux-renderers-ai/engine.md` §8.2.
+
+## `ReactMessageAdapter`
+
+The React-optimized `MessageStateAdapter` produced by `createReactMessageAdapter()`, backing `useMessage` and `useEngineView` via `useSyncExternalStore`.
+
+It keeps a module-level store plus a `Set<listener>`, performs reference-replacing state updates, and fans out subscriptions partitioned by update kind so React components subscribe at the granularity they need. It is framework-agnostic in implementation (no React import in the engine core) but tuned for React's subscription model. Publicly exported from `flux-renderers-ai/src/index.ts`.
+
+Architecture in `docs/components/flux-renderers-ai/engine.md` §8.2 and `docs/components/flux-renderers-ai/design.md`.
+
 ## Related Documents
 
 - `docs/references/maintenance-checklist.md`

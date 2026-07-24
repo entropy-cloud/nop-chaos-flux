@@ -33,7 +33,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### Follow-up Backlog (P2 from audits)
 
-> 以下 P2 项来自 2026-07-24 两份 open 审计（multi-audit + open-audit）。**代码/行为类 P2 项已由 `docs/plans/2026-07-24-2300-1-ai-p2-code-and-behavior-remediation.md` 收口（✅）**；文档一致性类 P2 项由 `docs/plans/2026-07-24-2300-2-ai-p2-doc-consistency-remediation.md` 收口（待处理）。每条带来源审计路径以保持可追溯。
+> 以下 P2 项来自 2026-07-24 两份 open 审计（multi-audit + open-audit）。**代码/行为类 P2 项已由 `docs/plans/2026-07-24-2300-1-ai-p2-code-and-behavior-remediation.md` 收口（✅）**；文档一致性类 P2 项由 `docs/plans/2026-07-24-2300-2-ai-p2-doc-consistency-remediation.md` 收口（✅ 已收口）。每条带来源审计路径以保持可追溯。
 
 **Source: `docs/audits/2026-07-24-1757-multi-audit-ai.md`**（P2 批）
 
@@ -42,7 +42,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - ✅ `AiChatProvider` value 每渲染内联重建，跨 Provider 边界 Compiler 无法 memoize（`ai-chat.tsx:283`）→ `useMemo` 稳定引用
 - ✅ `MaybePromise<T>` 定义 3 处（`engine/types.ts:95`、`storage/types.ts:17`、`ai-conversation-controller.ts:26`），重复导出 → 收敛到 `engine/types.ts` 单一来源
 - ✅ `toActionError` 死 module-local 导出，无消费者（`ai-action-provider.ts:41-43,136`）→ 已移除
-- `engine.md:179` 标 `createNativeMessageAdapter` 为 "test-use only"，实为生产默认 + 公共导出（→ Plan 2 文档收口）
+- ✅ `engine.md:179` 标 `createNativeMessageAdapter` 为 "test-use only"，实为生产默认 + 公共导出（→ Plan 2 文档收口）
 - ✅ `markdown-buffer.ts` stateful API（`createMarkdownBuffer` 等）导出但生产未用（仅 `safeMarkdownSlice` 在用）→ 仅保留 `safeMarkdownSlice`
 - ✅ `nop-` 前缀泄到非根内部 region（8 元素：`ai-voice-input.tsx:202` 等）→ 内部 region 改用 `data-slot`；新增 marker 一致性静态测试
 - ✅ `.ai-bubble-cursor` 裸全局 helper class，与文件自身 `data-slot` 约定不一致（`styles.css:4-21`）→ 改为 `[data-slot='ai-bubble-cursor']`
@@ -51,9 +51,9 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - ✅ `clear()` while-in-flight guard 无测试（与 `setMessages` 不对称；`create-engine.ts:451-464`）→ 新增 focused 测试
 - ✅ `component-handle-no-registry` skip 路径无测试（registry 缺失时的防御跳过）→ 新增 focused 测试
 - ✅ `use-conversation.test.ts`（520 行）跨 4 domain，导航性优化候选 → 拆为 create/switch/controller/storage 4 文件（断言零丢失）
-- `renderers.md`/`design.md` reference-block line rot（批量：§3.2 phantom `BubbleBoxRendererMatch`、§13 phantom `onScrollTop`、§1.3 `<footer>` 包裹、§6 目录树漏 6 文件、§10.3 default renderer 计数、§13.1 marker 表缺 4）（→ Plan 2 文档收口）
-- `terminology.md` 无 AI 包核心词条（`MessageEngine`/`AiConnector`/`ChatMessage`/`MessageStateAdapter`）（→ Plan 2 文档收口）
-- `AGENTS.md:9` 包列表漏 `flux-renderers-ai`（→ Plan 2 文档收口）
+- ✅ `renderers.md`/`design.md` reference-block line rot（批量：§3.2 phantom `BubbleBoxRendererMatch`、§13 phantom `onScrollTop`、§1.3 `<footer>` 包裹、§6 目录树漏 6 文件、§10.3 default renderer 计数、§13.1 marker 表缺 4）（→ Plan 2 文档收口）
+- ✅ `terminology.md` 无 AI 包核心词条（`MessageEngine`/`AiConnector`/`ChatMessage`/`MessageStateAdapter`）（→ Plan 2 文档收口）
+- ✅ `AGENTS.md:9` 包列表漏 `flux-renderers-ai`（→ Plan 2 文档收口）
 
 **Source: `docs/audits/2026-07-24-1757-open-audit-ai.md`**（P2）
 

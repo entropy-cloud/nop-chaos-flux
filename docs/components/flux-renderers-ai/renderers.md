@@ -43,15 +43,32 @@ export interface AiChatSchema extends BaseSchema {
 ### 1.3 DOM 结构
 
 ```html
-<section class="nop-ai-chat" data-slot="ai-chat-root" data-state="idle|processing|error">
+<section
+  class="nop-ai-chat"
+  data-slot="ai-chat-root"
+  data-state="idle|processing|completed|aborted|error|empty"
+>
   <header data-slot="ai-chat-header">...</header>
+  <!-- region：未声明时省略 -->
   <div data-slot="ai-chat-before">...</div>
+  <!-- beforeMessages region，可选 -->
   <div data-slot="ai-message-list">...</div>
+  <!-- AiMessageListView -->
   <div data-slot="ai-chat-after">...</div>
-  <footer data-slot="ai-sender">...</footer>
+  <!-- afterMessages region，可选 -->
+  <div class="nop-ai-sender" data-slot="ai-sender" data-extension?>...</div>
+  <!-- AiSenderView：根元素是 <div>，非 <footer> -->
   <footer data-slot="ai-chat-footer">...</footer>
+  <!-- footer region，可选 -->
 </section>
 ```
+
+> Failure-Path 变体（`ai-chat.tsx` 早返回分支）：
+>
+> - `engine-null-switch`（host 注入 `null`，如会话切换瞬间）：`data-state="empty"`，根下渲染 `<div data-slot="ai-chat-empty">…</div>`（`emptyState` region 或默认文案）。
+> - `connector-missing`（无 engine 且无 connector）：`data-state="error"`，根下渲染 `<div data-slot="ai-chat-error">…</div>`。
+>
+> `data-state` 反映 `engine.requestState`（`idle|processing|completed|aborted|error`）或上述 `empty` 变体，便于 CSS 选择器做状态样式。
 
 ### 1.4 实现要点
 
@@ -115,16 +132,21 @@ export interface AiBubbleSchema extends BaseSchema {
 
 ### 3.2 渲染器注册制（吸收 tiny-robot 设计）
 
+> 与 live `renderers/ai-bubble/types.ts` 一致。**不存在** `BubbleBoxRendererMatch` / `BubbleBoxRendererProps`——历史文档残留（`rg "BubbleBoxRendererMatch" packages/flux-renderers-ai/src/` 零命中）。实际注册制分两类：`BubbleContentRendererMatch`（按内容匹配）+ `BubbleToolRendererMatch`（A-6，按工具名匹配工具卡片）。
+
 ```ts
-export interface BubbleBoxRendererMatch {
-  find(messages: ChatMessage[], content: unknown, contentIndex: number): boolean;
-  renderer: React.ComponentType<BubbleBoxRendererProps>;
-  priority?: number; // 默认 0；越小越优先
+export interface BubbleContentRendererProps {
+  message: ChatMessage;
+  /** The content slice being rendered (string | part). */
+  content: unknown;
+  /** Index into the content array (0 for plain-string content). */
+  contentIndex: number;
 }
 
 export interface BubbleContentRendererMatch {
   find(message: ChatMessage, content: unknown, contentIndex: number): boolean;
-  renderer: React.ComponentType<BubbleContentRendererProps>;
+  renderer: ComponentType<BubbleContentRendererProps>;
+  /** Lower = higher priority. */
   priority?: number;
 }
 
@@ -134,17 +156,41 @@ export const BubbleRendererMatchPriority = {
   CONTENT: 10,
   ROLE: 20,
 } as const;
+
+// A-6: BubbleToolRendererMatch — per-tool card registry（design.md §3.3）
+export interface BubbleToolRendererProps {
+  /** The assistant message that owns the tool_call. */
+  message: ChatMessage;
+  /** The specific tool_call being rendered. */
+  toolCall: ChatToolCall;
+  /** Resolved per-call UI state (status / open / result). */
+  state: ChatToolCallUIState;
+  /** Stable key derived from `toolCall.id ?? idx-${index}` (React key). */
+  toolCallKey: string;
+}
+
+export interface BubbleToolRendererMatch {
+  toolName: string | RegExp; // 匹配 tool_call.function.name（`*` 为最低优先 fallback）
+  renderer: ComponentType<BubbleToolRendererProps>;
+  /** Lower wins. Defaults to 0; the `*` fallback is forced to +Infinity. */
+  priority?: number;
+}
 ```
 
 ### 3.3 默认 content renderers
 
-| 名字        | priority    | 匹配条件                         | 渲染                                                                  |
-| ----------- | ----------- | -------------------------------- | --------------------------------------------------------------------- |
-| `loading`   | LOADING(-1) | `message.loading === true`       | Spinner                                                               |
-| `markdown`  | NORMAL(0)   | content 为 string                | `react-markdown` + sanitize（复用 `flux-renderers-content/sanitize`） |
-| `image`     | CONTENT(10) | content 为数组含 `image_url`     | 图片网格                                                              |
-| `reasoning` | CONTENT(10) | `message.reasoning_content` 非空 | 可折叠面板（thinking）                                                |
-| `tools`     | CONTENT(10) | `message.tool_calls?.length > 0` | `<AiToolCallRenderer>` 列表                                           |
+> 与 `renderers/ai-bubble/renderers/default-renderers.ts` 的 `defaultBubbleContentRenderers` 一致（共 8 个）。注册系统按 `priority` 升序遍历，第一个 `find` 返回 true 的胜出（越小越优先）。
+
+| 名字        | priority    | 匹配条件                                                      | 渲染                                                                  |
+| ----------- | ----------- | ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `loading`   | LOADING(-1) | `message.loading === true`                                    | Spinner                                                               |
+| `tools`     | CONTENT(10) | `message.tool_calls?.length > 0`（`toolsMatcher`）            | `<AiToolCallRenderer>` 列表                                           |
+| `reasoning` | CONTENT(10) | `message.reasoning_content` 非空（`reasoningMatcher`）        | 可折叠面板（thinking）                                                |
+| `image`     | CONTENT(10) | content 为数组含 `image_url`（`imageMatcher`）                | 图片网格                                                              |
+| `error`     | CONTENT(10) | `errorMatcher(message)`（engine 错误态，A-5 wiring）          | 错误提示 + retry                                                      |
+| `markdown`  | NORMAL(0)   | 非空 text content（string 或 `{type:'text', text}` 非空）     | `react-markdown` + sanitize（复用 `flux-renderers-content/sanitize`） |
+| `data-part` | CONTENT(10) | content part 的 `type` 以 `data-` 前缀开头（A-1 host 自定义） | host 自定义内容块                                                     |
+| `text`      | ROLE(20)    | 兜底 `() => true`（非字符串/未匹配 content 降级为文本）       | 纯文本                                                                |
 
 ### 3.4 DOM 结构
 
@@ -560,7 +606,6 @@ export interface AiMcpManagerSchema extends BaseSchema {
 | ai-sender        | `onSubmit`                                                           | `{ text: string }`                 |
 | ai-sender        | `onCancel`                                                           | `{}`                               |
 | ai-sender        | `onChange`                                                           | `{ text: string }`                 |
-| ai-message-list  | `onScrollTop`                                                        | `{}`                               |
 | ai-bubble        | `onAction`                                                           | `{ action: string, message }`      |
 | ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ id?, conversation? }`           |
 | ai-prompts       | `onSelect`                                                           | `{ item, index }`                  |
@@ -654,27 +699,79 @@ export interface AiMcpManagerSchema extends BaseSchema {
 
 ## 15. data-slot 完整速查
 
+> 覆盖 `rg "data-slot=" packages/flux-renderers-ai/src/renderers/` 全部扫描结果（与 live code 一致）。`?` 标注的为条件渲染（仅特定状态下出现）。
+
+### 15.1 ai-chat-root 子树
+
 ```
-ai-chat-root
-├── ai-chat-header
-├── ai-chat-before
+ai-chat-root (data-state=idle|processing|completed|aborted|error|empty)
+├── ai-chat-header?                        (header region)
+├── ai-chat-before?                        (beforeMessages region)
 ├── ai-message-list
-│   └── ai-bubble (data-role, data-placement, data-streaming)
-│       ├── ai-bubble-avatar
+│   └── ai-bubble (data-role, data-placement, data-shape, data-streaming?, data-error?, data-editing?)
+│       ├── ai-bubble-avatar?
 │       └── ai-bubble-content
-│           ├── ai-bubble-reasoning (data-open)
-│           ├── ai-bubble-markdown
-│           ├── ai-bubble-image
-│           └── ai-bubble-tools
-│               └── ai-tool-call (data-tool-status)
-│                   ├── ai-tool-call-header
-│                   ├── ai-tool-call-args
-│                   └── ai-tool-call-result
-├── ai-chat-after
-├── ai-sender
+│           ├── [content renderer，按 §3.3 注册制每 slice 一个]
+│           │   ├── ai-bubble-loading
+│           │   ├── ai-bubble-markdown
+│           │   │   ├── ai-bubble-cursor?              (流式光标)
+│           │   │   ├── ai-bubble-pre > ai-bubble-code (代码块)
+│           │   │   └── ai-bubble-copy-code?           (代码复制按钮)
+│           │   ├── ai-bubble-reasoning (data-open)
+│           │   ├── ai-bubble-image
+│           │   │   └── ai-bubble-image-item
+│           │   ├── ai-bubble-tools
+│           │   │   └── ai-tool-call (data-tool-status, data-approval?, data-requires-approval?)
+│           │   │       ├── ai-tool-call-toggle        (展开/折叠 header)
+│           │   │       ├── ai-tool-call-args          (JSON 高亮)
+│           │   │       └── ai-tool-call-approval?     (P3 HITL pending 时)
+│           │   │           ├── ai-tool-call-approve
+│           │   │           └── ai-tool-call-reject
+│           │   ├── ai-bubble-error
+│           │   │   └── ai-bubble-error-retry?
+│           │   ├── ai-bubble-data-part               (A-1 host 自定义 data-${string})
+│           │   │   ├── ai-bubble-data-part-id
+│           │   │   └── ai-bubble-data-part-payload
+│           │   └── ai-bubble-text                    (兜底)
+│           ├── ai-bubble-timestamp?                  (showTimestamp)
+│           ├── ai-bubble-branches?                   (A-16 分支点)
+│           │   ├── ai-bubble-branch-prev
+│           │   ├── ai-bubble-branch-counter
+│           │   └── ai-bubble-branch-next
+│           └── ai-bubble-edit?                       (user 消息编辑态)
+│               ├── ai-bubble-edit-toggle
+│               ├── ai-bubble-edit-input
+│               ├── ai-bubble-edit-submit
+│               └── ai-bubble-edit-cancel
+├── ai-chat-after?                         (afterMessages region)
+├── ai-sender (data-extension?，根元素 <div>)
 │   ├── ai-sender-input
+│   │   └── ai-sender-count?               (字数计数)
 │   └── ai-sender-actions
-│       ├── ai-sender-submit
-│       └── ai-sender-cancel
-└── ai-chat-footer
+│       ├── ai-sender-cancel?              (processing 时显示停止)
+│       └── ai-sender-submit
+└── ai-chat-footer?                        (footer region)
+
+(failure-path 早返回，不在上述子树内)
+├── ai-chat-empty?                         (engine-null-switch，data-state=empty)
+└── ai-chat-error?                         (connector-missing，data-state=error)
+```
+
+### 15.2 独立 renderer data-slot
+
+> 以下 renderer 既可经 `ai-chat` 的 region（header/footer/beforeMessages/afterMessages）嵌入，也可独立放置；不在 `ai-chat-root` 子树内。
+
+```
+ai-welcome           → ai-welcome-icon / ai-welcome-title / ai-welcome-description / ai-welcome-footer?
+ai-prompts           → ai-prompts-item* (ai-prompts-item-label / ai-prompts-item-description? / ai-prompts-item-badge?)
+ai-feedback          → (根 ai-feedback，actions 由 button 组合)
+ai-conversations     → ai-conversations-header? / ai-conversations-create? / ai-conversations-list
+                         └ ai-conversations-item* (ai-conversations-item-button / ai-conversations-rename? / ai-conversations-rename-input? / ai-conversations-delete?)
+ai-attachments       → ai-attachments-input / ai-attachments-list
+                         └ ai-attachments-item* (ai-attachments-thumb / ai-attachments-pick / ai-attachments-upload? / ai-attachments-remove?)
+ai-tool-call         → (根 ai-tool-call，同 §15.1 的 ai-tool-call 子树：toggle / args / approval?)
+ai-citations         → ai-citation* (ai-citation-trigger / ai-citation-card / ai-citation-item? / ai-citation-empty? / ai-citation-open? / ai-citation-url?)
+ai-token-usage       → ai-token-usage-ring? / ai-token-usage-total / ai-token-usage-prompt? / ai-token-usage-completion? / ai-token-usage-cost? / ai-token-usage-text?
+ai-voice-input       → ai-voice-input-wave?
+ai-suggestions       → ai-suggestions-item* (ai-suggestions-item-text) / ai-suggestions-overflow? (ai-suggestions-overflow-list?)
 ```
