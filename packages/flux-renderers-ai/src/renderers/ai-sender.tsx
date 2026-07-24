@@ -1,9 +1,9 @@
-import { useRef, useState, type KeyboardEvent } from 'react';
+import { useRef, useState, type ComponentType, type KeyboardEvent } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { Button, Textarea, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
-import type { AiSenderSchema } from '../schemas.js';
+import type { AiSenderExtensionProps, AiSenderSchema } from '../schemas.js';
 
 export interface AiSenderViewProps {
   placeholder?: string;
@@ -16,6 +16,13 @@ export interface AiSenderViewProps {
   loading?: boolean;
   /** When true (default), focus returns to the input after each submit. */
   refocusAfterSubmit?: boolean;
+  /**
+   * Optional host-injected rich-text extension component (P6/A6). When present,
+   * the input area is delegated to this component (typically Tiptap from the
+   * `./rich-text` subpath). When absent, the built-in `<Textarea>` is rendered
+   * (zero-regression P0 behavior).
+   */
+  extensionComponent?: ComponentType<AiSenderExtensionProps> | null;
   onSubmit?: (text: string) => void;
   onCancel?: () => void;
   onChange?: (text: string) => void;
@@ -39,8 +46,10 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
   const clearOnSubmit = props.clearOnSubmit !== false;
   const refocusAfterSubmit = props.refocusAfterSubmit !== false;
   const loading = props.loading ?? ctx?.isProcessing ?? false;
+  const ExtensionComponent = props.extensionComponent;
 
   const overLimit = typeof maxLength === 'number' && draft.length > maxLength;
+  const trimmedLength = draft.trim().length;
 
   function commit(text: string) {
     if (props.onSubmit) props.onSubmit(text);
@@ -48,8 +57,9 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
     if (clearOnSubmit) setDraft('');
     // a11y: focus returns to the input so the user can immediately type the
     // next message (Phase 4 baseline; avoids the focus falling through to
-    // the submit button or page body).
-    if (refocusAfterSubmit) {
+    // the submit button or page body). Only applies to the Textarea path —
+    // the extension component owns its own focus management.
+    if (refocusAfterSubmit && !ExtensionComponent) {
       requestAnimationFrame(() => {
         inputRef.current?.focus();
       });
@@ -72,6 +82,63 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
       event.preventDefault();
       handleSubmit();
     }
+  }
+
+  const actions = (
+    <div data-slot="ai-sender-actions" className="flex items-center justify-end gap-2">
+      {loading ? (
+        <Button data-slot="ai-sender-cancel" variant="outline" size="sm" onClick={handleCancel}>
+          {t('flux.ai.stop')}
+        </Button>
+      ) : null}
+      <Button
+        data-slot="ai-sender-submit"
+        size="sm"
+        onClick={handleSubmit}
+        disabled={loading || trimmedLength === 0 || overLimit}
+      >
+        {t('flux.ai.send')}
+      </Button>
+    </div>
+  );
+
+  if (ExtensionComponent) {
+    return (
+      <div className={cn('nop-ai-sender', props.className)} data-slot="ai-sender" data-extension="">
+        <div data-slot="ai-sender-input" className="relative">
+          <ExtensionComponent
+            value={draft}
+            onChange={(text) => {
+              setDraft(text);
+              props.onChange?.(text);
+            }}
+            onSubmit={() => {
+              const text = draft.trim();
+              if (text.length === 0 || overLimit) return;
+              commit(text);
+            }}
+            onCancel={handleCancel}
+            loading={loading}
+            placeholder={props.placeholder ?? t('flux.ai.placeholder')}
+            maxLength={maxLength}
+            showWordLimit={props.showWordLimit}
+            submitType={submitType}
+          />
+          {props.showWordLimit && typeof maxLength === 'number' ? (
+            <span
+              data-slot="ai-sender-count"
+              className={cn(
+                'absolute bottom-1 right-2 text-xs',
+                overLimit ? 'text-destructive' : 'text-muted-foreground',
+              )}
+            >
+              {draft.length}/{maxLength}
+            </span>
+          ) : null}
+        </div>
+        {actions}
+      </div>
+    );
   }
 
   return (
@@ -104,21 +171,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
           </span>
         ) : null}
       </div>
-      <div data-slot="ai-sender-actions" className="flex items-center justify-end gap-2">
-        {loading ? (
-          <Button data-slot="ai-sender-cancel" variant="outline" size="sm" onClick={handleCancel}>
-            {t('flux.ai.stop')}
-          </Button>
-        ) : null}
-        <Button
-          data-slot="ai-sender-submit"
-          size="sm"
-          onClick={handleSubmit}
-          disabled={loading || draft.trim().length === 0 || overLimit}
-        >
-          {t('flux.ai.send')}
-        </Button>
-      </div>
+      {actions}
     </div>
   );
 }
@@ -127,6 +180,10 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
 export function AiSenderRenderer(props: RendererComponentProps<AiSenderSchema>): RendererRenderOutput {
   const resolved = props.props;
   const ctx = useAiChatContext();
+  const extensionComponent = resolved.senderExtensions as
+    | ComponentType<AiSenderExtensionProps>
+    | undefined
+    | null;
 
   return (
     <AiSenderView
@@ -137,6 +194,7 @@ export function AiSenderRenderer(props: RendererComponentProps<AiSenderSchema>):
       clearOnSubmit={resolved.clearOnSubmit}
       loading={resolved.loading as boolean | undefined}
       className={props.meta.className}
+      extensionComponent={extensionComponent ?? null}
       onSubmit={(text) => {
         void ctx?.sendMessage(text);
         if (props.events.onSubmit) {

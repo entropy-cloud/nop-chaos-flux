@@ -13,6 +13,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./rich-text": {
+      "types": "./dist/rich-text/index.d.ts",
+      "default": "./dist/rich-text/index.js"
+    },
     "./styles.css": {
       "default": "./dist/styles.css"
     }
@@ -27,6 +31,8 @@
     "jsonrepair": "^3.13.0"
   },
   "peerDependencies": {
+    "@tiptap/react": "^3.27.1",
+    "@tiptap/starter-kit": "^3.27.1",
     "dompurify": "^3.4.11",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
@@ -34,9 +40,20 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1"
   },
+  "peerDependenciesMeta": {
+    "@tiptap/react": {
+      "optional": true
+    },
+    "@tiptap/starter-kit": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
+    "@tiptap/core": "^3.27.1",
+    "@tiptap/react": "^3.27.1",
+    "@tiptap/starter-kit": "^3.27.1",
     "dompurify": "^3.4.11",
     "jsdom": "^29.1.1",
     "jsonrepair": "^3.13.0",

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -15,7 +15,7 @@ import { createAiComponentHandle } from '../adapters/ai-component-handle.js';
 import type { AiConversationController } from '../adapters/ai-conversation-controller.js';
 import type { AiConnector, ChatMessage, MessageEngine, RequestState, ToolExecutor } from '../engine/types.js';
 import type { AiToolSchema } from '../engine/types.js';
-import type { AiBranch } from '../schemas.js';
+import type { AiBranch, AiSenderExtensionProps } from '../schemas.js';
 import { AiMessageListView } from './ai-message-list.js';
 import { AiSenderView } from './ai-sender.js';
 import type { AiChatSchema } from '../schemas.js';
@@ -261,6 +261,9 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
           submitType={resolved.submitType}
           maxLength={resolved.maxLength}
           showWordLimit={resolved.showWordLimit}
+          extensionComponent={
+            (resolved.senderExtensions as React.ComponentType<AiSenderExtensionProps> | undefined | null) ?? null
+          }
         />
         {footerNode ? <footer data-slot="ai-chat-footer">{footerNode}</footer> : null}
       </section>

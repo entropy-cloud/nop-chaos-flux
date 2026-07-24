@@ -11,6 +11,11 @@ const FORBIDDEN_GLOBAL_IO = /\bfetch\s*\(|XMLHttpRequest|WebSocket|EventSource|R
 // Anchored to line start so prose mentions of `import 'react'` in doc comments
 // (e.g. "MUST NOT import 'react'") do not trigger a false positive.
 const FORBIDDEN_IMPORTS = /^\s*import\s+(?:['"]react['"]|.*\sfrom\s+['"]react['"])/m;
+// P6 (A6) bundle-isolation invariant: `src/engine/`, `src/renderers/`, and
+// `src/adapters/` MUST NOT import Tiptap — only the opt-in `./rich-text`
+// subpath (host-imported) is allowed to pull Tiptap into the bundle. See
+// design.md §18.2 #11 + plan 2026-07-24-2200-1 Phase 1.
+const FORBIDDEN_TIPTAP_IMPORTS = /^\s*import\s+.*\sfrom\s+['"]@tiptap\//m;
 
 function listSourceFiles(dir: string, exts: string[]): string[] {
   const out: string[] = [];
@@ -75,6 +80,32 @@ describe('INV-1: engine + renderers do not touch external IO APIs', () => {
     // The factory must not hardcode baseURL/apiKey/model literals.
     expect(factory).not.toMatch(/\bapiKey\s*[=:]/);
     expect(factory).not.toMatch(/baseURL\s*[:=]\s*['"]/);
+  });
+
+  // P6 (A6): bundle-isolation guard. Tiptap is an optional peerDep exposed
+  // only via the `./rich-text` subpath. The three bundled runtime subtrees
+  // (`src/engine/`, `src/renderers/`, `src/adapters/`) MUST NOT import Tiptap
+  // — otherwise every host would pay the Tiptap cost even when it never opts
+  // into rich text. The `src/rich-text/` subpath is explicitly exempt.
+  it('src/engine/ has no @tiptap imports', () => {
+    for (const file of listSourceFiles(ENGINE_DIR, ['.ts'])) {
+      const src = readFileSync(file, 'utf8');
+      expect(src).not.toMatch(FORBIDDEN_TIPTAP_IMPORTS);
+    }
+  });
+
+  it('src/renderers/ has no @tiptap imports', () => {
+    for (const file of listSourceFiles(RENDERERS_DIR, ['.ts', '.tsx'])) {
+      const src = readFileSync(file, 'utf8');
+      expect(src).not.toMatch(FORBIDDEN_TIPTAP_IMPORTS);
+    }
+  });
+
+  it('src/adapters/ has no @tiptap imports', () => {
+    for (const file of listSourceFiles(ADAPTERS_DIR, ['.ts', '.tsx'])) {
+      const src = readFileSync(file, 'utf8');
+      expect(src).not.toMatch(FORBIDDEN_TIPTAP_IMPORTS);
+    }
   });
 });
 

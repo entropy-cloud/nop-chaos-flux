@@ -28,6 +28,13 @@ export interface AiChatSchema extends BaseSchema {
   showWordLimit?: boolean;
   initialMessages?: SchemaValue;
   /**
+   * P6 (A6): host-injected rich-text extension for the embedded `ai-sender`.
+   * Expression resolving to a `React.ComponentType<AiSenderExtensionProps>`
+   * (typically `${$ai.tiptapSender}`). See `AiSenderSchema.senderExtensions`
+   * for the full contract. When omitted, the built-in `<Textarea>` is used.
+   */
+  senderExtensions?: SchemaValue;
+  /**
    * Optional host-side conversation controller (expression-resolved, typically
    * `${$ai.controller}`). When bound, the `ai` namespace's conversation actions
    * delegate to it. P1 (design.md §14.2).
@@ -127,10 +134,59 @@ export interface AiSenderSchema extends BaseSchema {
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
   clearOnSubmit?: boolean;
   actions?: SchemaInput;
+  /**
+   * P6 Tiptap rich-text extension (A6, design.md §10). Expression resolving to
+   * a `React.ComponentType<AiSenderExtensionProps>` that the host injects via
+   * `xui:imports` (typically `${$ai.tiptapSender}`). When present, `ai-sender`
+   * delegates the input area to this component (host-owned — usually a Tiptap
+   * editor from `./rich-text` subpath); when absent, falls back to the
+   * built-in `<Textarea>` (zero-regression P0 behavior). The component receives
+   * draft/onChange/onSubmit/onCancel/loading/etc. via `AiSenderExtensionProps`
+   * and serializes its content to plain text before calling `onSubmit` — the
+   * engine contract (`sendMessage(text: string)`) is unchanged.
+   */
+  senderExtensions?: SchemaValue;
 
   onSubmit?: ActionSchema;
   onCancel?: ActionSchema;
   onChange?: ActionSchema;
+}
+
+/**
+ * Props the host-injected rich-text extension component receives (P6, A6).
+ *
+ * `ai-sender` constructs this object and renders `<ExtensionComponent {...ctx} />`
+ * when `senderExtensions` resolves to a component. The extension owns the
+ * editing surface (e.g. Tiptap from `@nop-chaos/flux-renderers-ai/rich-text`);
+ * it serializes its content to a plain `string` for `onChange`/`onSubmit` so
+ * the message-engine contract stays unchanged.
+ *
+ * Erased at compile time (`export type` only from `src/index.ts`) — importing
+ * this interface does NOT pull Tiptap into the host bundle.
+ */
+export interface AiSenderExtensionProps {
+  /** Current draft plain-text value (controlled). */
+  value: string;
+  /** Fired with the serialized plain text whenever the editor content changes. */
+  onChange: (text: string) => void;
+  /** Submit the current draft (already plain-text-serialized by the extension). */
+  onSubmit: () => void;
+  /** Abort the in-flight request (maps to `engine.abort()`). */
+  onCancel: () => void;
+  /** True while a request is streaming — disables input + shows the stop button. */
+  loading?: boolean;
+  /** Placeholder text for the empty editor. */
+  placeholder?: string;
+  /** Max draft length in characters; extension should enforce / count this. */
+  maxLength?: number;
+  /** When true, render a `n/maxLength` counter (mirror of the Textarea version). */
+  showWordLimit?: boolean;
+  /** Submit trigger mode (extension wires its own keymap accordingly). */
+  submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
+  /** Whether the whole sender is disabled. */
+  disabled?: boolean;
+  /** Optional refocus target hook (host may ignore; ai-sender keeps ownership). */
+  refocusAfterSubmit?: boolean;
 }
 
 // ---- P1 renderers (A2) ----

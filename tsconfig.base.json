@@ -48,6 +48,9 @@
         "./packages/flux-renderers-content/src/styles.css"
       ],
       "@nop-chaos/flux-renderers-ai": ["./packages/flux-renderers-ai/src/index.ts"],
+      "@nop-chaos/flux-renderers-ai/rich-text": [
+        "./packages/flux-renderers-ai/src/rich-text/index.ts"
+      ],
       "@nop-chaos/flux-renderers-ai/styles.css": ["./packages/flux-renderers-ai/src/styles.css"],
       "@nop-chaos/flux-renderers-layout": ["./packages/flux-renderers-layout/src/index.ts"],
       "@nop-chaos/flux-renderers-layout/styles.css": [

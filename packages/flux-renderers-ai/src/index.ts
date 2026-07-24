@@ -32,6 +32,7 @@ export type {
   AiBranch,
   AiTokenUsage,
   AiSuggestionItem,
+  AiSenderExtensionProps,
 } from './schemas.js';
 
 // ---- Group 2: Renderer components (registry registration only) ----

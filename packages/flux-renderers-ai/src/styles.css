@@ -60,3 +60,24 @@
     transform: scaleY(0.6);
   }
 }
+
+/* P6 (A6): Tiptap rich-text sender — opt-in via `./rich-text` subpath.
+   The placeholder pseudo-element is driven by the `data-placeholder`
+   attribute the editor sets on its contenteditable root (mirrors the
+   `editor-renderer.tsx` convention). */
+.nop-ai-sender-tiptap-content[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground, currentColor);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.nop-ai-sender-tiptap-content {
+  min-height: 40px;
+  padding: 6px 10px;
+  line-height: 1.4;
+}
+
+.nop-ai-sender-tiptap-content p {
+  margin: 0;
+}
