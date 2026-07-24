@@ -431,7 +431,7 @@ createExpressionHelpers: () => ({ tiptapSender, ... });
 **Layer C（P2 跨组件控制）**：
 
 - `ai-chat` 渲染器经 `useCurrentComponentRegistry()` hook（`@nop-chaos/flux-react`，渲染器侧 live 访问器）取当前 `ComponentHandleRegistry`，再用 `registry.register(handle, { cid })` 注册 component handle（live API；**非** `runtime.componentRegistry?.register`）。注册在 `useEffect` 中完成，返回的反注册函数在 unmount 时调用；capability check：registry 为 `undefined` 时静默 skip（Failure Path `component-handle-no-registry`）。
-- handle 实现 `ComponentCapabilities.invoke(method, payload, ctx)` 分发模型（**非** flat methods）—— action 系统对 `component:<method>` action 经 `action-adapter.ts` 调 `invoke`。分发 5 个逻辑方法名：`sendMessage`（`{ text }` 或多模态 `{ parts }`）/ `abort` / `clear` / `getMessages`（只读快照，依赖 Phase 1 engine 扩展）/ `setMessages`（`{ messages }` 整体替换）。
+- handle 实现 `ComponentCapabilities.invoke(method, payload, ctx)` 分发模型（**非** flat methods）—— action 系统对 `component:<method>` action 经 `action-adapter.ts` 调 `invoke`。分发 6 个逻辑方法名：`sendMessage`（`{ text }` 或多模态 `{ parts }`）/ `abort` / `clear` / `getMessages`（只读快照，依赖 Phase 1 engine 扩展）/ `setMessages`（`{ messages }` 整体替换）/ `regenerate`（`{ branchId? }`，A-16 重新生成末条 assistant 消息并盖 `metadata.branchId`）。方法清单见 `ai-component-handle.ts` `AI_COMPONENT_METHODS`（6 个）。
 - handle 的 `id` 取 schema 显式 `componentId` 或 `props.meta.testid`/`props.id`；`name` 取 `componentName`（默认 `'ai-chat'`）。
 - schema 可写 `{ action: 'component:sendMessage', componentId: 'my-chat', args: { text: 'hello' } }`。
 - 适合"页面外按钮触发对话发送"场景。
@@ -615,13 +615,14 @@ tiny-robot 用 `--tr-*` 前缀。flux-renderers-ai **不引入** `--tr-*` 或 `-
 
 `ai-chat` 注册 component handle，可被 `componentId` / `componentName` 寻址：
 
-| method        | 参数           | 行为                          |
-| ------------- | -------------- | ----------------------------- |
-| `sendMessage` | `{ text }`     | 同 `ai:send`                  |
-| `abort`       | —              | 同 `ai:abort`                 |
-| `clear`       | —              | 同 `ai:clear`                 |
-| `getMessages` | —              | 返回当前 messages（只读快照） |
-| `setMessages` | `{ messages }` | 替换整个 messages 数组        |
+| method        | 参数            | 行为                                       |
+| ------------- | --------------- | ------------------------------------------ |
+| `sendMessage` | `{ text }`      | 同 `ai:send`                               |
+| `abort`       | —               | 同 `ai:abort`                              |
+| `clear`       | —               | 同 `ai:clear`                              |
+| `getMessages` | —               | 返回当前 messages（只读快照）              |
+| `setMessages` | `{ messages }`  | 替换整个 messages 数组                     |
+| `regenerate`  | `{ branchId? }` | 重新生成末条 assistant 消息（记 branchId） |
 
 ## 15. 测试策略
 

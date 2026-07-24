@@ -69,19 +69,17 @@ export interface AiChatSchema extends BaseSchema {
 ```ts
 export interface AiMessageListSchema extends BaseSchema {
   type: 'ai-message-list';
-  groupStrategy?: 'consecutive' | 'divider' | 'none'; // 默认 'divider'
-  dividerRole?: ChatRole; // 默认 'user'
   autoScroll?: boolean; // 默认 true
-  maxGroupSize?: number;
   itemRegion?: SchemaInput; // 参数化 region：$slot.message / $slot.index
   emptyRegion?: SchemaInput; // 覆盖 ai-chat.emptyState
 }
 ```
 
+> 与 `schemas.ts` `AiMessageListSchema` 一致。**不存在** `groupStrategy` / `dividerRole` / `maxGroupSize` 字段——历史文档残留，已从代码移除（`contract-honesty.test.ts` 回归断言三字段为零命中）。
+
 ### 2.2 实现要点
 
 - 通过 `useAiChatContext()` 拿 engine，订阅 `engine.messages`（`useSyncExternalStore`）。
-- `groupStrategy` 用 render-time 派生（React 19 默认，不加 `useMemo`）。
 - `itemRegion` 不提供 → 默认渲染 `<AiBubbleRenderer message={msg} />`；提供 → 走 `itemRegion.render({ bindings: { message: msg, index } })`。
 - 自动滚动：监听 `messages.length` + 末消息 content 长度，触发 `scrollToBottom`；用户向上滚动时暂停自动滚动（参考 tiny-robot `useAutoScroll`）。
 - Layout 类型：根 marker `nop-ai-message-list`，不硬编码内部样式。
@@ -348,19 +346,21 @@ export interface AiRawFileAttachment extends AiAttachmentBase {
 ```ts
 export interface AiAttachmentsSchema extends BaseSchema {
   type: 'ai-attachments';
-  items?: AiAttachment[] | SchemaValue;
-  mode?: 'image' | 'card'; // 默认按 fileType 自动判断
-  accept?: string; // input file accept
-  multiple?: boolean;
+  value?: SchemaValue; // 受控附件列表（表达式解析，AiAttachmentItem[]）
+  mode?: 'image' | 'card' | 'auto'; // 默认 'auto'：按 MIME 自动判断
+  accept?: string; // HTML input accept
+  multiple?: boolean; // 默认 true
   maxSize?: number; // 单文件字节数
-  maxFiles?: number;
-  fileMatchers?: Array<{ pattern: RegExp; icon?: string }>;
+  maxFiles?: number; // 最大文件数
+  enableDrop?: boolean; // 拖放 + 粘贴（默认 true）
 
-  onUpload?: ActionSchema; // { file }
-  onRemove?: ActionSchema; // { attachment }
+  onChange?: ActionSchema; // 附件列表变化
   onError?: ActionSchema; // { file, error }
+  onUpload?: ActionSchema; // { file }
 }
 ```
+
+> 与 `schemas.ts` `AiAttachmentsSchema` 一致。**不存在** `items` / `fileMatchers` / `onRemove` 字段——历史文档残留，已从代码移除。附件项类型见 `AiAttachmentItem`（`id` / `url` / `name` / `contentType` / `size` / `status`）。
 
 ## 10. ai-tool-call（Widget, P2 + P3 HITL）
 
@@ -369,16 +369,15 @@ export interface AiAttachmentsSchema extends BaseSchema {
 ```ts
 export interface AiToolCallSchema extends BaseSchema {
   type: 'ai-tool-call';
-  toolCall?: SchemaValue; // ChatToolCall
-  state?: ChatToolCallUIState; // { status, open?, result?, approval? }
-  defaultOpen?: boolean;
-  showResult?: boolean; // 默认 true
-
-  onToggle?: ActionSchema; // { open, toolCall }
+  toolCall?: SchemaValue; // 表达式解析为 ChatToolCall
+  state?: SchemaValue; // 表达式解析为 ChatToolCallUIState（status / open / result / approval）
+  defaultOpen?: boolean; // 参数面板是否默认展开
   // P3 HITL (A-14):
   onApproval?: ActionSchema; // { action: 'approve'|'reject', toolCall, toolCallId }
 }
 ```
+
+> 与 `schemas.ts` `AiToolCallSchema` 一致。**不存在** schema 级 `showResult` / `onToggle` 字段——`onToggle` 仅是 `AiToolCallView` 的 view-only prop（展开/折叠内部交互），schema 不可达；`showResult` 由 `state.open` / `defaultOpen` 表达。
 
 ### 10.2 状态属性
 
@@ -551,26 +550,26 @@ export interface AiMcpManagerSchema extends BaseSchema {
 
 ## 13. Events 总览
 
-| 渲染器           | event                                                                | payload                                    |
-| ---------------- | -------------------------------------------------------------------- | ------------------------------------------ | --------------------------------- |
-| ai-chat          | `onSend`                                                             | `{ message: ChatMessage }`                 |
-| ai-chat          | `onResponseComplete`                                                 | `{ message: ChatMessage }`                 |
-| ai-chat          | `onError`                                                            | `{ error: Error }`                         |
-| ai-chat          | `onAbort`                                                            | `{}`                                       |
-| ai-chat          | `onConversationChange`                                               | `{ conversationId }`                       |
-| ai-sender        | `onSubmit`                                                           | `{ text: string }`                         |
-| ai-sender        | `onCancel`                                                           | `{}`                                       |
-| ai-sender        | `onChange`                                                           | `{ text: string }`                         |
-| ai-message-list  | `onScrollTop`                                                        | `{}`                                       |
-| ai-bubble        | `onAction`                                                           | `{ action: string, message }`              |
-| ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ id?, conversation? }`                   |
-| ai-prompts       | `onSelect`                                                           | `{ item, index }`                          |
-| ai-feedback      | `onAction`                                                           | `{ action, message }`                      |
-| ai-attachments   | `onUpload` / `onRemove` / `onError`                                  | `{ file?, attachment? }`                   |
-| ai-tool-call     | `onToggle` / `onApproval` (P3 HITL)                                  | `{ open, toolCall }` / `{ action:'approve' | 'reject', toolCall, toolCallId }` |
-| ai-citations     | `onSourceClick`                                                      | `{ source, index }`                        |
-| ai-suggestions   | `onSelect`                                                           | `{ item, index }`                          |
-| ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                                       |
+| 渲染器           | event                                                                | payload                            |
+| ---------------- | -------------------------------------------------------------------- | ---------------------------------- |
+| ai-chat          | `onSend`                                                             | `{ message: ChatMessage }`         |
+| ai-chat          | `onResponseComplete`                                                 | `{ message: ChatMessage }`         |
+| ai-chat          | `onError`                                                            | `{ error: Error }`                 |
+| ai-chat          | `onAbort`                                                            | `{}`                               |
+| ai-chat          | `onConversationChange`                                               | `{ conversationId }`               |
+| ai-sender        | `onSubmit`                                                           | `{ text: string }`                 |
+| ai-sender        | `onCancel`                                                           | `{}`                               |
+| ai-sender        | `onChange`                                                           | `{ text: string }`                 |
+| ai-message-list  | `onScrollTop`                                                        | `{}`                               |
+| ai-bubble        | `onAction`                                                           | `{ action: string, message }`      |
+| ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ id?, conversation? }`           |
+| ai-prompts       | `onSelect`                                                           | `{ item, index }`                  |
+| ai-feedback      | `onAction`                                                           | `{ action, message }`              |
+| ai-attachments   | `onChange` / `onError` / `onUpload`                                  | `{ file?, error? }`                |
+| ai-tool-call     | `onApproval` (P3 HITL)                                               | `{ action, toolCall, toolCallId }` |
+| ai-citations     | `onSourceClick`                                                      | `{ source, index }`                |
+| ai-suggestions   | `onSelect`                                                           | `{ item, index }`                  |
+| ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                               |
 
 ## 14. 端到端 Schema 示例
 

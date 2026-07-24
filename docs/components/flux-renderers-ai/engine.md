@@ -257,6 +257,12 @@ export interface UseConversationReturn {
   deleteConversation(id: string): Promise<void>;
   renameConversation(id: string, title: string): void;
   clearAll(): void;
+  /**
+   * Layer B 桥接对象（P1，design.md §11.1 Layer B）：绑定到 `ai-chat` 的
+   * `conversationController` prop，让 `ai:createConversation` / `ai:switchConversation`
+   * 等会话级 action 委托到本 hook 的实现。
+   */
+  controller: AiConversationControllerBridge;
 }
 ```
 
@@ -286,7 +292,13 @@ export interface AiConnectorChunk {
     role?: ChatRole;
     content?: string;
     reasoning_content?: string;
-    tool_calls?: ChatToolCall[];
+    /**
+     * 流式 tool_calls 是 partial（后续 chunk 可省略 `id`/`type`/`function.name`），
+     * 故此处用 `AiConnectorDeltaToolCall[]`（`id`/`type`/`function` 均可选）而非
+     * 完成的 `ChatToolCall[]`。后者是 finalize 后的形态（见 `engine/types.ts`
+     * `AiConnectorDeltaToolCall` 与 `ChatToolCall`）。
+     */
+    tool_calls?: AiConnectorDeltaToolCall[];
   };
   /** 整体快照（某些后端按 snapshot 而非 delta 推送时使用） */
   snapshot?: Partial<ChatMessage>;
