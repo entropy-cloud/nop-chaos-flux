@@ -13,12 +13,28 @@ import { useMessage } from '../adapters/use-message.js';
 import { createAiActionProvider } from '../adapters/ai-action-provider.js';
 import { createAiComponentHandle } from '../adapters/ai-component-handle.js';
 import type { AiConversationController } from '../adapters/ai-conversation-controller.js';
-import type { AiConnector, ChatMessage, RequestState, ToolExecutor } from '../engine/types.js';
+import type { AiConnector, ChatMessage, MessageEngine, RequestState, ToolExecutor } from '../engine/types.js';
 import type { AiToolSchema } from '../engine/types.js';
 import type { AiBranch } from '../schemas.js';
 import { AiMessageListView } from './ai-message-list.js';
 import { AiSenderView } from './ai-sender.js';
 import type { AiChatSchema } from '../schemas.js';
+
+/**
+ * Duck-type guard: a value is a usable `MessageEngine` when it exposes the
+ * `useSyncExternalStore` contract (`subscribe` + `getState`) plus the engine
+ * mutation surface (`sendMessage`). Used to validate the host-injected
+ * `engine` prop (Failure Path `engine-prop-not-engine`).
+ */
+function isMessageEngine(value: unknown): value is MessageEngine {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as MessageEngine).subscribe === 'function' &&
+    typeof (value as MessageEngine).getState === 'function' &&
+    typeof (value as MessageEngine).sendMessage === 'function'
+  );
+}
 
 /**
  * ai-chat (Layout, P0/P1): the conversation panel root.
@@ -28,6 +44,13 @@ import type { AiChatSchema } from '../schemas.js';
  * share one engine, and renders the header / beforeMessages / messages /
  * afterMessages / sender / footer slots. Marker `nop-ai-chat`; Layout — no
  * hardcoded spacing (schema className drives layout).
+ *
+ * External engine injection (design.md §11.2/§11.5): when the resolved `engine`
+ * prop is a `MessageEngine` (e.g. `useConversation.activeEngine`), `ai-chat`
+ * binds it instead of self-creating one — unifying ai-chat with conversation
+ * managers / persistence. Failure Paths: `engine-prop-not-engine` (non-engine
+ * value → warn + self-built fallback) and `engine-null-switch` (null during a
+ * conversation switch → render emptyState).
  *
  * P1 (Layer B): registers the `ai` ActionScope namespace (7 actions, see
  * `createAiActionProvider`) when the host provides an ActionScope, and
@@ -55,7 +78,31 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
     : undefined);
   const maxToolRounds = typeof resolved.maxToolRounds === 'number' ? resolved.maxToolRounds : undefined;
 
+  // ---- External engine injection (design.md §11.2/§11.5) ----
+  // When the host binds an external `MessageEngine` (e.g.
+  // `useConversation.activeEngine`) via the `engine` prop, `ai-chat` binds it
+  // instead of self-creating one — unifying ai-chat with conversation managers
+  // / persistence so the same engine (and its stored messages) backs the chat.
+  const rawEngine = resolved.engine;
+  const externalEngine = isMessageEngine(rawEngine) ? rawEngine : undefined;
+  if (rawEngine !== undefined && rawEngine !== null && !externalEngine) {
+    // Failure Path `engine-prop-not-engine`: host injected a non-MessageEngine
+    // value. Degrade to the self-built path (same level as connector-missing)
+    // + console warn, never crash.
+    if (typeof console !== 'undefined') {
+      console.warn(
+        '[ai-chat] `engine` prop resolved to a non-MessageEngine value; falling back to a self-built engine.',
+      );
+    }
+  }
+  // Failure Path `engine-null-switch`: the host explicitly injected `null`
+  // (e.g. `useConversation.activeEngine` is null during a conversation switch).
+  // Hooks still run unconditionally below (rules-of-hooks); we render the
+  // emptyState instead of the message list after the hooks resolve.
+  const engineNullSwitch = rawEngine === null;
+
   const { messages, requestState, processingState, isProcessing, sendMessage, abortRequest, engine } = useMessage({
+    engine: externalEngine,
     connector: connector ?? null,
     systemPrompt,
     initialMessages,
@@ -153,8 +200,36 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   const footerNode = props.regions.footer ? (props.regions.footer.render({ scope: hostScope }) as React.ReactNode) : null;
   const emptyNode = props.regions.emptyState ? (props.regions.emptyState.render({ scope: hostScope }) as React.ReactNode) : undefined;
 
-  // connector-missing: show an inline error, never crash (Failure Path `connector-missing`).
-  if (!connector) {
+  // engine-null-switch: the host injected `null` (activeEngine is null during
+  // a conversation switch / before the first selection). Render the emptyState
+  // (or a default prompt) instead of the message list; recover automatically
+  // once a new engine arrives (Failure Path `engine-null-switch`). Checked
+  // before connector-missing: a null engine is a deliberate "switching" signal,
+  // not a misconfiguration.
+  if (engineNullSwitch) {
+    return (
+      <section
+        className={cn('nop-ai-chat', props.meta.className)}
+        data-slot="ai-chat-root"
+        data-state="empty"
+        data-testid={props.meta.testid || undefined}
+      >
+        {emptyNode ? (
+          <div data-slot="ai-chat-empty">{emptyNode}</div>
+        ) : (
+          <div data-slot="ai-chat-empty" className="p-4 text-sm text-muted-foreground">
+            {t('flux.ai.selectConversation')}
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  // connector-missing: fatal only when no engine backs the chat. An external
+  // engine (e.g. useConversation.activeEngine) already owns its connector, so
+  // requiring one here would false-positive on persistence / conversation
+  // demos (Failure Path `connector-missing`).
+  if (!externalEngine && !connector) {
     return (
       <section
         className={cn('nop-ai-chat', props.meta.className)}

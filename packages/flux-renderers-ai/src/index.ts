@@ -98,6 +98,7 @@ export { createReactMessageAdapter } from './adapters/react-adapter.js';
 export type { MessageStateAdapter, MessageUpdateKind } from './engine/types.js';
 
 export { useMessage, type UseMessageOptions, type UseMessageReturn } from './adapters/use-message.js';
+export { useEngineView, type UseEngineViewReturn } from './adapters/use-engine-view.js';
 export { useAutoScroll, type UseAutoScrollOptions, type UseAutoScrollReturn } from './adapters/use-auto-scroll.js';
 export {
   createStreamBasedAiConnector,

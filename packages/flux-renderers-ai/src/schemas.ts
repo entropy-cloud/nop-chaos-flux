@@ -5,6 +5,20 @@ export interface AiChatSchema extends BaseSchema {
   type: 'ai-chat';
   /** Expression resolving to an `AiConnector` instance (host injects via xui:imports). */
   connector?: SchemaValue;
+  /**
+   * Optional host-injected external `MessageEngine` to bind instead of
+   * self-creating one (design.md §11.2/§11.5). Typically `${engine}` (relative
+   * scope read of page-data) or `${$ai.engine}` — symmetric with
+   * `connector` / `conversationController`: these are resolved prop values
+   * (host objects), NOT reactive scope snapshots, so this does not violate the
+   * "engine instance must not enter reactive scope" rule (§11.5 line 467
+   * constrains scope snapshots, not resolved props). When bound (e.g. to
+   * `useConversation.activeEngine`), `ai-chat` shares the conversation
+   * manager's single engine so persistence / multi-conversation scenarios
+   * reuse all `ai-chat` capabilities (regions, namespace, ComponentHandle).
+   * When omitted, `ai-chat` self-creates an engine (zero-regression default).
+   */
+  engine?: SchemaValue;
   conversationId?: string;
   placeholder?: string;
   systemPrompt?: string;

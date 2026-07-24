@@ -83,6 +83,7 @@ export const enUS: Resource = {
       tokenUsage: 'Token usage',
       tokenNoUsage: 'Usage not reported',
       suggestionsTitle: 'Suggestions',
+      selectConversation: 'Select or create a conversation to start.',
     },
     wizard: {
       previous: 'Previous',

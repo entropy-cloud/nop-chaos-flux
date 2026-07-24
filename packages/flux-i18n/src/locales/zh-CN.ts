@@ -84,6 +84,7 @@ export const zhCN: Resource = {
       tokenUsage: 'Token 用量',
       tokenNoUsage: '用量未上报',
       suggestionsTitle: '建议',
+      selectConversation: '请选择或新建会话开始对话。',
     },
     wizard: {
       previous: '上一步',
