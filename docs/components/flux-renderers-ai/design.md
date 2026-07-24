@@ -1,6 +1,6 @@
 # flux-renderers-ai 包设计
 
-> **版本**：v2（按 `audit.md` 修订；v1 → v2 变更摘要见文末 §20）
+> **版本**：v2（按 `audit.md` 修订；v1 → v2 变更摘要见 §19 / `implementation.md`）
 > **当前状态**：v2 已解决所有 FIX 项；待独立 fresh session 复审
 
 ## 1. 包定位
@@ -16,7 +16,7 @@
 2. **引擎与渲染解耦**：消息状态机、流式累积、插件链、abort、存储等"行为"放在框架无关的引擎里；React 仅负责订阅与渲染。引擎可独立单测。
 3. **flux 契约一致性**：所有渲染器遵守 `RendererComponentProps`（数据从 `props.props/meta/regions/events/helpers` 读，不直接访问 store），响应式读走 `useScopeSelector` 等 selector hooks，UI 组件全部来自 `@nop-chaos/ui`。
 4. **平台能力渐进接入**：P0 自包含（engine 在包内 React Context 传播即可工作）；P1 把 `ai:send / ai:abort / ai:createConversation` 注册为 ActionScope namespace；P2 把 engine 作为 ComponentHandle 暴露，供跨组件控制。
-5. **可替换的 AI 后端**：通过 `ResponseProvider` 函数式抽象接入任何 OpenAI 兼容服务（OpenAI、DeepSeek、通义、Kimi、自部署 vLLM 等），不绑死单一 SDK。
+5. **可替换的 AI 后端**：通过 `AiConnector` 函数式抽象接入任何 OpenAI 兼容服务（OpenAI、DeepSeek、通义、Kimi、自部署 vLLM 等），不绑死单一 SDK。
 6. **不重写 AMIS**：AMIS 没有 AI 对话原生组件；本包是 flux 原生能力扩展，参考 tiny-robot 而非 AMIS。
 
 ## 3. 非目标
@@ -24,7 +24,7 @@
 - 不实现 MCP（Model Context Protocol）协议客户端本体（Phase 7 可选，需引入 `@modelcontextprotocol/sdk` 作为可选 peerDep）。
 - 不实现 Skills 系统（Anthropic 风格的 skill 文件夹加载）——非核心，按需再评估。
 - ~~不实现 Sender 的 Tiptap 富文本扩展（@提及、模板插入、Slash 命令）作为 P0；P0 用 `<Textarea>` + auto-resize + 键盘事件。Tiptap 集成是 Phase 6 可选项。~~ → **P6（A6）已落地**：`senderExtensions` schema 字段 + `./rich-text` 子路径导出 `createTiptapSender()` 工厂（含内置 @提及 / 模板 / Slash 扩展）。Tiptap 为可选 peerDep，host 未 import `./rich-text` 时 bundle 不含 Tiptap（bundle 隔离守卫见 `contract-honesty.test.ts`）。P0 `<Textarea>` 降级行为不变。
-- 不引入组件级 `api` 字段：所有 AI 请求通过 `ResponseProvider` 抽象注入，业务方在 host 层提供 provider 实现（封装自家后端 / 网关 / 鉴权），渲染器只接受已构造好的 provider 函数。
+- 不引入组件级 `api` 字段：所有 AI 请求通过 `AiConnector` 抽象注入，业务方在 host 层提供 connector 实现（封装自家后端 / 网关 / 鉴权），渲染器只接受已构造好的 connector 函数。
 - 不在 P0 接 flux form owner：消息状态由 engine 自持，不写回 form value（避免 form 验证、提交语义被污染）。Phase 5 再评估"把 messages 序列化进 scope 字段"的高级场景。
 
 > **Decision-A（P4 裁定，messages 进 form 字段）**：经 P4 Phase 1 评估裁定为 **落地 host 范式（路径 a）**，不扩 engine、不破 INV-17。host 在 `onResponseComplete`/按钮 handler 调 Layer C `component:getMessages` 取快照 → **序列化（深拷贝，如 `structuredClone`/JSON）** → `setValue` 写入 scope/form 字段。序列化步骤是 INV-17 的关键：`engine.messages` 仍是域内部唯一真源，host 持有独立副本（直接持有 engine 返回的引用会污染域内部，host 必须 copy）。proof 见 `packages/flux-renderers-ai/src/renderers/__tests__/phase4-platform-linkage.test.tsx`。本包无需新增 engine/handle 方法。
@@ -43,7 +43,7 @@
 | 消息引擎                 | `kit/src/message/core/engine.ts`（框架无关）                        | `src/engine/` 直接移植                                                                                  | **保留源码**           |
 | 流式累积                 | `combineDeltaData` 算法                                             | 同                                                                                                      | **保留源码**           |
 | 插件链                   | thinkingPlugin / toolPlugin / lengthPlugin / skillPlugin            | 前三个保留，skillPlugin 不移植                                                                          | 保留                   |
-| Provider 抽象            | `ResponseProvider` 函数式（新）+ `BaseModelProvider`（@deprecated） | 只保留 `ResponseProvider`                                                                               | 改进                   |
+| Provider 抽象            | `ResponseProvider` 函数式（新）+ `BaseModelProvider`（@deprecated） | 只保留 `AiConnector`                                                                                    | 改进                   |
 | 富文本编辑               | Tiptap/vue-3 强耦合                                                 | `<Textarea>` + auto-resize（P0）；Tiptap/react 可选（P6）                                               | 简化                   |
 | Markdown                 | markdown-it + DOMPurify                                             | `react-markdown` + `remark-gfm` + `rehype-raw` + DOMPurify（与 `flux-renderers-content/markdown` 对齐） | 复用现有依赖           |
 | 主题                     | `--tr-*` CSS 变量 + `data-tr-color-mode` 属性                       | flux 现有 token + Tailwind（不引入新 token 命名空间）                                                   | 改写                   |
@@ -140,26 +140,33 @@ packages/flux-renderers-ai/
     └── renderers/                   # flux 渲染器（每个一个 .tsx + .test.tsx）
         ├── ai-chat.tsx
         ├── ai-message-list.tsx
-        ├── ai-bubble/
-        │   ├── index.tsx            # AiBubbleRenderer 主组件
-        │   ├── renderers/           # BubbleRenderers 注册制（参考 tiny-robot）
-        │   │   ├── default-renderers.ts
-        │   │   ├── text.tsx
-        │   │   ├── markdown.tsx
-        │   │   ├── reasoning.tsx
-        │   │   ├── tools.tsx
-        │   │   ├── tool.tsx
-        │   │   ├── image.tsx
-        │   │   └── loading.tsx
-        │   └── types.ts             # BubbleBoxRendererMatch / BubbleContentRendererMatch
-    │   └── types.ts             # BubbleBoxRendererMatch / BubbleContentRendererMatch
         ├── ai-sender.tsx
         ├── ai-conversations.tsx
         ├── ai-welcome.tsx
         ├── ai-prompts.tsx
         ├── ai-feedback.tsx
         ├── ai-attachments.tsx
-        └── ai-tool-call.tsx
+        ├── ai-tool-call.tsx
+        ├── ai-citations.tsx
+        ├── ai-token-usage.tsx
+        ├── ai-voice-input.tsx
+        ├── ai-suggestions.tsx
+        ├── ai-bubble/
+        │   ├── index.tsx            # AiBubbleRenderer 主组件
+        │   ├── markdown-buffer.ts   # 流式 markdown 缓冲（CJK / fence 安全）
+        │   ├── user-edit.tsx        # §4.7 用户消息编辑
+        │   ├── types.ts             # BubbleContentRendererMatch / BubbleToolRendererMatch
+        │   └── renderers/           # BubbleRenderers 注册制（参考 tiny-robot）
+        │       ├── default-renderers.ts
+        │       ├── text.tsx
+        │       ├── markdown.tsx
+        │       ├── reasoning.tsx
+        │       ├── tools.tsx
+        │       ├── image.tsx
+        │       ├── loading.tsx
+        │       ├── error.tsx
+        │       ├── data-part.tsx
+        │       └── timestamp.tsx
     └── rich-text/                 # P6 (A6): Tiptap 富文本 sender 子路径（OPT-IN）
         ├── index.ts               # ./rich-text 子路径入口 — 导出 createTiptapSender + 类型
         ├── types.ts               # TiptapSenderOptions / TiptapMentionItem / ...

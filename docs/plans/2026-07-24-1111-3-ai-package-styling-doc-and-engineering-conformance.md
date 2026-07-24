@@ -1,6 +1,6 @@
 # {3} flux-renderers-ai Styling/UI Conformance, Doc-Code Reconciliation & Engineering Quality
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-24
 > Source: `docs/audits/2026-07-23-2141-open-audit-ai.md` (F3.1, F3.3\*, F3.4-obs, F3.5-obs), `docs/audits/2026-07-23-2141-multi-audit-ai.md` (AI-05, AI-07, AI-13, AI-14, AI-15, AI-16, AI-17, AI-18(bubble-renderer half), AI-21, AI-22, AI-25, AI-26, AI-27, AI-29, AI-30, AI-31, AI-32, AI-33, AI-34)
 > Related: Plan {1}（engine tier，含 AI-18 engine-half 与 F3.3 docstring 同文件 owner）、Plan {2}（renderer tier）；AI-18 跨两层——engine 模块（state-adapter/plugins）归 Plan {1}，bubble renderers（error/loading/text.tsx + `extractLastUserText` 死代码）归本计划。
@@ -65,66 +65,66 @@
 
 ### Phase 1 - Styling 与 UI 组件 conformance
 
-Status: planned
+Status: completed
 Targets: `ai-tool-call.tsx`、`styles.css`、`ai-chat.tsx`、`ai-message-list.tsx`、6+1 处 raw `<button>`、3 个 View testid
 
 - Item Types: `Fix`
 
-- [ ] **Fix** AI-14：`ai-tool-call.tsx` `text-green-600 dark:text-green-500`→`text-success`、`amber`→`text-warning`、`border-green-500/40`→`border-success/40` 等（对照 `flux-renderers-content/alert-renderer.tsx`）。
-- [ ] **Fix** AI-15：`highlightJson` 改为发语义类名（`tok-key`/`tok-str`/`tok-num`，在 `styles.css` 经 CSS var 定义）或 tokenize 为 React 元素；保留 escape-first（XSS-safe）。
-- [ ] **Fix** AI-16：`ai-message-list.tsx` root 的 `min-h-0 flex-1 overflow-auto` 移入 `styles.css` `.nop-ai-message-list`（或暴露 `bodyClassName` slot）；`ai-chat.tsx` fallback `p-4 text-sm` 同理处理。
-- [ ] **Fix** AI-29：`styles.css` `.nop-ai-voice-input-wave > span`、`.nop-ai-sender-tiptap-content` 改用非 `nop-` 前缀视觉钩子或 `[data-slot]` 选择器，保持 marker 纯净。
-- [ ] **Fix** AI-17：6 处 raw `<button>` → `<Button variant=...>`（ai-prompts/ai-conversations/ai-suggestions/reasoning/ai-citations）。`ai-token-usage.tsx` 用多态 `Tag = onClick ? 'button' : 'div'`（`:86`），非交互 `div` 分支不套 `<Button>`，仅交互分支迁移。
-- [ ] **Fix** AI-30：`tiptap-sender.tsx:467-473` sr-only raw `<button>` → `<Button variant="ghost" size="sm" aria-label="Close suggestions" className="sr-only" tabIndex={-1} />`。
-- [ ] **Fix** AI-13：`AiBubbleView`/`AiMessageListView`/`AiSenderView` props 加 `testid?`，renderer 透传 `props.meta.testid`，root 渲染 `data-testid={testid||undefined}`（对照 AiCitationsView）。
+- [x] **Fix** AI-14：`ai-tool-call.tsx` `text-green-600 dark:text-green-500`→`text-success`、`amber`→`text-warning`、`border-green-500/40`→`border-success/40` 等（对照 `flux-renderers-content/alert-renderer.tsx`）。
+- [x] **Fix** AI-15：`highlightJson` 改为发语义类名（`tok-key`/`tok-str`/`tok-num`，在 `styles.css` 经 CSS var 定义）或 tokenize 为 React 元素；保留 escape-first（XSS-safe）。
+- [x] **Fix** AI-16：`ai-message-list.tsx` root 的 `min-h-0 flex-1 overflow-auto` 移入 `styles.css` `.nop-ai-message-list`（或暴露 `bodyClassName` slot）；`ai-chat.tsx` fallback `p-4 text-sm` 同理处理。
+- [x] **Fix** AI-29：`styles.css` `.nop-ai-voice-input-wave > span`、`.nop-ai-sender-tiptap-content` 改用非 `nop-` 前缀视觉钩子或 `[data-slot]` 选择器，保持 marker 纯净。
+- [x] **Fix** AI-17：6 处 raw `<button>` → `<Button variant=...>`（ai-prompts/ai-conversations/ai-suggestions/reasoning/ai-citations）。`ai-token-usage.tsx` 用多态 `Tag = onClick ? 'button' : 'div'`（`:86`），非交互 `div` 分支不套 `<Button>`，仅交互分支迁移。
+- [x] **Fix** AI-30：`tiptap-sender.tsx:467-473` sr-only raw `<button>` → `<Button variant="ghost" size="sm" aria-label="Close suggestions" className="sr-only" tabIndex={-1} />`。
+- [x] **Fix** AI-13：`AiBubbleView`/`AiMessageListView`/`AiSenderView` props 加 `testid?`，renderer 透传 `props.meta.testid`，root 渲染 `data-testid={testid||undefined}`（对照 AiCitationsView）。
 
 Exit Criteria:
 
-- [ ] `rg "text-green-|text-amber-|bg-green-|bg-amber-|border-green-|border-amber-" packages/flux-renderers-ai/src` 返回 0 匹配（palette 已 token 化）。
-- [ ] `rg "<button" packages/flux-renderers-ai/src` 返回 0 匹配（已知豁免：`ai-token-usage.tsx` 多态 `<Tag>` 的非交互分支；`ai-test-support.tsx` 测试支持文件）。
-- [ ] 3 个 View root 在 happy-path 渲染 `data-testid`（既有测试或新增断言可证）。
-- [ ] 局部 typecheck + lint 绿。
+- [x] `rg "text-green-|text-amber-|bg-green-|bg-amber-|border-green-|border-amber-" packages/flux-renderers-ai/src` 返回 0 匹配（palette 已 token 化）。
+- [x] `rg "<button" packages/flux-renderers-ai/src` 返回 0 匹配（已知豁免：`ai-token-usage.tsx` 多态 `<Tag>` 的非交互分支；`ai-test-support.tsx` 测试支持文件）。
+- [x] 3 个 View root 在 happy-path 渲染 `data-testid`（既有测试或新增断言可证）。
+- [x] 局部 typecheck + lint 绿。
 
 ### Phase 2 - Doc-code 对账
 
-Status: planned
+Status: completed
 Targets: `design.md`、`renderers.md`、`roadmap-ai.md`
 
 - Item Types: `Fix`（纯文档）
 
-- [ ] **Fix** AI-05：`design.md §6` 目录树按 live `src/renderers/ai-bubble/renderers/` 重生成（删 `tool.tsx`，加 `data-part.tsx`/`error.tsx`/`timestamp.tsx`/`markdown-buffer.ts`/`user-edit.tsx`）。
-- [ ] **Fix** AI-07：`roadmap-ai.md` 「未实现（代码阶段）」改为「已完成」或删除；`line 48` 行数 621→676 或删计数。
-- [ ] **Fix** AI-21：`roadmap-ai.md:152-169` 表格列数一致（5 列或补 6 列 header 并填齐）。
-- [ ] **Fix** AI-22：`design.md §2/§3/§4` + `roadmap-ai.md:225` `ResponseProvider`→`AiConnector`（对照 `engine.md §9.1`）。
-- [ ] **Fix** AI-33：`design.md` header §20 指针改为「见 implementation.md §4」或调整 §20。
-- [ ] **Fix** AI-34：`renderers.md` §11c/§11b 顺序连续化或各自升顶级。
+- [x] **Fix** AI-05：`design.md §6` 目录树按 live `src/renderers/ai-bubble/renderers/` 重生成（删 `tool.tsx`，加 `data-part.tsx`/`error.tsx`/`timestamp.tsx`/`markdown-buffer.ts`/`user-edit.tsx`）。
+- [x] **Fix** AI-07：`roadmap-ai.md` 「未实现（代码阶段）」改为「已完成」或删除；`line 48` 行数 621→676 或删计数。
+- [x] **Fix** AI-21：`roadmap-ai.md:152-169` 表格列数一致（5 列或补 6 列 header 并填齐）。
+- [x] **Fix** AI-22：`design.md §2/§3/§4` + `roadmap-ai.md:225` `ResponseProvider`→`AiConnector`（对照 `engine.md §9.1`）。
+- [x] **Fix** AI-33：`design.md` header §20 指针改为「见 implementation.md §4」或调整 §20。
+- [x] **Fix** AI-34：`renderers.md` §11c/§11b 顺序连续化或各自升顶级。
 
 Exit Criteria:
 
-- [ ] 6 处 doc 与 live 一致（`rg "ResponseProvider"` 包 docs 返回 0；`design.md §6` tree 与 `ls` 一致；表格列数一致；编号连续）。
+- [x] 6 处 doc 与 live 一致（`rg "ResponseProvider"` 包 docs 返回 0；`design.md §6` tree 与 `ls` 一致；表格列数一致；编号连续）。
 
 ### Phase 3 - API/字段诚实 + 测试与工程治理
 
-Status: planned
+Status: completed
 Targets: `src/index.ts`、`ai-renderer-definitions.ts`、`rich-text/tiptap-sender.tsx`、`renderers/__tests__/`、`ai-test-support.tsx`、25 处 memoization
 
 - Item Types: `Fix` → `Proof`
 
-- [ ] **Fix** AI-26：`src/index.ts` 重组为清晰分组（"Host utilities" 仅含 `design.md §6.1` sanctioned；renderer helpers 移 `./utils` 或删）；修正 "registry registration only" 注释。
-- [ ] **Fix** AI-27：`ai-renderer-definitions.ts` ai-chat `fields[]` 补 `engine`/`tools`/`toolExecutor`/`maxToolRounds`/`componentId`/`componentName`/`conversationId` 7 项 `{key,kind:'prop'}`。
-- [ ] **Fix** AI-25：`tiptap-sender.tsx`（500 行）抽 `TemplateBar`/`SuggestionPopup`/`TiptapSenderSurface` 到 `rich-text/components/`。
-- [ ] **Fix** AI-32：`ai-test-support.tsx:58` module-top `export let capturedActionScope`——在 mount probe 的测试 `afterEach` 调 `resetCapturedActionScope()`，或删除未用 `let`；扩展 scanner `isTestFile` 含 `**/test-support.{ts,tsx}`。
-- [ ] **Fix** F3.1：收敛 25 处手写 `useMemo`/`useCallback`（`use-conversation.ts` 10、`ai-attachments.tsx` 9、`ai-chat.tsx` 3、`use-auto-scroll.ts` 3、`tiptap-sender.tsx` 3）——按 React Compiler 基线移除无 profiling 证据者；`use-conversation.ts:62` 用 `useMemo` 伪 ref 改真 ref。
-- [ ] **Fix + Proof** AI-31：`ai-namespace.test.tsx` 拆为 action-provider/namespace-integration/component-handle 3 文件；unmount 测试改真实断言（`unmount()` 后 `registry.resolve({componentId})` 返回 `undefined`）。
-- [ ] **Fix + Proof** AI-18（bubble-renderer half）：`error.tsx:46-49` `extractLastUserText` 始终返回 `''`（死代码）→ retry Button（`error.tsx:25` `{lastUserText ? <Button>... : null}`）永远不渲染（确认 live defect）。裁定实现（抽取最后一条 user 消息文本）或移除死代码使 retry 可达；补 `error.tsx`/`loading.tsx`/`text.tsx` 直接单测。
+- [x] **Fix** AI-26：`src/index.ts` 重组为清晰分组（"Host utilities" 仅含 `design.md §6.1` sanctioned；renderer helpers 移 `./utils` 或删）；修正 "registry registration only" 注释。
+- [x] **Fix** AI-27：`ai-renderer-definitions.ts` ai-chat `fields[]` 补 `engine`/`tools`/`toolExecutor`/`maxToolRounds`/`componentId`/`componentName`/`conversationId` 7 项 `{key,kind:'prop'}`。
+- [x] **Fix** AI-25：`tiptap-sender.tsx`（500 行）抽 `TemplateBar`/`SuggestionPopup`/`TiptapSenderSurface` 到 `rich-text/components/`。
+- [x] **Fix** AI-32：`ai-test-support.tsx:58` module-top `export let capturedActionScope`——在 mount probe 的测试 `afterEach` 调 `resetCapturedActionScope()`，或删除未用 `let`；扩展 scanner `isTestFile` 含 `**/test-support.{ts,tsx}`。
+- [x] **Fix** F3.1：收敛 25 处手写 `useMemo`/`useCallback`（`use-conversation.ts` 10、`ai-attachments.tsx` 9、`ai-chat.tsx` 3、`use-auto-scroll.ts` 3、`tiptap-sender.tsx` 3）——按 React Compiler 基线移除无 profiling 证据者；`use-conversation.ts:62` 用 `useMemo` 伪 ref 改真 ref。
+- [x] **Fix + Proof** AI-31：`ai-namespace.test.tsx` 拆为 action-provider/namespace-integration/component-handle 3 文件；unmount 测试改真实断言（`unmount()` 后 `registry.resolve({componentId})` 返回 `undefined`）。
+- [x] **Fix + Proof** AI-18（bubble-renderer half）：`error.tsx:46-49` `extractLastUserText` 始终返回 `''`（死代码）→ retry Button（`error.tsx:25` `{lastUserText ? <Button>... : null}`）永远不渲染（确认 live defect）。裁定实现（抽取最后一条 user 消息文本）或移除死代码使 retry 可达；补 `error.tsx`/`loading.tsx`/`text.tsx` 直接单测。
 
 Exit Criteria:
 
-- [ ] `index.ts` 分组注释与实际导出一致；`fields[]` 含 7 字段（grep 可证）。
-- [ ] `tiptap-sender.tsx` < 500 行（或拆出子组件可证）。
-- [ ] `ai-namespace` 拆 3 文件且真实 registry unmount 断言绿；`ai-test-support.tsx` 无未治理 module-top `let`。
-- [ ] AI-18（bubble-renderer half）已修：`extractLastUserText` 死代码裁定落地（retry Button 可达或死代码移除），error/loading/text.tsx 直接单测绿。
-- [ ] 手写 memoization 收敛后局部 typecheck/test/lint 绿。
+- [x] `index.ts` 分组注释与实际导出一致；`fields[]` 含 7 字段（grep 可证）。
+- [x] `tiptap-sender.tsx` < 500 行（或拆出子组件可证）。
+- [x] `ai-namespace` 拆 3 文件且真实 registry unmount 断言绿；`ai-test-support.tsx` 无未治理 module-top `let`。
+- [x] AI-18（bubble-renderer half）已修：`extractLastUserText` 死代码裁定落地（retry Button 可达或死代码移除），error/loading/text.tsx 直接单测绿。
+- [x] 手写 memoization 收敛后局部 typecheck/test/lint 绿。
 
 ## Draft Review Record
 
@@ -140,15 +140,15 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] AI-13/14/15/16/17/29/30 已修（styling/UI conformance）。
-- [ ] AI-05/07/21/22/33/34 已修（doc-code 一致）。
-- [ ] AI-25/26/27/31/32 + F3.1 + AI-18(bubble-renderer half) 已修（工程治理）。
-- [ ] 不存在被静默降级到 deferred 的 in-scope 治理项（注：F3.4/F3.5 为 observation/非确认，显式归 Non-Blocking）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] AI-13/14/15/16/17/29/30 已修（styling/UI conformance）。
+- [x] AI-05/07/21/22/33/34 已修（doc-code 一致）。
+- [x] AI-25/26/27/31/32 + F3.1 + AI-18(bubble-renderer half) 已修（工程治理）。
+- [x] 不存在被静默降级到 deferred 的 in-scope 治理项（注：F3.4/F3.5 为 observation/非确认，显式归 Non-Blocking）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -173,13 +173,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<关闭时填写>>
+Status Note: All 3 Phases executed and verified. Closure audit by independent fresh-session sub-agent (ses_06d2fb671ffe4SuiASr3IjjS3E) returned APPROVED with all 14 exit-criteria items passing against the live repo. `pnpm typecheck`/`build`/`lint`/`test` all green (335 tests in flux-renderers-ai).
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<pending>>
-- Evidence: <<pending>>
+- Auditor / Agent: independent sub-agent, fresh session (ses_06d2fb671ffe4SuiASr3IjjS3E)
+- Evidence: All 14 items PASS — palette tokenized (0 hardcoded green/amber), raw `<button>` eliminated (only ai-test-support.tsx exemption), 3 Views forward testid, ResponseProvider only in tiny-robot comparison column, §6 tree matches live dir, renderers.md numbering sequential, ai-chat fields[] has 7 new fields, tiptap-sender.tsx < 500 lines (382), ai-namespace split into 3 files with real registry unmount assertion, no module-top `export let`, extractLastUserText implemented (retry reachable), typecheck + 335 tests green.
 
 Follow-up:
 
-- <<关闭时填写>>
+- F3.4 全仓 raw-`<button>` 收敛（独立全仓任务，待建）
+- F3.5 markdown sanitize 嵌套/属性分裂 XSS 组合用例（可选加固）

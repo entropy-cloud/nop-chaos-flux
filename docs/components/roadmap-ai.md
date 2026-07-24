@@ -45,7 +45,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 - tiny-robot 深度调研报告 → `docs/analysis/ai-survey/2026-07-21-tiny-robot-deep-analysis.md`（61 KB，912 行）
 - tiny-robot 移植建议 → `docs/analysis/ai-survey/2026-07-21-tiny-robot-migration-recommendations.md`
-- 包设计文档（v2，audit.md 已解决所有 FIX 项）→ `docs/components/flux-renderers-ai/design.md`（621 行）
+- 包设计文档（v2，audit.md 已解决所有 FIX 项）→ `docs/components/flux-renderers-ai/design.md`
 - 引擎与适配器设计 → `docs/components/flux-renderers-ai/engine.md`
 - 实施辅助（测试策略、渐进式路线、风险表）→ `docs/components/flux-renderers-ai/implementation.md`
 - 组件级改进分析 → `docs/components/flux-renderers-ai/improvement-analysis.md`
@@ -54,11 +54,10 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - env.stream 扩充讨论 → `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`
 - 新渲染器引入审计 → `docs/references/new-renderer-introduction-audit.md`
 
-### 未实现（代码阶段）
+### 已完成（代码阶段）
 
-- `packages/flux-renderers-ai/` 包尚未创建
+- `packages/flux-renderers-ai/` 包已创建，全部 14 个渲染器 + 2 个增强项已实现（A1–A6 均 done）
 - `packages/flux-core` 的 `RendererEnv` 已扩充 `stream` / `openSocket` 接口（A0 已落地，2026-07-23）+ playground 默认实现 + decorator hooks
-- 全部 14 个渲染器 + 2 个增强项尚未实现
 
 ### 总览
 
@@ -149,24 +148,24 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 > 静态映射：渲染器 → 工作项 → Phase。逐渲染器实现状态以本表为准。
 
-| type               | Phase | Work item | 类别   | 职责                                                          |
-| ------------------ | ----- | --------- | ------ | ------------------------------------------------------------- | --- |
-| `ai-chat`          | P0    | A1        | Layout | 完整对话面板（messages + sender + auto-scroll + 状态管理）    |
-| `ai-message-list`  | P0    | A1        | Layout | 消息列表（分组、自动滚动、注册制渲染）                        |
-| `ai-bubble`        | P0    | A1        | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown）          |
-| `ai-sender`        | P0    | A1        | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                 |
-| `ai-conversations` | P1    | A2        | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                       | ✅  |
-| `ai-welcome`       | P1    | A2        | Widget | 空状态欢迎页 + icon/title/description/footer                  | ✅  |
-| `ai-prompts`       | P1    | A2        | Widget | 推荐提示词卡片列表（垂直/水平/折行）                          | ✅  |
-| `ai-feedback`      | P1    | A2        | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）           | ✅  |
-| `ai-attachments`   | P2    | A3        | Widget | 附件上传/预览（图片模式 / 卡片模式）                          |
-| `ai-tool-call`     | P2    | A3        | Widget | 工具调用卡片（状态、展开、JSON 高亮、按工具名注册专用渲染器） |
-| `ai-citations`     | P3    | A4        | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）              |
-| HITL 审批          | P3    | A4        | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮       |
-| `ai-voice-input`   | P4    | A5        | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）               | ✅  |
-| `ai-token-usage`   | P4    | A5        | Widget | Token / 成本 / 上下文占比显示                                 | ✅  |
-| 消息分支           | P4    | A5        | 增强   | 重新生成时分支切换（branches 由 host 管理）                   | ✅  |
-| `ai-suggestions`   | P4    | A5        | Widget | 建议气泡（Popover / Pills）                                   | ✅  |
+| type               | Phase | Work item | 类别   | 职责                                                          | 状态 |
+| ------------------ | ----- | --------- | ------ | ------------------------------------------------------------- | ---- |
+| `ai-chat`          | P0    | A1        | Layout | 完整对话面板（messages + sender + auto-scroll + 状态管理）    | ✅   |
+| `ai-message-list`  | P0    | A1        | Layout | 消息列表（分组、自动滚动、注册制渲染）                        | ✅   |
+| `ai-bubble`        | P0    | A1        | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown）          | ✅   |
+| `ai-sender`        | P0    | A1        | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                 | ✅   |
+| `ai-conversations` | P1    | A2        | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                       | ✅   |
+| `ai-welcome`       | P1    | A2        | Widget | 空状态欢迎页 + icon/title/description/footer                  | ✅   |
+| `ai-prompts`       | P1    | A2        | Widget | 推荐提示词卡片列表（垂直/水平/折行）                          | ✅   |
+| `ai-feedback`      | P1    | A2        | Widget | 消息底部操作条（copy/refresh/like/dislike/sources）           | ✅   |
+| `ai-attachments`   | P2    | A3        | Widget | 附件上传/预览（图片模式 / 卡片模式）                          | ✅   |
+| `ai-tool-call`     | P2    | A3        | Widget | 工具调用卡片（状态、展开、JSON 高亮、按工具名注册专用渲染器） | ✅   |
+| `ai-citations`     | P3    | A4        | Widget | 内联引用气泡（`[N]` 检测 + 悬停卡片 + 来源列表）              | ✅   |
+| HITL 审批          | P3    | A4        | 增强   | `ai-tool-call` 增 `approval` 状态 + approve/reject 按钮       | ✅   |
+| `ai-voice-input`   | P4    | A5        | Widget | 语音输入（Web Speech API 直呼，非 IO 不经 env）               | ✅   |
+| `ai-token-usage`   | P4    | A5        | Widget | Token / 成本 / 上下文占比显示                                 | ✅   |
+| 消息分支           | P4    | A5        | 增强   | 重新生成时分支切换（branches 由 host 管理）                   | ✅   |
+| `ai-suggestions`   | P4    | A5        | Widget | 建议气泡（Popover / Pills）                                   | ✅   |
 
 ---
 
@@ -222,7 +221,7 @@ graph TD
 | Renderer 契约       | 每个新渲染器必须有 `design.md` + `example.json` + renderer definition（见 `renderer-implementation-guidelines.md`）                                                                                                     |
 | 新渲染器引入审计    | 引入新渲染器包必须通过 `docs/references/new-renderer-introduction-audit.md` 的 5 项原则审计（IO 边界、复用边界、内部状态边界、契约边界、扩展边界）                                                                      |
 | UI 组件来源         | 一律复用 `@nop-chaos/ui`，禁止裸 HTML                                                                                                                                                                                   |
-| 请求下沉            | AI 渲染器**不得声明组件级 `api` 字段**。所有 AI 请求通过 `ResponseProvider` 函数式抽象注入，业务方在 host 层提供 provider 实现。流式请求走 `env.stream`（A0 扩充后）。                                                  |
+| 请求下沉            | AI 渲染器**不得声明组件级 `api` 字段**。所有 AI 请求通过 `AiConnector` 函数式抽象注入，业务方在 host 层提供 connector 实现。流式请求走 `env.stream`（A0 扩充后）。                                                      |
 | 安全                | `ai-bubble` 渲染 markdown 时必须走 sanitize pipeline（复用 `flux-renderers-content/markdown` 导出的 `sanitizeHtml`）                                                                                                    |
 | a11y                | `ai-message-list` 根元素 `role="log"` + `aria-live="polite"`（P1）；`ai-tool-call` 根元素 `aria-label`（P1）；`ai-sender` 提交后焦点回输（P1）；消息列表 Tab 导航（P2）；模态审批焦点陷阱（P3）；流式文本动态播报（P2） |
 | 单测                | 引擎核心（`src/engine/`）可独立单测，不依赖 React；每个落地渲染器配 focused 单测                                                                                                                                        |

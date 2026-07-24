@@ -470,7 +470,7 @@ export interface AiSuggestionsSchema extends BaseSchema {
 - **DOM**：marker `nop-ai-suggestions`，`data-slot="ai-suggestions"`，`data-overflow="expand|scroll|popover"`；每项 `data-slot="ai-suggestions-item"` + `data-index`；溢出触发 `data-slot="ai-suggestions-overflow"`（`+N`），展开后 `data-slot="ai-suggestions-overflow-list"`。
 - **Failure Path**：`suggestions-overflow` 按模式排布；`popover` 下超出 `maxVisible` 收进 Popover + 计数；空列表 `data-empty`。
 
-## 11c. ai-token-usage（Widget, P4, A-17）
+## 11b. ai-token-usage（Widget, P4, A-17）
 
 ```ts
 export interface AiTokenUsage {
@@ -496,7 +496,7 @@ export interface AiTokenUsageSchema extends BaseSchema {
 - **Failure Path `token-no-usage`**：`metadata.usage` 缺失 → 渲染 muted 占位（`data-empty`，文案"用量未上报"），从不崩溃。
 - **DOM**：marker `nop-ai-token-usage`；`ai-token-usage-ring`（SVG）、`ai-token-usage-total`/`-prompt`/`-completion`/`-cost`。
 
-## 11b. ai-voice-input（Widget, P4, A-15）
+## 11c. ai-voice-input（Widget, P4, A-15）
 
 ```ts
 export interface AiVoiceInputSchema extends BaseSchema {
