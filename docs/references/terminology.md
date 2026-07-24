@@ -508,7 +508,7 @@ Defined in `flux-renderers-ai/src/engine/types.ts`; architecture in `docs/compon
 
 The host-provided IO boundary that the `MessageEngine` calls to reach an AI backend. All network IO is injected through it, keeping the engine host-neutral.
 
-It exposes a streaming `stream(request)` that returns an `AsyncGenerator<AiConnectorChunk>` and an optional non-streaming `complete(request)`. A reference implementation is `createStreamBasedAiConnector(env)`, which bridges `RendererEnv.fetcher` to the connector contract.
+It exposes a streaming `stream(request)` that returns an `AsyncGenerator<AiConnectorChunk>` and an optional non-streaming `complete(request)`. A reference implementation is `createStreamBasedAiConnector(env)`, which bridges `RendererEnv.stream` to the connector contract (the engine / package never calls `RendererEnv.fetcher` for AI traffic — `env.stream` is the host IO surface; see `design.md` §11.4).
 
 Defined in `flux-renderers-ai/src/engine/types.ts`; architecture in `docs/components/flux-renderers-ai/engine.md` §8 and `docs/components/flux-renderers-ai/design.md`.
 

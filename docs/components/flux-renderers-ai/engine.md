@@ -237,6 +237,13 @@ export function useMessage(options: UseMessageOptions): UseMessageReturn;
   绑定该外部 engine，自建 engine 保持 idle；外部 engine 的 connector 生命周期归
   owner，热替换 effect 对它跳过（review m4: never touch an external engine's
   connector）。自建 engine 在卸载时会 `abort()` 在途流（F2.2）。
+- **热替换 scope（2151 P2 doc hardening）**：**只有 `connector` 是热替换字段**——
+  `options.connector` 引用变化时调 `engine.setConnector`。其余选项
+  （`systemPrompt` / `tools` / `toolExecutor` / `maxToolRounds` / `extraRequestParams` /
+  `plugins`）为 **mount-time-only**：它们仅在 `useState` 的 lazy initializer 里
+  种入 engine，后续 render 改变这些字段的值是**静默 no-op**——`MessageEngine`
+  没有对应的 setter（设计如此：mid-conversation 改 prompt/toolset 是 host 层决策，
+  应走「换 engine」路径，例如经 `useConversation.activeEngine` 注入新 engine）。
 
 ### 8.6 useConversation hook
 

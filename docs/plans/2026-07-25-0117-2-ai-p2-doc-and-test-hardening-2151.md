@@ -1,6 +1,6 @@
 # 2 flux-renderers-ai P2 Doc Consistency & Test Hardening (2151 audit batch)
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-25
 > Source: `docs/audits/2026-07-24-2151-multi-audit-ai.md`（P2：文档/契约措辞 rot 4 条 + 测试断言强度 6 条 + 跨节的 editing 归属冲突 1 条 + onResponseComplete 契约盲区 1 条，共 12 条文档/测试项）
 > Related: `docs/components/roadmap-ai.md`（`### Follow-up Backlog (P2 from audits)` → 2151 批次）、`docs/plans/2026-07-25-0117-1-ai-p2-code-and-behavior-remediation-2151.md`（代码类 P2，先执行）、`docs/plans/2026-07-24-2300-2-ai-p2-doc-consistency-remediation.md`（1757 批文档收口，本计划沿用其模式）
@@ -86,46 +86,46 @@
 
 ### Workstream 1 - 文档 / 契约措辞对齐
 
-Status: planned
+Status: completed
 Targets: `docs/components/flux-renderers-ai/design.md`, `docs/components/flux-renderers-ai/renderers.md`, `docs/references/terminology.md`, `docs/components/flux-renderers-ai/engine.md`
 
 - Item Types: `Fix`
 
-- [ ] [Fix] `design.md:74` P0 表 `ai-message-list` 描述移除「分组」，改为「自动滚动、注册制渲染、A-8 虚拟滚动」（与 `renderers.md:95` 对齐；F1.4 已移除 groupStrategy）。
-- [ ] [Fix] `design.md:578-589` §13.1 marker 表补 `nop-ai-citations`/`nop-ai-voice-input`/`nop-ai-token-usage`/`nop-ai-suggestions`（与 §5.1 一致；逐条核对 `rg "nop-ai-" packages/flux-renderers-ai/src/renderers` 根集合）。
-- [ ] [Fix] `design.md:543` §11.5 editing 归属：裁定为「当前实现 = 组件 `useState`（`user-edit.tsx`/`ai-bubble/index.tsx`），引擎无 editing-state setter；后果 = >200 消息虚拟回收时编辑态丢失」——把「engine 持有」改为如实描述组件持有的现状 + 限制注记（Decision：以低风险文档对齐收口，不迁引擎）。
-- [ ] [Fix] `terminology.md:511` 把 `RendererEnv.fetcher` 改为 `RendererEnv.stream`（与 `design.md §11.4`/`engine.md`/代码一致）。
-- [ ] [Fix] `use-message.ts:62-92` 补 JSDoc 注记：「仅 `connector` 热换；`systemPrompt`/`tools`/`toolExecutor`/`maxToolRounds` 为 mount-time-only（engine 无此类 setter）」；并在 `engine.md` 或 `design.md` 对应章节同步该限制说明。
-- [ ] [Fix] onResponseComplete 契约边界：在 `engine.md`（或 `design.md` 事件契约章节）显式记录「`onResponseComplete` 仅对 active engine 的 turn 触发；切换引擎后后台引擎 turn 完成不触发（`ai-chat.tsx:233-259` subscribe deps `[engine]` 的 cleanup 行为）」。
+- [x] [Fix] `design.md:74` P0 表 `ai-message-list` 描述移除「分组」，改为「自动滚动、注册制渲染、A-8 虚拟滚动」（与 `renderers.md:95` 对齐；F1.4 已移除 groupStrategy）。
+- [x] [Fix] `design.md:578-589` §13.1 marker 表补 `nop-ai-citations`/`nop-ai-voice-input`/`nop-ai-token-usage`/`nop-ai-suggestions`（与 §5.1 一致；逐条核对 `rg "nop-ai-" packages/flux-renderers-ai/src/renderers` 根集合）。
+- [x] [Fix] `design.md:543` §11.5 editing 归属：裁定为「当前实现 = 组件 `useState`（`user-edit.tsx`/`ai-bubble/index.tsx`），引擎无 editing-state setter；后果 = >200 消息虚拟回收时编辑态丢失」——把「engine 持有」改为如实描述组件持有的现状 + 限制注记（Decision：以低风险文档对齐收口，不迁引擎）。
+- [x] [Fix] `terminology.md:511` 把 `RendererEnv.fetcher` 改为 `RendererEnv.stream`（与 `design.md §11.4`/`engine.md`/代码一致）。
+- [x] [Fix] `use-message.ts:62-92` 补 JSDoc 注记：「仅 `connector` 热换；`systemPrompt`/`tools`/`toolExecutor`/`maxToolRounds` 为 mount-time-only（engine 无此类 setter）」；并在 `engine.md` 或 `design.md` 对应章节同步该限制说明。
+- [x] [Fix] onResponseComplete 契约边界：在 `engine.md`（或 `design.md` 事件契约章节）显式记录「`onResponseComplete` 仅对 active engine 的 turn 触发；切换引擎后后台引擎 turn 完成不触发（`ai-chat.tsx:233-259` subscribe deps `[engine]` 的 cleanup 行为）」。
 
 Exit Criteria:
 
 > 文档类：Exit Criteria 写具体文件路径 + 章节 + 与 live code 一致性。
 
-- [ ] `design.md:74` 不再含「分组」；§13.1 marker 表含全部 4 个补齐 marker。
-- [ ] `design.md:543` editing 归属描述与组件 useState 实现一致（含虚拟回收限制）。
-- [ ] `terminology.md:511` 用 `env.stream`；`use-message.ts` 有热换限制 JSDoc；onResponseComplete 契约边界已记录。
-- [ ] 抽查：文档章节内容与 live code 行为逐一对应（读者可在仓库核对）。
+- [x] `design.md:74` 不再含「分组」；§13.1 marker 表含全部 4 个补齐 marker。
+- [x] `design.md:543` editing 归属描述与组件 useState 实现一致（含虚拟回收限制）。
+- [x] `terminology.md:511` 用 `env.stream`；`use-message.ts` 有热换限制 JSDoc；onResponseComplete 契约边界已记录。
+- [x] 抽查：文档章节内容与 live code 行为逐一对应（读者可在仓库核对）。
 
 ### Workstream 2 - 测试断言加固
 
-Status: planned
+Status: completed
 Targets: `renderers/__tests__/ai-token-usage.test.tsx`, `renderers/ai-bubble/__tests__/`, `adapters/__tests__/use-message.test.tsx`, `renderers/__tests__/p1-renderers.test.tsx`, `renderers/__tests__/ai-tool-call-hitl.test.tsx`
 
 - Item Types: `Proof`
 
-- [ ] [Proof] `ai-token-usage.test.tsx:95-101`：clamp 用例断言实际 clamped 值——读 `[data-slot="ai-token-usage-ring"]` 的 `stroke-dasharray`（或等价可观测属性），断言 ratio 被 clamp 到 ≤1.0（used > limit 时 `stroke-dasharray` 不为负/超界），而非 `.not.toBeNull()`。
-- [ ] [Proof] safeMarkdownSlice wiring：新增/增强 `MarkdownContentRenderer` 端到端用例——构造一个会被 `safeMarkdownSlice` 截断的流式中途 markdown（如未闭合 fence），断言渲染输出被正确截断（移除 `markdown.tsx:28` 调用后该测试必红）。
-- [ ] [Proof] `use-message.test.tsx`：增用例——传 `toolExecutor` → 断言 engine 收到该 `toolExecutor`（adapter 层转发，与 engine 层 `engine-tool-loop.test.ts` 互补）。
-- [ ] [Proof] `p1-renderers.test.tsx:273-284` Timestamp：断言格式化 label（用固定时间 + 容忍时区格式，或断言含日期/时间成分），非仅 `tagName === 'TIME'`。
-- [ ] [Proof] `ai-tool-call-hitl.test.tsx:66-75`：no-handler 用例除 `.not.toThrow()` 外，复断言 `approval` 保持 `pending`（状态未被改动）。
-- [ ] [Proof] Markdown XSS 回归：新增 `rehypeRaw` 路径 XSS 用例——构造 `javascript:` href、`<img onerror>`、嵌套/属性分裂型 payload，断言 sanitize + rehypeRaw 后无可执行脚本/危险 href。**若实证发现逃逸**：记录为新 P1 finding（`docs/bugs/`），不在本计划修源码，本计划只保证「回归测试存在且能抓住」。
+- [x] [Proof] `ai-token-usage.test.tsx:95-101`：clamp 用例断言实际 clamped 值——读 `[data-slot="ai-token-usage-ring"]` 的 `stroke-dasharray`（或等价可观测属性），断言 ratio 被 clamp 到 ≤1.0（used > limit 时 `stroke-dasharray` 不为负/超界），而非 `.not.toBeNull()`。
+- [x] [Proof] safeMarkdownSlice wiring：新增/增强 `MarkdownContentRenderer` 端到端用例——构造一个会被 `safeMarkdownSlice` 截断的流式中途 markdown（如未闭合 fence），断言渲染输出被正确截断（移除 `markdown.tsx:28` 调用后该测试必红）。
+- [x] [Proof] `use-message.test.tsx`：增用例——传 `toolExecutor` → 断言 engine 收到该 `toolExecutor`（adapter 层转发，与 engine 层 `engine-tool-loop.test.ts` 互补）。
+- [x] [Proof] `p1-renderers.test.tsx:273-284` Timestamp：断言格式化 label（用固定时间 + 容忍时区格式，或断言含日期/时间成分），非仅 `tagName === 'TIME'`。
+- [x] [Proof] `ai-tool-call-hitl.test.tsx:66-75`：no-handler 用例除 `.not.toThrow()` 外，复断言 `approval` 保持 `pending`（状态未被改动）。
+- [x] [Proof] Markdown XSS 回归：新增 `rehypeRaw` 路径 XSS 用例——构造 `javascript:` href、`<img onerror>`、嵌套/属性分裂型 payload，断言 sanitize + rehypeRaw 后无可执行脚本/危险 href。**若实证发现逃逸**：记录为新 P1 finding（`docs/bugs/`），不在本计划修源码，本计划只保证「回归测试存在且能抓住」。
 
 Exit Criteria:
 
-- [ ] 6 处断言加固为真实断言（值/格式/转发/状态保持/XSS），revert-sensitive（被测行为被移除/削弱后测试必红）。
-- [ ] XSS 回归测试存在；若发现真实洞，已按新 finding 记录（升级路径明确）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-ai test` 通过（test count 不减少）。
+- [x] 6 处断言加固为真实断言（值/格式/转发/状态保持/XSS），revert-sensitive（被测行为被移除/削弱后测试必红）。
+- [x] XSS 回归测试存在；若发现真实洞，已按新 finding 记录（升级路径明确）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-ai test` 通过（test count 不减少）。
 
 ## Draft Review Record
 
@@ -140,16 +140,16 @@ Exit Criteria:
 
 > 文档 + 测试类计划。全量 `pnpm typecheck/build/lint/test` 在此跑一次。注：纯文档变更无需 build/typecheck，但本计划含测试文件改动（WS2）+ JSDoc，故保留 test/lint；typecheck/build 因仅触及测试与注释可保留以兜底。
 
-- [ ] 6 条文档/契约措辞 P2 与 live code 一致（章节路径可核）。
-- [ ] 6 条测试断言加固为 revert-sensitive 真实断言。
-- [ ] Markdown XSS 回归测试存在；发现的洞（若有）已升级为新 finding 而非静默吞掉。
-- [ ] 不存在被静默降级到 deferred/follow-up 的 in-scope owner-doc drift。
-- [ ] 受影响 owner docs（design.md / renderers.md / terminology.md / engine.md）已同步到 live baseline。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 6 条文档/契约措辞 P2 与 live code 一致（章节路径可核）。
+- [x] 6 条测试断言加固为 revert-sensitive 真实断言。
+- [x] Markdown XSS 回归测试存在；发现的洞（若有）已升级为新 finding 而非静默吞掉。
+- [x] 不存在被静默降级到 deferred/follow-up 的 in-scope owner-doc drift。
+- [x] 受影响 owner docs（design.md / renderers.md / terminology.md / engine.md）已同步到 live baseline。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -167,13 +167,21 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: WS1（6 条文档/契约措辞 P2）+ WS2（6 条测试断言加固）全部落地。验证基线：`pnpm typecheck`（58/58）、`pnpm build`（31/31）、`pnpm lint`（31/31）、`pnpm test`（58/58；flux-renderers-ai 442 tests 全绿，较执行前 433 净增 9 项 proof，test count 不减少）。XSS 回归用例覆盖 `<img onerror>` / `<script>` / `javascript:` href（raw HTML + markdown 语法两条路径）+ 属性分裂/嵌套 payload：全部被 sanitize + react-markdown `urlTransform` + React runtime `javascript:` URL 拦截三层闸门挡住，未发现真实 XSS 洞，无需升级新 finding。closure-audit 已由独立 fresh-session 子 agent 完成（见 Closure Audit Evidence），gate 勾选合规。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: independent fresh-session closure auditor (opencode general sub-agent, this session — not the execution session)
+- Verdict: `approved`
+- Evidence (live-repo verified point-by-point):
+  - WS1 doc fixes — `design.md:74` `ai-message-list` 描述为「自动滚动、注册制渲染、A-8 虚拟滚动」（无「分组」）；`design.md:578-593` §13.1 marker 表含 `nop-ai-citations`/`nop-ai-token-usage`/`nop-ai-voice-input`/`nop-ai-suggestions` 全 4 个；`design.md:543` §11.5 editing 归属改为「组件 `useState`（`user-edit.tsx` + `ai-bubble/index.tsx`）+ 引擎无 editing-state setter + >200 虚拟回收限制」；`terminology.md:511` 用 `RendererEnv.stream`（非 fetcher）；`use-message.ts:62-70` JSDoc 标注「仅 connector 热换，余 mount-time-only」；`design.md:617` §onResponseComplete 引擎 scope 边界（active-engine-only，cleanup 后后台 turn 不触发）。
+  - WS2 test hardenings — `ai-token-usage.test.tsx:95-129` 断言实际 `strokeDasharray`/circumference/非负 gap（移除 clamp 必红）；`markdown-content.test.tsx`（8 tests）覆盖 safeMarkdownSlice wiring（未闭合 fence held-back）+ rehypeRaw XSS（`<img onerror>`/`<script>`/`javascript:` href raw+markdown 双路径/属性分裂嵌套）；`use-message.test.tsx:188-237` toolExecutor 转发到 engine（移除字段必红）；`p1-renderers.test.tsx:285-302` Timestamp label + `datetime` attr；`ai-tool-call-hitl.test.tsx:84-96` `data-approval` 保持 pending。
+  - Anti-hollow: `markdown.tsx:28` 实际调用 `safeMarkdownSlice(raw)`、`:43` 实际使用 `rehypeRaw`（测试非空壳）。
+  - Five-point consistency: Plan Status `completed` ↔ WS1/WS2 `completed` ↔ 所有 Exit Criteria `[x]` ↔ Closure Gates 全 `[x]` ↔ `docs/logs/2026/07-25.md:5-10` 收口记录（full-green：flux-renderers-ai 442 tests，+9 net；typecheck/build/lint/test 58/31/31/58）。
+  - Deferred honesty: 编辑态迁引擎 classification=`out-of-scope improvement` + successor path 明确（非 in-scope live defect 降级）。
+  - XSS 升级路径诚实：回归测试存在且三层闸门（sanitize + urlTransform + React javascript: URL 拦截）实证有效，未发现真实洞，故未升级新 finding（符合 Failure Path `xss-regression` 裁定）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- markdown `sanitize→rehypeRaw` 组合 XSS 深挖（watch-only）：本计划回归测试已存在且三层闸门实证有效；未来若 react-markdown `urlTransform` 默认值变更或 DOMPurify 配置回归，该回归套件会变红。
+- 编辑态从组件 useState 迁引擎（Deferred，已裁定 successor path）。

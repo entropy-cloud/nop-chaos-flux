@@ -33,7 +33,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### Follow-up Backlog (P2 from audits)
 
-> 以下 P2 项来自 2026-07-24 两份 open 审计（multi-audit + open-audit）。**代码/行为类 P2 项已由 `docs/plans/2026-07-24-2300-1-ai-p2-code-and-behavior-remediation.md` 收口（✅ 1757 批）+ `docs/plans/2026-07-25-0117-1-ai-p2-code-and-behavior-remediation-2151.md` 收口（✅ 2151 批 25 条代码/行为项）**；文档一致性类 P2 项由 `docs/plans/2026-07-24-2300-2-ai-p2-doc-consistency-remediation.md` 收口（✅ 已收口）；2151 批剩余 12 条（文档一致性 6 + 测试断言加固 6）由 `docs/plans/2026-07-25-0117-2-ai-p2-doc-and-test-hardening-2151.md` 收口（planned）。每条带来源审计路径以保持可追溯。
+> 以下 P2 项来自 2026-07-24 两份 open 审计（multi-audit + open-audit）。**代码/行为类 P2 项已由 `docs/plans/2026-07-24-2300-1-ai-p2-code-and-behavior-remediation.md` 收口（✅ 1757 批）+ `docs/plans/2026-07-25-0117-1-ai-p2-code-and-behavior-remediation-2151.md` 收口（✅ 2151 批 25 条代码/行为项）**；文档一致性类 P2 项由 `docs/plans/2026-07-24-2300-2-ai-p2-doc-consistency-remediation.md` 收口（✅ 已收口）；2151 批剩余 12 条（文档一致性 6 + 测试断言加固 6）由 `docs/plans/2026-07-25-0117-2-ai-p2-doc-and-test-hardening-2151.md` 收口（✅ 已收口；全量 typecheck/build/lint/test 绿；closure-audit gate 待独立子 agent）。每条带来源审计路径以保持可追溯。
 
 **Source: `docs/audits/2026-07-24-1757-multi-audit-ai.md`**（P2 批）
 
@@ -59,21 +59,21 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 - ✅ O-4：`ai-attachments` 附件 id 由 `name-size-lastModified` 派生，重复文件 id 碰撞 → React key 重复 + `handleRemove` 误删全部同名件（`ai-attachments.tsx:99,243,125-137`）→ 改用 `generateAttachmentId()`（`crypto.randomUUID` + 回退 counter），同名文件各自唯一 id
 
-**Source: `docs/audits/2026-07-24-2151-multi-audit-ai.md`**（P2 批，32 条）+ **`docs/audits/2026-07-24-2151-open-audit-ai.md`**（P2 N-3..N-8，6 条）。✅ **P1（P1-1..P1-5 / N-1 / N-2）已由 `docs/plans/2026-07-25-0044-1-ai-p1-remediation.md` 收口**（7 条全部修复 + focused proof，全量 typecheck/build/lint/test 绿；两份源审计 `Audit Status: closed`）。✅ **P2 代码/行为类 25 条已由 `docs/plans/2026-07-25-0117-1-ai-p2-code-and-behavior-remediation-2151.md` 收口**（25 条全部修复 + focused proof，全量 typecheck/build/lint/test 绿；docs/test 加固 12 条由 Plan 2 收口）。
+**Source: `docs/audits/2026-07-24-2151-multi-audit-ai.md`**（P2 批，32 条）+ **`docs/audits/2026-07-24-2151-open-audit-ai.md`**（P2 N-3..N-8，6 条）。✅ **P1（P1-1..P1-5 / N-1 / N-2）已由 `docs/plans/2026-07-25-0044-1-ai-p1-remediation.md` 收口**（7 条全部修复 + focused proof，全量 typecheck/build/lint/test 绿；两份源审计 `Audit Status: closed`）。✅ **P2 代码/行为类 25 条已由 `docs/plans/2026-07-25-0117-1-ai-p2-code-and-behavior-remediation-2151.md` 收口**（25 条全部修复 + focused proof，全量 typecheck/build/lint/test 绿）。✅ **docs/test 加固 12 条已由 `docs/plans/2026-07-25-0117-2-ai-p2-doc-and-test-hardening-2151.md` 收口**（6 条文档 + 6 条测试断言全部落地，全量 typecheck/build/lint/test 绿；closure-audit gate 待独立子 agent）。
 
 _防御/交互守卫（silent-drop 家族）_
 
 - ✅ `ai-sender` 共享 `commit()` 无 `isProcessing` 守卫——host `senderExtensions` 组件不自禁用时 Enter 提交会静默丢 draft（`renderers/ai-sender.tsx:59-72,120-124`）→ `commit()` 入口加 `if (ctx?.isProcessing) return;` 守卫
 - ✅ `ai-attachments` 上传按钮流式中不禁用；`handleUpload` 调 `ctx.sendMessage(parts)` 无守卫 → 多模态消息静默丢弃（`renderers/ai-attachments.tsx:165-175,222-231`）→ 按钮 `disabled={ctx?.isProcessing}` + `handleUpload` 早返回守卫
 - ✅ `ai-tool-call` HITL approve/reject 在 host 未接 `onApproval` 时是死点击（无 disabled/tooltip，卡片永久 `pending`）（`renderers/ai-tool-call.tsx:241-272`）→ `!onApproval` 时按钮 disabled + `title` 提示「未配置审批处理器」
-- 编辑态存在组件 `useState`（`ai-bubble/index.tsx:85`、`user-edit.tsx:36-37`）而 `design.md §11.5` 指派为引擎持有（`message.state.editing`）；影响仅限 >200 消息虚拟回收（design-doc 冲突）→ 非 Goal（Plan 2 文档裁定归属；迁移超 P2 polish 范围）
+- ✅ 编辑态存在组件 `useState`（`ai-bubble/index.tsx:85`、`user-edit.tsx:36-37`）而 `design.md §11.5` 指派为引擎持有（`message.state.editing`）；影响仅限 >200 消息虚拟回收（design-doc 冲突）→ Plan 2 已以文档裁定收口：§11.5 改为如实记录「组件 useState 当前实现 + 虚拟回收限制 + 引擎无 editing-state setter」；迁移到引擎超 P2 polish 范围（Deferred successor）
 - ✅ `ai-prompts` item key 用 `label#index`；重排/插入丢失元素身份（`renderers/ai-prompts.tsx:47`）→ 改用纯内容派生 key（`label`+`badge`）
 
 _错误传播/可观测性_
 
 - ✅ `tool-execution.ts:46-59` catch 把 tool error 压平为 `err.message`，丢原 Error（stack/cause/自定义字段）——host 无法结构化日志（`engine/tool-execution.ts:46-59`）→ catch 保留原 Error 写入 `metadata.toolError`，`resultText` 仍取可读 message
 - ✅ `ai-bubble` `pickRenderer` 用裸 `catch {}` 吞 host matcher 异常（无 warn/回调）——host 无法调试自定义 bubble renderer 为何不匹配（`renderers/ai-bubble/index.tsx:206-224`）→ 改 `catch (err) { console.warn('[ai-bubble] custom matcher threw', err); }`
-- 后台（流式中切换）引擎 turn 转换未被 `ai-chat` 的 `[engine]`-keyed subscribe effect 观测 → `onResponseComplete` 对切换后完成的 turn 不触发（`renderers/ai-chat.tsx:231-259`）→ 已由 AI-12 latest-events-ref 模式覆盖（既有测试 `ai-chat-subscribe.test.tsx` 已断言不丢过渡）
+- ✅ 后台（流式中切换）引擎 turn 转换未被 `ai-chat` 的 `[engine]`-keyed subscribe effect 观测 → `onResponseComplete` 对切换后完成的 turn 不触发（`renderers/ai-chat.tsx:231-259`）→ 已由 AI-12 latest-events-ref 模式覆盖（既有测试 `ai-chat-subscribe.test.tsx` 已断言不丢过渡）；Plan 2 已在 `design.md §14.1` 显式记录该事件契约边界（仅 active engine turn 触发）
 
 _Public API surface（calibration #6 零消费者）_
 
@@ -88,12 +88,12 @@ _显示/定位正确性_
 
 _测试断言强度（非 fake-green，但偏弱）_
 
-- `ai-token-usage` clamp 测试仅断言 `.not.toBeNull()`（`renderers/__tests__/ai-token-usage.test.tsx:95-101`）→ Plan 2 收口
-- `safeMarkdownSlice` 已单测，但其接入 `MarkdownContentRenderer` 未 e2e 断言（`ai-bubble/renderers/markdown.tsx:28`）→ Plan 2 收口
-- `use-message.test.tsx` 未测 `toolExecutor` 转发到 engine（`adapters/__tests__/use-message.test.tsx`）→ Plan 2 收口
-- Timestamp 测试仅断言 `tagName === 'TIME'`（`renderers/__tests__/p1-renderers.test.tsx:273-284`）→ Plan 2 收口
+- ✅ `ai-token-usage` clamp 测试仅断言 `.not.toBeNull()`（`renderers/__tests__/ai-token-usage.test.tsx:95-101`）→ Plan 2 已加固为读 `stroke-dasharray` 实际 clamped 值（dash === circumference、gap === 0、in-bounds 不变量）
+- ✅ `safeMarkdownSlice` 已单测，但其接入 `MarkdownContentRenderer` 未 e2e 断言（`ai-bubble/renderers/markdown.tsx:28`）→ Plan 2 已新增 `markdown-content.test.tsx` 端到端 wiring 用例（未闭合 fence 被截断、移除 wiring 必红）
+- ✅ `use-message.test.tsx` 未测 `toolExecutor` 转发到 engine（`adapters/__tests__/use-message.test.tsx`）→ Plan 2 已增 toolExecutor 转发用例（adapter → engine → tool_calls loop 全链路）
+- ✅ Timestamp 测试仅断言 `tagName === 'TIME'`（`renderers/__tests__/p1-renderers.test.tsx:273-284`）→ Plan 2 已加固为断言 `toLocaleTimeString` 格式化 label + ISO `dateTime` 属性
 - ✅ `hitl-no-handler` 测试仅 `.not.toThrow()`（`renderers/__tests__/ai-tool-call-hitl.test.tsx:66-75`）→ 已加固为「按钮 disabled + 不派发 event + approval 仍 pending」断言
-- Markdown sanitize→`rehype-raw` 管线无 XSS 回归测试（`ai-bubble/renderers/markdown.tsx:34-47`）→ Plan 2 收口（下一轮 open-audit XSS 实证切入点）
+- ✅ Markdown sanitize→`rehype-raw` 管线无 XSS 回归测试（`ai-bubble/renderers/markdown.tsx:34-47`）→ Plan 2 已新增 XSS 回归套件（`<img onerror>` / `<script>` / `javascript:` href raw+markdown 双路径 / 属性分裂嵌套 payload）；三层闸门（sanitize + urlTransform + React runtime）实证有效，未发现真实洞
 
 _React-19/生命周期（churn 非正确性）_
 
@@ -110,10 +110,10 @@ _a11y polish_
 
 _文档/契约措辞 rot_
 
-- `design.md §74` 仍把 ai-message-list 能力列为「分组」，F1.4 已移除 groupStrategy（`docs/components/flux-renderers-ai/design.md:74`）→ Plan 2 收口
-- `design.md §13.1` marker 表漏 4 个已发 marker（`nop-ai-citations`/`nop-ai-voice-input`/`nop-ai-token-usage`/`nop-ai-suggestions`）（`docs/components/flux-renderers-ai/design.md:578-589`）→ Plan 2 收口
-- `terminology.md:511` 称 `createStreamBasedAiConnector` 桥接 `RendererEnv.fetcher`，代码用 `env.stream`（`docs/references/terminology.md:511`）→ Plan 2 收口
-- `useMessage` 仅热换 `connector`，其它 engine 选项 mount-time-only 无告警注记（`adapters/use-message.ts:62-92`）→ Plan 2 收口
+- ✅ `design.md §74` 仍把 ai-message-list 能力列为「分组」，F1.4 已移除 groupStrategy（`docs/components/flux-renderers-ai/design.md:74`）→ Plan 2 已移除「分组」，与 `renderers.md:95` 一致
+- ✅ `design.md §13.1` marker 表漏 4 个已发 marker（`nop-ai-citations`/`nop-ai-voice-input`/`nop-ai-token-usage`/`nop-ai-suggestions`）（`docs/components/flux-renderers-ai/design.md:578-589`）→ Plan 2 已补齐 4 个 marker
+- ✅ `terminology.md:511` 称 `createStreamBasedAiConnector` 桥接 `RendererEnv.fetcher`，代码用 `env.stream`（`docs/references/terminology.md:511`）→ Plan 2 已改为 `RendererEnv.stream`
+- ✅ `useMessage` 仅热换 `connector`，其它 engine 选项 mount-time-only 无告警注记（`adapters/use-message.ts:62-92`）→ Plan 2 已补 JSDoc + `engine.md §8.5` 热换 scope 注记
 
 _渲染器契约 polish_
 
