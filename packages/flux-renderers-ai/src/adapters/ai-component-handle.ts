@@ -65,6 +65,9 @@ export function createAiComponentHandle(input: {
             return { ok: true };
           }
           case 'getMessages': {
+            // getMessages() already returns a per-message shallow-isolated
+            // copy (O-2), so the host receives an independent snapshot — no
+            // second clone is needed at this public exit.
             const messages: ChatMessage[] = engine.getMessages();
             return { ok: true, data: messages };
           }

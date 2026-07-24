@@ -32,12 +32,12 @@ export async function executeToolCalls(
   adapter.mutate('requestState', (draft) => {
     draft.processingState = 'calling-tools';
   });
-  // Pull the assistant message that owns these tool_calls (last message).
-  const owner = adapter.getState().messages.at(-1);
-  // AI-23: cache the owner index once; tool messages are appended AFTER the
-  // owner so its position is stable across the loop (avoids per-call
-  // `lastIndexOf` scan).
-  const ownerIndex = owner ? adapter.getState().messages.length - 1 : -1;
+  // AI-23: cache the owning assistant message's index once. Tool result
+  // messages are appended AFTER the owner, so its position is stable across
+  // the loop (no per-call `lastIndexOf` scan). The owner element itself is
+  // read fresh inside each mutate recipe so the cached snapshot is never
+  // mutated in place (snapshot identity contract).
+  const ownerIndex = adapter.getState().messages.length - 1;
   for (const call of calls) {
     if (abortController.signal.aborted) return false;
     const key = call.id ?? `idx-${call.index}`;
@@ -57,22 +57,28 @@ export async function executeToolCalls(
       resultText = err instanceof Error ? err.message : String(err);
       status = 'failed';
     }
-    // Update per-call UI state on the owning assistant message.
-    if (owner && ownerIndex >= 0) {
-      if (!owner.state) owner.state = {};
-      const toolCallState = (owner.state.toolCall ?? {}) as Record<string, ChatToolCallUIState>;
-      toolCallState[key] = {
-        ...(toolCallState[key] ?? { status: 'running' }),
-        status,
-        result: resultText,
-      };
-      owner.state.toolCall = toolCallState;
-      // Commit a fresh reference so subscribers re-render (assign by cached
-      // index — no per-call `lastIndexOf` scan).
+    // Update per-call UI state on the owning assistant message — entirely
+    // inside the mutate recipe (read-old → build-new → replace) so the cached
+    // owner element is never mutated in place. The current owner is read from
+    // `draft.messages[ownerIndex]` each iteration so accumulated per-call
+    // state carries across calls without aliasing a stale cached object.
+    if (ownerIndex >= 0) {
       adapter.mutate('messages', (draft) => {
-        if (ownerIndex < draft.messages.length) {
-          draft.messages[ownerIndex] = { ...owner };
-        }
+        if (ownerIndex >= draft.messages.length) return;
+        const current = draft.messages[ownerIndex];
+        const prevToolCall = (current.state?.toolCall ?? {}) as Record<string, ChatToolCallUIState>;
+        const toolCallState: Record<string, ChatToolCallUIState> = {
+          ...prevToolCall,
+          [key]: {
+            ...(prevToolCall[key] ?? { status: 'running' }),
+            status,
+            result: resultText,
+          },
+        };
+        draft.messages[ownerIndex] = {
+          ...current,
+          state: { ...current.state, toolCall: toolCallState },
+        };
       });
     }
     // Append the role:'tool' result message so the next request carries it.

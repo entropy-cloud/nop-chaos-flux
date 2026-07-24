@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -173,13 +173,37 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // Decision-A (AI-02): project a SNAPSHOT of the engine messages, not the
   // live internal array. Descendants that read `${messages}` (via
   // `useScopeSelector`) receive an independent copy, so a host/descendant that
-  // mutates the projected array cannot pollute the engine's domain state. The
-  // memo recomputes on `isProcessing` transitions (turn boundaries) — the
-  // projected copy is intentionally a point-in-time snapshot, not a live feed
-  // (Decision-A: hosts needing the current set call `component:getMessages`).
+  // mutates the projected array cannot pollute the engine's domain state.
+  //
+  // P1#2 — clone frequency is gated to TURN BOUNDARIES. The snapshot is rebuilt
+  // only when a turn ends, detected as the `isProcessing` true→false flip (the
+  // engine always pairs this with a terminal `requestState`). During streaming
+  // the projection holds the previous turn-boundary snapshot (a point-in-time
+  // copy, not a live feed), avoiding a per-chunk `structuredClone` whose cost
+  // grows with conversation length; hosts needing the current full set call
+  // `component:getMessages`. The actual message list still renders from the
+  // live `messages` via `AiChatProvider` (this projection only feeds the
+  // header / beforeMessages / afterMessages / footer / emptyState regions).
+  //
+  // Implemented via the React "adjusting state during render" pattern (not a
+  // ref), so it satisfies `react-hooks/refs`. On a turn-start flip (false→true)
+  // only the tracked flag updates (no clone); only the boundary flip (true→
+  // false) re-clones. It converges: after the update `prevIsProcessing ===
+  // isProcessing`, so the guard is false on the next render.
+  const [projection, setProjection] = useState<{ prevIsProcessing: boolean; snap: ChatMessage[] }>(
+    () => ({ prevIsProcessing: isProcessing, snap: cloneMessages(messages) }),
+  );
+  if (projection.prevIsProcessing !== isProcessing) {
+    const crossedBoundary = projection.prevIsProcessing && !isProcessing;
+    setProjection({
+      prevIsProcessing: isProcessing,
+      snap: crossedBoundary ? cloneMessages(messages) : projection.snap,
+    });
+  }
+  const projectedMessages = projection.snap;
   const hostScopeData = {
     isProcessing,
-    messages: cloneMessages(messages),
+    messages: projectedMessages,
     activeConversationId,
   };
   const hostScope = useHostScope(hostScopeData, props.path, 'ai');

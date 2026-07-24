@@ -121,7 +121,17 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   }
 
   function getMessages(): ChatMessage[] {
-    return adapter.getState().messages;
+    // Return a per-message shallow-isolated copy (O-2): a new array whose
+    // elements are shallow copies of the internal message objects. This
+    // isolates top-level fields (content / role / id …) so a host or async
+    // storage path that pushes onto the array or mutates an element field
+    // cannot write through to the engine's internal state. Nested objects
+    // (metadata / tool_calls / state) still share refs — but Phase 1 already
+    // routed every engine write through a `mutate` recipe, so the engine
+    // itself never mutates those nested objects in place. Only invoked at
+    // turn boundaries (onResponseComplete / saveMessages), so O(n) per turn
+    // is acceptable.
+    return adapter.getState().messages.map((m) => ({ ...m }));
   }
 
   function setMessages(messages: ChatMessage[]): void {
@@ -206,13 +216,18 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         if (abortController.signal.aborted) break;
         if (rounds >= maxToolRounds) {
           // Failure Path `tool-loop-max`: terminate the loop, record cause.
-          const last = adapter.getState().messages.at(-1);
-          if (last) {
-            last.metadata = { ...last.metadata, toolLoopMaxReached: true };
-          }
+          // The marker is written entirely inside the mutate recipe
+          // (read-old → build-new → replace) so the cached snapshot's tail
+          // element is never mutated in place (snapshot identity contract).
           adapter.mutate('messages', (draft) => {
-            const tail = draft.messages[draft.messages.length - 1];
-            if (tail) draft.messages[draft.messages.length - 1] = { ...tail };
+            const len = draft.messages.length;
+            const tail = draft.messages[len - 1];
+            if (tail) {
+              draft.messages[len - 1] = {
+                ...tail,
+                metadata: { ...tail.metadata, toolLoopMaxReached: true },
+              };
+            }
           });
           break;
         }
@@ -274,6 +289,11 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         plugin.onError?.(buildContext(abortController), error);
       }
       adapter.mutate('requestState', (draft) => {
+        // P1#1 controller-identity guard: a stale turn whose abort raced a new
+        // `sendMessage` must not overwrite the new turn's requestState /
+        // isProcessing / lastError. Only act when this turn still owns the
+        // current controller.
+        if (draft.abortController !== abortController) return;
         draft.requestState = aborted ? 'aborted' : 'error';
         draft.isProcessing = false;
         draft.processingState = undefined;
@@ -283,7 +303,11 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       });
     } finally {
       adapter.mutate('full', (draft) => {
-        draft.abortController = null;
+        // P1#1: only clear the controller this turn created — never clobber a
+        // new turn's controller that replaced it during an abort→send race.
+        if (draft.abortController === abortController) {
+          draft.abortController = null;
+        }
       });
       for (const plugin of plugins) {
         await plugin.onTurnEnd?.(buildContext(abortController));
@@ -383,6 +407,10 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
 
       if (abortController.signal.aborted) {
         adapter.mutate('requestState', (draft) => {
+          // P1#1 controller-identity guard: the post-stream abort check must
+          // not overwrite a new turn's state when this turn was aborted and a
+          // new `sendMessage` started while the stream was completing.
+          if (draft.abortController !== abortController) return;
           draft.requestState = 'aborted';
           draft.isProcessing = false;
           draft.processingState = undefined;
@@ -398,6 +426,10 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         plugin.onError?.(ctx, error);
       }
       adapter.mutate('requestState', (draft) => {
+        // P1#1 controller-identity guard: this is the PRIMARY abort→send race
+        // path — the stream rejected mid-stream after abort, while a new turn
+        // may already own the controller. Do not clobber the new turn's state.
+        if (draft.abortController !== abortController) return;
         draft.requestState = aborted ? 'aborted' : 'error';
         draft.isProcessing = false;
         draft.processingState = undefined;

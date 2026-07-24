@@ -161,6 +161,9 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       prevState = next;
       if (wasProcessing && isDone) {
         try {
+          // getMessages() returns a per-message shallow-isolated copy (O-2),
+          // so the async storage implementation cannot read a cross-turn
+          // mixed snapshot even if it awaits before serializing.
           Promise.resolve(storage.saveMessages(conversationId, engine.getMessages())).catch(
             (error: unknown) => {
               reportStorageError({ phase: 'saveMessages', conversationId, error });

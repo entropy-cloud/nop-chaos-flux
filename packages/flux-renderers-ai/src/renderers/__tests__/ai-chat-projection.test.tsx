@@ -294,3 +294,94 @@ describe('ai-chat — Decision-A event handoff (AI-09): onResponseComplete messa
 
 // Silence the unused-env warning when aiMockEnv is not used in a sub-suite.
 void aiMockEnv as unknown as RendererEnv;
+
+/**
+ * Phase 4 — hostScopeData clone frequency gated to turn boundaries (P1#2).
+ *
+ * Observes the descendant-visible `messages` array ref identity (via the
+ * existing MessagesProbe, which captures the latest ref it rendered with).
+ * The clone must NOT rebuild per streaming chunk — only at the turn boundary
+ * (requestState terminal / isProcessing flip). We do not spy the private
+ * `cloneMessages`; instead we observe the downstream ref identity, which is
+ * the user-visible signal.
+ */
+describe('ai-chat — P1#2 hostScopeData clone gated to turn boundaries', () => {
+  it('projected messages ref stays stable across streaming chunks and updates only at the turn boundary', async () => {
+    let resolveGate: () => void = () => undefined;
+    const gate = new Promise<void>((r) => {
+      resolveGate = r;
+    });
+    const gatedMultiChunkConnector: AiConnector = {
+      async stream(_req: AiConnectorRequest) {
+        async function* gen(): AsyncGenerator<AiConnectorChunk> {
+          yield { delta: { content: 'chunk-1' } };
+          yield { delta: { content: ' chunk-2' } };
+          yield { delta: { content: ' chunk-3' } };
+          await gate;
+          yield { finishReason: 'stop' };
+        }
+        void _req;
+        return gen();
+      },
+    };
+    const external = buildExternalEngine(gatedMultiChunkConnector, seedMessages);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://ai/projection-gating"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'ai-chat',
+              testid: 'chat-gating',
+              engine: external as never,
+              beforeMessages: { type: 'messages-probe' },
+            },
+          ],
+        }}
+        env={aiMockEnv()}
+        formulaCompiler={aiFormulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(capturedProjectedMessages).not.toBeNull();
+    });
+    const refAtIdle = capturedProjectedMessages!;
+    // Decision-A: the idle projection is already a snapshot, not the live array.
+    expect(refAtIdle).not.toBe(external.getState().messages);
+
+    // Kick off a streaming turn; let several chunks flow while the stream is
+    // still gated (mid-stream).
+    let turnP: Promise<void>;
+    await act(async () => {
+      turnP = external.sendMessage('stream-me');
+      // Drain microtasks so the chunks emit + AiChat re-renders per chunk.
+      await new Promise((r) => setTimeout(r, 0));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    // INVARIANT: the projected messages ref did NOT change during streaming —
+    // the clone is gated to the turn boundary, so the probe did not re-render
+    // per chunk. Before the fix `cloneMessages(messages)` ran every render,
+    // producing a fresh ref per chunk; the probe would then see a new ref here.
+    expect(capturedProjectedMessages).toBe(refAtIdle);
+
+    // The engine is genuinely mid-stream (still processing, gated).
+    expect(external.getState().isProcessing).toBe(true);
+
+    // Complete the turn → turn boundary → the projection rebuilds with a new ref.
+    resolveGate();
+    await act(async () => {
+      await turnP!;
+    });
+    await waitFor(() => {
+      expect(capturedProjectedMessages).not.toBe(refAtIdle);
+    });
+
+    // The rebuilt projection reflects the completed turn's message set.
+    expect(capturedProjectedMessages!.length).toBe(external.getState().messages.length);
+    expect(capturedProjectedMessages).not.toBe(external.getState().messages);
+  });
+});

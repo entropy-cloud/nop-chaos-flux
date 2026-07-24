@@ -236,13 +236,33 @@ describe('createToolPlugin — resolveTools + status flow', () => {
 });
 
 describe('MessageEngine getMessages / setMessages', () => {
-  it('getMessages returns a read-only snapshot of current messages', async () => {
+  it('getMessages returns a per-message shallow-isolated snapshot (not the live engine reference)', async () => {
     const connector = scriptedConnector([stopChunks('hi')]);
     const engine = createMessageEngine({ connector });
     await engine.sendMessage('hello');
     const snapshot = engine.getMessages();
     expect(snapshot.length).toBe(2);
     expect(snapshot.map((m) => m.role)).toEqual(['user', 'assistant']);
+    // Array reference isolation: the returned array is NOT the live internal one.
+    expect(snapshot).not.toBe(engine.getState().messages);
+    // Per-message object reference isolation: top-level fields are copied, so
+    // mutating a returned element does not write through to engine state.
+    expect(snapshot[0]).not.toBe(engine.getState().messages[0]);
+
+    // Write-through immunity — push onto the array AND mutate an element field.
+    snapshot.push({ id: 'tampered', role: 'user', content: 'INJECTED' });
+    (snapshot[0] as { content: string }).content = 'TAMPERED';
+    const fresh = engine.getState().messages;
+    expect(fresh.length).toBe(2);
+    expect(fresh[0].content).toBe('hello');
+    expect(fresh.some((m) => m.id === 'tampered')).toBe(false);
+
+    // The snapshot is a point-in-time copy: a subsequent turn grows the engine
+    // state but must NOT grow the previously captured snapshot (no live alias).
+    const snapshotLenBeforeNextTurn = snapshot.length;
+    await engine.sendMessage('again');
+    expect(snapshot.length).toBe(snapshotLenBeforeNextTurn);
+    expect(engine.getState().messages.length).toBeGreaterThan(snapshotLenBeforeNextTurn);
   });
 
   it('setMessages replaces the whole list and notifies subscribers', async () => {

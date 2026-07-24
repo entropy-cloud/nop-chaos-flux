@@ -283,7 +283,14 @@ export interface MessageEngine {
   clear(): void;
   setConnector(connector: AiConnector): void;
   registerPlugin(plugin: MessageEnginePlugin): () => void;
-  /** Read-only snapshot of the current messages (design.md §14.3, ComponentHandle). */
+  /**
+   * Read-only snapshot of the current messages (design.md §14.3,
+   * ComponentHandle). Returns a per-message shallow-isolated copy: a new
+   * array whose elements are shallow copies of the internal message objects,
+   * so mutating the returned array or an element's top-level fields cannot
+   * write through to the engine's internal state. Nested objects (metadata /
+   * tool_calls / state) still share references — callers must not mutate them.
+   */
   getMessages(): ChatMessage[];
   /**
    * Replace the entire message list. Used by the Layer C ComponentHandle
