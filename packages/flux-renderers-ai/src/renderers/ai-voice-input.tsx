@@ -200,6 +200,7 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
       data-slot="ai-voice-input"
       data-state={status}
       data-unsupported={unsupported ? '' : undefined}
+      data-cid={props.meta.cid || undefined}
       data-testid={props.meta.testid || undefined}
       disabled={unsupported}
       aria-label={t('flux.ai.voiceInput')}

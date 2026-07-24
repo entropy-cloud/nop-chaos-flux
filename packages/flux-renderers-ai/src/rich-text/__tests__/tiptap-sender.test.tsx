@@ -153,4 +153,58 @@ describe('createTiptapSender — Phase 2 StarterKit editor', () => {
     });
     expect(onSubmit).toHaveBeenCalled();
   });
+
+  it('N-2: focused Enter submit clears the editor surface (FP-2)', async () => {
+    const { options: captureOpts, box } = captureEditor();
+    const onSubmit = vi.fn();
+    const onChange = vi.fn();
+    const Sender = createTiptapSender(makeOptions(captureOpts));
+    const props = makeProps({ onSubmit, onChange, submitType: 'enter' });
+    const { container } = render(<Sender {...props} />);
+    const editor = await waitForEditor(box);
+    const editable = container.querySelector('.ProseMirror') as HTMLElement;
+
+    // Type real content while focused.
+    await act(async () => {
+      editor.commands.focus();
+      editor.commands.insertContent('hello world');
+    });
+    expect(editable.textContent).toContain('hello world');
+
+    // Enter submit while the editor is focused.
+    await act(async () => {
+      fireEvent.keyDown(editable, { key: 'Enter', shiftKey: false });
+    });
+
+    // FP-2: the editor surface was cleared immediately by the keymap (it is
+    // still focused — the parent's external-clear effect would have skipped
+    // this case, so the clear must come from the keymap itself).
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(editable.textContent).toBe('');
+    // The empty-clear was relayed to onChange so the parent draft syncs.
+    const lastChange = onChange.mock.calls[onChange.mock.calls.length - 1]?.[0];
+    expect(String(lastChange)).toBe('');
+  });
+
+  it('N-2: focused Enter does NOT clear when clearOnSubmit is false', async () => {
+    const { options: captureOpts, box } = captureEditor();
+    const onSubmit = vi.fn();
+    const Sender = createTiptapSender(makeOptions(captureOpts));
+    const props = makeProps({ onSubmit, submitType: 'enter', clearOnSubmit: false });
+    const { container } = render(<Sender {...props} />);
+    const editor = await waitForEditor(box);
+    const editable = container.querySelector('.ProseMirror') as HTMLElement;
+
+    await act(async () => {
+      editor.commands.focus();
+      editor.commands.insertContent('keep me');
+    });
+    await act(async () => {
+      fireEvent.keyDown(editable, { key: 'Enter', shiftKey: false });
+    });
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    // clearOnSubmit=false → editor keeps its content.
+    expect(editable.textContent).toContain('keep me');
+  });
 });

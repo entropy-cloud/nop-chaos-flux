@@ -179,8 +179,18 @@ export interface AiSenderExtensionProps {
   showWordLimit?: boolean;
   /** Submit trigger mode (extension wires its own keymap accordingly). */
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
-  /** Whether the whole sender is disabled. */
+  /**
+   * Whether the whole sender is disabled.
+   */
   disabled?: boolean;
+  /**
+   * N-2: when true (default), the extension should clear its own editing
+   * surface after a successful submit. The Tiptap keymap reads this so a
+   * focused Enter submit clears the editor immediately (instead of relying on
+   * the parent's external-clear effect, which is gated on `!editor.isFocused`
+   * and would skip exactly the focused-submit case — Failure Path FP-2).
+   */
+  clearOnSubmit?: boolean;
   /** Optional refocus target hook (host may ignore; ai-sender keeps ownership). */
   refocusAfterSubmit?: boolean;
 }

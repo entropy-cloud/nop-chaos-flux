@@ -264,6 +264,44 @@ describe('createMessageEngine — AI-19 lastError state', () => {
     expect(engine.getState().requestState).toBe('completed');
     expect(engine.getState().lastError).toBeUndefined();
   });
+
+  it('P1-5 / FP-6: connector=null writes a structured connector-missing lastError and fires plugin.onError', async () => {
+    const onError = vi.fn();
+    // Build the engine with NO connector — the connector-missing branch in
+    // runTurn is the path under test (was previously a silent error transition
+    // that left state.lastError undefined).
+    const engine = createMessageEngine({
+      connector: null,
+      plugins: [{ name: 'test-error-sink', onError }],
+    });
+    await engine.sendMessage('hi');
+    const final = engine.getState();
+    expect(final.requestState).toBe('error');
+    expect(final.isProcessing).toBe(false);
+    // The user message is still appended (so the host can see what failed).
+    expect(final.messages).toHaveLength(1);
+    expect(final.messages[0].role).toBe('user');
+    // lastError is a structured Error the host can distinguish from a thrown
+    // request (mirrors the tool-no-executor shape).
+    expect(final.lastError).toBeInstanceOf(Error);
+    expect((final.lastError as Error).message).toBe('connector-missing');
+    // plugin.onError received the same cause.
+    expect(onError).toHaveBeenCalledTimes(1);
+    const [, cause] = onError.mock.calls[0];
+    expect(cause).toBe(final.lastError);
+  });
+
+  it('P1-5: connector-missing error is distinguishable from a connector-throw (different cause)', async () => {
+    const throwEngine = createMessageEngine({
+      connector: makeMockConnector([], { throw: new Error('network-down') }),
+    });
+    await throwEngine.sendMessage('hi');
+    expect((throwEngine.getState().lastError as Error).message).toBe('network-down');
+
+    const missingEngine = createMessageEngine({ connector: null });
+    await missingEngine.sendMessage('hi');
+    expect((missingEngine.getState().lastError as Error).message).toBe('connector-missing');
+  });
 });
 
 // ============================================================================

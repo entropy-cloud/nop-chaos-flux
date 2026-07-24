@@ -18,6 +18,7 @@ export function AiWelcomeRenderer(props: RendererComponentProps<AiWelcomeSchema>
       className={cn('nop-ai-welcome flex flex-col gap-3 p-6', alignClass, props.meta.className)}
       data-slot="ai-welcome"
       data-align={align}
+      data-cid={props.meta.cid || undefined}
       data-testid={props.meta.testid || undefined}
     >
       {typeof resolved.icon === 'string' && resolved.icon.length > 0 ? (

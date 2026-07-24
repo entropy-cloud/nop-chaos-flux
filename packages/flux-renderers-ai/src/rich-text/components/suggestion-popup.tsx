@@ -16,12 +16,20 @@ export function SuggestionPopup({
   kind,
   items,
   activeIndex,
+  onHover,
   onSelect,
   onClose,
 }: {
   kind: 'mention' | 'slash';
   items: PopupItem[];
   activeIndex: number;
+  /**
+   * N-1: hover preview — moving the pointer over an item updates the
+   * highlighted (active) item only. Distinct from `onSelect`, which commits.
+   * Previously `onMouseEnter` and `onClick` both bound `onSelect`, so merely
+   * hovering a candidate inserted it (Failure Path FP-1).
+   */
+  onHover?: (idx: number) => void;
   onSelect: (idx: number) => void;
   onClose: () => void;
 }): React.ReactElement {
@@ -44,7 +52,7 @@ export function SuggestionPopup({
           role="option"
           aria-selected={idx === activeIndex}
           data-active={idx === activeIndex ? '' : undefined}
-          onMouseEnter={() => onSelect(idx)}
+          onMouseEnter={() => onHover?.(idx)}
           onClick={() => onSelect(idx)}
           className={cn('h-7 w-full justify-start text-xs', idx === activeIndex && 'bg-accent text-accent-foreground')}
         >

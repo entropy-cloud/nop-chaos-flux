@@ -180,11 +180,23 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     }
     const connector = adapterStateConnector();
     if (!connector) {
+      // P1-5 / AI-19 parity: surface a structured "connector-missing" error on
+      // state.lastError (and forward to plugin.onError) — mirrors the
+      // tool-no-executor branch so error-state consumers can read the reason
+      // instead of just the requestState flip (Failure Path FP-6). Was
+      // previously a silent error transition with no lastError written.
+      const connectorMissingError = new Error('connector-missing');
+      const errorCtxAbort = createAbortController();
       adapter.mutate('requestState', (draft) => {
         draft.messages.push(...incomingMessages);
         draft.requestState = 'error';
         draft.isProcessing = false;
+        draft.processingState = undefined;
+        draft.lastError = connectorMissingError;
       });
+      for (const plugin of plugins) {
+        plugin.onError?.(buildContext(errorCtxAbort), connectorMissingError);
+      }
       return;
     }
 

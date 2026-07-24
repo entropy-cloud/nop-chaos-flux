@@ -38,6 +38,8 @@ export function AiToolCallView(props: {
   onToggle?: (open: boolean) => void;
   /** P3 HITL: invoked with 'approve' | 'reject'. No-op when undefined. */
   onApproval?: (action: 'approve' | 'reject') => void;
+  cid?: number;
+  testid?: string;
 }): React.ReactElement | null {
   const { toolCall, state } = props;
   const status: ToolCallStatus = state?.status ?? 'running';
@@ -126,6 +128,8 @@ export function AiToolCallView(props: {
       data-open={open ? '' : undefined}
       data-requires-approval={approval === 'pending' ? '' : undefined}
       data-approval={approval ?? undefined}
+      data-cid={props.cid || undefined}
+      data-testid={props.testid || undefined}
       aria-label={t('flux.ai.toolCall', { name: toolCall.function.name })}
       role="group"
     >
@@ -246,6 +250,7 @@ export function AiToolCallRenderer(props: RendererComponentProps<AiToolCallSchem
       <div
         className={cn('nop-ai-tool-call', props.meta.className)}
         data-slot="ai-tool-call"
+        data-cid={props.meta.cid || undefined}
         data-testid={props.meta.testid || undefined}
       />
     );
@@ -256,6 +261,8 @@ export function AiToolCallRenderer(props: RendererComponentProps<AiToolCallSchem
       state={resolved.state as ChatToolCallUIState | undefined}
       defaultOpen={resolved.defaultOpen}
       className={props.meta.className}
+      cid={props.meta.cid}
+      testid={props.meta.testid}
       onApproval={
         props.events?.onApproval
           ? (action) =>

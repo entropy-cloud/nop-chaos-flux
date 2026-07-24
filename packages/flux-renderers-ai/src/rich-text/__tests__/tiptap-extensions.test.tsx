@@ -175,6 +175,54 @@ describe('createTiptapSender — Phase 3 built-in extensions', () => {
     expect(String(lastCall)).toContain('@bob');
   });
 
+  it('N-1: hovering a suggestion only highlights (updates activeIndex) — does NOT insert / commit (FP-1)', async () => {
+    const { options: captureOpts, box } = captureEditor();
+    const onChange = vi.fn();
+    const Sender = createTiptapSender({
+      extensions: ['mention'],
+      mentions: MENTIONS,
+      ...captureOpts,
+    });
+    const { container } = render(<Sender {...makeProps({ onChange })} />);
+    const editor = await waitForEditor(box);
+
+    await act(async () => {
+      editor.commands.focus();
+      editor.commands.insertContent('@al');
+    });
+
+    const popup = container.querySelector('[data-slot="ai-sender-tiptap-popup"]');
+    const items = popup?.querySelectorAll('button[role="option"]');
+    expect(items?.length).toBe(2); // alice (0) + alex (1)
+    // Baseline: index 0 (alice) is the active item.
+    expect(items?.[0]?.getAttribute('data-active')).toBe('');
+    expect(items?.[1]?.getAttribute('data-active')).toBe(null);
+
+    const onChangeBeforeHover = onChange.mock.calls.length;
+    await act(async () => {
+      // Hover the second item (alex) — must only move the highlight, NOT insert.
+      fireEvent.mouseEnter(items![1] as HTMLButtonElement);
+    });
+
+    // activeIndex moved to 1 → alex is now the highlighted item.
+    const itemsAfter = container.querySelector('[data-slot="ai-sender-tiptap-popup"]')?.querySelectorAll('button[role="option"]');
+    expect(itemsAfter?.[1]?.getAttribute('data-active')).toBe('');
+    expect(itemsAfter?.[0]?.getAttribute('data-active')).toBe(null);
+    // No new onChange fired from the hover (no insert happened). The editor
+    // text still ends with the trigger query, not with an inserted mention.
+    expect(onChange.mock.calls.length).toBe(onChangeBeforeHover);
+    // Popup still resident for click selection (not closed by hover).
+    expect(container.querySelector('[data-slot="ai-sender-tiptap-popup"]')).not.toBeNull();
+
+    // Sanity: clicking the highlighted item still commits (regression guard
+    // for the wiring split — onSelect is still bound to commit, onHover is not).
+    await act(async () => {
+      fireEvent.click(itemsAfter![1] as HTMLButtonElement);
+    });
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1]?.[0];
+    expect(String(lastCall)).toContain('@alex');
+  });
+
   it('typing / opens the slash command popup', async () => {
     const { options: captureOpts, box } = captureEditor();
     const Sender = createTiptapSender({

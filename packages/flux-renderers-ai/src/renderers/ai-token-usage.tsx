@@ -61,9 +61,10 @@ export function AiTokenUsageView(props: {
   showCost?: boolean;
   className?: string;
   testid?: string;
+  cid?: number;
   onClick?: () => void;
 }): React.ReactElement | null {
-  const { message, contextLimit, showCost = true, className, testid, onClick } = props;
+  const { message, contextLimit, showCost = true, className, testid, cid, onClick } = props;
   const usage = resolveUsage(message, props.usage);
   if (!usage) {
     // token-no-usage: muted placeholder.
@@ -72,6 +73,7 @@ export function AiTokenUsageView(props: {
         className={cn('nop-ai-token-usage text-xs text-muted-foreground', className)}
         data-slot="ai-token-usage"
         data-empty=""
+        data-cid={cid || undefined}
         data-testid={testid || undefined}
       >
         {t('flux.ai.tokenNoUsage')}
@@ -117,6 +119,7 @@ export function AiTokenUsageView(props: {
         variant="ghost"
         className={rootClass}
         data-slot="ai-token-usage"
+        data-cid={cid || undefined}
         data-testid={testid || undefined}
         onClick={onClick}
       >
@@ -129,6 +132,7 @@ export function AiTokenUsageView(props: {
     <div
       className={rootClass}
       data-slot="ai-token-usage"
+      data-cid={cid || undefined}
       data-testid={testid || undefined}
       aria-hidden
     >
@@ -189,6 +193,7 @@ export function AiTokenUsageRenderer(props: RendererComponentProps<AiTokenUsageS
       showCost={resolved.showCost !== false}
       className={props.meta.className}
       testid={props.meta.testid}
+      cid={props.meta.cid}
       onClick={props.events.onClick ? () => void props.events.onClick?.() : undefined}
     />
   );

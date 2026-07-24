@@ -45,6 +45,7 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
     <div
       className={cn('nop-ai-feedback flex items-center gap-1 text-muted-foreground', props.meta.className)}
       data-slot="ai-feedback"
+      data-cid={props.meta.cid || undefined}
       data-testid={props.meta.testid || undefined}
     >
       {actions.map((action) => (

@@ -51,6 +51,16 @@ interface SenderCallbacks {
   onSubmit: () => void;
   onChange: (text: string) => void;
   submitMode: SubmitMode;
+  /**
+   * N-2: max draft length (mirrors `AiSenderExtensionProps.maxLength`). The
+   * keymap reads it so a focused Enter only commits/clears when under limit.
+   */
+  maxLength?: number;
+  /**
+   * N-2: whether to clear the editor surface after a successful focused
+   * submit (mirrors `AiSenderExtensionProps.clearOnSubmit`, default true).
+   */
+  clearOnSubmit: boolean;
 }
 
 export interface TiptapSenderComponentProps extends AiSenderExtensionProps {
@@ -69,6 +79,7 @@ export interface TiptapSenderComponentProps extends AiSenderExtensionProps {
  */
 export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElement | null {
   const { options, value, onChange, onSubmit, submitType, placeholder, loading, disabled } = props;
+  const clearOnSubmitProp = props.clearOnSubmit !== false;
 
   // Which built-in extensions are enabled (Phase 3)?
   const enabledExtensions = options.extensions ?? [];
@@ -105,11 +116,15 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
     onSubmit,
     onChange,
     submitMode: submitType ?? 'enter',
+    maxLength: props.maxLength,
+    clearOnSubmit: clearOnSubmitProp,
   });
   useEffect(() => {
     callbacksRef.current.onSubmit = onSubmit;
     callbacksRef.current.onChange = onChange;
     callbacksRef.current.submitMode = submitType ?? 'enter';
+    callbacksRef.current.maxLength = props.maxLength;
+    callbacksRef.current.clearOnSubmit = clearOnSubmitProp;
   });
 
   // Shared extra extensions (host-supplied). Memoized so the identity is stable
@@ -131,6 +146,24 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
           name: 'aiSenderSubmitKeymap',
           priority: 1000, // Higher than StarterKit's hardBreak Enter binding.
           addKeyboardShortcuts() {
+            // N-2: shared submit+clear helper. A focused submit must clear the
+            // editor surface itself (the parent's external-clear effect is
+            // gated on `!editor.isFocused` and would skip exactly the focused
+            // case — Failure Path FP-2). Always notifies onSubmit (the parent
+            // validates and returns early on empty/overLimit); only clears when
+            // there was real, in-limit content.
+            const submitAndClear = (edi: { getText(): string; commands: { setContent(content: string, options?: { emitUpdate?: boolean }): unknown } }): void => {
+              const cb = callbacksRef.current;
+              const text = edi.getText();
+              const hasContent = text.trim().length > 0;
+              const overLimit = typeof cb.maxLength === 'number' && text.length > cb.maxLength;
+              cb.onSubmit();
+              if (hasContent && !overLimit && cb.clearOnSubmit) {
+                edi.commands.setContent('', { emitUpdate: false });
+                lastEmittedRef.current = '';
+                cb.onChange('');
+              }
+            };
             return {
               Enter: ({ editor }) => {
                 // IME composition guard (O-3): while composing (CJK/JA/KO input
@@ -142,7 +175,7 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
                 if (editor.view.composing) return false;
                 const mode = callbacksRef.current.submitMode;
                 if (mode === 'enter') {
-                  callbacksRef.current.onSubmit();
+                  submitAndClear(editor);
                   return true;
                 }
                 if (mode === 'ctrlEnter') {
@@ -154,15 +187,15 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
               },
               'Shift-Enter': ({ editor }) => {
                 if (callbacksRef.current.submitMode === 'shiftEnter') {
-                  callbacksRef.current.onSubmit();
+                  submitAndClear(editor);
                   return true;
                 }
                 editor.commands.setHardBreak();
                 return true;
               },
-              'Mod-Enter': () => {
+              'Mod-Enter': ({ editor }) => {
                 if (callbacksRef.current.submitMode === 'ctrlEnter') {
-                  callbacksRef.current.onSubmit();
+                  submitAndClear(editor);
                   return true;
                 }
                 return false;
@@ -371,6 +404,13 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
           kind={popupState.kind}
           items={popupItems}
           activeIndex={popupState.activeIndex}
+          onHover={(idx) => {
+            // N-1: hover only updates the highlighted (active) item — it does
+            // NOT commit. Keeps the candidate list resident for click selection.
+            setPopupState((prev) =>
+              prev.kind === 'none' ? prev : { ...prev, activeIndex: idx },
+            );
+          }}
           onSelect={(idx) => popupItems[idx]?.onSelect()}
           onClose={() => setPopupState({ kind: 'none' })}
         />

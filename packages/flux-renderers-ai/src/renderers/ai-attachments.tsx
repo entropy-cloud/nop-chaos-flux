@@ -189,6 +189,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
       data-slot="ai-attachments"
       data-mode={effectiveMode}
       data-dragging={dragging ? '' : undefined}
+      data-cid={props.meta.cid || undefined}
       data-testid={props.meta.testid || undefined}
       role="button"
       tabIndex={0}

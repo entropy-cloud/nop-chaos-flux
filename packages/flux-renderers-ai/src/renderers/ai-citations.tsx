@@ -33,9 +33,10 @@ export function AiCitationsView(props: {
   mode?: 'inline' | 'list';
   className?: string;
   testid?: string;
+  cid?: number;
   onSourceClick?: (source: AiCitationSource, index: number) => void;
 }): React.ReactElement | null {
-  const { message, mode = 'inline', className, onSourceClick, testid } = props;
+  const { message, mode = 'inline', className, onSourceClick, testid, cid } = props;
   const sources = resolveSources(message, props.sources);
   const byIndex = new Map<number, AiCitationSource>();
   for (const s of sources) byIndex.set(s.index, s);
@@ -47,6 +48,7 @@ export function AiCitationsView(props: {
         className={cn('nop-ai-citations', 'm-0 list-decimal pl-4 text-xs space-y-1', className)}
         data-slot="ai-citations"
         data-mode="list"
+        data-cid={cid || undefined}
         data-testid={testid || undefined}
       >
         {sources.map((s) => (
@@ -69,6 +71,7 @@ export function AiCitationsView(props: {
       className={cn('nop-ai-citations', 'text-sm leading-relaxed', className)}
       data-slot="ai-citations"
       data-mode="inline"
+      data-cid={cid || undefined}
       data-testid={testid || undefined}
     >
       {segments.map((seg) =>
@@ -92,6 +95,7 @@ export function AiCitationsRenderer(props: RendererComponentProps<AiCitationsSch
       mode={resolved.mode ?? 'inline'}
       className={props.meta.className}
       testid={props.meta.testid}
+      cid={props.meta.cid}
       onSourceClick={
         props.events?.onSourceClick
           ? (source, index) => props.events.onSourceClick?.({ type: 'ai:citation-click', source, index })

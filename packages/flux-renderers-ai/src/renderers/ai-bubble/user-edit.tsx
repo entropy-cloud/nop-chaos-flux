@@ -53,6 +53,12 @@ export function UserMessageActions({ message, onEditingChange }: UserMessageActi
   }
 
   async function resubmit() {
+    // P1-1: never re-send while a turn is streaming — the engine would drop
+    // the request silently (runTurn's isProcessing guard). Keep the editor
+    // open + draft intact so nothing is lost (Failure Path FP-3). The pencil
+    // button is also disabled while processing; this guards the submit button
+    // + any keyboard-driven activation.
+    if (e.getState().isProcessing) return;
     const text = draft.trim();
     if (text.length === 0) return;
     const msgs = e.getMessages();
@@ -98,6 +104,7 @@ export function UserMessageActions({ message, onEditingChange }: UserMessageActi
       className="self-end opacity-60 hover:opacity-100"
       data-slot="ai-bubble-edit-toggle"
       aria-label={t('flux.ai.copy')}
+      disabled={ctx?.isProcessing ?? false}
       onClick={startEdit}
     >
       <Pencil className="h-3 w-3" />

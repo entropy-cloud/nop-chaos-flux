@@ -260,4 +260,72 @@ describe('useConversation — AI-28 storage error observability', () => {
     // The turn still completes (storage failure is non-fatal).
     expect(engine.getState().requestState).toBe('completed');
   });
+
+  it('P1-2 / FP-4: createConversation surfaces a saveConversation rejection via onStorageError', async () => {
+    const failing: ConversationStorageStrategy = {
+      ...mockStorage().strategy,
+      saveConversation: async () => {
+        throw new Error('boom-create');
+      },
+    };
+    const onStorageError = vi.fn();
+    const connector = slowConnector(okChunks);
+    const { result } = renderHook(() =>
+      useConversation({ connector, storage: failing, onStorageError }),
+    );
+
+    let createdId: string | undefined;
+    act(() => {
+      const info = result.current.createConversation({ title: 'New' });
+      createdId = info.id;
+    });
+    await act(async () => {
+      await wait();
+    });
+
+    // The previously-bare `void storage?.saveConversation?.(...)` would have
+    // silently swallowed this — now it routes through reportStorageError.
+    const saveCalls = onStorageError.mock.calls.filter((c) => c[0].phase === 'saveConversation');
+    expect(saveCalls.length).toBe(1);
+    expect(saveCalls[0][0].conversationId).toBe(createdId);
+    expect(saveCalls[0][0].error).toBeInstanceOf(Error);
+    // The in-memory list is unaffected (storage failure is non-fatal).
+    expect(result.current.conversations.length).toBe(1);
+  });
+
+  it('P1-2 / FP-4: renameConversation surfaces a saveConversation rejection via onStorageError', async () => {
+    const failing: ConversationStorageStrategy = {
+      ...mockStorage().strategy,
+      saveConversation: async () => {
+        throw new Error('boom-rename');
+      },
+    };
+    const onStorageError = vi.fn();
+    const connector = slowConnector(okChunks);
+    const { result } = renderHook(() =>
+      useConversation({ connector, storage: failing, onStorageError }),
+    );
+
+    let id: string | undefined;
+    act(() => {
+      id = result.current.createConversation({ title: 'Old' }).id;
+    });
+    await act(async () => {
+      await wait();
+    });
+    onStorageError.mockClear();
+    act(() => {
+      result.current.renameConversation(id!, 'New');
+    });
+    await act(async () => {
+      await wait();
+    });
+
+    const saveCalls = onStorageError.mock.calls.filter((c) => c[0].phase === 'saveConversation');
+    expect(saveCalls.length).toBe(1);
+    expect(saveCalls[0][0].conversationId).toBe(id);
+    expect(saveCalls[0][0].error).toBeInstanceOf(Error);
+    // The in-memory title still updated (storage failure is non-fatal).
+    expect(result.current.conversations[0].title).toBe('New');
+  });
 });

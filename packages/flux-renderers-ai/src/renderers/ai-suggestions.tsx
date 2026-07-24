@@ -51,11 +51,13 @@ export function AiSuggestionsView(props: {
   maxVisible?: number;
   className?: string;
   testid?: string;
+  cid?: number;
   onSelect?: (item: AiSuggestionItem, index: number) => void;
 }): React.ReactElement {
   const items = props.items ?? [];
   const overflowMode = props.overflowMode ?? 'scroll';
   const maxVisible = typeof props.maxVisible === 'number' && props.maxVisible > 0 ? props.maxVisible : 3;
+  const cid = props.cid;
 
   if (items.length === 0) {
     return (
@@ -64,6 +66,7 @@ export function AiSuggestionsView(props: {
         data-slot="ai-suggestions"
         data-overflow={overflowMode}
         data-empty=""
+        data-cid={cid || undefined}
         data-testid={props.testid || undefined}
       />
     );
@@ -85,6 +88,7 @@ export function AiSuggestionsView(props: {
       className={cn('nop-ai-suggestions', containerClass, props.className)}
       data-slot="ai-suggestions"
       data-overflow={overflowMode}
+      data-cid={cid || undefined}
       data-testid={props.testid || undefined}
       role="list"
       aria-label={t('flux.ai.suggestionsTitle')}
@@ -145,6 +149,7 @@ export function AiSuggestionsRenderer(props: RendererComponentProps<AiSuggestion
       maxVisible={resolved.maxVisible}
       className={props.meta.className}
       testid={props.meta.testid}
+      cid={props.meta.cid}
       onSelect={
         props.events.onSelect
           ? (item, index) => props.events.onSelect?.({ type: 'ai:suggestion-select', item, index })

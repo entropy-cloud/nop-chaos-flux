@@ -31,6 +31,7 @@ export function AiPromptsRenderer(props: RendererComponentProps<AiPromptsSchema>
         data-slot="ai-prompts"
         data-layout={layout}
         data-empty=""
+        data-cid={props.meta.cid || undefined}
         data-testid={props.meta.testid || undefined}
       />
     );
@@ -41,6 +42,7 @@ export function AiPromptsRenderer(props: RendererComponentProps<AiPromptsSchema>
       className={cn('nop-ai-prompts', layoutClass, props.meta.className)}
       data-slot="ai-prompts"
       data-layout={layout}
+      data-cid={props.meta.cid || undefined}
       data-testid={props.meta.testid || undefined}
     >
       {items.map((item, index) => {

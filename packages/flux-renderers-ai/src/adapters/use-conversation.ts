@@ -114,6 +114,20 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     storage ? null : (initialConversations?.[0]?.id ?? null),
   );
 
+  // P1-3: per-switch version guard. Each switchConversation call captures the
+  // current version; after its awaits, if a newer switch superseded it, it bails
+  // (Failure Path FP-5 — A→B fast switch with a slow A loadMessages must not
+  // let A's late resolve clobber engineB or wrongly evict it).
+  const switchVersionRef = useRef(0);
+  // P1-3: latest active-id mirror, read by the post-await eviction loop so it
+  // evicts against the CURRENT active conversation (not the closure-captured
+  // switch target, which a createConversation could have displaced). Mirrored
+  // via effect + updated synchronously inside switchConversation.
+  const activeIdRef = useRef<string | null>(activeId);
+  useEffect(() => {
+    activeIdRef.current = activeId;
+  });
+
   // Engine cache: id → engine. We keep this in a ref-like closure local so
   // updates don't trigger re-renders (the engine is read via subscribe).
   const [engineCache] = useState(() => new Map<string, MessageEngine>());
@@ -251,7 +265,14 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     const engine = buildEngineFor(info.id);
     engineCache.set(info.id, engine);
     setActiveEngine(engine);
-    void storage?.saveConversation?.(info);
+    // P1-2: route saveConversation failures through reportStorageError
+    // (parity with the saveMessages / load* call sites). Previously this was a
+    // bare `void storage?.saveConversation?.(...)` that silently swallowed
+    // rejections — the host had no way to observe a create-time persistence
+    // failure (Failure Path FP-4).
+    Promise.resolve(storage?.saveConversation?.(info)).catch((error: unknown) => {
+      reportStorageError({ phase: 'saveConversation', conversationId: info.id, error });
+    });
     return info;
   }
 
@@ -259,6 +280,11 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     const exists = conversations.some((c) => c.id === id);
     if (!exists) return;
     setActiveId(id);
+    // P1-3: stamp this switch with a version + sync the active-id mirror so the
+    // post-await checks (version guard + eviction) see the freshest state even
+    // before the effect flushes.
+    const myVersion = ++switchVersionRef.current;
+    activeIdRef.current = id;
 
     let engine = engineCache.get(id);
     if (!engine) {
@@ -267,6 +293,10 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       if (storage) {
         try {
           const stored = await storage.loadMessages(id);
+          // P1-3: a newer switch superseded this one while loadMessages was
+          // pending — drop the late resolve before it can hydrate a stale
+          // engine or displace the now-active one (Failure Path FP-5).
+          if (switchVersionRef.current !== myVersion) return;
           if (stored.length > 0) {
             engine.setMessages(stored);
           }
@@ -275,10 +305,18 @@ export function useConversation(options: UseConversationOptions): UseConversatio
         }
       }
     }
+    // P1-3: a newer switch owns the active slot now — do not promote this
+    // (possibly stale) engine to activeEngine.
+    if (switchVersionRef.current !== myVersion) return;
     setActiveEngine(engine);
 
+    // P1-3: evict against the CURRENT active id (activeIdRef.current), not the
+    // closure-captured `id` — a createConversation between the await and here
+    // could have displaced `id`, and evicting against the stale target would
+    // wrongly drop the now-active engine.
+    const currentActiveId = activeIdRef.current;
     for (const [cachedId, cachedEngine] of engineCache.entries()) {
-      if (cachedId === id) continue;
+      if (cachedId === currentActiveId) continue;
       if (cachedEngine.getState().isProcessing) continue;
       detachEngine(cachedId);
       engineCache.delete(cachedId);
@@ -310,7 +348,14 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title, updatedAt: now } : c)));
     const updated = conversations.find((c) => c.id === id);
     if (updated) {
-      void storage?.saveConversation?.({ ...updated, title, updatedAt: now });
+      // P1-2: route saveConversation failures through reportStorageError
+      // (parity with create + the saveMessages / load* call sites). Was a bare
+      // `void storage?.saveConversation?.(...)` that silently swallowed
+      // rejections — a rename-time persistence failure was unobservable.
+      const next = { ...updated, title, updatedAt: now };
+      Promise.resolve(storage?.saveConversation?.(next)).catch((error: unknown) => {
+        reportStorageError({ phase: 'saveConversation', conversationId: id, error });
+      });
     }
   }
 

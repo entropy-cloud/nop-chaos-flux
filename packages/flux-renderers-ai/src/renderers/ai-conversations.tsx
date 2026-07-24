@@ -34,6 +34,7 @@ export function AiConversationsRenderer(
     <aside
       className={cn('nop-ai-conversations flex flex-col gap-2', props.meta.className)}
       data-slot="ai-conversations"
+      data-cid={props.meta.cid || undefined}
       data-testid={props.meta.testid || undefined}
     >
       <div data-slot="ai-conversations-header" className="flex items-center justify-between">

@@ -288,6 +288,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
         className={cn('nop-ai-chat', props.meta.className)}
         data-slot="ai-chat-root"
         data-state="empty"
+        data-cid={props.meta.cid || undefined}
         data-testid={props.meta.testid || undefined}
       >
         {emptyNode ? (
@@ -311,6 +312,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
         className={cn('nop-ai-chat', props.meta.className)}
         data-slot="ai-chat-root"
         data-state="error"
+        data-cid={props.meta.cid || undefined}
         data-testid={props.meta.testid || undefined}
       >
         <div data-slot="ai-chat-error">
@@ -326,6 +328,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
         className={cn('nop-ai-chat', props.meta.className)}
         data-slot="ai-chat-root"
         data-state={requestState}
+        data-cid={props.meta.cid || undefined}
         data-testid={props.meta.testid || undefined}
       >
         {headerNode ? <header data-slot="ai-chat-header">{headerNode}</header> : null}

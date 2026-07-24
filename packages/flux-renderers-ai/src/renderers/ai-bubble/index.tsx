@@ -38,6 +38,7 @@ export interface AiBubbleViewProps {
   onBranchChange?: (branchId: string) => void;
   className?: string;
   testid?: string;
+  cid?: number;
 }
 
 function resolvePlacement(message: ChatMessage, placement: 'start' | 'end' | 'auto'): 'start' | 'end' {
@@ -104,6 +105,7 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
       data-streaming={isStreaming ? '' : undefined}
       data-error={isError ? '' : undefined}
       data-editing={isUser && isEditing ? '' : undefined}
+      data-cid={props.cid || undefined}
       data-testid={props.testid || undefined}
     >
       {showAvatar ? <div data-slot="ai-bubble-avatar" aria-hidden="true" /> : null}
@@ -229,7 +231,7 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
   const message = resolved.message as ChatMessage | undefined;
   if (!message) {
     return (
-      <article className={cn('nop-ai-bubble', props.meta.className)} data-slot="ai-bubble" data-testid={props.meta.testid || undefined}>
+      <article className={cn('nop-ai-bubble', props.meta.className)} data-slot="ai-bubble" data-cid={props.meta.cid || undefined} data-testid={props.meta.testid || undefined}>
         <div data-slot="ai-bubble-content" />
       </article>
     );
@@ -252,6 +254,7 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
       }
       className={props.meta.className}
       testid={props.meta.testid}
+      cid={props.meta.cid}
     />
   );
 }
