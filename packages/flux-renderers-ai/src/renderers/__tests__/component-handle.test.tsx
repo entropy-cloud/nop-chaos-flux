@@ -1,11 +1,16 @@
 import { afterEach, describe, it, expect } from 'vitest';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
+import React from 'react';
+import { ComponentRegistryContext } from '@nop-chaos/flux-react';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   aiFormulaCompiler,
   aiMockEnv,
   createAiSchemaRenderer,
   mockStreamConnector,
 } from '../../ai-test-support.js';
+import { AiChatRenderer } from '../ai-chat.js';
+import type { AiChatSchema } from '../../schemas.js';
 import type { AiConnectorChunk } from '../../engine/types.js';
 
 const SchemaRenderer = createAiSchemaRenderer();
@@ -126,5 +131,58 @@ describe('ai-chat Layer C ComponentHandle (registration lifecycle + dispatch)', 
       const userBubble = document.querySelector('[data-slot="ai-bubble"][data-role="user"]');
       expect(userBubble?.textContent).toContain('via-component-handle');
     });
+  });
+});
+
+// ============================================================================
+// Failure Path `component-handle-no-registry` (ai-chat.tsx effect guard):
+// when `useCurrentComponentRegistry()` returns null the registration effect
+// must SKIP silently — no throw, no `register` call. The SchemaRenderer always
+// provides a registry, so this is exercised by overriding the registry
+// context to `undefined` for the chat subtree only.
+// ============================================================================
+
+function NoRegistryAiChat(props: RendererComponentProps<AiChatSchema>): React.ReactElement {
+  const Chat = AiChatRenderer as unknown as React.ComponentType<RendererComponentProps<AiChatSchema>>;
+  return (
+    <ComponentRegistryContext.Provider value={undefined}>
+      <Chat {...props} />
+    </ComponentRegistryContext.Provider>
+  );
+}
+
+describe('ai-chat Layer C — component-handle-no-registry skip', () => {
+  it('renders without throwing and does NOT register a handle when no registry is in context', async () => {
+    const noRegistryChat = { type: 'no-reg-ai-chat', component: NoRegistryAiChat };
+    const Renderer = createAiSchemaRenderer([noRegistryChat]);
+    const connector = mockStreamConnector(okChunks);
+    let rootRegistry: import('@nop-chaos/flux-core').ComponentHandleRegistry | null = null;
+
+    render(
+      <Renderer
+        schemaUrl="test://ai/no-registry"
+        schema={{
+          type: 'page',
+          body: [{ type: 'no-reg-ai-chat', connector: connector as never, componentId: 'orphan-chat' }],
+        }}
+        env={aiMockEnv()}
+        formulaCompiler={aiFormulaCompiler}
+        onComponentRegistryChange={(reg) => {
+          rootRegistry = reg;
+        }}
+      />,
+    );
+
+    // The chat still mounts (the skip is silent, never a throw).
+    await waitFor(() => {
+      expect(document.querySelector('.nop-ai-chat')).not.toBeNull();
+    });
+    // The root registry exists (SchemaRenderer always creates one)…
+    await waitFor(() => {
+      expect(rootRegistry).not.toBeNull();
+    });
+    // …but the chat never registered its handle against it (skip path took
+    // effect: resolve returns undefined).
+    expect(rootRegistry!.resolve({ componentId: 'orphan-chat' })).toBeUndefined();
   });
 });

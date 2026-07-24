@@ -1,4 +1,4 @@
-import type { AiConversationInfo, ChatMessage } from '../engine/types.js';
+import type { AiConversationInfo, ChatMessage, MaybePromise } from '../engine/types.js';
 
 /**
  * Persistence strategy contract (interface only). The package ships NO
@@ -13,5 +13,3 @@ export interface ConversationStorageStrategy {
   saveMessages: (conversationId: string, messages: ChatMessage[]) => MaybePromise<void>;
   deleteConversation?: (conversationId: string) => MaybePromise<void>;
 }
-
-export type MaybePromise<T> = T | Promise<T>;

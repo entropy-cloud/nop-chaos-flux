@@ -38,10 +38,6 @@ function fail(message: string): ActionResult {
   return { ok: false, error: new Error(message) };
 }
 
-function toActionError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error), { cause: error });
-}
-
 /**
  * Build the `ai` ActionScope namespace provider. The renderer registers it via
  * `useNamespaceRegistration(actionScope, 'ai', provider)` (live API; the
@@ -132,5 +128,3 @@ export function createAiActionProvider(input: CreateAiActionProviderInput): Acti
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
-
-export { toActionError };

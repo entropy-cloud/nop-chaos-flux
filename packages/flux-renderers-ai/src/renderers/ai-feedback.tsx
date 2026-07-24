@@ -24,9 +24,17 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
 
   function fire(action: FeedbackAction) {
     if (action === 'copy' && message) {
-      copyMessageText(message);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      // clipboard-write-failed: only flip to "Copied" after the write resolves.
+      // A rejected write (permission lost / no focus) leaves the button as-is
+      // so the user does not see a false success.
+      void copyMessageText(message)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        })
+        .catch(() => {
+          // swallow: keep the button in its pre-copy state
+        });
     } else if (action === 'like' || action === 'dislike') {
       setVoted((prev) => (prev === action ? null : action));
     }
@@ -89,12 +97,17 @@ function labelVisible(action: FeedbackAction, state: { copied: boolean }): strin
   return labelFor(action);
 }
 
-function copyMessageText(message: ChatMessage): void {
+function copyMessageText(message: ChatMessage): Promise<void> {
   const text = extractMessageText(message);
-  if (text.length === 0) return;
+  if (text.length === 0) return Promise.resolve();
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-    void navigator.clipboard.writeText(text);
+    try {
+      return Promise.resolve(navigator.clipboard.writeText(text));
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
+  return Promise.resolve();
 }
 
 function extractMessageText(message: ChatMessage): string {

@@ -81,6 +81,7 @@ export type {
   AiToolSchema,
   AiToolFunctionSchema,
   MaybePromise,
+  MaybePromise as AiMaybePromise,
   RequestState,
   RequestProcessingState,
   ToolExecutor,
@@ -120,7 +121,6 @@ export {
 } from './adapters/ai-component-handle.js';
 export type {
   AiConversationController,
-  MaybePromise as AiMaybePromise,
 } from './adapters/ai-conversation-controller.js';
 
 // ---- Group 3c: Host-side conversation manager (P1) ----

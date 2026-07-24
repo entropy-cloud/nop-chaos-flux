@@ -70,6 +70,14 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
   // Detect once synchronously during the first render (no effect churn).
   const [unsupported] = useState<boolean>(() => !getSpeechRecognitionCtor());
   const firedUnsupportedRef = useRef(false);
+  // AI-31 (effect deps): read the latest events through a ref so the
+  // unsupported effect depends only on `[unsupported]`. The runtime builds a
+  // fresh `props.events` object every render, so depending on it re-ran the
+  // effect (and its no-op `firedUnsupportedRef` guard) on every render.
+  const eventsRef = useRef(props.events);
+  useEffect(() => {
+    eventsRef.current = props.events;
+  });
   // AI-04 (resource lifecycle): hold the live SpeechRecognition in a ref so the
   // stop branch and unmount cleanup can release the microphone. Previously the
   // recognition lived only inside the `handleStart` closure, so the stop button
@@ -97,12 +105,14 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
   }, []);
 
   // Fire onError('unsupported') exactly once when the browser lacks the API.
+  // AI-31: deps are `[unsupported]` only; events are read via the latest-ref so
+  // the effect does not re-run on every render's fresh events object.
   useEffect(() => {
     if (unsupported && !firedUnsupportedRef.current) {
       firedUnsupportedRef.current = true;
-      void props.events.onError?.({ type: 'ai:voice-error', reason: 'unsupported' });
+      void eventsRef.current.onError?.({ type: 'ai:voice-error', reason: 'unsupported' });
     }
-  }, [unsupported, props.events]);
+  }, [unsupported]);
 
   function fireError(reason: VoiceErrorReason): void {
     void props.events.onError?.({ type: 'ai:voice-error', reason });
@@ -199,7 +209,7 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
     >
       {status === 'listening' ? (
         <span
-          className="nop-ai-voice-input-wave inline-flex h-4 w-5 items-center justify-center text-primary"
+          className="inline-flex h-4 w-5 items-center justify-center text-primary"
           aria-hidden="true"
           data-slot="ai-voice-input-wave"
           data-testid={props.meta.testid ? `${props.meta.testid}-wave` : undefined}

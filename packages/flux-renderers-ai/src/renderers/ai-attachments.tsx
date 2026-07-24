@@ -96,7 +96,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
       const url = typeof URL !== 'undefined' && URL.createObjectURL ? URL.createObjectURL(file) : '';
       if (url) localUrlsRef.current.add(url);
       accepted.push({
-        id: `${file.name}-${file.size}-${file.lastModified}`,
+        id: generateAttachmentId(),
         url,
         name: file.name,
         contentType: file.type,
@@ -315,6 +315,21 @@ export function buildImageContentParts(attachments: AiAttachment[]): ChatMessage
   return attachments
     .filter((a) => isImageMime(a.contentType) || isImageExt(a.name))
     .map((a) => ({ type: 'image_url' as const, image_url: { url: a.url } }));
+}
+
+/**
+ * O-4 (attachment id collision): attachments need a stable React key + removal
+ * handle that does NOT collide when two files share name/size/lastModified.
+ * Prefer `crypto.randomUUID`; fall back to an incrementing counter for non-browser
+ * runtimes (SSR / test envs without the Web Crypto impl).
+ */
+let attachmentIdCounter = 0;
+function generateAttachmentId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  attachmentIdCounter += 1;
+  return `ai-att-${Date.now().toString(36)}-${attachmentIdCounter.toString(36)}`;
 }
 
 function detectMode(attachments: AiAttachment[]): 'image' | 'card' {

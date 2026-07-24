@@ -25,7 +25,7 @@ function SuggestionPill({
       size="xs"
       data-slot="ai-suggestions-item"
       data-index={index}
-      className="nop-ai-suggestions-item rounded-full whitespace-nowrap"
+      className="rounded-full whitespace-nowrap"
       onClick={() => onSelect?.(item, index)}
     >
       {typeof item.icon === 'string' && item.icon.length > 0 ? (

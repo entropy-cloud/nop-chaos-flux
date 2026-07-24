@@ -1,7 +1,8 @@
 /* flux-renderers-ai marker styles. */
 
-/* A-11: streaming cursor — appended to assistant markdown while loading. */
-.ai-bubble-cursor {
+/* A-11: streaming cursor — appended to assistant markdown while loading.
+   AI-29: keyed off [data-slot] (marker purity) instead of a bare class. */
+[data-slot='ai-bubble-cursor'] {
   display: inline-block;
   margin-left: 1px;
   line-height: 1;
@@ -15,7 +16,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-bubble-cursor {
+  [data-slot='ai-bubble-cursor'] {
     animation: none;
   }
 }
@@ -79,8 +80,10 @@
 
 /* AI-16: message-list layout utilities (moved out of JSX className).
    The scroll container needs min-height:0 + flex-grow to fill the panel
-   and allow the virtual list to scroll within a flex column. */
-.nop-ai-message-list {
+   and allow the virtual list to scroll within a flex column.
+   AI-29: visual rules keyed off [data-slot] so the .nop-ai-message-list
+   marker class stays a pure semantic identifier (Renderer Styling Contract). */
+[data-slot='ai-message-list'] {
   min-height: 0;
   flex: 1 1 0%;
   overflow: auto;

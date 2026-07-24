@@ -248,13 +248,18 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
           // If no executor is provided, transition to error and stop
           // (Failure Path `tool-no-executor`).
           if (!toolExecutor) {
+            // AI-19 parity with connector-throw: surface the real cause on
+            // `state.lastError` so error-state consumers (e.g. error bubble)
+            // can read the reason, not just the requestState flip.
+            const noExecutorError = new Error('tool-no-executor');
             adapter.mutate('requestState', (draft) => {
               draft.requestState = 'error';
               draft.isProcessing = false;
               draft.processingState = undefined;
+              draft.lastError = noExecutorError;
             });
             for (const plugin of plugins) {
-              plugin.onError?.(buildContext(abortController), new Error('tool-no-executor'));
+              plugin.onError?.(buildContext(abortController), noExecutorError);
             }
             return;
           }

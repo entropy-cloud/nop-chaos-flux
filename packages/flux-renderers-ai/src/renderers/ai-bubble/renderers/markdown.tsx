@@ -45,7 +45,7 @@ export function MarkdownContentRenderer({ message, content }: BubbleContentRende
       >
         {safe}
       </ReactMarkdown>
-      {streaming ? <span data-slot="ai-bubble-cursor" className="ai-bubble-cursor" aria-hidden="true">▍</span> : null}
+      {streaming ? <span data-slot="ai-bubble-cursor" aria-hidden="true">▍</span> : null}
     </div>
   );
 }
@@ -101,9 +101,17 @@ function CodeBlock({
 
   function handleCopy() {
     const text = extractElementText(children);
-    copyToClipboard(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    // clipboard-write-failed: only flip to "Copied" when the write resolves.
+    // A rejected write (permission lost / no focus) keeps the button as-is so
+    // the user does not see a false success.
+    void Promise.resolve(copyToClipboard(text))
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      })
+      .catch(() => {
+        // swallow: keep the button in its pre-copy state
+      });
   }
 
   return (
@@ -149,6 +157,6 @@ export const clipboardAdapter: { writeText(text: string): void | Promise<void> }
   },
 };
 
-function copyToClipboard(text: string): void {
-  void clipboardAdapter.writeText(text);
+function copyToClipboard(text: string): void | Promise<void> {
+  return clipboardAdapter.writeText(text);
 }

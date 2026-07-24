@@ -1,5 +1,5 @@
 /**
- * Streaming-safe markdown buffer (A-2, design.md §10.4 path C).
+ * Streaming-safe markdown slice (A-2, design.md §10.4 path C).
  *
  * Problem this solves: when chunks arrive mid-character or mid-fence, naive
  * `react-markdown` re-parse per chunk causes (a) CJK garbling (a UTF-16
@@ -7,11 +7,12 @@
  * (b) flicker / mis-highlighting when an open ``` code fence or `$$` math
  * delimiter is temporarily unmatched.
  *
- * Approach (~2KB, dependency-free): expose `bufferMarkdownChunk(raw)` that
- * appends raw text, then `renderSafeMarkdownSlice()` which returns the longest
- * prefix that is "safe to render" — i.e. with complete UTF-16 characters and
- * balanced code-fence / math-delimiter markers. Any dangling tail is held back
- * until subsequent chunks close it.
+ * Approach (~1KB, dependency-free): `safeMarkdownSlice(raw)` returns the
+ * longest prefix of the accumulated raw text that is "safe to render" — i.e.
+ * with complete UTF-16 characters and balanced code-fence / math-delimiter
+ * markers. The ai-bubble markdown renderer recomputes this from the full
+ * accumulated message content on each render (stateless), so no streaming
+ * state needs to be tracked here.
  *
  * This is a pure string-processor: no React, no DOM, no streaming protocol
  * knowledge (INV-1). The `ai-bubble` markdown renderer wraps it.
@@ -21,26 +22,6 @@ const CODE_FENCE = /(^|\n)(`{3,}|~{3,})/g;
 const MATH_BLOCK = /\$\$/g;
 const MATH_INLINE_OPEN = /\\\(/g;
 const MATH_INLINE_CLOSE = /\\\)/g;
-
-export interface MarkdownBufferState {
-  /** All raw text received so far. */
-  raw: string;
-  /** Text currently held back because it ends mid-character or mid-fence. */
-  pendingTail: string;
-}
-
-export function createMarkdownBuffer(): MarkdownBufferState {
-  return { raw: '', pendingTail: '' };
-}
-
-/**
- * Append a streaming chunk to the buffer. Mutates and returns the same state
- * object for convenience (the caller may keep one `useState`-style slot).
- */
-export function appendMarkdownChunk(state: MarkdownBufferState, chunk: string): MarkdownBufferState {
-  state.raw += chunk;
-  return state;
-}
 
 /**
  * Compute the safe-to-render prefix of the given raw markdown text. Returns
@@ -74,48 +55,6 @@ export function safeMarkdownSlice(raw: string): string {
     }
   }
 
-  return prefix;
-}
-
-/**
- * Streaming-stateful variant (kept for incremental use cases). Most callers
- * should prefer `safeMarkdownSlice` since the engine delivers full content.
- */
-export function renderSafeMarkdownSlice(state: MarkdownBufferState): string {
-  const raw = state.raw;
-  if (raw.length === 0) {
-    state.pendingTail = '';
-    return '';
-  }
-
-  // 1. UTF-16 safety: drop a trailing lone surrogate so we don't render half
-  //    of a supplementary-plane CJK character (e.g. 𠀋 — U+2000B).
-  let safeEnd = raw.length;
-  const lastCode = raw.charCodeAt(safeEnd - 1);
-  if (lastCode >= 0xd800 && lastCode <= 0xdbff) {
-    // High surrogate with no following low surrogate → hold back 1 char.
-    safeEnd -= 1;
-  }
-
-  let prefix = raw.slice(0, safeEnd);
-
-  // 2. Code fence balance: count ``` / ~~~ fence markers. An odd count means
-  //    the trailing fence is opened but not closed — hold back from the last
-  //    unclosed fence onward so the rest isn't rendered as code.
-  const fenceCut = findUnclosedFenceCutoff(prefix);
-  if (fenceCut !== undefined) {
-    prefix = prefix.slice(0, fenceCut);
-  }
-
-  // 3. Math block balance: $$ ... $$ pairs. Hold back the trailing unclosed $$.
-  if (fenceCut === undefined) {
-    const mathCut = findUnclosedMathCutoff(prefix);
-    if (mathCut !== undefined) {
-      prefix = prefix.slice(0, mathCut);
-    }
-  }
-
-  state.pendingTail = raw.slice(prefix.length);
   return prefix;
 }
 
@@ -155,19 +94,4 @@ function findUnclosedMathCutoff(text: string): number | undefined {
   }
 
   return undefined;
-}
-
-/**
- * Flush any remaining buffered text (call when the stream ends). Returns the
- * full raw text minus any incomplete trailing surrogate pair.
- */
-export function flushMarkdownBuffer(state: MarkdownBufferState): string {
-  const raw = state.raw;
-  let end = raw.length;
-  const lastCode = raw.charCodeAt(end - 1);
-  if (lastCode >= 0xd800 && lastCode <= 0xdbff) {
-    end -= 1;
-  }
-  state.pendingTail = raw.slice(end);
-  return raw.slice(0, end);
 }

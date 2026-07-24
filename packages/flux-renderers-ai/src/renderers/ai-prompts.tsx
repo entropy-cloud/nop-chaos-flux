@@ -52,7 +52,7 @@ export function AiPromptsRenderer(props: RendererComponentProps<AiPromptsSchema>
           data-slot="ai-prompts-item"
           data-index={index}
           className={cn(
-            'nop-ai-prompts-item rounded-md bg-card text-card-foreground text-left',
+            'rounded-md bg-card text-card-foreground text-left',
             sizeClass,
           )}
           onClick={() => {

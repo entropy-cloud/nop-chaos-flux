@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -128,6 +128,15 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
     maxToolRounds,
   });
 
+  // AI-12/AI-31 (latest-ref): the runtime builds a fresh `props.events`
+  // object every render. Read it through a ref so callbacks/effects that need
+  // the latest events can keep stable identities (subscribe effect deps
+  // `[engine]` only; context-value useMemo not invalidated every render).
+  const eventsRef = useRef(props.events);
+  useEffect(() => {
+    eventsRef.current = props.events;
+  });
+
   // ---- Layer B: ActionScope namespace `ai` registration ----
   const actionScope = useCurrentActionScope();
   const actionProvider = createAiActionProvider({ engine, conversationController });
@@ -165,11 +174,13 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // bubble can render a prev/next picker for branch-point messages.
   const branches = Array.isArray(resolved.branches) ? (resolved.branches as unknown as AiBranch[]) : undefined;
   const activeBranchId = typeof resolved.activeBranchId === 'string' ? resolved.activeBranchId : undefined;
-  const onBranchChange = props.events.onBranchChange
-    ? (branchId: string) => {
-        void props.events.onBranchChange?.({ type: 'ai:branch-change', branchId });
-      }
-    : undefined;
+  // AI-31: stable identity for the context value. Reads the latest handler via
+  // eventsRef so the callback (and thus the context value) is not rebuilt every
+  // render. No-ops when the host never wires `onBranchChange`; consumers invoke
+  // it via optional chaining so an always-defined stable no-op is equivalent.
+  const onBranchChange = useCallback((branchId: string) => {
+    void eventsRef.current.onBranchChange?.({ type: 'ai:branch-change', branchId });
+  }, []);
   // Decision-A (AI-02): project a SNAPSHOT of the engine messages, not the
   // live internal array. Descendants that read `${messages}` (via
   // `useScopeSelector`) receive an independent copy, so a host/descendant that
@@ -208,17 +219,11 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   };
   const hostScope = useHostScope(hostScopeData, props.path, 'ai');
 
-  // AI-12 (subscribe stability): read the latest events through a ref so the
-  // `requestState` subscription depends only on `[engine]`. Subscribing on
-  // `props.events` re-subscribed on every render (the runtime builds a fresh
-  // events object per render), which could drop a `processing→completed`
-  // transition when the re-subscribe landed mid-transition (Failure Path
-  // `subscribe-transition-not-dropped`). The latest-ref pattern keeps one
-  // persistent subscription per engine.
-  const eventsRef = useRef(props.events);
-  useEffect(() => {
-    eventsRef.current = props.events;
-  });
+  // AI-12 (subscribe stability): the `requestState` subscription below depends
+  // only on `[engine]`. It reads the latest events through `eventsRef` (declared
+  // above) so it is not re-subscribed on every render's fresh events object — a
+  // mid-transition re-subscribe could otherwise drop a `processing→completed`
+  // transition (Failure Path `subscribe-transition-not-dropped`).
 
   // Fire schema events on turn transitions via a subscribe callback. The
   // previous state is tracked in a closure local (no ref read during render,
@@ -258,6 +263,18 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   const afterNode = props.regions.afterMessages ? (props.regions.afterMessages.render({ scope: hostScope }) as React.ReactNode) : null;
   const footerNode = props.regions.footer ? (props.regions.footer.render({ scope: hostScope }) as React.ReactNode) : null;
   const emptyNode = props.regions.emptyState ? (props.regions.emptyState.render({ scope: hostScope }) as React.ReactNode) : undefined;
+
+  // AI-31 (context value stability): the AiChatProvider value crosses a
+  // Provider boundary, so React Compiler cannot memoize the inline object
+  // literal for context consumers. Stabilize the reference with useMemo so
+  // context consumers do not re-render on each parent render. (Documented
+  // exception to the "prefer plain derivation" guidance: solves a concrete
+  // re-render problem across the Provider boundary.) Declared before the early
+  // returns so the hook order is unconditional (rules-of-hooks).
+  const chatContextValue = useMemo(
+    () => ({ engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, branches, activeBranchId, onBranchChange }),
+    [engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, branches, activeBranchId, onBranchChange],
+  );
 
   // engine-null-switch: the host injected `null` (activeEngine is null during
   // a conversation switch / before the first selection). Render the emptyState
@@ -304,7 +321,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   }
 
   return (
-    <AiChatProvider value={{ engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, branches, activeBranchId, onBranchChange }}>
+    <AiChatProvider value={chatContextValue}>
       <section
         className={cn('nop-ai-chat', props.meta.className)}
         data-slot="ai-chat-root"

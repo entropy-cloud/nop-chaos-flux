@@ -168,7 +168,7 @@ function BranchPicker({
   return (
     <div
       data-slot="ai-bubble-branches"
-      className="nop-ai-bubble-branches inline-flex items-center gap-1 text-xs text-muted-foreground"
+      className="inline-flex items-center gap-1 text-xs text-muted-foreground"
       role="group"
       aria-label="Message branches"
     >

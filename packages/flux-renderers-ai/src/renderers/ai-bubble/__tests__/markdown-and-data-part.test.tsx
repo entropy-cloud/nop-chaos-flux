@@ -1,7 +1,8 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { AiBubbleView } from '../index.js';
 import { clipboardAdapter } from '../renderers/markdown.js';
+import { t } from '@nop-chaos/flux-i18n';
 import type { ChatMessage, ChatMessageContentPart } from '../../../engine/types.js';
 
 afterEach(() => {
@@ -53,6 +54,34 @@ describe('A-3 code block copy button', () => {
     const { container } = render(<AiBubbleView message={message} />);
     const copyBtn = container.querySelector('[data-slot="ai-bubble-copy-code"]');
     expect(copyBtn).toBeNull();
+  });
+
+  it('clipboard-write-failed: a rejected write does not flip the button to "Copied"', async () => {
+    // Pre-fix the copy path called `setCopied(true)` immediately, so a rejected
+    // clipboard write still showed a false "Copied" success.
+    const original = clipboardAdapter.writeText;
+    clipboardAdapter.writeText = () => Promise.reject(new Error('not allowed'));
+
+    try {
+      const message: ChatMessage = {
+        id: 'm-clip-fail',
+        role: 'assistant',
+        content: '```js\nconst z = 2;\n```',
+      };
+      const { container } = render(<AiBubbleView message={message} />);
+      const btn = container.querySelector('[data-slot="ai-bubble-copy-code"]') as HTMLButtonElement;
+      expect(btn).not.toBeNull();
+      btn.click();
+
+      // Let the rejected promise settle before re-reading.
+      await waitFor(() => {
+        expect(btn.textContent).toBe(t('flux.ai.copy'));
+      });
+      // Still showing the copy label, never "Copied".
+      expect(btn.textContent).not.toBe(t('flux.ai.copied'));
+    } finally {
+      clipboardAdapter.writeText = original;
+    }
   });
 });
 

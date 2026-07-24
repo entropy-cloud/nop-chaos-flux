@@ -163,6 +163,18 @@ describe('createMessageEngine — agentic tool execution loop', () => {
     expect(final.messages.some((m) => m.role === 'tool')).toBe(false);
   });
 
+  it('tool-no-executor: writes the cause onto state.lastError (parity with connector-throw)', async () => {
+    // Pre-fix the tool-no-executor path flipped requestState to 'error' but
+    // never wrote lastError, so error-state consumers had no cause to render.
+    const connector = scriptedConnector([toolCallChunks('c_ne', 'f', '{}')]);
+    const engine = createMessageEngine({ connector });
+    await engine.sendMessage('go');
+    const final = engine.getState();
+    expect(final.requestState).toBe('error');
+    expect(final.lastError).toBeInstanceOf(Error);
+    expect((final.lastError as Error).message).toBe('tool-no-executor');
+  });
+
   it('abort mid-loop stops further rounds', async () => {
     // First round tool_calls; the executor will await abort then the loop bails.
     const connector = scriptedConnector([toolCallChunks('c4', 'f', '{}'), stopChunks('late')]);

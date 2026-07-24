@@ -265,3 +265,62 @@ describe('createMessageEngine — AI-19 lastError state', () => {
     expect(engine.getState().lastError).toBeUndefined();
   });
 });
+
+// ============================================================================
+// clear() guards: a hard reset must not race the streaming accumulator.
+// Callers should `abort()` first; clear() while in-flight is a guarded no-op
+// (mirrors the setMessages-while-in-flight guard — Failure Path symmetry).
+// ============================================================================
+
+describe('createMessageEngine — clear() while-in-flight guard', () => {
+  it('clear() when idle drops every message and resets requestState to idle', async () => {
+    const connector = makeMockConnector(wordChunks);
+    const engine = createMessageEngine({ connector });
+    await engine.sendMessage('hi');
+    expect(engine.getMessages()).toHaveLength(2);
+    expect(engine.getState().requestState).toBe('completed');
+
+    engine.clear();
+
+    expect(engine.getMessages()).toEqual([]);
+    expect(engine.getState().requestState).toBe('idle');
+    expect(engine.getState().isProcessing).toBe(false);
+  });
+
+  it('clear() is a no-op while a turn is in-flight (symmetric with setMessages guard)', async () => {
+    let resolveStream: () => void;
+    const gate = new Promise<void>((r) => {
+      resolveStream = r;
+    });
+    const connector: AiConnector = {
+      async stream() {
+        async function* gen() {
+          yield { delta: { content: 'x' } };
+          await gate;
+          yield { finishReason: 'stop' };
+        }
+        return gen();
+      },
+    };
+    const engine = createMessageEngine({ connector });
+    const turn = engine.sendMessage('go');
+    // Let the stream emit its first chunk so isProcessing is true.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(engine.getState().isProcessing).toBe(true);
+    const before = engine.getMessages().length;
+    const stateBefore = engine.getState().requestState;
+
+    engine.clear();
+
+    // Guarded no-op: nothing cleared, still processing.
+    expect(engine.getMessages().length).toBe(before);
+    expect(engine.getState().isProcessing).toBe(true);
+    expect(engine.getState().requestState).toBe(stateBefore);
+    expect(engine.getState().requestState).not.toBe('idle');
+
+    resolveStream!();
+    await turn;
+  });
+});

@@ -1,4 +1,4 @@
-import type { AiConversationInfo } from '../engine/types.js';
+import type { AiConversationInfo, MaybePromise } from '../engine/types.js';
 
 /**
  * Host-side conversation controller. The `ai` ActionScope namespace delegates
@@ -22,5 +22,3 @@ export interface AiConversationController {
   deleteConversation(id: string): MaybePromise<void>;
   renameConversation(id: string, title: string): MaybePromise<void>;
 }
-
-export type MaybePromise<T> = T | Promise<T>;

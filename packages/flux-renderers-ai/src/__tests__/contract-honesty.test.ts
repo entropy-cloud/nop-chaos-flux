@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import type { Dirent } from 'node:fs';
-import { join, extname } from 'node:path';
+import { join, extname, relative } from 'node:path';
 
 const ENGINE_DIR = join(__dirname, '..', 'engine');
 const RENDERERS_DIR = join(__dirname, '..', 'renderers');
@@ -142,5 +142,50 @@ describe('F1.4: ai-message-list declares no unimplemented grouping contract', ()
   it('ai-message-list.tsx no longer threads groupStrategy through the view', () => {
     const src = readFileSync(join(RENDERERS_DIR, 'ai-message-list.tsx'), 'utf8');
     expect(src).not.toMatch(DEAD_FIELDS);
+  });
+});
+
+// ============================================================================
+// AI-29 / Renderer Styling Contract: the `nop-ai-` marker prefix is reserved
+// for component ROOT elements only (semantic identity). Internal regions use
+// `data-slot`. A `nop-ai-` class on an internal element (e.g. `nop-ai-*-item`,
+// `nop-ai-*-wave`, `nop-ai-*-branches`) leaks the marker namespace and breaks
+// the marker-purity invariant. This scan enforces it statically.
+// ============================================================================
+
+const ROOT_MARKER_CLASSES = new Set([
+  'nop-ai-chat',
+  'nop-ai-message-list',
+  'nop-ai-bubble',
+  'nop-ai-sender',
+  'nop-ai-conversations',
+  'nop-ai-welcome',
+  'nop-ai-prompts',
+  'nop-ai-feedback',
+  'nop-ai-tool-call',
+  'nop-ai-attachments',
+  'nop-ai-citations',
+  'nop-ai-voice-input',
+  'nop-ai-token-usage',
+  'nop-ai-suggestions',
+]);
+
+describe('AI-29: nop- prefix appears only on component root elements', () => {
+  it('renderers/**/*.tsx never applies a non-root nop-ai-* class', () => {
+    // Match a quote-delimited `nop-ai-…` token. Doc-comment prose wraps these
+    // in backticks (`nop-ai-x`), so anchoring on a quote avoids false hits.
+    const tokenRe = /['"]nop-ai-[a-z-]+/g;
+    const violations: string[] = [];
+    for (const file of listSourceFiles(RENDERERS_DIR, ['.tsx'])) {
+      if (file.includes('__tests__')) continue;
+      const src = readFileSync(file, 'utf8');
+      for (const match of src.matchAll(tokenRe)) {
+        const token = match[0].slice(1);
+        if (!ROOT_MARKER_CLASSES.has(token)) {
+          violations.push(`${relative(RENDERERS_DIR, file)}: "${token}"`);
+        }
+      }
+    }
+    expect(violations, violations.join('\n')).toEqual([]);
   });
 });
