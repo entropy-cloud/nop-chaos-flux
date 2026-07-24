@@ -681,18 +681,25 @@ Required rule:
 
 Runtime then normalizes that payload into `ActionContext.event` as a structured `FluxActionEvent` shape.
 
-Current normalized baseline includes:
+`normalizeActionEvent` (in `packages/flux-react/src/renderer-helpers.ts`) resolves a raw event as follows:
 
-- `type`
+1. `null` / `undefined` / primitives → `undefined` (no `event` binding; cannot be normalized).
+2. Objects that already carry a string `type` — DOM `Event` instances, React synthetic events, and explicit `FluxActionEvent` payloads — are returned **as-is**, so the original event identity and any `preventDefault` / `stopPropagation` wiring are preserved.
+3. Custom renderer-emitted payloads that lack a string `type` (e.g. `{ id, conversation }`, `{ reason }`, `{ item, index }`) are **preserved**, not dropped — every field stays accessible so schema expressions like `${event.id}` resolve to the real value. `type` is synthesized as `'custom'` so the `FluxActionEvent.type: string` contract still holds. (This also covers malformed/non-string `type` values, e.g. `{ type: 123, id }` → `{ type: 'custom', id }`.)
+
+The normalized baseline fields are:
+
+- `type` (string — always present; passed through for DOM/synthetic/explicit events, synthesized as `'custom'` otherwise)
 - `nativeEvent?`
 - `currentTarget?`
 - `target?`
 - `preventDefault?()`
 - `stopPropagation?()`
+- plus any custom payload fields carried by the original object (via the `FluxActionEvent` index signature).
 
 This rule exists so imported namespace providers, component-handle actions, and debugger/automation integrations can rely on one action-event contract instead of renderer-by-renderer ad hoc behavior.
 
-Non-DOM semantic payloads are still allowed when a renderer emits higher-level interaction data, but those payloads should still carry a meaningful `type` field.
+Non-DOM semantic payloads are allowed and preserved whenever a renderer emits higher-level interaction data. They are no longer silently dropped when they omit a string `type`, but they **should** still carry a meaningful namespaced `type` (e.g. `ai:conversation-click`, `list:item-click`) so payloads are self-describing and debuggable — the synthesized `'custom'` fallback is a safety net, not a substitute for a descriptive `type`.
 
 ### Schema-Driven Prevention
 
