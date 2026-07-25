@@ -116,6 +116,57 @@ describe('ai-citations — XSS safety (sanitize gate)', () => {
   });
 });
 
+// ============================================================================
+// P1-d (multi-audit P1-2): inline-text path must not double-encode `<`/`>`/`&`.
+// The previous pipeline ran `sanitizeHtml(rawText)` (DOMPurify HTML-encodes
+// such chars: `5 < 3` → `5 &lt; 3`) and then rendered the result as React text
+// (which re-escapes `&`), so the DOM textContent held the literal `&lt;` /
+// `&gt;` / `&amp;`. After the fix, `rawText` feeds `parseCitations` directly —
+// React text rendering provides the single, safe escape.
+// ============================================================================
+describe('ai-citations — P1-d inline text entity rendering (no double-encode)', () => {
+  it('renders `<`, `>`, `&` as the literal characters in textContent (FP-5)', () => {
+    const message: ChatMessage = {
+      id: 'm',
+      role: 'assistant',
+      content: '5 < 3 and a > b & c see [1]',
+    };
+    const sources = [{ index: 1, title: 'S' }];
+    const { container } = render(<AiCitationsView message={message} sources={sources} />);
+    // textContent must hold the literal comparison / logic chars — not the
+    // HTML-encoded entity strings.
+    expect(container.textContent).toContain('5 < 3');
+    expect(container.textContent).toContain('a > b');
+    expect(container.textContent).toContain('& c');
+    expect(container.textContent).not.toContain('&lt;');
+    expect(container.textContent).not.toContain('&gt;');
+    expect(container.textContent).not.toContain('&amp;');
+  });
+
+  it('FP-6 XSS invariant: `<script>` not injected AND `[1]`/`[2]` citation markers preserved', () => {
+    const message: ChatMessage = {
+      id: 'm',
+      role: 'assistant',
+      content: '<script>x</script>[1] plain [2]',
+    };
+    const sources = [
+      { index: 1, title: 'First' },
+      { index: 2, title: 'Second' },
+    ];
+    const { container } = render(<AiCitationsView message={message} sources={sources} />);
+    // No live script element reaches the DOM (React text-node rendering).
+    expect(container.querySelector('script')).toBeNull();
+    // Both citation markers are still parsed into hoverable triggers — the
+    // fix must not drop them (covers open-audit P2-3 same-root verification).
+    const triggers = container.querySelectorAll('[data-citation-index]');
+    expect(triggers.length).toBe(2);
+    expect(Array.from(triggers).map((t) => t.getAttribute('data-citation-index'))).toEqual([
+      '1',
+      '2',
+    ]);
+  });
+});
+
 describe('ai-citations — list mode', () => {
   it('renders a bottom sources list', () => {
     const sources = [

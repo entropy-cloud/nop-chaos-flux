@@ -2,7 +2,6 @@ import { Fragment } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { sanitizeHtml } from '@nop-chaos/flux-renderers-content';
 import type { ChatMessage, ChatMessageContentPart } from '../engine/types.js';
 import type { AiCitationSource, AiCitationsSchema } from '../schemas.js';
 
@@ -18,10 +17,16 @@ import type { AiCitationSource, AiCitationsSchema } from '../schemas.js';
  * the same slice twice (host chooses one placement). The in-bubble inline
  * variant (improvement §4.2) is out-of-scope (host `BubbleContentRenderer`).
  *
- * Security: content is sanitized via the shared `sanitizeHtml` (DOMPurify)
- * pipeline — the same gate `ai-bubble` markdown uses — and citation markers
- * are rendered as **controlled React elements** (never `dangerouslySetInnerHTML`
- * with user content), so XSS payloads cannot execute (Failure Path
+ * Security: the inline path parses the RAW message text and renders each text
+ * run as a **controlled React text node** (never `dangerouslySetInnerHTML`
+ * with user content), so `<`/`>`/`&` are escaped exactly once by React and no
+ * `<script>` element can ever reach the DOM (XSS gate). A prior version ran
+ * `sanitizeHtml` (DOMPurify) before parsing; that HTML-encoded the output and
+ * the subsequent React text render double-encoded it (`5 < 3` → literal
+ * `&lt;`), so the sanitize step was removed (P1-d). The markdown path
+ * (`ai-bubble/renderers/markdown.tsx`) still uses `sanitizeHtml` — react-markdown
+ * re-parses HTML entities, so no double-encode occurs there. Citation markers
+ * are rendered as **controlled React elements** (Failure Path
  * `citation-no-sources` + XSS gate).
  *
  * Marker `nop-ai-citations`; `data-slot="ai-citations"`; per-citation
@@ -63,8 +68,17 @@ export function AiCitationsView(props: {
   const rawText = extractMessageText(message);
   if (!rawText) return null;
 
-  const safeText = sanitizeHtml(rawText);
-  const segments = parseCitations(safeText);
+  // P1-d (multi-audit P1-2): do NOT run `sanitizeHtml(rawText)` here. The
+  // output of `sanitizeHtml` is an HTML-encoded string (e.g. `5 < 3` →
+  // `5 &lt; 3`); feeding that to `parseCitations` and then rendering each text
+  // segment as React text re-escapes the `&`, so the DOM textContent held the
+  // literal `&lt;`/`&gt;`/`&amp;` (double-encoding). It also dropped citation
+  // markers that sat inside a forbidden tag (open-audit P2-3 same root).
+  // Instead we parse the RAW text and let React's controlled text-node
+  // rendering provide the single, safe escape — `<`/`>`/`&` display as the
+  // literal chars and no `<script>` element can ever be created (XSS gate
+  // preserved; verified by the FP-5/FP-6 tests).
+  const segments = parseCitations(rawText);
 
   return (
     <div

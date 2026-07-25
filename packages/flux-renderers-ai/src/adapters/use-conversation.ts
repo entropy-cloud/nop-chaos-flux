@@ -127,6 +127,13 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   useEffect(() => {
     activeIdRef.current = activeId;
   });
+  // P1-a (multi-audit): latest conversations mirror, read by deleteConversation's
+  // post-await branch so it does not consult a stale closure list. Same
+  // mirror+effect pattern as `activeIdRef`.
+  const conversationsRef = useRef<AiConversationInfo[]>(conversations);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  });
 
   // Engine cache: id → engine. We keep this in a ref-like closure local so
   // updates don't trigger re-renders (the engine is read via subscribe).
@@ -262,6 +269,11 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     };
     setConversations((prev) => [info, ...prev]);
     setActiveId(info.id);
+    // P1-a: keep the active-id mirror in sync synchronously so a post-await
+    // reader (deleteConversation / switchConversation eviction) sees this
+    // activation even before the mirror effect flushes — the effect alone
+    // loses the race against the abort() microtask (Failure Path FP-1).
+    activeIdRef.current = info.id;
     const engine = buildEngineFor(info.id);
     engineCache.set(info.id, engine);
     setActiveEngine(engine);
@@ -314,6 +326,14 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     // closure-captured `id` — a createConversation between the await and here
     // could have displaced `id`, and evicting against the stale target would
     // wrongly drop the now-active engine.
+    //
+    // P1-c (open-audit): eviction is STORAGE-AWARE. Without storage there is
+    // no rehydration path, so evicting an idle engine permanently loses its
+    // message history (a no-storage A→B→A round-trip would rebuild A empty).
+    // no-storage is ephemeral-by-design; the host can still bound memory
+    // explicitly via deleteConversation. With storage, idle non-active
+    // engines are evicted as before (they can be rehydrated on demand).
+    if (!storage) return;
     const currentActiveId = activeIdRef.current;
     for (const [cachedId, cachedEngine] of engineCache.entries()) {
       if (cachedId === currentActiveId) continue;
@@ -331,9 +351,15 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     if (removed && removed.getState().isProcessing) {
       await removed.abort();
     }
-    if (activeId === id) {
-      const next = conversations.find((c) => c.id !== id) ?? null;
-      setActiveId(next?.id ?? null);
+    // P1-a (multi-audit): read the freshest active id / list via refs — a
+    // createConversation during the await could have displaced `id`, and the
+    // closure-captured `activeId` / `conversations` would wrongly reset the
+    // now-active conversation (Failure Path FP-1).
+    if (activeIdRef.current === id) {
+      const next = conversationsRef.current.find((c) => c.id !== id) ?? null;
+      const nextId = next?.id ?? null;
+      setActiveId(nextId);
+      activeIdRef.current = nextId;
       setActiveEngine(next ? (engineCache.get(next.id) ?? null) : null);
     }
     try {
@@ -360,16 +386,38 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   }
 
   function clearAll(): void {
+    // Capture ids before mutating the cache so the storage fan-out iterates a
+    // stable snapshot (the cache is cleared below).
+    const ids = [...engineCache.keys()];
     for (const [, engine] of engineCache.entries()) {
       if (engine.getState().isProcessing) {
         void engine.abort();
       }
     }
-    for (const id of engineCache.keys()) detachEngine(id);
+    for (const id of ids) detachEngine(id);
     engineCache.clear();
     setConversations([]);
     setActiveId(null);
+    activeIdRef.current = null;
     setActiveEngine(null);
+    // P1-b (open-audit): keep storage consistent so a remount does not
+    // rehydrate cleared items (FP-2 ghost rehydration). Prefer an atomic
+    // `storage.clearAll` when the host provides one; otherwise fall back to a
+    // per-id `deleteConversation` fan-out (mirroring deleteConversation's
+    // storage path). Per-id failures route through reportStorageError so one
+    // rejection doesn't hide the others (FP-3). Fire-and-forget, like the
+    // existing `void engine.abort()` calls.
+    if (storage?.clearAll) {
+      Promise.resolve(storage.clearAll()).catch((error: unknown) => {
+        reportStorageError({ phase: 'deleteConversation', error });
+      });
+    } else {
+      for (const id of ids) {
+        Promise.resolve(storage?.deleteConversation?.(id)).catch((error: unknown) => {
+          reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
+        });
+      }
+    }
   }
 
   const controller: AiConversationControllerBridge = {

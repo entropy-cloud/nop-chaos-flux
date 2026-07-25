@@ -134,4 +134,49 @@ describe('useConversation — switch / background processing', () => {
     expect(result.current.activeConversationId).toBe('c2');
     expect(result.current.activeEngine).toBe(engineB);
   });
+
+  // open-audit P1-2: without storage there is no rehydration path, so an idle
+  // engine must NOT be evicted on switch — otherwise a round-trip A→B→A would
+  // rebuild A empty and silently lose its prior message history.
+  it('FP-4 no-storage round-trip A→B→A preserves A\'s messages (no silent eviction)', async () => {
+    const connector = slowConnector(okChunks);
+    const { result } = renderHook(() => useConversation({ connector }));
+
+    act(() => {
+      result.current.createConversation({ title: 'A' });
+    });
+    const aId = result.current.activeConversationId!;
+    const aEngine = result.current.activeEngine!;
+
+    // Give A real history: a user + assistant turn.
+    await act(async () => {
+      await aEngine.sendMessage('hello');
+    });
+    expect(aEngine.getMessages().length).toBeGreaterThan(0);
+
+    act(() => {
+      result.current.createConversation({ title: 'B' });
+    });
+    const bId = result.current.activeConversationId!;
+
+    // Switch to B — under the buggy eviction this drops A's engine.
+    await act(async () => {
+      await result.current.switchConversation(bId);
+    });
+    expect(result.current.activeConversationId).toBe(bId);
+
+    // Switch back to A — must reuse the cached engine (messages preserved),
+    // not rebuild an empty one.
+    await act(async () => {
+      await result.current.switchConversation(aId);
+    });
+    expect(result.current.activeConversationId).toBe(aId);
+    const aEngineAfter = result.current.activeEngine!;
+    expect(aEngineAfter).toBe(aEngine);
+    expect(aEngineAfter.getMessages().length).toBeGreaterThan(0);
+    // The user message survives the round-trip.
+    expect(
+      aEngineAfter.getMessages().some((m) => m.role === 'user'),
+    ).toBe(true);
+  });
 });
