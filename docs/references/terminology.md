@@ -532,7 +532,7 @@ Defined in `flux-renderers-ai/src/engine/types.ts`; architecture in `docs/compon
 
 The React-optimized `MessageStateAdapter` produced by `createReactMessageAdapter()`, backing `useMessage` and `useEngineView` via `useSyncExternalStore`.
 
-It keeps a module-level store plus a `Set<listener>`, performs reference-replacing state updates, and fans out subscriptions partitioned by update kind so React components subscribe at the granularity they need. It is framework-agnostic in implementation (no React import in the engine core) but tuned for React's subscription model. Publicly exported from `flux-renderers-ai/src/index.ts`.
+It keeps a module-level store plus a `Set<listener>`, performs reference-replacing state updates, and fans out subscriptions partitioned by update kind so React components subscribe at the granularity they need. It is framework-agnostic in implementation (no React import in the engine core) but tuned for React's subscription model. The class itself is module-local (not re-exported from `src/index.ts`); only its factory `createReactMessageAdapter()` is part of the public surface (see `src/index.ts`).
 
 Architecture in `docs/components/flux-renderers-ai/engine.md` §8.2 and `docs/components/flux-renderers-ai/design.md`.
 

@@ -133,21 +133,21 @@ _Source: `docs/audits/2026-07-25-0707-multi-audit-ai.md`（P2-1..P2-6，6 条）
 
 _a11y / i18n polish_
 
-- [ ] multi-audit P2-1：`user-edit` 铅笔按钮 `aria-label` 误用 `t('flux.ai.copy')`（实为编辑动作）（`renderers/ai-bubble/user-edit.tsx:106`）→ 新增 `flux.ai.editMessage` i18n key + locale，绑定 `aria-label={t('flux.ai.editMessage')}`；`user-edit.test.tsx` 增 aria-label 断言
-- [ ] multi-audit P2-4：`suggestion-popup`+`template-bar` 4 处硬编码英文 aria-label（`rich-text/components/suggestion-popup.tsx:44,65`、`template-bar.tsx:22`）→ 新增 `flux.ai.mentions`/`slashCommands`/`closeSuggestions`/`insertTemplate` key；`p2-a11y-i18n.test.tsx` 扩展覆盖 `rich-text/components/`
+- [x] multi-audit P2-1：`user-edit` 铅笔按钮 `aria-label` 误用 `t('flux.ai.copy')`（实为编辑动作）（`renderers/ai-bubble/user-edit.tsx:106`）→ 新增 `flux.ai.editMessage` i18n key + locale，绑定 `aria-label={t('flux.ai.editMessage')}`；`p2-a11y-i18n.test.tsx` 增 aria-label 断言 ✅ `docs/plans/2026-07-25-0842-1-ai-p2-remediation-0707.md` Phase 1
+- [x] multi-audit P2-4：`suggestion-popup`+`template-bar` 4 处硬编码英文 aria-label（`rich-text/components/suggestion-popup.tsx:44,65`、`template-bar.tsx:22`）→ 新增 `flux.ai.mentions`/`slashCommands`/`closeSuggestions`/`insertTemplate` key；`p2-a11y-i18n.test.tsx` 扩展覆盖 `rich-text/components/` ✅ `docs/plans/2026-07-25-0842-1-ai-p2-remediation-0707.md` Phase 1
 
 _错误传播 / 可观测性_
 
-- [ ] multi-audit P2-2：`error.tsx` 重试按钮 `ctx?.sendMessage(lastUserText)` 是裸 promise（`renderers/ai-bubble/renderers/error.tsx:32-34`），与 `ai-sender.tsx:70/217`（`void`）/`ai-attachments.tsx:178`（`await`）不一致 → 改 `void ctx?.sendMessage(lastUserText);`
+- [x] multi-audit P2-2：`error.tsx` 重试按钮 `ctx?.sendMessage(lastUserText)` 是裸 promise（`renderers/ai-bubble/renderers/error.tsx:32-34`），与 `ai-sender.tsx:70/217`（`void`）/`ai-attachments.tsx:178`（`await`）不一致 → 改 `void ctx?.sendMessage(lastUserText);` ✅ `docs/plans/2026-07-25-0842-1-ai-p2-remediation-0707.md` Phase 2
 
 _Public surface / 契约诚实_
 
-- [ ] multi-audit P2-3：7 个 schema TYPE 字段声明但无消费者（`schemas.ts:21,67,98,109,132,212,409`：`conversationId`/`onSend`/`itemRegion`/`avatarRegion`/`actions`/`menuItems`/`trigger`）→ 移除（与上轮 field-metadata 清理 + `contract-honesty.test.ts` 哲学一致）或实现
+- [x] multi-audit P2-3：7 个 schema TYPE 字段声明但无消费者（`schemas.ts:21,67,98,109,132,212,409`：`conversationId`/`onSend`/`itemRegion`/`avatarRegion`/`actions`/`menuItems`/`trigger`）→ 移除（与上轮 field-metadata 清理 + `contract-honesty.test.ts` 哲学一致）或实现 ✅ `docs/plans/2026-07-25-0842-1-ai-p2-remediation-0707.md` Phase 3（`actions` 仅删 sender dead `SchemaInput` 处，保留 ai-feedback live `SchemaValue`）
 
 _文档 / 契约表 rot_
 
-- [ ] multi-audit P2-5：`roadmap-ai.md:253` Renderer Coverage 表仍宣传已移除的「分组」能力（与 `:113` 自述、`design.md §74`、`renderers.md:95`、`contract-honesty.test.ts:130` guard 均矛盾）→ 改为「自动滚动、注册制渲染、A-8 虚拟滚动」
-- [ ] multi-audit P2-6：`terminology.md:531-537` 误称 `ReactMessageAdapter` 公共导出（`index.ts:95` 仅导出工厂 `createReactMessageAdapter`，类为 module-local）→ 删「Publicly exported」句（或补 re-export type）
+- [x] multi-audit P2-5：`roadmap-ai.md:253` Renderer Coverage 表仍宣传已移除的「分组」能力（与 `:113` 自述、`design.md §74`、`renderers.md:95`、`contract-honesty.test.ts:130` guard 均矛盾）→ 改为「自动滚动、注册制渲染、A-8 虚拟滚动」 ✅ `docs/plans/2026-07-25-0842-1-ai-p2-remediation-0707.md` Phase 4
+- [x] multi-audit P2-6：`terminology.md:531-537` 误称 `ReactMessageAdapter` 公共导出（`index.ts:95` 仅导出工厂 `createReactMessageAdapter`，类为 module-local）→ 删「Publicly exported」句（或补 re-export type） ✅ `docs/plans/2026-07-25-0842-1-ai-p2-remediation-0707.md` Phase 4
 
 _debug 残留 / 测试有效性_
 
@@ -155,8 +155,8 @@ _debug 残留 / 测试有效性_
 
 _显示 / 交互 polish_
 
-- [ ] open-audit P2-2：`ai-voice-input` 单次失败会话重复 emit `no-result`（`onerror` + `onend` 各一次）（`renderers/ai-voice-input.tsx:146-162`）→ `onend` 的 `no-result` 加 `!errorAlreadyFired` 门（或仅由 `onend` 单源 emit）
-- [ ] open-audit P2-3：`ai-citations` sanitize 会 DROP citation marker（DOMPurify 丢弃 forbidden tag 内文本，非仅显示 mangle）——与 `2026-07-25-0730-1` plan 的 multi-audit P1-2（sanitizeHtml 双编码）同根，**该 P1 的 Proof 已含 `<script>x[1]</script> plain [2]` 验证点**（断言 `[1]` 保留）；本项随 P1 修复一并验证，不另立 scope
+- [x] open-audit P2-2：`ai-voice-input` 单次失败会话重复 emit `no-result`（`onerror` + `onend` 各一次）（`renderers/ai-voice-input.tsx:146-162`）→ `onend` 的 `no-result` 加 `!errorAlreadyFired` 门（或仅由 `onend` 单源 emit） ✅ `docs/plans/2026-07-25-0842-1-ai-p2-remediation-0707.md` Phase 2
+- [x] open-audit P2-3：`ai-citations` sanitize 会 DROP citation marker（DOMPurify 丢弃 forbidden tag 内文本，非仅显示 mangle）——与 `2026-07-25-0730-1` plan 的 multi-audit P1-2（sanitizeHtml 双编码）同根，**该 P1 的 Proof 已含 `<script>x[1]</script> plain [2]` 验证点**（断言 `[1]` 保留）；本项随 P1 修复一并验证，不另立 scope ✅ `docs/plans/2026-07-25-0730-1-ai-p1-remediation.md` Phase 2（`ai-citations.test.tsx` FP-6 XSS invariant 用例绿：`<script>` 不注入 + `[1]`/`[2]` citation 保留）
 
 ## Status Values
 
@@ -279,7 +279,7 @@ _显示 / 交互 polish_
 | type               | Phase | Work item | 类别   | 职责                                                          | 状态 |
 | ------------------ | ----- | --------- | ------ | ------------------------------------------------------------- | ---- |
 | `ai-chat`          | P0    | A1        | Layout | 完整对话面板（messages + sender + auto-scroll + 状态管理）    | ✅   |
-| `ai-message-list`  | P0    | A1        | Layout | 消息列表（分组、自动滚动、注册制渲染）                        | ✅   |
+| `ai-message-list`  | P0    | A1        | Layout | 消息列表（自动滚动、注册制渲染、A-8 虚拟滚动）                | ✅   |
 | `ai-bubble`        | P0    | A1        | Widget | 单条消息气泡（含 reasoning / tool_calls / markdown）          | ✅   |
 | `ai-sender`        | P0    | A1        | Widget | 输入区（submit / cancel / 字数 / Enter 提交）                 | ✅   |
 | `ai-conversations` | P1    | A2        | Widget | 会话列表侧边栏（新建/切换/重命名/删除）                       | ✅   |
