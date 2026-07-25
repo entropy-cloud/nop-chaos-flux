@@ -93,6 +93,11 @@ export const enUS: Resource = {
       like: 'Like',
       dislike: 'Dislike',
       sources: 'Sources',
+      editMessage: 'Edit message',
+      mentions: 'Mentions',
+      slashCommands: 'Slash commands',
+      closeSuggestions: 'Close suggestions',
+      insertTemplate: 'Insert template',
     },
     wizard: {
       previous: 'Previous',

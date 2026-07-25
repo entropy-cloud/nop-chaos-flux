@@ -94,6 +94,11 @@ export const zhCN: Resource = {
       like: '赞',
       dislike: '踩',
       sources: '来源',
+      editMessage: '编辑消息',
+      mentions: '提及',
+      slashCommands: '斜杠命令',
+      closeSuggestions: '关闭建议',
+      insertTemplate: '插入模板',
     },
     wizard: {
       previous: '上一步',
