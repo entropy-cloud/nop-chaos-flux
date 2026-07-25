@@ -18,6 +18,7 @@ import type {
   AiToolSchema,
   ChatMessage,
   ChatMessageContentPart,
+  ChatMessageEditingState,
   ChatMessageMetadata,
   MessageEngine,
   MessageEngineContext,
@@ -87,6 +88,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     registerPlugin,
     getMessages,
     setMessages,
+    setMessageEditing,
     regenerate,
   };
 
@@ -145,6 +147,25 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       draft.requestState = 'idle';
       draft.isProcessing = false;
       draft.processingState = undefined;
+    });
+  }
+
+  function setMessageEditing(
+    messageId: string,
+    editing: ChatMessageEditingState | null,
+  ): void {
+    // Renderer-driven editing state (design.md §11.5). Shallow-copy the
+    // message + its state so the snapshot returned by `getMessages()` (which
+    // shares nested state refs) cannot be written through. No-op when the
+    // messageId is unknown (Failure Path `edit-unknown-message`).
+    adapter.mutate('messages', (draft) => {
+      const idx = draft.messages.findIndex((m) => m.id === messageId);
+      if (idx < 0) return;
+      const current = draft.messages[idx];
+      draft.messages[idx] = {
+        ...current,
+        state: { ...current.state, editing: editing ?? undefined },
+      };
     });
   }
 

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import type { ChatMessage } from '../../engine/types.js';
@@ -82,8 +81,11 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
 
   // §4.7 message editing: user messages get an inline edit affordance; while
   // editing the normal content slices are hidden and the editor takes over.
+  // Editing state is engine-held (`message.state.editing`), so this derives
+  // directly from the engine snapshot rather than a local useState — A-8
+  // virtual recycling of this row restores the editor + draft on remount.
   const isUser = renderMessage.role === 'user';
-  const [isEditing, setIsEditing] = useState(false);
+  const isEditing = renderMessage.state?.editing?.active === true;
 
   // A-16 message branches: prefer explicit props, fall back to ai-chat context.
   const ctx = useAiChatContext();
@@ -135,7 +137,7 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
             onBranchChange={onBranchChange}
           />
         ) : null}
-        {isUser ? <UserMessageActions message={renderMessage} onEditingChange={setIsEditing} /> : null}
+        {isUser ? <UserMessageActions message={renderMessage} /> : null}
       </div>
     </article>
   );

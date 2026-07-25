@@ -52,9 +52,20 @@ export interface ChatToolCallUIState {
   approval?: 'pending' | 'approved' | 'rejected';
 }
 
+export interface ChatMessageEditingState {
+  active: boolean;
+  draft?: string;
+}
+
 export interface ChatMessageUIState {
   thinking?: { open: boolean; startedAt?: number; endedAt?: number };
   toolCall?: Record<string, ChatToolCallUIState>;
+  /**
+   * Renderer-driven message editing state (user-message edit affordance,
+   * design.md §11.5). Held by the engine so virtual recycling (A-8) cannot
+   * drop the editing flag / draft. Not projected to flux scope.
+   */
+  editing?: ChatMessageEditingState;
   [key: string]: unknown;
 }
 
@@ -298,6 +309,18 @@ export interface MessageEngine {
    * turn is in-flight; callers should `abort()` first.
    */
   setMessages(messages: ChatMessage[]): void;
+  /**
+   * Renderer-driven message editing state (design.md §11.5). Writes
+   * `message.state.editing` for the given message via an adapter `mutate`,
+   * shallow-copying the message + its state so the snapshot returned by
+   * `getMessages()` cannot be written through. When `editing` is `null` the
+   * editing field is cleared. If `messageId` does not match any message this
+   * is a no-op (Failure Path `edit-unknown-message`). Not projected to scope.
+   */
+  setMessageEditing(
+    messageId: string,
+    editing: { active: boolean; draft?: string } | null,
+  ): void;
   /**
    * A-16 message branches: drop the trailing assistant turn (back to the last
    * user message) and re-run the request, stamping the resulting assistant

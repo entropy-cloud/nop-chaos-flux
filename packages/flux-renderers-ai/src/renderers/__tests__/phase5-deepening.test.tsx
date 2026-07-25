@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect } from 'vitest';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cleanup, render, fireEvent, act, waitFor } from '@testing-library/react';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import { useAutoScroll } from '../../adapters/use-auto-scroll.js';
@@ -15,6 +15,7 @@ import type {
   AiConnectorRequest,
   ChatMessage,
   ChatMessageContentPart,
+  MessageEngine,
 } from '../../engine/types.js';
 
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
@@ -33,6 +34,27 @@ function mockConnector(chunks: AiConnectorChunk[]): AiConnector {
       return gen();
     },
   };
+}
+
+/**
+ * Subscribes to the engine and renders AiBubbleView with the fresh snapshot of
+ * `messageId`. Mirrors how `ai-message-list` feeds engine snapshots to each
+ * bubble — required now that editing state is engine-held (ai-bubble reads
+ * `message.state.editing` from its prop).
+ */
+function LiveBubble({ engine, messageId }: { engine: MessageEngine; messageId: string }) {
+  const [msg, setMsg] = useState<ChatMessage | undefined>(() =>
+    engine.getState().messages.find((m) => m.id === messageId),
+  );
+  useEffect(() => {
+    const sync = (): void => {
+      setMsg(engine.getState().messages.find((m) => m.id === messageId));
+    };
+    sync();
+    return engine.subscribe(sync);
+  }, [engine, messageId]);
+  if (!msg) return null;
+  return <AiBubbleView message={msg} />;
 }
 
 function setDims(el: HTMLElement, dims: { scrollHeight: number; clientHeight: number; scrollTop?: number }) {
@@ -190,7 +212,7 @@ describe('§4.7 message editing', () => {
 
     const { container } = render(
       <AiChatProvider value={ctx}>
-        <AiBubbleView message={user} />
+        <LiveBubble engine={engine} messageId="u1" />
       </AiChatProvider>,
     );
 
