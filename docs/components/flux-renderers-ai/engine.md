@@ -275,6 +275,12 @@ export interface UseConversationReturn {
 
 照搬 tiny-robot 双层模型：`conversations` 数组始终全量内存；`engines: Map` 惰性创建，切走时清理非活跃非 processing 的 engine，保留正在流式的会话后台运行。
 
+> **存储/驱逐契约（0730-1 P1 修正）**
+>
+> - **`clearAll()`** 不再是「仅清内存」的半成品：注入 `storage` 时它会逐条（或当 host 提供 `storage.clearAll?` 时原子地）调 `deleteConversation`/`clearAll` 清存储，单条失败经 `onStorageError({ phase:'deleteConversation' })` 上报且不阻断其余条；内存态始终清空。这避免了「清空后重载 ghost rehydration」（FP-2/FP-3）。
+> - **`switchConversation` 的驱逐循环是 storage-aware**：仅当注入了 `storage` 时才驱逐非活跃、非 processing 的 idle engine（可经 `loadMessages` 回灌）；无 storage 时**不驱逐**——因为 ephemeral-by-design，无 rehydration 可恢复，驱逐即丢消息（FP-4）。host 仍可经 `deleteConversation` 主动收敛内存。
+> - **`deleteConversation` 的 post-await 分支读 ref**（`activeIdRef.current` / `conversationsRef.current`）而非闭包值，确保删除进行中的会话期间并发 `createConversation` 时新会话不被陈旧闭包覆盖（FP-1）。所有 `setActiveId` 调用点同步刷新 `activeIdRef.current`，闭合 effect-mirror 与 abort 微任务的竞态。
+
 ## 9. Connector 抽象（替代 v1 的 Provider 抽象）
 
 ### 9.1 命名变更说明
