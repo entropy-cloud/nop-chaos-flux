@@ -66,7 +66,7 @@ _防御/交互守卫（silent-drop 家族）_
 - ✅ `ai-sender` 共享 `commit()` 无 `isProcessing` 守卫——host `senderExtensions` 组件不自禁用时 Enter 提交会静默丢 draft（`renderers/ai-sender.tsx:59-72,120-124`）→ `commit()` 入口加 `if (ctx?.isProcessing) return;` 守卫
 - ✅ `ai-attachments` 上传按钮流式中不禁用；`handleUpload` 调 `ctx.sendMessage(parts)` 无守卫 → 多模态消息静默丢弃（`renderers/ai-attachments.tsx:165-175,222-231`）→ 按钮 `disabled={ctx?.isProcessing}` + `handleUpload` 早返回守卫
 - ✅ `ai-tool-call` HITL approve/reject 在 host 未接 `onApproval` 时是死点击（无 disabled/tooltip，卡片永久 `pending`）（`renderers/ai-tool-call.tsx:241-272`）→ `!onApproval` 时按钮 disabled + `title` 提示「未配置审批处理器」
-- ✅ 编辑态存在组件 `useState`（`ai-bubble/index.tsx:85`、`user-edit.tsx:36-37`）而 `design.md §11.5` 指派为引擎持有（`message.state.editing`）；影响仅限 >200 消息虚拟回收（design-doc 冲突）→ Plan 2 已以文档裁定收口：§11.5 改为如实记录「组件 useState 当前实现 + 虚拟回收限制 + 引擎无 editing-state setter」；迁移到引擎超 P2 polish 范围（Deferred successor）
+- ✅ 编辑态存在组件 `useState`（`ai-bubble/index.tsx:85`、`user-edit.tsx:36-37`）而 `design.md §11.5` 指派为引擎持有（`message.state.editing`）；影响仅限 >200 消息虚拟回收（design-doc 冲突）→ Plan 2 已以文档裁定收口：§11.5 改为如实记录「组件 useState 当前实现 + 虚拟回收限制 + 引擎无 editing-state setter」；迁移到引擎超 P2 polish 范围（Deferred successor）→ ✅ **Deferred successor 已由 `docs/plans/2026-07-25-0923-1-ai-bubble-editing-state-engine-migration.md` 收口**：`MessageEngine.setMessageEditing()` 写入 `message.state.editing`，`ai-bubble`/`user-edit` 移除 `useState` 改读 engine 快照，A-8 虚拟回收编辑态恢复有 focused proof（FP-F），`design.md §11.5` 已同步为 engine-held 所有权
 - ✅ `ai-prompts` item key 用 `label#index`；重排/插入丢失元素身份（`renderers/ai-prompts.tsx:47`）→ 改用纯内容派生 key（`label`+`badge`）
 
 _错误传播/可观测性_
