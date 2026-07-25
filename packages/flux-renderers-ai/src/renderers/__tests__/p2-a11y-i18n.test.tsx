@@ -6,9 +6,13 @@ import { AiSenderView } from '../ai-sender.js';
 import { AiConversationsRenderer } from '../ai-conversations.js';
 import { AiToolCallView } from '../ai-tool-call.js';
 import { AiFeedbackRenderer } from '../ai-feedback.js';
+import { UserMessageActions } from '../ai-bubble/user-edit.js';
+import { SuggestionPopup } from '../../rich-text/components/suggestion-popup.js';
+import { TemplateBar } from '../../rich-text/components/template-bar.js';
+import { AiChatProvider } from '../../adapters/ai-chat-context.js';
 import { createMockRendererProps } from '../../test-support.js';
 import type { AiConversationsSchema, AiFeedbackSchema } from '../../schemas.js';
-import type { ChatToolCall, ChatToolCallUIState } from '../../engine/types.js';
+import type { ChatToolCall, ChatToolCallUIState, ChatMessage } from '../../engine/types.js';
 import type { AiConversationInfo } from '../../engine/types.js';
 
 resetFluxI18n();
@@ -150,5 +154,104 @@ describe('P2 i18n — ai-feedback like/dislike/sources use translations', () => 
     // Both aria-label and visible text come from the same t('flux.ai.sources') call.
     expect(btn.getAttribute('aria-label')).toBe('Sources');
     expect(btn.textContent).toBe('Sources');
+  });
+});
+
+// ============================================================================
+// 0707 batch P2-1 / P2-4: remaining a11y/i18n polish
+// - ai-bubble user-edit pencil button aria-label uses editMessage (NOT copy)
+// - rich-text suggestion-popup mention/slash/close + template-bar insert
+//   aria-labels all walk through t() (no hardcoded English literals)
+// ============================================================================
+
+describe('P2-1 — ai-bubble user-edit pencil button aria-label', () => {
+  function harness(message: ChatMessage) {
+    const engine = {
+      getState: () => ({ isProcessing: false }),
+      getMessages: () => [message],
+      setMessages: () => undefined,
+      sendMessage: async () => undefined,
+    } as unknown as Parameters<typeof AiChatProvider>[0]['value']['engine'];
+    const ctxValue = {
+      engine,
+      messages: [message],
+      requestState: 'idle' as const,
+      isProcessing: false,
+      sendMessage: async () => undefined,
+      abortRequest: async () => undefined,
+    };
+    return render(
+      <AiChatProvider value={ctxValue}>
+        <UserMessageActions message={message} />
+      </AiChatProvider>,
+    );
+  }
+
+  it('pencil button aria-label is the editMessage translation (not copy)', () => {
+    const message: ChatMessage = {
+      id: 'm1',
+      role: 'user',
+      content: 'hi',
+    };
+    const { container } = harness(message);
+    const toggle = container.querySelector('[data-slot="ai-bubble-edit-toggle"]') as HTMLButtonElement;
+    expect(toggle).toBeTruthy();
+    const label = toggle.getAttribute('aria-label');
+    // editMessage en-US translation is "Edit message"; copy is "Copy".
+    expect(label).toBe('Edit message');
+    expect(label).not.toBe('Copy');
+  });
+});
+
+describe('P2-4 — rich-text components aria-labels use translations', () => {
+  it('suggestion-popup mention kind aria-label is the mentions translation', () => {
+    const { container } = render(
+      <SuggestionPopup
+        kind="mention"
+        items={[]}
+        activeIndex={-1}
+        onSelect={() => undefined}
+        onClose={() => undefined}
+      />,
+    );
+    const popup = container.querySelector('[data-slot="ai-sender-tiptap-popup"]') as HTMLElement;
+    expect(popup).toBeTruthy();
+    expect(popup.getAttribute('aria-label')).toBe('Mentions');
+  });
+
+  it('suggestion-popup slash kind aria-label is the slashCommands translation', () => {
+    const { container } = render(
+      <SuggestionPopup
+        kind="slash"
+        items={[]}
+        activeIndex={-1}
+        onSelect={() => undefined}
+        onClose={() => undefined}
+      />,
+    );
+    const popup = container.querySelector('[data-slot="ai-sender-tiptap-popup"]') as HTMLElement;
+    expect(popup.getAttribute('aria-label')).toBe('Slash commands');
+  });
+
+  it('suggestion-popup close button aria-label is the closeSuggestions translation', () => {
+    const { container } = render(
+      <SuggestionPopup
+        kind="mention"
+        items={[]}
+        activeIndex={-1}
+        onSelect={() => undefined}
+        onClose={() => undefined}
+      />,
+    );
+    const closeBtn = container.querySelector('button.sr-only') as HTMLButtonElement;
+    expect(closeBtn).toBeTruthy();
+    expect(closeBtn.getAttribute('aria-label')).toBe('Close suggestions');
+  });
+
+  it('template-bar toolbar aria-label is the insertTemplate translation', () => {
+    const { container } = render(<TemplateBar templates={[]} editor={null} />);
+    const toolbar = container.querySelector('[data-slot="ai-sender-tiptap-templates"]') as HTMLElement;
+    expect(toolbar).toBeTruthy();
+    expect(toolbar.getAttribute('aria-label')).toBe('Insert template');
   });
 });

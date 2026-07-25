@@ -176,6 +176,45 @@ describe('ai-voice-input — Failure Path: voice-no-result', () => {
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'no-result' }));
     mock.remove();
   });
+
+  // open-audit P2-2: a single failed session (e.g. `no-speech`) triggers both
+  // `onerror` then `onend`. Without the `errorAlreadyFired` gate, `no-result`
+  // is emitted twice. The gate must keep it to exactly one.
+  it('emits no-result exactly once when onerror(no-speech) is followed by onend', () => {
+    const mock = installMockSpeechRecognition();
+    const onError = vi.fn();
+    const props = makeProps({ events: { onError } });
+    const { container } = render(<Voice {...props} />);
+    act(() => {
+      fireEvent.click(container.querySelector('[data-slot="ai-voice-input"]') as HTMLElement);
+    });
+    const recognition = mock.instances[0];
+    act(() => {
+      recognition.onerror?.({ error: 'no-speech' });
+      recognition.onend?.();
+    });
+    const noResultCalls = onError.mock.calls.filter((c) => c[0]?.reason === 'no-result');
+    expect(noResultCalls.length).toBe(1);
+    mock.remove();
+  });
+
+  it('emits no-result exactly once when a generic onerror is followed by onend', () => {
+    const mock = installMockSpeechRecognition();
+    const onError = vi.fn();
+    const props = makeProps({ events: { onError } });
+    const { container } = render(<Voice {...props} />);
+    act(() => {
+      fireEvent.click(container.querySelector('[data-slot="ai-voice-input"]') as HTMLElement);
+    });
+    const recognition = mock.instances[0];
+    act(() => {
+      recognition.onerror?.({ error: 'audio-capture' });
+      recognition.onend?.();
+    });
+    const noResultCalls = onError.mock.calls.filter((c) => c[0]?.reason === 'no-result');
+    expect(noResultCalls.length).toBe(1);
+    mock.remove();
+  });
 });
 
 // INV-1 honesty for voice is enforced by `src/__tests__/contract-honesty.test.ts`,

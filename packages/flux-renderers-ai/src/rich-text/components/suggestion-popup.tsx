@@ -1,4 +1,5 @@
 import { Button, cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface PopupItem {
   key: string;
@@ -41,7 +42,7 @@ export function SuggestionPopup({
       data-slot="ai-sender-tiptap-popup"
       data-popup-kind={kind}
       role="listbox"
-      aria-label={kind === 'mention' ? 'Mentions' : 'Slash commands'}
+      aria-label={t(kind === 'mention' ? 'flux.ai.mentions' : 'flux.ai.slashCommands')}
     >
       {items.map((item, idx) => (
         <Button
@@ -62,7 +63,7 @@ export function SuggestionPopup({
       <Button
         variant="ghost"
         size="sm"
-        aria-label="Close suggestions"
+        aria-label={t('flux.ai.closeSuggestions')}
         onClick={onClose}
         className="sr-only"
         tabIndex={-1}

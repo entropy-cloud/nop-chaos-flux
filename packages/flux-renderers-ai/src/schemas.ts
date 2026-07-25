@@ -18,7 +18,6 @@ export interface AiChatSchema extends BaseSchema {
    * When omitted, `ai-chat` self-creates an engine (zero-regression default).
    */
   engine?: SchemaValue;
-  conversationId?: string;
   placeholder?: string;
   systemPrompt?: string;
   autofocus?: boolean;
@@ -64,7 +63,6 @@ export interface AiChatSchema extends BaseSchema {
   afterMessages?: SchemaInput;
   emptyState?: SchemaInput;
 
-  onSend?: ActionSchema;
   onResponseComplete?: ActionSchema;
   onError?: ActionSchema;
   onAbort?: ActionSchema;
@@ -95,7 +93,6 @@ export interface AiBranch {
 export interface AiMessageListSchema extends BaseSchema {
   type: 'ai-message-list';
   autoScroll?: boolean;
-  itemRegion?: SchemaInput;
   emptyRegion?: SchemaInput;
 }
 
@@ -106,7 +103,6 @@ export interface AiBubbleSchema extends BaseSchema {
   shape?: 'corner' | 'rounded' | 'none';
   showAvatar?: boolean;
   showTimestamp?: boolean;
-  avatarRegion?: SchemaInput;
   contentResolverName?: string;
   /**
    * A-16 message branches: the host-managed branch set this message belongs to.
@@ -129,7 +125,6 @@ export interface AiSenderSchema extends BaseSchema {
   showWordLimit?: boolean;
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
   clearOnSubmit?: boolean;
-  actions?: SchemaInput;
   /**
    * P6 Tiptap rich-text extension (A6, design.md §10). Expression resolving to
    * a `React.ComponentType<AiSenderExtensionProps>` that the host injects via
@@ -209,7 +204,6 @@ export interface AiConversationsSchema extends BaseSchema {
   /** Expression resolving to the active conversation id. */
   activeId?: SchemaValue;
   showRenameControls?: boolean;
-  menuItems?: SchemaValue;
 
   onItemClick?: ActionSchema;
   onItemRename?: ActionSchema;
@@ -405,8 +399,6 @@ export interface AiSuggestionsSchema extends BaseSchema {
   items?: SchemaValue;
   /** `expand` (show all) / `scroll` (horizontal scroll, default) / `popover` (collapse overflow into a Popover). */
   overflowMode?: 'expand' | 'scroll' | 'popover';
-  /** Popover open trigger (popover mode only). */
-  trigger?: 'hover' | 'click' | 'manual';
   /** Max visible pills before overflow kicks in (popover mode, default 3). */
   maxVisible?: number;
 

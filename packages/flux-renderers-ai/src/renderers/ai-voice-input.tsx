@@ -132,6 +132,12 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
     recognitionRef.current = recognition;
 
     let gotFinal = false;
+    // open-audit P2-2: `onerror` and `onend` both fire for a single failed
+    // session (e.g. `no-speech` → onerror → onend). Without a gate, the
+    // `no-result` hint is emitted twice. `errorAlreadyFired` records that the
+    // error path already surfaced a reason; `onend` then only emits `no-result`
+    // when no error preceded it (the legitimate "pure no-result" path).
+    let errorAlreadyFired = false;
     recognition.onresult = (event) => {
       let transcript = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -145,6 +151,7 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
     };
     recognition.onerror = (event) => {
       const reason = event.error;
+      errorAlreadyFired = true;
       if (reason === 'not-allowed' || reason === 'service-not-allowed') {
         fireError('permission-denied');
       } else if (reason === 'no-speech') {
@@ -155,8 +162,11 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
     };
     recognition.onend = () => {
       setStatus('idle');
-      if (!gotFinal) {
+      if (!gotFinal && !errorAlreadyFired) {
         // voice-no-result: emit so the host can show a hint (non-fatal).
+        // Only the "no error fired, pure no-result" path emits here — when
+        // `onerror` already surfaced a `no-result` (e.g. `no-speech`), the
+        // gate above prevents the duplicate emit.
         fireError('no-result');
       }
     };

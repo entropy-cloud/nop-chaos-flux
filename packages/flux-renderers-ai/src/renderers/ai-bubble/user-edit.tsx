@@ -103,7 +103,7 @@ export function UserMessageActions({ message, onEditingChange }: UserMessageActi
       variant="ghost"
       className="self-end opacity-60 hover:opacity-100"
       data-slot="ai-bubble-edit-toggle"
-      aria-label={t('flux.ai.copy')}
+      aria-label={t('flux.ai.editMessage')}
       disabled={ctx?.isProcessing ?? false}
       onClick={startEdit}
     >

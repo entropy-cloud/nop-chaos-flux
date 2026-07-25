@@ -30,7 +30,7 @@ export function ErrorContentRenderer({ message }: BubbleContentRendererProps) {
           data-slot="ai-bubble-error-retry"
           aria-label={t('flux.ai.retry')}
           onClick={() => {
-            ctx?.sendMessage(lastUserText);
+            void ctx?.sendMessage(lastUserText);
           }}
         >
           {t('flux.ai.retry')}

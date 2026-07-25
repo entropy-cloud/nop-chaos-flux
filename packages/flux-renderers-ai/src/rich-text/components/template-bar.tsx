@@ -1,5 +1,6 @@
 import type { Editor } from '@tiptap/react';
 import { Button } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { TiptapTemplateItem } from '../types.js';
 import { insertTemplate } from '../extensions/template.js';
 
@@ -19,7 +20,7 @@ export function TemplateBar({
       className="nop-ai-sender-tiptap-templates flex flex-wrap gap-1 pb-1"
       data-slot="ai-sender-tiptap-templates"
       role="toolbar"
-      aria-label="Insert template"
+      aria-label={t('flux.ai.insertTemplate')}
     >
       {templates.map((tpl) => (
         <Button

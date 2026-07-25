@@ -146,6 +146,53 @@ describe('F1.4: ai-message-list declares no unimplemented grouping contract', ()
 });
 
 // ============================================================================
+// 0707 P2-3 (schema honesty): 6 schema TYPE fields were declared but had zero
+// consumers in src/renderers/** + src/rich-text/** + src/adapters/** (dead
+// contract). Adjudicated REMOVED so the schema cannot promise behaviour the
+// renderers do not provide. `actions` is excluded here because the live
+// `AiFeedbackSchema.actions?: SchemaValue` (consumed by ai-feedback.tsx) is
+// intentionally KEPT — only the dead `AiSenderSchema.actions?: SchemaInput`
+// was removed; that distinction is asserted by its own dedicated test below.
+//
+// NOTE on `trigger`: `ai-message-list.tsx:40` has an unrelated local
+// `const trigger` (auto-scroll dep), so `trigger` MUST be scanned against
+// schemas.ts ONLY — folding it into the shared 3-file `DEAD_FIELDS` regex
+// above would false-positive on the renderer local. This suite therefore
+// scans schemas.ts in isolation for the 0707 set.
+// ============================================================================
+
+describe('0707 P2-3: schemas.ts declares no dead unconsumed TYPE fields', () => {
+  // schemas.ts-only: these identifiers must not appear as field declarations.
+  // Matching the bare word is safe here because schemas.ts is the single
+  // source of schema field declarations and none of these names appear in
+  // its prose except as the (now-removed) fields themselves.
+  const SCHEMAS_DEAD_FIELDS = /\b(conversationId|onSend|itemRegion|avatarRegion|menuItems|trigger)\b\s*\??:/;
+
+  it('schemas.ts no longer declares conversationId/onSend/itemRegion/avatarRegion/menuItems/trigger', () => {
+    const src = readFileSync(join(__dirname, '..', 'schemas.ts'), 'utf8');
+    expect(src).not.toMatch(SCHEMAS_DEAD_FIELDS);
+  });
+
+  it('AiSenderSchema no longer declares the dead `actions?: SchemaInput`', () => {
+    // `actions` is intentionally KEPT on AiFeedbackSchema (SchemaValue, live —
+    // consumed by ai-feedback.tsx via `resolved.actions`). Only the dead
+    // AiSender `SchemaInput` declaration was removed. Extract the AiSender
+    // interface block and assert it has no `actions` field.
+    const src = readFileSync(join(__dirname, '..', 'schemas.ts'), 'utf8');
+    const senderBlock = src.match(/export interface AiSenderSchema extends BaseSchema \{[\s\S]*?\n\}/);
+    expect(senderBlock, 'AiSenderSchema interface block must exist').not.toBeNull();
+    expect(senderBlock![0]).not.toMatch(/\bactions\b\s*\??:/);
+  });
+
+  it('AiFeedbackSchema still declares the live `actions?: SchemaValue` (regression guard)', () => {
+    const src = readFileSync(join(__dirname, '..', 'schemas.ts'), 'utf8');
+    const feedbackBlock = src.match(/export interface AiFeedbackSchema extends BaseSchema \{[\s\S]*?\n\}/);
+    expect(feedbackBlock, 'AiFeedbackSchema interface block must exist').not.toBeNull();
+    expect(feedbackBlock![0]).toMatch(/actions\?:\s*SchemaValue/);
+  });
+});
+
+// ============================================================================
 // AI-29 / Renderer Styling Contract: the `nop-ai-` marker prefix is reserved
 // for component ROOT elements only (semantic identity). Internal regions use
 // `data-slot`. A `nop-ai-` class on an internal element (e.g. `nop-ai-*-item`,
