@@ -9,10 +9,14 @@
       "placeholder": "Ask the mock AI anything…",
       "submitType": "enter",
       "showWordLimit": false,
+      "showTimestamp": true,
       "header": {
-        "type": "hstack",
-        "className": "p-3 border-b items-center justify-between",
-        "items": [
+        "type": "flex",
+        "direction": "row",
+        "align": "center",
+        "justify": "between",
+        "className": "p-3 border-b",
+        "body": [
           { "type": "text", "text": "AI Chat (mock connector)" },
           {
             "type": "text",

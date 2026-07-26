@@ -607,6 +607,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'P6 flux-renderers-ai: host-injected Tiptap rich-text editor via ai-sender.senderExtensions (opt-in ./rich-text subpath) — @mention popup, template bar, slash commands, plain-text serialization to engine.sendMessage.',
   },
+  {
+    id: 'ai-widgets',
+    title: 'AI Widgets Showcase',
+    eyebrow: 'AI Renderers',
+    description:
+      'Comprehensive showcase of all AI widget renderers: ai-welcome, ai-bubble, ai-sender, ai-prompts, ai-feedback, ai-tool-call, ai-attachments, ai-citations, ai-voice-input, ai-token-usage, and ai-suggestions.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

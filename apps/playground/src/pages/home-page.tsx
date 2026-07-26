@@ -17,6 +17,7 @@ type NavigationTarget =
   | 'word-editor'
   | 'performance-table'
   | 'm5-showcase'
+  | 'ai-widgets'
   ;
 import { Button } from '@nop-chaos/ui';
 
@@ -153,6 +154,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'M1–M5 All Mobile',
     description:
       'Comprehensive mobile component showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers.',
+  },
+  {
+    id: 'ai-widgets',
+    title: 'AI Widgets',
+    eyebrow: 'AI Renderers',
+    description:
+      'Comprehensive showcase of all AI widget renderers: ai-welcome, ai-bubble, ai-sender, ai-prompts, ai-feedback, ai-tool-call, ai-attachments, ai-citations, ai-voice-input, ai-token-usage, and ai-suggestions.',
   },
 ];
 

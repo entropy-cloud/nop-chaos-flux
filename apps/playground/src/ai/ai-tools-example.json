@@ -12,9 +12,12 @@
       "placeholder": "Ask about the weather (the mock model always calls get_weather)…",
       "submitType": "enter",
       "header": {
-        "type": "hstack",
-        "className": "p-3 border-b items-center justify-between",
-        "items": [
+        "type": "flex",
+        "direction": "row",
+        "align": "center",
+        "justify": "between",
+        "className": "p-3 border-b",
+        "body": [
           { "type": "text", "text": "AI Tools (P2 agentic loop)" },
           {
             "type": "text",

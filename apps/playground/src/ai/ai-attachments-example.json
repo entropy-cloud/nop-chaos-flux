@@ -9,9 +9,12 @@
       "placeholder": "Attach an image below, then send…",
       "submitType": "enter",
       "header": {
-        "type": "hstack",
-        "className": "p-3 border-b items-center justify-between",
-        "items": [
+        "type": "flex",
+        "direction": "row",
+        "align": "center",
+        "justify": "between",
+        "className": "p-3 border-b",
+        "body": [
           { "type": "text", "text": "AI Attachments (P2 multimodal)" },
           {
             "type": "text",
