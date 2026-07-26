@@ -114,8 +114,8 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
 
         if (isMilestone) {
           const size = 12;
-          const cx = task.$x;
-          const cy = task.$y + task.$h / 2;
+          const cx = task.$x ?? 0;
+          const cy = (task.$y ?? 0) + (task.$h ?? 0) / 2;
           return (
             <div
               key={String(task.id)}
@@ -165,10 +165,10 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
               taskBarClassName,
             )}
             style={{
-              left: task.$x,
-              top: task.$y,
-              width: Math.max(task.$w, 4),
-              height: task.$h,
+              left: task.$x ?? 0,
+              top: task.$y ?? 0,
+              width: Math.max(task.$w ?? 0, 4),
+              height: task.$h ?? 28,
             }}
             onClick={() => onBarClick?.(task.id)}
             onDoubleClick={() => onBarDoubleClickEvent?.(task.id)}

@@ -218,11 +218,11 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
       const buffer = overscan * rowHeight;
       const viewBottom = scrollTop + viewportHeight;
       const windowed = tasks.filter((t) => {
-        const tEnd = t.$y + t.$h;
-        return tEnd >= scrollTop - buffer && t.$y <= viewBottom + buffer;
+        const tEnd = (t.$y ?? 0) + (t.$h ?? 0);
+        return tEnd >= scrollTop - buffer && (t.$y ?? 0) <= viewBottom + buffer;
       });
       const totalHeight = tasks.length > 0
-        ? tasks.reduce((max, t) => Math.max(max, t.$y + t.$h), 0)
+        ? tasks.reduce((max, t) => Math.max(max, (t.$y ?? 0) + (t.$h ?? 0)), 0)
         : tasks.length * rowHeight;
       return { tasks: windowed, totalHeight };
     },

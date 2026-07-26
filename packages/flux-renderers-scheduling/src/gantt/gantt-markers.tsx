@@ -15,7 +15,7 @@ export function GanttMarkers({ store, showToday = true, className }: GanttMarker
 
   const tasks = store.getVisibleTasks();
   const totalHeight = tasks.length > 0
-    ? tasks.reduce((max, t) => Math.max(max, t.$y + t.$h), 0)
+    ? tasks.reduce((max, t) => Math.max(max, (t.$y ?? 0) + (t.$h ?? 0)), 0)
     : tasks.length * 40;
 
   const todayX = (() => {

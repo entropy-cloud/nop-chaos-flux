@@ -16,7 +16,7 @@ export function GanttLinks({ store, className, onLinkClick }: GanttLinksProps) {
 
   const tasks = store.getVisibleTasks();
   const totalHeight = tasks.length > 0
-    ? tasks.reduce((max, t) => Math.max(max, t.$y + t.$h), 0)
+    ? tasks.reduce((max, t) => Math.max(max, (t.$y ?? 0) + (t.$h ?? 0)), 0)
     : 0;
   const maxWidth = store.scaleRange
     ? (diffInDays(store.scaleRange.end, store.scaleRange.start) * store.cellWidth)
@@ -37,7 +37,7 @@ export function GanttLinks({ store, className, onLinkClick }: GanttLinksProps) {
 
   return (
     <svg
-      className={cn('nop-gantt-links absolute inset-0 pointer-events-none overflow-visible', className)}
+      className={cn('nop-gantt-links absolute inset-0 overflow-visible', className)}
       data-slot="gantt-link"
       style={{ width: maxWidth, height: totalHeight || '100%' }}
     >
@@ -49,7 +49,7 @@ export function GanttLinks({ store, className, onLinkClick }: GanttLinksProps) {
       {links.map((link) => {
         const isHovered = hoveredLink === link.id;
         return (
-          <g key={String(link.id)} className="pointer-events-auto">
+          <g key={String(link.id)}>
             <polyline
               points={link.$p}
               fill="none"
@@ -66,6 +66,18 @@ export function GanttLinks({ store, className, onLinkClick }: GanttLinksProps) {
               stroke="transparent"
               strokeWidth={10}
               className="cursor-pointer"
+              style={{ pointerEvents: 'all' }}
+              onPointerDown={(e) => {
+                (e.target as SVGElement).style.pointerEvents = 'none';
+                const elBelow = document.elementFromPoint(e.clientX, e.clientY);
+                (e.target as SVGElement).style.pointerEvents = '';
+                const barEl = elBelow?.closest('[data-task-id]');
+                if (barEl) {
+                  const clone = new PointerEvent('pointerdown', { clientX: e.clientX, clientY: e.clientY, bubbles: true, cancelable: true });
+                  barEl.dispatchEvent(clone);
+                  return;
+                }
+              }}
               onMouseEnter={() => setHoveredLink(link.id)}
               onMouseLeave={() => { setHoveredLink(null); }}
               onClick={() => { handleLinkClick(link.id); setHoveredLink(link.id === hoveredLink ? null : link.id); }}
@@ -91,6 +103,7 @@ export function GanttLinks({ store, className, onLinkClick }: GanttLinksProps) {
               >
                 <div
                   className="flex items-center justify-center w-5 h-5 nop-gantt-link-delete-btn rounded-full text-xs cursor-pointer shadow"
+                  style={{ pointerEvents: 'auto' }}
                   onClick={() => handleDelete(link.id)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleDelete(link.id); }}
                   role="button"

@@ -70,21 +70,11 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
 
     useEffect(() => {
       void eventsRef.current.onMount?.({});
+      undoStackRef.current.clear();
       return () => {
         void eventsRef.current.onUnmount?.({});
-        store.destroy();
       };
-    }, [store]);
-
-    const initCalledRef = useRef(false);
-    const initDataRef = useRef({ tasks: resolved.tasks, links: resolved.links, resources: resolved.resources, assignments: resolved.assignments });
-    useEffect(() => {
-      if (initCalledRef.current) return;
-      initCalledRef.current = true;
-      const data = initDataRef.current;
-      store.parse(data.tasks ?? [], data.links ?? [], data.resources, data.assignments);
-      undoStackRef.current.clear();
-    }, [store]);
+    }, []);
 
     const handleTaskDragCommit = (taskId: string | number, changes: Record<string, string>) => {
       void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes }, { scope: scopeRef.current });
@@ -236,7 +226,14 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       [store, scrollToToday, scrollToTask, handleZoomChange],
     );
 
+    useSyncExternalStore(store.subscribe, () => store.layoutRevision);
+    const visibleTasks = store.getVisibleTasks();
+    const timelineHeight = visibleTasks.length > 0
+      ? visibleTasks.reduce((max, t) => Math.max(max, (t.$y ?? 0) + (t.$h ?? 0)), 400)
+      : 400;
+
     const handleTaskClick = (taskId: string | number) => {
+      store.selectTask(taskId);
       void eventsRef.current.onTaskClick?.({ _taskId: taskId });
     };
 
@@ -287,7 +284,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     );
 
     return (
-      <div ref={containerRef} className={cn('nop-gantt flex flex-col h-full', meta.className)} data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>
+      <div ref={containerRef} data-slot="gantt" className={cn('nop-gantt flex flex-col h-full', meta.className)} data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>
         <div aria-live="polite" aria-atomic="true" className="sr-only">
           {`${store.getVisibleTasks().length} tasks visible`}
         </div>
@@ -318,7 +315,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           timeline={
             <div ref={timelineRef} className="h-full overflow-auto">
               <GanttTimeScale store={store} />
-              <div className="relative">
+              <div className="relative" style={{ minHeight: timelineHeight }}>
                 <GanttCellGrid store={store} showWeekends={showWeekends} />
                 <GanttBars
                   store={store}
