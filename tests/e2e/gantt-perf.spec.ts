@@ -5,7 +5,7 @@ test.describe('Gantt Performance Baseline', () => {
   test.describe.configure({ timeout: 180_000 });
 
   test('idle FPS at scale on gantt-perf-scale route', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+    allowConsoleErrors(10);
     await page.goto('/#/gantt-perf-scale', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Gantt Performance Scale')).toBeVisible({ timeout: 120_000 });
     await expect(page.locator('[data-slot="gantt-bar"]').first()).toBeVisible({ timeout: 120_000 });
@@ -19,7 +19,7 @@ test.describe('Gantt Performance Baseline', () => {
   });
 
   test('scroll FPS on gantt-perf-scale synchronized grid+timeline', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+    allowConsoleErrors(10);
     await page.goto('/#/gantt-perf-scale', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Gantt Performance Scale')).toBeVisible({ timeout: 120_000 });
     await expect(page.locator('[data-slot="gantt-bar"]').first()).toBeVisible({ timeout: 120_000 });
@@ -42,7 +42,7 @@ test.describe('Gantt Performance Baseline', () => {
   });
 
   test('drag FPS on gantt-perf-scale (drag a task bar 200px)', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+    allowConsoleErrors(10);
     await page.goto('/#/gantt-perf-scale', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Gantt Performance Scale')).toBeVisible({ timeout: 120_000 });
     await expect(page.locator('[data-slot="gantt-bar"]').first()).toBeVisible({ timeout: 120_000 });

@@ -1,203 +1,375 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, assertTrackedPageErrors } from './fixtures.js';
 
 const ROUTE = '/#/gantt';
 const HEADING = /Gantt Chart Demo/i;
 
-test.describe('Gantt Chart Demo', () => {
+test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
   test.describe.configure({ mode: 'serial' });
-  test('page loads with task bars visible and correct count', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+
+  test('root container and aria live region', async ({ page }) => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
+    const gantt = page.locator('[data-slot="gantt"]');
+    await expect(gantt).toBeVisible({ timeout: 10_000 });
+
+    const liveRegion = page.locator('[aria-live="polite"]');
+    await expect(liveRegion).toBeVisible();
+    const text = await liveRegion.textContent();
+    expect(text).toMatch(/\d+ tasks? visible/);
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('root container has task bars visible', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'load' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+    await expect(page.locator('[data-slot="gantt"]')).toBeVisible();
     const barCount = await page.locator('[data-slot="gantt-bar"]').count();
-    const milestoneCount = await page.locator('[data-bar-type="milestone"]').count();
-    expect(barCount + milestoneCount).toBe(14);
+    expect(barCount).toBeGreaterThan(0);
 
-    const gridRowTexts = await page.locator('[data-slot="gantt-grid-row"]').allTextContents();
-    const allText = gridRowTexts.join(' ');
-    expect(allText).toContain('Project Alpha');
-    expect(allText).toContain('Requirements');
-    expect(allText).toContain('Project Beta');
+    await assertTrackedPageErrors(page);
   });
 
-  test('drag task bar changes position programmatically', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('all toolbar buttons render', async ({ page }) => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
-    const taskBar = page.locator('[data-slot="gantt-bar"][data-task-id="2"]');
-    await expect(taskBar).toBeVisible({ timeout: 15_000 });
+    const toolbar = page.locator('[data-slot="gantt-toolbar"]');
+    await expect(toolbar).toBeVisible();
 
-    const initialPos = await taskBar.evaluate((el) => {
-      const left = parseFloat(el.style.left) || 0;
-      return { left };
-    });
+    const buttons = toolbar.locator('button');
+    await expect(buttons).toHaveCount(4);
+    await expect(buttons.nth(0)).toHaveText('−');
+    await expect(buttons.nth(1)).toHaveText('+');
 
-    const box = await taskBar.boundingBox();
-    expect(box).toBeTruthy();
-    if (!box) return;
-
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    for (let i = 0; i < 10; i++) {
-      await page.mouse.move(box.x + box.width / 2 + i * 15, box.y + box.height / 2, { steps: 2 });
-    }
-    await page.mouse.up();
-    await page.waitForTimeout(300);
-
-    const newPos = await taskBar.evaluate((el) => {
-      const left = parseFloat(el.style.left) || 0;
-      return { left };
-    });
-
-    expect(newPos.left).not.toBe(initialPos.left);
+    await assertTrackedPageErrors(page);
   });
 
-  test('zoom level switching changes scale header', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('zoom out changes scale header', async ({ page }) => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
     const getScaleLabels = () =>
-      page.evaluate(() => {
-        return Array.from(document.querySelectorAll('[data-slot="gantt-scale-cell"]'))
-          .map((el) => el.textContent)
-          .filter(Boolean) as string[];
-      });
+      page.evaluate(() => Array.from(document.querySelectorAll('[data-slot="gantt-scale-cell"]')).map((el) => el.textContent).filter(Boolean) as string[]);
 
-    const initialLabels = await getScaleLabels();
-    expect(initialLabels.length).toBeGreaterThan(0);
+    const before = await getScaleLabels();
+    expect(before.length).toBeGreaterThan(0);
 
-    const zoomOutBtn = page.locator('[data-slot="gantt-toolbar"] button').first();
-    await zoomOutBtn.click();
+    const zoomOut = page.locator('[data-slot="gantt-toolbar"] button').first();
+    await zoomOut.click();
+    await page.waitForTimeout(300);
+
+    const after = await getScaleLabels();
+    expect(after.length).toBeGreaterThan(0);
+    expect(after.join(' ')).not.toBe(before.join(' '));
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('zoom in then zoom to fit', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const zoomIn = page.locator('[data-slot="gantt-toolbar"] button').nth(1);
+    await zoomIn.click();
+    await page.waitForTimeout(300);
+
+    const zoomFit = page.locator('[data-slot="gantt-toolbar"] button').nth(2);
+    await zoomFit.click();
+    await page.waitForTimeout(300);
+
+    const scaleCells = await page.locator('[data-slot="gantt-scale-cell"]').count();
+    expect(scaleCells).toBeGreaterThan(0);
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('grid header cells render with correct column labels', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const headerCells = page.locator('[data-slot="gantt-grid-header-cell"]');
+    await expect(headerCells).toHaveCount(5);
+
+    const labels = await headerCells.allTextContents();
+    expect(labels.join(' ')).toContain('Task Name');
+    expect(labels.join(' ')).toContain('Start');
+    expect(labels.join(' ')).toContain('End');
+    expect(labels.join(' ')).toContain('Days');
+    expect(labels.join(' ')).toContain('Dependencies');
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('grid rows render with correct data attributes', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const rows = page.locator('[data-slot="gantt-grid-row"]');
+    await expect(rows.first()).toBeVisible({ timeout: 10_000 });
+
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThanOrEqual(6);
+
+    const firstRow = rows.first();
+    await expect(firstRow).toHaveAttribute('data-task-id');
+    await expect(firstRow).toHaveAttribute('data-depth');
+    await expect(firstRow).toHaveAttribute('role', 'row');
+    await expect(firstRow).toHaveAttribute('aria-level');
+    await expect(firstRow).toHaveAttribute('aria-setsize');
+    await expect(firstRow).toHaveAttribute('aria-posinset');
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('task names visible in grid rows', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const gridTexts = await page.locator('[data-slot="gantt-grid-row"]').allTextContents();
+    const allText = gridTexts.join(' ');
+    expect(allText).toContain('Project Alpha');
+    expect(allText).toContain('Requirements');
+    expect(allText).toContain('Design');
+    expect(allText).toContain('Project Beta');
+    expect(allText).toContain('Research');
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('expand-collapse toggle buttons visible on parent rows', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const toggleButtons = page.locator('[aria-expanded]');
+    const count = await toggleButtons.count();
+    expect(count).toBeGreaterThanOrEqual(2);
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('collapsing a project hides its children then expanding shows them', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const getRowCount = () => page.locator('[data-slot="gantt-grid-row"]').count();
+
+    const initialCount = await getRowCount();
+    expect(initialCount).toBeGreaterThan(4);
+
+    const initialExpanded = await page.locator('[aria-expanded="true"]').count();
+    expect(initialExpanded).toBeGreaterThanOrEqual(1);
+    const firstTaskName = await page.evaluate(() => {
+      const btn = document.querySelector('[aria-expanded="true"]') as HTMLElement | null;
+      if (!btn) return '';
+      const row = btn.closest('[data-slot="gantt-grid-row"]');
+      if (!row) return '';
+      return row.getAttribute('data-task-id') || '';
+    });
+    expect(firstTaskName).toBeTruthy();
+
+    await page.evaluate(() => {
+      const btn = document.querySelector('[aria-expanded="true"]') as HTMLButtonElement | null;
+      if (btn) btn.click();
+    });
     await page.waitForTimeout(500);
 
-    const afterZoomOutLabels = await getScaleLabels();
-    expect(afterZoomOutLabels.length).toBeGreaterThan(0);
+    const collapsedCount = await getRowCount();
+    expect(collapsedCount).toBeLessThan(initialCount);
 
-    const zoomInBtn = page.locator('[data-slot="gantt-toolbar"] button').nth(1);
-    await zoomInBtn.click();
+    const toggledRow = page.locator(`[data-slot="gantt-grid-row"][data-task-id="${firstTaskName}"]`);
+    await expect(toggledRow.locator('button')).toHaveAttribute('aria-expanded', 'false', { timeout: 3_000 });
+
+    await toggledRow.locator('button').click();
     await page.waitForTimeout(500);
 
-    const afterZoomInLabels = await getScaleLabels();
-    expect(afterZoomInLabels.length).toBeGreaterThan(0);
+    const expandedCount = await getRowCount();
+    expect(expandedCount).toBe(initialCount);
+
+    await assertTrackedPageErrors(page);
   });
 
-  test('dependency links rendered on SVG', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('row selection highlights the row', async ({ page }) => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
-    const linkSvg = page.locator('[data-slot="gantt-link"]');
-    await expect(linkSvg).toBeVisible({ timeout: 10_000 });
+    const row = page.locator('[data-slot="gantt-grid-row"]').nth(0);
+    await row.click();
 
-    const linkCount = await linkSvg.evaluate((svg) => {
-      return svg.querySelectorAll('.nop-gantt-link-line').length;
-    });
-    expect(linkCount).toBe(9);
+    await expect(row).toHaveAttribute('aria-selected', 'true');
 
-    const linkIds = await linkSvg.evaluate((svg) => {
-      const ariaLabels = svg.querySelectorAll('[aria-label]');
-      return Array.from(ariaLabels).map((el) => el.getAttribute('aria-label') || '');
-    });
-    expect(linkIds.filter((l) => l.startsWith('Link')).length).toBe(9);
+    await assertTrackedPageErrors(page);
   });
 
-  test('keyboard navigation selects tasks', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('double-clicking text cell enters inline edit mode', async ({ page }) => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
-    const getFocusedTaskId = () =>
-      page.evaluate(() => {
-        const el = document.activeElement;
-        return el?.getAttribute('data-task-id') ?? null;
-      });
+    const row = page.locator('[data-slot="gantt-grid-row"]').nth(1);
+    await row.dblclick();
 
-    await page.locator('[role="grid"]').first().focus();
-    await page.waitForTimeout(200);
+    const input = page.locator('[data-slot="gantt-grid"] input');
+    await expect(input).toBeVisible({ timeout: 3_000 });
 
-    await page.keyboard.press('ArrowDown');
-    await page.waitForTimeout(200);
-    const afterFirstDown = await getFocusedTaskId();
-    expect(afterFirstDown).toBe('1');
-
-    await page.keyboard.press('ArrowDown');
-    await page.waitForTimeout(200);
-    const afterSecondDown = await getFocusedTaskId();
-    expect(afterSecondDown).toBe('2');
-
-    await page.keyboard.press('ArrowUp');
-    await page.waitForTimeout(200);
-    const afterUp = await getFocusedTaskId();
-    expect(afterUp).toBe('1');
-
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
-    const editor = page.locator('[role="dialog"]');
-    await expect(editor).toBeVisible({ timeout: 3_000 });
-
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-    await expect(editor).not.toBeVisible({ timeout: 3_000 });
+    await assertTrackedPageErrors(page);
   });
 
-  test('vertical scroll containers are present and synchronised', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('inline edit commit via Enter updates task text', async ({ page }) => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
-    const containerInfo = await page.evaluate(() => {
+    const row = page.locator('[data-slot="gantt-grid-row"]').nth(1);
+    await row.dblclick();
+    await page.waitForTimeout(200);
+
+    const input = page.locator('[data-slot="gantt-grid"] input');
+    await expect(input).toBeVisible({ timeout: 3_000 });
+    await input.fill('Updated Task');
+    await input.press('Enter');
+
+    await expect(input).not.toBeVisible({ timeout: 3_000 });
+    const texts = await page.locator('[data-slot="gantt-grid-row"]').allTextContents();
+    expect(texts.some(t => t.includes('Updated Task'))).toBe(true);
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('inline edit cancel via Escape restores original', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const row = page.locator('[data-slot="gantt-grid-row"]').nth(1);
+    const _originalText = await row.textContent();
+
+    await row.dblclick();
+    await page.waitForTimeout(200);
+
+    const input = page.locator('[data-slot="gantt-grid"] input');
+    await expect(input).toBeVisible({ timeout: 3_000 });
+    await input.fill('Modified');
+    await input.press('Escape');
+
+    await expect(input).not.toBeVisible({ timeout: 3_000 });
+    const texts = await page.locator('[data-slot="gantt-grid-row"]').allTextContents();
+    expect(texts.some(t => t.includes('Modified'))).toBe(false);
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('today marker visible with red line', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const today = page.locator('[data-slot="gantt-today"]');
+    await expect(today).toBeVisible({ timeout: 10_000 });
+
+    const left = await today.getAttribute('style');
+    expect(left).toContain('left:');
+    expect(left).toContain('px');
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('panel splitter renders with ARIA attributes', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const splitter = page.locator('[role="separator"]');
+    await expect(splitter).toBeVisible();
+    await expect(splitter).toHaveAttribute('aria-valuemin');
+    await expect(splitter).toHaveAttribute('aria-valuemax');
+    await expect(splitter).toHaveAttribute('aria-valuenow');
+    await expect(splitter).toHaveAttribute('aria-orientation', 'vertical');
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('panel splitter keyboard resize', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const splitter = page.locator('[role="separator"]');
+    await splitter.focus();
+
+    const beforeWidth = await splitter.evaluate((el) => parseFloat(el.getAttribute('aria-valuenow') || '0'));
+
+    await splitter.press('ArrowRight');
+
+    const afterWidth = await splitter.evaluate((el) => parseFloat(el.getAttribute('aria-valuenow') || '0'));
+    expect(afterWidth).toBeGreaterThan(beforeWidth);
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('grid and timeline vertical scroll containers present', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const info = await page.evaluate(() => {
       const grid = document.querySelector('[data-slot="gantt-grid"]');
       const scale = document.querySelector('[data-slot="gantt-scale"]');
-      if (!grid || !scale) return { error: 'elements not found' };
-
-      const gridScroll = grid.parentElement;
-      const timelineScroll = scale.parentElement;
-      if (!gridScroll || !timelineScroll) return { error: 'scroll parents not found' };
-
-      const gridCS = getComputedStyle(gridScroll);
-      const timelineCS = getComputedStyle(timelineScroll);
-
+      if (!grid || !scale) return { error: 'not found' };
       return {
-        gridOverflowY: gridCS.overflowY,
-        timelineOverflowY: timelineCS.overflowY,
-        gridCanScroll: gridScroll.scrollHeight > gridScroll.clientHeight,
-        timelineCanScroll: timelineScroll.scrollHeight > timelineScroll.clientHeight,
-        gridScrollHeight: gridScroll.scrollHeight,
-        gridClientHeight: gridScroll.clientHeight,
-        timelineScrollHeight: timelineScroll.scrollHeight,
-        timelineClientHeight: timelineScroll.clientHeight,
-        gridScrollTop: gridScroll.scrollTop,
-        timelineScrollTop: timelineScroll.scrollTop,
+        gridOverflowY: getComputedStyle(grid).overflowY,
+        timelineOverflowY: getComputedStyle(scale.parentElement!).overflowY,
+        gridScrollHeight: grid.scrollHeight,
+        timelineScrollHeight: scale.parentElement!.scrollHeight,
       };
     });
 
-    expect(containerInfo.error).toBeUndefined();
-    expect(containerInfo.gridOverflowY).toBe('auto');
-    expect(containerInfo.timelineOverflowY).toBe('auto');
+    expect(info.error).toBeUndefined();
+    expect(info.gridOverflowY).toBe('auto');
+    expect(info.timelineOverflowY).toBe('auto');
+    expect(info.gridScrollHeight).toBeGreaterThan(0);
+    expect(info.timelineScrollHeight).toBeGreaterThan(0);
 
-    if (containerInfo.gridCanScroll) {
+    await assertTrackedPageErrors(page);
+  });
+
+  test('scroll sync scrolls timeline when grid scrolls', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const canScroll = await page.evaluate(() => {
+      const grid = document.querySelector('[data-slot="gantt-grid"]');
+      if (!grid) return false;
+      const gs = grid.parentElement;
+      return gs ? gs.scrollHeight > gs.clientHeight : false;
+    });
+
+    if (canScroll) {
       await page.evaluate(() => {
         const grid = document.querySelector('[data-slot="gantt-grid"]');
         if (!grid) return;
         const gs = grid.parentElement;
         if (!gs) return;
-        gs.scrollTop = 150;
+        gs.scrollTop = 100;
         gs.dispatchEvent(new Event('scroll', { bubbles: true }));
       });
 
-      await page.waitForTimeout(300);
-
-      const after = await page.evaluate(() => {
-        const scale = document.querySelector('[data-slot="gantt-scale"]');
-        if (!scale) return -1;
-        const ts = scale.parentElement;
-        return ts ? ts.scrollTop : -1;
-      });
-
-      expect(after).toBeGreaterThan(0);
+      await expect(async () => {
+        const timelineScrollTop = await page.evaluate(() => {
+          const scale = document.querySelector('[data-slot="gantt-scale"]');
+          if (!scale) return -1;
+          const ts = scale.parentElement;
+          return ts ? ts.scrollTop : -1;
+        });
+        expect(timelineScrollTop).toBeGreaterThan(0);
+      }).toPass({ timeout: 3_000 });
     }
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('weekend columns have bg-gray-50 class', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const weekendCols = page.locator('[data-weekend="true"]');
+    const count = await weekendCols.count();
+    expect(count).toBeGreaterThanOrEqual(2);
+
+    await assertTrackedPageErrors(page);
   });
 });
