@@ -32,7 +32,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | MA4.3    | 测试层—设计器+办公 测试覆盖与 E2E 审计        | `done` |
 | MA5.1    | UI/UX—设计器可操作性审计                      | `done` |
 | MA5.2    | UI/UX—基础+内容渲染器 UX 审计                 | `done` |
-| MA6      | 文档与契约一致性审计                          | `todo` |
+| MA6      | 文档与契约一致性审计                          | `done` |
 | MA7.1    | 安全与运维—XSS/样式/性能审计                  | `todo` |
 | MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `todo` |
 | R1.0     | P1 修复—结构+运行时（展开器）                 | `todo` |
@@ -123,11 +123,11 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 | MA5.1 设计器（flow/report/spreadsheet/word）可操作性 | `done` | `docs/audits/arm-MA5-designer-operability.md` | M0           | `complex-component-display-operability-audit-prompt.md` |
 | MA5.2 基础+内容渲染器 UX 模式                        | `done` | `docs/audits/arm-MA5-basic-content-ux.md`     | M0           | `ux-design-pattern-audit-prompt.md`                     |
 
-### MA6 — 文档与契约一致性审计（维 F）
+### MA6 — 文档与契约一致性审计（维 F）✅
 
-| Work Item                             | Status | Owner Doc                                 | Dependencies | Skill                                                            |
-| ------------------------------------- | ------ | ----------------------------------------- | ------------ | ---------------------------------------------------------------- |
-| MA6.1 全部包簇 docs/ 与架构文档一致性 | `todo` | `docs/audits/00-audit-execution-guide.md` | M0           | `doc-evaluation.md` + `implementation-contract-review-prompt.md` |
+| Work Item                             | Status | Owner Doc                             | Dependencies | Skill                                                            |
+| ------------------------------------- | ------ | ------------------------------------- | ------------ | ---------------------------------------------------------------- |
+| MA6.1 全部包簇 docs/ 与架构文档一致性 | `done` | `docs/audits/arm-MA6-doc-contract.md` | M0           | `doc-evaluation.md` + `implementation-contract-review-prompt.md` |
 
 ### MA7 — 安全、性能与运维审计（维 G/H）
 
