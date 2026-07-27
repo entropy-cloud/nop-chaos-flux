@@ -113,6 +113,7 @@ It includes:
 - resolved `meta`
 - `regions`
 - `events`
+- `reactions` — `kind: 'reaction'` field handles, each a lazy proxy registered on first activation
 - `helpers`
 
 ## `RendererHelpers`

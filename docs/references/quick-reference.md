@@ -608,12 +608,18 @@ export function MyRenderer(props: RendererComponentProps<MySchema>) {
 interface ScopeRef {
   readonly id: string;
   readonly path: string;
+  parent?: ScopeRef;
+  isolate?: boolean;
   store?: ScopeStore;
-  readVisible(): Record<string, unknown>;
-  readOwn(): Record<string, unknown>;
-  update(patch: object): void;
-  merge(data: Record<string, any>): void;
-  replace(data: Record<string, any>): void;
+  readonly value: Record<string, any>;
+  get(path: string): unknown;
+  has(path: string): boolean;
+  readOwn(): Record<string, any>;
+  readVisible(): Record<string, any>;
+  materializeVisible(): Record<string, any>;
+  update(path: string, value: unknown): void;
+  merge(data: Record<string, unknown>): void;
+  replace?(data: Record<string, unknown>): void;
   dispose(): void;
 }
 ```

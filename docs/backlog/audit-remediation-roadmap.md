@@ -1,6 +1,6 @@
 # 审计-修复路线图
 
-> 最后更新：2026-07-27 (R2.0+R3.0 expander completed — MR2/MR3 work items populated)
+> 最后更新：2026-07-27 (MR3 completed — R3.1–R3.19 all fixed and verified)
 > 来源：`docs/skills/audit-remediation-roadmap-authoring-prompt.md`
 
 ## 目的
@@ -205,25 +205,25 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 | Work Item                                                             | Status | Owner Doc                                                                                     | Dependencies                      | Skill |
 | --------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------- | --------------------------------- | ----- |
 | R3.0 P1 展开器（裁决完成，已展开R3.1-19）                             | `done` | `docs/plans/2026-07-27-2300-2-r2-r3-combined-expander.md`                                     | MA5.1-MA5.2 + MA6.1 + MA7.1-MA7.2 | —     |
-| R3.1 MA5-P2-01 Spreadsheet filter gaps 修复                           | `todo` | `packages/spreadsheet-renderers/src/spreadsheet-grid/viewport.ts:91-96`                       | 无                                | —     |
-| R3.2 MA5-P2-02 Word editor stale savedDocument probe 修复             | `todo` | `packages/word-editor-renderers/src/hooks/use-word-editor-state.ts:229-247`                   | 无                                | —     |
-| R3.3 MA5-P2-03 Report designer inspector auto-open race 修复          | `todo` | `packages/report-designer-renderers/src/page-renderer.tsx:382-402`                            | 无                                | —     |
-| R3.4 MA5-P2-04 cell-style-map ignores border positional values 修复   | `todo` | `packages/spreadsheet-renderers/src/cell-style-map.ts:33-39`                                  | 无                                | —     |
-| R3.5 MA5-M-01 Array-editor/key-value add buttons missing PlusIcon     | `todo` | `packages/flux-renderers-form-advanced/src/array-editor.tsx:566-597`, `key-value.tsx:601-628` | 无                                | —     |
-| R3.6 MA5-M-02 Icon-picker hardcoded Chinese strings 替换为 t()        | `todo` | `packages/flux-renderers-form-advanced/src/icon-picker.tsx:191,204,236,249`                   | 无                                | —     |
-| R3.7 MA5-M-03 Icon-picker focus-visible ring 添加                     | `todo` | `packages/flux-renderers-form-advanced/src/icon-picker.tsx:211-223`                           | 无                                | —     |
-| R3.8 MA5-M-04 Content package hardcoded English strings 替换为 t()    | `todo` | 7 content renderer files (audio, video, carousel, json-view, markdown, image, qrcode)         | 无                                | —     |
-| R3.9 MA6-P1-001 field-frame.md 文档修复                               | `todo` | `docs/architecture/field-frame.md`                                                            | 无                                | —     |
-| R3.10 MA6-P1-002 form-validation.md wrong hook names 修复             | `todo` | `docs/architecture/form-validation.md`                                                        | 无                                | —     |
-| R3.11 MA6-P1-003 object-field.md transform claim 修复                 | `todo` | `docs/architecture/object-field.md`                                                           | 无                                | —     |
-| R3.12 MA6-P1-004 array-field.md sortable not wired 修复               | `todo` | `docs/architecture/array-field.md`                                                            | 无                                | —     |
-| R3.13 MA6-P1-005 module-cache-and-import-stack.md params 修复         | `todo` | `docs/architecture/module-cache-and-import-stack.md`                                          | 无                                | —     |
-| R3.14 MA6-P1-006 action-scope-and-imports.md wrong type 修复          | `todo` | `docs/architecture/action-scope-and-imports.md`                                               | 无                                | —     |
-| R3.15 MA6-P1-007 quick-reference.md ScopeRef.update 修复              | `todo` | `docs/references/quick-reference.md`                                                          | 无                                | —     |
-| R3.16 MA6-P1-008 terminology.md RendererComponentProps 修复           | `todo` | `docs/references/terminology.md`                                                              | 无                                | —     |
-| R3.17 MA72-P1-001 gantt.types.ts 7 deprecated fields JSDoc 补充       | `todo` | `packages/flux-renderers-scheduling/src/gantt/gantt.types.ts:155-174`                         | 无                                | —     |
-| R3.18 MA7-XSS-P2-01 ai-citations href javascript: scheme 过滤         | `todo` | `packages/flux-renderers-ai/src/renderers/ai-citations.tsx:192`                               | 无                                | —     |
-| R3.19 MA7-ASYNC-P2-01 word-editor document-io.ts catch 结构化失败路径 | `todo` | `packages/word-editor-core/src/document-io.ts`                                                | 无                                | —     |
+| R3.1 MA5-P2-01 Spreadsheet filter gaps 修复                           | `done` | `packages/spreadsheet-renderers/src/spreadsheet-grid/viewport.ts:91-96`                       | 无                                | —     |
+| R3.2 MA5-P2-02 Word editor stale savedDocument probe 修复             | `done` | `packages/word-editor-renderers/src/hooks/use-word-editor-state.ts:229-247`                   | 无                                | —     |
+| R3.3 MA5-P2-03 Report designer inspector auto-open race 修复          | `done` | `packages/report-designer-renderers/src/page-renderer.tsx:382-402`                            | 无                                | —     |
+| R3.4 MA5-P2-04 cell-style-map ignores border positional values 修复   | `done` | `packages/spreadsheet-renderers/src/cell-style-map.ts:33-39`                                  | 无                                | —     |
+| R3.5 MA5-M-01 Array-editor/key-value add buttons missing PlusIcon     | `done` | `packages/flux-renderers-form-advanced/src/array-editor.tsx:566-597`, `key-value.tsx:601-628` | 无                                | —     |
+| R3.6 MA5-M-02 Icon-picker hardcoded Chinese strings 替换为 t()        | `done` | `packages/flux-renderers-form-advanced/src/icon-picker.tsx:191,204,236,249`                   | 无                                | —     |
+| R3.7 MA5-M-03 Icon-picker focus-visible ring 添加                     | `done` | `packages/flux-renderers-form-advanced/src/icon-picker.tsx:211-223`                           | 无                                | —     |
+| R3.8 MA5-M-04 Content package hardcoded English strings 替换为 t()    | `done` | 7 content renderer files (audio, video, carousel, json-view, markdown, image, qrcode)         | 无                                | —     |
+| R3.9 MA6-P1-001 field-frame.md 文档修复                               | `done` | `docs/architecture/field-frame.md`                                                            | 无                                | —     |
+| R3.10 MA6-P1-002 form-validation.md wrong hook names 修复             | `done` | `docs/architecture/form-validation.md`                                                        | 无                                | —     |
+| R3.11 MA6-P1-003 object-field.md transform claim 修复                 | `done` | `docs/architecture/object-field.md`                                                           | 无                                | —     |
+| R3.12 MA6-P1-004 array-field.md sortable not wired 修复               | `done` | `docs/architecture/array-field.md`                                                            | 无                                | —     |
+| R3.13 MA6-P1-005 module-cache-and-import-stack.md params 修复         | `done` | `docs/architecture/module-cache-and-import-stack.md`                                          | 无                                | —     |
+| R3.14 MA6-P1-006 action-scope-and-imports.md wrong type 修复          | `done` | `docs/architecture/action-scope-and-imports.md`                                               | 无                                | —     |
+| R3.15 MA6-P1-007 quick-reference.md ScopeRef.update 修复              | `done` | `docs/references/quick-reference.md`                                                          | 无                                | —     |
+| R3.16 MA6-P1-008 terminology.md RendererComponentProps 修复           | `done` | `docs/references/terminology.md`                                                              | 无                                | —     |
+| R3.17 MA72-P1-001 gantt.types.ts 7 deprecated fields JSDoc 补充       | `done` | `packages/flux-renderers-scheduling/src/gantt/gantt.types.ts:155-174`                         | 无                                | —     |
+| R3.18 MA7-XSS-P2-01 ai-citations href javascript: scheme 过滤         | `done` | `packages/flux-renderers-ai/src/renderers/ai-citations.tsx:192`                               | 无                                | —     |
+| R3.19 MA7-ASYNC-P2-01 word-editor document-io.ts catch 结构化失败路径 | `done` | `packages/word-editor-core/src/document-io.ts`                                                | 无                                | —     |
 
 ### MR4 — 跨维度 P1 裁决与冲突修复
 

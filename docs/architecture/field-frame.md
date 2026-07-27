@@ -105,10 +105,12 @@ interface FieldFrameProps {
   layout?: 'default' | 'checkbox' | 'radio';
   labelAlign?: 'top' | 'left' | 'right';
   labelWidth?: string | number;
+  rootTag?: 'label' | 'div';
   validationBehavior?: CompiledValidationBehavior;
   className?: string;
   testid?: string;
   cid?: number;
+  rootProps?: Record<string, string | number | undefined>;
   children: ReactNode;
 }
 ```
@@ -142,8 +144,8 @@ Related schema contract:
 When `name` is provided, FieldFrame manages validation state internally:
 
 1. **Form lookup**: `useCurrentForm()` to get the current form context
-2. **Field state**: `useCurrentFormState(...)` + `selectCurrentFormFieldState(...)` to get `touched`, `dirty`, `visited`, `submitting`, `validating`, and `error`
-3. **Aggregate errors**: `useCurrentFormState(...)` + `selectCurrentFormErrors(...)` to collect the highest-priority current error for the field
+2. **Field state**: `useCurrentFormFieldState(...)` to get `touched`, `dirty`, `visited`, `submitting`, `submittingAttempted`, `validating`, and `error`
+3. **Aggregate errors**: `useAggregateError(...)` to collect the highest-priority current error for the field
 4. **Per-field behavior**: `getCompiledValidationField(form.validation, name)` to get field-specific `CompiledValidationBehavior`
 5. **Behavior fallback**: `validationBehavior` prop → field behavior → form behavior → default (`{ triggers: ['blur'], showErrorOn: ['touched', 'submit'] }`)
 6. **Conditional required tracking**: FieldFrame subscribes to `form.values` only when the field's compiled validation rules include `requiredWhen` or `requiredUnless`; `isFieldEffectivelyRequired(...)` then decides the final marker without broad-subscribing every field to all value changes
@@ -157,109 +159,124 @@ This means renderers do **not** need to manually manage outer `error`/`showError
 ```tsx
 export function FieldFrame(props: FieldFrameProps) {
   const {
-    name,
-    label,
-    required,
-    hint,
-    description,
-    layout,
-    validationBehavior,
-    className,
-    testid,
-    cid,
-    children,
+    name, label, required, hint, description, remark, labelRemark,
+    layout, labelAlign: labelAlignProp, labelWidth: labelWidthProp,
+    rootTag, validationBehavior, className, testid, cid, rootProps, children,
   } = props;
 
+  const formLayout = useFormLayout();
+  const reactId = useId();
   const currentForm = useCurrentForm();
-  const fieldState = useCurrentFormState(
-    (state) =>
-      name
-        ? selectCurrentFormFieldState(state, { path: name, ownerPath: name })
-        : EMPTY_FORM_FIELD_STATE,
-    (left, right) =>
-      left.error === right.error &&
-      left.validating === right.validating &&
-      left.touched === right.touched &&
-      left.dirty === right.dirty &&
-      left.visited === right.visited &&
-      left.submitting === right.submitting,
-  );
-  const aggregateError = useCurrentFormState(
-    (state) =>
-      name
-        ? selectCurrentFormErrors(state, {
-            path: name,
-            ownerPath: name,
-            sourceKinds: ['array', 'object', 'form', 'runtime-registration'],
-          })[0]
-        : undefined,
-    Object.is,
-  );
-  const validationField = name
-    ? getCompiledValidationField(currentForm?.validation, name)
-    : undefined;
+  const currentValidationScope = useCurrentValidationScope();
+
+  const rawFieldState = useCurrentFormFieldState(name ?? '', {
+    path: name ?? '', ownerPath: name ?? '',
+  });
+  const fieldState = name ? rawFieldState : EMPTY_FORM_FIELD_STATE;
+  const aggregateError = useAggregateError(name ?? '', { enabled: Boolean(name) });
+  const validationModel = currentForm?.validation ?? currentValidationScope?.validation;
+  const validationField = name ? getCompiledValidationField(validationModel, name) : undefined;
   const fieldBehavior = validationField?.behavior;
-  const hasDynamicRequiredRule = Boolean(
-    validationField?.rules.some(
-      ({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless',
-    ),
-  );
-  const values = useCurrentFormState(
-    (state) => (hasDynamicRequiredRule ? state.values : undefined),
-    Object.is,
-  );
   const behavior =
-    validationBehavior ?? fieldBehavior ?? currentForm?.validation?.behavior ?? defaultBehavior;
+    validationBehavior ?? fieldBehavior ?? validationModel?.behavior ?? defaultBehavior;
+  const dynamicRequiredPaths = name
+    ? getDynamicRequiredDependencyPaths(validationField)
+    : EMPTY_DYNAMIC_REQUIRED_PATHS;
+
+  // Dynamic required from form or non-form validation values
+  const dynamicRequired = useCurrentFormState(...) || useCurrentValidationValues(...);
 
   const error = aggregateError ?? fieldState.error;
-  const showError = Boolean(
-    error &&
-    shouldShowFieldError(behavior, {
-      touched: fieldState.touched,
-      dirty: fieldState.dirty,
-      visited: fieldState.visited,
-      submitting: fieldState.submitting,
-    }),
-  );
+  const showError = shouldShowFieldError(behavior, {
+    touched: fieldState.touched, dirty: fieldState.dirty,
+    visited: fieldState.visited, submitting: fieldState.submitting,
+    submitAttempted: fieldState.submitAttempted,
+  });
+  const [focused, setFocused] = useState(false);
 
   const isGroup = layout === 'checkbox' || layout === 'radio';
-  const Tag = isGroup ? 'fieldset' : 'label';
+  const Tag = isGroup ? 'fieldset' : (rootTag ?? 'label');
   const LabelTag = isGroup ? 'legend' : 'span';
   const effectiveRequired =
-    Boolean(required) ||
-    Boolean(name && isFieldEffectivelyRequired(currentForm?.validation, name, values ?? {}));
+    Boolean(required) || Boolean(currentForm ? dynamicRequired : nonFormDynamicRequired);
+
+  // ARIA ids for error/hint/description wiring
+  const errorId = name ? `${name}-error` : undefined;
+  const controlId = name ? `${name}-control` : undefined;
+  const labelId = label && Tag === 'div' ? `${name ?? reactId}-label` : undefined;
+  const hintId = (showValidating || showHint) ? `${name}-hint` : undefined;
+  const descriptionId = showDescription ? `${name}-description` : undefined;
+  const describedBy = mergeDescribedBy(showError ? errorId : undefined, hintId, descriptionId);
+
+  // Clone child with ARIA props (id, aria-labelledby, aria-describedby,
+  // aria-errormessage, aria-invalid, onFocus/onBlur for focus tracking)
+  const child = cloneElement(children, {
+    id: childProps?.id ?? controlId,
+    'aria-labelledby': mergeDescribedBy(childProps?.['aria-labelledby'], labelId),
+    'aria-describedby': mergeDescribedBy(childProps?.['aria-describedby'], describedBy),
+    'aria-errormessage': showError ? errorId : undefined,
+    'aria-invalid': (childProps?.['aria-invalid'] ?? showError) || undefined,
+    onFocus: (event) => { setFocused(true); childProps?.onFocus?.(event); },
+    onBlur: (event) => { setFocused(false); childProps?.onBlur?.(event); },
+  });
+
+  const effectiveLabelAlign = labelAlignProp ?? formLayout.labelAlign;
+  const isLabelTop =
+    effectiveLabelAlign === 'top' || (formLayout.mode === 'normal' && !effectiveLabelAlign);
 
   return (
     <Tag
+      {...rootProps}
       className={cn('nop-field', className)}
+      data-label-align={resolvedLabelAlign}
       data-testid={testid || undefined}
       data-cid={cid != null ? cid : undefined}
       data-field-visited={fieldState.visited ? '' : undefined}
       data-field-touched={fieldState.touched ? '' : undefined}
       data-field-dirty={fieldState.dirty ? '' : undefined}
       data-field-invalid={showError ? '' : undefined}
+      data-field-mode={formLayout.mode}
+      aria-required={effectiveRequired || undefined}
     >
       {label ? (
-        <LabelTag data-slot="field-label">
-          {label}
+        <LabelTag data-slot="field-label" style={labelStyle}>
+          {labelId ? <span id={labelId}>{label}</span> : label}
           {effectiveRequired ? (
-            <span data-slot="field-required" aria-hidden="true">
-              *
+            <span data-slot="field-required" aria-hidden="true">*</span>
+          ) : null}
+          {labelRemark ? (
+            <span data-slot="field-label-remark"
+              title={typeof labelRemark.content === 'string' ? labelRemark.content : undefined}>
+              {labelRemark.icon ?? '?'}
             </span>
           ) : null}
         </LabelTag>
       ) : null}
 
-      <div data-slot="field-control">{children}</div>
+      <div data-slot="field-control"
+        aria-labelledby={labelId}
+        aria-describedby={describedBy}
+        aria-errormessage={showError ? errorId : undefined}
+        aria-invalid={showError || undefined}>
+        {child}
+        {remark ? (
+          <span data-slot="field-remark"
+            title={typeof remark.content === 'string' ? remark.content : undefined}>
+            {remark.icon ?? '?'}
+          </span>
+        ) : null}
+      </div>
 
-      {error && showError ? (
-        <span data-slot="field-error">{error.message}</span>
+      {showError && error ? (
+        <span data-slot="field-error" id={errorId} role="alert" aria-live="assertive">
+          {error.message}
+        </span>
       ) : fieldState.validating ? (
-        <span data-slot="field-hint">Validating...</span>
-      ) : focused && !error && hint ? (
-        <span data-slot="field-hint">{hint}</span>
-      ) : !error && description ? (
-        <span data-slot="field-description">{description}</span>
+        <span data-slot="field-hint" id={hintId}>{t('flux.common.validating')}</span>
+      ) : showHint ? (
+        <span data-slot="field-hint" id={hintId}>{hint}</span>
+      ) : showDescription ? (
+        <span data-slot="field-description" id={descriptionId}>{description}</span>
       ) : null}
     </Tag>
   );

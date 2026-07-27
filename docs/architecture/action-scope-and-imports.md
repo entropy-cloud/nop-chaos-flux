@@ -289,8 +289,8 @@ interface ComponentCapabilities {
   invoke(
     method: string,
     payload: Record<string, unknown> | undefined,
-    ctx: ActionContext,
-  ): Promise<ActionResult> | ActionResult;
+    ctx: ComponentCapabilityActionContext,
+  ): Promise<ComponentCapabilityResult> | ComponentCapabilityResult;
   hasMethod?(method: string): boolean;
   listMethods?(): readonly string[];
 }

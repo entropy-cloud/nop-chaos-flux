@@ -60,7 +60,7 @@ interface ArrayFieldSchema extends BaseSchema {
 
 - `itemKind` / `itemKey` / add/remove baseline 已落地
 - schema-level `transformInAction` / `transformOutAction` / `validateValueAction` 仍不是当前已接线 baseline
-- `sortable` 目前也不应被表述为已完整落地的默认能力
+- `sortable` schema 可声明但 renderer 层未对接 sort 交互（无 runtime-wired reorder UI）；声明 `sortable: true` 不会产生可拖拽排序效果
 
 ## Item Kinds
 

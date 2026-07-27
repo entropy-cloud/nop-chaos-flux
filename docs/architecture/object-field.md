@@ -37,7 +37,7 @@ interface ObjectFieldSchema extends BaseSchema {
 
 当前 live implementation note:
 
-- `transformInAction` / `transformOutAction` 已接线
+- `transformInAction` / `transformOutAction` 已接线（schema 层声明 + runtime dispatch 已落地），但仅在此类 action 声明存在时触发；默认无 transform 场景的 inline 路径不创建局部 draft
 - `validateValueAction` 仍不是当前已接线 baseline，不应误读为 object-field 当前会额外跑 owner-level validate pipeline
 - 默认 inline live-edit 路径现在直接投影 parent owner 当前值：当 parent owner 用整对象替换 `name` 对应值时，`object-field` child scope / projected form 会直接反映这次替换，而不是继续停留在 renderer-local working copy 上
 - 只有声明了 `transformInAction` 或 `transformOutAction` 的场景，`object-field` 才会保留局部 working value，用来承载 adapted draft value 与 committed parent value 之间的必要差异

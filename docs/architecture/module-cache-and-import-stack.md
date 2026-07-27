@@ -217,20 +217,36 @@ interface ImportFrame {
 }
 
 interface ImportStack {
-  readonly frames: readonly ImportFrame[];
+  preload(args: { imports?: readonly XuiImportSpec[]; schemaUrl: string }): Promise<void>;
 
-  push(input: {
-    nodeId: string;
-    imports: readonly XuiImportSpec[];
-    cache: ModuleCache;
-    actionScope: ActionScope;
-  }): Promise<void>;
+  installPrepared(args: {
+    ownerNodeId: string;
+    parentFrame?: ImportFrame;
+    imports?: readonly PreparedImportSpec[];
+    actionScope?: ActionScope;
+    componentRegistry?: ComponentHandleRegistry;
+    scope: ScopeRef;
+    nodeInstance?: NodeInstance;
+  }): ImportFrame | undefined;
+
+  push(args: {
+    ownerNodeId: string;
+    parentFrameId?: string;
+    imports?: readonly XuiImportSpec[];
+    actionScope?: ActionScope;
+    componentRegistry?: ComponentHandleRegistry;
+    scope: ScopeRef;
+    schemaUrl: string;
+    nodeInstance?: NodeInstance;
+  }): Promise<ImportFrame | undefined>;
 
   pop(nodeId: string): void;
 
-  resolveAlias(alias: string): ImportStackEntry | undefined;
+  resolveAlias(alias: string, frameId?: string): ImportStackEntry | undefined;
 
-  currentBindings(): Readonly<Record<string, unknown>>;
+  currentBindings(frameId?: string): Readonly<Record<string, unknown>>;
+
+  dispose(): void;
 }
 ```
 
