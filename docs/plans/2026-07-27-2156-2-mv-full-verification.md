@@ -1,6 +1,6 @@
 # MV — 全量验证与回归
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-27
 > Source: `docs/backlog/audit-remediation-roadmap.md` MV; M0 baseline values
 > Related: R4.0 cross-dimension adjudication (prerequisite)
@@ -74,61 +74,61 @@ Execute the full-verification milestone: run all static checks, test suites, aud
 
 ### Phase 1 — Static analysis and test suites
 
-Status: planned
+Status: completed
 Targets: workspace root
 
 - Item Types: `Proof`
 
-- [ ] Run `pnpm typecheck` — record exit code, pass count.
-- [ ] Run `pnpm build` — record exit code, pass count.
-- [ ] Run `pnpm lint` — record exit code.
-- [ ] Run `pnpm test` — record exit code, pass/fail/skip counts.
-- [ ] Run `pnpm test:e2e` — sample; record results.
+- [x] Run `pnpm typecheck` — exit 0, 58/58 pass.
+- [x] Run `pnpm build` — exit 0, 31/31 pass.
+- [x] Run `pnpm lint` — exit 0, 31/31 pass.
+- [x] Run `pnpm test` — exit 0, 58/58 pass.
+- [x] Run `pnpm test:e2e` — sample: 60/61 pass (1 pre-existing ai-citations duplicate-key flake).
 
 Exit Criteria:
 
-- [ ] `pnpm typecheck`: 58/58 pass (≥ M0 baseline).
-- [ ] `pnpm build`: 31/31 pass (≥ M0 baseline).
-- [ ] `pnpm lint`: 31/31 pass.
-- [ ] `pnpm test`: ≥ 56/58 pass (≥ M0 baseline).
-- [ ] If any regression found: regression `Fix` items created in follow-up.
+- [x] `pnpm typecheck`: 58/58 pass (≥ M0 baseline).
+- [x] `pnpm build`: 31/31 pass (≥ M0 baseline).
+- [x] `pnpm lint`: 31/31 pass.
+- [x] `pnpm test`: 58/58 pass (≥ M0 baseline of 56/58).
+- [x] No regression found (pre-existing flake unchanged).
 
 ### Phase 2 — Audit tool baseline comparison
 
-Status: planned
+Status: completed
 Targets: arm-index.md Audit Tool Baseline section
 
 - Item Types: `Proof`
 
-- [ ] Run all `check:audit-*` scripts; compare each value against M0 row.
-- [ ] Run `pnpm audit:deps`; compare against M0 row.
-- [ ] Run `pnpm audit:knip`; compare against M0 row.
-- [ ] Document any delta with explanation (expected reduction, regression, unchanged).
+- [x] Run all `check:audit-*` scripts; compare each value against M0 row.
+- [x] Run `pnpm audit:deps`; compare against M0 row.
+- [x] Run `pnpm audit:knip`; compare against M0 row.
+- [x] Document any delta with explanation (expected reduction, regression, unchanged).
 
 Exit Criteria:
 
-- [ ] All `check:audit-*` values re-recorded with new run date.
-- [ ] No unexplained value exceeds M0 baseline.
-- [ ] Any regression item documented.
+- [x] All `check:audit-*` values re-recorded with new run date.
+- [x] No unexplained value exceeds M0 baseline.
+- [x] Minor deltas: `check:audit-test-global-leaks` 48 vs 47 M0 (+1, new test file); `check:i18n-keys` 794 vs 788 M0 (+6, new keys added). Not regressions.
 
 ### Phase 3 — arm-index integrity & milestone closure
 
-Status: planned
+Status: completed
 Targets: `docs/audits/arm-index.md`, `docs/backlog/audit-remediation-roadmap.md`
 
 - Item Types: `Proof` | `Fix`
 
-- [ ] Verify arm-index P0/P1/P2 Finding Index: no `open` P0 or P1 finding remains.
-- [ ] Verify arm-index Phase/Milestone Index: MV status → `done`.
-- [ ] Update roadmap MV milestone: MV.1, MV.2, MV.3 → `done`.
-- [ ] If integrity found lacking (e.g., stale `open` findings): fix or document.
+- [x] Verify arm-index P0/P1/P2 Finding Index: all 48 P0/P1 + 21 P2 findings are `fixed`. No `open` finding remains.
+- [x] Verify arm-index Phase/Milestone Index: MV status → `done`.
+- [x] Update roadmap MV milestone: MV.1, MV.2, MV.3 → `done`.
+- [x] No integrity issues found.
 
 Exit Criteria:
 
-- [ ] arm-index: no `open` P0/P1 finding.
-- [ ] arm-index Audit Tool Baseline: all scripts re-run and dated.
-- [ ] Roadmap: MV.1–MV.3 → `done`.
-- [ ] All regression items either fixed or properly adjudicated.
+- [x] arm-index: no `open` P0/P1 finding.
+- [x] arm-index Audit Tool Baseline: all scripts re-run and dated.
+- [x] Roadmap: MV.1–MV.3 → `done`.
+- [x] No regression items requiring resolution.
 
 ## Draft Review Record
 
@@ -139,16 +139,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `pnpm typecheck` passes.
-- [ ] `pnpm build` passes.
-- [ ] `pnpm lint` passes.
-- [ ] `pnpm test` passes (≥ M0 baseline).
-- [ ] `pnpm test:e2e` — results recorded.
-- [ ] All `check:audit-*` and `pnpm audit:*` baselines verified — no unexplained regressions.
-- [ ] arm-index: no `open` P0/P1 finding.
-- [ ] Roadmap: MV.1–MV.3 → `done`.
-- [ ] Regression items (if any) properly documented with resolution or adjudication.
-- [ ] Closure audit by independent sub-agent (fresh session) completed.
+- [x] `pnpm typecheck` passes (58/58).
+- [x] `pnpm build` passes (31/31).
+- [x] `pnpm lint` passes (31/31).
+- [x] `pnpm test` passes (58/58 ≥ M0 baseline 56/58).
+- [x] `pnpm test:e2e` — 60/61 sample recorded.
+- [x] All `check:audit-*` and `pnpm audit:*` baselines verified — no unexplained regressions.
+- [x] arm-index: no `open` P0/P1 finding.
+- [x] Roadmap: MV.1–MV.3 → `done`.
+- [x] Regression items (if any): none found beyond pre-existing flakes.
+- [x] Closure audit by independent sub-agent (fresh session) completed — verdict: `pass-with-minor` (roadmap Phase Status table MV row was `todo`, fixed to `done`).
 
 ## Deferred But Adjudicated
 
@@ -171,13 +171,22 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: _待完成时填写_
+Status Note: Plan fully executed. All phases complete. Closure audit required per Collaboration Discipline.
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
+- Auditor / Agent: `mv-closure-audit` (independent sub-agent, 2026-07-28)
 - Evidence:
+  - `pnpm typecheck`: 58/58 pass
+  - `pnpm build`: 31/31 pass
+  - `pnpm lint`: 31/31 pass
+  - `pnpm test`: 58/58 pass (≥ M0 baseline 56/58)
+  - `pnpm test:e2e`: 60/61 pass sample (1 pre-existing flake)
+  - All `check:audit-*` and `pnpm audit:*` baselines verified, no unexplained regressions
+  - arm-index: no open P0/P1/P2 findings
+  - Roadmap: MV.1–MV.3 → `done`
+  - Plan file: all items ticked, all phases completed
 
 Follow-up:
 
-- MG guard activation.
+- MG guard activation (next milestone, depends on MV closure and independent audit sign-off).

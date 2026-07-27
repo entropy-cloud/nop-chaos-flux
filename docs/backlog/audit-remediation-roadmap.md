@@ -39,7 +39,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | R2.0     | P1 修复—代码+测试（展开器）                   | `done` |
 | R3.0     | P1 修复—UI/UX+文档+安全+运维（展开器）        | `done` |
 | R4.0     | 跨维度 P1 裁决（可选）                        | `done` |
-| MV       | 全量验证与回归                                | `todo` |
+| MV       | 全量验证与回归                                | `done` |
 | MG       | Guard 激活与知识沉淀                          | `todo` |
 
 ## 框架/平台复用
@@ -233,11 +233,11 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 ### MV — 全量验证
 
-| Work Item                          | Status | Owner Doc | Dependencies           | Skill |
-| ---------------------------------- | ------ | --------- | ---------------------- | ----- |
-| MV.1 全量 typecheck + build + test | `todo` | —         | MR1-MR4 + 全部 P0 修复 | —     |
-| MV.2 审计工具基线对比              | `todo` | —         | MR1-MR4                | —     |
-| MV.3 arm-index 完整性校验          | `todo` | —         | MR1-MR4                | —     |
+| Work Item                          | Status | Owner Doc                                              | Dependencies           | Skill |
+| ---------------------------------- | ------ | ------------------------------------------------------ | ---------------------- | ----- |
+| MV.1 全量 typecheck + build + test | `done` | `docs/plans/2026-07-27-2156-2-mv-full-verification.md` | MR1-MR4 + 全部 P0 修复 | —     |
+| MV.2 审计工具基线对比              | `done` | `docs/plans/2026-07-27-2156-2-mv-full-verification.md` | MR1-MR4                | —     |
+| MV.3 arm-index 完整性校验          | `done` | `docs/plans/2026-07-27-2156-2-mv-full-verification.md` | MR1-MR4                | —     |
 
 ### MG — Guard 激活与知识沉淀
 

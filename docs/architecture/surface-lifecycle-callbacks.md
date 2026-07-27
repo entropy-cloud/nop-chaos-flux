@@ -360,6 +360,13 @@ async function findNearestRefreshable(startScope, registry, sourceRegistry, targ
 
 `ComponentHandleRegistry.findFirstInScope` 和 `SourceRegistry.findFirstInScope` 是新增的 helper API，按 `scope.id` 精确匹配 bucket，在 bucket 内按 predicate 找第一个。开销可控（同一 scope 下 CRUD / data-source 通常很少）。
 
+**实现注意事项**：两个 registry 的内部存储模型不对称：
+
+- `SourceRegistry` 已经按 `scope.id` 分桶（`scopeEntries: Map<scopeId, Map<name, entry>>`，见 `packages/flux-runtime/src/async-data/source-registry.ts:110-112`），`findFirstInScope` 直接读 bucket 即可。
+- `ComponentHandleRegistry` 是 flat `Set<ComponentHandle>` + by-id / by-name / by-cid 索引（`packages/flux-runtime/src/component-handle-registry.ts:19-24`），**没有 scope-id 维度**。`findFirstInScope` 实现需要遍历 handles 并按 `handle.scope.id === targetScope.id` 过滤，或者在 registry 初始化时新增一个 `Map<scopeId, Set<ComponentHandle>>` 索引。
+
+实现时优先选择新增 scope-id 索引（性能 + 一致性），避免每次 scan。索引维护与 handle register / unregister 同步。
+
 ### `notFound` Behavior
 
 - `silent`（默认）：找不到任何 refreshable target 时返回 `{ ok: true, data: { found: false } }`，不抛错
