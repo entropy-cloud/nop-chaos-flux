@@ -1,6 +1,6 @@
 # R1.0 — P1 修复展开器：结构+运行时（MA1+MA2）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-27
 > Source: `docs/backlog/audit-remediation-roadmap.md` R1.0
 > Related: MA1 审计（`docs/plans/2026-07-27-0800-2-ma1-structure-architecture-audit.md`）、MA2 审计（`docs/plans/2026-07-27-0800-3-ma2-runtime-correctness-audit.md`）、R2.0（后续）
@@ -77,42 +77,42 @@ R1.0 是"展开器"（expander）工作项。本 plan 的交付物不是代码�
 
 ### Phase 1 — 逐项裁决与展开
 
-Status: planned
+Status: completed
 Targets: `docs/audits/arm-index.md` Pending MR1 发现 + `docs/backlog/audit-remediation-roadmap.md`
 
 - Item Types: `Decision`
 
-- [ ] **(Decision)** MA1-P1-001：检查 `RendererDefinition` 和 `RendererDefinitionShape` 的 live 类型签名，确认冗余声明确实可安全移除而无 breakage。裁决修复方案（单文件 4 行删除）、预估工作量（<1h）。
-- [ ] **(Decision)** MA1-P1-002：检查 `nop-hairline--*` 的使用点 count，裁决重命名方案（映射到 `nop-hairline-*` 移除双连字符修饰符）。预估受影响文件数。
-- [ ] **(Decision)** MA1-P2-001：裁决 `docs/references/renderer-interfaces.md` 补充方案并标出新增内容位置。
-- [ ] **(Decision)** MA1-P2-002：裁决 action-core re-export 是"移除"还是"添加 deprecation 注释后保留"。
-- [ ] **(Decision)** MA1-P2-003/004：裁决 displayName/category 添加方案（枚举 + 映射）。
-- [ ] **(Decision)** MA1-P2-005：裁决 DiffView `data-slot` 添加方案。
-- [ ] **(Decision)** MA1-P2-006：裁决 DiffView CSS 提取方案（提取到新文件 + 调整 @import）。
-- [ ] **(Decision)** MA2-RT-F01/F03：裁决 async void-promise 注释添加标准（统一 structured-failure-path 注释格式）及受影响文件数。
-- [ ] 逐项记录裁决结论（修复方案 + 影响范围 + 工作量评级 S/M/L + 依赖关系）。
+- [x] **(Decision)** MA1-P1-001：检查确认。`RendererDefinition` (renderer-core.ts:276) extends `RendererDefinitionShape` (renderer-definition-types.ts:110)，冗余字段 `validation`/`validationDefaults`/`deepFields`/`compilation` 在子接口中重复声明。移除安全（TypeScript 继承保留所有字段）。**裁决：Fix** — 单文件删除4行。工作量 S。依赖：无。→ **R1.1**
+- [x] **(Decision)** MA1-P1-002：研究确认。`nop-hairline--*` (双连字符 BEM 修饰符) 在 1 个 CSS 定义文件 (mobile.css) + 4 个渲染器源码 + 5 个测试文件 + 2 个 playground demo 中使用。改为 `nop-hairline-*` (单连字符)。**裁决：Fix** — 全局重命名 ~12 文件。工作量 S。依赖：无。→ **R1.2**
+- [x] **(Decision)** MA1-P2-001：确认 `deepFields`/`compilation`/`validationDefaults`/`frameRootTag` 均存在于 `RendererDefinitionShape` 但未出现在 `renderer-interfaces.md` 字段映射表中。应追加到 "Runtime registration" 组。**裁决：Docs** — 单文件添加4字段。工作量 S。依赖：无。→ **R1.3**
+- [x] **(Decision)** MA1-P2-002：确认 `flux-action-core/src/index.ts:39` re-exports `cancelPendingDebounce`/`scheduleDebounce`。所有消费者已直接从 `flux-core` 导入，零消费者使用此 re-export。**裁决：Fix** — 移除单行 re-export。工作量 S。依赖：无。→ **R1.4**
+- [x] **(Decision)** MA1-P2-003/004：确认所有 19 个 form-advanced 渲染器和 7 个 date 渲染器均缺失 `displayName`/`category`。参考 `fieldset`/`form` 已有模式添加。**裁决：Fix** — 19 个定义 + 7 个定义分别添加。工作量 M（003） + S（004）。依赖：无。→ **R1.5**、**R1.6**
+- [x] **(Decision)** MA1-P2-005：确认 `DiffViewRenderer` 所有渲染路径的根 `<div>` 均无 `data-slot`。子组件已有 `data-slot="diff-header"` 等。**裁决：Fix** — 根元素加 `data-slot="diff-view"`。工作量 S。依赖：无。→ **R1.7**
+- [x] **(Decision)** MA1-P2-006：确认 `styles.css` 641 行中 ~609 行 (~95%) 为 DiffView 样式。**裁决：Fix** — 提取到 `diff-view/diff-view.css`，styles.css 保留 `@import`。工作量 S。依赖：无。→ **R1.8**
+- [x] **(Decision)** MA2-RT-F01/F03：确认 20 (runtime) + 15 (core) = 35 处 async void-promise 模式。全部为有意 fire-and-forget，错误通过 state machine / error boundary / form state 路由。**裁决：Fix** — 添加结构化错误路由注释（格式：`// Errors routed through <mechanism> — <rationale>`）。工作量 S（35 处加注释）。依赖：无。→ **R1.9**、**R1.10**
+- [x] 逐项记录裁决结论（修复方案 + 影响范围 + 工作量评级 S/M/L + 依赖关系）。参见上方各条目及 Phase 2 roadmap 展开。
 
 Exit Criteria:
 
-- [ ] 全部 10 项发现的裁决记录已完成
-- [ ] 不存在未经裁决的 `Pending MR1` 发现
+- [x] 全部 10 项发现的裁决记录已完成
+- [x] 不存在未经裁决的 `Pending MR1` 发现
 
 ### Phase 2 — Roadmap 展开
 
-Status: planned
+Status: completed
 Targets: `docs/backlog/audit-remediation-roadmap.md`
 
 - Item Types: `Decision`
 
-- [ ] 将 Phase 1 裁决的 Fix 项追加为 `docs/backlog/audit-remediation-roadmap.md` 中 MR1 节的具体工作项 R1.1 ... R1.N
-- [ ] 对每项 R1.x 写明确保目标、依赖关系、对应 finding ID
-- [ ] 更新 `docs/audits/arm-index.md` 中 Pending MR1 发现的状态（从 `Pending MR1` 改为指向具体 R1.x 编号）
+- [x] 将 Phase 1 裁决的 Fix 项追加为 `docs/backlog/audit-remediation-roadmap.md` 中 MR1 节的具体工作项 R1.1 ... R1.10
+- [x] 对每项 R1.x 写明确保目标、依赖关系、对应 finding ID
+- [x] 更新 `docs/audits/arm-index.md` 中 Pending MR1 发现的状态（从 `Pending MR1` 改为指向具体 R1.x 编号）
 
 Exit Criteria:
 
-- [ ] `docs/backlog/audit-remediation-roadmap.md` 的 MR1 节已包含展开的具体修复工作项 R1.1 ... R1.N
-- [ ] arm-index.md 中的对应发现状态已更新
-- [ ] 所有在 Phase 1 中裁定为 deferred 的项已明确标注并附理由
+- [x] `docs/backlog/audit-remediation-roadmap.md` 的 MR1 节已包含展开的具体修复工作项 R1.1 ... R1.10
+- [x] arm-index.md 中的对应发现状态已更新
+- [x] 所有在 Phase 1 中裁定为 deferred 的项已明确标注并附理由（本次无 deferred 项）
 
 ## Draft Review Record
 
@@ -124,12 +124,12 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 全部 10 项 MA1+MA2 发现已在 Phase 1 中完成裁决
-- [ ] `docs/backlog/audit-remediation-roadmap.md` 的 MR1 节已展开具体修复工作项 R1.1 ... R1.N
-- [ ] arm-index.md 中对应发现的状态已从 `Pending MR1` 指向具体 R1.x 编号
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 所有 deferred 项有明确 `Why Not Blocking Closure` 理由
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 全部 10 项 MA1+MA2 发现已在 Phase 1 中完成裁决
+- [x] `docs/backlog/audit-remediation-roadmap.md` 的 MR1 节已展开具体修复工作项 R1.1 ... R1.10
+- [x] arm-index.md 中对应发现的状态已从 `Pending MR1` 指向具体 R1.x 编号
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 所有 deferred 项有明确 `Why Not Blocking Closure` 理由（本次无 deferred 项）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
       _不适用：纯文档计划，不产生代码变更（仅修改 `docs/` 下的文件）。参见 Plan Authoring Guide Minimum Rule 18 例外。_
 
 ## Deferred But Adjudicated
@@ -142,13 +142,13 @@ _本 plan 为 expander plan，仅对发现进行裁决。任何被裁定为 defe
 
 ## Closure
 
-Status Note:
+Status: completed — 全部 Phase 1（10 项裁决）+ Phase 2（roadmap 展开 + arm-index 更新）已完成。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: mission-driver (2026-07-27)
+- Evidence: Phase 1 所有 10 项发现的裁决已记录在 plan 文件中。Phase 2 已追加 R1.1–R1.10 到 `docs/backlog/audit-remediation-roadmap.md` MR1 节。`docs/audits/arm-index.md` 中 10 项发现的状态已从 `Pending MR1` 更新为对应 R1.x 编号。无 deferred 项。
 
 Follow-up:
 
-- R1.1 ... R1.N 的具体代码修复由后续 MR1 fix execution plan 执行
+- R1.1–R1.10 的具体代码修复由后续 MR1 fix execution plan 执行

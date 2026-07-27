@@ -35,7 +35,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | MA6      | 文档与契约一致性审计                          | `done` |
 | MA7.1    | 安全与运维—XSS/样式/性能审计                  | `done` |
 | MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `done` |
-| R1.0     | P1 修复—结构+运行时（展开器）                 | `todo` |
+| R1.0     | P1 修复—结构+运行时（展开器）                 | `done` |
 | R2.0     | P1 修复—代码+测试（展开器）                   | `todo` |
 | R3.0     | P1 修复—UI/UX+文档+安全+运维（展开器）        | `todo` |
 | R4.0     | 跨维度 P1 裁决（可选）                        | `todo` |
@@ -138,9 +138,19 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 ### MR1 — P1 修复：结构+运行时（依赖 MA1 + MA2 完成）
 
-| Work Item                            | Status | Owner Doc | Dependencies              | Skill |
-| ------------------------------------ | ------ | --------- | ------------------------- | ----- |
-| R1.0 P1 展开器（追加实际修复工作项） | `todo` | —         | MA1.1-MA1.4 + MA2.1-MA2.3 | —     |
+| Work Item                                                | Status | Owner Doc                                                                                                                                            | Dependencies              | Skill |
+| -------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ----- |
+| R1.0 P1 展开器（裁决完成，已展开R1.1-10）                | `done` | `docs/plans/2026-07-27-2100-3-r10-p1-fix-expander-structure-runtime.md`                                                                              | MA1.1-MA1.4 + MA2.1-MA2.3 | —     |
+| R1.1 MA1-P1-001 RendererDefinition 冗余字段移除          | `todo` | `packages/flux-core/src/types/renderer-core.ts:286-289`                                                                                              | 无                        | —     |
+| R1.2 MA1-P1-002 nop-hairline--\* 重命名                  | `todo` | `packages/ui/src/styles/mobile.css` + 4 渲染器文件 + 测试/playground 更新                                                                            | 无                        | —     |
+| R1.3 MA1-P2-001 renderer-interfaces.md 字段补充          | `todo` | `docs/references/renderer-interfaces.md` "Runtime registration" 组追加 4 字段                                                                        | 无                        | —     |
+| R1.4 MA1-P2-002 action-core re-export 移除               | `todo` | `packages/flux-action-core/src/index.ts:39`                                                                                                          | 无                        | —     |
+| R1.5 MA1-P2-003 form-advanced displayName/category 添加  | `todo` | `packages/flux-renderers-form-advanced/src/` 19 个定义文件                                                                                           | 无                        | —     |
+| R1.6 MA1-P2-004 date renderers displayName/category 添加 | `todo` | `packages/flux-renderers-form/src/renderers/date-renderer-definitions.ts` 7 个定义                                                                   | 无                        | —     |
+| R1.7 MA1-P2-005 DiffView data-slot 添加                  | `todo` | `packages/flux-renderers-content/src/diff-view/diff-view-renderer.tsx`                                                                               | 无                        | —     |
+| R1.8 MA1-P2-006 DiffView CSS 提取到单独文件              | `todo` | `packages/flux-renderers-content/src/styles.css` → 提取 ~609 行 DiffView 样式到 `diff-view/diff-view.css`                                            | 无                        | —     |
+| R1.9 MA2-RT-F01 runtime async void-promise 注释          | `todo` | `packages/flux-runtime/src/`, `packages/flux-react/src/` — 20 处加结构化错误路由注释                                                                 | 无                        | —     |
+| R1.10 MA2-CORE-F03 core async void-promise 注释          | `todo` | `packages/flux-action-core/src/`, `packages/flux-compiler/src/`, `packages/flux-core/src/`, `packages/flux-formula/src/` — 15 处加结构化错误路由注释 | 无                        | —     |
 
 ### MR2 — P1 修复：代码+测试（依赖 MA3 + MA4 完成）
 
@@ -225,7 +235,18 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 ### MR1-MR4 — P1 修复
 
-- **R1.0 / R2.0 / R3.0**：展开器工作项——plan 产物是向 roadmap 追加具体修复工作项（R1.1, R1.2...）。每个追加的工作项对应一条审计发现的 P1。
+- **R1.0**：展开器工作项（已完成）——裁决了 MA1+MA2 全部 10 项 P1/P2 发现，向 roadmap 追加了 R1.1–R1.10 具体修复工作项。
+- **R1.1**：`RendererDefinition` 移除 4 个从 `RendererDefinitionShape` 继承的冗余字段（`validation`/`validationDefaults`/`deepFields`/`compilation`）。
+- **R1.2**：`nop-hairline--*` BEM 修饰符重命名为 `nop-hairline-*`。
+- **R1.3**：`docs/references/renderer-interfaces.md` 补充 `deepFields`/`compilation`/`validationDefaults`/`frameRootTag` 字段。
+- **R1.4**：`flux-action-core/src/index.ts` 移除 `cancelPendingDebounce`/`scheduleDebounce` re-export。
+- **R1.5**：`flux-renderers-form-advanced` 19 个渲染器定义添加 `displayName`/`category`。
+- **R1.6**：`flux-renderers-form` 7 个 date 渲染器定义添加 `displayName`/`category`。
+- **R1.7**：`DiffViewRenderer` 根元素添加 `data-slot="diff-view"`。
+- **R1.8**：`flux-renderers-content` DiffView CSS (~609 行) 提取到独立文件。
+- **R1.9**：runtime 包簇 20 处 async void-promise 添加结构化错误路由注释。
+- **R1.10**：core 包簇 15 处 async void-promise 添加结构化错误路由注释。
+- **R2.0 / R3.0**：展开器工作项——plan 产物是向 roadmap 追加具体修复工作项（R2.1/R3.1...）。
 - **R4.0**：裁决跨维度冲突。若无冲突直接标记 done。
 
 ### MV — 全量验证

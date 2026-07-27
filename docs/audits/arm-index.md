@@ -1,7 +1,7 @@
 # Audit Remediation Master Index (arm-index)
 
 > Plan Status: completed
-> Last Updated: 2026-07-27 (MA6 findings added)
+> Last Updated: 2026-07-27 (R1.0 expander completed — arm-index findings linked to R1.1–R1.10)
 > Purpose: Central index mapping all audit phases, package clusters, P0/P1 findings, and audit report paths.
 > Note: Baseline values recorded during M0 execution (2026-07-27 0800 Plan). All check:audit-_ and pnpm audit:_ commands executed. Full verification baseline green (typecheck + build + test with 1 pre-existing flake).
 
@@ -28,7 +28,7 @@
 | MA6      | 文档与契约一致性审计                          | `completed` | `docs/audits/arm-MA6-doc-contract.md`                                                                 |
 | MA7.1    | 安全与运维—XSS/样式/性能审计                  | `completed` | `docs/audits/arm-MA7-security-style-performance.md`                                                   |
 | MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `completed` | `docs/audits/arm-MA7-ci-deprecation-i18n.md`                                                          |
-| R1.0     | P1 修复—结构+运行时                           | `todo`      | `docs/plans/2026-*-MR1-*.md`                                                                          |
+| R1.0     | P1 修复—结构+运行时                           | `done`      | `docs/plans/2026-07-27-2100-3-r10-p1-fix-expander-structure-runtime.md`                               |
 | R2.0     | P1 修复—代码+测试                             | `todo`      | `docs/plans/2026-*-MR2-*.md`                                                                          |
 | R3.0     | P1 修复—UI/UX+文档+安全+运维                  | `todo`      | `docs/plans/2026-*-MR3-*.md`                                                                          |
 | R4.0     | 跨维度 P1 裁决                                | `todo`      | `docs/plans/2026-*-MR4-*.md`                                                                          |
@@ -57,8 +57,8 @@
 | AI-P1-1      | P1       | flux-renderers-ai                                  | `deleteConversation` post-await stale-closure race                                                   | `2026-07-25-multi-audit-ai`                     | open   | Pending MR2 |
 | AI-P1-2      | P1       | flux-renderers-ai                                  | `ai-citations` HTML 双编码显示损坏                                                                   | `2026-07-25-multi-audit-ai`                     | open   | Pending MR2 |
 | SCHED-F73    | P1       | flux-renderers-scheduling                          | Kanban DnD test silent no-op                                                                         | `2026-07-23-multi-audit-scheduling`             | open   | Pending MR2 |
-| MA1-P1-001   | P1       | flux-core (renderer-core)                          | `RendererDefinition` 冗余声明4个从`RendererDefinitionShape`继承的字段                                | `arm-MA1-core-structure.md`                     | open   | Pending MR1 |
-| MA1-P1-002   | P1       | flux-renderers-data/form/form-advanced/ui          | BEM风格 `nop-hairline--*` 修饰符命名违反无 BEM 原则                                                  | `arm-MA1-basic-structure.md`                    | open   | Pending MR1 |
+| MA1-P1-001   | P1       | flux-core (renderer-core)                          | `RendererDefinition` 冗余声明4个从`RendererDefinitionShape`继承的字段                                | `arm-MA1-core-structure.md`                     | open   | R1.1        |
+| MA1-P1-002   | P1       | flux-renderers-data/form/form-advanced/ui          | BEM风格 `nop-hairline--*` 修饰符命名违反无 BEM 原则                                                  | `arm-MA1-basic-structure.md`                    | open   | R1.2        |
 | MA3-F01      | P1       | flux-react                                         | `container-hooks.ts:87` 空catch吞掉`componentRegistry.resolve()`异常                                 | `arm-MA3-core-runtime-code-quality.md`          | open   | Pending MR2 |
 | MA3-P2-F1    | P1       | flux-renderers-data                                | `crud-renderer.tsx:512` runtime-raw-schema-read违反compile-once原则                                  | `arm-MA3-basic-content-mobile-code-quality.md`  | open   | Pending MR2 |
 | MA4-F01      | P1       | flux-runtime                                       | Validation compile→runtime 测试绕过，手动构造 CompiledFormValidationModel                            | `arm-MA4-core-runtime-test-coverage.md`         | open   | Pending MR2 |
@@ -105,14 +105,14 @@
 
 | Finding ID      | Severity | Package                      | Description                                                                                                               | Source Report                                  | Status | Fix Plan    |
 | --------------- | -------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------ | ----------- |
-| MA1-P2-001      | P2       | docs/references              | `renderer-interfaces.md` 字段映射缺少 `deepFields`/`compilation`/`validationDefaults`/`frameRootTag`                      | `arm-MA1-core-structure.md`                    | open   | Pending MR1 |
-| MA1-P2-002      | P2       | flux-action-core             | 便利再导出 flux-core debounce 函数造成传递耦合                                                                            | `arm-MA1-core-structure.md`                    | open   | Pending MR1 |
-| MA1-P2-003      | P2       | flux-renderers-form-advanced | 19个渲染器缺少 `displayName`/`category` 影响工具链发现性                                                                  | `arm-MA1-basic-structure.md`                   | open   | Pending MR1 |
-| MA1-P2-004      | P2       | flux-renderers-form          | 7个date渲染器缺少 `displayName`/`category`                                                                                | `arm-MA1-basic-structure.md`                   | open   | Pending MR1 |
-| MA1-P2-005      | P2       | flux-renderers-content       | DiffView根元素缺少 `data-slot` 属性                                                                                       | `arm-MA1-content-mobile-structure.md`          | open   | Pending MR1 |
-| MA1-P2-006      | P2       | flux-renderers-content       | CSS文件641行（~600行DiffView），建议提取到单独文件                                                                        | `arm-MA1-content-mobile-structure.md`          | open   | Pending MR1 |
-| MA2-RT-F01      | P2       | flux-runtime, flux-react     | 20 async void-promise patterns in runtime packages; all intentional but lack structured error routing comments            | `arm-MA2-runtime-raw-async-fieldframe.md`      | open   | Pending MR1 |
-| MA2-CORE-F03    | P2       | flux-core cluster            | 15 async void-promise patterns in core packages; all intentional but could benefit from structured error routing comments | `arm-MA2-core-schema-dispatch.md`              | open   | Pending MR1 |
+| MA1-P2-001      | P2       | docs/references              | `renderer-interfaces.md` 字段映射缺少 `deepFields`/`compilation`/`validationDefaults`/`frameRootTag`                      | `arm-MA1-core-structure.md`                    | open   | R1.3        |
+| MA1-P2-002      | P2       | flux-action-core             | 便利再导出 flux-core debounce 函数造成传递耦合                                                                            | `arm-MA1-core-structure.md`                    | open   | R1.4        |
+| MA1-P2-003      | P2       | flux-renderers-form-advanced | 19个渲染器缺少 `displayName`/`category` 影响工具链发现性                                                                  | `arm-MA1-basic-structure.md`                   | open   | R1.5        |
+| MA1-P2-004      | P2       | flux-renderers-form          | 7个date渲染器缺少 `displayName`/`category`                                                                                | `arm-MA1-basic-structure.md`                   | open   | R1.6        |
+| MA1-P2-005      | P2       | flux-renderers-content       | DiffView根元素缺少 `data-slot` 属性                                                                                       | `arm-MA1-content-mobile-structure.md`          | open   | R1.7        |
+| MA1-P2-006      | P2       | flux-renderers-content       | CSS文件641行（~600行DiffView），建议提取到单独文件                                                                        | `arm-MA1-content-mobile-structure.md`          | open   | R1.8        |
+| MA2-RT-F01      | P2       | flux-runtime, flux-react     | 20 async void-promise patterns in runtime packages; all intentional but lack structured error routing comments            | `arm-MA2-runtime-raw-async-fieldframe.md`      | open   | R1.9        |
+| MA2-CORE-F03    | P2       | flux-core cluster            | 15 async void-promise patterns in core packages; all intentional but could benefit from structured error routing comments | `arm-MA2-core-schema-dispatch.md`              | open   | R1.10       |
 | MA3-F02         | P2       | flux-runtime                 | `form-runtime-owner.ts` (739行)超过700行硬限制                                                                            | `arm-MA3-core-runtime-code-quality.md`         | open   | Pending MR2 |
 | MA3-F03         | P2       | flux-compiler                | `node-compiler.ts` (731行)超过700行硬限制                                                                                 | `arm-MA3-core-runtime-code-quality.md`         | open   | Pending MR2 |
 | MA3-F04         | P2       | flux-compiler                | `shape-validation-rules.ts` (706行)超过700行硬限制                                                                        | `arm-MA3-core-runtime-code-quality.md`         | open   | Pending MR2 |
