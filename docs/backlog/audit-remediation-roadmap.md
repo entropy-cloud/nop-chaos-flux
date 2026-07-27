@@ -24,9 +24,9 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | MA2.1    | 运行时层—核心包簇 Schema 与硬编码分发审计     | `done` |
 | MA2.2    | 运行时层—运行时包簇裸读取与异步路径审计       | `done` |
 | MA2.3    | 运行时层—基础渲染器分发与 Action 链路审计     | `done` |
-| MA3.1    | 代码质量—核心+运行时 代码质量与 React19 审计  | `todo` |
-| MA3.2    | 代码质量—基础+内容+移动端 代码质量审计        | `todo` |
-| MA3.3    | 代码质量—设计器+办公 代码质量审计             | `todo` |
+| MA3.1    | 代码质量—核心+运行时 代码质量与 React19 审计  | `done` |
+| MA3.2    | 代码质量—基础+内容+移动端 代码质量审计        | `done` |
+| MA3.3    | 代码质量—设计器+办公 代码质量审计             | `done` |
 | MA4.1    | 测试层—核心+运行时 测试覆盖审计               | `todo` |
 | MA4.2    | 测试层—基础+内容+移动端 测试覆盖审计          | `todo` |
 | MA4.3    | 测试层—设计器+办公 测试覆盖与 E2E 审计        | `todo` |
@@ -104,9 +104,9 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 | Work Item                            | Status | Owner Doc                               | Dependencies | Skill                                                               |
 | ------------------------------------ | ------ | --------------------------------------- | ------------ | ------------------------------------------------------------------- |
-| MA3.1 核心+运行时 代码质量 + React19 | `todo` | `docs/architecture/renderer-runtime.md` | M0           | `code-quality-audit-prompt.md` + `react19-best-practices-review.md` |
-| MA3.2 基础+内容+移动端 代码质量      | `todo` | `docs/architecture/styling-system.md`   | M0           | `code-quality-audit-prompt.md`                                      |
-| MA3.3 设计器+办公 代码质量           | `todo` | —                                       | M0           | `code-quality-audit-prompt.md`                                      |
+| MA3.1 核心+运行时 代码质量 + React19 | `done` | `docs/architecture/renderer-runtime.md` | M0           | `code-quality-audit-prompt.md` + `react19-best-practices-review.md` |
+| MA3.2 基础+内容+移动端 代码质量      | `done` | `docs/architecture/styling-system.md`   | M0           | `code-quality-audit-prompt.md`                                      |
+| MA3.3 设计器+办公 代码质量           | `done` | —                                       | M0           | `code-quality-audit-prompt.md`                                      |
 
 ### MA4 — 测试层审计（维 D）
 
@@ -197,11 +197,11 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 - **MA2.2**：审计运行时包簇：`check:audit-runtime-raw-schema-reads` + `check:audit-async-failure-paths` + `check:audit-fieldframe-bypasses` 扫描，抽样验证每个候选命中。产出 arm-MA2-runtime-\* 报告。
 - **MA2.3**：审计基础渲染器：硬编码分发路径 + Action 派发链路完整性。产出 arm-MA2-basic-\* 报告。
 
-### MA3 — 代码质量
+### MA3 — 代码质量 ✅
 
-- **MA3.1**：核心+运行时包簇：代码实现质量 + React 19 `'use no memo'` 纪律 + useCallback/useMemo 必要性审查 + `check:audit-react19-optimization-candidates`。
-- **MA3.2**：基础+内容+移动端：代码质量 + 重构候发现（超大文件/重复模式）。
-- **MA3.3**：设计器+办公：代码质量 + oversized code file 审查。
+- **MA3.1**：核心+运行时包簇：代码实现质量 + React 19 `'use no memo'` 纪律 + useCallback/useMemo 必要性审查 + `check:audit-react19-optimization-candidates`。✅ `done` — 详见 `docs/audits/arm-MA3-core-runtime-code-quality.md`
+- **MA3.2**：基础+内容+移动端：代码质量 + 重构候发现（超大文件/重复模式）。✅ `done` — 详见 `docs/audits/arm-MA3-basic-content-mobile-code-quality.md`
+- **MA3.3**：设计器+办公：代码质量 + oversized code file 审查。✅ `done` — 详见 `docs/audits/arm-MA3-designer-office-code-quality.md`
 
 ### MA4 — 测试层
 
