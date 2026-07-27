@@ -1,22 +1,15 @@
 import { appendJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics.js';
 import { isPlainObject, normalizeRootPath } from '@nop-chaos/flux-core';
-import { validateHostAction, type HostActionValidationContext } from './host-action-validation.js';
+import { validateHostAction } from './host-action-validation.js';
 import { classifyActionSelector, validateActionSelector } from './action-selector-validation.js';
+import {
+  emitSchemaDiagnostic,
+  isDynamicStructuralPath,
+  type ActionValidationContext,
+} from './shape-validation-predicates.js';
 
-export interface ActionValidationContext {
-  hostContext?: HostActionValidationContext;
-  symbolTable?: import('@nop-chaos/flux-core').CompileSymbolTable;
-  visibleImports?: ReadonlyMap<string, import('@nop-chaos/flux-core').PreparedImportSpec | undefined>;
-  componentTargets?: ReadonlyMap<
-    string,
-    import('./shape-validation-traversal.js').ComponentTargetContractResolution
-  >;
-  strictMode?: boolean;
-}
-
-function isDynamicStructuralPath(value: string): boolean {
-  return value.includes('${') || value.includes('$@{');
-}
+export type { ActionValidationContext };
+export { emitSchemaDiagnostic };
 
 export function validateStructuralPathField(input: {
   value: unknown;
@@ -54,24 +47,6 @@ export function validateStructuralPathField(input: {
       input.enabled,
     );
   }
-}
-
-export function emitSchemaDiagnostic(
-  diagnostics: SchemaCompilerDiagnosticsContext,
-  issue: {
-    code: Parameters<SchemaCompilerDiagnosticsContext['emit']>[0]['code'];
-    message: string;
-    path: string;
-    severity?: Parameters<SchemaCompilerDiagnosticsContext['emit']>[0]['severity'];
-    source?: Parameters<SchemaCompilerDiagnosticsContext['emit']>[0]['source'];
-  },
-  enabled: boolean,
-) {
-  if (!enabled) {
-    return;
-  }
-
-  diagnostics.emit(issue);
 }
 
 export function validateDependsOnRoots(

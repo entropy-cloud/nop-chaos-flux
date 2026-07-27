@@ -12,7 +12,7 @@ import {
   createSchemaCompilerDiagnosticsContext,
   schemaPathToJsonPointer,
 } from './diagnostics.js';
-import type { CompileSchemaToTemplateNodesFn } from './node-compiler.js';
+import type { CompileSchemaToTemplateNodesFn } from './node-compiler-helpers.js';
 
 export type ValidateSchemaInputFn = (
   schema: SchemaInput,

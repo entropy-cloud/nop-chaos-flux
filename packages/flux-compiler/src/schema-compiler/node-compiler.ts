@@ -15,12 +15,10 @@ import type {
   PreparedImportSpec,
   ReactionSchema,
   ReactiveActionSchema,
-  RendererDefinition,
   SchemaInput,
   ScopePlan,
   TemplateNode,
   TemplateRegion,
-  XuiImportSpec,
 } from '@nop-chaos/flux-core';
 import { createNodeId, createTemplateRegion, isSchemaInput } from '@nop-chaos/flux-core';
 import { classifyField, buildMetaProgram } from './fields.js';
@@ -46,6 +44,17 @@ import {
   computeStaticAnalysis,
 } from './static-analysis.js';
 import { compileRuntimeValueTree } from './runtime-value-compilation.js';
+import {
+  isImportSpecCandidate,
+  isSourceCarrier,
+  normalizeBooleanLikeCandidate,
+  createCompileFailureNode,
+  normalizeDeepFieldNestedRegions,
+} from './node-compiler-helpers.js';
+import type {
+  CompileSingleNodeFn,
+  CompileSchemaToTemplateNodesFn,
+} from './node-compiler-helpers.js';
 import { compileActions } from '../action-compiler.js';
 import { compileDataSource } from '../source-compiler.js';
 import { compileReaction } from '../reaction-compiler.js';
@@ -54,139 +63,20 @@ import {
   normalizeValidationTriggers,
   normalizeValidationVisibilityTriggers,
 } from '../validation-lowering.js';
-import { extractNestedSchemaRegions, normalizeHiddenFieldPolicy } from '@nop-chaos/flux-core';
+import { normalizeHiddenFieldPolicy } from '@nop-chaos/flux-core';
 
-// [Plan 444 / 02-N1] Extraction evaluation: this file (~690 lines) contains a single large
-// compileSingleNode closure that handles field classification, region compilation, prop
-// compilation, action/event compilation, validation, imports, and template node construction
-// in one pass. The sections share substantial mutable state (symbolTable, regions,
-// compiledPropEntries, sourcePropKeys, rawEventPlans). Helper functions
-// (normalizeDeepFieldNestedRegions, createCompileFailureNode, etc.) are already extracted.
-// Splitting the main closure would require passing significant shared state between modules,
-// reducing clarity without improving maintainability.
-// Decision: current cohesion is acceptable, no extraction needed.
-
-function normalizeDeepFieldNestedRegions(input: {
-  value: unknown;
-  path: string;
-  key: string;
-  rules?: readonly import('@nop-chaos/flux-core').RendererDeepFieldRegionRule[];
-  regions: Record<string, TemplateRegion>;
-  compileSchema: (
-    input: SchemaInput,
-    options?: CompileSchemaOptions,
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => TemplateNode | TemplateNode[];
-}) {
-  const rules = input.rules;
-
-  if (!rules?.length) {
-    return input.value;
-  }
-
-  if (Array.isArray(input.value)) {
-    return input.value.map((item, index) => {
-      if (!item || typeof item !== 'object') {
-        return item;
-      }
-
-      return extractNestedSchemaRegions({
-        candidate: item as Record<string, unknown>,
-        itemRegionPath: `${input.path}.${input.key}[${index}]`,
-        itemRegionKeyPrefix: `${input.key}.${index}`,
-        rules,
-        regions: input.regions,
-        compileSchema: input.compileSchema,
-      }).value;
-    });
-  }
-
-  if (!input.value || typeof input.value !== 'object') {
-    return input.value;
-  }
-
-  return extractNestedSchemaRegions({
-    candidate: input.value as Record<string, unknown>,
-    itemRegionPath: `${input.path}.${input.key}`,
-    itemRegionKeyPrefix: input.key,
-    rules,
-    regions: input.regions,
-    compileSchema: input.compileSchema,
-  }).value;
-}
-
-export type CompileSingleNodeFn = (
-  schema: BaseSchema,
-  options: CompileNodeOptions,
-  diagnostics: SchemaCompilerDiagnosticsContext,
-  depth: number,
-) => TemplateNode;
-
-export type CompileSchemaToTemplateNodesFn = (
-  schema: SchemaInput,
-  options: CompileSchemaOptions,
-  depth: number,
-) => TemplateNode | TemplateNode[];
-
-function isImportSpecCandidate(value: unknown): value is XuiImportSpec {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
+// [R2.4] Utility functions (normalizeDeepFieldNestedRegions, isImportSpecCandidate,
+// isSourceCarrier, normalizeBooleanLikeCandidate, createCompileFailureNode) and types
+// (CompileSingleNodeFn, CompileSchemaToTemplateNodesFn) extracted to
+// node-compiler-helpers.ts.
+// The main compileSingleNode closure remains here because it shares substantial mutable
+// state (symbolTable, regions, compiledPropEntries, sourcePropKeys, rawEventPlans)
+// across sections. Splitting would reduce clarity without improving maintainability.
 
 export function createCompileSingleNode(
   expressionCompiler: ExpressionCompiler,
   compileSchemaToTemplateNodes: CompileSchemaToTemplateNodesFn,
 ): CompileSingleNodeFn {
-  const compileFailureRenderer: RendererDefinition = {
-    type: '__compile-failure__',
-    component: (props) => String(props.props.message ?? 'Schema compilation failed'),
-  };
-
-  function isSourceCarrier(value: unknown): value is { type: 'source' } {
-    return !!value && typeof value === 'object' && !Array.isArray(value) && (value as { type?: unknown }).type === 'source';
-  }
-
-  function normalizeBooleanLikeCandidate(candidate: unknown): boolean | undefined {
-    return typeof candidate === 'boolean' ? candidate : undefined;
-  }
-
-  function createCompileFailureNode(input: {
-    schema: BaseSchema;
-    path: string;
-    message: string;
-    schemaUrl?: string;
-  }): TemplateNode {
-    return {
-      templateNodeId: 0,
-      id: createNodeId(input.path, input.schema),
-      type: input.schema.type,
-      schema: input.schema,
-      templatePath: input.path,
-      schemaUrl: input.schemaUrl,
-      rendererType: compileFailureRenderer.type,
-      component: compileFailureRenderer,
-      propsProgram: compileRuntimeValueTree({
-        message: input.message,
-        originalType: input.schema.type,
-      }) as CompiledRuntimeValue<Record<string, unknown>>,
-      metaProgram: {},
-      eventPlans: {},
-      regions: {},
-      providerPlan: {
-        actionScope: false,
-        componentRegistry: false,
-        classAliases: false,
-      },
-      providerWrap: buildWrapProvidersClosure({
-        actionScope: false,
-        componentRegistry: false,
-        classAliases: false,
-      }),
-      scopePlan: { kind: 'inherit' },
-      sourcePropKeys: [],
-      sourceStatePropKeys: {},
-    };
-  }
-
   return function compileSingleNode(
     schema: BaseSchema,
     options: CompileNodeOptions,

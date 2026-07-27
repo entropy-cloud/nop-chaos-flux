@@ -130,6 +130,21 @@ function createContainerBranch(depth: number, breadth: number, prefix: string): 
   };
 }
 
+const pageRendererCollector: RendererDefinition = {
+  type: 'page',
+  component: () => null,
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+  validationDefaults: {
+    collectDescendantValidation: true,
+  },
+};
+
+const containerWithoutCollect: RendererDefinition = {
+  type: 'container',
+  component: () => null,
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+};
+
 describe('collectValidationModel', () => {
   it('returns undefined for null input', () => {
     expect(collectValidationModel(null)).toBeUndefined();
@@ -137,6 +152,40 @@ describe('collectValidationModel', () => {
 
   it('returns undefined for undefined input', () => {
     expect(collectValidationModel(undefined)).toBeUndefined();
+  });
+
+  it('R2.26: page with collectDescendantValidation produces validation plan for child inputs', () => {
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([pageRendererCollector, inputRenderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile({
+      type: 'page',
+      body: { type: 'input-text', name: 'email' },
+    });
+
+    const root = compiled.root as TemplateNode;
+    expect(root.validationPlan).toBeDefined();
+    expect(root.validationOwnerPlan).toBeUndefined();
+    const nodes = root.validationPlan!.nodes as Record<string, CompiledValidationNode>;
+    expect(nodes['email']).toBeDefined();
+    expect(nodes['email'].kind).toBe('field');
+  });
+
+  it('R2.26: container without collectDescendantValidation does NOT produce validation plan when scopePolicy is not form', () => {
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([containerWithoutCollect, inputRenderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile({
+      type: 'container',
+      body: { type: 'input-text', name: 'email' },
+    });
+
+    const root = compiled.root as TemplateNode;
+    expect(root.validationPlan).toBeUndefined();
   });
 
   it('builds root form node with default behavior', () => {
