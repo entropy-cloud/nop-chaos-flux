@@ -35,11 +35,7 @@ import type {
 } from './render-fragment-types.js';
 import type { RendererPlugin } from './renderer-plugin.js';
 import type {
-  RendererCompilationDefinition,
-  RendererDeepFieldDefinition,
   RendererDefinitionShape,
-  RendererValidationDefaults,
-  ValidationContributor,
 } from './renderer-definition-types.js';
 import type {
   DataSourceController,
@@ -279,14 +275,6 @@ export interface RendererDefinition<
 > extends RendererDefinitionShape<S> {
   type: S['type'];
   component?: BivariantCallback<[RendererComponentProps<S, P>], RendererRenderOutput>;
-  /**
-   * Narrow readonly Flux-native exports such as $form or $crud summaries.
-   * This is not host projection and must not be used as a host-manifest substitute.
-   */
-  validation?: ValidationContributor<S>;
-  validationDefaults?: RendererValidationDefaults;
-  deepFields?: readonly RendererDeepFieldDefinition[];
-  compilation?: RendererCompilationDefinition;
 }
 
 export interface RendererRegistry {

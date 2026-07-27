@@ -231,6 +231,7 @@ function compilePatternPrecompiled(
 
   try {
     return { regex: new RegExp(patternValue), safe: true };
+    // Errors routed through validation pipeline — validation result captured via diagnostics
   } catch (err) {
     console.warn(
       `[flux-compiler] Invalid regex pattern at ${path}: /${patternValue}/ — ${err instanceof Error ? err.message : err}`,

@@ -30,6 +30,7 @@ export function scheduleDebounce<K, T>(
       try {
         pendingMap.delete(key);
         resolve(await factory());
+      // Errors routed through debounce internal try/catch — factory errors are captured and reject the returned promise
       } catch (error) {
         pendingMap.delete(key);
         reject(error);

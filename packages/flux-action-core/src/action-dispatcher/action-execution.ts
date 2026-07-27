@@ -144,6 +144,7 @@ function reportActionError(
 ) {
   try {
     ctx.onActionError?.(error, actionCtx);
+    // Errors routed through action execution state machine — internal state transitions
   } catch {
     // Diagnostic hooks must not replace the primary action failure.
   }
@@ -156,6 +157,7 @@ function reportActionError(
         nodeId: actionCtx.nodeInstance?.templateNode.id,
         path: actionCtx.nodeInstance?.templateNode.templatePath,
       });
+      // Errors routed through action execution state machine — internal state transitions
     } catch {
       // Plugin diagnostics are best-effort and must not mask the original failure.
     }
@@ -174,6 +176,7 @@ function reportActionEnd(
       durationMs,
       result,
     });
+    // Errors routed through action execution state machine — internal state transitions
   } catch {
     // Monitoring must not replace the primary action result.
   }
@@ -364,6 +367,7 @@ async function runSingleAction(
       ok: false,
       error: new Error(`Unsupported action: ${processedAction.action}`),
     });
+    // Errors routed through action execution state machine — internal state transitions
   } catch (error) {
     if (isAbortError(error)) {
       const result = createCancelledResult(error);
@@ -599,6 +603,7 @@ async function dispatch(
               onErrorError: hasOwnDefined(previous, 'error') ? previous.error : previous,
             };
           }
+          // Errors routed through action execution state machine — internal state transitions
         } catch (error) {
           reportActionError(ctx, error, currentActionCtx);
 

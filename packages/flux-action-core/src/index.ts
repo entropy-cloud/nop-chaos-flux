@@ -36,4 +36,3 @@ export {
 
 export { createActionDispatcher, type ActionDispatcherConfig } from './action-dispatcher.js';
 
-export { cancelPendingDebounce, scheduleDebounce } from '@nop-chaos/flux-core';

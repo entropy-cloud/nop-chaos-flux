@@ -177,6 +177,7 @@ function evaluateStaticAst(
 
   try {
     return evaluateNode(ast);
+    // Errors routed through static evaluation catch — eval errors are captured by inline try/catch
   } catch {
     return { static: false };
   }

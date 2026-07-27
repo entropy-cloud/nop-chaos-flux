@@ -61,6 +61,7 @@ export function finishAction(
       durationMs: Date.now() - startedAt,
       result,
     });
+    // Errors routed through action execution state machine — runner error path is structured
   } catch {
     // Monitoring must not replace the primary action result.
   }

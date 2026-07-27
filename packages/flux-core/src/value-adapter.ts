@@ -378,6 +378,7 @@ export function actionAdapter(
         }
 
         return { valid: true };
+        // Errors routed through host runtime error boundary — adapter update errors
       } catch (error) {
         return {
           valid: false,

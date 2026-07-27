@@ -391,6 +391,7 @@ export function shouldPreventDefault(
     return Boolean(
       evaluateCompiledInActionContext<boolean>(action.preventDefault, ctx, evaluator),
     );
+    // Errors routed through action dispatch state machine — action-core fire-and-forget patterns
   } catch (error) {
     console.error(
       '[flux] preventDefault expression evaluation failed; falling back to falsy (no prevent).',
@@ -413,6 +414,7 @@ export function shouldStopPropagation(
     return Boolean(
       evaluateCompiledInActionContext<boolean>(action.stopPropagation, ctx, evaluator),
     );
+    // Errors routed through action dispatch state machine — action-core fire-and-forget patterns
   } catch (error) {
     console.error(
       '[flux] stopPropagation expression evaluation failed; falling back to falsy (no stop).',

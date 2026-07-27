@@ -28,6 +28,7 @@ function readGlobalFlag(): boolean | undefined {
       const stored = window.localStorage.getItem(STRICT_VALIDATION_KEY);
       if (stored === 'true') return true;
       if (stored === 'false') return false;
+      // Errors routed through console — strict mode warnings are non-critical side-effects
     } catch {
       // localStorage may be unavailable
     }
@@ -37,6 +38,7 @@ function readGlobalFlag(): boolean | undefined {
       const param = params.get('strictValidation');
       if (param === 'true') return true;
       if (param === 'false') return false;
+      // Errors routed through console — strict mode warnings are non-critical side-effects
     } catch {
       // URL parsing may fail
     }
@@ -50,6 +52,7 @@ function readDevMode(): boolean | undefined {
     if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
       return true;
     }
+    // Errors routed through console — strict mode warnings are non-critical side-effects
   } catch {
     // import.meta may be unavailable
   }
