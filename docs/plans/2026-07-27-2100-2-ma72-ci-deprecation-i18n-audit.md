@@ -1,6 +1,6 @@
 # MA7.2 — 安全与运维：CI/Deprecation/i18n 审计
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-27
 > Source: `docs/backlog/audit-remediation-roadmap.md` MA7.2
 > Related: MA7.1 (`2026-07-27-2100-1-ma71-security-style-performance-audit.md`)
@@ -68,68 +68,68 @@
 
 ### Phase 1 — Deprecation 合规审计
 
-Status: planned
+Status: completed
 Targets: 全包簇 `src/index.ts` 和主要导出文件
 
 - Item Types: `Proof`
 
-- [ ] 扫描全包簇 `@deprecated` JSDoc 标记，记录所有 `@deprecated` 的公共 API
-- [ ] 按 `docs/skills/deprecated-feature-cleanup.md` 检查每个 deprecated API 是否满足 "deprecation × 2 release cycle" 规则
-- [ ] 检查 CI/lint 配置中是否已存在对 deprecated API 使用的 fail-fast guard
+- [x] 扫描全包簇 `@deprecated` JSDoc 标记，记录所有 `@deprecated` 的公共 API
+- [x] 按 `docs/skills/deprecated-feature-cleanup.md` 检查每个 deprecated API 是否满足 "deprecation × 2 release cycle" 规则
+- [x] 检查 CI/lint 配置中是否已存在对 deprecated API 使用的 fail-fast guard
 
 Exit Criteria:
 
-- [ ] deprecated API 清单已产出
-- [ ] 合规性违规发现已编号（P0/P1）
+- [x] deprecated API 清单已产出
+- [x] 合规性违规发现已编号（P0/P1）
 
 ### Phase 2 — i18n 完整性审计
 
-Status: planned
+Status: completed
 Targets: flux-i18n + 渲染器包中的 intl/t() 调用
 
 - Item Types: `Proof`
 
-- [ ] 读取 `packages/flux-i18n/src/` 下的资源文件 keys
-- [ ] 扫描全包簇 `intl.t(` / `intl.format(` / `t(` 调用，比对 keys 是否在 i18n 资源中有定义
-- [ ] 记录缺失 key 或有定义但未使用的 key
+- [x] 读取 `packages/flux-i18n/src/` 下的资源文件 keys
+- [x] 扫描全包簇 `intl.t(` / `intl.format(` / `t(` 调用，比对 keys 是否在 i18n 资源中有定义
+- [x] 记录缺失 key 或有定义但未使用的 key
 
 Exit Criteria:
 
-- [ ] i18n key 完整性报告已产出
-- [ ] 缺失/未匹配 key 的发现已编号
+- [x] i18n key 完整性报告已产出
+- [x] 缺失/未匹配 key 的发现已编号
 
 ### Phase 3 — 静态分析工具审计
 
-Status: planned
+Status: completed
 Targets: `pnpm audit:deps` / `pnpm audit:knip` / react-doctor 结果
 
 - Item Types: `Proof`
 
-- [ ] 分析 `pnpm audit:deps` 14 个违规，按真实风险分类（circular dep / src import / false positive）
-- [ ] 分析 `pnpm audit:knip` 结果，确认 unused exports/deps
-- [ ] react-doctor Maintainability 173 warnings 抽样 20% 分类
-- [ ] `check:audit-non-retained-renderer-references` 32 个结果中可 CI-automated guard 项的可行性评估
+- [x] 分析 `pnpm audit:deps` 14 个违规，按真实风险分类（circular dep / src import / false positive）
+- [x] 分析 `pnpm audit:knip` 结果，确认 unused exports/deps
+- [x] react-doctor Maintainability 173 warnings 抽样 20% 分类
+- [x] `check:audit-non-retained-renderer-references` 32 个结果中可 CI-automated guard 项的可行性评估
 
 Exit Criteria:
 
-- [ ] 静态分析发现清单已产出并编号
-- [ ] 非保留引用 guard 可行性评估已记录
+- [x] 静态分析发现清单已产出并编号
+- [x] 非保留引用 guard 可行性评估已记录
 
 ### Phase 4 — 报告产出
 
-Status: planned
+Status: completed
 Targets: `docs/audits/arm-MA7-ci-deprecation-i18n.md`
 
 - Item Types: `Proof`
 
-- [ ] 整合 Phase 1-3 所有发现为最终审计报告 `docs/audits/arm-MA7-ci-deprecation-i18n.md`
-- [ ] 更新 `docs/audits/arm-index.md`：Phase 索引、发现索引、审计工具基线对比
+- [x] 整合 Phase 1-3 所有发现为最终审计报告 `docs/audits/arm-MA7-ci-deprecation-i18n.md`
+- [x] 更新 `docs/audits/arm-index.md`：Phase 索引、发现索引、审计工具基线对比
 
 Exit Criteria:
 
-- [ ] `docs/audits/arm-MA7-ci-deprecation-i18n.md` 已产出
-- [ ] arm-index.md 已更新（MA7.2 状态 `todo`→`completed`、发现索引已注入）
-- [ ] 发现的 P0/P1 已编号并指向 MR3 fix plan
+- [x] `docs/audits/arm-MA7-ci-deprecation-i18n.md` 已产出
+- [x] arm-index.md 已更新（MA7.2 状态 `todo`→`completed`、发现索引已注入）
+- [x] 发现的 P0/P1 已编号并指向 MR3 fix plan
 
 ## Draft Review Record
 
@@ -142,11 +142,11 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope 审计 Phase 的 Exit Criteria 已勾选
-- [ ] 审计报告 `docs/audits/arm-MA7-ci-deprecation-i18n.md` 已产出
-- [ ] arm-index.md 已更新
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope P0/P1 deprecation 或 i18n defect
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 所有 in-scope 审计 Phase 的 Exit Criteria 已勾选
+- [x] 审计报告 `docs/audits/arm-MA7-ci-deprecation-i18n.md` 已产出
+- [x] arm-index.md 已更新
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope P0/P1 deprecation 或 i18n defect
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 
 ## Deferred But Adjudicated
 

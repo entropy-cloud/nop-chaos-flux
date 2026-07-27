@@ -34,7 +34,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | MA5.2    | UI/UX—基础+内容渲染器 UX 审计                 | `done` |
 | MA6      | 文档与契约一致性审计                          | `done` |
 | MA7.1    | 安全与运维—XSS/样式/性能审计                  | `done` |
-| MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `todo` |
+| MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `done` |
 | R1.0     | P1 修复—结构+运行时（展开器）                 | `todo` |
 | R2.0     | P1 修复—代码+测试（展开器）                   | `todo` |
 | R3.0     | P1 修复—UI/UX+文档+安全+运维（展开器）        | `todo` |
@@ -131,10 +131,10 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 ### MA7 — 安全、性能与运维审计（维 G/H）
 
-| Work Item                          | Status | Owner Doc                             | Dependencies | Skill                                                                                         |
-| ---------------------------------- | ------ | ------------------------------------- | ------------ | --------------------------------------------------------------------------------------------- |
-| MA7.1 XSS/样式/性能（全包簇抽样）  | `todo` | `docs/architecture/styling-system.md` | M0           | `deep-audit-prompts.md` + `check:audit-styling-suspects` + `check:audit-performance-suspects` |
-| MA7.2 CI/Deprecation/i18n/静态检查 | `todo` | —                                     | M0           | `deprecated-feature-cleanup.md` + `check:audit-non-retained-renderer-references`              |
+| Work Item                          | Status | Owner Doc                                    | Dependencies | Skill                                                                                         |
+| ---------------------------------- | ------ | -------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------- |
+| MA7.1 XSS/样式/性能（全包簇抽样）  | `todo` | `docs/architecture/styling-system.md`        | M0           | `deep-audit-prompts.md` + `check:audit-styling-suspects` + `check:audit-performance-suspects` |
+| MA7.2 CI/Deprecation/i18n/静态检查 | `done` | `docs/audits/arm-MA7-ci-deprecation-i18n.md` | M0           | `deprecated-feature-cleanup.md` + `check:audit-non-retained-renderer-references`              |
 
 ### MR1 — P1 修复：结构+运行时（依赖 MA1 + MA2 完成）
 

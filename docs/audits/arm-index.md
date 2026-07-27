@@ -27,7 +27,7 @@
 | MA5.2    | UI/UX—基础+内容渲染器 UX 审计                 | `completed` | `docs/audits/arm-MA5-basic-content-ux.md`                                                             |
 | MA6      | 文档与契约一致性审计                          | `completed` | `docs/audits/arm-MA6-doc-contract.md`                                                                 |
 | MA7.1    | 安全与运维—XSS/样式/性能审计                  | `completed` | `docs/audits/arm-MA7-security-style-performance.md`                                                   |
-| MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `todo`      | `docs/audits/arm-MA7-ci-*.md`                                                                         |
+| MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `completed` | `docs/audits/arm-MA7-ci-deprecation-i18n.md`                                                          |
 | R1.0     | P1 修复—结构+运行时                           | `todo`      | `docs/plans/2026-*-MR1-*.md`                                                                          |
 | R2.0     | P1 修复—代码+测试                             | `todo`      | `docs/plans/2026-*-MR2-*.md`                                                                          |
 | R3.0     | P1 修复—UI/UX+文档+安全+运维                  | `todo`      | `docs/plans/2026-*-MR3-*.md`                                                                          |
@@ -99,6 +99,7 @@
 | MA6-P1-006   | P1       | docs/architecture/action-scope-and-imports.md      | ComponentCapabilities.invoke() uses ComponentCapabilityActionContext not ActionContext               | `arm-MA6-doc-contract.md`                       | open   | Pending MR3 |
 | MA6-P1-007   | P1       | docs/references/quick-reference.md                 | ScopeRef.update signature completely wrong (patch → path+value)                                      | `arm-MA6-doc-contract.md`                       | open   | Pending MR3 |
 | MA6-P1-008   | P1       | docs/references/terminology.md                     | RendererComponentProps omitted reactions field                                                       | `arm-MA6-doc-contract.md`                       | open   | Pending MR3 |
+| MA72-P1-001  | P1       | flux-renderers-scheduling                          | `gantt.types.ts:155-174` 7 deprecated fields lack replacement message in JSDoc                       | `arm-MA7-ci-deprecation-i18n.md`                | open   | Pending MR3 |
 
 ## P2 Finding Index
 
@@ -171,6 +172,7 @@ _Baseline values recorded on 2026-07-27 as part of M0 audit baseline execution._
 | `check:audit-non-retained-renderer-references` | 2026-07-27 | 0         | 32           | 4 non-retained types: action, calendar, icon-picker, radio. MA7.1 re-run: unchanged. All 32 adjudicated as false positives (docs/tests/definitions).                                                                                                                                                  |
 | `check:audit-reactive-render-reads`            | 2026-07-27 | 0         | 4            | 2 buckets: reactive-render-read (2), broad-scope-selector (2)                                                                                                                                                                                                                                         |
 | `check:audit-react19-optimization-candidates`  | 2026-07-27 | 0         | ~400+        | Includes redundant useMemo, redundant useCallback, derived-state-in-effect, start-transition-on-critical-action. See saved output for full detail.                                                                                                                                                    |
+| `check:i18n-keys`                              | 2026-07-27 | 0         | 0            | 788 keys defined in both zh-CN/en-US, 675 used. All used keys defined ✅. 113 potentially unused keys recorded.                                                                                                                                                                                       |
 
 ### `pnpm audit:*` Commands
 
