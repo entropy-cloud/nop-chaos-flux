@@ -399,7 +399,7 @@ export function ReportDesignerPageRenderer(
         },
       });
     });
-  }, [core, env, props.path, resolvedDesigner]);
+  }, [actionScope, core, env, props.path, resolvedDesigner]);
 
   useEffect(() => {
     return () => {

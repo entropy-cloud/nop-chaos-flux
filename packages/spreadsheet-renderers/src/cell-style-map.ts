@@ -32,6 +32,14 @@ const VERTICAL_ALIGN_MAP: Record<string, string> = {
 
 const BORDER_STYLE_MAP: Record<string, string> = {
   all: 'ss-border-solid',
+  outer: 'ss-border-solid',
+  inner: 'ss-border-solid',
+  top: 'ss-border-top',
+  bottom: 'ss-border-bottom',
+  left: 'ss-border-left',
+  right: 'ss-border-right',
+  horizontal: 'ss-border-solid',
+  vertical: 'ss-border-solid',
   solid: 'ss-border-solid',
   dashed: 'ss-border-dashed',
   dotted: 'ss-border-dotted',

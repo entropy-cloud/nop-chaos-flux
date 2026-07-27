@@ -1,4 +1,5 @@
 import {
+  DEFAULT_ROW_HEIGHT,
   OVERSCAN,
   computeColOffsets,
   computeRowOffsets,
@@ -74,10 +75,28 @@ export function buildSpreadsheetGridViewport(
     findFirstVisible(colOffsets, model.scrollLeft + frozenColWidth + model.viewportWidth) + OVERSCAN,
   );
 
+  const rowsData = model.snapshot.activeSheet?.rows;
+
+  function filteredRowHeight(fromIndex: number, toIndex: number): number {
+    if (!rowsData) return 0;
+    let total = 0;
+    for (let r = fromIndex; r < toIndex; r++) {
+      const row = rowsData[String(r)];
+      if (row?.filteredOut) {
+        total += row.height ?? DEFAULT_ROW_HEIGHT;
+      }
+    }
+    return total;
+  }
+
   const topSpacerHeight =
-    frozenRows < visStartRow ? rowOffsets[visStartRow] - rowOffsets[frozenRows] : 0;
+    frozenRows < visStartRow
+      ? rowOffsets[visStartRow] - rowOffsets[frozenRows] - filteredRowHeight(frozenRows, visStartRow)
+      : 0;
   const bottomSpacerHeight =
-    visEndRow < model.rows - 1 ? rowOffsets[model.rows] - rowOffsets[visEndRow + 1] : 0;
+    visEndRow < model.rows - 1
+      ? rowOffsets[model.rows] - rowOffsets[visEndRow + 1] - filteredRowHeight(visEndRow + 1, model.rows)
+      : 0;
   const leftSpacerWidth =
     frozenCols < visStartCol ? colOffsets[visStartCol] - colOffsets[frozenCols] : 0;
   const rightSpacerWidth =

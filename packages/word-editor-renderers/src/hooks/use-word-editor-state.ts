@@ -83,6 +83,11 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
         ? createSavedDocumentData({ data: initialDocument, paperSettings: null })
         : null);
   });
+  const savedDocumentRef = useRef(savedDocument);
+  useEffect(() => {
+    savedDocumentRef.current = savedDocument;
+  });
+
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets');
@@ -234,7 +239,7 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
     window.__NOP_WORD_EDITOR_PROBE__ = {
       getState() {
         return {
-          document: savedDocument?.data ?? null,
+          document: savedDocumentRef.current?.data ?? null,
           datasets: datasetStore.getAll(),
           runtime: editorRuntime,
         };

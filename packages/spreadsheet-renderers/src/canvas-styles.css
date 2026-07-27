@@ -596,6 +596,18 @@
 .ss-border-double {
   border-style: double;
 }
+.ss-border-top {
+  border-top-style: solid;
+}
+.ss-border-bottom {
+  border-bottom-style: solid;
+}
+.ss-border-left {
+  border-left-style: solid;
+}
+.ss-border-right {
+  border-right-style: solid;
+}
 
 .ss-cell[data-cell-active] {
   outline: 2px solid #0f9d58;
