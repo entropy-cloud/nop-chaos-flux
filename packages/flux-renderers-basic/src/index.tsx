@@ -19,6 +19,8 @@ export { LoopRenderer } from './loop.js';
 export { RecurseRenderer } from './recurse.js';
 export { ScopeDebugRenderer } from './scope-debug.js';
 export { basicRendererDefinitions } from './basic-renderer-definitions.js';
+export { copyToClipboard } from './copy-to-clipboard.js';
+export type { CopyToClipboardResult } from './copy-to-clipboard.js';
 
 export function registerBasicRenderers(registry: RendererRegistry) {
   return registerRendererDefinitions(registry, basicRendererDefinitions);

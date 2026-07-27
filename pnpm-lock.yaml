@@ -689,6 +689,9 @@ importers:
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../flux-react
+      '@nop-chaos/flux-renderers-basic':
+        specifier: workspace:*
+        version: link:../flux-renderers-basic
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui

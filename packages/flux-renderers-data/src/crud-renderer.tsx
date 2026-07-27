@@ -509,7 +509,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
                 paginationState.currentPage * paginationState.pageSize,
               )
             : filteredRows;
-        const rawSchema = props.schema;
+        const rawSchema = props.schema as CrudSchema;
         const base = {
           items: carrierRows as BaseSchema['data'],
           selectionMode: 'none' as const,

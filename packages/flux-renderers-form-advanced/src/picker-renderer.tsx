@@ -3,12 +3,11 @@ import type {
   ActionSchema,
   BaseSchema,
   CompiledRuntimeValue,
-  ReactiveActionSchema,
   RendererComponentProps,
   RendererDefinition,
   ValidationRule,
 } from '@nop-chaos/flux-core';
-import { getIn, isRecord, toRecord } from '@nop-chaos/flux-core';
+import { getIn, isRecord } from '@nop-chaos/flux-core';
 import {
   useCurrentForm,
   useCurrentFormState,
@@ -19,17 +18,8 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Checkbox, cn, Empty, Input, Label, RadioGroup, RadioGroupItem } from '@nop-chaos/ui';
-import { SearchIcon, XIcon } from 'lucide-react';
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@nop-chaos/ui';
-import type { CrudColumnSchema, CrudSchema } from '@nop-chaos/flux-renderers-data';
+import { Button, cn } from '@nop-chaos/ui';
+import { XIcon } from 'lucide-react';
 import type { PickerSchema } from './composite-field/composite-schemas.js';
 import {
   normalizeOptions,
@@ -42,163 +32,17 @@ import {
   useFieldPresentation,
 } from '@nop-chaos/flux-renderers-form';
 import { useCurrentValidationScope } from '@nop-chaos/flux-react';
-
-type PickerValue = string | number | boolean;
-
-function normalizeFieldValues(rawFieldValue: unknown, valueKey?: string): PickerValue[] {
-  if (isRecord(rawFieldValue) && valueKey) {
-    const v = rawFieldValue[valueKey];
-    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-      return [v];
-    }
-  }
-  if (Array.isArray(rawFieldValue)) {
-    const result: PickerValue[] = [];
-    for (const item of rawFieldValue) {
-      if (isRecord(item) && valueKey) {
-        const v = item[valueKey];
-        if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-          result.push(v);
-          continue;
-        }
-      }
-      if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
-        result.push(item);
-      }
-    }
-    return result;
-  }
-  if (rawFieldValue === undefined || rawFieldValue === null || rawFieldValue === '') {
-    return [];
-  }
-  if (
-    typeof rawFieldValue === 'string' ||
-    typeof rawFieldValue === 'number' ||
-    typeof rawFieldValue === 'boolean'
-  ) {
-    return [rawFieldValue];
-  }
-  return [];
-}
-
-function getOptionLabelMap(options: NormalizedOption[]): Map<PickerValue, string> {
-  return new Map(options.map((o) => [o.value, o.label]));
-}
-
-function extractRowsFromActionResult(value: unknown): Record<string, unknown>[] {
-  if (Array.isArray(value)) {
-    return value.filter(isRecord).map((item) => toRecord(item));
-  }
-  const record = toRecord(value);
-  const items = Array.isArray(record.items)
-    ? record.items
-    : Array.isArray(record.rows)
-      ? record.rows
-      : Array.isArray(record.records)
-        ? record.records
-        : Array.isArray(record.list)
-          ? record.list
-          : [];
-  return items.filter(isRecord).map((item) => toRecord(item));
-}
-
-function extractDisplayValue(row: Record<string, unknown>, key: string | undefined, fallback: unknown): string {
-  const raw = key ? row[key] : fallback;
-  if (raw === undefined || raw === null) {
-    return '';
-  }
-  return String(raw);
-}
-
-function mapSelectionRows(args: {
-  rows: Record<string, unknown>[];
-  valueKey: string | undefined;
-  labelKey: string | undefined;
-}): Map<PickerValue, { label: string; row: Record<string, unknown> }> {
-  const result = new Map<PickerValue, { label: string; row: Record<string, unknown> }>();
-  for (const row of args.rows) {
-    const candidate = args.valueKey ? row[args.valueKey] : row.value;
-    if (
-      typeof candidate !== 'string' &&
-      typeof candidate !== 'number' &&
-      typeof candidate !== 'boolean'
-    ) {
-      continue;
-    }
-    result.set(candidate, {
-      label: extractDisplayValue(row, args.labelKey, candidate),
-      row,
-    });
-  }
-  return result;
-}
-
-function selectionToRowKeys(values: PickerValue[]): string[] {
-  return values.map((value) => String(value));
-}
-
-function rowToRecord(option: NormalizedOption): Record<string, unknown> {
-  if (isRecord(option.raw)) {
-    return toRecord(option.raw);
-  }
-  return { value: option.value, label: option.label };
-}
-
-function inferColumns(options: NormalizedOption[]): CrudColumnSchema[] {
-  if (options.length === 0) {
-    return [{ name: 'label', label: 'Label' }];
-  }
-
-  const firstRecord = isRecord(options[0].raw) ? toRecord(options[0].raw) : undefined;
-  if (!firstRecord) {
-    return [{ name: 'label', label: 'Label' }];
-  }
-
-  return Object.keys(firstRecord)
-    .filter((key) => typeof firstRecord[key] !== 'object')
-    .map((key) => ({ name: key, label: key }));
-}
-
-function createNormalizedPickerSource(options: NormalizedOption[]): CrudSchema['source'] {
-  const items = options.map((option) => rowToRecord(option));
-  return { items, total: items.length } as unknown as CrudSchema['source'];
-}
-
-function createPickerCrudSchema(args: {
-  pickerId: string;
-  loadAction: ActionSchema | ActionSchema[] | undefined;
-  options: NormalizedOption[];
-  columns: CrudColumnSchema[] | undefined;
-  searchable: boolean;
-  valueKey: string | undefined;
-  labelKey: string | undefined;
-  multiple: boolean;
-}): CrudSchema {
-  const normalizedSource = createNormalizedPickerSource(args.options);
-
-  return {
-    type: 'crud',
-    id: `${args.pickerId}-picker-crud`,
-    loadAction: args.loadAction as ReactiveActionSchema | undefined,
-    source: args.loadAction ? undefined : normalizedSource,
-    rowKey: args.valueKey ?? 'value',
-    loadAllData: false,
-    columns: args.columns && args.columns.length > 0 ? args.columns : inferColumns(args.options),
-    queryForm: args.searchable
-      ? {
-          body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],
-        }
-      : undefined,
-    selection: {
-      type: args.multiple ? 'checkbox' : 'radio',
-      keepOnPageChange: true,
-    },
-    selectionOwnership: 'scope',
-    selectionStatePath: `$_picker.${args.pickerId}.selection`,
-    dataStatePath: `$_picker.${args.pickerId}.rows`,
-    autoClearSelectionOnRefresh: false,
-  };
-}
+import {
+  normalizeFieldValues,
+  getOptionLabelMap,
+  type PickerValue,
+  extractRowsFromActionResult,
+  mapSelectionRows,
+  selectionToRowKeys,
+  rowToRecord,
+  createPickerCrudSchema,
+} from './picker-helpers.js';
+import { PickerDropdown } from './picker-dropdown.js';
 
 export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   const schemaProps = useSchemaProps(props) as PickerSchema;
@@ -429,6 +273,10 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     });
   }, []);
 
+  const handleSetPending = React.useCallback((values: PickerValue[]) => {
+    setPending(new Set(values));
+  }, []);
+
   const pickerCrudSchema = React.useMemo(
     () =>
       createPickerCrudSchema({
@@ -568,6 +416,10 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     return null;
   }
 
+  const crudContent = crudMode && open
+    ? (props.helpers.render(pickerCrudSchema, { pathSuffix: 'pickerCrud' }) as React.ReactNode)
+    : null;
+  const confirmDisabled = crudMode ? !multiple && crudSelection.length === 0 : !multiple && pending.size === 0;
   const confirmSelection = crudMode ? confirmCrudSelection : confirmListSelection;
 
   return (
@@ -605,98 +457,24 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
         readOnly
       />
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent data-slot="picker-dialog-content" size={dialogSize}>
-          <DialogHeader>
-            <DialogTitle>{dialogTitle}</DialogTitle>
-          </DialogHeader>
-          <DialogBody className="flex flex-col gap-2">
-            {crudMode
-              ? open
-                ? (props.helpers.render(pickerCrudSchema, { pathSuffix: 'pickerCrud' }) as React.ReactNode)
-                : null
-              : (
-                  <>
-                    <div className="relative">
-                      <SearchIcon className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        type="search"
-                        value={query}
-                        placeholder={t('flux.picker.search', { defaultValue: 'Search' })}
-                        style={{ paddingLeft: '2rem' }}
-                        onChange={(event) => setQuery(event.target.value)}
-                      />
-                    </div>
-                    <div className="max-h-72 min-h-32 overflow-y-auto rounded border border-border">
-                      {filteredOptions.length === 0 ? (
-                        <Empty className="p-4 text-sm text-muted-foreground">
-                          {t('flux.picker.noCandidates', { defaultValue: 'No candidates' })}
-                        </Empty>
-                      ) : multiple ? (
-                        <ul role="listbox" aria-multiselectable="true">
-                          {filteredOptions.map((option) => {
-                            const checked = pending.has(option.value);
-                            return (
-                              <li key={String(option.value)}>
-                                <Label
-                                  className={cn(
-                                    'flex cursor-pointer items-center gap-2 px-3 py-2 text-sm font-normal hover:bg-accent',
-                                    option.disabled && 'cursor-not-allowed opacity-60',
-                                  )}
-                                >
-                                  <Checkbox
-                                    checked={checked}
-                                    disabled={option.disabled}
-                                    onCheckedChange={() => togglePending(option.value)}
-                                    data-slot="picker-option"
-                                  />
-                                  <span className="truncate">{option.label}</span>
-                                </Label>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      ) : (
-                        <RadioGroup
-                          value={String(Array.from(pending).pop() ?? '')}
-                          onValueChange={(v) => {
-                            const match = filteredOptions.find((o) => String(o.value) === v);
-                            setPending(new Set(match ? [match.value] : []));
-                          }}
-                          className="flex flex-col"
-                        >
-                          {filteredOptions.map((option) => (
-                            <Label
-                              key={String(option.value)}
-                              className={cn(
-                                'flex cursor-pointer items-center gap-2 px-3 py-2 text-sm font-normal hover:bg-accent',
-                                option.disabled && 'cursor-not-allowed opacity-60',
-                              )}
-                            >
-                              <RadioGroupItem
-                                value={String(option.value)}
-                                disabled={option.disabled}
-                                data-slot="picker-option"
-                              />
-                              <span className="truncate">{option.label}</span>
-                            </Label>
-                          ))}
-                        </RadioGroup>
-                      )}
-                    </div>
-                  </>
-                )}
-          </DialogBody>
-          <DialogFooter>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              {t('flux.common.cancel', { defaultValue: 'Cancel' })}
-            </Button>
-            <Button type="button" size="sm" data-slot="picker-confirm" disabled={crudMode ? !multiple && crudSelection.length === 0 : !multiple && pending.size === 0} onClick={confirmSelection}>
-              {t('flux.common.confirm', { defaultValue: 'Confirm' })}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PickerDropdown
+        open={open}
+        onOpenChange={setOpen}
+        dialogSize={dialogSize}
+        dialogTitle={dialogTitle}
+        crudMode={crudMode}
+        crudContent={crudContent}
+        query={query}
+        onQueryChange={setQuery}
+        filteredOptions={filteredOptions}
+        pending={pending}
+        multiple={multiple}
+        onTogglePending={togglePending}
+        onSetPending={handleSetPending}
+        confirmDisabled={confirmDisabled}
+        onConfirm={confirmSelection}
+        onCancel={() => setOpen(false)}
+      />
     </div>
   );
 }

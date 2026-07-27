@@ -6,7 +6,7 @@ import { CopyIcon, CheckIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema, TableColumnSchema } from '../schemas.js';
 import { TableCellPopOver } from './table-cell-popover.js';
-import { copyToClipboard } from './copy-to-clipboard.js';
+import { copyToClipboard } from '@nop-chaos/flux-renderers-basic';
 
 export function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;

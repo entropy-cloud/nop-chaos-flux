@@ -9,7 +9,7 @@ import {
 } from '../table-renderer/table-header-tree.js';
 import { flattenTreeRows } from '../table-renderer/use-table-tree.js';
 import { processTableData } from '../table-renderer/table-data.js';
-import { copyToClipboard } from '../table-renderer/copy-to-clipboard.js';
+import { copyToClipboard } from '@nop-chaos/flux-renderers-basic';
 import { useColumnResize } from '../table-renderer/use-column-resize.js';
 import { useRowDragSort } from '../table-renderer/use-row-drag-sort.js';
 import { SortProbe, createHelpers, resetTableControlTestState } from './use-table-controls.test-support.js';

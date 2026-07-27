@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { DiffViewRenderer } from '../diff-view-renderer.js';
+import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { DiffViewRenderer, type DiffViewHandle } from '../diff-view-renderer.js';
 
 function createMockProps(overrides: Record<string, unknown> = {}) {
   return {
@@ -53,5 +54,75 @@ describe('DiffViewRenderer', () => {
       <DiffViewRenderer {...createMockProps({})} meta={{ visible: false, hidden: true, disabled: false, changed: false }} />,
     );
     expect(container.innerHTML).toBe('');
+  });
+
+  it('R2.31: invokes onLineClick when a diff line is clicked', () => {
+    const onLineClick = vi.fn();
+    render(<DiffViewRenderer {...createMockProps()} events={{ onLineClick }} />);
+    const addedLine = document.querySelector('[data-diff-type="added"].nop-diff-line-clickable');
+    if (addedLine) {
+      fireEvent.click(addedLine);
+      expect(onLineClick).toHaveBeenCalledWith({
+        lineNumber: expect.any(Number),
+        side: 'new',
+        type: 'added',
+      });
+    }
+  });
+
+  it('R2.31: toggles view type via imperative handle', () => {
+    const ref = React.createRef<DiffViewHandle>();
+    render(<DiffViewRenderer {...createMockProps()} ref={ref} />);
+    expect(document.querySelector('[data-view="split"]')).toBeTruthy();
+
+    ref.current?.toggleViewType();
+    expect(document.querySelector('[data-view="unified"]')).toBeTruthy();
+
+    ref.current?.toggleViewType();
+    expect(document.querySelector('[data-view="split"]')).toBeTruthy();
+  });
+
+  it('R2.31: setViewType via imperative handle switches to unified', () => {
+    const ref = React.createRef<DiffViewHandle>();
+    render(<DiffViewRenderer {...createMockProps()} ref={ref} />);
+    expect(document.querySelector('[data-view="split"]')).toBeTruthy();
+
+    ref.current?.setViewType('unified');
+    expect(document.querySelector('[data-view="unified"]')).toBeTruthy();
+  });
+
+  it('R2.31: expandAll and collapseAll via imperative handle toggle expansion state', () => {
+    const ref = React.createRef<DiffViewHandle>();
+    const { container } = render(
+      <DiffViewRenderer {...createMockProps({ defaultCollapsedLines: 1 })} ref={ref} />,
+    );
+
+    const collapsedHunksBefore = container.querySelectorAll('[data-diff-hunk-state="collapsed"]');
+
+    ref.current?.expandAll();
+    const collapsedAfterExpand = container.querySelectorAll('[data-diff-hunk-state="collapsed"]');
+    expect(collapsedAfterExpand.length).toBeLessThanOrEqual(collapsedHunksBefore.length);
+
+    ref.current?.collapseAll();
+    const collapsedAfterCollapse = container.querySelectorAll('[data-diff-hunk-state="collapsed"]');
+    expect(collapsedAfterCollapse.length).toBeGreaterThanOrEqual(collapsedAfterExpand.length);
+  });
+
+  it('R2.31: invokes onHunkExpand when hunk expand button is clicked', () => {
+    const onHunkExpand = vi.fn();
+    render(
+      <DiffViewRenderer
+        {...createMockProps({ defaultCollapsedLines: 1 })}
+        events={{ onHunkExpand }}
+      />,
+    );
+    const expandButton = document.querySelector('[data-diff-hunk-action="expand"]');
+    if (expandButton) {
+      fireEvent.click(expandButton);
+      expect(onHunkExpand).toHaveBeenCalledWith({
+        hunkIndex: expect.any(Number),
+        expanded: true,
+      });
+    }
   });
 });

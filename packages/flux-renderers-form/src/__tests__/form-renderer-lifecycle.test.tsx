@@ -598,4 +598,92 @@ describe('FormRenderer lifecycle wiring', () => {
       expect(successfulInitAction).toHaveBeenCalledTimes(1);
     });
   });
+
+  it('R2.27: initAction rejection triggers reportRuntimeHostIssue with error level', async () => {
+    const parentScope = makeScope({ id: 'parent', visible: { parentValue: 'plain' } });
+    const ownedScope = makeScope({ id: 'owned-init-error', visible: { localValue: 'test' } });
+    const initAction = vi.fn(async () => {
+      throw new Error('init-exploded');
+    });
+    const ownedForm = {
+      scope: ownedScope,
+      store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
+      dispose: vi.fn(),
+      setLifecycleHandlers: vi.fn(),
+    } as any;
+    const runtime = {
+      env: { notify: vi.fn(), monitor: undefined },
+      getImportedExpressionBindings: vi.fn(() => ({})),
+      createFormRuntime: vi.fn(() => ownedForm),
+    } as any;
+
+    mocks.useRendererRuntime.mockReturnValue(runtime);
+    mocks.useCurrentActionScope.mockReturnValue(undefined);
+    mocks.useCurrentComponentRegistry.mockReturnValue(undefined);
+    mocks.useCurrentPage.mockReturnValue(undefined);
+    mocks.useRenderScope.mockReturnValue(parentScope);
+
+    render(
+      <FormRenderer
+        {...buildProps({
+          events: { initAction },
+          regions: {},
+          templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
+          node: { instancePath: [] },
+        })}
+      />,
+    );
+
+    await vi.waitFor(() => {
+      expect(runtime.env.notify).toHaveBeenCalledWith('error', 'Form initAction failed');
+    });
+  });
+
+  it('R2.27: activationKey guards re-invocation for the same activation instance after successful init', async () => {
+    const ownedScope = makeScope({ id: 'owned-key', visible: { localValue: 'test' } });
+    const initAction = vi.fn(async () => undefined);
+    const ownedForm = {
+      scope: ownedScope,
+      store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
+      dispose: vi.fn(),
+      setLifecycleHandlers: vi.fn(),
+    } as any;
+    const runtime = {
+      getImportedExpressionBindings: vi.fn(() => ({})),
+      createFormRuntime: vi.fn(() => ownedForm),
+    } as any;
+
+    mocks.useRendererRuntime.mockReturnValue(runtime);
+
+    const { rerender } = render(
+      <FormRenderer
+        {...buildProps({
+          events: { initAction },
+          regions: {},
+          templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
+          node: { instancePath: [] },
+        })}
+      />,
+    );
+
+    await waitFor(() => expect(initAction).toHaveBeenCalledTimes(1));
+
+    // rerender with same activationKey (same id/path + empty instancePath) and same initAction ref
+    rerender(
+      <FormRenderer
+        {...buildProps({
+          events: { initAction },
+          regions: {},
+          templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
+          node: { instancePath: [] },
+        })}
+      />,
+    );
+
+    // Give the effect body time to run if it were going to; should stay at 1.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(initAction).toHaveBeenCalledTimes(1);
+  });
 });

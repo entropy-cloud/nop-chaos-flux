@@ -133,6 +133,55 @@ describe('form shell enhancements - submitOnChange', () => {
     );
   });
 
+  it('R2.28: debounces at exactly 300ms after last change', async () => {
+    vi.useFakeTimers();
+    try {
+      const SchemaRenderer = makeRenderer();
+      render(
+        <SchemaRenderer
+          schemaUrl="test://form/soc-debounce"
+          schema={{
+            type: 'form',
+            id: 'soc-debounce',
+            submitOnChange: true,
+            data: { q: 'init' },
+            submitAction: {
+              action: 'ajax',
+              args: { url: '/api/soc', method: 'post' },
+            },
+            body: [{ type: 'input-text', name: 'q', label: 'Query' }],
+          }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      expect(submitCalls).toHaveLength(0);
+
+      const input = screen.getByLabelText('Query');
+      fireEvent.change(input, { target: { value: 'a' } });
+
+      // At 200ms the debounce should NOT have fired yet
+      await vi.advanceTimersByTimeAsync(200);
+      expect(submitCalls).toHaveLength(0);
+
+      // Change again before the debounce fires — resets the timer
+      fireEvent.change(input, { target: { value: 'ab' } });
+      await vi.advanceTimersByTimeAsync(200);
+      expect(submitCalls).toHaveLength(0);
+
+      // Now advance past the 300ms window since the last change
+      await vi.advanceTimersByTimeAsync(150);
+      expect(submitCalls).toHaveLength(1);
+
+      // No extra submit without another change
+      await vi.advanceTimersByTimeAsync(500);
+      expect(submitCalls).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('does NOT submit and does not throw when submitOnChange is true but no submitAction is configured', async () => {
     const SchemaRenderer = makeRenderer();
     render(

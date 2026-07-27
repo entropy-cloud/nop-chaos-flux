@@ -4,7 +4,7 @@ import { cleanup, render, fireEvent, act, waitFor } from '@testing-library/react
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import type { TableColumnSchema, TableSchema } from '../schemas.js';
 import { renderDataRow, type FlattenedRow } from '../table-renderer/table-body-row-rendering.js';
-import { copyToClipboard } from '../table-renderer/copy-to-clipboard.js';
+import { copyToClipboard } from '@nop-chaos/flux-renderers-basic';
 import type { TableRowEntry } from '../table-renderer/types.js';
 import type { FixedColumnLayout } from '../table-renderer/fixed-columns.js';
 
