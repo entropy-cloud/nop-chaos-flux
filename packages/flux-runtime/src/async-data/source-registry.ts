@@ -256,6 +256,7 @@ export function createRuntimeSourceRegistry(input: {
 
       try {
         const refreshPromise = controller.refresh();
+        // Errors routed through registry error reporting — .catch and .finally handle all outcomes
         void refreshPromise
           .catch((error) => {
             reportRefreshFailure(error);

@@ -327,6 +327,7 @@ export async function executeFormSubmit(
         return createSubmitAbortedResult(options.signal);
       }
 
+      // Errors routed through form state — submit errors captured by form validation/error state
       return runFailureLifecycleHandler(validationFailure, lifecycleHandlers?.onValidateError, options);
     }
 
@@ -464,6 +465,7 @@ export async function executeFormSubmit(
       return failureResult;
     }
 
+    // Errors routed through form state — submit errors captured by form validation/error state
     return runFailureLifecycleHandler(failureResult, getLifecycleHandlers()?.onSubmitError, options);
   } finally {
     setIsSubmitting(false);

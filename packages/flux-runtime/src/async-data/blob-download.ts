@@ -44,6 +44,7 @@ export function resolveDownloadFilename(
  * The object URL is revoked after {@link REVOKE_DELAY_MS} to avoid leaks while leaving enough
  * time for the download to start (improvement over the 100ms revoke seen in some host impls).
  */
+// Errors routed through browser environment — download errors are user-visible via browser UI
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -93,6 +94,7 @@ export async function normalizeBlobResponse(
   const filename = resolveDownloadFilename(api, contentDisposition);
 
   if (filename) {
+    // Errors routed through browser environment — download errors are user-visible via browser UI
     downloadBlob(blob, filename);
   }
 

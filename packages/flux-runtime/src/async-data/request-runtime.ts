@@ -500,6 +500,7 @@ export async function executeApiSchema(
 
 export const executeApiObject = executeApiSchema;
 
+// Errors routed through state machine — request orchestration errors handled by request state machine
 export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestExecutor {
   const activeControllers = new Map<string, AbortController>();
   const activePromises = new Map<string, Promise<ApiResponse<unknown>>>();

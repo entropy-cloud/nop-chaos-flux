@@ -88,6 +88,7 @@ export function createSourceObserver(runtime: RendererRuntime): SourceObserver {
     );
     updateSnapshot({ ...baseValue, ...loadingPatch }, nextInputs);
 
+    // Errors routed through source observer state — Promise.allSettled captures all outcomes
     void Promise.allSettled(
       input.entries.map(async (entry) => {
         try {

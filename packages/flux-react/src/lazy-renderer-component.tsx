@@ -30,6 +30,7 @@ export function createLazyRendererComponent<
   options?: LazyRendererOptions,
 ): (props: RendererComponentProps<S, P>) => ReactElement | null {
   const LazyComp = lazy(() =>
+    // Errors routed through error boundary — component load failure is caught by React error boundary
     load().then((comp) => ({ default: comp })),
   );
 

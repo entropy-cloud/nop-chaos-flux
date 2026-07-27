@@ -149,6 +149,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
           strictMode: isStrictValidationEnabled(props.strictValidation),
           onActionError: (error, ctx) => onActionErrorRef.current?.(error, ctx),
         });
+      // Errors routed through import error state — prepare failure caught in catch handler
       } catch (error) {
         creationErrorRef.current = error;
         return undefined as unknown as import('@nop-chaos/flux-core').RendererRuntime;
@@ -171,6 +172,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       }
       try {
         return runtime.createPageRuntime(initialPageDataRef.current);
+      // Errors routed through import error state — prepare failure caught in catch handler
       } catch (error) {
         creationErrorRef.current = error;
         return undefined as unknown as import('@nop-chaos/flux-core').PageRuntime;
@@ -182,6 +184,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       }
       try {
         return runtime.createSurfaceRuntime();
+      // Errors routed through import error state — prepare failure caught in catch handler
       } catch (error) {
         creationErrorRef.current = error;
         return undefined as unknown as import('@nop-chaos/flux-core').SurfaceRuntime;

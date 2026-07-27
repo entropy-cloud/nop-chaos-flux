@@ -37,6 +37,7 @@ function dispatchLifecycleAction(
     return;
   }
 
+  // Errors routed through state machine — lifecycle dispatch errors caught by host runtime
   void input
     .dispatch(program, {
       runtime: input.runtime,
@@ -170,6 +171,7 @@ export function createApiDataSourceRequestRunner(
   options: { stop: () => void },
 ) {
   function relaunchPendingRefresh() {
+    // Errors routed through state machine — lifecycle dispatch errors caught by host runtime
     void runRequest().catch((error: unknown) => {
       if (!input.silent) {
         reportRuntimeHostIssue({

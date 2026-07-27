@@ -84,6 +84,7 @@ export function resolveContainerElement(
     if (byName?.ref instanceof HTMLElement) {
       return byName.ref;
     }
+  // Errors routed through runtime error boundary — effect failure handled by host error boundary
   } catch {
     // resolve throws if componentName is ambiguous — fall through
   }

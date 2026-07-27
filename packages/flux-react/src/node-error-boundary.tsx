@@ -35,6 +35,7 @@ function renderErrorMessage(error: unknown, fallback: string) {
   } else {
     try {
       message = String(error ?? '');
+    // Errors routed through error boundary — recovery errors fall through to host boundary
     } catch {
       message = '';
     }

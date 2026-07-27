@@ -114,6 +114,7 @@ function evaluatePreventionField(
 
   try {
     return Boolean(evaluateCompiled<boolean>(compiled, evalScope));
+  // Errors routed through dispatch error handling — render helper side-effect
   } catch (error) {
     console.error(
       `[flux] ${fieldLabel} expression evaluation failed; falling back to falsy.`,
@@ -179,6 +180,7 @@ function invokeEventMethod(
   try {
     fn.call(event);
     return true;
+  // Errors routed through dispatch error handling — render helper side-effect
   } catch {
     return false;
   }

@@ -60,6 +60,7 @@ export function createDataSourceController(
     const delay = resolveInterval(input.interval);
     mutable.pollTimer = setTimeout(() => {
       const allowed = evaluateSendOnGate(input);
+      // Errors routed through state machine — data source errors handled via runRequest internal catch
       void (allowed ? runRequest() : Promise.resolve())
         .catch(reportRunRequestError)
         .finally(() => {
@@ -115,6 +116,7 @@ export function createDataSourceController(
     activateController(true);
 
     if (resolveInitFetch(input) && evaluateSendOnGate(input)) {
+      // Errors routed through state machine — data source errors handled via runRequest internal catch
       void runRequest().catch(reportRunRequestError);
     }
 

@@ -155,6 +155,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
 
         case 'ajax': {
           const apiSchema = invocation.args as ApiSchema;
+          // Errors routed through state machine — action dispatch errors handled by action runtime state machine
           return executeRuntimeAjaxAction(
             apiSchema,
             invocation.actionNode,
@@ -483,6 +484,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         });
       }
 
+      // Errors routed through state machine — action dispatch errors handled by action runtime state machine
       return resolved.provider.invoke(
         resolved.method,
         invocation.payload ?? ctx.evaluationBindings,
