@@ -5,6 +5,12 @@ import { t } from '@nop-chaos/flux-i18n';
 import type { ChatMessage, ChatMessageContentPart } from '../engine/types.js';
 import type { AiCitationSource, AiCitationsSchema } from '../schemas.js';
 
+const UNSAFE_URL_RE = /^(javascript|data):/i;
+
+function sanitizeUrl(url: string): string | undefined {
+  return UNSAFE_URL_RE.test(url) ? undefined : url;
+}
+
 /**
  * ai-citations (Widget, P3, A-13): renders an assistant message's content as
  * plain text with `[N]` / `[N,M]` citation markers turned into hoverable
@@ -187,18 +193,28 @@ function CitationBody({
         <p className="font-medium leading-tight">{source.title}</p>
       ) : null}
       {source.snippet ? <p className="text-muted-foreground">{source.snippet}</p> : null}
-      {source.url ? (
-        <a
-          href={source.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          data-slot="ai-citation-url"
-          className="inline-block text-primary hover:underline"
-          onClick={() => onClick?.(source, source.index)}
-        >
-          {source.url}
-        </a>
-      ) : null}
+      {source.url ? (() => {
+        const safeUrl = sanitizeUrl(source.url);
+        return safeUrl ? (
+          <a
+            href={safeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-slot="ai-citation-url"
+            className="inline-block text-primary hover:underline"
+            onClick={() => onClick?.(source, source.index)}
+          >
+            {source.url}
+          </a>
+        ) : (
+          <span
+            data-slot="ai-citation-url"
+            className="inline-block text-muted-foreground"
+          >
+            {source.url}
+          </span>
+        );
+      })() : null}
       {onClick && !source.url ? (
         <Button
           variant="link"

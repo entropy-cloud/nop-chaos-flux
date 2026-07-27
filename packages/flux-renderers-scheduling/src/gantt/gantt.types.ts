@@ -152,26 +152,26 @@ export interface GanttSchema extends BaseSchema {
   resources?: GanttResource[];
   assignments?: GanttAssignment[];
   columns?: GanttColumn[];
-  /** @deprecated */
+  /** @deprecated Use `zoomLevels` instead. */
   scales?: GanttScale[];
   zoomLevels?: GanttZoomLevel[];
   defaultZoom?: string;
   cellWidth?: number;
-  /** @deprecated */
+  /** @deprecated Dates are per-task on `GanttTaskData.start`/`.end`; use `zoomLevels` for range control. */
   startDate?: string;
-  /** @deprecated */
+  /** @deprecated Dates are per-task on `GanttTaskData.start`/`.end`; use `zoomLevels` for range control. */
   endDate?: string;
-  /** @deprecated */
+  /** @deprecated Tasks use `children: GanttTaskData[]` directly on each task. */
   childrenField?: string;
-  /** @deprecated */
+  /** @deprecated Tasks use `children` nesting for hierarchy; expand/collapse is runtime-state-driven. */
   initiallyExpanded?: boolean;
   draggable?: boolean;
   editable?: boolean;
   linkable?: boolean;
   taskBarHeight?: number;
-  /** @deprecated */
+  /** @deprecated Use `taskBarHeight` instead. */
   progressBarHeight?: number;
-  /** @deprecated */
+  /** @deprecated Calendar configuration is now per-`parse()` call via `CalendarEntry[]`. */
   calendar?: string;
   showWeekends?: boolean;
   showToday?: boolean;
