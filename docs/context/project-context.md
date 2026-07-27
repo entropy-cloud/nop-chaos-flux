@@ -45,7 +45,7 @@ This file intentionally does **not** track "what is being worked on right now". 
 ## Optional Layers Currently In Use
 
 - [x] `docs/discussions/`
-- [ ] `docs/audits/`
+- [x] `docs/audits/`
 - [x] `docs/testing/`
 - [x] `docs/skills/`
 - [x] `docs/analysis/`
