@@ -312,3 +312,69 @@ describe('createReportDesignerCore', () => {
     expect(notified).toBe(true);
   });
 });
+
+describe('readonly mode guard', () => {
+  let readonlyCore: ReportDesignerCore;
+  let doc: ReportTemplateDocument;
+
+  beforeEach(() => {
+    const spreadsheetDoc = createEmptyDocument();
+    doc = createReportTemplateDocument(spreadsheetDoc);
+    readonlyCore = createReportDesignerCore({ document: doc, config: defaultConfig, readonly: true });
+  });
+
+  it('marks snapshot as readonly', () => {
+    expect(readonlyCore.getSnapshot().readonly).toBe(true);
+  });
+
+  it('prevents dispatch of mutation commands in readonly mode', async () => {
+    const result = await readonlyCore.dispatch({
+      type: 'report-designer:updateMeta',
+      target: { kind: 'workbook' },
+      patch: { title: 'Should not apply' },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.changed).toBe(false);
+    expect(result.error).toBe('Document is readonly');
+    const meta = readonlyCore.getMetadata({ kind: 'workbook' });
+    expect(meta).toEqual({});
+  });
+
+  it('prevents setMetadata in readonly mode', () => {
+    readonlyCore.setMetadata({ kind: 'workbook' }, { title: 'Should not apply' });
+
+    const meta = readonlyCore.getMetadata({ kind: 'workbook' });
+    expect(meta).toEqual({});
+  });
+
+  it('prevents syncSpreadsheetDocument in readonly mode', () => {
+    const nextSpreadsheet = JSON.parse(JSON.stringify(doc.spreadsheet));
+    nextSpreadsheet.workbook.sheets[0].cells = {
+      A1: { value: 'should-not-appear', type: 'string' },
+    };
+
+    readonlyCore.syncSpreadsheetDocument(nextSpreadsheet);
+
+    const sheet = readonlyCore.getSnapshot().document.spreadsheet.workbook.sheets[0];
+    expect(sheet.cells?.A1).toBeUndefined();
+  });
+
+  it('allows non-mutation commands (preview, export) in readonly mode', async () => {
+    const previewResult = await readonlyCore.dispatch({
+      type: 'report-designer:preview',
+      mode: 'inline',
+    });
+
+    expect(previewResult.ok).toBe(false);
+    expect(previewResult.changed).toBe(false);
+
+    const exportResult = await readonlyCore.dispatch({
+      type: 'report-designer:exportTemplate',
+      format: 'json',
+    });
+
+    expect(exportResult.ok).toBe(false);
+    expect(exportResult.changed).toBe(false);
+  });
+});

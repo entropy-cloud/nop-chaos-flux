@@ -3,6 +3,7 @@ import { createActionScope } from '@nop-chaos/flux-runtime';
 import {
   createReportDesignerActionProvider,
   REPORT_DESIGNER_HOST_METHODS,
+  toReportDesignerActionResult,
 } from './index.js';
 
 describe('report designer host action provider', () => {
@@ -139,5 +140,74 @@ describe('report designer host action provider', () => {
     expect((result.error as Error).message).toBe(
       'report-designer:dropFieldToTarget payload does not match the published host args contract.',
     );
+  });
+});
+
+describe('toReportDesignerActionResult', () => {
+  it('converts a successful command result', () => {
+    const result = toReportDesignerActionResult({ ok: true, changed: true });
+
+    expect(result.ok).toBe(true);
+    expect(result.cancelled).toBeUndefined();
+    expect(result.data).toBeUndefined();
+    expect(result.error).toBeUndefined();
+  });
+
+  it('converts a cancelled command result', () => {
+    const result = toReportDesignerActionResult({ ok: true, changed: false, cancelled: true });
+
+    expect(result.ok).toBe(true);
+    expect(result.cancelled).toBe(true);
+  });
+
+  it('converts a failed command result with string error', () => {
+    const result = toReportDesignerActionResult({ ok: false, changed: false, error: 'Something failed' });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as Error).message).toBe('Something failed');
+  });
+
+  it('converts a failed command result with Error instance', () => {
+    const error = new Error('Command error');
+    const result = toReportDesignerActionResult({ ok: false, changed: false, error });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as Error).message).toBe('Command error');
+  });
+
+  it('converts a failed command result with structured object error', () => {
+    const result = toReportDesignerActionResult({
+      ok: false,
+      changed: false,
+      error: { code: 'ERR_PREVIEW', message: 'Preview failed' },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as Error).message).toBe('Preview failed');
+    expect((result.error as Error).cause).toEqual({ code: 'ERR_PREVIEW', message: 'Preview failed' });
+  });
+
+  it('converts a failed command result with null error', () => {
+    const result = toReportDesignerActionResult({ ok: false, changed: false, error: null });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeUndefined();
+  });
+
+  it('converts a failed command result with undefined error', () => {
+    const result = toReportDesignerActionResult({ ok: false, changed: false, error: undefined });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeUndefined();
+  });
+
+  it('passes through data from the command result', () => {
+    const result = toReportDesignerActionResult({ ok: true, changed: true, data: { id: '123' } });
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ id: '123' });
   });
 });

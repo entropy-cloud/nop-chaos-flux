@@ -230,6 +230,18 @@ describe('adapter registry', () => {
     expect(registry.fieldSources.has('test-source')).toBe(true);
   });
 
+  it('should register preview adapter', () => {
+    const adapter = {
+      id: 'test-preview',
+      preview: async () => ({ ok: true }),
+    };
+    core.registerPreview(adapter);
+
+    const registry = core.getAdapterRegistry();
+    expect(registry.previews.has('test-preview')).toBe(true);
+    expect(registry.previews.get('test-preview')).toBe(adapter);
+  });
+
   it('should register field drop adapter', () => {
     const adapter: FieldDropAdapter = {
       id: 'test-drop',

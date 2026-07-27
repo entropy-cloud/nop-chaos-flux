@@ -4,6 +4,7 @@ import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from './bridge.js';
 import { SpreadsheetGrid } from './spreadsheet-grid.js';
 import { SheetTabBar } from './sheet-tab-bar.js';
 import { SpreadsheetToolbar } from './spreadsheet-toolbar.js';
+import { fire } from './fire.js';
 import { useSpreadsheetInteractions } from './use-spreadsheet-interactions.js';
 
 const DEFAULT_ROWS = 100;
@@ -156,24 +157,24 @@ export function DefaultSpreadsheetPageBody(props: {
             frozen={frozen}
             hasSelection={Boolean(selectedCell)}
             currentCellStyle={currentCell?.style}
-            onUndo={() => void handleUndo()}
-            onRedo={() => void handleRedo()}
-            onCopy={() => void handleCopy()}
-            onCut={() => void handleCut()}
-            onPaste={() => void handlePaste()}
-            onClear={() => void handleClear()}
-            onStyleTool={(tool) => void handleStyleTool(tool)}
-            onMerge={() => void handleMerge()}
-            onUnmerge={() => void handleUnmerge()}
-            onMergeCenter={() => void handleMergeCenter()}
-            onFillDown={() => void handleFillDown()}
-            onFillSeries={(direction) => void handleFillSeries(direction)}
-            onInsertRow={() => void handleInsertRow()}
-            onDeleteRow={() => void handleDeleteRow()}
-            onInsertColumn={() => void handleInsertColumn()}
-            onDeleteColumn={() => void handleDeleteColumn()}
-            onFreeze={() => void handleFreeze()}
-            onUnfreeze={() => void handleUnfreeze()}
+            onUndo={() => fire(handleUndo)}
+            onRedo={() => fire(handleRedo)}
+            onCopy={() => fire(handleCopy)}
+            onCut={() => fire(handleCut)}
+            onPaste={() => fire(handlePaste)}
+            onClear={() => fire(handleClear)}
+            onStyleTool={(tool) => fire(() => handleStyleTool(tool))}
+            onMerge={() => fire(handleMerge)}
+            onUnmerge={() => fire(handleUnmerge)}
+            onMergeCenter={() => fire(handleMergeCenter)}
+            onFillDown={() => fire(handleFillDown)}
+            onFillSeries={(direction) => fire(() => handleFillSeries(direction))}
+            onInsertRow={() => fire(handleInsertRow)}
+            onDeleteRow={() => fire(handleDeleteRow)}
+            onInsertColumn={() => fire(handleInsertColumn)}
+            onDeleteColumn={() => fire(handleDeleteColumn)}
+            onFreeze={() => fire(handleFreeze)}
+            onUnfreeze={() => fire(handleUnfreeze)}
             onCellValueChange={handleCellValueChange}
             showFindReplace={showFindReplace}
             onToggleFindReplace={() => setShowFindReplace((value) => !value)}
@@ -182,15 +183,15 @@ export function DefaultSpreadsheetPageBody(props: {
             replaceText={replaceText}
             onReplaceTextChange={setReplaceText}
             findResults={findResults}
-            onFind={() => void handleFind()}
-            onReplace={() => void handleReplace()}
-            onReplaceAll={() => void handleReplaceAll()}
+            onFind={() => fire(handleFind)}
+            onReplace={() => fire(handleReplace)}
+            onReplaceAll={() => fire(handleReplaceAll)}
             showCommentInput={showCommentInput}
             onToggleCommentInput={() => setShowCommentInput((value) => !value)}
             commentText={commentText}
             onCommentTextChange={setCommentText}
-            onAddComment={() => void handleAddComment()}
-            onDeleteComment={() => void handleDeleteComment()}
+            onAddComment={() => fire(handleAddComment)}
+            onDeleteComment={() => fire(handleDeleteComment)}
             hasComment={hasComment}
             readOnly={snapshot.runtime.readonly}
           />
@@ -226,7 +227,7 @@ export function DefaultSpreadsheetPageBody(props: {
         onFillHandleMouseDown={handleFillHandleMouseDown}
         onFillHandleDoubleClick={handleFillHandleDoubleClick}
         onEditValueChange={handleEditValueChange}
-        onEditSave={() => void handleEditSave()}
+        onEditSave={() => fire(handleEditSave)}
         onEditCancel={handleEditCancel}
         dropTargetCell={dropTargetCell}
         draggingField={null}
@@ -241,9 +242,9 @@ export function DefaultSpreadsheetPageBody(props: {
         onSwitchSheet={(nextSheetId) =>
           void props.bridge.dispatch({ type: 'spreadsheet:setActiveSheet', sheetId: nextSheetId })
         }
-        onAddSheet={() => void handleAddSheet()}
-        onRemoveSheet={(nextSheetId) => void handleRemoveSheet(nextSheetId)}
-        onRenameSheet={(nextSheetId, name) => void handleRenameSheet(nextSheetId, name)}
+        onAddSheet={() => fire(handleAddSheet)}
+        onRemoveSheet={(nextSheetId) => fire(() => handleRemoveSheet(nextSheetId))}
+        onRenameSheet={(nextSheetId, name) => fire(() => handleRenameSheet(nextSheetId, name))}
         canRemoveSheet={snapshot.workbook.sheets.length > 1}
         readOnly={snapshot.runtime.readonly}
       />
