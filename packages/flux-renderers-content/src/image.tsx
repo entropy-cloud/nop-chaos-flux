@@ -196,7 +196,7 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
           props.meta.className,
         )}
       >
-        <span data-slot="image-fallback">{alt || 'image'}</span>
+        <span data-slot="image-fallback">{alt || t('flux.common.noData')}</span>
       </div>
     );
   }

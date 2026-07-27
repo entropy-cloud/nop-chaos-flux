@@ -1,5 +1,6 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { t } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -66,7 +67,7 @@ describe('icon-picker renderer', () => {
     fireEvent.click(trigger);
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('搜索图标...')).toBeTruthy();
+      expect(screen.getByPlaceholderText(t('flux.common.search'))).toBeTruthy();
     });
   });
 

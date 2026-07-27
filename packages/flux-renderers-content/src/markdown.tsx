@@ -82,7 +82,7 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
         data-state={fetchError ? 'error' : 'empty'}
         className={cn('nop-markdown', props.meta.className)}
       >
-        {fetchError ? 'Failed to load markdown content' : (hasEmpty ? emptyContent : null)}
+        {fetchError ? t('flux.common.loadFailed') : (hasEmpty ? emptyContent : null)}
       </div>
     );
   }

@@ -11,6 +11,7 @@ import {
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, Input, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
 import { icons, SearchIcon, XIcon } from 'lucide-react';
 import {
@@ -188,7 +189,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
                 <Input
                   type="search"
                   value={query}
-                  placeholder="搜索图标..."
+                  placeholder={t('flux.common.search')}
                   className="h-8 pl-8"
                   onChange={(e) => {
                     setQuery(e.target.value);
@@ -201,7 +202,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
           <div className="grid max-h-72 grid-cols-6 gap-1 overflow-y-auto p-2">
             {visibleIcons.length === 0 ? (
               <div className="col-span-6 py-6 text-center text-sm text-muted-foreground">
-                无匹配项
+                {t('flux.common.noResults')}
               </div>
             ) : (
               visibleIcons.map((iconName) => {
@@ -212,7 +213,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
                     key={iconName}
                     type="button"
                     className={cn(
-                      'flex size-8 items-center justify-center rounded hover:bg-accent',
+                      'flex size-8 items-center justify-center rounded hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                       isSelected && 'bg-accent text-accent-foreground ring-1 ring-primary',
                     )}
                     title={iconName}
@@ -233,7 +234,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
                 className="w-full text-xs"
                 onClick={() => setVisibleCount((c) => c + VISIBLE_STEP)}
               >
-                显示更多 ({filteredIcons.length - visibleCount})
+                {t('flux.common.showMore', { count: filteredIcons.length - visibleCount })}
               </Button>
             </div>
           )}
@@ -246,7 +247,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
           variant="ghost"
           size="icon-sm"
           disabled={interactionDisabled}
-          aria-label="清空"
+          aria-label={t('flux.common.clear')}
           onClick={clearValue}
           data-slot="icon-picker-clear"
         >

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JsonViewRenderer } from './json-view.js';
+import { t } from '@nop-chaos/flux-i18n';
 import { createMockRendererProps } from './test-support.js';
 import type { JsonViewSchema } from './schemas.js';
 
@@ -75,7 +76,7 @@ describe('JsonViewRenderer', () => {
       '[data-slot="json-view-toolbar"] button',
     ) as HTMLButtonElement;
     expect(btn).toBeTruthy();
-    expect(btn.textContent).toContain('Copy');
+    expect(btn.textContent).toContain(t('flux.common.copy'));
   });
 
   it('copies the JSON payload to the clipboard on click', async () => {

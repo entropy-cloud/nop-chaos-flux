@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { VideoSchema } from './schemas.js';
 
@@ -54,7 +55,7 @@ export function VideoRenderer(props: RendererComponentProps<VideoSchema>) {
           <img src={poster} alt="" data-slot="video-poster" className="max-w-full rounded-md" />
         ) : null}
         <figcaption data-slot="video-fallback" className="text-xs text-muted-foreground">
-          {errored ? 'Video failed to load' : 'No video source'}
+          {errored ? t('flux.common.loadFailed') : t('flux.common.noSource')}
         </figcaption>
       </figure>
     );

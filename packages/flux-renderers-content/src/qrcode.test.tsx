@@ -1,6 +1,7 @@
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QrCodeRenderer } from './qrcode.js';
+import { t } from '@nop-chaos/flux-i18n';
 import { createMockRendererProps } from './test-support.js';
 import type { QrCodeSchema } from './schemas.js';
 
@@ -143,7 +144,7 @@ describe('QrCodeRenderer', () => {
     const fallback = container.querySelector('[data-slot="qrcode"][data-state="error"]');
     expect(fallback).toBeTruthy();
     expect(fallback?.querySelector('[data-slot="qrcode-fallback"]')?.textContent).toBe(
-      'QR code failed',
+      t('flux.common.loadFailed'),
     );
   });
 });

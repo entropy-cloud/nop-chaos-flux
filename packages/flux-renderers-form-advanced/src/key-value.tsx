@@ -17,7 +17,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
-import { ChevronDownIcon, ChevronUpIcon, Trash2Icon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import {
   formFieldRules,
   getChildFieldUiState,
@@ -624,6 +624,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           syncField(nextPairs);
         }}
       >
+        <PlusIcon className="size-4" />
         {props.props.addLabel ? String(props.props.addLabel) : t('flux.form.addEntry')}
       </Button>
     </div>

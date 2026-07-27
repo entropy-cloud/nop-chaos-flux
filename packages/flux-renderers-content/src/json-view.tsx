@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, JsonViewer, cn } from '@nop-chaos/ui';
 import type { JsonViewSchema } from './schemas.js';
 
@@ -87,7 +88,7 @@ export function JsonViewRenderer(props: RendererComponentProps<JsonViewSchema>) 
       {showCopy ? (
         <div data-slot="json-view-toolbar" className="mb-2 flex justify-end">
           <Button type="button" variant="outline" size="xs" onClick={() => void handleCopy()}>
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? t('flux.common.copied') : t('flux.common.copy')}
           </Button>
         </div>
       ) : null}

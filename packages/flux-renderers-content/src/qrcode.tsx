@@ -2,6 +2,7 @@ import React from 'react';
 import QRCode from 'qrcode';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { QrCodeLevel, QrCodeSchema } from './schemas.js';
 
@@ -86,7 +87,7 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
           style={{ width: size, height: size }}
           className="flex items-center justify-center rounded-md bg-muted text-xs text-muted-foreground"
         >
-          {failed ? 'QR code failed' : 'No value'}
+          {failed ? t('flux.common.loadFailed') : t('flux.common.noValue')}
         </div>
         {hasLabel ? (
           <figcaption data-slot="qrcode-label" className="text-sm text-muted-foreground">

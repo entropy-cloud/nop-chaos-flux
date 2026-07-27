@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { AudioSchema } from './schemas.js';
 
@@ -44,7 +45,7 @@ export function AudioRenderer(props: RendererComponentProps<AudioSchema>) {
           <img src={poster} alt="" data-slot="audio-poster" className="max-w-full rounded-md" />
         ) : null}
         <figcaption data-slot="audio-fallback" className="text-xs text-muted-foreground">
-          {errored ? 'Audio failed to load' : 'No audio source'}
+          {errored ? t('flux.common.loadFailed') : t('flux.common.noSource')}
         </figcaption>
       </figure>
     );

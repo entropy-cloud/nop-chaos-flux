@@ -17,7 +17,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
-import { ChevronDownIcon, ChevronUpIcon, Trash2Icon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import {
   formFieldRules,
   getChildFieldUiState,
@@ -593,6 +593,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           syncItems(nextItems);
         }}
       >
+        <PlusIcon className="size-4" />
         {t('flux.form.addItem')}
       </Button>
     </div>

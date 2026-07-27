@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   Carousel,
   type CarouselApi,
@@ -225,7 +226,7 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
         className={cn('nop-carousel', props.meta.className)}
       >
         <div data-slot="carousel-empty" className="text-sm text-muted-foreground">
-          {'No items to display'}
+          {t('flux.common.noData')}
         </div>
       </div>
     );
