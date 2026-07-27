@@ -17,10 +17,10 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | Phase ID | 名称                                          | 状态   |
 | -------- | --------------------------------------------- | ------ |
 | M0       | 审计编排基线                                  | `done` |
-| MA1.1    | 结构层—核心包簇（core）依赖与边界审计         | `todo` |
-| MA1.2    | 结构层—运行时包簇（runtime）依赖与边界审计    | `todo` |
-| MA1.3    | 结构层—基础渲染器（basic）定义与边界审计      | `todo` |
-| MA1.4    | 结构层—设计器/办公/内容/移动端 定义与样式审计 | `todo` |
+| MA1.1    | 结构层—核心包簇（core）依赖与边界审计         | `done` |
+| MA1.2    | 结构层—运行时包簇（runtime）依赖与边界审计    | `done` |
+| MA1.3    | 结构层—基础渲染器（basic）定义与边界审计      | `done` |
+| MA1.4    | 结构层—设计器/办公/内容/移动端 定义与样式审计 | `done` |
 | MA2.1    | 运行时层—核心包簇 Schema 与 FieldFrame 审计   | `todo` |
 | MA2.2    | 运行时层—运行时包簇裸读取与异步路径审计       | `todo` |
 | MA2.3    | 运行时层—基础渲染器分发与 Action 链路审计     | `todo` |
@@ -87,10 +87,10 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 | Work Item                                                | Status | Owner Doc                                             | Dependencies | Skill                                                              |
 | -------------------------------------------------------- | ------ | ----------------------------------------------------- | ------------ | ------------------------------------------------------------------ |
-| MA1.1 核心包簇（flux-core/formula/compiler/action-core） | `todo` | `docs/architecture/flux-core.md`                      | M0           | `deep-audit-prompts.md`                                            |
-| MA1.2 运行时包簇（flux-runtime/react/bundle）            | `todo` | `docs/architecture/flux-runtime-module-boundaries.md` | M0           | `deep-audit-prompts.md`                                            |
-| MA1.3 基础渲染器包簇（basic/form/form-advanced/data）    | `todo` | `docs/architecture/renderer-runtime.md`               | M0           | `deep-audit-prompts.md` + `flux-component-design-review-prompt.md` |
-| MA1.4 设计器/办公/内容/移动端定义与样式                  | `todo` | `docs/architecture/styling-system.md`                 | M0           | `deep-audit-prompts.md`                                            |
+| MA1.1 核心包簇（flux-core/formula/compiler/action-core） | `done` | `docs/architecture/flux-core.md`                      | M0           | `deep-audit-prompts.md`                                            |
+| MA1.2 运行时包簇（flux-runtime/react/bundle）            | `done` | `docs/architecture/flux-runtime-module-boundaries.md` | M0           | `deep-audit-prompts.md`                                            |
+| MA1.3 基础渲染器包簇（basic/form/form-advanced/data）    | `done` | `docs/architecture/renderer-runtime.md`               | M0           | `deep-audit-prompts.md` + `flux-component-design-review-prompt.md` |
+| MA1.4 设计器/办公/内容/移动端定义与样式                  | `done` | `docs/architecture/styling-system.md`                 | M0           | `deep-audit-prompts.md`                                            |
 
 ### MA2 — 运行时正确性层审计（维 B: 裸 schema/FieldFrame/异步路径/硬编码分发/Action 链路）
 

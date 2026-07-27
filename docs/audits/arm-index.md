@@ -7,33 +7,33 @@
 
 ## Phase / Milestone Index
 
-| Phase ID | Name                                          | Status      | Report Path                                     |
-| -------- | --------------------------------------------- | ----------- | ----------------------------------------------- |
-| M0       | 审计编排基线                                  | `completed` | (this index)                                    |
-| MA1.1    | 结构层—核心包簇（core）依赖与边界审计         | `todo`      | `docs/audits/arm-MA1-core-*.md`                 |
-| MA1.2    | 结构层—运行时包簇（runtime）依赖与边界审计    | `todo`      | `docs/audits/arm-MA1-runtime-*.md`              |
-| MA1.3    | 结构层—基础渲染器（basic）定义与边界审计      | `todo`      | `docs/audits/arm-MA1-basic-*.md`                |
-| MA1.4    | 结构层—设计器/办公/内容/移动端 定义与样式审计 | `todo`      | `docs/audits/arm-MA1-others-*.md`               |
-| MA2.1    | 运行时层—核心包簇 Schema 与 FieldFrame 审计   | `todo`      | `docs/audits/arm-MA2-core-*.md`                 |
-| MA2.2    | 运行时层—运行时包簇裸读取与异步路径审计       | `todo`      | `docs/audits/arm-MA2-runtime-*.md`              |
-| MA2.3    | 运行时层—基础渲染器分发与 Action 链路审计     | `todo`      | `docs/audits/arm-MA2-basic-*.md`                |
-| MA3.1    | 代码质量—核心+运行时 代码质量与 React19 审计  | `todo`      | `docs/audits/arm-MA3-core-runtime-*.md`         |
-| MA3.2    | 代码质量—基础+内容+移动端 代码质量审计        | `todo`      | `docs/audits/arm-MA3-basic-content-mobile-*.md` |
-| MA3.3    | 代码质量—设计器+办公 代码质量审计             | `todo`      | `docs/audits/arm-MA3-designer-office-*.md`      |
-| MA4.1    | 测试层—核心+运行时 测试覆盖审计               | `todo`      | `docs/audits/arm-MA4-core-runtime-*.md`         |
-| MA4.2    | 测试层—基础+内容+移动端 测试覆盖审计          | `todo`      | `docs/audits/arm-MA4-basic-content-mobile-*.md` |
-| MA4.3    | 测试层—设计器+办公 测试覆盖与 E2E 审计        | `todo`      | `docs/audits/arm-MA4-designer-office-*.md`      |
-| MA5.1    | UI/UX—设计器可操作性审计                      | `todo`      | `docs/audits/arm-MA5-designer-*.md`             |
-| MA5.2    | UI/UX—基础+内容渲染器 UX 审计                 | `todo`      | `docs/audits/arm-MA5-basic-content-*.md`        |
-| MA6      | 文档与契约一致性审计                          | `todo`      | `docs/audits/arm-MA6-*.md`                      |
-| MA7.1    | 安全与运维—XSS/样式/性能审计                  | `todo`      | `docs/audits/arm-MA7-security-*.md`             |
-| MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `todo`      | `docs/audits/arm-MA7-ci-*.md`                   |
-| R1.0     | P1 修复—结构+运行时                           | `todo`      | `docs/plans/2026-*-MR1-*.md`                    |
-| R2.0     | P1 修复—代码+测试                             | `todo`      | `docs/plans/2026-*-MR2-*.md`                    |
-| R3.0     | P1 修复—UI/UX+文档+安全+运维                  | `todo`      | `docs/plans/2026-*-MR3-*.md`                    |
-| R4.0     | 跨维度 P1 裁决                                | `todo`      | `docs/plans/2026-*-MR4-*.md`                    |
-| MV       | 全量验证与回归                                | `todo`      | `docs/plans/2026-*-MV-*.md`                     |
-| MG       | Guard 激活与知识沉淀                          | `todo`      | `docs/plans/2026-*-MG-*.md`                     |
+| Phase ID | Name                                          | Status      | Report Path                                                                                           |
+| -------- | --------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| M0       | 审计编排基线                                  | `completed` | (this index)                                                                                          |
+| MA1.1    | 结构层—核心包簇（core）依赖与边界审计         | `completed` | `docs/audits/arm-MA1-core-structure.md`                                                               |
+| MA1.2    | 结构层—运行时包簇（runtime）依赖与边界审计    | `completed` | `docs/audits/arm-MA1-runtime-structure.md`                                                            |
+| MA1.3    | 结构层—基础渲染器（basic）定义与边界审计      | `completed` | `docs/audits/arm-MA1-basic-structure.md`                                                              |
+| MA1.4    | 结构层—设计器/办公/内容/移动端 定义与样式审计 | `completed` | `docs/audits/arm-MA1-content-mobile-structure.md`, `docs/audits/arm-MA1-designer-office-structure.md` |
+| MA2.1    | 运行时层—核心包簇 Schema 与 FieldFrame 审计   | `todo`      | `docs/audits/arm-MA2-core-*.md`                                                                       |
+| MA2.2    | 运行时层—运行时包簇裸读取与异步路径审计       | `todo`      | `docs/audits/arm-MA2-runtime-*.md`                                                                    |
+| MA2.3    | 运行时层—基础渲染器分发与 Action 链路审计     | `todo`      | `docs/audits/arm-MA2-basic-*.md`                                                                      |
+| MA3.1    | 代码质量—核心+运行时 代码质量与 React19 审计  | `todo`      | `docs/audits/arm-MA3-core-runtime-*.md`                                                               |
+| MA3.2    | 代码质量—基础+内容+移动端 代码质量审计        | `todo`      | `docs/audits/arm-MA3-basic-content-mobile-*.md`                                                       |
+| MA3.3    | 代码质量—设计器+办公 代码质量审计             | `todo`      | `docs/audits/arm-MA3-designer-office-*.md`                                                            |
+| MA4.1    | 测试层—核心+运行时 测试覆盖审计               | `todo`      | `docs/audits/arm-MA4-core-runtime-*.md`                                                               |
+| MA4.2    | 测试层—基础+内容+移动端 测试覆盖审计          | `todo`      | `docs/audits/arm-MA4-basic-content-mobile-*.md`                                                       |
+| MA4.3    | 测试层—设计器+办公 测试覆盖与 E2E 审计        | `todo`      | `docs/audits/arm-MA4-designer-office-*.md`                                                            |
+| MA5.1    | UI/UX—设计器可操作性审计                      | `todo`      | `docs/audits/arm-MA5-designer-*.md`                                                                   |
+| MA5.2    | UI/UX—基础+内容渲染器 UX 审计                 | `todo`      | `docs/audits/arm-MA5-basic-content-*.md`                                                              |
+| MA6      | 文档与契约一致性审计                          | `todo`      | `docs/audits/arm-MA6-*.md`                                                                            |
+| MA7.1    | 安全与运维—XSS/样式/性能审计                  | `todo`      | `docs/audits/arm-MA7-security-*.md`                                                                   |
+| MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `todo`      | `docs/audits/arm-MA7-ci-*.md`                                                                         |
+| R1.0     | P1 修复—结构+运行时                           | `todo`      | `docs/plans/2026-*-MR1-*.md`                                                                          |
+| R2.0     | P1 修复—代码+测试                             | `todo`      | `docs/plans/2026-*-MR2-*.md`                                                                          |
+| R3.0     | P1 修复—UI/UX+文档+安全+运维                  | `todo`      | `docs/plans/2026-*-MR3-*.md`                                                                          |
+| R4.0     | 跨维度 P1 裁决                                | `todo`      | `docs/plans/2026-*-MR4-*.md`                                                                          |
+| MV       | 全量验证与回归                                | `todo`      | `docs/plans/2026-*-MV-*.md`                                                                           |
+| MG       | Guard 激活与知识沉淀                          | `todo`      | `docs/plans/2026-*-MG-*.md`                                                                           |
 
 ## Package Cluster Index
 
@@ -52,11 +52,24 @@
 
 ## P0/P1 Finding Index
 
-| Finding ID | Severity | Package                   | Description                                        | Source Report                       | Status | Fix Plan    |
-| ---------- | -------- | ------------------------- | -------------------------------------------------- | ----------------------------------- | ------ | ----------- |
-| AI-P1-1    | P1       | flux-renderers-ai         | `deleteConversation` post-await stale-closure race | `2026-07-25-multi-audit-ai`         | open   | Pending MR2 |
-| AI-P1-2    | P1       | flux-renderers-ai         | `ai-citations` HTML 双编码显示损坏                 | `2026-07-25-multi-audit-ai`         | open   | Pending MR2 |
-| SCHED-F73  | P1       | flux-renderers-scheduling | Kanban DnD test silent no-op                       | `2026-07-23-multi-audit-scheduling` | open   | Pending MR2 |
+| Finding ID | Severity | Package                                   | Description                                                           | Source Report                       | Status | Fix Plan    |
+| ---------- | -------- | ----------------------------------------- | --------------------------------------------------------------------- | ----------------------------------- | ------ | ----------- |
+| AI-P1-1    | P1       | flux-renderers-ai                         | `deleteConversation` post-await stale-closure race                    | `2026-07-25-multi-audit-ai`         | open   | Pending MR2 |
+| AI-P1-2    | P1       | flux-renderers-ai                         | `ai-citations` HTML 双编码显示损坏                                    | `2026-07-25-multi-audit-ai`         | open   | Pending MR2 |
+| SCHED-F73  | P1       | flux-renderers-scheduling                 | Kanban DnD test silent no-op                                          | `2026-07-23-multi-audit-scheduling` | open   | Pending MR2 |
+| MA1-P1-001 | P1       | flux-core (renderer-core)                 | `RendererDefinition` 冗余声明4个从`RendererDefinitionShape`继承的字段 | `arm-MA1-core-structure.md`         | open   | Pending MR1 |
+| MA1-P1-002 | P1       | flux-renderers-data/form/form-advanced/ui | BEM风格 `nop-hairline--*` 修饰符命名违反无 BEM 原则                   | `arm-MA1-basic-structure.md`        | open   | Pending MR1 |
+
+## P2 Finding Index
+
+| Finding ID | Severity | Package                      | Description                                                                                          | Source Report                         | Status | Fix Plan    |
+| ---------- | -------- | ---------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- | ------ | ----------- |
+| MA1-P2-001 | P2       | docs/references              | `renderer-interfaces.md` 字段映射缺少 `deepFields`/`compilation`/`validationDefaults`/`frameRootTag` | `arm-MA1-core-structure.md`           | open   | Pending MR1 |
+| MA1-P2-002 | P2       | flux-action-core             | 便利再导出 flux-core debounce 函数造成传递耦合                                                       | `arm-MA1-core-structure.md`           | open   | Pending MR1 |
+| MA1-P2-003 | P2       | flux-renderers-form-advanced | 19个渲染器缺少 `displayName`/`category` 影响工具链发现性                                             | `arm-MA1-basic-structure.md`          | open   | Pending MR1 |
+| MA1-P2-004 | P2       | flux-renderers-form          | 7个date渲染器缺少 `displayName`/`category`                                                           | `arm-MA1-basic-structure.md`          | open   | Pending MR1 |
+| MA1-P2-005 | P2       | flux-renderers-content       | DiffView根元素缺少 `data-slot` 属性                                                                  | `arm-MA1-content-mobile-structure.md` | open   | Pending MR1 |
+| MA1-P2-006 | P2       | flux-renderers-content       | CSS文件641行（~600行DiffView），建议提取到单独文件                                                   | `arm-MA1-content-mobile-structure.md` | open   | Pending MR1 |
 
 ## Existing Audit Reports (Pre-M0)
 
