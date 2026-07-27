@@ -142,13 +142,36 @@ export interface SubmitFormActionSchema extends ActionShapeFields {
 /** 打开弹窗动作 */
 export interface OpenDialogActionSchema extends ActionShapeFields {
   action: 'openDialog';
-  args: Record<string, SchemaValue>;
+  args: {
+    title?: string;
+    size?: string;
+    data?: object;
+    body: SchemaInput;
+    // ... 其他 surface 字段 ...
+
+    // ── lifecycle callbacks（在 owner ctx 执行，详见 docs/architecture/surface-lifecycle-callbacks.md） ──
+    onClose?: ActionSchema | ActionSchema[];
+    onSubmitSuccess?: ActionSchema | ActionSchema[];
+    onSubmitError?: ActionSchema | ActionSchema[];
+  };
 }
 
 /** 打开抽屉动作 */
 export interface OpenDrawerActionSchema extends ActionShapeFields {
   action: 'openDrawer';
-  args: Record<string, SchemaValue>;
+  args: {
+    title?: string;
+    size?: string;
+    side?: 'left' | 'right' | 'top' | 'bottom';
+    data?: object;
+    body: SchemaInput;
+    // ... 其他 surface 字段 ...
+
+    // ── lifecycle callbacks（在 owner ctx 执行，详见 docs/architecture/surface-lifecycle-callbacks.md） ──
+    onClose?: ActionSchema | ActionSchema[];
+    onSubmitSuccess?: ActionSchema | ActionSchema[];
+    onSubmitError?: ActionSchema | ActionSchema[];
+  };
 }
 
 /** 关闭弹窗动作 */
@@ -176,6 +199,17 @@ export interface RefreshTableActionSchema extends ActionShapeFields {
 export interface RefreshSourceActionSchema extends ActionShapeFields {
   action: 'refreshSource';
   targetId: string;
+}
+
+/** 沿 scope 链向上刷新最近的 CRUD / data-source / tree（不需要 id/name） */
+export interface RefreshNearestActionSchema extends ActionShapeFields {
+  action: 'refreshNearest';
+  args?: {
+    /** 限定目标类型，默认 'auto' */
+    targetType?: 'crud' | 'data-source' | 'tree' | 'auto';
+    /** 找不到目标时的行为，默认 'silent' */
+    notFound?: 'silent' | 'error';
+  };
 }
 
 /** 设置值动作 */

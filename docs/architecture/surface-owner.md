@@ -338,6 +338,20 @@ Current live affordance baseline:
 - form 的 `component:submit`
 - table/source 的 `component:refresh`
 
+## Surface Lifecycle Callbacks
+
+`openDialog` / `openDrawer` 的 `args` 支持 `onClose` / `onSubmitSuccess` / `onSubmitError` 三个 lifecycle callback 字段，让 owner 侧响应 surface 内部事件（surface 关闭、form 提交成功/失败）。
+
+callback 的核心规则：
+
+- **在 owner ctx 执行**，不在 surface child scope（确保 `refreshNearest` / `setValue` 等面向 owner 语义正确）
+- **不替代 ajax 默认通知**（`messages` / 默认 error→notify 仍然生效）
+- **不替代 form 自己的 lifecycle handler**（form schema 的 `onSubmitSuccess` 字段在 form ctx 执行，与 surface `args.onSubmitSuccess` 互补）
+
+配套新增 `refreshNearest` action，沿 scope.parent 链向上找最近的 CRUD / data-source / tree 调用其 refresh，**不需要 schema 作者知道组件 id/name**。
+
+完整规则见 `docs/architecture/surface-lifecycle-callbacks.md`。本文档不重复其细节。
+
 ## Confirm And Commit
 
 如果未来某个 dialog/drawer 承担了 confirm/commit 语义：
@@ -421,6 +435,7 @@ This rule is part of the broader creator-owned boundary model documented in `doc
 ## Related Documents
 
 - `docs/architecture/action-interaction-state.md`
+- `docs/architecture/surface-lifecycle-callbacks.md`
 - `docs/components/dialog/design.md`
 - `docs/components/drawer/design.md`
 - `docs/components/bottom-sheet/design.md`

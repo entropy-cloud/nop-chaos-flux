@@ -71,22 +71,23 @@
 
 ## 可用动作
 
-| 动作类型                      | 说明             |
-| ----------------------------- | ---------------- |
-| `ajax`                        | 发起 HTTP 请求   |
-| `submitForm`                  | 提交表单         |
-| `openDialog` / `openDrawer`   | 打开弹窗/抽屉    |
-| `closeDialog` / `closeDrawer` | 关闭弹窗/抽屉    |
-| `closeSurface`                | 关闭任意 surface |
-| `refreshTable`                | 刷新表格         |
-| `refreshSource`               | 刷新数据源       |
-| `setValue` / `setValues`      | 设置值           |
-| `showToast`                   | Toast 通知       |
-| `confirm`                     | 确认对话框       |
-| `alert`                       | 警告对话框       |
-| `navigate`                    | 页面跳转         |
-| `component:method`            | 调用组件实例方法 |
-| `namespace:method`            | 调用命名空间方法 |
+| 动作类型                      | 说明                                                                                      |
+| ----------------------------- | ----------------------------------------------------------------------------------------- |
+| `ajax`                        | 发起 HTTP 请求                                                                            |
+| `submitForm`                  | 提交表单                                                                                  |
+| `openDialog` / `openDrawer`   | 打开弹窗/抽屉（args 支持 `onClose`/`onSubmitSuccess`/`onSubmitError` lifecycle callback） |
+| `closeDialog` / `closeDrawer` | 关闭弹窗/抽屉                                                                             |
+| `closeSurface`                | 关闭任意 surface                                                                          |
+| `refreshTable`                | 刷新表格（bump `ctx.page.refreshTick`）                                                   |
+| `refreshSource`               | 刷新指定 name 的 data-source（需要 `targetId`）                                           |
+| `refreshNearest`              | 沿 scope 链向上找最近的 CRUD / data-source / tree 刷新（不需要 id/name）                  |
+| `setValue` / `setValues`      | 设置值                                                                                    |
+| `showToast`                   | Toast 通知                                                                                |
+| `confirm`                     | 确认对话框                                                                                |
+| `alert`                       | 警告对话框                                                                                |
+| `navigate`                    | 页面跳转                                                                                  |
+| `component:method`            | 调用组件实例方法                                                                          |
+| `namespace:method`            | 调用命名空间方法                                                                          |
 
 ## 目标标识字段
 
@@ -95,6 +96,8 @@
 | `componentId`   | 调用组件实例方法（`component:submit`、`component:refresh`） | `{ "action": "component:submit", "componentId": "myForm" }`       |
 | `targetId`      | 刷新数据源（`refreshSource`）或指定动作目标                 | `{ "action": "refreshSource", "targetId": "pagedUsers" }`         |
 | `componentName` | 按组件名称查找（多个同类型组件时使用）                      | `{ "action": "component:refresh", "componentName": "userTable" }` |
+
+> **不需要目标标识**的场景：`refreshNearest` 沿 scope 链自动查找最近的 CRUD / data-source / tree，适用于"不知道外层组件 id/name"的场景（如 dialog 提交后刷新外部列表）。详见 `design-patterns/page-dialog-drawer.md` 与 `docs/architecture/surface-lifecycle-callbacks.md`。
 
 ## 事件数据流
 

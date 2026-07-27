@@ -318,6 +318,18 @@ export interface FormSchema extends BoundFieldSchemaBase {
   onSubmitSuccess?: ActionSchema | ActionSchema[];
   onSubmitError?: ActionSchema | ActionSchema[];
   onValidateError?: ActionSchema | ActionSchema[];
+  /**
+   * 提交作用域。决定 form 提交后是否触发所在 surface 的 onSubmitSuccess / onSubmitError callback。
+   * - 'local' (默认): 只触发 form 自己的 lifecycle handler
+   * - 'surface': 同时触发所在 surface 的 lifecycle callback（在 owner ctx 执行）
+   *
+   * 多 form surface 场景只在主 form 上设 'surface'。
+   * 单 form surface 若未显式声明，编译期自动视为 'surface'（含 warning）。
+   * 同一 surface body 内最多一个 form 设 'surface'，多个时编译期报错。
+   *
+   * 详见 docs/architecture/surface-lifecycle-callbacks.md §Form Submit Scope。
+   */
+  submitScope?: 'local' | 'surface';
   statusPath?: string;
   valuesPath?: string;
   hiddenFieldPolicy?: {

@@ -173,21 +173,90 @@
 
 ---
 
-## 6. 关闭 Surface
+## 6. 关闭 Surface 与 Lifecycle Callback
 
 弹窗/抽屉打开后，通过 `closeSurface` 关闭：
 
 ```jsonc
 {
-  "type": "form",
-  "id": "myForm",
-  "submitAction": { "action": "ajax", "args": { "url": "/api/save" } },
-  "onSubmitSuccess": {
-    "action": "closeSurface",
-    "then": { "action": "refreshSource", "targetId": "listData" },
+  "type": "button",
+  "label": "取消",
+  "onClick": { "action": "closeSurface" },
+}
+```
+
+### 6.1 Lifecycle Callback（owner 侧响应 surface 内部事件）
+
+`openDialog` / `openDrawer` 的 `args` 支持三个 lifecycle callback 字段，让 owner 侧响应 surface 内部事件：
+
+| 字段              | 触发时机                                                                | 典型用途                                                                                      |
+| ----------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `onClose`         | surface 被关闭时（手动关闭、`closeSurface` action、ESC、outside click） | 关闭后刷新列表、清理临时状态                                                                  |
+| `onSubmitSuccess` | surface body 内的 form submit ajax 返回成功后                           | 提交成功后刷新列表、导航、上报                                                                |
+| `onSubmitError`   | surface body 内的 form submit ajax 返回失败后                           | 自定义错误恢复（重置字段、上报埋点）—— **不用于错误 toast**（ajax 默认行为已 toast 后端 msg） |
+
+callback 在 **owner ctx** 执行（不是 surface child scope），可通过 `$formData` / `$result` 引用提交数据：
+
+```jsonc
+{
+  "action": "openDialog",
+  "args": {
+    "title": "编辑用户",
+    "data": { "id": "${id}" },
+    "body": {
+      "type": "form",
+      "submitAction": {
+        "action": "ajax",
+        "args": { "url": "/api/users/${id}", "method": "put" },
+        "messages": { "success": "保存成功" },
+      },
+      "body": [
+        /* ... */
+      ],
+    },
+    "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+    "onClose": { "action": "refreshNearest" },
   },
 }
 ```
+
+完整规则（owner context reconstruction、triggering order、与 ajax 默认通知的关系）见 `docs/architecture/surface-lifecycle-callbacks.md`。
+
+### 6.2 提交后刷新外部列表：用 `refreshNearest`
+
+如果 dialog 内提交后想刷新外部 CRUD，推荐用 `refreshNearest`（不需要知道外层 CRUD 的 id/name）：
+
+```jsonc
+{
+  "action": "openDialog",
+  "args": {
+    "body": { "type": "form" /* ... */ },
+    "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+  },
+}
+```
+
+`refreshNearest` 从 callback 执行的 owner scope 开始向上查找最近的 CRUD / data-source / tree，命中后调其 refresh。
+
+如果明确知道外层组件 id/name，也可以用 `component:refresh`（等价但需要显式 id）：
+
+```jsonc
+{ "action": "component:refresh", "componentId": "userCrud" }
+```
+
+### 6.3 不推荐：依赖 `closeSurface then refreshSource`
+
+下面的写法在某些场景能工作（declarative dialog + 共享 page scope），但对 action-style `openDialog` 不可靠（`then` 不切换 ctx，且 `refreshSource` 的 scope 精确匹配可能找不到 owner 注册的 source）：
+
+```jsonc
+// ⚠️ 不推荐：依赖 then 链的隐式 scope 行为
+{
+  "action": "closeSurface",
+  "then": { "action": "refreshSource", "targetId": "listData" },
+}
+```
+
+推荐改用 §6.1 的 lifecycle callback + `refreshNearest`，语义明确且不依赖隐式行为。
 
 ---
 

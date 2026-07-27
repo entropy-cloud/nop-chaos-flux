@@ -38,7 +38,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | R1.0     | P1 修复—结构+运行时（展开器）                 | `done` |
 | R2.0     | P1 修复—代码+测试（展开器）                   | `done` |
 | R3.0     | P1 修复—UI/UX+文档+安全+运维（展开器）        | `done` |
-| R4.0     | 跨维度 P1 裁决（可选）                        | `todo` |
+| R4.0     | 跨维度 P1 裁决（可选）                        | `done` |
 | MV       | 全量验证与回归                                | `todo` |
 | MG       | Guard 激活与知识沉淀                          | `todo` |
 
@@ -112,7 +112,7 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 | Work Item                               | Status | Owner Doc                                              | Dependencies | Skill                                                                                         |
 | --------------------------------------- | ------ | ------------------------------------------------------ | ------------ | --------------------------------------------------------------------------------------------- |
-| MA4.1 核心+运行时 测试覆盖 + 全局泄漏   | `todo` | —                                                      | M0           | `unit-test-logic-and-contract-coverage-audit-prompt.md` + `check:audit-test-global-leaks`     |
+| MA4.1 核心+运行时 测试覆盖 + 全局泄漏   | `done` | —                                                      | M0           | `unit-test-logic-and-contract-coverage-audit-prompt.md` + `check:audit-test-global-leaks`     |
 | MA4.2 基础+内容+移动端 测试覆盖         | `done` | —                                                      | M0           | `unit-test-logic-and-contract-coverage-audit-prompt.md`                                       |
 | MA4.3 设计器+办公 测试覆盖 + E2E 有效性 | `done` | `docs/audits/arm-MA4-designer-office-test-coverage.md` | M0           | `unit-test-logic-and-contract-coverage-audit-prompt.md` + `exploratory-e2e-testing-prompt.md` |
 
@@ -133,7 +133,7 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 | Work Item                          | Status | Owner Doc                                    | Dependencies | Skill                                                                                         |
 | ---------------------------------- | ------ | -------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------- |
-| MA7.1 XSS/样式/性能（全包簇抽样）  | `todo` | `docs/architecture/styling-system.md`        | M0           | `deep-audit-prompts.md` + `check:audit-styling-suspects` + `check:audit-performance-suspects` |
+| MA7.1 XSS/样式/性能（全包簇抽样）  | `done` | `docs/architecture/styling-system.md`        | M0           | `deep-audit-prompts.md` + `check:audit-styling-suspects` + `check:audit-performance-suspects` |
 | MA7.2 CI/Deprecation/i18n/静态检查 | `done` | `docs/audits/arm-MA7-ci-deprecation-i18n.md` | M0           | `deprecated-feature-cleanup.md` + `check:audit-non-retained-renderer-references`              |
 
 ### MR1 — P1 修复：结构+运行时（依赖 MA1 + MA2 完成）
@@ -229,7 +229,7 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 | Work Item           | Status | Owner Doc | Dependencies | Skill |
 | ------------------- | ------ | --------- | ------------ | ----- |
-| R4.0 跨维度冲突裁决 | `todo` | —         | MR1-MR3      | —     |
+| R4.0 跨维度冲突裁决 | `done` | —         | MR1-MR3      | —     |
 
 ### MV — 全量验证
 

@@ -136,6 +136,20 @@
 - 弹窗 `data` 传当前行数据 → 表单引用 `${id}` → 成功后 `closeSurface` 再 `refreshSource`。
 - `footerToolbar` 接收 schema 对象数组——`statistics` 和 `pagination` 都是独立 renderer，`total` 可通过表达式绑定到 `${$crud.total}`。
 
+> **弹窗提交后刷新外部 CRUD**：上例的 `onSubmitSuccess: { closeSurface, then: refreshSource }` 写法依赖 `then` 链共享 ctx，仅适用于** declarative dialog 或 source/CRUD 共享 page scope** 的场景。action-style `openDialog` 推荐改用 lifecycle callback + `refreshNearest`，详见 `design-patterns/page-dialog-drawer.md` §6 与 `docs/architecture/surface-lifecycle-callbacks.md`：
+>
+> ```jsonc
+> {
+>   "action": "openDialog",
+>   "args": {
+>     "body": {
+>       /* form */
+>     },
+>     "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+>   },
+> }
+> ```
+
 ---
 
 ## 2. CRUD 自带取数（loadAction 路径）
