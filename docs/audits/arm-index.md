@@ -23,8 +23,8 @@
 | MA4.1    | 测试层—核心+运行时 测试覆盖审计               | `completed` | `docs/audits/arm-MA4-core-runtime-test-coverage.md`                                                   |
 | MA4.2    | 测试层—基础+内容+移动端 测试覆盖审计          | `completed` | `docs/audits/arm-MA4-basic-content-mobile-test-coverage.md`                                           |
 | MA4.3    | 测试层—设计器+办公 测试覆盖与 E2E 审计        | `completed` | `docs/audits/arm-MA4-designer-office-test-coverage.md`                                                |
-| MA5.1    | UI/UX—设计器可操作性审计                      | `todo`      | `docs/audits/arm-MA5-designer-*.md`                                                                   |
-| MA5.2    | UI/UX—基础+内容渲染器 UX 审计                 | `todo`      | `docs/audits/arm-MA5-basic-content-*.md`                                                              |
+| MA5.1    | UI/UX—设计器可操作性审计                      | `completed` | `docs/audits/arm-MA5-designer-operability.md`                                                         |
+| MA5.2    | UI/UX—基础+内容渲染器 UX 审计                 | `completed` | `docs/audits/arm-MA5-basic-content-ux.md`                                                             |
 | MA6      | 文档与契约一致性审计                          | `todo`      | `docs/audits/arm-MA6-*.md`                                                                            |
 | MA7.1    | 安全与运维—XSS/样式/性能审计                  | `todo`      | `docs/audits/arm-MA7-security-*.md`                                                                   |
 | MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `todo`      | `docs/audits/arm-MA7-ci-*.md`                                                                         |
