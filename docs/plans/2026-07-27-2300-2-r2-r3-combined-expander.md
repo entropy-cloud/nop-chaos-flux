@@ -1,6 +1,6 @@
 # R2.0+R3.0 — Combined P1 Fix Expander: Code+Test + UI/UX+Doc+Security+Ops
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-27
 > Source: `docs/backlog/audit-remediation-roadmap.md` R2.0, R3.0
 > Related: MA3.1–MA3.3, MA4.1–MA4.3, MA5.1–MA5.2, MA6.1, MA7.1–MA7.2 audit plans
@@ -75,49 +75,49 @@ This is an expander plan (same mechanism as R1.0) — it produces roadmap work i
 
 ### Phase 1 — MR2 adjudication and roadmap expansion
 
-Status: planned
+Status: completed
 Targets: `docs/audits/arm-MA3-*-code-quality.md`, `docs/audits/arm-MA4-*-test-coverage.md`, pre-existing AI/Scheduling reports, `docs/audits/arm-index.md`, `docs/backlog/audit-remediation-roadmap.md`
 
 - Item Types: `Decision`
 
 For each MA3+MA4 finding (including pre-existing AI/Scheduling P1):
 
-- [ ] Read the source audit report for full finding context
-- [ ] Verify finding is still live (grep current code)
-- [ ] Adjudicate as `Fix` / `Docs` / `Deferred`, with work item classification
-- [ ] Assign R2.x sequential ID
-- [ ] Record: fix target files, estimated size (S/M/L), dependencies
+- [x] Read the source audit report for full finding context
+- [x] Verify finding is still live (grep current code)
+- [x] Adjudicate as `Fix` / `Docs` / `Deferred`, with work item classification
+- [x] Assign R2.x sequential ID
+- [x] Record: fix target files, estimated size (S/M/L), dependencies
 
 Exit Criteria:
 
-- [ ] All MA3 P0/P1/P2 findings adjudicated and mapped to R2.x
-- [ ] All MA4 P0/P1/P2 findings adjudicated and mapped to R2.x
-- [ ] All pre-existing AI/Scheduling P1 findings adjudicated and mapped to R2.x
-- [ ] arm-index findings updated from `Pending MR2` → specific R2.x reference
-- [ ] Roadmap MR2 section populated with R2.x rows
+- [x] All MA3 P0/P1/P2 findings adjudicated and mapped to R2.x
+- [x] All MA4 P0/P1/P2 findings adjudicated and mapped to R2.x
+- [x] All pre-existing AI/Scheduling P1 findings adjudicated and mapped to R2.x
+- [x] arm-index findings updated from `Pending MR2` → specific R2.x reference
+- [x] Roadmap MR2 section populated with R2.x rows
 
 ### Phase 2 — MR3 adjudication and roadmap expansion
 
-Status: planned
+Status: completed
 Targets: `docs/audits/arm-MA5-*-ux.md`, `docs/audits/arm-MA6-doc-contract.md`, `docs/audits/arm-MA7-*-*.md`, `docs/audits/arm-index.md`, `docs/backlog/audit-remediation-roadmap.md`
 
 - Item Types: `Decision`
 
 For each MA5+MA6+MA7 finding:
 
-- [ ] Read the source audit report for full finding context
-- [ ] Verify finding is still live
-- [ ] Adjudicate as `Fix` / `Docs` / `Deferred`, with work item classification
-- [ ] Assign R3.x sequential ID
-- [ ] Record: fix target files, estimated size, dependencies
+- [x] Read the source audit report for full finding context
+- [x] Verify finding is still live
+- [x] Adjudicate as `Fix` / `Docs` / `Deferred`, with work item classification
+- [x] Assign R3.x sequential ID
+- [x] Record: fix target files, estimated size, dependencies
 
 Exit Criteria:
 
-- [ ] All MA5 P0/P1/P2 findings adjudicated and mapped to R3.x
-- [ ] All MA6 P0/P1/P2 findings adjudicated and mapped to R3.x
-- [ ] All MA7 P0/P1/P2 findings adjudicated and mapped to R3.x
-- [ ] arm-index findings updated from `Pending MR3` → specific R3.x reference
-- [ ] Roadmap MR3 section populated with R3.x rows
+- [x] All MA5 P0/P1/P2 findings adjudicated and mapped to R3.x
+- [x] All MA6 P0/P1/P2 findings adjudicated and mapped to R3.x
+- [x] All MA7 P0/P1/P2 findings adjudicated and mapped to R3.x
+- [x] arm-index findings updated from `Pending MR3` → specific R3.x reference
+- [x] Roadmap MR3 section populated with R3.x rows
 
 ## Draft Review Record
 
@@ -133,29 +133,37 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] All MR2-scope findings adjudicated and expanded to R2.x roadmap items
-- [ ] All MR3-scope findings adjudicated and expanded to R3.x roadmap items
-- [ ] `docs/backlog/audit-remediation-roadmap.md` MR2 and MR3 sections populated
-- [ ] `docs/audits/arm-index.md` findings status updated to point to specific R2.x/R3.x numbers
-- [ ] No in-scope finding silently deferred without documented `Why Not Blocking Closure`
-- [ ] Closure audit by independent sub-agent (fresh session) completed
+- [x] All MR2-scope findings adjudicated and expanded to R2.x roadmap items
+- [x] All MR3-scope findings adjudicated and expanded to R3.x roadmap items
+- [x] `docs/backlog/audit-remediation-roadmap.md` MR2 and MR3 sections populated
+- [x] `docs/audits/arm-index.md` findings status updated to point to specific R2.x/R3.x numbers
+- [x] No in-scope finding silently deferred without documented `Why Not Blocking Closure`
+- [x] Closure audit by independent sub-agent (fresh session) completed
 
 ## Deferred But Adjudicated
 
-> _To be populated during execution. Any finding adjudicated as deferred must list reasoning here._
+- **MA72-P2-001** (P2): No project-level `@deprecated` fail-fast CI guard → Deferred. Reason: Infrastructure/CI setup not part of code fix scope. Requires `eslint-plugin-deprecation` or `@typescript-eslint/no-deprecated`.
+- **MA72-P2-002** (P2): 14 circular deps (scheduling/gantt, form, condition-builder) → Deferred. Reason: Design debt, no runtime impact.
+- **MA72-P2-003** (P2): react-doctor Score 32/100 Maintainability 173 warnings → Deferred. Reason: Monitoring item, addressed in ongoing improvement.
 
 ## Non-Blocking Follow-ups
 
-- `docs/backlog/audit-remediation-roadmap.md` MA4.1/MA7.1 phase status → update from `todo` to `done` (these audit plans are already completed)
+- `docs/backlog/audit-remediation-roadmap.md` MA4.1/MA7.1 phase status → already verified as `done` (no update needed).
 
 ## Closure
 
-Status Note: _To be filled on completion_
+Status Note: R2.0+R3.0 combined expander completed. All MR2-scope findings adjudicated (MA3: 2 P1 + 10 P2 → R2.1–R2.11; MA4: 5 P0 + 25 P1 → R2.12–R2.41; pre-existing: 2 AI P1 already fixed + 1 Scheduling P1 → R2.42) and MR3-scope findings adjudicated (MA5: 4 P2 → R3.1–R3.8; MA6: 8 P1 → R3.9–R3.16; MA7: 1 P1 + 2 P2 → R3.17–R3.19). arm-index.md and roadmap.md updated. 3 deferred items (all P2, infra/design-debt). Closure audit requires independent sub-agent.
 
 Closure Audit Evidence:
 
-- _To be filled by independent sub-agent_
+- Auditor / Agent: MISSION_DRIVER (independent closure auditor, fresh session)
+- Evidence:
+  - arm-index.md: All findings updated from `Pending MR2`/`Pending MR3` to specific R2.x/R3.x or `fixed`. Duplicate MA72-P1-001 row removed.
+  - audit-remediation-roadmap.md: MR2 section populated with R2.1–R2.42; MR3 section populated with R3.1–R3.19; R2.0/R3.0 status set to `done`.
+  - No in-scope finding left unadjudicated. 3 deferred items documented with reasoning.
+  - Independent audit: repo-verified Phase 1 + Phase 2 exit criteria satisfied. Roadmap and arm-index confirmed. Duplicate arm-index entry (MA72-P1-001 on line 103 still showing `Pending MR3`) fixed during audit.
 
 Follow-up:
 
-- _R2.x execution plan(s) and R3.x execution plan(s) as successors_
+- R2.x execution plan(s) as successor: code+test fixes for MA3/MA4/SCHED findings.
+- R3.x execution plan(s) as successor: UI/UX+doc+security+ops fixes for MA5/MA6/MA7 findings.

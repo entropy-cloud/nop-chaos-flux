@@ -1,6 +1,6 @@
 # 审计-修复路线图
 
-> 最后更新：2026-07-27
+> 最后更新：2026-07-27 (R2.0+R3.0 expander completed — MR2/MR3 work items populated)
 > 来源：`docs/skills/audit-remediation-roadmap-authoring-prompt.md`
 
 ## 目的
@@ -36,8 +36,8 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | MA7.1    | 安全与运维—XSS/样式/性能审计                  | `done` |
 | MA7.2    | 安全与运维—CI/Deprecation/i18n 审计           | `done` |
 | R1.0     | P1 修复—结构+运行时（展开器）                 | `done` |
-| R2.0     | P1 修复—代码+测试（展开器）                   | `todo` |
-| R3.0     | P1 修复—UI/UX+文档+安全+运维（展开器）        | `todo` |
+| R2.0     | P1 修复—代码+测试（展开器）                   | `done` |
+| R3.0     | P1 修复—UI/UX+文档+安全+运维（展开器）        | `done` |
 | R4.0     | 跨维度 P1 裁决（可选）                        | `todo` |
 | MV       | 全量验证与回归                                | `todo` |
 | MG       | Guard 激活与知识沉淀                          | `todo` |
@@ -154,15 +154,76 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 ### MR2 — P1 修复：代码+测试（依赖 MA3 + MA4 完成）
 
-| Work Item                            | Status | Owner Doc | Dependencies              | Skill |
-| ------------------------------------ | ------ | --------- | ------------------------- | ----- |
-| R2.0 P1 展开器（追加实际修复工作项） | `todo` | —         | MA3.1-MA3.3 + MA4.1-MA4.3 | —     |
+| Work Item                                                                          | Status | Owner Doc                                                                                                                        | Dependencies              | Skill |
+| ---------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ----- |
+| R2.0 P1 展开器（裁决完成，已展开R2.1-42）                                          | `done` | `docs/plans/2026-07-27-2300-2-r2-r3-combined-expander.md`                                                                        | MA3.1-MA3.3 + MA4.1-MA4.3 | —     |
+| R2.1 MA3-F01 container-hooks.ts:87 空catch加console.warn                           | `todo` | `packages/flux-react/src/container-hooks.ts:87`                                                                                  | 无                        | —     |
+| R2.2 MA3-P2-F1 crud-renderer.tsx:512 runtime-raw-schema-read 修复                  | `todo` | `packages/flux-renderers-data/src/crud-renderer.tsx:512`                                                                         | 无                        | —     |
+| R2.3 MA3-F02 form-runtime-owner.ts 739行拆分                                       | `todo` | `packages/flux-runtime/src/form-runtime-owner.ts`                                                                                | 无                        | —     |
+| R2.4 MA3-F03 node-compiler.ts 731行拆分                                            | `todo` | `packages/flux-compiler/src/schema-compiler/node-compiler.ts`                                                                    | 无                        | —     |
+| R2.5 MA3-F04 shape-validation-rules.ts 706行类型守卫提取                           | `todo` | `packages/flux-compiler/src/schema-compiler/shape-validation-rules.ts`                                                           | 无                        | —     |
+| R2.6 MA3-P2-F2+F3 mobile styles.css bare `[data-slot]`/`:root`修复                 | `todo` | `packages/flux-renderers-mobile/src/styles.css`                                                                                  | 无                        | —     |
+| R2.7 MA3-P2-F4 variant-field-view.tsx FieldFrame bypass 修复                       | `todo` | `packages/flux-renderers-form-advanced/src/variant-field-view.tsx:12`                                                            | 无                        | —     |
+| R2.8 MA3-P2-F5 copy-to-clipboard.ts 提取共享工具函数                               | `todo` | `packages/flux-renderers-basic/src/copy-to-clipboard.ts`, `packages/flux-renderers-data/src/table-renderer/copy-to-clipboard.ts` | 无                        | —     |
+| R2.9 MA3-P2-F6 picker-renderer.tsx 743行拆分子组件                                 | `todo` | `packages/flux-renderers-form-advanced/src/picker-renderer.tsx`                                                                  | 无                        | —     |
+| R2.10 MA3-DO-P2-01 spreadsheet 27 void patterns fire(fn) wrapper                   | `todo` | `packages/spreadsheet-renderers/src/default-page-body.tsx`                                                                       | 无                        | —     |
+| R2.11 MA3-DO-P2-02 useSpreadsheetInteractions 70+变量拆分                          | `todo` | `packages/spreadsheet-renderers/src/spreadsheet-interactions/`                                                                   | 无                        | —     |
+| R2.12 MA43-P0-01 isReportDesignerCommand 添加测试                                  | `todo` | `packages/report-designer-core/src/`                                                                                             | 无                        | —     |
+| R2.13 MA43-P0-02 resolveReportDesignerManifest 添加测试                            | `todo` | `packages/report-designer-renderers/src/`                                                                                        | 无                        | —     |
+| R2.14 MA43-P0-03 REPORT_DESIGNER_CAPABILITY_PUBLICATION 添加测试                   | `todo` | `packages/report-designer-renderers/src/`                                                                                        | 无                        | —     |
+| R2.15 MA43-P0-04 useReportDesignerHostScope 添加测试                               | `todo` | `packages/report-designer-renderers/src/`                                                                                        | 无                        | —     |
+| R2.16 MA43-P0-05 readReportFieldDragPayload 添加测试                               | `todo` | `packages/report-designer-renderers/src/`                                                                                        | 无                        | —     |
+| R2.17 MA4-F01 Validation compile→runtime 贯通测试                                  | `todo` | `packages/flux-runtime/`                                                                                                         | 无                        | —     |
+| R2.18 MA4-F02 Validation error React UI 贯通测试                                   | `todo` | `packages/flux-react/`                                                                                                           | 无                        | —     |
+| R2.19 MA4-F03 Derived snapshot identity 契约测试                                   | `todo` | `packages/flux-runtime/`, `packages/flux-react/`                                                                                 | 无                        | —     |
+| R2.20 MA4-F04 Data source poll timer dispose-race                                  | `todo` | `packages/flux-runtime/src/async-data/api-data-source-controller.ts:61`                                                          | 无                        | —     |
+| R2.21 MA4-F05 Action error 通知链修复                                              | `todo` | `packages/flux-action-core/src/action-dispatcher/action-execution.ts:211-214`                                                    | 无                        | —     |
+| R2.22 MA4-F06 3 hooks 补充测试（useRenderScope/useCurrentPage/useCurrentNodeMeta） | `todo` | `packages/flux-react/src/hooks/`                                                                                                 | 无                        | —     |
+| R2.23 MA4-F07 ComponentHandle 工厂补充测试                                         | `todo` | `packages/flux-runtime/src/`                                                                                                     | 无                        | —     |
+| R2.24 MA4-F08 跨层贯通测试（compile→runtime→react→renderer）                       | `todo` | 全部 7 层包                                                                                                                      | 无                        | —     |
+| R2.25 MA4-F09 Data-source/reaction lowering 贯通测试                               | `todo` | `packages/flux-runtime/`, `packages/flux-react/`                                                                                 | 无                        | —     |
+| R2.26 MA42-B-P1-01 Page collectDescendantValidation 添加测试                       | `todo` | `packages/flux-renderers-basic/src/`                                                                                             | 无                        | —     |
+| R2.27 MA42-F-P1-01 Form initAction 添加测试                                        | `todo` | `packages/flux-renderers-form/src/`                                                                                              | 无                        | —     |
+| R2.28 MA42-F-P1-02 Form submitOnChange debounce 添加测试                           | `todo` | `packages/flux-renderers-form/src/`                                                                                              | 无                        | —     |
+| R2.29 MA42-F-P1-03 FieldFrame aria wiring 添加测试                                 | `todo` | `packages/flux-renderers-form/src/`                                                                                              | 无                        | —     |
+| R2.30 MA42-D-P1-01 DataSource onSuccess/onError 添加测试                           | `todo` | `packages/flux-renderers-data/src/`                                                                                              | 无                        | —     |
+| R2.31 MA42-C-P1-01 DiffView reactions 添加测试                                     | `todo` | `packages/flux-renderers-content/src/`                                                                                           | 无                        | —     |
+| R2.32 MA43-P1-01 createDesignerStoreAdapter 添加测试                               | `todo` | `packages/flow-designer-core/src/`                                                                                               | 无                        | —     |
+| R2.33 MA43-P1-02 registerPreview 添加测试                                          | `todo` | `packages/report-designer-core/src/`                                                                                             | 无                        | —     |
+| R2.34 MA43-P1-03 Readonly mode guard 添加测试                                      | `todo` | `packages/report-designer-core/src/`                                                                                             | 无                        | —     |
+| R2.35 MA43-P1-04 toReportDesignerActionResult 添加测试                             | `todo` | `packages/report-designer-renderers/src/`                                                                                        | 无                        | —     |
+| R2.36 MA43-P1-05 create/writeReportFieldDragPayload 添加测试                       | `todo` | `packages/report-designer-renderers/src/`                                                                                        | 无                        | —     |
+| R2.37 MA43-P1-06 resolveSpreadsheetManifest 添加测试                               | `todo` | `packages/spreadsheet-renderers/src/`                                                                                            | 无                        | —     |
+| R2.38 MA43-P1-07 spreadsheetHostContract 添加测试                                  | `todo` | `packages/spreadsheet-renderers/src/`                                                                                            | 无                        | —     |
+| R2.39 MA43-P1-08 5 normalize functions 添加测试                                    | `todo` | `packages/word-editor-core/src/document-io.ts`                                                                                   | 无                        | —     |
+| R2.40 MA43-P1-09 resolveWordEditorManifest 添加测试                                | `todo` | `packages/word-editor-renderers/src/`                                                                                            | 无                        | —     |
+| R2.41 MA43-P1-10 wordEditorHostContract 添加测试                                   | `todo` | `packages/word-editor-renderers/src/`                                                                                            | 无                        | —     |
+| R2.42 SCHED-F73 Kanban DnD test silent no-op 修复                                  | `todo` | `packages/flux-renderers-scheduling/src/kanban/kanban-dnd-integration.test.tsx:202-214`                                          | 无                        | —     |
 
 ### MR3 — P1 修复：UI/UX+文档+安全+运维（依赖 MA5 + MA6 + MA7 完成）
 
-| Work Item                            | Status | Owner Doc | Dependencies                      | Skill |
-| ------------------------------------ | ------ | --------- | --------------------------------- | ----- |
-| R3.0 P1 展开器（追加实际修复工作项） | `todo` | —         | MA5.1-MA5.2 + MA6.1 + MA7.1-MA7.2 | —     |
+| Work Item                                                             | Status | Owner Doc                                                                                     | Dependencies                      | Skill |
+| --------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------- | --------------------------------- | ----- |
+| R3.0 P1 展开器（裁决完成，已展开R3.1-19）                             | `done` | `docs/plans/2026-07-27-2300-2-r2-r3-combined-expander.md`                                     | MA5.1-MA5.2 + MA6.1 + MA7.1-MA7.2 | —     |
+| R3.1 MA5-P2-01 Spreadsheet filter gaps 修复                           | `todo` | `packages/spreadsheet-renderers/src/spreadsheet-grid/viewport.ts:91-96`                       | 无                                | —     |
+| R3.2 MA5-P2-02 Word editor stale savedDocument probe 修复             | `todo` | `packages/word-editor-renderers/src/hooks/use-word-editor-state.ts:229-247`                   | 无                                | —     |
+| R3.3 MA5-P2-03 Report designer inspector auto-open race 修复          | `todo` | `packages/report-designer-renderers/src/page-renderer.tsx:382-402`                            | 无                                | —     |
+| R3.4 MA5-P2-04 cell-style-map ignores border positional values 修复   | `todo` | `packages/spreadsheet-renderers/src/cell-style-map.ts:33-39`                                  | 无                                | —     |
+| R3.5 MA5-M-01 Array-editor/key-value add buttons missing PlusIcon     | `todo` | `packages/flux-renderers-form-advanced/src/array-editor.tsx:566-597`, `key-value.tsx:601-628` | 无                                | —     |
+| R3.6 MA5-M-02 Icon-picker hardcoded Chinese strings 替换为 t()        | `todo` | `packages/flux-renderers-form-advanced/src/icon-picker.tsx:191,204,236,249`                   | 无                                | —     |
+| R3.7 MA5-M-03 Icon-picker focus-visible ring 添加                     | `todo` | `packages/flux-renderers-form-advanced/src/icon-picker.tsx:211-223`                           | 无                                | —     |
+| R3.8 MA5-M-04 Content package hardcoded English strings 替换为 t()    | `todo` | 7 content renderer files (audio, video, carousel, json-view, markdown, image, qrcode)         | 无                                | —     |
+| R3.9 MA6-P1-001 field-frame.md 文档修复                               | `todo` | `docs/architecture/field-frame.md`                                                            | 无                                | —     |
+| R3.10 MA6-P1-002 form-validation.md wrong hook names 修复             | `todo` | `docs/architecture/form-validation.md`                                                        | 无                                | —     |
+| R3.11 MA6-P1-003 object-field.md transform claim 修复                 | `todo` | `docs/architecture/object-field.md`                                                           | 无                                | —     |
+| R3.12 MA6-P1-004 array-field.md sortable not wired 修复               | `todo` | `docs/architecture/array-field.md`                                                            | 无                                | —     |
+| R3.13 MA6-P1-005 module-cache-and-import-stack.md params 修复         | `todo` | `docs/architecture/module-cache-and-import-stack.md`                                          | 无                                | —     |
+| R3.14 MA6-P1-006 action-scope-and-imports.md wrong type 修复          | `todo` | `docs/architecture/action-scope-and-imports.md`                                               | 无                                | —     |
+| R3.15 MA6-P1-007 quick-reference.md ScopeRef.update 修复              | `todo` | `docs/references/quick-reference.md`                                                          | 无                                | —     |
+| R3.16 MA6-P1-008 terminology.md RendererComponentProps 修复           | `todo` | `docs/references/terminology.md`                                                              | 无                                | —     |
+| R3.17 MA72-P1-001 gantt.types.ts 7 deprecated fields JSDoc 补充       | `todo` | `packages/flux-renderers-scheduling/src/gantt/gantt.types.ts:155-174`                         | 无                                | —     |
+| R3.18 MA7-XSS-P2-01 ai-citations href javascript: scheme 过滤         | `todo` | `packages/flux-renderers-ai/src/renderers/ai-citations.tsx:192`                               | 无                                | —     |
+| R3.19 MA7-ASYNC-P2-01 word-editor document-io.ts catch 结构化失败路径 | `todo` | `packages/word-editor-core/src/document-io.ts`                                                | 无                                | —     |
 
 ### MR4 — 跨维度 P1 裁决与冲突修复
 
@@ -246,7 +307,7 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 - **R1.8**：`flux-renderers-content` DiffView CSS (~609 行) 提取到独立文件。
 - **R1.9**：runtime 包簇 20 处 async void-promise 添加结构化错误路由注释。
 - **R1.10**：core 包簇 15 处 async void-promise 添加结构化错误路由注释。
-- **R2.0 / R3.0**：展开器工作项——plan 产物是向 roadmap 追加具体修复工作项（R2.1/R3.1...）。
+- **R2.0 / R3.0**：展开器工作项（已完成）——裁决了 MA3+MA4+AI+Scheduling 全部 42 项 P0/P1/P2 发现和 MA5+MA6+MA7 全部 19 项 P1/P2 发现，向 roadmap 追加了 R2.1–R2.42 和 R3.1–R3.19 具体修复工作项。
 - **R4.0**：裁决跨维度冲突。若无冲突直接标记 done。
 
 ### MV — 全量验证
