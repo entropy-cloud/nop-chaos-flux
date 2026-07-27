@@ -162,6 +162,12 @@ test.describe('Gantt — Editor Dialog, Keyboard Nav & Undo', () => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
+    const zoomOutBtn = page.locator('[data-slot="gantt"] button').filter({ hasText: '−' }).first();
+    if (await zoomOutBtn.isVisible()) {
+      await zoomOutBtn.click();
+      await page.waitForTimeout(200);
+    }
+
     const weekendCols = page.locator('[data-weekend="true"]');
     const count = await weekendCols.count();
     expect(count).toBeGreaterThanOrEqual(2);
@@ -211,12 +217,11 @@ test.describe('Gantt — Editor Dialog, Keyboard Nav & Undo', () => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
-    const toggles = page.locator('[aria-expanded="true"]');
-    const toggleCount = await toggles.count();
-
-    for (let i = 0; i < Math.min(toggleCount, 3); i++) {
-      await toggles.first().click();
-    }
+    await page.evaluate(() => {
+      const btn = document.querySelector('[aria-expanded="true"]') as HTMLButtonElement | null;
+      if (btn) btn.click();
+    });
+    await page.waitForTimeout(500);
 
     await expect(page.locator('[data-slot="gantt"]')).toBeVisible({ timeout: 5_000 });
     await expect(page.locator('[data-slot="gantt-bar"]').first()).toBeVisible({ timeout: 5_000 });

@@ -366,6 +366,12 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
+    const zoomOutBtn = page.locator('[data-slot="gantt"] button').filter({ hasText: '−' }).first();
+    if (await zoomOutBtn.isVisible()) {
+      await zoomOutBtn.click();
+      await page.waitForTimeout(200);
+    }
+
     const weekendCols = page.locator('[data-weekend="true"]');
     const count = await weekendCols.count();
     expect(count).toBeGreaterThanOrEqual(2);
