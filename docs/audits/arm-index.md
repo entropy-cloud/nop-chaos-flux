@@ -1,7 +1,7 @@
 # Audit Remediation Master Index (arm-index)
 
 > Plan Status: completed
-> Last Updated: 2026-07-27 (MA3 findings added)
+> Last Updated: 2026-07-27 (MA4.3 findings added)
 > Purpose: Central index mapping all audit phases, package clusters, P0/P1 findings, and audit report paths.
 > Note: Baseline values recorded during M0 execution (2026-07-27 0800 Plan). All check:audit-_ and pnpm audit:_ commands executed. Full verification baseline green (typecheck + build + test with 1 pre-existing flake).
 
@@ -22,7 +22,7 @@
 | MA3.3    | 代码质量—设计器+办公 代码质量审计             | `completed` | `docs/audits/arm-MA3-designer-office-code-quality.md`                                                 |
 | MA4.1    | 测试层—核心+运行时 测试覆盖审计               | `completed` | `docs/audits/arm-MA4-core-runtime-test-coverage.md`                                                   |
 | MA4.2    | 测试层—基础+内容+移动端 测试覆盖审计          | `completed` | `docs/audits/arm-MA4-basic-content-mobile-test-coverage.md`                                           |
-| MA4.3    | 测试层—设计器+办公 测试覆盖与 E2E 审计        | `todo`      | `docs/audits/arm-MA4-designer-office-*.md`                                                            |
+| MA4.3    | 测试层—设计器+办公 测试覆盖与 E2E 审计        | `completed` | `docs/audits/arm-MA4-designer-office-test-coverage.md`                                                |
 | MA5.1    | UI/UX—设计器可操作性审计                      | `todo`      | `docs/audits/arm-MA5-designer-*.md`                                                                   |
 | MA5.2    | UI/UX—基础+内容渲染器 UX 审计                 | `todo`      | `docs/audits/arm-MA5-basic-content-*.md`                                                              |
 | MA6      | 文档与契约一致性审计                          | `todo`      | `docs/audits/arm-MA6-*.md`                                                                            |
@@ -76,6 +76,21 @@
 | MA42-F-P1-03 | P1       | flux-renderers-form (FieldFrame)          | FieldFrame `aria-labelledby`/`aria-describedby`/`aria-errormessage`/`aria-invalid` wiring zero tests | `arm-MA4-basic-content-mobile-test-coverage.md` | open   | Pending MR2 |
 | MA42-D-P1-01 | P1       | flux-renderers-data (DataSource)          | `onSuccess`/`onError` events compiled but never consumed/delivered (H1)                              | `arm-MA4-basic-content-mobile-test-coverage.md` | open   | Pending MR2 |
 | MA42-C-P1-01 | P1       | flux-renderers-content (DiffView)         | Reaction handles (`toggleViewType`/`setViewType`/`expandAll`/`collapseAll`) have zero tests          | `arm-MA4-basic-content-mobile-test-coverage.md` | open   | Pending MR2 |
+| MA43-P0-01   | P0       | report-designer-core                      | `isReportDesignerCommand` zero test coverage                                                         | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P0-02   | P0       | report-designer-renderers                 | `resolveReportDesignerManifest` zero test coverage                                                   | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P0-03   | P0       | report-designer-renderers                 | `REPORT_DESIGNER_CAPABILITY_PUBLICATION` zero test coverage                                          | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P0-04   | P0       | report-designer-renderers                 | `useReportDesignerHostScope` zero test coverage                                                      | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P0-05   | P0       | report-designer-renderers                 | `readReportFieldDragPayload` zero test coverage                                                      | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P1-01   | P1       | flow-designer-core                        | `createDesignerStoreAdapter` zero test coverage                                                      | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P1-02   | P1       | report-designer-core                      | `registerPreview` not directly tested                                                                | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P1-03   | P1       | report-designer-core                      | Readonly mode guard untested                                                                         | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P1-04   | P1       | report-designer-renderers                 | `toReportDesignerActionResult` not directly tested                                                   | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P1-05   | P1       | report-designer-renderers                 | `createReportFieldDragPayload`/`writeReportFieldDragPayload` not directly unit-tested                | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P1-06   | P1       | spreadsheet-renderers                     | `resolveSpreadsheetManifest` zero test coverage                                                      | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P1-07   | P1       | spreadsheet-renderers                     | `spreadsheetHostContract` not directly tested                                                        | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P1-08   | P1       | word-editor-core                          | 5 normalization functions (`normalizeWordDocument` etc.) zero test coverage                          | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P1-09   | P1       | word-editor-renderers                     | `resolveWordEditorManifest` zero test coverage                                                       | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
+| MA43-P1-10   | P1       | word-editor-renderers                     | `wordEditorHostContract` not directly tested                                                         | `arm-MA4-designer-office-test-coverage.md`      | open   | Pending MR2 |
 
 ## P2 Finding Index
 

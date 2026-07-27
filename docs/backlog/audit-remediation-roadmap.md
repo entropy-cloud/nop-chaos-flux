@@ -29,7 +29,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | MA3.3    | 代码质量—设计器+办公 代码质量审计             | `done` |
 | MA4.1    | 测试层—核心+运行时 测试覆盖审计               | `done` |
 | MA4.2    | 测试层—基础+内容+移动端 测试覆盖审计          | `done` |
-| MA4.3    | 测试层—设计器+办公 测试覆盖与 E2E 审计        | `todo` |
+| MA4.3    | 测试层—设计器+办公 测试覆盖与 E2E 审计        | `done` |
 | MA5.1    | UI/UX—设计器可操作性审计                      | `todo` |
 | MA5.2    | UI/UX—基础+内容渲染器 UX 审计                 | `todo` |
 | MA6      | 文档与契约一致性审计                          | `todo` |
@@ -110,11 +110,11 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 ### MA4 — 测试层审计（维 D）
 
-| Work Item                               | Status | Owner Doc | Dependencies | Skill                                                                                         |
-| --------------------------------------- | ------ | --------- | ------------ | --------------------------------------------------------------------------------------------- |
-| MA4.1 核心+运行时 测试覆盖 + 全局泄漏   | `todo` | —         | M0           | `unit-test-logic-and-contract-coverage-audit-prompt.md` + `check:audit-test-global-leaks`     |
-| MA4.2 基础+内容+移动端 测试覆盖         | `done` | —         | M0           | `unit-test-logic-and-contract-coverage-audit-prompt.md`                                       |
-| MA4.3 设计器+办公 测试覆盖 + E2E 有效性 | `todo` | —         | M0           | `unit-test-logic-and-contract-coverage-audit-prompt.md` + `exploratory-e2e-testing-prompt.md` |
+| Work Item                               | Status | Owner Doc                                              | Dependencies | Skill                                                                                         |
+| --------------------------------------- | ------ | ------------------------------------------------------ | ------------ | --------------------------------------------------------------------------------------------- |
+| MA4.1 核心+运行时 测试覆盖 + 全局泄漏   | `todo` | —                                                      | M0           | `unit-test-logic-and-contract-coverage-audit-prompt.md` + `check:audit-test-global-leaks`     |
+| MA4.2 基础+内容+移动端 测试覆盖         | `done` | —                                                      | M0           | `unit-test-logic-and-contract-coverage-audit-prompt.md`                                       |
+| MA4.3 设计器+办公 测试覆盖 + E2E 有效性 | `done` | `docs/audits/arm-MA4-designer-office-test-coverage.md` | M0           | `unit-test-logic-and-contract-coverage-audit-prompt.md` + `exploratory-e2e-testing-prompt.md` |
 
 ### MA5 — UI/UX 与可操作性审计（维 E）
 
