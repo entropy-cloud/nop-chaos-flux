@@ -266,6 +266,8 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
 
 export const iconPickerRendererDefinition: RendererDefinition = {
   type: 'icon-picker',
+  displayName: 'Icon Picker',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: IconPickerRenderer,
   wrap: true,

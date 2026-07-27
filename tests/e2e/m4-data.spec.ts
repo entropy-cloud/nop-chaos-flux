@@ -123,7 +123,7 @@ test.describe('M4 data display — mobile viewport (390x844)', () => {
 
     const firstItem = list.locator('[data-slot="list-item"]').first();
     await expect(
-      firstItem.evaluate((el) => el.className.includes('nop-hairline--bottom')),
+      firstItem.evaluate((el) => el.className.includes('nop-hairline-bottom')),
     ).resolves.toBe(true);
   });
 
@@ -217,7 +217,7 @@ test.describe('M4 data display — desktop viewport (1280x800)', () => {
 
     const firstItem = list.locator('[data-slot="list-item"]').first();
     await expect(
-      firstItem.evaluate((el) => el.className.includes('nop-hairline--bottom')),
+      firstItem.evaluate((el) => el.className.includes('nop-hairline-bottom')),
     ).resolves.toBe(true);
     await expect(
       firstItem.evaluate((el) => el.className.includes('py-2')),

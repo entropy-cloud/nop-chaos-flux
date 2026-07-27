@@ -443,7 +443,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             className="nop-safe-bottom max-h-[80vh] gap-0"
             data-testid="tree-select-mobile-sheet"
           >
-            <SheetHeader className="nop-hairline nop-hairline--bottom">
+            <SheetHeader className="nop-hairline nop-hairline-bottom">
               <SheetTitle className="truncate">{fieldLabel}</SheetTitle>
             </SheetHeader>
             <div
@@ -478,6 +478,8 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
 export const treeControlRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-tree',
+    displayName: 'Input Tree',
+    category: 'Form Advanced',
     sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
     fields: [
       ...formFieldRules,
@@ -508,6 +510,8 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'tree-select',
+    displayName: 'Tree Select',
+    category: 'Form Advanced',
     sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
     fields: [
       ...formFieldRules,

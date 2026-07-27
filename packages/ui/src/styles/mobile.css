@@ -27,22 +27,22 @@
 /* 0.5px hairline borders for high-DPI mobile screens.
  * Uses ::after pseudo-element + transform scale, matching Vant's van-hairline
  * pattern. The base class only establishes positioning context; pair it with
- * a direction modifier (nop-hairline--top/right/bottom/left) to draw the edge. */
+ * a direction modifier (nop-hairline-top/right/bottom/left) to draw the edge. */
 .nop-hairline {
   position: relative;
 }
 
-.nop-hairline--top::after,
-.nop-hairline--right::after,
-.nop-hairline--bottom::after,
-.nop-hairline--left::after {
+.nop-hairline-top::after,
+.nop-hairline-right::after,
+.nop-hairline-bottom::after,
+.nop-hairline-left::after {
   content: '';
   position: absolute;
   pointer-events: none;
   background-color: var(--nop-hairline-color, currentColor);
 }
 
-.nop-hairline--top::after {
+.nop-hairline-top::after {
   top: 0;
   left: 0;
   right: 0;
@@ -51,7 +51,7 @@
   transform-origin: top;
 }
 
-.nop-hairline--right::after {
+.nop-hairline-right::after {
   top: 0;
   right: 0;
   bottom: 0;
@@ -60,7 +60,7 @@
   transform-origin: right;
 }
 
-.nop-hairline--bottom::after {
+.nop-hairline-bottom::after {
   left: 0;
   right: 0;
   bottom: 0;
@@ -69,7 +69,7 @@
   transform-origin: bottom;
 }
 
-.nop-hairline--left::after {
+.nop-hairline-left::after {
   top: 0;
   left: 0;
   bottom: 0;
@@ -82,23 +82,23 @@
  * On 2x DPI, scaleY(0.5) renders 0.5 physical px. On 3x DPI, scale by 1/3
  * so the line still occupies ~1 physical pixel. */
 @media (-webkit-min-device-pixel-ratio: 2) {
-  .nop-hairline--top::after,
-  .nop-hairline--bottom::after {
+  .nop-hairline-top::after,
+  .nop-hairline-bottom::after {
     transform: scaleY(0.5);
   }
-  .nop-hairline--left::after,
-  .nop-hairline--right::after {
+  .nop-hairline-left::after,
+  .nop-hairline-right::after {
     transform: scaleX(0.5);
   }
 }
 
 @media (-webkit-min-device-pixel-ratio: 3) {
-  .nop-hairline--top::after,
-  .nop-hairline--bottom::after {
+  .nop-hairline-top::after,
+  .nop-hairline-bottom::after {
     transform: scaleY(0.333);
   }
-  .nop-hairline--left::after,
-  .nop-hairline--right::after {
+  .nop-hairline-left::after,
+  .nop-hairline-right::after {
     transform: scaleX(0.333);
   }
 }

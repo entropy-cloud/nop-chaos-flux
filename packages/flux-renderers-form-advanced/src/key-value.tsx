@@ -632,6 +632,8 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
 export const keyValueRendererDefinition: RendererDefinition = {
   type: 'key-value',
+  displayName: 'Key Value',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: KeyValueRenderer,
   wrap: true,

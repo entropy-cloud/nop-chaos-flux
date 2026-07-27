@@ -75,22 +75,22 @@ export function MobileInfrastructureDemoPage({ onBack }: MobileInfrastructureDem
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-sm">
             <p>
-              <code>nop-hairline</code> + <code>nop-hairline--top/right/bottom/left</code> 通过{' '}
+              <code>nop-hairline</code> + <code>nop-hairline-top/right/bottom/left</code> 通过{' '}
               <code>::after</code> 伪元素 + <code>transform: scaleY/scaleX(0.5)</code> 在高 DPI 屏渲染
               0.5px 细线。颜色由 <code>--nop-hairline-color</code> 控制，默认走主题 border 色。
             </p>
             <div data-testid="hairline-preview" className="flex flex-col gap-3 p-3">
-              <div className="nop-hairline nop-hairline--top rounded-sm bg-muted/40 p-2 text-xs">
-                nop-hairline--top
+              <div className="nop-hairline nop-hairline-top rounded-sm bg-muted/40 p-2 text-xs">
+                nop-hairline-top
               </div>
-              <div className="nop-hairline nop-hairline--bottom rounded-sm bg-muted/40 p-2 text-xs">
-                nop-hairline--bottom
+              <div className="nop-hairline nop-hairline-bottom rounded-sm bg-muted/40 p-2 text-xs">
+                nop-hairline-bottom
               </div>
-              <div className="nop-hairline nop-hairline--left rounded-sm bg-muted/40 p-2 text-xs">
-                nop-hairline--left
+              <div className="nop-hairline nop-hairline-left rounded-sm bg-muted/40 p-2 text-xs">
+                nop-hairline-left
               </div>
-              <div className="nop-hairline nop-hairline--right rounded-sm bg-muted/40 p-2 text-xs">
-                nop-hairline--right
+              <div className="nop-hairline nop-hairline-right rounded-sm bg-muted/40 p-2 text-xs">
+                nop-hairline-right
               </div>
             </div>
             <p className="text-xs text-muted-foreground">

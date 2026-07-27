@@ -65,9 +65,9 @@ describe('ListRenderer responsive — hairline migration + touch (successor)', (
     const items = root.querySelectorAll('[data-slot="list-item"]');
     expect(items.length).toBe(3);
     // All items except the last carry the hairline bottom edge.
-    expect(items[0]!.className).toContain('nop-hairline--bottom');
-    expect(items[1]!.className).toContain('nop-hairline--bottom');
-    expect(items[2]!.className).not.toContain('nop-hairline--bottom');
+    expect(items[0]!.className).toContain('nop-hairline-bottom');
+    expect(items[1]!.className).toContain('nop-hairline-bottom');
+    expect(items[2]!.className).not.toContain('nop-hairline-bottom');
   });
 
   it('keeps desktop row padding at py-2 and emits no narrow marker (no regression)', () => {
@@ -94,8 +94,8 @@ describe('ListRenderer responsive — hairline migration + touch (successor)', (
     expect(items[0]!.className).toContain('py-3');
     expect(items[0]!.className).not.toContain('py-2');
     // Hairline still present on mobile.
-    expect(items[0]!.className).toContain('nop-hairline--bottom');
-    expect(items[2]!.className).not.toContain('nop-hairline--bottom');
+    expect(items[0]!.className).toContain('nop-hairline-bottom');
+    expect(items[2]!.className).not.toContain('nop-hairline-bottom');
   });
 
   it('marks the empty-state root narrow on mobile', () => {

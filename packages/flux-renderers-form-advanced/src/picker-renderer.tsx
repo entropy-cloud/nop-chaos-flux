@@ -703,6 +703,8 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
 
 export const pickerRendererDefinition: RendererDefinition = {
   type: 'picker',
+  displayName: 'Picker',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: PickerRenderer,
   wrap: true,

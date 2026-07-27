@@ -402,6 +402,8 @@ function compileDetailValueAdaptationAction(value: unknown, context: {
 
 export const detailFieldRendererDefinition: RendererDefinition<DetailFieldSchema> = {
   type: 'detail-field',
+  displayName: 'Detail Field',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: DetailFieldRenderer,
   wrap: true,

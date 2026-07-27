@@ -477,6 +477,8 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
 export const objectFieldRendererDefinition: RendererDefinition = {
   type: 'object-field',
+  displayName: 'Object Field',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ObjectFieldRenderer,
   wrap: true,

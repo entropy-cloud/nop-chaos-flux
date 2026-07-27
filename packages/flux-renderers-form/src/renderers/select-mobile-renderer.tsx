@@ -192,7 +192,7 @@ export function SelectMobileSheet(props: SelectMobileSheetProps) {
         className="nop-safe-bottom max-h-[80vh] gap-0"
         data-testid="select-mobile-sheet"
       >
-        <SheetHeader className="nop-hairline nop-hairline--bottom">
+        <SheetHeader className="nop-hairline nop-hairline-bottom">
           <SheetTitle className="truncate">{props.ariaLabel}</SheetTitle>
           {props.searchable ? (
             <Input

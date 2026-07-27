@@ -552,6 +552,8 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
 
 export const comboRendererDefinition: RendererDefinition = {
   type: 'combo',
+  displayName: 'Combo',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ComboRenderer,
   wrap: true,

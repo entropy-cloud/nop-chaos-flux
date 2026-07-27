@@ -143,6 +143,8 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
 
 export const tagListRendererDefinition: RendererDefinition = {
   type: 'tag-list',
+  displayName: 'Tag List',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: TagListRenderer,
   wrap: true,

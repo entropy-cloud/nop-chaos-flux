@@ -385,6 +385,8 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
 
 export const editorRendererDefinition: RendererDefinition = {
   type: 'editor',
+  displayName: 'Editor',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: EditorRenderer,
   fields: [...formFieldRules, ...editorFieldRules],

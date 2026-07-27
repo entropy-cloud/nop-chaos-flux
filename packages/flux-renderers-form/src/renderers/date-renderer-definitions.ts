@@ -45,6 +45,8 @@ const FOCUS_CAPABILITY_CONTRACTS = [
 export const dateRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-date',
+    displayName: 'Input Date',
+    category: 'Date',
     sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: [...formFieldRules, ...dateFieldRules],
     validation: createFieldValidation(),
@@ -55,6 +57,8 @@ export const dateRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'input-datetime',
+    displayName: 'Input Datetime',
+    category: 'Date',
     sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: [
       ...formFieldRules,
@@ -75,6 +79,8 @@ export const dateRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'input-time',
+    displayName: 'Input Time',
+    category: 'Date',
     sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: [
       ...formFieldRules,
@@ -93,6 +99,8 @@ export const dateRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'date-range',
+    displayName: 'Date Range',
+    category: 'Date',
     sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: [
       ...formFieldRules,
@@ -115,6 +123,8 @@ export const dateRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'input-month',
+    displayName: 'Input Month',
+    category: 'Date',
     sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: [...formFieldRules, ...periodFieldRules],
     validation: createFieldValidation(),
@@ -125,6 +135,8 @@ export const dateRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'input-quarter',
+    displayName: 'Input Quarter',
+    category: 'Date',
     sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: [...formFieldRules, ...periodFieldRules],
     validation: createFieldValidation(),
@@ -135,6 +147,8 @@ export const dateRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'input-year',
+    displayName: 'Input Year',
+    category: 'Date',
     sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: [...formFieldRules, ...periodFieldRules],
     validation: createFieldValidation(),

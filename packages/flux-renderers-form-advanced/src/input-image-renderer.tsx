@@ -34,6 +34,8 @@ export function InputImageRenderer(props: RendererComponentProps) {
 
 export const inputImageRendererDefinition: RendererDefinition = {
   type: 'input-image',
+  displayName: 'Input Image',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: InputImageRenderer,
   fields: [...formFieldRules, ...imageFieldRules],

@@ -616,6 +616,8 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
 
 export const inputTableRendererDefinition: RendererDefinition = {
   type: 'input-table',
+  displayName: 'Input Table',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: InputTableRenderer,
   wrap: true,

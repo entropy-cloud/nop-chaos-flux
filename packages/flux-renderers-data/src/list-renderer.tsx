@@ -134,7 +134,7 @@ function ListItemView(props: ListItemViewProps) {
         isMobile ? 'py-3' : 'py-2',
         // Inter-item divider migrated from root `divide-y divide-border` to the M0.1
         // `nop-hairline` 0.5px hairline (last item omits the bottom edge).
-        !isLast ? 'nop-hairline nop-hairline--bottom' : null,
+        !isLast ? 'nop-hairline nop-hairline-bottom' : null,
         interactive ? 'cursor-pointer hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none' : null,
         selected ? 'bg-primary/10' : null,
       )}

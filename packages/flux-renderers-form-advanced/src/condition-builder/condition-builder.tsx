@@ -512,6 +512,8 @@ function PickerModeContent({
 
 export const conditionBuilderRendererDefinition: RendererDefinition = {
   type: 'condition-builder',
+  displayName: 'Condition Builder',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ConditionBuilderRenderer,
   fields: formFieldRules,

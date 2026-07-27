@@ -43,7 +43,7 @@ describe('mobile.css hairline helper classes (M0.1b)', () => {
 
   it('defines all 4 direction modifiers with ::after pseudo-element rules', () => {
     for (const dir of ['top', 'right', 'bottom', 'left']) {
-      expect(mobileCss).toContain(`.nop-hairline--${dir}::after`);
+      expect(mobileCss).toContain(`.nop-hairline-${dir}::after`);
     }
     expect(mobileCss).toMatch(/background-color:\s*var\(--nop-hairline-color,\s*currentColor\)/);
   });

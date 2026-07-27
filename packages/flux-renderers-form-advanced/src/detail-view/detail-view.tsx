@@ -598,6 +598,8 @@ function compileDetailValueAdaptationAction(value: unknown, context: {
 
 export const detailViewRendererDefinition: RendererDefinition<DetailViewSchema> = {
   type: 'detail-view',
+  displayName: 'Detail View',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: DetailViewRenderer,
   fields: [

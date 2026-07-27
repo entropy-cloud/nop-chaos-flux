@@ -241,7 +241,7 @@ export function M4DataDisplayDemoPage({ onBack }: M4DataDisplayDemoPageProps) {
         title="List — hairline 分隔 + 小屏触摸滚动"
         testidPrefix="m4-list"
         schema={schemas.list}
-        hint="条目间分隔迁移到 nop-hairline--bottom（0.5px 高 DPI 细线，末项无底边）。小屏：data-responsive='narrow' + touch-pan-y + py-3 触摸目标。桌面：py-2、无 marker。"
+        hint="条目间分隔迁移到 nop-hairline-bottom（0.5px 高 DPI 细线，末项无底边）。小屏：data-responsive='narrow' + touch-pan-y + py-3 触摸目标。桌面：py-2、无 marker。"
       />
       <Section
         title="Cards — 列数 schema 化 (columns)"

@@ -132,7 +132,7 @@ function SingleFileDiff({
 
   if (isEmpty) {
     return (
-      <div data-testid={testid} className={cn('nop-diff-view nop-diff-view-empty', className)} data-view={viewType}>
+      <div data-slot="diff-view" data-testid={testid} className={cn('nop-diff-view nop-diff-view-empty', className)} data-view={viewType}>
         <DiffHeader
           stats={stats}
           oldFileName={undefined}
@@ -162,6 +162,7 @@ function SingleFileDiff({
 
   return (
     <div
+      data-slot="diff-view"
       data-testid={testid}
       className={cn('nop-diff-view', className, wrapLines ? 'nop-diff-wrap' : '')}
       data-view={viewType}
@@ -399,6 +400,7 @@ function CrossFileDiffView({
   return (
     <div
       ref={containerRef}
+      data-slot="diff-view"
       data-testid={testid}
       data-shortcuts="diff-view"
       className={cn('nop-diff-view nop-diff-view-cross-file', className)}

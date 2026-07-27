@@ -442,6 +442,8 @@ function TransferPane(props: TransferPaneProps) {
 
 export const transferRendererDefinition: RendererDefinition = {
   type: 'transfer',
+  displayName: 'Transfer',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: TransferRenderer,
   wrap: true,

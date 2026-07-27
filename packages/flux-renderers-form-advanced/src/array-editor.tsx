@@ -601,6 +601,8 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
 export const arrayEditorRendererDefinition: RendererDefinition = {
   type: 'array-editor',
+  displayName: 'Array Editor',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ArrayEditorRenderer,
   wrap: true,

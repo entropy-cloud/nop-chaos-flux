@@ -50,7 +50,7 @@ export function renderExpandedRow(
               return (
                 <div
                   key={columnKey}
-                  className="nop-hairline nop-hairline--bottom rounded-md border bg-muted/20 px-3 py-3 sm:py-2"
+                  className="nop-hairline nop-hairline-bottom rounded-md border bg-muted/20 px-3 py-3 sm:py-2"
                   data-slot="table-responsive-expanded-item"
                 >
                   <div

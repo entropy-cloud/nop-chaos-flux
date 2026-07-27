@@ -9,6 +9,8 @@ export function InputFileRenderer(props: RendererComponentProps) {
 
 export const inputFileRendererDefinition: RendererDefinition = {
   type: 'input-file',
+  displayName: 'Input File',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: InputFileRenderer,
   fields: [...formFieldRules, ...uploadFieldRules],

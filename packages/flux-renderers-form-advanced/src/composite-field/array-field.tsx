@@ -537,6 +537,8 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
 
 export const arrayFieldRendererDefinition: RendererDefinition = {
   type: 'array-field',
+  displayName: 'Array Field',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ArrayFieldRenderer,
   wrap: true,

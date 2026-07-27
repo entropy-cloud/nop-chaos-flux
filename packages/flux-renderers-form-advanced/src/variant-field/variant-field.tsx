@@ -159,6 +159,8 @@ function normalizeVariantItems(
 
 export const variantFieldRendererDefinition: RendererDefinition<VariantFieldSchema> = {
   type: 'variant-field',
+  displayName: 'Variant Field',
+  category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: VariantFieldRenderer,
   deepFields: [
