@@ -34,6 +34,11 @@ import {
 } from './form-runtime-validation.js';
 import { defaultReportDependentRevalidationFailure } from './form-runtime-values.js';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
+import {
+  computeScopeState as computeScopeStateImpl,
+  createLifecycleBlockedValidationResult as createLifecycleBlockedValidationResultImpl,
+  supersedeLowerPriorityWork as supersedeLowerPriorityWorkImpl,
+} from './form-runtime-owner-validation-utils.js';
 
 export function buildFormOwnerRuntime(input: {
   sharedState: ManagedFormRuntimeSharedState;
@@ -44,79 +49,12 @@ export function buildFormOwnerRuntime(input: {
   getThisForm: () => FormRuntime;
   setLastChange: (change: ScopeChange) => void;
 }) {
-  function createLifecycleBlockedValidationResult(): FormValidationResult {
-    const lifecycleState = input.sharedState.lifecycleState;
-    const message =
-      lifecycleState === 'disposed'
-        ? 'Validation is blocked because the owner is disposed.'
-        : `Validation is blocked while owner lifecycleState is "${lifecycleState}".`;
-
-    return {
-      ok: false,
-      errors: [
-        {
-          path: '',
-          ownerPath: '',
-          rule: 'async',
-          message,
-          sourceKind: 'form',
-        },
-      ],
-      fieldErrors: {},
-    } as FormValidationResult;
+  function computeScopeState(): ScopeValidationStateSnapshot {
+    return computeScopeStateImpl(input.sharedState);
   }
 
-  let cachedFieldStatesRef: Record<string, FieldState> | undefined;
-  let cachedLifecycleState = input.sharedState.lifecycleState;
-  let cachedModelGeneration = input.sharedState.modelGeneration;
-  let cachedPendingValidationDebounceCount = input.sharedState.pendingValidationDebounces.size;
-  let cachedScopeState: ScopeValidationStateSnapshot | undefined;
-
-  function computeScopeState(): ScopeValidationStateSnapshot {
-    const state = input.sharedState.store.getState();
-    const fieldStates = state.fieldStates;
-    const lifecycleState = input.sharedState.lifecycleState;
-    const modelGeneration = input.sharedState.modelGeneration;
-    const pendingValidationDebounceCount = input.sharedState.pendingValidationDebounces.size;
-
-    if (
-      cachedScopeState &&
-      cachedFieldStatesRef === fieldStates &&
-      cachedLifecycleState === lifecycleState &&
-      cachedModelGeneration === modelGeneration &&
-      cachedPendingValidationDebounceCount === pendingValidationDebounceCount
-    ) {
-      return cachedScopeState;
-    }
-
-    let hasErrors = false;
-    let isValidating = false;
-
-    for (const fs of Object.values(fieldStates)) {
-      if (fs.errors && fs.errors.length > 0) hasErrors = true;
-      if (fs.validating) isValidating = true;
-      if (hasErrors && isValidating) break;
-    }
-
-    if (!isValidating && pendingValidationDebounceCount > 0) {
-      isValidating = true;
-    }
-
-    const valid = !hasErrors;
-    const ready = lifecycleState === 'active' && valid && !isValidating;
-    cachedFieldStatesRef = fieldStates;
-    cachedLifecycleState = lifecycleState;
-    cachedModelGeneration = modelGeneration;
-    cachedPendingValidationDebounceCount = pendingValidationDebounceCount;
-    cachedScopeState = {
-      valid,
-      hasErrors,
-      validating: isValidating,
-      lifecycleState,
-      ready,
-      modelGeneration,
-    };
-    return cachedScopeState;
+  function createLifecycleBlockedValidationResult(): FormValidationResult {
+    return createLifecycleBlockedValidationResultImpl(input.sharedState);
   }
 
   async function revalidateDependents(path: string, reason: ValidationReason = 'system') {
@@ -217,18 +155,7 @@ export function buildFormOwnerRuntime(input: {
   }
 
   function supersedeLowerPriorityWork(prefix?: string): void {
-    const allPaths = Array.from(input.sharedState.validationRuns.keys());
-    for (const path of allPaths) {
-      if (prefix && path !== prefix && !path.startsWith(`${prefix}.`)) {
-        continue;
-      }
-
-      input.sharedState.validationRuns.set(
-        path,
-        (input.sharedState.validationRuns.get(path) ?? 0) + 1,
-      );
-      cancelValidationDebounce(input.sharedState, path);
-    }
+    supersedeLowerPriorityWorkImpl(input.sharedState, prefix);
   }
 
   async function applyChangesAndRevalidate(

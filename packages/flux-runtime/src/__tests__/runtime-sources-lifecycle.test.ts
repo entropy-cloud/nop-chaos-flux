@@ -397,4 +397,154 @@ describe('data-source request-layer lifecycle (X4)', () => {
 
     registration.dispose();
   });
+
+  it('R2.30: onSuccess dispatched with real data each time, onError receives error and failureCount', async () => {
+    fetcherCount = 0;
+    let rejectNext = false;
+    const fetcher = vi.fn(async <T>(api: { url: string }) => {
+      fetcherCount += 1;
+      if (rejectNext) {
+        return { ok: false, status: 500, data: null as T };
+      }
+      return { ok: true, status: 200, data: { url: api.url, seq: fetcherCount } as T };
+    });
+    const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
+    const page = runtime.createPageRuntime({});
+
+    const registration = runtime.registerDataSource({
+      id: 'r230-dual',
+      scope: page.scope,
+      compiledSource: compileDataSource(
+        'r230-dual',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/r230' },
+          name: 'r230data',
+          silent: true,
+          onSuccess: {
+            action: 'setValue',
+            args: {
+              path: 'r230result',
+              value: '${data.url}',
+            },
+          },
+          onError: {
+            action: 'setValue',
+            args: {
+              path: 'r230error',
+              value: 'failed:${failureCount}',
+            },
+          },
+        },
+        expressionCompiler,
+      ),
+    });
+
+    // First call succeeds → onSuccess fires
+    await vi.waitFor(() => {
+      expect(page.scope.get('r230data')).toEqual({ url: '/api/r230', seq: 1 });
+    });
+    expect(page.scope.get('r230result')).toBe('/api/r230');
+
+    // Second call fails → onError fires
+    rejectNext = true;
+    await registration.controller.refresh();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('r230error')).toBe('failed:1');
+    });
+
+    registration.dispose();
+  });
+
+  it('R2.30: onSuccess with no handler does not throw', async () => {
+    const fetcher = vi.fn(async <T>() => ({
+      ok: true,
+      status: 200,
+      data: { ok: true } as T,
+    }));
+    const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
+    const page = runtime.createPageRuntime({});
+
+    const registration = runtime.registerDataSource({
+      id: 'r230-nosuccess',
+      scope: page.scope,
+      compiledSource: compileDataSource(
+        'r230-nosuccess',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/nosuccess' },
+          name: 'r230ns',
+          silent: true,
+          // no onSuccess or onError
+        },
+        expressionCompiler,
+      ),
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('r230ns')).toEqual({ ok: true });
+    });
+
+    registration.dispose();
+  });
+
+  it('R2.30: onError not dispatched for AbortError (superseded request) when using cancel-previous dedup', async () => {
+    vi.useFakeTimers();
+    try {
+      let firstResolve: (() => void) | undefined;
+      const firstPromise = new Promise<void>((resolve) => { firstResolve = resolve; });
+      const fetcher = vi.fn(async <T>(api: { url: string }) => {
+        if (fetcher.mock.calls.length === 1) {
+          await firstPromise;
+        }
+        return { ok: true, status: 200, data: { url: api.url } as T };
+      });
+      const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
+      const page = runtime.createPageRuntime({});
+
+      const registration = runtime.registerDataSource({
+        id: 'r230-abort',
+        scope: page.scope,
+        compiledSource: compileDataSource(
+          'r230-abort',
+          {
+            type: 'data-source',
+            action: 'ajax',
+            args: { url: '/api/abort' },
+            name: 'r230abort',
+            silent: true,
+            control: { dedup: 'cancel-previous' },
+            onError: {
+              action: 'setValue',
+              args: { path: 'r230errflag', value: '${failureCount}' },
+            },
+          },
+          expressionCompiler,
+        ),
+      });
+
+      // First fetch is pending (firstResolve not called)
+      await vi.advanceTimersByTimeAsync(10);
+
+      // Second fetch cancels the first
+      await registration.controller.refresh();
+      await vi.advanceTimersByTimeAsync(100);
+
+      // First fetch resolves
+      firstResolve!();
+      await vi.advanceTimersByTimeAsync(10);
+
+      // onError should NOT have been called for the aborted request
+      expect(page.scope.get('r230errflag')).toBeUndefined();
+
+      registration.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
+
+let fetcherCount = 0;
