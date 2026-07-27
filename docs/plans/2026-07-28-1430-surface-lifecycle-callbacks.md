@@ -1,6 +1,6 @@
 # Surface Lifecycle Callbacks And Owner-Scoped Refresh
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-07-28
 > Source: `docs/analysis/2026-07-27-flux-dialog-submit-refresh-design.md`, `docs/architecture/surface-lifecycle-callbacks.md`
 > Related: `docs/architecture/surface-owner.md`
@@ -239,10 +239,13 @@ Exit Criteria:
 
 > 起草后、执行前的独立审查证据。详见 plan guide 的 `Plan Review Rule`。由独立子 agent 填写。
 
-- Reviewer / Agent: <<fresh session id>>
-- Verdict: <<pass | pass-with-minors | revised | degraded>>
-- Rounds: <<审查轮数，≤2>>
-- Findings addressed: <<每条已处理的 Blocker/Major 一行；Minor 不记>>
+- Reviewer / Agent: fresh sub-agent session #1 (plan review) + fresh sub-agent session #1 (design doc review)
+- Verdict: `pass`（第二轮；第一轮为 `revised`）
+- Rounds: 2
+- Findings addressed:
+  - [Round 1 / Blocker B1] onClose 类型冲突：Phase 3 假定 `entry.onClose` 是 ActionNode[]，但 live `OwnedSurfaceStateBase.onClose` 是 function 类型（`packages/flux-core/src/types/runtime.ts:256`），declarative surface 在 `use-surface-renderer.ts:223/325/348` live 使用。**已修复**：Phase 1 加 Decision item 明确新增独立字段 `onCloseNodes` / `onSubmitSuccessNodes` / `onSubmitErrorNodes`（ActionNode[]），与现有 function-based `onClose` 共存；Phase 3 改为 `dispatchInOwner` on `entry.onCloseNodes`；declarative function-based onClose 路径不动。Round 2 独立 review 确认三方一致（plan ↔ design doc ↔ live repo）。
+  - [Round 1 / Minor m1-m5 design doc] 伪代码标 target-state sketch、补 hook 抛错/dispose 契约、补 component registry scope-id 模型不对称说明、表加 `$hook` 列、dialogId/surfaceId 术语统一。**已修复**（设计文档同步更新）。
+  - [Round 1 / Minor plan] `skipped: true` 非标准 ActionResult 字段 → 改为 `{ ok: false, error: new Error(...) }`。**已修复**。
 
 ## Closure Gates
 

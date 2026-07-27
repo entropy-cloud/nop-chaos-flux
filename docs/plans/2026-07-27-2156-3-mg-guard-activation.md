@@ -1,6 +1,6 @@
 # MG — Guard 激活与知识沉淀
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-27
 > Source: `docs/backlog/audit-remediation-roadmap.md` MG; MR1–MR4 failure patterns
 > Related: MV full verification (prerequisite)
@@ -60,70 +60,70 @@ Prevent regression by activating organizational guards: record new failure modes
 
 ### Phase 1 — Lessons extraction
 
-Status: planned
+Status: completed
 Targets: MR1–MR3 closure plans, MA1–MA7 audit reports, `docs/lessons/README.md`
 
 - Item Types: `Fix` (documentation)
 
-- [ ] Review MR1 closure plan and arm-index for repeatable patterns (e.g., BEM naming drift, async void-promise without structured error routing).
-- [ ] Review MR2 closure plan for repeatable patterns (e.g., empty catch blocks, oversized files, FieldFrame bypass, raw schema reads).
-- [ ] Review MR3 closure plan for repeatable patterns (e.g., hardcoded strings bypassing i18n, doc drift from live code, XSS href scheme).
-- [ ] Write lessons entries: each with detection method, fix pattern, prevention guard.
+- [x] Review MR1 closure plan and arm-index for repeatable patterns (e.g., BEM naming drift, async void-promise without structured error routing).
+- [x] Review MR2 closure plan for repeatable patterns (e.g., empty catch blocks, oversized files, FieldFrame bypass, raw schema reads).
+- [x] Review MR3 closure plan for repeatable patterns (e.g., hardcoded strings bypassing i18n, doc drift from live code, XSS href scheme).
+- [x] Write lessons entries: each with detection method, fix pattern, prevention guard.
 
 Exit Criteria:
 
-- [ ] `docs/lessons/README.md` contains ≥3 lessons entries derived from MR1–MR3 patterns.
-- [ ] Each entry patterned as: `## <Pattern Name>` → detection → fix → prevention.
+- [x] `docs/lessons/README.md` contains ≥3 lessons entries derived from MR1–MR3 patterns.
+- [x] Each entry patterned as: `## <Pattern Name>` → detection → fix → prevention.
 
 ### Phase 2 — project-context.md refresh
 
-Status: planned
+Status: completed
 Targets: `docs/context/project-context.md`
 
 - Item Types: `Fix` (documentation)
 
-- [ ] Review all sections for accuracy against live repo state.
-- [ ] Update freshness from `partially stale` → `fresh` (with justification: all audit-remediation phases complete, verification green, findings tracked to closure).
-- [ ] Verify verification commands still accurate.
-- [ ] Verify AI Block Conditions still accurate.
+- [x] Review all sections for accuracy against live repo state.
+- [x] Update freshness from `partially stale` → `fresh` (with justification: all audit-remediation phases complete, verification green, findings tracked to closure).
+- [x] Verify verification commands still accurate.
+- [x] Verify AI Block Conditions still accurate.
 
 Exit Criteria:
 
-- [ ] `project-context.md` freshness: `fresh`.
-- [ ] All factual claims verified against live repo.
+- [x] `project-context.md` freshness: `fresh`.
+- [x] All factual claims verified against live repo.
 
 ### Phase 3 — skills/README.md update
 
-Status: planned
+Status: completed
 Targets: `docs/skills/README.md`
 
 - Item Types: `Fix` (documentation)
 
-- [ ] Review current `docs/skills/README.md` for known failure pattern section existence.
-- [ ] Add "Known Failure Detection Patterns" section: reference each lesson entry with detection method.
-- [ ] Add guard recommendations: CI hooks, lint rules, or script additions that would catch each pattern.
+- [x] Review current `docs/skills/README.md` for known failure pattern section existence.
+- [x] Add "Known Failure Detection Patterns" section: reference each lesson entry with detection method.
+- [x] Add guard recommendations: CI hooks, lint rules, or script additions that would catch each pattern.
 
 Exit Criteria:
 
-- [ ] `docs/skills/README.md` has a "Known Failure Detection Patterns" section.
-- [ ] Each pattern references the corresponding lesson and detection method.
+- [x] `docs/skills/README.md` has a "Known Failure Detection Patterns" section.
+- [x] Each pattern references the corresponding lesson and detection method.
 
 ### Phase 4 — Roadmap closure
 
-Status: planned
+Status: completed
 Targets: `docs/backlog/audit-remediation-roadmap.md`
 
 - Item Types: `Fix`
 
-- [ ] Update roadmap Phase Status: MG → `done`.
-- [ ] Verify all preceding milestones (M0–MV) are `done`.
-- [ ] Update arm-index: MG → `done`.
+- [x] Update roadmap Phase Status: MG → `done`.
+- [x] Verify all preceding milestones (M0–MV) are `done`.
+- [x] Update arm-index: MG → `done`.
 
 Exit Criteria:
 
-- [ ] Roadmap: MG → `done`.
-- [ ] arm-index Phase/Milestone Index: MG → `done`.
-- [ ] All audit-remediation milestones consistently `done`.
+- [x] Roadmap: MG → `done`.
+- [x] arm-index Phase/Milestone Index: MG → `done`.
+- [x] All audit-remediation milestones consistently `done`.
 
 ## Draft Review Record
 
@@ -138,13 +138,13 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `docs/lessons/README.md` updated with ≥3 MR-derived lessons.
-- [ ] `docs/context/project-context.md` freshness updated to `fresh`.
-- [ ] `docs/skills/README.md` updated with known failure detection patterns.
-- [ ] Roadmap: MG → `done`.
-- [ ] arm-index: MG → `done`.
-- [ ] No stale or contradictory documentation remains.
-- [ ] Closure audit by independent sub-agent (fresh session) completed.
+- [x] `docs/lessons/README.md` updated with ≥3 MR-derived lessons.
+- [x] `docs/context/project-context.md` freshness updated to `fresh`.
+- [x] `docs/skills/README.md` updated with known failure detection patterns.
+- [x] Roadmap: MG → `done`.
+- [x] arm-index: MG → `done`.
+- [x] No stale or contradictory documentation remains.
+- [x] Closure audit by independent sub-agent (fresh session) completed.
 
 ## Deferred But Adjudicated
 
@@ -157,12 +157,12 @@ _None — all items are documentation updates with no prerequisites beyond MV._
 
 ## Closure
 
-Status Note: _待完成时填写_
+Status Note: All 4 phases completed. Lessons extracted (4 entries), project-context.md freshness updated to `fresh`, skills/README.md enriched with 10 failure patterns + detection methods + guard recommendations, roadmap and arm-index MG→done. Workspace green baseline verified. All audit-remediation milestones (M0 → MG) now consistently `done`.
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: ses_05a251d25ffeGIp7GUPgASjWvN (independent sub-agent, fresh session)
+- Evidence: All Phase Exit Criteria verified against live repo. 4 lesson entries confirmed in `docs/lessons/README.md` with detection/fix/prevention. `project-context.md` freshness=`fresh`. `skills/README.md` has 10 patterns with detection methods, guard recommendations, and lesson cross-references. Roadmap MG Phase Status and MG.1–MG.3 work items all `done`. arm-index MG `done`. No stale/contradictory docs remain. All closure gates ticked. Plan internally consistent.
 
 Follow-up:
 

@@ -49,13 +49,15 @@ export interface OpenDialogActionSchema extends ActionShapeFields {
 }
 ```
 
-| 字段              | 触发时机                                                                          | `$formData` | `$result`       | 典型用途                                             |
-| ----------------- | --------------------------------------------------------------------------------- | ----------- | --------------- | ---------------------------------------------------- |
-| `onClose`         | surface 被关闭时（任意路径：手动关闭、`closeSurface` action、ESC、outside click） | ✗           | ✗               | 关闭后刷新列表、清理临时状态                         |
-| `onSubmitSuccess` | surface body 内的 form submit ajax 返回成功后                                     | ✓           | ✓ ajax response | 提交成功后刷新列表、自定义副作用（导航、上报、关闭） |
-| `onSubmitError`   | surface body 内的 form submit ajax 返回失败后                                     | ✓           | ✓ error payload | 自定义错误恢复（重置字段、跳转错误页、上报埋点）     |
+| 字段              | 触发时机                                                                          | `$formData` | `$result`       | `$hook`            | 典型用途                                             |
+| ----------------- | --------------------------------------------------------------------------------- | ----------- | --------------- | ------------------ | ---------------------------------------------------- |
+| `onClose`         | surface 被关闭时（任意路径：手动关闭、`closeSurface` action、ESC、outside click） | ✗           | ✗               | `'close'`          | 关闭后刷新列表、清理临时状态                         |
+| `onSubmitSuccess` | surface body 内的 form submit ajax 返回成功后                                     | ✓           | ✓ ajax response | `'submit:success'` | 提交成功后刷新列表、自定义副作用（导航、上报、关闭） |
+| `onSubmitError`   | surface body 内的 form submit ajax 返回失败后                                     | ✓           | ✓ error payload | `'submit:error'`   | 自定义错误恢复（重置字段、跳转错误页、上报埋点）     |
 
 三个字段都是可选。不写就没有 callback，surface 行为与没有 lifecycle callback 时完全一致。
+
+> **字段命名说明**：上表的 schema 字段名（作者视角）是 `onClose` / `onSubmitSuccess` / `onSubmitError`。runtime 内部存储为 `entry.onCloseNodes` / `entry.onSubmitSuccessNodes` / `entry.onSubmitErrorNodes`（编译后的 `ActionNode[]`），与现有 `entry.onClose`（function 类型，declarative surface 专用）共存。详见 §Hook Triggering Semantics。
 
 ## Form Submit Scope
 
@@ -198,46 +200,59 @@ callback 默认不传 `ctx.form`（因为 callback 在 owner ctx 执行，与 su
 
 ### Close Hook
 
-`surfaceRuntime.close(surfaceId)` 在 dispose entry 之前触发 `onClose`：
+`surfaceRuntime.close(surfaceId)` 在 dispose entry 之前触发 `onCloseNodes`（仅 action-style openDialog/openDrawer 创建的 entry 有此字段；declarative surface 的 `entry.onClose` 是 function 类型，由 `use-surface-renderer.ts` 现有路径处理，不在本机制范围）：
 
 ```ts
+// target-state sketch（实现见 plan Phase 3）
 async close(surfaceId) {
   const removed = store.remove(surfaceId);
   if (!removed) return;
-  if (removed.options.onClose) {
-    await dispatchInOwner(removed, removed.options.onClose, { hookName: 'close' });
+  if (removed.onCloseNodes) {
+    try {
+      await dispatchInOwner(removed, removed.onCloseNodes, { hookName: 'close' });
+    } catch (err) {
+      // hook 抛错不阻塞 close 流程；详见 §Hook Error Semantics
+      console.warn('[surface] onClose hook failed:', err);
+    }
   }
   disposeEntry(removed);
   republishActiveStatuses();
 }
 ```
 
-`onClose` 在 surface 任意关闭路径都会触发：
+`onCloseNodes` 在 surface 任意关闭路径都会触发：
 
 - 用户点击 close 按钮 / mask / 按 ESC
 - schema 调 `closeSurface` action
 - 父级 runtime teardown
 
-不触发 `onClose` 的路径：
+不触发 `onCloseNodes` 的路径：
 
 - 整个 page runtime 强制 dispose（如 SPA 卸载）—— 这种情况所有 callback 都不保证触发
 - 同一 surface 内多次 close 调用（去重后只触发一次）
 
+declarative surface（`type: 'dialog'` / `type: 'drawer'`）的 close 路径**保持现状**：`entry.onClose` (function) 由 `use-surface-renderer.ts:223/325/348` 直接调用，不经 `dispatchInOwner`。两套机制共存，互不干扰。详见 `surface-owner.md` §Declarative And Action-Opened Surfaces。
+
 ### Submit Hooks
 
-form 的 `executeFormSubmit` 在 ajax 完成（成功或失败）后，通过 `surfaceRuntime.triggerHook` 触发 `onSubmitSuccess` / `onSubmitError`：
+form 的 `executeFormSubmit` 在 ajax 完成（成功或失败）后，通过 `surfaceRuntime.triggerHook` 触发 `onSubmitSuccessNodes` / `onSubmitErrorNodes`：
 
 ```ts
+// target-state sketch（实现见 plan Phase 3）
 // in form-runtime-submit-flow.ts, after ajax settles
-if (ctx.surfaceRuntime && ctx.dialogId && formSchema.submitScope === 'surface') {
-  const entry = ctx.surfaceRuntime.store.get(ctx.dialogId);
-  if (entry?.options.onSubmitSuccess && result.ok) {
+//
+// flux 的 createSurfaceScope 在 dialog scope 上挂 `dialogId`、drawer scope 上挂 `drawerId`
+// （runtime-factory.ts:602-617），两者值都是 surfaceId。这里用 surfaceId 统一引用。
+const surfaceId = ctx.dialogId ?? ctx.drawerId ?? ctx.surfaceId;
+if (formSchema.submitScope === 'surface' && ctx.surfaceRuntime && surfaceId) {
+  const entry = ctx.surfaceRuntime.store.getState().entries.find((e) => e.id === surfaceId);
+  if (entry?.onSubmitSuccessNodes && result.ok) {
     await ctx.surfaceRuntime.triggerHook(entry, 'submit:success', {
       result: result.data,
       formData: collectedFormValues,
     });
   }
-  if (entry?.options.onSubmitError && !result.ok && !result.cancelled) {
+  if (entry?.onSubmitErrorNodes && !result.ok && !result.cancelled) {
     await ctx.surfaceRuntime.triggerHook(entry, 'submit:error', {
       result: result.error,
       formData: collectedFormValues,
@@ -250,9 +265,19 @@ if (ctx.surfaceRuntime && ctx.dialogId && formSchema.submitScope === 'surface') 
 
 - **只触发 `submitScope: 'surface'` 的 form**（详见 §Form Submit Scope）。多 form surface 场景下，只有显式声明 `'surface'` 的 form（或单 form 自动启用）的 submit 才会触发 callback。
 - submit hooks 只对 surface body 内的 form submit 生效。如果 surface body 没有提交 form（纯展示），不会触发。
+- submit hooks 只对 **action-style** openDialog/openDrawer 有效（`onSubmitSuccessNodes` / `onSubmitErrorNodes` 字段只有 action-style entry 才有）。declarative surface 内的 form submit 不触发 surface callback（declarative surface 已有自己的 onSubmitSuccess 触发路径，由 `use-surface-renderer.ts` 透传）。
 - submit hooks 不替代 ajax 默认的 error→notify（详见 §Relationship With Ajax Default Notifications）。
 - submit hooks 在 form lifecycle handler 之后触发（form 自己的 `onSubmitSuccess` 字段先执行，然后才是 surface `args.onSubmitSuccess`）。
 - submit hooks 不自动关闭 surface。如果业务想在成功后关闭，应在 hook 里显式写 `{ action: 'closeSurface' }`。
+
+### Hook Error Semantics
+
+hook 内 action 抛错的处理契约：
+
+- **hook 抛错不阻塞 surface close 流程**：`close` 用 try/catch 包裹 `dispatchInOwner`，捕获错误后 `console.warn` 并继续 dispose entry + `republishActiveStatuses`
+- **hook 抛错不阻塞 form submit 流程**：`triggerHook` 在 form submit 流程中也是 await 但 catch 的，submit 本身的成功状态不被 hook 失败影响
+- **ownerActionCtx 已 dispose 时**：`dispatchInOwner` 检测 `entry.ownerActionCtx.runtime.disposed`（或同等标记）时跳过 dispatch，返回 `{ ok: false, error: new Error('ownerActionCtx already disposed') }`，console.warn 一条
+- hook 抛错时，错误信息走 action dispatcher 默认 error notify（一次 toast），与普通 action 失败一致
 
 ### Triggering Order
 

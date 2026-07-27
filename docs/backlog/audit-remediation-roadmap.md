@@ -40,7 +40,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | R3.0     | P1 修复—UI/UX+文档+安全+运维（展开器）        | `done` |
 | R4.0     | 跨维度 P1 裁决（可选）                        | `done` |
 | MV       | 全量验证与回归                                | `done` |
-| MG       | Guard 激活与知识沉淀                          | `todo` |
+| MG       | Guard 激活与知识沉淀                          | `done` |
 
 ## 框架/平台复用
 
@@ -243,9 +243,9 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 | Work Item                              | Status | Owner Doc                         | Dependencies | Skill |
 | -------------------------------------- | ------ | --------------------------------- | ------------ | ----- |
-| MG.1 失败模式提升为 lessons            | `todo` | `docs/lessons/README.md`          | MV           | —     |
-| MG.2 project-context.md 更新           | `todo` | `docs/context/project-context.md` | MV           | —     |
-| MG.3 skills/README.md 已知失败模式更新 | `todo` | `docs/skills/README.md`           | MV           | —     |
+| MG.1 失败模式提升为 lessons            | `done` | `docs/lessons/README.md`          | MV           | —     |
+| MG.2 project-context.md 更新           | `done` | `docs/context/project-context.md` | MV           | —     |
+| MG.3 skills/README.md 已知失败模式更新 | `done` | `docs/skills/README.md`           | MV           | —     |
 
 ## Work Item Details
 

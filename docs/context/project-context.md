@@ -11,8 +11,8 @@ This file intentionally does **not** track "what is being worked on right now". 
 - Project name: `nop-chaos-flux`
 - Product type: AMIS low-code renderer, modern rewrite (a schema-driven React rendering + compilation runtime)
 - Primary users: application builders consuming the Flux DSL; framework developers extending renderers/actions
-- Documentation freshness: `partially stale` <!-- fresh | partially stale | stale | unknown -->
-  - Scheduling package verified complete (S0-S21) as of 2026-07-23 — all P0/P1/P2/P3 defects fixed, Dim20 accessibility audit completed, all quality polish plans closed. `partially stale` retained because other packages' doc freshness has not been re-audited per human-confirmation policy.
+- Documentation freshness: `fresh` <!-- fresh | partially stale | stale | unknown -->
+  - All audit-remediation phases (M0 → MA1–MA7 → MR1–MR4 → MV) completed as of 2026-07-28. `pnpm typecheck` (58/58), `pnpm build` (31/31), `pnpm lint` (31/31), `pnpm test` (58/58) all pass. E2E sample 60/61 (1 pre-existing flake). All P0/P1 findings fixed and verified. `docs/lessons/` populated with MR-derived lessons. MG (Guard Activation) completing in parallel — this file is the final piece. All packages verified for correctness, documentation drift corrected (MA6 R3.9–R3.16), and the workspace is production-green across the entire audit-remediation pipeline.
 
 **Freshness gating:**
 

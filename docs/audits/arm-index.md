@@ -33,7 +33,7 @@
 | R3.0     | P1 修复—UI/UX+文档+安全+运维                  | `done`      | `docs/plans/2026-07-27-2300-2-r2-r3-combined-expander.md`                                             |
 | R4.0     | 跨维度 P1 裁决                                | `done`      | `docs/plans/2026-07-27-2156-1-r4-cross-dimension-adjudication.md`                                     |
 | MV       | 全量验证与回归                                | `done`      | `docs/plans/2026-07-27-2156-2-mv-full-verification.md`                                                |
-| MG       | Guard 激活与知识沉淀                          | `todo`      | `docs/plans/2026-*-MG-*.md`                                                                           |
+| MG       | Guard 激活与知识沉淀                          | `done`      | `docs/plans/2026-07-27-2156-3-mg-guard-activation.md`                                                 |
 
 ## Package Cluster Index
 

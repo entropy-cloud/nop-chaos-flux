@@ -137,16 +137,50 @@ flux-core → flux-formula → flux-compiler → flux-action-core → flux-runti
 
 ## 已知失败模式
 
-来自 `docs/lessons/` 和 `docs/bugs/` 的高频复现问题，skill 使用者在规划审计或修复时应主动检查：
+来自 `docs/lessons/` 和 `docs/bugs/` 的高频复现问题，skill 使用者在规划审计或修复时应主动检查。每条附有检测方法、防护建议及关联 lesson 参考。
 
 1. **React Strict Mode 双触发导致状态损坏** —— `useEffect` 清理与 pending 异步回调的竞争条件（例：Gantt bars 渲染 bug）
+   - 检测：React Strict Mode 下观察 `useEffect` cleanup + re-run 时序，检查异步回调中是否有 stale closure
+   - 防护：`useEffect` 中使用 ref 或 cleanup flag 防止 cleanup 后的回调修改状态
+
 2. **'use no memo' 文件误改** —— `node-renderer-resolved.tsx`、`render-nodes.tsx`、`dynamic-renderer.tsx` 使用 `'use no memo'` 声明，React Compiler 不得重写其 memo 化
+   - 检测：grep 检查 `'use no memo'` 文件是否被 React Compiler 自动重写
+   - 防护：修改这些文件时显式验证 `'use no memo'` 声明未被移除；PR review 中重点检查
+
 3. **公共导出面未经 plan** —— `packages/*/src/index.ts` 是受保护区域，修改前必须有 plan 和 owner doc
-4. **样式类名硬编码** —— 布局 renderer 只应发射 marker 类，不使用硬编码 `gap-4`、`flex`、`p-4` 等
+   - 检测：grep 检查 `packages/*/src/index.ts` 变更历史
+   - 防护：修改 `index.ts` 前须创建 plan 并引用 owner doc
+
+4. **样式类名硬编码 / BEM 命名漂移** —— 布局 renderer 只应发射 marker 类，不使用硬编码 `gap-4`、`flex`、`p-4` 等；BEM 风格 `--` 修饰符违反 no-BEM 政策
+   - 检测：grep 搜索 `--` 在 CSS class 中的使用；`check:audit-styling-suspects` 扫描 bare selector
+   - 防护：lint rule 禁止 CSS 中使用 `--` 修饰符命名；review checklist 检查 marker class vs visual class 分离
+   - 关联 lesson: `docs/lessons/README.md#02-bem-naming-drift-in-css-class-selectors`
+
 5. **Tailwind v4 monorepo `@source` 遗漏** —— 新增包时必须更新 `apps/playground/src/styles.css` 中的 `@source` 指令
+   - 检测：新包创建后检查 `styles.css` 中是否已添加 `@source` 指向新包路径
+   - 防护：新增包 checklist 第一项："Add @source to playground styles.css"
+
 6. **store.parse / store.destroy 生命周期不匹配** —— Zustand 在 Strict Mode 下初始化与销毁的时序问题
-7. **异步路径未处理失败** —— `async` 函数中缺少 try-catch 导致静默失败（`check:audit-async-failure-paths` 可扫描）
+   - 检测：Zustand store 初始化/销毁日志追踪
+   - 防护：对 Zustand store 添加 `isMounted` guard 或显式生命周期管理
+
+7. **异步路径未处理失败 / void-promise 缺少错误路由注释** —— `async` 函数中缺少 try-catch 导致静默失败；fire-and-forget `void` 调用缺少结构化错误路由说明
+   - 检测：`check:audit-async-failure-paths` 扫描；grep 搜索 `void ` 在 async 上下文中的使用
+   - 防护：所有 `void` 前缀的 async 调用必须附带 `// Errors routed through <mechanism>` 注释；empty catch 块应通过 ESLint `no-empty` 规则禁止
+   - 关联 lesson: `docs/lessons/README.md#03-async-void-promise-without-structured-error-routing`
+
 8. **测试全局泄漏** —— 测试间共享全局状态导致交叉污染（`check:audit-test-global-leaks` 可扫描）
+   - 检测：`check:audit-test-global-leaks` 扫描
+   - 防护：测试使用 `beforeEach`/`afterEach` 清理全局状态
+
+9. **文档契约漂移** —— 架构文档（field-frame.md, form-validation.md 等）包含与 live code 不一致的 API 名、类型引用或行为声明，误导依赖该文档的 AI agent 或开发者
+   - 检测：MA6 文档一致性审计——交叉验证每个 doc claim 与 live repo 代码签名、类型及行为
+   - 防护：修改公共 API 或 renderer 行为时，同步更新对应 `docs/architecture/` 文档；PR checklist 加入 doc-review 步骤
+   - 关联 lesson: `docs/lessons/README.md#05-documentation-contract-drift-from-live-code`
+
+10. **硬编码字符串绕过 i18n** —— 渲染器组件使用硬编码中文/英文字符串替代 `t()` 调用，导致多语言支持断裂
+    - 检测：grep 搜索渲染器文件中的中文字符串或硬编码英文字符串（非 `t()` 调用）
+    - 防护：所有用户可见字符串必须通过 `t()` 函数引用；`check:i18n-keys` 可验证 key 是否已定义
 
 ## Notes
 
