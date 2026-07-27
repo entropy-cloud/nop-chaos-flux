@@ -21,7 +21,7 @@
 | MA3.2    | 代码质量—基础+内容+移动端 代码质量审计        | `completed` | `docs/audits/arm-MA3-basic-content-mobile-code-quality.md`                                            |
 | MA3.3    | 代码质量—设计器+办公 代码质量审计             | `completed` | `docs/audits/arm-MA3-designer-office-code-quality.md`                                                 |
 | MA4.1    | 测试层—核心+运行时 测试覆盖审计               | `completed` | `docs/audits/arm-MA4-core-runtime-test-coverage.md`                                                   |
-| MA4.2    | 测试层—基础+内容+移动端 测试覆盖审计          | `todo`      | `docs/audits/arm-MA4-basic-content-mobile-*.md`                                                       |
+| MA4.2    | 测试层—基础+内容+移动端 测试覆盖审计          | `completed` | `docs/audits/arm-MA4-basic-content-mobile-test-coverage.md`                                           |
 | MA4.3    | 测试层—设计器+办公 测试覆盖与 E2E 审计        | `todo`      | `docs/audits/arm-MA4-designer-office-*.md`                                                            |
 | MA5.1    | UI/UX—设计器可操作性审计                      | `todo`      | `docs/audits/arm-MA5-designer-*.md`                                                                   |
 | MA5.2    | UI/UX—基础+内容渲染器 UX 审计                 | `todo`      | `docs/audits/arm-MA5-basic-content-*.md`                                                              |
@@ -52,24 +52,30 @@
 
 ## P0/P1 Finding Index
 
-| Finding ID | Severity | Package                                   | Description                                                               | Source Report                                  | Status | Fix Plan    |
-| ---------- | -------- | ----------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------- | ------ | ----------- |
-| AI-P1-1    | P1       | flux-renderers-ai                         | `deleteConversation` post-await stale-closure race                        | `2026-07-25-multi-audit-ai`                    | open   | Pending MR2 |
-| AI-P1-2    | P1       | flux-renderers-ai                         | `ai-citations` HTML 双编码显示损坏                                        | `2026-07-25-multi-audit-ai`                    | open   | Pending MR2 |
-| SCHED-F73  | P1       | flux-renderers-scheduling                 | Kanban DnD test silent no-op                                              | `2026-07-23-multi-audit-scheduling`            | open   | Pending MR2 |
-| MA1-P1-001 | P1       | flux-core (renderer-core)                 | `RendererDefinition` 冗余声明4个从`RendererDefinitionShape`继承的字段     | `arm-MA1-core-structure.md`                    | open   | Pending MR1 |
-| MA1-P1-002 | P1       | flux-renderers-data/form/form-advanced/ui | BEM风格 `nop-hairline--*` 修饰符命名违反无 BEM 原则                       | `arm-MA1-basic-structure.md`                   | open   | Pending MR1 |
-| MA3-F01    | P1       | flux-react                                | `container-hooks.ts:87` 空catch吞掉`componentRegistry.resolve()`异常      | `arm-MA3-core-runtime-code-quality.md`         | open   | Pending MR2 |
-| MA3-P2-F1  | P1       | flux-renderers-data                       | `crud-renderer.tsx:512` runtime-raw-schema-read违反compile-once原则       | `arm-MA3-basic-content-mobile-code-quality.md` | open   | Pending MR2 |
-| MA4-F01    | P1       | flux-runtime                              | Validation compile→runtime 测试绕过，手动构造 CompiledFormValidationModel | `arm-MA4-core-runtime-test-coverage.md`        | open   | Pending MR2 |
-| MA4-F02    | P1       | flux-react                                | Validation 错误从未通过 React UI 测试（FieldFrame error display）         | `arm-MA4-core-runtime-test-coverage.md`        | open   | Pending MR2 |
-| MA4-F03    | P1       | flux-react/runtime                        | Derived snapshot identity 无系统测试（React 19 infinite loop 风险）       | `arm-MA4-core-runtime-test-coverage.md`        | open   | Pending MR2 |
-| MA4-F04    | P1       | flux-runtime                              | Data source poll timer dispose-race（与 bug 28 同类未修）                 | `arm-MA4-core-runtime-test-coverage.md`        | open   | Pending MR2 |
-| MA4-F05    | P1       | flux-action-core                          | Action error 通知链静默失败（`onActionError` 主机跳过 notify）            | `arm-MA4-core-runtime-test-coverage.md`        | open   | Pending MR2 |
-| MA4-F06    | P1       | flux-react                                | 9 hooks 中 3 个无测试（useRenderScope/useCurrentPage/useCurrentNodeMeta） | `arm-MA4-core-runtime-test-coverage.md`        | open   | Pending MR2 |
-| MA4-F07    | P1       | flux-runtime                              | 3/4 ComponentHandle 工厂无专项测试                                        | `arm-MA4-core-runtime-test-coverage.md`        | open   | Pending MR2 |
-| MA4-F08    | P1       | all 7 packages                            | 跨层贯通测试（compile→runtime→react→renderer）全部缺失                    | `arm-MA4-core-runtime-test-coverage.md`        | open   | Pending MR2 |
-| MA4-F09    | P1       | flux-runtime, flux-react                  | Data-source/reaction 声明式 lowering 无贯通测试                           | `arm-MA4-core-runtime-test-coverage.md`        | open   | Pending MR2 |
+| Finding ID   | Severity | Package                                   | Description                                                                                          | Source Report                                   | Status | Fix Plan    |
+| ------------ | -------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ------ | ----------- |
+| AI-P1-1      | P1       | flux-renderers-ai                         | `deleteConversation` post-await stale-closure race                                                   | `2026-07-25-multi-audit-ai`                     | open   | Pending MR2 |
+| AI-P1-2      | P1       | flux-renderers-ai                         | `ai-citations` HTML 双编码显示损坏                                                                   | `2026-07-25-multi-audit-ai`                     | open   | Pending MR2 |
+| SCHED-F73    | P1       | flux-renderers-scheduling                 | Kanban DnD test silent no-op                                                                         | `2026-07-23-multi-audit-scheduling`             | open   | Pending MR2 |
+| MA1-P1-001   | P1       | flux-core (renderer-core)                 | `RendererDefinition` 冗余声明4个从`RendererDefinitionShape`继承的字段                                | `arm-MA1-core-structure.md`                     | open   | Pending MR1 |
+| MA1-P1-002   | P1       | flux-renderers-data/form/form-advanced/ui | BEM风格 `nop-hairline--*` 修饰符命名违反无 BEM 原则                                                  | `arm-MA1-basic-structure.md`                    | open   | Pending MR1 |
+| MA3-F01      | P1       | flux-react                                | `container-hooks.ts:87` 空catch吞掉`componentRegistry.resolve()`异常                                 | `arm-MA3-core-runtime-code-quality.md`          | open   | Pending MR2 |
+| MA3-P2-F1    | P1       | flux-renderers-data                       | `crud-renderer.tsx:512` runtime-raw-schema-read违反compile-once原则                                  | `arm-MA3-basic-content-mobile-code-quality.md`  | open   | Pending MR2 |
+| MA4-F01      | P1       | flux-runtime                              | Validation compile→runtime 测试绕过，手动构造 CompiledFormValidationModel                            | `arm-MA4-core-runtime-test-coverage.md`         | open   | Pending MR2 |
+| MA4-F02      | P1       | flux-react                                | Validation 错误从未通过 React UI 测试（FieldFrame error display）                                    | `arm-MA4-core-runtime-test-coverage.md`         | open   | Pending MR2 |
+| MA4-F03      | P1       | flux-react/runtime                        | Derived snapshot identity 无系统测试（React 19 infinite loop 风险）                                  | `arm-MA4-core-runtime-test-coverage.md`         | open   | Pending MR2 |
+| MA4-F04      | P1       | flux-runtime                              | Data source poll timer dispose-race（与 bug 28 同类未修）                                            | `arm-MA4-core-runtime-test-coverage.md`         | open   | Pending MR2 |
+| MA4-F05      | P1       | flux-action-core                          | Action error 通知链静默失败（`onActionError` 主机跳过 notify）                                       | `arm-MA4-core-runtime-test-coverage.md`         | open   | Pending MR2 |
+| MA4-F06      | P1       | flux-react                                | 9 hooks 中 3 个无测试（useRenderScope/useCurrentPage/useCurrentNodeMeta）                            | `arm-MA4-core-runtime-test-coverage.md`         | open   | Pending MR2 |
+| MA4-F07      | P1       | flux-runtime                              | 3/4 ComponentHandle 工厂无专项测试                                                                   | `arm-MA4-core-runtime-test-coverage.md`         | open   | Pending MR2 |
+| MA4-F08      | P1       | all 7 packages                            | 跨层贯通测试（compile→runtime→react→renderer）全部缺失                                               | `arm-MA4-core-runtime-test-coverage.md`         | open   | Pending MR2 |
+| MA4-F09      | P1       | flux-runtime, flux-react                  | Data-source/reaction 声明式 lowering 无贯通测试                                                      | `arm-MA4-core-runtime-test-coverage.md`         | open   | Pending MR2 |
+| MA42-B-P1-01 | P1       | flux-renderers-basic (Page)               | `collectDescendantValidation` contract has zero test coverage                                        | `arm-MA4-basic-content-mobile-test-coverage.md` | open   | Pending MR2 |
+| MA42-F-P1-01 | P1       | flux-renderers-form (Form)                | `initAction` lifecycle before form render untested                                                   | `arm-MA4-basic-content-mobile-test-coverage.md` | open   | Pending MR2 |
+| MA42-F-P1-02 | P1       | flux-renderers-form                       | `submitOnChange` debounce timing untested                                                            | `arm-MA4-basic-content-mobile-test-coverage.md` | open   | Pending MR2 |
+| MA42-F-P1-03 | P1       | flux-renderers-form (FieldFrame)          | FieldFrame `aria-labelledby`/`aria-describedby`/`aria-errormessage`/`aria-invalid` wiring zero tests | `arm-MA4-basic-content-mobile-test-coverage.md` | open   | Pending MR2 |
+| MA42-D-P1-01 | P1       | flux-renderers-data (DataSource)          | `onSuccess`/`onError` events compiled but never consumed/delivered (H1)                              | `arm-MA4-basic-content-mobile-test-coverage.md` | open   | Pending MR2 |
+| MA42-C-P1-01 | P1       | flux-renderers-content (DiffView)         | Reaction handles (`toggleViewType`/`setViewType`/`expandAll`/`collapseAll`) have zero tests          | `arm-MA4-basic-content-mobile-test-coverage.md` | open   | Pending MR2 |
 
 ## P2 Finding Index
 
