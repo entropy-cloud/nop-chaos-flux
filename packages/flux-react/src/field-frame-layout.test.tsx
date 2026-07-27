@@ -498,4 +498,64 @@ describe('FieldFrame — ARIA attributes', () => {
     fireEvent.blur(input as HTMLInputElement);
     expect(input?.getAttribute('aria-describedby')).toBe('f1-description');
   });
+
+  it('R2.29: control element receives forwarded aria-errormessage when error is shown', () => {
+    const state = {
+      ...EMPTY_FORM_STORE_STATE,
+      fieldStates: {
+        f1: {
+          touched: true,
+          errors: [{ path: 'f1', rule: 'required', message: 'Required', sourceKind: 'field' }],
+        },
+      },
+    };
+    const form = createMockForm({
+      store: { subscribe: () => () => undefined, getState: () => state },
+      validation: { behavior: { triggers: ['blur'], showErrorOn: ['touched'] } },
+    });
+
+    const view = render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="f1" label="Name">
+          <input aria-label="Name input" />
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+
+    const input = view.container.querySelector('input[aria-label="Name input"]');
+    expect(input?.getAttribute('aria-errormessage')).toBe('f1-error');
+  });
+
+  it('R2.29: control element does NOT get aria-errormessage when error is not shown', () => {
+    const form = createMockForm();
+
+    const view = render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="f1" label="Name">
+          <input aria-label="Name input" />
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+
+    const input = view.container.querySelector('input[aria-label="Name input"]');
+    expect(input?.hasAttribute('aria-errormessage')).toBe(false);
+  });
+
+  it('R2.29: aria-labelledby on the field-control div references the label span when rootTag is div', () => {
+    const view = render(
+      <FormContext.Provider value={createMockForm()}>
+        <FieldFrame name="email" label="Email" rootTag="div">
+          <input aria-label="Email input" />
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+
+    const controlDiv = view.container.querySelector('[data-slot="field-control"]');
+    const labelledby = controlDiv?.getAttribute('aria-labelledby');
+    expect(labelledby).toBeTruthy();
+    // The referenced element should exist and contain the label text
+    const labelSpan = view.container.querySelector(`#${CSS.escape(labelledby!)}`);
+    expect(labelSpan).toBeTruthy();
+    expect(labelSpan?.textContent).toContain('Email');
+  });
 });
