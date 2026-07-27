@@ -14,9 +14,9 @@
 | MA1.2    | 结构层—运行时包簇（runtime）依赖与边界审计    | `completed` | `docs/audits/arm-MA1-runtime-structure.md`                                                            |
 | MA1.3    | 结构层—基础渲染器（basic）定义与边界审计      | `completed` | `docs/audits/arm-MA1-basic-structure.md`                                                              |
 | MA1.4    | 结构层—设计器/办公/内容/移动端 定义与样式审计 | `completed` | `docs/audits/arm-MA1-content-mobile-structure.md`, `docs/audits/arm-MA1-designer-office-structure.md` |
-| MA2.1    | 运行时层—核心包簇 Schema 与 FieldFrame 审计   | `todo`      | `docs/audits/arm-MA2-core-*.md`                                                                       |
-| MA2.2    | 运行时层—运行时包簇裸读取与异步路径审计       | `todo`      | `docs/audits/arm-MA2-runtime-*.md`                                                                    |
-| MA2.3    | 运行时层—基础渲染器分发与 Action 链路审计     | `todo`      | `docs/audits/arm-MA2-basic-*.md`                                                                      |
+| MA2.1    | 运行时层—核心包簇 Schema 与硬编码分发审计     | `completed` | `docs/audits/arm-MA2-core-schema-dispatch.md`                                                         |
+| MA2.2    | 运行时层—运行时包簇裸读取与异步路径审计       | `completed` | `docs/audits/arm-MA2-runtime-raw-async-fieldframe.md`                                                 |
+| MA2.3    | 运行时层—基础渲染器分发与 Action 链路审计     | `completed` | `docs/audits/arm-MA2-basic-dispatch-action.md`                                                        |
 | MA3.1    | 代码质量—核心+运行时 代码质量与 React19 审计  | `todo`      | `docs/audits/arm-MA3-core-runtime-*.md`                                                               |
 | MA3.2    | 代码质量—基础+内容+移动端 代码质量审计        | `todo`      | `docs/audits/arm-MA3-basic-content-mobile-*.md`                                                       |
 | MA3.3    | 代码质量—设计器+办公 代码质量审计             | `todo`      | `docs/audits/arm-MA3-designer-office-*.md`                                                            |
@@ -62,14 +62,16 @@
 
 ## P2 Finding Index
 
-| Finding ID | Severity | Package                      | Description                                                                                          | Source Report                         | Status | Fix Plan    |
-| ---------- | -------- | ---------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- | ------ | ----------- |
-| MA1-P2-001 | P2       | docs/references              | `renderer-interfaces.md` 字段映射缺少 `deepFields`/`compilation`/`validationDefaults`/`frameRootTag` | `arm-MA1-core-structure.md`           | open   | Pending MR1 |
-| MA1-P2-002 | P2       | flux-action-core             | 便利再导出 flux-core debounce 函数造成传递耦合                                                       | `arm-MA1-core-structure.md`           | open   | Pending MR1 |
-| MA1-P2-003 | P2       | flux-renderers-form-advanced | 19个渲染器缺少 `displayName`/`category` 影响工具链发现性                                             | `arm-MA1-basic-structure.md`          | open   | Pending MR1 |
-| MA1-P2-004 | P2       | flux-renderers-form          | 7个date渲染器缺少 `displayName`/`category`                                                           | `arm-MA1-basic-structure.md`          | open   | Pending MR1 |
-| MA1-P2-005 | P2       | flux-renderers-content       | DiffView根元素缺少 `data-slot` 属性                                                                  | `arm-MA1-content-mobile-structure.md` | open   | Pending MR1 |
-| MA1-P2-006 | P2       | flux-renderers-content       | CSS文件641行（~600行DiffView），建议提取到单独文件                                                   | `arm-MA1-content-mobile-structure.md` | open   | Pending MR1 |
+| Finding ID   | Severity | Package                      | Description                                                                                                               | Source Report                             | Status | Fix Plan    |
+| ------------ | -------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ------ | ----------- |
+| MA1-P2-001   | P2       | docs/references              | `renderer-interfaces.md` 字段映射缺少 `deepFields`/`compilation`/`validationDefaults`/`frameRootTag`                      | `arm-MA1-core-structure.md`               | open   | Pending MR1 |
+| MA1-P2-002   | P2       | flux-action-core             | 便利再导出 flux-core debounce 函数造成传递耦合                                                                            | `arm-MA1-core-structure.md`               | open   | Pending MR1 |
+| MA1-P2-003   | P2       | flux-renderers-form-advanced | 19个渲染器缺少 `displayName`/`category` 影响工具链发现性                                                                  | `arm-MA1-basic-structure.md`              | open   | Pending MR1 |
+| MA1-P2-004   | P2       | flux-renderers-form          | 7个date渲染器缺少 `displayName`/`category`                                                                                | `arm-MA1-basic-structure.md`              | open   | Pending MR1 |
+| MA1-P2-005   | P2       | flux-renderers-content       | DiffView根元素缺少 `data-slot` 属性                                                                                       | `arm-MA1-content-mobile-structure.md`     | open   | Pending MR1 |
+| MA1-P2-006   | P2       | flux-renderers-content       | CSS文件641行（~600行DiffView），建议提取到单独文件                                                                        | `arm-MA1-content-mobile-structure.md`     | open   | Pending MR1 |
+| MA2-RT-F01   | P2       | flux-runtime, flux-react     | 20 async void-promise patterns in runtime packages; all intentional but lack structured error routing comments            | `arm-MA2-runtime-raw-async-fieldframe.md` | open   | Pending MR1 |
+| MA2-CORE-F03 | P2       | flux-core cluster            | 15 async void-promise patterns in core packages; all intentional but could benefit from structured error routing comments | `arm-MA2-core-schema-dispatch.md`         | open   | Pending MR1 |
 
 ## Existing Audit Reports (Pre-M0)
 

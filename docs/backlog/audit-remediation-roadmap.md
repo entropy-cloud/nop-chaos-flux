@@ -21,9 +21,9 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | MA1.2    | 结构层—运行时包簇（runtime）依赖与边界审计    | `done` |
 | MA1.3    | 结构层—基础渲染器（basic）定义与边界审计      | `done` |
 | MA1.4    | 结构层—设计器/办公/内容/移动端 定义与样式审计 | `done` |
-| MA2.1    | 运行时层—核心包簇 Schema 与 FieldFrame 审计   | `todo` |
-| MA2.2    | 运行时层—运行时包簇裸读取与异步路径审计       | `todo` |
-| MA2.3    | 运行时层—基础渲染器分发与 Action 链路审计     | `todo` |
+| MA2.1    | 运行时层—核心包簇 Schema 与硬编码分发审计     | `done` |
+| MA2.2    | 运行时层—运行时包簇裸读取与异步路径审计       | `done` |
+| MA2.3    | 运行时层—基础渲染器分发与 Action 链路审计     | `done` |
 | MA3.1    | 代码质量—核心+运行时 代码质量与 React19 审计  | `todo` |
 | MA3.2    | 代码质量—基础+内容+移动端 代码质量审计        | `todo` |
 | MA3.3    | 代码质量—设计器+办公 代码质量审计             | `todo` |
@@ -96,9 +96,9 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 
 | Work Item                               | Status | Owner Doc                                       | Dependencies | Skill                                                                                                          |
 | --------------------------------------- | ------ | ----------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------- |
-| MA2.1 核心包簇 Schema 校验 + 硬编码分发 | `todo` | `docs/architecture/flux-core.md`                | M0           | `check:audit-hardcoded-type-dispatch` + `code-quality-audit-prompt.md`                                         |
-| MA2.2 运行时包簇裸读取 + 异步路径       | `todo` | `docs/architecture/renderer-runtime.md`         | M0           | `check:audit-runtime-raw-schema-reads` + `check:audit-async-failure-paths` + `check:audit-fieldframe-bypasses` |
-| MA2.3 基础渲染器分发 + Action 链路      | `todo` | `docs/architecture/action-scope-and-imports.md` | M0           | `deep-audit-prompts.md`                                                                                        |
+| MA2.1 核心包簇 Schema 校验 + 硬编码分发 | `done` | `docs/architecture/flux-core.md`                | M0           | `check:audit-hardcoded-type-dispatch` + `code-quality-audit-prompt.md`                                         |
+| MA2.2 运行时包簇裸读取 + 异步路径       | `done` | `docs/architecture/renderer-runtime.md`         | M0           | `check:audit-runtime-raw-schema-reads` + `check:audit-async-failure-paths` + `check:audit-fieldframe-bypasses` |
+| MA2.3 基础渲染器分发 + Action 链路      | `done` | `docs/architecture/action-scope-and-imports.md` | M0           | `deep-audit-prompts.md`                                                                                        |
 
 ### MA3 — 代码质量与 React 实践层审计（维 C）
 
