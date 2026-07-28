@@ -160,6 +160,47 @@ describe('select remote search (S4)', () => {
     });
   });
 
+  it('aborts in-flight remote search when component unmounts', async () => {
+    const abortSpy = vi.fn();
+    const originalAbort = AbortController.prototype.abort;
+    AbortController.prototype.abort = abortSpy;
+
+    const mockFetcher = vi.fn(async () => ({
+      ok: true as const,
+      status: 200 as const,
+      data: [{ label: 'Remote', value: 'remote' }],
+    }));
+    const fetcher = mockFetcher as unknown as ApiFetcher;
+
+    const testEnv = { ...env, fetcher };
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formStateProbeRenderer]);
+    const { unmount } = render(
+      <SchemaRenderer
+        schemaUrl="test://select/abort-on-unmount"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              searchable: true,
+              searchSource: { action: 'ajax', args: { url: '/api/search' } },
+              options: [],
+            },
+          ],
+        } as React.ComponentProps<typeof SchemaRenderer>['schema']}
+        env={testEnv}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    unmount();
+
+    expect(abortSpy).toHaveBeenCalled();
+    AbortController.prototype.abort = originalAbort;
+  });
+
   it('returns to local options when search query is cleared', async () => {
     const mockFetcher = vi.fn(async () => ({
       ok: true as const,

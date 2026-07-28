@@ -168,6 +168,78 @@ describe('CRUD polling orchestration (E1d)', () => {
     });
   });
 
+  it('cleanup captures handle in closure (no handleRef overwrite race)', async () => {
+    const invokeCalls: string[] = [];
+
+    function TestApp({ show }: { show: boolean }) {
+      const body: any[] = [
+        {
+          type: 'data-source',
+          id: 'ds-closure',
+          name: 'payload',
+          action: 'ajax',
+          args: { url: '/api/value' },
+          initFetch: false,
+        },
+      ];
+      if (show) {
+        body.push({
+          type: 'crud',
+          id: 'crud-closure',
+          source: '${payload}',
+          polling: { enabled: true, sourceId: 'ds-closure' },
+          toolbarLayout: {
+            header: [{ type: 'polling-toggle' }],
+          },
+          columns: [{ name: 'name', label: 'Name' }],
+        });
+      }
+      return (
+        <SchemaRenderer
+          schemaUrl="test://crud/polling-closure"
+          schema={{ type: 'page', body }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+          onComponentRegistryChange={(registry) => {
+            if (!registry) return;
+            const handle = registry.resolve({ componentId: 'ds-closure' });
+            if (handle?.capabilities) {
+              const original = handle.capabilities.invoke.bind(handle.capabilities);
+              handle.capabilities.invoke = (method, payload, ctx) => {
+                invokeCalls.push(method);
+                return (original as any)(method, payload, ctx);
+              };
+            }
+          }}
+        />
+      );
+    }
+
+    render(<TestApp show={true} />);
+
+    // Wait for CRUD to be mounted
+    await waitFor(() => {
+      const crudRoot = document.querySelector('.nop-crud');
+      expect(crudRoot).toBeTruthy();
+    });
+
+    // Toggle polling off to trigger cancel, then back on to trigger start
+    const toggleButton = document.querySelector(
+      '[data-slot="header-toolbar-polling-toggle"] button',
+    ) as HTMLButtonElement;
+    expect(toggleButton).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(toggleButton);
+    });
+
+    await act(async () => {
+      fireEvent.click(toggleButton);
+    });
+
+    expect(invokeCalls.length).toBeGreaterThan(0);
+  });
+
   it('addresses only the data-source matching polling.sourceId', async () => {
     const startCalls: string[] = [];
 

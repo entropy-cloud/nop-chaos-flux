@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ChoiceOption } from './input-choice-renderers.js';
 import { useRendererEnv } from '@nop-chaos/flux-react';
 
@@ -10,6 +10,7 @@ export interface DictOptionsState {
 export function useDictOptions(dictName: string | undefined): DictOptionsState {
   const { loadDict } = useRendererEnv();
   const [state, setState] = useState<DictOptionsState>({ options: [], loading: false });
+  const genRef = useRef(0);
 
   const [prevDictName, setPrevDictName] = useState(dictName);
   if (prevDictName !== dictName) {
@@ -20,11 +21,12 @@ export function useDictOptions(dictName: string | undefined): DictOptionsState {
   useEffect(() => {
     if (!dictName || !loadDict) return;
 
-    let cancelled = false;
+    const controller = new AbortController();
+    const gen = ++genRef.current;
 
     void loadDict(dictName)
       .then((bean) => {
-        if (cancelled) return;
+        if (genRef.current !== gen) return;
         setState({
           options: (bean.options ?? []).map((opt) => ({
             label: opt.label,
@@ -35,13 +37,13 @@ export function useDictOptions(dictName: string | undefined): DictOptionsState {
         });
       })
       .catch((error) => {
-        if (cancelled) return;
+        if (genRef.current !== gen) return;
         console.warn(`[flux-select] Failed to load dict "${dictName}":`, error);
         setState({ options: [], loading: false });
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [dictName, loadDict]);
 

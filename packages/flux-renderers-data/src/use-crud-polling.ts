@@ -128,10 +128,8 @@ export function useCrudPolling(args: UseCrudPollingArgs): UseCrudPollingResult {
     lastActionRef.current = 'start';
 
     return () => {
-      if (lastActionRef.current === 'start') {
-        invokeCapability(handleRef.current, 'cancel');
-        lastActionRef.current = 'cancel';
-      }
+      invokeCapability(handle, 'cancel');
+      lastActionRef.current = 'cancel';
     };
   }, [effectiveEnabled, sourceId, componentRegistry, scope]);
 

@@ -31,10 +31,9 @@ export function useSelectRemoteSearch(input: {
       return;
     }
     const trimmed = query.trim();
-    let cancelled = false;
     const controller = new AbortController();
     const handle = setTimeout(() => {
-      if (cancelled) return;
+      if (controller.signal.aborted) return;
       startTransition(() => {
         setLoading(true);
         setError(undefined);
@@ -43,7 +42,7 @@ export function useSelectRemoteSearch(input: {
       helpers
         .dispatch(actionInput, { scope: helpers.createScope({ searchQuery: trimmed }), signal: controller.signal })
         .then((result) => {
-          if (cancelled) return;
+          if (controller.signal.aborted) return;
           if (result.ok) {
             const data = Array.isArray(result.data) ? result.data : [];
             const options = data.map((item: Record<string, unknown>) => ({
@@ -68,7 +67,6 @@ export function useSelectRemoteSearch(input: {
           }
         })
         .catch((err: unknown) => {
-          if (cancelled) return;
           if (err instanceof DOMException && err.name === 'AbortError') return;
           startTransition(() => {
             setError(err instanceof Error ? err.message : 'Search failed.');
@@ -76,13 +74,12 @@ export function useSelectRemoteSearch(input: {
           });
         })
         .finally(() => {
-          if (!cancelled) {
+          if (!controller.signal.aborted) {
             startTransition(() => setLoading(false));
           }
         });
     }, 300);
     return () => {
-      cancelled = true;
       controller.abort();
       clearTimeout(handle);
     };
