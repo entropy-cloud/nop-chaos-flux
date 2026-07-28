@@ -394,7 +394,7 @@ export function buildFormOwnerRuntime(input: {
         errors.push({
           path,
           ownerPath: path,
-          message: 'Validation failed due to an internal error',
+          message: `Validation failed due to an internal error: ${error instanceof Error ? error.message : String(error)}`,
           rule: 'async' as const,
           sourceKind: 'form' as const,
           cause: error,

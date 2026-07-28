@@ -432,8 +432,9 @@ export async function executeApiSchema(
   // normalized `ok`.
   const isOk = response.status === 0 || response.ok === true;
 
-  if (!isOk) {
+    if (!isOk) {
     let errorPayload = response.data;
+    let adaptorError: unknown;
     if (resolvedApi.responseAdaptor) {
       try {
         errorPayload = applyResponseAdaptor(
@@ -445,7 +446,8 @@ export async function executeApiSchema(
           env,
           response.status,
         );
-      } catch (adaptorError) {
+      } catch (e) {
+        adaptorError = e;
         // M-08: a throwing responseAdaptor on an error-shaped payload previously
         // failed completely silently (bare catch). Surface it through structured
         // diagnostics (monitor + console) so a broken adaptor is dev-visible,
@@ -475,7 +477,11 @@ export async function executeApiSchema(
       lastFailureReason: execution.retry.lastFailureReason,
     };
 
-    throw createApiResponseError({ ...response, data: errorPayload }, retryMetadata);
+    const apiError = createApiResponseError({ ...response, data: errorPayload }, retryMetadata);
+    if (adaptorError) {
+      (apiError as Error & { cause?: unknown }).cause = adaptorError;
+    }
+    throw apiError;
   }
 
   const adaptedData = applyResponseAdaptor(

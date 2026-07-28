@@ -441,13 +441,12 @@ export function createApiDataSourceRequestRunner(
         failureCount: mutable.state.failureCount,
       });
 
-      if (!input.silent) {
-        reportRuntimeHostIssue({
-          env: input.runtime.env,
-          error: caughtError,
-          phase: 'api',
-        });
-      }
+      reportRuntimeHostIssue({
+        env: input.runtime.env,
+        error: caughtError,
+        phase: 'api',
+        level: input.silent ? 'info' : 'error',
+      });
 
       updateControllerState(input, mutable, (current) => current);
     } finally {
