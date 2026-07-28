@@ -180,7 +180,7 @@ describe('dataRendererDefinitions data-source behavior', () => {
       />,
     );
     await waitFor(() => expect(fetcher).toHaveBeenCalled());
-    expect(notify).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith('info', 'Server error');
   });
 
   it('keeps cache isolated between independent renderer roots', async () => {

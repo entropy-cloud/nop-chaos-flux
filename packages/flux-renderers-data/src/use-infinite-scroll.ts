@@ -146,7 +146,7 @@ export function useInfiniteScroll(args: UseInfiniteScrollArgs): UseInfiniteScrol
           }
           // Defer to avoid synchronous recursion and let the consumer re-render
           // (it may flip `enabled` to false at the last page).
-          setTimeout(triggerLoad, 0);
+          pendingTimer = setTimeout(triggerLoad, 0);
         },
         (loadError: unknown) => {
           loadingRef.current = false;
@@ -155,6 +155,8 @@ export function useInfiniteScroll(args: UseInfiniteScrollArgs): UseInfiniteScrol
         },
       );
     };
+
+    let pendingTimer: ReturnType<typeof setTimeout> | null = null;
 
     const callback: IntersectionObserverCallback = (entries) => {
       const entry = entries[0];
@@ -177,6 +179,10 @@ export function useInfiniteScroll(args: UseInfiniteScrollArgs): UseInfiniteScrol
     ensureInfiniteObserverTestHook();
 
     return () => {
+      if (pendingTimer !== null) {
+        clearTimeout(pendingTimer);
+        pendingTimer = null;
+      }
       observerRegistry.delete(sentinel);
       observer.disconnect();
     };

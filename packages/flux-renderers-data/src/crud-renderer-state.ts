@@ -605,7 +605,7 @@ export function useCrudLoadAction(args: {
       return;
     }
 
-    let cancelled = false;
+    const controller = new AbortController();
 
     const evaluationBindings = createCrudEvaluationBindings({
       pagination,
@@ -621,9 +621,12 @@ export function useCrudLoadAction(args: {
       setLoading(true);
       setError(undefined);
       try {
-        const result: ActionResult = await loadReaction.dispatch({ evaluationBindings });
+        const result: ActionResult = await loadReaction.dispatch({
+          evaluationBindings,
+          signal: controller.signal,
+        });
 
-        if (cancelled || result.cancelled) {
+        if (controller.signal.aborted || result.cancelled) {
           return;
         }
 
@@ -658,7 +661,7 @@ export function useCrudLoadAction(args: {
 
         setLoading(false);
       } catch (err) {
-        if (cancelled) {
+        if (controller.signal.aborted) {
           return;
         }
         const error = err instanceof Error ? err : new Error(String(err));
@@ -668,7 +671,7 @@ export function useCrudLoadAction(args: {
     })();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
     // Note: all CRUD internal state (pagination/query/sort/filters/selection)
     // is intentionally in deps. In table mode, pagination/pageSize changes
