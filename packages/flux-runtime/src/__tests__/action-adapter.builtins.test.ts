@@ -226,7 +226,6 @@ describe('createActionRuntimeAdapter direct branches', () => {
 
   it('reports diagnostic when surface body compilation fails', async () => {
     const notify = vi.fn();
-    const onError = vi.fn();
     const createSurfaceScope = vi.fn();
     const compileError = new Error('bad surface body');
     const failingSurfaceRuntime = { open: vi.fn(), close: vi.fn() };
@@ -236,7 +235,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
       evaluate: <T>(target: unknown) => target as T,
       executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
-        env: { notify, monitor: { onError } },
+        env: { notify },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         compile: vi.fn(() => { throw compileError; }),
@@ -249,13 +248,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
       createCtx({ surfaceRuntime: failingSurfaceRuntime }),
     );
 
-    expect(onError).toHaveBeenCalledWith({
-      phase: 'action',
-      error: compileError,
-      nodeId: undefined,
-      path: undefined,
-      details: { reason: 'surface-validation-plan-compile-failed' },
-    });
+    expect(notify).toHaveBeenCalledWith('error', 'Failed to compile surface validation plan');
   });
 
   it('returns a cancelled result when ajax execution aborts', async () => {

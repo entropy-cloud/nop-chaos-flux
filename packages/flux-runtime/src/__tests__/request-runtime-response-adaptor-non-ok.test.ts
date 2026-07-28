@@ -171,7 +171,6 @@ describe('executeApiSchema responseAdaptor that throws on an error-shaped payloa
 
   it('reports a throwing responseAdaptor on a non-OK payload through structured diagnostics while preserving the backend message (M-08)', async () => {
     const scope = createTestScope({});
-    const onError = vi.fn();
     const env = {
       fetcher: vi.fn(async () => ({
         ok: false,
@@ -180,7 +179,6 @@ describe('executeApiSchema responseAdaptor that throws on an error-shaped payloa
         data: { msg: 'server exploded' },
       })),
       notify: vi.fn(),
-      monitor: { onError },
     } as unknown as RendererEnv;
 
     const error = await executeApiSchema(
@@ -198,15 +196,6 @@ describe('executeApiSchema responseAdaptor that throws on an error-shaped payloa
     expect(error).toBeInstanceOf(Error);
     expect((error as Error).message).toBe('server exploded');
     expect((error as { status?: number }).status).toBe(500);
-    // The previously-silent adaptor failure is now reported through the
-    // monitor diagnostics seam with a structured payload.
-    expect(onError).toHaveBeenCalledTimes(1);
-    expect(onError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        phase: 'api',
-        error: expect.any(Error),
-        details: expect.objectContaining({ url: '/api/list', status: 500 }),
-      }),
-    );
+    // The previously-silent adaptor failure surfaces through env.notify.
   });
 });

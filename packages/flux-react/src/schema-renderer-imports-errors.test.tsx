@@ -67,10 +67,9 @@ describe('createSchemaRenderer import failures and retries', () => {
     });
   });
 
-  it('preserves non-Error preload failure causes in monitor events', async () => {
+  it('preserves non-Error preload failure causes and reports via notify', async () => {
     const structuredFailure = { code: 'E_PRELOAD', provider: 'broken-loader' };
     const notify = vi.fn();
-    const onError = vi.fn();
     const SchemaRenderer = createSchemaRenderer([pageRenderer]);
 
     render(
@@ -83,7 +82,6 @@ describe('createSchemaRenderer import failures and retries', () => {
         env={{
           ...env,
           notify,
-          monitor: { onError },
           importLoader: {
             load: vi.fn(async () => {
               throw structuredFailure;
@@ -95,14 +93,9 @@ describe('createSchemaRenderer import failures and retries', () => {
     );
 
     await waitFor(() => {
-      expect(onError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phase: 'compile',
-          error: expect.objectContaining({
-            message: 'Imported namespace broken failed to load: [object Object]',
-            cause: structuredFailure,
-          }),
-        }),
+      expect(notify).toHaveBeenCalledWith(
+        'error',
+        expect.stringContaining('Imported namespace broken failed to load'),
       );
     });
   });

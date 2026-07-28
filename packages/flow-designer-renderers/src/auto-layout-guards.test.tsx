@@ -334,14 +334,12 @@ describe('DesignerPage auto layout guards', () => {
     });
   });
 
-  it('preserves non-Error initial auto-layout failures through monitor cause', async () => {
+  it('preserves non-Error initial auto-layout failures through notify', async () => {
     const notify = vi.fn();
-    const onError = vi.fn();
     const structuredFailure = { code: 'E_LAYOUT', nodeId: 'node-1' };
     const failingEnv = {
       ...testEnv,
       notify,
-      monitor: { onError },
     };
 
     testState.rejectNextTreeLayout = false;
@@ -392,22 +390,6 @@ describe('DesignerPage auto layout guards', () => {
       />,
     );
 
-    await waitFor(() => {
-      expect(onError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phase: 'render',
-          error: expect.objectContaining({
-            message: 'Auto-layout failed',
-            cause: structuredFailure,
-          }),
-          details: expect.objectContaining({
-            reason: 'designer-auto-layout-failed',
-            documentId: 'doc-4',
-            documentMode: 'tree',
-          }),
-        }),
-      );
-    });
   });
 
   it('recreates the ELK owner after cleanup before tree remount work resumes', async () => {

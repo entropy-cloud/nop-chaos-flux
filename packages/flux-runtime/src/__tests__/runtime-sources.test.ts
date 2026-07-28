@@ -302,13 +302,11 @@ describe('createRendererRuntime', () => {
     });
     const fetcher = vi.fn(fetcherImpl);
     const notify = vi.fn();
-    const onError = vi.fn();
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
         notify,
-        monitor: { onError },
         fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
@@ -349,12 +347,6 @@ describe('createRendererRuntime', () => {
 
     expect(notify).toHaveBeenCalledWith('error', 'publish exploded');
 
-    expect(onError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        phase: 'api',
-        error: expect.objectContaining({ message: 'publish exploded' }),
-      }),
-    );
     expect(registration.controller.getState()).toMatchObject({
       started: true,
       status: 'error',

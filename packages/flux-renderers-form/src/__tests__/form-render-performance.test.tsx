@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '../index.js';
-import { formRendererDefinitions, env, formTestHarness, formStateProbeRenderer } from './form-test-support.js';
+import { env, formTestHarness, formStateProbeRenderer } from './form-test-support.js';
 
 const { formStateProbeRenderCounts } = formTestHarness;
 

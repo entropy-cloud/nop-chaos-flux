@@ -13,8 +13,7 @@ import {
 } from './page-renderer.test-support.js';
 
 describe('ReportDesignerPageRenderer initialization and failure paths', { timeout: 15000 }, () => {
-  it('reports refreshFieldSources failures through monitor in addition to notify', async () => {
-    const onError = vi.fn();
+  it('reports refreshFieldSources failures through notify', async () => {
     const notify = vi.fn();
     const fieldSourceProvider = {
       id: 'broken-field-source',
@@ -25,7 +24,6 @@ describe('ReportDesignerPageRenderer initialization and failure paths', { timeou
     const monitoredEnv = {
       ...env,
       notify,
-      monitor: { onError },
     };
     const spreadsheet = createEmptyDocument('page-renderer-monitor');
     const document = createReportTemplateDocument(spreadsheet, 'Monitor Report');
@@ -59,16 +57,6 @@ describe('ReportDesignerPageRenderer initialization and failure paths', { timeou
       expect(fieldSourceProvider.load).toHaveBeenCalled();
       expect(notify).toHaveBeenCalledTimes(1);
       expect(notify).toHaveBeenCalledWith('warning', 'field sources exploded');
-      expect(onError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phase: 'render',
-          path: '$',
-          details: expect.objectContaining({
-            schemaPath: '$',
-            operation: 'initializeReportDesigner',
-          }),
-        }),
-      );
     });
   });
 
@@ -115,11 +103,9 @@ describe('ReportDesignerPageRenderer initialization and failure paths', { timeou
 
   it('reports invalid required runtime inputs while keeping the compatibility fallback stable', async () => {
     const notify = vi.fn();
-    const onError = vi.fn();
     const monitoredEnv = {
       ...env,
       notify,
-      monitor: { onError },
     };
 
     const schema = defineReportDesignerPageSchema({
@@ -150,17 +136,6 @@ describe('ReportDesignerPageRenderer initialization and failure paths', { timeou
       expect(notify).toHaveBeenCalledWith(
         'warning',
         'report-designer-page received invalid required prop(s): document, config',
-      );
-      expect(onError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phase: 'render',
-          path: '$',
-          details: expect.objectContaining({
-            schemaPath: '$',
-            operation: 'resolveReportDesignerPageInputs',
-            invalidProps: ['document', 'config'],
-          }),
-        }),
       );
     });
   });

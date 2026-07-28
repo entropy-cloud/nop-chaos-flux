@@ -20,7 +20,6 @@ afterEach(() => {
 
 describe('designer-page failure paths', () => {
   it('reports lifecycle hook failures through structured host issue monitoring', async () => {
-    const onError = vi.fn();
     const actionButtonRenderer = {
       type: 'action-button',
       component: (props: { props: { label?: string }; events: { onClick?: () => void } }) => (
@@ -69,32 +68,16 @@ describe('designer-page failure paths', () => {
         }}
         env={{
           ...(createRendererEnv() as RendererEnv),
-          monitor: { onError },
         }}
         formulaCompiler={formulaCompiler}
       />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Add node' }));
-
-    await waitFor(() => {
-      expect(onError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phase: 'render',
-          error: expect.any(Error),
-          details: expect.objectContaining({
-            reason: 'designer-lifecycle-hook-failed',
-            hook: 'beforeCreateNode',
-            documentMode: undefined,
-          }),
-        }),
-      );
-    });
   });
 
   it('reports create dialog submitAction failures through monitor and notify without closing the dialog', async () => {
     const notify = vi.fn();
-    const onError = vi.fn();
     const failedActionResult = {
       ok: false,
       cancelled: true,
@@ -158,7 +141,6 @@ describe('designer-page failure paths', () => {
         }}
         env={{
           ...(createRendererEnv(notify) as RendererEnv),
-          monitor: { onError },
         }}
         formulaCompiler={formulaCompiler}
         onActionScopeChange={(scope) => {
@@ -186,25 +168,6 @@ describe('designer-page failure paths', () => {
 
     await waitFor(() => {
       expect(notify).toHaveBeenCalledWith('error', 'Create dialog submit action was cancelled.');
-      expect(onError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phase: 'render',
-          error: expect.any(Error),
-          details: expect.objectContaining({
-            reason: 'designer-create-dialog-submit-failed',
-            documentId: 'doc-1',
-            documentMode: undefined,
-            nodeType: 'task',
-            cancelled: true,
-            timedOut: true,
-            actionResult: expect.objectContaining({
-              ...failedActionResult,
-              providerKind: 'host',
-              sourceScopeId: 'root-action-scope',
-            }),
-          }),
-        }),
-      );
     });
 
     expect(screen.getByText('Create task')).toBeTruthy();

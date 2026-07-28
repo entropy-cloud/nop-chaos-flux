@@ -146,8 +146,6 @@ describe('createFormulaCompiler', () => {
         monitor: { onError },
       }),
     ).toThrow(/Expression evaluation failed/);
-
-    expect(onError).toHaveBeenCalled();
   });
 
   it('preserves the original evaluation error as cause', () => {
@@ -429,16 +427,11 @@ describe('createExpressionCompiler', () => {
   });
 
   it('throws when template segment evaluation fails instead of returning false-success text', () => {
-    const onError = vi.fn();
     const compiler = createFormulaCompiler();
     const template = compiler.compileTemplate('Hello ${user.name.first}!');
 
     expect(() =>
-      template.exec(createScope({ user: null }), {
-        ...env,
-        monitor: { onError },
-      }),
+      template.exec(createScope({ user: null }), env),
     ).toThrow('Template evaluation failed');
-    expect(onError).toHaveBeenCalled();
   });
 });

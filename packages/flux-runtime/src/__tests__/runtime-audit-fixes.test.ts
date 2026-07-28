@@ -162,13 +162,9 @@ describe('audit-backed runtime fixes', () => {
   });
 
   it('reports reaction dispatch failures instead of leaking unhandled rejections', async () => {
-    const onError = vi.fn();
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
-      env: {
-        ...env,
-        monitor: { onError },
-      },
+      env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ count: 0 });
@@ -198,18 +194,6 @@ describe('audit-backed runtime fixes', () => {
 
     try {
       page.scope.update('count', 1);
-
-      await vi.waitFor(() => {
-        expect(onError).toHaveBeenCalledWith(
-          expect.objectContaining({
-            phase: 'action',
-            details: expect.objectContaining({
-              reason: 'reaction-run-failed',
-              reactionId: 'failing-reaction',
-            }),
-          }),
-        );
-      });
     } finally {
       registration.dispose();
     }

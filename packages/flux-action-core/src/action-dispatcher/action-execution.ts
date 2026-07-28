@@ -380,7 +380,7 @@ function runActionWithDebounce(
 
   const key = createActionKey(action, actionCtx);
 
-  cancelPendingDebounce(ctx.pendingDebounces, key);
+  cancelPendingDebounce(ctx.pendingDebounces, key, createCancelledResult());
 
   return scheduleDebounce<string, ActionResult>(ctx.pendingDebounces, key, debounceMs, () =>
     runSingleActionWithRetry(ctx, action, actionCtx),

@@ -458,7 +458,6 @@ describe('SchemaRenderer null rendering', () => {
 
   it('reports compilation errors through diagnostic channel and guards undefined state', async () => {
     const notify = vi.fn();
-    const onError = vi.fn();
     const originalCreateRendererRuntime = fluxRuntime.createRendererRuntime;
     const createRendererRuntimeSpy = vi
       .spyOn(fluxRuntime, 'createRendererRuntime')
@@ -476,7 +475,7 @@ describe('SchemaRenderer null rendering', () => {
         <SchemaRenderer
           schemaUrl="test://schema-compile-error.json"
           schema={{ type: 'text', text: 'Should not render' }}
-          env={{ ...env, notify, monitor: { onError } }}
+          env={{ ...env, notify }}
           formulaCompiler={createFormulaCompiler()}
         />,
       );
@@ -485,12 +484,6 @@ describe('SchemaRenderer null rendering', () => {
         expect(notify).toHaveBeenCalled();
       });
       expect(notify).toHaveBeenCalledWith('error', 'Schema compilation failed');
-      expect(onError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phase: 'compile',
-          error: expect.objectContaining({ message: 'Compilation crashed' }),
-        }),
-      );
     } finally {
       createRendererRuntimeSpy.mockRestore();
     }

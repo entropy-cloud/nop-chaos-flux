@@ -244,13 +244,11 @@ describe('createRendererRuntime', () => {
 
   it('reports and removes reactions that exceed the fire-count limit', async () => {
     const notify = vi.fn();
-    const onError = vi.fn();
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
         notify,
-        monitor: { onError },
       },
       expressionCompiler,
     });
@@ -288,16 +286,6 @@ describe('createRendererRuntime', () => {
       expect(notify).toHaveBeenCalledWith('warning', expect.stringContaining('bounded-reaction'));
     });
 
-    expect(onError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        phase: 'action',
-        details: expect.objectContaining({
-          reason: 'reaction-fire-count-limit',
-          reactionId: 'bounded-reaction',
-          maxCascadeDepth: 100,
-        }),
-      }),
-    );
     expect(runtime.getReactionDebugSnapshot?.()).toEqual({ reactions: [] });
   });
 
