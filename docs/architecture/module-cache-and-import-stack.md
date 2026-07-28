@@ -223,21 +223,21 @@ interface ImportStack {
     ownerNodeId: string;
     parentFrame?: ImportFrame;
     imports?: readonly PreparedImportSpec[];
-    actionScope?: ActionScope;
-    componentRegistry?: ComponentHandleRegistry;
+    actionScope?: ImportActionScope;
+    componentRegistry?: ComponentHandleRegistryCore;
     scope: ScopeRef;
-    nodeInstance?: NodeInstance;
+    nodeInstance?: ImportContextNodeInstance;
   }): ImportFrame | undefined;
 
   push(args: {
     ownerNodeId: string;
     parentFrameId?: string;
     imports?: readonly XuiImportSpec[];
-    actionScope?: ActionScope;
-    componentRegistry?: ComponentHandleRegistry;
+    actionScope?: ImportActionScope;
+    componentRegistry?: ComponentHandleRegistryCore;
     scope: ScopeRef;
     schemaUrl: string;
-    nodeInstance?: NodeInstance;
+    nodeInstance?: ImportContextNodeInstance;
   }): Promise<ImportFrame | undefined>;
 
   pop(nodeId: string): void;
