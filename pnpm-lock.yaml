@@ -210,7 +210,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/theme-tokens
       '@nop-chaos/ui':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/ui
       '@nop-chaos/word-editor-renderers':
         specifier: workspace:*
@@ -849,6 +849,9 @@ importers:
       '@nop-chaos/flux-i18n':
         specifier: workspace:*
         version: link:../flux-i18n
+      '@nop-chaos/flux-react':
+        specifier: workspace:*
+        version: link:../flux-react
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
