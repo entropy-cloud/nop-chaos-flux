@@ -144,9 +144,8 @@ function reportActionError(
 ) {
   try {
     ctx.onActionError?.(error, actionCtx);
-    // Errors routed through action execution state machine — internal state transitions
-  } catch {
-    // Diagnostic hooks must not replace the primary action failure.
+  } catch (diagnosticError) {
+    console.warn('[action-execution] onActionError diagnostic hook threw:', diagnosticError);
   }
 
   for (const plugin of ctx.plugins ?? []) {
@@ -157,9 +156,8 @@ function reportActionError(
         nodeId: actionCtx.nodeInstance?.templateNode.id,
         path: actionCtx.nodeInstance?.templateNode.templatePath,
       });
-      // Errors routed through action execution state machine — internal state transitions
-    } catch {
-      // Plugin diagnostics are best-effort and must not mask the original failure.
+    } catch (pluginError) {
+      console.warn('[action-execution] plugin onError diagnostic threw:', pluginError);
     }
   }
 }
@@ -176,9 +174,8 @@ function reportActionEnd(
       durationMs,
       result,
     });
-    // Errors routed through action execution state machine — internal state transitions
-  } catch {
-    // Monitoring must not replace the primary action result.
+  } catch (monitorError) {
+    console.warn('[action-execution] monitor onActionEnd threw:', monitorError);
   }
 }
 
@@ -211,7 +208,7 @@ function reportUnhandledFailureClass(
   // onActionError (which may be undefined). Without this notify, action-arg
   // expression failures (e.g. unresolved ${pagination.currentPage} in a dialog
   // scope) are completely silent: no toast, no console message.
-  const hasDiagnosticChannel = ctx.onActionError !== undefined || (ctx.plugins?.length ?? 0) > 0;
+  const hasDiagnosticChannel = ctx.onActionError !== undefined || (ctx.plugins ?? []).some(p => typeof p.onError === 'function');
   if (hasDiagnosticChannel && caughtFailureResults.has(result)) {
     return;
   }
@@ -473,6 +470,10 @@ async function runSingleActionWithRetry(
         : typeof lastResultWithRetry?.failureCount === 'number'
           ? lastResultWithRetry.failureCount
           : failureCount;
+
+    if (failureCount > 0) {
+      reportActionError(ctx, lastFailureReason ?? lastResult?.error ?? new Error('Action retries failed'), actionCtx);
+    }
 
     return preserveCaughtFailureMarker(lastResult, {
       ...(lastResult ?? { ok: false, error: new Error('Action failed without result') }),
