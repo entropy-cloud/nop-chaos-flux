@@ -87,7 +87,7 @@ describe('schema property coverage - table', () => {
       type: 'table',
       onFilterChange: { action: 'ajax', args: { url: '/filter' } },
     });
-    expect(root.eventPlans.onFilterChange).toBeDefined();
+    expect(root.eventPlans.onFilterChange.nodes[0].action).toBe('ajax');
   });
 
   it('compiles table with onSelectionChange event', () => {
@@ -98,7 +98,7 @@ describe('schema property coverage - table', () => {
         args: { path: 'selected', value: '${selectedKeys}' },
       },
     });
-    expect(root.eventPlans.onSelectionChange).toBeDefined();
+    expect(root.eventPlans.onSelectionChange.nodes[0].action).toBe('setValue');
   });
 
   it('compiles table with onSortChange event', () => {
@@ -106,7 +106,7 @@ describe('schema property coverage - table', () => {
       type: 'table',
       onSortChange: { action: 'ajax', args: { url: '/sort' } },
     });
-    expect(root.eventPlans.onSortChange).toBeDefined();
+    expect(root.eventPlans.onSortChange.nodes[0].action).toBe('ajax');
   });
 });
 
@@ -126,7 +126,7 @@ describe('schema property coverage - crud', () => {
       type: 'crud',
       onQueryReset: { action: 'setValue', args: { path: 'query', value: {} } },
     });
-    expect(root.eventPlans.onQueryReset).toBeDefined();
+    expect(root.eventPlans.onQueryReset.nodes[0].action).toBe('setValue');
   });
 
   it('compiles crud with onRowClick event', () => {
@@ -134,7 +134,7 @@ describe('schema property coverage - crud', () => {
       type: 'crud',
       onRowClick: { action: 'navigate', args: { url: '/detail/${row.id}' } },
     });
-    expect(root.eventPlans.onRowClick).toBeDefined();
+    expect(root.eventPlans.onRowClick.nodes[0].action).toBe('navigate');
   });
 
   it('compiles crud with onSelectionChange event', () => {
@@ -145,7 +145,7 @@ describe('schema property coverage - crud', () => {
         args: { path: 'selected', value: '${selectedKeys}' },
       },
     });
-    expect(root.eventPlans.onSelectionChange).toBeDefined();
+    expect(root.eventPlans.onSelectionChange.nodes[0].action).toBe('setValue');
   });
 
   it('compiles crud with selection config', () => {
@@ -207,7 +207,7 @@ describe('schema property coverage - chart', () => {
       type: 'chart',
       onClick: { action: 'showToast', args: { message: 'clicked' } },
     });
-    expect(root.eventPlans.onClick).toBeDefined();
+    expect(root.eventPlans.onClick.nodes[0].action).toBe('showToast');
   });
 
   it('compiles chart with onHover event', () => {
@@ -215,7 +215,7 @@ describe('schema property coverage - chart', () => {
       type: 'chart',
       onHover: { action: 'setValue', args: { path: 'hovered', value: true } },
     });
-    expect(root.eventPlans.onHover).toBeDefined();
+    expect(root.eventPlans.onHover.nodes[0].action).toBe('setValue');
   });
 });
 
@@ -257,7 +257,8 @@ describe('schema property coverage - detail-field', () => {
       name: 'detail',
       viewer: { type: 'text', text: 'viewer content' },
     });
-    expect(root.regions.viewer).toBeDefined();
+    expect(root.regions.viewer.key).toBe('viewer');
+    expect(root.regions.viewer.node).toBeDefined();
     expect(root.propsProgram.value.name).toBe('detail');
   });
 });
@@ -286,7 +287,8 @@ describe('schema property coverage - detail-view', () => {
       viewer: { type: 'text', text: 'viewer content' },
     });
 
-    expect(root.regions.viewer).toBeDefined();
+    expect(root.regions.viewer.key).toBe('viewer');
+    expect(root.regions.viewer.node).toBeDefined();
     expect(root.propsProgram.value.name).toBe('settings.profile');
   });
 });
@@ -316,6 +318,6 @@ describe('schema property coverage - tabs', () => {
       items: [{ key: 'a', title: 'A', body: [] }],
       onChange: { action: 'setValue', args: { path: 'tab', value: '${key}' } },
     });
-    expect(root.eventPlans.onChange).toBeDefined();
+    expect(root.eventPlans.onChange.nodes[0].action).toBe('setValue');
   });
 });

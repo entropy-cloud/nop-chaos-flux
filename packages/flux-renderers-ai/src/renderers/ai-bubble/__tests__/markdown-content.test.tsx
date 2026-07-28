@@ -49,13 +49,15 @@ describe('MarkdownContentRenderer — safeMarkdownSlice wiring', () => {
       <MarkdownContentRenderer {...makeProps({ message, content: message.content })} />,
     );
     const markdown = container.querySelector('[data-slot="ai-bubble-markdown"]');
-    expect(markdown).not.toBeNull();
+    expect(markdown).toBeTruthy();
     expect(markdown!.textContent).toContain('intro');
     expect(markdown!.textContent).not.toContain('would-leak-as-code');
     expect(markdown!.textContent).not.toContain('still-open');
     // No code block rendered (the fence was held back rather than closed).
     expect(container.querySelector('pre')).toBeNull();
     expect(container.querySelector('code')).toBeNull();
+    // End-to-end: safeMarkdownSlice output is valid inline content rendered as <p>.
+    expect(markdown!.innerHTML).toContain('<p>');
   });
 
   it('holds back an unclosed ~~~ fence', () => {
@@ -64,7 +66,8 @@ describe('MarkdownContentRenderer — safeMarkdownSlice wiring', () => {
       <MarkdownContentRenderer {...makeProps({ message, content: message.content })} />,
     );
     const markdown = container.querySelector('[data-slot="ai-bubble-markdown"]');
-    expect(markdown).not.toBeNull();
+    expect(markdown).toBeTruthy();
+    expect(markdown!.innerHTML).toContain('<p>');
     expect(markdown!.textContent).toContain('lead-in');
     expect(markdown!.textContent).not.toContain('would-leak-tilde');
     expect(container.querySelector('pre')).toBeNull();
@@ -76,12 +79,13 @@ describe('MarkdownContentRenderer — safeMarkdownSlice wiring', () => {
       <MarkdownContentRenderer {...makeProps({ message, content: message.content })} />,
     );
     const markdown = container.querySelector('[data-slot="ai-bubble-markdown"]');
-    expect(markdown).not.toBeNull();
+    expect(markdown).toBeTruthy();
+    expect(markdown!.innerHTML).toContain('<p>');
     expect(markdown!.textContent).toContain('before');
     expect(markdown!.textContent).toContain('const x = 1;');
     expect(markdown!.textContent).toContain('after');
     // A balanced fence renders a code block (copy button present).
-    expect(container.querySelector('[data-slot="ai-bubble-copy-code"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="ai-bubble-copy-code"]')).toBeTruthy();
   });
 });
 

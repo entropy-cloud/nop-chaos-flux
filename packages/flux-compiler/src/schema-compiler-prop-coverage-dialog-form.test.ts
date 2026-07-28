@@ -23,7 +23,8 @@ describe('schema property coverage - dialog', () => {
       title: 'My Dialog',
       actions: [{ type: 'text', text: 'OK' }],
     });
-    expect(root.regions.actions).toBeDefined();
+    expect(root.regions.actions.key).toBe('actions');
+    expect(root.regions.actions.node).toBeDefined();
   });
 
   it('compiles dialog with container prop', () => {
@@ -41,7 +42,7 @@ describe('schema property coverage - dialog', () => {
       title: 'Dialog',
       onClose: { action: 'closeDialog' },
     });
-    expect(root.eventPlans.onClose).toBeDefined();
+    expect(root.eventPlans.onClose.nodes[0].action).toBe('closeDialog');
   });
 
   it('compiles dialog with onOpen event', () => {
@@ -50,7 +51,7 @@ describe('schema property coverage - dialog', () => {
       title: 'Dialog',
       onOpen: { action: 'showToast', args: { message: 'opened' } },
     });
-    expect(root.eventPlans.onOpen).toBeDefined();
+    expect(root.eventPlans.onOpen.nodes[0].action).toBe('showToast');
   });
 
   it('compiles dialog with showMask prop', () => {
@@ -77,7 +78,8 @@ describe('schema property coverage - drawer', () => {
       title: 'Drawer',
       actions: [{ type: 'text', text: 'Close' }],
     });
-    expect(root.regions.actions).toBeDefined();
+    expect(root.regions.actions.key).toBe('actions');
+    expect(root.regions.actions.node).toBeDefined();
   });
 
   it('compiles drawer with container prop', () => {
@@ -95,7 +97,7 @@ describe('schema property coverage - drawer', () => {
       title: 'Drawer',
       onClose: { action: 'closeDrawer' },
     });
-    expect(root.eventPlans.onClose).toBeDefined();
+    expect(root.eventPlans.onClose.nodes[0].action).toBe('closeDrawer');
   });
 
   it('compiles drawer with onOpen event', () => {
@@ -104,7 +106,7 @@ describe('schema property coverage - drawer', () => {
       title: 'Drawer',
       onOpen: { action: 'showToast', args: { message: 'opened' } },
     });
-    expect(root.eventPlans.onOpen).toBeDefined();
+    expect(root.eventPlans.onOpen.nodes[0].action).toBe('showToast');
   });
 
   it('compiles drawer with showMask prop', () => {

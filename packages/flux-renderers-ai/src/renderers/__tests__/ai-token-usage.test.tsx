@@ -102,7 +102,8 @@ describe('ai-token-usage — rendering', () => {
       <AiTokenUsageView usage={{ total_tokens: 5000 }} contextLimit={1000} />,
     );
     const ring = container.querySelector('[data-slot="ai-token-usage-ring"]') as unknown as SVGSVGElement | null;
-    expect(ring).not.toBeNull();
+    expect(ring).toBeTruthy();
+    expect(ring!.tagName).toBe('svg');
     // The progress arc is the second <circle>; it carries strokeDasharray +
     // strokeLinecap=round + a rotation transform (the first circle is the
     // muted background track with no dash).
@@ -110,7 +111,7 @@ describe('ai-token-usage — rendering', () => {
     expect(circles.length).toBe(2);
     const arc = circles[1] as unknown as SVGCircleElement;
     const dashArray = arc.getAttribute('stroke-dasharray');
-    expect(dashArray).not.toBeNull();
+    expect(dashArray).toBeTruthy();
     const parts = dashArray!.split(/\s+/);
     expect(parts.length).toBe(2);
     const dash = Number(parts[0]);
