@@ -1,6 +1,6 @@
 # 审计-修复路线图
 
-> 最后更新：2026-07-27 (MR3 completed — R3.1–R3.19 all fixed and verified)
+> 最后更新：2026-07-28 (P2 async-safety & error-propagation remediation completed — D06/D15/D19/P2-E all fixed and verified)
 > 来源：`docs/skills/audit-remediation-roadmap-authoring-prompt.md`
 
 ## 目的
