@@ -75,6 +75,7 @@ export function buildMetaProgram(
       case 'hidden':
       case 'disabled':
       case 'testid':
+      case 'frameWrap':
         meta[key] = expressionCompiler.compileValue(value as any, {
           transform: BOOLEAN_META_FIELDS.has(key)
             ? normalizeBooleanLikeCandidate

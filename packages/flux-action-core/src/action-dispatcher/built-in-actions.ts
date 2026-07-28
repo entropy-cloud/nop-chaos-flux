@@ -252,6 +252,16 @@ export async function runBuiltInAction(
       };
       break;
     }
+    case 'refreshNearest': {
+      invocation = {
+        action: 'refreshNearest',
+        args: evaluateActionArgs(action, ctx, internals.evaluator),
+        targeting: action.targeting,
+        actionNode: action,
+        signal,
+      };
+      break;
+    }
     case 'submit':
     case 'submitForm': {
       if (!ctx.form) {
