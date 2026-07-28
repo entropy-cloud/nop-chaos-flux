@@ -98,6 +98,24 @@ export interface FormSchema extends BaseSchema {
   onSubmitSuccess?: ActionSchema | ActionSchema[];
   onSubmitError?: ActionSchema | ActionSchema[];
   onValidateError?: ActionSchema | ActionSchema[];
+  /**
+   * Submit scope. Determines whether this form's submit also triggers the
+   * enclosing surface's `onSubmitSuccess` / `onSubmitError` callback.
+   *
+   * - `'local'` (default): only fires this form's own lifecycle handlers.
+   * - `'surface'`: also fires the enclosing surface's lifecycle callbacks
+   *   (dispatched in owner ctx).
+   *
+   * Current implementation:
+   * - Default is `'local'`; authors must explicitly declare `'surface'` to
+   *   trigger surface callbacks. There is **no single-form auto-promotion**.
+   * - No compile-time or runtime validation that at most one form per
+   *   surface declares `'surface'` — if multiple forms do, each submit fires
+   *   the same callback. Business must ensure only the primary form opts in.
+   *
+   * See `docs/architecture/surface-lifecycle-callbacks.md` §Form Submit Scope.
+   */
+  submitScope?: 'local' | 'surface';
   hiddenFieldPolicy?: HiddenFieldPolicy;
   bodyClassName?: string;
   actionsClassName?: string;

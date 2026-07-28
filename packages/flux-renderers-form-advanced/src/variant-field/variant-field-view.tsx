@@ -89,7 +89,7 @@ export function VariantFieldView({
   variantValidationOwner,
   variants,
 }: VariantFieldViewProps) {
-  const frameWrap = schemaProps.frameWrap;
+  const frameWrap = meta.frameWrap ?? schemaProps.frameWrap;
   const frameWrapMode: FrameWrapMode =
     frameWrap === false || frameWrap === 'none'
       ? 'none'
@@ -174,7 +174,7 @@ export function VariantFieldView({
           className={cn('nop-variant-field', meta.className)}
           data-testid={frameWrapMode === 'none' ? meta.testid : undefined}
           data-cid={frameWrapMode === 'none' ? meta.cid : undefined}
-          data-frame-wrap={schemaProps.frameWrap}
+          data-frame-wrap={frameWrap}
         >
           {renderSelector()}
           {renderReadOnlyContent()}
@@ -215,7 +215,7 @@ export function VariantFieldView({
           rootProps={{
             'data-active-variant': activeKey,
             'data-frame-wrap':
-              typeof schemaProps.frameWrap === 'string' ? schemaProps.frameWrap : undefined,
+              typeof frameWrap === 'string' ? frameWrap : undefined,
           }}
         >
           {body}

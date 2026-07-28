@@ -154,10 +154,6 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       return currentValue;
     }
 
-    if (typeof parentScope?.get === 'function') {
-      return parentScope.get(name);
-    }
-
     return fieldValue;
   }
 

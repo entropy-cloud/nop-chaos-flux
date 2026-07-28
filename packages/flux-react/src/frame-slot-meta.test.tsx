@@ -452,6 +452,32 @@ describe('reactive meta and draggable dialogs', () => {
     expect(document.querySelector('.nop-drawer-card')).toBeNull();
   });
 
+  it('reads frameWrap from resolvedMeta instead of raw templateNode.schema (compile-once D09-02)', () => {
+    const { container } = render(
+      <FormContext.Provider value={{ store: { subscribe: () => () => undefined, getState: () => EMPTY_FORM_STORE_STATE }, validation: undefined } as any}>
+        <NodeFrameWrapper
+          templateNode={{
+            type: 'wrap-probe',
+            component: { frameRootTag: 'div' },
+            schema: { type: 'wrap-probe', frameWrap: false },
+          } as any}
+          definitionWrap={true}
+          resolvedMeta={{ frameWrap: 'group' } as any}
+          resolvedPropsValue={{ name: 'query', label: 'Query' }}
+          regions={{}}
+        >
+          <input aria-label="Query" />
+        </NodeFrameWrapper>
+      </FormContext.Provider>,
+    );
+
+    const field = container.querySelector('.nop-field');
+    expect(field).toBeTruthy();
+    // resolvedMeta.frameWrap = 'group' overrides templateNode.schema.frameWrap = false
+    // 'group' renders as <fieldset> (checkbox layout) instead of <label>
+    expect(field?.tagName).toBe('FIELDSET');
+  });
+
   it('uses resolved frame props instead of raw schema values for field chrome', async () => {
     const { container } = render(
       <FormContext.Provider

@@ -296,4 +296,58 @@ describe('detail-field renderer basic behavior', () => {
       expect(screen.getByText('Architect')).toBeTruthy();
     });
   });
+
+  it('reactively re-renders viewer when scope data changes (compile-once D09-06)', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-basic.test.tsx#reactive-1"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'detail-field',
+              name: 'status',
+              label: 'Status',
+              triggerLabel: 'Edit Status',
+              content: [{ type: 'input-text', name: '__value', label: 'Status Value' }],
+            },
+          ],
+        }}
+        data={{ status: 'initial' }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('initial')).toBeTruthy();
+    });
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-basic.test.tsx#reactive-2"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'detail-field',
+              name: 'status',
+              label: 'Status',
+              triggerLabel: 'Edit Status',
+              content: [{ type: 'input-text', name: '__value', label: 'Status Value' }],
+            },
+          ],
+        }}
+        data={{ status: 'updated' }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('updated')).toBeTruthy();
+    });
+  });
 });

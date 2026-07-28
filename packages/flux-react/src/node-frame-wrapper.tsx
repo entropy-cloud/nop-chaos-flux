@@ -15,7 +15,7 @@ export function NodeFrameWrapper(props: {
 }) {
   const frameWrapMode = resolveFrameWrapMode(
     props.definitionWrap,
-    (props.templateNode.schema as { frameWrap?: boolean | 'label' | 'group' | 'none' }).frameWrap,
+    props.resolvedMeta.frameWrap,
   );
 
   if (frameWrapMode === 'none') {

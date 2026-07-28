@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
-import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
+import type { BaseSchema, RendererComponentProps, TemplateNode } from '@nop-chaos/flux-core';
 import {
   createReadonlyScopeBinding,
   hasRendererSlotContent,
@@ -494,12 +494,24 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const listTotalPages = Math.max(1, Math.ceil(filteredRows.length / paginationState.pageSize));
   const listAtLastPage = paginationState.currentPage >= listTotalPages;
 
+  function extractRegionSchema(
+    region: { templateNode: unknown } | undefined,
+  ): BaseSchema | undefined {
+    if (!region?.templateNode) return undefined;
+    const nodes = Array.isArray(region.templateNode) ? region.templateNode : [region.templateNode];
+    const schemas = nodes.map((n) => (n as TemplateNode).schema);
+    if (schemas.length === 0) return undefined;
+    if (schemas.length === 1) return schemas[0] as BaseSchema;
+    return schemas as unknown as BaseSchema;
+  }
+
   // Build the nested carrier schema (list/cards) inline. The React Compiler auto-memoizes this,
   // and the carrier wrapper below is keyed on pagination/selection state AND data version so the
   // nested `helpers.render` subtree remounts (and re-evaluates template bindings) when data loads
   // or pagination/selection changes. Without the data-version segment, the initial load (0→N rows)
   // re-renders with memoized stale empty items — only pagination changes would force remount,
   // causing the "cards empty until next page" bug.
+  // item/card are consumed from compiled region handles instead of raw props.schema (compile-once).
   const carrierSchema: BaseSchema | null = nonTableMode
     ? (() => {
         const carrierRows =
@@ -509,7 +521,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
                 paginationState.currentPage * paginationState.pageSize,
               )
             : filteredRows;
-        const rawSchema = props.schema as CrudSchema;
         const base = {
           items: carrierRows as BaseSchema['data'],
           selectionMode: 'none' as const,
@@ -520,7 +531,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
           return {
             ...base,
             type: 'list' as const,
-            item: rawSchema.item,
+            item: extractRegionSchema(props.regions.item),
             pagination: { enabled: true, mode: 'page' as const, pageSize: paginationState.pageSize },
             paginationOwnership: 'scope' as const,
             paginationStatePath,
@@ -529,7 +540,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         return {
           ...base,
           type: 'cards' as const,
-          card: rawSchema.card,
+          card: extractRegionSchema(props.regions.card),
         };
       })()
     : null;

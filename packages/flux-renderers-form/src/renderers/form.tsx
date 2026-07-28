@@ -11,6 +11,7 @@ import {
   useCurrentActionScope,
   useCurrentComponentRegistry,
   useCurrentPage,
+  useCurrentSurfaceRuntime,
   useRenderScope,
   useRendererRuntime,
 } from '@nop-chaos/flux-react';
@@ -129,6 +130,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const currentActionScope = useCurrentActionScope();
   const currentComponentRegistry = useCurrentComponentRegistry();
   const currentPage = useCurrentPage();
+  const currentSurfaceRuntime = useCurrentSurfaceRuntime();
   const parentScope = useRenderScope();
   const nodeImports = props.templateNode.importsPlan?.preparedImports;
   const bodyContent = resolveRendererSlotContent(props, 'body');
@@ -238,6 +240,40 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const initActionAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    const submitScope = (props.props as FormSchema).submitScope;
+    const surfaceRuntimeForHook = submitScope === 'surface' ? currentSurfaceRuntime : undefined;
+    const visibleScope = lifecycleScope.readVisible();
+    const surfaceId =
+      typeof visibleScope.dialogId === 'string'
+        ? visibleScope.dialogId
+        : typeof visibleScope.drawerId === 'string'
+          ? visibleScope.drawerId
+          : undefined;
+
+    /**
+     * After form's own onSubmitSuccess / onSubmitError runs, trigger the
+     * enclosing surface's submit hooks if this form declares
+     * `submitScope: 'surface'`. Surface hooks run in the owner ctx (see
+     * `docs/architecture/surface-lifecycle-callbacks.md`).
+     */
+    const triggerSurfaceSubmitHook = async (
+      hookName: 'submit:success' | 'submit:error',
+      result: unknown,
+    ) => {
+      if (!surfaceRuntimeForHook?.triggerHook || !surfaceId) return;
+      const entry = surfaceRuntimeForHook.store.getState().entries.find((e) => e.id === surfaceId);
+      if (!entry) return;
+      try {
+        await surfaceRuntimeForHook.triggerHook(entry, hookName, {
+          result,
+          formData: { ...ownedForm.store.getState().values },
+          hookName,
+        });
+      } catch (err) {
+        console.warn(`[form] surface ${hookName} hook failed:`, err);
+      }
+    };
+
     ownedForm.setLifecycleHandlers({
       submitAction: submitAction
         ? (options) =>
@@ -249,8 +285,8 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             })
         : undefined,
       onSubmitSuccess: submitSuccessAction
-        ? (result, options) =>
-            submitSuccessAction(undefined, {
+        ? async (result, options) => {
+            const r = await submitSuccessAction(undefined, {
               scope: lifecycleWriteScope,
               form: ownedForm,
               interactionId: options?.interactionId,
@@ -261,11 +297,23 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
                 error: undefined,
                 prevResult: undefined,
               },
-            })
-        : undefined,
+            });
+            await triggerSurfaceSubmitHook(
+              'submit:success',
+              r && typeof r === 'object' && 'ok' in r ? (r.ok ? r.data : result) : result?.data,
+            );
+            return r;
+          }
+        : async (result) => {
+            await triggerSurfaceSubmitHook(
+              'submit:success',
+              result && typeof result === 'object' && 'data' in result ? result.data : result,
+            );
+            return result;
+          },
       onSubmitError: submitErrorAction
-        ? (result, options) =>
-            submitErrorAction(undefined, {
+        ? async (result, options) => {
+            const r = await submitErrorAction(undefined, {
               scope: lifecycleWriteScope,
               form: ownedForm,
               interactionId: options?.interactionId,
@@ -276,8 +324,14 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
                 error: result.error,
                 prevResult: undefined,
               },
-            })
-        : undefined,
+            });
+            await triggerSurfaceSubmitHook('submit:error', result);
+            return r;
+          }
+        : async (result) => {
+            await triggerSurfaceSubmitHook('submit:error', result);
+            return result;
+          },
       onValidateError: validateErrorAction
         ? (result, options) =>
             validateErrorAction(undefined, {
@@ -306,6 +360,8 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     submitErrorAction,
     submitSuccessAction,
     validateErrorAction,
+    currentSurfaceRuntime,
+    props.props,
   ]);
 
   useEffect(() => {

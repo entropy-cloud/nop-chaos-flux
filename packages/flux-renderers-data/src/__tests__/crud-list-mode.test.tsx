@@ -317,6 +317,35 @@ describe('CRUD listMode carrier selection', () => {
     });
   });
 
+  it('item/card are consumed from compiled region handles, not raw props.schema (compile-once P0)', async () => {
+    renderCrud(
+      {
+        type: 'crud',
+        id: 'compile-once-crud',
+        listMode: 'list',
+        source: '${records}',
+        rowKey: 'id',
+        item: [{ type: 'text', text: '${$slot.item.name}' }],
+        columns: [{ name: 'name', label: 'Name' }],
+      },
+      [],
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Name-1')).toBeTruthy();
+    });
+
+    const body = document.querySelector('[data-slot="crud-list-body"]');
+    expect(body).not.toBeNull();
+    expect(body?.getAttribute('data-list-mode')).toBe('list');
+
+    const listRoot = document.querySelector('[data-slot="list-root"]');
+    expect(listRoot).not.toBeNull();
+    expect(listRoot?.getAttribute('data-current-page')).toBe('1');
+    const listItems = document.querySelectorAll('[data-slot="list-item"]');
+    expect(listItems.length).toBe(10);
+  });
+
   it('AUDIT-02: cards carrier does not remount on selection change (compile-once, no keyed remount)', async () => {
     renderCrud(
       {
