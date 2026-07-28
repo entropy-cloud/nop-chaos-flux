@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
+import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { ThreeWayRowType } from '../model/diff-3way.js';
@@ -19,16 +19,15 @@ export function DiffThreeColumnView({
   middleContent,
   newContent,
   language,
-  showLineNumbers = true,
+  showLineNumbers,
 }: DiffThreeColumnViewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
   const { rows, conflictZones } = useMemo(
     () => computeThreeWayDiff(oldContent, middleContent, newContent),
     [oldContent, middleContent, newContent],
   );
 
   const [currentDiffIndex, setCurrentDiffIndex] = useState(() => conflictZones.length > 0 ? 0 : -1);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const goToPrevDiff = useCallback(() => {
     setCurrentDiffIndex((prev) => {

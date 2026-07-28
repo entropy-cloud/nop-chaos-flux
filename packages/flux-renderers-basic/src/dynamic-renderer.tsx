@@ -37,11 +37,16 @@ function getLoadActionKey(loadAction?: DynamicRendererSchema['loadAction']): str
     return undefined;
   }
 
-  try {
-    return JSON.stringify(loadAction);
-  } catch {
-    return String(loadAction);
+  if (typeof loadAction === 'string') {
+    return loadAction;
   }
+
+  const action = 'action' in loadAction ? loadAction.action : undefined;
+  const args = 'args' in loadAction ? (loadAction.args as Record<string, unknown> | undefined) : undefined;
+  const api = args?.api ?? args?.url;
+  const data = args?.data;
+
+  return `${action}|${String(api ?? '')}|${String(data ?? '')}`;
 }
 
 function createDynamicRendererState(

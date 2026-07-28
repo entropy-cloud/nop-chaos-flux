@@ -71,6 +71,7 @@ function SingleFileDiff({
   onNextFile,
   expansionState,
 }: SingleFileDiffProps) {
+  'use no memo';
   const [debouncedOld, setDebouncedOld] = useState(oldContent);
   const [debouncedNew, setDebouncedNew] = useState(newContent);
   const [debouncedMid, setDebouncedMid] = useState(middleContent ?? '');
@@ -207,6 +208,7 @@ function SingleFileDiff({
 }
 
 export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema> & { ref?: Ref<DiffViewHandle> }) {
+  'use no memo';
   const { ref, props: resolved, meta, events } = allProps;
 
   const {
@@ -348,6 +350,7 @@ function CrossFileDiffView({
   onLineClick: onLineClickProp,
   onHunkExpand: onHunkExpandProp,
 }: CrossFileDiffViewProps) {
+  'use no memo';
   const containerRef = useRef<HTMLDivElement>(null);
   const clampedIndex = Math.min(initialIndex, files.length - 1);
   const [activeIndex, setActiveIndex] = useState(clampedIndex);

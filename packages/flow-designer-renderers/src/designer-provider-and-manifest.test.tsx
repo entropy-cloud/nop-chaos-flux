@@ -1,4 +1,5 @@
-import { createDesignerCore } from '@nop-chaos/flow-designer-core';
+import type { ActionContext } from '@nop-chaos/flux-core';
+import { createDesignerCore, type DesignerCore, type DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { describe, expect, it, vi } from 'vitest';
 import { createDesignerActionProvider, flowDesignerRendererDefinitions } from './index.js';
 import { DesignerIcon } from './designer-icon.js';
@@ -101,27 +102,27 @@ describe('createDesignerActionProvider', () => {
       restore: () => undefined,
       commitTransaction: () => ({ ok: true, transactionId: 'tx-1' }),
       rollbackTransaction: () => ({ ok: true, transactionId: 'tx-2' }),
-    } as any;
+    } as unknown as DesignerCore;
 
     const provider = createDesignerActionProvider(core);
     const addResult = await provider.invoke(
       'addNode',
       { nodeType: 'task', position: { x: 1, y: 2 } },
-      {} as any,
+      {} as unknown as ActionContext,
     );
-    const exportResult = await provider.invoke('export', undefined, {} as any);
+    const exportResult = await provider.invoke('export', undefined, {} as unknown as ActionContext);
     const branchResult = await provider.invoke(
       'selectBranch',
       { nodeId: 'gateway-1', branchId: 'b2' },
-      {} as any,
+      {} as unknown as ActionContext,
     );
     const addEdgeResult = await provider.invoke(
       'addEdge',
       { source: 'n1', target: 'n2', sourcePort: 'out-1', targetPort: 'in-1' },
-      {} as any,
+      {} as unknown as ActionContext,
     );
-    const commitResult = await provider.invoke('commitTransaction', { transactionId: 'tx-1' }, {} as any);
-    const rollbackResult = await provider.invoke('rollbackTransaction', { transactionId: 'tx-2' }, {} as any);
+    const commitResult = await provider.invoke('commitTransaction', { transactionId: 'tx-1' }, {} as unknown as ActionContext);
+    const rollbackResult = await provider.invoke('rollbackTransaction', { transactionId: 'tx-2' }, {} as unknown as ActionContext);
 
     expect(addResult).toMatchObject({ ok: true, data: { nodeId: 'n1' } });
     expect(exportResult).toMatchObject({ ok: true, data: '{"ok":true}' });
@@ -135,10 +136,10 @@ describe('createDesignerActionProvider', () => {
     const provider = createDesignerActionProvider({
       commitTransaction: () => ({ ok: false, reason: 'missing-transaction' }),
       rollbackTransaction: () => ({ ok: false, reason: 'unavailable' }),
-    } as any);
+    } as unknown as DesignerCore);
 
-    const commitResult = await provider.invoke('commitTransaction', { transactionId: 'missing' }, {} as any);
-    const rollbackResult = await provider.invoke('rollbackTransaction', undefined, {} as any);
+    const commitResult = await provider.invoke('commitTransaction', { transactionId: 'missing' }, {} as unknown as ActionContext);
+    const rollbackResult = await provider.invoke('rollbackTransaction', undefined, {} as unknown as ActionContext);
 
     expect(commitResult).toMatchObject({
       ok: false,
@@ -176,32 +177,32 @@ describe('createDesignerActionProvider', () => {
       setSelection: vi.fn(),
       moveNodes: vi.fn(),
       updateMultipleNodes: vi.fn(),
-    } as any);
+    } as unknown as DesignerCore);
 
     const toggleNodeResult = await provider.invoke(
       'toggleNodeSelection',
       { nodeId: 'missing-node' },
-      {} as any,
+      {} as unknown as ActionContext,
     );
     const toggleEdgeResult = await provider.invoke(
       'toggleEdgeSelection',
       { edgeId: 'missing-edge' },
-      {} as any,
+      {} as unknown as ActionContext,
     );
     const setSelectionResult = await provider.invoke(
       'setSelection',
       { nodeIds: ['node-1'], edgeIds: ['missing-edge'] },
-      {} as any,
+      {} as unknown as ActionContext,
     );
     const moveNodesResult = await provider.invoke(
       'moveNodes',
       { deltas: { 'missing-node': { dx: 1, dy: 2 } } },
-      {} as any,
+      {} as unknown as ActionContext,
     );
     const updateNodesResult = await provider.invoke(
       'updateMultipleNodes',
       { updates: [{ nodeId: 'missing-node', data: { label: 'x' } }] },
-      {} as any,
+      {} as unknown as ActionContext,
     );
 
     expect(toggleNodeResult).toMatchObject({
@@ -247,11 +248,11 @@ describe('createDesignerActionProvider', () => {
           viewport: { x: 0, y: 0, zoom: 1 },
         },
       }),
-    } as any);
+    } as unknown as DesignerCore);
 
-    const commitResult = await provider.invoke('commitTransaction', { transactionId: 'missing' }, {} as any);
-    const rollbackResult = await provider.invoke('rollbackTransaction', undefined, {} as any);
-    const toggleNodeResult = await provider.invoke('toggleNodeSelection', { nodeId: 'missing-node' }, {} as any);
+    const commitResult = await provider.invoke('commitTransaction', { transactionId: 'missing' }, {} as unknown as ActionContext);
+    const rollbackResult = await provider.invoke('rollbackTransaction', undefined, {} as unknown as ActionContext);
+    const toggleNodeResult = await provider.invoke('toggleNodeSelection', { nodeId: 'missing-node' }, {} as unknown as ActionContext);
 
     expect(commitResult).toMatchObject({
       ok: false,
@@ -300,17 +301,17 @@ describe('createDesignerActionProvider', () => {
       },
     ));
 
-    const addNodeResult = await provider.invoke('addNode', { position: { x: 1, y: 2 } }, {} as any);
-    const toggleResult = await provider.invoke('toggleNodeSelection', { edgeId: 'e1' }, {} as any);
+    const addNodeResult = await provider.invoke('addNode', { position: { x: 1, y: 2 } }, {} as unknown as ActionContext);
+    const toggleResult = await provider.invoke('toggleNodeSelection', { edgeId: 'e1' }, {} as unknown as ActionContext);
     const moveBranchResult = await provider.invoke(
       'moveBranch',
       { nodeId: 'node-1', branchId: 'branch-1', direction: 'up' },
-      {} as any,
+      {} as unknown as ActionContext,
     );
     const moveNodesResult = await provider.invoke(
       'moveNodes',
       { deltas: { 'node-1': { dx: 1, dy: 'bad' } } },
-      {} as any,
+      {} as unknown as ActionContext,
     );
 
     expect(addNodeResult).toMatchObject({
@@ -386,12 +387,12 @@ describe('createDesignerActionProvider', () => {
       }),
       subscribe: () => () => {},
       addEdge: () => null,
-    } as any;
+    } as unknown as DesignerCore;
 
     const provider = createDesignerActionProvider(core);
     const result = await provider.invoke('addEdge', { source: 'node-1', target: 'missing-node' }, {
       runtime: { env: { notify } },
-    } as any);
+    } as unknown as ActionContext);
 
     expect(result.ok).toBe(false);
     expect(result.error).toBe('Edges must connect existing nodes.');
@@ -436,7 +437,7 @@ describe('createDesignerActionProvider', () => {
 
     expect(provider.listMethods()).toContain('deleteSelection');
 
-    const result = await provider.invoke('deleteSelection', undefined, {} as any);
+    const result = await provider.invoke('deleteSelection', undefined, {} as unknown as ActionContext);
 
     expect(result).toMatchObject({ ok: true });
     expect(core.getSnapshot().doc.nodes).toEqual([]);
@@ -514,7 +515,7 @@ describe('flowDesignerRendererDefinitions', () => {
     const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
     const graphDiagnostics = validateSchema({
-      schema: { type: 'designer-page', config: { nodeTypes: [], edgeTypes: [] } } as any,
+      schema: { type: 'designer-page', config: { nodeTypes: [], edgeTypes: [] } },
       registry,
       expressionCompiler,
     });
@@ -522,7 +523,7 @@ describe('flowDesignerRendererDefinitions', () => {
       schema: {
         type: 'designer-page',
         config: { documentMode: 'tree', nodeTypes: [], edgeTypes: [] },
-      } as any,
+      },
       registry,
       expressionCompiler,
     });
@@ -531,7 +532,7 @@ describe('flowDesignerRendererDefinitions', () => {
         type: 'designer-page',
         treeDocument: { id: 'tree-1', kind: 'tree', name: 'Tree', version: '1.0.0', nodes: [] },
         config: { documentMode: 'tree', nodeTypes: [], edgeTypes: [] },
-      } as any,
+      },
       registry,
       expressionCompiler,
     });
@@ -571,15 +572,15 @@ describe('flow-designer manifest', () => {
     expect(fields.activeNode).toBeTruthy();
     expect(fields.activeEdge).toBeTruthy();
     expect(fields.runtime).toBeTruthy();
-    const activeEdgeFields = (fields.activeEdge.schema as any).anyOf[1].fields;
+    const activeEdgeFields = (fields.activeEdge.schema as Record<string, unknown>).anyOf[1].fields;
     expect(activeEdgeFields.sourcePort).toBeTruthy();
     expect(activeEdgeFields.targetPort).toBeTruthy();
-    expect((fields.runtime.schema as any).fields.gridEnabled).toBeTruthy();
-    expect((fields.runtime.schema as any).fields.gridVisible).toBeUndefined();
-    expect((fields.runtime.schema as any).fields.viewport).toBeTruthy();
-    expect((fields.doc.schema as any).fields.nodeCount).toBeTruthy();
-    expect((fields.doc.schema as any).fields.nodes).toBeTruthy();
-    expect((fields.doc.schema as any).fields.edges).toBeTruthy();
+    expect((fields.runtime.schema as Record<string, unknown>).fields.gridEnabled).toBeTruthy();
+    expect((fields.runtime.schema as Record<string, unknown>).fields.gridVisible).toBeUndefined();
+    expect((fields.runtime.schema as Record<string, unknown>).fields.viewport).toBeTruthy();
+    expect((fields.doc.schema as Record<string, unknown>).fields.nodeCount).toBeTruthy();
+    expect((fields.doc.schema as Record<string, unknown>).fields.nodes).toBeTruthy();
+    expect((fields.doc.schema as Record<string, unknown>).fields.edges).toBeTruthy();
     expect(fields.activeBranch).toBeTruthy();
     expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods.copySelection).toBeTruthy();
     expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods.pasteClipboard).toBeTruthy();
@@ -615,7 +616,7 @@ describe('flow-designer manifest', () => {
         isDirty: true,
         gridEnabled: true,
         viewport: { x: 10, y: 20, zoom: 1.25 },
-      } as any,
+      } as unknown as DesignerSnapshot,
     });
 
     expect(Object.keys(FLOW_DESIGNER_MANIFEST_V1.projection.fields).sort()).toEqual(

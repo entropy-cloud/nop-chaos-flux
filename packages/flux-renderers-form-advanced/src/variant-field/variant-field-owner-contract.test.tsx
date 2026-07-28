@@ -1,6 +1,8 @@
+import type { NodeInstance, RendererHelpers, ResolvedNodeMeta, TemplateNode } from '@nop-chaos/flux-core';
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { VariantFieldSchema } from '../composite-field/composite-schemas.js';
 
 const TabsMockContext = React.createContext<((value: string) => void) | undefined>(undefined);
 
@@ -119,10 +121,10 @@ describe('variant-field generic owner contracts', () => {
       <VariantFieldRenderer
         id="variant"
         path="$.body[0]"
-        schema={{ type: 'variant-field', name: 'kind', variants: [] } as any}
-        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as any}
-        node={{} as any}
-        meta={{} as any}
+        schema={{ type: 'variant-field', name: 'kind', variants: [] } as unknown as VariantFieldSchema}
+        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as unknown as TemplateNode<VariantFieldSchema>}
+        node={{} as unknown as NodeInstance<VariantFieldSchema>}
+        meta={{} as unknown as ResolvedNodeMeta}
         props={{
           name: 'kind',
           selectorMode: 'tabs',
@@ -140,7 +142,7 @@ describe('variant-field generic owner contracts', () => {
           render: vi.fn(),
           evaluateCompiled: vi.fn(),
           executeSource: vi.fn(),
-        } as any}
+        } as unknown as RendererHelpers}
         reactions={{}}
       />,
     );
@@ -210,10 +212,10 @@ describe('variant-field generic owner contracts', () => {
       <VariantFieldRenderer
         id="variant"
         path="$.body[0]"
-        schema={{ type: 'variant-field', name: 'kind', variants: [] } as any}
-        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as any}
-        node={{} as any}
-        meta={{} as any}
+        schema={{ type: 'variant-field', name: 'kind', variants: [] } as unknown as VariantFieldSchema}
+        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as unknown as TemplateNode<VariantFieldSchema>}
+        node={{} as unknown as NodeInstance<VariantFieldSchema>}
+        meta={{} as unknown as ResolvedNodeMeta}
         props={{
           name: 'kind',
           selectorMode: 'tabs',
@@ -228,7 +230,7 @@ describe('variant-field generic owner contracts', () => {
           render: vi.fn(),
           evaluateCompiled: vi.fn(),
           executeSource: vi.fn(),
-        } as any}
+        } as unknown as RendererHelpers}
         reactions={{}}
       />,
     );
@@ -261,10 +263,10 @@ describe('variant-field generic owner contracts', () => {
       <VariantFieldRenderer
         id="variant"
         path="$.body[0]"
-        schema={{ type: 'variant-field', name: 'kind', variants: [] } as any}
-        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as any}
-        node={{} as any}
-        meta={{} as any}
+        schema={{ type: 'variant-field', name: 'kind', variants: [] } as unknown as VariantFieldSchema}
+        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as unknown as TemplateNode<VariantFieldSchema>}
+        node={{} as unknown as NodeInstance<VariantFieldSchema>}
+        meta={{} as unknown as ResolvedNodeMeta}
         props={{
           name: 'kind',
           selectorMode: 'tabs',
@@ -282,7 +284,7 @@ describe('variant-field generic owner contracts', () => {
           render: vi.fn(),
           evaluateCompiled: vi.fn(),
           executeSource: vi.fn(),
-        } as any}
+        } as unknown as RendererHelpers}
         reactions={{}}
       />,
     );
@@ -357,7 +359,7 @@ describe('variant-field generic owner contracts', () => {
       <VariantFieldRenderer
         id="variant"
         path="$.body[0]"
-        schema={{ type: 'variant-field', name: 'payload', variants: [] } as any}
+        schema={{ type: 'variant-field', name: 'payload', variants: [] } as unknown as VariantFieldSchema}
         templateNode={{
           schema: {
             type: 'variant-field',
@@ -374,9 +376,9 @@ describe('variant-field generic owner contracts', () => {
           },
           validationOwnerPlan: { boundary: 'inherit-owner' },
           eventPlans: {},
-        } as any}
-        node={{} as any}
-        meta={{} as any}
+        } as unknown as TemplateNode<VariantFieldSchema>}
+        node={{} as unknown as NodeInstance<VariantFieldSchema>}
+        meta={{} as unknown as ResolvedNodeMeta}
         props={{
           name: 'payload',
           selectorMode: 'tabs',
@@ -401,7 +403,7 @@ describe('variant-field generic owner contracts', () => {
           render: vi.fn(),
           evaluateCompiled: vi.fn(),
           executeSource: vi.fn(),
-        } as any}
+        } as unknown as RendererHelpers}
         reactions={{}}
       />,
     );

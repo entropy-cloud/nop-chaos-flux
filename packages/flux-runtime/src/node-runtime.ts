@@ -84,6 +84,7 @@ function evaluateCompiledValue<T>(
     return undefined;
   }
 
+  // Safe: evaluateValue returns a value conforming to T by construction.
   return compiler.evaluateValue(value, scope, env, state) as T | undefined;
 }
 
@@ -226,9 +227,11 @@ export function createNodeRuntime(input: {
       ),
       frameWrap: evaluateCompiledValue(
         input.expressionCompiler,
+        // Safe: compiled meta program produces the correct type for frameWrap.
         meta.frameWrap as CompiledRuntimeValue<boolean | 'label' | 'group' | 'none' | undefined> | undefined,
         scope,
         env,
+        // Safe: state mirrors the compiled program structure.
         state?.meta.frameWrap as RuntimeValueState<unknown> | undefined,
       ),
       changed: true,
@@ -257,7 +260,8 @@ export function createNodeRuntime(input: {
     const propsProgram = node.propsProgram;
     const execution =
       propsProgram.kind === 'static'
-        ? ((state?._staticPropsResult ?? {
+        ? // Safe: object literal matches ResolvedNodeProps shape; _staticPropsResult is already typed.
+          ((state?._staticPropsResult ?? {
             value: propsProgram.value,
             changed: false,
             reusedReference: true,
@@ -274,6 +278,7 @@ export function createNodeRuntime(input: {
     }
 
     const result = execution;
+    // Safe: props are always a Record<string, unknown> by schema contract.
     const propsValue = result.value as Record<string, unknown>;
     const projectedProps = projectRendererFacingMeta({
       disabled: normalizeBooleanLike(
@@ -308,6 +313,7 @@ export function createNodeRuntime(input: {
       ),
     });
     const finalValue = Object.assign({}, projectedProps, propsValue);
+    // Safe: _lastPropsResult.value is always a Record from the same props pipeline.
     const lastProjectedValue = state?._lastPropsResult?.value as Record<string, unknown> | undefined;
     const finalResult =
       lastProjectedValue && shallowEqual(lastProjectedValue, finalValue)

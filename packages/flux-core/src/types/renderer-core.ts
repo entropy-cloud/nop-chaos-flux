@@ -362,14 +362,14 @@ export interface RendererRuntime {
     ctx?: Partial<ActionContext>;
   }): Promise<ActionResult>;
   createSourceObserver(): SourceObserver;
-  createPageRuntime(data?: Record<string, any>): PageRuntime;
+  createPageRuntime(data?: Record<string, unknown>): PageRuntime;
   disposeOwnedPage(page: PageRuntime): void;
   createValidationScopeRuntime(input: {
     id?: string;
     parentScope: ScopeRef;
     scopePath?: string;
     validation?: CompiledFormValidationModel;
-    initialValues?: Record<string, any>;
+    initialValues?: Record<string, unknown>;
   }): ValidationScopeRuntime;
   createSurfaceRuntime(input?: {
     disposeScope?: (scopeId: string) => void;
@@ -438,7 +438,7 @@ export interface RendererRuntime {
   createFormRuntime(input: {
     id?: string;
     name?: string;
-    initialValues?: Record<string, any>;
+    initialValues?: Record<string, unknown>;
     parentScope: ScopeRef;
     page?: PageRuntime;
     validation?: CompiledFormValidationModel;

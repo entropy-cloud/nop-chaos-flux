@@ -27,20 +27,26 @@ export function createRuntimeEvalHelpers(
     const cached = compiledValueCache.get(target as object);
 
     if (cached) {
+      // Safe: compileValue<T> returns CompiledRuntimeValue<T>; cache stores what we put in.
       return cached as CompiledRuntimeValue<T>;
     }
 
     const compiled = expressionCompiler.compileValue(target);
     compiledValueCache.set(target as object, compiled);
+    // Safe: compiled is the direct result of compileValue<T>.
     return compiled as CompiledRuntimeValue<T>;
   }
 
   function evaluateCompiled<T = unknown>(compiled: CompiledRuntimeValue<T>, scope: ScopeRef): T {
-    return expressionCompiler.evaluateValue(compiled, scope, getEnv()) as T;
+    const result = expressionCompiler.evaluateValue(compiled, scope, getEnv());
+    // Safe: evaluateValue returns a value that conforms to T by construction —
+    // the compiled expression produces the type T when evaluated.
+    return result as T;
   }
 
   function evaluate<T = unknown>(target: unknown, scope: ScopeRef): T {
-    return evaluateCompiled(compileValue<T>(target as T), scope);
+    // Safe: target is the runtime value which conforms to T; T is compile-time only.
+    return evaluateCompiled(compileValue(target as T), scope);
   }
 
   return { evaluate, compileValue, evaluateCompiled };

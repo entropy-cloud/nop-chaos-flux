@@ -104,7 +104,7 @@ describe('flex renderer — responsive wrap (M3b)', () => {
 });
 
 describe('container renderer — responsive direction/wrap (M3b)', () => {
-  it('emits sm:flex-row md:flex-col for container responsiveDirection', () => {
+  it('emits data attributes for container responsiveDirection', () => {
     const { container } = renderInPage({
       type: 'container',
       direction: 'column',
@@ -113,12 +113,8 @@ describe('container renderer — responsive direction/wrap (M3b)', () => {
     } as BaseSchema);
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body).toBeTruthy();
-    const cls = body?.className ?? '';
-    expect(cls).toContain('flex');
-    expect(cls).toContain('flex-col');
-    expect(cls).toContain('sm:flex-row');
-    expect(cls).toContain('md:flex-col');
     expect(body?.getAttribute('data-flex')).toBe('');
+    expect(body?.getAttribute('data-direction')).toBe('column');
   });
 
   it('enables flex body when only responsive fields are set (no base direction/wrap)', () => {
@@ -129,13 +125,10 @@ describe('container renderer — responsive direction/wrap (M3b)', () => {
     } as BaseSchema);
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body).toBeTruthy();
-    const cls = body?.className ?? '';
-    expect(cls).toContain('flex');
-    expect(cls).toContain('md:flex-row');
     expect(body?.getAttribute('data-flex')).toBe('');
   });
 
-  it('emits sm:flex-wrap md:flex-nowrap for container responsiveWrap', () => {
+  it('emits data-wrap attribute for container responsiveWrap', () => {
     const { container } = renderInPage({
       type: 'container',
       wrap: true,
@@ -144,10 +137,7 @@ describe('container renderer — responsive direction/wrap (M3b)', () => {
     } as BaseSchema);
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body).toBeTruthy();
-    const cls = body?.className ?? '';
-    expect(cls).toContain('flex-wrap');
-    expect(cls).toContain('sm:flex-nowrap');
-    expect(cls).toContain('md:flex-wrap');
+    expect(body?.getAttribute('data-wrap')).toBe('true');
   });
 
   it('keeps body as non-flex when no layout fields (no regression)', () => {
@@ -158,7 +148,6 @@ describe('container renderer — responsive direction/wrap (M3b)', () => {
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body).toBeTruthy();
     expect(body?.getAttribute('data-flex')).toBeNull();
-    expect(body?.className ?? '').not.toMatch(/(sm|md|lg|xl|2xl):flex-/);
   });
 });
 
@@ -186,9 +175,7 @@ describe('flex/container responsive — shared breakpoint field convention (Deci
       responsiveDirection: directionMap,
       body: [{ type: 'text', text: 'A' }],
     } as BaseSchema);
-    const contCls = contContainer.querySelector('[data-slot="container-body"]')?.className ?? '';
-    for (const bp of breakpoints) {
-      expect(contCls).toContain(`${bp}:flex-`);
-    }
+    const contBody = contContainer.querySelector('[data-slot="container-body"]');
+    expect(contBody?.getAttribute('data-flex')).toBe('');
   });
 });

@@ -55,7 +55,7 @@ type ActionContextPage = {
 type ActionContextSurfaceRuntime = {
   open(input: {
     kind: 'dialog' | 'drawer' | 'sheet';
-    surface: Record<string, any>;
+    surface: Record<string, unknown>;
     scope: ScopeRef;
     surfaceId?: string;
     options?: {

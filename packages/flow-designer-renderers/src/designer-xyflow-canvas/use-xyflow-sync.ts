@@ -88,7 +88,7 @@ export function useXyflowSync({
   const lastCommittedPositionsRef = useRef<Map<string, string>>(new Map());
 
   const [localNodes, setLocalNodes, onNodesChangeInternal] = useNodesState(snapshotNodes);
-  const [localEdges, setLocalEdges, onEdgesChangeInternal] = useEdgesState(snapshotEdges);
+  const [, , onEdgesChangeInternal] = useEdgesState(snapshotEdges);
 
   useEffect(() => {
     setLocalNodes((currentNodes) => {
@@ -100,20 +100,16 @@ export function useXyflowSync({
     });
   }, [snapshotNodes, setLocalNodes]);
 
-  useEffect(() => {
-    setLocalEdges(snapshotEdges);
-  }, [snapshotEdges, setLocalEdges]);
-
   const renderedEdges = useMemo<Edge[]>(
     () =>
-      localEdges.map((edge) => ({
+      snapshotEdges.map((edge) => ({
         ...edge,
         data: {
           ...((edge.data as Record<string, unknown> | undefined) ?? {}),
           __fdHovered: edge.id === hoveredEdgeId,
         },
       })),
-    [localEdges, hoveredEdgeId],
+    [snapshotEdges, hoveredEdgeId],
   );
 
   return {

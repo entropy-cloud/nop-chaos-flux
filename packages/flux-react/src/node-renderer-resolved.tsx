@@ -72,7 +72,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const currentSurfaceRuntime = useCurrentSurfaceRuntime();
   const mountedCid = props.mountedCid;
   const instanceStateKey = useMemo(
-    () => JSON.stringify(instancePath ?? []),
+    () => (instancePath ?? []).map((f) => `${f.repeatedTemplateId}:${f.instanceKey}`).join('/'),
     [instancePath],
   );
   const nodeState = useMemo<NodeRuntimeState>(

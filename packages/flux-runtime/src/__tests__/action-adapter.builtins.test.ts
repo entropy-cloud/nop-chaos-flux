@@ -1,3 +1,5 @@
+import type { ActionContext, BuiltInActionInvocation, ExpressionCompiler, RendererEnv, RendererRuntime } from '@nop-chaos/flux-core';
+import type { ApiRequestExecutor } from '../async-data/request-runtime.js';
 import { describe, expect, it, vi } from 'vitest';
 import { createActionRuntimeAdapter, createBuiltInInvocation, createCtx } from './action-adapter.test-support.js';
 import { createScopeRef } from '../scope.js';
@@ -13,18 +15,18 @@ describe('createActionRuntimeAdapter direct branches', () => {
     );
     const refreshDataSource = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify },
         createChildScope,
         refreshDataSource,
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope,
-      getDialogActionScope: () => ({ id: 'dialog-action-scope' }) as any,
-      getDialogComponentRegistry: () => ({ id: 'dialog-component-registry' }) as any,
+      getDialogActionScope: () => ({ id: 'dialog-action-scope' } as unknown as ActionContext['actionScope']),
+      getDialogComponentRegistry: () => ({ id: 'dialog-component-registry' } as unknown as ActionContext['componentRegistry']),
     });
 
     await expect(
@@ -83,10 +85,10 @@ describe('createActionRuntimeAdapter direct branches', () => {
     const compileError = new Error('bad surface body');
     const failingSurfaceRuntime = { open: vi.fn(), close: vi.fn() };
     const failingAdapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify, monitor: { onError: vi.fn() } },
         createChildScope,
@@ -94,7 +96,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
         compile: vi.fn(() => {
           throw compileError;
         }),
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope,
     });
 
@@ -230,16 +232,16 @@ describe('createActionRuntimeAdapter direct branches', () => {
       const compileError = new Error('bad surface body');
       const failingSurfaceRuntime = { open: vi.fn(), close: vi.fn() };
       const failingAdapter = createActionRuntimeAdapter({
-        getEnv: () => ({ notify }) as any,
-        expressionCompiler: {} as any,
+        getEnv: () => ({ notify } as unknown as RendererEnv),
+        expressionCompiler: {} as unknown as ExpressionCompiler,
         evaluate: <T>(target: unknown) => target as T,
-        executeApiRequest: vi.fn() as any,
+        executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
         runtime: {
           env: { notify, monitor: { onError: vi.fn() } },
           createChildScope: vi.fn(),
           refreshDataSource: vi.fn(),
           compile: vi.fn(() => { throw compileError; }),
-        } as any,
+        } as unknown as RendererRuntime,
         createSurfaceScope,
       });
 
@@ -259,17 +261,18 @@ describe('createActionRuntimeAdapter direct branches', () => {
 
   it('returns a cancelled result when ajax execution aborts', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi
-        .fn()
-        .mockRejectedValue(Object.assign(new Error('aborted'), { name: 'AbortError' })) as any,
+      executeApiRequest: Object.assign(
+        vi.fn().mockRejectedValue(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+        { dispose: vi.fn() },
+      ) as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
 
@@ -280,7 +283,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
           args: { url: '/api/test', method: 'get' },
           targeting: {},
           actionNode: {},
-        } as any,
+        } as unknown as BuiltInActionInvocation,
         createCtx({ interactionId: 'ajax-1' }),
       ),
     ).resolves.toMatchObject({ ok: false, cancelled: true, error: expect.any(Error) });
@@ -290,16 +293,16 @@ describe('createActionRuntimeAdapter direct branches', () => {
 describe('built-in scope-write and submit semantics', () => {
   it('setValue always writes current scope even when form exists', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         registry: { get: vi.fn(() => undefined) },
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
     const form = { id: 'form-1', setValue: vi.fn() };
@@ -318,16 +321,16 @@ describe('built-in scope-write and submit semantics', () => {
 
   it('setValue no longer uses componentId as a path fallback', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         registry: { get: vi.fn(() => undefined) },
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
     const scopeUpdate = vi.fn();
@@ -345,16 +348,16 @@ describe('built-in scope-write and submit semantics', () => {
 
   it('setValue uses scope without formId even when form exists', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         registry: { get: vi.fn(() => undefined) },
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
     const form = { id: 'form-1', setValue: vi.fn() };
@@ -373,16 +376,16 @@ describe('built-in scope-write and submit semantics', () => {
 
   it('setValue uses scope without form when no form exists', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         registry: { get: vi.fn(() => undefined) },
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
     const scopeUpdate = vi.fn();
@@ -399,16 +402,16 @@ describe('built-in scope-write and submit semantics', () => {
 
   it('setValues uses current form runtime when one exists', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         registry: { get: vi.fn(() => undefined) },
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
     const form = { id: 'form-1', setValues: vi.fn() };
@@ -428,16 +431,16 @@ describe('built-in scope-write and submit semantics', () => {
 
   it('setValues honors args.path inside the current form runtime', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         registry: { get: vi.fn(() => undefined) },
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
     const form = { id: 'form-1', setValue: vi.fn(), setValues: vi.fn() };
@@ -466,16 +469,16 @@ describe('built-in scope-write and submit semantics', () => {
 
   it('setValues no longer uses targetId as a base-path fallback', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         registry: { get: vi.fn(() => undefined) },
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
     const form = { id: 'form-1', setValue: vi.fn(), setValues: vi.fn() };
@@ -499,16 +502,16 @@ describe('built-in scope-write and submit semantics', () => {
 
   it('submitForm returns error when there is no current form runtime', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         registry: { get: vi.fn(() => undefined) },
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
 
@@ -522,16 +525,16 @@ describe('built-in scope-write and submit semantics', () => {
 
   it('submitForm forwards abort signal to the current form', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         registry: { get: vi.fn(() => undefined) },
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
     const controller = new AbortController();
@@ -559,16 +562,16 @@ describe('built-in scope-write and submit semantics', () => {
 
   it('submitForm preserves current-form failures', async () => {
     const adapter = createActionRuntimeAdapter({
-      getEnv: () => ({ notify: vi.fn() }) as any,
-      expressionCompiler: {} as any,
+      getEnv: () => ({ notify: vi.fn() } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
-      executeApiRequest: vi.fn() as any,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
       runtime: {
         env: { notify: vi.fn() },
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
         registry: { get: vi.fn(() => undefined) },
-      } as any,
+      } as unknown as RendererRuntime,
       createSurfaceScope: vi.fn(),
     });
     const submitError = new Error('submit failed');

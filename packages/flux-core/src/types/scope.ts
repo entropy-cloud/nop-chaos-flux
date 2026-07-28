@@ -16,7 +16,7 @@ export interface ScopeDependencyCollector {
   recordWildcard(): void;
 }
 
-export interface ScopeStore<T = Record<string, any>> {
+export interface ScopeStore<T = Record<string, unknown>> {
   getSnapshot(): T;
   getLastChange(): ScopeChange | undefined;
   setSnapshot(next: T, change?: ScopeChange): void;
@@ -26,7 +26,7 @@ export interface ScopeStore<T = Record<string, any>> {
 export interface EvalContext {
   resolve(path: string): unknown;
   has(path: string): boolean;
-  materialize(): Record<string, any>;
+  materialize(): Record<string, unknown>;
   collector?: ScopeDependencyCollector;
 }
 
@@ -36,12 +36,12 @@ export interface ScopeRef {
   parent?: ScopeRef;
   isolate?: boolean;
   store?: ScopeStore;
-  readonly value: Record<string, any>;
+  readonly value: Record<string, unknown>;
   get(path: string): unknown;
   has(path: string): boolean;
-  readOwn(): Record<string, any>;
-  readVisible(): Record<string, any>;
-  materializeVisible(): Record<string, any>;
+  readOwn(): Record<string, unknown>;
+  readVisible(): Record<string, unknown>;
+  materializeVisible(): Record<string, unknown>;
   update(path: string, value: unknown): void;
   merge(data: Record<string, unknown>): void;
   replace?(data: Record<string, unknown>): void;

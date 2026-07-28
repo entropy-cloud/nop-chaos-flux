@@ -185,7 +185,6 @@ export function DesignerPageBody({
   const [pendingCreateDialog, setPendingCreateDialog] =
     React.useState<DesignerCreateDialogState | null>(null);
   const [creatingNode, setCreatingNode] = React.useState(false);
-  const creatingNodeRef = useRef(false);
   const jsonOffsetRef = useRef({ x: 0, y: 0 });
   const jsonDocument = useMemo(() => {
     if (!jsonOpen) return null;
@@ -228,11 +227,10 @@ export function DesignerPageBody({
   );
 
   const handleConfirmCreateDialog = useCallback(async () => {
-    if (!pendingCreateDialog || creatingNodeRef.current) {
+    if (!pendingCreateDialog || creatingNode) {
       return;
     }
 
-    creatingNodeRef.current = true;
     setCreatingNode(true);
     try {
       const result = await confirmCreateDialog({
@@ -277,12 +275,12 @@ export function DesignerPageBody({
         });
       }
     } finally {
-      creatingNodeRef.current = false;
       setCreatingNode(false);
     }
   }, [
     actionScope,
     config.documentMode,
+    creatingNode,
     designerScope,
     dispatch,
     pendingCreateDialog,

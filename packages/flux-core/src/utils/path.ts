@@ -8,19 +8,15 @@ const parsePathCache = new Map<string, readonly string[]>();
 function rememberParsedPath(path: string, segments: readonly string[]) {
   if (parsePathCache.has(path)) {
     parsePathCache.delete(path);
+  } else if (parsePathCache.size >= MAX_PARSE_PATH_CACHE_SIZE) {
+    const oldestKey = parsePathCache.keys().next().value;
+
+    if (typeof oldestKey === 'string') {
+      parsePathCache.delete(oldestKey);
+    }
   }
 
   parsePathCache.set(path, segments);
-
-  if (parsePathCache.size <= MAX_PARSE_PATH_CACHE_SIZE) {
-    return;
-  }
-
-  const oldestKey = parsePathCache.keys().next().value;
-
-  if (typeof oldestKey === 'string') {
-    parsePathCache.delete(oldestKey);
-  }
 }
 
 export function parsePath(path: string): string[] {
@@ -101,7 +97,7 @@ export function parsePath(path: string): string[] {
     segments.push(current.trim());
   }
 
-  const result = Object.freeze(segments.filter(Boolean));
+  const result = segments.filter(Boolean);
 
   rememberParsedPath(path, result);
 

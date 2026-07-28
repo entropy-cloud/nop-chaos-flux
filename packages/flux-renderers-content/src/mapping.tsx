@@ -47,6 +47,7 @@ function toTextNode(value: unknown): React.ReactNode {
 }
 
 export function MappingRenderer(props: RendererComponentProps<MappingSchema>) {
+  'use no memo';
   const slotProps = props.props;
   const value = slotProps.value;
   const staticMap = slotProps.map;

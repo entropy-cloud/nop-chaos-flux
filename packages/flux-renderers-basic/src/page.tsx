@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { PageStatusSummary, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
@@ -43,12 +43,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
     Object.is,
     { paths: ['refreshTick'] },
   );
-  const summary = useMemo<PageStatusSummary>(
-    () => ({
-      refreshTick,
-    }),
-    [refreshTick],
-  );
+  const summary: PageStatusSummary = { refreshTick };
   const slotProps = props.props as PageSchema;
   const subTitle =
     typeof slotProps.subTitle === 'string' && slotProps.subTitle.length > 0

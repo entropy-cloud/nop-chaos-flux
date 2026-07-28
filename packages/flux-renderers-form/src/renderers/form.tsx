@@ -126,6 +126,7 @@ function reportFormInitActionError(
 }
 
 export function FormRenderer(props: RendererComponentProps<FormSchema>) {
+  'use no memo';
   const runtime = useRendererRuntime();
   const currentActionScope = useCurrentActionScope();
   const currentComponentRegistry = useCurrentComponentRegistry();
@@ -676,7 +677,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
               </div>
             ) : null}
             {hasRendererSlotContent(actionsContent) ? (
-              <div data-slot="form-actions" className={cn('flex justify-end gap-2', slotProps.actionsClassName)}>
+              <div data-slot="form-actions" className={cn(slotProps.actionsClassName)}>
                 {actionsContent}
               </div>
             ) : null}

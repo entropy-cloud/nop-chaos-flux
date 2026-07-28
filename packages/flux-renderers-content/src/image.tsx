@@ -162,10 +162,7 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
   }
 
   const interactive = preview || Boolean(onClick);
-  const sizeStyle = React.useMemo(
-    () => ({ width, height }),
-    [width, height],
-  );
+  const sizeStyle: React.CSSProperties = { width, height };
 
   if (fetcherLoading) {
     return (

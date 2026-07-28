@@ -93,7 +93,7 @@ describe('form runtime status helpers', () => {
     expect(boundScope.readVisible().$form).toEqual(
       expect.objectContaining({ id: 'form-1', name: 'profile' }),
     );
-    expect(boundScope.value.$form.valid).toBe(true);
+    expect((boundScope.value.$form as Record<string, unknown>).valid).toBe(true);
     expect(createInitialFormScopeChange('form-1')).toEqual({
       paths: ['*'],
       sourceScopeId: 'form-1',

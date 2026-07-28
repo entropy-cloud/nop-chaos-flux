@@ -248,15 +248,15 @@ function DialogView(props: {
   const primitiveSize = resolveDialogPrimitiveSize(effectiveSize);
   const inlineStyle = buildSurfaceInlineStyle({
     size: effectiveSize,
-    width: surface.surface.width,
-    height: surface.surface.height,
+    width: surface.surface.width as string | number | undefined,
+    height: surface.surface.height as string | number | undefined,
     fullSize: 'viewport',
   });
   const headerClassName = surface.surface.headerClassName as string | undefined;
   const bodyClassName = surface.surface.bodyClassName as string | undefined;
   const footerClassName = surface.surface.footerClassName as string | undefined;
   const confirmButtons = resolveConfirmButtons({
-    confirm: surface.surface.confirm,
+    confirm: surface.surface.confirm as string | boolean | undefined,
     hasExplicitActions: Boolean(surface.actions),
     onCancel: handleClose,
     onConfirm: () => {
@@ -422,20 +422,20 @@ function DrawerView(props: {
   const showCloseButton = surface.surface.showCloseButton !== false;
   const size = surface.surface.size as FluxSurfaceSize | undefined;
   const resizable = surface.surface.resizable === true;
-  const schemaSide = surface.surface.side;
+  const schemaSide = surface.surface.side as string | undefined;
   const effectiveSide =
     isMobile && schemaSide !== 'bottom' ? 'bottom' : schemaSide;
   const inlineStyle = buildSurfaceInlineStyle({
     size,
-    width: surface.surface.width,
-    height: surface.surface.height,
+    width: surface.surface.width as string | number | undefined,
+    height: surface.surface.height as string | number | undefined,
     fullSize: 'percent',
   });
   const headerClassName = surface.surface.headerClassName as string | undefined;
   const bodyClassName = surface.surface.bodyClassName as string | undefined;
   const footerClassName = surface.surface.footerClassName as string | undefined;
   const confirmButtons = resolveConfirmButtons({
-    confirm: surface.surface.confirm,
+    confirm: surface.surface.confirm as string | boolean | undefined,
     hasExplicitActions: Boolean(surface.actions),
     onCancel: handleClose,
     onConfirm: () => {

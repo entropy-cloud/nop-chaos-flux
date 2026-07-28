@@ -1,3 +1,4 @@
+import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
@@ -5,6 +6,10 @@ import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { TableBodyRows } from '../table-renderer/table-body-rows.js';
 import { TableLoadingOverlay } from '../table-renderer/table-loading-overlay.js';
 import { TablePaginationBar } from '../table-renderer/table-pagination-bar.js';
+import type { FixedColumnLayout } from '../table-renderer/fixed-columns.js';
+import type { TableColumnSchema } from '../schemas.js';
+import type { TableRowEntry } from '../table-renderer/types.js';
+import type { TableSchema } from '../schemas.js';
 
 beforeEach(() => {
   resetFluxI18n();
@@ -22,7 +27,7 @@ function makeTableProps(overrides: Record<string, unknown> = {}) {
     node: { instancePath: [] },
     meta: {},
     ...overrides,
-  } as any;
+  } as unknown as RendererComponentProps<TableSchema>;
 }
 
 function makeRowScope(record: Record<string, unknown>, index: number) {
@@ -41,7 +46,7 @@ function makeRowScope(record: Record<string, unknown>, index: number) {
     materializeVisible: () => ({ record, index }),
     update() {},
     merge() {},
-  } as any;
+  } as unknown as ScopeRef;
 }
 
 describe('table internal components', () => {
@@ -130,7 +135,7 @@ describe('table internal components', () => {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
-            } as any
+            } as unknown as FixedColumnLayout
           }
           emptyContent={<span>No data</span>}
           showExpandColumn={false}
@@ -155,9 +160,9 @@ describe('table internal components', () => {
       <table>
         <TableBodyRows
           props={makeTableProps({ props: { expandable: {}, rowSelection: undefined }, events: {} })}
-          columns={[{ label: 'Name', name: 'name' } as any]}
-          responsiveHiddenColumns={[{ label: 'Email', name: 'email' } as any]}
-          processedData={processedData as any}
+          columns={[{ label: 'Name', name: 'name' } as unknown as TableColumnSchema]}
+          responsiveHiddenColumns={[{ label: 'Email', name: 'email' } as unknown as TableColumnSchema]}
+          processedData={processedData as unknown as TableRowEntry[]}
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="row"
           expandedRowKeys={new Set(['1'])}
@@ -169,7 +174,7 @@ describe('table internal components', () => {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
-            } as any
+            } as unknown as FixedColumnLayout
           }
           emptyContent={null}
           showExpandColumn={true}
@@ -196,9 +201,9 @@ describe('table internal components', () => {
       <table>
         <TableBodyRows
           props={makeTableProps({ events: { onRowClick } })}
-          columns={[{ label: 'Name', name: 'name' } as any]}
+          columns={[{ label: 'Name', name: 'name' } as unknown as TableColumnSchema]}
           responsiveHiddenColumns={[]}
-          processedData={processedData as any}
+          processedData={processedData as unknown as TableRowEntry[]}
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="row"
           expandedRowKeys={new Set()}
@@ -210,7 +215,7 @@ describe('table internal components', () => {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
-            } as any
+            } as unknown as FixedColumnLayout
           }
           emptyContent={null}
           showExpandColumn={false}
@@ -243,9 +248,9 @@ describe('table internal components', () => {
       <table>
         <TableBodyRows
           props={makeTableProps({ events: {} })}
-          columns={[{ label: 'Name', name: 'name' } as any]}
+          columns={[{ label: 'Name', name: 'name' } as unknown as TableColumnSchema]}
           responsiveHiddenColumns={[]}
-          processedData={processedData as any}
+          processedData={processedData as unknown as TableRowEntry[]}
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="row"
           expandedRowKeys={new Set(['1'])}
@@ -257,7 +262,7 @@ describe('table internal components', () => {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
-            } as any
+            } as unknown as FixedColumnLayout
           }
           emptyContent={null}
           showExpandColumn={true}
@@ -282,9 +287,9 @@ describe('table internal components', () => {
       <table>
         <TableBodyRows
           props={makeTableProps({ events: {} })}
-          columns={[{ label: 'Name', name: 'name' } as any]}
+          columns={[{ label: 'Name', name: 'name' } as unknown as TableColumnSchema]}
           responsiveHiddenColumns={[]}
-          processedData={processedData as any}
+          processedData={processedData as unknown as TableRowEntry[]}
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="row"
           expandedRowKeys={new Set()}
@@ -296,7 +301,7 @@ describe('table internal components', () => {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
-            } as any
+            } as unknown as FixedColumnLayout
           }
           emptyContent={null}
           showExpandColumn={true}
@@ -337,11 +342,11 @@ describe('table internal components', () => {
             events: {},
           })}
           columns={[
-            { label: 'Name', name: 'name' } as any,
-            { label: 'Status', name: 'status' } as any,
+            { label: 'Name', name: 'name' } as unknown as TableColumnSchema,
+            { label: 'Status', name: 'status' } as unknown as TableColumnSchema,
           ]}
           responsiveHiddenColumns={[]}
-          processedData={processedData as any}
+          processedData={processedData as unknown as TableRowEntry[]}
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="row"
           expandedRowKeys={new Set()}
@@ -353,7 +358,7 @@ describe('table internal components', () => {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
-            } as any
+            } as unknown as FixedColumnLayout
           }
           emptyContent={null}
           showExpandColumn={false}
@@ -407,9 +412,9 @@ describe('table internal components', () => {
             props: { expandable: undefined, rowSelection: { type: 'radio' } },
             events: {},
           })}
-          columns={[{ label: 'Name', name: 'name' } as any]}
+          columns={[{ label: 'Name', name: 'name' } as unknown as TableColumnSchema]}
           responsiveHiddenColumns={[]}
-          processedData={processedData as any}
+          processedData={processedData as unknown as TableRowEntry[]}
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="row"
           expandedRowKeys={new Set()}
@@ -421,7 +426,7 @@ describe('table internal components', () => {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
-            } as any
+            } as unknown as FixedColumnLayout
           }
           emptyContent={null}
           showExpandColumn={false}
@@ -464,9 +469,9 @@ describe('table internal components', () => {
       <table>
         <TableBodyRows
           props={makeTableProps({ props: { expandable: undefined }, events: {} })}
-          columns={[{ label: 'Name', name: 'name' } as any]}
+          columns={[{ label: 'Name', name: 'name' } as unknown as TableColumnSchema]}
           responsiveHiddenColumns={[]}
-          processedData={processedData as any}
+          processedData={processedData as unknown as TableRowEntry[]}
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="row"
           expandedRowKeys={new Set()}
@@ -478,7 +483,7 @@ describe('table internal components', () => {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
-            } as any
+            } as unknown as FixedColumnLayout
           }
           emptyContent={null}
           showExpandColumn={false}
@@ -509,9 +514,9 @@ describe('table internal components', () => {
       <table>
         <TableBodyRows
           props={makeTableProps({ props: { expandable: {}, rowSelection: undefined }, events: {} })}
-          columns={[{ label: 'Name', name: 'name' } as any]}
+          columns={[{ label: 'Name', name: 'name' } as unknown as TableColumnSchema]}
           responsiveHiddenColumns={[]}
-          processedData={processedData as any}
+          processedData={processedData as unknown as TableRowEntry[]}
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="row"
           expandedRowKeys={new Set(['dup::dup:1'])}
@@ -523,7 +528,7 @@ describe('table internal components', () => {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
-            } as any
+            } as unknown as FixedColumnLayout
           }
           emptyContent={null}
           showExpandColumn={false}

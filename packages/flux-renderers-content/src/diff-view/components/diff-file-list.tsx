@@ -23,6 +23,7 @@ interface DiffFileListProps {
 type StatusTab = 'all' | 'added' | 'modified' | 'deleted';
 
 export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListProps) {
+  'use no memo';
   const [searchText, setSearchText] = useState('');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [visitedSet, setVisitedSet] = useState<Set<number>>(() => new Set());

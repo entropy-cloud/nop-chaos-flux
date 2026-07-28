@@ -121,12 +121,9 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     const body = container.querySelector('[data-slot="container-body"]');
     const rootClasses = Array.from(root?.classList ?? []);
     expect(rootClasses).not.toContain('flex');
-    expect(rootClasses).not.toContain('gap-2');
     expect(body?.hasAttribute('data-flex')).toBe(true);
-    const bodyClasses = Array.from(body?.classList ?? []);
-    expect(bodyClasses).toContain('flex');
-    expect(bodyClasses).toContain('flex-col');
-    expect(bodyClasses).toContain('gap-2');
+    expect(body?.getAttribute('data-direction')).toBe('column');
+    expect(body?.getAttribute('data-gap')).toBe('sm');
   });
 
   it('container gap-only path does not inject implicit row direction', () => {
@@ -145,11 +142,9 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     );
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body?.hasAttribute('data-flex')).toBe(true);
-    const bodyClasses = Array.from(body?.classList ?? []);
-    expect(bodyClasses).toContain('flex');
-    expect(bodyClasses).toContain('gap-2');
-    expect(bodyClasses).not.toContain('flex-row');
-    expect(bodyClasses).not.toContain('flex-col');
+    expect(body?.getAttribute('data-gap')).toBe('sm');
+    expect(body?.getAttribute('data-direction')).toBeNull();
+    expect(body?.className).toBe('');
   });
 
   it('container with direction:row keeps explicit row override on semantic path', () => {
@@ -168,9 +163,7 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     );
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body?.hasAttribute('data-flex')).toBe(true);
-    const bodyClasses = Array.from(body?.classList ?? []);
-    expect(bodyClasses).toContain('flex');
-    expect(bodyClasses).toContain('flex-row');
+    expect(body?.getAttribute('data-direction')).toBe('row');
   });
 
   it('page applies className to root, not body', () => {

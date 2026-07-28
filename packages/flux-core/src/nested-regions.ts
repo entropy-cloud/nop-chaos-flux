@@ -1,5 +1,6 @@
 import type { TemplateRegion, TemplateNode } from './types/node-identity.js';
 import type { CompileSchemaOptions } from './types/renderer-compiler.js';
+import type { SchemaDiagnosticCollector } from './types/schema-diagnostics-types.js';
 import type { SchemaInput } from './types/schema.js';
 import { isSchemaInput } from './utils/schema.js';
 
@@ -17,22 +18,54 @@ export type RegionCompileSchema = (
   regionMeta?: { params?: readonly string[]; isolate?: boolean },
 ) => TemplateNode | TemplateNode[];
 
-export function validateRegionParams(params: readonly string[], regionPath: string): void {
+export function validateRegionParams(
+  params: readonly string[],
+  regionPath: string,
+  collector?: SchemaDiagnosticCollector,
+): void {
   const seen = new Set<string>();
+  const errors: string[] = [];
 
   for (const name of params) {
     if (name.startsWith('$')) {
-      throw new Error(
+      const message =
         `Region ${regionPath} declares reserved param name "${name}". ` +
-          'Names starting with "$" are reserved for slot-frame metadata.',
-      );
+        'Names starting with "$" are reserved for slot-frame metadata.';
+      if (collector) {
+        collector.add({
+          code: 'invalid-property-value',
+          path: regionPath,
+          message,
+          severity: 'error',
+          source: 'core',
+        });
+      } else {
+        errors.push(message);
+      }
+      continue;
     }
 
     if (seen.has(name)) {
-      throw new Error(`Region ${regionPath} has duplicate param name "${name}".`);
+      const message = `Region ${regionPath} has duplicate param name "${name}".`;
+      if (collector) {
+        collector.add({
+          code: 'invalid-property-value',
+          path: regionPath,
+          message,
+          severity: 'error',
+          source: 'core',
+        });
+      } else {
+        errors.push(message);
+      }
+      continue;
     }
 
     seen.add(name);
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join('; '));
   }
 }
 

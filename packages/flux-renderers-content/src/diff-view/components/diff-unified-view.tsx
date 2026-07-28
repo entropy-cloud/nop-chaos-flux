@@ -24,6 +24,7 @@ export function DiffUnifiedView({
   onLineClick,
   onHunkExpand,
 }: DiffUnifiedViewProps) {
+  'use no memo';
   const inlineTokensMaps = useMemo(() => {
     if (!showInlineDiff) return undefined;
     const maps: Map<number, Map<number, InlineToken[]>> = new Map();

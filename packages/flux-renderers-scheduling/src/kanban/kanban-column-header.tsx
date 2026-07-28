@@ -108,17 +108,18 @@ export function KanbanColumnHeader({
           onKeyDown={onResizeKeyDown}
         />
       )}
-      <div
+      <Button
+        variant="ghost"
+        size="sm"
         data-slot="kanban-column-drag-handle"
-        className="nop-kanban-column-drag-handle cursor-grab text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+        className="nop-kanban-column-drag-handle cursor-grab px-0.5 py-0.5 h-auto text-gray-400 hover:text-gray-600 rounded"
         tabIndex={dndEnabled ? 0 : -1}
-        role="button"
         aria-label={t('scheduling.kanban.dragColumnLabel', { title })}
         aria-roledescription="drag handle"
         onKeyDown={(e) => onDragHandleKeyDown?.(e, column.id)}
       >
         <GripVertical className="w-4 h-4" />
-      </div>
+      </Button>
       <span className="font-semibold text-sm flex-1 truncate">{title}</span>
       <span className={cn(
         'text-xs rounded-full px-1.5 py-0.5 min-w-5 text-center',

@@ -35,7 +35,7 @@ export interface FieldState {
 }
 
 export interface FormStoreState {
-  values: Record<string, any>;
+  values: Record<string, unknown>;
   fieldStates: Record<string, FieldState>;
   submitting: boolean;
   submitAttempted: boolean;
@@ -134,7 +134,7 @@ export interface FormStoreApi {
   getPathState(path: string): FormPathState;
   getFieldState(path: string): FieldState | undefined;
   setFieldState(path: string, state: Partial<FieldState>): void;
-  setValues(values: Record<string, any>): void;
+  setValues(values: Record<string, unknown>): void;
   setValue(path: string, value: unknown): void;
   setPathErrors(path: string, errors?: ValidationError[]): void;
   setValidating(path: string, validating: boolean): void;
@@ -279,7 +279,7 @@ export interface OwnedSurfaceStateBase {
 }
 
 export interface SurfaceEntry extends OwnedSurfaceStateBase {
-  surface: Record<string, any>;
+  surface: Record<string, unknown>;
 }
 
 export interface SurfaceStoreState {
@@ -288,14 +288,14 @@ export interface SurfaceStoreState {
 }
 
 export interface PageStoreState {
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   refreshTick: number;
 }
 
 export interface PageStoreApi {
   getState(): PageStoreState;
   subscribe(listener: () => void): () => void;
-  setData(data: Record<string, any>): void;
+  setData(data: Record<string, unknown>): void;
   updateData(path: string, value: unknown): void;
   refresh(): void;
 }
@@ -315,7 +315,7 @@ export interface SurfaceRuntime {
   store: SurfaceStoreApi;
   open(input: {
     kind: 'dialog' | 'drawer' | 'sheet';
-    surface: Record<string, any>;
+  surface: Record<string, unknown>;
     scope: ScopeRef;
     surfaceId?: string;
     options?: {

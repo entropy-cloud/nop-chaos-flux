@@ -81,7 +81,8 @@ describe('per-slot className props', () => {
       />,
     );
     const body = container.querySelector('[data-slot="container-body"]');
-    expect(body?.className).toContain('flex');
+    expect(body?.getAttribute('data-flex')).toBe('');
+    expect(body?.getAttribute('data-direction')).toBe('column');
     expect(body?.className).toContain('gap-4');
   });
 
@@ -143,9 +144,8 @@ describe('per-slot className props', () => {
     );
 
     const body = container.querySelector('[data-slot="container-body"]');
-    expect(body?.className).toContain('flex');
-    expect(body?.className).toContain('flex-col');
-    expect(body?.hasAttribute('data-flex')).toBe(true);
+    expect(body?.getAttribute('data-flex')).toBe('');
+    expect(body?.getAttribute('data-direction')).toBe('column');
     expect(body?.hasAttribute('style')).toBe(false);
   });
 

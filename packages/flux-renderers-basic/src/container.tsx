@@ -1,14 +1,9 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveGap, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import type { ContainerSchema } from './schemas.js';
-import {
-  asReactNode,
-  resolveDirection,
-  resolveResponsiveDirection,
-  resolveResponsiveWrap,
-} from './utils.js';
+import { asReactNode } from './utils.js';
 
 export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
   const slotProps = props.props;
@@ -23,20 +18,14 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
     slotProps.align === 'stretch'
       ? slotProps.align
       : undefined;
-  const gap = resolveGap(slotProps.gap as number | string | undefined);
-  const responsiveDirectionClasses = resolveResponsiveDirection(
-    slotProps.responsiveDirection as Record<string, string | undefined> | undefined,
-  );
-  const responsiveWrapClasses = resolveResponsiveWrap(
-    slotProps.responsiveWrap as Record<string, boolean | undefined> | undefined,
-  );
-  const hasResponsive = responsiveDirectionClasses.length > 0 || responsiveWrapClasses.length > 0;
+  const gap = slotProps.gap as number | string | undefined;
+  const hasResponsive = slotProps.responsiveDirection != null || slotProps.responsiveWrap != null;
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
   const bodyContent = asReactNode(props.regions.body?.render());
 
   const useFlexChild =
-    wrap || align !== undefined || gap.className || gap.style || direction !== undefined || hasResponsive;
+    wrap || align !== undefined || gap !== undefined || direction !== undefined || hasResponsive;
   return (
     <div
       className={cn('nop-container', props.meta.className)}
@@ -52,20 +41,13 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
         <div
           data-slot="container-body"
           data-flex=""
+          data-direction={direction || undefined}
+          data-wrap={wrap ? 'true' : undefined}
+          data-align={align || undefined}
+          data-gap={gap !== undefined ? String(gap) : undefined}
           className={cn(
-            'flex',
-            resolveDirection(direction),
-            wrap && 'flex-wrap',
-            ...responsiveDirectionClasses,
-            ...responsiveWrapClasses,
-            align === 'center' && 'items-center justify-center',
-            align === 'start' && 'items-start justify-start',
-            align === 'end' && 'items-end justify-end',
-            align === 'stretch' && 'items-stretch',
-            gap.className,
             slotProps.bodyClassName,
           )}
-          style={gap.style}
         >
           {bodyContent}
         </div>
