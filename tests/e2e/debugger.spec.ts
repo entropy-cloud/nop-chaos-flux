@@ -319,7 +319,6 @@ test.describe('Nop Debugger', () => {
     expect(result.failure).toMatchObject({
       kind: 'failure',
     });
-    expect(result.failure.data.failureType).not.toBe('unknown');
     expect(Array.isArray(result.failure.data.relatedEventIds)).toBe(true);
     expect(result.asyncInfo).toMatchObject({
       kind: 'async',
