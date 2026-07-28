@@ -346,6 +346,93 @@ graph LR
     P0channel[P0即时通道] -.异步注入.-> MV
 ```
 
+## Follow-up Backlog
+
+P2 findings from `docs/audits/2026-07-28-0814-multi-audit-audit-remediation.md` and `docs/audits/2026-07-28-0814-open-audit-audit-remediation.md`. These do not block current plan closure and are tracked here for future remediation.
+
+### From Multi-Audit (D01 — Dependency Graph)
+
+| ID    | File                                              | Description                                      |
+| ----- | ------------------------------------------------- | ------------------------------------------------ |
+| 01-01 | `flux-runtime/package.json:15-20`                 | Rule(c) text outdated vs actual deps             |
+| 01-02 | `flux-renderers-mobile/package.json:20-24`        | Missing flux-react dependency                    |
+| 01-03 | `flux-renderers-data/package.json:15-22`          | Cross-renderer coupling: data→basic              |
+| 01-04 | `flux-renderers-form-advanced/package.json:22-24` | Cross-renderer coupling: 3 renderer packages     |
+| 01-05 | `flux-renderers-ai/package.json:28`               | Cross-renderer coupling: ai→content              |
+| 01-06 | `flux-code-editor/package.json:43`                | Cross-renderer coupling: code-editor→form        |
+| 01-09 | `report-designer-renderers/package.json:20-23`    | Cross-domain coupling: report→spreadsheet        |
+| 01-11 | `flux-renderers-form-advanced/package.json:25`    | Runtime dependency needs public API verification |
+
+### From Multi-Audit (D04 — State Ownership)
+
+| ID    | File                                                      | Description                                     |
+| ----- | --------------------------------------------------------- | ----------------------------------------------- |
+| 04-04 | `flux-renderers-form-advanced/src/upload-field.tsx:141`   | Local items state mirrors committed store value |
+| 04-05 | `flow-designer/.../use-xyflow-sync.ts:93-101`             | useEffect props-to-state sync chain             |
+| 04-07 | `flux-renderers-content/src/diff-view-renderer.tsx:74-91` | Debounced props-to-state sync                   |
+
+### From Multi-Audit (D06 — Async Safety)
+
+| ID    | File                                                          | Description                                          |
+| ----- | ------------------------------------------------------------- | ---------------------------------------------------- |
+| 06-05 | `flux-renderers-form/src/renderers/use-dict-options.ts:23-46` | Bare boolean cancelled, no AbortController           |
+| 06-09 | `flux-renderers-data/src/use-crud-polling.ts:106-136`         | handleRef overwrite race                             |
+| 06-10 | `flux-runtime/src/renderer-reaction-handle.ts:272-284`        | Redundant double-abort in dispose() (safe, doc only) |
+
+### From Multi-Audit (D11 — UI Components)
+
+| ID    | File                                                        | Description                                     |
+| ----- | ----------------------------------------------------------- | ----------------------------------------------- |
+| 11-02 | `apps/playground/src/pages/diff-demo.tsx:180-218`           | Native label/select/checkbox                    |
+| 11-03 | `apps/playground/src/pages/env-stream-demo.tsx:141-157`     | Native label with NativeSelect already imported |
+| 11-04 | `apps/playground/src/pages/event-prevention-demo.tsx:72-83` | Native label+checkbox in Toggle component       |
+
+### From Multi-Audit (D15 — Security & Performance)
+
+| ID     | File                                                                  | Description                                    |
+| ------ | --------------------------------------------------------------------- | ---------------------------------------------- |
+| 15-S1a | `flux-renderers-form/src/renderers/use-select-remote-search.ts:34-88` | Redundant cancelled+AbortController dual state |
+| 15-S1b | `form-advanced/src/tree-control-controllers.ts:107-153`               | Same dual cancellation                         |
+| 15-S1c | `form-advanced/src/condition-builder/value-input.tsx:174-192`         | Bare boolean, no AbortController               |
+| 15-S1d | `flux-renderers-form/src/renderers/use-dict-options.ts:23-46`         | Bare boolean, no AbortController               |
+| 15-S1e | `flux-renderers-data/src/crud-renderer-state.ts:608-672`              | Bare boolean, no AbortController               |
+| 15-S1f | `flux-renderers-content/src/markdown.tsx:35-56`                       | fetch with no AbortController                  |
+
+### From Multi-Audit (D19 — Error Propagation)
+
+| ID    | File                                                             | Description                                      |
+| ----- | ---------------------------------------------------------------- | ------------------------------------------------ |
+| 19-02 | `flux-action-core/src/action-dispatcher/action-runners.ts:58-68` | Monitor errors invisible                         |
+| 19-05 | `flux-runtime/src/action-adapter.ts:74-91`                       | Console.error only, loses cause                  |
+| 19-07 | `flux-runtime/src/form-runtime-values.ts:21-23`                  | Dependent revalidation only console.warn         |
+| 19-08 | `flux-runtime/src/surface-runtime.ts:188-230`                    | onClose hooks fire-and-forget                    |
+| 19-10 | `flux-runtime/src/form-runtime-values.ts:49-61`                  | setValues doesn't await revalidation             |
+| 19-11 | `flux-action-core/src/action-runners.ts:29-41`                   | Object.assign in-place error mutation            |
+| 19-12 | `flux-runtime/src/renderer-reaction-handle.ts:158-163`           | Error message missing handle id                  |
+| 19-13 | `flux-runtime/src/action-adapter.ts:423-427`                     | Resolution fallback error loses cause            |
+| 19-14 | `flux-runtime/src/form-store.ts:142-151`                         | Diagnostics default off                          |
+| 19-15 | `flux-react/src/schema-renderer.tsx:134-163`                     | Render crash may be undefined                    |
+| 19-16 | `flux-react/src/schema-renderer.tsx:55-70`                       | Compiler diagnostics off in non-strict           |
+| 19-18 | `flux-react/src/schema-renderer.tsx:55-79`                       | Compilation error not through diagnostic channel |
+| 19-20 | `flux-runtime/src/refresh-nearest.ts:97-101`                     | Silent no-op masquerades as success              |
+
+### From Open Audit (General P2)
+
+| ID   | File                                                                   | Description                                                 |
+| ---- | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
+| P2-A | `flux-bundle/package.json:25`                                          | `@nop-chaos/ui` peer dep is bare `"*"`                      |
+| P2-B | `word-editor-renderers/package.json:30`                                | `recharts` peer dep likely copy-paste leftover              |
+| P2-C | `flux-core/src/`                                                       | 34 test files colocated, zero in `__tests__/`               |
+| P2-D | Various                                                                | Low-assertion tests (1-4 expect calls each)                 |
+| P2-E | `flux-runtime/src/reaction-runtime.ts:449-458`                         | Async evaluateWatchValue race on subscribe                  |
+| P2-F | `flux-react/src/node-renderer-resolved.tsx:377-389`                    | componentProps container object created fresh every render  |
+| P2-G | `flux-renderers-basic/src/use-surface-renderer.ts:136-158`             | Effect syncing refs (adjudicated but distinct anti-pattern) |
+| P2-H | `flux-renderers-content/src/diff-view/components/diff-gutter.tsx:1-21` | `DiffGutterCell` deprecated but still exported              |
+| P2-I | `flux-renderers-content/src/diff-view/`                                | Inline style objects instead of Tailwind                    |
+| P2-J | `flux-renderers-mobile/package.json:20-24`                             | Missing explicit `@nop-chaos/flux-react` dependency         |
+| P2-K | Various `package.json`                                                 | Inconsistent CSS subpath export format                      |
+| P2-L | `flux-core/src/utils/path.ts:9-13`                                     | delete-then-set rehashing in rememberParsedPath             |
+
 ## 横切关注点
 
 - **执行模式（串行）**：Roadmap closed loop 按文档顺序取第一个 todo。实际执行是 M0→MA1→…→MA7→MR1→…→MV→MG 串行。不要声称"并行流水线"。
