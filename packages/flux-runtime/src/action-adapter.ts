@@ -79,7 +79,16 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
       const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
       return { plan: root?.validationPlan };
     } catch (error) {
-      console.error('Failed to compile surface validation plan:', error);
+      reportRuntimeHostIssue({
+        env: runtime.env,
+        level: 'error',
+        message: 'Failed to compile surface validation plan',
+        error,
+        phase: 'action',
+        details: {
+          reason: 'surface-validation-plan-compile-failed',
+        },
+      });
       return {
         plan: undefined,
         error:
@@ -423,7 +432,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
       try {
         handle = ctx.componentRegistry.resolve(invocation.target);
       } catch (e) {
-        resolveError = e instanceof Error ? e : new Error('Component handle resolution failed');
+        resolveError = e instanceof Error ? e : new Error('Component handle resolution failed', { cause: e });
       }
 
       if (resolveError || !handle) {

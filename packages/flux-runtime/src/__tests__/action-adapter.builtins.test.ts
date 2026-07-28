@@ -224,39 +224,38 @@ describe('createActionRuntimeAdapter direct branches', () => {
     ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
   });
 
-  it('logs console.error when surface body compilation fails', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    try {
-      const notify = vi.fn();
-      const createSurfaceScope = vi.fn();
-      const compileError = new Error('bad surface body');
-      const failingSurfaceRuntime = { open: vi.fn(), close: vi.fn() };
-      const failingAdapter = createActionRuntimeAdapter({
-        getEnv: () => ({ notify } as unknown as RendererEnv),
-        expressionCompiler: {} as unknown as ExpressionCompiler,
-        evaluate: <T>(target: unknown) => target as T,
-        executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
-        runtime: {
-          env: { notify, monitor: { onError: vi.fn() } },
-          createChildScope: vi.fn(),
-          refreshDataSource: vi.fn(),
-          compile: vi.fn(() => { throw compileError; }),
-        } as unknown as RendererRuntime,
-        createSurfaceScope,
-      });
+  it('reports diagnostic when surface body compilation fails', async () => {
+    const notify = vi.fn();
+    const onError = vi.fn();
+    const createSurfaceScope = vi.fn();
+    const compileError = new Error('bad surface body');
+    const failingSurfaceRuntime = { open: vi.fn(), close: vi.fn() };
+    const failingAdapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
+      runtime: {
+        env: { notify, monitor: { onError } },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        compile: vi.fn(() => { throw compileError; }),
+      } as unknown as RendererRuntime,
+      createSurfaceScope,
+    });
 
-      await failingAdapter.invokeBuiltInAction(
-        createBuiltInInvocation('openDialog', { title: 'Broken', body: [{ type: 'text' }] }),
-        createCtx({ surfaceRuntime: failingSurfaceRuntime }),
-      );
+    await failingAdapter.invokeBuiltInAction(
+      createBuiltInInvocation('openDialog', { title: 'Broken', body: [{ type: 'text' }] }),
+      createCtx({ surfaceRuntime: failingSurfaceRuntime }),
+    );
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to compile surface validation plan:',
-        compileError,
-      );
-    } finally {
-      consoleSpy.mockRestore();
-    }
+    expect(onError).toHaveBeenCalledWith({
+      phase: 'action',
+      error: compileError,
+      nodeId: undefined,
+      path: undefined,
+      details: { reason: 'surface-validation-plan-compile-failed' },
+    });
   });
 
   it('returns a cancelled result when ajax execution aborts', async () => {

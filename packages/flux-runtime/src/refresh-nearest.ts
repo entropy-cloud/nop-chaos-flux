@@ -1,10 +1,11 @@
-import type {
-  ActionContext,
-  ActionResult,
-  ComponentHandle,
-  ComponentHandleRegistryCore,
-  RendererRuntime,
-  ScopeRef,
+import {
+  reportRuntimeHostIssue,
+  type ActionContext,
+  type ActionResult,
+  type ComponentHandle,
+  type ComponentHandleRegistryCore,
+  type RendererRuntime,
+  type ScopeRef,
 } from '@nop-chaos/flux-core';
 
 export type RefreshNearestTargetType = 'auto' | 'crud' | 'tree' | 'data-source';
@@ -95,9 +96,17 @@ export async function refreshNearest(
   });
 
   if (!target) {
-    return notFound === 'error'
-      ? { ok: false, error: new Error('refreshNearest found no refreshable target') }
-      : { ok: true, data: { found: false } };
+    if (notFound === 'error') {
+      return { ok: false, error: new Error('refreshNearest found no refreshable target') };
+    }
+    reportRuntimeHostIssue({
+      env: runtime.env,
+      level: 'info',
+      message: 'refreshNearest found no refreshable target — no-op',
+      phase: 'action',
+      details: { targetType, notFound },
+    });
+    return { ok: true, data: { found: false } };
   }
 
   if (target.kind === 'component') {

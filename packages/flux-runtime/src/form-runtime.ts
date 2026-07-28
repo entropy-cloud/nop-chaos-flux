@@ -577,7 +577,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           reportDependentRevalidationFailure: inputValue.reportDependentRevalidationFailure,
         },
         values,
-      );
+      ).catch((error) => {
+        console.error('[form-runtime] executeSetValues unexpected error:', error);
+      });
     },
 
     appendValue(path, value) {

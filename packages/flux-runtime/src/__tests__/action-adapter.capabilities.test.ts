@@ -43,6 +43,23 @@ describe('createActionRuntimeAdapter component and namespaced actions', () => {
       adapter.invokeComponentAction(
         {
           method: 'submit',
+          target: { componentId: 'form-1' },
+          payload: undefined,
+        } as ComponentActionInvocation,
+        createCtx({
+          componentRegistry: {
+            resolve: () => {
+              throw { code: 'E_RESOLVE_FAILED' };
+            },
+          },
+        }),
+      ),
+    ).resolves.toMatchObject({ ok: false, error: new Error('Component handle resolution failed', { cause: { code: 'E_RESOLVE_FAILED' } }) });
+
+    await expect(
+      adapter.invokeComponentAction(
+        {
+          method: 'submit',
           target: { componentName: 'named-form' },
           payload: undefined,
         } as ComponentActionInvocation,

@@ -159,7 +159,7 @@ export function createRendererReactionHandle(input: {
       return {
         ok: false,
         cancelled: true,
-        error: new Error('ReactionHandle disposed'),
+        error: new Error(`ReactionHandle disposed (id: ${input.id})`),
       };
     }
 
@@ -215,7 +215,7 @@ export function createRendererReactionHandle(input: {
         return Promise.resolve({
           ok: false,
           cancelled: true,
-          error: new Error('ReactionHandle disposed'),
+          error: new Error(`ReactionHandle disposed (id: ${input.id})`),
         });
       }
       return dispatchWithAbortChain(plan.action, {

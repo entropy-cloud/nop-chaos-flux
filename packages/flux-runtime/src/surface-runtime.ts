@@ -2,12 +2,14 @@ import type {
   ActionSchema,
   CompiledFormValidationModel,
   RenderNodeInput,
+  RendererEnv,
   ScopeRef,
   SurfaceEntry,
   SurfaceRuntime,
   SurfaceStoreApi,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
+import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import { dispatchInOwner, type HookPayload } from './surface-hooks.js';
 import { publishOwnerStatus } from './status-owner.js';
 import { createSurfaceStore } from './surface-store.js';
@@ -206,7 +208,14 @@ export function createManagedSurfaceRuntime(
           closeNodes,
           { hookName: 'close' },
         ).catch((err) => {
-          console.warn('[surface] onClose hook failed:', err);
+          reportRuntimeHostIssue({
+            env: ownerActionCtx.runtime.env as RendererEnv,
+            level: 'warning',
+            message: 'Surface onClose hook failed',
+            error: err,
+            phase: 'action',
+            details: { surfaceId, hookName: 'close' },
+          });
         });
       }
     },
@@ -226,7 +235,14 @@ export function createManagedSurfaceRuntime(
           closeNodes,
           { hookName: 'close' },
         ).catch((err) => {
-          console.warn('[surface] onClose hook failed:', err);
+          reportRuntimeHostIssue({
+            env: ownerActionCtx.runtime.env as RendererEnv,
+            level: 'warning',
+            message: 'Surface onClose hook failed',
+            error: err,
+            phase: 'action',
+            details: { surfaceId: removed.id, hookName: 'close' },
+          });
         });
       }
     },

@@ -420,4 +420,39 @@ describe('registerReaction dispose race with scheduled microtask', () => {
 
     registration.dispose();
   });
+
+  it('subscribe guard buffers scope changes until after evaluateWatchValue initialization', async () => {
+    const runtime = createRuntime();
+    const page = runtime.createPageRuntime({ count: 0 });
+    const dispatch = vi.fn().mockResolvedValue({ ok: true });
+
+    const reactionRuntime = await import('../async-data/reaction-runtime.js');
+
+    // Register a reaction with immediate:true so it fires on registration
+    const registration = reactionRuntime.registerReaction({
+      id: 'subscribe-guard',
+      scope: page.scope,
+      runtime,
+      compiledReaction: compileReaction(
+        'subscribe-guard',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          immediate: true,
+          actions: { action: 'custom:noop' },
+        },
+        expressionCompiler,
+      ),
+      helpers: { dispatch },
+    });
+
+    // After initialization (subscribed=true), a scope change should trigger dispatch
+    page.scope.update('count', 1);
+
+    await vi.waitFor(() => {
+      expect(dispatch).toHaveBeenCalled();
+    });
+
+    registration.dispose();
+  });
 });

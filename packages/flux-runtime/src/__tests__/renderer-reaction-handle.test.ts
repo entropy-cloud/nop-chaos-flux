@@ -259,10 +259,11 @@ describe('registerRendererReaction (Phase 4)', () => {
 
     expect(handle.getDebugState().phase).toBe('disposed');
 
-    // After dispose, dispatch resolves to cancelled.
+    // After dispose, dispatch resolves to cancelled with handle id in error message.
     const postDispose = await handle.dispatch();
     expect(postDispose.ok).toBe(false);
     expect(postDispose.cancelled).toBe(true);
+    expect((postDispose.error as Error | undefined)?.message).toContain('ReactionHandle disposed (id: r9)');
 
     // Force/ready/pause/resume are silent no-ops.
     handle.force();

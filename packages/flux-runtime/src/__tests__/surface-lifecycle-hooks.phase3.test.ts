@@ -75,6 +75,42 @@ describe('surface lifecycle hooks — Phase 3 close hook', () => {
     expect(page.scope.readOwn()).toEqual({});
   });
 
+  it('forwards onClose hook results through runtime.dispatch and reports failures on reject', async () => {
+    const notifySpy = vi.spyOn(env, 'notify');
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
+    const mockRuntime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = mockRuntime.createPageRuntime({});
+    const surfaceRuntime = mockRuntime.createSurfaceRuntime();
+
+    // Open dialog first (with real dispatch), then override dispatch to reject
+    await mockRuntime.dispatch(
+      {
+        action: 'openDialog',
+        args: {
+          title: 'Rejecting onClose',
+          body: [{ type: 'text', text: 'Body' }],
+          onClose: { action: 'setValue', args: { path: 'x', value: 1 } },
+        },
+      },
+      { runtime: mockRuntime, scope: page.scope, page, surfaceRuntime },
+    );
+
+    const rejection = new Error('onClose reject');
+    mockRuntime.dispatch = vi.fn().mockRejectedValue(rejection) as typeof mockRuntime.dispatch;
+
+    const entry = surfaceRuntime.store.getState().entries[0]!;
+    surfaceRuntime.close(entry.id);
+
+    await vi.waitFor(() => {
+      expect(notifySpy).toHaveBeenCalledWith('warning', 'Surface onClose hook failed');
+    });
+    notifySpy.mockRestore();
+  });
+
   it('triggerHook dispatches submit:success with $formData + $result', async () => {
     const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({

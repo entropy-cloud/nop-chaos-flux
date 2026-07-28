@@ -212,9 +212,9 @@ describe('executeSetValues', () => {
 
   it('reports dependent revalidation failures without throwing', async () => {
     const sharedState = createSharedState({ a: 1 });
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    executeSetValues(
+    await executeSetValues(
       {
         sharedState,
         formId: 'f1',
@@ -226,14 +226,12 @@ describe('executeSetValues', () => {
       { a: 10 },
     );
 
-    await Promise.resolve();
-
-    expect(warn).toHaveBeenCalledWith(
+    expect(errorSpy).toHaveBeenCalledWith(
       '[form-runtime] dependent revalidation failed for "a"',
       expect.any(Error),
     );
 
-    warn.mockRestore();
+    errorSpy.mockRestore();
   });
 
   it('reports single-path dependent revalidation failures without throwing', async () => {

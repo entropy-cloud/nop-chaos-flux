@@ -19,7 +19,7 @@ export interface SetValuesContext {
 }
 
 export function defaultReportDependentRevalidationFailure(path: string, error: unknown): void {
-  console.warn(`[form-runtime] dependent revalidation failed for "${path}"`, error);
+  console.error(`[form-runtime] dependent revalidation failed for "${path}"`, error instanceof Error ? error.cause ?? error : error);
 }
 
 export function createDependentRevalidationFailureHandler(input: {
@@ -60,7 +60,7 @@ export function attachDependentRevalidationFailureHandler(
   });
 }
 
-export function executeSetValues(ctx: SetValuesContext, values: Record<string, unknown>): void {
+export async function executeSetValues(ctx: SetValuesContext, values: Record<string, unknown>): Promise<void> {
   const {
     sharedState,
     formId,
@@ -145,10 +145,10 @@ export function executeSetValues(ctx: SetValuesContext, values: Record<string, u
   }
 
   for (const changedPath of changedPaths) {
-    attachDependentRevalidationFailureHandler(
-      changedPath,
-      revalidateDependents(changedPath, 'change'),
-      reportDependentRevalidationFailure,
-    );
+    try {
+      await revalidateDependents(changedPath, 'change');
+    } catch (error) {
+      reportDependentRevalidationFailure(changedPath, error);
+    }
   }
 }

@@ -446,17 +446,12 @@ export function registerReaction(input: {
     emitDebug();
   }
 
-  const initialValue = evaluateWatchValue();
-  previousValue = initialValue;
-  initialized = true;
-  emitDebug();
-
-  if (immediateSource) {
-    scheduleReaction([], true);
-  }
-
+  let subscribed = false;
   const unsubscribe = input.scope.store?.subscribe((change) => {
     if (abortController.signal.aborted) {
+      return;
+    }
+    if (!subscribed) {
       return;
     }
 
@@ -466,6 +461,16 @@ export function registerReaction(input: {
 
     scheduleReaction(change.paths);
   });
+
+  const initialValue = evaluateWatchValue();
+  previousValue = initialValue;
+  initialized = true;
+  subscribed = true;
+  emitDebug();
+
+  if (immediateSource) {
+    scheduleReaction([], true);
+  }
 
   const registration: ForceableReactionRegistration = {
     id: input.id,

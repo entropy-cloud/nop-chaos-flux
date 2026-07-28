@@ -180,6 +180,8 @@ describe('refreshNearest — Phase 2 action end-to-end', () => {
     });
     const page = runtime.createPageRuntime({});
 
+    const notifySpy = vi.spyOn(env, 'notify');
+
     const result = await runtime.dispatch(
       { action: 'refreshNearest' },
       { runtime, scope: page.scope, page },
@@ -187,6 +189,8 @@ describe('refreshNearest — Phase 2 action end-to-end', () => {
 
     expect(result.ok).toBe(true);
     expect((result as any).data).toMatchObject({ found: false });
+    expect(notifySpy).toHaveBeenCalledWith('info', 'refreshNearest found no refreshable target — no-op');
+    notifySpy.mockRestore();
   });
 
   it('returns ok:false when notFound="error" and no target', async () => {
