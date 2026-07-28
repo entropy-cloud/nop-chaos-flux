@@ -32,27 +32,27 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
       setFetchLoading(false);
       return;
     }
-    let cancelled = false;
+    const controller = new AbortController();
     setFetchLoading(true);
     setFetchError(false);
-    fetch(src)
+    fetch(src, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.text();
       })
       .then((text) => {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setFetchedContent(text);
           setFetchLoading(false);
         }
       })
       .catch(() => {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setFetchError(true);
           setFetchLoading(false);
         }
       });
-    return () => { cancelled = true; };
+    return () => { controller.abort(); };
   }, [src, raw]);
 
   const effectiveContent = raw.length > 0 ? raw : (fetchedContent ?? '');

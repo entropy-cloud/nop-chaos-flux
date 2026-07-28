@@ -51,25 +51,22 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
     if (!canvasRef.current || valueStr.length === 0) {
       return;
     }
-    let cancelled = false;
+    const controller = new AbortController();
     QRCode.toCanvas(canvasRef.current, valueStr, {
       width: size,
       errorCorrectionLevel: level,
       margin: 1,
       color: { dark: foreground, light: background },
     }).catch((error: unknown) => {
-      if (!cancelled) {
-        setFailed(true);
-        // Align with the image/audio/video family: surface the failure as an event
-        // so schema authors can attach error handling.
-        void onLoadError?.();
-        if (import.meta.env?.DEV === true) {
-          console.warn('[qrcode] render failed:', error);
-        }
+      if (controller.signal.aborted) return;
+      setFailed(true);
+      void onLoadError?.();
+      if (import.meta.env?.DEV === true) {
+        console.warn('[qrcode] render failed:', error);
       }
     });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [valueStr, size, level, foreground, background, onLoadError]);
 
