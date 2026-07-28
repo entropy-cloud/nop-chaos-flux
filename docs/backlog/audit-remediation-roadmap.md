@@ -64,7 +64,7 @@ M0 产出 + 以下 skill 和工具可供审计工作项直接调用：
 ## 当前基线
 
 - **绿色基线**：`pnpm typecheck` + `pnpm build` + `pnpm test` 通过
-- **已知良好测试状态**：AI 包 442/442 pass（54 文件），Scheduling 包 816/816 pass（70 文件）
+- **已知良好测试状态**：AI 包 442/442 pass（54 文件），Scheduling 包 826/826 pass（73 文件）
 - **E2E 测试**：AI Chat 10/10、AI Widgets 10/10、AI Conversations 4/4；Gantt 部分 pass（~5/27 rendering pass，interaction 预知失败）
 - **审计工具状态**：待 M0 跑取基线
 - **已闭包审计项**：AI 包 P1×5 + P2×32 已闭包；Scheduling 包 P0×12 + P1×35 + P2×10 已闭包
