@@ -469,6 +469,12 @@ export function createRendererRuntime(input: {
 
       return sourceRegistryRef.current.refreshDataSource(inputValue);
     },
+    findFirstInScope(scope: ScopeRef) {
+      if (!sourceRegistryRef.current) {
+        return undefined;
+      }
+      return sourceRegistryRef.current.findFirstInScope(scope);
+    },
     registerReaction(inputValue: {
       id: string;
       compiledReaction: import('@nop-chaos/flux-core').CompiledReaction;

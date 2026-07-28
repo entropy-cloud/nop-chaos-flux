@@ -1,5 +1,6 @@
 import type {
   ActionContext,
+  ActionSchema,
   BuiltInActionInvocation,
   ComponentActionInvocation,
   ActionResult,
@@ -21,6 +22,7 @@ import {
 import type { ApiRequestExecutor } from './async-data/request-runtime.js';
 import type { SchemaFetchSharingContext } from './async-data/request-in-flight-registry.js';
 import { executeRuntimeAjaxAction } from './runtime-action-helpers.js';
+import { refreshNearest, type RefreshNearestArgs, type RefreshNearestTargetType } from './refresh-nearest.js';
 
 export interface ActionAdapterInput {
   getEnv: () => RendererEnv;
@@ -211,6 +213,10 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
               validationPlan: validation.plan,
               ownerNodeInstance: ctx.nodeInstance,
+              onCloseNodes: invocation.args?.onClose as ActionSchema | ActionSchema[] | undefined,
+              onSubmitSuccessNodes: invocation.args?.onSubmitSuccess as ActionSchema | ActionSchema[] | undefined,
+              onSubmitErrorNodes: invocation.args?.onSubmitError as ActionSchema | ActionSchema[] | undefined,
+              ownerActionCtx: ctx,
             },
           });
           dialogScope.update('dialogId', dialogId);
@@ -270,6 +276,10 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
               validationPlan: validation.plan,
               ownerNodeInstance: ctx.nodeInstance,
+              onCloseNodes: invocation.args?.onClose as ActionSchema | ActionSchema[] | undefined,
+              onSubmitSuccessNodes: invocation.args?.onSubmitSuccess as ActionSchema | ActionSchema[] | undefined,
+              onSubmitErrorNodes: invocation.args?.onSubmitError as ActionSchema | ActionSchema[] | undefined,
+              ownerActionCtx: ctx,
             },
           });
 
@@ -379,6 +389,19 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             data: refreshed,
             error: refreshed ? undefined : new Error(`Source not found: ${targetId}`),
           };
+        }
+
+        case 'refreshNearest': {
+          const rawArgs = invocation.args ?? {};
+          const target = typeof rawArgs.targetType === 'string' ? rawArgs.targetType : 'auto';
+          const validTargets: RefreshNearestTargetType[] = ['auto', 'crud', 'tree', 'data-source'];
+          const targetType = validTargets.includes(target as RefreshNearestTargetType)
+            ? (target as RefreshNearestTargetType)
+            : 'auto';
+          const notFound =
+            rawArgs.notFound === 'error' || rawArgs.notFound === 'silent' ? rawArgs.notFound : 'silent';
+          const args: RefreshNearestArgs = { targetType, notFound };
+          return refreshNearest(ctx, runtime, args);
         }
 
         default:

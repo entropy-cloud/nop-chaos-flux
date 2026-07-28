@@ -88,6 +88,7 @@ export interface RuntimeSourceRegistry {
     compiledSource: CompiledDataSource;
   }): DataSourceRegistration;
   refreshDataSource(input: { name: string; scope?: ScopeRef }): Promise<boolean>;
+  findFirstInScope(scope: ScopeRef): { name: string; scope: ScopeRef } | undefined;
   disposeScope(scopeId: string): void;
   disposeScopeTree(scopeId: string): void;
   getDebugSnapshot(): import('@nop-chaos/flux-core').SourceRegistryDebugSnapshot;
@@ -376,9 +377,32 @@ export function createRuntimeSourceRegistry(input: {
     return false;
   }
 
+  /**
+   * Returns the first registered source entry in the given scope's bucket, or
+   * undefined if the scope owns no data source. Used by `refreshNearest` to
+   * locate the closest refreshable data source without knowing its name.
+   *
+   * Like `refreshDataSource({ scope })`, this matches the scope's own bucket
+   * only — it does NOT walk the parent scope chain. Callers responsible for
+   * scope chain traversal (e.g. `refreshNearest`).
+   */
+  function findFirstInScope(
+    scope: ScopeRef,
+  ): { name: string; scope: ScopeRef } | undefined {
+    const bucket = scopeEntries.get(scope.id);
+    if (!bucket || bucket.size === 0) return undefined;
+    for (const entry of bucket.values()) {
+      if (entry.name) {
+        return { name: entry.name, scope: entry.scope };
+      }
+    }
+    return undefined;
+  }
+
   return {
     registerDataSource,
     refreshDataSource,
+    findFirstInScope,
     disposeScope,
     disposeScopeTree,
     getDebugSnapshot() {

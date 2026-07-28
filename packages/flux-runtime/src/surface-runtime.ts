@@ -1,4 +1,5 @@
 import type {
+  ActionSchema,
   CompiledFormValidationModel,
   ScopeRef,
   SurfaceEntry,
@@ -6,6 +7,7 @@ import type {
   SurfaceStoreApi,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
+import { dispatchInOwner, type HookPayload } from './surface-hooks.js';
 import { publishOwnerStatus } from './status-owner.js';
 import { createSurfaceStore } from './surface-store.js';
 
@@ -149,6 +151,10 @@ export function createManagedSurfaceRuntime(
         onOpen: options?.onOpen,
         onClose: options?.onClose,
         onConfirm: options?.onConfirm,
+        onCloseNodes: options?.onCloseNodes,
+        onSubmitSuccessNodes: options?.onSubmitSuccessNodes,
+        onSubmitErrorNodes: options?.onSubmitErrorNodes,
+        ownerActionCtx: options?.ownerActionCtx,
       };
 
       store.push(entry);
@@ -181,13 +187,72 @@ export function createManagedSurfaceRuntime(
     },
     close(surfaceId) {
       const removed = store.remove(surfaceId);
+      if (!removed) return;
+
+      // Snapshot hook info before disposeEntry clears the entry.
+      const closeNodes: ActionSchema | ActionSchema[] | undefined = removed.onCloseNodes;
+      const ownerActionCtx = removed.ownerActionCtx;
+
       disposeEntry(removed);
       republishActiveStatuses();
+
+      // Fire onCloseNodes (action-style openDialog/openDrawer only).
+      // Declarative surfaces use function-based `entry.onClose` via use-surface-renderer.ts.
+      // Fire-and-forget: close() stays sync; hook errors are warned, not thrown.
+      if (closeNodes && ownerActionCtx) {
+        dispatchInOwner(
+          { ...removed, ownerActionCtx },
+          closeNodes,
+          { hookName: 'close' },
+        ).catch((err) => {
+          console.warn('[surface] onClose hook failed:', err);
+        });
+      }
     },
     closeTop() {
       const removed = store.remove();
+      if (!removed) return;
+
+      const closeNodes = removed.onCloseNodes;
+      const ownerActionCtx = removed.ownerActionCtx;
+
       disposeEntry(removed);
       republishActiveStatuses();
+
+      if (closeNodes && ownerActionCtx) {
+        dispatchInOwner(
+          { ...removed, ownerActionCtx },
+          closeNodes,
+          { hookName: 'close' },
+        ).catch((err) => {
+          console.warn('[surface] onClose hook failed:', err);
+        });
+      }
+    },
+    /**
+     * Trigger a lifecycle hook on the given entry. Called by form submit flow
+     * (see form.tsx) when a `submitScope: 'surface'` form completes ajax and
+     * the entry has matching hook schema nodes.
+     *
+     * Resolves with the hook dispatch result. Errors propagate; callers
+     * should wrap in try/catch when triggering hooks from non-blocking flows.
+     */
+    async triggerHook(entry: SurfaceEntry, hookName: 'submit:success' | 'submit:error' | 'close', payload: HookPayload) {
+      let nodes: ActionSchema | ActionSchema[] | undefined;
+      if (hookName === 'submit:success') nodes = entry.onSubmitSuccessNodes;
+      else if (hookName === 'submit:error') nodes = entry.onSubmitErrorNodes;
+      else nodes = entry.onCloseNodes;
+
+      if (!nodes || !entry.ownerActionCtx) {
+        return { ok: true, data: { skipped: true } };
+      }
+
+      try {
+        return await dispatchInOwner(entry, nodes, payload);
+      } catch (err) {
+        console.warn(`[surface] ${hookName} hook failed:`, err);
+        return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };
+      }
     },
     dispose() {
       while (store.getState().entries.length > 0) {

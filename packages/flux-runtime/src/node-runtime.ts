@@ -224,6 +224,13 @@ export function createNodeRuntime(input: {
         env,
         state?.meta.testid,
       ),
+      frameWrap: evaluateCompiledValue(
+        input.expressionCompiler,
+        meta.frameWrap as CompiledRuntimeValue<boolean | 'label' | 'group' | 'none' | undefined> | undefined,
+        scope,
+        env,
+        state?.meta.frameWrap as RuntimeValueState<unknown> | undefined,
+      ),
       changed: true,
     };
 

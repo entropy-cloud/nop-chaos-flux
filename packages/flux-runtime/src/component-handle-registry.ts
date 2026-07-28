@@ -22,6 +22,9 @@ export function createComponentHandleRegistry(input: {
   const handlesById = new Map<string, Set<ComponentHandle>>();
   const handlesByName = new Map<string, Set<ComponentHandle>>();
   const nameIndex = new Map<string, Set<number>>();
+  // scope-id → set of handles carrying that scope. Populated only for handles
+  // whose `scope` field is set at register time (most leaf handles omit scope).
+  const handlesByScopeId = new Map<string, Set<ComponentHandle>>();
   const childRegistries = new Set<ComponentHandleRegistry>();
   const debugEnabledListeners = new Set<() => void>();
 
@@ -200,6 +203,12 @@ export function createComponentHandleRegistry(input: {
       existingByName.add(handle);
       handlesByName.set(handle.name, existingByName);
     }
+
+    if (handle.scope) {
+      const bucket = handlesByScopeId.get(handle.scope.id) ?? new Set<ComponentHandle>();
+      bucket.add(handle);
+      handlesByScopeId.set(handle.scope.id, bucket);
+    }
   }
 
   function unindexHandle(handle: ComponentHandle) {
@@ -226,6 +235,28 @@ export function createComponentHandleRegistry(input: {
         clearNameIndex(handle.name, handle._cid);
       }
     }
+
+    if (handle.scope) {
+      const indexedByScope = handlesByScopeId.get(handle.scope.id);
+      indexedByScope?.delete(handle);
+      if (indexedByScope && indexedByScope.size === 0) {
+        handlesByScopeId.delete(handle.scope.id);
+      }
+    }
+  }
+
+  function findFirstInScope(
+    scope: import('@nop-chaos/flux-core').ScopeRef,
+    predicate: (handle: ComponentHandle) => boolean,
+  ): ComponentHandle | undefined {
+    const bucket = handlesByScopeId.get(scope.id);
+    if (!bucket) return undefined;
+    for (const handle of bucket) {
+      if (handle._mounted !== false && predicate(handle)) {
+        return handle;
+      }
+    }
+    return undefined;
   }
 
   function resolveInScope(
@@ -350,6 +381,7 @@ export function createComponentHandleRegistry(input: {
       unindexHandle(handle);
     },
     resolve: resolveInScope,
+    findFirstInScope,
     inspectCid(cid) {
       const handle = resolveHandleByCid(cid);
       const debugData = resolveDebugDataByCid(cid);
