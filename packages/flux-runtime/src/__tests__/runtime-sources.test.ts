@@ -70,7 +70,6 @@ describe('createRendererRuntime', () => {
   });
 
   it('executes ajax data-source producers through action dispatch', async () => {
-    const onActionStart = vi.fn();
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiSchema) => ({
       ok: true,
       status: 200,
@@ -80,7 +79,6 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        monitor: { onActionStart },
         fetcher: fetcherImpl,
       },
       expressionCompiler,
@@ -105,13 +103,6 @@ describe('createRendererRuntime', () => {
     await vi.waitFor(() => {
       expect(page.scope.get('payload')).toEqual({ value: '/api/action-routed' });
     });
-
-    expect(onActionStart).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionType: 'ajax',
-        interactionId: expect.any(String),
-      }),
-    );
 
     registration.dispose();
   });

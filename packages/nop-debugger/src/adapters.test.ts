@@ -58,18 +58,9 @@ describe('debugger adapters', () => {
     });
   });
 
-  it('decorates env monitor, fetcher, and notify handlers', async () => {
+  it('decorates env fetcher and notify handlers', async () => {
     const store = createStore();
-    const baseMonitor = {
-      onRenderStart: vi.fn(),
-      onRenderEnd: vi.fn(),
-      onActionStart: vi.fn(),
-      onActionEnd: vi.fn(),
-      onApiRequest: vi.fn(),
-      onError: vi.fn(),
-    };
     const env: RendererEnv = {
-      monitor: baseMonitor,
       async fetcher<T>(api: ApiSchema) {
         return {
           ok: true,
@@ -92,52 +83,6 @@ describe('debugger adapters', () => {
       nextRequestInstanceId: createRequestInstanceIdFactory(),
     });
 
-    decoratedEnv.monitor?.onRenderStart?.({ nodeId: 'node-1', path: 'body.0', type: 'text' });
-    decoratedEnv.monitor?.onRenderEnd?.({
-      nodeId: 'node-1',
-      path: 'body.0',
-      type: 'text',
-      durationMs: 5,
-    });
-    decoratedEnv.monitor?.onActionStart?.({
-      actionType: 'reload',
-      instancePath: [],
-      nodeId: 'node-1',
-      path: 'body.0',
-    });
-    decoratedEnv.monitor?.onActionEnd?.({
-      actionType: 'reload',
-      instancePath: [],
-      nodeId: 'node-1',
-      path: 'body.0',
-      durationMs: 7,
-      result: { ok: true },
-    });
-    decoratedEnv.monitor?.onApiRequest?.({
-      api: {
-        url: '/api/demo',
-        method: 'post',
-        data: { token: 'client-secret', keep: 'visible' },
-      },
-      nodeId: 'node-1',
-      path: 'body.0',
-    });
-    decoratedEnv.monitor?.onApiRequest?.({
-      api: {
-        url: '/api/demo',
-        method: 'post',
-        data: { token: 'client-secret', keep: 'visible' },
-      },
-      nodeId: 'node-1',
-      path: 'body.0',
-    });
-    decoratedEnv.monitor?.onError?.({
-      phase: 'action',
-      error: new Error('monitor failed', { cause: { code: 'E_MONITOR', token: 'secret' } }),
-      nodeId: 'node-1',
-      path: 'body.0',
-      details: { provider: 'host', token: 'detail-secret' },
-    });
     decoratedEnv.notify('warning', 'watch out');
     await decoratedEnv.fetcher(
       {
@@ -162,16 +107,8 @@ describe('debugger adapters', () => {
     );
     const apiEndEvent = snapshot.events.find((event: NopDebugEvent) => event.kind === 'api:end');
     const notifyEvent = snapshot.events.find((event: NopDebugEvent) => event.kind === 'notify');
-    const errorEvent = snapshot.events.find(
-      (event: NopDebugEvent) => event.kind === 'error' && event.source === 'monitor.onError',
-    );
 
-    expect(baseMonitor.onRenderStart).toHaveBeenCalled();
-    expect(baseMonitor.onApiRequest).toHaveBeenCalledTimes(2);
-    expect(
-      snapshot.events.find((event: NopDebugEvent) => event.kind === 'action:start')?.actionType,
-    ).toBe('reload');
-    expect(apiStartEvents).toHaveLength(2);
+    expect(apiStartEvents).toHaveLength(1);
     expect(apiStartEvents[0].exportedData).toMatchObject({ token: '[MASKED]', keep: 'visible' });
     expect(apiStartEvents[0].requestInstanceId).toBeTruthy();
     expect(apiEndEvent?.exportedData).toMatchObject({ echoedUrl: '/api/demo', token: '[MASKED]' });
@@ -179,14 +116,6 @@ describe('debugger adapters', () => {
       method: 'POST',
       status: 200,
       responseType: 'object',
-    });
-    expect(errorEvent?.detail).toContain('Caused by:');
-    expect(errorEvent?.exportedData).toMatchObject({
-      error: {
-        message: 'monitor failed',
-        cause: { code: 'E_MONITOR', token: '[MASKED]' },
-      },
-      details: { provider: 'host', token: '[MASKED]' },
     });
     expect(notifyEvent).toMatchObject({ summary: 'warning: watch out' });
   });
@@ -316,40 +245,5 @@ describe('debugger adapters', () => {
     });
   });
 
-  it('can skip render events when performance capture is disabled', () => {
-    const store = createStore();
-    const env: RendererEnv = {
-      monitor: {
-        onRenderStart: vi.fn(),
-        onRenderEnd: vi.fn(),
-      },
-      async fetcher<T>() {
-        return { ok: true, status: 200, data: undefined as T };
-      },
-      notify() {
-        return undefined;
-      },
-    };
 
-    const decoratedEnv = decorateDebuggerEnv({
-      enabled: true,
-      capturePerformance: false,
-      env,
-      store,
-      redaction: normalizeRedactionOptions(undefined),
-      requestState: new Map(),
-      nextRequestInstanceId: createRequestInstanceIdFactory(),
-    });
-
-    decoratedEnv.monitor?.onRenderStart?.({ nodeId: 'node-1', path: 'body.0', type: 'text' });
-    decoratedEnv.monitor?.onRenderEnd?.({
-      nodeId: 'node-1',
-      path: 'body.0',
-      type: 'text',
-      durationMs: 4,
-    });
-    decoratedEnv.notify('info', 'still tracked');
-
-    expect(store.getSnapshot().events.map((event) => event.kind)).toEqual(['notify']);
-  });
 });

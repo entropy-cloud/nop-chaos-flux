@@ -4,65 +4,7 @@ import type {
   CompiledActionProgram,
   NodeInstance,
   RendererHelpers,
-  ResolvedNodeMeta,
-  TemplateNode,
 } from '@nop-chaos/flux-core';
-
-export function useRenderMonitor(input: {
-  monitor: import('@nop-chaos/flux-core').RendererEnv['monitor'];
-  templateNode: TemplateNode;
-  resolvedMeta: ResolvedNodeMeta;
-}) {
-  const startedAtRef = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    if (!input.monitor) {
-      startedAtRef.current = undefined;
-      return;
-    }
-
-    if (
-      input.resolvedMeta.when === false ||
-      !input.resolvedMeta.visible ||
-      input.resolvedMeta.hidden
-    ) {
-      startedAtRef.current = undefined;
-      return;
-    }
-
-    const payload = {
-      nodeId: input.templateNode.id,
-      path: input.templateNode.templatePath,
-      type: input.templateNode.rendererType,
-    };
-
-    startedAtRef.current = Date.now();
-
-    input.monitor.onRenderStart?.(payload);
-
-    return () => {
-      const startedAt = startedAtRef.current;
-      startedAtRef.current = undefined;
-
-      if (startedAt == null) {
-        return;
-      }
-
-      input.monitor?.onRenderEnd?.({
-        ...payload,
-        durationMs: Math.max(0, Date.now() - startedAt),
-      });
-    };
-  }, [
-    input.monitor,
-    input.templateNode.id,
-    input.templateNode.templatePath,
-    input.templateNode.rendererType,
-    input.resolvedMeta.when,
-    input.resolvedMeta.visible,
-    input.resolvedMeta.hidden,
-  ]);
-}
 
 export function useNodeLifecycleActions(input: {
   lifecycleActions:

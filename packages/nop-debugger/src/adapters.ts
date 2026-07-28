@@ -6,7 +6,6 @@ import {
   type ApiResponse,
   type ExecutableApiRequest,
   type RendererEnv,
-  type RendererMonitor,
   type RendererPlugin,
   type SchemaInput,
   type CompiledTemplate,
@@ -14,7 +13,6 @@ import {
 import {
   buildNetworkSummary,
   createRequestKey,
-  formatActionResult,
   formatErrorDetail,
   normalizeErrorForExport,
   normalizeCompiledRoot,
@@ -125,126 +123,6 @@ export function decorateDebuggerEnv(input: {
     return input.env;
   }
 
-  const baseMonitor = input.env.monitor;
-  const decoratedMonitor: RendererMonitor = {
-    ...baseMonitor,
-    onRenderStart(payload) {
-      if (input.capturePerformance) {
-        input.store.append({
-          kind: 'render:start',
-          group: 'render',
-          level: 'info',
-          source: 'monitor.onRenderStart',
-          summary: `${payload.type} render start`,
-          detail: `nodeId=${payload.nodeId} | path=${payload.path}`,
-          nodeId: payload.nodeId,
-          path: payload.path,
-          rendererType: payload.type,
-        });
-      }
-      baseMonitor?.onRenderStart?.(payload);
-    },
-    onRenderEnd(payload) {
-      if (input.capturePerformance) {
-        input.store.append({
-          kind: 'render:end',
-          group: 'render',
-          level: 'success',
-          source: 'monitor.onRenderEnd',
-          summary: `${payload.type} rendered in ${payload.durationMs}ms`,
-          detail: `nodeId=${payload.nodeId} | path=${payload.path}`,
-          nodeId: payload.nodeId,
-          path: payload.path,
-          rendererType: payload.type,
-          durationMs: payload.durationMs,
-        });
-      }
-      baseMonitor?.onRenderEnd?.(payload);
-    },
-    onActionStart(payload) {
-      input.store.append({
-        kind: 'action:start',
-        group: 'action',
-        level: 'info',
-        source: 'monitor.onActionStart',
-        summary: `${payload.actionType} started`,
-        detail: `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`,
-        actionType: payload.actionType,
-        interactionId: payload.interactionId,
-        instancePath: payload.instancePath,
-        nodeId: payload.nodeId,
-        path: payload.path,
-      });
-      baseMonitor?.onActionStart?.(payload);
-    },
-    onActionEnd(payload) {
-      input.store.append({
-        kind: 'action:end',
-        group: 'action',
-        level: payload.result?.ok === false ? 'error' : 'success',
-        source: 'monitor.onActionEnd',
-        summary: `${payload.actionType} ${formatActionResult(payload.result)} in ${payload.durationMs}ms`,
-        detail: `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`,
-        actionType: payload.actionType,
-        interactionId: payload.interactionId,
-        instancePath: payload.instancePath,
-        nodeId: payload.nodeId,
-        path: payload.path,
-        durationMs: payload.durationMs,
-      });
-      baseMonitor?.onActionEnd?.(payload);
-    },
-    onApiRequest(payload) {
-      const requestKey = createRequestKey(payload.api, payload.nodeId, payload.path);
-      const requestInstanceId = payload.requestInstanceId ?? input.nextRequestInstanceId();
-      if (!input.requestState.has(requestInstanceId)) {
-        input.requestState.set(requestInstanceId, {
-          startedAt: Date.now(),
-          requestInstanceId,
-          interactionId: payload.interactionId,
-          nodeId: payload.nodeId,
-          path: payload.path,
-        });
-        input.store.append({
-          kind: 'api:start',
-          group: 'api',
-          level: 'info',
-          source: 'monitor.onApiRequest',
-          summary: summarizeApi(payload.api),
-          detail: `nodeId=${payload.nodeId ?? 'n/a'} | path=${payload.path ?? 'n/a'}`,
-          nodeId: payload.nodeId,
-          path: payload.path,
-          requestKey,
-          requestInstanceId,
-          interactionId: payload.interactionId,
-          exportedData: redactData(payload.api.data, input.redaction),
-          network: buildNetworkSummary({ api: payload.api }),
-        });
-      }
-      baseMonitor?.onApiRequest?.(payload);
-    },
-    onError(payload) {
-      input.store.append({
-        kind: 'error',
-        group: 'error',
-        level: 'error',
-        source: 'monitor.onError',
-        summary: `${payload.phase} error`,
-        detail: formatErrorDetail(payload.error),
-        nodeId: payload.nodeId,
-        path: payload.path,
-        exportedData: redactData(
-          {
-            error: normalizeErrorForExport(payload.error),
-            details: payload.details,
-          },
-          input.redaction,
-        ),
-      });
-      baseMonitor?.onError?.(payload);
-    },
-  };
-
   const decoratedFetcher = async <T>(
     next: ApiFetcher,
     api: ExecutableApiRequest,
@@ -262,21 +140,19 @@ export function decorateDebuggerEnv(input: {
       path: existingRequest?.path,
     });
 
-    if (!ctx.env.monitor?.onApiRequest) {
-      input.store.append({
-        kind: 'api:start',
-        group: 'api',
-        level: 'info',
-        source: 'fetcher',
-        summary: summarizeApi(api),
-        detail: 'request started via fetcher wrapper',
-        requestKey,
-        requestInstanceId,
-        interactionId: ctx.interactionId,
-        exportedData: redactData(api.data, input.redaction),
-        network: buildNetworkSummary({ api }),
-      });
-    }
+    input.store.append({
+      kind: 'api:start',
+      group: 'api',
+      level: 'info',
+      source: 'fetcher',
+      summary: summarizeApi(api),
+      detail: 'request started via fetcher wrapper',
+      requestKey,
+      requestInstanceId,
+      interactionId: ctx.interactionId,
+      exportedData: redactData(api.data, input.redaction),
+      network: buildNetworkSummary({ api }),
+    });
 
     try {
       const response = await next<T>(api, ctx);
@@ -327,10 +203,7 @@ export function decorateDebuggerEnv(input: {
   };
 
   return decorateRendererEnv(
-    {
-      ...input.env,
-      monitor: decoratedMonitor,
-    },
+    input.env,
     {
       fetcher: decoratedFetcher,
       notify(next, level, message) {

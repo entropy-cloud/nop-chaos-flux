@@ -136,15 +136,11 @@ describe('createRendererRuntime', () => {
   });
 
   it('emits cancelled monitor results for guarded duplicate submitForm actions', async () => {
-    const onActionEnd = vi.fn();
     let resolveApi: (() => void) | undefined;
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        monitor: {
-          onActionEnd,
-        },
         fetcher: async <T>() => {
           await new Promise<void>((resolve) => {
             resolveApi = resolve;
@@ -184,12 +180,6 @@ describe('createRendererRuntime', () => {
     );
 
     expect(secondResult).toMatchObject({ cancelled: true });
-    expect(onActionEnd).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionType: 'submitForm',
-        result: expect.objectContaining({ cancelled: true }),
-      }),
-    );
 
     resolveApi?.();
     await firstPromise;

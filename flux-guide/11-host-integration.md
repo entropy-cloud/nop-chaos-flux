@@ -8,19 +8,20 @@
 
 `createSchemaRenderer()` 返回的组件接收以下 props（必填项加粗）：
 
-| prop                  | 类型                        | 说明                                                       |
-| --------------------- | --------------------------- | ---------------------------------------------------------- |
-| **`schema`**          | `SchemaInput`               | 要渲染的 JSON schema                                       |
-| **`schemaUrl`**       | `string`                    | schema 逻辑地址，用作缓存键 / `xui:imports` 解析基准       |
-| **`env`**             | `RendererEnv`               | 宿主能力集合（见下）                                       |
-| **`formulaCompiler`** | `FormulaCompiler`           | 表达式编译器，`createFormulaCompiler()` 创建               |
-| `registry`            | `RendererRegistry`          | 渲染器注册表（不传则用 `createSchemaRenderer(defs)` 内建） |
-| `data`                | `Record<string, any>`       | 页面初始数据                                               |
-| `plugins`             | `RendererPlugin[]`          | 编译/动作管线插件（见下）                                  |
-| `moduleCache`         | `ModuleCache`               | `xui:imports` 模块缓存，`createModuleCache()` 创建         |
-| `strictValidation`    | `boolean`                   | 严格校验模式（未知属性等升级为 error）                     |
-| `onActionError`       | `(error, ctx) => void`      | 全局动作错误回调                                           |
-| `onRuntimeChange`     | `(runtime \| null) => void` | 运行时实例变更回调                                         |
+| prop                  | 类型                        | 说明                                                                    |
+| --------------------- | --------------------------- | ----------------------------------------------------------------------- |
+| **`schema`**          | `SchemaInput`               | 要渲染的 JSON schema                                                    |
+| **`schemaUrl`**       | `string`                    | schema 逻辑地址，用作缓存键 / `xui:imports` 解析基准                    |
+| **`env`**             | `RendererEnv`               | 宿主能力集合（见下）                                                    |
+| **`formulaCompiler`** | `FormulaCompiler`           | 表达式编译器，`createFormulaCompiler()` 创建                            |
+| `registry`            | `RendererRegistry`          | 渲染器注册表（不传则用 `createSchemaRenderer(defs)` 内建）              |
+| `data`                | `Record<string, any>`       | 页面初始数据                                                            |
+| `plugins`             | `RendererPlugin[]`          | 编译/动作管线插件（见下）                                               |
+| `moduleCache`         | `ModuleCache`               | `xui:imports` 模块缓存，`createModuleCache()` 创建                      |
+| `strictValidation`    | `boolean`                   | 严格校验模式（未知属性等升级为 error）                                  |
+| `onActionError`       | `(error, ctx) => void`      | 全局动作错误回调                                                        |
+| `onRuntimeChange`     | `(runtime \| null) => void` | 运行时实例变更回调                                                      |
+| `monitor`             | `RendererMonitor`           | 遥测监控函数，独立于 env（详见 `../docs/architecture/flux-monitor.md`） |
 
 ```tsx
 <SchemaRenderer

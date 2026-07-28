@@ -13,7 +13,7 @@
 
 ## 2. env 字段全集
 
-> **状态声明**：以下展示**目标态全集**。当前 `master` 分支 `packages/flux-core/src/types/renderer-api.ts:83` 已实施字段为：`fetcher / notify / navigate / confirm / alert / functions / filters / importLoader / resolveImportUrl / monitor / loadPage / loadDict / hasRole / locale`。
+> **状态声明**：以下展示**目标态全集**。当前 `master` 分支 `packages/flux-core/src/types/renderer-api.ts:83` 已实施字段为：`fetcher / notify / navigate / confirm / alert / functions / filters / importLoader / resolveImportUrl / loadPage / loadDict / hasRole / locale`。（`monitor` 已从 env 移除，改用 `<SchemaRenderer monitor>` prop，详见 `docs/architecture/flux-monitor.md`。）
 >
 > `stream` 与 `openSocket` 已于 2026-07-21 经 INV-2 评审通过，并于 2026-07-23 **落地实施**（接口 + playground 默认实现 + decorator hooks，见 §4.3 历史记录）。两个字段均 optional，向后兼容。使用方应 capability check（`if (env.stream) ...`）。
 
@@ -44,7 +44,7 @@ export interface RendererEnv extends ExpressionExecutionEnv {
   resolveImportUrl?: (schemaUrl: string, from: string, options?) => string;
 
   // ===== 监控 =====
-  monitor?: RendererMonitor;
+  // monitor 已移至 <SchemaRenderer monitor> prop（详见 docs/architecture/flux-monitor.md）
 
   // ===== 表达式扩展 =====
   functions?: Record<string, (...args: any[]) => any>;
@@ -199,13 +199,9 @@ resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, un
 - **owner doc**：`docs/architecture/module-cache-and-import-stack.md:139`
 - **用途**：`xui:imports` 的 module 解析入口；同时产生 action namespace + 表达式 helper 两个 channel
 
-### 3.9 `monitor`（监控）
+### 3.9 `monitor`（已移除）
 
-```ts
-monitor?: RendererMonitor;  // { onRenderStart, onRenderEnd, onActionStart, onActionEnd, onError, onApiRequest }
-```
-
-- **owner doc**：`docs/architecture/performance-diagnostics-and-e2e-design.md:163`
+> `monitor` 已从 `RendererEnv` 移除，改用 `<SchemaRenderer monitor>` prop。详见 `docs/architecture/flux-monitor.md`。
 
 ### 3.10 `functions` / `filters`（表达式扩展）
 
@@ -271,7 +267,7 @@ locale?: string;
 | `loadPage` / `loadDict` | 可选    | 后端 API 或本地 mock                                                                               |
 | `hasRole`               | 可选    | 缺省 allow-all                                                                                     |
 | `importLoader`          | 可选    | 静态注册表或动态 `import()`                                                                        |
-| `monitor`               | 可选    | `nop-debugger` 提供                                                                                |
+| `monitor`               | 已移除  | 改用 `<SchemaRenderer monitor>` prop（见 `flux-monitor.md`）                                       |
 | `functions` / `filters` | 可选    | 静态注册表                                                                                         |
 | `locale`                | 可选    | i18n 库                                                                                            |
 
@@ -295,7 +291,7 @@ locale?: string;
 | `ApiResponse` envelope                          | `docs/architecture/api-response-envelope.md`                        |
 | `loadPage` / `loadDict` 接口                    | `docs/architecture/flux-page-dict-loading-and-precompile.md`        |
 | `importLoader` / `resolveImportUrl`             | `docs/architecture/module-cache-and-import-stack.md`                |
-| `monitor` 在性能诊断中的角色                    | `docs/architecture/performance-diagnostics-and-e2e-design.md`       |
+| `monitor` 在性能诊断中的角色                    | `docs/architecture/flux-monitor.md`                                 |
 | `functions` / `filters` 表达式扩展              | `docs/architecture/flux-formula.md`                                 |
 | 设计哲学（为什么 IO 经 env）                    | `docs/articles/flux-design-introduction.md:606`                     |
 | Runtime requirements（环境稳定性 / 域私有通道） | `docs/low-code-dsl-runtime-requirements.md`                         |

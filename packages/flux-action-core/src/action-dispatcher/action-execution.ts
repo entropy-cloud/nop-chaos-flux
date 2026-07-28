@@ -162,23 +162,6 @@ function reportActionError(
   }
 }
 
-function reportActionEnd(
-  ctx: ActionDispatcherContext,
-  actionPayload: ActionMonitorPayload,
-  durationMs: number,
-  result: ActionResult,
-): void {
-  try {
-    ctx.getEnv().monitor?.onActionEnd?.({
-      ...actionPayload,
-      durationMs,
-      result,
-    });
-  } catch (monitorError) {
-    console.warn('[action-execution] monitor onActionEnd threw:', monitorError);
-  }
-}
-
 function reportUnhandledFailureClass(
   ctx: ActionDispatcherContext,
   actionCtx: ActionContext,
@@ -280,7 +263,6 @@ async function runSingleAction(
   const actionPayload = buildActionMonitorPayload(action, activeCtx);
 
   try {
-    ctx.getEnv().monitor?.onActionStart?.(actionPayload);
     const processedAction =
       (ctx.plugins?.length ?? 0) > 0
         ? normalizeCompiledActionProgram(
@@ -368,7 +350,6 @@ async function runSingleAction(
   } catch (error) {
     if (isAbortError(error)) {
       const result = createCancelledResult(error);
-      reportActionEnd(ctx, actionPayload, Date.now() - startedAt, result);
       return result;
     }
 
@@ -382,7 +363,6 @@ async function runSingleAction(
       ...metadata,
     };
     caughtFailureResults.add(result);
-    reportActionEnd(ctx, actionPayload, Date.now() - startedAt, result);
     return result;
   }
 }
@@ -399,11 +379,8 @@ function runActionWithDebounce(
   }
 
   const key = createActionKey(action, actionCtx);
-  const cancelledResult = createCancelledResult();
 
-  if (cancelPendingDebounce<string, ActionResult>(ctx.pendingDebounces, key, cancelledResult)) {
-    reportActionEnd(ctx, buildActionMonitorPayload(action, actionCtx), 0, cancelledResult);
-  }
+  cancelPendingDebounce(ctx.pendingDebounces, key);
 
   return scheduleDebounce<string, ActionResult>(ctx.pendingDebounces, key, debounceMs, () =>
     runSingleActionWithRetry(ctx, action, actionCtx),

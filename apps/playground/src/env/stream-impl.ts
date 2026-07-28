@@ -227,12 +227,6 @@ export function createDefaultStream(options: CreateStreamOptions = {}): NonNulla
   ): Promise<StreamFetchResult<T>> => {
     const { url, init } = buildFetchInput(api);
 
-    ctx.env.monitor?.onApiRequest?.({
-      api,
-      interactionId: ctx.interactionId,
-      requestInstanceId: ctx.requestInstanceId,
-    });
-
     let response: Response;
     try {
       response = await fetchImpl(url, { ...init, signal: ctx.signal });

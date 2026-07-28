@@ -454,15 +454,6 @@ export async function executeApiSchema(
         // while still falling back to the raw response body so the backend
         // message is preserved on the thrown error below. This mirrors the
         // observability of the success path, which has no catch and propagates.
-        env.monitor?.onError?.({
-          phase: 'api',
-          error: adaptorError,
-          details: {
-            url: executableApi.url,
-            status: response.status,
-            adaptor: 'responseAdaptor',
-          },
-        });
         console.warn(
           `[flux-runtime] responseAdaptor threw while adapting a non-OK response from ${executableApi.url} (status ${response.status}); falling back to the raw response body.`,
           adaptorError,

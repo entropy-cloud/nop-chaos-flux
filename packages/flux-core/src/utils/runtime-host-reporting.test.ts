@@ -11,9 +11,8 @@ function createMockEnv(overrides?: Partial<RendererEnv>): RendererEnv {
 }
 
 describe('reportRuntimeHostIssue', () => {
-  it('reports error via env.notify and env.monitor by default', () => {
-    const monitor = { onError: vi.fn() };
-    const env = createMockEnv({ monitor });
+  it('reports error via env.notify by default', () => {
+    const env = createMockEnv();
 
     reportRuntimeHostIssue({
       env,
@@ -21,15 +20,10 @@ describe('reportRuntimeHostIssue', () => {
     });
 
     expect(env.notify).toHaveBeenCalledWith('error', 'something broke');
-    expect(monitor.onError).toHaveBeenCalledWith({
-      phase: 'render',
-      error: new Error('something broke'),
-      details: undefined,
-    });
   });
 
   it('uses custom level and message', () => {
-    const env = createMockEnv({ monitor: { onError: vi.fn() } });
+    const env = createMockEnv();
 
     reportRuntimeHostIssue({
       env,
@@ -42,7 +36,7 @@ describe('reportRuntimeHostIssue', () => {
   });
 
   it('derives message from error when not provided', () => {
-    const env = createMockEnv({ monitor: { onError: vi.fn() } });
+    const env = createMockEnv();
 
     reportRuntimeHostIssue({
       env,
@@ -53,7 +47,7 @@ describe('reportRuntimeHostIssue', () => {
   });
 
   it('handles string error', () => {
-    const env = createMockEnv({ monitor: { onError: vi.fn() } });
+    const env = createMockEnv();
 
     reportRuntimeHostIssue({
       env,
@@ -64,7 +58,7 @@ describe('reportRuntimeHostIssue', () => {
   });
 
   it('uses fallback message for null/undefined error', () => {
-    const env = createMockEnv({ monitor: { onError: vi.fn() } });
+    const env = createMockEnv();
 
     reportRuntimeHostIssue({ env });
 
@@ -72,7 +66,7 @@ describe('reportRuntimeHostIssue', () => {
   });
 
   it('skips notification when notify: false', () => {
-    const env = createMockEnv({ monitor: { onError: vi.fn() } });
+    const env = createMockEnv();
 
     reportRuntimeHostIssue({
       env,
@@ -81,26 +75,10 @@ describe('reportRuntimeHostIssue', () => {
     });
 
     expect(env.notify).not.toHaveBeenCalled();
-    expect(env.monitor!.onError).toHaveBeenCalled();
   });
 
-  it('skips monitor when monitor: false', () => {
-    const monitor = { onError: vi.fn() };
-    const env = createMockEnv({ monitor });
-
-    reportRuntimeHostIssue({
-      env,
-      error: new Error('no monitor report'),
-      monitor: false,
-    });
-
-    expect(env.notify).toHaveBeenCalled();
-    expect(monitor.onError).not.toHaveBeenCalled();
-  });
-
-  it('skips monitor when no error provided', () => {
-    const monitor = { onError: vi.fn() };
-    const env = createMockEnv({ monitor });
+  it('works without error object', () => {
+    const env = createMockEnv();
 
     reportRuntimeHostIssue({
       env,
@@ -109,39 +87,5 @@ describe('reportRuntimeHostIssue', () => {
     });
 
     expect(env.notify).toHaveBeenCalledWith('info', 'info only');
-    expect(monitor.onError).not.toHaveBeenCalled();
-  });
-
-  it('passes details to monitor', () => {
-    const monitor = { onError: vi.fn() };
-    const env = createMockEnv({ monitor });
-
-    reportRuntimeHostIssue({
-      env,
-      error: new Error('with details'),
-      nodeId: 'node-1',
-      path: '/path',
-      phase: 'action',
-      details: { extra: 'info' },
-    });
-
-    expect(monitor.onError).toHaveBeenCalledWith({
-      phase: 'action',
-      error: new Error('with details'),
-      nodeId: 'node-1',
-      path: '/path',
-      details: { extra: 'info' },
-    });
-  });
-
-  it('skips monitor when env has no monitor', () => {
-    const env = createMockEnv();
-
-    reportRuntimeHostIssue({
-      env,
-      error: new Error('no monitor attached'),
-    });
-
-    expect(env.notify).toHaveBeenCalled();
   });
 });

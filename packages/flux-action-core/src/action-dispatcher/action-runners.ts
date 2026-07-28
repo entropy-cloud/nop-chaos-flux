@@ -14,7 +14,7 @@ import {
   isNamespacedAction,
   parseNamespacedAction,
 } from './action-parsing.js';
-import { XUI_ACTIONS_NAMESPACE, reportRuntimeHostIssue } from '@nop-chaos/flux-core';
+import { XUI_ACTIONS_NAMESPACE } from '@nop-chaos/flux-core';
 
 function attachResultMetadata(
   result: ActionResult,
@@ -44,36 +44,11 @@ function attachThrownMetadata(
 }
 
 export function finishAction(
-  ctx: ActionDispatcherContext,
-  actionPayload: ActionMonitorPayload,
-  startedAt: number,
+  _ctx: ActionDispatcherContext,
+  _actionPayload: ActionMonitorPayload,
+  _startedAt: number,
   result: ActionResult,
 ): ActionResult {
-  const enrichedPayload: ActionMonitorPayload = {
-    ...actionPayload,
-    ...(result.componentId !== undefined && { componentId: result.componentId }),
-    ...(result.componentName !== undefined && { componentName: result.componentName }),
-    ...(result.componentType !== undefined && { componentType: result.componentType }),
-    ...(result.namespace !== undefined && { namespace: result.namespace }),
-    ...(result.sourceScopeId !== undefined && { sourceScopeId: result.sourceScopeId }),
-    ...(result.providerKind !== undefined && { providerKind: result.providerKind }),
-  };
-  try {
-    ctx.getEnv().monitor?.onActionEnd?.({
-      ...enrichedPayload,
-      durationMs: Date.now() - startedAt,
-      result,
-    });
-  } catch (monitorError) {
-    reportRuntimeHostIssue({
-      env: ctx.getEnv(),
-      level: 'warning',
-      message: 'Action monitor onActionEnd threw',
-      error: monitorError,
-      phase: 'action',
-      details: { actionType: actionPayload.actionType },
-    });
-  }
   return result;
 }
 

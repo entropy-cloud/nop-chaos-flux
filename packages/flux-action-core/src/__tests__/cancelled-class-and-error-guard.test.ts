@@ -164,38 +164,6 @@ describe('cancelled result follows failure-class semantics', () => {
   });
 });
 
-describe('onActionStart throwing does not crash dispatch chain', () => {
-  it('catches onActionStart error and returns failure result', async () => {
-    const adapter = createMockAdapter();
-    const startError = new Error('monitor start broke');
-    const env = createMockEnv();
-    env.monitor = {
-      onActionStart: vi.fn(() => {
-        throw startError;
-      }),
-      onActionEnd: vi.fn(),
-    };
-    const { dispatcher, runtime } = createTestDispatcher({ adapter, env });
-
-    const result = await dispatcher.dispatch(
-      makeCompiledProgram([
-        {
-          action: 'setValue',
-          payload: { args: staticCompiled({ path: 'x', value: 1 }) },
-          targeting: {},
-          control: {},
-          source: { action: 'setValue', args: { path: 'x', value: 1 } },
-        },
-      ]),
-      createActionCtx({ runtime }),
-    );
-
-    expect(result.ok).toBe(false);
-    expect(result.error).toBe(startError);
-    expect(adapter.invokeBuiltInAction).not.toHaveBeenCalled();
-  });
-});
-
 describe('onError dispatch throwing is caught', () => {
   it('handles onError action failure gracefully without unhandled rejection', async () => {
     const onErrorError = new Error('onError handler blew up');

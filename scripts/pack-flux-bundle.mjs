@@ -31,6 +31,21 @@ async function createReleaseDir() {
   const readmePath = path.join(packageDir, 'README.md');
   const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'));
 
+  const peerDeps = {};
+  for (const [dep, ver] of Object.entries(packageJson.peerDependencies || {})) {
+    if (ver.startsWith('workspace:')) {
+      const depPkgPath = path.join(rootDir, 'node_modules', dep, 'package.json');
+      try {
+        const depPkg = JSON.parse(await readFile(depPkgPath, 'utf8'));
+        peerDeps[dep] = depPkg.version;
+      } catch {
+        peerDeps[dep] = ver.replace(/^workspace:\*$/, '*').replace(/^workspace:[~^]/, '');
+      }
+    } else {
+      peerDeps[dep] = ver;
+    }
+  }
+
   const releaseManifest = {
     name: packageJson.name,
     version: packageJson.version,
@@ -41,7 +56,7 @@ async function createReleaseDir() {
     module: packageJson.module,
     types: packageJson.types,
     exports: packageJson.exports,
-    peerDependencies: packageJson.peerDependencies,
+    peerDependencies: peerDeps,
   };
 
   await rm(releaseDir, { recursive: true, force: true });

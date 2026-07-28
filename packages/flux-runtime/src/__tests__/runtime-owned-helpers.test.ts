@@ -163,12 +163,6 @@ describe('executeRuntimeAjaxAction', () => {
       ctx.form,
       expect.objectContaining({ interactionId: 'interaction-1' }),
     );
-    expect(monitor.onApiRequest).toHaveBeenCalledWith({
-      api: expect.objectContaining({ url: '/api/demo' }),
-      nodeId: 'node-1',
-      path: '$.body[0]',
-      interactionId: 'interaction-1',
-    });
     expect(result).toEqual({
       ok: true,
       data: { next: 2 },
@@ -419,12 +413,6 @@ describe('createRuntimeOwnedFactories', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(onError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        phase: 'action',
-        details: expect.objectContaining({ operation: 'dependent-revalidation', path: 'email' }),
-      }),
-    );
     expect(notify).toHaveBeenCalledWith('error', 'Dependent revalidation failed for "email".');
   });
 
@@ -495,16 +483,6 @@ describe('createRuntimeOwnedFactories', () => {
 
     inputValue.reportDependentRevalidationFailure('email', new Error('boom'));
 
-    expect(onError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        phase: 'action',
-        details: expect.objectContaining({
-          source: 'validation-scope-runtime',
-          operation: 'dependent-revalidation',
-          path: 'email',
-        }),
-      }),
-    );
     expect(notify).toHaveBeenCalledWith('error', 'Dependent revalidation failed for "email".');
 
     vi.doUnmock('../form-runtime.js');

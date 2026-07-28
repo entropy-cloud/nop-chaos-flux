@@ -106,11 +106,8 @@ export function createDefaultOpenSocket(
   const openSocket = (
     url: string,
     opts?: WebSocketOptions,
-    ctx?: ApiRequestContext,
+    _ctx?: ApiRequestContext,
   ): WebSocketConnection => {
-    ctx?.env?.monitor?.onApiRequest?.({
-      api: { url } as never,
-    });
     const native = factory(url, opts?.protocols);
     const connection = mapWebSocket(native, opts);
 

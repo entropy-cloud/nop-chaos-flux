@@ -1,6 +1,6 @@
 # 错误处理
 
-> Flux 错误处理分三层：**编译期**（schema diagnostics）、**运行时 action 错误**（链式恢复 + notify + 宿主回调）、**React 渲染错误**（节点级 + 根级 Error Boundary）。失败后默认行为已较完备，宿主主要通过 `onActionError` prop、`plugins[].onError`、`env.monitor.onError` 与 schema 内 `onError` / `onSettled` / `messages` 等点接入。
+> Flux 错误处理分三层：**编译期**（schema diagnostics）、**运行时 action 错误**（链式恢复 + notify + 宿主回调）、**React 渲染错误**（节点级 + 根级 Error Boundary）。失败后默认行为已较完备，宿主主要通过 `onActionError` prop、`plugins[].onError`、`monitor` prop（详见 `../docs/architecture/flux-monitor.md`）与 schema 内 `onError` / `onSettled` / `messages` 等点接入。
 
 ---
 
@@ -205,20 +205,20 @@ UI 显示路径：
 
 ### 宿主 / Schema 作者可定制
 
-| 定制点                      | 途径                                                                   | 默认                                  |
-| --------------------------- | ---------------------------------------------------------------------- | ------------------------------------- |
-| 全局动作错误监控            | `<SchemaRenderer onActionError={(err, ctx) => ...}>`                   | undefined（不调用）                   |
-| 错误监控插件                | `<SchemaRenderer plugins={[{ onError }]}>`                             | 空数组                                |
-| Toast UI                    | `env.notify(level, message)` 实现                                      | **必填**，宿主自带                    |
-| Monitor 钩子                | `env.monitor.onActionStart/End/onError/onApiRequest/onRenderStart/End` | undefined                             |
-| Schema 内 action 错误恢复   | `onError` / `onSettled` / `continueOnError: true`                      | 失败即链终止                          |
-| 自动 toast 文案             | `messages: { success, failed }`                                        | 不显示                                |
-| responseAdaptor 错误兜底    | runtime 自动 `console.warn` + `monitor.onError({phase:'api'})`         | 透明                                  |
-| 字段错误显示时机            | `showErrorOn`（`touched` / `dirty` / `visited` / `submit`）            | `['touched', 'submit']`               |
-| 校验失败 / 提交失败 handler | form 的 `onValidateError` / `onSubmitError`                            | 走默认 notify                         |
-| strictValidation            | prop / globalThis / localStorage / URL param / DEV                     | DEV 模式 true，prod false             |
-| fail-on-diagnostics         | `globalThis.__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__ = true`                | 测试/Playwright 自动 true，prod false |
-| Debugger 一键开 strict      | `nop-debugger` controller `setStrictMode(true)`                        | 用户操作                              |
+| 定制点                      | 途径                                                            | 默认                                  |
+| --------------------------- | --------------------------------------------------------------- | ------------------------------------- |
+| 全局动作错误监控            | `<SchemaRenderer onActionError={(err, ctx) => ...}>`            | undefined（不调用）                   |
+| 错误监控插件                | `<SchemaRenderer plugins={[{ onError }]}>`                      | 空数组                                |
+| Toast UI                    | `env.notify(level, message)` 实现                               | **必填**，宿主自带                    |
+| 遥测监控                    | `<SchemaRenderer monitor={onEvent}>` ＋ 自动捕获 notify/fetcher | undefined（全不记录）                 |
+| Schema 内 action 错误恢复   | `onError` / `onSettled` / `continueOnError: true`               | 失败即链终止                          |
+| 自动 toast 文案             | `messages: { success, failed }`                                 | 不显示                                |
+| responseAdaptor 错误兜底    | runtime 自动 `console.warn` + `monitor.onError({phase:'api'})`  | 透明                                  |
+| 字段错误显示时机            | `showErrorOn`（`touched` / `dirty` / `visited` / `submit`）     | `['touched', 'submit']`               |
+| 校验失败 / 提交失败 handler | form 的 `onValidateError` / `onSubmitError`                     | 走默认 notify                         |
+| strictValidation            | prop / globalThis / localStorage / URL param / DEV              | DEV 模式 true，prod false             |
+| fail-on-diagnostics         | `globalThis.__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__ = true`         | 测试/Playwright 自动 true，prod false |
+| Debugger 一键开 strict      | `nop-debugger` controller `setStrictMode(true)`                 | 用户操作                              |
 
 ---
 
@@ -229,3 +229,5 @@ UI 显示路径：
 3. **`onSettled` 子链 throw 不 notify**：仅 `reportActionError`，终端用户完全静默。
 4. **SchemaRenderer 不把渲染期 throw 上报 `env.monitor.onError`**：boundary 仅 `console.error`，未调 `monitor.onError({ phase: 'render' })`。
 5. **`reportUnhandledFailureClass` 的合成事件名单硬编码**：仅识别 `actionError` / `actionSettled` / `actionSettledError`（`action-execution.ts:188-195`），未来新增合成分支事件需同步更新。
+
+6. **缺口 4 的改进路径**：新 Monitor 设计（`../docs/architecture/flux-monitor.md`）通过 `SchemaRenderer monitor` prop 统一接收运行时事件。Error Boundary 可在将来的版本中将 `console.error` 升级为 `monitor({ type: 'error', phase: 'render', ... })`，填补渲染期错误对 monitor 不可见的缺口。

@@ -43,19 +43,6 @@ describe('nop-debugger automation api', () => {
     });
     const env = debuggerController.decorateEnv(baseEnv);
 
-    env.monitor?.onRenderEnd?.({
-      nodeId: 'node-1',
-      path: 'body.0',
-      type: 'text',
-      durationMs: 4,
-    });
-    env.monitor?.onActionEnd?.({
-      actionType: 'submitForm',
-      nodeId: 'node-1',
-      path: 'body.0',
-      durationMs: 8,
-      result: { ok: true },
-    });
     env.notify('warning', 'username duplicated');
     debuggerController.onActionError(new Error('submit exploded'), {
       runtime: {} as never,
@@ -63,16 +50,6 @@ describe('nop-debugger automation api', () => {
       nodeInstance: {
         templateNode: { id: 'node-1', templatePath: 'body.0', rendererType: 'form' },
       } as never,
-    });
-
-    const renderEvents = debuggerController.queryEvents({
-      group: 'render',
-      nodeId: 'node-1',
-    });
-    expect(renderEvents).toHaveLength(1);
-    expect(renderEvents[0]).toMatchObject({
-      kind: 'render:end',
-      rendererType: 'text',
     });
 
     const latestError = debuggerController.getLatestError();
@@ -84,8 +61,7 @@ describe('nop-debugger automation api', () => {
     const report = debuggerController.createDiagnosticReport({ eventLimit: 3 });
     expect(report.controllerId).toBe('automation-query');
     expect(report.overview.countsByGroup.error).toBe(1);
-    expect(report.latestAction?.actionType).toBe('submitForm');
-    expect(report.recentEvents).toHaveLength(3);
+    expect(report.recentEvents).toHaveLength(2);
   });
 
   it('captures structured network summaries and node diagnostics', async () => {
@@ -95,24 +71,6 @@ describe('nop-debugger automation api', () => {
     });
     const env = debuggerController.decorateEnv(baseEnv);
 
-    env.monitor?.onApiRequest?.({
-      api: {
-        url: '/api/users',
-        method: 'post',
-        data: {
-          username: 'alice',
-          role: 'admin',
-        },
-      },
-      nodeId: 'form-node',
-      path: 'body.1',
-    });
-    env.monitor?.onRenderEnd?.({
-      nodeId: 'form-node',
-      path: 'body.1',
-      type: 'form',
-      durationMs: 6,
-    });
     await env.fetcher(
       {
         url: '/api/users',
@@ -142,17 +100,6 @@ describe('nop-debugger automation api', () => {
     });
     expect(latestApi?.network?.requestDataKeys).toEqual(['username', 'role']);
     expect(latestApi?.network?.responseDataKeys).toEqual(['url', 'method']);
-
-    const nodeDiagnostics = debuggerController.getNodeDiagnostics({
-      nodeId: 'form-node',
-    });
-    expect(nodeDiagnostics.nodeId).toBe('form-node');
-    expect(nodeDiagnostics.countsByGroup.api).toBe(1);
-    expect(nodeDiagnostics.countsByGroup.render).toBe(1);
-    expect(nodeDiagnostics.renderCommitCount).toBe(1);
-    expect(nodeDiagnostics.renderBurstCount).toBe(0);
-    expect(nodeDiagnostics.rendererTypes).toContain('form');
-    expect(nodeDiagnostics.latestApi?.network?.url).toBe('/api/users');
   });
 
   it('keeps registry debug capture disabled when debugger is disabled', () => {
@@ -175,24 +122,7 @@ describe('nop-debugger automation api', () => {
       id: 'trace-export',
       enabled: true,
     });
-    const env = debuggerController.decorateEnv(baseEnv);
 
-    env.monitor?.onActionStart?.({
-      actionType: 'submitForm',
-      nodeId: 'trace-node',
-      path: 'body.2',
-    });
-    env.monitor?.onApiRequest?.({
-      api: {
-        url: '/api/trace',
-        method: 'post',
-        data: {
-          status: 'draft',
-        },
-      },
-      nodeId: 'trace-node',
-      path: 'body.2',
-    });
     debuggerController.onActionError(new Error('trace failure'), {
       runtime: {} as never,
       scope: {} as never,
@@ -205,8 +135,6 @@ describe('nop-debugger automation api', () => {
       nodeId: 'trace-node',
       path: 'body.2',
     });
-    expect(trace.totalEvents).toBeGreaterThanOrEqual(3);
-    expect(trace.latestAction?.actionType).toBe('submitForm');
     expect(trace.latestError?.group).toBe('error');
     expect(trace.paths).toContain('body.2');
 
@@ -230,20 +158,6 @@ describe('nop-debugger automation api', () => {
       },
     });
     const env = debuggerController.decorateEnv(baseEnv);
-
-    env.monitor?.onApiRequest?.({
-      api: {
-        url: '/api/secure',
-        method: 'post',
-        data: {
-          username: 'architect',
-          password: '123456',
-          token: 'top-secret',
-        },
-      },
-      nodeId: 'secure-node',
-      path: 'body.9',
-    });
 
     await env.fetcher(
       {
@@ -281,10 +195,10 @@ describe('nop-debugger automation api', () => {
     expect(exported.snapshot.events.some((event) => event.network?.url === '/api/secure')).toBe(
       true,
     );
-    const redactedSecureEvent = exported.snapshot.events.find(
-      (event) => event.kind === 'api:start' && event.network?.url === '/api/secure',
+    const redactedEvent = exported.snapshot.events.find(
+      (event) => event.kind === 'api:end' && event.network?.url === '/api/secure',
     );
-    expect(redactedSecureEvent?.exportedData).toMatchObject({
+    expect(redactedEvent?.exportedData).toMatchObject({
       username: 'architect',
       password: '[MASKED]',
       token: '[MASKED]',

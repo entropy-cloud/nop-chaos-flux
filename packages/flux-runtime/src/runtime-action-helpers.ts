@@ -174,18 +174,6 @@ export async function executeRuntimeAjaxAction(
     const cacheTTL = requestControl?.cacheTTL;
     const cacheEnabled = typeof cacheTTL === 'number' && cacheTTL > 0;
 
-    const reportMonitor = (monitoredApi: ExecutableApiRequest | undefined) => {
-      if (!monitoredApi) {
-        return;
-      }
-      env.monitor?.onApiRequest?.({
-        api: monitoredApi,
-        nodeId: ctx.nodeInstance?.templateNode.id,
-        path: ctx.nodeInstance?.templateNode.templatePath,
-        interactionId: ctx.interactionId,
-      });
-    };
-
     try {
       // A11: schema-fetch cross-subscriber dedup + runtime cache, opt-in via
       // control.cacheTTL on a safe HTTP method. Other ajax paths keep the original
@@ -200,7 +188,7 @@ export async function executeRuntimeAjaxAction(
         );
 
         if (!isSafeRequestMethod(prepared.request.method)) {
-          return await runStandardAjaxRequest(api, ctx, signal, requestControl, helpers, env, reportMonitor);
+          return await runStandardAjaxRequest(api, ctx, signal, requestControl, helpers, env, () => {});
         }
 
         const cacheKey = resolveCacheKey(prepared.request, requestControl);
@@ -208,7 +196,6 @@ export async function executeRuntimeAjaxAction(
         if (cacheKey) {
           const cached = sharing.apiCache.get<unknown>(cacheKey);
           if (cached) {
-            reportMonitor(prepared.request);
             // M-06: a single subscriber aborting never cancels the shared fetch
             // (documented intent), but an already-aborted caller that reaches a
             // cache hit must not receive a success result. The shared fetch is
@@ -224,7 +211,7 @@ export async function executeRuntimeAjaxAction(
           executeApiSchema(evaluatedApi, ctx.scope, env, helpers.expressionCompiler, {
             signal: registrySignal,
             preparedRequest: prepared,
-            onPreparedRequest: reportMonitor,
+            onPreparedRequest: () => {},
             executor: (adaptedApi, executorSignal) =>
               helpers.executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
                 signal: executorSignal,
@@ -250,7 +237,7 @@ export async function executeRuntimeAjaxAction(
         };
       }
 
-      return await runStandardAjaxRequest(api, ctx, signal, requestControl, helpers, env, reportMonitor);
+      return await runStandardAjaxRequest(api, ctx, signal, requestControl, helpers, env, () => {});
     } catch (error) {
       if (isAbortError(error)) {
         return createCancelledResult(error);
@@ -299,15 +286,12 @@ async function runStandardAjaxRequest(
     executeApiRequest: ApiRequestExecutor;
   },
   env: RendererEnv,
-  reportMonitor: (api: ExecutableApiRequest | undefined) => void,
+  _reportMonitor: (api: ExecutableApiRequest | undefined) => void,
 ): Promise<ActionResult> {
-  let monitoredApi: ExecutableApiRequest | undefined;
   const response = await executeApiSchema(api, ctx.scope, env, helpers.expressionCompiler, {
     signal,
     evaluate: helpers.evaluate,
-    onPreparedRequest: (preparedApi) => {
-      monitoredApi = preparedApi;
-    },
+    onPreparedRequest: () => {},
     executor: (adaptedApi) =>
       helpers.executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
         signal,
@@ -316,8 +300,6 @@ async function runStandardAjaxRequest(
       }),
     control: requestControl,
   });
-
-  reportMonitor(monitoredApi);
 
   return {
     ok: true,

@@ -26,16 +26,6 @@ export function reportImportFailure(input: {
   const message = input.message ?? error.message;
 
   input.env.notify('error', message);
-  input.env.monitor?.onError?.({
-    phase: input.phase ?? 'render',
-    error,
-    nodeId: input.nodeId,
-    path: input.path,
-    details: {
-      reason: input.reason ?? 'import-namespace-setup-failed',
-      imports: input.imports ?? [],
-    },
-  });
 
   return error;
 }

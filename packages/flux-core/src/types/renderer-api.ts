@@ -1,5 +1,5 @@
 import type { ExpressionExecutionEnv } from './expression-env-types.js';
-import type { ActionMonitorPayload, ActionResult, ImportedLibraryLoader } from './actions.js';
+import type { ImportedLibraryLoader } from './actions.js';
 import type { ScopeRef } from './scope.js';
 import type { ExecutableApiRequest, SchemaPath } from './schema-base-types.js';
 import type { SchemaInput } from './schema.js';
@@ -163,35 +163,12 @@ export type WebSocketOpener = (
   ctx?: ApiRequestContext,
 ) => WebSocketConnection;
 
-export interface RenderMonitorPayload {
-  nodeId: string;
-  path: SchemaPath;
-  type: string;
-}
-
 export interface ErrorMonitorPayload {
   phase: 'compile' | 'render' | 'action' | 'expression' | 'api';
   error: unknown;
   nodeId?: string;
   path?: SchemaPath;
   details?: Record<string, unknown>;
-}
-
-export interface ApiMonitorPayload {
-  api: ExecutableApiRequest;
-  nodeId?: string;
-  path?: SchemaPath;
-  interactionId?: string;
-  requestInstanceId?: string;
-}
-
-export interface RendererMonitor {
-  onRenderStart?(payload: RenderMonitorPayload): void;
-  onRenderEnd?(payload: RenderMonitorPayload & { durationMs: number }): void;
-  onActionStart?(payload: ActionMonitorPayload): void;
-  onActionEnd?(payload: ActionMonitorPayload & { durationMs: number; result?: ActionResult }): void;
-  onError?(payload: ErrorMonitorPayload): void;
-  onApiRequest?(payload: ApiMonitorPayload): void;
 }
 
 export interface RendererEnv extends ExpressionExecutionEnv {
@@ -214,7 +191,6 @@ export interface RendererEnv extends ExpressionExecutionEnv {
   filters?: Record<string, (input: any, ...args: any[]) => any>;
   importLoader?: ImportedLibraryLoader;
   resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
-  monitor?: RendererMonitor;
 
   /** Load a page schema by path. App provides caching, URL resolution, role filtering. */
   loadPage?: (path: string, signal?: AbortSignal) => Promise<SchemaInput>;

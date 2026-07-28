@@ -119,7 +119,7 @@ const SchemaRenderer = createSchemaRenderer();
 >
 > - **i18n 初始化**：`initFluxI18n()` 在 `ReactDOM.createRoot` 之前调用一次，否则 `${t('key')}` 与渲染器内部文案不生效（详见 `12-i18n.md`）。
 > - **主题样式 import**：`import '@nop-chaos/theme-tokens/styles.css'`，并把渲染子树挂到 `.nop-theme-root`（详见 `14-theming.md`）。
-> - **错误监控**：传 `<SchemaRenderer onActionError={(err, ctx) => ...}>` + `env.monitor.onError` 上报动作异常（详见 `15-error-handling.md`）。
+> - **错误监控**：传 `<SchemaRenderer monitor={onEvent}>` 或 `<SchemaRenderer onActionError={(err, ctx) => ...}>` 上报动作异常（详见 `15-error-handling.md` + `16-monitor.md`）。
 
 ## 文件索引
 
@@ -140,6 +140,7 @@ const SchemaRenderer = createSchemaRenderer();
 | `13-testing.md`           | 测试栈（Vitest + Playwright）、mock helper 清单、渲染 schema 标准做法、3 个推荐参考范例                            |
 | `14-theming.md`           | 主题与样式：纯 CSS 契约（无 ThemeProvider）、三层 CSS、4 主题变体、`data-slot` 协议、`className`/`frameClassName`  |
 | `15-error-handling.md`    | 错误处理三层（编译/action/渲染）、Error Boundary、`onActionError`、链式恢复、默认 notify、已知缺口                 |
+| `16-monitor.md`           | 运行时遥测监控（event-based monitor，独立 prop，自动捕获 notify + fetcher，E2E 友好）                              |
 | `flux-types/`             | 所有组件的 TypeScript 接口（字段知识源）。入口见 `flux-types/index.ts`                                             |
 | `design-patterns/`        | 常见业务场景的完整解法 cookbook（单组件/单特性）                                                                   |
 | `examples/`               | 多技术组合的端到端页面范例（主从联动 / 行内编辑 / 业务单据公式 / 分步向导）                                        |

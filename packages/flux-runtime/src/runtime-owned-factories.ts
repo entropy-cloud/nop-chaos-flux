@@ -246,7 +246,6 @@ export function createRuntimeOwnedFactories(input: {
   }): ValidationScopeRuntime {
     const reportDependentRevalidationFailure = createDependentRevalidationFailureHandler({
       notify: input.getEnv?.().notify,
-      onError: input.getEnv?.().monitor?.onError,
       source: 'validation-scope-runtime',
     });
 
@@ -302,7 +301,6 @@ export function createRuntimeOwnedFactories(input: {
   }): FormRuntime {
     const reportDependentRevalidationFailure = createDependentRevalidationFailureHandler({
       notify: input.getEnv?.().notify,
-      onError: input.getEnv?.().monitor?.onError,
       source: 'form-runtime',
     });
 

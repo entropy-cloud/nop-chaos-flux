@@ -300,11 +300,6 @@ describe('action-dispatcher routing', () => {
       sourceScopeId: 'import:demo',
       providerKind: 'import',
     });
-    expect((env.monitor?.onActionEnd as ReturnType<typeof vi.fn>).mock.calls[0]?.[0]?.result).toMatchObject({
-      namespace: 'demo',
-      sourceScopeId: 'import:demo',
-      providerKind: 'import',
-    });
   });
 
   it('preserves component target metadata when a component action throws', async () => {

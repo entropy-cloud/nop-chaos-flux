@@ -61,17 +61,9 @@ type CompiledTemplateSegment =
       };
     };
 
-function createExpressionMonitorReporter(env: RendererEnv, source: string) {
-  return (error: unknown, details?: Record<string, unknown>) => {
-    env.monitor?.onError?.({
-      phase: 'expression',
-      error,
-      details: {
-        ...details,
-        source,
-      },
-    });
-  };
+// monitor removed — kept as noop for ExpressionExecutionEnv reportError compatibility
+function createExpressionMonitorReporter(_env: RendererEnv, _source: string) {
+  return (_error: unknown, _details?: Record<string, unknown>) => {};
 }
 
 function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompiler {

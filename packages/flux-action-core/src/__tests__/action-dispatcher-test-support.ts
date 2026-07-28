@@ -70,10 +70,6 @@ export function createMockEnv(): RendererEnv {
     notify: vi.fn(),
     confirm: vi.fn(async () => true),
     alert: vi.fn(),
-    monitor: {
-      onActionStart: vi.fn(),
-      onActionEnd: vi.fn(),
-    },
   };
 }
 

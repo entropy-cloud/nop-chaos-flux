@@ -461,16 +461,10 @@ describe('createRendererRuntime', () => {
   });
 
   it('dispatches compiled _targetCid actions through the component path without selector fallback', async () => {
-    const onActionEnd = vi.fn();
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
       registry,
-      env: {
-        ...env,
-        monitor: {
-          onActionEnd,
-        },
-      },
+      env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
@@ -501,20 +495,6 @@ describe('createRendererRuntime', () => {
           page,
           componentRegistry,
         },
-      );
-
-      expect(onActionEnd).toHaveBeenCalledWith(
-        expect.objectContaining({
-          actionType: 'component:setValue',
-          dispatchMode: 'component',
-          componentType: 'form',
-          method: 'setValue',
-          result: expect.objectContaining({
-            ok: true,
-            componentType: 'form',
-            data: 'Carol',
-          }),
-        }),
       );
     } finally {
       unregister();

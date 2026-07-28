@@ -37,7 +37,7 @@ import { NodeFrameWrapper } from './node-frame-wrapper.js';
 import { createNodeInstance, createTemplateNodeRuntimeState } from './node-instance.js';
 import { useNodeDebugData } from './use-node-debug-data.js';
 import { useNodeSourceProps } from './use-node-source-props.js';
-import { useNodeLifecycleActions, useRenderMonitor } from './node-renderer-effects.js';
+import { useNodeLifecycleActions } from './node-renderer-effects.js';
 import { NodeRendererProviders } from './node-renderer-providers.js';
 import { createNormalizedActionEvent, applySchemaDrivenPrevention, createRendererHelpers } from './renderer-helpers.js';
 import { createReactionHandleProxy, type ReactionHandleProxy } from './reaction-handle-proxy.js';
@@ -396,11 +396,6 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
       }
     : undefined;
 
-  useRenderMonitor({
-    monitor: runtime.env.monitor,
-    templateNode,
-    resolvedMeta: finalResolvedMeta,
-  });
   useNodeLifecycleActions({
     lifecycleActions: lifecycleActionsValue,
     helpers,

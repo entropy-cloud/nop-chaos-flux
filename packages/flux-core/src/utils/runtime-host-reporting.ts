@@ -1,15 +1,16 @@
-import type { ErrorMonitorPayload, RendererEnv } from '../types/renderer-api.js';
+import type { RendererEnv } from '../types/renderer-api.js';
 
 export interface RuntimeHostIssueInput {
   env: RendererEnv;
   level?: 'info' | 'success' | 'warning' | 'error';
   message?: string;
   error?: unknown;
-  phase?: ErrorMonitorPayload['phase'];
+  notify?: boolean;
+  /** 以下字段保留兼容性，当前不再转发到 monitor（monitor 已移除） */
+  phase?: string;
   nodeId?: string;
   path?: string;
   details?: Record<string, unknown>;
-  notify?: boolean;
   monitor?: boolean;
 }
 
@@ -23,15 +24,5 @@ export function reportRuntimeHostIssue(input: RuntimeHostIssueInput): void {
 
   if (input.notify !== false) {
     input.env.notify(level, message);
-  }
-
-  if (input.monitor !== false && input.error !== undefined) {
-    input.env.monitor?.onError?.({
-      phase: input.phase ?? 'render',
-      error: input.error,
-      nodeId: input.nodeId,
-      path: input.path,
-      details: input.details,
-    });
   }
 }

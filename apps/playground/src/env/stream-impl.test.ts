@@ -309,17 +309,4 @@ describe('createDefaultStream — fetch integration', () => {
     // 已 abort 的信号下迭代必须能自然结束，不抛出到顶层
     expect(Array.isArray(collected)).toBe(true);
   });
-
-  it('calls monitor.onApiRequest once on connection', async () => {
-    const fetchImpl = mockFetch(mockReadableStream([encode('data: 1\n\n')]));
-    const stream = createDefaultStream({ fetchImpl });
-    const onApiRequest = vi.fn();
-    const env = {
-      fetcher: async () => ({ status: 200, data: null }),
-      notify: vi.fn(),
-      monitor: { onApiRequest },
-    } as never;
-    await stream({ url: '/api/m', streamProtocol: 'sse' }, { env, scope: {} as never });
-    expect(onApiRequest).toHaveBeenCalledTimes(1);
-  });
 });

@@ -276,17 +276,6 @@ export function registerReaction(input: {
       if (!dispatchResult.ok) {
         const error = toReactionFailureError(dispatchResult, input.id);
 
-        input.runtime.env.monitor?.onError?.({
-          phase: 'action',
-          error,
-          details: {
-            reason: 'reaction-run-failed',
-            reactionId: input.id,
-            scopeId: input.scope.id,
-            changedPaths: changePaths,
-            actionResult: dispatchResult,
-          },
-        });
         if (run && input.asyncGovernance) {
           input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
         }
@@ -335,16 +324,7 @@ export function registerReaction(input: {
         return;
       }
 
-      input.runtime.env.monitor?.onError?.({
-        phase: 'action',
-        error,
-        details: {
-          reason: 'reaction-run-failed',
-          reactionId: input.id,
-          scopeId: input.scope.id,
-          changedPaths: changePaths,
-        },
-      });
+
       if (run && input.asyncGovernance) {
         input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
       }

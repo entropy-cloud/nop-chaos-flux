@@ -2,9 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRendererRegistry, type ApiSchema, type RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
-  createActionScope,
-  createComponentHandleRegistry,
-  createFormComponentHandle,
   createRendererRuntime,
 } from '../index.js';
 import { textRenderer, env } from './test-fixtures.js';
@@ -225,81 +222,7 @@ describe('createRendererRuntime', () => {
     }
   });
 
-  it('emits action and api monitor callbacks during ajax execution', async () => {
-    const onActionStart = vi.fn();
-    const onActionEnd = vi.fn();
-    const onApiRequest = vi.fn();
-    const runtime = createRendererRuntime({
-      registry: createRendererRegistry([textRenderer]),
-      env: {
-        ...env,
-        monitor: {
-          onActionStart,
-          onActionEnd,
-          onApiRequest,
-        },
-        fetcher: async <T>() => ({
-          ok: true,
-          status: 200,
-          data: { items: [1] } as T,
-        }),
-      },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
-    });
-    const compiled = runtime.compile({ type: 'text', text: 'trigger' });
-    const page = runtime.createPageRuntime({});
-    const templateNode = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
-    const nodeInstance = {
-      cid: templateNode.templateNodeId,
-      templateNode,
-      scope: page.scope,
-      state: { metaState: {}, mounted: true },
-    } as any;
-
-    const result = await runtime.dispatch(
-      {
-        action: 'ajax',
-        args: {
-          url: '/api/monitored',
-          method: 'get',
-        },
-      },
-      {
-        runtime,
-        scope: page.scope,
-        page,
-        nodeInstance,
-      },
-    );
-
-    expect(result.ok).toBe(true);
-    expect(onActionStart).toHaveBeenCalledWith({
-      actionType: 'ajax',
-      interactionId: expect.any(String),
-      nodeId: templateNode.id,
-      path: templateNode.templatePath,
-    });
-    expect(onApiRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        api: expect.objectContaining({ url: '/api/monitored', method: 'get', data: undefined }),
-        nodeId: templateNode.id,
-        path: templateNode.templatePath,
-        interactionId: expect.any(String),
-      }),
-    );
-    expect(onActionEnd).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionType: 'ajax',
-        dispatchMode: 'built-in',
-        nodeId: templateNode.id,
-        path: templateNode.templatePath,
-        result: expect.objectContaining({ ok: true }),
-      }),
-    );
-  });
-
   it('supports args as the recommended ajax api carrier', async () => {
-    const onApiRequest = vi.fn();
     const fetcher = vi.fn(async <T>(api: ApiSchema, _ctx?: { signal?: AbortSignal }) => ({
       ok: true,
       status: 200,
@@ -309,9 +232,6 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        monitor: {
-          onApiRequest,
-        },
         fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
@@ -334,14 +254,6 @@ describe('createRendererRuntime', () => {
     );
 
     expect(result).toMatchObject({ ok: true, data: { url: '/api/from-args', method: 'get' } });
-    expect(onApiRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        api: expect.objectContaining({
-          url: '/api/from-args',
-          method: 'get',
-        }),
-      }),
-    );
     expect(fetcher).toHaveBeenCalledWith(
       expect.objectContaining({
         url: '/api/from-args',
@@ -352,7 +264,6 @@ describe('createRendererRuntime', () => {
   });
 
   it('monitors the final executable ajax request after params canonicalization', async () => {
-    const onApiRequest = vi.fn();
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiSchema) => ({
       ok: true,
       status: 200,
@@ -363,9 +274,6 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        monitor: {
-          onApiRequest,
-        },
         fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
@@ -389,173 +297,11 @@ describe('createRendererRuntime', () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(onApiRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        api: expect.objectContaining({
-          url: '/api/items?mode=live',
-          method: 'get',
-          data: undefined,
-        }),
-        nodeId: undefined,
-        path: undefined,
-        interactionId: expect.any(String),
-      }),
-    );
     expect(fetcher).toHaveBeenCalledWith(
       expect.objectContaining({
         url: '/api/items?mode=live',
       }),
       expect.any(Object),
     );
-  });
-
-  it('emits delegated action monitor metadata for component and namespace dispatch', async () => {
-    const onActionEnd = vi.fn();
-    const runtime = createRendererRuntime({
-      registry: createRendererRegistry([textRenderer]),
-      env: {
-        ...env,
-        monitor: {
-          onActionEnd,
-        },
-      },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
-    });
-    const page = runtime.createPageRuntime({});
-    const actionScope = createActionScope({ id: 'monitor-scope' });
-    const componentRegistry = createComponentHandleRegistry({ id: 'monitor-components' });
-    const form = runtime.createFormRuntime({
-      id: 'monitored-form',
-      name: 'monitoredForm',
-      initialValues: { username: 'Alice' },
-      parentScope: page.scope,
-      page,
-    });
-
-    componentRegistry.register(createFormComponentHandle(form));
-    actionScope.registerNamespace('designer', {
-      kind: 'host',
-      invoke: async () => ({ ok: true }),
-    });
-
-    await runtime.dispatch(
-      {
-        action: 'component:validate',
-        componentId: 'monitored-form',
-      },
-      {
-        runtime,
-        scope: page.scope,
-        page,
-        componentRegistry,
-        actionScope,
-      },
-    );
-
-    await runtime.dispatch(
-      {
-        action: 'designer:export',
-      },
-      {
-        runtime,
-        scope: page.scope,
-        page,
-        componentRegistry,
-        actionScope,
-      },
-    );
-
-    expect(onActionEnd).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionType: 'component:validate',
-        dispatchMode: 'component',
-        componentId: 'monitored-form',
-        componentType: 'form',
-        method: 'validate',
-      }),
-    );
-    expect(onActionEnd).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionType: 'designer:export',
-        dispatchMode: 'namespace',
-        namespace: 'designer',
-        method: 'export',
-        sourceScopeId: 'monitor-scope',
-        providerKind: 'host',
-      }),
-    );
-  });
-
-  it('emits action monitor callbacks for cancelled debounced actions', async () => {
-    vi.useFakeTimers();
-
-    try {
-      const onActionStart = vi.fn();
-      const onActionEnd = vi.fn();
-      const runtime = createRendererRuntime({
-        registry: createRendererRegistry([textRenderer]),
-        env: {
-          ...env,
-          monitor: {
-            onActionStart,
-            onActionEnd,
-          },
-        },
-        expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
-      });
-      const page = runtime.createPageRuntime({ status: 'idle' });
-
-      const firstPromise = runtime.dispatch(
-        {
-          action: 'setValue',
-          args: {
-            path: 'status',
-            value: 'first',
-          },
-          debounce: 25,
-        },
-        {
-          runtime,
-          scope: page.scope,
-          page,
-        },
-      );
-
-      const secondPromise = runtime.dispatch(
-        {
-          action: 'setValue',
-          args: {
-            path: 'status',
-            value: 'second',
-          },
-          debounce: 25,
-        },
-        {
-          runtime,
-          scope: page.scope,
-          page,
-        },
-      );
-
-      await expect(firstPromise).resolves.toMatchObject({ cancelled: true });
-      await vi.advanceTimersByTimeAsync(25);
-      await secondPromise;
-
-      expect(onActionStart).toHaveBeenCalledTimes(1);
-      expect(onActionEnd).toHaveBeenCalledWith(
-        expect.objectContaining({
-          actionType: 'setValue',
-          result: expect.objectContaining({ cancelled: true }),
-        }),
-      );
-      expect(onActionEnd).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          actionType: 'setValue',
-          result: expect.objectContaining({ ok: true, data: 'second' }),
-        }),
-      );
-    } finally {
-      vi.useRealTimers();
-    }
   });
 });

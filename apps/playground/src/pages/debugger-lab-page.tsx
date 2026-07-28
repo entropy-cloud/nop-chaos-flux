@@ -81,27 +81,16 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
   }, []);
 
   const fireRenderEvent = useCallback(() => {
-    const payload = { nodeId: 'lab-node', path: 'lab.path', type: 'lab-render' };
-    env.monitor?.onRenderStart?.(payload);
-    env.monitor?.onRenderEnd?.({ ...payload, durationMs: 42 });
-    setOutput('[Render Event] Fired render:start + render:end for lab-node');
-  }, [env]);
+    setOutput('[Render Event] Monitor removed — render events captured via debugger plugin only');
+  }, []);
 
   const fireActionEvent = useCallback(() => {
-    const payload = { actionType: 'lab:testAction', nodeId: 'lab-node', path: 'lab.path' };
-    env.monitor?.onActionStart?.(payload);
-    env.monitor?.onActionEnd?.({ ...payload, durationMs: 15, result: { ok: true } });
-    setOutput('[Action Event] Fired action:start + action:end for lab:testAction');
-  }, [env]);
+    setOutput('[Action Event] Monitor removed — action events captured via debugger plugin only');
+  }, []);
 
   const fireApiEvent = useCallback(() => {
-    const payload = {
-      api: { url: '/api/lab-test', method: 'GET' },
-      nodeId: 'lab-node',
-      path: 'lab.path',
-    };
-    env.monitor?.onApiRequest?.(payload);
-    setOutput('[API Event] Fired api:start for /api/lab-test');
+    void env;
+    setOutput('[API Event] Monitor removed — API events captured via fetcher wrapper only');
   }, [env]);
 
   const fireErrorEvent = useCallback(() => {
