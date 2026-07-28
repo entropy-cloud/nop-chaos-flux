@@ -36,7 +36,7 @@
     "@nop-chaos/spreadsheet-core": "workspace:*",
     "@nop-chaos/spreadsheet-renderers": "workspace:*",
     "@nop-chaos/theme-tokens": "workspace:*",
-    "@nop-chaos/ui": "workspace:^",
+    "@nop-chaos/ui": "workspace:*",
     "@nop-chaos/word-editor-renderers": "workspace:*",
     "@xyflow/react": "^12.10.2",
     "lucide-react": "^1.17.0",

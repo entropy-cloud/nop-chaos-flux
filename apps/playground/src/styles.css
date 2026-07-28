@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@config "../../../tailwind.config.ts";
 @import '@nop-chaos/theme-tokens/styles.css';
 @import '@nop-chaos/flux-react/default-spacing.css';
 @import '@nop-chaos/ui/base.css';

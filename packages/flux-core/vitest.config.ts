@@ -5,19 +5,14 @@ export default createSharedVitestConfig({
   coverage: {
     provider: 'v8',
     reporter: ['text', 'json-summary'],
-    include: [
-      'src/class-aliases.ts',
-      'src/compiled-cid.ts',
-      'src/constants.ts',
-      'src/registry.ts',
-      'src/i18n-sink.ts',
-      'src/validation-model.ts',
-      'src/utils/path-binding.ts',
-      'src/utils/instance-path.ts',
-      'src/utils/debounce.ts',
-      'src/utils/import-failure.ts',
-      'src/utils/runtime-host-reporting.ts',
-      'src/schema-diagnostics/index.ts',
+    include: ['src/**/*.{ts,tsx}'],
+    exclude: [
+      'src/**/*.test.ts',
+      'src/**/*.test.tsx',
+      'src/**/__tests__/**',
+      'src/types.ts',
+      'src/types/**',
+      'src/workbench/**',
     ],
     thresholds: {
       branches: 80,

@@ -11,7 +11,7 @@
       "outputs": ["dist/**", "!dist/**/*.tsbuildinfo"]
     },
     "typecheck": {
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "inputs": ["$TURBO_DEFAULT$", ".env*", "tsconfig*.json"],
       "outputs": []
     },
