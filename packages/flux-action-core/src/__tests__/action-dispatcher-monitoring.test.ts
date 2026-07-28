@@ -53,5 +53,6 @@ describe('action-dispatcher monitoring', () => {
     );
 
     expect(result).toMatchObject({ ok: true });
+    expect(env.notify).toHaveBeenCalledWith('warning', 'Action monitor onActionEnd threw');
   });
 });

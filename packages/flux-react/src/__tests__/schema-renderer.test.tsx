@@ -455,6 +455,46 @@ describe('SchemaRenderer null rendering', () => {
     );
     expect(container.textContent).toContain('Visible');
   });
+
+  it('reports compilation errors through diagnostic channel and guards undefined state', async () => {
+    const notify = vi.fn();
+    const onError = vi.fn();
+    const originalCreateRendererRuntime = fluxRuntime.createRendererRuntime;
+    const createRendererRuntimeSpy = vi
+      .spyOn(fluxRuntime, 'createRendererRuntime')
+      .mockImplementation((input) => {
+        const runtime = originalCreateRendererRuntime(input);
+        runtime.schemaCompiler.compile = ((_schema: any, _options?: any) => {
+          throw new Error('Compilation crashed');
+        }) as typeof runtime.schemaCompiler.compile;
+        return runtime;
+      });
+
+    try {
+      const SchemaRenderer = createSchemaRenderer([textRenderer]);
+      render(
+        <SchemaRenderer
+          schemaUrl="test://schema-compile-error.json"
+          schema={{ type: 'text', text: 'Should not render' }}
+          env={{ ...env, notify, monitor: { onError } }}
+          formulaCompiler={createFormulaCompiler()}
+        />,
+      );
+
+      await vi.waitFor(() => {
+        expect(notify).toHaveBeenCalled();
+      });
+      expect(notify).toHaveBeenCalledWith('error', 'Schema compilation failed');
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phase: 'compile',
+          error: expect.objectContaining({ message: 'Compilation crashed' }),
+        }),
+      );
+    } finally {
+      createRendererRuntimeSpy.mockRestore();
+    }
+  });
 });
 
 describe('SchemaRenderer page modalContainer', () => {

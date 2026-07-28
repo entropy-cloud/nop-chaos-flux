@@ -14,7 +14,7 @@ import {
   isNamespacedAction,
   parseNamespacedAction,
 } from './action-parsing.js';
-import { XUI_ACTIONS_NAMESPACE } from '@nop-chaos/flux-core';
+import { XUI_ACTIONS_NAMESPACE, reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 
 function attachResultMetadata(
   result: ActionResult,
@@ -30,10 +30,13 @@ function attachThrownMetadata(
   error: unknown,
   metadata: Partial<Pick<ActionResult, 'namespace' | 'sourceScopeId' | 'providerKind' | 'componentId' | 'componentName' | 'componentType'>>,
 ): unknown {
-  if (error && typeof error === 'object') {
-    return Object.assign(error as Record<string, unknown>, metadata);
+  if (error instanceof Error) {
+    const wrapped = new Error(error.message, { cause: error });
+    return Object.assign(wrapped, metadata);
   }
-
+  if (error && typeof error === 'object') {
+    return { ...(error as object), ...metadata };
+  }
   return {
     error,
     ...metadata,
@@ -61,9 +64,15 @@ export function finishAction(
       durationMs: Date.now() - startedAt,
       result,
     });
-    // Errors routed through action execution state machine — runner error path is structured
-  } catch {
-    // Monitoring must not replace the primary action result.
+  } catch (monitorError) {
+    reportRuntimeHostIssue({
+      env: ctx.getEnv(),
+      level: 'warning',
+      message: 'Action monitor onActionEnd threw',
+      error: monitorError,
+      phase: 'action',
+      details: { actionType: actionPayload.actionType },
+    });
   }
   return result;
 }

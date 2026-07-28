@@ -53,27 +53,35 @@ function CompiledSchemaTree(props: {
   rootComponentRegistry: import('@nop-chaos/flux-core').ComponentHandleRegistry;
 }) {
   const compiledRoot = useMemo<import('@nop-chaos/flux-core').CompiledTemplate | null>(() => {
-    return props.runtime.schemaCompiler.compile(props.schema, {
-      schemaUrl: props.schemaUrl,
-      importLoader: props.env.importLoader,
-      resolveImportUrl: props.env.resolveImportUrl,
-      preparedImports: props.preparedImports,
-      validation: {
-        strictMode: props.strictMode,
-      },
-      diagnostics: props.strictMode
-        ? {
-            enabled: true,
-            continueOnError: true,
-          }
-        : undefined,
-    });
+    try {
+      return props.runtime.schemaCompiler.compile(props.schema, {
+        schemaUrl: props.schemaUrl,
+        importLoader: props.env.importLoader,
+        resolveImportUrl: props.env.resolveImportUrl,
+        preparedImports: props.preparedImports,
+        validation: {
+          strictMode: props.strictMode,
+        },
+        diagnostics: {
+          enabled: true,
+          continueOnError: true,
+        },
+      });
+    } catch (compilationError) {
+      reportImportFailure({
+        env: props.env,
+        error: compilationError instanceof Error ? compilationError : new Error(String(compilationError)),
+        message: 'Schema compilation failed',
+        phase: 'compile',
+        path: props.schemaUrl,
+      });
+      return null;
+    }
   }, [
     props.runtime,
     props.schema,
     props.schemaUrl,
-    props.env.importLoader,
-    props.env.resolveImportUrl,
+    props.env,
     props.preparedImports,
     props.strictMode,
   ]);
@@ -192,6 +200,9 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [runtime]);
 
     useEffect(() => {
+      if (creationErrorRef.current || !page) {
+        return;
+      }
       const attachExternalPageStoreSync = (page as PageRuntimeWithExternalSync).__attachExternalPageStoreSync;
       if (!attachExternalPageStoreSync) {
         return;
@@ -201,6 +212,9 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [page]);
 
     useEffect(() => {
+      if (creationErrorRef.current || !page) {
+        return;
+      }
       const schemaInput = props.schema;
       const rootSchema = Array.isArray(schemaInput) ? schemaInput[0] : schemaInput;
       page.modalContainer = (
@@ -209,6 +223,9 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [props.schema, page]);
 
     useEffect(() => {
+      if (creationErrorRef.current || !page) {
+        return;
+      }
       if (!initialDataAppliedRef.current) {
         initialDataAppliedRef.current = true;
         return;
@@ -226,6 +243,9 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [page, pageData]);
 
     useEffect(() => {
+      if (creationErrorRef.current || !runtime || !page) {
+        return;
+      }
       runtime.setEnv(props.env);
       page.refresh();
     }, [page, props.env, runtime]);
