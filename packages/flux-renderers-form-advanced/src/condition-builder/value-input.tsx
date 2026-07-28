@@ -173,10 +173,10 @@ function FormulaValueSlot({
 
   useEffect(() => {
     if (!canEvaluate || !evaluateFormula) return;
-    let cancelled = false;
+    const controller = new AbortController();
     evaluateFormula(formulaStr)
       .then((result) => {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
         if (result.error) {
           setPreview(t('conditionBuilder.formulaEvalError'));
         } else {
@@ -184,10 +184,10 @@ function FormulaValueSlot({
         }
       })
       .catch(() => {
-        if (!cancelled) setPreview(t('conditionBuilder.formulaEvalError'));
+        if (!controller.signal.aborted) setPreview(t('conditionBuilder.formulaEvalError'));
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [formulaStr, evaluateFormula, canEvaluate]);
 
