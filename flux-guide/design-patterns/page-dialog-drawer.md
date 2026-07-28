@@ -189,36 +189,18 @@
 
 `openDialog` / `openDrawer` 的 `args` 支持三个 lifecycle callback 字段，让 owner 侧响应 surface 内部事件：
 
-| 字段              | 触发时机                                                                | 典型用途                                                                                      |
-| ----------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `onClose`         | surface 被关闭时（手动关闭、`closeSurface` action、ESC、outside click） | 关闭后刷新列表、清理临时状态                                                                  |
-| `onSubmitSuccess` | surface body 内的 form submit ajax 返回成功后                           | 提交成功后刷新列表、导航、上报                                                                |
-| `onSubmitError`   | surface body 内的 form submit ajax 返回失败后                           | 自定义错误恢复（重置字段、上报埋点）—— **不用于错误 toast**（ajax 默认行为已 toast 后端 msg） |
+| 字段              | 触发时机                                                                | `$formData` | `$result`       | 典型用途                                                                                      |
+| ----------------- | ----------------------------------------------------------------------- | ----------- | --------------- | --------------------------------------------------------------------------------------------- |
+| `onClose`         | surface 被关闭时（手动关闭、`closeSurface` action、ESC、outside click） | ✗           | ✗               | 关闭后刷新列表、清理临时状态                                                                  |
+| `onSubmitSuccess` | surface body 内**标了 `submitScope: 'surface'`** 的 form 提交成功后     | ✓           | ✓ ajax response | 提交成功后刷新列表、导航、上报                                                                |
+| `onSubmitError`   | surface body 内**标了 `submitScope: 'surface'`** 的 form 提交失败后     | ✓           | ✓ error payload | 自定义错误恢复（重置字段、上报埋点）—— **不用于错误 toast**（ajax 默认行为已 toast 后端 msg） |
 
-callback 在 **owner ctx** 执行（不是 surface child scope），可通过 `$formData` / `$result` 引用提交数据：
-
-```jsonc
-{
-  "action": "openDialog",
-  "args": {
-    "title": "编辑用户",
-    "data": { "id": "${id}" },
-    "body": {
-      "type": "form",
-      "submitAction": {
-        "action": "ajax",
-        "args": { "url": "/api/users/${id}", "method": "put" },
-        "messages": { "success": "保存成功" },
-      },
-      "body": [
-        /* ... */
-      ],
-    },
-    "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
-    "onClose": { "action": "refreshNearest" },
-  },
-}
-```
+> **关键约束（容易踩坑）**：
+>
+> 1. **callback 在 owner ctx 执行**（不是 surface child scope）——`refreshNearest` 从 owner scope 开始向上查找，能命中外层 CRUD；`setValue` 写到 owner scope。
+> 2. **submit callback 只对 `submitScope: 'surface'` 的 form 触发**——多 form dialog 场景必须在主提交 form 上显式声明 `submitScope: 'surface'`，否则即使配了 `args.onSubmitSuccess` 也不会触发。详见 §6.4。
+> 3. **`onClose` 是 fire-and-forget 异步执行**——`closeSurface` 立即关闭 surface（同步），`onClose` callback 异步执行不阻塞 UI；hook 内 action 抛错只 `console.warn`，不影响 close 主流程。
+> 4. **declarative dialog/drawer 不走此机制**——`type: 'dialog'` / `type: 'drawer'` 节点的 form submit 不触发 `args.onSubmitSuccess`；declarative surface 用自己的 function-based `onClose` 路径。本节机制仅适用于 action-style `openDialog` / `openDrawer`。
 
 完整规则（owner context reconstruction、triggering order、与 ajax 默认通知的关系）见 `docs/architecture/surface-lifecycle-callbacks.md`。
 
@@ -230,13 +212,27 @@ callback 在 **owner ctx** 执行（不是 surface child scope），可通过 `$
 {
   "action": "openDialog",
   "args": {
-    "body": { "type": "form" /* ... */ },
+    "body": {
+      "type": "form",
+      "submitScope": "surface",
+      "submitAction": { "action": "ajax", "args": { "url": "/api/users", "method": "post" } },
+      "body": [
+        /* ... */
+      ],
+    },
     "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
   },
 }
 ```
 
-`refreshNearest` 从 callback 执行的 owner scope 开始向上查找最近的 CRUD / data-source / tree，命中后调其 refresh。
+`refreshNearest` 从 callback 执行的 owner scope 开始沿 `scope.parent` 链向上查找，命中第一个具备 `refresh` capability 的 CRUD / tree 或第一个 data-source，调用其 refresh。
+
+可选 `args`：
+
+| 字段         | 类型                                          | 默认       | 说明                                                                                                        |
+| ------------ | --------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
+| `targetType` | `'auto' \| 'crud' \| 'tree' \| 'data-source'` | `'auto'`   | 限定目标类型；`'auto'` 不区分类型按最近匹配                                                                 |
+| `notFound`   | `'silent' \| 'error'`                         | `'silent'` | 找不到目标时：`'silent'` 返回 `{ ok: true, data: { found: false } }`；`'error'` 返回 `{ ok: false, error }` |
 
 如果明确知道外层组件 id/name，也可以用 `component:refresh`（等价但需要显式 id）：
 
@@ -256,7 +252,43 @@ callback 在 **owner ctx** 执行（不是 surface child scope），可通过 `$
 }
 ```
 
-推荐改用 §6.1 的 lifecycle callback + `refreshNearest`，语义明确且不依赖隐式行为。
+推荐改用 §6.2 的 lifecycle callback + `refreshNearest`，语义明确且不依赖隐式行为。
+
+### 6.4 多 form dialog：用 `submitScope` 区分主提交 form
+
+dialog 内可能有多个 form（搜索 form + 编辑 form / 主 form + 子 form / 多 step form）。默认情况下，所有 form 的 submit 都不触发 surface callback（`submitScope: 'local'` 是默认值）。必须在主提交 form 上显式声明 `submitScope: 'surface'`：
+
+```jsonc
+{
+  "action": "openDialog",
+  "args": {
+    "body": [
+      {
+        // 搜索 form — 不标 submitScope，默认 'local'，submit 不触发 dialog callback
+        "type": "form",
+        "submitAction": { "action": "ajax", "args": { "url": "/api/search" } },
+        "body": [
+          /* ... */
+        ],
+      },
+      {
+        // 主编辑 form — 显式标 submitScope: 'surface'，submit 触发 dialog callback
+        "type": "form",
+        "submitScope": "surface",
+        "submitAction": { "action": "ajax", "args": { "url": "/api/save" } },
+        "body": [
+          /* ... */
+        ],
+      },
+    ],
+    "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+  },
+}
+```
+
+> **注意**：当前 flux 没有 schema-level 校验"同一 surface 内最多一个 `submitScope: 'surface'` form"。如果多个 form 都标了 `'surface'`，它们的 submit 都会触发同一个 callback。建议业务侧自行保证只有一个主 form。
+
+完整多 form 场景示例见 `flux-guide/examples/crud-with-dialog-and-search-form.md`。
 
 ---
 

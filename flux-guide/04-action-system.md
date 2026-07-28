@@ -99,9 +99,48 @@
 
 > **不需要目标标识**的场景：`refreshNearest` 沿 scope 链自动查找最近的 CRUD / data-source / tree，适用于"不知道外层组件 id/name"的场景（如 dialog 提交后刷新外部列表）。详见 `design-patterns/page-dialog-drawer.md` 与 `docs/architecture/surface-lifecycle-callbacks.md`。
 
+## `refreshNearest` 参数
+
+```jsonc
+{
+  "action": "refreshNearest",
+  "args": {
+    "targetType": "auto", // 'auto' | 'crud' | 'tree' | 'data-source'，默认 'auto'
+    "notFound": "silent", // 'silent' | 'error'，默认 'silent'
+  },
+}
+```
+
+| 字段         | 类型                                          | 默认       | 说明                                                                                                        |
+| ------------ | --------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
+| `targetType` | `'auto' \| 'crud' \| 'tree' \| 'data-source'` | `'auto'`   | 限定查找目标类型。`'auto'` 不区分类型按"最近"匹配；`'crud'` / `'tree'` / `'data-source'` 跳过其他类型       |
+| `notFound`   | `'silent' \| 'error'`                         | `'silent'` | 找不到目标时：`'silent'` 返回 `{ ok: true, data: { found: false } }`；`'error'` 返回 `{ ok: false, error }` |
+
+`refreshNearest` 从当前作用域开始沿父级作用域链向上查找：
+
+- 在每一层作用域的 component registry 中查 CRUD / tree（要求组件注册时携带 `scope` 信息；详见 `docs/architecture/surface-lifecycle-callbacks.md` §Finding Algorithm）
+- 在每一层作用域的 source registry 中查 data-source
+- 命中第一个匹配后调用其 refresh（CRUD/tree 走 component capability，data-source 走 `refreshDataSource`）
+
+## `openDialog` / `openDrawer` Lifecycle Callback 参数
+
+`openDialog` / `openDrawer` 的 `args` 除了 `title` / `size` / `data` / `body` 等常规字段外，还支持三个 lifecycle callback 字段（仅对 action-style 生效；declarative `type: 'dialog'` / `type: 'drawer'` 不走此机制）：
+
+| 字段              | 触发时机                                               | `$formData` | `$result`  | 典型用途                                              |
+| ----------------- | ------------------------------------------------------ | ----------- | ---------- | ----------------------------------------------------- |
+| `onClose`         | surface 被关闭时（任意路径）                           | ✗           | ✗          | 关闭后刷新外部列表（`refreshNearest`）、清理状态      |
+| `onSubmitSuccess` | surface body 内 `submitScope: 'surface'` form 提交成功 | ✓           | ✓ response | 提交后刷新外部列表、导航、上报                        |
+| `onSubmitError`   | surface body 内 `submitScope: 'surface'` form 提交失败 | ✓           | ✓ error    | 错误恢复（字段重置、上报）—— **不替代默认错误 toast** |
+
+> **关键约束**：submit callback 只对 form schema 上**显式标了 `submitScope: 'surface'`** 的 form 触发。多 form dialog 场景必须在主提交 form 上声明。详见 `design-patterns/page-dialog-drawer.md` §6.4。
+
+callback 在 **owner ctx** 执行（不是 surface child scope），由 surface runtime 主动触发。完整规则（owner context reconstruction、triggering order、hook error semantics）见 `docs/architecture/surface-lifecycle-callbacks.md`。
+
 ## 事件数据流
 
 ```
 ajax 输出 → 通过 result / prevResult 链式传递
 dialog 输出 → ${result} (形态: {confirmed, value})
 ```
+
+                            

@@ -95,18 +95,22 @@ export interface FormSchema extends BoundFieldSchemaBase {
 
 ### Single-Form Default
 
-surface body 内**只有一个 form** 且未显式设 `submitScope` 时，编译期自动视为 `'surface'` + 输出 warning（建议显式声明）。
+> **Status: planned, not yet implemented.** Flux 当前没有 schema-level 校验或自动提升。`submitScope` 默认 `'local'`，必须显式声明 `'surface'` 才触发 surface callback。
+
+设计意图（待实现）：surface body 内**只有一个 form** 且未显式设 `submitScope` 时，编译期自动视为 `'surface'` + 输出 warning（建议显式声明）。
 
 理由：
 
 - 老 schema（单 form dialog）默认就能用 surface callback，不破坏现有写法
 - 多 form 场景必须显式区分，避免歧义
 
-实现位置：schema 编译期校验（`packages/flux-core/src/schema-validator/` 或同级），与现有 schema 校验同层。
+**实现依赖**：schema validator（`packages/flux-core/src/schema-validator/` 或同级），与现有 schema 校验同层。flux 当前没有 runtime schema validator（详见 `docs/plans/2026-07-28-1430-surface-lifecycle-callbacks.md` §Deferred But Adjudicated）。在 schema validator 落地前，作者必须在主提交 form 上显式写 `submitScope: 'surface'`。
 
 ### Multi-Form Validation
 
-同一 surface body 内最多一个 form 设 `submitScope: 'surface'`。多个时编译期报错：
+> **Status: planned, not yet implemented.**
+
+设计意图（待实现）：同一 surface body 内最多一个 form 设 `submitScope: 'surface'`。多个时编译期报错：
 
 ```
 schema-validation-error: at most one form per surface body may declare
@@ -114,6 +118,8 @@ submitScope='surface'; found N (form ids: a, b)
 ```
 
 这是硬约束，不可降级为 warning。理由：多个 `submitScope: 'surface'` form 的 submit 都会触发同一个 surface callback，业务无法区分是哪个 form 触发，语义模糊。
+
+**当前现实**：runtime 不做校验。如果多个 form 都标了 `'surface'`，它们的 submit 都会触发同一 callback（行为可观察，但不会失败）。业务侧需自行保证只有一个主 form。schema validator 落地后会强制校验。
 
 ### 嵌套 form 处理
 
@@ -200,27 +206,34 @@ callback 默认不传 `ctx.form`（因为 callback 在 owner ctx 执行，与 su
 
 ### Close Hook
 
-`surfaceRuntime.close(surfaceId)` 在 dispose entry 之前触发 `onCloseNodes`（仅 action-style openDialog/openDrawer 创建的 entry 有此字段；declarative surface 的 `entry.onClose` 是 function 类型，由 `use-surface-renderer.ts` 现有路径处理，不在本机制范围）：
+`surfaceRuntime.close(surfaceId)` removes the entry first (preserving the existing sync close contract that callers rely on), then **fire-and-forgets** `onCloseNodes` asynchronously (only action-style openDialog/openDrawer entries have this field; declarative surface's `entry.onClose` is a function, handled by `use-surface-renderer.ts`, and is not part of this mechanism):
 
 ```ts
-// target-state sketch（实现见 plan Phase 3）
-async close(surfaceId) {
+// live implementation (packages/flux-runtime/src/surface-runtime.ts)
+close(surfaceId) {
   const removed = store.remove(surfaceId);
   if (!removed) return;
-  if (removed.onCloseNodes) {
-    try {
-      await dispatchInOwner(removed, removed.onCloseNodes, { hookName: 'close' });
-    } catch (err) {
-      // hook 抛错不阻塞 close 流程；详见 §Hook Error Semantics
-      console.warn('[surface] onClose hook failed:', err);
-    }
-  }
+
+  // Snapshot hook info before disposeEntry clears entry-owned resources.
+  const closeNodes = removed.onCloseNodes;
+  const ownerActionCtx = removed.ownerActionCtx;
+
   disposeEntry(removed);
   republishActiveStatuses();
+
+  // Fire onCloseNodes asynchronously after dispose (fire-and-forget).
+  // close() stays sync; hook errors are warned, not thrown.
+  if (closeNodes && ownerActionCtx) {
+    dispatchInOwner({ ...removed, ownerActionCtx }, closeNodes, { hookName: 'close' }).catch(
+      (err) => {
+        console.warn('[surface] onClose hook failed:', err);
+      },
+    );
+  }
 }
 ```
 
-`onCloseNodes` 在 surface 任意关闭路径都会触发：
+`onCloseNodes` fires for any close path:
 
 - 用户点击 close 按钮 / mask / 按 ESC
 - schema 调 `closeSurface` action
@@ -233,32 +246,33 @@ async close(surfaceId) {
 
 declarative surface（`type: 'dialog'` / `type: 'drawer'`）的 close 路径**保持现状**：`entry.onClose` (function) 由 `use-surface-renderer.ts:223/325/348` 直接调用，不经 `dispatchInOwner`。两套机制共存，互不干扰。详见 `surface-owner.md` §Declarative And Action-Opened Surfaces。
 
+> **设计权衡（为什么是 sync fire-and-forget 而不是 async）**：让 `close()` 改为 async 会破坏所有现有调用方（5 处：`use-surface-renderer.ts:328`、`dialog-host.tsx:209/388`、`action-adapter.ts:239/241`）。这些调用方依赖 close 立即移除 entry 并触发 React unmount。把 close 改 async 会引入 race（mask 点击后 React tree 还没卸载，用户可能再次点击）。sync + fire-and-forget 保持了 close 的"立即生效"语义，hook 作为副作用异步执行不阻塞 UI 响应。
+
 ### Submit Hooks
 
-form 的 `executeFormSubmit` 在 ajax 完成（成功或失败）后，通过 `surfaceRuntime.triggerHook` 触发 `onSubmitSuccessNodes` / `onSubmitErrorNodes`：
+form 的 submit hook 由 **`packages/flux-renderers-form/src/renderers/form.tsx`** 在创建 lifecycle handler 时注入。form.tsx 读 schema 的 `submitScope` 字段，并通过 `useCurrentSurfaceRuntime()` hook 获取 surface runtime；当 form submit 完成（成功或失败）后，在 form 自己的 lifecycle handler 末尾调 `surfaceRuntime.triggerHook(entry, hookName, payload)`：
 
 ```ts
-// target-state sketch（实现见 plan Phase 3）
-// in form-runtime-submit-flow.ts, after ajax settles
-//
-// flux 的 createSurfaceScope 在 dialog scope 上挂 `dialogId`、drawer scope 上挂 `drawerId`
-// （runtime-factory.ts:602-617），两者值都是 surfaceId。这里用 surfaceId 统一引用。
-const surfaceId = ctx.dialogId ?? ctx.drawerId ?? ctx.surfaceId;
-if (formSchema.submitScope === 'surface' && ctx.surfaceRuntime && surfaceId) {
-  const entry = ctx.surfaceRuntime.store.getState().entries.find((e) => e.id === surfaceId);
-  if (entry?.onSubmitSuccessNodes && result.ok) {
-    await ctx.surfaceRuntime.triggerHook(entry, 'submit:success', {
-      result: result.data,
-      formData: collectedFormValues,
+// live implementation in form.tsx setLifecycleHandlers
+const triggerSurfaceSubmitHook = async (hookName, result) => {
+  if (!surfaceRuntimeForHook?.triggerHook || !surfaceId) return;
+  const entry = surfaceRuntimeForHook.store.getState().entries.find((e) => e.id === surfaceId);
+  if (!entry) return;
+  try {
+    await surfaceRuntimeForHook.triggerHook(entry, hookName, {
+      result,
+      formData: { ...ownedForm.store.getState().values },
+      hookName,
     });
+  } catch (err) {
+    console.warn(`[form] surface ${hookName} hook failed:`, err);
   }
-  if (entry?.onSubmitErrorNodes && !result.ok && !result.cancelled) {
-    await ctx.surfaceRuntime.triggerHook(entry, 'submit:error', {
-      result: result.error,
-      formData: collectedFormValues,
-    });
-  }
-}
+};
+
+// onSubmitSuccess lifecycle handler:
+// 1. await form's own onSubmitSuccess action (form schema)
+// 2. await triggerSurfaceSubmitHook('submit:success', result)
+// similarly for onSubmitError
 ```
 
 **关键约束**：
@@ -270,13 +284,15 @@ if (formSchema.submitScope === 'surface' && ctx.surfaceRuntime && surfaceId) {
 - submit hooks 在 form lifecycle handler 之后触发（form 自己的 `onSubmitSuccess` 字段先执行，然后才是 surface `args.onSubmitSuccess`）。
 - submit hooks 不自动关闭 surface。如果业务想在成功后关闭，应在 hook 里显式写 `{ action: 'closeSurface' }`。
 
+> **设计权衡（为什么触发位置在 form.tsx 而不是 form-runtime-submit-flow.ts）**：`form-runtime-submit-flow.ts` 是 form runtime 的纯函数式 submit 流程，不持有 surfaceRuntime / dialogId / schema 等 React-context-bound 信息。让 submit-flow 持有这些会破坏其纯函数性。`form.tsx` 是 React 组件，通过 `useCurrentSurfaceRuntime()` 和 `props.props.submitScope` 拿到这些信息天然合适。lifecycle handler 包装方式让 form-runtime-submit-flow 不变。
+
 ### Hook Error Semantics
 
 hook 内 action 抛错的处理契约：
 
-- **hook 抛错不阻塞 surface close 流程**：`close` 用 try/catch 包裹 `dispatchInOwner`，捕获错误后 `console.warn` 并继续 dispose entry + `republishActiveStatuses`
-- **hook 抛错不阻塞 form submit 流程**：`triggerHook` 在 form submit 流程中也是 await 但 catch 的，submit 本身的成功状态不被 hook 失败影响
-- **ownerActionCtx 已 dispose 时**：`dispatchInOwner` 检测 `entry.ownerActionCtx.runtime.disposed`（或同等标记）时跳过 dispatch，返回 `{ ok: false, error: new Error('ownerActionCtx already disposed') }`，console.warn 一条
+- **hook 抛错不阻塞 surface close 流程**：`close` 用 Promise.catch 包裹 `dispatchInOwner`，捕获错误后 `console.warn`。entry 已在 dispatch 前 dispose，hook 失败不影响 close 主流程。
+- **hook 抛错不阻塞 form submit 流程**：`triggerHook` 内部 try/catch，submit 本身的成功状态不被 hook 失败影响
+- **owner runtime 已 teardown 时**：`dispatchInOwner` 调用 `entry.ownerActionCtx.runtime.dispatch` 时可能抛错（runtime 对象已失效），错误被上层 catch 捕获并 `console.warn`。flux 当前 `ActionContextRuntime` 不暴露 `disposed` 字段，因此**没有显式 pre-check**，依赖 try/catch 兜底
 - hook 抛错时，错误信息走 action dispatcher 默认 error notify（一次 toast），与普通 action 失败一致
 
 ### Triggering Order
