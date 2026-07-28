@@ -21,7 +21,9 @@ async function main() {
     throw new Error('Facade root export must point types to ./dist/index.d.ts');
   }
 
-  if (packageJson.exports?.['./style.css'] !== './dist/style.css') {
+  const styleExport = packageJson.exports?.['./style.css'];
+  const stylePath = typeof styleExport === 'string' ? styleExport : styleExport?.default;
+  if (stylePath !== './dist/style.css') {
     throw new Error('Facade stylesheet export must point to ./dist/style.css');
   }
 

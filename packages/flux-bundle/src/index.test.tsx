@@ -24,9 +24,11 @@ const formRendererStyles = readFileSync('../flux-renderers-form/src/form-rendere
 
 describe('@nop-chaos/flux public entry contract', () => {
   it('exposes the root stylesheet export and host-owned peers', () => {
-    expect(packageJsonFromCwd.exports?.['./style.css']).toBe('./dist/style.css');
+    const styleExport = packageJsonFromCwd.exports?.['./style.css'];
+    const stylePath = typeof styleExport === 'string' ? styleExport : (styleExport as Record<string, string>)?.default;
+    expect(stylePath).toBe('./dist/style.css');
     expect(packageJsonFromCwd.peerDependencies).toMatchObject({
-      '@nop-chaos/ui': '*',
+      '@nop-chaos/ui': 'workspace:*',
       'lucide-react': '^1.17.0',
       react: '^19.0.0',
       'react-dom': '^19.0.0',

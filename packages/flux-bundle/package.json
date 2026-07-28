@@ -19,10 +19,12 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./style.css": "./dist/style.css"
+    "./style.css": {
+      "default": "./dist/style.css"
+    }
   },
   "peerDependencies": {
-    "@nop-chaos/ui": "*",
+    "@nop-chaos/ui": "workspace:*",
     "i18next": "^26.0.0",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",

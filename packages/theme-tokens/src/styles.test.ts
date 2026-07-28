@@ -12,7 +12,9 @@ const packageJson = JSON.parse(
 
 describe('@nop-chaos/theme-tokens styles contract', () => {
   it('exports the published stylesheet subpath', () => {
-    expect(packageJson.exports?.['./styles.css']).toBe('./dist/styles.css');
+    const styleExport = packageJson.exports?.['./styles.css'];
+    const stylePath = typeof styleExport === 'string' ? styleExport : (styleExport as Record<string, string>)?.default;
+    expect(stylePath).toBe('./dist/styles.css');
   });
 
   it('defines the base root token block', () => {

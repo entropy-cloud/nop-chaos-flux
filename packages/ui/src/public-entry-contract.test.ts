@@ -32,8 +32,10 @@ describe('@nop-chaos/ui public entry contract', () => {
       types: './dist/lib/utils.d.ts',
       default: './dist/lib/utils.js',
     });
-    expect(packageJson.exports['./base.css']).toBe('./dist/styles/base.css');
-    expect(packageJson.exports['./styles.css']).toBe('./dist/styles/index.css');
+    const baseCss = packageJson.exports['./base.css'];
+    const stylesCss = packageJson.exports['./styles.css'];
+    expect(typeof baseCss === 'string' ? baseCss : (baseCss as Record<string, string>).default).toBe('./dist/styles/base.css');
+    expect(typeof stylesCss === 'string' ? stylesCss : (stylesCss as Record<string, string>).default).toBe('./dist/styles/index.css');
     expect(chart.ChartContainer).toBeTypeOf('function');
   });
 });

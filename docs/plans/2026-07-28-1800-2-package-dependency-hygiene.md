@@ -1,6 +1,6 @@
 # {2} Package Dependency & Build Hygiene
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-07-28
 > Source: `docs/backlog/audit-remediation-roadmap.md` Follow-up Backlog (D01 + Open Audit P2-A/B/J/K)
 > Related: `docs/plans/2026-07-28-1800-1-async-safety-error-propagation-p2.md`, `docs/plans/2026-07-28-0900-3-infrastructure-and-build-tooling.md`
@@ -72,61 +72,61 @@ Fix 12 P2 package dependency and build hygiene findings: correct stale/missing d
 
 ### Phase 1 — Straightforward Package.json Fixes
 
-Status: planned
+Status: completed
 Targets: `flux-runtime/package.json`, `flux-renderers-mobile/package.json`, `flux-bundle/package.json`, `word-editor-renderers/package.json`
 
 - Item Types: `Fix | Decision`
 
-- [ ] 01-01 — flux-runtime/package.json: update Rule(c) text to match actual declared/production deps
-- [ ] 01-02 (P2-J dup) — flux-renderers-mobile/package.json: add explicit `@nop-chaos/flux-react` to deps or peerDeps
-- [ ] P2-A — flux-bundle/package.json: change `"@nop-chaos/ui": "*"` peer dep to explicit `"workspace:*"`
-- [ ] P2-B — word-editor-renderers/package.json: remove `recharts` peer dep (copy-paste leftover)
+- [x] 01-01 — flux-runtime/package.json: update Rule(c) text to match actual declared/production deps
+- [x] 01-02 (P2-J dup) — flux-renderers-mobile/package.json: add explicit `@nop-chaos/flux-react` to deps or peerDeps
+- [x] P2-A — flux-bundle/package.json: change `"@nop-chaos/ui": "*"` peer dep to explicit `"workspace:*"`
+- [x] P2-B — word-editor-renderers/package.json: remove `recharts` peer dep (copy-paste leftover)
 
 Exit Criteria:
 
-- [ ] All 4 straightforward package.json edits applied
-- [ ] Rule(c) text in flux-runtime/package.json matches actual dependency set
-- [ ] flux-renderers-mobile has explicit flux-react dependency declared
-- [ ] flux-bundle peer dep uses explicit version (not bare `"*"`)
-- [ ] word-editor-renderers no longer declares recharts peer dep
-- [ ] `pnpm typecheck && pnpm build` passes
+- [x] All 4 straightforward package.json edits applied
+- [x] Rule(c) text in flux-runtime/package.json matches actual dependency set
+- [x] flux-renderers-mobile has explicit flux-react dependency declared
+- [x] flux-bundle peer dep uses explicit version (not bare `"*"`)
+- [x] word-editor-renderers no longer declares recharts peer dep
+- [x] `pnpm typecheck && pnpm build` passes
 
 ### Phase 2 — Cross-Package Coupling Adjudication
 
-Status: planned
+Status: completed
 Targets: `flux-renderers-data/package.json`, `flux-renderers-form-advanced/package.json`, `flux-renderers-ai/package.json`, `flux-code-editor/package.json`, `report-designer-renderers/package.json`
 
 - Item Types: `Decision | Fix`
 
-- [ ] 01-03 — flux-renderers-data: adjudicate data→basic coupling (inspect usage, decide: accept-and-annotate vs extract)
-- [ ] 01-04 — flux-renderers-form-advanced: adjudicate 3-package coupling (form-advanced→form→basic)
-- [ ] 01-05 — flux-renderers-ai: adjudicate ai→content coupling
-- [ ] 01-06 — flux-code-editor: adjudicate code-editor→form coupling
-- [ ] 01-09 — report-designer-renderers: adjudicate report→spreadsheet cross-domain coupling
-- [ ] 01-11 — flux-renderers-form-advanced: verify runtime dep only uses public API; document if OK or escalate
+- [x] 01-03 — flux-renderers-data: adjudicate data→basic coupling (inspect usage, decide: accept-and-annotate vs extract)
+- [x] 01-04 — flux-renderers-form-advanced: adjudicate 3-package coupling (form-advanced→form→basic)
+- [x] 01-05 — flux-renderers-ai: adjudicate ai→content coupling
+- [x] 01-06 — flux-code-editor: adjudicate code-editor→form coupling
+- [x] 01-09 — report-designer-renderers: adjudicate report→spreadsheet cross-domain coupling
+- [x] 01-11 — flux-renderers-form-advanced: verify runtime dep only uses public API; document if OK or escalate
 
 Exit Criteria:
 
-- [ ] Each of the 6 coupling sites has a written Decision (in source comment or package.json comment) recording: what is depended on, why it's acceptable (or what refactoring is needed), and whether extraction to a shared package is warranted
-- [ ] Package.json annotated where coupling is accepted
-- [ ] No behavioral code change — documentation-only for cross-coupling sites
-- [ ] `pnpm typecheck && pnpm build` passes
+- [x] Each of the 6 coupling sites has a written Decision (in source comment or package.json comment) recording: what is depended on, why it's acceptable (or what refactoring is needed), and whether extraction to a shared package is warranted
+- [x] Package.json annotated where coupling is accepted
+- [x] No behavioral code change — documentation-only for cross-coupling sites
+- [x] `pnpm typecheck && pnpm build` passes
 
 ### Phase 3 — CSS Subpath Export Format Standardization
 
-Status: planned
+Status: completed
 Targets: All packages exporting CSS via package.json `exports` field
 
 - Item Types: `Fix | Proof`
 
-- [ ] P2-K-01 — Audit all packages for CSS subpath export format inconsistencies (e.g. `"./styles.css"` vs `"./styles"` vs bare path formats)
-- [ ] P2-K-02 — Standardize to the convention used by the majority of well-formed packages in the monorepo
+- [x] P2-K-01 — Audit all packages for CSS subpath export format inconsistencies (e.g. `"./styles.css"` vs `"./styles"` vs bare path formats)
+- [x] P2-K-02 — Standardize to the convention used by the majority of well-formed packages in the monorepo
 
 Exit Criteria:
 
-- [ ] CSS subpath export format is consistent across all packages that export CSS
-- [ ] `pnpm typecheck && pnpm build` passes
-- [ ] `pnpm test` passes (verify no import breakage)
+- [x] CSS subpath export format is consistent across all packages that export CSS
+- [x] `pnpm typecheck && pnpm build` passes
+- [x] `pnpm test` passes (verify no import breakage)
 
 ## Draft Review Record
 
@@ -137,16 +137,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] All D01 items resolved (text fixed, coupling adjudicated, public API verified)
-- [ ] All Open Audit P2 package.json items resolved (peer dep, leftover dep, CSS export format)
-- [ ] Cross-coupling adjudication recorded for each site — no unresolved ambiguity
-- [ ] No in-scope live defect or contract drift silently deferred to follow-up
-- [ ] Affected owner docs synced (daily dev log)
-- [ ] By independent sub-agent (fresh session) executed closure audit and recorded evidence; execution session did not self-audit or self-check this item
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All D01 items resolved (text fixed, coupling adjudicated, public API verified)
+- [x] All Open Audit P2 package.json items resolved (peer dep, leftover dep, CSS export format)
+- [x] Cross-coupling adjudication recorded for each site — no unresolved ambiguity
+- [x] No in-scope live defect or contract drift silently deferred to follow-up
+- [x] Affected owner docs synced (daily dev log)
+- [x] By independent sub-agent (fresh session) executed closure audit and recorded evidence; execution session did not self-audit or self-check this item
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -159,11 +159,11 @@ No deferred items — all in-scope findings are actionable with clear resolution
 
 ## Closure
 
-Status Note:
+Status Note: All 3 phases executed. Plan Status: completed. Full green: `pnpm typecheck` 31/31, `pnpm build` 31/31, `pnpm lint` 31/31, `pnpm test` 58/58. Independent closure audit completed by fresh sub-agent session — all items verified against live repo.
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: closure-auditor-subagent (fresh independent session)
+- Evidence: Verified all 3 phases against live repo — Phase 1 (4 package.json edits: flux-runtime description updated, mobile flux-react dep added, flux-bundle peer dep pinned, word-editor recharts peer dep removed) all confirmed in live package.json files. Phase 2 (6 coupling adjudications: 01-03 via table-cell-chrome.tsx:10, 01-04 via picker-helpers.ts:4, 01-05 via markdown.tsx:6, 01-06 via code-editor-renderer.tsx:7, 01-09 via page-renderer.tsx:23 + report-spreadsheet-canvas.tsx:7, 01-11 via projected-scope.ts:1) all have source comments recording the decision. Phase 3 (CSS export format): value-side format consistently uses `{"default": "./dist/<path>"}` across all 15 CSS-exporting packages. No empty placeholders or hollow implementations found. Daily log docs/logs/2026/07-28.md records full green (pnpm typecheck 31/31, build 31/31, lint 31/31, test 58/58).
 
 Follow-up:

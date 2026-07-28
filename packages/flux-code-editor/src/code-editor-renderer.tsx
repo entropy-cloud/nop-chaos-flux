@@ -4,6 +4,7 @@ import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';
 import { formFieldChromeRules } from '@nop-chaos/flux-renderers-form';
+/* Adjudication 01-06: cross-package coupling code-editor→form for formFieldChromeRules. Minimal scope (1 function). Accept-and-annotate: extraction to shared package not warranted until a 3rd consumer appears. */
 import { cn } from '@nop-chaos/ui';
 import { Maximize2Icon, XIcon } from 'lucide-react';
 import { ToolbarButton } from './code-editor-renderer/toolbar-button.js';

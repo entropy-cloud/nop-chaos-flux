@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { sanitizeHtml } from '@nop-chaos/flux-renderers-content';
+/* Adjudication 01-05: cross-package coupling ai→content for sanitizeHtml. Minimal scope (1 utility function, same dependency form-advanced also uses). Accept-and-annotate: not worth extracting without a 3rd consumer. */
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { Components } from 'react-markdown';

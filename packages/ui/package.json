@@ -25,8 +25,12 @@
       "types": "./dist/lib/i18n.d.ts",
       "default": "./dist/lib/i18n.js"
     },
-    "./base.css": "./dist/styles/base.css",
-    "./styles.css": "./dist/styles/index.css"
+    "./base.css": {
+      "default": "./dist/styles/base.css"
+    },
+    "./styles.css": {
+      "default": "./dist/styles/index.css"
+    }
   },
   "peerDependencies": {
     "lucide-react": "^1.17.0",

@@ -4,6 +4,7 @@ import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { useBridgeSnapshot, useRendererEnv } from '@nop-chaos/flux-react';
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
+/* Adjudication 01-09: cross-domain coupling report→spreadsheet - embeds spreadsheet UI (SheetTabBar, SpreadsheetGrid, useSpreadsheetInteractions) and types (SpreadsheetBridge, SpreadsheetHostSnapshot). Accept-and-annotate: architecturally expected composition dependency. */
 import {
   SheetTabBar,
   SpreadsheetGrid,

@@ -17,7 +17,9 @@
       "types": "./dist/unstable.d.ts",
       "default": "./dist/unstable.js"
     },
-    "./default-spacing.css": "./dist/default-spacing.css"
+    "./default-spacing.css": {
+      "default": "./dist/default-spacing.css"
+    }
   },
   "dependencies": {
     "@nop-chaos/flux-core": "workspace:*",

@@ -1,6 +1,7 @@
 import { isRecord, toRecord } from '@nop-chaos/flux-core';
 import type { ActionSchema, ReactiveActionSchema } from '@nop-chaos/flux-core';
 import type { CrudColumnSchema, CrudSchema } from '@nop-chaos/flux-renderers-data';
+/* Adjudication 01-04: cross-package coupling form-advanced→data for CRUD type references in picker integration. Minimal scope (2 types). Accept-and-annotate: architecturally expected for picker/composite integration with CRUD schemas. */
 import { type NormalizedOption } from './option-normalize.js';
 
 export type PickerValue = string | number | boolean;

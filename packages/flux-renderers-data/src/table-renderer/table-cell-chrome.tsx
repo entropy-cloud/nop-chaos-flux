@@ -7,6 +7,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema, TableColumnSchema } from '../schemas.js';
 import { TableCellPopOver } from './table-cell-popover.js';
 import { copyToClipboard } from '@nop-chaos/flux-renderers-basic';
+/* Adjudication 01-03: cross-package coupling data→basic for copyToClipboard. Minimal scope (1 utility function). Accept-and-annotate: not worth extraction until a 3rd consumer appears. */
 
 export function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;

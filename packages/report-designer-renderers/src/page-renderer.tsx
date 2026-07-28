@@ -20,6 +20,7 @@ import {
   createEmptyDocument,
   createSpreadsheetCore,
 } from '@nop-chaos/spreadsheet-core';
+/* Adjudication 01-09: cross-domain coupling report→spreadsheet for core types and renderer composition (SheetTabBar, SpreadsheetGrid, bridge). This is architecturally expected: report-designer embeds the spreadsheet as a sub-component. Accept-and-annotate: intentional composition dependency, not accidental. */
 import {
   createSpreadsheetBridge,
   createSpreadsheetActionProvider,
