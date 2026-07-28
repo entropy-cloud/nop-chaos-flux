@@ -7,6 +7,7 @@ export const META_FIELDS = new Set([
   'hidden',
   'disabled',
   'testid',
+  'frameWrap',
 ]);
 
 export interface BuiltInActionDescriptor {

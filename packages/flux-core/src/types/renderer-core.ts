@@ -390,6 +390,12 @@ export interface RendererRuntime {
     compiledSource: CompiledDataSource;
   }): DataSourceRegistration;
   refreshDataSource(input: { name: string; scope?: ScopeRef }): Promise<boolean>;
+  /**
+   * Returns the first registered source in the given scope's bucket (without
+   * walking the parent scope chain). Used by `refreshNearest` to find the
+   * closest refreshable data source without knowing its name.
+   */
+  findFirstInScope(scope: ScopeRef): { name: string; scope: ScopeRef } | undefined;
   registerReaction(input: {
     id: string;
     scope: ScopeRef;

@@ -13,6 +13,7 @@ export interface ResolvedNodeMeta {
   hidden: boolean;
   disabled: boolean;
   testid?: string;
+  frameWrap?: boolean | 'label' | 'group' | 'none';
   changed: boolean;
   cid?: number;
 }

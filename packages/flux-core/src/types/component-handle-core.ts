@@ -54,6 +54,14 @@ export interface ComponentHandle {
   type: string;
   ref?: HTMLElement | null;
   capabilities: ComponentCapabilities;
+  /**
+   * Optional scope this handle belongs to. Populated by renderer hooks that
+   * have access to the current render scope (e.g. CRUD / tree / form handles).
+   * Used by `ComponentHandleRegistry.findFirstInScope` to enable scope-aware
+   * lookup for `refreshNearest`. When undefined, the handle does not
+   * participate in scope-based lookup (only id/name based resolve works).
+   */
+  scope?: import('./scope.js').ScopeRef;
 }
 
 export interface ComponentHandleRegistryCore {
@@ -67,5 +75,17 @@ export interface ComponentHandleRegistryCore {
   ): () => void;
   unregister(handle: ComponentHandle): void;
   resolve(target: ComponentTarget): ComponentHandle | undefined;
+  /**
+   * Find the first handle in this registry's own bucket whose `handle.scope.id`
+   * matches `scope.id` and that satisfies `predicate`. Does NOT walk parent or
+   * child registries — callers responsible for registry tree traversal.
+   *
+   * Returns undefined when no handle in this bucket carries the given scope
+   * (e.g. handles registered without a scope are skipped).
+   */
+  findFirstInScope?(
+    scope: import('./scope.js').ScopeRef,
+    predicate: (handle: ComponentHandle) => boolean,
+  ): ComponentHandle | undefined;
   dispose?(): void;
 }

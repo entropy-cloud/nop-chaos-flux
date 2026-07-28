@@ -82,6 +82,12 @@ type ActionContextSurfaceRuntime = {
       controlledOpen?: boolean;
       onOpen?: () => Promise<ActionResult> | ActionResult | void;
       onClose?: () => Promise<ActionResult> | ActionResult | void;
+      // ── lifecycle hook schema nodes (action-style openDialog/openDrawer only) ──
+      onCloseNodes?: ActionSchema | ActionSchema[];
+      onSubmitSuccessNodes?: ActionSchema | ActionSchema[];
+      onSubmitErrorNodes?: ActionSchema | ActionSchema[];
+      // ── owner ActionContext snapshot for hook dispatch ──
+      ownerActionCtx?: ActionContext;
     };
   }): string;
   close(surfaceId?: string): void;

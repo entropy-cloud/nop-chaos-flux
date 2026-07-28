@@ -110,6 +110,7 @@ export type NodeMetaProgram = {
   hidden?: CompiledRuntimeValue<boolean | unknown>;
   disabled?: CompiledRuntimeValue<boolean | undefined>;
   testid?: CompiledRuntimeValue<string | undefined>;
+  frameWrap?: CompiledRuntimeValue<boolean | 'label' | 'group' | 'none' | undefined>;
 };
 
 export interface TemplateProviderPlan {

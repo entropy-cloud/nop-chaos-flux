@@ -43,8 +43,12 @@ describe('META_FIELDS', () => {
     expect(META_FIELDS.has('frameClassName')).toBe(true);
   });
 
-  it('has exactly 8 fields', () => {
-    expect(META_FIELDS.size).toBe(8);
+  it('contains frameWrap', () => {
+    expect(META_FIELDS.has('frameWrap')).toBe(true);
+  });
+
+  it('has exactly 9 fields', () => {
+    expect(META_FIELDS.size).toBe(9);
   });
 
   it('does not contain arbitrary strings', () => {

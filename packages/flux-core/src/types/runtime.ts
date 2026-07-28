@@ -1,4 +1,4 @@
-import type { ActionResult } from './actions.js';
+import type { ActionContext, ActionResult, ActionSchema, ActionScope } from './actions.js';
 import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance.js';
 import type { ComponentHandleRegistryCore } from './component-handle-core.js';
 import type { NodeInstance, TemplateNode } from './node-identity.js';
@@ -18,7 +18,6 @@ import type {
   ScopeValidationStateSnapshot,
   ChildValidationContractRegistration,
 } from './validation.js';
-import type { ActionScope } from './actions.js';
 import type { RenderNodeInput, RenderRegionHandle } from './render-fragment-types.js';
 
 type SurfaceNodeMeta = {
@@ -255,6 +254,28 @@ export interface OwnedSurfaceStateBase {
   onOpen?: () => Promise<ActionResult> | ActionResult | void;
   onClose?: () => Promise<ActionResult> | ActionResult | void;
   onConfirm?: () => Promise<ActionResult> | ActionResult | void;
+  /**
+   * Lifecycle hooks authored in schema form (ActionSchema | ActionSchema[]).
+   *
+   * Populated only by action-style openDialog/openDrawer when the schema declares
+   * `args.onClose` / `args.onSubmitSuccess` / `args.onSubmitError`. Declarative
+   * surfaces keep using the function-based `onClose` above.
+   *
+   * Hooks are dispatched in the owner ctx (see SurfaceEntry.ownerActionCtx) when
+   * the corresponding surface event fires. See
+   * `docs/architecture/surface-lifecycle-callbacks.md`.
+   */
+  onCloseNodes?: ActionSchema | ActionSchema[];
+  onSubmitSuccessNodes?: ActionSchema | ActionSchema[];
+  onSubmitErrorNodes?: ActionSchema | ActionSchema[];
+  /**
+   * Snapshot of the owner ActionContext captured at surface open time. Used by
+   * lifecycle hook dispatch to reconstruct an owner-side ctx (scope, runtime,
+   * componentRegistry, etc.). May become stale if the owner runtime is torn down
+   * while the surface is still open; consumers must guard against disposed
+   * runtimes.
+   */
+  ownerActionCtx?: ActionContext;
 }
 
 export interface SurfaceEntry extends OwnedSurfaceStateBase {
@@ -313,6 +334,12 @@ export interface SurfaceRuntime {
       onOpen?: () => Promise<ActionResult> | ActionResult | void;
       onClose?: () => Promise<ActionResult> | ActionResult | void;
       onConfirm?: () => Promise<ActionResult> | ActionResult | void;
+      // ── lifecycle hook schema nodes (action-style openDialog/openDrawer only) ──
+      onCloseNodes?: ActionSchema | ActionSchema[];
+      onSubmitSuccessNodes?: ActionSchema | ActionSchema[];
+      onSubmitErrorNodes?: ActionSchema | ActionSchema[];
+      // ── owner ActionContext snapshot for hook dispatch ──
+      ownerActionCtx?: ActionContext;
     };
   }): string;
   upsert(entry: SurfaceEntry): void;
@@ -325,6 +352,24 @@ export interface SurfaceRuntime {
   }): void;
   close(surfaceId?: string): void;
   closeTop(): void;
+  /**
+   * Trigger a lifecycle hook (submit:success / submit:error / close) on the
+   * given entry, dispatching the corresponding hook schema nodes in the
+   * owner ctx. Used by form submit flow when a `submitScope: 'surface'` form
+   * completes ajax. See `docs/architecture/surface-lifecycle-callbacks.md`.
+   *
+   * Returns the hook dispatch result; callers do not need to await close()
+   * (close still has its own onCloseNodes fire-and-forget path).
+   */
+  triggerHook?(
+    entry: SurfaceEntry,
+    hookName: 'submit:success' | 'submit:error' | 'close',
+    payload: {
+      result?: unknown;
+      formData?: Record<string, unknown>;
+      hookName?: 'close' | 'submit:success' | 'submit:error';
+    },
+  ): Promise<ActionResult>;
   dispose(): void;
 }
 
