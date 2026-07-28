@@ -5,6 +5,7 @@ import {
   getSourceErrorMessage,
   useTreeOptionNodeController,
   useTreeOptionListController,
+  useTreeRemoteSearch,
   useTreeSelectController,
 } from './tree-control-controllers.js';
 import { buildTreeOptionMetaList, getTreeOptionConfig, type TreeOptionMeta } from './tree-options.js';
@@ -92,6 +93,32 @@ function NodeControllerHarness(props: {
       <span data-testid="expanded">{String(controller.expanded)}</span>
     </>
   );
+}
+
+function createMockHelpers() {
+  return {
+    createScope: (patch: Record<string, unknown>) => patch,
+    evaluate: vi.fn(),
+    dispatch: vi.fn().mockResolvedValue({ ok: true, data: [] }),
+    render: vi.fn(),
+    getScope: vi.fn(),
+  } as any;
+}
+
+function RemoteSearchHarness(props: {
+  query: string;
+  searchSource?: unknown;
+  searchable: boolean;
+  disabled: boolean;
+}) {
+  const helpers = React.useMemo(() => createMockHelpers(), []);
+  useTreeRemoteSearch({
+    ...props,
+    searchSource: props.searchSource as any,
+    config: getTreeOptionConfig({}),
+    helpers,
+  } as any);
+  return null;
 }
 
 describe('tree control controllers', () => {
@@ -237,5 +264,23 @@ describe('tree control controllers', () => {
     );
 
     expect(screen.getByTestId('trigger-text').textContent).toBe('Platform, Design');
+  });
+
+  it('useTreeRemoteSearch aborts on unmount', async () => {
+    cleanup();
+    const abortSpy = vi.spyOn(AbortController.prototype, 'abort');
+
+    const { unmount } = render(
+      <RemoteSearchHarness
+        query="test"
+        searchSource={{ action: 'ajax:search' }}
+        searchable
+        disabled={false}
+      />,
+    );
+
+    unmount();
+    expect(abortSpy).toHaveBeenCalled();
+    abortSpy.mockRestore();
   });
 });

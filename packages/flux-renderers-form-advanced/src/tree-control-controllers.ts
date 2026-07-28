@@ -104,20 +104,16 @@ export function useTreeRemoteSearch(input: {
       setError(undefined);
       return;
     }
-    let cancelled = false;
-    // AUDIT-12: abort the in-flight request on cleanup (newer query, unmount,
-    // or dep change). The `cancelled` flag is retained as the stale-response
-    // guard for paths that do not honor the signal (e.g. formula sources).
     const controller = new AbortController();
     const handle = setTimeout(() => {
-      if (cancelled) {
+      if (controller.signal.aborted) {
         return;
       }
       setLoading(true);
       setError(undefined);
       executeTreeSource(searchSource!, helpers, { searchQuery: trimmed }, controller.signal)
         .then((result) => {
-          if (cancelled) {
+          if (controller.signal.aborted) {
             return;
           }
           if (result.ok) {
@@ -134,20 +130,19 @@ export function useTreeRemoteSearch(input: {
           }
         })
         .catch((err: unknown) => {
-          if (cancelled) {
+          if (controller.signal.aborted) {
             return;
           }
           setError(err instanceof Error ? err.message : 'Search failed.');
           setRemoteOptions([]);
         })
         .finally(() => {
-          if (!cancelled) {
+          if (!controller.signal.aborted) {
             setLoading(false);
           }
         });
     }, 300);
     return () => {
-      cancelled = true;
       controller.abort();
       clearTimeout(handle);
     };
