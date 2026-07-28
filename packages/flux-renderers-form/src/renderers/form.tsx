@@ -430,6 +430,8 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const loadAction = props.events['loadAction'];
   const autoLoad = (props.props as FormSchema).autoLoad !== false;
   const loadActionKeyRef = useRef<string | undefined>(undefined);
+  const loadAbortRef = useRef<AbortController | null>(null);
+  const loadRequestIdRef = useRef(0);
   // latest instances via refs so the load action effect does not re-run (and
   // abort the in-flight request) on every render — only on activation/action
   // change. `lifecycleScope`/`ownedForm` identities are volatile across renders.
@@ -449,21 +451,48 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       return;
     }
 
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     loadActionKeyRef.current = activationKey;
+    const requestId = ++loadRequestIdRef.current;
 
     void loadAction(undefined, {
       scope: loadLifecycleScopeRef.current,
       form: loadOwnedFormRef.current,
+      signal: controller.signal,
     })
       .then((result) => {
+        if (loadRequestIdRef.current !== requestId) {
+          return;
+        }
         if (result.ok && !result.cancelled && result.data != null) {
           loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
         }
       })
-      .catch(() => {
-        // best-effort; load failures surface through the runtime toast channel
+      .catch((error) => {
+        if (
+          controller.signal.aborted ||
+          (error instanceof Error && error.name === 'AbortError') ||
+          ((error as { name?: string } | null | undefined)?.name === 'AbortError')
+        ) {
+          return;
+        }
+        reportFormInitActionError(runtime, props.path, error);
+      })
+      .finally(() => {
+        if (loadAbortRef.current === controller) {
+          loadAbortRef.current = null;
+        }
       });
-  }, [activationKey, autoLoad, importsReady, loadAction]);
+
+    return () => {
+      if (loadAbortRef.current === controller) {
+        controller.abort();
+        loadAbortRef.current = null;
+      }
+    };
+  }, [activationKey, autoLoad, importsReady, loadAction, runtime, props.path]);
 
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;
