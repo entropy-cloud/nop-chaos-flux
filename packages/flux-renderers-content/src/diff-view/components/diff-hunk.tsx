@@ -1,4 +1,5 @@
 import { memo, useCallback, useState, type CSSProperties } from 'react';
+import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffHunk as DiffHunkType } from '../model/diff-file.js';
 import { DiffLineComponent } from './diff-line.js';
@@ -53,13 +54,13 @@ export const DiffHunkComponent = memo(function DiffHunkComponent({
     const contextCount = hunk.lines.filter((l) => l.type === 'context').length;
     return (
       <div data-slot="diff-hunk-header" data-expanded="false" className="nop-diff-hunk nop-diff-hunk-collapsed">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           className="nop-diff-hunk-expand-btn"
           onClick={toggleExpand}
         >
           {t('flux.diff.collapsedLines', { count: contextCount })}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -68,9 +69,9 @@ export const DiffHunkComponent = memo(function DiffHunkComponent({
     <div data-slot="diff-hunk-header" data-expanded="true" className="nop-diff-hunk nop-diff-hunk-expanded">
       <div className="nop-diff-hunk-header-row">
         <span className="nop-diff-hunk-header-text">{hunk.header}</span>
-        <button type="button" className="nop-diff-hunk-collapse-btn" onClick={toggleExpand}>
+        <Button variant="ghost" className="nop-diff-hunk-collapse-btn" onClick={toggleExpand}>
           {t('flux.diff.collapse')}
-        </button>
+        </Button>
       </div>
       <div style={contentStyle}>
       {hunk.lines.map((line, lineIndex) => {

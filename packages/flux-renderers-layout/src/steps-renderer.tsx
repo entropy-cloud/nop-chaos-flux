@@ -3,7 +3,7 @@ import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { CheckIcon, XIcon } from 'lucide-react';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import type { StepsItemSchema, StepsItemStatus, StepsSchema } from './schemas.js';
 
 const UNUSED: unique symbol = Symbol('unused');
@@ -263,8 +263,8 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
                 )}
               />
             )}
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               data-slot="steps-indicator"
               data-status={status}
               disabled={disabled}
@@ -283,7 +283,7 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
               ) : (
                 index + 1
               )}
-            </button>
+            </Button>
             <div
               className={cn(
                 'min-w-0',

@@ -216,24 +216,26 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   // ---- Mount bootstrap: hydrate conversations from storage (P3) ----
   useEffect(() => {
     if (!storage) return;
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     (async () => {
       try {
         const convs = await storage.loadConversations();
-        if (cancelled) return;
+        if (signal.aborted) return;
         if (convs.length > 0) {
           setConversations(convs);
           // Select the first conversation as active when none is active yet.
           setActiveId((current) => current ?? convs[0].id);
         }
       } catch (error) {
+        if (signal.aborted) return;
         // Failure Path `storage-load-error`: non-fatal, keep the empty list.
         // AI-28: surface to host (callback may be undefined).
         reportStorageError({ phase: 'loadConversations', error });
       }
     })();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [storage, reportStorageError]);
 

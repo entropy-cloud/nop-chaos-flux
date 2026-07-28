@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, type ReactNode } from 'react';
+import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffFileMeta } from '../../schemas.js';
 import { computeDiffFile } from '../model/diff-parse.js';
@@ -93,9 +94,9 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
       </div>
       <div style={{ display: 'flex', borderBottom: '1px solid var(--nop-border)', fontSize: 12 }}>
         {tabs.map((tab) => (
-          <button
+          <Button
             key={tab.key}
-            type="button"
+            variant="ghost"
             onClick={() => setStatusTab(tab.key)}
             data-active={statusTab === tab.key ? 'true' : undefined}
             style={{
@@ -110,7 +111,7 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
             }}
           >
             {tab.label}
-          </button>
+          </Button>
         ))}
       </div>
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>

@@ -23,9 +23,6 @@ describe('flow-designer-renderers public surface', () => {
 
   it('exposes renderer internals through the unstable entry', () => {
     expect(typeof flowDesignerUnstable.createFlowDesignerRegistry).toBe('function');
-    expect(typeof flowDesignerUnstable.extendFlowDesignerRegistry).toBe('function');
-    expect(typeof flowDesignerUnstable.registerFlowDesignerRenderers).toBe('function');
-    expect(Array.isArray(flowDesignerUnstable.flowDesignerRendererDefinitions)).toBe(true);
     expect(typeof flowDesignerUnstable.DesignerXyflowCanvasBridge).toBe('function');
     expect(typeof flowDesignerUnstable.renderDesignerCanvasBridge).toBe('function');
     expect(typeof flowDesignerUnstable.DesignerXyflowCanvas).toBe('function');

@@ -55,9 +55,9 @@ export function renderMobileOptionRow(
   }
   const optionId = `select-mobile-option-${getChoiceOptionKey(option.value)}`;
   return (
-    <button
+    <Button
       key={getChoiceOptionKey(option.value)}
-      type="button"
+      variant="ghost"
       id={optionId}
       role="option"
       aria-selected={ctx.selected}
@@ -78,7 +78,7 @@ export function renderMobileOptionRow(
         {ctx.selected ? <CheckIcon className="size-3.5" /> : null}
       </span>
       <span className="flex-1 truncate">{content}</span>
-    </button>
+    </Button>
   );
 }
 

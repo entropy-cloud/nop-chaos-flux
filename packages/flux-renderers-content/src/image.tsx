@@ -37,9 +37,10 @@ function toSize(value: unknown): string | number | undefined {
 async function fetchAsDataUri(
   fetcher: ActionSchema,
   helpers: RendererComponentProps['helpers'],
+  signal?: AbortSignal,
 ): Promise<string | undefined> {
   try {
-    const result = await helpers.dispatch(fetcher);
+    const result = await helpers.dispatch(fetcher, { signal });
     if (!result.ok || !result.data) {
       return undefined;
     }
@@ -87,12 +88,13 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
       setFetcherLoading(false);
       return;
     }
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     setFetcherLoading(true);
     setErrored(false);
-    fetchAsDataUri(fetcher, props.helpers)
+    fetchAsDataUri(fetcher, props.helpers, signal)
       .then((uri) => {
-        if (cancelled) return;
+        if (signal.aborted) return;
         if (uri) {
           setFetcherSrc(uri);
         } else {
@@ -100,13 +102,13 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
         }
       })
       .catch(() => {
-        if (cancelled) return;
+        if (signal.aborted) return;
         setErrored(true);
       })
       .finally(() => {
-        if (!cancelled) setFetcherLoading(false);
+        if (!signal.aborted) setFetcherLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => { controller.abort(); };
   }, [fetcher, props.helpers]);
 
   const effectiveSrc = fetcher ? fetcherSrc : src;

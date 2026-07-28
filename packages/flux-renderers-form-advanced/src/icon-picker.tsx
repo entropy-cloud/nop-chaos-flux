@@ -209,18 +209,18 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
                 const IconComp = resolveLucideIcon(iconName);
                 const isSelected = matchIcon(currentValue, iconName);
                 return (
-                  <button
+                  <Button
                     key={iconName}
-                    type="button"
+                    variant="ghost"
                     className={cn(
-                      'flex size-8 items-center justify-center rounded hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                      'size-8',
                       isSelected && 'bg-accent text-accent-foreground ring-1 ring-primary',
                     )}
                     title={iconName}
                     onClick={() => selectIcon(iconName)}
                   >
                     <IconComp className="size-4" />
-                  </button>
+                  </Button>
                 );
               })
             )}

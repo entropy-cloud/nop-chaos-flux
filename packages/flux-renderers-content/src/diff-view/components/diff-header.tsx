@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffStats } from '../utils/diff-stats.js';
 
@@ -42,29 +43,29 @@ export const DiffHeader = memo(function DiffHeader({
       </div>
       {showNavButtons && (
         <div className="nop-diff-header-nav">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             className="nop-diff-nav-prev"
             disabled={!hasPrevFile}
             onClick={onPrevFile}
             title={t('flux.diff.prevFile')}
           >
             ↑
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
             className="nop-diff-nav-next"
             disabled={!hasNextFile}
             onClick={onNextFile}
             title={t('flux.diff.nextFile')}
           >
             ↓
-          </button>
+          </Button>
         </div>
       )}
-      <button type="button" className="nop-diff-view-toggle" onClick={onToggleView}>
+      <Button variant="ghost" className="nop-diff-view-toggle" onClick={onToggleView}>
         {viewType === 'split' ? t('flux.diff.unifiedView') : t('flux.diff.splitView')}
-      </button>
+      </Button>
     </div>
   );
 });

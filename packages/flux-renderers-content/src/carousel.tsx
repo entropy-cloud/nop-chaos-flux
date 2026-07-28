@@ -3,6 +3,7 @@ import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-co
 import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
+  Button,
   Carousel,
   type CarouselApi,
   CarouselContent,
@@ -297,16 +298,16 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
       {showIndicators ? (
         <div data-slot="carousel-indicators" className="mt-2 flex justify-center gap-2">
           {items.map((item, index) => (
-            <button
+            <Button
               key={toSlideKey(item, index)}
-              type="button"
+              variant="ghost"
               data-slot="carousel-indicator"
               data-index={index}
               data-active={index === activeIndex ? 'true' : undefined}
               aria-label={`Go to slide ${index + 1}`}
               onClick={() => api?.scrollTo(index)}
               className={cn(
-                'h-2 w-2 rounded-full transition-colors',
+                'h-2 w-2 rounded-full p-0',
                 index === activeIndex ? 'bg-primary' : 'bg-muted-foreground/30',
               )}
             />

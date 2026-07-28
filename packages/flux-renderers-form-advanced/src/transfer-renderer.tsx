@@ -377,8 +377,8 @@ function TransferPane(props: TransferPaneProps) {
           </span>
         </div>
         {props.clearable && props.onClearAll && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             className={cn(
               'text-xs text-muted-foreground hover:text-foreground transition-colors',
               props.interactionDisabled && 'pointer-events-none opacity-50',
@@ -388,7 +388,7 @@ function TransferPane(props: TransferPaneProps) {
             data-slot="transfer-clear-all"
           >
             {t('flux.transfer.clear', { defaultValue: 'Clear' })}
-          </button>
+          </Button>
         )}
       </div>
       {props.searchable && (

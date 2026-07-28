@@ -10,6 +10,27 @@ afterEach(() => {
   cleanup();
 });
 
+describe('ImageRenderer — AbortController cleanup', () => {
+  it('aborts in-flight dispatch on unmount', () => {
+    let capturedSignal: AbortSignal | undefined;
+    const helpers = {
+      dispatch: vi.fn((_action: unknown, ctx?: { signal?: AbortSignal }) => {
+        capturedSignal = ctx?.signal;
+        return new Promise(() => {}); // never resolves
+      }),
+    };
+    const props = createMockRendererProps<ImageSchema>({
+      schema: { type: 'image' },
+      props: { fetcher: { action: 'ajax', args: { url: '/api/image' } } },
+      helpers: helpers as unknown as RendererComponentProps<ImageSchema>['helpers'],
+    });
+    const { unmount } = render(<ImageRenderer {...props} />);
+    expect(helpers.dispatch).toHaveBeenCalledTimes(1);
+    unmount();
+    expect(capturedSignal?.aborted).toBe(true);
+  });
+});
+
 describe('ImageRenderer — DD7 fetcher-backed mode', () => {
   it('shows loading state while fetcher is in progress', () => {
     const props = createMockRendererProps<ImageSchema>({

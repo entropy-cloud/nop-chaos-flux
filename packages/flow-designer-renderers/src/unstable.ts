@@ -28,7 +28,4 @@ export {
 } from './designer-xyflow-canvas/index.js';
 export {
   createFlowDesignerRegistry,
-  extendFlowDesignerRegistry,
-  flowDesignerRendererDefinitions,
-  registerFlowDesignerRenderers,
 } from './renderer-definitions.js';

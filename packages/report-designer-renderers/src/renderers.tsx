@@ -151,9 +151,9 @@ function compileToolbarItemsOverride(
 }
 
 function validateReportToolbarItems(
-  context: RendererSchemaValidationContext<ReportToolbarSchema>,
+  context: RendererSchemaValidationContext<BaseSchema>,
 ) {
-  const items = context.schema.itemsOverride;
+  const items = (context.schema as ReportToolbarSchema).itemsOverride;
   if (!Array.isArray(items)) {
     return;
   }
@@ -201,7 +201,7 @@ function compileToolbarItem(
 
 export type { ReportDesignerPageSchemaInput, ReportDesignerPageSchema };
 
-export const reportDesignerRendererDefinitions: RendererDefinition<any>[] = [
+export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'report-inspector-shell',
     component: LazyReportInspectorShellRenderer,
