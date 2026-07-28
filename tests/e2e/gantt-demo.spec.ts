@@ -21,12 +21,20 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
     await assertTrackedPageErrors(page);
   });
 
-  test('root container has task bars visible', async ({ page }) => {
+  test('root container has task bars visible with specific count', async ({ page }) => {
     await page.goto(ROUTE, { waitUntil: 'load' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
     await expect(page.locator('[data-slot="gantt"]')).toBeVisible();
-    const barCount = await page.locator('[data-slot="gantt-bar"]').count();
-    expect(barCount).toBeGreaterThan(0);
+    const bars = page.locator('[data-slot="gantt-bar"]');
+    await expect(bars.first()).toBeVisible({ timeout: 15_000 });
+    const barCount = await bars.count();
+    expect(barCount).toBeGreaterThanOrEqual(8);
+
+    const firstBar = bars.first();
+    const left = await firstBar.evaluate((el) => parseFloat(el.style.left) || 0);
+    const top = await firstBar.evaluate((el) => parseFloat(el.style.top) || 0);
+    expect(left).not.toBeNaN();
+    expect(top).not.toBeNaN();
 
     await assertTrackedPageErrors(page);
   });

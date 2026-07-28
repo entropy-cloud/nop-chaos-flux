@@ -1,8 +1,7 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, assertTrackedPageErrors } from './fixtures.js';
 
 test.describe('Calendar Demo', () => {
-  test('page loads with month view visible', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('page loads with month view visible', async ({ page }) => {
     await page.goto('/#/scheduling-calendar', { waitUntil: 'load' });
     await expect(page.locator('[data-view="month"]')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-slot="calendar-matrix"]')).toBeVisible({ timeout: 15_000 });
@@ -11,10 +10,10 @@ test.describe('Calendar Demo', () => {
     await expect(resourceRows.first()).toBeVisible();
     const rowCount = await resourceRows.count();
     expect(rowCount).toBeGreaterThan(0);
+    await assertTrackedPageErrors(page);
   });
 
-  test('view switch buttons present with correct labels', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('view switch buttons present with correct labels', async ({ page }) => {
     await page.goto('/#/scheduling-calendar', { waitUntil: 'load' });
     await expect(page.locator('[data-view="month"]')).toBeVisible({ timeout: 15_000 });
 
@@ -28,10 +27,10 @@ test.describe('Calendar Demo', () => {
     expect(monthBtn).toBeTruthy();
     expect(weekBtn).toBeTruthy();
     expect(dayBtn).toBeTruthy();
+    await assertTrackedPageErrors(page);
   });
 
-  test('calendar navigation buttons work', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('calendar navigation buttons work', async ({ page }) => {
     await page.goto('/#/scheduling-calendar', { waitUntil: 'load' });
     await expect(page.locator('[data-view="month"]')).toBeVisible({ timeout: 15_000 });
 
@@ -43,24 +42,24 @@ test.describe('Calendar Demo', () => {
 
     await page.locator('button[aria-label="Previous"]').click();
     await expect(dateDisplay).toHaveText(initialDateText!, { timeout: 3_000 });
+    await assertTrackedPageErrors(page);
   });
 
-  test('events rendered in month view', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('events rendered with correct count and attributes', async ({ page }) => {
     await page.goto('/#/scheduling-calendar', { waitUntil: 'load' });
     await expect(page.locator('[data-view="month"]')).toBeVisible({ timeout: 15_000 });
 
-    const hasEventBlocks = await page.evaluate(() => {
-      return document.querySelectorAll('.nop-calendar-event-block').length > 0;
-    });
+    const eventBlocks = page.locator('[data-slot="calendar-event"]');
+    await expect(eventBlocks.first()).toBeVisible({ timeout: 10_000 });
+    const eventCount = await eventBlocks.count();
+    expect(eventCount).toBeGreaterThan(0);
 
-    if (hasEventBlocks) {
-      await expect(page.locator('.nop-calendar-event-block').first()).toBeVisible();
-    }
+    await expect(eventBlocks.first()).toHaveAttribute('data-event-id');
+    await expect(eventBlocks.first()).toHaveAttribute('data-event-type');
+    await assertTrackedPageErrors(page);
   });
 
-  test('day cells clickable', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('day cells clickable', async ({ page }) => {
     await page.goto('/#/scheduling-calendar', { waitUntil: 'load' });
     await expect(page.locator('[data-view="month"]')).toBeVisible({ timeout: 15_000 });
 
@@ -70,15 +69,16 @@ test.describe('Calendar Demo', () => {
 
     const firstCell = cells.first();
     await expect(firstCell).toBeVisible();
+    await assertTrackedPageErrors(page);
   });
 
-  test('resource rows present', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('resource rows present', async ({ page }) => {
     await page.goto('/#/scheduling-calendar', { waitUntil: 'load' });
     await expect(page.locator('[data-view="month"]')).toBeVisible({ timeout: 15_000 });
 
     const resourceRows = page.locator('[data-slot="calendar-resource-row"]');
     const rowCount = await resourceRows.count();
     expect(rowCount).toBeGreaterThanOrEqual(1);
+    await assertTrackedPageErrors(page);
   });
 });
