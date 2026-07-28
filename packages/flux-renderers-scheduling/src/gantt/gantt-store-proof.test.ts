@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GanttStore } from './gantt-store.js';
+import { createInitialStore } from './gantt.js';
 import type { GanttTaskData, GanttLinkData } from './gantt.types.js';
 
 function makeTask(overrides: Partial<GanttTaskData> & { id: string | number }): GanttTaskData {
@@ -232,5 +233,36 @@ describe('Zustand GanttStore proof', () => {
     store.setZoom('week');
     expect(store.revision).toBeGreaterThan(r0);
     expect(store.layoutRevision).toBeGreaterThan(lr0);
+  });
+});
+
+describe('createInitialStore — store wiring proof', () => {
+  it('passes zoomLevels/cellWidth/defaultZoom from resolved props to store', () => {
+    const store = createInitialStore({
+      zoomLevels: [
+        { key: 'day', label: 'Day', minCellWidth: 40, scales: [{ unit: 'day' as const }] },
+        { key: 'week', label: 'Week', minCellWidth: 80, scales: [{ unit: 'week' as const }] },
+      ],
+      cellWidth: 40,
+      defaultZoom: 'day',
+      tasks: [],
+      links: [],
+    });
+    expect(store.cellWidth).toBe(40);
+    expect(store.currentZoom).toBe('day');
+    expect(store.getAvailableZooms()).toHaveLength(2);
+  });
+
+  it('falls back to defaults when zoomLevels is not provided', () => {
+    const store = createInitialStore({ tasks: [], links: [] });
+    expect(store.cellWidth).toBe(40);
+    expect(store.currentZoom).toBe('week');
+    expect(store.getAvailableZooms().length).toBeGreaterThan(0);
+  });
+
+  it('initializes with empty tasks/links when not provided', () => {
+    const store = createInitialStore({});
+    expect(store.tasks.size).toBe(0);
+    expect(store.links.size).toBe(0);
   });
 });

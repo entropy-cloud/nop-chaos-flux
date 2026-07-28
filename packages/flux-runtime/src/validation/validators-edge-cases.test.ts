@@ -132,19 +132,27 @@ describe('required validator edge cases', () => {
   });
 
   it('fails for null', () => {
-    expect(validate(null)).toBeDefined();
+    const err = validate(null);
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('required');
   });
 
   it('fails for undefined', () => {
-    expect(validate(undefined)).toBeDefined();
+    const err = validate(undefined);
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('required');
   });
 
   it('fails for empty string', () => {
-    expect(validate('')).toBeDefined();
+    const err = validate('');
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('required');
   });
 
   it('fails for empty array', () => {
-    expect(validate([])).toBeDefined();
+    const err = validate([]);
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('required');
   });
 
   it('passes for single-element array', () => {
@@ -181,7 +189,9 @@ describe('maxLength edge cases', () => {
   });
 
   it('fails for non-empty string when maxLength is 0', () => {
-    expect(invoke('maxLength', { kind: 'maxLength', value: 0 }, 'a')).toBeDefined();
+    const err = invoke('maxLength', { kind: 'maxLength', value: 0 }, 'a');
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('maxLength');
   });
 });
 
@@ -191,7 +201,9 @@ describe('minItems edge cases', () => {
   });
 
   it('fails for empty array when minItems is 1', () => {
-    expect(invoke('minItems', { kind: 'minItems', value: 1 }, [])).toBeDefined();
+    const err = invoke('minItems', { kind: 'minItems', value: 1 }, []);
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('minItems');
   });
 
   it('passes for string value (not an array)', () => {
@@ -209,7 +221,9 @@ describe('pattern edge cases', () => {
   });
 
   it('passes for whitespace-only string when pattern does not match', () => {
-    expect(invoke('pattern', { kind: 'pattern', value: '^\\d+$' }, '   ')).toBeDefined();
+    const err = invoke('pattern', { kind: 'pattern', value: '^\\d+$' }, '   ');
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('pattern');
   });
 
   it('passes for empty regex pattern on non-empty string', () => {
@@ -219,15 +233,21 @@ describe('pattern edge cases', () => {
 
 describe('email edge cases', () => {
   it('fails for email with trailing dot', () => {
-    expect(invoke('email', { kind: 'email' }, 'user@domain.')).toBeDefined();
+    const err = invoke('email', { kind: 'email' }, 'user@domain.');
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('email');
   });
 
   it('fails for email without TLD', () => {
-    expect(invoke('email', { kind: 'email' }, 'user@domain')).toBeDefined();
+    const err = invoke('email', { kind: 'email' }, 'user@domain');
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('email');
   });
 
   it('fails for double @', () => {
-    expect(invoke('email', { kind: 'email' }, 'user@@domain.com')).toBeDefined();
+    const err = invoke('email', { kind: 'email' }, 'user@@domain.com');
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('email');
   });
 
   it('passes for email with subdomain', () => {
@@ -241,13 +261,15 @@ describe('equalsField with special values', () => {
   });
 
   it('fails when value is 0 and peer is -0 (Object.is distinguishes them)', () => {
-    expect(invoke('equalsField', { kind: 'equalsField', path: 'peer' }, 0, { peer: -0 })).toBeDefined();
+    const err = invoke('equalsField', { kind: 'equalsField', path: 'peer' }, 0, { peer: -0 });
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('equalsField');
   });
 
   it('fails when value is object and peer is different object', () => {
-    expect(
-      invoke('equalsField', { kind: 'equalsField', path: 'peer' }, { a: 1 }, { peer: { a: 1 } }),
-    ).toBeDefined();
+    const err = invoke('equalsField', { kind: 'equalsField', path: 'peer' }, { a: 1 }, { peer: { a: 1 } });
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('equalsField');
   });
 
   it('fails when value is object and peer is same reference', () => {
@@ -258,7 +280,9 @@ describe('equalsField with special values', () => {
 
 describe('notEqualsField with special values', () => {
   it('fails when both are NaN', () => {
-    expect(invoke('notEqualsField', { kind: 'notEqualsField', path: 'peer' }, NaN, { peer: NaN })).toBeDefined();
+    const err = invoke('notEqualsField', { kind: 'notEqualsField', path: 'peer' }, NaN, { peer: NaN });
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('notEqualsField');
   });
 
   it('passes when one is 0 and other is -0 are the same', () => {
@@ -275,6 +299,7 @@ describe('requiredWhen edge cases', () => {
       { flag: NaN },
     );
     expect(err).toBeDefined();
+    expect(err!.rule).toBe('requiredWhen');
   });
 
   it('does not trigger when equals is NaN and dependency is not NaN', () => {
@@ -295,6 +320,7 @@ describe('requiredWhen edge cases', () => {
       { flag: 0 },
     );
     expect(err).toBeDefined();
+    expect(err!.rule).toBe('requiredWhen');
   });
 
   it('does not trigger when equals is 0 and dependency is undefined', () => {
@@ -317,6 +343,7 @@ describe('requiredUnless edge cases', () => {
       {},
     );
     expect(err).toBeDefined();
+    expect(err!.rule).toBe('requiredUnless');
   });
 
   it('does not require when dependency equals target', () => {
@@ -355,13 +382,13 @@ describe('uniqueBy edge cases', () => {
   });
 
   it('detects duplicates among non-empty values', () => {
-    expect(
-      invoke('uniqueBy', { kind: 'uniqueBy', itemPath: 'id' }, [
-        { id: null },
-        { id: 'a' },
-        { id: 'a' },
-      ]),
-    ).toBeDefined();
+    const err = invoke('uniqueBy', { kind: 'uniqueBy', itemPath: 'id' }, [
+      { id: null },
+      { id: 'a' },
+      { id: 'a' },
+    ]);
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('uniqueBy');
   });
 
   it('handles non-array value gracefully', () => {
@@ -373,21 +400,21 @@ describe('uniqueBy edge cases', () => {
 
 describe('atLeastOneOf edge cases', () => {
   it('fails when value is null', () => {
-    expect(
-      invoke('atLeastOneOf', { kind: 'atLeastOneOf', paths: ['a', 'b'] }, null),
-    ).toBeDefined();
+    const err = invoke('atLeastOneOf', { kind: 'atLeastOneOf', paths: ['a', 'b'] }, null);
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('atLeastOneOf');
   });
 
   it('fails when value is undefined', () => {
-    expect(
-      invoke('atLeastOneOf', { kind: 'atLeastOneOf', paths: ['a', 'b'] }, undefined),
-    ).toBeDefined();
+    const err = invoke('atLeastOneOf', { kind: 'atLeastOneOf', paths: ['a', 'b'] }, undefined);
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('atLeastOneOf');
   });
 
   it('fails when paths is empty array', () => {
-    expect(
-      invoke('atLeastOneOf', { kind: 'atLeastOneOf', paths: [] }, { a: 'val' }),
-    ).toBeDefined();
+    const err = invoke('atLeastOneOf', { kind: 'atLeastOneOf', paths: [] }, { a: 'val' });
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('atLeastOneOf');
   });
 
   it('passes when deep nested path is filled', () => {
@@ -419,21 +446,21 @@ describe('allOrNone edge cases', () => {
 
 describe('atLeastOneFilled edge cases', () => {
   it('fails for null value', () => {
-    expect(
-      invoke('atLeastOneFilled', { kind: 'atLeastOneFilled' }, null),
-    ).toBeDefined();
+    const err = invoke('atLeastOneFilled', { kind: 'atLeastOneFilled' }, null);
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('atLeastOneFilled');
   });
 
   it('fails for undefined value', () => {
-    expect(
-      invoke('atLeastOneFilled', { kind: 'atLeastOneFilled' }, undefined),
-    ).toBeDefined();
+    const err = invoke('atLeastOneFilled', { kind: 'atLeastOneFilled' }, undefined);
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('atLeastOneFilled');
   });
 
   it('fails for string value (not array)', () => {
-    expect(
-      invoke('atLeastOneFilled', { kind: 'atLeastOneFilled' }, 'string'),
-    ).toBeDefined();
+    const err = invoke('atLeastOneFilled', { kind: 'atLeastOneFilled' }, 'string');
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('atLeastOneFilled');
   });
 
   it('passes when array has a zero value', () => {

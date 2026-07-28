@@ -30,7 +30,7 @@ export interface GanttHandle {
   scrollToTask: (taskId: string | number) => void;
 }
 
-function createInitialStore(resolved: Record<string, unknown>): GanttStoreApi {
+export function createInitialStore(resolved: Record<string, unknown>): GanttStoreApi {
   const s = createGanttStore({
     cellWidth: (resolved.cellWidth as number) ?? 40,
     defaultZoom: (resolved.defaultZoom as string) ?? 'week',
