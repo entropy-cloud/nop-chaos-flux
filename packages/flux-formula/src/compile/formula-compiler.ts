@@ -126,6 +126,7 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
               context,
               registry: getSnapshot(),
               reportError: createExpressionMonitorReporter(env, source),
+              onUndefinedVariable: env.onUndefinedVariable,
             }) as T;
           } catch (error) {
             const wrappedError = new Error(`Expression evaluation failed for: ${source}`, {
@@ -205,6 +206,7 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
                   context,
                   registry: getSnapshot(),
                   reportError: createExpressionMonitorReporter(env, source),
+                  onUndefinedVariable: env.onUndefinedVariable,
                 });
 
                 return evaluated == null ? '' : String(evaluated);

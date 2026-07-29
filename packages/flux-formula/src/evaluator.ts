@@ -1,4 +1,4 @@
-import type { EvalContext, RendererEnv } from '@nop-chaos/flux-core';
+import type { EvalContext, RendererEnv, UndefinedVariableInfo } from '@nop-chaos/flux-core';
 import type { FormulaAstNode, IdentifierNode, MemberExpressionNode } from './ast.js';
 import { customEquals, installBuiltins } from './builtins.js';
 import { createFormulaRegistry, type FormulaRegistrySnapshot } from './registry.js';
@@ -25,6 +25,7 @@ interface EvaluateOptions {
   context: EvalContext;
   registry?: FormulaRegistrySnapshot;
   reportError?: (error: unknown, details?: Record<string, unknown>) => void;
+  onUndefinedVariable?: (info: UndefinedVariableInfo) => void;
 }
 
 interface ResolvedCallable {
@@ -232,11 +233,27 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
     if (node.binding !== 'library') {
       options.context.collector?.recordPath(node.name);
     }
-    return options.context.resolve(node.name);
+
+    const resolved = options.context.resolve(node.name);
+
+    if (resolved === undefined && !options.context.has(node.name) && node.binding !== 'library') {
+      options.onUndefinedVariable?.({
+        variableName: node.name,
+      });
+    }
+
+    return resolved;
   };
 
   const evaluateMemberTarget = (node: MemberExpressionNode, frame?: LambdaFrame) => {
     const objectValue = evaluateNode(node.object, frame);
+
+    if (objectValue === undefined && node.object.type === 'Identifier' && node.object.binding === 'scope') {
+      options.onUndefinedVariable?.({
+        variableName: `${node.object.name}.${node.property.type === 'Identifier' ? node.property.name : '(computed)'}`,
+      });
+    }
+
     if (objectValue == null) {
       if (node.optional) {
         return { value: undefined, receiver: undefined, name: undefined };

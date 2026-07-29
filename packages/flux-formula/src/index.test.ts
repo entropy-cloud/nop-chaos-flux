@@ -434,4 +434,34 @@ describe('createExpressionCompiler', () => {
       template.exec(createScope({ user: null }), env),
     ).toThrow('Template evaluation failed');
   });
+
+  it('calls onUndefinedVariable from compiled expression env', () => {
+    const compiler = createFormulaCompiler();
+    const onUndefinedVariable = vi.fn();
+    const expression = compiler.compileExpression('${nonexistent}');
+
+    expression.exec(createScope({}), { ...env, onUndefinedVariable });
+
+    expect(onUndefinedVariable).toHaveBeenCalledWith({ variableName: 'nonexistent' });
+  });
+
+  it('calls onUndefinedVariable from compiled template env', () => {
+    const compiler = createFormulaCompiler();
+    const onUndefinedVariable = vi.fn();
+    const template = compiler.compileTemplate('Hello ${nonexistent}');
+
+    template.exec(createScope({}), { ...env, onUndefinedVariable });
+
+    expect(onUndefinedVariable).toHaveBeenCalledWith({ variableName: 'nonexistent' });
+  });
+
+  it('does not call onUndefinedVariable for existing scope variables or $Math', () => {
+    const compiler = createFormulaCompiler();
+    const onUndefinedVariable = vi.fn();
+    const expression = compiler.compileExpression('${$Math.PI}');
+
+    expression.exec(createScope({}), { ...env, onUndefinedVariable });
+
+    expect(onUndefinedVariable).not.toHaveBeenCalled();
+  });
 });

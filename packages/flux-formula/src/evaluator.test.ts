@@ -454,3 +454,56 @@ describe('evaluateAst', () => {
     expect(result).toEqual(expect.objectContaining({ a: 1, b: 2 }));
   });
 });
+
+describe('onUndefinedVariable callback', () => {
+  it('calls onUndefinedVariable for a simple undefined scope variable', () => {
+    const onUndefinedVariable = vi.fn();
+
+    evaluateAst(parseFormula('nonexistent'), {
+      env,
+      context: createContext({}),
+      onUndefinedVariable,
+    });
+
+    expect(onUndefinedVariable).toHaveBeenCalledWith({ variableName: 'nonexistent' });
+  });
+
+  it('does NOT call onUndefinedVariable for an existing scope variable', () => {
+    const onUndefinedVariable = vi.fn();
+
+    evaluateAst(parseFormula('user'), {
+      env,
+      context: createContext({ user: { name: 'Alice' } }),
+      onUndefinedVariable,
+    });
+
+    expect(onUndefinedVariable).not.toHaveBeenCalled();
+  });
+
+  it('calls onUndefinedVariable for a scope-bound member expression with undefined root', () => {
+    const onUndefinedVariable = vi.fn();
+
+    evaluateAst(member(identifier('record', 'scope'), identifier('field'), { optional: true }), {
+      env,
+      context: createContext({}),
+      onUndefinedVariable,
+    });
+
+    expect(onUndefinedVariable).toHaveBeenCalledWith({ variableName: 'record.field' });
+  });
+
+  it('does NOT call onUndefinedVariable for $Math namespace variable', () => {
+    const registry = createFormulaRegistry();
+    createFormulaCompiler(registry);
+    const onUndefinedVariable = vi.fn();
+
+    evaluateAst(identifier('$Math', 'namespace'), {
+      env,
+      context: createContext({}),
+      registry: registry.getSnapshot(),
+      onUndefinedVariable,
+    });
+
+    expect(onUndefinedVariable).not.toHaveBeenCalled();
+  });
+});
