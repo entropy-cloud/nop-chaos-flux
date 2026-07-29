@@ -264,12 +264,10 @@ export async function runBuiltInAction(
     }
     case 'submit':
     case 'submitForm': {
-      if (!ctx.form) {
-        return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
-          ok: false,
-          error: new Error('submit requires form runtime'),
-        });
-      }
+      // Always create the invocation. When ctx.form is null (e.g. dialog footer
+      // button outside FormContext), the adapter resolves the form through:
+      //   1. surface form with submitScope='surface'
+      //   2. componentId targeting from the component registry
       invocation = {
         action: 'submitForm',
         args: undefined,

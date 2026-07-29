@@ -75,17 +75,16 @@ export async function runComponentAction(
     _targetCid:
       typeof action.targeting._targetCid === 'number' ? action.targeting._targetCid : undefined,
     componentId: action.targeting.componentId,
-    componentName: action.targeting.componentName,
   };
 
-  if (!target.componentId && !target.componentName && target._targetCid === undefined) {
+  if (!target.componentId && target._targetCid === undefined) {
     return finishAction(
       internals,
       { ...actionPayload, dispatchMode: 'component', method },
       startedAt,
       {
         ok: false,
-        error: new Error('component:<method> requires _targetCid, componentId or componentName'),
+        error: new Error('component:<method> requires _targetCid or componentId'),
       },
     );
   }
@@ -103,13 +102,11 @@ export async function runComponentAction(
       normalizeActionResult(await internals.adapter.invokeComponentAction(invocation, ctx)),
       {
         componentId: target.componentId,
-        componentName: target.componentName,
       },
     );
   } catch (error) {
     throw attachThrownMetadata(error, {
       componentId: target.componentId,
-      componentName: target.componentName,
     });
   }
 

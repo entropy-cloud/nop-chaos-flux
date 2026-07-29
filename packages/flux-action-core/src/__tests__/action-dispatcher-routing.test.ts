@@ -316,9 +316,9 @@ describe('action-dispatcher routing', () => {
         {
           action: 'component:doStuff',
           payload: {},
-          targeting: { componentId: 'comp-1', componentName: 'Editor' },
+          targeting: { componentId: 'comp-1' },
           control: {},
-          source: { action: 'component:doStuff', componentId: 'comp-1', componentName: 'Editor' },
+          source: { action: 'component:doStuff', componentId: 'comp-1' },
         },
       ]),
       createActionCtx({ runtime }),
@@ -328,7 +328,6 @@ describe('action-dispatcher routing', () => {
       ok: false,
       error: componentError,
       componentId: 'comp-1',
-      componentName: 'Editor',
     });
   });
 
