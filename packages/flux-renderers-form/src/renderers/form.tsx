@@ -251,6 +251,13 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
           ? visibleScope.drawerId
           : undefined;
 
+    // Register this form as the surface's submittable form so that action
+    // buttons outside FormContext (e.g. dialog footer submit) can resolve
+    // ctx.form at dispatch time.
+    if (surfaceRuntimeForHook?.setSurfaceForm && surfaceId) {
+      surfaceRuntimeForHook.setSurfaceForm(surfaceId, ownedForm);
+    }
+
     /**
      * After form's own onSubmitSuccess / onSubmitError runs, trigger the
      * enclosing surface's submit hooks if this form declares
@@ -351,6 +358,9 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     });
 
     return () => {
+      if (surfaceRuntimeForHook?.setSurfaceForm && surfaceId) {
+        surfaceRuntimeForHook.setSurfaceForm(surfaceId, undefined);
+      }
       ownedForm.setLifecycleHandlers(undefined);
     };
   }, [
@@ -494,6 +504,27 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       }
     };
   }, [activationKey, autoLoad, importsReady, loadAction, runtime, props.path]);
+
+  useEffect(() => {
+    if (!loadAction || !importsReady) {
+      ownedForm.setRefreshHandler(undefined);
+      return;
+    }
+
+    ownedForm.setRefreshHandler(async () => {
+      const result = await loadAction(undefined, {
+        scope: loadLifecycleScopeRef.current,
+        form: loadOwnedFormRef.current,
+      });
+      if (result.ok && !result.cancelled && result.data != null) {
+        loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
+      }
+    });
+
+    return () => {
+      ownedForm.setRefreshHandler(undefined);
+    };
+  }, [loadAction, importsReady, ownedForm]);
 
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;
