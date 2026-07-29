@@ -366,7 +366,7 @@ interface CrudStatusSummary {
   - 达到上限后：未选行 checkbox 进入 `disabled`；`handleSelectRow(rowKey, true)` 被拒绝（no-op，selection 不变）。
   - `handleSelectAll(true)`：按当前可见行顺序追加可勾选行，直到达到上限即 **截断**（不抛错、不补全）。
   - radio 单选模式（`selection.type: 'radio'`）忽略此字段——radio 本质单选，上限无意义。
-- **`checkableWhen`**（缺省 `undefined` = 全部可勾选）— 按行可勾选条件，类型为 Flux 表达式字符串（raw expression，**不**包裹 `${}`，如 `"record.status === 'active'"`；表达式由 table 在行 scope 下延迟求值，schema 编译期不解析，避免在 CRUD scope 缺少 `record` 时出错）。
+- **`checkableWhen`**（缺省 `undefined` = 全部可勾选）— 按行可勾选条件，类型为 Flux 表达式字符串（raw expression，**不**包裹 `${}`，如 `"status === 'active'"`；表达式由 table 在行 scope 下延迟求值，schema 编译期不解析，避免在 CRUD scope 缺少 `record` 时出错）。
   - 在行 scope（含 `record` / `index` 绑定）下求值；truthy 行 checkbox 可勾选、falsy 行 checkbox `disabled` 且不可被全选纳入。
   - 表达式求值失败按 Flux 现行 `when` 语义处理：视为 falsy（disabled）。
   - radio 单选模式同样消费 `checkableWhen`（不可勾选行 radio disabled）。

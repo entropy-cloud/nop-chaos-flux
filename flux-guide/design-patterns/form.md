@@ -34,11 +34,13 @@
       "type": "button",
       "label": "提交",
       "variant": "default",
-      "onClick": { "action": "component:submit", "componentId": "userForm" }
+      "onClick": { "action": "submitForm" }
     }
   ]
 }
 ```
+
+> 按钮在 form body 内时，`submitForm` 直接从 `FormContext` 获取 form，无需 `componentId`；按钮在 dialog 或 page 的 footer actions 中时，`submitForm` 自动从当前 surface 查找声明了 `submitScope: 'surface'` 的 form。
 
 ## 嵌套表单 (Fieldset)
 
@@ -67,7 +69,7 @@
       "type": "button",
       "label": "提交订单",
       "variant": "default",
-      "onClick": { "action": "component:submit", "componentId": "orderForm" }
+      "onClick": { "action": "submitForm" }
     }
   ]
 }
@@ -107,7 +109,7 @@
 }
 ```
 
-**关键点**：按钮是 `component:submit` 的薄触发器（目标用顶层 `componentId`），验证→提交→分支全部由表单节点拥有。
+**关键点**：按钮用 `submitForm` action 触发表单提交，提交逻辑（验证→ajax→成功/失败分支）全部由表单节点自己掌管。
 
 ---
 

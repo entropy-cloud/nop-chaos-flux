@@ -271,3 +271,41 @@ formulaRegistry.registerNamespace('$Arr', {
 ```
 
 > 内置命名空间见 `02-expression-syntax.md`（`$Math`/`$Date`/`$JSON`）；`$Arr` 这类领域命名空间由宿主按需注册。完整范例见 `examples/business-document-formula.md`。
+
+---
+
+## onUndefinedVariable：监控未定义变量
+
+`env.onUndefinedVariable` 是一个可选回调，在表达式求值过程中遇到**未定义的作用域变量**时触发。它是 `RendererEnv` 从 `ExpressionExecutionEnv` 继承的成员，类型签名：
+
+```ts
+onUndefinedVariable?: (info: { variableName: string }) => void;
+```
+
+### 触发时机
+
+当 `evaluateIdentifier` 或 `evaluateMemberTarget` 对标识符执行以下判断时触发：
+
+1. `context.resolve(name)` 返回 `undefined`
+2. `context.has(name)` 返回 `false`
+3. 该标识符不是 `library`（导入库）绑定
+
+`$` 前缀命名空间（如 `$Math`、`$Date`）已在公式注册表中注册，求值时直接返回命名空间对象，**不会**触发回调。
+
+### 典型用法
+
+```ts
+const env = {
+  fetcher: async (api) => fetch(api.url).then((r) => r.json()),
+  notify: (level, msg) => console[level](msg),
+  onUndefinedVariable: (info) => {
+    console.warn(`[dev] 表达式引用缺失变量: ${info.variableName}`);
+  },
+};
+```
+
+### 应用场景
+
+- **开发警告**：在开发阶段启用，帮助快速发现拼写错误或遗漏的 scope 字段
+- **日志审计**：生产环境记录未定义变量引用，配合遥测分析
+- **渐进式迁移**：监控旧的字段引用，确保迁移期间无遗漏

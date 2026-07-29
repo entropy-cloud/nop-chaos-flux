@@ -135,12 +135,13 @@ isolate: true            -> own-scope only
 - row scope 等高频重复子树
 - 纯局部片段，不应被父 scope churn 持续扇出通知
 - 明确需要封闭局部数据环境的优化型渲染子树
+- dialog / drawer（通过 `isolate: true` 开关 opt-in），适用于需要显式数据契约的场景
 
 不适合作为默认的场景：
 
 - page
 - form
-- dialog body
+- dialog body（但 schema 作者可通过 `dialog.isolate: true` 或 `drawer.isolate: true` 显式 opt-in）
 - 一般 container / fragment
 - `loop` item scope
 
@@ -215,8 +216,10 @@ table shell 本身默认遵循普通规则：
 row scope 是 table owner 派生出来的高频子 scope：
 
 - 默认 `isolate: true`
-- 基础 row carrier 至少包含 `record`、`index`
-- 如有需要，可额外包含 `rowKey`、`viewIndex`、以及少量显式投影的外部字段
+- 基础 row carrier 包含 **expanded record fields**（纯业务数据） + `$slot: { record, index }`（系统元数据）
+- `record` 和 `index` 不暴露在顶层，避免混淆系统变量与业务字段名
+- 如有需要，可额外包含 `$slot.rowKey`、`$slot.viewIndex`、以及少量显式投影的外部字段（通过 `rowData` 注入）
+- 所有 `$` 前缀名为系统变量，业务字段不允许以 `$` 开头，因此展开的 record 字段与系统变量零碰撞
 
 推荐新增的 authoring 方向：
 
@@ -232,7 +235,7 @@ row scope 是 table owner 派生出来的高频子 scope：
 
 ```text
 table shell scope = inherited lexical scope (+ optional table.data)
-row scope        = isolated row-local scope built from { record, index, ...rowData }
+row scope        = isolated row-local scope built from { ...record, $slot: { record, index }, ...rowData }
 ```
 
 ### `rowData` Evaluation Rule
@@ -328,15 +331,15 @@ createScope(
 - `page` / `form` / table row 的条目已基于当前 live codebase 审计
 - `dialog` / `drawer` 的 `data` 语义仍是推荐 baseline，而不是已落地的 live feature
 
-| 节点                            | data 语义                                                                                                   | scope 创建者                                                                                                                              |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `page`                          | 初始化 page root scope                                                                                      | page renderer/host 在 mount 时创建 `PageRuntime` + page scope                                                                             |
-| `form`                          | 初始化 form own scope / initial values                                                                      | form renderer 在 mount 时创建 `FormRuntime` + form scope                                                                                  |
-| `dialog`                        | future `data` should initialize dialog own scope                                                            | dialog host/renderer 在每次打开时创建 `SurfaceRuntime` + surface scope；`data` 语义是推荐 baseline，不表示该 authoring surface 已完整落地 |
-| `drawer`                        | future `data` should initialize drawer own scope                                                            | 与 dialog 相同，共用 `SurfaceRuntime`/`SurfaceStore` 模型，`kind: 'drawer'`；`data` 语义仍属推荐 baseline                                 |
-| fragment `render({ bindings })` | 创建 fragment child scope                                                                                   | `RenderNodes` 在收到 `options.bindings` 时创建 child scope；不由 `NodeRenderer` 创建                                                      |
-| table row                       | 隔离 row scope；当前 live baseline payload 是 `record`/`index`，future 可再增加窄的 `rowKey`/`rowData` 投影 | table renderer 在每行渲染时创建；默认 `isolate: true`                                                                                     |
-| loop item                       | 继承 parent lexical scope，叠加 item-local bindings                                                         | loop renderer 在每项渲染时创建；默认非隔离                                                                                                |
+| 节点                            | data 语义                                                                                                                                                                    | scope 创建者                                                                         | isolate 支持         |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------- |
+| `page`                          | 初始化 page root scope                                                                                                                                                       | page renderer/host 在 mount 时创建 `PageRuntime` + page scope                        | 无（不适用）         |
+| `form`                          | 初始化 form own scope / initial values                                                                                                                                       | form renderer 在 mount 时创建 `FormRuntime` + form scope                             | 无（不适用）         |
+| `dialog`                        | 初始化 dialog own scope                                                                                                                                                      | dialog host/renderer 在每次打开时创建 `SurfaceRuntime` + surface scope               | `isolate?: boolean`  |
+| `drawer`                        | 初始化 drawer own scope                                                                                                                                                      | 与 dialog 相同，共用 `SurfaceRuntime`/`SurfaceStore` 模型，`kind: 'drawer'`          | `isolate?: boolean`  |
+| fragment `render({ bindings })` | 创建 fragment child scope                                                                                                                                                    | `RenderNodes` 在收到 `options.bindings` 时创建 child scope；不由 `NodeRenderer` 创建 | `isolate?: boolean`  |
+| table row                       | 隔离 row scope；payload 包含 expanded record fields + `$slot: { record, index }`，`record` 和 `index` 不暴露在顶层，可再增加 `$slot.rowKey`/`$slot.viewIndex`/`rowData` 投影 | table renderer 在每行渲染时创建；默认 `isolate: true`                                | 默认 `isolate: true` |
+| loop item                       | 继承 parent lexical scope，叠加 item-local bindings                                                                                                                          | loop renderer 在每项渲染时创建；默认非隔离                                           | 无（不适用）         |
 
 这些 owner 规则与 `docs/architecture/renderer-runtime.md` 的"Execution Boundary Ownership Matrix"保持一致：creator-owned boundaries 只由具体创建者创建和发布，不经过 `NodeRenderer` 通用层。
 
@@ -349,7 +352,8 @@ createScope(
 ## Recommended Follow-Up
 
 - 在 `page` 组件设计中补齐 `data` 作为 root scope init patch（如尚未更新）
-- `dialog` / `drawer` 引入 `data` 时沿用相同语义（初始化 surface own scope）
+- `dialog` / `drawer` 已支持 `data` 初始化 own scope
+- `dialog` / `drawer` 已支持 `isolate: boolean`，允许 schema 作者显式封闭 surface 的数据环境；默认 `false` 保持向后兼容
 - 继续保持 row scope 使用现有 `isolate` 术语，不再新增 `isolateScope`
 
 ## Related Documents

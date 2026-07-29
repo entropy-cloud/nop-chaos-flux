@@ -159,6 +159,7 @@ export interface DialogSchema extends BaseSchema {
   height?: string | number;
   showCloseButton?: boolean;
   confirm?: boolean | string;
+  isolate?: boolean;
   bodyClassName?: string;
   headerClassName?: string;
   footerClassName?: string;
@@ -185,6 +186,7 @@ export interface DrawerSchema extends BaseSchema {
   height?: string | number;
   showCloseButton?: boolean;
   confirm?: boolean | string;
+  isolate?: boolean;
   bodyClassName?: string;
   headerClassName?: string;
   footerClassName?: string;
@@ -318,22 +320,6 @@ export interface FormSchema extends BoundFieldSchemaBase {
   onSubmitSuccess?: ActionSchema | ActionSchema[];
   onSubmitError?: ActionSchema | ActionSchema[];
   onValidateError?: ActionSchema | ActionSchema[];
-  /**
-   * 提交作用域。决定 form 提交后是否触发所在 surface 的 onSubmitSuccess / onSubmitError callback。
-   *
-   * - `'local'` (默认): 只触发 form 自己的 lifecycle handler
-   * - `'surface'`: 同时触发所在 surface 的 lifecycle callback（在 owner ctx 执行）
-   *
-   * 多 form surface 场景只在主 form 上设 `'surface'`。
-   *
-   * 当前实现：
-   * - 默认值 `'local'`，必须显式声明 `'surface'` 才触发 surface callback（**没有单 form 自动提升**）
-   * - 没有编译期 / 运行时校验"同一 surface 内最多一个 `'surface'` form"——多个 form 都标 `'surface'`
-   *   时它们的 submit 都会触发同一 callback，由业务方自行保证只有一个主 form
-   *
-   * 详见 docs/architecture/surface-lifecycle-callbacks.md §Form Submit Scope。
-   */
-  submitScope?: 'local' | 'surface';
   statusPath?: string;
   valuesPath?: string;
   hiddenFieldPolicy?: {
@@ -444,6 +430,8 @@ export interface SelectSchema extends BoundFieldSchemaBase {
   noResultsText?: SchemaValue;
   virtual?: boolean;
   optionTemplate?: SchemaInput;
+  searchSource?: SchemaValue;
+  searchMergeMode?: SchemaValue;
 }
 
 export interface TextareaSchema extends BoundFieldSchemaBase {
@@ -487,6 +475,7 @@ export interface CheckboxGroupSchema extends BoundFieldSchemaBase {
 
 export interface InputNumberSchema extends BoundFieldSchemaBase {
   type: 'input-number';
+  precisionMode?: SchemaValue;
 }
 
 export interface InputDateSchema extends BoundFieldSchemaBase {
@@ -588,6 +577,8 @@ export interface InputTreeSchema extends BoundFieldSchemaBase {
   virtualThreshold?: SchemaValue;
   childrenSource?: SchemaValue;
   searchSource?: SchemaValue;
+  enableNodePath?: boolean;
+  pathSeparator?: SchemaValue;
 }
 
 export interface TreeSelectSchema extends BoundFieldSchemaBase {
@@ -596,6 +587,8 @@ export interface TreeSelectSchema extends BoundFieldSchemaBase {
   virtualThreshold?: SchemaValue;
   childrenSource?: SchemaValue;
   searchSource?: SchemaValue;
+  enableNodePath?: boolean;
+  pathSeparator?: SchemaValue;
 }
 
 export interface TagListSchema extends BoundFieldSchemaBase {
@@ -680,9 +673,15 @@ export interface InputFileSchema extends BoundFieldSchemaBase {
   multiple?: boolean;
   accept?: SchemaValue;
   maxFiles?: SchemaValue;
+  maxSize?: SchemaValue;
   uploadAction?: SchemaValue;
+  deleteAction?: SchemaValue;
   valueMode?: SchemaValue;
   buttonText?: SchemaValue;
+  onReject?: ActionSchema | ActionSchema[];
+  onDelete?: ActionSchema | ActionSchema[];
+  onDeleteSuccess?: ActionSchema | ActionSchema[];
+  onDeleteFail?: ActionSchema | ActionSchema[];
 }
 
 export interface InputImageSchema extends BoundFieldSchemaBase {
@@ -691,9 +690,15 @@ export interface InputImageSchema extends BoundFieldSchemaBase {
   multiple?: boolean;
   accept?: SchemaValue;
   maxFiles?: SchemaValue;
+  maxSize?: SchemaValue;
   uploadAction?: SchemaValue;
+  deleteAction?: SchemaValue;
   valueMode?: SchemaValue;
   buttonText?: SchemaValue;
+  onReject?: ActionSchema | ActionSchema[];
+  onDelete?: ActionSchema | ActionSchema[];
+  onDeleteSuccess?: ActionSchema | ActionSchema[];
+  onDeleteFail?: ActionSchema | ActionSchema[];
   previewMode?: SchemaValue;
   crop?: SchemaValue;
 }
@@ -810,6 +815,7 @@ export interface TableSchema extends BaseSchema {
   orderOwnership?: SchemaValue;
   orderStatePath?: SchemaValue;
   rowChildrenField?: SchemaValue;
+  childrenSource?: SchemaValue;
   columnWidthsOwnership?: SchemaValue;
   columnWidthsStatePath?: SchemaValue;
   multiSort?: boolean;
@@ -1029,6 +1035,7 @@ export interface ImageSchema extends BaseSchema {
   width?: SchemaValue;
   height?: SchemaValue;
   lazy?: boolean;
+  fetcher?: SchemaValue;
   onClick?: ActionSchema | ActionSchema[];
   onLoadError?: ActionSchema | ActionSchema[];
 }
@@ -1044,6 +1051,7 @@ export interface JsonViewSchema extends BaseSchema {
 export interface MarkdownSchema extends BaseSchema {
   type: 'markdown';
   content?: SchemaValue;
+  src?: SchemaValue;
   allowHtml?: boolean;
   empty?: SchemaValue | SchemaInput;
 }
@@ -1083,6 +1091,7 @@ export interface MappingSchema extends BaseSchema {
   map?: Record<string, unknown>;
   defaultLabel?: string;
   placeholder?: string;
+  source?: SchemaValue;
   item?: SchemaInput;
 }
 
@@ -1113,6 +1122,8 @@ export interface VideoSchema extends BaseSchema {
   loop?: boolean;
   controls?: boolean;
   muted?: boolean;
+  width?: SchemaValue;
+  height?: SchemaValue;
   onLoadError?: ActionSchema | ActionSchema[];
 }
 
@@ -1135,6 +1146,27 @@ export interface QrCodeSchema extends BaseSchema {
   foreground?: SchemaValue;
   background?: SchemaValue;
   onLoadError?: ActionSchema | ActionSchema[];
+}
+
+export interface DiffViewSchema extends BaseSchema {
+  type: 'diff-view';
+  oldContent?: SchemaValue;
+  newContent?: SchemaValue;
+  middleContent?: SchemaValue;
+  files?: SchemaValue;
+  activeFileIndex?: SchemaValue;
+  language?: SchemaValue;
+  viewType?: SchemaValue;
+  showLineNumbers?: boolean;
+  showInlineDiff?: boolean;
+  defaultCollapsedLines?: SchemaValue;
+  wrapLines?: boolean;
+  onLineClick?: ActionSchema | ActionSchema[];
+  onHunkExpand?: ActionSchema | ActionSchema[];
+  toggleViewType?: SchemaValue;
+  setViewType?: SchemaValue;
+  expandAll?: SchemaValue;
+  collapseAll?: SchemaValue;
 }
 
 // ============================================================================

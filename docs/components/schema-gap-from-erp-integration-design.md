@@ -85,7 +85,7 @@ Flux 原生替代方案（cell 级 className 表达式）：
     {
       "name": "status",
       "label": "状态",
-      "cell": { "className": "${record.status === 'rejected' ? 'bg-destructive/10' : ''}" }
+      "cell": { "className": "${status === 'rejected' ? 'bg-destructive/10' : ''}" }
     }
   ]
 }

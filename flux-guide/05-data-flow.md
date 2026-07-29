@@ -14,6 +14,8 @@ Page {data: {x:1}}              ← data 字段（请求走 data-source 兄弟�
 
 子组件自动继承父组件词法作用域。同名变量子遮蔽父。
 
+dialog / drawer 默认继承触发位置的 scope。如需切断继承、让弹窗只读 `data` 中显式传入的值，设置 `isolate: true`（声明式 `type: 'dialog'` / `type: 'drawer'` 和 action-style `openDialog` / `openDrawer` 均支持）。
+
 ## 数据来源
 
 | 方式           | 适用组件                   | 说明                                       |

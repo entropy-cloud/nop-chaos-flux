@@ -84,10 +84,9 @@ Constraint for nested repeated structures:
 
 Author selectors are convenience selectors, not canonical targets:
 
-- `componentId`
-- `componentName`
+- `componentId` — matches `handle.id` first, then `handle.name` (id takes priority)
 
-They resolve inside the visible component-registry boundary.
+They resolve inside the visible component-registry boundary. When both an id and a name match the same value, the id-match wins (see `resolveInScope` in `component-handle-registry.ts`).
 
 ## Compile-Time Lowering Rules
 
@@ -99,9 +98,9 @@ If a `componentId` points to a unique singleton target inside the compiled templ
 
 If the source and target both live inside the same repeated template boundary, lowering to `RepeatedTargetPlan` is valid.
 
-### Do not globally lower `componentName`
+### Do not globally lower `componentId` for name-aware resolution
 
-`componentName` should not lower to a global template id map.
+`componentId` when matched against `handle.name` should not lower to a global template id map.
 
 Reasons:
 
@@ -115,7 +114,7 @@ Resolution order should be:
 1. if action already carries `_targetCid`, resolve directly
 2. if action carries `StaticTargetPlan`, resolve the singleton live instance and obtain its `cid`
 3. if action carries `RepeatedTargetPlan`, combine with current repeated-instance context and resolve the matching live instance
-4. otherwise, resolve `componentId` / `componentName` inside the visible registry boundary
+4. otherwise, resolve `componentId` inside the visible registry boundary
 
 Canonical result contract:
 
@@ -167,7 +166,6 @@ function resolveTarget(target: ActionTarget, ctx: ResolutionContext): Resolution
   return registry.resolveSelector(
     {
       id: target.componentId,
-      name: target.componentName,
     },
     ctx,
   );
@@ -197,7 +195,7 @@ There is no need for a `NodeLocator` wrapper. Structural targeting is compile-ti
 
 Selectors inside repeated content follow this rule:
 
-- `componentId` / `componentName` are convenience lookups in the current visible registry boundary
+- `componentId` is a convenience lookup in the current visible registry boundary (matching `handle.id` first, then `handle.name`)
 - they are suitable for targeting the current repeated instance when that boundary is unambiguous
 - they are not the preferred cross-instance targeting mechanism
 - cross-instance operations should use `RepeatedInstanceSelector` plus explicit repeated context when needed
@@ -218,7 +216,7 @@ If a target is structurally valid but not currently materialized because of virt
 
 ### Ambiguous selector resolution
 
-If runtime selector lookup by `componentId` or `componentName` is ambiguous inside the visible registry boundary, the result must be explicit ambiguity, not "pick first".
+If runtime selector lookup by `componentId` is ambiguous inside the visible registry boundary (multiple handles share the same `id` or the same `name` when id lookup yields no match), the result must be explicit ambiguity, not "pick first".
 
 ## Related Documents
 

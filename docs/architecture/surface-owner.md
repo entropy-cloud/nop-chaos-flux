@@ -232,6 +232,7 @@ stack 中只有最上层 surface 拥有当前交互控制权。
 - surface 保持打开期间，parent scope 后续变化默认不应替换该 surface child scope 或覆盖其中已存在的值
 - 需要重新取新的 `data` 时，应通过关闭后重新打开、remount，或显式 action/lifecycle 完成，而不是给 `data` 增加 sync 开关
 - 关闭 surface 时，对应 child scope 生命周期结束
+- `isolate: true` 时，surface child scope 切断父链查找，只读取 own snapshot；默认 `false`（词法继承）
 
 因此这些都应成立：
 

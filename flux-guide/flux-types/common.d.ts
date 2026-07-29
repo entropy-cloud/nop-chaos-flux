@@ -201,12 +201,12 @@ export interface RefreshSourceActionSchema extends ActionShapeFields {
   targetId: string;
 }
 
-/** 沿 scope 链向上刷新最近的 CRUD / data-source / tree（不需要 id/name） */
+/** 沿 scope 链向上刷新最近的 CRUD / data-source / tree / form（不需要 id/name） */
 export interface RefreshNearestActionSchema extends ActionShapeFields {
   action: 'refreshNearest';
   args?: {
-    /** 限定目标类型，默认 'auto' */
-    targetType?: 'crud' | 'data-source' | 'tree' | 'auto';
+    /** 限定目标类型，默认 'auto'。'auto' 匹配 crud/tree/form/data-source */
+    targetType?: 'crud' | 'data-source' | 'tree' | 'form' | 'auto';
     /** 找不到目标时的行为，默认 'silent' */
     notFound?: 'silent' | 'error';
   };

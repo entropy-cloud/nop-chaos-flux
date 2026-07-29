@@ -76,7 +76,9 @@ export interface FormSchema extends BoundFieldSchemaBase {
    * 提交作用域。决定 form 提交后是否触发所在 surface 的 callback。
    *
    * - 'local' (默认): 只触发 form 自己的 lifecycle handler（onSubmitSuccess / onSubmitError）
-   * - 'surface': 同时触发所在 surface 的 onSubmitSuccess / onSubmitError callback（在 owner ctx 执行）
+   * - 'surface': 同时触发所在 surface 的 onSubmitSuccess / onSubmitError callback（在 owner ctx 执行）。
+   *   此外，form mount 时自动注册到 surface 的 `surfaceForm` 字段，使 surface footer 中的
+   *   action 按钮（如 `submitForm`）能零参数定位该 form。
    *
    * 多 form surface 场景（dialog 内搜索 form + 编辑 form）只在主 form 上设 'surface'。
    * 单 form surface 场景建议仍显式声明，消除歧义。
@@ -415,12 +417,12 @@ async function findNearestRefreshable(startScope, registry, sourceRegistry, targ
 
 ### Relationship With `refreshTable` / `refreshSource` / `component:refresh`
 
-| 动作                | 适用场景                                                                              | 是否需要 id/name                      |
-| ------------------- | ------------------------------------------------------------------------------------- | ------------------------------------- |
-| `refreshTable`      | bump `ctx.page.refreshTick`（仅触发订阅了 refreshTick 的组件，目前只有 PageRenderer） | 不需要                                |
-| `refreshSource`     | 刷新指定 name 的 data-source                                                          | **需要** targetId                     |
-| `component:refresh` | 调指定 component 的 refresh capability                                                | **需要** componentId 或 componentName |
-| `refreshNearest`    | 沿 scope 链向上找最近的 refreshable 目标（CRUD / tree / data-source）                 | **不需要**                            |
+| 动作                | 适用场景                                                                              | 是否需要 id/name     |
+| ------------------- | ------------------------------------------------------------------------------------- | -------------------- |
+| `refreshTable`      | bump `ctx.page.refreshTick`（仅触发订阅了 refreshTick 的组件，目前只有 PageRenderer） | 不需要               |
+| `refreshSource`     | 刷新指定 name 的 data-source                                                          | **需要** targetId    |
+| `component:refresh` | 调指定 component 的 refresh capability                                                | **需要** componentId |
+| `refreshNearest`    | 沿 scope 链向上找最近的 refreshable 目标（CRUD / tree / data-source）                 | **不需要**           |
 
 四个动作语义互补，不替代。`refreshTable` / `refreshSource` / `component:refresh` 都要求作者显式指定目标，适合"明确知道要刷谁"的场景。`refreshNearest` 适合"作者只知道有一个外层列表，不关心它的 id"的场景，例如：
 

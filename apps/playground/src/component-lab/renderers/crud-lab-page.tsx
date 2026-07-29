@@ -311,7 +311,7 @@ const quickEditCrud = {
             mode: 'dialog',
             body: {
               type: 'input-text',
-              name: 'record.status',
+              name: 'status',
               label: 'Status',
               frameWrap: false,
             },

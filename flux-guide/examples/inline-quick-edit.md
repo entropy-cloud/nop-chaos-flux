@@ -36,13 +36,13 @@
       "columns": [
         { "name": "department", "label": "部门", "width": 160 },
 
-        // 3) quickEdit.body：name 用 record.<字段> 写回行草稿；frameWrap:false 去掉表单项外框
+        // 3) quickEdit.body：name 直接用 <字段> 写回行草稿（行 scope 已将记录字段展开到顶层）；frameWrap:false 去掉表单项外框
         {
           "name": "q1",
           "label": "Q1 预算(万)",
           "width": 130,
           "quickEdit": {
-            "body": { "type": "input-number", "name": "record.q1", "min": 0, "frameWrap": false },
+            "body": { "type": "input-number", "name": "q1", "min": 0, "frameWrap": false },
           },
         },
         {
@@ -50,7 +50,7 @@
           "label": "Q2 预算(万)",
           "width": 130,
           "quickEdit": {
-            "body": { "type": "input-number", "name": "record.q2", "min": 0, "frameWrap": false },
+            "body": { "type": "input-number", "name": "q2", "min": 0, "frameWrap": false },
           },
         },
         {
@@ -58,7 +58,7 @@
           "label": "Q3 预算(万)",
           "width": 130,
           "quickEdit": {
-            "body": { "type": "input-number", "name": "record.q3", "min": 0, "frameWrap": false },
+            "body": { "type": "input-number", "name": "q3", "min": 0, "frameWrap": false },
           },
         },
         {
@@ -66,7 +66,7 @@
           "label": "Q4 预算(万)",
           "width": 130,
           "quickEdit": {
-            "body": { "type": "input-number", "name": "record.q4", "min": 0, "frameWrap": false },
+            "body": { "type": "input-number", "name": "q4", "min": 0, "frameWrap": false },
           },
         },
 
@@ -86,7 +86,7 @@
 
 | 关键点                           | 说明                                                                                       |
 | -------------------------------- | ------------------------------------------------------------------------------------------ |
-| `quickEdit.body.name`            | 必须用 `record.<字段>` 前缀，编辑值才会落到该行草稿（而非整表 scope）。                    |
+| `quickEdit.body.name`            | 行 scope 已将记录字段展开到顶层，`name` 直接用 `<字段>` 即可（不用 `record.` 前缀）。      |
 | `frameWrap: false`               | 去掉表单项 label/边框，让控件直接铺进单元格。                                              |
 | `actionType: "quickSaveItem"`    | 行按钮专用动作类型，触发 CRUD 的 `quickSaveItemAction`，自动以当前行 scope 求值。          |
 | `includeScope: "*"`              | 保存时把整行草稿（`record.*`）一起提交，后端按整行 update。                                |

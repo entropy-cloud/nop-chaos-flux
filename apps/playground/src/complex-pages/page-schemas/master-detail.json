@@ -166,7 +166,7 @@
                           "quickEdit": {
                             "body": {
                               "type": "input-text",
-                              "name": "record.name",
+                              "name": "name",
                               "frameWrap": false
                             }
                           }
@@ -178,7 +178,7 @@
                           "quickEdit": {
                             "body": {
                               "type": "input-number",
-                              "name": "record.qty",
+                              "name": "qty",
                               "min": 1,
                               "frameWrap": false
                             }
@@ -191,7 +191,7 @@
                           "quickEdit": {
                             "body": {
                               "type": "input-number",
-                              "name": "record.price",
+                              "name": "price",
                               "min": 0,
                               "step": 0.01,
                               "frameWrap": false

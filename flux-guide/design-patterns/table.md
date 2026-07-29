@@ -138,6 +138,8 @@
 ## 6. 操作列
 
 > 操作列按钮的求值 scope 是**当前行**，因此可直接 `${id}`、`${name}` 读行字段。需要显式取行上下文时用 `${$slot.record.<字段>}`（`$slot.record` 指向当前行记录）。`$slot.record` 与 cards/list 的 `$slot.item`（见 `crud.md` §5）对应，区别是 table 操作列用 `record` 命名。
+>
+> **注意**：`record` 和 `index` 不再作为顶层 key 存在。`record` 需要通过 `$slot.record` 访问，`index` 通过 `$slot.index` 访问。此变更与 crud 的 row scope 对齐。
 
 ```jsonc
 {

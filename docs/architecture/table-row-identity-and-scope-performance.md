@@ -114,44 +114,64 @@ Optional source-level optimization metadata such as row revision or changed-row 
 
 ### 3. Row Scope Data
 
-Each materialized row gets one row-local scope payload:
+Each materialized row gets one row-local scope payload. The row scope expands record fields to the top level; system metadata (record, index) live under the reserved `$slot` binding rather than polluting the top level.
 
 ```ts
 interface TableRowScopeData {
-  record: Record<string, unknown>;
-  index: number;
-  viewIndex?: number;
-  rowKey?: string;
+  // Record fields expanded to top level (pure business data)
+  [fieldName: string]: unknown;
+  // Slot frame for system metadata — record, index, and optional fields
+  $slot: {
+    record: Record<string, unknown>;
+    index: number;
+    viewIndex?: number;
+    rowKey?: string;
+  };
 }
 ```
 
 Rules:
 
-- `index` means `sourceIndex`, not visible position
-- `record` is the primary same-row data binding
-- `viewIndex` is optional and should not be part of the default hot-path row scope unless a visible-order feature actually needs it
-- `rowKey` is optional in row scope and should only be exposed when expression ergonomics or debugging need it; repeated identity still belongs to `instancePath`
+- **Record fields are expanded to the top level** of the row scope. `${name}` is the primary access pattern, same as form scope.
+- **`record` and `index` are NOT top-level keys.** They live under `$slot` to avoid conflating system variables with business field names.
+- `$slot` is the single reserved top-level key containing `{ record, index, viewIndex?, rowKey? }`.
+- `$slot.record` provides structured access to the full record object when needed.
+- `$slot.index` means `sourceIndex`, not visible position.
+- `$slot.viewIndex` is optional and should not be part of the default hot-path row scope unless a visible-order feature actually needs it.
+- `$slot.rowKey` is optional and should only be exposed when expression ergonomics or debugging need it; repeated identity still belongs to `instancePath`.
 
-The default minimal row scope payload is:
+The default minimal row scope payload is constructed as:
 
 ```ts
 {
-  record,
-  index,
+  ...record,          // expanded record fields (pure business data — same as form scope)
+  $slot: { record, index },
 }
 ```
 
-Optional projected extras such as future `rowData` must stay additive and narrow. They are not a license to turn every row scope into a second full parent-scope clone.
+Optional projected extras such as `rowData` must stay additive and narrow.
+
+#### `$`-Prefixed Names Are System Variables, No Collision Possible
+
+All `$`-prefixed names are reserved for system-defined variables (e.g. `$slot`, `$form`, `$surface`, `$crud`, `$page`, and any import aliases like `$myLib`). Business field names **must not** start with `$`, so there is zero collision between expanded record fields and any system variable. The available system variables are determined by the compile-time lexical scope (via `pushInjectedLocalSymbols`, `pushImportSymbols`, `pushRegionParamSymbols` in the compiler's symbol table).
 
 ### 4. Same-Row Access Model
 
-Table parameterized slot expressions and renderers should read same-row values through `$slot.record`:
+Table parameterized slot expressions and renderers can access same-row values in equivalent ways:
+
+**Direct field access (recommended — same as form scope):**
+
+- `${name}`
+- `${status}`
+- `${total}`
+
+**Slot-frame structured access:**
 
 - `${$slot.record.name}`
 - `${$slot.record.status}`
-- `${$slot.record.total}`
+- `${$slot.index}`
 
-Runtime row scope still carries `record` and `index`, but parameterized region authoring uses the reserved `$slot` namespace so slot-local bindings do not silently fall through to parent scope names.
+The direct field access is the primary pattern, matching form scope semantics exactly. `$slot` access is available when explicit qualification is needed (e.g. to disambiguate in nested slot contexts).
 
 Do not model same-row access through sibling component lookup, DOM lookup, or component-handle lookup.
 
@@ -650,13 +670,22 @@ Rejected because reorder, insert, remove, and sort change index without changing
 
 ### 2. Flattening All Record Fields Into Top-Level Row Scope
 
-Rejected as the default because it:
+**Now accepted as the default**, with explicit collision rules (see Section 3 "Field Name Collision Rules").
 
-- increases collision risk with parent bindings
-- makes row-scope shape less explicit
-- encourages broad reads of many top-level keys
+Primary motivation: **consistency with form scope semantics**. In form context, field values are the top-level scope variables — field names are directly accessible. 例如 `visible: "${status === 'active'}"` 在表单中直接通过字段名 `status` 访问。行 scope 应当提供完全一致的编程体验，使得 `visible`、`disabled`、`value` 等属性无论控件在表单中还是在表行中，表达式写法完全相同。单个控件不需要感知自己当前在表单还是行环境。
 
-The baseline row binding is `record`, not automatic field flattening.
+Supporting reasoning:
+
+- Row-level expressions (condition rules, cell formatters, button visibility) frequently reference record fields. Requiring `record.xxx` in every expression increases authoring friction and error rates.
+- The expanded scope is shallow (one level of record fields), not recursive deep flattening.
+- `$slot` is the sole reserved top-level key — there is no collision between record fields and `record`/`index` because those system variables live under `$slot`.
+- Structured access via `$slot.record` remains available, so explicit qualification is always possible.
+
+The earlier rejection of flattening concerned:
+
+- **Collision with parent bindings**: row scopes are isolated by default, so parent collision is not a concern. Additionally, `record` and `index` are no longer top-level keys, further reducing collision surface.
+- **Less explicit shape**: mitigated by keeping `$slot.record` available for structured access alongside expanded fields.
+- **Encourages broad reads**: row descendants already need narrow subscription discipline regardless of binding shape.
 
 ### 3. Dedicated Row React Contexts
 
@@ -723,7 +752,7 @@ Before a table row implementation is considered aligned with this document, veri
 - row reconciliation is keyed by `rowKey` with O(1) lookup
 - unchanged rows do not republish when semantic row payload and required row-local bindings are unchanged
 - row-local changes do not force unrelated row scopes to update
-- same-row reads work through `record.xxx`
+- same-row reads work through direct field access (bare field name or `$slot.record.xxx`); `record` and `index` are NOT top-level keys
 - the table shell is not subscribed to the entire lexical scope
 - row descendants, especially cells, do not rely on whole-scope selectors when row-local data is sufficient
 - immutable row record replacement is used when row data changes

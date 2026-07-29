@@ -27,6 +27,7 @@ import type {
   DetailFieldSchema,
   DetailViewSchema,
   DialogSchema,
+  DiffViewSchema,
   DrawerSchema,
   DropdownButtonSchema,
   DynamicRendererSchema,
@@ -187,6 +188,7 @@ export type FluxSchema =
   | VideoSchema
   | CarouselSchema
   | QrCodeSchema
+  | DiffViewSchema
   | PullRefreshSchema
   | InfiniteScrollSchema
   | SwipeCellSchema
@@ -283,6 +285,7 @@ export interface FluxSchemaByType {
   'video': VideoSchema;
   'carousel': CarouselSchema;
   'qrcode': QrCodeSchema;
+  'diff-view': DiffViewSchema;
   'pull-refresh': PullRefreshSchema;
   'infinite-scroll': InfiniteScrollSchema;
   'swipe-cell': SwipeCellSchema;
@@ -317,6 +320,7 @@ export type {
   DetailFieldSchema,
   DetailViewSchema,
   DialogSchema,
+  DiffViewSchema,
   DrawerSchema,
   DropdownButtonSchema,
   DynamicRendererSchema,

@@ -286,15 +286,15 @@ CRUD 把只读摘要发布到 scope 的 `$crud`，可在任意子节点表达式
       "label": "Q1 预算(万)",
       "width": 130,
       "quickEdit": {
-        // 编辑控件的 name 必须以 `record.` 前缀写入行草稿
-        "body": { "type": "input-number", "name": "record.q1", "min": 0, "frameWrap": false },
+        // 编辑控件的 name 直接用字段名（现在记录字段直接暴露在 scope 顶层）
+        "body": { "type": "input-number", "name": "q1", "min": 0, "frameWrap": false },
       },
     },
     {
       "name": "q2",
       "label": "Q2 预算(万)",
       "quickEdit": {
-        "body": { "type": "input-number", "name": "record.q2", "min": 0, "frameWrap": false },
+        "body": { "type": "input-number", "name": "q2", "min": 0, "frameWrap": false },
       },
     },
     {
@@ -311,7 +311,7 @@ CRUD 把只读摘要发布到 scope 的 `$crud`，可在任意子节点表达式
 
 **关键点**：
 
-- `quickEdit.body` 是一个**内联的渲染器 spec**（通常是 `input-number`/`input-text`/`select`），其 `name` 用 `record.<字段>` 形式把编辑值写回该行草稿。
+- `quickEdit.body` 是一个**内联的渲染器 spec**（通常是 `input-number`/`input-text`/`select`），其 `name` 直接用 `<字段>` 形式把编辑值写回该行草稿（行 scope 已将记录字段展开到顶层）。
 - `frameWrap: false` 去掉表单项的外框，让控件直接铺在单元格里。
 - 行内保存按钮用 `actionType: "quickSaveItem"` 触发 CRUD 的 `quickSaveItemAction`；该 action 默认以当前行 scope 求值，`includeScope: "*"` 把整行草稿一起提交。
 - 保存成功后通常 `then: component:refresh` 刷新本 CRUD。

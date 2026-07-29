@@ -130,14 +130,33 @@
 }
 ```
 
+Dialog/Drawer 默认继承触发位置的 scope（即弹窗内可以直接读取父级变量）。如果想切断继承、让弹窗只看到 `data` 中显式传入的值，可以设置 `isolate: true`：
+
+```jsonc
+{
+  "type": "button",
+  "label": "隔离弹窗",
+  "onClick": {
+    "action": "openDialog",
+    "args": {
+      "title": "隔离弹窗",
+      "isolate": true,
+      "data": { "userId": "${id}" },
+      "body": [{ "type": "text", "text": "只能看到 data 中传入的值，${parentKey} 读不到" }],
+    },
+  },
+}
+```
+
 **Dialog 属性**：
 
-| 属性    | 类型          | 说明                                                |
-| ------- | ------------- | --------------------------------------------------- |
-| `title` | `string`      | 弹窗标题                                            |
-| `size`  | `string`      | 弹窗大小：`xs` / `sm` / `md` / `lg` / `xl` / `full` |
-| `data`  | `object`      | 传入弹窗的初始数据                                  |
-| `body`  | `SchemaInput` | 弹窗内容                                            |
+| 属性      | 类型          | 说明                                                             |
+| --------- | ------------- | ---------------------------------------------------------------- |
+| `title`   | `string`      | 弹窗标题                                                         |
+| `size`    | `string`      | 弹窗大小：`xs` / `sm` / `md` / `lg` / `xl` / `full`              |
+| `data`    | `object`      | 传入弹窗的初始数据                                               |
+| `isolate` | `boolean`     | 切断父 scope 继承，弹窗只读 own data；默认 `false`，声明式也支持 |
+| `body`    | `SchemaInput` | 弹窗内容                                                         |
 
 ---
 
@@ -163,6 +182,8 @@
   },
 }
 ```
+
+Drawer 的 `data` / `isolate` 语义与 Dialog 相同，`isolate: true` 同样切断父 scope 继承。
 
 **Drawer 额外属性**：
 
@@ -226,6 +247,44 @@
 ```
 
 `refreshNearest` 从 callback 执行的 owner scope 开始沿 `scope.parent` 链向上查找，命中第一个具备 `refresh` capability 的 CRUD / tree 或第一个 data-source，调用其 refresh。
+
+**关于 dialog actions 的 submit 按钮**：声明了 `submitScope: 'surface'` 的 form 在 mount 时会自动注册到当前 surface。dialog 或 page 的 footer actions 中的 submit 按钮可以用 `submitForm` 零参数触发提交：
+
+```jsonc
+{
+  "type": "page",
+  "body": {
+    "type": "form",
+    "submitScope": "surface",
+    "submitAction": { "action": "ajax", "args": { "url": "/api/users", "method": "post" } },
+    "body": [
+      /* ... */
+    ],
+  },
+  "actions": [
+    { "label": "取消", "actionType": "close" },
+    {
+      "label": "提交",
+      "level": "primary",
+      "actionType": "submit",
+      "onClick": {
+        "action": "submitForm",
+        "then": { "action": "closeSurface" },
+      },
+    },
+  ],
+}
+```
+
+`submitForm` 的查找优先级：
+
+1. `ctx.form` — 按钮在 form body 内（`FormContext` 内）时直接使用。
+2. surface form — 按钮在 dialog/page footer 时，自动从 surface 查找注册了 `submitScope: 'surface'` 的 form。
+3. `componentId` — 显式指定 id 时从 component registry 解析（先匹配 `handle.id`，再匹配 `handle.name`）。
+
+这样 dialog footer 的 submit 按钮无需传 `componentId` 或 `componentName`。<｜end▁of▁thinking｜>
+
+Let me now move to the other impacted test (查看用户详情) ...
 
 可选 `args`：
 

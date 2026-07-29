@@ -92,6 +92,16 @@ type MonitorEvent =
       path: SchemaPath;
       componentType: string;
       durationMs: number;
+    }
+
+  // ── 表达式变量未定义（scope 中不存在的变量，返回 undefined） ──
+  | {
+      type: 'expression:undefined-variable';
+      variableName: string;
+      nodeId?: string;
+      path?: SchemaPath;
+      scopeSnapshot?: Record<string, unknown>;
+      expression: string;
     };
 ```
 

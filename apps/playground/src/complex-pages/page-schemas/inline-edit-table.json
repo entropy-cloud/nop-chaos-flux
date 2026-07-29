@@ -37,7 +37,7 @@
           "label": "Q1 预算(万)",
           "width": 130,
           "quickEdit": {
-            "body": { "type": "input-number", "name": "record.q1", "min": 0, "frameWrap": false }
+            "body": { "type": "input-number", "name": "q1", "min": 0, "frameWrap": false }
           }
         },
         {
@@ -45,7 +45,7 @@
           "label": "Q2 预算(万)",
           "width": 130,
           "quickEdit": {
-            "body": { "type": "input-number", "name": "record.q2", "min": 0, "frameWrap": false }
+            "body": { "type": "input-number", "name": "q2", "min": 0, "frameWrap": false }
           }
         },
         {
@@ -53,7 +53,7 @@
           "label": "Q3 预算(万)",
           "width": 130,
           "quickEdit": {
-            "body": { "type": "input-number", "name": "record.q3", "min": 0, "frameWrap": false }
+            "body": { "type": "input-number", "name": "q3", "min": 0, "frameWrap": false }
           }
         },
         {
@@ -61,7 +61,7 @@
           "label": "Q4 预算(万)",
           "width": 130,
           "quickEdit": {
-            "body": { "type": "input-number", "name": "record.q4", "min": 0, "frameWrap": false }
+            "body": { "type": "input-number", "name": "q4", "min": 0, "frameWrap": false }
           }
         },
         { "name": "total", "label": "年度合计", "width": 120 }

@@ -471,7 +471,32 @@ ${$slot.item.name}
 ${$slot.index}
 ```
 
-### Example 3: Nested cell slot inside row slot
+### Example 3a: Row scope with `$slot`
+
+Table row scopes publish `$slot` directly into the isolated row scope, not through a parameterized region `render({ bindings })` call:
+
+Scope payload construction (`use-table-row-scope-cache.ts`):
+
+```ts
+const payload = {
+  ...record, // expanded record fields (pure business data)
+  $slot: { record, index }, // slot frame (system metadata — NOT at top level)
+};
+```
+
+Author expression inside row-level templates:
+
+```text
+${name}             ← expanded field, direct access (same as form scope)
+${$slot.record.name} ← explicit structured access via slot frame
+${$slot.index}      ← row index access via slot frame
+```
+
+Note: `record` and `index` are NOT top-level scope keys. They live under `$slot` to avoid conflating system variables with business field names. Business field names must not start with `$`, so `$slot` itself cannot collide with any record field.
+
+`$slot` is built using `buildSlotFrame(bindings, outerSlotFrame)` from `packages/flux-react/src/slot-frame.ts`. For top-level table rows there is no outer slot frame, so `$slot.$parent` is `undefined`.
+
+### Example 3b: Nested cell slot inside row slot
 
 Outer row slot expression context:
 
