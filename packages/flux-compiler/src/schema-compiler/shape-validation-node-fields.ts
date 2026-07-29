@@ -292,7 +292,9 @@ export function inspectSchemaNodeFields(
           : diagnostics.validation.unknownBarePropertyPolicy === 'warn'
             ? 'warning'
             : 'error'
-        : 'warning';
+        : strictMode
+          ? 'error'
+          : 'warning';
 
       emitSchemaDiagnostic(
         diagnostics,
