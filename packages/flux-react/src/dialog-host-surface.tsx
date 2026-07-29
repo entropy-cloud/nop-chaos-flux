@@ -5,6 +5,7 @@ import type {
   NodeInstance,
   RenderNodeInput,
   ScopeRef,
+  SurfaceRuntime,
   TemplateNode,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
@@ -13,6 +14,7 @@ import {
   ActionScopeContext,
   ComponentRegistryContext,
   ScopeContext,
+  SurfaceContext,
   ValidationContext,
 } from './contexts.js';
 import { RenderNodes } from './render-nodes.js';
@@ -24,6 +26,7 @@ export interface SurfaceRenderContext {
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   ownerNodeInstance?: NodeInstance;
+  surfaceRuntime?: SurfaceRuntime;
 }
 
 function isTemplateNode(input: unknown): input is TemplateNode {
@@ -77,9 +80,11 @@ export function SurfaceScopeProviders(props: React.PropsWithChildren<SurfaceRend
     <ActionScopeContext.Provider value={props.actionScope}>
       <ComponentRegistryContext.Provider value={props.componentRegistry}>
         <ScopeContext.Provider value={props.scope}>
-          <ValidationContext.Provider value={props.validationOwner}>
-            {props.children}
-          </ValidationContext.Provider>
+          <SurfaceContext.Provider value={props.surfaceRuntime}>
+            <ValidationContext.Provider value={props.validationOwner}>
+              {props.children}
+            </ValidationContext.Provider>
+          </SurfaceContext.Provider>
         </ScopeContext.Provider>
       </ComponentRegistryContext.Provider>
     </ActionScopeContext.Provider>
