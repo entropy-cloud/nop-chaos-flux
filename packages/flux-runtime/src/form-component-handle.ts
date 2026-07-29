@@ -20,12 +20,12 @@ export function createFormComponentHandle(form: FormRuntime): ComponentHandle {
     capabilities: {
       store: form.store,
       hasMethod(method) {
-        return ['submit', 'validate', 'reset', 'setValue', 'setValues', 'getValues'].includes(
+        return ['submit', 'validate', 'reset', 'refresh', 'setValue', 'setValues', 'getValues'].includes(
           method,
         );
       },
       listMethods() {
-        return ['submit', 'validate', 'reset', 'setValue', 'setValues', 'getValues'];
+        return ['submit', 'validate', 'reset', 'refresh', 'setValue', 'setValues', 'getValues'];
       },
       async invoke(method, payload) {
         const input = toPayloadRecord(payload);
@@ -51,6 +51,9 @@ export function createFormComponentHandle(form: FormRuntime): ComponentHandle {
               error: result.ok ? undefined : result.errors,
             };
           }
+          case 'refresh':
+            await form.refresh();
+            return { ok: true };
           case 'reset':
             if (input.values !== undefined && !isPlainRecord(input.values)) {
               return fail('reset values must be an object when provided');

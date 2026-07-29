@@ -282,14 +282,27 @@ export function createComponentHandleRegistry(input: {
       );
 
       if (byId.length === 1) {
-        if (target.componentName && byId[0].name && byId[0].name !== target.componentName) {
-          return undefined;
-        }
-
         return byId[0];
       }
 
       if (byId.length > 1) {
+        const err = new Error(`Ambiguous component target: ${target.componentId}`) as Error & {
+          _ambiguous?: boolean;
+        };
+        err._ambiguous = true;
+        throw err;
+      }
+
+      // No match by id — try name (componentId serves as both id and name)
+      const byName = Array.from(handlesByName.get(target.componentId) ?? []).filter(
+        (handle) => handle._mounted !== false,
+      );
+
+      if (byName.length === 1) {
+        return byName[0];
+      }
+
+      if (byName.length > 1) {
         const err = new Error(`Ambiguous component target: ${target.componentId}`) as Error & {
           _ambiguous?: boolean;
         };
@@ -305,24 +318,6 @@ export function createComponentHandleRegistry(input: {
       }
 
       return (input.parent as RegistryWithResolveTraversal | undefined)?.resolve?.(target, visited);
-    }
-
-    if (target.componentName) {
-      const byName = Array.from(handlesByName.get(target.componentName) ?? []).filter(
-        (handle) => handle._mounted !== false,
-      );
-
-      if (byName.length === 1) {
-        return byName[0];
-      }
-
-      if (byName.length > 1) {
-        const err = new Error(`Ambiguous component target: ${target.componentName}`) as Error & {
-          _ambiguous?: boolean;
-        };
-        err._ambiguous = true;
-        throw err;
-      }
     }
 
     return (input.parent as RegistryWithResolveTraversal | undefined)?.resolve?.(target, visited);

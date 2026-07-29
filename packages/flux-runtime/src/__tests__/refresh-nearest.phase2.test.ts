@@ -168,6 +168,58 @@ describe('refreshNearest — Phase 2 find logic', () => {
 
     expect(result).toBeNull();
   });
+
+  it("targetType='form' finds a form handle", async () => {
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    runtime.createPageRuntime({});
+
+    const scope = makeScope('formScope');
+    const componentRegistry = createComponentHandleRegistry({ id: 'cr' });
+    componentRegistry.register(makeHandle('form', scope), { cid: 2 });
+
+    const result = await findNearestRefreshable({
+      startScope: scope,
+      componentRegistry,
+      runtime,
+      targetType: 'form',
+    });
+
+    expect(result?.kind).toBe('component');
+    if (result?.kind === 'component') {
+      expect(result.handle.type).toBe('form');
+    }
+  });
+
+  it("targetType='auto' finds a form handle when no crud/tree is nearer", async () => {
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    runtime.createPageRuntime({});
+
+    const scope = makeScope('formScope');
+    const componentRegistry = createComponentHandleRegistry({ id: 'cr' });
+    componentRegistry.register(makeHandle('form', scope), { cid: 2 });
+
+    const result = await findNearestRefreshable({
+      startScope: scope,
+      componentRegistry,
+      runtime,
+      targetType: 'auto',
+    });
+
+    expect(result?.kind).toBe('component');
+    if (result?.kind === 'component') {
+      expect(result.handle.type).toBe('form');
+    }
+  });
 });
 
 describe('refreshNearest — Phase 2 action end-to-end', () => {

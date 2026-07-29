@@ -33,7 +33,7 @@ describe('createComponentHandleRegistry', () => {
     );
 
     registry.register(named);
-    expect(registry.resolve({ componentName: 'search' })).toBe(named);
+    expect(registry.resolve({ componentId: 'search' })).toBe(named);
     disposeFirst();
     expect(registry.resolve({ _targetCid: 1 })).toBeUndefined();
 
@@ -58,10 +58,8 @@ describe('createComponentHandleRegistry', () => {
     child.register(duplicateB);
 
     expect(child.resolve({ componentId: 'shared-form' })).toBe(parentHandle);
-    expect(
-      child.resolve({ componentId: 'child-form', componentName: 'wrong-name' }),
-    ).toBeUndefined();
-    expect(() => child.resolve({ componentName: 'duplicate' })).toThrow(
+    expect(child.resolve({ componentId: 'non-existent' })).toBeUndefined();
+    expect(() => child.resolve({ componentId: 'duplicate' })).toThrow(
       'Ambiguous component target: duplicate',
     );
   });

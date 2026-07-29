@@ -123,6 +123,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   let currentValidation = inputValue.validation;
   let nextChangeRevision = lastChange.revision ?? 0;
   let clearExternalPublication: (() => void) | undefined;
+  let refreshHandler: (() => Promise<void>) | undefined;
 
   function setLastChange(change: ScopeChange) {
     nextChangeRevision += 1;
@@ -401,6 +402,14 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
     setLifecycleHandlers(handlers) {
       lifecycleHandlers = handlers;
+    },
+
+    setRefreshHandler(handler) {
+      refreshHandler = handler;
+    },
+
+    async refresh() {
+      await refreshHandler?.();
     },
 
     registerField(registration: RuntimeFieldRegistration): FieldRegistrationHandle {

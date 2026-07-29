@@ -69,7 +69,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
         openDialogCtx,
       ),
     ).resolves.toEqual({ ok: true, data: { dialogId: 'dialog-1' } });
-    expect(createSurfaceScope).toHaveBeenCalledWith('dialog', openDialogCtx, { recordId: 1 });
+    expect(createSurfaceScope).toHaveBeenCalledWith('dialog', openDialogCtx, { recordId: 1 }, false);
     expect(surfaceRuntime.open).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
@@ -172,7 +172,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
         openDrawerCtx,
       ),
     ).resolves.toEqual({ ok: true, data: { drawerId: 'drawer-1' } });
-    expect(createSurfaceScope).toHaveBeenCalledWith('drawer', openDrawerCtx, { recordId: 2 });
+    expect(createSurfaceScope).toHaveBeenCalledWith('drawer', openDrawerCtx, { recordId: 2 }, false);
 
     await expect(
       adapter.invokeBuiltInAction(

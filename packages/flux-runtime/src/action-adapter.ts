@@ -35,6 +35,7 @@ export interface ActionAdapterInput {
     kind: 'dialog' | 'drawer',
     ctx: ActionContext,
     patch?: Record<string, unknown>,
+    isolate?: boolean,
   ) => ScopeRef;
   getDialogActionScope?: (ctx: ActionContext) => ActionContext['actionScope'];
   getDialogComponentRegistry?: (ctx: ActionContext) => ActionContext['componentRegistry'];
@@ -183,14 +184,33 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         }
 
         case 'submitForm': {
-          if (!ctx.form) {
-            return { ok: false, error: new Error('submitForm requires form runtime') };
+          if (ctx.form) {
+            return ctx.form.submit({
+              interactionId: ctx.interactionId,
+              signal: invocation.signal,
+            });
           }
 
-          return ctx.form.submit({
-            interactionId: ctx.interactionId,
-            signal: invocation.signal,
-          });
+          // Fallback: resolve form from component registry by componentId
+          // when ctx.form is not available (e.g. custom rendering without
+          // surface form registration)
+          const componentId = invocation.targeting.componentId;
+
+          if (ctx.componentRegistry && componentId) {
+            const handle = ctx.componentRegistry.resolve({ componentId });
+            if (handle?.type === 'form' && handle.capabilities.hasMethod?.('submit')) {
+              return handle.capabilities.invoke(
+                'submit',
+                {
+                  interactionId: ctx.interactionId,
+                  signal: invocation.signal,
+                },
+                ctx,
+              );
+            }
+          }
+
+          return { ok: false, error: new Error('submitForm requires form runtime') };
         }
 
         case 'openDialog': {
@@ -211,7 +231,8 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             invocation.args?.data && typeof invocation.args.data === 'object'
               ? (invocation.args.data as Record<string, unknown>)
               : undefined;
-          const dialogScope = input.createSurfaceScope('dialog', ctx, dialogData);
+          const dialogIsolate = !!(invocation.args as Record<string, unknown>)?.isolate;
+          const dialogScope = input.createSurfaceScope('dialog', ctx, dialogData, dialogIsolate);
           const dialogId = ctx.surfaceRuntime.open({
             kind: 'dialog',
             surface: invocation.args ?? {},
@@ -273,7 +294,8 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             invocation.args?.data && typeof invocation.args.data === 'object'
               ? (invocation.args.data as Record<string, unknown>)
               : undefined;
-          const drawerScope = input.createSurfaceScope('drawer', ctx, drawerData);
+          const drawerIsolate = !!(invocation.args as Record<string, unknown>)?.isolate;
+          const drawerScope = input.createSurfaceScope('drawer', ctx, drawerData, drawerIsolate);
 
           const drawerId = ctx.surfaceRuntime.open({
             kind: 'drawer',
@@ -403,7 +425,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         case 'refreshNearest': {
           const rawArgs = invocation.args ?? {};
           const target = typeof rawArgs.targetType === 'string' ? rawArgs.targetType : 'auto';
-          const validTargets: RefreshNearestTargetType[] = ['auto', 'crud', 'tree', 'data-source'];
+          const validTargets: RefreshNearestTargetType[] = ['auto', 'crud', 'tree', 'data-source', 'form'];
           const targetType = validTargets.includes(target as RefreshNearestTargetType)
             ? (target as RefreshNearestTargetType)
             : 'auto';
@@ -440,7 +462,6 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           ok: false,
           error: resolveError ?? new Error('Component handle not found'),
           componentId: invocation.target.componentId,
-          componentName: invocation.target.componentName,
         };
       }
 

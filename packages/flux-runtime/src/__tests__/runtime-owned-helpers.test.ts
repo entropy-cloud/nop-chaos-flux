@@ -512,6 +512,7 @@ describe('createFormComponentHandle', () => {
       'submit',
       'validate',
       'reset',
+      'refresh',
       'setValue',
       'setValues',
       'getValues',

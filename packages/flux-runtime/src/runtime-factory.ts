@@ -595,7 +595,7 @@ export function createRendererRuntime(input: {
     executeApiRequest,
     sharing: schemaFetchSharing,
     runtime,
-    createSurfaceScope: (kind, ctx, patch) => {
+    createSurfaceScope: (kind, ctx, patch, isolate) => {
       const ownerInstanceKey = ctx.nodeInstance?.instancePath?.length
         ? ctx.nodeInstance.instancePath
             .map((frame) => `${frame.repeatedTemplateId}:${frame.instanceKey}`)
@@ -615,6 +615,7 @@ export function createRendererRuntime(input: {
         id: `${ownerId}:${kind}-scope`,
         path: `${ctx.scope.path}.${kind}`,
         parent: openingScope,
+        isolate,
         initialData: {
           dialogId: pendingId,
           ...(patch ?? {}),

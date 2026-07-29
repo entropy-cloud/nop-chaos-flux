@@ -8,7 +8,7 @@ import {
   type ScopeRef,
 } from '@nop-chaos/flux-core';
 
-export type RefreshNearestTargetType = 'auto' | 'crud' | 'tree' | 'data-source';
+export type RefreshNearestTargetType = 'auto' | 'crud' | 'tree' | 'data-source' | 'form';
 
 export interface RefreshNearestArgs {
   targetType?: RefreshNearestTargetType;
@@ -22,6 +22,7 @@ type FoundTarget = FoundComponent | FoundSource;
 const COMPONENT_TYPES_BY_TARGET: Record<Exclude<RefreshNearestTargetType, 'auto' | 'data-source'>, string> = {
   crud: 'crud',
   tree: 'tree',
+  form: 'form',
 };
 
 /**
@@ -43,12 +44,12 @@ export async function findNearestRefreshable(input: {
   targetType: RefreshNearestTargetType;
 }): Promise<FoundTarget | null> {
   const { runtime, targetType } = input;
-  const wantComponent = targetType === 'auto' || targetType === 'crud' || targetType === 'tree';
+  const wantComponent = targetType === 'auto' || targetType === 'crud' || targetType === 'tree' || targetType === 'form';
   const wantSource = targetType === 'auto' || targetType === 'data-source';
   const componentPredicate =
     targetType === 'auto'
-      ? (handle: ComponentHandle) => handle.type === 'crud' || handle.type === 'tree'
-      : targetType === 'crud' || targetType === 'tree'
+      ? (handle: ComponentHandle) => handle.type === 'crud' || handle.type === 'tree' || handle.type === 'form'
+      : targetType === 'crud' || targetType === 'tree' || targetType === 'form'
         ? (handle: ComponentHandle) => handle.type === COMPONENT_TYPES_BY_TARGET[targetType]
         : null;
 

@@ -246,7 +246,7 @@ describe('createRendererRuntime', () => {
       const validateResult = await runtime.dispatch(
         {
           action: 'component:validate',
-          componentName: 'userForm',
+          componentId: 'userForm',
         },
         {
           runtime,
@@ -315,7 +315,7 @@ describe('createRendererRuntime', () => {
     }
   });
 
-  it('fails component action when componentId and componentName target different handles', async () => {
+  it('fails component action when componentId targets a name that is ambiguous', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
       registry,
@@ -326,14 +326,14 @@ describe('createRendererRuntime', () => {
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
     const firstForm = runtime.createFormRuntime({
       id: 'first-form',
-      name: 'firstForm',
+      name: 'duplicateName',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
       page,
     });
     const secondForm = runtime.createFormRuntime({
       id: 'second-form',
-      name: 'secondForm',
+      name: 'duplicateName',
       initialValues: { username: 'Bob' },
       parentScope: page.scope,
       page,
@@ -346,8 +346,7 @@ describe('createRendererRuntime', () => {
       const result = await runtime.dispatch(
         {
           action: 'component:validate',
-          componentId: 'first-form',
-          componentName: 'secondForm',
+          componentId: 'duplicateName',
         },
         {
           runtime,
@@ -359,14 +358,14 @@ describe('createRendererRuntime', () => {
 
       expect(result.ok).toBe(false);
       expect(result.error).toBeInstanceOf(Error);
-      expect((result.error as Error).message).toBe('Component handle not found');
+      expect((result.error as Error).message).toContain('Ambiguous component target');
     } finally {
       unregisterSecond();
       unregisterFirst();
     }
   });
 
-  it('fails component action when componentName resolves ambiguously', async () => {
+  it('fails component action when componentId resolves a name with ambiguity', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
       registry,
@@ -397,7 +396,7 @@ describe('createRendererRuntime', () => {
       const result = await runtime.dispatch(
         {
           action: 'component:validate',
-          componentName: 'sharedForm',
+          componentId: 'sharedForm',
         },
         {
           runtime,
@@ -416,7 +415,7 @@ describe('createRendererRuntime', () => {
     }
   });
 
-  it('dispatches component action by compiled _targetCid without componentId/componentName', async () => {
+  it('dispatches component action by compiled _targetCid without componentId', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
       registry,
@@ -523,7 +522,7 @@ describe('createRendererRuntime', () => {
 
     expect(result.ok).toBe(false);
     expect((result.error as Error).message).toBe(
-      'component:<method> requires _targetCid, componentId or componentName',
+      'component:<method> requires _targetCid or componentId',
     );
   });
 

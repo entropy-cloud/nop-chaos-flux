@@ -1,6 +1,7 @@
 import type {
   ActionSchema,
   CompiledFormValidationModel,
+  FormRuntime,
   RenderNodeInput,
   RendererEnv,
   ScopeRef,
@@ -270,6 +271,17 @@ export function createManagedSurfaceRuntime(
         console.warn(`[surface] ${hookName} hook failed:`, err);
         return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };
       }
+    },
+    setSurfaceForm(surfaceId: string, form: FormRuntime | undefined) {
+      const entries = store.getState().entries;
+      const entry = entries.find((e) => e.id === surfaceId);
+      if (!entry) return;
+      store.upsert({ ...entry, surfaceForm: form });
+    },
+    getSurfaceForm(surfaceId: string): FormRuntime | undefined {
+      const entries = store.getState().entries;
+      const entry = entries.find((e) => e.id === surfaceId);
+      return entry?.surfaceForm;
     },
     dispose() {
       while (store.getState().entries.length > 0) {

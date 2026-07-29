@@ -60,7 +60,7 @@ describe('createActionRuntimeAdapter component and namespaced actions', () => {
       adapter.invokeComponentAction(
         {
           method: 'submit',
-          target: { componentName: 'named-form' },
+          target: { componentId: 'named-form' },
           payload: undefined,
         } as ComponentActionInvocation,
         createCtx({
@@ -69,7 +69,7 @@ describe('createActionRuntimeAdapter component and namespaced actions', () => {
           },
         }),
       ),
-    ).resolves.toMatchObject({ ok: false, error: expect.any(Error), componentName: 'named-form' });
+    ).resolves.toMatchObject({ ok: false, error: expect.any(Error), componentId: 'named-form' });
   });
 
   it('rejects unsupported component methods and wraps primitive invocation results', async () => {
