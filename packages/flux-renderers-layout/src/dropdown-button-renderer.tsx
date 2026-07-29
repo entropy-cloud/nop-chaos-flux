@@ -40,8 +40,9 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
 
   const handleItemClick = (item: ResolvedItem, index: number, itemDisabled: boolean) => {
     if (itemDisabled) return;
-    if (item.action) {
-      void props.helpers.dispatch(item.action as ActionSchema | ActionSchema[], {
+    const action = item.action ?? (item as Record<string, unknown>).onClick as ActionSchema | ActionSchema[] | undefined;
+    if (action) {
+      void props.helpers.dispatch(action, {
         scope: props.node.scope,
         evaluationBindings: { item, index },
       });
