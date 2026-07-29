@@ -374,6 +374,7 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'bodyClassName', kind: 'prop' },
     { key: 'actionsClassName', kind: 'prop' },
     { key: 'columnCount', kind: 'prop' },
+    { key: 'submitScope', kind: 'prop' },
     { key: 'submitOnChange', kind: 'prop', valueType: 'boolean' },
     { key: 'preventEnterSubmit', kind: 'prop', valueType: 'boolean' },
     { key: 'autoFocus', kind: 'prop', valueType: 'boolean' },
