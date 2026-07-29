@@ -237,7 +237,7 @@ describe('createSchemaCompiler', () => {
     expect(regionNode.regions?.empty).toBeUndefined();
   });
 
-  it('warns when table parameterized slots use bare record instead of $slot.record', () => {
+  it('does not warn when table cells use bare field names (expanded from record)', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
@@ -258,20 +258,16 @@ describe('createSchemaCompiler', () => {
       columns: [
         {
           name: 'name',
-          cell: { type: 'text', text: 'User ${record.name}' },
+          cell: { type: 'text', text: 'User ${name}' },
         },
       ],
     });
 
-    expect(diagnostics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: 'unknown-slot-param',
-          severity: 'warning',
-          path: '$.columns[0].cell.text',
-        }),
-      ]),
-    );
+    // Record fields are now expanded to top level, so bare field names are valid.
+    const slotWarnings = diagnostics?.filter(
+      (d) => d.code === 'unknown-slot-param',
+    ) ?? [];
+    expect(slotWarnings).toHaveLength(0);
   });
 
   it('accepts $slot.record in table parameterized slots without slot diagnostics', () => {

@@ -30,7 +30,6 @@ function compileTargeting(action: ActionSchema): CompiledActionTargeting {
     _targetTemplateId: action._targetTemplateId,
     targetId: action.targetId,
     componentId: action.componentId,
-    componentName: action.componentName,
     dialogId: action.dialogId,
     surfaceId: action.surfaceId,
   };

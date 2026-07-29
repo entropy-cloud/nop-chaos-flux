@@ -281,7 +281,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      const expandable = { expandedRow: { type: 'text', text: 'Details ${record.id}' } };
+      const expandable = { expandedRow: { type: 'text', text: 'Details ${id}' } };
 
       const result = normalize({
         value: expandable,
@@ -302,7 +302,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      const expandable = { rowExpandable: '${record.active}' };
+      const expandable = { rowExpandable: '${active}' };
 
       const result = normalize({ value: expandable, path: '$', regions, compileSchema });
 
