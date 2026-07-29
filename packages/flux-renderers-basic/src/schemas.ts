@@ -55,6 +55,7 @@ export interface DialogSchema extends BaseSchema {
   body?: BaseSchema[];
   actions?: BaseSchema[];
   data?: SchemaValue;
+  isolate?: boolean;
   open?: boolean;
   defaultOpen?: boolean;
   statusPath?: string;
@@ -85,6 +86,7 @@ export interface DrawerSchema extends BaseSchema {
   body?: BaseSchema[];
   actions?: BaseSchema[];
   data?: SchemaValue;
+  isolate?: boolean;
   open?: boolean;
   defaultOpen?: boolean;
   side?: 'left' | 'right' | 'top' | 'bottom';

@@ -50,6 +50,7 @@ export function useSurfaceRenderer(
     resolvedProps.data && typeof resolvedProps.data === 'object'
       ? (resolvedProps.data as Record<string, unknown>)
       : undefined;
+  const resolvedIsolate = resolvedProps.isolate === true;
   const [openRevision, setOpenRevision] = React.useState(0);
   const uncontrolledOpen = React.useSyncExternalStore(
     surfaceRuntime?.store.subscribe ?? (() => () => undefined),
@@ -121,6 +122,7 @@ export function useSurfaceRenderer(
       {
         scopeKey: `${getSurfaceScopeId(id, kind)}:${openRevision}`,
         pathSuffix: kind,
+        isolate: resolvedIsolate,
       },
     );
 
@@ -132,7 +134,7 @@ export function useSurfaceRenderer(
     declarativeScopeRef.current = nextScope;
     disposeSurfaceScope(runtime, current);
     setDeclarativeScope(nextScope);
-  }, [effectiveOpen, id, kind, node.scope, openRevision, openingData, runtime]);
+  }, [effectiveOpen, id, kind, node.scope, openRevision, openingData, resolvedIsolate, runtime]);
   const cleanupRef = React.useRef({
     surfaceRuntime,
     id,
