@@ -132,6 +132,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     defaultSchema: { type: 'text', text: 'Text' },
     component: TextRenderer,
     fields: [
+      { key: 'name', kind: 'prop' },
       { key: 'text', kind: 'prop', allowSource: true },
       { key: 'body', kind: 'prop' },
       { key: 'tag', kind: 'prop' },

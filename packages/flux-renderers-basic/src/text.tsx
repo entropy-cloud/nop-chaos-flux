@@ -2,6 +2,8 @@ import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { Button, cn, resolveLucideIconStrict, toast } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { useScopeSelector } from '@nop-chaos/flux-react';
+import { getIn } from '@nop-chaos/flux-core';
 import type { TextSchema } from './schemas.js';
 import { copyToClipboard } from './copy-to-clipboard.js';
 
@@ -84,8 +86,15 @@ function TextCopyButton({ value }: { value: string }) {
 }
 
 export function TextRenderer(props: RendererComponentProps<TextSchema>) {
+  const fieldName = props.props.name;
+  const boundValue = useScopeSelector(
+    (scopeData) => (fieldName ? getIn(scopeData, fieldName) : undefined),
+    undefined,
+    { paths: fieldName ? [fieldName] : [] },
+  );
+
   const text = props.props.body ?? props.props.text;
-  const resolvedText = String(text ?? '');
+  const resolvedText = String(boundValue ?? text ?? '');
   const tag = VALID_TAGS.includes(props.props.tag as (typeof VALID_TAGS)[number])
     ? (props.props.tag as (typeof VALID_TAGS)[number])
     : 'span';
