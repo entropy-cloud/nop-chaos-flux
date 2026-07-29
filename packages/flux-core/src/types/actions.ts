@@ -143,7 +143,6 @@ export interface ActionShapeFields extends SchemaObject {
   _targetTemplateId?: string;
   targetId?: string;
   componentId?: string;
-  componentName?: string;
   dialogId?: string;
   surfaceId?: string;
   args?: Record<string, SchemaValue>;
@@ -431,7 +430,6 @@ export interface CompiledActionTargeting {
   _targetTemplateId?: string;
   targetId?: string;
   componentId?: string;
-  componentName?: string;
   dialogId?: string;
   surfaceId?: string;
 }
@@ -487,7 +485,7 @@ export interface BuiltInActionInvocation {
 
 export interface ComponentActionInvocation {
   method: string;
-  target: { _targetCid?: number; componentId?: string; componentName?: string };
+  target: { _targetCid?: number; componentId?: string };
   payload: Record<string, unknown> | undefined;
 }
 

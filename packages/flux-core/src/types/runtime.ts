@@ -248,6 +248,13 @@ export interface OwnedSurfaceStateBase {
   title?: RenderNodeInput | string;
   body?: RenderNodeInput;
   actions?: RenderNodeInput;
+  /**
+   * The form runtime registered by a form with `submitScope: 'surface'`.
+   * Populated when the form mounts; cleared when it unmounts. Used by the
+   * renderer to resolve `ctx.form` for action buttons rendered outside the
+   * form's FormContext (e.g. dialog footer submit button).
+   */
+  surfaceForm?: FormRuntime;
   meta?: SurfaceNodeMeta;
   regionHandles?: Readonly<Record<string, RenderRegionHandle>>;
   controlledOpen?: boolean;
@@ -370,6 +377,17 @@ export interface SurfaceRuntime {
       hookName?: 'close' | 'submit:success' | 'submit:error';
     },
   ): Promise<ActionResult>;
+  /**
+   * Register or clear the surface form. Called by a form with
+   * `submitScope: 'surface'` on mount / unmount so that action buttons
+   * outside FormContext (e.g. dialog footer) can resolve `ctx.form`.
+   */
+  setSurfaceForm?(surfaceId: string, form: FormRuntime | undefined): void;
+  /**
+   * Get the surface form registered via `setSurfaceForm`. Returns undefined
+   * when no form has registered or the surface is not found.
+   */
+  getSurfaceForm?(surfaceId: string): FormRuntime | undefined;
   dispose(): void;
 }
 
@@ -515,6 +533,8 @@ export interface FormRuntime extends ValidationScopeRuntime {
   findByPrefix(prefix: string): string[];
   getChildren(path: string): string[];
   subscribeToModelGeneration?(listener: () => void): () => void;
+  setRefreshHandler(handler: (() => Promise<void>) | undefined): void;
+  refresh(): Promise<void>;
 }
 
 export interface PageRuntime {

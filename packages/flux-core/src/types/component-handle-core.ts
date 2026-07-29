@@ -31,7 +31,6 @@ export interface ComponentCapabilityActionContext {
 export interface ComponentTarget {
   _targetCid?: number;
   componentId?: string;
-  componentName?: string;
 }
 
 export interface ComponentCapabilities {
