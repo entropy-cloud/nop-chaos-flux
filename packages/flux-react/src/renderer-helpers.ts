@@ -250,8 +250,25 @@ export function createRendererHelpers(
   },
   render: (renderInput: RenderNodeInput, options?: RenderFragmentOptions) => React.ReactNode,
 ): RendererHelpers {
-  const dispatch = (action: any, ctx?: Partial<ActionContext>) =>
-    input.runtime.dispatch(action, mergeActionContext(input, ctx));
+  const dispatch = (action: any, ctx?: Partial<ActionContext>) => {
+    const merged = mergeActionContext(input, ctx);
+    if (!merged.form && input.surfaceRuntime?.getSurfaceForm) {
+      const scopeData = merged.scope.readVisible() as Record<string, unknown>;
+      const surfaceId =
+        typeof scopeData.dialogId === 'string'
+          ? scopeData.dialogId
+          : typeof scopeData.drawerId === 'string'
+            ? scopeData.drawerId
+            : undefined;
+      if (surfaceId) {
+        const surfaceForm = input.surfaceRuntime.getSurfaceForm(surfaceId);
+        if (surfaceForm) {
+          merged.form = surfaceForm;
+        }
+      }
+    }
+    return input.runtime.dispatch(action, merged);
+  };
   (
     dispatch as typeof dispatch & {
       __actionScope?: ActionScope;

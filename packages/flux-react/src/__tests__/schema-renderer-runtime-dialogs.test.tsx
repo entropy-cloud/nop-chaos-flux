@@ -153,7 +153,7 @@ describe('createSchemaRenderer dialog and provider behavior', () => {
                   resultKey: 'component-dispatch-result',
                   runAction: {
                     action: 'component:ping',
-                    componentName: 'shared',
+                    componentId: 'shared',
                     args: { value: 'hit' },
                   },
                 },
@@ -296,7 +296,7 @@ describe('createSchemaRenderer dialog and provider behavior', () => {
     });
   });
 
-  it('surfaces ambiguous componentName targets within a mounted child registry', async () => {
+  it('surfaces ambiguous componentId targets within a mounted child registry', async () => {
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
       scopedHostRenderer,
@@ -331,7 +331,7 @@ describe('createSchemaRenderer dialog and provider behavior', () => {
                   resultKey: 'component-ambiguous-result',
                   runAction: {
                     action: 'component:ping',
-                    componentName: 'shared',
+                    componentId: 'shared',
                     args: { value: 'hit' },
                   },
                 },

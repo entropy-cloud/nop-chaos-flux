@@ -194,7 +194,7 @@ describe('createSchemaRenderer import scope boundaries', () => {
               resultKey: 'outer-handle-result',
               runAction: {
                 action: 'component:ping',
-                componentName: 'shared',
+                componentId: 'shared',
                 args: { value: 'root' },
               },
             },
@@ -219,7 +219,7 @@ describe('createSchemaRenderer import scope boundaries', () => {
                   resultKey: 'inner-handle-result',
                   runAction: {
                     action: 'component:ping',
-                    componentName: 'shared',
+                    componentId: 'shared',
                     args: { value: 'child' },
                   },
                 },
@@ -310,7 +310,7 @@ describe('createSchemaRenderer import scope boundaries', () => {
     });
     const fallbackHandleResult = await retainedDispatch({
       action: 'component:ping',
-      componentName: 'shared',
+      componentId: 'shared',
       args: { value: 'after-unmount' },
     } as any);
     expect(fallbackHandleResult).toMatchObject({

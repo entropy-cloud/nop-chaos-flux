@@ -75,18 +75,13 @@ export function resolveContainerElement(
   }
 
   try {
-    const byId = componentRegistry.resolve({ componentId: containerId });
-    if (byId?.ref instanceof HTMLElement) {
-      return byId.ref;
-    }
-
-    const byName = componentRegistry.resolve({ componentName: containerId });
-    if (byName?.ref instanceof HTMLElement) {
-      return byName.ref;
+    const resolved = componentRegistry.resolve({ componentId: containerId });
+    if (resolved?.ref instanceof HTMLElement) {
+      return resolved.ref;
     }
   // Errors routed through runtime error boundary — effect failure handled by host error boundary
   } catch (error: unknown) {
-    console.warn('[container-hooks] resolveContainerElement failed', { containerId, componentName: containerId, error });
+    console.warn('[container-hooks] resolveContainerElement failed', { containerId, error });
   }
 
   return null;
