@@ -36,6 +36,7 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: true,
+    minify: false,
     cssCodeSplit: false,
     lib: {
       entry: './src/index.tsx',
