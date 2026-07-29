@@ -290,6 +290,7 @@ export function useFormFieldController(
     required?: boolean;
     readOnly?: boolean;
     areValuesEqual?: (a: unknown, b: unknown) => boolean;
+    defaultValue?: unknown;
   },
 ) {
   const scope = useRenderScope();
@@ -314,6 +315,21 @@ export function useFormFieldController(
     adapter: options?.adapter,
     adapterContext,
   });
+
+  useEffect(() => {
+    if (!name || options?.defaultValue === undefined) return;
+    if (rawValue !== undefined) return;
+    const ctx = { name, readOnly: options?.readOnly ?? false };
+    const converted = options?.adapter
+      ? options.adapter.out(options.defaultValue, ctx)
+      : options.defaultValue;
+    if (converted === undefined) return;
+    if (currentForm) {
+      currentForm.setValue(name, converted);
+    } else {
+      scope.update(name, converted);
+    }
+  }, [name, options?.defaultValue, rawValue, currentForm, scope, options?.adapter, options?.readOnly]);
 
   return {
     currentForm,

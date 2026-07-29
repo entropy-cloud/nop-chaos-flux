@@ -153,31 +153,10 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const formName = typeof props.props.name === 'string' ? props.props.name : undefined;
   const statusPath = typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
   const valuesPath = typeof props.props.valuesPath === 'string' ? props.props.valuesPath : undefined;
-
-  function collectDefaultValues(node: unknown, out: Record<string, unknown>): void {
-    if (!node || typeof node !== 'object') return;
-    if (Array.isArray(node)) { node.forEach((c) => collectDefaultValues(c, out)); return; }
-    const obj = node as Record<string, unknown>;
-    if (typeof obj.name === 'string' && obj.name && obj.value !== undefined && !(obj.name in out)) {
-      out[obj.name] = obj.value;
-    }
-    if (obj.body) collectDefaultValues(obj.body, out);
-    if (obj.items) collectDefaultValues(obj.items, out);
-    for (const key of Object.keys(obj)) {
-      if (key !== 'body' && key !== 'items' && typeof obj[key] === 'object') {
-        collectDefaultValues(obj[key], out);
-      }
-    }
-  }
-
-  const initialValues = useMemo(() => {
-    const dataValues =
-      props.props.data && typeof props.props.data === 'object'
-        ? { ...(props.props.data as Record<string, unknown>) }
-        : {};
-    collectDefaultValues(props.props, dataValues);
-    return Object.keys(dataValues).length > 0 ? dataValues : undefined;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: mount-only initial value computation
+  const initialValues =
+    props.props.data && typeof props.props.data === 'object'
+      ? (props.props.data as Record<string, unknown>)
+      : undefined;  
   const initialValuesRef = useRef(initialValues);
   const mountedFormRef = useRef(false);
   const activeOwnedFormRef = useRef<ReturnType<typeof runtime.createFormRuntime> | null>(null);

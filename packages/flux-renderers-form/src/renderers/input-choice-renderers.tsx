@@ -58,16 +58,6 @@ const stringValueAdapter = stringAdapter();
 
 const SELECT_METHODS = ['clear', 'focus', 'open'] as const;
 const FOCUS_ONLY_METHODS = ['focus'] as const;
-const selectMultipleAdapter: ValueAdapter<unknown, unknown[]> & { __syncIn: true; __syncOut: true } = {
-  __syncIn: true,
-  __syncOut: true,
-  in(value) {
-    return Array.isArray(value) ? value : [];
-  },
-  out(value) {
-    return Array.isArray(value) ? value : [];
-  },
-};
 const checkboxGroupAdapter: ValueAdapter<unknown, unknown[]> & { __syncIn: true; __syncOut: true } = {
   __syncIn: true,
   __syncOut: true,
@@ -204,10 +194,11 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const multiple = Boolean(props.props.multiple);
   const dictName = props.props.dict as string | undefined;
   const { value, handlers, presentation } = useFormFieldController(name, {
-    adapter: multiple ? selectMultipleAdapter : stringValueAdapter,
+    adapter,
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
   const dictState = useDictOptions(dictName);
   const hasDict = !!dictName;
@@ -561,6 +552,7 @@ export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) 
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
   const option = props.props.option as CheckboxSchema['option'] | undefined;
   const optionLabel = option?.label;
@@ -602,6 +594,7 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
   const option = props.props.option as SwitchSchema['option'] | undefined;
   const checked = value as boolean;
@@ -655,6 +648,7 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
   const options = sanitizeChoiceOptions(props.props.options);
   const horizontal = props.props.direction === 'horizontal';
