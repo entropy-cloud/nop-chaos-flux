@@ -4,21 +4,28 @@ import { describe, expect, it, vi } from 'vitest';
 import { useTableQuickEditController } from '../table-renderer/table-quick-edit-controller.js';
 
 function createRowScope(record: Record<string, unknown>) {
-  const state = { record: { ...record } };
+  let data: Record<string, unknown> = {
+    ...record,
+    $slot: { record: { ...record }, index: 0 },
+  };
   return {
     get(path: string) {
-      if (path === 'record') {
-        return state.record;
-      }
+      if (path === '$slot.record') return data.$slot ? (data.$slot as Record<string, unknown>).record : undefined;
+      if (path === '$slot') return data.$slot;
+      if (path in data) return data[path];
       return undefined;
     },
-    update(path: string, value: unknown) {
-      if (path === 'record' && value && typeof value === 'object') {
-        state.record = { ...(value as Record<string, unknown>) };
-        return;
+    merge(patch: Record<string, unknown>) {
+      data = { ...data, ...patch };
+      if (patch.$slot) {
+        data.$slot = { ...(data.$slot as Record<string, unknown>), ...(patch.$slot as Record<string, unknown>) };
       }
-      if (path.startsWith('record.')) {
-        state.record[path.slice('record.'.length)] = value;
+    },
+    update(path: string, value: unknown) {
+      if (path === '$slot.record' && value && typeof value === 'object') {
+        const slot = (data.$slot as Record<string, unknown>) || {};
+        data.$slot = { ...slot, record: { ...(value as Record<string, unknown>) } };
+        return;
       }
     },
   } as any;
@@ -60,7 +67,7 @@ function ControllerHarness(props: {
       <button type="button" onClick={() => controller.handleInlineValueChange('Alicia')}>
         change
       </button>
-      <button type="button" onClick={() => controller.draftRowScope.update('record.name', 'Changed')}>
+      <button type="button" onClick={() => controller.draftRowScope.update('name', 'Changed')}>
         change-custom
       </button>
       <button type="button" onClick={controller.markBodyDirty}>
@@ -101,7 +108,7 @@ describe('useTableQuickEditController', () => {
     expect(screen.getByTestId('dirty').textContent).toBe('false');
     fireEvent.click(screen.getByRole('button', { name: 'change' }));
     expect(screen.getByTestId('dirty').textContent).toBe('true');
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
+    expect(rowScope.get('$slot.record')).toMatchObject({ name: 'Alice' });
 
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
@@ -109,7 +116,7 @@ describe('useTableQuickEditController', () => {
       expect(dispatch).toHaveBeenCalledTimes(1);
     });
 
-    expect((dispatch.mock.calls[0] as any)?.[1]?.scope.get('record')).toMatchObject({
+    expect((dispatch.mock.calls[0] as any)?.[1]?.scope.get('$slot.record')).toMatchObject({
       name: 'Alicia',
     });
 
@@ -118,7 +125,7 @@ describe('useTableQuickEditController', () => {
       expect(screen.getByTestId('draft').textContent).toBe('Alicia');
     });
 
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alicia' });
+    expect(rowScope.get('$slot.record')).toMatchObject({ name: 'Alicia' });
   });
 
   it('keeps unsaved inline draft changes out of the shared row scope', () => {
@@ -139,7 +146,7 @@ describe('useTableQuickEditController', () => {
 
     expect(screen.getByTestId('dirty').textContent).toBe('true');
     expect(screen.getByTestId('draft').textContent).toBe('Alicia');
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
+    expect(rowScope.get('$slot.record')).toMatchObject({ name: 'Alice' });
   });
 
   it('marks custom-body edits dirty and restores saved value on close', () => {
@@ -162,7 +169,7 @@ describe('useTableQuickEditController', () => {
     expect(screen.getByTestId('dirty').textContent).toBe('true');
 
     fireEvent.click(screen.getByRole('button', { name: 'close' }));
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
+    expect(rowScope.get('$slot.record')).toMatchObject({ name: 'Alice' });
     expect(screen.getByTestId('dirty').textContent).toBe('false');
   });
 
@@ -184,7 +191,7 @@ describe('useTableQuickEditController', () => {
     fireEvent.click(screen.getByRole('button', { name: 'change-custom' }));
     fireEvent.click(screen.getByRole('button', { name: 'mark-body-dirty' }));
 
-    expect((rowScope.get('record') as Record<string, unknown>).status).toBe('draft');
+    expect((rowScope.get('$slot.record') as Record<string, unknown>).status).toBe('draft');
     expect((screen.getByTestId('dirty').textContent)).toBe('true');
 
     rendered.rerender(
@@ -199,7 +206,7 @@ describe('useTableQuickEditController', () => {
     );
 
     expect(screen.getByTestId('dirty').textContent).toBe('true');
-    expect((rowScope.get('record') as Record<string, unknown>).status).toBe('draft');
+    expect((rowScope.get('$slot.record') as Record<string, unknown>).status).toBe('draft');
   });
 
   it('opens dialog with saved value and ignores close while saving', async () => {

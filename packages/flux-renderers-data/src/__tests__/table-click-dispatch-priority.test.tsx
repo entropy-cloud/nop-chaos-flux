@@ -25,16 +25,22 @@ function makeRowScope(record: Record<string, unknown>, index: number): ScopeRef 
   return {
     id: `scope-${index}`,
     path: `$rows.${index}`,
-    value: { record, index },
+    value: { ...record, $slot: { record, index } },
     get(path: string) {
-      if (path === 'record') return record;
+      if (path in record) return (record as any)[path];
+      if (path === '$slot') return { record, index };
       if (path === 'index') return index;
       return undefined;
     },
-    has: () => false,
-    readOwn: () => ({ record, index }),
-    readVisible: () => ({ record, index }),
-    materializeVisible: () => ({ record, index }),
+    has(path: string) {
+      if (path in record) return true;
+      if (path === '$slot') return true;
+      if (path === 'index') return true;
+      return false;
+    },
+    readOwn: () => ({ ...record, $slot: { record, index } }),
+    readVisible: () => ({ ...record, $slot: { record, index } }),
+    materializeVisible: () => ({ ...record, $slot: { record, index } }),
     update: vi.fn(),
     merge() {},
   };

@@ -16,7 +16,7 @@ type TestScope = ScopeRef & {
   };
 };
 
-function createTestScope(initial: { record: Record<string, unknown>; index: number }, id: string): TestScope {
+function createTestScope(initial: Record<string, unknown>, id: string): TestScope {
   let own = initial;
   let lastChange: { paths: readonly string[] } | undefined;
   const merge = vi.fn((patch: Record<string, unknown>) => {
@@ -29,12 +29,15 @@ function createTestScope(initial: { record: Record<string, unknown>; index: numb
     path: `$rows.${id}`,
     value: own,
     get(path: string) {
-      if (path === 'record') return own.record;
-      if (path === 'index') return own.index;
+      if (path === '$slot.record') return (own.$slot as { record: unknown })?.record;
+      if (path === '$slot.index') return (own.$slot as { index: unknown })?.index;
+      if (path in own) return own[path];
       return undefined;
     },
     has(path: string) {
-      return path === 'record' || path === 'index';
+      if (path === '$slot.record') return !!own.$slot;
+      if (path === '$slot.index') return !!own.$slot;
+      return path in own;
     },
     readOwn() {
       return own;
@@ -85,10 +88,7 @@ function HookHarness(props: {
       createScope:
         props.createScope ??
         ((patch, options) =>
-          createTestScope(
-            { record: patch.record as Record<string, unknown>, index: patch.index as number },
-            String(options?.scopeKey ?? 'scope'),
-          )),
+          createTestScope(patch, String(options?.scopeKey ?? 'scope'))),
       disposeScope: props.disposeScope ?? (() => undefined),
     } as any,
     props.path,
@@ -140,8 +140,11 @@ describe('useTableRowScopeCache', () => {
     );
 
     await waitFor(() => expect(scope.merge).toHaveBeenCalledTimes(1));
-    expect(scope.merge).toHaveBeenCalledWith({ index: 1, record: { name: 'Alice updated' } });
-    expect(scope.store.getLastChange()).toEqual({ paths: ['index', 'record'] });
+    expect(scope.merge).toHaveBeenCalledWith({
+      $slot: { index: 1, record: { name: 'Alice updated' } },
+      name: 'Alice updated',
+    });
+    expect(scope.store.getLastChange()).toEqual({ paths: ['$slot', 'name'] });
   });
 
   it('does not republish unchanged rows', async () => {
@@ -181,10 +184,7 @@ describe('useTableRowScopeCache', () => {
     const secondCacheKey = 'table-b::$page.table';
     const createdScopes: TestScope[] = [];
     const createScope = vi.fn((patch: Record<string, unknown>, options?: Record<string, unknown>) => {
-      const scope = createTestScope(
-        { record: patch.record as Record<string, unknown>, index: patch.index as number },
-        String(options?.scopeKey ?? `scope-${createdScopes.length}`),
-      );
+      const scope = createTestScope(patch, String(options?.scopeKey ?? `scope-${createdScopes.length}`));
       createdScopes.push(scope);
       return scope;
     });
@@ -252,7 +252,7 @@ describe('useTableRowScopeCache', () => {
     await new Promise<void>((resolve) => queueMicrotask(resolve));
 
     expect(disposeScope).not.toHaveBeenCalled();
-    expect(cache?.get('r1')?.get('record')).toEqual({ name: 'Alice' });
+    expect(cache?.get('r1')?.get('$slot.record')).toEqual({ name: 'Alice' });
   });
 
   it('keeps existing row scopes stable when only row payloads change', async () => {

@@ -43,35 +43,6 @@ function areRecordsEqual(left: Record<string, unknown>, right: Record<string, un
   });
 }
 
-function setRecordPath(
-  record: Record<string, unknown>,
-  path: string,
-  value: unknown,
-): Record<string, unknown> {
-  if (!path) {
-    return record;
-  }
-
-  const segments = path.split('.').filter(Boolean);
-  if (segments.length === 0) {
-    return record;
-  }
-
-  const nextRecord: Record<string, unknown> = { ...record };
-  let cursor: Record<string, unknown> = nextRecord;
-
-  for (let index = 0; index < segments.length - 1; index += 1) {
-    const segment = segments[index]!;
-    const current = cursor[segment];
-    const next = current && typeof current === 'object' ? { ...(current as Record<string, unknown>) } : {};
-    cursor[segment] = next;
-    cursor = next;
-  }
-
-  cursor[segments[segments.length - 1]!] = value;
-  return nextRecord;
-}
-
 function createDraftScopeStore(getSnapshot: () => Record<string, unknown>): {
   store: ScopeStore<Record<string, unknown>>;
   publish(change: ScopeChange): void;
@@ -160,7 +131,11 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     () =>
       createDraftScopeStore(() => ({
         ...rowScope.readVisible(),
-        record: draftRecordRef.current,
+        ...draftRecordRef.current,
+        $slot: {
+          ...(rowScope.readVisible().$slot as Record<string, unknown> || {}),
+          record: draftRecordRef.current,
+        },
       })),
     [rowScope],
   );
@@ -170,19 +145,22 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
       ...rowScope,
       store: draftScopeStore.store,
       get(path: string) {
-        if (path === 'record') {
+        if (field && path === field) {
+          return draftRecordRef.current[field];
+        }
+        if (path === '$slot.record') {
           return draftRecordRef.current;
         }
-        if (field && path === `record.${field}`) {
+        if (field && path === `$slot.record.${field}`) {
           return draftRecordRef.current[field];
         }
         return rowScope.get(path);
       },
       has(path: string) {
-        if (path === 'record') {
+        if (field && (path === field || path === `$slot.record.${field}`)) {
           return true;
         }
-        if (field && path === `record.${field}`) {
+        if (path === '$slot.record') {
           return true;
         }
         return rowScope.has(path);
@@ -191,50 +169,49 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
         const own = rowScope.readOwn();
         return {
           ...own,
-          record: draftRecordRef.current,
+          ...(field ? { [field]: draftRecordRef.current[field] } : {}),
+          $slot: {
+            ...(own.$slot as Record<string, unknown> || {}),
+            record: draftRecordRef.current,
+          },
         };
       },
       readVisible() {
         const visible = rowScope.readVisible();
         return {
           ...visible,
-          record: draftRecordRef.current,
+          ...(field ? { [field]: draftRecordRef.current[field] } : {}),
+          $slot: {
+            ...(visible.$slot as Record<string, unknown> || {}),
+            record: draftRecordRef.current,
+          },
         };
       },
       materializeVisible() {
         const visible = rowScope.materializeVisible();
         return {
           ...visible,
-          record: draftRecordRef.current,
+          ...(field ? { [field]: draftRecordRef.current[field] } : {}),
+          $slot: {
+            ...(visible.$slot as Record<string, unknown> || {}),
+            record: draftRecordRef.current,
+          },
         };
       },
       update(path: string, value: unknown) {
-        if (path === 'record' && typeof value === 'object' && value !== null) {
-          draftRecordRef.current = value as Record<string, unknown>;
-          draftScopeStore.publish({ paths: ['record'], kind: 'update' });
-          if (field) {
-            setDraftValue(toOptionalDraftValue(draftRecordRef.current, field));
-          }
-          return;
-        }
-
-        if (field && path === `record.${field}`) {
+        if (field && path === field) {
           draftRecordRef.current = {
             ...draftRecordRef.current,
             [field]: value,
           };
-          draftScopeStore.publish({ paths: [`record.${field}`, 'record'], kind: 'update' });
+          draftScopeStore.publish({ paths: [field, '$slot.record'], kind: 'update' });
           setDraftValue(toOptionalDraftValue(draftRecordRef.current, field));
           return;
         }
 
-        if (path.startsWith('record.')) {
-          draftRecordRef.current = setRecordPath(
-            draftRecordRef.current,
-            path.slice('record.'.length),
-            value,
-          );
-          draftScopeStore.publish({ paths: [path, 'record'], kind: 'update' });
+        if (path === '$slot.record' && typeof value === 'object' && value !== null) {
+          draftRecordRef.current = value as Record<string, unknown>;
+          draftScopeStore.publish({ paths: ['$slot.record'], kind: 'update' });
           if (field) {
             setDraftValue(toOptionalDraftValue(draftRecordRef.current, field));
           }
@@ -259,13 +236,13 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     lastRecordRef.current = { ...record };
 
     if (!honestReset) {
-      draftScopeStore.publish({ paths: field ? [`record.${field}`, 'record'] : ['record'], kind: 'update' });
+      draftScopeStore.publish({ paths: field ? [field, '$slot.record'] : ['$slot.record'], kind: 'update' });
       return;
     }
 
     draftRecordRef.current = { ...record };
     savedRecordRef.current = { ...record };
-    draftScopeStore.publish({ paths: field ? [`record.${field}`, 'record'] : ['record'], kind: 'update' });
+    draftScopeStore.publish({ paths: field ? [field, '$slot.record'] : ['$slot.record'], kind: 'update' });
     setDraftValue(nextValue);
     setSavedValue(nextValue);
     setBodyDirty(false);
@@ -283,7 +260,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
 
   const restoreSavedValue = useCallback(() => {
     draftRecordRef.current = { ...savedRecordRef.current };
-    draftScopeStore.publish({ paths: field ? [`record.${field}`, 'record'] : ['record'], kind: 'update' });
+    draftScopeStore.publish({ paths: field ? [field, '$slot.record'] : ['$slot.record'], kind: 'update' });
 
     if (hasCustomBody) {
       setBodyDirty(false);
@@ -296,7 +273,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
   const openDialog = useCallback(() => {
     setDraftValue(savedValue);
     draftRecordRef.current = { ...savedRecordRef.current };
-    draftScopeStore.publish({ paths: field ? [`record.${field}`, 'record'] : ['record'], kind: 'update' });
+    draftScopeStore.publish({ paths: field ? [field, '$slot.record'] : ['$slot.record'], kind: 'update' });
     setDialogOpen(true);
   }, [draftScopeStore, field, savedValue]);
 
@@ -313,7 +290,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
           ...draftRecordRef.current,
           [field]: nextValue,
         };
-        draftScopeStore.publish({ paths: [`record.${field}`, 'record'], kind: 'update' });
+        draftScopeStore.publish({ paths: [field, '$slot.record'], kind: 'update' });
       }
     },
     [draftScopeStore, field],
@@ -343,7 +320,11 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
         throw result.error ?? new Error('Save action returned ok=false');
       }
       const committedRecord = recordSnapshot;
-      rowScope.update('record', committedRecord);
+      const existingSlot = rowScope.get('$slot') as { record: unknown; index: number } | undefined;
+      rowScope.merge({
+        ...committedRecord,
+        $slot: { ...(existingSlot ?? {}), record: committedRecord, index: existingSlot?.index ?? 0 },
+      });
       const nextSavedValue = field ? toOptionalDraftValue(committedRecord, field) : draftValue;
       lastRecordValueRef.current = nextSavedValue;
       savedRecordRef.current = { ...committedRecord };

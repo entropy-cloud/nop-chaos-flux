@@ -42,7 +42,7 @@ function renderTable(schemaProps: Record<string, unknown>) {
 describe('Table expandable.expandableWhen', () => {
   it('hides the expand toggle for rows where expandableWhen evaluates falsy', () => {
     const { container } = renderTable({
-      expandable: { expandableWhen: 'record.expandable === true' },
+      expandable: { expandableWhen: 'expandable === true' },
     });
     const expandCells = container.querySelectorAll('[data-slot="table-expand-cell"]');
     expect(expandCells.length).toBe(2);

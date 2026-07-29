@@ -15,23 +15,6 @@ function toDraftValue(record: Record<string, unknown>, field: string) {
   return value == null ? '' : String(value);
 }
 
-function setRecordPath(record: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
-  if (!path) return record;
-  const segments = path.split('.').filter(Boolean);
-  if (segments.length === 0) return record;
-  const nextRecord: Record<string, unknown> = { ...record };
-  let cursor: Record<string, unknown> = nextRecord;
-  for (let index = 0; index < segments.length - 1; index += 1) {
-    const segment = segments[index]!;
-    const current = cursor[segment];
-    const next = current && typeof current === 'object' ? { ...(current as Record<string, unknown>) } : {};
-    cursor[segment] = next;
-    cursor = next;
-  }
-  cursor[segments[segments.length - 1]!] = value;
-  return nextRecord;
-}
-
 function createDraftScopeStore(getSnapshot: () => Record<string, unknown>) {
   let revision = 0;
   const listeners = new Set<(change: ScopeChange) => void>();
@@ -95,7 +78,11 @@ export function useRowQuickEditDraft(input: UseRowQuickEditDraftInput): RowQuick
   const draftScopeStore = useMemo(
     () => createDraftScopeStore(() => ({
       ...rowScope.readVisible(),
-      record: draftRecordRef.current,
+      ...draftRecordRef.current,
+      $slot: {
+        ...(rowScope.readVisible().$slot as Record<string, unknown> || {}),
+        record: draftRecordRef.current,
+      },
     })),
     [rowScope],
   );
@@ -105,39 +92,62 @@ export function useRowQuickEditDraft(input: UseRowQuickEditDraftInput): RowQuick
       ...rowScope,
       store: draftScopeStore.store,
       get(path: string) {
-        if (path === 'record') return draftRecordRef.current;
-        if (path.startsWith('record.')) {
-          const key = path.slice('record.'.length);
+        if (path in draftRecordRef.current) return draftRecordRef.current[path];
+        if (path === '$slot.record') return draftRecordRef.current;
+        if (path.startsWith('$slot.record.')) {
+          const key = path.slice('$slot.record.'.length);
           return draftRecordRef.current[key];
         }
         return rowScope.get(path);
       },
       has(path: string) {
-        if (path === 'record' || path.startsWith('record.')) return true;
+        if (path in draftRecordRef.current) return true;
+        if (path === '$slot.record' || path.startsWith('$slot.record.')) return true;
         return rowScope.has(path);
       },
       readOwn() {
         const own = rowScope.readOwn();
-        return { ...own, record: draftRecordRef.current };
+        return {
+          ...own,
+          ...draftRecordRef.current,
+          $slot: {
+            ...(own.$slot as Record<string, unknown> || {}),
+            record: draftRecordRef.current,
+          },
+        };
       },
       readVisible() {
         const visible = rowScope.readVisible();
-        return { ...visible, record: draftRecordRef.current };
+        return {
+          ...visible,
+          ...draftRecordRef.current,
+          $slot: {
+            ...(visible.$slot as Record<string, unknown> || {}),
+            record: draftRecordRef.current,
+          },
+        };
       },
       materializeVisible() {
         const visible = rowScope.materializeVisible();
-        return { ...visible, record: draftRecordRef.current };
+        return {
+          ...visible,
+          ...draftRecordRef.current,
+          $slot: {
+            ...(visible.$slot as Record<string, unknown> || {}),
+            record: draftRecordRef.current,
+          },
+        };
       },
       update(path: string, value: unknown) {
-        if (path === 'record' && typeof value === 'object' && value !== null) {
-          draftRecordRef.current = value as Record<string, unknown>;
-          draftScopeStore.publish(['record']);
+        if (path in draftRecordRef.current) {
+          draftRecordRef.current = { ...draftRecordRef.current, [path]: value };
+          draftScopeStore.publish([path, '$slot.record']);
           setDraftVersion((v) => v + 1);
           return;
         }
-        if (path.startsWith('record.')) {
-          draftRecordRef.current = setRecordPath(draftRecordRef.current, path.slice('record.'.length), value);
-          draftScopeStore.publish([path, 'record']);
+        if (path === '$slot.record' && typeof value === 'object' && value !== null) {
+          draftRecordRef.current = value as Record<string, unknown>;
+          draftScopeStore.publish(['$slot.record']);
           setDraftVersion((v) => v + 1);
           return;
         }
@@ -150,7 +160,7 @@ export function useRowQuickEditDraft(input: UseRowQuickEditDraftInput): RowQuick
   useEffect(() => {
     draftRecordRef.current = { ...record };
     savedRecordRef.current = { ...record };
-    draftScopeStore.publish(['record']);
+    draftScopeStore.publish(['$slot.record']);
   }, [draftScopeStore, record]);
 
   const getFieldValue = useCallback((field: string): string => {
@@ -159,7 +169,7 @@ export function useRowQuickEditDraft(input: UseRowQuickEditDraftInput): RowQuick
 
   const setFieldValue = useCallback((field: string, value: string) => {
     draftRecordRef.current = { ...draftRecordRef.current, [field]: value };
-    draftScopeStore.publish([`record.${field}`, 'record']);
+    draftScopeStore.publish([field, '$slot.record']);
     setDraftVersion((v) => v + 1);
   }, [draftScopeStore]);
 
@@ -182,7 +192,7 @@ export function useRowQuickEditDraft(input: UseRowQuickEditDraftInput): RowQuick
 
   const cancelEditing = useCallback(() => {
     draftRecordRef.current = { ...savedRecordRef.current };
-    draftScopeStore.publish(['record']);
+    draftScopeStore.publish(['$slot.record']);
     setDraftVersion((v) => v + 1);
   }, [draftScopeStore]);
 
@@ -199,10 +209,14 @@ export function useRowQuickEditDraft(input: UseRowQuickEditDraftInput): RowQuick
         throw result.error ?? new Error('Save action returned ok=false');
       }
       const committedRecord = recordSnapshot;
-      rowScope.update('record', committedRecord);
+      const existingSlot = rowScope.get('$slot') as { record: unknown; index: number } | undefined;
+      rowScope.merge({
+        ...committedRecord,
+        $slot: { ...(existingSlot ?? {}), record: committedRecord, index: existingSlot?.index ?? 0 },
+      });
       savedRecordRef.current = { ...committedRecord };
       draftRecordRef.current = { ...committedRecord };
-      draftScopeStore.publish(['record']);
+      draftScopeStore.publish(['$slot.record']);
     } catch (error) {
       if (saveGenerationRef.current !== generation) return;
       onSaveError?.(error);

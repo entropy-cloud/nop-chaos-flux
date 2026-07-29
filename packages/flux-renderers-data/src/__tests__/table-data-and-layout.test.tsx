@@ -25,19 +25,22 @@ import {
 import { areColumnsRenderEquivalent } from '../table-renderer/table-flattened-items.js';
 
 function makeRowScope(record: Record<string, unknown>, index: number): ScopeRef {
+  const $slot = { record, index };
   return {
     id: `scope-${index}`,
     path: `$rows.${index}`,
-    value: { record, index },
+    value: { ...record, $slot },
     get(path: string) {
-      if (path === 'record') return record;
-      if (path === 'index') return index;
+      if (path === '$slot') return $slot;
+      if (path === '$slot.record') return record;
+      if (path === '$slot.index') return index;
+      if (path in record) return (record as any)[path];
       return undefined;
     },
     has: () => false,
-    readOwn: () => ({ record, index }),
-    readVisible: () => ({ record, index }),
-    materializeVisible: () => ({ record, index }),
+    readOwn: () => ({ ...record, $slot }),
+    readVisible: () => ({ ...record, $slot }),
+    materializeVisible: () => ({ ...record, $slot }),
     update: vi.fn(),
     merge() {},
   };

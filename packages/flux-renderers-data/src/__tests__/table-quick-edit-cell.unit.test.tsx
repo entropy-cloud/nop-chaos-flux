@@ -8,23 +8,44 @@ import {
   TableQuickEditCell,
 } from '../table-renderer/table-quick-edit-cell.js';
 
-function createRowScope(record: Record<string, unknown>) {
-  const state = { record: { ...record } };
+function createRowScope(record: Record<string, unknown>, index = 0) {
+  const state: Record<string, unknown> = { ...record, $slot: { record: { ...record }, index } };
+  function getSlotRecord() {
+    const slot = state.$slot as { record: Record<string, unknown> } | undefined;
+    return slot?.record ?? {};
+  }
   return {
     get(path: string) {
-      if (path === 'record') {
-        return state.record;
-      }
-      return undefined;
+      if (path === '$slot.record') return getSlotRecord();
+      if (path === '$slot') return state.$slot;
+      return state[path];
+    },
+    has(path: string) {
+      return path in state;
     },
     update(path: string, value: unknown) {
-      if (path === 'record' && value && typeof value === 'object') {
-        state.record = { ...(value as Record<string, unknown>) };
+      if (path === '$slot.record' && value && typeof value === 'object') {
+        const newRecord = value as Record<string, unknown>;
+        state.$slot = { ...(state.$slot as object), record: newRecord } as any;
         return;
       }
-      if (path.startsWith('record.')) {
-        state.record[path.slice('record.'.length)] = value;
+      state[path] = value;
+    },
+    merge(data: Record<string, unknown>) {
+      const { $slot, ...fields } = data;
+      Object.assign(state, fields);
+      if ($slot) {
+        state.$slot = $slot;
       }
+    },
+    readVisible() {
+      return { ...state };
+    },
+    readOwn() {
+      return { ...state };
+    },
+    materializeVisible() {
+      return { ...state };
     },
   } as any;
 }
@@ -110,17 +131,17 @@ describe('TableQuickEditCell', () => {
 
     expect(input.value).toBe('Alice');
     expect(saveButton.hasAttribute('disabled')).toBe(true);
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
+    expect(rowScope.get('name')).toBe('Alice');
 
     fireEvent.change(input, { target: { value: 'Alicia' } });
     expect(saveButton.hasAttribute('disabled')).toBe(false);
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
+    expect(rowScope.get('name')).toBe('Alice');
 
     fireEvent.click(saveButton);
     await waitFor(() => {
       expect(helpers.dispatch).toHaveBeenCalledTimes(1);
     });
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alicia' });
+    expect(rowScope.get('name')).toBe('Alicia');
 
     rerender(
       wrapWithProviders(
@@ -193,8 +214,8 @@ describe('TableQuickEditCell', () => {
           render: (options: any) => (
             <input
               aria-label="Custom body"
-              defaultValue={String((options?.scope.get('record') as Record<string, unknown>)?.name ?? '')}
-              onChange={(event) => options?.scope.update('record.name', event.target.value)}
+              defaultValue={String(options?.scope.get('name') ?? '')}
+              onChange={(event) => options?.scope.update('name', event.target.value)}
             />
           ),
         },
@@ -204,17 +225,17 @@ describe('TableQuickEditCell', () => {
     const customInput = screen.getByRole('textbox', { name: 'Custom body' }) as HTMLInputElement;
     const saveButton = screen.getByRole('button', { name: t('flux.common.save') });
     expect(saveButton.hasAttribute('disabled')).toBe(true);
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
+    expect(rowScope.get('name')).toBe('Alice');
 
     fireEvent.change(customInput, { target: { value: 'changed' } });
     expect(saveButton.hasAttribute('disabled')).toBe(false);
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
+    expect(rowScope.get('name')).toBe('Alice');
 
     fireEvent.click(saveButton);
     await waitFor(() => {
       expect(screen.getByRole('button', { name: t('flux.common.save') })).toBeTruthy();
     });
-    expect(rowScope.get('record')).toMatchObject({ name: 'changed' });
+    expect(rowScope.get('name')).toBe('changed');
   });
 
   it('renders compiled quickEdit body regions when quickEditBodyRegionKey is provided', async () => {
@@ -263,8 +284,8 @@ describe('TableQuickEditCell', () => {
           render: (options: any) => (
             <input
               aria-label="Dialog body"
-              defaultValue={String((options?.scope.get('record') as Record<string, unknown>)?.name ?? '')}
-              onChange={(event) => options?.scope.update('record.name', event.target.value)}
+              defaultValue={String(options?.scope.get('name') ?? '')}
+              onChange={(event) => options?.scope.update('name', event.target.value)}
             />
           ),
         },
@@ -273,7 +294,7 @@ describe('TableQuickEditCell', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Name' }));
     expect(screen.getAllByText('Edit Name').length).toBeGreaterThan(0);
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
+    expect(rowScope.get('name')).toBe('Alice');
 
     const body = screen.getByLabelText('Dialog body');
     fireEvent.change(body, { target: { value: 'changed' } });
@@ -281,7 +302,7 @@ describe('TableQuickEditCell', () => {
     const closeButton = dialog.querySelector('[data-slot="dialog-footer"] [data-slot="button"]');
     expect(closeButton).toBeTruthy();
     fireEvent.click(closeButton as HTMLButtonElement);
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
+    expect(rowScope.get('name')).toBe('Alice');
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Name' }));
     fireEvent.change(screen.getByLabelText('Dialog body'), { target: { value: 'changed-again' } });
@@ -316,8 +337,8 @@ describe('TableQuickEditCell', () => {
           render: (options: any) => (
             <input
               aria-label="Dialog body"
-              defaultValue={String((options?.scope.get('record') as Record<string, unknown>)?.name ?? '')}
-              onChange={(event) => options?.scope.update('record.name', event.target.value)}
+              defaultValue={String(options?.scope.get('name') ?? '')}
+              onChange={(event) => options?.scope.update('name', event.target.value)}
             />
           ),
         },

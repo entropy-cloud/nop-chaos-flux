@@ -217,7 +217,8 @@ describe('CRUD selection drift — checkableWhen (hook-level)', () => {
       ...createHelpers(),
       evaluate: vi.fn((target: unknown, scope: any) => {
         if (typeof target !== 'string') return target;
-        const record = scope?.value?.record ?? scope?.record;
+        const value = scope?.value ?? {};
+        const record = value.$slot?.record ?? value.record ?? scope?.record;
         if (!record) return true;
         return record.status === 'active';
       }),
@@ -231,7 +232,7 @@ describe('CRUD selection drift — checkableWhen (hook-level)', () => {
           rowSelection: {
             type: 'checkbox',
             selectedRowKeys: [],
-            checkableWhen: "record.status === 'active'",
+            checkableWhen: "status === 'active'",
           },
         }}
         source={[

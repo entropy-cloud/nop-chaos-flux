@@ -362,7 +362,6 @@ function DataRowView({
                   ? asReactNode(
                       buttonRegion.render({
                         scope: rowScope,
-                        bindings: { record: entry.record, index: entry.sourceIndex },
                         instancePath: rowInstancePath,
                         pathSuffix: `buttons.${columnIndex}`,
                       }),
@@ -393,7 +392,6 @@ function DataRowView({
               {asReactNode(
                 cellRegion.render({
                   scope: rowScope,
-                  bindings: { record: entry.record, index: entry.sourceIndex },
                   instancePath: rowInstancePath,
                   pathSuffix: `cells.${columnIndex}`,
                 }),

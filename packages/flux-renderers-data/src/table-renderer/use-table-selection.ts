@@ -104,8 +104,8 @@ export function useTableSelection(
       let isCheckable = true;
       try {
         const rowScope = helpers.createScope({
-          record: row.record,
-          index: row.sourceIndex,
+          ...row.record,
+          $slot: { record: row.record, index: row.sourceIndex },
         });
         const wrapped = `\${${checkableWhen}}`;
         const result = helpers.evaluate(wrapped, rowScope);

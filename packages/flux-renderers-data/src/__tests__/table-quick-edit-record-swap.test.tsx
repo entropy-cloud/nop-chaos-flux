@@ -4,24 +4,29 @@ import { act, cleanup, render } from '@testing-library/react';
 import { useTableQuickEditController } from '../table-renderer/table-quick-edit-controller.js';
 
 function createRowScope(record: Record<string, unknown>) {
-  const state = { record: { ...record } };
+  let data: Record<string, unknown> = {
+    ...record,
+    $slot: { record: { ...record }, index: 0 },
+  };
   return {
     id: 'row-scope',
     get(path: string) {
-      if (path === 'record') return state.record;
-      if (path.startsWith('record.')) return state.record[path.slice('record.'.length)];
+      if (path === '$slot.record') return (data.$slot as Record<string, unknown>)?.record;
+      if (path === '$slot') return data.$slot;
+      if (path in data) return data[path];
       return undefined;
     },
     has: () => true,
-    readOwn: () => ({ record: state.record }),
-    readVisible: () => ({ record: state.record }),
-    materializeVisible: () => ({ record: state.record }),
-    update: vi.fn((path: string, value: unknown) => {
-      if (path === 'record' && value && typeof value === 'object') {
-        state.record = { ...(value as Record<string, unknown>) };
+    readOwn: () => data,
+    readVisible: () => data,
+    materializeVisible: () => data,
+    update: vi.fn(),
+    merge: vi.fn((patch: Record<string, unknown>) => {
+      data = { ...data, ...patch };
+      if (patch.$slot) {
+        data.$slot = { ...(data.$slot as Record<string, unknown>), ...(patch.$slot as Record<string, unknown>) };
       }
     }),
-    merge() {},
   } as any;
 }
 
@@ -91,10 +96,9 @@ describe('useTableQuickEditController — record swap during save (H20)', () => 
 
     // The committed record must be the snapshot at save start ("Alicia"), not the
     // mutated "Bob" — no cross-record saving.
-    expect(rowScope.update).toHaveBeenCalledWith('record', expect.objectContaining({ name: 'Alicia' }));
-    const committed = rowScope.update.mock.calls.find(
-      (call: unknown[]) => call[0] === 'record',
-    )?.[1] as Record<string, unknown>;
-    expect(committed.name).toBe('Alicia');
+    expect(rowScope.merge).toHaveBeenCalled();
+    const mergeCall = rowScope.merge.mock.calls.find(() => true);
+    const merged = mergeCall?.[0] as Record<string, unknown> | undefined;
+    expect(merged?.name).toBe('Alicia');
   });
 });

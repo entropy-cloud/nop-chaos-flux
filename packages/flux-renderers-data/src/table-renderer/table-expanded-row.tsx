@@ -64,10 +64,6 @@ export function renderExpandedRow(
                       ? asReactNode(
                           cellRegion.render({
                             scope: rowScope,
-                            bindings: {
-                              record: rowScope.get('record'),
-                              index: rowScope.get('index'),
-                            },
                             instancePath: rowInstancePath,
                             pathSuffix: `responsive.${index}`,
                           }),
@@ -75,7 +71,7 @@ export function renderExpandedRow(
                       : column.name
                         ? String(
                             getIn(
-                              rowScope.get('record') as Record<string, unknown> | undefined,
+                              rowScope.get('$slot.record') as Record<string, unknown> | undefined,
                               column.name,
                             ) ?? '',
                           )
@@ -90,10 +86,6 @@ export function renderExpandedRow(
           ? asReactNode(
               parentProps.regions[regionKey].render({
                 scope: rowScope,
-                bindings: {
-                  record: rowScope.get('record'),
-                  index: rowScope.get('index'),
-                },
                 instancePath: rowInstancePath,
                 pathSuffix: `expanded.${item.rowKey}`,
               }),

@@ -41,8 +41,8 @@ describe('CRUD renderer quick-edit baseline', () => {
     saveProbeCalls.length = 0;
     const observeSave = vi.fn(
       (_payload: Record<string, unknown> | undefined, ctx: ActionContext) => {
-        saveProbeCalls.push({ scopeRecord: ctx.scope.get('record') });
-        return { ok: true, data: ctx.scope.get('record') };
+        saveProbeCalls.push({ scopeRecord: ctx.scope.get('$slot.record') });
+        return { ok: true, data: ctx.scope.get('$slot.record') };
       },
     );
 
@@ -106,7 +106,7 @@ describe('CRUD renderer quick-edit baseline', () => {
     cleanup();
     const observeSave = vi.fn(
       (_payload: Record<string, unknown> | undefined, ctx: ActionContext) => {
-        return { ok: true, data: ctx.scope.get('record') };
+        return { ok: true, data: ctx.scope.get('$slot.record') };
       },
     );
 
@@ -153,7 +153,7 @@ describe('CRUD renderer quick-edit baseline', () => {
 
     await waitFor(() => {
       expect(observeSave).toHaveBeenCalledTimes(1);
-      expect(observeSave.mock.calls[0]?.[1].scope.get('record')).toMatchObject({
+      expect(observeSave.mock.calls[0]?.[1].scope.get('$slot.record')).toMatchObject({
         id: '1',
         name: 'Alicia',
       });
@@ -164,7 +164,7 @@ describe('CRUD renderer quick-edit baseline', () => {
     cleanup();
     const observeSave = vi.fn(
       (_payload: Record<string, unknown> | undefined, ctx: ActionContext) => {
-        return { ok: true, data: ctx.scope.get('record') };
+        return { ok: true, data: ctx.scope.get('$slot.record') };
       },
     );
 
@@ -220,7 +220,7 @@ describe('CRUD renderer quick-edit baseline', () => {
     cleanup();
     const observeSave = vi.fn(
       (_payload: Record<string, unknown> | undefined, ctx: ActionContext) => {
-        return { ok: true, data: ctx.scope.get('record') };
+        return { ok: true, data: ctx.scope.get('$slot.record') };
       },
     );
 
@@ -243,7 +243,7 @@ describe('CRUD renderer quick-edit baseline', () => {
                   quickEdit: {
                     body: {
                       type: 'input-text',
-                      name: 'record.name',
+                      name: 'name',
                       label: 'Inline Name',
                       frameWrap: false,
                     },
@@ -287,7 +287,7 @@ describe('CRUD renderer quick-edit baseline', () => {
 
     await waitFor(() => {
       expect(observeSave).toHaveBeenCalledTimes(1);
-      expect(observeSave.mock.calls[0]?.[1].scope.get('record')).toMatchObject({
+      expect(observeSave.mock.calls[0]?.[1].scope.get('$slot.record')).toMatchObject({
         id: '1',
         name: 'Alicia',
       });
@@ -298,7 +298,7 @@ describe('CRUD renderer quick-edit baseline', () => {
     cleanup();
     const observeSave = vi.fn(
       (_payload: Record<string, unknown> | undefined, ctx: ActionContext) => {
-        return { ok: true, data: ctx.scope.get('record') };
+        return { ok: true, data: ctx.scope.get('$slot.record') };
       },
     );
 
@@ -322,7 +322,7 @@ describe('CRUD renderer quick-edit baseline', () => {
                     mode: 'dialog',
                     body: {
                       type: 'input-text',
-                      name: 'record.name',
+                      name: 'name',
                       label: 'Dialog Name',
                       frameWrap: false,
                     },
@@ -365,7 +365,7 @@ describe('CRUD renderer quick-edit baseline', () => {
 
     await waitFor(() => {
       expect(observeSave).toHaveBeenCalledTimes(1);
-      expect(observeSave.mock.calls[0]?.[1].scope.get('record')).toMatchObject({
+      expect(observeSave.mock.calls[0]?.[1].scope.get('$slot.record')).toMatchObject({
         id: '1',
         name: 'Alicia',
       });
@@ -380,7 +380,7 @@ describe('CRUD renderer quick-edit baseline', () => {
     cleanup();
     const observeSave = vi.fn(
       (_payload: Record<string, unknown> | undefined, ctx: ActionContext) => {
-        return { ok: true, data: ctx.scope.get('record') };
+        return { ok: true, data: ctx.scope.get('$slot.record') };
       },
     );
 
@@ -404,7 +404,7 @@ describe('CRUD renderer quick-edit baseline', () => {
                     mode: 'dialog',
                     body: {
                       type: 'input-text',
-                      name: 'record.name',
+                      name: 'name',
                       label: 'Dialog Name',
                       frameWrap: false,
                     },

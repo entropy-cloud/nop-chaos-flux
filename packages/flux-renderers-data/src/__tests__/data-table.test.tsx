@@ -78,7 +78,7 @@ describe('dataRendererDefinitions table behavior', () => {
                 action: 'openDialog',
                 args: {
                   title: 'Row click',
-                  body: [{ type: 'text', text: 'Selected ${record.name}' }],
+                  body: [{ type: 'text', text: 'Selected ${name}' }],
                 },
               },
               columns: [{ label: 'Name', name: 'name' }],
@@ -584,6 +584,6 @@ describe('dataRendererDefinitions table behavior', () => {
     );
 
     const sw = await screen.findByRole('switch');
-    expect(sw.getAttribute('aria-checked')).toBe('false');
+    expect(sw.getAttribute('aria-checked')).toBe('true');
   });
 });

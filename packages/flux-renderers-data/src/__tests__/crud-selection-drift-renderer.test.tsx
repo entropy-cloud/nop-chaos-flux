@@ -71,7 +71,7 @@ describe('CRUD selection drift — renderer-level DOM verification', () => {
               rowKey: 'id',
               selection: {
                 type: 'checkbox',
-                checkableWhen: "record.status === 'active'",
+                checkableWhen: "status === 'active'",
               },
               source: [
                 { id: '1', name: 'Alice', status: 'active' },

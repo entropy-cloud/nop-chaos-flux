@@ -7,20 +7,41 @@ import { renderExpandedRow } from '../table-renderer/table-body-row-rendering.js
 import type { FlattenedExpandedRow } from '../table-renderer/table-flattened-items.js';
 import type { TableSchema, TableColumnSchema } from '../schemas.js';
 
+function getIn(obj: unknown, path: string): unknown {
+  if (!path) return undefined;
+  const parts = path.split('.');
+  let current: unknown = obj;
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined;
+    if (typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
+}
+
 function makeRecordScope(record: Record<string, unknown>): ScopeRef {
+  const $slot = { record, index: 0 };
+  const data = { ...record, $slot };
   return {
     id: 'row-scope',
     path: '$row',
-    value: { record },
+    value: data,
     get(path: string) {
-      if (path === 'record') return record;
-      if (path === 'index') return 0;
-      return undefined;
+      if (path === '$slot') return $slot;
+      if (path === '$slot.record') return record;
+      if (path === '$slot.index') return 0;
+      return getIn(data, path);
     },
-    has: () => false,
-    readOwn: () => ({ record }),
-    readVisible: () => ({ record }),
-    materializeVisible: () => ({ record }),
+    has(path: string) {
+      if (path in record) return true;
+      if (path === '$slot') return true;
+      if (path === '$slot.record') return true;
+      if (path === 'index') return true;
+      return false;
+    },
+    readOwn: () => ({ ...record, $slot }),
+    readVisible: () => ({ ...record, $slot }),
+    materializeVisible: () => ({ ...record, $slot }),
     update: () => {},
     merge() {},
   };

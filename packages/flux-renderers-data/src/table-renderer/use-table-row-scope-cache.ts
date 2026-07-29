@@ -5,13 +5,17 @@ import type { TableRowEntry } from './types.js';
 import { createRowScopeId, createRowScopePath } from './table-data.js';
 
 interface RowScopePayload {
-  record: TableRowEntry['record'];
-  index: number;
+  $slot: { record: Record<string, unknown>; index: number };
+  [field: string]: unknown;
 }
 
 interface RowScopeCacheState {
   scopes: Map<string, ScopeRef>;
   snapshots: Map<string, RowScopePayload>;
+}
+
+function buildRowScopePayload(record: Record<string, unknown>, index: number): RowScopePayload {
+  return { ...record, $slot: { record, index } };
 }
 
 const tableRowScopeCaches = new Map<string, RowScopeCacheState>();
@@ -90,14 +94,21 @@ function publishRowScopePayload(
   payload: RowScopePayload,
   previous: RowScopePayload | undefined,
 ): void {
-  const changedRoots: Partial<RowScopePayload> = {};
+  const changedRoots: Record<string, unknown> = {};
 
-  if (!previous || previous.record !== payload.record) {
-    changedRoots.record = payload.record;
+  if (!previous || previous.$slot.record !== payload.$slot.record) {
+    for (const key of Object.keys(payload)) {
+      if (key !== '$slot') {
+        changedRoots[key] = payload[key];
+      }
+    }
+    changedRoots.$slot = payload.$slot;
   }
 
-  if (!previous || previous.index !== payload.index) {
-    changedRoots.index = payload.index;
+  if (!previous || previous.$slot.index !== payload.$slot.index) {
+    if (!changedRoots.$slot) {
+      changedRoots.$slot = { ...payload.$slot, record: previous?.$slot.record ?? payload.$slot.record };
+    }
   }
 
   if (Object.keys(changedRoots).length === 0) {
@@ -189,7 +200,7 @@ export function useTableRowScopeCache(
     }
 
     for (const entry of processedData) {
-      const payload = { record: entry.record, index: entry.sourceIndex };
+      const payload = buildRowScopePayload(entry.record, entry.sourceIndex);
       const cacheEntryKey = entry.cacheKey ?? entry.rowKey;
       visibleKeys.add(cacheEntryKey);
 
