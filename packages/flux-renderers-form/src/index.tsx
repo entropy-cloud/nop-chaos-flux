@@ -29,6 +29,8 @@ export {
   createFieldHandlers,
   useFieldHandlers,
   useFormFieldController,
+  useFormFieldFromProps,
+  useDefaultValuePush,
 } from './field-utils.js';
 export {
   MarkdownEditorRenderer,

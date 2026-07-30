@@ -6,6 +6,53 @@
 
 ---
 
+## 0. 字段默认值（value 属性）
+
+每个表单字段都可以设置 `value` 属性作为默认值。当 form data 中没有该字段时，`value` 自动推入 form state。
+
+```jsonc
+{
+  "type": "form",
+  "body": [
+    {
+      "type": "switch",
+      "name": "hidden",
+      "label": "是否隐藏",
+      "trueValue": 1,
+      "falseValue": 0,
+      "value": 0,
+    },
+    {
+      "type": "select",
+      "name": "status",
+      "label": "状态",
+      "value": "1",
+      "options": [
+        { "label": "启用", "value": "1" },
+        { "label": "禁用", "value": "0" },
+      ],
+    },
+  ],
+}
+```
+
+**`value` 可以是表达式**：
+
+```jsonc
+{
+  "type": "input-number",
+  "name": "total",
+  "label": "合计",
+  "value": "${price * quantity}",
+}
+```
+
+表达式由 flux 运行环境解析，控件拿到的始终是具体值。当引用变量（如 `price`）变化时，`total` 自动更新。用户手动编辑后，表达式不再覆盖。
+
+**优先级**：form `data` 中的值 > `value` 属性 > 空。如果 form 的 `data` 已经包含该字段，`value` 属性被忽略。
+
+---
+
 ## 1. Textarea 多行文本
 
 ```jsonc

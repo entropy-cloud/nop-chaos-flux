@@ -296,6 +296,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             submitAction(undefined, {
               scope: lifecycleScope,
               form: ownedForm,
+              componentRegistry: currentComponentRegistry,
               interactionId: options?.interactionId,
               signal: options?.signal,
             })
@@ -305,6 +306,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             const r = await submitSuccessAction(undefined, {
               scope: lifecycleWriteScope,
               form: ownedForm,
+              componentRegistry: currentComponentRegistry,
               interactionId: options?.interactionId,
               signal: options?.signal,
               prevResult: result,
@@ -332,6 +334,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             const r = await submitErrorAction(undefined, {
               scope: lifecycleWriteScope,
               form: ownedForm,
+              componentRegistry: currentComponentRegistry,
               interactionId: options?.interactionId,
               signal: options?.signal,
               prevResult: result,
@@ -353,6 +356,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             validateErrorAction(undefined, {
               scope: lifecycleWriteScope,
               form: ownedForm,
+              componentRegistry: currentComponentRegistry,
               interactionId: options?.interactionId,
               signal: options?.signal,
               prevResult: result,
@@ -380,6 +384,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     submitSuccessAction,
     validateErrorAction,
     currentSurfaceRuntime,
+    currentComponentRegistry,
     props.props,
   ]);
 

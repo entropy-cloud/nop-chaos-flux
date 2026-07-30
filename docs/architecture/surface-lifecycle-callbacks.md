@@ -310,45 +310,50 @@ form lifecycle handlers (form schema 的 onSubmitSuccess / onSubmitError 字段)
   ↓
 surface submit hooks (openDialog args.onSubmitSuccess / args.onSubmitError)
   ↓
-（业务在 hook 内显式 closeSurface）
+submitForm.then chain (closeSurface 等 UI 后置操作)
   ↓
 surface close hook (openDialog args.onClose)
   ↓
 disposeEntry
 ```
 
-注意：`onClose` 不会在 submit 成功后**自动**触发——业务必须在 submit hook 内显式 `closeSurface`。这避免"submit success 后 onClose 重复刷新"的歧义。
+**`closeSurface` 的职责分离**：`closeSurface` 不应放在 `onSubmitSuccess` 中，而应放在 `submitForm` 的 `then` 链中：
 
-如果业务想要"submit 成功后自动关闭 + 刷新"，写法是：
+- `onSubmitSuccess` 是 owner 侧的数据回调（刷新、导航、上报），不是 UI 控制点
+- `closeSurface` 是 UI 动作（关闭浮层），属于提交后的 UI 后置操作
+- 把 `closeSurface` 放在 `onSubmitSuccess` 中会导致关闭与刷新的时序耦合，且与 `submitForm.then` 链重复
+
+Submit 按钮的推荐写法：
+
+```jsonc
+{
+  "type": "button",
+  "label": "提交",
+  "level": "primary",
+  "onClick": {
+    "action": "submitForm",
+    "then": { "action": "closeSurface" },
+  },
+}
+```
+
+openDialog args 的推荐写法：
 
 ```jsonc
 {
   "action": "openDialog",
   "args": {
     "body": {
-      /* form */
+      /* form with submitScope: 'surface' */
     },
-    "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+    "onSubmitSuccess": { "action": "refreshNearest" },
   },
 }
 ```
 
-或者把 refresh 放在 `onClose`：
+这确保 `refreshNearest` 在 dialog 仍打开时执行（用户看到刷新完成），然后 `closeSurface` 关闭 UI。
 
-```jsonc
-{
-  "action": "openDialog",
-  "args": {
-    "body": {
-      /* form */
-    },
-    "onSubmitSuccess": { "action": "closeSurface" },
-    "onClose": { "action": "refreshNearest" },
-  },
-}
-```
-
-两种写法语义等价（都会刷新一次），第二种把 refresh 集中在 close 钩子，便于"用户取消也刷新"的场景。
+注意：`onClose` 不会在 submit 成功后**自动**触发——`closeSurface` 在 `submitForm.then` 中触发，之后才进入 close hook。如果想让"用户取消也刷新"，在 `onClose` 中更新即可。
 
 ## `refreshNearest` Action
 
@@ -358,7 +363,7 @@ disposeEntry
 export interface RefreshNearestActionSchema extends ActionShapeFields {
   action: 'refreshNearest';
   args?: {
-    targetType?: 'crud' | 'data-source' | 'tree' | 'auto'; // 默认 'auto'
+    targetType?: 'crud' | 'data-source' | 'tree' | 'form' | 'auto'; // 默认 'auto'
     notFound?: 'silent' | 'error'; // 默认 'silent'
   };
 }
@@ -527,6 +532,7 @@ declarative `type: 'dialog'` / `type: 'drawer'`（走 `useSurfaceRenderer`）已
               "data": { "id": "${id}" },
               "body": {
                 "type": "form",
+                "submitScope": "surface",
                 "submitAction": {
                   "action": "ajax",
                   "args": { "url": "/r/User__update" },
@@ -534,9 +540,18 @@ declarative `type: 'dialog'` / `type: 'drawer'`（走 `useSurfaceRenderer`）已
                 },
                 "body": [
                   /* ... */
+                  {
+                    "type": "button",
+                    "label": "提交",
+                    "level": "primary",
+                    "onClick": {
+                      "action": "submitForm",
+                      "then": { "action": "closeSurface" },
+                    },
+                  },
                 ],
               },
-              "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+              "onSubmitSuccess": { "action": "refreshNearest" },
             },
           },
         },
@@ -565,8 +580,8 @@ declarative `type: 'dialog'` / `type: 'drawer'`（走 `useSurfaceRenderer`）已
               "onClick": {
                 "action": "openDialog",
                 "args": {
-                  "body": { "type": "form" /* ... */ },
-                  "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+                  "body": { "type": "form", "submitScope": "surface" /* ... */ },
+                  "onSubmitSuccess": { "action": "refreshNearest" },
                   // refreshNearest 从 inner dialog 的 owner（=嵌套 CRUD）开始查找
                   // 命中嵌套 CRUD，而不是外层 CRUD
                 },
@@ -679,3 +694,21 @@ declarative `type: 'dialog'` / `type: 'drawer'`（走 `useSurfaceRenderer`）已
 - `flux-guide/design-patterns/page-dialog-drawer.md` — authoring 范例
 - `flux-guide/design-patterns/crud.md` — CRUD 操作范例
 - `flux-guide/flux-types/common.d.ts` — schema 类型定义
+
+## SurfaceScopeProviders Context Rule
+
+`SurfaceScopeProviders`（`flux-react/src/dialog-host-surface.tsx`）是 dialog/drawer body 渲染时的 context 提供者。它**必须**包含 `<SurfaceContext.Provider>`，将 `surfaceRuntime` 传递给 dialog 内的所有子组件。
+
+**不提供 `SurfaceContext` 的后果**：
+
+1. dialog 内的 form renderer 调用 `useCurrentSurfaceRuntime()` 返回 `undefined`
+2. form 无法通过 `setSurfaceForm` 注册为 surface form
+3. `submitForm` action 无法通过 `getSurfaceForm` 找到表单 → 表单不提交，只关闭 dialog
+4. `triggerSurfaceSubmitHook` 无法找到 surface entry → dialog 级别 `onSubmitSuccess` 不执行
+5. `refreshNearest` 不触发 → CRUD 表格不刷新
+
+**实现约束**：
+
+- `SurfaceRenderContext` 接口必须包含 `surfaceRuntime?: SurfaceRuntime` 字段
+- `DialogView` 和 `DrawerView` 构造 `surfaceContext` 时必须传入 `surfaceRuntime`
+- `SurfaceScopeProviders` 渲染时必须包含 `<SurfaceContext.Provider value={props.surfaceRuntime}>`

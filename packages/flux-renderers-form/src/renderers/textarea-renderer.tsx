@@ -35,6 +35,7 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
   const textareaValue = (value as string | undefined) ?? '';
   const errorId = name ? `${name}-error` : undefined;

@@ -95,6 +95,7 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
 
   const storedValue = typeof value === 'string' ? value : undefined;

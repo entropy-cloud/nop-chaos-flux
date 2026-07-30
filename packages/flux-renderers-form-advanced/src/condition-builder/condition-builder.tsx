@@ -121,6 +121,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
     areValuesEqual: groupValuesEqual,
   });
   const currentValidationScope = useCurrentValidationScope();

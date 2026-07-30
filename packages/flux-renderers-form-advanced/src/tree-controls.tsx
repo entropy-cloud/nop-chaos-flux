@@ -45,6 +45,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -214,6 +215,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;

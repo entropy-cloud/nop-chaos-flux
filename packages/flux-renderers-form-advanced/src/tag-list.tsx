@@ -27,6 +27,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
     disabled: props.props.disabled,
     required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
   const value = Array.isArray(boundValue) ? boundValue.map((item) => String(item)) : [];
   const labelText = resolveFieldLabelText(props, name);

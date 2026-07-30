@@ -1,9 +1,11 @@
 # Dialog 提交后刷新外部 Table 的设计分析
 
 > **创建日期**：2026-07-27
-> **状态**：分析完成，待实现
+> **状态**：分析完成，已实现（2026-07-28 落地）
 > **范围**：flux-runtime / flux-action-core / flux-renderers-data / flux-renderers-form / flux-renderers-basic
 > **背景**：nop-entropy flux-mode e2e 调试中发现"openDialog + form submit 后刷新外部 CRUD"链路不通。本文系统分析根因并提出设计方案。
+>
+> **实现后修正**：设计方案中 `onSubmitSuccess: [{ action: "closeSurface" }, { action: "refreshNearest" }]` 的推荐写法在实现时改为 `closeSurface` 放在 `submitForm.then` 链中，`onSubmitSuccess` 只保留 `refreshNearest`。原因：`onSubmitSuccess` 是 owner 侧的数据回调，`closeSurface` 是 UI 后置操作，职责应分离。详见 `flux-guide/design-patterns/page-dialog-drawer.md` §6.2 和 `docs/architecture/surface-lifecycle-callbacks.md` §Triggering Order。
 
 ---
 

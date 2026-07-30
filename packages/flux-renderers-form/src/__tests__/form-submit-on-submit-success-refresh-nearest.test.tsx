@@ -115,8 +115,7 @@ describe('form submit → onSubmitSuccess → refreshNearest', () => {
     // submitForm + then: closeSurface 工作正常
     expect(actionEvents.some(e => e.actionType === 'closeSurface')).toBe(true);
 
-    // refreshNearest 应当通过 onSubmitSuccess 的 surface hook 触发
-    // ⚠️ 当前: refreshNearest 未触发 — triggerSurfaceSubmitHook 未找到 entry 或 surfaceId
+    // refreshNearest 通过 onSubmitSuccess 的 surface hook 触发
     expect(actionEvents.some(e => e.actionType === 'refreshNearest')).toBe(true);
   });
 });

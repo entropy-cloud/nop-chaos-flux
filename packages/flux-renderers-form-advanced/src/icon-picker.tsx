@@ -18,6 +18,7 @@ import {
   formFieldRules,
   shouldValidateOn,
   useFieldPresentation,
+  useDefaultValuePush,
 } from '@nop-chaos/flux-renderers-form';
 import { normalizeIconName, resolveLucideIcon } from '@nop-chaos/ui';
 
@@ -84,6 +85,14 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
   const rawFieldValue = currentForm ? formValue : scopeValue;
   const currentValue = typeof rawFieldValue === 'string' ? rawFieldValue : undefined;
 
+  const defaultPush = useDefaultValuePush({
+    name,
+    defaultValue: schemaProps.value ?? schemaProps.defaultValue,
+    currentForm,
+    scope,
+    hasInitialValue: rawFieldValue !== undefined,
+  });
+
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [visibleCount, setVisibleCount] = React.useState(VISIBLE_STEP);
@@ -105,6 +114,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
 
   const writeValue = React.useCallback(
     (next: unknown) => {
+      defaultPush.markUserEdited();
       if (currentForm && name) {
         if (!currentForm.isTouched(name)) {
           currentForm.touchField(name);
@@ -117,7 +127,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
       }
       scope.update(name, next);
     },
-    [currentForm, name, scope],
+    [currentForm, name, scope, defaultPush],
   );
 
   const selectIcon = React.useCallback(

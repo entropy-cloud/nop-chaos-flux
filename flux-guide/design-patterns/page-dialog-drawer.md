@@ -227,7 +227,23 @@ Drawer 的 `data` / `isolate` 语义与 Dialog 相同，`isolate: true` 同样�
 
 ### 6.2 提交后刷新外部列表：用 `refreshNearest`
 
-如果 dialog 内提交后想刷新外部 CRUD，推荐用 `refreshNearest`（不需要知道外层 CRUD 的 id/name）：
+如果 dialog 内提交后想刷新外部 CRUD，推荐用 `refreshNearest`（不需要知道外层 CRUD 的 id/name）。**注意**：`closeSurface` 不应放在 `onSubmitSuccess` 中，而应放在 `submitForm` 的 `then` 链中。原因：
+
+- `onSubmitSuccess` 是 owner 侧的数据回调（刷新列表、导航、上报），不是 UI 控制点
+- `closeSurface` 是 UI 动作，应作为 `submitForm` 的后置操作（`then` 链），让 dialog 在数据刷新完成后才关闭
+- 把 `closeSurface` 放在 `onSubmitSuccess` 中会导致关闭与刷新的时序耦合不清晰，且与 `submitForm.then` 链重复
+
+```jsonc
+{
+  "type": "button",
+  "label": "提交",
+  "level": "primary",
+  "onClick": {
+    "action": "submitForm",
+    "then": { "action": "closeSurface" },
+  },
+}
+```
 
 ```jsonc
 {
@@ -241,9 +257,21 @@ Drawer 的 `data` / `isolate` 语义与 Dialog 相同，`isolate: true` 同样�
         /* ... */
       ],
     },
-    "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+    "onSubmitSuccess": { "action": "refreshNearest" },
   },
 }
+```
+
+完整执行顺序：
+
+```
+form.submitAction (ajax)
+  ↓
+form lifecycle handlers (form schema 的 onSubmitSuccess)
+  ↓
+surface submit hook (args.onSubmitSuccess → refreshNearest)
+  ↓ dialog UI 保持打开，用户看到刷新完成
+submitForm.then → closeSurface（关闭 dialog）
 ```
 
 `refreshNearest` 从 callback 执行的 owner scope 开始沿 `scope.parent` 链向上查找，命中第一个具备 `refresh` capability 的 CRUD / tree 或第一个 data-source，调用其 refresh。
@@ -282,16 +310,14 @@ Drawer 的 `data` / `isolate` 语义与 Dialog 相同，`isolate: true` 同样�
 2. surface form — 按钮在 dialog/page footer 时，自动从 surface 查找注册了 `submitScope: 'surface'` 的 form。
 3. `componentId` — 显式指定 id 时从 component registry 解析（先匹配 `handle.id`，再匹配 `handle.name`）。
 
-这样 dialog footer 的 submit 按钮无需传 `componentId` 或 `componentName`。<｜end▁of▁thinking｜>
-
-Let me now move to the other impacted test (查看用户详情) ...
+这样 dialog footer 的 submit 按钮无需传 `componentId` 或 `componentName`。
 
 可选 `args`：
 
-| 字段         | 类型                                          | 默认       | 说明                                                                                                        |
-| ------------ | --------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
-| `targetType` | `'auto' \| 'crud' \| 'tree' \| 'data-source'` | `'auto'`   | 限定目标类型；`'auto'` 不区分类型按最近匹配                                                                 |
-| `notFound`   | `'silent' \| 'error'`                         | `'silent'` | 找不到目标时：`'silent'` 返回 `{ ok: true, data: { found: false } }`；`'error'` 返回 `{ ok: false, error }` |
+| 字段         | 类型                                                    | 默认       | 说明                                                                                                        |
+| ------------ | ------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
+| `targetType` | `'auto' \| 'crud' \| 'tree' \| 'data-source' \| 'form'` | `'auto'`   | 限定目标类型；`'auto'` 不区分类型按最近匹配                                                                 |
+| `notFound`   | `'silent' \| 'error'`                                   | `'silent'` | 找不到目标时：`'silent'` 返回 `{ ok: true, data: { found: false } }`；`'error'` 返回 `{ ok: false, error }` |
 
 如果明确知道外层组件 id/name，也可以用 `component:refresh`（等价但需要显式 id）：
 
@@ -340,10 +366,21 @@ dialog 内可能有多个 form（搜索 form + 编辑 form / 主 form + 子 form
         ],
       },
     ],
-    "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+    "onSubmitSuccess": { "action": "refreshNearest" },
   },
 }
 ```
+
+> **注意**：主编辑 form 的提交按钮应配合 `submitForm.then` 关闭 dialog：
+>
+> ```jsonc
+> "onClick": {
+>   "action": "submitForm",
+>   "then": { "action": "closeSurface" }
+> }
+> ```
+>
+> `closeSurface` 放在 `submitForm.then` 中而非 `onSubmitSuccess` 中，以保持数据回调与 UI 动作的职责分离。详见 §6.2。
 
 > **注意**：当前 flux 没有 schema-level 校验"同一 surface 内最多一个 `submitScope: 'surface'` form"。如果多个 form 都标了 `'surface'`，它们的 submit 都会触发同一个 callback。建议业务侧自行保证只有一个主 form。
 

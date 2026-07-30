@@ -520,3 +520,41 @@ export const META_FIELDS = new Set([
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/value-adaptation-and-detail-field.md`
+
+## Field Value Default Binding
+
+### 语义
+
+schema 中的 `value` 属性是表单字段的**默认值**。当 form data 中没有该字段时，`value` 被推入 form state 作为初始值。`value` 可以是静态值或表达式（如 `'${base + 1}'`），flux 运行环境在编译期解析表达式，控件拿到的是具体值。
+
+### 优先级链
+
+1. **form data 已有值** → `value` 被忽略（form data 优先）
+2. **form data 无值，value 是静态值** → 初始化时推入 form state，之后不变
+3. **form data 无值，value 是表达式** → 每次表达式结果变化时推入（响应式更新）
+4. **用户手动编辑后** → 表达式不再覆盖（用户优先）
+
+### 三层 Hook 架构
+
+| 层         | Hook                                               | 用途                                                         |
+| ---------- | -------------------------------------------------- | ------------------------------------------------------------ |
+| 统一入口   | `useFormFieldFromProps(props, { adapter? })`       | 标准表单字段——自动提取 name/value/disabled/required/readOnly |
+| 底层控制器 | `useFormFieldController(name, { ... })`            | 自定义 name 来源或测试                                       |
+| 独立推送   | `useDefaultValuePush({ name, defaultValue, ... })` | 不使用 controller 但需要 value 推送                          |
+
+### 属性分类
+
+| 分类            | 属性                                | 处理方式                        |
+| --------------- | ----------------------------------- | ------------------------------- |
+| 推入 form state | `value`                             | 通过 `useDefaultValuePush` 推入 |
+| 适配器配置      | `trueValue`, `falseValue`           | 被 adapter 转换，不单独推入     |
+| 选项数据源      | `options`, `dict`, `source`         | 局部 state 加载                 |
+| 验证配置        | `required`, `readOnly`, `validate`  | 验证模型                        |
+| UI/格式配置     | `className`, `placeholder`, `label` | 直接读取，天然响应式            |
+| 表单生命周期    | `submitAction`, `loadAction`        | event 编译                      |
+
+### 不需要 value 推送的控件
+
+- `detail-field` / `detail-view`：viewer/dialog editor，value 通过 confirm action 提交
+- `variant-field`：使用 `defaultVariant` 而非 `value`
+- `object-field` / `array-field` / `combo`：容器控件，初始值由 form data 提供

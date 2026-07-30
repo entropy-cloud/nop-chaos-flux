@@ -193,6 +193,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const name = String(props.props.name ?? '');
   const multiple = Boolean(props.props.multiple);
   const dictName = props.props.dict as string | undefined;
+  const adapter = multiple ? checkboxGroupAdapter : stringValueAdapter;
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter,
     disabled: props.props.disabled,

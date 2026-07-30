@@ -96,7 +96,7 @@ form. The search form keeps the default `'local'` scope.
                       ],
                     },
                   ],
-                  "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+                  "onSubmitSuccess": { "action": "refreshNearest" },
                   "onClose": { "action": "refreshNearest" },
                 },
               },
@@ -123,11 +123,13 @@ form. The search form keeps the default `'local'` scope.
 - **`edit-user-form` (main)**: explicitly marks `submitScope: 'surface'`. On
   submit success, it fires the dialog's `onSubmitSuccess` hook in the dialog
   owner's ctx (the page scope).
-- **`onSubmitSuccess`** closes the dialog and runs `refreshNearest`. Because
-  the hook runs in the **dialog owner's** scope (page scope),
-  `refreshNearest` walks up from page scope and finds the outer
+- **`onSubmitSuccess`** runs `refreshNearest` in the **dialog owner's** scope
+  (page scope). `refreshNearest` walks up from page scope and finds the outer
   `users-page-list` CRUD — not the inner `user-activity-list` (which lives in
-  dialog scope and is disposed by the time the hook fires).
+  dialog scope, outside the owner's scope chain).
+- **Dialog is closed** via the submit button's `submitForm.then: closeSurface`
+  chain, not inside `onSubmitSuccess`. This ensures the data refresh completes
+  before the UI closes.
 - **`onClose`** also refreshes — covers the case where the user cancels via
   ESC / mask click without submitting.
 

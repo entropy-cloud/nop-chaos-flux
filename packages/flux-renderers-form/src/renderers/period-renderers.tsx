@@ -73,6 +73,7 @@ export function PeriodRenderer(
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
 
   const storedValue = typeof value === 'string' ? value : undefined;

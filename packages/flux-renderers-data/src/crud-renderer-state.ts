@@ -315,6 +315,7 @@ export function useCrudHandle(
   const cid = props.meta.cid;
   const id = props.id;
   const name = (props.props as CrudSchema).name as string | undefined;
+  const nodeScope = props.node?.scope;
 
   useEffect(() => {
     if (!componentRegistry || cid === undefined) {
@@ -330,6 +331,7 @@ export function useCrudHandle(
         id,
         name,
         type: 'crud',
+        scope: nodeScope,
         capabilities: {
           hasMethod(method) {
             return methods.includes(method);
@@ -373,7 +375,7 @@ export function useCrudHandle(
       },
       { cid },
     );
-  }, [clearSelection, componentRegistry, cid, handleRefresh, id, name, selectedRowKeys, toggleSelection, handleLoadMore, querySubmit, queryReset]);
+  }, [clearSelection, componentRegistry, cid, handleRefresh, id, name, nodeScope, selectedRowKeys, toggleSelection, handleLoadMore, querySubmit, queryReset]);
 }
 
 export function useCrudRuntimeState(args: {

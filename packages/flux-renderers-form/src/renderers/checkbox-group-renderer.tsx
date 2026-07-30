@@ -24,6 +24,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
   const selectedValues = value as unknown[];
   const options = sanitizeChoiceOptions(props.props.options);

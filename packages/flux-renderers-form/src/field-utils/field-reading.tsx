@@ -29,6 +29,7 @@ export const formFieldChromeRules: SchemaFieldRule[] = [
 
 export const formFieldRules: SchemaFieldRule[] = [
   formLabelFieldRule,
+  { key: 'value', kind: 'prop' },
   ...formBooleanFieldRules,
   ...formFieldChromeRules,
 ];

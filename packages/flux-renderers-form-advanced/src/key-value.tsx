@@ -272,6 +272,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const pairsRef = React.useRef<KeyValuePair[]>([]);

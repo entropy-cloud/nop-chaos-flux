@@ -238,6 +238,7 @@ export function createInputRenderer(inputType: string) {
       disabled: props.props.disabled,
       required: props.props.required,
       readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
     });
     const inputValue = (value as string | undefined) ?? '';
     const errorId = name ? `${name}-error` : undefined;

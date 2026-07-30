@@ -134,6 +134,7 @@ export function UploadFieldRenderer(
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
+    defaultValue: props.props.value,
   });
 
   const inputRef = useRef<HTMLInputElement | null>(null);

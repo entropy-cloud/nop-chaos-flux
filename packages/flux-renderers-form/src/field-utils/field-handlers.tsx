@@ -281,6 +281,45 @@ function useAdaptedFieldValue(
   return canResolveSynchronously ? synchronousValue : adaptedValue;
 }
 
+export function useDefaultValuePush(args: {
+  name: string;
+  defaultValue: unknown;
+  currentForm: FormRuntime | undefined;
+  scope: ScopeRef;
+  hasInitialValue?: boolean;
+}): { markUserEdited: () => void } {
+  const hadInitialValueRef = useRef(args.hasInitialValue ?? false);
+  const userEditedRef = useRef(false);
+  const lastAppliedDefaultRef = useRef<{ hasValue: false } | { hasValue: true; value: unknown }>(
+    { hasValue: false },
+  );
+
+  const { name, defaultValue, currentForm, scope } = args;
+
+  useEffect(() => {
+    if (!name || defaultValue === undefined) return;
+    if (hadInitialValueRef.current) return;
+    if (userEditedRef.current) return;
+    if (
+      lastAppliedDefaultRef.current.hasValue &&
+      Object.is(lastAppliedDefaultRef.current.value, defaultValue)
+    )
+      return;
+    lastAppliedDefaultRef.current = { hasValue: true, value: defaultValue };
+    if (currentForm) {
+      currentForm.setValue(name, defaultValue);
+    } else {
+      scope.update(name, defaultValue);
+    }
+  }, [name, defaultValue, currentForm, scope]);
+
+  return {
+    markUserEdited: () => {
+      userEditedRef.current = true;
+    },
+  };
+}
+
 export function useFormFieldController(
   name: string,
   options?: {
@@ -316,26 +355,48 @@ export function useFormFieldController(
     adapterContext,
   });
 
-  useEffect(() => {
-    if (!name || options?.defaultValue === undefined) return;
-    if (rawValue !== undefined) return;
-    const ctx = { name, readOnly: options?.readOnly ?? false };
-    const converted = options?.adapter
-      ? options.adapter.out(options.defaultValue, ctx)
-      : options.defaultValue;
-    if (converted === undefined) return;
-    if (currentForm) {
-      currentForm.setValue(name, converted);
-    } else {
-      scope.update(name, converted);
-    }
-  }, [name, options?.defaultValue, rawValue, currentForm, scope, options?.adapter, options?.readOnly]);
+  const defaultPush = useDefaultValuePush({
+    name,
+    defaultValue: options?.defaultValue,
+    currentForm,
+    scope,
+    hasInitialValue: rawValue !== undefined,
+  });
+
+  const wrappedHandlers = {
+    ...handlers,
+    onChange(nextValue: unknown) {
+      defaultPush.markUserEdited();
+      handlers.onChange(nextValue);
+    },
+  };
 
   return {
     currentForm,
     scope,
     value,
     presentation,
-    handlers,
+    handlers: wrappedHandlers,
   };
+}
+
+export function useFormFieldFromProps<P extends Record<string, unknown>>(
+  props: { props: P },
+  options?: {
+    adapter?: ValueAdapter<unknown, unknown>;
+    toFormValue?: (value: unknown) => unknown;
+    areValuesEqual?: (a: unknown, b: unknown) => boolean;
+    pushDefaultValue?: boolean;
+  },
+) {
+  const schemaProps = props.props;
+  return useFormFieldController(String(schemaProps.name ?? ''), {
+    adapter: options?.adapter,
+    toFormValue: options?.toFormValue,
+    areValuesEqual: options?.areValuesEqual,
+    disabled: schemaProps.disabled as boolean | undefined,
+    required: schemaProps.required as boolean | undefined,
+    readOnly: schemaProps.readOnly as boolean | undefined,
+    defaultValue: options?.pushDefaultValue === false ? undefined : schemaProps.value,
+  });
 }
