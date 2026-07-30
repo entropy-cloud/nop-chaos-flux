@@ -87,6 +87,35 @@ const formWithHiddenRequiredField = {
   ],
 };
 
+const formWithAjaxSubmit = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      submitAction: {
+        action: 'ajax',
+        args: { url: '/api/component-lab/save-form', method: 'post', includeScope: '*' },
+      },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        {
+          type: 'input-text',
+          name: 'fullName',
+          label: 'Full Name',
+          required: true,
+        },
+        {
+          type: 'input-text',
+          name: 'nickName',
+          label: 'Nick Name',
+        },
+        { type: 'text', text: '${submitted ? "Saved! Name: " + fullName : ""}' },
+      ],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
 export function FormLabPage() {
   return (
     <MultiScenarioLabPage
@@ -108,6 +137,12 @@ export function FormLabPage() {
           description:
             'Submit once with the secret field hidden to prove hidden fields do not block submission. Then reveal the required field and submit again to verify validation resumes when the field becomes visible.',
           schema: formWithHiddenRequiredField,
+        },
+        {
+          title: 'Form with ajax submit and includeScope',
+          description:
+            'Typing into form fields and submitting sends the field values in the ajax request body via includeScope.',
+          schema: formWithAjaxSubmit,
         },
       ]}
     />
