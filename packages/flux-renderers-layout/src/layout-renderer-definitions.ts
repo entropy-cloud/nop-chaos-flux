@@ -492,10 +492,21 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
     component: ButtonGroupRenderer,
     propContracts: {
       items: {
-        shape: { kind: 'array', item: { kind: 'unknown' } },
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              label: 'value',
+              action: 'event',
+              variant: 'value',
+              disabled: 'value',
+            },
+          },
+        },
         displayName: 'Items',
         description:
-          'Button item collection (pure value prop, no nested regions). Each item: { label, action, variant, disabled }.',
+          'Button item collection. Each item: { label, action, variant, disabled }. action is an event field (template-preserved at compile time).',
         editorType: 'object-array',
       },
       orientation: {
@@ -645,10 +656,24 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
         defaultValue: 'default',
       },
       items: {
-        shape: { kind: 'array', item: { kind: 'unknown' } },
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              label: 'value',
+              action: 'event',
+              onClick: 'event',
+              disabled: 'value',
+              destructive: 'value',
+              key: 'value',
+              icon: 'value',
+            },
+          },
+        },
         displayName: 'Items',
         description:
-          'Menu item collection (pure value prop, no nested regions). Each item: { label, action, disabled, destructive }.',
+          'Menu item collection. Each item: { label, action/onClick, disabled, destructive }. action/onClick are event fields (template-preserved at compile time).',
         editorType: 'object-array',
       },
       trigger: {

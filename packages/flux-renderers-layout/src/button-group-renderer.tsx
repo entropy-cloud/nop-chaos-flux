@@ -1,9 +1,24 @@
 import type { ActionSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useState } from 'react';
+import { unwrapPreservedLiteral } from '@nop-chaos/flux-react';
 import { Button, ButtonGroup, cn } from '@nop-chaos/ui';
 import type { ButtonGroupItemSchema, ButtonGroupSchema } from './schemas.js';
 
 type ResolvedItem = ButtonGroupItemSchema;
+
+/**
+ * Resolve the dispatchable action of an item.
+ *
+ * The schema-definition compiler may deliver the action as a
+ * `{ __nopPreserveLiteral: true, value }` envelope (fully-static items) or as
+ * the raw ActionSchema (authoring form / mixed items). No onClick fallback:
+ * button-group only reads `item.action` (renderer contract).
+ */
+function resolveItemAction(item: ResolvedItem): ActionSchema | ActionSchema[] | undefined {
+  const action = item.action;
+  const unwrapped = unwrapPreservedLiteral(action);
+  return (unwrapped ?? action) as ActionSchema | ActionSchema[] | undefined;
+}
 
 function resolveItemKey(item: ResolvedItem, index: number): string {
   if (item.key !== undefined && item.key !== null && item.key !== '') {
@@ -72,10 +87,13 @@ export function ButtonGroupRenderer(props: RendererComponentProps<ButtonGroupSch
     }
 
     if (item.action) {
-      void props.helpers.dispatch(item.action as ActionSchema | ActionSchema[], {
-        scope: props.node.scope,
-        evaluationBindings: { item, index },
-      });
+      const action = resolveItemAction(item);
+      if (action) {
+        void props.helpers.dispatch(action, {
+          scope: props.node.scope,
+          evaluationBindings: { item, index },
+        });
+      }
     }
   };
 

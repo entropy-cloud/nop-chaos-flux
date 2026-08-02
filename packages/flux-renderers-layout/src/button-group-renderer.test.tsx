@@ -83,6 +83,71 @@ describe('ButtonGroupRenderer (W3b — grouped action container)', () => {
     await waitFor(() => expect(screen.getByText('flag:set')).toBeTruthy());
   });
 
+  it('unwrap chain: dispatches envelope-form item action (compiler-preserved literal)', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/button-group-envelope"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button-group',
+              items: [
+                {
+                  label: 'Enveloped',
+                  action: {
+                    __nopPreserveLiteral: true,
+                    value: { action: 'setValue', args: { path: 'flag', value: true } },
+                  },
+                },
+              ],
+            },
+            { type: 'text', text: 'flag:${flag ? "set" : "unset"}' },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(screen.getByText('flag:unset')).toBeTruthy();
+    fireEvent.click(groupItems()[0]);
+    await waitFor(() => expect(screen.getByText('flag:set')).toBeTruthy());
+  });
+
+  it('unwrap chain: dispatches mixed item (dynamic label + static action)', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/button-group-mixed"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button-group',
+              items: [
+                {
+                  label: '${rowLabel}',
+                  action: { action: 'setValue', args: { path: 'flag', value: true } },
+                },
+              ],
+            },
+            { type: 'text', text: 'flag:${flag ? "set" : "unset"}' },
+          ],
+        }}
+        data={{ rowLabel: 'Dynamic' }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(screen.getByText('flag:unset')).toBeTruthy();
+    fireEvent.click(groupItems()[0]);
+    await waitFor(() => expect(screen.getByText('flag:set')).toBeTruthy());
+  });
+
   it('renders static buttons without throwing when item has no action', () => {
     const SchemaRenderer = createLayoutSchemaRenderer();
     render(

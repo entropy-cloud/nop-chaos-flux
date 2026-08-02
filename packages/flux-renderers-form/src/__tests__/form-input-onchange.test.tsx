@@ -24,7 +24,7 @@ describe('form input onChange', () => {
         }
         return { ok: true, data: {} };
       }),
-    } as typeof baseEnv;
+    } as unknown as typeof baseEnv;
 
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,

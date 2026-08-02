@@ -47,6 +47,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
               name: 'email',
               label: 'Email',
               required: true,
+              validate: { debounce: 300, message: 'Check email' },
             },
           ],
           actions: [

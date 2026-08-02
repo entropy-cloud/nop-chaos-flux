@@ -137,6 +137,7 @@ describe('FormRenderer init dep-change-during-in-flight (F5): in-flight guard cl
       },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       env: { notify: vi.fn(), monitor: undefined },
@@ -187,6 +188,7 @@ describe('FormRenderer init dep-change-during-in-flight (F5): in-flight guard cl
       },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       env: { notify: vi.fn(), monitor: undefined },

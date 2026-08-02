@@ -120,6 +120,7 @@ function makeOwnedForm(scopeOverride?: any) {
     },
     dispose: vi.fn(),
     setLifecycleHandlers: vi.fn(),
+    setRefreshHandler: vi.fn(),
     setValues,
     submit: vi.fn(async () => ({ ok: true })),
   } as any;

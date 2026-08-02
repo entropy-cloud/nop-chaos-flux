@@ -5,6 +5,7 @@ import {
   stringAdapter,
   type RendererComponentProps,
   type RendererDefinition,
+  type RendererPropContract,
   type RendererSchemaValidationContext,
   type SchemaFieldRule,
   type ValidationRule,
@@ -35,6 +36,7 @@ import {
   SwitchRenderer,
 } from './input-choice-renderers.js';
 import { CheckboxGroupRenderer } from './checkbox-group-renderer.js';
+import { ButtonGroupSelectRenderer } from './button-group-select-renderer.js';
 import { InputNumberRenderer } from './input-number-renderer.js';
 import { TextareaRenderer } from './textarea-renderer.js';
 
@@ -87,6 +89,36 @@ const FOCUS_ONLY_CAPABILITY_CONTRACTS = [
     description: 'Focus the control.',
   },
 ] as const;
+
+/**
+ * Async validation configuration contract: `validate.action` is an action
+ * value (whole-value template preservation via schema-definition actionValue).
+ */
+const validatePropContract: RendererPropContract = {
+  shape: {
+    kind: 'object',
+    fields: {
+      action: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+      debounce: { kind: 'number' },
+      message: { kind: 'string' },
+    },
+    optional: ['action', 'debounce', 'message'],
+  },
+  displayName: 'Validate',
+  description:
+    'Async validation configuration: { action, debounce, message }. action is preserved as a template (not row-scope evaluated).',
+};
+
+/**
+ * Remote search action contract: the whole `searchSource` value is an
+ * ActionSchema preserved as a template (actionValue).
+ */
+const searchSourcePropContract: RendererPropContract = {
+  shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+  displayName: 'Search Source',
+  description:
+    'On-demand remote search action (ActionSchema). Preserved as a template; ${searchQuery} is evaluated at dispatch time.',
+};
 
 export const inputEnhancementFieldRules: SchemaFieldRule[] = [
   { key: 'prefix', kind: 'prop' },
@@ -475,6 +507,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-text',
     sourcePackage: '@nop-chaos/flux-renderers-form',
+    propContracts: {
+      validate: validatePropContract,
+    },
     component: createInputRenderer('text'),
     fields: [...formFieldRules, ...inputEnhancementFieldRules],
     validation: createFieldValidation(),
@@ -485,6 +520,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-email',
     sourcePackage: '@nop-chaos/flux-renderers-form',
+    propContracts: {
+      validate: validatePropContract,
+    },
     component: createInputRenderer('email'),
     fields: [...formFieldRules, ...inputEnhancementFieldRules],
     validation: createFieldValidation(undefined, true),
@@ -495,6 +533,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-password',
     sourcePackage: '@nop-chaos/flux-renderers-form',
+    propContracts: {
+      validate: validatePropContract,
+    },
     component: createInputRenderer('password'),
     fields: [...formFieldRules, ...inputEnhancementFieldRules],
     validation: createFieldValidation(),
@@ -505,6 +546,10 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'select',
     sourcePackage: '@nop-chaos/flux-renderers-form',
+    propContracts: {
+      validate: validatePropContract,
+      searchSource: searchSourcePropContract,
+    },
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
@@ -530,6 +575,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'textarea',
     sourcePackage: '@nop-chaos/flux-renderers-form',
+    propContracts: {
+      validate: validatePropContract,
+    },
     fields: [...formFieldRules, ...textareaEnhancementFieldRules],
     component: TextareaRenderer,
     validation: createFieldValidation(),
@@ -586,6 +634,22 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     componentCapabilityContracts: FOCUS_ONLY_CAPABILITY_CONTRACTS,
     wrap: true,
     component: CheckboxGroupRenderer,
+  },
+  {
+    type: 'button-group-select',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    fields: [
+      ...formFieldRules,
+      { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      { key: 'multiple', kind: 'prop', valueType: 'boolean' },
+      { key: 'direction', kind: 'prop' },
+      { key: 'dict', kind: 'prop' },
+    ],
+    validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: FOCUS_ONLY_CAPABILITY_CONTRACTS,
+    wrap: true,
+    component: ButtonGroupSelectRenderer,
   },
   {
     type: 'input-number',

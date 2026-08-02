@@ -181,4 +181,112 @@ describe('DropdownButtonRenderer (W3b — menu-style action trigger)', () => {
 
     expect(dropdownTrigger().getAttribute('data-trigger')).toBe('hover');
   });
+
+  it('unwrap chain: dispatches envelope-form item action (compiler-preserved literal)', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/dropdown-button-envelope"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dropdown-button',
+              label: 'Menu',
+              items: [
+                {
+                  label: 'Enveloped',
+                  action: {
+                    __nopPreserveLiteral: true,
+                    value: { action: 'setValue', args: { path: 'clicked', value: true } },
+                  },
+                },
+              ],
+            },
+            { type: 'text', text: 'clicked:${clicked ? "yes" : "no"}' },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(dropdownTrigger());
+    await waitFor(() => expect(screen.getByText('Enveloped')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Enveloped'));
+    await waitFor(() => expect(screen.getByText('clicked:yes')).toBeTruthy());
+  });
+
+  it('unwrap chain: dispatches onClick fallback in envelope form', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/dropdown-button-onclick-envelope"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dropdown-button',
+              label: 'Menu',
+              items: [
+                {
+                  label: 'OnClick Enveloped',
+                  onClick: {
+                    __nopPreserveLiteral: true,
+                    value: { action: 'setValue', args: { path: 'clicked', value: true } },
+                  },
+                },
+              ],
+            },
+            { type: 'text', text: 'clicked:${clicked ? "yes" : "no"}' },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(dropdownTrigger());
+    await waitFor(() => expect(screen.getByText('OnClick Enveloped')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('OnClick Enveloped'));
+    await waitFor(() => expect(screen.getByText('clicked:yes')).toBeTruthy());
+  });
+
+  it('unwrap chain: dispatches mixed item (dynamic label + static action)', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/dropdown-button-mixed"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dropdown-button',
+              label: 'Menu',
+              items: [
+                {
+                  label: '${rowLabel}',
+                  action: { action: 'setValue', args: { path: 'clicked', value: true } },
+                },
+              ],
+            },
+            { type: 'text', text: 'clicked:${clicked ? "yes" : "no"}' },
+          ],
+        }}
+        data={{ rowLabel: 'Dynamic Label' }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(dropdownTrigger());
+    await waitFor(() => expect(screen.getByText('Dynamic Label')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Dynamic Label'));
+    await waitFor(() => expect(screen.getByText('clicked:yes')).toBeTruthy());
+  });
 });

@@ -59,6 +59,7 @@ export function NodeFrameWrapper(props: {
   return (
     <FieldFrame
       name={fieldName}
+      renderer={props.templateNode.rendererType}
       label={labelValue}
       required={requiredValue}
       hint={hintValue}

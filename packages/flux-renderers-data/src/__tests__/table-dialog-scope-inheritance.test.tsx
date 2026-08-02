@@ -159,7 +159,7 @@ describe('table row → dialog scope inheritance', () => {
       const calls = mockFetcher.mock.calls;
       const urlCall = calls.find(([config]: any) => config?.url === '/api/user/7');
       expect(urlCall).toBeDefined();
-      expect(urlCall[0].method).toBe('get');
+      expect(urlCall?.[0].method).toBe('get');
     });
 
     // Also verify ${id} renders in the dialog text (scope inherited)

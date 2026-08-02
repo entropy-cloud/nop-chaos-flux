@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ActionSchema, RendererComponentProps } from '@nop-chaos/flux-core';
-import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { resolveRendererSlotContent, unwrapPreservedLiteral } from '@nop-chaos/flux-react';
 import {
   resolveLucideIcon,
   Button,
@@ -14,6 +14,21 @@ import { ChevronDownIcon } from 'lucide-react';
 import type { DropdownButtonItemSchema, DropdownButtonSchema } from './schemas.js';
 
 type ResolvedItem = DropdownButtonItemSchema;
+
+/**
+ * Resolve the dispatchable action of a menu item.
+ *
+ * The schema-definition compiler may deliver the action in three forms:
+ * 1. `{ __nopPreserveLiteral: true, value }` envelope (fully-static items),
+ * 2. the raw ActionSchema (authoring form),
+ * 3. a raw value inside a mixed item (dynamic sibling fields).
+ * `item.action` wins over `item.onClick`; each is unwrapped before use.
+ */
+function resolveItemAction(item: ResolvedItem): ActionSchema | ActionSchema[] | undefined {
+  const action = item.action ?? (item as Record<string, unknown>).onClick;
+  const unwrapped = unwrapPreservedLiteral(action);
+  return (unwrapped ?? action) as ActionSchema | ActionSchema[] | undefined;
+}
 
 export function DropdownButtonRenderer(props: RendererComponentProps<DropdownButtonSchema>) {
   const schemaProps = props.props;
@@ -40,7 +55,7 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
 
   const handleItemClick = (item: ResolvedItem, index: number, itemDisabled: boolean) => {
     if (itemDisabled) return;
-    const action = item.action ?? (item as Record<string, unknown>).onClick as ActionSchema | ActionSchema[] | undefined;
+    const action = resolveItemAction(item);
     if (action) {
       void props.helpers.dispatch(action, {
         scope: props.node.scope,

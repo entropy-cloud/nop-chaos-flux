@@ -92,7 +92,7 @@ describe('input / textarea / input-number touch adaptation (M2a)', () => {
     mobileState.isMobile = true;
     renderForm([
       { type: 'input-text', name: 'title', label: 'Title' },
-      { type: 'textarea', name: 'notes', label: 'Notes' },
+      { type: 'textarea', name: 'notes', label: 'Notes', validate: { debounce: 300, message: 'x' } },
     ]);
     const input = document.querySelector('input[type="text"]') as HTMLInputElement;
     const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
