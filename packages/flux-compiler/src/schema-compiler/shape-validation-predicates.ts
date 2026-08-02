@@ -10,6 +10,13 @@ export interface ActionValidationContext {
     import('./shape-validation-traversal.js').ComponentTargetContractResolution
   >;
   strictMode?: boolean;
+  /**
+   * Recursive schema-input validation hook for schema-kind action args
+   * (e.g. openDialog `args.body` / `args.actions`), wired by
+   * `analyzeSchemaInput` so nested renderer schemas inside action args are
+   * validated with full registry/imports/host context.
+   */
+  analyzeSchemaInput?: (inputValue: unknown, path: string) => void;
 }
 
 export function isDynamicStructuralPath(value: string): boolean {

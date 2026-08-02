@@ -1,4 +1,7 @@
-import type { FluxValueShape } from '@nop-chaos/flux-core';
+import type {
+  FluxValueShape,
+  SchemaDefinitionFieldKind,
+} from '@nop-chaos/flux-core';
 import { appendJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics.js';
 
 function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
@@ -34,6 +37,30 @@ function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
 
 function describeLiteral(value: string | number | boolean | null) {
   return JSON.stringify(value);
+}
+
+function isActionShapeLike(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value) && typeof (value as { action?: unknown }).action === 'string';
+}
+
+function summarizeSchemaDefinitionKind(kind: SchemaDefinitionFieldKind): string {
+  switch (kind) {
+    case 'value':
+    case 'prop':
+      return 'value';
+    case 'event':
+    case 'action':
+      return 'action';
+    case 'schema':
+    case 'region':
+      return 'schema';
+    case 'schema-array':
+      return 'schema[]';
+    case 'literal':
+      return 'literal';
+    default:
+      return kind;
+  }
 }
 
 function formatUnionBranchFailureMessages(messages: string[]) {
@@ -75,6 +102,16 @@ export function summarizeExpectedFluxValueShape(shape: FluxValueShape): string {
     }
     case 'union':
       return shape.anyOf.map((entry) => summarizeExpectedFluxValueShape(entry)).join(' | ');
+    case 'schema-definition': {
+      const ruleSummary = Object.entries(shape.fieldRules).map(
+        ([key, spec]) => `${key}: ${summarizeSchemaDefinitionKind(typeof spec === 'string' ? spec : spec.kind)}`,
+      );
+      const parts = [`schema-definition{${ruleSummary.join(', ')}}`];
+      if (shape.actionValue) {
+        parts.push('actionValue');
+      }
+      return parts.join(' ');
+    }
     default:
       return 'unknown';
   }
@@ -110,7 +147,7 @@ export function validateFluxValueShape(
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
   issue: {
-    code: 'invalid-property-value' | 'invalid-host-capability-args';
+    code: 'invalid-property-value' | 'invalid-host-capability-args' | 'invalid-action-shape';
     source: 'core' | 'host-contract';
     messagePrefix?: string;
   },
@@ -297,7 +334,189 @@ export function validateFluxValueShape(
     case 'unknown':
       return true;
 
+    case 'schema-definition': {
+      if (shape.actionValue) {
+        if (!isActionShapeLike(value)) {
+          diagnostics.emit({
+            code: issue.code,
+            path,
+            message: `${issue.messagePrefix ?? 'Expected action value.'} Received ${summarizeActualSchemaValue(value)}.`,
+            source: issue.source,
+          });
+          return false;
+        }
+        return true;
+      }
+
+      const containers = Array.isArray(value)
+        ? value.map((item, index) => ({ item, path: appendJsonPointer(path, index) }))
+        : value && typeof value === 'object'
+          ? [{ item: value as Record<string, unknown>, path }]
+          : undefined;
+
+      if (!containers) {
+        diagnostics.emit({
+          code: issue.code,
+          path,
+          message: `${issue.messagePrefix ?? 'Expected nested schema structure.'} Received ${summarizeActualSchemaValue(value)}.`,
+          source: issue.source,
+        });
+        return false;
+      }
+
+      let valid = true;
+      for (const { item, path: itemPath } of containers) {
+        for (const [fieldKey, spec] of Object.entries(shape.fieldRules)) {
+          const fieldPath = appendJsonPointer(itemPath, fieldKey);
+          const fieldValue = item[fieldKey];
+          const kind = typeof spec === 'string' ? spec : spec.kind;
+
+          if (fieldValue === undefined) {
+            if (typeof spec === 'object' && spec.required) {
+              diagnostics.emit({
+                code: issue.code,
+                path: fieldPath,
+                message: `${issue.messagePrefix ?? 'Missing required field.'} Required field ${JSON.stringify(fieldKey)} is missing.`,
+                source: issue.source,
+              });
+              valid = false;
+            }
+            continue;
+          }
+
+          if (!validateSchemaDefinitionField(fieldValue, kind, fieldPath, diagnostics, issue)) {
+            valid = false;
+            continue;
+          }
+
+          if (typeof spec === 'object' && (spec.valueType !== undefined || spec.nonEmpty)) {
+            if (!validateSchemaDefinitionConstraints(fieldValue, spec, fieldPath, diagnostics, issue)) {
+              valid = false;
+            }
+          }
+        }
+      }
+      return valid;
+    }
+
     default:
       return true;
   }
+}
+
+function validateSchemaDefinitionField(
+  value: unknown,
+  kind: SchemaDefinitionFieldKind,
+  path: string,
+  diagnostics: SchemaCompilerDiagnosticsContext,
+  issue: {
+    code: 'invalid-property-value' | 'invalid-host-capability-args' | 'invalid-action-shape';
+    source: 'core' | 'host-contract';
+    messagePrefix?: string;
+  },
+): boolean {
+  switch (kind) {
+    case 'value':
+    case 'prop':
+    case 'literal':
+      return true;
+    case 'event':
+    case 'action': {
+      if (isActionShapeLike(value)) {
+        return true;
+      }
+      if (Array.isArray(value) && value.every(isActionShapeLike)) {
+        return true;
+      }
+      diagnostics.emit({
+        code: issue.code,
+        path,
+        message: `${issue.messagePrefix ?? 'Expected action value.'} Received ${summarizeActualSchemaValue(value)}.`,
+        source: issue.source,
+      });
+      return false;
+    }
+    case 'schema':
+    case 'region':
+      if (value && typeof value === 'object') {
+        return true;
+      }
+      diagnostics.emit({
+        code: issue.code,
+        path,
+        message: `${issue.messagePrefix ?? 'Expected schema subtree.'} Received ${summarizeActualSchemaValue(value)}.`,
+        source: issue.source,
+      });
+      return false;
+    case 'schema-array':
+      if (Array.isArray(value)) {
+        return true;
+      }
+      diagnostics.emit({
+        code: issue.code,
+        path,
+        message: `${issue.messagePrefix ?? 'Expected schema array.'} Received ${summarizeActualSchemaValue(value)}.`,
+        source: issue.source,
+      });
+      return false;
+    default:
+      return true;
+  }
+}
+
+function validateSchemaDefinitionConstraints(
+  value: unknown,
+  spec: { valueType?: 'boolean' | 'string' | 'number' | 'object' | 'array'; nonEmpty?: boolean },
+  path: string,
+  diagnostics: SchemaCompilerDiagnosticsContext,
+  issue: {
+    code: 'invalid-property-value' | 'invalid-host-capability-args' | 'invalid-action-shape';
+    source: 'core' | 'host-contract';
+    messagePrefix?: string;
+  },
+): boolean {
+  let valid = true;
+
+  if (spec.valueType !== undefined && !isDynamicallyAuthoredSchemaValue(value)) {
+    const typeOk = (() => {
+      switch (spec.valueType) {
+        case 'boolean':
+          return typeof value === 'boolean';
+        case 'string':
+          return typeof value === 'string';
+        case 'number':
+          return typeof value === 'number';
+        case 'object':
+          return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+        case 'array':
+          return Array.isArray(value);
+        default:
+          return true;
+      }
+    })();
+
+    if (!typeOk) {
+      diagnostics.emit({
+        code: issue.code,
+        path,
+        message: `${issue.messagePrefix ?? 'Invalid field value.'} Expected ${spec.valueType}, received ${summarizeActualSchemaValue(value)}.`,
+        source: issue.source,
+      });
+      valid = false;
+    }
+  }
+
+  if (spec.nonEmpty && !isDynamicallyAuthoredSchemaValue(value)) {
+    if (typeof value !== 'string' || value.length === 0) {
+      diagnostics.emit({
+        code: issue.code,
+        path,
+        message: `${issue.messagePrefix ?? 'Invalid field value.'} Expected non-empty string, received ${summarizeActualSchemaValue(value)}.`,
+        source: issue.source,
+      });
+      valid = false;
+    }
+  }
+
+  return valid;
 }

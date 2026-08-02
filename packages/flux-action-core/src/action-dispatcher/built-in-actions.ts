@@ -5,7 +5,7 @@ import type {
   BuiltInActionInvocation,
   CompiledActionNode,
 } from '@nop-chaos/flux-core';
-import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
+import { getBuiltInActionDefinition, isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import {
   evaluateActionArgs,
   normalizeActionResult,
@@ -15,6 +15,26 @@ import {
 } from '../action-core.js';
 import type { ActionDispatcherContext } from './types.js';
 import { finishAction } from './action-runners.js';
+
+/**
+ * Raw-preserved args keys per built-in action definition (action-class fields
+ * such as onClose/onSubmitSuccess/onSubmitError, plus schema-carrying keys).
+ */
+function collectRawPreservedArgKeys(action: CompiledActionNode): Set<string> {
+  const definition = getBuiltInActionDefinition(action.action);
+  if (!definition) {
+    return new Set();
+  }
+
+  const keys = new Set<string>();
+  for (const [key, spec] of Object.entries(definition.fieldRules)) {
+    const kind = typeof spec === 'string' ? spec : spec.kind;
+    if (kind === 'action' || kind === 'event') {
+      keys.add(key);
+    }
+  }
+  return keys;
+}
 
 function evaluateSurfaceArgs(
   action: CompiledActionNode,
@@ -29,9 +49,10 @@ function evaluateSurfaceArgs(
 
   const evaluated = evaluateActionArgs(action, ctx, evaluator) ?? {};
   const result: Record<string, unknown> = { ...evaluated };
+  const rawPreservedKeys = collectRawPreservedArgKeys(action);
 
   for (const [key, value] of Object.entries(rawArgs)) {
-    if (isSchema(value) || isSchemaArray(value as unknown[])) {
+    if (isSchema(value) || isSchemaArray(value as unknown[]) || rawPreservedKeys.has(key)) {
       result[key] = value;
     }
   }

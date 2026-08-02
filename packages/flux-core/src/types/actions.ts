@@ -203,6 +203,10 @@ export interface RefreshSourceActionSchema extends ActionShapeFields {
   targetId: string;
 }
 
+export interface RefreshNearestActionSchema extends ActionShapeFields {
+  action: 'refreshNearest';
+}
+
 export interface SetValueActionSchema extends ActionShapeFields {
   action: 'setValue';
   args: SetValueActionArgs;
@@ -253,6 +257,7 @@ export type BuiltInActionSchema =
   | CloseSurfaceActionSchema
   | RefreshTableActionSchema
   | RefreshSourceActionSchema
+  | RefreshNearestActionSchema
   | SetValueActionSchema
   | SetValuesActionSchema
   | ShowToastActionSchema
