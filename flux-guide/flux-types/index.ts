@@ -8,6 +8,7 @@ import type {
   AudioSchema,
   BadgeSchema,
   ButtonGroupSchema,
+  ButtonGroupSelectSchema,
   ButtonSchema,
   CardSchema,
   CardsSchema,
@@ -134,6 +135,7 @@ export type FluxSchema =
   | SwitchSchema
   | RadioGroupSchema
   | CheckboxGroupSchema
+  | ButtonGroupSelectSchema
   | InputNumberSchema
   | InputDateSchema
   | InputDatetimeSchema
@@ -231,6 +233,7 @@ export interface FluxSchemaByType {
   'switch': SwitchSchema;
   'radio-group': RadioGroupSchema;
   'checkbox-group': CheckboxGroupSchema;
+  'button-group-select': ButtonGroupSelectSchema;
   'input-number': InputNumberSchema;
   'input-date': InputDateSchema;
   'input-datetime': InputDatetimeSchema;
@@ -301,6 +304,7 @@ export type {
   AudioSchema,
   BadgeSchema,
   ButtonGroupSchema,
+  ButtonGroupSelectSchema,
   ButtonSchema,
   CardSchema,
   CardsSchema,

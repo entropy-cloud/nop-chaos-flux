@@ -31,13 +31,20 @@
 
 ## Recurse (递归)
 
+> `recurse` 自身没有 `body`。它复用最近 enclosing `loop` 的 `body` 模板，以新的 `items` 再次实例化（词法递归，见 `docs/components/recurse/design.md` §6）。正确形态：
+
 ```json
 {
-  "type": "recurse",
+  "type": "loop",
   "items": "${treeData}",
+  "itemName": "node",
   "body": [
-    { "type": "text", "text": "${item.name}" },
-    { "type": "recurse", "items": "${item.children}" }
+    { "type": "text", "text": "${node.name}" },
+    {
+      "type": "fragment",
+      "when": "${node.children && node.children.length > 0}",
+      "body": [{ "type": "recurse", "items": "${node.children}" }]
+    }
   ]
 }
 ```
