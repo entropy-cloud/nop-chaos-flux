@@ -336,13 +336,11 @@ export interface CarouselItemSchema extends SchemaObject {
   title?: string;
   /** 轮播项说明文字 */
   caption?: string;
-  /** 轮播项自定义内容（受限 schema） */
-  body?: SchemaInput;
 }
 
 export interface CarouselSchema extends BaseSchema {
   type: 'carousel';
-  /** 轮播项集合（每项可带 body region / image / title） */
+  /** 轮播项集合（每项可带 image / title / caption） */
   items?: CarouselItemSchema[];
   /** 自动轮播 */
   autoPlay?: boolean;
