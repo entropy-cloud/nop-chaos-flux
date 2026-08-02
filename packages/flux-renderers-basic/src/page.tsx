@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PageStatusSummary, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
@@ -12,6 +12,7 @@ import {
   resolveLucideIconStrict,
   Sheet,
   SheetContent,
+  t,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -45,6 +46,26 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   );
   const summary: PageStatusSummary = { refreshTick };
   const slotProps = props.props as PageSchema;
+  const dataPatch = slotProps.data;
+  const dataPatchAppliedScopesRef = useRef<WeakSet<object> | undefined>(undefined);
+  useEffect(() => {
+    if (!dataPatch || typeof dataPatch !== 'object' || Array.isArray(dataPatch)) {
+      return;
+    }
+    const scope = props.node.scope;
+    if (!scope) {
+      return;
+    }
+    // StrictMode remounts discard the first effect run and may recreate the
+    // page scope, so the one-time init patch is keyed on scope identity
+    // instead of a plain boolean ref.
+    const applied = dataPatchAppliedScopesRef.current;
+    if (applied?.has(scope)) {
+      return;
+    }
+    (dataPatchAppliedScopesRef.current ??= new WeakSet()).add(scope);
+    scope.merge(dataPatch as Record<string, unknown>);
+  }, [dataPatch, props.node.scope]);
   const subTitle =
     typeof slotProps.subTitle === 'string' && slotProps.subTitle.length > 0
       ? slotProps.subTitle
@@ -133,7 +154,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
           data-slot="page-aside-resize-handle"
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize aside"
+          aria-label={t('flux.page.asideResize')}
           className={cn(
             'absolute top-0 bottom-0 w-1 cursor-col-resize bg-transparent hover:bg-border transition-colors',
             asidePosition === 'right' ? 'left-0 -ml-1' : 'right-0 -mr-1',
@@ -162,7 +183,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
             <Tooltip>
               <TooltipTrigger
                 data-slot="page-remark"
-                aria-label="Remark"
+                aria-label={t('flux.page.remark')}
                 className="inline-flex size-4 items-center justify-center align-middle text-muted-foreground hover:text-foreground"
               >
                 {InfoIcon ? (
@@ -230,7 +251,7 @@ function PageAsideToggle({
         variant="outline"
         size="icon"
         data-slot="page-aside-toggle"
-        aria-label="Toggle aside"
+        aria-label={t('flux.page.asideToggle')}
         className="nop-haptic"
         onClick={() => setOpen(true)}
       >

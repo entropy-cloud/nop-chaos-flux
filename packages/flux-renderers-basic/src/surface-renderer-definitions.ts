@@ -188,6 +188,8 @@ export const dialogRendererDefinition: RendererDefinition = {
   componentCapabilityContracts: surfaceHandleCapabilityContracts,
   fields: sharedSurfaceFields.concat([
     { key: 'closeOnOutsideClick', kind: 'prop' as const, valueType: 'boolean' as const },
+    { key: 'draggable', kind: 'prop' as const, valueType: 'boolean' as const },
+    { key: 'allowFullscreen', kind: 'prop' as const, valueType: 'boolean' as const },
   ]),
 };
 

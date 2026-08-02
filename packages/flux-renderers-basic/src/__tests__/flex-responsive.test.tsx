@@ -115,6 +115,8 @@ describe('container renderer — responsive direction/wrap (M3b)', () => {
     expect(body).toBeTruthy();
     expect(body?.getAttribute('data-flex')).toBe('');
     expect(body?.getAttribute('data-direction')).toBe('column');
+    expect(body?.className).toContain('sm:flex-row');
+    expect(body?.className).toContain('md:flex-col');
   });
 
   it('enables flex body when only responsive fields are set (no base direction/wrap)', () => {
@@ -138,6 +140,7 @@ describe('container renderer — responsive direction/wrap (M3b)', () => {
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body).toBeTruthy();
     expect(body?.getAttribute('data-wrap')).toBe('true');
+    expect(body?.className).toContain('md:flex-wrap');
   });
 
   it('keeps body as non-flex when no layout fields (no regression)', () => {
