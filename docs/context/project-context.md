@@ -12,7 +12,7 @@ This file intentionally does **not** track "what is being worked on right now". 
 - Product type: AMIS low-code renderer, modern rewrite (a schema-driven React rendering + compilation runtime)
 - Primary users: application builders consuming the Flux DSL; framework developers extending renderers/actions
 - Documentation freshness: `fresh` <!-- fresh | partially stale | stale | unknown -->
-  - All audit-remediation phases (M0 → MA1–MA7 → MR1–MR4 → MV) completed as of 2026-07-28. `pnpm typecheck` (58/58), `pnpm build` (31/31), `pnpm lint` (31/31), `pnpm test` (58/58) all pass. E2E sample 60/61 (1 pre-existing flake). All P0/P1 findings fixed and verified. `docs/lessons/` populated with MR-derived lessons. MG (Guard Activation) completing in parallel — this file is the final piece. All packages verified for correctness, documentation drift corrected (MA6 R3.9–R3.16), and the workspace is production-green across the entire audit-remediation pipeline.
+  - C0 编排基线已建立（2026-08-02，`docs/plans/2026-08-02-2043-1-c0-orchestration-baseline.md`，组件审计路线图见 `docs/backlog/component-audit-roadmap.md`）。**C0 实测基线**：`pnpm typecheck`（31/31）、`pnpm build`（31/31）、`pnpm lint`（31/31）、`pnpm test`（58/58）unit 层全绿；`pnpm test:e2e` **770 passed / 43 skipped / 9 pre-existing failed**（ai-chat timestamp、ai-rich-text-sender ×5（Tiptap）、calendar-demo nav、diff-perf 200ms 阈值（机器相关）、input-suggest popover 稳定性——均与 HEAD 基线对比复现一致，归属 ai/scheduling/content/form 相关 successor C8.1/C9/C2.2/CV，**未达 e2e full-green**）。历史：audit-remediation 管线（M0→MV）2026-07-28 收尾，unit 全绿，E2E sample 60/61（1 pre-existing flake）；`docs/lessons/` 已填充 MR 派生 lessons。**注意：上一版快照标 "production-green" 属过期表述，C0 已按实测回写为"unit 全绿 + e2e 9 pre-existing 失败（watch-only residual）"的诚实基线**。
 
 **Freshness gating:**
 

@@ -13,42 +13,42 @@
 
 > **全文件唯一的动态状态区。** 状态流转：draft review 通过 → `todo` 改 `planned`；closure audit 通过 → `planned` 改 `done`（不得提前）。一个 work item = 一个 execution plan 的交付范围（审计一个组件族 + 逐组件审计卡 + **P0/P1 自动修复** + 回归测试 + closure）。**组件族是 plan 单位、组件是审计卡单位**（micro-plan 反模式）；若单个 work item 无法被一个 plan 收口，在 C0 后经人工确认拆分。
 
-| Work Item                                                                                                                               | Status | Owner Doc                    | 覆盖组件 | Dependencies |
-| --------------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------- | -------- | ------------ |
-| C0. 编排基线（组件清单与注册定义/amis-baseline-matrix 核对、全量基线重跑、审计卡模板、工具基线、保护区域地图）                          | `todo` | component-audit-checklist.md | —        | —            |
-| C1.1 basic 结构核心族（page/container/flex/tabs/dialog/drawer）                                                                         | `todo` | component-audit-checklist.md | 6        | C0           |
-| C1.2 basic 结构扩展族（fragment/loop/recurse/reaction/scope-debug/dynamic-renderer）                                                    | `todo` | component-audit-checklist.md | 6        | C0           |
-| C1.3 basic 原子显示族（text/button/badge/icon）                                                                                         | `todo` | component-audit-checklist.md | 4        | C0           |
-| C2.1 form shell（form/fieldset + hidden-field 策略）                                                                                    | `todo` | component-audit-checklist.md | 2        | C0           |
-| C2.2 form 文本输入族（input-text/input-password/input-email/input-number/textarea）                                                     | `todo` | component-audit-checklist.md | 5        | C0           |
-| C2.3 form 选择控件族（select/checkbox/checkbox-group/radio-group/switch）                                                               | `todo` | component-audit-checklist.md | 5        | C0           |
-| C2.4 form 日期族（input-date/input-datetime/input-time/date-range/input-month/input-quarter/input-year）                                | `todo` | component-audit-checklist.md | 7        | C0           |
-| C2.5 form markdown-editor                                                                                                               | `todo` | component-audit-checklist.md | 1        | C0           |
-| C3.1 form-advanced 复合输入族（combo/input-table/transfer/picker）                                                                      | `todo` | component-audit-checklist.md | 4        | C0           |
-| C3.2 form-advanced 组合字段族（object-field/array-field/detail-field/detail-view/variant-field）                                        | `todo` | component-audit-checklist.md | 5        | C0           |
-| C3.3 condition-builder                                                                                                                  | `todo` | component-audit-checklist.md | 1        | C0           |
-| C3.4 form-advanced 轻量编辑族（tag-list/key-value/array-editor/icon-picker）                                                            | `todo` | component-audit-checklist.md | 4        | C0           |
-| C3.5 form-advanced 媒体与富文本族（editor/input-file/input-image/tree-select/input-tree）                                               | `todo` | component-audit-checklist.md | 5        | C0           |
-| C4.1 table                                                                                                                              | `todo` | component-audit-checklist.md | 1        | C0           |
-| C4.2 crud                                                                                                                               | `todo` | component-audit-checklist.md | 1        | C0           |
-| C4.3 data 其余（tree/chart/list/pagination/statistics/data-source）                                                                     | `todo` | component-audit-checklist.md | 6        | C0           |
-| C5.1 layout 网格与流程族（grid/collapse/wizard）                                                                                        | `todo` | component-audit-checklist.md | 3        | C0           |
-| C5.2 layout 动作组族（button-group/dropdown-button/steps/timeline）                                                                     | `todo` | component-audit-checklist.md | 4        | C0           |
-| C6.1 content 文本类（markdown/html/json-view/link/image）                                                                               | `todo` | component-audit-checklist.md | 5        | C0           |
-| C6.2 content 状态反馈类（card/cards/empty/progress/spinner/separator）                                                                  | `todo` | component-audit-checklist.md | 6        | C0           |
-| C6.3 content 值映射类（alert/mapping/status）                                                                                           | `todo` | component-audit-checklist.md | 3        | C0           |
-| C6.4 content 媒体类（audio/video/carousel/qrcode）                                                                                      | `todo` | component-audit-checklist.md | 4        | C0           |
-| C6.5 diff-view                                                                                                                          | `todo` | component-audit-checklist.md | 1        | C0           |
-| C7 mobile 交互族（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）                                                        | `todo` | component-audit-checklist.md | 5        | C0           |
-| C8.1 ai 会话主链（ai-chat/ai-message-list/ai-bubble/ai-sender/ai-conversations）                                                        | `todo` | component-audit-checklist.md | 5        | C0           |
-| C8.2 ai 工具内容族（ai-tool-call/ai-attachments/ai-citations/ai-feedback/ai-token-usage）                                               | `todo` | component-audit-checklist.md | 5        | C0           |
-| C8.3 ai 增强族（ai-prompts/ai-suggestions/ai-voice-input/ai-welcome）                                                                   | `todo` | component-audit-checklist.md | 4        | C0           |
-| C9 scheduling 族（gantt/kanban/calendar/barcode-input）                                                                                 | `todo` | component-audit-checklist.md | 4        | C0           |
-| CR. 跨族集中修复与裁决（**剩余** shared 缺陷（C\* 已通过 CX-n 处理的除外）、C 阶段 deferred P1、各审计卡 P2 backlog、机制落地后复验项） | `todo` | component-audit-checklist.md | —        | 全部 C\*     |
-| CV. 全量验证（typecheck/build/lint/test + e2e full-green + 回归）                                                                       | `todo` | component-audit-checklist.md | —        | CR           |
-| CG. Guard 沉淀（审计卡汇总索引、lessons、checklist v2、工具脚本升级）                                                                   | `todo` | component-audit-checklist.md | —        | CV           |
+| Work Item                                                                                                                               | Status    | Owner Doc                    | 覆盖组件 | Dependencies |
+| --------------------------------------------------------------------------------------------------------------------------------------- | --------- | ---------------------------- | -------- | ------------ |
+| C0. 编排基线（组件清单与注册定义/amis-baseline-matrix 核对、全量基线重跑、审计卡模板、工具基线、保护区域地图）                          | `done`    | component-audit-checklist.md | —        | —            |
+| C1.1 basic 结构核心族（page/container/flex/tabs/dialog/drawer）                                                                         | `planned` | component-audit-checklist.md | 6        | C0           |
+| C1.2 basic 结构扩展族（fragment/loop/recurse/reaction/scope-debug/dynamic-renderer）                                                    | `planned` | component-audit-checklist.md | 6        | C0           |
+| C1.3 basic 原子显示族（text/button/badge/icon）                                                                                         | `todo`    | component-audit-checklist.md | 4        | C0           |
+| C2.1 form shell（form/fieldset + hidden-field 策略）                                                                                    | `todo`    | component-audit-checklist.md | 2        | C0           |
+| C2.2 form 文本输入族（input-text/input-password/input-email/input-number/textarea）                                                     | `todo`    | component-audit-checklist.md | 5        | C0           |
+| C2.3 form 选择控件族（select/checkbox/checkbox-group/radio-group/switch + button-group-select）                                         | `todo`    | component-audit-checklist.md | 6        | C0           |
+| C2.4 form 日期族（input-date/input-datetime/input-time/date-range/input-month/input-quarter/input-year）                                | `todo`    | component-audit-checklist.md | 7        | C0           |
+| C2.5 form markdown-editor                                                                                                               | `todo`    | component-audit-checklist.md | 1        | C0           |
+| C3.1 form-advanced 复合输入族（combo/input-table/transfer/picker）                                                                      | `todo`    | component-audit-checklist.md | 4        | C0           |
+| C3.2 form-advanced 组合字段族（object-field/array-field/detail-field/detail-view/variant-field）                                        | `todo`    | component-audit-checklist.md | 5        | C0           |
+| C3.3 condition-builder                                                                                                                  | `todo`    | component-audit-checklist.md | 1        | C0           |
+| C3.4 form-advanced 轻量编辑族（tag-list/key-value/array-editor/icon-picker）                                                            | `todo`    | component-audit-checklist.md | 4        | C0           |
+| C3.5 form-advanced 媒体与富文本族（editor/input-file/input-image/tree-select/input-tree）                                               | `todo`    | component-audit-checklist.md | 5        | C0           |
+| C4.1 table                                                                                                                              | `todo`    | component-audit-checklist.md | 1        | C0           |
+| C4.2 crud                                                                                                                               | `todo`    | component-audit-checklist.md | 1        | C0           |
+| C4.3 data 其余（tree/chart/list/pagination/statistics/data-source）                                                                     | `todo`    | component-audit-checklist.md | 6        | C0           |
+| C5.1 layout 网格与流程族（grid/collapse/wizard）                                                                                        | `todo`    | component-audit-checklist.md | 3        | C0           |
+| C5.2 layout 动作组族（button-group/dropdown-button/steps/timeline）                                                                     | `todo`    | component-audit-checklist.md | 4        | C0           |
+| C6.1 content 文本类（markdown/html/json-view/link/image）                                                                               | `todo`    | component-audit-checklist.md | 5        | C0           |
+| C6.2 content 状态反馈类（card/cards/empty/progress/spinner/separator）                                                                  | `todo`    | component-audit-checklist.md | 6        | C0           |
+| C6.3 content 值映射类（alert/mapping/status）                                                                                           | `todo`    | component-audit-checklist.md | 3        | C0           |
+| C6.4 content 媒体类（audio/video/carousel/qrcode）                                                                                      | `todo`    | component-audit-checklist.md | 4        | C0           |
+| C6.5 diff-view                                                                                                                          | `todo`    | component-audit-checklist.md | 1        | C0           |
+| C7 mobile 交互族（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）                                                        | `todo`    | component-audit-checklist.md | 5        | C0           |
+| C8.1 ai 会话主链（ai-chat/ai-message-list/ai-bubble/ai-sender/ai-conversations）                                                        | `todo`    | component-audit-checklist.md | 5        | C0           |
+| C8.2 ai 工具内容族（ai-tool-call/ai-attachments/ai-citations/ai-feedback/ai-token-usage）                                               | `todo`    | component-audit-checklist.md | 5        | C0           |
+| C8.3 ai 增强族（ai-prompts/ai-suggestions/ai-voice-input/ai-welcome）                                                                   | `todo`    | component-audit-checklist.md | 4        | C0           |
+| C9 scheduling 族（gantt/kanban/calendar/barcode-input）                                                                                 | `todo`    | component-audit-checklist.md | 4        | C0           |
+| CR. 跨族集中修复与裁决（**剩余** shared 缺陷（C\* 已通过 CX-n 处理的除外）、C 阶段 deferred P1、各审计卡 P2 backlog、机制落地后复验项） | `todo`    | component-audit-checklist.md | —        | 全部 C\*     |
+| CV. 全量验证（typecheck/build/lint/test + e2e full-green + 回归）                                                                       | `todo`    | component-audit-checklist.md | —        | CR           |
+| CG. Guard 沉淀（审计卡汇总索引、lessons、checklist v2、工具脚本升级）                                                                   | `todo`    | component-audit-checklist.md | —        | CV           |
 
-> 组件合计 **112** 个注册组件（basic 16 / content 19 / data 8 / layout 7 / form 20 / form-advanced 19 / mobile 5 / ai 14 / scheduling 4）。两个非注册项说明：`input-suggest` 是 input-text 的 `suggestSource` 子特性（`renderers/input-suggest.tsx` 为 hook，非注册 type），随 C2.2 一并审查；`button-group-select` 渲染器与测试存在但**未注册**进 `formRendererDefinitions`（WIP，其 DOM 契约测试 5/5 失败），C2.3 审计时以注册定义为准记录其状态。C0 与注册定义核对后，任何差异以注册为准并回写本表。**执行中发现共性缺陷模式时，插入的「共性重构」work item 使用 `CX-n` 编号**（见「自动修复机制」§7），插入时同步更新本表、依赖图与计数说明。
+> 组件合计 **113** 个注册组件（basic 16 / content 19 / data 8 / layout 7 / form 21 / form-advanced 19 / mobile 5 / ai 14 / scheduling 4）——C0 已与 live 注册定义核对（2026-08-02，逐包定义文件 + 运行时 registry 枚举，证据见 `docs/logs/2026/08-02.md` C0 记录）。一个非注册项说明：`input-suggest` 是 input-text 的 `suggestSource` 子特性（`renderers/input-suggest.tsx` 为 hook，非注册 type），随 C2.2 一并审查。`button-group-select` 已于 2026-08-02 mission-driver 注册（`flux-renderers-form/src/renderers/input.tsx:639`，fields: options/multiple/direction/dict，见 `docs/logs/2026/08-02.md`），随 C2.3 一并审查（其 DOM 契约测试已在 C0 基线全绿）。C0 与注册定义核对后，任何差异以注册为准并回写本表。**执行中发现共性缺陷模式时，插入的「共性重构」work item 使用 `CX-n` 编号**（见「自动修复机制」§7），插入时同步更新本表、依赖图与计数说明。
 
 ## 框架/平台复用
 
@@ -82,10 +82,19 @@
 
 ## 当前基线
 
-- **最后记录的全绿快照**：2026-07-28（audit-remediation MV/MG 收尾，`pnpm typecheck` 58/58、`pnpm build` 31/31、`pnpm lint` 31/31、`pnpm test` 58/58 全绿；见 `docs/context/project-context.md`）。
-- **当前树（2026-08-02，含未提交 WIP）已知红项（已实测）**：`flux-renderers-form` 包 29 失败 / 6 文件——`field-controls-dom-contract.test.tsx`（6）与 `button-group-select-dom-contract.test.tsx`（5）为**未提交**的新 DOM 契约测试（验证 08-01 契约落地，属 WIP）；`form-renderer-lifecycle.test.tsx`（9）、`slot-classname.test.tsx`（2）、`form-loadaction.test.tsx`（5）、`form-init-inflight-race.test.tsx`（2）含**已提交代码上的真实回归**（如 `form.tsx:523` 调用 `ownedForm.setRefreshHandler`，与 form-runtime 实例不匹配）。E2E 侧有 3 个未提交新 spec + 1 个修改（`tests/e2e/component-lab/`）。**C0 重跑全量基线并回写本节与 `docs/context/project-context.md`**（该文件仍标 "production-green"，属过期表述）；后续 work item 的验证门禁以"C0 后基线"为准。
+> **C0 后基线（2026-08-02 C0 全量重跑实测，本表权威基线；后续 work item 的验证门禁以此为参照）。** 历史快照：2026-07-28 audit-remediation MV/MG 收尾全绿（`pnpm typecheck` 58/58、`pnpm build` 31/31、`pnpm lint` 31/31、`pnpm test` 58/58，见 `docs/context/project-context.md` 历史段）。
+
+- **单元基线（C0 实测 2026-08-02）**：`pnpm typecheck` 31/31、`pnpm build` 31/31、`pnpm lint` 31/31、`pnpm test` 58/58 全部成功（含 flux-compiler 531、flux-renderers-form 643、flux-renderers-ai 474、nop-debugger 125 等；`button-group-select` DOM 契约测试 5 条与 field-controls DOM 契约 28/28 全绿——2026-08-02 mission-driver 注册后已归零）。**unit 层全绿**。
+- **E2E 基线（C0 实测 2026-08-02）**：`pnpm test:e2e` 全量 **770 passed / 43 skipped / 9 failed**。9 个失败与 2026-08-02 mission-driver 提交后基线逐项一致（同一 spec/测试名/类别），均为 mission 未触及包，**未达 full-green**：
+  - `ai-chat.spec.ts` ai-bubble 渲染 timestamp（ai 包）→ successor: C8.1
+  - `ai-rich-text-sender.spec.ts` ×5 Tiptap 编辑面/模板/mention/slash 命令/提交（ai 包）→ successor: C8.1
+  - `calendar-demo.spec.ts` 日历导航按钮（scheduling 包）→ successor: C9
+  - `diff-perf.spec.ts` 首屏渲染 <200ms 阈值（content 包，机器相关阈值）→ successor: CV/专项（需评估阈值与机器基线）
+  - `input-suggest.spec.ts` suggest 选择写回值（form 包 input-text suggestSource 子特性，popover 稳定性）→ successor: C2.2
+- **e2e pre-existing 9 失败裁定（C0 决策，watch-only residual）**：逐项与 HEAD 基线 stash 对比复现一致（2026-08-02 mission-driver 已核），均为 mission 未触及包；C0 不阻塞、不修复，归属 successor（C8.1/C9/C2.2/CV 专项），详见 `docs/plans/2026-08-02-2043-1-c0-orchestration-baseline.md` Deferred But Adjudicated 节。
+- **保护区域地图与授权边界（C0 记录，来源 `docs/context/ai-autonomy-policy.md` Protected Areas 表 + `missions/component-audit.json` description）**：mission 已授权**全部保护区域**的代码变更——`packages/flux-core/src/`（`plan-first`，已获 mission 授权）、Schema/contract validation（`plan-first`，已授权）、`packages/ui/src/index.ts` 公共组件导出（`ask-first`，mission 授权范围内但仍需理由）、Renderer 定义 fields（`plan-first`，已授权）、样式契约（`plan-first`，已授权）；`@nop-chaos/ui` 公共导出变更维持 `ask-first`（须先说明理由）；**结构性重构**（公共 API、包边界、编译期机制）执行前仍需人工确认；P0/P1 自动修复、审计与修复之间无人工握手（roadmap「自动修复机制」§1）。
 - **已知组件级缺陷样本**（证明逐组件审计必要性）：`combobox-item` 无 `data-value`（`select-combobox-lists.tsx:63`，DOM 契约测试冻结该缺口）；CRUD 行内 dropdown-button 嵌套 openDialog 提交旧值（行 scope 污染，`nested-schema-field-classification` plan 修复中）；dialog 表单真实浏览器输入不更新 store（bug 73，单测绿但真机失败）。
-- **组件清单**：112 个注册组件（9 包：basic 16 / content 19 / data 8 / layout 7 / form 20 / form-advanced 19 / mobile 5 / ai 14 / scheduling 4），见 Work Item Status 逐项列示；C0 与注册定义核对后回写本表。
+- **组件清单**：113 个注册组件（9 包：basic 16 / content 19 / data 8 / layout 7 / form 21 / form-advanced 19 / mobile 5 / ai 14 / scheduling 4），见 Work Item Status 逐项列示；C0 已与注册定义核对（逐包定义文件 + 运行时 registry 枚举），差异（form 20→21 计入 button-group-select）已回写本表。
 - **已知结论保留**：mobile/ai/scheduling 已有多轮密集审计（P0/P1 已闭包），本轮的增量价值在"组件级卡 + 组合宿主场景 + 契约维度回填"，不重跑其全量维度；`deep-audit-prompts.md` 已覆盖维度直接复用。
 
 ## 上轮审计的遗漏分析（Gap Analysis）
@@ -127,7 +136,7 @@
 
 ### C2.x — form 族
 
-- shell（form/fieldset + hidden-field 策略）+ 文本输入 5 + 选择控件 5 + 日期 7 + markdown-editor。`input-suggest`（input-text 的 suggestSource 子特性）随 C2.2 审查；`button-group-select`（未注册 WIP）在 C2.3 记录注册状态。重点：field metadata、校验参与、三态值所有权、受控 echo、DOM 契约（data-field/data-renderer/data-value/testid）、select 远程搜索异步生命周期。
+- shell（form/fieldset + hidden-field 策略）+ 文本输入 5 + 选择控件 6（含已注册的 button-group-select）+ 日期 7 + markdown-editor。`input-suggest`（input-text 的 suggestSource 子特性）随 C2.2 审查；`button-group-select` 已注册（`input.tsx:639`，DOM 契约测试全绿）随 C2.3 审查。重点：field metadata、校验参与、三态值所有权、受控 echo、DOM 契约（data-field/data-renderer/data-value/testid）、select 远程搜索异步生命周期。
 
 ### C3.x — form-advanced 族
 
