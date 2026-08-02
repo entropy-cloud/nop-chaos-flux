@@ -81,7 +81,43 @@ export function explainNodeFailure(args: {
             (event.group === 'api' && (event.level === 'error' || event.kind === 'api:abort')),
         );
 
-  const anchor = directAnchor ?? traceAnchor;
+  // When the node's most recent action interaction succeeded (e.g. a retry
+  // after an earlier aborted request), fall back to scanning the node's action
+  // events for the latest interaction that actually carries failure evidence,
+  // so the explanation anchors on the failed attempt instead of 'unknown'.
+  const failedActionTraceAnchor =
+    (traceAnchor || directAnchor || !inspect
+      ? undefined
+      : args.events
+          .filter(
+            (event) =>
+              event.group === 'action' &&
+              matchesNodeQuery(event, { nodeId: inspect.nodeId, path: inspect.path }),
+          )
+          .map((actionEvent) => ({
+            anchor: buildInteractionTrace(args.events, {
+              inferFromLatest: false,
+              interactionId: actionEvent.interactionId,
+              requestInstanceId: actionEvent.requestInstanceId,
+              requestKey: actionEvent.requestKey,
+              actionType: actionEvent.actionType,
+              nodeId: inspect.nodeId,
+              path: inspect.path,
+              mode: 'related',
+              limit: MAX_RELATED_EVENTS,
+            }).matchedEvents.find(
+              (event) =>
+                event.group === 'error' ||
+                (event.group === 'api' &&
+                  (event.level === 'error' || event.kind === 'api:abort')),
+            ),
+            actionEvent,
+          }))
+          .find((entry): entry is { anchor: NopDebugEvent; actionEvent: NopDebugEvent } =>
+            Boolean(entry.anchor),
+          )?.anchor) ?? undefined;
+
+  const anchor = directAnchor ?? failedActionTraceAnchor ?? traceAnchor;
 
   if (!anchor) {
     return {

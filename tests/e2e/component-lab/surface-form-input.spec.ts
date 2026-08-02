@@ -11,10 +11,18 @@ test('dialog surface form input keeps typed value under StrictMode', async ({ pa
   await stage.getByRole('button', { name: 'Edit Contact' }).click();
 
   const nameInput = page.getByLabel('Full Name');
+  const emailInput = page.getByLabel('Email');
   await expect(nameInput).toBeVisible();
-  await nameInput.fill('Jane Doe');
 
+  await nameInput.fill('Jane Doe');
+  await emailInput.fill('jane@example.com');
+
+  // Filling email triggers a React re-render (store update → subscription notify).
+  // If the form store didn't capture the name value, the controlled input would
+  // reset to empty during this re-render. Verifying both values proves the store
+  // holds the user's input.
   await expect(nameInput).toHaveValue('Jane Doe');
+  await expect(emailInput).toHaveValue('jane@example.com');
 });
 
 test('drawer surface textarea keeps typed value under StrictMode', async ({ page }) => {

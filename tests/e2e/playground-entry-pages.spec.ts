@@ -407,6 +407,13 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-testid="p4-branches"]')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-testid="p4-linkage"]')).toBeVisible();
   },
+  'ai-rich-text': async (page) => {
+    await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-slot="ai-sender"]')).toBeVisible();
+  },
+  'ai-widgets': async (page) => {
+    await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

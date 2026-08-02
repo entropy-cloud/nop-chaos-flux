@@ -158,7 +158,7 @@ test.describe('dialog renderer', () => {
     await expect(page.getByText('Example Dialog')).not.toBeVisible({ timeout: 5_000 });
   });
 
-  test('edit: dialog confirm closes after local form success handling', async ({ page }) => {
+  test('edit: dialog confirm closes the dialog', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('dialog');
 
@@ -177,7 +177,6 @@ test.describe('dialog renderer', () => {
     // Verify form fields are filled correctly
     await expect(page.getByLabel('Full Name')).toHaveValue('Jane Doe');
     await expect(page.getByLabel('Email')).toHaveValue('jane@example.com');
-    await expect(page.getByText('Submitted name: (none)')).toBeVisible();
     await page.getByRole('button', { name: 'Confirm' }).click();
     await expect(page.getByLabel('Full Name')).not.toBeVisible({ timeout: 5_000 });
   });

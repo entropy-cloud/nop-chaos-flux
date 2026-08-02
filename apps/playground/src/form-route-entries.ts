@@ -147,6 +147,13 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Multi-choice checkbox group; options from schema or async source.',
   },
   {
+    id: 'button-group-select',
+    title: 'Button Group Select',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'Button-styled single/multiple select field (AMIS button-group-select).',
+  },
+  {
     id: 'input-tree',
     title: 'Input Tree',
     category: 'form',
