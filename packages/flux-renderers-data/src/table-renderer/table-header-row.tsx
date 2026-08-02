@@ -104,7 +104,15 @@ function renderLeafHeaderCell(
     (column.filterable === true || Boolean(filterConfig)) &&
     Array.isArray(filterOptions) &&
     filterOptions.length > 0;
-  const isSearchable = column.searchable === true || Boolean(filterConfig?.searchable);
+  const searchableRegionKey = (column as { searchableRegionKey?: string }).searchableRegionKey;
+  const searchableRegion =
+    typeof searchableRegionKey === 'string'
+      ? rendererProps.regions[searchableRegionKey]
+      : undefined;
+  const isSearchable =
+    column.searchable === true ||
+    Boolean(filterConfig?.searchable) ||
+    typeof searchableRegionKey === 'string';
   const activeSortEntry = column.name
     ? leafCtx.activeSortEntries.find((entry) => entry.column === column.name)
     : undefined;
@@ -215,23 +223,27 @@ function renderLeafHeaderCell(
               <DropdownMenuContent>
                 {isSearchable && column.name ? (
                   <div className="p-2">
-                    <Input
-                      value={currentKeyword}
-                      aria-label={
-                        columnLabelText
-                          ? `${t('flux.table.search')} ${columnLabelText}`
-                          : t('flux.table.search')
-                      }
-                      placeholder={
-                        typeof column.searchable === 'object' && column.searchable
-                          ? String(
-                              (column.searchable as { placeholder?: string }).placeholder ??
-                                t('flux.table.search'),
-                            )
-                          : t('flux.table.search')
-                      }
-                      onChange={(event) => onSearch(column.name!, event.target.value)}
-                    />
+                    {searchableRegion ? (
+                      asReactNode(searchableRegion.render())
+                    ) : (
+                      <Input
+                        value={currentKeyword}
+                        aria-label={
+                          columnLabelText
+                            ? `${t('flux.table.search')} ${columnLabelText}`
+                            : t('flux.table.search')
+                        }
+                        placeholder={
+                          typeof column.searchable === 'object' && column.searchable
+                            ? String(
+                                (column.searchable as { placeholder?: string }).placeholder ??
+                                  t('flux.table.search'),
+                              )
+                            : t('flux.table.search')
+                        }
+                        onChange={(event) => onSearch(column.name!, event.target.value)}
+                      />
+                    )}
                   </div>
                 ) : null}
                 {isFilterable

@@ -71,4 +71,52 @@ describe('CRUD renderer header forwarding', () => {
       expect(screen.getByText('Beta')).toBeTruthy();
     });
   });
+
+  it('renders SchemaInput searchable columns through the region path (searchableRegionKey)', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-header-searchable-region"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              rowKey: 'id',
+              source: [
+                { id: '1', name: 'Alpha', owner: 'Alice' },
+                { id: '2', name: 'Beta', owner: 'Bob' },
+              ],
+              columns: [
+                {
+                  name: 'name',
+                  label: 'Name',
+                  searchable: {
+                    type: 'text',
+                    text: 'region-search-ui',
+                  },
+                } as never,
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getAllByRole('button', { name: t('flux.table.filter') })[0] as HTMLElement,
+    );
+    const searchPopup = document.querySelector(
+      '[data-slot="dropdown-menu-content"]',
+    ) as HTMLElement | null;
+    expect(searchPopup).toBeTruthy();
+
+    // The region-ized searchable renders its schema content (region rendering
+    // path) instead of the built-in placeholder Input.
+    expect(within(searchPopup!).getByText('region-search-ui')).toBeTruthy();
+  });
 });
