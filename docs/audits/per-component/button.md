@@ -1,0 +1,57 @@
+# 审计卡：button（flux-renderers-basic）
+
+> 状态: closed
+> 审查日期: 2026-08-03
+> 审查 plan: `docs/plans/2026-08-03-0105-1-c1-3-basic-atomic-display-family-audit.md`
+> 注册定义: `packages/flux-renderers-basic/src/basic-renderer-definitions.ts:169` | 渲染器: `packages/flux-renderers-basic/src/button.tsx:60` | design.md: `docs/components/button/design.md` | playground: `apps/playground/src/component-lab/renderers/button-lab-page.tsx` | e2e: `tests/e2e/component-lab/action-logic.spec.ts`
+
+## 组件身份
+
+button / flux-renderers-basic / ButtonSchema（`schemas.ts:222-248`）/ `{type:'button', label:'Button'}` / 表单参与: 否（trigger，`instance-renderer` + `trigger` trait + focus handle）/ widget 交互 renderer（自样式，无 nop- marker——design.md §10 显式裁定复用 shadcn/ui）
+
+## 18 维审查记录
+
+| #   | 维度                        | 结论 | 证据                                                                                                                                                                                                                                                                                                     | 发现                                                                                                   |
+| --- | --------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1   | Schema 契约                 | fail | 定义 `basic-renderer-definitions.ts:292-307` fields 缺 `label`/`variant`/`size`（schemas.ts:224-226 已声明，propContracts :176-217 已有 editor 契约）——closed model strict 下 unknown-property（与 C1.1 container P2-1 同类）；defaultSchema 存在（:173）                                                | **P2-1：fields 清单不全（label/variant/size）**                                                        |
+| 2   | RendererComponentProps 合规 | pass | `button.tsx:60-266` 仅读 props.props/meta/events；disabled 经 meta 程序求值后投影进 props（`flux-runtime/src/node-runtime.ts:283-315`，B1 测试锁定）；无直接 store 访问                                                                                                                                  | —                                                                                                      |
+| 3   | 值所有权三态                | n-a  | 无值语义（design.md §7 不建 owner state；loading 显式 owner 控制）                                                                                                                                                                                                                                       | —                                                                                                      |
+| 4   | 表单参与                    | n-a  | 非表单字段（trigger）                                                                                                                                                                                                                                                                                    | —                                                                                                      |
+| 5   | DOM 与选择器契约            | pass | shadcn/ui Button `data-slot="button"`（widget-markers-contract.test.tsx:8-27 冻结"无 nop- marker"契约，design.md §10 一致）；data-testid/data-cid（:218-219）；data-active/aria-pressed（:220-221）；data-tooltip 镜像（:222）；data-countdown（:223）；图标 data-icon（:33）                            | —                                                                                                      |
+| 6   | 嵌套 schema 分类            | pass | onClick 为 `event` 字段（:295）；内嵌 action 走事件编译模板保持；无 deepFields 残留                                                                                                                                                                                                                      | —                                                                                                      |
+| 7   | 事件与 action 契约          | pass | `props.events.onClick?.(event)`（:210）→ dispatch 经 `createNormalizedActionEvent`（`flux-react/src/renderer-helpers.ts:47-61`）payload `{...event, type:'custom'}` 保留 nativeEvent/currentTarget/target，与 eventContracts（:268-283）一致；action args 模板保持（编译期）                             | —                                                                                                      |
+| 8   | a11y                        | pass | 原生 `<button>` 键盘路径完整；focus handle（:191-199）；disabled/loading/countdown 生效时 `disabled` 属性（:244）；active aria-pressed；icon aria-hidden；href 模式无 aria-disabled（disabled 时仅拦 onClick，锚点仍可被修饰键导航——非阻断，见 P3）                                                      | —                                                                                                      |
+| 9   | i18n                        | pass | 无硬编码文案（label/tooltip/countDownTpl 均 schema 驱动；`{timeLeft}` token 为格式模板）                                                                                                                                                                                                                 | —                                                                                                      |
+| 10  | 四态覆盖                    | pass | 空 label 渲染空按钮不崩溃（:202）；loading 强制 disabled + Spinner（button-enhancements.test.tsx:56-117）；disabled；无错误态（n-a）                                                                                                                                                                     | —                                                                                                      |
+| 11  | 异步生命周期                | fail | `void handleClick(event)`（:232,:245）未 catch dispatch rejection——button 设计注释自述"action runtime 会 reject on error"（:207-209），失败路径产生 unhandled promise rejection（仅 console 噪音，行为正确：countdown 不启动）                                                                           | **P2-2：onClick action 失败路径未处理 rejection**（Phase 2 实测确认后修复）                            |
+| 12  | 组合宿主场景                | pass | action-logic.spec.ts button 2 用例（变体/计数器回显）；button 在 dialog/form 内触发 action 提交（C1.1 host surface 已覆盖 tabs 内 button；本族 Phase 3 补 host-button-act 专项）                                                                                                                         | 宿主场景缺"action 成功→countdown 启动/失败→不启动"真机断言（Phase 3）                                  |
+| 13  | 样式契约                    | pass | widget 自样式；`cn()` 合并（:182-186）；block w-full/mobile min-h-11 为 schema 驱动类；无 BEM；`check:audit-styling-suspects` 无本组件命中（C0 基线 142 无新增）                                                                                                                                         | —                                                                                                      |
+| 14  | React 19 规范               | pass | countdown 用 useState/useEffect/useRef（timer 外部同步合理，cleanup :152）；lazy init 恢复（:92-108）；无冗余 memo/callback                                                                                                                                                                              | —                                                                                                      |
+| 15  | 性能边界                    | pass | interval 250ms 单按钮级；localStorage 仅在 id/name 存在时读写；unmount cleanup（button-count-down.test.tsx:196-211）                                                                                                                                                                                     | —                                                                                                      |
+| 16  | 测试质量                    | pass | button-enhancements/button-count-down/button-href/button-tooltip-placement/button-touch-adaptation/component-handles-button 覆盖正确行为断言；B1 disabled-expr/B3 label 忠实渲染锚（button-enhancements.test.tsx:217-266）                                                                               | —                                                                                                      |
+| 17  | 文档对照                    | fail | design.md §2 countDown 行声明"localStorage 耦合已解决"并持久化（P0-1 修复后需同步为 host 注入 adapter 语义）；其余字段/行为与实现一致；quick-reference 无组件级词条（n-a）；flux-guide/flux-types ButtonSchema 与 schemas.ts 基本一致（label 继承 BaseSchema）                                           | —                                                                                                      |
+| 18  | 注册、包边界与 IO/安全红线  | fail | **INV-1 违反**：`button.tsx:95,99,115,143,167-170` 直调 `localStorage`（renderer-env.md §6.1 硬红线；new-renderer-introduction-audit.md:145 checklist 明列）；架构裁决本地持久化走 B 档 host 注入 adapter（renderer-env.md §9:322）；href 无 URL 协议校验（link renderer 亦然，无 house pattern，归 CR） | **P0-1：countDown 直调 localStorage（INV-1 env IO 边界违反）**；P2-3（shared）: href 协议校验缺失归 CR |
+
+## 发现清单
+
+- [P0-1] countDown 持久化直调 `localStorage`（`button.tsx:95,99,115,143,167-170`）——INV-1 硬红线违反 → 状态: fixed（host 注入 adapter，见修复记录）
+- [P2-1] definition `fields` 缺 `label`/`variant`/`size`（`basic-renderer-definitions.ts:292-307`）→ 状态: fixed
+- [P2-2] `void handleClick(event)` 未 catch dispatch rejection（`button.tsx:232,245`）→ 状态: fixed（实测确认 unhandled rejection 真实存在——test-first 测试触发 vitest Unhandled Rejection，修复后消失）
+- [P2-3] href URL 协议校验缺失（`button.tsx:227-232`；与 content `link.tsx` 同源，根因公共）→ 状态: open（shared，归 CR 集中裁决；本 plan 仅记录）
+- [P3-1] href 模式 disabled 时无 aria-disabled、修饰键可导航（`button.tsx:226-237`）——仅记录
+
+## 组合宿主场景（真实浏览器验证）
+
+- 场景: button 触发 action 写 scope → 页面回显（Phase 3，host-button-act，bug 73 模式专项） | 断言: programmatic DOM | 结果: **pass**（c1-3-host-surfaces.spec.ts：Change Name 点击 → name-bound text 'Initial'→'Updated'）
+- 场景: countDown 真机持久化（P0-1 修复后）：lab 页注入 adapter → 点击 → reload → countdown 恢复 | 结果: **pass**（同 spec：点击后 disabled + data-countdown>0；`page.reload()` 后仍 disabled 且恢复值 ≤10——INV-1 合规持久化路径真机证明）
+
+## 修复记录
+
+- test-first 证据: `button-count-down.test.tsx` 重写为 adapter 驱动（persist/不持久化/session-only/恢复/过期清理 5 条新断言，先红后绿）；`button-rejection-path.test.tsx`（新，onClick reject → 无 unhandled rejection + countdown 不启动；resolve → 启动；先红——vitest 捕获 Unhandled Rejection——后绿）；`renderer-contract-smoke.test.ts` +4（badge/icon defaultSchema、badge fields、button fields、countDownStorage field）
+- 实现: `button.tsx` 直调 localStorage 全部替换为 `countDownStorage` adapter（lazy init/恢复 effect/interval 清理/startCountDown 四处，try/catch 兜底）；handleClick 加 try/catch 吞掉 dispatch rejection（action 失败不启动 countdown 语义保留）；`schemas.ts` 新增 `CountDownStorage` 接口 + `countDownStorage?`（SchemaValue 类型，ai-chat engine 同模式）；`basic-renderer-definitions.ts` button fields 补 label/variant/size/countDownStorage
+- 文档: `docs/components/button/design.md` §2 countDown 行同步（adapter 注入 + INV-1）
+- 验证: `pnpm --filter @nop-chaos/flux-renderers-basic typecheck/build/lint/test` 全绿（466 tests）；playground typecheck 绿
+
+## Closure
+
+- 独立 closure audit: pass + 证据: `docs/plans/2026-08-03-0105-1-c1-3-basic-atomic-display-family-audit.md` Closure Audit Evidence（独立子 agent fresh session task `ses_03c655ea6ffeZUBM6m56E4eKJe`，verdict approved，零 Blocker/Major，2 Minor 非阻塞：P2-3 走 CR 后继已登记；卡内行号为审计时点）
