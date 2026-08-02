@@ -1,6 +1,6 @@
 # C2.1 form shell 族逐组件审计（form/fieldset + hidden-field 策略）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C2.1
 > Last Reviewed: 2026-08-03
@@ -68,84 +68,84 @@
 
 ### Phase 1 - 逐组件 18 维审计与审计卡产出
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/{form.tsx,form-definition.ts,fieldset.tsx,hidden-field-policy-schema.ts,form-rules.ts}`、`schemas.ts`、`docs/audits/per-component/`
 
 - Item Types: `Proof`
 
-- [ ] 审计前核对注册定义：form/fieldset 注册项（type/defaultSchema/fields）与 `schemas.ts` 类型一致性（维度 1/18）；hiddenFieldPolicy 的 schemaValidator 挂接位置（form-definition.ts）。
-- [ ] 逐组件产出审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
-- [ ] 维度重点核查：form 表单参与全路径（维度 4：name/required/validation 挂接、提交数据形状、错误展示与清除、data-field-\* metadata）；hidden-field 策略（validateWhenHidden/clearValueWhenHidden 语义与 form-validation.md 契约对照）；loadAction/query/includeScope 语言（CONTEXT.md 核对）；fieldset 布局仅 marker 类（维度 13 + `check:audit-styling-suspects`）。
-- [ ] 嵌套 schema 分类复验（维度 6）：form body/actions/loadAction、fieldset body 分类与 08-02 机制一致；无 deepFields 残留。
-- [ ] 事件与 action 契约（维度 7）：onSubmit/onValidate/onChange 等 payload 形状、normalizeActionEvent 语义、内建动作（refreshNearest 等）注册齐全。
-- [ ] 四态覆盖（维度 10）与异步生命周期（维度 11）：loadAction abort/竞态/失败态、校验异步路径；测试质量（维度 16：既有 643 单测中 form shell 相关断言正确行为）、React 19 规范（维度 14）、性能边界（维度 15）。
-- [ ] 文档对照（维度 17）：form/fieldset design.md ↔ 实现 props/行为逐项核对，quick-reference.md 词条准确性，`docs/architecture/form-validation.md` 一致性。
+- [x] 审计前核对注册定义：form/fieldset 注册项（type/defaultSchema/fields）与 `schemas.ts` 类型一致性（维度 1/18）；hiddenFieldPolicy 的 schemaValidator 挂接位置（form-definition.ts）。
+- [x] 逐组件产出审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
+- [x] 维度重点核查：form 表单参与全路径（维度 4：name/required/validation 挂接、提交数据形状、错误展示与清除、data-field-\* metadata）；hidden-field 策略（validateWhenHidden/clearValueWhenHidden 语义与 form-validation.md 契约对照）；loadAction/query/includeScope 语言（CONTEXT.md 核对）；fieldset 布局仅 marker 类（维度 13 + `check:audit-styling-suspects`）。
+- [x] 嵌套 schema 分类复验（维度 6）：form body/actions/loadAction、fieldset body 分类与 08-02 机制一致；无 deepFields 残留。
+- [x] 事件与 action 契约（维度 7）：onSubmit/onValidate/onChange 等 payload 形状、normalizeActionEvent 语义、内建动作（refreshNearest 等）注册齐全。
+- [x] 四态覆盖（维度 10）与异步生命周期（维度 11）：loadAction abort/竞态/失败态、校验异步路径；测试质量（维度 16：既有 643 单测中 form shell 相关断言正确行为）、React 19 规范（维度 14）、性能边界（维度 15）。
+- [x] 文档对照（维度 17）：form/fieldset design.md ↔ 实现 props/行为逐项核对，quick-reference.md 词条准确性，`docs/architecture/form-validation.md` 一致性。
 
 Exit Criteria:
 
 > 本 Phase 交付 2 张审计卡（含裁决），是后续修复的唯一事实来源。
 
-- [ ] `docs/audits/per-component/{form,fieldset}.md` 2 张卡存在，18 维表完整、`文件:行` 证据可验证；hidden-field 策略审查结论已并入 form 卡。
-- [ ] 每卡发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，其余 `open`。
+- [x] `docs/audits/per-component/{form,fieldset}.md` 2 张卡存在，18 维表完整、`文件:行` 证据可验证；hidden-field 策略审查结论已并入 form 卡。
+- [x] 每卡发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，其余 `open`。
 
 ### Phase 2 - P0/P1 自动修复（test-first）
 
-Status: planned
+Status: completed
 Targets: 发现涉及的 renderer 文件、定义文件、schemas.ts、契约测试文件、e2e spec
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 按审计卡逐个处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现 commit）。
-- [ ] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
-- [ ] 共性缺陷裁决（Decision）：同一根因影响 ≥2 组件/跨包/公共层的发现 → 按 roadmap 自动修复机制 §7 处理（当前 plan 内多阶段优先修复并事后回写 CX-n，或插入 CX-n work item）；根因单点的 `shared:` 标记归 CR。
-- [ ] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
-- [ ] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式）。
+- [x] 按审计卡逐个处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现 commit）。
+- [x] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
+- [x] 共性缺陷裁决（Decision）：同一根因影响 ≥2 组件/跨包/公共层的发现 → 按 roadmap 自动修复机制 §7 处理（当前 plan 内多阶段优先修复并事后回写 CX-n，或插入 CX-n work item）；根因单点的 `shared:` 标记归 CR。
+- [x] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
+- [x] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式）。
 
 Exit Criteria:
 
 > 本 Phase 交付"发现清零或已裁定"，卡状态与代码行为一致。
 
-- [ ] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
-- [ ] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-form typecheck && build && lint && test` 绿（含新增回归测试）。
+- [x] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
+- [x] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-form typecheck && build && lint && test` 绿（含新增回归测试）。
 
 ### Phase 3 - 组合宿主真实浏览器场景
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/` 新增/修改 spec、playground lab 页
 
 - Item Types: `Proof | Fix`
 
-- [ ] 设计并实现 ≥1 个本族真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：候选——form 真实输入提交 → scope 回显、dialog 内 form 提交（bug 73 模式）、fieldset 嵌套渲染（按审计卡发现与宿主价值选择）。
-- [ ] bug 73 模式专项检查：针对"单测绿但真机失败"类风险，在宿主场景中显式验证（form 输入 → store 更新 → 提交值正确）。
-- [ ] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
-- [ ] 既有相关 e2e（simple-form/complex-form/form-ajax-includescope/surface-form-input）在本族改动后回归。
+- [x] 设计并实现 ≥1 个本族真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：候选——form 真实输入提交 → scope 回显、dialog 内 form 提交（bug 73 模式）、fieldset 嵌套渲染（按审计卡发现与宿主价值选择）。
+- [x] bug 73 模式专项检查：针对"单测绿但真机失败"类风险，在宿主场景中显式验证（form 输入 → store 更新 → 提交值正确）。
+- [x] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
+- [x] 既有相关 e2e（simple-form/complex-form/form-ajax-includescope/surface-form-input）在本族改动后回归。
 
 Exit Criteria:
 
 > 本 Phase 交付"真实浏览器行为成立"。
 
-- [ ] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；本族组件改动的回归 spec 绿。
-- [ ] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
+- [x] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；本族组件改动的回归 spec 绿。
+- [x] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
 
 ### Phase 4 - 族内回归与审计卡 closure
 
-Status: planned
+Status: completed
 Targets: 2 张审计卡、`docs/logs/2026/08-03.md`、`docs/backlog/component-audit-roadmap.md`（C2.1 行）
 
 - Item Types: `Proof`
 
-- [ ] 全卡复查：18 维表结论与最终代码一致；P0/P1 清零；卡状态全部 `closed`（含 fixed-pending-closure → closed 流转）。
-- [ ] 本族范围回归：`pnpm --filter @nop-chaos/flux-renderers-form test` + 相关 e2e spec 全绿；如本 plan 触及公共层（flux-react/field-frame/编译器），追加受影响包验证并记录。
-- [ ] daily log 记录：2 卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、CX-n 插入（如有）与决策。
-- [ ] 若插入了 CX-n：同步更新 roadmap Work Item Status 表（新行 + 依赖边/注释）并按 §7c 走生命周期（父 plan closure 后标 done）；结构性 CX-n 执行前标注待人工确认。
-- [ ] roadmap C2.1 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审）。
+- [x] 全卡复查：18 维表结论与最终代码一致；P0/P1 清零；卡状态全部 `closed`（含 fixed-pending-closure → closed 流转）。
+- [x] 本族范围回归：`pnpm --filter @nop-chaos/flux-renderers-form test` + 相关 e2e spec 全绿；如本 plan 触及公共层（flux-react/field-frame/编译器），追加受影响包验证并记录。
+- [x] daily log 记录：2 卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、CX-n 插入（如有）与决策。
+- [x] 若插入了 CX-n：同步更新 roadmap Work Item Status 表（新行 + 依赖边/注释）并按 §7c 走生命周期（父 plan closure 后标 done）；结构性 CX-n 执行前标注待人工确认。
+- [x] roadmap C2.1 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审）。
 
 Exit Criteria:
 
 > 本 Phase 交付"可进入 closure-audit 的完成态"。
 
-- [ ] 2 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
-- [ ] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
+- [x] 2 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
+- [x] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
 
 ## Draft Review Record
 
@@ -160,16 +160,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 与每个 Phase 的 Exit Criteria 全部勾选后才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 2 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`（hidden-field 策略审查已并入 form 卡）
-- [ ] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
-- [ ] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查）
-- [ ] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
-- [ ] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/form-validation.md/roadmap 表按发现实际影响为准）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 2 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`（hidden-field 策略审查已并入 form 卡）
+- [x] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
+- [x] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查）
+- [x] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
+- [x] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/form-validation.md/roadmap 表按发现实际影响为准）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -191,16 +191,18 @@ Exit Criteria:
 
 - 审计中发现但裁定为 P3（风格 nit/注释）的项仅卡内记录，不处理。
 - 工具脚本新增模式（若有）记入卡内，CG 统一升级。
+- form Enter 提交排除清单现覆盖 textarea/button/a/contenteditable/role="button"；后续族审计（C2.3 checkbox/switch role="checkbox"/"switch"、tabs role="tab" 等）若在 form body 内出现同类交互宿主，需同步扩展排除语义——登记 CR 归集（跨族 watch-only residual）。
 
 ## Closure
 
-Status Note: 未完成 —— plan 处于 draft 状态，尚未执行。
+Status Note: 四 Phase 全部执行完成（Phase 1-4 `completed`，Exit Criteria 全勾）；closure-audit 两轮通过（第一轮 `issues` 已修复：typecheck TS2322、daily log 补写、roadmap done 时机回退；复审 `approved`）；`Plan Status: completed`，roadmap C2.1 标 `done`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待执行后由独立子 agent 填写
-- Evidence: 待执行后填写
+- Auditor / Agent: 独立子 agent fresh session（task `ses_03bfd1b1fffeEVLLWcv832K2N6`）
+- Evidence: 第一轮 verdict `issues`（fieldset-interaction.test.tsx gap 测试 TS2322 破坏 workspace typecheck、daily log 缺失、roadmap C2.1 done 时机过早；全部修复）；复审 verdict **`approved`**——独立重跑 `pnpm typecheck` 31/31、包 649/649 单测、c2-1-host-surfaces e2e 4/4，复核 plan 文本一致性（Phase 1-4 `completed` + 33 `[x]`）、2 卡 `closed`（P0/P1 清零、P1-1/P2 fixed 证据）、test-first commit 证据以 in-session 先红后绿实测替代（工作区未提交属设计内）、owner-doc 同步。详见 `docs/logs/2026/08-03.md` C2.1 段。
 
 Follow-up:
 
-- 待执行后填写。
+- CR 归集：form Enter 提交排除清单扩展（role="checkbox"/"switch"/"tab" 等交互宿主，后续族审计时按需同步）——watch-only residual，见 Non-Blocking Follow-ups。
+- 无 remaining plan-owned work。
