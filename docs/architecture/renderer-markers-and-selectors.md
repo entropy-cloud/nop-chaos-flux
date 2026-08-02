@@ -87,6 +87,20 @@ Do not use root marker classes as a license for renderer component code to injec
 
 Example: `FieldFrame` may emit `nop-field`, `data-slot="field-label"`, and `data-field-invalid`, but renderer component code must not rely on `nop-field` to inject implicit `grid`, `gap-*`, padding, or color styling. Package-owned base CSS may still key default themeable rules off `nop-field` together with slot selectors.
 
+### Field selector contract attributes (stable, host-visible)
+
+Beyond structural `data-slot`, FieldFrame exposes stable, host-visible attributes so downstream consumers (e2e adapters, host integration, AI inspection) can locate a field by name and know its control type without reverse-engineering id/slot/role:
+
+- `data-field={name}` — the field's schema name, on the FieldFrame root (`.nop-field`). Present for every wrapped field regardless of control type; this is the single stable name hook (checkbox/switch interactive elements do NOT carry `${name}-control`).
+- `data-renderer={rendererType}` — the schema control type (e.g. `input-text`, `select`, `checkbox`, `input-number`), sourced from `NodeMetaContext.type` (`templateNode.rendererType`). Emitted only when a `NodeMetaContext` provider is present (production render path); absent when `FieldFrame` is rendered in isolation without a provider.
+
+Companion option/column hooks (not on FieldFrame):
+
+- combobox options: `[data-slot="combobox-item"][data-value={option.value}]` — locate a select option by value. The option's visible text is still `option.label`, not `value`.
+- table cells: `<td data-field={column.name}>` — locate a column cell by field name, replacing fragile column-index arithmetic.
+
+Contract rules: these attributes are production-resident (never debug-gated), additive (existing `data-slot`/`controlId` are unchanged), and frozen by `packages/flux-renderers-form/src/__tests__/field-controls-dom-contract.test.tsx`.
+
 ### Layer 3: Visual classes
 
 Visual styling belongs to:
