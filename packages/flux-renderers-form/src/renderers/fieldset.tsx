@@ -114,9 +114,13 @@ export const fieldsetRendererDefinition: RendererDefinition = {
   defaultSchema: { type: 'fieldset', body: [] },
   component: FieldsetRenderer,
   fields: [
+    { key: 'title', kind: 'prop' },
     { key: 'collapsible', kind: 'prop', valueType: 'boolean' },
     { key: 'collapsed', kind: 'prop', valueType: 'boolean' },
     { key: 'columnCount', kind: 'prop' },
+    { key: 'gap', kind: 'prop' },
     { key: 'body', kind: 'region', regionKey: 'body' },
+    { key: 'bodyClassName', kind: 'prop' },
+    { key: 'titleClassName', kind: 'prop' },
   ],
 };

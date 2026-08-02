@@ -116,6 +116,64 @@ const formWithAjaxSubmit = {
   ],
 };
 
+const formWithValuesPath = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      valuesPath: 'ui.formValues',
+      data: { username: '' },
+      submitAction: {
+        action: 'ajax',
+        args: { url: '/api/component-lab/save-form', method: 'post', includeScope: '*' },
+      },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        {
+          type: 'input-text',
+          name: 'username',
+          label: 'Username',
+          placeholder: 'Enter username',
+          required: true,
+        },
+        {
+          type: 'text',
+          text:
+            '${submitted && ui.formValues ? "Echo: " + ui.formValues.username + " (valuesPath) " : ""}',
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
+const formWithClearOnHidden = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      data: { collectSecret: true },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        { type: 'checkbox', name: 'collectSecret', label: 'Collect secret code' },
+        {
+          type: 'input-text',
+          name: 'secretCode',
+          label: 'Secret Code',
+          placeholder: 'Enter secret code',
+          visible: '${collectSecret === true}',
+          hiddenFieldPolicy: { clearValueWhenHidden: true },
+        },
+        {
+          type: 'text',
+          text: '${submitted ? "Done. secretCode=" + secretCode : ""}',
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
 export function FormLabPage() {
   return (
     <MultiScenarioLabPage
@@ -143,6 +201,18 @@ export function FormLabPage() {
           description:
             'Typing into form fields and submitting sends the field values in the ajax request body via includeScope.',
           schema: formWithAjaxSubmit,
+        },
+        {
+          title: 'Submit publishes form values to parent scope (valuesPath)',
+          description:
+            'Real input -> store update -> submit -> valuesPath publishes the committed values into the page scope where an outer text echoes them.',
+          schema: formWithValuesPath,
+        },
+        {
+          title: 'Hidden field with clearValueWhenHidden policy',
+          description:
+            'Typing a secret and unchecking the toggle hides the field; the hiddenFieldPolicy clears its value so the next submit carries no stale secret.',
+          schema: formWithClearOnHidden,
         },
       ]}
     />

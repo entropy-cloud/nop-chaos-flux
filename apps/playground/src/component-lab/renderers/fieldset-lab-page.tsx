@@ -42,6 +42,39 @@ const collapsibleFieldset = {
   ],
 };
 
+const collapsibleFieldsetWithSubmit = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      data: { username: '', token: '' },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        {
+          type: 'fieldset',
+          title: 'Profile',
+          body: [{ type: 'input-text', name: 'username', label: 'Username' }],
+        },
+        {
+          type: 'fieldset',
+          title: 'Advanced Settings',
+          collapsible: true,
+          collapsed: true,
+          body: [
+            { type: 'input-text', name: 'token', label: 'Access Token' },
+            { type: 'textarea', name: 'notes', label: 'Notes' },
+          ],
+        },
+        {
+          type: 'text',
+          text: '${submitted ? "Submitted: " + username + " / " + token : ""}',
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
 export function FieldsetLabPage() {
   return (
     <MultiScenarioLabPage
@@ -58,6 +91,12 @@ export function FieldsetLabPage() {
           description:
             'Fieldsets can also start collapsed and toggle their body visibility through the legend.',
           schema: collapsibleFieldset,
+        },
+        {
+          title: 'Collapsible fieldset inside submitting form',
+          description:
+            'Nested fieldsets group isolated fields; expanding the collapsible legend with Enter must NOT submit the form, and the submitted values echo back.',
+          schema: collapsibleFieldsetWithSubmit,
         },
       ]}
     />

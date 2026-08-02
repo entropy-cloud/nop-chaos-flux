@@ -204,6 +204,21 @@ describe('fieldset collapsible interaction', () => {
     expect(updatedIcon).toBeTruthy();
   });
 
+  it('applies schema gap token to the body region', () => {
+    cleanup();
+    const baseProps = makeProps({ body: [] });
+    const props = {
+      ...baseProps,
+      props: { type: 'fieldset', title: 'Gap Section', gap: 'md', body: [] },
+    } as unknown as RendererComponentProps<FieldsetSchema>;
+
+    render(wrapWithProviders(<FieldsetRenderer {...props} />));
+
+    const body = document.querySelector('[data-slot="fieldset-body"]');
+    expect(body).toBeTruthy();
+    expect(body?.className).toContain('gap-');
+  });
+
   it('does not render collapse icon when collapsible is false', () => {
     cleanup();
     const props = makeProps({
