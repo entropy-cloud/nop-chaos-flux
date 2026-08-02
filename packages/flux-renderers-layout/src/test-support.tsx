@@ -35,6 +35,73 @@ export const buttonRenderer: RendererDefinition = {
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
+const wizardStepsShape = {
+  kind: 'array' as const,
+  item: {
+    kind: 'schema-definition' as const,
+    fieldRules: {
+      title: {
+        kind: 'value-or-region' as const,
+        regionKey: 'titleRegionKey',
+        params: ['step', 'index', 'key'],
+        isolate: false,
+      },
+      body: {
+        kind: 'region' as const,
+        regionKey: 'bodyRegionKey',
+        params: ['step', 'index', 'key'],
+        isolate: false,
+      },
+      actions: {
+        kind: 'region' as const,
+        regionKey: 'actionsRegionKey',
+        params: ['step', 'index', 'key'],
+        isolate: false,
+      },
+      disabled: 'literal' as const,
+      beforeEnter: 'event' as const,
+      beforeLeave: 'event' as const,
+    },
+  },
+};
+
+const gridItemsShape = {
+  kind: 'array' as const,
+  item: {
+    kind: 'schema-definition' as const,
+    fieldRules: {
+      body: {
+        kind: 'region' as const,
+        regionKey: 'bodyRegionKey',
+        params: ['item', 'index', 'key'],
+        isolate: false,
+      },
+    },
+  },
+};
+
+const collapseItemsShape = {
+  kind: 'array' as const,
+  item: {
+    kind: 'schema-definition' as const,
+    fieldRules: {
+      title: {
+        kind: 'value-or-region' as const,
+        regionKey: 'titleRegionKey',
+        params: ['item', 'index', 'key'],
+        isolate: false,
+      },
+      body: {
+        kind: 'region' as const,
+        regionKey: 'bodyRegionKey',
+        params: ['item', 'index', 'key'],
+        isolate: false,
+      },
+      disabled: 'literal' as const,
+    },
+  },
+};
+
 export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
   return createSchemaRenderer([
     pageRenderer,
@@ -48,36 +115,12 @@ export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
       category: 'layout',
       sourcePackage: '@nop-chaos/flux-renderers-layout',
       component: WizardRendererForTest,
-      deepFields: [
-        {
-          key: 'steps',
-          nestedRegions: [
-            {
-              key: 'title',
-              regionKeySuffix: 'title',
-              compiledKey: 'titleRegionKey',
-              params: ['step', 'index', 'key'],
-              isolate: false,
-            },
-            {
-              key: 'body',
-              regionKeySuffix: 'body',
-              compiledKey: 'bodyRegionKey',
-              params: ['step', 'index', 'key'],
-              isolate: false,
-            },
-            {
-              key: 'actions',
-              regionKeySuffix: 'actions',
-              compiledKey: 'actionsRegionKey',
-              params: ['step', 'index', 'key'],
-              isolate: false,
-            },
-          ],
-          booleanKeys: ['disabled'],
-          normalize: wizardStepsNormalize,
+      propContracts: {
+        steps: {
+          shape: wizardStepsShape,
+          displayName: 'Steps',
         },
-      ],
+      },
       fields: [
         { key: 'steps', kind: 'prop' },
         { key: 'value', kind: 'prop' },
@@ -101,21 +144,12 @@ export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
       category: 'layout',
       sourcePackage: '@nop-chaos/flux-renderers-layout',
       component: GridRendererForTest,
-      deepFields: [
-        {
-          key: 'items',
-          nestedRegions: [
-            {
-              key: 'body',
-              regionKeySuffix: 'body',
-              compiledKey: 'bodyRegionKey',
-              params: ['item', 'index', 'key'],
-              isolate: false,
-            },
-          ],
-          normalize: gridItemsNormalize,
+      propContracts: {
+        items: {
+          shape: gridItemsShape,
+          displayName: 'Items',
         },
-      ],
+      },
       fields: [
         { key: 'items', kind: 'prop' },
         { key: 'columns', kind: 'prop' },
@@ -132,29 +166,12 @@ export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
       category: 'layout',
       sourcePackage: '@nop-chaos/flux-renderers-layout',
       component: CollapseRendererForTest,
-      deepFields: [
-        {
-          key: 'items',
-          nestedRegions: [
-            {
-              key: 'title',
-              regionKeySuffix: 'title',
-              compiledKey: 'titleRegionKey',
-              params: ['item', 'index', 'key'],
-              isolate: false,
-            },
-            {
-              key: 'body',
-              regionKeySuffix: 'body',
-              compiledKey: 'bodyRegionKey',
-              params: ['item', 'index', 'key'],
-              isolate: false,
-            },
-          ],
-          booleanKeys: ['disabled'],
-          normalize: collapseItemsNormalize,
+      propContracts: {
+        items: {
+          shape: collapseItemsShape,
+          displayName: 'Items',
         },
-      ],
+      },
       fields: [
         { key: 'items', kind: 'prop' },
         { key: 'value', kind: 'prop' },
@@ -231,7 +248,6 @@ export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
   ]);
 }
 
-import { extractNestedSchemaRegions } from '@nop-chaos/flux-core';
 import { GridRenderer as GridRendererForTest } from './grid-renderer.js';
 import { CollapseRenderer as CollapseRendererForTest } from './collapse-renderer.js';
 import { ButtonGroupRenderer as ButtonGroupRendererForTest } from './button-group-renderer.js';
@@ -239,139 +255,6 @@ import { DropdownButtonRenderer as DropdownButtonRendererForTest } from './dropd
 import { WizardRenderer as WizardRendererForTest } from './wizard-renderer.js';
 import { StepsRenderer as StepsRendererForTest } from './steps-renderer.js';
 import { TimelineRenderer as TimelineRendererForTest } from './timeline-renderer.js';
-
-function wizardStepsNormalize(input: {
-  value: unknown;
-  path: string;
-  regions: Record<string, import('@nop-chaos/flux-core').TemplateRegion>;
-  compileSchema: (
-    schemaInput: import('@nop-chaos/flux-core').SchemaInput,
-    options?: import('@nop-chaos/flux-core').CompileSchemaOptions,
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => import('@nop-chaos/flux-core').TemplateNode | import('@nop-chaos/flux-core').TemplateNode[];
-}) {
-  if (!Array.isArray(input.value)) return input.value;
-  return input.value.map((item, index) => {
-    if (!item || typeof item !== 'object') return item;
-    const normalized = extractNestedSchemaRegions({
-      candidate: item as Record<string, unknown>,
-      itemRegionPath: `${input.path}.steps[${index}]`,
-      itemRegionKeyPrefix: `steps.${index}`,
-      rules: [
-        {
-          key: 'title',
-          regionKeySuffix: 'title',
-          compiledKey: 'titleRegionKey',
-          params: ['step', 'index', 'key'] as readonly string[],
-          isolate: false,
-        },
-        {
-          key: 'body',
-          regionKeySuffix: 'body',
-          compiledKey: 'bodyRegionKey',
-          params: ['step', 'index', 'key'] as readonly string[],
-          isolate: false,
-        },
-        {
-          key: 'actions',
-          regionKeySuffix: 'actions',
-          compiledKey: 'actionsRegionKey',
-          params: ['step', 'index', 'key'] as readonly string[],
-          isolate: false,
-        },
-      ],
-      regions: input.regions,
-      compileSchema: input.compileSchema,
-    }).value as Record<string, unknown>;
-    for (const booleanKey of ['disabled']) {
-      if (normalized[booleanKey] !== undefined) {
-        normalized[booleanKey] = {
-          __nopPreserveLiteral: true,
-          value: normalized[booleanKey] === true,
-        };
-      }
-    }
-    return normalized;
-  });
-}
-
-function gridItemsNormalize(input: {
-  value: unknown;
-  path: string;
-  regions: Record<string, import('@nop-chaos/flux-core').TemplateRegion>;
-  compileSchema: (
-    schemaInput: import('@nop-chaos/flux-core').SchemaInput,
-    options?: import('@nop-chaos/flux-core').CompileSchemaOptions,
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => import('@nop-chaos/flux-core').TemplateNode | import('@nop-chaos/flux-core').TemplateNode[];
-}) {
-  if (!Array.isArray(input.value)) return input.value;
-  return input.value.map((item, index) => {
-    if (!item || typeof item !== 'object') return item;
-    return extractNestedSchemaRegions({
-      candidate: item as Record<string, unknown>,
-      itemRegionPath: `${input.path}.items[${index}]`,
-      itemRegionKeyPrefix: `items.${index}`,
-      rules: [
-        {
-          key: 'body',
-          regionKeySuffix: 'body',
-          compiledKey: 'bodyRegionKey',
-          params: ['item', 'index', 'key'] as readonly string[],
-          isolate: false,
-        },
-      ],
-      regions: input.regions,
-      compileSchema: input.compileSchema,
-    }).value as Record<string, unknown>;
-  });
-}
-
-function collapseItemsNormalize(input: {
-  value: unknown;
-  path: string;
-  regions: Record<string, import('@nop-chaos/flux-core').TemplateRegion>;
-  compileSchema: (
-    schemaInput: import('@nop-chaos/flux-core').SchemaInput,
-    options?: import('@nop-chaos/flux-core').CompileSchemaOptions,
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => import('@nop-chaos/flux-core').TemplateNode | import('@nop-chaos/flux-core').TemplateNode[];
-}) {
-  if (!Array.isArray(input.value)) return input.value;
-  return input.value.map((item, index) => {
-    if (!item || typeof item !== 'object') return item;
-    const normalized = extractNestedSchemaRegions({
-      candidate: item as Record<string, unknown>,
-      itemRegionPath: `${input.path}.items[${index}]`,
-      itemRegionKeyPrefix: `items.${index}`,
-      rules: [
-        {
-          key: 'title',
-          regionKeySuffix: 'title',
-          compiledKey: 'titleRegionKey',
-          params: ['item', 'index', 'key'] as readonly string[],
-          isolate: false,
-        },
-        {
-          key: 'body',
-          regionKeySuffix: 'body',
-          compiledKey: 'bodyRegionKey',
-          params: ['item', 'index', 'key'] as readonly string[],
-          isolate: false,
-        },
-      ],
-      regions: input.regions,
-      compileSchema: input.compileSchema,
-    }).value as Record<string, unknown>;
-    if (normalized.disabled !== undefined) {
-      normalized.disabled = {
-        __nopPreserveLiteral: true,
-        value: normalized.disabled === true,
-      };
-    }
-    return normalized;
-  });
-}
 
 export { env };
 export const formulaCompiler = createFormulaCompiler();

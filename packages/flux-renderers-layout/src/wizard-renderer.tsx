@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { unwrapBooleanLiteral, useCurrentComponentRegistry, useStatusPathPublication } from '@nop-chaos/flux-react';
+import type {
+  ActionSchema,
+  RendererComponentProps,
+  RendererRenderOutput,
+} from '@nop-chaos/flux-core';
+import {
+  unwrapBooleanLiteral,
+  unwrapPreservedLiteral,
+  useCurrentComponentRegistry,
+  useStatusPathPublication,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, XIcon } from 'lucide-react';
@@ -70,6 +79,23 @@ function findStepIndexByKey(steps: WizardStepSchema[], key: string | number): nu
 
 function asReactNode(value: RendererRenderOutput): React.ReactNode {
   return value as React.ReactNode;
+}
+
+/**
+ * Resolve a per-step lifecycle action (beforeEnter/beforeLeave).
+ *
+ * The schema-definition compiler delivers these `event`-kind fields as
+ * `{ __nopPreserveLiteral: true, value }` envelopes (template-preserved so the
+ * action args are never polluted by row/step-scope evaluation at compile
+ * time). Unwrap before dispatch; bare authoring-form actions pass through.
+ */
+function resolveStepLifecycleAction(
+  step: WizardStepSchema,
+  key: 'beforeEnter' | 'beforeLeave',
+): ActionSchema | ActionSchema[] | undefined {
+  const raw = step[key];
+  const unwrapped = unwrapPreservedLiteral(raw);
+  return (unwrapped ?? raw) as ActionSchema | ActionSchema[] | undefined;
 }
 
 /**
@@ -273,7 +299,57 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
 
   // ─────────── Navigation handlers (interaction layer) ───────────
 
-  const goToStep = (targetIndex: number, options?: { skipLinearGate?: boolean }) => {
+  // Per-step lifecycle dispatch (beforeLeave of the current step, then
+  // beforeEnter of the target step). Both run BEFORE the transition; either
+  // returning `{ ok: false }` aborts the navigation (blocking convention
+  // shared with onStepCommit).
+  const runStepTransitionGuards = async (
+    targetIndex: number,
+  ): Promise<boolean> => {
+    const targetStep = steps[targetIndex];
+    if (!targetStep) return false;
+
+    const beforeLeaveAction = currentStep
+      ? resolveStepLifecycleAction(currentStep, 'beforeLeave')
+      : undefined;
+    if (beforeLeaveAction) {
+      const result = await props.helpers.dispatch(beforeLeaveAction, {
+        scope: props.node.scope,
+        evaluationBindings: {
+          currentStepKey,
+          currentStepIndex,
+          targetStepKey: resolveStepKey(targetStep, targetIndex),
+          targetStepIndex: targetIndex,
+        },
+      });
+      if (result && (result as { ok?: boolean }).ok === false) {
+        return false;
+      }
+    }
+
+    const beforeEnterAction = resolveStepLifecycleAction(targetStep, 'beforeEnter');
+    if (beforeEnterAction) {
+      const result = await props.helpers.dispatch(beforeEnterAction, {
+        scope: props.node.scope,
+        evaluationBindings: {
+          targetStepKey: resolveStepKey(targetStep, targetIndex),
+          targetStepIndex: targetIndex,
+          fromStepKey: currentStepKey,
+          fromStepIndex: currentStepIndex,
+        },
+      });
+      if (result && (result as { ok?: boolean }).ok === false) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const goToStep = async (
+    targetIndex: number,
+    options?: { skipLinearGate?: boolean },
+  ) => {
     if (targetIndex < 0 || targetIndex >= stepCount) return;
     if (targetIndex === currentStepIndex) return;
     const skipLinearGate = options?.skipLinearGate === true;
@@ -281,6 +357,11 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       !skipLinearGate &&
       !computeCanGoTo(steps, targetIndex, linear, allowStepJump, furthestReached)
     ) {
+      return;
+    }
+
+    const allowed = await runStepTransitionGuards(targetIndex);
+    if (!allowed) {
       return;
     }
 
@@ -299,24 +380,24 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
     );
   };
 
-  const goNext = () => {
-    if (!canGoNext) return;
+  const goNext = (): Promise<void> => {
+    if (!canGoNext) return Promise.resolve();
     for (let i = currentStepIndex + 1; i < stepCount; i += 1) {
       if (computeCanGoTo(steps, i, linear, allowStepJump, furthestReached)) {
-        goToStep(i);
-        return;
+        return goToStep(i);
       }
     }
+    return Promise.resolve();
   };
 
-  const goPrev = () => {
-    if (!canGoPrev) return;
+  const goPrev = (): Promise<void> => {
+    if (!canGoPrev) return Promise.resolve();
     for (let i = currentStepIndex - 1; i >= 0; i -= 1) {
       if (isStepVisible(steps[i]) && !isStepDisabled(steps[i])) {
-        goToStep(i, { skipLinearGate: true });
-        return;
+        return goToStep(i, { skipLinearGate: true });
       }
     }
+    return Promise.resolve();
   };
 
   // ─────────── Commit handler (lifecycle layer — separated from navigation) ───────────
@@ -415,8 +496,9 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
         return;
       }
 
-      // Advance to next step — interaction layer mutation.
-      goNext();
+      // Advance to next step — interaction layer mutation (awaited so the
+      // beforeLeave/beforeEnter transition guards gate advancement too).
+      await goNext();
     } catch (error) {
       setLifecycle({
         committing: false,
@@ -474,7 +556,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
     const handleStepClick = clickable
       ? (event: React.MouseEvent<HTMLButtonElement>) => {
           event.preventDefault();
-          goToStep(index);
+          void goToStep(index);
         }
       : undefined;
 

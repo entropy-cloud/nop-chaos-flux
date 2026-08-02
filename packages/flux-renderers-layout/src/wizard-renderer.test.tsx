@@ -286,7 +286,7 @@ describe('WizardRenderer (W2a — layered interaction/lifecycle state)', () => {
     expect(wizardRoot().getAttribute('data-current-step-index')).toBe('0');
   });
 
-  it('allows non-linear step jumping when allowStepJump=true', () => {
+  it('allows non-linear step jumping when allowStepJump=true', async () => {
     const SchemaRenderer = createLayoutSchemaRenderer();
     render(
       <SchemaRenderer
@@ -319,7 +319,9 @@ describe('WizardRenderer (W2a — layered interaction/lifecycle state)', () => {
     expect(step2Button.getAttribute('data-reachable')).toBe('true');
 
     fireEvent.click(step2Button);
-    expect(wizardRoot().getAttribute('data-current-step-index')).toBe('2');
+    await waitFor(() =>
+      expect(wizardRoot().getAttribute('data-current-step-index')).toBe('2'),
+    );
   });
 
   it('dispatches onComplete (lifecycle) when the final step is committed', async () => {
@@ -446,5 +448,191 @@ describe('WizardRenderer (W2a — layered interaction/lifecycle state)', () => {
     await waitFor(() =>
       expect(wizardRoot().getAttribute('data-current-step-index')).toBe('2'),
     );
+  });
+
+  it('dispatches per-step beforeLeave/beforeEnter lifecycle actions on navigation (envelope form)', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/wizard-step-lifecycle"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'wizard',
+              allowStepJump: true,
+              steps: [
+                {
+                  title: 'A',
+                  body: [{ type: 'text', text: 'A' }],
+                  beforeLeave: {
+                    action: 'setValue',
+                    args: { path: 'leftA', value: true },
+                  },
+                },
+                {
+                  title: 'B',
+                  body: [{ type: 'text', text: 'B' }],
+                  beforeEnter: {
+                    action: 'setValue',
+                    args: { path: 'enteredB', value: true },
+                  },
+                },
+              ],
+            },
+            { type: 'text', text: 'left:${leftA ? "yes" : "no"}' },
+            { type: 'text', text: 'enter:${enteredB ? "yes" : "no"}' },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(screen.getByText('left:no')).toBeTruthy();
+    expect(screen.getByText('enter:no')).toBeTruthy();
+
+    fireEvent.click(
+      document.querySelector(
+        '[data-slot="wizard-step-nav-button"][data-step-index="1"]',
+      ) as HTMLButtonElement,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('left:yes')).toBeTruthy();
+      expect(screen.getByText('enter:yes')).toBeTruthy();
+      expect(wizardRoot().getAttribute('data-current-step-index')).toBe('1');
+    });
+  });
+
+  it('evaluates beforeEnter args against the live scope at dispatch time (no stale-value pollution)', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/wizard-step-lifecycle-live-scope"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'wizard',
+              allowStepJump: true,
+              steps: [
+                { title: 'A', body: [{ type: 'text', text: 'A' }] },
+                {
+                  title: 'B',
+                  body: [{ type: 'text', text: 'B' }],
+                  beforeEnter: {
+                    action: 'setValue',
+                    args: { path: '${seedPath}', value: true },
+                  },
+                },
+              ],
+            },
+            { type: 'text', text: 'seed:${seedA ? "a" : "?"}' },
+          ],
+        }}
+        data={{ seedPath: 'seedA' }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(
+      document.querySelector(
+        '[data-slot="wizard-step-nav-button"][data-step-index="1"]',
+      ) as HTMLButtonElement,
+    );
+
+    // The ${seedPath} arg resolves at dispatch time from the live scope — the
+    // envelope-preserved action must NOT carry a stale baked value.
+    await waitFor(() => expect(screen.getByText('seed:a')).toBeTruthy());
+  });
+
+  it('blocks navigation when beforeEnter returns {ok:false} (abort convention)', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/wizard-step-lifecycle-block"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'wizard',
+              allowStepJump: true,
+              steps: [
+                { title: 'A', body: [{ type: 'text', text: 'A' }] },
+                {
+                  title: 'B',
+                  body: [{ type: 'text', text: 'B' }],
+                  beforeEnter: { action: 'probe:blockEnter' },
+                },
+              ],
+            },
+            { type: 'text', text: 'blocked:${blockReported ? "yes" : "no"}' },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={(actionScope) => {
+          actionScope?.registerNamespace('probe', {
+            kind: 'host',
+            invoke() {
+              return { ok: false };
+            },
+          });
+        }}
+      />,
+    );
+
+    fireEvent.click(
+      document.querySelector(
+        '[data-slot="wizard-step-nav-button"][data-step-index="1"]',
+      ) as HTMLButtonElement,
+    );
+
+    // Navigation aborted: still on step 0.
+    await waitFor(() =>
+      expect(wizardRoot().getAttribute('data-current-step-index')).toBe('0'),
+    );
+  });
+
+  it('fires beforeLeave when advancing via Next (commit → guard → advance)', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/wizard-step-lifecycle-next"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'wizard',
+              steps: [
+                {
+                  title: 'A',
+                  body: [{ type: 'text', text: 'A' }],
+                  beforeLeave: {
+                    action: 'setValue',
+                    args: { path: 'leftByCommit', value: true },
+                  },
+                },
+                { title: 'B', body: [{ type: 'text', text: 'B' }] },
+              ],
+            },
+            { type: 'text', text: 'left:${leftByCommit ? "yes" : "no"}' },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('wizard-next'));
+    await waitFor(() => {
+      expect(screen.getByText('left:yes')).toBeTruthy();
+      expect(wizardRoot().getAttribute('data-current-step-index')).toBe('1');
+    });
   });
 });
