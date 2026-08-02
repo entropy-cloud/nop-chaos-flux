@@ -37,13 +37,8 @@ export {
 export { reportRuntimeHostIssue } from './utils/runtime-host-reporting.js';
 
 export { createNamedActionProvider } from './named-action-provider.js';
-export {
-  createTemplateRegion,
-  extractNestedSchemaRegions,
-  validateRegionParams,
-  visitNestedSchemaRegions,
-} from './nested-regions.js';
-export type { NestedRegionFieldRule, RegionCompileSchema } from './nested-regions.js';
+export { createTemplateRegion, validateRegionParams } from './nested-regions.js';
+export type { RegionCompileSchema } from './nested-regions.js';
 
 export {
   FAIL_ON_SCHEMA_DIAGNOSTICS_KEY,

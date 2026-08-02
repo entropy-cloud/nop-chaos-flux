@@ -8,9 +8,7 @@ import type { SymbolInfo } from './compilation.js';
 import type {
   RendererAuthoringTransformContextLike,
   RendererSchemaValidationContextLike,
-  SchemaCompileDiagnosticsOptions,
 } from './schema-diagnostics-types.js';
-import type { SchemaCompileValidationOptions } from './schema-validation-types.js';
 import type {
   ChildValidationMode,
   ValidationOwnerBoundaryKind,
@@ -68,45 +66,6 @@ export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
   getChildFieldPathPrefix?(schema: S, ctx: ValidationCollectContext<S>): string | false | undefined;
 }
 
-export interface RendererDeepFieldRegionRule {
-  key: string;
-  regionKeySuffix: string;
-  compiledKey: string;
-  params?: readonly string[];
-  isolate?: boolean;
-}
-
-export interface RendererDeepFieldNormalizeInput {
-  value: unknown;
-  path: string;
-  regions: Record<string, import('./node-identity.js').TemplateRegion>;
-  compileSchema: (
-    input: import('./schema.js').SchemaInput,
-    options?: {
-      basePath?: string;
-      parentPath?: string;
-      schemaUrl?: string;
-      signal?: AbortSignal;
-      parentScopePolicy?: import('./schema.js').ScopePolicy;
-      cidState?: import('../compiled-cid.js').CompiledCidState;
-      symbolTable?: import('./compilation.js').CompileSymbolTable;
-      preparedImports?: ReadonlyMap<string, import('./compilation.js').PreparedImportSpec>;
-      importLoader?: import('./actions.js').ImportedLibraryLoader;
-      resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
-      diagnostics?: SchemaCompileDiagnosticsOptions;
-      validation?: SchemaCompileValidationOptions;
-    },
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => import('./node-identity.js').TemplateNode | import('./node-identity.js').TemplateNode[];
-}
-
-export interface RendererDeepFieldDefinition {
-  key: string;
-  nestedRegions?: readonly RendererDeepFieldRegionRule[];
-  booleanKeys?: readonly string[];
-  normalize?: (input: RendererDeepFieldNormalizeInput) => unknown;
-}
-
 export interface RendererDefinitionShape<S extends BaseSchema = BaseSchema> {
   type: S['type'];
   displayName?: string;
@@ -130,7 +89,6 @@ export interface RendererDefinitionShape<S extends BaseSchema = BaseSchema> {
   componentRegistryPolicy?: 'inherit' | 'new';
   validation?: ValidationContributor<S>;
   validationDefaults?: RendererValidationDefaults;
-  deepFields?: readonly RendererDeepFieldDefinition[];
   compilation?: RendererCompilationDefinition;
   wrap?: boolean;
   frameRootTag?: 'div' | 'label';

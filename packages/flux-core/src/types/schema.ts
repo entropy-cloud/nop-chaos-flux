@@ -47,12 +47,29 @@ export interface FieldCompileSchemaOptions {
 export type ValidationTrigger = 'change' | 'blur' | 'submit';
 export type ValidationVisibilityTrigger = 'touched' | 'dirty' | 'visited' | 'submit';
 export type ScopePolicy = 'inherit' | 'form';
+
+/**
+ * Unified field classification vocabulary.
+ *
+ * Shared by top-level renderer `fields` (`SchemaFieldRule[]`) and nested
+ * `fieldRules` (`Record<string, SchemaFieldRule | SchemaFieldKind>`) — one
+ * vocabulary, one classification semantics.
+ *
+ * Nested-only kinds (`value`/`schema`/`schema-array`/`action`/`literal`) are
+ * incremental additions; `meta`/`reaction`/`ignored` carry top-level
+ * semantics only (nested `fieldRules` use the subset they need).
+ */
 export type SchemaFieldKind =
   | 'meta'
   | 'prop'
+  | 'value'
   | 'region'
   | 'value-or-region'
+  | 'schema'
+  | 'schema-array'
   | 'event'
+  | 'action'
+  | 'literal'
   | 'reaction'
   | 'ignored';
 export type FrameWrapMode = boolean | 'label' | 'group' | 'none';
@@ -134,10 +151,45 @@ export interface BoundFieldSchemaBase extends BaseSchema {
 }
 
 export interface SchemaFieldRule {
-  key: string;
+  /**
+   * Field key. Required in top-level `fields` array form; in nested
+   * `fieldRules` record form the record key provides it and `key` may be
+   * omitted (when present it must equal the record key).
+   */
+  key?: string;
   kind: SchemaFieldKind;
-  valueType?: 'boolean';
+  /**
+   * Value shape constraint. Top-level boolean fields use `'boolean'` for
+   * literal normalization; nested `fieldRules` may declare the broader
+   * union. Expression strings (`${...}`) are exempt at validation time.
+   */
+  valueType?: 'boolean' | 'string' | 'number' | 'object' | 'array';
+  /**
+   * Compiled-key carrier with dual semantics (resolved by context):
+   * - top-level `fields`: the region key under which the extracted subtree
+   *   is registered (`renderer` reads `props.regions[regionKey]`);
+   * - nested `fieldRules`: the compiled key written into the item that
+   *   receives the region key string (renderer reads `item.<regionKey>`
+   *   e.g. `item.titleRegionKey`).
+   */
   regionKey?: string;
+  /**
+   * Region key suffix for nested `fieldRules` region extraction. Defaults to
+   * the field key. May contain dots to produce a dotted region key
+   * (e.g. `'quickEditBody'` for field `body`, `'popOver.content'` for
+   * field `popOver`).
+   */
+  regionKeySuffix?: string;
+  /**
+   * When the nested field value is a plain object (not schema input), the
+   * schema subtree lives at `value[sourceKey]`. Extraction removes that
+   * leaf and writes the compiled key (per `regionKey` semantics).
+   */
+  sourceKey?: string;
+  /** Field is required (missing value is reported) — nested validation. */
+  required?: boolean;
+  /** String must be non-empty (combined with `valueType: 'string'`). */
+  nonEmpty?: boolean;
   allowSource?: boolean;
   sourceStateKey?: string;
   /**
