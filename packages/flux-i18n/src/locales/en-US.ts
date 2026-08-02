@@ -20,6 +20,8 @@ export const enUS: Resource = {
       noSource: 'No source',
       copied: 'Copied',
       copy: 'Copy',
+      copyFailed: 'Copy failed',
+      copyToClipboard: 'Copy to clipboard',
       noValue: 'No value',
       noResults: 'No results found',
       more: 'More',

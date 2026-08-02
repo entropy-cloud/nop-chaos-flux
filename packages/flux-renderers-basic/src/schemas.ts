@@ -209,6 +209,18 @@ export interface RecurseSchema extends BaseSchema {
 
 export type IconSize = number | 'sm' | 'md' | 'lg';
 
+/**
+ * Optional host-injected persistence adapter for button countdown state
+ * (INV-1: renderers must not touch localStorage directly). When absent the
+ * countdown is session-only. Key format is renderer-owned
+ * (`flux-countdown-${pathname}-${id|name}`); values are `endsAt` timestamps.
+ */
+export interface CountDownStorage {
+  get(key: string): string | null;
+  set(key: string, value: string): void;
+  remove(key: string): void;
+}
+
 export interface TextSchema extends BaseSchema {
   type: 'text';
   text?: string;
@@ -241,6 +253,14 @@ export interface ButtonSchema extends BaseSchema {
   countDown?: number;
   /** Countdown label template (supports `{timeLeft}` token); defaults to "{timeLeft}s". amis: countDownTpl. */
   countDownTpl?: string;
+  /**
+   * Host-injected persistence adapter (INV-1). Without it the countdown is
+   * session-only; with it the in-flight countdown survives refreshes when the
+   * author supplies an explicit `id` or `name`. Typed as SchemaValue because
+   * host-built objects cannot satisfy the SchemaObject index signature (same
+   * pattern as `ai-chat.engine`); the renderer casts to CountDownStorage.
+   */
+  countDownStorage?: SchemaValue;
   /** When set, renders an `<a href>` instead of a `<button>`. */
   href?: string;
   /** Anchor target attribute (used with `href`). */

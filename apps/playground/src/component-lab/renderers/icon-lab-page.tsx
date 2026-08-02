@@ -61,6 +61,22 @@ const inlineWithText = {
   ],
 };
 
+const fallbackIcon = {
+  type: 'page',
+  body: [
+    {
+      type: 'flex',
+      direction: 'row',
+      align: 'center',
+      gap: 4,
+      body: [
+        { type: 'icon', icon: 'star' },
+        { type: 'icon', icon: 'totally-nonexistent-icon-name' },
+      ],
+    },
+  ],
+};
+
 export function IconLabPage() {
   return (
     <MultiScenarioLabPage
@@ -77,6 +93,12 @@ export function IconLabPage() {
           description:
             'Icons are commonly used inline in flex rows next to text for labelled list items.',
           schema: inlineWithText,
+        },
+        {
+          title: 'Unknown icon name falls back without crashing',
+          description:
+            'An unresolvable icon name renders the fallback icon (Circle) — decorative, aria-hidden, no crash.',
+          schema: fallbackIcon,
         },
       ]}
     />

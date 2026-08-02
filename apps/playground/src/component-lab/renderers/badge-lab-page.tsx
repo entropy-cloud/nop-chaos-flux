@@ -91,6 +91,30 @@ const statusVariantMapping = {
   ],
 };
 
+const badgeCounter = {
+  type: 'page',
+  data: { orderCount: 0 },
+  body: [
+    {
+      type: 'flex',
+      direction: 'row',
+      gap: 3,
+      align: 'center',
+      body: [
+        { type: 'badge', text: '${orderCount}', testid: 'count-badge' },
+        {
+          type: 'button',
+          label: 'Add',
+          onClick: {
+            action: 'setValue',
+            args: { path: 'orderCount', value: '${(orderCount ?? 0) + 1}' },
+          },
+        },
+      ],
+    },
+  ],
+};
+
 export function BadgeLabPage() {
   return (
     <MultiScenarioLabPage
@@ -115,6 +139,12 @@ export function BadgeLabPage() {
             'Both text and level can be expressions. The bottom row dynamically picks the semantic level based on the userStatus scope variable.',
           schema: statusVariantMapping,
           data: { userStatus: 'error' },
+        },
+        {
+          title: 'Count badge updates with scope',
+          description:
+            'The badge text re-renders as the orderCount scope variable changes via an action.',
+          schema: badgeCounter,
         },
       ]}
     />

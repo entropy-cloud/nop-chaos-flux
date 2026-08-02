@@ -290,6 +290,9 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       },
     ],
     fields: [
+      { key: 'label', kind: 'prop' },
+      { key: 'variant', kind: 'prop' },
+      { key: 'size', kind: 'prop' },
       { key: 'disabled', kind: 'meta' },
       { key: 'loading', kind: 'prop', valueType: 'boolean' },
       { key: 'onClick', kind: 'event' },
@@ -300,6 +303,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'tooltipPlacement', kind: 'prop' },
       { key: 'countDown', kind: 'prop' },
       { key: 'countDownTpl', kind: 'prop' },
+      { key: 'countDownStorage', kind: 'prop' },
       { key: 'href', kind: 'prop' },
       { key: 'target', kind: 'prop' },
       { key: 'block', kind: 'prop', valueType: 'boolean' },
@@ -311,6 +315,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     displayName: 'Icon',
     category: 'content',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'icon', icon: 'star' },
     component: IconRenderer,
     fields: [
       { key: 'icon', kind: 'prop' },
@@ -324,7 +329,12 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     displayName: 'Badge',
     category: 'content',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'badge', text: 'Badge' },
     component: BadgeRenderer,
+    fields: [
+      { key: 'text', kind: 'prop' },
+      { key: 'level', kind: 'prop' },
+    ],
     staticCapable: true,
   },
   {

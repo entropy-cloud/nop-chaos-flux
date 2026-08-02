@@ -1,4 +1,32 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
+import type { BaseSchema } from '@nop-chaos/flux-core';
+
+// Host-side persistence adapter for the button countdown (INV-1: renderers
+// never touch localStorage; hosts inject the storage implementation — B 档
+// import-injection pattern, docs/architecture/renderer-env.md §9).
+const countDownStorage = {
+  get: (key: string) => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  set: (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // ignore quota / private mode
+    }
+  },
+  remove: (key: string) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+  },
+};
 
 const variantShowcase = {
   type: 'page',
@@ -65,6 +93,33 @@ const clickCounter = {
   ],
 };
 
+const countDown = {
+  type: 'page',
+  body: [
+    {
+      type: 'flex',
+      direction: 'row',
+      align: 'center',
+      gap: 4,
+      body: [
+        {
+          type: 'button',
+          id: 'lab-countdown-btn',
+          label: 'Send Code',
+          testid: 'lab-countdown-btn',
+          countDown: 10,
+          countDownStorage,
+          onClick: {
+            action: 'setValue',
+            args: { path: 'codeSent', value: true },
+          },
+        },
+        { type: 'text', text: 'Sent: ${codeSent ?? "no"}' },
+      ],
+    },
+  ],
+} as unknown as BaseSchema;
+
 export function ButtonLabPage() {
   return (
     <MultiScenarioLabPage
@@ -85,6 +140,12 @@ export function ButtonLabPage() {
           description:
             'Click "Increment" to call setValue and update the clickCount scope variable. The text renderer reacts immediately. Click "Reset" to set it back to zero.',
           schema: clickCounter,
+        },
+        {
+          title: 'Countdown after action success (host-injected persistence)',
+          description:
+            'Click "Send Code" to start a 10s countdown via the injected countDownStorage adapter; the button disables and the countdown survives a page reload while running.',
+          schema: countDown,
         },
       ]}
     />
