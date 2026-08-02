@@ -103,15 +103,16 @@
 
 ## 10. 样式与 DOM marker 约定
 
-- 根节点延续 field frame 语义，并输出 `nop-input-text` marker。
+- 根节点延续 field frame 语义，并输出 `nop-input-text` marker（控件根：bare `<Input>` 或 `InputGroup` 外层，随增强路径切换而保持 marker 不变）。
 - 无 prefix/suffix/clearable/showCounter/nativeAutoComplete 声明时，直接渲染 `<Input>`（bare styled `<input>`，`data-slot="input"`）。
 - 声明任一增强时，用 `@nop-chaos/ui` `InputGroup` 包裹：外层 `<div data-slot="input-group">`，内部 `<input>` 改用 `InputGroupInput`（`data-slot="input-group-control"`，dropping 自身 border/ring，避免双重边框）。prefix → `InputGroupAddon align="inline-start"` + `InputGroupText`；suffix/clear/counter → `InputGroupAddon align="inline-end"`。DOM 结构在值变化时保持稳定（声明 clearable/showCounter 即始终包裹 InputGroup，不随按钮显隐切换）。
 - `InputGroupFieldControl` 包装组件吸收 FieldFrame `cloneElement` 注入的 `id`/`aria-*`/`onFocus`/`onBlur`，转发到内部 `InputGroupInput`（避免 InputGroup div 与 input 重复 id/aria）。
 - E3 suggest 浮层 DOM marker（基于 `@nop-chaos/ui` Popover，portal 渲染到 body）：
-  - 浮层根：`data-slot="input-suggest-list"`（挂在 PopoverContent 上）。
-  - 每条建议项：`data-slot="input-suggest-item"`（含 `data-index`、`aria-selected`；高亮项随键盘导航切换）。
-  - 空态/错误态：`data-slot="input-suggest-empty"`（建议数组为空或请求失败时渲染 `suggestEmpty` 文案）。
-  - 触发不渲染独立 marker —— 浮层锚定在既有 InputGroupInput/`<Input>` 上（Popover trigger 即输入框），不新增 DOM 节点。
+  - 浮层根：`data-slot="input-suggest-list"` + `role="listbox"`（挂在 PopoverContent 上；`id` 与输入框 `aria-controls` 配对）。
+  - 每条建议项：`data-slot="input-suggest-item"`（含 `id`（`<listbox-id>-option-<index>`）、`data-index`、`aria-selected`；高亮项随键盘导航切换，输入框 `aria-activedescendant` 指向当前高亮项）。
+  - 空态/错误态：`data-slot="input-suggest-empty"`（建议数组为空或请求失败时渲染 `suggestEmpty` 文案，缺省走 i18n `flux.common.noSuggestions`）。
+  - 触发节点：Popover trigger 为 `@nop-chaos/ui` Popover 的 trigger span（`role="button"`，Base UI 要求的存在性节点），输入框锚定在其内部；输入框在 suggest 启用时输出组合框语义（`role="combobox"`/`aria-autocomplete="list"`/`aria-expanded`/`aria-controls`/`aria-haspopup="listbox"`/`aria-activedescendant`）。
+  - **焦点契约（C2.2 修复）**：浮层 `initialFocus={false}` + `modal={false}`（Base UI Popover）——打开时**不窃取输入框焦点**，输入框持续可输入；`Enter` 选择高亮项、`Escape` 关闭、鼠标点击建议项（`onMouseDown preventDefault`）均保持焦点在输入框。
 
 ## 11. 实现拆分建议
 

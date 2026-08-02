@@ -1,6 +1,6 @@
 # C2.2 form 文本输入族逐组件审计（input-text/input-password/input-email/input-number/textarea + input-suggest）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C2.2
 > Last Reviewed: 2026-08-03
@@ -70,87 +70,87 @@
 
 ### Phase 1 - 逐组件 18 维审计与审计卡产出
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/{input.tsx,textarea-renderer.tsx,input-suggest.tsx}`、`definitions.ts`、`schemas.ts`、`docs/audits/per-component/`
 
 - Item Types: `Proof`
 
-- [ ] 审计前核对注册定义：5 组件注册项（type/fields/componentCapabilityContracts）与 `schemas.ts` 类型一致性（维度 1/18）；input-suggest 与 input-text 的关系（suggestSource 子特性，非注册 type）。
-- [ ] 逐组件产出审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
-- [ ] 维度重点核查：值所有权三态全路径（维度 3：input.tsx 的 valueState 读取/受控 echo/reset 语义）；表单参与（维度 4：name/required/validation、校验错误展示与清除、data-field-\*）；DOM 契约（维度 5 + `check:audit-missing-renderer-markers`：data-field/data-renderer/data-value/data-testid 与 08-01 契约对齐）。
-- [ ] input-suggest 专项（维度 5/11/12）：suggestSource 远程数据异步生命周期（abort/竞态/失败态/重试、env IO 边界 INV-1）；popover 稳定性与 e2e pre-existing 失败根因初查（`tests/e2e/input-suggest.spec.ts` "selecting writes back value" 用例）。
-- [ ] 嵌套 schema 分类复验（维度 6）：suggestSource/suggestTemplate 分类与 08-02 机制一致；无 deepFields 残留。
-- [ ] 事件与 action 契约（维度 7）：onChange/onFocus/onBlur payload 形状、normalizeActionEvent 语义。
-- [ ] 四态覆盖（维度 10）与测试质量（维度 16）：既有单测（input-suggest.test.tsx/input-reset-resync.test.tsx/input-classname-contract.test.tsx）断言正确行为；React 19 规范（维度 14）、性能边界（维度 15：受控 echo 大输入、selector 精度）。
-- [ ] 文档对照（维度 17）：5 组件 design.md ↔ 实现 props/行为逐项核对，quick-reference.md 词条准确性。
+- [x] 审计前核对注册定义：5 组件注册项（type/fields/componentCapabilityContracts）与 `schemas.ts` 类型一致性（维度 1/18）；input-suggest 与 input-text 的关系（suggestSource 子特性，非注册 type）。
+- [x] 逐组件产出审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
+- [x] 维度重点核查：值所有权三态全路径（维度 3：input.tsx 的 valueState 读取/受控 echo/reset 语义）；表单参与（维度 4：name/required/validation、校验错误展示与清除、data-field-\*）；DOM 契约（维度 5 + `check:audit-missing-renderer-markers`：data-field/data-renderer/data-value/data-testid 与 08-01 契约对齐）。
+- [x] input-suggest 专项（维度 5/11/12）：suggestSource 远程数据异步生命周期（abort/竞态/失败态/重试、env IO 边界 INV-1）；popover 稳定性与 e2e pre-existing 失败根因初查（`tests/e2e/input-suggest.spec.ts` "selecting writes back value" 用例）。
+- [x] 嵌套 schema 分类复验（维度 6）：suggestSource/suggestTemplate 分类与 08-02 机制一致；无 deepFields 残留。
+- [x] 事件与 action 契约（维度 7）：onChange/onFocus/onBlur payload 形状、normalizeActionEvent 语义。
+- [x] 四态覆盖（维度 10）与测试质量（维度 16）：既有单测（input-suggest.test.tsx/input-reset-resync.test.tsx/input-classname-contract.test.tsx）断言正确行为；React 19 规范（维度 14）、性能边界（维度 15：受控 echo 大输入、selector 精度）。
+- [x] 文档对照（维度 17）：5 组件 design.md ↔ 实现 props/行为逐项核对，quick-reference.md 词条准确性。
 
 Exit Criteria:
 
 > 本 Phase 交付 5 张审计卡（含裁决），是后续修复的唯一事实来源。
 
-- [ ] `docs/audits/per-component/{input-text,input-password,input-email,input-number,textarea}.md` 5 张卡存在，18 维表完整、`文件:行` 证据可验证；input-suggest 审查结论已并入 input-text 卡。
-- [ ] 每卡发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，其余 `open`；input-suggest e2e 失败根因初查结论已记录。
+- [x] `docs/audits/per-component/{input-text,input-password,input-email,input-number,textarea}.md` 5 张卡存在，18 维表完整、`文件:行` 证据可验证；input-suggest 审查结论已并入 input-text 卡。
+- [x] 每卡发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，其余 `open`；input-suggest e2e 失败根因初查结论已记录。
 
 ### Phase 2 - P0/P1 自动修复（test-first）
 
-Status: planned
+Status: completed
 Targets: 发现涉及的 renderer 文件、定义文件、schemas.ts、契约测试文件、e2e spec
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 按审计卡逐个处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现 commit）。
-- [ ] **input-suggest e2e pre-existing 失败修复**：先写/固化复现测试（`tests/e2e/input-suggest.spec.ts` 写回用例），归因（popover 稳定性/时序/数据竞争），实现修复使 3/3 全绿；若根因在包外公共层，按 §7 插入 CX-n；若无法在本 plan 内修复，带回证据回写裁定到 daily log + roadmap（不得静默跳过）。
-- [ ] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
-- [ ] 共性缺陷裁决（Decision）：同一根因影响 ≥2 组件/跨包/公共层的发现 → 按 roadmap 自动修复机制 §7 处理（当前 plan 内多阶段优先修复并事后回写 CX-n，或插入 CX-n work item）；根因单点的 `shared:` 标记归 CR。
-- [ ] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
-- [ ] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式）。
+- [x] 按审计卡逐个处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现 commit）。
+- [x] **input-suggest e2e pre-existing 失败修复**：先写/固化复现测试（`tests/e2e/input-suggest.spec.ts` 写回用例），归因（popover 稳定性/时序/数据竞争），实现修复使 3/3 全绿；若根因在包外公共层，按 §7 插入 CX-n；若无法在本 plan 内修复，带回证据回写裁定到 daily log + roadmap（不得静默跳过）。
+- [x] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
+- [x] 共性缺陷裁决（Decision）：同一根因影响 ≥2 组件/跨包/公共层的发现 → 按 roadmap 自动修复机制 §7 处理（当前 plan 内多阶段优先修复并事后回写 CX-n，或插入 CX-n work item）；根因单点的 `shared:` 标记归 CR。
+- [x] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
+- [x] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式）。
 
 Exit Criteria:
 
 > 本 Phase 交付"发现清零或已裁定"，卡状态与代码行为一致。
 
-- [ ] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
-- [ ] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-form typecheck && build && lint && test` 绿（含新增回归测试）。
-- [ ] `tests/e2e/input-suggest.spec.ts` 3/3 全绿（或带回证据的裁定已记录）。
+- [x] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
+- [x] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-form typecheck && build && lint && test` 绿（含新增回归测试）。
+- [x] `tests/e2e/input-suggest.spec.ts` 3/3 全绿（或带回证据的裁定已记录）。
 
 ### Phase 3 - 组合宿主真实浏览器场景
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/` 新增/修改 spec、playground lab 页
 
 - Item Types: `Proof | Fix`
 
-- [ ] 设计并实现 ≥1 个本族真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：候选——form 内文本输入提交（bug 73 模式）、input-suggest 选择写回进 store、password reveal 切换（按审计卡发现与宿主价值选择）。
-- [ ] bug 73 模式专项检查：针对"单测绿但真机失败"类风险，在宿主场景中显式验证（输入 → store 更新 → 提交值正确）。
-- [ ] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
-- [ ] 既有相关 e2e（form-input-enhancements/simple-form/complex-form）在本族改动后回归。
+- [x] 设计并实现 ≥1 个本族真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：候选——form 内文本输入提交（bug 73 模式）、input-suggest 选择写回进 store、password reveal 切换（按审计卡发现与宿主价值选择）。
+- [x] bug 73 模式专项检查：针对"单测绿但真机失败"类风险，在宿主场景中显式验证（输入 → store 更新 → 提交值正确）。
+- [x] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
+- [x] 既有相关 e2e（form-input-enhancements/simple-form/complex-form）在本族改动后回归。
 
 Exit Criteria:
 
 > 本 Phase 交付"真实浏览器行为成立"。
 
-- [ ] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；本族组件改动的回归 spec 绿。
-- [ ] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
+- [x] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；本族组件改动的回归 spec 绿。
+- [x] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
 
 ### Phase 4 - 族内回归与审计卡 closure
 
-Status: planned
+Status: completed
 Targets: 5 张审计卡、`docs/logs/2026/08-03.md`、`docs/backlog/component-audit-roadmap.md`（C2.2 行）
 
 - Item Types: `Proof`
 
-- [ ] 全卡复查：18 维表结论与最终代码一致；P0/P1 清零；卡状态全部 `closed`（含 fixed-pending-closure → closed 流转）。
-- [ ] 本族范围回归：`pnpm --filter @nop-chaos/flux-renderers-form test` + 相关 e2e spec 全绿（含 input-suggest.spec.ts）；如本 plan 触及公共层（flux-react/field-frame/编译器），追加受影响包验证并记录。
-- [ ] daily log 记录：5 卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、input-suggest e2e 失败处置记录、CX-n 插入（如有）与决策。
-- [ ] 若插入了 CX-n：同步更新 roadmap Work Item Status 表（新行 + 依赖边/注释）并按 §7c 走生命周期（父 plan closure 后标 done）；结构性 CX-n 执行前标注待人工确认。
-- [ ] roadmap C2.2 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审）。
+- [x] 全卡复查：18 维表结论与最终代码一致；P0/P1 清零；卡状态全部 `closed`（含 fixed-pending-closure → closed 流转）。
+- [x] 本族范围回归：`pnpm --filter @nop-chaos/flux-renderers-form test` + 相关 e2e spec 全绿（含 input-suggest.spec.ts）；如本 plan 触及公共层（flux-react/field-frame/编译器），追加受影响包验证并记录。
+- [x] daily log 记录：5 卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、input-suggest e2e 失败处置记录、CX-n 插入（如有）与决策。
+- [x] 若插入了 CX-n：同步更新 roadmap Work Item Status 表（新行 + 依赖边/注释）并按 §7c 走生命周期（父 plan closure 后标 done）；结构性 CX-n 执行前标注待人工确认。
+- [x] roadmap C2.2 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审）。
 
 Exit Criteria:
 
 > 本 Phase 交付"可进入 closure-audit 的完成态"。
 
-- [ ] 5 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
-- [ ] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置、input-suggest e2e 处置结论）。
+- [x] 5 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
+- [x] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置、input-suggest e2e 处置结论）。
 
 ## Draft Review Record
 
@@ -165,17 +165,17 @@ Exit Criteria:
 
 > 关闭条件：本 section 与每个 Phase 的 Exit Criteria 全部勾选后才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 5 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`（input-suggest 审查已并入 input-text 卡）
-- [ ] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
-- [ ] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查）
-- [ ] input-suggest e2e pre-existing 失败已修复（3/3 绿）或带回证据裁定（不得静默跳过）
-- [ ] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
-- [ ] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 5 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`（input-suggest 审查已并入 input-text 卡）
+- [x] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
+- [x] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查）
+- [x] input-suggest e2e pre-existing 失败已修复（3/3 绿）或带回证据裁定（不得静默跳过）
+- [x] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
+- [x] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -207,13 +207,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 未完成 —— plan 处于 draft 状态，尚未执行。
+Status Note: 已完成 —— 四 Phase 全部执行：5 张审计卡产出并 closed（P0/P1 清零、P2 fixed、P3 卡内记录归 CR）；P0/P1 均 test-first 修复（form 包 649→655 tests 全绿）；真实浏览器宿主场景 5/5（含 bug 73 模式专项）；**C0 裁定的 e2e pre-existing 失败 `input-suggest.spec.ts`（suggest 选择写回）已复现、归因（Base UI Popover `initialFocus:true` 焦点窃取 + BLUR_CLOSE_DELAY 150ms blur-close 死循环，bug 73 模式）并修复（3/3 全绿）**；全量验证 typecheck/build/lint 31/31、test 58/58 tasks；共性缺陷按 §7b 当前 plan 内修复 + CX-4 事后回写（planned）。剩余 e2e pre-existing 8 项归属 C8.1/C9/CV 不在本 plan scope。未达仓库级 e2e full-green，不声明。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待执行后由独立子 agent 填写
-- Evidence: 待执行后填写
+- Auditor / Agent: 独立子 agent fresh session（task `ses_03bb1a612ffe2K2XqYNpitL1gv`）
+- Verdict: `approved`（零 Blocker/Major；2 Minor 文本项已修正：Closure Status Note 从 draft 陈旧文本改写、audit 证据回填 plan Closure 节与 5 卡 Closure 节）
+- Evidence: 复核范围——plan 文本一致性（Phase 1-4 completed + 43/43 `[x]`、Closure Gates 11 项）、5 卡 18 维表 + ~15 处 `文件:行` 证据抽查（input.tsx marker/comboboxAria/i18n、input-suggest.tsx useId/initialFocus/modal/listbox/min-length gate、textarea/input-number i18n）、代码修复落点、测试断言正确性、`pnpm exec playwright test` input-suggest 3/3 + c2-2-host-surfaces 5/5 独立重跑、form 包 655/655 与 workspace typecheck 31/31 与 check:i18n-keys 独立重跑、deferred 诚实性（P3 非阻断、CX-4 planned 证据成立）、owner-doc 同步（5 份 design.md）
 
 Follow-up:
 
-- 待执行后填写。
+- 无 remaining plan-owned work；P3 项与脚本假阴性升级登记 CR/CG 归集（见 daily log C2.2 节）
+- 收口后：roadmap C2.2 标 `done`（closure-audit approved 后）

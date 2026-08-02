@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type {
   ActionSchema,
@@ -7,6 +7,7 @@ import type {
   SchemaValue,
 } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import type { InputSchema } from '../schemas.js';
 
@@ -54,6 +55,12 @@ export interface InputSuggestApi {
   handleBlur(): void;
   handleKeyDown(event: { key: string; preventDefault(): void }): void;
   wrap(element: ReactNode): ReactNode;
+  /**
+   * Combobox ARIA attributes for the host input. Empty when suggestions are
+   * disabled. Includes `aria-controls` pointing at the listbox id and
+   * `aria-activedescendant` tracking the highlighted option.
+   */
+  comboboxAria: Record<string, string | boolean | undefined>;
 }
 
 export function useInputSuggest(params: {
@@ -93,6 +100,7 @@ export function useInputSuggest(params: {
   const [attemptedFetch, setAttemptedFetch] = useState(false);
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const focusCounterRef = useRef(0);
+  const listboxId = useId();
 
   useEffect(() => {
     const hasSuggestConfigButNoSource =
@@ -162,6 +170,16 @@ export function useInputSuggest(params: {
       : highlightIndex >= suggestions.length
         ? 0
         : highlightIndex;
+
+  const belowMinInputLength =
+    typeof inputValue !== 'string' || inputValue.length < suggestMinInputLength;
+
+  const popoverOpen = open && (suggestions.length > 0 || attemptedFetch) && !belowMinInputLength;
+
+  const activeOptionId =
+    popoverOpen && effectiveHighlightIndex >= 0
+      ? `${listboxId}-option-${effectiveHighlightIndex}`
+      : undefined;
 
   useEffect(() => {
     return () => {
@@ -276,16 +294,18 @@ export function useInputSuggest(params: {
     if (!enabled) {
       return element;
     }
-    const showEmpty = attemptedFetch && suggestions.length === 0;
-    const emptyText = suggestEmpty ?? 'No suggestions';
-    const popoverOpen = open && (suggestions.length > 0 || attemptedFetch);
+    const showEmpty = attemptedFetch && suggestions.length === 0 && !belowMinInputLength;
+    const emptyText = suggestEmpty ?? t('flux.common.noSuggestions');
 
     return (
-      <Popover open={popoverOpen} onOpenChange={setOpen}>
+      <Popover open={popoverOpen} onOpenChange={setOpen} modal={false}>
         <PopoverTrigger render={<span className="block" />} nativeButton={false}>
           {element}
         </PopoverTrigger>
         <PopoverContent
+          id={listboxId}
+          role="listbox"
+          initialFocus={false}
           data-slot="input-suggest-list"
           align="start"
           side="bottom"
@@ -300,6 +320,7 @@ export function useInputSuggest(params: {
             suggestions.map((suggestion, index) => (
               <div
                 key={String(suggestion.value)}
+                id={`${listboxId}-option-${index}`}
                 data-slot="input-suggest-item"
                 data-index={index}
                 data-value={String(suggestion.value)}
@@ -328,5 +349,16 @@ export function useInputSuggest(params: {
     );
   }
 
-  return { handleFocus, handleBlur, handleKeyDown, wrap };
+  const comboboxAria: Record<string, string | boolean | undefined> = enabled
+    ? {
+        role: 'combobox',
+        'aria-autocomplete': 'list',
+        'aria-expanded': popoverOpen,
+        'aria-controls': listboxId,
+        'aria-haspopup': 'listbox',
+        'aria-activedescendant': activeOptionId,
+      }
+    : {};
+
+  return { handleFocus, handleBlur, handleKeyDown, wrap, comboboxAria };
 }

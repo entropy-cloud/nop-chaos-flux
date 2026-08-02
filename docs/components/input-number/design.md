@@ -46,6 +46,7 @@
 interface InputNumberSchema extends BoundFieldSchemaBase {
   type: 'input-number';
   placeholder?: string;
+  inputMode?: string;
   min?: number;
   max?: number;
   step?: number;
@@ -66,12 +67,13 @@ interface InputNumberSchema extends BoundFieldSchemaBase {
 
 ### 字段默认值
 
-| 字段          | 默认值 | 说明                         |
-| ------------- | ------ | ---------------------------- |
-| `step`        | `1`    | 步长默认为 1                 |
-| `precision`   | 不限   | undefined 表示不限制小数位数 |
-| `showStepper` | `true` | 默认显示步进按钮             |
-| `keyboard`    | `true` | 默认启用键盘上下键步进       |
+| 字段          | 默认值    | 说明                                                    |
+| ------------- | --------- | ------------------------------------------------------- |
+| `step`        | `1`       | 步长默认为 1                                            |
+| `precision`   | 不限      | undefined 表示不限制小数位数                            |
+| `showStepper` | `true`    | 默认显示步进按钮                                        |
+| `keyboard`    | `true`    | 默认启用键盘上下键步进                                  |
+| `inputMode`   | `decimal` | 默认移动端小数键盘；schema 声明可覆盖（如 `'numeric'`） |
 
 ## 5. 字段分类
 

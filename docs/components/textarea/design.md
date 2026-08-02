@@ -83,7 +83,7 @@
 ## 11. 实现拆分建议
 
 - 继续保持 value 读写和验证逻辑与单行输入共享（`field-utils`）。
-- `TextareaRenderer`（`packages/flux-renderers-form/src/renderers/input-choice-renderers.tsx`）承担 auto-height 测量（`resolveTextareaLineHeightPx` + `useEffect`）+ 增强消费（counter/clear/trim/maxLength）。
+- `TextareaRenderer`（`packages/flux-renderers-form/src/renderers/textarea-renderer.tsx`）承担 auto-height 测量（`resolveTextareaLineHeightPx` + `useEffect`）+ 增强消费（counter/clear/trim/maxLength）。
 - `textareaEnhancementFieldRules`（`packages/flux-renderers-form/src/renderers/input.tsx`）是 textarea definition 的显式字段注册子集，与 `inputEnhancementFieldRules` 平行（不含 prefix/suffix/nativeAutoComplete/revealPassword）。
 
 ## 12. 风险、取舍与后续阶段

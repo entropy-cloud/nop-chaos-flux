@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { stringAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, Textarea, useIsMobile } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
 import { useFormFieldController } from '../field-utils.js';
@@ -131,7 +132,7 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
       aria-describedby={presentation.showError ? errorId : undefined}
       aria-errormessage={presentation.showError ? errorId : undefined}
       placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
-      className={props.meta.className}
+      className={cn('nop-textarea', props.meta.className)}
       onFocus={() => {
         handlers.onFocus();
         scrollRefIntoViewOnMobile(isMobile, textareaRef);
@@ -156,7 +157,7 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
             variant="ghost"
             size="icon"
             data-slot="textarea-clear"
-            aria-label="Clear"
+            aria-label={t('flux.common.clear')}
             className="size-5 text-muted-foreground hover:text-foreground"
             onClick={handleClear}
           >

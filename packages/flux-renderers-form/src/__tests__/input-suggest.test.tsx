@@ -524,6 +524,90 @@ describe('input-text suggest — keyboard navigation', () => {
   });
 });
 
+describe('input-text suggest — combobox ARIA contract (P1-3)', () => {
+  it('exposes role=combobox + aria-expanded/controls/haspopup on the input and role=listbox popup', async () => {
+    renderForm(SUGGEST_SCHEMA);
+
+    const input = screen.getByLabelText('City') as HTMLInputElement;
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'ap' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Apple')).toBeTruthy();
+    });
+
+    const list = document.querySelector('[data-slot="input-suggest-list"]') as HTMLElement | null;
+    expect(list).toBeTruthy();
+    expect(list?.getAttribute('role')).toBe('listbox');
+    expect(list?.id).toBeTruthy();
+
+    expect(input.getAttribute('role')).toBe('combobox');
+    expect(input.getAttribute('aria-autocomplete')).toBe('list');
+    expect(input.getAttribute('aria-haspopup')).toBe('listbox');
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+    expect(input.getAttribute('aria-controls')).toBe(list?.id);
+
+    const items = document.querySelectorAll('[data-slot="input-suggest-item"]');
+    expect(items.length).toBeGreaterThan(0);
+    const first = items[0] as HTMLElement;
+    expect(first.getAttribute('role')).toBe('option');
+    expect(first.id).toBeTruthy();
+    expect(first.id.startsWith(list!.id)).toBe(true);
+  });
+
+  it('sets aria-activedescendant to the highlighted option on ArrowDown and clears on close', async () => {
+    renderForm(SUGGEST_SCHEMA);
+
+    const input = screen.getByLabelText('City') as HTMLInputElement;
+    await typeAndExpectSuggestions(input, 'ap');
+
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+    const items = document.querySelectorAll('[data-slot="input-suggest-item"]');
+    const firstId = (items[0] as HTMLElement).id;
+    expect(input.getAttribute('aria-activedescendant')).toBe(firstId);
+    expect((items[0] as HTMLElement).getAttribute('aria-selected')).toBe('true');
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="input-suggest-list"]')).toBeNull();
+    });
+    expect(input.hasAttribute('aria-activedescendant')).toBe(false);
+  });
+});
+
+describe('input-text suggest — min input length stale-popup gate (P2-2)', () => {
+  it('closes the popover when the input is shortened below suggestMinInputLength', async () => {
+    renderForm(SUGGEST_SCHEMA);
+
+    const input = screen.getByLabelText('City') as HTMLInputElement;
+    await typeAndExpectSuggestions(input, 'ap');
+    expect(document.querySelector('[data-slot="input-suggest-list"]')).toBeTruthy();
+
+    fireEvent.change(input, { target: { value: 'a' } });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="input-suggest-list"]')).toBeNull();
+    });
+  });
+
+  it('does not reopen the popover with stale suggestions when length stays below the gate', async () => {
+    renderForm(SUGGEST_SCHEMA);
+
+    const input = screen.getByLabelText('City') as HTMLInputElement;
+    await typeAndExpectSuggestions(input, 'ap');
+
+    fireEvent.change(input, { target: { value: 'a' } });
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="input-suggest-list"]')).toBeNull();
+    });
+
+    await new Promise((r) => setTimeout(r, 150));
+    expect(document.querySelector('[data-slot="input-suggest-list"]')).toBeNull();
+    expect(screen.queryByText('Apple')).toBeNull();
+  });
+});
+
 describe('input-text suggest — shared across text family', () => {
   it('input-email renders suggest popover', async () => {
     renderForm(

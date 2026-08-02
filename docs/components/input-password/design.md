@@ -64,7 +64,7 @@
 
 ## 10. 样式与 DOM marker 约定
 
-- 建议输出 `nop-input-password` marker，并复用共享 field frame。
+- 输出 `nop-input-password` marker（控件根，随增强路径切换保持），并复用共享 field frame。
 - `revealPassword: true` 时包裹 `InputGroup`（即便无其他增强），reveal toggle 渲染在 inline-end addon，DOM marker：`<button data-slot="input-password-reveal">`（含 `aria-pressed`/`aria-label`）。end addon 子元素顺序：suffix → counter → clear button → reveal button。
 - reveal button 用 `InputGroupButton`（ghost, `icon-xs`）+ `Eye`/`EyeOff`（lucide-react）；`aria-pressed={revealed}`，`aria-label` 随态切换（`Show password` / `Hide password`）。
 
