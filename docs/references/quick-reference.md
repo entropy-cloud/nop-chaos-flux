@@ -206,8 +206,9 @@ interface RendererDefinition<S extends BaseSchema = BaseSchema, P = RendererReso
   component?: (props: RendererComponentProps<S, P>) => RendererRenderOutput;
   validation?: ValidationContributor<S>;
   validationDefaults?: RendererValidationDefaults;
-  deepFields?: readonly RendererDeepFieldDefinition[];
   compilation?: RendererCompilationDefinition;
+  propContracts?: Record<string, RendererPropContract>;
+  fields?: readonly SchemaFieldRule[];
 }
 ```
 

@@ -313,16 +313,15 @@ Violations of this principle include:
 
 Instead, all renderer-specific behavior must be declared on `RendererDefinition` so that each renderer self-describes its needs:
 
-| Current hardcoded location                                   | What it controls                                              | Declarative home                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `node-frame-wrapper.tsx` type list                           | Whether `FieldFrame` root uses `<div>` vs default tag         | `RendererDefinition.frameRootTag?: string`                               |
-| `shape-validation-deep-fields.ts` type checks                | Deep nested-region traversal rules (columns, items, variants) | `RendererDefinition.deepFields?: readonly RendererDeepFieldDefinition[]` |
-| `shape-validation-node-fields.ts` type checks                | Per-item boolean field validation inside deep item containers | `RendererDefinition.deepFields?: readonly RendererDeepFieldDefinition[]` |
-| `node-compiler.ts` `schema.type === 'form'`                  | Default child validation contract mode                        | `RendererDefinition.validationDefaults?.defaultChildContractMode`        |
-| `node-compiler.ts` `schema.type === 'page'`                  | Descendant validation-model collection without a form owner   | `RendererDefinition.validationDefaults?.collectDescendantValidation`     |
-| `node-compiler.ts` `data-source` / `reaction`                | Compile-time attachment of runtime artifacts                  | `RendererDefinition.compilation` metadata                                |
-| `shape-validation-node-fields.ts` `data-source` / `reaction` | Renderer-specific node shape validation                       | `RendererDefinition.schemaValidator(...)`                                |
-| `tables.ts` `DEEP_FIELD_NORMALIZERS` map                     | Deep field normalization keyed by renderer type               | `RendererDefinition.deepFields[].normalize(...)`                         |
+| Current hardcoded location                                   | What it controls                                                                      | Declarative home                                                                    |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `node-frame-wrapper.tsx` type list                           | Whether `FieldFrame` root uses `<div>` vs default tag                                 | `RendererDefinition.frameRootTag?: string`                                          |
+| `shape-validation-node-fields.ts` type checks                | Per-item boolean field validation inside deep item containers                         | `propContracts[key].shape` schema-definition `literal` kind                         |
+| `node-compiler.ts` `schema.type === 'form'`                  | Default child validation contract mode                                                | `RendererDefinition.validationDefaults?.defaultChildContractMode`                   |
+| `node-compiler.ts` `schema.type === 'page'`                  | Descendant validation-model collection without a form owner                           | `RendererDefinition.validationDefaults?.collectDescendantValidation`                |
+| `node-compiler.ts` `data-source` / `reaction`                | Compile-time attachment of runtime artifacts                                          | `RendererDefinition.compilation` metadata                                           |
+| `shape-validation-node-fields.ts` `data-source` / `reaction` | Renderer-specific node shape validation                                               | `RendererDefinition.schemaValidator(...)`                                           |
+| `node-compiler-helpers.ts` classification pipeline           | Deep field normalization (region extraction / literal envelope / action preservation) | `propContracts[key].shape` schema-definition fieldRules (unified `SchemaFieldKind`) |
 
 Existing mechanisms that already follow this principle:
 
@@ -337,14 +336,13 @@ This principle is enforced by the `check:audit-hardcoded-type-dispatch` heuristi
 
 ### Declarative Metadata Ownership
 
-The current baseline uses four distinct renderer-owned metadata surfaces for former hardcoded dispatch sites:
+The current baseline uses three distinct renderer-owned metadata surfaces for former hardcoded dispatch sites:
 
 1. `frameRootTag`
-2. `deepFields`
-3. `validationDefaults`
-4. `compilation`
+2. `validationDefaults`
+3. `compilation`
 
-They have different responsibilities and must not be collapsed into one generic catch-all field.
+(plus `fields`/`propContracts` — see the schema-definition section below). They have different responsibilities and must not be collapsed into one generic catch-all field.
 
 #### `frameRootTag`
 
@@ -353,26 +351,23 @@ They have different responsibilities and must not be collapsed into one generic 
 - Current baseline use case: wrapped composite controls such as `array-editor`, `array-field`, `tag-list`, `condition-builder`, `key-value`, and `detail-field` declare `frameRootTag: 'div'`.
 - Boundary: this only controls wrapper root semantics. It does not own layout, styling, or validation behavior.
 
-#### `deepFields`
+#### `propContracts[key].shape` schema-definition (nested schema transport)
 
-- Purpose: declare renderer props that contain nested schema-bearing structures rather than ordinary scalar/object props.
-- Owner: the renderer definition.
-- Each entry may declare:
-  - the authored prop key
-  - how nested region-bearing items are traversed for shape validation
-  - which nested item fields are boolean-like and must follow boolean authoring rules
-  - how the field is normalized into compiled region keys during schema compilation
+- Purpose: declare renderer props that contain nested schema-bearing structures rather than ordinary scalar/object props. The compiler classifies each nested field by its `fieldRules` kind (unified `SchemaFieldKind`): `region`/`schema`/`schema-array`/`value-or-region` → compiler-extracted region, `event`/`action`/`literal` → preserve-literal envelope, `prop`/`value` → expression evaluation. Items carrying an explicit `type` are classified per the child renderer's registry definition (typed item semantics).
+- Owner: the renderer definition (`propContracts`).
 - Current baseline use cases:
-  - `table.columns`
-  - `table.expandable`
+  - `table.columns` / `table.expandable`
   - `crud.columns`
   - `tabs.items`
-  - `variant-field.variants`
-- Boundary: `deepFields` is for nested schema-bearing authored props, not for ordinary top-level `fields` classification.
+  - `wizard.steps`
+  - `grid.items` / `collapse.items` / `variant-field.variants`
+  - `dropdown-button.items` / `button-group.items`
+  - action-value props (`searchSource`/`quickSaveAction`/`loadAction`/`uploadAction`…) via `actionValue: true`
+- Boundary: this is for nested schema-bearing authored props, not for ordinary top-level `fields` classification. The legacy `deepFields`/`nestedRegions`/`booleanKeys`/`DEEP_FIELD_NORMALIZERS` mechanisms were removed after the 7 renderer declarations migrated.
 
 Custom field compilation note:
 
-- Some renderer-owned schema-bearing props are not modeled as `deepFields`, but still need compile-time-owned nested schema transport. The live baseline allows `SchemaFieldRule.compile` to precompile renderer-specific nested artifacts such as `CompiledActionProgram` or `TemplateNode` fragments, as long as those values are preserved as atomic compiled leaves instead of being recursively rewritten back into ordinary runtime value trees.
+- Some renderer-owned schema-bearing props are not modeled via `propContracts[key].shape` schema-definition, but still need compile-time-owned nested schema transport. The live baseline allows `SchemaFieldRule.compile` to precompile renderer-specific nested artifacts such as `CompiledActionProgram` or `TemplateNode` fragments, as long as those values are preserved as atomic compiled leaves instead of being recursively rewritten back into ordinary runtime value trees.
 - This is the current closure path for `designer-page.config` nested schema leaves and detail owner value-adaptation action slots.
 
 #### `validationDefaults`

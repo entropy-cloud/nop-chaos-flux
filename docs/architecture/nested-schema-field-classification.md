@@ -92,15 +92,15 @@ export type SchemaFieldKind =
 ```ts
 export interface FluxSchemaDefinitionShape extends FluxValueShapeBase {
   kind: 'schema-definition';
-  /** 嵌套字段词表（SchemaDefinitionFieldKind 封闭联合：value/event/action/region/schema/schema-array/prop/literal），
-   *  支持字符串简写（kind 名）或对象形态 SchemaDefinitionFieldRule（required/valueType/nonEmpty 约束） */
-  fieldRules: Readonly<Record<string, SchemaDefinitionFieldSpec>>;
+  /** 嵌套字段词表（统一 SchemaFieldKind；支持字符串简写（kind 名）或
+   *  SchemaFieldRule 对象形态（params/isolate/regionKey/required/valueType/nonEmpty）） */
+  fieldRules: Readonly<Record<string, SchemaFieldRule | SchemaFieldKind>>;
   /** 该属性的整体值是一个 ActionSchema（单 action 值字段）——整值保持模板 */
   actionValue?: true;
 }
 ```
 
-**fieldRules 载体**：`SchemaDefinitionFieldKind`（`flux-core/src/schema-diagnostics/manifest.ts`）是嵌套词表（value/event/action/region/schema/schema-array/prop/literal——顶层 `SchemaFieldKind` 的嵌套子集）；对象形态 `SchemaDefinitionFieldRule` 携带取值约束（`required`/`valueType`/`nonEmpty`，表达式字符串豁免）。顶层 `fields` 继续用数组形态（`SchemaFieldRule[]`，含 regionKey 等扩展），嵌套 `fieldRules` 用 Record 形态——分类语义同源。
+**fieldRules 载体**：嵌套 `fieldRules` 复用统一 `SchemaFieldKind` 词表 + `SchemaFieldRule` 对象形态（`flux-core/src/types/schema.ts`）——`params`/`isolate`/`regionKey`（compiledKey 载体）与顶层 `fields` 同构（`SchemaDefinitionFieldKind` 独立词表已在机制统一时合并删除）。对象形态 `SchemaFieldRule` 携带取值约束（`required`/`valueType`/`nonEmpty`，表达式字符串豁免）与 region 载体（`regionKey`/`regionKeySuffix`/`sourceKey`/`params`/`isolate`）。顶层 `fields` 继续用数组形态（`SchemaFieldRule[]`），嵌套 `fieldRules` 用 Record 形态——分类语义同源。
 
 **容器形态自动确定 definition 作用对象**：
 
@@ -190,21 +190,27 @@ ajax: {
 },
 ```
 
-**字段约束载体**——取值约束随 definition 声明，校验器消费（`SchemaDefinitionFieldRule`，`manifest.ts`）：
+**字段约束载体**——取值约束随 definition 声明，校验器消费（统一 `SchemaFieldRule`，`flux-core/src/types/schema.ts`；嵌套形态复用同一类型）：
 
 ```ts
-export interface SchemaDefinitionFieldRule {
-  kind: SchemaDefinitionFieldKind;
+export interface SchemaFieldRule {
+  key?: string; // 顶层 fields 必填；嵌套 fieldRules 由 record 键提供
+  kind: SchemaFieldKind; // 统一词表（顶层与嵌套共用）
   /** 字段必填（缺失报错） */
   required?: boolean;
   /** 取值形状约束——对表达式字符串（${...}）豁免（编译期类型未知，运行时求值） */
   valueType?: 'boolean' | 'string' | 'number' | 'object' | 'array';
   /** 字符串非空（配合 valueType: 'string'，如 url） */
   nonEmpty?: boolean;
+  regionKey?: string; // 双语义：顶层 = region 键；嵌套 = compiledKey 载体
+  regionKeySuffix?: string; // 嵌套 region 键后缀（缺省 = 字段键，可含点）
+  sourceKey?: string; // 嵌套 plain-object 字段的 schema 叶子键
+  params?: readonly string[]; // region 参数（pushRegionParamSymbols）
+  isolate?: boolean; // region 作用域隔离
 }
 ```
 
-**fieldRules 记录值形态**：`Record<string, SchemaDefinitionFieldSpec>`（`SchemaDefinitionFieldSpec = SchemaDefinitionFieldKind | SchemaDefinitionFieldRule`；字符串简写 = kind 名）。
+**fieldRules 记录值形态**：`Record<string, SchemaFieldRule | SchemaFieldKind>`（字符串简写 = kind 名）。
 
 **校验语义（含表达式豁免）**：
 
@@ -216,13 +222,13 @@ export interface SchemaDefinitionFieldRule {
 
 约束全部在 definition 声明，`validateActionShape` 按 definition 消费——`validateApiSchemaShape` 的 action 场景由此取代（source/data-source 场景保留）。
 
-**覆盖清单以代码为双重锚**：`BUILT_IN_ACTION_REGISTRY`（16 canonical，含 refreshNearest 补正）**∪** `runBuiltInAction` switch（`flux-action-core/src/action-dispatcher/built-in-actions.ts`）。编译按 definition 分类 args 字段；校验按 definition 递归（`args.body` 走 analyzeSchemaInput；action 链继承既有递归 `shape-validation-rules.ts:278-326`）。ajax 的硬编码 args 分支迁移（definition 接管、`validateApiSchemaShape` action 场景移除）由 `docs/plans/2026-08-02-3-ajax-validation-migration.md`（Plan 3）收口。
+**覆盖清单以代码为双重锚**：`BUILT_IN_ACTION_REGISTRY`（16 canonical，含 refreshNearest 补正）**∪** `runBuiltInAction` switch（`flux-action-core/src/action-dispatcher/built-in-actions.ts`）。编译按 definition 分类 args 字段；校验按 definition 递归（`args.body` 走 analyzeSchemaInput；action 链继承既有递归 `shape-validation-rules.ts:278-326`）。ajax 的硬编码 args 分支已删除（definition 接管：argsRequired + fieldRules；`validateApiSchemaShape` 的 action 场景已移除，仅 source/data-source 场景保留），由 `docs/plans/2026-08-02-3-ajax-validation-migration.md`（Plan 3）执行完成（2026-08-02）。
 
 **兑现边界（选项①，已选定）**：`evaluateSurfaceArgs`（`built-in-actions.ts:19-40`）只对顶层 isSchema 键原始值覆盖——`onClose`/`onSubmitSuccess` 是 action 结构（非 isSchema），在 dispatch scope 仍会被整体求值。**扩展 evaluateSurfaceArgs 对契约标注 action 类键做原始值保留**，契约测试锁定"onClose/onSubmitSuccess 不被 dispatch scope 求值"。
 
 ### 3.8 item 显式 type 语义
 
-item 元素可显式带 `type`（完整支持）：**有 `type` → 按 `registry.get(type)` 的 definition 处理**（完整 renderer 语义：字段分类、region 编译）；**无 `type` → 按内联 schema-definition 处理**。两者互斥时（item 既带 type 又被父级声明 fieldRules）以显式 type 为准并 emit 诊断。typed item 走 region 化会改变 props 形状——renderer 按 props 契约消费（现有 dropdown/button-group 用无 type item，不受影响）。
+item 元素可显式带 `type`（完整支持）：**有 `type` → 按 `registry.get(type)` 的 definition 处理**（完整 renderer 语义：字段分类、region 编译）；**无 `type` → 按内联 schema-definition 处理**。两者互斥时（item 既带 type 又被父级声明 fieldRules）以显式 type 为准并 emit `conflicting-field-definition` 诊断（warning）。typed item 走 region 化会改变 props 形状——renderer 按 props 契约消费（现有 dropdown/button-group 用无 type item，不受影响）。**未注册的 type 值**（如 table column 的 `type: 'operation'`/`'fixed'`）回退到内联 fieldRules，不触发诊断。
 
 ### 3.9 与既有机制的关系
 

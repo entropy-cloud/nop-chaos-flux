@@ -1,6 +1,6 @@
 # 2026-08-02 ajax 校验迁移进 action definition（Ajax Validation Migration）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-02
 > Source: `docs/architecture/nested-schema-field-classification.md`（v8 §3.7：definition 锚定 registry ∪ switch 双重锚、字段约束载体 SchemaFieldRule 扩展）、`docs/plans/2026-08-02-1-nested-schema-field-classification.md`（Plan 1）
 > Related: `docs/plans/2026-08-02-2-nested-schema-mechanism-unification.md`（Plan 2）
@@ -66,37 +66,37 @@
 
 ### Phase 1 - ajax 硬编码分支迁移
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/schema-compiler/shape-validation-rules.ts`（+ `packages/flux-core/src/types/schema.ts`——SchemaFieldRule 约束扩展落点，若 Plan 1 未落地）
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **Decision（约束机制）**：字段约束载体采用设计 v8 §3.7 裁定——SchemaFieldRule 扩展 required/valueType（扩展 boolean → string/number/object/array）/nonEmpty + **表达式豁免语义（只认 `${` 前缀，判据与 `FormulaCompiler.hasExpression`（flux-formula/src/compile/formula-compiler.ts:98-100，`includes('${')`）语义对齐——`$@{` 非活跃语法不识别；表达式字符串跳过类型/非空校验——运行时求值）**；fieldRules 记录值形态 `Record<string, Omit<SchemaFieldRule, "key">>`；action definition 增加 argsRequired（args 必填语义）；校验器按约束消费（declaration-driven）；约束消费范围 = schema-definition/action definition（顶层 fields 不消费）
-- [ ] 确认 Plan 1 的 action definition 校验管道已就绪（可观测判据：constants.ts 存在 ajax definition 且**约束形态齐全**——fieldRules 对象形态含 required/valueType/nonEmpty、argsRequired 存在、validateActionShape 有按 definition 分支；未就绪 → 本 Phase 标记 blocked，依赖 Plan 1 P6 先落地）
-- [ ] 删除 `validateActionShape` 的 ajax 硬编码分支（:212-232：args 缺失报错 + validateApiSchemaShape 调用）——语义由 definition 的 argsRequired + fieldRules 约束（url required/string/nonEmpty、method string、data/params object）接管
-- [ ] 移除 `validateApiSchemaShape` 的 action 场景调用（:224）；**保留** source（:395）与 data-source（shape-validation-node-fields.ts:340）调用
-- [ ] ajax 校验由 definition 消费：args 缺失诊断（argsRequired，保留语义：'ajax actions require args payload'）+ **args 存在但非对象 → 单诊断**（保留 'Action args must be an object when provided'，收敛现有双发射）+ url 非空字符串（required/string/nonEmpty）+ method 字符串 / data·params 对象形状（fieldRules 增强，表达式豁免）
-- [ ] 对照单测：迁移前后 ajax 校验行为一致（按实际诊断集合：args 缺失报错、url 缺失/非字符串/空串、api 非对象——含现有双诊断发射现状与 schema-compiler-shape-validation-compile.test.ts:259 锁定的语义）；**表达式字符串用例：`data: '${formData}'` / `url: '${apiUrl}'` 通过（schema-compiler-xui-actions.test.ts:160 锁定的合法模式）**；source/data-source 场景行为不变；增强项（method 字符串、data/params 对象——非表达式时）断言
+- [x] **Decision（约束机制）**：字段约束载体采用设计 v8 §3.7 裁定——SchemaFieldRule 扩展 required/valueType（扩展 boolean → string/number/object/array）/nonEmpty + **表达式豁免语义（只认 `${` 前缀，判据与 `FormulaCompiler.hasExpression`（flux-formula/src/compile/formula-compiler.ts:98-100，`includes('${')`）语义对齐——`$@{` 非活跃语法不识别；表达式字符串跳过类型/非空校验——运行时求值）**；fieldRules 记录值形态 `Record<string, Omit<SchemaFieldRule, "key">>`；action definition 增加 argsRequired（args 必填语义）；校验器按约束消费（declaration-driven）；约束消费范围 = schema-definition/action definition（顶层 fields 不消费）——**由 Plan 1 P6 落地**（SchemaFieldRule required/valueType/nonEmpty 见 `flux-core/src/types/schema.ts:153+`；ajax definition 含 fieldRules 对象形态 + argsRequired 见 `constants.ts:105-113`；表达式豁免 `isDynamicallyAuthoredSchemaValue`（flux-value-shape-validation.ts:78-89，`${` 前缀判据）；约束消费范围与设计 v8 §3.7 一致）
+- [x] 确认 Plan 1 的 action definition 校验管道已就绪（可观测判据：constants.ts 存在 ajax definition 且**约束形态齐全**——fieldRules 对象形态含 required/valueType/nonEmpty、argsRequired 存在、validateActionShape 有按 definition 分支；未就绪 → 本 Phase 标记 blocked，依赖 Plan 1 P6 先落地）——**已就绪**（`BUILT_IN_ACTION_DEFINITIONS.ajax` 完整；`validateBuiltInActionArgsByDefinition` 已挂入 `validateActionShape`，本计划在其上补齐 argsRequired 消费）
+- [x] 删除 `validateActionShape` 的 ajax 硬编码分支（:212-232：args 缺失报错 + validateApiSchemaShape 调用）——语义由 definition 的 argsRequired + fieldRules 约束（url required/string/nonEmpty、method string、data/params object）接管（grep `value.action === 'ajax'` 在 shape-validation-rules.ts 零命中）
+- [x] 移除 `validateApiSchemaShape` 的 action 场景调用（:224）；**保留** source（:395）与 data-source（shape-validation-node-fields.ts:340）调用——移除后 `validateApiSchemaShape` 调用点仅剩定义 + source（shape-validation-rules.ts:463）+ data-source（shape-validation-node-fields.ts:296）
+- [x] ajax 校验由 definition 消费：args 缺失诊断（argsRequired，保留语义：'ajax actions require args payload'）+ **args 存在但非对象 → 单诊断**（保留 'Action args must be an object when provided'，收敛现有双发射）+ url 非空字符串（required/string/nonEmpty）+ method 字符串 / data·params 对象形状（fieldRules 增强，表达式豁免）
+- [x] 对照单测：迁移前后 ajax 校验行为一致（按实际诊断集合：args 缺失报错、url 缺失/非字符串/空串、api 非对象——含现有双诊断发射现状与 schema-compiler-shape-validation-compile.test.ts:259 锁定的语义）；**表达式字符串用例：`data: '${formData}'` / `url: '${apiUrl}'` 通过（schema-compiler-xui-actions.test.ts:160 锁定的合法模式）**；source/data-source 场景行为不变；增强项（method 字符串、data/params 对象——非表达式时）断言——**新增 `schema-compiler-ajax-validation-migration.test.ts`（12 用例全绿：args 缺失/url 缺失/url 非字符串/url 空串/非对象单诊断/表达式豁免/合法完整 args/method/data/params 增强 + source/data-source 场景不变）**
 
 Exit Criteria:
 
-- [ ] `shape-validation-rules.ts` 无 ajax 硬编码残留（grep `value.action === 'ajax'` 在 shape-validation-rules 零命中）；`validateApiSchemaShape` 仅 source/data-source 调用
-- [ ] 对照单测 + 增强断言通过；局部 `tsc -p tsconfig.build.json`（flux-compiler）通过
+- [x] `shape-validation-rules.ts` 无 ajax 硬编码残留（grep `value.action === 'ajax'` 在 shape-validation-rules 零命中）；`validateApiSchemaShape` 仅 source/data-source 调用
+- [x] 对照单测 + 增强断言通过；局部 `tsc -p tsconfig.build.json`（flux-compiler）通过
 
 ### Phase 2 - 回归与文档核对
 
-Status: planned
+Status: completed
 Targets: 全仓 + `docs/architecture/nested-schema-field-classification.md`
 
 - Item Types: `Proof | Follow-up`
 
-- [ ] 全仓 grep：`validateApiSchemaShape` 调用点仅定义 + source/data-source 两处
-- [ ] 设计文档 v8 §3.7 与 live baseline 一致（硬编码分支已消除、字段约束载体与 definition 样例相符）；daily log 记录
+- [x] 全仓 grep：`validateApiSchemaShape` 调用点仅定义 + source/data-source 两处——**证据**：`shape-validation-rules.ts:108`（定义）+ `shape-validation-rules.ts:463`（source 场景）+ `shape-validation-node-fields.ts:296`（data-source 场景）；docs/archive 命中为历史分析记录
+- [x] 设计文档 v8 §3.7 与 live baseline 一致（硬编码分支已消除、字段约束载体与 definition 样例相符）；daily log 记录——**§3.7 收口句更新为已完成状态**（"ajax 的硬编码 args 分支已删除…Plan 3 执行完成（2026-08-02）"）；`docs/logs/2026/08-02.md` 新增 Plan 3 执行记录
 
 Exit Criteria:
 
-- [ ] grep 证据（validateApiSchemaShape 仅定义 + source/data-source 调用）
-- [ ] 设计文档无漂移（§3.7 与 live 一致；全量验证见 Closure Gates）
+- [x] grep 证据（validateApiSchemaShape 仅定义 + source/data-source 调用）
+- [x] 设计文档无漂移（§3.7 与 live 一致；全量验证见 Closure Gates）
 
 ## Draft Review Record
 
@@ -113,16 +113,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 与每个 Phase 的 Exit Criteria 全部 `[x]` 后，方可 `Plan Status: completed`。
 
-- [ ] ajax 硬编码分支已删除（grep 证据），action 场景由 definition 校验接管
-- [ ] `validateApiSchemaShape` 仅 source/data-source 场景调用（grep 证据）
-- [ ] ajax 校验行为对照（迁移前后一致）+ 增强项契约测试通过
-- [ ] 不存在被静默降级到 deferred/follow-up 的 in-scope 项
-- [ ] 设计文档 §3.7 与 live baseline 一致
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] ajax 硬编码分支已删除（grep 证据：`value.action === 'ajax'` 在 shape-validation-rules.ts 零命中），action 场景由 definition 校验接管（argsRequired + fieldRules）
+- [x] `validateApiSchemaShape` 仅 source/data-source 场景调用（grep 证据：定义 + shape-validation-rules.ts:463 source + shape-validation-node-fields.ts:296 data-source）
+- [x] ajax 校验行为对照（迁移前后一致）+ 增强项契约测试通过（`schema-compiler-ajax-validation-migration.test.ts` 12 用例）
+- [x] 不存在被静默降级到 deferred/follow-up 的 in-scope 项（Deferred 区为空；两项 follow-up 为治理项与跨仓库 successor，均非 blocking）
+- [x] 设计文档 §3.7 与 live baseline 一致（收口句更新为"硬编码分支已删除…Plan 3 执行完成"）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（审计任务 `ses_03d431a5fffe14GABTnxy0izGu`，verdict `approved`，证据见 Closure 区）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -135,13 +135,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成或关闭时填写）
+Status Note: 2 Phase 全部完成。ajax 硬编码校验分支已从 `validateActionShape` 删除，语义由 `BUILT_IN_ACTION_DEFINITIONS.ajax` 接管（argsRequired 缺失诊断保留 'ajax actions require args payload.'；args 非对象收敛为单诊断 'Action args must be an object when provided.'；url required/string/nonEmpty + method 字符串 + data/params 对象形状增强，表达式 `${...}` 豁免）。`validateApiSchemaShape` 收窄为 source/data-source 场景（action 场景调用移除）。全量验证：typecheck/build/lint 31/31；test 58/58（flux-compiler 36 文件 533 用例，含新增 12 对照/增强契约测试）。依赖 Plan 1 P6 definition 校验管道，管道已就绪、直接消费。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立审计）
-- Evidence: （待定）
+- Auditor / Agent: 独立子 agent `ses_03d431a5fffe14GABTnxy0izGu`（fresh session，只读复核）
+- Evidence: 逐项核对 live repo——`value.action === 'ajax'` 全仓零命中；`validateApiSchemaShape` 调用点仅定义 + source + data-source 两场景；argsRequired 消费与非对象单诊断早退（shape-validation-rules.ts:168-185）；constants.ts ajax definition 约束齐全；新测试 12/12 通过（flux-compiler 36/533）；typecheck/lint/build 31/31 + test 58/58 全绿（flux-core 35/507 独立复跑确认非 stale cache）；plan 文本一致性（双 Phase completed、Execution Plan 无残留 `[ ]`）；deferred 诚实性（无 in-scope deferred，两项 follow-up 均为非 blocking 治理/跨仓库项）——verdict `approved`，零 Blocker/Major。
 
 Follow-up:
 
-- （待定）
+- 内建 action definition 与 `classifyActionSelector` 的关系文档化（选择器解析 vs 参数校验职责划分）——治理项（与 Plan 1/2 同项，任一处落地即可）。
+- host（nop-chaos-next）重打包验证——跨仓库 successor。

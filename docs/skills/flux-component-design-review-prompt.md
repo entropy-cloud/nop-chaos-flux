@@ -84,7 +84,7 @@ Flux 组件设计与常规 React 组件有三点根本不同，审查时必须�
 - [ ] **布尔字段 authoring 类型为 `boolean | string`**，不接受 `"true"`/`"false"` 字符串字面量
 - [ ] **Renderer 直接消费 resolved boolean 值**，不做 `Boolean()` 包裹或 truthiness 强制判断
 - [ ] **需要特殊 wrapper root 标签？声明 `frameRootTag`**，不在 NodeRenderer 中硬编码 type
-- [ ] **有嵌套 schema 结构的 prop？声明 `deepFields`**
+- [ ] **有嵌套 schema 结构的 prop？在 `propContracts[key].shape` 内联 `schema-definition`**（fieldRules 声明 region/event/literal/value 分类——取代已删除的 `deepFields` 机制）
 - [ ] **需要默认校验行为？声明 `validationDefaults`**
 - [ ] **需要编译时产物附着？声明 `compilation` 元数据**
 
@@ -201,7 +201,7 @@ Flux 组件设计与常规 React 组件有三点根本不同，审查时必须�
 
 ### 15. RendererDefinition 元数据声明合规
 
-- [ ] **无硬编码 type dispatch**：渲染器行为不依赖 schema.type 硬编码分支（if/switch）——通过 RendererDefinition 声明式元数据表达（`scopePolicy`、`wrap`、`deepFields`、`validationDefaults`、`compilation` 等）
+- [ ] **无硬编码 type dispatch**：渲染器行为不依赖 schema.type 硬编码分支（if/switch）——通过 RendererDefinition 声明式元数据表达（`scopePolicy`、`wrap`、`propContracts`/`fields`、`validationDefaults`、`compilation` 等）
 - [ ] **自定义校验行为通过 validationDefaults 声明**，非 schema.type 判断
 - [ ] **自定义编译行为通过 compilation 元数据声明**，非 schema.type 判断
 
