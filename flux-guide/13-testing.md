@@ -180,6 +180,59 @@ const result = compiled.exec(scope, env).value; // 3
 
 **约定：E2E 默认零容忍 console.error / pageerror**。需要放宽时显式调用 `allowConsoleErrors(n)`。
 
+### 字段定位契约（简化 E2E 定位与取值）
+
+Flux 渲染器对外暴露一组**生产常驻**的 DOM 契约属性，E2E 可按契约直读字段，无需从 `id`/`data-slot`/`role`/`tagName` 反推——后者在不同控件间碎片化，且 checkbox/switch 的 `${name}-control` id 不在交互元素上（在 wrapper label 上）。
+
+**属性速查**
+
+| 属性                         | 位置                                         | 用途                                                                                                               |
+| ---------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `data-field="name"`          | 字段根 `.nop-field`（所有 wrap 字段）        | 按字段名定位，**含 checkbox/switch**。替代 `input[name]`/`#${name}-control`/`#${name}-control-label` 三套 selector |
+| `data-renderer="input-text"` | 字段根 `.nop-field`                          | 控件类型（schema type）。确定性分派填写逻辑，不再运行时探测 tagName/role                                           |
+| `data-value="1"`             | `[data-slot="combobox-item"]`（select 选项） | 按 **value** 精确选择选项。注意选项可见文本仍是 `option.label`（非 value）                                         |
+| `data-field="colName"`       | 表格 `<td>`                                  | 按列名定位单元格。替代 `td:nth-child(N)` + 占位空表头的列索引偏移修正                                              |
+
+**填字段（按 `data-renderer` 分派）**
+
+```ts
+const field = dialog.locator('[data-field="gender"]');
+const type = await field.getAttribute('data-renderer');
+
+switch (type) {
+  case 'checkbox':
+  case 'switch': {
+    const w = field.locator('[data-slot="checkbox"], [data-slot="switch"]');
+    if ((await w.getAttribute('aria-checked')) !== 'true') await w.click();
+    break;
+  }
+  case 'select': {
+    await field.locator('[data-slot="combobox-trigger"], [role="combobox"]').click();
+    // 按 value 选，不再按文本模糊匹配 "1-男"
+    await page.locator('[data-slot="combobox-item"][data-value="1"]').click();
+    break;
+  }
+  default:
+    await field.locator('input, textarea').fill('值');
+}
+```
+
+**读表格单元格（按列名，不按索引）**
+
+```ts
+// before：靠列索引，还要修占位空表头的偏移
+// const i = headers.indexOf('email'); row.locator(`td:nth-child(${i + 1})`);
+
+// after：按列名直读
+const cell = row.locator('td[data-field="email"]');
+```
+
+**要点**
+
+- 这四个属性是**稳定契约**，由 `packages/flux-renderers-form/src/__tests__/field-controls-dom-contract.test.tsx` 冻结；变更必须在该契约测试显式更新（规约见 `docs/architecture/renderer-markers-and-selectors.md` Layer 2）。
+- 纯新增：现有 `data-slot`/`${name}-control` 仍保留，E2E 可渐进迁移。
+- 生产常驻、**不走调试开关**——E2E 测的就是生产行为，gate 在调试态会脱离真实 DOM。
+
 ---
 
 ## 推荐参考的 3 个测试范例

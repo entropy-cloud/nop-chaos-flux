@@ -1,0 +1,23 @@
+{
+  "name": "component-audit",
+  "description": "nop-chaos-flux 逐组件深度审计 + 自动修复 mission：以单个渲染器组件为最小审计单元，对全部 9 个 renderer 包的 112 个注册组件逐一完成 18 维契约审查（schema 契约 / RendererComponentProps 合规 / 值所有权三态 / 表单参与 / DOM 选择器契约 / 嵌套 schema 分类 / 事件与 action 契约 / a11y / i18n / 四态覆盖 / 异步生命周期 / 组合宿主场景 / 样式契约 / React19 / 性能边界 / 测试质量 / 文档对照 / 注册包边界与 IO 安全红线），每个组件产出独立审计卡（P0/P1/P2/P3 裁决），P0/P1 缺陷由执行 agent 在同一 plan 内自动修复（test-first + 回归测试 + 自动验证门禁，审计与修复之间无人工握手，见 roadmap「自动修复机制」节）；执行中发现共性缺陷模式（≥2 组件/跨包/公共层）时主动插入「共性重构」CX-n work item 动态调整 roadmap（见 roadmap「自动修复机制」§7），不默认囤积到 CR；每族至少 1 个真实浏览器宿主场景验证。对照上轮 audit-remediation（包簇 x 审计层粒度）的遗漏面逐组件补查。代码变更授权范围同 audit-remediation：全部保护区域（flux-core/src/、Schema/contract validation、ui/src/index.ts、Renderer 定义、样式契约）。",
+  "model": "opencode-go/deepseek-v4-flash",
+  "variant": "max",
+  "roadmapPath": "docs/backlog/component-audit-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": ".",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "fix(component-audit): <description>"
+}
