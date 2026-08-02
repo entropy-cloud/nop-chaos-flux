@@ -1,71 +1,56 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  CompileSchemaOptions,
-  SchemaInput,
-  TemplateNode,
-  TemplateRegion,
-} from '@nop-chaos/flux-core';
+import type { FluxSchemaDefinitionShape } from '@nop-chaos/flux-core';
 import { layoutRendererDefinitions } from '../layout-renderer-definitions.js';
 import { isStepDisabled } from '../wizard-renderer.js';
 
-function createMockCompileSchema(): (
-  input: SchemaInput,
-  options?: CompileSchemaOptions,
-) => TemplateNode | TemplateNode[] {
-  return (_input: SchemaInput, _options?: CompileSchemaOptions) =>
-    ({ type: 'text', text: 'mock' }) as unknown as TemplateNode;
-}
-
-function getWizardStepsNormalize() {
+function getWizardStepsShape(): FluxSchemaDefinitionShape {
   const wizardDef = layoutRendererDefinitions.find((def) => def.type === 'wizard');
-  const stepsDeepField = wizardDef?.deepFields?.find((field) => field.key === 'steps');
-  const normalize = stepsDeepField?.normalize;
-  if (typeof normalize !== 'function') {
-    throw new Error('wizard steps deepField.normalize not found in production definitions');
+  const stepsContract = wizardDef?.propContracts?.steps;
+  const shape = stepsContract?.shape;
+  if (shape?.kind !== 'array' || shape.item.kind !== 'schema-definition') {
+    throw new Error('wizard steps propContract schema-definition not found in production definitions');
   }
-  return normalize;
+  return shape.item;
 }
 
-describe('wizard step.disabled — compile-through boolean-literal contract', () => {
-  it('production deepField.normalize wraps authored step.disabled into __nopPreserveLiteral envelope', () => {
-    const normalize = getWizardStepsNormalize();
-    const regions: Record<string, TemplateRegion> = {};
-    const compileSchema = createMockCompileSchema();
+describe('wizard step.disabled — compile-through boolean-literal contract (unified pipeline)', () => {
+  it('production propContracts declares steps.disabled as literal kind (envelope auto-wrapping)', () => {
+    const itemShape = getWizardStepsShape();
 
-    const result = normalize({
-      value: [
-        { title: 'A', disabled: true },
-        { title: 'B', disabled: false },
-      ],
-      path: '$.steps',
-      regions,
-      compileSchema,
-    }) as Record<string, unknown>[];
+    // disabled → literal: the compiler auto-wraps into __nopPreserveLiteral.
+    expect(itemShape.fieldRules.disabled).toBe('literal');
 
-    expect(result[0].disabled).toEqual({ __nopPreserveLiteral: true, value: true });
-    expect(result[1].disabled).toEqual({ __nopPreserveLiteral: true, value: false });
+    // title → value-or-region; body/actions → region with params preserved.
+    expect(itemShape.fieldRules.title).toEqual(
+      expect.objectContaining({
+        kind: 'value-or-region',
+        regionKey: 'titleRegionKey',
+        params: ['step', 'index', 'key'],
+      }),
+    );
+    expect(itemShape.fieldRules.body).toEqual(
+      expect.objectContaining({
+        kind: 'region',
+        regionKey: 'bodyRegionKey',
+        params: ['step', 'index', 'key'],
+      }),
+    );
+    expect(itemShape.fieldRules.actions).toEqual(
+      expect.objectContaining({
+        kind: 'region',
+        regionKey: 'actionsRegionKey',
+        params: ['step', 'index', 'key'],
+      }),
+    );
   });
 
   it('isStepDisabled resolves the compiler-produced envelope (renderer-side unwrap)', () => {
-    const normalize = getWizardStepsNormalize();
-    const regions: Record<string, TemplateRegion> = {};
-    const compileSchema = createMockCompileSchema();
-
-    const result = normalize({
-      value: [
-        { title: 'A', disabled: true },
-        { title: 'B', disabled: false },
-      ],
-      path: '$.steps',
-      regions,
-      compileSchema,
-    }) as unknown as { disabled: unknown }[];
-
-    // Contract: after the fix, the renderer must treat the compiler-emitted
+    // Contract: after the migration, the renderer must treat the compiler-emitted
     // `{__nopPreserveLiteral:true, value:true}` envelope as a disabled step.
-    // RED before the fix (isStepDisabled compared only bare literals and
-    // returned false for the envelope object).
-    expect(isStepDisabled(result[0] as never)).toBe(true);
-    expect(isStepDisabled(result[1] as never)).toBe(false);
+    expect(isStepDisabled({ disabled: { __nopPreserveLiteral: true, value: true } } as never)).toBe(true);
+    expect(isStepDisabled({ disabled: { __nopPreserveLiteral: true, value: false } } as never)).toBe(false);
+    expect(isStepDisabled({ disabled: true } as never)).toBe(true);
+    expect(isStepDisabled({ disabled: false } as never)).toBe(false);
+    expect(isStepDisabled({ disabled: 'true' } as never)).toBe(true);
   });
 });

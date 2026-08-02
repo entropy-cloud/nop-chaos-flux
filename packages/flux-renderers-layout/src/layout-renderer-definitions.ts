@@ -1,5 +1,4 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { extractNestedSchemaRegions } from '@nop-chaos/flux-core';
 import { GridRenderer } from './grid-renderer.js';
 import { CollapseRenderer } from './collapse-renderer.js';
 import { ButtonGroupRenderer } from './button-group-renderer.js';
@@ -16,7 +15,35 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
     component: WizardRenderer,
     propContracts: {
       steps: {
-        shape: { kind: 'array', item: { kind: 'unknown' } },
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              title: {
+                kind: 'value-or-region',
+                regionKey: 'titleRegionKey',
+                params: ['step', 'index', 'key'],
+                isolate: false,
+              },
+              body: {
+                kind: 'region',
+                regionKey: 'bodyRegionKey',
+                params: ['step', 'index', 'key'],
+                isolate: false,
+              },
+              actions: {
+                kind: 'region',
+                regionKey: 'actionsRegionKey',
+                params: ['step', 'index', 'key'],
+                isolate: false,
+              },
+              disabled: 'literal',
+              beforeEnter: 'event',
+              beforeLeave: 'event',
+            },
+          },
+        },
         displayName: 'Steps',
         description:
           'Renderer-owned structured step list. Declaration order = navigation order. Each step carries title/body/actions regions + visible/disabled flags.',
@@ -123,88 +150,6 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
         },
       },
     },
-    deepFields: [
-      {
-        key: 'steps',
-        nestedRegions: [
-          {
-            key: 'title',
-            regionKeySuffix: 'title',
-            compiledKey: 'titleRegionKey',
-            params: ['step', 'index', 'key'],
-            isolate: false,
-          },
-          {
-            key: 'body',
-            regionKeySuffix: 'body',
-            compiledKey: 'bodyRegionKey',
-            params: ['step', 'index', 'key'],
-            isolate: false,
-          },
-          {
-            key: 'actions',
-            regionKeySuffix: 'actions',
-            compiledKey: 'actionsRegionKey',
-            params: ['step', 'index', 'key'],
-            isolate: false,
-          },
-        ],
-        booleanKeys: ['disabled'],
-        normalize(input) {
-          if (!Array.isArray(input.value)) {
-            return input.value;
-          }
-
-          return input.value.map((item, index) => {
-            if (!item || typeof item !== 'object') {
-              return item;
-            }
-
-            const normalized = extractNestedSchemaRegions({
-              candidate: item as Record<string, unknown>,
-              itemRegionPath: `${input.path}.steps[${index}]`,
-              itemRegionKeyPrefix: `steps.${index}`,
-              rules: [
-                {
-                  key: 'title',
-                  regionKeySuffix: 'title',
-                  compiledKey: 'titleRegionKey',
-                  params: ['step', 'index', 'key'] as readonly string[],
-                  isolate: false,
-                },
-                {
-                  key: 'body',
-                  regionKeySuffix: 'body',
-                  compiledKey: 'bodyRegionKey',
-                  params: ['step', 'index', 'key'] as readonly string[],
-                  isolate: false,
-                },
-                {
-                  key: 'actions',
-                  regionKeySuffix: 'actions',
-                  compiledKey: 'actionsRegionKey',
-                  params: ['step', 'index', 'key'] as readonly string[],
-                  isolate: false,
-                },
-              ],
-              regions: input.regions,
-              compileSchema: input.compileSchema,
-            }).value as Record<string, unknown>;
-
-            for (const booleanKey of ['disabled']) {
-              if (normalized[booleanKey] !== undefined) {
-                normalized[booleanKey] = {
-                  __nopPreserveLiteral: true,
-                  value: normalized[booleanKey] === true,
-                };
-              }
-            }
-
-            return normalized;
-          });
-        },
-      },
-    ],
     fields: [
       { key: 'steps', kind: 'prop' },
       { key: 'value', kind: 'prop' },
@@ -286,49 +231,26 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
         editorType: 'select',
       },
       items: {
-        shape: { kind: 'array', item: { kind: 'unknown' } },
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              body: {
+                kind: 'region',
+                regionKey: 'bodyRegionKey',
+                params: ['item', 'index', 'key'],
+                isolate: false,
+              },
+            },
+          },
+        },
         displayName: 'Items',
         description:
           'Grid item collection. Each item carries a body region plus optional colSpan/rowSpan.',
         editorType: 'object-array',
       },
     },
-    deepFields: [
-      {
-        key: 'items',
-        nestedRegions: [
-          {
-            key: 'body',
-            regionKeySuffix: 'body',
-            compiledKey: 'bodyRegionKey',
-            params: ['item', 'index', 'key'],
-            isolate: false,
-          },
-        ],
-        normalize(input) {
-          if (!Array.isArray(input.value)) return input.value;
-          return input.value.map((item, index) => {
-            if (!item || typeof item !== 'object') return item;
-            return extractNestedSchemaRegions({
-              candidate: item as Record<string, unknown>,
-              itemRegionPath: `${input.path}.items[${index}]`,
-              itemRegionKeyPrefix: `items.${index}`,
-              rules: [
-                {
-                  key: 'body',
-                  regionKeySuffix: 'body',
-                  compiledKey: 'bodyRegionKey',
-                  params: ['item', 'index', 'key'] as readonly string[],
-                  isolate: false,
-                },
-              ],
-              regions: input.regions,
-              compileSchema: input.compileSchema,
-            }).value as Record<string, unknown>;
-          });
-        },
-      },
-    ],
     fields: [
       { key: 'items', kind: 'prop' },
       { key: 'columns', kind: 'prop' },
@@ -347,7 +269,27 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
     component: CollapseRenderer,
     propContracts: {
       items: {
-        shape: { kind: 'array', item: { kind: 'unknown' } },
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              title: {
+                kind: 'value-or-region',
+                regionKey: 'titleRegionKey',
+                params: ['item', 'index', 'key'],
+                isolate: false,
+              },
+              body: {
+                kind: 'region',
+                regionKey: 'bodyRegionKey',
+                params: ['item', 'index', 'key'],
+                isolate: false,
+              },
+              disabled: 'literal',
+            },
+          },
+        },
         displayName: 'Items',
         description:
           'Collapse panel collection. Each item carries title + body regions plus key/disabled flags.',
@@ -415,64 +357,6 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
         },
       },
     },
-    deepFields: [
-      {
-        key: 'items',
-        nestedRegions: [
-          {
-            key: 'title',
-            regionKeySuffix: 'title',
-            compiledKey: 'titleRegionKey',
-            params: ['item', 'index', 'key'],
-            isolate: false,
-          },
-          {
-            key: 'body',
-            regionKeySuffix: 'body',
-            compiledKey: 'bodyRegionKey',
-            params: ['item', 'index', 'key'],
-            isolate: false,
-          },
-        ],
-        booleanKeys: ['disabled'],
-        normalize(input) {
-          if (!Array.isArray(input.value)) return input.value;
-          return input.value.map((item, index) => {
-            if (!item || typeof item !== 'object') return item;
-            const normalized = extractNestedSchemaRegions({
-              candidate: item as Record<string, unknown>,
-              itemRegionPath: `${input.path}.items[${index}]`,
-              itemRegionKeyPrefix: `items.${index}`,
-              rules: [
-                {
-                  key: 'title',
-                  regionKeySuffix: 'title',
-                  compiledKey: 'titleRegionKey',
-                  params: ['item', 'index', 'key'] as readonly string[],
-                  isolate: false,
-                },
-                {
-                  key: 'body',
-                  regionKeySuffix: 'body',
-                  compiledKey: 'bodyRegionKey',
-                  params: ['item', 'index', 'key'] as readonly string[],
-                  isolate: false,
-                },
-              ],
-              regions: input.regions,
-              compileSchema: input.compileSchema,
-            }).value as Record<string, unknown>;
-            if (normalized.disabled !== undefined) {
-              normalized.disabled = {
-                __nopPreserveLiteral: true,
-                value: normalized.disabled === true,
-              };
-            }
-            return normalized;
-          });
-        },
-      },
-    ],
     fields: [
       { key: 'items', kind: 'prop' },
       { key: 'value', kind: 'prop' },
