@@ -123,36 +123,6 @@ function validateBooleanAuthoredValue(input: {
   );
 }
 
-function validateNestedBooleanFields(input: {
-  value: unknown;
-  path: string;
-  keys: readonly string[];
-  diagnostics: SchemaCompilerDiagnosticsContext;
-  enabled: boolean;
-}) {
-  if (!Array.isArray(input.value)) {
-    return;
-  }
-
-  input.value.forEach((item, index) => {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) {
-      return;
-    }
-
-    const record = item as Record<string, unknown>;
-    for (const key of input.keys) {
-      validateBooleanAuthoredValue({
-        key,
-        value: record[key],
-        path: appendJsonPointer(appendJsonPointer(input.path, index), key),
-        diagnostics: input.diagnostics,
-        enabled: input.enabled,
-        source: 'renderer',
-      });
-    }
-  });
-}
-
 export function inspectSchemaNodeFields(
   schema: BaseSchema,
   renderer: RendererDefinition,
@@ -245,18 +215,6 @@ export function inspectSchemaNodeFields(
         diagnostics,
         enabled,
         source: 'renderer',
-      });
-    }
-
-    const deepField = renderer.deepFields?.find((field) => field.key === key);
-
-    if (deepField?.booleanKeys?.length) {
-      validateNestedBooleanFields({
-        value,
-        path: keyPath,
-        keys: deepField.booleanKeys,
-        diagnostics,
-        enabled,
       });
     }
 

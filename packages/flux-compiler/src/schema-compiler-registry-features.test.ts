@@ -1,107 +1,53 @@
 import { describe, expect, it } from 'vitest';
-import {
-  extractNestedSchemaRegions,
-  type CompileSchemaOptions,
-  type RendererDefinition,
-  type SchemaInput,
-  type TemplateNode,
-  type TemplateRegion,
-} from '@nop-chaos/flux-core';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
 import {
   importHostRenderer,
   createTestCompiler,
 } from './schema-compiler-registry-fixtures.js';
 
-function normalizeTableColumns(
-  value: unknown,
-  path: string,
-  regions: Record<string, TemplateRegion>,
-  compileSchema: (
-    input: SchemaInput,
-    options?: CompileSchemaOptions,
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => TemplateNode | TemplateNode[],
-) {
-  if (!Array.isArray(value)) {
-    return value;
-  }
-
-  return value.map((column, index) => {
-    if (!column || typeof column !== 'object') {
-      return column;
-    }
-
-    return extractNestedSchemaRegions({
-      candidate: column as Record<string, unknown>,
-      itemRegionPath: `${path}.columns[${index}]`,
-      itemRegionKeyPrefix: `columns.${index}`,
-      rules: [
-        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
-        {
-          key: 'buttons',
-          regionKeySuffix: 'buttons',
-          compiledKey: 'buttonsRegionKey',
+const tableColumnsContract: NonNullable<RendererDefinition['propContracts']>['columns'] = {
+  shape: {
+    kind: 'array',
+    item: {
+      kind: 'schema-definition',
+      fieldRules: {
+        label: { kind: 'value-or-region', regionKey: 'labelRegionKey' },
+        buttons: {
+          kind: 'region',
+          regionKey: 'buttonsRegionKey',
           params: ['record', 'index'],
           isolate: true,
         },
-        {
-          key: 'cell',
-          regionKeySuffix: 'cell',
-          compiledKey: 'cellRegionKey',
+        cell: {
+          kind: 'region',
+          regionKey: 'cellRegionKey',
           params: ['record', 'index'],
           isolate: true,
         },
-        {
-          key: 'body',
+        body: {
+          kind: 'region',
+          regionKey: 'quickEditBodyRegionKey',
           regionKeySuffix: 'quickEditBody',
-          compiledKey: 'quickEditBodyRegionKey',
         },
-      ],
-      regions,
-      compileSchema,
-    }).value;
-  });
-}
-
-const tableDeepFields = [
-  {
-    key: 'columns',
-    nestedRegions: [
-      { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
-      {
-        key: 'buttons',
-        regionKeySuffix: 'buttons',
-        compiledKey: 'buttonsRegionKey',
-        params: ['record', 'index'] as const,
-        isolate: true,
       },
-      {
-        key: 'cell',
-        regionKeySuffix: 'cell',
-        compiledKey: 'cellRegionKey',
-        params: ['record', 'index'] as const,
-        isolate: true,
-      },
-      {
-        key: 'body',
-        regionKeySuffix: 'quickEditBody',
-        compiledKey: 'quickEditBodyRegionKey',
-      },
-    ],
-    normalize(input: {
-      value: unknown;
-      path: string;
-      regions: Record<string, TemplateRegion>;
-      compileSchema: (
-        input: SchemaInput,
-        options?: CompileSchemaOptions,
-        regionMeta?: { params?: readonly string[]; isolate?: boolean },
-      ) => TemplateNode | TemplateNode[];
-    }) {
-      return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
     },
   },
-];
+  displayName: 'Columns',
+};
+
+const variantFieldVariantsContract: NonNullable<RendererDefinition['propContracts']>['variants'] = {
+  shape: {
+    kind: 'array',
+    item: {
+      kind: 'schema-definition',
+      fieldRules: {
+        content: { kind: 'region', regionKey: 'contentRegionKey' },
+        viewer: { kind: 'region', regionKey: 'viewerRegionKey' },
+      },
+    },
+  },
+  displayName: 'Variants',
+};
 
 describe('createSchemaCompiler', () => {
   it('preserves xui:imports on compiled schema for runtime registration', () => {
@@ -125,7 +71,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
-      deepFields: tableDeepFields,
+      propContracts: { columns: tableColumnsContract },
     };
     const buttonRenderer: RendererDefinition = {
       type: 'button',
@@ -154,7 +100,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
-      deepFields: tableDeepFields,
+      propContracts: { columns: tableColumnsContract },
     };
     const textRendererLocal: RendererDefinition = {
       type: 'text',
@@ -182,7 +128,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
-      deepFields: tableDeepFields,
+      propContracts: { columns: tableColumnsContract },
     };
     const textRendererLocal: RendererDefinition = {
       type: 'text',
@@ -211,23 +157,7 @@ describe('createSchemaCompiler', () => {
     const variantFieldRenderer: RendererDefinition = {
       type: 'variant-field',
       component: () => null,
-      deepFields: [
-        {
-          key: 'variants',
-          nestedRegions: [
-            {
-              key: 'content',
-              regionKeySuffix: 'content',
-              compiledKey: 'contentRegionKey',
-            },
-            {
-              key: 'viewer',
-              regionKeySuffix: 'viewer',
-              compiledKey: 'viewerRegionKey',
-            },
-          ],
-        },
-      ],
+      propContracts: { variants: variantFieldVariantsContract },
     };
     const textRendererLocal: RendererDefinition = {
       type: 'text',
@@ -260,7 +190,7 @@ describe('createSchemaCompiler', () => {
       type: 'table',
       component: () => null,
       fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }],
-      deepFields: tableDeepFields,
+      propContracts: { columns: tableColumnsContract },
     };
     const textRendererLocal: RendererDefinition = {
       type: 'text',
