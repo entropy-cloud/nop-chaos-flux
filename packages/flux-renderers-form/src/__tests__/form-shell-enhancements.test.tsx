@@ -311,6 +311,102 @@ describe('form shell enhancements - Enter key handling', () => {
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(submitCalls).toHaveLength(0);
   });
+
+  it('does NOT submit when Enter is pressed on a focused checkbox (role="checkbox")', async () => {
+    const SchemaRenderer = makeRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/enter-checkbox"
+        schema={{
+          type: 'form',
+          id: 'enter-checkbox-form',
+          submitAction: {
+            action: 'ajax',
+            args: { url: '/api/enter-checkbox', method: 'post' },
+          },
+          body: [{ type: 'checkbox', name: 'agree', label: 'Agree', option: { label: 'I agree' } }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const checkbox = document.querySelector('[data-slot="checkbox"][role="checkbox"]') as HTMLElement;
+    expect(checkbox).toBeTruthy();
+    fireEvent.keyDown(checkbox, { key: 'Enter', keyCode: 13, bubbles: true });
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(submitCalls).toHaveLength(0);
+  });
+
+  it('does NOT submit when Enter is pressed on a focused switch (role="switch")', async () => {
+    const SchemaRenderer = makeRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/enter-switch"
+        schema={{
+          type: 'form',
+          id: 'enter-switch-form',
+          submitAction: {
+            action: 'ajax',
+            args: { url: '/api/enter-switch', method: 'post' },
+          },
+          body: [{ type: 'switch', name: 'active', label: 'Active' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const switchEl = document.querySelector('[data-slot="switch"][role="switch"]') as HTMLElement;
+    expect(switchEl).toBeTruthy();
+    fireEvent.keyDown(switchEl, { key: 'Enter', keyCode: 13, bubbles: true });
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(submitCalls).toHaveLength(0);
+  });
+
+  it('does NOT submit when Enter was consumed by a control (event.defaultPrevented)', async () => {
+    const SchemaRenderer = makeRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/enter-prevented"
+        schema={{
+          type: 'form',
+          id: 'enter-prevented-form',
+          submitAction: {
+            action: 'ajax',
+            args: { url: '/api/enter-prevented', method: 'post' },
+          },
+          body: [{ type: 'input-text', name: 'q', label: 'Query' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const section = document.querySelector('.nop-form') as HTMLElement;
+    expect(section).toBeTruthy();
+    // Simulate a control that handles Enter itself (e.g. Base UI radio): a
+    // capture-phase listener preventDefaults before the React bubbling handler.
+    const event = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      keyCode: 13,
+      bubbles: true,
+      cancelable: true,
+    });
+    window.addEventListener(
+      'keydown',
+      (e) => {
+        e.preventDefault();
+      },
+      { once: true, capture: true },
+    );
+    section.dispatchEvent(event);
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(submitCalls).toHaveLength(0);
+  });
 });
 
 describe('form shell enhancements - autoFocus', () => {
