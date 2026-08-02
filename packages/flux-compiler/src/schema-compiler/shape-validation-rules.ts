@@ -142,14 +142,15 @@ export function validateApiSchemaShape(
  * Definition-driven built-in action args validation.
  *
  * Consumes the per-action definition table (`BUILT_IN_ACTION_DEFINITIONS`):
- * - args are validated against the definition's fieldRules (required /
- *   valueType / nonEmpty constraints, expression exemption included);
+ * - `argsRequired` definitions emit the missing-args diagnostic (Plan 3
+ *   migrated ajax semantics: 'ajax actions require args payload');
+ * - non-object args fall through to the generic `Action args must be an
+ *   object when provided` check in `validateActionShape` (single emission);
+ * - object args are validated against the definition's fieldRules
+ *   (required / valueType / nonEmpty constraints, expression exemption
+ *   included);
  * - schema-kind args (`body`/`actions`) recurse into `analyzeSchemaInput`
  *   when the validation traversal wires the hook.
- *
- * The ajax hardcoded branch above stays until Plan 3
- * (`docs/plans/2026-08-02-3-ajax-validation-migration.md`) removes it; the
- * definition pipeline is already authoritative for every other built-in.
  */
 function validateBuiltInActionArgsByDefinition(
   value: Record<string, unknown>,
@@ -160,7 +161,26 @@ function validateBuiltInActionArgsByDefinition(
 ) {
   const definition: BuiltInActionDefinition | undefined = getBuiltInActionDefinition(value.action as string);
 
-  if (!definition || value.args === undefined) {
+  if (!definition) {
+    return;
+  }
+
+  if (value.args === undefined) {
+    if (definition.argsRequired) {
+      emitSchemaDiagnostic(
+        diagnostics,
+        {
+          code: 'invalid-action-shape',
+          path: appendJsonPointer(path, 'args'),
+          message: 'ajax actions require args payload.',
+        },
+        enabled,
+      );
+    }
+    return;
+  }
+
+  if (!isPlainObject(value.args)) {
     return;
   }
 
@@ -175,7 +195,7 @@ function validateBuiltInActionArgsByDefinition(
     messagePrefix: `Invalid args for built-in action "${String(value.action)}".`,
   });
 
-  if (!actionContext?.analyzeSchemaInput || !isPlainObject(value.args)) {
+  if (!actionContext?.analyzeSchemaInput) {
     return;
   }
 
@@ -269,28 +289,6 @@ export function validateActionShape(
       },
       enabled,
     );
-  }
-
-  if (value.action === 'ajax') {
-    if (value.args === undefined) {
-      emitSchemaDiagnostic(
-        diagnostics,
-        {
-          code: 'invalid-action-shape',
-          path: appendJsonPointer(path, 'args'),
-          message: 'ajax actions require args payload.',
-        },
-        enabled,
-      );
-    } else {
-      validateApiSchemaShape(
-        value.args,
-        appendJsonPointer(path, 'args'),
-        diagnostics,
-        enabled,
-        'invalid-action-shape',
-      );
-    }
   }
 
   validateBuiltInActionArgsByDefinition(

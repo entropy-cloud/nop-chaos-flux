@@ -51,7 +51,9 @@ export function getAcceptedSchemaKeys(renderer: RendererDefinition): Set<string>
   }
 
   for (const field of renderer.fields ?? []) {
-    keys.add(field.key);
+    if (field.key) {
+      keys.add(field.key);
+    }
   }
 
   return keys;

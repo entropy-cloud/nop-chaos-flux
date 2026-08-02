@@ -49,7 +49,6 @@ import {
   isSourceCarrier,
   normalizeBooleanLikeCandidate,
   createCompileFailureNode,
-  normalizeDeepFieldNestedRegions,
   findSchemaDefinitionShape,
   classifySchemaDefinitionValue,
 } from './node-compiler-helpers.js';
@@ -67,17 +66,19 @@ import {
 } from '../validation-lowering.js';
 import { normalizeHiddenFieldPolicy } from '@nop-chaos/flux-core';
 
-// [R2.4] Utility functions (normalizeDeepFieldNestedRegions, isImportSpecCandidate,
-// isSourceCarrier, normalizeBooleanLikeCandidate, createCompileFailureNode) and types
+// [R2.4] Utility functions (isImportSpecCandidate, isSourceCarrier,
+// normalizeBooleanLikeCandidate, createCompileFailureNode) and types
 // (CompileSingleNodeFn, CompileSchemaToTemplateNodesFn) extracted to
 // node-compiler-helpers.ts.
-// The main compileSingleNode closure remains here because it shares substantial mutable
-// state (symbolTable, regions, compiledPropEntries, sourcePropKeys, rawEventPlans)
-// across sections. Splitting would reduce clarity without improving maintainability.
+// The main compileSingleNode closure remains here because it shares substantial
+// mutable state (symbolTable, regions, compiledPropEntries, sourcePropKeys,
+// rawEventPlans) across sections. Splitting would reduce clarity without
+// improving maintainability.
 
 export function createCompileSingleNode(
   expressionCompiler: ExpressionCompiler,
   compileSchemaToTemplateNodes: CompileSchemaToTemplateNodesFn,
+  registry: import('@nop-chaos/flux-core').RendererRegistry,
 ): CompileSingleNodeFn {
   return function compileSingleNode(
     schema: BaseSchema,
@@ -128,12 +129,12 @@ export function createCompileSingleNode(
     }
 
     const lazyEvalRules =
-      renderer.fields?.filter((f) => f.lazyEval) ?? [];
-    const lazyEvalKeys = new Set(lazyEvalRules.map((f) => f.key));
+      renderer.fields?.filter((f) => f.lazyEval && f.key) ?? [];
+    const lazyEvalKeys = new Set(lazyEvalRules.map((f) => f.key as string));
 
     const structuralFields: Record<string, import('@nop-chaos/flux-core').CompiledRuntimeValue<unknown>> = {};
     for (const rule of lazyEvalRules) {
-      const rawValue = (schema as Record<string, unknown>)[rule.key];
+      const rawValue = (schema as Record<string, unknown>)[rule.key as string];
       if (rawValue === undefined) continue;
 
       const params = rule.params;
@@ -148,7 +149,7 @@ export function createCompileSingleNode(
             })
           : symbolTable;
 
-      structuralFields[rule.key] = expressionCompiler.compileValue(rawValue, {
+      structuralFields[rule.key as string] = expressionCompiler.compileValue(rawValue, {
         symbolTable: lazySymbolTable,
         sourcePath: `${path}.${rule.key}`,
         reportDiagnostic: (issue) => diagnostics.emit(issue),
@@ -296,95 +297,22 @@ export function createCompileSingleNode(
         continue;
       }
 
-      const deepField = renderer.deepFields?.find((field) => field.key === key);
-      const normalizedValue = deepField
-        ? (deepField.normalize
-            ? deepField.normalize({
-                value,
-                path,
-                regions,
-                compileSchema: (
-                  s: SchemaInput,
-                  o?: CompileSchemaOptions,
-                  regionMeta?: { params?: readonly string[]; isolate?: boolean },
-                ) =>
-                  compileSchemaToTemplateNodes(
-                    s,
-                    {
-                      ...o,
-                      schemaUrl: o?.schemaUrl ?? options.schemaUrl,
-                      preparedImports: o?.preparedImports ?? options.preparedImports,
-                      diagnostics: diagnostics.enabled
-                        ? {
-                            enabled: true,
-                            continueOnError: diagnostics.continueOnError,
-                            maxIssues: diagnostics.maxIssues,
-                            reporter: (issue) => diagnostics.emit(issue),
-                          }
-                        : o?.diagnostics,
-                      symbolTable: regionMeta?.params?.length
-                        ? pushRegionParamSymbols(
-                            o?.symbolTable ?? symbolTable,
-                            regionMeta.params,
-                            `${path}.${key}:slot`,
-                          )
-                        : (o?.symbolTable ?? symbolTable),
-                    },
-                    depth + 1,
-                  ),
-              })
-            : normalizeDeepFieldNestedRegions({
-                value,
-                path,
-                key,
-                rules: deepField.nestedRegions,
-                regions,
-                compileSchema: (
-                  s: SchemaInput,
-                  o?: CompileSchemaOptions,
-                  regionMeta?: { params?: readonly string[]; isolate?: boolean },
-                ) =>
-                  compileSchemaToTemplateNodes(
-                    s,
-                    {
-                      ...o,
-                      schemaUrl: o?.schemaUrl ?? options.schemaUrl,
-                      preparedImports: o?.preparedImports ?? options.preparedImports,
-                      diagnostics: diagnostics.enabled
-                        ? {
-                            enabled: true,
-                            continueOnError: diagnostics.continueOnError,
-                            maxIssues: diagnostics.maxIssues,
-                            reporter: (issue) => diagnostics.emit(issue),
-                          }
-                        : o?.diagnostics,
-                      symbolTable: regionMeta?.params?.length
-                        ? pushRegionParamSymbols(
-                            o?.symbolTable ?? symbolTable,
-                            regionMeta.params,
-                            `${path}.${key}:slot`,
-                          )
-                        : (o?.symbolTable ?? symbolTable),
-                    },
-                    depth + 1,
-                  ),
-              }))
-        : value;
-
       // Schema-definition classification pipeline (propContracts.shape):
-      // runs AFTER deepFields normalize so legacy normalize/nestedRegions keep
-      // priority when both are declared on the same field. The classified
-      // value keeps event/action fields as preserve-literal envelopes and
+      // the single nested-handling entry point. The classified value keeps
+      // event/action/literal fields as preserve-literal envelopes and
       // region/schema fields as extracted regions, so the props program never
       // expression-evaluates nested action/schema templates.
       const schemaDefinitionMatch = findSchemaDefinitionShape(renderer.propContracts?.[key]);
       const classifiedValue = schemaDefinitionMatch
         ? classifySchemaDefinitionValue({
-            value: normalizedValue,
+            value,
             match: schemaDefinitionMatch,
             path: `${path}.${key}`,
             key,
             regions,
+            registry,
+            emitDiagnostic: (issue) =>
+              diagnostics.emit({ ...issue, source: 'core', sourceLocation: options.schemaUrl ? { file: options.schemaUrl } : undefined }),
             compileSchema: (
               s: SchemaInput,
               o?: CompileSchemaOptions,
@@ -415,7 +343,7 @@ export function createCompileSingleNode(
                 depth + 1,
               ),
           })
-        : normalizedValue;
+        : value;
 
       compiledPropEntries[key] = expressionCompiler.compileValue(classifiedValue, {
         symbolTable,

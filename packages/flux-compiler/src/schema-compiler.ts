@@ -110,7 +110,11 @@ export function createSchemaCompiler(input: {
       );
     }
 
-    const compileSingleNode = createCompileSingleNode(expressionCompiler, compileSchemaToTemplateNodes);
+    const compileSingleNode = createCompileSingleNode(
+      expressionCompiler,
+      compileSchemaToTemplateNodes,
+      input.registry,
+    );
 
     if (Array.isArray(canonicalPrepared)) {
       const compiled = canonicalPrepared
@@ -207,6 +211,7 @@ export function createSchemaCompiler(input: {
   const compileSingleNodeForExternal = createCompileSingleNode(
     expressionCompiler,
     compileSchemaToTemplateNodes,
+    input.registry,
   );
 
   return {

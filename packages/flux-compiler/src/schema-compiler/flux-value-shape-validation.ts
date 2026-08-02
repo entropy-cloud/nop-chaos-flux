@@ -1,7 +1,7 @@
 import type {
   FluxValueShape,
-  SchemaDefinitionFieldKind,
 } from '@nop-chaos/flux-core';
+import type { SchemaFieldKind } from '@nop-chaos/flux-core';
 import { appendJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics.js';
 
 function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
@@ -43,7 +43,7 @@ function isActionShapeLike(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value) && typeof (value as { action?: unknown }).action === 'string';
 }
 
-function summarizeSchemaDefinitionKind(kind: SchemaDefinitionFieldKind): string {
+function summarizeSchemaDefinitionKind(kind: SchemaFieldKind): string {
   switch (kind) {
     case 'value':
     case 'prop':
@@ -58,6 +58,14 @@ function summarizeSchemaDefinitionKind(kind: SchemaDefinitionFieldKind): string 
       return 'schema[]';
     case 'literal':
       return 'literal';
+    case 'value-or-region':
+      return 'value-or-region';
+    case 'meta':
+      return 'meta';
+    case 'reaction':
+      return 'reaction';
+    case 'ignored':
+      return 'ignored';
     default:
       return kind;
   }
@@ -384,7 +392,10 @@ export function validateFluxValueShape(
             continue;
           }
 
-          if (!validateSchemaDefinitionField(fieldValue, kind, fieldPath, diagnostics, issue)) {
+          const specObject = typeof spec === 'object' ? spec : {};
+          if (
+            !validateSchemaDefinitionField(fieldValue, kind, specObject, fieldPath, diagnostics, issue)
+          ) {
             valid = false;
             continue;
           }
@@ -406,7 +417,8 @@ export function validateFluxValueShape(
 
 function validateSchemaDefinitionField(
   value: unknown,
-  kind: SchemaDefinitionFieldKind,
+  kind: SchemaFieldKind,
+  spec: { sourceKey?: string; kind?: SchemaFieldKind },
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
   issue: {
@@ -419,9 +431,13 @@ function validateSchemaDefinitionField(
     case 'value':
     case 'prop':
     case 'literal':
+    case 'value-or-region':
+    case 'meta':
+    case 'ignored':
       return true;
     case 'event':
-    case 'action': {
+    case 'action':
+    case 'reaction': {
       if (isActionShapeLike(value)) {
         return true;
       }
@@ -439,6 +455,12 @@ function validateSchemaDefinitionField(
     case 'schema':
     case 'region':
       if (value && typeof value === 'object') {
+        return true;
+      }
+      // Fields declaring a nested `sourceKey` are dual config/value forms
+      // (e.g. `quickEdit: true`, `popOver: { trigger }`, `searchable: true`) —
+      // the schema leaf is optional and scalars are valid.
+      if (spec.sourceKey) {
         return true;
       }
       diagnostics.emit({
