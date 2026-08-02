@@ -1,0 +1,54 @@
+# 审计卡：radio-group（flux-renderers-form）
+
+> 状态: closed
+> 审查日期: 2026-08-03
+> 审查 plan: `docs/plans/2026-08-03-0517-1-c2-3-form-choice-control-family-audit.md`
+> 注册定义: `packages/flux-renderers-form/src/renderers/input.tsx:612-624` | 渲染器: `packages/flux-renderers-form/src/renderers/input-choice-renderers.tsx:663-751` | design.md: `docs/components/radio-group/design.md` | playground: `apps/playground/src/component-lab/renderers/radio-group-lab-page.tsx` | e2e: `tests/e2e/component-lab/c2-3-host-surfaces.spec.ts`（本族宿主场景新增）
+
+## 组件身份
+
+radio-group / flux-renderers-form / RadioGroupSchema（`schemas.ts:164-167`）/ `{type:'radio-group', name}` / 表单参与: 是（name/required/validation/提交路径）/ widget 控件 renderer（`wrap: true`，FieldFrame 提供 label/校验 chrome + `data-field-*`）
+
+## 18 维审查记录
+
+| #   | 维度                        | 结论 | 证据                                                                                                                                                                                                                                                                                   | 发现                                                                                             |
+| --- | --------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 1   | Schema 契约                 | pass | RadioGroupSchema: options/direction（schemas.ts:164-167）；注册 fields（input.tsx:614-618）双侧一致；options allowSource（:616-617）                                                                                                                                                   | —                                                                                                |
+| 2   | RendererComponentProps 合规 | pass | 仅读 props.props/meta；useFormFieldController 标准 hooks（:647-653）；useInputComponentHandle（:665-675）                                                                                                                                                                              | —                                                                                                |
+| 3   | 值所有权三态                | pass | 三态经 useFormFieldController；**adapter 用 choiceSingleAdapter 值保真（:667,70-89）**；`selectedValue` null/undefined→'' 保持 Base UI 受控、其余原生类型（:679-685）；Base UI RadioGroup 严格相等匹配（`checkedValue === value`）——number/boolean 选中态成立                          | P1-A 已修复（CX-6）；回归测试 choice-native-value-echo.test.tsx（数值 0 选中 + 写回 + 受控翻转） |
+| 4   | 表单参与                    | pass | name/required/validation 挂接；aria-required（:697）；校验错误展示/清除经 FieldFrame；`data-field`/`data-renderer=radio-group` 契约（field-controls-dom-contract.test.tsx:406-426 区域）；真机证明：host-choice-submit 'pro' 提交进 valuesPath                                         | —                                                                                                |
+| 5   | DOM 与选择器契约            | pass | 根 `nop-radio-group` marker + `data-slot="radio-group-wrapper"`（:701-703）+ `radio-group-options`/`radio-group-item`/`radio-group-item-label`/`radio-group-loading`/`radio-group-error`（:705-747）；data-mobile-stack marker（:703）                                                 | P1-B 已修复（根同时输出 type marker + -wrapper，CX-5）                                           |
+| 6   | 嵌套 schema 分类            | pass | options 为 value（allowSource）；direction 为 prop；无内嵌 action/region；无 deepFields 残留                                                                                                                                                                                           | —                                                                                                |
+| 7   | 事件与 action 契约          | pass | onValueChange → handlers.onChange(nextValue)（:702）；onFocus/onBlur 走 field handlers；无自定义 payload                                                                                                                                                                               | —                                                                                                |
+| 8   | a11y                        | pass | RadioGroup aria-label/required/invalid/describedby/errormessage（:696-700）+ item aria-label（:713）；role=radio 由 Base UI 提供；键盘：Base UI RadioRoot Enter 时 preventDefault；**form Enter 排除 role=radio + event.defaultPrevented 兜底（form.tsx:650-674，C2.1 交棒项已闭合）** | P1-C 已修复（排除清单扩展 + defaultPrevented）                                                   |
+| 9   | i18n                        | pass | loading 走 `t('flux.common.loading')`（:687）；无其他硬编码文案（option.label 来自 schema）                                                                                                                                                                                            | —                                                                                                |
+| 10  | 四态覆盖                    | pass | loading → `radio-group-loading`（:684-689）+ options disabled（:694）；error → `radio-group-error` role=alert（:720-724）；disabled/readOnly 经 presentation（:694-695）；空选项渲染安全（map 空数组）                                                                                 | —                                                                                                |
+| 11  | 异步生命周期                | n-a  | 无组件内异步（optionsSourceState 由 data-source 层管理）                                                                                                                                                                                                                               | —                                                                                                |
+| 12  | 组合宿主场景                | pass | 单测（dom-contract/choice-touch-adaptation/native-value-echo）+ 真机 host-choice-submit（radio 选择 → 'pro' 进 valuesPath 回显）                                                                                                                                                       | Phase 3 完成                                                                                     |
+| 13  | 样式契约                    | pass | widget 自样式；wrapper 仅 marker + 布局类 + meta.className；无 BEM；`check:audit-styling-suspects` 0 命中                                                                                                                                                                              | —                                                                                                |
+| 14  | React 19 规范               | pass | 无 memo/callback/effect 镜像；mobileStack 渲染期派生（:656）                                                                                                                                                                                                                           | —                                                                                                |
+| 15  | 性能边界                    | pass | useBoundFieldValue paths 订阅；options map O(n)；无热点                                                                                                                                                                                                                                | —                                                                                                |
+| 16  | 测试质量                    | pass | field-controls-dom-contract（wrapper/options/item-label）、choice-touch-adaptation、input-source-state（source 加载态）、choice-native-value-echo（数值选中 + 受控翻转）、choice-markers-contract、form-shell-enhancements（Enter）——正确行为断言                                      | 缺口已补齐（P1-A/P1-C 均有回归测试）                                                             |
+| 17  | 文档对照                    | pass | design.md §10:61 承诺 `nop-radio-group` marker ↔ 实现（:701）一致；§2 决策表 ↔ 实现一致（choiceSingleAdapter 值保真，已同步 design.md）                                                                                                                                                | P1-A/P1-B 修复后 design.md 与实现一致                                                            |
+| 18  | 注册、包边界与 IO/安全红线  | pass | 注册 input.tsx:612 + definitions.ts 导出链；playground radio-group-lab-page.tsx 存在；无浏览器 IO；复用 @nop-chaos/ui RadioGroup；无注入面                                                                                                                                             | —                                                                                                |
+
+## 发现清单
+
+- [P1-A] number/boolean option value 选中态破坏（`stringAdapter` `input-choice-renderers.tsx:648` + Base UI `checkedValue === value` 严格匹配）→ 状态: fixed（共性根因 3 组件 → CX-6 回写；`choiceSingleAdapter` 值保真，input-choice-renderers.tsx:70-89,667；`selectedValue` 仅对 null/undefined 归一为 '' 保持 Base UI 受控（防 uncontrolled→controlled 翻转，React 警告），其余原生类型保真 :679-685；test-first：choice-native-value-echo.test.tsx 先红后绿，含受控翻转回归用例）
+- [P1-B] 根 marker `nop-radio-group` 缺失（design.md §10:61 承诺 vs `input-choice-renderers.tsx:680` 仅 `nop-radio-group-wrapper`）→ 状态: fixed（根同时输出 `nop-radio-group` + `nop-radio-group-wrapper`，input-choice-renderers.tsx:701；共性根因 4 组件 → CX-5 回写；test-first：choice-markers-contract.test.tsx 先红后绿）
+- [P1-C] form Enter 提交排除清单缺 role="radio" + 不检查 defaultPrevented（`form.tsx:641-673`，C2.1 交棒项）→ 状态: fixed（排除清单扩展 + defaultPrevented 兜底，form.tsx:650-674；test-first：form-shell-enhancements.test.tsx 先红后绿）
+- [P3-1] `selectedValue = value as string` 类型断言随 P1-A 修复后泛化（cosmetic，随修复一并处理）
+
+## 组合宿主场景（真实浏览器验证）
+
+- 场景: form 内 radio-group 选择 → store → 提交 | 断言: programmatic DOM（c2-3-host-surfaces.spec.ts host-choice-submit）| 结果: pass（plan='pro' 提交进 valuesPath，"Choice: ... | pro | ..." 真机回显）
+
+## 修复记录
+
+- plan: `docs/plans/2026-08-03-0517-1-c2-3-form-choice-control-family-audit.md` Phase 2/3
+- test-first 证据: choice-native-value-echo.test.tsx（数值 0 选中 + 写回 + 受控翻转回归，先红后绿）、choice-markers-contract.test.tsx（先红后绿）、form-shell-enhancements.test.tsx（defaultPrevented + role 先红）、simple-form.spec.ts radio 用例（受控翻转真机回归：修复前 console.error）
+- 实现: `input-choice-renderers.tsx`（choiceSingleAdapter、selectedValue 归一、nop-radio-group marker）、`form.tsx`（Enter 排除清单 + defaultPrevented）
+- 文档: `docs/components/radio-group/design.md` §2 决策表 stringValueAdapter → choiceSingleAdapter 同步
+- 验证: `pnpm --filter @nop-chaos/flux-renderers-form typecheck && build && lint && test` 全绿（677 tests）；e2e c2-3 5/5 + component-lab 171 passed / 1 skipped + simple-form 回归绿
+
+- 独立 closure audit: pass（task `ses_03b60f3d0ffe0WzxJ5baVcQWAW`，2026-08-03，零 Blocker/Major；证据见 plan `2026-08-03-0517-1` Closure 节）
