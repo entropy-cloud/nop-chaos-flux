@@ -191,6 +191,58 @@ export const formRendererDefinition: RendererDefinition = {
         'Renders the form body as a CSS grid with the given number of columns. Values < 1 are clamped to 1 (single column).',
       editorType: 'number',
     },
+    gap: {
+      shape: { kind: 'unknown' },
+      displayName: 'Gap',
+      description: 'Spacing between body fields (stack-*/hstack-* aliases or a raw length).',
+      editorType: 'gap',
+    },
+    labelWidth: {
+      shape: { kind: 'unknown' },
+      displayName: 'Label Width',
+      description: 'Label column width (e.g. "120px" or a grid ratio number); horizontal mode only.',
+      editorType: 'text',
+    },
+    bodyClassName: {
+      shape: { kind: 'string' },
+      displayName: 'Body Class Name',
+      description: 'Additional className applied to the form body region.',
+      editorType: 'text',
+    },
+    actionsClassName: {
+      shape: { kind: 'string' },
+      displayName: 'Actions Class Name',
+      description: 'Additional className applied to the form actions region.',
+      editorType: 'text',
+    },
+    autoInit: {
+      shape: { kind: 'boolean' },
+      displayName: 'Auto Init',
+      description: 'When true (default), initAction runs automatically after mount.',
+      editorType: 'boolean',
+      defaultValue: true,
+    },
+    autoLoad: {
+      shape: { kind: 'boolean' },
+      displayName: 'Auto Load',
+      description: 'When true (default), loadAction runs automatically after mount and its result becomes the form values.',
+      editorType: 'boolean',
+      defaultValue: true,
+    },
+    submitScope: {
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'local' },
+          { kind: 'literal', value: 'surface' },
+        ],
+      },
+      displayName: 'Submit Scope',
+      description:
+        "local (default): only this form's own lifecycle handlers fire. surface: submit also triggers the enclosing surface's onSubmitSuccess/onSubmitError callback.",
+      editorType: 'select',
+      defaultValue: 'local',
+    },
     submitOnChange: {
       shape: { kind: 'boolean' },
       displayName: 'Submit On Change',
@@ -246,6 +298,11 @@ export const formRendererDefinition: RendererDefinition = {
     initAction: {
       displayName: 'Init',
       description: 'Runs after the form runtime is created.',
+    },
+    loadAction: {
+      displayName: 'Load',
+      description:
+        'Fetches initial values into the form after mount (gated by autoLoad). Also backs the form refresh handle.',
     },
     submitAction: {
       displayName: 'Submit',
@@ -371,6 +428,7 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'mode', kind: 'prop' },
     { key: 'labelAlign', kind: 'prop' },
     { key: 'labelWidth', kind: 'prop' },
+    { key: 'gap', kind: 'prop' },
     { key: 'bodyClassName', kind: 'prop' },
     { key: 'actionsClassName', kind: 'prop' },
     { key: 'columnCount', kind: 'prop' },

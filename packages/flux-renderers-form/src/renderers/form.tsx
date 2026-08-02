@@ -658,6 +658,12 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       if (isContentEditable) {
         return;
       }
+      // Interactive triggers hosted in the form body (e.g. a collapsible
+      // fieldset legend rendered with role="button") handle Enter themselves;
+      // the form must not additionally submit.
+      if (target.getAttribute('role') === 'button') {
+        return;
+      }
     }
     if (!submitAction) {
       return;

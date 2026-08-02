@@ -125,4 +125,27 @@ describe('form renderer definition contracts', () => {
     expect(schema.autoLoad).toBe(true);
     expect(schema.loadAction).toBeDefined();
   });
+
+  it('form fields cover every schema property the renderer reads (incl. gap/labelWidth/className)', () => {
+    const form = formRendererDefinitions.find((d) => d.type === 'form');
+    const fieldKeys = form?.fields?.map((f) => f.key) ?? [];
+    for (const key of ['gap', 'labelWidth', 'bodyClassName', 'actionsClassName', 'submitScope']) {
+      expect(fieldKeys, `form.fields should declare ${key}`).toContain(key);
+    }
+  });
+
+  it('form eventContracts declare loadAction alongside the other lifecycle events', () => {
+    const form = formRendererDefinitions.find((d) => d.type === 'form');
+    expect(form?.eventContracts?.loadAction?.displayName).toBeDefined();
+    expect(Object.keys(form?.eventContracts ?? {})).toEqual(
+      expect.arrayContaining([
+        'initAction',
+        'loadAction',
+        'submitAction',
+        'onSubmitSuccess',
+        'onSubmitError',
+        'onValidateError',
+      ]),
+    );
+  });
 });

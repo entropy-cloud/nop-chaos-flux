@@ -33,6 +33,7 @@ describe('form shell enhancements - columnCount', () => {
         schema={{
           type: 'form',
           columnCount: 2,
+          gap: 'md',
           body: [
             { type: 'input-text', name: 'firstName', label: 'First' },
             { type: 'input-text', name: 'lastName', label: 'Last' },
@@ -47,6 +48,7 @@ describe('form shell enhancements - columnCount', () => {
     expect(body).toBeTruthy();
     expect(body.style.gridTemplateColumns).toContain('repeat(2');
     expect(body.style.display).toBe('grid');
+    expect(body.className).toContain('gap-');
   });
 
   it('clamps columnCount < 1 to single column (no grid)', () => {
@@ -269,6 +271,45 @@ describe('form shell enhancements - Enter key handling', () => {
     await waitFor(() => {
       expect(submitCalls.length).toBeGreaterThanOrEqual(1);
     });
+  });
+
+  it('does NOT submit when Enter is pressed on a collapsible fieldset legend (interactive trigger)', async () => {
+    const SchemaRenderer = makeRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/enter-legend"
+        schema={{
+          type: 'form',
+          id: 'enter-legend-form',
+          submitAction: {
+            action: 'ajax',
+            args: { url: '/api/enter-legend', method: 'post' },
+          },
+          body: [
+            {
+              type: 'fieldset',
+              title: 'Advanced',
+              collapsible: true,
+              collapsed: true,
+              body: [{ type: 'input-text', name: 'token', label: 'Token' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const legend = screen.getByText('Advanced');
+    expect(legend.getAttribute('role')).toBe('button');
+
+    fireEvent.keyDown(legend, { key: 'Enter', keyCode: 13, bubbles: true });
+
+    // The legend's own disclosure behavior still toggles the collapse state…
+    await waitFor(() => expect(legend.getAttribute('aria-expanded')).toBe('true'));
+    // …but the form must NOT treat Enter on an interactive trigger as a submit.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(submitCalls).toHaveLength(0);
   });
 });
 
