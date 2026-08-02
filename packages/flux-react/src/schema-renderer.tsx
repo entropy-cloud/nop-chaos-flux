@@ -174,6 +174,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const pageData = props.data ?? EMPTY_SCOPE_DATA;
     const initialPageDataRef = useRef(pageData);
     const initialDataAppliedRef = useRef(false);
+    const lastSyncedDataRef = useRef<unknown>(pageData);
     const page = useMemo(() => {
       if (creationErrorRef.current) {
         return undefined as unknown as import('@nop-chaos/flux-core').PageRuntime;
@@ -228,18 +229,24 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       }
       if (!initialDataAppliedRef.current) {
         initialDataAppliedRef.current = true;
+        lastSyncedDataRef.current = pageData;
         return;
       }
 
-      const currentData = page.store.getState().data;
-
-      if (currentData !== pageData) {
-        page.scope.store?.setSnapshot(pageData, {
-          paths: ['*'],
-          sourceScopeId: page.scope.id,
-          kind: 'replace',
-        });
+      // Only sync when the host-authored page data actually changed. The
+      // snapshot comparison must use the last-synced value, not the live scope
+      // snapshot: page-scope writes (statusPath publication, page.data init
+      // patch, action writes) would otherwise be clobbered by a no-op replace
+      // on the StrictMode re-run.
+      if (Object.is(lastSyncedDataRef.current, pageData)) {
+        return;
       }
+      lastSyncedDataRef.current = pageData;
+      page.scope.store?.setSnapshot(pageData, {
+        paths: ['*'],
+        sourceScopeId: page.scope.id,
+        kind: 'replace',
+      });
     }, [page, pageData]);
 
     useEffect(() => {

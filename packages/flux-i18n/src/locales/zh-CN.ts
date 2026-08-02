@@ -268,6 +268,11 @@ export const zhCN: Resource = {
       close: '关闭',
       resize: '调整大小',
     },
+    page: {
+      asideResize: '调整侧栏宽度',
+      asideToggle: '切换侧栏',
+      remark: '备注',
+    },
     sheet: {
       close: '关闭',
       deleteTitle: '删除工作表',
