@@ -9,6 +9,7 @@ import { Button } from './button.js';
 import { GripHorizontalIcon, XIcon } from 'lucide-react';
 import { useDialogDrag } from './use-dialog-drag.js';
 import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
+import { wrapSurfaceTabFocus } from './wrap-surface-tab-focus.js';
 
 interface DialogContextValue {
   draggable: boolean;
@@ -175,6 +176,10 @@ const DialogContent = React.forwardRef<
               : { zIndex, ...props.style }
           }
           onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
+          onKeyDown={(event) => {
+            wrapSurfaceTabFocus(event);
+            props.onKeyDown?.(event);
+          }}
         >
           <DialogDragContext.Provider value={dragContextValue}>
             {children}

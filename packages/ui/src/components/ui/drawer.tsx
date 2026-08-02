@@ -8,6 +8,7 @@ import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
 import { t } from '../../lib/i18n.js';
 import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
+import { wrapSurfaceTabFocus } from './wrap-surface-tab-focus.js';
 
 type DrawerDirection = 'top' | 'bottom' | 'left' | 'right';
 
@@ -156,6 +157,9 @@ function DrawerContent({
       >
         <DrawerPrimitive.Popup
           data-slot="drawer-popup"
+          onKeyDown={(event) => {
+            wrapSurfaceTabFocus(event);
+          }}
           className={cn(
             'pointer-events-auto flex h-auto flex-col bg-popover text-sm text-popover-foreground outline-none',
             isContained ? 'absolute' : 'fixed',
