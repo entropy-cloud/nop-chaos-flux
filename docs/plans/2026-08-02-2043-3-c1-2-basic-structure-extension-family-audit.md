@@ -1,6 +1,6 @@
 # C1.2 basic 结构扩展族逐组件审计（fragment/loop/recurse/reaction/scope-debug/dynamic-renderer）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C1.2
 > Last Reviewed: 2026-08-02
@@ -66,84 +66,84 @@
 
 ### Phase 1 - 逐组件 18 维审计与审计卡产出
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-basic/src/{fragment,loop,structural-loop,recurse,reaction,scope-debug,dynamic-renderer}.tsx`、`basic-renderer-definitions.ts`、`schemas.ts`、`docs/audits/per-component/`
 
 - Item Types: `Proof`
 
-- [ ] 审计前核对注册定义：6 组件注册项（type/defaultSchema/fields）与 `schemas.ts` 类型一致性（维度 1/18）；loop 与 structural-loop 的关系与归属（注册为准）。
-- [ ] 逐组件产出审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），裁决留痕。
-- [ ] 维度重点核查：loop/recurse 行 scope（维度 3/12）：行身份、行内值所有权三态、嵌套行 action args 不污染；dynamic-renderer autoLoad 异步生命周期（维度 11）：abort/竞态/失败态/重试；reaction 事件订阅与 payload 形状（维度 7）+ 订阅清理（维度 15）；fragment 无 DOM 容器语义（维度 5/13）；scope-debug 展开/折叠与 a11y（维度 8）+ 文档缺口（维度 17，无 design.md 的事实确认与裁决建议）。
-- [ ] 嵌套 schema 分类复验（维度 6）：reaction events/actions、dynamic-renderer body、loop items 与 08-02 机制一致；无 deepFields 残留。
-- [ ] 四态覆盖（维度 10）与测试质量（维度 16）：既有单测断言正确行为、四态/错误路径覆盖、DOM 契约断言。
-- [ ] 文档对照（维度 17）：5 个有 design.md 的组件 ↔ 实现 props/行为核对；scope-debug 缺口裁决（补写 vs 归 CR）。
+- [x] 审计前核对注册定义：6 组件注册项（type/defaultSchema/fields）与 `schemas.ts` 类型一致性（维度 1/18）；loop 与 structural-loop 的关系与归属（注册为准：structural-loop 为非注册共享引擎，`structural-loop.tsx:126` renderStructuralLoop + `resolveLoopBindings`，归属以 loop/recurse 注册项为准）。
+- [x] 逐组件产出审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），裁决留痕。
+- [x] 维度重点核查：loop/recurse 行 scope（维度 3/12）：行身份（instancePath repeated frame）、行内值所有权三态（buildSlotBindings + itemData structuralFields + 保留绑定保护）、嵌套行 action args 不污染（region child scope 机制核对 + Phase 3 真机复验）；dynamic-renderer autoLoad 异步生命周期（维度 11）：abort/竞态/stale-clear/失败态/refresh 重试；reaction 事件订阅与 payload 形状（维度 7）+ 订阅清理（维度 15）；fragment 无 DOM 容器语义（维度 5/13）；scope-debug 展开/折叠与 a11y（维度 8）+ 文档缺口（维度 17，无 design.md 事实确认，裁决建议：行为完整 → 补写）。
+- [x] 嵌套 schema 分类复验（维度 6）：reaction actions（编译期 artifact）、dynamic-renderer body/loadAction（prop + schemaValidator）、loop items/body params 与 08-02 机制一致；无 deepFields 残留。
+- [x] 四态覆盖（维度 10）与测试质量（维度 16）：既有单测断言正确行为（basic-structural/basic-reactions/basic-dynamic-renderer/scope-debug.test 等）、四态/错误路径覆盖、DOM 契约断言（data-slot/data-loading/data-error）核对。
+- [x] 文档对照（维度 17）：5 个有 design.md 的组件 ↔ 实现 props/行为核对（发现 flux-guide/07-structural-nodes.md §Recurse 示例 body 声明与实现不符）；scope-debug 缺口裁决：补写（行为完整，见 Phase 2）。
 
 Exit Criteria:
 
 > 本 Phase 交付 6 张审计卡（含裁决），是后续修复的唯一事实来源。
 
-- [ ] `docs/audits/per-component/{fragment,loop,recurse,reaction,scope-debug,dynamic-renderer}.md` 6 张卡存在，18 维表完整、`文件:行` 证据可验证。
-- [ ] 每卡发现清单带 P0/P1/P2/P3 裁决；scope-debug 文档缺口已记录裁决建议。
+- [x] `docs/audits/per-component/{fragment,loop,recurse,reaction,scope-debug,dynamic-renderer}.md` 6 张卡存在，18 维表完整、`文件:行` 证据可验证。
+- [x] 每卡发现清单带 P0/P1/P2/P3 裁决；scope-debug 文档缺口已记录裁决建议（补写 design.md）。
 
 ### Phase 2 - P0/P1 自动修复（test-first）
 
-Status: planned
+Status: completed
 Targets: 发现涉及的 renderer 文件、定义文件、schemas.ts、契约测试文件、e2e spec
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 按审计卡逐个处理 P0/P1：先写复现/回归测试（断言正确行为），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现 commit）。
-- [ ] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
-- [ ] 共性缺陷裁决（Decision）：同一根因 ≥2 组件/跨包/公共层 → 按 roadmap §7 处理（plan 内多阶段优先修复并事后回写 CX-n，或插入 CX-n）；根因单点的 `shared:` 归 CR。
-- [ ] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
-- [ ] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`。
-- [ ] scope-debug 文档缺口裁决落地：补写 `docs/components/scope-debug/design.md`（若组件行为完整）或登记 CR（若需行为澄清），裁决留痕。
+- [x] 按审计卡逐个处理 P0/P1：**本族审计未发现 P0/P1**（loop/recurse 行 scope 机制与 08-02 structuralFields/region child scope 一致；dynamic-renderer 异步管线已完整；reaction 订阅/清理契约完整）——无 P0/P1 修复项，卡内逐项留痕；P2 低成本项全部当场修复（test-first：renderer-contract-smoke.test.ts 追加断言先红后绿，2 failed → 455 passed）。
+- [x] P2 低成本（约 15 分钟内）当场修复：reaction 定义补 `dependsOn` fields + defaultSchema；recurse/dynamic-renderer 补 defaultSchema；flux-guide/07-structural-nodes.md §Recurse 示例修正（去除错误的 body 声明）；scope-debug 补写 design.md + example.json + index.md 条目；flux-guide/flux-types 再生成（catch-up 到 live baseline，含 dependsOn）。其余 P2 无。
+- [x] 共性缺陷裁决（Decision）：缺 `defaultSchema` 为同一根因影响 3 组件（recurse/reaction/dynamic-renderer）→ 按 roadmap §7b 当前 plan 内修复 + 事后回写 **CX-3**（planned，引用本 plan 为执行证据）；无根因在公共层的跨包发现。
+- [x] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixed-pending-closure`（reaction/scope-debug/dynamic-renderer 三卡；fragment/loop/recurse 无 P0/P1 直接 `closed`）。
+- [x] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`：**本族无复杂/跨包 bug**（修复均为单包注册项/文档变更，不适用）。
+- [x] scope-debug 文档缺口裁决落地：**补写** `docs/components/scope-debug/design.md`（+ example.json + index.md 条目）——组件行为完整（title/defaultExpand/dataPaths/sanitize/折叠订阅均有实现与 focused 测试），不归 CR。
 
 Exit Criteria:
 
 > 本 Phase 交付"发现清零或已裁定"，卡状态与代码行为一致。
 
-- [ ] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
-- [ ] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-basic typecheck && build && lint && test` 绿（含新增回归测试）。
+- [x] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。（本族无 P0/P1；P2 全部当场修复；P3 卡内记录。）
+- [x] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-basic typecheck && build && lint && test` 绿（455 tests，含新增回归断言）；workspace typecheck/lint 31/31、build 31/31。
 
 ### Phase 3 - 组合宿主真实浏览器场景
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/` 新增/修改 spec、playground lab 页
 
 - Item Types: `Proof | Fix`
 
-- [ ] 设计并实现 ≥1 个本族真实浏览器组合宿主场景（programmatic DOM 断言）：候选——loop 行内 action/dialog 提交（行 scope 不污染）、dynamic-renderer autoLoad 切换（加载/错误/空态）、recurse 深层结构渲染（按审计卡发现选择）。
-- [ ] 行 scope 专项检查：针对 bug 73/行污染模式，验证 loop/recurse 行内嵌套 action args 提交正确（08-02 plan-1 修复的同类风险复验）。
-- [ ] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
-- [ ] 既有相关 e2e（action-logic/navigation/layout-content）在本族改动后回归。
+- [x] 设计并实现 ≥1 个本族真实浏览器组合宿主场景（programmatic DOM 断言）：新增 `tests/e2e/component-lab/c1-2-host-surfaces.spec.ts` **3 用例全绿**——(1) loop 行内 action/dialog 提交（行 scope 不污染，bug 73/行污染模式）；(2) dynamic-renderer loadAction 失败 → renderer-owned 错误态（`[data-error]` 壳内诊断，页面不崩）；(3) recurse 深层结构（6 层真机渲染无栈溢出）+ maxDepth 截断（Level 2 不渲染）。配套 lab 场景：loop-lab-page 新增 row-edit 场景（探针 `window.__loopRowEditProbe`）、dynamic-renderer-lab-page 新增 failing-load 场景、recurse-lab-page 新增 deep/maxDepth 场景。
+- [x] 行 scope 专项检查：针对 bug 73/行污染模式，验证 loop 行内嵌套 action args 提交正确——行 A 提交 `{rowId:'row-a', rowName:'Alice', nick:'N1-Alice'}`、行 B 提交 `{rowId:'row-b', rowName:'Bob', nick:'N2-Bob'}`，dialog 标题逐行求值（'Edit Alice'/'Edit Bob'），**无跨行污染 → pass**（08-02 plan-1 dropdown-button 修复的同类风险在 loop 行内复验通过）。
+- [x] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）：**无产品缺陷发现**（动态错误态断言初始因浏览器 zh-CN locale 文案 '错误:' 导致断言字符串不匹配——测试侧修正为 locale 无关断言 'Request failed (status=500)'；recurse 断言初始命中 scope-debug JSON 文本（strict mode violation）——测试侧改为 `.nop-text` 作用域定位器，均为测试侧修正，非产品缺陷）。
+- [x] 既有相关 e2e（action-logic/navigation/layout-content/smoke + exploratory keyboard-focus-and-teardown scope-debug 用例）在本族改动后回归：**88/88 全绿**。
 
 Exit Criteria:
 
 > 本 Phase 交付"真实浏览器行为成立"。
 
-- [ ] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；本族改动回归 spec 绿。
-- [ ] 行 scope 专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
+- [x] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；本族改动回归 spec 绿（c1-2-host-surfaces 3/3 + 相关回归 88/88）。
+- [x] 行 scope 专项检查结论记录于 daily log（pass，见 `docs/logs/2026/08-02.md` C1.2 记录）。
 
 ### Phase 4 - 族内回归与审计卡 closure
 
-Status: planned
+Status: completed
 Targets: 6 张审计卡、`docs/logs/2026/08-02.md`、`docs/backlog/component-audit-roadmap.md`（C1.2 行）
 
 - Item Types: `Proof`
 
-- [ ] 全卡复查：18 维表结论与最终代码一致；P0/P1 清零；卡状态全部 `closed`。
-- [ ] 本族范围回归：`pnpm --filter @nop-chaos/flux-renderers-basic test` + 相关 e2e spec 全绿；触及公共层时追加受影响包验证并记录。
-- [ ] daily log 记录：6 卡 closure 汇总、修复清单、宿主场景结果、CX-n 插入（如有）与决策、scope-debug 文档缺口裁决。
-- [ ] 若插入 CX-n：同步更新 roadmap Work Item Status 表并按 §7c 走生命周期；结构性 CX-n 执行前标注待人工确认。
-- [ ] roadmap C1.2 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审）。
+- [x] 全卡复查：18 维表结论与最终代码一致（defaultSchema/dependsOn 补入后 D1 结论与代码一致）；P0/P1 清零（本族无 P0/P1，P2 全部当场修复，P3 卡内记录）；卡状态全部 `closed`（fragment/loop/recurse 直闭；reaction/scope-debug/dynamic-renderer 经 fixed-pending-closure → closed）。
+- [x] 本族范围回归：`pnpm --filter @nop-chaos/flux-renderers-basic test` 455 全绿 + 相关 e2e（c1-2-host-surfaces 3/3、action-logic/layout-content/navigation/smoke/exploratory 88/88）全绿；触及公共层（无——修复均为 basic 包注册项 + 文档 + flux-guide 生成类型），未追加其他包验证（flux-guide 生成类型经 workspace typecheck/lint 覆盖）。
+- [x] daily log 记录：6 卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果（行 scope 专项 pass）、CX-3 插入（planned，事后回写）与决策、scope-debug 文档缺口裁决（补写 design.md）。
+- [x] 若插入 CX-n：**CX-3 已插入**（planned，引用本 plan 为执行证据，roadmap §7b 事后回写形态，父 plan closure-audit pass 后一并标 done，不走 §7c 完整生命周期）；非结构性（纯注册项补齐），无需人工确认。
+- [x] roadmap C1.2 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审）。
 
 Exit Criteria:
 
 > 本 Phase 交付"可进入 closure-audit 的完成态"。
 
-- [ ] 6 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
-- [ ] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
+- [x] 6 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
+- [x] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
 
 ## Draft Review Record
 
@@ -156,16 +156,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 与每个 Phase 的 Exit Criteria 全部勾选后才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 6 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`
-- [ ] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
-- [ ] ≥1 个真实浏览器组合宿主场景通过（含行 scope 专项检查）
-- [ ] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
-- [ ] scope-debug 文档缺口已裁决（补 design.md 或登记 CR），受影响的 owner docs 已同步到 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 6 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`
+- [x] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift（本族无 P0/P1；P2 全部当场修复并有回归断言；P3 卡内记录）
+- [x] ≥1 个真实浏览器组合宿主场景通过（含行 scope 专项检查——loop 行内 dialog 提交 payload 逐行正确，bug 73/行污染模式复验 pass）
+- [x] 共性缺陷已按 §7 处理（CX-3 插入 planned，§7b 事后回写；决策记录在卡与 daily log）
+- [x] scope-debug 文档缺口已裁决（补 design.md + example.json + index.md 条目），受影响的 owner docs 已同步到 live baseline
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（task `ses_03cad223cffeto4wjWEHA5fHaC`，verdict `approved`，见 Closure 节）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -190,13 +190,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行
+Status Note: 已完成 —— 四 Phase 全部执行并勾选（18 维审计 6 卡 / P2 自动修复（test-first，本族无 P0/P1）/ 组合宿主真机场景 3 用例含行 scope 专项 / 族内回归与卡 closure）。6 卡 `closed`、P0/P1 清零、CX-3 事后回写（planned）、宿主 e2e 3/3、回归 88/88、full e2e 777 passed / 43 skipped / 9 failed（9 项与 C0 基线逐项一致，属 ai/scheduling/content 包，本族外，watch-only residual）、workspace typecheck/build/lint 31/31 + test 58/58 全绿。独立 closure audit 通过（见下），roadmap C1.2 已标 `done`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: TBD
-- Evidence: TBD
+- Auditor / Agent: 独立子 agent fresh session（task `ses_03cad223cffeto4wjWEHA5fHaC`）
+- Evidence: verdict `approved`（2 Minor 非阻塞：卡内个别行号引用偏移、diff-summary 措辞）；live-repo 复核全部 6 卡 18 维表与 `文件:行` 证据（~20 处抽查）、Phase 勾选与 Exit Criteria 文本一致性、代码修复落点（defaultSchema :117/:348/:412、dependsOn :420）、宿主 spec 3 用例断言、scope-debug design.md、flux-guide Recurse 示例、roadmap CX-3 行、deferred 分类诚实性，并亲自重跑 unit 455/455、e2e c1-2 3/3、回归 action-logic+layout-content 28/28、workspace typecheck 31/31。2 Minor 已处理（卡内行号引用已重同步；Minor-2 为报告措辞非仓库问题）。证据另见 `docs/logs/2026/08-02.md` C1.2 收口记录。
 
 Follow-up:
 
-- 待执行后填写（non-blocking 项仅记录于 Non-Blocking Follow-ups）。
+- CX-3（planned）：父 plan closure 后由 mission-driver 按 roadmap §7b 标 `done`（纯注册项补齐，无需人工确认）。
+- 卡内 P2 backlog：无（全部当场修复）；P3 仅卡内记录。
+- no remaining plan-owned work。

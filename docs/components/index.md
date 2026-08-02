@@ -462,6 +462,7 @@ UI primitive 对齐补充规则：
 
 - `dynamic-renderer/`
 - `reaction/`
+- `scope-debug/`
 - `data-source/`
 - `service/`
 - `table/`
