@@ -1,14 +1,10 @@
 import React from 'react';
 import type {
   BaseSchema,
-  CompileSchemaOptions,
   RendererComponentProps,
   RendererDefinition,
-  SchemaInput,
-  TemplateNode,
-  TemplateRegion,
 } from '@nop-chaos/flux-core';
-import { extractNestedSchemaRegions, getIn } from '@nop-chaos/flux-core';
+import { getIn } from '@nop-chaos/flux-core';
 import {
   resolveRendererSlotContent,
   useCurrentForm,
@@ -99,90 +95,31 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   );
 }
 
-function normalizeVariantItems(
-  value: unknown,
-  path: string,
-  regions: Record<string, TemplateRegion>,
-  compileSchema: (
-    input: SchemaInput,
-    options?: CompileSchemaOptions,
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => TemplateNode | TemplateNode[],
-) {
-  if (!Array.isArray(value)) {
-    return value;
-  }
-
-  return value.map((item, index) => {
-    if (!item || typeof item !== 'object') {
-      return item;
-    }
-
-    const normalized = extractNestedSchemaRegions({
-      candidate: item as Record<string, unknown>,
-      itemRegionPath: `${path}.variants[${index}]`,
-      itemRegionKeyPrefix: `variants.${index}`,
-      rules: [
-        {
-          key: 'content',
-          regionKeySuffix: 'content',
-          compiledKey: 'contentRegionKey',
-        },
-        {
-          key: 'viewer',
-          regionKeySuffix: 'viewer',
-          compiledKey: 'viewerRegionKey',
-        },
-      ],
-      regions,
-      compileSchema,
-    }).value as Record<string, unknown>;
-
-    const match = normalized.match as { kind?: unknown; when?: unknown } | undefined;
-    if (!match || typeof match !== 'object' || Array.isArray(match)) {
-      return normalized;
-    }
-
-    if (match.kind !== 'expression' || typeof match.when !== 'string') {
-      return normalized;
-    }
-
-    return {
-      ...normalized,
-      match: {
-        ...match,
-        when: { __nopPreserveLiteral: true, value: match.when },
-      },
-    };
-  });
-}
-
 export const variantFieldRendererDefinition: RendererDefinition<VariantFieldSchema> = {
   type: 'variant-field',
   displayName: 'Variant Field',
   category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: VariantFieldRenderer,
-  deepFields: [
-    {
-      key: 'variants',
-      nestedRegions: [
-        {
-          key: 'content',
-          regionKeySuffix: 'content',
-          compiledKey: 'contentRegionKey',
+  propContracts: {
+    variants: {
+      shape: {
+        kind: 'array',
+        item: {
+          kind: 'schema-definition',
+          fieldRules: {
+            content: { kind: 'region', regionKey: 'contentRegionKey' },
+            viewer: { kind: 'region', regionKey: 'viewerRegionKey' },
+            match: { kind: 'literal', sourceKey: 'when' },
+          },
         },
-        {
-          key: 'viewer',
-          regionKeySuffix: 'viewer',
-          compiledKey: 'viewerRegionKey',
-        },
-      ],
-      normalize(input) {
-        return normalizeVariantItems(input.value, input.path, input.regions, input.compileSchema);
       },
+      displayName: 'Variants',
+      description:
+        'Variant option collection. Each option carries content/viewer regions; expression match.when is literal-preserved.',
+      editorType: 'object-array',
     },
-  ],
+  },
   fields: [
     ...formFieldRules,
     { key: 'variants', kind: 'prop' },
