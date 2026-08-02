@@ -21,6 +21,7 @@ import {
   useIsMobile,
 } from '@nop-chaos/ui';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Eye, EyeOff, XIcon } from 'lucide-react';
 import { formFieldRules, useFormFieldController } from '../field-utils.js';
 import type {
@@ -248,7 +249,7 @@ function InputGroupFieldControl(props: InputGroupFieldControlProps) {
             <InputGroupButton
               size="icon-xs"
               variant="ghost"
-              aria-label="Clear"
+              aria-label={t('flux.common.clear')}
               onClick={onClear}
             >
               <XIcon className="pointer-events-none" />
@@ -371,7 +372,7 @@ export function createInputRenderer(inputType: string) {
         size="icon-xs"
         variant="ghost"
         data-slot="input-password-reveal"
-        aria-label={revealed ? 'Hide password' : 'Show password'}
+        aria-label={t(revealed ? 'flux.common.hidePassword' : 'flux.common.showPassword')}
         aria-pressed={revealed}
         disabled={!presentation.interactive}
         onClick={handleRevealToggle}
@@ -418,19 +419,22 @@ export function createInputRenderer(inputType: string) {
       onKeyDown: (event) => {
         suggest.handleKeyDown(event);
       },
+      ...suggest.comboboxAria,
       ...(nativeAutoComplete ? { autoComplete: nativeAutoComplete } : {}),
       ...nativeAttrs,
     };
 
+    const rootMarker = `nop-input-${inputType}`;
+
     if (!needsInputGroup) {
       return suggest.wrap(
-        <Input {...sharedInputProps} className={props.meta.className} />,
+        <Input {...sharedInputProps} className={cn(rootMarker, props.meta.className)} />,
       );
     }
 
     return suggest.wrap(
       <InputGroupFieldControl
-        className={cn('nop-input-group', props.meta.className)}
+        className={cn('nop-input-group', rootMarker, props.meta.className)}
         inputProps={sharedInputProps}
         prefix={prefix}
         suffix={suffix}

@@ -52,6 +52,27 @@ const confirmPassword = {
   ],
 };
 
+const revealPasswordForm = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      data: { password: '' },
+      body: [
+        {
+          type: 'input-password',
+          name: 'password',
+          label: 'Reveal Password',
+          placeholder: 'Type a password',
+          revealPassword: true,
+        },
+        { type: 'text', testid: 'password-live', text: '${password ? "Set: " + password : ""}' },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
 export function InputPasswordLabPage() {
   return (
     <MultiScenarioLabPage
@@ -68,6 +89,12 @@ export function InputPasswordLabPage() {
           description:
             'Two password fields are rendered together so authoring can express confirm-password rules. The current lab validates stable masked input behavior rather than overclaiming richer validation UI.',
           schema: confirmPassword,
+        },
+        {
+          title: 'Reveal password toggle',
+          description:
+            'revealPassword: true renders the show/hide toggle. Clicking it switches the input between type=password and type=text without changing the committed form value.',
+          schema: revealPasswordForm,
         },
       ]}
     />

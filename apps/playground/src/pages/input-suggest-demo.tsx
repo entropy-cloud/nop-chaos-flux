@@ -119,7 +119,7 @@ const formulaCompiler = createFormulaCompiler();
 
 const pageEnv: RendererEnv = {
   fetcher: async function <T,>(api: ApiSchema, ctx: ApiRequestContext) {
-    const scopeData = ctx.scope.readOwn() as Record<string, unknown>;
+    const scopeData = ctx.scope.readVisible() as Record<string, unknown>;
     const rawQ = scopeData.fruit ?? scopeData.fruitTpl ?? '';
     const q = String(rawQ).toLowerCase();
     await new Promise((r) => setTimeout(r, 80));

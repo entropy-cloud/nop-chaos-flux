@@ -14,7 +14,7 @@ test.describe('E3 form input enhancements', () => {
   test('input-number long-press continuously steps and clamps at max', async ({ page }) => {
     await openFormInputEnhancementsPage(page);
 
-    const increase = page.getByRole('button', { name: 'Increase' });
+    const increase = page.locator('[data-slot="stepper-increase"]');
     await expect(increase).toBeVisible({ timeout: 10_000 });
 
     await increase.dispatchEvent('pointerdown', { button: 0 });

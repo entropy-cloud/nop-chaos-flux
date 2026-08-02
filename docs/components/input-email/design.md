@@ -60,7 +60,7 @@
 
 ## 10. 样式与 DOM marker 约定
 
-- 建议输出 `nop-input-email` marker，并复用共享 input field chrome。
+- 输出 `nop-input-email` marker（控件根，随增强路径切换保持），并复用共享 input field chrome。
 
 ## 11. 实现拆分建议
 

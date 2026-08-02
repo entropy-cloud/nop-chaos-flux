@@ -1,6 +1,7 @@
 import { useEffect, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { numberAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, Input, useIsMobile } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import { useFormFieldController } from '../field-utils.js';
@@ -273,7 +274,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
             <Button
               type="button"
               data-slot="stepper-increase"
-              aria-label="Increase"
+              aria-label={t('flux.common.increase')}
               variant="ghost"
               size="icon-xs"
               className="h-4 w-6 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -288,7 +289,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
             <Button
               type="button"
               data-slot="stepper-decrease"
-              aria-label="Decrease"
+              aria-label={t('flux.common.decrease')}
               variant="ghost"
               size="icon-xs"
               className="h-4 w-6 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
