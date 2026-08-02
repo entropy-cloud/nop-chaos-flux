@@ -1,11 +1,12 @@
 /**
  * Compiler-preserved literal helpers.
  *
- * The schema compiler (via renderer `deepFields.normalize` booleanKeys/stringKeys
- * handling) wraps authored boolean/string literals that must survive compilation
- * as literal values (rather than being evaluated as expressions) into the
- * envelope `{ __nopPreserveLiteral: true, value: <T> }`. Renderers must unwrap
- * the envelope before reading the underlying value.
+ * The schema compiler (via renderer `propContracts.shape` schema-definition
+ * `fieldRules` with `literal` kind, or `event`/`action` kinds) wraps authored
+ * boolean/string/action literals that must survive compilation as literal
+ * values (rather than being evaluated as expressions) into the envelope
+ * `{ __nopPreserveLiteral: true, value: <T> }`. Renderers must unwrap the
+ * envelope before reading the underlying value.
  *
  * The compiler-layer consumer that PRODUCES/reads this envelope for value-node
  * compilation lives in `@nop-chaos/flux-formula` (`compile-node.ts`, returns a
