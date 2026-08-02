@@ -36,7 +36,8 @@ export type SchemaDiagnosticCode =
   | 'unhandled-compilation-error'
   | 'invalid-reaction-deps'
   | 'invalid-reaction-deep-path'
-  | 'invalid-reaction-immediate';
+  | 'invalid-reaction-immediate'
+  | 'conflicting-field-definition';
 
 export interface SchemaDiagnosticSourceLocation {
   readonly file?: string;

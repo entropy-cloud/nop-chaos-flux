@@ -2,8 +2,8 @@ import type {
   FluxValueShape,
   FluxSchemaDefinitionShape,
   HostCapabilityMethod,
-  SchemaDefinitionFieldKind,
 } from './manifest.js';
+import type { SchemaFieldKind } from '../types/schema.js';
 
 export type FluxValueShapePayloadValidationResult =
   | { ok: true; args: unknown }
@@ -19,23 +19,33 @@ function isActionLike(value: unknown): boolean {
 
 function matchesSchemaDefinitionField(
   value: unknown,
-  kind: SchemaDefinitionFieldKind,
+  kind: SchemaFieldKind,
+  hasSourceKey: boolean,
 ): boolean {
   switch (kind) {
     case 'value':
     case 'prop':
     case 'literal':
-      // Expression-evaluated values cannot be statically rejected.
+    case 'value-or-region':
+    case 'meta':
+    case 'ignored':
+      // Expression-evaluated values / metadata cannot be statically rejected.
       return true;
     case 'event':
     case 'action':
+    case 'reaction':
       if (isActionLike(value)) {
         return true;
       }
       return Array.isArray(value) && value.every(isActionLike);
     case 'schema':
     case 'region':
-      // SchemaInput = BaseSchema | BaseSchema[]
+      // SchemaInput = BaseSchema | BaseSchema[]. Fields declaring a nested
+      // `sourceKey` are dual config/value forms (e.g. `quickEdit: true`,
+      // `popOver: { trigger }`) — the schema leaf is optional.
+      if (hasSourceKey) {
+        return true;
+      }
       return isRecord(value) || Array.isArray(value);
     case 'schema-array':
       return Array.isArray(value);
@@ -66,7 +76,7 @@ function matchesSchemaDefinitionShape(value: unknown, shape: FluxSchemaDefinitio
     }
 
     const kind = typeof spec === 'string' ? spec : spec.kind;
-    if (!matchesSchemaDefinitionField(value[key], kind)) {
+    if (!matchesSchemaDefinitionField(value[key], kind, typeof spec === 'object' && Boolean(spec.sourceKey))) {
       return false;
     }
   }

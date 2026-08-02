@@ -443,7 +443,7 @@ export function findUnreferencedContracts(
     }
     if (definition.fields) {
       for (const field of definition.fields) {
-        if (field.kind === 'event') {
+        if (field.kind === 'event' && field.key) {
           eventKeys.add(field.key);
         }
       }

@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  FluxSchemaDefinitionShape,
-  SchemaDefinitionFieldSpec,
-  SchemaDefinitionFieldKind,
-} from './manifest.js';
+import type { FluxSchemaDefinitionShape } from './manifest.js';
+import type { SchemaFieldKind, SchemaFieldRule } from '../types/schema.js';
 import { matchesFluxValueShape } from './value-shape-runtime.js';
 
 const dropdownItemShape: FluxSchemaDefinitionShape = {
@@ -117,22 +114,26 @@ describe('schema-definition shape matching', () => {
   });
 });
 
-describe('SchemaDefinitionFieldKind vocabulary', () => {
-  it('is a closed union covering the nested classification kinds', () => {
-    const kinds: SchemaDefinitionFieldKind[] = [
+describe('unified SchemaFieldKind vocabulary', () => {
+  it('covers the nested classification kinds within the unified vocabulary', () => {
+    const kinds: SchemaFieldKind[] = [
+      'meta',
+      'prop',
       'value',
-      'event',
-      'action',
       'region',
+      'value-or-region',
       'schema',
       'schema-array',
-      'prop',
+      'event',
+      'action',
       'literal',
+      'reaction',
+      'ignored',
     ];
 
-    const spec: SchemaDefinitionFieldSpec = kinds[0];
+    const spec: SchemaFieldRule | SchemaFieldKind = kinds[0];
     expect(typeof spec).toBe('string');
-    expect(kinds.length).toBeGreaterThanOrEqual(6);
+    expect(kinds.length).toBe(12);
   });
 
   it('accepts object-form rules in fieldRules', () => {
@@ -145,5 +146,43 @@ describe('SchemaDefinitionFieldKind vocabulary', () => {
     };
 
     expect(matchesFluxValueShape({ url: '/r/x', data: { a: 1 } }, shape)).toBe(true);
+  });
+
+  it('accepts SchemaFieldRule object form carrying params/isolate/regionKey', () => {
+    const shape: FluxSchemaDefinitionShape = {
+      kind: 'schema-definition',
+      fieldRules: {
+        title: {
+          kind: 'value-or-region',
+          regionKey: 'titleRegionKey',
+          params: ['item', 'index', 'key'],
+          isolate: false,
+        },
+        body: {
+          kind: 'region',
+          regionKey: 'bodyRegionKey',
+          regionKeySuffix: 'body',
+          params: ['item', 'index', 'key'],
+        },
+        disabled: 'literal',
+      },
+    };
+
+    expect(matchesFluxValueShape({ title: 'A', disabled: true }, shape)).toBe(true);
+    expect(matchesFluxValueShape({ title: { type: 'text' }, disabled: false }, shape)).toBe(true);
+  });
+
+  it('supports value-or-region fields (either value or schema input)', () => {
+    const shape: FluxSchemaDefinitionShape = {
+      kind: 'schema-definition',
+      fieldRules: {
+        searchable: 'value-or-region',
+      },
+    };
+
+    expect(matchesFluxValueShape({ searchable: true }, shape)).toBe(true);
+    expect(matchesFluxValueShape({ searchable: { type: 'input-text', name: 'q' } }, shape)).toBe(
+      true,
+    );
   });
 });

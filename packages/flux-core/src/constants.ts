@@ -10,6 +10,8 @@ export const META_FIELDS = new Set([
   'frameWrap',
 ]);
 
+import type { SchemaFieldKind, SchemaFieldRule } from './types/schema.js';
+
 export interface BuiltInActionDescriptor {
   canonicalName: string;
   compatibilityAliases?: readonly string[];
@@ -77,7 +79,7 @@ export interface BuiltInActionDefinition {
    * `action` args (e.g. onClose/onSubmitSuccess) are preserved raw at dispatch
    * scope evaluation, `value` args are expression-evaluated.
    */
-  fieldRules: Readonly<Record<string, import('./schema-diagnostics/manifest.js').SchemaDefinitionFieldSpec>>;
+  fieldRules: Readonly<Record<string, SchemaFieldRule | SchemaFieldKind>>;
 }
 
 /**
