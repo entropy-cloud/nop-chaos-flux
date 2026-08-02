@@ -1,4 +1,5 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 
 const dynamicRendererEnv = {
   fetcher: async <T,>(api: { url?: string; params?: { schemaType?: string } }) => {
@@ -163,6 +164,37 @@ const manualLoadOnDemand = {
   ],
 };
 
+/**
+ * C1.2 Phase 3 host scenario: a failing loadAction must surface the
+ * renderer-owned error state (`[data-error]`) in a real browser instead of
+ * crashing the render boundary.
+ */
+const failingLoadEnv: Partial<RendererEnv> = {
+  fetcher: async <T,>() => ({
+    ok: false,
+    status: 500,
+    data: null as T,
+  }),
+};
+
+const failingLoad = {
+  type: 'page',
+  body: [
+    { type: 'text', text: 'A failing loadAction surfaces the error state.' },
+    {
+      type: 'dynamic-renderer',
+      loadAction: {
+        action: 'ajax',
+        args: { url: '/api/component-lab/dynamic-renderer/fail' },
+      },
+      body: {
+        type: 'text',
+        text: 'Loading dynamic schema...',
+      },
+    },
+  ],
+};
+
 export function DynamicRendererLabPage() {
   return (
     <MultiScenarioLabPage
@@ -191,6 +223,13 @@ export function DynamicRendererLabPage() {
             'autoLoad:false skips the initial fetch. Click "Load Schema" to trigger component:refresh, which fires loadAction and renders the returned schema.',
           schema: manualLoadOnDemand,
           env: dynamicRendererEnv,
+        },
+        {
+          title: 'Failing loadAction surfaces the error state',
+          description:
+            'loadAction fails (HTTP 500). The renderer shows its owned error diagnostic inside the nop-dynamic-renderer shell (host-dynamic-autoload error path).',
+          schema: failingLoad,
+          env: failingLoadEnv,
         },
       ]}
     />

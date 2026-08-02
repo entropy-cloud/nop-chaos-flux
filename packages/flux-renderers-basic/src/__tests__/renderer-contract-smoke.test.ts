@@ -93,4 +93,20 @@ describe('renderer definition contract smoke tests', () => {
     const page = basicRendererDefinitions.find((d) => d.type === 'page');
     expect(page?.injectedLocals?.$page).toEqual({ kind: 'injected-local' });
   });
+
+  it('reaction renderer declares dependsOn field (compileReaction + runtime consume it)', () => {
+    const reaction = basicRendererDefinitions.find((d) => d.type === 'reaction');
+    const dependsOnField = reaction?.fields?.find((f) => f.key === 'dependsOn');
+    expect(dependsOnField?.kind).toBe('prop');
+  });
+
+  it('recurse/reaction/dynamic-renderer declare defaultSchema (palette/insertion baseline)', () => {
+    const recurse = basicRendererDefinitions.find((d) => d.type === 'recurse');
+    const reaction = basicRendererDefinitions.find((d) => d.type === 'reaction');
+    const dynamicRenderer = basicRendererDefinitions.find((d) => d.type === 'dynamic-renderer');
+
+    expect(recurse?.defaultSchema?.type).toBe('recurse');
+    expect(reaction?.defaultSchema?.type).toBe('reaction');
+    expect(dynamicRenderer?.defaultSchema?.type).toBe('dynamic-renderer');
+  });
 });
