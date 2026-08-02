@@ -1,0 +1,25 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "text",
+      "text": "点击按钮后观察下方 scope 快照变化"
+    },
+    {
+      "type": "button",
+      "label": "Increment count",
+      "onClick": {
+        "action": "setValue",
+        "args": {
+          "path": "count",
+          "value": "${count + 1}"
+        }
+      }
+    },
+    {
+      "type": "scope-debug",
+      "title": "Local Page Scope",
+      "defaultExpand": true
+    }
+  ]
+}
