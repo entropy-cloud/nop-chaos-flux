@@ -71,6 +71,8 @@ export interface TableColumnSchema extends BaseSchema {
   buttons?: BaseSchema[];
   buttonsRegionKey?: string;
   quickEditBodyRegionKey?: string;
+  /** Compiled region key when `searchable` is authored as SchemaInput (region-ized). */
+  searchableRegionKey?: string;
   width?: number | string;
   fixed?: 'left' | 'right';
   hidden?: boolean;

@@ -294,6 +294,84 @@ describe('CRUD renderer quick-edit baseline', () => {
     });
   });
 
+  it('supports the direct column.body authored form (maps to the same quickEditBodyRegionKey)', async () => {
+    cleanup();
+    const observeSave = vi.fn(
+      (_payload: Record<string, unknown> | undefined, ctx: ActionContext) => {
+        return { ok: true, data: ctx.scope.get('$slot.record') };
+      },
+    );
+
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer, saveProbeRenderer]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-quick-edit-direct-body"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'quick-edit-crud-direct-body',
+              source: [{ id: '1', name: 'Alice' }],
+              quickSaveItemAction: { action: 'probe:saveItem' },
+              columns: [
+                {
+                  name: 'name',
+                  label: 'Name',
+                  quickEdit: true,
+                  // Dual authored form: direct column.body (no quickEdit wrapper).
+                  body: {
+                    type: 'input-text',
+                    name: 'name',
+                    label: 'Direct Body',
+                    frameWrap: false,
+                  },
+                } as never,
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={(actionScope) => {
+          actionScope?.registerNamespace('probe', {
+            kind: 'host',
+            invoke(
+              method: string,
+              payload: Record<string, unknown> | undefined,
+              ctx: ActionContext,
+            ) {
+              if (method === 'saveItem') {
+                return observeSave(payload, ctx);
+              }
+
+              return { ok: false, error: new Error(`Unsupported method: ${method}`) };
+            },
+          });
+        }}
+      />,
+    );
+
+    const input = screen.getByRole('textbox', { name: 'Direct Body' }) as HTMLInputElement;
+    expect(input.value).toBe('Alice');
+
+    fireEvent.change(input, { target: { value: 'Alicia' } });
+
+    await waitFor(() => {
+      expect(input.value).toBe('Alicia');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: t('flux.common.save') }));
+
+    await waitFor(() => {
+      expect(observeSave).toHaveBeenCalledTimes(1);
+      expect(observeSave.mock.calls[0]?.[1].scope.get('$slot.record')).toMatchObject({
+        id: '1',
+        name: 'Alicia',
+      });
+    });
+  });
+
   it('opens dialog quickEdit mode, saves edited values, and closes the dialog', async () => {
     cleanup();
     const observeSave = vi.fn(

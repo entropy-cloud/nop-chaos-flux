@@ -72,6 +72,8 @@ export interface CrudColumnSchema extends SchemaObject {
   align?: 'left' | 'center' | 'right';
   sortable?: boolean;
   searchable?: boolean | SchemaInput;
+  /** Compiled region key when `searchable` is authored as SchemaInput (region-ized). */
+  searchableRegionKey?: string;
   filterable?: boolean | CrudColumnFilterConfig;
   filterOptions?: CrudColumnFilterOption[];
   quickEdit?: boolean | CrudQuickEditConfig;

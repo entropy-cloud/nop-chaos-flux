@@ -1,90 +1,6 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { createTemplateRegion, extractNestedSchemaRegions, isSchemaInput } from '@nop-chaos/flux-core';
 import { CrudRenderer } from './crud-renderer.js';
 import { transformCrudAuthoringSchema, validateCrudSchema } from './data-schema-validation.js';
-
-function normalizeTableColumns(
-  value: unknown,
-  path: string,
-  regions: Record<string, import('@nop-chaos/flux-core').TemplateRegion>,
-  compileSchema: (
-    input: import('@nop-chaos/flux-core').SchemaInput,
-    options?: import('@nop-chaos/flux-core').CompileSchemaOptions,
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => import('@nop-chaos/flux-core').TemplateNode | import('@nop-chaos/flux-core').TemplateNode[],
-) {
-  if (!Array.isArray(value)) {
-    return value;
-  }
-
-  return value.map((column, index) => {
-    if (!column || typeof column !== 'object') {
-      return column;
-    }
-
-    const normalizedColumn = extractNestedSchemaRegions({
-      candidate: column as Record<string, unknown>,
-      itemRegionPath: `${path}.columns[${index}]`,
-      itemRegionKeyPrefix: `columns.${index}`,
-      rules: [
-        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
-        {
-          key: 'buttons',
-          regionKeySuffix: 'buttons',
-          compiledKey: 'buttonsRegionKey',
-          params: ['record', 'index'] as readonly string[],
-          isolate: true,
-        },
-        {
-          key: 'cell',
-          regionKeySuffix: 'cell',
-          compiledKey: 'cellRegionKey',
-          params: ['record', 'index'] as readonly string[],
-          isolate: true,
-        },
-        {
-          key: 'body',
-          regionKeySuffix: 'quickEditBody',
-          compiledKey: 'quickEditBodyRegionKey',
-        },
-      ],
-      regions,
-      compileSchema,
-    }).value as Record<string, unknown>;
-
-    const quickEdit = normalizedColumn.quickEdit;
-    if (
-      quickEdit &&
-      typeof quickEdit === 'object' &&
-      !Array.isArray(quickEdit) &&
-      isSchemaInput((quickEdit as Record<string, unknown>).body)
-    ) {
-      const quickEditBodyRegionKey =
-        typeof normalizedColumn.quickEditBodyRegionKey === 'string'
-          ? normalizedColumn.quickEditBodyRegionKey
-          : `columns.${index}.quickEditBody`;
-      const quickEditBodyRegionPath = `${path}.columns[${index}].quickEdit.body`;
-
-      regions[quickEditBodyRegionKey] = createTemplateRegion(
-        quickEditBodyRegionKey,
-        (quickEdit as Record<string, unknown>).body,
-        quickEditBodyRegionPath,
-        compileSchema,
-      );
-
-      const nextQuickEdit = { ...(quickEdit as Record<string, unknown>) };
-      delete nextQuickEdit.body;
-
-      return {
-        ...normalizedColumn,
-        quickEdit: nextQuickEdit,
-        quickEditBodyRegionKey,
-      };
-    }
-
-    return normalizedColumn;
-  });
-}
 
 export const crudRendererDefinition: RendererDefinition = {
   type: 'crud',
@@ -133,7 +49,45 @@ export const crudRendererDefinition: RendererDefinition = {
         'Action dispatched per row on quick save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
     },
     columns: {
-      shape: { kind: 'unknown' },
+      shape: {
+        kind: 'array',
+        item: {
+          kind: 'schema-definition',
+          fieldRules: {
+            label: {
+              kind: 'value-or-region',
+              regionKey: 'labelRegionKey',
+            },
+            buttons: {
+              kind: 'region',
+              regionKey: 'buttonsRegionKey',
+              params: ['record', 'index'],
+              isolate: true,
+            },
+            cell: {
+              kind: 'region',
+              regionKey: 'cellRegionKey',
+              params: ['record', 'index'],
+              isolate: true,
+            },
+            body: {
+              kind: 'region',
+              regionKey: 'quickEditBodyRegionKey',
+              regionKeySuffix: 'quickEditBody',
+            },
+            quickEdit: {
+              kind: 'region',
+              sourceKey: 'body',
+              regionKey: 'quickEditBodyRegionKey',
+              regionKeySuffix: 'quickEditBody',
+            },
+            searchable: {
+              kind: 'value-or-region',
+              regionKey: 'searchableRegionKey',
+            },
+          },
+        },
+      },
       displayName: 'Columns',
       description:
         'Table column declarations, including operation, fixed, searchable, filterable, and quick-edit metadata.',
@@ -407,36 +361,6 @@ export const crudRendererDefinition: RendererDefinition = {
       displayName: 'Load More',
       description:
         'Load the next page of data when the CRUD pagination mode is "infinite". Triggers the loadAction or source refresh.',
-    },
-  ],
-  deepFields: [
-    {
-      key: 'columns',
-      nestedRegions: [
-        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
-        {
-          key: 'buttons',
-          regionKeySuffix: 'buttons',
-          compiledKey: 'buttonsRegionKey',
-          params: ['record', 'index'],
-          isolate: true,
-        },
-        {
-          key: 'cell',
-          regionKeySuffix: 'cell',
-          compiledKey: 'cellRegionKey',
-          params: ['record', 'index'],
-          isolate: true,
-        },
-        {
-          key: 'body',
-          regionKeySuffix: 'quickEditBody',
-          compiledKey: 'quickEditBodyRegionKey',
-        },
-      ],
-      normalize(input) {
-        return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
-      },
     },
   ],
   scopeExportContracts: {

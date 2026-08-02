@@ -1,5 +1,4 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { createTemplateRegion, extractNestedSchemaRegions, isSchemaInput } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { DataSourceRenderer } from './data-source-renderer.js';
 import { validateTableSchema } from './data-schema-validation.js';
@@ -9,148 +8,6 @@ import { TreeRenderer } from './tree-renderer.js';
 import { crudRendererDefinition } from './crud-renderer-definition.js';
 import { w2aDataCompositionDefinitions } from './w2a-data-composition-definitions.js';
 import type { ChartSchema } from './chart-schemas.js';
-
-function normalizeTableColumns(
-  value: unknown,
-  path: string,
-  regions: Record<string, import('@nop-chaos/flux-core').TemplateRegion>,
-  compileSchema: (
-    input: import('@nop-chaos/flux-core').SchemaInput,
-    options?: import('@nop-chaos/flux-core').CompileSchemaOptions,
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => import('@nop-chaos/flux-core').TemplateNode | import('@nop-chaos/flux-core').TemplateNode[],
-) {
-  if (!Array.isArray(value)) {
-    return value;
-  }
-
-  return value.map((column, index) => {
-    if (!column || typeof column !== 'object') {
-      return column;
-    }
-
-    let normalizedColumn = extractNestedSchemaRegions({
-      candidate: column as Record<string, unknown>,
-      itemRegionPath: `${path}.columns[${index}]`,
-      itemRegionKeyPrefix: `columns.${index}`,
-      rules: [
-        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
-        {
-          key: 'buttons',
-          regionKeySuffix: 'buttons',
-          compiledKey: 'buttonsRegionKey',
-          params: ['record', 'index'] as readonly string[],
-          isolate: true,
-        },
-        {
-          key: 'cell',
-          regionKeySuffix: 'cell',
-          compiledKey: 'cellRegionKey',
-          params: ['record', 'index'] as readonly string[],
-          isolate: true,
-        },
-        {
-          key: 'body',
-          regionKeySuffix: 'quickEditBody',
-          compiledKey: 'quickEditBodyRegionKey',
-        },
-      ],
-      regions,
-      compileSchema,
-    }).value as Record<string, unknown>;
-
-    const popOverConfig = normalizedColumn.popOver;
-    if (
-      popOverConfig &&
-      typeof popOverConfig === 'object' &&
-      !Array.isArray(popOverConfig)
-    ) {
-      const popOverResult = extractNestedSchemaRegions({
-        candidate: popOverConfig as Record<string, unknown>,
-        itemRegionPath: `${path}.columns[${index}].popOver`,
-        itemRegionKeyPrefix: `columns.${index}.popOver`,
-        rules: [
-          {
-            key: 'content',
-            regionKeySuffix: 'content',
-            compiledKey: 'contentRegionKey',
-            params: ['record', 'index'] as readonly string[],
-            isolate: true,
-          },
-        ],
-        regions,
-        compileSchema,
-      });
-      if (popOverResult.changed) {
-        normalizedColumn = { ...normalizedColumn, popOver: popOverResult.value };
-      }
-    }
-
-    const quickEdit = normalizedColumn.quickEdit;
-    if (
-      quickEdit &&
-      typeof quickEdit === 'object' &&
-      !Array.isArray(quickEdit) &&
-      isSchemaInput((quickEdit as Record<string, unknown>).body)
-    ) {
-      const quickEditBodyRegionKey =
-        typeof normalizedColumn.quickEditBodyRegionKey === 'string'
-          ? normalizedColumn.quickEditBodyRegionKey
-          : `columns.${index}.quickEditBody`;
-      const quickEditBodyRegionPath = `${path}.columns[${index}].quickEdit.body`;
-
-      regions[quickEditBodyRegionKey] = createTemplateRegion(
-        quickEditBodyRegionKey,
-        (quickEdit as Record<string, unknown>).body,
-        quickEditBodyRegionPath,
-        compileSchema,
-      );
-
-      const nextQuickEdit = { ...(quickEdit as Record<string, unknown>) };
-      delete nextQuickEdit.body;
-
-      return {
-        ...normalizedColumn,
-        quickEdit: nextQuickEdit,
-        quickEditBodyRegionKey,
-      };
-    }
-
-    return normalizedColumn;
-  });
-}
-
-function normalizeTableExpandable(
-  value: unknown,
-  path: string,
-  regions: Record<string, import('@nop-chaos/flux-core').TemplateRegion>,
-  compileSchema: (
-    input: import('@nop-chaos/flux-core').SchemaInput,
-    options?: import('@nop-chaos/flux-core').CompileSchemaOptions,
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => import('@nop-chaos/flux-core').TemplateNode | import('@nop-chaos/flux-core').TemplateNode[],
-) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return value;
-  }
-
-  return extractNestedSchemaRegions({
-    candidate: value as Record<string, unknown>,
-    itemRegionPath: `${path}.expandable`,
-    itemRegionKeyPrefix: 'expandable',
-    rules: [
-      {
-        key: 'expandedRow',
-        regionKeySuffix: 'expandedRow',
-        compiledKey: 'expandedRowRegionKey',
-        params: ['record', 'index'] as readonly string[],
-        isolate: true,
-      },
-    ],
-    regions,
-    compileSchema,
-  }).value;
-}
 
 const LazyChartRenderer = createLazyRendererComponent<ChartSchema>(
   () => import('./chart-renderer.js').then((m) => m.ChartRenderer),
@@ -186,7 +43,49 @@ export const dataRendererDefinitions: RendererDefinition[] = [
           'Action dispatched per row on quick save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
       },
       columns: {
-        shape: { kind: 'unknown' },
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              label: {
+                kind: 'value-or-region',
+                regionKey: 'labelRegionKey',
+              },
+              buttons: {
+                kind: 'region',
+                regionKey: 'buttonsRegionKey',
+                params: ['record', 'index'],
+                isolate: true,
+              },
+              cell: {
+                kind: 'region',
+                regionKey: 'cellRegionKey',
+                params: ['record', 'index'],
+                isolate: true,
+              },
+              body: {
+                kind: 'region',
+                regionKey: 'quickEditBodyRegionKey',
+                regionKeySuffix: 'quickEditBody',
+              },
+              quickEdit: {
+                kind: 'region',
+                sourceKey: 'body',
+                regionKey: 'quickEditBodyRegionKey',
+                regionKeySuffix: 'quickEditBody',
+              },
+              popOver: {
+                kind: 'region',
+                sourceKey: 'content',
+                regionKey: 'popOver.contentRegionKey',
+                regionKeySuffix: 'popOver.content',
+                params: ['record', 'index'],
+                isolate: true,
+              },
+            },
+          },
+        },
         displayName: 'Columns',
         description: 'Table column definitions.',
         editorType: 'object-array',
@@ -204,7 +103,17 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         editorType: 'object',
       },
       expandable: {
-        shape: { kind: 'object', fields: {} },
+        shape: {
+          kind: 'schema-definition',
+          fieldRules: {
+            expandedRow: {
+              kind: 'region',
+              regionKey: 'expandedRowRegionKey',
+              params: ['record', 'index'],
+              isolate: true,
+            },
+          },
+        },
         displayName: 'Expandable',
         description: 'Expanded-row configuration for the table.',
         editorType: 'object',
@@ -289,51 +198,6 @@ export const dataRendererDefinitions: RendererDefinition[] = [
           kind: 'unknown',
         },
         result: { kind: 'array', item: { kind: 'string' } },
-      },
-    ],
-    deepFields: [
-      {
-        key: 'columns',
-        nestedRegions: [
-          { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
-          {
-            key: 'buttons',
-            regionKeySuffix: 'buttons',
-            compiledKey: 'buttonsRegionKey',
-            params: ['record', 'index'],
-            isolate: true,
-          },
-          {
-            key: 'cell',
-            regionKeySuffix: 'cell',
-            compiledKey: 'cellRegionKey',
-            params: ['record', 'index'],
-            isolate: true,
-          },
-          {
-            key: 'body',
-            regionKeySuffix: 'quickEditBody',
-            compiledKey: 'quickEditBodyRegionKey',
-          },
-        ],
-        normalize(input) {
-          return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
-        },
-      },
-      {
-        key: 'expandable',
-        nestedRegions: [
-          {
-            key: 'expandedRow',
-            regionKeySuffix: 'expandedRow',
-            compiledKey: 'expandedRowRegionKey',
-            params: ['record', 'index'],
-            isolate: true,
-          },
-        ],
-        normalize(input) {
-          return normalizeTableExpandable(input.value, input.path, input.regions, input.compileSchema);
-        },
       },
     ],
     fields: [
