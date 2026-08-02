@@ -56,7 +56,7 @@ describe('widget renderer data-slot and marker contract', () => {
     expect(icon?.getAttribute('data-icon')).toBe('star');
   });
 
-  it('badge has no nop- marker (delegates to shadcn/ui Badge)', () => {
+  it('badge emits nop-badge marker alongside the shadcn/ui badge slot', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -67,6 +67,11 @@ describe('widget renderer data-slot and marker contract', () => {
       />,
     );
     const badge = container.querySelector('[data-slot="badge"]');
+    expect(badge).toBeTruthy();
+    // Root marker contract (renderer-markers-and-selectors.md §Root Marker
+    // Rules + badge design.md §10): the badge renderer root carries the
+    // nop-badge identity marker like nop-text / nop-icon.
+    expect(badge?.classList.contains('nop-badge')).toBe(true);
     expect(badge?.textContent).toContain('New');
   });
 });

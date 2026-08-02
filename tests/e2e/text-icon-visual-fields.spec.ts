@@ -34,24 +34,36 @@ test.describe('E3 text/icon visual fields (copyable / maxLine / icon size+color)
     await assertTrackedPageErrors(page);
   });
 
-  test('text maxLine=2 applies line-clamp-2 class to the root element', async ({ page }) => {
+  test('text maxLine=2 applies the CSS-variable line-clamp class and count to the root element', async ({
+    page,
+  }) => {
     await openTextIconVisualFieldsPage(page);
 
     const el = page.getByTestId('text-visual-maxline-2');
     await expect(el).toBeVisible({ timeout: 10_000 });
     const className = await el.evaluate((node) => node.className);
-    expect(className).toContain('line-clamp-2');
+    expect(className).toContain('line-clamp-(--nop-line-count)');
+    const count = await el.evaluate((node) =>
+      (node as HTMLElement).style.getPropertyValue('--nop-line-count'),
+    );
+    expect(count).toBe('2');
 
     await assertTrackedPageErrors(page);
   });
 
-  test('text maxLine=3 applies line-clamp-3 class to the root element', async ({ page }) => {
+  test('text maxLine=3 applies the CSS-variable line-clamp class and count to the root element', async ({
+    page,
+  }) => {
     await openTextIconVisualFieldsPage(page);
 
     const el = page.getByTestId('text-visual-maxline-3');
     await expect(el).toBeVisible({ timeout: 10_000 });
     const className = await el.evaluate((node) => node.className);
-    expect(className).toContain('line-clamp-3');
+    expect(className).toContain('line-clamp-(--nop-line-count)');
+    const count = await el.evaluate((node) =>
+      (node as HTMLElement).style.getPropertyValue('--nop-line-count'),
+    );
+    expect(count).toBe('3');
 
     await assertTrackedPageErrors(page);
   });
@@ -112,20 +124,24 @@ test.describe('E3 text/icon visual fields (copyable / maxLine / icon size+color)
 
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     const collapsedClass = await textRoot.evaluate((node) => node.className);
-    expect(collapsedClass).toContain('line-clamp-2');
+    expect(collapsedClass).toContain('line-clamp-(--nop-line-count)');
+    const collapsedCount = await textRoot.evaluate((node) =>
+      (node as HTMLElement).style.getPropertyValue('--nop-line-count'),
+    );
+    expect(collapsedCount).toBe('2');
 
     await toggle.click();
 
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await expect(textRoot).toHaveAttribute('data-expanded', 'true');
     const expandedClass = await textRoot.evaluate((node) => node.className);
-    expect(expandedClass).not.toMatch(/line-clamp-\d/);
+    expect(expandedClass).not.toMatch(/line-clamp/);
 
     await toggle.click();
 
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     const reCollapsedClass = await textRoot.evaluate((node) => node.className);
-    expect(reCollapsedClass).toContain('line-clamp-2');
+    expect(reCollapsedClass).toContain('line-clamp-(--nop-line-count)');
 
     await assertTrackedPageErrors(page);
   });

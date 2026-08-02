@@ -2,35 +2,35 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { BaseSchema } from '@nop-chaos/flux-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
+import type { CountDownStorage } from '../button.js';
 
-// happy-dom localStorage persistence is unreliable (no --localstorage-file path);
-// install an in-memory store so persistence behavior is testable.
-function createMemoryLocalStorage(): Storage {
+// INV-1 audit fix (C1.3): the renderer no longer touches localStorage
+// directly. Persistence is host-injected via the optional `countDownStorage`
+// adapter (B 档 import-injection pattern, renderer-env.md §9); without an
+// adapter the countdown is session-only.
+
+function createMemoryStorage(): CountDownStorage & { store: Map<string, string> } {
   const store = new Map<string, string>();
   return {
-    get length() {
-      return store.size;
-    },
-    clear: () => store.clear(),
-    getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
-    key: (index: number) => Array.from(store.keys())[index] ?? null,
-    removeItem: (key: string) => {
-      store.delete(key);
-    },
-    setItem: (key: string, value: string) => {
+    store,
+    get: (key: string) => (store.has(key) ? store.get(key)! : null),
+    set: (key: string, value: string) => {
       store.set(key, value);
+    },
+    remove: (key: string) => {
+      store.delete(key);
     },
   };
 }
 
-let memoryLs: Storage;
+let memoryStorage: CountDownStorage & { store: Map<string, string> };
 
-function renderButton(schema: BaseSchema) {
+function renderButton(schema: Record<string, unknown>) {
   const SchemaRenderer = createBasicSchemaRenderer();
   return render(
     <SchemaRenderer
       schemaUrl="test://button-count-down"
-      schema={{ type: 'page', body: [schema] }}
+      schema={{ type: 'page', body: [schema as BaseSchema] }}
       env={env}
       formulaCompiler={formulaCompiler}
     />,
@@ -43,11 +43,9 @@ function flushMicrotasks() {
 
 describe('button countDown / countDownTpl (E2e)', () => {
   beforeEach(() => {
-    memoryLs = createMemoryLocalStorage();
-    vi.stubGlobal('localStorage', memoryLs);
+    memoryStorage = createMemoryStorage();
   });
   afterEach(() => {
-    vi.unstubAllGlobals();
     vi.useRealTimers();
     cleanup();
   });
@@ -89,13 +87,14 @@ describe('button countDown / countDownTpl (E2e)', () => {
     expect(button.hasAttribute('data-countdown')).toBe(false);
   });
 
-  it('persists countdown key with pathname when id is set', async () => {
+  it('persists countdown key with pathname when id is set (via injected adapter)', async () => {
     renderButton({
       type: 'button',
       id: 'verify-btn',
       label: 'Verify',
       testid: 'verify-btn',
       countDown: 5,
+      countDownStorage: memoryStorage,
       onClick: { action: 'setValue', args: { path: 'sent', value: true } },
     });
     const button = screen.getByTestId('verify-btn') as HTMLButtonElement;
@@ -103,17 +102,10 @@ describe('button countDown / countDownTpl (E2e)', () => {
       fireEvent.click(button);
       await flushMicrotasks();
     });
-    // happy-dom localStorage may not expose key() iteration reliably; read the known key directly.
+
     const expectedKey = `flux-countdown-${location.pathname}-verify-btn`;
-    let stored: string | null = null;
-    try {
-      stored = localStorage.getItem(expectedKey);
-    } catch {
-      // ignore
-    }
-    expect(stored).toBeTruthy();
-    expect(expectedKey).toContain('verify-btn');
-    expect(expectedKey).toContain(location.pathname);
+    expect(memoryStorage.store.get(expectedKey)).toBeTruthy();
+    expect(Number(memoryStorage.store.get(expectedKey))).toBeGreaterThan(Date.now());
   });
 
   it('does not persist when neither id nor name is set', async () => {
@@ -122,6 +114,7 @@ describe('button countDown / countDownTpl (E2e)', () => {
       label: 'Anon',
       testid: 'anon-btn',
       countDown: 5,
+      countDownStorage: memoryStorage,
       onClick: { action: 'setValue', args: { path: 'sent', value: true } },
     });
     const button = screen.getByTestId('anon-btn') as HTMLButtonElement;
@@ -129,18 +122,63 @@ describe('button countDown / countDownTpl (E2e)', () => {
       fireEvent.click(button);
       await flushMicrotasks();
     });
-    let found = false;
-    try {
-      const ls = typeof localStorage !== 'undefined' ? localStorage : null;
-      if (ls) {
-        for (let i = 0; i < ls.length; i++) {
-          if (ls.key(i)?.startsWith('flux-countdown-')) found = true;
-        }
-      }
-    } catch {
-      // ignore
-    }
-    expect(found).toBe(false);
+    expect(memoryStorage.store.size).toBe(0);
+  });
+
+  it('does not touch storage when no adapter is injected (session-only, INV-1)', async () => {
+    renderButton({
+      type: 'button',
+      id: 'session-btn',
+      label: 'Session',
+      testid: 'session-btn',
+      countDown: 5,
+      onClick: { action: 'setValue', args: { path: 'sent', value: true } },
+    });
+    const button = screen.getByTestId('session-btn') as HTMLButtonElement;
+    await act(async () => {
+      fireEvent.click(button);
+      await flushMicrotasks();
+    });
+    // Countdown still works in-session…
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute('data-countdown')).toBe('5');
+    // …but nothing was persisted anywhere.
+    expect(memoryStorage.store.size).toBe(0);
+  });
+
+  it('restores an in-flight countdown from the injected adapter on mount', async () => {
+    const future = Date.now() + 30_000;
+    memoryStorage.set(`flux-countdown-${location.pathname}-restore-btn`, String(future));
+
+    renderButton({
+      type: 'button',
+      id: 'restore-btn',
+      label: 'Restore',
+      testid: 'restore-btn',
+      countDown: 60,
+      countDownStorage: memoryStorage,
+    });
+    const button = screen.getByTestId('restore-btn') as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    const remaining = Number(button.getAttribute('data-countdown'));
+    expect(remaining).toBeGreaterThan(0);
+    expect(remaining).toBeLessThanOrEqual(60);
+  });
+
+  it('removes an expired adapter entry on mount (no restore for stale endsAt)', () => {
+    memoryStorage.set(`flux-countdown-${location.pathname}-expired-btn`, String(Date.now() - 1000));
+
+    renderButton({
+      type: 'button',
+      id: 'expired-btn',
+      label: 'Expired',
+      testid: 'expired-btn',
+      countDown: 60,
+      countDownStorage: memoryStorage,
+    });
+    const button = screen.getByTestId('expired-btn') as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+    expect(memoryStorage.store.has(`flux-countdown-${location.pathname}-expired-btn`)).toBe(false);
   });
 
   it('uses countDownTpl to render the label', async () => {
@@ -179,9 +217,9 @@ describe('button countDown / countDownTpl (E2e)', () => {
     });
     expect(button.disabled).toBe(true);
 
-    // Drive the self-rescheduling tick past the countdown window. Each 250ms tick
-    // recomputes remaining from Date.now() and re-schedules; advancing iteratively
-    // within act flushes the React state updates.
+    // Drive the tick past the countdown window. Each 250ms tick recomputes
+    // remaining from Date.now() and re-schedules; advancing iteratively within
+    // act flushes the React state updates.
     for (let elapsed = 0; elapsed < 4000; elapsed += 250) {
       await act(async () => {
         vi.advanceTimersByTime(250);

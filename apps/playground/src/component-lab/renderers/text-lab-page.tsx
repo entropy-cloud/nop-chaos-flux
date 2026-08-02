@@ -29,6 +29,34 @@ const tagVariants = {
   ],
 };
 
+const nameBinding = {
+  type: 'page',
+  data: { userName: 'Initial' },
+  body: [
+    { type: 'text', name: 'userName', text: 'fallback', testid: 'bound-name-text' },
+    {
+      type: 'button',
+      label: 'Change Name',
+      onClick: {
+        action: 'setValue',
+        args: { path: 'userName', value: 'Updated' },
+      },
+    },
+  ],
+};
+
+const maxLineClamp = {
+  type: 'page',
+  body: [
+    {
+      type: 'text',
+      text: 'A'.repeat(400),
+      maxLine: 5,
+      testid: 'clamped-text',
+    },
+  ],
+};
+
 export function TextLabPage() {
   return (
     <MultiScenarioLabPage
@@ -52,6 +80,18 @@ export function TextLabPage() {
           description:
             'The tag prop changes the semantic wrapper element while preserving plain-text rendering.',
           schema: tagVariants,
+        },
+        {
+          title: 'Name binding to scope value (write-through echo)',
+          description:
+            'With a name prop the text binds to the scope variable and re-renders when the scope changes via an action.',
+          schema: nameBinding,
+        },
+        {
+          title: 'maxLine clamps in a real browser (CSS variable mechanism)',
+          description:
+            'maxLine: 5 clamps the text to 5 lines via the line-clamp CSS variable utility.',
+          schema: maxLineClamp,
         },
       ]}
     />

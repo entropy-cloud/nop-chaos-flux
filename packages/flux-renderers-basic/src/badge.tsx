@@ -1,6 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { Badge } from '@nop-chaos/ui';
+import { Badge, cn } from '@nop-chaos/ui';
 import type { BadgeSchema } from './schemas.js';
 
 export function BadgeRenderer(props: RendererComponentProps<BadgeSchema>) {
@@ -16,7 +16,7 @@ export function BadgeRenderer(props: RendererComponentProps<BadgeSchema>) {
   return (
     <Badge
       variant={variant}
-      className={props.meta.className}
+      className={cn('nop-badge', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
     >

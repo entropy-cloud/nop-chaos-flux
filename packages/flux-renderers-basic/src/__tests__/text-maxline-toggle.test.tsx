@@ -64,7 +64,7 @@ describe('text renderer - maxLineToggle', () => {
       expect(toggle).not.toBeNull();
       expect(toggle?.getAttribute('aria-expanded')).toBe('false');
       const root = container.querySelector('.nop-text');
-      expect(root?.className).toContain('line-clamp-2');
+      expect(root?.className).toContain('line-clamp-(--nop-line-count)');
       expect(root?.getAttribute('data-expanded')).toBe('false');
     } finally {
       Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
@@ -99,16 +99,16 @@ describe('text renderer - maxLineToggle', () => {
         '[data-slot="text-maxline-toggle"]',
       ) as HTMLButtonElement;
 
-      expect(root?.className).toContain('line-clamp-2');
+      expect(root?.className).toContain('line-clamp-(--nop-line-count)');
 
       fireEvent.click(toggle);
       expect(toggle.getAttribute('aria-expanded')).toBe('true');
-      expect(root?.className).not.toMatch(/line-clamp-\d/);
+      expect(root?.className).not.toMatch(/line-clamp/);
       expect(root?.getAttribute('data-expanded')).toBe('true');
 
       fireEvent.click(toggle);
       expect(toggle.getAttribute('aria-expanded')).toBe('false');
-      expect(root?.className).toContain('line-clamp-2');
+      expect(root?.className).toContain('line-clamp-(--nop-line-count)');
     } finally {
       Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
         configurable: true,
@@ -139,7 +139,7 @@ describe('text renderer - maxLineToggle', () => {
       });
       expect(container.querySelector('[data-slot="text-maxline-toggle"]')).toBeNull();
       const root = container.querySelector('.nop-text');
-      expect(root?.className).toContain('line-clamp-2');
+      expect(root?.className).toContain('line-clamp-(--nop-line-count)');
       expect(root?.getAttribute('data-expanded')).toBeNull();
     } finally {
       Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
@@ -161,7 +161,7 @@ describe('text renderer - maxLineToggle', () => {
     });
     expect(container.querySelector('[data-slot="text-maxline-toggle"]')).toBeNull();
     const root = container.querySelector('.nop-text');
-    expect(root?.className).not.toMatch(/line-clamp-\d/);
+    expect(root?.className).not.toMatch(/line-clamp/);
   });
 
   it('preserves copyable button alongside toggle when both are enabled', () => {

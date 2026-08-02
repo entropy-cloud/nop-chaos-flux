@@ -20,6 +20,17 @@ const VALID_TAGS = [
   'div',
 ] as const;
 
+/**
+ * Static line-clamp class bound to a CSS variable. Tailwind v4 statically
+ * scans candidate class names, so `line-clamp-${N}` template literals are
+ * never generated (only the literals that happen to exist elsewhere, e.g.
+ * 1/2/3/100, made it into the built CSS) — clamping silently failed for every
+ * other N in real browsers. `line-clamp-(<custom-property>)` is Tailwind v4's
+ * dynamic syntax: the class is a stable literal (scanner-visible) and the
+ * count comes from `--nop-line-count` set inline by the renderer.
+ */
+const MAX_LINE_CLAMP_CLASS = 'line-clamp-(--nop-line-count)';
+
 function resolveMaxLineClass(maxLine: unknown): string | null {
   if (typeof maxLine !== 'number' || !Number.isFinite(maxLine) || maxLine <= 0) {
     return null;
@@ -28,7 +39,7 @@ function resolveMaxLineClass(maxLine: unknown): string | null {
   if (clamped > 100) {
     return 'line-clamp-100';
   }
-  return `line-clamp-${clamped}`;
+  return MAX_LINE_CLAMP_CLASS;
 }
 
 function isPositiveFiniteMaxLine(maxLine: unknown): maxLine is number {
@@ -43,7 +54,7 @@ function measureOverflow(el: HTMLElement | null): boolean {
 const CopyIcon = resolveLucideIconStrict('copy');
 const CheckIcon = resolveLucideIconStrict('check');
 
-function TextCopyButton({ value }: { value: string }) {
+const TextCopyButton = ({ value }: { value: string }) => {
   const [copied, setCopied] = React.useState(false);
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,9 +71,9 @@ function TextCopyButton({ value }: { value: string }) {
       setCopied(true);
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setCopied(false), 1500);
-      toast.success('Copied');
+      toast.success(t('flux.common.copied'));
     } else {
-      toast.error('Copy failed');
+      toast.error(t('flux.common.copyFailed'));
     }
   };
 
@@ -78,12 +89,12 @@ function TextCopyButton({ value }: { value: string }) {
       data-slot="text-copy-button"
       className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-primary"
       onClick={onClick}
-      aria-label={copied ? 'Copied' : 'Copy to clipboard'}
+      aria-label={copied ? t('flux.common.copied') : t('flux.common.copyToClipboard')}
     >
       {IconComp ? <IconComp className="size-3" /> : null}
     </Button>
   );
-}
+};
 
 export function TextRenderer(props: RendererComponentProps<TextSchema>) {
   const fieldName = props.props.name;
@@ -120,11 +131,20 @@ export function TextRenderer(props: RendererComponentProps<TextSchema>) {
   const showToggle = toggleEnabled && overflows;
   const toggleId = React.useId();
   const appliedMaxLineClass = showToggle && expanded ? null : maxLineClass;
+  const maxLineCount =
+    maxLineClass === MAX_LINE_CLAMP_CLASS && typeof maxLine === 'number'
+      ? String(Math.floor(maxLine))
+      : undefined;
 
   return (
     <Tag
       ref={contentRef}
       className={cn('nop-text', appliedMaxLineClass, props.meta.className)}
+      style={
+        maxLineCount
+          ? ({ '--nop-line-count': maxLineCount } as React.CSSProperties)
+          : undefined
+      }
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-expanded={showToggle ? String(expanded) : undefined}

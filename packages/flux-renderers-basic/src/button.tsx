@@ -11,7 +11,9 @@ import {
   TooltipTrigger,
   useIsMobile,
 } from '@nop-chaos/ui';
-import type { ButtonSchema } from './schemas.js';
+import type { ButtonSchema, CountDownStorage } from './schemas.js';
+
+export type { CountDownStorage };
 
 const BUTTON_METHODS = ['focus'] as const;
 
@@ -41,7 +43,7 @@ function renderIconSlot(
 
 /** Storage key for countdown persistence. Includes pathname to avoid cross-page collisions.
  *  Only persists when the author supplied an explicit `id` or `name`; generated node ids
- *  (path keys like `_.body_0_`) are skipped to avoid localStorage garbage. */
+ *  (path keys like `_.body_0_`) are skipped to avoid storage garbage. */
 function countDownStorageKey(
   id: string | undefined,
   name: string | undefined,
@@ -81,28 +83,32 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 
   // ── countDown ────────────────────────────────────────────────────────────
   const countDownSeconds = typeof props.props.countDown === 'number' ? props.props.countDown : undefined;
+  // INV-1: persistence goes through the host-injected adapter (B 档 import
+  // injection, renderer-env.md §9). Without an adapter the countdown is
+  // session-only — the renderer never touches localStorage itself.
+  const countDownStorage = props.props.countDownStorage as CountDownStorage | undefined;
   // Use {timeLeft} token (not ${timeLeft}) so the Flux compiler does not treat it as a
   // scope expression. amis uses a similar `${timeLeft}` token resolved at the i18n layer;
   // Flux resolves it directly in the renderer to stay expression-system-free.
   const countDownTpl = props.props.countDownTpl ?? '{timeLeft}s';
   const countDownKey = countDownStorageKey(props.id, props.props.name);
-  // Restore an in-progress countdown from localStorage at first render (survives
-  // refresh) when an identity exists. Computed via a lazy initialiser so the
-  // restore never needs a synchronous setState-in-effect.
+  // Restore an in-progress countdown from the injected adapter at first render
+  // (survives refresh) when an identity exists. Computed via a lazy
+  // initialiser so the restore never needs a synchronous setState-in-effect.
   const [countDownLeft, setCountDownLeft] = useState<number | null>(() => {
-    if (countDownSeconds === undefined || !countDownKey) return null;
+    if (countDownSeconds === undefined || !countDownKey || !countDownStorage) return null;
     try {
-      const stored = localStorage.getItem(countDownKey);
+      const stored = countDownStorage.get(countDownKey);
       if (!stored) return null;
       const endsAt = Number(stored);
       if (!Number.isFinite(endsAt) || endsAt <= Date.now()) {
-        localStorage.removeItem(countDownKey);
+        countDownStorage.remove(countDownKey);
         return null;
       }
       const left = Math.ceil((endsAt - Date.now()) / 1000);
       return left > 0 ? left : null;
     } catch {
-      // localStorage unavailable (private mode / SSR) — countdown stays session-only.
+      // Adapter failure — countdown stays session-only.
       return null;
     }
   });
@@ -110,9 +116,9 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 
   // Sync the restored end-timestamp ref once the restored countdown is known.
   useEffect(() => {
-    if (countDownLeft !== null && countDownSeconds !== undefined && countDownKey) {
+    if (countDownLeft !== null && countDownSeconds !== undefined && countDownKey && countDownStorage) {
       try {
-        const endsAt = Number(localStorage.getItem(countDownKey));
+        const endsAt = Number(countDownStorage.get(countDownKey));
         if (Number.isFinite(endsAt) && endsAt > Date.now()) {
           countDownEndRef.current = endsAt;
         }
@@ -120,7 +126,7 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
         // ignore
       }
     }
-  }, [countDownLeft, countDownSeconds, countDownKey]);
+  }, [countDownLeft, countDownSeconds, countDownKey, countDownStorage]);
 
   const countDownInactive = countDownLeft === null || countDownLeft <= 0;
 
@@ -140,7 +146,7 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
         setCountDownLeft(null);
         if (countDownKey) {
           try {
-            localStorage.removeItem(countDownKey);
+            countDownStorage?.remove(countDownKey);
           } catch {
             // ignore
           }
@@ -150,7 +156,7 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
       }
     }, 250);
     return () => clearInterval(interval);
-  }, [countDownInactive, countDownKey]);
+  }, [countDownInactive, countDownKey, countDownStorage]);
 
   const countDownActive = countDownLeft !== null && countDownLeft > 0;
   const countDownLabel = countDownActive
@@ -164,9 +170,9 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
     setCountDownLeft(countDownSeconds);
     if (countDownKey) {
       try {
-        localStorage.setItem(countDownKey, String(endsAt));
+        countDownStorage?.set(countDownKey, String(endsAt));
       } catch {
-        // ignore quota / private mode
+        // ignore adapter failures
       }
     }
   }
@@ -206,8 +212,14 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
     // Start the countdown only after the onClick action resolves on its success
     // branch (the action runtime rejects on error). This matches the design's
     // "action 成功分支后触发" semantics — a rejecting action does NOT start the
-    // countdown, so the user can retry immediately.
-    await props.events.onClick?.(event);
+    // countdown, so the user can retry immediately. The rejection itself is
+    // swallowed here so a failed action never surfaces as an unhandled promise
+    // rejection (the runtime already routes diagnostics through notify()).
+    try {
+      await props.events.onClick?.(event);
+    } catch {
+      return;
+    }
     if (countDownSeconds !== undefined) {
       startCountDown();
     }

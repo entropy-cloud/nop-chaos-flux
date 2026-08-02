@@ -21,6 +21,8 @@ export const zhCN: Resource = {
       noSource: '无来源',
       copied: '已复制',
       copy: '复制',
+      copyFailed: '复制失败',
+      copyToClipboard: '复制到剪贴板',
       noValue: '无值',
       noResults: '未找到结果',
       more: '更多',

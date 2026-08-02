@@ -109,4 +109,33 @@ describe('renderer definition contract smoke tests', () => {
     expect(reaction?.defaultSchema?.type).toBe('reaction');
     expect(dynamicRenderer?.defaultSchema?.type).toBe('dynamic-renderer');
   });
+
+  it('badge and icon declare defaultSchema (CX-3 class, C1.3 completion)', () => {
+    const badge = basicRendererDefinitions.find((d) => d.type === 'badge');
+    const icon = basicRendererDefinitions.find((d) => d.type === 'icon');
+
+    expect(badge?.defaultSchema?.type).toBe('badge');
+    expect(icon?.defaultSchema?.type).toBe('icon');
+  });
+
+  it('badge declares text/level fields', () => {
+    const badge = basicRendererDefinitions.find((d) => d.type === 'badge');
+    const keys = badge?.fields?.map((f) => f.key) ?? [];
+    expect(keys).toContain('text');
+    expect(keys).toContain('level');
+  });
+
+  it('button declares label/variant/size fields (authoring contract completeness)', () => {
+    const button = basicRendererDefinitions.find((d) => d.type === 'button');
+    const keys = button?.fields?.map((f) => f.key) ?? [];
+    expect(keys).toContain('label');
+    expect(keys).toContain('variant');
+    expect(keys).toContain('size');
+  });
+
+  it('button declares countDownStorage as a prop field (host-injected adapter)', () => {
+    const button = basicRendererDefinitions.find((d) => d.type === 'button');
+    const storageField = button?.fields?.find((f) => f.key === 'countDownStorage');
+    expect(storageField?.kind).toBe('prop');
+  });
 });
