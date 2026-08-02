@@ -35,8 +35,8 @@
 - 当前导出字段为 `text`、`body`、`tag`、`copyable?`、`maxLine?`、`maxLineToggle?`。
 - 推荐外部正式字段以 `text` 为主，`body` 作为兼容别名或过渡字段，避免两个同义文本入口长期并存。
 - `copyable?: boolean` — 渲染复制按钮，点击调 `navigator.clipboard.writeText` + `toast.success`；不可用降级到 `execCommand` + `toast.error`。
-- `maxLine?: number` — 正整数；映射到 Tailwind `line-clamp-{N}` class（`>100` 截断为 `line-clamp-100`）；非正/非有限值 → 无截断。
-- `maxLineToggle?: boolean` — 缺省 `false`（向后兼容）。为 `true` 且 `maxLine` 为有效正整数且文本实际溢出时，渲染「展开/收起」toggle button：点击切换 local `expanded` state，展开态移除 `line-clamp-{N}` class；a11y `aria-expanded` + `aria-controls`；label 复用既有 `flux.common.expand`/`flux.common.collapse`（不新开 `flux.text.*` namespace）。
+- `maxLine?: number` — 正整数；钳制为 N 行。**实现机制（2026-08-03 C1.3 修订）**：静态类 `line-clamp-(--nop-line-count)`（Tailwind v4 动态 CSS 变量语法）+ renderer 内联 `--nop-line-count: N`。历史实现 `line-clamp-${N}` 动态拼接类名对 Tailwind 静态扫描不可见（built CSS 仅生成字面量出现的 1/2/3/100），`maxLine` 4..99 真机视觉失效（bug 73 模式，见 `docs/audits/per-component/text.md` P1-1）。`>100` 仍回退 `line-clamp-100` 字面类；非正/非有限值 → 无截断。
+- `maxLineToggle?: boolean` — 缺省 `false`（向后兼容）。为 `true` 且 `maxLine` 为有效正整数且文本实际溢出时，渲染「展开/收起」toggle button：点击切换 local `expanded` state，展开态移除钳制类（`:class` 与 `--nop-line-count` 同根移除语义）；a11y `aria-expanded` + `aria-controls`；label 复用既有 `flux.common.expand`/`flux.common.collapse`（不新开 `flux.text.*` namespace）。
 
 ## 5. 字段分类
 
@@ -72,9 +72,9 @@
 
 - 根节点保留 `nop-text` marker。
 - `tag` 只负责语义标签切换，不应顺带决定视觉级别；视觉由 `className` 和设计 token 控制。
-- `maxLine` 追加 `line-clamp-{N}` class 到根节点。
+- `maxLine` 追加 `line-clamp-(--nop-line-count)` 类 + 内联 `--nop-line-count`（见 §4 修订；`>100` 用 `line-clamp-100` 字面类）。
 - `maxLineToggle` 开启且溢出时：根节点加 `data-expanded={expanded}`；toggle button DOM marker 为 `data-slot="text-maxline-toggle"`，含 `aria-expanded`/`aria-controls`。
-- `copyable` 渲染 `@nop-chaos/ui` `Button`（`variant="ghost" size="icon-xs"`），DOM marker 为 `data-slot="text-copy-button"`。
+- `copyable` 渲染 `@nop-chaos/ui` `Button`（`variant="ghost" size="icon-xs"`），DOM marker 为 `data-slot="text-copy-button"`；反馈文案与 aria-label 走 `flux.common.copied`/`flux.common.copyFailed`/`flux.common.copyToClipboard`（i18n，C1.3 修订）。
 
 ## 11. 实现拆分建议
 

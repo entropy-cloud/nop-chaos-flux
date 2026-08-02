@@ -111,6 +111,8 @@ export interface TextSchema extends BaseSchema {
 
 export interface ButtonSchema extends BaseSchema {
   type: 'button';
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
   loading?: boolean;
   onClick?: ActionSchema | ActionSchema[];
   icon?: string;
@@ -120,12 +122,11 @@ export interface ButtonSchema extends BaseSchema {
   tooltipPlacement?: SchemaValue;
   countDown?: SchemaValue;
   countDownTpl?: SchemaValue;
+  countDownStorage?: SchemaValue;
   href?: SchemaValue;
   target?: SchemaValue;
   block?: boolean;
   active?: boolean;
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
-  size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
 }
 
 export interface IconSchema extends BaseSchema {
@@ -137,6 +138,8 @@ export interface IconSchema extends BaseSchema {
 
 export interface BadgeSchema extends BaseSchema {
   type: 'badge';
+  text?: SchemaValue;
+  level?: SchemaValue;
 }
 
 export interface ScopeDebugSchema extends BaseSchema {
