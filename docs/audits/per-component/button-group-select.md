@@ -1,0 +1,53 @@
+# 审计卡：button-group-select（flux-renderers-form）
+
+> 状态: closed
+> 审查日期: 2026-08-03
+> 审查 plan: `docs/plans/2026-08-03-0517-1-c2-3-form-choice-control-family-audit.md`
+> 注册定义: `packages/flux-renderers-form/src/renderers/input.tsx:643-657` | 渲染器: `packages/flux-renderers-form/src/renderers/button-group-select-renderer.tsx:31-136` | design.md: `docs/components/button-group-select/design.md`（本 plan 补齐，2026-08-02 注册时无） | playground: `apps/playground/src/component-lab/renderers/button-group-select-lab-page.tsx` | e2e: `tests/e2e/component-lab/c2-3-host-surfaces.spec.ts`（本族宿主场景新增）
+
+## 组件身份
+
+button-group-select / flux-renderers-form / ButtonGroupSelectSchema（`schemas.ts:259-264`）/ `{type:'button-group-select', name}` / 表单参与: 是（name/required/validation/提交路径）/ widget 控件 renderer（`wrap: true`，FieldFrame 提供 label/校验 chrome + `data-field-*`）
+
+## 18 维审查记录
+
+| #   | 维度                        | 结论 | 证据                                                                                                                                                                                                                                                                                                 | 发现                                                                                  |
+| --- | --------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1   | Schema 契约                 | pass | ButtonGroupSelectSchema: options/multiple/direction/dict（schemas.ts:259-266）；注册 fields: options/multiple/direction/dict（input.tsx:645-651）双侧一致                                                                                                                                            | P2-1 已修复（schema 类型补 dict）                                                     |
+| 2   | RendererComponentProps 合规 | pass | 仅读 props.props/meta；useFormFieldController 标准 hooks（:38-44）；useInputComponentHandle（:54-65）；useDictOptions 经 useRendererEnv（:45）                                                                                                                                                       | —                                                                                     |
+| 3   | 值所有权三态                | pass | multiple 用 checkboxGroupAdapter 保数组身份（:37）；**single 用 choiceSingleAdapter 值保真（:37,12）**——number/boolean option value 选中态成立（`Object.is` 匹配 :67-72 原生值）                                                                                                                     | P1-A 已修复（CX-6）；回归测试 choice-native-value-echo.test.tsx bgs 断言              |
+| 4   | 表单参与                    | pass | name/required/validation 挂接；aria-required/invalid/disabled/readonly（:103-106）；提交路径数据形状 string[]（multiple）/scalar（single）；`data-field`/`data-renderer=button-group-select` 契约（真机证明：host-choice-submit valuesPath 'main' + 'admin,editor'）                                 | —                                                                                     |
+| 5   | DOM 与选择器契约            | pass | `.nop-button-group-select[data-slot="button-group-select-wrapper"]`（:90-91）+ `button-group-select-options`[role=group] + `button-group-select-item`[data-selected][aria-pressed] + loading/error slots（:93-133）——DOM 契约测试冻结（button-group-select-dom-contract.test.tsx 5 条，C0 基线全绿） | —（根 marker `nop-button-group-select` 与 data-slot 契约一致，无 design.md 承诺冲突） |
+| 6   | 嵌套 schema 分类            | pass | options 为 value（allowSource）；multiple/direction/dict 为 prop；无内嵌 action/region；无 deepFields 残留                                                                                                                                                                                           | —                                                                                     |
+| 7   | 事件与 action 契约          | pass | onClick → handleToggle → handlers.onChange（:74-85）；无自定义 payload；onFocus/onBlur 走 field handlers（:107-108）                                                                                                                                                                                 | —                                                                                     |
+| 8   | a11y                        | pass | ButtonGroup role=group + aria-label/required/invalid/disabled/readonly（:101-106）；item Button aria-pressed（:121）——toggle-button 语义正确；按钮原生键盘（Enter/Space 触发 onClick）                                                                                                               | —（P1-C 覆盖的 role="button" 已在 C2.1 排除清单内——按钮自带，无 form Enter 风险）     |
+| 9   | i18n                        | pass | loading 走 `t('flux.common.loading')`（:96）；dict 失败走 `t('flux.form.failedToLoadOptions')`（use-dict-options）；无其他硬编码文案（option.label 来自 schema）                                                                                                                                     | —                                                                                     |
+| 10  | 四态覆盖                    | pass | loading → `button-group-select-loading` + 全部按钮 disabled（:93-98,112）；error → `button-group-select-error` role=alert（:129-133，dict 失败同槽展示）；disabled/readOnly 经 presentation；空选项渲染安全                                                                                          | P2-2 已修复（dict 失败进 error 槽）                                                   |
+| 11  | 异步生命周期                | pass | dict 加载 generation 守卫 + 失败 errorMessage（use-dict-options.ts:24-53）；无 abort 传递（env.loadDict 接口无 signal，非禁止项）                                                                                                                                                                    | P2-2 同源已修复                                                                       |
+| 12  | 组合宿主场景                | pass | DOM 契约单测（5 条）+ single/multiple 值写回真机（c2-3-host-surfaces.spec.ts host-choice-submit：'main' + ['admin','editor'] 进 valuesPath）                                                                                                                                                         | Phase 3 完成（值形状 string[]/scalar 真机证明）                                       |
+| 13  | 样式契约                    | pass | widget 自样式（ButtonGroup/Button variant）；wrapper 仅 marker + meta.className；无 BEM；`check:audit-styling-suspects` 0 命中                                                                                                                                                                       | —                                                                                     |
+| 14  | React 19 规范               | pass | 无 memo/callback/effect 镜像；isSelected 渲染期派生（:67-72）                                                                                                                                                                                                                                        | —                                                                                     |
+| 15  | 性能边界                    | pass | useBoundFieldValue paths 订阅；options map O(n)；无热点                                                                                                                                                                                                                                              | —                                                                                     |
+| 16  | 测试质量                    | pass | button-group-select-dom-contract.test.tsx 5 条 + choice-native-value-echo（bgs 数值选中）+ choice-dict-error（bgs error 槽）+ host 真机（提交形状 string[]/scalar）——正确行为断言                                                                                                                    | Phase 2/3 补齐（single/multiple 写回 + 数值 value + dict 失败）                       |
+| 17  | 文档对照                    | pass | **design.md 已补齐**（`docs/components/button-group-select/design.md`，按族内 conventions：定位/决策表/schema/字段分类/事件句柄/DOM marker/风险/响应式）——维度 17 缺口关闭；裁定：注册契约以 DOM 契约测试为准 + design.md 补齐                                                                       | P2-3 已修复（本 plan 执行）                                                           |
+| 18  | 注册、包边界与 IO/安全红线  | pass | 注册 input.tsx:643 + definitions.ts 导出链；playground button-group-select-lab-page.tsx 存在；无浏览器 IO（dict 经 env.loadDict，INV-1 合规）；复用 @nop-chaos/ui ButtonGroup/Button；option.label 走 React 文本节点（无 XSS 面）                                                                    | —                                                                                     |
+
+## 发现清单
+
+- [P1-A] single 模式 number/boolean option value 选中态破坏（`stringAdapter` `button-group-select-renderer.tsx:37` + `Object.is` 匹配 :67-72）→ 状态: fixed（共性根因 3 组件 → CX-6 回写；`choiceSingleAdapter` 值保真，button-group-select-renderer.tsx:12,37；test-first：choice-native-value-echo.test.tsx 先红后绿，含 bgs 数值选中断言）
+- [P2-1] ButtonGroupSelectSchema 缺 `dict?: string`（`schemas.ts:259-264` vs fields/实现）→ 状态: fixed（schema 类型补 dict，schemas.ts:263-265）
+- [P2-2] dict 加载失败无错误展示（`button-group-select-renderer.tsx:50` 仅接 optionsSourceState）→ 状态: fixed（与 select P2-4 同根因一并修复：`dictState.errorMessage ?? optionsSourceState`，button-group-select-renderer.tsx:50；test-first：choice-dict-error.test.tsx 先红后绿）
+- [P2-3] 无 design.md（2026-08-02 注册缺口）→ 状态: fixed（按族内 conventions 补齐 `docs/components/button-group-select/design.md`；维度 17 缺口裁定：注册契约以 DOM 契约测试为准 + design.md 补齐）
+
+## 组合宿主场景（真实浏览器验证）
+
+- 场景: form 内 button-group-select 单/多选提交 | 断言: programmatic DOM（c2-3-host-surfaces.spec.ts host-choice-submit）| 结果: pass（site='main' 标量 + roles=['admin','editor'] string[] 数组进 valuesPath，"Choice: ... | main | admin,editor" 真机回显）
+
+## 修复记录
+
+- plan: `docs/plans/2026-08-03-0517-1-c2-3-form-choice-control-family-audit.md` Phase 2/3
+- test-first 证据: choice-native-value-echo.test.tsx（bgs 数值选项 data-selected 断言先红后绿）、choice-dict-error.test.tsx（bgs error 槽先红）、c2-3-host-surfaces.spec.ts（真机证明）
+- 实现: `button-group-select-renderer.tsx`（choiceSingleAdapter、dict error 合并）、`schemas.ts`（dict 字段）、`docs/components/button-group-select/design.md`（新建）
+- 验证: `pnpm --filter @nop-chaos/flux-renderers-form typecheck && build && lint && test` 全绿（677 tests）；e2e c2-3 5/5 + component-lab 171 passed / 1 skipped + bgs DOM 契约 5 条回归绿
+
+- 独立 closure audit: pass（task `ses_03b60f3d0ffe0WzxJ5baVcQWAW`，2026-08-03，零 Blocker/Major；证据见 plan `2026-08-03-0517-1` Closure 节）
