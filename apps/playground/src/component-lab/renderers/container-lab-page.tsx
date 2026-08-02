@@ -47,6 +47,24 @@ const withClassNameCard = {
   ],
 };
 
+const semanticRowDirection = {
+  type: 'page',
+  data: { itemCount: 3 },
+  body: [
+    {
+      type: 'container',
+      direction: 'row',
+      gap: 'md',
+      body: [
+        { type: 'badge', text: 'Alpha', level: 'info' },
+        { type: 'badge', text: 'Beta', level: 'success' },
+        { type: 'badge', text: 'Gamma', level: 'warning' },
+        { type: 'text', text: '${itemCount} items' },
+      ],
+    },
+  ],
+};
+
 export function ContainerLabPage() {
   return (
     <MultiScenarioLabPage
@@ -63,6 +81,12 @@ export function ContainerLabPage() {
           description:
             'Container emits no card styling itself. Pass explicit className values to create bordered card shells around the body content.',
           schema: withClassNameCard,
+        },
+        {
+          title: 'Semantic row direction with gap',
+          description:
+            'Container semantic layout props map to real layout: direction "row" lays children out horizontally with the requested gap. Real-browser regression for the semantic props inert bug (audit C1.1 P1-1, docs/bugs/75).',
+          schema: semanticRowDirection,
         },
       ]}
     />

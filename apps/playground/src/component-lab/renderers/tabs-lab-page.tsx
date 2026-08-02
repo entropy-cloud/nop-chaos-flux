@@ -1,4 +1,5 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 
 const basicTabs = {
   type: 'page',
@@ -186,6 +187,87 @@ const formTabs = {
   ],
 };
 
+/**
+ * Real-browser composite host scenario (C1.1 Phase 3): tab panel hosts a
+ * dialog and a drawer surface. The dialog form submits through the surface
+ * scope and the probe fetcher records the payload to `window.__tabsSurfaceSubmitProbe`
+ * so the e2e can assert that the typed value (not a stale one) was submitted —
+ * the bug 73 pattern check for this family.
+ */
+const tabsSurfaceProbeFetcher = (async (api: { url?: string; data?: unknown }) => {
+  const url = api.url ?? '';
+  if (url.includes('Note__save')) {
+    (window as unknown as { __tabsSurfaceSubmitProbe?: unknown }).__tabsSurfaceSubmitProbe =
+      api.data;
+    return { ok: true, status: 200, data: api.data };
+  }
+  return { ok: true, status: 200, data: null };
+}) as unknown as RendererEnv['fetcher'];
+
+const tabsWithSurfaces = {
+  type: 'page',
+  body: [
+    {
+      type: 'tabs',
+      items: [
+        {
+          title: 'Overview',
+          body: [{ type: 'text', text: 'Tab one content.' }],
+        },
+        {
+          title: 'Surfaces',
+          body: [
+            {
+              type: 'button',
+              label: 'Open Note Dialog',
+              onClick: {
+                action: 'openDialog',
+                args: {
+                  title: 'Add Note',
+                  body: {
+                    type: 'form',
+                    submitScope: 'surface',
+                    submitAction: {
+                      action: 'ajax',
+                      args: {
+                        url: '/r/Note__save',
+                        method: 'post',
+                        data: { note: '${note}' },
+                      },
+                    },
+                    onSubmitSuccess: [{ action: 'closeSurface' }],
+                    body: [{ type: 'input-text', name: 'note', label: 'Note' }],
+                    actions: [
+                      {
+                        type: 'button',
+                        label: 'Save',
+                        level: 'primary',
+                        onClick: { action: 'submitForm', then: { action: 'closeSurface' } },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              type: 'button',
+              label: 'Open Note Drawer',
+              onClick: {
+                action: 'openDrawer',
+                args: {
+                  title: 'Note Drawer',
+                  body: [{ type: 'text', text: 'Drawer content inside a tab panel.' }],
+                  actions: [{ type: 'button', label: 'Close', onClick: { action: 'closeSurface' } }],
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 export function TabsLabPage() {
   return (
     <MultiScenarioLabPage
@@ -224,6 +306,13 @@ export function TabsLabPage() {
           description:
             'Each tab panel can host a full form, which is useful for multi-section editors.',
           schema: formTabs,
+        },
+        {
+          title: 'Tabs hosting dialog and drawer surfaces',
+          description:
+            'Real-browser composite host scenario: a tab panel opens a dialog (form submit recorded via probe) and a drawer, both closing without residual DOM.',
+          schema: tabsWithSurfaces,
+          env: { fetcher: tabsSurfaceProbeFetcher },
         },
       ]}
     />
