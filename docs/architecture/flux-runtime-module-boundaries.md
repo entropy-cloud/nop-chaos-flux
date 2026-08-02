@@ -72,8 +72,8 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
   - renderer field classification helpers and meta-program compilation
 - `packages/flux-compiler/src/schema-compiler/node-compiler.ts`
   - compiled node assembly and nested region extraction consumption
-- `packages/flux-compiler/src/schema-compiler/tables.ts`
-  - table-specific deep normalization helpers
+- `packages/flux-compiler/src/schema-compiler/node-compiler-helpers.ts`
+  - schema-definition classification pipeline (region extraction / literal envelope / action template preservation) and compile failure nodes
 - `packages/flux-compiler/src/schema-compiler/validation-collection.ts`
   - compiled validation model collection during compilation
 - `packages/flux-compiler/src/schema-compiler/diagnostics.ts`
