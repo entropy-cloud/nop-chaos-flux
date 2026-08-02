@@ -83,4 +83,39 @@ describe('Dialog', () => {
     expect(overlay?.className).toContain('bg-surface-overlay');
     expect(overlay?.className).not.toContain('bg-black/10');
   });
+
+  it('wraps Tab focus from the last focusable back to the first inside the popup', () => {
+    render(
+      <Dialog modal={false} open>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Wrap Title</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <input data-testid="wrap-input" aria-label="Wrap input" />
+            <button type="button" data-testid="wrap-last">
+              Last
+            </button>
+          </DialogBody>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    const popup = document.querySelector('[data-slot="dialog-content"]') as HTMLDivElement | null;
+    expect(popup).toBeTruthy();
+
+    // The drag handle is the first focusable inside the popup (draggable default).
+    const first = popup!.querySelector('button:not([disabled])') as HTMLButtonElement;
+    const last = screen.getByTestId('wrap-last') as HTMLButtonElement;
+    expect(first).toBeTruthy();
+
+    last.focus();
+    expect(document.activeElement).toBe(last);
+    fireEvent.keyDown(last, { key: 'Tab' });
+    expect(document.activeElement).toBe(first);
+
+    first.focus();
+    fireEvent.keyDown(first, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
 });
