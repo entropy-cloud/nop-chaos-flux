@@ -301,7 +301,7 @@ function stripCitationsInsideCode(segments: CitationSegment[]): CitationSegment[
     }
     // Text segment: scan for fence / inline-code delimiters and split it so we
     // can keep tracking state across the whole stream.
-    const pieces = scanTextForCodeRegions(seg.text, fenceDelimiter, inlineOpen);
+    const pieces = scanTextForCodeRegions(seg.text, fenceDelimiter, inlineOpen, seg.id);
     fenceDelimiter = pieces.nextFenceDelimiter;
     inlineOpen = pieces.nextInlineOpen;
     for (const piece of pieces.runs) {
@@ -329,12 +329,14 @@ interface CodeRegionScan {
 /**
  * Split a text segment at code-fence and inline-code delimiters. Returns the
  * literal text runs (no transformation) plus the updated fence/inline state
- * carried across segments.
+ * carried across segments. Run ids are prefixed with the enclosing segment id
+ * so keys stay unique across calls (idCounter restarts per call).
  */
 function scanTextForCodeRegions(
   text: string,
   fenceDelimiter: string | null,
   inlineOpen: boolean,
+  segmentId: string,
 ): CodeRegionScan {
   const runs: TextRunScan[] = [];
   // Match fence opens/closes OR an inline backtick toggle. A fence wins over
@@ -348,7 +350,7 @@ function scanTextForCodeRegions(
   let idCounter = 0;
   const push = (str: string): void => {
     if (str.length > 0) {
-      runs.push({ text: str, id: `t@${last}#${idCounter++}` });
+      runs.push({ text: str, id: `${segmentId}#${last}#${idCounter++}` });
     }
   };
   for (const m of text.matchAll(tokenRe)) {

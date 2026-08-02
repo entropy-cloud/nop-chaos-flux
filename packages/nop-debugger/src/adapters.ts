@@ -80,6 +80,7 @@ export function createDebuggerPlugin(store: NopDebuggerStore, enabled = true): R
         instancePath: ctx.instancePath,
         nodeId: ctx.nodeInstance?.templateNode.id,
         path: ctx.nodeInstance?.templateNode.templatePath,
+        interactionId: ctx.interactionId,
       });
       return action;
     },

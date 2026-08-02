@@ -192,7 +192,6 @@ describe('nop-debugger automation api', () => {
       method: 'post',
     });
   });
-  });
 
   it('waits for later matching events', async () => {
     vi.useFakeTimers();
