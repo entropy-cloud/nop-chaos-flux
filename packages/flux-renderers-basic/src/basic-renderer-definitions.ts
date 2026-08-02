@@ -1,5 +1,4 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { extractNestedSchemaRegions } from '@nop-chaos/flux-core';
 import { BadgeRenderer } from './badge.js';
 import { ButtonRenderer } from './button.js';
 import { ContainerRenderer } from './container.js';
@@ -407,6 +406,36 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: TabsRenderer,
     propContracts: {
+      items: {
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              title: {
+                kind: 'value-or-region',
+                regionKey: 'titleRegionKey',
+                params: ['item', 'index', 'key'],
+              },
+              body: {
+                kind: 'region',
+                regionKey: 'bodyRegionKey',
+                params: ['item', 'index', 'key'],
+              },
+              toolbar: {
+                kind: 'region',
+                regionKey: 'toolbarRegionKey',
+                params: ['item', 'index', 'key'],
+              },
+              disabled: 'literal',
+            },
+          },
+        },
+        displayName: 'Items',
+        description:
+          'Tab item collection. Each item carries title (value-or-region) / body / toolbar regions plus key/disabled flags.',
+        editorType: 'object-array',
+      },
       orientation: {
         shape: {
           kind: 'union',
@@ -451,80 +480,6 @@ export const basicRendererDefinitions: RendererDefinition[] = [
         displayName: 'Get Value',
         description: 'Read the current active tab value.',
         result: { kind: 'string' },
-      },
-    ],
-    deepFields: [
-      {
-        key: 'items',
-        nestedRegions: [
-          {
-            key: 'title',
-            regionKeySuffix: 'title',
-            compiledKey: 'titleRegionKey',
-            params: ['item', 'index', 'key'],
-          },
-          {
-            key: 'body',
-            regionKeySuffix: 'body',
-            compiledKey: 'bodyRegionKey',
-            params: ['item', 'index', 'key'],
-          },
-          {
-            key: 'toolbar',
-            regionKeySuffix: 'toolbar',
-            compiledKey: 'toolbarRegionKey',
-            params: ['item', 'index', 'key'],
-          },
-        ],
-        booleanKeys: ['disabled'],
-        normalize(input) {
-          if (!Array.isArray(input.value)) {
-            return input.value;
-          }
-
-          return input.value.map((item, index) => {
-            if (!item || typeof item !== 'object') {
-              return item;
-            }
-
-            const normalized = extractNestedSchemaRegions({
-              candidate: item as Record<string, unknown>,
-              itemRegionPath: `${input.path}.items[${index}]`,
-              itemRegionKeyPrefix: `items.${index}`,
-              rules: [
-                {
-                  key: 'title',
-                  regionKeySuffix: 'title',
-                  compiledKey: 'titleRegionKey',
-                  params: ['item', 'index', 'key'] as readonly string[],
-                },
-                {
-                  key: 'body',
-                  regionKeySuffix: 'body',
-                  compiledKey: 'bodyRegionKey',
-                  params: ['item', 'index', 'key'] as readonly string[],
-                },
-                {
-                  key: 'toolbar',
-                  regionKeySuffix: 'toolbar',
-                  compiledKey: 'toolbarRegionKey',
-                  params: ['item', 'index', 'key'] as readonly string[],
-                },
-              ],
-              regions: input.regions,
-              compileSchema: input.compileSchema,
-            }).value as Record<string, unknown>;
-
-            if (normalized.disabled !== undefined) {
-              normalized.disabled = {
-                __nopPreserveLiteral: true,
-                value: normalized.disabled === true,
-              };
-            }
-
-            return normalized;
-          });
-        },
       },
     ],
     fields: [
