@@ -50,6 +50,8 @@ import {
   normalizeBooleanLikeCandidate,
   createCompileFailureNode,
   normalizeDeepFieldNestedRegions,
+  findSchemaDefinitionShape,
+  classifySchemaDefinitionValue,
 } from './node-compiler-helpers.js';
 import type {
   CompileSingleNodeFn,
@@ -369,7 +371,53 @@ export function createCompileSingleNode(
               }))
         : value;
 
-      compiledPropEntries[key] = expressionCompiler.compileValue(normalizedValue, {
+      // Schema-definition classification pipeline (propContracts.shape):
+      // runs AFTER deepFields normalize so legacy normalize/nestedRegions keep
+      // priority when both are declared on the same field. The classified
+      // value keeps event/action fields as preserve-literal envelopes and
+      // region/schema fields as extracted regions, so the props program never
+      // expression-evaluates nested action/schema templates.
+      const schemaDefinitionMatch = findSchemaDefinitionShape(renderer.propContracts?.[key]);
+      const classifiedValue = schemaDefinitionMatch
+        ? classifySchemaDefinitionValue({
+            value: normalizedValue,
+            match: schemaDefinitionMatch,
+            path: `${path}.${key}`,
+            key,
+            regions,
+            compileSchema: (
+              s: SchemaInput,
+              o?: CompileSchemaOptions,
+              regionMeta?: { params?: readonly string[]; isolate?: boolean },
+            ) =>
+              compileSchemaToTemplateNodes(
+                s,
+                {
+                  ...o,
+                  schemaUrl: o?.schemaUrl ?? options.schemaUrl,
+                  preparedImports: o?.preparedImports ?? options.preparedImports,
+                  diagnostics: diagnostics.enabled
+                    ? {
+                        enabled: true,
+                        continueOnError: diagnostics.continueOnError,
+                        maxIssues: diagnostics.maxIssues,
+                        reporter: (issue) => diagnostics.emit(issue),
+                      }
+                    : o?.diagnostics,
+                  symbolTable: regionMeta?.params?.length
+                    ? pushRegionParamSymbols(
+                        o?.symbolTable ?? symbolTable,
+                        regionMeta.params,
+                        `${path}.${key}:slot`,
+                      )
+                    : (o?.symbolTable ?? symbolTable),
+                },
+                depth + 1,
+              ),
+          })
+        : normalizedValue;
+
+      compiledPropEntries[key] = expressionCompiler.compileValue(classifiedValue, {
         symbolTable,
         sourcePath: `${path}.${key}`,
         transform: rule.valueType === 'boolean' ? normalizeBooleanLikeCandidate : undefined,

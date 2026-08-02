@@ -1,7 +1,9 @@
 import { appendJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics.js';
-import { isPlainObject, normalizeRootPath } from '@nop-chaos/flux-core';
+import { getBuiltInActionDefinition, isPlainObject, normalizeRootPath } from '@nop-chaos/flux-core';
+import type { BuiltInActionDefinition, FluxSchemaDefinitionShape } from '@nop-chaos/flux-core';
 import { validateHostAction } from './host-action-validation.js';
 import { classifyActionSelector, validateActionSelector } from './action-selector-validation.js';
+import { validateFluxValueShape } from './flux-value-shape-validation.js';
 import {
   emitSchemaDiagnostic,
   isDynamicStructuralPath,
@@ -136,6 +138,66 @@ export function validateApiSchemaShape(
   }
 }
 
+/**
+ * Definition-driven built-in action args validation.
+ *
+ * Consumes the per-action definition table (`BUILT_IN_ACTION_DEFINITIONS`):
+ * - args are validated against the definition's fieldRules (required /
+ *   valueType / nonEmpty constraints, expression exemption included);
+ * - schema-kind args (`body`/`actions`) recurse into `analyzeSchemaInput`
+ *   when the validation traversal wires the hook.
+ *
+ * The ajax hardcoded branch above stays until Plan 3
+ * (`docs/plans/2026-08-02-3-ajax-validation-migration.md`) removes it; the
+ * definition pipeline is already authoritative for every other built-in.
+ */
+function validateBuiltInActionArgsByDefinition(
+  value: Record<string, unknown>,
+  path: string,
+  diagnostics: SchemaCompilerDiagnosticsContext,
+  enabled: boolean,
+  actionContext?: ActionValidationContext,
+) {
+  const definition: BuiltInActionDefinition | undefined = getBuiltInActionDefinition(value.action as string);
+
+  if (!definition || value.args === undefined) {
+    return;
+  }
+
+  const shape: FluxSchemaDefinitionShape = {
+    kind: 'schema-definition',
+    fieldRules: definition.fieldRules,
+  };
+
+  validateFluxValueShape(value.args, shape, appendJsonPointer(path, 'args'), diagnostics, {
+    code: 'invalid-action-shape',
+    source: 'core',
+    messagePrefix: `Invalid args for built-in action "${String(value.action)}".`,
+  });
+
+  if (!actionContext?.analyzeSchemaInput || !isPlainObject(value.args)) {
+    return;
+  }
+
+  for (const [key, spec] of Object.entries(definition.fieldRules)) {
+    const kind = typeof spec === 'string' ? spec : spec.kind;
+    if (kind !== 'schema' && kind !== 'region' && kind !== 'schema-array') {
+      continue;
+    }
+
+    const argValue = (value.args as Record<string, unknown>)[key];
+    if (argValue === undefined) {
+      continue;
+    }
+
+    if (kind === 'schema-array' && !Array.isArray(argValue)) {
+      continue;
+    }
+
+    actionContext.analyzeSchemaInput(argValue, `${path}.args.${key}`);
+  }
+}
+
 export function validateActionShape(
   value: unknown,
   path: string,
@@ -230,6 +292,14 @@ export function validateActionShape(
       );
     }
   }
+
+  validateBuiltInActionArgsByDefinition(
+    value,
+    path,
+    diagnostics,
+    enabled,
+    actionContext,
+  );
 
   if (value.when !== undefined && typeof value.when !== 'boolean' && typeof value.when !== 'string') {
     emitSchemaDiagnostic(

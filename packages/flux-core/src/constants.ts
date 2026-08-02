@@ -27,6 +27,7 @@ export const BUILT_IN_ACTION_REGISTRY = {
   closeSurface: { canonicalName: 'closeSurface' },
   refreshTable: { canonicalName: 'refreshTable' },
   refreshSource: { canonicalName: 'refreshSource' },
+  refreshNearest: { canonicalName: 'refreshNearest' },
   submitForm: { canonicalName: 'submitForm', compatibilityAliases: ['submit'] },
   navigate: { canonicalName: 'navigate' },
   confirm: { canonicalName: 'confirm' },
@@ -65,6 +66,111 @@ export function getBuiltInActionDescriptor(name: string):
 
 export function isCanonicalBuiltInActionName(name: string): boolean {
   return CANONICAL_BUILT_IN_ACTION_NAMES.has(name);
+}
+
+export interface BuiltInActionDefinition {
+  /** args 必填（'ajax actions require args payload'）。Plan 3 迁移后由校验器消费。 */
+  argsRequired?: boolean;
+  /**
+   * Args field classification. Applied to the action's `args` object:
+   * `schema`/`schema-array` args are validated recursively as schema input,
+   * `action` args (e.g. onClose/onSubmitSuccess) are preserved raw at dispatch
+   * scope evaluation, `value` args are expression-evaluated.
+   */
+  fieldRules: Readonly<Record<string, import('./schema-diagnostics/manifest.js').SchemaDefinitionFieldSpec>>;
+}
+
+/**
+ * Built-in action definition table — one fieldRules per canonical action type.
+ * Anchored on `BUILT_IN_ACTION_REGISTRY` ∪ `runBuiltInAction` switch
+ * (flux-action-core). Unknown args keys pass through (host passthrough).
+ *
+ * @see docs/architecture/nested-schema-field-classification.md §3.7
+ */
+export const BUILT_IN_ACTION_DEFINITIONS: Readonly<Record<string, BuiltInActionDefinition>> = {
+  setValue: {
+    fieldRules: {
+      path: 'value',
+      value: 'value',
+    },
+  },
+  setValues: {
+    fieldRules: {
+      path: 'value',
+      values: 'value',
+    },
+  },
+  ajax: {
+    argsRequired: true,
+    fieldRules: {
+      url: { kind: 'value', required: true, valueType: 'string', nonEmpty: true },
+      method: { kind: 'value', valueType: 'string' },
+      data: { kind: 'value', valueType: 'object' },
+      params: { kind: 'value', valueType: 'object' },
+    },
+  },
+  openDialog: {
+    fieldRules: {
+      body: 'schema',
+      actions: 'schema-array',
+      data: 'value',
+      isolate: 'value',
+      onClose: 'action',
+      onSubmitSuccess: 'action',
+      onSubmitError: 'action',
+    },
+  },
+  openDrawer: {
+    fieldRules: {
+      body: 'schema',
+      actions: 'schema-array',
+      data: 'value',
+      isolate: 'value',
+      onClose: 'action',
+      onSubmitSuccess: 'action',
+      onSubmitError: 'action',
+    },
+  },
+  closeDialog: { fieldRules: {} },
+  closeDrawer: { fieldRules: {} },
+  closeSurface: { fieldRules: {} },
+  refreshTable: { fieldRules: {} },
+  refreshSource: { fieldRules: {} },
+  refreshNearest: { fieldRules: {} },
+  submitForm: { fieldRules: {} },
+  navigate: {
+    fieldRules: {
+      url: 'value',
+      back: 'value',
+      replace: 'value',
+    },
+  },
+  confirm: {
+    fieldRules: {
+      message: 'value',
+      title: 'value',
+    },
+  },
+  alert: {
+    fieldRules: {
+      message: 'value',
+      title: 'value',
+    },
+  },
+  showToast: {
+    fieldRules: {
+      level: 'value',
+      message: 'value',
+    },
+  },
+};
+
+export function getBuiltInActionDefinition(name: string): BuiltInActionDefinition | undefined {
+  const descriptor = getBuiltInActionDescriptor(name);
+  if (!descriptor) {
+    return undefined;
+  }
+  return BUILT_IN_ACTION_DEFINITIONS[descriptor.canonicalName];
 }
 
 export const XUI_ACTIONS_NAMESPACE = '__xui_actions__';

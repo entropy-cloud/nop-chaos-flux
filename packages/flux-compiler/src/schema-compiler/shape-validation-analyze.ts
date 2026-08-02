@@ -18,6 +18,7 @@ import {
 import {
   createDefaultValidationTraversalState,
   createRegionTraversalState,
+  createChildTraversalState,
   resolveNodeHostContext,
   type ValidationTraversalState,
 } from './shape-validation-traversal.js';
@@ -61,6 +62,32 @@ function extendVisibleImports(input: {
 
 function isImportSpecCandidate(value: unknown): value is import('@nop-chaos/flux-core').XuiImportSpec {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Convert a JSON-pointer path (e.g. `/onClick/args/body`) into the dot-style
+ * schema path consumed by `analyzeSchemaInput` (e.g. `$.onClick.args.body`).
+ * Numeric segments become bracket segments (`[n]`), matching the array
+ * recursion convention of `analyzeSchemaInput`.
+ */
+function jsonPointerToSchemaPath(pointer: string): string {
+  if (!pointer) {
+    return '$';
+  }
+
+  const segments = pointer
+    .replace(/^\//, '')
+    .split('/')
+    .map((segment) => segment.replace(/~1/g, '/').replace(/~0/g, '~'));
+
+  const suffix = segments
+    .map((segment) => (isNumericSegment(segment) ? `[${segment}]` : `.${segment}`))
+    .join('');
+  return `$${suffix}`;
+}
+
+function isNumericSegment(segment: string): boolean {
+  return /^\d+$/.test(segment);
 }
 
 export function analyzeSchemaInput(
@@ -176,6 +203,19 @@ export function analyzeSchemaInput(
     visibleImports: nodeState.visibleImports,
     componentTargets: nodeState.componentTargets,
     strictMode: diagnostics.validation.strictMode,
+    analyzeSchemaInput: (inputValue, nestedPointerPath) =>
+      analyzeSchemaInput(
+        inputValue,
+        jsonPointerToSchemaPath(nestedPointerPath),
+        registry,
+        plugins,
+        diagnostics,
+        createChildTraversalState(
+          nodeState,
+          jsonPointerToSchemaPath(nestedPointerPath),
+          nodeState.startsHostBoundary,
+        ),
+      ),
   };
 
   inspectSchemaNodeFields(

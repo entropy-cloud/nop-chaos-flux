@@ -21,6 +21,7 @@ export type FluxValueShapeKind =
   | 'array'
   | 'union'
   | 'literal'
+  | 'schema-definition'
   | 'unknown';
 
 export interface FluxValueShapeBase {
@@ -75,6 +76,75 @@ export interface FluxUnknownShape extends FluxValueShapeBase {
   kind: 'unknown';
 }
 
+/**
+ * Field classification vocabulary for nested (inlined) schema definitions.
+ *
+ * A closed sub-vocabulary of the top-level `SchemaFieldKind` family, covering
+ * every kind the compiler/validator must act on inside a nested structure:
+ *
+ * - `value`         — expression-evaluated value field (nested counterpart of `prop`)
+ * - `event`         — ActionSchema | ActionSchema[] → whole-value template preservation (envelope)
+ * - `action`        — same as `event` (action value semantics)
+ * - `region`        — SchemaInput subtree → compiler-extracted region
+ * - `schema`        — single SchemaInput → template preservation / recursive validation
+ * - `schema-array`  — SchemaInput[] → template preservation / recursive validation
+ * - `prop`          — ordinary property (expression evaluation; alias of `value` for
+ *                     constraint declarations in built-in action definitions)
+ * - `literal`       — literal preservation (boolean/string literals stay un-evaluated)
+ *
+ * @see docs/architecture/nested-schema-field-classification.md
+ */
+export type SchemaDefinitionFieldKind =
+  | 'value'
+  | 'event'
+  | 'action'
+  | 'region'
+  | 'schema'
+  | 'schema-array'
+  | 'prop'
+  | 'literal';
+
+/**
+ * Object form of a nested field rule. Field keys are the record keys in
+ * {@link FluxSchemaDefinitionShape.fieldRules}; constraints (`required`,
+ * `valueType`, `nonEmpty`) are consumed by the validation path only.
+ */
+export interface SchemaDefinitionFieldRule {
+  kind: SchemaDefinitionFieldKind;
+  /** Field is required (missing value is reported). */
+  required?: boolean;
+  /**
+   * Value shape constraint. Expression strings (`${...}`) are exempt —
+   * the compile-time type is unknown and the value is resolved at runtime.
+   */
+  valueType?: 'boolean' | 'string' | 'number' | 'object' | 'array';
+  /** String must be non-empty (combined with `valueType: 'string'`). */
+  nonEmpty?: boolean;
+}
+
+/** String shorthand (= kind name) or full object form. */
+export type SchemaDefinitionFieldSpec = SchemaDefinitionFieldKind | SchemaDefinitionFieldRule;
+
+/**
+ * Inlined nested schema definition shape.
+ *
+ * Declares the field classification for a nested structure embedded in a
+ * renderer prop (dropdown items, select searchSource, crud quickSaveAction,
+ * built-in action args, ...). The container form (array.item / record.value /
+ * object.fields) decides which element the definition applies to.
+ *
+ * - `fieldRules` map keys to a nested field kind (or object rule).
+ * - `actionValue: true` marks the whole prop value as a single ActionSchema
+ *   that must be preserved as a template (not expression-evaluated).
+ *
+ * @see docs/architecture/nested-schema-field-classification.md §3.3
+ */
+export interface FluxSchemaDefinitionShape extends FluxValueShapeBase {
+  kind: 'schema-definition';
+  fieldRules: Readonly<Record<string, SchemaDefinitionFieldSpec>>;
+  actionValue?: true;
+}
+
 export type FluxValueShape =
   | FluxStringShape
   | FluxNumberShape
@@ -85,6 +155,7 @@ export type FluxValueShape =
   | FluxArrayShape
   | FluxUnionShape
   | FluxLiteralShape
+  | FluxSchemaDefinitionShape
   | FluxUnknownShape;
 
 /**

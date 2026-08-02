@@ -1,4 +1,9 @@
-import type { FluxValueShape, HostCapabilityMethod } from './manifest.js';
+import type {
+  FluxValueShape,
+  FluxSchemaDefinitionShape,
+  HostCapabilityMethod,
+  SchemaDefinitionFieldKind,
+} from './manifest.js';
 
 export type FluxValueShapePayloadValidationResult =
   | { ok: true; args: unknown }
@@ -6,6 +11,67 @@ export type FluxValueShapePayloadValidationResult =
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isActionLike(value: unknown): boolean {
+  return isRecord(value) && typeof value.action === 'string';
+}
+
+function matchesSchemaDefinitionField(
+  value: unknown,
+  kind: SchemaDefinitionFieldKind,
+): boolean {
+  switch (kind) {
+    case 'value':
+    case 'prop':
+    case 'literal':
+      // Expression-evaluated values cannot be statically rejected.
+      return true;
+    case 'event':
+    case 'action':
+      if (isActionLike(value)) {
+        return true;
+      }
+      return Array.isArray(value) && value.every(isActionLike);
+    case 'schema':
+    case 'region':
+      // SchemaInput = BaseSchema | BaseSchema[]
+      return isRecord(value) || Array.isArray(value);
+    case 'schema-array':
+      return Array.isArray(value);
+    default:
+      return false;
+  }
+}
+
+function matchesSchemaDefinitionShape(value: unknown, shape: FluxSchemaDefinitionShape): boolean {
+  if (shape.actionValue) {
+    return isActionLike(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.every((item) => matchesSchemaDefinitionShape(item, shape));
+  }
+
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  for (const [key, spec] of Object.entries(shape.fieldRules)) {
+    if (!(key in value)) {
+      if (typeof spec === 'object' && spec.required) {
+        return false;
+      }
+      continue;
+    }
+
+    const kind = typeof spec === 'string' ? spec : spec.kind;
+    if (!matchesSchemaDefinitionField(value[key], kind)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export function matchesFluxValueShape(value: unknown, shape: FluxValueShape): boolean {
@@ -56,6 +122,8 @@ export function matchesFluxValueShape(value: unknown, shape: FluxValueShape): bo
       }
       return true;
     }
+    case 'schema-definition':
+      return matchesSchemaDefinitionShape(value, shape);
     default:
       return false;
   }

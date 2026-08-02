@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BUILT_IN_ACTION_DEFINITIONS,
   BUILT_IN_ACTION_NAMES,
   CANONICAL_BUILT_IN_ACTION_NAMES,
   META_FIELDS,
+  getBuiltInActionDefinition,
   getBuiltInActionDescriptor,
 } from './constants.js';
 
@@ -74,5 +76,50 @@ describe('built-in action registry', () => {
       compatibilityAliases: ['submit'],
       isAlias: false,
     });
+  });
+
+  it('registers refreshNearest (registry ∪ runBuiltInAction switch anchor)', () => {
+    expect(CANONICAL_BUILT_IN_ACTION_NAMES.has('refreshNearest')).toBe(true);
+    expect(getBuiltInActionDescriptor('refreshNearest')).toEqual({
+      canonicalName: 'refreshNearest',
+      isAlias: false,
+    });
+  });
+});
+
+describe('built-in action definition table', () => {
+  it('covers every canonical registry entry with a fieldRules definition', () => {
+    for (const name of CANONICAL_BUILT_IN_ACTION_NAMES) {
+      expect(BUILT_IN_ACTION_DEFINITIONS[name]).toBeDefined();
+      expect(BUILT_IN_ACTION_DEFINITIONS[name].fieldRules).toBeDefined();
+    }
+  });
+
+  it('marks action-class args (onClose/onSubmitSuccess/onSubmitError) in surface actions', () => {
+    const openDialog = BUILT_IN_ACTION_DEFINITIONS.openDialog;
+    expect(openDialog.fieldRules.onClose).toBe('action');
+    expect(openDialog.fieldRules.onSubmitSuccess).toBe('action');
+    expect(openDialog.fieldRules.onSubmitError).toBe('action');
+    expect(openDialog.fieldRules.body).toBe('schema');
+    expect(openDialog.fieldRules.actions).toBe('schema-array');
+  });
+
+  it('declares ajax constraints and argsRequired', () => {
+    const ajax = BUILT_IN_ACTION_DEFINITIONS.ajax;
+    expect(ajax.argsRequired).toBe(true);
+    expect(ajax.fieldRules.url).toEqual({
+      kind: 'value',
+      required: true,
+      valueType: 'string',
+      nonEmpty: true,
+    });
+    expect(ajax.fieldRules.method).toEqual({ kind: 'value', valueType: 'string' });
+    expect(ajax.fieldRules.data).toEqual({ kind: 'value', valueType: 'object' });
+  });
+
+  it('resolves definitions through compatibility aliases', () => {
+    expect(getBuiltInActionDefinition('submit')).toBe(
+      BUILT_IN_ACTION_DEFINITIONS.submitForm,
+    );
   });
 });
