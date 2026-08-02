@@ -268,6 +268,11 @@ export const enUS: Resource = {
       close: 'Close',
       resize: 'Resize',
     },
+    page: {
+      asideResize: 'Resize aside',
+      asideToggle: 'Toggle aside',
+      remark: 'Remark',
+    },
     sheet: {
       close: 'Close',
       deleteTitle: 'Delete Sheet',
