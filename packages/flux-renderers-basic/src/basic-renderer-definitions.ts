@@ -114,6 +114,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     displayName: 'Recurse',
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'recurse', items: [] },
     component: RecurseRenderer,
     fields: [
       { key: 'items', kind: 'prop' },
@@ -344,6 +345,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     displayName: 'Dynamic Renderer',
     category: 'advanced',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'dynamic-renderer', autoLoad: true },
     component: DynamicRenderer,
     schemaValidator({ schema, emit }) {
       const loadAction = schema.loadAction;
@@ -407,6 +409,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     displayName: 'Reaction',
     category: 'logic',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'reaction', watch: '', actions: [] },
     component: ReactionRenderer,
     compilation: {
       artifacts: ['reaction'],
@@ -414,6 +417,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'watch', kind: 'prop' },
       { key: 'when', kind: 'prop' },
+      { key: 'dependsOn', kind: 'prop' },
       { key: 'immediate', kind: 'prop' },
       { key: 'debounce', kind: 'prop' },
       { key: 'once', kind: 'prop' },

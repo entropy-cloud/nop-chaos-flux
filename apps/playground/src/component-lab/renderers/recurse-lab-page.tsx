@@ -1,5 +1,63 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
 
+function buildDeepTree(levels: number): Array<Record<string, unknown>> {
+  const node = (label: string, children: unknown[]): Record<string, unknown> => ({
+    label,
+    children,
+  });
+  let children: Array<Record<string, unknown>> = [];
+  for (let i = levels - 1; i >= 0; i -= 1) {
+    children = [node(`Level ${i}`, children)];
+  }
+  return children;
+}
+
+/**
+ * C1.2 Phase 3 host scenarios: deep recursive structure (6 levels, no stack
+ * overflow in a real browser) and maxDepth truncation (termination guard).
+ */
+const deepTree = buildDeepTree(6);
+
+const deepRecurse = {
+  type: 'page',
+  body: [
+    {
+      type: 'loop',
+      items: '${deepTree}',
+      itemName: 'node',
+      keyBy: 'item.label',
+      body: [
+        { type: 'text', text: '${$slot.node.label}' },
+        {
+          type: 'fragment',
+          when: '${$slot.node.children && $slot.node.children.length > 0}',
+          body: [{ type: 'recurse', items: '${$slot.node.children}' }],
+        },
+      ],
+    },
+  ],
+};
+
+const maxDepthRecurse = {
+  type: 'page',
+  body: [
+    {
+      type: 'loop',
+      items: '${deepTree}',
+      itemName: 'node',
+      keyBy: 'item.label',
+      body: [
+        { type: 'text', text: '${$slot.node.label}' },
+        {
+          type: 'fragment',
+          when: '${$slot.node.children && $slot.node.children.length > 0}',
+          body: [{ type: 'recurse', items: '${$slot.node.children}', maxDepth: 2 }],
+        },
+      ],
+    },
+  ],
+};
+
 const basicRecurse = {
   type: 'page',
   body: [
@@ -114,6 +172,20 @@ export function RecurseLabPage() {
             'Each node renders as a flex row with a folder icon, the node label, and a badge showing its depth level.',
           schema: richRecurse,
           data: { orgTree: orgTreeData },
+        },
+        {
+          title: 'Deep tree renders all 6 levels without stack overflow',
+          description:
+            'A 6-level chain renders end-to-end in a real browser (host-recurse-deep).',
+          schema: deepRecurse,
+          data: { deepTree },
+        },
+        {
+          title: 'maxDepth 2 truncates recursion beyond depth 2',
+          description:
+            'The same deep tree with maxDepth: 2 renders Levels 0-1 and stops (host-recurse-deep termination guard).',
+          schema: maxDepthRecurse,
+          data: { deepTree },
         },
       ]}
     />
