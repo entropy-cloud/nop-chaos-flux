@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { stringAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
+import { type RendererComponentProps } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { useDictOptions } from './use-dict-options.js';
@@ -9,6 +9,7 @@ import { useFormFieldController } from '../field-utils.js';
 import type { ButtonGroupSelectSchema } from '../schemas.js';
 import {
   checkboxGroupAdapter,
+  choiceSingleAdapter,
   type ChoiceOption,
   getChoiceOptionKey,
   getSourceErrorMessage,
@@ -16,7 +17,6 @@ import {
 } from './input-choice-renderers.js';
 
 const FOCUS_ONLY_METHODS = ['focus'] as const;
-const stringValueAdapter = stringAdapter();
 
 /**
  * button-group-select：按钮组形态的单选/多选字段（AMIS button-group-select 的 flux 实现）。
@@ -34,7 +34,7 @@ export function ButtonGroupSelectRenderer(
   const name = String(props.props.name ?? '');
   const multiple = Boolean(props.props.multiple);
   const dictName = props.props.dict as string | undefined;
-  const adapter = multiple ? checkboxGroupAdapter : stringValueAdapter;
+  const adapter = multiple ? checkboxGroupAdapter : choiceSingleAdapter;
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter,
     disabled: props.props.disabled,
@@ -47,7 +47,7 @@ export function ButtonGroupSelectRenderer(
   const options = hasDict ? dictState.options : sanitizeChoiceOptions(props.props.options);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = hasDict ? dictState.loading : optionsSourceState?.loading === true;
-  const errorMessage = getSourceErrorMessage(optionsSourceState);
+  const errorMessage = dictState.errorMessage ?? getSourceErrorMessage(optionsSourceState);
   const errorId = errorMessage && name ? `${name}-source-error` : undefined;
   const groupRef = useRef<HTMLDivElement | null>(null);
 

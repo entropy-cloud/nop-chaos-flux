@@ -125,6 +125,7 @@ describe('useDictOptions', () => {
     });
 
     expect(ref.current.options).toEqual([]);
+    expect(ref.current.errorMessage).toBe('flux.form.failedToLoadOptions');
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('Failed to load dict'),
       expect.any(Error),

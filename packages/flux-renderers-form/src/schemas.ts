@@ -261,6 +261,8 @@ export interface ButtonGroupSelectSchema extends InputSchema {
   options?: SelectOptionsValue;
   multiple?: boolean;
   direction?: 'horizontal' | 'vertical';
+  /** Dictionary name resolved through `env.loadDict` (same semantics as `select.dict`). */
+  dict?: string;
 }
 
 export interface TagListSchema extends InputSchema {

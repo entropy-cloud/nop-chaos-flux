@@ -1,6 +1,17 @@
 import { startTransition, useEffect, useState } from 'react';
 import type { ActionSchema, RendererHelpers } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { ChoiceOption } from './input-choice-renderers.js';
+
+function searchFailureMessage(error: unknown): string {
+  if (typeof error === 'string' && error) {
+    return error;
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return t('flux.form.searchFailed');
+}
 
 export interface SelectRemoteSearchResult {
   remoteOptions: ChoiceOption[] | null;
@@ -55,13 +66,7 @@ export function useSelectRemoteSearch(input: {
             startTransition(() => setRemoteOptions(options));
           } else {
             startTransition(() => {
-              setError(
-                typeof result.error === 'string' && result.error
-                  ? result.error
-                  : result.error instanceof Error
-                    ? result.error.message
-                    : 'Search failed.',
-              );
+              setError(searchFailureMessage(result.error));
               setRemoteOptions([]);
             });
           }
@@ -69,7 +74,7 @@ export function useSelectRemoteSearch(input: {
         .catch((err: unknown) => {
           if (err instanceof DOMException && err.name === 'AbortError') return;
           startTransition(() => {
-            setError(err instanceof Error ? err.message : 'Search failed.');
+            setError(searchFailureMessage(err));
             setRemoteOptions([]);
           });
         })

@@ -645,6 +645,11 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     if (preventEnterSubmit) {
       return;
     }
+    // A control that already consumed Enter (e.g. Base UI radio preventDefault)
+    // must not additionally trigger a form submit.
+    if (event.defaultPrevented) {
+      return;
+    }
     const target = event.target as HTMLElement | null;
     if (target) {
       const tag = target.tagName;
@@ -660,8 +665,11 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       }
       // Interactive triggers hosted in the form body (e.g. a collapsible
       // fieldset legend rendered with role="button") handle Enter themselves;
-      // the form must not additionally submit.
-      if (target.getAttribute('role') === 'button') {
+      // the form must not additionally submit. Boolean/choice controls
+      // (checkbox/switch/radio-group) follow the same interactive-host
+      // semantics (C2.3, C2.1 follow-up).
+      const role = target.getAttribute('role');
+      if (role === 'button' || role === 'checkbox' || role === 'switch' || role === 'radio') {
         return;
       }
     }

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChoiceOption } from './input-choice-renderers.js';
 import { useRendererEnv } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface DictOptionsState {
   options: ChoiceOption[];
   loading: boolean;
+  errorMessage?: string;
 }
 
 export function useDictOptions(dictName: string | undefined): DictOptionsState {
@@ -15,7 +17,7 @@ export function useDictOptions(dictName: string | undefined): DictOptionsState {
   const [prevDictName, setPrevDictName] = useState(dictName);
   if (prevDictName !== dictName) {
     setPrevDictName(dictName);
-    setState({ options: [], loading: !!dictName });
+    setState({ options: [], loading: !!dictName, errorMessage: undefined });
   }
 
   useEffect(() => {
@@ -34,12 +36,13 @@ export function useDictOptions(dictName: string | undefined): DictOptionsState {
             disabled: false,
           })),
           loading: false,
+          errorMessage: undefined,
         });
       })
       .catch((error) => {
         if (genRef.current !== gen) return;
         console.warn(`[flux-select] Failed to load dict "${dictName}":`, error);
-        setState({ options: [], loading: false });
+        setState({ options: [], loading: false, errorMessage: t('flux.form.failedToLoadOptions') });
       });
 
     return () => {

@@ -122,6 +122,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
     <div
       ref={wrapperRef}
       className={cn(
+        'nop-checkbox-group',
         'nop-checkbox-group-wrapper',
         mobileStack ? 'flex flex-col gap-1' : horizontal ? 'flex flex-wrap items-center gap-3' : 'flex flex-col gap-2.5',
         props.meta.className,

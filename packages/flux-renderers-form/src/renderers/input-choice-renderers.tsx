@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   booleanMappingAdapter,
-  stringAdapter,
   type ActionSchema,
   type RendererComponentProps,
   type RenderRegionHandle,
@@ -54,8 +53,6 @@ export type ChoiceOption = {
   disabledTip?: string;
 };
 
-const stringValueAdapter = stringAdapter();
-
 const SELECT_METHODS = ['clear', 'focus', 'open'] as const;
 const FOCUS_ONLY_METHODS = ['focus'] as const;
 const checkboxGroupAdapter: ValueAdapter<unknown, unknown[]> & { __syncIn: true; __syncOut: true } = {
@@ -69,6 +66,26 @@ const checkboxGroupAdapter: ValueAdapter<unknown, unknown[]> & { __syncIn: true;
   },
 };
 export { checkboxGroupAdapter };
+
+/**
+ * Value-preserving adapter for single choice fields (select single /
+ * radio-group / button-group-select single). Option matching uses
+ * `Object.is(option.value, value)` (see `select/design.md` §12 S1 LOCK), so
+ * the form value must keep its native type (`string | number | boolean`,
+ * `SelectOptionSchema` contract). `stringAdapter` would stringify 0/true and
+ * break echo for non-string option values.
+ */
+const choiceSingleAdapter: ValueAdapter<unknown, unknown> & { __syncIn: true; __syncOut: true } = {
+  __syncIn: true,
+  __syncOut: true,
+  in(value) {
+    return value;
+  },
+  out(value) {
+    return value;
+  },
+};
+export { choiceSingleAdapter };
 
 export function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
   if (sourceState?.status !== 'error') {
@@ -193,7 +210,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const name = String(props.props.name ?? '');
   const multiple = Boolean(props.props.multiple);
   const dictName = props.props.dict as string | undefined;
-  const adapter = multiple ? checkboxGroupAdapter : stringValueAdapter;
+  const adapter = multiple ? checkboxGroupAdapter : choiceSingleAdapter;
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter,
     disabled: props.props.disabled,
@@ -224,7 +241,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const ariaLabel = String(props.props.label ?? name);
   const loading = hasDict ? dictState.loading : optionsSourceState?.loading === true;
-  const errorMessage = getSourceErrorMessage(optionsSourceState);
+  const errorMessage = dictState.errorMessage ?? getSourceErrorMessage(optionsSourceState);
   const errorId = errorMessage && name ? `${name}-source-error` : undefined;
   const placeholder = props.props.placeholder ? String(props.props.placeholder) : undefined;
   const searchPlaceholder = props.props.searchPlaceholder
@@ -562,6 +579,7 @@ export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) 
   return (
     <Label
       className={cn(
+        'nop-checkbox',
         'nop-checkbox-wrapper',
         'nop-haptic',
         isMobile && 'min-h-11 py-2',
@@ -617,6 +635,7 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
     <Label
       ref={switchRef}
       className={cn(
+        'nop-switch',
         'nop-switch-wrapper',
         'nop-haptic',
         isMobile && 'min-h-11 py-2',
@@ -635,7 +654,9 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
         onBlur={handlers.onBlur}
       />
       <span data-slot="switch-label">
-        {checked ? (option?.onLabel ?? 'On') : (option?.offLabel ?? 'Off')}
+        {checked
+          ? (option?.onLabel ?? t('flux.form.switchOn'))
+          : (option?.offLabel ?? t('flux.form.switchOff'))}
       </span>
     </Label>
   );
@@ -645,7 +666,7 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
   const name = String(props.props.name ?? '');
   const isMobile = useIsMobile();
   const { value, handlers, presentation } = useFormFieldController(name, {
-    adapter: stringValueAdapter,
+    adapter: choiceSingleAdapter,
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
@@ -657,7 +678,12 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = optionsSourceState?.loading === true;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
-  const selectedValue = value as string;
+  // Base UI RadioGroup must stay controlled for its whole lifetime. A
+  // value-preserving adapter keeps `undefined` until the first selection,
+  // which would flip the group uncontrolled→controlled (React warning).
+  // Coerce only null/undefined to '' (matches no option unless an option
+  // explicitly declares value ''); every other value keeps its native type.
+  const selectedValue = (value == null ? '' : value) as ChoiceOption['value'];
   const errorId = name ? `${name}-source-error` : undefined;
   const groupLabel = String((props.props.label ?? name) || '') || undefined;
   const radioRef = useRef<HTMLDivElement | null>(null);
@@ -677,7 +703,7 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
   return (
     <div
       ref={radioRef}
-      className={cn('nop-radio-group-wrapper', props.meta.className)}
+      className={cn('nop-radio-group', 'nop-radio-group-wrapper', props.meta.className)}
       data-slot="radio-group-wrapper"
       data-mobile-stack={mobileStack ? 'true' : undefined}
     >

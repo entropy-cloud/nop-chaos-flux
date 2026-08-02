@@ -37,6 +37,29 @@ const checkboxWithReaction = {
   ],
 };
 
+const choiceEnterNoSubmitForm = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      data: { agree: false, active: false },
+      submitAction: { action: 'ajax', args: { url: '/api/enter-no-submit', method: 'post' } },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        { type: 'checkbox', name: 'agree', label: 'Agree', option: { label: 'I agree' } },
+        { type: 'switch', name: 'active', label: 'Active' },
+        {
+          type: 'text',
+          testid: 'enter-echo',
+          text:
+            '${submitted ? "Submitted: " + (agree ? "checked" : "unchecked") + " / " + (active ? "on" : "off") : ""}',
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
 export function CheckboxLabPage() {
   return (
     <MultiScenarioLabPage
@@ -53,6 +76,12 @@ export function CheckboxLabPage() {
           description:
             'Toggle the checkboxes to exercise the current bound boolean state. The summary text is rendered inside the form scope and updates live.',
           schema: checkboxWithReaction,
+        },
+        {
+          title: 'Checkbox and switch Enter no-submit (P1-C fix proof)',
+          description:
+            'Enter pressed while a checkbox (role="checkbox") or switch (role="switch") is focused must NOT submit the form (C2.1 follow-up). Submit only fires from the explicit Submit button.',
+          schema: choiceEnterNoSubmitForm,
         },
       ]}
     />

@@ -565,6 +565,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'filterOption', kind: 'prop' },
       { key: 'searchPlaceholder', kind: 'prop' },
       { key: 'noResultsText', kind: 'prop' },
+      { key: 'noMatchText', kind: 'prop' },
       { key: 'virtual', kind: 'prop', valueType: 'boolean' },
       { key: 'optionTemplate', kind: 'region', params: ['option', 'index'] },
       { key: 'searchSource', kind: 'prop' },
@@ -592,7 +593,12 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'checkbox',
     sourcePackage: '@nop-chaos/flux-renderers-form',
-    fields: formFieldRules,
+    fields: [
+      ...formFieldRules,
+      { key: 'option', kind: 'prop' },
+      { key: 'trueValue', kind: 'prop' },
+      { key: 'falseValue', kind: 'prop' },
+    ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     wrap: true,
@@ -601,7 +607,12 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'switch',
     sourcePackage: '@nop-chaos/flux-renderers-form',
-    fields: formFieldRules,
+    fields: [
+      ...formFieldRules,
+      { key: 'option', kind: 'prop' },
+      { key: 'trueValue', kind: 'prop' },
+      { key: 'falseValue', kind: 'prop' },
+    ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     componentCapabilityContracts: FOCUS_ONLY_CAPABILITY_CONTRACTS,
