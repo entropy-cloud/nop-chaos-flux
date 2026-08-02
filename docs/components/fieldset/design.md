@@ -29,22 +29,30 @@ interface FieldsetSchema extends BaseSchema {
   title?: string;
   collapsible?: boolean;
   collapsed?: boolean;
+  columnCount?: number;
+  gap?: number | string;
   body: SchemaCollection;
+  bodyClassName?: string;
+  titleClassName?: string;
 }
 ```
 
-| 字段          | 类型               | 默认值  | 说明                        | 对应 AMIS              |
-| ------------- | ------------------ | ------- | --------------------------- | ---------------------- |
-| `title`       | `string?`          | —       | 分组标题，渲染为 `<legend>` | `FieldSet.title`       |
-| `collapsible` | `boolean?`         | `false` | 是否可折叠                  | `FieldSet.collapsable` |
-| `collapsed`   | `boolean?`         | `false` | 初始折叠状态                | `FieldSet.collapsed`   |
-| `body`        | `SchemaCollection` | —       | 子字段区域                  | `FieldSet.body`        |
+| 字段             | 类型                | 默认值  | 说明                                                           | 对应 AMIS              |
+| ---------------- | ------------------- | ------- | -------------------------------------------------------------- | ---------------------- |
+| `title`          | `string?`           | —       | 分组标题，渲染为 `<legend>`                                    | `FieldSet.title`       |
+| `collapsible`    | `boolean?`          | `false` | 是否可折叠                                                     | `FieldSet.collapsable` |
+| `collapsed`      | `boolean?`          | `false` | 初始折叠状态（仅 `collapsible: true` 时生效）                  | `FieldSet.collapsed`   |
+| `columnCount`    | `number?`           | —       | body 容器 CSS grid 列数；`> 1` 时启用 grid；`<= 1` 不应用 grid | —                      |
+| `gap`            | `number \| string?` | —       | body 区域间距（`stack-*`/`hstack-*` 别名或原始长度）           | —                      |
+| `body`           | `SchemaCollection`  | —       | 子字段区域                                                     | `FieldSet.body`        |
+| `bodyClassName`  | `string?`           | —       | body 区域附加 className                                        | —                      |
+| `titleClassName` | `string?`           | —       | legend 标题附加 className                                      | —                      |
 
 fieldset 不传播 mode/labelAlign/labelWidth。AMIS 的 `subFormMode` / `subFormHorizontal` 在 Flux 中不需要，因为布局配置只有两级（form 全局 + 字段 FieldFrame 覆盖），fieldset 作为中间容器只需透传 context。
 
 ## 5. 字段分类
 
-- `title`、`collapsible`、`collapsed`: `value`
+- `title`、`collapsible`、`collapsed`、`columnCount`、`gap`、`bodyClassName`、`titleClassName`: `value`
 - `body`: `region`
 
 ## 6. regions 与 slot 约定

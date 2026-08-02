@@ -52,7 +52,7 @@
 
 ## 4. schema 设计
 
-- 目标导出字段为 `body`、`actions`、`data`、`statusPath`、`valuesPath`、`autoInit`、`initAction`、`submitAction`、`onSubmitSuccess`、`onSubmitError`、`onValidateError`。
+- 目标导出字段为 `body`、`actions`、`data`、`statusPath`、`valuesPath`、`autoInit`、`initAction`、`autoLoad`、`loadAction`、`submitAction`、`onSubmitSuccess`、`onSubmitError`、`onValidateError`。
 - E2g 增强字段（8 组）：
   - `columnCount?: number` — body 容器使用 CSS grid 多列布局（`repeat(N, minmax(0, 1fr))`）；`< 1` clamp 到 `1`；`1` 时不应用 grid（默认纵向流式）。
   - `mode?: 'normal' | 'horizontal' | 'inline'` — `inline` 让 body 使用 `nop-form-body--inline` flex-row 类，actions 区域可内联。
@@ -77,7 +77,8 @@
 - `statusPath`: `value`
 - `valuesPath`: `value`
 - `autoInit`: `value`（boolean，default `true`）
-- `initAction`、`submitAction`、`onSubmitSuccess`、`onSubmitError`、`onValidateError`: `event`
+- `initAction`、`loadAction`、`submitAction`、`onSubmitSuccess`、`onSubmitError`、`onValidateError`: `event`
+- `autoLoad`: `value`（boolean，default `true`；`loadAction` 挂载时自动触发的开关，缺省 `true`；设为 `false` 则仅经显式 refresh handle / `loadAction` 事件触发）
 - E2g 字段分类：
   - `columnCount`、`submitOnChange`、`preventEnterSubmit`、`autoFocus`、`scrollToFirstError`、`rules`: `value`（form schema 上的结构配置）
   - `static`: `value`（影响子字段 readOnly，传播通过 `FormLayoutContext.staticReadOnly`）
@@ -129,6 +130,7 @@ X2 工作项落地后，`ActionShapeFields.preventDefault` / `stopPropagation` �
 ## 9. 数据源、表达式、导入能力接入点
 
 - 初始值通过 `data` 注入。
+- `loadAction` 在挂载后（`autoLoad: true`，缺省）经 action graph 拉取初始 values（`result.data` 为对象时 `setValues` 合入）；`autoLoad: false` 时仅经显式触发。`loadAction` 亦为 form refresh handle 的数据源。
 - `data` 中的表达式在 form 创建时求值一次，结果成为 form store 的初始 values。
 - 表单内字段表达式读取 form scope。
 - 表单内元状态表达式读取 `$form`，不读取 `$store`。
@@ -176,7 +178,7 @@ grid-template-columns: repeat(columnCount, minmax(0, 1fr));
 - `columnCount` 不影响 actions 区域（actions 始终在 body 之外，独立排列）。
 - `columnCount <= 1`：不应用 grid（保持默认纵向流式）。
 - `inline` 模式下 `columnCount` 不生效（`inline` 强制 flex-row，二者冲突时以 `inline` 优先）。
-- `columnCount` 经 `FormLayoutContext.columnCount` 传播，子 fieldset 可感知（但当前子 fieldset 自身不消费该值，预留扩展）。
+- `columnCount` 经 `FormLayoutContext.columnCount` 传播，子 fieldset 可感知；子 fieldset 自身也可声明 `columnCount` 在其 body 上应用独立的 CSS grid（二者独立生效）。
 
 ### 13.2 Form 级标签配置
 
