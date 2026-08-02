@@ -124,6 +124,8 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     expect(body?.hasAttribute('data-flex')).toBe(true);
     expect(body?.getAttribute('data-direction')).toBe('column');
     expect(body?.getAttribute('data-gap')).toBe('sm');
+    expect(body?.className).toContain('flex-col');
+    expect(body?.className).toContain('gap-2');
   });
 
   it('container gap-only path does not inject implicit row direction', () => {
@@ -144,7 +146,9 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     expect(body?.hasAttribute('data-flex')).toBe(true);
     expect(body?.getAttribute('data-gap')).toBe('sm');
     expect(body?.getAttribute('data-direction')).toBeNull();
-    expect(body?.className).toBe('');
+    expect(body?.className).toContain('gap-2');
+    expect(body?.className).not.toContain('flex-row');
+    expect(body?.className).not.toContain('flex-col');
   });
 
   it('container with direction:row keeps explicit row override on semantic path', () => {
@@ -164,6 +168,7 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body?.hasAttribute('data-flex')).toBe(true);
     expect(body?.getAttribute('data-direction')).toBe('row');
+    expect(body?.className).toContain('flex-row');
   });
 
   it('page applies className to root, not body', () => {
