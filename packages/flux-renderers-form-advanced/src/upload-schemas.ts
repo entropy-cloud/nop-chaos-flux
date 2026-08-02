@@ -1,9 +1,29 @@
 import type {
   ActionSchema,
   BoundFieldSchemaBase,
+  RendererPropContract,
   SchemaFieldRule,
   SchemaObject,
 } from '@nop-chaos/flux-core';
+
+/**
+ * Action-value prop contract: the whole prop value is an ActionSchema (or
+ * ActionSchema[]) preserved as a template via schema-definition actionValue —
+ * never row-scope expression-evaluated at compile/render time.
+ */
+export const uploadActionPropContract: RendererPropContract = {
+  shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+  displayName: 'Upload Action',
+  description:
+    'Host action reference that performs the upload (ActionSchema | ActionSchema[]). Template-preserved.',
+};
+
+export const deleteActionPropContract: RendererPropContract = {
+  shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+  displayName: 'Delete Action',
+  description:
+    'Action dispatched to delete an uploaded file (ActionSchema | ActionSchema[]). Template-preserved.',
+};
 
 /**
  * Normalized upload result returned by the host `uploadAction` (the action's

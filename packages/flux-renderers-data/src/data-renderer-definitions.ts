@@ -173,6 +173,18 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         description: 'Rows rendered by the table after upstream scope/data-source evaluation.',
         editorType: 'expression',
       },
+      quickSaveAction: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Quick Save Action',
+        description:
+          'Action dispatched for batch quick-save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
+      },
+      quickSaveItemAction: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Quick Save Item Action',
+        description:
+          'Action dispatched per row on quick save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
+      },
       columns: {
         shape: { kind: 'unknown' },
         displayName: 'Columns',

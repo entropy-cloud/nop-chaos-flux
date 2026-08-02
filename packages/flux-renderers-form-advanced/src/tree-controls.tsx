@@ -483,6 +483,20 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
     displayName: 'Input Tree',
     category: 'Form Advanced',
     sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
+    propContracts: {
+      searchSource: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Search Source',
+        description:
+          'On-demand remote search action descriptor (ActionSchema). Template-preserved; ${searchQuery} evaluated at dispatch.',
+      },
+      childrenSource: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Children Source',
+        description:
+          'On-demand lazy child source descriptor (ActionSchema). Template-preserved; ${expandedNodeValue} evaluated at dispatch.',
+      },
+    },
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
@@ -515,6 +529,20 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
     displayName: 'Tree Select',
     category: 'Form Advanced',
     sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
+    propContracts: {
+      searchSource: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Search Source',
+        description:
+          'On-demand remote search action descriptor (ActionSchema). Template-preserved; ${searchQuery} evaluated at dispatch.',
+      },
+      childrenSource: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Children Source',
+        description:
+          'On-demand lazy child source descriptor (ActionSchema). Template-preserved; ${expandedNodeValue} evaluated at dispatch.',
+      },
+    },
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },

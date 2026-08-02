@@ -34,6 +34,7 @@ describe('basic renderer static contracts', () => {
     const text = basicRendererDefinitions.find((definition) => definition.type === 'text');
 
     expect(text?.fields?.map((field) => field.key)).toEqual([
+      'name',
       'text',
       'body',
       'tag',

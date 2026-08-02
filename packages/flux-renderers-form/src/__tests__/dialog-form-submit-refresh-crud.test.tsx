@@ -47,7 +47,7 @@ describe('dialog form submit → refreshNearest → CRUD reload', () => {
         }
         return { ok: true, data: {} };
       }),
-    } as typeof baseEnv;
+    } as unknown as typeof baseEnv;
 
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,

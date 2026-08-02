@@ -151,6 +151,7 @@ describe('FormRenderer lifecycle wiring', () => {
       setLifecycleHandlers: vi.fn((handlers: unknown) => {
         lifecycleHandlers.push(handlers);
       }),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       getImportedExpressionBindings: vi.fn(() => ({ importedFlag: 'yes' })),
@@ -307,6 +308,7 @@ describe('FormRenderer lifecycle wiring', () => {
       setLifecycleHandlers: vi.fn((handlers: unknown) => {
         lifecycleHandlers.push(handlers);
       }),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       getImportedExpressionBindings: vi.fn(() => ({})),
@@ -360,6 +362,7 @@ describe('FormRenderer lifecycle wiring', () => {
       store: { getState: () => ({ values: { username: 'Alice' }, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       getImportedExpressionBindings: vi.fn(() => ({})),
@@ -412,12 +415,14 @@ describe('FormRenderer lifecycle wiring', () => {
       store: { getState: () => ({ values: { username: 'Alice' }, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
+      setRefreshHandler: vi.fn(),
     } as any;
     const secondOwnedForm = {
       scope: makeScope({ id: 'owned-second', visible: {} }),
       store: { getState: () => ({ values: { username: 'Alice' }, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       getImportedExpressionBindings: vi.fn(() => ({})),
@@ -481,6 +486,7 @@ describe('FormRenderer lifecycle wiring', () => {
       store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       getImportedExpressionBindings: vi.fn(() => ({})),
@@ -524,6 +530,7 @@ describe('FormRenderer lifecycle wiring', () => {
       store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       getImportedExpressionBindings: vi.fn(() => ({ importedFlag: 'yes' })),
@@ -556,6 +563,7 @@ describe('FormRenderer lifecycle wiring', () => {
       store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       env: { notify: vi.fn(), monitor: undefined },
@@ -612,6 +620,7 @@ describe('FormRenderer lifecycle wiring', () => {
       store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       env: { notify: vi.fn(), monitor: undefined },
@@ -649,6 +658,7 @@ describe('FormRenderer lifecycle wiring', () => {
       store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
+      setRefreshHandler: vi.fn(),
     } as any;
     const runtime = {
       getImportedExpressionBindings: vi.fn(() => ({})),

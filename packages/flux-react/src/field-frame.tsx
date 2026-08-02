@@ -44,6 +44,7 @@ export function toFieldRemarkProps(schema: FieldRemarkSchemaLike): FieldRemarkPr
 
 export interface FieldFrameProps {
   name?: string;
+  renderer?: string;
   label?: ReactNode;
   required?: boolean;
   hint?: ReactNode;
@@ -78,6 +79,7 @@ const defaultBehavior: CompiledValidationBehavior = {
 export function FieldFrame(props: FieldFrameProps) {
   const {
     name,
+    renderer,
     label,
     required,
     hint,
@@ -221,6 +223,8 @@ export function FieldFrame(props: FieldFrameProps) {
     <Tag
       {...rootProps}
       className={cn('nop-field', className)}
+      data-field={name || undefined}
+      data-renderer={renderer || undefined}
       data-label-align={resolvedLabelAlign}
       data-testid={testid || undefined}
       data-cid={cid != null ? cid : undefined}

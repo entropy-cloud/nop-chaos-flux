@@ -28,6 +28,7 @@ describe('formRendererDefinitions - relational and conditional field validation'
               type: 'input-password',
               name: 'password',
               label: 'Password',
+              validate: { debounce: 300, message: 'x' },
             },
             {
               type: 'input-password',

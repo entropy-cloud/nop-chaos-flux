@@ -64,6 +64,7 @@ function renderComboboxItem(
       key={getChoiceOptionKey(option.value)}
       value={option}
       disabled={option.disabled}
+      data-value={typeof option.value === 'string' ? option.value : undefined}
     >
       {content}
     </ComboboxItem>

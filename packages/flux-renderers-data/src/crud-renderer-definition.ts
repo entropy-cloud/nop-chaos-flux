@@ -120,6 +120,18 @@ export const crudRendererDefinition: RendererDefinition = {
       description: 'Optional embedded query form configuration or migrated AMIS filter form.',
       editorType: 'object',
     },
+    quickSaveAction: {
+      shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+      displayName: 'Quick Save Action',
+      description:
+        'Action dispatched for batch quick-save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
+    },
+    quickSaveItemAction: {
+      shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+      displayName: 'Quick Save Item Action',
+      description:
+        'Action dispatched per row on quick save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
+    },
     columns: {
       shape: { kind: 'unknown' },
       displayName: 'Columns',

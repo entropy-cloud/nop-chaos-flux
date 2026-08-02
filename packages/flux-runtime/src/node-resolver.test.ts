@@ -60,7 +60,7 @@ describe('node identity contracts', () => {
     expect(result).toBeUndefined();
   });
 
-  it('resolveTarget returns undefined for unknown componentName', () => {
+  it('resolveTarget returns undefined for an unknown target without identifiers', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
@@ -69,7 +69,7 @@ describe('node identity contracts', () => {
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
 
     const result = runtime.resolveTarget(
-      { componentName: 'nonexistent' },
+      {},
       { runtimeId: runtime.runtimeId, componentRegistry },
     );
 

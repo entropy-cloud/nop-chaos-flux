@@ -242,15 +242,25 @@ export interface CheckboxSchema extends InputSchema {
   };
   trueValue?: SchemaValue;
   falseValue?: SchemaValue;
-}
-
-export interface SwitchSchema extends InputSchema {
+}export interface SwitchSchema extends InputSchema {
   option?: {
     onLabel?: string;
     offLabel?: string;
   };
   trueValue?: SchemaValue;
   falseValue?: SchemaValue;
+}
+
+/**
+ * Button-group styled single/multiple select field (AMIS button-group-select).
+ * Implemented in `button-group-select-renderer.tsx`; registered in
+ * `renderers/input.tsx` (`inputRendererDefinitions`).
+ */
+export interface ButtonGroupSelectSchema extends InputSchema {
+  type: 'button-group-select';
+  options?: SelectOptionsValue;
+  multiple?: boolean;
+  direction?: 'horizontal' | 'vertical';
 }
 
 export interface TagListSchema extends InputSchema {

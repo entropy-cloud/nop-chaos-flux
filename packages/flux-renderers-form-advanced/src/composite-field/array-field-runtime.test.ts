@@ -311,6 +311,8 @@ describe('createItemFormProxy', () => {
       updateFieldRegistration: vi.fn(),
       notifyFieldHidden: vi.fn(),
       validateSubtree: vi.fn(async () => okFormValidation),
+      setRefreshHandler: vi.fn(),
+      refresh: vi.fn(async () => {}),
     };
   }
 

@@ -64,6 +64,7 @@ describe('select enhancements (E1a)', () => {
           type: 'select',
           name: 'role',
           label: 'Role',
+          validate: { debounce: 300, message: 'x' },
           searchable: true,
           searchPlaceholder: 'Search roles...',
           options: [

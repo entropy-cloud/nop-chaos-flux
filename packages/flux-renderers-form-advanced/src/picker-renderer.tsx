@@ -486,6 +486,20 @@ export const pickerRendererDefinition: RendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: PickerRenderer,
   wrap: true,
+  propContracts: {
+    loadAction: {
+      shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+      displayName: 'Load Action',
+      description:
+        'On-demand option load action (ActionSchema). Template-preserved; ${query} evaluated at dispatch.',
+    },
+    labelResolveAction: {
+      shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+      displayName: 'Label Resolve Action',
+      description:
+        'Action that resolves stored values into display labels (ActionSchema). Template-preserved.',
+    },
+  },
   fields: [
     { key: 'name', kind: 'prop' },
     ...formFieldRules,
