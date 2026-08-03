@@ -1,0 +1,60 @@
+# 审计卡：tag-list（flux-renderers-form-advanced）
+
+> 状态: closed
+> 审查日期: 2026-08-03
+> 审查 plan: `docs/plans/2026-08-03-1616-1-c3-4-form-advanced-lightweight-editor-family-audit.md`
+> 注册定义: `packages/flux-renderers-form-advanced/src/tag-list.tsx:145-153` | 渲染器: `packages/flux-renderers-form-advanced/src/tag-list.tsx:18-143` | design.md: `docs/components/tag-list/design.md` | playground: `apps/playground/src/component-lab/renderers/tag-list-lab-page.tsx` | e2e: `tests/e2e/component-lab/c3-4-host-surfaces.spec.ts`（本族新增）
+
+## 组件身份
+
+tag-list / flux-renderers-form-advanced / TagListSchema（`flux-renderers-form/src/schemas.ts:268-270`，继承 InputSchema + `tags?: string[]`）/ 表单参与: 是（name/required/校验/提交路径，wrap: true FieldFrame 提供 label/校验 chrome + data-field-\*）/ widget 控件 renderer——字符串标签数组轻量编辑字段（schema `tags` 为候选集，值为选中标签数组）
+
+## 18 维审查记录
+
+| #   | 维度                        | 结论 | 证据                                                                                                                                                                                                                                                                                                                                                                                     | 发现                                                                                              |
+| --- | --------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 1   | Schema 契约                 | fail | TagListSchema 声明 `tags`（schemas.ts:269）+ 渲染器消费（tag-list.tsx:34）；**定义 fields 仅 formFieldRules（:153）未注册 `tags`** → flux-guide 生成类型 TagListSchema 缺 `tags`（flux-guide/flux-types/schema.d.ts:684-687）——schema/定义/生成类型三方契约缺口（与 C3.x phantom 同类，方向相反：已消费未注册）                                                                          | P1-1 已修复（fields 补注册 + honesty test + flux-types 重新生成）                                 |
+| 2   | RendererComponentProps 合规 | pass | 仅读 props.props/meta/events（:19-35, 86-141）；标准 hooks：useFormFieldController/useCurrentFormFieldState/useCurrentValidationScope/useCurrentForm；无 ad-hoc context/prop-drilling；不直接访问 store（写经 currentForm.setValue/scope.update）                                                                                                                                        | —                                                                                                 |
+| 3   | 值所有权三态                | pass | 受控 echo：boundValue 经 useFormFieldController 路径订阅（:22-32），`value` 由 store 派生（:32）；form 内 currentForm.setValue + touchField（:119-124）、form 外 scope.update（:127）；reset/清空由 form runtime 提供（C2.1 已核）；defaultValue: props.props.value（:30）与 useDefaultValuePush 同源语义；无越界 clamp 需求（候选集固定）                                               | —                                                                                                 |
+| 4   | 表单参与                    | pass | name/required/校验挂接：required 经 registerField validate()（:60-83，probe 实证 submit 空值报错单条不重复）；validateOn change 路径 syncErrorVisibility（:38-51）；disabled/visible 响应（presentation :26-31, disabled :99）；data-field-\* 由 FieldFrame 输出（wrap: true）                                                                                                           | —（P2-1：校验消息硬编码英文，见 i18n 维）                                                         |
+| 5   | DOM 与选择器契约            | pass | 根 `nop-tag-list` + data-slot="tag-list-control"（:88-90）；标签按钮 aria-pressed（:111）；data-field/data-renderer/data-cid/data-testid 由 FieldFrame 输出（wrap: true）；契约冻结于 tag-list.test.tsx（aria-pressed 断言 :96-103 等）                                                                                                                                                  | —                                                                                                 |
+| 6   | 嵌套 schema 分类            | pass | 无嵌套 schema/action 属性（纯值编辑器）；无 deepFields 残留；`tags` 为 value 表达式 prop（编译期求值后为 string[]）；无行 scope 概念（单值字段）                                                                                                                                                                                                                                         | —（08-02 机制核对：无 action 型嵌套属性）                                                         |
+| 7   | 事件与 action 契约          | pass | 定义无 eventContracts（无 onChange/onClick 等 schema 事件声明——form 族字段值变更写 store 即事件语义，C2.x 族级裁定）；无 component handles（design §8 记录「后续可考虑 addItem/removeItem」= out-of-scope improvement，登记 backlog）                                                                                                                                                    | —                                                                                                 |
+| 8   | a11y                        | pass | 标签按钮 aria-pressed 切换（:111）；键盘完整路径 WrappedFieldAction Enter/Space 同业务路径（tag-list.test.tsx:188-223 断言）；disabled 态视觉可区分（shadcn disabled）                                                                                                                                                                                                                   | —                                                                                                 |
+| 9   | i18n                        | fail | **P2-1：required 校验消息硬编码英文**「${labelText} requires at least one tag」（:76）——flux-runtime buildValidationMessage 有 `validation.required` en/zh 回退（message.ts:13，locales en-US.ts:793 / zh-CN.ts:792），registerField validate 直出 message 绕过 i18n；无其它硬编码文案（标签内容来自 schema）                                                                            | P2-1 已修复（t('validation.required', {label})）                                                  |
+| 10  | 四态覆盖                    | pass | 空态：tags 为空时零按钮不崩溃（:34, 91-140 map）；disabled/readOnly → 按钮 disabled + onClick guard（:99, 113）；错误态经 FieldFrame data-field-invalid + field-error 槽（wrap: true，probe 实证 submit 错误展示）；无加载态（无异步）                                                                                                                                                   | —（CX-8 同型复验：本组件无嵌套 schema 字段，直接 disabled 传播即全链冻结，host-le-readonly 实证） |
+| 11  | 异步生命周期                | pass | 无内嵌 IO（候选集为 schema 静态 props；无 fetch/env IO）；validateField 调用 void + 错误兜底（:44, 49）；无裸 Promise                                                                                                                                                                                                                                                                    | n-a                                                                                               |
+| 12  | 组合宿主场景                | pass | 单测 8 用例（scope 三态/校验触发/键盘/表格单元格/readOnly 不写值）；真实浏览器：`c3-4-host-surfaces.spec.ts` host-le-tag（受控 echo 增删回显）+ host-le-readonly 含 tag-list 只读复验（Phase 3 完成）                                                                                                                                                                                    | —（Phase 3 见「组合宿主场景」节）                                                                 |
+| 13  | 样式契约                    | pass | widget 自样式（flex + gap-2.5 :88）；根仅 marker + meta.className；选中态 bg-primary/10 等（:101-103）；无 BEM；cn() 合并；`check:audit-styling-suspects` 0 命中                                                                                                                                                                                                                         | —                                                                                                 |
+| 14  | React 19 规范               | pass | 渲染期派生（value/tags 直接计算）；useCallback 仅 syncErrorVisibility（事件处理，Compiler 友好）；无 effect+setState 镜像（effect 仅注册/清理）；`check:audit-react19-optimization-candidates` tag-list 0 命中                                                                                                                                                                           | —                                                                                                 |
+| 15  | 性能边界                    | pass | tags 候选集 map（:91）规模 = schema 声明数量（有界）；value.includes 线性（候选集小）；无订阅泄漏（registerField effect cleanup :60-83）                                                                                                                                                                                                                                                 | —                                                                                                 |
+| 16  | 测试质量                    | pass | tag-list.test.tsx 8 用例断言正确行为（aria-pressed 状态机、校验触发时机、键盘路径、table 单元格隔离、readOnly 不写值），非 not-throw；DOM 契约断言存在（aria-pressed :96-103）；错误路径（required 消息 :146）与 readOnly 态有测试；e2e 本族新增 host-le-tag/readonly                                                                                                                    | —                                                                                                 |
+| 17  | 文档对照                    | fail | design.md §4/§5 将 `tags` 描述为「过渡字段或初始化别名」（design.md:21-22, 27）——实现语义为**候选集**（值为选中标签数组，schema value 来自 form data）；§3「fields: label 为 value-or-region」为旧格式（实际 formFieldRules）；其余 §7/§10（marker 契约）与实现一致                                                                                                                      | P2-2 已修复（design.md §4/§5 同步为候选集语义 + §3 fields 现状）                                  |
+| 18  | 注册、包边界与 IO/安全红线  | pass | 定义经 `formAdvancedRendererDefinitions`（index.tsx:63）单注册 + src/index.tsx 导出（:38）；无 surface 双注册；playground tag-list-lab-page.tsx 存在（2 场景）；无浏览器 IO（INV-1 合规）；复用 @nop-chaos/ui Button/cn（WrappedFieldAction）；标签文本经 React 文本节点渲染（无 XSS 面）；`check:audit-runtime-raw-schema-reads`/`fieldframe-bypasses`/`hardcoded-type-dispatch` 0 命中 | —                                                                                                 |
+
+## 发现清单
+
+- [P0] 无
+- [P1-1] 定义 fields 未注册 `tags`（tag-list.tsx:153）——schema 声明 + 渲染器消费，但定义/生成类型缺失（flux-guide/flux-types/schema.d.ts TagListSchema 无 tags）→ 状态: fixed（fields 补 `{key:'tags', kind:'prop', valueType:'array'}`；test-first：c3-4-schema-contract-honesty.test.ts；flux-types 重新生成）
+- [P2-1] required 校验消息硬编码英文「requires at least one tag」（tag-list.tsx:76）绕过 `validation.required` i18n 回退 → 状态: fixed（t('validation.required', {label: labelText})）
+- [P2-2] design.md §4/§5 将 `tags` 描述为「初始化别名」而实现为候选集 + §3 fields 旧格式（docs/components/tag-list/design.md:21-22, 27, 17）→ 状态: fixed（design.md 同步）
+- [P3-1] `_fieldState` 未消费订阅（tag-list.tsx:36，useCurrentFormFieldState 返回值未读，仅维持响应性）→ 状态: 卡内记录，归 CR 集中裁定
+- [P3-2] component:addItem/removeItem handles 未提供（design §8 自述「后续可考虑」）→ 状态: 卡内记录，out-of-scope improvement 归 CR
+
+## 组合宿主场景（真实浏览器验证）
+
+- 场景: form 内 tag-list 增删标签（受控 echo）| 断言: programmatic DOM（c3-4-host-surfaces.spec.ts host-le-tag）| 结果: pass（点击增删 → echo 数组增减正确、无重复/丢失）
+- 场景: readOnly tag-list 冻结复验（CX-8 同型）| 断言: programmatic DOM（c3-4-host-surfaces.spec.ts host-le-readonly）| 结果: pass（按钮 disabled、提交值未变化）
+
+## 修复记录
+
+- plan: `docs/plans/2026-08-03-1616-1-c3-4-form-advanced-lightweight-editor-family-audit.md` Phase 2/3
+- test-first 证据: c3-4-schema-contract-honesty.test.ts（fields 注册断言先红后绿）
+- 实现: tag-list.tsx（fields 补注册 + validate 消息 i18n）、docs/components/tag-list/design.md §3/§4/§5
+- 验证: `pnpm --filter @nop-chaos/flux-renderers-form-advanced typecheck && build && lint && test` 全绿（详见 plan Phase 4 与 daily log）
+
+- 独立 closure audit: 见 plan `## Closure` 节（独立子 agent fresh session）
+
+## Closure
+
+- 独立 closure audit: 见 plan `## Closure` 节（mission-driver CLOSURE_VERIFY fresh session）

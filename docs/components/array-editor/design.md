@@ -30,8 +30,8 @@
 
 - `type: 'array-editor'`
 - `sourcePackage: '@nop-chaos/flux-renderers-form-advanced'`
-- 当前 fields: `label` 为 `value-or-region`
-- 当前 validation contributor: `kind: 'field'`、`valueKind: 'array'`
+- 当前 fields: `formFieldRules`（label 为 `value-or-region`）+ `itemLabel`/`minItems`/`maxItems`
+- 当前 validation contributor: `kind: 'field'`、`valueKind: 'array'`（规则消息经 `buildValidationMessage` i18n 回退）
 
 ## 4. schema 设计
 

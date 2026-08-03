@@ -80,7 +80,8 @@ interface IconPickerSchema extends BaseSchema {
 - `required`: `value`
 - `defaultValue`: `value`
 - `value`: `value`
-- `onChange`: `event`
+
+> 值变更经 form runtime 写回 store（`setValue`/`scope.update`），字段级 `onChange` 事件语义由 form 族统一约定（本 renderer 不单独派发 schema `onChange` 事件）。
 
 ## 6. regions 与 slot 约定
 
@@ -92,11 +93,10 @@ interface IconPickerSchema extends BaseSchema {
 
 - 当前选中值归 form runtime 或 scope。
 - 搜索关键字、弹层打开态、可见图标数量等纯 UI 状态归本地组件状态，不应默认写入表单。
-- 值变更通过 `onChange` 事件通知表单 owner。
+- 值变更经 form runtime 写回 store（`setValue`/`scope.update`）；字段级 `onChange` 事件语义由 form 族统一约定，本 renderer 不单独派发 schema `onChange` 事件。
 
 ## 8. 事件、动作与组件句柄能力
 
-- `onChange`: 值变更事件，触发 `ActionSchema`。
 - 首版不提供组件句柄（`component:open` 等）。
 - 如果需要编程式打开弹层，归后续评估。
 

@@ -31,8 +31,8 @@
 
 - `type: 'key-value'`
 - `sourcePackage: '@nop-chaos/flux-renderers-form-advanced'`
-- 当前 fields: `label` 为 `value-or-region`
-- 当前 validation contributor: `kind: 'field'`、`valueKind: 'array'`
+- 当前 fields: `formFieldRules`（label 为 `value-or-region`）+ `addLabel`/`uniqueKeys`/`minItems`/`maxItems`
+- 当前 validation contributor: `kind: 'field'`、`valueKind: 'array'`（规则消息经 `buildValidationMessage` i18n 回退，`uniqueKeys` 自定义 message 除外）
 
 ## 4. schema 设计
 

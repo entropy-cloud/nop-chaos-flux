@@ -14,17 +14,17 @@
 
 - `type: 'tag-list'`
 - `sourcePackage: '@nop-chaos/flux-renderers-form-advanced'`
-- 当前 fields: `label` 为 `value-or-region`
+- 当前 fields: `formFieldRules`（label 为 `value-or-region`）+ `tags`（value）
 
 ## 4. schema 设计
 
-- 当前导出字段为 `tags?: string[]`，并继承 `InputSchema`。
-- 建议正式契约后续统一到 `value`/`defaultValue` 风格，`tags` 可作为过渡字段或初始化别名。
+- 当前导出字段为 `tags?: string[]`（**候选集**：可点击切换的预定义标签列表，值 = 选中标签数组，写入 form/scope 的 `name` 字段），并继承 `InputSchema`。
+- `value`/`defaultValue` 语义由 `InputSchema` 提供（表单数据为值来源），`tags` 不是初始化别名。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `tags`: `value`
+- `tags`: `value`（候选集）
 
 ## 6. regions 与 slot 约定
 

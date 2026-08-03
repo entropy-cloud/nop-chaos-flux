@@ -684,16 +684,24 @@ export interface TreeSelectSchema extends BoundFieldSchemaBase {
 export interface TagListSchema extends BoundFieldSchemaBase {
   type: 'tag-list';
   value?: SchemaValue;
+  tags?: SchemaValue;
 }
 
 export interface KeyValueSchema extends BoundFieldSchemaBase {
   type: 'key-value';
   value?: SchemaValue;
+  addLabel?: SchemaValue;
+  uniqueKeys?: SchemaValue;
+  minItems?: SchemaValue;
+  maxItems?: SchemaValue;
 }
 
 export interface ArrayEditorSchema extends BoundFieldSchemaBase {
   type: 'array-editor';
   value?: SchemaValue;
+  itemLabel?: SchemaValue;
+  minItems?: SchemaValue;
+  maxItems?: SchemaValue;
 }
 
 export interface ConditionBuilderSchema extends BoundFieldSchemaBase {
