@@ -1,6 +1,6 @@
 # 3 I11 事件联动与画布交互
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-04
 > Source: `docs/components/roadmap-industrial-hmi.md`（I11、Cross-Cutting 平台能力复用表/测试纪律/性能红线）、`docs/components/industrial-hmi/design-renderer.md`（§8.1 schema 级事件/§8.2 图元事件→flux action 联动/§8.3 React 桥接/§8.5 组件句柄）、`docs/components/industrial-hmi/design-engine.md`（§4.4 视口变换/§6 交互覆盖层/§8.1 引擎事件/§8.2 命令句柄）、`docs/analysis/industrial-hmi/gate-3-review.md`（§10 wheel/pinch 交互配置/sky 覆盖物接线归属）、`docs/discussions/2026-08-03-industrial-hmi-scada-mission-scope-discussion.md`（Q8 交互/事件能力）
 > Related: 上游 `docs/plans/2026-08-03-2307-1-i6-data-binding-and-animation-wave2.md`（deferred 事件→action 派发/触发器体系评估）、`docs/plans/2026-08-03-2307-3-i8-basic-symbol-library-wave3.md`（deferred sky 覆盖物接线）、本批 `2026-08-04-0225-2-i10-renderer-and-flux-integration.md`（前置，use-scada-events.ts 桥接基座）；下游 roadmap I12（整体 gate）
@@ -70,40 +70,40 @@
 
 ### Phase 1 - I11.1 图元事件→flux action 全链路 + 触发器体系评估
 
-Status: planned
+Status: completed
 Targets: `src/renderer/`（图元事件声明派发扩展）、playground 临时验证路由、`docs/components/industrial-hmi/design-data-binding.md`（§12.3 评估回写）
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] `Decision`：roadmap Phase Status 回写 I11: `todo` → `planned`（本 plan 激活为 active 时同步执行；roadmap Rule 1 状态机，对齐 I0–I10 plan 先例）。
-- [ ] `Proof`：前置验证——roadmap I10 = `done`（I10 五边界审计无待人工裁决项）；`use-scada-events.ts` 桥接基座（onSymbolEvent → createNormalizedActionEvent → dispatch）可用；`ScadaSymbolEvent` 类型（design-symbols.md §4.2 `events` 字段）与 `createNormalizedActionEvent`（renderer-helpers.ts:98 单参数）契约可用。
-- [ ] `Proof`：事件派发失败测试先行（`renderer/scada-event-actions.test.tsx`）：图元 `events` 声明读取（on 枚举 click/dblclick/hover、action 形状校验、非法声明 → onError）、声明优先 + props.events 兜底优先级链、派发载荷形状（ScadaSymbolEventPayload → FluxActionEvent，symbolId/pointValues 承载）、**双击合并语义**（leafer 交互层自带：`Interaction.ts:321-356` 对 path 含 `double_tap` 监听的首击延迟发射（`setTimeout(emitTap, tapTime)`，默认 tapTime=120ms，config.ts:14）+ 双击窗口（`tapTime+50`）内 `tapWaitCancel` 取消首击，双击只派发 dblclick 不派发 click——EventBridge 恒挂 `double_tap` 监听故抑制生效；mock 需按该语义建模延迟/取消，design-renderer.md §8.2:212「dblclick 由交互层合并」同口径）。
-- [ ] `Fix`：组态内图元事件声明→action 全链路——`use-scada-events.ts` 扩展：场景构建时收集图元 `events` 声明（symbolId → ScadaSymbolEvent[] 索引），EventBridge onSymbolEvent 到达 → 查声明 → 优先派发声明 action；无声明时映射 props.events 全局钩子（onSymbolClick/onSymbolDblClick/onSymbolHover）；非法声明走 onError。
-- [ ] `Fix`：playground 事件联动最小验证场景——注册临时路由/卡片（标注「I11 验证用，I13.1 正式 demo 取代」）：scada-canvas 加载最小组态（1-2 图元 + 事件声明），click→dialog、click→页面跳转、click→数据请求三链路验证。
-- [ ] `Decision`：触发器体系评估（I6 deferred 触发点，design-data-binding.md §12.3）：以 `point:change`/`state:change` 事件源 + 既有事件派发链评估条件-动作触发扩展（meta2d dataEvents 蓝本）——裁定扩展/不扩展 + 依据（需求场景/成本/与既有事件体系边界），回写 design-data-binding.md §12.3；若裁定扩展则产出扩展设计草案供 roadmap 后续项消费（实现不在本 plan）。
+- [x] `Decision`：roadmap Phase Status 回写 I11: `todo` → `planned`（本 plan 激活为 active 时同步执行；roadmap Rule 1 状态机，对齐 I0–I10 plan 先例）。
+- [x] `Proof`：前置验证——roadmap I10 = `done`（I10 五边界审计无待人工裁决项）；`use-scada-events.ts` 桥接基座（onSymbolEvent → createNormalizedActionEvent → dispatch）可用；`ScadaSymbolEvent` 类型（design-symbols.md §4.2 `events` 字段）与 `createNormalizedActionEvent`（renderer-helpers.ts:98 单参数）契约可用。
+- [x] `Proof`：事件派发失败测试先行（`renderer/scada-event-actions.test.tsx`）：图元 `events` 声明读取（on 枚举 click/dblclick/hover、action 形状校验、非法声明 → onError）、声明优先 + props.events 兜底优先级链、派发载荷形状（ScadaSymbolEventPayload → FluxActionEvent，symbolId/pointValues 承载）、**双击合并语义**（leafer 交互层自带：`Interaction.ts:321-356` 对 path 含 `double_tap` 监听的首击延迟发射（`setTimeout(emitTap, tapTime)`，默认 tapTime=120ms，config.ts:14）+ 双击窗口（`tapTime+50`）内 `tapWaitCancel` 取消首击，双击只派发 dblclick 不派发 click——EventBridge 恒挂 `double_tap` 监听故抑制生效；mock 需按该语义建模延迟/取消，design-renderer.md §8.2:212「dblclick 由交互层合并」同口径）。
+- [x] `Fix`：组态内图元事件声明→action 全链路——`use-scada-events.ts` 扩展：场景构建时收集图元 `events` 声明（symbolId → ScadaSymbolEvent[] 索引），EventBridge onSymbolEvent 到达 → 查声明 → 优先派发声明 action；无声明时映射 props.events 全局钩子（onSymbolClick/onSymbolDblClick/onSymbolHover）；非法声明走 onError。
+- [x] `Fix`：playground 事件联动最小验证场景——注册临时路由/卡片（标注「I11 验证用，I13.1 正式 demo 取代」）：scada-canvas 加载最小组态（1-2 图元 + 事件声明），click→dialog、click→页面跳转、click→数据请求三链路验证。
+- [x] `Decision`：触发器体系评估（I6 deferred 触发点，design-data-binding.md §12.3）：以 `point:change`/`state:change` 事件源 + 既有事件派发链评估条件-动作触发扩展（meta2d dataEvents 蓝本）——裁定扩展/不扩展 + 依据（需求场景/成本/与既有事件体系边界），回写 design-data-binding.md §12.3；若裁定扩展则产出扩展设计草案供 roadmap 后续项消费（实现不在本 plan）。
 
 Exit Criteria:
 
-- [ ] 图元事件声明→action 全链路组件测试全绿（声明读取/优先级链/载荷形状/非法声明断言）；playground 验证场景可运行（三链路经组件测试覆盖断言，非手动验收）。
-- [ ] 触发器体系评估裁定落地（design-data-binding.md §12.3 回写，裁定 + 依据）。
+- [x] 图元事件声明→action 全链路组件测试全绿（声明读取/优先级链/载荷形状/非法声明断言）；playground 验证场景可运行（三链路经组件测试覆盖断言，非手动验收）。
+- [x] 触发器体系评估裁定落地（design-data-binding.md §12.3 回写，裁定 + 依据）。
 
 ### Phase 2 - I11.2 画布浏览交互（wheel/pinch、fit/center、hover 反馈）
 
-Status: planned
+Status: completed
 Targets: `src/engine/`（interactionLayer 接线）、`src/renderer/`（交互接线）、`docs/components/industrial-hmi/design-engine.md`（视口交互核对记录）
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] `Proof`：视口交互前置核对——viewport 插件默认 wheel/pinch 交互配置（gate-3-review §10 归属）与引擎视口钳制（MIN_SCALE 0.1/MAX_SCALE 20，仅钳制 scale）核对：zoomAt/setViewport 纯逻辑钳制单测（越界缩放钳制 + 平移坐标正确性断言）；插件默认行为核对记录（能否满足浏览需求/钳制一致性）。
-- [ ] `Proof`：hover 反馈失败测试先行（`renderer/scada-hover-overlay.test.tsx`）：EventBridge symbol:hover 到达 → InteractionOverlay 覆盖物出现/跟随断言（hover 进/移），**hover 退出/切换路径**（A→B 图元切换清前一覆盖物、指针移出命中为空 → 覆盖物消失）——事件源机制：EventBridge 增发 hover-miss 信号（pointer.move 命中为空且前一命中存在时发射）或 renderer 监听 tree `pointer.leave`（PointerEvent.LEAVE，@leafer-ui/event PointerEvent.ts:24），interactionLayer 选项开关行为。
-- [ ] `Fix`：hover 命中反馈接线——`use-scada-engine.ts`/`use-scada-events.ts` 扩展：`interactionLayer` 选项开启时经引擎惰性 getter 获取 InteractionOverlay（sky 层，scada-engine.ts:125-128；renderer 传 `interactionLayer: true` 并驱动 `highlight`/`clear`，不自行创建），EventBridge symbol:hover → 覆盖物高亮（INTERACTION_STYLE_PRESETS）；**hover 退出/切换接线**：EventBridge 增发 hover-miss 信号（或 renderer 订阅 tree `pointer.leave`——注意 `pointerEnterOrLeave` 每次移动都发 LEAVE/ENTER，必须以前一命中存在为守卫，测试场景显式覆盖），A→B 切换清前一目标、命中为空清当前覆盖物（InteractionOverlay 按 symbolId 键控，必须显式清理防残留）；覆盖物随图元移动/移除清理（applyDiff 增删同步）；m-7 接线兑现。
-- [ ] `Fix`：画布浏览交互——wheel/pinch 平移缩放（viewport 插件默认交互配置核对后启用；若插件行为与钳制不一致，引擎侧兜底钳制）、fit/center 控制接入验证（组件句柄 fit/center 已注册，经测试断言视图状态变化）；记录核对结论回写 design-engine.md §4.4（如需）。
-- [ ] `Fix`：`docs/logs/2026/08-04.md` 记录本 plan 产出摘要（置顶条目）。
+- [x] `Proof`：视口交互前置核对——viewport 插件默认 wheel/pinch 交互配置（gate-3-review §10 归属）与引擎视口钳制（MIN_SCALE 0.1/MAX_SCALE 20，仅钳制 scale）核对：zoomAt/setViewport 纯逻辑钳制单测（越界缩放钳制 + 平移坐标正确性断言）；插件默认行为核对记录（能否满足浏览需求/钳制一致性）。
+- [x] `Proof`：hover 反馈失败测试先行（`renderer/scada-hover-overlay.test.tsx`）：EventBridge symbol:hover 到达 → InteractionOverlay 覆盖物出现/跟随断言（hover 进/移），**hover 退出/切换路径**（A→B 图元切换清前一覆盖物、指针移出命中为空 → 覆盖物消失）——事件源机制：EventBridge 增发 hover-miss 信号（pointer.move 命中为空且前一命中存在时发射）或 renderer 监听 tree `pointer.leave`（PointerEvent.LEAVE，@leafer-ui/event PointerEvent.ts:24），interactionLayer 选项开关行为。
+- [x] `Fix`：hover 命中反馈接线——`use-scada-engine.ts`/`use-scada-events.ts` 扩展：`interactionLayer` 选项开启时经引擎惰性 getter 获取 InteractionOverlay（sky 层，scada-engine.ts:125-128；renderer 传 `interactionLayer: true` 并驱动 `highlight`/`clear`，不自行创建），EventBridge symbol:hover → 覆盖物高亮（INTERACTION_STYLE_PRESETS）；**hover 退出/切换接线**：EventBridge 增发 hover-miss 信号（或 renderer 订阅 tree `pointer.leave`——注意 `pointerEnterOrLeave` 每次移动都发 LEAVE/ENTER，必须以前一命中存在为守卫，测试场景显式覆盖），A→B 切换清前一目标、命中为空清当前覆盖物（InteractionOverlay 按 symbolId 键控，必须显式清理防残留）；覆盖物随图元移动/移除清理（applyDiff 增删同步）；m-7 接线兑现。
+- [x] `Fix`：画布浏览交互——wheel/pinch 平移缩放（viewport 插件默认交互配置核对后启用；若插件行为与钳制不一致，引擎侧兜底钳制）、fit/center 控制接入验证（组件句柄 fit/center 已注册，经测试断言视图状态变化）；记录核对结论回写 design-engine.md §4.4（如需）。
+- [x] `Fix`：`docs/logs/2026/08-04.md` 记录本 plan 产出摘要（置顶条目）。
 
 Exit Criteria:
 
-- [ ] hover 反馈接线测试全绿（覆盖物出现/跟随/消失 + interactionLayer 开关断言）；视口钳制单测全绿（越界断言）。
-- [ ] wheel/pinch 平移缩放与 fit/center 控制验证完成（组件测试断言视图状态变化；插件配置核对结论记录，无未裁定偏离）。
+- [x] hover 反馈接线测试全绿（覆盖物出现/消失/跟随 + interactionLayer 开关断言）；视口钳制单测全绿（越界断言）。
+- [x] wheel/pinch 平移缩放与 fit/center 控制验证完成（组件测试断言视图状态变化；插件配置核对结论记录，无未裁定偏离）。
 
 ## Draft Review Record
 
@@ -118,19 +118,19 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] I11.1–I11.2 全部落地：图元事件→action 全链路/hover 反馈/画布浏览交互，均有 focused 测试覆盖，包级 typecheck 通过。
-- [ ] 契约一致性：事件派发对齐 `createNormalizedActionEvent`/props.events 既有模式（design-renderer.md §8.2）；视口钳制与 design-engine.md §4.4 一致；interactionLayer 接线兑现 m-7（design-engine.md §6 交互覆盖层语义）。
-- [ ] I6 deferred 兑现：事件→flux action 全链路派发（I11.1）落地；触发器体系评估裁定落地（§12.3 回写）。
-- [ ] I8 deferred 兑现：sky 覆盖物接线（hover 真实事件桥→覆盖层，I11.2）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] roadmap 状态机未跳序：I11 `todo → planned` 已在激活期完成，收口时 `planned → done` 由独立 closure-audit 核验后回写。
-- [ ] 受影响的 owner 文档已同步（docs/logs/2026/08-04.md 收口摘要；design-data-binding.md §12.3 评估回写；design-engine.md §4.4 核对结论（如需）；架构文档同步属 I15.2）。
-- [ ] roadmap Phase Status I11 已回写 `done`。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] I11.1–I11.2 全部落地：图元事件→action 全链路/hover 反馈/画布浏览交互，均有 focused 测试覆盖，包级 typecheck 通过。
+- [x] 契约一致性：事件派发对齐 `createNormalizedActionEvent`/props.events 既有模式（design-renderer.md §8.2）；视口钳制与 design-engine.md §4.4 一致；interactionLayer 接线兑现 m-7（design-engine.md §6 交互覆盖层语义）。
+- [x] I6 deferred 兑现：事件→flux action 全链路派发（I11.1）落地；触发器体系评估裁定落地（§12.3 回写）。
+- [x] I8 deferred 兑现：sky 覆盖物接线（hover 真实事件桥→覆盖层，I11.2）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
+- [x] roadmap 状态机未跳序：I11 `todo → planned` 已在激活期完成，收口时 `planned → done` 由独立 closure-audit 核验后回写。
+- [x] 受影响的 owner 文档已同步（docs/logs/2026/08-04.md 收口摘要；design-data-binding.md §12.3 评估回写；design-engine.md §4.4 核对结论；架构文档同步属 I15.2）。
+- [x] roadmap Phase Status I11 已回写 `done`。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -170,16 +170,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行。
+Status Note: 两 Phase 全部完成（I11.1 图元事件→action 全链路 + 触发器体系评估裁定；I11.2 画布浏览交互 + hover 反馈接线），包级 450 tests / 34 files 全绿 + coverage 阈值 90 达标（branches 90.46），workspace typecheck/build/lint/test 32/32 全绿（full-green verification：unit 全绿；e2e 不在 mission 校验命令内，不声明）；独立 closure-audit `approved`（0 Blocker/0 Major/2 Minor/1 Nit，2 Minor 已落地：日志措辞回写 + applyDiff-updated 重定位 focused 断言）后 roadmap I11 `planned → done` 回写，plan 收口。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待执行
-- Evidence: 待执行
+- Auditor / Agent: 独立子 agent（general，fresh session），task `ses_03688be36ffe8jRpc6pEdUbqun`
+- Evidence: 13/13 Closure Gates + 2 Phase Exit Criteria 实测核验零 Blocker/Major（声明优先派发/双击合并/onError/hover 覆盖物出现-跟随-切换-消失/applyDiff 清理/zoom-move 同步与钳制/fit-center 视图状态断言逐项落地；既有测试无弱化——仅因 120ms 双击延迟升级为异步断言；deferred 分类诚实；roadmap I11 审计时保持 `planned` 未跳序）；2 Minor（日志「待收口验证」措辞过时 + applyDiff-updated 重定位缺 focused 断言）与 1 Nit（action: unknown 依赖运行时校验，属既有 JSON schema 设计）——Minors 已由执行侧落地，Nit 维持
 
 Follow-up:
 
-- 待执行（non-blocking follow-up 区见上；confirmed live defect 不得出现在这里）。
+- 无 remaining plan-owned work（non-blocking follow-up 见上；I11 验证页退役路径与 leafer-ui-mock 扩展面记录于 Non-Blocking Follow-ups，随 I13.1/I12 消费）
 
 ## Optional Sections
 

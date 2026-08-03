@@ -54,7 +54,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **I8. 基础图元库（Wave 3）** (`done`)
 - **I9. 工业设备图元库（Wave 4）** (`done`)
 - **I10. React 渲染器与 flux 集成** (`done`)
-- **I11. 事件联动与画布交互** (`todo`)
+- **I11. 事件联动与画布交互** (`done`)
 - **I12. 设计回顾与修正 #4 —— 整体 gate** (`todo`)
 - **I13. Playground 演示页** (`todo`)
 - **I14. Benchmark 与性能优化** (`todo`)

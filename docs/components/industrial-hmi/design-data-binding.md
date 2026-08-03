@@ -300,3 +300,18 @@ packages/flux-renderers-industrial/src/binding/       （域核心，无 React �
 | I6.3  | 状态动画引擎 + 生命周期（本档 §4.4）                                                                                                                     |
 | I10.3 | 点表 ↔ flux 表达式桥接（useScopeSelector + 公式编译器，本档 §9.1）                                                                                       |
 | I11.1 | 图元事件→flux action 全链路（roadmap I11.1 口径；本档 §8.1 数据事件条件-动作钩子为 `point:change`/`state:change` 事件源，是否扩展触发器体系随 I11 评估） |
+
+> **触发器体系评估裁定（I11，2026-08-04）**：以 `point:change`/`state:change` 事件源 + 既有事件派发链
+> （`createNormalizedActionEvent` + `helpers.dispatch`，I11.1 交付）评估条件-动作触发扩展
+> （meta2d `dataEvents` 蓝本）——**裁定：不扩展完整触发器体系**。依据：
+> ① 需求场景：条件-动作的**视觉面**已由 I6.2/I6.3 交付（`value-to-state` 量程/布尔/值映射 → 状态样式 +
+> 状态动画，§4.2/§4.5）；**动作面**中 flux 桥接点源场景可直接复用平台既有 `reaction` renderer
+> （scope 值变化 → 条件 → 动作，复用边界 INV-3 禁止重复实现）；剩余 gap 仅为「组态内非 flux 点的阈值动作」，
+> roadmap 内无已承诺消费场景（I13 demo 为点击联动）。② 成本：完整 meta2d 19 动作体系明确不在 I11 范围
+> （plan Non-Goals）；最小实现仍需新声明面（组态 JSON `triggers`）+ 刷新流水线条件求值钩子 +
+> 与点表/状态模型边界划分。③ 与既有事件体系边界：`point:change`/`state:change` 为**数据源触发**，
+> 与 I11.1 图元**交互触发**（click/dblclick/hover → action）属不同触发源，共享派发链已复用，无架构新增；
+> 「进入 fault → 报警动作」属报警状态机边界（§9.3 报警/趋势本期不内置，FUXA 式报警状态机超范围）。
+> **最小扩展路径（后继评估触发时）**：组态 JSON 图元级 `triggers: [{ on: 'point:change'|'state:change',
+when: 条件表达式, action: ActionSchema }]` 声明 + RefreshPipeline 事件源条件求值 → 复用 I11.1 派发链；
+> 实现归属 roadmap 后续项。

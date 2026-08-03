@@ -80,7 +80,7 @@ interface ScadaEngineOptions {
   };
   /** 背景层配置（地面色/网格） */
   background?: { color?: string; grid?: { size: number; color: string } };
-  /** 交互覆盖层开关（hover 高亮等运行时反馈；缺省 true；本期引擎惰性保留——sky 覆盖物接线归 I8.2/I11.2 语义，I7 gate m-7 记录） */
+  /** 交互覆盖层开关（hover 高亮等运行时反馈；缺省 true；I11.2 接线兑现：renderer 传 true 时经引擎惰性 getter 获取 InteractionOverlay 并驱动 highlight/clear） */
   interactionLayer?: boolean;
   /** 测试句柄开关（dev/test 下 true 时暴露 window.__flux_scada_<cid>） */
   exposeTestHandle?: boolean;
@@ -112,6 +112,18 @@ interface ScadaEngineOptions {
   - `center(bounds, viewport)`：计算将 bounds 中心对齐视口中心的平移量；
   - 缩放边界钳制：`minScale`/`maxScale`（缺省 0.1/20），避免视觉不可用。
 - 程序式视口 API：`setViewport({x, y, scale})`（对齐 `zoomLayer` 矩阵）、`zoomAt(worldPoint, factor)`（锚点缩放）、`fit()`/`center()`。用户 wheel/pinch 平移缩放由 viewport 插件原生承担（I11.2 画布浏览交互）。
+
+> **视口交互核对结论（I11.2，leafer-in viewport 源码核对）**：插件默认 wheel/pinch 交互配置——
+> `addViewportConfig` 仅设 `wheel.preventDefault`/`touch.preventDefault`（type/viewport.ts），
+> wheel 缩放经 Interaction → `Transformer.zoom` → `ZoomEvent.BEFORE_ZOOM` 处理器
+> `zoomLayer.scaleOfWorld(e, changeScale)`（`changeScale = leafer.getValidScale(e.scale)`，
+> **`getValidScale` 原样返回、无 min/max 钳制**，display Leafer.ts:405）；平移经
+> `MoveEvent.BEFORE_MOVE` → `zoomLayer.move(move)`。**插件缩放路径绕过引擎 `clampViewport`
+> （0.1/20 仅钳 scale、平移 x/y 不钳制）**→ 引擎兜底（Failure Paths `viewport-interaction-drift` 兑现）：
+> 引擎订阅 tree `zoom`（ZoomEvent.ZOOM）/`move`（MoveEvent.MOVE）事件，越界缩放以视口中心为锚
+> `scaleOfWorld` 重钳制回 [MIN_SCALE, MAX_SCALE]，并把 zoomLayer 矩阵状态（`zoomLayer.x/y/scaleX`，
+> 读 `zoomLayer.__` 数据面，view/src/index.ts:27）同步回引擎视口状态（`zoomLayer.x = -viewport.x * scale`，
+> gate-3-review §5 M-3 推导），保证 wheel/pinch 后 `getViewport`/命中 world 坐标/后续命令不漂移。
 
 ### 4.5 渲染循环与脏区/局部重绘
 
@@ -171,12 +183,13 @@ interface ScadaEngineOptions {
 
 ### 8.1 引擎事件
 
-| 事件                                                | 载荷                            | 说明                                                                                                                  |
-| --------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `symbol:click` / `symbol:dblclick` / `symbol:hover` | `{ symbolId, world, viewport }` | leafer 节点事件（capture/bubble 双阶段，render-engines §2.4/§12 #17）→ 引擎层事件桥；规范化与 flux action 派发属 I2.4 |
-| `render`（tree 层）                                 | `{ frame }`                     | 帧事件（A2），性能测量/测试用                                                                                         |
-| `ready`                                             | `{ engine }`                    | 首帧渲染完成（对齐 spike 首帧口径）                                                                                   |
-| `error`                                             | `{ code, message }`             | 引擎级错误（画布创建失败/配置非法）                                                                                   |
+| 事件                                                | 载荷                            | 说明                                                                                                                                                     |
+| --------------------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `symbol:click` / `symbol:dblclick` / `symbol:hover` | `{ symbolId, world, viewport }` | leafer 节点事件（capture/bubble 双阶段，render-engines §2.4/§12 #17）→ 引擎层事件桥；规范化与 flux action 派发属 I2.4                                    |
+| `symbol:hover-miss`                                 | `{ symbolId }`                  | I11.2 hover 退出信号：pointer.move 命中为空且前一命中存在时发射（载荷承载前一 symbolId，无 world/viewport）；仅覆盖物消费，不派发 action（事件表外扩展） |
+| `render`（tree 层）                                 | `{ frame }`                     | 帧事件（A2），性能测量/测试用                                                                                                                            |
+| `ready`                                             | `{ engine }`                    | 首帧渲染完成（对齐 spike 首帧口径）                                                                                                                      |
+| `error`                                             | `{ code, message }`             | 引擎级错误（画布创建失败/配置非法）                                                                                                                      |
 
 ### 8.2 引擎命令句柄（renderer/外层可调）
 
