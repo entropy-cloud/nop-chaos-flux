@@ -22,7 +22,7 @@
 
 - 本文档定义**图元模型层**设计：Symbol 接口与属性 schema（几何/样式/文本/管线 + 状态样式）、图元注册机制（对齐 flux renderer registry 模式的 `registerScadaSymbol`）、复合图元（group 组合/instance 模板复用/实例属性覆盖）、基础形状与工业设备图元分类（形状族/设备族/仪表族/传感控制族，映射 I8/I9）。
 - 图元模型层是引擎（`design-engine.md`）与数据绑定（`design-data-binding.md`）共同消费的**组态语义层**：符号定义是静态注册表（纯逻辑），实例是场景树节点（引擎持有）。
-- **边界**：`design-symbols.md` 只定义 Symbol 接口/注册机制/分类与属性 schema 归属（讨论 §九：图元级 type `scada-symbol` 本期不注册，I8/I9 图元库成型后评估——本档仅预留接口边界，不定义图元级 type 的注册契约）。
+- **边界**：`design-symbols.md` 只定义 Symbol 接口/注册机制/分类与属性 schema 归属（讨论 §九：图元级 type `scada-symbol` 已评估裁定**不注册**（2026-08-04，§12.2 评估记录），本档只定义领域内符号注册表契约，不定义图元级 type 的注册契约）。
 - 非目标：不定义具体图元实现细节（I8/I9）；不定义组态 JSON 顶层 schema（I2.4）；不定义动画/绑定语义（I2.2）。
 
 ## 2. 与 AMIS 或既有产品的能力对照
@@ -43,11 +43,11 @@
 | 复合图元：group（children 组合）+ instance（模板复用+属性覆盖） | **P0 采用** | —                              | meta2d parentId/children 组合 + 图元模板思想（scada-apps §2.4）；instance 属性覆盖为参数化语义（自研，leafer 无此语义）                                                                                                                                  |
 | 状态样式（normal + 状态覆盖）                                   | **P0 采用** | 全状态全量样式表               | `@leafer-in/state` hover/press 原语（render-engines §8 #4）+ 业务多状态（I2.2 §4.5）；样式覆盖为增量                                                                                                                                                     |
 | svgPath 字符串注册                                              | P1 评估     | —                              | meta2d `svgPath`（scada-apps §2.3）；fabric SVG parser 模块化（render-engines §12 #22）；需求未确认不引入                                                                                                                                                |
-| 图元级 type `scada-symbol` 注册契约                             | —           | **本期不定义**                 | 讨论 §九 裁定：I8/I9 图元库成型后评估；本档仅预留接口边界                                                                                                                                                                                                |
+| 图元级 type `scada-symbol` 注册契约                             | —           | **不注册（已评估裁定）**       | 讨论 §九 评估触发点：I8/I9 图元库成型后评估——2026-08-04 已评估裁定不注册（无真实单图元独立用法 + 双 schema 漂移成本，§12.2 依据）                                                                                                                        |
 
 ## 3. Flux 中的 renderer/type 定义
 
-- 图元模型层**不是 renderer type**：符号 type（如 `scada-device-motor`）是**组态 JSON 内部领域标识**（`design-renderer.md` 组态 schema 的 symbol 节点 `type` 字段），由引擎符号工厂在场景打开时解析；**不进 renderer-definitions、不注册 flux renderer type**（与 `scada-canvas` 单容器决策一致，讨论 Q10；`scada-symbol` 图元级 type 注册后置评估，§12.3）。
+- 图元模型层**不是 renderer type**：符号 type（如 `scada-device-motor`）是**组态 JSON 内部领域标识**（`design-renderer.md` 组态 schema 的 symbol 节点 `type` 字段），由引擎符号工厂在场景打开时解析；**不进 renderer-definitions、不注册 flux renderer type**（与 `scada-canvas` 单容器决策一致，讨论 Q10；`scada-symbol` 图元级 type 注册已评估裁定不注册，§12.2）。
 - 包归属：`@nop-chaos/flux-renderers-industrial` 内 `symbols/` 子目录；符号注册 API 由包入口导出（`registerScadaSymbol`），供 I8/I9 图元库与第三方扩展消费。
 
 ## 4. schema 设计（Symbol 接口与属性 schema）
@@ -232,18 +232,21 @@ packages/flux-renderers-industrial/src/symbols/       （域核心，无 React �
 
 ### 12.2 风险与取舍
 
-- **`scada-symbol` 图元级 type 注册契约 deferred**（讨论 §九）：本期 `scada-canvas` 单容器内嵌组态 JSON，图元级 type 注册（作为独立 renderer 使用单图元）不定义；`design-renderer.md` 组态 schema 预留 symbol type 标识空间（`scada-*`），I8/I9 成型后评估（watch-only residual，plan Deferred But Adjudicated）。
+- **`scada-symbol` 图元级 type 注册契约评估落地（2026-08-04，I9 plan Phase 4 Decision）**：触发点兑现（讨论 §九「I8/I9 图元库成型后评估」；本档 §1 边界预留）。以 **24 个内置符号成型**（8 形状 + image/video + group + 设备 4 + 仪表 4 + 传感控制 4 + pipe-junction 1）为评估事实，裁定为 **不注册**，依据：
+  - **价值面**：单图元独立 renderer 用法（`{type:'scada-symbol', symbolType:'scada-device-motor', ...}`）当前无真实消费场景——Q10 裁定消费路径为 `scada-canvas` 单容器内嵌组态 JSON（I13.1 scada-demo、I16 编辑器均为容器内用法）；「画布外单图元复用」（表单内嵌/属性面板预览）无确认需求。
+  - **成本面**：注册引入「renderer type schema ↔ 组态 JSON symbol schema」双 schema 漂移面（renderer fields 需镜像 `ScadaSymbolProps` 子集 + `custom` 透传，与 design-renderer.md 组态 schema 同步义务）；注册实现依赖 renderer 桥接层上下文（I10.1 组件生命周期/I10.2 renderer-definitions），当前无挂载点。
+  - **结论**：不注册、不产出注册契约草案（不注册路径）；若后续出现画布外单图元复用真实需求（触发点：I13.1 演示页或 I16 编辑器预览需求），按 roadmap 新评估项重新评估（watch-only residual，I9 plan Deferred But Adjudicated 记录）。
 - **instance 覆盖语义复杂度**：深合并规则（defaults/实例/绑定/动画分层）需交叉验证；I8.3 实现时以纯逻辑单测覆盖（实例属性覆盖、缩放、custom 透传）。
 - **自定义扩展字段膨胀**：`custom` 字段为图元私有；过度使用将削弱组态 JSON 通用性——审计约束：自定义字段需符号定义声明 schema（I4 包基建时以 TS 类型约束，I15.2 文档收尾复核）。
 - **架构冲突记录（I15.2）**：符号注册模式与 flux renderer registry 的差异（领域标识 vs renderer type）如有冲突，记录于 plan Failure Paths `design-contract-conflict`，不提前改架构文档。
 
 ### 12.3 后续阶段
 
-| 阶段      | 内容                                                                               |
-| --------- | ---------------------------------------------------------------------------------- |
-| I5.4      | 图元基类 `BaseSymbol` + 基础形状（8 形状，本档 §4.1/§11 base-shapes）              |
-| I8.1      | 基础图元族样式属性细化（渐变/阴影/线宽）+ image/video 占位符号（本档 §4.4 形状族） |
-| I8.2      | 视觉状态（选中/悬停/报警闪烁状态样式，与 I6.3 动画联动）                           |
-| I8.3      | 复合图元（group/instance/属性覆盖，本档 §4.3）                                     |
-| I9.1–I9.4 | 设备/仪表/传感控制/管道图元库（本档 §4.4 分类）                                    |
-| I8/I9 后  | 评估 `scada-symbol` 图元级 type 注册契约（讨论 §九 待定事项）                      |
+| 阶段      | 内容                                                                                                              |
+| --------- | ----------------------------------------------------------------------------------------------------------------- |
+| I5.4      | 图元基类 `BaseSymbol` + 基础形状（8 形状，本档 §4.1/§11 base-shapes）                                             |
+| I8.1      | 基础图元族样式属性细化（渐变/阴影/线宽）+ image/video 占位符号（本档 §4.4 形状族）                                |
+| I8.2      | 视觉状态（选中/悬停/报警闪烁状态样式，与 I6.3 动画联动）                                                          |
+| I8.3      | 复合图元（group/instance/属性覆盖，本档 §4.3）                                                                    |
+| I9.1–I9.4 | 设备/仪表/传感控制/管道图元库（本档 §4.4 分类）——**已完成（2026-08-04，I9 plan 收口，24 内置符号）**              |
+| I8/I9 后  | 评估 `scada-symbol` 图元级 type 注册契约（讨论 §九 待定事项）——**已评估（2026-08-04）：裁定不注册，依据见 §12.2** |
