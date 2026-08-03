@@ -267,6 +267,14 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Semantic field grouping container with optional legend and collapsible body.',
   },
   {
+    id: 'hidden',
+    title: 'Hidden',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description:
+      'Invisible field renderer: renders a native input[type=hidden] carrying a form value with no visible chrome; participates in validation/clearing via hiddenFieldPolicy.',
+  },
+  {
     id: 'object-field',
     title: 'Object Field',
     category: 'form',

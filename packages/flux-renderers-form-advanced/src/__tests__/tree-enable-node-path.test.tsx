@@ -191,4 +191,50 @@ describe('input-tree enableNodePath — TR7', () => {
 
     expect(document.querySelector('[data-slot="tree-select-control"]')).toBeTruthy();
   });
+
+  it('P1-2: custom pathSeparator joins path segments for nested nodes (input-tree)', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://tree-enable-node-path-separator"
+        schema={
+          {
+            type: 'form',
+            data: { node: '' },
+            submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+            body: [
+              {
+                type: 'input-tree',
+                name: 'node',
+                label: 'Node',
+                enableNodePath: true,
+                pathSeparator: ' > ',
+                options: [
+                  { label: 'Root', value: 'root', children: [{ label: 'Child', value: 'child' }] },
+                ],
+              },
+              {
+                type: 'button',
+                label: 'Submit',
+                onClick: { action: 'submitForm' },
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('treeitem', { name: 'Child' }));
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => {
+      expect(submitCalls).toHaveLength(1);
+    });
+
+    expect(submitCalls[0].node).toBe('root > child');
+  });
 });

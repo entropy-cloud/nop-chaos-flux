@@ -26,7 +26,8 @@
     "@nop-chaos/ui": "workspace:*",
     "@tanstack/react-virtual": "^3.13.24",
     "@tiptap/react": "^3.27.1",
-    "@tiptap/starter-kit": "^3.27.1"
+    "@tiptap/starter-kit": "^3.27.1",
+    "@tiptap/extension-link": "^3.27.1"
   },
   "peerDependencies": {
     "lucide-react": "^1.17.0",
@@ -42,7 +43,8 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "lucide-react": "^1.17.0",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "@tiptap/core": "^3.27.1"
   },
   "description": "Advanced form renderers: condition builder, tag list, and detail views"
 }

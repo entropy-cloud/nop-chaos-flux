@@ -29,11 +29,13 @@ export interface TreeOptionConfig {
   valueField?: string;
   onlyLeaf?: boolean;
   showPathLabel?: boolean;
+  pathSeparator?: string;
 }
 
 const DEFAULT_CHILDREN_KEY = 'children';
 const DEFAULT_LABEL_FIELD = 'label';
 const DEFAULT_VALUE_FIELD = 'value';
+const DEFAULT_PATH_SEPARATOR = '/';
 
 function isTreeOptionRecord(value: unknown): value is TreeOptionRecord {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -50,6 +52,7 @@ export function getTreeOptionConfig(config?: TreeOptionConfig) {
     valueField: config?.valueField || DEFAULT_VALUE_FIELD,
     onlyLeaf: config?.onlyLeaf === true,
     showPathLabel: config?.showPathLabel === true,
+    pathSeparator: config?.pathSeparator || DEFAULT_PATH_SEPARATOR,
   };
 }
 
@@ -71,7 +74,7 @@ function buildTreeOptionMeta(input: {
       : `${label}:${input.index}`;
   const valueStr = value !== undefined && value !== null && value !== '' ? String(value) : '';
   const valuePath = input.parentValuePath
-    ? `${input.parentValuePath}/${valueStr}`
+    ? `${input.parentValuePath}${input.config.pathSeparator}${valueStr}`
     : valueStr;
   const pathLabel = input.parentPathLabel ? `${input.parentPathLabel} / ${label}` : label;
   const rawChildren = toTreeOptionArray(getIn(input.node, input.config.childrenKey));

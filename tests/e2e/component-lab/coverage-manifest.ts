@@ -230,15 +230,41 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     id: 'input-tree',
     title: 'Input Tree',
     tier: 'write',
-    primaryScenario: 'Radio mode — single department selection',
-    notes: 'Click a tree node, verify "Selected:" live text shows the value',
+    primaryScenario: 'Host form remote lazy children + retry (bug 73 pattern)',
+    notes:
+      'Expand a deferChildren node, children load from the remote childrenSource; failure shows inline error + retry, retry succeeds; submit echoes the committed value (C3.5)',
   },
   {
     id: 'tree-select',
     title: 'Tree Select',
     tier: 'write',
-    primaryScenario: 'Single-value tree select with search',
-    notes: 'Open trigger, select a node, verify "Selected:" live text updates',
+    primaryScenario: 'Host form remote lazy children + retry (bug 73 pattern)',
+    notes:
+      'Same host scenario as input-tree (shared lazy-children mechanism); select a lazy node and submit (C3.5)',
+  },
+  {
+    id: 'editor',
+    title: 'Editor',
+    tier: 'write',
+    primaryScenario: 'Host form editor edit + submit (bug 73 pattern)',
+    notes:
+      'Type/format in the WYSIWYG editor, submit; the echo publishes the committed HTML; sanitize boundary keeps script payloads out (C3.5)',
+  },
+  {
+    id: 'input-file',
+    title: 'Input File',
+    tier: 'write',
+    primaryScenario: 'Host form upload success + failure (bug 73 pattern)',
+    notes:
+      'Upload a file through the mock env fetcher (success), then a failing one (error state, value stays clean), submit echoes the committed url (C3.5)',
+  },
+  {
+    id: 'input-image',
+    title: 'Input Image',
+    tier: 'write',
+    primaryScenario: 'Host form image upload success + failure (bug 73 pattern)',
+    notes:
+      'Image upload writes back the url, thumbnail preview renders; failure path shows error without polluting the value (C3.5)',
   },
   {
     id: 'tag-list',

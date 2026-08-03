@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
@@ -363,6 +363,61 @@ describe('tree controls - async lazy loading (E2d childrenSource)', () => {
     await waitFor(() => {
       expect(screen.getByRole('treeitem', { name: 'Child A1' })).toBeTruthy();
       expect(screen.getByRole('treeitem', { name: 'Child A2' })).toBeTruthy();
+    });
+
+    expect(calls.some((c) => c.expandedNodeValue === 'parent-a')).toBe(true);
+  });
+
+  it('C3.5: lazy children still load under React StrictMode double-mount (bug 73 pattern)', async () => {
+    // Regression for the real-browser failure found by the C3.5 host scenario:
+    // the mountedRef cleanup ran during StrictMode's mount→cleanup→mount
+    // cycle and was never reset to true, so every in-flight lazy load was
+    // discarded as "unmounted". Unit tests run without StrictMode, so only the
+    // real browser (playground) exposed it.
+    const { env, calls } = makeLazyChildrenEnv((parentValue) => {
+      if (parentValue === 'parent-a') {
+        return [{ label: 'Child A1', value: 'child-a1' }];
+      }
+      return [];
+    });
+
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+    render(
+      <StrictMode>
+        <SchemaRenderer
+          schemaUrl="test://tree-lazy-strictmode"
+          schema={
+            {
+              type: 'form',
+              body: [
+                {
+                  type: 'input-tree',
+                  name: 'tree',
+                  label: 'Tree',
+                  treeMode: 'checkbox',
+                  childrenSource: {
+                    action: 'ajax',
+                    args: { url: '/api/children', method: 'get' },
+                  },
+                  options: [
+                    { label: 'Parent A', value: 'parent-a', deferChildren: true },
+                  ],
+                },
+              ],
+            } as any
+          }
+          env={env}
+          formulaCompiler={createFormulaCompiler()}
+        />
+      </StrictMode>,
+    );
+
+    const expandBtn = screen.getAllByLabelText('Expand')[0];
+    fireEvent.click(expandBtn);
+
+    await waitFor(() => {
+      expect(screen.getByRole('treeitem', { name: 'Child A1' })).toBeTruthy();
     });
 
     expect(calls.some((c) => c.expandedNodeValue === 'parent-a')).toBe(true);

@@ -1,5 +1,6 @@
 import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import { formFieldRules } from '@nop-chaos/flux-renderers-form';
 import { UploadFieldRenderer } from './upload-field.js';
 import {
@@ -14,7 +15,7 @@ function ImagePreview(props: { item: UploadResultItem; mode: 'thumbnail' | 'fill
   return (
     <img
       src={props.item.url}
-      alt={props.item.name ?? 'uploaded image'}
+      alt={props.item.name ?? props.item.url ?? t('flux.form.uploadedImage')}
       className={cn(
         'rounded border border-border object-cover',
         props.mode === 'fill' ? 'h-20 w-full' : 'size-12',

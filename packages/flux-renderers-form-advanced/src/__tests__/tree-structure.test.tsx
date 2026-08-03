@@ -473,4 +473,92 @@ describe('tree controls - DOM structure, markers, and expand/collapse', () => {
     fireEvent.keyDown(support, { key: 'End' });
     await waitFor(() => expect(design.tabIndex).toBe(0));
   });
+
+  it('honors custom childrenKey/labelField/valueField and showPathLabel (input-tree)', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://tree-custom-fields-input-tree"
+        schema={
+          {
+            type: 'form',
+            data: {},
+            submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+            body: [
+              {
+                type: 'input-tree',
+                name: 'node',
+                label: 'Node',
+                childrenKey: 'kids',
+                labelField: 'title',
+                valueField: 'code',
+                showPathLabel: true,
+                options: [
+                  {
+                    title: 'Root',
+                    code: 'root',
+                    kids: [{ title: 'Child', code: 'child' }],
+                  },
+                ],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    // labelField → title; showPathLabel → "Root / Child" as the accessible name.
+    const root = screen.getByRole('treeitem', { name: 'Root' });
+    const child = screen.getByRole('treeitem', { name: 'Root / Child' });
+    expect(root).toBeTruthy();
+    expect(child).toBeTruthy();
+  });
+
+  it('honors custom childrenKey/labelField/valueField and onlyLeaf (tree-select)', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://tree-custom-fields-tree-select"
+        schema={
+          {
+            type: 'form',
+            data: {},
+            body: [
+              {
+                type: 'tree-select',
+                name: 'node',
+                label: 'Node',
+                childrenKey: 'kids',
+                labelField: 'title',
+                valueField: 'code',
+                onlyLeaf: true,
+                options: [
+                  {
+                    title: 'Root',
+                    code: 'root',
+                    kids: [{ title: 'Leaf', code: 'leaf' }],
+                  },
+                ],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Node/ }));
+    await screen.findByRole('treeitem', { name: 'Leaf' });
+    // valueField → code: selecting the leaf commits 'leaf'.
+    fireEvent.click(screen.getByRole('treeitem', { name: 'Leaf' }));
+    const trigger = screen.getByRole('button', { name: /Node/ });
+    await waitFor(() => expect(trigger.textContent).toContain('Leaf'));
+  });
 });

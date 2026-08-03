@@ -62,8 +62,8 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   // the new `config` identity is a dep of useTreeRemoteSearch's 300ms debounce
   // effect, so every re-render reset the timer and remote search never fired.
   const treeConfig = React.useMemo(
-    () => getTreeOptionConfig({ childrenKey, labelField, valueField, onlyLeaf, showPathLabel }),
-    [childrenKey, labelField, valueField, onlyLeaf, showPathLabel],
+    () => getTreeOptionConfig({ childrenKey, labelField, valueField, onlyLeaf, showPathLabel, pathSeparator: props.props.pathSeparator }),
+    [childrenKey, labelField, valueField, onlyLeaf, showPathLabel, props.props.pathSeparator],
   );
   const baseOptions = React.useMemo(
     () => buildTreeOptionMetaList(treeOptions, treeConfig),
@@ -236,8 +236,9 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
         valueField: selectValueField,
         onlyLeaf: selectOnlyLeaf,
         showPathLabel: selectShowPathLabel,
+        pathSeparator: props.props.pathSeparator,
       }),
-    [selectChildrenKey, selectLabelField, selectValueField, selectOnlyLeaf, selectShowPathLabel],
+    [selectChildrenKey, selectLabelField, selectValueField, selectOnlyLeaf, selectShowPathLabel, props.props.pathSeparator],
   );
   const baseOptions = React.useMemo(
     () => buildTreeOptionMetaList(selectTreeOptions, treeConfig),
@@ -417,7 +418,11 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
                 </Button>
               }
             />
-            <PopoverContent align="start">{treeOptionListElement}</PopoverContent>
+            <PopoverContent align="start">
+              <div className="max-h-[60vh] overflow-y-auto" data-slot="tree-select-popover-options">
+                {treeOptionListElement}
+              </div>
+            </PopoverContent>
           </Popover>
         )}
         {props.props.clearable === true && hasSelection ? (
@@ -500,6 +505,14 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      { key: 'treeMode', kind: 'prop' },
+      { key: 'childrenKey', kind: 'prop' },
+      { key: 'labelField', kind: 'prop' },
+      { key: 'valueField', kind: 'prop' },
+      { key: 'cascade', kind: 'prop', valueType: 'boolean' },
+      { key: 'searchable', kind: 'prop', valueType: 'boolean' },
+      { key: 'onlyLeaf', kind: 'prop', valueType: 'boolean' },
+      { key: 'showPathLabel', kind: 'prop', valueType: 'boolean' },
       { key: 'virtualThreshold', kind: 'prop' },
       { key: 'childrenSource', kind: 'prop' },
       { key: 'searchSource', kind: 'prop' },
@@ -546,6 +559,16 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      { key: 'treeMode', kind: 'prop' },
+      { key: 'childrenKey', kind: 'prop' },
+      { key: 'labelField', kind: 'prop' },
+      { key: 'valueField', kind: 'prop' },
+      { key: 'cascade', kind: 'prop', valueType: 'boolean' },
+      { key: 'searchable', kind: 'prop', valueType: 'boolean' },
+      { key: 'onlyLeaf', kind: 'prop', valueType: 'boolean' },
+      { key: 'showPathLabel', kind: 'prop', valueType: 'boolean' },
+      { key: 'clearable', kind: 'prop', valueType: 'boolean' },
+      { key: 'placeholder', kind: 'prop' },
       { key: 'virtualThreshold', kind: 'prop' },
       { key: 'childrenSource', kind: 'prop' },
       { key: 'searchSource', kind: 'prop' },

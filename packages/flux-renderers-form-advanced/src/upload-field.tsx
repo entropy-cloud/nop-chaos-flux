@@ -503,7 +503,9 @@ export function UploadFieldRenderer(
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={`Remove ${entry.name ?? entry.url}`}
+                  aria-label={t('flux.form.removeItem', {
+                    name: entry.name ?? entry.url ?? '',
+                  })}
                   data-testid={`${options.marker}-remove-${index}`}
                   onClick={() => removeExisting(index)}
                 >

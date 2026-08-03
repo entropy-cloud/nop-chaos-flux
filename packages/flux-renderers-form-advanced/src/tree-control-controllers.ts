@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ActionSchema } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { RendererHelpers, SourceTransientState } from '@nop-chaos/flux-react';
 import type { TreeSourceConfig } from '@nop-chaos/flux-renderers-form';
 import {
@@ -194,6 +195,10 @@ export function useTreeLazyChildren(input: {
   const mountedRef = React.useRef(true);
   const generationRef = React.useRef(0);
   React.useEffect(() => {
+    // Reset on (re-)mount: StrictMode double-mounts effects (mount → cleanup
+    // → mount); the cleanup must not leave the ref false for the second mount,
+    // or every in-flight lazy load would be discarded as "unmounted".
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
     };
@@ -710,7 +715,7 @@ export function useTreeSelectController(input: {
   }, [multiple, options, selectedValueSet, treeConfig, value]);
 
   const triggerLabel =
-    typeof placeholder === 'string' && placeholder ? placeholder : 'Select tree option';
+    typeof placeholder === 'string' && placeholder ? placeholder : t('flux.form.treeSelectPlaceholder');
 
   return {
     triggerText,
