@@ -11,12 +11,14 @@ import type {
 import { getIn } from '@nop-chaos/flux-core';
 import {
   FormContext,
+  FormLayoutContext,
   ScopeContext,
   ValidationContext,
   useCompositeFieldHandle,
   useCurrentForm,
   useCurrentFormState,
   useCurrentValidationScope,
+  useFormLayout,
   useRenderInstancePath,
   useRenderScope,
   useScopeSelector,
@@ -93,6 +95,8 @@ function ComboItemView(props: ComboItemProps) {
     itemRegion,
   } = props;
 
+  const parentLayout = useFormLayout();
+
   const itemScope = React.useMemo(
     () => createItemScope(parentScope, arrayPath, index, 'object', readOnly, itemIdentity),
     [parentScope, arrayPath, index, readOnly, itemIdentity],
@@ -126,6 +130,19 @@ function ComboItemView(props: ComboItemProps) {
     [index, item, itemInstancePath, itemRegion, itemScope],
   );
 
+  // Propagate the composite-level readOnly/disabled into the item fields
+  // through the form-layout mechanism (staticReadOnly): without this, item
+  // field presentations only see their own schema props and stay editable
+  // while the composite chrome is locked (C3.1 P1-2).
+  const itemLayout = React.useMemo(() => {
+    if (readOnly) {
+      return parentLayout
+        ? { ...parentLayout, staticReadOnly: true }
+        : { staticReadOnly: true };
+    }
+    return parentLayout;
+  }, [parentLayout, readOnly]);
+
   const canRemove = totalCount > minItems;
   const canRemoveNow = canRemove && !removeBlocked;
   const canMoveUp = index > 0;
@@ -147,11 +164,13 @@ function ComboItemView(props: ComboItemProps) {
     <div className="rounded-lg border border-border bg-card p-3" data-slot="combo-item">
       <div className="flex items-start gap-2">
         <div className={cn(bodyClassName)} style={bodyStyle} data-slot="combo-item-body">
-          <FormContext.Provider value={itemForm ?? undefined}>
-            <ScopeContext.Provider value={itemScope}>
-              <ValidationContext.Provider value={itemValidationOwner}>{itemContent}</ValidationContext.Provider>
-            </ScopeContext.Provider>
-          </FormContext.Provider>
+          <FormLayoutContext.Provider value={itemLayout}>
+            <FormContext.Provider value={itemForm ?? undefined}>
+              <ScopeContext.Provider value={itemScope}>
+                <ValidationContext.Provider value={itemValidationOwner}>{itemContent}</ValidationContext.Provider>
+              </ScopeContext.Provider>
+            </FormContext.Provider>
+          </FormLayoutContext.Provider>
         </div>
         {(reorderable || removable) && !readOnly && (
           <div className="flex shrink-0 flex-col gap-1" data-slot="combo-item-actions">

@@ -168,8 +168,9 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
       setCandidateChecked(new Set());
     } else {
       setCandidateChecked(new Set(allCandidateValues));
+      void props.events.onSelectAll?.();
     }
-  }, [allCandidateChecked, allCandidateValues, interactionDisabled]);
+  }, [allCandidateChecked, allCandidateValues, interactionDisabled, props.events]);
 
   const clearAll = React.useCallback(() => {
     if (interactionDisabled) {
@@ -268,6 +269,7 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
         allChecked={allCandidateChecked}
         someChecked={someCandidateChecked}
         onToggleAll={toggleAllCandidates}
+        checkAllLabel={typeof props.props.checkAllLabel === 'string' ? props.props.checkAllLabel : undefined}
         searchable={searchable}
         query={candidateQuery}
         onQueryChange={setCandidateQuery}
@@ -343,6 +345,7 @@ interface TransferPaneProps {
   allChecked?: boolean;
   someChecked?: boolean;
   onToggleAll?: () => void;
+  checkAllLabel?: string;
   clearable?: boolean;
   onClearAll?: () => void;
   searchable: boolean;
@@ -368,7 +371,7 @@ function TransferPane(props: TransferPaneProps) {
               disabled={props.interactionDisabled || props.options.length === 0}
               onCheckedChange={() => props.onToggleAll?.()}
               data-slot="transfer-toggle-all"
-              aria-label="Select all"
+              aria-label={props.checkAllLabel || t('flux.transfer.selectAll', { defaultValue: 'Select all' })}
             />
           )}
           <span className="text-sm font-medium">{props.title}</span>
@@ -466,6 +469,7 @@ export const transferRendererDefinition: RendererDefinition = {
     { key: 'onAdd', kind: 'event' },
     { key: 'onRemove', kind: 'event' },
     { key: 'onChange', kind: 'event' },
+    { key: 'onSelectAll', kind: 'event' },
   ],
   validation: {
     kind: 'field',

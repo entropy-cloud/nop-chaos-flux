@@ -56,6 +56,41 @@ const lineItems = {
   ],
 };
 
+const nestedSubmit = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      valuesPath: 'ui.comboRows',
+      data: {
+        lines: [
+          { name: 'Alice', phone: 'P-100' },
+          { name: 'Bob', phone: 'P-200' },
+        ],
+      },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        {
+          type: 'combo',
+          name: 'lines',
+          label: 'Lines',
+          itemKey: 'name',
+          items: [
+            { type: 'input-text', name: 'name', placeholder: 'CName' },
+            { type: 'input-text', name: 'phone', placeholder: 'CPhone' },
+          ],
+        },
+        {
+          type: 'text',
+          testid: 'combo-echo',
+          text: '${submitted ? "Combo: " + $JSON.stringify(ui.comboRows.lines) : ""}',
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
 export function ComboLabPage() {
   return (
     <MultiScenarioLabPage
@@ -71,6 +106,12 @@ export function ComboLabPage() {
           title: 'Line items with min/max bounds',
           description: 'minItems/maxItems clamp the add/remove buttons and the canonical handle.',
           schema: lineItems,
+        },
+        {
+          title: 'Nested combo multi-row submit (bug 73 pattern)',
+          description:
+            'Two pre-seeded rows edited in place, one row added and filled, then submit. valuesPath publishes the committed array; the echo asserts row-scope isolation (editing row 0 must not leak into row 1) and the exact committed shape.',
+          schema: nestedSubmit,
         },
       ]}
     />

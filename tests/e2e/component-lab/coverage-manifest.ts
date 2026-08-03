@@ -348,6 +348,36 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     primaryScenario: 'Bar chart with configured axes and series',
     notes: 'Verify chart container renders from source data with live xAxis/yAxis config',
   },
+  {
+    id: 'combo',
+    title: 'Combo',
+    tier: 'write',
+    primaryScenario: 'Nested combo multi-row submit (bug 73 pattern)',
+    notes:
+      'Verify repeated composite-item editing: row edit + add + submit publishes isolated committed rows',
+  },
+  {
+    id: 'input-table',
+    title: 'Input Table',
+    tier: 'write',
+    primaryScenario: 'Table multi-row edit submit (bug 73 pattern)',
+    notes: 'Verify tabular object-array editing: cell edit + add row + submit committed shape',
+  },
+  {
+    id: 'transfer',
+    title: 'Transfer',
+    tier: 'write',
+    primaryScenario: 'Controlled value echo + onSelectAll (external scope update)',
+    notes: 'Verify two-pane shuttle: external scope echo + checkAll/clear + onSelectAll event',
+  },
+  {
+    id: 'picker',
+    title: 'Picker',
+    tier: 'edit',
+    primaryScenario: 'CRUD-mode picker per-row isolation (bug 73 pattern)',
+    notes:
+      'Verify dialog-layer selection: open dialog, select candidate, confirm writeback; CRUD-mode per-row state isolation',
+  },
 ];
 
 /** Quick lookup by renderer id */
