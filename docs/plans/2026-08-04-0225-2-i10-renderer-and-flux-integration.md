@@ -1,6 +1,6 @@
 # 2 I10 React 渲染器与 flux 集成
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-04
 > Source: `docs/components/roadmap-industrial-hmi.md`（I10、Cross-Cutting 平台能力复用表/测试纪律/人工确认阈值）、`docs/components/industrial-hmi/design-renderer.md`（§4.1 schema/§5 字段分类/§6 regions/§7 状态归属/§8.2 事件联动/§8.3 React 桥接/§8.4 测试句柄/§8.5 组件句柄/§10 样式契约/§12.2 审计预审）、`docs/references/new-renderer-introduction-audit.md`（五边界审计 INV-1–INV-5）、`docs/analysis/industrial-hmi/gate-3-review.md`（§10 onReady/onError/component:\* 句柄归属）
 > Related: 上游 `docs/plans/2026-08-03-2307-1-i6-data-binding-and-animation-wave2.md`（deferred 点表↔flux 桥接）、`docs/plans/2026-08-03-2307-2-i7-implementation-gate-review.md`（deferred I10.2 五边界审计）；下游 roadmap I11（事件联动/画布交互，依赖 I10.x）
@@ -73,57 +73,57 @@
 
 ### Phase 1 - 前置验证 + I10.1 renderer 组件与实例生命周期
 
-Status: planned
+Status: completed
 Targets: `src/renderer/scada-canvas.tsx`、`src/renderer/hooks/use-scada-engine.ts`、`src/renderer/hooks/use-scada-config-sync.ts`
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] `Decision`：roadmap Phase Status 回写 I10: `todo` → `planned`（本 plan 激活为 active 时同步执行；roadmap Rule 1 状态机，对齐 I0–I9 plan 先例）。
-- [ ] `Proof`：前置验证——roadmap I9 = `done`（I9 评估裁定无待人工裁决项）；`ScadaCanvasEngine`/`parseScadaConfig`/`validateScadaConfig`/`diffScadaConfig`/`applyDiff`/`test-handle` 契约可用（实测）；`RendererComponentProps` cid 通道（gate-3-review 核对项 4 已确认）；`design-renderer.md` §4.1/§8.3/§8.4 未被 I7 gate 修正为冲突。
-- [ ] `Proof`：生命周期组件测试失败先行（`renderer/scada-canvas-lifecycle.test.tsx`）：mount 创建引擎（`ScadaCanvasEngine.create` 调用断言 + cid/exposeTestHandle 传递）、config 解析 + 场景构建（组态 JSON 加载）、unmount destroy（幂等 + 测试句柄移除）、resize 防抖 setSize（ResizeObserver mock）、config 变化 diff 增量应用（`applyDiff` 调用断言）/全量 reset 判定（版本变更 → reset）、loading/empty region 切换（config 校验中/失败）。
-- [ ] `Fix`：`src/renderer/hooks/use-scada-engine.ts`（引擎实例生命周期：mount 创建/destroy 清理/ResizeObserver resize/ref 幂等守卫，INV-4 环境稳定性）、`use-scada-config-sync.ts`（config → parse/validate → diff 判定 → applyDiff/reset，Failure Paths `diff-sync-mismatch` 兜底）。
-- [ ] `Fix`：`src/renderer/scada-canvas.tsx` 主渲染器——`RendererComponentProps<ScadaCanvasSchema>` 装配（props.props 读 config/width/height/viewport，meta 读 disabled/visible/testid/className，regions 渲染 loading/empty，events 读 props.events）；占位组件退役替换；DOM 契约（`nop-scada-canvas` marker + data-slot `scada-canvas`/`scada-canvas-canvas`/`scada-canvas-loading`/`scada-canvas-error`，design-renderer.md §10）；render path 无副作用（INV-5）。
+- [x] `Decision`：roadmap Phase Status 回写 I10: `todo` → `planned`（本 plan 激活为 active 时同步执行；roadmap Rule 1 状态机，对齐 I0–I9 plan 先例）。
+- [x] `Proof`：前置验证——roadmap I9 = `done`（I9 评估裁定无待人工裁决项）；`ScadaCanvasEngine`/`parseScadaConfig`/`validateScadaConfig`/`diffScadaConfig`/`applyDiff`/`test-handle` 契约可用（实测）；`RendererComponentProps` cid 通道（gate-3-review 核对项 4 已确认）；`design-renderer.md` §4.1/§8.3/§8.4 未被 I7 gate 修正为冲突。
+- [x] `Proof`：生命周期组件测试失败先行（`renderer/scada-canvas-lifecycle.test.tsx`）：mount 创建引擎（`ScadaCanvasEngine.create` 调用断言 + cid/exposeTestHandle 传递）、config 解析 + 场景构建（组态 JSON 加载）、unmount destroy（幂等 + 测试句柄移除）、resize 防抖 setSize（ResizeObserver mock）、config 变化 diff 增量应用（`applyDiff` 调用断言）/全量 reset 判定（版本变更 → reset）、loading/empty region 切换（config 校验中/失败）。
+- [x] `Fix`：`src/renderer/hooks/use-scada-engine.ts`（引擎实例生命周期：mount 创建/destroy 清理/ResizeObserver resize/ref 幂等守卫，INV-4 环境稳定性）、`use-scada-config-sync.ts`（config → parse/validate → diff 判定 → applyDiff/reset，Failure Paths `diff-sync-mismatch` 兜底）。
+- [x] `Fix`：`src/renderer/scada-canvas.tsx` 主渲染器——`RendererComponentProps<ScadaCanvasSchema>` 装配（props.props 读 config/width/height/viewport，meta 读 disabled/visible/testid/className，regions 渲染 loading/empty，events 读 props.events）；占位组件退役替换；DOM 契约（`nop-scada-canvas` marker + data-slot `scada-canvas`/`scada-canvas-canvas`/`scada-canvas-loading`/`scada-canvas-error`，design-renderer.md §10）；render path 无副作用（INV-5）。
 
 Exit Criteria:
 
-- [ ] 生命周期组件测试全绿（mount 引擎创建 + cid 传递、unmount destroy 幂等、resize setSize、diff 增量/reset 判定、loading/empty region 切换断言）。
-- [ ] 占位组件替换完成（`scada-canvas-placeholder.tsx` 移除或降级为内部占位，smoke 测试升级为真实组件渲染断言）；包级 typecheck 通过。
+- [x] 生命周期组件测试全绿（mount 引擎创建 + cid 传递、unmount destroy 幂等、resize setSize、diff 增量/reset 判定、loading/empty region 切换断言）。
+- [x] 占位组件替换完成（`scada-canvas-placeholder.tsx` 移除或降级为内部占位，smoke 测试升级为真实组件渲染断言）；包级 typecheck 通过。
 
 ### Phase 2 - I10.2 renderer-definitions 完整注册 + 组件句柄 + 五边界审计
 
-Status: planned
+Status: completed
 Targets: `src/renderer-definitions.ts`、`src/schemas.ts`、`src/renderer/hooks/use-scada-handles.ts`（句柄注册）、`docs/analysis/industrial-hmi/`（审计结论）
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] `Proof`：注册契约测试失败先行（`renderer-definitions.test.ts` 升级）：fields 完整（config prop/loading/empty region/events.\* event，design-renderer.md §5 字段分类表规则）、schemas.ts 类型收口（ScadaCanvasSchema 与 §4.1 逐字段对齐）、renderer 组件从占位切换为真实组件（registry.get('scada-canvas').component 断言）。
-- [ ] `Fix`：`renderer-definitions.ts` 完整注册——fields/events/regions 按 design-renderer.md §5 规则落地（`config: { key: 'config', kind: 'prop' }`、`loading/empty: { kind: 'region' }`、`events.*: { kind: 'event' }`，对齐 quick-reference.md「Layer 2 field rule」）；schemas.ts 类型收口。
-- [ ] `Proof`：组件句柄注册失败测试先行（`renderer/scada-handles.test.tsx`）：`useCurrentComponentRegistry` 注册 `component:*` 句柄（fit/center/getSymbols/getSymbol/setPointValue/getPointTable/exportConfig/importConfig/destroy，**对齐 design-renderer.md §8.5 表逐项**），capabilities（hasMethod/listMethods/invoke）断言；not-mounted/point-not-found 等失败路径（§8.5 失败路径表）。
-- [ ] `Fix`：`src/renderer/hooks/use-scada-handles.ts`——组件句柄注册（ComponentHandleRegistry 既有通道，list-renderer `register({ id, type, capabilities })` 模式；句柄方法转发到引擎命令句柄 + 点表 store；卸载时退订）。
-- [ ] `Decision`：**五边界审计全量执行**（new-renderer-introduction-audit INV-1/INV-2）：A. IO 边界（无直调 fetch/WebSocket/localStorage/history；图片经 env.fetcher 归位——I8.1 cacheImage 注入点；外部数据经 RendererEnv/xui:imports）、B. 复用边界（useScopeSelector/flux-formula/action/UI 复用，无自造 DSL）、C. 内部 state 边界（引擎/点表/动画不进 scope，INV-4）、D. 契约边界（严格 RendererComponentProps，render path 无副作用）、E. 扩展点（事件/region/组态内事件声明）、F. 样式边界（marker + data-slot，无新 token 命名空间）——审计结论落盘（`docs/analysis/industrial-hmi/renderer-boundary-audit.md`），作为 I12 gate 输入；INV-2 复核设计期预审（不扩 env）是否成立。
+- [x] `Proof`：注册契约测试失败先行（`renderer-definitions.test.ts` 升级）：fields 完整（config prop/loading/empty region/events.\* event，design-renderer.md §5 字段分类表规则）、schemas.ts 类型收口（ScadaCanvasSchema 与 §4.1 逐字段对齐）、renderer 组件从占位切换为真实组件（registry.get('scada-canvas').component 断言）。
+- [x] `Fix`：`renderer-definitions.ts` 完整注册——fields/events/regions 按 design-renderer.md §5 规则落地（`config: { key: 'config', kind: 'prop' }`、`loading/empty: { kind: 'region' }`、`events.*: { kind: 'event' }`，对齐 quick-reference.md「Layer 2 field rule」）；schemas.ts 类型收口。
+- [x] `Proof`：组件句柄注册失败测试先行（`renderer/scada-handles.test.tsx`）：`useCurrentComponentRegistry` 注册 `component:*` 句柄（fit/center/getSymbols/getSymbol/setPointValue/getPointTable/exportConfig/importConfig/destroy，**对齐 design-renderer.md §8.5 表逐项**），capabilities（hasMethod/listMethods/invoke）断言；not-mounted/point-not-found 等失败路径（§8.5 失败路径表）。
+- [x] `Fix`：`src/renderer/hooks/use-scada-handles.ts`——组件句柄注册（ComponentHandleRegistry 既有通道，list-renderer `register({ id, type, capabilities })` 模式；句柄方法转发到引擎命令句柄 + 点表 store；卸载时退订）。
+- [x] `Decision`：**五边界审计全量执行**（new-renderer-introduction-audit INV-1/INV-2）：A. IO 边界（无直调 fetch/WebSocket/localStorage/history；图片经 env.fetcher 归位——I8.1 cacheImage 注入点；外部数据经 RendererEnv/xui:imports）、B. 复用边界（useScopeSelector/flux-formula/action/UI 复用，无自造 DSL）、C. 内部 state 边界（引擎/点表/动画不进 scope，INV-4）、D. 契约边界（严格 RendererComponentProps，render path 无副作用）、E. 扩展点（事件/region/组态内事件声明）、F. 样式边界（marker + data-slot，无新 token 命名空间）——审计结论落盘（`docs/analysis/industrial-hmi/renderer-boundary-audit.md`），作为 I12 gate 输入；INV-2 复核设计期预审（不扩 env）是否成立。
 
 Exit Criteria:
 
-- [ ] renderer-definitions 完整注册测试全绿（fields/events/regions + component 切换断言）；component:\* 句柄注册测试全绿（含失败路径）。
-- [ ] 五边界审计结论落盘（审计文档存在，INV-1/INV-2 逐项结论 + I12 gate 输入说明）。
+- [x] renderer-definitions 完整注册测试全绿（fields/events/regions + component 切换断言）；component:\* 句柄注册测试全绿（含失败路径）。
+- [x] 五边界审计结论落盘（审计文档存在，INV-1/INV-2 逐项结论 + I12 gate 输入说明）。
 
 ### Phase 3 - I10.3 点表↔flux 桥接 + 事件派发
 
-Status: planned
+Status: completed
 Targets: `src/renderer/hooks/use-scada-points-bridge.ts`、`src/renderer/hooks/use-scada-events.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof`：paths 提取纯函数失败测试先行（`renderer/scada-points-bridge.test.tsx` 内纯逻辑断言）：config 扫描 → `$xxx` 引用集 → paths 数组（复用点表声明 `source: 'flux'` 的 `flux` 字段），漏订阅/过订阅断言；禁用（enabled: false）/fallback 行为。
-- [ ] `Fix`：`use-scada-points-bridge.ts`——`useScopeSelector`（paths 精细化失效，design-renderer.md §8.3）订阅 scope 数据流 → flux-formula/flux-compiler 编译求值（平台能力复用表；私有求值子 scope 注入点表上下文，INV-4）→ `PointStore.setPointValues` 注入（刷新流水线合帧，**不逐点 setState 直刷 React**——性能红线）。
-- [ ] `Proof`：事件桥接测试失败先行（`renderer/scada-events.test.tsx`）：引擎 `onSymbolEvent`（symbol:click/dblclick/hover）→ `createNormalizedActionEvent`（单参数签名 renderer-helpers.ts:98）→ `useActionDispatcher`/helpers.dispatch 派发，载荷形状（ScadaSymbolEventPayload → FluxActionEvent）断言；props.events.onSymbolClick 等映射；onReady/onError 桥接（引擎 ready/error → region 切换 + 事件派发，gate-3-review §10 归属兑现）。
-- [ ] `Fix`：`use-scada-events.ts`——引擎事件桥接（onSymbolEvent → 规范化 → dispatch；props.events 映射；onReady/onError 消费）；I11.1 桥接基座就绪（组态内图元事件声明派发留 I11.1 扩展）。
-- [ ] `Fix`：`docs/logs/2026/08-04.md` 记录本 plan 产出摘要（置顶条目）。
+- [x] `Proof`：paths 提取纯函数失败测试先行（`renderer/scada-points-bridge.test.tsx` 内纯逻辑断言）：config 扫描 → `$xxx` 引用集 → paths 数组（复用点表声明 `source: 'flux'` 的 `flux` 字段），漏订阅/过订阅断言；禁用（enabled: false）/fallback 行为。
+- [x] `Fix`：`use-scada-points-bridge.ts`——`useScopeSelector`（paths 精细化失效，design-renderer.md §8.3）订阅 scope 数据流 → flux-formula/flux-compiler 编译求值（平台能力复用表；私有求值子 scope 注入点表上下文，INV-4）→ `PointStore.setPointValues` 注入（刷新流水线合帧，**不逐点 setState 直刷 React**——性能红线）。
+- [x] `Proof`：事件桥接测试失败先行（`renderer/scada-events.test.tsx`）：引擎 `onSymbolEvent`（symbol:click/dblclick/hover）→ `createNormalizedActionEvent`（单参数签名 renderer-helpers.ts:98）→ `useActionDispatcher`/helpers.dispatch 派发，载荷形状（ScadaSymbolEventPayload → FluxActionEvent）断言；props.events.onSymbolClick 等映射；onReady/onError 桥接（引擎 ready/error → region 切换 + 事件派发，gate-3-review §10 归属兑现）。
+- [x] `Fix`：`use-scada-events.ts`——引擎事件桥接（onSymbolEvent → 规范化 → dispatch；props.events 映射；onReady/onError 消费）；I11.1 桥接基座就绪（组态内图元事件声明派发留 I11.1 扩展）。
+- [x] `Fix`：`docs/logs/2026/08-04.md` 记录本 plan 产出摘要（置顶条目）。
 
 Exit Criteria:
 
-- [ ] 点表↔flux 桥接测试全绿（paths 提取/求值注入/刷新流水线断言，无逐点 setState）；事件桥接测试全绿（派发载荷形状 + onReady/onError）。
-- [ ] 包级全量测试全绿（组件测试 + 既有域核心测试无回归）；五边界审计结论可作 I12 gate 输入。
+- [x] 点表↔flux 桥接测试全绿（paths 提取/求值注入/刷新流水线断言，无逐点 setState）；事件桥接测试全绿（派发载荷形状 + onReady/onError）。
+- [x] 包级全量测试全绿（组件测试 + 既有域核心测试无回归）；五边界审计结论可作 I12 gate 输入。
 
 ## Draft Review Record
 
@@ -138,19 +138,19 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] I10.1–I10.3 全部落地：renderer 组件生命周期/完整注册/组件句柄/点表↔flux 桥接/事件派发，均有 focused 测试覆盖，包级 typecheck 通过。
-- [ ] 契约一致性：renderer-definitions 与 `design-renderer.md` §5 字段分类表对齐；DOM 契约与 §10 对齐；组件句柄与 §8.5 对齐；点表桥接复用平台能力（useScopeSelector/flux-formula）无重复实现（roadmap 平台能力复用表）。
-- [ ] 五边界审计完成并落盘（new-renderer-introduction-audit INV-1/INV-2 逐项结论），结论可作 I12 gate 输入（I7 deferred 兑现）。
-- [ ] I6 deferred 兑现：点表↔flux scope 桥接（I10.3）落地。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] roadmap 状态机未跳序：I10 `todo → planned` 已在激活期完成，收口时 `planned → done` 由独立 closure-audit 核验后回写。
-- [ ] 受影响的 owner 文档已同步（docs/logs/2026/08-04.md 收口摘要；审计文档落盘；无其他风险节需回写；架构文档同步属 I15.2）。
-- [ ] roadmap Phase Status I10 已回写 `done`。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] I10.1–I10.3 全部落地：renderer 组件生命周期/完整注册/组件句柄/点表↔flux 桥接/事件派发，均有 focused 测试覆盖，包级 typecheck 通过。
+- [x] 契约一致性：renderer-definitions 与 `design-renderer.md` §5 字段分类表对齐；DOM 契约与 §10 对齐；组件句柄与 §8.5 对齐；点表桥接复用平台能力（useScopeSelector/flux-formula）无重复实现（roadmap 平台能力复用表）。
+- [x] 五边界审计完成并落盘（new-renderer-introduction-audit INV-1/INV-2 逐项结论），结论可作 I12 gate 输入（I7 deferred 兑现）。
+- [x] I6 deferred 兑现：点表↔flux scope 桥接（I10.3）落地。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
+- [x] roadmap 状态机未跳序：I10 `todo → planned` 已在激活期完成，收口时 `planned → done` 由独立 closure-audit 核验后回写。
+- [x] 受影响的 owner 文档已同步（docs/logs/2026/08-04.md 收口摘要；审计文档落盘；无其他风险节需回写；架构文档同步属 I15.2）。
+- [x] roadmap Phase Status I10 已回写 `done`。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -183,16 +183,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行。
+Status Note: 三 Phase 全部完成（I10.1 生命周期/I10.2 完整注册+句柄+五边界审计/I10.3 点表桥接+事件派发），包级 421 tests / 31 files 全绿 + coverage 90 达标，workspace typecheck/build/lint/test 全绿（full-green verification：unit 全绿；e2e 不在 mission 校验命令内，不声明）；独立 closure-audit `approved`（0 Blocker/0 Major/2 Minor 均为预期状态观察）后 roadmap I10 `planned → done` 回写，plan 收口。BUILD_VERIFY 强制重跑发现并修正 1 例句柄 not-mounted 判定缺陷（`engine.isDestroyed()` 公开访问器 + invoke destroy 前置分支，destroy 幂等契约保持；回归断言补 `isDestroyed()`），复测全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待执行
-- Evidence: 待执行
+- Auditor / Agent: 独立子 agent（general，fresh session），task `ses_036adbdabffen6Ut0q4aHSa9ca`
+- Evidence: 13/13 Closure Gates + 3 Phase Exit Criteria 实测核验零 Blocker/Major；D-1 事件通道裁定核对属实（flux-compiler `classifyField` 顶层 key 精确匹配，fields.ts:30）；I10 `planned → done` 未由执行者自写（审计时 roadmap 保持 `planned`）；deferred 三项分类诚实（I11.1/I13.1+I15.1/I14 successor）；git 变更未提交（collaboration discipline：audit 通过后随 full-green 记录提交）
 
 Follow-up:
 
-- 待执行（non-blocking follow-up 区见上；confirmed live defect 不得出现在这里）。
+- 无 remaining plan-owned work（non-blocking follow-up 见上；D-1 events 通道契约 drift 的文档同步路径明确归 I15.2）
 
 ## Optional Sections
 
