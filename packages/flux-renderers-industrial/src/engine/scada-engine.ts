@@ -136,6 +136,11 @@ export class ScadaCanvasEngine {
     this.options.onRender?.({ frame: this.frameCount, dirtyBlocks: 0 });
   };
 
+  /** 销毁状态（I10.2 句柄 not-mounted 判定）：destroy 幂等调用后为 true，后续句柄命令返回 not-mounted。 */
+  isDestroyed(): boolean {
+    return this.destroyed;
+  }
+
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
@@ -234,6 +239,10 @@ export class ScadaCanvasEngine {
   setSize(width: number, height: number): void {
     this.size = { width, height };
     this.app.resize({ width, height });
+  }
+
+  getSize(): Size {
+    return { ...this.size };
   }
 
   getViewport(): ViewportState {

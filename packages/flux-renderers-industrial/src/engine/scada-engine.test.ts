@@ -90,6 +90,7 @@ describe('ScadaCanvasEngine lifecycle (I5.1)', () => {
     engine.destroy();
     engine.destroy();
     expect(app.destroyed).toBe(true);
+    expect(engine.isDestroyed()).toBe(true);
     expect((window as unknown as Record<string, unknown>)[scadaTestHandleKey(7)]).toBeUndefined();
     engine.tree.emit('render', {});
     expect(onRender).not.toHaveBeenCalled();
