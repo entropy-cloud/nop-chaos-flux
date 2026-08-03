@@ -78,6 +78,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'columnWidth', kind: 'prop' },
       { key: 'columnDraggable', kind: 'prop' },
       { key: 'draggable', kind: 'prop' },
+      { key: 'wipStrict', kind: 'prop' },
 
       { key: 'collapsedStatePath', kind: 'prop' },
       { key: 'collapsedOwnership', kind: 'prop' },

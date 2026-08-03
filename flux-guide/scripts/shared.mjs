@@ -17,6 +17,8 @@ export const REGISTER_PACKAGES = [
   { pkg: 'flux-renderers-content', fn: 'registerContentRenderers' },
   { pkg: 'flux-renderers-mobile', fn: 'registerMobileRenderers' },
   { pkg: 'flux-code-editor', fn: 'registerCodeEditorRenderers' },
+  { pkg: 'flux-renderers-scheduling', fn: 'registerSchedulingRenderers' },
+  { pkg: 'flux-renderers-ai', fn: 'registerAiRenderers' },
 ];
 
 /**

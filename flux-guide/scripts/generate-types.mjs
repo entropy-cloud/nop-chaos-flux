@@ -40,6 +40,8 @@ const PACKAGE_CATEGORY = {
   'flux-renderers-content': 'content',
   'flux-renderers-mobile': 'mobile',
   'flux-code-editor': 'code-editor',
+  'flux-renderers-scheduling': 'scheduling',
+  'flux-renderers-ai': 'ai',
 };
 
 const CATEGORY_COMMENTS = {
@@ -51,6 +53,8 @@ const CATEGORY_COMMENTS = {
   'content': 'Content/Display — flux-renderers-content',
   'mobile': 'Mobile — flux-renderers-mobile',
   'code-editor': 'Code Editor — flux-code-editor (lazy-loaded CodeMirror)',
+  'scheduling': 'Scheduling — flux-renderers-scheduling',
+  'ai': 'AI — flux-renderers-ai',
 };
 
 // ─── Name overrides for TS interface names ──────────────────────────────────
@@ -99,6 +103,11 @@ function getInterfaceName(type) {
   return toPascalCase(type) + 'Schema';
 }
 
+// Quote keys that are not valid TS identifiers (e.g. nested path `resources[].resources`)
+function toTSKey(key) {
+  return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key) ? key : JSON.stringify(key);
+}
+
 // ─── Build the base fields common to all schemas ────────────────────────────
 
 const BASE_TYPE_FIELDS = new Set([
@@ -140,7 +149,7 @@ function generateInterface(def) {
     seenKeys.add(field.key);
 
     let tsType = resolveFieldType(field, propContracts, eventContracts);
-    lines.push(`  ${field.key}?: ${tsType};`);
+    lines.push(`  ${toTSKey(field.key)}?: ${tsType};`);
   }
 
   // Additional keys from propContracts not in fields
@@ -152,14 +161,14 @@ function generateInterface(def) {
     const matchingField = fields.find(f => f.key === key);
     const valueType = matchingField?.valueType;
     const tsType = contractToFieldType2(contract.shape, valueType);
-    lines.push(`  ${key}?: ${tsType};`);
+    lines.push(`  ${toTSKey(key)}?: ${tsType};`);
   }
 
   // Additional keys from eventContracts not in fields
   for (const key of Object.keys(eventContracts)) {
     if (seenKeys.has(key)) continue;
     seenKeys.add(key);
-    lines.push(`  ${key}?: ActionSchema | ActionSchema[];`);
+    lines.push(`  ${toTSKey(key)}?: ActionSchema | ActionSchema[];`);
   }
 
   lines.push('}');
@@ -240,7 +249,7 @@ async function main() {
   lines.push('} from \'./common\';');
   lines.push('');
 
-  const catOrder = ['basic', 'layout', 'form', 'form-advanced', 'data', 'content', 'mobile', 'code-editor'];
+  const catOrder = ['basic', 'layout', 'form', 'form-advanced', 'data', 'content', 'mobile', 'code-editor', 'scheduling', 'ai'];
 
   for (const cat of catOrder) {
     const catDefs = grouped[cat];

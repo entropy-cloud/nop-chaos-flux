@@ -354,10 +354,11 @@ export interface FormSchema extends BoundFieldSchemaBase {
     validateWhenHidden?: boolean;
     clearValueWhenHidden?: boolean;
   };
-  bodyClassName?: SchemaValue;
-  actionsClassName?: SchemaValue;
+  gap?: unknown;
+  bodyClassName?: string;
+  actionsClassName?: string;
   columnCount?: number;
-  submitScope?: SchemaValue;
+  submitScope?: "local" | "surface";
   submitOnChange?: boolean;
   preventEnterSubmit?: boolean;
   autoFocus?: boolean;
@@ -371,7 +372,10 @@ export interface FieldsetSchema extends BoundFieldSchemaBase {
   collapsible?: boolean;
   collapsed?: boolean;
   columnCount?: SchemaValue;
+  gap?: SchemaValue;
   body?: SchemaInput;
+  bodyClassName?: SchemaValue;
+  titleClassName?: SchemaValue;
 }
 
 export interface InputTextSchema extends BoundFieldSchemaBase {
@@ -473,6 +477,7 @@ export interface SelectSchema extends BoundFieldSchemaBase {
   filterOption?: SchemaValue;
   searchPlaceholder?: SchemaValue;
   noResultsText?: SchemaValue;
+  noMatchText?: SchemaValue;
   virtual?: boolean;
   optionTemplate?: SchemaInput;
   searchSource?: unknown;
@@ -508,11 +513,17 @@ export interface TextareaSchema extends BoundFieldSchemaBase {
 export interface CheckboxSchema extends BoundFieldSchemaBase {
   type: 'checkbox';
   value?: SchemaValue;
+  option?: SchemaValue;
+  trueValue?: SchemaValue;
+  falseValue?: SchemaValue;
 }
 
 export interface SwitchSchema extends BoundFieldSchemaBase {
   type: 'switch';
   value?: SchemaValue;
+  option?: SchemaValue;
+  trueValue?: SchemaValue;
+  falseValue?: SchemaValue;
 }
 
 export interface RadioGroupSchema extends BoundFieldSchemaBase {
@@ -821,6 +832,7 @@ export interface InputTableSchema extends BoundFieldSchemaBase {
   reorderable?: boolean;
   minItems?: SchemaValue;
   maxItems?: SchemaValue;
+  removeWhen?: SchemaValue;
   onAdd?: ActionSchema | ActionSchema[];
   onRemove?: ActionSchema | ActionSchema[];
   onReorder?: ActionSchema | ActionSchema[];
@@ -845,6 +857,7 @@ export interface TransferSchema extends BoundFieldSchemaBase {
   onAdd?: ActionSchema | ActionSchema[];
   onRemove?: ActionSchema | ActionSchema[];
   onChange?: ActionSchema | ActionSchema[];
+  onSelectAll?: ActionSchema | ActionSchema[];
 }
 
 export interface PickerSchema extends BoundFieldSchemaBase {
@@ -963,6 +976,9 @@ export interface ChartSchema extends BaseSchema {
   stacked?: SchemaValue;
   grid?: SchemaValue;
   colors?: SchemaValue;
+  referenceLines?: SchemaValue;
+  band?: SchemaValue;
+  markers?: SchemaValue;
   onClick?: ActionSchema | ActionSchema[];
   onHover?: ActionSchema | ActionSchema[];
 }
@@ -1371,4 +1387,311 @@ export interface CodeEditorSchema extends BaseSchema {
   onFocus?: ActionSchema | ActionSchema[];
   onBlur?: ActionSchema | ActionSchema[];
   onEditorMount?: ActionSchema | ActionSchema[];
+}
+
+// ============================================================================
+// Scheduling — flux-renderers-scheduling
+// ============================================================================
+
+export interface GanttSchema extends BaseSchema {
+  type: 'gantt';
+  tasks?: SchemaValue;
+  links?: SchemaValue;
+  resources?: SchemaValue;
+  assignments?: SchemaValue;
+  columns?: SchemaValue;
+  zoomLevels?: SchemaValue;
+  defaultZoom?: SchemaValue;
+  cellWidth?: SchemaValue;
+  taskBarHeight?: SchemaValue;
+  showWeekends?: SchemaValue;
+  showToday?: SchemaValue;
+  draggable?: SchemaValue;
+  editable?: SchemaValue;
+  linkable?: SchemaValue;
+  taskBar?: SchemaInput;
+  toolbar?: SchemaInput;
+  editor?: SchemaInput;
+  empty?: SchemaInput;
+  loading?: SchemaInput;
+  onTaskClick?: ActionSchema | ActionSchema[];
+  onTaskDoubleClick?: ActionSchema | ActionSchema[];
+  onTaskDragEnd?: ActionSchema | ActionSchema[];
+  onLinkClick?: ActionSchema | ActionSchema[];
+  onLinkDragEnd?: ActionSchema | ActionSchema[];
+  onEmptyCellClick?: ActionSchema | ActionSchema[];
+  onZoomChange?: ActionSchema | ActionSchema[];
+  onScroll?: ActionSchema | ActionSchema[];
+  toolbarClassName?: SchemaValue;
+  taskBarClassName?: SchemaValue;
+  editorClassName?: SchemaValue;
+  emptyClassName?: SchemaValue;
+  zoomIn?: SchemaValue;
+  zoomOut?: SchemaValue;
+  scrollToToday?: SchemaValue;
+  scrollToTask?: SchemaValue;
+}
+
+export interface KanbanSchema extends BaseSchema {
+  type: 'kanban';
+  configMap?: SchemaValue;
+  columnsConfig?: SchemaValue;
+  columnHeader?: SchemaInput;
+  columnHeaderToolbar?: SchemaInput;
+  cardTemplate?: SchemaInput;
+  columnFooter?: SchemaInput;
+  empty?: SchemaInput;
+  loading?: SchemaInput;
+  filterText?: SchemaValue;
+  filterCard?: SchemaValue;
+  filterTags?: SchemaValue;
+  columnWidth?: SchemaValue;
+  columnDraggable?: SchemaValue;
+  draggable?: SchemaValue;
+  wipStrict?: SchemaValue;
+  collapsedStatePath?: SchemaValue;
+  collapsedOwnership?: SchemaValue;
+  columnHeaderClassName?: SchemaValue;
+  cardClassName?: SchemaValue;
+  columnFooterClassName?: SchemaValue;
+  kanbanOwnership?: SchemaValue;
+  kanbanStatePath?: SchemaValue;
+  statusPath?: SchemaValue;
+  onCardMove?: ActionSchema | ActionSchema[];
+  onCardClick?: ActionSchema | ActionSchema[];
+  onColumnReorder?: ActionSchema | ActionSchema[];
+  onColumnClick?: ActionSchema | ActionSchema[];
+  onCardAdd?: ActionSchema | ActionSchema[];
+  onCardRemove?: ActionSchema | ActionSchema[];
+  onColumnAdd?: ActionSchema | ActionSchema[];
+}
+
+export interface CalendarSchema extends BaseSchema {
+  type: 'calendar';
+  view?: SchemaValue;
+  date?: SchemaValue;
+  events?: SchemaValue;
+  resources?: SchemaValue;
+  firstDayOfWeek?: SchemaValue;
+  showWeekends?: SchemaValue;
+  maxConcurrent?: SchemaValue;
+  eventTemplate?: SchemaInput;
+  loading?: SchemaInput;
+  empty?: SchemaInput;
+  body?: SchemaInput;
+  headerClassName?: SchemaValue;
+  eventClassName?: SchemaValue;
+  emptyClassName?: SchemaValue;
+  onEventClick?: ActionSchema | ActionSchema[];
+  onDateChange?: ActionSchema | ActionSchema[];
+  onViewChange?: ActionSchema | ActionSchema[];
+  onEventChange?: ActionSchema | ActionSchema[];
+  onEventCreate?: ActionSchema | ActionSchema[];
+  onBatchSchedule?: ActionSchema | ActionSchema[];
+  onImport?: ActionSchema | ActionSchema[];
+  onImportError?: ActionSchema | ActionSchema[];
+  onTimezoneChange?: ActionSchema | ActionSchema[];
+  onGroupToggle?: ActionSchema | ActionSchema[];
+  showCrossDayLines?: SchemaValue;
+  timezoneSelector?: SchemaValue;
+  batchScheduling?: SchemaValue;
+  "resources[].resources"?: SchemaValue;
+  "resources[].open"?: SchemaValue;
+  viewOwnership?: SchemaValue;
+  viewStatePath?: SchemaValue;
+  dateOwnership?: SchemaValue;
+  dateStatePath?: SchemaValue;
+  locale?: SchemaValue;
+  statusPath?: SchemaValue;
+  loadAction?: ActionSchema | ActionSchema[];
+  print?: SchemaValue;
+  exportPNG?: SchemaValue;
+  importICal?: SchemaValue;
+  exportToICal?: SchemaValue;
+}
+
+export interface BarcodeInputSchema extends BaseSchema {
+  type: 'barcode-input';
+  placeholder?: SchemaValue;
+  required?: boolean;
+  readOnly?: boolean;
+  clearable?: boolean;
+  trimContents?: boolean;
+  minLength?: SchemaValue;
+  maxLength?: SchemaValue;
+  pattern?: SchemaValue;
+  validate?: SchemaValue;
+  formats?: SchemaValue;
+  continuousScan?: boolean;
+  scanButton?: boolean;
+  scanInterval?: SchemaValue;
+  batchMode?: boolean;
+  torchButton?: boolean;
+  wasmUrl?: SchemaValue;
+  scanButtonClassName?: SchemaValue;
+  autoSubmit?: boolean;
+  scanOnFocus?: boolean;
+  onScan?: ActionSchema | ActionSchema[];
+  onScanError?: ActionSchema | ActionSchema[];
+}
+
+// ============================================================================
+// AI — flux-renderers-ai
+// ============================================================================
+
+export interface AiChatSchema extends BaseSchema {
+  type: 'ai-chat';
+  connector?: SchemaValue;
+  placeholder?: SchemaValue;
+  systemPrompt?: SchemaValue;
+  submitType?: SchemaValue;
+  maxLength?: SchemaValue;
+  showWordLimit?: boolean;
+  autofocus?: boolean;
+  initialMessages?: SchemaValue;
+  senderExtensions?: SchemaValue;
+  conversationController?: SchemaValue;
+  activeConversationId?: SchemaValue;
+  engine?: SchemaValue;
+  tools?: SchemaValue;
+  toolExecutor?: SchemaValue;
+  maxToolRounds?: SchemaValue;
+  componentId?: SchemaValue;
+  componentName?: SchemaValue;
+  header?: SchemaInput;
+  beforeMessages?: SchemaValue | SchemaInput;
+  afterMessages?: SchemaValue | SchemaInput;
+  emptyState?: SchemaValue | SchemaInput;
+  footer?: SchemaInput;
+  onResponseComplete?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
+  onAbort?: ActionSchema | ActionSchema[];
+  onConversationChange?: ActionSchema | ActionSchema[];
+  branches?: SchemaValue;
+  activeBranchId?: SchemaValue;
+  onBranchChange?: ActionSchema | ActionSchema[];
+}
+
+export interface AiMessageListSchema extends BaseSchema {
+  type: 'ai-message-list';
+  autoScroll?: boolean;
+  emptyRegion?: SchemaValue | SchemaInput;
+}
+
+export interface AiBubbleSchema extends BaseSchema {
+  type: 'ai-bubble';
+  message?: SchemaValue;
+  placement?: SchemaValue;
+  shape?: SchemaValue;
+  showAvatar?: boolean;
+  showTimestamp?: boolean;
+  contentResolverName?: SchemaValue;
+  branches?: SchemaValue;
+  activeBranchId?: SchemaValue;
+  onBranchChange?: ActionSchema | ActionSchema[];
+}
+
+export interface AiSenderSchema extends BaseSchema {
+  type: 'ai-sender';
+  placeholder?: SchemaValue;
+  loading?: SchemaValue;
+  autofocus?: boolean;
+  maxLength?: SchemaValue;
+  showWordLimit?: boolean;
+  submitType?: SchemaValue;
+  clearOnSubmit?: boolean;
+  senderExtensions?: SchemaValue;
+  onSubmit?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+  onChange?: ActionSchema | ActionSchema[];
+}
+
+export interface AiConversationsSchema extends BaseSchema {
+  type: 'ai-conversations';
+  conversations?: SchemaValue;
+  activeId?: SchemaValue;
+  showRenameControls?: boolean;
+  onItemClick?: ActionSchema | ActionSchema[];
+  onItemRename?: ActionSchema | ActionSchema[];
+  onItemDelete?: ActionSchema | ActionSchema[];
+  onCreate?: ActionSchema | ActionSchema[];
+}
+
+export interface AiWelcomeSchema extends BaseSchema {
+  type: 'ai-welcome';
+  description?: SchemaValue;
+  icon?: SchemaValue;
+  align?: SchemaValue;
+  footer?: SchemaValue | SchemaInput;
+}
+
+export interface AiPromptsSchema extends BaseSchema {
+  type: 'ai-prompts';
+  items?: SchemaValue;
+  layout?: SchemaValue;
+  size?: SchemaValue;
+  onSelect?: ActionSchema | ActionSchema[];
+}
+
+export interface AiFeedbackSchema extends BaseSchema {
+  type: 'ai-feedback';
+  message?: SchemaValue;
+  actions?: SchemaValue;
+  onAction?: ActionSchema | ActionSchema[];
+}
+
+export interface AiToolCallSchema extends BaseSchema {
+  type: 'ai-tool-call';
+  toolCall?: SchemaValue;
+  state?: SchemaValue;
+  defaultOpen?: boolean;
+  onApproval?: ActionSchema | ActionSchema[];
+}
+
+export interface AiAttachmentsSchema extends BaseSchema {
+  type: 'ai-attachments';
+  value?: SchemaValue;
+  mode?: SchemaValue;
+  accept?: SchemaValue;
+  multiple?: boolean;
+  maxSize?: SchemaValue;
+  maxFiles?: SchemaValue;
+  enableDrop?: boolean;
+  onChange?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
+  onUpload?: ActionSchema | ActionSchema[];
+}
+
+export interface AiCitationsSchema extends BaseSchema {
+  type: 'ai-citations';
+  message?: SchemaValue;
+  sources?: SchemaValue;
+  mode?: SchemaValue;
+  onSourceClick?: ActionSchema | ActionSchema[];
+}
+
+export interface AiVoiceInputSchema extends BaseSchema {
+  type: 'ai-voice-input';
+  lang?: SchemaValue;
+  continuous?: boolean;
+  interimResults?: boolean;
+  onResult?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
+}
+
+export interface AiTokenUsageSchema extends BaseSchema {
+  type: 'ai-token-usage';
+  message?: SchemaValue;
+  usage?: SchemaValue;
+  contextLimit?: SchemaValue;
+  showCost?: boolean;
+  onClick?: ActionSchema | ActionSchema[];
+}
+
+export interface AiSuggestionsSchema extends BaseSchema {
+  type: 'ai-suggestions';
+  items?: SchemaValue;
+  overflowMode?: SchemaValue;
+  maxVisible?: SchemaValue;
+  onSelect?: ActionSchema | ActionSchema[];
 }
