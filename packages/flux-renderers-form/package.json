@@ -26,7 +26,8 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "@tanstack/react-virtual": "^3.13.24"
+    "@tanstack/react-virtual": "^3.13.24",
+    "react-day-picker": "^9.14.0"
   },
   "peerDependencies": {
     "lucide-react": "^1.17.0",

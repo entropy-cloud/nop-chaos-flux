@@ -2,7 +2,13 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { useFormFieldController } from '../field-utils.js';
 import type { InputDatetimeSchema } from '../schemas.js';
-import { DEFAULT_DATETIME_FORMAT, parseDate, resolveRelativeDate, toCalendarDate } from './date/date-utils.js';
+import {
+  DEFAULT_DATETIME_FORMAT,
+  DEFAULT_TIME_FORMAT,
+  parseDate,
+  resolveRelativeDate,
+  toCalendarDate,
+} from './date/date-utils.js';
 import { DateFieldControl } from './date/date-field-control.js';
 
 export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetimeSchema>) {
@@ -15,6 +21,12 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
     typeof props.props.displayFormat === 'string' && props.props.displayFormat
       ? props.props.displayFormat
       : valueFormat;
+  // timeFormat drives the popover time-input granularity (seconds when it
+  // includes `ss`); storage always follows valueFormat.
+  const timeFormat =
+    typeof props.props.timeFormat === 'string' && props.props.timeFormat
+      ? props.props.timeFormat
+      : DEFAULT_TIME_FORMAT;
   const utc = props.props.utc === true;
   const clearable = props.props.clearable === true;
   const placeholder =
@@ -61,6 +73,7 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
         displayFormat={displayFormat}
         utc={utc}
         withTime={true}
+        timeFormat={timeFormat}
         minDate={minDate}
         maxDate={maxDate}
         clearable={clearable}

@@ -142,6 +142,51 @@ describe('input-quarter', () => {
   });
 });
 
+describe('period family — shortcuts (P1-1)', () => {
+  it('applies a range-mode shortcut and normalizes reversed ends', async () => {
+    renderSchema(
+      buildForm('input-month', 'm', '2024-06', {
+        selectionMode: 'range',
+        // Shortcut ends are expressed in the period valueFormat (YYYY-MM);
+        // reversed order must be normalized to start <= end on write.
+        shortcuts: [{ label: 'Last week', start: '2024-06', end: '2024-05' }],
+      }),
+    );
+    fireEvent.click(screen.getByText('Last week'));
+    await submit();
+    expect(submitCalls[0].m).toBe('2024-05,2024-06');
+  });
+
+  it('applies a single-mode shortcut value (clamped by min/max)', async () => {
+    renderSchema(
+      buildForm('input-month', 'm', '2024-06', {
+        shortcuts: [{ label: 'January', start: '2024-01' }],
+        minDate: '2024-03',
+      }),
+    );
+    fireEvent.click(screen.getByText('January'));
+    await submit();
+    // Below minDate → clamped to the declared floor.
+    expect(submitCalls[0].m).toBe('2024-03');
+  });
+
+  it('filters malformed shortcut entries (missing range end / non-objects)', () => {
+    renderSchema(
+      buildForm('input-month', 'm', '2024-01,2024-06', {
+        selectionMode: 'range',
+        shortcuts: [
+          { label: 'only start', start: '2024-06' },
+          null,
+          { label: 'ok', start: '2024-06', end: '2024-07' },
+        ] as any,
+      }),
+    );
+    const buttons = document.querySelectorAll('[data-testid="period-shortcut-month"]');
+    expect(buttons.length).toBe(1);
+    expect((buttons[0] as HTMLElement).textContent).toBe('ok');
+  });
+});
+
 describe('period family — range selectionMode', () => {
   it('input-month range emits a delimiter-joined value and normalizes reversed ends', async () => {
     renderSchema(

@@ -141,6 +141,77 @@ describe('input-datetime — D12 time sub-field no digit doubling', () => {
   });
 });
 
+describe('input-datetime renderer — timeFormat granularity (P1-1)', () => {
+  function buildTimeFormatForm(initialValue: string, extra: Record<string, unknown> = {}) {
+    return {
+      type: 'form',
+      id: 'datetime-format-form',
+      data: { at: initialValue },
+      submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+      body: [
+        {
+          type: 'input-datetime',
+          name: 'at',
+          label: 'At',
+          valueFormat: 'YYYY-MM-DD HH:mm:ss',
+          ...extra,
+        },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'component:submit', componentId: 'datetime-format-form' },
+        },
+      ],
+    } as any;
+  }
+
+  it('renders a seconds sub-field when timeFormat includes ss', async () => {
+    renderSchema(buildTimeFormatForm('2024-06-09 14:30:00', { timeFormat: 'HH:mm:ss' }));
+    fireEvent.click(screen.getByTestId('date-trigger'));
+    const popover = await screen.findByTestId('date-popover');
+    expect(within(popover).getByLabelText('Second')).toBeTruthy();
+  });
+
+  it('does not render a seconds sub-field for the default HH:mm timeFormat', async () => {
+    renderSchema(buildTimeFormatForm('2024-06-09 14:30:00'));
+    fireEvent.click(screen.getByTestId('date-trigger'));
+    const popover = await screen.findByTestId('date-popover');
+    expect(within(popover).queryByLabelText('Second')).toBeNull();
+  });
+
+  it('commits a typed second via the seconds sub-field', async () => {
+    renderSchema(buildTimeFormatForm('2024-06-09 14:30:00', { timeFormat: 'HH:mm:ss' }));
+    fireEvent.click(screen.getByTestId('date-trigger'));
+    const popover = await screen.findByTestId('date-popover');
+    const second = within(popover).getByLabelText('Second') as HTMLInputElement;
+    fireEvent.change(second, { target: { value: '45' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(1));
+    expect(submitCalls[0].at).toBe('2024-06-09 14:30:45');
+  });
+
+  it('picking a date preserves seconds when timeFormat includes ss', async () => {
+    renderSchema(buildTimeFormatForm('2024-06-09 14:30:20', { timeFormat: 'HH:mm:ss' }));
+    const popover = await openPicker();
+    pickDay(popover, 15);
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(1));
+    expect(submitCalls[0].at).toBe('2024-06-15 14:30:20');
+  });
+
+  it('default timeFormat HH:mm zeroes seconds on a date pick', async () => {
+    renderSchema(buildTimeFormatForm('2024-06-09 14:30:20'));
+    const popover = await openPicker();
+    pickDay(popover, 15);
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(1));
+    expect(submitCalls[0].at).toBe('2024-06-15 14:30:00');
+  });
+});
+
 describe('input-datetime — min/max across entry paths (D9)', () => {
   it('clamps a time-typed value that escapes below minDate back into [min,max]', async () => {
     renderSchema({

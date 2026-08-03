@@ -48,6 +48,46 @@ const utcDateInput = {
   ],
 };
 
+const dateFamilyComposite = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      valuesPath: 'ui.dates',
+      data: {
+        when: '2024-06-09',
+        at: '2024-06-09 14:30',
+        open: '08:30',
+        range: '2024-06-01,2024-06-10',
+        month: '2024-06',
+        quarter: '2024-Q3',
+        year: '2024',
+      },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        { type: 'input-date', name: 'when', label: 'When' },
+        { type: 'input-datetime', name: 'at', label: 'Appointment' },
+        { type: 'input-time', name: 'open', label: 'Open at' },
+        {
+          type: 'date-range',
+          name: 'range',
+          label: 'Date range',
+          shortcuts: [{ label: 'Last 7 days', start: '2024-06-03', end: '2024-06-10' }],
+        },
+        { type: 'input-month', name: 'month', label: 'Month' },
+        { type: 'input-quarter', name: 'quarter', label: 'Quarter' },
+        { type: 'input-year', name: 'year', label: 'Year' },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+    {
+      type: 'text',
+      text:
+        '${submitted && ui.dates ? "Date: " + ui.dates.when + " | " + ui.dates.at + " | " + ui.dates.open + " | " + ui.dates.range + " | " + ui.dates.month + " | " + ui.dates.quarter + " | " + ui.dates.year : ""}',
+    },
+  ],
+};
+
 export function InputDateLabPage() {
   return (
     <MultiScenarioLabPage
@@ -64,6 +104,12 @@ export function InputDateLabPage() {
           description:
             'utc:true stores UTC components so the value round-trips without timezone drift.',
           schema: utcDateInput,
+        },
+        {
+          title: 'Date family composite submit (bug 73 pattern)',
+          description:
+            'All seven date-family controls in one form: real picker/input into each control, then submit. valuesPath publishes the committed values into the page scope where an outer text echoes all seven values.',
+          schema: dateFamilyComposite,
         },
       ]}
     />
