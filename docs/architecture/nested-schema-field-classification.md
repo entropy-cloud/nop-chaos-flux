@@ -142,6 +142,38 @@ export interface FluxSchemaDefinitionShape extends FluxValueShapeBase {
 
 `schema-definition` case：按 `fieldRules` 校验；`actionValue` 字段走 `validateActionShape`（+ §3.7 内建 action definition）；`literal` 字段按字面量校验（取代 `booleanKeys`/`validateNestedBooleanFields`）。**包边界注**：`matchesFluxValueShape` 在 flux-core（无 validateActionShape），flux-core 侧需本地近似校验（isPlainObject + action 字符串键）。
 
+#### 3.5.1 `analyzeSchemaInput` 主遍历的 kind 递归（schema 树统一递归入口）
+
+除上述 shape 消费（schema-definition 内部 fieldRules 校验），`analyzeSchemaInput`（`shape-validation-analyze.ts`）还负责**整个 schema 树的递归遍历**——对每个节点先 `inspectSchemaNodeFields`（校验 fields，含 `event`→`validateActionShape`、`reaction`、`meta`、unknown-property 检测），再遍历子字段，按 `classifyField`（`fields.ts`）得到的 kind 决定是否递归进入子节点：
+
+| kind                                                                  | 递归行为                                                                                |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `region`                                                              | 子节点（SchemaInput/SchemaInput[]）按 region 语义递归（`createRegionTraversalState`）   |
+| `value-or-region`（且值是 SchemaInput）                               | 同 region 递归                                                                          |
+| `schema-array` / `schema`                                             | 子节点（有 `type` 的 SchemaInput）按 child renderer 递归（`createChildTraversalState`） |
+| `propContracts[key]` 声明 schema-definition shape                     | 走 `analyzeSchemaDefinitionField`（按 fieldRules / child renderer 递归，§3.3）          |
+| `prop` / `event` / `reaction` / `meta` / `literal` / `ignored` / 其他 | 不递归（叶子值，或由独立校验路径处理）                                                  |
+
+**编译/校验对称性**：编译路径（`node-compiler.ts` §3.4）对 `region`/`schema`/`schema-array` 都做 region 提取/保持模板；校验路径（`analyzeSchemaInput`）必须**同样递归**这三种 kind，否则"一侧编译一侧不校验"，嵌套 schema 的字段错误（未知属性、action 缺失等）会被静默放行。
+
+#### 3.5.2 机制缺口修复：columns 不递归（2026-08-03）
+
+`SchemaFieldKind` 早已定义 `schema-array`/`schema`（§3.2），但 `analyzeSchemaInput` 校验路径**只递归 `region`/`value-or-region`，漏了 `schema-array`/`schema`**。叠加 `DEFAULT_FIELD_RULES.columns`（`fields.ts`）原为 `kind:'prop'`——所有未显式声明 `propContracts.columns` 的 renderer（array-editor 等），columns 元素**完全不进校验**，column 内的 `onEvent`/action 字段错误被隐藏。
+
+**实测后果**：ERP 采购订单 add 弹窗打不开。根因是 view.xml 的 gen-control 手写了 AMIS 格式 `onEvent: { change: { actions: [{ actionType: 'setValue' }] } }`（flux 用 renderer 显式声明的 `onChange`/`onClick`，值是单个 ActionSchema，不支持 AMIS 事件映射）。由于 columns 不递归校验，这个格式错误从不报错、也无 schema 路径，导致长时间定位（最终靠逐层二分到 column 的 onEvent）。
+
+**修复**（统一机制，不每个组件单独处理）：
+
+1. `analyzeSchemaInput`（`shape-validation-analyze.ts`）补全 `schema-array`/`schema` kind 的递归——对每个有 `type` 的元素按 child renderer `analyzeSchemaInput` 递归（`createChildTraversalState`）；
+2. `DEFAULT_FIELD_RULES.columns`（`fields.ts`）kind 从 `'prop'` 改为 `'schema-array'`——让所有未显式声明 columns 的 renderer 自动递归校验列元素。
+
+**效果**：array-editor/table 等的 columns 元素现在自动进入 `inspectSchemaNodeFields`，column 内的 `onEvent` 触发 `validateActionShape`，报 `invalid-action-shape`（路径如 `/columns/0/onEvent/action`），不再静默隐藏。renderer 显式声明的 `onChange` + flux `action` 格式合法不报错。
+
+**待后续**（应用层，不在 flux 机制范围）：
+
+- ERP view.xml 的 `onEvent`（AMIS 事件映射）+ `actionType`（253 处源文件）改为 flux 格式（`onChange` + `action`）；
+- `classifyField` 正则 `/^on[A-Z]/`（`fields.ts:44`）把 `onEvent` 归为 `event` kind——onEvent 非 flux 合法字段（flux 用 renderer 显式声明的 onChange/onClick），后续可考虑改为报 unknown-property（当前至少触发 validateActionShape 报错带路径，已能定位）。
+
 ### 3.6 机制统一：schema-definition 取代 deepFields（删除清单）
 
 `RendererDeepFieldDefinition` 的三项职责全部被 schema-definition 取代：
