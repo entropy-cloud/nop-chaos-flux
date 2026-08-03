@@ -18,13 +18,13 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `name`、`label`、`items`、`multiple`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`itemKey`、`removeWhen`。
+- 正式字段为 `name`、`label`、`items`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`itemKey`、`removeWhen`（`multiple` 不在 ComboSchema 中——combo 是重复对象项容器，数组身份由字段值本身决定）。
 - `removeWhen`（可选）：相对当前 item 求值的布尔表达式字符串（`${...}` 形式，如 `'${value.locked !== true}'`）。声明后，某行仅在表达式对该 item 求值为真时允许删除；求值为假的行删除按钮禁用。未声明时所有行在 `minItems` 地板之上均可删除。求值出错 fail-open。详见 `docs/architecture/array-field.md` 的 _Per-Row Delete Gating_。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `name`、`items`、`multiple`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`itemKey`: `value`
+- `name`、`items`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`itemKey`: `value`
 - `items`: `region`（regionKey `items`，参数 `index`/`value`）
 - `onAdd`、`onRemove`、`onReorder`: `event`
 
@@ -47,7 +47,7 @@
 
 ## 10. 样式与 DOM marker 约定
 
-- 根节点输出 `nop-combo` marker；每项输出 `nop-combo__item` marker。
+- 根节点输出 `nop-combo` marker；每项输出 `data-slot="combo-item"`（早期 BEM `nop-combo__item` 已于 C-06 移除，稳定契约为 data-slot 标记）。
 
 ## 11. 实现拆分建议
 
