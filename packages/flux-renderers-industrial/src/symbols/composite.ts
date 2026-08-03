@@ -1,0 +1,124 @@
+import { Group } from 'leafer-ui';
+import { toShapeAttrs } from './base-shapes/common.js';
+import type { LeafNode, ScadaSymbolPropSchema, ScadaSymbolProps } from './symbol-types.js';
+
+/**
+ * 复合图元公共装配（I9.1–I9.2，design-symbols.md §4.3）：
+ * - 复合根 = Group，子形状按角色命名：body（主体）/rotor|impeller|blades|needle（旋转件）/
+ *   core（开关件）/liquid|bar（长度驱动件）/label（文本）；
+ * - applyProps 按角色路由增量：rotation → 旋转件，width/height → 长度件 ?? 主体，
+ *   text/textColor → 文本件，位置/可见性/透明度 → 根，其余样式字段 → 主体。
+ */
+
+export interface CompositeParts {
+  root: LeafNode;
+  body: LeafNode;
+  rotor?: LeafNode;
+  core?: LeafNode;
+  extent?: LeafNode;
+  text?: LeafNode;
+}
+
+export interface CompositeApplyOptions {
+  /** rotation 属性路由目标：'rotor'（动画驱动面，缺省）| 'root'（整机旋转）。 */
+  rotationTarget?: 'rotor' | 'root';
+}
+
+const ROOT_FIELDS = new Set(['x', 'y', 'visible', 'opacity', 'scale']);
+const BODY_FIELDS = new Set(['fill', 'stroke', 'strokeWidth', 'strokeDash', 'shadow', 'textColor']);
+const EXTENT_FIELDS = new Set(['width', 'height']);
+
+/** 节点属性写入（leafer `set` 契约；mock 面同形状）。 */
+export function setAttrs(node: LeafNode, attrs: Record<string, unknown>): void {
+  (node as unknown as { set: (data: Record<string, unknown>) => void }).set(attrs);
+}
+
+/** 默认路由：rotation → 旋转件；width/height → 长度件 ?? 主体；样式 → body；位置/可见性 → 根。 */
+export function applyCompositeProps(
+  root: LeafNode,
+  parts: CompositeParts,
+  props: Partial<ScadaSymbolProps>,
+  options: CompositeApplyOptions = {},
+): void {
+  for (const [key, value] of Object.entries(props)) {
+    if (value === undefined) continue;
+    if (key === 'rotation') {
+      const target = options.rotationTarget === 'root' ? undefined : (parts.rotor ?? parts.core);
+      if (target) setAttrs(target, { rotation: value });
+      else setAttrs(root, { rotation: value });
+      continue;
+    }
+    if (key === 'text' && parts.text) {
+      setAttrs(parts.text, { text: value });
+      continue;
+    }
+    if (key === 'textColor' && parts.text) {
+      setAttrs(parts.text, { fill: value });
+      continue;
+    }
+    if (ROOT_FIELDS.has(key)) {
+      if (key === 'scale') setAttrs(root, { scaleX: value, scaleY: value });
+      else setAttrs(root, { [key]: value });
+      continue;
+    }
+    if (EXTENT_FIELDS.has(key) && parts.extent) {
+      setAttrs(parts.extent, { [key]: value });
+      continue;
+    }
+    if (BODY_FIELDS.has(key)) {
+      setAttrs(parts.body, toNodePatchOf(parts.body, key, value));
+      continue;
+    }
+    // 其余声明层字段（custom/states/bindings/animations）不写节点
+  }
+}
+
+function toNodePatchOf(node: LeafNode, key: string, value: unknown): Record<string, unknown> {
+  if (key === 'strokeDash') return { dashPattern: value };
+  if (key === 'textColor' && node.tag === 'Text') return { fill: value };
+  return { [key]: value };
+}
+
+/** 复合根创建：Group + 角色子节点挂载，返回根与角色 parts。 */
+export function createCompositeGroup(
+  props: ScadaSymbolProps,
+  children: Array<{ name: string; node: LeafNode }>,
+): { root: LeafNode; parts: CompositeParts } {
+  const attrs = toShapeAttrs(props);
+  const root = new Group(attrs) as LeafNode;
+  const parts: CompositeParts = { root, body: children[0]?.node };
+  for (const child of children) {
+    (root as unknown as { add: (node: LeafNode) => void }).add(child.node);
+    if (child.name === 'body') parts.body = child.node;
+    else if (child.name === 'rotor' || child.name === 'impeller' || child.name === 'blades' || child.name === 'needle') {
+      parts.rotor = child.node;
+    } else if (child.name === 'core') parts.core = child.node;
+    else if (child.name === 'liquid' || child.name === 'bar') parts.extent = child.node;
+    else if (child.name === 'label') parts.text = child.node;
+  }
+  return { root, parts };
+}
+
+/** 复合图元公共属性 schema（几何/样式/文本/声明层字段）。 */
+export const compositePropSchema: ScadaSymbolPropSchema = {
+  x: { type: 'number' },
+  y: { type: 'number' },
+  width: { type: 'number' },
+  height: { type: 'number' },
+  rotation: { type: 'number' },
+  scale: { type: 'number' },
+  visible: { type: 'boolean' },
+  opacity: { type: 'number' },
+  fill: { type: 'string' },
+  stroke: { type: 'string' },
+  strokeWidth: { type: 'number' },
+  strokeDash: { type: 'array' },
+  shadow: { type: 'object' },
+  text: { type: 'string' },
+  textColor: { type: 'string' },
+  custom: { type: 'object' },
+  states: { type: 'object' },
+  bindings: { type: 'object' },
+  animations: { type: 'object' },
+  events: { type: 'object' },
+};

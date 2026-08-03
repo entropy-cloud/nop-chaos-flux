@@ -17,8 +17,10 @@ import {
   type ViewportState,
 } from './viewport.js';
 import { toNodePatch } from '../symbols/symbol-factory.js';
+import { deepMergeInstanceProps } from '../symbols/compound.js';
 import type { ScadaSymbolProps } from '../symbols/symbol-types.js';
 import type { PointStore } from '../binding/point-store.js';
+import type { ScadaAnimation, ScadaStateDeclaration } from '../serialization/config-types.js';
 import { EventBridge, type ScadaSymbolEventName, type ScadaSymbolEventPayload } from './event-bridge.js';
 import { HitResolver } from './hit.js';
 import { validateScadaConfig } from '../serialization/validate.js';
@@ -173,6 +175,21 @@ export class ScadaCanvasEngine {
   /** 配置图元节点按 id 查找（含 group 子树；I8.2 视觉状态应用实例属性解析）。 */
   getConfigNode(id: string): ScadaSymbolNode | undefined {
     return this.adapter.getNode(id);
+  }
+
+  /**
+   * 图元级声明查询（I9 图元装配）：states/animations 经 `defaults ∪ 实例` 深合并返回，
+   * 使符号定义自带的状态/动画默认声明对 I6.3 联动层可见（实例声明覆盖 defaults）。
+   */
+  getSymbolDeclarations(id: string): { states?: ScadaStateDeclaration; animations?: ScadaAnimation[] } | undefined {
+    const leaf = this.registry.get(id);
+    if (!leaf?.definition) return undefined;
+    const node = this.adapter.getNode(id);
+    const merged = deepMergeInstanceProps(
+      leaf.definition.defaults,
+      (node ?? {}) as unknown as ScadaSymbolProps,
+    );
+    return { states: merged.states, animations: merged.animations };
   }
 
   getSymbols(): RegistryLeaf[] {

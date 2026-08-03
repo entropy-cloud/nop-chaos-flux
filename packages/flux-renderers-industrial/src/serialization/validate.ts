@@ -181,6 +181,18 @@ function validateSymbolNode(
   if ('visible' in nodeObj && typeof nodeObj.visible !== 'boolean') {
     errors.push(`${scope}.visible must be a boolean`);
   }
+  if ('flow' in nodeObj && !isPlainObject(nodeObj.flow)) {
+    errors.push(`${scope}.flow must be an object`);
+  } else if (nodeObj.flow !== undefined) {
+    const flow = nodeObj.flow as Record<string, unknown>;
+    if (typeof flow.enabled !== 'boolean') {
+      errors.push(`${scope}.flow.enabled must be a boolean`);
+    }
+    checkNumberField(flow, 'speed', errors, `${scope}.flow`);
+    if ('dash' in flow && (!Array.isArray(flow.dash) || flow.dash.some((v) => typeof v !== 'number'))) {
+      errors.push(`${scope}.flow.dash must be an array of numbers`);
+    }
+  }
   for (const field of ['fill', 'stroke', 'text', 'textColor', 'fontFamily', 'fontWeight']) {
     checkStringField(nodeObj, field, errors, scope);
   }

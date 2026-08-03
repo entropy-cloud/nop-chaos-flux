@@ -72,6 +72,8 @@ export interface ScadaSymbolNode {
   text?: string;
   textColor?: string;
   textSize?: number;
+  /** 管线流动参数（I9.4 管道图元经 applyProps 增量消费；I2.2 §4.4 flow 行）。 */
+  flow?: { enabled: boolean; speed: number; dash?: number[] };
   custom?: Record<string, unknown>;
   bindings?: Record<string, ScadaBinding>;
   states?: ScadaStateDeclaration;

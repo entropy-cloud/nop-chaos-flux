@@ -168,8 +168,8 @@ describe('builtin base shapes (I5.4)', () => {
       config: { world: { x: 0, y: 0, scale: 1 } },
     }) as unknown as Record<string, unknown>;
 
-  it('should register exactly the 11 builtin symbols on load (8 shapes + image/video placeholders + group)', () => {
-    expect(builtinScadaSymbolDefinitions).toHaveLength(11);
+  it('should register exactly the 24 builtin symbols on load (8 shapes + image/video placeholders + group + device/instrument/sensor-control 4 族 12 个 + pipe-junction)', () => {
+    expect(builtinScadaSymbolDefinitions).toHaveLength(24);
     for (const def of builtinScadaSymbolDefinitions) {
       expect(hasScadaSymbol(def.type)).toBe(true);
     }
