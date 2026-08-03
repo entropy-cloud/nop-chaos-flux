@@ -157,13 +157,15 @@
     {
       "id": "item1",
       "left": { "type": "field", "field": "username" },
-      "op": "contains",
+      "op": "like",
       "right": "admin"
     },
     { "id": "item2", "left": { "type": "field", "field": "age" }, "op": "greater", "right": 18 }
   ]
 }
 ```
+
+> 运算符使用组件内置 vocabulary（如 `like`/`equal`/`greater`），自定义运算符的 `value` 也应与同一 vocabulary 保持一致（见 `docs/components/condition-builder/design.md` §4）。
 
 ---
 

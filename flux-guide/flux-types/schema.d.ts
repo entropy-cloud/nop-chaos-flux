@@ -699,6 +699,24 @@ export interface ArrayEditorSchema extends BoundFieldSchemaBase {
 export interface ConditionBuilderSchema extends BoundFieldSchemaBase {
   type: 'condition-builder';
   value?: SchemaValue;
+  fields?: SchemaValue;
+  operators?: SchemaValue;
+  formulas?: SchemaValue;
+  formulaForIf?: SchemaValue;
+  builderMode?: SchemaValue;
+  embed?: SchemaValue;
+  showAndOr?: SchemaValue;
+  showNot?: SchemaValue;
+  showIf?: SchemaValue;
+  draggable?: SchemaValue;
+  uniqueFields?: SchemaValue;
+  maxDepth?: SchemaValue;
+  maxItemsPerGroup?: SchemaValue;
+  placeholder?: SchemaValue;
+  addConditionLabel?: SchemaValue;
+  addGroupLabel?: SchemaValue;
+  removeConditionLabel?: SchemaValue;
+  removeGroupLabel?: SchemaValue;
 }
 
 export interface ObjectFieldSchema extends BoundFieldSchemaBase {
