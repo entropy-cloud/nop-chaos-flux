@@ -2,14 +2,30 @@
 // Do not edit manually. Regenerate with: node flux-guide/scripts/generate-types.mjs
 
 import type {
+  AiAttachmentsSchema,
+  AiBubbleSchema,
+  AiChatSchema,
+  AiCitationsSchema,
+  AiConversationsSchema,
+  AiFeedbackSchema,
+  AiMessageListSchema,
+  AiPromptsSchema,
+  AiSenderSchema,
+  AiSuggestionsSchema,
+  AiTokenUsageSchema,
+  AiToolCallSchema,
+  AiVoiceInputSchema,
+  AiWelcomeSchema,
   AlertSchema,
   ArrayEditorSchema,
   ArrayFieldSchema,
   AudioSchema,
   BadgeSchema,
+  BarcodeInputSchema,
   ButtonGroupSchema,
   ButtonGroupSelectSchema,
   ButtonSchema,
+  CalendarSchema,
   CardSchema,
   CardsSchema,
   CarouselSchema,
@@ -38,6 +54,7 @@ import type {
   FlexSchema,
   FormSchema,
   FragmentSchema,
+  GanttSchema,
   GridSchema,
   HtmlSchema,
   IconPickerSchema,
@@ -59,6 +76,7 @@ import type {
   InputTreeSchema,
   InputYearSchema,
   JsonViewSchema,
+  KanbanSchema,
   KeyValueSchema,
   LinkSchema,
   ListSchema,
@@ -196,7 +214,25 @@ export type FluxSchema =
   | SwipeCellSchema
   | CountdownSchema
   | NoticeBarSchema
-  | CodeEditorSchema;
+  | CodeEditorSchema
+  | GanttSchema
+  | KanbanSchema
+  | CalendarSchema
+  | BarcodeInputSchema
+  | AiChatSchema
+  | AiMessageListSchema
+  | AiBubbleSchema
+  | AiSenderSchema
+  | AiConversationsSchema
+  | AiWelcomeSchema
+  | AiPromptsSchema
+  | AiFeedbackSchema
+  | AiToolCallSchema
+  | AiAttachmentsSchema
+  | AiCitationsSchema
+  | AiVoiceInputSchema
+  | AiTokenUsageSchema
+  | AiSuggestionsSchema;
 
 export interface FluxSchemaByType {
   'page': PageSchema;
@@ -295,17 +331,51 @@ export interface FluxSchemaByType {
   'countdown': CountdownSchema;
   'notice-bar': NoticeBarSchema;
   'code-editor': CodeEditorSchema;
+  'gantt': GanttSchema;
+  'kanban': KanbanSchema;
+  'calendar': CalendarSchema;
+  'barcode-input': BarcodeInputSchema;
+  'ai-chat': AiChatSchema;
+  'ai-message-list': AiMessageListSchema;
+  'ai-bubble': AiBubbleSchema;
+  'ai-sender': AiSenderSchema;
+  'ai-conversations': AiConversationsSchema;
+  'ai-welcome': AiWelcomeSchema;
+  'ai-prompts': AiPromptsSchema;
+  'ai-feedback': AiFeedbackSchema;
+  'ai-tool-call': AiToolCallSchema;
+  'ai-attachments': AiAttachmentsSchema;
+  'ai-citations': AiCitationsSchema;
+  'ai-voice-input': AiVoiceInputSchema;
+  'ai-token-usage': AiTokenUsageSchema;
+  'ai-suggestions': AiSuggestionsSchema;
 }
 
 export type {
+  AiAttachmentsSchema,
+  AiBubbleSchema,
+  AiChatSchema,
+  AiCitationsSchema,
+  AiConversationsSchema,
+  AiFeedbackSchema,
+  AiMessageListSchema,
+  AiPromptsSchema,
+  AiSenderSchema,
+  AiSuggestionsSchema,
+  AiTokenUsageSchema,
+  AiToolCallSchema,
+  AiVoiceInputSchema,
+  AiWelcomeSchema,
   AlertSchema,
   ArrayEditorSchema,
   ArrayFieldSchema,
   AudioSchema,
   BadgeSchema,
+  BarcodeInputSchema,
   ButtonGroupSchema,
   ButtonGroupSelectSchema,
   ButtonSchema,
+  CalendarSchema,
   CardSchema,
   CardsSchema,
   CarouselSchema,
@@ -334,6 +404,7 @@ export type {
   FlexSchema,
   FormSchema,
   FragmentSchema,
+  GanttSchema,
   GridSchema,
   HtmlSchema,
   IconPickerSchema,
@@ -355,6 +426,7 @@ export type {
   InputTreeSchema,
   InputYearSchema,
   JsonViewSchema,
+  KanbanSchema,
   KeyValueSchema,
   LinkSchema,
   ListSchema,
