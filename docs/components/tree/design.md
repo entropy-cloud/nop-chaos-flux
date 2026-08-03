@@ -81,6 +81,10 @@ E3 plan（搜索/图标/引导线）落地时对四条机制作出显式裁定�
 interface TreeSchema extends BaseSchema {
   type: 'tree';
   data: SchemaValue;
+  // Renderer-level display label used as the tree aria-label (falls back to `title`, then node id).
+  label?: string;
+  // Renderer-level display title used as the tree aria-label (falls back to node id).
+  title?: string;
   childrenKey?: string;
   labelField?: string;
   keyField?: string;
@@ -89,6 +93,8 @@ interface TreeSchema extends BaseSchema {
   initiallyExpanded?: boolean | number;
   expandOnClickNode?: boolean;
   statusPath?: string;
+  // 仅驱动 aria-multiselectable 发布，无选择逻辑（§2 不采纳行）
+  multiple?: boolean;
   // E3 树展示 UX 增强（搜索/图标/引导线）
   searchable?: boolean;
   showIcon?: boolean;
@@ -111,7 +117,7 @@ E3 新增字段（均缺省不渲染，无回归）：
 
 ## 6. 字段分类
 
-- `data`、`childrenKey`、`labelField`、`keyField`、`initiallyExpanded`、`expandOnClickNode`、`statusPath`、`searchable`、`showIcon`、`iconField`、`showGuideLine`: `value`（prop）
+- `data`、`label`、`title`、`childrenKey`、`labelField`、`keyField`、`initiallyExpanded`、`expandOnClickNode`、`statusPath`、`multiple`、`searchable`、`showIcon`、`iconField`、`showGuideLine`: `value`（prop）
 - `node`: `region`
 - `empty`: `value-or-region`
 
