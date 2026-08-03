@@ -1,14 +1,18 @@
 import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject } from '@nop-chaos/flux-core';
+import type { ScadaConfig } from './serialization/config-types.js';
+
+export type { ScadaConfig, ScadaSymbolNode, ScadaPointDeclaration } from './serialization/config-types.js';
 
 /**
  * `scada-canvas` renderer schema（契约：`docs/components/industrial-hmi/design-renderer.md` §4.1）。
- * 组态 JSON 内部类型（ScadaConfig/ScadaSymbolNode）随 I5.3 `serialization/config-types.ts`
- * 落定后收紧 `config` 类型并在本 barrel 再导出，骨架期以 SchemaObject 承接对象形态。
+ * 组态 JSON 内部类型（ScadaConfig/ScadaSymbolNode）自 I5.3 `serialization/config-types.ts` 再导出；
+ * `config` 字段对象形态按 `SchemaObject` 承载（BaseSchema 索引签名约束），运行时经
+ * `parseScadaConfig`/`validateScadaConfig` 收紧为 `ScadaConfig` 结构。
  */
 export interface ScadaCanvasSchema extends BaseSchema {
   type: 'scada-canvas';
   /** 组态 JSON：内嵌字符串（JSON 文本）或对象（已解析）；支持表达式绑定（source-enabled） */
-  config: string | SchemaObject;
+  config: string | (ScadaConfig & SchemaObject);
   /** 画布尺寸（px）；缺省填满容器 */
   width?: number;
   height?: number;

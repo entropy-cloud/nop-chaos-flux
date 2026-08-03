@@ -1,7 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createRendererRegistry, registerRendererDefinitions } from '@nop-chaos/flux-core';
 import { industrialRendererDefinitions } from './renderer-definitions.js';
 import { registerScadaRenderers } from './index.js';
+
+// index.ts 引入链含 registerBuiltinScadaSymbols → base-shapes → leafer-ui；
+// happy-dom 无 canvas 上下文，mock leafer-ui 类保证包入口在纯 JS 环境可加载。
+vi.mock('leafer-ui', () => import('./test-support/leafer-ui-mock.js'));
 
 describe('industrialRendererDefinitions', () => {
   it('should export an array of RendererDefinition', () => {

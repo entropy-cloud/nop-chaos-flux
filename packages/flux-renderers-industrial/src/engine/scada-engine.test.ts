@@ -1,0 +1,231 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { resetLeaferMock, MockRect } from '../test-support/leafer-ui-mock.js';
+import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
+import { registerScadaSymbol, unregisterScadaSymbol } from '../symbols/symbol-registry.js';
+import { scadaTestHandleKey } from './test-handle.js';
+import { ScadaCanvasEngine } from './scada-engine.js';
+import type { ScadaConfig } from '../serialization/config-types.js';
+
+vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
+vi.mock('@leafer-in/viewport', () => ({}));
+
+const makeContainer = () => {
+  const el = document.createElement('div');
+  Object.defineProperty(el, 'clientWidth', { value: 800, configurable: true });
+  Object.defineProperty(el, 'clientHeight', { value: 600, configurable: true });
+  return el;
+};
+
+const validConfig = (overrides: Record<string, unknown> = {}) => ({
+  version: 1,
+  symbols: [
+    { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#ff0000' },
+    { id: 'rect-2', type: 'scada-rect', x: 200, y: 20, width: 100, height: 50, fill: '#00ff00' },
+  ],
+  ...overrides,
+});
+
+beforeEach(() => {
+  resetLeaferMock();
+  registerBuiltinScadaSymbols();
+});
+
+describe('ScadaCanvasEngine lifecycle (I5.1)', () => {
+  it('create should assemble three layers with viewport tree type (A1)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const app = engine.app as unknown as {
+      config: { tree: { type: string } };
+      tree: unknown;
+      ground: unknown;
+      sky: unknown;
+    };
+    expect(app.config.tree.type).toBe('viewport');
+    expect(engine.tree).toBe(app.tree);
+    expect(engine.ground).toBe(app.ground);
+    expect(engine.sky).toBe(app.sky);
+    expect((app.tree as { zoomLayer?: unknown }).zoomLayer).toBeDefined();
+  });
+
+  it('create should forward performance options into leafer config', () => {
+    const engine = ScadaCanvasEngine.create({
+      container: makeContainer(),
+      performance: { usePartRender: false, lazySpeard: 50 },
+    });
+    const config = (engine.app as unknown as { config: Record<string, unknown> }).config;
+    expect(config.usePartRender).toBe(false);
+    expect(config.lazySpeard).toBe(50);
+    expect(config.usePartLayout).toBe(true);
+  });
+
+  it('create should apply background color to the ground layer', () => {
+    const engine = ScadaCanvasEngine.create({
+      container: makeContainer(),
+      background: { color: '#112233' },
+    });
+    const ground = engine.ground as unknown as { fill?: string };
+    expect(ground.fill).toBe('#112233');
+    engine.destroy();
+  });
+
+  it('tree render event should drive onRender frames (A2)', () => {
+    const onRender = vi.fn();
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), onRender });
+    engine.tree.emit('render', {});
+    expect(onRender).toHaveBeenCalledTimes(1);
+    expect(onRender).toHaveBeenCalledWith({ frame: 1, dirtyBlocks: 0 });
+    engine.tree.emit('render', {});
+    expect(onRender).toHaveBeenCalledWith({ frame: 2, dirtyBlocks: 0 });
+  });
+
+  it('destroy should be idempotent, release app, remove handle and detach render listener', () => {
+    const onRender = vi.fn();
+    const engine = ScadaCanvasEngine.create({
+      container: makeContainer(),
+      exposeTestHandle: true,
+      cid: 7,
+      onRender,
+    });
+    const app = engine.app as unknown as { destroyed: boolean };
+    engine.destroy();
+    engine.destroy();
+    expect(app.destroyed).toBe(true);
+    expect((window as unknown as Record<string, unknown>)[scadaTestHandleKey(7)]).toBeUndefined();
+    engine.tree.emit('render', {});
+    expect(onRender).not.toHaveBeenCalled();
+    expect(engine.registry.size()).toBe(0);
+  });
+
+  it('duplicate create should yield independent instances with distinct cids', () => {
+    const a = ScadaCanvasEngine.create({ container: makeContainer(), exposeTestHandle: true });
+    const b = ScadaCanvasEngine.create({ container: makeContainer(), exposeTestHandle: true });
+    expect(a).not.toBe(b);
+    a.destroy();
+    b.destroy();
+  });
+
+  it('reset should rebuild the scene tree', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(validConfig() as ScadaConfig);
+    expect(engine.registry.size()).toBe(2);
+    expect(engine.getSymbols().map((l) => l.id)).toEqual(['rect-1', 'rect-2']);
+    engine.reset(validConfig({ symbols: [{ id: 'only', type: 'scada-rect', x: 0, y: 0 }] }) as ScadaConfig);
+    expect(engine.registry.size()).toBe(1);
+    expect(engine.getSymbol('only')).toBeDefined();
+    expect(engine.getSymbol('rect-1')).toBeUndefined();
+  });
+});
+
+describe('ScadaCanvasEngine test handle (I5.1)', () => {
+  it('should mount window.__flux_scada_<cid> with engine/tree/app/getSymbol/getViewport/forceRender', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), exposeTestHandle: true, cid: 42 });
+    engine.reset(validConfig() as ScadaConfig);
+    const handle = (window as unknown as Record<string, unknown>)[scadaTestHandleKey(42)] as {
+      engine: unknown;
+      tree: unknown;
+      app: unknown;
+      getSymbol: (id: string) => unknown;
+      getViewport: () => unknown;
+      forceRender: () => void;
+    };
+    expect(handle).toBeDefined();
+    expect(handle.engine).toBe(engine);
+    expect(handle.tree).toBe(engine.tree);
+    expect(handle.app).toBe(engine.app);
+    expect((handle.getSymbol('rect-1') as { fill?: string }).fill).toBe('#ff0000');
+    expect(handle.getViewport()).toEqual({ x: 0, y: 0, scale: 1 });
+    const treeRender = vi.fn();
+    engine.tree.on('render', treeRender);
+    handle.forceRender();
+    expect(treeRender).toHaveBeenCalled();
+    engine.destroy();
+    expect((window as unknown as Record<string, unknown>)[scadaTestHandleKey(42)]).toBeUndefined();
+  });
+
+  it('should not mount a handle when exposeTestHandle is false', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), cid: 43 });
+    expect((window as unknown as Record<string, unknown>)[scadaTestHandleKey(43)]).toBeUndefined();
+    engine.destroy();
+  });
+});
+
+describe('ScadaCanvasEngine commands (I5.1/I5.2 wiring)', () => {
+  it('applyAttrs should batch-apply via generic set path and skip unknown ids', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(validConfig() as ScadaConfig);
+    engine.applyAttrs({ 'rect-1': { fill: '#123456' }, 'rect-2': { x: 999 }, missing: { fill: '#000' } });
+    expect((engine.getSymbol('rect-1')?.node as { fill: string }).fill).toBe('#123456');
+    expect((engine.getSymbol('rect-2')?.node as { x: number }).x).toBe(999);
+  });
+
+  it('applyAttrs should route to custom definition applyProps when provided', () => {
+    const applyProps = vi.fn();
+    registerScadaSymbol({
+      type: 'scada-test-custom',
+      name: 'Custom',
+      props: { x: { type: 'number' }, y: { type: 'number' }, fill: { type: 'string' } },
+      create: () => new MockRect({ x: 0, y: 0 }) as never,
+      applyProps,
+    });
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [{ id: 'c1', type: 'scada-test-custom', x: 1, y: 2 }] } as ScadaConfig);
+    engine.applyAttrs({ c1: { fill: '#abc' } });
+    expect(applyProps).toHaveBeenCalledWith(
+      engine.getSymbol('c1')?.node,
+      expect.objectContaining({ fill: '#abc' }),
+    );
+    unregisterScadaSymbol('scada-test-custom');
+  });
+
+  it('getSymbolProps / setSymbolProps / getSymbols should work as convenience commands', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(validConfig() as ScadaConfig);
+    expect(engine.getSymbols().map((l) => l.id)).toEqual(['rect-1', 'rect-2']);
+    engine.setSymbolProps('rect-1', { fill: '#00ff00' });
+    expect((engine.getSymbolProps('rect-1') as { fill?: string }).fill).toBe('#00ff00');
+    expect(engine.getSymbol('nope')).toBeUndefined();
+    expect(engine.getSymbolProps('nope')).toBeUndefined();
+  });
+
+  it('setViewport / zoomAt should drive zoomLayer move and scaleOfWorld', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.tree.zoomLayer as unknown as {
+      moveCalls: Array<{ x: number; y: number }>;
+      scaleOfWorldCalls: Array<{ world: { x: number; y: number }; scale: number }>;
+    };
+    const result = engine.setViewport({ x: 50, y: 30, scale: 2 });
+    expect(result).toEqual({ x: 50, y: 30, scale: 2 });
+    expect(zoomLayer.scaleOfWorldCalls).toHaveLength(1);
+    expect(zoomLayer.moveCalls.length).toBeGreaterThan(0);
+    const zoomed = engine.zoomAt({ x: 100, y: 100 }, 2);
+    expect(zoomed.scale).toBe(4);
+    expect(zoomLayer.scaleOfWorldCalls).toHaveLength(2);
+    expect(engine.getViewport()).toEqual({ x: 75, y: 65, scale: 4 });
+  });
+
+  it('setViewport should clamp scale beyond bounds', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    expect(engine.setViewport({ x: 0, y: 0, scale: 999 }).scale).toBe(20);
+  });
+
+  it('fit / center should update viewport state', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), width: 800, height: 600 });
+    const fitted = engine.fit({ x: 0, y: 0, width: 200, height: 100 }, 20);
+    expect(fitted.scale).toBe(3.8);
+    const centered = engine.center({ x: 0, y: 0, width: 200, height: 100 });
+    expect(centered.scale).toBe(3.8);
+  });
+
+  it('setSize should update size and resize the app', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.setSize(1024, 768);
+    const app = engine.app as unknown as { resizeCalls: Array<{ width: number; height: number }> };
+    expect(app.resizeCalls).toContainEqual({ width: 1024, height: 768 });
+  });
+
+  it('getWorldPoint / getViewportPoint should map coordinates through the viewport state', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.setViewport({ x: 10, y: 20, scale: 2 });
+    expect(engine.getWorldPoint({ x: 20, y: 40 })).toEqual({ x: 20, y: 40 });
+    expect(engine.getViewportPoint({ x: 30, y: 60 })).toEqual({ x: 40, y: 80 });
+  });
+});
