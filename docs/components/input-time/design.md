@@ -19,6 +19,7 @@
 ## 4. schema 设计
 
 - 建议正式字段为 `name`、`label`、`valueFormat`、`displayFormat`、`minTime`、`maxTime`、`required`。
+- **displayFormat 语义（2026-08-03 C2.4 收敛）**：原生 `<input type="time">` 的显示格式由浏览器固定为 `HH:mm`（含 `ss` 时 `HH:mm:ss`）；`displayFormat` 仅参与秒分辨率决策（`valueFormat`/`displayFormat` 任一含 `ss` 时原生输入启用秒粒度），不改变原生控件的显示字形。存储始终由 `valueFormat` 决定。
 
 ## 5. 字段分类
 

@@ -41,6 +41,7 @@
 ## 7.1 边界与校验契约（D4 / D6）
 
 - **bound 独立性（D4）**：设一端时间分量**不**变异另一端。`setTimeOn('start', …)` 调 `commitRange(base, endDate)`（end 透传不变），`setTimeOn('end', …)` 调 `commitRange(startDate, base)`（start 不变）。`normalizeRange` 仅在两端均存在且 start>end 时 swap，**不**清零时间分量。datetime-range 两端的时间分量彼此独立存活。
+- **日历 locale 随 flux 语言（2026-08-03 C2.4 收敛）**：面板 Calendar 按当前 flux 语言映射 react-day-picker locale（enUS/zhCN），月/周标题随语言本地化。
 - **required 两端校验（D6）**：范围值是单 delimited 字符串（`joinDateRange`，默认 `,`）。当 `required: true` 时，**两端均须非空**——仅设一端（值形如 `'2024-06-01,'`）视为未满足 required。
   - 裁定（option-a，validator 注册）：date-range renderer 经 `validation.collectRules` 在 `required: true` 时贡献 `{ kind: 'requiredRange', delimiter }` 规则。该规则**仅**在「部分填充」（一端非空、另一端空）时触发错误；全空由通用 `required` 规则处理，全填不触发。故任一状态至多一条 required 类错误。
   - 不采用 option-b（归一化使单端触发），因其会在非 required range 丢掉合法的半选值（regression 风险）。
