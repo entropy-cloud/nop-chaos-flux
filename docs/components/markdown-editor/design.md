@@ -24,13 +24,14 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `name`、`label`、`placeholder`、`mode`、`readOnly`、`required`。
-- `mode`：`split`（默认，左编辑右预览）/ `edit`（仅编辑）/ `preview`（仅预览）。
+- 建议正式字段为 `name`、`label`、`placeholder`、`viewMode`、`toolbar`、`readOnly`、`required`。
+- `viewMode`：`split`（默认，左编辑右预览）/ `edit`（仅编辑）/ `preview`（仅预览）。命名用 `viewMode`（非 `mode`）因为 `BoundFieldSchemaBase.mode` 保留给字段布局（normal/horizontal）。
+- `toolbar`：markdown 语法工具栏开关，默认 `true`。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `name`、`placeholder`、`mode`、`readOnly`、`required`: `value`
+- `name`、`placeholder`、`viewMode`、`toolbar`、`readOnly`、`required`: `value`
 - `onChange`、`onFocus`、`onBlur`: `event`
 
 ## 6. 实现方案

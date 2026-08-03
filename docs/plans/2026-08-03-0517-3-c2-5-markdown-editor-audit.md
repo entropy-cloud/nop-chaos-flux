@@ -1,6 +1,6 @@
 # C2.5 markdown-editor 逐组件审计
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C2.5
 > Last Reviewed: 2026-08-03
@@ -69,84 +69,84 @@
 
 ### Phase 1 - 逐组件 18 维审计与审计卡产出
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/markdown-editor-renderer.tsx`、`definitions.ts`、`schemas.ts`、`docs/audits/per-component/`
 
 - Item Types: `Proof`
 
-- [ ] 审计前核对注册定义：markdown-editor 注册项（type/fields/componentCapabilityContracts）与 `schemas.ts:382` 一致（维度 1/18）；预览渲染依赖链（markdown 解析库与 sanitize 机制）定位。
-- [ ] 产出审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
-- [ ] 维度重点核查：值所有权三态（维度 3：markdown 源码值受控 echo、defaultValue/initValue/valueStatePath）；表单参与（维度 4：name/required/validation、提交数据形状、data-field-\* 与 08-01 契约对齐）；DOM 契约（维度 5 + `check:audit-missing-renderer-markers`：data-field/data-renderer/data-value/data-testid、编辑面与预览面 data-slot）。
-- [ ] **安全红线专项（维度 18）**：markdown 预览渲染 sanitize 门禁核对——恶意 HTML/script/img onerror/链接协议载荷在预览中的表现（escaped or removed）；与 content 包 `markdown` 组件（C6.1）共享依赖链核对；共性缺陷按 §7 处理或显式交接 C6.1（卡内记录）。
-- [ ] a11y 专项（维度 8）：编辑面 textarea label/aria、预览面语义；i18n（维度 9：placeholder/文案 key 存在性）。
-- [ ] 四态覆盖（维度 10：空值/加载/错误/禁用/readOnly）与测试质量（维度 16：markdown-editor.test.tsx 断言正确行为而非 not-throw）；React 19 规范（维度 14）、性能边界（维度 15：大文档实时预览重渲染）。
-- [ ] 文档对照（维度 17）：design.md ↔ 实现 props/行为逐项核对；example.json 缺失是否影响可读性（低优先，P3 级）；quick-reference.md 词条准确性。
+- [x] 审计前核对注册定义：markdown-editor 注册项（type/fields/componentCapabilityContracts）与 `schemas.ts:382` 一致（维度 1/18）；预览渲染依赖链（markdown 解析库与 sanitize 机制）定位。
+- [x] 产出审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
+- [x] 维度重点核查：值所有权三态（维度 3：markdown 源码值受控 echo、defaultValue/initValue/valueStatePath）；表单参与（维度 4：name/required/validation、提交数据形状、data-field-\* 与 08-01 契约对齐）；DOM 契约（维度 5 + `check:audit-missing-renderer-markers`：data-field/data-renderer/data-value/data-testid、编辑面与预览面 data-slot）。
+- [x] **安全红线专项（维度 18）**：markdown 预览渲染 sanitize 门禁核对——恶意 HTML/script/img onerror/链接协议载荷在预览中的表现（escaped or removed）；与 content 包 `markdown` 组件（C6.1）共享依赖链核对；共性缺陷按 §7 处理或显式交接 C6.1（卡内记录）。
+- [x] a11y 专项（维度 8）：编辑面 textarea label/aria、预览面语义；i18n（维度 9：placeholder/文案 key 存在性）。
+- [x] 四态覆盖（维度 10：空值/加载/错误/禁用/readOnly）与测试质量（维度 16：markdown-editor.test.tsx 断言正确行为而非 not-throw）；React 19 规范（维度 14）、性能边界（维度 15：大文档实时预览重渲染）。
+- [x] 文档对照（维度 17）：design.md ↔ 实现 props/行为逐项核对；example.json 缺失是否影响可读性（低优先，P3 级）；quick-reference.md 词条准确性。
 
 Exit Criteria:
 
 > 本 Phase 交付 1 张审计卡（含裁决），是后续修复的唯一事实来源。
 
-- [ ] `docs/audits/per-component/markdown-editor.md` 卡存在，18 维表完整、`文件:行` 证据可验证。
-- [ ] 卡内发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 则标记 `closed`，否则 `open`；sanitize 门禁核对结论已记录。
+- [x] `docs/audits/per-component/markdown-editor.md` 卡存在，18 维表完整、`文件:行` 证据可验证。
+- [x] 卡内发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 则标记 `closed`，否则 `open`；sanitize 门禁核对结论已记录。
 
 ### Phase 2 - P0/P1 自动修复（test-first）
 
-Status: planned
+Status: completed
 Targets: 发现涉及的 renderer/定义文件、schemas.ts、契约测试文件、e2e spec
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 按审计卡处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw；XSS 场景断言无脚本执行），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现）。
-- [ ] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
-- [ ] 共性缺陷裁决（Decision）：sanitize 依赖链或公共层发现影响 ≥2 组件/跨包 → 按 roadmap 自动修复机制 §7 处理（当前 plan 内优先修复并事后回写 CX-n，或插入 CX-n work item；涉及 content 包 `markdown` 组件的共性根因 → 显式交接 C6.1 并记录）；根因单点 `shared:` 标记归 CR。
-- [ ] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
-- [ ] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式）。
+- [x] 按审计卡处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw；XSS 场景断言无脚本执行），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现）。（本组件无 P0/P1 发现——审计卡裁决留痕；P2 修复全部 test-first：markdown-editor-i18n.test.tsx 5 用例 zh-CN 断言先 3 red 后全绿）
+- [x] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
+- [x] 共性缺陷裁决（Decision）：sanitize 依赖链或公共层发现影响 ≥2 组件/跨包 → 按 roadmap 自动修复机制 §7 处理（当前 plan 内优先修复并事后回写 CX-n，或插入 CX-n work item；涉及 content 包 `markdown` 组件的共性根因 → 显式交接 C6.1 并记录）；根因单点 `shared:` 标记归 CR。（裁定：无共性缺陷——预览组合节点不传 allowHtml → markdown 默认门禁生效，markdown-editor schema 无 allowHtml prop 无法绕过，sanitize 链 pass；无 CX-n 插入；交接 C6.1 核对 allowHtml=true DOMPurify 路径，卡内记录）
+- [x] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
+- [x] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式）。（本 plan 无复杂/跨包 bug 修复——P2 均为文案 i18n/文档同步/测试加固，无需 docs/bugs/ 记录）
 
 Exit Criteria:
 
 > 本 Phase 交付"发现清零或已裁定"，卡状态与代码行为一致。
 
-- [ ] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
-- [ ] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-form typecheck && build && lint && test` 绿（含新增回归测试）。
+- [x] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。（本组件无 P0/P1；P2-1/P2-2/P2-3 全部 fixed，P3 ×4 卡内记录归 CR——无静默跳过）
+- [x] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-form typecheck && build && lint && test` 绿（含新增回归测试）。（typecheck/build/lint 绿；test 85 files/**711 tests** 全绿；`check:i18n-keys` 绿；flux-i18n 2 files/26 tests 绿）
 
 ### Phase 3 - 组合宿主真实浏览器场景
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/` 新增/修改 spec、playground lab 页
 
 - Item Types: `Proof | Fix`
 
-- [ ] 设计并实现 ≥1 个本组件真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：候选——form 内 markdown-editor 编辑+预览+提交（bug 73 模式：输入 → store 更新 → 提交值正确）、XSS 载荷预览 sanitize 验证（断言载荷不以 HTML 形态执行/呈现）。
-- [ ] bug 73 模式专项检查：在宿主场景中显式验证单测绿但真机失败类风险。
-- [ ] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
-- [ ] 既有相关 e2e（`tests/e2e/w3d-markdown-editor.spec.ts`）在本组件改动后回归。
+- [x] 设计并实现 ≥1 个本组件真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：候选——form 内 markdown-editor 编辑+预览+提交（bug 73 模式：输入 → store 更新 → 提交值正确）、XSS 载荷预览 sanitize 验证（断言载荷不以 HTML 形态执行/呈现）。（lab 页 +4 场景 + `tests/e2e/component-lab/c2-5-host-surfaces.spec.ts` 4 条：host-md-submit/host-md-xss/host-md-echo/host-md-disabled，全 programmatic DOM 断言）
+- [x] bug 73 模式专项检查：在宿主场景中显式验证单测绿但真机失败类风险。（host-md-submit pass：真机 typing → 预览跟随 → submit → valuesPath 回显成立；host-md-xss 真机核对 react-markdown 默认 urlTransform 剥除 javascript: 协议（href=""）——断言按真实行为校准为 `a[href^="javascript:"]` 计数 0，非单测语义假设）
+- [x] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。（无新缺陷；XSS 断言初版过严（a[href] 计数 0 未考虑 react-markdown 剥协议留空 href），校准为危险协议前缀断言——非组件缺陷）
+- [x] 既有相关 e2e（`tests/e2e/w3d-markdown-editor.spec.ts`）在本组件改动后回归。
 
 Exit Criteria:
 
 > 本 Phase 交付"真实浏览器行为成立"。
 
-- [ ] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；w3d-markdown-editor.spec.ts 回归绿。
-- [ ] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
+- [x] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；w3d-markdown-editor.spec.ts 回归绿。（c2-5-host-surfaces 4/4；w3d-markdown-editor 2/2；component-lab 全量 178 passed / 1 skipped（pre-existing simple-form skip）/ 0 failed）
+- [x] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。（结论 pass：真机提交链路 + XSS sanitize + 受控 echo + 四态全部成立，详见 daily log 08-03 记录）
 
 ### Phase 4 - 族内回归与审计卡 closure
 
-Status: planned
+Status: completed
 Targets: 审计卡、`docs/logs/2026/08-03.md`、`docs/backlog/component-audit-roadmap.md`（C2.5 行）
 
 - Item Types: `Proof`
 
-- [ ] 全卡复查：18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
-- [ ] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-form test` + 相关 e2e spec 全绿；如本 plan 触及公共层（flux-react/field-frame/编译器），追加受影响包验证并记录。
-- [ ] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、sanitize 交接结论（C6.1 共性发现如有）、CX-n 插入（如有）与决策、**form 族 C2.x 收官留痕**。
-- [ ] 若插入了 CX-n：同步更新 roadmap Work Item Status 表（新行 + 依赖边/注释）并按 §7b（事后回写：父 plan closure 后标 done）/§7c（正常生命周期）走；结构性 CX-n 执行前标注待人工确认。
-- [ ] roadmap C2.5 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审）。
+- [x] 全卡复查：18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
+- [x] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-form test` + 相关 e2e spec 全绿；如本 plan 触及公共层（flux-react/field-frame/编译器），追加受影响包验证并记录。（本 plan 触及 flux-i18n（新增 keys）——flux-i18n 2 files/26 tests 绿 + workspace 全量验证覆盖）
+- [x] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、sanitize 交接结论（C6.1 共性发现如有）、CX-n 插入（如有）与决策、**form 族 C2.x 收官留痕**。
+- [x] 若插入了 CX-n：同步更新 roadmap Work Item Status 表（新行 + 依赖边/注释）并按 §7b（事后回写：父 plan closure 后标 done）/§7c（正常生命周期）走；结构性 CX-n 执行前标注待人工确认。（未插入 CX-n——sanitize 链核对无共性缺陷，决策记录于卡 dim 18 与 daily log）
+- [x] roadmap C2.5 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审）。
 
 Exit Criteria:
 
 > 本 Phase 交付"可进入 closure-audit 的完成态"。
 
-- [ ] 审计卡 `closed`；`docs/audits/per-component/` 汇总可读。
-- [ ] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置、form 族 C2.x 收官记录）。
+- [x] 审计卡 `closed`；`docs/audits/per-component/` 汇总可读。
+- [x] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置、form 族 C2.x 收官记录）。
 
 ## Draft Review Record
 
@@ -161,17 +161,17 @@ Exit Criteria:
 
 > 关闭条件：本 section 与每个 Phase 的 Exit Criteria 全部勾选后才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 审计卡存在、18 维表完整、P0/P1 清零、`closed`
-- [ ] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
-- [ ] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查）
-- [ ] sanitize 门禁核对完成（XSS 载荷场景断言成立）；与 content 包 markdown（C6.1）的共性发现已处理或显式交接
-- [ ] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
-- [ ] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 审计卡存在、18 维表完整、P0/P1 清零、`closed`
+- [x] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
+- [x] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查）
+- [x] sanitize 门禁核对完成（XSS 载荷场景断言成立）；与 content 包 markdown（C6.1）的共性发现已处理或显式交接
+- [x] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
+- [x] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -203,13 +203,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 完成时填写
+Status Note: 2026-08-03 四 Phase 全部执行完成。1 张审计卡（markdown-editor）closed、P0/P1 清零（本组件无 P0/P1 发现；P2×3 全部 fixed：i18n 硬编码文案 14 处走 flux.markdown.\* keys、design.md §4/§5 viewMode/toolbar 同步、四态 + handles 测试加固；P3×4 卡内记录归 CR）、宿主场景 4/4（host-md-submit bug 73 模式 pass / host-md-xss sanitize 门禁 pass / host-md-echo pass / host-md-disabled pass）、workspace 全量验证绿（typecheck 31/31、build 31/31、lint 31/31、test 58/58，form 包 705→**711 tests**）。独立子 agent（fresh session，mission-driver CLOSURE_VERIFY 阶段）closure-audit 已通过并回填下方证据；roadmap C2.5 行已按 roadmap 规则（「closure audit 通过 → done，不得提前」）标 `done`，与 C2.3/C2.4 先例一致。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent
-- Evidence: 待执行后回填
+- Auditor / Agent: 独立子 agent fresh session（mission-driver CLOSURE_VERIFY，2026-08-03，与执行 session 隔离）
+- Evidence: 独立 re-run 验证——form 包 85 files/**711 tests** 全绿（现场重跑）；`tests/e2e/component-lab/c2-5-host-surfaces.spec.ts` 4/4 + `tests/e2e/w3d-markdown-editor.spec.ts` 2/2 全绿（现场重跑）；workspace typecheck/build/lint 31/31 + test 58/58 全绿（turbo 验证）；`check:i18n-keys` pass（flux.markdown.\* 14 keys zh/en 双语言核对）；审计卡 18 维表与 live 代码逐项核对一致（renderer/schemas.ts:383-394/definitions/i18n 键位/e2e 断言），无 hollow 实现（useFluxTranslation 渲染期 t()、PreviewBoundary、XSS 断言真机执行）；design.md §4/§5 已同步；daily log 08-03 C2.5 记录完整；deferred 项分类诚实（P3×4 optimization candidate 归 CR、C6.1 交接为跨 plan 显式交接、e2e pre-existing 8 项 C0 裁定）；roadmap C2.5 行标 `done`
 
 Follow-up:
 
-- 待执行后回填
+- 无剩余 plan-owned work；P3 ×4（预览 aria-live、rows prop、example.json、大文档预览性能阈值）登记审计卡 backlog 归 CR；C6.1 交接：content 包 markdown `allowHtml=true` 路径 DOMPurify 门禁核对（本 plan 已核 allowHtml 默认 OFF 转义路径 pass）
