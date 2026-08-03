@@ -3,7 +3,7 @@
 > 最后更新：2026-08-03
 > 来源：`docs/discussions/2026-08-03-industrial-hmi-scada-mission-scope-discussion.md`（范围讨论），后续调研报告 `docs/analysis/industrial-hmi/research-*.md`，设计文档 `docs/components/industrial-hmi/design-*.md`
 > Mission：`missions/industrial-hmi.json`
-> 目标：为 nop-chaos-flux 新增**工业组态（HMI/SCADA）运行时渲染**能力——高性能 Canvas 场景图引擎（LeaferJS 底座 + 自研组态语义层）+ 工业图元库 + 实时数据驱动 + 画面渲染组件（`scada-canvas`），对标 LeaferJS 官方性能档（数值官方自报，待 I0 调研校准）
+> 目标：为 nop-chaos-flux 新增**工业组态（HMI/SCADA）运行时渲染**能力——高性能 Canvas 场景图引擎（LeaferJS 底座 + 自研组态语义层）+ 工业图元库 + 实时数据驱动 + 画面渲染组件（`scada-canvas`），对标 LeaferJS 官方性能档（数值官方自报，已由 I0 调研校准，见 `docs/analysis/industrial-hmi/research-download.md` §2.2；无 >30% 人工触发）
 
 ## 文档共识审查记录（本文件）
 
@@ -14,6 +14,7 @@
 - **Round 3（2026-08-03）**：独立 agent（fresh session）复审，判定 `REVISE`（轻量轮）——2 项 minor：① 两份文件 Round 3 占位记录预写 `AGREE` 断言（预写判定反模式复发）；② 讨论文件 §九 待定事项仍引用 Round 2（已过期）。修正项全部落地（占位改中性 + §九 改 Round 3）。
 - **Round 4（2026-08-03）**：独立 agent（fresh session）复审，判定 `AGREE`——零新增修正项，**达成共识**（共识循环：R1–R3 修正 3 轮 + R4 确认轮，未超轮次上限）。本文件可作为下游工作输入依据。
 - **Round 5（2026-08-03，共识后增补验证）**：因执行安全考量新增「执行必读」节（防 mission-driver 执行 agent 只读 Phase Status/前半部而漏读后部 Cross-Cutting/Rule 条款），纯增补、不改既有条款语义。独立 agent（fresh session）focused 验证，判定 `AGREE`——增补与既有条款一致（编号/判据/阈值逐条吻合）、位置无 BULLET_RE 解析冲突、未破坏动态状态区唯一性；4 项低严重度建议中 3 项已采纳（执行必读头部措辞、Rule 4 引用补全、本记录回填），1 项裁量不采纳（"动画合帧"子约束因 Work Items I6.3/I14.2 已有呼应，核对清单定位为非穷尽）。增补定稿。
+- **I1.1 review gate（2026-08-03，roadmap Rule 4 回写）**：独立 agent（fresh session，task `ses_03892d672ffeSeXQMQCUBFBIjo`）对照讨论文件 §八/§九 任务范围 + 5 份调研报告（`docs/analysis/industrial-hmi/research-*.md`）+ 差异清单执行终轮复核审查，判定 `pass-with-minors`——**零 Blocker，范围覆盖完整、选型（LeaferJS 底座 + 自研组态语义层）论证链成立**。修正项 3 项全部落地：`M-1`（Major）scada-apps §6 #9 动画表述修正（leafer 无帧动画/动画组队列类引擎、但过渡/路径动画原语已有——消除与 render-engines §8 #4 的跨报告矛盾）；`m-1`（Minor）scada-apps/summary 头部补「终轮复核说明」标准 bullet；`m-2`（Minor）本文件"待 I0 调研校准"过时表述回写（见「调研结论摘要」数值说明）。差异清单裁定：① SceneV 源码不可获取降级浅层、② 许可矩阵如实记录、③ 共识超轮（scada-apps 8 轮/summary 4 轮，全为行号/计数精度类 Minor、单调收敛）均**维持非阻断**；④ 性能数字观察项（内存 0% 余量 / 首屏 -36% 方向有利）**维持**交 I1.2 spike 实测仲裁。**I1.1 gate 达成共识（0 新增未落地修正项）**，I1 状态回写见 Phase Status。
 
 ## Purpose
 
@@ -41,7 +42,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 > 本 mission 固定 4 个 **review gate**（I1/I3/I7/I12）：每个 gate 由独立 agent（fresh session，不复用执行上下文）对照上游产物审查，输出修正项并落地回写；修正若涉及范围/顺序/选型变更，标记为需人工确认项并暂停推进。
 
 - **I0. 调研与源码下载** (`done`)
-- **I1. 设计回顾与修正 #1 —— 调研结论 gate** (`planned`)
+- **I1. 设计回顾与修正 #1 —— 调研结论 gate** (`done`)
 - **I2. 通用引擎层设计文档** (`planned`)
 - **I3. 设计回顾与修正 #2 —— 引擎设计 gate** (`todo`)
 - **I4. 包基建与依赖引入** (`todo`)
@@ -69,7 +70,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### 调研结论摘要（2026-08-03，详见讨论文件 §三）
 
-> **数值说明**：以下 LeaferJS 性能数字为**官方自报**（leafer-ui README 宣称，联网检索存在转述出入，如内存 320MB vs 350MB），**待 I0 调研校准并逐数字标注来源**后才作为设计依据。
+> **数值说明**：以下 LeaferJS 性能数字为**官方自报**（leafer-ui README 宣称，联网检索存在转述出入，如内存 320MB vs 350MB），**已由 I0 调研校准并逐数字标注来源**（`research-download.md` §2.2：跨来源差异 9.4%/≤17.2% 均 <30%，无不安全方向 >30% 差异、无人工确认触发）；观察项（内存验收阈值=官方 320MB 零余量、首屏验收 <2s 比官方 1.28s 宽松 36% 方向有利）已由 **I1.1 gate 裁定维持**，交 I1.2 spike 实测仲裁（I1.1 gate 结论见本文件头部记录块）。
 
 - **引擎选型**：LeaferJS（leafer-ui，MIT，官方宣称百万图形 1.28s 首屏/320MB/60fps 拖动、70KB min+gzip、零依赖、Editor 插件、Flex 布局、官方场景含"万级节点电力组态"）；组态语义层（点表绑定/状态动画/图元模型/序列化）自研。
 - **竞品参考**：Meta2d.js（数据驱动视图/订阅/1000+ 动画/生命周期 hooks）、FUXA（SCADA 平台点表/报警/趋势）、SceneV（低代码编辑器/属性面板/事件体系）。
@@ -81,7 +82,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - 1 个新 renderer type：`scada-canvas`（props 内嵌组态 JSON：图元树 + 点表），图元级 type 后续叠加
 - 数据模型：双轨（组态内点表自包含 + flux 表达式 `$xxx` 桥接）
 - 测试：纯逻辑层 Vitest 单测 + Playwright e2e 程序化断言（经测试句柄读场景树，不用截图/不引 node-canvas）
-- 性能验收（对标 LeaferJS 官方性能档（数值官方自报，待 I0 调研校准））：10 万图元可交互 ≥45fps、首屏创建 <2s、内存 ≤320MB；1 万实时数据点端到端刷新 <200ms
+- 性能验收（对标 LeaferJS 官方性能档（数值官方自报，已由 I0 调研校准，`research-download.md` §2.2）：10 万图元可交互 ≥45fps、首屏创建 <2s、内存 ≤320MB；1 万实时数据点端到端刷新 <200ms
 - 调研源码下载目录：`~/sources/industrial-hmi-research/`
 
 ---
@@ -290,7 +291,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### I14 Benchmark 与性能优化
 
-对标 LeaferJS 官方性能档（数值官方自报，待 I0 调研校准）：10 万图元可交互 ≥45fps、首屏 <2s、内存 ≤320MB；1 万点端到端刷新 <200ms。基准→优化→复测闭环，结论固化。
+对标 LeaferJS 官方性能档（数值官方自报，已由 I0 调研校准，`research-download.md` §2.2）：10 万图元可交互 ≥45fps、首屏 <2s、内存 ≤320MB；1 万点端到端刷新 <200ms。基准→优化→复测闭环，结论固化。
 
 ### I15 测试补强、文档与收尾
 

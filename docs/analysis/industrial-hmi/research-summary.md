@@ -15,6 +15,7 @@
 - **Round 3（2026-08-03）**：独立 agent（fresh session，task `ses_03908e623ffe2qdD59Ehu4Kw6p`）确认轮，判定 `REVISE`——R2 三项确认落地；新修正项 1 Minor（§2 FUXA 事件格 `opendialog`→`ondialog`，与 scada-apps §3.4 及 FUXA 源码 `GaugeEventActionType.ondialog` 对齐）。已落地。
 - **Round 4（2026-08-03）**：独立 agent（fresh session，task `ses_038fb48f1ffeC2WD3cEsTddNXG`）确认轮，判定 `REVISE`——R3 一项确认落地；新修正项 2 Minor（§4.3 A2 `LineAnimateType` 行号改 `103-110,318-330`；§4.2 D7 范围对齐 scada-apps 精确行号 `4333-4374,4377-4423,4426-4464,4497-4533`、`event.ts:99-116`）。已全部落地。
 - **Round 5（2026-08-03）**：独立 agent（fresh session，task `ses_038dfcb99ffeM6AmNvqMTfH4x2`）确认轮，判定 `AGREE`——R4 两项验证落地（与源码逐项核对），全文档扫描（§3 V1-V8/§4 设计清单/§5 flux 引注/§6 一致性）**零新增修正项，达成共识**（共识循环：R1-R4 修正 4 轮 + R5 确认轮，⚠️ 修正轮超 3 轮上限，与 scada-apps 同源的行号精度类修正，交 I1.1 gate 人工裁定复核）。
+- **终轮复核说明（I1.1 review gate，2026-08-03）**：I1.1 gate 已对本文件执行终轮复核（roadmap Cross-Cutting，不叠加额外审查轮）。裁定：① 超轮观察项（共识修正 4 轮，与 scada-apps 同源的行号/计数精度类修正）**维持为非阻断**，无事实/结论争议；② 性能数字观察项（内存 0% 余量 / 首屏 -36% 方向有利）**维持**，由 I1.2 spike 实测仲裁；③ 零新增修正项——**终轮复核达成共识（0 新增未落地修正项）**。
 
 ---
 

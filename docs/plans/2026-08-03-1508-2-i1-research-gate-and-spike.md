@@ -1,6 +1,6 @@
 # 2 I1 设计回顾与修正 #1（调研 gate + 选型可行性 spike）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-03
 > Source: `docs/components/roadmap-industrial-hmi.md`（I1、Cross-Cutting review gate 纪律/人工确认阈值/文档共识审查）、`docs/discussions/2026-08-03-industrial-hmi-scada-mission-scope-discussion.md`（§八任务范围）
 > Related: `docs/plans/2026-08-03-1508-1-i0-research-and-source-downloads.md`（上游）、`docs/plans/2026-08-03-1508-3-i2-engine-design-docs.md`（下游，依赖 I1.2 结论）
@@ -69,45 +69,45 @@
 
 ### Phase 1 - I1.1 调研结论 review（gate #1 审查）
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/industrial-hmi/research-*.md`（5 份）、roadmap、gate 结论文档
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] `Decision`：roadmap Phase Status 回写 I1: `todo` → `planned`（本 plan 激活为 active 时同步执行）。
-- [ ] `Proof`：确认 I0 的 5 份调研报告已就绪（若 I0 未完成，本 Phase 等待，不提前审查）。
-- [ ] `Decision`：启动独立子 agent（fresh session，不复用 I0 执行上下文）执行 gate 审查——输入 = 讨论文件 §八任务范围 + 5 份调研报告 + 与 roadmap 的差异清单；输出 = review 结论 + 修正项清单（Blocker/Major/Minor 分级）。
-- [ ] `Fix`：修正项全部落地——按清单回写对应调研报告；涉及范围/顺序/选型变化的修正项回写 roadmap（Rule 4）并标记人工确认项，暂停推进至人工裁决。
-- [ ] `Proof`：gate 审查同时作为 I0 调研文档「文档共识审查」的终轮复核——gate 修正项全部落地且无遗留修正项即达成共识，记录到各报告头部「文档共识审查记录」；不额外叠加独立审查轮。
-- [ ] `Proof`：gate 结论与修正项摘要回写 roadmap 头部（review gate 执行纪律要求）。
+- [x] `Decision`：roadmap Phase Status 回写 I1: `todo` → `planned`（本 plan 激活为 active 时同步执行）。
+- [x] `Proof`：确认 I0 的 5 份调研报告已就绪（若 I0 未完成，本 Phase 等待，不提前审查）。
+- [x] `Decision`：启动独立子 agent（fresh session，不复用 I0 执行上下文）执行 gate 审查——输入 = 讨论文件 §八任务范围 + 5 份调研报告 + 与 roadmap 的差异清单；输出 = review 结论 + 修正项清单（Blocker/Major/Minor 分级）。
+- [x] `Fix`：修正项全部落地——按清单回写对应调研报告；涉及范围/顺序/选型变化的修正项回写 roadmap（Rule 4）并标记人工确认项，暂停推进至人工裁决。
+- [x] `Proof`：gate 审查同时作为 I0 调研文档「文档共识审查」的终轮复核——gate 修正项全部落地且无遗留修正项即达成共识，记录到各报告头部「文档共识审查记录」；不额外叠加独立审查轮。
+- [x] `Proof`：gate 结论与修正项摘要回写 roadmap 头部（review gate 执行纪律要求）。
 
 Exit Criteria:
 
-- [ ] 独立 agent 完成 5 份报告的 gate 审查，审查结论（含轮次、判定、修正项清单）有据可查（报告头部记录或 gate 结论文档）。
-- [ ] 修正项全部落地：报告回写可见（git diff 可证），涉及范围/顺序/选型变化的已回写 roadmap 并标记人工确认（若有）。
-- [ ] I1.1 的修正项落地后，I0 调研文档共识审查达成共识（终轮复核 0 新增修正项）。
+- [x] 独立 agent 完成 5 份报告的 gate 审查，审查结论（含轮次、判定、修正项清单）有据可查（报告头部记录或 gate 结论文档）。
+- [x] 修正项全部落地：报告回写可见（git diff 可证），涉及范围/顺序/选型变化的已回写 roadmap 并标记人工确认（若有）。
+- [x] I1.1 的修正项落地后，I0 调研文档共识审查达成共识（终轮复核 0 新增修正项）。
 
 ### Phase 2 - I1.2 选型可行性 spike
 
-Status: planned
+Status: completed
 Targets: `~/sources/industrial-hmi-research/spike-leafer/`（scratch，不入仓库）、gate 结论文档
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] `Proof`：在 scratch 目录创建 spike 工程（Vite + leafer-ui），编写最小 demo：① 10 万矩形创建与渲染；② 视口拖动（wheel/pinch 平移缩放）fps 测量；③ 命中检测（点击坐标→图元解析）；④ 组态 JSON 批量加载与增量属性更新（模拟点表刷新）。
-- [ ] `Proof`：Playwright headless Chromium 程序化实测（`page.evaluate` 计时 + 读场景树，禁用截图判定；必要时 `--use-gl=swiftshader` 处理无 GPU 环境），记录：创建耗时、拖动 fps、内存占用（`performance.memory` 或 CDP）、JSON 加载/更新延迟。
-- [ ] `Decision`：实测数据以 **mission 验收包络为判定基准**（10 万图元可交互 ≥45fps / 首屏 <2s / 内存 ≤320MB，roadmap 总览与 I14.3 阈值；1 万点端到端刷新 <200ms 由 I14 正式固化，spike 仅记录 JSON 增量更新延迟作参考）——**包络任何一项未达标即判定不达标**（不设容差，如 42fps < 45fps 即不达标）→ 产出替代方案（Konva/Fabric/自研）对比依据并标记人工确认（roadmap「人工确认阈值」）；官方自报数字（100 万图形首屏 1.28s/320MB/60fps）仅作上下文对照，需按图元量级换算（10 万 ≈ 1/10 量级）后引用。
-- [ ] `Fix`：按 I1.1 修正项与 spike 发现修正选型可行性结论，写入 gate 结论文档（或对应报告章节），结论区分「确认」/「有条件确认（列出 API 风险清单）」/「不成立（替代方案）」。
-- [ ] `Proof`：gate 结论文档经独立子 agent 文档共识审查（≥1 轮，0 新增修正项即共识；≤3 轮，超限升级人工），记录到文档头部。
-- [ ] `Follow-up`：把 spike 验证点与 API 契合度风险清单映射为 I2 设计文档必须回应的约束（供 `docs/plans/2026-08-03-1508-3-i2-engine-design-docs.md` 引用）。
+- [x] `Proof`：在 scratch 目录创建 spike 工程（Vite + leafer-ui），编写最小 demo：① 10 万矩形创建与渲染；② 视口拖动（wheel/pinch 平移缩放）fps 测量；③ 命中检测（点击坐标→图元解析）；④ 组态 JSON 批量加载与增量属性更新（模拟点表刷新）。
+- [x] `Proof`：Playwright headless Chromium 程序化实测（`page.evaluate` 计时 + 读场景树，禁用截图判定；必要时 `--use-gl=swiftshader` 处理无 GPU 环境），记录：创建耗时、拖动 fps、内存占用（`performance.memory` 或 CDP）、JSON 加载/更新延迟。
+- [x] `Decision`：实测数据以 **mission 验收包络为判定基准**（10 万图元可交互 ≥45fps / 首屏 <2s / 内存 ≤320MB，roadmap 总览与 I14.3 阈值；1 万点端到端刷新 <200ms 由 I14 正式固化，spike 仅记录 JSON 增量更新延迟作参考）——**包络任何一项未达标即判定不达标**（不设容差，如 42fps < 45fps 即不达标）→ 产出替代方案（Konva/Fabric/自研）对比依据并标记人工确认（roadmap「人工确认阈值」）；官方自报数字（100 万图形首屏 1.28s/320MB/60fps）仅作上下文对照，需按图元量级换算（10 万 ≈ 1/10 量级）后引用。
+- [x] `Fix`：按 I1.1 修正项与 spike 发现修正选型可行性结论，写入 gate 结论文档（或对应报告章节），结论区分「确认」/「有条件确认（列出 API 风险清单）」/「不成立（替代方案）」。
+- [x] `Proof`：gate 结论文档经独立子 agent 文档共识审查（≥1 轮，0 新增修正项即共识；≤3 轮，超限升级人工），记录到文档头部。
+- [x] `Follow-up`：把 spike 验证点与 API 契合度风险清单映射为 I2 设计文档必须回应的约束（供 `docs/plans/2026-08-03-1508-3-i2-engine-design-docs.md` 引用）。
 
 Exit Criteria:
 
-- [ ] spike 工程与实测脚本存在于 `~/sources/industrial-hmi-research/spike-leafer/`（scratch，仓库内无对应文件）。
-- [ ] 实测数据（创建耗时/拖动 fps/内存/JSON 加载与更新延迟）已记录并与官方自报数字逐项对照。
-- [ ] 选型结论明确：确认 / 有条件确认（带 API 风险清单）/ 不成立（带替代方案 + 人工确认标记）。
-- [ ] 若出现范围/顺序/选型变化，roadmap 已回写并标记人工确认项（若有）。
-- [ ] 每日日志（`docs/logs/2026/08-03.md`）已记录本 plan 产出摘要。
+- [x] spike 工程与实测脚本存在于 `~/sources/industrial-hmi-research/spike-leafer/`（scratch，仓库内无对应文件）。
+- [x] 实测数据（创建耗时/拖动 fps/内存/JSON 加载与更新延迟）已记录并与官方自报数字逐项对照。
+- [x] 选型结论明确：确认 / 有条件确认（带 API 风险清单）/ 不成立（带替代方案 + 人工确认标记）。
+- [x] 若出现范围/顺序/选型变化，roadmap 已回写并标记人工确认项（若有）。
+- [x] 每日日志（`docs/logs/2026/08-03.md`）已记录本 plan 产出摘要。
 
 ## Draft Review Record
 
@@ -120,13 +120,13 @@ Exit Criteria:
 
 > 纯文档 + scratch 实验计划：不修改任何仓库代码/依赖（spike 在 `~/sources/` 外部目录，报告与 roadmap 为 `docs/` 下文件），按 plan 指南从 Closure Gates 中删除 `pnpm typecheck`/`build`/`lint`/`test`。
 
-- [ ] I1.1 独立 gate 审查完成，修正项全部落地，roadmap 已回写（含人工确认标记，若有）。
-- [ ] I1.2 spike 实测完成，实测数据与官方数字对照记录在案；选型结论明确（确认/有条件确认/不成立+替代方案）。
-- [ ] I0 调研文档文档共识审查经终轮复核达成共识（0 新增修正项）。
-- [ ] gate 结论文档经文档共识审查定稿（≥1 轮，无未裁定修正项）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 缺项（spike 失败/环境失败均有记录与裁定；>30% 差异或选型变化均有人工确认标记）。
-- [ ] roadmap Phase Status I1 已回写 `done`；`docs/logs/2026/08-03.md` 已记录收口摘要。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] I1.1 独立 gate 审查完成，修正项全部落地，roadmap 已回写（含人工确认标记，若有）。
+- [x] I1.2 spike 实测完成，实测数据与官方数字对照记录在案；选型结论明确（确认/有条件确认/不成立+替代方案）。
+- [x] I0 调研文档文档共识审查经终轮复核达成共识（0 新增修正项）。
+- [x] gate 结论文档经文档共识审查定稿（≥1 轮，无未裁定修正项）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 缺项（spike 失败/环境失败均有记录与裁定；>30% 差异或选型变化均有人工确认标记）。
+- [x] roadmap Phase Status I1 已回写 `done`；`docs/logs/2026/08-03.md` 已记录收口摘要。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
 
 ## Deferred But Adjudicated
 
@@ -151,14 +151,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写：为什么这个 plan 可以关闭>>
+Status Note: I1.1 独立 gate 审查完成（pass-with-minors，1 Major + 2 Minor 全部落地，零 Blocker；同时作为 I0 调研文档共识审查终轮复核达成共识 0 新增修正项），修正项已回写 5 份调研报告与 roadmap 头部（Rule 4）；I1.2 spike 实测完成（10 万验收包络三项全达标：首屏 165.3 ms / 吞吐 114.3 fps / 内存 47.5 MB，100 万对照同量级复现），选型确认（LeaferJS 底座成立，无人工确认触发），gate 结论文档经独立文档共识审查 3 轮达成共识（R1 REVISE → R2 REVISE → R3 AGREE）；I2 计划 Current Baseline 已回写 spike 约束（gate-1-review §4/§6 A1–A5 + V1–V8）。所有 closure criteria 满足，可关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 closure-audit agent（fresh session，不复用 I1 执行上下文）
+- Evidence: 对照 live repo 全量复核——Phase 1/Phase 2 各 6 项 + Exit Criteria 3+5 项全部 [x] 且 Status completed；roadmap I1 Phase Status 原为 `planned` 且头部含 I1.1 gate 记录（task `ses_03892d672ffeSeXQMQCUBFBIjo`，1 Major + 2 Minor）；修正项落地核验（scada-apps §6 #9 动画表述、scada-apps/summary 终轮复核说明 bullet、roadmap 4 处无残留"待 I0 调研校准"且数值说明含 I1.1 gate 裁定）；5 份报告终轮复核说明齐备；spike 工程存在（leafer-ui 2.2.9 + `@leafer-in/viewport` + Playwright，demo.js/measure.mjs/measure-million.mjs/results-2026-08-03.json/million-2026-08-03.json）且仓库 `git status` 仅 docs/ 变更；gate-1-review.md 共识记录（R1 6M+6m / R2 m-7 / R3 AGREE）与选型结论"确认"、§4 A1–A5、§6 约束映射齐备；§3.2 数字与 JSON 逐项吻合（165.3 / 114.3 / 47.5 MB / 1516.7 / 448.4 MB）；I2 plan Current Baseline 含 spike 约束 bullet；日志顶部含 I1 执行条目（Phase 1 + Phase 2 + 收口前置）。检查清单 5 项全部 pass。详见 `docs/logs/2026/08-03.md` 顶部审计记录。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
-- <<或者明确写 no remaining plan-owned work>>
+- no remaining plan-owned work
