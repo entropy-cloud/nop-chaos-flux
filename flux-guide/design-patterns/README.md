@@ -39,5 +39,6 @@
 | 33  | `gantt.md`                      | Gantt 甘特图（任务层级/依赖链接/基线/可拖拽）                                                                                                             |
 | 34  | `kanban.md`                     | Kanban 看板（拖拽列与卡片/过滤）                                                                                                                          |
 | 35  | `calendar.md`                   | Calendar 日历（月/周/日视图/资源分组/事件编辑）                                                                                                           |
-| 36  | `barcode-input.md`              | Barcode Input 条码输入（摄像头扫码/连续扫码/批量模式）                                                                                                    |
-| 37  | `remaining-components.md`       | Transfer / Picker / DropdownButton / ScopeDebug / TreeSelect / InputTree / TagList / KeyValue / ArrayEditor / ConditionBuilder / DetailField / DetailView |
+| 36  | `barcode-input.md`              | Barcode Input 条码输入（摄像头扫码/连续扫码/批量队列/静态校验）                                                                                           |
+| 37  | `ai.md`                         | AI 组件家族（ai-chat 中枢 + 13 卫星组件 + MessageEngine + 宿主接线）                                                                                      |
+| 38  | `remaining-components.md`       | Transfer / Picker / DropdownButton / ScopeDebug / TreeSelect / InputTree / TagList / KeyValue / ArrayEditor / ConditionBuilder / DetailField / DetailView |

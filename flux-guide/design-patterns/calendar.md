@@ -1,6 +1,6 @@
 # Calendar 日历
 
-支持月/周/日视图、资源分组、拖拽事件编辑。
+支持月/周/日视图、资源分组折叠、拖拽事件编辑、时区、打印与图片导出。
 
 ## 基础用法
 
@@ -14,7 +14,8 @@
       "title": "项目评审",
       "start": "2026-07-22T09:00",
       "end": "2026-07-22T11:00",
-      "type": "meeting"
+      "type": "meeting",
+      "status": "confirmed"
     },
     {
       "id": "2",
@@ -25,9 +26,12 @@
     }
   ],
   "firstDayOfWeek": 1,
-  "showWeekends": true
+  "showWeekends": true,
+  "locale": "zh-CN"
 }
 ```
+
+> 事件 `status`：`scheduled | confirmed | cancelled`；`color` 可自定义事件颜色。
 
 ## 周视图
 
@@ -44,7 +48,7 @@
 }
 ```
 
-## 资源视图
+## 资源分组视图
 
 ```json
 {
@@ -68,11 +72,21 @@
     }
   ],
   "resources": [
-    { "id": "room-a", "text": "会议室 A", "type": "room" },
-    { "id": "room-b", "text": "会议室 B", "type": "room" }
+    {
+      "id": "room-group",
+      "title": "会议室",
+      "type": "group",
+      "open": true,
+      "resources": [
+        { "id": "room-a", "title": "会议室 A", "type": "room" },
+        { "id": "room-b", "title": "会议室 B", "type": "room" }
+      ]
+    }
   ]
 }
 ```
+
+> 资源用 `title`（`text` 已废弃）。`resources[].resources` 嵌套子资源，`open` 控制分组折叠（`onGroupToggle` 事件）。
 
 ## 自定义事件模板
 
@@ -90,28 +104,43 @@
 
 ## 字段参考
 
-| 字段                            | 类型                                 | 说明                        |
-| ------------------------------- | ------------------------------------ | --------------------------- |
-| `view`                          | `'month' \| 'week' \| 'day'`         | 视图模式（默认 month）      |
-| `date`                          | `string` (ISO)                       | 当前日期                    |
-| `events`                        | `CalendarEvent[]`                    | 事件数组                    |
-| `resources`                     | `CalendarResource[]`                 | 资源列表                    |
-| `firstDayOfWeek`                | `0 \| 1`                             | 每周第一天（0=周日 1=周一） |
-| `showWeekends`                  | `boolean`                            | 显示周末（默认 true）       |
-| `maxConcurrent`                 | `number`                             | 事件重叠最大行数（默认 4）  |
-| `showCrossDayLines`             | `boolean`                            | 显示跨日线（默认 true）     |
-| `timezoneSelector`              | `boolean`                            | 显示时区选择器              |
-| `viewOwnership`/`dateOwnership` | `'local' \| 'controlled' \| 'scope'` | 视图/日期所有权             |
+| 字段                            | 类型                                 | 说明                                            |
+| ------------------------------- | ------------------------------------ | ----------------------------------------------- |
+| `view`                          | `'month' \| 'week' \| 'day'`         | 视图模式（默认 month）                          |
+| `date`                          | `string` (ISO)                       | 当前日期                                        |
+| `events`                        | `CalendarEvent[]`                    | 事件数组（`status`/`color`/`resourceId`）       |
+| `resources`                     | `CalendarResource[]`                 | 资源列表（`resources[]` 嵌套 + `open`）         |
+| `firstDayOfWeek`                | `0 \| 1`                             | 每周第一天（0=周日 1=周一）                     |
+| `showWeekends`                  | `boolean`                            | 显示周末（默认 true）                           |
+| `maxConcurrent`                 | `number`                             | 事件重叠最大行数（默认 4）                      |
+| `showCrossDayLines`             | `boolean`                            | 显示跨日线（默认 true）                         |
+| `timezoneSelector`              | `boolean`                            | 显示时区选择器（保留）                          |
+| `batchScheduling`               | `boolean`                            | 批量排期（保留）                                |
+| `locale`                        | `string`                             | 区域语言（默认跟随浏览器 `navigator.language`） |
+| `viewOwnership`/`dateOwnership` | `'local' \| 'controlled' \| 'scope'` | 视图/日期所有权                                 |
+| `viewStatePath`/`dateStatePath` | `string`                             | scope 模式下视图/日期的存储路径                 |
+| `statusPath`                    | `string`                             | 业务状态字段路径（已注册，未接线）              |
+| `headerClassName`               | `string`                             | 头部类名                                        |
+| `eventClassName`                | `string`                             | 事件类名                                        |
+| `emptyClassName`                | `string`                             | 空状态类名                                      |
 
 ### Events
 
-| 事件            | 说明              |
-| --------------- | ----------------- |
-| `onEventClick`  | 事件点击          |
-| `onDateChange`  | 日期变化          |
-| `onViewChange`  | 视图切换          |
-| `onEventChange` | 事件拖拽/大小调整 |
-| `onEventCreate` | 创建新事件        |
+| 事件               | 说明                               |
+| ------------------ | ---------------------------------- |
+| `onEventClick`     | 事件点击                           |
+| `onDateChange`     | 日期变化                           |
+| `onViewChange`     | 视图切换                           |
+| `onEventChange`    | 事件拖拽/大小调整                  |
+| `onEventCreate`    | 拖拽创建新事件（创建通道唯一入口） |
+| `onGroupToggle`    | 资源分组折叠切换                   |
+| `onImportError`    | iCal 导入失败（保留，未接线）      |
+| `loadAction`       | 加载事件数据                       |
+| `onMount`          | 挂载完成                           |
+| `onUnmount`        | 卸载前                             |
+| `onBatchSchedule`  | 批量排期（保留，未接线）           |
+| `onImport`         | iCal 导入（保留，未接线）          |
+| `onTimezoneChange` | 时区切换（保留，未接线）           |
 
 ### Regions
 
@@ -124,16 +153,16 @@
 
 ### Reactions
 
-`component:print`, `component:exportPNG`, `component:importICal`, `component:exportToICal`
+`print`, `exportPNG`, `importICal`（保留）, `exportToICal`（保留）
 
 ### 组件句柄方法
 
-| 方法                 | 说明       |
-| -------------------- | ---------- |
-| `goNext()`           | 下一周期   |
-| `goPrev()`           | 上一周期   |
-| `goToday()`          | 回到今天   |
-| `setView(view)`      | 切换视图   |
-| `scrollToDate(date)` | 滚动到日期 |
-| `exportToPNG()`      | 导出为图片 |
-| `exportToPrint()`    | 打印       |
+| 方法                                        | 说明       |
+| ------------------------------------------- | ---------- |
+| `goNext()`                                  | 下一周期   |
+| `goPrev()`                                  | 上一周期   |
+| `goToday()`                                 | 回到今天   |
+| `setView(view)`                             | 切换视图   |
+| `scrollToDate(date)`                        | 滚动到日期 |
+| `exportToPNG(element?, fileName?, signal?)` | 导出为图片 |
+| `exportToPrint()`                           | 打印       |

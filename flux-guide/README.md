@@ -27,7 +27,7 @@ JSON Schema (含 type 字段)
 | 文件          | 内容                                                                                                      |
 | ------------- | --------------------------------------------------------------------------------------------------------- |
 | `common.d.ts` | `BaseSchema`, `BoundFieldSchemaBase`, `ActionShapeFields`, `ApiSchema`, `SchemaInput`, `SchemaExpression` |
-| `schema.d.ts` | 所有组件 Schema 接口（Page/Form/Table/Dialog/Mobile/CodeEditor 等，共 93 个 type）                        |
+| `schema.d.ts` | 所有组件 Schema 接口（Page/Form/Table/Dialog/Mobile/Gantt/AI 等，共 114 个 type）                         |
 | `index.ts`    | `FluxSchema`（所有组件的联合类型）+ `FluxSchemaByType`（type→接口映射）                                   |
 
 > 看 TypeScript 接口即知 JSON 怎么写：接口的属性名就是 JSON key，类型就是值的类型。CRUD 等复杂控件字段较多，详见 `design-patterns/crud.md`。
@@ -97,6 +97,7 @@ import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerCodeEditorRenderers } from '@nop-chaos/flux-code-editor';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
+import { registerAiRenderers } from '@nop-chaos/flux-renderers-ai';
 
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry); // page, text, button, icon, ...
@@ -108,6 +109,7 @@ registerContentRenderers(registry); // card, alert, status, mapping, audio, vide
 registerMobileRenderers(registry); // pull-refresh, infinite-scroll, ...
 registerCodeEditorRenderers(registry); // code-editor（懒加载 CodeMirror）
 registerSchedulingRenderers(registry); // gantt, kanban, calendar, barcode-input
+registerAiRenderers(registry); // ai-chat, ai-message-list, ai-bubble, ai-sender, ...
 
 // registry 作为 prop 传入（见最小集成示例）
 const SchemaRenderer = createSchemaRenderer();
@@ -185,7 +187,8 @@ const SchemaRenderer = createSchemaRenderer();
 | `design-patterns/gantt.md`                      | Gantt 甘特图（任务层级/依赖链接/基线/可拖拽）                                                                                                             |
 | `design-patterns/kanban.md`                     | Kanban 看板（拖拽列与卡片/过滤）                                                                                                                          |
 | `design-patterns/calendar.md`                   | Calendar 日历（月/周/日视图/资源分组/事件编辑）                                                                                                           |
-| `design-patterns/barcode-input.md`              | Barcode Input 条码输入（摄像头扫码/连续扫码/批量模式）                                                                                                    |
+| `design-patterns/barcode-input.md`              | Barcode Input 条码输入（摄像头扫码/连续扫码/批量队列/静态校验）                                                                                           |
+| `design-patterns/ai.md`                         | AI 组件家族（ai-chat 中枢 + 卫星组件 + MessageEngine + 宿主接线）                                                                                         |
 | `design-patterns/remaining-components.md`       | Transfer / Picker / DropdownButton / ScopeDebug / TreeSelect / InputTree / TagList / KeyValue / ArrayEditor / ConditionBuilder / DetailField / DetailView |
 
 ### `mobile/` 清单
