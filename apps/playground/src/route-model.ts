@@ -249,6 +249,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'Two-pane text diff comparison with split/unified views, syntax highlighting, inline diffs, hunk folding, and virtual scrolling.',
   },
   {
+    id: 'scada-event-linkage',
+    title: 'Scada Event Linkage',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I11 验证用（I13.1 正式 demo 取代）：scada-canvas 图元事件声明→flux action 三链路（click→dialog / dblclick→页面跳转 / click→数据请求）。',
+  },
+  {
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',

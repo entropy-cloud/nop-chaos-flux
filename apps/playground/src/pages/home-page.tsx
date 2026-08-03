@@ -16,6 +16,7 @@ type NavigationTarget =
   | 'code-editor'
   | 'word-editor'
   | 'performance-table'
+  | 'scada-event-linkage'
   | 'm5-showcase'
   | 'ai-widgets'
   ;
@@ -147,6 +148,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Large Data Stress',
     description:
       'Same-environment comparative measurement page for a 1000-row paged table baseline plus nested loop cards, aggregate formulas, scope-backed selection/pagination, and many mounted editable controls.',
+  },
+  {
+    id: 'scada-event-linkage',
+    title: 'Scada Event Linkage',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I11 验证用（I13.1 正式 demo 取代）：scada-canvas 图元事件声明→flux action 全链路——click→dialog、dblclick→页面跳转、click→数据请求。',
   },
   {
     id: 'm5-showcase',

@@ -15,6 +15,7 @@ export { TreeDisplayUxDemoPage } from './tree-display-ux-demo';
 export { TablePopOverDemoPage } from './table-popover-demo';
 export { MobileInfrastructureDemoPage } from './mobile-infrastructure-demo';
 export { M5MobileShowcaseDemoPage } from './m5-mobile-showcase-demo';
+export { ScadaEventLinkageDemoPage } from './scada-event-linkage-demo';
 export { GanttDemoPage } from './gantt-demo';
 export { CalendarPerfScaleDemoPage } from './calendar-perf-scale-demo';
 export { KanbanPerfScaleDemoPage } from './kanban-perf-scale-demo';
