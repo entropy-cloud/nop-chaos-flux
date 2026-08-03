@@ -249,11 +249,18 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'Two-pane text diff comparison with split/unified views, syntax highlighting, inline diffs, hunk folding, and virtual scrolling.',
   },
   {
-    id: 'scada-event-linkage',
-    title: 'Scada Event Linkage',
+    id: 'scada-demo',
+    title: 'Scada Demo',
     eyebrow: 'Industrial HMI',
     description:
-      'I11 验证用（I13.1 正式 demo 取代）：scada-canvas 图元事件声明→flux action 三链路（click→dialog / dblclick→页面跳转 / click→数据请求）。',
+      'I13.1 工艺流程组态演示：设备图元 + 管道 + 仪表，点表模拟数据定时刷新（flux 桥接轨 + component:setPointValue 句柄轨双演示），单击设备弹出详情（I11 三链路并入）。',
+  },
+  {
+    id: 'scada-pressure-demo',
+    title: 'Scada Pressure Demo',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I13.2 大屏/复杂组态示例：万级（10k）图元程序化生成压力画面 + 多画面 tab 切换（工艺流程大屏 / 高密度压力画面），固定随机种子保证 e2e 确定性。',
   },
   {
     id: 'taskflow-designer',

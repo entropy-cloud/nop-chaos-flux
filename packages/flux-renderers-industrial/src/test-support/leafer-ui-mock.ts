@@ -287,25 +287,27 @@ export class MockLeafer extends MockGroup {
 
 export class MockApp extends MockLeafer {
   override tag = 'App';
-  ground: MockLeafer;
+  ground: MockLeafer | undefined;
   tree: MockLeafer;
-  sky: MockLeafer;
+  sky: MockLeafer | undefined;
   resizeCalls: Array<{ width: number; height: number }> = [];
   destroyed = false;
 
   constructor(config: Record<string, unknown> = {}) {
     super(config);
     this.config = config;
-    this.ground = new MockLeafer({ type: 'ground' });
+    // 对齐真实 leafer App.init（web.module.js:10099-10106）：仅当 config 含 ground/tree/sky key 时创建对应层
+    // （gate-3 类 mock↔真实漂移面：此前 mock 恒建三层，掩蔽引擎未请求 sky/ground 时真实层缺失的缺陷）。
+    if (config.ground !== undefined) this.ground = new MockLeafer({ type: 'ground' });
     this.tree = new MockLeafer((config.tree as Record<string, unknown>) ?? {});
-    this.sky = new MockLeafer({ type: 'sky' });
+    if (config.sky !== undefined) this.sky = new MockLeafer({ type: 'sky' });
   }
 
   override destroy() {
     this.destroyed = true;
     this.tree.destroy();
-    this.ground.destroy();
-    this.sky.destroy();
+    this.ground?.destroy();
+    this.sky?.destroy();
     this.zoomLayer.destroy();
   }
 

@@ -48,7 +48,8 @@ import { M5MobileShowcaseDemoPage } from './pages/m5-mobile-showcase-demo';
 import { GanttDemoPage } from './pages/gantt-demo';
 import { KanbanDemoPage } from './pages/kanban-demo';
 import { DiffDemoPage } from './pages/diff-demo';
-import { ScadaEventLinkageDemoPage } from './pages/scada-event-linkage-demo';
+import { ScadaDemoPage } from './pages/scada-demo';
+import { ScadaPressureDemoPage } from './pages/scada-pressure-demo';
 import { CalendarDemoPage } from './pages/calendar-demo';
 import { BarcodeDemoPage } from './pages/barcode-demo';
 import { CalendarPerfScaleDemoPage } from './pages/calendar-perf-scale-demo';
@@ -274,8 +275,10 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <BarcodeDemoPage onBack={goHome} />;
         case 'diff-view':
           return <DiffDemoPage onBack={goHome} />;
-        case 'scada-event-linkage':
-          return <ScadaEventLinkageDemoPage onBack={goHome} />;
+        case 'scada-demo':
+          return <ScadaDemoPage onBack={goHome} />;
+        case 'scada-pressure-demo':
+          return <ScadaPressureDemoPage onBack={goHome} />;
         case 'calendar-perf-scale':
           return <CalendarPerfScaleDemoPage onBack={goHome} />;
         case 'kanban-perf-scale':

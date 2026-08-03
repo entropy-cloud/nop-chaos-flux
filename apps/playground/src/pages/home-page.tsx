@@ -16,7 +16,8 @@ type NavigationTarget =
   | 'code-editor'
   | 'word-editor'
   | 'performance-table'
-  | 'scada-event-linkage'
+  | 'scada-demo'
+  | 'scada-pressure-demo'
   | 'm5-showcase'
   | 'ai-widgets'
   ;
@@ -150,11 +151,18 @@ const NAV_CARDS: NavCard[] = [
       'Same-environment comparative measurement page for a 1000-row paged table baseline plus nested loop cards, aggregate formulas, scope-backed selection/pagination, and many mounted editable controls.',
   },
   {
-    id: 'scada-event-linkage',
-    title: 'Scada Event Linkage',
+    id: 'scada-demo',
+    title: 'Scada Demo',
     eyebrow: 'Industrial HMI',
     description:
-      'I11 验证用（I13.1 正式 demo 取代）：scada-canvas 图元事件声明→flux action 全链路——click→dialog、dblclick→页面跳转、click→数据请求。',
+      'I13.1 工艺流程组态演示：设备图元 + 管道 + 仪表，点表模拟数据定时刷新（双轨），单击设备弹出详情，双击跳转，按钮触发数据请求。',
+  },
+  {
+    id: 'scada-pressure-demo',
+    title: 'Scada Pressure Demo',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I13.2 大屏/复杂组态示例：万级（10k）图元压力画面 + 多画面切换（工艺流程大屏 / 高密度压力画面），程序化生成、固定随机种子。',
   },
   {
     id: 'm5-showcase',

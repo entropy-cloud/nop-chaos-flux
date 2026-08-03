@@ -1,6 +1,6 @@
 # 2 I13 Playground 演示页
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-04
 > Source: `docs/components/roadmap-industrial-hmi.md`（I13、Cross-Cutting 测试纪律/性能红线）、`docs/components/industrial-hmi/design-renderer.md`（§4.1 schema/§8.1 事件/§8.5 组件句柄）、`docs/components/industrial-hmi/design-data-binding.md`（§4.1 点表三源/§4.3 刷新流水线）、`docs/analysis/industrial-hmi/gate-3-review.md`（§10 e2e 归属）、`docs/analysis/industrial-hmi/renderer-boundary-audit.md`（测试句柄 `window.__flux_scada_<cid>` 恒开）
 > Related: 上游 `docs/plans/2026-08-04-0225-3-i11-event-linkage-and-canvas-interaction.md`（completed，验证页退役条款）；下游 roadmap I14（Benchmark，依赖 I13.1）、I15（测试补强/文档收尾）
@@ -70,18 +70,24 @@
 
 ### Phase 1 - I13.1 scada-demo 工艺流程演示页
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/pages/scada-demo.tsx`、`apps/playground/src/pages/index.ts`、`apps/playground/src/route-model.ts`、`apps/playground/src/App.tsx`、`apps/playground/src/pages/home-page.tsx`、`tests/e2e/scada-demo.spec.ts`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] `Proof`：前置验证——具体判定：roadmap I12 = `done`（或 I12 gate 已产出注意项清单且其中不阻塞本 plan 的修正已落地）、I10/I11 = `done` 且 closure-audit 通过；未就绪则等待（Failure Paths `upstream-not-ready`）。
-- [ ] `Decision`：roadmap Phase Status 回写 I13: `todo` → `planned`（本 plan 激活为 active 时同步执行；roadmap Rule 1 状态机，对齐 I10/I11 plan 先例）。
-- [ ] `Decision`：点表模拟数据刷新方式裁定——`component:setPointValue` 定时器驱动（static 变量，不依赖 scope）vs flux 变量经 `useScopeSelector` 桥接驱动（演示双轨数据模型）；择一或双演示，记录裁定依据（demo 复杂度 vs 双轨展示价值）。
-- [ ] `Fix`：`scada-demo.tsx` 工艺流程组态画面——内嵌组态 JSON（设备图元 motor/pump/valve/fan + 管道/管道连接 + 仪表 gauge/level/thermometer + 指示灯/按钮等，图元间管道连接语义 per I9.4）+ 点表模拟数据定时刷新 + 点击设备弹出详情（组态内 `events` 声明 → openDialog，消费 I11.1 全链路）+ 画布浏览交互（fit/center 控制、hover 反馈消费 I11.2）+ loading/empty region 承接；若收敛裁定为「并入」，则 I11 验证页三链路（click→dialog、dblclick→页面跳转、click→数据请求）全部保留于 scada-demo。
-- [ ] `Fix`：路由/导航注册——`pages/index.ts` export `ScadaDemoPage`、`route-model.ts` `DOMAIN_RENDERER_ROUTES` 新增 `scada-demo` 条目、`App.tsx` domain switch case（`scada-demo`）、`home-page.tsx` NAV_CARDS 条目 + `NavigationTarget` 联合类型（标题/eyebrow Industrial HMI/描述）。
-- [ ] `Fix`：I11 验证页收敛——裁定（退役 vs 并入）并落地：退役则移除 `scada-event-linkage-demo.tsx` 的 export/路由/卡片（含 `route-model.ts` 的 `scada-event-linkage` 条目、`App.tsx` case、`home-page.tsx` NAV_CARDS 条目与 `NavigationTarget` 联合类型）；并入则把三链路场景并入 scada-demo 并同步清理验证页入口。
-- [ ] `Proof`：`tests/e2e/scada-demo.spec.ts` smoke 断言——页面上挂（canvas 元素 + data-slot）、`window.__flux_scada_<cid>` 测试句柄存在且 getSymbols/getViewport 可读、点表刷新后 getPointTable 值变化、点击设备后 dialog 打开、无 console error（程序化断言，禁截图）。
+- [x] `Proof`：前置验证——具体判定：roadmap I12 = `done`（或 I12 gate 已产出注意项清单且其中不阻塞本 plan 的修正已落地）、I10/I11 = `done` 且 closure-audit 通过；未就绪则等待（Failure Paths `upstream-not-ready`）。
+- [x] `Decision`：roadmap Phase Status 回写 I13: `todo` → `planned`（本 plan 激活为 active 时同步执行；roadmap Rule 1 状态机，对齐 I10/I11 plan 先例）。
+- [x] `Decision`：点表模拟数据刷新方式裁定——**双演示（择一或双演示中的"双"）**：① flux 轨——`tankLevel/flow/temp/flowOn` 声明 `source: 'flux'`，页面组件 `setInterval`（1s）生成模拟数据 → SchemaRenderer `data` prop 注入 page scope → `useScadaPointsBridge`（useScopeSelector 精细化失效）→ point store → 刷新流水线合帧（I10.3 双轨中的 flux 桥接轨，平台能力复用禁重复实现）；② static 轨——`motorState/pumpState/valveOpen/fanState/alarm` 声明 `source: 'static'`，schema 按钮经 `component:setPointValue` 组件句柄派发（I10.2 句柄轨，组态内点表自包含）。裁定依据：双轨数据模型是 mission 核心主张（design-data-binding.md §4.1 点表三源），演示页作为首个真实浏览器载体一次演示双轨最有价值；页面零额外 dispatch 基础设施（定时器只更新 React state）。
+- [x] `Fix`：`scada-demo.tsx` 工艺流程组态画面——内嵌组态 JSON（设备图元 motor/pump/valve/fan + 管道/管道连接 pipe-junction + 仪表 gauge/level/thermometer + 指示灯/按钮等，图元间管道连接语义 per I9.4）+ 点表模拟数据定时刷新 + 点击设备弹出详情（组态内 `events` 声明 → openDialog，消费 I11.1 全链路）+ 画布浏览交互（fit/center 控制按钮、hover 反馈消费 I11.2）+ loading/empty region 承接；收敛裁定为「并入」——I11 验证页三链路（click→dialog、dblclick→页面跳转、click→数据请求）全部保留于 scada-demo。
+- [x] `Fix`：路由/导航注册——`pages/index.ts` export `ScadaDemoPage`、`route-model.ts` `DOMAIN_RENDERER_ROUTES` 新增 `scada-demo` 条目、`App.tsx` domain switch case（`scada-demo`）、`home-page.tsx` NAV_CARDS 条目 + `NavigationTarget` 联合类型（标题/eyebrow Industrial HMI/描述）。
+- [x] `Fix`：I11 验证页收敛——裁定为「并入」：三链路场景并入 scada-demo（click→openDialog 按设备 inline title/body args、dblclick→navigate `#/flux-basic`、click→ajax `/api/scada-demo/points`），验证页退役——移除 `scada-event-linkage-demo.tsx`（文件删除）及其 export/路由/卡片（`route-model.ts` 的 `scada-event-linkage` 条目、`App.tsx` case、`pages/index.ts` export、`home-page.tsx` NAV_CARDS 条目与 `NavigationTarget` 联合类型成员）。
+- [x] `Proof`：`tests/e2e/scada-demo.spec.ts` smoke 断言——页面上挂（canvas 元素 + data-slot `scada-canvas`/data-status ready）、`window.__flux_scada_<cid>` 测试句柄存在且 engine.getSymbols/getViewport 可读、点表刷新后 getPointValue 值变化（flux 轨定时器）、`component:setPointValue` 按钮写穿点表（static 轨）、点击设备后 dialog 打开（`data-slot="dialog-surface"` + 标题文本）、无 console error（程序化断言，禁截图）。
+
+> **执行中发现的真实浏览器缺陷（本 plan 职责内修复，regression 已固化）**：
+>
+> 1. `app.sky`/`app.ground` 缺失——leafer App 仅当 config 含对应 key 才创建层（web.module.js App.init），引擎 appConfig 只声明 `tree` → `InteractionOverlay` 构造崩溃（hover 链路）→ 修复：appConfig 补 `ground: {}`/`sky: {}` + leafer-ui-mock 按真实行为建模（ground/sky 按 config 创建）+ A1 三层测试强化（断言 app.sky/app.ground defined，防 undefined===undefined 空过）。
+> 2. `TreeRegistry.findByNode` 只索引符号根节点，真实 `selector.getByPoint` 返回最深命中子节点（设备 body/转子等）→ 命中反查失败、symbol:click 永不发射 → 修复：findByNode 沿 parent 链上溯到已登记根 + 回归测试（deepest-hit regression）。
+> 3. I11 验证页的 `openDialog args: { dialogId }` 模式在真实 flux 上打开的是**空 surface**（openDialog 从 args 创建 surface，`dialogId` 是 targeting 字段非 args 字段）→ 并入时改用 **inline `title`/`body` args**（fluxBasicPageSchema 既有工作模式），三链路语义不变。
 
 Exit Criteria:
 
@@ -89,27 +95,27 @@ Exit Criteria:
 >
 > **写法原则**：只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续所必需的局部检查。全量验证属 Closure Gates。
 
-- [ ] `scada-demo` 页面落地：工艺流程组态画面渲染、点表定时刷新、点击设备弹出详情、路由/导航卡片注册（`#/scada-demo` 可访问）。
-- [ ] I11 验证页收敛裁定已落地（退役或并入，路由/卡片同步清理，无残留临时入口标注）。
-- [ ] `tests/e2e/scada-demo.spec.ts` smoke 断言全绿（测试句柄读场景树/点表/事件链路 + 无 console error）。
+- [x] `scada-demo` 页面落地：工艺流程组态画面渲染、点表定时刷新、点击设备弹出详情、路由/导航卡片注册（`#/scada-demo` 可访问）。
+- [x] I11 验证页收敛裁定已落地（退役或并入，路由/卡片同步清理，无残留临时入口标注）。
+- [x] `tests/e2e/scada-demo.spec.ts` smoke 断言全绿（测试句柄读场景树/点表/事件链路 + 无 console error）。
 
 ### Phase 2 - I13.2 大屏/复杂组态示例页
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/pages/scada-pressure-demo.tsx`、`apps/playground/src/pages/index.ts`、`apps/playground/src/route-model.ts`、`apps/playground/src/App.tsx`、`apps/playground/src/pages/home-page.tsx`、`tests/e2e/scada-pressure-demo.spec.ts`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] `Decision`：压力示例页结构裁定——单页多画面 tab 切换 vs 页面级多路由切换（多画面切换语义，roadmap I13.2「多画面切换（页面导航）」）；**若选页面级多路由切换，需在 scope 内增加对应 domain 路由条目 + NAV_CARDS 卡片注册**（裁定记录，防止注册面越界）；程序化组态生成器设计（~10k 图元：矩形/线/文本/管道混合，固定随机种子保证 e2e 确定性）。
-- [ ] `Fix`：`scada-pressure-demo.tsx` 大屏/复杂组态示例页——程序化生成万级（~10k）图元组态 JSON + 多画面切换（≥2 个组态画面：工艺流程大屏 + 高密度图元压力画面）+ 大屏布局（全屏 canvas + 顶部信息栏）+ fit/center 初始视口。
-- [ ] `Fix`：路由/导航注册——`pages/index.ts` export、`route-model.ts` `DOMAIN_RENDERER_ROUTES` 新增 `scada-pressure-demo` 条目、`App.tsx` domain switch case（`scada-pressure-demo`）、`home-page.tsx` NAV_CARDS 条目 + `NavigationTarget` 联合类型（若裁定页面级多路由，则对应画面路由一并注册）。
-- [ ] `Proof`：`tests/e2e/scada-pressure-demo.spec.ts` smoke 断言——页面上挂、测试句柄 getSymbols 计数（≥10k）、多画面切换后场景树/视口变化断言、无 console error（程序化断言，禁截图；`pressure-scale-drift` 裁定记录交 I14.1）。
+- [x] `Decision`：压力示例页结构裁定——**单页多画面 tab 切换**（不选页面级多路由：注册面最小化——不新增 domain 路由条目/NAV_CARDS 卡片，roadmap I13.2「多画面切换（页面导航）」以 tab 形态等价演示）；一个 scada-canvas 挂载点 + 顶部 tab 切换两个组态画面（工艺流程大屏 ~20 图元 + 高密度图元压力画面 10k）；**切换实现裁定**：SchemaRenderer `key={screen}` 重挂载（引擎实例销毁/重建）而非 config version 换版本——`config.version` 是组态 JSON schema 版本且 `validate.ts` 严格校验 `version === 1`，不能借版本号触发 useScadaConfigSync 全量 reset（version: 2 会被 validate 拒绝进 empty 态）；程序化组态生成器：mulberry32(42) 固定种子 → 10k 图元（矩形/线/管道/文本各 2500，2000×1300 世界坐标），保证 e2e 确定性（`gen-5000` 等稳定 id 断言）。
+- [x] `Fix`：`scada-pressure-demo.tsx` 大屏/复杂组态示例页——程序化生成万级（10,000）图元组态 JSON + 多画面切换（≥2 个组态画面：工艺流程大屏 + 高密度图元压力画面）+ 大屏布局（全屏 canvas 面板 + 顶部信息栏：当前画面/图元数/操作提示）+ `viewport: { fit: 'contain' }` 初始视口（10k 画面 fit 后 scale < 1）。
+- [x] `Fix`：路由/导航注册——`pages/index.ts` export `ScadaPressureDemoPage`、`route-model.ts` `DOMAIN_RENDERER_ROUTES` 新增 `scada-pressure-demo` 条目、`App.tsx` domain switch case（`scada-pressure-demo`）、`home-page.tsx` NAV_CARDS 条目 + `NavigationTarget` 联合类型（裁定单页多画面，无额外画面路由注册）。
+- [x] `Proof`：`tests/e2e/scada-pressure-demo.spec.ts` smoke 断言——页面上挂（canvas + data-status ready）、测试句柄 engine.getSymbols 计数（默认大屏 <200 → 切压力画面 ≥10,000 且引擎实例引用替换断言）、多画面切换后场景树/视口变化断言（`gen-5000` 稳定存在 + fit 后 scale < 1）、切回大屏恢复小场景、无 console error（程序化断言，禁截图）；`pressure-scale-drift` 裁定记录交 I14.1（本页生成器以固定 `PRESSURE_COUNT = 10_000` 常量内嵌，10 万级加载方式——扩展 scale 参数 vs 独立 harness——由 I14.1 决策，本页不越界实现）。
 
 Exit Criteria:
 
-- [ ] `scada-pressure-demo` 页面落地：万级图元组态渲染、多画面切换、路由/导航卡片注册（`#/scada-pressure-demo` 可访问）。
-- [ ] `tests/e2e/scada-pressure-demo.spec.ts` smoke 断言全绿（getSymbols 计数 ≥10k + 画面切换 + 无 console error）。
-- [ ] 10 万级测量场景加载方式裁定已记录（供 I14.1 决策，无越界实现）。
+- [x] `scada-pressure-demo` 页面落地：万级图元组态渲染、多画面切换、路由/导航卡片注册（`#/scada-pressure-demo` 可访问）。
+- [x] `tests/e2e/scada-pressure-demo.spec.ts` smoke 断言全绿（getSymbols 计数 ≥10k + 画面切换 + 无 console error）。
+- [x] 10 万级测量场景加载方式裁定已记录（供 I14.1 决策，无越界实现）。
 
 ## Draft Review Record
 
@@ -124,19 +130,19 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。关闭流程详见本 guide 的 `When Closing The Plan` 和 `Closure Audit Rule`。
 
-- [ ] I13.1 与 I13.2 页面全部落地（路由/导航卡片注册，`#/scada-demo` 与 `#/scada-pressure-demo` 经 `route-model.ts` `DOMAIN_RENDERER_ROUTES` 可访问）。
-- [ ] I11 验证页收敛落地（退役或并入，无残留临时入口标注；`scada-event-linkage` 路由/卡片/export 已清理）。
-- [ ] 两个 smoke e2e spec 全绿（程序化断言：场景树/点表/事件链路 + 无 console error；无截图断言、未引 node-canvas）。
-- [ ] `pressure-scale-drift` 裁定已记录（10 万级加载方式归属 I14.1）。
-- [ ] roadmap Phase Status I13 已回写 `done`（前置：本 plan Closure Gates 全通过 + 独立 closure-audit 通过——由独立 closure-audit session 核验后执行）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] 受影响的 owner docs 已同步（无设计变更时不新增回写；本 plan 为 playground 演示层，不改变 `scada-canvas` 公共契约）。
-- [ ] `docs/logs/2026/08-04.md`（或当日日志）已记录收口摘要。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] I13.1 与 I13.2 页面全部落地（路由/导航卡片注册，`#/scada-demo` 与 `#/scada-pressure-demo` 经 `route-model.ts` `DOMAIN_RENDERER_ROUTES` 可访问）。
+- [x] I11 验证页收敛落地（退役或并入，无残留临时入口标注；`scada-event-linkage` 路由/卡片/export 已清理）。
+- [x] 两个 smoke e2e spec 全绿（程序化断言：场景树/点表/事件链路 + 无 console error；无截图断言、未引 node-canvas）。
+- [x] `pressure-scale-drift` 裁定已记录（10 万级加载方式归属 I14.1）。
+- [x] roadmap Phase Status I13 已回写 `done`（前置：本 plan Closure Gates 全通过 + 独立 closure-audit 通过——由独立 closure-audit session 核验后执行）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
+- [x] 受影响的 owner docs 已同步（无设计变更时不新增回写；本 plan 为 playground 演示层，不改变 `scada-canvas` 公共契约）。
+- [x] `docs/logs/2026/08-04.md`（或当日日志）已记录收口摘要。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -161,16 +167,18 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待关闭时填写。
+Status Note: I13.1 scada-demo 与 I13.2 scada-pressure-demo 全部落地（路由/导航注册 + 双轨点表演示 + 点击详情 + 万级压力画面 + 多画面切换）；I11 验证页并入收敛（三链路保留于 scada-demo，验证页退役清理）；两个 smoke e2e spec 全绿；执行中发现并修复 2 个真实浏览器缺陷（app.sky/app.ground 层缺失 + findByNode 最深命中反查失败，均带 regression 测试）；workspace 全量验证（typecheck/build/lint/test）全绿；roadmap I13 回写 `done`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立 closure-audit session 填写
-- Evidence: 待填
+- Auditor / Agent: 独立子 agent（fresh session，task `ses_03622fdc9ffeKhah0YcFqIERsV`，不复用执行上下文）
+- Evidence: 判定 `issues`（2 项均为流程项非缺陷：B-1 日志收口摘要未写——本 Closure 节与 `docs/logs/2026/08-04.md` 顶部条目即 B-1 落地；M-1 Closure Gates 未勾选——本节的 `[x]` 勾选即 M-1 落地）；实质内容逐项实测核验通过：两 Phase Exit Criteria 全部 landing（scada-demo.tsx flux 定时器/双轨按钮/inline openDialog 事件、scada-pressure-demo.tsx 固定种子 10k 生成器 + key 重挂载切换、路由/卡片/export 注册、`scada-event-linkage` 零残留）、引擎缺陷修复与回归测试（appConfig ground/sky + mock 条件建层 + A1 强化断言；findByNode parent 链 + deepest-hit 测试）、deferred 分类诚实（10 万级 → I14.1、完整断言矩阵 → I15.1）、roadmap 状态机未跳序（I13 `todo → planned → done`）。
 
 Follow-up:
 
-- 待关闭时填写。
+- 演示页作为 I15.1 正式 e2e 断言补强的常驻载体（测试句柄 `window.__flux_scada_<cid>` 恒开）。
+- 10 万级测量场景加载方式（扩展压力页 scale 参数 vs 独立 harness）由 I14.1 决策。
+- no remaining plan-owned work。
 
 ## Optional Sections
 

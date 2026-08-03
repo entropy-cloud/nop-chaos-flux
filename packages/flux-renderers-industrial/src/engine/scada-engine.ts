@@ -92,7 +92,13 @@ export class ScadaCanvasEngine {
       width: options.width,
       height: options.height,
       pixelRatio: options.pixelRatio,
+      // leafer App 三层模型（design-engine.md §6）：仅当 config 含对应 key 时才创建该层
+      // （web.module.js App.init: `if (ground) ... if (tree || editor) ... if (sky || editor)`）——
+      // ground 背景层 + tree 图元层 + sky 交互覆盖层全部显式创建，防 mock 掩蔽真实层缺失
+      // （gate-3 类 mock↔真实漂移：InteractionOverlay 构造读 app.sky，sky 缺失即 hover 崩溃）。
+      ground: {},
       tree: { type: 'viewport' },
+      sky: {},
       ...performanceDefaults,
       ...options.performance,
     };

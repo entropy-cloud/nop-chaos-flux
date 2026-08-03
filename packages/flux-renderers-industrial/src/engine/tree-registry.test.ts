@@ -47,4 +47,16 @@ describe('TreeRegistry (I5.1)', () => {
     expect(registry.subtreeIds('c1')).toEqual(['c1']);
     expect(registry.subtreeIds('solo')).toEqual(['solo']);
   });
+
+  it('should resolve deep hit nodes to the symbol root via parent chain (deepest-hit regression)', () => {
+    const registry = new TreeRegistry();
+    const root = node('Group') as { parent?: unknown };
+    const child = { parent: root };
+    const grandchild = { parent: child };
+    registry.add({ id: 'pump-1', node: root as never });
+    expect(registry.findByNode(root as never)).toBe('pump-1');
+    expect(registry.findByNode(child as never)).toBe('pump-1');
+    expect(registry.findByNode(grandchild as never)).toBe('pump-1');
+    expect(registry.findByNode({} as never)).toBeUndefined();
+  });
 });

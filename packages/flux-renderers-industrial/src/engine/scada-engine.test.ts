@@ -35,12 +35,18 @@ describe('ScadaCanvasEngine lifecycle (I5.1)', () => {
   it('create should assemble three layers with viewport tree type (A1)', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     const app = engine.app as unknown as {
-      config: { tree: { type: string } };
+      config: { tree: { type: string }; ground?: unknown; sky?: unknown };
       tree: unknown;
       ground: unknown;
       sky: unknown;
     };
     expect(app.config.tree.type).toBe('viewport');
+    // 三层必须真实存在：leafer App 仅当 config 含对应 key 时创建该层
+    // （web.module.js App.init）——缺失 sky 时 InteractionOverlay 构造崩溃（hover 链路，regression gate）。
+    expect(app.ground).toBeDefined();
+    expect(app.sky).toBeDefined();
+    expect(app.config.ground).toEqual({});
+    expect(app.config.sky).toEqual({});
     expect(engine.tree).toBe(app.tree);
     expect(engine.ground).toBe(app.ground);
     expect(engine.sky).toBe(app.sky);

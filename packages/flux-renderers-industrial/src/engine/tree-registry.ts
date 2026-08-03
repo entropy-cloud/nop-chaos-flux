@@ -34,9 +34,20 @@ export class TreeRegistry {
     return this.byId.has(id);
   }
 
-  /** 节点引用反查 id（I6.4 命中解析：selector.getByPoint 返回最深命中节点 → id）。 */
+  /**
+   * 节点引用反查 id（I6.4 命中解析：selector.getByPoint 返回最深命中节点 → id）。
+   * 真实 leafer `getByPoint` 返回**最深命中节点**（复合图元的子节点，如设备 body/转子），
+   * 而 nodeIndex 只登记符号根节点——沿 parent 链上溯直到命中已登记根（gate-3 类 mock↔真实
+   * 漂移回归：mock getByPoint 恒返回带 id 的叶子，掩蔽根索引反查失败的缺陷）。
+   */
   findByNode(node: object): string | undefined {
-    return this.nodeIndex.get(node);
+    let current: object | null = node;
+    while (current !== null) {
+      const id = this.nodeIndex.get(current);
+      if (id !== undefined) return id;
+      current = (current as { parent?: object | null }).parent ?? null;
+    }
+    return undefined;
   }
 
   getSymbols(): RegistryLeaf[] {
