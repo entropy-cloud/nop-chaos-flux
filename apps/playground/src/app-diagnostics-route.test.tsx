@@ -28,6 +28,10 @@ vi.mock('@nop-chaos/flux-renderers-data', () => ({
   registerDataRenderers: () => undefined,
 }));
 
+vi.mock('@nop-chaos/flux-renderers-industrial', () => ({
+  registerScadaRenderers: () => undefined,
+}));
+
 vi.mock('@nop-chaos/nop-debugger', () => ({
   NopDebuggerPanel: () => null,
   createNopDebugger: () => ({
