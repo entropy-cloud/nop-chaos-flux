@@ -86,12 +86,12 @@ export function ConditionGroup({
     showNot = false,
     showIf = false,
     draggable = false,
-    searchable = false,
     uniqueFields = false,
     maxDepth,
     maxItemsPerGroup,
     addConditionLabel = t('conditionBuilder.addCondition'),
     addGroupLabel = t('conditionBuilder.addGroup'),
+    removeConditionLabel = t('conditionBuilder.removeCondition'),
     removeGroupLabel = t('conditionBuilder.removeGroup'),
   } = schema;
 
@@ -231,7 +231,7 @@ export function ConditionGroup({
                   onChange={(v) => handleChildChange(index, v)}
                   onRemove={() => handleChildRemove(index)}
                   disabled={disabled}
-                  searchable={searchable}
+                  removeLabel={removeConditionLabel}
                   usedFields={
                     uniqueFields ? computeUsedFields(value.children, child.id) : undefined
                   }
@@ -287,7 +287,7 @@ export function ConditionGroup({
             onChange={(v) => handleChildChange(index, v)}
             onRemove={() => handleChildRemove(index)}
             disabled={disabled}
-              searchable={searchable}
+              removeLabel={removeConditionLabel}
               usedFields={uniqueFields ? computeUsedFields(value.children, child.id) : undefined}
               uniqueFields={uniqueFields}
               draggable={draggable}

@@ -16,7 +16,6 @@ interface FieldSelectProps {
   value: string | undefined;
   onChange: (fieldName: string) => void;
   disabled?: boolean;
-  searchable?: boolean;
   usedFields?: Set<string>;
   uniqueFields?: boolean;
 }

@@ -167,7 +167,14 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     syncValueRef.current = syncValue;
   }, [syncValue]);
 
-  const disabled = presentation.effectiveDisabled || presentation.fieldState.submitting;
+  // Single umbrella switch (design §7.6): `disabled` freezes every mutation
+  // affordance. `readOnly` (component schema prop or form-level `static:true`
+  // via FormLayoutContext.staticReadOnly) folds into the same umbrella — with
+  // the chrome left interactive under readOnly, form-mode writes would be
+  // silently dropped while scope-mode custom-editor writes would throw on the
+  // readOnly projected owner scope (C3.3 P1-1).
+  const disabled =
+    presentation.effectiveDisabled || presentation.fieldState.submitting || presentation.readOnly;
 
   // H30: projected form/scope/validation instances are stable per item across
   // renders. `effectiveValue` is rebuilt every render (sanitizeNode), so child
@@ -511,32 +518,58 @@ function PickerModeContent({
   );
 }
 
+const conditionBuilderValidation: RendererDefinition['validation'] = {
+  kind: 'field',
+  valueKind: 'scalar',
+  getFieldPath(schema: BaseSchema) {
+    return typeof schema.name === 'string' ? schema.name : undefined;
+  },
+  collectRules(schema: BaseSchema) {
+    const rules: ValidationRule[] = [];
+    if (schema.required) {
+      rules.push({
+        kind: 'required',
+        message: getRequiredMessage(
+          String(schema.label ?? schema.name ?? t('conditionBuilder.conditionLabel')),
+        ),
+      });
+    }
+    return rules;
+  },
+};
+
 export const conditionBuilderRendererDefinition: RendererDefinition = {
   type: 'condition-builder',
   displayName: 'Condition Builder',
   category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ConditionBuilderRenderer,
-  fields: formFieldRules,
-  validation: {
-    kind: 'field',
-    valueKind: 'scalar',
-    getFieldPath(schema: BaseSchema) {
-      return typeof schema.name === 'string' ? schema.name : undefined;
-    },
-    collectRules(schema: BaseSchema) {
-      const rules: ValidationRule[] = [];
-      if (schema.required) {
-        rules.push({
-          kind: 'required',
-          message: getRequiredMessage(
-            String(schema.label ?? schema.name ?? t('conditionBuilder.conditionLabel')),
-          ),
-        });
-      }
-      return rules;
-    },
-  },
+  // The consumed condition-builder props are registered explicitly (design §5
+  // classifies fields/operators/formulas/formulaForIf as value props); the
+  // compiler default prop classification already resolved them, and the
+  // registration freezes the contract against phantom drift (C3.3 P1-3).
+  fields: [
+    ...formFieldRules,
+    { key: 'fields', kind: 'value' },
+    { key: 'operators', kind: 'value' },
+    { key: 'formulas', kind: 'value' },
+    { key: 'formulaForIf', kind: 'value' },
+    { key: 'builderMode', kind: 'prop' },
+    { key: 'embed', kind: 'prop' },
+    { key: 'showAndOr', kind: 'prop' },
+    { key: 'showNot', kind: 'prop' },
+    { key: 'showIf', kind: 'prop' },
+    { key: 'draggable', kind: 'prop' },
+    { key: 'uniqueFields', kind: 'prop' },
+    { key: 'maxDepth', kind: 'prop' },
+    { key: 'maxItemsPerGroup', kind: 'prop' },
+    { key: 'placeholder', kind: 'prop' },
+    { key: 'addConditionLabel', kind: 'prop' },
+    { key: 'addGroupLabel', kind: 'prop' },
+    { key: 'removeConditionLabel', kind: 'prop' },
+    { key: 'removeGroupLabel', kind: 'prop' },
+  ],
+  validation: conditionBuilderValidation,
   wrap: true,
   frameRootTag: 'div',
 };

@@ -1,6 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { BaseSchema, FormRuntime, ScopeRef, ValidationScopeRuntime } from '@nop-chaos/flux-core';
-import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
+import {
+  FormContext,
+  FormLayoutContext,
+  ScopeContext,
+  ValidationContext,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
@@ -143,11 +148,22 @@ function CustomValueEditorHost({
   scope,
   validationOwner,
 }: CustomValueEditorHostProps) {
+  const staticReadOnlyValue = useMemo(
+    () => (disabled === true ? { staticReadOnly: true } : undefined),
+    [disabled],
+  );
   return (
     <FormContext.Provider value={form}>
       <ScopeContext.Provider value={scope}>
         <ValidationContext.Provider value={validationOwner}>
-          {renderSchema(schema, { field, op, value, disabled, scope })}
+          {/* The builder umbrella (disabled/readOnly) must freeze the nested
+              value-editor schema. The composite-family mechanism
+              (FormLayoutContext.staticReadOnly) is reused here so child
+              fields render readonly/disabled instead of staying interactive
+              and leaking writes into the store (C3.3 P1-2, CX-8 mechanism). */}
+          <FormLayoutContext.Provider value={staticReadOnlyValue}>
+            {renderSchema(schema, { field, op, value, disabled, scope })}
+          </FormLayoutContext.Provider>
         </ValidationContext.Provider>
       </ScopeContext.Provider>
     </FormContext.Provider>
@@ -364,7 +380,7 @@ function MultiSelectInput({
               variant="secondary"
               size="xs"
               className="h-auto px-1.5 py-0 text-[10px]"
-              aria-label={`Remove value ${opt?.label ?? v}`}
+              aria-label={t('conditionBuilder.removeValue', { label: opt?.label ?? v })}
               disabled={disabled}
               onClick={() => toggle(v)}
             >

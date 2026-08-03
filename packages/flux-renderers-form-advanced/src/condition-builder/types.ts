@@ -19,14 +19,13 @@ export interface BaseConditionField extends SchemaObject {
   placeholder?: string;
   operators?: (string | ConditionCustomOperator)[];
   defaultOp?: string;
-  defaultValue?: SchemaValue;
-  disabled?: boolean;
-  valueTypes?: Array<'value' | 'field' | 'func'>;
 }
 
 export interface ConditionCustomOperator extends SchemaObject {
   label: string;
   value: string;
+  /** Declared but not yet consumed by the value editor (design §7.2 documents
+   *  the future dynamic-form extension; kept as a documented extension point). */
   values?: ConditionCustomOperatorValueField[];
 }
 
@@ -39,48 +38,28 @@ export interface ConditionCustomOperatorValueField extends SchemaObject {
 
 export interface ConditionTextField extends BaseConditionField {
   type: 'text';
-  minLength?: number;
-  maxLength?: number;
 }
 
 export interface ConditionNumberField extends BaseConditionField {
   type: 'number';
-  minimum?: number;
-  maximum?: number;
-  step?: number;
-  precision?: number;
 }
 
 export interface ConditionDateField extends BaseConditionField {
   type: 'date';
-  format?: string;
-  inputFormat?: string;
-  minDate?: string;
-  maxDate?: string;
 }
 
 export interface ConditionTimeField extends BaseConditionField {
   type: 'time';
-  format?: string;
-  inputFormat?: string;
-  minTime?: string;
-  maxTime?: string;
 }
 
 export interface ConditionDateTimeField extends BaseConditionField {
   type: 'datetime';
-  format?: string;
-  inputFormat?: string;
-  timeFormat?: string;
 }
 
 export interface ConditionSelectField extends BaseConditionField {
   type: 'select';
   options?: Array<{ label: string; value: SchemaValue } & SchemaObject>;
-  searchable?: boolean;
   multiple?: boolean;
-  autoComplete?: string;
-  maxTagCount?: number;
 }
 
 export interface ConditionBooleanField extends BaseConditionField {
@@ -152,18 +131,14 @@ export interface ConditionBuilderSchema extends BaseSchema {
   fields?: ConditionFieldSchemaValue[];
   builderMode?: 'full' | 'simple';
   embed?: boolean;
-  title?: string;
-  searchable?: boolean;
-  draggable?: boolean;
   showAndOr?: boolean;
   showNot?: boolean;
   showIf?: boolean;
+  draggable?: boolean;
   uniqueFields?: boolean;
   formulas?: ConditionFormulaConfig;
   formulaForIf?: ConditionFormulaConfig;
   operators?: ConditionOperatorOverridesSchemaValue;
-  addBtnVisibleOn?: string;
-  addGroupBtnVisibleOn?: string;
   placeholder?: string;
   addConditionLabel?: string;
   addGroupLabel?: string;

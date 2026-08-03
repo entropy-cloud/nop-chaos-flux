@@ -265,8 +265,9 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     id: 'condition-builder',
     title: 'Condition Builder',
     tier: 'write',
-    primaryScenario: 'Simple single-rule AND group',
-    notes: 'Verify initial rule is visible; change a value to verify mutation',
+    primaryScenario: 'Host form build conditions + submit (bug 73 pattern)',
+    notes:
+      'Verify condition tree editing: edit rule values, add rules/groups, submit publishes the committed condition shape; disabled/readOnly freeze every affordance (C3.3 P1-1); custom value editors write back and freeze when disabled (C3.3 P1-2)',
   },
   {
     id: 'object-field',

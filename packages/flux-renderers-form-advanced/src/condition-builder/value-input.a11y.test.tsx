@@ -36,6 +36,6 @@ describe('condition-builder value input accessibility', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Remove value Open' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '移除值 Open' })).toBeTruthy();
   });
 });

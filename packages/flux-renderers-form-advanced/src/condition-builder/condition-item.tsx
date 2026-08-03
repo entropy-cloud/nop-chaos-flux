@@ -24,7 +24,7 @@ interface ConditionItemProps {
   onChange: (value: ConditionItemValue) => void;
   onRemove: () => void;
   disabled?: boolean;
-  searchable?: boolean;
+  removeLabel?: string;
   usedFields?: Set<string>;
   uniqueFields?: boolean;
   draggable?: boolean;
@@ -64,7 +64,7 @@ export function ConditionItem({
   onChange,
   onRemove,
   disabled,
-  searchable,
+  removeLabel,
   usedFields,
   uniqueFields,
   draggable,
@@ -148,7 +148,6 @@ export function ConditionItem({
         value={value.left.field}
         onChange={handleFieldChange}
         disabled={disabled}
-        searchable={searchable}
         usedFields={usedFields}
         uniqueFields={uniqueFields}
       />
@@ -182,7 +181,7 @@ export function ConditionItem({
           size="icon-xs"
           className="ml-auto text-muted-foreground opacity-40 group-hover:opacity-100 focus:opacity-100 hover:text-destructive transition-opacity"
           onClick={onRemove}
-          aria-label={t('conditionBuilder.removeCondition')}
+          aria-label={removeLabel ?? t('conditionBuilder.removeCondition')}
         >
           <Trash2Icon className="size-3.5" />
         </WrappedFieldAction>
