@@ -1,6 +1,6 @@
 # 2 I4 包基建与依赖引入（flux-renderers-industrial）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-03
 > Source: `docs/components/roadmap-industrial-hmi.md`（I4、Cross-Cutting 新增包流程/平台能力复用表/测试纪律）、`docs/components/industrial-hmi/design-renderer.md`（§11 实现拆分建议：schemas.ts 为 I4.1 职责）、`docs/components/industrial-hmi/design-engine.md`（§4.1 ScadaEngineOptions）、AGENTS.md「Adding New Packages」
 > Related: 上游 `docs/plans/2026-08-03-2113-1-i3-design-gate-review.md`（I3 gate，前置等待）；下游 `docs/plans/2026-08-03-2113-3-i5-engine-core-wave1.md`（I5 引擎 Wave 1，依赖本 plan I4.1）
@@ -70,41 +70,41 @@
 
 ### Phase 1 - I4.1 包创建与依赖引入
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/*`、`pnpm-lock.yaml`、`vite.workspace-alias.ts`、根 `tsconfig.json`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] `Proof`：前置验证——核对 I3 gate 已关闭（**具体判定：roadmap I3 = `done` 且 `gate-2-review.md` 存在、无待人工裁决项**），且 `design-renderer.md` §4.1/§11 契约未被 I3.2 修正为与本文冲突；未就绪则等待（Failure Paths `upstream-not-ready`）。
-- [ ] `Fix`：创建 `packages/flux-renderers-industrial/`：package.json（workspace 依赖 flux-core/flux-react/flux-i18n/ui；runtime deps `leafer-ui@2.2.9`、`@leafer-in/viewport@2.2.9`；peerDependencies react/react-dom（可选标记按既有包惯例）；exports `./styles.css`；sideEffects；scripts 对齐 `flux-renderers-mobile` 的 build/typecheck/test/lint 模式）、tsconfig.json、tsconfig.build.json、vitest.config.ts、src 骨架（`schemas.ts`/`renderer-definitions.ts`/`index.ts`/`styles.css`）。
-- [ ] `Decision`：`schemas.ts` 类型范围——按 `design-renderer.md` §4.1 落地 `ScadaCanvasSchema`/`ScadaCanvasEvents`（config/width/height/loading/empty/viewport/events 字段），组态 JSON 内部类型（ScadaConfig/ScadaSymbolNode）留待 I5.3 `serialization/config-types.ts` 再导出（避免空包承载未实现契约）。
-- [ ] `Fix`：`pnpm add` 引入 `leafer-ui@2.2.9` + `@leafer-in/viewport@2.2.9`；审查 pnpm-lock diff（依赖树/许可 MIT/体积预算，对照 `research-download.md` §2.1/§2.2；spike 工程 lockfile 作版本参考）。
-- [ ] `Fix`：工程接线三通道——`vite.workspace-alias.ts` 新增包别名；根 `tsconfig.json` project references 新增 `./packages/flux-renderers-industrial`；**`tsconfig.base.json` `paths` 新增包主入口 + `/styles.css` 子路径**（对齐 `@nop-chaos/flux-renderers-scheduling` 先例，缺省会导致 playground 类型检查 TS2307 与 Closure Gate 失败）。
-- [ ] `Proof`：renderer-definitions 注册单测（`scada-canvas` 空壳可经 `registerRendererDefinitions` 注册、类型与 sourcePackage 正确）。
+- [x] `Proof`：前置验证——核对 I3 gate 已关闭（**具体判定：roadmap I3 = `done` 且 `gate-2-review.md` 存在、无待人工裁决项**），且 `design-renderer.md` §4.1/§11 契约未被 I3.2 修正为与本文冲突；未就绪则等待（Failure Paths `upstream-not-ready`）。
+- [x] `Fix`：创建 `packages/flux-renderers-industrial/`：package.json（workspace 依赖 flux-core/flux-react/flux-i18n/ui；runtime deps `leafer-ui@2.2.9`、`@leafer-in/viewport@2.2.9`；peerDependencies react/react-dom（可选标记按既有包惯例）；exports `./styles.css`；sideEffects；scripts 对齐 `flux-renderers-mobile` 的 build/typecheck/test/lint 模式）、tsconfig.json、tsconfig.build.json、vitest.config.ts、src 骨架（`schemas.ts`/`renderer-definitions.ts`/`index.ts`/`styles.css`）。
+- [x] `Decision`：`schemas.ts` 类型范围——按 `design-renderer.md` §4.1 落地 `ScadaCanvasSchema`/`ScadaCanvasEvents`（config/width/height/loading/empty/viewport/events 字段），组态 JSON 内部类型（ScadaConfig/ScadaSymbolNode）留待 I5.3 `serialization/config-types.ts` 再导出（避免空包承载未实现契约）。
+- [x] `Fix`：`pnpm add` 引入 `leafer-ui@2.2.9` + `@leafer-in/viewport@2.2.9`；审查 pnpm-lock diff（依赖树/许可 MIT/体积预算，对照 `research-download.md` §2.1/§2.2；spike 工程 lockfile 作版本参考）。
+- [x] `Fix`：工程接线三通道——`vite.workspace-alias.ts` 新增包别名；根 `tsconfig.json` project references 新增 `./packages/flux-renderers-industrial`；**`tsconfig.base.json` `paths` 新增包主入口 + `/styles.css` 子路径**（对齐 `@nop-chaos/flux-renderers-scheduling` 先例，缺省会导致 playground 类型检查 TS2307 与 Closure Gate 失败）。
+- [x] `Proof`：renderer-definitions 注册单测（`scada-canvas` 空壳可经 `registerRendererDefinitions` 注册、类型与 sourcePackage 正确）。
 
 Exit Criteria:
 
-- [ ] `packages/flux-renderers-industrial/` 完整落盘（package.json/tsconfig×2/vitest.config.ts/schemas.ts/renderer-definitions.ts/index.ts/styles.css），结构与既有 renderer 包一致（`sideEffects`/exports/scripts/peerDependencies）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck` 通过；包内注册单测通过（`pnpm --filter @nop-chaos/flux-renderers-industrial test`）。
-- [ ] pnpm-lock diff 审查记录在案（依赖树/许可/体积），无未裁定异常；工程接线三通道（vite.workspace-alias.ts / 根 tsconfig references / tsconfig.base.json paths）已更新；playground 侧类型检查无 TS2307（`pnpm --filter @nop-chaos/flux-playground typecheck` 或等价局部验证）。
+- [x] `packages/flux-renderers-industrial/` 完整落盘（package.json/tsconfig×2/vitest.config.ts/schemas.ts/renderer-definitions.ts/index.ts/styles.css），结构与既有 renderer 包一致（`sideEffects`/exports/scripts/peerDependencies）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck` 通过；包内注册单测通过（`pnpm --filter @nop-chaos/flux-renderers-industrial test`）。
+- [x] pnpm-lock diff 审查记录在案（依赖树/许可/体积），无未裁定异常；工程接线三通道（vite.workspace-alias.ts / 根 tsconfig references / tsconfig.base.json paths）已更新；playground 侧类型检查无 TS2307（`pnpm --filter @nop-chaos/flux-playground typecheck` 或等价局部验证）。
 
 ### Phase 2 - I4.2 scada-canvas 空壳注册
 
-Status: planned
+Status: completed
 Targets: `docs/components/examples.manifest.json`、`apps/playground/src/App.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`：`examples.manifest.json` `runtime` 数组新增 `"scada-canvas"`（若 manifest 校验要求 example.json 文件，按既有 `declaredButUnregistered`/`targetContract` 语义处理——空壳期可仅进 `runtime`，example 文件属 I13）。
-- [ ] `Fix`：`apps/playground/src/App.tsx` 新增 `import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial'` + `registerScadaRenderers(registry)`（对齐 `registerSchedulingRenderers` 调用位置）。
-- [ ] `Proof`：空壳渲染 smoke——playground 启动后构造含 `scada-canvas` 的最小 schema 渲染，断言不抛错（经既有 playground 测试基建或人工抽查记录）；确认 `__FLUX_STRICT_VALIDATION__`/schema 诊断不拦截空壳 defaultSchema。
-- [ ] `Fix`：`docs/logs/2026/08-03.md` 记录本 plan 产出摘要。
+- [x] `Fix`：`examples.manifest.json` `runtime` 数组新增 `"scada-canvas"`（若 manifest 校验要求 example.json 文件，按既有 `declaredButUnregistered`/`targetContract` 语义处理——空壳期可仅进 `runtime`，example 文件属 I13）。
+- [x] `Fix`：`apps/playground/src/App.tsx` 新增 `import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial'` + `registerScadaRenderers(registry)`（对齐 `registerSchedulingRenderers` 调用位置）。
+- [x] `Proof`：空壳渲染 smoke——playground 启动后构造含 `scada-canvas` 的最小 schema 渲染，断言不抛错（经既有 playground 测试基建或人工抽查记录）；确认 `__FLUX_STRICT_VALIDATION__`/schema 诊断不拦截空壳 defaultSchema。
+- [x] `Fix`：`docs/logs/2026/08-03.md` 记录本 plan 产出摘要。
 
 Exit Criteria:
 
-- [ ] `examples.manifest.json` runtime 含 `scada-canvas`，无 manifest/registry 校验失败。
-- [ ] playground `App.tsx` 已注册 `registerScadaRenderers`，最小 schema smoke 渲染无异常（记录在日志或测试中）。
-- [ ] roadmap I4 状态已按 plan 生命周期回写（Closure Gates 全过后置 `done`）。
+- [x] `examples.manifest.json` runtime 含 `scada-canvas`，无 manifest/registry 校验失败。
+- [x] playground `App.tsx` 已注册 `registerScadaRenderers`，最小 schema smoke 渲染无异常（记录在日志或测试中）。
+- [x] roadmap I4 状态已按 plan 生命周期回写（Closure Gates 全过后置 `done`）。
 
 ## Draft Review Record
 
@@ -117,17 +117,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 新包落盘完整且包级验证通过（typecheck + 注册单测；`pnpm --filter @nop-chaos/flux-renderers-industrial test` 无失败）。
-- [ ] `leafer-ui@2.2.9` + `@leafer-in/viewport@2.2.9` 入 dependencies，pnpm-lock diff 审查通过（许可 MIT/依赖树/体积预算，无未裁定异常）。
-- [ ] `vite.workspace-alias.ts` 别名 + 根 tsconfig references + **`tsconfig.base.json` paths**（主入口 + `/styles.css`）三通道已更新，playground 可解析新包且无 TS2307。
-- [ ] `scada-canvas` 空壳注册完成（manifest runtime + playground registry），渲染 smoke 无异常；不存在被静默降级到 deferred / follow-up 的 in-scope 缺项。
-- [ ] 受影响的 owner 文档已同步（docs/logs 收口摘要；架构文档同步属 I15.2，不在本 plan 范围）。
-- [ ] roadmap Phase Status I4 已回写 `done`。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 新包落盘完整且包级验证通过（typecheck + 注册单测；`pnpm --filter @nop-chaos/flux-renderers-industrial test` 无失败）。
+- [x] `leafer-ui@2.2.9` + `@leafer-in/viewport@2.2.9` 入 dependencies，pnpm-lock diff 审查通过（许可 MIT/依赖树/体积预算，无未裁定异常）。
+- [x] `vite.workspace-alias.ts` 别名 + 根 tsconfig references + **`tsconfig.base.json` paths**（主入口 + `/styles.css`）三通道已更新，playground 可解析新包且无 TS2307。
+- [x] `scada-canvas` 空壳注册完成（manifest runtime + playground registry），渲染 smoke 无异常；不存在被静默降级到 deferred / follow-up 的 in-scope 缺项。
+- [x] 受影响的 owner 文档已同步（docs/logs 收口摘要；架构文档同步属 I15.2，不在本 plan 范围）。
+- [x] roadmap Phase Status I4 已回写 `done`。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -159,13 +159,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待填写
+Status Note: 两 Phase 全绿执行完毕，workspace typecheck 32/32、build 32/32、lint 32/32、test 59/59 全绿；closure-audit（独立 fresh session）verdict `approved`（0 Blocker/0 Major/0 Minor，11 项核查通过）；roadmap I4 已回写 `done`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待填写
-- Evidence: 待填写
+- Auditor / Agent: 独立子 agent（fresh session，task `ses_03804462fffeCBo2xwSf3BFEDA`）
+- Evidence: verdict `approved`——11 项核查全部通过：① 两 Phase 全部 `[x]` + Status `completed`，未勾选项仅存 Closure Gates（留给审计）；② 包文件与 In Scope 逐项一致（package.json 依赖/peer/exports/sideEffects/scripts、tsconfig 双份、vitest 阈值基线注释）；③ 骨架期 drift 均为计划内（config `string | SchemaObject` 为 I5.3 前占位、placeholder 组件为 registry 必需、src 根目录布局 I10.2 迁移 `renderer/`）；④ lockfile 审查：leafer-ui@2.2.9 MIT 零外部依赖（10 项全 `@leafer*` 2.2.9）、@leafer-in/viewport@2.2.9 MIT 零依赖 peer 全 2.2.9；⑤ 三通道接线逐文件核对；⑥ manifest runtime 含 scada-canvas（JSON parse 验证）且 App.tsx 注册就位；⑦ smoke 测试真实走完整 runtime + strict validation（共享 vitest 配置双 env flag + setupFiles）并断言 DOM 契约；⑧ 包级 typecheck/test 新鲜重跑全绿（9 tests 100% 可执行行覆盖，schemas.ts 为纯类型 0 行不计阈值）、workspace 四命令全绿（turbo 缓存与包级新鲜结果一致）、playground 无 TS2307；⑨ docs/logs 条目就位；⑩ Deferred 分类诚实（fields/events→I10.2、coverage→基线只升不降、i18n/quick-reference→I15.1/I15.2），无 in-scope 静默降级；⑪ 上游 I3 gate 就绪验证。
 
 Follow-up:
 
-- 待填写
+- 无剩余 plan 归属工作。I5 引擎 Wave 1（plan `2026-08-03-2113-3`）前置 Proof（I4.1 就绪）已满足，可推进；`leafer-ui@2.2.9` 实际安装版本与 lockfile 快照已记入 docs/logs（I14 benchmark 复测版本对照）。

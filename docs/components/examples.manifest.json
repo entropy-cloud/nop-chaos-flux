@@ -59,7 +59,8 @@
     "spreadsheet-page",
     "word-editor-page",
     "barcode-input",
-    "diff-view"
+    "diff-view",
+    "scada-canvas"
   ],
   "targetContract": [
     "alert",
