@@ -4,6 +4,7 @@ import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { registerScadaSymbol, unregisterScadaSymbol } from '../symbols/symbol-registry.js';
 import { scadaTestHandleKey } from './test-handle.js';
 import { ScadaCanvasEngine } from './scada-engine.js';
+import { PointStore } from '../binding/point-store.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
@@ -146,6 +147,36 @@ describe('ScadaCanvasEngine test handle (I5.1)', () => {
     expect((window as unknown as Record<string, unknown>)[scadaTestHandleKey(43)]).toBeUndefined();
     engine.destroy();
   });
+
+  it('getPointValue should project point store values when injected (I6.1)', () => {
+    const store = new PointStore();
+    store.loadDeclarations([
+      { id: 'level', source: 'static', value: 42 },
+      { id: 'raw', source: 'static', value: 1, scale: { k: 2, b: 1 } },
+    ]);
+    store.setPointValue('raw', 3);
+    const engine = ScadaCanvasEngine.create({
+      container: makeContainer(),
+      exposeTestHandle: true,
+      cid: 44,
+      pointStore: store,
+    });
+    const handle = (window as unknown as Record<string, unknown>)[scadaTestHandleKey(44)] as {
+      getPointValue: (pointId: string) => unknown;
+    };
+    expect(handle.getPointValue('level')).toBe(42);
+    expect(handle.getPointValue('raw')).toBe(7);
+    engine.destroy();
+  });
+
+  it('getPointValue should return undefined when no point store is injected', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), exposeTestHandle: true, cid: 45 });
+    const handle = (window as unknown as Record<string, unknown>)[scadaTestHandleKey(45)] as {
+      getPointValue: (pointId: string) => unknown;
+    };
+    expect(handle.getPointValue('level')).toBeUndefined();
+    engine.destroy();
+  });
 });
 
 describe('ScadaCanvasEngine commands (I5.1/I5.2 wiring)', () => {
@@ -227,5 +258,83 @@ describe('ScadaCanvasEngine commands (I5.1/I5.2 wiring)', () => {
     engine.setViewport({ x: 10, y: 20, scale: 2 });
     expect(engine.getWorldPoint({ x: 20, y: 40 })).toEqual({ x: 20, y: 40 });
     expect(engine.getViewportPoint({ x: 30, y: 60 })).toEqual({ x: 40, y: 80 });
+  });
+});
+
+describe('ScadaCanvasEngine 事件桥接线 (I6.4)', () => {
+  it('should emit symbol:click with normalized payload on tree tap', () => {
+    const onSymbolEvent = vi.fn();
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), onSymbolEvent });
+    engine.reset(validConfig() as ScadaConfig);
+    const leaf = engine.getSymbol('rect-1')?.node;
+    (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
+      leaf;
+    engine.tree.emit('tap', { point: { x: 100, y: 200 } });
+    expect(onSymbolEvent).toHaveBeenCalledTimes(1);
+    expect(onSymbolEvent).toHaveBeenCalledWith(
+      'symbol:click',
+      expect.objectContaining({
+        symbolId: 'rect-1',
+        symbolType: 'scada-rect',
+        world: { x: 100, y: 200 },
+        viewport: { x: 100, y: 200 },
+      }),
+    );
+    engine.destroy();
+  });
+
+  it('should project bound point values via getPointValuesFor into the payload', () => {
+    const onSymbolEvent = vi.fn();
+    const getPointValuesFor = vi.fn(() => ({ level: 42 }));
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), onSymbolEvent, getPointValuesFor });
+    engine.reset(validConfig() as ScadaConfig);
+    const leaf = engine.getSymbol('rect-1')?.node;
+    (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
+      leaf;
+    engine.tree.emit('double_tap', { point: { x: 10, y: 20 } });
+    expect(getPointValuesFor).toHaveBeenCalledWith('rect-1');
+    expect(onSymbolEvent).toHaveBeenCalledWith(
+      'symbol:dblclick',
+      expect.objectContaining({ symbolId: 'rect-1', pointValues: { level: 42 } }),
+    );
+    engine.destroy();
+  });
+
+  it('should map world coordinates through the viewport state', () => {
+    const onSymbolEvent = vi.fn();
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), onSymbolEvent });
+    engine.reset(validConfig() as ScadaConfig);
+    engine.setViewport({ x: 0, y: 0, scale: 2 });
+    const leaf = engine.getSymbol('rect-1')?.node;
+    (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
+      leaf;
+    engine.tree.emit('pointer.move', { point: { x: 100, y: 200 } });
+    expect(onSymbolEvent).toHaveBeenCalledWith(
+      'symbol:hover',
+      expect.objectContaining({ world: { x: 50, y: 100 }, viewport: { x: 100, y: 200 } }),
+    );
+    engine.destroy();
+  });
+
+  it('should not emit when no onSymbolEvent handler is provided', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(validConfig() as ScadaConfig);
+    const leaf = engine.getSymbol('rect-1')?.node;
+    (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
+      leaf;
+    engine.tree.emit('tap', { point: { x: 10, y: 20 } });
+    engine.destroy();
+  });
+
+  it('destroy should detach the event bridge', () => {
+    const onSymbolEvent = vi.fn();
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), onSymbolEvent });
+    engine.reset(validConfig() as ScadaConfig);
+    const leaf = engine.getSymbol('rect-1')?.node;
+    (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
+      leaf;
+    engine.destroy();
+    engine.tree.emit('tap', { point: { x: 10, y: 20 } });
+    expect(onSymbolEvent).not.toHaveBeenCalled();
   });
 });

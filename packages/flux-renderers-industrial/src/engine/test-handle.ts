@@ -9,6 +9,7 @@ export interface ScadaTestHandle {
   tree: unknown;
   app: unknown;
   getSymbol(id: string): unknown;
+  getPointValue(pointId: string): unknown;
   getViewport(): ViewportState;
   forceRender(): void;
 }

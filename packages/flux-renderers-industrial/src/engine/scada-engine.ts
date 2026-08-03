@@ -18,6 +18,9 @@ import {
 } from './viewport.js';
 import { toNodePatch } from '../symbols/symbol-factory.js';
 import type { ScadaSymbolProps } from '../symbols/symbol-types.js';
+import type { PointStore } from '../binding/point-store.js';
+import { EventBridge, type ScadaSymbolEventName, type ScadaSymbolEventPayload } from './event-bridge.js';
+import { HitResolver } from './hit.js';
 import { validateScadaConfig } from '../serialization/validate.js';
 import { parseScadaConfig } from '../serialization/parse.js';
 import type { ScadaConfig, ScadaConfigDiff } from '../serialization/config-types.js';
@@ -41,6 +44,11 @@ export interface ScadaEngineOptions {
   exposeTestHandle?: boolean;
   cid?: number;
   onRender?: (info: { frame: number; dirtyBlocks: number }) => void;
+  pointStore?: PointStore;
+  /** 图元事件回调（symbol:click/dblclick/hover，design-engine.md §8.1）。 */
+  onSymbolEvent?: (name: ScadaSymbolEventName, payload: ScadaSymbolEventPayload) => void;
+  /** 命中的绑定点值快照投影（只读；renderer 桥接层装配，经 point-store 投影）。 */
+  getPointValuesFor?: (symbolId: string) => Record<string, unknown> | undefined;
 }
 
 export interface ScadaRenderFrameInfo {
@@ -57,6 +65,7 @@ export class ScadaCanvasEngine {
   private size: Size;
   private frameCount = 0;
   private destroyed = false;
+  private eventBridge: EventBridge | undefined;
   private static nextCid = 1;
 
   private constructor(private readonly options: ScadaEngineOptions) {
@@ -89,6 +98,7 @@ export class ScadaCanvasEngine {
     if (options.exposeTestHandle) {
       this.installTestHandle();
     }
+    this.installEventBridge();
   }
 
   static create(options: ScadaEngineOptions): ScadaCanvasEngine {
@@ -115,6 +125,8 @@ export class ScadaCanvasEngine {
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
+    this.eventBridge?.destroy();
+    this.eventBridge = undefined;
     this.app.tree.off('render', this.handleRender);
     this.adapter.destroy();
     this.registry.clear();
@@ -245,9 +257,30 @@ export class ScadaCanvasEngine {
       tree: this.app.tree,
       app: this.app,
       getSymbol: (id) => this.registry.get(id)?.node,
+      getPointValue: (pointId) => this.options.pointStore?.getPointValue(pointId),
       getViewport: () => this.getViewport(),
       forceRender: () => this.forceRender(),
     };
     mountScadaTestHandle(this.cid, handle);
+  }
+
+  /** 事件桥接线（I6.4）：onSymbolEvent 提供时挂接 tree 层 tap/double_tap/pointer.move → 命中解析 → 事件发射。 */
+  private installEventBridge(): void {
+    const onSymbolEvent = this.options.onSymbolEvent;
+    if (!onSymbolEvent) return;
+    const resolver = new HitResolver({
+      getByPoint: (point, padding) => this.app.tree.selector?.getByPoint(point, padding ?? 0),
+      idOf: (leaf) => this.registry.findByNode(leaf as object),
+      getSize: () => this.size,
+    });
+    this.eventBridge = new EventBridge({
+      tree: this.app.tree,
+      resolver,
+      viewportToWorld: (point) => viewportToWorld(this.viewport, point),
+      getSymbolType: (symbolId) => this.registry.get(symbolId)?.definition?.type,
+      getPointValues: this.options.getPointValuesFor,
+      onSymbolEvent,
+    });
+    this.eventBridge.attach();
   }
 }

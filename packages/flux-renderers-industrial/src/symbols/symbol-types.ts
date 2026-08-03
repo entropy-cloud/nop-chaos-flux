@@ -23,6 +23,7 @@ export interface ScadaSymbolProps {
   stroke?: string;
   strokeWidth?: number;
   strokeDash?: number[];
+  dashOffset?: number;
   fillStyle?: Record<string, unknown>;
   shadow?: { x: number; y: number; blur: number; color: string };
   text?: string;

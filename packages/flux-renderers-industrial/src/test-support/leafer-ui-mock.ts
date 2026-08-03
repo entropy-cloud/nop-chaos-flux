@@ -181,6 +181,8 @@ export class MockZoomLayer extends MockGroup {
   }
 }
 
+const wrappedByOriginal = new WeakMap<(...args: unknown[]) => void, Set<(...args: unknown[]) => void>>();
+
 export class MockLeafer extends MockGroup {
   override tag = 'Leafer';
   zoomLayer: MockZoomLayer;
@@ -206,7 +208,20 @@ export class MockLeafer extends MockGroup {
       if (event === 'render') this.renderCount++;
       fn(...args);
     };
+    const set = wrappedByOriginal.get(fn) ?? new Set<(...args: unknown[]) => void>();
+    set.add(wrapped);
+    wrappedByOriginal.set(fn, set);
     return super.on(event, wrapped);
+  }
+
+  override off(event: string, fn?: (...args: unknown[]) => void) {
+    if (fn) {
+      for (const wrapped of wrappedByOriginal.get(fn) ?? []) {
+        super.off(event, wrapped);
+      }
+      return this;
+    }
+    return super.off(event, fn);
   }
 
   forceRender() {
