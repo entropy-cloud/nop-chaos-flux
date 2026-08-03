@@ -120,8 +120,8 @@ interface ScadaEngineOptions {
 > **`getValidScale` 原样返回、无 min/max 钳制**，display Leafer.ts:405）；平移经
 > `MoveEvent.BEFORE_MOVE` → `zoomLayer.move(move)`。**插件缩放路径绕过引擎 `clampViewport`
 > （0.1/20 仅钳 scale、平移 x/y 不钳制）**→ 引擎兜底（Failure Paths `viewport-interaction-drift` 兑现）：
-> 引擎订阅 tree `zoom`（ZoomEvent.ZOOM）/`move`（MoveEvent.MOVE）事件，越界缩放以视口中心为锚
-> `scaleOfWorld` 重钳制回 [MIN_SCALE, MAX_SCALE]，并把 zoomLayer 矩阵状态（`zoomLayer.x/y/scaleX`，
+> 引擎订阅 tree `zoom`（ZoomEvent.ZOOM）/`move`（MoveEvent.MOVE）事件，越界缩放以视口原点世界点为锚
+> `scaleOfWorld` 重钳制回 [MIN_SCALE, MAX_SCALE]（与命令路径 `applyViewportState` 同锚、与 gate-3-review §5 M-3 推导口径一致），并把 zoomLayer 矩阵状态（`zoomLayer.x/y/scaleX`，
 > 读 `zoomLayer.__` 数据面，view/src/index.ts:27）同步回引擎视口状态（`zoomLayer.x = -viewport.x * scale`，
 > gate-3-review §5 M-3 推导），保证 wheel/pinch 后 `getViewport`/命中 world 坐标/后续命令不漂移。
 
@@ -160,12 +160,12 @@ interface ScadaEngineOptions {
 
 > leafer App 三层模型（ground/tree/sky，render-engines §8 #1/§2.2）映射为组态图层：
 
-| 层          | leafer 载体                      | 组态职责                                   | 说明                                                                                                                     |
-| ----------- | -------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| 背景层      | `App.ground`                     | 画面底色/网格背景                          | 静态、不参与命中；`background` 配置                                                                                      |
-| 图元层      | `App.tree`（`type: 'viewport'`） | 全部组态图元子树                           | 世界坐标；受视口矩阵变换；**命中检测/渲染帧事件均挂此层**（A2）                                                          |
-| 交互覆盖层  | `App.sky`                        | 运行时 hover 高亮/报警闪烁描边等反馈覆盖物 | 最小化使用；选中/拖拽/控制点等编辑器覆盖物后置 I16（Editor=独立 sky Group，research-summary §4.1 E12）                   |
-| HTML 覆盖层 | React DOM（canvas 外层）         | 弹窗/提示/说明文字等 DOM UI                | 经既有 `dialog`/`drawer` 与 `@nop-chaos/ui`（平台能力复用表）；不进入场景树；`@leafer-in/html` 作 P1 评估项（§2 决策表） |
+| 层          | leafer 载体                      | 组态职责                                   | 说明                                                                                                                                                                                                                                                                                   |
+| ----------- | -------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 背景层      | `App.ground`                     | 画面底色/网格背景                          | 静态、不参与命中；`background` 配置                                                                                                                                                                                                                                                    |
+| 图元层      | `App.tree`（`type: 'viewport'`） | 全部组态图元子树                           | 世界坐标；受视口矩阵变换；**命中检测/渲染帧事件均挂此层**（A2）                                                                                                                                                                                                                        |
+| 交互覆盖层  | `App.sky`                        | 运行时 hover 高亮/报警闪烁描边等反馈覆盖物 | 最小化使用；选中/拖拽/控制点等编辑器覆盖物后置 I16（Editor=独立 sky Group，research-summary §4.1 E12）；覆盖物几何：矩形语义图元取 x/y/width/height，line/arrow/polygon 无宽高语义时按 points 包围盒兜底、0 尺寸退化最小框（gate-4-review m-C 落地，I15.1 e2e 补线/多边形 hover 断言） |
+| HTML 覆盖层 | React DOM（canvas 外层）         | 弹窗/提示/说明文字等 DOM UI                | 经既有 `dialog`/`drawer` 与 `@nop-chaos/ui`（平台能力复用表）；不进入场景树；`@leafer-in/html` 作 P1 评估项（§2 决策表）                                                                                                                                                               |
 
 - 场景树与 leafer 树的映射规则、symbol 实例化细节见 `design-symbols.md`（I2.3）；图层与 renderer 的 DOM 结构关系见 `design-renderer.md`（I2.4）。
 

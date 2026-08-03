@@ -252,6 +252,68 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     view.unmount();
   });
 
+  it('does not re-apply the initial viewport policy on diff updates, only on full resets (gate-4 m-B)', async () => {
+    const environment = createScadaTestEnvironment([]);
+    const view = renderScadaCanvas(
+      makeProps({
+        props: {
+          config: configProp(validConfig()),
+          width: 800,
+          height: 600,
+          viewport: { fit: 'fill', center: true },
+        },
+      }),
+      environment,
+    );
+    await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
+    const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
+    await waitFor(() => expect(engine.getViewport().scale).not.toBe(1));
+    const framed = engine.getViewport();
+    expect(framed.scale).toBeGreaterThan(1);
+
+    view.rerender(
+      <ScadaTestProviders environment={environment}>
+        <ScadaCanvasRenderer
+          {...makeProps({
+            props: {
+              config: configProp(
+                validConfig({
+                  symbols: [
+                    { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#123456' },
+                    { id: 'rect-2', type: 'scada-rect', x: 200, y: 20, width: 100, height: 50, fill: '#00ff00' },
+                  ],
+                }),
+              ),
+              width: 800,
+              height: 600,
+              viewport: { fit: 'fill', center: true },
+            },
+          })}
+        />
+      </ScadaTestProviders>,
+    );
+    await waitFor(() =>
+      expect((scadaTestHandle(7)?.getSymbol('rect-1') as { fill: string })?.fill).toBe('#123456'),
+    );
+    expect(engine.getViewport()).toEqual(framed);
+
+    view.rerender(
+      <ScadaTestProviders environment={environment}>
+        <ScadaCanvasRenderer
+          {...makeProps({
+            props: {
+              config: configProp(validConfig({ version: 2 })),
+              width: 800,
+              height: 600,
+              viewport: { fit: 'fill', center: true },
+            },
+          })}
+        />
+      </ScadaTestProviders>,
+    );
+    await waitFor(() => expect(engine.getViewport().scale).toBeGreaterThan(1));
+  });
+
   it('reports config-parse errors through the onError dispatch path', async () => {
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);

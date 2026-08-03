@@ -165,4 +165,41 @@ describe('scada-canvas hover 命中反馈覆盖物 (I11.2)', () => {
     expect(engineOn.interactionOverlay).toBeDefined();
     engineOn.destroy();
   });
+
+  it('shows a non-zero-size overlay for line/polygon symbols via points-bounds fallback (gate-4 m-C)', async () => {
+    const config = {
+      version: 1,
+      symbols: [
+        { id: 'line-a', type: 'scada-line', x: 10, y: 40, width: 120, height: 0 },
+        { id: 'poly-a', type: 'scada-polygon', x: 20, y: 80 },
+      ],
+    } as ScadaConfig;
+    const environment = createScadaTestEnvironment([]);
+    renderScadaCanvas(
+      makeProps({
+        props: { config: configProp(config), width: 800, height: 600 },
+        node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
+      }),
+      environment,
+    );
+    const engine = await waitForEngine();
+    await waitFor(() => expect(engine.getSymbol('line-a')).toBeDefined());
+
+    movePointerTo(engine, 'line-a', { x: 50, y: 40 });
+    await waitFor(() => expect(engine.interactionOverlay?.activeCount).toBe(1));
+    let rect = overlayRects(engine)[0];
+    expect(rect.width).toBeGreaterThan(0);
+    expect(rect.height).toBeGreaterThan(0);
+    expect(rect.x).toBeGreaterThanOrEqual(10);
+    expect(rect.y).toBeGreaterThanOrEqual(40);
+
+    movePointerTo(engine, 'poly-a', { x: 60, y: 120 });
+    await waitFor(() => {
+      rect = overlayRects(engine)[0];
+      expect(rect.width).toBeGreaterThan(0);
+      expect(rect.height).toBeGreaterThan(0);
+      expect(rect.x).toBeGreaterThanOrEqual(20);
+      expect(rect.y).toBeGreaterThanOrEqual(80);
+    });
+  });
 });

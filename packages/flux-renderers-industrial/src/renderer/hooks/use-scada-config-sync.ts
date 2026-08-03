@@ -95,6 +95,9 @@ export function useScadaConfigSync(args: UseScadaConfigSyncArgs): void {
       if (strategy === 'full') {
         runtime.engine.reset(config);
         reloadBindings(config.variables, config.symbols);
+        // 初始视口策略只在全量（reset）路径应用：diff 增量重应用会重置用户在画布上的平移/缩放，
+        // 且绑定域重建（setRuntime 新对象）触发的 effect 重跑应为 diff 空增量不重复执行（gate-4-review m-B）
+        applyInitialViewport(runtime, config, latest.current.viewport);
       } else {
         const diff = diffScadaConfig(prevRef.current as ScadaConfig, config);
         runtime.engine.applyDiff(diff, config);
@@ -107,7 +110,6 @@ export function useScadaConfigSync(args: UseScadaConfigSyncArgs): void {
           reloadBindings(config.variables, config.symbols);
         }
       }
-      applyInitialViewport(runtime, config, latest.current.viewport);
       prevRef.current = config;
       latest.current.onBuilt?.();
     } catch (error) {
