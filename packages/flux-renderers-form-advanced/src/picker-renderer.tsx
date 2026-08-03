@@ -84,9 +84,15 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     { enabled: Boolean(!currentForm && hasName), fallback: undefined, paths: hasName ? [name] : undefined },
   );
   const rawFieldValue = currentForm ? formValue : scopeValue;
+  // Instance-unique key for the CRUD-mode `$_picker.*` selection/data state
+  // paths. Repeated instances of the same template node (combo item / input
+  // table row / CRUD row) share `props.id`; keying by the mounted cid keeps
+  // each instance's dialog selection isolated (bug 73 pattern: row-scope
+  // pollution — two rows opening their dialogs must not clobber each other).
+  const pickerStateKey = props.meta.cid != null ? String(props.meta.cid) : props.id;
   const crudSelection = useScopeSelector(
     (scopeData) => {
-      const raw = getIn(scopeData, `$_picker.${props.id}.selection`);
+      const raw = getIn(scopeData, `$_picker.${pickerStateKey}.selection`);
       return Array.isArray(raw) ? raw : [];
     },
     (a, b) =>
@@ -94,7 +100,11 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
       Array.isArray(b) &&
       a.length === b.length &&
       a.every((v, i) => v === b[i]),
-    { enabled: crudMode, fallback: [], paths: crudMode ? [`$_picker.${props.id}.selection`] : undefined },
+    {
+      enabled: crudMode,
+      fallback: [],
+      paths: crudMode ? [`$_picker.${pickerStateKey}.selection`] : undefined,
+    },
   );
 
   const options = React.useMemo<NormalizedOption[]>(
@@ -231,14 +241,20 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
         },
       })
       .then((result) => {
-        if (!result.ok || result.cancelled) {
-          return;
+        if (result.ok && !result.cancelled) {
+          const rows = extractRowsFromActionResult(result.data);
+          const rowMap = mapSelectionRows({ rows, valueKey, labelKey });
+          cacheLabelsForValues(rowMap);
+        } else {
+          // Failed/cancelled dispatch: clear the request marker so the same
+          // value can be retried on a later trigger (re-open / external value
+          // change). A sticky marker would otherwise skip re-resolution forever.
+          labelResolveRequestedRef.current = null;
         }
-        const rows = extractRowsFromActionResult(result.data);
-        const rowMap = mapSelectionRows({ rows, valueKey, labelKey });
-        cacheLabelsForValues(rowMap);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        labelResolveRequestedRef.current = null;
+      });
   }, [
     cacheLabelsForValues,
     labelKey,
@@ -280,7 +296,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   const pickerCrudSchema = React.useMemo(
     () =>
       createPickerCrudSchema({
-        pickerId: props.id,
+        pickerId: pickerStateKey,
         loadAction,
         options,
         columns: schemaProps.columns,
@@ -289,15 +305,15 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
         labelKey,
         multiple,
       }),
-    [labelKey, loadAction, multiple, options, props.id, schemaProps.columns, searchable, valueKey],
+    [labelKey, loadAction, multiple, options, pickerStateKey, schemaProps.columns, searchable, valueKey],
   );
 
   React.useEffect(() => {
     if (!open || !crudMode) {
       return;
     }
-    scope?.update(`$_picker.${props.id}.selection`, selectionToRowKeys(selectedValues));
-  }, [crudMode, open, props.id, scope, selectedValues]);
+    scope?.update(`$_picker.${pickerStateKey}.selection`, selectionToRowKeys(selectedValues));
+  }, [crudMode, open, pickerStateKey, scope, selectedValues]);
 
   const openDialog = React.useCallback(() => {
     if (!hasPickerDialog && options.length === 0 && !crudMode) {
@@ -340,11 +356,11 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   }, [applyAutoFill, cacheLabelsForValues, multiple, options, pending, props.events, writeValue]);
 
   const confirmCrudSelection = React.useCallback(() => {
-    const rawSelection = scope?.get?.(`$_picker.${props.id}.selection`);
+    const rawSelection = scope?.get?.(`$_picker.${pickerStateKey}.selection`);
     const selectedKeys = Array.isArray(rawSelection)
       ? rawSelection.map((value) => String(value))
       : [];
-    const loadedRows = extractRowsFromActionResult(scope?.get?.(`$_picker.${props.id}.rows`));
+    const loadedRows = extractRowsFromActionResult(scope?.get?.(`$_picker.${pickerStateKey}.rows`));
     const loadedRowMap = mapSelectionRows({ rows: loadedRows, valueKey, labelKey });
     const rows = new Map<PickerValue, { label: string; row: Record<string, unknown> }>(selectionRows);
     const nextValues: PickerValue[] = [];
@@ -391,8 +407,8 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     labelKey,
     multiple,
     options,
+    pickerStateKey,
     props.events,
-    props.id,
     scope,
     selectionRows,
     valueKey,

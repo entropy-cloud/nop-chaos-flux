@@ -53,6 +53,58 @@ const reviewersPicker = {
   ],
 };
 
+const crudPickerEnv = {
+  fetcher: async function <T>() {
+    return {
+      ok: true,
+      status: 200,
+      data: {
+        items: [
+          { id: 'a0', title: 'Alpha' },
+          { id: 'b1', title: 'Beta' },
+        ],
+        total: 2,
+      } as T,
+    };
+  },
+};
+
+const crudRowIsolation = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      data: {
+        rows: [
+          { name: 'R0', owner: undefined },
+          { name: 'R1', owner: undefined },
+        ],
+      },
+      body: [
+        {
+          type: 'combo',
+          name: 'rows',
+          label: 'Rows',
+          items: [
+            { type: 'input-text', name: 'name', placeholder: 'PRow' },
+            {
+              type: 'picker',
+              name: 'owner',
+              label: 'Owner',
+              pickerDialog: { title: 'Pick owner', size: 'lg' },
+              loadAction: { action: 'ajax', args: { url: '/api/owners' } },
+              valueKey: 'id',
+              labelKey: 'title',
+            },
+          ],
+        },
+        { type: 'text', testid: 'picker-row-echo', text: 'PR:${$JSON.stringify(rows)}' },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
 export function PickerLabPage() {
   return (
     <MultiScenarioLabPage
@@ -67,6 +119,13 @@ export function PickerLabPage() {
           title: 'Multiple reviewers pick',
           description: 'multiple: true writes an array. clear empties the field via the canonical clear handle.',
           schema: reviewersPicker,
+        },
+        {
+          title: 'CRUD-mode picker per-row isolation (bug 73 pattern)',
+          description:
+            'Two combo rows each host a CRUD-mode picker (loadAction). Opening row 1 while row 0 selection is pending must not clobber row 0; each confirm writes back to its own row.',
+          schema: crudRowIsolation,
+          env: crudPickerEnv,
         },
       ]}
     />

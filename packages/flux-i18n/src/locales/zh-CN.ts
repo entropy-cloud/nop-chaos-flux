@@ -232,6 +232,7 @@ export const zhCN: Resource = {
       select: '选择',
       deselect: '移除',
       clear: '清除',
+      selectAll: '全选',
       noCandidates: '暂无候选项',
       noSelection: '暂无已选项',
     },

@@ -1,22 +1,13 @@
 import React from 'react';
 import type {
   BaseSchema,
-  ComponentHandleRegistry,
-  FormRuntime,
   InstanceFrame,
   RendererComponentProps,
   RendererDefinition,
-  RendererHelpers,
-  RendererRuntime,
-  ScopeRef,
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
-  ComponentRegistryContext,
-  FormContext,
-  ScopeContext,
-  ValidationContext,
   useCompositeFieldHandle,
   useCurrentComponentRegistry,
   useCurrentForm,
@@ -28,33 +19,23 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, cn } from '@nop-chaos/ui';
-import { ChevronDownIcon, ChevronUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { Button, cn, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@nop-chaos/ui';
+import { PlusIcon } from 'lucide-react';
 import type { InputTableColumn, InputTableSchema } from './composite-field/composite-schemas.js';
-import { createItemFormProxy, createItemScope } from './composite-field/array-field-runtime.js';
-import { instancePathEqual } from './composite-field/instance-path-equal.js';
+import { createItemScope } from './composite-field/array-field-runtime.js';
 import {
   buildStableObjectItemKeys,
   useCompatibilityItemKeys,
 } from './composite-field/composite-item-keys.js';
-import { createProjectedValidationRuntime } from './detail-view/projected-validation-runtime.js';
+import { isRemoveBlockedByWhen, isRemoveWhenConfigured } from './composite-field/remove-when-gating.js';
 import {
   COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
   COMPOSITE_EDITOR_METHODS,
 } from './composite-field/composite-editor-capability-contracts.js';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@nop-chaos/ui';
 import { formFieldRules, shouldValidateOn, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
+import { InputTableRow } from './input-table-row.js';
 
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
+export { InputTableRow } from './input-table-row.js';
 
 const EMPTY_ITEMS: unknown[] = [];
 const EMPTY_COLUMNS: InputTableColumn[] = [];
@@ -62,231 +43,6 @@ const EMPTY_COLUMNS: InputTableColumn[] = [];
 function toArrayItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
-
-type InputTableRowProps = {
-  itemIdentity: string;
-  index: number;
-  arrayPath: string;
-  parentScope: ScopeRef;
-  parentForm: FormRuntime | undefined;
-  parentValidationOwner: import('@nop-chaos/flux-core').ValidationScopeRuntime | undefined;
-  runtime: RendererRuntime;
-  parentComponentRegistry: ComponentHandleRegistry | undefined;
-  helpers: RendererHelpers;
-  readOnly: boolean;
-  removable: boolean;
-  reorderable: boolean;
-  totalCount: number;
-  minItems: number;
-  columns: readonly InputTableColumn[];
-  onRemove: (index: number) => void;
-  onMoveUp: (index: number) => void;
-  onMoveDown: (index: number) => void;
-  item: unknown;
-  itemInstancePath: readonly InstanceFrame[];
-  itemRegion: RendererComponentProps<InputTableSchema>['regions']['item'];
-};
-
-function InputTableRowView(props: InputTableRowProps) {
-  const {
-    itemIdentity,
-    index,
-    arrayPath,
-    parentScope,
-    parentForm,
-    parentValidationOwner,
-    runtime,
-    parentComponentRegistry,
-    helpers,
-    readOnly,
-    removable,
-    reorderable,
-    totalCount,
-    minItems,
-    columns,
-    onRemove,
-    onMoveUp,
-    onMoveDown,
-    item,
-    itemInstancePath,
-    itemRegion,
-  } = props;
-
-  const itemScope = React.useMemo(
-    () => createItemScope(parentScope, arrayPath, index, 'object', readOnly, itemIdentity),
-    [parentScope, arrayPath, index, readOnly, itemIdentity],
-  );
-  const itemForm = React.useMemo(
-    () => (parentForm ? createItemFormProxy(parentForm, arrayPath, index, 'object') : parentForm),
-    [parentForm, arrayPath, index],
-  );
-  const itemValidationOwner = React.useMemo(() => {
-    if (!parentValidationOwner) {
-      return parentValidationOwner;
-    }
-    return createProjectedValidationRuntime(parentValidationOwner, {
-      ownerRootPath: `${arrayPath}.${index}`,
-      prefixPath(path) {
-        if (!path) return `${arrayPath}.${index}`;
-        return `${arrayPath}.${index}.${path}`;
-      },
-    });
-  }, [arrayPath, index, parentValidationOwner]);
-
-  const itemComponentRegistry = React.useMemo(() => {
-    if (!parentComponentRegistry) {
-      return undefined;
-    }
-    return runtime.createComponentHandleRegistry({
-      id: `${arrayPath}.${index}:input-table-row:component-registry`,
-      parent: parentComponentRegistry,
-    });
-  }, [runtime, parentComponentRegistry, arrayPath, index]);
-
-  React.useEffect(() => {
-    const registry = itemComponentRegistry;
-    return () => {
-      queueMicrotask(() => {
-        registry?.dispose?.();
-      });
-    };
-  }, [itemComponentRegistry]);
-
-  const itemContent = React.useMemo(
-    () =>
-      asReactNode(
-        itemRegion?.render({
-          scope: itemScope,
-          bindings: { index, value: item },
-          instancePath: itemInstancePath,
-        }),
-      ) ?? null,
-    [index, item, itemInstancePath, itemRegion, itemScope],
-  );
-
-  const canRemove = totalCount > minItems;
-
-  const columnCells = React.useMemo(() => {
-    const templateNodes = Array.isArray(itemRegion?.templateNode)
-      ? itemRegion.templateNode
-      : itemRegion?.templateNode
-        ? [itemRegion.templateNode]
-        : null;
-
-    if (!templateNodes || templateNodes.length === 0) {
-      const columnCount = Math.max(1, columns.length);
-      return (
-        <TableCell key="fallback" colSpan={columnCount} data-slot="input-table-row-body">
-          {itemContent}
-        </TableCell>
-      );
-    }
-
-    return templateNodes.map((node, i) => {
-      const rendered = helpers.render(node, {
-        scope: itemScope,
-        instancePath: itemInstancePath,
-      });
-      const colWidth = columns[i]?.width;
-      const colKey = columns[i]?.label ?? `col-${i}`;
-      return (
-        <TableCell
-          key={colKey}
-          data-slot="input-table-row-body"
-          style={colWidth != null ? { width: colWidth } : undefined}
-        >
-          {asReactNode(rendered)}
-        </TableCell>
-      );
-    });
-  }, [itemRegion, helpers, itemScope, itemInstancePath, columns, itemContent]);
-  const canMoveUp = index > 0;
-  const canMoveDown = index < totalCount - 1;
-
-  return (
-    <TableRow data-slot="input-table-row" data-row-index={index}>
-      <FormContext.Provider value={itemForm ?? undefined}>
-        <ScopeContext.Provider value={itemScope}>
-          <ValidationContext.Provider value={itemValidationOwner}>
-            <ComponentRegistryContext.Provider value={itemComponentRegistry}>
-              {columnCells}
-            </ComponentRegistryContext.Provider>
-          </ValidationContext.Provider>
-        </ScopeContext.Provider>
-      </FormContext.Provider>
-      {(reorderable || removable) && !readOnly && (
-        <TableCell className="w-px whitespace-nowrap">
-          <div className="flex items-center gap-1" data-slot="input-table-row-actions">
-            {reorderable && (
-              <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  data-slot="input-table-move-up"
-                  disabled={readOnly || !canMoveUp}
-                  aria-label={t('flux.form.moveUp', { defaultValue: `Move up row ${index + 1}` })}
-                  onClick={() => canMoveUp && onMoveUp(index)}
-                >
-                  <ChevronUpIcon className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  data-slot="input-table-move-down"
-                  disabled={readOnly || !canMoveDown}
-                  aria-label={t('flux.form.moveDown', { defaultValue: `Move down row ${index + 1}` })}
-                  onClick={() => canMoveDown && onMoveDown(index)}
-                >
-                  <ChevronDownIcon className="size-4" />
-                </Button>
-              </>
-            )}
-            {removable && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                data-slot="input-table-remove"
-                disabled={readOnly || !canRemove}
-                className="hover:text-destructive"
-                aria-label={t('flux.form.remove', { defaultValue: `Remove row ${index + 1}` })}
-                onClick={() => canRemove && onRemove(index)}
-              >
-                <Trash2Icon className="size-4" />
-              </Button>
-            )}
-          </div>
-        </TableCell>
-      )}
-    </TableRow>
-  );
-}
-
-export const InputTableRow = React.memo(InputTableRowView, (prev, next) =>
-  prev.itemIdentity === next.itemIdentity &&
-  prev.index === next.index &&
-  prev.arrayPath === next.arrayPath &&
-  prev.parentScope === next.parentScope &&
-  prev.parentForm === next.parentForm &&
-  prev.parentValidationOwner === next.parentValidationOwner &&
-  prev.runtime === next.runtime &&
-  prev.parentComponentRegistry === next.parentComponentRegistry &&
-  prev.helpers === next.helpers &&
-  prev.readOnly === next.readOnly &&
-  prev.removable === next.removable &&
-  prev.reorderable === next.reorderable &&
-  prev.totalCount === next.totalCount &&
-  prev.minItems === next.minItems &&
-  prev.columns === next.columns &&
-  prev.onRemove === next.onRemove &&
-  prev.onMoveUp === next.onMoveUp &&
-  prev.onMoveDown === next.onMoveDown &&
-  prev.item === next.item &&
-  instancePathEqual(prev.itemInstancePath, next.itemInstancePath) &&
-  prev.itemRegion === next.itemRegion,
-);
 
 export function InputTableRenderer(props: RendererComponentProps<InputTableSchema>) {
   const runtime = useRendererRuntime();
@@ -313,6 +69,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
     typeof props.props.maxItems === 'number' && Number.isFinite(props.props.maxItems)
       ? Math.max(0, Math.floor(props.props.maxItems))
       : undefined;
+  const removeWhenHandle = props.templateNode.structuralFields?.removeWhen;
   const columns = React.useMemo<InputTableColumn[]>(
     () => (Array.isArray(props.props.columns) ? props.props.columns : EMPTY_COLUMNS),
     [props.props.columns],
@@ -384,6 +141,42 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
   }, [name, objectItemKeyResolution.duplicatePreferredKeys]);
 
   const atMaxItems = maxItems !== undefined && itemsArray.length >= maxItems;
+
+  const removeBlockedByIndex = React.useMemo(() => {
+    if (!isRemoveWhenConfigured(removeWhenHandle)) {
+      return null;
+    }
+    return itemsArray.map((_, index) => {
+      const itemIdentity = objectItemKeyResolution.itemKeys[index];
+      const itemScope = createItemScope(
+        parentScope,
+        name,
+        index,
+        'object',
+        readOnly || presentation.effectiveDisabled,
+        itemIdentity,
+      );
+      return isRemoveBlockedByWhen({
+        removeWhenHandle,
+        itemScope,
+        evaluateCompiled: (compiled, scope) => props.helpers.evaluateCompiled(compiled, scope),
+      });
+    });
+  }, [
+    removeWhenHandle,
+    itemsArray,
+    objectItemKeyResolution.itemKeys,
+    parentScope,
+    name,
+    readOnly,
+    presentation.effectiveDisabled,
+    props.helpers,
+  ]);
+
+  const isRemoveBlockedAt = React.useCallback(
+    (index: number) => Boolean(removeBlockedByIndex?.[index]),
+    [removeBlockedByIndex],
+  );
 
   const writeValue = React.useCallback(
     (next: unknown[]) => {
@@ -488,6 +281,9 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
       if (itemsArray.length <= minItems) {
         return { skipped: true };
       }
+      if (isRemoveBlockedAt(index)) {
+        return { skipped: true };
+      }
       compatRemoveAt(index);
       if (parentForm && name) {
         parentForm.removeValue(name, index);
@@ -583,6 +379,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
                   reorderable={reorderable}
                   totalCount={itemsArray.length}
                   minItems={minItems}
+                  removeBlocked={isRemoveBlockedAt(index)}
                   columns={columns}
                   onRemove={handleRemove}
                   onMoveUp={handleMoveUp}
@@ -631,6 +428,7 @@ export const inputTableRendererDefinition: RendererDefinition = {
     { key: 'reorderable', kind: 'prop', valueType: 'boolean' },
     { key: 'minItems', kind: 'prop' },
     { key: 'maxItems', kind: 'prop' },
+    { key: 'removeWhen', kind: 'prop', lazyEval: true, params: ['record', 'index', 'value'] },
     { key: 'readOnly', kind: 'prop' },
     { key: 'onAdd', kind: 'event' },
     { key: 'onRemove', kind: 'event' },

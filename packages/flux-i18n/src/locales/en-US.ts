@@ -231,6 +231,7 @@ export const enUS: Resource = {
       select: 'Select',
       deselect: 'Deselect',
       clear: 'Clear',
+      selectAll: 'Select all',
       noCandidates: 'No candidates',
       noSelection: 'No selection',
     },
