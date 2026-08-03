@@ -15,6 +15,8 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  ReferenceLine,
+  ReferenceArea,
 } from 'recharts';
 import { getIn, type ComponentHandle, type RendererComponentProps } from '@nop-chaos/flux-core';
 import {
@@ -32,7 +34,14 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from '@nop-chaos/ui/chart';
-import type { ChartSchema, ChartSeriesSchema, ChartType } from './chart-schemas.js';
+import type {
+  ChartSchema,
+  ChartSeriesSchema,
+  ChartType,
+  ChartReferenceLineSchema,
+  ChartBandSchema,
+  ChartMarkersSchema,
+} from './chart-schemas.js';
 
 const COLORS = [
   'hsl(var(--chart-1))',
@@ -91,6 +100,91 @@ function sanitizeSeries(value: unknown): ChartSeriesSchema[] {
   });
 }
 
+function sanitizeReferenceLines(value: unknown): ChartReferenceLineSchema[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const lines: ChartReferenceLineSchema[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') {
+      continue;
+    }
+
+    const candidate = entry as Record<string, unknown>;
+    const line: ChartReferenceLineSchema = {};
+    if (typeof candidate.value === 'number' && Number.isFinite(candidate.value)) {
+      line.value = candidate.value;
+    }
+    if (typeof candidate.label === 'string') {
+      line.label = candidate.label;
+    }
+    if (typeof candidate.color === 'string') {
+      line.color = candidate.color;
+    }
+    if (typeof candidate.dashed === 'boolean') {
+      line.dashed = candidate.dashed;
+    }
+    if (line.value !== undefined) {
+      lines.push(line);
+    }
+  }
+  return lines;
+}
+
+function sanitizeBand(value: unknown): ChartBandSchema | undefined {
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const band: ChartBandSchema = {};
+  if (typeof candidate.upper === 'number' && Number.isFinite(candidate.upper)) {
+    band.upper = candidate.upper;
+  }
+  if (typeof candidate.lower === 'number' && Number.isFinite(candidate.lower)) {
+    band.lower = candidate.lower;
+  }
+  if (typeof candidate.color === 'string') {
+    band.color = candidate.color;
+  }
+  if (typeof candidate.opacity === 'number' && Number.isFinite(candidate.opacity)) {
+    band.opacity = candidate.opacity;
+  }
+  if (band.upper === undefined || band.lower === undefined) {
+    return undefined;
+  }
+  return band;
+}
+
+function sanitizeMarkers(value: unknown): ChartMarkersSchema | undefined {
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const markers: ChartMarkersSchema = {};
+  if (typeof candidate.dataKey === 'string') {
+    markers.dataKey = candidate.dataKey;
+  }
+  if (Array.isArray(candidate.indices)) {
+    const indices = candidate.indices.filter(
+      (item): item is number =>
+        typeof item === 'number' && Number.isInteger(item) && item >= 0,
+    );
+    if (indices.length > 0) {
+      markers.indices = indices;
+    }
+  }
+  if (typeof candidate.color === 'string') {
+    markers.color = candidate.color;
+  }
+  if (markers.dataKey === undefined && markers.indices === undefined) {
+    return undefined;
+  }
+  return markers;
+}
+
 export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
   const chartRef = useRef<HTMLDivElement>(null);
@@ -140,6 +234,9 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     ? (props.props.source as Array<Record<string, unknown>>)
     : [];
   const series = sanitizeSeries(props.props.series);
+  const referenceLines = sanitizeReferenceLines(props.props.referenceLines);
+  const band = sanitizeBand(props.props.band);
+  const markers = sanitizeMarkers(props.props.markers);
   const componentId =
     typeof props.props.componentId === 'string' ? props.props.componentId : props.id;
   const xAxis = props.props.xAxis as { dataKey?: string; label?: string } | undefined;
@@ -249,6 +346,12 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       return `${label}: ${seriesList}`;
     });
   })();
+  const referenceSummary =
+    referenceLines.length > 0
+      ? `References: ${referenceLines
+          .map((line) => `${line.label ?? 'reference'}: ${line.value}`)
+          .join(', ')}`
+      : undefined;
 
   const handleResize = useCallback(() => {
     measureContainerWidth();
@@ -283,6 +386,63 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     if (!componentRegistry) return;
     return componentRegistry.register(chartHandle, { cid: props.meta.cid });
   }, [chartHandle, componentRegistry, props.meta.cid]);
+
+  // Marked points (e.g. SPC out-of-control subgroups) render as prominent
+  // dots; unmarked points keep the clean `dot={false}` line look.
+  const markerDot = markers
+    ? (dotProps: {
+        cx?: number;
+        cy?: number;
+        index?: number;
+        payload?: Record<string, unknown>;
+      }) => {
+        const marked = markers.dataKey
+          ? Boolean(getIn(dotProps.payload, markers.dataKey))
+          : markers.indices?.includes(dotProps.index ?? -1) ?? false;
+        if (!marked) {
+          return null;
+        }
+        return (
+          <circle
+            cx={dotProps.cx}
+            cy={dotProps.cy}
+            r={4}
+            fill={markers.color ?? '#ef4444'}
+            stroke="none"
+          />
+        );
+      }
+    : undefined;
+
+  // UCL/LCL/CL style horizontal reference lines plus an optional shaded band
+  // between two bounds. Cartes-ian chart types only (line/bar/area).
+  const referenceOverlay =
+    band || referenceLines.length > 0 ? (
+      <>
+        {band ? (
+          <ReferenceArea
+            y1={band.upper}
+            y2={band.lower}
+            fill={band.color ?? 'hsl(var(--chart-2))'}
+            fillOpacity={band.opacity ?? 0.08}
+          />
+        ) : null}
+        {referenceLines.map((line, i) => (
+          <ReferenceLine
+            key={line.label ?? `reference-${i}`}
+            y={line.value}
+            stroke={line.color ?? 'hsl(var(--chart-5))'}
+            strokeOpacity={0.8}
+            strokeDasharray={line.dashed ? '4 4' : undefined}
+            label={
+              line.label
+                ? { value: line.label, position: 'insideTopRight', fontSize: 11 }
+                : undefined
+            }
+          />
+        ))}
+      </>
+    ) : null;
 
   const renderChart = () => {
     if (resolvedChartType === 'pie') {
@@ -340,6 +500,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           {showGrid && <CartesianGrid strokeDasharray="3 3" />}
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
           <YAxis name={yAxis?.label} />
+          {referenceOverlay}
           <ChartTooltip content={<ChartTooltipContent />} />
           {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
           {series.length > 0 ? (
@@ -351,11 +512,17 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
                 name={s.name}
                 stroke={palette[i % palette.length]}
                 strokeWidth={2}
-                dot={false}
+                dot={markerDot ?? false}
               />
             ))
           ) : (
-            <Line type="monotone" dataKey="value" stroke={palette[0]} strokeWidth={2} dot={false} />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke={palette[0]}
+              strokeWidth={2}
+              dot={markerDot ?? false}
+            />
           )}
         </LineChart>
       );
@@ -367,6 +534,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           {showGrid && <CartesianGrid strokeDasharray="3 3" />}
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
           <YAxis name={yAxis?.label} />
+          {referenceOverlay}
           <ChartTooltip content={<ChartTooltipContent />} />
           {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
           {series.length > 0 ? (
@@ -393,6 +561,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         {showGrid && <CartesianGrid strokeDasharray="3 3" />}
         {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
         <YAxis name={yAxis?.label} />
+        {referenceOverlay}
         <ChartTooltip content={<ChartTooltipContent />} />
         {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
         {series.length > 0 ? (
@@ -449,6 +618,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
               {chartDataSummary.map((line) => (
                 <li key={line}>{line}</li>
               ))}
+              {referenceSummary ? <li>{referenceSummary}</li> : null}
             </ul>
           </div>
           {loading ? (

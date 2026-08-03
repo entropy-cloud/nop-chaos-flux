@@ -9,6 +9,26 @@ export interface ChartSeriesSchema {
   dataRegionKey?: string;
 }
 
+export interface ChartReferenceLineSchema {
+  value?: number;
+  label?: string;
+  color?: string;
+  dashed?: boolean;
+}
+
+export interface ChartBandSchema {
+  upper?: number;
+  lower?: number;
+  color?: string;
+  opacity?: number;
+}
+
+export interface ChartMarkersSchema {
+  dataKey?: string;
+  indices?: number[];
+  color?: string;
+}
+
 export interface ChartSchema extends BaseSchema {
   type: 'chart';
   componentId?: string;
@@ -25,4 +45,7 @@ export interface ChartSchema extends BaseSchema {
   stacked?: boolean;
   grid?: boolean;
   colors?: string[];
+  referenceLines?: SchemaValue;
+  band?: SchemaValue;
+  markers?: SchemaValue;
 }

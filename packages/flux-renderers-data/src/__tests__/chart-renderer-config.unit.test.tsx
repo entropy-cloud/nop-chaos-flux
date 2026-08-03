@@ -107,6 +107,8 @@ vi.mock('recharts', () => ({
   XAxis: createMockComponent('XAxis'),
   YAxis: createMockComponent('YAxis'),
   CartesianGrid: createMockComponent('CartesianGrid'),
+  ReferenceLine: createMockComponent('ReferenceLine'),
+  ReferenceArea: createMockComponent('ReferenceArea'),
 }));
 
 function makeProps(overrides: Record<string, unknown> = {}) {
@@ -432,5 +434,208 @@ describe('dotted dataRegionKey / dataKey resolution for pie and scatter (G8)', (
 
     const equivalent = document.querySelector('[data-slot="chart-data-equivalent"]');
     expect(equivalent?.textContent).toContain('Revenue: 7');
+  });
+});
+
+// SPC-style enhancement: horizontal reference lines (UCL/LCL/CL), a shaded
+// band between bounds, and prominent markers for out-of-control points.
+describe('ChartRenderer SPC enhancement (referenceLines / band / markers)', () => {
+  beforeEach(() => {
+    mockState.currentRegistry = undefined;
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  });
+
+  afterEach(() => {
+    mockState.currentRegistry = undefined;
+    cleanup();
+  });
+
+  it('renders a ReferenceLine per referenceLines entry with y/label/dash', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'line',
+            xAxis: { dataKey: 'subgroup' },
+            source: [
+              { subgroup: 1, mean: 10 },
+              { subgroup: 2, mean: 11 },
+            ],
+            series: [{ name: 'Mean', dataRegionKey: 'mean' }],
+            referenceLines: [
+              { value: 13, label: 'UCL', dashed: true },
+              { value: 7, label: 'LCL', dashed: true },
+              { value: 10, label: 'CL', color: '#16a34a' },
+            ],
+          },
+        })}
+      />,
+    );
+
+    const lines = screen.getAllByTestId('ReferenceLine');
+    expect(lines).toHaveLength(3);
+    expect(lines[0].getAttribute('data-props')).toContain('"y":13');
+    expect(lines[0].getAttribute('data-props')).toContain('UCL');
+    expect(lines[0].getAttribute('data-props')).toContain('"strokeDasharray":"4 4"');
+    expect(lines[2].getAttribute('data-props')).toContain('#16a34a');
+    expect(lines[2].getAttribute('data-props')).not.toContain('strokeDasharray');
+  });
+
+  it('renders a shaded ReferenceArea when band has upper and lower bounds', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'line',
+            xAxis: { dataKey: 'subgroup' },
+            source: [{ subgroup: 1, mean: 10 }],
+            series: [{ name: 'Mean', dataRegionKey: 'mean' }],
+            band: { upper: 13, lower: 7, color: '#22c55e', opacity: 0.15 },
+          },
+        })}
+      />,
+    );
+
+    const area = screen.getByTestId('ReferenceArea');
+    const props = area.getAttribute('data-props') ?? '';
+    expect(props).toContain('"y1":13');
+    expect(props).toContain('"y2":7');
+    expect(props).toContain('#22c55e');
+    expect(props).toContain('"fillOpacity":0.15');
+  });
+
+  it('ignores band entries with missing or non-finite bounds', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'line',
+            source: [{ subgroup: 1, mean: 10 }],
+            series: [{ name: 'Mean', dataRegionKey: 'mean' }],
+            band: { upper: 13 },
+          },
+        })}
+      />,
+    );
+
+    expect(screen.queryByTestId('ReferenceArea')).toBeNull();
+  });
+
+  it('applies a marker dot function when markers.dataKey flags points', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'line',
+            xAxis: { dataKey: 'subgroup' },
+            source: [
+              { subgroup: 1, mean: 10, ooc: false },
+              { subgroup: 2, mean: 14, ooc: true },
+            ],
+            series: [{ name: 'Mean', dataRegionKey: 'mean' }],
+            markers: { dataKey: 'ooc', color: '#ef4444' },
+          },
+        })}
+      />,
+    );
+
+    const line = screen.getByTestId('Line');
+    expect(line.getAttribute('data-props')).toContain('"dot":"[function]"');
+  });
+
+  it('applies a marker dot function when markers.indices lists points', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'line',
+            source: [{ subgroup: 1, mean: 10 }],
+            series: [{ name: 'Mean', dataRegionKey: 'mean' }],
+            markers: { indices: [0], color: '#ef4444' },
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId('Line').getAttribute('data-props')).toContain('"dot":"[function]"');
+  });
+
+  it('sanitizes referenceLines without a finite value and keeps dot=false when no markers', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'line',
+            source: [{ subgroup: 1, mean: 10 }],
+            series: [{ name: 'Mean', dataRegionKey: 'mean' }],
+            referenceLines: [{ label: 'stray' }, { value: 5 }],
+          },
+        })}
+      />,
+    );
+
+    const lines = screen.getAllByTestId('ReferenceLine');
+    expect(lines).toHaveLength(1);
+    expect(lines[0].getAttribute('data-props')).toContain('"y":5');
+    expect(screen.getByTestId('Line').getAttribute('data-props')).toContain('"dot":false');
+  });
+
+  it('skips the overlay entirely when referenceLines/band are absent', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'bar',
+            source: [{ month: 'Jan', value: 12 }],
+            series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+          },
+        })}
+      />,
+    );
+
+    expect(screen.queryByTestId('ReferenceLine')).toBeNull();
+    expect(screen.queryByTestId('ReferenceArea')).toBeNull();
+  });
+
+  it('does not render the overlay on pie charts', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'pie',
+            xAxis: { dataKey: 'label' },
+            source: [{ label: 'Jan', value: 12 }],
+            series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+            referenceLines: [{ value: 10, label: 'UCL' }],
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId('PieChart')).toBeTruthy();
+    expect(screen.queryByTestId('ReferenceLine')).toBeNull();
+  });
+
+  it('exposes reference lines in the sr-only textual equivalent', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'line',
+            xAxis: { dataKey: 'subgroup' },
+            source: [{ subgroup: 1, mean: 10 }],
+            series: [{ name: 'Mean', dataRegionKey: 'mean' }],
+            referenceLines: [
+              { value: 13, label: 'UCL' },
+              { value: 7, label: 'LCL' },
+            ],
+          },
+        })}
+      />,
+    );
+
+    const equivalent = document.querySelector('[data-slot="chart-data-equivalent"]');
+    expect(equivalent?.textContent).toContain('References: UCL: 13, LCL: 7');
   });
 });
