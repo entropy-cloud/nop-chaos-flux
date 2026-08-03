@@ -9,6 +9,7 @@ export {
   validateInputFieldSchema,
 } from './renderers/input.js';
 export { fieldsetRendererDefinition } from './renderers/fieldset.js';
+export { HiddenRenderer, hiddenRendererDefinition } from './renderers/hidden-renderer.js';
 export { FieldError, FieldHint, FieldHelpText, FieldLabel } from './renderers/shared/index.js';
 export {
   defaultValidationBehavior,

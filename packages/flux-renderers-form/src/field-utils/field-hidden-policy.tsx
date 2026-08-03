@@ -1,9 +1,14 @@
 import { useEffect } from 'react';
-import { useCurrentForm, useCurrentValidationScope } from '@nop-chaos/flux-react';
+import {
+  useCurrentForm,
+  useCurrentFormModelGeneration,
+  useCurrentValidationScope,
+} from '@nop-chaos/flux-react';
 
 export function useHiddenFieldPolicy(name: string, hidden: boolean) {
   const currentForm = useCurrentForm();
   const currentValidationScope = useCurrentValidationScope();
+  const modelGeneration = useCurrentFormModelGeneration();
   const hiddenOwner = currentForm ?? currentValidationScope;
 
   useEffect(() => {
@@ -16,5 +21,5 @@ export function useHiddenFieldPolicy(name: string, hidden: boolean) {
     return () => {
       hiddenOwner.notifyFieldHidden(name, false);
     };
-  }, [hiddenOwner, name, hidden]);
+  }, [hiddenOwner, name, hidden, modelGeneration]);
 }

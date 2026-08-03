@@ -79,6 +79,12 @@ export interface InputSchema extends BoundFieldSchemaBase {
   suggestEmpty?: string;
 }
 
+export interface HiddenSchema extends BoundFieldSchemaBase {
+  type: 'hidden';
+  value?: string | number | boolean;
+  hiddenFieldPolicy?: HiddenFieldPolicy;
+}
+
 export interface FormSchema extends BaseSchema {
   type: 'form';
   body?: BaseSchema[];

@@ -5,12 +5,14 @@ import {
 } from '@nop-chaos/flux-core';
 import { fieldsetRendererDefinition } from './renderers/fieldset.js';
 import { formRendererDefinition } from './renderers/form-definition.js';
+import { hiddenRendererDefinition } from './renderers/hidden-renderer.js';
 import { inputRendererDefinitions } from './renderers/input.js';
 import { dateRendererDefinitions } from './renderers/date-renderer-definitions.js';
 import { markdownEditorRendererDefinition } from './renderers/markdown-editor-renderer.js';
 
 export { formRendererDefinition } from './renderers/form-definition.js';
 export { fieldsetRendererDefinition } from './renderers/fieldset.js';
+export { hiddenRendererDefinition } from './renderers/hidden-renderer.js';
 export { inputRendererDefinitions } from './renderers/input.js';
 export { dateRendererDefinitions } from './renderers/date-renderer-definitions.js';
 export { markdownEditorRendererDefinition } from './renderers/markdown-editor-renderer.js';
@@ -18,6 +20,7 @@ export { markdownEditorRendererDefinition } from './renderers/markdown-editor-re
 export const formRendererDefinitions: RendererDefinition[] = [
   formRendererDefinition,
   fieldsetRendererDefinition,
+  hiddenRendererDefinition,
   ...inputRendererDefinitions,
   ...dateRendererDefinitions,
   markdownEditorRendererDefinition,
