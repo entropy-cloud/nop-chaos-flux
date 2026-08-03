@@ -1,7 +1,7 @@
 # 3 I8 基础图元库（Wave 3）
 
-> Plan Status: active
-> Last Reviewed: 2026-08-03
+> Plan Status: completed
+> Last Reviewed: 2026-08-04
 > Source: `docs/components/roadmap-industrial-hmi.md`（I8、Cross-Cutting 测试纪律/平台能力复用表）、`docs/components/industrial-hmi/design-symbols.md`（§4.2 属性 schema/§4.3 复合图元/§4.4 图元分类/§10 状态样式解析/§11 compound.ts）、`docs/components/industrial-hmi/design-data-binding.md`（§4.5 多状态呈现/§4.4 动画——I8.2 视觉状态与动画联动）、`docs/components/industrial-hmi/design-renderer.md`（§4.2 组态 JSON schema）
 > Related: 上游 `docs/plans/2026-08-03-2113-3-i5-engine-core-wave1.md`（completed，I5.4 基础形状/deferred 复合图元与视觉状态）、`docs/plans/2026-08-03-2307-2-i7-implementation-gate-review.md`（I7 gate，前置等待）；下游 roadmap I9（Wave 4 设备图元库，依赖 I8.x）
 > Mission: industrial-hmi
@@ -74,64 +74,64 @@
 
 ### Phase 1 - 前置验证 + I8.1 基础图元族（样式细化 + image/video 占位）
 
-Status: planned
+Status: completed
 Targets: `src/symbols/base-shapes/`、`src/symbols/register-builtin.ts`
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] `Decision`：roadmap Phase Status 回写 I8: `todo` → `planned`（本 plan 激活为 active 时同步执行；roadmap Rule 1 状态机，对齐 I0/I1/I2/I3 plan 先例）。
-- [ ] `Proof`：前置验证——具体判定：roadmap I6 = `done` 且 roadmap I7 = `done`（`gate-3-review.md` 存在、无待人工裁决修正项）；`resolveSymbolStyle`/`registerScadaSymbol`/`symbol-factory` 契约可用；`design-symbols.md` §4.4 未被 I7 gate 修正为冲突。
-- [ ] `Proof`：为样式细化写失败测试：fillStyle 渐变/纹理透传 leafer 样式系统（对象/字符串形态）、shadow 样式对象、strokeWidth/strokeDash 组合解析、样式在 8 形状实例化后的节点属性映射断言。
-- [ ] `Decision`：状态覆盖对 fillStyle 的支持范围裁定——`ScadaSymbolStylePatch`（`src/symbols/symbol-types.ts:42-47`，design-symbols.md §4.2 定义的状态 style 类型）当前不含 `fillStyle`；裁定：**状态覆盖不扩展 `fillStyle`**（渐变属图元静态样式，状态覆盖只作用于色值类属性 fill/stroke 等既有 patch 字段；渐变状态覆盖需求未见确认场景，防止状态 patch 面膨胀）；裁定记录回写 design-symbols.md §4.2 注释（如实现期发现 leafer 渐变状态覆盖真实需求，按 I5/I6 plan Failure Paths `design-contract-conflict` 同口径记录并升级人工/下一 gate 评估）。
-- [ ] `Fix`：`base-shapes/` 样式细化——fillStyle（渐变/纹理透传）、shadow、strokeWidth/strokeDash 组合在 8 形状 create/applyProps 生效（状态样式覆盖范围按 Phase 1 Decision 裁定，不扩 `ScadaSymbolStylePatch`）。
-- [ ] `Proof`：为 image/video 占位符号写失败测试：`scada-image`（URL 属性 → 占位/加载后呈现路径）、`scada-video`（静态占位）、未配置 URL 的占位默认样式、加载失败占位（Failure Paths `image-load-error`）。
-- [ ] `Fix`：`base-shapes/` 新增 `scada-image`/`scada-video` 占位符号（type 命名对齐形状族无前缀约定；image URL 加载经引擎图片缓存路径，外部 IO 归 renderer 桥接层 env.fetcher——INV-1，引擎不直调 fetch）；`register-builtin.ts` 注册扩展。
-- [ ] `Fix`：序列化/校验协同——`ScadaSymbolNode` 校验支持 image/video 的 custom/URL 字段（validate 增量），serialize/diff 对新图元类型无回归（既有单测保持绿）。
+- [x] `Decision`：roadmap Phase Status 回写 I8: `todo` → `planned`（本 plan 激活为 active 时同步执行；roadmap Rule 1 状态机，对齐 I0/I1/I2/I3 plan 先例）——本 plan draft review 通过时已回写（roadmap I8 = `planned`，见 Phase Status）。
+- [x] `Proof`：前置验证——roadmap I6 = `done`（Wave 2 收口提交 2c4469fe）且 I7 = `done`（gate-3-review.md 存在、I7.2 修正全部落地）；`resolveSymbolStyle`/`registerScadaSymbol`/`symbol-factory` 契约可用（style-resolver.ts/symbol-registry.ts/symbol-factory.ts 实测）；`design-symbols.md` §4.4 未被 I7 gate 修正为冲突（image/video 形状族条目与 §4.4 一致）。
+- [x] `Proof`：样式细化失败测试先行（`base-shapes/style-refinement.test.ts` 8 例）：fillStyle 渐变/纹理透传（对象/字符串形态）、shadow 样式对象、strokeWidth/strokeDash 组合解析、样式在 8 形状实例化后的节点属性映射断言——修复前 4 例红（fillStyle×3/dashOffset），修复后全绿。
+- [x] `Decision`：状态覆盖对 fillStyle 的支持范围裁定——**状态覆盖不扩展 `fillStyle`**（渐变属图元静态样式，状态覆盖只作用于色值类既有 patch 字段）；裁定已回写 `design-symbols.md` §4.2 注释（2026-08-04 追加条目）。
+- [x] `Fix`：`base-shapes/` 样式细化——`toShapeAttrs` 增加 fillStyle 透传（对象=leafer paint，字符串=fill 字符串，优先于 fill 简写）、dashOffset 直通；8 形状 props schema 补 fillStyle/shadow/strokeDash/dashOffset；`toNodePatch` fillStyle→fill 映射（更新路径与 create 路径一致）。
+- [x] `Proof`：image/video 占位符号失败测试先行（`base-shapes/media-symbols.test.ts` 10 例）：`scada-image`（URL 属性 → 占位/呈现路径、引擎图片缓存桥接 resolveImageUrl、加载失败占位保持 + loadFailed 错误信号）、`scada-video`（静态占位帧、URL 暂存）、未配置 URL 占位默认样式、validate custom.url 增量——修复前 8 例红，修复后全绿。
+- [x] `Fix`：`base-shapes/` 新增 `scada-image`（leafer `Image` + `background` 占位灰块，URL 经引擎 `resolveImageUrl` 图片缓存归位——INV-1 引擎不直调 fetch，env.fetcher 注入点为 I10.1 `cacheImage`）/`scada-video`（静态占位帧灰块 + URL 暂存）占位符号（type 无前缀对齐形状族 §4.4）；`register-builtin.ts` 注册扩展（10 内置）。
+- [x] `Fix`：序列化/校验协同——`ScadaSymbolNode` 补 strokeDash/dashOffset/fillStyle/shadow 字段；validate 增量（image/video `custom.url` 非空字符串、strokeDash 数字数组、fillStyle 对象|字符串、shadow 对象、dashOffset 数字）；diff SYMBOL_KEYS 增量；既有序列化/校验单测保持绿（291 全量绿）。
 
 Exit Criteria:
 
-- [ ] base-shapes 样式细化与 image/video 占位符号 focused 单测全绿（渐变/阴影/线宽/占位/加载失败断言）。
-- [ ] 8 形状 + image/video 经 config-adapter 组态 JSON 构建路径可实例化（场景树节点与属性映射断言）。
+- [x] base-shapes 样式细化与 image/video 占位符号 focused 单测全绿（渐变/阴影/线宽/占位/加载失败断言，style-refinement 8 例 + media-symbols 10 例）。
+- [x] 8 形状 + image/video 经 config-adapter 组态 JSON 构建路径可实例化（既有 8 形状场景树断言 + media-symbols config-adapter 构建断言：tag/x/y/url/占位映射）。
 
 ### Phase 2 - I8.2 视觉状态样式（消费 I6.3 状态机，不重复接线）
 
-Status: planned
+Status: completed
 Targets: `src/symbols/`（视觉状态应用模块）、I6.3 状态机联动层消费验证
 
 > **所有权分界（裁定）**：业务状态流水线（绑定求值 → value-to-state 判定 → 样式覆盖 patch 汇入脏收集 + animator 按 `when: { state }` 启停）由 **I6.3 binding 层状态机联动**承担（I6 plan Phase 3 已交付）；I8.2 只负责**图元侧视觉层**：交互状态（hover/press/selected/disabled——图元内部实现细节，不进组态 JSON，design-symbols.md §10）、hover 视觉降级路径（sky 覆盖层）、以及 fault→blink 与 I6.3 联动行为的集成验证。I8.2 不重写业务状态流水线，只消费其输出。
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof`：为图元侧视觉状态应用写失败测试：I6.3 状态机输出的状态（run/stop/fault）→ `resolveSymbolStyle` 计算（defaults ∪ 实例 ∪ statePatch，状态优先）→ 写入图元节点属性（走引擎批量写路径）；退出状态恢复 normal 样式；`visible: false` 用节点 visible 而非移除（绑定索引稳定）；交互状态（hover/press/selected/disabled）与业务状态（run/stop/fault）分层不冲突。
-- [ ] `Fix`：`src/symbols/` 视觉状态应用模块——消费 I6.3 状态机联动层的状态输出，应用状态样式 patch（经 `resolveSymbolStyle` 计算后写入节点属性）；交互状态（hover/press/selected/disabled）为图元内部实现细节（不进组态 JSON，design-symbols.md §10）；如 `@leafer-in/state` 原语不可用，按 Failure Paths `leafer-state-primitive-drift` 回退为引擎交互覆盖层（sky 层高亮，design-engine.md §6）。
-- [ ] `Proof`：为 fault→blink 联动写**集成验证**测试（不重复实现 animator）：fault 状态经 I6.3 状态机联动 → blink 动画启动（`when: { state: 'fault' }` 语义）、退出 fault → blink 停止、其他状态（run/stop）样式与动画正确（状态色 + 无闪烁）——断言验证的是 I6.3 联动层输出与本层视觉应用的端到端行为。
-- [ ] `Fix`：视觉层消费接线验证——I6.3 联动层产出的样式覆盖 patch 在本层正确应用（消费 `ScadaStateDefinition.style`，design-data-binding.md §4.5）；本 Phase 若发现联动层缺口（如某状态样式未透出），作为修正项交回 I6 域修正并在本 plan 记录（不静默绕过）。
+- [x] `Proof`：图元侧视觉状态应用失败测试先行（`symbols/state-visual.test.ts`，实现前 3 例红）：I6.3 状态机输出的状态（run/stop/fault）→ `resolveSymbolStyle` 计算（defaults ∪ 实例 ∪ statePatch，状态优先）→ 写入图元节点属性（`engine.applyAttrs` 批量写路径）；退出状态恢复 normal 样式；`visible: false` 用节点 visible 而非移除（绑定索引稳定）；交互状态（hover/press/selected/disabled）与业务状态（run/stop/fault）分层不冲突（sky 覆盖层 vs 节点属性）。
+- [x] `Fix`：`src/symbols/visual-state.ts` 视觉状态应用模块——`StateVisualApplier`：挂接 I6.3 联动层 `state:change`（`attachTo(pipeline)`），经 `resolveSymbolStyle` 计算样式 patch 后 `engine.applyAttrs` 批量写；退出状态恢复 normal（base ∪ STYLE_RESET_DEFAULTS）；`visible:false` 只写节点属性不移除；`engine/getConfigNode`（config-adapter `getNode` 递归含 group 子树）提供实例属性解析。交互状态为图元内部实现细节（不进组态 JSON）；`@leafer-in/state` 原语未引入（依赖清单仅 leafer-ui+viewport）→ 按 Failure Paths `leafer-state-primitive-drift` 回退为引擎交互覆盖层：`src/engine/interaction-overlay.ts`（sky 层 Group + `INTERACTION_STYLE_PRESETS` hover/press/selected/disabled 预设，engine `interactionLayer` 选项惰性接线，真实 hover 事件桥→覆盖层接线归 I11.2）。
+- [x] `Proof`：fault→blink **集成验证**测试（不重复实现 animator）：fault 状态经 I6.3 状态机联动 → `when: { state: 'fault' }` blink 启动（`animator.isPlaying` 断言）、退出 fault → blink 停止、run/stop 状态样式与动画正确（状态色 + 无闪烁）——端到端断言 I6.3 联动层输出与本层视觉应用（state-visual.test.ts 全量）。
+- [x] `Fix`：消费接线验证——`ScadaStateDefinition.style` 经 state:change → `resolveSymbolStyle`（状态优先）正确应用；**联动层缺口核查结论**：I6.3 `collectStates` 对目标状态无 `style` 的状态切换不产生 revert patch（样式残留）——该边界已由 I8.2 层经 state:change 消费 + 全量重算兜底（`state-visual.test.ts`「restore instance/default styles」断言），**契约内分工**（design-data-binding.md §4.5 增量覆盖 + design-symbols.md §10 状态优先），无静默绕过；I6 域修正项记录：dirty-collector.collectStates 无退出 revert patch 依赖视觉层兜底——作为已知行为边界记录于本 plan（I12 gate 复核输入）。
 
 Exit Criteria:
 
-- [ ] 图元侧视觉状态应用单测全绿（样式覆盖优先级/退出恢复/hover 分层断言）；fault→blink 集成验证测试通过（验证 I6.3 联动层输出与本层视觉应用的端到端行为，非重复实现）。
-- [ ] 消费接线验证完成：I6.3 状态机联动层产出的样式覆盖 patch 在本层正确应用；发现的联动层缺口已作为修正项记录（未静默绕过）。
+- [x] 图元侧视觉状态应用单测全绿（样式覆盖优先级/退出恢复/hover 分层断言）；fault→blink 集成验证测试通过（验证 I6.3 联动层输出与本层视觉应用的端到端行为，非重复实现）——state-visual.test.ts 15 例 + InteractionOverlay 断言全绿（包级 326 全量绿）。
+- [x] 消费接线验证完成：I6.3 状态机联动层产出的样式覆盖 patch 在本层正确应用（状态优先 + 退出恢复断言）；发现的联动层缺口已作为修正项记录（I6.3 无退出 revert patch 边界 → I8.2 层兜底，记录于本 plan，未静默绕过）。
 
 ### Phase 3 - I8.3 复合图元（group/instance）
 
-Status: planned
+Status: completed
 Targets: `src/symbols/compound.ts`、`src/serialization/`、`src/engine/config-adapter.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof`：为 group 建树写失败测试：group 相对坐标/相对旋转的子图元布局、children 递归建树（含嵌套 group）、group 节点在 tree-registry 的索引（父/子 id 均注册）、group 销毁清理。
-- [ ] `Fix`：`symbols/compound.ts` group 部分——group 建树（子节点坐标相对父级 + 相对旋转，design-symbols.md §4.3）；`scada-group` 容器 type 实现（I5 预留契约）；config-adapter 递归建树复用（children 已支持，补充 group 语义装配）。
-- [ ] `Proof`：为 instance 覆盖写失败测试：深合并优先级链（`defaults` ← 实例 JSON 属性 ← 绑定/动画/事件声明层）、`scale` 整体缩放、`custom` 字段透传、实例属性覆盖集 diff 于 defaults（序列化输出最小覆盖集）。
-- [ ] `Fix`：`symbols/compound.ts` instance 部分——实例化模板复用（`type` 指向已注册符号 + 属性覆盖深合并后经 symbol-factory create）；`scale` 整体缩放应用。
-- [ ] `Proof`：为复合图元序列化写失败测试：group children 树递归序列化（I5.3 已有基础，扩展 group 语义）、instance 序列化覆盖集输出（diff 于 defaults，`serialization-instance-drift` Failure Path）、applyDiff 增量对 group/instance 子树生效。
-- [ ] `Fix`：序列化协同——serialize/diff 支持 instance 覆盖集（diff 于 defaults）与 group 子树递归；config-adapter `applyDiff` 对复合图元子树增删/属性 patch 收敛（避免全量重建）。
-- [ ] `Proof`：V5 单测扩展——group/instance 复合图元全路径（注册 → 校验 → 实例化 → 场景树加载 → 序列化 → 卸载）；20+ 自定义图元基线保持绿（I5 V5 单测不弱化）。
-- [ ] `Fix`：`docs/logs/2026/08-03.md` 记录本 plan 产出摘要。
+- [x] `Proof`：group 建树失败测试先行（`symbols/compound.test.ts`，compound.ts 不存在时红）：group 相对坐标/相对旋转的子图元布局、children 递归建树（含嵌套 group）、group 节点在 tree-registry 的索引（父/子 id 均注册）、group 销毁清理（engine.destroy 全子树清理）。
+- [x] `Fix`：`symbols/compound.ts` group 部分——`scada-group` 容器 type 实现（I5 预留契约：`scadaGroupDefinition` create → leafer Group，registered in builtin）；group 建树（子节点坐标相对父级 + 相对旋转，config-adapter 容器分支复用 + 补 `scale` 整体缩放装配）。
+- [x] `Proof`：instance 覆盖失败测试先行：深合并优先级链（`defaults` ← 实例 JSON 属性 ← 绑定/动画/事件声明层：custom/bindings/states 逐层合并断言）、`scale` 整体缩放、`custom` 字段透传、实例属性覆盖集 diff 于 defaults（最小覆盖集）。
+- [x] `Fix`：`symbols/compound.ts` instance 部分——`deepMergeInstanceProps`/`mergeInstanceProps`/`instantiateInstance`（模板复用：type → 注册符号 + 覆盖深合并后经 symbol-factory create）；`symbol-factory.instantiateSymbol` 改深合并路径（既有浅合并语义单测无回归）。
+- [x] `Proof`：复合图元序列化失败测试先行：group children 树递归序列化（I5.3 基础扩展 group 语义）、instance 序列化覆盖集输出（diff 于 defaults，`serialization-instance-drift` Failure Path）、applyDiff 增量对 group/instance 子树生效（增删/属性 patch 收敛，避免全量重建断言）。
+- [x] `Fix`：序列化协同——`serialize.ts` `pruneInstanceNode`：instance 覆盖集输出（diff 于 defaults，最小覆盖集）+ group 子树递归；config-adapter `applyDiff` 对复合图元子树增删/属性 patch 收敛（组 scale 装配、未知 id no-op、移除子树连同清理）；`ScadaSymbolNode`/diff SYMBOL_KEYS 补 strokeDash/dashOffset/fillStyle/shadow 字段。
+- [x] `Proof`：V5 单测扩展——group/instance 复合图元全路径（注册 → 校验 → 实例化 → 场景树加载 → 序列化 → 卸载）：`compound.test.ts` 17 例（含 skid group + 3 instance 全路径）；既有 20+ 自定义图元基线保持绿（v5-custom-registration.test.ts 未弱化）。
+- [x] `Fix`：`docs/logs/2026/08-03.md` 已记录本 plan 产出摘要（置顶条目，2026-08-04 执行记录）。
 
 Exit Criteria:
 
-- [ ] compound.ts（group/instance）纯逻辑单测全绿（相对坐标/深合并优先级/scale/custom 透传/覆盖集 diff 断言）。
-- [ ] group/instance 经 config-adapter 场景树全路径 + 序列化/applyDiff 协同单测通过；V5 基线保持绿。
+- [x] compound.ts（group/instance）纯逻辑单测全绿（相对坐标/深合并优先级/scale/custom 透传/覆盖集 diff 断言）——compound.test.ts 17 例全绿。
+- [x] group/instance 经 config-adapter 场景树全路径 + 序列化/applyDiff 协同单测通过（compound.test.ts + config-adapter.test.ts 增量）；V5 基线保持绿（包级 326 tests / 24 files 全绿，coverage 阈值 90 达标）。
 
 ## Draft Review Record
 
@@ -146,18 +146,18 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。关闭流程详见本 guide 的 `When Closing The Plan` 和 `Closure Audit Rule`。
 
-- [ ] I8.1–I8.3 全部落地：样式细化/image-video 占位/视觉状态应用与动画联动/group/instance 复合图元，均有 focused 单测覆盖，包级 typecheck 通过。
-- [ ] 契约一致性：图元 type 命名与 `design-symbols.md` §4.4 分类对齐（形状族无前缀、group/instance 语义 §4.3）；状态样式解析规则（§10）与 I6 状态机联动一致，无未裁定偏离。
-- [ ] I5 deferred 项（复合图元与视觉状态样式，Successor Path I8.2/I8.3）已落地；V5 20+ 自定义图元基线保持绿（未弱化）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] roadmap 状态机未跳序：I8 `todo → planned` 已在激活期完成，收口时 `planned → done` 由独立 closure-audit 核验后回写。
-- [ ] 受影响的 owner 文档已同步（docs/logs 收口摘要；design-\*.md 风险节如需回写已记录；架构文档同步属 I15.2）。
-- [ ] roadmap Phase Status I8 已回写 `done`。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] I8.1–I8.3 全部落地：样式细化/image-video 占位/视觉状态应用与动画联动/group/instance 复合图元，均有 focused 单测覆盖，包级 typecheck 通过。
+- [x] 契约一致性：图元 type 命名与 `design-symbols.md` §4.4 分类对齐（形状族无前缀、group/instance 语义 §4.3）；状态样式解析规则（§10）与 I6 状态机联动一致，无未裁定偏离（I8.1 Decision：状态覆盖不扩展 fillStyle，已回写 §4.2 注释）。
+- [x] I5 deferred 项（复合图元与视觉状态样式，Successor Path I8.2/I8.3）已落地；V5 20+ 自定义图元基线保持绿（未弱化）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（I6.3 revert-patch 边界为契约内分工，I8.2 层兜底并记录，非缺陷）。
+- [x] roadmap 状态机未跳序：I8 `todo → planned` 已在激活期完成，收口时 `planned → done` 由独立 closure-audit 核验后回写。
+- [x] 受影响的 owner 文档已同步（docs/logs/2026/08-03.md 收口摘要；design-symbols.md §4.2 I8.1 Decision 注释；无其他风险节需回写；架构文档同步属 I15.2）。
+- [x] roadmap Phase Status I8 已回写 `done`。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（Auditor: task `ses_03727e6a5ffeciXAp6iLWu00DT`，Verdict `approved`，3 Nit 非阻塞已修正计数记录；执行 session 未自审）。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -190,16 +190,18 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 关闭时填写（I8.1–I8.3 落地情况、契约一致性、deferred 裁定、closure-audit 证据摘要）。
+Status Note: 关闭完成（2026-08-04）——I8.1 样式细化 + image/video 占位（11 内置符号）、I8.2 视觉状态应用（StateVisualApplier 消费 I6.3 state:change + sky 交互覆盖层，fault→blink 集成验证，I6.3 revert-patch 边界契约内分工记录）、I8.3 复合图元（group/instance 深合并优先级链/覆盖集 diff 序列化/applyDiff 子树收敛）全部落地；契约一致性核验通过（§4.4 无前缀命名、§4.3 复合语义、§10 状态优先）；I5 deferred 项（复合图元与视觉状态）兑现；V5 基线保持绿。roadmap I8 `planned → done`（closure-audit 核验后回写）；packages/flux-renderers-industrial 326 tests / 24 files 全绿，coverage statements 96.04 / branches 90.01 / functions 97.86 / lines 97.79（阈值 90 达标）；workspace typecheck/build/lint/test 32/32、32/32、32/32、59/59 全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent（fresh session）执行
-- Evidence: 待定
+- Auditor / Agent: 独立子 agent（fresh session），task `ses_03727e6a5ffeciXAp6iLWu00DT`
+- Evidence: Verdict `approved`——7 维核查全部通过：① 全部 Phase item/Exit Criteria `[x]` + Status `completed`，Closure Gates 无残留未勾选项；② 落地真实性逐文件抽查（common.ts fillStyle 透传/image.ts 占位+错误信号/visual-state.ts revert+visible/compound.ts 深合并+覆盖集/serialize.ts pruneInstanceNode/config-types 新字段）；③ 测试非空洞（revert-on-exit、fault→blink 经 animator.isPlaying 端到端、覆盖集序列化裁剪、V5 skid group 全路径）；④ 契约一致性（§4.2 Decision 注释、§4.3/§4.4 语义无漂移）；⑤ deferred 诚实（e2e→I13.1/I15.1、scada-symbol→I9、性能→I14；I6.3 revert-patch 为契约内分工非隐藏缺陷）；⑥ 亲自重跑包级 test（24 files / 326 tests / coverage 全过阈值）+ typecheck clean；⑦ roadmap I8 `planned` 待收口回写。3 项 Nit 非阻塞（测试计数陈旧已修正、覆盖率 90.01 聚合余量、未提交属预期流程）。
 
 Follow-up:
 
-- 待定（关闭时填写；确认无 in-scope 残留或记录 successor）
+- 无 in-scope 残留。watch-only residuals：真实浏览器视觉状态 e2e 断言 → I13.1/I15.1；`scada-symbol` 图元级 type 注册评估 → I9 成型后由 roadmap 状态机触发；性能复测与基准固化 → I14。
+- 已知行为边界记录（I12 gate 复核输入）：I6.3 `collectStates` 对目标状态无 `style` 的状态切换不产生 revert patch，由 I8.2 视觉层（state:change 消费 + 全量重算）兜底——契约内分工，非缺陷。
+- 实现期触发 Failure Path `leafer-state-primitive-drift`（`@leafer-in/state` 未引入 → sky 交互覆盖层回退路径落地），修正记录供 I12 gate 复核。
 
 ## Optional Sections
 

@@ -142,6 +142,7 @@ type ScadaSymbolStylePatch = Partial<
 ```
 
 - **样式解析与状态样式**（§10 详述）：normal 样式 = defaults 合并实例属性；状态样式 = 状态定义（I2.2 `states`）增量覆盖；`@leafer-in/state` 的 hover/press 交互样式为图元内部实现细节（I8.2 落地），不进组态 JSON。
+- **状态覆盖不扩展 `fillStyle`（I8.1 Decision）**：渐变/纹理属图元静态样式，状态覆盖只作用于色值类既有 patch 字段（fill/stroke/strokeWidth/opacity/visible/textColor/shadow/strokeDash）；渐变状态覆盖需求未见确认场景，防止状态 patch 面膨胀。如实现期发现 leafer 渐变状态覆盖真实需求，按 I5/I6 plan Failure Paths `design-contract-conflict` 同口径记录并升级人工/下一 gate 评估。
 
 ### 4.3 复合图元（group/instance）
 
