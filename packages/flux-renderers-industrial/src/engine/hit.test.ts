@@ -74,4 +74,27 @@ describe('HitResolver 命中解析 (I6.4)', () => {
     });
     expect(resolver.resolveSymbolId(10, 10)).toBeUndefined();
   });
+
+  it('should unwrap IPickResult.target from getByPoint (M-2 回归：真实返回形状)', () => {
+    const tree = new MockLeafer();
+    const leaf = new MockRect({ id: 'pump-1' });
+    tree.selector.getByPoint = () => ({ target: leaf, path: [leaf] });
+    const resolver = new HitResolver({
+      getByPoint: (point) => tree.selector.getByPoint(point),
+      idOf: (hit) => (hit as { id?: string })?.id,
+      getSize: () => ({ width: 800, height: 600 }),
+    });
+    expect(resolver.resolveSymbolId(100, 200)).toBe('pump-1');
+  });
+
+  it('should return undefined when IPickResult.target is null (M-2 回归：未命中形状)', () => {
+    const tree = new MockLeafer();
+    tree.selector.getByPoint = () => ({ target: null, path: [] });
+    const resolver = new HitResolver({
+      getByPoint: (point) => tree.selector.getByPoint(point),
+      idOf: (hit) => (hit as { id?: string })?.id,
+      getSize: () => ({ width: 800, height: 600 }),
+    });
+    expect(resolver.resolveSymbolId(100, 200)).toBeUndefined();
+  });
 });

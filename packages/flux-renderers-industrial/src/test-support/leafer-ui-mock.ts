@@ -198,8 +198,9 @@ export class MockLeafer extends MockGroup {
     this.config = config;
     this.type = (config.type as string | undefined) ?? 'design';
     this.zoomLayer = new MockZoomLayer({ name: 'zoomLayer' });
+    // 真实 leafer `selector.getByPoint` 恒返回 `IPickResult { target, path }`（gate-3-review §3 抽查项 3 / M-2）——mock 返回同形状
     this.selector = {
-      getByPoint: () => null,
+      getByPoint: () => ({ target: null, path: [] }),
     };
   }
 

@@ -90,9 +90,10 @@ export class EventBridge {
 
   private pointOf(event: unknown): { x: number; y: number } | undefined {
     if (event === undefined || event === null || typeof event !== 'object') return undefined;
-    const point = (event as { point?: { x?: unknown; y?: unknown } }).point;
-    if (point === undefined || typeof point.x !== 'number' || typeof point.y !== 'number') return undefined;
-    return { x: point.x, y: point.y };
+    // leafer 指针事件数据为 `{ ..., x, y, ... }`（PointerEventHelper.convert；UIEvent 仅 x/y + getPagePoint）——无 `point` 属性（gate-3-review §3 抽查项 2 / M-1）
+    const { x, y } = event as { x?: unknown; y?: unknown };
+    if (typeof x !== 'number' || typeof y !== 'number') return undefined;
+    return { x, y };
   }
 
   private emit(name: ScadaSymbolEventName, viewportPoint: { x: number; y: number }): void {

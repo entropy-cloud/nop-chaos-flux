@@ -21,6 +21,9 @@ export class HitResolver {
     }
     const hit = this.options.getByPoint({ x: viewX, y: viewY });
     if (hit === undefined || hit === null) return undefined;
-    return this.options.idOf(hit);
+    // leafer `selector.getByPoint` 恒返回 `IPickResult { target, path }`（ISelector.ts；spike demo.js `result.target` 解包）——先解包 target 再反查；无 target 键时视原始返回为节点（gate-3-review §3 抽查项 3 / M-2）
+    const target = 'target' in (hit as object) ? (hit as { target?: unknown }).target : hit;
+    if (target === null || target === undefined) return undefined;
+    return this.options.idOf(target);
   }
 }

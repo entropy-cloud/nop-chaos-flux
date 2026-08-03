@@ -12,7 +12,9 @@ function createBridge(options?: {
 }) {
   const tree = new MockLeafer();
   const leaf = options?.hitLeaf ?? new MockRect({ id: 'pump-1' });
-  tree.selector.getByPoint = () => (options?.hitLeaf === null ? null : leaf);
+  // 真实 leafer `getByPoint` 返回 `IPickResult { target, path }`（gate-3-review M-2 回归）
+  tree.selector.getByPoint = () =>
+    options?.hitLeaf === null ? { target: null, path: [] } : { target: leaf, path: [leaf] };
   const resolver = new HitResolver({
     getByPoint: (point) => tree.selector.getByPoint(point),
     idOf: (hit) => (hit as { id?: string })?.id,
@@ -37,7 +39,7 @@ describe('EventBridge 引擎事件桥 (I6.4)', () => {
   it('should emit symbol:click on tree tap with normalized payload', () => {
     const { tree, bridge, onSymbolEvent } = createBridge({ symbolType: 'scada-rect', pointValues: { level: 42 } });
     bridge.attach();
-    tree.emit('tap', { point: { x: 100, y: 200 } });
+    tree.emit('tap', { x: 100, y: 200 });
     expect(onSymbolEvent).toHaveBeenCalledTimes(1);
     expect(onSymbolEvent).toHaveBeenCalledWith('symbol:click', {
       symbolId: 'pump-1',
@@ -51,22 +53,22 @@ describe('EventBridge 引擎事件桥 (I6.4)', () => {
   it('should emit symbol:dblclick on tree double_tap', () => {
     const { tree, bridge, onSymbolEvent } = createBridge();
     bridge.attach();
-    tree.emit('double_tap', { point: { x: 10, y: 20 } });
+    tree.emit('double_tap', { x: 10, y: 20 });
     expect(onSymbolEvent).toHaveBeenCalledWith('symbol:dblclick', expect.objectContaining({ symbolId: 'pump-1' }));
   });
 
   it('should emit symbol:hover on tree pointer.move', () => {
     const { tree, bridge, onSymbolEvent } = createBridge();
     bridge.attach();
-    tree.emit('pointer.move', { point: { x: 10, y: 20 } });
+    tree.emit('pointer.move', { x: 10, y: 20 });
     expect(onSymbolEvent).toHaveBeenCalledWith('symbol:hover', expect.objectContaining({ symbolId: 'pump-1' }));
   });
 
   it('should not emit when nothing is hit (未命中不发射)', () => {
     const { tree, bridge, onSymbolEvent } = createBridge({ hitLeaf: null });
     bridge.attach();
-    tree.emit('tap', { point: { x: 10, y: 20 } });
-    tree.emit('pointer.move', { point: { x: 10, y: 20 } });
+    tree.emit('tap', { x: 10, y: 20 });
+    tree.emit('pointer.move', { x: 10, y: 20 });
     expect(onSymbolEvent).not.toHaveBeenCalled();
   });
 
@@ -74,7 +76,7 @@ describe('EventBridge 引擎事件桥 (I6.4)', () => {
     const { tree, bridge, onSymbolEvent } = createBridge();
     bridge.attach();
     tree.emit('tap', {});
-    tree.emit('tap', { point: { x: 'a', y: 1 } });
+    tree.emit('tap', { x: 'a', y: 1 });
     tree.emit('tap', null);
     expect(onSymbolEvent).not.toHaveBeenCalled();
   });
@@ -82,7 +84,7 @@ describe('EventBridge 引擎事件桥 (I6.4)', () => {
   it('should default symbolType to unknown and omit optional fields', () => {
     const { tree, bridge, onSymbolEvent } = createBridge();
     bridge.attach();
-    tree.emit('tap', { point: { x: 10, y: 20 } });
+    tree.emit('tap', { x: 10, y: 20 });
     const payload = onSymbolEvent.mock.calls[0][1] as ScadaSymbolEventPayload;
     expect(payload.symbolType).toBe('unknown');
     expect(payload.pointValues).toBeUndefined();
@@ -94,7 +96,7 @@ describe('EventBridge 引擎事件桥 (I6.4)', () => {
     const { tree, bridge, onSymbolEvent } = createBridge();
     bridge.attach();
     bridge.attach();
-    tree.emit('tap', { point: { x: 10, y: 20 } });
+    tree.emit('tap', { x: 10, y: 20 });
     expect(onSymbolEvent).toHaveBeenCalledTimes(1);
   });
 
@@ -103,9 +105,9 @@ describe('EventBridge 引擎事件桥 (I6.4)', () => {
     bridge.attach();
     bridge.destroy();
     bridge.destroy();
-    tree.emit('tap', { point: { x: 10, y: 20 } });
-    tree.emit('double_tap', { point: { x: 10, y: 20 } });
-    tree.emit('pointer.move', { point: { x: 10, y: 20 } });
+    tree.emit('tap', { x: 10, y: 20 });
+    tree.emit('double_tap', { x: 10, y: 20 });
+    tree.emit('pointer.move', { x: 10, y: 20 });
     expect(onSymbolEvent).not.toHaveBeenCalled();
   });
 });

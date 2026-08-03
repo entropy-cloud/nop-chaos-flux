@@ -40,7 +40,7 @@ export interface ScadaEngineOptions {
   pixelRatio?: number;
   performance?: ScadaEnginePerformanceOptions;
   background?: { color?: string; grid?: { size: number; color: string } };
-  interactionLayer?: boolean;
+  interactionLayer?: boolean; // reserved：sky 交互覆盖物接线归 I8.2/I11.2（gate-3-review m-7）
   exposeTestHandle?: boolean;
   cid?: number;
   onRender?: (info: { frame: number; dirtyBlocks: number }) => void;
@@ -119,6 +119,7 @@ export class ScadaCanvasEngine {
 
   private handleRender = (): void => {
     this.frameCount++;
+    // dirtyBlocks 预留字段恒 0：leafer render 事件未暴露脏块计数，I14 固化口径（gate-3-review m-1）
     this.options.onRender?.({ frame: this.frameCount, dirtyBlocks: 0 });
   };
 
@@ -163,6 +164,7 @@ export class ScadaCanvasEngine {
   getSymbolProps(id: string): ScadaSymbolProps | undefined {
     const leaf = this.registry.get(id);
     if (!leaf) return undefined;
+    // 返回 leafer 节点属性面（toNodePatch 映射后键名，如 fontSize 非 textSize）——e2e 断言指南 I15.1 知悉（gate-3-review m-6）
     return leaf.node.get() as ScadaSymbolProps;
   }
 
@@ -243,9 +245,10 @@ export class ScadaCanvasEngine {
       this.app.tree.zoomLayer.scaleOfWorld(anchor, clamped.scale / cur.scale);
     }
     if (clamped.x !== cur.x || clamped.y !== cur.y) {
+      // 屏幕映射 zoomLayer.x = -viewport.x * scale：平移量须为 -(Δx)*scale（gate-3-review §5 M-3 符号推导）
       this.app.tree.zoomLayer.move({
-        x: (clamped.x - cur.x) * clamped.scale,
-        y: (clamped.y - cur.y) * clamped.scale,
+        x: -(clamped.x - cur.x) * clamped.scale,
+        y: -(clamped.y - cur.y) * clamped.scale,
       });
     }
     this.viewport = clamped;

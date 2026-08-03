@@ -32,6 +32,107 @@ function checkStringField(
   }
 }
 
+const ANIMATION_KINDS = ['rotate', 'blink', 'flow', 'move'];
+
+function validateBinding(value: unknown, errors: string[], scope: string): void {
+  if (!isPlainObject(value)) {
+    errors.push(`${scope} must be an object`);
+    return;
+  }
+  const binding = value as Record<string, unknown>;
+  if (Object.keys(binding).length === 0) {
+    errors.push(`${scope} must contain at least one of: point | expression | map | scale | format`);
+    return;
+  }
+  if ('point' in binding && (typeof binding.point !== 'string' || binding.point.trim() === '')) {
+    errors.push(`${scope}.point must be a non-empty string`);
+  }
+  if ('expression' in binding && (typeof binding.expression !== 'string' || binding.expression.trim() === '')) {
+    errors.push(`${scope}.expression must be a non-empty string`);
+  }
+  if ('map' in binding && !isPlainObject(binding.map)) {
+    errors.push(`${scope}.map must be an object`);
+  }
+  if ('scale' in binding && !isPlainObject(binding.scale)) {
+    errors.push(`${scope}.scale must be an object`);
+  }
+  if ('format' in binding && typeof binding.format !== 'string') {
+    errors.push(`${scope}.format must be a string`);
+  }
+}
+
+function validateAnimation(value: unknown, errors: string[], scope: string): void {
+  if (!isPlainObject(value)) {
+    errors.push(`${scope} must be an object`);
+    return;
+  }
+  const anim = value as Record<string, unknown>;
+  if (typeof anim.kind !== 'string' || !ANIMATION_KINDS.includes(anim.kind)) {
+    errors.push(`${scope}.kind must be one of: ${ANIMATION_KINDS.join(' | ')}`);
+  }
+  checkNumberField(anim, 'period', errors, scope);
+  checkNumberField(anim, 'loop', errors, scope);
+  for (const field of ['from', 'to']) {
+    if (field in anim && !(typeof anim[field] === 'number' || isPlainObject(anim[field]))) {
+      errors.push(`${scope}.${field} must be a number or an object`);
+    }
+  }
+  if ('when' in anim) {
+    const when = anim.when;
+    if (when !== 'always' && !(isPlainObject(when) && typeof when.state === 'string')) {
+      errors.push(`${scope}.when must be 'always' or an object with a state string`);
+    }
+  }
+}
+
+function validateStateDeclaration(value: unknown, errors: string[], scope: string): void {
+  if (!isPlainObject(value)) {
+    errors.push(`${scope} must be an object`);
+    return;
+  }
+  const decl = value as Record<string, unknown>;
+  if (!isPlainObject(decl.states)) {
+    errors.push(`${scope}.states must be an object`);
+  } else {
+    for (const [stateName, stateValue] of Object.entries(decl.states)) {
+      if (!isPlainObject(stateValue)) {
+        errors.push(`${scope}.states.${stateName} must be an object`);
+      }
+    }
+  }
+  if ('ranges' in decl) {
+    if (!Array.isArray(decl.ranges)) {
+      errors.push(`${scope}.ranges must be an array`);
+    } else {
+      decl.ranges.forEach((range, index) => {
+        if (!isPlainObject(range)) {
+          errors.push(`${scope}.ranges[${index}] must be an object`);
+          return;
+        }
+        const rangeScope = `${scope}.ranges[${index}]`;
+        checkNumberField(range as Record<string, unknown>, 'min', errors, rangeScope);
+        checkNumberField(range as Record<string, unknown>, 'max', errors, rangeScope);
+        if (typeof (range as Record<string, unknown>).state !== 'string') {
+          errors.push(`${rangeScope}.state must be a string`);
+        }
+      });
+    }
+  }
+  if ('booleanMap' in decl) {
+    if (!isPlainObject(decl.booleanMap)) {
+      errors.push(`${scope}.booleanMap must be an object`);
+    } else {
+      const booleanMap = decl.booleanMap as Record<string, unknown>;
+      if (typeof booleanMap.true !== 'string' || typeof booleanMap.false !== 'string') {
+        errors.push(`${scope}.booleanMap must contain string true/false states`);
+      }
+    }
+  }
+  if ('valueMap' in decl && !isPlainObject(decl.valueMap)) {
+    errors.push(`${scope}.valueMap must be an object`);
+  }
+}
+
 function validateSymbolNode(
   node: unknown,
   seenIds: Set<string>,
@@ -76,12 +177,22 @@ function validateSymbolNode(
   }
   if ('bindings' in nodeObj && !isPlainObject(nodeObj.bindings)) {
     errors.push(`${scope}.bindings must be an object`);
+  } else if (nodeObj.bindings !== undefined) {
+    Object.entries(nodeObj.bindings as Record<string, unknown>).forEach(([property, binding]) => {
+      validateBinding(binding, errors, `${scope}.bindings.${property}`);
+    });
   }
   if ('states' in nodeObj && !isPlainObject(nodeObj.states)) {
     errors.push(`${scope}.states must be an object`);
+  } else if (nodeObj.states !== undefined) {
+    validateStateDeclaration(nodeObj.states, errors, `${scope}.states`);
   }
   if ('animations' in nodeObj && !Array.isArray(nodeObj.animations)) {
     errors.push(`${scope}.animations must be an array`);
+  } else if (nodeObj.animations !== undefined) {
+    (nodeObj.animations as unknown[]).forEach((anim, index) => {
+      validateAnimation(anim, errors, `${scope}.animations[${index}]`);
+    });
   }
   if ('events' in nodeObj && !Array.isArray(nodeObj.events)) {
     errors.push(`${scope}.events must be an array`);

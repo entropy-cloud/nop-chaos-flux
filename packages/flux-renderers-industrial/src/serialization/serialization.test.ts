@@ -159,6 +159,127 @@ describe('validateScadaConfig', () => {
     const badSymbolShape = validateScadaConfig(baseConfig({ symbols: ['x' as never] }));
     expect(badSymbolShape.ok).toBe(false);
   });
+
+  it('should validate bindings internal structure (m-4 回归：绑定字段语义)', () => {
+    const badBindingShape = validateScadaConfig(
+      baseConfig({ symbols: [rect('b1', { bindings: { fill: {} as never } })] }),
+    );
+    expect(badBindingShape.ok).toBe(false);
+    expect((badBindingShape as { errors: string[] }).errors).toContain(
+      'symbols[0].bindings.fill must contain at least one of: point | expression | map | scale | format',
+    );
+    const badMap = validateScadaConfig(
+      baseConfig({ symbols: [rect('b2', { bindings: { fill: { point: 'p1', map: 'x' as never } } })] }),
+    );
+    expect(badMap.ok).toBe(false);
+    const badScale = validateScadaConfig(
+      baseConfig({ symbols: [rect('b2b', { bindings: { fill: { point: 'p1', scale: 'x' as never } } })] }),
+    );
+    expect(badScale.ok).toBe(false);
+    const badFormat = validateScadaConfig(
+      baseConfig({ symbols: [rect('b2c', { bindings: { fill: { point: 'p1', format: 3 as never } } })] }),
+    );
+    expect(badFormat.ok).toBe(false);
+    const badPoint = validateScadaConfig(
+      baseConfig({ symbols: [rect('b2d', { bindings: { fill: { point: '' } } })] }),
+    );
+    expect(badPoint.ok).toBe(false);
+    const badExpr = validateScadaConfig(
+      baseConfig({ symbols: [rect('b2e', { bindings: { fill: { expression: '' } } })] }),
+    );
+    expect(badExpr.ok).toBe(false);
+    const ok = validateScadaConfig(
+      baseConfig({
+        symbols: [rect('b3', { bindings: { fill: { point: 'p1', format: '#f00' }, text: { expression: '@{p1} > 1' } } })],
+      }),
+    );
+    expect(ok).toEqual({ ok: true });
+  });
+
+  it('should validate animations internal structure (m-4 回归：动画字段语义)', () => {
+    const badKind = validateScadaConfig(
+      baseConfig({ symbols: [rect('a1', { animations: [{ kind: 'spin' as never }] })] }),
+    );
+    expect(badKind.ok).toBe(false);
+    expect((badKind as { errors: string[] }).errors.some((e) => e.includes('kind must be one of'))).toBe(true);
+    const badWhen = validateScadaConfig(
+      baseConfig({ symbols: [rect('a2', { animations: [{ kind: 'rotate', when: 'sometimes' as never }] })] }),
+    );
+    expect(badWhen.ok).toBe(false);
+    const badPeriod = validateScadaConfig(
+      baseConfig({ symbols: [rect('a2b', { animations: [{ kind: 'rotate', period: 'x' as never }] })] }),
+    );
+    expect(badPeriod.ok).toBe(false);
+    const badFrom = validateScadaConfig(
+      baseConfig({ symbols: [rect('a2c', { animations: [{ kind: 'flow', from: 'x' as never }] })] }),
+    );
+    expect(badFrom.ok).toBe(false);
+    const ok = validateScadaConfig(
+      baseConfig({
+        symbols: [
+          rect('a3', {
+            animations: [
+              { kind: 'rotate', period: 1000, when: { state: 'run' }, loop: -1 },
+              { kind: 'flow', from: 0, to: 100 },
+            ],
+          }),
+        ],
+      }),
+    );
+    expect(ok).toEqual({ ok: true });
+  });
+
+  it('should validate states internal structure (m-4 回归：状态字段语义)', () => {
+    const badStatesValue = validateScadaConfig(
+      baseConfig({
+        symbols: [rect('s1', { states: { states: { run: 'x' as never } } as never })],
+      }),
+    );
+    expect(badStatesValue.ok).toBe(false);
+    const badRange = validateScadaConfig(
+      baseConfig({ symbols: [rect('s2', { states: { states: { run: {} }, ranges: [{ min: 'a' as never, state: 'run' }] } })] }),
+    );
+    expect(badRange.ok).toBe(false);
+    const badRangeEntry = validateScadaConfig(
+      baseConfig({ symbols: [rect('s2b', { states: { states: { run: {} }, ranges: ['x' as never] } })] }),
+    );
+    expect(badRangeEntry.ok).toBe(false);
+    const badRangeState = validateScadaConfig(
+      baseConfig({ symbols: [rect('s2c', { states: { states: { run: {} }, ranges: [{ max: 10, state: 5 as never }] } })] }),
+    );
+    expect(badRangeState.ok).toBe(false);
+    const badBooleanMapShape = validateScadaConfig(
+      baseConfig({ symbols: [rect('s2d', { states: { states: { run: {} }, booleanMap: 'x' as never } })] }),
+    );
+    expect(badBooleanMapShape.ok).toBe(false);
+    const badValueMap = validateScadaConfig(
+      baseConfig({ symbols: [rect('s2e', { states: { states: { run: {} }, valueMap: 'x' as never } })] }),
+    );
+    expect(badValueMap.ok).toBe(false);
+    const badStatesShape = validateScadaConfig(
+      baseConfig({ symbols: [rect('s2f', { states: { states: 'x' as never } as never })] }),
+    );
+    expect(badStatesShape.ok).toBe(false);
+    const badBooleanMap = validateScadaConfig(
+      baseConfig({ symbols: [rect('s3', { states: { states: { run: {} }, booleanMap: { true: 'run' } as never } })] }),
+    );
+    expect(badBooleanMap.ok).toBe(false);
+    const ok = validateScadaConfig(
+      baseConfig({
+        symbols: [
+          rect('s4', {
+            states: {
+              states: { run: { style: { fill: '#00ff00' } }, stop: {} },
+              ranges: [{ min: 0, max: 100, state: 'run' }],
+              booleanMap: { true: 'run', false: 'stop' },
+              valueMap: { 1: 'run' },
+            },
+          }),
+        ],
+      }),
+    );
+    expect(ok).toEqual({ ok: true });
+  });
 });
 
 describe('parseScadaConfig', () => {

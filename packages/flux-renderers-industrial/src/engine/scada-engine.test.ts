@@ -217,7 +217,7 @@ describe('ScadaCanvasEngine commands (I5.1/I5.2 wiring)', () => {
     expect(engine.getSymbolProps('nope')).toBeUndefined();
   });
 
-  it('setViewport / zoomAt should drive zoomLayer move and scaleOfWorld', () => {
+  it('setViewport / zoomAt should drive zoomLayer move and scaleOfWorld (M-3 回归：平移符号)', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     const zoomLayer = engine.tree.zoomLayer as unknown as {
       moveCalls: Array<{ x: number; y: number }>;
@@ -226,11 +226,13 @@ describe('ScadaCanvasEngine commands (I5.1/I5.2 wiring)', () => {
     const result = engine.setViewport({ x: 50, y: 30, scale: 2 });
     expect(result).toEqual({ x: 50, y: 30, scale: 2 });
     expect(zoomLayer.scaleOfWorldCalls).toHaveLength(1);
-    expect(zoomLayer.moveCalls.length).toBeGreaterThan(0);
+    // zoomLayer.x = -viewport.x * scale：setViewport({50,30,2}) 应从 (0,0,1) 平移 -(50-0)*2 = -100 / -(30-0)*2 = -60
+    expect(zoomLayer.moveCalls).toEqual([{ x: -100, y: -60 }]);
     const zoomed = engine.zoomAt({ x: 100, y: 100 }, 2);
     expect(zoomed.scale).toBe(4);
     expect(zoomLayer.scaleOfWorldCalls).toHaveLength(2);
     expect(engine.getViewport()).toEqual({ x: 75, y: 65, scale: 4 });
+    expect(zoomLayer.moveCalls[1]).toEqual({ x: -100, y: -140 });
   });
 
   it('setViewport should clamp scale beyond bounds', () => {
@@ -268,8 +270,8 @@ describe('ScadaCanvasEngine 事件桥接线 (I6.4)', () => {
     engine.reset(validConfig() as ScadaConfig);
     const leaf = engine.getSymbol('rect-1')?.node;
     (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
-      leaf;
-    engine.tree.emit('tap', { point: { x: 100, y: 200 } });
+      ({ target: leaf, path: [leaf] });
+    engine.tree.emit('tap', { x: 100, y: 200 });
     expect(onSymbolEvent).toHaveBeenCalledTimes(1);
     expect(onSymbolEvent).toHaveBeenCalledWith(
       'symbol:click',
@@ -290,8 +292,8 @@ describe('ScadaCanvasEngine 事件桥接线 (I6.4)', () => {
     engine.reset(validConfig() as ScadaConfig);
     const leaf = engine.getSymbol('rect-1')?.node;
     (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
-      leaf;
-    engine.tree.emit('double_tap', { point: { x: 10, y: 20 } });
+      ({ target: leaf, path: [leaf] });
+    engine.tree.emit('double_tap', { x: 10, y: 20 });
     expect(getPointValuesFor).toHaveBeenCalledWith('rect-1');
     expect(onSymbolEvent).toHaveBeenCalledWith(
       'symbol:dblclick',
@@ -307,8 +309,8 @@ describe('ScadaCanvasEngine 事件桥接线 (I6.4)', () => {
     engine.setViewport({ x: 0, y: 0, scale: 2 });
     const leaf = engine.getSymbol('rect-1')?.node;
     (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
-      leaf;
-    engine.tree.emit('pointer.move', { point: { x: 100, y: 200 } });
+      ({ target: leaf, path: [leaf] });
+    engine.tree.emit('pointer.move', { x: 100, y: 200 });
     expect(onSymbolEvent).toHaveBeenCalledWith(
       'symbol:hover',
       expect.objectContaining({ world: { x: 50, y: 100 }, viewport: { x: 100, y: 200 } }),
@@ -321,8 +323,8 @@ describe('ScadaCanvasEngine 事件桥接线 (I6.4)', () => {
     engine.reset(validConfig() as ScadaConfig);
     const leaf = engine.getSymbol('rect-1')?.node;
     (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
-      leaf;
-    engine.tree.emit('tap', { point: { x: 10, y: 20 } });
+      ({ target: leaf, path: [leaf] });
+    engine.tree.emit('tap', { x: 10, y: 20 });
     engine.destroy();
   });
 
@@ -332,9 +334,9 @@ describe('ScadaCanvasEngine 事件桥接线 (I6.4)', () => {
     engine.reset(validConfig() as ScadaConfig);
     const leaf = engine.getSymbol('rect-1')?.node;
     (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
-      leaf;
+      ({ target: leaf, path: [leaf] });
     engine.destroy();
-    engine.tree.emit('tap', { point: { x: 10, y: 20 } });
+    engine.tree.emit('tap', { x: 10, y: 20 });
     expect(onSymbolEvent).not.toHaveBeenCalled();
   });
 });
