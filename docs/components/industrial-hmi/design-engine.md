@@ -76,17 +76,17 @@ interface ScadaEngineOptions {
     ceilPartPixel?: boolean; // 缺省 true（脏区像素对齐）
     usePartLayout?: boolean; // 缺省 true（增量布局，render-engines §3.2）
     lazySpeard?: number; // 缺省 100（惰性边界；键名沿用 leafer 实际拼写 lazySpeard，对照 leafer-ui/packages/display/src/Leafer.ts:71,225，research-summary §4.1 E4）
-    changedThreshold?: number; // 缺省 100（Watcher 帧内节流，research-summary §4.1 E3）
+    changedThreshold?: number; // 自研占位键（缺省 100；语义对齐 leafer Watcher 硬编码 changed<100 帧内节流，research-summary §4.1 E3；非 leafer 配置键，透传无害，I14 调参不依赖此键——gate-3-review m-2）
   };
   /** 背景层配置（地面色/网格） */
   background?: { color?: string; grid?: { size: number; color: string } };
-  /** 交互覆盖层开关（hover 高亮等运行时反馈；缺省 true） */
+  /** 交互覆盖层开关（hover 高亮等运行时反馈；缺省 true；本期引擎惰性保留——sky 覆盖物接线归 I8.2/I11.2 语义，I7 gate m-7 记录） */
   interactionLayer?: boolean;
   /** 测试句柄开关（dev/test 下 true 时暴露 window.__flux_scada_<cid>） */
   exposeTestHandle?: boolean;
   /** 测试句柄键名 cid（默认自增；renderer 桥接层传 RendererResolvedProps.cid，I2.4 §8.4） */
   cid?: number;
-  /** 帧事件回调（tree 层 render 事件，gate-1-review §4 A2） */
+  /** 帧事件回调（tree 层 render 事件，gate-1-review §4 A2）；`dirtyBlocks` 为预留字段（当前恒 0，leafer render 事件未暴露脏块计数，I14 固化口径时再接线） */
   onRender?: (info: { frame: number; dirtyBlocks: number }) => void;
 }
 ```
@@ -135,14 +135,14 @@ interface ScadaEngineOptions {
 
 ## 5. 字段分类
 
-| 配置                                      | 归属                   | 说明                                               |
-| ----------------------------------------- | ---------------------- | -------------------------------------------------- |
-| `container`/`width`/`height`/`pixelRatio` | 构造参数               | 由 renderer 桥接层从 DOM 与 props 传入（I2.4）     |
-| `performance.*`                           | 构造参数               | 透传 leafer config，默认值按 §4.1                  |
-| `background.*`                            | 构造参数               | 背景层配置                                         |
-| `interactionLayer`/`exposeTestHandle`     | 构造参数               | dev/test 句柄与交互层开关                          |
-| `onRender`                                | 构造参数               | tree 层 render 帧事件回调（A2）                    |
-| 点表/绑定/动画声明                        | 组态 JSON（I2.2/I2.4） | 引擎不解析业务语义，只接收「节点 id → 属性值」写入 |
+| 配置                                      | 归属                   | 说明                                                                                                        |
+| ----------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `container`/`width`/`height`/`pixelRatio` | 构造参数               | 由 renderer 桥接层从 DOM 与 props 传入（I2.4）                                                              |
+| `performance.*`                           | 构造参数               | 透传 leafer config，默认值按 §4.1（注：`changedThreshold` 为自研占位键非 leafer 配置键，gate-3-review m-2） |
+| `background.*`                            | 构造参数               | 背景层配置                                                                                                  |
+| `interactionLayer`/`exposeTestHandle`     | 构造参数               | dev/test 句柄与交互层开关                                                                                   |
+| `onRender`                                | 构造参数               | tree 层 render 帧事件回调（A2）                                                                             |
+| 点表/绑定/动画声明                        | 组态 JSON（I2.2/I2.4） | 引擎不解析业务语义，只接收「节点 id → 属性值」写入                                                          |
 
 ## 6. 图层与场景树（对应 regions 约定）
 
@@ -181,7 +181,7 @@ interface ScadaEngineOptions {
 ### 8.2 引擎命令句柄（renderer/外层可调）
 
 - `applyAttrs(attrsBySymbolId: Record<string, Partial<ScadaSymbolProps>>)`：**批量属性写入入口**（I2.2 刷新流水线帧尾调用；单次调用内合并全部脏属性，遵守 §4.5 合帧义务——引擎侧不再提供逐点写 API；`ScadaSymbolProps` 见 design-symbols.md §4.2）；
-- `getSymbol(id)` / `getSymbols()` / `getSymbolProps(id)`：场景树只读访问（图元便捷封装，design-symbols.md §8）；`setSymbolProps(id, patch)` = `applyAttrs({ [id]: patch })` 便捷封装；
+- `getSymbol(id)` / `getSymbols()` / `getSymbolProps(id)`：场景树只读访问（图元便捷封装，design-symbols.md §8）；`getSymbolProps` 返回 leafer 节点属性面（经 `toNodePatch` 映射后的键名，如 text 节点 `fontSize`，非 `ScadaSymbolProps` 原始键名——e2e 断言指南 I15.1 需知悉）；`setSymbolProps(id, patch)` = `applyAttrs({ [id]: patch })` 便捷封装；
 - `fit()` / `center()` / `setViewport(...)` / `zoomAt(...)`：视口命令（I11.2 画布浏览交互）；
 - `setSize(w, h)`：画布尺寸更新（resize 同步，I10.1 ResizeObserver 调用；不重建引擎）；
 - `applyDiff(diff: ScadaConfigDiff)`：组态 JSON 增量 diff 应用（I5.3/I2.4 序列化契约；symbol 增删/属性变更增量生效，避免全量重建）；

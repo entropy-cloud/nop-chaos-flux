@@ -114,6 +114,7 @@ interface ScadaSymbolProps {
   align?: 'left' | 'center' | 'right';
   // 管线（flow 动画消费，I2.2 §4.4）
   flow?: { enabled: boolean; speed: number; dash?: number[] };
+  dashOffset?: number; // 流动动画相位（flow 插值直接写入，I2.2 §4.4 flow 行 dash-offset 语义；I7 gate-3-review m-5 补列）
   // 自定义扩展字段（图元私有，schema 分层，meta2d 蓝本 scada-apps §2.4）
   custom?: Record<string, unknown>;
   // 状态声明容器（组态 JSON 字段类型 = I2.2 §4.5 ScadaStateDeclaration：states 映射 + 判定配置；样式增量覆盖经 ScadaStateDefinition.style = ScadaSymbolStylePatch）
