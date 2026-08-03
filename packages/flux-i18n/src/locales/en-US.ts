@@ -159,6 +159,8 @@ export const enUS: Resource = {
       copied: 'Copied',
       retry: 'Retry',
       noChildren: 'No children',
+      dragToReorder: 'Drag to reorder row',
+      loadChildrenFailed: 'Failed to load children.',
     },
     form: {
       required: 'Required',

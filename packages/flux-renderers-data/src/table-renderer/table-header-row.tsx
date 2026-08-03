@@ -139,11 +139,17 @@ function renderLeafHeaderCell(
   };
   const resolvedWidth = resizeApi?.getColumnWidth(column, index) ?? column.width;
   const cellProps = fixedColumnLayout.getColumnCellProps(column, index);
+  const headerAlignClass =
+    column.headerAlign === 'center'
+      ? 'text-center'
+      : column.headerAlign === 'right'
+        ? 'text-right'
+        : undefined;
 
   return (
     <TableHead
       key={columnKey}
-      className={cellProps.className}
+      className={cn(cellProps.className, headerAlignClass)}
       style={{
         ...(resolvedWidth ? { width: resolvedWidth, minWidth: resolvedWidth } : undefined),
         ...cellProps.style,

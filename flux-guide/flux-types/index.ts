@@ -56,6 +56,7 @@ import type {
   FragmentSchema,
   GanttSchema,
   GridSchema,
+  HiddenSchema,
   HtmlSchema,
   IconPickerSchema,
   IconSchema,
@@ -144,6 +145,7 @@ export type FluxSchema =
   | TimelineSchema
   | FormSchema
   | FieldsetSchema
+  | HiddenSchema
   | InputTextSchema
   | InputEmailSchema
   | InputPasswordSchema
@@ -260,6 +262,7 @@ export interface FluxSchemaByType {
   'timeline': TimelineSchema;
   'form': FormSchema;
   'fieldset': FieldsetSchema;
+  'hidden': HiddenSchema;
   'input-text': InputTextSchema;
   'input-email': InputEmailSchema;
   'input-password': InputPasswordSchema;
@@ -406,6 +409,7 @@ export type {
   FragmentSchema,
   GanttSchema,
   GridSchema,
+  HiddenSchema,
   HtmlSchema,
   IconPickerSchema,
   IconSchema,

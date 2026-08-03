@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ActionSchema, RendererHelpers } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface LazyChildrenState {
   loading: boolean;
@@ -71,7 +72,7 @@ export function useTableLazyChildren(input: {
                 ? result.error
                 : result.error instanceof Error
                   ? result.error.message
-                  : 'Failed to load children.';
+                  : t('flux.table.loadChildrenFailed');
             setNodeState(rowKey, { loading: false, error: errorMsg, children: undefined });
           }
         })
@@ -79,7 +80,7 @@ export function useTableLazyChildren(input: {
           if (!mountedRef.current) return;
           setNodeState(rowKey, {
             loading: false,
-            error: err instanceof Error ? err.message : 'Failed to load children.',
+            error: err instanceof Error ? err.message : t('flux.table.loadChildrenFailed'),
             children: undefined,
           });
         })

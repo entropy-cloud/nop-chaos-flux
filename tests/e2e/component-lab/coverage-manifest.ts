@@ -358,8 +358,8 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     id: 'table',
     title: 'Table',
     tier: 'read',
-    primaryScenario: 'Table with sortable text columns',
-    notes: 'Verify user rows and sortable column headers are visible',
+    primaryScenario: 'Host table quick edit + save + echo (bug 73 pattern)',
+    notes: 'Verify quick-edit writeback submits the EDITED value via quickSaveItemAction (bug 73 pattern); lazy children fail+retry and selection covered in c4-1-host-surfaces.spec.ts',
   },
   {
     id: 'tree',

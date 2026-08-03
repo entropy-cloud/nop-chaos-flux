@@ -46,6 +46,27 @@ describe('table schemaValidator', () => {
     ]);
   });
 
+  it('P2-3: requires sort/filter scope ownership state paths', () => {
+    expect(
+      compiler.validate?.({
+        type: 'table',
+        sortOwnership: 'scope',
+        filterOwnership: 'scope',
+      } as any),
+    ).toEqual([
+      expect.objectContaining({
+        code: 'missing-required-field',
+        path: '/sortStatePath',
+        source: 'renderer',
+      }),
+      expect.objectContaining({
+        code: 'missing-required-field',
+        path: '/filterStatePath',
+        source: 'renderer',
+      }),
+    ]);
+  });
+
   it('reports invalid nested table configuration shapes', () => {
     expect(
       compiler.validate?.({

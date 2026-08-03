@@ -34,9 +34,14 @@ interface TableBodyRowsProps {
   virtualEnabled?: boolean;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
   combineNum?: number;
+  combineFromIndex?: number;
+  /** P1-2: responsive.defaultExpanded — every row starts expanded; the
+   * expandedRowKeys set then means "collapsed overrides" (inverted semantics). */
+  expandAllByDefault?: boolean;
   treeMode?: boolean;
   expandedTreeRowKeys?: Set<string>;
   onToggleTreeExpand?: (rowKey: string) => void;
+  onRetryTreeLoad?: (rowKey: string) => void;
   lazyChildrenMap?: ReadonlyMap<string, import('./use-table-lazy-children.js').LazyChildrenState>;
   rowDragSortApi?: RowDragSortApi | null;
   draggable?: boolean;
@@ -64,9 +69,12 @@ export function TableBodyRows({
   virtualEnabled,
   scrollRef,
   combineNum,
+  combineFromIndex,
+  expandAllByDefault,
   treeMode,
   expandedTreeRowKeys,
   onToggleTreeExpand,
+  onRetryTreeLoad,
   lazyChildrenMap,
   rowDragSortApi,
   draggable,
@@ -93,9 +101,12 @@ export function TableBodyRows({
         isRowCheckable={isRowCheckable}
         isAtMaxSelection={isAtMaxSelection}
         combineNum={combineNum}
+        combineFromIndex={combineFromIndex}
+        expandAllByDefault={expandAllByDefault}
         treeMode={treeMode}
         expandedTreeRowKeys={expandedTreeRowKeys}
         onToggleTreeExpand={onToggleTreeExpand}
+        onRetryTreeLoad={onRetryTreeLoad}
         lazyChildrenMap={lazyChildrenMap}
         rowDragSortApi={rowDragSortApi}
         draggable={draggable}
@@ -125,9 +136,12 @@ export function TableBodyRows({
       isAtMaxSelection={isAtMaxSelection}
       scrollRef={scrollRef}
       combineNum={combineNum}
+      combineFromIndex={combineFromIndex}
+      expandAllByDefault={expandAllByDefault}
       treeMode={treeMode}
       expandedTreeRowKeys={expandedTreeRowKeys}
       onToggleTreeExpand={onToggleTreeExpand}
+      onRetryTreeLoad={onRetryTreeLoad}
       lazyChildrenMap={lazyChildrenMap}
       rowDragSortApi={rowDragSortApi}
       draggable={draggable}
@@ -155,9 +169,12 @@ function NonVirtualBody({
   isRowCheckable,
   isAtMaxSelection,
   combineNum,
+  combineFromIndex,
+  expandAllByDefault,
   treeMode,
   expandedTreeRowKeys,
   onToggleTreeExpand,
+  onRetryTreeLoad,
   lazyChildrenMap,
   rowDragSortApi,
   draggable,
@@ -168,8 +185,12 @@ function NonVirtualBody({
     schemaProps.rowSelection?.type === 'radio' ? Array.from(selectedRowKeys)[0] : undefined;
 
   const combinePlan: CombinePlan = React.useMemo(
-    () => computeCombinePlan(processedData, columns, combineNum, { virtualEnabled: false }),
-    [processedData, columns, combineNum],
+    () =>
+      computeCombinePlan(processedData, columns, combineNum, {
+        virtualEnabled: false,
+        combineFromIndex,
+      }),
+    [processedData, columns, combineNum, combineFromIndex],
   );
 
   const rows =
@@ -190,7 +211,10 @@ function NonVirtualBody({
           ...(props.node.instancePath ?? []),
           { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey },
         ];
-        const isExpanded = expandedRowKeys.has(rowKey);
+        // P1-2: expandAllByDefault inverts set membership (set = collapsed overrides).
+        const isExpanded = expandAllByDefault
+          ? !expandedRowKeys.has(rowKey)
+          : expandedRowKeys.has(rowKey);
         const isSelected = selectedRowKeys.has(rowKey);
         const isEven = entry.sourceIndex % 2 === 0;
 
@@ -224,6 +248,7 @@ function NonVirtualBody({
               treeMode,
               expandedTreeRowKeys,
               onToggleTreeExpand,
+              onRetryTreeLoad,
               lazyChildrenMap,
               draggable,
               rowDragSortApi,
@@ -291,9 +316,12 @@ function VirtualBody({
   emptyContent,
   scrollRef,
   combineNum,
+  combineFromIndex,
+  expandAllByDefault,
   treeMode,
   expandedTreeRowKeys,
   onToggleTreeExpand,
+  onRetryTreeLoad,
   lazyChildrenMap,
   rowDragSortApi,
   draggable,
@@ -303,8 +331,12 @@ function VirtualBody({
   const helpers = props.helpers;
 
   const combinePlan: CombinePlan = React.useMemo(
-    () => computeCombinePlan(processedData, columns, combineNum, { virtualEnabled: true }),
-    [processedData, columns, combineNum],
+    () =>
+      computeCombinePlan(processedData, columns, combineNum, {
+        virtualEnabled: true,
+        combineFromIndex,
+      }),
+    [processedData, columns, combineNum, combineFromIndex],
   );
 
   const flattenedItems = React.useMemo(
@@ -317,6 +349,7 @@ function VirtualBody({
         columnCount,
         props,
         rowRepeatedTemplateId,
+        expandAllByDefault,
       ),
     [
       processedData,
@@ -326,6 +359,7 @@ function VirtualBody({
       columnCount,
       props,
       rowRepeatedTemplateId,
+      expandAllByDefault,
     ],
   );
 
@@ -398,6 +432,7 @@ function VirtualBody({
                     treeMode,
                     expandedTreeRowKeys,
                     onToggleTreeExpand,
+                    onRetryTreeLoad,
                     lazyChildrenMap,
                     draggable,
                     rowDragSortApi,

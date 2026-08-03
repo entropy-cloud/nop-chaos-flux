@@ -1,6 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { Button, Checkbox, RadioGroupItem, TableCell, TableRow } from '@nop-chaos/ui';
+import { Button, Checkbox, RadioGroupItem, TableCell, TableRow, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon, GripVerticalIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema, TableColumnSchema } from '../schemas.js';
@@ -10,6 +10,7 @@ import type { TreeRowEntry } from './use-table-tree.js';
 import type { LazyChildrenState } from './use-table-lazy-children.js';
 import type { RowDragSortApi } from './use-row-drag-sort.js';
 import { getCellRowSpan, type CombinePlan } from './combine-cells.js';
+import { isDevRuntime } from './use-table-tree.js';
 import { asReactNode, indentStyle, CellContentWithPopOver } from './table-cell-chrome.js';
 import {
   areColumnsRenderEquivalent,
@@ -74,6 +75,7 @@ type DataRowRenderProps = {
   treeMode?: boolean;
   expandedTreeRowKeys?: Set<string>;
   onToggleTreeExpand?: (rowKey: string) => void;
+  onRetryTreeLoad?: (rowKey: string) => void;
   lazyChildrenMap?: ReadonlyMap<string, LazyChildrenState>;
   draggable?: boolean;
   rowDragSortApi?: RowDragSortApi | null;
@@ -98,6 +100,7 @@ function DataRowView({
   treeMode,
   expandedTreeRowKeys,
   onToggleTreeExpand,
+  onRetryTreeLoad,
   lazyChildrenMap,
   draggable,
   rowDragSortApi,
@@ -122,6 +125,39 @@ function DataRowView({
     helpers,
     saveAction: schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction,
   });
+
+  // P1-1: per-cell className expression (raw, no `${}`) + vertical alignment.
+  // Both are evaluated per row against the row scope; a failing classNameExpr
+  // degrades to no class + dev warn (Failure Path expr-eval-error).
+  const resolveCellChromeClass = (
+    column: TableColumnSchema,
+    columnIndexForName: number,
+  ): string | undefined => {
+    const vAlignClass =
+      column.vAlign === 'top'
+        ? 'align-top'
+        : column.vAlign === 'bottom'
+          ? 'align-bottom'
+          : column.vAlign === 'middle'
+            ? 'align-middle'
+            : undefined;
+    const expr = column.classNameExpr;
+    if (typeof expr !== 'string' || expr.length === 0) {
+      return vAlignClass;
+    }
+    let evaluated: unknown;
+    try {
+      evaluated = helpers.evaluate(`\${${expr}}`, rowScope);
+    } catch {
+      if (isDevRuntime()) {
+        console.warn(
+          `[TableRenderer] classNameExpr evaluation failed for column "${column.name ?? columnIndexForName}"`,
+        );
+      }
+      return vAlignClass;
+    }
+    return cn(vAlignClass, typeof evaluated === 'string' && evaluated.length > 0 ? evaluated : undefined);
+  };
   const hasQuickEditColumns = columns.some((col) => {
     const cfg = resolveTableQuickEditConfig(col);
     return cfg && cfg.saveImmediately !== true && cfg.mode !== 'dialog';
@@ -301,7 +337,14 @@ function DataRowView({
             data-slot="table-tree-toggle"
             onClick={(event) => {
               event.stopPropagation();
-              onToggleTreeExpand?.(rowKey);
+              // P1-3: an error-state toggle retries the lazy load instead of
+              // collapsing; refreshNode clears the cached error so the re-run
+              // actually refetches (Failure Path host-table-lazy).
+              if (lazyState?.error && onRetryTreeLoad) {
+                onRetryTreeLoad(rowKey);
+              } else {
+                onToggleTreeExpand?.(rowKey);
+              }
             }}
             className="mr-1 inline-flex h-5 w-5 items-center justify-center rounded hover:bg-accent"
             aria-label={
@@ -342,7 +385,10 @@ function DataRowView({
           return (
             <TableCell
               key={column.name ?? `op-${columnIndex}`}
-              className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className}
+              className={cn(
+                resolveCellChromeClass(column, columnIndex),
+                fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
+              )}
               style={{
                 ...(column.width ? { width: column.width } : undefined),
                 ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
@@ -376,7 +422,10 @@ function DataRowView({
           return (
             <TableCell
               key={`${column.name ?? columnIndex}`}
-              className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className}
+              className={cn(
+                resolveCellChromeClass(column, columnIndex),
+                fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
+              )}
               style={{
                 ...(column.width ? { width: column.width } : undefined),
                 ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
@@ -405,7 +454,10 @@ function DataRowView({
           return (
             <TableCell
               key={`${column.name ?? columnIndex}`}
-              className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className}
+              className={cn(
+                resolveCellChromeClass(column, columnIndex),
+                fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
+              )}
               style={{
                 ...(column.width ? { width: column.width } : undefined),
                 ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
@@ -434,7 +486,10 @@ function DataRowView({
         return (
           <TableCell
             key={`${column.name ?? columnIndex}`}
-            className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className}
+            className={cn(
+              resolveCellChromeClass(column, columnIndex),
+              fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
+            )}
             style={{
               ...(column.width ? { width: column.width } : undefined),
               ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
@@ -547,6 +602,7 @@ export function renderDataRow(
   treeMode?: boolean,
   expandedTreeRowKeys?: Set<string>,
   onToggleTreeExpand?: (rowKey: string) => void,
+  onRetryTreeLoad?: (rowKey: string) => void,
   lazyChildrenMap?: ReadonlyMap<string, LazyChildrenState>,
   draggable?: boolean,
   rowDragSortApi?: RowDragSortApi | null,
@@ -571,6 +627,7 @@ export function renderDataRow(
       treeMode={treeMode}
       expandedTreeRowKeys={expandedTreeRowKeys}
       onToggleTreeExpand={onToggleTreeExpand}
+      onRetryTreeLoad={onRetryTreeLoad}
       lazyChildrenMap={lazyChildrenMap}
       draggable={draggable}
       rowDragSortApi={rowDragSortApi}

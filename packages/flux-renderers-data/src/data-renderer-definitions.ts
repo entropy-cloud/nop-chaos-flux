@@ -42,6 +42,12 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         description:
           'Action dispatched per row on quick save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
       },
+      childrenSource: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Children Source',
+        description:
+          'Action dispatched on tree-node expand to lazy-load children (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
+      },
       columns: {
         shape: {
           kind: 'array',
@@ -82,6 +88,10 @@ export const dataRendererDefinitions: RendererDefinition[] = [
                 regionKeySuffix: 'popOver.content',
                 params: ['record', 'index'],
                 isolate: true,
+              },
+              searchable: {
+                kind: 'value-or-region',
+                regionKey: 'searchableRegionKey',
               },
             },
           },
@@ -212,6 +222,11 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'selectionStatePath', kind: 'prop' },
       { key: 'sortStatePath', kind: 'prop' },
       { key: 'filterStatePath', kind: 'prop' },
+      { key: 'sort', kind: 'prop' },
+      { key: 'sortEntries', kind: 'prop' },
+      { key: 'sortColumn', kind: 'prop' },
+      { key: 'sortDirection', kind: 'prop' },
+      { key: 'filters', kind: 'prop' },
       { key: 'header', kind: 'value-or-region', regionKey: 'header' },
       { key: 'footer', kind: 'value-or-region', regionKey: 'footer' },
       { key: 'loading', kind: 'prop' },

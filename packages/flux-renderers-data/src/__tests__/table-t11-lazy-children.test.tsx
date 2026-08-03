@@ -170,4 +170,120 @@ describe('T11 tree-table lazy children', () => {
       expect(rows.length).toBeGreaterThan(1);
     });
   });
+
+  it('P1-3: failed lazy load renders error state and retry reloads children', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 500, error: 'boom' })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: [{ id: '1-1', name: 'Retried Child', __rowKey: '1-1' }],
+      });
+
+    const env = { ...testEnv, fetcher };
+    const SchemaRenderer = createSchemaRenderer(dataRendererDefinitions);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://table/lazy-children-retry"
+        schema={
+          {
+            type: 'table',
+            rowChildrenField: 'items',
+            childrenSource: { action: 'ajax', args: { url: '/api/children' } },
+            source: [{ id: '1', name: 'Parent' }],
+            columns: [{ name: 'name', label: 'Name' }],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const toggle = document.querySelector('[data-slot="table-tree-toggle"]');
+    expect(toggle).not.toBeNull();
+
+    // First expand → failure. The toggle's aria-label flips to "Retry" and the
+    // error icon (text-destructive) is shown.
+    fireEvent.click(toggle!);
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(toggle!.getAttribute('aria-label')).toBe('重试');
+    });
+
+    // P1-3: clicking the error-state toggle RETRIES the load instead of just
+    // collapsing (refreshNode clears the cached error; loadChildren refetches).
+    fireEvent.click(toggle!);
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+
+    await vi.waitFor(() => {
+      const childRow = Array.from(document.querySelectorAll('[data-slot="table-row"]')).find(
+        (row) => row.textContent?.includes('Retried Child'),
+      );
+      expect(childRow).toBeTruthy();
+    });
+  });
+
+  it('P1-3: after a successful retry, collapse + re-expand reuses the cache (no refetch)', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 500, error: 'boom' })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: [{ id: '1-1', name: 'Retried Child', __rowKey: '1-1' }],
+      });
+
+    const env = { ...testEnv, fetcher };
+    const SchemaRenderer = createSchemaRenderer(dataRendererDefinitions);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://table/lazy-children-cache-reuse"
+        schema={
+          {
+            type: 'table',
+            rowChildrenField: 'items',
+            childrenSource: { action: 'ajax', args: { url: '/api/children' } },
+            source: [{ id: '1', name: 'Parent' }],
+            columns: [{ name: 'name', label: 'Name' }],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const toggle = document.querySelector('[data-slot="table-tree-toggle"]');
+    expect(toggle).not.toBeNull();
+
+    // Expand → fail → error toggle retries → success (fetch #2).
+    fireEvent.click(toggle!);
+    await vi.waitFor(() => {
+      expect(toggle!.getAttribute('aria-label')).toBe('重试');
+    });
+    fireEvent.click(toggle!);
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      const childRow = Array.from(document.querySelectorAll('[data-slot="table-row"]')).find(
+        (row) => row.textContent?.includes('Retried Child'),
+      );
+      expect(childRow).toBeTruthy();
+    });
+
+    // Collapse → re-expand: cached children reused, no third fetch (T11 cache reuse).
+    fireEvent.click(toggle!);
+    await vi.waitFor(() => {
+      expect(toggle!.getAttribute('aria-label')).toBe('展开');
+    });
+    fireEvent.click(toggle!);
+    await vi.waitFor(() => {
+      const childRow = Array.from(document.querySelectorAll('[data-slot="table-row"]')).find(
+        (row) => row.textContent?.includes('Retried Child'),
+      );
+      expect(childRow).toBeTruthy();
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
 });

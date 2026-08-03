@@ -160,6 +160,8 @@ export const zhCN: Resource = {
       copied: '已复制',
       retry: '重试',
       noChildren: '暂无子节点',
+      dragToReorder: '拖拽调整行顺序',
+      loadChildrenFailed: '子节点加载失败',
     },
     form: {
       required: '必填',

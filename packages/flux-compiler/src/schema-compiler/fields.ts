@@ -21,7 +21,7 @@ export const DEFAULT_FIELD_RULES: Record<string, SchemaFieldRule> = {
   footer: { key: 'footer', kind: 'region', regionKey: 'footer' },
   toolbar: { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
   dialog: { key: 'dialog', kind: 'prop' },
-  columns: { key: 'columns', kind: 'prop' },
+  columns: { key: 'columns', kind: 'schema-array' },
 };
 
 const LIFECYCLE_KEYS = new Set(['onMount', 'onUnmount']);

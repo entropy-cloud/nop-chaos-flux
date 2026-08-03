@@ -93,6 +93,10 @@ export function useRowQuickEditDraft(input: UseRowQuickEditDraftInput): RowQuick
       store: draftScopeStore.store,
       get(path: string) {
         if (path in draftRecordRef.current) return draftRecordRef.current[path];
+        if (path === '$slot') {
+          const slot = rowScope.get('$slot') as { record: unknown; index: number } | undefined;
+          return { ...(slot ?? {}), record: draftRecordRef.current };
+        }
         if (path === '$slot.record') return draftRecordRef.current;
         if (path.startsWith('$slot.record.')) {
           const key = path.slice('$slot.record.'.length);
@@ -102,7 +106,7 @@ export function useRowQuickEditDraft(input: UseRowQuickEditDraftInput): RowQuick
       },
       has(path: string) {
         if (path in draftRecordRef.current) return true;
-        if (path === '$slot.record' || path.startsWith('$slot.record.')) return true;
+        if (path === '$slot' || path === '$slot.record' || path.startsWith('$slot.record.')) return true;
         return rowScope.has(path);
       },
       readOwn() {

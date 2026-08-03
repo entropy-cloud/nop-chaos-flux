@@ -378,6 +378,12 @@ export interface FieldsetSchema extends BoundFieldSchemaBase {
   titleClassName?: SchemaValue;
 }
 
+export interface HiddenSchema extends BoundFieldSchemaBase {
+  type: 'hidden';
+  value?: SchemaValue;
+  hiddenFieldPolicy?: SchemaValue;
+}
+
 export interface InputTextSchema extends BoundFieldSchemaBase {
   type: 'input-text';
   value?: SchemaValue;
@@ -946,6 +952,11 @@ export interface TableSchema extends BaseSchema {
   selectionStatePath?: SchemaValue;
   sortStatePath?: SchemaValue;
   filterStatePath?: SchemaValue;
+  sort?: SchemaValue;
+  sortEntries?: SchemaValue;
+  sortColumn?: SchemaValue;
+  sortDirection?: SchemaValue;
+  filters?: SchemaValue;
   header?: SchemaValue | SchemaInput;
   footer?: SchemaValue | SchemaInput;
   loading?: SchemaValue;
@@ -968,7 +979,7 @@ export interface TableSchema extends BaseSchema {
   orderOwnership?: SchemaValue;
   orderStatePath?: SchemaValue;
   rowChildrenField?: SchemaValue;
-  childrenSource?: SchemaValue;
+  childrenSource?: unknown;
   columnWidthsOwnership?: SchemaValue;
   columnWidthsStatePath?: SchemaValue;
   multiSort?: boolean;

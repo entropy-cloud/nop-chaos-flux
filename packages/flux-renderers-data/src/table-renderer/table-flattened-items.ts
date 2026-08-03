@@ -29,6 +29,7 @@ export function buildFlattenedItems(
   columnCount: number,
   parentProps: RendererComponentProps<TableSchema>,
   rowRepeatedTemplateId: string,
+  expandAllByDefault = false,
 ): FlattenedItem[] {
   const items: FlattenedItem[] = [];
 
@@ -42,7 +43,10 @@ export function buildFlattenedItems(
       ...(parentProps.node.instancePath ?? []),
       { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey },
     ];
-    const isExpanded = expandedRowKeys.has(rowKey);
+    // P1-2: expandAllByDefault inverts set membership (set = collapsed overrides).
+    const isExpanded = expandAllByDefault
+      ? !expandedRowKeys.has(rowKey)
+      : expandedRowKeys.has(rowKey);
 
     items.push({
       kind: 'data',

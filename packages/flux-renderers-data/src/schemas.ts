@@ -113,6 +113,8 @@ export interface TableColumnSchemaInput extends Omit<TableColumnSchema, 'label'>
   body?: SchemaInput;
 }
 
+export type SortInputEntry = { column: string; direction: 'asc' | 'desc' };
+
 export interface TableSchema extends BaseSchema {
   type: 'table';
   source?: SchemaValue;
@@ -125,6 +127,17 @@ export interface TableSchema extends BaseSchema {
   selectionStatePath?: string;
   sortStatePath?: string;
   filterStatePath?: string;
+  /** Controlled sort input (sortOwnership: 'controlled'). Single mode:
+   * `{ column, direction }`; multi-sort mode: array of entries. */
+  sort?: { column?: string; direction?: 'asc' | 'desc' } | SortInputEntry[];
+  /** Controlled multi-sort input (sortOwnership: 'controlled' + multiSort). */
+  sortEntries?: SortInputEntry[];
+  /** Legacy controlled single-sort column input (sortOwnership: 'controlled'). */
+  sortColumn?: string;
+  /** Legacy controlled single-sort direction input (sortOwnership: 'controlled'). */
+  sortDirection?: 'asc' | 'desc';
+  /** Controlled filter input (filterOwnership: 'controlled'): column → { filters?, keyword? }. */
+  filters?: Record<string, { filters?: string[]; keyword?: string }>;
   columns?: TableColumnSchema[];
   onRowClick?: BaseSchema;
   header?: SchemaInput | string;

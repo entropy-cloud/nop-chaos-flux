@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRenderScope } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import type { TableRowEntry } from './types.js';
 
 type ReorderableRow = TableRowEntry;
@@ -241,7 +242,7 @@ export function useRowDragSort(options: UseRowDragSortOptions): RowDragSortApi |
       },
       role: 'button' as const,
       tabIndex: 0,
-      'aria-label': 'Drag to reorder row',
+      'aria-label': t('flux.table.dragToReorder'),
     }),
     [handleDragEnd, handleDragOver, handleDragStart, handleDrop, handleKeyDown],
   );

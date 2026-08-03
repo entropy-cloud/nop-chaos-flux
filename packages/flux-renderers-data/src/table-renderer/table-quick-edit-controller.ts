@@ -148,6 +148,10 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
         if (field && path === field) {
           return draftRecordRef.current[field];
         }
+        if (path === '$slot') {
+          const slot = rowScope.get('$slot') as { record: unknown; index: number } | undefined;
+          return { ...(slot ?? {}), record: draftRecordRef.current };
+        }
         if (path === '$slot.record') {
           return draftRecordRef.current;
         }
@@ -160,7 +164,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
         if (field && (path === field || path === `$slot.record.${field}`)) {
           return true;
         }
-        if (path === '$slot.record') {
+        if (path === '$slot' || path === '$slot.record') {
           return true;
         }
         return rowScope.has(path);

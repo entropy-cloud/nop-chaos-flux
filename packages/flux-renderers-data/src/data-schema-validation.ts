@@ -140,6 +140,22 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
     });
   }
 
+  if (schema.sortOwnership === 'scope' && typeof schema.sortStatePath !== 'string') {
+    emit({
+      code: 'missing-required-field',
+      path: toJsonPointer(path, 'sortStatePath'),
+      message: 'table.sortStatePath is required when sortOwnership is "scope".',
+    });
+  }
+
+  if (schema.filterOwnership === 'scope' && typeof schema.filterStatePath !== 'string') {
+    emit({
+      code: 'missing-required-field',
+      path: toJsonPointer(path, 'filterStatePath'),
+      message: 'table.filterStatePath is required when filterOwnership is "scope".',
+    });
+  }
+
   if (
     schema.pagination?.pageSizeOptions !== undefined &&
     !validateNumberArray(schema.pagination.pageSizeOptions)

@@ -477,6 +477,34 @@ export function analyzeSchemaInput(
       continue;
     }
 
+    if (rule.kind === 'schema-array' || rule.kind === 'schema') {
+      if (value === undefined) {
+        continue;
+      }
+      const childItems = Array.isArray(value) ? value : [value];
+      childItems.forEach((item, index) => {
+        if (
+          item !== null &&
+          typeof item === 'object' &&
+          !Array.isArray(item) &&
+          typeof (item as { type?: unknown }).type === 'string'
+        ) {
+          const itemPath = Array.isArray(value)
+            ? `${path}.${key}[${index}]`
+            : `${path}.${key}`;
+          analyzeSchemaInput(
+            item as BaseSchema,
+            itemPath,
+            registry,
+            plugins,
+            diagnostics,
+            createChildTraversalState(nodeState, key, nodeState.startsHostBoundary),
+          );
+        }
+      });
+      continue;
+    }
+
     const isSourceCarrier =
       !!value &&
       typeof value === 'object' &&

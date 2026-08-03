@@ -355,6 +355,15 @@ describe('P0 action-value props are never props-expression polluted', () => {
       authored: { action: 'ajax', args: { url: '/r/quick-save', data: { name: '${row.name}' } } },
     },
     {
+      label: 'table childrenSource',
+      type: 'table',
+      propKey: 'childrenSource',
+      authored: {
+        action: 'ajax',
+        args: { url: '/r/children?parent=${record.id}', data: { key: '${rowKey}' } },
+      },
+    },
+    {
       label: 'picker loadAction',
       type: 'picker',
       propKey: 'loadAction',

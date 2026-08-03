@@ -246,6 +246,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const isBelowResponsiveBreakpoint = useIsBelowResponsiveBreakpoint(responsiveBreakpoint);
   const responsiveExpandActive =
     schemaProps.responsive?.mode === 'expand' && isBelowResponsiveBreakpoint;
+  // P1-2: responsive.defaultExpanded — when expand mode is active and the flag
+  // is set, all detail rows start expanded. The same local set drives toggles
+  // with inverted semantics: membership = "collapsed override" (expandAllByDefault
+  // true) vs "expanded" (normal mode), so user collapse/expand still works.
+  const expandAllByDefault =
+    responsiveExpandActive && schemaProps.responsive?.defaultExpanded === true;
   const responsiveColumns = useMemo(() => splitResponsiveColumns(tableColumns), [tableColumns]);
   const mainColumns = responsiveExpandActive ? responsiveColumns.primaryColumns : tableColumns;
   const responsiveHiddenColumns = responsiveExpandActive
@@ -267,7 +273,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   );
   // Lazy children loading for tree table (T11): when a tree node with
   // childrenSource is expanded, trigger an action dispatch to fetch children.
-  const { lazyChildrenMap, loadChildren } = useTableLazyChildren({
+  const { lazyChildrenMap, loadChildren, refreshNode } = useTableLazyChildren({
     childrenSource: tableSchemaProps.childrenSource,
     helpers,
   });
@@ -289,7 +295,10 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     const prev = prevExpandedRef.current;
     const next = expandedTreeRowKeys;
     for (const key of next) {
-      if (!prev.has(key) && !lazyChildrenMap.has(key)) {
+      // P1-3: re-load when the node has no cached children OR the cache holds a
+      // failed state (error) — a stale error must not permanently block reloads.
+      const cached = lazyChildrenMap.get(key);
+      if (!prev.has(key) && (!cached || cached.error)) {
         const row = filteredData.find((r) => (r.cacheKey ?? r.rowKey) === key);
         if (row && row.record && !readChildren(row.record, tableSchemaProps.rowChildrenField!)) {
           loadChildren(key, row.record);
@@ -303,6 +312,16 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     }
     prevExpandedRef.current = next;
   }, [treeMode, tableSchemaProps, expandedTreeRowKeys, lazyChildrenMap, filteredData, loadChildren]);
+
+  // P1-3: retry path for a failed lazy load. refreshNode clears the error state
+  // (so the auto-trigger effect above can re-run) and loadChildren re-fetches
+  // with the same row scope; used by the error-state tree toggle.
+  const handleRetryTreeLoad = (rowKey: string) => {
+    const row = filteredData.find((r) => (r.cacheKey ?? r.rowKey) === rowKey);
+    if (!row || !row.record) return;
+    refreshNode(rowKey);
+    loadChildren(rowKey, row.record);
+  };
   const {
     selectedRowKeys,
     allSelected,
@@ -605,30 +624,32 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         data-auto-fill-height={autoFillActive ? 'true' : undefined}
       >
         <Table data-striped={isStriped || undefined} data-bordered={isBordered || undefined}>
-          <TableHeader data-slot="table-header">
-            <TableHeaderRow
-              props={props}
-              columns={mainColumns}
-              sourceLength={filteredData.length}
-              sortState={sortState}
-              sortEntries={sortEntries}
-              multiSort={schemaProps.multiSort}
-              filterState={filterState}
-              allSelected={allSelected}
-              selectedRowCount={selectedRowKeys.size}
-              fixedColumnLayout={fixedColumnLayout}
-              showExpandColumn={showExpandColumn}
-              onSort={handleSort}
-              onFilter={handleFilter}
-              onSearch={handleSearch}
-              onClearFilters={clearFilters}
-              onSelectAll={handleSelectAll}
-              selectAllDisabled={isAtMaxSelection && !allSelected}
-              columnResize={schemaProps.columnResize}
-              resizeApi={resizeApi}
-              affixHeader={schemaProps.affixHeader}
-            />
-          </TableHeader>
+          {schemaProps.showHeader !== false ? (
+            <TableHeader data-slot="table-header">
+              <TableHeaderRow
+                props={props}
+                columns={mainColumns}
+                sourceLength={filteredData.length}
+                sortState={sortState}
+                sortEntries={sortEntries}
+                multiSort={schemaProps.multiSort}
+                filterState={filterState}
+                allSelected={allSelected}
+                selectedRowCount={selectedRowKeys.size}
+                fixedColumnLayout={fixedColumnLayout}
+                showExpandColumn={showExpandColumn}
+                onSort={handleSort}
+                onFilter={handleFilter}
+                onSearch={handleSearch}
+                onClearFilters={clearFilters}
+                onSelectAll={handleSelectAll}
+                selectAllDisabled={isAtMaxSelection && !allSelected}
+                columnResize={schemaProps.columnResize}
+                resizeApi={resizeApi}
+                affixHeader={schemaProps.affixHeader}
+              />
+            </TableHeader>
+          ) : null}
 
           {schemaProps.prefixRow ? (
             <TableBody>
@@ -666,12 +687,15 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             virtualEnabled={virtualEnabled}
             scrollRef={scrollRef}
             combineNum={schemaProps.combineNum}
+            combineFromIndex={schemaProps.combineFromIndex}
             treeMode={treeMode}
             expandedTreeRowKeys={expandedTreeRowKeys}
             onToggleTreeExpand={handleToggleTreeExpand}
+            onRetryTreeLoad={handleRetryTreeLoad}
             lazyChildrenMap={lazyChildrenMap}
             rowDragSortApi={rowDragSortApi}
             draggable={schemaProps.draggable === true}
+            expandAllByDefault={expandAllByDefault}
           />
 
           {schemaProps.affixRow ? (

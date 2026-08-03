@@ -42,7 +42,7 @@ export function computeCombinePlan(
   rows: TableRowEntry[],
   columns: TableColumnSchema[],
   combineNum: number | undefined,
-  options: { virtualEnabled?: boolean } = {},
+  options: { virtualEnabled?: boolean; combineFromIndex?: number } = {},
 ): CombinePlan {
   if (typeof combineNum !== 'number' || combineNum <= 0 || rows.length === 0) {
     return EMPTY_COMBINE_PLAN;
@@ -52,14 +52,17 @@ export function computeCombinePlan(
     return EMPTY_COMBINE_PLAN;
   }
 
-  const n = Math.min(Math.floor(combineNum), columns.length);
+  // combineFromIndex: start column index for merging (amis parity). The merge
+  // applies to columns [combineFromIndex, combineFromIndex + combineNum).
+  const startIndex = Math.max(0, Math.floor(options.combineFromIndex ?? 0));
+  const n = Math.min(Math.floor(combineNum), columns.length - startIndex);
   if (n <= 0) {
     return EMPTY_COMBINE_PLAN;
   }
 
   const plan: CombinePlan = rows.map(() => ({}));
-  const affectedColumnKeys = columns.slice(0, n).map((column, index) => ({
-    key: column.name ?? `column-${index}`,
+  const affectedColumnKeys = columns.slice(startIndex, startIndex + n).map((column, index) => ({
+    key: column.name ?? `column-${startIndex + index}`,
     column,
   }));
 
