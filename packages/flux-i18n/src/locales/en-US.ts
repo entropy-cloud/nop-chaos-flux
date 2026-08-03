@@ -191,6 +191,7 @@ export const enUS: Resource = {
       moveDown: 'Move down',
       noItems: 'No items',
       value: 'Value',
+      iconList: 'Icons',
     },
     date: {
       hour: 'Hour',

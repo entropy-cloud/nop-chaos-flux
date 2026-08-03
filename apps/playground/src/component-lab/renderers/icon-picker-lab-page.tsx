@@ -58,6 +58,32 @@ const disabledIconPicker = {
   ],
 };
 
+const hostIconSelect = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      valuesPath: 'ui.hostIcon',
+      data: { icon: undefined },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        {
+          type: 'icon-picker',
+          name: 'icon',
+          label: 'Menu Icon',
+          placeholder: 'Select an icon',
+        },
+        {
+          type: 'text',
+          testid: 'le-icon-echo',
+          text: '${submitted ? "LE-ICON:" + $JSON.stringify(ui.hostIcon.icon) : ""}',
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
 export function IconPickerLabPage() {
   return (
     <MultiScenarioLabPage
@@ -77,6 +103,12 @@ export function IconPickerLabPage() {
           title: 'Disabled state',
           description: 'disabled: true prevents opening the popover and clearing the value.',
           schema: disabledIconPicker,
+        },
+        {
+          title: 'Host form icon picker select + submit (bug 73 pattern)',
+          description:
+            'Open the popover, search and select an icon, then submit; the echo publishes the committed icon value (selection writes the form value in a real browser).',
+          schema: hostIconSelect,
         },
       ]}
     />

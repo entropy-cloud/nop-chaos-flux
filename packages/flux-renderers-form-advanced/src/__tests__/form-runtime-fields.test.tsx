@@ -63,14 +63,14 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
     await waitFor(() => {
       expect(submitCalls).toHaveLength(0);
     });
-    expect(screen.getByText('Tag List requires at least one tag')).toBeTruthy();
+    expect(screen.getByText('Tag List is required')).toBeTruthy();
     expect(document.querySelector('[data-slot="field-control"]')).toBeTruthy();
     expect(submitCalls).toHaveLength(0);
 
     fireEvent.click(screen.getByText('alpha'));
 
     await waitFor(() => {
-      expect(screen.queryByText('Tag List requires at least one tag')).toBeNull();
+      expect(screen.queryByText('Tag List is required')).toBeNull();
     });
 
     fireEvent.click(screen.getByText('Submit tags'));
@@ -127,7 +127,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
 
     fireEvent.click(screen.getByText('Submit metadata'));
 
-    expect(await screen.findByText('Metadata requires at least one entry')).toBeTruthy();
+    expect(await screen.findByText('Metadata must contain at least 1 item(s)')).toBeTruthy();
     expect(document.querySelector('[data-slot="field-control"]')).toBeTruthy();
     expect(submitCalls).toHaveLength(0);
 
@@ -250,7 +250,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
 
     fireEvent.click(screen.getByText('Submit reviewers'));
 
-    expect(await screen.findByText('Reviewers requires at least one item')).toBeTruthy();
+    expect(await screen.findByText('Reviewers must contain at least 1 item(s)')).toBeTruthy();
     expect(document.querySelector('[data-slot="field-control"]')).toBeTruthy();
     expect(submitCalls).toHaveLength(0);
 

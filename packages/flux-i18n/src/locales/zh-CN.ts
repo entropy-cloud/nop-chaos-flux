@@ -192,6 +192,7 @@ export const zhCN: Resource = {
       moveDown: '下移',
       noItems: '暂无项',
       value: '值',
+      iconList: '图标',
     },
     date: {
       hour: '时',

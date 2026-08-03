@@ -177,23 +177,26 @@ describe('key-value renderer', () => {
     expect(validation.getFieldPath({ name: 'settings' })).toBe('settings');
     expect(validation.getFieldPath({})).toBeUndefined();
 
+    // Rules carry no hardcoded message: buildValidationMessage localizes via the
+    // `validation.*` i18n fallback at validation time (C3.4 P2-1).
     expect(validation.collectRules({ name: 'settings', label: 'Settings' })).toEqual([
-      { kind: 'minItems', value: 1, message: 'Settings requires at least one entry' },
+      { kind: 'minItems', value: 1 },
     ]);
     expect(
       validation.collectRules({ name: 'settings', label: 'Settings', uniqueKeys: true }),
-    ).toEqual([
-      { kind: 'minItems', value: 1, message: 'Settings requires at least one entry' },
-      { kind: 'uniqueBy', itemPath: 'key', message: 'Settings keys must be unique' },
-    ]);
+    ).toEqual([{ kind: 'minItems', value: 1 }, { kind: 'uniqueBy', itemPath: 'key' }]);
     expect(
       validation.collectRules({
         name: 'settings',
         uniqueKeys: { message: 'Custom unique key message' },
       }),
     ).toEqual([
-      { kind: 'minItems', value: 1, message: 'settings requires at least one entry' },
+      { kind: 'minItems', value: 1 },
       { kind: 'uniqueBy', itemPath: 'key', message: 'Custom unique key message' },
+    ]);
+    expect(validation.collectRules({ name: 'settings', minItems: 2, maxItems: 3 })).toEqual([
+      { kind: 'minItems', value: 2 },
+      { kind: 'maxItems', value: 3 },
     ]);
   });
 });

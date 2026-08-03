@@ -317,7 +317,7 @@ describe('FluxBasicPage debugger wiring', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Entry 1 key is required')).toBeTruthy();
+      expect(screen.getByText(/Entry 1 key/)).toBeTruthy();
     });
 
     expect(

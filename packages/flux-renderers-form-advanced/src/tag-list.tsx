@@ -4,6 +4,7 @@ import {
   useCurrentFormFieldState,
   useCurrentValidationScope,
 } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import {
   formFieldRules,
@@ -73,7 +74,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
             {
               path: name,
               rule: 'required',
-              message: `${labelText} requires at least one tag`,
+              message: t('validation.required', { label: labelText }),
             },
           ];
         }
@@ -150,5 +151,5 @@ export const tagListRendererDefinition: RendererDefinition = {
   component: TagListRenderer,
   wrap: true,
   frameRootTag: 'div',
-  fields: formFieldRules,
+  fields: [...formFieldRules, { key: 'tags', kind: 'prop', valueType: 'array' }],
 };

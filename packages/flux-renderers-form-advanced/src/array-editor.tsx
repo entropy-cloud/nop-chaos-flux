@@ -519,7 +519,9 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           {
             path,
             rule: 'required',
-            message: `${props.props.itemLabel ?? 'Item'} ${Number(match[1]) + 1} is required`,
+            message: t('validation.required', {
+              label: `${props.props.itemLabel ?? 'Item'} ${Number(match[1]) + 1}`,
+            }),
           },
         ];
       },
@@ -608,7 +610,12 @@ export const arrayEditorRendererDefinition: RendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ArrayEditorRenderer,
   wrap: true,
-  fields: formFieldRules,
+  fields: [
+    ...formFieldRules,
+    { key: 'itemLabel', kind: 'prop' },
+    { key: 'minItems', kind: 'prop', valueType: 'number' },
+    { key: 'maxItems', kind: 'prop', valueType: 'number' },
+  ],
   componentCapabilityContracts: COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
   validation: {
     kind: 'field',
@@ -624,10 +631,6 @@ export const arrayEditorRendererDefinition: RendererDefinition = {
         {
           kind: 'minItems',
           value: configuredMinItems,
-          message:
-            configuredMinItems <= 1
-              ? `${schema.label ?? schema.name ?? 'Field'} requires at least one item`
-              : `${schema.label ?? schema.name ?? 'Field'} requires at least ${configuredMinItems} items`,
         },
       ];
 
@@ -636,10 +639,6 @@ export const arrayEditorRendererDefinition: RendererDefinition = {
         rules.push({
           kind: 'maxItems',
           value: configuredMaxItems,
-          message:
-            configuredMaxItems <= 1
-              ? `${schema.label ?? schema.name ?? 'Field'} must contain at most one item`
-              : `${schema.label ?? schema.name ?? 'Field'} must contain at most ${configuredMaxItems} items`,
         });
       }
 

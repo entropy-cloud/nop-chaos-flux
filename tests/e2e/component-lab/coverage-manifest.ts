@@ -244,22 +244,33 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     id: 'tag-list',
     title: 'Tag List',
     tier: 'write',
-    primaryScenario: 'Pre-populated technology tags',
-    notes: 'Verify pre-populated tags are visible in live text',
+    primaryScenario: 'Host form tag toggle + submit (bug 73 pattern)',
+    notes:
+      'Toggle a tag and submit; the echo publishes the committed tag array (controlled echo stability); readOnly freezes tag-list/array-editor/key-value/icon-picker in one host form (C3.4)',
   },
   {
     id: 'key-value',
     title: 'Key Value',
     tier: 'write',
-    primaryScenario: 'HTTP header editing',
-    notes: 'Verify pre-populated rows are visible; add a row, fill key/value fields, and verify the new row appears',
+    primaryScenario: 'Host form key-value row edit + submit (bug 73 pattern)',
+    notes:
+      'Edit a row inline, add a row, submit; the echo publishes the committed key-value array (row edits reach the store in a real browser, C3.4)',
   },
   {
     id: 'array-editor',
     title: 'Array Editor',
     tier: 'write',
-    primaryScenario: 'Contact list with pre-populated scalar items',
-    notes: 'Verify pre-populated rows are visible; add a row, fill the new scalar value, and verify it appears',
+    primaryScenario: 'Host form array-editor + key-value edit + submit (bug 73 pattern)',
+    notes:
+      'Edit seeded rows inline, add a row to each, submit; the echo publishes both committed shapes (bug 73 pattern, C3.4)',
+  },
+  {
+    id: 'icon-picker',
+    title: 'Icon Picker',
+    tier: 'write',
+    primaryScenario: 'Host form icon picker select + submit (bug 73 pattern)',
+    notes:
+      'Open the popover, search and select an icon, submit; the echo publishes the committed icon value (C3.4)',
   },
   {
     id: 'condition-builder',

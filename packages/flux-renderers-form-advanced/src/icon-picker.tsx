@@ -209,7 +209,11 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
               </div>
             </div>
           )}
-          <div className="grid max-h-72 grid-cols-6 gap-1 overflow-y-auto p-2">
+          <div
+            className="grid max-h-72 grid-cols-6 gap-1 overflow-y-auto p-2"
+            role="listbox"
+            aria-label={t('flux.form.iconList')}
+          >
             {visibleIcons.length === 0 ? (
               <div className="col-span-6 py-6 text-center text-sm text-muted-foreground">
                 {t('flux.common.noResults')}
@@ -222,6 +226,9 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
                   <Button
                     key={iconName}
                     variant="ghost"
+                    role="option"
+                    aria-selected={isSelected}
+                    aria-label={iconName}
                     className={cn(
                       'size-8',
                       isSelected && 'bg-accent text-accent-foreground ring-1 ring-primary',
@@ -292,5 +299,12 @@ export const iconPickerRendererDefinition: RendererDefinition = {
     { key: 'readOnly', kind: 'prop' },
     { key: 'defaultValue', kind: 'prop' },
   ],
+  validation: {
+    kind: 'field',
+    valueKind: 'scalar',
+    getFieldPath(schema: BaseSchema) {
+      return typeof schema.name === 'string' ? schema.name : undefined;
+    },
+  },
   frameRootTag: 'div',
 };

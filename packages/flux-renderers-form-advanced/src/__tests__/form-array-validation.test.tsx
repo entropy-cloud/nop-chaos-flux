@@ -175,7 +175,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
       expect(submitCalls).toHaveLength(1);
     });
 
-    expect(screen.queryByText('Reviewers requires at least one item')).toBeNull();
+    expect(screen.queryByText('Reviewers must contain at least 1 item(s)')).toBeNull();
     expect(submitCalls[0].reviewers).toHaveLength(2);
     expect(submitCalls[0]).toMatchObject({
       reviewers: [{ value: 'alice' }, { value: 'carol' }],
@@ -457,7 +457,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
               label: 'Metadata',
               uniqueBy: {
                 itemPath: 'key',
-                message: 'Metadata keys must be unique',
+                message: 'Custom metadata unique key message',
               },
             },
           ],
@@ -477,12 +477,12 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     );
 
     fireEvent.click(screen.getByText('Submit unique metadata'));
-    expect(await screen.findByText('Metadata keys must be unique')).toBeTruthy();
+    expect(await screen.findByText('Custom metadata unique key message')).toBeTruthy();
 
     fireEvent.change(screen.getAllByPlaceholderText('Key')[1], { target: { value: 'tier' } });
 
     await waitFor(() => {
-      expect(screen.queryByText('Metadata keys must be unique')).toBeNull();
+      expect(screen.queryByText('Custom metadata unique key message')).toBeNull();
     });
   });
 
@@ -608,12 +608,12 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     );
 
     fireEvent.click(screen.getByText('Submit shorthand metadata'));
-    expect(await screen.findByText('Metadata keys must be unique')).toBeTruthy();
+    expect(await screen.findByText('Metadata items must have unique key')).toBeTruthy();
 
     fireEvent.change(screen.getAllByPlaceholderText('Key')[1], { target: { value: 'tier' } });
 
     await waitFor(() => {
-      expect(screen.queryByText('Metadata keys must be unique')).toBeNull();
+      expect(screen.queryByText('Metadata items must have unique key')).toBeNull();
     });
   });
 });

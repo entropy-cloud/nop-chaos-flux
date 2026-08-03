@@ -45,6 +45,33 @@ const envVars = {
   ],
 };
 
+const hostKvSubmit = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      valuesPath: 'ui.hostKv',
+      data: {
+        headers: [{ id: 'pair-1', key: 'Content-Type', value: 'application/json' }],
+      },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        {
+          type: 'key-value',
+          name: 'headers',
+          label: 'HTTP Headers',
+        },
+        {
+          type: 'text',
+          testid: 'le-kv-echo',
+          text: '${submitted ? "LE-KV:" + $JSON.stringify(ui.hostKv.headers) : ""}',
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
 export function KeyValueLabPage() {
   return (
     <MultiScenarioLabPage
@@ -61,6 +88,12 @@ export function KeyValueLabPage() {
           description:
             'Same structure used for environment variable maps with descriptive placeholders for key and value columns.',
           schema: envVars,
+        },
+        {
+          title: 'Host form key-value row edit + submit (bug 73 pattern)',
+          description:
+            'Edit a row inline, add a row, then submit; the echo publishes the committed key-value array (row edits reach the store and the submitted shape in a real browser).',
+          schema: hostKvSubmit,
         },
       ]}
     />
