@@ -11,9 +11,11 @@ import type {
 import {
   FieldFrame,
   FormContext,
+  FormLayoutContext,
   ScopeContext,
   ValidationContext,
   toFieldRemarkProps,
+  useFormLayout,
 } from '@nop-chaos/flux-react';
 import {
   cn,
@@ -108,6 +110,9 @@ export function VariantFieldView({
     }
 
     if (selectorMode === 'select') {
+      const activeLabel =
+        variants.find((variant) => variant.key === activeKey)?.label ?? activeKey ?? '';
+
       return (
         <div data-slot="variant-field-selector">
           <Select
@@ -119,7 +124,7 @@ export function VariantFieldView({
             }}
           >
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue>{activeLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {variants.map((variant) => (
@@ -154,6 +159,19 @@ export function VariantFieldView({
     );
   };
 
+  // P1-3/CX-8: when a readOnly variant-field falls back to the content region
+  // (no viewer authored), the branch fields must present read-only instead of
+  // staying interactive and writing back through the variant form proxy.
+  const parentLayout = useFormLayout();
+  const readOnlyLayout = React.useMemo(() => {
+    return parentLayout ? { ...parentLayout, staticReadOnly: true } : { staticReadOnly: true };
+  }, [parentLayout]);
+  const renderActiveRegionReadOnly = (region: RenderRegionHandle | undefined) => (
+    <FormLayoutContext.Provider value={readOnlyLayout}>
+      {asReactNode(region?.render())}
+    </FormLayoutContext.Provider>
+  );
+
   const renderReadOnlyContent = () => {
     if (!readOnly && !effectiveDisabled) {
       return null;
@@ -161,7 +179,9 @@ export function VariantFieldView({
 
     return (
       <div data-slot="variant-field-readonly-body">
-        {renderActiveRegion(activeViewerRegion ?? activeContentRegion)}
+        <VariantFieldProviders form={variantForm} scope={variantScope} validationOwner={variantValidationOwner}>
+          {renderActiveRegionReadOnly(activeViewerRegion ?? activeContentRegion)}
+        </VariantFieldProviders>
       </div>
     );
   };

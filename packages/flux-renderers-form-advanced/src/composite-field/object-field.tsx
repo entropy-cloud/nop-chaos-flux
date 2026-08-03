@@ -10,12 +10,14 @@ import { actionAdapter, getIn, setIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   FormContext,
+  FormLayoutContext,
   ScopeContext,
   ValidationContext,
   resolveRendererSlotContent,
   useCurrentForm,
   useCurrentValidationScope,
   useCurrentFormState,
+  useFormLayout,
   useRenderScope,
   useRendererEnv,
   useScopeSelector,
@@ -169,8 +171,12 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
   const [resolvedValue, setResolvedValue] = React.useState(rawValue);
   const projectedValue = usesWorkingValue ? resolvedValue : rawValue;
-  const transformOutOwner = parentForm ?? parentScope;
-  const pendingTransformOutOwner = React.useMemo(() => ({}), []);
+  // P1-1: sequence/pending tracking must be keyed per component instance.
+  // Keying the transformOut sequence by the shared owner (parentForm/parentScope)
+  // makes one instance's unmount invalidate another instance's in-flight
+  // writeback in the same form — silently dropping committed values.
+  const transformOutOwner = React.useMemo(() => ({}), []);
+  const pendingTransformOutOwner = transformOutOwner;
 
   React.useEffect(() => {
     return () => {
@@ -234,6 +240,20 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   });
 
   const bodyContent = resolveRendererSlotContent(props, 'body');
+  // P1-3/CX-8: propagate the composite-level readOnly/disabled into the body
+  // fields through the form-layout mechanism (staticReadOnly), mirroring the
+  // combo/input-table fix (C3.1 P1-2). Without this, body field presentations
+  // only see their own schema props and stay editable while the composite
+  // chrome is locked.
+  const parentLayout = useFormLayout();
+  const bodyLayout = React.useMemo(() => {
+    if (readOnly || presentation.effectiveDisabled) {
+      return parentLayout
+        ? { ...parentLayout, staticReadOnly: true }
+        : { staticReadOnly: true };
+    }
+    return parentLayout;
+  }, [parentLayout, readOnly, presentation.effectiveDisabled]);
   const childValidationOwner = React.useMemo(() => {
     if (parentForm || !parentValidationOwner || !name) {
       return parentValidationOwner;
@@ -467,7 +487,9 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
       <FormContext.Provider value={childForm ?? undefined}>
         <ScopeContext.Provider value={childScope}>
           <ValidationContext.Provider value={childValidationOwner}>
-            <div data-slot="object-field-body">{bodyContent}</div>
+            <FormLayoutContext.Provider value={bodyLayout}>
+              <div data-slot="object-field-body">{bodyContent}</div>
+            </FormLayoutContext.Provider>
           </ValidationContext.Provider>
         </ScopeContext.Provider>
       </FormContext.Provider>

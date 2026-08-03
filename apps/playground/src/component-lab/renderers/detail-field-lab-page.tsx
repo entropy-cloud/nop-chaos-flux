@@ -80,6 +80,44 @@ const addressDetailField = {
   ],
 };
 
+const projectedSubmit = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'projDetailForm',
+      valuesPath: 'ui.projDetailValues',
+      data: {
+        shipping: {
+          street: '1600 Pennsylvania Ave',
+          city: 'Washington',
+          state: 'DC',
+          zip: '20500',
+        },
+      },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        {
+          type: 'detail-field',
+          name: 'shipping',
+          label: 'Shipping Address',
+          triggerLabel: 'Edit Shipping',
+          content: [
+            { type: 'input-text', name: 'street', placeholder: 'DStreet' },
+            { type: 'input-text', name: 'city', placeholder: 'DCity' },
+          ],
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+    {
+      type: 'text',
+      testid: 'detail-echo',
+      text: '${submitted ? "Detail: " + $JSON.stringify(ui.projDetailValues.shipping) : ""}',
+    },
+  ],
+};
+
 export function DetailFieldLabPage() {
   return (
     <MultiScenarioLabPage
@@ -96,6 +134,12 @@ export function DetailFieldLabPage() {
           description:
             'The viewer slot shows the address on two lines. Click "Edit" to open the dialog with street, city, state, and ZIP fields.',
           schema: addressDetailField,
+        },
+        {
+          title: 'Projected dialog edit submit (bug 73 pattern)',
+          description:
+            'Edit the shipping object in the projected dialog, confirm, then submit the form; the echo asserts the committed value shape and that the draft never leaks before confirm.',
+          schema: projectedSubmit,
         },
       ]}
     />

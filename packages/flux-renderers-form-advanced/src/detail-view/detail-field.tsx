@@ -350,6 +350,8 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         title={surfaceTitle}
         bodySlot="detail-field-surface-body"
         readOnly={readOnly}
+        size={(schemaProps.surface as { size?: string } | undefined)?.size}
+        placement={(schemaProps.surface as { placement?: string } | undefined)?.placement}
         onClose={handleCancel}
         footer={
           <DetailDraftFooter
@@ -366,7 +368,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
           />
         }
       >
-        <DetailDraftBody form={draftForm} bodySlot="detail-field-draft-body">
+        <DetailDraftBody form={draftForm} bodySlot="detail-field-draft-body" staticReadOnly={readOnly}>
           {editContent}
         </DetailDraftBody>
       </DetailSurface>
