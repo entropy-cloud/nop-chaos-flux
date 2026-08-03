@@ -19,6 +19,7 @@
 ## 4. schema 设计
 
 - 建议正式字段为 `name`、`label`、`valueFormat`、`displayFormat`、`timeFormat`、`minDate`、`maxDate`、`utc`、`required`。
+- **timeFormat 语义（2026-08-03 C2.4 收敛）**：`timeFormat` 驱动弹层时间子输入的分辨率——含 `ss` 时渲染秒输入（时/分/秒三段），默认 `HH:mm`（仅时/分，选日或编辑时/分把秒清零）。存储格式始终由 `valueFormat` 决定（含 `ss` 的 valueFormat 才保留秒），`timeFormat` 不改变存储契约。示例 `valueFormat: "YYYY-MM-DD HH:mm:ss"` + `timeFormat: "HH:mm"` = 存储带秒、选择器分钟精度。
 
 ## 5. 字段分类
 

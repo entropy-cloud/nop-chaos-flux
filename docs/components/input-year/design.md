@@ -18,6 +18,7 @@
 ## 4. schema 设计
 
 - 建议正式字段为 `name`、`label`、`valueFormat`、`displayFormat`、`minDate`、`maxDate`。
+- **shortcuts 语义（2026-08-03 C2.4 收敛）**：快捷项 `{ label, start, end }` 以值格式（valueFormat）书写，渲染为控件行下方的内联按钮。`single` 模式取 `start` 提交（经 min/max clamp）；`range` 模式双端提交（`end` 必填，缺失项被过滤；两端经 `normalizePeriodRange` 归一 start≤end）。
 
 ## 5. 字段分类
 
