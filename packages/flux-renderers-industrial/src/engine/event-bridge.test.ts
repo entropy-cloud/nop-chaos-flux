@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EventBridge, buildSymbolEventPayload } from './event-bridge.js';
 import type { ScadaSymbolEventPayload } from './event-bridge.js';
 import { HitResolver } from './hit.js';
-import { MockLeafer, MockRect, resetLeaferMock } from '../test-support/leafer-ui-mock.js';
+import { MockLeafer, MockRect, TAP_MERGE_TIME, resetLeaferMock } from '../test-support/leafer-ui-mock.js';
 
 function createBridge(options?: {
   pointValues?: Record<string, unknown>;
@@ -36,11 +36,12 @@ beforeEach(() => {
 });
 
 describe('EventBridge 引擎事件桥 (I6.4)', () => {
-  it('should emit symbol:click on tree tap with normalized payload', () => {
+  it('should emit symbol:click on tree tap with normalized payload', async () => {
     const { tree, bridge, onSymbolEvent } = createBridge({ symbolType: 'scada-rect', pointValues: { level: 42 } });
     bridge.attach();
+    // tap 经双击合并延迟 120ms 发射（leafer 交互层语义，I11.1 Proof）
     tree.emit('tap', { x: 100, y: 200 });
-    expect(onSymbolEvent).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(onSymbolEvent).toHaveBeenCalledTimes(1));
     expect(onSymbolEvent).toHaveBeenCalledWith('symbol:click', {
       symbolId: 'pump-1',
       symbolType: 'scada-rect',
@@ -57,6 +58,17 @@ describe('EventBridge 引擎事件桥 (I6.4)', () => {
     expect(onSymbolEvent).toHaveBeenCalledWith('symbol:dblclick', expect.objectContaining({ symbolId: 'pump-1' }));
   });
 
+  it('should merge a double tap into dblclick only (双击合并：窗口内第二击取消首击，不发射 click)', async () => {
+    const { tree, bridge, onSymbolEvent } = createBridge();
+    bridge.attach();
+    tree.emit('tap', { x: 10, y: 20 });
+    tree.emit('tap', { x: 10, y: 20 });
+    expect(onSymbolEvent).toHaveBeenCalledWith('symbol:dblclick', expect.objectContaining({ symbolId: 'pump-1' }));
+    await new Promise((resolve) => setTimeout(resolve, TAP_MERGE_TIME + 20));
+    expect(onSymbolEvent).not.toHaveBeenCalledWith('symbol:click', expect.anything());
+    expect(onSymbolEvent).toHaveBeenCalledTimes(1);
+  });
+
   it('should emit symbol:hover on tree pointer.move', () => {
     const { tree, bridge, onSymbolEvent } = createBridge();
     bridge.attach();
@@ -64,27 +76,68 @@ describe('EventBridge 引擎事件桥 (I6.4)', () => {
     expect(onSymbolEvent).toHaveBeenCalledWith('symbol:hover', expect.objectContaining({ symbolId: 'pump-1' }));
   });
 
-  it('should not emit when nothing is hit (未命中不发射)', () => {
+  it('should emit symbol:hover-miss when the pointer leaves a previously hit symbol (hover 退出信号)', () => {
+    const { tree, bridge, onSymbolEvent } = createBridge();
+    bridge.attach();
+    tree.emit('pointer.move', { x: 10, y: 20 });
+    expect(onSymbolEvent).toHaveBeenCalledTimes(1);
+    tree.selector.getByPoint = () => ({ target: null, path: [] });
+    tree.emit('pointer.move', { x: 500, y: 500 });
+    expect(onSymbolEvent).toHaveBeenCalledTimes(2);
+    expect(onSymbolEvent).toHaveBeenLastCalledWith(
+      'symbol:hover-miss',
+      expect.objectContaining({ symbolId: 'pump-1' }),
+    );
+    const missPayload = onSymbolEvent.mock.calls[1][1] as ScadaSymbolEventPayload;
+    expect(missPayload.viewport).toBeUndefined();
+    expect(missPayload.world).toBeUndefined();
+  });
+
+  it('should not emit hover-miss when nothing was previously hovered', () => {
     const { tree, bridge, onSymbolEvent } = createBridge({ hitLeaf: null });
     bridge.attach();
-    tree.emit('tap', { x: 10, y: 20 });
-    tree.emit('pointer.move', { x: 10, y: 20 });
+    tree.emit('pointer.move', { x: 500, y: 500 });
     expect(onSymbolEvent).not.toHaveBeenCalled();
   });
 
-  it('should ignore events without a numeric point payload', () => {
+  it('should not emit hover-miss when switching directly to another hit symbol (A→B 不发 miss)', () => {
+    const { tree, bridge, onSymbolEvent } = createBridge();
+    const other = new MockRect({ id: 'pump-2' });
+    bridge.attach();
+    tree.emit('pointer.move', { x: 10, y: 20 });
+    tree.selector.getByPoint = () => ({ target: other, path: [other] });
+    tree.emit('pointer.move', { x: 30, y: 40 });
+    const names = onSymbolEvent.mock.calls.map((call) => call[0] as string);
+    expect(names).toEqual(['symbol:hover', 'symbol:hover']);
+  });
+
+  it('should not emit when nothing is hit (未命中不发射)', async () => {
+    const { tree, bridge, onSymbolEvent } = createBridge({ hitLeaf: null });
+    bridge.attach();
+    tree.emit('tap', { x: 10, y: 20 });
+    tree.emit('double_tap', { x: 10, y: 20 });
+    tree.emit('pointer.move', { x: 10, y: 20 });
+    await new Promise((resolve) => setTimeout(resolve, TAP_MERGE_TIME + 20));
+    expect(onSymbolEvent).not.toHaveBeenCalled();
+  });
+
+  it('should ignore events without a numeric point payload', async () => {
     const { tree, bridge, onSymbolEvent } = createBridge();
     bridge.attach();
     tree.emit('tap', {});
     tree.emit('tap', { x: 'a', y: 1 });
     tree.emit('tap', null);
+    tree.emit('pointer.move', {});
+    tree.emit('pointer.move', null);
+    await new Promise((resolve) => setTimeout(resolve, TAP_MERGE_TIME + 20));
     expect(onSymbolEvent).not.toHaveBeenCalled();
   });
 
-  it('should default symbolType to unknown and omit optional fields', () => {
+  it('should default symbolType to unknown and omit optional fields', async () => {
     const { tree, bridge, onSymbolEvent } = createBridge();
     bridge.attach();
     tree.emit('tap', { x: 10, y: 20 });
+    await vi.waitFor(() => expect(onSymbolEvent).toHaveBeenCalled());
     const payload = onSymbolEvent.mock.calls[0][1] as ScadaSymbolEventPayload;
     expect(payload.symbolType).toBe('unknown');
     expect(payload.pointValues).toBeUndefined();
@@ -92,12 +145,12 @@ describe('EventBridge 引擎事件桥 (I6.4)', () => {
     expect(payload.viewport).toEqual({ x: 10, y: 20 });
   });
 
-  it('attach should be idempotent (重复注册幂等)', () => {
+  it('attach should be idempotent (重复注册幂等)', async () => {
     const { tree, bridge, onSymbolEvent } = createBridge();
     bridge.attach();
     bridge.attach();
     tree.emit('tap', { x: 10, y: 20 });
-    expect(onSymbolEvent).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(onSymbolEvent).toHaveBeenCalledTimes(1));
   });
 
   it('destroy should detach all listeners (引擎生命周期注销)', () => {

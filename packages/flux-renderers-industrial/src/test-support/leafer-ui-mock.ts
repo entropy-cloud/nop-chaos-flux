@@ -1,7 +1,16 @@
 let innerIdCounter = 0;
 
+/** 首击延迟（leafer-ui interaction config.ts:14 `pointer.tapTime` 默认 120ms）。 */
+export const TAP_MERGE_TIME = 120;
+/** 双击窗口增量（leafer Interaction.ts tap(): `useTime < tapTime + 50`）。 */
+export const TAP_MERGE_WINDOW = 50;
+
+const pendingTapTimers = new Set<ReturnType<typeof setTimeout>>();
+
 export function resetLeaferMock() {
   innerIdCounter = 0;
+  for (const timer of pendingTapTimers) clearTimeout(timer);
+  pendingTapTimers.clear();
 }
 
 export class MockLeaf {
@@ -196,6 +205,7 @@ export class MockLeafer extends MockGroup {
   renderCount = 0;
   type?: string;
   config: Record<string, unknown> = {};
+  private tapMerge: { timer: ReturnType<typeof setTimeout> | null; downTime: number } | null = null;
 
   constructor(config: Record<string, unknown> = {}) {
     super();
@@ -206,6 +216,46 @@ export class MockLeafer extends MockGroup {
     this.selector = {
       getByPoint: () => ({ target: null, path: [] }),
     };
+  }
+
+  override emit(event: string, ...args: unknown[]) {
+    // tap 事件经双击合并语义建模（I11.1 Proof，leafer Interaction.ts tap():321-356 + config.ts:14）：
+    // path 含 double_tap 监听（EventBridge 恒挂）→ 首击延迟 tapTime(120ms) 发射，tapTime+50 窗口内
+    // 第二击取消首击并改发 double_tap（双击只派发 dblclick 不派发 click）；窗口外重开新周期。
+    if (event === 'tap' && this.listeners.has('double_tap')) {
+      return this.emitTapWithDoubleMerge(...args);
+    }
+    return super.emit(event, ...args);
+  }
+
+  private emitTapWithDoubleMerge(...args: unknown[]) {
+    const now = Date.now();
+    const pending = this.tapMerge;
+    if (pending !== null && now - pending.downTime < TAP_MERGE_TIME + TAP_MERGE_WINDOW) {
+      if (pending.timer !== null) {
+        clearTimeout(pending.timer);
+        pendingTapTimers.delete(pending.timer);
+      }
+      this.tapMerge = null;
+      return super.emit('double_tap', ...args);
+    }
+    if (pending !== null && pending.timer !== null) {
+      clearTimeout(pending.timer);
+      pendingTapTimers.delete(pending.timer);
+    }
+    const state: { timer: ReturnType<typeof setTimeout> | null; downTime: number } = {
+      timer: null,
+      downTime: now,
+    };
+    const timer = setTimeout(() => {
+      pendingTapTimers.delete(timer);
+      if (this.tapMerge === state) this.tapMerge = null;
+      super.emit('tap', ...args);
+    }, TAP_MERGE_TIME);
+    state.timer = timer;
+    pendingTapTimers.add(timer);
+    this.tapMerge = state;
+    return this;
   }
 
   override on(event: string, fn: (...args: unknown[]) => void) {

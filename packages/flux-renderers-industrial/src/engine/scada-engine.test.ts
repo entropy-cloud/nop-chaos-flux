@@ -264,16 +264,98 @@ describe('ScadaCanvasEngine commands (I5.1/I5.2 wiring)', () => {
   });
 });
 
+describe('ScadaCanvasEngine 插件交互状态同步与钳制兜底 (I11.2)', () => {
+  it('should sync in-bounds plugin zoom into the viewport state on tree zoom event', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { scaleX: number };
+    zoomLayer.scaleX = 2;
+    engine.tree.emit('zoom', { scale: 2 });
+    expect(engine.getViewport()).toEqual({ x: 0, y: 0, scale: 2 });
+    engine.destroy();
+  });
+
+  it('should clamp out-of-bounds plugin zoom back to MAX_SCALE (越界缩放重钳制)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { scaleX: number };
+    zoomLayer.scaleX = 25;
+    engine.tree.emit('zoom', { scale: 25 });
+    expect(engine.getViewport().scale).toBe(20);
+    expect(zoomLayer.scaleX).toBeCloseTo(20, 10);
+    engine.destroy();
+  });
+
+  it('should clamp out-of-bounds plugin zoom back to MIN_SCALE', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { scaleX: number };
+    zoomLayer.scaleX = 0.01;
+    engine.tree.emit('zoom', { scale: 0.01 });
+    expect(engine.getViewport().scale).toBe(0.1);
+    expect(zoomLayer.scaleX).toBeCloseTo(0.1, 10);
+    engine.destroy();
+  });
+
+  it('should sync plugin pan into the viewport state on tree move event', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.setViewport({ x: 0, y: 0, scale: 2 });
+    engine.app.tree.zoomLayer.move({ x: -100, y: -60 });
+    engine.tree.emit('move', { moveX: 100, moveY: 60 });
+    expect(engine.getViewport()).toEqual({ x: 50, y: 30, scale: 2 });
+    engine.destroy();
+  });
+
+  it('should keep engine viewport state consistent with engine commands after plugin sync', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.setViewport({ x: 50, y: 30, scale: 2 });
+    engine.app.tree.zoomLayer.move({ x: -20, y: -10 });
+    engine.tree.emit('move', {});
+    expect(engine.getViewport()).toEqual({ x: 60, y: 35, scale: 2 });
+    engine.destroy();
+  });
+
+  it('applyDiff should clear the interaction overlay of removed symbols and reposition updated ones', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    engine.reset(validConfig() as ScadaConfig);
+    const overlay = engine.interactionOverlay;
+    expect(overlay).toBeDefined();
+    overlay!.highlight('rect-1');
+    expect(overlay!.activeCount).toBe(1);
+    engine.applyDiff({ added: [], removed: ['rect-1'], updated: [] }, validConfig() as ScadaConfig);
+    expect(overlay!.activeCount).toBe(0);
+    engine.destroy();
+  });
+
+  it('applyDiff should reposition the overlay of an updated symbol while hovered', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    engine.reset(validConfig() as ScadaConfig);
+    const overlay = engine.interactionOverlay!;
+    overlay.highlight('rect-1');
+    expect(overlay.activeCount).toBe(1);
+    engine.applyDiff(
+      { added: [], removed: [], updated: [{ id: 'rect-1', patch: { x: 500, y: 300 } }] },
+      validConfig() as ScadaConfig,
+    );
+    const group = (engine.app.sky as unknown as { children: Array<{ children: Array<{ x: number; y: number }> }> }).children.find(
+      (child) => (child as { name?: string }).name === 'scada-interaction-overlay',
+    );
+    const rects = group?.children ?? [];
+    expect(rects).toHaveLength(1);
+    expect(rects[0].x).toBe(500);
+    expect(rects[0].y).toBe(300);
+    engine.destroy();
+  });
+});
+
 describe('ScadaCanvasEngine 事件桥接线 (I6.4)', () => {
-  it('should emit symbol:click with normalized payload on tree tap', () => {
+  it('should emit symbol:click with normalized payload on tree tap', async () => {
     const onSymbolEvent = vi.fn();
     const engine = ScadaCanvasEngine.create({ container: makeContainer(), onSymbolEvent });
     engine.reset(validConfig() as ScadaConfig);
     const leaf = engine.getSymbol('rect-1')?.node;
     (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
       ({ target: leaf, path: [leaf] });
+    // tap 经双击合并延迟 120ms 发射（leafer 交互层语义，I11.1 Proof）
     engine.tree.emit('tap', { x: 100, y: 200 });
-    expect(onSymbolEvent).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(onSymbolEvent).toHaveBeenCalledTimes(1));
     expect(onSymbolEvent).toHaveBeenCalledWith(
       'symbol:click',
       expect.objectContaining({

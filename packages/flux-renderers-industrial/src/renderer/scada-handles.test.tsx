@@ -1,6 +1,7 @@
 import { cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
+import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
 import { createScadaTestEnvironment, renderScadaCanvas } from '../test-support/renderer-test-support.js';
@@ -98,13 +99,19 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(makeProps(), environment);
     const handle = await resolveScadaHandle(environment);
+    const engine = ((window as unknown as Record<string, unknown>)[`__flux_scada_9`] as { engine: ScadaCanvasEngine }).engine;
 
+    const before = engine.getViewport();
     const fitResult = await handle.capabilities.invoke('fit', undefined, {});
     expect(fitResult.ok).toBe(true);
-    expect((fitResult.data as { scale: number }).scale).toBeGreaterThan(0);
+    const fitViewport = (fitResult.data as { x: number; y: number; scale: number });
+    expect(fitViewport.scale).toBeGreaterThan(0);
+    expect(engine.getViewport()).toEqual(fitViewport);
+    expect(engine.getViewport()).not.toEqual(before);
 
     const centerResult = await handle.capabilities.invoke('center', undefined, {});
     expect(centerResult.ok).toBe(true);
+    expect(engine.getViewport().scale).toBe(fitViewport.scale);
 
     const symbols = await handle.capabilities.invoke('getSymbols', undefined, {});
     expect(symbols.ok).toBe(true);

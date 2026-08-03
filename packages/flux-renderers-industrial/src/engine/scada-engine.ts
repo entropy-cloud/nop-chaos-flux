@@ -5,6 +5,7 @@ import { mountScadaTestHandle, removeScadaTestHandle, type ScadaTestHandle } fro
 import { TreeRegistry, type RegistryLeaf } from './tree-registry.js';
 import {
   center,
+  clampScale,
   clampViewport,
   fit,
   setViewport as setViewportState,
@@ -105,6 +106,7 @@ export class ScadaCanvasEngine {
       this.installTestHandle();
     }
     this.installEventBridge();
+    this.installPluginInteractionSync();
   }
 
   static create(options: ScadaEngineOptions): ScadaCanvasEngine {
@@ -149,6 +151,8 @@ export class ScadaCanvasEngine {
     this.interaction?.destroy();
     this.interaction = undefined;
     this.app.tree.off('render', this.handleRender);
+    this.app.tree.off('zoom', this.handlePluginZoom);
+    this.app.tree.off('move', this.handlePluginMove);
     this.adapter.destroy();
     this.registry.clear();
     this.app.destroy();
@@ -260,6 +264,17 @@ export class ScadaCanvasEngine {
   applyDiff(diff: ScadaConfigDiff, nextConfig?: ScadaConfig): void {
     this.adapter.applyDiff(diff);
     if (nextConfig) this.adapter.setConfig(nextConfig);
+    // 交互覆盖物随图元增删/移动同步（I11.2，applyDiff 增删同步）：移除图元清其覆盖物，更新图元重定位
+    if (this.interaction) {
+      for (const id of diff.removed) {
+        this.interaction.clear(id);
+      }
+      for (const update of diff.updated) {
+        if (this.interaction.hasActive(update.id)) {
+          this.interaction.highlight(update.id);
+        }
+      }
+    }
   }
 
   resolveImageUrl = (url: string): string => {
@@ -338,4 +353,48 @@ export class ScadaCanvasEngine {
     });
     this.eventBridge.attach();
   }
+
+  /**
+   * 插件交互状态同步 + 缩放钳制兜底（I11.2，gate-3-review §10 归属）：
+   * viewport 插件 wheel/pinch 直改 zoomLayer 矩阵（`type/viewport.ts` BEFORE_ZOOM → `zoomLayer.scaleOfWorld`），
+   * 且 `getValidScale` 原样返回无 min/max 钳制（display Leafer.ts:405）→ 绕过引擎 `clampViewport`
+   * （Failure Paths `viewport-interaction-drift`）。兜底：订阅 tree `zoom`/`move` 事件（ZoomEvent.ZOOM/
+   * MoveEvent.MOVE）——越界缩放重钳制回 MIN_SCALE/MAX_SCALE，并把 zoomLayer 矩阵状态同步回引擎视口
+   * 状态（zoomLayer.x = -viewport.x * scale，gate-3-review §5 M-3 推导）。
+   */
+  private installPluginInteractionSync(): void {
+    this.app.tree.on('zoom', this.handlePluginZoom);
+    this.app.tree.on('move', this.handlePluginMove);
+  }
+
+  private readonly handlePluginZoom = (): void => {
+    const zoomLayer = this.app.tree.zoomLayer as unknown as { x?: number; y?: number; scaleX?: number };
+    const rawScale = readZoomLayerScale(zoomLayer.scaleX, this.viewport.scale);
+    const clamped = clampScale(rawScale);
+    if (clamped !== rawScale) {
+      const anchor = viewportToWorld(this.viewport, { x: 0, y: 0 });
+      this.app.tree.zoomLayer.scaleOfWorld(anchor, clamped / rawScale);
+    }
+    this.syncViewportFromZoomLayer();
+  };
+
+  private readonly handlePluginMove = (): void => {
+    this.syncViewportFromZoomLayer();
+  };
+
+  private syncViewportFromZoomLayer(): void {
+    const zoomLayer = this.app.tree.zoomLayer as unknown as { x?: number; y?: number; scaleX?: number };
+    const scale = readZoomLayerScale(zoomLayer.scaleX, this.viewport.scale);
+    const zoomX = readZoomLayerPosition(zoomLayer.x, -this.viewport.x * scale);
+    const zoomY = readZoomLayerPosition(zoomLayer.y, -this.viewport.y * scale);
+    this.viewport = { x: -zoomX / scale || 0, y: -zoomY / scale || 0, scale };
+  }
+}
+
+function readZoomLayerScale(scaleX: unknown, fallback: number): number {
+  return typeof scaleX === 'number' && Number.isFinite(scaleX) ? scaleX : fallback;
+}
+
+function readZoomLayerPosition(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }

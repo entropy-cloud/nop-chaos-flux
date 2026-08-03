@@ -6,6 +6,7 @@ import { parseScadaConfig } from '../serialization/parse.js';
 import { validateScadaConfig } from '../serialization/validate.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 import type { ScadaCanvasSchema, ScadaCanvasEvents } from '../schemas.js';
+import type { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { useScadaEngine, type ScadaCanvasRuntime } from './hooks/use-scada-engine.js';
 import { errorMessage } from './scada-errors.js';
 import { useScadaConfigSync } from './hooks/use-scada-config-sync.js';
@@ -63,10 +64,16 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     [props.props.config],
   );
 
+  // 引擎实例经 ref 传入事件桥（引擎创建于 useScadaEngine，事件仅用户交互期到达，ref 已就绪；I11.2 覆盖物驱动）
+  const engineRef = useRef<ScadaCanvasEngine | undefined>(undefined);
+
   const eventsApi = useScadaEvents({
     events: props.props.events as ScadaCanvasEvents | undefined,
     helpers: props.helpers,
     scope: props.node?.scope,
+    config: parsedConfig,
+    engine: engineRef,
+    interactionLayer: true,
   });
 
   const handleReady = useCallback(() => {
@@ -101,12 +108,17 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     containerRef,
     cid: props.meta.cid,
     exposeTestHandle: true,
+    interactionLayer: true,
     width: props.props.width,
     height: props.props.height,
     onSymbolEvent: (name, payload) => eventsApi.onSymbolEvent(name, payload),
     getPointValuesFor: getPointValuesForLatest,
     onEngineError: handleError,
   });
+
+  useEffect(() => {
+    engineRef.current = runtime?.engine;
+  }, [runtime]);
 
   useEffect(() => {
     runtimeRef.current = runtime;

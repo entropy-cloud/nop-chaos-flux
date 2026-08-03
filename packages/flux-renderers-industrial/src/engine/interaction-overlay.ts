@@ -36,6 +36,10 @@ export class InteractionOverlay {
     return this.overlays.size;
   }
 
+  hasActive(symbolId: string): boolean {
+    return this.overlays.has(symbolId);
+  }
+
   highlight(symbolId: string, style?: InteractionStyle): void {
     const leaf = this.engine.registry.get(symbolId);
     if (!leaf) return;

@@ -33,6 +33,7 @@ function checkStringField(
 }
 
 const ANIMATION_KINDS = ['rotate', 'blink', 'flow', 'move'];
+const SYMBOL_EVENT_ONS = ['click', 'dblclick', 'hover'];
 
 function validateBinding(value: unknown, errors: string[], scope: string): void {
   if (!isPlainObject(value)) {
@@ -133,6 +134,21 @@ function validateStateDeclaration(value: unknown, errors: string[], scope: strin
   }
 }
 
+function validateSymbolEvent(value: unknown, errors: string[], scope: string): void {
+  if (!isPlainObject(value)) {
+    errors.push(`${scope} must be an object`);
+    return;
+  }
+  const event = value as Record<string, unknown>;
+  if (typeof event.on !== 'string' || !SYMBOL_EVENT_ONS.includes(event.on)) {
+    errors.push(`${scope}.on must be one of: click | dblclick | hover`);
+  }
+  const action = event.action;
+  if (!isPlainObject(action) || typeof (action as Record<string, unknown>).action !== 'string') {
+    errors.push(`${scope}.action must be an object with an action string (ActionSchema)`);
+  }
+}
+
 function validateSymbolNode(
   node: unknown,
   seenIds: Set<string>,
@@ -226,8 +242,14 @@ function validateSymbolNode(
       validateAnimation(anim, errors, `${scope}.animations[${index}]`);
     });
   }
-  if ('events' in nodeObj && !Array.isArray(nodeObj.events)) {
-    errors.push(`${scope}.events must be an array`);
+  if ('events' in nodeObj) {
+    if (!Array.isArray(nodeObj.events)) {
+      errors.push(`${scope}.events must be an array`);
+    } else {
+      (nodeObj.events as unknown[]).forEach((event, index) => {
+        validateSymbolEvent(event, errors, `${scope}.events[${index}]`);
+      });
+    }
   }
   if (nodeObj.children !== undefined) {
     if (!Array.isArray(nodeObj.children)) {

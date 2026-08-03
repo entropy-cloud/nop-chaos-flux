@@ -26,6 +26,7 @@ export interface UseScadaEngineArgs {
   containerRef: RefObject<HTMLElement | null>;
   cid?: number;
   exposeTestHandle?: boolean;
+  interactionLayer?: boolean;
   width?: number;
   height?: number;
   onSymbolEvent?: (name: ScadaSymbolEventName, payload: ScadaSymbolEventPayload) => void;
@@ -87,6 +88,7 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
         container,
         cid: latest.current.cid,
         exposeTestHandle: latest.current.exposeTestHandle,
+        interactionLayer: latest.current.interactionLayer,
         width: latest.current.width,
         height: latest.current.height,
         pointStore,
