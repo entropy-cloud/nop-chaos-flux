@@ -65,6 +65,10 @@ export interface ScadaSymbolNode {
   fill?: string;
   stroke?: string;
   strokeWidth?: number;
+  strokeDash?: number[];
+  dashOffset?: number;
+  fillStyle?: Record<string, unknown> | string;
+  shadow?: { x: number; y: number; blur: number; color: string };
   text?: string;
   textColor?: string;
   textSize?: number;

@@ -1,14 +1,17 @@
 import {
   scadaArrowDefinition,
   scadaEllipseDefinition,
+  scadaImageDefinition,
   scadaLineDefinition,
   scadaPipeDefinition,
   scadaPolygonDefinition,
   scadaRectDefinition,
   scadaRoundRectDefinition,
   scadaTextDefinition,
+  scadaVideoDefinition,
 } from './base-shapes/index.js';
 import { hasScadaSymbol, registerScadaSymbol } from './symbol-registry.js';
+import { scadaGroupDefinition } from './compound.js';
 
 export const builtinScadaSymbolDefinitions = [
   scadaRectDefinition,
@@ -19,6 +22,9 @@ export const builtinScadaSymbolDefinitions = [
   scadaPipeDefinition,
   scadaTextDefinition,
   scadaPolygonDefinition,
+  scadaImageDefinition,
+  scadaVideoDefinition,
+  scadaGroupDefinition,
 ];
 
 export function registerBuiltinScadaSymbols(): void {

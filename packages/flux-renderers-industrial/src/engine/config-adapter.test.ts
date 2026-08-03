@@ -102,6 +102,27 @@ describe('ConfigAdapter build (I5.3b)', () => {
     engine.destroy();
   });
 
+  it('should forward scale onto group container nodes (I8.3 复合图元装配)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [
+        shape('g', 'scada-group', {
+          x: 10,
+          y: 20,
+          scale: 3,
+          children: [shape('c1', 'scada-rect', { x: 1, y: 2 })],
+        }),
+      ],
+    } as ScadaConfig);
+    const group = engine.getSymbol('g')?.node as unknown as Record<string, unknown>;
+    expect(group.scaleX).toBe(3);
+    expect(group.scaleY).toBe(3);
+    expect(group.x).toBe(10);
+    expect((engine.getSymbol('c1')?.node as unknown as { x: number }).x).toBe(1);
+    engine.destroy();
+  });
+
   it('should apply symbol defaults when instance props omit them', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     engine.reset({ version: 1, symbols: [shape('r', 'scada-rect')] } as ScadaConfig);
@@ -189,6 +210,18 @@ describe('ConfigAdapter applyDiff (I5.3b)', () => {
     } as ScadaConfig);
     engine.applyDiff({ added: [], removed: ['g'], updated: [] });
     expect(engine.registry.size()).toBe(0);
+    engine.destroy();
+  });
+
+  it('should no-op for unknown ids in applyDiff remove/update (I8.3 增量收敛)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [shape('a', 'scada-rect')] } as ScadaConfig);
+    expect(() =>
+      engine.applyDiff({ added: [], removed: ['ghost'], updated: [{ id: 'ghost2', patch: { fill: '#000' } }] }),
+    ).not.toThrow();
+    expect(engine.registry.size()).toBe(1);
+    const a = engine.getSymbol('a')?.node as { fill: string };
+    expect(a.fill).toBe('#ffffff');
     engine.destroy();
   });
 

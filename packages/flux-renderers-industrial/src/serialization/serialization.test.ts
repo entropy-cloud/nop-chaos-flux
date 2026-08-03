@@ -309,19 +309,47 @@ describe('parseScadaConfig', () => {
 });
 
 describe('serializeScadaConfig', () => {
-  it('should serialize with a fixed version of 1', () => {
+  it('should serialize with a fixed version of 1 (instance override sets, I8.3)', () => {
     const config = baseConfig();
     const text = serializeScadaConfig(config);
-    expect(JSON.parse(text)).toEqual({ ...config, version: 1 });
+    const parsed = JSON.parse(text) as ScadaConfig;
+    expect(parsed.version).toBe(1);
+    // 实例覆盖集最小化：与 defaults 相等的字段裁剪，仅保留覆盖集
+    expect(parsed.symbols[0]).toEqual({ id: 'a', type: 'scada-rect' });
+    expect(parsed.symbols[1]).toEqual({ id: 'b', type: 'scada-rect', x: 10, y: 20 });
   });
 
-  it('should round-trip through parse', () => {
+  it('should output instance override sets diffed from defaults (I8.3 minimal coverage set)', () => {
     const config = baseConfig({
-      symbols: [rect('g', { type: 'scada-group', children: [rect('c', { fill: '#fff' })] })],
+      symbols: [rect('a'), rect('b', { x: 10, y: 20, width: 99 })],
+    });
+    const parsed = JSON.parse(serializeScadaConfig(config)) as ScadaConfig;
+    // 与 defaults 相等的字段（x/y/width/height）被裁剪，只保留覆盖集
+    expect(parsed.symbols[0]).toEqual({ id: 'a', type: 'scada-rect' });
+    expect(parsed.symbols[1]).toEqual({ id: 'b', type: 'scada-rect', x: 10, y: 20, width: 99 });
+  });
+
+  it('should round-trip through parse (group children keep override sets)', () => {
+    const config = baseConfig({
+      symbols: [
+        rect('g', {
+          type: 'scada-group',
+          children: [rect('c', { fill: '#fff', width: 55 })],
+        }),
+      ],
       variables: [{ id: 'v1', source: 'static', value: 42 }],
     });
     const parsed = parseScadaConfig(serializeScadaConfig(config));
-    expect(parsed).toEqual(config);
+    expect(parsed.symbols[0]).toEqual({
+      id: 'g',
+      type: 'scada-group',
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      children: [{ id: 'c', type: 'scada-rect', width: 55, fill: '#fff' }],
+    });
+    expect(parsed.variables).toEqual([{ id: 'v1', source: 'static', value: 42 }]);
   });
 });
 

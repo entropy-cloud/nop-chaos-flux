@@ -23,7 +23,8 @@ import { EventBridge, type ScadaSymbolEventName, type ScadaSymbolEventPayload } 
 import { HitResolver } from './hit.js';
 import { validateScadaConfig } from '../serialization/validate.js';
 import { parseScadaConfig } from '../serialization/parse.js';
-import type { ScadaConfig, ScadaConfigDiff } from '../serialization/config-types.js';
+import { InteractionOverlay } from './interaction-overlay.js';
+import type { ScadaConfig, ScadaConfigDiff, ScadaSymbolNode } from '../serialization/config-types.js';
 
 export interface ScadaEnginePerformanceOptions {
   usePartRender?: boolean;
@@ -59,6 +60,8 @@ export interface ScadaRenderFrameInfo {
 export class ScadaCanvasEngine {
   readonly app: App;
   readonly registry = new TreeRegistry();
+  /** 图片缓存（I8.1，INV-1）：桥接层 env.fetcher 加载结果经 `cacheImage` 注入（I10.1），`resolveImageUrl` 供图元 create 归位；缺省直通 leafer 原生加载。 */
+  readonly imageCache = new Map<string, string>();
   private readonly cid: number;
   private adapter: ConfigAdapter;
   private viewport: ViewportState = { x: 0, y: 0, scale: 1 };
@@ -66,6 +69,7 @@ export class ScadaCanvasEngine {
   private frameCount = 0;
   private destroyed = false;
   private eventBridge: EventBridge | undefined;
+  private interaction: InteractionOverlay | undefined;
   private static nextCid = 1;
 
   private constructor(private readonly options: ScadaEngineOptions) {
@@ -117,6 +121,13 @@ export class ScadaCanvasEngine {
     return this.app.sky;
   }
 
+  /** 交互覆盖层（I8.2，sky 层 hover/selected 等反馈）：`interactionLayer` 选项开启时惰性可用。 */
+  get interactionOverlay(): InteractionOverlay | undefined {
+    if (!this.options.interactionLayer) return undefined;
+    this.interaction ??= new InteractionOverlay(this);
+    return this.interaction;
+  }
+
   private handleRender = (): void => {
     this.frameCount++;
     // dirtyBlocks 预留字段恒 0：leafer render 事件未暴露脏块计数，I14 固化口径（gate-3-review m-1）
@@ -128,6 +139,8 @@ export class ScadaCanvasEngine {
     this.destroyed = true;
     this.eventBridge?.destroy();
     this.eventBridge = undefined;
+    this.interaction?.destroy();
+    this.interaction = undefined;
     this.app.tree.off('render', this.handleRender);
     this.adapter.destroy();
     this.registry.clear();
@@ -155,6 +168,11 @@ export class ScadaCanvasEngine {
 
   getSymbol(id: string): RegistryLeaf | undefined {
     return this.registry.get(id);
+  }
+
+  /** 配置图元节点按 id 查找（含 group 子树；I8.2 视觉状态应用实例属性解析）。 */
+  getConfigNode(id: string): ScadaSymbolNode | undefined {
+    return this.adapter.getNode(id);
   }
 
   getSymbols(): RegistryLeaf[] {
@@ -216,6 +234,14 @@ export class ScadaCanvasEngine {
   applyDiff(diff: ScadaConfigDiff, nextConfig?: ScadaConfig): void {
     this.adapter.applyDiff(diff);
     if (nextConfig) this.adapter.setConfig(nextConfig);
+  }
+
+  resolveImageUrl = (url: string): string => {
+    return this.imageCache.get(url) ?? url;
+  };
+
+  cacheImage(url: string, resolved: string): void {
+    this.imageCache.set(url, resolved);
   }
 
   exportConfig(): ScadaConfig | undefined {

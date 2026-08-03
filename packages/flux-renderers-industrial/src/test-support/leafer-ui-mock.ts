@@ -146,6 +146,10 @@ export class MockText extends MockLeaf {
   override tag = 'Text';
 }
 
+export class MockImage extends MockRect {
+  override tag = 'Image';
+}
+
 export class MockPath extends MockLeaf {
   override tag = 'Path';
 }
@@ -274,6 +278,7 @@ export const leaferUIMock = {
   Arrow: MockLine,
   Polygon: MockPolygon,
   Text: MockText,
+  Image: MockImage,
   Path: MockPath,
   UI: MockLeaf,
 };
@@ -284,6 +289,7 @@ export {
   MockLine as Line,
   MockPolygon as Polygon,
   MockText as Text,
+  MockImage as Image,
   MockPath as Path,
   MockLeaf as UI,
 };

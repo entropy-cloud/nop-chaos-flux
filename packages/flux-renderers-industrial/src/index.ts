@@ -16,7 +16,13 @@ export type {
   ScadaSymbolEvent,
   ScadaPrimitive,
 } from './serialization/config-types.js';
-export type { ScadaSymbolDefinition, ScadaSymbolProps, ScadaSymbolStylePatch } from './symbols/symbol-types.js';
+export type { ScadaSymbolDefinition, ScadaSymbolProps, ScadaSymbolStylePatch, ScadaFillStyle } from './symbols/symbol-types.js';
+export {
+  scadaImageType,
+  scadaVideoType,
+  SCADA_IMAGE_PLACEHOLDER,
+  SCADA_VIDEO_PLACEHOLDER,
+} from './symbols/base-shapes/index.js';
 export type {
   ScadaPointValue,
   ScadaPointState,
@@ -60,8 +66,18 @@ export {
 } from './engine/event-bridge.js';
 
 export { ScadaCanvasEngine, type ScadaEngineOptions } from './engine/scada-engine.js';
+export { InteractionOverlay, INTERACTION_STYLE_PRESETS, type InteractionStyle, type InteractionState } from './engine/interaction-overlay.js';
+export { StateVisualApplier } from './symbols/visual-state.js';
 export { registerScadaSymbol, unregisterScadaSymbol, hasScadaSymbol } from './symbols/symbol-registry.js';
 export { resolveSymbolStyle } from './symbols/style-resolver.js';
+export {
+  deepMergeInstanceProps,
+  mergeInstanceProps,
+  instantiateInstance,
+  diffInstanceProps,
+  scadaGroupType,
+  scadaGroupDefinition,
+} from './symbols/compound.js';
 export {
   worldToViewport,
   viewportToWorld,

@@ -163,8 +163,20 @@ function validateSymbolNode(
   }
   checkNumberField(nodeObj, 'x', errors, scope);
   checkNumberField(nodeObj, 'y', errors, scope);
-  for (const field of ['width', 'height', 'rotation', 'scale', 'opacity', 'strokeWidth', 'textSize']) {
+  for (const field of ['width', 'height', 'rotation', 'scale', 'opacity', 'strokeWidth', 'textSize', 'dashOffset']) {
     checkNumberField(nodeObj, field, errors, scope);
+  }
+  if ('strokeDash' in nodeObj && (!Array.isArray(nodeObj.strokeDash) || nodeObj.strokeDash.some((v) => typeof v !== 'number'))) {
+    errors.push(`${scope}.strokeDash must be an array of numbers`);
+  }
+  if ('fillStyle' in nodeObj) {
+    const fillStyle = nodeObj.fillStyle;
+    if (typeof fillStyle !== 'string' && !isPlainObject(fillStyle)) {
+      errors.push(`${scope}.fillStyle must be an object or a string`);
+    }
+  }
+  if ('shadow' in nodeObj && !isPlainObject(nodeObj.shadow)) {
+    errors.push(`${scope}.shadow must be an object`);
   }
   if ('visible' in nodeObj && typeof nodeObj.visible !== 'boolean') {
     errors.push(`${scope}.visible must be a boolean`);
@@ -174,6 +186,14 @@ function validateSymbolNode(
   }
   if ('custom' in nodeObj && !isPlainObject(nodeObj.custom)) {
     errors.push(`${scope}.custom must be an object`);
+  } else if (nodeObj.custom !== undefined) {
+    // I8.1 增量：image/video 占位符号的 URL 字段（custom.url）须为非空字符串（image-load-error 前置校验）
+    if (nodeObj.type === 'scada-image' || nodeObj.type === 'scada-video') {
+      const url = (nodeObj.custom as Record<string, unknown>).url;
+      if (url !== undefined && (typeof url !== 'string' || url.trim() === '')) {
+        errors.push(`${scope}.custom.url must be a non-empty string`);
+      }
+    }
   }
   if ('bindings' in nodeObj && !isPlainObject(nodeObj.bindings)) {
     errors.push(`${scope}.bindings must be an object`);

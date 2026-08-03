@@ -22,6 +22,12 @@ export class ConfigAdapter {
     return this.config;
   }
 
+  /** 按 id 递归查找配置图元节点（含 group 子树；供 I8.2 视觉状态应用的实例属性解析）。 */
+  getNode(id: string): ScadaSymbolNode | undefined {
+    if (!this.config) return undefined;
+    return findNodeById(this.config.symbols, id);
+  }
+
   build(config: ScadaConfig): void {
     this.destroy();
     this.config = config;
@@ -70,6 +76,7 @@ export class ConfigAdapter {
         rotation: node.rotation,
         visible: node.visible,
         opacity: node.opacity,
+        ...(node.scale !== undefined ? { scaleX: node.scale, scaleY: node.scale } : {}),
       });
       this.registry.add({ id: node.id, node: group, parentId });
       for (const child of node.children ?? []) {
@@ -128,4 +135,15 @@ export class ConfigAdapter {
       node.set(toNodePatch(node, attrPatch));
     }
   }
+}
+
+function findNodeById(nodes: ScadaSymbolNode[], id: string): ScadaSymbolNode | undefined {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    if (node.children) {
+      const found = findNodeById(node.children, id);
+      if (found) return found;
+    }
+  }
+  return undefined;
 }

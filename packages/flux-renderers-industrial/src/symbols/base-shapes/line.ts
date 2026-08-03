@@ -19,6 +19,9 @@ export const scadaLineDefinition: ScadaSymbolDefinition = {
     opacity: { type: 'number' },
     stroke: { type: 'string' },
     strokeWidth: { type: 'number' },
+    strokeDash: { type: 'array' },
+    dashOffset: { type: 'number' },
+    shadow: { type: 'object' },
   },
   defaults: { x: 0, y: 0, width: 100, height: 0, stroke: '#000000', strokeWidth: 1 },
   create: ({ props }) => {

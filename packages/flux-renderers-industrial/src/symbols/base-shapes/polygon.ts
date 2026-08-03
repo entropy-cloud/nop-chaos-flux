@@ -22,8 +22,12 @@ export const scadaPolygonDefinition: ScadaSymbolDefinition = {
     visible: { type: 'boolean' },
     opacity: { type: 'number' },
     fill: { type: 'string' },
+    fillStyle: { type: 'any' },
     stroke: { type: 'string' },
     strokeWidth: { type: 'number' },
+    strokeDash: { type: 'array' },
+    dashOffset: { type: 'number' },
+    shadow: { type: 'object' },
   },
   defaults: { x: 0, y: 0, fill: '#ffffff', stroke: '#000000', strokeWidth: 1 },
   create: ({ props }) => {

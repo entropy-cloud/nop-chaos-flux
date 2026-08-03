@@ -6,3 +6,5 @@ export { scadaArrowDefinition, scadaArrowType } from './arrow.js';
 export { scadaPipeDefinition, scadaPipeType } from './pipe.js';
 export { scadaTextDefinition, scadaTextType } from './text.js';
 export { scadaPolygonDefinition, scadaPolygonType } from './polygon.js';
+export { scadaImageDefinition, scadaImageType, SCADA_IMAGE_PLACEHOLDER } from './image.js';
+export { scadaVideoDefinition, scadaVideoType, SCADA_VIDEO_PLACEHOLDER } from './video.js';
