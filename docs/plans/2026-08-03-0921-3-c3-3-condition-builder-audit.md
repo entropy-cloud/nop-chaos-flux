@@ -1,6 +1,6 @@
 # C3.3 condition-builder 逐组件审计
 
-> Plan Status: active
+> Plan Status: skip
 > Mission: component-audit
 > Work Item: C3.3
 > Last Reviewed: 2026-08-03
