@@ -63,6 +63,52 @@ const nestedInsideArray = {
   ],
 };
 
+const compositeNestedSubmit = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'objArrForm',
+      valuesPath: 'ui.objArrValues',
+      data: {
+        address: { street: '1 Main St', city: 'Springfield', zip: '62701' },
+        contacts: [
+          { name: 'Alice', phone: 'P-100' },
+          { name: 'Bob', phone: 'P-200' },
+        ],
+      },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        {
+          type: 'object-field',
+          name: 'address',
+          label: 'Address',
+          body: [
+            { type: 'input-text', name: 'street', placeholder: 'OStreet' },
+            { type: 'input-text', name: 'city', placeholder: 'OCity' },
+          ],
+        },
+        {
+          type: 'array-field',
+          name: 'contacts',
+          label: 'Contacts',
+          itemKind: 'object',
+          item: [
+            { type: 'input-text', name: 'name', placeholder: 'CName' },
+            { type: 'input-text', name: 'phone', placeholder: 'CPhone' },
+          ],
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+    {
+      type: 'text',
+      testid: 'objarr-echo',
+      text: '${submitted ? "ObjArr: " + $JSON.stringify(ui.objArrValues) : ""}',
+    },
+  ],
+};
+
 export function ObjectFieldLabPage() {
   return (
     <MultiScenarioLabPage
@@ -79,6 +125,12 @@ export function ObjectFieldLabPage() {
           description:
             'Each array item contains a name field and a nested address object-field. Demonstrates composite nesting.',
           schema: nestedInsideArray,
+        },
+        {
+          title: 'Object + array fields nested submit (bug 73 pattern)',
+          description:
+            'Form hosts an object-field and an array-field together. Edit the object sub-fields and the array rows, add a row, submit; the echo asserts the committed shapes and row-scope isolation.',
+          schema: compositeNestedSubmit,
         },
       ]}
     />

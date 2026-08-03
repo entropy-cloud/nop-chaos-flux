@@ -18,6 +18,7 @@ const state = vi.hoisted(() => ({
 vi.mock('@nop-chaos/flux-react', () => ({
   FieldFrame: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   FormContext: { Provider: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
+  FormLayoutContext: { Provider: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
   ScopeContext: { Provider: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
   ValidationContext: {
     Provider: ({ value, children }: { value: unknown; children?: React.ReactNode }) => {
@@ -27,6 +28,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
   },
   useCurrentForm: () => state.parentForm,
   useCurrentValidationScope: () => state.parentValidationOwner,
+  useFormLayout: () => undefined,
   useRenderScope: () => state.parentScope,
   useRenderFragment: () => (input: unknown) => input,
   useRendererRuntime: () => state.runtime,

@@ -272,29 +272,33 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     id: 'object-field',
     title: 'Object Field',
     tier: 'write',
-    primaryScenario: 'Inline address editing',
-    notes: 'Verify pre-populated sub-fields are visible and editable',
+    primaryScenario: 'Object + array fields nested submit (bug 73 pattern)',
+    notes:
+      'Verify composite nested editing: object sub-fields + array rows edited, submit publishes committed shapes with row-scope isolation',
   },
   {
     id: 'array-field',
     title: 'Array Field',
     tier: 'write',
-    primaryScenario: 'Contact list with submit result display',
-    notes: 'Add a contact row, fill name + email, submit, verify count changes',
+    primaryScenario: 'Read-only object + array fields submit (unchanged values)',
+    notes:
+      'Verify array editing (add/remove/submit) and readOnly propagation to item fields (C3.2 P1-3 / CX-8)',
   },
   {
     id: 'variant-field',
     title: 'Variant Field',
     tier: 'write',
-    primaryScenario: 'String vs list editor with scope-state switching',
-    notes: 'Switch type selector to list, verify list editor becomes visible',
+    primaryScenario: 'Variant switch writes value + submit echo (bug 73 pattern)',
+    notes:
+      'Verify branch switch writes the variant value (value ownership) and the active branch editor follows; submit echoes committed shape',
   },
   {
     id: 'detail-field',
     title: 'Detail Field',
     tier: 'edit',
-    primaryScenario: 'User profile editing via dialog',
-    notes: 'Click Edit, change First Name, confirm, verify new name in viewer slot',
+    primaryScenario: 'Projected dialog edit submit (bug 73 pattern)',
+    notes:
+      'Verify projected draft stays decoupled from host form until confirm; confirm writes back and submit echoes committed shape',
   },
   {
     id: 'detail-view',

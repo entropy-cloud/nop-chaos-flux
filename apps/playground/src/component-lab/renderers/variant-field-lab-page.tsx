@@ -90,6 +90,55 @@ const stringOrListVariant = {
   ],
 };
 
+const variantSwitchSubmit = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'variantSwitchForm',
+      valuesPath: 'ui.variantValue',
+      data: {
+        contactMode: 'single',
+      },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        {
+          type: 'variant-field',
+          name: 'contactMode',
+          label: 'Contact Mode',
+          selector: { mode: 'select' },
+          variants: [
+            {
+              key: 'single',
+              label: 'Single Contact',
+              match: { kind: 'typeof', value: 'string' },
+              initialValue: 'a@example.com',
+              content: [
+                { type: 'input-text', name: 'value', label: 'Email', placeholder: 'VEmail' },
+              ],
+            },
+            {
+              key: 'multiple',
+              label: 'Multiple Contacts',
+              match: { kind: 'array' },
+              initialValue: ['a@example.com', 'b@example.com'],
+              content: [
+                { type: 'array-field', name: '', label: 'Emails', itemKind: 'scalar', item: [{ type: 'input-text', name: 'value', placeholder: 'VEmailItem' }] },
+              ],
+            },
+          ],
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+    {
+      type: 'text',
+      testid: 'variant-echo',
+      text: '${submitted ? "Variant: " + $JSON.stringify(ui.variantValue.contactMode) : ""}',
+    },
+  ],
+};
+
 export function VariantFieldLabPage() {
   return (
     <MultiScenarioLabPage
@@ -100,6 +149,12 @@ export function VariantFieldLabPage() {
           description:
             'The selected tab should be visibly active. Switch between a single string input and a list editor, edit both forms, and verify the active editor plus bound scope state change with the selected variant.',
           schema: stringOrListVariant,
+        },
+        {
+          title: 'Variant switch writes value + submit echo (bug 73 pattern)',
+          description:
+            'Switching the select writes the variant initialValue into the form value; editing the active branch and submitting echoes the exact committed shape.',
+          schema: variantSwitchSubmit,
         },
       ]}
     />

@@ -69,6 +69,54 @@ const contactsWithSubmit = {
   ],
 };
 
+const readOnlyCompositeSubmit = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'roCompositeForm',
+      valuesPath: 'ui.roValues',
+      data: {
+        address: { street: 'FIXED-ST', city: 'RO-CITY' },
+        contacts: [
+          { name: 'RO-1', phone: 'R-100' },
+          { name: 'RO-2', phone: 'R-200' },
+        ],
+      },
+      onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+      body: [
+        {
+          type: 'object-field',
+          name: 'address',
+          label: 'ReadOnly Address',
+          readOnly: true,
+          body: [
+            { type: 'input-text', name: 'street', placeholder: 'ROStreet' },
+            { type: 'input-text', name: 'city', placeholder: 'ROCity' },
+          ],
+        },
+        {
+          type: 'array-field',
+          name: 'contacts',
+          label: 'ReadOnly Contacts',
+          itemKind: 'object',
+          readOnly: true,
+          item: [
+            { type: 'input-text', name: 'name', placeholder: 'ROCName' },
+            { type: 'input-text', name: 'phone', placeholder: 'ROCPhone' },
+          ],
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
+    },
+    {
+      type: 'text',
+      testid: 'ro-composite-echo',
+      text: '${submitted ? "RO: " + $JSON.stringify(ui.roValues) : ""}',
+    },
+  ],
+};
+
 export function ArrayFieldLabPage() {
   return (
     <MultiScenarioLabPage
@@ -85,6 +133,12 @@ export function ArrayFieldLabPage() {
           description:
             'Starts empty. Add contacts with name and email, then submit. The success message shows how many contacts were saved.',
           schema: contactsWithSubmit,
+        },
+        {
+          title: 'Read-only object + array fields submit (unchanged values)',
+          description:
+            'Both composite fields are readOnly: child inputs carry the readonly attribute, add/remove chrome is hidden, and submit echoes the untouched values.',
+          schema: readOnlyCompositeSubmit,
         },
       ]}
     />

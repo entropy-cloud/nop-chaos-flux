@@ -10,12 +10,14 @@ import type {
 import { getIn } from '@nop-chaos/flux-core';
 import {
   FormContext,
+  FormLayoutContext,
   ScopeContext,
   ValidationContext,
   useCurrentForm,
   useCurrentFormModelGeneration,
   useCurrentFormState,
   useCurrentValidationScope,
+  useFormLayout,
   useRenderInstancePath,
   useRenderScope,
   useScopeSelector,
@@ -91,6 +93,21 @@ function ArrayItemView(props: ArrayItemProps) {
     [parentScope, arrayPath, index, itemKind, readOnly, itemIdentity],
   );
 
+  // P1-3/CX-8: propagate the composite-level readOnly/disabled into the item
+  // fields through the form-layout mechanism (staticReadOnly), mirroring the
+  // combo/input-table fix (C3.1 P1-2). Without this, item field presentations
+  // only see their own schema props and stay editable while the composite
+  // chrome is locked.
+  const parentLayout = useFormLayout();
+  const itemLayout = React.useMemo(() => {
+    if (readOnly) {
+      return parentLayout
+        ? { ...parentLayout, staticReadOnly: true }
+        : { staticReadOnly: true };
+    }
+    return parentLayout;
+  }, [parentLayout, readOnly]);
+
   const itemForm = React.useMemo(
     () => (parentForm ? createItemFormProxy(parentForm, arrayPath, index, itemKind) : parentForm),
     [parentForm, arrayPath, index, itemKind],
@@ -125,11 +142,13 @@ function ArrayItemView(props: ArrayItemProps) {
   return (
     <div data-slot="array-field-item">
       <div data-slot="array-field-item-body">
-        <FormContext.Provider value={itemForm ?? undefined}>
-          <ScopeContext.Provider value={itemScope}>
-            <ValidationContext.Provider value={itemValidationOwner}>{itemContent}</ValidationContext.Provider>
-          </ScopeContext.Provider>
-        </FormContext.Provider>
+        <FormLayoutContext.Provider value={itemLayout}>
+          <FormContext.Provider value={itemForm ?? undefined}>
+            <ScopeContext.Provider value={itemScope}>
+              <ValidationContext.Provider value={itemValidationOwner}>{itemContent}</ValidationContext.Provider>
+            </ScopeContext.Provider>
+          </FormContext.Provider>
+        </FormLayoutContext.Provider>
       </div>
       {removable && (
         <WrappedFieldAction

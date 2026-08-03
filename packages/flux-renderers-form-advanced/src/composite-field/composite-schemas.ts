@@ -15,7 +15,6 @@ export interface ObjectFieldSchema extends BoundFieldSchemaBase {
   body: SchemaInput;
   transformInAction?: ActionSchema | ActionSchema[];
   transformOutAction?: ActionSchema | ActionSchema[];
-  validateValueAction?: ActionSchema | ActionSchema[];
 }
 
 export interface ArrayFieldSchema extends BoundFieldSchemaBase {
@@ -25,11 +24,7 @@ export interface ArrayFieldSchema extends BoundFieldSchemaBase {
   item: SchemaInput;
   addable?: boolean;
   removable?: boolean;
-  sortable?: boolean;
   removeWhen?: string;
-  transformInAction?: ActionSchema | ActionSchema[];
-  transformOutAction?: ActionSchema | ActionSchema[];
-  validateValueAction?: ActionSchema | ActionSchema[];
 }
 
 export interface VariantMatch extends SchemaObject {
@@ -48,8 +43,6 @@ export interface VariantOption extends SchemaObject {
   match?: VariantMatch;
   initialValue?: SchemaValue;
   transformInAction?: ActionSchema | ActionSchema[];
-  transformOutAction?: ActionSchema | ActionSchema[];
-  validateValueAction?: ActionSchema | ActionSchema[];
 }
 
 export interface VariantSelectorConfig extends SchemaObject {
@@ -81,11 +74,7 @@ export interface DetailFieldSchema extends BoundFieldSchemaBase {
   viewer?: SchemaInput;
   content: SchemaInput;
   surface?: DetailSurfaceConfig;
-  trigger?: string;
   triggerLabel?: string;
-  openAction?: ActionSchema | ActionSchema[];
-  confirmAction?: ActionSchema | ActionSchema[];
-  cancelAction?: ActionSchema | ActionSchema[];
   transformInAction?: ActionSchema | ActionSchema[];
   transformOutAction?: ActionSchema | ActionSchema[];
   validateValueAction?: ActionSchema | ActionSchema[];
@@ -197,11 +186,7 @@ export interface DetailViewSchema extends BaseSchema {
   viewer?: SchemaInput;
   content: SchemaInput;
   surface?: DetailSurfaceConfig;
-  trigger?: string;
   triggerLabel?: string;
-  openAction?: ActionSchema | ActionSchema[];
-  confirmAction?: ActionSchema | ActionSchema[];
-  cancelAction?: ActionSchema | ActionSchema[];
   transformInAction?: ActionSchema | ActionSchema[];
   transformOutAction?: ActionSchema | ActionSchema[];
   validateValueAction?: ActionSchema | ActionSchema[];
