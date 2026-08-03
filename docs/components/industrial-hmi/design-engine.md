@@ -13,6 +13,7 @@
 - **Round 1（2026-08-03）**：独立 agent（fresh session）审查，判定 `REVISE`——1 Major（E* 引注错配文件，14 处 `render-engines E*`应为`research-summary.md §4.1 E\*`，其中 changedThreshold 帧内节流应为 E3）+ 2 Minor（头部占位预写判定反模式；`lazySpread`与 leafer 实际键名`lazySpeard`不一致，已对照源码`leafer-ui/packages/display/src/Leafer.ts:71,225` 确认）——修正项全部落地，未裁决项 0。
 - **Round 2（2026-08-03）**：独立 agent（fresh session）确认轮，判定 `AGREE`——R1 三项验证落地（E\* 引注 0 残留且编号逐条正确、头部记录事实化、lazySpeard 键名与源码一致），全文轻扫无新增修正项，**达成共识**（共识循环：R1 修正 1 轮 + R2 确认轮，未超轮次上限）。
 - **终轮复核说明（I3.1 review gate，2026-08-03）**：I3.1 gate 为本文件「文档共识审查」的终轮复核（roadmap Cross-Cutting「不叠加额外审查轮」），本文件可作为 I4 包基建与 I5/I6 实现的契约依据。
+- **I3.1 gate 修正（2026-08-03）**：gate 结论 `docs/analysis/industrial-hmi/gate-2-review.md` m-2（Minor）——§4.6 组态 JSON 加载行实测分解遗漏「渲染」分量（23.4+88.5=111.9≠178.9），已补全为「parse 23.4 + 实例化 88.5 + 渲染 ~67」（口径 gate-1-review §3.2 #8）。I2 文档共识终轮复核经确认轮（0 新增）达成。
 
 ---
 
@@ -120,15 +121,15 @@ interface ScadaEngineOptions {
 
 ### 4.6 性能策略与基线（引用 I1.2 实测）
 
-| 策略           | 机制                                                                                                                   | 实测基线（gate-1-review §3.2，headless Chromium 单次实测留档）                                    |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| 实例化         | 首次 fullLayout/fullRender 单遍（render-engines §3.6）；静态元素走 `drawFast` 快路径（research-summary §4.1 E9）       | 10 万矩形创建至首帧 **165.3 ms**（实例化 125.5 + 入树 8.7），验收 <2s，余量 ~12x                  |
-| 裁剪           | 渲染遍历自动视口外剔除 + 惰性边界（research-summary §4.1 E4）                                                          | —                                                                                                 |
-| 命中           | 两阶段命中：bounds 预检 O(候选) + hitCanvas 缓存池 ≤1000 张（research-summary §4.1 E5）；**10 万级无需空间索引**（A3） | 屏内 1.9–2.4 ms/次，屏外 0 ms 立即排除                                                            |
-| 合帧           | Watcher changed<100 帧内节流 + partRender 局部重绘（research-summary §4.1 E3）；上层批量 set                           | 1 万点批量更新端到端 **16.9–19.7 ms**（更新 1.7–2.6 ms + 渲染 ~15–17 ms），验收 <200ms，余量 ~10x |
-| 内存           | 紧凑节点对象 + 惰性 layout + 同尺寸画布池/图像 URL 引用计数缓存（research-summary §4.1 E6）                            | 10 万图元 **47.5 MB**（CDP JS heap），验收 ≤320MB，余量 ~6.7x                                     |
-| 持续变换       | 相机平移/缩放仅重绘脏块（render-engines §3.1）                                                                         | 平移吞吐 **114.3 fps**（8.7ms/帧）、缩放 **174.2 fps**，验收 ≥45fps（吞吐口径，A4）               |
-| 组态 JSON 加载 | 解析→按 tag 实例化→Group.add 批量入树                                                                                  | 10 万 symbol 组态 JSON（11.6 MB）**178.9 ms**（parse 23.4 + 实例化 88.5）                         |
+| 策略           | 机制                                                                                                                   | 实测基线（gate-1-review §3.2，headless Chromium 单次实测留档）                                                   |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 实例化         | 首次 fullLayout/fullRender 单遍（render-engines §3.6）；静态元素走 `drawFast` 快路径（research-summary §4.1 E9）       | 10 万矩形创建至首帧 **165.3 ms**（实例化 125.5 + 入树 8.7），验收 <2s，余量 ~12x                                 |
+| 裁剪           | 渲染遍历自动视口外剔除 + 惰性边界（research-summary §4.1 E4）                                                          | —                                                                                                                |
+| 命中           | 两阶段命中：bounds 预检 O(候选) + hitCanvas 缓存池 ≤1000 张（research-summary §4.1 E5）；**10 万级无需空间索引**（A3） | 屏内 1.9–2.4 ms/次，屏外 0 ms 立即排除                                                                           |
+| 合帧           | Watcher changed<100 帧内节流 + partRender 局部重绘（research-summary §4.1 E3）；上层批量 set                           | 1 万点批量更新端到端 **16.9–19.7 ms**（更新 1.7–2.6 ms + 渲染 ~15–17 ms），验收 <200ms，余量 ~10x                |
+| 内存           | 紧凑节点对象 + 惰性 layout + 同尺寸画布池/图像 URL 引用计数缓存（research-summary §4.1 E6）                            | 10 万图元 **47.5 MB**（CDP JS heap），验收 ≤320MB，余量 ~6.7x                                                    |
+| 持续变换       | 相机平移/缩放仅重绘脏块（render-engines §3.1）                                                                         | 平移吞吐 **114.3 fps**（8.7ms/帧）、缩放 **174.2 fps**，验收 ≥45fps（吞吐口径，A4）                              |
+| 组态 JSON 加载 | 解析→按 tag 实例化→Group.add 批量入树                                                                                  | 10 万 symbol 组态 JSON（11.6 MB）**178.9 ms**（parse 23.4 + 实例化 88.5 + 渲染 ~67，口径 gate-1-review §3.2 #8） |
 
 > **测量口径声明（A4）**：headless 无 vsync，rAF 吞吐 ≠ 显示 fps。≥45fps 判定基于渲染吞吐代理口径；真实指针事件路径实测 17–29fps（输入路径受限、渲染零丢帧），指针端到端口径的 45fps 保证需 **I14 在真实浏览器复测**（gate-1-review §3.3 #3/§4 A4），本引擎实现阶段不固化基准方法。
 

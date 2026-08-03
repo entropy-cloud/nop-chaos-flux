@@ -15,6 +15,7 @@
 - **Round 4（2026-08-03）**：独立 agent（fresh session）复审，判定 `AGREE`——零新增修正项，**达成共识**（共识循环：R1–R3 修正 3 轮 + R4 确认轮，未超轮次上限）。本文件可作为下游工作输入依据。
 - **Round 5（2026-08-03，共识后增补验证）**：因执行安全考量新增「执行必读」节（防 mission-driver 执行 agent 只读 Phase Status/前半部而漏读后部 Cross-Cutting/Rule 条款），纯增补、不改既有条款语义。独立 agent（fresh session）focused 验证，判定 `AGREE`——增补与既有条款一致（编号/判据/阈值逐条吻合）、位置无 BULLET_RE 解析冲突、未破坏动态状态区唯一性；4 项低严重度建议中 3 项已采纳（执行必读头部措辞、Rule 4 引用补全、本记录回填），1 项裁量不采纳（"动画合帧"子约束因 Work Items I6.3/I14.2 已有呼应，核对清单定位为非穷尽）。增补定稿。
 - **I1.1 review gate（2026-08-03，roadmap Rule 4 回写）**：独立 agent（fresh session，task `ses_03892d672ffeSeXQMQCUBFBIjo`）对照讨论文件 §八/§九 任务范围 + 5 份调研报告（`docs/analysis/industrial-hmi/research-*.md`）+ 差异清单执行终轮复核审查，判定 `pass-with-minors`——**零 Blocker，范围覆盖完整、选型（LeaferJS 底座 + 自研组态语义层）论证链成立**。修正项 3 项全部落地：`M-1`（Major）scada-apps §6 #9 动画表述修正（leafer 无帧动画/动画组队列类引擎、但过渡/路径动画原语已有——消除与 render-engines §8 #4 的跨报告矛盾）；`m-1`（Minor）scada-apps/summary 头部补「终轮复核说明」标准 bullet；`m-2`（Minor）本文件"待 I0 调研校准"过时表述回写（见「调研结论摘要」数值说明）。差异清单裁定：① SceneV 源码不可获取降级浅层、② 许可矩阵如实记录、③ 共识超轮（scada-apps 8 轮/summary 4 轮，全为行号/计数精度类 Minor、单调收敛）均**维持非阻断**；④ 性能数字观察项（内存 0% 余量 / 首屏 -36% 方向有利）**维持**交 I1.2 spike 实测仲裁。**I1.1 gate 达成共识（0 新增未落地修正项）**，I1 状态回写见 Phase Status。
+- **I3.1 review gate（2026-08-03，roadmap Rule 4 回写）**：独立 agent（fresh session，task `ses_0382c18a7ffeF3m1lsPmGffiG7`）对照调研结论（I0.5）+ 项目架构文档 + 本 roadmap 全文 + 差异清单审查 4 份设计文档，产出 `docs/analysis/industrial-hmi/gate-2-review.md`，判定 `pass-with-minors`——**零 Blocker/零 Major，2 Minor 全部落地**：`m-1` 本文件总览依赖措辞回写（补 `@leafer-in/viewport@2.2.9` 必需依赖、移除过时"按需 `@leafer-ui/core`/`@leafer-ui/draw`"表述，对齐 design-engine.md §4.2/§12.2 与 I4 plan 清单）；`m-2` design-engine.md §4.6 组态 JSON 加载分解补全「渲染」分量（parse 23.4 + 实例化 88.5 + 渲染 ~67，口径 gate-1-review §3.2 #8）。差异清单裁定：① 依赖清单措辞需修正（m-1，I4 plan 已先行解析实现侧）；② 范围一致性（编辑器→I16/报警趋势/scada-symbol deferred 全链一致）、③ 顺序一致性（实现映射与依赖图逐项吻合）、④ 选型一致性（v2.2.9 锁定）、⑤ 性能包络一致性（11 行数字逐项对照，仅 m-2 分解遗漏）均**维持非阻断**。**I3.1 gate 作为 I2 设计文档「文档共识审查」终轮复核达成共识（m-1/m-2 落地后确认轮 0 新增）**，无人工确认触发（无范围/顺序/选型变化）；gate-2-review.md 自身经 3 轮共识审查达成 AGREE（R1 2 Minor + R2 N1 → R3）。I3 状态回写见 Phase Status。
 
 ## Purpose
 
@@ -44,9 +45,9 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **I0. 调研与源码下载** (`done`)
 - **I1. 设计回顾与修正 #1 —— 调研结论 gate** (`done`)
 - **I2. 通用引擎层设计文档** (`done`)
-- **I3. 设计回顾与修正 #2 —— 引擎设计 gate** (`todo`)
-- **I4. 包基建与依赖引入** (`todo`)
-- **I5. 引擎核心实现（Wave 1：场景图适配/视口/序列化）** (`todo`)
+- **I3. 设计回顾与修正 #2 —— 引擎设计 gate** (`done`)
+- **I4. 包基建与依赖引入** (`planned`)
+- **I5. 引擎核心实现（Wave 1：场景图适配/视口/序列化）** (`planned`)
 - **I6. 数据绑定与动画引擎（Wave 2）** (`todo`)
 - **I7. 设计回顾与修正 #3 —— 实现对照 gate** (`todo`)
 - **I8. 基础图元库（Wave 3）** (`todo`)
@@ -78,7 +79,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### 总览
 
-- 新建 1 个包（`@nop-chaos/flux-renderers-industrial`），依赖引入 `leafer-ui`（+ 按需 `@leafer-ui/core`/`@leafer-ui/draw`）
+- 新建 1 个包（`@nop-chaos/flux-renderers-industrial`），依赖引入 `leafer-ui@2.2.9` + `@leafer-in/viewport@2.2.9`（viewport 插件为 A1 固化必需依赖：`tree: { type: 'viewport' }` 显式配置，design-engine.md §4.2/§12.2；版本与 I1.2 spike 一致，I4 plan 已锁定）
 - 1 个新 renderer type：`scada-canvas`（props 内嵌组态 JSON：图元树 + 点表），图元级 type 后续叠加
 - 数据模型：双轨（组态内点表自包含 + flux 表达式 `$xxx` 桥接）
 - 测试：纯逻辑层 Vitest 单测 + Playwright e2e 程序化断言（经测试句柄读场景树，不用截图/不引 node-canvas）
