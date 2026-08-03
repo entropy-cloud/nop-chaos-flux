@@ -145,3 +145,89 @@ describe('markdown-editor — toolbar inserts markdown syntax', () => {
     expect(screen.queryByTestId('md-toolbar-bold')).toBeNull();
   });
 });
+
+describe('markdown-editor — four-state coverage & component handles (P2-3)', () => {
+  it('disabled blocks the textarea and hides the toolbar', () => {
+    renderSchema(buildForm('md', '# hi', { disabled: true }));
+    const textarea = screen.getByTestId('markdown-editor-textarea') as HTMLTextAreaElement;
+    expect(textarea.disabled).toBe(true);
+    expect(screen.queryByTestId('md-toolbar-bold')).toBeNull();
+  });
+
+  it('readOnly blocks editing and hides the toolbar while the preview still renders', () => {
+    renderSchema(buildForm('md', '# hi', { readOnly: true }));
+    const textarea = screen.getByTestId('markdown-editor-textarea') as HTMLTextAreaElement;
+    expect(textarea.readOnly).toBe(true);
+    expect(screen.queryByTestId('md-toolbar-bold')).toBeNull();
+    expect(screen.getByTestId('markdown-editor-preview')).toBeTruthy();
+  });
+
+  it('readOnly textarea changes do not write to scope', async () => {
+    renderSchema(buildForm('md', 'before', { readOnly: true }));
+    const textarea = screen.getByTestId('markdown-editor-textarea') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: '# after' } });
+    await submit();
+    expect(submitCalls[0].md).toBe('before');
+  });
+
+  it('blocks submit when a required markdown field is empty', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'md-form',
+      data: { md: '' },
+      submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+      body: [
+        { type: 'markdown-editor', name: 'md', label: 'Markdown', required: true },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'component:submit', componentId: 'md-form' },
+        },
+      ],
+    } as any);
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(0));
+    expect(await screen.findByText(/is required/i)).toBeTruthy();
+  });
+
+  it('component:clear empties the markdown source', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'md-form',
+      data: { md: '# hello' },
+      body: [
+        { type: 'markdown-editor', id: 'md-editor', name: 'md', label: 'Markdown' },
+        {
+          type: 'button',
+          label: 'Clear MD',
+          onClick: { action: 'component:clear', componentId: 'md-editor' },
+        },
+      ],
+    } as any);
+    const textarea = screen.getByTestId('markdown-editor-textarea') as HTMLTextAreaElement;
+    expect(textarea.value).toBe('# hello');
+    fireEvent.click(screen.getByText('Clear MD'));
+    await waitFor(() => expect(textarea.value).toBe(''));
+  });
+
+  it('component:focus focuses the editor textarea', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'md-form',
+      data: { md: 'x' },
+      body: [
+        { type: 'markdown-editor', id: 'md-editor', name: 'md', label: 'Markdown' },
+        {
+          type: 'button',
+          label: 'Focus MD',
+          onClick: { action: 'component:focus', componentId: 'md-editor' },
+        },
+      ],
+    } as any);
+    const textarea = screen.getByTestId('markdown-editor-textarea') as HTMLTextAreaElement;
+    expect(document.activeElement).not.toBe(textarea);
+    fireEvent.click(screen.getByText('Focus MD'));
+    await waitFor(() => expect(document.activeElement).toBe(textarea));
+  });
+});

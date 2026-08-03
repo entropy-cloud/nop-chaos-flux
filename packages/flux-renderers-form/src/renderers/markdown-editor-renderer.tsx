@@ -21,6 +21,7 @@ import {
   type SchemaFieldRule,
 } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { Button, cn, Textarea, useIsMobile } from '@nop-chaos/ui';
 import { formFieldRules, useFormFieldController } from '../field-utils.js';
 import type { MarkdownEditorSchema } from '../schemas.js';
@@ -51,7 +52,7 @@ const MARKDOWN_EDITOR_CAPABILITY_CONTRACTS = [
 interface ToolbarAction {
   id: string;
   icon: ReactNode;
-  title: string;
+  titleKey: string;
   apply: (selected: string) => { text: string; selectOffset?: number; selectLength?: number };
 }
 
@@ -61,22 +62,22 @@ function prefixLines(text: string, prefix: (line: string, index: number) => stri
 
 const TOOLBAR_GROUPS: ToolbarAction[][] = [
   [
-    { id: 'bold', icon: <BoldIcon className="size-4" />, title: 'Bold', apply: (s) => ({ text: `**${s || 'bold'}**` }) },
-    { id: 'italic', icon: <ItalicIcon className="size-4" />, title: 'Italic', apply: (s) => ({ text: `*${s || 'italic'}*` }) },
-    { id: 'strike', icon: <StrikethroughIcon className="size-4" />, title: 'Strikethrough', apply: (s) => ({ text: `~~${s || 'strikethrough'}~~` }) },
-    { id: 'code', icon: <CodeIcon className="size-4" />, title: 'Code', apply: (s) => ({ text: s.includes('\n') ? `\`\`\`\n${s || 'code'}\n\`\`\`` : `\`${s || 'code'}\`` }) },
+    { id: 'bold', icon: <BoldIcon className="size-4" />, titleKey: 'markdown.bold', apply: (s) => ({ text: `**${s || 'bold'}**` }) },
+    { id: 'italic', icon: <ItalicIcon className="size-4" />, titleKey: 'markdown.italic', apply: (s) => ({ text: `*${s || 'italic'}*` }) },
+    { id: 'strike', icon: <StrikethroughIcon className="size-4" />, titleKey: 'markdown.strikethrough', apply: (s) => ({ text: `~~${s || 'strikethrough'}~~` }) },
+    { id: 'code', icon: <CodeIcon className="size-4" />, titleKey: 'markdown.code', apply: (s) => ({ text: s.includes('\n') ? `\`\`\`\n${s || 'code'}\n\`\`\`` : `\`${s || 'code'}\`` }) },
   ],
   [
-    { id: 'heading', icon: <Heading2Icon className="size-4" />, title: 'Heading', apply: (s) => ({ text: `## ${s || 'heading'}` }) },
-    { id: 'quote', icon: <QuoteIcon className="size-4" />, title: 'Quote', apply: (s) => ({ text: s ? prefixLines(s, (l) => `> ${l}`) : '> quote' }) },
-    { id: 'ul', icon: <ListIcon className="size-4" />, title: 'Bulleted list', apply: (s) => ({ text: s ? prefixLines(s, (l) => `- ${l}`) : '- item' }) },
-    { id: 'ol', icon: <ListOrderedIcon className="size-4" />, title: 'Numbered list', apply: (s) => ({ text: s ? prefixLines(s, (l, i) => `${i + 1}. ${l}`) : '1. item' }) },
-    { id: 'hr', icon: <MinusIcon className="size-4" />, title: 'Horizontal rule', apply: (s) => ({ text: s ? `${s}\n\n---` : '---' }) },
+    { id: 'heading', icon: <Heading2Icon className="size-4" />, titleKey: 'markdown.heading', apply: (s) => ({ text: `## ${s || 'heading'}` }) },
+    { id: 'quote', icon: <QuoteIcon className="size-4" />, titleKey: 'markdown.quote', apply: (s) => ({ text: s ? prefixLines(s, (l) => `> ${l}`) : '> quote' }) },
+    { id: 'ul', icon: <ListIcon className="size-4" />, titleKey: 'markdown.bulletedList', apply: (s) => ({ text: s ? prefixLines(s, (l) => `- ${l}`) : '- item' }) },
+    { id: 'ol', icon: <ListOrderedIcon className="size-4" />, titleKey: 'markdown.numberedList', apply: (s) => ({ text: s ? prefixLines(s, (l, i) => `${i + 1}. ${l}`) : '1. item' }) },
+    { id: 'hr', icon: <MinusIcon className="size-4" />, titleKey: 'markdown.horizontalRule', apply: (s) => ({ text: s ? `${s}\n\n---` : '---' }) },
   ],
   [
-    { id: 'link', icon: <LinkIcon className="size-4" />, title: 'Link', apply: (s) => ({ text: `[${s || 'link'}](https://)` }) },
-    { id: 'image', icon: <ImageIcon className="size-4" />, title: 'Image', apply: (s) => ({ text: `![${s || 'alt text'}](https://)` }) },
-    { id: 'table', icon: <TableIcon className="size-4" />, title: 'Table', apply: () => ({ text: '| Column 1 | Column 2 | Column 3 |\n| --- | --- | --- |\n| Cell | Cell | Cell |' }) },
+    { id: 'link', icon: <LinkIcon className="size-4" />, titleKey: 'markdown.link', apply: (s) => ({ text: `[${s || 'link'}](https://)` }) },
+    { id: 'image', icon: <ImageIcon className="size-4" />, titleKey: 'markdown.image', apply: (s) => ({ text: `![${s || 'alt text'}](https://)` }) },
+    { id: 'table', icon: <TableIcon className="size-4" />, titleKey: 'markdown.table', apply: () => ({ text: '| Column 1 | Column 2 | Column 3 |\n| --- | --- | --- |\n| Cell | Cell | Cell |' }) },
   ],
 ];
 
@@ -147,6 +148,7 @@ class PreviewBoundary extends Component<PreviewBoundaryProps, PreviewBoundarySta
  * parity (W3d design §10).
  */
 export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEditorSchema>) {
+  const { t } = useFluxTranslation();
   const name = String(props.props.name ?? '');
   const isMobile = useIsMobile();
   const { value, handlers, presentation } = useFormFieldController(name, {
@@ -231,7 +233,7 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
           className="nop-markdown-editor-toolbar mb-1.5 flex flex-wrap items-center gap-1"
           data-slot="markdown-editor-toolbar"
           role="toolbar"
-          aria-label="Markdown formatting"
+          aria-label={t('markdown.toolbarLabel')}
         >
           {TOOLBAR_GROUPS.map((group, gi) => (
             <div key={group[0].id} className="flex items-center gap-1">
@@ -242,8 +244,8 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
                   type="button"
                   variant="outline"
                   size="sm"
-                  title={action.title}
-                  aria-label={action.title}
+                  title={t(action.titleKey)}
+                  aria-label={t(action.titleKey)}
                   data-testid={`md-toolbar-${action.id}`}
                   className="size-8 p-0"
                   onClick={() => runToolbarAction(action)}
@@ -279,7 +281,7 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
               aria-invalid={presentation.showError ? true : undefined}
               aria-describedby={presentation.showError ? errorId : undefined}
               placeholder={
-                props.props.placeholder ? String(props.props.placeholder) : 'Enter markdown…'
+                props.props.placeholder ? String(props.props.placeholder) : t('markdown.placeholder')
               }
               className="font-mono text-sm"
               data-testid="markdown-editor-textarea"
