@@ -148,6 +148,10 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     sortStatePath,
     filterStatePath,
     selectionStatePath,
+    ownerStatePath: ownerPaths.ownerStatePath,
+    statusPath: normalizedSchema.statusPath,
+    dataStatePath: normalizedSchema.dataStatePath,
+    totalField: normalizedSchema.totalField,
     pageField: normalizedSchema.pageField,
     pageSizeField: normalizedSchema.pageSizeField,
   });
@@ -302,6 +306,24 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     }
   };
 
+  // autoJumpToTopOnPagerChange (amis: autoJumpToTopOnPagerChange): scroll the
+  // table container to the top when the page changes (skipping the initial
+  // mount so first paint is not disturbed).
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
+  const previousPageRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (normalizedSchema.autoJumpToTopOnPagerChange !== true) {
+      previousPageRef.current = paginationState.currentPage;
+      return;
+    }
+    const previousPage = previousPageRef.current;
+    previousPageRef.current = paginationState.currentPage;
+    if (previousPage === undefined || previousPage === paginationState.currentPage) {
+      return;
+    }
+    tableContainerRef.current?.scrollIntoView?.({ block: 'start' });
+  }, [normalizedSchema.autoJumpToTopOnPagerChange, paginationState.currentPage]);
+
   const infiniteState = useInfiniteScroll({
     enabled: infiniteSentinelEnabled,
     sentinelRef: infiniteSentinelRef,
@@ -386,6 +408,10 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         mode: paginationMode,
         hideBar: hasExternalPaginationControl || undefined,
       },
+      // loadAction 模式下把 fetch 中状态透传给内部 table，四态-加载态有真实 UI
+      // （TableLoadingOverlay）。infinite 模式由 infinite-status 区表达加载，
+      // 不再叠加整表 overlay。
+      loading: useLoadAction && paginationMode === 'pages' ? loadResult.loading : undefined,
       empty: tableEmptyContent,
       quickSaveAction: normalizedSchema.quickSaveAction,
       quickSaveItemAction: normalizedSchema.quickSaveItemAction,
@@ -653,7 +679,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
           ) : null}
         </div>
       ) : (
-        <div className="nop-crud-table" data-slot="crud-table">
+        <div className="nop-crud-table" data-slot="crud-table" ref={tableContainerRef}>
           <TableRenderer {...tableRendererProps} />
         </div>
       )}

@@ -1,4 +1,9 @@
-import type { ReactionHandle, ReactionHandleDebugState } from '@nop-chaos/flux-core';
+import type {
+  ActionResult,
+  ReactionHandle,
+  ReactionHandleDebugState,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 
 type ReactionHandleMethod = 'dispatch' | 'force' | 'ready' | 'pause' | 'resume';
 
@@ -38,6 +43,29 @@ export interface ReactionHandleProxy extends ReactionHandle {
    * into the action's evaluationBindings.
    */
   __setBindingsProvider?(fn: (() => Record<string, unknown>) | undefined): void;
+  /**
+   * Override the dispatch scope (e.g. CRUD's per-instance scope projection)
+   * so includeScope extraction and expression resolution see the renderer's
+   * virtual scope. Forwarded to the real handle on activation.
+   */
+  __setScopeOverride?(scope: ScopeRef | undefined): void;
+  /**
+   * Declare additional ignored write roots (the renderer-owned scope paths)
+   * so the renderer's own state writes do not re-trigger the reaction.
+   * Forwarded to the real handle on activation.
+   */
+  __setIgnoreWritesTo?(paths: readonly string[] | undefined): void;
+  /**
+   * Register load lifecycle callbacks so reactive `force()` dispatch results
+   * (dropped by the underlying reaction registry) can be captured by the
+   * renderer. Forwarded to the real handle on activation.
+   */
+  __setLoadCallbacks?(
+    callbacks: {
+      onStart?: () => void;
+      onSettle?: (result: ActionResult) => void;
+    } | undefined,
+  ): void;
 }
 
 const DEFAULT_DEBUG_STATE: ReactionHandleDebugState = {
@@ -57,6 +85,14 @@ export function createReactionHandleProxy(): ReactionHandleProxy {
   let realHandle: ReactionHandle | undefined;
   let pendingCalls: PendingCall[] = [];
   let bindingsProvider: (() => Record<string, unknown>) | undefined;
+  let scopeOverride: ScopeRef | undefined;
+  let ignoreWritesTo: readonly string[] | undefined;
+  let loadCallbacks:
+    | {
+        onStart?: () => void;
+        onSettle?: (result: ActionResult) => void;
+      }
+    | undefined;
 
   function bufferVoid(method: ReactionHandleMethod, args: unknown[]): void {
     pendingCalls.push({ method, args, resolve: noop, reject: noop });
@@ -144,6 +180,29 @@ export function createReactionHandleProxy(): ReactionHandleProxy {
         };
         handleWithSetter._setBindingsProvider?.(bindingsProvider);
       }
+      if (scopeOverride) {
+        const handleWithSetter = realHandle as ReactionHandle & {
+          __setScopeOverride?(scope: ScopeRef | undefined): void;
+        };
+        handleWithSetter.__setScopeOverride?.(scopeOverride);
+      }
+      if (ignoreWritesTo) {
+        const handleWithSetter = realHandle as ReactionHandle & {
+          __setIgnoreWritesTo?(paths: readonly string[] | undefined): void;
+        };
+        handleWithSetter.__setIgnoreWritesTo?.(ignoreWritesTo);
+      }
+      if (loadCallbacks) {
+        const handleWithSetter = realHandle as ReactionHandle & {
+          __setLoadCallbacks?(
+            callbacks: {
+              onStart?: () => void;
+              onSettle?: (result: ActionResult) => void;
+            } | undefined,
+          ): void;
+        };
+        handleWithSetter.__setLoadCallbacks?.(loadCallbacks);
+      }
       drainPending(realHandle);
     },
     __dispose() {
@@ -165,6 +224,38 @@ export function createReactionHandleProxy(): ReactionHandleProxy {
           _setBindingsProvider?(provider: (() => Record<string, unknown>) | undefined): void;
         };
         handleWithSetter._setBindingsProvider?.(fn);
+      }
+    },
+    __setScopeOverride(scope) {
+      scopeOverride = scope;
+      if (realHandle) {
+        const handleWithSetter = realHandle as ReactionHandle & {
+          __setScopeOverride?(scope: ScopeRef | undefined): void;
+        };
+        handleWithSetter.__setScopeOverride?.(scope);
+      }
+    },
+    __setIgnoreWritesTo(paths) {
+      ignoreWritesTo = paths;
+      if (realHandle) {
+        const handleWithSetter = realHandle as ReactionHandle & {
+          __setIgnoreWritesTo?(paths: readonly string[] | undefined): void;
+        };
+        handleWithSetter.__setIgnoreWritesTo?.(paths);
+      }
+    },
+    __setLoadCallbacks(callbacks) {
+      loadCallbacks = callbacks;
+      if (realHandle) {
+        const handleWithSetter = realHandle as ReactionHandle & {
+          __setLoadCallbacks?(
+            callbacks: {
+              onStart?: () => void;
+              onSettle?: (result: ActionResult) => void;
+            } | undefined,
+          ): void;
+        };
+        handleWithSetter.__setLoadCallbacks?.(callbacks);
       }
     },
   };

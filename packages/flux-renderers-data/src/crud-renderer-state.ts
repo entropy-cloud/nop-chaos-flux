@@ -498,6 +498,10 @@ export function useCrudLoadAction(args: {
   sortStatePath: string;
   filterStatePath: string;
   selectionStatePath: string;
+  ownerStatePath: string;
+  statusPath?: string;
+  dataStatePath?: string;
+  totalField?: string;
   pageField?: string;
   pageSizeField?: string;
 }): CrudLoadActionResult {
@@ -506,6 +510,7 @@ export function useCrudLoadAction(args: {
     loadReaction,
     loadAllData,
     onError,
+    helpers,
     env,
     scope,
     nodeScope,
@@ -519,6 +524,10 @@ export function useCrudLoadAction(args: {
     sortStatePath,
     filterStatePath,
     selectionStatePath,
+    ownerStatePath,
+    statusPath,
+    dataStatePath,
+    totalField,
     pageField,
     pageSizeField,
   } = args;
@@ -534,6 +543,15 @@ export function useCrudLoadAction(args: {
   // reaction's ajax but its result is not captured, so a nonce state is bumped
   // to make the effect re-run and re-dispatch.
   const [reloadNonce, setReloadNonce] = useState(0);
+
+  // Per-instance child scope projection of the CRUD scope variables
+  // (pagination/query/sort/filters/selection). The loadAction dispatches against
+  // this scope so the request layer's includeScope extraction resolves the
+  // documented CRUD scope variables (CONTEXT.md) instead of the raw store.
+  const crudScopeRef = useRef<ScopeRef | undefined>(undefined);
+  // Latest evaluation bindings for error reporting from the load callbacks
+  // (reactive force() dispatches carry no renderer-side ctx).
+  const lastBindingsRef = useRef<Record<string, unknown>>({});
 
   const reload = useCallback(() => {
     loadedAllRef.current = false;
@@ -559,10 +577,13 @@ export function useCrudLoadAction(args: {
     [env, nodeScope, onError, scope],
   );
 
-  // Activate the reaction handle on mount and register a bindings provider
-  // so that reactive triggers (external binding changes) and manual refresh
-  // (force/reload) inject CRUD internal state into the action's
-  // evaluationBindings — same context as imperative dispatch.
+  // Activate the reaction handle on mount and register:
+  //  1. a bindings provider (reactive triggers + manual refresh inject CRUD
+  //     internal state into the action's evaluationBindings),
+  //  2. a scope override (dispatch against the CRUD scope projection child
+  //     scope, so includeScope extraction resolves CRUD scope variables),
+  //  3. load lifecycle callbacks (capture dispatch results — including
+  //     reactive force() dispatches the reaction registry would drop).
   useEffect(() => {
     if (!enabled || !loadReaction) {
       return;
@@ -570,14 +591,47 @@ export function useCrudLoadAction(args: {
 
     // Register bindings provider: reads current CRUD state directly from scope
     // (NOT from React state closures) to avoid stale-data issues during
-    // synchronous scope-change notification.
+    // synchronous scope-change notification. Also refreshes the CRUD scope
+    // projection child scope so every dispatch (imperative + reactive) sees
+    // current pagination/query/sort/filters/selection data.
     const proxyHandle = loadReaction as ReactionHandle & {
       __setBindingsProvider?(fn: (() => Record<string, unknown>) | undefined): void;
+      __setScopeOverride?(scope: ScopeRef | undefined): void;
+      __setIgnoreWritesTo?(paths: readonly string[] | undefined): void;
+      __setLoadCallbacks?(
+        callbacks: {
+          onStart?: () => void;
+          onSettle?: (result: ActionResult) => void;
+        } | undefined,
+      ): void;
     };
+    if (!crudScopeRef.current) {
+      crudScopeRef.current = helpers.createScope({}, {
+        pathSuffix: 'crud-load',
+        scopeKey: `${(scope ?? nodeScope)?.id ?? 'crud'}:load`,
+      });
+    }
+    proxyHandle.__setScopeOverride?.(crudScopeRef.current);
+
+    // Declare the scope paths this CRUD instance owns itself: its owner state
+    // slice, the internal load-revision counter, and any configured
+    // status/data publication targets. Writes to these paths are CRUD-internal
+    // bookkeeping (or CRUD-originated data publication) — they must not
+    // re-trigger the reaction (a captured load result would otherwise feed a
+    // fetch → state-write → fetch loop). External bindings (dependsOn roots)
+    // and non-owned paths still fire normally.
+    proxyHandle.__setIgnoreWritesTo?.(
+      [
+        ownerStatePath,
+        '__crudLoadRevision',
+        ...(statusPath ? [statusPath] : []),
+        ...(dataStatePath ? [dataStatePath] : []),
+      ],
+    );
     proxyHandle.__setBindingsProvider?.(() => {
       const activeScope = scope ?? nodeScope;
       const snapshot = activeScope?.readVisible() ?? {};
-      return createCrudEvaluationBindings({
+      const bindings = createCrudEvaluationBindings({
         pagination: normalizePagination(
           getIn(snapshot, paginationStatePath),
           pagination.pageSize,
@@ -589,14 +643,79 @@ export function useCrudLoadAction(args: {
         pageField,
         pageSizeField,
       });
+      lastBindingsRef.current = bindings;
+      crudScopeRef.current?.replace?.({
+        pagination: bindings.pagination,
+        query: bindings.query,
+        sort: bindings.sort,
+        filters: bindings.filters,
+        selection: bindings.selection,
+      });
+      return bindings;
+    });
+    proxyHandle.__setScopeOverride?.(crudScopeRef.current);
+
+    proxyHandle.__setLoadCallbacks?.({
+      onStart: () => {
+        setLoading(true);
+        setError(undefined);
+      },
+      onSettle: (result) => {
+        if (result.cancelled) {
+          // A newer dispatch owns loading state; do not touch it.
+          return;
+        }
+        if (!result.ok) {
+          const err =
+            result.error instanceof Error
+              ? result.error
+              : typeof result.error === 'string'
+                ? new Error(result.error)
+                : new Error('loadAction failed');
+          reportError(err, lastBindingsRef.current);
+          setLoading(false);
+          return;
+        }
+
+        const normalized = normalizeCrudSourceValue(result.data);
+        // totalField: custom response field name for the total count (amis:
+        // totalField). Overrides the built-in total/count keys when present.
+        if (totalField) {
+          const rawRecord = toRecord(result.data);
+          const customTotal = rawRecord[totalField];
+          if (typeof customTotal === 'number' && Number.isFinite(customTotal)) {
+            normalized.total = customTotal;
+          }
+        }
+        setRows(normalized.rows);
+        setTotal(normalized.total);
+
+        if (normalized.serverPagination && (scope ?? nodeScope)) {
+          const correctedPage = normalized.serverPagination.currentPage ?? pagination.currentPage;
+          const correctedPageSize = normalized.serverPagination.pageSize ?? pagination.pageSize;
+          (scope ?? nodeScope)!.update(paginationStatePath, {
+            currentPage: correctedPage,
+            pageSize: correctedPageSize,
+          });
+        }
+
+        if (loadAllData) {
+          loadedAllRef.current = true;
+        }
+
+        setLoading(false);
+      },
     });
 
     loadReaction.ready();
 
     return () => {
       proxyHandle.__setBindingsProvider?.(undefined);
+      proxyHandle.__setScopeOverride?.(undefined);
+      proxyHandle.__setIgnoreWritesTo?.(undefined);
+      proxyHandle.__setLoadCallbacks?.(undefined);
     };
-  }, [enabled, loadReaction, scope, nodeScope, paginationStatePath, queryStatePath, sortStatePath, filterStatePath, selectionStatePath, pagination.pageSize, pageField, pageSizeField]);
+  }, [enabled, loadReaction, scope, nodeScope, ownerStatePath, statusPath, dataStatePath, totalField, paginationStatePath, queryStatePath, sortStatePath, filterStatePath, selectionStatePath, pagination.pageSize, pageField, pageSizeField, loadAllData, pagination, reportError, helpers]);
 
   useEffect(() => {
     if (!enabled || !loadReaction) {
@@ -619,58 +738,17 @@ export function useCrudLoadAction(args: {
       pageSizeField,
     });
 
-    void (async () => {
-      setLoading(true);
-      setError(undefined);
-      try {
-        const result: ActionResult = await loadReaction.dispatch({
-          evaluationBindings,
-          signal: controller.signal,
-        });
-
-        if (controller.signal.aborted || result.cancelled) {
-          return;
-        }
-
-        if (!result.ok) {
-          const err =
-            result.error instanceof Error
-              ? result.error
-              : typeof result.error === 'string'
-                ? new Error(result.error)
-                : new Error('loadAction failed');
-          reportError(err, evaluationBindings);
-          setLoading(false);
-          return;
-        }
-
-        const normalized = normalizeCrudSourceValue(result.data);
-        setRows(normalized.rows);
-        setTotal(normalized.total);
-
-        if (normalized.serverPagination && (scope ?? nodeScope)) {
-          const correctedPage = normalized.serverPagination.currentPage ?? pagination.currentPage;
-          const correctedPageSize = normalized.serverPagination.pageSize ?? pagination.pageSize;
-          (scope ?? nodeScope)!.update(paginationStatePath, {
-            currentPage: correctedPage,
-            pageSize: correctedPageSize,
-          });
-        }
-
-        if (loadAllData) {
-          loadedAllRef.current = true;
-        }
-
-        setLoading(false);
-      } catch (err) {
-        if (controller.signal.aborted) {
-          return;
-        }
-        const error = err instanceof Error ? err : new Error(String(err));
-        reportError(error, evaluationBindings);
-        setLoading(false);
-      }
-    })();
+    // Result processing (rows/total/error/loading) is handled uniformly by the
+    // load callbacks registered on the reaction handle — the same sink that
+    // captures reactive force() dispatches.
+    void loadReaction
+      .dispatch({
+        evaluationBindings,
+        signal: controller.signal,
+      })
+      .catch(() => {
+        // dispatch failures are surfaced through the load callbacks (onSettle)
+      });
 
     return () => {
       controller.abort();
@@ -686,7 +764,6 @@ export function useCrudLoadAction(args: {
     enabled,
     loadReaction,
     loadAllData,
-    reportError,
     scope,
     nodeScope,
     pagination,
@@ -699,6 +776,15 @@ export function useCrudLoadAction(args: {
     pageField,
     pageSizeField,
   ]);
+
+  useEffect(() => {
+    return () => {
+      if (crudScopeRef.current) {
+        helpers.disposeScope(crudScopeRef.current.id);
+        crudScopeRef.current = undefined;
+      }
+    };
+  }, [helpers]);
 
   return useMemo(
     () => ({ rows, total, loading, error, reload }),

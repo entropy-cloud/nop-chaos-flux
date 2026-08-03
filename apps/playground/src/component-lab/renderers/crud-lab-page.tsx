@@ -1,4 +1,5 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
+import { c4c2HostEnv, c4c2HostSchemas } from './crud-lab-page-c4c2';
 
 let requestOwnedFetchCount = 0;
 let clientModeFetchCount = 0;
@@ -561,6 +562,42 @@ export function CrudLabPage() {
             'Shows `listMode: "list"`: CRUD renders rows through the list carrier, self-holds selection via a template button, and reuses the list runtime for scope-owned pagination slicing (footer pagination still rendered by CRUD).',
           schema: listModeCrud,
           data: { modeRecords },
+        },
+        {
+          title: 'Host CRUD row quick-edit submit probe (bug 73 pattern)',
+          description:
+            'C4.2 Phase 3: CRUD inline quick edit writes back to the row scope, quickSaveItemAction receives the EDITED record (row-scope pollution re-verify), and the probe fetcher echoes the payload.',
+          schema: c4c2HostSchemas.quickEdit,
+          data: { records },
+          env: c4c2HostEnv,
+        },
+        {
+          title: 'Host CRUD query form → loadAction chain',
+          description:
+            'C4.2 Phase 3: queryForm submit collects values into CRUD scope (`query.*`), the loadAction re-dispatches with the query binding, and rows render from the fetch result.',
+          schema: c4c2HostSchemas.queryLoad,
+          env: c4c2HostEnv,
+        },
+        {
+          title: 'Host CRUD includeScope injection',
+          description:
+            'C4.2 Phase 3: loadAction args `includeScope: "*"` injects the flat CRUD scope variables (pagination/query/sort/filters/selection) into the request data — no `$_crud` wrapper, no internal detail leak.',
+          schema: c4c2HostSchemas.includeScope,
+          env: c4c2HostEnv,
+        },
+        {
+          title: 'Host CRUD load failure keeps data + retry',
+          description:
+            'C4.2 Phase 3: loadAction failures keep the current data and surface an error; the refresh action re-triggers the load and recovers rows.',
+          schema: c4c2HostSchemas.flakyLoad,
+          env: c4c2HostEnv,
+        },
+        {
+          title: 'Host CRUD paging/sort/selection echo',
+          description:
+            'C4.2 Phase 3: pagination, sortable header, and cross-page selection echo through `$crud` — selection survives page changes with `keepOnPageChange`.',
+          schema: c4c2HostSchemas.pagingSortSelection,
+          data: { pagedRecords: Array.from({ length: 12 }, (_, i) => ({ id: i + 1, name: `Item ${i + 1}`, owner: ['Alice', 'Bob'][i % 2] })) },
         },
       ]}
     />

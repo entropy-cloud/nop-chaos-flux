@@ -179,7 +179,8 @@ export const crudRendererDefinition: RendererDefinition = {
         ],
       },
       displayName: 'Selection Ownership',
-      description: 'Controls whether selection state is local, controlled, or scope-owned.',
+      description:
+        'Ownership mode for the selection slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.selection`, overridable via `selectionStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
       editorType: 'select',
       defaultValue: 'local',
     },
@@ -193,7 +194,8 @@ export const crudRendererDefinition: RendererDefinition = {
         ],
       },
       displayName: 'Pagination Ownership',
-      description: 'Controls whether pagination state is local, controlled, or scope-owned.',
+      description:
+        'Ownership mode for the pagination slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.pagination`, overridable via `paginationStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
       editorType: 'select',
       defaultValue: 'local',
     },
@@ -213,7 +215,8 @@ export const crudRendererDefinition: RendererDefinition = {
         ],
       },
       displayName: 'Sort Ownership',
-      description: 'Controls whether sort state is local, controlled, or scope-owned.',
+      description:
+        'Ownership mode for the sort slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.sort`, overridable via `sortStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
       editorType: 'select',
       defaultValue: 'local',
     },
@@ -233,7 +236,8 @@ export const crudRendererDefinition: RendererDefinition = {
         ],
       },
       displayName: 'Filter Ownership',
-      description: 'Controls whether filter state is local, controlled, or scope-owned.',
+      description:
+        'Ownership mode for the filter slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.filters`, overridable via `filterStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
       editorType: 'select',
       defaultValue: 'local',
     },

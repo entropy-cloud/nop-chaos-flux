@@ -104,6 +104,35 @@ export function createRendererReactionHandle(input: {
    * as imperative dispatch.
    */
   let bindingsProvider: (() => Record<string, unknown>) | undefined;
+  /**
+   * Renderer-declared additional ignored write roots (merged with the
+   * plan-level `ignoreWritesTo`). The renderer (e.g. CRUD) declares the scope
+   * paths it owns itself — writes to those paths (internal state bookkeeping,
+   * status publication, etc.) must not re-trigger the reaction, otherwise a
+   * captured load result would feed a fetch → state write → fetch loop.
+   */
+  let rendererIgnoreRoots: readonly string[] | undefined;
+  /**
+   * Optional dispatch-scope override set by the renderer (e.g. CRUD). When set,
+   * every dispatch (imperative, force, and reactive triggers) runs against this
+   * scope instead of the registration scope, so the action's request layer
+   * (includeScope extraction, expression resolution) sees the renderer's own
+   * virtual scope projection.
+   */
+  let scopeOverride: ScopeRef | undefined;
+  /**
+   * Optional load lifecycle callbacks set by the renderer (e.g. CRUD). `onStart`
+   * fires before each dispatch; `onSettle` receives every dispatch result —
+   * including reactive `force()` triggers whose results the underlying reaction
+   * registry would otherwise drop. This is what makes renderer-owned reactions
+   * able to capture fetched data regardless of which path fired the dispatch.
+   */
+  let loadCallbacks:
+    | {
+        onStart?: () => void;
+        onSettle?: (result: ActionResult) => void;
+      }
+    | undefined;
 
   // Lifecycle abort controller — fires once on dispose, aborts every in-flight dispatch.
   const lifecycleController = new AbortController();
@@ -126,9 +155,13 @@ export function createRendererReactionHandle(input: {
       return;
     }
 
-    const filtered = ignoredRootsSet
+    const planIgnored = ignoredRootsSet
       ? filterScopeChangeByIgnoredRoots(change, ignoredRootsSet)
       : change;
+    const filtered =
+      rendererIgnoreRoots && rendererIgnoreRoots.length > 0
+        ? filterScopeChangeByIgnoredRoots(planIgnored, rendererIgnoreRoots)
+        : planIgnored;
     if (!filtered) {
       return;
     }
@@ -181,17 +214,25 @@ export function createRendererReactionHandle(input: {
     // triggers that don't have renderer context.
     const callbackBindings = bindingsProvider?.() ?? {};
 
+    loadCallbacks?.onStart?.();
     try {
-      return await input.dispatch(action, {
+      const result = await input.dispatch(action, {
         ...ctx,
         signal: combinedSignal,
-        scope: ctx?.scope ?? input.scope,
+        scope: scopeOverride ?? ctx?.scope ?? input.scope,
         evaluationBindings: { ...callbackBindings, ...ctx?.evaluationBindings },
       });
-    } finally {
-      if (inFlightController === perFire) {
-        inFlightController = undefined;
-      }
+      loadCallbacks?.onSettle?.(result);
+      return result;
+    } catch (error) {
+      // Surface synchronous/transport failures to the renderer's load lifecycle
+      // so loading/error state can be settled uniformly; re-throw so callers
+      // (and the reaction registry's own error handling) see the failure too.
+      loadCallbacks?.onSettle?.({
+        ok: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+      throw error;
     }
   };
 
@@ -221,7 +262,7 @@ export function createRendererReactionHandle(input: {
       return dispatchWithAbortChain(plan.action, {
         signal: ctx?.signal,
         evaluationBindings: ctx?.evaluationBindings,
-        scope: input.scope,
+        scope: ctx?.scope ?? input.scope,
       });
     },
     force(paths) {
@@ -301,6 +342,33 @@ export function createRendererReactionHandle(input: {
    */
   (handle as ReactionHandle & { _setBindingsProvider?: (fn: (() => Record<string, unknown>) | undefined) => void })._setBindingsProvider = (fn) => {
     bindingsProvider = fn;
+  };
+
+  /**
+   * Internal extension point: the renderer may override the dispatch scope
+   * (e.g. CRUD's per-instance CRUD scope projection) so includeScope extraction
+   * and expression resolution see the renderer's own virtual scope.
+   */
+  (handle as ReactionHandle & { __setScopeOverride?: (scope: ScopeRef | undefined) => void }).__setScopeOverride = (scope) => {
+    scopeOverride = scope;
+  };
+
+  /**
+   * Internal extension point: the renderer declares additional ignored write
+   * roots (merged with plan-level `ignoreWritesTo`) — the scope paths it owns
+   * itself, so its own state writes do not re-trigger the reaction.
+   */
+  (handle as ReactionHandle & { __setIgnoreWritesTo?: (paths: readonly string[] | undefined) => void }).__setIgnoreWritesTo = (paths) => {
+    rendererIgnoreRoots = paths;
+  };
+
+  /**
+   * Internal extension point: the renderer may register load lifecycle
+   * callbacks so reactive `force()` dispatches (whose results the underlying
+   * reaction registry does not surface) can still be captured.
+   */
+  (handle as ReactionHandle & { __setLoadCallbacks?: (callbacks: { onStart?: () => void; onSettle?: (result: ActionResult) => void } | undefined) => void }).__setLoadCallbacks = (callbacks) => {
+    loadCallbacks = callbacks;
   };
 
   return handle;

@@ -16,6 +16,7 @@ export interface CrudQueryFormConfig extends SchemaObject {
   columnCount?: number;
   gap?: number | string;
   mode?: 'manual' | 'auto';
+  /** Reserved — URL state sync is not implemented (design §9); retained for authoring compatibility. */
   syncLocation?: boolean;
   defaultParams?: Record<string, SchemaValue>;
   parsePrimitiveQuery?:
@@ -164,12 +165,21 @@ export interface CrudSchema extends BaseSchema {
   card?: SchemaInput;
   /** List-mode row template (per-record region, `item`/`index` params). Consumed only when `listMode: 'list'`. */
   item?: SchemaInput;
+  /**
+   * Ownership mode for the selection slice. The CRUD composite always owns
+   * this state in scope (per-instance `$_crud.<id>.selection`, overridable via
+   * `selectionStatePath`); `'local'`/`'controlled'` values are accepted for
+   * schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).
+   */
   selectionOwnership?: 'local' | 'controlled' | 'scope';
   selectionStatePath?: string;
+  /** Ownership mode for the pagination slice — see `selectionOwnership` (scope-owned composition). */
   paginationOwnership?: 'local' | 'controlled' | 'scope';
   paginationStatePath?: string;
+  /** Ownership mode for the sort slice — see `selectionOwnership` (scope-owned composition). */
   sortOwnership?: 'local' | 'controlled' | 'scope';
   sortStatePath?: string;
+  /** Ownership mode for the filter slice — see `selectionOwnership` (scope-owned composition). */
   filterOwnership?: 'local' | 'controlled' | 'scope';
   filterStatePath?: string;
   rowKey?: string;
@@ -178,9 +188,14 @@ export interface CrudSchema extends BaseSchema {
   pageField?: string;
   pageSizeField?: string;
   defaultParams?: Record<string, SchemaValue>;
+  /** Reserved — URL state sync is not implemented (design §9); retained for authoring compatibility. */
   syncLocation?: boolean;
   columnSettings?: CrudColumnSettingsConfig;
   responsive?: CrudResponsiveConfig;
+  /**
+   * Reserved — automatic query-form generation is not implemented (design §9);
+   * retained for authoring compatibility. Author the `queryForm` region explicitly.
+   */
   autoGenerateQueryForm?:
     | boolean
     | {
@@ -193,6 +208,7 @@ export interface CrudSchema extends BaseSchema {
   pagination?: CrudPaginationConfig;
   quickSaveAction?: ActionSchema;
   quickSaveItemAction?: ActionSchema;
+  /** Authoring-only migration metadata (AMIS import hints); not consumed at runtime. */
   migrationHints?: CrudMigrationHints;
   onQuerySubmit?: ActionSchema;
   onQueryReset?: ActionSchema;

@@ -214,6 +214,13 @@ export interface ReactionHandle {
   dispatch(ctx?: {
     signal?: AbortSignal;
     evaluationBindings?: Record<string, unknown>;
+    /**
+     * Optional dispatch scope override. When omitted, dispatches run against
+     * the reaction's registration scope (or the renderer-declared scope
+     * override, if set). Renderers may pass a child scope projection so the
+     * action's request layer resolves renderer-scoped variables.
+     */
+    scope?: ScopeRef;
   }): Promise<ActionResult>;
   /**
    * Force the reaction to fire as if a scope change touched `paths` (or all

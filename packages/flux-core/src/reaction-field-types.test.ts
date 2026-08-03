@@ -8,6 +8,7 @@ import type {
   ReactionHandle,
   ReactionHandleDebugState,
   ReactionRegistration,
+  ScopeRef,
   ReactiveActionSchema,
   RendererComponentProps,
   SchemaFieldKind,
@@ -111,7 +112,11 @@ describe('kind: "reaction" type contract (Phase 2)', () => {
     expect(typeof handle.dispatch).toBe('function');
 
     expectTypeOf<ReactionHandle>().toHaveProperty('dispatch').toEqualTypeOf<
-      (ctx?: { signal?: AbortSignal; evaluationBindings?: Record<string, unknown> }) => Promise<ActionResult>
+      (ctx?: {
+        signal?: AbortSignal;
+        evaluationBindings?: Record<string, unknown>;
+        scope?: ScopeRef;
+      }) => Promise<ActionResult>
     >();
     expectTypeOf<ReactionHandle>().toHaveProperty('force').toEqualTypeOf<(paths?: readonly string[]) => void>();
     expectTypeOf<ReactionHandle>().toHaveProperty('ready').toEqualTypeOf<() => void>();
