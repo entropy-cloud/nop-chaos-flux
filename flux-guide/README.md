@@ -143,6 +143,7 @@ const SchemaRenderer = createSchemaRenderer();
 | `14-theming.md`           | 主题与样式：纯 CSS 契约（无 ThemeProvider）、三层 CSS、4 主题变体、`data-slot` 协议、`className`/`frameClassName`              |
 | `15-error-handling.md`    | 错误处理三层（编译/action/渲染）、Error Boundary、`onActionError`、链式恢复、默认 notify、已知缺口                             |
 | `16-monitor.md`           | 运行时遥测监控（event-based monitor，独立 prop，自动捕获 notify + fetcher，E2E 友好）                                          |
+| `17-debugging.md`         | 三层定位法（配置/生成/渲染）、`__fluxDebug` 环形缓冲、后端 schema 直读、渲染器补测试规范、CRUD 缺按钮实战案例                  |
 | `flux-types/`             | 所有组件的 TypeScript 接口（字段知识源）。入口见 `flux-types/index.ts`                                                         |
 | `design-patterns/`        | 常见业务场景的完整解法 cookbook（单组件/单特性）                                                                               |
 | `examples/`               | 多技术组合的端到端页面范例（主从联动 / 行内编辑 / 业务单据公式 / 分步向导）                                                    |
