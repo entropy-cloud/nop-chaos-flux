@@ -1,4 +1,5 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
+import { c4c3HostSchemas, c4c3OrgTree } from './data-c4c3-host';
 
 const expandCollapseTree = {
   type: 'page',
@@ -79,6 +80,13 @@ export function TreeLabPage() {
             'The node region can render custom content using node, index, depth, key, and parentNode bindings.',
           schema: customNodeTree,
           data: { orgTree: orgTreeData },
+        },
+        {
+          title: 'Host tree search filters and auto-expands ancestors (C4.3 Phase 3)',
+          description:
+            'C4.3 Phase 3: searchable tree filters nodes by label, auto-expands matching ancestors, highlights matches, and restores the previous expand state when the query is cleared.',
+          schema: c4c3HostSchemas.treeSearch,
+          data: { orgTree: c4c3OrgTree },
         },
       ]}
     />

@@ -339,6 +339,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'dependsOn', kind: 'prop' },
       { key: 'initialData', kind: 'prop' },
       { key: 'resultMapping', kind: 'prop' },
+      { key: 'control', kind: 'prop' },
+      { key: 'retry', kind: 'prop' },
     ],
   },
   {
@@ -354,6 +356,19 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         description: 'Request the current chart instance to recompute its layout.',
       },
     ],
+    eventContracts: {
+      onClick: {
+        displayName: 'On Click',
+        description:
+          'Dispatched when the chart canvas is clicked (or activated via Enter/Space). Payload is the raw DOM event.',
+        payload: { kind: 'unknown' },
+      },
+      onHover: {
+        displayName: 'On Hover',
+        description: 'Dispatched when the mouse enters the chart canvas. Payload is the raw DOM event.',
+        payload: { kind: 'unknown' },
+      },
+    },
     fields: [
       { key: 'source', kind: 'prop' },
       { key: 'series', kind: 'prop' },
@@ -371,6 +386,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'referenceLines', kind: 'prop' },
       { key: 'band', kind: 'prop' },
       { key: 'markers', kind: 'prop' },
+      { key: 'componentId', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
       { key: 'onHover', kind: 'event' },
     ],
@@ -396,6 +412,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'showIcon', kind: 'prop', valueType: 'boolean' },
       { key: 'iconField', kind: 'prop' },
       { key: 'showGuideLine', kind: 'prop', valueType: 'boolean' },
+      { key: 'multiple', kind: 'prop', valueType: 'boolean' },
       {
         key: 'node',
         kind: 'region',

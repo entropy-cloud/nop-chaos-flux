@@ -243,6 +243,13 @@ describe('ChartRenderer', () => {
     fireEvent.mouseEnter(canvas);
     expect(onClick).toHaveBeenCalledTimes(3);
     expect(onHover).toHaveBeenCalled();
+
+    // Event payload contract (definition eventContracts): the raw DOM event is
+    // the payload (first arg); the second arg is the dispatch context.
+    const clickArgs = onClick.mock.calls[0];
+    expect(clickArgs[0]).toBeTruthy();
+    expect(typeof (clickArgs[0] as { type?: string }).type).toBe('string');
+    expect(clickArgs[1]).toEqual({});
   });
 
   it('uses the chart title as the canvas accessible name when present', () => {

@@ -1,4 +1,5 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
+import { c4c3HostEnv, c4c3HostSchemas } from './data-c4c3-host';
 
 const preloadedData = {
   type: 'page',
@@ -70,6 +71,22 @@ export function DataSourceLabPage() {
             'This shows the actual live data-source contract. The default playground fetcher returns null for /api/users here, so the loop stays empty; in a real environment the named `users` value would be published and rendered below.',
           schema: withDataSource,
           data: { users: [] },
+        },
+        {
+          title: 'Host data-source loads remote users into list (C4.3 Phase 3)',
+          description:
+            'C4.3 Phase 3: a data-source fetches users through the env IO boundary into the page scope; the list renders the published value and statistics echoes the count. component:refresh re-fetches a new batch.',
+          schema: c4c3HostSchemas.dsList,
+          data: {},
+          env: c4c3HostEnv,
+        },
+        {
+          title: 'Host data-source failure keeps data + retry (C4.3 bug 73 pattern)',
+          description:
+            'C4.3 Phase 3: the first two fetches fail (500). The statusPath reports hasError, the list keeps the initialData rows (old data retained), and component:refresh retries to recovery.',
+          schema: c4c3HostSchemas.dsFail,
+          data: {},
+          env: c4c3HostEnv,
         },
       ]}
     />

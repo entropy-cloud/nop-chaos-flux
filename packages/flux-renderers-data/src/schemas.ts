@@ -229,6 +229,10 @@ export interface TableSchemaInput extends Omit<TableSchema, 'columns'> {
 export interface TreeSchema extends BaseSchema {
   type: 'tree';
   data?: SchemaValue;
+  /** Renderer-level display label used as the tree aria-label (falls back to `title`, then node id). */
+  label?: string;
+  /** Renderer-level display title used as the tree aria-label (falls back to node id). */
+  title?: string;
   childrenKey?: string;
   labelField?: string;
   keyField?: string;

@@ -391,6 +391,20 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes: 'Verify chart container renders from source data with live xAxis/yAxis config',
   },
   {
+    id: 'pagination',
+    title: 'Pagination',
+    tier: 'read',
+    primaryScenario: 'Host pagination drives a list data flow (C4.3 Phase 3)',
+    notes: 'Verify standalone pagination page switching publishes statusPath and drives the controlled list slice',
+  },
+  {
+    id: 'statistics',
+    title: 'Statistics',
+    tier: 'read',
+    primaryScenario: 'Basic statistics',
+    notes: 'Verify the numeric total summary renders with the nop-statistics marker and data-total attribute',
+  },
+  {
     id: 'combo',
     title: 'Combo',
     tier: 'write',

@@ -177,11 +177,11 @@ describe('list pagination integration', () => {
               pagination: { enabled: true, pageSize: 3, total: 12 },
               onPageChange: {
                 action: 'setValue',
-                args: { path: 'reportedPage', value: true },
+                args: { path: 'reportedPage', value: '${currentPage}|${pageSize}|${totalPages}|${total}' },
               },
               item: { type: 'text', text: '${$slot.item.label}' },
             },
-            { type: 'text', text: 'reported:${reportedPage ? "yes" : "no"}' },
+            { type: 'text', text: 'reported:${reportedPage ? reportedPage : "pending"}' },
           ],
         }}
         env={env}
@@ -193,7 +193,7 @@ describe('list pagination integration', () => {
     );
 
     await waitFor(() => expect(itemLabels()).toEqual(['Item 1', 'Item 2', 'Item 3']));
-    expect(screen.getByText('reported:no')).toBeTruthy();
+    expect(screen.getByText('reported:pending')).toBeTruthy();
 
     await waitFor(() => {
       expect(registryRef.current?.resolve({ componentId: 'list-cap' })?.capabilities).toBeTruthy();
@@ -215,7 +215,9 @@ describe('list pagination integration', () => {
     expect(result.ok).toBe(true);
     expect(result.data?.currentPage).toBe(3);
     await waitFor(() => expect(itemLabels()).toEqual(['Item 7', 'Item 8', 'Item 9']));
-    await waitFor(() => expect(screen.getByText('reported:yes')).toBeTruthy());
+    // onPageChange payload fields flow to the action args as evaluationBindings:
+    // { currentPage: 3, pageSize: 3, totalPages: 4, total: 12 }.
+    await waitFor(() => expect(screen.getByText('reported:3|3|4|12')).toBeTruthy());
   });
 
   it('list has zero component-level request fields (request-sink constraint)', () => {
@@ -286,9 +288,13 @@ describe('list infinite-scroll integration', () => {
               id: 'list-infinite',
               items: twelveItems,
               pagination: { enabled: true, mode: 'infinite', pageSize: 3, total: 12 },
-              onLoadMore: { action: 'probe:onLoadMore' },
+              onLoadMore: [
+                { action: 'probe:onLoadMore' },
+                { action: 'setValue', args: { path: 'lm', value: '${currentPage}|${pageSize}|${total}' } },
+              ],
               item: { type: 'text', text: '${$slot.item.label}' },
             },
+            { type: 'text', text: 'lm:${lm}' },
           ],
         }}
         env={env}
@@ -320,6 +326,9 @@ describe('list infinite-scroll integration', () => {
     expect(triggerIntersection()).toBe(true);
 
     await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
+    // onLoadMore payload fields flow to the action args as evaluationBindings:
+    // { currentPage: 2, pageSize: 3, total: 12 }.
+    await waitFor(() => expect(screen.getByText('lm:2|3|12')).toBeTruthy());
   });
 
   it('hides the sentinel and stops dispatching at the last page', async () => {

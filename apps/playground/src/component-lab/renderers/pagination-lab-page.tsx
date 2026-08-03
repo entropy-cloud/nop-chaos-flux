@@ -1,4 +1,5 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
+import { c4c3HostSchemas, c4c3PagedRecords } from './data-c4c3-host';
 
 const simplePagination = {
   type: 'page',
@@ -63,6 +64,13 @@ export function PaginationLabPage() {
           description: 'currentPage=999 with total=25/pageSize=10 clamps to the last page (3).',
           schema: boundaryClamp,
           data: {},
+        },
+        {
+          title: 'Host pagination drives a list data flow (C4.3 Phase 3)',
+          description:
+            'C4.3 Phase 3: the standalone pagination publishes its state through statusPath; the controlled list re-slices as the page changes, so pagination drives the list data flow end to end.',
+          schema: c4c3HostSchemas.paginationDrivesList,
+          data: { records: c4c3PagedRecords },
         },
       ]}
     />

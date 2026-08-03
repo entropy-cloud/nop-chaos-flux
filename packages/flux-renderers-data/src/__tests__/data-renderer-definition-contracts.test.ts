@@ -39,6 +39,13 @@ describe('data renderer definition contracts', () => {
     expect(nodeField?.params).toEqual(['node', 'index', 'depth', 'key', 'parentNode']);
   });
 
+  it('tree registers the multiple field consumed for aria-multiselectable', () => {
+    const tree = dataRendererDefinitions.find((d) => d.type === 'tree');
+    const multipleField = tree?.fields?.find((f) => f.key === 'multiple');
+    expect(multipleField?.kind).toBe('prop');
+    expect(multipleField?.valueType).toBe('boolean');
+  });
+
   it('chart has onClick and onHover events', () => {
     const chart = dataRendererDefinitions.find((d) => d.type === 'chart');
     expect(chart?.fields?.some((f) => f.key === 'onClick' && f.kind === 'event')).toBe(true);
@@ -138,6 +145,16 @@ describe('data renderer definition contracts', () => {
     for (const def of dataRendererDefinitions) {
       expect(def.hostContract).toBeUndefined();
     }
+  });
+
+  it('data-source registers the operation control layer (control/retry) consumed by the compiler and runtime', () => {
+    const ds = dataRendererDefinitions.find((d) => d.type === 'data-source');
+    const keys = ds?.fields?.map((f) => f.key) ?? [];
+    // design.md §4 documents the operation control layer; source-compiler.ts
+    // compileOperationControl and source-registry.ts consume it. The definition
+    // fields must expose it to authoring/tooling surfaces.
+    expect(keys).toContain('control');
+    expect(keys).toContain('retry');
   });
 
   it('table renderer has value-or-region fields for empty and loadingContent', () => {

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
@@ -289,5 +289,80 @@ describe('PaginationRenderer (W2a — standalone pagination interaction owner)',
 
     expect(paginationRoot().getAttribute('data-total')).toBe('100');
     expect(paginationRoot().getAttribute('data-total-pages')).toBe('10');
+  });
+
+  it('publishes the pagination status summary through statusPath (design §7 shape)', async () => {
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/pagination-statuspath"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'pagination',
+              testid: 'status-pagination',
+              currentPage: 2,
+              pageSize: 10,
+              total: 25,
+              statusPath: 'pager',
+            },
+            {
+              type: 'text',
+              text:
+                '${pager?.kind}:${pager?.currentPage}:${pager?.pageSize}:${pager?.total}:${pager?.totalPages}:${pager?.canGoNext}:${pager?.canGoPrev}',
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    // total=25, pageSize=10 → totalPages=3; page 2 → canGoNext=true, canGoPrev=true.
+    await waitFor(() =>
+      expect(screen.getByText('pagination:2:10:25:3:true:true')).toBeTruthy(),
+    );
+  });
+
+  it('updates the status summary after a page change and clears it on unmount', async () => {
+    const SchemaRenderer = createDataSchemaRenderer();
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://data/pagination-statuspath-unmount"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'pagination',
+              testid: 'status-pagination',
+              currentPage: 1,
+              pageSize: 10,
+              total: 25,
+              statusPath: 'pager',
+            },
+            {
+              type: 'text',
+              text:
+                '${pager?.kind}:${pager?.currentPage}:${pager?.canGoNext}:${pager?.canGoPrev}',
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('pagination:1:true:false')).toBeTruthy());
+
+    // Page 3 (last) → canGoNext flips to false in the published summary.
+    fireEvent.click(screen.getByText('3'));
+    await waitFor(() => expect(screen.getByText('pagination:3:false:true')).toBeTruthy());
+
+    // Unmount clears the published status (leaf scope no longer carries it).
+    view.unmount();
+    expect(document.body.textContent ?? '').not.toContain('pagination:3');
   });
 });

@@ -1,4 +1,5 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
+import { c4c3HostSchemas } from './data-c4c3-host';
 
 const barChart = {
   type: 'page',
@@ -167,6 +168,22 @@ export function ChartLabPage() {
             'legend:true forces the legend to render even for a single series (default heuristic hides it for one series).',
           schema: legendToggleChart,
           data: { chartData },
+        },
+        {
+          title: 'Host chart data flow and empty state (C4.3 Phase 3)',
+          description:
+            'C4.3 Phase 3: the chart renders scope data; a button swaps the data in-place (no remount), another clears it to the explicit empty state.',
+          schema: c4c3HostSchemas.chartFlow,
+          data: {
+            chartRows: [
+              { name: 'Alpha', value: 1 },
+              { name: 'Beta', value: 2 },
+            ],
+            chartRows2: [
+              { name: 'Gamma', value: 7 },
+              { name: 'Delta', value: 9 },
+            ],
+          },
         },
       ]}
     />

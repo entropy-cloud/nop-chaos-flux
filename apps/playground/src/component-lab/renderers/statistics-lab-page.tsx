@@ -6,8 +6,7 @@ const basicStatistics = {
     {
       type: 'statistics',
       testid: 'demo-statistics-basic',
-      source: '${records}',
-      statistics: [{ label: 'Total', field: 'value', aggregation: 'sum' }],
+      total: '${totalCount}',
     },
   ],
 };
@@ -15,18 +14,14 @@ const basicStatistics = {
 export function StatisticsLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Inline field-value statistics display with CRUD integration."
+      introDescription="Standalone numeric summary display (total count). Total flows in via the total prop."
       scenarios={[
         {
           title: 'Basic statistics',
-          description: 'Inline statistics driven by source data.',
+          description: 'Numeric total summary driven by scope data.',
           schema: basicStatistics,
           data: {
-            records: [
-              { value: 10 },
-              { value: 20 },
-              { value: 30 },
-            ],
+            totalCount: 60,
           },
         },
       ]}
