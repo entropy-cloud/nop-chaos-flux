@@ -2,8 +2,11 @@ import { useRef, useState } from 'react';
 import { CalendarIcon, XIcon } from 'lucide-react';
 import { Button, Calendar, Input, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useFluxTranslation } from '@nop-chaos/flux-i18n';
+import { enUS as enUSLocale, zhCN as zhCNLocale } from 'react-day-picker/locale';
 import {
   DEFAULT_DATETIME_FORMAT,
+  DEFAULT_TIME_FORMAT,
   type DateOptions,
   formatDate,
   isWithinRange,
@@ -17,6 +20,10 @@ type RangeMatcher = { before: Date } | { after: Date };
 
 const DATE_FIELD_METHODS = ['clear', 'focus'] as const;
 
+function calendarLocaleFor(language: string | undefined) {
+  return language?.toLowerCase().startsWith('zh') ? zhCNLocale : enUSLocale;
+}
+
 export interface DateFieldControlProps {
   id: string;
   cid?: number;
@@ -27,6 +34,8 @@ export interface DateFieldControlProps {
   displayFormat: string;
   utc: boolean;
   withTime: boolean;
+  /** Popover time-input granularity (e.g. `HH:mm:ss` renders a seconds field). */
+  timeFormat?: string;
   minDate: Date | undefined;
   maxDate: Date | undefined;
   clearable: boolean;
@@ -74,6 +83,7 @@ export function DateFieldControl(props: DateFieldControlProps) {
     displayFormat,
     utc,
     withTime,
+    timeFormat = DEFAULT_TIME_FORMAT,
     minDate,
     maxDate,
     clearable,
@@ -88,6 +98,7 @@ export function DateFieldControl(props: DateFieldControlProps) {
     onFocus,
   } = props;
 
+  const { t, i18n } = useFluxTranslation();
   const options: DateOptions = { utc };
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -101,6 +112,8 @@ export function DateFieldControl(props: DateFieldControlProps) {
 
   const hour = selected ? selected.getHours() : 0;
   const minute = selected ? selected.getMinutes() : 0;
+  const second = selected ? selected.getSeconds() : 0;
+  const withSeconds = withTime && timeFormat.includes('ss');
 
   useInputComponentHandle({
     id,
@@ -131,7 +144,8 @@ export function DateFieldControl(props: DateFieldControlProps) {
     // Preserve existing time when picking a date for datetime fields.
     const base = new Date(day);
     if (withTime && selected) {
-      base.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
+      const secs = withSeconds ? selected.getSeconds() : 0;
+      base.setHours(selected.getHours(), selected.getMinutes(), secs, 0);
     }
     commitDate(base);
     if (!withTime) {
@@ -143,15 +157,24 @@ export function DateFieldControl(props: DateFieldControlProps) {
     if (raw === '') return;
     const numeric = clamp(Number(raw), 0, part === 'hour' ? 23 : 59);
     const base = selected ? new Date(selected) : new Date();
+    const secs = withSeconds ? base.getSeconds() : 0;
     base.setHours(
       part === 'hour' ? numeric : base.getHours(),
       part === 'minute' ? numeric : base.getMinutes(),
-      0,
+      secs,
       0,
     );
     // Time-typing must not bypass minDate/maxDate. Clamp the resulting datetime
     // into [minDate, maxDate] (calendar path already constrains via disabled
     // matchers). Bounds are calendar-local, same frame as `selected`/`base`.
+    commitDate(clampToRange(base));
+  }
+
+  function handleSecondsChange(raw: string) {
+    if (raw === '') return;
+    const numeric = clamp(Number(raw), 0, 59);
+    const base = selected ? new Date(selected) : new Date();
+    base.setHours(base.getHours(), base.getMinutes(), numeric, 0);
     commitDate(clampToRange(base));
   }
 
@@ -224,6 +247,7 @@ export function DateFieldControl(props: DateFieldControlProps) {
             onSelect={(day) => handleSelect(day ?? undefined)}
             disabled={disabledMatchers}
             captionLayout="dropdown"
+            locale={calendarLocaleFor(i18n.language)}
           />
           {withTime ? (
             <div className="flex items-center gap-2 px-1 pt-2">
@@ -233,7 +257,7 @@ export function DateFieldControl(props: DateFieldControlProps) {
                 min={0}
                 max={23}
                 value={String(hour)}
-                aria-label="Hour"
+                aria-label={t('date.hour')}
                 disabled={!interactive}
                 onChange={(event) => handleTimeChange('hour', event.target.value)}
                 className="h-8 w-16"
@@ -245,11 +269,27 @@ export function DateFieldControl(props: DateFieldControlProps) {
                 min={0}
                 max={59}
                 value={String(minute)}
-                aria-label="Minute"
+                aria-label={t('date.minute')}
                 disabled={!interactive}
                 onChange={(event) => handleTimeChange('minute', event.target.value)}
                 className="h-8 w-16"
               />
+              {withSeconds ? (
+                <>
+                  <span className="text-muted-foreground" aria-hidden="true">:</span>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={59}
+                    value={String(second)}
+                    aria-label={t('date.second')}
+                    disabled={!interactive}
+                    onChange={(event) => handleSecondsChange(event.target.value)}
+                    className="h-8 w-16"
+                  />
+                </>
+              ) : null}
             </div>
           ) : null}
           {clearable && hasValue ? (
@@ -258,7 +298,7 @@ export function DateFieldControl(props: DateFieldControlProps) {
                 type="button"
                 variant="ghost"
                 size="icon-xs"
-                aria-label="Clear"
+                aria-label={t('common.clear')}
                 onClick={handleClear}
                 data-testid="date-clear"
               >
@@ -273,7 +313,7 @@ export function DateFieldControl(props: DateFieldControlProps) {
           type="button"
           size="icon-xs"
           variant="ghost"
-          aria-label="Clear"
+          aria-label={t('common.clear')}
           className="pointer-events-auto absolute right-1"
           onClick={handleClear}
           data-testid="date-clear-inline"

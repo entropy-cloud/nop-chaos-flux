@@ -2,6 +2,8 @@ import { useRef, useState, type ChangeEvent } from 'react';
 import { CalendarIcon, XIcon } from 'lucide-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useFluxTranslation, t } from '@nop-chaos/flux-i18n';
+import { enUS as enUSLocale, zhCN as zhCNLocale } from 'react-day-picker/locale';
 import { Button, Calendar, Input, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { useFormFieldController } from '../field-utils.js';
 import type { DateRangeSchema } from '../schemas.js';
@@ -23,6 +25,10 @@ import {
 } from './date/date-utils.js';
 
 const DATE_RANGE_METHODS = ['clear', 'focus'] as const;
+
+function calendarLocaleFor(language: string | undefined) {
+  return language?.toLowerCase().startsWith('zh') ? zhCNLocale : enUSLocale;
+}
 
 interface RangeShortcut {
   label: string;
@@ -69,6 +75,7 @@ function clampDateToRange(
 }
 
 export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>) {
+  const { t, i18n } = useFluxTranslation();
   const name = String(props.props.name ?? '');
   const rangeKind = asRangeKind(props.props.rangeKind);
   const delimiter =
@@ -265,7 +272,7 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
           {hasValue ? (
             <span data-testid="range-display">{displayText}</span>
           ) : (
-            <span className="text-muted-foreground">{placeholder ?? 'Select range'}</span>
+            <span className="text-muted-foreground">{placeholder ?? t('date.selectRange')}</span>
           )}
         </PopoverTrigger>
         <PopoverContent
@@ -295,20 +302,21 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
               }
               disabled={disabledMatchers}
               numberOfMonths={1}
+              locale={calendarLocaleFor(i18n.language)}
             />
           ) : null}
 
           {rangeKind === 'datetime' ? (
             <div className="flex flex-col gap-2 px-1 pt-2">
               <RangeTimeRow
-                label="Start time"
+                label={t('date.startTime')}
                 hour={timeComponent('start', 'hour')}
                 minute={timeComponent('start', 'minute')}
                 disabled={!presentation.interactive}
                 onChange={(component, raw) => setTimeOn('start', component, raw)}
               />
               <RangeTimeRow
-                label="End time"
+                label={t('date.endTime')}
                 hour={timeComponent('end', 'hour')}
                 minute={timeComponent('end', 'minute')}
                 disabled={!presentation.interactive}
@@ -323,7 +331,7 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
                 type="time"
                 value={nativeTimeValue('start')}
                 disabled={!presentation.interactive}
-                aria-label="Range start time"
+                aria-label={t('date.rangeStartTime')}
                 onChange={(event) => handleNativeTimeChange('start', event)}
                 className="h-8"
               />
@@ -331,7 +339,7 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
                 type="time"
                 value={nativeTimeValue('end')}
                 disabled={!presentation.interactive}
-                aria-label="Range end time"
+                aria-label={t('date.rangeEndTime')}
                 onChange={(event) => handleNativeTimeChange('end', event)}
                 className="h-8"
               />
@@ -360,7 +368,7 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
                 type="button"
                 variant="ghost"
                 size="icon-xs"
-                aria-label="Clear"
+                aria-label={t('common.clear')}
                 onClick={handleClear}
                 data-testid="range-clear"
               >
@@ -375,7 +383,7 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
           type="button"
           size="icon-xs"
           variant="ghost"
-          aria-label="Clear"
+          aria-label={t('common.clear')}
           className="pointer-events-auto absolute right-1"
           onClick={handleClear}
           data-testid="range-clear-inline"
@@ -408,7 +416,7 @@ function RangeTimeRow(props: RangeTimeRowProps) {
         min={0}
         max={23}
         value={hour}
-        aria-label={`${label} hour`}
+        aria-label={`${label} ${t('flux.date.hour')}`}
         disabled={disabled}
         onChange={(event) => onChange('hour', event.target.value)}
         className="h-8 w-16"
@@ -420,7 +428,7 @@ function RangeTimeRow(props: RangeTimeRowProps) {
         min={0}
         max={59}
         value={minute}
-        aria-label={`${label} minute`}
+        aria-label={`${label} ${t('flux.date.minute')}`}
         disabled={disabled}
         onChange={(event) => onChange('minute', event.target.value)}
         className="h-8 w-16"

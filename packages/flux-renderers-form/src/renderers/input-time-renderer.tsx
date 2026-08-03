@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Input, Button, cn } from '@nop-chaos/ui';
 import { useFormFieldController } from '../field-utils.js';
 import type { InputTimeSchema } from '../schemas.js';
@@ -127,7 +128,7 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
           type="button"
           size="icon-xs"
           variant="ghost"
-          aria-label="Clear"
+          aria-label={t('flux.common.clear')}
           data-testid="time-clear"
           className="absolute right-1"
           onClick={() => handlers.onChange(undefined)}

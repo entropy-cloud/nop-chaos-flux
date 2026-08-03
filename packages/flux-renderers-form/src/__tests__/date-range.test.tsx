@@ -310,7 +310,7 @@ describe('date-range renderer — D4 bound independence (datetime-range)', () =>
 
     const popover = await openRange();
     // Change the END hour to 20; start must survive at 08:00.
-    const endHour = within(popover).getByLabelText('End time hour') as HTMLInputElement;
+    const endHour = within(popover).getByLabelText('End time Hour') as HTMLInputElement;
     fireEvent.change(endHour, { target: { value: '20' } });
 
     fireEvent.click(screen.getByText('Submit'));
@@ -336,7 +336,7 @@ describe('date-range renderer — D4 bound independence (datetime-range)', () =>
     } as any);
 
     const popover = await openRange();
-    const startMinute = within(popover).getByLabelText('Start time minute') as HTMLInputElement;
+    const startMinute = within(popover).getByLabelText('Start time Minute') as HTMLInputElement;
     fireEvent.change(startMinute, { target: { value: '45' } });
 
     fireEvent.click(screen.getByText('Submit'));
@@ -364,7 +364,7 @@ describe('date-range renderer — D4 bound independence (datetime-range)', () =>
     } as any);
 
     const popover = await openRange();
-    const endHour = within(popover).getByLabelText('End time hour') as HTMLInputElement;
+    const endHour = within(popover).getByLabelText('End time Hour') as HTMLInputElement;
     // Type 25 — the hour field clamps to 23, then commitRange clamps the
     // resulting datetime into maxDate (20:00). Without the bounds fix the
     // committed end would be 23:00 (out of bounds).

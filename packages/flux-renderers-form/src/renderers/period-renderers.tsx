@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { XIcon } from 'lucide-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
 import { useFormFieldController } from '../field-utils.js';
 import type { InputPeriodSchema } from '../schemas.js';
@@ -20,6 +21,12 @@ import {
 const PERIOD_METHODS = ['clear', 'focus'] as const;
 
 const QUARTER_LABELS = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
+
+interface PeriodShortcut {
+  label: string;
+  start: string;
+  end: string;
+}
 
 function periodMarker(kind: PeriodKind): string {
   switch (kind) {
@@ -68,6 +75,16 @@ export function PeriodRenderer(
       ? props.props.placeholder
       : undefined;
   const ariaLabel = String((props.props.label ?? name) || '') || undefined;
+  // Single mode uses `start` as the value; range mode requires both ends.
+  const shortcuts: PeriodShortcut[] = Array.isArray(props.props.shortcuts)
+    ? (props.props.shortcuts as PeriodShortcut[]).filter(
+        (s) =>
+          s &&
+          typeof s.label === 'string' &&
+          typeof s.start === 'string' &&
+          (selectionMode !== 'range' || typeof s.end === 'string'),
+      )
+    : [];
 
   const { value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.props.disabled,
@@ -128,6 +145,14 @@ export function PeriodRenderer(
     handlers.onChange(joinDateRange(normalized.start, normalized.end, delimiter));
   }
 
+  function applyShortcut(shortcut: PeriodShortcut) {
+    if (selectionMode === 'range') {
+      commitRange(shortcut.start, shortcut.end);
+      return;
+    }
+    commitSingle(shortcut.start);
+  }
+
   const parsedRange =
     selectionMode === 'range'
       ? parsePeriodRange(storedValue, delimiter, kind, valueFormat)
@@ -143,7 +168,7 @@ export function PeriodRenderer(
 
   return (
     <div
-      className={cn(periodMarker(kind), 'flex items-center gap-2', props.meta.className)}
+      className={cn(periodMarker(kind), 'flex flex-wrap items-center gap-2', props.meta.className)}
       data-slot="period-control"
       data-period-kind={kind}
       data-selection-mode={selectionMode}
@@ -175,8 +200,8 @@ export function PeriodRenderer(
             value={formatPeriod(startVal, kind, valueFormat)}
             valueFormat={valueFormat}
             displayFormat={displayFormat}
-            placeholder="Start"
-            ariaLabel={ariaLabel ? `${ariaLabel} start` : 'Range start'}
+            placeholder={t('flux.date.start')}
+            ariaLabel={ariaLabel ? `${ariaLabel} ${t('flux.date.start')}` : t('flux.date.rangeStart')}
             interactive={interactive}
             showError={presentation.showError}
             errorId={errorId}
@@ -195,8 +220,8 @@ export function PeriodRenderer(
             value={formatPeriod(endVal, kind, valueFormat)}
             valueFormat={valueFormat}
             displayFormat={displayFormat}
-            placeholder="End"
-            ariaLabel={ariaLabel ? `${ariaLabel} end` : 'Range end'}
+            placeholder={t('flux.date.end')}
+            ariaLabel={ariaLabel ? `${ariaLabel} ${t('flux.date.end')}` : t('flux.date.rangeEnd')}
             interactive={interactive}
             showError={presentation.showError}
             errorId={errorId}
@@ -207,12 +232,28 @@ export function PeriodRenderer(
           />
         </>
       )}
+      {shortcuts.length > 0 ? (
+        <div className="flex w-full flex-wrap gap-1" data-testid={`period-shortcuts-${kind}`}>
+          {shortcuts.map((shortcut) => (
+            <Button
+              key={shortcut.label}
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid={`period-shortcut-${kind}`}
+              onClick={() => applyShortcut(shortcut)}
+            >
+              {shortcut.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
       {clearable && hasValue && interactive ? (
         <Button
           type="button"
           size="icon-xs"
           variant="ghost"
-          aria-label="Clear"
+          aria-label={t('flux.common.clear')}
           data-testid={`period-clear-${kind}`}
           onClick={() => handlers.onChange(undefined)}
         >
@@ -325,7 +366,7 @@ function PeriodPicker(props: PeriodPickerProps) {
         disabled={!interactive}
         maxLength={4}
         placeholder={placeholder ?? 'YYYY'}
-        aria-label={ariaLabel ? `${ariaLabel} year` : 'Quarter year'}
+        aria-label={ariaLabel ? `${ariaLabel} ${t('flux.date.quarterYear')}` : t('flux.date.quarterYear')}
         aria-invalid={showError ? true : undefined}
         aria-describedby={showError ? errorId : undefined}
         className="w-24"
@@ -343,7 +384,7 @@ function PeriodPicker(props: PeriodPickerProps) {
       <NativeSelect
         value={currentQuarter ? String(currentQuarter) : ''}
         disabled={!interactive}
-        aria-label={ariaLabel ? `${ariaLabel} quarter` : 'Quarter'}
+        aria-label={ariaLabel ? `${ariaLabel} ${t('flux.date.quarter')}` : t('flux.date.quarter')}
         onChange={(event) => {
           const q = Number(event.target.value);
           const yr = yearValue ? Number(yearValue) : 0;
