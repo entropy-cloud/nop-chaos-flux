@@ -18,12 +18,13 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `name`、`label`、`columns`、`rowKey`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`required`。
+- 正式字段为 `name`、`label`、`columns`、`rowKey`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`removeWhen`、`required`。
+- `removeWhen`（可选）：相对当前行求值的布尔表达式字符串（`${...}` 形式）。声明后，某行仅在表达式对该行求值为真时允许删除；求值为假的行删除按钮禁用。未声明时所有行在 `minItems` 地板之上均可删除。求值出错 fail-open。与 combo/array-field 的 per-row 删除门控语义一致（`docs/architecture/array-field.md` _Per-Row Delete Gating_）。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `name`、`columns`、`rowKey`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`required`: `value`
+- `name`、`columns`、`rowKey`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`removeWhen`、`required`: `value`
 - `item`: `region`（regionKey `item`，参数 `index`/`value`）
 - `onAdd`、`onRemove`、`onReorder`: `event`
 
@@ -39,6 +40,7 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 推荐句柄为 `component:addItem`、`component:removeItem`、`component:moveItem`（canonical composite handle，method-locked）。design 早期写作 `addRow`/`removeRow`/`moveRow` 为**概念别名**，映射到 canonical `addItem`/`removeItem`/`moveItem` 方法名；不扩展/泛化句柄工厂。
+- `removeItem` 受 `minItems` field-global 地板与 per-row `removeWhen` 门控叠加约束（取并集禁用）；详见 §4 与 `docs/architecture/array-field.md` 的 _Per-Row Delete Gating_。
 
 ## 9. 数据源、表达式、导入能力接入点
 
@@ -46,7 +48,7 @@
 
 ## 10. 样式与 DOM marker 约定
 
-- 根节点输出 `nop-input-table` marker；每行输出 `nop-input-table__row` marker。
+- 根节点输出 `nop-input-table` marker；每行输出 `data-slot="input-table-row"` + `data-row-index`（早期 BEM `nop-input-table__row` 已于 C-06 移除，稳定契约为 data-slot 标记）。
 
 ## 11. 实现拆分建议
 

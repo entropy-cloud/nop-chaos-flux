@@ -8,20 +8,20 @@
 
 ## 2. 与 AMIS 能力对照
 
-| 能力              | AMIS transfer                          | Flux 当前              | 优先级 |
-| ----------------- | -------------------------------------- | ---------------------- | ------ |
-| 双栏穿梭          | ✅                                     | ✅                     | —      |
-| valueKey/labelKey | ✅                                     | ✅                     | —      |
-| searchable 过滤   | ✅ 本地 + 异步 `onSearch`              | ✅ 本地                | —      |
-| checkAll 全选     | ✅ 左侧标题栏 Checkbox + `toggleAll()` | ❌                     | P1     |
-| clearAll 清空     | ✅ 右侧标题栏 "Clear" 链接             | ❌                     | P1     |
-| statistics 统计   | ✅ `(available/total)`                 | ❌ 仅 `options.length` | P1     |
-| selectMode        | ✅ list/table/tree/chained/associated  | ❌ 仅 list             | P2     |
-| 级联选中          | ✅ `autoCheckChildren`                 | ❌                     | P2     |
-| 结果面板搜索      | ✅ `resultSearchable`                  | ✅ 共用 searchable     | —      |
-| 结果可排序        | ✅ `sortable` + `ResultList`           | ❌                     | P3     |
-| 分页              | ✅ `pagination`                        | ❌                     | P3     |
-| 虚拟滚动          | ✅ `virtualThreshold`                  | ❌ Non-Goal            | P3     |
+| 能力              | AMIS transfer                          | Flux 当前                       | 优先级 |
+| ----------------- | -------------------------------------- | ------------------------------- | ------ |
+| 双栏穿梭          | ✅                                     | ✅                              | —      |
+| valueKey/labelKey | ✅                                     | ✅                              | —      |
+| searchable 过滤   | ✅ 本地 + 异步 `onSearch`              | ✅ 本地                         | —      |
+| checkAll 全选     | ✅ 左侧标题栏 Checkbox + `toggleAll()` | ✅（含 `onSelectAll` 事件派发） | —      |
+| clearAll 清空     | ✅ 右侧标题栏 "Clear" 链接             | ❌                              | P1     |
+| statistics 统计   | ✅ `(available/total)`                 | ❌ 仅 `options.length`          | P1     |
+| selectMode        | ✅ list/table/tree/chained/associated  | ❌ 仅 list                      | P2     |
+| 级联选中          | ✅ `autoCheckChildren`                 | ❌                              | P2     |
+| 结果面板搜索      | ✅ `resultSearchable`                  | ✅ 共用 searchable              | —      |
+| 结果可排序        | ✅ `sortable` + `ResultList`           | ❌                              | P3     |
+| 分页              | ✅ `pagination`                        | ❌                              | P3     |
+| 虚拟滚动          | ✅ `virtualThreshold`                  | ❌ Non-Goal                     | P3     |
 
 ## 3. Schema 定义
 
@@ -52,7 +52,7 @@ export interface TransferSchema extends BoundFieldSchemaBase {
 
 - `label`: `value-or-region`
 - `name`、`options`、`multiple`、`valueKey`、`labelKey`、`searchable`、`searchPlaceholder`、`required`、`checkAll`、`checkAllLabel`、`clearable`、`selectTitle`、`resultTitle`: `value`
-- `onAdd`、`onRemove`、`onChange`、`onSelectAll`: `event`
+- `onAdd`、`onRemove`、`onChange`、`onSelectAll`: `event`（`onSelectAll` 在 toggle-all 将候选全选时派发；反选（取消全选）不派发）
 
 ## 5. 运行期状态归属
 
