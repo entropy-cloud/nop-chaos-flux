@@ -47,11 +47,13 @@ describe('scada-canvas render smoke', () => {
     expect(handles.length).toBeGreaterThan(0);
   });
 
-  it('renders the lightweight loading placeholder while config is missing', () => {
+  it('renders ready (empty scene) when config is missing — author-less schema fallback (plan 2026-08-04-1558-1 Phase 3)', () => {
+    // P3 fix: parseAndValidateConfig 兜底返回最小合法空场景 { version:1, variables:[], symbols:[] }，
+    // renderer 构建 empty 画布并进入 ready（不再永久 loading）。defaultSchema 元数据同步含 config。
     const SchemaRenderer = createSchemaRenderer(industrialRendererDefinitions);
     const { container } = render(
       <SchemaRenderer
-        schemaUrl="test://industrial/smoke-loading"
+        schemaUrl="test://industrial/smoke-empty"
         schema={{ type: 'scada-canvas' }}
         env={createDefaultEnv()}
         formulaCompiler={createFormulaCompiler()}
@@ -60,6 +62,10 @@ describe('scada-canvas render smoke', () => {
     const root = container.querySelector('[data-slot="scada-canvas"]') as HTMLElement;
     expect(root).toBeTruthy();
     expect(root.className).toContain('nop-scada-canvas');
-    expect(container.querySelector('[data-slot="scada-canvas-loading"]')).toBeTruthy();
+    // 状态须为 ready（非 loading）；空场景经 useScadaConfigSync onBuilt 翻转 status。
+    expect(root.getAttribute('data-status')).toBe('ready');
+    // 渲染 canvas 占位（非 loading 占位）：空场景已构建，进入 ready 画布层。
+    expect(container.querySelector('[data-slot="scada-canvas-canvas"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="scada-canvas-loading"]')).toBeNull();
   });
 });

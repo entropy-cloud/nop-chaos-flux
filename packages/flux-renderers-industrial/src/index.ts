@@ -1,6 +1,17 @@
 import { registerRendererDefinitions, type RendererRegistry } from '@nop-chaos/flux-core';
-import { registerBuiltinScadaSymbols } from './symbols/register-builtin.js';
+import { registerScadaSymbols } from './symbols/register-builtin.js';
 import { industrialRendererDefinitions } from './renderer-definitions.js';
+
+/**
+ * 包公共面（design-renderer.md §11 授权面）：
+ * - 注册入口：`registerScadaRenderers` / `registerScadaSymbols` / 符号注册表 API（`registerScadaSymbol` 等）
+ * - 类型：`ScadaCanvasSchema` / `ScadaCanvasEvents` / `ScadaConfig` / `ScadaSymbolNode` / `ScadaPointDeclaration`
+ *   / `ScadaSymbolDefinition` / `ScadaSymbolProps`（+ 序列化/绑定 companion 类型）
+ *
+ * 收敛历史（plan 2026-08-04-1558-1 Phase 2）：原 index.ts 导出 ~93 个符号，其中 ~90 个零外部消费者
+ * （engine/binding/symbols 内部实现类）。零消费者内部类不再经包入口泄漏；内部实现保持模块内可达，
+ * 测试走 internal path（`../engine/...`、`../binding/...`、`../symbols/...`）。
+ */
 
 export type { ScadaCanvasSchema, ScadaCanvasEvents } from './schemas.js';
 export type {
@@ -16,83 +27,42 @@ export type {
   ScadaSymbolEvent,
   ScadaPrimitive,
 } from './serialization/config-types.js';
-export type { ScadaSymbolDefinition, ScadaSymbolProps, ScadaSymbolStylePatch, ScadaFillStyle } from './symbols/symbol-types.js';
-export {
-  scadaImageType,
-  scadaVideoType,
-  SCADA_IMAGE_PLACEHOLDER,
-  SCADA_VIDEO_PLACEHOLDER,
-} from './symbols/base-shapes/index.js';
 export type {
-  ScadaPointValue,
-  ScadaPointState,
-  ScadaPointChangeEvent,
-  PointChangeListener,
-  Unsubscribe,
-} from './binding/point-store.js';
-export { PointStore, EventHub } from './binding/point-store.js';
-export { ReverseIndex, extractPointIdRefs, collectBindingPointIds, type BindingTarget, type SymbolBindingTarget } from './binding/reverse-index.js';
-export {
-  DirtyCollector,
-  RefreshPipeline,
-  createTickScheduler,
-  type ApplyAttrs,
-  type CollectedEntry,
-  type TickScheduler,
-  type FrameScheduler,
-  type RefreshPipelineOptions,
-} from './binding/dirty-collector.js';
-export { ExpressionEvaluator, type EvaluationResult, type ExpressionEvaluatorContext } from './binding/expression-evaluator.js';
-export {
-  BindResolver,
-  applyScale,
-  formatValue,
-  isBindableProperty,
-  BINDABLE_PROPERTIES,
-  type BindResolverDeps,
-  type ResolvedBinding,
-  type BindableProperty,
-} from './binding/bind-resolver.js';
-export { resolveState, type ResolveStateOptions } from './binding/value-to-state.js';
-export { Animator, type AnimatorOptions, type AnimatorEvents, type AnimationStartStopEvent } from './binding/animator.js';
-export { HitResolver, type HitResolverOptions } from './engine/hit.js';
-export {
-  EventBridge,
-  buildSymbolEventPayload,
-  type EventBridgeOptions,
-  type ScadaSymbolEventName,
-  type ScadaSymbolEventPayload,
-  type BuildSymbolEventPayloadInput,
-} from './engine/event-bridge.js';
-
-export { ScadaCanvasEngine, type ScadaEngineOptions } from './engine/scada-engine.js';
-export { InteractionOverlay, INTERACTION_STYLE_PRESETS, type InteractionStyle, type InteractionState } from './engine/interaction-overlay.js';
-export { StateVisualApplier } from './symbols/visual-state.js';
-export { registerScadaSymbol, unregisterScadaSymbol, hasScadaSymbol } from './symbols/symbol-registry.js';
-export { resolveSymbolStyle } from './symbols/style-resolver.js';
-export {
-  deepMergeInstanceProps,
-  mergeInstanceProps,
-  instantiateInstance,
-  diffInstanceProps,
-  scadaGroupType,
-  scadaGroupDefinition,
-} from './symbols/compound.js';
-export {
-  worldToViewport,
-  viewportToWorld,
-  fit,
-  center,
-  zoomAt,
-  setViewport,
-  MIN_SCALE,
-  MAX_SCALE,
-} from './engine/viewport.js';
-
+  ScadaSymbolDefinition,
+  ScadaSymbolProps,
+  ScadaSymbolStylePatch,
+  ScadaFillStyle,
+} from './symbols/symbol-types.js';
 export type { IndustrialRendererSchema } from './renderer-definitions.js';
 
-registerBuiltinScadaSymbols();
+// 符号注册表 API（design-symbols.md §3：供第三方扩展注册自定义图元）。
+export {
+  registerScadaSymbol,
+  unregisterScadaSymbol,
+  hasScadaSymbol,
+  getScadaSymbolDefinition,
+  listScadaSymbols,
+} from './symbols/symbol-registry.js';
 
+// 内置图元注册入口（幂等；registerScadaRenderers 内部亦调用）。
+export { registerScadaSymbols, builtinScadaSymbolDefinitions } from './symbols/register-builtin.js';
+
+/**
+ * 序列化契约函数（design-renderer.md §4.3 表）：design-contract 函数，运行期经 `exportConfig`/
+ * `importConfig` 组件句柄使用；导出供 host 侧工具链（config 迁移/校验/审计）直接调用。
+ * 无 live 内部消费者（renderer 经 `engine.exportConfig()` 路径，非此函数），保留导出为契约诚实。
+ */
+export { serializeScadaConfig } from './serialization/serialize.js';
+
+/**
+ * `scada-canvas` renderer 注册入口（design-renderer.md §11）。
+ *
+ * 注册内置 SCADA 图元（`registerScadaSymbols()`，幂等）+ 注册 `scada-canvas` renderer 定义。
+ * 调用方仅需 `registerScadaRenderers(registry)` 即完成全部注册——不再依赖模块加载副作用
+ * （plan 2026-08-04-1558-1 Phase 1：移除历史 `registerBuiltinScadaSymbols()` 顶层副作用调用，
+ * 该副作用曾强制任何 `import type` 消费者拖入 leafer-ui canvas 运行时）。
+ */
 export function registerScadaRenderers(registry: RendererRegistry) {
+  registerScadaSymbols();
   return registerRendererDefinitions(registry, industrialRendererDefinitions);
 }

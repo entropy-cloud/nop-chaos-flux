@@ -64,3 +64,12 @@ export function registerBuiltinScadaSymbols(): void {
     if (!hasScadaSymbol(definition.type)) registerScadaSymbol(definition);
   }
 }
+
+/**
+ * 公开注册入口（plan 2026-08-04-1558-1 Phase 1）：幂等包装 `registerBuiltinScadaSymbols`，
+ * 对齐 `registerXxxRenderers` 命名约定，供消费方在调用 `registerScadaRenderers` 之外显式触发。
+ * `registerScadaRenderers` 内部亦会调用本函数，故绝大多数消费方经 `registerScadaRenderers` 即可。
+ */
+export function registerScadaSymbols(): void {
+  registerBuiltinScadaSymbols();
+}

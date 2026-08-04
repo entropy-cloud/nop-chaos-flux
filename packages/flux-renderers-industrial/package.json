@@ -36,7 +36,7 @@
     "react-dom": "^19.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests --coverage",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

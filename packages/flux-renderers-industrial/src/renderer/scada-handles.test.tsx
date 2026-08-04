@@ -206,9 +206,13 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
       engine: ScadaCanvasEngine;
     }).engine;
 
-    expect(
-      view.container.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status'),
-    ).toBe('loading');
+    // Phase 3 author-less fallback: 缺 config 兜底空场景 → ready（不再 loading）。
+    // importConfig 后符号入树；effect 重跑沉降后 import 持久（不被空场景 props 回刷）。
+    await waitFor(() =>
+      expect(
+        view.container.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status'),
+      ).toBe('ready'),
+    );
 
     const imported = { version: 1, symbols: [{ id: 'imp-1', type: 'scada-pipe', width: 200, height: 0 }] };
     const result = await handle.capabilities.invoke('importConfig', { config: imported }, {});
@@ -251,7 +255,12 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
     );
   });
 
-  it('returns no-config errors for viewport/config commands before a scene is loaded', async () => {
+  it('returns bounds-errors for viewport commands on an empty scene; exportConfig returns the empty fallback config (plan 2026-08-04-1558-1 Phase 3)', async () => {
+    // Phase 3 author-less fallback: 缺 config 兜底空场景 → 引擎已建空场景。
+    // - fit/center：空场景 computeSymbolBounds 返回 undefined → 失败（错误信息沿用 'no config' 措辞，
+    //   实指无可拟合符号 bounds；Non-Goal 不改 handle 错误码语义）。
+    // - exportConfig：空场景已构建 → 返回空场景 config（ok）。
+    // - getSymbols：空场景 → 空数组。
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(makeProps({ props: {} }), environment);
     const handle = await resolveScadaHandle(environment);
@@ -259,8 +268,9 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
     expect(fit.ok).toBe(false);
     expect(String(fit.error)).toContain('no config');
     const exported = await handle.capabilities.invoke('exportConfig', undefined, {});
-    expect(exported.ok).toBe(false);
-    expect(String(exported.error)).toContain('no config');
+    expect(exported.ok).toBe(true);
+    expect((exported.data as { version: number; symbols: unknown[] }).version).toBe(1);
+    expect((exported.data as { version: number; symbols: unknown[] }).symbols).toEqual([]);
     const symbols = await handle.capabilities.invoke('getSymbols', undefined, {});
     expect(symbols.ok).toBe(true);
     expect(symbols.data).toEqual([]);

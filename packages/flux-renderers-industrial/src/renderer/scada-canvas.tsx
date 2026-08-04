@@ -22,11 +22,22 @@ export interface ScadaCanvasErrorInfo {
   message: string;
 }
 
+/**
+ * 最小合法空场景（plan 2026-08-04-1558-1 Phase 3 author-less schema 兜底）：
+ * author 未提供 config 时 renderer 兜底构造空场景，使画布进入 ready（不再永久 loading）。
+ * 经 `validateScadaConfig` 通过；与 `renderer-definitions.ts` defaultSchema 的 config 一致。
+ */
+export const EMPTY_SCADA_CONFIG: ScadaConfig = {
+  version: 1,
+  variables: [],
+  symbols: [],
+};
+
 function parseAndValidateConfig(
   raw: unknown,
 ): { config?: ScadaConfig; error?: ScadaCanvasErrorInfo } {
   if (raw === undefined || raw === null || raw === '') {
-    return {};
+    return { config: EMPTY_SCADA_CONFIG };
   }
   try {
     const config = parseScadaConfig(raw as string | object);

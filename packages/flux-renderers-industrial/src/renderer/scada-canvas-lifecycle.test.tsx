@@ -236,7 +236,9 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     ).toBe('ready');
   });
 
-  it('renders the loading region while config is missing and the empty region on invalid config', async () => {
+  it('renders ready (empty scene) when config is missing, and the empty region on invalid config (plan 2026-08-04-1558-1 Phase 3)', async () => {
+    // P3 fix: 缺 config 不再永久 loading——parseAndValidateConfig 兜底返回最小合法空场景，
+    // renderer 进入 ready 渲染 canvas 层（loading region 不再被调用）。
     const environment = createScadaTestEnvironment([]);
     const loadingRegion = makeRegion(() => <div data-testid="custom-loading" />);
     const emptyRegion = makeRegion(() => <div data-testid="custom-empty" />);
@@ -244,8 +246,16 @@ describe('scada-canvas lifecycle (I10.1)', () => {
       makeProps({ regions: { loading: loadingRegion, empty: emptyRegion } }),
       environment,
     );
-    await waitFor(() => expect(loadingRegion.render).toHaveBeenCalled());
-    expect(document.querySelector('[data-testid="custom-loading"]')).toBeTruthy();
+    // 缺 config → 空场景构建 → ready（loading region 不再渲染）
+    // 注：status 初始为 'loading'（useState 初值），首帧 loading.render() 会被调用一次，
+    // 随后空场景构建 onBuilt → setStatus('ready')，loading DOM 移除。本断言验证最终态。
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status'),
+      ).toBe('ready'),
+    );
+    expect(document.querySelector('[data-testid="custom-loading"]')).toBeNull();
+    expect(document.querySelector('[data-slot="scada-canvas-canvas"]')).toBeTruthy();
 
     view.rerender(
       <ScadaTestProviders environment={environment}>
