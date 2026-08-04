@@ -162,6 +162,7 @@ interface ScadaSymbolNode {
 
 - diff 消费方：renderer props `config` 变化 → `diffScadaConfig` → 引擎增量应用（`engine.applyDiff`，避免全量重建，I5.3/design-engine.md §4.2 reset 仅用于全量替换）；点表 diff 直接走数据层 `setPointValues`（design-data-binding.md §4.3）。
 - 序列化/反序列化与 leafer 引擎的边界：组态 JSON 是**唯一事实源**（single source of truth），leafer 场景树是其渲染投影；引擎导出（`exportConfig`）从组态模型生成，不反向依赖 leafer toJSON（render-engines §8 #7 直出格式含内部字段，不可作组态契约）。
+- 序列化函数导出归属（plan 2026-08-04-1558-1 Phase 3 Decision）：`serializeScadaConfig` 为 design-contract 函数，**保留导出**（包入口 `@nop-chaos/flux-renderers-industrial`），供 host 侧工具链（config 迁移/校验/审计）直接调用；运行期消费经 `component:exportConfig`/`component:importConfig` 句柄（内部转发至 `engine.exportConfig()`），renderer 不直调 `serializeScadaConfig`——故该函数无 live 内部消费者，保留导出为契约诚实（非死代码）。`parseScadaConfig`/`validateScadaConfig`/`diffScadaConfig` 为内部实现（renderer/handles 经 relative path 消费），不经包入口导出。
 
 ## 5. 字段分类
 
@@ -293,8 +294,10 @@ packages/flux-renderers-industrial/src/
 │   │   ├── use-scada-points-bridge.ts # useScopeSelector 点表桥接（I10.3）
 │   │   └── use-scada-events.ts   # 图元事件→createNormalizedActionEvent→dispatch（I10.3/I11.1）
 │   └── （测试句柄挂载/移除属 engine/test-handle.ts，design-engine.md §11；renderer 仅经 ScadaEngineOptions 传 cid/exposeTestHandle，I10.1）
-└── index.ts                      # 导出 registerScadaRenderers/registerScadaSymbol/类型
+└── index.ts                      # 公共面：registerScadaRenderers/registerScadaSymbols/registerScadaSymbol + 符号注册表 API + 类型（plan 2026-08-04-1558-1 Phase 2 收敛）
 ```
+
+- **公共导出面**（plan 2026-08-04-1558-1 Phase 2 收敛后）：`registerScadaRenderers` / `registerScadaSymbols` / 符号注册表 API（`registerScadaSymbol`/`unregisterScadaSymbol`/`hasScadaSymbol`/`getScadaSymbolDefinition`/`listScadaSymbols`）/ `builtinScadaSymbolDefinitions` / 类型（`ScadaCanvasSchema`/`ScadaCanvasEvents`/`ScadaConfig`/`ScadaSymbolNode`/`ScadaPointDeclaration`/`ScadaSymbolDefinition`/`ScadaSymbolProps` 等 + 序列化 companion 类型）。engine/binding/symbols 内部实现类（`ScadaCanvasEngine`/`PointStore`/`DirtyCollector`/`BindResolver`/`Animator`/`EventBridge`/viewport 工具等）不再经包入口导出——内部测试走 relative path（`../engine/...`），零外部消费者（audit dim 03 实核）。
 
 - 拆分依据：`renderer-implementation-guidelines.md` Case 4（引擎/绑定/图元为域核心）+ Case 1/3（renderer 壳薄、桥接 hooks 本地化）；`complex-component-design-process.md` 分层（schema → 编译（序列化/校验）→ 运行时（引擎）→ 样式）。
 - 实现阶段映射：I4.1 包基建（schemas.ts/renderer-definitions.ts 骨架）、I4.2 空壳注册、I5.3 序列化（本档 §4.3）、I10.1/I10.2/I10.3 桥接与完整注册、I11.1/I11.2 事件联动与画布交互。

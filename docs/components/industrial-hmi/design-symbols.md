@@ -82,7 +82,9 @@ interface SymbolCreateContext {
 }
 ```
 
-- 注册表：`Map<type, ScadaSymbolDefinition>`；`registerScadaSymbol(def)` 幂等（同 type 覆盖需显式 `override: true`），`unregisterScadaSymbol(type)`。
+> **强类型缺失注记（impl drift，2026-08-04）**：`SymbolCreateContext.engine` 在 impl `symbol-types.ts:64` 为 `unknown`，`ScadaTestHandle.engine/tree/app/getSymbol/getPointValue` 在 impl `engine/test-handle.ts:10-20` 亦为 `unknown`——根因为 `symbols/` 与 `engine/` 互相引用将形成循环导入（`ScadaCanvasEngine` 依赖 `SymbolCreateContext` 经 create 工厂，反向引用会环）。本档保留强类型接口面作契约示意；impl 走 `unknown` + 调用点局部窄化。e2e/单测消费时按 `design-engine.md §8.3` 结构断言。
+
+- 注册表：`Map<type, ScadaSymbolDefinition>`；`registerScadaSymbol(def)`——同 type 重复注册**抛错**（`scada symbol type [...] is already registered`），需显式 `{ override: true }` 才替换（impl `symbol-registry.ts:18-22`，2026-08-04 措辞对齐）；`unregisterScadaSymbol(type)`。包入口另提供幂等的 `registerScadaSymbols()`（内置 24 图元注册，`hasScadaSymbol` 守卫，重复调用 no-op），由 `registerScadaRenderers` 内部调用，消费方亦可显式触发。
 - 引擎侧映射：符号 `create` 返回 leafer 节点 → 挂入 `tree` 层；节点属性更新统一走 `leaf.set()` 批量路径（design-engine.md §4.5 合帧义务）；符号实例化即「按 tag 工厂」（leafer `UICreator.get`，research-summary §4.1 E7）的语义层封装。
 
 ### 4.2 属性 schema（ScadaSymbolProps）

@@ -238,6 +238,7 @@ interface ScadaEngineOptions {
     forceRender(): void;
   }
   ```
+  > **强类型缺失注记（impl drift，2026-08-04）**：上述接口面在 impl `engine/test-handle.ts:9-21` 全部以 `unknown` 出现（`engine`/`tree`/`app`/`getSymbol`/`getPointValue`，仅 `getViewport` 为强类型 `ViewportState`）——根因为 `engine/test-handle.ts` 强类型引用 `ScadaCanvasEngine`/`Leaf`/`App` 会形成与 `scada-engine.ts` 的循环导入。本档保留强类型接口面作契约示意；impl 走 `unknown`，消费方（e2e/单测）按上述结构断言。
 - 卸载时移除；e2e 经 `page.evaluate(() => window.__flux_scada_<cid>...)` 程序化断言场景树（roadmap 测试纪律，禁截图判定）；I15 e2e 与本句柄为测试锚点。
 
 ## 9. 数据源、表达式、导入能力接入点
