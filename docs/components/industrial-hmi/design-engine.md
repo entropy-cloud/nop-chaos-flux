@@ -210,8 +210,11 @@ interface ScadaEngineOptions {
 | `symbol:click` / `symbol:dblclick` / `symbol:hover` | `{ symbolId, world, viewport }` | leafer 节点事件（capture/bubble 双阶段，render-engines §2.4/§12 #17）→ 引擎层事件桥；规范化与 flux action 派发属 I2.4                                    |
 | `symbol:hover-miss`                                 | `{ symbolId }`                  | I11.2 hover 退出信号：pointer.move 命中为空且前一命中存在时发射（载荷承载前一 symbolId，无 world/viewport）；仅覆盖物消费，不派发 action（事件表外扩展） |
 | `render`（tree 层）                                 | `{ frame }`                     | 帧事件（A2），性能测量/测试用                                                                                                                            |
-| `ready`                                             | `{ engine }`                    | 首帧渲染完成（对齐 spike 首帧口径）                                                                                                                      |
-| `error`                                             | `{ code, message }`             | 引擎级错误（画布创建失败/配置非法）                                                                                                                      |
+
+> `scada:ready` / `scada:error` 派发归属（plan 2026-08-04-1558-2 Phase 4 doc drift fix）：
+> 这两个事件为 **renderer 层 action 派发**（`helpers.dispatch` 经 `events.onReady`/`events.onError`，design-renderer.md §8.1），
+> 不在引擎事件表内。引擎层不发射 ready/error 事件；renderer 在场景构建成功/失败时派发对应 action（载荷 `{ engine }` / `{ code, message }`）。
+> 错误码注册表 + i18n 文案见 design-renderer.md §8.5。
 
 ### 8.2 引擎命令句柄（renderer/外层可调）
 

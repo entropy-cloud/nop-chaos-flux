@@ -204,6 +204,7 @@ type ScadaSymbolStylePatch = Partial<
 
 - 图元模型层不接数据源：绑定/动画消费（I2.2）与事件联动（I2.4）；`custom` 字段内容由符号定义解释（图片 URL 等外部资源经 RendererEnv 归位，INV-1——符号 `create` 中图片加载走引擎图片缓存 + 桥接层 env.fetcher，design-engine.md §9）。
 - 表达式：符号属性值经点表绑定消费表达式（I2.2 §4.2 统一归口：绑定只引用点表变量；`source: 'flux'` 点表声明经桥接层订阅 scope 写入，I2.2 §4.1/§9.1），flux 表达式经 flux-formula 编译求值（平台能力复用表）。
+- `scada-image` 资源加载失败契约（plan 2026-08-04-1558-2 Phase 4 Decision）：`loadFailed` 写入节点但目前**无画布级消费者**——加载失败时视觉占位（灰块）保留，画布级诊断通道与 P1-8「数据/资源错误不升级画布 status」契约冲突，需 I16 编辑器时代统一资源面诊断；author 不应假设已接入运行时报警通道。
 
 ## 10. 样式与 DOM marker 约定
 

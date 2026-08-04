@@ -161,6 +161,7 @@ interface ScadaSymbolNode {
 | 增量 diff | `diffScadaConfig(prev, next): ScadaConfigDiff`——顶层：symbols 增删/属性变更/点表变更；属性变更收敛为 `{ added: ScadaSymbolNode[], removed: string[], updated: Array<{ id, patch }> }`（`added` 为完整节点数组——applyDiff 需节点实例化入树，I5 closure audit + I7 gate-3-review m-3 修正，对齐 `serialization/config-types.ts`）。契约补充（plan-2026-08-04-1235-1 修正）：同 id 图元 `type` 变更不产出 `updated` patch，改产出 `removed`（旧 id）+ `added`（新节点）——`applyDiff` 按 `removed → added → updated` 顺序执行 remove-then-rebuild，且更新路径同步 `nodeById` 索引/声明（diff 应用必须收敛场景树 + 索引 + 基线单一事实源）；`children` 差异为 `undefined`（group 变叶子/删除子树）产出显式 `children: []` patch | `serialization/diff.ts`（Vitest 单测）                                  |
 
 - diff 消费方：renderer props `config` 变化 → `diffScadaConfig` → 引擎增量应用（`engine.applyDiff`，避免全量重建，I5.3/design-engine.md §4.2 reset 仅用于全量替换）；点表 diff 直接走数据层 `setPointValues`（design-data-binding.md §4.3）。
+- 绑定域重载 live 值合并语义（plan 2026-08-04-1558-2 Phase 1）：config 变化触发 `reloadBindings` 重建点表声明 + 反向索引 + 刷新流水线/动画时钟时，**props full/diff 路径按 pointId 保留现存 live 点值**（经 `PointStore.snapshotValues` + `restoreValues` 直接回填，绕过 convert 防二次量程换算）；声明已删除的 id 丢弃，新增声明用 init。**`component:importConfig` 为显式全量替换契约**（author 意图是换画面），重置为 init 不保留 live 值。full/reset 构建失败（`config-build-failed`）后 `prevRef` 置空，强制下次同步走 full 重建（不基于损坏基线 diff）。
 - 序列化/反序列化与 leafer 引擎的边界：组态 JSON 是**唯一事实源**（single source of truth），leafer 场景树是其渲染投影；引擎导出（`exportConfig`）从组态模型生成，不反向依赖 leafer toJSON（render-engines §8 #7 直出格式含内部字段，不可作组态契约）。
 - 序列化函数导出归属（plan 2026-08-04-1558-1 Phase 3 Decision）：`serializeScadaConfig` 为 design-contract 函数，**保留导出**（包入口 `@nop-chaos/flux-renderers-industrial`），供 host 侧工具链（config 迁移/校验/审计）直接调用；运行期消费经 `component:exportConfig`/`component:importConfig` 句柄（内部转发至 `engine.exportConfig()`），renderer 不直调 `serializeScadaConfig`——故该函数无 live 内部消费者，保留导出为契约诚实（非死代码）。`parseScadaConfig`/`validateScadaConfig`/`diffScadaConfig` 为内部实现（renderer/handles 经 relative path 消费），不经包入口导出。
 
@@ -227,9 +228,10 @@ interface ScadaSymbolNode {
   - `resize`：ResizeObserver 观察容器 → `engine.setSize(w, h)`（防抖到帧）；容器尺寸变更不重建引擎；
 - **props 同步**：
   - `config` 变化 → `diffScadaConfig` → 引擎增量应用（§4.3）或全量 `reset`（diff 不可用/版本变更）；
-  - 点表 flux 桥接：`useScopeSelector`（paths 精细化，从 config 提取 `$xxx` 引用路径）订阅 scope → 公式编译器求值 → `setPointValues` 注入点表（I10.3，design-data-binding.md §9.1）——**不逐点 setState 直刷 React**（性能红线）；
-  - `width`/`height`/`viewport` 变化 → 引擎命令式 API；
+  - 点表 flux 桥接：`useScopeSelector`（paths 精细化，从 config 提取 `$xxx` 引用路径；复杂表达式经平台依赖收集产出根级订阅路径，design-data-binding.md §9.1/plan 2026-08-04-1558-2 Phase 3）订阅 scope → 公式编译器求值 → `setPointValues` 注入点表（I10.3）——**不逐点 setState 直刷 React**（性能红线）；
+  - `width`/`height`/`viewport` 变化 → 引擎命令式 API（**`width`/`height` props 变更触发 `engine.setSize`**：plan 2026-08-04-1558-2 Phase 4 WD-1/m10 落地，effect deps 含 width/height；**`viewport` policy 仅在 full/reset 路径应用**：diff 增量重应用会重置用户在画布上的平移/缩放，保持现状契约，不自动重应用）；
 - **React Compiler 基线**：引擎实例为命令式副作用，生命周期放 `useEffect`（`useEffectEvent` 用于事件桥接注册/注销，research-summary §5.2 差距项）；渲染函数内不触碰引擎（INV-5：render path 无副作用）。
+- **销毁状态可见性**（plan 2026-08-04-1558-2 Phase 1 OP-4）：`component:destroy` 后 wrapper `data-status` 反映 `destroyed` 态（非 `ready`），e2e/tooling 不再把已销毁画布报为健康；后续句柄命令返回 `not-mounted`。
 
 ### 8.4 测试句柄契约（A2 固化，I2.4 Decision）
 
@@ -238,15 +240,17 @@ interface ScadaSymbolNode {
 
 ### 8.5 组件句柄（component:<method>）
 
-| 句柄                                                          | 说明                                                                                           | 失败路径                         |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------- |
-| `component:fit()` / `component:center()`                      | 视口命令                                                                                       | `not-mounted`/`not-visible`      |
-| `component:getSymbols()` / `component:getSymbol(id)`          | 场景树只读                                                                                     | `not-mounted`/`symbol-not-found` |
-| `component:setPointValue(pointId, value)`                     | 点表写入（经数据层点表 store → 刷新流水线 → `engine.applyAttrs`，design-data-binding.md §4.3） | `not-mounted`/`point-not-found`  |
-| `component:getPointTable()`                                   | 点表快照                                                                                       | `not-mounted`                    |
-| `component:exportConfig()` / `component:importConfig(config)` | 序列化契约                                                                                     | `not-mounted`/`invalid-config`   |
-| `component:destroy()`                                         | 命令式销毁                                                                                     | `not-mounted`                    |
+| 句柄                                                          | 说明                                                                                           | 失败路径                                                                                                                    |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `component:fit()` / `component:center()`                      | 视口命令                                                                                       | `not-mounted`/`not-visible`（plan 2026-08-04-1558-2 Phase 4 WD-5 落地：空场景无 bounds 时返回 `not-visible`，对齐本表语义） |
+| `component:getSymbols()` / `component:getSymbol(id)`          | 场景树只读                                                                                     | `not-mounted`/`symbol-not-found`                                                                                            |
+| `component:setPointValue(pointId, value)`                     | 点表写入（经数据层点表 store → 刷新流水线 → `engine.applyAttrs`，design-data-binding.md §4.3） | `not-mounted`/`point-not-found`                                                                                             |
+| `component:getPointTable()`                                   | 点表快照                                                                                       | `not-mounted`                                                                                                               |
+| `component:exportConfig()` / `component:importConfig(config)` | 序列化契约                                                                                     | `not-mounted`/`invalid-config`                                                                                              |
+| `component:destroy()`                                         | 命令式销毁（`data-status` 转为 `destroyed`，后续句柄返回 `not-mounted`）                       | `not-mounted`                                                                                                               |
 
+- 错误码注册表 + i18n 文案映射（plan 2026-08-04-1558-2 Phase 4 WD-6）：全部错误码（`config-parse`/`config-invalid`/`config-build-failed`/`engine-create-failed`/`flux-compile-failed`/`flux-evaluate-failed`/`handler-error`/`not-visible`/`not-mounted`/`symbol-not-found`/`point-not-found`/`invalid-config`）集中登记于 `scada-errors.ts` `SCADA_ERROR_CODES`，code→i18n key 经 `scadaErrorI18nKey` 映射（`industrial.scada.error.<code>`），locale 文案在 `flux-i18n` `locales/{zh-CN,en-US}.ts`；scada-canvas 错误区经 `useScadaErrorText` 解析本地化文案，未知码 fallback 原始 message（向后兼容）。
+- 缺 `config` 兜底（plan 2026-08-04-1558-1 Phase 3 落地 + plan 2026-08-04-1558-2 Phase 4 doc 注记）：author 未提供 config 时 renderer 兜底构造最小合法空场景（`EMPTY_SCADA_CONFIG`），画布进入 `ready`（**非永久 loading**）；本行为由 plan `{1}` 实现收口，本档同步实际契约。
 - 注册：`ComponentHandleRegistry`（`useCurrentComponentRegistry`，INV-4 例外通道）——I10.2 落地；I16 编辑器场景可经句柄扩展（增删图元）。
 
 ## 9. 数据源、表达式、导入能力接入点
