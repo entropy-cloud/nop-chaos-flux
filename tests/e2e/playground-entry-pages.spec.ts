@@ -368,6 +368,26 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       timeout: 15_000,
     });
   },
+  'scada-demo': async (page) => {
+    await expect(page.getByRole('heading', { name: /scada-demo 工艺流程组态演示页/i, level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
+  },
+  'scada-pressure-demo': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: /scada-pressure-demo 大屏\/复杂组态示例页/i, level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'scada-edge-cases': async (page) => {
+    await expect(page.getByRole('heading', { name: /scada 边界用例测试页/i, level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
+  },
+  'scada-perf-scale': async (page) => {
+    await expect(page.getByRole('heading', { name: /scada-perf-scale 性能基准测量页/i, level: 1 })).toBeVisible({
+      timeout: 30_000,
+    });
+  },
   'env-stream': async (page) => {
     await expect(page.getByRole('heading', { name: /env\.stream/i })).toBeVisible({ timeout: 15_000 });
   },
@@ -427,7 +447,7 @@ test('domain route coverage matches playground route inventory', () => {
   expect(assertionIds).toEqual(routeIds);
 });
 
-const ROUTES_WITH_KNOWN_ERRORS = new Set(['gantt', 'kanban', 'scheduling-calendar', 'barcode-input', 'calendar-perf-scale', 'kanban-perf-scale', 'gantt-perf-scale', 'diff-perf-scale']);
+const ROUTES_WITH_KNOWN_ERRORS = new Set(['gantt', 'kanban', 'scheduling-calendar', 'barcode-input', 'calendar-perf-scale', 'kanban-perf-scale', 'gantt-perf-scale', 'diff-perf-scale', 'scada-perf-scale']);
 
 for (const route of DOMAIN_RENDERER_ROUTES) {
   test(`playground entry page smoke: ${route.id}`, async ({ page, allowConsoleErrors }) => {
