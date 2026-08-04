@@ -204,6 +204,35 @@ export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
   },
 ];
 
+// C5.1 layout grid/flow family lab routes (C5.2 successor adds button-group/
+// dropdown-button/steps/timeline).
+export const LAYOUT_RENDERER_ROUTES: RendererRouteEntry[] = [
+  {
+    id: 'grid',
+    title: 'Grid',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-layout',
+    description:
+      'Explicit 2D grid layout (columns + colSpan/rowSpan) with responsive breakpoint columns.',
+  },
+  {
+    id: 'collapse',
+    title: 'Collapse',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-layout',
+    description:
+      'Collapsible content group with local/controlled/scope expand-state ownership.',
+  },
+  {
+    id: 'wizard',
+    title: 'Wizard',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-layout',
+    description:
+      'Layered wizard: interaction (step switching) + lifecycle (commit/validate/complete) state.',
+  },
+];
+
 export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
   {
     id: 'flux-basic',
@@ -620,6 +649,7 @@ export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [
   ...BASIC_RENDERER_ROUTES,
   ...FORM_RENDERER_ROUTES,
   ...DATA_RENDERER_ROUTES,
+  ...LAYOUT_RENDERER_ROUTES,
 ];
 
 export type RouteSpec =

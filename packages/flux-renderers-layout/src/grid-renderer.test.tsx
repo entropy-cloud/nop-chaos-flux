@@ -177,6 +177,42 @@ describe('GridRenderer (W3a — explicit 2D grid layout)', () => {
 
     expect((gridRoot() as HTMLElement).style.gridTemplateColumns).toBe('1fr 2fr 1fr');
   });
+
+  it('resolves semantic gap tokens (md → gap-4 class) like flex/container and raw CSS strings via inline style', () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/grid-gap-token"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'grid',
+              columns: 2,
+              gap: 'md',
+              items: [{ body: [{ type: 'text', text: 'a' }] }],
+            },
+            {
+              type: 'grid',
+              columns: 2,
+              gap: '1rem',
+              items: [{ body: [{ type: 'text', text: 'b' }] }],
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const roots = document.querySelectorAll('.nop-grid');
+    // Token gap: class emitted, no invalid CSS gap value.
+    expect(roots[0].className).toContain('gap-4');
+    expect((roots[0] as HTMLElement).style.gap).toBe('');
+    // Raw CSS gap string: inline style kept.
+    expect((roots[1] as HTMLElement).style.gap).toBe('1rem');
+  });
 });
 
 describe('GridRenderer responsive — breakpoint column switching (successor)', () => {

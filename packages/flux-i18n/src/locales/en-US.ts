@@ -120,6 +120,8 @@ export const enUS: Resource = {
       noSteps: 'No steps defined',
       stepNav: 'Wizard steps',
       close: 'Close',
+      validationFailed: 'Step validation failed',
+      commitFailed: 'Step commit failed',
     },
     crud: {
       pollingStart: 'Resume polling',

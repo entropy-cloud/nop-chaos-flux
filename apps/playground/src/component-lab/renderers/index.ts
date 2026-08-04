@@ -63,3 +63,6 @@ export { MarkdownEditorLabPage } from './markdown-editor-lab-page';
 export { InputFileLabPage } from './input-file-lab-page';
 export { InputImageLabPage } from './input-image-lab-page';
 export { EditorLabPage } from './editor-lab-page';
+export { GridLabPage } from './grid-lab-page';
+export { CollapseLabPage } from './collapse-lab-page';
+export { WizardLabPage } from './wizard-lab-page';

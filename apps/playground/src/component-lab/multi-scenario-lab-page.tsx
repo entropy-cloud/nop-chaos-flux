@@ -12,7 +12,7 @@ import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-ad
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
-import type { BaseSchema, RendererEnv } from '@nop-chaos/flux-core';
+import type { BaseSchema, RendererEnv, ActionScope } from '@nop-chaos/flux-core';
 import { attachScopeDebugToSchema } from './scope-debug';
 
 const registry = createDefaultRegistry();
@@ -33,9 +33,18 @@ export interface ScenarioBlockProps {
   schema: BaseSchema;
   data?: Record<string, unknown>;
   env?: Partial<RendererEnv>;
+  /** Host action-scope registration (probe namespaces etc.), forwarded to SchemaRenderer. */
+  onActionScopeChange?: (actionScope: ActionScope | null) => void;
 }
 
-function ScenarioBlock({ title, description, schema, data, env: envOverride }: ScenarioBlockProps) {
+function ScenarioBlock({
+  title,
+  description,
+  schema,
+  data,
+  env: envOverride,
+  onActionScopeChange,
+}: ScenarioBlockProps) {
   const env = useMemo(
     () => (envOverride ? createDefaultEnv({ ...defaultEnv, ...envOverride }) : defaultEnv),
     [envOverride],
@@ -75,6 +84,7 @@ function ScenarioBlock({ title, description, schema, data, env: envOverride }: S
           env={env}
           registry={registry}
           formulaCompiler={formulaCompiler}
+          onActionScopeChange={onActionScopeChange}
         />
       </div>
     </div>

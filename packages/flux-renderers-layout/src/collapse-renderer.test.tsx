@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createLayoutSchemaRenderer, env, formulaCompiler } from './test-support.js';
 
 function collapseRoot() {
@@ -13,6 +13,7 @@ function triggers() {
 describe('CollapseRenderer (W3a — collapsible content group)', () => {
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
   });
 
   it('renders nop-collapse marker with title/body regions for each item', () => {
@@ -234,5 +235,97 @@ describe('CollapseRenderer (W3a — collapsible content group)', () => {
     expect(screen.getByText('Custom Title')).toBeTruthy();
     fireEvent.click(triggers()[0]);
     await waitFor(() => expect(screen.getByText('content')).toBeTruthy());
+  });
+
+  it('renders disabled items as locked triggers that cannot toggle and do not dispatch onChange', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/collapse-disabled"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'collapse',
+              items: [
+                { key: 'a', title: 'A', body: [{ type: 'text', text: 'body-A' }] },
+                { key: 'b', title: 'B', disabled: true, body: [{ type: 'text', text: 'body-B' }] },
+              ],
+              onChange: {
+                action: 'setValue',
+                args: { path: 'collapseChanged', value: true },
+              },
+            },
+            { type: 'text', text: 'changed:${collapseChanged ? "yes" : "no"}' },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const disabledItem = document.querySelector('[data-item-key="b"]');
+    expect(disabledItem?.getAttribute('data-disabled')).toBe('true');
+    // The ui CollapsibleTrigger maps `disabled` to Base UI's aria-disabled
+    // contract (native `disabled` attribute is not emitted by the primitive).
+    expect(triggers()[1].getAttribute('aria-disabled')).toBe('true');
+
+    // Clicking the disabled trigger does not open the panel…
+    fireEvent.click(triggers()[1]);
+    await waitFor(() => {
+      expect(
+        document.querySelector('[data-item-key="b"]')?.getAttribute('data-open'),
+      ).toBeNull();
+    });
+    // …and does not dispatch onChange.
+    expect(screen.getByText('changed:no')).toBeTruthy();
+
+    // A sibling enabled item still toggles normally.
+    fireEvent.click(triggers()[0]);
+    await waitFor(() => {
+      expect(
+        document.querySelector('[data-item-key="a"]')?.getAttribute('data-open'),
+      ).not.toBeNull();
+    });
+    expect(screen.getByText('changed:yes')).toBeTruthy();
+  });
+
+  it('degrades scope ownership without valueStatePath to local controlled with a dev warning', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/collapse-scope-degraded"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'collapse',
+              valueOwnership: 'scope',
+              items: [
+                { key: 'a', title: 'A', body: [{ type: 'text', text: 'body-A' }] },
+              ],
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    // Degradation warning emitted.
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('valueOwnership=scope requires valueStatePath'),
+    );
+
+    // Clicking still expands locally (no silent no-op).
+    fireEvent.click(triggers()[0]);
+    await waitFor(() => {
+      expect(
+        document.querySelector('[data-item-key="a"]')?.getAttribute('data-open'),
+      ).not.toBeNull();
+    });
   });
 });

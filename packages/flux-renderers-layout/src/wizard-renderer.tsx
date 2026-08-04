@@ -101,7 +101,9 @@ function resolveStepLifecycleAction(
 /**
  * Compute the next navigable index, skipping hidden and (in linear mode) uncommitted steps.
  * Per design §10 + §12: linear mode blocks jumping past the furthest committed step unless
- * `allowStepJump` overrides.
+ * `allowStepJump` overrides. Hidden steps are skipped entirely: linear progression allows
+ * reaching any target with no visible step between the high-water mark and the target
+ * (C5.1 P1-3 — visible:false steps must not block linear advancement).
  */
 function computeCanGoTo(
   steps: WizardStepSchema[],
@@ -115,7 +117,9 @@ function computeCanGoTo(
   if (!isStepVisible(target)) return false;
   if (isStepDisabled(target)) return false;
   if (linear && !allowStepJump && targetIndex > furthestReachedIndex) {
-    return targetIndex === furthestReachedIndex + 1;
+    for (let i = furthestReachedIndex + 1; i < targetIndex; i += 1) {
+      if (isStepVisible(steps[i])) return false;
+    }
   }
   return true;
 }
@@ -267,7 +271,17 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
     return false;
   }, [currentStepIndex, steps, linear, allowStepJump, furthestReached]);
 
-  const isLastStep = currentStepIndex === stepCount - 1;
+  // The FINAL step is the last VISIBLE step (C5.1 P1-3): a hidden trailing
+  // step must not leave the wizard un-finishable (canGoNext=false yet the
+  // current step is not treated as final, so onComplete never fires).
+  const lastVisibleStepIndex = useMemo(() => {
+    for (let i = steps.length - 1; i >= 0; i -= 1) {
+      if (isStepVisible(steps[i])) return i;
+    }
+    return -1;
+  }, [steps]);
+
+  const isLastStep = stepCount > 0 && currentStepIndex === lastVisibleStepIndex;
 
   const summary: WizardStatusSummary = useMemo(
     () => ({
@@ -302,45 +316,51 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
   // Per-step lifecycle dispatch (beforeLeave of the current step, then
   // beforeEnter of the target step). Both run BEFORE the transition; either
   // returning `{ ok: false }` aborts the navigation (blocking convention
-  // shared with onStepCommit).
+  // shared with onStepCommit). A throwing guard action also aborts the
+  // navigation (C5.1 P2-1 — never leak an unhandled rejection from the
+  // nav-click path).
   const runStepTransitionGuards = async (
     targetIndex: number,
   ): Promise<boolean> => {
     const targetStep = steps[targetIndex];
     if (!targetStep) return false;
 
-    const beforeLeaveAction = currentStep
-      ? resolveStepLifecycleAction(currentStep, 'beforeLeave')
-      : undefined;
-    if (beforeLeaveAction) {
-      const result = await props.helpers.dispatch(beforeLeaveAction, {
-        scope: props.node.scope,
-        evaluationBindings: {
-          currentStepKey,
-          currentStepIndex,
-          targetStepKey: resolveStepKey(targetStep, targetIndex),
-          targetStepIndex: targetIndex,
-        },
-      });
-      if (result && (result as { ok?: boolean }).ok === false) {
-        return false;
+    try {
+      const beforeLeaveAction = currentStep
+        ? resolveStepLifecycleAction(currentStep, 'beforeLeave')
+        : undefined;
+      if (beforeLeaveAction) {
+        const result = await props.helpers.dispatch(beforeLeaveAction, {
+          scope: props.node.scope,
+          evaluationBindings: {
+            currentStepKey,
+            currentStepIndex,
+            targetStepKey: resolveStepKey(targetStep, targetIndex),
+            targetStepIndex: targetIndex,
+          },
+        });
+        if (result && (result as { ok?: boolean }).ok === false) {
+          return false;
+        }
       }
-    }
 
-    const beforeEnterAction = resolveStepLifecycleAction(targetStep, 'beforeEnter');
-    if (beforeEnterAction) {
-      const result = await props.helpers.dispatch(beforeEnterAction, {
-        scope: props.node.scope,
-        evaluationBindings: {
-          targetStepKey: resolveStepKey(targetStep, targetIndex),
-          targetStepIndex: targetIndex,
-          fromStepKey: currentStepKey,
-          fromStepIndex: currentStepIndex,
-        },
-      });
-      if (result && (result as { ok?: boolean }).ok === false) {
-        return false;
+      const beforeEnterAction = resolveStepLifecycleAction(targetStep, 'beforeEnter');
+      if (beforeEnterAction) {
+        const result = await props.helpers.dispatch(beforeEnterAction, {
+          scope: props.node.scope,
+          evaluationBindings: {
+            targetStepKey: resolveStepKey(targetStep, targetIndex),
+            targetStepIndex: targetIndex,
+            fromStepKey: currentStepKey,
+            fromStepIndex: currentStepIndex,
+          },
+        });
+        if (result && (result as { ok?: boolean }).ok === false) {
+          return false;
+        }
       }
+    } catch {
+      return false;
     }
 
     return true;
@@ -430,7 +450,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
               committing: false,
               validating: false,
               lastCommitStatus: 'validationError',
-              stepError: 'Validation failed',
+              stepError: t('flux.wizard.validationFailed'),
             });
             void props.events.onStepError?.(
               {
@@ -463,7 +483,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           committing: false,
           validating: false,
           lastCommitStatus: 'error',
-          stepError: 'Step commit returned failure',
+          stepError: t('flux.wizard.commitFailed'),
         });
         void props.events.onStepError?.(
           {
@@ -523,112 +543,118 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
 
   const currentStepHasError = lifecycle.lastCommitStatus === 'error';
 
-  const stepNav = steps.map((step, index) => {
-    const stepKey = resolveStepKey(step, index);
-    const isActive = index === currentStepIndex;
-    const isPast = index < currentStepIndex;
-    const reachable = computeCanGoTo(
-      steps,
-      index,
-      linear,
-      allowStepJump,
-      furthestReached,
-    );
-    const titleRegion =
-      typeof step.titleRegionKey === 'string' ? props.regions[step.titleRegionKey] : undefined;
-    const titleContent = titleRegion ? asReactNode(titleRegion.render()) : null;
-    const titleText =
-      (typeof step.title === 'string' ? step.title : null) ??
-      (typeof titleContent === 'string' ? titleContent : null) ??
-      toStepKeyString(stepKey);
-    const descText =
-      typeof step.description === 'string' ? step.description : null;
+  const stepNav = steps
+    .map((step, index) => {
+      // Hidden steps are skipped entirely in navigation (C5.1 P1-3): they are
+      // not rendered as disabled nav items.
+      if (!isStepVisible(step)) return null;
 
-    const stepStatus = isActive && currentStepHasError
-      ? 'error'
-      : isActive
-        ? 'process' as const
-        : isPast
-          ? 'finish' as const
-          : 'wait' as const;
+      const stepKey = resolveStepKey(step, index);
+      const isActive = index === currentStepIndex;
+      const isPast = index < currentStepIndex;
+      const reachable = computeCanGoTo(
+        steps,
+        index,
+        linear,
+        allowStepJump,
+        furthestReached,
+      );
+      const titleRegion =
+        typeof step.titleRegionKey === 'string' ? props.regions[step.titleRegionKey] : undefined;
+      const titleContent = titleRegion ? asReactNode(titleRegion.render()) : null;
+      const titleText =
+        (typeof step.title === 'string' ? step.title : null) ??
+        (typeof titleContent === 'string' ? titleContent : null) ??
+        toStepKeyString(stepKey);
+      const descText =
+        typeof step.description === 'string' ? step.description : null;
 
-    const clickable = reachable && !isActive && !isStepDisabled(step);
-    const handleStepClick = clickable
-      ? (event: React.MouseEvent<HTMLButtonElement>) => {
-          event.preventDefault();
-          void goToStep(index);
-        }
-      : undefined;
+      const stepStatus = isActive && currentStepHasError
+        ? 'error'
+        : isActive
+          ? 'process' as const
+          : isPast
+            ? 'finish' as const
+            : 'wait' as const;
 
-    return (
-      <li
-        key={toStepKeyString(stepKey)}
-        data-slot="wizard-step-nav-item"
-        data-step-index={index}
-        data-status={stepStatus}
-      >
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          data-slot="wizard-step-nav-button"
+      const clickable = reachable && !isActive && !isStepDisabled(step);
+      const handleStepClick = clickable
+        ? (event: React.MouseEvent<HTMLButtonElement>) => {
+            event.preventDefault();
+            void goToStep(index);
+          }
+        : undefined;
+
+      return (
+        <li
+          key={toStepKeyString(stepKey)}
+          data-slot="wizard-step-nav-item"
           data-step-index={index}
-          data-active={isActive || undefined}
-          data-past={isPast || undefined}
-          data-reachable={reachable || undefined}
-          data-disabled={isStepDisabled(step) || undefined}
           data-status={stepStatus}
-          aria-current={isActive ? 'step' : undefined}
-          disabled={!clickable && !isActive}
-          onClick={handleStepClick}
-          className={cn(
-            'h-auto gap-1.5 px-3 py-2 text-sm',
-            isActive
-              ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
-              : stepStatus === 'error'
-                ? 'text-destructive hover:bg-destructive/10'
-                : reachable
-                  ? 'text-foreground hover:bg-muted'
-                  : 'text-muted-foreground cursor-not-allowed',
-            mode === 'vertical' && 'w-full justify-start',
-          )}
         >
-          <span
-            data-slot="wizard-step-nav-marker"
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            data-slot="wizard-step-nav-button"
+            data-step-index={index}
+            data-active={isActive || undefined}
+            data-past={isPast || undefined}
+            data-reachable={reachable || undefined}
+            data-disabled={isStepDisabled(step) || undefined}
+            data-status={stepStatus}
+            aria-current={isActive ? 'step' : undefined}
+            disabled={!clickable && !isActive}
+            onClick={handleStepClick}
             className={cn(
-              'inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs',
-              stepStatus === 'process'
-                ? 'bg-primary-foreground/20'
-                : stepStatus === 'finish'
-                  ? 'bg-primary/20 text-primary'
-                  : stepStatus === 'error'
-                    ? 'bg-destructive/20 text-destructive'
-                    : 'bg-muted',
+              'h-auto gap-1.5 px-3 py-2 text-sm',
+              isActive
+                ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                : stepStatus === 'error'
+                  ? 'text-destructive hover:bg-destructive/10'
+                  : reachable
+                    ? 'text-foreground hover:bg-muted'
+                    : 'text-muted-foreground cursor-not-allowed',
+              mode === 'vertical' && 'w-full justify-start',
             )}
           >
-            {stepStatus === 'finish' ? (
-              <CheckIcon className="size-3" />
-            ) : stepStatus === 'error' ? (
-              <XIcon className="size-3" />
-            ) : (
-              index + 1
-            )}
-          </span>
-          <span className="flex flex-col items-start text-left">
-            <span data-slot="wizard-step-nav-title">{titleText}</span>
-            {descText ? (
-              <span
-                data-slot="wizard-step-nav-description"
-                className="text-xs font-normal opacity-70"
-              >
-                {descText}
-              </span>
-            ) : null}
-          </span>
-        </Button>
-      </li>
-    );
-  });
+            <span
+              data-slot="wizard-step-nav-marker"
+              className={cn(
+                'inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs',
+                stepStatus === 'process'
+                  ? 'bg-primary-foreground/20'
+                  : stepStatus === 'finish'
+                    ? 'bg-primary/20 text-primary'
+                    : stepStatus === 'error'
+                      ? 'bg-destructive/20 text-destructive'
+                      : 'bg-muted',
+              )}
+            >
+              {stepStatus === 'finish' ? (
+                <CheckIcon className="size-3" />
+              ) : stepStatus === 'error' ? (
+                <XIcon className="size-3" />
+              ) : (
+                index + 1
+              )}
+            </span>
+            <span className="flex flex-col items-start text-left">
+              <span data-slot="wizard-step-nav-title">{titleText}</span>
+              {descText ? (
+                <span
+                  data-slot="wizard-step-nav-description"
+                  className="text-xs font-normal opacity-70"
+                >
+                  {descText}
+                </span>
+              ) : null}
+            </span>
+          </Button>
+        </li>
+      );
+    })
+    .filter((node): node is React.ReactElement => node !== null);
 
   const currentActionsRegion = currentStep
     ? typeof currentStep.actionsRegionKey === 'string'
@@ -729,6 +755,19 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           </>
         )}
       </div>
+
+      {(lifecycle.lastCommitStatus === 'error' ||
+        lifecycle.lastCommitStatus === 'validationError') && (
+        <div
+          data-slot="wizard-step-error"
+          role="alert"
+          className="mt-3 text-sm text-destructive"
+        >
+          {lifecycle.lastCommitStatus === 'validationError'
+            ? t('flux.wizard.validationFailed')
+            : t('flux.wizard.commitFailed')}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { cn, useIsMobile } from '@nop-chaos/ui';
+import { resolveGap } from '@nop-chaos/flux-react';
 import type { GridItemSchema, GridResponsiveColumns, GridSchema } from './schemas.js';
 
 type CompiledGridItem = GridItemSchema & {
@@ -76,10 +77,6 @@ function buildGridStyle(
     style.gridTemplateColumns = schemaProps.columns;
   }
 
-  if (schemaProps.gap !== undefined && schemaProps.gap !== null) {
-    style.gap = typeof schemaProps.gap === 'number' ? `${schemaProps.gap}px` : schemaProps.gap;
-  }
-
   if (schemaProps.autoFlow) {
     style.gridAutoFlow = schemaProps.autoFlow;
   }
@@ -107,11 +104,15 @@ export function GridRenderer(props: RendererComponentProps<GridSchema>) {
     isMobile,
   );
 
+  // Gap resolution matches flex/container/form: number → px inline style,
+  // semantic token (xs/sm/md/lg/xl) → Tailwind class, other strings → raw CSS.
+  const gapResult = resolveGap(schemaProps.gap as number | string | undefined);
   const gridStyle = buildGridStyle(schemaProps as GridSchema, effectiveColumns);
+  Object.assign(gridStyle, gapResult.style);
 
   return (
     <div
-      className={cn('nop-grid', props.meta.className)}
+      className={cn('nop-grid', gapResult.className, props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="grid-root"

@@ -30,7 +30,7 @@ export interface WizardSchema extends BaseSchema {
   /** Renderer-owned structured step list (declaration order = navigation order). */
   steps: WizardStepSchema[];
   /**
-   * Initial current step key or index (1-based index when numeric and no matching key).
+   * Initial current step key or index (0-based index when numeric and no matching key).
    * Seed only — step navigation is local controlled interaction state (renderer-maintained);
    * runtime changes to `value` are NOT reactive. The render-read-only status summary is
    * published via `statusPath`.
@@ -56,8 +56,6 @@ export interface WizardSchema extends BaseSchema {
   actionNextLabel?: string;
   /** Label for the previous action button. amis actionPrevLabel. */
   actionPrevLabel?: string;
-  /** Label for the next-and-save action button. amis actionNextSaveLabel. */
-  actionNextSaveLabel?: string;
   onChange?: ActionSchema;
   onStepCommit?: ActionSchema | ActionSchema[];
   onComplete?: ActionSchema | ActionSchema[];

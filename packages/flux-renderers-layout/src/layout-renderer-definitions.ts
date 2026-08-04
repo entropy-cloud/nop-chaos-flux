@@ -53,7 +53,7 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
         shape: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'number' }] },
         displayName: 'Value',
         description:
-          'Initial step key or index (1-based index when numeric and no matching key). Seed only — step navigation is local controlled state (non-reactive to runtime value changes).',
+          'Initial step key or index (0-based index when numeric and no matching key). Seed only — step navigation is local controlled state (non-reactive to runtime value changes).',
         editorType: 'expression',
       },
       defaultValue: {
@@ -163,7 +163,6 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
       { key: 'actionFinishLabel', kind: 'prop' },
       { key: 'actionNextLabel', kind: 'prop' },
       { key: 'actionPrevLabel', kind: 'prop' },
-      { key: 'actionNextSaveLabel', kind: 'prop' },
       { key: 'onChange', kind: 'event' },
       { key: 'onStepCommit', kind: 'event' },
       { key: 'onComplete', kind: 'event' },

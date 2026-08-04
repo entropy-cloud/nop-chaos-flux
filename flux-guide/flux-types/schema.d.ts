@@ -262,7 +262,6 @@ export interface WizardSchema extends BaseSchema {
   actionFinishLabel?: SchemaValue;
   actionNextLabel?: SchemaValue;
   actionPrevLabel?: SchemaValue;
-  actionNextSaveLabel?: SchemaValue;
   onChange?: ActionSchema | ActionSchema[];
   onStepCommit?: ActionSchema | ActionSchema[];
   onComplete?: ActionSchema | ActionSchema[];
@@ -1015,6 +1014,8 @@ export interface DataSourceSchema extends BaseSchema {
   dependsOn?: SchemaValue;
   initialData?: SchemaValue;
   resultMapping?: SchemaValue;
+  control?: SchemaValue;
+  retry?: SchemaValue;
 }
 
 export interface ChartSchema extends BaseSchema {
@@ -1034,6 +1035,7 @@ export interface ChartSchema extends BaseSchema {
   referenceLines?: SchemaValue;
   band?: SchemaValue;
   markers?: SchemaValue;
+  componentId?: SchemaValue;
   onClick?: ActionSchema | ActionSchema[];
   onHover?: ActionSchema | ActionSchema[];
 }
@@ -1051,6 +1053,7 @@ export interface TreeSchema extends BaseSchema {
   showIcon?: boolean;
   iconField?: SchemaValue;
   showGuideLine?: boolean;
+  multiple?: boolean;
   node?: SchemaInput;
 }
 

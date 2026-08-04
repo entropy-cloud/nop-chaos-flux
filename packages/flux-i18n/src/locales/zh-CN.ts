@@ -121,6 +121,8 @@ export const zhCN: Resource = {
       noSteps: '未定义步骤',
       stepNav: '向导步骤',
       close: '关闭',
+      validationFailed: '步骤校验未通过',
+      commitFailed: '步骤提交失败',
     },
     crud: {
       pollingStart: '恢复轮询',

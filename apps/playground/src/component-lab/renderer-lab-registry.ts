@@ -65,6 +65,9 @@ import {
   InputFileLabPage,
   InputImageLabPage,
   EditorLabPage,
+  GridLabPage,
+  CollapseLabPage,
+  WizardLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -133,4 +136,7 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   'input-file': InputFileLabPage,
   'input-image': InputImageLabPage,
   editor: EditorLabPage,
+  grid: GridLabPage,
+  collapse: CollapseLabPage,
+  wizard: WizardLabPage,
 };

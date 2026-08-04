@@ -1,4 +1,4 @@
-import React, { startTransition, useMemo, useState } from 'react';
+import React, { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { getIn, type RendererComponentProps, type RendererRenderOutput } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector, unwrapBooleanLiteral } from '@nop-chaos/flux-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
@@ -25,6 +25,14 @@ function isItemDisabled(item: CompiledCollapseItem): boolean {
   return unwrapBooleanLiteral(item.disabled);
 }
 
+function warnScopeDegraded() {
+  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+    console.warn(
+      '[nop-collapse] valueOwnership=scope requires valueStatePath; falling back to local controlled.',
+    );
+  }
+}
+
 function toKeyArray(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value.map((v) => String(v));
@@ -39,9 +47,23 @@ const UNUSED: unique symbol = Symbol('unused');
 
 function useCollapseValue(props: RendererComponentProps<CollapseSchema>) {
   const schemaProps = props.props;
-  const ownership = (schemaProps.valueOwnership as string) ?? 'local';
+  const declaredOwnership = (schemaProps.valueOwnership as string) ?? 'local';
   const statePath =
     typeof schemaProps.valueStatePath === 'string' ? schemaProps.valueStatePath : undefined;
+  // Effective ownership: scope without valueStatePath degrades to local controlled
+  // (+ dev warning), matching the steps renderer (C5.1 P1-1) — a silent no-op
+  // click target would be an un-recoverable control.
+  const scopeDegraded = declaredOwnership === 'scope' && !statePath;
+  const ownership = scopeDegraded ? 'local' : (declaredOwnership as 'local' | 'controlled' | 'scope');
+
+  const warnedRef = useRef(false);
+  useEffect(() => {
+    if (scopeDegraded && !warnedRef.current) {
+      warnScopeDegraded();
+      warnedRef.current = true;
+    }
+  }, [scopeDegraded]);
+
   const multiple = schemaProps.multiple !== false;
   const renderScope = useRenderScope();
 

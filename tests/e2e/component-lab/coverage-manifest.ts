@@ -434,6 +434,30 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes:
       'Verify dialog-layer selection: open dialog, select candidate, confirm writeback; CRUD-mode per-row state isolation',
   },
+  {
+    id: 'grid',
+    title: 'Grid',
+    tier: 'read',
+    primaryScenario: 'Host nested grid with responsive columns (C5.1 Phase 3)',
+    notes:
+      'Verify explicit 2D grid layout: marker-only root, responsive column switching, nested grid cells',
+  },
+  {
+    id: 'collapse',
+    title: 'Collapse',
+    tier: 'write',
+    primaryScenario: 'Host collapse three-way ownership switching (C5.1 Phase 3)',
+    notes:
+      'Verify local/controlled/scope expand-state ownership: local toggle, controlled scope echo, scope valueStatePath writeback',
+  },
+  {
+    id: 'wizard',
+    title: 'Wizard',
+    tier: 'write',
+    primaryScenario: 'Host wizard step validation with embedded form (C5.1 Phase 3)',
+    notes:
+      'Verify layered interaction/lifecycle: embedded form validation blocks advancement, async gates, dialog-hosted wizard chain',
+  },
 ];
 
 /** Quick lookup by renderer id */
