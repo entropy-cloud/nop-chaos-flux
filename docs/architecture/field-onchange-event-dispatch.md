@@ -1,7 +1,7 @@
 # 字段控件统一事件派发 + 事件字段显式声明设计
 
 > 日期：2026-08-03（初稿）→ 2026-08-04（修订：事件字段显式声明驱动 + 非法事件名报错 + onChange/onBlur 事件载荷）
-> 状态：设计（待实现）
+> 状态：设计（待实现）—— §3 已于 2026-08-04 落地（plan 453）；§4 统一事件派发待实现（plan 454）
 > 关联：`nop-app-erp/docs/analysis/2026-08-03-gen-control-special-cases-and-flux-solution.md`、`docs/architecture/nested-schema-field-classification.md` §3.5.2
 
 ## 1. 背景与问题
@@ -90,11 +90,12 @@ export function classifyField(renderer: RendererDefinition, key: string): Schema
 }
 ```
 
-### 3.4 编译验证效果
+### 3.4 编译验证效果（已落地，plan 453）
 
 - 声明的合法事件（onChange/onBlur/onFocus + renderer 特有）→ event kind → `validateActionShape` 校验 action 格式；
 - **未声明/不在词表的 onXxx（如 AMIS 遗留 `onEvent`）→ 落回 prop → 走 unknown-property 检测**（`shape-validation-node-fields.ts:246`，closedModel 或 strictMode 时报 `unknown-property`，路径带完整 schema 位置）；
-- 需同步检查：`getAcceptedSchemaKeys`（shape-validation-utils.ts:34）已含 renderer.fields 声明键，但**不含 COMMON_EVENT_FIELDS**——需补（否则词表事件在 closedModel 下仍被报 unknown）。
+- `getAcceptedSchemaKeys`（shape-validation-utils.ts:34）已补 COMMON_EVENT_FIELDS——词表事件在 closedModel 下不再误报。
+- 实现记录：`COMMON_EVENT_FIELDS` 词表（flux-core constants.ts）、`classifyField` 声明驱动（fields.ts）、renderer 事件声明审计（补 `onUploadSuccess`/`onUploadError` 等声明）、`getAcceptedSchemaKeys` 合并词表——见 `docs/plans/453-*.md`。
 
 ## 4. 设计二：字段控件统一事件派发（useFormFieldController 扩展）
 

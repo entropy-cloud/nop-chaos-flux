@@ -172,7 +172,10 @@ export interface FluxSchemaDefinitionShape extends FluxValueShapeBase {
 **待后续**（应用层，不在 flux 机制范围）：
 
 - ERP view.xml 的 `onEvent`（AMIS 事件映射）+ `actionType`（253 处源文件）改为 flux 格式（`onChange` + `action`）；
-- `classifyField` 正则 `/^on[A-Z]/`（`fields.ts:44`）把 `onEvent` 归为 `event` kind——onEvent 非 flux 合法字段（flux 用 renderer 显式声明的 onChange/onClick），后续可考虑改为报 unknown-property（当前至少触发 validateActionShape 报错带路径，已能定位）。
+
+**已落地（2026-08-04，plan 453）**：
+
+- `classifyField` 正则 `/^on[A-Z]/`（`fields.ts`）已改为**显式声明驱动**：合法事件 = renderer.fields 声明 `kind:'event'` **∪** flux-core `COMMON_EVENT_FIELDS` 词表（onChange/onBlur/onFocus/onKeyDown/onKeyUp/onInput）；未声明/不在词表的 onXxx（如 AMIS 遗留 `onEvent`、拼写错误事件名）→ 落回 prop → 走 unknown-property 检测（closedModel/strictMode 下报错，带完整 schema 路径）。详见 `docs/plans/453-flux-event-field-explicit-declaration-and-validation-plan.md`。
 
 ### 3.6 机制统一：schema-definition 取代 deepFields（删除清单）
 
