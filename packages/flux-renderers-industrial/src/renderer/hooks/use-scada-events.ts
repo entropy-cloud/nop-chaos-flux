@@ -111,7 +111,12 @@ export function useScadaEvents(args: UseScadaEventsArgs): ScadaEventsApi {
   const onSymbolEvent = useCallback(
     (name: ScadaSymbolEventName, payload: ScadaSymbolEventPayload) => {
       if (name === 'symbol:hover') {
+        // WD-4 hover ACTION 去重：driveHover（覆盖物跟随）每次 move 都跑（重读图元几何），
+        // 但 onSymbolHover action 仅在悬停符号切换时派发——同符号多次 move 不产生 action 风暴。
+        // hover-miss 后 lastHoverSymbolRef 置空，重入同符号再次派发。
+        const prevHoverSymbol = lastHoverSymbolRef.current;
         driveHover(payload.symbolId);
+        if (prevHoverSymbol === payload.symbolId) return undefined;
       } else if (name === 'symbol:hover-miss') {
         clearHover();
         return undefined;

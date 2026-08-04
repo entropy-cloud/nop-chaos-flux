@@ -932,6 +932,21 @@ export const zhCN: Resource = {
     industrial: {
       scada: {
         canvasError: '画布场景错误',
+        error: {
+          'config-parse': '组态配置解析失败',
+          'config-invalid': '组态配置校验未通过',
+          'config-build-failed': '组态场景构建失败',
+          'engine-create-failed': '画布引擎创建失败',
+          'flux-compile-failed': 'Flux 表达式编译失败',
+          'flux-evaluate-failed': 'Flux 表达式求值失败',
+          'handler-error': '事件处理器异常',
+          'not-visible': '画布无可见图元，无法执行视口命令',
+          'not-mounted': '画布未挂载或已销毁',
+          'symbol-not-found': '未找到指定图元',
+          'point-not-found': '未找到指定测点',
+          'invalid-config': '组态配置非法',
+          unknown: '未知错误',
+        },
       },
     },
   },

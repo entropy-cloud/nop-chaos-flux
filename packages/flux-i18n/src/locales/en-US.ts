@@ -933,6 +933,21 @@ export const enUS: Resource = {
     industrial: {
       scada: {
         canvasError: 'Scada canvas error',
+        error: {
+          'config-parse': 'Scada config parse failed',
+          'config-invalid': 'Scada config validation failed',
+          'config-build-failed': 'Scada scene build failed',
+          'engine-create-failed': 'Scada engine creation failed',
+          'flux-compile-failed': 'Flux expression compile failed',
+          'flux-evaluate-failed': 'Flux expression evaluation failed',
+          'handler-error': 'Event handler error',
+          'not-visible': 'Canvas has no visible symbols; viewport command unavailable',
+          'not-mounted': 'Scada canvas is not mounted or has been destroyed',
+          'symbol-not-found': 'Symbol not found',
+          'point-not-found': 'Point not found',
+          'invalid-config': 'Invalid scada config',
+          unknown: 'Unknown error',
+        },
       },
     },
   },

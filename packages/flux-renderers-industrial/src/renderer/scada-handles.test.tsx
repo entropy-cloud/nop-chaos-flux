@@ -257,8 +257,8 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
 
   it('returns bounds-errors for viewport commands on an empty scene; exportConfig returns the empty fallback config (plan 2026-08-04-1558-1 Phase 3)', async () => {
     // Phase 3 author-less fallback: 缺 config 兜底空场景 → 引擎已建空场景。
-    // - fit/center：空场景 computeSymbolBounds 返回 undefined → 失败（错误信息沿用 'no config' 措辞，
-    //   实指无可拟合符号 bounds；Non-Goal 不改 handle 错误码语义）。
+    // - fit/center：空场景 computeSymbolBounds 返回 undefined → 失败。
+    //   plan 2026-08-04-1558-2 Phase 4 WD-5：错误码对齐 §8.5 表 `not-visible`。
     // - exportConfig：空场景已构建 → 返回空场景 config（ok）。
     // - getSymbols：空场景 → 空数组。
     const environment = createScadaTestEnvironment([]);
@@ -266,7 +266,10 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
     const handle = await resolveScadaHandle(environment);
     const fit = await handle.capabilities.invoke('fit', undefined, {});
     expect(fit.ok).toBe(false);
-    expect(String(fit.error)).toContain('no config');
+    expect(String(fit.error)).toContain('not-visible');
+    const center = await handle.capabilities.invoke('center', undefined, {});
+    expect(center.ok).toBe(false);
+    expect(String(center.error)).toContain('not-visible');
     const exported = await handle.capabilities.invoke('exportConfig', undefined, {});
     expect(exported.ok).toBe(true);
     expect((exported.data as { version: number; symbols: unknown[] }).version).toBe(1);

@@ -8,6 +8,7 @@ import { ReverseIndex } from '../binding/reverse-index.js';
 import { DirtyCollector, RefreshPipeline, type ApplyAttrs } from '../binding/dirty-collector.js';
 import {
   createPrivateEvalScope,
+  extractExpressionDepsViaProbe,
   extractFluxRefs,
   extractFluxScopePaths,
   normalizeFluxExpression,
@@ -82,6 +83,40 @@ describe('flux scope path extraction (漏订阅/过订阅 判定)', () => {
     expect(normalizeFluxExpression('$analog.temp')).toBe('${analog.temp}');
     expect(normalizeFluxExpression('${analog.temp}')).toBe('${analog.temp}');
     expect(normalizeFluxExpression('$a.b')).toBe('${a.b}');
+  });
+
+  it('complex expressions fall back to text-scan (no deps) when compiler/env are not provided', () => {
+    const config = bridgeConfig([{ id: 'temp', flux: '${analog.temp + 1}' }]);
+    // 无 compiler/env：复杂表达式无 path 提取（保留既有行为，向后兼容）
+    expect(extractFluxScopePaths(config)).toEqual([]);
+  });
+
+  it('extracts scope paths for complex expressions via platform dependency collection (WD-2)', () => {
+    const config = bridgeConfig([
+      { id: 'a', flux: '${analog.temp + 1}' },
+      { id: 'b', flux: '${plant.pump.speed * 100}' },
+      { id: 'c', flux: '${analog.temp}' },
+      { id: 'd', flux: '$analog.humidity' },
+    ]);
+    const paths = extractFluxScopePaths(config, { compiler: expressionCompiler, env });
+    // 平台依赖收集 normalize 到根段（flux-core normalizeRootPath）：复杂表达式产出根级订阅路径
+    // （'analog'、'plant'）；纯路径 ${analog.temp} / $analog.humidity 走既有文本扫描产出全路径。
+    // 复杂表达式经根级订阅生效（覆盖该根下任意子路径变更，scopeChangeHitsDependencies 前缀匹配）。
+    expect(paths).toEqual(expect.arrayContaining(['analog', 'analog.humidity', 'analog.temp', 'plant']));
+  });
+
+  it('extractExpressionDepsViaProbe collects root-level dependencies for arithmetic and member chains', () => {
+    // 平台 collector normalize 到根段（normalizeRootPath）——记录所有标识符与成员表达式的 root path。
+    // 多标识符表达式（如 `${a + b}`）返回 ['a', 'b']；链式 `${x.y.z}` 返回 ['x']（根段）。
+    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${analog.temp + 1}')).toContain('analog');
+    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${plant.pump.speed * 2}')).toContain('plant');
+    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${analog.temp + plant.pump.speed}')).toEqual(
+      expect.arrayContaining(['analog', 'plant']),
+    );
+    // 编译失败的语法 → 空集（不抛错）
+    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${@@invalid@@}')).toEqual([]);
+    // 静态表达式 → 空集
+    expect(extractExpressionDepsViaProbe(expressionCompiler, env, 'just a string')).toEqual([]);
   });
 
   it('the private eval scope satisfies the ScopeRef contract without side effects', () => {
@@ -169,6 +204,120 @@ describe('scada-canvas points bridge (I10.3)', () => {
     harness.flush();
     await waitFor(() => expect(harness.applied.length).toBe(2));
     expect(harness.applied[1]).toEqual({ 'rect-1': { fill: 'hot' } });
+  });
+
+  it('complex expression re-evaluates on scope changes (Phase 3 WD-2: platform dep collection)', async () => {
+    // 复杂表达式 `${analog.temp + 1}` 的订阅路径由平台依赖收集产出 → useScopeSelector 订阅生效
+    const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
+    const { Probe, harness } = createBridgeProbe(
+      bridgeConfig(
+        [{ id: 'computed', flux: '${analog.temp + 1}' }],
+        [
+          {
+            id: 'rect-1',
+            type: 'scada-rect',
+            x: 0,
+            y: 0,
+            bindings: { text: { point: 'computed' } },
+          },
+        ],
+      ),
+    );
+    render(
+      <ScadaTestProviders environment={environment}>
+        <Probe />
+      </ScadaTestProviders>,
+    );
+    // 初始求值：25 + 1 = 26
+    await waitFor(() => expect(harness.pending.length).toBeGreaterThan(0));
+    harness.flush();
+    await waitFor(() => expect(harness.applied.length).toBe(1));
+    expect(harness.applied[0]).toEqual({ 'rect-1': { text: 26 } });
+
+    // scope 变更触发重新求值（依赖路径 'analog.temp' 由平台收集产出）
+    act(() => {
+      environment.scope.update('analog.temp', 100);
+    });
+    await waitFor(() => expect(harness.pending.length).toBeGreaterThan(0));
+    harness.flush();
+    await waitFor(() => expect(harness.applied.length).toBe(2));
+    expect(harness.applied[1]).toEqual({ 'rect-1': { text: 101 } });
+  });
+
+  it('clears compiledCache on config change (Phase 3 WD-3: bounded cache lifecycle)', async () => {
+    // WD-3：config 变更（含绑定域重载）时 compiledCache 清空——观察编译次数：初次 1 次 + 配置变更
+    // 后再次 1 次（cache 已清空），而非累计。多次 scope 变更不重新触发编译（cache 命中）。
+    const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
+    const compileSpy = vi.spyOn(expressionCompiler, 'compileValue');
+
+    let currentConfig: ScadaConfig = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+
+    function ConfigSwitch({ config }: { config: ScadaConfig }) {
+      const runtime = useMemo<ScadaPointsBridgeRuntime>(() => {
+        const pointStore = new PointStore();
+        pointStore.loadDeclarations(config.variables ?? []);
+        const reverseIndex = new ReverseIndex(config.symbols);
+        const pendingFlushes: Array<() => void> = [];
+        const collector = new DirtyCollector({ scheduleTick: () => () => undefined });
+        const pipeline = new RefreshPipeline({
+          pointStore,
+          reverseIndex,
+          collector,
+          scheduleTick: (cb) => {
+            pendingFlushes.push(cb);
+            return () => undefined;
+          },
+        });
+        return {
+          pointStore,
+          pipeline,
+          applyAttrs: () => undefined,
+        };
+      }, [config]);
+      useScadaPointsBridge({
+        config,
+        runtime,
+        expressionCompiler,
+        env,
+        onError: () => undefined,
+      });
+      return null;
+    }
+
+    const { rerender } = render(
+      <ScadaTestProviders environment={environment}>
+        <ConfigSwitch config={currentConfig} />
+      </ScadaTestProviders>,
+    );
+
+    // 初次编译：1 次（$analog.temp → ${analog.temp}）
+    await waitFor(() => expect(compileSpy).toHaveBeenCalledTimes(1));
+
+    // 多次 scope 变更：cache 命中，编译次数不增加
+    act(() => environment.scope.update('analog.temp', 30));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(compileSpy).toHaveBeenCalledTimes(1);
+
+    // config 变更（新身份）：compiledCache 清空 → 重新编译 1 次
+    currentConfig = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+    rerender(
+      <ScadaTestProviders environment={environment}>
+        <ConfigSwitch config={currentConfig} />
+      </ScadaTestProviders>,
+    );
+    await waitFor(() => expect(compileSpy).toHaveBeenCalledTimes(2));
+
+    // 长会话模拟：多次 config 变更，编译次数随变更次数线性增长（cache 每次重置，不累积）
+    for (let i = 0; i < 5; i++) {
+      currentConfig = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+      rerender(
+        <ScadaTestProviders environment={environment}>
+          <ConfigSwitch config={currentConfig} />
+        </ScadaTestProviders>,
+      );
+    }
+    await waitFor(() => expect(compileSpy).toHaveBeenCalledTimes(7));
+    compileSpy.mockRestore();
   });
 
   it('evaluates string and boolean flux values (non-numeric primitives)', async () => {

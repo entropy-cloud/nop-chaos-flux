@@ -101,16 +101,30 @@ describe('scada-canvas hover 命中反馈覆盖物 (I11.2)', () => {
     expect(overlayRects(engine)).toHaveLength(0);
   });
 
-  it('follows the symbol when the node moves while hovered (覆盖物跟随图元移动)', async () => {
+  it('does not refresh the overlay when the pointer moves within the same hovered symbol (WD-4 emit-level dedup)', async () => {
+    // plan 2026-08-04-1558-2 Phase 2 WD-4：`symbol:hover` 同符号只发射一次（emit 层去重）。
+    // 悬停同一图元时多次 pointer.move 不再触发 driveHover/overlay.highlight——覆盖物只在首次
+    // 命中时绘制，视口变化经 `refresh()` 钩子维护（pan/zoom），图元几何变化重画属 deferred。
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(makeProps({ node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'] }), environment);
     const engine = await waitForEngine();
 
     movePointerTo(engine, 'rect-a', { x: 50, y: 50 });
     await waitFor(() => expect(engine.interactionOverlay?.activeCount).toBe(1));
+    const initialRect = overlayRects(engine)[0];
+    expect(initialRect).toMatchObject({ x: 10, y: 20, width: 100, height: 50 });
 
+    // 同符号多次 pointer.move：覆盖物保持首次命中几何（不重读图元节点）
     engine.getSymbol('rect-a')?.node.set({ x: 60, y: 80 });
-    movePointerTo(engine, 'rect-a', { x: 100, y: 100 });
+    movePointerTo(engine, 'rect-a', { x: 80, y: 40 });
+    const stableRect = overlayRects(engine)[0];
+    expect(stableRect.x).toBe(initialRect.x);
+    expect(stableRect.y).toBe(initialRect.y);
+
+    // 离开后重入同符号：覆盖物按最新几何重画（hover-miss 后 lastHovered 重置，重入再发射）
+    movePointerTo(engine, null, { x: 500, y: 500 });
+    await waitFor(() => expect(engine.interactionOverlay?.activeCount).toBe(0));
+    movePointerTo(engine, 'rect-a', { x: 70, y: 90 });
     await waitFor(() => expect(overlayRects(engine)[0].x).toBe(60));
     expect(overlayRects(engine)[0].y).toBe(80);
   });

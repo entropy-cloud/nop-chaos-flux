@@ -91,7 +91,11 @@ function applyInitialViewportState(
 export interface UseScadaConfigSyncArgs {
   config: ScadaConfig | undefined;
   runtime: ScadaCanvasRuntime | null;
-  reloadBindings: (variables: ScadaConfig['variables'], symbols: ScadaSymbolNode[]) => void;
+  reloadBindings: (
+    variables: ScadaConfig['variables'],
+    symbols: ScadaSymbolNode[],
+    options?: { preserveValues?: boolean },
+  ) => void;
   viewport?: { fit?: 'contain' | 'fill'; center?: boolean };
   onBuilt?: () => void;
   onBuildError?: (code: string, message: string) => void;
@@ -154,6 +158,9 @@ export function useScadaConfigSync(
         }
       }
     } catch (error) {
+      // SL-4 fix：full/reset 构建失败后强制下次 full 重建（prevRef 置空）——避免树半构建 +
+      // 绑定旧导致下次 diff 基于损坏基线。
+      prevRef.current = undefined;
       latest.current.onBuildError?.(
         'config-build-failed',
         error instanceof Error ? error.message : String(error),
@@ -171,13 +178,17 @@ export function useScadaConfigSync(
       pendingSkipRef.current += 1;
       prevRef.current = imported;
       currentRuntime.engine.reset(imported);
-      reload(imported.variables, imported.symbols);
+      // import 为显式全量替换契约（author 意图是换画面）：重置为 init，不保留 props 路径的 live 值
+      // （plan 2026-08-04-1558-2 Phase 1 Decision：props full/diff 按保留、import 重置）。
+      reload(imported.variables, imported.symbols, { preserveValues: false });
       // import 恒为全量构建：初始视口（props policy 优先，config.viewport 兜底）同样在 reset 期应用
       applyInitialViewportState(currentRuntime, imported, latest.current.viewport);
       // import 恒为全量构建：change 基准守卫天然满足
       built?.();
     } catch (error) {
       pendingSkipRef.current = Math.max(0, pendingSkipRef.current - 1);
+      // SL-4 fix：import 全量构建失败同样强制下次 full 重建（prevRef 置空），避免损坏基线。
+      prevRef.current = undefined;
       buildError?.(
         'config-build-failed',
         error instanceof Error ? error.message : String(error),

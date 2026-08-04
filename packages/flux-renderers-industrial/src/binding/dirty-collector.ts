@@ -113,6 +113,11 @@ export interface RefreshPipelineOptions {
   getStates?: (symbolId: string) => ScadaStateDeclaration | undefined;
   /** 图元级动画声明查询（图元节点 `animations` 字段，`when: 'always' | { state }`）。 */
   getAnimations?: (symbolId: string) => ScadaAnimation[] | undefined;
+  /**
+   * 全部图元 id 查询（plan 2026-08-04-1558-2 Phase 2 SL-1/m1）：首次全量同步遍历全部动画承载图元，
+   * 覆盖无 states 且无绑定图元的 `when:'always'` 动画启动（仅 collectStates 路径会漏掉这类图元）。
+   */
+  getSymbolIds?: () => string[];
   /** 状态动画引擎（状态联动：进入状态启动、退出停止）。 */
   animator?: Animator;
   onStateChange?: (payload: { symbolId: string; state: string }) => void;
@@ -191,6 +196,9 @@ export class RefreshPipeline {
       }
       this.options.pointStore.drainDirtyPointIds();
       changed = this.options.pointStore.pointIds();
+      // SL-1/m1：首次同步启动全部 when:'always' 动画（含无 states/无绑定图元），在脏检查早退之前——
+      // 无点/无绑定图元的 always 动画不依赖脏点驱动，否则被下方 `changed.length === 0` 早退跳过。
+      this.startAlwaysAnimations();
     } else {
       changed = this.options.pointStore.drainDirtyPointIds();
     }
@@ -221,6 +229,30 @@ export class RefreshPipeline {
     this.lastDeps.clear();
     this.lastState.clear();
     this.lastError.clear();
+  }
+
+  /**
+   * `when:'always'` 动画首次全量启动（plan 2026-08-04-1558-2 Phase 2 SL-1/m1）：
+   * collectStates 仅覆盖有 states 且被脏点触碰的图元——无 states/无绑定图元的 always 动画
+   * 从不进入该路径而静默 no-op。首次同步遍历全部动画承载图元统一 `animator.start`（幂等），
+   * 覆盖 validate 接受但 collectStates 漏掉的图元。config 变更经 reloadBindings 重建 pipeline
+   * → synced=false → 首同步重跑，新增图元的 always 动画随之启动。
+   */
+  private startAlwaysAnimations(): void {
+    const animator = this.options.animator;
+    const getSymbolIds = this.options.getSymbolIds;
+    if (!animator || !getSymbolIds) return;
+    const getAnimations = this.options.getAnimations;
+    if (!getAnimations) return;
+    for (const symbolId of getSymbolIds()) {
+      const animations = getAnimations(symbolId);
+      if (!animations) continue;
+      for (const animation of animations) {
+        if (animation.when === 'always') {
+          animator.start(symbolId, animation);
+        }
+      }
+    }
   }
 
   /** 表达式点递归求值（经 evaluator 上下文注入）：环检测（active 栈）+ 求值结果回写 store。 */

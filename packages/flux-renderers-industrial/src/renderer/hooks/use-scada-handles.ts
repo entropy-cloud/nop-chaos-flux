@@ -25,6 +25,7 @@ export interface UseScadaHandlesArgs {
   cid: number | undefined;
   runtime: ScadaCanvasRuntime | null;
   destroy: () => void;
+  onDestroyed?: () => void;
   reloadConfig: (config: ScadaConfig) => void;
 }
 
@@ -34,7 +35,7 @@ export interface UseScadaHandlesArgs {
  * 句柄方法转发到引擎命令句柄 + 点表 store；卸载时退订。失败路径对齐 §8.5 失败路径表。
  */
 export function useScadaHandles(args: UseScadaHandlesArgs): void {
-  const { componentRegistry, id, cid, runtime, destroy, reloadConfig } = args;
+  const { componentRegistry, id, cid, runtime, destroy, onDestroyed, reloadConfig } = args;
   const latest = useRef(args);
   useEffect(() => {
     latest.current = args;
@@ -53,6 +54,8 @@ export function useScadaHandles(args: UseScadaHandlesArgs): void {
       invoke(method, payload) {
         if (method === 'destroy') {
           latest.current.destroy();
+          // plan 2026-08-04-1558-2 Phase 1：destroy 后状态面置 destroyed（OP-4）。
+          latest.current.onDestroyed?.();
           return { ok: true };
         }
         const current = latest.current.runtime;
@@ -61,12 +64,18 @@ export function useScadaHandles(args: UseScadaHandlesArgs): void {
         switch (method) {
           case 'fit': {
             const bounds = computeSymbolBounds(current.engine.exportConfig()?.symbols ?? []);
-            if (!bounds) return { ok: false, error: new Error('scada canvas has no config') };
+            if (!bounds) {
+              // plan 2026-08-04-1558-2 Phase 4 WD-5：fit/center 无 bounds 失败路径对齐
+              // design-renderer.md §8.5 表 `not-visible`（错误码注册表登记）。
+              return { ok: false, error: new Error('not-visible') };
+            }
             return { ok: true, data: current.engine.fit(bounds, 0) };
           }
           case 'center': {
             const bounds = computeSymbolBounds(current.engine.exportConfig()?.symbols ?? []);
-            if (!bounds) return { ok: false, error: new Error('scada canvas has no config') };
+            if (!bounds) {
+              return { ok: false, error: new Error('not-visible') };
+            }
             return { ok: true, data: current.engine.center(bounds) };
           }
           case 'getSymbols': {
@@ -135,5 +144,5 @@ export function useScadaHandles(args: UseScadaHandlesArgs): void {
       type: 'scada-canvas',
       capabilities,
     });
-  }, [componentRegistry, id, cid, runtime, destroy, reloadConfig]);
+  }, [componentRegistry, id, cid, runtime, destroy, onDestroyed, reloadConfig]);
 }

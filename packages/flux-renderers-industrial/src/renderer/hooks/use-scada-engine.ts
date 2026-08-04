@@ -53,6 +53,9 @@ function createBindingDomain(
     collector,
     getStates: (symbolId) => engine.getSymbolDeclarations(symbolId)?.states,
     getAnimations: (symbolId) => engine.getSymbolDeclarations(symbolId)?.animations,
+    // plan 2026-08-04-1558-2 Phase 2：首次同步遍历全部图元启动 when:'always' 动画
+    // （覆盖无 states/无绑定图元，SL-1/m1）。
+    getSymbolIds: () => engine.getSymbols().map((leaf) => leaf.id),
     animator,
   });
   // I8.2 视觉状态应用（open-audit P1-B 接线）：消费 `state:change` 事件应用/恢复状态样式；
@@ -70,6 +73,12 @@ function applyAttrsOf(engine: ScadaCanvasEngine): ApplyAttrs {
 /**
  * 引擎实例生命周期（design-renderer.md §8.3）：mount 创建（幂等守卫防 React Compiler 重复执行，
  * Failure Paths `react-compiler-re-exec`）、unmount destroy（幂等）、ResizeObserver → setSize 防抖到帧。
+ *
+ * plan 2026-08-04-1558-2 Phase 1 收口：
+ * - observer/rafId 提为 ref，mount cleanup 与 `destroy` 共用断开逻辑（SL-2：destroy 后容器不再被观察）；
+ * - 绑定域（pipeline/animator/collector）释放始终针对 `runtimeRef.current` 的最新实例（M1：reload 后 unmount
+ *   不再泄漏最新 animator 时钟——mount cleanup 闭包不再持有 mount 期域对象）；
+ * - `setPointValues` 注入闭包经 `runtimeRef.current` 取最新 pipeline 写入（SL-3：reload 后注入不再写向已销毁 pipeline）。
  */
 export function useScadaEngine(args: UseScadaEngineArgs) {
   const { containerRef } = args;
@@ -79,6 +88,34 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
   });
   const [runtime, setRuntime] = useState<ScadaCanvasRuntime | null>(null);
   const runtimeRef = useRef<ScadaCanvasRuntime | null>(null);
+  // observer/rafId 提为 ref：mount cleanup 与命令式 destroy 共用断开逻辑（SL-2）。
+  const observerRef = useRef<ResizeObserver | undefined>(undefined);
+  const rafIdRef = useRef(0);
+
+  const cancelPendingResize = useCallback(() => {
+    if (rafIdRef.current !== 0) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = 0;
+    }
+  }, []);
+
+  /**
+   * 释放当前绑定域 + 引擎 + 观察器/rAF（幂等）。mount cleanup 与 `destroy` 共用：
+   * 始终针对 `runtimeRef.current` 的最新域实例（M1：reload 后释放的是最新 animator 时钟，非 mount 期旧域）。
+   */
+  const releaseRuntime = useCallback(() => {
+    cancelPendingResize();
+    observerRef.current?.disconnect();
+    observerRef.current = undefined;
+    const current = runtimeRef.current;
+    if (!current) return;
+    current.pipeline.destroy();
+    current.animator.destroy();
+    current.collector.destroy();
+    current.engine.destroy();
+    runtimeRef.current = null;
+    setRuntime(null);
+  }, [cancelPendingResize]);
 
   useEffect(() => {
     if (runtimeRef.current) return;
@@ -115,64 +152,72 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
     // （`window.__flux_scada_<cid>.setPointValues`）——与 scope-bridge 同写入路径
     // （pointStore.setPointValues + pipeline.requestRender），但剔除 1 万 flux 变量
     // 订阅/求值开销，非 `scada-canvas` 公共契约变更（仅 exposeTestHandle 时存在）。
+    // SL-3 fix：注入闭包经 runtimeRef.current 取最新 pipeline（reload 后写向新域，不写已销毁 pipeline）。
     if (latest.current.exposeTestHandle && latest.current.cid !== undefined) {
       const handle = (window as unknown as Record<string, unknown>)[
         scadaTestHandleKey(latest.current.cid)
       ] as ScadaTestHandle | undefined;
       if (handle) {
         handle.setPointValues = (values: Record<string, ScadaPrimitive>) => {
-          pointStore.setPointValues(values);
-          pipeline.requestRender(applyAttrsOf(engine));
+          const current = runtimeRef.current;
+          if (!current) return;
+          current.pointStore.setPointValues(values);
+          current.pipeline.requestRender(applyAttrsOf(current.engine));
         };
       }
     }
 
-    let rafId = 0;
-    let observer: ResizeObserver | undefined;
     if (typeof ResizeObserver !== 'undefined') {
-      observer = new ResizeObserver((entries) => {
+      observerRef.current = new ResizeObserver((entries) => {
         const entry = entries[0];
         if (!entry) return;
         const width = Math.round(entry.contentRect.width);
         const height = Math.round(entry.contentRect.height);
-        if (rafId !== 0) cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => {
-          rafId = 0;
+        cancelPendingResize();
+        rafIdRef.current = requestAnimationFrame(() => {
+          rafIdRef.current = 0;
           if (runtimeRef.current?.engine) runtimeRef.current.engine.setSize(width, height);
         });
       });
-      observer.observe(container);
+      observerRef.current.observe(container);
     }
 
     return () => {
-      if (rafId !== 0) cancelAnimationFrame(rafId);
-      observer?.disconnect();
-      pipeline.destroy();
-      animator.destroy();
-      collector.destroy();
-      engine.destroy();
-      runtimeRef.current = null;
-      setRuntime(null);
+      releaseRuntime();
     };
-  }, [containerRef]);
+  }, [containerRef, cancelPendingResize, releaseRuntime]);
 
   useEffect(() => {
     const current = runtimeRef.current;
     if (!current) return;
+    // plan 2026-08-04-1558-2 Phase 4 WD-1/m10：width/height props 变更触发 engine.setSize
+    // （补全 width/height effect deps——design-renderer.md §8.3 声称「width/height 变化 → 引擎命令式 API」）
     const targetWidth = latest.current.width ?? containerRef.current?.clientWidth ?? 0;
     const targetHeight = latest.current.height ?? containerRef.current?.clientHeight ?? 0;
     if (targetWidth > 0 && targetHeight > 0) {
       current.engine.setSize(targetWidth, targetHeight);
     }
-  }, [runtime, containerRef]);
+  }, [runtime, containerRef, args.width, args.height]);
 
-  /** 绑定域整体重载（config 变更含点表/绑定变化时）：点表声明 + 反向索引 + 刷新流水线/动画时钟重建。 */
+  /**
+   * 绑定域整体重载（config 变更含点表/绑定变化时）：点表声明 + 反向索引 + 刷新流水线/动画时钟重建。
+   * plan 2026-08-04-1558-2 Phase 1：props full/diff 路径按 id 保留 live 点值（OP-1：静态/表达式运行期值
+   * 不静默丢失）；importConfig 全量替换路径重置为 init（Decision：author 意图是换画面）。
+   * 保留路径经 PointStore.snapshotValues + restoreValues 直接回填（绕过 convert，防二次 scale，m2）。
+   */
   const reloadBindings = useCallback(
-    (variables: ScadaPointDeclaration[] | undefined, symbols: ScadaSymbolNode[]) => {
+    (
+      variables: ScadaPointDeclaration[] | undefined,
+      symbols: ScadaSymbolNode[],
+      options?: { preserveValues?: boolean },
+    ) => {
       const current = runtimeRef.current;
       if (!current) return;
+      const preserve = options?.preserveValues ?? true;
+      const snapshot = preserve ? current.pointStore.snapshotValues() : new Map<string, ScadaPrimitive>();
       current.pointStore.reset();
       current.pointStore.loadDeclarations(variables ?? []);
+      if (snapshot.size > 0) current.pointStore.restoreValues(snapshot);
       current.reverseIndex.build(symbols);
       current.pipeline.destroy();
       current.animator.destroy();
@@ -191,17 +236,10 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
     [],
   );
 
-  /** 命令式销毁（component:destroy 句柄）：引擎/流水线/动画时钟销毁，runtime 置空（后续句柄调用返回 not-mounted）。 */
+  /** 命令式销毁（component:destroy 句柄）：释放当前域 + 断开 observer/取消 rAF，runtime 置空（后续句柄返回 not-mounted）。 */
   const destroy = useCallback(() => {
-    const current = runtimeRef.current;
-    if (!current) return;
-    current.pipeline.destroy();
-    current.animator.destroy();
-    current.collector.destroy();
-    current.engine.destroy();
-    runtimeRef.current = null;
-    setRuntime(null);
-  }, []);
+    releaseRuntime();
+  }, [releaseRuntime]);
 
   return { runtime, reloadBindings, destroy };
 }

@@ -64,6 +64,11 @@ export interface ScadaEngineOptions {
   pointStore?: PointStore;
   /** 图元事件回调（symbol:click/dblclick/hover，design-engine.md §8.1）。 */
   onSymbolEvent?: (name: ScadaSymbolEventName, payload: ScadaSymbolEventPayload) => void;
+  /**
+   * 图元事件处理器异常隔离上报（plan 2026-08-04-1558-2 Phase 2 SL-5/m3）：onSymbolEvent 处理器 throw
+   * 经去重上报，**不升级画布 status**（P1-8 降级契约）。异常不冒泡进 leafer 交互管线。
+   */
+  onHandlerError?: (error: unknown) => void;
   /** 命中的绑定点值快照投影（只读；renderer 桥接层装配，经 point-store 投影）。 */
   getPointValuesFor?: (symbolId: string) => Record<string, unknown> | undefined;
 }
@@ -399,6 +404,7 @@ export class ScadaCanvasEngine {
       getSymbolType: (symbolId) => this.registry.get(symbolId)?.definition?.type,
       getPointValues: this.options.getPointValuesFor,
       onSymbolEvent,
+      onHandlerError: this.options.onHandlerError,
     });
     this.eventBridge.attach();
   }

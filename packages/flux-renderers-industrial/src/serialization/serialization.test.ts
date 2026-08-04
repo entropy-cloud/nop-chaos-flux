@@ -391,6 +391,18 @@ describe('serializeScadaConfig', () => {
     });
     expect(parsed.variables).toEqual([{ id: 'v1', source: 'static', value: 42 }]);
   });
+
+  it('pruneInstanceNode returns node as-is for unregistered types without defaults/children', () => {
+    // 未注册 type 或无 defaults 的节点：children 不存在时直接返回 node（不走 diff 路径，
+    // serialize.ts:21 false 分支）。验证 serialize 不破坏未注册图元原貌。
+    const config: ScadaConfig = {
+      version: 1,
+      variables: [],
+      symbols: [{ id: 'x', type: 'scada-totally-unregistered', x: 5 } as unknown as ScadaConfig['symbols'][number]],
+    };
+    const parsed = JSON.parse(serializeScadaConfig(config)) as ScadaConfig;
+    expect(parsed.symbols[0]).toEqual({ id: 'x', type: 'scada-totally-unregistered', x: 5 });
+  });
 });
 
 describe('diffScadaConfig', () => {

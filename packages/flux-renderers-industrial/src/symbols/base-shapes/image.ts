@@ -41,7 +41,10 @@ export const scadaImageDefinition: ScadaSymbolDefinition = {
     }
     const node = new Image(attrs);
     node.on('error', () => {
-      // 加载失败占位样式保持 + 错误信号（onError 语义归 I10 桥接层消费）
+      // plan 2026-08-04-1558-2 Phase 4 Decision：加载失败占位样式保持（视觉契约），
+      // `loadFailed` 写入但当前**无画布级消费者**（ Deferred But Adjudicated：与 P1-8 数据/资源
+      // 错误不升级 status 契约冲突，画布级诊断通道需 I16 编辑器时代统一接线）。保留写入以便
+      // 未来诊断面/调试器直接读取，author 不应假设已接入运行时报警通道（design-symbols.md 注记）。
       node.set({ background: SCADA_IMAGE_PLACEHOLDER, loadFailed: true });
     });
     return node;

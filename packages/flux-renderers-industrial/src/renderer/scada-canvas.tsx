@@ -9,13 +9,13 @@ import type { ScadaConfig } from '../serialization/config-types.js';
 import type { ScadaCanvasSchema, ScadaCanvasEvents } from '../schemas.js';
 import type { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { useScadaEngine, type ScadaCanvasRuntime } from './hooks/use-scada-engine.js';
-import { errorMessage } from './scada-errors.js';
+import { errorMessage, useScadaErrorText } from './scada-errors.js';
 import { useScadaConfigSync } from './hooks/use-scada-config-sync.js';
 import { useScadaPointsBridge } from './hooks/use-scada-points-bridge.js';
 import { useScadaEvents } from './hooks/use-scada-events.js';
 import { useScadaHandles } from './hooks/use-scada-handles.js';
 
-export type ScadaCanvasStatus = 'loading' | 'ready' | 'error';
+export type ScadaCanvasStatus = 'loading' | 'ready' | 'error' | 'destroyed';
 
 export interface ScadaCanvasErrorInfo {
   code: string;
@@ -71,6 +71,8 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   const [status, setStatus] = useState<ScadaCanvasStatus>('loading');
   const [errorInfo, setErrorInfo] = useState<ScadaCanvasErrorInfo | undefined>();
   const { t } = useFluxTranslation();
+  // plan 2026-08-04-1558-2 Phase 4 WD-6：错误码经注册表 + i18n 映射为本地化文案（fallback 原文）
+  const resolveErrorText = useScadaErrorText();
 
   const { config: parsedConfig, error: parseError } = useMemo(
     () => parseAndValidateConfig(props.props.config),
@@ -129,6 +131,12 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     onEngineError: handleError,
   });
 
+  // plan 2026-08-04-1558-2 Phase 1：component:destroy 后画布状态可见（OP-4）——
+  // destroy 句柄回调置 destroyed，wrapper data-status 反映销毁态，e2e/tooling 不再把已销毁画布报为 healthy。
+  const handleDestroyed = useCallback(() => {
+    setStatus('destroyed');
+  }, []);
+
   useEffect(() => {
     engineRef.current = runtime?.engine;
   }, [runtime]);
@@ -170,6 +178,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     cid: props.meta.cid,
     runtime,
     destroy,
+    onDestroyed: handleDestroyed,
     reloadConfig: (config) => {
       const current = runtimeRef.current;
       if (!current) return;
@@ -194,7 +203,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
       ) : effectiveStatus === 'error' ? (
         asReactNode(empty?.render({ bindings: { error: parseError ?? errorInfo } })) ?? (
           <div data-slot="scada-canvas-error" className="nop-scada-canvas-error" data-code={parseError?.code ?? errorInfo?.code}>
-            {(parseError ?? errorInfo)?.message ?? t('industrial.scada.canvasError')}
+            {resolveErrorText(parseError ?? errorInfo) || t('industrial.scada.canvasError')}
           </div>
         )
       ) : (

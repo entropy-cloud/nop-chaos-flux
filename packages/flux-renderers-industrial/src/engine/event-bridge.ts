@@ -54,6 +54,12 @@ export interface EventBridgeOptions {
   /** 命中的绑定点值快照投影（只读；经 point-store 投影）。 */
   getPointValues?: (symbolId: string) => Record<string, unknown> | undefined;
   onSymbolEvent: (name: ScadaSymbolEventName, payload: ScadaSymbolEventPayload) => void;
+  /**
+   * 处理器异常隔离上报通道（plan 2026-08-04-1558-2 Phase 2 SL-5/m3）：用户侧 onSymbolEvent
+   * throw（坏 ActionSchema 等）经去重上报，**不升级画布 status**（P1-8 降级契约）——异常不冒泡进
+   * leafer 交互管线，后续 move/tap 仍可达。缺省吞掉（仅隔离）。
+   */
+  onHandlerError?: (error: unknown) => void;
 }
 
 /**
@@ -67,6 +73,7 @@ export interface EventBridgeOptions {
 export class EventBridge {
   private attached = false;
   private lastHovered: string | undefined;
+  private reportedHandlerErrors = new Set<string>();
 
   constructor(private readonly options: EventBridgeOptions) {}
 
@@ -90,35 +97,48 @@ export class EventBridge {
   }
 
   private readonly handleTap = (event: unknown): void => {
-    const point = this.pointOf(event);
-    if (!point) return;
-    const symbolId = this.resolveSymbol(point);
-    if (symbolId !== undefined) this.emit('symbol:click', point, symbolId);
+    this.safeRun(() => {
+      const point = this.pointOf(event);
+      if (!point) return;
+      const symbolId = this.resolveSymbol(point);
+      if (symbolId !== undefined) this.emit('symbol:click', point, symbolId);
+    });
   };
 
   private readonly handleDoubleTap = (event: unknown): void => {
-    const point = this.pointOf(event);
-    if (!point) return;
-    const symbolId = this.resolveSymbol(point);
-    if (symbolId !== undefined) this.emit('symbol:dblclick', point, symbolId);
+    this.safeRun(() => {
+      const point = this.pointOf(event);
+      if (!point) return;
+      const symbolId = this.resolveSymbol(point);
+      if (symbolId !== undefined) this.emit('symbol:dblclick', point, symbolId);
+    });
   };
 
   private readonly handlePointerMove = (event: unknown): void => {
-    const point = this.pointOf(event);
-    if (point) this.handleHover(point);
+    this.safeRun(() => {
+      const point = this.pointOf(event);
+      if (point) this.handleHover(point);
+    });
   };
 
   /** 指针离开画布（moveTarget `pointer.leave`）：前一命中图元 hover 退出（覆盖物清除）。 */
   private readonly handlePointerLeave = (): void => {
-    if (this.lastHovered === undefined) return;
-    const prev = this.lastHovered;
-    this.lastHovered = undefined;
-    this.emit('symbol:hover-miss', undefined, prev);
+    this.safeRun(() => {
+      if (this.lastHovered === undefined) return;
+      const prev = this.lastHovered;
+      this.lastHovered = undefined;
+      this.emit('symbol:hover-miss', undefined, prev);
+    });
   };
 
   private handleHover(point: { x: number; y: number }): void {
     const symbolId = this.resolveSymbol(point);
     if (symbolId !== undefined) {
+      // plan 2026-08-04-1558-2 Phase 2 WD-4：同符号去重——`lastHovered === symbolId` 时不重复
+      // emit `symbol:hover`（悬停同一符号期间 hover 事件只发射一次）。hover-miss 后 `lastHovered`
+      // 重置为 undefined，重入同符号再发射。InteractionOverlay 视口跟随经 `refresh()` 钩子维护
+      // （pan/zoom 触发），无需每次 move 重复发射。
+      if (this.lastHovered === symbolId) return;
       this.lastHovered = symbolId;
       this.emit('symbol:hover', point, symbolId);
       return;
@@ -128,6 +148,21 @@ export class EventBridge {
       this.lastHovered = undefined;
       this.emit('symbol:hover-miss', undefined, prev);
     }
+  }
+
+  private safeRun(fn: () => void): void {
+    try {
+      fn();
+    } catch (error) {
+      this.reportHandlerError(error);
+    }
+  }
+
+  private reportHandlerError(error: unknown): void {
+    const message = error instanceof Error ? error.message : String(error);
+    if (this.reportedHandlerErrors.has(message)) return;
+    this.reportedHandlerErrors.add(message);
+    this.options.onHandlerError?.(error);
   }
 
   private resolveSymbol(viewportPoint: { x: number; y: number }): string | undefined {
