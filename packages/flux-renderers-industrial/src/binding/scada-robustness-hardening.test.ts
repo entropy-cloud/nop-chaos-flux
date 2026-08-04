@@ -195,7 +195,9 @@ describe('always-animation startup for stateless/unbound symbols (plan 2026-08-0
     const pointStore = new PointStore();
     const reverseIndex = new ReverseIndex([]);
     const collector = new DirtyCollector({ scheduleTick: () => () => undefined });
-    // 无 animator + 无 getSymbolIds + 无 getAnimations：startAlwaysAnimations 各早退路径均不抛错
+    // 无 animator + 无 getSymbolIds + 无 getAnimations：startAlwaysAnimations 各早退路径均不抛错。
+    // T6（plan 2026-08-04-2243-3）：直接调用 flushFrame（若早退 guard 失败 → 访问 undefined animator → 抛错 → 测试失败）。
+    // 无 animator 时无可观测动画副作用，guard 的语义即「不抛错」；下方两个含 animator 的分支用 isPlaying 负向断言加固。
     const pipelineNoAnimator = new RefreshPipeline({
       pointStore,
       reverseIndex,
@@ -204,39 +206,45 @@ describe('always-animation startup for stateless/unbound symbols (plan 2026-08-0
       getAnimations: () => [{ kind: 'rotate', when: 'always', period: 100 }],
       scheduleTick: () => () => undefined,
     });
-    expect(() => pipelineNoAnimator.flushFrame(() => undefined)).not.toThrow();
+    pipelineNoAnimator.flushFrame(() => undefined);
     pipelineNoAnimator.destroy();
 
+    // 无 symbolIds → startAlwaysAnimations 无遍历目标 → 不启动任何动画（isPlaying 恒 false）
+    const noSymbolIdsAnimator = new Animator({
+      now: () => 0,
+      scheduleTick: () => () => undefined,
+      collect: () => undefined,
+      requestFrame: () => undefined,
+    });
     const pipelineNoSymbolIds = new RefreshPipeline({
       pointStore,
       reverseIndex,
       collector: new DirtyCollector({ scheduleTick: () => () => undefined }),
       getAnimations: () => [{ kind: 'rotate', when: 'always', period: 100 }],
-      animator: new Animator({
-        now: () => 0,
-        scheduleTick: () => () => undefined,
-        collect: () => undefined,
-        requestFrame: () => undefined,
-      }),
+      animator: noSymbolIdsAnimator,
       scheduleTick: () => () => undefined,
     });
-    expect(() => pipelineNoSymbolIds.flushFrame(() => undefined)).not.toThrow();
+    pipelineNoSymbolIds.flushFrame(() => undefined);
+    expect(noSymbolIdsAnimator.isPlaying('x', 'rotate')).toBe(false);
     pipelineNoSymbolIds.destroy();
 
+    // 无 getAnimations → 每图元动画列表为空 → 不启动任何动画（isPlaying 恒 false）
+    const noGetAnimationsAnimator = new Animator({
+      now: () => 0,
+      scheduleTick: () => () => undefined,
+      collect: () => undefined,
+      requestFrame: () => undefined,
+    });
     const pipelineNoGetAnimations = new RefreshPipeline({
       pointStore,
       reverseIndex,
       collector: new DirtyCollector({ scheduleTick: () => () => undefined }),
       getSymbolIds: () => ['x'],
-      animator: new Animator({
-        now: () => 0,
-        scheduleTick: () => () => undefined,
-        collect: () => undefined,
-        requestFrame: () => undefined,
-      }),
+      animator: noGetAnimationsAnimator,
       scheduleTick: () => () => undefined,
     });
-    expect(() => pipelineNoGetAnimations.flushFrame(() => undefined)).not.toThrow();
+    pipelineNoGetAnimations.flushFrame(() => undefined);
+    expect(noGetAnimationsAnimator.isPlaying('x', 'rotate')).toBe(false);
     pipelineNoGetAnimations.destroy();
   });
 

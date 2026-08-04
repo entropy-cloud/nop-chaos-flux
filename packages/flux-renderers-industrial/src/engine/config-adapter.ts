@@ -42,10 +42,6 @@ export class ConfigAdapter {
     this.engine.tree.add(this.root);
   }
 
-  setConfig(config: ScadaConfig): void {
-    this.config = config;
-  }
-
   destroy(): void {
     this.registry.clear();
     this.nodeById.clear();

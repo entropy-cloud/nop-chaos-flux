@@ -456,7 +456,11 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     renderScadaCanvas(makeProps({ props: { config: configProp(textConfig()) } }), environment);
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
     const handle = scadaTestHandle(7) as
-      | { engine: ScadaCanvasEngine; setPointValues: (values: Record<string, unknown>) => void }
+      | {
+          engine: ScadaCanvasEngine;
+          setPointValues: (values: Record<string, unknown>) => void;
+          getPointValue?: (pointId: string) => unknown;
+        }
       | undefined;
     expect(handle).toBeDefined();
     const engine = handle!.engine;
@@ -466,8 +470,10 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
       capabilities: { invoke: (m: string) => Promise<{ ok: boolean }> };
     };
     await destroyResult.capabilities.invoke('destroy');
-    // 引擎已销毁：setPointValues 经 runtimeRef.current guard 安全返回（不抛、不写已销毁 pipeline）
-    expect(() => handle!.setPointValues({ level: 999 })).not.toThrow();
+    // 引擎已销毁：setPointValues 经 runtimeRef.current guard 安全返回（不抛、不写已销毁 pipeline）。
+    // T6（plan 2026-08-04-2243-3）：负向副作用断言——注入值不得落 pointStore（getPointValue 恒非 999）。
+    handle!.setPointValues({ level: 999 });
+    expect(handle!.getPointValue?.('level')).not.toBe(999);
     expect(engine.isDestroyed()).toBe(true);
   });
 });

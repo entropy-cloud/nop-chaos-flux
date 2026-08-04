@@ -136,13 +136,13 @@ describe('registration semantics (registerScadaRenderers → builtin symbols)', 
     expect(hasScadaSymbol('scada-group')).toBe(true);
   });
 
-  it('registerScadaRenderers is idempotent (repeat calls keep registry consistent, no throw)', () => {
+  it('registerScadaRenderers is idempotent (repeat calls keep registry consistent)', () => {
     const registry = createRendererRegistry();
-    expect(() => {
-      registerScadaRenderers(registry);
-      registerScadaRenderers(registry);
-      registerScadaRenderers(registry);
-    }).not.toThrow();
+    // T6（plan 2026-08-04-2243-3）：移除 not.toThrow() 弱断言——直接调用 3 次，
+    // 若抛错测试自然失败；idempotency 由下方 toHaveLength(1) 负向副作用断言证明（无重复注册）。
+    registerScadaRenderers(registry);
+    registerScadaRenderers(registry);
+    registerScadaRenderers(registry);
     expect(hasScadaSymbol('scada-rect')).toBe(true);
     expect(registry.list()).toHaveLength(1);
   });

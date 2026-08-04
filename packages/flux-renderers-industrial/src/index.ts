@@ -33,7 +33,6 @@ export type {
   ScadaSymbolStylePatch,
   ScadaFillStyle,
 } from './symbols/symbol-types.js';
-export type { IndustrialRendererSchema } from './renderer-definitions.js';
 
 // 符号注册表 API（design-symbols.md §3：供第三方扩展注册自定义图元）。
 export {

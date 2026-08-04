@@ -1,5 +1,4 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import type { ScadaCanvasSchema } from './schemas.js';
 import { ScadaCanvasRenderer } from './renderer/scada-canvas.js';
 
 /**
@@ -205,5 +204,3 @@ export const industrialRendererDefinitions: RendererDefinition[] = [
     ],
   },
 ];
-
-export type IndustrialRendererSchema = ScadaCanvasSchema;

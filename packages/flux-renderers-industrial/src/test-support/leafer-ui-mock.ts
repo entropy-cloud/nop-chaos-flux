@@ -121,6 +121,20 @@ export class MockLeaf {
   toJSON(): Record<string, unknown> {
     return { tag: this.tag, innerId: this.innerId, children: this.children.map((c) => c.toJSON()) };
   }
+
+  // T2（plan 2026-08-04-2243-3）：leafer bounds API 在 mock 不建模——
+  // 抛错以暴露产线代码误用 mock 路径（mock 掩蔽 live defect 的失败模式，gate-3 同根因）。
+  getBoundsToWorld(): never {
+    throw new Error('leafer-ui mock does not model bounds API: getBoundsToWorld() is not stubbed');
+  }
+
+  getBounds(): never {
+    throw new Error('leafer-ui mock does not model bounds API: getBounds() is not stubbed');
+  }
+
+  get worldBox(): never {
+    throw new Error('leafer-ui mock does not model bounds API: worldBox is not stubbed');
+  }
 }
 
 export class MockGroup extends MockLeaf {
@@ -205,9 +219,11 @@ export class MockZoomLayer extends MockGroup {
 
 const wrappedByOriginal = new WeakMap<(...args: unknown[]) => void, Set<(...args: unknown[]) => void>>();
 
-export class MockLeafer extends MockGroup {
+// T1（plan 2026-08-04-2243-3）：MockLeafer 继承 MockZoomLayer，使 tree 身份自带 zoom 能力
+// （scaleX/scaleY/x/y/move/scaleOfWorld/moveCalls/scaleOfWorldCalls），配合下方 `zoomLayer` getter
+// 实现 `tree.zoomLayer === tree` 身份对齐（真实 leafer viewport 插件语义）。
+export class MockLeafer extends MockZoomLayer {
   override tag = 'Leafer';
-  zoomLayer: MockZoomLayer;
   selector: { getByPoint: (point: { x: number; y: number }, padding?: number) => unknown };
   leafs = 0;
   __world = { x: 0, y: 0, width: 0, height: 0 };
@@ -216,11 +232,19 @@ export class MockLeafer extends MockGroup {
   config: Record<string, unknown> = {};
   private tapMerge: { timer: ReturnType<typeof setTimeout> | null; downTime: number } | null = null;
 
+  /**
+   * T1（plan 2026-08-04-2243-3）：对齐真实 leafer `tree.zoomLayer === tree`（viewport 插件语义）。
+   * 此前 mock 持独立 `MockZoomLayer` 实例——产线代码直读 `tree.scaleX` 在 mock 见身份、产线见
+   * viewport transform，掩蔽 live defect。现返回 `this`，使 tree 即其自身 zoom layer。
+   */
+  get zoomLayer(): this {
+    return this;
+  }
+
   constructor(config: Record<string, unknown> = {}) {
     super();
     this.config = config;
     this.type = (config.type as string | undefined) ?? 'design';
-    this.zoomLayer = new MockZoomLayer({ name: 'zoomLayer' });
     // 真实 leafer `selector.getByPoint` 恒返回 `IPickResult { target, path }`（gate-3-review §3 抽查项 3 / M-2）——mock 返回同形状
     this.selector = {
       getByPoint: () => ({ target: null, path: [] }),
@@ -329,7 +353,7 @@ export class MockApp extends MockLeafer {
     this.tree.destroy();
     this.ground?.destroy();
     this.sky?.destroy();
-    this.zoomLayer.destroy();
+    // T1：zoomLayer === this（不再持独立实例），无需单独 destroy；app 自身经 MockLeaf.destroy 收尾。
     this.canvasView?.remove();
     this.canvasView = undefined;
   }

@@ -265,8 +265,13 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
     expect(viewportChanged, 'pointer drag must actually move the viewport (zoomLayer x/y changed)').toBe(true);
     expect(pointerBest).toBeGreaterThanOrEqual(45);
     expect(throughputBest).toBeGreaterThanOrEqual(45);
-    // TE-3 canvas 存在性断言（重场景像素探测可能 fallback，帧计数硬门禁）
-    await assertScadaCanvasRendered(page, cid, { notes: '100k stroke scene after pan' });
+    // TE-3 canvas 存在性断言（重场景像素探测可能 fallback，帧计数硬门禁）。
+    // T5 例外：throughput 循环把视口移出内容区（+~2880px vs 2000px world），canvas 合法空白——
+    // 非可见性缺陷，允许全零 fallback。
+    await assertScadaCanvasRendered(page, cid, {
+      notes: '100k stroke scene after pan (viewport off-content)',
+      allowZeroPixels: true,
+    });
   });
 
   test('10 万图元内存（CDP JS heap，含无 stroke 对照组）≤ 320MB', async ({ page }) => {
@@ -302,6 +307,8 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
 
     expect(strokeMB).toBeLessThanOrEqual(320);
     expect(noStrokeMB).toBeLessThanOrEqual(320);
+    // TE-3 canvas 存在性断言（100k 内存场景成功 ready 路径硬门，plan 2026-08-04-2243-3 T4）
+    await assertScadaCanvasRendered(page, cid, { notes: '100k memory scene' });
   });
 
   test('1 万点实时刷新端到端延迟 < 200ms + 合帧断言（批量注入渲染增量 = 1）', async ({ page }) => {
@@ -374,6 +381,8 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
 
     expect(result.latencyMs).toBeLessThan(200);
     expect(result.renderDelta).toBe(1);
+    // TE-3 canvas 存在性断言（10k 刷新场景成功 ready 路径硬门，plan 2026-08-04-2243-3 T4）
+    await assertScadaCanvasRendered(page, cid!, { notes: '10k refresh scene' });
   });
 
   test('gate-3 §10 m-8：组态加载逐节点 add vs batch.add 对照（观察项口径固化）', async ({ page }) => {

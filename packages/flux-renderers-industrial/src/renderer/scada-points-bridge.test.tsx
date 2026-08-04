@@ -127,8 +127,12 @@ describe('flux scope path extraction (漏订阅/过订阅 判定)', () => {
     expect(scope.readOwn()).toEqual({ a: { b: 1 } });
     expect(scope.readVisible()).toEqual({ a: { b: 1 } });
     expect(scope.materializeVisible()).toEqual({ a: { b: 1 } });
-    expect(() => scope.update('x', 1)).not.toThrow();
-    expect(() => scope.merge({ x: 1 })).not.toThrow();
+    // T6（plan 2026-08-04-2243-3）：负向副作用断言——update/merge 为只读 no-op，
+    // 调用后 scope 数据保持不变（不写入）。替代原 not.toThrow() 弱断言。
+    scope.update('x', 1);
+    scope.merge({ x: 1 });
+    expect(scope.readOwn()).toEqual({ a: { b: 1 } });
+    expect(scope.get('x')).toBeUndefined();
   });
 });
 

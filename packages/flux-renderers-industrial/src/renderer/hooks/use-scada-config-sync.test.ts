@@ -90,10 +90,6 @@ describe('computeSymbolBounds — custom.points 几何族 (plan 2026-08-04-1558-
   it('returns undefined for an empty symbol list', () => {
     expect(computeSymbolBounds([])).toBeUndefined();
   });
-
-  it('returns undefined when no symbols', () => {
-    expect(computeSymbolBounds([])).toBeUndefined();
-  });
 });
 
 // Proof-1/Proof-2 (plan 2026-08-04-2242-2 Phase 1, 失败用例先行)：

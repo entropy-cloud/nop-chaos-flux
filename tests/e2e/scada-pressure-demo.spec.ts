@@ -106,6 +106,8 @@ test.describe('Scada Pressure Demo (I13.2)', () => {
       `__flux_scada_${cid}`,
     );
     expect(viewport.scale).toBeLessThan(1);
+    // TE-3 canvas 存在性断言（10k 压力场景成功 ready 路径硬门，plan 2026-08-04-2243-3 T3）
+    await assertScadaCanvasRendered(page, cid!, { notes: 'pressure 10k scene' });
     await assertTrackedPageErrors(page);
   });
 
@@ -141,6 +143,8 @@ test.describe('Scada Pressure Demo (I13.2)', () => {
         { timeout: 60_000, intervals: [1000, 1000, 1000] },
       )
       .toBeLessThan(200);
+    // TE-3 canvas 存在性断言（overview 回切成功 ready 路径硬门，plan 2026-08-04-2243-3 T3）
+    await assertScadaCanvasRendered(page, backCid!, { notes: 'overview restore scene' });
     await assertTrackedPageErrors(page);
   });
 });
