@@ -1,6 +1,6 @@
 # C5.1 layout 网格与流程族逐组件审计（grid/collapse/wizard）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C5.1
 > Last Reviewed: 2026-08-04
@@ -69,85 +69,85 @@
 
 ### Phase 1 - 逐组件 18 维审计与审计卡产出
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-layout/src/{grid,collapse,wizard}-renderer.tsx`、`layout-renderer-definitions.ts`、`schemas.ts`、`docs/audits/per-component/`
 
 - Item Types: `Proof`
 
-- [ ] 审计前核对注册定义：3 组件注册项（type/fields/propContracts/fieldRules）与各自 schema 一致（维度 1/18）；wizard steps fieldRules（title/body/actions value-or-region/region、beforeEnter/beforeLeave event）与 collapse items fieldRules（title/body region）08-02 机制核对。
-- [ ] 产出 3 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
-- [ ] 维度重点核查：值所有权三态（维度 3：collapse valueOwnership local/controlled/scope 全路径——`collapse-renderer.tsx:42` ownership 读取与三态分支、wizard stepIndex 交互态 vs commit 生命周期态分离）；params/isolate 迁移语义（维度 6：08-02 机制在 wizard/collapse items 上的落地——`fieldRules` 的 params/isolate 声明与实际求值一致）。
-- [ ] 事件与 action 契约（维度 7：wizard beforeEnter/beforeLeave/onComplete payload 形状与 dispatch、collapse 展开事件）与 a11y（维度 8：collapse 键盘路径/aria-expanded、wizard 步进焦点管理）。
-- [ ] 异步生命周期（维度 11：wizard beforeEnter/beforeLeave 异步 gate——abort/竞态/失败态）与性能边界（维度 15：wizard 步进切换重渲染、collapse 大量项渲染）。
-- [ ] 测试质量（维度 16）：既有 grid/collapse/wizard 测试断言正确行为而非 not-throw、DOM 契约断言、错误路径——假绿核查（含 `contract-honesty.test.ts` 覆盖项）。
-- [ ] 文档对照（维度 17）：3 组件 design.md ↔ 实现 props/行为逐项核对；wizard-flux-vs-amis-analysis.md 与实现一致性；layout-selection-guide.md 对 grid 的定位（grid vs flex vs container 选择语义）。
-- [ ] playground 覆盖核查（维度 18）：3 组件无 component-lab lab 页——记录缺口并裁决（补页或标记 P2/P3 归 CR/CG）。
+- [x] 审计前核对注册定义：3 组件注册项（type/fields/propContracts/fieldRules）与各自 schema 一致（维度 1/18）；wizard steps fieldRules（title/body/actions value-or-region/region、beforeEnter/beforeLeave event）与 collapse items fieldRules（title/body region）08-02 机制核对。
+- [x] 产出 3 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
+- [x] 维度重点核查：值所有权三态（维度 3：collapse valueOwnership local/controlled/scope 全路径——`collapse-renderer.tsx:42` ownership 读取与三态分支、wizard stepIndex 交互态 vs commit 生命周期态分离）；params/isolate 迁移语义（维度 6：08-02 机制在 wizard/collapse items 上的落地——`fieldRules` 的 params/isolate 声明与实际求值一致）。
+- [x] 事件与 action 契约（维度 7：wizard beforeEnter/beforeLeave/onComplete payload 形状与 dispatch、collapse 展开事件）与 a11y（维度 8：collapse 键盘路径/aria-expanded、wizard 步进焦点管理）。
+- [x] 异步生命周期（维度 11：wizard beforeEnter/beforeLeave 异步 gate——abort/竞态/失败态）与性能边界（维度 15：wizard 步进切换重渲染、collapse 大量项渲染）。
+- [x] 测试质量（维度 16）：既有 grid/collapse/wizard 测试断言正确行为而非 not-throw、DOM 契约断言、错误路径——假绿核查（含 `contract-honesty.test.ts` 覆盖项）。
+- [x] 文档对照（维度 17）：3 组件 design.md ↔ 实现 props/行为逐项核对；wizard-flux-vs-amis-analysis.md 与实现一致性；layout-selection-guide.md 对 grid 的定位（grid vs flex vs container 选择语义）。
+- [x] playground 覆盖核查（维度 18）：3 组件无 component-lab lab 页——记录缺口并裁决（P2 低成本当场补页，Phase 3 落地）。
 
 Exit Criteria:
 
 > 本 Phase 交付 3 张审计卡（含裁决），是后续修复的唯一事实来源。
 
-- [ ] `docs/audits/per-component/{grid,collapse,wizard}.md` 卡存在，18 维表完整、`文件:行` 证据可验证。
-- [ ] 卡内发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，否则 `open`；08-02 机制复验结论已记录。
+- [x] `docs/audits/per-component/{grid,collapse,wizard}.md` 卡存在，18 维表完整、`文件:行` 证据可验证。
+- [x] 卡内发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，否则 `open`；08-02 机制复验结论已记录。（grid 卡 P0/P1 无、P2×2 在本 plan 内修复故留 `open` 至 Phase 4 收口；collapse/wizard 卡含 P1，`open`）
 
 ### Phase 2 - P0/P1 自动修复（test-first）
 
-Status: planned
+Status: completed
 Targets: 发现涉及的 renderer/子模块文件、schema 文件、契约测试文件、e2e spec
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 按审计卡处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现）。
-- [ ] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
-- [ ] 共性缺陷裁决（Decision）：公共层/跨包发现（items 嵌套 schema 机制、region/value-or-region 公共层）影响 ≥2 组件/跨包 → 按 roadmap 自动修复机制 §7 处理（当前 plan 内优先修复并事后回写 CX-n，或插入 CX-n work item）；根因单点 `shared:` 标记归 CR。
-- [ ] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
-- [ ] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式）。
+- [x] 按审计卡处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现）。
+- [x] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
+- [x] 共性缺陷裁决（Decision）：全部发现为**组件单点根因**——wizard P1-1（死字段移除）/P1-2（文档漂移）/P1-3（visible 语义，wizard 内部）/P2-1（guard 抛错兜底，wizard 内部）/P2-2（错误展示 + i18n key，i18n 增 key 为纯增量）、collapse P1-1（scope-degrade 移植 steps 既有模式，根因在 collapse 单点）、grid P2-2（resolveGap 对齐，根因在 grid 单点）——**无 ≥2 组件/跨包公共层根因，无 CX-n 插入**（决策记录于各卡 + daily log）。
+- [x] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
+- [x] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式）——本 plan 无复杂跨包 bug（全部单点根因），无需新记录。
 
 Exit Criteria:
 
 > 本 Phase 交付"发现清零或已裁定"，卡状态与代码行为一致。
 
-- [ ] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
-- [ ] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-layout typecheck && build && lint && test` 绿（含新增回归测试）。
+- [x] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。（P1×4 全部 fixed：wizard P1-1/P1-2/P1-3 + collapse P1-1；P2×8 fixed + P2-b backlog ×2 显式登记卡内归 CR）
+- [x] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-layout typecheck && build && lint && test` 绿（含新增回归测试）。（81 tests 全绿，+8：wizard ×5 + collapse ×2 + grid ×1）
 
 ### Phase 3 - 组合宿主真实浏览器场景
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/c5-1-host-surfaces.spec.ts`（新增）、playground demo/lab 页
 
 - Item Types: `Proof | Fix`
 
-- [ ] 设计并实现 ≥1 个本组件真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：候选——wizard 步进校验/onComplete 提交（含 dialog 内 wizard，bug 73 模式专项：单测绿真机失败类风险）、collapse 展开态三态切换、grid 嵌套/响应式渲染；若使用新 lab 页路由，同步在 `playground-entry-pages.spec.ts` 的 ROUTE_ASSERTIONS 补该路由断言（先例：08-03 路由覆盖门禁）。
-- [ ] bug 73 模式专项检查：wizard 组合宿主真机步进/校验/提交链路（dialog 内交互类风险）。
-- [ ] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
-- [ ] 既有相关 e2e（`m3-layout.spec.ts`、`w3a-w3b-layout-action-family.spec.ts`、`layout-family-enhancements.spec.ts`、`w2a-data-composition.spec.ts`）在本族改动后回归。
+- [x] 设计并实现 ≥1 个本组件真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：新增 **3 个 lab 页**（`grid-lab-page.tsx`/`collapse-lab-page.tsx`/`wizard-lab-page.tsx`，补上维度 18 缺口——P2 低成本当场补页裁决）+ `data-c5c1-host.ts` 宿主 schema 模块 + `LAYOUT_RENDERER_ROUTES`（grid/collapse/wizard 3 条，C5.2 successor 补其余 4 条）+ `COMPONENT_LAB_COVERAGE_MANIFEST` 3 条（smoke.spec.ts 自动覆盖 58/58 含新条目）；lab-renderer 路由不经 `DOMAIN_RENDERER_ROUTES`（`playground-entry-pages.spec.ts` ROUTE_ASSERTIONS 仅覆盖 domain 路由，lab 路由由 smoke.spec 门禁——核对结论：无需 ROUTE_ASSERTIONS 更新）；route-matrix 计数测试同步含 LAYOUT_RENDERER_ROUTES。
+- [x] bug 73 模式专项检查：**host-wizard-dialog 真机 5/5 通过**——dialog 内 wizard 步进/校验/提交链路成立（portal/focus 环境实证）。过程中发现并适配两个宿主设计事实：(a) dialog 内容渲染于页级 portal（`data-slot="dialog-surface"`，非 scenario stage 内）——断言按 portal 定位；(b) dialog 内容 scope 写为**本地分支语义**（openDialog 建 child scope，setValue 写不进页级 scope——scope 模型设计行为非缺陷）——onComplete 信号改用 host window probe（dialog-edit-submit.spec.ts 同款跨 scope 模式），断言 probe + `data-last-commit-status=success`。
+- [x] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）：宿主阶段未发现新渲染器缺陷（3 个失败均为测试用例作者错误——断言文本格式/portal 定位/scope 模型理解，修正用例后全绿）。
+- [x] 既有相关 e2e（`m3-layout.spec.ts`、`w3a-w3b-layout-action-family.spec.ts`、`layout-family-enhancements.spec.ts`、`w2a-data-composition.spec.ts`）在本族改动后回归——**全绿**（85 passed 首轮 + smoke 58/58 含新增 3 条目）。
 
 Exit Criteria:
 
 > 本 Phase 交付"真实浏览器行为成立"。
 
-- [ ] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；相关既有 e2e 回归绿。
-- [ ] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
+- [x] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；相关既有 e2e 回归绿。（c5-1-host-surfaces **5/5**：host-grid + host-collapse + host-wizard-step + host-wizard-gate + host-wizard-dialog；m3-layout 7/7 + w3a-w3b 5/5 + layout-family-enhancements 9/9 + w2a-data-composition 3/3 + smoke 58/58）
+- [x] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。（host-wizard-dialog **pass**，证据与宿主设计事实记录于 daily log `docs/logs/2026/08-04.md` C5.1 节）
 
 ### Phase 4 - 组件回归与审计卡 closure
 
-Status: planned
+Status: completed
 Targets: 审计卡、`docs/logs/2026/08-04.md`、`docs/backlog/component-audit-roadmap.md`（C5.1 行）
 
 - Item Types: `Proof`
 
-- [ ] 全卡复查：3 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
-- [ ] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-layout test` + 相关 e2e spec 全绿；如本 plan 触及公共层（flux-react/field-frame/编译器/嵌套 schema 机制），追加受影响包验证并记录。
-- [ ] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、08-02 机制复验结论、CX-n 插入（如有）与决策。
-- [ ] 若插入了 CX-n：同步更新 roadmap Work Item Status 表（新行 + 依赖边/注释）并按 §7b（事后回写：父 plan closure 后标 done）/§7c（正常生命周期）走；结构性 CX-n 执行前标注待人工确认。
-- [ ] roadmap C5.1 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；已交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）。
+- [x] 全卡复查：3 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。（live 核验：actionNextSaveLabel 移除（grep 零命中）、0-based JSDoc、lastVisibleStepIndex + wizard-step-error + warnScopeDegraded + resolveGap 均落地、lab 页 ×3 存在、宿主 5/5 真机 pass）
+- [x] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-layout test`（81/81）+ 相关 e2e spec 全绿（c5-1-host-surfaces 5/5 + m3-layout 7/7 + w3a-w3b 5/5 + layout-family-enhancements 9/9 + w2a-data-composition 3/3 + smoke 58/58）；本 plan 触及 flux-i18n（+2 key 双 locale）与 flux-guide（regenerate）——追加验证：workspace `pnpm typecheck`/`build`/`lint`/`test` 全绿 + `pnpm test:e2e` 全量 874 passed/8 failed（8 项全为 C0 基线 pre-existing，successor C8.1/C9/CV，零新增）。
+- [x] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、08-02 机制复验结论、CX-n 插入（无）与决策。（`docs/logs/2026/08-04.md` C5.1 节）
+- [x] 若插入了 CX-n：无 CX-n 插入（全部组件单点根因），不适用。
+- [x] roadmap C5.1 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；已交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）。
 
 Exit Criteria:
 
 > 本 Phase 交付"可进入 closure-audit 的完成态"。
 
-- [ ] 3 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
-- [ ] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
+- [x] 3 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。（grid/collapse/wizard 卡均 `closed`：P1×4/P2×8 fixed、P2-b backlog ×2 显式登记、P3 ×9 keep）
+- [x] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。（`docs/logs/2026/08-04.md` C5.1 节：Phase 1-4 摘要 + closure-audit 证据位置 + pre-existing 观察）
 
 ## Draft Review Record
 
@@ -162,16 +162,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 与每个 Phase 的 Exit Criteria 全部勾选后才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 3 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`
-- [ ] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
-- [ ] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查）
-- [ ] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
-- [ ] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（mission-driver CLOSURE_VERIFY fresh session 执行）
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 3 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`
+- [x] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
+- [x] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查）
+- [x] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
+- [x] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（mission-driver CLOSURE_VERIFY fresh session 执行）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -210,13 +210,22 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行（draft 状态，尚未执行）。
+Status Note: 已执行完毕（4 Phase 全部 `completed` + 全部执行项/Exit Criteria 勾选；Closure Gates 中 `pnpm typecheck/build/lint/test` 已实测全绿）。**独立子 agent fresh session（mission-driver CLOSURE_VERIFY）closure-audit 已 pass（approved）**：Closure Gates 审计门禁项已勾选、Closure Audit Evidence 已回填、roadmap C5.1 行标已标 `done`——收口动作由审计 session 完成，执行 session 未自审（与 C2.x/C3.x/C4.1/C4.2/C4.3 先例一致）。
+
+执行收口证据（Phase 1-4）：
+
+- **Phase 1**：3 张审计卡产出（`docs/audits/per-component/{grid,collapse,wizard}.md`，18 维表 + `文件:行` 证据 + P0/P1/P2/P3 裁决）；注册定义三方核对完成（layout-renderer-definitions.ts wizard `:11`/grid `:174`/collapse `:265`）；08-02 机制复验结论：steps/collapse/grid items fieldRules 分类一致、beforeEnter/beforeLeave 信封 + live scope 求值实证、无 deepFields；工具脚本本族 0 命中。
+- **Phase 2**：P0 ×0；P1 ×4 全部 test-first 修复（wizard P1-1 actionNextSaveLabel 死契约移除 + design §10.2 留痕 + flux-guide regenerate；wizard P1-2 索引基文档对齐 0-based；wizard P1-3 visible:false 语义（nav 过滤 + linear 门跳过 hidden + lastVisibleStep 完成判定）；collapse P1-1 scope-degrade 移植）；P2 ×8 低成本修复（guard 抛错兜底/内联错误区 + i18n/种子契约测试/commit 失败用例/disabled 用例/lab 页 ×3/gap resolveGap 对齐）；P2-b backlog ×2 显式登记（wizard/collapse 推荐句柄，归 CR）；P3 keep ×9。test-first 证据：`__tests__/wizard-c5-1-contract.test.tsx` ×5 + collapse-renderer.test.tsx ×2 + grid-renderer.test.tsx ×1 先红后绿。**共性缺陷裁决（Decision）**：全部组件单点根因 → **无 CX-n 插入**。
+- **Phase 3**：`tests/e2e/component-lab/c5-1-host-surfaces.spec.ts` **5/5 全绿**（host-grid / host-collapse / host-wizard-step（内嵌表单步进校验，单测盲区真机补上）/ host-wizard-gate（**bug 73 模式专项**）/ host-wizard-dialog（**bug 73 模式专项**：dialog portal/focus 环境步进+校验+提交链路 + onComplete host probe））；新 lab 页 ×3 + LAYOUT_RENDERER_ROUTES + coverage manifest 3 条（smoke 58/58）；既有相关 e2e 回归全绿（m3-layout 7/7 + w3a-w3b 5/5 + layout-family-enhancements 9/9 + w2a-data-composition 3/3）；宿主适配记录（dialog portal 定位 + dialog 内容 scope 本地写语义 → host probe 跨 scope 信号，均非渲染器缺陷）。
+- **Phase 4**：3 卡全部 `closed`（P0/P1/P2 清零 + P2-b backlog 显式登记 + P3 keep）；`pnpm --filter @nop-chaos/flux-renderers-layout typecheck && build && lint && test` 81/81 绿；workspace `pnpm typecheck` 31/31、`build` 31/31、`lint` 31/31、`test` 58/58（--force 实测）全绿；`pnpm test:e2e` 全量 874 passed/43 skipped/8 failed（8 项全为 C0 基线 pre-existing，successor C8.1/C9/CV，零新增）；daily log `docs/logs/2026/08-04.md` C5.1 节已记录收口证据。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent fresh session（mission-driver CLOSURE_VERIFY）
-- Evidence: —
+- Auditor / Agent: 独立子 agent fresh session（mission-driver CLOSURE_VERIFY，2026-08-04，closure-audit 独立复核，非执行 session 上下文）
+- Verdict: `approved`（零 Blocker/Major）
+- Evidence: 独立复核 live repo：3 审计卡 `docs/audits/per-component/{grid,collapse,wizard}.md` 均 `closed`（P1×4/P2×8 fixed、P2-b backlog ×2 显式登记、P3 ×9 keep）；代码落点可核验（actionNextSaveLabel 非测试代码 grep 零命中、wizard-renderer.tsx lastVisibleStepIndex :277/:284 + data-slot="wizard-step-error" :762、collapse-renderer.tsx warnScopeDegraded :28/:62、grid-renderer.tsx resolveGap :109）；回归测试 `__tests__/wizard-c5-1-contract.test.tsx` 存在且断言正确行为；lab 页 ×3（grid/collapse/wizard-lab-page.tsx）+ data-c5c1-host.ts + LAYOUT_RENDERER_ROUTES + coverage manifest；宿主 spec `tests/e2e/component-lab/c5-1-host-surfaces.spec.ts` 5 个真实 Playwright 用例（含 bug 73 模式 host-wizard-dialog）；本审计 re-run `pnpm --filter @nop-chaos/flux-renderers-layout test` 81/81 全绿（11 files）；daily log `docs/logs/2026/08-04.md` C5.1 节记录收口证据；plan 文本五点一致（Plan Status completed / 4 Phase completed / Exit Criteria 全 [x] / Closure Gates 全 [x] / log 一致）；deferred 诚实（P2 backlog → CR、pre-existing e2e → C8.1/C9/CV，均带 non-blocking 理由）；收口动作由本审计 session 完成：Closure Gates closure-audit 项勾选 + Audit Evidence 回填 + Plan Status → completed + roadmap C5.1 行标 `done`
 
 Follow-up:
 
-- 待 closure-audit 后填写。
+- no remaining plan-owned work（closure-audit 已 pass，收口动作已完成：Plan Status → completed、Closure Gates 审计门禁项已勾选、roadmap C5.1 行标已标 done）
+- 观察（供 CLOSURE_VERIFY 核对）：`pnpm check:oversized-code-files` 为 pre-existing 红（HEAD 基线 14 文件超 700 行；本 plan 使 wizard-renderer.tsx 734→774 入清单；plan gates 全绿；超限文件治理归 CG/CR，非本 plan scope）

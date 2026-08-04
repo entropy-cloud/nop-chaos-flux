@@ -18,6 +18,7 @@
 ## 4. schema 设计
 
 - 建议正式字段为 `columns`、`gap`、`items`、`autoFlow`、`alignItems`、`justifyItems`。
+- `gap` 语义与 flex/container/form 一致（`resolveGap`）：数值 → px inline style；语义 token（`xs`/`sm`/`md`/`lg`/`xl`）→ Tailwind gap 类；其他字符串 → raw CSS inline（C5.1 对齐修正）。
 
 ## 5. 字段分类
 

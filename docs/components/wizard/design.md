@@ -39,7 +39,6 @@ interface WizardSchema extends BaseSchema {
   actionFinishLabel?: string; // 完成按钮文案（amis actionFinishLabel），schema 暴露
   actionNextLabel?: string; // 下一步按钮文案（amis actionNextLabel），schema 暴露
   actionPrevLabel?: string; // 上一步按钮文案（amis actionPrevLabel），schema 暴露
-  actionNextSaveLabel?: string; // 下一步并保存按钮文案（amis actionNextSaveLabel），schema 暴露
   onChange?: ActionSchema;
   onStepCommit?: ActionSchema | ActionSchema[];
   onComplete?: ActionSchema | ActionSchema[];
@@ -164,6 +163,12 @@ interface WizardStatusSummary {
 - canonical 三态分层（`valueOwnership`/`valueStatePath` 真正实现）只保留在 steps/collapse duo；wizard 与之边界不同：wizard 是组合 owner（interaction + lifecycle 分层），步骤切换交互态本身就是 local controlled。
 - 若未来需要 wizard 的当前步骤受外部受控/scope 驱动，应重新引入 ownership 契约**并同时实现** controlled/scope 的读/写管线（对齐 steps/collapse 范式），再恢复字段声明——不得再次保留死字段。
 - `statusPath`（只读摘要发布）是真实实现的能力，保留不变。
+
+## 10.2 actionNextSaveLabel 移除（C5.1 P1-1）
+
+`WizardSchema` 不再声明 `actionNextSaveLabel`。AMIS 的「下一步并保存」（`actionNextSaveLabel`）语义在 Flux 模型中被 `commitStep` 合并承载——`onStepCommit` 已在前置、成功后才前进，Next 按钮本身就是「提交并前进」，单独的下一次保存按钮/标签没有独立行为面。该字段早期声明于 schema 并注册于 definition fields，但 renderer 从未消费（dead-field honesty 违例，先例：`optional`（§10）/`valueOwnership`（§10.1）移除），已移除（C5.1 审计 `docs/plans/2026-08-04-0043-3-c5-1-layout-grid-flow-family-audit.md` P1-1）。
+
+- 若未来确需「保存但不前进」或「下一步不校验直接前进」的分离按钮语义，应重新引入独立的按钮/事件契约（如 `onStepSave`）并同步实现，再恢复字段声明。
 
 ## 11. 样式与 DOM marker 约定
 
