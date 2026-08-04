@@ -106,6 +106,35 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     [eventsApi],
   );
 
+  const rendererRuntime = useRendererRuntime();
+
+  // plan 2026-08-04-2242-1 Phase 1 Decision（诊断出口裁定）：flux 编译/求值失败 + 用户侧图元事件
+  // 处理器 throw 走一条**非升级**诊断通道（option b）。出口实现：
+  //  - `console.warn('[scada-canvas]', code, message)` 保底可见（dev+prod；去重已在上游
+  //    `useScadaPointsBridge.reportOnce`/`EventBridge.reportHandlerError` 完成，故每唯一错误仅 fire 一次）；
+  //  - flux 表达式错误额外复用既有 host telemetry 钩子 `env.monitor.onError`（`ExpressionExecutionEnv.monitor`，
+  //    phase:'expression'；handler-error 的 'action' phase 超出现 monitor 类型，host telemetry 后置，Follow-up）。
+  // 不违反 §8.1：诊断 ≠ status 升级——此处不动 `setStatus`/`setErrorInfo`/`eventsApi.notifyError`，
+  // 画布保持 ready，不派发 `scada:error`（§8.1 onError 仅 config 校验/构建失败）。
+  // 出口整体 try/catch 自保护——通道自身 throw 不得回流 engine/hook（Failure Paths channel-outlet-throws）。
+  const reportDiagnostic = useCallback(
+    (code: string, message: string) => {
+      try {
+        console.warn('[scada-canvas]', code, message);
+        if (code === 'flux-compile-failed' || code === 'flux-evaluate-failed') {
+          rendererRuntime.env.monitor?.onError?.({
+            phase: 'expression',
+            error: new Error(message),
+            details: { code },
+          });
+        }
+      } catch {
+        // 诊断通道自身异常隔离：不得回流 engine/hook
+      }
+    },
+    [rendererRuntime.env],
+  );
+
   const runtimeRef = useRef<ScadaCanvasRuntime | null>(null);
 
   const getPointValuesForLatest = useCallback((symbolId: string) => {
@@ -129,6 +158,10 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     onSymbolEvent: (name, payload) => eventsApi.onSymbolEvent(name, payload),
     getPointValuesFor: getPointValuesForLatest,
     onEngineError: handleError,
+    // plan 2026-08-04-2242-1 Phase 2：接通用户侧图元事件处理器 throw 的去重上报通道
+    // （engine `EventBridge.safeRun`/`reportHandlerError` 已去重，此处仅订阅消费者）。
+    onHandlerError: (error) =>
+      reportDiagnostic('handler-error', error instanceof Error ? error.message : String(error)),
   });
 
   // plan 2026-08-04-1558-2 Phase 1：component:destroy 后画布状态可见（OP-4）——
@@ -171,16 +204,17 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     onBuildError: handleError,
   });
 
-  const rendererRuntime = useRendererRuntime();
   useScadaPointsBridge({
     config: parsedConfig,
     runtime,
     enabled: runtime !== null && parsedConfig !== undefined,
     expressionCompiler: rendererRuntime.expressionCompiler,
     env: rendererRuntime.env,
-    // P1-8 降级契约：flux 数据错误（编译/求值失败）按声明跳过 + 单次去重上报（hook 内 onError），
-    // 不直通 handleError——数据错误不升级画布级 error（§8.1 onError 仅限 config 校验/构建失败），
-    // scope 数据修复后点值自动回流，画面保持 ready。
+    // plan 2026-08-04-2242-1 Phase 1：接通 flux 编译/求值失败的去重上报通道（hook 内
+    // `reportOnce` 已按同表达式同错误码去重，求值成功后清空记录）。走非升级诊断出口
+    // `reportDiagnostic`（console.warn + env.monitor），不直通 handleError——数据错误不升级
+    // 画布级 error（§8.1 onError 仅限 config 校验/构建失败），scope 数据修复后点值自动回流。
+    onError: reportDiagnostic,
   });
 
   useScadaHandles({

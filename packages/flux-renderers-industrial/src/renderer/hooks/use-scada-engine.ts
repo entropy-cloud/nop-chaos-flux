@@ -34,6 +34,12 @@ export interface UseScadaEngineArgs {
   onSymbolEvent?: (name: ScadaSymbolEventName, payload: ScadaSymbolEventPayload) => void;
   getPointValuesFor?: (symbolId: string) => Record<string, unknown> | undefined;
   onEngineError?: (code: string, message: string) => void;
+  /**
+   * 用户侧图元事件处理器异常隔离上报消费者（plan 2026-08-04-2242-1 Phase 2）：
+   * engine `EventBridge.safeRun` 顶层 try/catch + `reportHandlerError` 去重后的上报出口，
+   * 经 `latest` ref 转发（对齐 `onSymbolEvent`/`getPointValuesFor` 转发模式）。不升级画布 status（§8.1）。
+   */
+  onHandlerError?: (error: unknown) => void;
 }
 
 function createBindingDomain(
@@ -137,6 +143,8 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
         pointStore,
         onSymbolEvent: (name, payload) => latest.current.onSymbolEvent?.(name, payload),
         getPointValuesFor: (symbolId) => latest.current.getPointValuesFor?.(symbolId),
+        // plan 2026-08-04-2242-1 Phase 2：转发 handler-error 去重上报消费者（经 latest ref 取最新）。
+        onHandlerError: (error) => latest.current.onHandlerError?.(error),
       });
     } catch (error) {
       latest.current.onEngineError?.('engine-create-failed', errorMessage(error));
