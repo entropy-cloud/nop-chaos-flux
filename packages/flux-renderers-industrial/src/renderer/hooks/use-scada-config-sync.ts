@@ -47,22 +47,21 @@ function applyInitialViewport(
   if (policy.fit === 'contain') {
     runtime.engine.fit(bounds, 0);
   } else if (policy.fit === 'fill') {
+    // P1-6 视口公式修正：引擎约定 screen = (world - vx)·s（viewport.ts worldToViewport），
+    // 内容包围盒中心映射到视口中心要求 vx = cx - sw/(2s)。fill 分支保留 max-scale 语义
+    // （不可委托 engine.fit——fit 是 min-scale/contain 语义，viewport.ts:60），仅 center 可委托。
     const size = runtime.engine.getSize();
     const scale = Math.max(size.width / bounds.width, size.height / bounds.height);
     runtime.engine.setViewport({
-      x: size.width / 2 - (bounds.x + bounds.width / 2) * scale,
-      y: size.height / 2 - (bounds.y + bounds.height / 2) * scale,
+      x: bounds.x + bounds.width / 2 - size.width / (2 * scale),
+      y: bounds.y + bounds.height / 2 - size.height / (2 * scale),
       scale,
     });
   }
   if (policy.center) {
-    const size = runtime.engine.getSize();
-    const scale = runtime.engine.getViewport().scale;
-    runtime.engine.setViewport({
-      x: size.width / 2 - (bounds.x + bounds.width / 2) * scale,
-      y: size.height / 2 - (bounds.y + bounds.height / 2) * scale,
-      scale,
-    });
+    // P1-6 center 分支同公式：委托 engine.center(bounds)（viewport.ts:70-78，vx = cx - sw/(2s)），
+    // 消除双实现漂移；scale 取当前视口（fill 先跑时即 fill scale，纯 center 时保持 1）。
+    runtime.engine.center(bounds);
   }
 }
 

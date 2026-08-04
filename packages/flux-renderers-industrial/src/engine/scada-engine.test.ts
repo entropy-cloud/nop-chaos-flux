@@ -224,8 +224,45 @@ describe('ScadaCanvasEngine commands (I5.1/I5.2 wiring)', () => {
     expect(engine.getSymbolProps('nope')).toBeUndefined();
   });
 
-  it('setViewport / zoomAt should drive zoomLayer move and scaleOfWorld (M-3 回归：平移符号)', () => {
+  it('pan-then-zoomAt keeps the anchor world point fixed on screen with no matrix drift (P1-9)', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { x: number; y: number; scaleX: number };
+    engine.setViewport({ x: 50, y: 30, scale: 2 });
+    expect(zoomLayer.x).toBeCloseTo(-100, 6);
+    expect(zoomLayer.y).toBeCloseTo(-60, 6);
+    engine.zoomAt({ x: 100, y: 100 }, 2);
+    // zoomAt 语义：锚点世界点在其 screen 位置保持固定 → 视口 {75,65,4}
+    expect(engine.getViewport()).toEqual({ x: 75, y: 65, scale: 4 });
+    // 矩阵级断言：zoomLayer.x = -viewport.x * scale（gate-3-review §5 M-3 推导）——旧引擎
+    // 传内容坐标锚点（viewportToWorld(cur,{0,0})）→ scaleOfWorld 把它当 screen 点固定，
+    // 产生 (vx·(1-k), vy·(1-k)) 漂移（x=-450 而非 -300），此断言在新 mock + 旧引擎下失败。
+    expect(zoomLayer.scaleX).toBeCloseTo(4, 6);
+    expect(zoomLayer.x).toBeCloseTo(-300, 6);
+    expect(zoomLayer.y).toBeCloseTo(-260, 6);
+    expect(zoomLayer.x).toBeCloseTo(-engine.getViewport().x * engine.getViewport().scale, 6);
+    expect(zoomLayer.y).toBeCloseTo(-engine.getViewport().y * engine.getViewport().scale, 6);
+    engine.destroy();
+  });
+
+  it('plugin zoom clamp fallback should not drift the zoomLayer matrix either (P1-9 handlePluginZoom)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { x: number; y: number; scaleX: number };
+    engine.setViewport({ x: 50, y: 30, scale: 2 });
+    expect(zoomLayer.x).toBeCloseTo(-100, 6);
+    // 模拟插件 zoom 到越界 25x（矩阵保持与视口一致：x = -vx·scale）
+    zoomLayer.scaleX = 25;
+    zoomLayer.x = -50 * 25;
+    zoomLayer.y = -30 * 25;
+    engine.tree.emit('zoom', { scale: 25 });
+    // 越界重钳制回 20：screen 原点锚定 → 视口 x/y 不变（旧实现内容坐标锚点 → 漂移 vx·(1-k)），矩阵无漂移
+    expect(engine.getViewport()).toEqual({ x: 50, y: 30, scale: 20 });
+    expect(zoomLayer.scaleX).toBeCloseTo(20, 6);
+    expect(zoomLayer.x).toBeCloseTo(-50 * 20, 6);
+    expect(zoomLayer.y).toBeCloseTo(-30 * 20, 6);
+    engine.destroy();
+  });
+
+  it('setViewport / zoomAt should drive zoomLayer move and scaleOfWorld (M-3 回归：平移符号)', () => {    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     const zoomLayer = engine.tree.zoomLayer as unknown as {
       moveCalls: Array<{ x: number; y: number }>;
       scaleOfWorldCalls: Array<{ world: { x: number; y: number }; scale: number }>;
@@ -347,6 +384,83 @@ describe('ScadaCanvasEngine 插件交互状态同步与钳制兜底 (I11.2)', ()
     expect(rects).toHaveLength(1);
     expect(rects[0].x).toBe(500);
     expect(rects[0].y).toBe(300);
+    engine.destroy();
+  });
+
+  it('overlay group should be non-hittable so pointer events reach the tree (P1-7)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    engine.reset(validConfig() as ScadaConfig);
+    engine.interactionOverlay!.highlight('rect-1');
+    const group = (engine.app.sky as unknown as { children: Array<{ name?: string; hittable?: boolean }> }).children.find(
+      (child) => (child as { name?: string }).name === 'scada-interaction-overlay',
+    );
+    expect(group?.hittable).toBe(false);
+    engine.destroy();
+  });
+
+  it('overlay should be drawn in screen coordinates aligned with the symbol under a non-identity viewport (P1-7)', () => {    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    engine.reset(validConfig() as ScadaConfig);
+    engine.setViewport({ x: 100, y: 0, scale: 2 });
+    engine.interactionOverlay!.highlight('rect-1');
+    const group = (engine.app.sky as unknown as { children: Array<{ children: Array<Record<string, unknown>> }> }).children.find(
+      (child) => (child as { name?: string }).name === 'scada-interaction-overlay',
+    );
+    const rects = group?.children ?? [];
+    expect(rects).toHaveLength(1);
+    // world rect-1 = {x:10,y:20,w:100,h:50} → screen (world - vx)·s = {(-180), 40}；宽/高乘 scale
+    expect(rects[0].x).toBeCloseTo(-180, 6);
+    expect(rects[0].y).toBeCloseTo(40, 6);
+    expect(rects[0].width).toBeCloseTo(200, 6);
+    expect(rects[0].height).toBeCloseTo(100, 6);
+    // strokeWidth 保持 preset 屏幕像素（不除 scale）
+    expect(rects[0].strokeWidth).toBe(2);
+    engine.destroy();
+  });
+
+  it('overlay should be repositioned after a viewport command change (refresh hook, P1-7)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    engine.reset(validConfig() as ScadaConfig);
+    engine.setViewport({ x: 100, y: 0, scale: 2 });
+    engine.interactionOverlay!.highlight('rect-1');
+    // 命令路径：setViewport/zoomAt/fit/center → applyViewportState → refresh
+    engine.setViewport({ x: 0, y: 0, scale: 1 });
+    const group = (engine.app.sky as unknown as { children: Array<{ children: Array<Record<string, unknown>> }> }).children.find(
+      (child) => (child as { name?: string }).name === 'scada-interaction-overlay',
+    );
+    const rects = group?.children ?? [];
+    expect(rects).toHaveLength(1);
+    expect(rects[0].x).toBeCloseTo(10, 6);
+    expect(rects[0].y).toBeCloseTo(20, 6);
+    expect(rects[0].width).toBeCloseTo(100, 6);
+    expect(rects[0].height).toBeCloseTo(50, 6);
+    engine.destroy();
+  });
+
+  it('overlay should be repositioned after plugin zoom/move sync (refresh hook, P1-7)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    engine.reset(validConfig() as ScadaConfig);
+    engine.setViewport({ x: 100, y: 0, scale: 2 });
+    engine.interactionOverlay!.highlight('rect-1');
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { scaleX: number };
+    const group = () => {
+      const g = (engine.app.sky as unknown as { children: Array<{ children: Array<Record<string, unknown>> }> }).children.find(
+        (child) => (child as { name?: string }).name === 'scada-interaction-overlay',
+      );
+      return g?.children ?? [];
+    };
+    // 插件 zoom 路径：zoomLayer.scaleX=4 → 视口 {x:50,y:0,scale:4} → screen (10-50)*4=-160, 20*4=80
+    zoomLayer.scaleX = 4;
+    engine.tree.emit('zoom', { scale: 4 });
+    expect(engine.getViewport()).toEqual({ x: 50, y: 0, scale: 4 });
+    expect(group()[0].x).toBeCloseTo(-160, 6);
+    expect(group()[0].y).toBeCloseTo(80, 6);
+    expect(group()[0].width).toBeCloseTo(400, 6);
+    expect(group()[0].height).toBeCloseTo(200, 6);
+    // 插件 move 路径：zoomLayer 平移 -40 → 视口 x 60 → screen (10-60)*4=-200
+    engine.app.tree.zoomLayer.move({ x: -40, y: 0 });
+    engine.tree.emit('move', {});
+    expect(engine.getViewport()).toEqual({ x: 60, y: 0, scale: 4 });
+    expect(group()[0].x).toBeCloseTo(-200, 6);
     engine.destroy();
   });
 });

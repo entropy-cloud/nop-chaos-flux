@@ -261,7 +261,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     expect(document.querySelector('[data-testid="custom-empty"]')).toBeTruthy();
   });
 
-  it('applies the initial viewport policy (fit fill/contain + center) after scene build', async () => {
+  it('applies the initial viewport policy (fit fill + center) with exact centering math (P1-6)', async () => {
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
       makeProps({
@@ -276,13 +276,39 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     );
     await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
     const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
-    await waitFor(() => expect(engine.getViewport().scale).not.toBe(1));
+    // 非巧合几何精确断言：vx = cx - sw/(2s)（bounds cx=155, cy=45, fill scale=12, sw=800）
+    await waitFor(() => expect(engine.getViewport().scale).toBeCloseTo(12, 6));
     const viewport = engine.getViewport();
-    expect(viewport.scale).toBeGreaterThan(1);
-    expect(viewport.x).not.toBe(0);
-    expect(viewport.y).not.toBe(0);
+    expect(viewport.scale).toBeCloseTo(12, 6);
+    expect(viewport.x).toBeCloseTo(155 - 800 / (2 * 12), 6);
+    expect(viewport.y).toBeCloseTo(45 - 600 / (2 * 12), 6);
+  });
 
-    const view = renderScadaCanvas(
+  it('applies the center policy at the current scale with exact math (P1-6)', async () => {
+    const environment = createScadaTestEnvironment([]);
+    renderScadaCanvas(
+      makeProps({
+        props: {
+          config: configProp(validConfig()),
+          width: 800,
+          height: 600,
+          viewport: { center: true },
+        },
+      }),
+      environment,
+    );
+    await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
+    const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
+    await waitFor(() => expect(engine.getViewport().scale).toBe(1));
+    const viewport = engine.getViewport();
+    expect(viewport.scale).toBe(1);
+    expect(viewport.x).toBeCloseTo(155 - 800 / 2, 6);
+    expect(viewport.y).toBeCloseTo(45 - 600 / 2, 6);
+  });
+
+  it('applies the contain fit with min-scale semantics and exact math (P1-6 regression)', async () => {
+    const environment = createScadaTestEnvironment([]);
+    renderScadaCanvas(
       makeProps({
         props: {
           config: configProp(validConfig()),
@@ -291,9 +317,15 @@ describe('scada-canvas lifecycle (I10.1)', () => {
           viewport: { fit: 'contain' },
         },
       }),
-      createScadaTestEnvironment([]),
+      environment,
     );
-    view.unmount();
+    await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
+    const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
+    await waitFor(() => expect(engine.getViewport().x).toBeCloseTo(10, 6));
+    const viewport = engine.getViewport();
+    expect(viewport.scale).toBeCloseTo(800 / 290, 6);
+    expect(viewport.x).toBeCloseTo(155 - 800 / (2 * (800 / 290)), 6);
+    expect(viewport.y).toBeCloseTo(45 - 600 / (2 * (800 / 290)), 6);
   });
 
   it('does not re-apply the initial viewport policy on diff updates, only on full resets (gate-4 m-B)', async () => {

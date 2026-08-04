@@ -21,21 +21,27 @@ async function getScadaCid(page: Page): Promise<string> {
   return cid!;
 }
 
-async function hoverSymbolAtWorld(page: Page, cid: string, worldX: number, worldY: number): Promise<void> {
-  const viewportPoint = await page.evaluate(
-    ({ key, x, y }) => {
-      const handle = (window as unknown as Record<string, unknown>)[key] as {
-        engine: { getViewportPoint(p: { x: number; y: number }): { x: number; y: number } };
-      };
-      return handle.engine.getViewportPoint({ x, y });
-    },
-    { key: `__flux_scada_${cid}`, x: worldX, y: worldY },
-  );
-  const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
-  expect(box).toBeTruthy();
-  await page.mouse.move(box!.x + viewportPoint.x, box!.y + viewportPoint.y);
-  await page.waitForTimeout(50);
-}
+  async function hoverSymbolAtWorld(page: Page, cid: string, worldX: number, worldY: number): Promise<void> {
+    const viewportPoint = await page.evaluate(
+      ({ key, x, y }) => {
+        const handle = (window as unknown as Record<string, unknown>)[key] as {
+          engine: { getViewportPoint(p: { x: number; y: number }): { x: number; y: number } };
+        };
+        return handle.engine.getViewportPoint({ x, y });
+      },
+      { key: `__flux_scada_${cid}`, x: worldX, y: worldY },
+    );
+    const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
+    expect(box).toBeTruthy();
+    await page.mouse.move(box!.x + viewportPoint.x, box!.y + viewportPoint.y);
+    await page.waitForTimeout(50);
+  }
+
+  interface ScadaTestHandleShape {
+    engine: {
+      getViewport(): { x: number; y: number; scale: number };
+    };
+  }
 
 /** sky 层交互覆盖物 rect 面（I15.1 非矩形图元 hover 断言：m-C points 包围盒兜底尺寸）。 */
 async function readOverlayRects(page: Page, cid: string): Promise<Array<{ x: number; y: number; width: number; height: number }>> {
@@ -136,16 +142,30 @@ test.describe('Scada Edge Cases (I15.1)', () => {
     await page.getByTestId('scada-edge-line-poly').click();
     const cid = await getScadaCid(page);
 
-    // 多边形图元：x=400,y=120,points (0,0)-(160,0)-(160,90)-(80,120)-(0,90) → 包围盒 160×120
+    // 多边形图元：x=400,y=120,points (0,0)-(160,0)-(160,90)-(80,120)-(0,90) → 包围盒 160×120。
+    // 覆盖物以 screen 坐标绘制（P1-7）：页面 viewport: {fit:'contain'} 非恒等 → 断言按
+    // screen = (world - vx)·s 换算（旧断言 400/120/160×120 是世界坐标，掩蔽了覆盖物未对齐缺陷）。
+    const viewport = await page.evaluate(
+      (key) => ((window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape).engine.getViewport(),
+      `__flux_scada_${cid}`,
+    );
+    const expectScreen = (worldX: number, worldY: number, width: number, height: number) => ({
+      x: (worldX - viewport.x) * viewport.scale,
+      y: (worldY - viewport.y) * viewport.scale,
+      width: width * viewport.scale,
+      height: height * viewport.scale,
+    });
+
     await hoverSymbolAtWorld(page, cid, 480, 180);
     await expect
       .poll(async () => readOverlayRects(page, cid), { timeout: 5_000, intervals: [200, 200, 200] })
       .toHaveLength(1);
     const polyRects = await readOverlayRects(page, cid);
-    expect(polyRects[0].width).toBe(160);
-    expect(polyRects[0].height).toBe(120);
-    expect(polyRects[0].x).toBe(400);
-    expect(polyRects[0].y).toBe(120);
+    const expected = expectScreen(400, 120, 160, 120);
+    expect(polyRects[0].width).toBeCloseTo(expected.width, 1);
+    expect(polyRects[0].height).toBeCloseTo(expected.height, 1);
+    expect(polyRects[0].x).toBeCloseTo(expected.x, 1);
+    expect(polyRects[0].y).toBeCloseTo(expected.y, 1);
 
     // A→B 切换：移动到线图元 → 覆盖物数量保持 1 且位置切换
     await hoverSymbolAtWorld(page, cid, 200, 240);

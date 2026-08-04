@@ -287,6 +287,95 @@ test.describe('Scada Demo assertion matrix (I15.1)', () => {
     await assertTrackedPageErrors(page);
   });
 
+  test('hover overlay stays aligned with the symbol across pan/zoom (screen-coord overlay, P1-7)', async ({ page }) => {
+    await page.goto('/#/scada-demo', { waitUntil: 'load' });
+    const cid = await getScadaCid(page);
+
+    const readViewport = (): Promise<{ x: number; y: number; scale: number }> =>
+      page.evaluate(
+        (key) => ((window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape).engine.getViewport(),
+        `__flux_scada_${cid}`,
+      );
+
+    // hover pump-1 → sky 覆盖物出现（初始视口 V0 下读覆盖物几何 R0）
+    const viewportPoint = await page.evaluate(
+      ({ key, x, y }) => {
+        const handle = (window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape;
+        return handle.engine.getViewportPoint({ x, y });
+      },
+      { key: `__flux_scada_${cid}`, x: 242, y: 234 },
+    );
+    const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
+    expect(box).toBeTruthy();
+    await page.mouse.move(box!.x + viewportPoint.x, box!.y + viewportPoint.y);
+    await expect
+      .poll(async () => readOverlayRects(page, cid), { timeout: 5_000, intervals: [200, 200, 200] })
+      .toHaveLength(1);
+    const v0 = await readViewport();
+    const r0 = (await readOverlayRects(page, cid))[0];
+
+    // R0 在 V0 下的屏幕几何 → world 几何（screen = (world - vx)·s 逆变换）
+    const world = {
+      x: r0.x / v0.scale + v0.x,
+      y: r0.y / v0.scale + v0.y,
+      width: r0.width / v0.scale,
+      height: r0.height / v0.scale,
+    };
+    const expectedAt = (v: { x: number; y: number; scale: number }) => ({
+      x: (world.x - v.x) * v.scale,
+      y: (world.y - v.y) * v.scale,
+      width: world.width * v.scale,
+      height: world.height * v.scale,
+    });
+
+    // 命令路径（setViewport pan+zoom → applyViewportState → refresh）：覆盖物仍与图元 screen 几何对齐
+    await page.evaluate(
+      (key) => {
+        const handle = (window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape & {
+          engine: { setViewport(s: { x: number; y: number; scale: number }): void };
+        };
+        handle.engine.setViewport({ x: 200, y: 100, scale: 3 });
+      },
+      `__flux_scada_${cid}`,
+    );
+    const afterCommand = expectedAt(await readViewport());
+    let rects = await readOverlayRects(page, cid);
+    expect(rects).toHaveLength(1);
+    expect(rects[0].x).toBeCloseTo(afterCommand.x, 1);
+    expect(rects[0].y).toBeCloseTo(afterCommand.y, 1);
+    expect(rects[0].width).toBeCloseTo(afterCommand.width, 1);
+    expect(rects[0].height).toBeCloseTo(afterCommand.height, 1);
+
+    // 插件路径 1（wheel 平移 → handlePluginMove → refresh）：覆盖物仍对齐
+    await page.mouse.wheel(0, 120);
+    await expect
+      .poll(async () => (await readViewport()).y, { timeout: 3_000, intervals: [200, 200] })
+      .not.toBe(100);
+    let afterPlugin = expectedAt(await readViewport());
+    rects = await readOverlayRects(page, cid);
+    expect(rects).toHaveLength(1);
+    expect(rects[0].x).toBeCloseTo(afterPlugin.x, 1);
+    expect(rects[0].y).toBeCloseTo(afterPlugin.y, 1);
+    expect(rects[0].width).toBeCloseTo(afterPlugin.width, 1);
+    expect(rects[0].height).toBeCloseTo(afterPlugin.height, 1);
+
+    // 插件路径 2（ctrl+wheel 缩放 → handlePluginZoom → refresh，leafer 默认 zoomMode 需 ctrl/meta）：覆盖物仍对齐
+    await page.keyboard.down('Control');
+    await page.mouse.wheel(0, -100);
+    await page.keyboard.up('Control');
+    await expect
+      .poll(async () => (await readViewport()).scale, { timeout: 3_000, intervals: [200, 200] })
+      .toBeGreaterThan(3);
+    afterPlugin = expectedAt(await readViewport());
+    rects = await readOverlayRects(page, cid);
+    expect(rects).toHaveLength(1);
+    expect(rects[0].x).toBeCloseTo(afterPlugin.x, 1);
+    expect(rects[0].y).toBeCloseTo(afterPlugin.y, 1);
+    expect(rects[0].width).toBeCloseTo(afterPlugin.width, 1);
+    expect(rects[0].height).toBeCloseTo(afterPlugin.height, 1);
+    await assertTrackedPageErrors(page);
+  });
+
   test('fit/center component handles drive the viewport state', async ({ page }) => {
     await page.goto('/#/scada-demo', { waitUntil: 'load' });
     const cid = await getScadaCid(page);
@@ -335,6 +424,44 @@ test.describe('Scada Demo assertion matrix (I15.1)', () => {
     await expect
       .poll(async () => (await readViewport()).y, { timeout: 3_000, intervals: [200, 200] })
       .toBeLessThan(1000);
+    await assertTrackedPageErrors(page);
+  });
+
+  test('programmatic zoom keeps the anchor fixed in screen space (matrix-level, P1-9)', async ({ page }) => {
+    await page.goto('/#/scada-demo', { waitUntil: 'load' });
+    const cid = await getScadaCid(page);
+
+    // 矩阵级断言（经测试句柄读视口 + zoomLayer 矩阵，非场景树属性）：zoomLayer.x = -viewport.x * scale
+    // 恒成立 → pan 后 zoomAt 无 (vx·(1-k), vy·(1-k)) 漂移（旧引擎传内容坐标锚点，漂移后矩阵 -450 而非 -300）。
+    const result = await page.evaluate((key) => {
+      const handle = (window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape & {
+        app: { tree: { zoomLayer: { x: number; y: number; scaleX: number } } };
+        engine: {
+          setViewport(s: { x: number; y: number; scale: number }): void;
+          zoomAt(p: { x: number; y: number }, factor: number): void;
+          getViewport(): { x: number; y: number; scale: number };
+        };
+      };
+      const layer = handle.app.tree.zoomLayer;
+      handle.engine.setViewport({ x: 50, y: 30, scale: 2 });
+      const afterSet = { viewport: handle.engine.getViewport(), layer: { x: layer.x, y: layer.y, scaleX: layer.scaleX } };
+      handle.engine.zoomAt({ x: 100, y: 100 }, 2);
+      return {
+        afterSet,
+        after: handle.engine.getViewport(),
+        layerAfter: { x: layer.x, y: layer.y, scaleX: layer.scaleX },
+      };
+    }, `__flux_scada_${cid}`);
+
+    expect(result.afterSet.viewport).toEqual({ x: 50, y: 30, scale: 2 });
+    expect(result.afterSet.layer.scaleX).toBeCloseTo(2, 6);
+    expect(result.afterSet.layer.x).toBeCloseTo(-100, 6);
+    expect(result.afterSet.layer.y).toBeCloseTo(-60, 6);
+
+    expect(result.after).toEqual({ x: 75, y: 65, scale: 4 });
+    expect(result.layerAfter.scaleX).toBeCloseTo(4, 6);
+    expect(result.layerAfter.x).toBeCloseTo(-75 * 4, 6);
+    expect(result.layerAfter.y).toBeCloseTo(-65 * 4, 6);
     await assertTrackedPageErrors(page);
   });
 });

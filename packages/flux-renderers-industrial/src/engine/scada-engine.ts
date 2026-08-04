@@ -346,8 +346,12 @@ export class ScadaCanvasEngine {
     const cur = this.viewport;
     const clamped = clampViewport(next);
     if (clamped.scale !== cur.scale) {
-      const anchor = viewportToWorld(cur, { x: 0, y: 0 });
-      this.app.tree.zoomLayer.scaleOfWorld(anchor, clamped.scale / cur.scale);
+      // P1-9 锚点空间修正：zoomLayer.scaleOfWorld 的锚点是其外层（screen）空间点
+      // （leafer 2.2.9 zoomOfWorld → getTempLocal 按 parent 世界矩阵逆变换，origin 即 zoomLayer
+      // 外层坐标）。固定屏幕原点（{0,0}）缩放 → 视口 x/y 不变、仅 scale 乘 k（zoomLayer.x *= k），
+      // 与后续 move 序列合成即 zoomAt/fit/center/setViewport 的精确视口态。旧实现传内容坐标
+      // viewportToWorld(cur,{0,0})，scaleOfWorld 把它当 screen 点固定 → 内容漂移 (vx·(1-k), vy·(1-k))。
+      this.app.tree.zoomLayer.scaleOfWorld({ x: 0, y: 0 }, clamped.scale / cur.scale);
     }
     if (clamped.x !== cur.x || clamped.y !== cur.y) {
       // 屏幕映射 zoomLayer.x = -viewport.x * scale：平移量须为 -(Δx)*scale（gate-3-review §5 M-3 符号推导）
@@ -357,6 +361,8 @@ export class ScadaCanvasEngine {
       });
     }
     this.viewport = clamped;
+    // 命令路径（zoomAt/fit/center/setViewport）视口变更 → 活动覆盖物按最新视口重定位（P1-7）
+    this.interaction?.refresh();
   }
 
   private installTestHandle(): void {
@@ -419,14 +425,19 @@ export class ScadaCanvasEngine {
     const rawScale = readZoomLayerScale(zoomLayer.scaleX, this.viewport.scale);
     const clamped = clampScale(rawScale);
     if (clamped !== rawScale) {
-      const anchor = viewportToWorld(this.viewport, { x: 0, y: 0 });
-      this.app.tree.zoomLayer.scaleOfWorld(anchor, clamped / rawScale);
+      // P1-9 兜底同修正（与 applyViewportState 共用 bug 类）：钳制缩放以 screen 原点为锚点，
+      // 视口 x/y 不变、仅 scale 变化（旧实现传内容坐标锚点 → 钳制后内容漂移）。
+      this.app.tree.zoomLayer.scaleOfWorld({ x: 0, y: 0 }, clamped / rawScale);
     }
     this.syncViewportFromZoomLayer();
+    // 插件 zoom 路径（wheel/pinch 直改 zoomLayer 矩阵）→ 活动覆盖物重定位（P1-7）
+    this.interaction?.refresh();
   };
 
   private readonly handlePluginMove = (): void => {
     this.syncViewportFromZoomLayer();
+    // 插件 move 路径（拖拽平移）→ 活动覆盖物重定位（P1-7）
+    this.interaction?.refresh();
   };
 
   private syncViewportFromZoomLayer(): void {

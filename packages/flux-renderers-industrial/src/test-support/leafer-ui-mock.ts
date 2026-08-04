@@ -186,8 +186,17 @@ export class MockZoomLayer extends MockGroup {
     return this;
   }
 
-  scaleOfWorld(world: { x: number; y: number }, scale: number) {
-    this.scaleOfWorldCalls.push({ world, scale });
+  scaleOfWorld(origin: { x: number; y: number }, scale: number) {
+    // P1-9 mock↔真实漂移收口：按 leafer-ui@2.2.9 真实语义建模 x/y 锚定副作用——
+    // `zoomOfWorld` → `getTempLocal(t, origin)` 把 origin 当 **外层（screen）空间** 点
+    // （parent.scrollWorldTransform 逆变换），`zoomOfLocal` 缩放后按锚点反推平移：
+    // t.x = (x - ox)·k + ox（t = zoomLayer，x/y 为外层空间平移）。此前 mock 只乘 scaleX/scaleY
+    // 不更新 x/y，掩蔽了引擎传内容坐标锚点的漂移缺陷（P1-9 462 单测不可见）。
+    this.scaleOfWorldCalls.push({ world: origin, scale });
+    const ox = origin.x;
+    const oy = origin.y;
+    this.x = (this.x - ox) * scale + ox;
+    this.y = (this.y - oy) * scale + oy;
     this.scaleX = this.scaleX * scale;
     this.scaleY = this.scaleY * scale;
     return this;

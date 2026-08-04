@@ -84,7 +84,10 @@ export class InteractionOverlay {
   private readonly overlays = new Map<string, IRect>();
 
   constructor(private readonly engine: ScadaCanvasEngine) {
-    this.group = new Group({ name: 'scada-interaction-overlay' });
+    // P1-7 覆盖物必须不参与命中测试（hittable: false）：sky 层覆盖物与图元 screen 几何对齐后，
+    // 若不标记为不可命中，指针命中会落到覆盖物 rect 上，tap/pointer 事件路径不再含 tree →
+    // 图元 click/hover 链路被 sky 层吞掉（e2e I11 click→dialog 链实测暴露）。
+    this.group = new Group({ name: 'scada-interaction-overlay', hittable: false });
     this.engine.app.sky.add(this.group);
   }
 
@@ -102,14 +105,7 @@ export class InteractionOverlay {
     const node = leaf.node as unknown as OverlayNodeGeometry;
     const merged = { ...(style ?? INTERACTION_STYLE_PRESETS.hover) };
     const geometry = resolveOverlayGeometry(node);
-    const attrs: Record<string, unknown> = {
-      x: geometry.x,
-      y: geometry.y,
-      width: geometry.width,
-      height: geometry.height,
-      rotation: node.rotation ?? 0,
-      ...merged,
-    };
+    const attrs = this.toScreenAttrs(geometry, node, merged);
     const existing = this.overlays.get(symbolId);
     if (existing) {
       existing.set(attrs);
@@ -117,6 +113,46 @@ export class InteractionOverlay {
       const rect = new Rect(attrs);
       this.group.add(rect);
       this.overlays.set(symbolId, rect);
+    }
+  }
+
+  /**
+   * P1-7 覆盖物变换面对齐：sky 层恒等变换，覆盖物以 **screen 坐标**绘制（与树内图元
+   * `screen = (world - vx)·s` 同面）。x/y 经 `getViewportPoint` 换算、宽/高乘当前 scale、
+   * rotation 不变；strokeWidth 保持 preset 屏幕像素（screen 坐标绘制下除 scale 会产生
+   * 2/scale px 的几乎不可见描边）。
+   */
+  private toScreenAttrs(
+    geometry: { x: number; y: number; width: number; height: number },
+    node: OverlayNodeGeometry,
+    style: InteractionStyle,
+  ): Record<string, unknown> {
+    const scale = this.engine.getViewport().scale;
+    const point = this.engine.getViewportPoint({ x: geometry.x, y: geometry.y });
+    return {
+      x: point.x,
+      y: point.y,
+      width: geometry.width * scale,
+      height: geometry.height * scale,
+      rotation: node.rotation ?? 0,
+      ...style,
+    };
+  }
+
+  /** pan/zoom 后按最新视口重算全部活动覆盖物（P1-7：screen 坐标绘制下视口变化必须刷新）。 */
+  refresh(): void {
+    if (this.overlays.size === 0) return;
+    for (const [symbolId, rect] of this.overlays) {
+      const leaf = this.engine.registry.get(symbolId);
+      if (!leaf) continue;
+      const node = leaf.node as unknown as OverlayNodeGeometry;
+      const geometry = resolveOverlayGeometry(node);
+      const current = rect.get() as Record<string, unknown>;
+      const style: InteractionStyle = {};
+      for (const key of ['stroke', 'strokeWidth', 'fill', 'opacity'] as const) {
+        if (current[key] !== undefined) (style as Record<string, unknown>)[key] = current[key];
+      }
+      rect.set(this.toScreenAttrs(geometry, node, style));
     }
   }
 
