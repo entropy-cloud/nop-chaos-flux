@@ -51,6 +51,7 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'submitType', kind: 'prop' },
       { key: 'maxLength', kind: 'prop' },
       { key: 'showWordLimit', kind: 'prop', valueType: 'boolean' },
+      { key: 'showTimestamp', kind: 'prop', valueType: 'boolean' },
       { key: 'autofocus', kind: 'prop', valueType: 'boolean' },
       { key: 'initialMessages', kind: 'prop' },
       { key: 'senderExtensions', kind: 'prop' },
@@ -85,6 +86,7 @@ export const aiRendererDefinitions: RendererDefinition[] = [
     component: AiMessageListRenderer,
     fields: [
       { key: 'autoScroll', kind: 'prop', valueType: 'boolean' },
+      { key: 'showTimestamp', kind: 'prop', valueType: 'boolean' },
       { key: 'emptyRegion', kind: 'value-or-region', regionKey: 'emptyRegion' },
     ],
   },
