@@ -263,17 +263,17 @@ interface ScadaSymbolNode {
 
 ## 10. 样式与 DOM marker 约定
 
-| DOM 元素    | marker class       | data-slot              |
-| ----------- | ------------------ | ---------------------- |
-| 根容器      | `nop-scada-canvas` | `scada-canvas`         |
-| canvas 画布 | —                  | `scada-canvas-canvas`  |
-| HTML 覆盖层 | —                  | `scada-canvas-overlay` |
-| 加载占位    | —                  | `scada-canvas-loading` |
-| 错误提示    | —                  | `scada-canvas-error`   |
+| DOM 元素    | marker class              | data-slot              |
+| ----------- | ------------------------- | ---------------------- |
+| 根容器      | `nop-scada-canvas`        | `scada-canvas`         |
+| canvas 画布 | `nop-scada-canvas-canvas` | `scada-canvas-canvas`  |
+| 加载占位    | —                         | `scada-canvas-loading` |
+| 错误提示    | —                         | `scada-canvas-error`   |
 
 - 根容器尺寸策略：`width: 100%; height: 100%`（`width`/`height` props 显式覆盖）；canvas 绝对定位铺满根容器；
-- canvas 渲染层不产 DOM marker（引擎内部绘制）；HTML 覆盖层使用 `@nop-chaos/ui` 组件与既有主题体系（不新增 token 命名空间，INV-§3F）；
-- 测试锚点优先顺序：`window.__flux_scada_<cid>`（程序化断言）> data-slot > `nop-*`（对齐既有约定）。
+- `data-slot="scada-canvas-canvas"` 落在真实 leafer `<canvas>` DOM 元素上（plan 2026-08-04-1558-3 Phase 1：引擎创建后由 renderer effect 标注），DOM 断言直接命中渲染画布（TE-3 黑屏兜底基础）；wrapper 占位 div 仅保留 `nop-scada-canvas-canvas` marker class 供 CSS 定位规则稳定命中（F8）；
+- HTML 覆盖层（hover/selected 反馈）渲染在 leafer sky 层（`InteractionOverlay`），**不产 DOM marker / 不占 data-slot**——此前的 `scada-canvas-overlay` slot 行永不渲染，已移除；
+- canvas 渲染层不额外产 DOM marker（引擎内部绘制）；测试锚点优先顺序：`window.__flux_scada_<cid>`（程序化断言）> data-slot > `nop-*`（对齐既有约定）。
 
 ## 11. 实现拆分建议
 

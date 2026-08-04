@@ -385,10 +385,10 @@ flowchart TD
 
 ### Display & positioning（multi-audit dim 21）
 
-- `multi-audit-industrial-hmi.md` `[P2]` — `use-scada-config-sync.ts:20-37` `computeSymbolBounds` 忽略 `custom.points` 几何；polygon-only 场景 fit/center 冲到 MAX_SCALE（20×）且图元钉在画布外（line/polygon bounds 退化为 0 尺寸；`viewport.ts:58-59` 1e-6 兜底）。
-- `multi-audit-industrial-hmi.md` `[P2]` — `dirty-collector.ts:291-315` + `value-to-state.ts:11-16` 状态判定链不转发主绑定 `scale`（`resolveState(declaration, raw)` 无 options）→ 绑定带 `scale` 时判定值偏离写入值。
-- `multi-audit-industrial-hmi.md` `[P2]` — `src/symbols/instrument/{gauge,level,thermometer}.ts` + `base-shapes/text.ts` 自动宽 Text 上 `textAlign:'center'` 无效（leafer 无 width 即无 autoSizeAlign → center 偏移 0）；仪表数值标签左对齐/偏心。
-- `multi-audit-industrial-hmi.md` `[P2]` — `scada-canvas.tsx:188-190` `data-slot="scada-canvas-canvas"` 在空 wrapper div 上而非 leafer canvas 元素；slot 断言会指向错误节点。
+- `multi-audit-industrial-hmi.md` `[P2]` — `use-scada-config-sync.ts:20-37` `computeSymbolBounds` 忽略 `custom.points` 几何；polygon-only 场景 fit/center 冲到 MAX_SCALE（20×）且图元钉在画布外（line/polygon bounds 退化为 0 尺寸；`viewport.ts:58-59` 1e-6 兜底）。**已由 plan `2026-08-04-1558-3` Phase 1 收口**：`computeSymbolBounds` 对含 `custom.points` 几何族（polygon/line/arrow）从 points 数组算 min/max 包围盒，无 width/height 但有 points 时不退化为 0 尺寸；focused 单测 + polygon fit 精确断言入库。
+- `multi-audit-industrial-hmi.md` `[P2]` — `dirty-collector.ts:291-315` + `value-to-state.ts:11-16` 状态判定链不转发主绑定 `scale`（`resolveState(declaration, raw)` 无 options）→ 绑定带 `scale` 时判定值偏离写入值。**已由 plan `2026-08-04-1558-3` Phase 1 收口**：`collectStates` 经 `resolveStateScale` 取主绑定 scale 转发（F4 语义：判定作用于存储值，binding.scale 仅声明级无 scale 或同一 scale 对象时转发，避免双重换算）。
+- `multi-audit-industrial-hmi.md` `[P2]` — `src/symbols/instrument/{gauge,level,thermometer}.ts` + `base-shapes/text.ts` 自动宽 Text 上 `textAlign:'center'` 无效（leafer 无 width 即无 autoSizeAlign → center 偏移 0）；仪表数值标签左对齐/偏心。**已由 plan `2026-08-04-1558-3` Phase 1 收口**：以显式 width 为主路径（自动宽下 autoSizeAlign 无 layoutWidth 使 textAlign 偏移不生效，已核实 leafer-ui@2.2.9 dist），居中 Text 按内容测量设置 width；attrs 级单测（mock 面）入库，浏览器级像素验证列 watch-only residual。
+- `multi-audit-industrial-hmi.md` `[P2]` — `scada-canvas.tsx:188-190` `data-slot="scada-canvas-canvas"` 在空 wrapper div 上而非 leafer canvas 元素；slot 断言会指向错误节点。**已由 plan `2026-08-04-1558-3` Phase 1 收口**：renderer effect 在引擎创建后把 `data-slot="scada-canvas-canvas"` + marker class 落到真实 leafer `<canvas>` 元素（`app.canvas.view` 面）；`design-renderer.md §10` 表同步（canvas 行 marker/slot 一致、永不渲染的 overlay 行移除）。
 
 ### Wiring & degradation（multi-audit dim 22）
 
@@ -404,17 +404,17 @@ flowchart TD
 ### Test effectiveness & coverage（multi-audit dim 23/14）
 
 - `multi-audit-industrial-hmi.md` `[P2]` — `leafer-ui-mock.ts` `MockZoomLayer.scaleOfWorld` 不建模 x/y 锚定副作用 → viewport x-sync 分支单测不可验证（**P1-9 fix 随 plan `{3}` 收口**：mock 已按 leafer-ui@2.2.9 真实 `zoomOfLocal` 语义建模 x/y 锚定副作用，矩阵级单测 2 例 + e2e 矩阵断言 1 条入库；本条闭）。
-- `multi-audit-industrial-hmi.md` `[P2]` — `tests/e2e/scada-perf.spec.ts:158-184` "drag pan fps" 指标只数 rAF 帧（~60fps 恒发，与是否真平移无关）→ pan 半恒真断言。需断言 viewport 变化作为平移有效证据。
-- `multi-audit-industrial-hmi.md` `[P2]` — `src/engine/batch-add-probe.ts` 0% 覆盖（I14.1 探针无任何测试执行；时序值不可断言但 shape/count/ratio 可）。
-- `multi-audit-industrial-hmi.md` `[P2]` — e2e 断言主要是 `window.__flux_scada_<cid>` 场景树属性读取；整画布黑屏仍可能全过——每个 spec 家族至少补一条 canvas 像素/DOM canvas 存在性断言。
-- `multi-audit-industrial-hmi.md` `[P2]` — 覆盖缺口：`scada-engine.ts:318,367`（`cacheImage`/`measureAddStrategies` 投影）、`use-scada-engine.ts` `setPointValues` 注入通道、`use-scada-config-sync.ts` `onBuildError` catch、`use-scada-handles.ts` center-no-config、`validate.ts` 17 错误分支、`expression-evaluator.ts` 14 错误分支、switch OFF 位 applyProps。
-- `multi-audit-industrial-hmi.md` `[P2]` — `scada-canvas-smoke.test.tsx` 未调 `resetLeaferMock()`（唯一漏调消费者文件；未来 innerId 断言隐患）。
+- `multi-audit-industrial-hmi.md` `[P2]` — `tests/e2e/scada-perf.spec.ts:158-184` "drag pan fps" 指标只数 rAF 帧（~60fps 恒发，与是否真平移无关）→ pan 半恒真断言。需断言 viewport 变化作为平移有效证据。**已由 plan `2026-08-04-1558-3` Phase 2 收口**：perf drag pan 断言补「视口变化」证据——直接读 `tree.zoomLayer.x/y`（平移前后必变，F3），非恒真；e2e 实测 zoomLayer offset changed across pan windows。
+- `multi-audit-industrial-hmi.md` `[P2]` — `src/engine/batch-add-probe.ts` 0% 覆盖（I14.1 探针无任何测试执行；时序值不可断言但 shape/count/ratio 可）。**已由 plan `2026-08-04-1558-3` Phase 3 收口**：`batch-add-probe.test.ts` 断言 count + AddStrategyTiming shape + 两条 Group.add 路径（per-node/batch）；包级覆盖 100%（timing>0 断言保留在 e2e 真实计时处）。
+- `multi-audit-industrial-hmi.md` `[P2]` — e2e 断言主要是 `window.__flux_scada_<cid>` 场景树属性读取；整画布黑屏仍可能全过——每个 spec 家族至少补一条 canvas 像素/DOM canvas 存在性断言。**已由 plan `2026-08-04-1558-3` Phase 2 收口**：新增 `helpers/scada-canvas-assert.ts`，每个 spec 家族（demo/edge/perf/pressure）补 canvas 存在性断言（CANVAS 元素 + 非零尺寸 + render 帧计数 > 0 硬门禁 + best-effort 像素探测，SecurityError/全零 fallback F2）。
+- `multi-audit-industrial-hmi.md` `[P2]` — 覆盖缺口：`scada-engine.ts:318,367`（`cacheImage`/`measureAddStrategies` 投影）、`use-scada-engine.ts` `setPointValues` 注入通道、`use-scada-config-sync.ts` `onBuildError` catch、`use-scada-handles.ts` center-no-config、`validate.ts` 17 错误分支、`expression-evaluator.ts` 14 错误分支、switch OFF 位 applyProps。**已由 plan `2026-08-04-1558-3` Phase 3 收口**：逐项补 focused 单测（cacheImage/resolveImageUrl/exportConfig-no-config/measureAddStrategies 投影、setPointValues mount-path guard、onBuildError config-build-failed catch、validate 错误分支矩阵、expression-evaluator 错误分支矩阵、switch true→false applyProps OFF 位）；包级 coverage 95.5→97.29 stmts / 90.02→91.89 branches。
+- `multi-audit-industrial-hmi.md` `[P2]` — `scada-canvas-smoke.test.tsx` 未调 `resetLeaferMock()`（唯一漏调消费者文件；未来 innerId 断言隐患）。**已由 plan `2026-08-04-1558-3` Phase 3 收口**：`beforeEach` 补 `resetLeaferMock()`，对齐其余 leafer mock 消费者。
 
 ### Documentation drift（multi-audit dim 16）
 
-- `multi-audit-industrial-hmi.md` `[P2]` — `design-renderer.md:179,258` `data-slot="scada-canvas-overlay"` 声明但从未渲染（hover 覆盖物在 leafer sky 层）。
+- `multi-audit-industrial-hmi.md` `[P2]` — `design-renderer.md:179,258` `data-slot="scada-canvas-overlay"` 声明但从未渲染（hover 覆盖物在 leafer sky 层）。**已由 plan `2026-08-04-1558-3` Phase 1 收口**：§10 表移除永不渲染的 `scada-canvas-overlay` 行并注记「HTML 覆盖层渲染在 leafer sky 层、不产 DOM marker / 不占 data-slot」。
 - `multi-audit-industrial-hmi.md` `[P2]` — `design-renderer.md:157` 点表 diff 文档化为 `setPointValues` 增量路径；实现是整域重建 `reloadBindings`。**已由 plan `2026-08-04-1558-2` Phase 1 收口**：§4.3 同步 live baseline（含 import reset / props 保留合并语义）。
-- `multi-audit-industrial-hmi.md` `[P2]` — `design-renderer.md:257` canvas marker 文档为 "—" 但代码发 `nop-scada-canvas-canvas`（含 CSS）。
+- `multi-audit-industrial-hmi.md` `[P2]` — `design-renderer.md:257` canvas marker 文档为 "—" 但代码发 `nop-scada-canvas-canvas`（含 CSS）。**已由 plan `2026-08-04-1558-3` Phase 1 收口**：§10 表 canvas 行 marker 同步为 `nop-scada-canvas-canvas`、slot 为 `scada-canvas-canvas`（落在真实 leafer `<canvas>` 元素）。
 - `multi-audit-industrial-hmi.md` `[P2]` — `design-renderer.md:235` `not-visible` 失败路径文档化但未实现。**已由 plan `2026-08-04-1558-2` Phase 4 收口**：fit/center 无 bounds 返回 `not-visible` 错误码，§8.5 表行措辞同步落地。
 - `multi-audit-industrial-hmi.md` `[P2]` — `design-engine.md:203-204` `ready`/`error` 列为 engine 事件；实际是 renderer 层 `scada:ready`/`scada:error` action 派发。**已由 plan `2026-08-04-1558-2` Phase 4 收口**：引擎事件表删除 `ready`/`error` 行，补 blockquote 注记归属 renderer 层 action 派发。
 - `multi-audit-industrial-hmi.md` `[P2]` — `design-engine.md:220-229`、`design-symbols.md:80` `ScadaTestHandle`/`SymbolCreateContext.engine` 代码里 `unknown`（文档显示强类型；疑似循环导入约束，需 doc 注记）。**已由 plan `2026-08-04-1558-1` Phase 1 收口**：design-engine.md §8.3 + design-symbols.md:80 补「强类型缺失注记（循环导入约束）」。
@@ -428,7 +428,7 @@ flowchart TD
 - `open-audit-industrial-hmi.md` `[P2]` — `scada-image` 加载失败信号 `loadFailed` 无消费者（注释声称 I10 桥接层消费，实际不存在）→ 404 渲染永久灰块零诊断。**已由 plan `2026-08-04-1558-2` Phase 4 收口**：注释修正（无画布级消费者），design-symbols.md 注记「资源加载失败渲染占位、画布级诊断后置 I16」（Deferred But Adjudicated——与 P1-8 不升级 status 契约冲突，需 I16 编辑器时代统一资源面诊断）。
 - `open-audit-industrial-hmi.md` `[P2]` — `point-store.ts:187-203` `point:change` 订阅者无 try/catch 在 `applyValue` 内运行；订阅者 throw 中断剩余写入循环（今日零生产订阅者，latent）。**已由 plan `2026-08-04-1558-2` Phase 2 收口**：EventHub.emit 与 PointStore.applyValue 双路径订阅者循环均加 try/catch（单订阅者异常隔离，异常经 `onSubscriberError` 去重上报）。
 - `open-audit-industrial-hmi.md` `[P2]` — `component:destroy` 后 `data-status="ready"` 且 wrapper 仍挂载（`use-scada-handles.ts:54-57`）——销毁状态无处反映；e2e/tooling 会把已销毁 canvas 报为健康。或 surface destroyed status 或文档化为 unmount-only。**已由 plan `2026-08-04-1558-2` Phase 1 收口**：`ScadaCanvasStatus` 增 `destroyed`，`component:destroy` 句柄回调置状态，wrapper `data-status` 反映销毁态。
-- `open-audit-industrial-hmi.md` `[P2]` — `tests/e2e/scada-perf.spec.ts:134,148,237,273,346` `allowConsoleErrors(100)` + `playground-entry-pages.spec.ts:450` `ROUTES_WITH_KNOWN_ERRORS` 是 calendar 先例拷贝而非证据驱动（本审计 live probe 该路由 0 console.error/pageerror）→ 建议移除 allowance 或记录真实已知错误。
+- `open-audit-industrial-hmi.md` `[P2]` — `tests/e2e/scada-perf.spec.ts:134,148,237,273,346` `allowConsoleErrors(100)` + `playground-entry-pages.spec.ts:450` `ROUTES_WITH_KNOWN_ERRORS` 是 calendar 先例拷贝而非证据驱动（本审计 live probe 该路由 0 console.error/pageerror）→ 建议移除 allowance 或记录真实已知错误。**已由 plan `2026-08-04-1558-3` Phase 2 收口**：移除 perf spec ×5 `allowConsoleErrors(100)` + `ROUTES_WITH_KNOWN_ERRORS` 的 `scada-perf-scale` 条目；全量 scada e2e + playground-entry-pages 无 allowance 全绿（该路由经 `assertTrackedPageErrors` 0 console.error/pageerror 验证）。
 
 ## Rule
 
