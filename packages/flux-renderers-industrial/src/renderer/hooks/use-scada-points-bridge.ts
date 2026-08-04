@@ -137,7 +137,12 @@ export function normalizeFluxExpression(flux: string): string {
   return `\${${trimmed.replace(/^\$/, '')}}`;
 }
 
-function isScadaPrimitive(value: unknown): value is ScadaPrimitive {
+/**
+ * `ScadaPrimitive` 类型守卫（plan 2026-08-04-2243-2 W4）：flux 桥接与 host 句柄
+ * （`component:setPointValue`）共用，确保进入点表的值恒为 number|boolean|string，
+ * 非 primitive 值在边界处被拒绝（不静默 corrupt 点表）。
+ */
+export function isScadaPrimitive(value: unknown): value is ScadaPrimitive {
   return typeof value === 'number' || typeof value === 'boolean' || typeof value === 'string';
 }
 

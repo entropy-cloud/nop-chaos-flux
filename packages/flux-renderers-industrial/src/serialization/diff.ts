@@ -47,7 +47,20 @@ function valuesEqual(a: unknown, b: unknown): boolean {
   if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') {
     return a === b;
   }
-  return JSON.stringify(a) === JSON.stringify(b);
+  // plan 2026-08-04-2243-2 W5：own-keys 递归比较（stable deep-equal），key 序不影响结果。
+  // 旧实现 `JSON.stringify(a) === JSON.stringify(b)` 在异源 config（prev=exportConfig vs
+  // next=host 表达式重算）key 序不同时假阳性 → 全 reloadBindings 重建。按 a 的 own keys 逐项
+  // 在 b 中查表 + 递归，数组按 index 比较（数组序本身是语义），key 插入序不再影响判等。
+  const aRecord = a as Record<string, unknown>;
+  const bRecord = b as Record<string, unknown>;
+  const aKeys = Object.keys(aRecord);
+  const bKeys = Object.keys(bRecord);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (!Object.prototype.hasOwnProperty.call(bRecord, key)) return false;
+    if (!valuesEqual(aRecord[key], bRecord[key])) return false;
+  }
+  return true;
 }
 
 export function diffScadaConfig(prev: ScadaConfig, next: ScadaConfig): ScadaConfigDiff {

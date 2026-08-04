@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { diffScadaConfig } from '../../serialization/diff.js';
 import type { ScadaConfig, ScadaSymbolNode } from '../../serialization/config-types.js';
+import { getScadaSymbolDefinition } from '../../symbols/symbol-registry.js';
 import type { ScadaCanvasRuntime } from './use-scada-engine.js';
 import type { Bounds } from '../../engine/viewport.js';
 
@@ -40,14 +41,27 @@ function unionBounds(a: Bounds, b: Bounds): Bounds {
 }
 
 /**
- * 单图元包围盒（plan 2026-08-04-1558-3 Phase 1）：含 `custom.points` 几何族（polygon/line/arrow）
- * 从 points 数组计算 min/max 包围盒；无 width/height 但有 points 时不退化为 0 尺寸。
+ * 单图元包围盒（plan 2026-08-04-1558-3 Phase 1 + 2026-08-04-2243-2 D1）：含 `custom.points` 几何族
+ * （polygon/line/arrow）从 points 数组计算 min/max 包围盒；无显式 `custom.points` 时 consult
+ * 符号定义 `defaultGeometryPoints`（polygon DEFAULT_TRIANGLE、line/arrow 由 width/height 派生），
+ * 不退化为 0 尺寸冲到 MAX_SCALE。无 points 几何族时回退 width/height 矩形。
  * points 坐标相对 node.x/y，绝对包围盒 = node 原点 + points 极值。
- * custom.points 存在时以其为几何源（polygon/line 几何不取 width/height 矩形）。
  */
 function boundsOfNode(node: ScadaSymbolNode): Bounds | undefined {
-  const pointsBounds = boundsFromCustomPoints(node);
-  if (pointsBounds !== undefined) return pointsBounds;
+  const explicitPoints = node.custom?.points;
+  if (Array.isArray(explicitPoints) && explicitPoints.length > 0) {
+    const pointsBounds = boundsFromPoints(node, explicitPoints);
+    if (pointsBounds !== undefined) return pointsBounds;
+  } else {
+    // plan 2026-08-04-2243-2 D1：无显式 custom.points 时 consult 符号定义默认几何
+    // （polygon/line/arrow 的 defaultGeometryPoints），使默认几何族 fit/center 不退化。
+    const definition = getScadaSymbolDefinition(node.type);
+    const defaultPoints = definition?.defaultGeometryPoints?.(node);
+    if (Array.isArray(defaultPoints) && defaultPoints.length > 0) {
+      const defBounds = boundsFromPoints(node, defaultPoints);
+      if (defBounds !== undefined) return defBounds;
+    }
+  }
   const width = node.width ?? 0;
   const height = node.height ?? 0;
   // plan 2026-08-04-2242-2 Fix-1：省略 x/y 时默认 0（与 interaction-overlay.ts:43-44 一致），
@@ -55,9 +69,7 @@ function boundsOfNode(node: ScadaSymbolNode): Bounds | undefined {
   return { x: node.x ?? 0, y: node.y ?? 0, width, height };
 }
 
-function boundsFromCustomPoints(node: ScadaSymbolNode): Bounds | undefined {
-  const raw = node.custom?.points;
-  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+function boundsFromPoints(node: ScadaSymbolNode, raw: unknown[]): Bounds | undefined {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;

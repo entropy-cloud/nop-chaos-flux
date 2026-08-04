@@ -422,7 +422,7 @@ export class ScadaCanvasEngine {
     this.app.tree.on('move', this.handlePluginMove);
   }
 
-  private readonly handlePluginZoom = (): void => {
+  private readonly handlePluginZoom = (event?: { x?: unknown; y?: unknown }): void => {
     const zoomLayer = this.app.tree.zoomLayer as unknown as {
       x?: number;
       y?: number;
@@ -431,9 +431,13 @@ export class ScadaCanvasEngine {
     const rawScale = readZoomLayerScale(zoomLayer.scaleX, this.viewport.scale);
     const clamped = clampScale(rawScale);
     if (clamped !== rawScale) {
-      // P1-9 兜底同修正（与 applyViewportState 共用 bug 类）：钳制缩放以 screen 原点为锚点，
-      // 视口 x/y 不变、仅 scale 变化（旧实现传内容坐标锚点 → 钳制后内容漂移）。
-      this.app.tree.zoomLayer.scaleOfWorld({ x: 0, y: 0 }, clamped / rawScale);
+      // plan 2026-08-04-2243-2 D3：wheel/pinch 越界钳制以**光标 screen 锚**钳制（替代原点 {0,0} 兜底）。
+      // 插件 wheel 经 Transformer.zoom → ZoomEvent.ZOOM 携带指针 screen 坐标（leafer-in viewport
+      // getZoomEventData 透传 event.x/y），钳制沿用同一锚点 → 光标下内容点保持固定，超界无视觉偏移。
+      // 与 P1-9 applyViewportState 命令路径的 screen 原点锚区分：命令路径是显式目标态合成（x/y 不变、
+      // 仅 scale 变），wheel 钳制是修正已发生的指针锚缩放（保持光标内容固定）。事件缺 x/y（程序触发/
+      // 旧消费方）回落 {0,0}（P1-9 不变式，视口 x/y 不变）。
+      this.app.tree.zoomLayer.scaleOfWorld(readZoomAnchor(event), clamped / rawScale);
     }
     this.syncViewportFromZoomLayer();
     // 插件 zoom 路径（wheel/pinch 直改 zoomLayer 矩阵）→ 活动覆盖物重定位（P1-7）
@@ -465,4 +469,16 @@ function readZoomLayerScale(scaleX: unknown, fallback: number): number {
 
 function readZoomLayerPosition(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+/**
+ * 从插件 zoom 事件载荷读光标 screen 锚（plan 2026-08-04-2243-2 D3）：ZoomEvent.ZOOM 经
+ * `getZoomEventData` 透传指针 event.x/y。非有限值（程序触发/旧消费方）回落 screen 原点 {0,0}
+ * （P1-9 命令路径不变式：视口 x/y 不变）。
+ */
+function readZoomAnchor(event: { x?: unknown; y?: unknown } | undefined): { x: number; y: number } {
+  if (!event) return { x: 0, y: 0 };
+  const x = typeof event.x === 'number' && Number.isFinite(event.x) ? event.x : 0;
+  const y = typeof event.y === 'number' && Number.isFinite(event.y) ? event.y : 0;
+  return { x, y };
 }

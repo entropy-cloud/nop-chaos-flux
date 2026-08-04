@@ -4,6 +4,7 @@ import type {
   ScadaBinding,
   ScadaStateDeclaration,
   ScadaSymbolEvent,
+  ScadaSymbolNode,
 } from '../serialization/config-types.js';
 
 export type LeafNode = IUI;
@@ -74,6 +75,14 @@ export interface ScadaSymbolDefinition {
   applyProps?: (node: LeafNode, props: Partial<ScadaSymbolProps>) => void;
   resolveStateStyle?: (props: ScadaSymbolProps, state: string) => ScadaSymbolStylePatch;
   category?: ScadaSymbolCategory;
+  /**
+   * 默认几何 points 源（plan 2026-08-04-2243-2 D1）：points 几何族（polygon/line/arrow）在节点
+   * 无显式 `custom.points` 时，由此 resolver 返回符号定义的默认 points（如 polygon `DEFAULT_TRIANGLE`、
+   * line/arrow 由 width/height 派生 `[0,0,w,h]`），使 fit/center 包围盒不退化为 0 尺寸冲到 MAX_SCALE。
+   * 返回值与 `custom.points` 同构——`{x,y}[]` 或 flat `[x1,y1,...]`。仅在 `boundsOfNode` 经
+   * 显式 custom.points 路径未命中时 consult，不影响 create() 内的渲染几何。
+   */
+  defaultGeometryPoints?: (node: ScadaSymbolNode) => unknown[] | undefined;
 }
 
 /** 引擎图片缓存桥接面（I8.1，INV-1）：URL 经引擎图片缓存归位；桥接层 env.fetcher 由 I10.1 注入。 */

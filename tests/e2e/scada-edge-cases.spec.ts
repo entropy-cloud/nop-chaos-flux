@@ -191,4 +191,28 @@ test.describe('Scada Edge Cases (I15.1)', () => {
 
     await assertTrackedPageErrors(page);
   });
+
+  test('default-geometry polygon/line fit keeps viewport scale bounded (< MAX_SCALE) (D1)', async ({ page }) => {
+    // plan 2026-08-04-2243-2 D1 e2e 几何断言：默认几何族（polygon 无 custom.points、line 无 width/height）
+    // + viewport {fit:'contain'}。修复前 bounds 退化为 0 尺寸 → fit 冲到 MAX_SCALE(20×)；修复后按符号定义
+    // 默认 points（polygon DEFAULT_TRIANGLE 100×86 / line [0,0,100,0]）算包围盒，fit scale 合理且 < 20。
+    await page.goto('/#/scada-edge-cases', { waitUntil: 'load' });
+    await page.getByTestId('scada-edge-default-geom').click();
+    const cid = await getScadaCid(page);
+
+    const viewport = await page.evaluate(
+      (key) =>
+        ((window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape).engine.getViewport(),
+      `__flux_scada_${cid}`,
+    );
+    // fit 已应用（full/reset 路径）：scale 有限且严格小于 MAX_SCALE(20)——修复前会贴到 20。
+    expect(Number.isFinite(viewport.scale)).toBe(true);
+    expect(viewport.scale).toBeLessThan(20);
+    expect(viewport.scale).toBeGreaterThan(1);
+    // 包围盒按默认几何有效：fit 后视口原点落在默认几何范围内（非 NaN/Infinity）
+    expect(Number.isFinite(viewport.x)).toBe(true);
+    expect(Number.isFinite(viewport.y)).toBe(true);
+
+    await assertTrackedPageErrors(page);
+  });
 });

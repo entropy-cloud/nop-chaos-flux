@@ -4,6 +4,10 @@ import { toShapeAttrs } from './common.js';
 
 export const scadaLineType = 'scada-line';
 
+/** line 默认宽/高（create 与 defaultGeometryPoints 共用，保持渲染几何与 bounds 同源）。 */
+const LINE_DEFAULT_WIDTH = 100;
+const LINE_DEFAULT_HEIGHT = 0;
+
 export const scadaLineDefinition: ScadaSymbolDefinition = {
   type: scadaLineType,
   name: 'Line',
@@ -23,14 +27,22 @@ export const scadaLineDefinition: ScadaSymbolDefinition = {
     dashOffset: { type: 'number' },
     shadow: { type: 'object' },
   },
-  defaults: { x: 0, y: 0, width: 100, height: 0, stroke: '#000000', strokeWidth: 1 },
+  defaults: { x: 0, y: 0, width: LINE_DEFAULT_WIDTH, height: LINE_DEFAULT_HEIGHT, stroke: '#000000', strokeWidth: 1 },
   create: ({ props }) => {
     const attrs = toShapeAttrs(props);
-    const width = (attrs.width as number | undefined) ?? 100;
-    const height = (attrs.height as number | undefined) ?? 0;
+    const width = (attrs.width as number | undefined) ?? LINE_DEFAULT_WIDTH;
+    const height = (attrs.height as number | undefined) ?? LINE_DEFAULT_HEIGHT;
     delete attrs.width;
     delete attrs.height;
     attrs.points = [0, 0, width, height];
     return new Line(attrs);
+  },
+  // plan 2026-08-04-2243-2 D1：line 渲染几何 = [0,0,width,height]（运行时由 width/height 派生）。
+  // bounds 路径在节点无 custom.points 时 consult 此 resolver，按节点 width/height（或缺省值）算包围盒，
+  // 使零高线段（height=0）fit 不退化为 0 尺寸冲到 MAX_SCALE（width 仍贡献有效尺寸）。
+  defaultGeometryPoints: (node) => {
+    const w = node.width ?? LINE_DEFAULT_WIDTH;
+    const h = node.height ?? LINE_DEFAULT_HEIGHT;
+    return [0, 0, w, h];
   },
 };

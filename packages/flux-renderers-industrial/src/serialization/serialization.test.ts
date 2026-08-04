@@ -473,6 +473,68 @@ describe('diffScadaConfig', () => {
   });
 });
 
+// plan 2026-08-04-2243-2 W5：diffScadaConfig 深相等改 own-keys-sorted 递归比较（stable deep-equal）。
+// 失败用例（修复前）：valuesEqual 用 JSON.stringify，异源 config（prev=exportConfig vs next=host 重算）
+// key 序不同 → 假阳性 diff → 全 reloadBindings 重建。修复后 key 插入序不影响判等，仅真实语义变更触发更新。
+describe('diffScadaConfig stable deep-equal (plan 2026-08-04-2243-2 W5)', () => {
+  it('异源 key 序不同但语义相同的 nested 对象判等（不假阳性触发 updated）', () => {
+    // 同一图元，shadow 对象字段顺序相反——JSON.stringify 会判不等，stable deep-equal 判等。
+    const prev = baseConfig({
+      symbols: [rect('a', { shadow: { x: 1, y: 2, blur: 3, color: '#000' } })],
+    });
+    const next = baseConfig({
+      symbols: [rect('a', { shadow: { color: '#000', blur: 3, y: 2, x: 1 } })],
+    });
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.updated).toEqual([]);
+  });
+
+  it('异源 key 序不同的 custom 对象判等', () => {
+    const prev = baseConfig({ symbols: [rect('a', { custom: { a: 1, b: 2, c: 3 } })] });
+    const next = baseConfig({ symbols: [rect('a', { custom: { c: 3, b: 2, a: 1 } })] });
+    expect(diffScadaConfig(prev, next).updated).toEqual([]);
+  });
+
+  it('真实字段变更仍检出（语义不同 → updated patch）', () => {
+    const prev = baseConfig({
+      symbols: [rect('a', { shadow: { x: 1, y: 2, blur: 3, color: '#000' } })],
+    });
+    const next = baseConfig({
+      symbols: [rect('a', { shadow: { color: '#000', blur: 3, y: 2, x: 99 } })],
+    });
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.updated).toEqual([{ id: 'a', patch: { shadow: { color: '#000', blur: 3, y: 2, x: 99 } } }]);
+  });
+
+  it('键数不同（b 缺键）检出更新', () => {
+    const prev = baseConfig({ symbols: [rect('a', { custom: { a: 1, b: 2 } })] });
+    const next = baseConfig({ symbols: [rect('a', { custom: { a: 1 } })] });
+    expect(diffScadaConfig(prev, next).updated).toEqual([{ id: 'a', patch: { custom: { a: 1 } } }]);
+  });
+
+  it('数组按 index 比较（顺序敏感，数组重排检出更新）', () => {
+    const prev = baseConfig({ symbols: [rect('a', { strokeDash: [6, 2] })] });
+    const next = baseConfig({ symbols: [rect('a', { strokeDash: [2, 6] })] });
+    expect(diffScadaConfig(prev, next).updated).toEqual([{ id: 'a', patch: { strokeDash: [2, 6] } }]);
+  });
+
+  it('相同数组（同序）判等', () => {
+    const prev = baseConfig({ symbols: [rect('a', { strokeDash: [6, 2] })] });
+    const next = baseConfig({ symbols: [rect('a', { strokeDash: [6, 2] })] });
+    expect(diffScadaConfig(prev, next).updated).toEqual([]);
+  });
+
+  it('异源 key 序不同的变量 scale 对象判等（不假阳性触发 variables.updated）', () => {
+    const prev = baseConfig({
+      variables: [{ id: 'v', source: 'static', value: 1, scale: { k: 2, b: 1 } }],
+    });
+    const next = baseConfig({
+      variables: [{ id: 'v', source: 'static', value: 1, scale: { b: 1, k: 2 } }],
+    });
+    expect(diffScadaConfig(prev, next).variables).toBeUndefined();
+  });
+});
+
 // plan 2026-08-04-1558-3 Phase 3 覆盖缺口闭合：validate.ts 错误分支逐分支补断言。
 describe('validateScadaConfig error branch matrix (plan 2026-08-04-1558-3 Phase 3)', () => {
   const expectErrors = (config: ScadaConfig, ...fragments: string[]): void => {

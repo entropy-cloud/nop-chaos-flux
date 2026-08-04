@@ -292,6 +292,40 @@ describe('builtin base shapes (I5.4)', () => {
     expect(centered.width).toBe(200);
   });
 
+  // plan 2026-08-04-2243-2 D2：base scada-text 居中在自动宽下生效。失败用例（修复前）：自动宽 Text
+  // 上 textAlign:'center' 无 layoutWidth → autoSizeAlign 偏移不生效（仍左对齐）。修复：按内容测量设置
+  // width，并把原点平移到对齐锚（center→文本中心、right→文本右缘落在 node.x）。happy-dom 无 canvas →
+  // measureTextWidth 走确定性 fallback（≈0.6em/char），断言按 fallback 期望值。
+  it('scada-text 自动宽 + align:center 按内容测量设置 width 并把原点平移到文本中心 (D2)', () => {
+    const node = instantiate('scada-text', { text: 'hello', align: 'center', x: 100, textSize: 20 });
+    expect(node.textAlign).toBe('center');
+    // fallback: 5 chars × 20px × 0.6 = 60
+    expect(node.width).toBe(60);
+    // center 锚：原点 = node.x - measured/2 = 100 - 30 = 70（文本中心落在 node.x=100）
+    expect(node.x).toBe(70);
+  });
+
+  it('scada-text 自动宽 + align:right 按内容测量设置 width 并把原点平移到文本右缘 (D2)', () => {
+    const node = instantiate('scada-text', { text: 'ab', align: 'right', x: 50, textSize: 10 });
+    expect(node.textAlign).toBe('right');
+    // fallback: 2 chars × 10px × 0.6 = 12
+    expect(node.width).toBe(12);
+    // right 锚：原点 = node.x - measured = 50 - 12 = 38（文本右缘落在 node.x=50）
+    expect(node.x).toBe(38);
+  });
+
+  it('scada-text 自动宽 + align:left（默认）不触发测量/原点平移（保持现状契约） (D2)', () => {
+    const node = instantiate('scada-text', { text: 'hello', x: 100, textSize: 20 });
+    expect(node.x).toBe(100);
+    expect(node.width).toBeUndefined();
+  });
+
+  it('scada-text 显式 width + align:center 不触发测量覆盖（width 原样保留） (D2)', () => {
+    const node = instantiate('scada-text', { text: 'hello', align: 'center', x: 100, width: 200, textSize: 20 });
+    expect(node.width).toBe(200);
+    expect(node.x).toBe(100);
+  });
+
   it('scada-pipe should derive stroke from fill when stroke is absent', () => {
     const node = scadaPipeDefinition.create({
       id: 's',

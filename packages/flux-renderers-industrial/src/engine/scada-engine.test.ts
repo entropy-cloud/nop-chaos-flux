@@ -262,6 +262,41 @@ describe('ScadaCanvasEngine commands (I5.1/I5.2 wiring)', () => {
     engine.destroy();
   });
 
+  // plan 2026-08-04-2243-2 D3：wheel-zoom 越界钳制以光标 screen 锚钳制（替代原点 {0,0} 兜底）。
+  // 失败用例（修复前）：handlePluginZoom 钳制用 screen 原点 {0,0}，而插件 wheel 经 Transformer.zoom
+  // 已按光标 scaleOfWorld 缩放 → 钳制锚点与缩放锚点不一致 → 光标下内容点视觉偏移。修复：从 ZoomEvent
+  // 载荷读光标 screen 坐标作 clamp 锚（leafer-in viewport getZoomEventData 透传 event.x/y）。
+  it('plugin zoom out-of-bounds clamp uses the cursor screen anchor so content under cursor stays fixed (D3)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { x: number; y: number; scaleX: number };
+    engine.setViewport({ x: 50, y: 30, scale: 2 });
+    // 模拟插件 wheel 在光标 screen {200,100} 处 zoom 到越界 25x（scaleOfWorld({200,100}, 25/2) 后矩阵）：
+    //   x = (-100-200)·12.5 + 200 = -3550；y = (-60-100)·12.5 + 100 = -1900；scaleX = 25
+    zoomLayer.scaleX = 25;
+    zoomLayer.x = -3550;
+    zoomLayer.y = -1900;
+    // ZoomEvent.ZOOM 经 getZoomEventData 透传光标 screen 坐标（已核实 leafer-in viewport 源码）
+    engine.tree.emit('zoom', { scale: 25, x: 200, y: 100 });
+    // 钳制 25→20 沿光标 {200,100}：scaleOfWorld({200,100}, 0.8) → x=-2800, y=-1500 → 视口 {140,75,20}
+    expect(engine.getViewport()).toEqual({ x: 140, y: 75, scale: 20 });
+    // 光标下世界点保持固定（无视觉偏移）：缩放前光标世界点 = viewportToWorld({50,30,2},{200,100}) = {150,80}
+    expect(engine.getViewportPoint({ x: 150, y: 80 })).toEqual({ x: 200, y: 100 });
+    engine.destroy();
+  });
+
+  it('plugin zoom clamp falls back to screen-origin anchor when the zoom event lacks cursor coords (D3 non-regression)', () => {
+    // 程序触发/旧消费方：zoom 事件不携带 x/y → 回落 {0,0}（P1-9 命令路径不变式：视口 x/y 不变）。
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { x: number; y: number; scaleX: number };
+    engine.setViewport({ x: 50, y: 30, scale: 2 });
+    zoomLayer.scaleX = 25;
+    zoomLayer.x = -50 * 25;
+    zoomLayer.y = -30 * 25;
+    engine.tree.emit('zoom', { scale: 25 });
+    expect(engine.getViewport()).toEqual({ x: 50, y: 30, scale: 20 });
+    engine.destroy();
+  });
+
   it('setViewport / zoomAt should drive zoomLayer move and scaleOfWorld (M-3 回归：平移符号)', () => {    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     const zoomLayer = engine.tree.zoomLayer as unknown as {
       moveCalls: Array<{ x: number; y: number }>;

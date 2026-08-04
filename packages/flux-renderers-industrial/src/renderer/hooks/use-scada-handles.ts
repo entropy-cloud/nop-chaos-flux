@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react';
 import type { ComponentCapabilities, ComponentHandleRegistry } from '@nop-chaos/flux-core';
 import { parseScadaConfig } from '../../serialization/parse.js';
 import { validateScadaConfig } from '../../serialization/validate.js';
-import type { ScadaConfig, ScadaPrimitive } from '../../serialization/config-types.js';
+import type { ScadaConfig } from '../../serialization/config-types.js';
 import { computeSymbolBounds } from './use-scada-config-sync.js';
+import { isScadaPrimitive } from './use-scada-points-bridge.js';
 import { toError } from '../scada-errors.js';
 import type { ScadaCanvasRuntime } from './use-scada-engine.js';
 
@@ -101,7 +102,15 @@ export function useScadaHandles(args: UseScadaHandlesArgs): void {
             if (!current.pointStore.has(pointId)) {
               return { ok: false, error: new Error(`point not found: ${pointId}`) };
             }
-            current.pointStore.setPointValue(pointId, value as ScadaPrimitive);
+            // plan 2026-08-04-2243-2 W4：host action 传非原始值（对象/数组）拒绝，与 flux 桥接
+            // （use-scada-points-bridge 经 isScadaPrimitive 校验）对称，不静默 corrupt 点表。
+            if (!isScadaPrimitive(value)) {
+              return {
+                ok: false,
+                error: new Error('invalid point value: expected a primitive (number | boolean | string)'),
+              };
+            }
+            current.pointStore.setPointValue(pointId, value);
             current.pipeline.requestRender(current.applyAttrs);
             return { ok: true };
           }

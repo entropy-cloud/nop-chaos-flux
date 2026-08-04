@@ -45,7 +45,18 @@ const LINE_POLYGON_CONFIG: ScadaConfig = {
   ],
 };
 
-type EdgeScreen = 'minimal' | 'empty-scene' | 'invalid-json' | 'line-polygon';
+// plan 2026-08-04-2243-2 D1 e2e 几何载体：默认几何族（polygon 无 custom.points、无 width/height）
+// + viewport {fit:'contain'}。修复前 bounds 退化为 0 尺寸 → fit 冲到 MAX_SCALE(20×)；修复后
+// 按符号定义默认 points（DEFAULT_TRIANGLE 100×86）算包围盒，fit scale 合理（< MAX_SCALE）。
+const DEFAULT_GEOMETRY_FIT_CONFIG: ScadaConfig = {
+  version: 1,
+  symbols: [
+    { id: 'edge-default-poly', type: 'scada-polygon', x: 200, y: 120, fill: '#6a1b9a' },
+    { id: 'edge-default-line', type: 'scada-line', x: 200, y: 300, stroke: '#ef6c00', strokeWidth: 3 },
+  ],
+};
+
+type EdgeScreen = 'minimal' | 'empty-scene' | 'invalid-json' | 'line-polygon' | 'default-geometry-fit';
 
 function buildSchema(screen: EdgeScreen) {
   const config: unknown =
@@ -55,7 +66,9 @@ function buildSchema(screen: EdgeScreen) {
         ? EMPTY_CONFIG
         : screen === 'line-polygon'
           ? LINE_POLYGON_CONFIG
-          : MINIMAL_CONFIG;
+          : screen === 'default-geometry-fit'
+            ? DEFAULT_GEOMETRY_FIT_CONFIG
+            : MINIMAL_CONFIG;
   return {
     type: 'page',
     body: [
@@ -155,6 +168,15 @@ export function ScadaEdgeDemoPage({ onBack }: ScadaEdgeDemoPageProps) {
             onClick={() => setScreen('line-polygon')}
           >
             线/多边形 hover 验证
+          </Button>
+          <Button
+            type="button"
+            variant={screen === 'default-geometry-fit' ? 'default' : 'outline'}
+            size="sm"
+            data-testid="scada-edge-default-geom"
+            onClick={() => setScreen('default-geometry-fit')}
+          >
+            默认几何 fit 验证
           </Button>
         </div>
         <div className="ml-auto text-sm text-[var(--nop-body-copy)]">

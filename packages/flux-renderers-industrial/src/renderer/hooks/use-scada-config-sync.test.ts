@@ -1,9 +1,19 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { computeSymbolBounds, useScadaConfigSync } from './use-scada-config-sync.js';
 import { MAX_SCALE, MIN_SCALE, fit } from '../../engine/viewport.js';
+import { registerBuiltinScadaSymbols } from '../../symbols/register-builtin.js';
+import { resetLeaferMock } from '../../test-support/leafer-ui-mock.js';
 import type { ScadaSymbolNode, ScadaConfig } from '../../serialization/config-types.js';
 import type { ScadaCanvasRuntime } from './use-scada-engine.js';
+
+vi.mock('leafer-ui', () => import('../../test-support/leafer-ui-mock.js'));
+vi.mock('@leafer-in/viewport', () => ({}));
+
+beforeEach(() => {
+  resetLeaferMock();
+  registerBuiltinScadaSymbols();
+});
 
 describe('computeSymbolBounds — custom.points 几何族 (plan 2026-08-04-1558-3 Phase 1)', () => {
   it('derives bounds from custom.points ({x,y} 形式) 而非退化为 0 尺寸', () => {
@@ -138,6 +148,78 @@ describe('computeSymbolBounds / viewport pipeline — omitted x/y contract (plan
     expect(Number.isFinite(state.scale)).toBe(true);
     expect(state.scale).toBeGreaterThanOrEqual(MIN_SCALE);
     expect(state.scale).toBeLessThanOrEqual(MAX_SCALE);
+  });
+});
+
+// plan 2026-08-04-2243-2 D1：默认几何族（polygon/line/arrow 无显式 custom.points）fit/center 包围盒。
+// 失败用例（修复前）：boundsOfNode 仅认显式 custom.points，无 custom.points 时回退 width/height 矩形 →
+// 默认三角形 polygon（无 width/height）bounds = 0×0 → fit 冲到 MAX_SCALE(20×)，图元钉在画布外。
+// 修复后：consult 符号定义 defaultGeometryPoints（polygon DEFAULT_TRIANGLE 100×86 / line [0,0,100,0]）。
+describe('computeSymbolBounds — default geometry points (plan 2026-08-04-2243-2 D1)', () => {
+  it('default-triangle polygon（无 custom.points/width/height）bounds 按符号定义 DEFAULT_TRIANGLE 计算', () => {
+    const polygon: ScadaSymbolNode = { id: 'p', type: 'scada-polygon', x: 100, y: 200 };
+    const bounds = computeSymbolBounds([polygon]);
+    expect(bounds).toBeDefined();
+    // DEFAULT_TRIANGLE = (0,0),(100,0),(50,86) → 包围盒 (0,0,100,86)，绝对 = node 原点 + 极值
+    expect(bounds).toEqual({ x: 100, y: 200, width: 100, height: 86 });
+  });
+
+  it('default-triangle polygon fit 后 scale 有界（< MAX_SCALE），不冲到 20×', () => {
+    const polygon: ScadaSymbolNode = { id: 'p', type: 'scada-polygon', x: 500, y: 500 };
+    const bounds = computeSymbolBounds([polygon]);
+    expect(bounds).toBeDefined();
+    expect(bounds!.width).toBe(100);
+    expect(bounds!.height).toBe(86);
+    const state = fit(bounds!, { width: 800, height: 600 }, 0);
+    expect(state.scale).toBeGreaterThanOrEqual(MIN_SCALE);
+    expect(state.scale).toBeLessThan(MAX_SCALE);
+    expect(state.scale).toBeLessThan(20);
+  });
+
+  it('零高 line（无 custom.points/width/height）bounds 按默认 [0,0,100,0] 计算（width=100）', () => {
+    const line: ScadaSymbolNode = { id: 'l', type: 'scada-line', x: 0, y: 0 };
+    const bounds = computeSymbolBounds([line]);
+    expect(bounds).toBeDefined();
+    // line defaultGeometryPoints = [0,0,100,0] → 包围盒 (0,0,100,0)
+    expect(bounds).toEqual({ x: 0, y: 0, width: 100, height: 0 });
+  });
+
+  it('零高 line fit 后 scale 有界（width=100 贡献有效尺寸，不冲到 MAX_SCALE）', () => {
+    const line: ScadaSymbolNode = { id: 'l', type: 'scada-line', x: 0, y: 0 };
+    const bounds = computeSymbolBounds([line]);
+    expect(bounds).toBeDefined();
+    const state = fit(bounds!, { width: 800, height: 600 }, 0);
+    expect(state.scale).toBeLessThan(MAX_SCALE);
+  });
+
+  it('arrow（无 custom.points/width/height）bounds 按默认 [0,0,100,0] 计算', () => {
+    const arrow: ScadaSymbolNode = { id: 'a', type: 'scada-arrow', x: 10, y: 20 };
+    const bounds = computeSymbolBounds([arrow]);
+    expect(bounds).toEqual({ x: 10, y: 20, width: 100, height: 0 });
+  });
+
+  it('节点带显式 custom.points 仍优先于定义默认几何（不退化、不误用 default）', () => {
+    const polygon: ScadaSymbolNode = {
+      id: 'p',
+      type: 'scada-polygon',
+      x: 0,
+      y: 0,
+      custom: { points: [{ x: 0, y: 0 }, { x: 200, y: 0 }, { x: 100, y: 150 }] },
+    };
+    const bounds = computeSymbolBounds([polygon]);
+    expect(bounds).toEqual({ x: 0, y: 0, width: 200, height: 150 });
+  });
+
+  it('line 带显式 width/height（无 custom.points）按定义默认几何 [0,0,w,h] 算包围盒', () => {
+    const line: ScadaSymbolNode = { id: 'l', type: 'scada-line', x: 5, y: 6, width: 240, height: 0 };
+    const bounds = computeSymbolBounds([line]);
+    expect(bounds).toEqual({ x: 5, y: 6, width: 240, height: 0 });
+  });
+
+  it('非 points 几何族（rect 无 custom.points）仍回退 width/height 矩形（不误触发 defaultGeometryPoints）', () => {
+    const rect: ScadaSymbolNode = { id: 'r', type: 'scada-rect', x: 1, y: 2, width: 30, height: 40 };
+    const bounds = computeSymbolBounds([rect]);
+    expect(bounds).toEqual({ x: 1, y: 2, width: 30, height: 40 });
   });
 });
 
