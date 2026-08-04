@@ -318,7 +318,7 @@ describe('scada-canvas 组态内图元事件声明→action 全链路 (I11.1)', 
     const leaf = engine.getSymbol('rect-b')?.node;
     (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
       ({ target: leaf, path: [leaf] });
-    engine.tree.emit('pointer.move', { x: 30, y: 40 });
+    engine.app.emit('pointer.move', { x: 30, y: 40 });
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(dispatch).not.toHaveBeenCalled();
   });

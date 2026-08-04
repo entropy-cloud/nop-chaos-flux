@@ -37,8 +37,17 @@ interface EventTarget {
 }
 
 export interface EventBridgeOptions {
-  /** leafer tree 层（引擎事件挂载点）。 */
+  /** leafer tree 层（tap/double_tap 挂载点）。 */
   tree: EventTarget;
+  /**
+   * pointer.move/pointer.leave 挂载面（I15.1 live defect 修复，mock↔真实漂移类）：
+   * 真实 leafer 交互层在指针位于空白画布（无图元命中）时命中路径为空/defaultPath，
+   * tree 层收不到 `pointer.move`（leafer Interaction pointerMoveReal → checkPath → emit 沿 path 派发；
+   * 实测 probe：空白区移动 tree.move 计数不变，app.move 恒增）——tree 面订阅使
+   * `symbol:hover-miss` 永不发射、hover 覆盖物移出图元后不消失。App 视图面 `pointer.move`
+   * 对画布内任意位置（含空白区）恒发射，`pointer.leave` 覆盖指针离开画布场景。
+   */
+  moveTarget: EventTarget;
   resolver: HitResolver;
   viewportToWorld: (point: { x: number; y: number }) => { x: number; y: number };
   getSymbolType?: (symbolId: string) => string | undefined;
@@ -66,7 +75,8 @@ export class EventBridge {
     this.attached = true;
     this.options.tree.on('tap', this.handleTap);
     this.options.tree.on('double_tap', this.handleDoubleTap);
-    this.options.tree.on('pointer.move', this.handlePointerMove);
+    this.options.moveTarget.on('pointer.move', this.handlePointerMove);
+    this.options.moveTarget.on('pointer.leave', this.handlePointerLeave);
   }
 
   destroy(): void {
@@ -75,7 +85,8 @@ export class EventBridge {
     this.lastHovered = undefined;
     this.options.tree.off('tap', this.handleTap);
     this.options.tree.off('double_tap', this.handleDoubleTap);
-    this.options.tree.off('pointer.move', this.handlePointerMove);
+    this.options.moveTarget.off('pointer.move', this.handlePointerMove);
+    this.options.moveTarget.off('pointer.leave', this.handlePointerLeave);
   }
 
   private readonly handleTap = (event: unknown): void => {
@@ -95,6 +106,14 @@ export class EventBridge {
   private readonly handlePointerMove = (event: unknown): void => {
     const point = this.pointOf(event);
     if (point) this.handleHover(point);
+  };
+
+  /** 指针离开画布（moveTarget `pointer.leave`）：前一命中图元 hover 退出（覆盖物清除）。 */
+  private readonly handlePointerLeave = (): void => {
+    if (this.lastHovered === undefined) return;
+    const prev = this.lastHovered;
+    this.lastHovered = undefined;
+    this.emit('symbol:hover-miss', undefined, prev);
   };
 
   private handleHover(point: { x: number; y: number }): void {

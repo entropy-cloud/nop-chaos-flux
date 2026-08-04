@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "validate": "node --experimental-loader ./scripts/css-stub.mjs scripts/validate.mjs",
-    "generate-types": "node --experimental-loader ./scripts/css-stub.mjs scripts/generate-types.mjs"
+    "validate": "node --experimental-loader ./scripts/css-stub.mjs --import ./scripts/env-stub.mjs scripts/validate.mjs",
+    "generate-types": "node --experimental-loader ./scripts/css-stub.mjs --import ./scripts/env-stub.mjs scripts/generate-types.mjs"
   }
 }

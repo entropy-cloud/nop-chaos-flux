@@ -474,6 +474,17 @@ Current unstable-only examples:
 
 The same rule now applies to `@nop-chaos/flow-designer-renderers`: the root entry keeps the stable schema/manifest registration surface, while Xyflow bridge primitives, palette/canvas internals, and designer context helpers move behind `@nop-chaos/flow-designer-renderers/unstable`.
 
+### `@nop-chaos/flux-renderers-industrial`（I15.2 增量）
+
+Industrial HMI/SCADA 域包，注册 `scada-canvas` 单 renderer（`registerScadaRenderers`）。边界要点（详见 `docs/components/industrial-hmi/design-renderer.md`、`renderer-boundary-audit.md`）：
+
+- **契约归属**：`scada-canvas` 是**自包含域组件**——组态 JSON（`config`）为唯一事实源，leafer 场景树是其渲染投影（引擎内部状态不进 React scope、不写 scope，INV-4/INV-5 边界）；渲染期经标准 RendererComponentProps（props/meta/regions/helpers）。
+- **引擎依赖**：leafer-ui + `@leafer-in/viewport`（A1 固化 `tree: { type: 'viewport' }`）为包内私有依赖；App 三层模型（ground/tree/sky）显式创建（gate-3 类 mock↔真实漂移修复），sky 层承载交互覆盖物（hover 高亮）。
+- **事件通道（D-1 裁定）**：schema 级 `events` 注册为整体 prop（flux-compiler 无点号字段支持），renderer 桥接层经 `createNormalizedActionEvent` + `helpers.dispatch` 派发——与平台 props.events 通道同源，不新增平行事件协议。
+- **数据桥接**：点表 flux 轨经 `useScopeSelector` + flux-formula（复用平台能力，不重复实现 scope 订阅）；高频点表刷新经刷新流水线合帧（不逐点 setState 直刷 React，性能红线）。
+- **测试句柄**：`window.__flux_scada_<cid>` 引擎侧唯一所有权（`engine/test-handle.ts`），生产裁剪属 host 配置；e2e 程序化断言锚点（roadmap 测试纪律：canvas 一律 Playwright 程序化断言、禁截图、不引 node-canvas）。
+- **性能红线**：1 万点批量注入合并帧（renderDelta=1）、10 万图元首屏 <2s / 拖动 ≥45fps / 内存 ≤320MB（`docs/analysis/industrial-hmi/benchmark-report.md` 固化口径）。
+
 ## Namespaced Host Provider Result Contract
 
 Workbench host families that publish namespaced providers through `ActionScope` should converge on one result baseline:

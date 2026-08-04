@@ -34,15 +34,14 @@ interface OverlayNodeGeometry {
  * 覆盖物几何解析（gate-4-review m-C）：矩形语义图元取 x/y/width/height；
  * line/arrow/polygon 无 width/height 语义（attrs 含 points）时按 points 包围盒兜底，
  * 0 尺寸（水平/垂直直线）退化为最小尺寸框——保证 hover 反馈可见（事件链不受影响）。
+ * I15.1 live defect 修复（mock↔真实漂移）：真实 leafer Path 形状节点（Line/Polygon）的
+ * `width`/`height` 为**默认值**（实测 Line width=100/height=0、Polygon 100×100），不反映
+ * points 几何——points 有语义时**恒优先**按 points 包围盒计算，否则 100×100 默认框会盖过
+ * 真实几何（gate-4 m-C 单测由 mock 建模未掩蔽此漂移，e2e 实测暴露）。
  */
 function resolveOverlayGeometry(node: OverlayNodeGeometry): { x: number; y: number; width: number; height: number } {
   const baseX = node.x ?? 0;
   const baseY = node.y ?? 0;
-  const width = node.width ?? 0;
-  const height = node.height ?? 0;
-  if (width > 0 && height > 0) {
-    return { x: baseX, y: baseY, width, height };
-  }
   const points = node.points;
   if (Array.isArray(points) && points.length > 0) {
     const flat = typeof points[0] === 'number';
@@ -66,6 +65,11 @@ function resolveOverlayGeometry(node: OverlayNodeGeometry): { x: number; y: numb
         height: Math.max(maxY - minY, MIN_OVERLAY_SIZE),
       };
     }
+  }
+  const width = node.width ?? 0;
+  const height = node.height ?? 0;
+  if (width > 0 && height > 0) {
+    return { x: baseX, y: baseY, width, height };
   }
   return { x: baseX, y: baseY, width: MIN_OVERLAY_SIZE, height: MIN_OVERLAY_SIZE };
 }

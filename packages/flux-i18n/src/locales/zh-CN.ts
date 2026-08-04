@@ -929,6 +929,11 @@ export const zhCN: Resource = {
         errorLabel: '错误',
         deleteItemLabel: '移除条目',
       },
+    industrial: {
+      scada: {
+        canvasError: '画布场景错误',
+      },
+    },
   },
 };
 

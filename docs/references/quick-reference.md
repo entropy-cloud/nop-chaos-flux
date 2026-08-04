@@ -27,6 +27,7 @@ Code source of truth: `packages/flux-core/src/types/`, `packages/flux-react/src/
 | flux-renderers-content                               | @nop-chaos/flux-renderers-content       | 7     |
 | flux-renderers-layout                                | @nop-chaos/flux-renderers-layout        | 7     |
 | flux-renderers-scheduling                            | @nop-chaos/flux-renderers-scheduling    | 7     |
+| flux-renderers-industrial                            | @nop-chaos/flux-renderers-industrial    | 7     |
 | ui                                                   | @nop-chaos/ui                           | 7     |
 | flux-code-editor                                     | @nop-chaos/flux-code-editor             | 7     |
 | flux-i18n                                            | @nop-chaos/flux-i18n                    | 7     |
@@ -771,6 +772,52 @@ All schema types are re-exported from the package barrel via `schemas.ts`.
 - **Gantt**: Class-based command pattern (`Command` interface with `execute/undo/redo` methods) — fine-grained mergeable commands for linked task graphs.
 - **Kanban**: Type-based command pattern — operations stored as type+params deltas, applied/reversed via kanban helpers.
 - Both are command-based; neither uses full-state snapshots.
+
+````
+
+---
+
+## Industrial Package — @nop-chaos/flux-renderers-industrial
+
+### Component Registration
+
+```ts
+import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial';
+// registry: RendererRegistry
+registerScadaRenderers(registry);
+````
+
+Registers one renderer type: `scada-canvas`（category `industrial`）.
+
+### Schema Types
+
+| Schema              | Import path                                               |
+| ------------------- | --------------------------------------------------------- |
+| `ScadaCanvasSchema` | `@nop-chaos/flux-renderers-industrial` (barrel re-export) |
+
+Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（source-enabled，组态 JSON 单一字段）/`width`/`height`/`viewport`/`events` 为 prop；`loading`/`empty` 为 region。**`events` 注册为整体 prop（非 `events.*` event 规则）**——flux-compiler 无点号字段支持，schema 事件经 renderer 桥接 `createNormalizedActionEvent` + `helpers.dispatch` 派发。
+
+### Key Hooks (internal to the package)
+
+| Hook                   | Location                                 | Purpose                                          |
+| ---------------------- | ---------------------------------------- | ------------------------------------------------ |
+| `useScadaEngine`       | `renderer/hooks/use-scada-engine`        | 引擎生命周期（创建/resize/destroy/绑定域）       |
+| `useScadaConfigSync`   | `renderer/hooks/use-scada-config-sync`   | config 同步（full reset / diff 增量）            |
+| `useScadaPointsBridge` | `renderer/hooks/use-scada-points-bridge` | 点表 flux 轨桥接（useScopeSelector + 合帧）      |
+| `useScadaEvents`       | `renderer/hooks/use-scada-events`        | 图元事件→action 派发 + hover 覆盖物驱动          |
+| `useScadaHandles`      | `renderer/hooks/use-scada-handles`       | `component:*` 句柄注册（fit/center/.../destroy） |
+
+### Component Handles（`component:<method>`）
+
+`fit` / `center`（视口命令）、`getSymbols` / `getSymbol`（场景树只读，getSymbol 返回 leafer 属性面）、`setPointValue` / `getPointTable`（点表）、`exportConfig` / `importConfig`（序列化契约）、`destroy`。失败路径：`not-mounted` / `symbol-not-found` / `point-not-found` / `invalid-config`。
+
+### Test Handle（e2e 程序化断言锚点）
+
+`window.__flux_scada_<cid>`（cid 来自 `RendererResolvedProps.cid`）：`engine`（getSymbols/getSymbol/getSymbolProps/getViewport/getViewportPoint/...）、`tree`（render 帧事件）、`app`（sky 层覆盖物断言）、`getSymbol/getPointValue/getViewport/forceRender` + dev/test 批量注入 `setPointValues`。恒开（生产裁剪属 host 配置）；roadmap 测试纪律：canvas 一律 Playwright 程序化断言、禁截图、不引 node-canvas。
+
+### Performance Red Lines
+
+1 万点批量刷新合并帧（渲染增量 = 1）、10 万图元首屏 <2s / 拖动 ≥45fps / 内存 ≤320MB（`docs/analysis/industrial-hmi/benchmark-report.md` 口径）；点表刷新不逐点 setState 直刷 React。
 
 ```
 

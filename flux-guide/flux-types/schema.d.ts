@@ -1695,3 +1695,18 @@ export interface AiSuggestionsSchema extends BaseSchema {
   maxVisible?: SchemaValue;
   onSelect?: ActionSchema | ActionSchema[];
 }
+
+// ============================================================================
+// Industrial — flux-renderers-industrial
+// ============================================================================
+
+export interface ScadaCanvasSchema extends BaseSchema {
+  type: 'scada-canvas';
+  config?: SchemaValue;
+  width?: SchemaValue;
+  height?: SchemaValue;
+  viewport?: SchemaValue;
+  events?: SchemaValue;
+  loading?: SchemaInput;
+  empty?: SchemaInput;
+}

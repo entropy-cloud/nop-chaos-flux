@@ -263,6 +263,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'I13.2 大屏/复杂组态示例：万级（10k）图元程序化生成压力画面 + 多画面 tab 切换（工艺流程大屏 / 高密度压力画面），固定随机种子保证 e2e 确定性。',
   },
   {
+    id: 'scada-edge-cases',
+    title: 'Scada Edge Cases',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I15.1 边界用例测试页：最小合法 config / 空画面（symbols: []）/ 非法 JSON（empty region + onError）/ 线多边形 hover 覆盖物验证（m-C），e2e 程序化断言入口。',
+  },
+  {
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',

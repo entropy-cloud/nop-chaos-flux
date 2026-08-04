@@ -95,6 +95,7 @@ import type {
   RadioGroupSchema,
   ReactionSchema,
   RecurseSchema,
+  ScadaCanvasSchema,
   ScopeDebugSchema,
   SelectSchema,
   SeparatorSchema,
@@ -232,7 +233,8 @@ export type FluxSchema =
   | AiCitationsSchema
   | AiVoiceInputSchema
   | AiTokenUsageSchema
-  | AiSuggestionsSchema;
+  | AiSuggestionsSchema
+  | ScadaCanvasSchema;
 
 export interface FluxSchemaByType {
   'page': PageSchema;
@@ -349,6 +351,7 @@ export interface FluxSchemaByType {
   'ai-voice-input': AiVoiceInputSchema;
   'ai-token-usage': AiTokenUsageSchema;
   'ai-suggestions': AiSuggestionsSchema;
+  'scada-canvas': ScadaCanvasSchema;
 }
 
 export type {
@@ -445,6 +448,7 @@ export type {
   RadioGroupSchema,
   ReactionSchema,
   RecurseSchema,
+  ScadaCanvasSchema,
   ScopeDebugSchema,
   SelectSchema,
   SeparatorSchema,

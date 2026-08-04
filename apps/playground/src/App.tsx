@@ -51,6 +51,7 @@ import { DiffDemoPage } from './pages/diff-demo';
 import { ScadaDemoPage } from './pages/scada-demo';
 import { ScadaPressureDemoPage } from './pages/scada-pressure-demo';
 import { ScadaPerfScaleDemoPage } from './pages/scada-perf-scale-demo';
+import { ScadaEdgeDemoPage } from './pages/scada-edge-demo';
 import { CalendarDemoPage } from './pages/calendar-demo';
 import { BarcodeDemoPage } from './pages/barcode-demo';
 import { CalendarPerfScaleDemoPage } from './pages/calendar-perf-scale-demo';
@@ -282,6 +283,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <ScadaPressureDemoPage onBack={goHome} />;
         case 'scada-perf-scale':
           return <ScadaPerfScaleDemoPage onBack={goHome} />;
+        case 'scada-edge-cases':
+          return <ScadaEdgeDemoPage onBack={goHome} />;
         case 'calendar-perf-scale':
           return <CalendarPerfScaleDemoPage onBack={goHome} />;
         case 'kanban-perf-scale':

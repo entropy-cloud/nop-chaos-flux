@@ -159,18 +159,18 @@ interface ScadaSymbolNode {
 
 ## 5. 字段分类
 
-| 字段                                                                  | 分类                   | 说明                                                                     |
-| --------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------ |
-| `config`                                                              | prop (source-enabled)  | 表达式或静态；组态 JSON 单一字段承载（讨论 Q10）                         |
-| `width`/`height`                                                      | prop                   | 画布尺寸（缺省容器自适应）                                               |
-| `viewport`                                                            | prop                   | 初始视口策略                                                             |
-| `loading`                                                             | region                 | 加载态模板                                                               |
-| `empty`                                                               | region                 | 空态/错误态模板                                                          |
-| `events.onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError` | event                  | ActionSchema；与组态内图元事件声明（§8.2）并存                           |
-| `id`/`className`/`disabled`/`visible`/`hidden`/`testid`               | meta                   | 继承 BaseSchema 元数据通道                                               |
-| 组态 JSON 内部字段（variables/symbols/bindings/...）                  | ignored（renderer 级） | 图元级字段不进 renderer-definitions（§4.2 注）；由 `config` 字段整体承载 |
+| 字段                                                                                | 分类                   | 说明                                                                                    |
+| ----------------------------------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------- |
+| `config`                                                                            | prop (source-enabled)  | 表达式或静态；组态 JSON 单一字段承载（讨论 Q10）                                        |
+| `width`/`height`                                                                    | prop                   | 画布尺寸（缺省容器自适应）                                                              |
+| `viewport`                                                                          | prop                   | 初始视口策略                                                                            |
+| `loading`                                                                           | region                 | 加载态模板                                                                              |
+| `empty`                                                                             | region                 | 空态/错误态模板                                                                         |
+| `events`（onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError 为对象字段） | prop                   | ActionSchema 对象整体经 props 通道保留；**非 event 规则分类**（D-1 裁定，见下方 §5 注） |
+| `id`/`className`/`disabled`/`visible`/`hidden`/`testid`                             | meta                   | 继承 BaseSchema 元数据通道                                                              |
+| 组态 JSON 内部字段（variables/symbols/bindings/...）                                | ignored（renderer 级） | 图元级字段不进 renderer-definitions（§4.2 注）；由 `config` 字段整体承载                |
 
-- renderer-definitions `fields` 规则（I10.2 落地）：`config: { key: 'config', kind: 'prop' }`、`loading/empty: { kind: 'region' }`、`events.*: { kind: 'event' }`（对齐 quick-reference.md「Layer 2 field rule」模式）。
+- renderer-definitions `fields` 规则（I10.2 落地，I15.2 D-1 同步回写）：`config: { key: 'config', kind: 'prop' }`、`width/height/viewport/events: { kind: 'prop' }`、`loading/empty: { kind: 'region' }`。**`events` 注册为整体 prop（非 `events.*` event 规则）**：flux-compiler `classifyField` 仅按顶层 key 精确匹配、无点号路径支持（probe 实测 `events.onClick` 规则不产生 eventPlans），ActionSchema 字面量经 props 通道保留，事件派发由 renderer 桥接层经 `createNormalizedActionEvent` + `helpers.dispatch` 落地（renderer-boundary-audit.md D-1 契约裁定 :65-70，I15.2 已同步闭环）；与组态内图元事件声明（§8.2）并存。
 
 ## 6. regions 与 slot 约定
 

@@ -66,7 +66,7 @@ renderer 桥接层（I10.1/I10.2/I10.3 落地代码）——不重复审计 I5/I
 
 - **现象**：design-renderer.md §5 字段分类表将 `events.onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError` 归为 event 分类；但 flux-compiler `classifyField`（schema-compiler/fields.ts）仅按**顶层 key 精确匹配** renderer 字段规则，无点号路径支持——probe 实测（I10.2 执行期）`fields: [{ key: 'events.onClick', kind: 'event' }]` 不产生任何 eventPlans，`events` 对象落入 props 通道（ActionSchema 字面量原样保留，无破坏性编译）。
 - **裁定**：`events` 对象整体注册为 `{ key: 'events', kind: 'prop' }`；renderer 事件桥接读 `props.props.events.*`（raw ActionSchema）→ `createNormalizedActionEvent`（renderer-helpers.ts:98 单参数签名）→ `helpers.dispatch(action, { event, scope })` 派发——**与平台 props.events 通道同源**（同一 action dispatcher + 事件规范化，raw ActionSchema 由 dispatcher 按需编译，normalizeCompiledActionProgram 契约），对齐 roadmap I10.3「事件经 action dispatcher 派发（对齐 props.events）」。
-- **影响面**：schema 类型（design-renderer.md §4.1 `events?: ScadaCanvasEvents`）不变；renderer-definitions 注册形态偏离 §5 表文字（`events` prop + renderer 派发 vs `events.*` event 规则）——**记录为 contract drift 供 I15.2 收尾同步**（design-renderer.md §5 表注或 flux-compiler 增加点号字段支持时回切）；不构成 I10 in-scope 缺陷（行为语义：schema 事件经平台 dispatcher 派发——已达成）。
+- **影响面**：schema 类型（design-renderer.md §4.1 `events?: ScadaCanvasEvents`）不变；renderer-definitions 注册形态偏离 §5 表文字（`events` prop + renderer 派发 vs `events.*` event 规则）——~~记录为 contract drift 供 I15.2 收尾同步~~ **已由 I15.2 同步闭环**（design-renderer.md §5 字段分类表/§5 注回写为 prop 注册形态，2026-08-04；flux-compiler 增加点号字段支持时仍可回切）；不构成 I10 in-scope 缺陷（行为语义：schema 事件经平台 dispatcher 派发——已达成）。
 - **I11.1 边界**：组态内图元事件声明（config 内 `events`）→ 全链路派发属 I11.1，本裁定仅覆盖 schema 级 `events` 对象。
 
 ## 扩展点边界
@@ -102,7 +102,7 @@ renderer 桥接层（I10.1/I10.2/I10.3 落地代码）——不重复审计 I5/I
 
 | 项                                  | 处置                                                                                                                                                                                                          |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `events.*` 事件通道裁定（D-1）      | 本审计落盘 + I15.2 文档同步；不阻塞 I10 收口                                                                                                                                                                  |
+| `events.*` 事件通道裁定（D-1）      | 本审计落盘 + **I15.2 已同步闭环**（design-renderer.md §5 回写为 prop 注册形态，2026-08-04）；flux-compiler 支持点号字段时可回切（watch-only residual，I15 plan Deferred）                                     |
 | `viewport.fit: 'fill'` 语义         | 实现为 cover-fit（setViewport 计算 scale = max 比），引擎级 fit 为 contain；I11.2 画布浏览交互可细化                                                                                                          |
 | `component:destroy()` 后句柄状态    | 句柄保持注册（invoke 返回 not-mounted），对齐 §8.5 失败路径语义；unmount 时退订                                                                                                                               |
 | `onReady` 触发口径                  | 定义为场景构建成功（config 同步完成）；`leafer.ready`（首帧）未消费——gate-3-review §10 归属（ready/error 桥接属 renderer）兑现口径，记录供 I11.1/I14 复核                                                     |

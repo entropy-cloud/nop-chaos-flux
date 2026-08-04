@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRendererRuntime } from '@nop-chaos/flux-react';
+import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import { parseScadaConfig } from '../serialization/parse.js';
 import { validateScadaConfig } from '../serialization/validate.js';
@@ -58,6 +59,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [status, setStatus] = useState<ScadaCanvasStatus>('loading');
   const [errorInfo, setErrorInfo] = useState<ScadaCanvasErrorInfo | undefined>();
+  const { t } = useFluxTranslation();
 
   const { config: parsedConfig, error: parseError } = useMemo(
     () => parseAndValidateConfig(props.props.config),
@@ -180,7 +182,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
       ) : effectiveStatus === 'error' ? (
         asReactNode(empty?.render({ bindings: { error: parseError ?? errorInfo } })) ?? (
           <div data-slot="scada-canvas-error" className="nop-scada-canvas-error" data-code={parseError?.code ?? errorInfo?.code}>
-            {(parseError ?? errorInfo)?.message ?? 'Scada canvas error'}
+            {(parseError ?? errorInfo)?.message ?? t('industrial.scada.canvasError')}
           </div>
         )
       ) : (

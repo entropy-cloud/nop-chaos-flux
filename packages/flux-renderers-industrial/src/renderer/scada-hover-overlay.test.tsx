@@ -64,7 +64,7 @@ function movePointerTo(engine: ScadaCanvasEngine, symbolId: string | null, point
   const leaf = symbolId === null ? undefined : engine.getSymbol(symbolId)?.node;
   (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
     (leaf ? { target: leaf, path: [leaf] } : { target: null, path: [] });
-  engine.tree.emit('pointer.move', point);
+  engine.app.emit('pointer.move', point);
 }
 
 function overlayRects(engine: ScadaCanvasEngine): Array<{ x: number; y: number; width: number; height: number }> {

@@ -399,7 +399,7 @@ describe('ScadaCanvasEngine 事件桥接线 (I6.4)', () => {
     const leaf = engine.getSymbol('rect-1')?.node;
     (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
       ({ target: leaf, path: [leaf] });
-    engine.tree.emit('pointer.move', { x: 100, y: 200 });
+    engine.app.emit('pointer.move', { x: 100, y: 200 });
     expect(onSymbolEvent).toHaveBeenCalledWith(
       'symbol:hover',
       expect.objectContaining({ world: { x: 50, y: 100 }, viewport: { x: 100, y: 200 } }),

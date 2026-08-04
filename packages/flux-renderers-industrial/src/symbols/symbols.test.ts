@@ -12,9 +12,19 @@ import { resolveSymbolStyle } from './style-resolver.js';
 import { instantiateSymbol, toNodePatch } from './symbol-factory.js';
 import { registerBuiltinScadaSymbols, builtinScadaSymbolDefinitions } from './register-builtin.js';
 import { scadaPipeDefinition } from './base-shapes/pipe.js';
+import { validateScadaConfig } from '../serialization/validate.js';
+import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import type { ScadaSymbolDefinition, ScadaSymbolProps } from './symbol-types.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
+vi.mock('@leafer-in/viewport', () => ({}));
+
+const makeContainer = () => {
+  const el = document.createElement('div');
+  Object.defineProperty(el, 'clientWidth', { value: 800, configurable: true });
+  Object.defineProperty(el, 'clientHeight', { value: 600, configurable: true });
+  return el;
+};
 
 const makeDef = (type: string, overrides: Partial<ScadaSymbolDefinition> = {}): ScadaSymbolDefinition => ({
   type,
@@ -292,6 +302,42 @@ describe('builtin base shapes (I5.4)', () => {
     expect(rect.fill).toBe('#fedcba');
     expect(rect.stroke).toBe('#010203');
     expect(rect.strokeWidth).toBe(2);
+  });
+
+  // I15.1 V5 体积面补强（I5 plan Deferred：I9 设备库落地后 20+ 真实工业图元覆盖断言）：
+  // 24 个内置图元定义（8 基础形状 + image/video 占位 + group + 4 族 12 个 + pipe-junction）
+  // 全量经引擎场景树加载（validate → engine.reset → getSymbols/registry 覆盖），不弱化既有用例。
+  it('should full-path load all 24 builtin symbols through the engine scene tree (I15.1 V5 volume)', () => {
+    const config = {
+      version: 1 as const,
+      symbols: builtinScadaSymbolDefinitions.map((def, index) => ({
+        id: `builtin-${index}`,
+        type: def.type,
+        x: index * 30,
+        y: 0,
+        width: 40,
+        height: 30,
+      })),
+    };
+
+    const result = validateScadaConfig(config);
+    expect(result).toEqual({ ok: true });
+
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(config as never);
+    expect(engine.registry.size()).toBe(24);
+    // scada-group 容器节点按设计不挂 symbol definition（design-symbols.md §4.3 容器语义），
+    // 经 node tag（Group）归位；其余图元经 definition.type 断言。
+    const loadedTypes = new Set(
+      engine.getSymbols().map((leaf) => {
+        if (leaf.definition?.type) return leaf.definition.type;
+        return (leaf.node as { tag?: string }).tag === 'Group' ? 'scada-group' : undefined;
+      }),
+    );
+    for (const def of builtinScadaSymbolDefinitions) {
+      expect(loadedTypes.has(def.type)).toBe(true);
+    }
+    engine.destroy();
   });
 });
 

@@ -153,7 +153,7 @@ describe('scada-canvas event bridging (I10.3)', () => {
       ({ target: leaf, path: [leaf] });
 
     engine.tree.emit('double_tap', { x: 10, y: 20 });
-    engine.tree.emit('pointer.move', { x: 30, y: 40 });
+    engine.app.emit('pointer.move', { x: 30, y: 40 });
 
     await waitFor(() => expect(dispatch.mock.calls.length).toBe(2));
     const types = dispatch.mock.calls.map((call) => (call[1] as { event: { type: string } }).event.type);

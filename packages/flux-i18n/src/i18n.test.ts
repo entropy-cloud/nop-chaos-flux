@@ -62,6 +62,33 @@ describe('flux i18n', () => {
     expect(t('custom.greeting', { name: 'Flux' })).toBe('Hello Flux');
   });
 
+  // I15.1 i18n 接入（design-renderer.md §6 空态缺省文案）：scada-canvas 有运行时消费者的
+  // 文案（empty region 缺省错误文本）经 flux-i18n 解析；图元名/displayName 为模块级静态字段
+  // 无运行时消费面，不 i18n-ize（裁定记录于 plan I15.1）。
+  it('industrial namespace: scada-canvas canvasError resolves in both locales', async () => {
+    initFluxI18n({ lng: 'zh-CN', fallbackLng: 'zh-CN' });
+    await changeLanguage('zh-CN');
+    expect(t('industrial.scada.canvasError')).toBe('画布场景错误');
+
+    await changeLanguage('en-US');
+    expect(t('industrial.scada.canvasError')).toBe('Scada canvas error');
+  });
+
+  it('industrial namespace: zh-CN and en-US resources are key-parity (无缺词)', async () => {
+    initFluxI18n({ lng: 'zh-CN', fallbackLng: 'zh-CN' });
+    const { zhCN } = await import('./locales/zh-CN.js');
+    const { enUS } = await import('./locales/en-US.js');
+    const zhScada = (zhCN.flux.industrial as { scada: Record<string, unknown> }).scada;
+    const enScada = (enUS.flux.industrial as { scada: Record<string, unknown> }).scada;
+    expect(zhScada).toBeTruthy();
+    expect(enScada).toBeTruthy();
+    expect(Object.keys(zhScada).sort()).toEqual(Object.keys(enScada).sort());
+    for (const key of Object.keys(zhScada)) {
+      expect(zhScada[key]).not.toBe('');
+      expect(enScada[key]).not.toBe('');
+    }
+  });
+
   it('resets the shared formatter back to identity', async () => {
     initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 

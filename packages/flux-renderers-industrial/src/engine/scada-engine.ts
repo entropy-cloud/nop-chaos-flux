@@ -380,6 +380,9 @@ export class ScadaCanvasEngine {
     });
     this.eventBridge = new EventBridge({
       tree: this.app.tree,
+      // pointer.move 挂 App 视图面（I15.1 live defect 修复）：真实 leafer 空白区命中路径为空，
+      // tree 层收不到 pointer.move → hover-miss 永不发射（实测 probe 佐证）；app 面对画布内任意位置恒发射
+      moveTarget: this.app,
       resolver,
       viewportToWorld: (point) => viewportToWorld(this.viewport, point),
       getSymbolType: (symbolId) => this.registry.get(symbolId)?.definition?.type,

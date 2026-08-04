@@ -930,6 +930,11 @@ export const enUS: Resource = {
         errorLabel: 'Error',
         deleteItemLabel: 'Remove item',
       },
+    industrial: {
+      scada: {
+        canvasError: 'Scada canvas error',
+      },
+    },
   },
 };
 export default enUS;

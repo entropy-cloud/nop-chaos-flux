@@ -42,6 +42,7 @@ const PACKAGE_CATEGORY = {
   'flux-code-editor': 'code-editor',
   'flux-renderers-scheduling': 'scheduling',
   'flux-renderers-ai': 'ai',
+  'flux-renderers-industrial': 'industrial',
 };
 
 const CATEGORY_COMMENTS = {
@@ -55,6 +56,7 @@ const CATEGORY_COMMENTS = {
   'code-editor': 'Code Editor — flux-code-editor (lazy-loaded CodeMirror)',
   'scheduling': 'Scheduling — flux-renderers-scheduling',
   'ai': 'AI — flux-renderers-ai',
+  'industrial': 'Industrial — flux-renderers-industrial',
 };
 
 // ─── Name overrides for TS interface names ──────────────────────────────────
@@ -249,7 +251,7 @@ async function main() {
   lines.push('} from \'./common\';');
   lines.push('');
 
-  const catOrder = ['basic', 'layout', 'form', 'form-advanced', 'data', 'content', 'mobile', 'code-editor', 'scheduling', 'ai'];
+  const catOrder = ['basic', 'layout', 'form', 'form-advanced', 'data', 'content', 'mobile', 'code-editor', 'scheduling', 'ai', 'industrial'];
 
   for (const cat of catOrder) {
     const catDefs = grouped[cat];

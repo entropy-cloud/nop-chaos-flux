@@ -1299,6 +1299,18 @@ Current handle baseline:
 
 This is the preferred bridge for imported libraries or host tooling that need one concrete chart instance or DOM anchor without turning renderer internals into ambient global state.
 
+## Industrial Package — `@nop-chaos/flux-renderers-industrial`（I15.2 增量）
+
+`scada-canvas`（SCADA 组态画布）的 RendererComponentProps 装配形态（结构对齐 quick-reference.md §723 scheduling 先例）：
+
+- **注册面**：`registerScadaRenderers(registry)` → 单定义 `scada-canvas`（category `industrial`）；fields 全量注册：`config/width/height/viewport/events` 为 prop（`config` source-enabled，组态 JSON 单一字段承载）、`loading/empty` 为 region（受控，`empty` params `[{ error }]`）。**`events` 为整体 prop 而非 `events.*` event 规则**（D-1 裁定：flux-compiler `classifyField` 无点号路径支持，probe 实测）——schema 事件经 renderer 桥接 `createNormalizedActionEvent` + `helpers.dispatch` 派发，与平台 props.events 通道同源。
+- **数据来源**：`props.props.config/width/height/viewport/events`、`props.meta`（cid/testid/className）、`props.regions.loading/empty`、`props.helpers`（dispatch）；**渲染路径无副作用**（引擎副作用集中在 useEffect 生命周期，INV-5）。
+- **引擎生命周期**：命令式 `ScadaCanvasEngine`（leafer-ui + viewport 插件）经 `useScadaEngine` 创建，ref 持有（不进 scope）；config 同步策略 full（首次/版本变更 reset）/ diff（同版本 applyDiff 增量）；ResizeObserver 防抖 resize；unmount 幂等 destroy。
+- **组件句柄**：`component:fit/center/getSymbols/getSymbol/setPointValue/getPointTable/exportConfig/importConfig/destroy`（`ComponentHandleRegistry`，INV-4 例外通道）；失败路径 `not-mounted`/`symbol-not-found`/`point-not-found`/`invalid-config`。
+- **测试句柄**：`window.__flux_scada_<cid>`（引擎侧唯一所有权，恒开，生产裁剪属 host 配置）——e2e 程序化断言场景树/点表/视口/sky 覆盖物的锚点（roadmap 测试纪律：canvas 渲染一律 Playwright 程序化断言、禁截图、不引 node-canvas）。
+- **性能红线**：点表高频刷新经刷新流水线合帧（1 万点批量注入渲染增量 = 1）；10 万图元首屏 <2s / 拖动 ≥45fps / 内存 ≤320MB（`docs/analysis/industrial-hmi/benchmark-report.md`）。
+- **域文档**：`docs/components/industrial-hmi/design-*.md`（engine/renderer/symbols/data-binding）、`docs/analysis/industrial-hmi/`（gate 审查/benchmark/边界审计）。
+
 ## Performance Rules
 
 ### Do not reinterpret compiled nodes every render
