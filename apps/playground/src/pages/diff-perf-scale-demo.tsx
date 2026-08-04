@@ -93,7 +93,9 @@ ${LARGE_FILE_CONTENT_NEW}`,
   viewType: 'split',
   showLineNumbers: true,
   showInlineDiff: true,
-  defaultCollapsedLines: 15,
+  // 0 → no hunk collapsing: the scale page exists to render the full 1500+
+  // line diff on first screen so the perf baseline measures real work.
+  defaultCollapsedLines: 0,
   wrapLines: false,
 };
 
