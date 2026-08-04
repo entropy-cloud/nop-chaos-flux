@@ -1,6 +1,6 @@
 # C5.2 layout 动作组族逐组件审计（button-group/dropdown-button/steps/timeline）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C5.2
 > Last Reviewed: 2026-08-04
@@ -176,7 +176,7 @@ Exit Criteria:
 - [x] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
 - [x] 4 个 lab 页 + LAYOUT_RENDERER_ROUTES 4 条 + coverage manifest 4 条已落地（C5.1 标注的 C5.2 收口项）
 - [x] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（mission-driver CLOSURE_VERIFY fresh session 执行）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（mission-driver CLOSURE_VERIFY fresh session 执行）
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -206,13 +206,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行（active 状态，已通过独立子 agent draft review，可进入执行队列）。
+Status Note: 本 plan 已可关闭。4 Phase 全部 `completed`；4 张审计卡（button-group/dropdown-button/steps/timeline）全部 `closed`（P0 ×0、P1 ×4 全部 test-first 修复并落地、P2 ×12 全部 fixed、P3 ×4 卡内 keep）；真机宿主 5/5 通过（含 bug 73 模式专项 host-dd-row——CRUD 行内 dropdown-button 08-02 行 scope 隔离修复真机复验 pass）；独立子 agent（fresh session）closure-audit pass 后 roadmap C5.2 行标 `done`。文本一致性核对：Plan Status / 4 × Phase Status / 各 Phase Exit Criteria / Closure Gates / `docs/logs/2026/08-04.md` C5.2 节全部 `completed`/`[x]`，无残留未勾选 in-scope checklist 项。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待执行
-- Evidence: 待执行
+- Auditor / Agent: 独立子 agent fresh session（mission-driver CLOSURE_VERIFY，2026-08-04；执行 session 未自审本 plan，audit 勾选由本轮 fresh session 完成）
+- Evidence: live repo 核验——4 审计卡 `docs/audits/per-component/{button-group,dropdown-button,steps,timeline}.md` 全部 `closed`（P0 ×0/P1 清零）；P1 修复落地：`steps-renderer.tsx:174/208`、`timeline-renderer.tsx:64/87`、`dropdown-button-renderer.tsx:70` 根 `cn('nop-steps'|'nop-timeline'|'nop-dropdown-button', props.meta.className)` marker-only（+ 包 CSS 布局规则），`layout-renderer-definitions.ts` dropdown-button items fieldRules 死分类 `icon: 'value'` 已移除（:583 仅 `kind: 'prop'`）；契约测试 `__tests__/c5-2-layout-action-family-contract.test.tsx` 12 用例（先红后绿）；宿主场景 `tests/e2e/component-lab/c5-2-host-surfaces.spec.ts` 5/5 programmatic DOM 断言；lab 页 ×4 + `data-c5c2-host.ts` + `layout-renderer-routes.ts` 7 条（grid/collapse/wizard + button-group/dropdown-button/steps/timeline）+ `COMPONENT_LAB_COVERAGE_MANIFEST` 4 条（coverage-manifest.ts:462-491）；roadmap C5.2 行 `done`；daily log `docs/logs/2026/08-04.md` C5.2 节（全量验证 93/93 unit、58/58 workspace test、31/31 typecheck/build/lint、相关 e2e 全绿零回归）。deferred 诚实：仅 `optimization candidate`（P2 backlog → CR）与 `watch-only residual`（跨 plan 机制依赖 → CR 复验），均 adjudicated + successor。
 
 Follow-up:
 
-- 待执行
+- 无 plan-owned 剩余工作（P2 backlog 与机制依赖项已 adjudicated 归 CR，见 Deferred But Adjudicated）。
