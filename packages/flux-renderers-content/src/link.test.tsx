@@ -100,4 +100,38 @@ describe('LinkRenderer', () => {
     fireEvent.click(a);
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  it('drops javascript: hrefs entirely (URL protocol guard)', () => {
+    const props = createMockRendererProps<LinkSchema>({
+      schema: { type: 'link' },
+      props: { label: 'evil', href: 'javascript:alert(1)' },
+    });
+    const { container } = render(<LinkRenderer {...props} />);
+    const a = rootOf(container);
+    expect(a.getAttribute('href')).toBeNull();
+    expect(a.textContent).toBe('evil');
+  });
+
+  it('keeps safe schemes and relative URLs, drops javascript:/vbscript:', () => {
+    const cases: Array<[string, string | null]> = [
+      ['https://safe.example/', 'https://safe.example/'],
+      ['/relative/path', '/relative/path'],
+      ['#anchor', '#anchor'],
+      ['./sibling', './sibling'],
+      ['mailto:dev@example.com', 'mailto:dev@example.com'],
+      ['data:text/csv;base64,YSxiLGM=', 'data:text/csv;base64,YSxiLGM='],
+      ['javascript:alert(1)', null],
+      ['vbscript:msgbox(1)', null],
+    ];
+    for (const [href, expected] of cases) {
+      const props = createMockRendererProps<LinkSchema>({
+        schema: { type: 'link' },
+        props: { label: 'x', href },
+      });
+      const { container } = render(<LinkRenderer {...props} />);
+      const a = rootOf(container);
+      expect(a.getAttribute('href'), `href=${href}`).toBe(expected);
+      cleanup();
+    }
+  });
 });

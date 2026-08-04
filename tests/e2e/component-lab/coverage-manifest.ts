@@ -490,6 +490,46 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes:
       'Verify display-only timeline: left/alternate modes, reverse order, horizontal orientation, marker-only roots, no owner state (C5.2)',
   },
+  {
+    id: 'markdown',
+    title: 'Markdown',
+    tier: 'read',
+    primaryScenario: 'Basic markdown with GFM table',
+    notes:
+      'Verify react-markdown + GFM rendering; dynamic content sanitize re-verification and env.fetcher remote src in c6-1-host-surfaces.spec.ts (C6.1)',
+  },
+  {
+    id: 'html',
+    title: 'HTML',
+    tier: 'read',
+    primaryScenario: 'Basic html with sanitize gate',
+    notes:
+      'Verify the DOMPurify gate strips scripts; dynamic update sanitize re-verification (bug 73 pattern) in c6-1-host-surfaces.spec.ts (C6.1)',
+  },
+  {
+    id: 'json-view',
+    title: 'JSON View',
+    tier: 'write',
+    primaryScenario: 'Host json-view null empty + dynamic value update (C6.1)',
+    notes:
+      'Verify null empty state and scope-driven value updates between object tree and null (C6.1)',
+  },
+  {
+    id: 'link',
+    title: 'Link',
+    tier: 'write',
+    primaryScenario: 'Host link onClick + href coexist + javascript: href stripped (C6.1)',
+    notes:
+      'Verify onClick dispatch alongside native navigation, and javascript: href rendered without an href attribute (C6.1)',
+  },
+  {
+    id: 'image',
+    title: 'Image',
+    tier: 'write',
+    primaryScenario: 'Host image fail + retry on src update (C6.1 host-img-lifecycle)',
+    notes:
+      'Verify error fallback on missing src and retry recovery when the scope-bound src switches to a valid source (C6.1)',
+  },
 ];
 
 /** Quick lookup by renderer id */

@@ -5,6 +5,7 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { MarkdownRenderer } from './markdown.js';
 import { createMockRendererProps } from './test-support.js';
+import { createTestRuntime, TestRuntimeProvider } from './test-support-runtime.js';
 import type { MarkdownSchema } from './schemas.js';
 
 afterEach(() => {
@@ -21,7 +22,12 @@ describe('MarkdownRenderer — allowHtml gate + GFM', () => {
       schema: { type: 'markdown' },
       props: { content: '## Title\n\n- one\n- two' },
     });
-    const { container } = render(<MarkdownRenderer {...props} />);
+    const runtime = createTestRuntime();
+    const { container } = render(
+      <TestRuntimeProvider runtime={runtime}>
+        <MarkdownRenderer {...props} />
+      </TestRuntimeProvider>,
+    );
     const root = rootOf(container);
     expect(root.querySelector('h2')?.textContent).toBe('Title');
     expect(root.querySelectorAll('li').length).toBe(2);
@@ -32,7 +38,12 @@ describe('MarkdownRenderer — allowHtml gate + GFM', () => {
       schema: { type: 'markdown' },
       props: { content: '| a | b |\n| --- | --- |\n| 1 | 2 |' },
     });
-    const { container } = render(<MarkdownRenderer {...props} />);
+    const runtime = createTestRuntime();
+    const { container } = render(
+      <TestRuntimeProvider runtime={runtime}>
+        <MarkdownRenderer {...props} />
+      </TestRuntimeProvider>,
+    );
     expect(rootOf(container).querySelector('table')).toBeTruthy();
     expect(rootOf(container).querySelectorAll('td').length).toBe(2);
   });
@@ -42,7 +53,12 @@ describe('MarkdownRenderer — allowHtml gate + GFM', () => {
       schema: { type: 'markdown' },
       props: { content: '<b>raw</b>' },
     });
-    const { container } = render(<MarkdownRenderer {...props} />);
+    const runtime = createTestRuntime();
+    const { container } = render(
+      <TestRuntimeProvider runtime={runtime}>
+        <MarkdownRenderer {...props} />
+      </TestRuntimeProvider>,
+    );
     const root = rootOf(container);
     // no <b> element is produced
     expect(root.querySelector('b')).toBeNull();
@@ -58,7 +74,12 @@ describe('MarkdownRenderer — allowHtml gate + GFM', () => {
         allowHtml: true,
       },
     });
-    const { container } = render(<MarkdownRenderer {...props} />);
+    const runtime = createTestRuntime();
+    const { container } = render(
+      <TestRuntimeProvider runtime={runtime}>
+        <MarkdownRenderer {...props} />
+      </TestRuntimeProvider>,
+    );
     const root = rootOf(container);
     expect(root.getAttribute('data-allow-html')).toBe('true');
     expect(root.querySelector('h2')).toBeTruthy();
@@ -72,7 +93,12 @@ describe('MarkdownRenderer — allowHtml gate + GFM', () => {
       schema: { type: 'markdown' },
       props: { content: '', empty: 'No content' },
     });
-    const { container } = render(<MarkdownRenderer {...props} />);
+    const runtime = createTestRuntime();
+    const { container } = render(
+      <TestRuntimeProvider runtime={runtime}>
+        <MarkdownRenderer {...props} />
+      </TestRuntimeProvider>,
+    );
     const root = rootOf(container);
     expect(root.getAttribute('data-state')).toBe('empty');
     expect(root.textContent).toBe('No content');
@@ -90,7 +116,12 @@ describe('MarkdownRenderer — fenced code block verbatim preservation (sanitize
       schema: { type: 'markdown' },
       props: { content: '```js\n' + code + '\n```' },
     });
-    const { container } = render(<MarkdownRenderer {...props} />);
+    const runtime = createTestRuntime();
+    const { container } = render(
+      <TestRuntimeProvider runtime={runtime}>
+        <MarkdownRenderer {...props} />
+      </TestRuntimeProvider>,
+    );
     const codeEl = rootOf(container).querySelector('code');
     expect(codeEl).not.toBeNull();
     const text = codeEl?.textContent ?? '';
@@ -108,7 +139,12 @@ describe('MarkdownRenderer — fenced code block verbatim preservation (sanitize
       schema: { type: 'markdown' },
       props: { content: '```\n' + code + '\n```', allowHtml: true },
     });
-    const { container } = render(<MarkdownRenderer {...props} />);
+    const runtime = createTestRuntime();
+    const { container } = render(
+      <TestRuntimeProvider runtime={runtime}>
+        <MarkdownRenderer {...props} />
+      </TestRuntimeProvider>,
+    );
     const text = rootOf(container).querySelector('code')?.textContent ?? '';
     expect(text).toContain(`"a" + 'b'`);
   });

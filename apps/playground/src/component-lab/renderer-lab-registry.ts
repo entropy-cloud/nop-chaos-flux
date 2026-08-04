@@ -72,6 +72,11 @@ import {
   DropdownButtonLabPage,
   StepsLabPage,
   TimelineLabPage,
+  MarkdownLabPage,
+  HtmlLabPage,
+  JsonViewLabPage,
+  LinkLabPage,
+  ImageLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -147,4 +152,9 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   'dropdown-button': DropdownButtonLabPage,
   steps: StepsLabPage,
   timeline: TimelineLabPage,
+  markdown: MarkdownLabPage,
+  html: HtmlLabPage,
+  'json-view': JsonViewLabPage,
+  link: LinkLabPage,
+  image: ImageLabPage,
 };

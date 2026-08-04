@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import React from 'react';
 import { contentRendererDefinitions } from './content-renderer-definitions.js';
 import { createMockRendererProps } from './test-support.js';
+import { createTestRuntime, TestRuntimeProvider } from './test-support-runtime.js';
 import type {
   CardSchema,
   EmptySchema,
@@ -226,7 +227,11 @@ describe('contentRendererDefinitions', () => {
       props: { content: '## hi' },
     });
     const Comp = def?.component as React.ComponentType<typeof props>;
-    const view = render(<Comp {...props} />);
+    const view = render(
+      <TestRuntimeProvider runtime={createTestRuntime()}>
+        <Comp {...props} />
+      </TestRuntimeProvider>,
+    );
     expect(view.container.querySelector('[data-slot="markdown"] h2')).toBeTruthy();
   });
 

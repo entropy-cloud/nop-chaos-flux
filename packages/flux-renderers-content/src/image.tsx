@@ -81,6 +81,18 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
   const [fetcherSrc, setFetcherSrc] = React.useState<string | undefined>(undefined);
   const [fetcherLoading, setFetcherLoading] = React.useState(false);
   const imgRef = React.useRef<HTMLImageElement | null>(null);
+  // Last effective source seen — used to clear the sticky error state when the
+  // source changes so a scope-driven src update retries after a failure.
+  const lastSrcRef = React.useRef<string | undefined>(undefined);
+
+  const effectiveSrc = fetcher ? fetcherSrc : src;
+
+  React.useEffect(() => {
+    if (lastSrcRef.current !== effectiveSrc) {
+      lastSrcRef.current = effectiveSrc;
+      setErrored(false);
+    }
+  }, [effectiveSrc]);
 
   React.useEffect(() => {
     if (!fetcher) {
@@ -110,8 +122,6 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
       });
     return () => { controller.abort(); };
   }, [fetcher, props.helpers]);
-
-  const effectiveSrc = fetcher ? fetcherSrc : src;
 
   // Old browsers without native lazy loading get an IntersectionObserver
   // fallback that defers setting `src` until the image scrolls into view.

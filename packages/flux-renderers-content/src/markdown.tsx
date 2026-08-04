@@ -1,6 +1,11 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import {
+  hasRendererSlotContent,
+  resolveRendererSlotContent,
+  useRendererEnv,
+  useRenderScope,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,6 +15,8 @@ import { sanitizeHtml } from './sanitize.js';
 import type { MarkdownSchema } from './schemas.js';
 
 export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) {
+  const env = useRendererEnv();
+  const scope = useRenderScope();
   const slotProps = props.props;
   const raw =
     typeof slotProps.content === 'string' && slotProps.content.length > 0
@@ -35,14 +42,16 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
     const controller = new AbortController();
     setFetchLoading(true);
     setFetchError(false);
-    fetch(src, { signal: controller.signal })
+    // INV-1 env IO boundary: remote markdown sources are fetched through the
+    // host RendererEnv fetcher (never the browser fetch API directly).
+    env
+      .fetcher<string>({ url: src, responseType: 'text' }, { scope, env, signal: controller.signal })
       .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.text();
-      })
-      .then((text) => {
+        if (res.ok !== true && res.status !== 0) {
+          throw new Error(`HTTP ${res.status}`);
+        }
         if (!controller.signal.aborted) {
-          setFetchedContent(text);
+          setFetchedContent(typeof res.data === 'string' ? res.data : '');
           setFetchLoading(false);
         }
       })
@@ -53,7 +62,7 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
         }
       });
     return () => { controller.abort(); };
-  }, [src, raw]);
+  }, [src, raw, env, scope]);
 
   const effectiveContent = raw.length > 0 ? raw : (fetchedContent ?? '');
 

@@ -1,6 +1,7 @@
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
+import { isSafeNavigationUrl } from './sanitize.js';
 import type { LinkSchema } from './schemas.js';
 
 function resolveRel(
@@ -21,9 +22,16 @@ export function LinkRenderer(props: RendererComponentProps<LinkSchema>) {
   const labelContent = resolveRendererSlotContent(props, 'label');
   const hasLabel = hasRendererSlotContent(labelContent);
 
-  const href = typeof slotProps.href === 'string' && slotProps.href.length > 0
-    ? slotProps.href
-    : undefined;
+  // URL protocol guard: a javascript:/data:/vbscript: href would execute on
+  // click, and href may be data-bound (`${item.link}`). Unsafe hrefs degrade to
+  // a non-navigable link (label still renders) — fail-safe, matching the
+  // javascript: URI stripping done by the html/markdown sanitize gate.
+  const href =
+    typeof slotProps.href === 'string' &&
+    slotProps.href.length > 0 &&
+    isSafeNavigationUrl(slotProps.href)
+      ? slotProps.href
+      : undefined;
   const target = slotProps.target as LinkSchema['target'] | undefined;
   const rel = resolveRel(target, slotProps.rel);
 

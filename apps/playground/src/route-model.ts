@@ -1,4 +1,5 @@
 import { LAYOUT_RENDERER_ROUTES } from './layout-renderer-routes.js';
+import { CONTENT_RENDERER_ROUTES } from './content-renderer-routes.js';
 
 export type RendererCategory =
   | 'layout'
@@ -623,9 +624,11 @@ export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [
   ...FORM_RENDERER_ROUTES,
   ...DATA_RENDERER_ROUTES,
   ...LAYOUT_RENDERER_ROUTES,
+  ...CONTENT_RENDERER_ROUTES,
 ];
 
 export { LAYOUT_RENDERER_ROUTES };
+export { CONTENT_RENDERER_ROUTES };
 
 export type RouteSpec =
   | { kind: 'home' }

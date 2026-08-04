@@ -97,4 +97,25 @@ describe('ImageRenderer', () => {
     const empty = container.querySelector('[data-slot="image"][data-state="empty"]');
     expect(empty).toBeTruthy();
   });
+
+  it('clears the error state and retries when src changes after a load failure', () => {
+    const failed = createMockRendererProps<ImageSchema>({
+      schema: { type: 'image' },
+      props: { src: '/missing.png', alt: 'broken' },
+    });
+    const { container, rerender } = render(<ImageRenderer {...failed} />);
+    fireEvent.error(imgOf(container));
+    expect(container.querySelector('[data-slot="image"][data-state="error"]')).toBeTruthy();
+
+    // Scope-driven src update (e.g. `src: "${item.pic}"` switching rows) must
+    // reset the sticky error state so the new source gets a fresh load attempt.
+    const fixed = createMockRendererProps<ImageSchema>({
+      schema: { type: 'image' },
+      props: { src: '/ok.png', alt: 'fixed' },
+    });
+    rerender(<ImageRenderer {...fixed} />);
+    const retried = imgOf(container);
+    expect(retried.getAttribute('src')).toBe('/ok.png');
+    expect(container.querySelector('[data-slot="image"][data-state="error"]')).toBeNull();
+  });
 });
