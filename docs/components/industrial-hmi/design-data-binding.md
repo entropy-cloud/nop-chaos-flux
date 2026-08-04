@@ -247,6 +247,22 @@ interface ScadaStateDefinition {
 | 表达式          | 组态内 `expression`（`@{pointId}` 子集） | 纯逻辑求值器（§4.2），点表依赖链变化时重算                                                                                                                                                                                                                                                                  |
 | flux scope 桥接 | `flux: "$xxx"`                           | **`useScopeSelector`（带 `paths` 精细化失效）在 renderer 桥接层订阅**（`@nop-chaos/flux-react`，quick-reference.md:521,526），变化 → `setPointValues` 注入点表；flux 表达式经 flux-formula/flux-compiler 编译求值（I10.3 落地）——复用平台能力，禁止重复实现 scope 订阅/表达式编译（roadmap 平台能力复用表） |
 
+> **复杂表达式订阅诊断 `flux-deps-empty`（plan 2026-08-05-0325-1，W1 successor）**：复杂 flux 表达式
+> （`${analog.temp + 1}` 类，含运算符/函数调用）的订阅路径经平台依赖收集（`extractExpressionDepsViaProbe`）
+> 产出。当平台 collector 失败（compile/createState/evaluateWithState 任一 catch、root 非 leaf-state、
+> 无 deps、wildcard）→ `paths` 为空 → `useScopeSelector` 静默 disable，表达式永不随 scope 更新且对 author
+> 不透明。该静默 disable 路径经既有**非升级**诊断通道一次性上报 `flux-deps-empty`（per-expression 可定位）：
+> `analyzeFluxSubscriptions` 收集 `depsEmptyExpressions`（probe 返空 deps 且 `expressionReadsScope` 为真），
+> `useScadaPointsBridge` 经 `reportOnce` 一次性上报 → `scada-canvas reportDiagnostic`（console.warn 保底 +
+> `env.monitor.onError` phase `expression`）。**非升级**：不升画布 status、不派发 `scada:error`（§8.1 降级
+> 契约，与 `flux-compile-failed`/`flux-evaluate-failed` 同通道）。一次性：`depsEmptyExpressions` 经
+> `useMemo` 随 config/compiler/env 稳定，effect 仅在其变化时重跑；`reportOnce` 按 `(expression, code)` 去重
+> 兜底；config reload 时去重记录对称清空 → 同表达式重报。**启发式限制**：`expressionReadsScope` 仅判标识符
+> 存在（`[a-zA-Z_][a-zA-Z0-9_]*`），含全局名（如 `Math.PI*2`）的复杂表达式可能误报为「reads scope」——
+> 属可接受的一次性 best-effort 诊断（不扩平台 collector 能力，仅 surface 静默 disable 嫌疑）。纯路径/`$xxx`
+> 简写表达式不走 probe，不诊断。**静默 disable 残留已 surfaced**：此前该路径完全静默，现经 `flux-deps-empty`
+> 对 author 可感知。
+
 ### 9.2 外部数据通道（INV-1/INV-2）
 
 - 组态画面需要接入实时数据源（socket.io 推送等）时：**外部 IO 必须经 `RendererEnv`**（fetcher/stream/openSocket，`docs/architecture/renderer-env.md`），或经 `xui:imports` 注入协议适配器（INV-2 B 档，`new-renderer-introduction-audit.md` §2 能力归属表）；**禁止引擎/数据层直调 `fetch`/`WebSocket`**（INV-1）。
