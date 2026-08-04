@@ -23,7 +23,7 @@ import {
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { Button, cn, Textarea, useIsMobile } from '@nop-chaos/ui';
-import { formFieldRules, useFormFieldController } from '../field-utils.js';
+import { formFieldRules, useFormFieldFromProps } from '../field-utils.js';
 import type { MarkdownEditorSchema } from '../schemas.js';
 import { createFieldValidation, validateInputFieldSchema } from './input.js';
 
@@ -151,12 +151,8 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
   const { t } = useFluxTranslation();
   const name = String(props.props.name ?? '');
   const isMobile = useIsMobile();
-  const { value, handlers, presentation } = useFormFieldController(name, {
+  const { value, handlers, presentation } = useFormFieldFromProps(props, {
     adapter: stringValueAdapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
   });
   const source = (value as string | undefined) ?? '';
   const errorId = name ? `${name}-error` : undefined;

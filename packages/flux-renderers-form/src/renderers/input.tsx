@@ -23,7 +23,7 @@ import {
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Eye, EyeOff, XIcon } from 'lucide-react';
-import { formFieldRules, useFormFieldController } from '../field-utils.js';
+import { formFieldRules, useFormFieldFromProps } from '../field-utils.js';
 import type {
   InputSchema,
 } from '../schemas.js';
@@ -266,12 +266,8 @@ export function createInputRenderer(inputType: string) {
   return function InputRenderer(props: RendererComponentProps<InputSchema>) {
     const name = String(props.props.name ?? '');
     const isMobile = useIsMobile();
-    const { value, handlers, presentation } = useFormFieldController(name, {
+    const { value, handlers, presentation } = useFormFieldFromProps(props, {
       adapter: stringAdapter(),
-      disabled: props.props.disabled,
-      required: props.props.required,
-      readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
     });
     const inputValue = (value as string | undefined) ?? '';
     const errorId = name ? `${name}-error` : undefined;

@@ -5,7 +5,7 @@ import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { useDictOptions } from './use-dict-options.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, ButtonGroup, Spinner, cn } from '@nop-chaos/ui';
-import { useFormFieldController } from '../field-utils.js';
+import { useFormFieldFromProps } from '../field-utils.js';
 import type { ButtonGroupSelectSchema } from '../schemas.js';
 import {
   checkboxGroupAdapter,
@@ -35,12 +35,8 @@ export function ButtonGroupSelectRenderer(
   const multiple = Boolean(props.props.multiple);
   const dictName = props.props.dict as string | undefined;
   const adapter = multiple ? checkboxGroupAdapter : choiceSingleAdapter;
-  const { value, handlers, presentation } = useFormFieldController(name, {
+  const { value, handlers, presentation } = useFormFieldFromProps(props, {
     adapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
   });
   const dictState = useDictOptions(dictName);
   const hasDict = !!dictName;

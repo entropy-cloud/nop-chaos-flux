@@ -4,7 +4,7 @@ import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, Input, useIsMobile } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
-import { useFormFieldController } from '../field-utils.js';
+import { useFormFieldFromProps } from '../field-utils.js';
 import type { InputNumberSchema } from '../schemas.js';
 import { scrollRefIntoViewOnMobile, type InputModeValue } from './mobile-touch-utils.js';
 
@@ -57,12 +57,8 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
   const showStepper = props.props.showStepper !== false;
   const keyboard = props.props.keyboard !== false;
 
-  const { value, handlers, presentation } = useFormFieldController(name, {
+  const { value, handlers, presentation } = useFormFieldFromProps(props, {
     adapter: numericAdapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
   });
 
   const numericValue = value as number | undefined;

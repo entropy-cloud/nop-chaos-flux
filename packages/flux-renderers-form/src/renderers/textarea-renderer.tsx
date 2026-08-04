@@ -4,7 +4,7 @@ import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, Textarea, useIsMobile } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
-import { useFormFieldController } from '../field-utils.js';
+import { useFormFieldFromProps } from '../field-utils.js';
 import type { TextareaSchema } from '../schemas.js';
 import { scrollRefIntoViewOnMobile } from './mobile-touch-utils.js';
 
@@ -31,12 +31,8 @@ function resolveTextareaLineHeightPx(el: HTMLElement): number {
 export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
   const name = String(props.props.name ?? '');
   const isMobile = useIsMobile();
-  const { value, handlers, presentation } = useFormFieldController(name, {
+  const { value, handlers, presentation } = useFormFieldFromProps(props, {
     adapter: stringValueAdapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
   });
   const textareaValue = (value as string | undefined) ?? '';
   const errorId = name ? `${name}-error` : undefined;

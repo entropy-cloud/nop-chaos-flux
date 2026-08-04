@@ -33,7 +33,7 @@ import {
   Switch,
   useIsMobile,
 } from '@nop-chaos/ui';
-import { useFormFieldController } from '../field-utils.js';
+import { useFormFieldFromProps } from '../field-utils.js';
 import type {
   CheckboxSchema,
   RadioGroupSchema,
@@ -211,12 +211,8 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const multiple = Boolean(props.props.multiple);
   const dictName = props.props.dict as string | undefined;
   const adapter = multiple ? checkboxGroupAdapter : choiceSingleAdapter;
-  const { value, handlers, presentation } = useFormFieldController(name, {
+  const { value, handlers, presentation } = useFormFieldFromProps(props, {
     adapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
   });
   const dictState = useDictOptions(dictName);
   const hasDict = !!dictName;
@@ -565,12 +561,8 @@ export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) 
   const trueValue = (props.props as CheckboxSchema).trueValue ?? true;
   const falseValue = (props.props as CheckboxSchema).falseValue ?? false;
   const adapter = booleanMappingAdapter(trueValue, falseValue);
-  const { value, handlers, presentation } = useFormFieldController(name, {
+  const { value, handlers, presentation } = useFormFieldFromProps(props, {
     adapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
   });
   const option = props.props.option as CheckboxSchema['option'] | undefined;
   const optionLabel = option?.label;
@@ -608,12 +600,8 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   const trueValue = (props.props as SwitchSchema).trueValue ?? true;
   const falseValue = (props.props as SwitchSchema).falseValue ?? false;
   const adapter = booleanMappingAdapter(trueValue, falseValue);
-  const { value, handlers, presentation } = useFormFieldController(name, {
+  const { value, handlers, presentation } = useFormFieldFromProps(props, {
     adapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
   });
   const option = props.props.option as SwitchSchema['option'] | undefined;
   const checked = value as boolean;
@@ -665,12 +653,8 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
 export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
   const name = String(props.props.name ?? '');
   const isMobile = useIsMobile();
-  const { value, handlers, presentation } = useFormFieldController(name, {
+  const { value, handlers, presentation } = useFormFieldFromProps(props, {
     adapter: choiceSingleAdapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
   });
   const options = sanitizeChoiceOptions(props.props.options);
   const horizontal = props.props.direction === 'horizontal';

@@ -3,7 +3,10 @@ import {
   getIn,
   reportRuntimeHostIssue,
   type AdapterContext,
+  type BaseSchema,
   type FormRuntime,
+  type RendererComponentProps,
+  type RendererEventHandler,
   type ScopeRef,
   type ValidationScopeRuntime,
   type ValueAdapter,
@@ -320,6 +323,58 @@ export function useDefaultValuePush(args: {
   };
 }
 
+type FieldEventPayload = { name: string; value: unknown };
+
+function reportFieldEventFailure(args: {
+  eventName: 'onChange' | 'onBlur';
+  error: unknown;
+  runtime: ReturnType<typeof useRendererRuntime>;
+  name: string;
+}) {
+  const { eventName, error, runtime, name } = args;
+  if (!runtime) {
+    return;
+  }
+
+  reportRuntimeHostIssue({
+    env: runtime.env,
+    level: 'warning',
+    message: `${eventName} action failed`,
+    error,
+    phase: 'action',
+    path: name,
+  });
+}
+
+function dispatchFieldEvent(args: {
+  eventName: 'onChange' | 'onBlur';
+  payload: FieldEventPayload;
+  events: Readonly<Record<string, RendererEventHandler | undefined>> | undefined;
+  currentForm: FormRuntime | undefined;
+  runtime: ReturnType<typeof useRendererRuntime>;
+  name: string;
+}) {
+  const { eventName, payload, events, currentForm, runtime, name } = args;
+  const handler = events?.[eventName];
+  if (!handler) {
+    return;
+  }
+
+  try {
+    const result = handler(payload, { form: currentForm });
+
+    if (!isPromiseLike(result)) {
+      return;
+    }
+
+    void result.catch((error: unknown) => {
+      reportFieldEventFailure({ eventName, error, runtime, name });
+    });
+  } catch (error) {
+    reportFieldEventFailure({ eventName, error, runtime, name });
+  }
+}
+
 export function useFormFieldController(
   name: string,
   options?: {
@@ -330,21 +385,24 @@ export function useFormFieldController(
     readOnly?: boolean;
     areValuesEqual?: (a: unknown, b: unknown) => boolean;
     defaultValue?: unknown;
+    events?: Readonly<Record<string, RendererEventHandler | undefined>>;
   },
 ) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
   const currentValidationScope = useCurrentValidationScope();
+  const runtime = useRendererRuntime();
+  const readOnly = options?.readOnly ?? false;
   const rawValue = useBoundFieldValue(name, currentForm, options?.areValuesEqual);
   const adapterContext = {
     name,
-    readOnly: options?.readOnly ?? false,
+    readOnly,
   };
   const value = useAdaptedFieldValue(rawValue, options?.adapter, adapterContext);
   const presentation = useFieldPresentation(name, currentValidationScope, {
     disabled: options?.disabled,
     required: options?.required,
-    readOnly: options?.readOnly,
+    readOnly,
   });
   const handlers = useFieldHandlers({
     name,
@@ -363,11 +421,40 @@ export function useFormFieldController(
     hasInitialValue: rawValue !== undefined,
   });
 
+  const events = options?.events;
+
   const wrappedHandlers = {
     ...handlers,
     onChange(nextValue: unknown) {
+      if (readOnly) {
+        return;
+      }
+
       defaultPush.markUserEdited();
       handlers.onChange(nextValue);
+      dispatchFieldEvent({
+        eventName: 'onChange',
+        payload: { name, value: nextValue },
+        events,
+        currentForm,
+        runtime,
+        name,
+      });
+    },
+    onBlur() {
+      if (readOnly) {
+        return;
+      }
+
+      handlers.onBlur();
+      dispatchFieldEvent({
+        eventName: 'onBlur',
+        payload: { name, value },
+        events,
+        currentForm,
+        runtime,
+        name,
+      });
     },
   };
 
@@ -380,8 +467,8 @@ export function useFormFieldController(
   };
 }
 
-export function useFormFieldFromProps<P extends Record<string, unknown>>(
-  props: { props: P },
+export function useFormFieldFromProps<P extends BaseSchema = BaseSchema>(
+  props: RendererComponentProps<P>,
   options?: {
     adapter?: ValueAdapter<unknown, unknown>;
     toFormValue?: (value: unknown) => unknown;
@@ -398,5 +485,6 @@ export function useFormFieldFromProps<P extends Record<string, unknown>>(
     required: schemaProps.required as boolean | undefined,
     readOnly: schemaProps.readOnly as boolean | undefined,
     defaultValue: options?.pushDefaultValue === false ? undefined : schemaProps.value,
+    events: props.events,
   });
 }

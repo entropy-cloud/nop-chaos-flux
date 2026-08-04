@@ -4,7 +4,7 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
-import { useFormFieldController } from '../field-utils.js';
+import { useFormFieldFromProps } from '../field-utils.js';
 import type { InputPeriodSchema } from '../schemas.js';
 import {
   type PeriodKind,
@@ -86,12 +86,7 @@ export function PeriodRenderer(
       )
     : [];
 
-  const { value, handlers, presentation } = useFormFieldController(name, {
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
-  });
+  const { value, handlers, presentation } = useFormFieldFromProps(props);
 
   const storedValue = typeof value === 'string' ? value : undefined;
   const errorId = name ? `${name}-error` : undefined;

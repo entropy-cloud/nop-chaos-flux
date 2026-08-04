@@ -1,6 +1,6 @@
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
-import { useFormFieldController } from '../field-utils.js';
+import { useFormFieldFromProps } from '../field-utils.js';
 import type { InputDatetimeSchema } from '../schemas.js';
 import {
   DEFAULT_DATETIME_FORMAT,
@@ -34,12 +34,7 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
       ? props.props.placeholder
       : undefined;
 
-  const { value, handlers, presentation } = useFormFieldController(name, {
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
-  });
+  const { value, handlers, presentation } = useFormFieldFromProps(props);
 
   const storedValue = typeof value === 'string' ? value : undefined;
   const errorId = name ? `${name}-error` : undefined;

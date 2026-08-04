@@ -3,7 +3,7 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle, type SourceTransientState } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Checkbox, cn, Label, Spinner, useIsMobile } from '@nop-chaos/ui';
-import { useFormFieldController } from '../field-utils.js';
+import { useFormFieldFromProps } from '../field-utils.js';
 import type { CheckboxGroupSchema } from '../schemas.js';
 import {
   checkboxGroupAdapter,
@@ -19,12 +19,8 @@ const FOCUS_ONLY_METHODS = ['focus'] as const;
 export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema>) {
   const name = String(props.props.name ?? '');
   const isMobile = useIsMobile();
-  const { value, handlers, presentation } = useFormFieldController(name, {
+  const { value, handlers, presentation } = useFormFieldFromProps(props, {
     adapter: checkboxGroupAdapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
   });
   const selectedValues = value as unknown[];
   const options = sanitizeChoiceOptions(props.props.options);
