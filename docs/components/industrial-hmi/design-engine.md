@@ -129,12 +129,19 @@ interface ScadaEngineOptions {
 >
 > **P1-9 增补（scaleOfWorld 锚点空间，mock↔真实漂移收口）**：leafer `scaleOfWorld` 的锚点是
 > **zoomLayer 外层（screen）空间点**（`zoomOfWorld` → `getTempLocal` 按 parent 世界矩阵逆变换，
-> 源码核对 core 2.2.9 `zoomOfLocal`/`scaleOfOuter`）——引擎命令路径 `applyViewportState` 与
-> 插件钳制兜底 `handlePluginZoom` 的缩放均以**屏幕原点 `{x:0,y:0}`** 为锚（固定屏幕原点缩放 =
-> 视口 x/y 不变、仅 scale 变化），再经 `move({-(Δx)*scale})` 平移合成精确视口态；**不得传内容
-> 坐标锚点**（`viewportToWorld(vp,{0,0})`，会被当 screen 点固定 → 内容漂移 `(vx·(1-k), vy·(1-k))`）。
+> 源码核对 core 2.2.9 `zoomOfLocal`/`scaleOfOuter`）——引擎命令路径 `applyViewportState` 的缩放以
+> **屏幕原点 `{x:0,y:0}`** 为锚（固定屏幕原点缩放 = 视口 x/y 不变、仅 scale 变化），再经
+> `move({-(Δx)*scale})` 平移合成精确视口态；**不得传内容坐标锚点**（`viewportToWorld(vp,{0,0})`，
+> 会被当 screen 点固定 → 内容漂移 `(vx·(1-k), vy·(1-k))`）。
 > `leafer-ui-mock.ts` `MockZoomLayer.scaleOfWorld` 已按真实锚定语义建模 x/y 副作用
 > （`x = (x-ox)·k + ox`），矩阵级断言可验证。
+>
+> **D3 增补（wheel-zoom 钳制光标锚，plan 2026-08-04-2243-2）**：插件钳制兜底 `handlePluginZoom`
+> 与命令路径锚点需求不同——命令路径是显式目标态合成（screen 原点锚），wheel 钳制是修正已发生的
+> 指针锚缩放。插件 wheel 经 `Transformer.zoom` → `ZoomEvent.ZOOM`，`getZoomEventData` 透传指针
+> `event.x/y`（screen 坐标，已核实 leafer-in viewport 源码）；钳制改用**光标 screen 锚**
+> （`scaleOfWorld(cursor, clamped/raw)`）→ 光标下内容点保持固定，超界无视觉偏移。事件缺 `x/y`
+> （程序触发/旧消费方）回落 screen 原点 `{0,0}`（P1-9 命令路径不变式：视口 x/y 不变）。
 >
 > **I14.1 增补（指针拖动平移）**：viewport 插件默认**不开启鼠标拖动平移**（`move` 配置缺省仅
 > `autoDistance: 2`，`canMove = moveMode || (drag==='auto' && !pathCanDrag(path))` 恒 false）——
