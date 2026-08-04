@@ -11,7 +11,7 @@ import {
   resolveFieldLabelText,
   shouldValidateOn,
   shouldValidateOnOwner,
-  useFormFieldController,
+  useFormFieldFromProps,
 } from '@nop-chaos/flux-renderers-form';
 import type { TagListSchema } from '@nop-chaos/flux-renderers-form';
 import { WrappedFieldAction } from './wrapped-field-action.js';
@@ -24,12 +24,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
     scope,
     value: boundValue,
     presentation,
-  } = useFormFieldController(name, {
-    disabled: props.props.disabled,
-    required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
-  });
+  } = useFormFieldFromProps(props);
   const value = Array.isArray(boundValue) ? boundValue.map((item) => String(item)) : [];
   const labelText = resolveFieldLabelText(props, name);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];

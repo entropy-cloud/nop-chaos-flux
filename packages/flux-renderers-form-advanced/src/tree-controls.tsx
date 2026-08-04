@@ -19,7 +19,7 @@ import { ChevronsUpDownIcon, XIcon } from 'lucide-react';
 import {
   createFieldValidation,
   formFieldRules,
-  useFormFieldController,
+  useFormFieldFromProps,
   validateInputFieldSchema,
 } from '@nop-chaos/flux-renderers-form';
 import type { InputTreeSchema, TreeSelectSchema } from '@nop-chaos/flux-renderers-form';
@@ -41,12 +41,7 @@ const TREE_METHODS = ['clear', 'focus'] as const;
 
 function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const name = String(props.props.name ?? '');
-  const { value, handlers, presentation } = useFormFieldController(name, {
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
-  });
+  const { value, handlers, presentation } = useFormFieldFromProps(props);
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const enableNodePath = props.props.enableNodePath === true;
@@ -211,12 +206,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
 
 function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const name = String(props.props.name ?? '');
-  const { value, handlers, presentation } = useFormFieldController(name, {
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
-  });
+  const { value, handlers, presentation } = useFormFieldFromProps(props);
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const enableNodePath = props.props.enableNodePath === true;

@@ -24,7 +24,7 @@ import {
   getFieldValidationBehavior,
   shouldValidateOn,
   useCompositeChildFieldState,
-  useFormFieldController,
+  useFormFieldFromProps,
 } from '@nop-chaos/flux-renderers-form';
 import type { ArrayEditorItem, ArrayEditorSchema } from '@nop-chaos/flux-renderers-form';
 import { FieldHint } from '@nop-chaos/flux-renderers-form';
@@ -235,12 +235,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     typeof props.props.maxItems === 'number' && Number.isFinite(props.props.maxItems)
       ? Math.max(0, Math.floor(props.props.maxItems))
       : undefined;
-  const { currentForm, scope, presentation } = useFormFieldController(name, {
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
-  });
+  const { currentForm, scope, presentation } = useFormFieldFromProps(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const itemsRef = React.useRef<ArrayEditorItem[]>([]);
   const registrationRef = React.useRef<{ registrationId: string } | undefined>(undefined);

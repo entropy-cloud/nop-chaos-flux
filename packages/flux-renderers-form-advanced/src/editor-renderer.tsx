@@ -22,7 +22,7 @@ import { sanitizeHtml } from '@nop-chaos/flux-renderers-content';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { formFieldRules, useFormFieldController } from '@nop-chaos/flux-renderers-form';
+import { formFieldRules, useFormFieldFromProps } from '@nop-chaos/flux-renderers-form';
 import {
   DEFAULT_EDITOR_TOOLBAR,
   editorFieldRules,
@@ -251,12 +251,7 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
       ? props.props.placeholder
       : undefined;
 
-  const { value, handlers, presentation } = useFormFieldController(name, {
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
-  });
+  const { value, handlers, presentation } = useFormFieldFromProps(props);
 
   const readOnly = presentation.readOnly || !presentation.interactive;
   const handlersRef = useRef(handlers);

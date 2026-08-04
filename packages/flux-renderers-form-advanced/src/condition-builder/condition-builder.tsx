@@ -12,7 +12,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { useCurrentFormModelGeneration, useCurrentValidationScope, useSchemaProps } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { formFieldRules, useFormFieldController } from '@nop-chaos/flux-renderers-form';
+import { formFieldRules, useFormFieldFromProps } from '@nop-chaos/flux-renderers-form';
 import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
 import type {
@@ -117,11 +117,7 @@ function createFormulaEvaluator(
 
 export function ConditionBuilderRenderer(props: RendererComponentProps<ConditionBuilderSchema>) {
   const name = String(props.props.name ?? '');
-  const { currentForm, scope, value, handlers, presentation } = useFormFieldController(name, {
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
+  const { currentForm, scope, value, handlers, presentation } = useFormFieldFromProps(props, {
     areValuesEqual: groupValuesEqual,
   });
   const currentValidationScope = useCurrentValidationScope();

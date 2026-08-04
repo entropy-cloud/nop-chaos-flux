@@ -11,7 +11,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
 import {
   formFieldRules,
-  useFormFieldController,
+  useFormFieldFromProps,
 } from '@nop-chaos/flux-renderers-form';
 import {
   normalizeUploadValue,
@@ -130,12 +130,7 @@ export function UploadFieldRenderer(
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
 
-  const { value, handlers, presentation } = useFormFieldController(name, {
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-    defaultValue: props.props.value,
-  });
+  const { value, handlers, presentation } = useFormFieldFromProps(props);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
