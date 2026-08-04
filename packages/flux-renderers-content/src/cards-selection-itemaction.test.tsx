@@ -278,4 +278,88 @@ describe('CD4: onItemClick action evaluates against the per-row itemScope', () =
       expect(screen.getByTestId('capture-result').textContent).toBe('Gamma');
     });
   });
+
+  it('onItemClick payload fields ({item,index,key}) resolve in action args templates', async () => {
+    // Event-payload contract (eventContracts :233-246): payload {item, index, key}
+    // must be reachable from action args — the steps/button-group family passes
+    // evaluationBindings: payload; cards must do the same.
+    const SchemaRenderer = createCardsSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://content/cd4-payload-args"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'capture-provider', label: 'cards-itemaction-payload' },
+            {
+              type: 'cards',
+              items: '${rows}',
+              onItemClick: {
+                action: 'capture:record',
+                args: { value: '${item.label}|${index}|${key}' },
+              },
+              card: { type: 'text', text: '${$slot.item.label}' },
+            },
+          ],
+        }}
+        data={{ rows }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const cards = document.querySelectorAll('[data-slot="cards-item"]');
+    fireEvent.click(cards[1] as HTMLElement);
+    await waitFor(() => {
+      expect(screen.getByTestId('capture-result').textContent).toBe('Beta|1|b');
+    });
+  });
+});
+
+describe('CD5: onSelectionChange payload fields ({selectedKeys, selectionMode}) resolve in action args templates', () => {
+  beforeEach(() => {
+    mobileState.isMobile = false;
+  });
+  afterEach(() => {
+    cleanup();
+    mobileState.isMobile = false;
+  });
+
+  it('onSelectionChange args read ${selectedKeys} and ${selectionMode} (evaluationBindings contract)', async () => {
+    const SchemaRenderer = createCardsSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://content/cd5-selection-payload"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'capture-provider', label: 'cards-selection-payload' },
+            {
+              type: 'cards',
+              selectionMode: 'multiple',
+              items: '${rows}',
+              onSelectionChange: {
+                action: 'capture:record',
+                args: { value: '${selectedKeys.join(",")}|${selectionMode}' },
+              },
+              card: { type: 'text', text: '${$slot.item.label}' },
+            },
+          ],
+        }}
+        data={{ rows }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const cards = document.querySelectorAll('[data-slot="cards-item"]');
+    fireEvent.click(cards[0] as HTMLElement);
+    await waitFor(() => {
+      expect(screen.getByTestId('capture-result').textContent).toBe('a|multiple');
+    });
+    fireEvent.click(cards[2] as HTMLElement);
+    await waitFor(() => {
+      expect(screen.getByTestId('capture-result').textContent).toBe('a,c|multiple');
+    });
+  });
 });

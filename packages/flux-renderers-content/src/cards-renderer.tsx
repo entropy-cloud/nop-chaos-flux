@@ -148,21 +148,17 @@ function CardItemView(props: CardItemViewProps) {
 
   const handleClick = (_event: React.MouseEvent<HTMLDivElement>) => {
     onSelect(itemKey);
-    void owner.events.onItemClick?.(
-      { type: 'cards:item-click', item, index, key: itemKey },
-      { scope: itemScope },
-    );
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!interactive) return;
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    onSelect(itemKey);
-    void owner.events.onItemClick?.(
-      { type: 'cards:item-click', item, index, key: itemKey },
-      { scope: itemScope },
-    );
+    const itemPayload = {
+      type: 'cards:item-click',
+      item,
+      index,
+      key: itemKey,
+    };
+    void owner.events.onItemClick?.(itemPayload, {
+      event: itemPayload,
+      evaluationBindings: itemPayload,
+      scope: itemScope,
+    });
   };
 
   return (
@@ -174,7 +170,6 @@ function CardItemView(props: CardItemViewProps) {
       aria-selected={selectionMode !== 'none' ? selected : undefined}
       tabIndex={interactive ? 0 : undefined}
       onClick={interactive ? handleClick : undefined}
-      onKeyDown={interactive ? handleKeyDown : undefined}
       className={cn(
         'transition-colors',
         interactive
@@ -222,7 +217,11 @@ export function CardsRenderer(props: RendererComponentProps<CardsSchema>) {
       selectedKeys: Array.from(next),
       selectionMode,
     };
-    void props.events.onSelectionChange?.(payload, { scope: props.node.scope });
+    void props.events.onSelectionChange?.(payload, {
+      event: payload,
+      evaluationBindings: payload,
+      scope: props.node.scope,
+    });
   };
 
   if (items.length === 0) {

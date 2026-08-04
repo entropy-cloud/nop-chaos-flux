@@ -77,6 +77,12 @@ import {
   JsonViewLabPage,
   LinkLabPage,
   ImageLabPage,
+  CardLabPage,
+  CardsLabPage,
+  EmptyLabPage,
+  ProgressLabPage,
+  SpinnerLabPage,
+  SeparatorLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -157,4 +163,10 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   'json-view': JsonViewLabPage,
   link: LinkLabPage,
   image: ImageLabPage,
+  card: CardLabPage,
+  cards: CardsLabPage,
+  empty: EmptyLabPage,
+  progress: ProgressLabPage,
+  spinner: SpinnerLabPage,
+  separator: SeparatorLabPage,
 };

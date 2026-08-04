@@ -530,6 +530,54 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes:
       'Verify error fallback on missing src and retry recovery when the scope-bound src switches to a valid source (C6.1)',
   },
+  {
+    id: 'card',
+    title: 'Card',
+    tier: 'write',
+    primaryScenario: 'Host card onClick + inner button action (C6.2)',
+    notes:
+      'Verify whole-card onClick dispatch and the inner actions-region button dispatching its own action (C6.2)',
+  },
+  {
+    id: 'cards',
+    title: 'Cards',
+    tier: 'write',
+    primaryScenario: 'Host cards selection modes + item action (C6.2 bug 73 pattern)',
+    notes:
+      'Verify local-only selection (single/multiple/none) with onSelectionChange reports, per-row onItemClick, and embedded item action row-scope isolation in c6-2-host-surfaces.spec.ts (C6.2 bug 73 pattern)',
+  },
+  {
+    id: 'empty',
+    title: 'Empty',
+    tier: 'write',
+    primaryScenario: 'Host empty actions CTA (C6.2)',
+    notes:
+      'Verify the actions-region CTA button dispatches its action and the report flips (C6.2)',
+  },
+  {
+    id: 'progress',
+    title: 'Progress',
+    tier: 'write',
+    primaryScenario: 'Host progress clamp on scope update (C6.2)',
+    notes:
+      'Verify value over max / negative values clamp (aria-valuenow + value display) and follow scope updates (C6.2)',
+  },
+  {
+    id: 'spinner',
+    title: 'Spinner',
+    tier: 'write',
+    primaryScenario: 'Host spinner visible toggle (C6.2)',
+    notes:
+      'Verify meta.visible scope toggle removes the spinner node entirely (C6.2)',
+  },
+  {
+    id: 'separator',
+    title: 'Separator',
+    tier: 'read',
+    primaryScenario: 'Host separator orientations + decorative (C6.2)',
+    notes:
+      'Verify horizontal/vertical aria-orientation, labelled variant and decorative aria-hidden mapping (C6.2)',
+  },
 ];
 
 /** Quick lookup by renderer id */
