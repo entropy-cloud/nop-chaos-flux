@@ -66,6 +66,29 @@ function applyInitialViewport(
   }
 }
 
+/**
+ * 初始视口应用（open-audit P1-A 接线）：props `viewport` policy 为显式首选项；
+ * 无 props policy 时 `config.viewport {x,y,scale}` 作为组态默认初始视口应用（full/reset 路径）。
+ * 两者都无时保持现状。plan `{3}` Phase 2 修正 `applyInitialViewport` 公式后本路径共用。
+ */
+function applyInitialViewportState(
+  runtime: ScadaCanvasRuntime,
+  config: ScadaConfig,
+  policy: { fit?: 'contain' | 'fill'; center?: boolean } | undefined,
+): void {
+  if (policy) {
+    applyInitialViewport(runtime, config, policy);
+    return;
+  }
+  if (config.viewport !== undefined) {
+    runtime.engine.setViewport({
+      x: config.viewport.x,
+      y: config.viewport.y,
+      scale: config.viewport.scale,
+    });
+  }
+}
+
 export interface UseScadaConfigSyncArgs {
   config: ScadaConfig | undefined;
   runtime: ScadaCanvasRuntime | null;
@@ -111,7 +134,7 @@ export function useScadaConfigSync(
         reloadBindings(config.variables, config.symbols);
         // 初始视口策略只在全量（reset）路径应用：diff 增量重应用会重置用户在画布上的平移/缩放，
         // 且绑定域重建（setRuntime 新对象）触发的 effect 重跑应为 diff 空增量不重复执行（gate-4-review m-B）
-        applyInitialViewport(runtime, config, latest.current.viewport);
+        applyInitialViewportState(runtime, config, latest.current.viewport);
         prevRef.current = config;
         latest.current.onBuilt?.();
       } else {
@@ -150,6 +173,8 @@ export function useScadaConfigSync(
       prevRef.current = imported;
       currentRuntime.engine.reset(imported);
       reload(imported.variables, imported.symbols);
+      // import 恒为全量构建：初始视口（props policy 优先，config.viewport 兜底）同样在 reset 期应用
+      applyInitialViewportState(currentRuntime, imported, latest.current.viewport);
       // import 恒为全量构建：change 基准守卫天然满足
       built?.();
     } catch (error) {

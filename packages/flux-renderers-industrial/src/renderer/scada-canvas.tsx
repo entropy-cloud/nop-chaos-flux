@@ -148,7 +148,9 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     enabled: runtime !== null && parsedConfig !== undefined,
     expressionCompiler: rendererRuntime.expressionCompiler,
     env: rendererRuntime.env,
-    onError: handleError,
+    // P1-8 降级契约：flux 数据错误（编译/求值失败）按声明跳过 + 单次去重上报（hook 内 onError），
+    // 不直通 handleError——数据错误不升级画布级 error（§8.1 onError 仅限 config 校验/构建失败），
+    // scope 数据修复后点值自动回流，画面保持 ready。
   });
 
   useScadaHandles({

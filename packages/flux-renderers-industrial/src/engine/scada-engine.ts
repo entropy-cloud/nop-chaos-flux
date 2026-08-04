@@ -184,6 +184,12 @@ export class ScadaCanvasEngine {
   }
 
   reset(config: ScadaConfig): void {
+    // 组态 JSON `background.color` 接线（open-audit P1-A）：reset 期应用 ground 层填充，
+    // 与构造期 `ScadaEngineOptions.background` 同口径（config 经 props 到达，mount 期不可用）。
+    // `background.grid` 为 watch-only（validate 接受但无 runtime 消费面，design-renderer.md §4.2）。
+    if (config.background?.color) {
+      this.app.ground.fill = config.background.color;
+    }
     this.adapter.build(config);
   }
 

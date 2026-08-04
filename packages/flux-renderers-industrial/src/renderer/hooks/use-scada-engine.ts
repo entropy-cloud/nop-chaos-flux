@@ -4,6 +4,7 @@ import { PointStore } from '../../binding/point-store.js';
 import { ReverseIndex } from '../../binding/reverse-index.js';
 import { DirtyCollector, RefreshPipeline, type ApplyAttrs } from '../../binding/dirty-collector.js';
 import { Animator } from '../../binding/animator.js';
+import { StateVisualApplier } from '../../symbols/visual-state.js';
 import type { ScadaSymbolEventName, ScadaSymbolEventPayload } from '../../engine/event-bridge.js';
 import { scadaTestHandleKey, type ScadaTestHandle } from '../../engine/test-handle.js';
 import { errorMessage } from '../scada-errors.js';
@@ -54,6 +55,10 @@ function createBindingDomain(
     getAnimations: (symbolId) => engine.getSymbolDeclarations(symbolId)?.animations,
     animator,
   });
+  // I8.2 视觉状态应用（open-audit P1-B 接线）：消费 `state:change` 事件应用/恢复状态样式；
+  // pipeline 每次重建（mount / reloadBindings）都必须重新 attach（attachTo 返回的退订句柄
+  // 随 pipeline 一起被丢弃，无需显式退订）。
+  new StateVisualApplier(engine).attachTo(pipeline);
   frameRequest.current = () => pipeline.requestRender(applyAttrsOf(engine));
   return { pipeline, animator };
 }
@@ -173,6 +178,12 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
       current.animator.destroy();
       const collector = new DirtyCollector();
       const { pipeline, animator } = createBindingDomain(current.engine, current.pointStore, current.reverseIndex, collector);
+      // P1-2 首帧刷新：绑定域重建后无条件立即触发一次首同步（`synced=false` 全量路径，
+      // 静态/表达式点绑定/状态色/when:'always' 动画首帧即应用）。触发点内置在重建之后、
+      // setRuntime 之前——config-sync 闭包持有的 runtime 是旧对象，外部触发会打到已销毁的
+      // pipeline；此处对新 pipeline 直接 requestRender 保证"重建后即首同步"。full 与非空 diff
+      // 两条路径都经 reloadBindings（diff 新增的静态绑定图元同样需要首同步，不做策略门控）。
+      pipeline.requestRender(applyAttrsOf(current.engine));
       const next: ScadaCanvasRuntime = { ...current, collector, pipeline, animator };
       runtimeRef.current = next;
       setRuntime(next);

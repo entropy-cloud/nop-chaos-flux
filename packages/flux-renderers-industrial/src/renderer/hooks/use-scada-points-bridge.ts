@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { getIn, type ExpressionCompiler, type RendererEnv, type ScopeRef } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import type { ScadaConfig, ScadaPrimitive } from '../../serialization/config-types.js';
@@ -93,6 +93,9 @@ export interface UseScadaPointsBridgeArgs {
  * 点表↔flux 桥接（I10.3，design-renderer.md §8.3/design-data-binding.md §9.1）：
  * useScopeSelector（paths 精细化失效）订阅 scope 数据流 → flux-formula 编译求值 →
  * PointStore.setPointValues 批量注入 → 刷新流水线合帧（不逐点 setState 直刷 React，性能红线）。
+ * 错误降级（P1-8）：单声明编译/求值失败 → 跳过该声明（continue）+ lastError 式去重上报
+ * （同表达式同错误码仅在变化时上报一次；该声明求值成功后清空去重记录，允许下次失败再报），
+ * 不升级画布 status（scada-canvas 不把 onError 直通 handleError，§8.1 onError 仅限 config 错误）。
  */
 export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
   const { config, runtime, enabled = true, expressionCompiler, env, onError } = args;
@@ -107,10 +110,17 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
     },
   );
   const compiledCache = useRef(new Map<string, ReturnType<ExpressionCompiler['compileValue']>>());
+  const lastReportedErrors = useRef(new Map<string, string>());
   const latest = useRef({ expressionCompiler, env, onError });
   useEffect(() => {
     latest.current = { expressionCompiler, env, onError };
   });
+
+  const reportOnce = useCallback((expression: string, code: string, error: unknown) => {
+    if (lastReportedErrors.current.get(expression) === code) return;
+    lastReportedErrors.current.set(expression, code);
+    latest.current.onError?.(code, errorMessage(error));
+  }, []);
 
   useEffect(() => {
     if (!enabled || !config || !runtime) return;
@@ -134,7 +144,7 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
         try {
           compiled = latest.current.expressionCompiler.compileValue(expression);
         } catch (error) {
-          latest.current.onError?.('flux-compile-failed', errorMessage(error));
+          reportOnce(expression, 'flux-compile-failed', error);
           continue;
         }
         compiledCache.current.set(expression, compiled);
@@ -143,9 +153,10 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
       try {
         value = latest.current.expressionCompiler.evaluateValue(compiled, evalScope, latest.current.env);
       } catch (error) {
-        latest.current.onError?.('flux-evaluate-failed', errorMessage(error));
+        reportOnce(expression, 'flux-evaluate-failed', error);
         continue;
       }
+      lastReportedErrors.current.delete(expression);
       if (isScadaPrimitive(value)) {
         values[decl.id] = value;
       }
@@ -154,5 +165,5 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
       runtime.pointStore.setPointValues(values);
       runtime.pipeline.requestRender(runtime.applyAttrs);
     }
-  }, [config, runtime, enabled, scopeData]);
+  }, [config, runtime, enabled, scopeData, reportOnce]);
 }

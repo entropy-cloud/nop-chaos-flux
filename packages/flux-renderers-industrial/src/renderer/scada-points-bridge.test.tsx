@@ -362,4 +362,79 @@ describe('scada-canvas points bridge (I10.3)', () => {
     expect(errors[0].message).toContain('bad flux syntax');
     expect(pendingFlushes.length).toBe(0);
   });
+
+  it('dedupes flux error reports per expression until that declaration evaluates successfully, then recovers (P1-8)', async () => {
+    const environment = createScadaTestEnvironment([], { analog: { temp: null } });
+    const errors: Array<{ code: string; message: string }> = [];
+    const pendingFlushes: Array<() => void> = [];
+    const applied: Array<Record<string, Record<string, unknown>>> = [];
+    const pointStore = new PointStore();
+    const config = bridgeConfig([{ id: 'temp', flux: '$analog.temp.value' }], [
+      {
+        id: 'rect-1',
+        type: 'scada-rect',
+        x: 0,
+        y: 0,
+        text: 'init',
+        bindings: { text: { point: 'temp' } },
+      },
+    ]);
+    pointStore.loadDeclarations(config.variables ?? []);
+    const runtime: ScadaPointsBridgeRuntime = {
+      pointStore,
+      pipeline: new RefreshPipeline({
+        pointStore,
+        reverseIndex: new ReverseIndex(config.symbols),
+        collector: new DirtyCollector({ scheduleTick: () => () => undefined }),
+        scheduleTick: (cb) => {
+          pendingFlushes.push(cb);
+          return () => undefined;
+        },
+      }),
+      applyAttrs: (attrs) => applied.push(attrs as Record<string, Record<string, unknown>>),
+    };
+    function Probe() {
+      useScadaPointsBridge({
+        config,
+        runtime,
+        expressionCompiler,
+        env,
+        onError: (code, message) => errors.push({ code, message }),
+      });
+      return null;
+    }
+    render(
+      <ScadaTestProviders environment={environment}>
+        <Probe />
+      </ScadaTestProviders>,
+    );
+    // 初始求值失败（analog.temp 为 null）→ 上报 1 次
+    await waitFor(() => expect(errors.length).toBe(1));
+    expect(errors[0].code).toBe('flux-evaluate-failed');
+
+    // 多次失败的 scope 更新 → 同表达式同错误码去重（仍 1 次），无值注入
+    act(() => {
+      environment.scope.update('analog', { temp: null, other: 1 });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(errors.length).toBe(1);
+    expect(applied.length).toBe(0);
+
+    // scope 数据修复 → 求值成功 → 点值回流
+    act(() => {
+      environment.scope.update('analog.temp', { value: 42 });
+    });
+    await waitFor(() => expect(pendingFlushes.length).toBeGreaterThan(0));
+    const flush = pendingFlushes.shift() as () => void;
+    flush();
+    await waitFor(() => expect(applied.length).toBe(1));
+    expect(applied[0]).toEqual({ 'rect-1': { text: 42 } });
+
+    // 求值成功清空去重记录 → 再次失败重新上报
+    act(() => {
+      environment.scope.update('analog.temp', null);
+    });
+    await waitFor(() => expect(errors.length).toBe(2));
+    expect(errors[1].code).toBe('flux-evaluate-failed');
+  });
 });

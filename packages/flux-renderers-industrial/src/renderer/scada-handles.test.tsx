@@ -154,10 +154,13 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
 
     const write = await handle.capabilities.invoke('setPointValue', { pointId: 'level', value: 42 }, {});
     expect(write.ok).toBe(true);
+    // P1-2 首帧刷新：表达式点 calc 挂载即求值（@{level} * 2 = 20），进入点表快照；
+    // 写入 level 后等 rAF 合帧 flush 触发依赖链重算（calc → 84），断言确定化
+    await new Promise((resolve) => setTimeout(resolve, 30));
 
     const table = await handle.capabilities.invoke('getPointTable', undefined, {});
     expect(table.ok).toBe(true);
-    expect(table.data).toEqual({ level: 42, speed: 100 });
+    expect(table.data).toEqual({ level: 42, speed: 100, calc: 84 });
 
     const handleWindow = (window as unknown as Record<string, unknown>)[`__flux_scada_9`] as {
       getPointValue: (pointId: string) => unknown;
