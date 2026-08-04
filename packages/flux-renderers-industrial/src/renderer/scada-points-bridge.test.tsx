@@ -586,4 +586,66 @@ describe('scada-canvas points bridge (I10.3)', () => {
     await waitFor(() => expect(errors.length).toBe(2));
     expect(errors[1].code).toBe('flux-evaluate-failed');
   });
+
+  // plan 2026-08-04-2243-1 Phase 2 L5：lastReportedErrors 与 compiledCache 对称清空。
+  // 失败用例（修复前）：config reload 后旧 config 的去重记录抑制新 config 同表达式上报
+  // （plan {2242-1} 接通 onError 后该缺陷变可观测）。修复后 lastReportedErrors 在 config 变更时清空 → 同表达式重报。
+  it('re-reports the same expression error after a config reload (Phase 2 L5: lastReportedErrors sym-clear)', async () => {
+    const environment = createScadaTestEnvironment([], { analog: { temp: null } });
+    const errors: Array<{ code: string; message: string }> = [];
+    const failingEvaluateCompiler = {
+      compileValue: () => ({ kind: 'static', value: 1 }),
+      evaluateValue: () => {
+        throw 'evaluation boom';
+      },
+    } as unknown as typeof expressionCompiler;
+
+    // 两份 config 结构相同（同一表达式 $analog.temp.value）但对象身份不同（模拟 config reload）。
+    // runtime 在组件外构造一次（symbols 跨两份 config 相同，ReverseIndex 恒有效），使 hook 实例
+    // 与 lastReportedErrors ref 跨 config reload 持续存在——L5 验证的正是该 ref 被对称清空。
+    const baseConfig = bridgeConfig([{ id: 'temp', flux: '$analog.temp.value' }]);
+    const pointStore = new PointStore();
+    pointStore.loadDeclarations(baseConfig.variables ?? []);
+    const runtime: ScadaPointsBridgeRuntime = {
+      pointStore,
+      pipeline: new RefreshPipeline({
+        pointStore,
+        reverseIndex: new ReverseIndex(baseConfig.symbols),
+        collector: new DirtyCollector({ scheduleTick: () => () => undefined }),
+        scheduleTick: () => () => undefined,
+      }),
+      applyAttrs: () => undefined,
+    };
+
+    function Probe({ config }: { config: ScadaConfig }) {
+      useScadaPointsBridge({
+        config,
+        runtime,
+        expressionCompiler: failingEvaluateCompiler,
+        env,
+        onError: (code, message) => errors.push({ code, message }),
+      });
+      return null;
+    }
+
+    const config1 = bridgeConfig([{ id: 'temp', flux: '$analog.temp.value' }]);
+    const { rerender } = render(
+      <ScadaTestProviders environment={environment}>
+        <Probe config={config1} />
+      </ScadaTestProviders>,
+    );
+    // 初次求值失败 → 上报 1 次
+    await waitFor(() => expect(errors.length).toBe(1));
+    expect(errors[0].code).toBe('flux-evaluate-failed');
+
+    // config reload（新身份、同表达式）：L5 fix 清空 lastReportedErrors → 同表达式重新上报
+    const config2 = bridgeConfig([{ id: 'temp', flux: '$analog.temp.value' }]);
+    rerender(
+      <ScadaTestProviders environment={environment}>
+        <Probe config={config2} />
+      </ScadaTestProviders>,
+    );
+    await waitFor(() => expect(errors.length).toBe(2));
+    expect(errors[1].code).toBe('flux-evaluate-failed');
+  });
 });

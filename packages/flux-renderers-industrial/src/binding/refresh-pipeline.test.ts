@@ -602,3 +602,55 @@ describe('RefreshPipeline 状态→动画联动 (I6.3)', () => {
     expect(onStateChange).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('RefreshPipeline 销毁门控 + collector 单一 owner (plan 2026-08-04-2243-1 Phase 1 L1/L3)', () => {
+  it('destroy 后 requestRender/flushFrame 均为 no-op（L1：阻断陈旧 runtime 闭包重激活）', () => {
+    const reverseIndex = new ReverseIndex([
+      { id: 'sym', type: 'scada-rect', x: 0, y: 0, bindings: { text: { point: 'p' } } },
+    ]);
+    const pointStore = new PointStore();
+    pointStore.loadDeclarations([{ id: 'p', source: 'static', value: 1 }]);
+    const collector = new DirtyCollector({ scheduleTick: () => () => {} });
+    let tick: (() => void) | undefined;
+    const pipeline = new RefreshPipeline({
+      pointStore,
+      reverseIndex,
+      collector,
+      scheduleTick: (cb) => {
+        tick = cb;
+        return () => {
+          tick = undefined;
+        };
+      },
+    });
+    const applied: Array<Record<string, Record<string, unknown>>> = [];
+    const applyAttrs = (attrs: Record<string, Record<string, unknown>>) => applied.push(attrs);
+
+    pipeline.destroy();
+
+    // destroy 后 requestRender 不调度帧（不设 tick）
+    pointStore.setPointValue('p', 99);
+    pipeline.requestRender(applyAttrs as ApplyAttrs);
+    expect(tick).toBeUndefined();
+    if (tick) tick();
+    // destroy 后 flushFrame no-op 返 false，不写 applyAttrs
+    expect(pipeline.flushFrame(applyAttrs as ApplyAttrs)).toBe(false);
+    expect(applied).toHaveLength(0);
+  });
+
+  it('pipeline.destroy() 是 collector 销毁的单一 owner，仅销毁一次（L3 single-owner）', () => {
+    const reverseIndex = new ReverseIndex([]);
+    const pointStore = new PointStore();
+    const collector = new DirtyCollector({ scheduleTick: () => () => {} });
+    const pipeline = new RefreshPipeline({ pointStore, reverseIndex, collector });
+    const destroySpy = vi.spyOn(collector, 'destroy');
+
+    pipeline.destroy();
+    // 单一 owner：pipeline.destroy() 内部销毁 collector 恰好一次
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+    // 二次调用 pipeline.destroy() 幂等 no-op（不重复销毁 collector）
+    pipeline.destroy();
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+    destroySpy.mockRestore();
+  });
+});

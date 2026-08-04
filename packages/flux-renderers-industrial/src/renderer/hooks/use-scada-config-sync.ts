@@ -170,16 +170,26 @@ export function useScadaConfigSync(
   });
   // importConfig 汇入 props 同步链（P1-5）：syncImported 后 reloadBindings → setRuntime 会触发
   // effect 重跑（deps [config, runtime, reloadBindings]）；若重跑时用过期 prevRef 对 props config 算
-  // diff，非空 diff 会把树刷回 props config——import 变 no-op 闪回。skip-next 标记（计数 + 配置身份
-  // 匹配）仅吞掉同一次提交内的 self-induced 重跑；其后 props 变更（config 身份变化）照常从 imported 基线 diff。
+  // diff，非空 diff 会把树刷回 props config——import 变 no-op 闪回。skip-next 标记（per-import nonce
+  // + 配置身份匹配）仅吞掉同一次提交内的 self-induced 重跑；其后 props 变更（config 身份变化）照常从
+  // imported 基线 diff。
+  // plan 2026-08-04-2243-1 Phase 2 L4：pendingSkip 计数器改 per-import nonce——
+  // import 时生成 nonce 并标记 skip，effect 首次运行即消费该 nonce（不论是否真正 skip），消除
+  // 「identity 不匹配时不递减 → 计数器残留 → 后续 host 新身份巧合匹配 baseline 误 skip」泄漏。
   const lastImportBaselineRef = useRef<ScadaConfig | undefined>(undefined);
-  const pendingSkipRef = useRef(0);
+  const importSeqRef = useRef(0);
+  const pendingSkipNonceRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!runtime || !config) return;
-    if (pendingSkipRef.current > 0 && config === lastImportBaselineRef.current) {
-      pendingSkipRef.current -= 1;
-      return;
+    // L4 nonce：single-use。import 标记 pending nonce，effect 首次运行即消费（不论是否真正 skip），
+    // 消除计数器泄漏。真正 skip 仅当 config 仍是 import 时的 props 基线（self-induced re-run）；
+    // host 并发改了 config（identity 变化）则 nonce 已消费、正常走 sync（不滞留 imported 场景）。
+    if (pendingSkipNonceRef.current !== null) {
+      pendingSkipNonceRef.current = null;
+      if (config === lastImportBaselineRef.current) {
+        return;
+      }
     }
     const strategy = decideSyncStrategy(prevRef.current, config);
     try {
@@ -226,7 +236,8 @@ export function useScadaConfigSync(
     if (!currentRuntime) return;
     try {
       lastImportBaselineRef.current = latest.current.config;
-      pendingSkipRef.current += 1;
+      // L4：per-import nonce（单调递增，唯一标识本次 import 的 self-induced re-run）。
+      pendingSkipNonceRef.current = ++importSeqRef.current;
       prevRef.current = imported;
       currentRuntime.engine.reset(imported);
       // import 为显式全量替换契约（author 意图是换画面）：重置为 init，不保留 props 路径的 live 值
@@ -237,7 +248,8 @@ export function useScadaConfigSync(
       // import 恒为全量构建：change 基准守卫天然满足
       built?.();
     } catch (error) {
-      pendingSkipRef.current = Math.max(0, pendingSkipRef.current - 1);
+      // L4：构建失败时同样消费 nonce（防残留误 skip 下次合法 sync）。
+      pendingSkipNonceRef.current = null;
       // SL-4 fix：import 全量构建失败同样强制下次 full 重建（prevRef 置空），避免损坏基线。
       prevRef.current = undefined;
       buildError?.(

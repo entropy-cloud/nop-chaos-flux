@@ -46,6 +46,9 @@ export class DirtyCollector {
   }
 
   collect(entries: CollectedEntry | CollectedEntry[]): void {
+    // plan 2026-08-04-2243-1 Phase 1 L2：销毁门控对称——destroyed 后 collect no-op，
+    // 阻断陈旧 runtime 闭包（animator 残留 tick / reload 旧 pipeline）向已销毁 collector 写入。
+    if (this.destroyed) return;
     const list = Array.isArray(entries) ? entries : [entries];
     for (const entry of list) {
       if (entry.value === undefined) continue;
@@ -76,6 +79,8 @@ export class DirtyCollector {
 
   /** 帧尾批量写：合并帧一次性写入，单次 applyAttrs 调用。返回是否发生写入。 */
   flush(applyAttrs: ApplyAttrs): boolean {
+    // plan 2026-08-04-2243-1 Phase 1 L2：销毁门控对称——destroyed 后 flush no-op 返 false。
+    if (this.destroyed) return false;
     if (this.pending.size === 0) return false;
     const attrs: Record<string, Partial<ScadaSymbolProps>> = {};
     for (const [symbolId, byProperty] of this.pending) {
@@ -88,6 +93,8 @@ export class DirtyCollector {
 
   /** 强制帧尾批量写（测试/性能测量用）：取消挂起的帧调度并立即 flush。 */
   flushFrame(applyAttrs: ApplyAttrs): boolean {
+    // plan 2026-08-04-2243-1 Phase 1 L2：销毁门控对称——destroyed 后 flushFrame no-op 返 false。
+    if (this.destroyed) return false;
     this.cancelTick?.();
     this.cancelTick = undefined;
     this.frameScheduled = false;
@@ -148,6 +155,9 @@ export class RefreshPipeline {
   private synced = false;
   private frameScheduled = false;
   private cancelFrame: (() => void) | undefined;
+  // plan 2026-08-04-2243-1 Phase 1 L1：销毁门控镜像 DirtyCollector——destroy 后 requestRender/flushFrame
+  // 入口 no-op，阻断 config reload 期 use-scada-points-bridge eval effect 持有的旧 runtime 闭包重激活已销毁 pipeline。
+  private destroyed = false;
 
   constructor(private readonly options: RefreshPipelineOptions) {
     this.scheduleTick = createTickScheduler(options.scheduleTick);
@@ -188,6 +198,8 @@ export class RefreshPipeline {
   }
 
   flushFrame(applyAttrs: ApplyAttrs): boolean {
+    // plan 2026-08-04-2243-1 Phase 1 L1：销毁门控——destroy 后 flushFrame no-op 返 false。
+    if (this.destroyed) return false;
     let changed: string[];
     if (!this.synced) {
       this.synced = true;
@@ -211,7 +223,8 @@ export class RefreshPipeline {
 
   /** 帧对齐（与 animator 时钟共享调度语义）：一帧窗口内多次写入合并为帧尾单次批量写。 */
   requestRender(applyAttrs: ApplyAttrs): void {
-    if (this.frameScheduled) return;
+    // plan 2026-08-04-2243-1 Phase 1 L1：销毁门控——destroy 后 requestRender no-op。
+    if (this.frameScheduled || this.destroyed) return;
     this.frameScheduled = true;
     this.cancelFrame = this.scheduleTick(() => {
       this.frameScheduled = false;
@@ -221,6 +234,10 @@ export class RefreshPipeline {
   }
 
   destroy(): void {
+    // plan 2026-08-04-2243-1 Phase 1 L3：collector 销毁单一 owner——pipeline.destroy() 内部销毁 collector
+    // 为唯一路径（releaseRuntime 不再显式 collector.destroy()）。幂等守卫防二次调用重入。
+    if (this.destroyed) return;
+    this.destroyed = true;
     this.cancelFrame?.();
     this.cancelFrame = undefined;
     this.frameScheduled = false;

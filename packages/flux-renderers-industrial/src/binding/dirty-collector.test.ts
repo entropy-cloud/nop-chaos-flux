@@ -141,3 +141,35 @@ describe('createTickScheduler (I6.1)', () => {
     cancel();
   });
 });
+
+describe('DirtyCollector 销毁门控对称 (plan 2026-08-04-2243-1 Phase 1 L2)', () => {
+  it('destroyed 后 collect/flush/flushFrame/requestRender 全 no-op（与 requestRender 对称）', () => {
+    const collector = new DirtyCollector();
+    collector.collect({ symbolId: 'a', property: 'fill', value: '#111' });
+    expect(collector.hasPending()).toBe(true);
+    collector.destroy();
+    expect(collector.hasPending()).toBe(false);
+
+    const applyAttrs = vi.fn();
+    // collect no-op：不再注入新 pending
+    collector.collect({ symbolId: 'b', property: 'x', value: 9 });
+    expect(collector.hasPending()).toBe(false);
+    // flush no-op 返 false
+    expect(collector.flush(applyAttrs)).toBe(false);
+    // flushFrame no-op 返 false
+    expect(collector.flushFrame(applyAttrs)).toBe(false);
+    // requestRender no-op（不调度帧）
+    collector.requestRender();
+    expect(applyAttrs).not.toHaveBeenCalled();
+  });
+
+  it('destroyed 后 requestRender 不调度帧（即使 collect 在 destroy 前 pending 存在也不复跑）', () => {
+    const scheduleTick = vi.fn(() => () => {});
+    const collector = new DirtyCollector({ scheduleTick });
+    // 先 collect 再 destroy：destroy 清空 pending，requestRender 不应调度
+    collector.collect({ symbolId: 'a', property: 'x', value: 1 });
+    collector.destroy();
+    collector.requestRender();
+    expect(scheduleTick).not.toHaveBeenCalled();
+  });
+});

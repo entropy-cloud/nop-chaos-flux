@@ -67,7 +67,9 @@ function createBindingDomain(
   // I8.2 视觉状态应用（open-audit P1-B 接线）：消费 `state:change` 事件应用/恢复状态样式；
   // pipeline 每次重建（mount / reloadBindings）都必须重新 attach（attachTo 返回的退订句柄
   // 随 pipeline 一起被丢弃，无需显式退订）。
-  new StateVisualApplier(engine).attachTo(pipeline);
+  // plan 2026-08-04-2243-1 Phase 3 W3：传 collector 使 revert 经脏收集合帧（单一 applyAttrs owner），
+  // active-state 样式由 collectStates 写入、revert 由本层汇入同一帧尾 flush。
+  new StateVisualApplier(engine, collector).attachTo(pipeline);
   frameRequest.current = () => pipeline.requestRender(applyAttrsOf(engine));
   return { pipeline, animator };
 }
@@ -115,9 +117,10 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
     observerRef.current = undefined;
     const current = runtimeRef.current;
     if (!current) return;
+    // plan 2026-08-04-2243-1 Phase 1 L3：collector 销毁单一 owner——pipeline.destroy() 内部销毁 collector
+    // 为唯一路径，此处不再显式 collector.destroy()（消除双销毁依赖幂等）。pipeline/animator/engine 各自独立销毁。
     current.pipeline.destroy();
     current.animator.destroy();
-    current.collector.destroy();
     current.engine.destroy();
     runtimeRef.current = null;
     setRuntime(null);

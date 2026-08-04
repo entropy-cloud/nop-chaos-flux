@@ -224,11 +224,16 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     runtime,
     destroy,
     onDestroyed: handleDestroyed,
-    reloadConfig: (config) => {
-      const current = runtimeRef.current;
-      if (!current) return;
-      syncImported(config);
-    },
+    // plan 2026-08-04-2243-1 Phase 3 L6：reloadConfig 稳定身份（依赖 runtime + syncImported），
+    // 消除每渲染新内联箭头 → useScadaHandles effect 不每渲染重登/反注 handle。
+    reloadConfig: useCallback(
+      (config: ScadaConfig) => {
+        const current = runtimeRef.current;
+        if (!current) return;
+        syncImported(config);
+      },
+      [syncImported],
+    ),
   });
 
   const { loading, empty } = props.regions;

@@ -216,8 +216,12 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
   });
 
   // WD-3：config 变更（含绑定域重载）时清空 compiledCache，杜绝长会话无界增长
+  // plan 2026-08-04-2243-1 Phase 2 L5：与 compiledCache 对称清空 lastReportedErrors——
+  // config reload 后旧 config 的去重记录会抑制新 config 同表达式的错误上报（plan `{2242-1}`
+  // 接通 onError 后该缺陷变可观测）。对称清空使新 config 的同表达式错误能正常重新上报。
   useEffect(() => {
     compiledCache.current.clear();
+    lastReportedErrors.current.clear();
   }, [config]);
 
   const reportOnce = useCallback((expression: string, code: string, error: unknown) => {

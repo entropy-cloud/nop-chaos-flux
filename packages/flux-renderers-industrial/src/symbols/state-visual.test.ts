@@ -239,6 +239,94 @@ describe('StateVisualApplier (I8.2 视觉状态应用，消费 I6.3 状态机输
   });
 });
 
+// plan 2026-08-04-2243-1 Phase 3 W3：状态样式写入单一合帧 owner。
+// 裁定：active-state 样式 owner = collectStates（脏收集批量写）；revert owner = StateVisualApplier
+// （经 collector.collect 汇入同一帧尾 flush）。两模块对同字段同帧不再并发写。
+// Proof：alarm-storm（多图元同帧状态切换）engine.applyAttrs 调用次数 ≤ 帧数（合帧），而非 N+1。
+describe('StateVisualApplier 状态样式合帧 owner (plan 2026-08-04-2243-1 Phase 3 W3)', () => {
+  it('alarm-storm：多图元同帧切换状态 → engine.applyAttrs 恰好 1 次/帧（active 由 collectStates 合帧，revert 经 collector 合帧）', () => {
+    const N = 6;
+    const symbols: ScadaSymbolNode[] = [];
+    for (let i = 0; i < N; i++) {
+      symbols.push({
+        id: `s${i}`,
+        type: 'scada-rect',
+        x: 0,
+        y: 0,
+        bindings: { fill: { point: `flag-${i}` } },
+        states: {
+          states: {
+            run: { style: { fill: '#00aa00' } },
+            fault: { style: { fill: '#ff0000' } },
+            off: {},
+          },
+          valueMap: { 0: 'run', 1: 'fault', 2: 'off' },
+        },
+      });
+    }
+    const config: ScadaConfig = { version: 1, symbols };
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    engine.reset(config);
+    const pointStore = new PointStore();
+    const declarations = symbols.map((_, i) => ({ id: `flag-${i}`, source: 'static' as const, value: 0 }));
+    pointStore.loadDeclarations(declarations);
+    const reverseIndex = new ReverseIndex(config.symbols);
+    const collector = new DirtyCollector({ scheduleTick: () => () => {} });
+    const pipeline = new RefreshPipeline({
+      pointStore,
+      reverseIndex,
+      collector,
+      getStates: (id) => engine.getConfigNode(id)?.states,
+      getAnimations: (id) => engine.getConfigNode(id)?.animations,
+    });
+    // W3 关键：visual-state 传入 collector → revert 经脏收集合帧（非 immediate applyAttrs）
+    new StateVisualApplier(engine, collector).attachTo(pipeline);
+
+    const applyAttrsSpy = vi.spyOn(engine, 'applyAttrs');
+    const flush = () => pipeline.flushFrame((attrs) => engine.applyAttrs(attrs));
+
+    // 帧 1：全量首同步，N 个图元进入 run（active-state 样式由 collectStates 批量写）
+    flush();
+    // 单一合帧 owner：N 个图元的状态切换收敛为 1 次 engine.applyAttrs（而非 N+1：N immediate + 1 flush）
+    expect(applyAttrsSpy).toHaveBeenCalledTimes(1);
+    const frame1Arg = applyAttrsSpy.mock.calls[0][0] as Record<string, Record<string, unknown>>;
+    expect(Object.keys(frame1Arg).length).toBe(N);
+    for (let i = 0; i < N; i++) {
+      expect(frame1Arg[`s${i}`]?.fill).toBe('#00aa00');
+    }
+    applyAttrsSpy.mockClear();
+
+    // 帧 2：全部 run → fault（active 切换，仍由 collectStates 合帧）
+    for (let i = 0; i < N; i++) pointStore.setPointValue(`flag-${i}`, 1);
+    flush();
+    expect(applyAttrsSpy).toHaveBeenCalledTimes(1);
+    const frame2Arg = applyAttrsSpy.mock.calls[0][0] as Record<string, Record<string, unknown>>;
+    for (let i = 0; i < N; i++) {
+      expect(frame2Arg[`s${i}`]?.fill).toBe('#ff0000');
+    }
+    applyAttrsSpy.mockClear();
+
+    // 帧 3：全部 fault → off（off 无 style，revert 由 visual-state 经 collector 合帧，仍 1 次 applyAttrs）
+    for (let i = 0; i < N; i++) pointStore.setPointValue(`flag-${i}`, 2);
+    flush();
+    // revert 也合帧：N 个退出恢复收敛为 1 次 engine.applyAttrs（修复前 visual-state 会 N 次 immediate）
+    expect(applyAttrsSpy).toHaveBeenCalledTimes(1);
+    applyAttrsSpy.mockRestore();
+    engine.destroy();
+  });
+
+  it('collectStates 仍是 active-state 样式 owner（visual-state 不再 immediate 写 active）', () => {
+    // visual-state 不传 collector（回退路径）时也不写 active——active 始终由 collectStates 经 flush 写。
+    // 断言：仅 attach visual-state（无 collector）后，active 样式仍出现在 flush 批量写中（来自 collectStates）。
+    const { engine, setFlag, flush } = createHarness({ version: 1, symbols: [pumpNode()] });
+    setFlag(1);
+    flush();
+    // active-state fill 来自 collectStates 批量写（visual-state 仅追踪/恢复，不写 active）
+    expect((engine.getSymbolProps('pump') as { fill?: string }).fill).toBe('#ff0000');
+    engine.destroy();
+  });
+});
+
 describe('InteractionOverlay (I8.2 sky 交互覆盖层，leafer-state-primitive-drift 回退路径)', () => {
   it('should be lazily available only when the interactionLayer option is enabled', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });

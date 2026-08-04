@@ -1,7 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { computeSymbolBounds } from './use-scada-config-sync.js';
+import { describe, it, expect, vi } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
+import { computeSymbolBounds, useScadaConfigSync } from './use-scada-config-sync.js';
 import { MAX_SCALE, MIN_SCALE, fit } from '../../engine/viewport.js';
-import type { ScadaSymbolNode } from '../../serialization/config-types.js';
+import type { ScadaSymbolNode, ScadaConfig } from '../../serialization/config-types.js';
+import type { ScadaCanvasRuntime } from './use-scada-engine.js';
 
 describe('computeSymbolBounds — custom.points 几何族 (plan 2026-08-04-1558-3 Phase 1)', () => {
   it('derives bounds from custom.points ({x,y} 形式) 而非退化为 0 尺寸', () => {
@@ -136,5 +138,95 @@ describe('computeSymbolBounds / viewport pipeline — omitted x/y contract (plan
     expect(Number.isFinite(state.scale)).toBe(true);
     expect(state.scale).toBeGreaterThanOrEqual(MIN_SCALE);
     expect(state.scale).toBeLessThanOrEqual(MAX_SCALE);
+  });
+});
+
+// plan 2026-08-04-2243-1 Phase 2 L4：pendingSkip 计数器改 per-import nonce 收口泄漏。
+// 失败用例（修复前）：import 后 host 并发改 config（identity 不匹配 baseline）→ 旧计数器不递减 →
+// 残留 → 后续 host 重发与 baseline 同身份的 config 时被误 skip（画布滞留 imported 场景，prevRef 静默前进）。
+// nonce 修复：skip 标记 single-use，effect 首次运行即消费（不论 identity 是否匹配），不残留。
+describe('useScadaConfigSync pendingSkip per-import nonce (plan 2026-08-04-2243-1 Phase 2 L4)', () => {
+  const sym = (id: string, x = 0): ScadaSymbolNode => ({ id, type: 'scada-rect', x, y: 0 });
+  // cfgA 与 leak-step 重发使用同一常量引用（身份匹配 baseline 是泄漏触发条件）。
+  const cfgA: ScadaConfig = { version: 1, variables: [], symbols: [sym('a', 0)] };
+  const cfgAprime: ScadaConfig = { version: 1, variables: [], symbols: [sym('a', 99)] };
+  const cfgImported: ScadaConfig = { version: 1, variables: [], symbols: [sym('imp', 0)] };
+
+  interface FakeRuntimeEngine {
+    reset: ReturnType<typeof vi.fn>;
+    applyDiff: ReturnType<typeof vi.fn>;
+  }
+  type FakeRuntime = { engine: FakeRuntimeEngine };
+
+  it('nonce consumed once even when a concurrent non-matching config change occurs (no leak → re-sent baseline still syncs)', () => {
+    const reset = vi.fn();
+    const applyDiff = vi.fn();
+    const reload = vi.fn();
+    const onBuilt = vi.fn();
+    let runtime: FakeRuntime = { engine: { reset, applyDiff } };
+
+    const { result, rerender } = renderHook(
+      (props: { config: ScadaConfig; runtime: FakeRuntime }) =>
+        useScadaConfigSync({
+          config: props.config,
+          runtime: props.runtime as unknown as ScadaCanvasRuntime,
+          reloadBindings: reload,
+          onBuilt,
+        }),
+      { initialProps: { config: cfgA, runtime } },
+    );
+
+    // step 1：mount → full sync cfgA → reset(cfgA)
+    expect(reset).toHaveBeenCalledWith(cfgA);
+    expect(applyDiff).not.toHaveBeenCalled();
+
+    // step 2：import cfgImported（nonce 标记，prevRef=imported，reset(imported)）
+    act(() => result.current.syncImported(cfgImported));
+    expect(reset).toHaveBeenCalledWith(cfgImported);
+
+    // step 3：模拟 reload setRuntime（新 runtime 身份）+ host 并发改 cfgAprime（identity 不匹配 baseline cfgA）
+    // 修复前：计数器不递减（残留）；修复后：nonce 首次运行即消费。两条都走正常 diff sync。
+    runtime = { engine: { reset, applyDiff } };
+    rerender({ config: cfgAprime, runtime });
+    expect(applyDiff).toHaveBeenCalledTimes(1);
+
+    // step 4：host 重发 cfgA（identity === baseline）。
+    // 修复前（计数器泄漏）：counter>0 && cfgA===baseline → 误 skip → applyDiff 不递增（仍 1）。
+    // 修复后（nonce 已消费）：正常 diff sync → applyDiff 递增到 2。
+    rerender({ config: cfgA, runtime });
+    expect(applyDiff).toHaveBeenCalledTimes(2);
+  });
+
+  it('self-induced re-run after import (same config identity) is still skipped (nonce preserves skip intent)', () => {
+    const reset = vi.fn();
+    const applyDiff = vi.fn();
+    const reload = vi.fn();
+    const onBuilt = vi.fn();
+    let runtime: FakeRuntime = { engine: { reset, applyDiff } };
+
+    const { result, rerender } = renderHook(
+      (props: { config: ScadaConfig; runtime: FakeRuntime }) =>
+        useScadaConfigSync({
+          config: props.config,
+          runtime: props.runtime as unknown as ScadaCanvasRuntime,
+          reloadBindings: reload,
+          onBuilt,
+        }),
+      { initialProps: { config: cfgA, runtime } },
+    );
+
+    expect(reset).toHaveBeenCalledWith(cfgA);
+    reset.mockClear();
+
+    act(() => result.current.syncImported(cfgImported));
+    expect(reset).toHaveBeenCalledWith(cfgImported);
+    reset.mockClear();
+
+    // self-induced re-run：reload 产新 runtime，config 仍为 baseline cfgA（身份匹配）→ skip。
+    // 不应再次 reset/import（import 已应用）。
+    runtime = { engine: { reset, applyDiff } };
+    rerender({ config: cfgA, runtime });
+    expect(reset).not.toHaveBeenCalled();
+    expect(applyDiff).not.toHaveBeenCalled();
   });
 });

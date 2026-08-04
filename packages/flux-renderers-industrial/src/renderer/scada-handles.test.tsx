@@ -4,7 +4,8 @@ import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-co
 import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
-import { createScadaTestEnvironment, renderScadaCanvas } from '../test-support/renderer-test-support.js';
+import { ScadaTestProviders, createScadaTestEnvironment, renderScadaCanvas } from '../test-support/renderer-test-support.js';
+import { ScadaCanvasRenderer } from './scada-canvas.js';
 import type { ScadaCanvasSchema } from '../schemas.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 
@@ -277,5 +278,31 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
     const symbols = await handle.capabilities.invoke('getSymbols', undefined, {});
     expect(symbols.ok).toBe(true);
     expect(symbols.data).toEqual([]);
+  });
+
+  // plan 2026-08-04-2243-1 Phase 3 L6：reloadConfig 包 useCallback → 稳定身份。
+  // useScadaHandles effect deps 含 reloadConfig；稳定后 re-render（同 props）不重跑 effect → 不重登 handle。
+  // 修复前：reloadConfig 为内联箭头（每渲染新身份）→ effect 每渲染重跑 → register 每渲染重登/反注。
+  it('reloadConfig stable identity → handle not re-registered on same-props re-render (Phase 3 L6)', async () => {
+    const environment = createScadaTestEnvironment([]);
+    const registerSpy = vi.spyOn(environment.componentRegistry, 'register');
+    const props = makeProps();
+    const view = renderScadaCanvas(props, environment);
+    await resolveScadaHandle(environment);
+    const mountCount = registerSpy.mock.calls.length;
+    expect(mountCount).toBeGreaterThanOrEqual(1);
+
+    // 同 props re-render（新 wrapper 元素，逻辑 props 不变）：reloadConfig 稳定 → effect 不重跑。
+    view.rerender(
+      <ScadaTestProviders environment={environment}>
+        <ScadaCanvasRenderer {...props} />
+      </ScadaTestProviders>,
+    );
+    await waitFor(() =>
+      expect(environment.componentRegistry.resolve({ componentId: 'scada-1' })).toBeDefined(),
+    );
+    // L6 fix：register 不随渲染递增（仍是 mountCount）。修复前会 +1（effect 重跑重登）。
+    expect(registerSpy.mock.calls.length).toBe(mountCount);
+    registerSpy.mockRestore();
   });
 });
