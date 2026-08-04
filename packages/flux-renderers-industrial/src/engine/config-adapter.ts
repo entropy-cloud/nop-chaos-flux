@@ -89,8 +89,10 @@ export class ConfigAdapter {
     if (isContainer) {
       const group = new Group({
         name: node.id,
-        x: node.x,
-        y: node.y,
+        // plan 2026-08-04-2242-2 Fix-4：省略 x/y 时默认 0（与 boundsOfNode/interaction-overlay 一致），
+        // 避免 undefined 原样透传 leafer Group transform（与 bounds consumer 同型 NaN 源）。
+        x: node.x ?? 0,
+        y: node.y ?? 0,
         rotation: node.rotation,
         visible: node.visible,
         opacity: node.opacity,

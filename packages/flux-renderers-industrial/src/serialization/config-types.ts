@@ -54,8 +54,10 @@ export interface ScadaSymbolEvent {
 export interface ScadaSymbolNode {
   id: string;
   type: string;
-  x: number;
-  y: number;
+  /** 节点原点 x（可选 + 默认 0；plan 2026-08-04-2242-2：三层契约收敛——type/validator/runtime-consumer 同读「可选 + 默认 0」，与同接口 width/height/rotation/scale 一致，bounds consumer 经 `?? 0` 兜底） */
+  x?: number;
+  /** 节点原点 y（可选 + 默认 0；plan 2026-08-04-2242-2） */
+  y?: number;
   width?: number;
   height?: number;
   rotation?: number;

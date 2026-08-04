@@ -50,7 +50,9 @@ function boundsOfNode(node: ScadaSymbolNode): Bounds | undefined {
   if (pointsBounds !== undefined) return pointsBounds;
   const width = node.width ?? 0;
   const height = node.height ?? 0;
-  return { x: node.x, y: node.y, width, height };
+  // plan 2026-08-04-2242-2 Fix-1：省略 x/y 时默认 0（与 interaction-overlay.ts:43-44 一致），
+  // 避免 node.x/node.y 原样透传 undefined → NaN bounds → NaN viewport → 静默空白画布。
+  return { x: node.x ?? 0, y: node.y ?? 0, width, height };
 }
 
 function boundsFromCustomPoints(node: ScadaSymbolNode): Bounds | undefined {
@@ -81,7 +83,8 @@ function boundsFromCustomPoints(node: ScadaSymbolNode): Bounds | undefined {
     }
   }
   if (!Number.isFinite(minX)) return undefined;
-  return { x: node.x + minX, y: node.y + minY, width: maxX - minX, height: maxY - minY };
+  // plan 2026-08-04-2242-2 Fix-2：省略 x/y 时原点默认 0（undefined + number = NaN 防御）。
+  return { x: (node.x ?? 0) + minX, y: (node.y ?? 0) + minY, width: maxX - minX, height: maxY - minY };
 }
 
 function applyInitialViewport(

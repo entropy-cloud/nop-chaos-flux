@@ -30,7 +30,14 @@ export function clampScale(scale: number): number {
 }
 
 export function clampViewport(state: ViewportState): ViewportState {
-  return { x: state.x, y: state.y, scale: clampScale(state.scale) };
+  // plan 2026-08-04-2242-2 Fix-3：关闭 position 放大器——非有限 x/y（NaN/Infinity）回落 0，
+  // 与 clampScale 的 Number.isFinite 防御对称。使任何来源的 NaN position 都无法驻留 leafer
+  // zoomLayer transform（旧实现仅钳 scale、x/y 原样透传 → NaN 经 applyViewportState 永久驻留）。
+  return {
+    x: Number.isFinite(state.x) ? state.x : 0,
+    y: Number.isFinite(state.y) ? state.y : 0,
+    scale: clampScale(state.scale),
+  };
 }
 
 export function worldToViewport(state: ViewportState, world: Point): Point {

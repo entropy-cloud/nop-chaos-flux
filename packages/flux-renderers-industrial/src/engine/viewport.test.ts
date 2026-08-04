@@ -133,8 +133,24 @@ describe('viewport pure logic', () => {
       expect(clampScale(Infinity)).toBe(MIN_SCALE);
     });
 
-    it('clampViewport should clamp scale only', () => {
+    it('clampViewport should preserve finite translation while clamping scale', () => {
       expect(clampViewport({ x: 5, y: 6, scale: 0.01 })).toEqual({ x: 5, y: 6, scale: MIN_SCALE });
+    });
+
+    // Proof-3 (plan 2026-08-04-2242-2 Phase 1, 失败用例先行)：clampViewport 放大器——
+    // 非有限 x/y（NaN/Infinity）必须回落 0，使任何来源的 NaN position 都无法驻留 leafer zoomLayer transform。
+    // Fix 前应失败（x/y 原样透传 NaN/Infinity）。
+    it('clampViewport should fall back non-finite x/y to 0 (plan 2026-08-04-2242-2 Proof-3)', () => {
+      expect(clampViewport({ x: Number.NaN, y: Number.NaN, scale: 0.1 })).toEqual({
+        x: 0,
+        y: 0,
+        scale: 0.1,
+      });
+      expect(clampViewport({ x: Infinity, y: -Infinity, scale: 1 })).toEqual({
+        x: 0,
+        y: 0,
+        scale: 1,
+      });
     });
   });
 });
