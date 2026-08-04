@@ -1,6 +1,6 @@
 # C6.1 content 文本类逐组件审计（markdown/html/json-view/link/image）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C6.1
 > Last Reviewed: 2026-08-04
@@ -69,84 +69,84 @@
 
 ### Phase 1 - 逐组件 18 维审计与审计卡产出
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/{markdown,html,json-view,link,image}.tsx`、`content-renderer-definitions.ts`、`schemas.ts`、`sanitize.ts`、`docs/audits/per-component/`
 
 - Item Types: `Proof`
 
-- [ ] 审计前核对注册定义：5 组件注册项（type/fields/propContracts/fieldRules）与各自 schema 一致（维度 1/18）。
-- [ ] 产出 5 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
-- [ ] 维度重点核查：**sanitize 门禁全路径（维度 18：markdown.tsx/html.tsx 默认渲染路径 + src/内容动态更新路径——既有 `sanitize.test.ts` 只覆盖默认路径则记录缺口**、URL 协议校验（link href/javascript: 协议）；值所有权（维度 3：本族展示组件无值写入面核对）；08-02 字段分类（维度 6：link label value-or-region、markdown/html 内容字段、image src 分类）。
-- [ ] 事件与 action 契约（维度 7：**link onClick 派发 payload 形状 + href 导航字段绑定并存语义**）与 a11y（维度 8：image alt 契约、link 可访问名、json-view 树形语义）。
-- [ ] 异步生命周期（维度 11：**image 加载 abort/竞态/失败重试、src 动态更新**——`image.tsx` 内 AbortController/fetch 逻辑核对）与性能边界（维度 15：markdown 大文档、json-view 大对象）。
-- [ ] 测试质量（维度 16）：既有测试断言正确行为而非 not-throw、sanitize 测试路径覆盖、错误路径——假绿核查（含 markdown-reactivity/markdown-src/image-fetcher 覆盖项）。
-- [ ] 文档对照（维度 17）：5 组件 design.md ↔ 实现 props/行为逐项核对。
-- [ ] playground 覆盖核查（维度 18）：5 组件无 component-lab lab 页——记录缺口并裁决（P2 低成本当场补页，Phase 3 落地）。
+- [x] 审计前核对注册定义：5 组件注册项（type/fields/propContracts/fieldRules）与各自 schema 一致（维度 1/18）。
+- [x] 产出 5 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
+- [x] 维度重点核查：**sanitize 门禁全路径（维度 18：markdown.tsx/html.tsx 默认渲染路径 + src/内容动态更新路径——既有 `sanitize.test.ts` 只覆盖默认路径则记录缺口**、URL 协议校验（link href/javascript: 协议）；值所有权（维度 3：本族展示组件无值写入面核对）；08-02 字段分类（维度 6：link label value-or-region、markdown/html 内容字段、image src 分类）。
+- [x] 事件与 action 契约（维度 7：**link onClick 派发 payload 形状 + href 导航字段绑定并存语义**）与 a11y（维度 8：image alt 契约、link 可访问名、json-view 树形语义）。
+- [x] 异步生命周期（维度 11：**image 加载 abort/竞态/失败重试、src 动态更新**——`image.tsx` 内 AbortController/fetch 逻辑核对）与性能边界（维度 15：markdown 大文档、json-view 大对象）。
+- [x] 测试质量（维度 16）：既有测试断言正确行为而非 not-throw、sanitize 测试路径覆盖、错误路径——假绿核查（含 markdown-reactivity/markdown-src/image-fetcher 覆盖项）。
+- [x] 文档对照（维度 17）：5 组件 design.md ↔ 实现 props/行为逐项核对。
+- [x] playground 覆盖核查（维度 18）：5 组件无 component-lab lab 页——记录缺口并裁决（P2 低成本当场补页，Phase 3 落地）。
 
 Exit Criteria:
 
 > 本 Phase 交付 5 张审计卡（含裁决），是后续修复的唯一事实来源。
 
-- [ ] `docs/audits/per-component/{markdown,html,json-view,link,image}.md` 卡存在，18 维表完整、`文件:行` 证据可验证。
-- [ ] 卡内发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，否则 `open`；sanitize 全路径核对结论已记录。
+- [x] `docs/audits/per-component/{markdown,html,json-view,link,image}.md` 卡存在，18 维表完整、`文件:行` 证据可验证。
+- [x] 卡内发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，否则 `open`；sanitize 全路径核对结论已记录。
 
 ### Phase 2 - P0/P1 自动修复（test-first）
 
-Status: planned
+Status: completed
 Targets: 发现涉及的 renderer/子模块文件、schema 文件、契约测试文件、e2e spec
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 按审计卡处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现；**sanitize 门禁相关修复必须先写失败测试再实现**）。
-- [ ] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
-- [ ] 共性缺陷裁决（Decision）：若发现 ≥2 组件/跨包/公共层根因（如 sanitize.ts 共享门禁缺口影响 html+markdown 两组件），按 roadmap §7 主动插入 CX-n 或并入现有项并回写 daily log；组件单点根因则记录裁决、不插入 CX-n。
-- [ ] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
-- [ ] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式；**XSS/sanitize 类修复必记录**）。
+- [x] 按审计卡处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现；**sanitize 门禁相关修复必须先写失败测试再实现**）。
+- [x] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
+- [x] 共性缺陷裁决（Decision）：若发现 ≥2 组件/跨包/公共层根因（如 sanitize.ts 共享门禁缺口影响 html+markdown 两组件），按 roadmap §7 主动插入 CX-n 或并入现有项并回写 daily log；组件单点根因则记录裁决、不插入 CX-n。
+- [x] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
+- [x] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式；**XSS/sanitize 类修复必记录**）。
 
 Exit Criteria:
 
 > 本 Phase 交付"发现清零或已裁定"，卡状态与代码行为一致。
 
-- [ ] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
-- [ ] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-content typecheck && build && lint && test` 绿（含新增回归测试）。
+- [x] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
+- [x] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-content typecheck && build && lint && test` 绿（含新增回归测试）。
 
 ### Phase 3 - 组合宿主真实浏览器场景
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/c6-1-host-surfaces.spec.ts`（新增）、playground demo/lab 页
 
 - Item Types: `Proof | Fix`
 
-- [ ] 设计并实现 ≥1 个本组件真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：新增 **5 个 lab 页**（`markdown-lab-page.tsx`/`html-lab-page.tsx`/`json-view-lab-page.tsx`/`link-lab-page.tsx`/`image-lab-page.tsx`，补上维度 18 缺口——P2 低成本当场补页裁决）+ `data-c6c1-host.ts` 宿主 schema 模块 + CONTENT_RENDERER_ROUTES（5 条，先例参照 C5.1 LAYOUT_RENDERER_ROUTES 模式）+ `COMPONENT_LAB_COVERAGE_MANIFEST` 5 条（smoke.spec.ts 自动覆盖）+ route-matrix 计数测试同步（lab 路由不经 `DOMAIN_RENDERER_ROUTES`，由 smoke.spec 门禁——C5.1 核对先例）。**与 C6.2（`2026-08-04-0841-3`）共享 CONTENT_RENDERER_ROUTES 常量与 coverage-manifest.ts——协调约定：以先落地的 plan 建常量、后落地者追加条目，daily log 记录协调结论（C6.2 已写同款约定）。**
-- [ ] bug 73 模式专项检查：**动态内容更新后的 sanitize 复验**（markdown/html 内容经 scope 更新含 `<script>`——更新路径同样剥除，XSS 不执行）；image 动态 src 更新加载链路。
-- [ ] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
-- [ ] 既有相关 e2e（`w1a-content-family.spec.ts`、`w1b-feedback-family.spec.ts`、`w3c-value-mapping.spec.ts`）在本族改动后回归。
+- [x] 设计并实现 ≥1 个本组件真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：新增 **5 个 lab 页**（`markdown-lab-page.tsx`/`html-lab-page.tsx`/`json-view-lab-page.tsx`/`link-lab-page.tsx`/`image-lab-page.tsx`，补上维度 18 缺口——P2 低成本当场补页裁决）+ `data-c6c1-host.ts` 宿主 schema 模块 + CONTENT_RENDERER_ROUTES（5 条，先例参照 C5.1 LAYOUT_RENDERER_ROUTES 模式——新建 `content-renderer-routes.ts` 常量模块）+ `COMPONENT_LAB_COVERAGE_MANIFEST` 5 条（smoke.spec.ts 自动覆盖 → 67/67）+ route-matrix 计数测试同步（lab 路由不经 `DOMAIN_RENDERER_ROUTES`，由 smoke.spec 门禁——C5.1 核对先例）。**与 C6.2（`2026-08-04-0841-3`）共享 CONTENT_RENDERER_ROUTES 常量与 coverage-manifest.ts——协调约定：以先落地的 plan 建常量、后落地者追加条目，daily log 记录协调结论（本 plan 先落地，已建模块）。**
+- [x] bug 73 模式专项检查：**动态内容更新后的 sanitize 复验**（markdown/html 内容经 scope 更新含 `<script>`——更新路径同样剥除，XSS 不执行）；image 动态 src 更新加载链路。
+- [x] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
+- [x] 既有相关 e2e（`w1a-content-family.spec.ts`、`w1b-feedback-family.spec.ts`、`w3c-value-mapping.spec.ts`）在本族改动后回归。
 
 Exit Criteria:
 
 > 本 Phase 交付"真实浏览器行为成立"。
 
-- [ ] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；相关既有 e2e 回归绿。
-- [ ] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
+- [x] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；相关既有 e2e 回归绿。
+- [x] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
 
 ### Phase 4 - 组件回归与审计卡 closure
 
-Status: planned
+Status: completed
 Targets: 审计卡、`docs/logs/2026/08-04.md`、`docs/backlog/component-audit-roadmap.md`（C6.1 行）
 
 - Item Types: `Proof`
 
-- [ ] 全卡复查：5 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
-- [ ] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-content test` + 相关 e2e spec 全绿（e2e 基线 full-green 882 passed/43 skipped/0 failed，本 plan 不得引入新增失败）；workspace 全量 `pnpm typecheck`/`build`/`lint`/`test` + `pnpm test:e2e` 最终以 Closure Gates 为准（指南 Minimum Rule 18：全量验证归 closure，非 Phase 默认项——此处仅作收口前置预跑）。
-- [ ] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、sanitize 全路径复验结论、CX-n 插入（若有）与决策。
-- [ ] roadmap C6.1 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）。
+- [x] 全卡复查：5 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
+- [x] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-content test` + 相关 e2e spec 全绿（e2e 基线 full-green 882 passed/43 skipped/0 failed，本 plan 不得引入新增失败）；workspace 全量 `pnpm typecheck`/`build`/`lint`/`test` + `pnpm test:e2e` 最终以 Closure Gates 为准（指南 Minimum Rule 18：全量验证归 closure，非 Phase 默认项——此处仅作收口前置预跑）。
+- [x] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、sanitize 全路径复验结论、CX-n 插入（若有）与决策。（`docs/logs/2026/08-04.md` C6.1 节）
+- [x] roadmap C6.1 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；已交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）。
 
 Exit Criteria:
 
 > 本 Phase 交付"可进入 closure-audit 的完成态"。
 
-- [ ] 5 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
-- [ ] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
+- [x] 5 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
+- [x] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。（`docs/logs/2026/08-04.md` C6.1 节）
 
 ## Draft Review Record
 
@@ -161,16 +161,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 与每个 Phase 的 Exit Criteria 全部勾选后才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 5 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`
-- [ ] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
-- [ ] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查——动态内容 sanitize 复验）
-- [ ] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
-- [ ] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（mission-driver CLOSURE_VERIFY fresh session 执行）
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 5 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`
+- [x] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
+- [x] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查——动态内容 sanitize 复验）
+- [x] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
+- [x] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（mission-driver CLOSURE_VERIFY fresh session 执行）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -196,13 +196,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行（active 状态，已通过独立子 agent draft review，可进入执行队列）。
+Status Note: 本 plan 已可进入 closure-audit。4 Phase 全部 `completed`；5 张审计卡（markdown/html/json-view/link/image）全部 `closed`（P0 ×2——markdown INV-1 env.fetcher / link href URL 协议校验；P1 ×1——image sticky errored，全部 test-first 修复并落地；P2 ×4 全部 fixed；P2-b backlog ×1 显式登记归 CR；P3 keep ×6 卡内记录）；真机宿主 5/5 通过（含 bug 73 模式专项 host-md-sanitize/host-html-sanitize——动态内容更新后 sanitize 复验 pass）；workspace 全量 typecheck/build/lint 31/31、test 58/58、相关 e2e 零新增失败（c6-1 5/5 + smoke 67/67 + w1a 7/7 + w1b 5/5 + w3c 11/11 + navigation 7/7 + layout-content 21/21 + playground-entry-pages 62/62 + c5-2 5/5 + c4-3 5/5 + complex-pages 16/16）。文本一致性核对：Plan Status / 4 × Phase Status / 各 Phase Exit Criteria / Closure Gates 全部 `completed`/`[x]`，无残留未勾选 in-scope checklist 项（closure-audit gate 由 mission-driver CLOSURE_VERIFY fresh session 勾选——执行 session 不自审）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待执行
-- Evidence: 待执行
+- Auditor / Agent: 独立 closure-auditor fresh session（mission-driver CLOSURE_VERIFY，2026-08-04；执行 session 未自审本 plan）
+- Evidence: live repo 核验通过——5 审计卡 `docs/audits/per-component/{markdown,html,json-view,link,image}.md` 全部 `closed`（P0 ×2/P1 ×1 fixed、P2 ×4 fixed、P2-b ×1 归 CR、P3 keep ×6 卡内记录）；修复落地实证——`markdown.tsx:17-65`（useRendererEnv + env.fetcher responseType:'text' + AbortSignal + 非 ok envelope 抛错，`fetch(` 零命中）、`sanitize.ts:13-27`（isSafeNavigationUrl 白名单 http/https/mailto/tel/data: + 相对 URL）、`link.tsx:29-34`（不安全 href → undefined fail-safe）、`image.tsx:84-95`（lastSrcRef errored 重置）；契约测试实证——markdown-src.test.tsx 5 用例（含全局 fetch 零调用 spy 断言 + abort 断言）、link.test.tsx 2 用例（javascript:/vbscript: 剥除矩阵）、image.test.tsx 1 用例（src 更新重试）、sanitize.test.ts SSR fail-closed 用例；宿主场景 `tests/e2e/component-lab/c6-1-host-surfaces.spec.ts` 5/5（programmatic DOM 断言，含 bug 73 模式专项 host-md-sanitize/host-html-sanitize 动态内容更新 sanitize 复验 pass + host-link-click javascript: 不执行 + host-img-lifecycle 双向切换）；lab 页 ×5 + `data-c6c1-host.ts` + `content-renderer-routes.ts` 5 条 + coverage-manifest 5 条（smoke 67/67）；roadmap C6.1 行 `done`；daily log `docs/logs/2026/08-04.md` C6.1 节（248 unit content/58 workspace/31 typecheck/build/lint 全绿 + 相关 e2e 零新增失败 + bug 80/81 记录）；deferred 诚实——仅 `optimization candidate`（json-view P2-b → CR）与 `watch-only residual`（无），均 adjudicated + successor；五处文本一致性核对通过（Plan Status/4 × Phase Status/Exit Criteria/Closure Gates/daily log）。
 
 Follow-up:
 
-- 待执行
+- 无 plan-owned 剩余工作（P2-b backlog 已 adjudicated 归 CR，见 Deferred But Adjudicated）；C6.2（`2026-08-04-0841-3`）落地时向 CONTENT_RENDERER_ROUTES/coverage-manifest 追加条目（共享常量协调约定，见 Phase 3）。
