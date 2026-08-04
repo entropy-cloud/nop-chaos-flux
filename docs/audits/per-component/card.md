@@ -1,0 +1,51 @@
+# 审计卡：card（flux-renderers-content）
+
+> 状态: closed
+> 审查日期: 2026-08-04
+> 审查 plan: `docs/plans/2026-08-04-0841-3-c6-2-content-status-feedback-family-audit.md`
+> 注册定义: `packages/flux-renderers-content/src/content-renderer-definitions.ts:100` | 渲染器: `packages/flux-renderers-content/src/card.tsx:7` | design.md: `docs/components/card/design.md` | playground: `apps/playground/src/component-lab/renderers/card-lab-page.tsx` | e2e: `tests/e2e/w1b-feedback-family.spec.ts`（card 场景）、`tests/e2e/component-lab/c6-2-host-surfaces.spec.ts`
+
+## 组件身份
+
+card / flux-renderers-content / CardSchema（`schemas.ts:93-112`）/ defaultSchema `{type:'card', body:[]}`（定义 `:104`）/ 表单参与: 无 / widget 展示容器 renderer（自样式 + region 组合，`data-slot="card"`）
+
+## 18 维审查记录
+
+| #   | 维度                        | 结论 | 证据                                                                                                                                                                                                                                                                                                                                                              | 发现                                                         |
+| --- | --------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 1   | Schema 契约                 | pass | 注册项 `content-renderer-definitions.ts:100-117` fields（title value-or-region/header/body/footer/actions region/image/imageClassName/variant prop/onClick event）与 CardSchema `schemas.ts:93-112` 一致；defaultSchema `{type:'card', body:[]}` 合理；category `layout` 与 roadmap 归属说明一致（注册 data 族外的 layout 分类，非本族缺陷）                      | —                                                            |
+| 2   | RendererComponentProps 合规 | pass | `card.tsx:7-75` 仅读 props.props/meta/regions/events/helpers（helpers 未用）；无 store 直接访问；无 ad-hoc context                                                                                                                                                                                                                                                | —                                                            |
+| 3   | 值所有权三态                | n-a  | 展示容器无值所有权（design.md §7）                                                                                                                                                                                                                                                                                                                                | —                                                            |
+| 4   | 表单参与                    | n-a  | 非表单字段，无 name/validation 泄漏                                                                                                                                                                                                                                                                                                                               | —                                                            |
+| 5   | DOM 与选择器契约            | pass | 根 `nop-card` marker（`card.tsx:43`）+ ui Card `data-slot="card"`（`packages/ui/src/components/ui/card.tsx:15`）+ `data-variant`（`card.tsx:40`）+ testid/cid 透传；image `data-slot="card-image"`、header region `data-slot="card-header-region"`、footer region `data-slot="card-footer-region"`、actions `data-slot="card-actions"`（`:49/:56/:63/:68`）均稳定 | —                                                            |
+| 6   | 嵌套 schema 分类            | pass | title value-or-region（定义 `:107`）、header/body/footer/actions region（`:108-111`）、onClick event（`:115`）——08-02 机制分类与实现消费一致；无 deepFields 残留（live grep 零命中）；onClick 以节点 scope 求值（design.md §8：独立 card 无 per-row itemScope）                                                                                                   | —                                                            |
+| 7   | 事件与 action 契约          | pass | `onClick` 派发原始 MouseEvent（`card.tsx:25-31`，`void onClick?.(event)` 与 link.tsx 同型惯例）；ui Card 在 onClick 存在时自动补 `role="button"`/`tabIndex=0`/Enter/Space 键盘激活（`packages/ui/src/components/ui/card.tsx:23-36`）——键盘路径实测单一派发（见修复记录回归）                                                                                      | —                                                            |
+| 8   | a11y                        | pass | onClick 时 role=button + tabIndex=0 + Enter/Space 激活（ui 层）；无 onClick 时纯展示（无多余 role）                                                                                                                                                                                                                                                               | —                                                            |
+| 9   | i18n                        | pass | 无硬编码文案（title/body 等均 schema 驱动）                                                                                                                                                                                                                                                                                                                       | —                                                            |
+| 10  | 四态覆盖                    | pass | 空 card（无任何 region/title）渲染空壳不崩溃；无加载/错误/禁用语义（展示容器）                                                                                                                                                                                                                                                                                    | —                                                            |
+| 11  | 异步生命周期                | n-a  | 无异步                                                                                                                                                                                                                                                                                                                                                            | —                                                            |
+| 12  | 组合宿主场景                | pass | w1b card 场景（四 region + onClick flag）+ c6-2 宿主 host-card-click（card onClick + 内嵌按钮 action 并存，onClick 派发 + 内嵌 action 独立派发）                                                                                                                                                                                                                  | —                                                            |
+| 13  | 样式契约                    | pass | widget 自样式（ui Card 视觉壳）；`cn()` 合并（`card.tsx:43/:50`）；无 BEM；无硬编码布局类（imageClassName 作者通道 L14 契约已测）                                                                                                                                                                                                                                 | —                                                            |
+| 14  | React 19 规范               | fail | `card.tsx:26-31` `useCallback(handleClick, [onClick])` 冗余——无 memo 收益（React Compiler 基线），react19-optimization-candidates 工具命中（card.tsx:26）                                                                                                                                                                                                         | **P3-1：冗余 useCallback**（风格 nit，不处理，工具候选留档） |
+| 15  | 性能边界                    | pass | 无订阅/监听器；useCallback 依赖仅 onClick（latest-ref 语义由 events 对象保证）                                                                                                                                                                                                                                                                                    | —                                                            |
+| 16  | 测试质量                    | pass | card.test.tsx 7 用例断言正确行为（region 渲染/图片/变体/onClick 派发/无 handler 不绑定/子交互不阻断）；无 not-throw 空断言；错误路径 n-a                                                                                                                                                                                                                          | —                                                            |
+| 17  | 文档对照                    | pass | design.md ↔ 实现一致（字段 §4/§5、regions §6、L14 imageClassName `:36`、§8 onClick 节点 scope、§10 nop-card marker）                                                                                                                                                                                                                                              | —                                                            |
+| 18  | 注册、包边界与 IO/安全红线  | pass | 定义 `:100` + 包 index.ts 导出（`index.ts:40`）+ registerContentRenderers；无浏览器 IO；无 dangerouslySetInnerHTML；demo 宿主 `w1b-content-feedback-demo.tsx:100` + lab 页（Phase 3 补）                                                                                                                                                                          | —                                                            |
+
+## 发现清单
+
+- [P3-1] 冗余 useCallback（`card.tsx:26`）→ 状态: keep（P3 卡内记录，不处理）
+
+## 组合宿主场景（真实浏览器验证）
+
+- 场景: card onClick + 内嵌按钮 action 组合宿主（host-card-click，c6-2-host-surfaces.spec.ts） | 断言: programmatic DOM——card onClick 派发 flag 翻转、内嵌按钮 action 独立派发且不触发 card onClick | 结果: **pass**（click flag 'pending'→'clicked'；内嵌按钮 action 计数 0→1 而 card flag 不变）
+- 场景: card 内嵌按钮 action item 值正确（bug 73 模式 companion，host-cards-action 卡内复验） | 结果: pass
+
+## 修复记录
+
+- P0/P1: 无。P3-1 卡内记录。
+- 验证: `pnpm --filter @nop-chaos/flux-renderers-content typecheck/build/lint/test` 全绿（248 → 254 tests）；c6-2 宿主 spec 7/7；w1b-feedback-family 5/5 回归。
+
+## Closure
+
+- 独立 closure audit: 待 mission-driver CLOSURE_VERIFY fresh session（证据位置: plan Closure 节）

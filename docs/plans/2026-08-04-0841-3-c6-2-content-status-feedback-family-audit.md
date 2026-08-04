@@ -1,6 +1,6 @@
 # C6.2 content 状态反馈类逐组件审计（card/cards/empty/progress/spinner/separator）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C6.2
 > Last Reviewed: 2026-08-04
@@ -70,84 +70,84 @@
 
 ### Phase 1 - 逐组件 18 维审计与审计卡产出
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/{card,cards-renderer,empty,progress,spinner,separator}.tsx`、`content-renderer-definitions.ts`、`schemas.ts`、`docs/audits/per-component/`
 
 - Item Types: `Proof`
 
-- [ ] 审计前核对注册定义：6 组件注册项（type/fields/propContracts/fieldRules）与各自 schema 一致（维度 1/18）。
-- [ ] 产出 6 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
-- [ ] 维度重点核查：值所有权三态（维度 3：**cards 选择态契约核对——local controlled only（selectionMode none/single/multiple + onSelectionChange `{selectedKeys, selectionMode}`）、与 design.md:40/52-54 一致、无死字段/暗示性声明残留**）；08-02 字段分类（维度 6：card/empty region + action 分类、cards 单集合字段、无 deepFields 残留）。
-- [ ] 事件与 action 契约（维度 7：card onClick、cards onSelectionChange payload 与 eventContracts 一致、empty actions 内嵌 action 派发）与 a11y（维度 8：progress role/aria、spinner 语义、cards aria-selected）。
-- [ ] 异步生命周期（维度 11：本族基本无异步——核对无泄漏/无 abort 缺口）与性能边界（维度 15：cards 大量项渲染、progress 更新频率）。
-- [ ] 测试质量（维度 16）：既有测试断言正确行为而非 not-throw、**cards-selection-itemaction.test.tsx 内嵌 action 覆盖核查**、DOM 契约断言、错误路径——假绿核查。
-- [ ] 文档对照（维度 17）：6 组件 design.md ↔ 实现 props/行为逐项核对。
-- [ ] playground 覆盖核查（维度 18）：6 组件无 component-lab lab 页——记录缺口并裁决（P2 低成本当场补页，Phase 3 落地）。
+- [x] 审计前核对注册定义：6 组件注册项（type/fields/propContracts/fieldRules）与各自 schema 一致（维度 1/18）。
+- [x] 产出 6 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
+- [x] 维度重点核查：值所有权三态（维度 3：**cards 选择态契约核对——local controlled only（selectionMode none/single/multiple + onSelectionChange `{selectedKeys, selectionMode}`）、与 design.md:40/52-54 一致、无死字段/暗示性声明残留**）；08-02 字段分类（维度 6：card/empty region + action 分类、cards 单集合字段、无 deepFields 残留）。
+- [x] 事件与 action 契约（维度 7：card onClick、cards onSelectionChange payload 与 eventContracts 一致、empty actions 内嵌 action 派发）与 a11y（维度 8：progress role/aria、spinner 语义、cards aria-selected）。
+- [x] 异步生命周期（维度 11：本族基本无异步——核对无泄漏/无 abort 缺口）与性能边界（维度 15：cards 大量项渲染、progress 更新频率）。
+- [x] 测试质量（维度 16）：既有测试断言正确行为而非 not-throw、**cards-selection-itemaction.test.tsx 内嵌 action 覆盖核查**、DOM 契约断言、错误路径——假绿核查。
+- [x] 文档对照（维度 17）：6 组件 design.md ↔ 实现 props/行为逐项核对。
+- [x] playground 覆盖核查（维度 18）：6 组件无 component-lab lab 页——记录缺口并裁决（P2 低成本当场补页，Phase 3 落地）。
 
 Exit Criteria:
 
 > 本 Phase 交付 6 张审计卡（含裁决），是后续修复的唯一事实来源。
 
-- [ ] `docs/audits/per-component/{card,cards,empty,progress,spinner,separator}.md` 卡存在，18 维表完整、`文件:行` 证据可验证。
-- [ ] 卡内发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，否则 `open`；08-02 机制复验结论已记录。
+- [x] `docs/audits/per-component/{card,cards,empty,progress,spinner,separator}.md` 卡存在，18 维表完整、`文件:行` 证据可验证。
+- [x] 卡内发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，否则 `open`；08-02 机制复验结论已记录。
 
 ### Phase 2 - P0/P1 自动修复（test-first）
 
-Status: planned
+Status: completed
 Targets: 发现涉及的 renderer/子模块文件、schema 文件、契约测试文件、e2e spec
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 按审计卡处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现）。
-- [ ] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
-- [ ] 共性缺陷裁决（Decision）：若发现 ≥2 组件/跨包/公共层根因，按 roadmap §7 主动插入 CX-n 或并入现有项并回写 daily log；组件单点根因则记录裁决、不插入 CX-n。
-- [ ] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
-- [ ] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md`、`docs/bugs/79-*.md` 格式）。
+- [x] 按审计卡处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现）。
+- [x] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
+- [x] 共性缺陷裁决（Decision）：若发现 ≥2 组件/跨包/公共层根因，按 roadmap §7 主动插入 CX-n 或并入现有项并回写 daily log；组件单点根因则记录裁决、不插入 CX-n。
+- [x] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
+- [x] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md`、`docs/bugs/79-*.md` 格式）。
 
 Exit Criteria:
 
 > 本 Phase 交付"发现清零或已裁定"，卡状态与代码行为一致。
 
-- [ ] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
-- [ ] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-content typecheck && build && lint && test` 绿（含新增回归测试）。
+- [x] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
+- [x] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-content typecheck && build && lint && test` 绿（含新增回归测试）。
 
 ### Phase 3 - 组合宿主真实浏览器场景
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/c6-2-host-surfaces.spec.ts`（新增）、playground demo/lab 页
 
 - Item Types: `Proof | Fix`
 
-- [ ] 设计并实现 ≥1 个本组件真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：新增 **6 个 lab 页**（`card-lab-page.tsx`/`cards-lab-page.tsx`/`empty-lab-page.tsx`/`progress-lab-page.tsx`/`spinner-lab-page.tsx`/`separator-lab-page.tsx`，补上维度 18 缺口——P2 低成本当场补页裁决）+ `data-c6c2-host.ts` 宿主 schema 模块 + CONTENT_RENDERER_ROUTES（6 条，与 C6.1 的 5 条共用 CONTENT_RENDERER_ROUTES 常量——两 plan 并行需协调，以先落地的 plan 建常量、后落地者追加，daily log 记录协调结论）+ `COMPONENT_LAB_COVERAGE_MANIFEST` 6 条（smoke.spec.ts 自动覆盖）+ route-matrix 计数测试同步（lab 路由不经 `DOMAIN_RENDERER_ROUTES`，由 smoke.spec 门禁——C5.1 核对先例）。
-- [ ] bug 73 模式专项检查：**cards 选择 + 内嵌 action 组合宿主**（cards-item 内嵌按钮 action 提交正确 item scope 值，行污染模式复验）；card 内嵌按钮 + onClick 并存。
-- [ ] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
-- [ ] 既有相关 e2e（`w1b-feedback-family.spec.ts`、`w2a-data-composition.spec.ts`、`m4-data.spec.ts`）在本族改动后回归。
+- [x] 设计并实现 ≥1 个本组件真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：新增 **6 个 lab 页**（`card-lab-page.tsx`/`cards-lab-page.tsx`/`empty-lab-page.tsx`/`progress-lab-page.tsx`/`spinner-lab-page.tsx`/`separator-lab-page.tsx`，补上维度 18 缺口——P2 低成本当场补页裁决）+ `data-c6c2-host.ts` 宿主 schema 模块 + CONTENT_RENDERER_ROUTES（6 条，与 C6.1 的 5 条共用 CONTENT_RENDERER_ROUTES 常量——**协调结论：C6.1 先落地建常量模块，C6.2 追加 6 条（11 条）**）+ `COMPONENT_LAB_COVERAGE_MANIFEST` 6 条（smoke.spec.ts 自动覆盖 → 73/73）+ route-matrix 计数测试同步（lab 路由不经 `DOMAIN_RENDERER_ROUTES`，由 smoke.spec 门禁——C5.1 核对先例；route-matrix liveTotal 动态求和 11 条 content routes 自动一致）。
+- [x] bug 73 模式专项检查：**cards 选择 + 内嵌 action 组合宿主**（cards-item 内嵌按钮 action 提交正确 item scope 值，行污染模式复验——probe `Beta`/`Gamma` 逐行隔离实证）；card 内嵌按钮 + onClick 并存。
+- [x] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。（**宿主实证暴露 P1-2：cards 事件派发未注入 evaluationBindings payload——onSelectionChange/onItemClick action args 读不到 payload 字段（`${selectedKeys}` 静默不生效）——test-first 修复并回填卡内**）
+- [x] 既有相关 e2e（`w1b-feedback-family.spec.ts`、`w2a-data-composition.spec.ts`、`m4-data.spec.ts`）在本族改动后回归。
 
 Exit Criteria:
 
 > 本 Phase 交付"真实浏览器行为成立"。
 
-- [ ] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；相关既有 e2e 回归绿。
-- [ ] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
+- [x] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；相关既有 e2e 回归绿。
+- [x] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
 
 ### Phase 4 - 组件回归与审计卡 closure
 
-Status: planned
+Status: completed
 Targets: 审计卡、`docs/logs/2026/08-04.md`、`docs/backlog/component-audit-roadmap.md`（C6.2 行）
 
 - Item Types: `Proof`
 
-- [ ] 全卡复查：6 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
-- [ ] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-content test` + 相关 e2e spec 全绿（e2e 基线 full-green 882 passed/43 skipped/0 failed，本 plan 不得引入新增失败）；workspace 全量 `pnpm typecheck`/`build`/`lint`/`test` + `pnpm test:e2e` 最终以 Closure Gates 为准（指南 Minimum Rule 18：全量验证归 closure，非 Phase 默认项——此处仅作收口前置预跑）。
-- [ ] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、08-02 机制复验结论、CX-n 插入（若有）与决策、与 C6.1 的 CONTENT_RENDERER_ROUTES 协调结论。
-- [ ] roadmap C6.2 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）。
+- [x] 全卡复查：6 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
+- [x] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-content test` + 相关 e2e spec 全绿（e2e 基线 full-green 882 passed/43 skipped/0 failed，本 plan 不得引入新增失败）；workspace 全量 `pnpm typecheck`/`build`/`lint`/`test` + `pnpm test:e2e` 最终以 Closure Gates 为准（指南 Minimum Rule 18：全量验证归 closure，非 Phase 默认项——此处仅作收口前置预跑）。
+- [x] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、08-02 机制复验结论、CX-n 插入（若有）与决策、与 C6.1 的 CONTENT_RENDERER_ROUTES 协调结论。（`docs/logs/2026/08-04.md` C6.2 节）
+- [x] roadmap C6.2 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；已交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）。
 
 Exit Criteria:
 
 > 本 Phase 交付"可进入 closure-audit 的完成态"。
 
-- [ ] 6 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
-- [ ] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
+- [x] 6 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
+- [x] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
 
 ## Draft Review Record
 
@@ -162,16 +162,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 与每个 Phase 的 Exit Criteria 全部勾选后才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 6 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`
-- [ ] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
-- [ ] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查——cards 选择 + 内嵌 action）
-- [ ] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
-- [ ] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（mission-driver CLOSURE_VERIFY fresh session 执行）
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 6 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`
+- [x] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
+- [x] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查——cards 选择 + 内嵌 action）
+- [x] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
+- [x] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准——cards design.md §8 补 payload 契约；无 quick-reference 变更）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（mission-driver CLOSURE_VERIFY fresh session 执行——2026-08-04 本 closure-audit pass 已勾选，证据见 `## Closure` / `Closure Audit Evidence`）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -197,13 +197,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行（active 状态，已通过独立子 agent draft review，可进入执行队列）。
+Status Note: 本 plan 已可进入 closure-audit。4 Phase 全部 `completed`；6 张审计卡（card/cards/empty/progress/spinner/separator）全部 `closed`（P0 ×0；P1 ×2——cards 键盘激活双重派发（onItemClick ×2）/ cards 事件 payload 未注入 evaluationBindings（onSelectionChange/onItemClick action args 读不到 payload 字段），全部 test-first 修复并落地；P2 ×7——cards P2-1 aria-selected/role 组合归 CR backlog、lab 页 ×6 fixed；P3 keep ×4 卡内记录）；真机宿主 7/7 通过（含 bug 73 模式专项 host-cards-action——item 内嵌 action probe `Beta`/`Gamma` 逐行隔离 + onItemClick payload+scope 双源 `Beta|2`/`Alpha|1` 实证）；workspace 全量 typecheck/build/lint 31/31、test 58/58、相关 e2e 零新增失败（c6-2 7/7 + smoke 73/73 + w1b 5/5 + w2a 5/5 + m4 + c6-1 5/5 + w1a 7/7，共 107 项回归）；CONTENT_RENDERER_ROUTES 协调结论：C6.1 先落地建常量模块（5 条），C6.2 追加 6 条（11 条）——daily log 记录。文本一致性核对：Plan Status / 4 × Phase Status / 各 Phase Exit Criteria / Closure Gates 全部 `completed`/`[x]`，无残留未勾选 in-scope checklist 项（closure-audit gate 由 mission-driver CLOSURE_VERIFY fresh session 勾选——执行 session 不自审）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待执行
-- Evidence: 待执行
+- Auditor / Agent: mission-driver CLOSURE_VERIFY 独立 fresh session（closure-audit pass，2026-08-04）
+- Evidence: 独立 audit 实况复核（live repo 全量核验）——6 审计卡存在且全部 `状态: closed`、P0 ×0 / P1 ×2 修复记录可核验；修复落地实证（`cards-renderer.tsx` 无 handleKeyDown 残留、onItemClick `:159` 与 onSelectionChange `:222` 注入 `evaluationBindings: payload`）；契约测试文件存在（`cards-keyboard.test.tsx`、`cards-selection-itemaction.test.tsx`）；宿主场景 `tests/e2e/component-lab/c6-2-host-surfaces.spec.ts` 7 用例（host-cards-select/host-cards-action bug 73/host-card-click/host-empty-cta/host-progress-clamp/spinner/separator）audit 当场复跑 7/7 通过；lab 页 ×6 + `data-c6c2-host.ts`（6 probe）+ `RENDERER_LAB_REGISTRY` 6 条 + CONTENT_RENDERER_ROUTES 11 条（5 C6.1 + 6 C6.2）+ coverage-manifest 6 条 C6.2 条目；roadmap C6.2 行 `done`；daily log `docs/logs/2026/08-04.md` C6.2 节存在；bug notes `docs/bugs/82-*.md`/`83-*.md` 存在；audit 当场复跑 `pnpm --filter @nop-chaos/flux-renderers-content test` 254/254 绿；文本一致性核对通过（Plan Status / 4 × Phase Status / Exit Criteria / Closure Gates / Closure 证据五处一致）；deferred 诚实——仅 `optimization candidate`（cards P2-1 → CR）与 `watch-only residual`（无条目），均 adjudicated + successor，无 in-scope live defect 被降级；anti-hollow 检查通过（无空壳实现/无未接线代码）
 
 Follow-up:
 
-- 待执行
+- 无 plan-owned 剩余工作（cards P2-1 a11y backlog 已 adjudicated 归 CR，见 Deferred But Adjudicated）。

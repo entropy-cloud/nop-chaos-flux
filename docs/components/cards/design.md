@@ -46,6 +46,7 @@
 - 推荐最小事件为 `onItemClick`、`onSelectionChange`。
 - `onItemClick`（CD4 锁定）：action 的求值/target scope 是 **per-row itemScope**（`cards-renderer.tsx:125,151-154`，每张卡 `helpers.createScope({ item, index })`，dispatch 时 `{ scope: itemScope }`）。故 action 内 `${item.x}` / `${index}` 解析到**被点行**的值（非 root），`setValue` 写入也落到该行的 itemScope。回归锚：`cards-selection-itemaction.test.tsx`「onItemClick reads ${item.label} and resolves to the CLICKED row」。
 - `onSelectionChange` 的 dispatch scope 是 cards 节点 scope（page 级，`cards-renderer.tsx:225`），与 `onItemClick` 的 per-row itemScope 区分明确。
+- **事件 payload 契约（C6.2 追加）**：两个事件派发时均携带 `event: payload` + `evaluationBindings: payload`（steps/button-group 同族惯例）——`onItemClick` 的 `{item, index, key}` 与 `onSelectionChange` 的 `{selectedKeys, selectionMode}` 字段可直接在 action args 模板中引用（`${key}`/`${selectedKeys}` 等）。回归锚：`cards-selection-itemaction.test.tsx`「payload fields resolve in action args templates」+ 宿主 `host-cards-action`（probe `Beta|2`）。
 
 ## 8.1 advertised-but-dead 契约诚实裁定
 
