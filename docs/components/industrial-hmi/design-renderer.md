@@ -186,7 +186,7 @@ interface ScadaSymbolNode {
 
 - `loading`：受控 region，`params: []`。config 未 resolve/校验中渲染；缺省为轻量占位（避免默认空屏闪烁）。
 - `empty`：受控 region，`params: [{ error }]`。config 非法（校验失败）或场景构建失败时渲染错误提示；缺省显示错误文案（i18n，I15.1）。
-- 根容器 slot：`data-slot="scada-canvas"`（canvas 元素），HTML 覆盖层 slot `data-slot="scada-canvas-overlay"`（React 渲染的 DOM 覆盖层，design-engine.md §6 图层表；弹窗走既有 dialog/drawer，不占此 slot）。
+- 根容器 slot：`data-slot="scada-canvas"`（canvas 元素）。HTML 覆盖层（hover/selected 反馈）渲染在 leafer sky 层（`InteractionOverlay`），**不产 DOM marker / 不占 data-slot**（与 §10 一致；弹窗走既有 dialog/drawer）。
 
 ## 7. 运行期状态归属
 
@@ -266,12 +266,12 @@ interface ScadaSymbolNode {
 
 ## 10. 样式与 DOM marker 约定
 
-| DOM 元素    | marker class              | data-slot              |
-| ----------- | ------------------------- | ---------------------- |
-| 根容器      | `nop-scada-canvas`        | `scada-canvas`         |
-| canvas 画布 | `nop-scada-canvas-canvas` | `scada-canvas-canvas`  |
-| 加载占位    | —                         | `scada-canvas-loading` |
-| 错误提示    | —                         | `scada-canvas-error`   |
+| DOM 元素    | marker class               | data-slot              |
+| ----------- | -------------------------- | ---------------------- |
+| 根容器      | `nop-scada-canvas`         | `scada-canvas`         |
+| canvas 画布 | `nop-scada-canvas-canvas`  | `scada-canvas-canvas`  |
+| 加载占位    | `nop-scada-canvas-loading` | `scada-canvas-loading` |
+| 错误提示    | `nop-scada-canvas-error`   | `scada-canvas-error`   |
 
 - 根容器尺寸策略：`width: 100%; height: 100%`（`width`/`height` props 显式覆盖）；canvas 绝对定位铺满根容器；
 - `data-slot="scada-canvas-canvas"` 落在真实 leafer `<canvas>` DOM 元素上（plan 2026-08-04-1558-3 Phase 1：引擎创建后由 renderer effect 标注），DOM 断言直接命中渲染画布（TE-3 黑屏兜底基础）；wrapper 占位 div 仅保留 `nop-scada-canvas-canvas` marker class 供 CSS 定位规则稳定命中（F8）；

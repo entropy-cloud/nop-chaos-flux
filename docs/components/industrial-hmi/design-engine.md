@@ -247,6 +247,9 @@ interface ScadaEngineOptions {
     getPointValue(pointId: string): unknown;
     getViewport(): { x: number; y: number; scale: number };
     forceRender(): void;
+    // 以下两项为 dev/test 专用注入通道（非 scada-canvas 公共契约，仅 exposeTestHandle 时挂载）：
+    setPointValues?: (values: Record<string, ScadaPrimitive>) => void; // I14.1 perf-injection-channel 批量注入
+    measureAddStrategies?: (count: number) => AddStrategyTiming; // gate-3-review §10 m-8 batch.add 对照探针
   }
   ```
   > **强类型缺失注记（impl drift，2026-08-04）**：上述接口面在 impl `engine/test-handle.ts:9-21` 全部以 `unknown` 出现（`engine`/`tree`/`app`/`getSymbol`/`getPointValue`，仅 `getViewport` 为强类型 `ViewportState`）——根因为 `engine/test-handle.ts` 强类型引用 `ScadaCanvasEngine`/`Leaf`/`App` 会形成与 `scada-engine.ts` 的循环导入。本档保留强类型接口面作契约示意；impl 走 `unknown`，消费方（e2e/单测）按上述结构断言。

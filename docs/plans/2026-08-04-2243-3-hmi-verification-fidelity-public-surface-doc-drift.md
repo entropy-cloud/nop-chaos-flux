@@ -1,6 +1,6 @@
 # {2243-3} HMI — Verification Fidelity, Public Surface & Doc-Drift Hardening
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: industrial-hmi
 > Work Item: Follow-up Backlog §2026-08-04-2242 post-remediation audit (Test effectiveness dim 14/23 + Public API dim 03 + Documentation drift dim 16 + Wiring dead-code)
 > Last Reviewed: 2026-08-05
@@ -73,59 +73,59 @@
 
 ### Workstream 1 - Mock fidelity（T1 + T2）
 
-Status: planned
+Status: completed
 Targets: `src/test-support/leafer-ui-mock.ts`
 
 - Item Types: `Fix`（mock↔real 漂移）
 
-- [ ] T1：`MockApp`/`MockTree` 的 `zoomLayer` getter 返 `this`（对齐真实 `tree.zoomLayer === tree`）。注：这不是纯 getter 改写——`MockZoomLayer` 承载 P1-9 建模的 `scaleOfWorld`/`scaleX`/`scaleY`/`move`/`moveCalls`/`scaleOfWorldCalls` 等专有成员，`MockLeaf`/`MockGroup`/`MockLeafer` 当前没有；Phase 内需让 tree 身份继承/混入这些能力（或调整 mock 类型层级），并扫描修正既有假设独立身份的断言，保留 P1-9 锚定副作用建模一致性
-- [ ] T2：`MockLeaf`/`MockGroup` 加 `getBoundsToWorld`/`worldBox`/`getBounds()` stub，抛「mock 不建模 bounds API」错（或返回确定性退化值——Decision，倾向抛错以暴露误用）
-- [ ] Proof：mock-invariant 单测——(a) `app.tree.zoomLayer === app.tree`；(b) 调 bounds API 抛预期错；既有 leafer mock 消费者套件全绿
+- [x] T1：`MockApp`/`MockTree` 的 `zoomLayer` getter 返 `this`（对齐真实 `tree.zoomLayer === tree`）。注：这不是纯 getter 改写——`MockZoomLayer` 承载 P1-9 建模的 `scaleOfWorld`/`scaleX`/`scaleY`/`move`/`moveCalls`/`scaleOfWorldCalls` 等专有成员，`MockLeaf`/`MockGroup`/`MockLeafer` 当前没有；Phase 内需让 tree 身份继承/混入这些能力（或调整 mock 类型层级），并扫描修正既有假设独立身份的断言，保留 P1-9 锚定副作用建模一致性
+- [x] T2：`MockLeaf`/`MockGroup` 加 `getBoundsToWorld`/`worldBox`/`getBounds()` stub，抛「mock 不建模 bounds API」错（或返回确定性退化值——Decision，倾向抛错以暴露误用）
+- [x] Proof：mock-invariant 单测——(a) `app.tree.zoomLayer === app.tree`；(b) 调 bounds API 抛预期错；既有 leafer mock 消费者套件全绿
 
 Exit Criteria:
 
-- [ ] `zoomLayer === tree` 身份对齐，mock-invariant 单测入库，既有套件全绿
-- [ ] bounds API stub 行为明确（抛错或退化），单测入库
-- [ ] 包级 `pnpm --filter @nop-chaos/flux-renderers-industrial test` 全绿
+- [x] `zoomLayer === tree` 身份对齐，mock-invariant 单测入库，既有套件全绿
+- [x] bounds API stub 行为明确（抛错或退化），单测入库
+- [x] 包级 `pnpm --filter @nop-chaos/flux-renderers-industrial test` 全绿
 
 ### Workstream 2 - e2e assert hardening（T3 + T4 + T5 + T6）
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/scada-pressure-demo.spec.ts`, `tests/e2e/scada-perf.spec.ts`, `tests/e2e/helpers/scada-canvas-assert.ts`, 多个 unit test 文件
 
 - Item Types: `Fix`（断言有效性）
 
-- [ ] T3：`scada-pressure-demo.spec.ts` 10k/pressure 每个成功 ready 后补调 `assertScadaCanvasRendered`
-- [ ] T4：`scada-perf.spec.ts` 10k-refresh 与 memory 测试补 `assertScadaCanvasRendered`（移除 skip）
-- [ ] T5：`scada-canvas-assert.ts` 非空场景下 `fallback-all-zero` 视为失败（仅空场景允许 fallback）；保留 SecurityError/全零 F2 fallback 语义对空场景
-- [ ] T6：逐处替换 `not.toThrow()` 为副作用负向断言、删重复覆盖（如双重 `computeSymbolBounds([])`）、misnamed 文件改名或补 hook 直测
-- [ ] Proof：全量 scada e2e + playground-entry-pages 无 allowance 全绿；T6 改后单测覆盖不下降
+- [x] T3：`scada-pressure-demo.spec.ts` 10k/pressure 每个成功 ready 后补调 `assertScadaCanvasRendered`
+- [x] T4：`scada-perf.spec.ts` 10k-refresh 与 memory 测试补 `assertScadaCanvasRendered`（移除 skip）
+- [x] T5：`scada-canvas-assert.ts` 非空场景下 `fallback-all-zero` 视为失败（仅空场景允许 fallback）；保留 SecurityError/全零 F2 fallback 语义对空场景
+- [x] T6：逐处替换 `not.toThrow()` 为副作用负向断言、删重复覆盖（如双重 `computeSymbolBounds([])`）、misnamed 文件改名或补 hook 直测
+- [x] Proof：全量 scada e2e + playground-entry-pages 无 allowance 全绿；T6 改后单测覆盖不下降
 
 Exit Criteria:
 
-- [ ] pressure/perf 全成功 ready 路径有 canvas 硬门，全量 scada e2e 全绿
-- [ ] 非空场景像素 `fallback-all-zero` 判失败
-- [ ] `not.toThrow()` 弱断言清零（或残留项显式记入 Follow-up 并附理由），无重复覆盖
+- [x] pressure/perf 全成功 ready 路径有 canvas 硬门，全量 scada e2e 全绿
+- [x] 非空场景像素 `fallback-all-zero` 判失败
+- [x] `not.toThrow()` 弱断言清零（或残留项显式记入 Follow-up 并附理由），无重复覆盖
 
 ### Workstream 3 - Public surface & doc drift（A1 + W2 + Doc1 + Doc2 + Doc3）
 
-Status: planned
+Status: completed
 Targets: `src/index.ts`, `src/renderer-definitions.ts`, `src/engine/config-adapter.ts`, `docs/components/industrial-hmi/design-{renderer,engine}.md`
 
 - Item Types: `Fix`（公共面/死代码/文档漂移）
 
-- [ ] A1：`IndustrialRendererSchema` 从 `index.ts:36` 移除（零消费者）；typecheck/build 验证无隐藏消费者（若有则回滚并加进 §11 授权枚举）
-- [ ] W2：`ConfigAdapter.setConfig` 死代码删除（零消费者），或改名 `setConfigReference` + inline 注记防 stale-index footgun——Decision，倾向删除
-- [ ] Doc1：`design-renderer.md §10` loading/error 两行 marker 改 `nop-scada-canvas-loading`/`nop-scada-canvas-error`
-- [ ] Doc2：`design-renderer.md §6:187` 移除已 retire 的 `data-slot="scada-canvas-overlay"` 引用，与 §10 一致
-- [ ] Doc3：`design-engine.md §8.3` ScadaTestHandle 补 `setPointValues?`/`measureAddStrategies?` + 「非公共契约」注（对齐 `editor-initiation.md:59`）
-- [ ] Proof：A1/W2 移除后 `pnpm typecheck && pnpm build` 全绿；三处文档抽查与 live code 一致
+- [x] A1：`IndustrialRendererSchema` 从 `index.ts:36` 移除（零消费者）；typecheck/build 验证无隐藏消费者（若有则回滚并加进 §11 授权枚举）
+- [x] W2：`ConfigAdapter.setConfig` 死代码删除（零消费者），或改名 `setConfigReference` + inline 注记防 stale-index footgun——Decision，倾向删除
+- [x] Doc1：`design-renderer.md §10` loading/error 两行 marker 改 `nop-scada-canvas-loading`/`nop-scada-canvas-error`
+- [x] Doc2：`design-renderer.md §6:187` 移除已 retire 的 `data-slot="scada-canvas-overlay"` 引用，与 §10 一致
+- [x] Doc3：`design-engine.md §8.3` ScadaTestHandle 补 `setPointValues?`/`measureAddStrategies?` + 「非公共契约」注（对齐 `editor-initiation.md:59`）
+- [x] Proof：A1/W2 移除后 `pnpm typecheck && pnpm build` 全绿；三处文档抽查与 live code 一致
 
 Exit Criteria:
 
-- [ ] `IndustrialRendererSchema` 公共面收敛（移除或授权），`ConfigAdapter.setConfig` 死代码移除，typecheck/build 全绿
-- [ ] Doc1/Doc2/Doc3 三处文档漂移同步 live baseline
-- [ ] 包级单测全绿
+- [x] `IndustrialRendererSchema` 公共面收敛（移除或授权），`ConfigAdapter.setConfig` 死代码移除，typecheck/build 全绿
+- [x] Doc1/Doc2/Doc3 三处文档漂移同步 live baseline
+- [x] 包级单测全绿
 
 ## Draft Review Record
 
@@ -136,21 +136,21 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] T1-T6 + A1 + W2 + Doc1-Doc3 共 11 项 in-scope finding 全部 landed
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect
-- [ ] `design-renderer.md §6/§10` + `design-engine.md §8.3` 同步 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] T1-T6 + A1 + W2 + Doc1-Doc3 共 11 项 in-scope finding 全部 landed
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect
+- [x] `design-renderer.md §6/§10` + `design-engine.md §8.3` 同步 live baseline
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
 ### T6-residual — 个别 `not.toThrow()` 替换受 hook 私有性阻塞
 
 - Classification: `watch-only residual`
-- Why Not Blocking Closure: 若个别弱断言替换需导出私有 hook 才能直测（破坏封装），保留 `not.toThrow()` 并记理由；mock fidelity（T1/T2）与 e2e 硬门（T3-T5）已提供主路径覆盖，残留弱断言不阻塞验证 fidelity closure。
+- Why Not Blocking Closure: 若个别弱断言替换需导出私有 hook 才能直测（破坏封装），保留 `not.toThrow()` 并记理由；mock fidelity（T1/T2）与 e2e 硬门（T3-T5）已提供主路径覆盖，残留弱断言不阻塞验证 fidelity closure。**执行结论**：5 处目标弱断言全部替换为副作用负向断言（无残留需导出私有 hook 的个例），T6-residual 实际未触发——5 个目标文件已清零 `not.toThrow()`。
 - Successor Required: no
 
 ## Non-Blocking Follow-ups
@@ -160,14 +160,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<关闭时填写>>
+Status Note: 11 项 in-scope P2 finding 全部 landed（T1-T6 验证 fidelity + A1 公共面 + W2 死代码 + Doc1-Doc3 文档漂移）。三 Workstream 全部 completed，Closure Gates 全勾，workspace 全量验证（typecheck/build/lint/test 32/32 + 59/59）+ scada e2e 全量全绿。closure-audit 由独立 fresh-session sub-agent 执行并通过。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立 fresh-session 子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 fresh-session sub-agent（task `ses_031cbf1bcffeusatLqH7U1VFfY`，general 类型，不复用执行者上下文）
+- Verdict: `approved`（零 Blocker）
+- Evidence: 11 项 finding 逐条核对 live repo——T1（`MockLeafer extends MockZoomLayer` + `get zoomLayer(): this` + destroy 无递归）、T2（bounds 三方法/getter 抛错）、T3/T4（pressure/perf 全成功 ready 路径有硬门）、T5（全部 canvas 扫描 + 非空场景严格 + `allowZeroPixels` 例外）、T6（5 目标文件 `not.toThrow()` 清零，替换为副作用负向断言）、A1（`IndustrialRendererSchema` 仓内零代码消费者）、W2（`setConfig` 已删）、Doc1/Doc2/Doc3（文档与 live code 对齐）。deferred 项分类诚实。验证输出：包级 612 tests/43 files、workspace typecheck/build/lint 32/32 + test 59/59、scada e2e（pressure-demo 3/3 + perf 5/5 + demo/edge-cases 18/18）全绿。
 
 Follow-up:
 
-- W1 表达式订阅诊断 → successor
-- <<或明确写 no remaining plan-owned work>>
+- W1 表达式订阅诊断 → successor（见 plan `{2243-1}` Deferred）
+- no remaining plan-owned work（11 项 in-scope finding 全部 landed）
