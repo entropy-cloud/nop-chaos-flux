@@ -164,6 +164,23 @@ describe('MappingRenderer (W3c — value→display-result mapping)', () => {
     expect(container.querySelector('[data-testid="m1"] [data-slot="mapping-item"]')).toBeNull();
   });
 
+  it('renders an object hit value as JSON string (toTextNode object branch)', () => {
+    const { container } = renderMapping(
+      [
+        {
+          type: 'mapping',
+          testid: 'obj',
+          value: 'meta',
+          map: { meta: { tag: 'x', score: 3 } },
+        },
+      ],
+      'test://mapping/object-hit',
+    );
+    expect(
+      container.querySelector('[data-testid="obj"] [data-slot="mapping-item"]')?.textContent,
+    ).toBe('{"tag":"x","score":3}');
+  });
+
   it('renders the item region template when value hits and item region is configured', () => {
     const { container } = renderMapping(
       [

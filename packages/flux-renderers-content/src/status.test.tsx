@@ -196,6 +196,81 @@ describe('StatusRenderer (W3c — business status display, Badge semantic layer)
     ).toBeNull();
   });
 
+  it('renders no icon when iconMap names an unknown lucide icon', () => {
+    const { container } = renderStatus(
+      [
+        {
+          type: 'status',
+          testid: 's1',
+          value: 'done',
+          labelMap: { done: 'Done' },
+          iconMap: { done: 'not-a-real-icon-name' },
+        },
+      ],
+      'test://status/unknown-icon',
+    );
+    expect(
+      container.querySelector('[data-testid="s1"] [data-slot="status-badge"]')?.querySelector('svg'),
+    ).toBeNull();
+  });
+
+  it('keeps non-string labelMap/levelMap/iconMap values through the compile pipeline', () => {
+    // StatusSchema declares Record<string, SchemaValue>; the propContracts must
+    // not narrow it to string (a compile-time shape violation silently skips
+    // the WHOLE prop → data loss). Non-string values degrade gracefully:
+    // label falls back to the raw key, level falls back to secondary.
+    const { container } = renderStatus(
+      [
+        {
+          type: 'status',
+          testid: 'num-label',
+          value: 'ok',
+          labelMap: { ok: 123 },
+        },
+        {
+          type: 'status',
+          testid: 'num-level',
+          value: 'done',
+          labelMap: { done: 'Done' },
+          levelMap: { done: 1 },
+        },
+        {
+          type: 'status',
+          testid: 'num-icon',
+          value: 'done',
+          labelMap: { done: 'Done' },
+          iconMap: { done: 5 },
+        },
+      ],
+      'test://status/nonstring-maps',
+    );
+    const label = container.querySelector('[data-testid="num-label"]') as HTMLElement;
+    expect(label.getAttribute('data-state')).toBe('hit');
+    expect(label.querySelector('[data-slot="status-badge"]')?.textContent).toBe('ok');
+    const level = container.querySelector('[data-testid="num-level"]') as HTMLElement;
+    expect(level.getAttribute('data-state')).toBe('hit');
+    expect(level.getAttribute('data-level')).toBe('default');
+    const icon = container.querySelector('[data-testid="num-icon"]') as HTMLElement;
+    expect(icon.getAttribute('data-state')).toBe('hit');
+    expect(icon.querySelector('[data-slot="status-badge"]')?.querySelector('svg')).toBeNull();
+  });
+
+  it('falls back to the raw key when labelMap value is not a string', () => {
+    const { container } = renderStatus(
+      [
+        {
+          type: 'status',
+          testid: 's1',
+          value: 'ok',
+          labelMap: { ok: 123 },
+        },
+      ],
+      'test://status/nonstring-label',
+    );
+    const badge = container.querySelector('[data-testid="s1"] [data-slot="status-badge"]');
+    expect(badge?.textContent).toBe('ok');
+  });
+
   it('renders placeholder when value misses labelMap (status-miss)', () => {
     const { container } = renderStatus(
       [

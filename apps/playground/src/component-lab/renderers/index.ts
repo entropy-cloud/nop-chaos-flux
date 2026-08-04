@@ -81,3 +81,6 @@ export { EmptyLabPage } from './empty-lab-page';
 export { ProgressLabPage } from './progress-lab-page';
 export { SpinnerLabPage } from './spinner-lab-page';
 export { SeparatorLabPage } from './separator-lab-page';
+export { AlertLabPage } from './alert-lab-page';
+export { MappingLabPage } from './mapping-lab-page';
+export { StatusLabPage } from './status-lab-page';

@@ -381,19 +381,19 @@ export const contentRendererDefinitions: RendererDefinition[] = [
         editorType: 'expression',
       },
       labelMap: {
-        shape: { kind: 'record', value: { kind: 'string' } },
+        shape: { kind: 'record', value: { kind: 'unknown' } },
         displayName: 'Label Map',
         description: 'Value→display label table. A value not present here is treated as a miss (placeholder fallback).',
         editorType: 'expression',
       },
       levelMap: {
-        shape: { kind: 'record', value: { kind: 'string' } },
+        shape: { kind: 'record', value: { kind: 'unknown' } },
         displayName: 'Level Map',
         description: 'Value→semantic level table (success/warning/error/info/default/processing/pending/inactive). Projects to Badge color.',
         editorType: 'expression',
       },
       iconMap: {
-        shape: { kind: 'record', value: { kind: 'string' } },
+        shape: { kind: 'record', value: { kind: 'unknown' } },
         displayName: 'Icon Map',
         description: 'Value→lucide icon name table. Optional; missing keys render without an icon.',
         editorType: 'expression',

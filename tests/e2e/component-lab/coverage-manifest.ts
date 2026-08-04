@@ -578,6 +578,30 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes:
       'Verify horizontal/vertical aria-orientation, labelled variant and decorative aria-hidden mapping (C6.2)',
   },
+  {
+    id: 'alert',
+    title: 'Alert',
+    tier: 'write',
+    primaryScenario: 'Host alert close + embedded actions (C6.3)',
+    notes:
+      'Verify closable close hides the node and the onClose action args read ${level} from the event payload (evaluationBindings), plus the actions-region button dispatching its own action (C6.3)',
+  },
+  {
+    id: 'mapping',
+    title: 'Mapping',
+    tier: 'write',
+    primaryScenario: 'Host mapping rows + item region (C6.3 bug 73 pattern)',
+    notes:
+      'Verify mapping inside repeated card rows resolves each row\'s own scope value (row pollution re-verification) and the item region template + embedded action on hit (C6.3 bug 73 pattern)',
+  },
+  {
+    id: 'status',
+    title: 'Status',
+    tier: 'write',
+    primaryScenario: 'Host status in dialog scope (C6.3)',
+    notes:
+      'Verify status inside an openDialog surface evaluates the opened row\'s scope values and projects the levelMap semantic color (C6.3)',
+  },
 ];
 
 /** Quick lookup by renderer id */

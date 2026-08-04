@@ -67,7 +67,12 @@ export function AlertRenderer(props: RendererComponentProps<AlertSchema>) {
 
   const handleClose = () => {
     setOpen(false);
-    void props.events.onClose?.({ type: 'alert:close', level }, { scope: props.node.scope });
+    const payload = { type: 'alert:close', level };
+    void props.events.onClose?.(payload, {
+      event: payload,
+      evaluationBindings: payload,
+      scope: props.node.scope,
+    });
   };
 
   return (
