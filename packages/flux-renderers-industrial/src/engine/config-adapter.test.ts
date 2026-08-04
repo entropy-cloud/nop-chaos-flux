@@ -225,6 +225,40 @@ describe('ConfigAdapter applyDiff (I5.3b)', () => {
     engine.destroy();
   });
 
+  it('getConfigNode should track add/remove/children-rebuild through applyDiff (I14.2 O(1) 索引)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [
+        shape('g', 'scada-group', { children: [shape('c1', 'scada-rect', { x: 1 }), shape('c2', 'scada-rect', { x: 2 })] }),
+        shape('b', 'scada-rect', { fill: '#000' }),
+      ],
+    } as ScadaConfig);
+    expect(engine.getConfigNode('c1')?.x).toBe(1);
+    expect(engine.getConfigNode('b')?.id).toBe('b');
+
+    engine.applyDiff(
+      {
+        added: [shape('c', 'scada-ellipse', { width: 20, height: 20 })],
+        removed: ['b'],
+        updated: [{ id: 'g', patch: { children: [shape('c1', 'scada-rect', { x: 9 }), shape('c3', 'scada-rect', { x: 3 })] } }],
+      },
+      {
+        version: 1,
+        symbols: [
+          shape('g', 'scada-group', { children: [shape('c1', 'scada-rect', { x: 9 }), shape('c3', 'scada-rect', { x: 3 })] }),
+          shape('c', 'scada-ellipse', { width: 20, height: 20 }),
+        ],
+      },
+    );
+    expect(engine.getConfigNode('c')?.width).toBe(20);
+    expect(engine.getConfigNode('b')).toBeUndefined();
+    expect(engine.getConfigNode('c1')?.x).toBe(9);
+    expect(engine.getConfigNode('c2')).toBeUndefined();
+    expect(engine.getConfigNode('c3')?.x).toBe(3);
+    engine.destroy();
+  });
+
   it('should throw when applyDiff is invoked before a build', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     const adapter = (engine as unknown as { adapter: { applyDiff: (d: unknown) => void } }).adapter;

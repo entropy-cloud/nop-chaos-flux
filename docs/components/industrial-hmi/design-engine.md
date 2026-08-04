@@ -124,6 +124,16 @@ interface ScadaEngineOptions {
 > `scaleOfWorld` 重钳制回 [MIN_SCALE, MAX_SCALE]（与命令路径 `applyViewportState` 同锚、与 gate-3-review §5 M-3 推导口径一致），并把 zoomLayer 矩阵状态（`zoomLayer.x/y/scaleX`，
 > 读 `zoomLayer.__` 数据面，view/src/index.ts:27）同步回引擎视口状态（`zoomLayer.x = -viewport.x * scale`，
 > gate-3-review §5 M-3 推导），保证 wheel/pinch 后 `getViewport`/命中 world 坐标/后续命令不漂移。
+>
+> **I14.1 增补（指针拖动平移）**：viewport 插件默认**不开启鼠标拖动平移**（`move` 配置缺省仅
+> `autoDistance: 2`，`canMove = moveMode || (drag==='auto' && !pathCanDrag(path))` 恒 false）——
+> 验收包络含「10 万图元可交互 ≥45fps/拖动」，且 spike 拖动 fps 口径（`move: { drag: 'auto', dragEmpty: true }`）
+> 需指针拖动可用 → 引擎 tree 配置补 `move: { drag: 'auto', dragEmpty: true }`
+> （drag:'auto' 在图元非 draggable 时让位画布平移，dragEmpty 覆盖空白区拖动；图元级 draggable
+> 语义留 I16 编辑器）。测量发现记录：插件驱动 zoomLayer 平移（指针/wheel）在 3 层 App 下
+> **不发射 tree 层 render 事件**（renderer `totalTimes` 递增、`times`/render 事件不递增；画布像素
+> 实测随平移更新，视觉平移正常）——指针路径 fps 以 rAF 显示帧率计量，渲染吞吐以命令路径
+> `setViewport` render 事件计数作 A4 吞吐代理口径（benchmark-report.md 测量口径声明）。
 
 ### 4.5 渲染循环与脏区/局部重绘
 
@@ -144,6 +154,8 @@ interface ScadaEngineOptions {
 | 组态 JSON 加载 | 解析→按 tag 实例化→Group.add 批量入树                                                                                  | 10 万 symbol 组态 JSON（11.6 MB）**178.9 ms**（parse 23.4 + 实例化 88.5 + 渲染 ~67，口径 gate-1-review §3.2 #8） |
 
 > **测量口径声明（A4）**：headless 无 vsync，rAF 吞吐 ≠ 显示 fps。≥45fps 判定基于渲染吞吐代理口径；真实指针事件路径实测 17–29fps（输入路径受限、渲染零丢帧），指针端到端口径的 45fps 保证需 **I14 在真实浏览器复测**（gate-1-review §3.3 #3/§4 A4），本引擎实现阶段不固化基准方法。
+>
+> **I14 复测结论（A4 兑现，详见 benchmark-report.md）**：真实浏览器（Playwright Chromium headless）复测完成——10 万图元拖动：指针路径 rAF 显示帧率 3 采样 69.1/69.9/69.5fps（best 69.9，≥45 达标）；渲染吞吐（命令路径 tree render 事件计数）3 采样 45/42.3/49.9fps（best 49.9，≥45 达标）。测量发现：插件驱动 zoomLayer 平移不发射 tree render 事件（见 §4.4 I14.1 增补）→ 吞吐代理口径以命令路径 render 事件计数固化。首屏创建（组态生成完成→tree render 首帧）344.4ms（spike 165.3ms 口径对照，余量 ~5.8x）；内存 stroke 128.8MB / 无 stroke 126.1MB（CDP JS heap 全页口径，验收 ≤320MB）；1 万点批量刷新端到端 80.1ms + 合帧断言（渲染增量 = 1，验收 <200ms）。
 
 ## 5. 字段分类
 

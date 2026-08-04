@@ -525,6 +525,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'High-scale diff-view performance test with 1500+ lines of diff content.',
   },
   {
+    id: 'scada-perf-scale',
+    title: 'Scada Performance Scale',
+    eyebrow: 'Performance',
+    description:
+      'I14.1 性能基准测量页：10 万图元首屏创建 / 拖动 fps（双口径）/ 内存（含无 stroke 对照）/ 1 万点实时刷新端到端延迟，e2e 程序化驱动。',
+  },
+  {
     id: 'data-verify',
     title: 'Data Source Verify',
     eyebrow: 'Mechanism Test',

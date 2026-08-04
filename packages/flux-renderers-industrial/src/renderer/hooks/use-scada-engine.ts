@@ -5,8 +5,9 @@ import { ReverseIndex } from '../../binding/reverse-index.js';
 import { DirtyCollector, RefreshPipeline, type ApplyAttrs } from '../../binding/dirty-collector.js';
 import { Animator } from '../../binding/animator.js';
 import type { ScadaSymbolEventName, ScadaSymbolEventPayload } from '../../engine/event-bridge.js';
+import { scadaTestHandleKey, type ScadaTestHandle } from '../../engine/test-handle.js';
 import { errorMessage } from '../scada-errors.js';
-import type { ScadaPointDeclaration, ScadaSymbolNode } from '../../serialization/config-types.js';
+import type { ScadaPointDeclaration, ScadaPrimitive, ScadaSymbolNode } from '../../serialization/config-types.js';
 
 /**
  * 引擎 + 绑定域运行时（I10.1/I10.3）：引擎实例与点表/反向索引/刷新流水线/动画时钟同生命周期。
@@ -104,6 +105,22 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
     const next: ScadaCanvasRuntime = { engine, pointStore, reverseIndex, collector, pipeline, animator, applyAttrs };
     runtimeRef.current = next;
     setRuntime(next);
+
+    // I14.1 `perf-injection-channel` 裁定：dev/test 专用批量注入通道挂测试句柄
+    // （`window.__flux_scada_<cid>.setPointValues`）——与 scope-bridge 同写入路径
+    // （pointStore.setPointValues + pipeline.requestRender），但剔除 1 万 flux 变量
+    // 订阅/求值开销，非 `scada-canvas` 公共契约变更（仅 exposeTestHandle 时存在）。
+    if (latest.current.exposeTestHandle && latest.current.cid !== undefined) {
+      const handle = (window as unknown as Record<string, unknown>)[
+        scadaTestHandleKey(latest.current.cid)
+      ] as ScadaTestHandle | undefined;
+      if (handle) {
+        handle.setPointValues = (values: Record<string, ScadaPrimitive>) => {
+          pointStore.setPointValues(values);
+          pipeline.requestRender(applyAttrsOf(engine));
+        };
+      }
+    }
 
     let rafId = 0;
     let observer: ResizeObserver | undefined;

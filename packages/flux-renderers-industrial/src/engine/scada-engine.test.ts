@@ -429,3 +429,107 @@ describe('ScadaCanvasEngine 事件桥接线 (I6.4)', () => {
     expect(onSymbolEvent).not.toHaveBeenCalled();
   });
 });
+
+describe('getSymbolDeclarations 无声明快路径 (I14.2)', () => {
+  it('should return undefined when neither instance nor defaults declare states/animations', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(validConfig() as ScadaConfig);
+    expect(engine.getSymbolDeclarations('rect-1')).toBeUndefined();
+    engine.destroy();
+  });
+
+  it('should return merged instance states when only the instance declares them', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [
+        {
+          id: 's',
+          type: 'scada-rect',
+          x: 0,
+          y: 0,
+          states: {
+            states: { alarm: { style: { fill: '#ff0000' } } },
+            booleanMap: { true: 'alarm', false: 'normal' },
+          },
+        },
+      ],
+    } as ScadaConfig);
+    const declarations = engine.getSymbolDeclarations('s');
+    expect(declarations?.states?.booleanMap).toEqual({ true: 'alarm', false: 'normal' });
+    engine.destroy();
+  });
+
+  it('should return merged defaults when only the definition defaults declare them', () => {
+    registerScadaSymbol({
+      type: 'scada-test-decl-defaults',
+      name: 'DeclDefaults',
+      props: { x: { type: 'number' }, y: { type: 'number' }, fill: { type: 'string' } },
+      defaults: {
+        x: 0,
+        y: 0,
+        states: { states: { fault: { style: { fill: '#0000ff' } } }, booleanMap: { true: 'fault', false: 'normal' } },
+      },
+      create: () => ({ tag: 'Rect', set: (patch: unknown) => Object.assign({}, patch) } as never),
+    });
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [{ id: 'd', type: 'scada-test-decl-defaults', x: 0, y: 0 }],
+    } as ScadaConfig);
+    const declarations = engine.getSymbolDeclarations('d');
+    expect(declarations?.states?.booleanMap).toEqual({ true: 'fault', false: 'normal' });
+    engine.destroy();
+    unregisterScadaSymbol('scada-test-decl-defaults');
+  });
+
+  it('should let instance declarations override definition defaults', () => {
+    registerScadaSymbol({
+      type: 'scada-test-decl-override',
+      name: 'DeclOverride',
+      props: { x: { type: 'number' }, y: { type: 'number' } },
+      defaults: {
+        x: 0,
+        y: 0,
+        states: { states: { a: { style: { fill: '#ffffff' } } }, booleanMap: { true: 'a', false: 'b' } },
+      },
+      create: () => ({ tag: 'Rect', set: (patch: unknown) => Object.assign({}, patch) } as never),
+    });
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [
+        {
+          id: 'o',
+          type: 'scada-test-decl-override',
+          x: 0,
+          y: 0,
+          states: { states: { z: { style: { fill: '#123456' } } }, booleanMap: { true: 'z', false: 'n' } },
+        },
+      ],
+    } as ScadaConfig);
+    const declarations = engine.getSymbolDeclarations('o');
+    expect(declarations?.states?.booleanMap).toEqual({ true: 'z', false: 'n' });
+    engine.destroy();
+    unregisterScadaSymbol('scada-test-decl-override');
+  });
+
+  it('should keep returning declarations for symbols with only animations declared', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [
+        {
+          id: 'a',
+          type: 'scada-rect',
+          x: 0,
+          y: 0,
+          animations: [{ kind: 'rotate', period: 1000, when: 'always' }],
+        },
+      ],
+    } as ScadaConfig);
+    const declarations = engine.getSymbolDeclarations('a');
+    expect(declarations?.animations).toEqual([{ kind: 'rotate', period: 1000, when: 'always' }]);
+    engine.destroy();
+  });
+});

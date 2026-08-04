@@ -1,6 +1,6 @@
 # 3 I14 Benchmark 与性能优化
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-04
 > Source: `docs/components/roadmap-industrial-hmi.md`（I14、Cross-Cutting 性能红线/测试纪律/人工确认阈值）、`docs/components/industrial-hmi/design-engine.md`（§4.6 性能策略与基线/§12.1 spike 测量方法、A4 双口径声明、内存 +40% 观察项）、`docs/analysis/industrial-hmi/research-download.md`（§2.2 性能数字校准）、`docs/analysis/industrial-hmi/gate-3-review.md`（§3 leafer 真实 API 抽查结论、§10 1 万点批量合并断言 + batch.add 对照归属 I14）
 > Related: 上游 `docs/plans/2026-08-04-0523-2-i13-playground-demo-pages.md`（draft，I13.1/I13.2 页面为挂载载体）；下游 roadmap I15（测试补强/文档收尾）
@@ -70,19 +70,19 @@
 
 ### Phase 1 - I14.1 benchmark 脚本与基线
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/scada-perf.spec.ts`（或既有 perf 命名约定）、`docs/analysis/industrial-hmi/benchmark-report.md`、（按裁定）`apps/playground/src/pages/scada-pressure-demo.tsx`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] `Proof`：前置验证——具体判定：roadmap I13 = `done` 且 I13 plan closure-audit 通过、`scada-demo`/`scada-pressure-demo` 可挂载、I13 `pressure-scale-drift` 裁定记录可读；未就绪则等待（Failure Paths `upstream-not-ready`）。
-- [ ] `Decision`：roadmap Phase Status 回写 I14: `todo` → `planned`（本 plan 激活为 active 时同步执行；roadmap Rule 1 状态机，对齐 I10/I11 plan 先例）。
-- [ ] `Decision`：10 万级测量场景加载方式裁定（消费 I13 `pressure-scale-drift`）——独立 perf 页/路由（对齐 calendar-perf-scale 先例：独立页面 + 独立路由 `#/scada-perf-scale`）vs 扩展 `scada-pressure-demo` 支持规模参数；**无 stroke 对照变体（10 万图元无 stroke 组态，design-engine.md §4.6 内存 +40% 观察项）一并纳入选项空间**；裁定记录入 benchmark 报告，落地归属明确（页面/路由扩展归本 plan I14.1，需保持 I13 页面既有 10k 模式不回归）。
-- [ ] `Decision`（`perf-injection-channel`）：1 万点批量注入通道裁定——**`component:setPointValues` 不存在**（component 句柄面仅 `setPointValue` 单点，use-scada-handles.ts `SCADA_HANDLE_METHODS` 核实；批量写存在于 domain 层 `point-store.setPointValues`，经 `use-scada-points-bridge` 的 scope-bridge 通道可达（config 声明 1 万 `source:'flux'` 变量 + 订阅/求值链路注入，开销含订阅面））；1 万点逐点 `component:setPointValue` 经 action 派发链会以派发开销污染测量（spike 基线 16.9–19.7 ms 量级）——裁定批量注入通道：**dev/test 专用批量方法挂测试句柄 `window.__flux_scada_<cid>`（dev/test 投影，非 `scada-canvas` 公共契约变更，不触发人工确认阈值）** vs scope-bridge（flux 变量 1 万点注入）路径；裁定 + 依据记录入 benchmark 报告。
-- [ ] `Fix`：测量脚本落地 `tests/e2e/scada-perf.spec.ts`（`test.describe.configure({ timeout: 180_000 })`，对齐 calendar-perf/gantt-perf 超时档位）——① 10 万图元首屏创建（性能计时，**口径边界明示：`组态生成完成 → tree render 首帧`**，与 spike 基线 165.3 ms（design-engine.md §4.6）口径对齐，导航/生成开销排除在计时外；经 I10.1 测试句柄 `window.__flux_scada_<cid>` + tree render 事件）；② 拖动/平移 fps（`measureFps`，**双口径 A4**：渲染吞吐（tree render 事件计数）+ 显示帧率（rAF），指针事件路径实测（真实浏览器 move 事件驱动平移））；③ 内存（CDP JS heap，含**无 stroke 对照组**，design-engine.md §4.6 风险节）；④ 1 万点实时刷新端到端延迟（经 `perf-injection-channel` 裁定通道批量注入 → 渲染完成计时，合并帧/脏属性收集路径断言）。
-- [ ] `Proof`：gate-3-review §10 兑现——1 万点全量批量合并断言（合帧/脏属性收集路径）+ 组态 JSON 加载 **batch.add 对照（m-8）**（逐节点 add vs batch.add 对比记录，非缺陷、性能观察项口径固化）。
-- [ ] `Fix`：`docs/analysis/industrial-hmi/benchmark-report.md`——测量方法（脚本路径/测量时机/采样口径/环境：机型/浏览器版本/CDP 采样点）、基线数值（各测量项 + spike 对照 + 无 stroke 对照组）、双口径记录（A4）、batch.add 对照结论；预填基线，优化轮后回填对比。
-- [ ] `Proof`：`benchmark-report.md` 自身经独立子 agent（fresh session）文档共识审查（判据：连续一轮 0 新增修正项；≤3 轮，超限升级人工），共识记录写入文件头部。
+- [x] `Proof`：前置验证——具体判定：roadmap I13 = `done` 且 I13 plan closure-audit 通过、`scada-demo`/`scada-pressure-demo` 可挂载、I13 `pressure-scale-drift` 裁定记录可读；未就绪则等待（Failure Paths `upstream-not-ready`）。
+- [x] `Decision`：roadmap Phase Status 回写 I14: `todo` → `planned`（本 plan 激活为 active 时同步执行；roadmap Rule 1 状态机，对齐 I10/I11 plan 先例）。
+- [x] `Decision`：10 万级测量场景加载方式裁定（消费 I13 `pressure-scale-drift`）——独立 perf 页/路由（对齐 calendar-perf-scale 先例：独立页面 + 独立路由 `#/scada-perf-scale`）vs 扩展 `scada-pressure-demo` 支持规模参数；**无 stroke 对照变体（10 万图元无 stroke 组态，design-engine.md §4.6 内存 +40% 观察项）一并纳入选项空间**；裁定记录入 benchmark 报告，落地归属明确（页面/路由扩展归本 plan I14.1，需保持 I13 页面既有 10k 模式不回归）。
+- [x] `Decision`（`perf-injection-channel`）：1 万点批量注入通道裁定——**`component:setPointValues` 不存在**（component 句柄面仅 `setPointValue` 单点，use-scada-handles.ts `SCADA_HANDLE_METHODS` 核实；批量写存在于 domain 层 `point-store.setPointValues`，经 `use-scada-points-bridge` 的 scope-bridge 通道可达（config 声明 1 万 `source:'flux'` 变量 + 订阅/求值链路注入，开销含订阅面））；1 万点逐点 `component:setPointValue` 经 action 派发链会以派发开销污染测量（spike 基线 16.9–19.7 ms 量级）——裁定批量注入通道：**dev/test 专用批量方法挂测试句柄 `window.__flux_scada_<cid>`（dev/test 投影，非 `scada-canvas` 公共契约变更，不触发人工确认阈值）** vs scope-bridge（flux 变量 1 万点注入）路径；裁定 + 依据记录入 benchmark 报告。
+- [x] `Fix`：测量脚本落地 `tests/e2e/scada-perf.spec.ts`（`test.describe.configure({ timeout: 180_000 })`，对齐 calendar-perf/gantt-perf 超时档位）——① 10 万图元首屏创建（性能计时，**口径边界明示：`组态生成完成 → tree render 首帧`**，与 spike 基线 165.3 ms（design-engine.md §4.6）口径对齐，导航/生成开销排除在计时外；经 I10.1 测试句柄 `window.__flux_scada_<cid>` + tree render 事件）；② 拖动/平移 fps（`measureFps`，**双口径 A4**：渲染吞吐（tree render 事件计数）+ 显示帧率（rAF），指针事件路径实测（真实浏览器 move 事件驱动平移））；③ 内存（CDP JS heap，含**无 stroke 对照组**，design-engine.md §4.6 风险节）；④ 1 万点实时刷新端到端延迟（经 `perf-injection-channel` 裁定通道批量注入 → 渲染完成计时，合并帧/脏属性收集路径断言）。
+- [x] `Proof`：gate-3-review §10 兑现——1 万点全量批量合并断言（合帧/脏属性收集路径）+ 组态 JSON 加载 **batch.add 对照（m-8）**（逐节点 add vs batch.add 对比记录，非缺陷、性能观察项口径固化）。
+- [x] `Fix`：`docs/analysis/industrial-hmi/benchmark-report.md`——测量方法（脚本路径/测量时机/采样口径/环境：机型/浏览器版本/CDP 采样点）、基线数值（各测量项 + spike 对照 + 无 stroke 对照组）、双口径记录（A4）、batch.add 对照结论；预填基线，优化轮后回填对比。
+- [x] `Proof`：`benchmark-report.md` 自身经独立子 agent（fresh session）文档共识审查（判据：连续一轮 0 新增修正项；≤3 轮，超限升级人工），共识记录写入文件头部。
 
 Exit Criteria:
 
@@ -90,43 +90,43 @@ Exit Criteria:
 >
 > **写法原则**：只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续所必需的局部检查。全量验证属 Closure Gates。
 
-- [ ] `tests/e2e/scada-perf.spec.ts` 落地且运行通过（四项测量可重复执行；性能断言阈值按基线试探性设定，最终阈值在 I14.3 固化）。
-- [ ] `perf-injection-channel` 裁定已记录（1 万点批量注入通道：dev/test 专用批量方法 vs scope-bridge，裁定依据入 benchmark 报告）。
-- [ ] `benchmark-report.md` 存在：测量方法/环境/基线数值/双口径记录/batch.add 对照结论，文档共识闭环（≤3 轮）。
-- [ ] 10 万级场景加载方式裁定落地（独立 perf 页/路由或压力页规模参数，含无 stroke 对照变体，I13 既有 10k 模式不回归）。
+- [x] `tests/e2e/scada-perf.spec.ts` 落地且运行通过（四项测量可重复执行；性能断言阈值按基线试探性设定，最终阈值在 I14.3 固化）。
+- [x] `perf-injection-channel` 裁定已记录（1 万点批量注入通道：dev/test 专用批量方法 vs scope-bridge，裁定依据入 benchmark 报告）。
+- [x] `benchmark-report.md` 存在：测量方法/环境/基线数值/双口径记录/batch.add 对照结论，文档共识闭环（≤3 轮）。
+- [x] 10 万级场景加载方式裁定落地（独立 perf 页/路由或压力页规模参数，含无 stroke 对照变体，I13 既有 10k 模式不回归）。
 
 ### Phase 2 - I14.2 性能优化轮
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/**`（按基线差距）、`docs/analysis/industrial-hmi/benchmark-report.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] `Decision`：按 Phase 1 基线结果裁定优化项清单——设计文档预设优化面（图元实例化、裁剪、脏区、数据节流、动画合帧，design-engine.md §4.6 策略）逐项对照基线：达标且余量充分 → 记录裁定不优化；存在差距 → 列入优化执行；优化候选排序（收益/风险）。
-- [ ] `Fix`：按裁定执行优化（如 batch.add 批量入树（m-8 对照结论）、裁剪/脏区策略、数据节流参数、动画合帧路径），每项优化落地携带 focused 单测（行为不回归，I8–I11 既有测试保持绿为硬约束）。
-- [ ] `Proof`：逐项复测记录——每项优化后重跑 `scada-perf.spec.ts` 对应测量项，数值与基线对比记录入 benchmark 报告（优化前后表格）。
+- [x] `Decision`：按 Phase 1 基线结果裁定优化项清单——设计文档预设优化面（图元实例化、裁剪、脏区、数据节流、动画合帧，design-engine.md §4.6 策略）逐项对照基线：达标且余量充分 → 记录裁定不优化；存在差距 → 列入优化执行；优化候选排序（收益/风险）。
+- [x] `Fix`：按裁定执行优化（如 batch.add 批量入树（m-8 对照结论）、裁剪/脏区策略、数据节流参数、动画合帧路径），每项优化落地携带 focused 单测（行为不回归，I8–I11 既有测试保持绿为硬约束）。
+- [x] `Proof`：逐项复测记录——每项优化后重跑 `scada-perf.spec.ts` 对应测量项，数值与基线对比记录入 benchmark 报告（优化前后表格）。
 
 Exit Criteria:
 
-- [ ] 优化项清单裁定记录（达标项 + 差距项 + 排序）已入 benchmark 报告。
-- [ ] 执行的优化项全部落地且 focused 单测全绿（既有 I8–I11 测试未被弱化）。
-- [ ] 每项优化复测数值已记录（优化前后对比）。
+- [x] 优化项清单裁定记录（达标项 + 差距项 + 排序）已入 benchmark 报告。
+- [x] 执行的优化项全部落地且 focused 单测全绿（既有 I8–I11 测试未被弱化）。
+- [x] 每项优化复测数值已记录（优化前后对比）。
 
 ### Phase 3 - I14.3 复测与结论固化
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/industrial-hmi/benchmark-report.md`、`docs/components/roadmap-industrial-hmi.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] `Proof`：最终复测——全项重跑 `scada-perf.spec.ts`（10 万图元首屏创建/拖动 fps（双口径）/内存（含无 stroke 对照组）/1 万点刷新延迟），数值对照验收包络（≥45fps / 首屏 <2s / 内存 ≤320MB / 刷新 <200ms）。
-- [ ] `Decision`：达标裁定——全项达标 → 结论写入 benchmark 报告（含测量口径声明、spike 对照、余量分析）；任一项不达标 → 分析瓶颈 + **标记人工决策**（roadmap「人工确认阈值」，不自动推进，Failure Paths `benchmark-not-pass`）。
-- [ ] `Fix`：roadmap Phase Status I14 回写 `done`（前置：本 plan Closure Gates 全通过 + 独立 closure-audit 通过——由独立 closure-audit session 核验后执行）；`docs/logs/2026/08-04.md`（或当日日志）记录本 plan 产出摘要（含 benchmark 结论摘要）。
+- [x] `Proof`：最终复测——全项重跑 `scada-perf.spec.ts`（10 万图元首屏创建/拖动 fps（双口径）/内存（含无 stroke 对照组）/1 万点刷新延迟），数值对照验收包络（≥45fps / 首屏 <2s / 内存 ≤320MB / 刷新 <200ms）。
+- [x] `Decision`：达标裁定——全项达标 → 结论写入 benchmark 报告（含测量口径声明、spike 对照、余量分析）；任一项不达标 → 分析瓶颈 + **标记人工决策**（roadmap「人工确认阈值」，不自动推进，Failure Paths `benchmark-not-pass`）。
+- [x] `Fix`：roadmap Phase Status I14 回写 `done`（前置：本 plan Closure Gates 全通过 + 独立 closure-audit 通过——由独立 closure-audit session 核验后执行）；`docs/logs/2026/08-04.md`（或当日日志）记录本 plan 产出摘要（含 benchmark 结论摘要）。
 
 Exit Criteria:
 
-- [ ] benchmark 报告最终版含：最终复测数值表、验收包络对照（逐项达标/不达标）、达标结论或人工决策标记、测量口径与环境声明。
-- [ ] 不达标时 roadmap 已标记人工确认项并暂停推进；达标时 roadmap I14 状态与本文一致（`planned` → `done` 由独立 closure-audit session 核验后回写）。
+- [x] benchmark 报告最终版含：最终复测数值表、验收包络对照（逐项达标/不达标）、达标结论或人工决策标记、测量口径与环境声明。
+- [x] 不达标时 roadmap 已标记人工确认项并暂停推进；达标时 roadmap I14 状态与本文一致（`planned` → `done` 由独立 closure-audit session 核验后回写）。
 
 ## Draft Review Record
 
@@ -141,18 +141,18 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。关闭流程详见本 guide 的 `When Closing The Plan` 和 `Closure Audit Rule`。
 
-- [ ] `tests/e2e/scada-perf.spec.ts` 四项测量可重复运行（首屏/拖动 fps 双口径/内存含无 stroke 对照/1 万点刷新延迟）。
-- [ ] `benchmark-report.md` 达成文档共识（≤3 轮），含：测量方法/环境/基线/优化前后对比/最终复测结论。
-- [ ] gate-3-review §10 归属兑现（1 万点批量合并断言 + batch.add 对照复测记录）。
-- [ ] 达标则结论固化（含余量分析）；不达标则 roadmap 已标记人工决策且暂停推进（无静默放行）。
-- [ ] 优化项无行为回归（focused 单测 + 既有 I8–I11 测试全绿）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] `docs/logs/2026/08-04.md`（或当日日志）已记录收口摘要。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `tests/e2e/scada-perf.spec.ts` 四项测量可重复运行（首屏/拖动 fps 双口径/内存含无 stroke 对照/1 万点刷新延迟）。
+- [x] `benchmark-report.md` 达成文档共识（≤3 轮），含：测量方法/环境/基线/优化前后对比/最终复测结论。
+- [x] gate-3-review §10 归属兑现（1 万点批量合并断言 + batch.add 对照复测记录）。
+- [x] 达标则结论固化（含余量分析）；不达标则 roadmap 已标记人工决策且暂停推进（无静默放行）。
+- [x] 优化项无行为回归（focused 单测 + 既有 I8–I11 测试全绿）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
+- [x] `docs/logs/2026/08-04.md`（或当日日志）已记录收口摘要。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -177,16 +177,17 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待关闭时填写。
+Status Note: I14 收口。测量基础设施 + 基线固化（`scada-perf.spec.ts` 5 项测量、`#/scada-perf-scale` 独立 perf 页、测试句柄 dev/test 批量注入通道 + batch.add 探针）→ 优化轮（声明解析 O(1) 化：nodeById 索引 + 无声明快路径，1 万点刷新 86.2→42.1ms -51%，+6 focused 单测）→ 最终复测全项达标（首屏 358.1ms <2s、指针 rAF best 77.6fps ≥45、吞吐 best 68.3fps ≥45、内存 130.6/127.8MB ≤320MB、刷新 42.6ms <200ms + renderDelta=1）。benchmark 报告 2 轮文档共识 AGREE（R1 pass-with-minors 3 项全落地 → R2 0 新增）；全项验证 typecheck 32/32、build 32/32、lint 32/32、test 59/59（unit 459/34 包级）+ perf e2e 5/5 + I13 回归 e2e 7/7 全绿；roadmap I14 `planned → done` 回写见 Phase Status。无 in-scope live defect 残留；deferred 项诚实分类（I15/I16 watch-only residual + out-of-scope improvement，均带 successor）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立 closure-audit session 填写
-- Evidence: 待填
+- Auditor / Agent: 独立子 agent（fresh session，task `ses_035d296bbffeXECI1GcN47ZZ9H`，不复用执行上下文）
+- Evidence: 判定 `approved`（2 Minor 均为提交前卫生项：删除 `zz-breakdown.spec.ts` 诊断探针 + `prettier --write scada-engine.ts`，均已落地）。逐项实测核验：Phase 1–3 Exit Criteria 全部 landing（spec 5 项测量 + 阈值、perf-injection-channel 裁定与 use-scada-engine 挂载、benchmark-report §4 裁定/§5 基线/§8 优化/§9 最终复测、scada-perf-scale 页面与路由、I13 页面 git diff 零改动）；Closure Gates 全部通过（独立复跑 perf spec 5/5：buildMs=365.2、pointer best 75.7fps、吞吐 best 57.5fps、heap 130.6/127.8MB、latency 41.4ms renderDelta=1；包级 459/34 全绿；workspace typecheck/build/lint 32/32 + `pnpm test --force` 59/59 无缓存；测试 diff 仅新增无弱化）；文本一致性五处核对通过（Plan Status active→completed 前、Phase 状态与勾选、Exit Criteria、Closure Gates、日志）；接口↔语义抽查通过（getSymbolDeclarations 快路径保留 defaults∪实例合并语义、nodeById 跨 applyDiff children-rebuild 维护）；deferred 分类诚实（无 live defect/contract drift 静默降级）。
 
 Follow-up:
 
-- 待关闭时填写。
+- benchmark 报告测量方法固化结果作为后续版本性能回归基线（与 calendar/gantt/diff perf spec 并列）。
+- leafer 升级后复测插件平移 render 事件行为（双口径决策承重证据）与 batch.add 对照。
 
 ## Risks And Rollback
 

@@ -12,6 +12,8 @@ const GROUP_CONTAINER_TYPE = 'scada-group';
 export class ConfigAdapter {
   private root: Group | null = null;
   private config: ScadaConfig | null = null;
+  /** id → 组态图元节点索引（构建时增量维护；getNode O(1)，I14.2 热路径优化——原线性扫描在 1 万点刷新场景每帧 10k 次全量遍历）。 */
+  private nodeById = new Map<string, ScadaSymbolNode>();
 
   constructor(
     private readonly engine: ScadaCanvasEngine,
@@ -22,8 +24,10 @@ export class ConfigAdapter {
     return this.config;
   }
 
-  /** 按 id 递归查找配置图元节点（含 group 子树；供 I8.2 视觉状态应用的实例属性解析）。 */
+  /** 按 id 递归查找配置图元节点（含 group 子树；供 I8.2 视觉状态应用的实例属性解析）。O(1) 索引命中，未命中回退线性扫描。 */
   getNode(id: string): ScadaSymbolNode | undefined {
+    const hit = this.nodeById.get(id);
+    if (hit !== undefined) return hit;
     if (!this.config) return undefined;
     return findNodeById(this.config.symbols, id);
   }
@@ -44,6 +48,7 @@ export class ConfigAdapter {
 
   destroy(): void {
     this.registry.clear();
+    this.nodeById.clear();
     if (this.root) {
       this.root.destroy();
       this.root = null;
@@ -67,6 +72,7 @@ export class ConfigAdapter {
   }
 
   private buildNode(node: ScadaSymbolNode, parent: IGroup, parentId?: string): void {
+    this.nodeById.set(node.id, node);
     const isContainer = node.type === GROUP_CONTAINER_TYPE || (node.children?.length ?? 0) > 0;
     if (isContainer) {
       const group = new Group({
@@ -105,8 +111,10 @@ export class ConfigAdapter {
     if (!leaf) return;
     const parentNode = leaf.parentId ? this.registry.get(leaf.parentId)?.node : this.root;
     if (parentNode) (parentNode as IGroup).remove(leaf.node);
+    this.nodeById.delete(id);
     for (const subtreeId of this.registry.subtreeIds(id)) {
       this.registry.remove(subtreeId);
+      this.nodeById.delete(subtreeId);
     }
   }
 
@@ -122,6 +130,7 @@ export class ConfigAdapter {
           (node as IGroup).remove(child.node);
           this.registry.remove(subtreeId);
         }
+        this.nodeById.delete(subtreeId);
       }
       for (const child of patch.children) {
         this.buildNode(child, node as IGroup, id);

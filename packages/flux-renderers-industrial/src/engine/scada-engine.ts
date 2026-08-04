@@ -1,7 +1,12 @@
 import { App, type IAppConfig } from 'leafer-ui';
 import '@leafer-in/viewport';
 import { ConfigAdapter } from './config-adapter.js';
-import { mountScadaTestHandle, removeScadaTestHandle, type ScadaTestHandle } from './test-handle.js';
+import {
+  mountScadaTestHandle,
+  removeScadaTestHandle,
+  type ScadaTestHandle,
+} from './test-handle.js';
+import { measureAddStrategies } from './batch-add-probe.js';
 import { TreeRegistry, type RegistryLeaf } from './tree-registry.js';
 import {
   center,
@@ -22,12 +27,20 @@ import { deepMergeInstanceProps } from '../symbols/compound.js';
 import type { ScadaSymbolProps } from '../symbols/symbol-types.js';
 import type { PointStore } from '../binding/point-store.js';
 import type { ScadaAnimation, ScadaStateDeclaration } from '../serialization/config-types.js';
-import { EventBridge, type ScadaSymbolEventName, type ScadaSymbolEventPayload } from './event-bridge.js';
+import {
+  EventBridge,
+  type ScadaSymbolEventName,
+  type ScadaSymbolEventPayload,
+} from './event-bridge.js';
 import { HitResolver } from './hit.js';
 import { validateScadaConfig } from '../serialization/validate.js';
 import { parseScadaConfig } from '../serialization/parse.js';
 import { InteractionOverlay } from './interaction-overlay.js';
-import type { ScadaConfig, ScadaConfigDiff, ScadaSymbolNode } from '../serialization/config-types.js';
+import type {
+  ScadaConfig,
+  ScadaConfigDiff,
+  ScadaSymbolNode,
+} from '../serialization/config-types.js';
 
 export interface ScadaEnginePerformanceOptions {
   usePartRender?: boolean;
@@ -96,8 +109,11 @@ export class ScadaCanvasEngine {
       // （web.module.js App.init: `if (ground) ... if (tree || editor) ... if (sky || editor)`）——
       // ground 背景层 + tree 图元层 + sky 交互覆盖层全部显式创建，防 mock 掩蔽真实层缺失
       // （gate-3 类 mock↔真实漂移：InteractionOverlay 构造读 app.sky，sky 缺失即 hover 崩溃）。
+      // `move: { drag: 'auto', dragEmpty: true }`：I14.1 拖动 fps 测量口径对齐（spike 工程同配置）——
+      // viewport 插件默认不开启指针拖动平移（仅 wheel/pinch），验收包络含「10 万图元拖动」，
+      // drag:'auto' 在图元非 draggable 时让位给画布平移、dragEmpty 覆盖空白区拖动。
       ground: {},
-      tree: { type: 'viewport' },
+      tree: { type: 'viewport', move: { drag: 'auto' as const, dragEmpty: true } },
       sky: {},
       ...performanceDefaults,
       ...options.performance,
@@ -195,13 +211,24 @@ export class ScadaCanvasEngine {
   /**
    * 图元级声明查询（I9 图元装配）：states/animations 经 `defaults ∪ 实例` 深合并返回，
    * 使符号定义自带的状态/动画默认声明对 I6.3 联动层可见（实例声明覆盖 defaults）。
+   * I14.2 热路径优化：无声明快路径——实例与 defaults 均无 states/animations 时直接
+   * 返回 undefined（跳过 deepMerge），避免 1 万点刷新场景每帧 10k 次深合并。
    */
-  getSymbolDeclarations(id: string): { states?: ScadaStateDeclaration; animations?: ScadaAnimation[] } | undefined {
+  getSymbolDeclarations(
+    id: string,
+  ): { states?: ScadaStateDeclaration; animations?: ScadaAnimation[] } | undefined {
     const leaf = this.registry.get(id);
     if (!leaf?.definition) return undefined;
     const node = this.adapter.getNode(id);
+    const defaults = leaf.definition.defaults;
+    const nodeHasDecls =
+      node !== undefined && (node.states !== undefined || node.animations !== undefined);
+    const defaultsHasDecls =
+      defaults !== undefined &&
+      (defaults.states !== undefined || defaults.animations !== undefined);
+    if (!nodeHasDecls && !defaultsHasDecls) return undefined;
     const merged = deepMergeInstanceProps(
-      leaf.definition.defaults,
+      defaults ?? ({} as ScadaSymbolProps),
       (node ?? {}) as unknown as ScadaSymbolProps,
     );
     return { states: merged.states, animations: merged.animations };
@@ -336,6 +363,8 @@ export class ScadaCanvasEngine {
       getPointValue: (pointId) => this.options.pointStore?.getPointValue(pointId),
       getViewport: () => this.getViewport(),
       forceRender: () => this.forceRender(),
+      // I14.1 batch.add 对照探针（gate-3-review §10 m-8）：dev/test 专用投影，非公共契约
+      measureAddStrategies: (count) => measureAddStrategies(count),
     };
     mountScadaTestHandle(this.cid, handle);
   }
@@ -374,7 +403,11 @@ export class ScadaCanvasEngine {
   }
 
   private readonly handlePluginZoom = (): void => {
-    const zoomLayer = this.app.tree.zoomLayer as unknown as { x?: number; y?: number; scaleX?: number };
+    const zoomLayer = this.app.tree.zoomLayer as unknown as {
+      x?: number;
+      y?: number;
+      scaleX?: number;
+    };
     const rawScale = readZoomLayerScale(zoomLayer.scaleX, this.viewport.scale);
     const clamped = clampScale(rawScale);
     if (clamped !== rawScale) {
@@ -389,7 +422,11 @@ export class ScadaCanvasEngine {
   };
 
   private syncViewportFromZoomLayer(): void {
-    const zoomLayer = this.app.tree.zoomLayer as unknown as { x?: number; y?: number; scaleX?: number };
+    const zoomLayer = this.app.tree.zoomLayer as unknown as {
+      x?: number;
+      y?: number;
+      scaleX?: number;
+    };
     const scale = readZoomLayerScale(zoomLayer.scaleX, this.viewport.scale);
     const zoomX = readZoomLayerPosition(zoomLayer.x, -this.viewport.x * scale);
     const zoomY = readZoomLayerPosition(zoomLayer.y, -this.viewport.y * scale);
