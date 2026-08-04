@@ -123,6 +123,7 @@ PointStore.setPointValues(点表写入)           ← 值未变去重（deadband
   ▼
 帧尾批量写入（rAF/节流窗口结束）：
   - engine.applyAttrs(Record<symbolId, Partial<ScadaSymbolProps>>)（单次批量调用，design-engine.md §8.2/§4.5 合帧义务）
+  - **状态样式合帧 owner**（plan 2026-08-04-2243-1 Phase 3 W3 裁定）：active-state 样式 owner = `RefreshPipeline.collectStates`（每帧脏收集批量写，与 binding 同帧合并、状态色胜出）；退出状态恢复 base（revert）owner = `StateVisualApplier`，经同一 `collector.collect` 汇入帧尾单次写（不再 immediate `engine.applyAttrs`）。两模块对同一字段在同帧不并发写，alarm-storm（N 图元同帧状态切换）收敛为 1 次 applyAttrs/帧（消除 N+1）。
   │
   ▼
 leafer watcher（changed<100 帧内节流）→ partLayout → partRender（合帧局部重绘）

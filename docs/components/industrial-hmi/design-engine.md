@@ -95,6 +95,7 @@ interface ScadaEngineOptions {
 
 - **创建**：`ScadaCanvasEngine.create(options)` → 构建 `Leafer` 画布 + `App` 三图层 + `tree` 视图层。**A1 约束**：App/tree 创建参数**写死**为 `tree: { type: 'viewport' }`（`@leafer-in/viewport` 默认类型为 `'design'`，无平移/缩放交互；源码证据 `leafer-in/packages/viewport/src/LeaferTypeCreator.ts`，gate-1-review §4 A1）——`scada-canvas` 引擎创建参数中不再暴露该配置项，防误改。
 - **销毁**：`engine.destroy()` 逆序销毁（清除 tree/sky/ground 子节点 → 销毁 App 画布 → 释放图片缓存引用计数 → 移除测试句柄）；幂等（重复调用 no-op）。
+- **销毁门控对称**（plan 2026-08-04-2243-1 Phase 1）：`DirtyCollector`（collect/flush/flushFrame/requestRender）与 `RefreshPipeline`（requestRender/flushFrame）所有公共入口在 `destroyed` 后均 no-op，阻断 config reload 期陈旧 runtime 闭包（eval effect / handle）重激活已销毁 pipeline/collector；collector 销毁单一 owner = `RefreshPipeline.destroy()`（内部销毁 collector，`releaseRuntime` 不再显式 `collector.destroy()`）。
 - **重建**：`engine.reset(config)` 销毁后重建（组态 JSON 全量替换场景，I2.4 序列化契约调用）。
 
 ### 4.3 场景树组织
