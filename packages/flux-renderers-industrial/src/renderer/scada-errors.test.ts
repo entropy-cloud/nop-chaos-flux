@@ -30,6 +30,8 @@ describe('scada error code registry (plan 2026-08-04-1558-2 Phase 4 WD-6)', () =
     expect(SCADA_ERROR_CODES).toContain('engine-create-failed');
     expect(SCADA_ERROR_CODES).toContain('flux-compile-failed');
     expect(SCADA_ERROR_CODES).toContain('flux-evaluate-failed');
+    // plan 2026-08-05-0325-1：flux-deps-empty 登记进注册表（非升级诊断码）
+    expect(SCADA_ERROR_CODES).toContain('flux-deps-empty');
     expect(SCADA_ERROR_CODES).toContain('handler-error');
     expect(SCADA_ERROR_CODES).toContain('not-visible');
     expect(SCADA_ERROR_CODES).toContain('not-mounted');
@@ -41,6 +43,8 @@ describe('scada error code registry (plan 2026-08-04-1558-2 Phase 4 WD-6)', () =
   it('scadaErrorI18nKey maps registered codes to industrial.scada.error.<code>', () => {
     expect(scadaErrorI18nKey('config-parse')).toBe('industrial.scada.error.config-parse');
     expect(scadaErrorI18nKey('not-visible')).toBe('industrial.scada.error.not-visible');
+    // plan 2026-08-05-0325-1：flux-deps-empty 经 scadaErrorI18nKey 映射到 industrial.scada.error.flux-deps-empty
+    expect(scadaErrorI18nKey('flux-deps-empty')).toBe('industrial.scada.error.flux-deps-empty');
   });
 
   it('scadaErrorI18nKey falls back to .unknown for unregistered codes', () => {

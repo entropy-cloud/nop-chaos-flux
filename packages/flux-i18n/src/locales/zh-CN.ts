@@ -939,6 +939,7 @@ export const zhCN: Resource = {
           'engine-create-failed': '画布引擎创建失败',
           'flux-compile-failed': 'Flux 表达式编译失败',
           'flux-evaluate-failed': 'Flux 表达式求值失败',
+          'flux-deps-empty': '复杂 flux 表达式订阅路径收集失败，该表达式可能不随数据更新',
           'handler-error': '事件处理器异常',
           'not-visible': '画布无可见图元，无法执行视口命令',
           'not-mounted': '画布未挂载或已销毁',

@@ -652,4 +652,117 @@ describe('scada-canvas points bridge (I10.3)', () => {
     await waitFor(() => expect(errors.length).toBe(2));
     expect(errors[1].code).toBe('flux-evaluate-failed');
   });
+
+  // plan 2026-08-05-0325-1 Phase 1（failing-first，实现前红）：复杂表达式「读取 scope 但平台 collector
+  // 返空 deps」时 useScopeSelector 静默 disable。修复后经既有非升级诊断通道一次性上报 flux-deps-empty。
+  it('reports flux-deps-empty once when a complex expression reads scope but the probe returns no deps (W1 successor)', async () => {
+    const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
+    const errors: Array<{ code: string; message: string }> = [];
+    const pendingFlushes: Array<() => void> = [];
+    const pointStore = new PointStore();
+    const config = bridgeConfig([{ id: 'computed', flux: '${analog.temp + 1}' }], [
+      {
+        id: 'rect-1',
+        type: 'scada-rect',
+        x: 0,
+        y: 0,
+        bindings: { text: { point: 'computed' } },
+      },
+    ]);
+    pointStore.loadDeclarations(config.variables ?? []);
+    const runtime: ScadaPointsBridgeRuntime = {
+      pointStore,
+      pipeline: new RefreshPipeline({
+        pointStore,
+        reverseIndex: new ReverseIndex(config.symbols),
+        collector: new DirtyCollector({ scheduleTick: () => () => undefined }),
+        scheduleTick: (cb) => {
+          pendingFlushes.push(cb);
+          return () => undefined;
+        },
+      }),
+      applyAttrs: () => undefined,
+    };
+    // stub compiler：createState 返 root 无 dependencies → extractExpressionDepsViaProbe 返 []；
+    // evaluateValue 返值（主 effect 求值成功，不产生 flux-evaluate-failed）。
+    const depsEmptyCompiler = {
+      compileValue: () => ({ kind: 'dynamic' }),
+      createState: () => ({ root: { kind: 'leaf-state', dependencies: undefined } }),
+      evaluateWithState: () => ({ value: 1, changed: false, reusedReference: false }),
+      evaluateValue: () => 1,
+    } as unknown as typeof expressionCompiler;
+    function Probe() {
+      useScadaPointsBridge({
+        config,
+        runtime,
+        expressionCompiler: depsEmptyCompiler,
+        env,
+        onError: (code, message) => errors.push({ code, message }),
+      });
+      return null;
+    }
+    render(
+      <ScadaTestProviders environment={environment}>
+        <Probe />
+      </ScadaTestProviders>,
+    );
+    await waitFor(() => expect(errors.some((e) => e.code === 'flux-deps-empty')).toBe(true));
+    const depsEmptyErrors = errors.filter((e) => e.code === 'flux-deps-empty');
+    expect(depsEmptyErrors).toHaveLength(1);
+    expect(depsEmptyErrors[0].message).toContain('${analog.temp + 1}');
+    // 非升级：仅 flux-deps-empty，无 status-upgrading 码（config-*/engine-*）
+    expect(errors.every((e) => e.code === 'flux-deps-empty')).toBe(true);
+
+    // 重复 scope 更新不重报（一次性：depsEmptyExpressions 稳定 → effect 不重跑；reportOnce 去重兜底）
+    act(() => {
+      environment.scope.update('analog', { temp: 99 });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(errors.filter((e) => e.code === 'flux-deps-empty')).toHaveLength(1);
+  });
+
+  // plan 2026-08-05-0325-1 Phase 1（failing-first 负向）：纯字面量复杂表达式（无标识符）不触发
+  // flux-deps-empty（expressionReadsScope 为假）。
+  it('does not report flux-deps-empty for a literal-only complex expression with no identifiers', async () => {
+    const environment = createScadaTestEnvironment([], {});
+    const errors: Array<{ code: string; message: string }> = [];
+    const pointStore = new PointStore();
+    const config = bridgeConfig([{ id: 'literal', flux: '${1 + 2}' }], [
+      {
+        id: 'rect-1',
+        type: 'scada-rect',
+        x: 0,
+        y: 0,
+        bindings: { text: { point: 'literal' } },
+      },
+    ]);
+    pointStore.loadDeclarations(config.variables ?? []);
+    const runtime: ScadaPointsBridgeRuntime = {
+      pointStore,
+      pipeline: new RefreshPipeline({
+        pointStore,
+        reverseIndex: new ReverseIndex(config.symbols),
+        collector: new DirtyCollector({ scheduleTick: () => () => undefined }),
+        scheduleTick: () => () => undefined,
+      }),
+      applyAttrs: () => undefined,
+    };
+    function Probe() {
+      useScadaPointsBridge({
+        config,
+        runtime,
+        expressionCompiler,
+        env,
+        onError: (code, message) => errors.push({ code, message }),
+      });
+      return null;
+    }
+    render(
+      <ScadaTestProviders environment={environment}>
+        <Probe />
+      </ScadaTestProviders>,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(errors.some((e) => e.code === 'flux-deps-empty')).toBe(false);
+  });
 });

@@ -940,6 +940,8 @@ export const enUS: Resource = {
           'engine-create-failed': 'Scada engine creation failed',
           'flux-compile-failed': 'Flux expression compile failed',
           'flux-evaluate-failed': 'Flux expression evaluation failed',
+          'flux-deps-empty':
+            'Complex flux expression subscription paths could not be collected; the expression may not reactively update',
           'handler-error': 'Event handler error',
           'not-visible': 'Canvas has no visible symbols; viewport command unavailable',
           'not-mounted': 'Scada canvas is not mounted or has been destroyed',

@@ -112,7 +112,8 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   // 处理器 throw 走一条**非升级**诊断通道（option b）。出口实现：
   //  - `console.warn('[scada-canvas]', code, message)` 保底可见（dev+prod；去重已在上游
   //    `useScadaPointsBridge.reportOnce`/`EventBridge.reportHandlerError` 完成，故每唯一错误仅 fire 一次）；
-  //  - flux 表达式错误额外复用既有 host telemetry 钩子 `env.monitor.onError`（`ExpressionExecutionEnv.monitor`，
+  //  - flux 表达式错误（`flux-compile-failed`/`flux-evaluate-failed`/`flux-deps-empty`，plan 2026-08-05-0325-1）
+  //    额外复用既有 host telemetry 钩子 `env.monitor.onError`（`ExpressionExecutionEnv.monitor`，
   //    phase:'expression'；handler-error 的 'action' phase 超出现 monitor 类型，host telemetry 后置，Follow-up）。
   // 不违反 §8.1：诊断 ≠ status 升级——此处不动 `setStatus`/`setErrorInfo`/`eventsApi.notifyError`，
   // 画布保持 ready，不派发 `scada:error`（§8.1 onError 仅 config 校验/构建失败）。
@@ -121,7 +122,11 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     (code: string, message: string) => {
       try {
         console.warn('[scada-canvas]', code, message);
-        if (code === 'flux-compile-failed' || code === 'flux-evaluate-failed') {
+        if (
+          code === 'flux-compile-failed' ||
+          code === 'flux-evaluate-failed' ||
+          code === 'flux-deps-empty'
+        ) {
           rendererRuntime.env.monitor?.onError?.({
             phase: 'expression',
             error: new Error(message),

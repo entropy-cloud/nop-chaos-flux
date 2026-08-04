@@ -15,8 +15,8 @@ export function toError(error: unknown): Error {
  * 错误码语义对齐 `design-renderer.md §8.1`：
  * - `config-parse`/`config-invalid`/`config-build-failed`/`engine-create-failed` 升级画布 error
  *   并派发 `scada:error`；
- * - `flux-compile-failed`/`flux-evaluate-failed`/`handler-error` 不升级画布 status（P1-8 降级契约），
- *   经去重数据通道上报；
+ * - `flux-compile-failed`/`flux-evaluate-failed`/`flux-deps-empty`/`handler-error` 不升级画布 status
+ *   （P1-8 降级契约），经去重数据通道上报；
  * - `not-visible`/`not-mounted`/`symbol-not-found`/`point-not-found`/`invalid-config` 为命令句柄
  *   失败路径（不升级画布 status）。
  */
@@ -27,6 +27,7 @@ export const SCADA_ERROR_CODES = [
   'engine-create-failed',
   'flux-compile-failed',
   'flux-evaluate-failed',
+  'flux-deps-empty',
   'handler-error',
   'not-visible',
   'not-mounted',

@@ -273,4 +273,65 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
       expect(document.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status')).toBe('ready'),
     );
   });
+
+  // plan 2026-08-05-0325-1（W1 successor）：复杂表达式 probe 返空 deps → flux-deps-empty 经
+  // reportDiagnostic 的 monitor.onError（phase 'expression'）分支上报，画布保持 ready（非升级）。
+  it('surfaces flux-deps-empty through monitor.onError (expression phase) when a complex expression reads scope but the probe returns no deps', async () => {
+    const monitorSpy = vi.fn();
+    const dispatch = vi.fn().mockResolvedValue({ ok: true });
+    const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
+    environment.runtime.env.monitor = { onError: monitorSpy };
+    // stub compiler：createState 返 root 无 dependencies → extractExpressionDepsViaProbe 返 []
+    // （复杂表达式读取 scope 但平台 collector 失败）。evaluateValue 返值（主 effect 不报 flux-evaluate-failed）。
+    environment.runtime.expressionCompiler = {
+      compileValue: () => ({ kind: 'dynamic' }),
+      createState: () => ({ root: { kind: 'leaf-state', dependencies: undefined } }),
+      evaluateWithState: () => ({ value: 1, changed: false, reusedReference: false }),
+      evaluateValue: () => 1,
+    } as unknown as typeof environment.runtime.expressionCompiler;
+    const fluxConfig = validConfig({
+      version: 1,
+      variables: [{ id: 'computed', source: 'flux', flux: '${analog.temp + 1}' }],
+      symbols: [
+        {
+          id: 'rect-1',
+          type: 'scada-rect',
+          x: 0,
+          y: 0,
+          width: 50,
+          height: 50,
+          text: 'init',
+          bindings: { text: { point: 'computed' } },
+        },
+      ],
+    });
+    renderScadaCanvas(
+      makeProps({
+        props: { config: configProp(fluxConfig) },
+        node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
+        helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
+      }),
+      environment,
+    );
+    await waitFor(() => expect(scadaTestHandle(19)).toBeDefined());
+
+    // reportDiagnostic 把 flux-deps-empty 纳入 monitor.onError expression-phase 分支
+    await waitFor(() => expect(warnReported(warnSpy, 'flux-deps-empty')).toBe(true));
+    await waitFor(() => expect(monitorSpy).toHaveBeenCalled());
+    const fluxDepsCall = monitorSpy.mock.calls.find((call) => {
+      const payload = call[0] as { phase: string; details?: { code?: string } };
+      return payload.details?.code === 'flux-deps-empty';
+    });
+    expect(fluxDepsCall).toBeDefined();
+    expect((fluxDepsCall![0] as { phase: string }).phase).toBe('expression');
+
+    // 画布保持 ready（诊断 ≠ status 升级，§8.1）；不派发 scada:error
+    expect(document.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status')).toBe('ready');
+    expect(document.querySelector('[data-slot="scada-canvas-error"]')).toBeNull();
+    expect(
+      dispatch.mock.calls.filter(
+        ([, ctx]) => (ctx as { event?: { type?: string } } | undefined)?.event?.type === 'scada:error',
+      ),
+    ).toHaveLength(0);
+  });
 });

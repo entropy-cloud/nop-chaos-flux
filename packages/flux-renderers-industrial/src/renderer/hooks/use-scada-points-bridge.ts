@@ -91,17 +91,32 @@ export interface ExtractFluxScopePathsOptions {
 }
 
 /**
- * config 扫描 → `$xxx` 引用集 → useScopeSelector paths 数组（精细化失效，漏订阅/过订阅由单测固化）。
- * 覆盖三种写法：`$analog.temp`（简写）、`${analog.temp}`（平台表达式纯路径）、裸路径 `analog.temp`。
- *
- * plan 2026-08-04-1558-2 Phase 3 WD-2：复杂表达式（`${analog.temp + 1}` 类）当 `compiler`/`env`
- * 选项提供时经平台依赖收集产出订阅路径；不提供时回退到既有文本扫描（仅识别纯路径，复杂表达式无 path）。
+ * 复杂表达式候选是否「demonstrably reads scope」（plan 2026-08-05-0325-1）：
+ * 含标识符（`[a-zA-Z_][a-zA-Z0-9_]*`）即为真，排除纯字面量/纯运算符 `${1 + 2}`。
+ * 启发式限制：仅判标识符存在，含全局名（如 `Math.PI`）的复杂表达式会判真——属可接受的
+ * best-effort 一次性诊断（不扩平台 collector 能力，仅 surface 静默 disable 嫌疑）。
  */
-export function extractFluxScopePaths(
+export function expressionReadsScope(candidate: string): boolean {
+  return /[a-zA-Z_][a-zA-Z0-9_]*/.test(candidate);
+}
+
+export interface AnalyzeFluxSubscriptionsResult {
+  paths: string[];
+  /** 复杂表达式片段（normalize 后 `${...}`）：读取 scope 但平台 collector 返空 deps 的嫌疑表达式。 */
+  depsEmptyExpressions: string[];
+}
+
+/**
+ * config 扫描 → 订阅路径集 + deps-empty 嫌疑表达式集（plan 2026-08-05-0325-1）。
+ * 复杂表达式分支复用 `extractExpressionDepsViaProbe`：probe 返 `[]` 且 `expressionReadsScope`
+ * 为真时把表达式片段入 `depsEmptyExpressions`（供桥接层一次性上报 `flux-deps-empty`）。
+ */
+export function analyzeFluxSubscriptions(
   config: ScadaConfig,
   options?: ExtractFluxScopePathsOptions,
-): string[] {
+): AnalyzeFluxSubscriptionsResult {
   const paths = new Set<string>();
+  const depsEmptyExpressions: string[] = [];
   const compiler = options?.compiler;
   const env = options?.env;
   for (const decl of config.variables ?? []) {
@@ -122,12 +137,31 @@ export function extractFluxScopePaths(
     if (compiler && env && candidate !== source) {
       const expression = normalizeFluxExpression(source);
       const deps = extractExpressionDepsViaProbe(compiler, env, expression);
-      for (const dep of deps) {
-        if (dep !== '*' && dep.length > 0) paths.add(dep);
+      if (deps.length > 0) {
+        for (const dep of deps) {
+          if (dep !== '*' && dep.length > 0) paths.add(dep);
+        }
+      } else if (expressionReadsScope(candidate)) {
+        depsEmptyExpressions.push(expression);
       }
     }
   }
-  return [...paths].sort();
+  return { paths: [...paths].sort(), depsEmptyExpressions };
+}
+
+/**
+ * config 扫描 → `$xxx` 引用集 → useScopeSelector paths 数组（精细化失效，漏订阅/过订阅由单测固化）。
+ * 覆盖三种写法：`$analog.temp`（简写）、`${analog.temp}`（平台表达式纯路径）、裸路径 `analog.temp``。
+ *
+ * plan 2026-08-04-1558-2 Phase 3 WD-2：复杂表达式（`${analog.temp + 1}` 类）当 `compiler`/`env`
+ * 选项提供时经平台依赖收集产出订阅路径；不提供时回退到既有文本扫描（仅识别纯路径，复杂表达式无 path）。
+ * plan 2026-08-05-0325-1：降为 `analyzeFluxSubscriptions` 的薄包装（仅返 `.paths`，保留既有签名/导出/测试）。
+ */
+export function extractFluxScopePaths(
+  config: ScadaConfig,
+  options?: ExtractFluxScopePathsOptions,
+): string[] {
+  return analyzeFluxSubscriptions(config, options).paths;
 }
 
 /** scada `$xxx` 简写 → 平台 `${...}` 表达式语法（flux-formula/flux-compiler 求值入口）。 */
@@ -199,9 +233,13 @@ export interface UseScadaPointsBridgeArgs {
  */
 export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
   const { config, runtime, enabled = true, expressionCompiler, env, onError } = args;
-  // WD-2：复杂表达式订阅路径经平台依赖收集产出（compiler/env 提供给 extractor）
-  const paths = useMemo(
-    () => (config ? extractFluxScopePaths(config, { compiler: expressionCompiler, env }) : []),
+  // WD-2：复杂表达式订阅路径经平台依赖收集产出（compiler/env 提供给 extractor）。
+  // plan 2026-08-05-0325-1：同时取 depsEmptyExpressions（probe 返空 deps 嫌疑）供诊断上报。
+  const { paths, depsEmptyExpressions } = useMemo(
+    () =>
+      config
+        ? analyzeFluxSubscriptions(config, { compiler: expressionCompiler, env })
+        : { paths: [] as string[], depsEmptyExpressions: [] as string[] },
     [config, expressionCompiler, env],
   );
   const scopeData = useScopeSelector<Record<string, unknown>, Record<string, unknown>>(
@@ -234,6 +272,26 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
     lastReportedErrors.current.set(expression, code);
     latest.current.onError?.(code, errorMessage(error));
   }, []);
+
+  // plan 2026-08-05-0325-1（W1 successor）：复杂表达式「读取 scope 但平台 collector 返空 deps」时
+  // useScopeSelector 静默 disable（paths 为空），表达式永不随 scope 更新且对 author 不透明。此 effect
+  // 经既有非升级诊断通道（reportOnce → onError → scada-canvas reportDiagnostic）一次性上报
+  // `flux-deps-empty`，使该静默 disable 路径对 author 可感知（per-expression 可定位）。不升级画布 status、
+  // 不派发 `scada:error`（与 flux-compile-failed/flux-evaluate-failed 同通道，§8.1 降级契约）。
+  // 一次性保证：depsEmptyExpressions 经 useMemo 稳定（随 config/compiler/env），effect 仅在其变化时重跑；
+  // reportOnce 按 (expression, code) 去重兜底。config reload 时 lastReportedErrors 对称清空 → 同表达式重报。
+  useEffect(() => {
+    if (depsEmptyExpressions.length === 0) return;
+    for (const expression of depsEmptyExpressions) {
+      reportOnce(
+        expression,
+        'flux-deps-empty',
+        new Error(
+          `Complex flux expression '${expression}' subscription paths could not be collected; the expression may not reactively update`,
+        ),
+      );
+    }
+  }, [depsEmptyExpressions, reportOnce]);
 
   useEffect(() => {
     if (!enabled || !config || !runtime) return;
