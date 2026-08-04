@@ -295,8 +295,7 @@ export class ScadaCanvasEngine {
   }
 
   applyDiff(diff: ScadaConfigDiff, nextConfig?: ScadaConfig): void {
-    this.adapter.applyDiff(diff);
-    if (nextConfig) this.adapter.setConfig(nextConfig);
+    this.adapter.applyDiff(diff, nextConfig);
     // 交互覆盖物随图元增删/移动同步（I11.2，applyDiff 增删同步）：移除图元清其覆盖物，更新图元重定位
     if (this.interaction) {
       for (const id of diff.removed) {

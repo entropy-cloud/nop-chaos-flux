@@ -132,7 +132,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     }
   }, [parseError, eventsApi]);
 
-  useScadaConfigSync({
+  const { syncImported } = useScadaConfigSync({
     config: parsedConfig,
     runtime,
     reloadBindings,
@@ -160,8 +160,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     reloadConfig: (config) => {
       const current = runtimeRef.current;
       if (!current) return;
-      current.engine.reset(config);
-      reloadBindings(config.variables, config.symbols);
+      syncImported(config);
     },
   });
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { diffScadaConfig } from '../../serialization/diff.js';
 import type { ScadaConfig, ScadaSymbolNode } from '../../serialization/config-types.js';
 import type { ScadaCanvasRuntime } from './use-scada-engine.js';
@@ -79,17 +79,31 @@ export interface UseScadaConfigSyncArgs {
  * config props 同步（design-renderer.md §8.3）：parse/validate 由 renderer 完成；
  * 首次/版本变更 → engine.reset 全量构建；同版本 → diffScadaConfig → engine.applyDiff 增量；
  * 点表/绑定变化 → 绑定域重载（reloadBindings）；构建成功 → onBuilt（ready），失败 → onBuildError。
+ * onBuilt 走 change 基准守卫（plan `{2}` Phase 2 语义）：仅实际执行非空构建（full reset 或非空 diff）
+ * 时触发；空 diff 重跑（宿主重传同值新对象身份、reloadBindings → setRuntime 引起的 effect 重跑）不触发。
  */
-export function useScadaConfigSync(args: UseScadaConfigSyncArgs): void {
+export function useScadaConfigSync(
+  args: UseScadaConfigSyncArgs,
+): { syncImported: (config: ScadaConfig) => void } {
   const { config, runtime, reloadBindings, viewport, onBuilt, onBuildError } = args;
   const prevRef = useRef<ScadaConfig | undefined>(undefined);
-  const latest = useRef({ viewport, onBuilt, onBuildError });
+  const latest = useRef({ viewport, onBuilt, onBuildError, runtime, reloadBindings, config });
   useEffect(() => {
-    latest.current = { viewport, onBuilt, onBuildError };
+    latest.current = { viewport, onBuilt, onBuildError, runtime, reloadBindings, config };
   });
+  // importConfig 汇入 props 同步链（P1-5）：syncImported 后 reloadBindings → setRuntime 会触发
+  // effect 重跑（deps [config, runtime, reloadBindings]）；若重跑时用过期 prevRef 对 props config 算
+  // diff，非空 diff 会把树刷回 props config——import 变 no-op 闪回。skip-next 标记（计数 + 配置身份
+  // 匹配）仅吞掉同一次提交内的 self-induced 重跑；其后 props 变更（config 身份变化）照常从 imported 基线 diff。
+  const lastImportBaselineRef = useRef<ScadaConfig | undefined>(undefined);
+  const pendingSkipRef = useRef(0);
 
   useEffect(() => {
     if (!runtime || !config) return;
+    if (pendingSkipRef.current > 0 && config === lastImportBaselineRef.current) {
+      pendingSkipRef.current -= 1;
+      return;
+    }
     const strategy = decideSyncStrategy(prevRef.current, config);
     try {
       if (strategy === 'full') {
@@ -98,20 +112,25 @@ export function useScadaConfigSync(args: UseScadaConfigSyncArgs): void {
         // 初始视口策略只在全量（reset）路径应用：diff 增量重应用会重置用户在画布上的平移/缩放，
         // 且绑定域重建（setRuntime 新对象）触发的 effect 重跑应为 diff 空增量不重复执行（gate-4-review m-B）
         applyInitialViewport(runtime, config, latest.current.viewport);
+        prevRef.current = config;
+        latest.current.onBuilt?.();
       } else {
         const diff = diffScadaConfig(prevRef.current as ScadaConfig, config);
-        runtime.engine.applyDiff(diff, config);
-        if (
+        const nonEmpty =
           diff.variables !== undefined ||
           diff.added.length > 0 ||
           diff.removed.length > 0 ||
-          diff.updated.length > 0
-        ) {
+          diff.updated.length > 0;
+        if (nonEmpty) {
+          runtime.engine.applyDiff(diff, config);
           reloadBindings(config.variables, config.symbols);
+          prevRef.current = config;
+          latest.current.onBuilt?.();
+        } else {
+          // 空 diff 重跑：仅维护基线，不触碰树、不触发 onBuilt
+          prevRef.current = config;
         }
       }
-      prevRef.current = config;
-      latest.current.onBuilt?.();
     } catch (error) {
       latest.current.onBuildError?.(
         'config-build-failed',
@@ -119,4 +138,28 @@ export function useScadaConfigSync(args: UseScadaConfigSyncArgs): void {
       );
     }
   }, [config, runtime, reloadBindings]);
+
+  /** importConfig 汇入（I10.2 句柄）：基线统一 + skip-next 防回刷 + change 守卫 onBuilt。 */
+  const syncImported = useCallback((imported: ScadaConfig) => {
+    const { runtime: currentRuntime, reloadBindings: reload, onBuilt: built, onBuildError: buildError } =
+      latest.current;
+    if (!currentRuntime) return;
+    try {
+      lastImportBaselineRef.current = latest.current.config;
+      pendingSkipRef.current += 1;
+      prevRef.current = imported;
+      currentRuntime.engine.reset(imported);
+      reload(imported.variables, imported.symbols);
+      // import 恒为全量构建：change 基准守卫天然满足
+      built?.();
+    } catch (error) {
+      pendingSkipRef.current = Math.max(0, pendingSkipRef.current - 1);
+      buildError?.(
+        'config-build-failed',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }, []);
+
+  return { syncImported };
 }

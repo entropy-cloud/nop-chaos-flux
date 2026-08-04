@@ -419,6 +419,26 @@ describe('diffScadaConfig', () => {
     expect(diff.updated[0]!.patch.children?.map((c) => c.id)).toEqual(['c1', 'c2']);
   });
 
+  it('should convert a same-id type change into removed + added (no updated patch)', () => {
+    const prev = baseConfig({ symbols: [rect('a'), rect('b')] });
+    const next = baseConfig({
+      symbols: [{ ...rect('a'), type: 'scada-ellipse', width: 30, height: 30 }, rect('b')],
+    });
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.removed).toEqual(['a']);
+    expect(diff.added.map((n) => ({ id: n.id, type: n.type }))).toEqual([
+      { id: 'a', type: 'scada-ellipse' },
+    ]);
+    expect(diff.updated).toEqual([]);
+  });
+
+  it('should emit an explicit empty children patch when a subtree becomes undefined', () => {
+    const prev = baseConfig({ symbols: [rect('g', { type: 'scada-group', children: [rect('c1')] })] });
+    const next = baseConfig({ symbols: [rect('g', { type: 'scada-group' })] });
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.updated).toEqual([{ id: 'g', patch: { children: [] } }]);
+  });
+
   it('should diff variables only when changed', () => {
     const prev = baseConfig({ variables: [{ id: 'v1', source: 'static', value: 1 }] });
     const next = baseConfig({ variables: [{ id: 'v1', source: 'static', value: 2 }, { id: 'v2', source: 'flux', flux: '$x' }] });

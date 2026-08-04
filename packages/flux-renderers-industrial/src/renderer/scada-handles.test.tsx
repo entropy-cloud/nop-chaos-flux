@@ -195,6 +195,33 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
     expect(String(unknown.error)).toContain('Unknown method: no-such-method');
   });
 
+  it('importConfig is immediate, persistent and restores ready status without a props config (P1-5)', async () => {
+    const environment = createScadaTestEnvironment([]);
+    const view = renderScadaCanvas(makeProps({ props: {} }), environment);
+    const handle = await resolveScadaHandle(environment);
+    const engine = ((window as unknown as Record<string, unknown>)[`__flux_scada_9`] as {
+      engine: ScadaCanvasEngine;
+    }).engine;
+
+    expect(
+      view.container.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status'),
+    ).toBe('loading');
+
+    const imported = { version: 1, symbols: [{ id: 'imp-1', type: 'scada-pipe', width: 200, height: 0 }] };
+    const result = await handle.capabilities.invoke('importConfig', { config: imported }, {});
+    expect(result.ok).toBe(true);
+
+    await waitFor(() => expect(engine.getSymbols().map((leaf) => leaf.id)).toEqual(['imp-1']));
+    await waitFor(() =>
+      expect(
+        view.container.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status'),
+      ).toBe('ready'),
+    );
+    // effect 重跑沉降后 import 持久（不被 props 回刷）
+    expect(engine.getSymbols().map((leaf) => leaf.id)).toEqual(['imp-1']);
+    expect(engine.registry.size()).toBe(1);
+  });
+
   it('destroy tears down the engine; later invocations return not-mounted', async () => {
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(makeProps(), environment);

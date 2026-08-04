@@ -192,6 +192,50 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     expect(updatedEngine.getSymbols().map((leaf) => leaf.id)).toEqual(['rect-1', 'rect-3']);
   });
 
+  it('importConfig converges the props-sync baseline: import-then-edit builds no duplicate symbols (P1-5)', async () => {
+    const environment = createScadaTestEnvironment([]);
+    const view = renderScadaCanvas(makeProps({ props: { config: configProp(validConfig()) } }), environment);
+    await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
+    const handle = environment.componentRegistry.resolve({ componentId: 'scada-1' }) as unknown as {
+      capabilities: { invoke: (m: string, p: unknown) => Promise<{ ok: boolean }> };
+    };
+    const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
+    const treeRoot = () =>
+      (engine.tree as unknown as { children: Array<{ children: Array<{ tag: string }> }> }).children[0];
+
+    // importConfig 立即生效：场景树替换为 import config
+    const imported = {
+      version: 1,
+      symbols: [{ id: 'import-1', type: 'scada-ellipse', x: 0, y: 0, width: 40, height: 40 }],
+    };
+    const importResult = await handle.capabilities.invoke('importConfig', { config: imported });
+    expect(importResult.ok).toBe(true);
+    await waitFor(() => expect(treeRoot().children).toHaveLength(1));
+    expect(treeRoot().children[0]?.tag).toBe('Ellipse');
+    expect(engine.getSymbols().map((leaf) => leaf.id)).toEqual(['import-1']);
+    expect(
+      document.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status'),
+    ).toBe('ready');
+
+    // 编辑对象源自 import 场景（props config 含 import 引入的 id），移动该图元
+    const edited = {
+      version: 1,
+      symbols: [{ id: 'import-1', type: 'scada-ellipse', x: 100, y: 100, width: 40, height: 40 }],
+    };
+    view.rerender(
+      <ScadaTestProviders environment={environment}>
+        <ScadaCanvasRenderer {...makeProps({ props: { config: configProp(edited) } })} />
+      </ScadaTestProviders>,
+    );
+    await waitFor(() => expect((scadaTestHandle(7)?.getSymbol('import-1') as { x: number })?.x).toBe(100));
+    // 基线已同步：import 图元不被当作 added 重建，场景树无重复节点
+    expect(treeRoot().children).toHaveLength(1);
+    expect(engine.getSymbols().map((leaf) => leaf.id)).toEqual(['import-1']);
+    expect(
+      document.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status'),
+    ).toBe('ready');
+  });
+
   it('renders the loading region while config is missing and the empty region on invalid config', async () => {
     const environment = createScadaTestEnvironment([]);
     const loadingRegion = makeRegion(() => <div data-testid="custom-loading" />);

@@ -225,6 +225,74 @@ describe('ConfigAdapter applyDiff (I5.3b)', () => {
     engine.destroy();
   });
 
+  it('should destroy the old symbol before building the new one for a same-id type change (remove-then-rebuild)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [shape('a', 'scada-rect', { width: 100, height: 100 })] } as ScadaConfig);
+    const treeRoot = (engine.tree as unknown as { children: Array<{ children: unknown[] }> }).children[0];
+    const next = {
+      version: 1,
+      symbols: [shape('a', 'scada-ellipse', { width: 30, height: 30 })],
+    } as ScadaConfig;
+    engine.applyDiff(
+      { added: [shape('a', 'scada-ellipse', { width: 30, height: 30 })], removed: ['a'], updated: [] },
+      next,
+    );
+    expect(engine.registry.size()).toBe(1);
+    expect((engine.getSymbol('a')?.node as { tag: string }).tag).toBe('Ellipse');
+    expect(treeRoot.children).toHaveLength(1);
+    expect(engine.getConfigNode('a')).toBe(next.symbols[0]);
+    engine.destroy();
+  });
+
+  it('should refresh nodeById and declarations for non-children updated ids (states/animations via diff)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [
+        shape('d', 'scada-rect', {
+          width: 60,
+          height: 40,
+          states: { states: { run: { style: { fill: '#ff0000' } } } },
+        }),
+      ],
+    } as ScadaConfig);
+    expect(engine.getSymbolDeclarations('d')?.states?.states.run.style).toEqual({ fill: '#ff0000' });
+
+    const next = {
+      version: 1,
+      symbols: [
+        shape('d', 'scada-rect', {
+          width: 60,
+          height: 40,
+          states: { states: { run: { style: { fill: '#00ff00' } }, stop: {} } },
+          animations: [{ kind: 'blink', period: 50 }],
+        }),
+      ],
+    } as ScadaConfig;
+    engine.applyDiff(
+      {
+        added: [],
+        removed: [],
+        updated: [
+          {
+            id: 'd',
+            patch: {
+              states: { states: { run: { style: { fill: '#00ff00' } }, stop: {} } },
+              animations: [{ kind: 'blink', period: 50 }],
+            },
+          },
+        ],
+      },
+      next,
+    );
+    const declarations = engine.getSymbolDeclarations('d');
+    expect(declarations?.states?.states.run.style).toEqual({ fill: '#00ff00' });
+    expect(declarations?.states?.states.stop).toBeDefined();
+    expect(declarations?.animations).toEqual([{ kind: 'blink', period: 50 }]);
+    expect(engine.getConfigNode('d')).toBe(next.symbols[0]);
+    engine.destroy();
+  });
+
   it('getConfigNode should track add/remove/children-rebuild through applyDiff (I14.2 O(1) 索引)', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     engine.reset({

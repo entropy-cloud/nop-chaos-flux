@@ -67,11 +67,20 @@ export function diffScadaConfig(prev: ScadaConfig, next: ScadaConfig): ScadaConf
   for (const node of next.symbols) {
     const prevNode = prevById.get(node.id);
     if (!prevNode) continue;
+    // 图元 type 变更（如 rect→ellipse 换形）：不产出 updated patch（applyUpdate 只能 set 旧 leafer 节点），
+    // 改为 removed（旧 id）+ added（新节点），让 applyDiff 走 remove-then-rebuild 路径。
+    if (prevNode.type !== node.type) {
+      removed.push(node.id);
+      added.push(node);
+      continue;
+    }
     const patch = {} as Record<string, unknown>;
     for (const key of SYMBOL_KEYS) {
       if (key === 'id' || key === 'type') continue;
       if (!valuesEqual(prevNode[key], node[key])) {
-        patch[key] = node[key];
+        // children 差异为 undefined（group 变叶子/子树删除）时产出显式空数组 patch，
+        // 使 applyUpdate 走"移除全部子树"分支而非被 `!== undefined` 守卫跳过。
+        patch[key] = key === 'children' && node[key] === undefined ? [] : node[key];
       }
     }
     if (Object.keys(patch).length > 0) updated.push({ id: node.id, patch: patch as Partial<ScadaSymbolNode> });

@@ -56,18 +56,30 @@ export class ConfigAdapter {
     this.config = null;
   }
 
-  applyDiff(diff: ScadaConfigDiff): void {
+  applyDiff(diff: ScadaConfigDiff, nextConfig?: ScadaConfig): void {
     if (!this.root) {
       throw new Error('config adapter is not built');
+    }
+    // 处理顺序 removed → added → updated：同 id 图元若同时出现在 added 与 removed
+    // （type 变更的 remove+add 语义），必须先销毁旧节点再构建新节点，否则 removeSymbol
+    // 删除的是刚构建的新节点、旧 leafer 节点残留舞台。
+    for (const id of diff.removed) {
+      this.removeSymbol(id);
     }
     for (const node of diff.added) {
       this.buildNode(node, this.root, undefined);
     }
-    for (const id of diff.removed) {
-      this.removeSymbol(id);
-    }
     for (const update of diff.updated) {
-      this.applyUpdate(update.id, update.patch);
+      this.applyUpdate(update.id, update.patch, nextConfig);
+    }
+    if (nextConfig) {
+      this.config = nextConfig;
+      // nodeById 校准：added 图元索引指向新 config 的节点对象（updated 由 applyUpdate 校准），
+      // 保证 getNode/getSymbolDeclarations 与 nextConfig 单一事实源一致。
+      for (const node of diff.added) {
+        const fresh = findNodeById(nextConfig.symbols, node.id);
+        if (fresh) this.nodeById.set(node.id, fresh);
+      }
     }
   }
 
@@ -118,7 +130,7 @@ export class ConfigAdapter {
     }
   }
 
-  private applyUpdate(id: string, patch: Partial<ScadaSymbolNode>): void {
+  private applyUpdate(id: string, patch: Partial<ScadaSymbolNode>, nextConfig?: ScadaConfig): void {
     const leaf = this.registry.get(id);
     if (!leaf) return;
     const node = leaf.node as LeafNode;
@@ -142,6 +154,12 @@ export class ConfigAdapter {
       leaf.definition.applyProps(node, attrPatch as ScadaSymbolProps);
     } else {
       node.set(toNodePatch(node, attrPatch));
+    }
+    // nodeById 收敛：diff 应用后索引必须指向新 config 的节点（含 group 自身；重建的子树
+    // 已由 buildNode 注册），否则 getNode/getSymbolDeclarations 读到过期声明（multi-audit P1-4）。
+    if (nextConfig) {
+      const fresh = findNodeById(nextConfig.symbols, id);
+      if (fresh) this.nodeById.set(id, fresh);
     }
   }
 }
