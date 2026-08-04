@@ -360,7 +360,7 @@ flowchart TD
 
 ## Follow-up Backlog
 
-> 来源：`docs/audits/2026-08-03-1506-multi-audit-industrial-hmi.md`（约 30 条 P2/P3）与 `docs/audits/2026-08-03-1506-open-audit-industrial-hmi.md`（6 条 P2），2026-08-04 triage 登记。P0/P1 已由 `docs/plans/2026-08-04-1235-{1,2,3}-*.md` 收口。每条带源审计路径可追溯；分类：`out-of-scope improvement` / `watch-only residual`（个别与 P1 修复同源、被 P1 fix 覆盖的条目标注已收口）。
+> 来源：`docs/audits/2026-08-03-1506-multi-audit-industrial-hmi.md`（约 30 条 P2/P3）与 `docs/audits/2026-08-03-1506-open-audit-industrial-hmi.md`（6 条 P2），2026-08-04 triage 登记。P0/P1 已由 `docs/plans/2026-08-04-1235-{1,2,3}-*.md` 收口。追加来源：`docs/audits/2026-08-04-2242-multi-audit-industrial-hmi.md`（~22 P2）与 `docs/audits/2026-08-04-2242-open-audit-industrial-hmi.md`（3 P2），P0/P1 已由 `docs/plans/2026-08-04-2242-{1,2}-*.md` 收口（见下「2026-08-04-2242 post-remediation audit P2」子节）。每条带源审计路径可追溯；分类：`out-of-scope improvement` / `watch-only residual`（个别与 P1 修复同源、被 P1 fix 覆盖的条目标注已收口）。
 
 ### Dependency & packaging（multi-audit dim 01/03）
 
@@ -429,6 +429,53 @@ flowchart TD
 - `open-audit-industrial-hmi.md` `[P2]` — `point-store.ts:187-203` `point:change` 订阅者无 try/catch 在 `applyValue` 内运行；订阅者 throw 中断剩余写入循环（今日零生产订阅者，latent）。**已由 plan `2026-08-04-1558-2` Phase 2 收口**：EventHub.emit 与 PointStore.applyValue 双路径订阅者循环均加 try/catch（单订阅者异常隔离，异常经 `onSubscriberError` 去重上报）。
 - `open-audit-industrial-hmi.md` `[P2]` — `component:destroy` 后 `data-status="ready"` 且 wrapper 仍挂载（`use-scada-handles.ts:54-57`）——销毁状态无处反映；e2e/tooling 会把已销毁 canvas 报为健康。或 surface destroyed status 或文档化为 unmount-only。**已由 plan `2026-08-04-1558-2` Phase 1 收口**：`ScadaCanvasStatus` 增 `destroyed`，`component:destroy` 句柄回调置状态，wrapper `data-status` 反映销毁态。
 - `open-audit-industrial-hmi.md` `[P2]` — `tests/e2e/scada-perf.spec.ts:134,148,237,273,346` `allowConsoleErrors(100)` + `playground-entry-pages.spec.ts:450` `ROUTES_WITH_KNOWN_ERRORS` 是 calendar 先例拷贝而非证据驱动（本审计 live probe 该路由 0 console.error/pageerror）→ 建议移除 allowance 或记录真实已知错误。**已由 plan `2026-08-04-1558-3` Phase 2 收口**：移除 perf spec ×5 `allowConsoleErrors(100)` + `ROUTES_WITH_KNOWN_ERRORS` 的 `scada-perf-scale` 条目；全量 scada e2e + playground-entry-pages 无 allowance 全绿（该路由经 `assertTrackedPageErrors` 0 console.error/pageerror 验证）。
+
+### 2026-08-04-2242 post-remediation audit P2（multi + open audit）
+
+> 来源：`docs/audits/2026-08-04-2242-multi-audit-industrial-hmi.md`（~22 P2）与 `docs/audits/2026-08-04-2242-open-audit-industrial-hmi.md`（3 P2），2026-08-04 triage 登记。P0/P1（multi-audit P1-1/P1-2 onError+onHandlerError 未接、open-audit P1 x/y 契约漂移）已由 `docs/plans/2026-08-04-2242-{1,2}-*.md` 收口。每条带源审计文件 + 代码定位可追溯。
+
+**State & lifecycle（multi-audit dim 04/07）**
+
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — RefreshPipeline 无 destroyed 守卫（`binding/dirty-collector.ts:213-221` `requestRender`、`:223-232` `destroy`）；config reload 时 `useScadaPointsBridge` eval effect 旧 `runtime` 闭包可重激活已销毁 pipeline。建议加 `destroyed` flag 门 `requestRender`/`flushFrame`（镜像 `DirtyCollector.destroyed`）。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `DirtyCollector.destroyed` 不对称：`requestRender`（`:67`）守卫，`collect`/`flush`/`flushFrame`（`:48-59,78-87,90-95`）bypass。半门控是 footgun。建议三处统一守卫或移除 flag 改 caller-managed。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `releaseRuntime` 双 destroy collector（`use-scada-engine.ts:112-115` 调 `pipeline.destroy()` + `collector.destroy()`，`dirty-collector.ts:227` pipeline 内又 destroy collector）——依赖幂等。建议择一 owner。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `pendingSkipRef` 计数器在 props config 身份变更期可泄漏（`use-scada-config-sync.ts:172-180,220-245`）；host 表达式重算产新对象身份时 skip 机制失配，错误跳过 sync 使画布滞留 imported 场景而 `prevRef` 静默前进。建议改 per-import nonce。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `lastReportedErrors` Map 跨 config reload 不清（`use-scada-points-bridge.ts:212,218-221`）；与 `compiledCache` 清空不对称。**plan `{2242-1}` 接通 onError 后该缺陷变可观测**（旧 config 去重记录抑制新 config 同表达式上报）。建议加 `lastReportedErrors.current.clear()` 到既有 `compiledCache` 清空 effect。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `useScadaHandles` effect 每 render 重跑（`scada-canvas.tsx:193-197` 内联 `reloadConfig` 新身份 → `use-scada-handles.ts:147` deps 重登/反注 handle）。建议 `reloadConfig` 包 `useCallback`。
+
+**Display & positioning（multi-audit dim 21）**
+
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `computeSymbolBounds` 仅认显式 `custom.points`；default-triangle polygon 与零高 line 无 `custom.points` 时仍 fit 到 MAX_SCALE(20×)（`use-scada-config-sync.ts:48-85`、`polygon.ts:7-11,32,35-37`、`line.ts:26-33`）。建议 `boundsFromCustomPoints` consult `getScadaSymbolDefinition(node.type)` 取默认 points。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `scada-text` `align:'center'` 居中修正只落 in instruments，base `text.ts:27-37` 仍依赖 leafer `autoSizeAlign`（无 `layoutWidth` 时失效）。建议显式 width 契约或 measureText。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — wheel-zoom clamp 兜底用 screen 原点 `{0,0}` 而非光标锚（`scada-engine.ts:425-441`）；超界 scale 时内容视觉偏移。建议捕获 wheel 事件 screen 坐标作 clamp 锚。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `viewport` prop 变更 mount 后被静默忽略，与 `width`/`height` 可反应不对称（`use-scada-config-sync.ts:165-217`、`design-renderer.md:232`）。建议 §8.3 显式标注不对称或接 viewport 变更 effect。
+
+**Wiring（multi-audit dim 22）**
+
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — 复杂表达式订阅路径在平台 collector 失败时静默 disable（`use-scada-points-bridge.ts:57-86,100-131,198-210` `extractExpressionDepsViaProbe` 任一 catch 返 `[]` → `useScopeSelector` disabled → 表达式永不随 scope 更新）。建议集成测试 + empty-paths 时发 `flux-deps-empty` 诊断（经 plan `{2242-1}` 同一通道）。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `ConfigAdapter.setConfig` 死代码（`config-adapter.ts:45-47`，全仓零消费者）+ stale-index footgun（未来贡献者直调会跳过 tree 重建 + `nodeById` 刷新，重引 P1-4 形态）。建议删除或改名 `setConfigReference` + inline 注记。
+- `2026-08-04-2242-open-audit-industrial-hmi.md` `[P2]` — `collectStates` 与 `StateVisualApplier` 两模块每次 state 转换都写同一 state-style 字段（`dirty-collector.ts:323-347` batched + `symbols/visual-state.ts:62-64` immediate，绕过 A5 合帧契约）；alarm-storm 下 N+1 `applyAttrs`/frame。建议择一 owner。
+- `2026-08-04-2242-open-audit-industrial-hmi.md` `[P2]` — `component:setPointValue` handle 把 `value as ScadaPrimitive` 无校验（`use-scada-handles.ts:97-106`），与 flux bridge `isScadaPrimitive` 校验不对称；host action 传非原始值静默 corrupt 点表。建议复用 `isScadaPrimitive` 返 `{ ok:false }`。
+- `2026-08-04-2242-open-audit-industrial-hmi.md` `[P2]` — `diffScadaConfig` 深对象相等用 `JSON.stringify`（key-order-sensitive，`diff.ts:45-51`），在增量热路径上；prev/next 来自异源（exportConfig vs host 表达式重算）时 key 序不同 → 假阳性 diff → 全 `reloadBindings` 重建。建议换 stable deep-equal（own-keys-sorted 递归比较）。
+
+**Test effectiveness & coverage（multi-audit dim 14/23）**
+
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `MockApp.tree.zoomLayer` 是独立实例非 `app.tree` 自身（`leafer-ui-mock.ts:210,219-228,297-325`）；真实 leafer `tree.zoomLayer === tree`。未来直读 `tree.scaleX` 的产线代码会在 mock 见身份、产线见 viewport transform。建议 mock getter 返 `this` 或加不变量注记 + lint。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `MockLeaf`/`MockGroup` 未建模 `getBoundsToWorld`/`worldBox`/`getBounds()`（`leafer-ui-mock.ts:16-124`）；未来产线代码调 leafer bounds API 会在 mock 见 `undefined`。建议加 stub 抛「mock 不建模」错。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `scada-pressure-demo.spec.ts:49-110,112-145` canvas 存在性硬门只盖 overview 场景，10k-symbol 切换路径无 `assertScadaCanvasRendered`。建议 10k/pressure 每个成功 ready 后补调。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `scada-perf.spec.ts:272-305,307-377` canvas 存在性硬门在 10k-refresh 与 memory 测试上 skipped。建议两处补 `assertScadaCanvasRendered`。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `assertScadaCanvasRendered` 像素探测对非空场景 best-effort（`tests/e2e/helpers/scada-canvas-assert.ts:85-113,122-128`）；`visible:false`/`opacity:0` 回归会过（`renderFrames>0` 满足、像素 `fallback-all-zero` 非失败）。建议非空场景下 `fallback-all-zero` 视为失败。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — 多处 `not.toThrow()` 弱断言 + 重复覆盖（`scada-canvas-lifecycle-hardening.test.tsx:453-472`、`scada-robustness-hardening.test.ts:194-241`、`scada-points-bridge.test.tsx:122-132`、`renderer-definitions.test.ts:139-148`、`use-scada-config-sync.test.ts:78-84` 双重 `computeSymbolBounds([])`）。建议换副作用负向断言、删重复、misnamed 文件改名或补 hook 直测。
+
+**Public API surface（multi-audit dim 03）**
+
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `IndustrialRendererSchema` 泄漏公共面（`src/index.ts:36` + `renderer-definitions.ts:209` 零消费者，不在 §11 授权清单）。建议从 `index.ts:36` 删除导出或加进 §11 授权枚举。
+
+**Documentation drift（multi-audit dim 16）**
+
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `design-renderer.md §10` marker 表 loading/error 行记 `—` 但代码发类 + 有 CSS（`scada-canvas.tsx:213,216`、`styles.css:14,21`、`design-renderer.md:270-271`）。建议两行改 `nop-scada-canvas-loading`/`nop-scada-canvas-error`。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `design-renderer.md §6:187` 仍记已移除的 `data-slot="scada-canvas-overlay"`，与 §10「已移除」自相矛盾。建议 §6 行重写 retire 该 slot 引用。
+- `2026-08-04-2242-multi-audit-industrial-hmi.md` `[P2]` — `design-engine.md §8.3:233-244` `ScadaTestHandle` 漏 2 个 impl 可选字段（`setPointValues?`/`measureAddStrategies?`，`test-handle.ts:9-21` 9 成员 vs 文档 7 成员）；sibling `editor-initiation.md:59` 正确列全。建议 §8.3 补两字段 + 「非公共契约」注。
 
 ## Rule
 

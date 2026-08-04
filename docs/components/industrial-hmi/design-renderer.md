@@ -204,6 +204,7 @@ interface ScadaSymbolNode {
 - `onSymbolClick`/`onSymbolDblClick`/`onSymbolHover`：图元交互全局钩子（除组态内图元事件声明外的统一出口）；
 - `onReady`（场景构建完成，`scada:ready`）：**按构建触发**——每次实际执行非空构建（mount/full reset/importConfig 全量构建、非空 diff 增量）恰 dispatch 1 次；空 diff 重跑（宿主每渲染传同值新对象身份、绑定域重建引起的 effect 重跑）不触发（change 基准守卫，P1-3 fix）。
 - `onError`（`scada:error`，载荷 `{ code, message }`）：**仅 config 校验/构建失败**（config-parse/config-invalid/config-build-failed/engine-create-failed）。**运行期数据错误（flux 编译/求值失败）不升级画布 error、不派发 `scada:error`**：按声明跳过（失败点不更新）+ 桥接层单次去重上报（同表达式同错误码仅在变化时上报一次，求值成功后清空去重记录），scope 数据修复后点值自动回流，画面保持 ready（P1-8 fix）。
+- **运行期诊断出口（非升级，plan 2026-08-04-2242-1）**：flux 编译/求值失败（`flux-compile-failed`/`flux-evaluate-failed`）与用户侧图元事件处理器 throw（`handler-error`）的去重上报在 React renderer 层经 `scada-canvas.tsx` 的 `reportDiagnostic` 出口消费——`console.warn('[scada-canvas]', code, message)` 保底可见（dev+prod；去重在上游 hook/engine 层完成，每唯一错误仅 fire 一次）+ flux 表达式错误额外复用既有 host telemetry 钩子 `RendererEnv.monitor.onError`（`ExpressionExecutionEnv.monitor`，phase:'expression'）。该出口**不升级画布 status、不派发 `scada:error`**（诊断 ≠ error status，与 §8.1 降级契约一致）：不动 `setStatus`/`setErrorInfo`/`notifyError`，画布保持 `ready`。出口实现含 try/catch 自保护（通道自身 throw 不得回流 engine/hook）。handler-error 的 host telemetry 后置（`env.monitor` 当前类型限定 phase:'expression'，扩展为 'action' phase 属 Non-Blocking Follow-up）。
 
 ### 8.2 图元事件 → flux action 联动（讨论 Q8）
 
