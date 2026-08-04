@@ -1,6 +1,6 @@
 # 454 字段控件统一事件派发 + 23 调用点迁移
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-04
 > Source: `docs/architecture/field-onchange-event-dispatch.md` §4/§5、`docs/plans/2026-07-30-field-default-value-and-surface-context-fix.md` Phase 6（deferred）、`nop-app-erp/docs/analysis/2026-08-03-gen-control-special-cases-and-flux-solution.md`
 > Related: `docs/architecture/nested-schema-field-classification.md` §3.5.2
@@ -68,64 +68,64 @@
 
 ### Phase 1 - 事件派发契约测试先行（红）
 
-Status: planned
+Status: completed
 Targets: `flux-renderers-form/src/__tests__/form-field-handlers.test.tsx`（或同目录新增）
 
 - Item Types: `Proof`
 
-- [ ] 新增 controller 事件派发测试（针对当前实现为红）：onChange action 派发 + 载荷 `{name, value}`（非 undefined）；onBlur 派发；setValue → events → validate 顺序；默认值 push 不派发；readOnly 不派发；action 抛错走 reportRuntimeHostIssue 且值绑定不受影响
+- [x] 新增 controller 事件派发测试（针对当前实现为红）：onChange action 派发 + 载荷 `{name, value}`（非 undefined）；onBlur 派发；setValue → events → validate 顺序；默认值 push 不派发；readOnly 不派发；action 抛错走 reportRuntimeHostIssue 且值绑定不受影响
 
 Exit Criteria:
 
-- [ ] 上述测试用例已写入且针对当前代码（无 events 选项）失败
+- [x] 上述测试用例已写入且针对当前代码（无 events 选项）失败
 
 ### Phase 2 - controller 扩展 events + FromProps 透传（转绿）
 
-Status: planned
+Status: completed
 Targets: `flux-renderers-form/src/field-utils/field-handlers.tsx`
 
 - Item Types: `Fix`
 
-- [ ] `useFormFieldController` 增加 `events` 选项，包装 `wrappedHandlers.onChange`/`onBlur`（载荷 `{name, value}`；readOnly gate；dispatchFieldEvent 错误走 `reportRuntimeHostIssue`；顺序 setValue → events → validate）
-- [ ] `useFormFieldFromProps` 签名改为 `RendererComponentProps<P>`，透传 `props.events`（hidden-renderer 等既有调用点源码兼容，无需改动）
+- [x] `useFormFieldController` 增加 `events` 选项，包装 `wrappedHandlers.onChange`/`onBlur`（载荷 `{name, value}`；readOnly gate；dispatchFieldEvent 错误走 `reportRuntimeHostIssue`；顺序 setValue → events → validate）
+- [x] `useFormFieldFromProps` 签名改为 `RendererComponentProps<P>`，透传 `props.events`（hidden-renderer 等既有调用点源码兼容，无需改动）
 
 Exit Criteria:
 
-- [ ] Phase 1 红测试全部转绿（含载荷/顺序/默认值/readOnly/错误路径）
-- [ ] flux-renderers-form 局部 typecheck 通过；hidden-renderer 调用点无源码改动仍编译
+- [x] Phase 1 红测试全部转绿（含载荷/顺序/默认值/readOnly/错误路径）
+- [x] flux-renderers-form 局部 typecheck 通过；hidden-renderer 调用点无源码改动仍编译
 
 ### Phase 3 - 23 个调用点迁移
 
-Status: planned
+Status: completed
 Targets: `flux-renderers-form/src/renderers/*.tsx`（12 文件/15 调用点）、`flux-renderers-form-advanced/src/*.tsx`（7 文件/8 调用点）
 
 - Item Types: `Fix`
 
-- [ ] 12 个 flux-renderers-form renderer 文件迁移到 `useFormFieldFromProps`（保留原 controller options）
-- [ ] 7 个 flux-renderers-form-advanced renderer 文件迁移到 `useFormFieldFromProps`（保留原 controller options）
-- [ ] grep 验证：两包 renderer 源码中 `useFormFieldController(` 调用零残留（仅 field-handlers.tsx 定义/导出与 **tests** 脚手架）
+- [x] 12 个 flux-renderers-form renderer 文件迁移到 `useFormFieldFromProps`（保留原 controller options）
+- [x] 7 个 flux-renderers-form-advanced renderer 文件迁移到 `useFormFieldFromProps`（保留原 controller options）
+- [x] grep 验证：两包 renderer 源码中 `useFormFieldController(` 调用零残留（仅 field-handlers.tsx 定义/导出与 **tests** 脚手架）
 
 Exit Criteria:
 
-- [ ] 迁移最终态必须是全部目标调用点走 `useFormFieldFromProps`（"先传 events 验证、再全量 FromProps"仅是分批执行策略，不是终态）
-- [ ] grep 复核无遗漏调用点（计数 = 0）
+- [x] 迁移最终态必须是全部目标调用点走 `useFormFieldFromProps`（"先传 events 验证、再全量 FromProps"仅是分批执行策略，不是终态）
+- [x] grep 复核无遗漏调用点（计数 = 0）
 
 ### Phase 4 - 全量回归 + owner docs 同步
 
-Status: planned
+Status: completed
 Targets: `flux-renderers-form`、`flux-renderers-form-advanced`、`docs/architecture/field-onchange-event-dispatch.md`、`docs/plans/2026-07-30-field-default-value-and-surface-context-fix.md`
 
 - Item Types: `Fix | Proof`
 
-- [ ] flux-renderers-form + flux-renderers-form-advanced 全量测试通过（含新事件派发测试）
-- [ ] 依赖包（flux-react 等）回归通过
-- [ ] `field-onchange-event-dispatch.md` §4/§5 由"设计（待实现）"改写为最终设计状态（删除演进叙事；§2.3/§2.4 计数口径修正为 23 调用点/19 文件；§5 步骤 1-2 属 453，标 453 归属）
-- [ ] plan 07-30 Phase 6 标记 completed（follow-up 关闭）
-- [ ] `docs/logs/` 对应日期条目更新
+- [x] flux-renderers-form + flux-renderers-form-advanced 全量测试通过（含新事件派发测试）
+- [x] 依赖包（flux-react 等）回归通过
+- [x] `field-onchange-event-dispatch.md` §4/§5 由"设计（待实现）"改写为最终设计状态（删除演进叙事；§2.3/§2.4 计数口径修正为 23 调用点/19 文件；§5 步骤 1-2 属 453，标 453 归属）
+- [x] plan 07-30 Phase 6 标记 completed（follow-up 关闭）
+- [x] `docs/logs/` 对应日期条目更新
 
 Exit Criteria:
 
-- [ ] 两包测试全绿；设计文档状态不再是"待实现"；plan 07-30 Phase 6 `Status: completed`
+- [x] 两包测试全绿；设计文档状态不再是"待实现"；plan 07-30 Phase 6 `Status: completed`
 
 ## Draft Review Record
 
@@ -136,16 +136,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] flux-renderers-form 全量测试通过（含新事件派发测试）
-- [ ] 依赖包（form-advanced 等）回归通过
-- [ ] 23 个调用点迁移完成（grep 验证两包 renderer 源码 `useFormFieldController(` 零残留）
-- [ ] plan 07-30 Phase 6 标记 completed（follow-up 关闭）
-- [ ] 独立子 agent closure-audit 完成并记录证据（执行 session 不得自审勾选本项）
-- [ ] owner docs 同步（设计文档终态改写 + docs/logs/ 收口）
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] flux-renderers-form 全量测试通过（含新事件派发测试）
+- [x] 依赖包（form-advanced 等）回归通过
+- [x] 23 个调用点迁移完成（grep 验证两包 renderer 源码 `useFormFieldController(` 零残留）
+- [x] plan 07-30 Phase 6 标记 completed（follow-up 关闭）
+- [x] 独立子 agent closure-audit 完成并记录证据（执行 session 不得自审勾选本项）
+- [x] owner docs 同步（设计文档终态改写 + docs/logs/ 收口）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -162,13 +162,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<关闭时填写：为什么这个 plan 可以关闭>>
+Status Note: 字段控件统一事件派发已落地（`useFormFieldController` events 选项 + wrappedHandlers onChange/onBlur 派发 `{name, value}` 载荷 + readOnly gate + 错误走 reportRuntimeHostIssue）；`useFormFieldFromProps` 签名改 `RendererComponentProps<P>` 透传 events；19 文件/23 调用点全部迁移（两包 renderer 源码 `useFormFieldController(` 零残留）；测试先行红→绿（form-field-event-dispatch.test.tsx 9 用例，含 schema 级端到端 onChange/onBlur 派发）；plan 07-30 Phase 6 deferred 关闭；owner docs 终态改写；全量验证 typecheck/build/lint/test 全绿（31/31/31/58）。应用层（ERP view.xml）与 `dispatchOn: 'valid-change'` 为显式 Non-Goals / follow-up，未静默降级任何 in-scope 项。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 fresh sub-agent closure-audit（task `ses_033d56af1ffeaTihomakE90A5S`，执行 session 之外）
+- Evidence: verdict `approved`；逐项核对 A（guide 合规）/B（plan 文本一致性：四 Phase completed + 全部 [x]、无残留 [ ]）/C（live repo 落地：field-handlers.tsx:388-489 events 选项 + FromProps 透传、两包调用点 19 文件/23 处、adapter/areValuesEqual 经 options 保留、`useFormFieldController(` renderer 源码零残留）/D（docs 一致性：design doc 终态「最终设计（已落地）」+ 19/23 计数、plan 07-30 Phase 6 completed、daily log 收口）/E（deferred 诚实性：async-adapter-stale 为 watch-only residual，adapter 均同步）/F（接口↔语义：审计自跑 form 包 723/723 含事件派发测试，行为由断言证明非仅 API 存在）。无 Blocker。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- ERP 应用层验证：purchase 弹窗 quantity → amount 联动重算（e2e，属 `nop-app-erp` 仓库，计划外）
+- `dispatchOn: 'valid-change'` 选项（默认直接触发，留作未来）

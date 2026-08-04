@@ -156,12 +156,12 @@ Exit Criteria:
 
 ### Phase 6 - 统一迁移到 useFormFieldFromProps
 
-Status: deferred
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/*.tsx`, `packages/flux-renderers-form-advanced/src/*.tsx`
 
 - Item Types: `Follow-up`
 
-移入 Deferred But Adjudicated，见下方。
+已由 `docs/plans/454-flux-form-field-uniform-event-dispatch-plan.md` 执行并关闭（2026-08-04）：**19 个 renderer 文件 / 23 个调用点**（flux-renderers-form 12 文件/15 调用点 + flux-renderers-form-advanced 7 文件/8 调用点）全部迁移到 `useFormFieldFromProps`（保留原 controller options），两包 renderer 源码 `useFormFieldController(` 零残留（仅 field-handlers.tsx 定义/导出与 tests 脚手架）。原 deferred 状态撤销——统一事件派发为迁移提供了实质动机。
 
 ## Closure Gates
 
@@ -184,8 +184,8 @@ Targets: `packages/flux-renderers-form/src/renderers/*.tsx`, `packages/flux-rend
 
 ### 统一迁移到 useFormFieldFromProps
 
-- Classification: `optimization candidate`
-- Why Not Blocking Closure: 所有 22 个调用点已通过手动 `defaultValue: props.props.value` 补齐，功能正确。`useFormFieldFromProps` 已定义并导出，迁移是纯代码整洁性改进。当前 `useFormFieldFromProps` 是死代码——定义了但无人调用，迁移后它将生效。
+- Classification: `optimization candidate` → 已执行（plan 454，2026-08-04）
+- Why Not Blocking Closure: 所有调用点已通过手动 `defaultValue: props.props.value` 补齐，功能正确；迁移为纯代码整洁性改进。**plan 454 已执行全部 19 文件/23 调用点迁移**（统一事件派发赋予实质动机），Phase 6 标记 completed。
 - Successor Required: no
 
 - Classification: `watch-only residual`
