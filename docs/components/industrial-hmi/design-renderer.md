@@ -145,6 +145,12 @@ interface ScadaSymbolNode {
 
 > 图元级字段（`bindings`/`states`/`animations`/`events`/`custom`）**不进 renderer-definitions**：renderer-definitions 只注册 `scada-canvas` 级 fields（讨论 Q10 单容器决策 + summary §5.4 #3）；组态 JSON 内部 schema 由本包 `schemas.ts` 类型 + 运行时校验器（纯逻辑，Vitest 单测）约束。
 
+> **视图配置接线契约（2026-08-04 plan `{2}` Phase 3 落地）**：
+>
+> - `background.color` **已接线**：full/reset 路径（`engine.reset(config)`）应用到 ground 层填充，与构造期 `ScadaEngineOptions.background` 同口径，reset 覆盖构造值（config 经 props 到达，mount 期不可用，接线点在 reset/同步期而非 options 透传）。
+> - `background.grid` **未接线（watch-only）**：validate 接受但无任何 runtime 消费面（v1 无兼容负担）；author 不应依赖 grid 底纹，后续图元样式轮或需求触发时再接线（roadmap Follow-up Backlog 登记）。
+> - `viewport {x,y,scale}` **已接线（组态默认）**：full/reset 路径（含 importConfig）存在且无 props `viewport` policy 时作为初始视口经 `engine.setViewport` 应用；props `viewport` policy（fit/center）为**显式首选项**，两者都无时保持现状。diff 增量路径不重应用（用户画布平移/缩放不被重置，gate-4-review m-B）。
+
 ### 4.3 校验/序列化/反序列化/增量 diff
 
 | 能力      | 契约                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | 实现落点                                                                |
@@ -194,7 +200,8 @@ interface ScadaSymbolNode {
 ### 8.1 schema 级事件（props.events）
 
 - `onSymbolClick`/`onSymbolDblClick`/`onSymbolHover`：图元交互全局钩子（除组态内图元事件声明外的统一出口）；
-- `onReady`（首帧渲染完成）、`onError`（config 校验/构建失败，载荷 `{ code, message }`）。
+- `onReady`（场景构建完成，`scada:ready`）：**按构建触发**——每次实际执行非空构建（mount/full reset/importConfig 全量构建、非空 diff 增量）恰 dispatch 1 次；空 diff 重跑（宿主每渲染传同值新对象身份、绑定域重建引起的 effect 重跑）不触发（change 基准守卫，P1-3 fix）。
+- `onError`（`scada:error`，载荷 `{ code, message }`）：**仅 config 校验/构建失败**（config-parse/config-invalid/config-build-failed/engine-create-failed）。**运行期数据错误（flux 编译/求值失败）不升级画布 error、不派发 `scada:error`**：按声明跳过（失败点不更新）+ 桥接层单次去重上报（同表达式同错误码仅在变化时上报一次，求值成功后清空去重记录），scope 数据修复后点值自动回流，画面保持 ready（P1-8 fix）。
 
 ### 8.2 图元事件 → flux action 联动（讨论 Q8）
 
