@@ -1,10 +1,10 @@
 import type { ScadaAnimation, ScadaPrimitive, ScadaStateDeclaration } from '../serialization/config-types.js';
 import type { ScadaSymbolProps, ScadaSymbolStylePatch } from '../symbols/symbol-types.js';
 import { EventHub, PointStore, type Unsubscribe } from './point-store.js';
-import { ReverseIndex } from './reverse-index.js';
+import { ReverseIndex, type SymbolBindingTarget } from './reverse-index.js';
 import { BindResolver } from './bind-resolver.js';
 import { ExpressionEvaluator } from './expression-evaluator.js';
-import { resolveState } from './value-to-state.js';
+import { resolveState, type ResolveStateOptions } from './value-to-state.js';
 import { Animator } from './animator.js';
 
 export type ApplyAttrs = (attrsBySymbolId: Record<string, Partial<ScadaSymbolProps>>) => void;
@@ -327,7 +327,7 @@ export class RefreshPipeline {
       const primary = this.options.reverseIndex.lookupSymbol(symbolId)[0];
       if (!primary) continue;
       const raw = this.options.pointStore.getPointValue(primary.pointId);
-      const state = resolveState(declaration, raw);
+      const state = resolveState(declaration, raw, this.resolveStateScale(symbolId, primary));
       const prev = this.lastState.get(symbolId);
       if (prev !== state) {
         this.lastState.set(symbolId, state);
@@ -344,6 +344,22 @@ export class RefreshPipeline {
         }
       }
     }
+  }
+
+  /**
+   * 状态判定 scale 转发（plan 2026-08-04-1558-3 Phase 1，F4 语义）：
+   * 判定作用于 point-store 存储值（声明级 scale 已在 convert 施加）。
+   * binding.scale 仅在声明级无 scale、或与声明级为同一 scale 对象时转发，避免双重换算。
+   */
+  private resolveStateScale(symbolId: string, primary: SymbolBindingTarget): ResolveStateOptions | undefined {
+    const binding = this.options.reverseIndex.getBindings(symbolId)?.[primary.property];
+    const bindingScale = binding?.scale;
+    if (bindingScale === undefined) return undefined;
+    const declarationScale = this.options.pointStore.getPointState(primary.pointId)?.declaration.scale;
+    if (declarationScale === undefined || bindingScale === declarationScale) {
+      return { scale: bindingScale };
+    }
+    return undefined;
   }
 
   /** 状态→动画联动：进入状态启动（state 级 + when:{state} 匹配）、退出状态停止（当: 状态级动画）。 */

@@ -447,7 +447,10 @@ test('domain route coverage matches playground route inventory', () => {
   expect(assertionIds).toEqual(routeIds);
 });
 
-const ROUTES_WITH_KNOWN_ERRORS = new Set(['gantt', 'kanban', 'scheduling-calendar', 'barcode-input', 'calendar-perf-scale', 'kanban-perf-scale', 'gantt-perf-scale', 'diff-perf-scale', 'scada-perf-scale']);
+// plan 2026-08-04-1558-3 Phase 2：scada-perf-scale 经 open-audit live probe 证 0 console.error/pageerror，
+// 从 KNOWN_ERRORS 移除（证据驱动）。其余 8 条（gantt/kanban/scheduling/calendar/barcode 等）属其他家族、
+// 无本计划探针证据——不盲删，归各自 owner 或凭逐路由探针证据移除（m3-r2）。
+const ROUTES_WITH_KNOWN_ERRORS = new Set(['gantt', 'kanban', 'scheduling-calendar', 'barcode-input', 'calendar-perf-scale', 'kanban-perf-scale', 'gantt-perf-scale', 'diff-perf-scale']);
 
 for (const route of DOMAIN_RENDERER_ROUTES) {
   test(`playground entry page smoke: ${route.id}`, async ({ page, allowConsoleErrors }) => {

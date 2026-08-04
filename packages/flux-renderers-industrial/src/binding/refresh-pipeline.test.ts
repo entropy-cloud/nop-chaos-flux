@@ -418,6 +418,84 @@ describe('RefreshPipeline 状态判定联动 (I6.2)', () => {
   });
 });
 
+describe('RefreshPipeline 状态判定 scale 转发 (F4, plan 2026-08-04-1558-3 Phase 1)', () => {
+  // 语义钉死：判定作用于 point-store 存储值（声明级 scale 已在 convert 施加）。
+  // binding.scale 仅在声明级无 scale、或与声明级为同一 scale 对象时转发，避免双重换算。
+  const rangesStates = (boundary: number): ScadaStateDeclaration => ({
+    states: {
+      low: { style: { fill: '#00ff00' } },
+      high: { style: { fill: '#ff0000' } },
+    },
+    ranges: [{ min: boundary, state: 'high' }],
+  });
+
+  it('声明级有 scale + binding 不同 scale → 不转发 binding.scale（判定作用于存储值）', () => {
+    // declaration scale k=0.1：setPointValue(500) → convert → stored 50。binding scale k=2（不同对象）。
+    // 边界 60：存储值 50 < 60 → low（不转发）。若（错误地）转发 k=2 → 100 ≥ 60 → high。
+    const harness = createHarness({
+      declarations: [{ id: 'raw', source: 'flux', scale: { k: 0.1 } }],
+      symbols: [
+        {
+          id: 's1',
+          type: 'scada-rect',
+          x: 0,
+          y: 0,
+          bindings: { text: { point: 'raw', scale: { k: 2 } } },
+          states: rangesStates(60),
+        },
+      ],
+      getStates: (id) => (id === 's1' ? rangesStates(60) : undefined),
+    });
+    harness.pointStore.setPointValue('raw', 500); // convert k=0.1 → stored 50
+    harness.pipeline.flushFrame(harnessApply(harness));
+    // 判定作用于存储值 50 → low（fill #00ff00）；binding.scale 未转发（避免双重换算）。
+    // text = BindResolver 对存储值 50 施加 binding.scale k=2 → 100。
+    expect(harness.applied[0]['s1']).toEqual({ text: 100, fill: '#00ff00' });
+  });
+
+  it('声明级无 scale + binding 有 scale → 转发 binding.scale（判定对齐绑定消费值）', () => {
+    // declaration 无 scale：setPointValue(50) → stored 50（无换算）。binding scale k=2。
+    // 边界 100：转发后 2×50=100 ≥ 100 → high；不转发则 50 < 100 → low。
+    const harness = createHarness({
+      declarations: [{ id: 'val', source: 'flux' }],
+      symbols: [
+        {
+          id: 's2',
+          type: 'scada-rect',
+          x: 0,
+          y: 0,
+          bindings: { text: { point: 'val', scale: { k: 2 } } },
+          states: rangesStates(100),
+        },
+      ],
+      getStates: (id) => (id === 's2' ? rangesStates(100) : undefined),
+    });
+    harness.pointStore.setPointValue('val', 50); // 无声明 scale → stored 50
+    harness.pipeline.flushFrame(harnessApply(harness));
+    // 转发 binding.scale → 100 ≥ 100 → high（fill #ff0000）；text 同为 100。
+    expect(harness.applied[0]['s2']).toEqual({ text: 100, fill: '#ff0000' });
+  });
+
+  it('binding 无 scale → 判定作用于存储值（无转发）', () => {
+    const harness = createHarness({
+      declarations: [{ id: 'val', source: 'static', value: 70 }],
+      symbols: [
+        {
+          id: 's3',
+          type: 'scada-rect',
+          x: 0,
+          y: 0,
+          bindings: { text: { point: 'val' } },
+          states: rangesStates(60),
+        },
+      ],
+      getStates: (id) => (id === 's3' ? rangesStates(60) : undefined),
+    });
+    harness.pipeline.flushFrame(harnessApply(harness));
+    expect(harness.applied[0]['s3']).toEqual({ text: 70, fill: '#ff0000' });
+  });
+});
+
 describe('RefreshPipeline 状态→动画联动 (I6.3)', () => {
   const faultDeclaration = (): ScadaStateDeclaration => ({
     states: {

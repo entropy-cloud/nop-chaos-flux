@@ -472,3 +472,69 @@ describe('diffScadaConfig', () => {
     expect(gained.variables).toEqual({ added: [{ id: 'gone', source: 'static', value: 1 }], removed: [], updated: [] });
   });
 });
+
+// plan 2026-08-04-1558-3 Phase 3 覆盖缺口闭合：validate.ts 错误分支逐分支补断言。
+describe('validateScadaConfig error branch matrix (plan 2026-08-04-1558-3 Phase 3)', () => {
+  const expectErrors = (config: ScadaConfig, ...fragments: string[]): void => {
+    const result = validateScadaConfig(config);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      for (const frag of fragments) {
+        expect(result.errors.some((e) => e.includes(frag)), `expected error fragment "${frag}"`).toBe(true);
+      }
+    }
+  };
+
+  it('rejects non-object binding value (validateBinding must-be-an-object)', () => {
+    expectErrors(baseConfig({ symbols: [rect('b', { bindings: { fill: 'nope' as never } })] }), 'bindings.fill must be an object');
+  });
+
+  it('rejects non-object animation entry (validateAnimation must-be-an-object)', () => {
+    expectErrors(baseConfig({ symbols: [rect('a', { animations: ['nope' as never] })] }), 'animations[0] must be an object');
+  });
+
+  it('rejects non-array states.ranges (ranges must-be-an-array)', () => {
+    expectErrors(
+      baseConfig({ symbols: [rect('s', { states: { states: { run: {} }, ranges: 'nope' as never } })] }),
+      '.ranges must be an array',
+    );
+  });
+
+  it('rejects symbol missing/empty id and type (id/type must-be-a-non-empty-string)', () => {
+    expectErrors(baseConfig({ symbols: [{ type: 'scada-rect', x: 0, y: 0 } as never] }), 'symbols[0].id must be a non-empty string');
+    expectErrors(baseConfig({ symbols: [{ id: 'x', type: '  ', x: 0, y: 0 } as never] }), 'symbols[0].type must be a non-empty string');
+  });
+
+  it('rejects malformed strokeDash (must-be-an-array-of-numbers + some 非数字)', () => {
+    expectErrors(baseConfig({ symbols: [rect('d', { strokeDash: 'nope' as never })] }), '.strokeDash must be an array of numbers');
+    expectErrors(baseConfig({ symbols: [rect('d2', { strokeDash: [1, 'x' as never] })] }), '.strokeDash must be an array of numbers');
+  });
+
+  it('rejects malformed fillStyle (must-be-an-object-or-a-string)', () => {
+    expectErrors(baseConfig({ symbols: [rect('f', { fillStyle: 42 as never })] }), '.fillStyle must be an object or a string');
+  });
+
+  it('rejects malformed shadow (must-be-an-object)', () => {
+    expectErrors(baseConfig({ symbols: [rect('sh', { shadow: 'nope' as never })] }), '.shadow must be an object');
+  });
+
+  it('rejects malformed flow.dash (must-be-an-array-of-numbers)', () => {
+    expectErrors(
+      baseConfig({ symbols: [rect('fd', { flow: { enabled: true, speed: 1, dash: 'nope' as never } })] }),
+      '.flow.dash must be an array of numbers',
+    );
+    expectErrors(
+      baseConfig({ symbols: [rect('fd2', { flow: { enabled: true, speed: 1, dash: [1, 'x' as never] } })] }),
+      '.flow.dash must be an array of numbers',
+    );
+  });
+
+  it('rejects malformed children (must-be-an-array)', () => {
+    expectErrors(baseConfig({ symbols: [rect('g', { type: 'scada-group', children: 'nope' as never })] }), '.children must be an array');
+  });
+
+  it('rejects point declaration missing/empty id (id must-be-a-non-empty-string)', () => {
+    expectErrors(baseConfig({ variables: [{ source: 'static', value: 1 } as never] }), 'variables[0].id must be a non-empty string');
+    expectErrors(baseConfig({ variables: [{ id: '  ', source: 'static', value: 1 }] }), 'variables[0].id must be a non-empty string');
+  });
+});

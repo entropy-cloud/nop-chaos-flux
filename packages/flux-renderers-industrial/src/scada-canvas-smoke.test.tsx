@@ -6,6 +6,7 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { industrialRendererDefinitions } from './renderer-definitions.js';
 import { registerBuiltinScadaSymbols } from './symbols/register-builtin.js';
+import { resetLeaferMock } from './test-support/leafer-ui-mock.js';
 
 vi.mock('leafer-ui', () => import('./test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
@@ -16,6 +17,9 @@ const validConfig = {
 };
 
 beforeEach(async () => {
+  // plan 2026-08-04-1558-3 Phase 3（TE-5）：对齐其余 leafer mock 消费者，每用例重置 mock 计数器/定时器，
+  // 消除 innerId 断言跨用例污染隐患（唯一漏调消费者文件）。
+  resetLeaferMock();
   resetFluxI18n();
   initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
   await changeLanguage('en-US');

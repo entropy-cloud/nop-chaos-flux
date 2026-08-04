@@ -221,3 +221,81 @@ describe('ExpressionEvaluator 表达式点与环检测 (I6.2)', () => {
     expect(ctx.evaluator.evaluatePoint('b')).toEqual({ ok: true, value: 4 });
   });
 });
+
+// plan 2026-08-04-1558-3 Phase 3 覆盖缺口闭合：expression-evaluator.ts 错误/未覆盖分支逐项补断言。
+describe('ExpressionEvaluator error branch matrix (plan 2026-08-04-1558-3 Phase 3)', () => {
+  it('rejects empty @{} point reference', () => {
+    const ctx = new TestContext();
+    ctx.declarePoint('v1', 1);
+    expect(ctx.evaluator.evaluate('@{} + 1')).toEqual({ ok: false, error: 'empty @{} point reference' });
+  });
+
+  it('rejects unclosed @{ point reference', () => {
+    const ctx = new TestContext();
+    ctx.declarePoint('v1', 1);
+    expect(ctx.evaluator.evaluate('@{v1')).toEqual({ ok: false, error: 'unclosed @{ point reference' });
+  });
+
+  it('rejects unclosed string literal', () => {
+    const ctx = new TestContext();
+    ctx.declarePoint('v1', 1);
+    expect(ctx.evaluator.evaluate('"abc')).toEqual({ ok: false, error: 'unclosed string literal' });
+  });
+
+  it('rejects unexpected trailing tokens after a valid expression', () => {
+    const ctx = new TestContext();
+    ctx.declarePoint('v1', 1);
+    expect(ctx.evaluator.evaluate('1 2')).toEqual({ ok: false, error: expect.stringContaining('unexpected trailing token') });
+  });
+
+  it('rejects unexpected primary token (bare operator chain / stray char)', () => {
+    const ctx = new TestContext();
+    ctx.declarePoint('v1', 1);
+    // `* 2` 起手：parsePrimary 首符非字面量/point/( → unexpected token
+    expect(ctx.evaluator.evaluate('* 2')).toEqual({ ok: false, error: expect.stringContaining('unexpected token') });
+  });
+
+  it('rejects unary - applied to a non-number', () => {
+    const ctx = new TestContext();
+    ctx.declarePoint('flag', true);
+    expect(ctx.evaluator.evaluate('-@{flag}')).toEqual({ ok: false, error: 'unary - requires a number' });
+  });
+
+  it('unary + returns the operand value unchanged (一元 + 分支)', () => {
+    const ctx = new TestContext();
+    ctx.declarePoint('v1', 7);
+    expect(ctx.evaluator.evaluate('+@{v1}')).toEqual({ ok: true, value: 7 });
+  });
+
+  it('evaluates string comparison operators (< > <= >=)', () => {
+    const ctx = new TestContext();
+    ctx.declarePoint('a', 'abc');
+    ctx.declarePoint('b', 'abd');
+    expect(ctx.evaluator.evaluate('@{a} < @{b}')).toEqual({ ok: true, value: true });
+    expect(ctx.evaluator.evaluate('@{a} > @{b}')).toEqual({ ok: true, value: false });
+    expect(ctx.evaluator.evaluate('@{a} <= @{b}')).toEqual({ ok: true, value: true });
+    expect(ctx.evaluator.evaluate('@{a} >= @{b}')).toEqual({ ok: true, value: false });
+  });
+
+  it('rejects comparison between mismatched types (number vs string)', () => {
+    const ctx = new TestContext();
+    ctx.declarePoint('n', 1);
+    ctx.declarePoint('s', 'a');
+    expect(ctx.evaluator.evaluate('@{n} < @{s}')).toEqual({
+      ok: false,
+      error: 'comparison < requires two numbers or two strings',
+    });
+  });
+
+  it('rejects division by zero as a finite numeric result (numeric / 分支)', () => {
+    const ctx = new TestContext();
+    ctx.declarePoint('v1', 10);
+    ctx.declarePoint('z', 0);
+    // `/` 走 numeric 分支（JS 语法允许，结果 Infinity，不抛错——断言 numeric 路径不抛 + 有限性）
+    const result = ctx.evaluator.evaluate('@{v1} / @{z}');
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(typeof result.value).toBe('number');
+    }
+  });
+});

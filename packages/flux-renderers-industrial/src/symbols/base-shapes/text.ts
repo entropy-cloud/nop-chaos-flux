@@ -11,6 +11,8 @@ export const scadaTextDefinition: ScadaSymbolDefinition = {
   props: {
     x: { type: 'number' },
     y: { type: 'number' },
+    width: { type: 'number' },
+    height: { type: 'number' },
     rotation: { type: 'number' },
     scale: { type: 'number' },
     visible: { type: 'boolean' },

@@ -145,6 +145,17 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     runtimeRef.current = runtime;
   }, [runtime]);
 
+  // plan 2026-08-04-1558-3 Phase 1：canvas slot 落点——把 data-slot 与 marker 语义落到真实 leafer
+  // canvas DOM 元素（leafer App 在 containerRef 内创建 <canvas>）。wrapper 占位 div 仅保留 marker class
+  // （styles.css 定位规则目标一致，F8）；mock 环境经 MockApp 同样挂 canvas 元素（mock↔真实对齐）。
+  useEffect(() => {
+    if (!runtime || !containerRef.current) return;
+    const canvas = containerRef.current.querySelector('canvas');
+    if (!canvas) return;
+    canvas.setAttribute('data-slot', 'scada-canvas-canvas');
+    canvas.classList.add('nop-scada-canvas-canvas');
+  }, [runtime]);
+
   useEffect(() => {
     if (parseError) {
       void eventsApi.notifyError(parseError);
@@ -207,7 +218,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
           </div>
         )
       ) : (
-        <div data-slot="scada-canvas-canvas" className="nop-scada-canvas-canvas" />
+        <div className="nop-scada-canvas-canvas" />
       )}
     </div>
   );

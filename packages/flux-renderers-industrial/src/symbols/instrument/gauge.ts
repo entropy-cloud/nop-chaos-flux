@@ -48,8 +48,9 @@ export const scadaInstrumentGaugeDefinition = createInstrumentSymbol({
     }) as LeafNode;
     const label = new Text({
       name: 'label',
-      x: width / 2,
+      x: 0,
       y: height / 2 + radius * 0.45,
+      width,
       text: props.text ?? '',
       fontSize: 12,
       fill: props.textColor,

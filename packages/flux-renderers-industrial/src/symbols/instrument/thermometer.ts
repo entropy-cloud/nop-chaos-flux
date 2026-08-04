@@ -59,6 +59,7 @@ export const scadaInstrumentThermometerDefinition = createInstrumentSymbol({
       name: 'label',
       x: 0,
       y: height + 4,
+      width,
       text: props.text ?? '',
       fontSize: 12,
       fill: props.textColor,

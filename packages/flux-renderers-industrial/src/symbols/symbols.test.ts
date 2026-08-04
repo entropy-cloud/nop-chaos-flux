@@ -284,6 +284,14 @@ describe('builtin base shapes (I5.4)', () => {
     expect(plain.text).toBe('');
   });
 
+  it('scada-text 居中主路径：align:center + 显式 width 共同生效 (plan 2026-08-04-1558-3 Phase 1)', () => {
+    // leafer-ui@2.2.9 自动宽 Text 下 textAlign:'center' 无 layoutWidth 不生效。
+    // 显式 width 为主路径：center 对齐需 width 才产生有效居中偏移。
+    const centered = instantiate('scada-text', { text: 'hi', align: 'center', width: 200 });
+    expect(centered.textAlign).toBe('center');
+    expect(centered.width).toBe(200);
+  });
+
   it('scada-pipe should derive stroke from fill when stroke is absent', () => {
     const node = scadaPipeDefinition.create({
       id: 's',

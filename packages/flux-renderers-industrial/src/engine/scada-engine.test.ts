@@ -647,3 +647,36 @@ describe('getSymbolDeclarations 无声明快路径 (I14.2)', () => {
     engine.destroy();
   });
 });
+
+describe('ScadaCanvasEngine image cache + config projection (plan 2026-08-04-1558-3 Phase 3 覆盖缺口)', () => {
+  it('cacheImage / resolveImageUrl round-trip：缓存命中返回 resolved，未缓存回退原 url', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    // 未缓存：返回原 url
+    expect(engine.resolveImageUrl('https://x/a.png')).toBe('https://x/a.png');
+    // 缓存写入后：命中返回 resolved
+    engine.cacheImage('https://x/a.png', 'blob:resolved-a');
+    expect(engine.resolveImageUrl('https://x/a.png')).toBe('blob:resolved-a');
+    // 不同 url 仍未缓存
+    expect(engine.resolveImageUrl('https://x/b.png')).toBe('https://x/b.png');
+    engine.destroy();
+  });
+
+  it('exportConfig returns undefined before any config is built (no currentConfig)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    expect(engine.exportConfig()).toBeUndefined();
+    engine.destroy();
+  });
+
+  it('test handle measureAddStrategies projection returns count + timing shape (m-8 探针投影)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), exposeTestHandle: true, cid: 77 });
+    const handle = (window as unknown as Record<string, unknown>)[scadaTestHandleKey(77)] as {
+      measureAddStrategies?: (count: number) => { count: number; perNodeMs: number; batchMs: number; ratio: number };
+    };
+    expect(handle.measureAddStrategies).toBeDefined();
+    const probe = handle.measureAddStrategies!(30);
+    expect(probe.count).toBe(30);
+    expect(Object.keys(probe).sort()).toEqual(['batchMs', 'count', 'perNodeMs', 'ratio']);
+    expect(Number.isFinite(probe.ratio)).toBe(true);
+    engine.destroy();
+  });
+});

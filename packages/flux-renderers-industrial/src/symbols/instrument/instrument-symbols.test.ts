@@ -307,3 +307,21 @@ describe('I9.2 instrument full path (注册 → 校验 → 实例化 → 场景�
     engine.destroy();
   });
 });
+
+describe('instrument label 居中：显式 width 主路径 (plan 2026-08-04-1558-3 Phase 1)', () => {
+  // leafer-ui@2.2.9 自动宽 Text 下 autoSizeAlign 无 layoutWidth，textAlign:'center' 偏移不生效（仍左对齐）。
+  // 修复：仪表数值标签按仪表宽度设置显式 width，使 textAlign:'center' 产生有效居中。
+  it('gauge/level/thermometer label 均带显式 width 与 textAlign:center', () => {
+    const gauge = instantiateInstrument('scada-instrument-gauge', { width: 120, height: 120 });
+    expect(childOf(gauge, 'label').textAlign).toBe('center');
+    expect(childOf(gauge, 'label').width).toBe(120);
+
+    const level = instantiateInstrument('scada-instrument-level', { width: 60, height: 140 });
+    expect(childOf(level, 'label').textAlign).toBe('center');
+    expect(childOf(level, 'label').width).toBe(60);
+
+    const thermo = instantiateInstrument('scada-instrument-thermometer', { width: 40, height: 140 });
+    expect(childOf(thermo, 'label').textAlign).toBe('center');
+    expect(childOf(thermo, 'label').width).toBe(40);
+  });
+});

@@ -1,6 +1,9 @@
 import { test, expect, assertTrackedPageErrors, type Page } from './fixtures.js';
+import { assertScadaCanvasRendered } from './helpers/scada-canvas-assert.js';
 
 // I13.2 scada-pressure-demo smoke：程序化断言（测试句柄读场景树/视口），无截图断言、不引 node-canvas。
+//
+// plan 2026-08-04-1558-3 Phase 2（TE-3）：每个 spec 家族补 canvas 存在性断言（黑屏兜底）。
 
 async function getScadaCid(page: Page): Promise<string> {
   const canvas = page.locator('[data-slot="scada-canvas"]');
@@ -38,6 +41,8 @@ test.describe('Scada Pressure Demo (I13.2)', () => {
       `__flux_scada_${cid}`,
     );
     expect(typeof viewport.scale).toBe('number');
+    // TE-3 canvas 存在性断言（pressure overview 家族黑屏兜底）
+    await assertScadaCanvasRendered(page, cid, { notes: 'pressure overview scene' });
     await assertTrackedPageErrors(page);
   });
 

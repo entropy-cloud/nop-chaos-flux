@@ -1,8 +1,11 @@
 import { test, expect, assertTrackedPageErrors, type Page } from './fixtures.js';
+import { assertScadaCanvasRendered } from './helpers/scada-canvas-assert.js';
 
 // I13.1 scada-demo smoke：程序化断言（测试句柄 window.__flux_scada_<cid> 读场景树/点表），
 // 无截图断言、不引 node-canvas（roadmap 测试纪律）。I15.1 断言矩阵补强追加在下方 describe 内
 // （场景树属性面/双轨刷新渲染一致性/dblclick/hover 覆盖物/视口句柄）。
+//
+// plan 2026-08-04-1558-3 Phase 2（TE-3）：每个 spec 家族补 canvas 存在性断言（黑屏兜底）。
 
 async function getScadaCid(page: Page): Promise<string> {
   const canvas = page.locator('[data-slot="scada-canvas"]');
@@ -82,6 +85,8 @@ test.describe('Scada Demo (I13.1)', () => {
       `__flux_scada_${cid}`,
     );
     expect(pump).toBeTruthy();
+    // TE-3 canvas 存在性断言（demo 家族黑屏兜底）
+    await assertScadaCanvasRendered(page, cid, { notes: 'scada-demo scene' });
     await assertTrackedPageErrors(page);
   });
 

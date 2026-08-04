@@ -20,20 +20,68 @@ export function decideSyncStrategy(prev: ScadaConfig | undefined, next: ScadaCon
 export function computeSymbolBounds(symbols: ScadaSymbolNode[]): Bounds | undefined {
   let out: Bounds | undefined;
   for (const node of symbols) {
-    const width = node.width ?? 0;
-    const height = node.height ?? 0;
-    const bounds = { x: node.x, y: node.y, width, height };
+    const bounds = boundsOfNode(node);
+    if (bounds === undefined) continue;
     if (out === undefined) {
       out = bounds;
       continue;
     }
-    const minX = Math.min(out.x, bounds.x);
-    const minY = Math.min(out.y, bounds.y);
-    const maxX = Math.max(out.x + out.width, bounds.x + bounds.width);
-    const maxY = Math.max(out.y + out.height, bounds.y + bounds.height);
-    out = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    out = unionBounds(out, bounds);
   }
   return out;
+}
+
+function unionBounds(a: Bounds, b: Bounds): Bounds {
+  const minX = Math.min(a.x, b.x);
+  const minY = Math.min(a.y, b.y);
+  const maxX = Math.max(a.x + a.width, b.x + b.width);
+  const maxY = Math.max(a.y + a.height, b.y + b.height);
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+/**
+ * 单图元包围盒（plan 2026-08-04-1558-3 Phase 1）：含 `custom.points` 几何族（polygon/line/arrow）
+ * 从 points 数组计算 min/max 包围盒；无 width/height 但有 points 时不退化为 0 尺寸。
+ * points 坐标相对 node.x/y，绝对包围盒 = node 原点 + points 极值。
+ * custom.points 存在时以其为几何源（polygon/line 几何不取 width/height 矩形）。
+ */
+function boundsOfNode(node: ScadaSymbolNode): Bounds | undefined {
+  const pointsBounds = boundsFromCustomPoints(node);
+  if (pointsBounds !== undefined) return pointsBounds;
+  const width = node.width ?? 0;
+  const height = node.height ?? 0;
+  return { x: node.x, y: node.y, width, height };
+}
+
+function boundsFromCustomPoints(node: ScadaSymbolNode): Bounds | undefined {
+  const raw = node.custom?.points;
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  if (typeof raw[0] === 'object' && raw[0] !== null) {
+    for (const p of raw as Array<{ x?: unknown; y?: unknown }>) {
+      if (typeof p.x !== 'number' || typeof p.y !== 'number') return undefined;
+      if (p.x < minX) minX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y > maxY) maxY = p.y;
+    }
+  } else {
+    const flat = raw as unknown[];
+    for (let i = 0; i + 1 < flat.length; i += 2) {
+      const px = flat[i];
+      const py = flat[i + 1];
+      if (typeof px !== 'number' || typeof py !== 'number') return undefined;
+      if (px < minX) minX = px;
+      if (py < minY) minY = py;
+      if (px > maxX) maxX = px;
+      if (py > maxY) maxY = py;
+    }
+  }
+  if (!Number.isFinite(minX)) return undefined;
+  return { x: node.x + minX, y: node.y + minY, width: maxX - minX, height: maxY - minY };
 }
 
 function applyInitialViewport(

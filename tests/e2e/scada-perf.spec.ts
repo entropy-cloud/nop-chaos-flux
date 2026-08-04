@@ -1,7 +1,14 @@
 import { test, expect, type Page } from './fixtures.js';
+import { assertScadaCanvasRendered } from './helpers/scada-canvas-assert.js';
 
 // I14.1 性能基准测量（scada-perf-scale）：10 万图元首屏创建 / 拖动 fps（双口径 A4）/ 内存（CDP JS heap，
 // 含无 stroke 对照组）/ 1 万点实时刷新端到端延迟 + 合并帧断言。程序化断言，禁截图、不引 node-canvas。
+//
+// plan 2026-08-04-1558-3 Phase 2（TE-1/TE-3 e2e 有效性）：
+// - 指针平移断言改为「视口变化」证据：直接读 `tree.zoomLayer.x/y`（真实平移下必变，不依赖 rAF 恒发帧），
+//   断言平移期间视口偏移变化 → 消除原 rAF-only 半恒真断言（恒发 ~60fps 与是否真平移无关）。
+// - 移除 blanket `allowConsoleErrors(100)`（open-audit live probe 该路由 0 console.error/pageerror）；
+// - 每个 test 补 canvas 存在性断言（TE-3 黑屏兜底，helper 详见 scada-canvas-assert.ts）。
 //
 // 测量口径（I14.1 裁定，详见 docs/analysis/industrial-hmi/benchmark-report.md）：
 // - 首屏创建 = 组态生成完成 → tree render 首帧（engine.reset 驱动，导航/生成开销排除在计时外；
@@ -130,8 +137,7 @@ async function measurePanDual(page: Page, cid: string, durationMs: number): Prom
 test.describe('Scada Performance Baseline (I14.1)', () => {
   test.describe.configure({ timeout: 180_000 });
 
-  test('10 万图元首屏创建（组态生成完成 → tree render 首帧）< 2000ms', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('10 万图元首屏创建（组态生成完成 → tree render 首帧）< 2000ms', async ({ page }) => {
     await gotoPerfScale(page);
     const cid = await getScadaCid(page);
 
@@ -142,10 +148,11 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
 
     expect(result.symbols).toBeGreaterThanOrEqual(SCALE_COUNT);
     expect(result.buildMs).toBeLessThan(2000);
+    // TE-3 canvas 存在性断言（重场景像素探测可能 fallback，帧计数硬门禁）
+    await assertScadaCanvasRendered(page, cid, { notes: '100k stroke scene' });
   });
 
-  test('10 万图元拖动/平移 fps 双口径（渲染吞吐 ≥45fps，A4）', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('10 万图元拖动/平移 fps 双口径（渲染吞吐 ≥45fps，A4）', async ({ page }) => {
     await gotoPerfScale(page);
     const cid = await getScadaCid(page);
     await buildScaleScene(page, cid, { stroke: true });
@@ -160,10 +167,22 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
     // totalTimes 递增但 render 事件不发射；画布像素实测随平移更新，视觉平移正常）——
     // 指针路径渲染吞吐以 rAF 显示帧率计量（benchmark-report 测量口径声明）。
     // headless 帧钟随机器负载波动：取 3 次采样最大值作判定（试探性阈值，I14.3 固化）。
+    //
+    // TE-1 有效性（plan 2026-08-04-1558-3 Phase 2）：rAF 恒发 ~60fps 与是否真平移无关（半恒真），
+    // 补「视口变化」证据——直接读 `tree.zoomLayer.x/y`（真实平移下必变，不依赖引擎 sync 路径送达性，
+    // F3）。平移前后 zoomLayer 偏移变化 → 证明指针拖动真实驱动了视口平移（非恒真）。
     const pointerSamples: PanResult[] = [];
+    let viewportChanged = false;
     for (let sample = 0; sample < 3; sample++) {
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
       await page.mouse.down();
+      const beforeOffset = await page.evaluate((key) => {
+        const handle = (window as unknown as Record<string, unknown>)[key] as {
+          app: { tree: { zoomLayer: { x: number; y: number } } };
+        };
+        const layer = handle.app.tree.zoomLayer;
+        return { x: layer.x, y: layer.y };
+      }, `__flux_scada_${cid}`);
       const pointerPan = measurePanDual(page, cid, PAN_DURATION_MS);
       const end = Date.now() + PAN_DURATION_MS;
       let x = box.x + box.width * 0.25;
@@ -173,6 +192,16 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
         await page.mouse.move(x, box.y + box.height * 0.5, { steps: 2 });
       }
       await page.mouse.up();
+      const afterOffset = await page.evaluate((key) => {
+        const handle = (window as unknown as Record<string, unknown>)[key] as {
+          app: { tree: { zoomLayer: { x: number; y: number } } };
+        };
+        const layer = handle.app.tree.zoomLayer;
+        return { x: layer.x, y: layer.y };
+      }, `__flux_scada_${cid}`);
+      if (afterOffset.x !== beforeOffset.x || afterOffset.y !== beforeOffset.y) {
+        viewportChanged = true;
+      }
       const pointer = await pointerPan;
       pointerSamples.push(pointer);
       await page.waitForTimeout(300);
@@ -181,6 +210,9 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
     console.log(
       `[PERF] Scada 100k pointer-drag fps (display/rAF, 3 samples): samples=${pointerSamples.map((s) => s.rafFps).join(',')}` +
         `, best=${pointerBest} (render-events: plugin-pan 不发射，见 benchmark-report 口径声明)`,
+    );
+    console.log(
+      `[TE-1] pointer-drag viewport-change evidence: zoomLayer offset ${viewportChanged ? 'changed' : 'unchanged'} across pan windows`,
     );
 
     // ② 渲染吞吐代理口径（命令路径 setViewport rAF 帧循环，tree render 事件计数）：A4 判定基础。
@@ -229,12 +261,15 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
         `, rafSamples=${throughputSamples.map((s) => s.rafFps).join(',')}`,
     );
 
+    // TE-1 视口变化证据：指针拖动期间 zoomLayer 偏移必须变化（非恒真）。
+    expect(viewportChanged, 'pointer drag must actually move the viewport (zoomLayer x/y changed)').toBe(true);
     expect(pointerBest).toBeGreaterThanOrEqual(45);
     expect(throughputBest).toBeGreaterThanOrEqual(45);
+    // TE-3 canvas 存在性断言（重场景像素探测可能 fallback，帧计数硬门禁）
+    await assertScadaCanvasRendered(page, cid, { notes: '100k stroke scene after pan' });
   });
 
-  test('10 万图元内存（CDP JS heap，含无 stroke 对照组）≤ 320MB', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('10 万图元内存（CDP JS heap，含无 stroke 对照组）≤ 320MB', async ({ page }) => {
     await gotoPerfScale(page);
     const cid = await getScadaCid(page);
 
@@ -269,8 +304,7 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
     expect(noStrokeMB).toBeLessThanOrEqual(320);
   });
 
-  test('1 万点实时刷新端到端延迟 < 200ms + 合帧断言（批量注入渲染增量 = 1）', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('1 万点实时刷新端到端延迟 < 200ms + 合帧断言（批量注入渲染增量 = 1）', async ({ page }) => {
     await page.goto('/#/scada-perf-scale', { waitUntil: 'load' });
     await getScadaCid(page);
 
@@ -342,8 +376,7 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
     expect(result.renderDelta).toBe(1);
   });
 
-  test('gate-3 §10 m-8：组态加载逐节点 add vs batch.add 对照（观察项口径固化）', async ({ page, allowConsoleErrors }) => {
-    allowConsoleErrors(100);
+  test('gate-3 §10 m-8：组态加载逐节点 add vs batch.add 对照（观察项口径固化）', async ({ page }) => {
     await gotoPerfScale(page);
     const cid = await getScadaCid(page);
 
@@ -367,5 +400,7 @@ test.describe('Scada Performance Baseline (I14.1)', () => {
     expect(probe.count).toBe(50_000);
     expect(probe.perNodeMs).toBeGreaterThan(0);
     expect(probe.batchMs).toBeGreaterThan(0);
+    // TE-3 canvas 存在性断言
+    await assertScadaCanvasRendered(page, cid, { notes: 'm-8 probe scene' });
   });
 });

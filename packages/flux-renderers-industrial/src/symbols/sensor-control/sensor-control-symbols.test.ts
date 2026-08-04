@@ -197,6 +197,24 @@ describe('I9.3 scada-sensor-control-switch (开/关位形态 + 状态色)', () =
     engine.destroy();
   });
 
+  it('applyProps moves the lever back to the OFF position on true→false toggle (plan 2026-08-04-1558-3 Phase 3)', () => {
+    // build 路径覆盖 on=true（右位）与 on=false（左位）；applyProps 路径需覆盖 true→false 的
+    // `: 3` OFF 分支（switch.ts:55 cond-expr#1），既有用例仅覆盖 false→true。
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [{ id: 'w', type: 'scada-sensor-control-switch', x: 0, y: 0, custom: { on: true } }],
+    });
+    expect(childOf(engine.getSymbol('w')!.node, 'core').x).toBe(23);
+    // applyProps true→false：拨杆回左位 OFF（x=3）
+    engine.setSymbolProps('w', { custom: { on: false } });
+    expect(childOf(engine.getSymbol('w')!.node, 'core').x).toBe(3);
+    // applyProps false→true：拨杆回右位 ON（x=23）
+    engine.setSymbolProps('w', { custom: { on: true } });
+    expect(childOf(engine.getSymbol('w')!.node, 'core').x).toBe(23);
+    engine.destroy();
+  });
+
   it('should apply state colors to the switch base', () => {
     const { engine, setValue, flush } = createSensorHarness(
       { version: 1, symbols: [sensorNode('w1', 'scada-sensor-control-switch')] },

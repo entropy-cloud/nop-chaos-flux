@@ -1,8 +1,12 @@
 import { test, expect, assertTrackedPageErrors, type Page } from './fixtures.js';
+import { assertScadaCanvasRendered } from './helpers/scada-canvas-assert.js';
 
 // I15.1 边界用例 + 非矩形图元 hover 覆盖物验证（scada-edge-cases 独立测试页，
 // I15 plan Phase 1 Decision `edge-case-carrier`）。程序化断言（测试句柄读场景树/视口/sky 覆盖物），
 // 禁截图、不引 node-canvas。
+//
+// plan 2026-08-04-1558-3 Phase 2（TE-3）：每个 spec 家族补 canvas 存在性断言；
+// empty-scene 合法全零像素走 fallback（帧计数硬门禁），非空 minimal 场景像素可探测。
 //
 // 边界 config 形态（断言矩阵清单钉死，按路径分断言）：
 // - minimal：最小合法 config（1 矩形）→ 正常挂载（ready，无 empty region）；
@@ -85,6 +89,8 @@ test.describe('Scada Edge Cases (I15.1)', () => {
 
     await expect(page.locator('[data-slot="scada-canvas-error"]')).toHaveCount(0);
     await expect(page.getByText('scada 场景构建失败（config 非法）')).toHaveCount(0);
+    // TE-3 canvas 存在性断言（minimal 场景：单 rect 非空，像素探测应 confirmed 或 fallback）
+    await assertScadaCanvasRendered(page, cid, { notes: 'edge minimal scene' });
     await assertTrackedPageErrors(page);
   });
 
@@ -103,6 +109,8 @@ test.describe('Scada Edge Cases (I15.1)', () => {
     expect(count).toBe(0);
 
     await expect(page.locator('[data-slot="scada-canvas-error"]')).toHaveCount(0);
+    // TE-3 canvas 存在性断言（empty scene：合法空画面，像素探测全零 → fallback，帧计数硬门禁）
+    await assertScadaCanvasRendered(page, cid, { notes: 'edge empty scene (all-zero pixel fallback expected)' });
     await assertTrackedPageErrors(page);
   });
 

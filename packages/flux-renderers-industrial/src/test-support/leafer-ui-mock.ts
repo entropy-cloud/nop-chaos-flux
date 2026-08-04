@@ -301,6 +301,12 @@ export class MockApp extends MockLeafer {
   sky: MockLeafer | undefined;
   resizeCalls: Array<{ width: number; height: number }> = [];
   destroyed = false;
+  /**
+   * 真实 leafer App 在 `view` 容器内创建 `<canvas>` DOM 元素（plan 2026-08-04-1558-3 Phase 1）。
+   * mock 对齐该行为：`view` 为 HTMLElement 时挂一个 canvas，使 `containerRef.querySelector('canvas')`
+   * 与 data-slot 落点断言在 mock 面可用（消除 mock↔真实 DOM 漂移，TE-3 canvas 存在性断言基础）。
+   */
+  canvasView: HTMLCanvasElement | undefined;
 
   constructor(config: Record<string, unknown> = {}) {
     super(config);
@@ -310,6 +316,12 @@ export class MockApp extends MockLeafer {
     if (config.ground !== undefined) this.ground = new MockLeafer({ type: 'ground' });
     this.tree = new MockLeafer((config.tree as Record<string, unknown>) ?? {});
     if (config.sky !== undefined) this.sky = new MockLeafer({ type: 'sky' });
+    const view = config.view;
+    if (typeof document !== 'undefined' && view instanceof HTMLElement) {
+      const canvas = document.createElement('canvas');
+      view.appendChild(canvas);
+      this.canvasView = canvas;
+    }
   }
 
   override destroy() {
@@ -318,6 +330,8 @@ export class MockApp extends MockLeafer {
     this.ground?.destroy();
     this.sky?.destroy();
     this.zoomLayer.destroy();
+    this.canvasView?.remove();
+    this.canvasView = undefined;
   }
 
   resize(size: { width: number; height: number } | number, height?: number) {

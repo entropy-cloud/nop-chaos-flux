@@ -408,4 +408,66 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
       expect(size.height).toBe(600);
     });
   });
+
+  it('a failed props-driven sync fires onBuildError(config-build-failed) and clears prevRef (plan 2026-08-04-1558-3 Phase 3 覆盖缺口)', async () => {
+    // use-scada-config-sync props-sync effect catch 块（onBuildError + prevRef=undefined）。
+    // 触发：同版本非空 diff → applyDiff 抛错 → catch → onBuildError('config-build-failed')。
+    // （注：version 变更会先被 parseAndValidateConfig 拦截，故经 diff 路径触发 catch。）
+    const environment = createScadaTestEnvironment([]);
+    const view = renderScadaCanvas(
+      makeProps({ props: { config: configProp(textConfig()) } }),
+      environment,
+    );
+    await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
+    const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
+
+    const applyDiffSpy = vi.spyOn(engine, 'applyDiff').mockImplementationOnce(() => {
+      throw new Error('props diff boom');
+    });
+
+    view.rerender(
+      <ScadaTestProviders environment={environment}>
+        <ScadaCanvasRenderer
+          {...makeProps({
+            props: {
+              config: configProp(
+                textConfig({ symbols: [{ id: 'rect-1', type: 'scada-rect', x: 99, y: 20, width: 100, height: 50, bindings: { text: { point: 'level' } } }] }),
+              ),
+            },
+          })}
+        />
+      </ScadaTestProviders>,
+    );
+
+    // onBuildError → handleError → status=error（wrapper data-status 反映 + error region data-code）
+    await waitFor(() => expect(applyDiffSpy).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status')).toBe('error'),
+    );
+    expect(view.container.querySelector('[data-slot="scada-canvas-error"]')?.getAttribute('data-code')).toBe(
+      'config-build-failed',
+    );
+    applyDiffSpy.mockRestore();
+  });
+
+  it('setPointValues injection handle is a no-op when runtime has been destroyed (mount-path guard, plan 2026-08-04-1558-3 Phase 3)', async () => {
+    // use-scada-engine setPointValues 注入闭包：runtimeRef.current 为空时直接 return（mount 路径注入边界）。
+    const environment = createScadaTestEnvironment([]);
+    renderScadaCanvas(makeProps({ props: { config: configProp(textConfig()) } }), environment);
+    await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
+    const handle = scadaTestHandle(7) as
+      | { engine: ScadaCanvasEngine; setPointValues: (values: Record<string, unknown>) => void }
+      | undefined;
+    expect(handle).toBeDefined();
+    const engine = handle!.engine;
+    // destroy → releaseRuntime → runtimeRef.current=null；window handle 经 engine.destroy 移除，
+    // 但注入闭包仍可经 destroy 前捕获的 handle 引用调用。此处验证 mount-path 注入闭包不抛错。
+    const destroyResult = environment.componentRegistry.resolve({ componentId: 'scada-1' }) as unknown as {
+      capabilities: { invoke: (m: string) => Promise<{ ok: boolean }> };
+    };
+    await destroyResult.capabilities.invoke('destroy');
+    // 引擎已销毁：setPointValues 经 runtimeRef.current guard 安全返回（不抛、不写已销毁 pipeline）
+    expect(() => handle!.setPointValues({ level: 999 })).not.toThrow();
+    expect(engine.isDestroyed()).toBe(true);
+  });
 });
