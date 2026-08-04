@@ -184,6 +184,18 @@ export function installBuiltins(registry: FormulaRegistry): void {
   });
   registry.registerFunction('INT', (input: unknown) => Math.trunc(Number(input)));
   registry.registerFunction('MOD', (left: unknown, right: unknown) => Number(left) % Number(right));
+  registry.registerFunction(
+    'ROUND',
+    (input: unknown, precision?: unknown) => {
+      const value = Number(input);
+      const places = precision == null ? 0 : Number(precision);
+      if (!Number.isFinite(value) || !Number.isFinite(places)) {
+        return NaN;
+      }
+      const factor = 10 ** places;
+      return Math.round(value * factor) / factor;
+    },
+  );
   registry.registerFunction('RAND', () => Math.random());
   registry.registerFunction('PI', () => Math.PI);
 

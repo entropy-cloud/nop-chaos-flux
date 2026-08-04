@@ -44,6 +44,7 @@ describe('columns schema-array recursive validation', () => {
       },
       registry,
       expressionCompiler: ec,
+      options: { validation: { strictMode: true } },
     });
     expect(diagnostics.length).toBeGreaterThan(0);
     expect(

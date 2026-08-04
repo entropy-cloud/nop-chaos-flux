@@ -30,13 +30,14 @@ const formRenderer: RendererDefinition = {
   },
 };
 
-const openDialogButtonRenderer = {
+const openDialogButtonRenderer: RendererDefinition = {
   type: 'open-dialog-button',
   component: (props: any) => (
     <Button onClick={(event) => props.events.onClick?.(event)}>
       {String(props.props.label ?? '')}
     </Button>
   ),
+  fields: [{ key: 'onClick', kind: 'event' }],
 };
 
 describe('SchemaRenderer surface runtime seam', () => {

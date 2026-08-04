@@ -3,6 +3,7 @@ import {
   BUILT_IN_ACTION_DEFINITIONS,
   BUILT_IN_ACTION_NAMES,
   CANONICAL_BUILT_IN_ACTION_NAMES,
+  COMMON_EVENT_FIELDS,
   META_FIELDS,
   getBuiltInActionDefinition,
   getBuiltInActionDescriptor,
@@ -55,6 +56,31 @@ describe('META_FIELDS', () => {
 
   it('does not contain arbitrary strings', () => {
     expect(META_FIELDS.has('notAMetaField')).toBe(false);
+  });
+});
+
+describe('COMMON_EVENT_FIELDS', () => {
+  it('is a Set', () => {
+    expect(COMMON_EVENT_FIELDS).toBeInstanceOf(Set);
+  });
+
+  it('contains all 6 value-control generic events', () => {
+    for (const key of ['onChange', 'onBlur', 'onFocus', 'onKeyDown', 'onKeyUp', 'onInput']) {
+      expect(COMMON_EVENT_FIELDS.has(key)).toBe(true);
+    }
+  });
+
+  it('has exactly 6 fields', () => {
+    expect(COMMON_EVENT_FIELDS.size).toBe(6);
+  });
+
+  it('does not contain renderer-specific events (declared in renderer.fields)', () => {
+    expect(COMMON_EVENT_FIELDS.has('onClick')).toBe(false);
+    expect(COMMON_EVENT_FIELDS.has('onSelectionChange')).toBe(false);
+  });
+
+  it('does not contain arbitrary strings', () => {
+    expect(COMMON_EVENT_FIELDS.has('onEvent')).toBe(false);
   });
 });
 

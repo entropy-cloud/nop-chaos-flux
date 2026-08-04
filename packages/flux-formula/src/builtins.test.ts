@@ -178,6 +178,53 @@ describe('builtins', () => {
   });
 });
 
+describe('builtins — ROUND(value, precision)', () => {
+  function evalRound(expression: string): unknown {
+    const compiler = createFormulaCompiler();
+    const expr = compiler.compileExpression(expression);
+    return expr.exec(emptyScope, evalEnv);
+  }
+
+  it('rounds to the given positive precision (decimal places)', () => {
+    expect(evalRound('ROUND(3.14159, 4)')).toBe(3.1416);
+    expect(evalRound('ROUND(1.23456, 2)')).toBe(1.23);
+    expect(evalRound('ROUND(0.000012345, 6)')).toBe(0.000012);
+  });
+
+  it('defaults precision to 0 (round to integer, half up)', () => {
+    expect(evalRound('ROUND(3.5)')).toBe(4);
+    expect(evalRound('ROUND(2.4)')).toBe(2);
+    expect(evalRound('ROUND(-1.5)')).toBe(-1);
+  });
+
+  it('supports negative precision (round to tens/hundreds)', () => {
+    expect(evalRound('ROUND(1234.5, -2)')).toBe(1200);
+    expect(evalRound('ROUND(1234.56, -1)')).toBe(1230);
+    expect(evalRound('ROUND(9876, -3)')).toBe(10000);
+  });
+
+  it('is equivalent to $Math.round(value * 10^p) / 10^p', () => {
+    const pairs: Array<[number, number]> = [
+      [3.14159, 4],
+      [1234.56, -1],
+      [0.000012345, 6],
+      [9876, -3],
+      [2.675, 2],
+      [-7.777, 2],
+    ];
+    for (const [value, precision] of pairs) {
+      expect(evalRound(`ROUND(${value}, ${precision})`)).toBe(
+        evalRound(`$Math.round(${value} * $Math.pow(10, ${precision})) / $Math.pow(10, ${precision})`),
+      );
+    }
+  });
+
+  it('coerces numeric strings and leaves NaN for non-numeric input', () => {
+    expect(evalRound('ROUND("12.345", 2)')).toBe(12.35);
+    expect(Number.isNaN(evalRound('ROUND("abc", 2)'))).toBe(true);
+  });
+});
+
 // I3: `t(key, params?)` is exposed as a formula builtin so schema authors can
 // write `${t('flux.common.noData')}` or `${t('greeting', {name})}`. It resolves
 // through the shared i18n sink (getMessageFormatter), so it reflects the active

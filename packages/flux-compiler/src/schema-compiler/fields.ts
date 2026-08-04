@@ -6,7 +6,7 @@ import type {
   RendererDefinition,
   SchemaFieldRule,
 } from '@nop-chaos/flux-core';
-import { META_FIELDS } from '@nop-chaos/flux-core';
+import { COMMON_EVENT_FIELDS, META_FIELDS } from '@nop-chaos/flux-core';
 
 const BOOLEAN_META_FIELDS = new Set(['when', 'visible', 'hidden', 'disabled']);
 
@@ -42,7 +42,11 @@ export function classifyField(renderer: RendererDefinition, key: string): Schema
   }
 
   if (/^on[A-Z]/.test(key)) {
-    return { key, kind: 'event' };
+    // 显式声明驱动：通用词表 ∪ renderer 声明（explicit 已查）才归为 event；否则不归 event（走 unknown-property 检测）
+    if (COMMON_EVENT_FIELDS.has(key)) {
+      return { key, kind: 'event' };
+    }
+    return DEFAULT_FIELD_RULES[key] ?? { key, kind: 'prop' };
   }
 
   return DEFAULT_FIELD_RULES[key] ?? { key, kind: 'prop' };

@@ -68,6 +68,10 @@ export interface InputFileSchema extends BoundFieldSchemaBase {
   onDeleteSuccess?: ActionSchema;
   /** Action triggered after a server-side delete fails. */
   onDeleteFail?: ActionSchema;
+  /** Action triggered after a file upload succeeds. */
+  onUploadSuccess?: ActionSchema;
+  /** Action triggered after a file upload fails. */
+  onUploadError?: ActionSchema;
 }
 
 export interface InputImageSchema extends BoundFieldSchemaBase {
@@ -97,6 +101,10 @@ export interface InputImageSchema extends BoundFieldSchemaBase {
   onDeleteSuccess?: ActionSchema;
   /** Action triggered after a server-side delete fails. */
   onDeleteFail?: ActionSchema;
+  /** Action triggered after a file upload succeeds. */
+  onUploadSuccess?: ActionSchema;
+  /** Action triggered after a file upload fails. */
+  onUploadError?: ActionSchema;
 }
 
 export const uploadFieldRules: SchemaFieldRule[] = [
@@ -113,6 +121,8 @@ export const uploadFieldRules: SchemaFieldRule[] = [
   { key: 'onDelete', kind: 'event' },
   { key: 'onDeleteSuccess', kind: 'event' },
   { key: 'onDeleteFail', kind: 'event' },
+  { key: 'onUploadSuccess', kind: 'event' },
+  { key: 'onUploadError', kind: 'event' },
 ];
 
 export const imageFieldRules: SchemaFieldRule[] = [

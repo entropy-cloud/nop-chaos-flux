@@ -1,5 +1,5 @@
 import type { RendererDefinition, RendererPlugin } from '@nop-chaos/flux-core';
-import { META_FIELDS } from '@nop-chaos/flux-core';
+import { COMMON_EVENT_FIELDS, META_FIELDS } from '@nop-chaos/flux-core';
 
 export function applyWrapComponentPlugins(
   renderer: RendererDefinition,
@@ -35,6 +35,10 @@ export function getAcceptedSchemaKeys(renderer: RendererDefinition): Set<string>
   const keys = new Set<string>(['type']);
 
   for (const key of META_FIELDS) {
+    keys.add(key);
+  }
+
+  for (const key of COMMON_EVENT_FIELDS) {
     keys.add(key);
   }
 
