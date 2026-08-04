@@ -1,7 +1,7 @@
 # {2} HMI — Converge Symbol `x`/`y` Config Contract (Type ↔ Validator ↔ Runtime-Consumer) To Eliminate Silent NaN Viewport
 
-> Plan Status: active
-> Last Reviewed: 2026-08-04
+> Plan Status: completed
+> Last Reviewed: 2026-08-05
 > Source: `docs/audits/2026-08-04-2242-open-audit-industrial-hmi.md` (`[P1]` x/y 3-way contract drift)
 > Related: `docs/plans/2026-08-04-1235-3-hmi-display-math-manifest-plan.md` (P1-6 viewport formula), `docs/plans/2026-08-04-1558-3-hmi-display-geometry-test-effectiveness-plan.md` (mock↔real drift), `docs/components/roadmap-industrial-hmi.md`
 
@@ -73,44 +73,51 @@ live repo 核对（2026-08-04，三层漂移三角已逐点验证）：
 
 ### Phase 1 - 契约裁定 + Proof 失败用例先行
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/renderer/hooks/use-scada-config-sync.test.ts`（或新 `bounds-contract.test.ts`）, `packages/flux-renderers-industrial/src/engine/viewport.test.ts`
 
 - Item Types: `Decision` / `Proof`
 
 > **Phase 1 只做裁定 + 写失败用例，不动任何产线代码/类型**（避免类型改可选后下游 typecheck breakage 在 Fix 落地前悬挂）。Proof 用例经 `as ScadaSymbolNode` / `JSON.parse` 构造省略 `x`/`y` 的节点，绕过当前 `x: number` 必填类型——测试断言的是运行期行为，不是类型层。
 
-- [ ] **Decision（`x`/`y` 契约读法裁定）**：选定三层收敛到「`x`/`y` 可选 + 默认 `0`」。依据：(a) open-audit 明示「证明意图是 default to 0，非 may be undefined」；(b) validator 已把 `x`/`y` 当可选；(c) `interaction-overlay.ts:43-44` 已默认 `?? 0`；(d) `width`/`height`/`rotation`/`scale` 在类型里已是可选——`x`/`y` 改可选与同接口一致。**类型改动（`config-types.ts` `x?: number`/`y?: number`）随 Phase 2 的 consumer 修复一起落地**，确保 typecheck 在 Phase 2 收尾时一次性恢复（见 Phase 2 Fix-0）。validator 维持 `checkNumberField`（可选语义不变）。若审阅子 agent 主张「收紧 validator 为必填」（open-audit 备选建议 b），于此登记反对意见并升级人工裁定前维持本裁定。
-- [ ] **Proof-1（bounds，失败用例先行）**：新增测试——构造一个省略 `x`/`y` 的 symbol 节点（仅 `id`/`type`/`width`/`height`，经 `as ScadaSymbolNode` 或 `JSON.parse` 绕过当前必填类型），断言导出的 `computeSymbolBounds([node])`（内部调 `boundsOfNode`/`boundsFromCustomPoints`，二者模块私有不可直调）返回的 bounds `.x`/`.y` 为有限 number（`0`）；对带 `custom.points`、省略 `x`/`y` 的节点同理断言有限 bounds。Fix 前应失败（返回 `undefined`/`NaN`）。
-- [ ] **Proof-2（viewport fit，失败用例先行）**：新增集成测试——一个最小 config（含一个省略 `x`/`y` 的 symbol + `viewport: { fit: 'contain' }`），经 `applyInitialViewport`/`engine.fit` 后断言 `getViewport().x`/`.y` 为 `Number.isFinite === true`，且 `unionBounds` 结果不含 NaN。Fix 前应失败（NaN）。
-- [ ] **Proof-3（clampViewport 放大器，失败用例先行）**：新增单测——`clampViewport({ x: NaN, y: NaN, scale: 0.1 })` 断言返回 `{ x: 0, y: 0, scale: 0.1 }`；`clampViewport({ x: Infinity, y: -Infinity, scale: 1 })` 同理回落有限。Fix 前应失败（x/y 原样透传 NaN/Infinity）。
+- [x] **Decision（`x`/`y` 契约读法裁定）**：选定三层收敛到「`x`/`y` 可选 + 默认 `0`」。依据：(a) open-audit 明示「证明意图是 default to 0，非 may be undefined」；(b) validator 已把 `x`/`y` 当可选；(c) `interaction-overlay.ts:43-44` 已默认 `?? 0`；(d) `width`/`height`/`rotation`/`scale` 在类型里已是可选——`x`/`y` 改可选与同接口一致。**类型改动（`config-types.ts` `x?: number`/`y?: number`）随 Phase 2 的 consumer 修复一起落地**，确保 typecheck 在 Phase 2 收尾时一次性恢复（见 Phase 2 Fix-0）。validator 维持 `checkNumberField`（可选语义不变）。若审阅子 agent 主张「收紧 validator 为必填」（open-audit 备选建议 b），于此登记反对意见并升级人工裁定前维持本裁定。
+- [x] **Proof-1（bounds，失败用例先行）**：新增测试——构造一个省略 `x`/`y` 的 symbol 节点（仅 `id`/`type`/`width`/`height`，经 `as ScadaSymbolNode` 或 `JSON.parse` 绕过当前必填类型），断言导出的 `computeSymbolBounds([node])`（内部调 `boundsOfNode`/`boundsFromCustomPoints`，二者模块私有不可直调）返回的 bounds `.x`/`.y` 为有限 number（`0`）；对带 `custom.points`、省略 `x`/`y` 的节点同理断言有限 bounds。Fix 前应失败（返回 `undefined`/`NaN`）。
+- [x] **Proof-2（viewport fit，失败用例先行）**：新增集成测试——一个最小 config（含一个省略 `x`/`y` 的 symbol + `viewport: { fit: 'contain' }`），经 `applyInitialViewport`/`engine.fit` 后断言 `getViewport().x`/`.y` 为 `Number.isFinite === true`，且 `unionBounds` 结果不含 NaN。Fix 前应失败（NaN）。
+- [x] **Proof-3（clampViewport 放大器，失败用例先行）**：新增单测——`clampViewport({ x: NaN, y: NaN, scale: 0.1 })` 断言返回 `{ x: 0, y: 0, scale: 0.1 }`；`clampViewport({ x: Infinity, y: -Infinity, scale: 1 })` 同理回落有限。Fix 前应失败（x/y 原样透传 NaN/Infinity）。
 
 Exit Criteria:
 
-- [ ] Decision 记录写明「可选 + 默认 0」裁定理由 + 与 validator/interaction-overlay/同接口其他字段的一致性论证；类型改动明确归属 Phase 2。
-- [ ] Proof-1/2/3 三个失败用例已入库，且在本 Phase（产线 Fix 未落地时）均失败（红）。
-- [ ] 产线代码与 `config-types.ts` 类型未改动（Phase 1 不动产线）。
+- [x] Decision 记录写明「可选 + 默认 0」裁定理由 + 与 validator/interaction-overlay/同接口其他字段的一致性论证；类型改动明确归属 Phase 2。
+- [x] Proof-1/2/3 三个失败用例已入库，且在本 Phase（产线 Fix 未落地时）均失败（红）。
+- [x] 产线代码与 `config-types.ts` 类型未改动（Phase 1 不动产线）。
 
 ### Phase 2 - Fix：类型收敛 + 默认 bounds consumer + 关闭 clampViewport 放大器（一并落地恢复 typecheck）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/serialization/config-types.ts`, `packages/flux-renderers-industrial/src/renderer/hooks/use-scada-config-sync.ts`, `packages/flux-renderers-industrial/src/engine/viewport.ts`, `packages/flux-renderers-industrial/src/engine/config-adapter.ts`
 
 - Item Types: `Fix`
 
 > **类型改动（Fix-0）与全部 consumer 修复（Fix-1/2/3/4）在同一 Phase 落地**，使 typecheck 在 Phase 收尾时一次性通过——避免「类型已可选、consumer 未补默认」的中间破损态。
 
-- [ ] **Fix-0（类型层收敛）**：`config-types.ts:57-58` 改 `x?: number; y?: number;`（与同接口 `width?`/`height?`/`rotation?`/`scale?` 对齐）。
-- [ ] **Fix-1（boundsOfNode）**：`use-scada-config-sync.ts:48-54` `boundsOfNode` 改 `return { x: node.x ?? 0, y: node.y ?? 0, width, height }`（镜像 `interaction-overlay.ts:43-44`）。
-- [ ] **Fix-2（boundsFromCustomPoints）**：`use-scada-config-sync.ts:84` 改 `return { x: (node.x ?? 0) + minX, y: (node.y ?? 0) + minY, width: maxX - minX, height: maxY - minY }`。
-- [ ] **Fix-3（clampViewport 放大器）**：`viewport.ts:32-34` `clampViewport` 对 `x`/`y` 加 `Number.isFinite` 防御：`return { x: Number.isFinite(state.x) ? state.x : 0, y: Number.isFinite(state.y) ? state.y : 0, scale: clampScale(state.scale) }`。文档化「position 非有限回落 0」语义。
-- [ ] **Fix-4（Phase 0 类型改动暴露的下游 raw 消费点）**：grep 全仓 `node.x`/`node.y`（及 `ScadaSymbolNode` 解构的 `x`/`y`）消费点，凡把 `node.x`/`node.y` 原样透传给下游（且语义上 NaN/undefined 会引发漂移）处补 `?? 0`。**已知消费点**：`config-adapter.ts:92-93` `new Group({ x: node.x, y: node.y, ... })`（raw 透传给 leafer Group，与 boundsOfNode 同型 NaN 源）——补 `x: node.x ?? 0, y: node.y ?? 0`。记录扫描结果清单（即使某些消费点裁定不需补，注明理由）。
+- [x] **Fix-0（类型层收敛）**：`config-types.ts:57-58` 改 `x?: number; y?: number;`（与同接口 `width?`/`height?`/`rotation?`/`scale?` 对齐）。
+- [x] **Fix-1（boundsOfNode）**：`use-scada-config-sync.ts:48-54` `boundsOfNode` 改 `return { x: node.x ?? 0, y: node.y ?? 0, width, height }`（镜像 `interaction-overlay.ts:43-44`）。
+- [x] **Fix-2（boundsFromCustomPoints）**：`use-scada-config-sync.ts:84` 改 `return { x: (node.x ?? 0) + minX, y: (node.y ?? 0) + minY, width: maxX - minX, height: maxY - minY }`。
+- [x] **Fix-3（clampViewport 放大器）**：`viewport.ts:32-34` `clampViewport` 对 `x`/`y` 加 `Number.isFinite` 防御：`return { x: Number.isFinite(state.x) ? state.x : 0, y: Number.isFinite(state.y) ? state.y : 0, scale: clampScale(state.scale) }`。文档化「position 非有限回落 0」语义。
+- [x] **Fix-4（Phase 0 类型改动暴露的下游 raw 消费点）**：grep 全仓 `node.x`/`node.y`（及 `ScadaSymbolNode` 解构的 `x`/`y`）消费点，凡把 `node.x`/`node.y` 原样透传给下游（且语义上 NaN/undefined 会引发漂移）处补 `?? 0`。**已知消费点**：`config-adapter.ts:92-93` `new Group({ x: node.x, y: node.y, ... })`（raw 透传给 leafer Group，与 boundsOfNode 同型 NaN 源）——补 `x: node.x ?? 0, y: node.y ?? 0`。记录扫描结果清单（即使某些消费点裁定不需补，注明理由）。
+
+  **Fix-4 全仓扫描结果清单**（`rg "node\.x|node\.y"` src/，排除 _.test._）：
+  - `engine/config-adapter.ts:92-93`（Group/container 构造，raw 透传 leafer Group transform，无默认层）→ **已补 `?? 0`**。
+  - `engine/config-adapter.ts:110`（leaf 路径 `resolveSymbolStyle(definition, node as ScadaSymbolProps)` → `instantiateSymbol` → `deepMergeInstanceProps(definition.defaults, ctx.props)`）→ **裁定不需补**：所有内置 symbol 定义 `defaults` 均含 `x:0,y:0`（base-shapes/device/sensor-control/instrument/pipe/compound 全量核对），且 `deepMergeInstanceProps`（`compound.ts:34`）对 `value === undefined` 显式 `continue` 跳过，故省略 x/y 时 leaf 节点经 defaults 兜底为 0；`resolveSymbolStyle` 的 `{...defaults, ...instanceProps}` 虽产生 `x:undefined`（explicit-undefined 覆盖），但经第二层 `deepMergeInstanceProps` 再次合并 defaults 时 undefined 被跳过、defaults 的 0 保留。
+  - `engine/interaction-overlay.ts:43-44`（`baseX = node.x ?? 0`）→ **已默认**（本 plan 一致性目标，无需改）。
+  - `renderer/hooks/use-scada-config-sync.ts:53/:84` → Fix-1/Fix-2 已补。
+  - `renderer/hooks/use-scada-config-sync.ts:45` → 注释文本，无代码消费。
 
 Exit Criteria:
 
-- [ ] Phase 1 的 Proof-1/2/3 全部由红转绿。
-- [ ] `boundsOfNode`/`boundsFromCustomPoints` 对省略 `x`/`y` 返回有限 bounds；`clampViewport` 对非有限 `x`/`y` 回落 `0`；`config-adapter.ts` Group 构造对省略 `x`/`y` 给 `0`。
-- [ ] 包级 typecheck 通过（`x`/`y` 改可选 + 全部 consumer 补默认后，无新增 TS 错误；Fix-4 扫描清单已记录）。
+- [x] Phase 1 的 Proof-1/2/3 全部由红转绿。
+- [x] `boundsOfNode`/`boundsFromCustomPoints` 对省略 `x`/`y` 返回有限 bounds；`clampViewport` 对非有限 `x`/`y` 回落 `0`；`config-adapter.ts` Group 构造对省略 `x`/`y` 给 `0`。
+- [x] 包级 typecheck 通过（`x`/`y` 改可选 + 全部 consumer 补默认后，无新增 TS 错误；Fix-4 扫描清单已记录）。
 
 ## Draft Review Record
 
@@ -129,16 +136,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 全部 `[x]` + 每 Phase Exit Criteria 全部 `[x]` 后，方可 `Plan Status: completed`。closure-audit 必须由独立子 agent（fresh session）执行。
 
-- [ ] open-audit P1（x/y 3-way contract drift）confirmed fixed in live code：`boundsOfNode`/`boundsFromCustomPoints` 默认 `x`/`y`、`clampViewport` 防御非有限 position、`config-types.ts` `x`/`y` 改可选。
-- [ ] 回归测试（bounds + viewport fit + clampViewport 三组）落地并通过，覆盖「省略 `x`/`y` + fit → 有限 viewport + 符号在屏」与「NaN/Infinity 注入 clamp → 回落 `0`」。
-- [ ] 三层契约读法一致（type 可选 + validator 可选 + runtime 默认 0）——无残留分歧。
-- [ ] `interaction-overlay.ts:43-44` 的既有默认与本 plan 默认语义一致（两 consumer 不再矛盾）。
-- [ ] `design-renderer.md` config 契约注记 `x`/`y`「可选 + 默认 0」语义（若 §4.x 涉及）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] open-audit P1（x/y 3-way contract drift）confirmed fixed in live code：`boundsOfNode`/`boundsFromCustomPoints` 默认 `x`/`y`、`clampViewport` 防御非有限 position、`config-types.ts` `x`/`y` 改可选。
+- [x] 回归测试（bounds + viewport fit + clampViewport 三组）落地并通过，覆盖「省略 `x`/`y` + fit → 有限 viewport + 符号在屏」与「NaN/Infinity 注入 clamp → 回落 `0`」。
+- [x] 三层契约读法一致（type 可选 + validator 可选 + runtime 默认 0）——无残留分歧。
+- [x] `interaction-overlay.ts:43-44` 的既有默认与本 plan 默认语义一致（两 consumer 不再矛盾）。
+- [x] `design-renderer.md` config 契约注记 `x`/`y`「可选 + 默认 0」语义（若 §4.x 涉及）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -151,13 +158,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: x/y 三层契约漂移已收口——`ScadaSymbolNode.x/y` 改可选（type）、validator 维持可选语义、runtime bounds consumer（`boundsOfNode`/`boundsFromCustomPoints`）与 Group 构造（`config-adapter`）统一 `?? 0`、`clampViewport` 关闭 position 放大器（非有限 x/y 回落 0）。Proof-1/2/3 三组回归测试落地（红→绿），silent NaN viewport 失败路径已闭合（省略 x/y + fit → 有限 viewport，符号在屏）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 fresh-session general sub-agent（task `ses_0322c7a16ffeRLPgu2ZntwSI0z`），不复用执行上下文
+- Evidence: 独立通读 plan + 6 个产线/测试文件 live code 核对；逐点验证 Phase 1/2 Exit Criteria（Proof 断言与代码一致）、interface↔semantics trace（`{id,type,width,height}` → `computeSymbolBounds` → `fit` → 有限 viewport；`clampViewport({x:NaN})` → 0）、Fix-4 扫描诚实性（leaf 路径经 31 个 symbol 定义 `defaults{x:0,y:0}` + `deepMergeInstanceProps` undefined-skip 兜底，裁定 sound）、两 consumer 一致性（interaction-overlay 已 `?? 0`）、plan 文本一致性（Phase 1/2 completed + 全 `[x]`、Plan Status 未自我翻转、Closure Evidence 未预填）；独立复跑 industrial 包 typecheck/build/lint/test 570/570 全绿。Verdict `approved`（1 项 non-blocking note：Proof-2 走 pure `fit` 而非 engine 集成，经审定合理——`applyInitialViewport` 委托同一 pure `fit`、`clampViewport` 防御由 Proof-3 独立覆盖、engine wrapper 无新增 NaN 逻辑）。
 
 Follow-up:
 
-- <<non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- `computeSymbolBounds` 对无 `custom.points` 的 default polygon/line（`DEFAULT_TRIANGLE`/width-height-derived points）仍退化为 MAX_SCALE（P2，Non-Goal，源 `2026-08-04-2242-multi-audit-industrial-hmi.md`）。
+- `leafer-ui-mock` 未建模 `getBoundsToWorld`/`worldBox`/`tree.zoomLayer !== tree`（P2，Non-Goal）——本 plan bounds 回归测试在 pure `fit`/mock 层验证有限性；真实 leafer 像素级 bounds 一致性仍是 mock↔real 漂移观察项。
+- 无剩余 plan-owned work。

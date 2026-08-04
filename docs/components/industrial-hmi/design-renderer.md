@@ -114,8 +114,10 @@ interface ScadaSymbolNode {
   /** 图元 type（design-symbols.md §4.4 对齐约定：形状族 `scada-<名>` 无前缀；其余族 `scada-<族>-<名>`；group 为 scada-group） */
   type: string;
   /** 几何与样式属性（design-symbols.md §4.2 ScadaSymbolProps 子集，序列化 JSON 化） */
-  x: number;
-  y: number;
+  /** 节点原点 x（可选 + 默认 0；plan 2026-08-04-2242-2：type/validator/runtime-consumer 三层同读「可选 + 默认 0」，bounds consumer 经 `?? 0` 兜底，省略时按原点 0 计算） */
+  x?: number;
+  /** 节点原点 y（可选 + 默认 0；plan 2026-08-04-2242-2） */
+  y?: number;
   width?: number;
   height?: number;
   rotation?: number;

@@ -1,4 +1,4 @@
-> Audit Status: planned
+> Audit Status: closed
 > Audit Type: open-ended
 > Mission: industrial-hmi
 > Planned Into: `docs/plans/2026-08-04-2242-2-hmi-config-xy-bounds-contract-plan.md` (P1 x/y 3-way contract drift). P2 findings triaged to `docs/components/roadmap-industrial-hmi.md` Follow-up Backlog (2026-08-04-2242 子节).
