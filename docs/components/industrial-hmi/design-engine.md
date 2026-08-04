@@ -120,10 +120,20 @@ interface ScadaEngineOptions {
 > **`getValidScale` 原样返回、无 min/max 钳制**，display Leafer.ts:405）；平移经
 > `MoveEvent.BEFORE_MOVE` → `zoomLayer.move(move)`。**插件缩放路径绕过引擎 `clampViewport`
 > （0.1/20 仅钳 scale、平移 x/y 不钳制）**→ 引擎兜底（Failure Paths `viewport-interaction-drift` 兑现）：
-> 引擎订阅 tree `zoom`（ZoomEvent.ZOOM）/`move`（MoveEvent.MOVE）事件，越界缩放以视口原点世界点为锚
-> `scaleOfWorld` 重钳制回 [MIN_SCALE, MAX_SCALE]（与命令路径 `applyViewportState` 同锚、与 gate-3-review §5 M-3 推导口径一致），并把 zoomLayer 矩阵状态（`zoomLayer.x/y/scaleX`，
-> 读 `zoomLayer.__` 数据面，view/src/index.ts:27）同步回引擎视口状态（`zoomLayer.x = -viewport.x * scale`，
-> gate-3-review §5 M-3 推导），保证 wheel/pinch 后 `getViewport`/命中 world 坐标/后续命令不漂移。
+> 引擎订阅 tree `zoom`（ZoomEvent.ZOOM）/`move`（MoveEvent.MOVE）事件，越界缩放经
+> `zoomLayer.scaleOfWorld` 重钳制回 [MIN_SCALE, MAX_SCALE]，并把 zoomLayer 矩阵状态
+> （`zoomLayer.x/y/scaleX`，读 `zoomLayer.__` 数据面，view/src/index.ts:27）同步回引擎视口状态
+> （`zoomLayer.x = -viewport.x * scale`，gate-3-review §5 M-3 推导），保证 wheel/pinch 后
+> `getViewport`/命中 world 坐标/后续命令不漂移。
+>
+> **P1-9 增补（scaleOfWorld 锚点空间，mock↔真实漂移收口）**：leafer `scaleOfWorld` 的锚点是
+> **zoomLayer 外层（screen）空间点**（`zoomOfWorld` → `getTempLocal` 按 parent 世界矩阵逆变换，
+> 源码核对 core 2.2.9 `zoomOfLocal`/`scaleOfOuter`）——引擎命令路径 `applyViewportState` 与
+> 插件钳制兜底 `handlePluginZoom` 的缩放均以**屏幕原点 `{x:0,y:0}`** 为锚（固定屏幕原点缩放 =
+> 视口 x/y 不变、仅 scale 变化），再经 `move({-(Δx)*scale})` 平移合成精确视口态；**不得传内容
+> 坐标锚点**（`viewportToWorld(vp,{0,0})`，会被当 screen 点固定 → 内容漂移 `(vx·(1-k), vy·(1-k))`）。
+> `leafer-ui-mock.ts` `MockZoomLayer.scaleOfWorld` 已按真实锚定语义建模 x/y 副作用
+> （`x = (x-ox)·k + ox`），矩阵级断言可验证。
 >
 > **I14.1 增补（指针拖动平移）**：viewport 插件默认**不开启鼠标拖动平移**（`move` 配置缺省仅
 > `autoDistance: 2`，`canMove = moveMode || (drag==='auto' && !pathCanDrag(path))` 恒 false）——
@@ -172,12 +182,12 @@ interface ScadaEngineOptions {
 
 > leafer App 三层模型（ground/tree/sky，render-engines §8 #1/§2.2）映射为组态图层：
 
-| 层          | leafer 载体                      | 组态职责                                   | 说明                                                                                                                                                                                                                                                                                   |
-| ----------- | -------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 背景层      | `App.ground`                     | 画面底色/网格背景                          | 静态、不参与命中；`background` 配置                                                                                                                                                                                                                                                    |
-| 图元层      | `App.tree`（`type: 'viewport'`） | 全部组态图元子树                           | 世界坐标；受视口矩阵变换；**命中检测/渲染帧事件均挂此层**（A2）                                                                                                                                                                                                                        |
-| 交互覆盖层  | `App.sky`                        | 运行时 hover 高亮/报警闪烁描边等反馈覆盖物 | 最小化使用；选中/拖拽/控制点等编辑器覆盖物后置 I16（Editor=独立 sky Group，research-summary §4.1 E12）；覆盖物几何：矩形语义图元取 x/y/width/height，line/arrow/polygon 无宽高语义时按 points 包围盒兜底、0 尺寸退化最小框（gate-4-review m-C 落地，I15.1 e2e 补线/多边形 hover 断言） |
-| HTML 覆盖层 | React DOM（canvas 外层）         | 弹窗/提示/说明文字等 DOM UI                | 经既有 `dialog`/`drawer` 与 `@nop-chaos/ui`（平台能力复用表）；不进入场景树；`@leafer-in/html` 作 P1 评估项（§2 决策表）                                                                                                                                                               |
+| 层          | leafer 载体                      | 组态职责                                   | 说明                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------- | -------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 背景层      | `App.ground`                     | 画面底色/网格背景                          | 静态、不参与命中；`background` 配置                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 图元层      | `App.tree`（`type: 'viewport'`） | 全部组态图元子树                           | 世界坐标；受视口矩阵变换；**命中检测/渲染帧事件均挂此层**（A2）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 交互覆盖层  | `App.sky`                        | 运行时 hover 高亮/报警闪烁描边等反馈覆盖物 | 最小化使用；选中/拖拽/控制点等编辑器覆盖物后置 I16（Editor=独立 sky Group，research-summary §4.1 E12）；覆盖物几何：矩形语义图元取 x/y/width/height，line/arrow/polygon 无宽高语义时按 points 包围盒兜底、0 尺寸退化最小框（gate-4-review m-C 落地，I15.1 e2e 补线/多边形 hover 断言）。**P1-7 变换面对齐**：sky 层恒等变换 → 覆盖物以 **screen 坐标**绘制（x/y 经 `engine.getViewportPoint` 换算、宽/高乘当前 scale、rotation 不变、strokeWidth 保持 preset 屏幕像素不除 scale）；视口变更后 `InteractionOverlay.refresh()` 按最新视口重算全部活动覆盖物（命令路径 `applyViewportState` + 插件 zoom/move sync 路径双钩子）；覆盖物 Group `hittable: false`——不参与命中测试，指针事件路径保持落在 tree（否则 sky 覆盖物与图元 screen 几何对齐后吞掉 click/hover 链路） |
+| HTML 覆盖层 | React DOM（canvas 外层）         | 弹窗/提示/说明文字等 DOM UI                | 经既有 `dialog`/`drawer` 与 `@nop-chaos/ui`（平台能力复用表）；不进入场景树；`@leafer-in/html` 作 P1 评估项（§2 决策表）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 - 场景树与 leafer 树的映射规则、symbol 实例化细节见 `design-symbols.md`（I2.3）；图层与 renderer 的 DOM 结构关系见 `design-renderer.md`（I2.4）。
 

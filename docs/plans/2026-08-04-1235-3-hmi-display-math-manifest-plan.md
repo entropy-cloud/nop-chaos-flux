@@ -1,6 +1,6 @@
 # 3 Display/Interaction Math And Manifest Gate — `flux-renderers-industrial`
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-04
 > Source: `docs/audits/2026-08-03-1506-multi-audit-industrial-hmi.md` (P1-1, P1-6, P1-7, P1-9)
 > Related: `docs/components/roadmap-industrial-hmi.md`; `docs/plans/2026-08-04-1235-1-hmi-diff-path-convergence-plan.md`; `docs/plans/2026-08-04-1235-2-hmi-lifecycle-wiring-plan.md`
@@ -64,61 +64,61 @@
 
 ### Phase 1 - Manifest 门修复（P1-1）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/package.json`
 
 - Item Types: `Fix | Proof`
-- [ ] `Proof` — 复跑 `pnpm check:workspace-manifest-deps` 记录当前本包 3 条 undeclared 命中（基线失败态）。
-- [ ] `Fix` — 在 devDependencies 补 `"@nop-chaos/flux-formula": "workspace:*"`、`"@nop-chaos/flux-runtime": "workspace:*"`（`renderer-test-support.tsx` 需要两者，`scada-points-bridge.test.tsx` 需要前者；`scada-canvas-smoke.test.tsx:3` 也消费 flux-formula，但因其位于 `src/` 根未被 gate 扫描到——补依赖后一并覆盖）。
-- [ ] `Proof` — 重跑 `pnpm check:workspace-manifest-deps`：本包 0 undeclared（残留 5 条为 form/scheduling 既有问题，不属本包）。
+- [x] `Proof` — 复跑 `pnpm check:workspace-manifest-deps` 记录当前本包 3 条 undeclared 命中（基线失败态）。
+- [x] `Fix` — 在 devDependencies 补 `"@nop-chaos/flux-formula": "workspace:*"`、`"@nop-chaos/flux-runtime": "workspace:*"`（`renderer-test-support.tsx` 需要两者，`scada-points-bridge.test.tsx` 需要前者；`scada-canvas-smoke.test.tsx:3` 也消费 flux-formula，但因其位于 `src/` 根未被 gate 扫描到——补依赖后一并覆盖）。
+- [x] `Proof` — 重跑 `pnpm check:workspace-manifest-deps`：本包 0 undeclared（残留 5 条为 form/scheduling 既有问题，不属本包）。
 
 Exit Criteria:
 
-- [ ] `check:workspace-manifest-deps` 输出中本包 0 命中；`pnpm install --lockfile-only` 无冲突（或等价验证 lockfile 一致）。
+- [x] `check:workspace-manifest-deps` 输出中本包 0 命中；`pnpm install --lockfile-only` 无冲突（或等价验证 lockfile 一致）。
 
 ### Phase 2 - 初始视口公式修正（P1-6）
 
-Status: planned
+Status: completed
 Targets: `src/renderer/hooks/use-scada-config-sync.ts`, `src/renderer/scada-canvas-lifecycle.test.tsx`
 
 - Item Types: `Fix | Proof`
-- [ ] `Proof` — 先写失败用例（非巧合几何，如 bounds 中心 cx=155、fill scale=12、sw=800）：断言 fill 分支 `x = cx - sw/(2s)`（当前实现 `sw/2 - cx·s` 失败）；center 分支同样按 `vx = cx - sw/(2s)`（当前 scale 不变）断言；contain 分支行为不回退。
-- [ ] `Fix` — `applyInitialViewport` fill 分支改为 `x: bounds.x + bounds.width/2 - size.width/(2*scale)`（`y` 同理：`bounds.y + bounds.height/2 - size.height/(2*scale)`）；center 分支同公式（与 `engine.center`（viewport.ts:70-78）语义一致，可委托 `engine.center(bounds)` 消除双实现漂移）。**注意**：不得用 `engine.fit(bounds, 0)` 替代 fill 分支——`fit` 是 min-scale（contain 语义，viewport.ts:60），fill 是 max-scale（use-scada-config-sync.ts:51），委托会改变填充语义。
-- [ ] `Proof` — 既有生命周期视口测试不回退（`not.toBe(0)` 类弱断言升级为新公式精确断言）。
+- [x] `Proof` — 先写失败用例（非巧合几何，如 bounds 中心 cx=155、fill scale=12、sw=800）：断言 fill 分支 `x = cx - sw/(2s)`（当前实现 `sw/2 - cx·s` 失败）；center 分支同样按 `vx = cx - sw/(2s)`（当前 scale 不变）断言；contain 分支行为不回退。
+- [x] `Fix` — `applyInitialViewport` fill 分支改为 `x: bounds.x + bounds.width/2 - size.width/(2*scale)`（`y` 同理：`bounds.y + bounds.height/2 - size.height/(2*scale)`）；center 分支同公式（与 `engine.center`（viewport.ts:70-78）语义一致，可委托 `engine.center(bounds)` 消除双实现漂移）。**注意**：不得用 `engine.fit(bounds, 0)` 替代 fill 分支——`fit` 是 min-scale（contain 语义，viewport.ts:60），fill 是 max-scale（use-scada-config-sync.ts:51），委托会改变填充语义。
+- [x] `Proof` — 既有生命周期视口测试不回退（`not.toBe(0)` 类弱断言升级为新公式精确断言）。
 
 Exit Criteria:
 
-- [ ] fill/center 新公式测试通过（非巧合几何精确断言）；contain 与既有用例不回退。
+- [x] fill/center 新公式测试通过（非巧合几何精确断言）；contain 与既有用例不回退。
 
 ### Phase 3 - Overlay 变换面对齐（P1-7）
 
-Status: planned
+Status: completed
 Targets: `src/engine/interaction-overlay.ts`, `src/engine/scada-engine.ts`, `src/engine/scada-engine.test.ts`, `src/renderer/scada-hover-overlay.test.tsx`, `tests/e2e/scada-*.spec.ts`
 
 - Item Types: `Fix | Proof`
-- [ ] `Proof` — 先写失败用例（非恒等视口，如 viewport {x:100,y:0,scale:2}）：断言覆盖物几何 = 图元 screen 坐标（`getViewportPoint` 手算：`(world - vx)·s`）；当前实现直接用 world 坐标失败。
-- [ ] `Fix` — 覆盖物以 **screen 坐标**绘制（sky 层恒等变换下即屏幕像素）：`highlight` 中 x/y 经 `engine.getViewportPoint(worldPoint)`（scada-engine.ts:293 已存在）换算，width/height 乘当前 scale（`engine.getViewport().scale`），rotation 不变，**strokeWidth 保持 preset 屏幕像素、不除 scale**（screen 坐标绘制方案下除 scale 会产生 2/scale px 的几乎不可见描边）。
-- [ ] `Fix` — pan/zoom 后活动覆盖物重定位：`interaction-overlay.ts` 提供 `refresh()`（按最新 viewport 重算全部活动覆盖物），在**两个** viewport 变更钩子都调用——`applyViewportState` 后（命令路径：zoomAt/fit/center/setViewport）与插件 zoom/move sync 路径（wheel/pinch 缩放与拖拽平移只走插件路径，漏接即 overlay-align 失败路径不闭合）。
+- [x] `Proof` — 先写失败用例（非恒等视口，如 viewport {x:100,y:0,scale:2}）：断言覆盖物几何 = 图元 screen 坐标（`getViewportPoint` 手算：`(world - vx)·s`）；当前实现直接用 world 坐标失败。
+- [x] `Fix` — 覆盖物以 **screen 坐标**绘制（sky 层恒等变换下即屏幕像素）：`highlight` 中 x/y 经 `engine.getViewportPoint(worldPoint)`（scada-engine.ts:293 已存在）换算，width/height 乘当前 scale（`engine.getViewport().scale`），rotation 不变，**strokeWidth 保持 preset 屏幕像素、不除 scale**（screen 坐标绘制方案下除 scale 会产生 2/scale px 的几乎不可见描边）。
+- [x] `Fix` — pan/zoom 后活动覆盖物重定位：`interaction-overlay.ts` 提供 `refresh()`（按最新 viewport 重算全部活动覆盖物），在**两个** viewport 变更钩子都调用——`applyViewportState` 后（命令路径：zoomAt/fit/center/setViewport）与插件 zoom/move sync 路径（wheel/pinch 缩放与拖拽平移只走插件路径，漏接即 overlay-align 失败路径不闭合）。**附**：覆盖物 Group `hittable: false`（screen 对齐后若不屏蔽命中，sky 覆盖物吞掉 tree 指针事件 → click/hover 链路断裂，e2e I11 click→dialog 实测暴露）。
 
 Exit Criteria:
 
-- [ ] 非恒等视口 overlay 对齐测试通过（精确 screen 坐标断言 + 刷新后重定位断言）；既有 identity-viewport 行为不回退。
+- [x] 非恒等视口 overlay 对齐测试通过（精确 screen 坐标断言 + 刷新后重定位断言）；既有 identity-viewport 行为不回退。
 
 ### Phase 4 - zoomLayer 锚点空间修正 + mock 建模（P1-9）
 
-Status: planned
+Status: completed
 Targets: `src/engine/scada-engine.ts`（`applyViewportState`/`handlePluginZoom`/`syncViewportFromZoomLayer`）、`src/test-support/leafer-ui-mock.ts`、`src/engine/scada-engine.test.ts`、`tests/e2e/scada-*.spec.ts`
 
 - Item Types: `Fix | Proof`
-- [ ] `Proof` — 先写失败用例（mock 更新后）：pan 后 zoomAt → 断言最终视口/矩阵 x,y 无漂移（旧 mock 下此断言不过——当前 mock 不建模 x/y 锚定副作用，先修 mock 再修引擎的 TDD 序中，本用例在新 mock + 旧引擎下失败）。
-- [ ] `Fix` — `leafer-ui-mock.ts` `MockZoomLayer.scaleOfWorld` 补 x/y 锚定副作用（按真实 `zoomOfLocal` 语义：固定传入点于外层 screen 空间，scale 后按锚点反推 x/y），使 `syncViewportFromZoomLayer` 分支可被单测验证。
-- [ ] `Fix` — `applyViewportState`：缩放锚点传 **screen 空间**点（如 `{x:0,y:0}`，由 leafer `toInnerPoint` 换算为正确内容点），或显式先 move 再 scale 的一致序列；`handlePluginZoom` 兜底（scada-engine.ts:417-418）同修正——两处共用同一 bug 类，不得只修一处。
-- [ ] `Proof` — 单测：矩阵级断言（非恒等视口 + 程序化缩放后，锚点世界点对应 screen 坐标不变）；e2e 一条程序化矩阵级断言（经测试句柄读视口/矩阵，非场景树属性）。wheel/pinch 路径（viewport 插件传 screen 坐标）回归确认不受影响。
+- [x] `Proof` — 先写失败用例（mock 更新后）：pan 后 zoomAt → 断言最终视口/矩阵 x,y 无漂移（旧 mock 下此断言不过——当前 mock 不建模 x/y 锚定副作用，先修 mock 再修引擎的 TDD 序中，本用例在新 mock + 旧引擎下失败）。
+- [x] `Fix` — `leafer-ui-mock.ts` `MockZoomLayer.scaleOfWorld` 补 x/y 锚定副作用（按真实 `zoomOfLocal` 语义：固定传入点于外层 screen 空间，scale 后按锚点反推 x/y），使 `syncViewportFromZoomLayer` 分支可被单测验证。
+- [x] `Fix` — `applyViewportState`：缩放锚点传 **screen 空间**点（如 `{x:0,y:0}`，由 leafer `toInnerPoint` 换算为正确内容点），或显式先 move 再 scale 的一致序列；`handlePluginZoom` 兜底（scada-engine.ts:417-418）同修正——两处共用同一 bug 类，不得只修一处。
+- [x] `Proof` — 单测：矩阵级断言（非恒等视口 + 程序化缩放后，锚点世界点对应 screen 坐标不变）；e2e 一条程序化矩阵级断言（经测试句柄读视口/矩阵，非场景树属性）。wheel/pinch 路径（viewport 插件传 screen 坐标）回归确认不受影响。
 
 Exit Criteria:
 
-- [ ] 矩阵级断言通过（mock 更新 + 引擎两处修正后），e2e 全绿；gate-3 既有 zoomLayer 相关测试不回退。
-- [ ] 包内全量测试 `pnpm --filter @nop-chaos/flux-renderers-industrial test` 通过（Phase 1-4 focused 验证收口）。
+- [x] 矩阵级断言通过（mock 更新 + 引擎两处修正后），e2e 全绿；gate-3 既有 zoomLayer 相关测试不回退。
+- [x] 包内全量测试 `pnpm --filter @nop-chaos/flux-renderers-industrial test` 通过（Phase 1-4 focused 验证收口）。
 
 ## Draft Review Record
 
@@ -131,16 +131,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复：P1-1（manifest 门）、P1-6（视口公式）、P1-7（overlay 变换面）、P1-9（zoom 锚点空间，含 handlePluginZoom 兜底）——按 Phase 1-4 行为语义在 live repo 验证
-- [ ] `leafer-ui-mock` 与 leafer-ui@2.2.9 真实 `scaleOfWorld` 锚定语义一致（无 mock↔真实漂移回归，gate-3 教训）
-- [ ] 4 组回归验证（manifest gate / 非巧合视口 / 非恒等视口 overlay / 矩阵级 zoom 锚点）全绿入库
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步：`design-renderer.md`/`design-engine.md` 若因实现修正产生契约文字变化已更新；否则 No owner-doc update required；`docs/logs/` 收口记录
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live defects 已修复：P1-1（manifest 门）、P1-6（视口公式）、P1-7（overlay 变换面）、P1-9（zoom 锚点空间，含 handlePluginZoom 兜底）——按 Phase 1-4 行为语义在 live repo 验证
+- [x] `leafer-ui-mock` 与 leafer-ui@2.2.9 真实 `scaleOfWorld` 锚定语义一致（无 mock↔真实漂移回归，gate-3 教训）
+- [x] 4 组回归验证（manifest gate / 非巧合视口 / 非恒等视口 overlay / 矩阵级 zoom 锚点）全绿入库
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步：`design-engine.md` §4.4（scaleOfWorld 锚点空间 P1-9 增补）与 §6（覆盖物 screen 坐标 + refresh 双钩子 + hittable:false）已更新；`design-renderer.md` 无契约文字变化（初始视口 wiring 语义不变，仅公式修正，§4.2/§8.3 无需回写）；`docs/logs/` 收口记录
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（auditor task `ses_0344967f8ffeKI8LXXT4kAHd4B`，判定 `approved`，证据见下方 Closure）
+- [x] `pnpm typecheck`（workspace 32/32）
+- [x] `pnpm build`（workspace 32/32）
+- [x] `pnpm lint`（workspace 32/32）
+- [x] `pnpm test`（workspace 59/59；包级 483/35；scada e2e 全绿，见 daily log）
 
 ## Deferred But Adjudicated
 
@@ -152,13 +152,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行。
+Status Note: 四 Phase 全部落地——P1-1 manifest 门（本包 0 undeclared）/ P1-6 初始视口公式（`vx = cx - sw/(2s)`，fill 保留 max-scale 不降级 contain，center 委托 engine.center）/ P1-7 覆盖物 screen 坐标绘制 + refresh 双钩子 + hittable:false / P1-9 `scaleOfWorld` 锚点空间修正（命令路径 + 插件兜底两处，screen 原点锚定）+ mock x/y 锚定副作用建模。4 项 confirmed live defect 修复并各带 focused 回归测试（单测 10 例 + e2e 3 条 + manifest 门复跑）；包级 483/35 全绿、workspace typecheck/build/lint 32/32 + test 59/59 全绿、scada e2e 25/25 全绿（全量 e2e 唯一残余为 pre-existing gantt 基线失败，HEAD stash A/B 证实与本 plan 无关）；`design-engine.md §4.4/§6` 与 live baseline 一致。独立 closure-audit 通过后关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立子 agent 填写）
-- Evidence: （待填）
+- Auditor / Agent: 独立子 agent（fresh session，不复用执行上下文），task `ses_0344967f8ffeKI8LXXT4kAHd4B`
+- Evidence: 判定 `approved`（0 Blocker / 0 Major / 2 Minor 卫生项已随收口落地）。逐项核验：A1 manifest 门 live 复跑 0 命中（package.json:33-34 双 workspace devDep 在档，残留 5 条均属 form/scheduling 且 pre-existing）；A2 公式源码核对（use-scada-config-sync.ts:56-57 fill `x = bounds.x + bounds.width/2 - size.width/(2*scale)`、center 委托 :64，fill 显式禁止 engine.fit 委托）+ lifecycle 精确断言（155 - 800/(2\*12) 等三例实跑）；A3 overlay screen 坐标（interaction-overlay.ts:131/135-136/138 + refresh :143-157 + group hittable:false :90）+ refresh 三钩子（scada-engine.ts:365/434/440）；A4 mock x/y 锚定副作用（leafer-ui-mock.ts:196-201 `x=(x-ox)·k+ox`）+ 两处 `scaleOfWorld({x:0,y:0})`（scada-engine.ts:354/430，无 viewportToWorld 残留）+ 矩阵级单测 2 例与 e2e 矩阵断言实跑；A5 mock↔真实语义推导成立（@leafer/core@2.2.9 core.esm.js `zoomOfWorld`→`getTempLocal`（origin 为 parent/screen 空间点）→`zoomOfLocal`/`scaleOfOuter`（`t.x = x + matrix.e - o.e`）导出 `x'=(px-ox)·k+ox` 与 mock 模型逐项一致）；B 无静默降级（Phase items/Exit Criteria 全勾、Deferred 无、Follow-up 仅 pre-declared P2）；C owner docs §4.4/§6 已同步；D 独立复跑包级 483/35 全绿 + manifest gate 复跑 + scada e2e 25/25（demo 12/edge 5/perf 5/pressure 3）；E plan 文本一致性（Plan Status/Phase Status/Exit Criteria/Closure Gates 互洽，audit gate 待本 session 证据后由执行方勾选）。2 Minor（daily log 收口记录、roadmap plan `{3}` 执行记录）已随本收口 commit 落地。
 
 Follow-up:
 
-- 待关闭时填写；no remaining plan-owned work 或指向 `{1}`/`{2}` 的衔接。
+- 无 remaining plan-owned work。衔接：P1 remediation 轮 {1}/{2}/{3} 全部收口；关联 P2（mock↔真实漂移候选面、perf e2e 恒真断言、not-visible 失败路径等）登记在 roadmap-industrial-hmi.md `## Follow-up Backlog`。
