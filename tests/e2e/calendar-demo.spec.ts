@@ -37,10 +37,14 @@ test.describe('Calendar Demo', () => {
     const dateDisplay = page.locator('[data-slot="calendar-header"] h2');
     const initialDateText = await dateDisplay.textContent();
 
-    await page.locator('button[aria-label="Next"]').click();
+    // Locale-agnostic: the app defaults to zh-CN but honors en-US builds.
+    const nextBtn = page.locator('button[aria-label="Next"], button[aria-label="下一个"]');
+    const prevBtn = page.locator('button[aria-label="Previous"], button[aria-label="上一个"]');
+
+    await nextBtn.click();
     await expect(dateDisplay).not.toHaveText(initialDateText!, { timeout: 3_000 });
 
-    await page.locator('button[aria-label="Previous"]').click();
+    await prevBtn.click();
     await expect(dateDisplay).toHaveText(initialDateText!, { timeout: 3_000 });
     await assertTrackedPageErrors(page);
   });

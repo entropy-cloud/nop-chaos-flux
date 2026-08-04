@@ -12,8 +12,8 @@ test.describe('AI Rich Text Sender — P6 (A6) end-to-end', () => {
     const sender = page.locator('[data-slot="ai-sender"]');
     await expect(sender).toBeVisible();
     await expect(sender).toHaveAttribute('data-extension', '');
-    // The Tiptap contenteditable is present.
-    const tiptapContent = page.locator('.nop-ai-sender-tiptap-content');
+    // The Tiptap contenteditable is present (surface carries the tiptap marker).
+    const tiptapContent = page.locator('[data-slot="ai-sender-tiptap"]');
     await expect(tiptapContent).toBeVisible();
     await assertTrackedPageErrors(page);
   });
@@ -27,14 +27,14 @@ test.describe('AI Rich Text Sender — P6 (A6) end-to-end', () => {
     // Click the "Greeting" template button.
     await page.locator('[data-testid="ai-sender-template-Greeting"]').click();
     // The editor content now includes the template text.
-    const content = page.locator('.nop-ai-sender-tiptap-content');
+    const content = page.locator('[data-slot="ai-sender-tiptap"]');
     await expect(content).toContainText('Hello! How can I help?');
     await assertTrackedPageErrors(page);
   });
 
   test('typing @ opens the mention popup and selecting inserts @label', async ({ page }) => {
     await openRichTextDemo(page);
-    const content = page.locator('.nop-ai-sender-tiptap-content');
+    const content = page.locator('[data-slot="ai-sender-tiptap"]');
     await content.click();
     await page.keyboard.type('@al');
 
@@ -53,7 +53,7 @@ test.describe('AI Rich Text Sender — P6 (A6) end-to-end', () => {
 
   test('typing / opens the slash command popup', async ({ page }) => {
     await openRichTextDemo(page);
-    const content = page.locator('.nop-ai-sender-tiptap-content');
+    const content = page.locator('[data-slot="ai-sender-tiptap"]');
     await content.click();
     await page.keyboard.type(' /sum');
 
@@ -65,7 +65,7 @@ test.describe('AI Rich Text Sender — P6 (A6) end-to-end', () => {
 
   test('submitting rich-text content sends plain text to the message list', async ({ page }) => {
     await openRichTextDemo(page);
-    const content = page.locator('.nop-ai-sender-tiptap-content');
+    const content = page.locator('[data-slot="ai-sender-tiptap"]');
     await content.click();
     await page.keyboard.type('hello from tiptap');
 

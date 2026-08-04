@@ -116,7 +116,7 @@ test.describe('AI chat — P0 mock streaming loop', () => {
     await input.fill('timestamp test');
     await page.locator('[data-slot="ai-sender-submit"]').click();
 
-    await expect(page.locator('[data-slot="ai-bubble-timestamp"]')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('[data-slot="ai-bubble-timestamp"]').first()).toBeVisible({ timeout: 10_000 });
 
     await assertTrackedPageErrors(page);
   });
