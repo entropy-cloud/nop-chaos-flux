@@ -135,4 +135,25 @@ describe('AiMessageListView + AiSenderView inside an ai-chat context', () => {
     expect(list?.getAttribute('data-empty')).toBe('');
     expect(container.querySelectorAll('.nop-ai-bubble').length).toBe(0);
   });
+
+  it('forwards showTimestamp to bubbles (A-4 timestamp footer wiring)', async () => {
+    const connector = mockConnector([{ delta: { content: 'Hi' } }, { finishReason: 'stop' }]);
+    function TimestampHarness() {
+      const ctx = useMessage({ connector });
+      return (
+        <AiChatProvider value={ctx}>
+          <AiMessageListView showTimestamp />
+          <AiSenderView placeholder="Type…" submitType="enter" />
+        </AiChatProvider>
+      );
+    }
+    const { container } = render(<TimestampHarness />);
+    const input = screen.getByPlaceholderText('Type…') as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: 'hello' } });
+    await act(async () => {
+      fireEvent.click(container.querySelector('[data-slot="ai-sender-submit"]')!);
+    });
+    const stamps = container.querySelectorAll('[data-slot="ai-bubble-timestamp"]');
+    expect(stamps.length).toBe(2);
+  });
 });

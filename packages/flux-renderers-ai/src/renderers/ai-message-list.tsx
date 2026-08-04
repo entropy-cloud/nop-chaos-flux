@@ -13,6 +13,8 @@ export interface AiMessageListViewProps {
   emptyNode?: React.ReactNode;
   testid?: string;
   cid?: number;
+  /** A-4: forward to every bubble so `metadata.createdAt` renders as a time footer. */
+  showTimestamp?: boolean;
 }
 
 /** A-8: message count above which windowed virtual rendering kicks in. */
@@ -100,6 +102,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
                 <AiBubbleView
                   message={message}
                   isError={inError && vi.index === messages.length - 1 && message.role === 'assistant'}
+                  showTimestamp={props.showTimestamp}
                   branches={ctx?.branches}
                   activeBranchId={ctx?.activeBranchId}
                   onBranchChange={ctx?.onBranchChange}
@@ -114,6 +117,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
             key={message.id}
             message={message}
             isError={inError && idx === messages.length - 1 && message.role === 'assistant'}
+            showTimestamp={props.showTimestamp}
             branches={ctx?.branches}
             activeBranchId={ctx?.activeBranchId}
             onBranchChange={ctx?.onBranchChange}
@@ -136,6 +140,7 @@ export function AiMessageListRenderer(props: RendererComponentProps<AiMessageLis
       emptyNode={emptyNode}
       testid={props.meta.testid}
       cid={props.meta.cid}
+      showTimestamp={resolved.showTimestamp === true}
     />
   );
 }

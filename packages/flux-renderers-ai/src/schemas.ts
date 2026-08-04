@@ -24,6 +24,13 @@ export interface AiChatSchema extends BaseSchema {
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
   maxLength?: number;
   showWordLimit?: boolean;
+  /**
+   * A-4 timestamp footer: when true, every bubble in the message list renders
+   * its `metadata.createdAt` as a localized time. Forwarded through
+   * `ai-message-list` to each `ai-bubble` (the bubble itself defaults to
+   * `showTimestamp=false` when used standalone without the prop).
+   */
+  showTimestamp?: boolean;
   initialMessages?: SchemaValue;
   /**
    * P6 (A6): host-injected rich-text extension for the embedded `ai-sender`.
@@ -94,6 +101,8 @@ export interface AiMessageListSchema extends BaseSchema {
   type: 'ai-message-list';
   autoScroll?: boolean;
   emptyRegion?: SchemaInput;
+  /** A-4: when true, bubbles render their `metadata.createdAt` time footer. */
+  showTimestamp?: boolean;
 }
 
 export interface AiBubbleSchema extends BaseSchema {
