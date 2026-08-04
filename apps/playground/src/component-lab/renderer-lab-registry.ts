@@ -68,6 +68,10 @@ import {
   GridLabPage,
   CollapseLabPage,
   WizardLabPage,
+  ButtonGroupLabPage,
+  DropdownButtonLabPage,
+  StepsLabPage,
+  TimelineLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -139,4 +143,8 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   grid: GridLabPage,
   collapse: CollapseLabPage,
   wizard: WizardLabPage,
+  'button-group': ButtonGroupLabPage,
+  'dropdown-button': DropdownButtonLabPage,
+  steps: StepsLabPage,
+  timeline: TimelineLabPage,
 };

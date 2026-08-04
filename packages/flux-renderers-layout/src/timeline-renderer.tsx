@@ -84,13 +84,7 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
 
   return (
     <ol
-      className={cn(
-        'nop-timeline',
-        orientation === 'horizontal'
-          ? 'flex flex-row items-stretch gap-4 overflow-x-auto'
-          : 'flex flex-col',
-        props.meta.className,
-      )}
+      className={cn('nop-timeline', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="timeline-root"

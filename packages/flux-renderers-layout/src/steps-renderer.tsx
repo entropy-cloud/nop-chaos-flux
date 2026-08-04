@@ -123,7 +123,7 @@ function useStepsValue(props: RendererComponentProps<StepsSchema>) {
     if (ownership === 'scope') {
       return (effectiveScopeValue as string | number | undefined) ?? schemaProps.value ?? schemaProps.defaultValue;
     }
-    return (schemaProps.defaultValue as string | number | undefined) ?? schemaProps.value;
+    return (schemaProps.value as string | number | undefined) ?? (schemaProps.defaultValue as string | number | undefined);
   };
 
   const [localValue, setLocalValue] = useState<string | number | undefined>(computeInitial);
@@ -205,11 +205,7 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
 
   return (
     <ol
-      className={cn(
-        'nop-steps',
-        orientation === 'vertical' ? 'flex flex-col' : 'flex flex-row items-start',
-        props.meta.className,
-      )}
+      className={cn('nop-steps', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="steps-root"

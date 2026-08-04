@@ -67,7 +67,7 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
 
   return (
     <div
-      className={cn('nop-dropdown-button inline-block', props.meta.className)}
+      className={cn('nop-dropdown-button', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="dropdown-button-root"

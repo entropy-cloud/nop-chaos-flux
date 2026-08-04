@@ -380,6 +380,7 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
           item: {
             kind: 'schema-definition',
             fieldRules: {
+              key: 'value',
               label: 'value',
               action: 'event',
               variant: 'value',
@@ -550,7 +551,6 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
               disabled: 'value',
               destructive: 'value',
               key: 'value',
-              icon: 'value',
             },
           },
         },

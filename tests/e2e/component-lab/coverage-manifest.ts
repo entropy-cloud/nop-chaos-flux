@@ -458,6 +458,38 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes:
       'Verify layered interaction/lifecycle: embedded form validation blocks advancement, async gates, dialog-hosted wizard chain',
   },
+  {
+    id: 'button-group',
+    title: 'Button Group',
+    tier: 'write',
+    primaryScenario: 'Host button-group selection + onChange payload (C5.2 Phase 3)',
+    notes:
+      'Verify single-selection toggle with mutual exclusion (data-selected) and the onChange payload {value, selectedKeys, selectionMode} reaching host scope (C5.2)',
+  },
+  {
+    id: 'dropdown-button',
+    title: 'Dropdown Button',
+    tier: 'edit',
+    primaryScenario: 'Host CRUD row dropdown-button menu (C5.2 bug 73 pattern)',
+    notes:
+      'Verify CRUD row menu openDialog edit submits the CURRENT row value — bug 73 pattern re-verifying the 08-02 row-scope isolation fix (C5.2)',
+  },
+  {
+    id: 'steps',
+    title: 'Steps',
+    tier: 'write',
+    primaryScenario: 'Host steps three-way ownership switching (C5.2 Phase 3)',
+    notes:
+      'Verify local/controlled/scope current-step ownership: local toggles, controlled scope echo without mutation, scope valueStatePath writeback (C5.2)',
+  },
+  {
+    id: 'timeline',
+    title: 'Timeline',
+    tier: 'read',
+    primaryScenario: 'Host timeline display modes (C5.2 Phase 3)',
+    notes:
+      'Verify display-only timeline: left/alternate modes, reverse order, horizontal orientation, marker-only roots, no owner state (C5.2)',
+  },
 ];
 
 /** Quick lookup by renderer id */

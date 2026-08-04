@@ -1,3 +1,35 @@
 /* flux-renderers-layout marker styles.
    Layout renderers emit marker classes only; widget renderers are self-styled
-   via @nop-chaos/ui primitives. */
+   via @nop-chaos/ui primitives.
+
+   Root flow/layout defaults live here (theme-tunable) so renderer roots stay
+   marker-only per the styling-system contract — see
+   docs/architecture/styling-system.md §Renderer Styling Contract. */
+
+.nop-dropdown-button {
+  display: inline-block;
+}
+
+.nop-steps[data-orientation='horizontal'] {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.nop-steps[data-orientation='vertical'] {
+  display: flex;
+  flex-direction: column;
+}
+
+.nop-timeline[data-orientation='horizontal'] {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 1rem;
+  overflow-x: auto;
+}
+
+.nop-timeline[data-orientation='vertical'] {
+  display: flex;
+  flex-direction: column;
+}

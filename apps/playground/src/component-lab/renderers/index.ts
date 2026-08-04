@@ -66,3 +66,7 @@ export { EditorLabPage } from './editor-lab-page';
 export { GridLabPage } from './grid-lab-page';
 export { CollapseLabPage } from './collapse-lab-page';
 export { WizardLabPage } from './wizard-lab-page';
+export { ButtonGroupLabPage } from './button-group-lab-page';
+export { DropdownButtonLabPage } from './dropdown-button-lab-page';
+export { StepsLabPage } from './steps-lab-page';
+export { TimelineLabPage } from './timeline-lab-page';

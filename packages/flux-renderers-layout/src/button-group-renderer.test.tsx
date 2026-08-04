@@ -332,8 +332,8 @@ describe('ButtonGroupRenderer (W3b — grouped action container)', () => {
     expect(valueContract.toLowerCase()).toMatch(/seed/);
     expect(valueContract.toLowerCase()).not.toMatch(/currently selected/);
 
-    // Renderer seeds from defaultValue ?? value exactly once in the useState initializer.
-    expect(renderer).toMatch(/defaultValue \?\? schemaProps\.value/);
+    // Renderer seeds from value ?? defaultValue exactly once in the useState initializer.
+    expect(renderer).toMatch(/schemaProps\.value \?\? schemaProps\.defaultValue/);
     // No reactive subscription/sync of runtime value changes.
     expect(renderer).not.toMatch(/useScopeSelector/);
   });

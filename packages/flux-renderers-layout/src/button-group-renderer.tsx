@@ -55,7 +55,7 @@ export function ButtonGroupRenderer(props: RendererComponentProps<ButtonGroupSch
   // Selection is local controlled state. `value`/`defaultValue` are initial seeds only
   // (read once here); runtime changes to `value` do NOT move the selection (non-reactive).
   const [localSelected, setLocalSelected] = useState<string[]>(() =>
-    toKeyArray(schemaProps.defaultValue ?? schemaProps.value),
+    toKeyArray(schemaProps.value ?? schemaProps.defaultValue),
   );
   const selectedSet = new Set(localSelected);
 
