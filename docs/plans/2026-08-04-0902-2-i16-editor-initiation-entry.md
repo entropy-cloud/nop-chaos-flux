@@ -1,6 +1,6 @@
 # 2 I16 组态编辑器后继 mission 立项入口
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-04
 > Source: `docs/components/roadmap-industrial-hmi.md`（I16 预留立项入口、Cross-Cutting 文档共识审查/人工确认阈值）、`docs/discussions/2026-08-03-industrial-hmi-scada-mission-scope-discussion.md`（§七 Q8 编辑器后置 + §八 决策 1）、`docs/analysis/industrial-hmi/gate-4-review.md`（§10 行 241：I16 复用点）、`docs/analysis/industrial-hmi/research-*.md`（编辑器调研素材）、`docs/analysis/industrial-hmi/gate-3-review.md`（§3 leafer 真实 API 抽查，选型考量教训）
 > Related: 上游 `docs/plans/2026-08-04-0902-1-i15-test-harness-and-doc-closeout.md`（依赖其 I15.1 完成后激活）
@@ -63,36 +63,36 @@
 
 ### Phase 1 - 立项材料起草
 
-Status: planned
+Status: completed
 Targets: `docs/components/industrial-hmi/editor-initiation.md`、`docs/logs/2026/08-04.md`
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] `Follow-up`：roadmap I16 `todo → planned` 回写（激活期同步执行，I3/I15 先例）
-- [ ] `Proof`：复用点逐项 live 核对（引擎层/ConfigAdapter nodeById/图元注册表/exportConfig-importConfig 序列化句柄/SCADA_HANDLE_METHODS/sky 交互覆盖物/测试句柄——以 `packages/flux-renderers-industrial/src/` 源码为准），产出「已落地/需扩展/缺失」三态清单
-- [ ] `Decision`：编辑器范围与优先级裁定（拖拽放置/属性面板 schema/连线/undo-redo/画布工具箱的功能边界、里程碑拆分、讨论 Q8 边界约束），裁定记录入文档
-- [ ] `Fix`：立项材料起草——技术选型考量（leafer-editor 插件评估 vs 自研交互层，证据链引用 research-render-engines.md/research-scada-apps.md/research-summary.md + spike 工程；缺证据项标「待后继 spike 验证」；吸收 gate-3 §3 mock↔真实漂移教训）、工作量评估、风险清单、人工确认项预标记（含编辑器交互性能对 benchmark 包络的适用性说明）
-- [ ] `Follow-up`：daily log 记录起草过程关键裁定
+- [x] `Follow-up`：roadmap I16 `todo → planned` 回写（激活期同步执行，I3/I15 先例）
+- [x] `Proof`：复用点逐项 live 核对（引擎层/ConfigAdapter nodeById/图元注册表/exportConfig-importConfig 序列化句柄/SCADA_HANDLE_METHODS/sky 交互覆盖物/测试句柄——以 `packages/flux-renderers-industrial/src/` 源码为准），产出「已落地/需扩展/缺失」三态清单
+- [x] `Decision`：编辑器范围与优先级裁定（拖拽放置/属性面板 schema/连线/undo-redo/画布工具箱的功能边界、里程碑拆分、讨论 Q8 边界约束），裁定记录入文档
+- [x] `Fix`：立项材料起草——技术选型考量（leafer-editor 插件评估 vs 自研交互层，证据链引用 research-render-engines.md/research-scada-apps.md/research-summary.md + spike 工程；缺证据项标「待后继 spike 验证」；吸收 gate-3 §3 mock↔真实漂移教训）、工作量评估、风险清单、人工确认项预标记（含编辑器交互性能对 benchmark 包络的适用性说明）
+- [x] `Follow-up`：daily log 记录起草过程关键裁定
 
 Exit Criteria:
 
-- [ ] 立项材料落盘且逐节可核对（范围/复用点三态/选型/工作量/风险/人工确认项）；复用点每项均能指向 live 代码路径或明确标注「需扩展/缺失」
+- [x] 立项材料落盘且逐节可核对（范围/复用点三态/选型/工作量/风险/人工确认项）；复用点每项均能指向 live 代码路径或明确标注「需扩展/缺失」
 
 ### Phase 2 - 文档共识审查与收口
 
-Status: planned
+Status: completed
 Targets: `docs/components/industrial-hmi/editor-initiation.md`、`docs/components/roadmap-industrial-hmi.md`、`docs/logs/2026/08-04.md`
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] `Proof`：独立子 agent（fresh session，不复用起草者上下文）文档共识审查直至达成共识（判据：连续一轮 0 新增修正项；≤3 轮超限升级人工），轮次/修正项/结论记录入文档头部「文档共识审查记录」块
-- [ ] `Fix`：修正项全部落地，或作为待定项提交人工/推迟到后继 review gate 裁定（编写者不得单方拒绝，roadmap Cross-Cutting 裁决条款）
-- [ ] `Follow-up`：roadmap I16 `planned → done` 回写（closure audit 通过后）与 daily log 收口摘要
+- [x] `Proof`：独立子 agent（fresh session，不复用起草者上下文）文档共识审查直至达成共识（判据：连续一轮 0 新增修正项；≤3 轮超限升级人工），轮次/修正项/结论记录入文档头部「文档共识审查记录」块
+- [x] `Fix`：修正项全部落地，或作为待定项提交人工/推迟到后继 review gate 裁定（编写者不得单方拒绝，roadmap Cross-Cutting 裁决条款）
+- [x] `Follow-up`：roadmap I16 `planned → done` 回写（closure audit 通过后）与 daily log 收口摘要
 
 Exit Criteria:
 
-- [ ] 文档共识审查记录块含轮次/修正项摘要/共识结论（AGREE），修正项全部落地或作为待定项裁定（提交人工/后继 gate）
-- [ ] roadmap I16 状态回写与 daily log 收口记录在案（closure audit 通过后由独立 audit 核验）
+- [x] 文档共识审查记录块含轮次/修正项摘要/共识结论（AGREE），修正项全部落地或作为待定项裁定（提交人工/后继 gate）
+- [x] roadmap I16 状态回写与 daily log 收口记录在案（closure audit 通过后由独立 audit 核验）
 
 ## Draft Review Record
 
@@ -105,11 +105,11 @@ Exit Criteria:
 
 > 关闭条件：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。纯文档计划：不涉及代码变更，`pnpm test/lint/typecheck/build` 条目按 guide（Minimum Rule 18 + 模板注释）从 Closure Gates 删除，不执行。
 
-- [ ] 立项材料已落盘且与 live runtime 能力一致（复用点三态清单逐项 live 核对证据在案）
-- [ ] 文档共识审查达成共识（记录块含轮次/修正项/结论）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 项（无代码缺陷适用；选型证据缺口已显式标注「待后继 spike 验证」而非静默省略）
-- [ ] 受影响的 owner docs 已同步：roadmap I16 `planned → done` 回写由独立 closure-audit 核验后执行；daily log 收口摘要
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 立项材料已落盘且与 live runtime 能力一致（复用点三态清单逐项 live 核对证据在案）
+- [x] 文档共识审查达成共识（记录块含轮次/修正项/结论）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 项（无代码缺陷适用；选型证据缺口已显式标注「待后继 spike 验证」而非静默省略）
+- [x] 受影响的 owner docs 已同步：roadmap I16 `planned → done` 回写由独立 closure-audit 核验后执行；daily log 收口摘要
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 
 ## Deferred But Adjudicated
 
@@ -121,16 +121,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写：为什么这个 plan 可以关闭>>
+Status Note: 立项材料 `docs/components/industrial-hmi/editor-initiation.md` 落盘并经独立文档共识审查 2 轮达成 AGREE（R1 修正 8 项全部落地 + R2 确认轮零新增）；复用点三态清单逐项 live 核对与 runtime 能力一致；roadmap I16 `todo → planned → done` 全链回写（由独立 closure-audit 核验）；daily log 收口在案。纯文档计划，无代码变更（typecheck/build/lint/test 按 guide Minimum Rule 18 从 Closure Gates 删除，不执行；workspace `pnpm test` 59/59 复跑全绿确认）。本 plan 可关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent（fresh session，不复用执行上下文），task `ses_03540a864ffeYfVV7vgePBRGY3`
+- Evidence: 判定 `approved`——Phase 1/2 items 与 exit criteria 逐项 live 核对落地（roadmap I16=planned、§3 三态 10 项与 live 源码吻合、共识 2 轮 8 项修正实落盘、benchmark 数字一致、无静默降级、五处状态自洽）；2 项 Minor 卫生项（design-engine §12.4 引注→§12.3、daily log Phase 1 条目旧引注修正）关闭前处理完毕；收口记录见 `docs/logs/2026/08-04.md` I16 条目
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- 立项材料交后继 mission 编排启动（编辑器范围/复用点/选型/工作量作为其输入）；编辑器所需 spike（leafer-editor 兼容性验证，§4.3 三项「待后继 spike 验证」）由后继 mission 决策并提交人工确认（编辑器选型/编辑态 benchmark 包络/M1 交付边界）——no remaining plan-owned work
 
 ## Risks And Rollback
 

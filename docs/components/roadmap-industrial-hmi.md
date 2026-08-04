@@ -60,7 +60,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **I13. Playground 演示页** (`done`)
 - **I14. Benchmark 与性能优化** (`done`)
 - **I15. 测试补强、文档与收尾** (`done`)
-- **I16. 组态编辑器后继 mission 立项入口** (`todo`) <!-- 预留：仅产出立项材料，不实现 -->
+- **I16. 组态编辑器后继 mission 立项入口** (`done`) <!-- 预留：仅产出立项材料，不实现；`todo → planned` 于 plan-2026-08-04-0902-2 激活期回写（I3/I15 先例），`planned → done` 由独立 closure-audit（task `ses_03540a864ffeYfVV7vgePBRGY3`）核验后回写（2026-08-04） -->
 
 ## Current Baseline
 
