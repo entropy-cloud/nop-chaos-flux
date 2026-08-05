@@ -174,7 +174,7 @@ Exit Criteria:
 - [x] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查——ai-chat dialog 内流式对话 + HITL 死点击专项）
 - [x] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
 - [x] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准；无变更则不写）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -215,8 +215,8 @@ Status Note: 执行 session 已完成（4 Phase 全 completed、5 卡 closed（P
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立子 agent 填写）
-- Evidence: （待填）
+- Auditor / Agent: 独立子 agent（mission-driver CLOSURE_VERIFY fresh session，2026-08-05）
+- Evidence: closure-audit pass——① 5 卡 closed 复验（`docs/audits/per-component/ai-{chat,message-list,bubble,sender,conversations}.md`，P0×0/P1×3 组/P2×6/P3×1，P1 组 ① onConversationChange 派发 + ② 事件派发 ctx 修复均 live 实证）；② live code 实证：ai-chat.tsx `eventCtx()` + `:321` onConversationChange 派发、ai-sender.tsx `:210/:230/:237/:243`、ai-bubble/index.tsx `:265-268`、ai-conversations.tsx `:31-134`、ai-tool-call.tsx `:285-298` onApproval ctx；③ fresh 复跑：ai 包 typecheck 绿 + 单测 **479/479**、e2e c8-1-host-surfaces **5/5** + ai-chat **10/10**（含 `:112` timestamp）+ ai-rich-text-sender **5/5**（Tiptap ×5）全绿（programmatic 断言）；④ anti-hollow：宿主场景断言真实行为（dialog 内流式渲染/HITL 双击仅 1 次派发/abort 恢复 sender/`${id}` 解析）；⑤ 五处一致性：Plan Status/4 Phase Status/Exit Criteria/Closure Gates/`docs/logs/2026/08-05.md`（`:5-14`）全对齐；⑥ deferred 诚实：P2 backlog/CX-10 依赖/e2e 非本族项均 adjudicated + successor。plan-check --strict 全勾选。
 
 Follow-up:
 
