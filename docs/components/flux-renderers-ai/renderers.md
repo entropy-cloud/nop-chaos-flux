@@ -410,9 +410,9 @@ export interface AiAttachmentsSchema extends BaseSchema {
   maxFiles?: number; // 最大文件数
   enableDrop?: boolean; // 拖放 + 粘贴（默认 true）
 
-  onChange?: ActionSchema; // 附件列表变化
-  onError?: ActionSchema; // { file, error }
-  onUpload?: ActionSchema; // { file }
+  onChange?: ActionSchema; // 附件列表变化 → `{ attachments: AiAttachment[] }`
+  onError?: ActionSchema; // 校验失败 → `{ reason: 'attachment-too-large' | 'attachment-too-many' }`
+  onUpload?: ActionSchema; // 上传派发 → `{ attachments: AiAttachment[] }`
 }
 ```
 
@@ -486,7 +486,7 @@ export interface AiCitationsSchema extends BaseSchema {
 
 来源读取顺序：显式 `sources` prop > `message.metadata.sources` > `data-sources` ChatMessageDataPart（A-1）。`citation-no-sources`：检测到 `[N]` 但无对应来源时，标记渲染但卡片显示空态文案。
 
-安全：content 先经共享 `sanitizeHtml`（与 `ai-bubble` markdown 同一 DOMPurify pipeline），再做 `[N]` 解析；标记渲染为**受控 React 元素**（非 `dangerouslySetInnerHTML`），防 XSS。
+安全：inline 路径对**原始** `message.content` 直接做 `[N]` 解析，每个文本 run 渲染为**受控 React 文本节点**（绝不用 `dangerouslySetInnerHTML` 处理用户内容）——`<`/`>`/`&` 由 React 恰好转义一次，`<script>` 元素不可能进入 DOM（XSS 门）。**不再**先经 `sanitizeHtml`（DOMPurify）：其输出为 HTML 转义串，再经 React 文本节点渲染会二次转义（`5 < 3` → 字面 `&lt;` 双编码，且会吞掉禁标签内的引用标记——multi-audit P1-d 裁定移除）；markdown 路径（`ai-bubble/renderers/markdown.tsx`）仍用 `sanitizeHtml`（react-markdown 会重新解析 HTML 实体，无双编码）。引用标记渲染为**受控 React 元素**，防 XSS。
 
 ### DOM 结构
 
@@ -549,7 +549,7 @@ export interface AiTokenUsageSchema extends BaseSchema {
 - 纯展示，数据由 connector 填 `message.metadata.usage`（engine §9.2 `AiConnectorChunk.metadata`）。
 - 环形进度（SVG，零依赖）显示 `total / contextLimit`；`contextLimit` 缺省时只显示文本计数。
 - **Failure Path `token-no-usage`**：`metadata.usage` 缺失 → 渲染 muted 占位（`data-empty`，文案"用量未上报"），从不崩溃。
-- **DOM**：marker `nop-ai-token-usage`；`ai-token-usage-ring`（SVG）、`ai-token-usage-total`/`-prompt`/`-completion`/`-cost`。
+- **DOM**：marker `nop-ai-token-usage`；`ai-token-usage-ring`（SVG）、`ai-token-usage-total`/`-prompt`/`-completion`/`-cost`/`-text`。
 
 ## 11c. ai-voice-input（Widget, P4, A-15）
 
@@ -620,9 +620,10 @@ export interface AiMcpManagerSchema extends BaseSchema {
 | ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ type?: 'ai:conversation-*', id?, conversation?, title? }`                         |
 | ai-prompts       | `onSelect`                                                           | `{ item, index }`                                                                    |
 | ai-feedback      | `onAction`                                                           | `{ action, message }`                                                                |
-| ai-attachments   | `onChange` / `onError` / `onUpload`                                  | `{ file?, error? }`                                                                  |
+| ai-attachments   | `onChange` / `onError` / `onUpload`                                  | `{ attachments }` / `{ reason }` / `{ attachments }`                                 |
 | ai-tool-call     | `onApproval` (P3 HITL)                                               | `{ action, toolCall, toolCallId }`                                                   |
 | ai-citations     | `onSourceClick`                                                      | `{ source, index }`                                                                  |
+| ai-token-usage   | `onClick`                                                            | `{ usage }`                                                                          |
 | ai-suggestions   | `onSelect`                                                           | `{ item, index }`                                                                    |
 | ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                                                                                 |
 
@@ -699,7 +700,7 @@ export interface AiMcpManagerSchema extends BaseSchema {
   },
   "afterMessages": {
     "type": "ai-attachments",
-    "items": "${$page.attachments}",
+    "value": "${$page.attachments}",
     "accept": "image/*",
     "multiple": true,
     "maxSize": 5242880
