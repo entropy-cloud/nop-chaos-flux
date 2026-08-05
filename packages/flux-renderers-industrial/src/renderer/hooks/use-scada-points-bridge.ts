@@ -288,6 +288,13 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
   );
   const compiledCache = useRef(new Map<string, ReturnType<ExpressionCompiler['compileValue']>>());
   const lastReportedErrors = useRef(new Map<string, string>());
+  // plan 2026-08-05-1253-1 Phase 3（open-audit P2-2）：point-values 快照 generation-memoize。
+  // scope-only 变更（generation 不变）复用快照，不在 point 值未变时重复全量重建（pointIds/getPointValue）。
+  // generation 变化（applyValue/loadDeclarations/restoreValues/reset bump）触发重建，不返回 stale 快照。
+  const pointSnapshotRef = useRef<{ generation: number; snapshot: Record<string, unknown> }>({
+    generation: -1,
+    snapshot: {},
+  });
   const latest = useRef({ expressionCompiler, env, onError });
   useEffect(() => {
     latest.current = { expressionCompiler, env, onError };
@@ -297,9 +304,12 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
   // plan 2026-08-04-2243-1 Phase 2 L5：与 compiledCache 对称清空 lastReportedErrors——
   // config reload 后旧 config 的去重记录会抑制新 config 同表达式的错误上报（plan `{2242-1}`
   // 接通 onError 后该缺陷变可观测）。对称清空使新 config 的同表达式错误能正常重新上报。
+  // plan 2026-08-05-1253-1 Phase 3：对称重置 pointSnapshot 缓存——config reload（reloadBindings→
+  // loadDeclarations 已 bump generation，但新 pointStore 实例 generation 序列不同），强制下次重建。
   useEffect(() => {
     compiledCache.current.clear();
     lastReportedErrors.current.clear();
+    pointSnapshotRef.current = { generation: -1, snapshot: {} };
   }, [config]);
 
   const reportOnce = useCallback((expression: string, code: string, error: unknown) => {
@@ -337,11 +347,22 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
     );
     if (fluxPoints.length === 0) return;
 
-    const pointValues: Record<string, unknown> = {};
-    for (const pointId of runtime.pointStore.pointIds()) {
-      const value = runtime.pointStore.getPointValue(pointId);
-      if (value !== undefined) pointValues[pointId] = value;
+    // plan 2026-08-05-1253-1 Phase 3：generation-memoize 全量 point-values 快照。
+    // generation 不变（scope-only 变更）时复用缓存快照；变化（point 值/点集改写）时重建。
+    const generation = runtime.pointStore.getGeneration();
+    let pointValues: Record<string, unknown>;
+    if (generation !== pointSnapshotRef.current.generation) {
+      const rebuilt: Record<string, unknown> = {};
+      for (const pointId of runtime.pointStore.pointIds()) {
+        const value = runtime.pointStore.getPointValue(pointId);
+        if (value !== undefined) rebuilt[pointId] = value;
+      }
+      pointSnapshotRef.current = { generation, snapshot: rebuilt };
+      pointValues = rebuilt;
+    } else {
+      pointValues = pointSnapshotRef.current.snapshot;
     }
+    // 合并优先级（文档化契约，design-data-binding.md §9.1）：scope 在 id 冲突时遮蔽 point。
     const evalScope = createPrivateEvalScope({ ...pointValues, ...scopeData });
 
     const values: Record<string, ScadaPrimitive> = {};
@@ -372,6 +393,13 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
     if (Object.keys(values).length > 0) {
       runtime.pointStore.setPointValues(values);
       runtime.pipeline.requestRender(runtime.applyAttrs);
+      // bridge 自身写入会 bump generation（applyValue）；更新缓存到 post-write generation + 合并刚写入值，
+      // 使下次 scope-only 变更（无外部 point 写入）generation 仍匹配 → 复用快照（不重建）。
+      // 合并刚写入值保证快照与 store 现态一致（flux 值虽下次重算，但 inter-flux 引用读快照需一致）。
+      pointSnapshotRef.current = {
+        generation: runtime.pointStore.getGeneration(),
+        snapshot: { ...pointValues, ...values },
+      };
     }
   }, [config, runtime, enabled, scopeData, reportOnce]);
 }

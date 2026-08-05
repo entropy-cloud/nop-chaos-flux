@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { computeSymbolBounds, useScadaConfigSync } from './use-scada-config-sync.js';
-import { MAX_SCALE, MIN_SCALE, fit } from '../../engine/viewport.js';
+import { MAX_SCALE, MIN_SCALE, fit, clampScale } from '../../engine/viewport.js';
 import { registerBuiltinScadaSymbols } from '../../symbols/register-builtin.js';
 import { resetLeaferMock } from '../../test-support/leafer-ui-mock.js';
 import type { ScadaSymbolNode, ScadaConfig } from '../../serialization/config-types.js';
@@ -306,5 +306,83 @@ describe('useScadaConfigSync pendingSkip per-import nonce (plan 2026-08-04-2243-
     rerender({ config: cfgA, runtime });
     expect(reset).not.toHaveBeenCalled();
     expect(applyDiff).not.toHaveBeenCalled();
+  });
+});
+
+// plan 2026-08-05-1253-1 Phase 1（multi-audit P2-5）：applyInitialViewport fill 分支 clamp-before-center。
+// 失败用例（修复前）：fill 分支用未钳制 scale 算居中 x/y，引擎 setViewport 才钳 scale → 极端 bounds
+// （rawScale 越界 [0.1,20]）时 x/y 按未钳 scale 算、实际 scale 被钳 → 内容几何中心不齐视口中心（漂移）。
+// 修复后：scale 先 clampScale 再算 x/y（与 contain/fit 分支 viewport.ts:67 对齐）。
+describe('useScadaConfigSync applyInitialViewport fill branch clamp-before-center (plan 2026-08-05-1253-1 Phase 1)', () => {
+  const tinySym = (): ScadaSymbolNode => ({ id: 'tiny', type: 'scada-rect', x: 0, y: 0, width: 1, height: 1 });
+  // bounds = {x:0, y:0, width:1, height:1}; size = 800×600 → rawScale = max(800/1, 600/1) = 800 越界。
+  // 修复前期望（按未钳 scale=800）：x = 0.5 - 800/1600 = 0；修复后（钳 scale=20）：x = 0.5 - 20 = -19.5。
+  const expectedRawScale = 800;
+  const expectedClampedScale = clampScale(expectedRawScale);
+  const expectedCenteredX = 0 + 0.5 - 800 / (2 * expectedClampedScale);
+  const expectedCenteredY = 0 + 0.5 - 600 / (2 * expectedClampedScale);
+
+  it('Proof: fill 分支极端 bounds → setViewport 收到已钳 scale 且 x/y 按钳制 scale 算（不漂移）', () => {
+    expect(expectedClampedScale).toBe(MAX_SCALE);
+    const setViewport = vi.fn();
+    const reset = vi.fn();
+    const applyDiff = vi.fn();
+    const reload = vi.fn();
+    const runtime = {
+      engine: {
+        reset,
+        applyDiff,
+        setViewport,
+        getSize: () => ({ width: 800, height: 600 }),
+      },
+    };
+
+    renderHook(
+      (props: { config: ScadaConfig; runtime: typeof runtime }) =>
+        useScadaConfigSync({
+          config: props.config,
+          runtime: props.runtime as unknown as ScadaCanvasRuntime,
+          reloadBindings: reload,
+          viewport: { fit: 'fill' },
+        }),
+      { initialProps: { config: { version: 1, variables: [], symbols: [tinySym()] }, runtime } },
+    );
+
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledTimes(1);
+    const state = setViewport.mock.calls[0][0];
+    // scale 已钳制到 [MIN_SCALE, MAX_SCALE]（修复前传 800 未钳）
+    expect(state.scale).toBe(expectedClampedScale);
+    expect(state.scale).toBeLessThanOrEqual(MAX_SCALE);
+    // 居中 x/y 按钳制 scale 计算（内容几何中心 0.5 对齐视口中心 400/600）
+    expect(state.x).toBeCloseTo(expectedCenteredX, 10);
+    expect(state.y).toBeCloseTo(expectedCenteredY, 10);
+    // 修复前：x===0（按未钳 scale 算）、scale===800（未钳），二者均漂移。
+    expect(state.x).not.toBe(0);
+    expect(state.scale).not.toBe(expectedRawScale);
+  });
+
+  it('contain 分支不回归（仍委托 engine.fit，scale 有界）', () => {
+    const fitSpy = vi.fn((_bounds: unknown, _padding: number) => ({ x: 0, y: 0, scale: 1 }));
+    const reset = vi.fn();
+    const applyDiff = vi.fn();
+    const reload = vi.fn();
+    const runtime = {
+      engine: { reset, applyDiff, fit: fitSpy, getSize: () => ({ width: 800, height: 600 }) },
+    };
+
+    renderHook(
+      (props: { config: ScadaConfig; runtime: typeof runtime }) =>
+        useScadaConfigSync({
+          config: props.config,
+          runtime: props.runtime as unknown as ScadaCanvasRuntime,
+          reloadBindings: reload,
+          viewport: { fit: 'contain' },
+        }),
+      { initialProps: { config: { version: 1, variables: [], symbols: [tinySym()] }, runtime } },
+    );
+
+    expect(fitSpy).toHaveBeenCalledTimes(1);
+    expect(fitSpy.mock.calls[0][1]).toBe(0);
   });
 });

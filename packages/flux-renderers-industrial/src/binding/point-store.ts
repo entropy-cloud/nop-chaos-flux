@@ -140,9 +140,19 @@ export class PointStore {
   private dirtyPointIds = new Set<string>();
   private reportedSubscriberErrors = new Set<string>();
   private readonly onSubscriberError?: (pointId: string, error: unknown) => void;
+  // plan 2026-08-05-1253-1 Phase 3（open-audit P2-2）：点集/点值变更代际计数器。
+  // 仅在真正改写点值/点集的入口 bump（applyValue 命中变更 / loadDeclarations / restoreValues / reset）；
+  // 只读/订阅路径不 bump。useScadaPointsBridge 据此 memoize 全量 point-values 快照，
+  // point 值未变时复用快照（scope-only 变更不触发快照重建）。
+  private generation = 0;
 
   constructor(options?: PointStoreOptions) {
     this.onSubscriberError = options?.onSubscriberError;
+  }
+
+  /** 点集/点值变更代际（每次真正改写点值/点集 +1，供 bridge memoize 快照）。 */
+  getGeneration(): number {
+    return this.generation;
   }
 
   loadDeclarations(declarations: ScadaPointDeclaration[]): void {
@@ -153,6 +163,8 @@ export class PointStore {
         dirty: false,
       });
     }
+    // 直写 entries 不经 applyValue：新增点 id 必须触发快照重建（新 id 进入 pointIds）。
+    this.generation++;
   }
 
   reset(): void {
@@ -161,6 +173,8 @@ export class PointStore {
     this.dirtyPointIds.clear();
     this.events.removeAll();
     this.reportedSubscriberErrors.clear();
+    // 点集清空：快照必须重建（否则返回 stale 旧值）。
+    this.generation++;
   }
 
   has(pointId: string): boolean {
@@ -263,6 +277,8 @@ export class PointStore {
       entry.dirty = true;
       this.dirtyPointIds.add(pointId);
     }
+    // 直写 entries（绕过 applyValue）：回填的 live 值进入快照，必须触发重建。
+    this.generation++;
   }
 
   private applyValue(pointId: string, raw: ScadaPrimitive): boolean {
@@ -275,6 +291,8 @@ export class PointStore {
     entry.value = next;
     entry.dirty = true;
     this.dirtyPointIds.add(pointId);
+    // 命中真实变更才 bump（point 值未变时 bridge 可复用快照）。
+    this.generation++;
     const payload: ScadaPointChangeEvent = { pointId, value: next, prev };
     // plan 2026-08-05-0653-3 B5：用 emitWith 携 per-emit 闭包捕获当前 pointId，消除 re-entrant
     // setPointValue 下 lastNotifyPointId 可变字段被覆盖的归属竞态——错误始终归属正在派发的 pointId。

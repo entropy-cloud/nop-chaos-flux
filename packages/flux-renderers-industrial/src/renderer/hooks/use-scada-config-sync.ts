@@ -4,6 +4,7 @@ import type { ScadaConfig, ScadaSymbolNode } from '../../serialization/config-ty
 import { getScadaSymbolDefinition } from '../../symbols/symbol-registry.js';
 import type { ScadaCanvasRuntime } from './use-scada-engine.js';
 import type { Bounds } from '../../engine/viewport.js';
+import { clampScale } from '../../engine/viewport.js';
 
 export type ScadaSyncStrategy = 'full' | 'diff';
 
@@ -113,8 +114,11 @@ function applyInitialViewport(
     // P1-6 视口公式修正：引擎约定 screen = (world - vx)·s（viewport.ts worldToViewport），
     // 内容包围盒中心映射到视口中心要求 vx = cx - sw/(2s)。fill 分支保留 max-scale 语义
     // （不可委托 engine.fit——fit 是 min-scale/contain 语义，viewport.ts:60），仅 center 可委托。
+    // P2-5 clamp-before-center（plan 2026-08-05-1253-1 Phase 1）：scale 先 clampScale 再算居中 x/y，
+    // 与 contain 分支（viewport.ts:67 fit 已 clampScale）对齐。极端 bounds（rawScale 越界 [0.1,20]）
+    // 时若用未钳 scale 算居中、引擎 setViewport 才钳 scale → x/y 按未钳 scale、实际 scale 被钳 → 内容漂移。
     const size = runtime.engine.getSize();
-    const scale = Math.max(size.width / bounds.width, size.height / bounds.height);
+    const scale = clampScale(Math.max(size.width / bounds.width, size.height / bounds.height));
     runtime.engine.setViewport({
       x: bounds.x + bounds.width / 2 - size.width / (2 * scale),
       y: bounds.y + bounds.height / 2 - size.height / (2 * scale),

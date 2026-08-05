@@ -453,3 +453,159 @@ describe('scada-canvas points bridge (I10.3)', () => {
     expect(harness.applied.length).toBe(0);
   });
 });
+
+// plan 2026-08-05-1253-1 Phase 3（open-audit P2-2）：useScadaPointsBridge 快照 generation-memoize +
+// 合并优先级（scope 遮蔽 point）契约守护。
+// ① 合并优先级（contract lock-in，非 red-on-current）：scope 与 point 同 id 冲突时 scope 遮蔽 point。
+// ② generation-memo skip（red-on-current）：scope-only 变更（generation 不变）不重建快照（pointIds 不重调）。
+// ③ generation-memo rebuild（回归守护）：point 写入 bump generation → 下次 scope 变更重建快照，新值进入 evalScope。
+interface ExposedBridgeHarness {
+  applied: Array<Record<string, Record<string, unknown>>>;
+  pending: Array<() => void>;
+  flush: () => void;
+  pointStore: PointStore;
+  runtime: ScadaPointsBridgeRuntime;
+}
+
+function createExposedBridge(
+  config: ScadaConfig,
+  symbols: ScadaConfig['symbols'] = [],
+  options?: { enabled?: boolean },
+): { Probe: React.ReactElement; harness: ExposedBridgeHarness } {
+  const applied: Array<Record<string, Record<string, unknown>>> = [];
+  const pending: Array<() => void> = [];
+  const pointStore = new PointStore();
+  pointStore.loadDeclarations(config.variables ?? []);
+  const reverseIndex = new ReverseIndex(symbols);
+  const collector = new DirtyCollector({ scheduleTick: () => () => undefined });
+  const pipeline = new RefreshPipeline({
+    pointStore,
+    reverseIndex,
+    collector,
+    scheduleTick: (cb) => {
+      pending.push(cb);
+      return () => undefined;
+    },
+  });
+  const applyAttrs: ApplyAttrs = (attrs) => {
+    applied.push(attrs as Record<string, Record<string, unknown>>);
+  };
+  const runtime: ScadaPointsBridgeRuntime = { pointStore, pipeline, applyAttrs };
+  const flush = () => {
+    const f = pending.shift();
+    f?.();
+  };
+  const harness: ExposedBridgeHarness = { applied, pending, flush, pointStore, runtime };
+
+  function PointsBridgeProbe() {
+    const { enabled = true } = options ?? {};
+    useScadaPointsBridge({
+      config,
+      runtime,
+      enabled,
+      expressionCompiler,
+      env,
+      onError: () => undefined,
+    });
+    return null;
+  }
+
+  return { Probe: <PointsBridgeProbe />, harness };
+}
+
+describe('scada-canvas points bridge generation-memoize + merge priority (plan 2026-08-05-1253-1 Phase 3)', () => {
+  it('Proof ① (contract lock-in): 同 id point 与 scope 冲突时 scope 遮蔽 point（文档化契约）', async () => {
+    // point 'shared' static 值 1；scope 数据 { shared: 2 }；flux point 'r' = ${shared} 应得 2（scope 遮蔽）。
+    const environment = createScadaTestEnvironment([], { shared: 2 });
+    const config: ScadaConfig = {
+      version: 1,
+      variables: [
+        { id: 'shared', source: 'static', value: 1 },
+        { id: 'r', source: 'flux', flux: '${shared}' },
+      ],
+      symbols: [
+        { id: 'rect-1', type: 'scada-rect', x: 0, y: 0, bindings: { text: { point: 'r' } } },
+      ],
+    } as ScadaConfig;
+    const { Probe, harness } = createExposedBridge(config, config.symbols);
+    render(<ScadaTestProviders environment={environment}>{Probe}</ScadaTestProviders>);
+    await waitFor(() => expect(harness.pending.length).toBeGreaterThan(0));
+    harness.flush();
+    await waitFor(() => expect(harness.applied.length).toBe(1));
+    // evalScope = { ...pointValues(shared:1), ...scopeData(shared:2) } = { shared:2 } → r = 2（scope 遮蔽 point）
+    expect(harness.applied[0]).toEqual({ 'rect-1': { text: 2 } });
+  });
+
+  it('Proof ② (generation-memo · skip, red-on-current): scope-only 变更不重建快照（pointIds 不重调）', async () => {
+    const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
+    const config = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+    const { Probe, harness } = createExposedBridge(config, [
+      {
+        id: 'rect-1',
+        type: 'scada-rect',
+        x: 0,
+        y: 0,
+        bindings: { fill: { expression: "@{temp} > 30 ? 'hot' : 'cool'" } },
+      },
+    ]);
+    render(<ScadaTestProviders environment={environment}>{Probe}</ScadaTestProviders>);
+    // 初始求值：snapshot 首次重建
+    await waitFor(() => expect(harness.pending.length).toBeGreaterThan(0));
+    harness.flush();
+    await waitFor(() => expect(harness.applied.length).toBe(1));
+
+    // 清零 pointIds 计数后触发 scope-only 变更（无 point 写入 → generation 不变）
+    const pointIdsSpy = vi.spyOn(harness.pointStore, 'pointIds');
+    act(() => {
+      environment.scope.update('analog.temp', 40);
+    });
+    await waitFor(() => expect(harness.pending.length).toBeGreaterThan(0));
+    harness.flush();
+    await waitFor(() => expect(harness.applied.length).toBe(2));
+    // generation-memo：scope-only 变更（generation 不变）复用快照 → pointIds 不重调。
+    // 修复前（无 memo）：每次 scope 变更都全量重建 → pointIds 被调 → 断言失败（red on current）。
+    expect(pointIdsSpy).not.toHaveBeenCalled();
+    pointIdsSpy.mockRestore();
+  });
+
+  it('Proof ③ (generation-memo · rebuild, 回归守护): point 写入 bump generation → 下次 scope 变更重建快照，新值进入 evalScope', async () => {
+    const environment = createScadaTestEnvironment([], { clk: 0 });
+    // static point 'base'=1；flux 'clk_reader'=${clk}（订阅 clk，触发 effect 重跑）；
+    // flux 'base_reader'=${base}（读 base 合并值）。host 写 base=5（bump generation）后 scope clk 变更
+    // 应使 base_reader=5（generation 变化→快照重建→不返回 stale base=1）。
+    const config: ScadaConfig = {
+      version: 1,
+      variables: [
+        { id: 'base', source: 'static', value: 1 },
+        { id: 'clk_reader', source: 'flux', flux: '${clk}' },
+        { id: 'base_reader', source: 'flux', flux: '${base}' },
+      ],
+      symbols: [
+        { id: 'rect-1', type: 'scada-rect', x: 0, y: 0, bindings: { text: { point: 'base_reader' } } },
+      ],
+    } as ScadaConfig;
+    const { Probe, harness } = createExposedBridge(config, config.symbols);
+    render(<ScadaTestProviders environment={environment}>{Probe}</ScadaTestProviders>);
+    await waitFor(() => expect(harness.pending.length).toBeGreaterThan(0));
+    harness.flush();
+    await waitFor(() => expect(harness.applied.length).toBe(1));
+    // 初始：base=1 → base_reader=1
+    expect(harness.applied[0]).toEqual({ 'rect-1': { text: 1 } });
+
+    // host 写入 base=5（generation bump；PointStore 写不经 scope 订阅）
+    act(() => {
+      harness.pointStore.setPointValue('base', 5);
+    });
+    // scope clk 变更（订阅路径，触发 effect 重跑）：generation 变化→快照重建→evalScope 含 base=5
+    act(() => {
+      environment.scope.update('clk', 1);
+    });
+    await waitFor(() => expect(harness.pending.length).toBeGreaterThan(0));
+    harness.flush();
+    // generation 变化 → 快照重建 → evalScope.base=5 → base_reader=5（不返回 stale 1）
+    await waitFor(() => {
+      const last = harness.applied[harness.applied.length - 1];
+      expect(last).toEqual({ 'rect-1': { text: 5 } });
+    });
+  });
+});
