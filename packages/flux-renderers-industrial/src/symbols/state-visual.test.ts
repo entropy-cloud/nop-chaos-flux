@@ -311,6 +311,15 @@ describe('StateVisualApplier 状态样式合帧 owner (plan 2026-08-04-2243-1 Ph
     flush();
     // revert 也合帧：N 个退出恢复收敛为 1 次 engine.applyAttrs（修复前 visual-state 会 N 次 immediate）
     expect(applyAttrsSpy).toHaveBeenCalledTimes(1);
+    // plan 2026-08-05-0653-2 Phase 4（multi P1-1 failing-first）：binding+state-style 同字段图元
+    // alarm→unstyled 退出时，引擎应停在 binding 解析值（如同帧 collectBindings 写入值）。
+    // 修复前：revert 经 collector.collect 覆盖同帧 collectBindings 写入的 binding 值
+    // （pending Map last-write-wins），引擎停在 base/reset 空值（''）。修复后：revert 跳过有 binding
+    // 的字段，binding 值胜出。每个 symbol 的 binding `fill: { point: 'flag-i' }` 解析为 flag-i 的原值 2。
+    const frame3Arg = applyAttrsSpy.mock.calls[0][0] as Record<string, Record<string, unknown>>;
+    for (let i = 0; i < N; i++) {
+      expect(frame3Arg[`s${i}`]?.fill).toBe(2);
+    }
     applyAttrsSpy.mockRestore();
     engine.destroy();
   });
@@ -323,6 +332,80 @@ describe('StateVisualApplier 状态样式合帧 owner (plan 2026-08-04-2243-1 Ph
     flush();
     // active-state fill 来自 collectStates 批量写（visual-state 仅追踪/恢复，不写 active）
     expect((engine.getSymbolProps('pump') as { fill?: string }).fill).toBe('#ff0000');
+    engine.destroy();
+  });
+});
+
+// plan 2026-08-05-0653-2 Phase 4（multi P1-1）：binding-vs-revert 三路裁定聚焦回归。
+// 配置：单图元 fill 字段同时有 binding + state-style（alarm 红色）。
+// 失败用例（修复前）：alarm→unstyled 退出时 revert 覆盖 binding 值，fill 落到 base/reset 空值 ''
+// （持续到下次点变化）。修复后：revert 跳过有 binding 的字段，binding 值胜出（Failure Paths `revert-shadows-binding`）。
+describe('StateVisualApplier binding-vs-revert 三路裁定 (plan 2026-08-05-0653-2 Phase 4 multi P1-1)', () => {
+  it('binding+state-style 同字段图元 alarm→unstyled 退出时引擎停在 binding 解析值（非 base/reset 空值）', () => {
+    const node: ScadaSymbolNode = {
+      id: 'bind-state',
+      type: 'scada-rect',
+      x: 0,
+      y: 0,
+      bindings: { fill: { point: 'flag' } },
+      states: {
+        states: {
+          alarm: { style: { fill: '#ff0000' } },
+          normal: {},
+        },
+        valueMap: { 0: 'normal', 1: 'alarm' },
+      },
+    };
+    const { engine, setFlag, flush } = createHarness({ version: 1, symbols: [node] });
+    // 进入 alarm 态：state-style fill=#ff0000 胜出（collectStates 同帧后写覆盖 binding 值）
+    setFlag(1);
+    flush();
+    expect((engine.getSymbolProps('bind-state') as { fill?: unknown }).fill).toBe('#ff0000');
+    // 退出 alarm → normal（无 style）：binding 值胜出（flag=0），revert 跳过有 binding 的 fill 字段。
+    // 修复前此处失败：fill='' （base/reset 空值，revert 覆盖 binding 值）。
+    setFlag(0);
+    flush();
+    expect((engine.getSymbolProps('bind-state') as { fill?: unknown }).fill).toBe(0);
+    engine.destroy();
+  });
+
+  it('无 binding 的同字段 revert 行为不变（既有 revert 单测语义保留）', () => {
+    // pumpNode bindings 是 rotation（非 fill），fill 仅由 state-style 驱动 → revert 行为不变。
+    const { engine, setFlag, flush } = createHarness({ version: 1, symbols: [pumpNode()] });
+    setFlag(1);
+    flush();
+    expect((engine.getSymbolProps('pump') as { fill?: string }).fill).toBe('#ff0000');
+    setFlag(2);
+    flush();
+    // stop 状态无 style → 恢复 base（defaults fill #ffffff），revert 正常执行（无 binding 跳过）
+    expect((engine.getSymbolProps('pump') as { fill?: string }).fill).toBe('#ffffff');
+    engine.destroy();
+  });
+
+  it('binding+state-style 同字段保持 alarm 态时，state-style 仍胜出（active 路径不受影响）', () => {
+    const node: ScadaSymbolNode = {
+      id: 'bind-state',
+      type: 'scada-rect',
+      x: 0,
+      y: 0,
+      bindings: { fill: { point: 'flag' } },
+      states: {
+        states: {
+          alarm: { style: { fill: '#ff0000' } },
+          normal: {},
+        },
+        valueMap: { 0: 'normal', 1: 'alarm' },
+      },
+    };
+    const { engine, setFlag, flush } = createHarness({ version: 1, symbols: [node] });
+    setFlag(1);
+    flush();
+    // active 态：state-style fill=#ff0000 胜出（即使 binding 值 = 1 也在同帧被 collectStates 覆盖）
+    expect((engine.getSymbolProps('bind-state') as { fill?: unknown }).fill).toBe('#ff0000');
+    setFlag(1);
+    flush();
+    // 保持 alarm 态：state-style 仍胜出（binding-vs-revert 仅影响 revert 路径，active 不变）
+    expect((engine.getSymbolProps('bind-state') as { fill?: unknown }).fill).toBe('#ff0000');
     engine.destroy();
   });
 });

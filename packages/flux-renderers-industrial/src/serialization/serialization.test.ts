@@ -535,6 +535,81 @@ describe('diffScadaConfig stable deep-equal (plan 2026-08-04-2243-2 W5)', () => 
   });
 });
 
+// plan 2026-08-05-0653-2 Phase 2（open P1-1）：diffScadaConfig 不再丢弃 flow 字段。
+// 失败用例（修复前）：`SYMBOL_KEYS` 字面量数组不含 `'flow'`，仅 `flow.enabled` / `flow.dash` 变更时
+// diff 路径产出空 patch（机械遗漏）→ host 同版本 config prop 改 flow 时 pipe-junction applyProps
+// 收不到新 flow，管道流动动画冻结在旧值（Failure Paths `flow-toggle-ignored`）。
+describe('diffScadaConfig flow field (plan 2026-08-05-0653-2 Phase 2 open P1-1)', () => {
+  it('检出仅 flow.enabled 变更（true→false）并产出 updated[].patch.flow', () => {
+    const prev = baseConfig({
+      symbols: [rect('p', { type: 'scada-pipe-junction', flow: { enabled: true, speed: 1 } })],
+    });
+    const next = baseConfig({
+      symbols: [rect('p', { type: 'scada-pipe-junction', flow: { enabled: false, speed: 1 } })],
+    });
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.updated).toHaveLength(1);
+    expect(diff.updated[0]).toEqual({
+      id: 'p',
+      patch: { flow: { enabled: false, speed: 1 } },
+    });
+  });
+
+  it('检出 flow.speed / flow.dash 子字段变更', () => {
+    const prev = baseConfig({
+      symbols: [
+        rect('p', { type: 'scada-pipe-junction', flow: { enabled: true, speed: 1, dash: [4, 2] } }),
+      ],
+    });
+    const next = baseConfig({
+      symbols: [
+        rect('p', { type: 'scada-pipe-junction', flow: { enabled: true, speed: 5, dash: [10, 6] } }),
+      ],
+    });
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.updated).toEqual([
+      { id: 'p', patch: { flow: { enabled: true, speed: 5, dash: [10, 6] } } },
+    ]);
+  });
+
+  it('flow 子字段同值判等（不假阳性触发 updated）', () => {
+    const flow = { enabled: true, speed: 2, dash: [8, 4] };
+    const prev = baseConfig({
+      symbols: [rect('p', { type: 'scada-pipe-junction', flow })],
+    });
+    const next = baseConfig({
+      symbols: [rect('p', { type: 'scada-pipe-junction', flow: { ...flow } })],
+    });
+    expect(diffScadaConfig(prev, next).updated).toEqual([]);
+  });
+
+  it('flow 由 undefined → 定义检出新增', () => {
+    const prev = baseConfig({
+      symbols: [rect('p', { type: 'scada-pipe-junction' })],
+    });
+    const next = baseConfig({
+      symbols: [rect('p', { type: 'scada-pipe-junction', flow: { enabled: true, speed: 1 } })],
+    });
+    expect(diffScadaConfig(prev, next).updated).toEqual([
+      { id: 'p', patch: { flow: { enabled: true, speed: 1 } } },
+    ]);
+  });
+
+  it('flow 由定义 → undefined 检出移除', () => {
+    const prev = baseConfig({
+      symbols: [rect('p', { type: 'scada-pipe-junction', flow: { enabled: true, speed: 1 } })],
+    });
+    const next = baseConfig({
+      symbols: [rect('p', { type: 'scada-pipe-junction' })],
+    });
+    // 注意：`flow` 移除时 patch.flow = undefined，applyUpdate 经 `!== undefined` 守卫会跳过——
+    // 这是 applyDiff 层语义（移除需经符号级 reload），diff 层职责仅为产出标记。本测试断言 diff 层标记存在。
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.updated).toHaveLength(1);
+    expect(diff.updated[0]!.id).toBe('p');
+  });
+});
+
 // plan 2026-08-04-1558-3 Phase 3 覆盖缺口闭合：validate.ts 错误分支逐分支补断言。
 describe('validateScadaConfig error branch matrix (plan 2026-08-04-1558-3 Phase 3)', () => {
   const expectErrors = (config: ScadaConfig, ...fragments: string[]): void => {

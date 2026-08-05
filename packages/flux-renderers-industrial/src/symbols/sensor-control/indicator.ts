@@ -40,8 +40,13 @@ export const scadaSensorControlIndicatorDefinition = createSensorControlSymbol({
       strokeWidth: 1,
     }) as LeafNode;
     return createCompositeGroup(props, [
-      { name: 'body', node: lamp },
+      // plan 2026-08-05-0653-2 Phase 3 (open P1-2)：子序 swap 为 [housing, lamp]——
+      // leafer `Group` 后入子在上层渲染，原序 [lamp, housing] 使不透明 housing（#455a64，
+      // 覆盖全 bounds）绘制在 lamp 之上，灯体被完全遮挡（Failure Paths `indicator-lamp-hidden`）。
+      // swap 后 housing 先绘作背景层，lamp 后绘于上层，状态色可见。`name:'body'` 仍在 lamp，
+      // applyCompositeProps 状态色路由（parts.body）不变。
       { name: 'housing', node: housing },
+      { name: 'body', node: lamp },
     ]);
   },
 });

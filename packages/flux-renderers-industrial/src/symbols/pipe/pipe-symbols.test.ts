@@ -9,6 +9,7 @@ import { DirtyCollector, RefreshPipeline } from '../../binding/dirty-collector.j
 import { Animator } from '../../binding/animator.js';
 import { validateScadaConfig } from '../../serialization/validate.js';
 import { serializeScadaConfig } from '../../serialization/serialize.js';
+import { diffScadaConfig } from '../../serialization/diff.js';
 import type { ScadaConfig, ScadaSymbolNode } from '../../serialization/config-types.js';
 import type { LeafNode } from '../symbol-types.js';
 
@@ -242,5 +243,77 @@ describe('I9.4 scada-pipe-junction (连接点 + 流动方向动画 + 与设备�
         ],
       },
     });
+  });
+});
+
+// plan 2026-08-05-0653-2 Phase 2（open P1-1 集成层 proof）：
+// diffScadaConfig 产出的 flow patch 经 engine.applyDiff → pipe-junction.applyProps 路径贯通，
+// 管道流动动画按新 enabled 开/关（Failure Paths `flow-toggle-ignored`）。
+describe('scada-pipe-junction flow diff→applyDiff 链路 (plan 2026-08-05-0653-2 Phase 2 integration)', () => {
+  it('applyDiff 携带 flow patch 时，pipe-junction stub 的 dashPattern 按新 flow.enabled 切换', () => {
+    const prev: ScadaConfig = {
+      version: 1,
+      symbols: [
+        junctionNode('j1', {
+          custom: { connections: [{ id: 'a', x: 0, y: 0.5, direction: 'in' }] },
+          flow: { enabled: true, speed: 1, dash: [6, 4] },
+        }),
+      ],
+    };
+    const next: ScadaConfig = {
+      version: 1,
+      symbols: [
+        junctionNode('j1', {
+          custom: { connections: [{ id: 'a', x: 0, y: 0.5, direction: 'in' }] },
+          flow: { enabled: false, speed: 1, dash: [6, 4] },
+        }),
+      ],
+    };
+    const diff = diffScadaConfig(prev, next);
+    // 集成断言 1：diff 产出含 flow 的 patch（P1-1 修复点）
+    expect(diff.updated).toEqual([
+      { id: 'j1', patch: { flow: { enabled: false, speed: 1, dash: [6, 4] } } },
+    ]);
+
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(prev);
+    // 初态：flow.enabled=true → stub dashPattern = [6, 4]
+    expect(stubOf(engine.getSymbol('j1')!.node, 0).dashPattern).toEqual([6, 4]);
+
+    // 集成断言 2：applyDiff 携带 flow patch → pipe-junction.applyProps 收到新 flow
+    // → flowPatch(enabled:false) 写 dashPattern: []（流动关闭）
+    engine.applyDiff(diff, next);
+    expect(stubOf(engine.getSymbol('j1')!.node, 0).dashPattern).toEqual([]);
+    engine.destroy();
+  });
+
+  it('applyDiff 携带 flow.dash 变更时，pipe-junction stub 的 dashPattern 切到新 dash 序列', () => {
+    const prev: ScadaConfig = {
+      version: 1,
+      symbols: [
+        junctionNode('j1', {
+          custom: { connections: [{ id: 'a', x: 0, y: 0.5, direction: 'in' }] },
+          flow: { enabled: true, speed: 1, dash: [6, 4] },
+        }),
+      ],
+    };
+    const next: ScadaConfig = {
+      version: 1,
+      symbols: [
+        junctionNode('j1', {
+          custom: { connections: [{ id: 'a', x: 0, y: 0.5, direction: 'in' }] },
+          flow: { enabled: true, speed: 1, dash: [12, 8] },
+        }),
+      ],
+    };
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.updated[0]!.patch.flow).toEqual({ enabled: true, speed: 1, dash: [12, 8] });
+
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(prev);
+    expect(stubOf(engine.getSymbol('j1')!.node, 0).dashPattern).toEqual([6, 4]);
+    engine.applyDiff(diff, next);
+    expect(stubOf(engine.getSymbol('j1')!.node, 0).dashPattern).toEqual([12, 8]);
+    engine.destroy();
   });
 });

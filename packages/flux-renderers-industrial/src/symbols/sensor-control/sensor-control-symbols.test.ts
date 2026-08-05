@@ -178,6 +178,83 @@ describe('I9.3 scada-sensor-control-indicator (指示灯多态色 + fault 闪烁
   });
 });
 
+// plan 2026-08-05-0653-2 Phase 3（open P1-2 z-order proof）：
+// indicator 复合子序必须为 [housing, lamp]——leafer `Group` 后入子在上层渲染，
+// 原序 [lamp, housing] 使不透明 housing 覆盖灯体（Failure Paths `indicator-lamp-hidden`）。
+// mock 的 `children` 数组按入序保留（即 render order），断言入序即可观测 z-order 逆序类缺陷，
+// 关闭「mock 盲于 z-order」而不仅单例（sensor-control-symbols.test.ts 原仅直读 `.fill` 忽略入序）。
+describe('scada-sensor-control-indicator z-order (plan 2026-08-05-0653-2 Phase 3 open P1-2)', () => {
+  it('children 入序为 [housing, lamp]——housing 背景层、lamp 上层（状态色不被遮挡）', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [
+        sensorNode('i1', 'scada-sensor-control-indicator', {
+          fill: '#00cc66',
+        }),
+      ],
+    });
+    const root = engine.getSymbol('i1')!.node;
+    const children = (root as unknown as { children: Array<Record<string, unknown>> }).children;
+    // housing 在入序首位（背景层，先绘），lamp（name='body'）在后（上层，后绘覆盖 housing）
+    expect(children[0]?.name).toBe('housing');
+    expect(children[0]?.tag).toBe('Rect');
+    expect(children[1]?.name).toBe('body');
+    expect(children[1]?.tag).toBe('Ellipse');
+    engine.destroy();
+  });
+
+  it('lamp（body）位于 housing 之上，状态色 fill 在最上层可见（rect housing 不透明 #455a64）', () => {
+    const { engine, setValue, flush } = createSensorHarness(
+      {
+        version: 1,
+        symbols: [
+          sensorNode('i1', 'scada-sensor-control-indicator', {
+            bindings: { fill: { point: 'value' } },
+            states: { states: {}, ranges: [{ min: 80, state: 'fault' }] },
+          }),
+        ],
+      },
+      [{ id: 'value', value: 50 }],
+    );
+    setValue('value', 90);
+    flush();
+    const root = engine.getSymbol('i1')!.node;
+    const children = (root as unknown as { children: Array<Record<string, unknown>> }).children;
+    // 状态色落到 lamp（body, 上层）：fill=#e53935（fault 红）
+    expect(childOf(root, 'body').fill).toBe('#e53935');
+    // housing（背景层）保持 #455a64
+    expect(childOf(root, 'housing').fill).toBe('#455a64');
+    // z-order 不变量：housing 永远在 children[0]、lamp 永远在 children[1]
+    expect(children[0]?.name).toBe('housing');
+    expect(children[1]?.name).toBe('body');
+    engine.destroy();
+  });
+
+  it('兄弟复合图元（motor/pump/fan/valve）子序同为 [body, active]，indicator swap 后与其对齐（唯一离群点消除）', () => {
+    // 同包兄弟复合图元均为 [background_body, active_part] 序——indicator swap 后不再是逆序离群点。
+    // 此处仅断言 indicator 的 body 在末位（active 上层），与兄弟图元的 body 序位语义一致。
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [
+        sensorNode('m1', 'scada-device-motor'),
+        sensorNode('i1', 'scada-sensor-control-indicator'),
+      ],
+    });
+    const motorRoot = engine.getSymbol('m1')!.node;
+    const indicatorRoot = engine.getSymbol('i1')!.node;
+    const motorChildren = (motorRoot as unknown as { children: Array<Record<string, unknown>> }).children;
+    const indicatorChildren = (indicatorRoot as unknown as { children: Array<Record<string, unknown>> }).children;
+    // motor body 在首位（背景），indicator swap 后 body 也在末位（active 上层）——
+    // 关键不变量：body 不被同 group 的不透明兄弟遮挡。motor body 在 [0]（无遮挡兄弟），
+    // indicator body 在 [1]（housing 在 [0] 作背景，不遮挡 lamp）。
+    expect(motorChildren[0]?.name).toBe('body');
+    expect(indicatorChildren[1]?.name).toBe('body');
+    engine.destroy();
+  });
+});
+
 describe('I9.3 scada-sensor-control-switch (开/关位形态 + 状态色)', () => {
   it('should place the lever at the on/off position from custom.on', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });

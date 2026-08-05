@@ -29,6 +29,14 @@ const STYLE_RESET_DEFAULTS: Record<string, unknown> = {
  * - revert（退出恢复）owner = 本层，经 `collector.collect` 汇入同一帧尾 flush（不再 immediate applyAttrs）。
  * - 两模块对同一字段在同帧不再并发写（active 仅 collectStates，revert 仅本层），消除 alarm-storm N+1 applyAttrs。
  * - `collector` 省略时（既有单测回退路径）revert 退回 immediate applyAttrs，仅用于向后兼容；生产装配恒传 collector。
+ *
+ * plan 2026-08-05-0653-2 Phase 4 三路裁定补丁（multi P1-1 binding-vs-revert）：
+ * - 当 revert 字段同时存在 binding 时，binding 胜出（revert 跳过该字段），因 collectBindings 已在同帧
+ *   写入 binding 解析值（pending Map last-write-wins）。修复前 revert 覆盖 binding 值，使
+ *   binding+state-style 同字段图元 alarm→unstyled 退出时引擎停在 base/reset 空值（Failure Paths
+ *   `revert-shadows-binding`）。无 binding 时 revert 行为不变（既有单测仍绿）。
+ * - 边缘 case：binding 源点本轮未变化（binding 未重算，collectBindings 不写入）时，跳过 revert 会使
+ *   引擎暂留 active 态值。这是 pre-existing 边缘 case（非 W3 引入），归 Non-Blocking Follow-ups。
  */
 export class StateVisualApplier {
   private readonly lastApplied = new Map<string, Set<string>>();
@@ -49,6 +57,7 @@ export class StateVisualApplier {
     const leaf = this.engine.registry.get(symbolId);
     if (!leaf?.definition) return;
     const instanceProps = (this.engine.getConfigNode(symbolId) ?? {}) as ScadaSymbolProps;
+    const instanceBindings = instanceProps.bindings;
     const base = resolveSymbolStyle(leaf.definition, instanceProps) as unknown as Record<string, unknown>;
     const styled = resolveSymbolStyle(leaf.definition, instanceProps, state) as unknown as Record<string, unknown>;
     const applied = this.lastApplied.get(symbolId) ?? new Set<string>();
@@ -59,6 +68,15 @@ export class StateVisualApplier {
         // active state-style 键：collectStates 已（将）经脏收集写入。本层仅追踪，以便退出时恢复 base。
         applied.add(key);
       } else if (applied.has(key)) {
+        // plan 2026-08-05-0653-2 Phase 4（multi P1-1）binding-vs-revert 三路裁定：
+        // 该字段同时存在 binding 时跳过 revert collect——同帧 collectBindings 已把 binding 解析值
+        // 写入 pending（pending Map last-write-wins），是正确终值；revert 会覆盖为 base/reset 空值，
+        // 使 binding+state-style 同字段图元 alarm→unstyled 退出时引擎停在空值而非 binding 值。
+        // 跳过 revert 仅移除追踪（binding 值已在 pending 中），无 binding 时 revert 行为不变。
+        if (instanceBindings?.[key]) {
+          applied.delete(key);
+          continue;
+        }
         // revert：曾由状态样式覆盖，现已回到 base → 恢复 base 或重置默认。
         const revert =
           base[key] !== undefined ? base[key] : (STYLE_RESET_DEFAULTS[key] as unknown);

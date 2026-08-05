@@ -21,6 +21,10 @@ const SYMBOL_KEYS: Array<keyof ScadaSymbolNode> = [
   'text',
   'textColor',
   'textSize',
+  // plan 2026-08-05-0653-2 Phase 2 (open P1-1)：补 'flow'（管道流动参数）。
+  // 声明在 config-types.ts:78、validate.ts 校验、pipe-junction.ts create+applyProps 消费；
+  // 此前机械遗漏导致 host 同版本 config 改 flow 时 diff 路径产出空 patch（Failure Paths `flow-toggle-ignored`）。
+  'flow',
   'custom',
   'bindings',
   'states',
