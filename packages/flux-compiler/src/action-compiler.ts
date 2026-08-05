@@ -9,6 +9,33 @@ import type {
   ExpressionCompiler,
   ExpressionCompileOptions,
 } from '@nop-chaos/flux-core';
+import { isSchemaInput } from '@nop-chaos/flux-core';
+
+/**
+ * C8.3 P1-2 (CX-11): schema-valued args (e.g. `openDialog`/`openDrawer` `body`)
+ * are compiled as STATIC via the `__nopPreserveLiteral` envelope — mirroring
+ * the dispatcher-side preservation in `evaluateSurfaceArgs`
+ * (flux-action-core/built-in-actions.ts). The dispatcher always overwrites
+ * schema args with the raw source value, so eagerly compiling nested event
+ * templates inside the body is wasted work AND a silent-failure hazard: a
+ * dotted template (`${item.label}`) throws against the dispatch scope (item is
+ * undefined) and the whole surface open fails before the preservation loop.
+ * Keeping the body static means nested templates stay raw and are evaluated
+ * lazily in the surface scope at event-dispatch time.
+ */
+function preserveSchemaArgs(args: Record<string, unknown>): Record<string, unknown> {
+  let changed = false;
+  const preserved: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(args)) {
+    if (isSchemaInput(value)) {
+      preserved[key] = { __nopPreserveLiteral: true, value };
+      changed = true;
+    } else {
+      preserved[key] = value;
+    }
+  }
+  return changed ? preserved : args;
+}
 
 function compilePayload(
   action: ActionSchema,
@@ -18,7 +45,10 @@ function compilePayload(
   const payload: CompiledActionPayload = {};
 
   if (action.args !== undefined) {
-    payload.args = compiler.compileValue<Record<string, unknown>>(action.args, options);
+    payload.args = compiler.compileValue<Record<string, unknown>>(
+      preserveSchemaArgs(action.args),
+      options,
+    );
   }
 
   return payload;

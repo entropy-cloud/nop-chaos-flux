@@ -1,9 +1,10 @@
 import type { RendererRouteEntry } from './route-model.js';
 
 /**
- * C8.1/C8.2 ai renderer lab routes
+ * C8.1/C8.2/C8.3 ai renderer lab routes
  * (ai-chat / ai-message-list / ai-bubble / ai-sender / ai-conversations /
- * ai-tool-call / ai-attachments / ai-citations / ai-feedback / ai-token-usage).
+ * ai-tool-call / ai-attachments / ai-citations / ai-feedback / ai-token-usage /
+ * ai-prompts / ai-suggestions / ai-voice-input / ai-welcome).
  * Extracted from route-model.ts to keep files within the lint max-lines budget
  * (content-renderer-routes.ts precedent).
  */
@@ -87,5 +88,37 @@ export const AI_RENDERER_ROUTES: RendererRouteEntry[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     description:
       'Pure-display token/cost widget reading message.metadata.usage: SVG context ring, data-empty placeholder and onClick payload resolution.',
+  },
+  {
+    id: 'ai-prompts',
+    title: 'AI Prompts',
+    category: 'advanced',
+    sourcePackage: '@nop-chaos/flux-renderers-ai',
+    description:
+      'Static recommendation prompt cards (vertical/horizontal/wrap + sm/md/lg): schema-driven items and onSelect payload resolution (bug 73 dialog hosting).',
+  },
+  {
+    id: 'ai-suggestions',
+    title: 'AI Suggestions',
+    category: 'advanced',
+    sourcePackage: '@nop-chaos/flux-renderers-ai',
+    description:
+      'In-conversation suggestion pills: expand/scroll/popover overflow modes with +N collapse and onSelect payload resolution.',
+  },
+  {
+    id: 'ai-voice-input',
+    title: 'AI Voice Input',
+    category: 'advanced',
+    sourcePackage: '@nop-chaos/flux-renderers-ai',
+    description:
+      'Web Speech API microphone button (user-gesture browser API, non-IO per INV-1): onResult/onError payload resolution and unsupported-browser degradation.',
+  },
+  {
+    id: 'ai-welcome',
+    title: 'AI Welcome',
+    category: 'advanced',
+    sourcePackage: '@nop-chaos/flux-renderers-ai',
+    description:
+      'Empty-state welcome panel: icon/title/description/align plus a footer value-or-region slot for nested host components.',
   },
 ];

@@ -712,7 +712,7 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     id: 'ai-tool-call',
     title: 'AI Tool Call',
     tier: 'write',
-    primaryScenario: 'Host tool-call in dialog + HITL dead-click (C8.2)',
+    primaryScenario: 'Host tool-call in dialog + status transition (C8.2 bug 73 pattern)',
     notes:
       'Verify ai-tool-call inside an openDialog surface transitions running → success with args expand/collapse (bug 73 pattern), and a wired HITL approval cannot double-submit on rapid double click (C8.2)',
   },
@@ -720,7 +720,7 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     id: 'ai-attachments',
     title: 'AI Attachments',
     tier: 'write',
-    primaryScenario: 'Host attachments in dialog + safety (C8.2)',
+    primaryScenario: 'Host attachments in dialog + validation (C8.2 bug 73 pattern)',
     notes:
       'Verify ai-attachments inside an openDialog surface: real file pick renders the thumbnail, remove works, over-limit fires onError (bug 73 pattern); a javascript: URL in a controlled value never becomes an anchor (C8.2)',
   },
@@ -728,7 +728,7 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     id: 'ai-citations',
     title: 'AI Citations',
     tier: 'write',
-    primaryScenario: 'Host citation popover + onSourceClick (C8.2)',
+    primaryScenario: 'Host citation popover + onSourceClick payload (C8.2)',
     notes:
       'Verify inline [N] markers render, the popover source card shows the title/url, and onSourceClick dispatches ${index}|${source.title} through the dispatch ctx (C8.2)',
   },
@@ -747,5 +747,37 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     primaryScenario: 'Host token usage render + onClick payload (C8.2)',
     notes:
       'Verify metadata.usage renders total/prompt/completion, the missing-usage placeholder carries data-empty, and onClick dispatches ${usage.total_tokens} through the dispatch ctx (C8.2)',
+  },
+  {
+    id: 'ai-prompts',
+    title: 'AI Prompts',
+    tier: 'write',
+    primaryScenario: 'Host prompts in dialog + onSelect payload (C8.3 bug 73 pattern)',
+    notes:
+      'Verify ai-prompts inside an openDialog surface: clicking a prompt item dispatches onSelect and ${item.label}|${index} resolves through the dispatch ctx (C8.3)',
+  },
+  {
+    id: 'ai-suggestions',
+    title: 'AI Suggestions',
+    tier: 'write',
+    primaryScenario: 'Host suggestions popover overflow + onSelect payload (C8.3)',
+    notes:
+      'Verify popover overflow collapse (+N trigger) expands and clicking an overflow item dispatches onSelect with the global index; ${item.text}|${index} resolves via ctx (C8.3)',
+  },
+  {
+    id: 'ai-voice-input',
+    title: 'AI Voice Input',
+    tier: 'write',
+    primaryScenario: 'Host voice input degradation path (C8.3)',
+    notes:
+      'Verify the unsupported-browser degradation: disabled marker button + data-unsupported and onError dispatches ${reason} = unsupported via ctx (C8.3)',
+  },
+  {
+    id: 'ai-welcome',
+    title: 'AI Welcome',
+    tier: 'write',
+    primaryScenario: 'Host welcome footer region + nested component (C8.3)',
+    notes:
+      'Verify the footer value-or-region renders nested schema components and the embedded button dispatches its action (region evaluation + events, C8.3)',
   },
 ];

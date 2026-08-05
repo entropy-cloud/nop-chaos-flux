@@ -109,7 +109,14 @@ describe('ai-voice-input (Widget, A-15) — supported path', () => {
         } as never,
       });
     });
-    expect(onResult).toHaveBeenCalledWith(expect.objectContaining({ transcript: 'hello world' }));
+    // C8.3 P1-1: the second arg is the dispatch ctx — the payload keys double as
+    // evaluationBindings so action-args templates read `${transcript}`.
+    const [payload, ctx] = onResult.mock.calls[0] as unknown[];
+    expect(payload).toMatchObject({ type: 'ai:voice-result', transcript: 'hello world' });
+    expect(ctx).toMatchObject({
+      event: payload,
+      evaluationBindings: expect.objectContaining({ transcript: 'hello world' }),
+    });
     mock.remove();
   });
 
@@ -138,7 +145,12 @@ describe('ai-voice-input — Failure Path: voice-unsupported', () => {
     expect(btn.hasAttribute('disabled')).toBe(true);
     expect(btn.getAttribute('data-unsupported')).toBe('');
     // The mount-time detection notifies the host once.
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'unsupported' }));
+    const [payload, ctx] = onError.mock.calls[0] as unknown[];
+    expect(payload).toMatchObject({ type: 'ai:voice-error', reason: 'unsupported' });
+    expect(ctx).toMatchObject({
+      event: payload,
+      evaluationBindings: expect.objectContaining({ reason: 'unsupported' }),
+    });
   });
 });
 
@@ -155,7 +167,12 @@ describe('ai-voice-input — Failure Path: voice-permission-denied', () => {
     act(() => {
       recognition.onerror?.({ error: 'not-allowed' });
     });
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'permission-denied' }));
+    const [payload, ctx] = onError.mock.calls[0] as unknown[];
+    expect(payload).toMatchObject({ type: 'ai:voice-error', reason: 'permission-denied' });
+    expect(ctx).toMatchObject({
+      event: payload,
+      evaluationBindings: expect.objectContaining({ reason: 'permission-denied' }),
+    });
     mock.remove();
   });
 });
@@ -173,7 +190,14 @@ describe('ai-voice-input — Failure Path: voice-no-result', () => {
     act(() => {
       recognition.onend?.();
     });
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'no-result' }));
+    // C8.3 P1-1: the second arg is the dispatch ctx — the payload keys double as
+    // evaluationBindings so action-args templates read `${reason}`.
+    const [payload, ctx] = onError.mock.calls[0] as unknown[];
+    expect(payload).toMatchObject({ type: 'ai:voice-error', reason: 'no-result' });
+    expect(ctx).toMatchObject({
+      event: payload,
+      evaluationBindings: expect.objectContaining({ reason: 'no-result' }),
+    });
     mock.remove();
   });
 

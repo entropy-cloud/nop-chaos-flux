@@ -22,6 +22,42 @@ describe('compileAction', () => {
     expect((result.nodes[0].payload.args as any)?.value).toEqual({ path: 'name', value: 'test' });
   });
 
+  // C8.3 P1-2 (CX-11): schema-valued args (openDialog/openDrawer `body`) must
+  // compile as STATIC — the dispatcher's evaluateSurfaceArgs always overwrites
+  // schema args with the raw source value, so eagerly compiling nested event
+  // templates inside the body is both wasted work and a silent-failure hazard:
+  // a dotted template (`${item.label}`) throws on the dispatch scope (item is
+  // undefined) and the whole openDialog fails before the preservation loop.
+  it('preserves schema-valued args (openDialog body) as static, keeping nested event templates raw', () => {
+    const compiler = createCompiler();
+    const body = {
+      type: 'page',
+      body: [
+        {
+          type: 'ai-prompts',
+          items: [{ label: 'A' }],
+          onSelect: { action: 'probe:p', args: { value: '${item.label}|${index}' } },
+        },
+      ],
+    };
+    const result = compileAction(
+      {
+        action: 'openDialog',
+        args: { title: '${dynamicTitle}', body },
+      } as ActionSchema,
+      compiler,
+    );
+
+    const args = result.nodes[0].payload.args as any;
+    // Ordinary args stay dynamic.
+    expect(args.isStatic).toBe(false);
+    // The schema body is preserved RAW (static-node) so the nested template
+    // string is never evaluated against the dispatch scope.
+    expect(args.node.entries.body.kind).toBe('static-node');
+    expect(args.node.entries.body.value).toEqual(body);
+    expect(args.node.entries.title.kind).toBe('expression-node');
+  });
+
   it('compiles an action with expression args as dynamic', () => {
     const compiler = createCompiler();
     const result = compileAction(

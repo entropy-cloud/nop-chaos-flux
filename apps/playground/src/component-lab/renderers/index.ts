@@ -104,3 +104,7 @@ export { AiAttachmentsLabPage } from './ai-attachments-lab-page';
 export { AiCitationsLabPage } from './ai-citations-lab-page';
 export { AiFeedbackLabPage } from './ai-feedback-lab-page';
 export { AiTokenUsageLabPage } from './ai-token-usage-lab-page';
+export { AiPromptsLabPage } from './ai-prompts-lab-page';
+export { AiSuggestionsLabPage } from './ai-suggestions-lab-page';
+export { AiVoiceInputLabPage } from './ai-voice-input-lab-page';
+export { AiWelcomeLabPage } from './ai-welcome-lab-page';

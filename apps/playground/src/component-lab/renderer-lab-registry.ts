@@ -106,6 +106,10 @@ import {
   AiCitationsLabPage,
   AiFeedbackLabPage,
   AiTokenUsageLabPage,
+  AiPromptsLabPage,
+  AiSuggestionsLabPage,
+  AiVoiceInputLabPage,
+  AiWelcomeLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -215,4 +219,8 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   'ai-citations': AiCitationsLabPage,
   'ai-feedback': AiFeedbackLabPage,
   'ai-token-usage': AiTokenUsageLabPage,
+  'ai-prompts': AiPromptsLabPage,
+  'ai-suggestions': AiSuggestionsLabPage,
+  'ai-voice-input': AiVoiceInputLabPage,
+  'ai-welcome': AiWelcomeLabPage,
 };

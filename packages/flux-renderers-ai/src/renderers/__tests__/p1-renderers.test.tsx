@@ -229,7 +229,14 @@ describe('ai-prompts (Widget)', () => {
     const { container } = render(<Prompts {...props} />);
     const items = container.querySelectorAll('[data-slot="ai-prompts-item"]');
     fireEvent.click(items[1]!);
-    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ index: 1 }));
+    // C8.3 P1-1: assert the full payload + dispatch ctx (not a single key), so
+    // a regression dropping `item` or the evaluationBindings ctx turns red.
+    const [payload, ctx] = onSelect.mock.calls[0] as unknown[];
+    expect(payload).toMatchObject({ type: 'ai:prompt-select', index: 1, item: { label: 'B' } });
+    expect(ctx).toMatchObject({
+      event: payload,
+      evaluationBindings: expect.objectContaining({ index: 1 }),
+    });
   });
 });
 

@@ -102,7 +102,14 @@ describe('ai-suggestions — schema-driven renderer', () => {
     const { container } = render(<Suggestions {...props} />);
     expect(container.querySelectorAll('[data-slot="ai-suggestions-item"]').length).toBe(5);
     fireEvent.click(container.querySelector('[data-slot="ai-suggestions-item"]')!);
-    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ index: 0 }));
+    // C8.3 P1-1: the second arg is the dispatch ctx — the payload keys double as
+    // evaluationBindings so action-args templates read `${item}` / `${index}`.
+    const [payload, ctx] = onSelect.mock.calls[0] as unknown[];
+    expect(payload).toMatchObject({ type: 'ai:suggestion-select', index: 0, item: { text: 'Summarize' } });
+    expect(ctx).toMatchObject({
+      event: payload,
+      evaluationBindings: expect.objectContaining({ index: 0, item: { text: 'Summarize' } }),
+    });
   });
 });
 

@@ -1,8 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import type {
+  FluxActionEvent,
+  RendererComponentProps,
+  RendererRenderOutput,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { AiVoiceInputSchema } from '../schemas.js';
+
+/**
+ * C8.3 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
+ * carries `{ event, evaluationBindings, scope }` so action-args templates can
+ * read `${transcript}` / `${reason}` (ai-feedback.tsx:22-28 precedent).
+ */
+function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
+  return {
+    event: payload as FluxActionEvent,
+    evaluationBindings: payload,
+    scope: nodeScope,
+  };
+}
 
 /**
  * Minimal SpeechRecognition surface (TS ships no DOM lib types for it). Only
@@ -78,6 +96,12 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
   useEffect(() => {
     eventsRef.current = props.events;
   });
+  // C8.3 P1-1: the mount-time unsupported effect reads the scope through a ref
+  // (node identity is stable) so the effect deps stay minimal (`[unsupported]`).
+  const nodeScopeRef = useRef(props.node.scope as ScopeRef | undefined);
+  useEffect(() => {
+    nodeScopeRef.current = props.node.scope as ScopeRef | undefined;
+  });
   // AI-04 (resource lifecycle): hold the live SpeechRecognition in a ref so the
   // stop branch and unmount cleanup can release the microphone. Previously the
   // recognition lived only inside the `handleStart` closure, so the stop button
@@ -110,12 +134,14 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
   useEffect(() => {
     if (unsupported && !firedUnsupportedRef.current) {
       firedUnsupportedRef.current = true;
-      void eventsRef.current.onError?.({ type: 'ai:voice-error', reason: 'unsupported' });
+      const payload = { type: 'ai:voice-error' as const, reason: 'unsupported' as const };
+      void eventsRef.current.onError?.(payload, dispatchCtx(payload, nodeScopeRef.current));
     }
   }, [unsupported]);
 
   function fireError(reason: VoiceErrorReason): void {
-    void props.events.onError?.({ type: 'ai:voice-error', reason });
+    const payload = { type: 'ai:voice-error', reason };
+    void props.events.onError?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
   }
 
   function handleStart(): void {
@@ -146,7 +172,8 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
         if (result.isFinal) gotFinal = true;
       }
       if (transcript.trim().length > 0) {
-        void props.events.onResult?.({ type: 'ai:voice-result', transcript });
+        const payload = { type: 'ai:voice-result', transcript };
+        void props.events.onResult?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
       }
     };
     recognition.onerror = (event) => {
