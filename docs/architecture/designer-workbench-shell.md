@@ -69,6 +69,21 @@ Responsive priority rules:
 - when both sides exist, the shell may suppress the right side below the tablet breakpoint and suppress the left side too below the phone breakpoint instead of preserving collapsed rails at every width
 - this responsive suppression is a viewport behavior, not a change to config-driven side existence; at desktop widths, available sides still follow the normal expanded-or-collapsed contract
 
+## Panel Resize Contract
+
+Side panels may opt into drag-resizable widths. Resize is opt-in per family config, never a default of the shared shell.
+
+Required interaction rules:
+
+- only an expanded panel exposes a resize handle; collapsed rails never render handles
+- the handle sits on the panel edge closest to the central work surface (left panel → right edge, right panel → left edge)
+- pointer drag changes panel width with a min/max clamp; the right-panel drag direction is inverted (dragging left widens the right panel)
+- the handle is keyboard-resizable: focusable, with `ArrowLeft` / `ArrowRight` adjusting width by a step, honoring the same min/max clamp
+- handle a11y: `role="separator"`, `aria-orientation="vertical"`, `aria-valuenow` / `aria-valuemin` / `aria-valuemax`
+- width state is family-owned like collapse state: the shell is a controlled surface; the family persists widths in its core store (or local state for non-store hosts) and re-hydrates them on expand
+- responsive suppression and collapsed-rail behavior are unchanged by resize; resized widths still yield to the breakpoint suppression rules above
+- default widths without resize remain the fixed shell widths (left 15rem, right 22rem); opting in must not change the initial visual state
+
 ## Family Mapping
 
 ### Flow Designer
@@ -130,6 +145,8 @@ That naming difference does not imply different shell semantics.
 - page regions are override/mount surfaces
 - family config is the canonical panel-definition surface
 - shell visibility and collapse behavior follow the shared rules in this doc
+
+The business-page `page.aside` (single optional sidebar, optional drag-resize via `asideResizable`) remains the pattern for business pages. Two-sided workbench layout (left rail/panel + canvas + right rail/panel + resize) belongs to this shared workbench shell; `page` does not absorb workbench semantics. Decision record: `docs/analysis/2026-08-05-page-vs-workbench-layout-analysis.md`.
 
 ## Implementation Direction
 
