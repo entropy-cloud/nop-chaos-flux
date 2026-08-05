@@ -1,6 +1,6 @@
 # C8.3 ai 增强族逐组件审计（ai-prompts/ai-suggestions/ai-voice-input/ai-welcome）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C8.3
 > Last Reviewed: 2026-08-05
@@ -71,70 +71,78 @@
 
 ### Phase 1 - 逐组件 18 维审计与审计卡产出
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/{ai-prompts,ai-suggestions,ai-voice-input,ai-welcome}.tsx`、`ai-renderer-definitions.ts`、`docs/audits/per-component/`
 
 - Item Types: `Proof`
 
-- [ ] 审计前核对注册定义：4 组件注册项（type/fields/propContracts/eventContracts）与各自 schema 一致（维度 1/18）。
-- [ ] 产出 4 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
-- [ ] 事件派发链路专项核对：onSelect（ai-prompts/ai-suggestions）/onResult/onError（ai-voice-input）派发点是否携带 `{event, evaluationBindings, scope}` ctx——CX-10 家族约定比对（C8.1/C8.2 修复模式：`renderer-reaction-handle.ts` + 派发点补参），确认是否同型缺口。
-- [ ] 维度 16 假绿核查：ai-welcome/ai-prompts 独立行为断言是否足够（p1-renderers/data-cid-contract 覆盖 vs 独立语义用例）；既有测试是否 not-throw-only。
-- [ ] 维度 17 文档核对：renderers.md §6/§7/§13 与四组件 schema/行为一致性；§13 遗留 onAction 误标行（ai-bubble 卡 P3 观察）是否为 ai-welcome 族残留。
+- [x] 审计前核对注册定义：4 组件注册项（type/fields/propContracts/eventContracts）与各自 schema 一致（维度 1/18）。
+- [x] 产出 4 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
+- [x] 事件派发链路专项核对：onSelect（ai-prompts/ai-suggestions）/onResult/onError（ai-voice-input）派发点是否携带 `{event, evaluationBindings, scope}` ctx——CX-10 家族约定比对（C8.1/C8.2 修复模式：`renderer-reaction-handle.ts` + 派发点补参），确认是否同型缺口。
+- [x] 维度 16 假绿核查：ai-welcome/ai-prompts 独立行为断言是否足够（p1-renderers/data-cid-contract 覆盖 vs 独立语义用例）；既有测试是否 not-throw-only。
+- [x] 维度 17 文档核对：renderers.md §6/§7/§13 与四组件 schema/行为一致性；§13 遗留 onAction 误标行（ai-bubble 卡 P3 观察）是否为 ai-welcome 族残留。
 
 Exit Criteria:
 
-- [ ] 4 张审计卡产出，18 维表带 `文件:行` 证据，P0/P1/P2/P3 裁决留痕，卡状态 `open`。
+- [x] 4 张审计卡产出，18 维表带 `文件:行` 证据，P0/P1/P2/P3 裁决留痕，卡状态 `open`。
+
+> Phase 1 结论摘要：4 卡产出（`docs/audits/per-component/{ai-prompts,ai-suggestions,ai-voice-input,ai-welcome}.md`），P0×0 / P1×3（全部为 CX-10 事件 ctx 同型缺口：ai-prompts onSelect、ai-suggestions onSelect、ai-voice-input onResult/onError ×3 派发点） / P2×8 / P3×1。注册定义核对：ai 包定义无 propContracts/eventContracts 声明（全族先例 C8.1/C8.2 同，payload 形状以 renderers.md §13 与 schema JSDoc 为准）。dim 17 核对：§13 onAction 行归属 ai-feedback（:622，schema 确有 onAction），无 ai-welcome 族残留；另发现 §11 phantom `trigger` 字段（ai-suggestions）与 §13 缺 ai-voice-input 事件行两处文档漂移 → P2。dim 16 假绿核查：ai-welcome/ai-prompts 无独立测试文件（行为断言不足）→ P2。
 
 ### Phase 2 - P0/P1 自动修复（test-first）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/*.tsx`、`ai-renderer-definitions.ts`、`schemas.ts`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] 对 Phase 1 确认的每个 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复。
-- [ ] 事件 ctx 注入（若确认缺口）：按 C8.1/C8.2 修复模式补 `{event, evaluationBindings, scope}`；test-first（先红后绿）。
-- [ ] 契约/定义修复（propContracts/eventContracts/schema 漂移）：test-first。
-- [ ] P2 低成本（≤15 分钟）项当场修复；其余登记卡内 backlog 归 CR。
-- [ ] 每次修复后跑 `pnpm --filter @nop-chaos/flux-renderers-ai typecheck && build && lint && test`。
+- [x] 对 Phase 1 确认的每个 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复。
+- [x] 事件 ctx 注入（若确认缺口）：按 C8.1/C8.2 修复模式补 `{event, evaluationBindings, scope}`；test-first（先红后绿）。
+- [x] 契约/定义修复（propContracts/eventContracts/schema 漂移）：test-first。
+- [x] P2 低成本（≤15 分钟）项当场修复；其余登记卡内 backlog 归 CR。
+- [x] 每次修复后跑 `pnpm --filter @nop-chaos/flux-renderers-ai typecheck && build && lint && test`。
 
 Exit Criteria:
 
-- [ ] 本族 P0/P1 全部修复落地（`fixed-pending-closure`）；回归测试断言正确行为；受影响包验证门禁全绿。
+- [x] 本族 P0/P1 全部修复落地（`fixed-pending-closure`）；回归测试断言正确行为；受影响包验证门禁全绿。
+
+> Phase 2 结论摘要：P1×3 全部为 CX-10 事件 ctx 同型缺口（ai-prompts onSelect / ai-suggestions onSelect / ai-voice-input onResult+onError ×3 派发点），按 C8.1/C8.2 模式补 `dispatchCtx`（`{event, evaluationBindings, scope}`，scope 经 nodeScopeRef 供 mount effect 路径）——test-first 先红后绿（新增 `ai-prompts.test.tsx` 9 用例 + `ai-welcome.test.tsx` 9 用例 + ai-suggestions/ai-voice-input/p1-renderers 断言收紧为 payload+ctx 双参契约，初跑 5 失败全转绿）。P2×5 当场修复：ai-welcome/ai-prompts 独立测试文件、ai-voice-input 测试 ctx 断言 ×4、renderers.md §11 phantom `trigger` 字段移除、renderers.md §13 补 ai-voice-input onResult/onError 行。契约/定义层核对结论：ai 包注册定义无 propContracts/eventContracts 声明系全族惯例（C8.1/C8.2 closed 先例，payload 形状以 renderers.md §13 + schema JSDoc 为准），无新增漂移，无需 definitions 改动。验证：ai 包 typecheck/build/lint 绿 + test 509/509 全绿 + workspace typecheck 32/32 绿。
 
 ### Phase 3 - 组合宿主真实浏览器场景
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/c8-3-host-surfaces.spec.ts`、`apps/playground/src/component-lab/`（lab 页 ×4，若缺）、`renderer-lab-registry.ts`、`route-model.ts`、`coverage-manifest.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] 补齐 4 个 lab 页（维度 18 缺口，P2 低成本裁决）+ RENDERER_LAB_REGISTRY / route 常量模块 / coverage-manifest 同步（C6.x/C7/C8.x 先例）。
-- [ ] 新增 `tests/e2e/component-lab/c8-3-host-surfaces.spec.ts`：≥4 场景 programmatic DOM 断言（host-prompts-dlg/host-suggest-pop/host-voice-degrd/host-welcome-reg）。
-- [ ] bug 73 模式专项检查：四组件在 dialog 内使用（scope 求值 + 事件派发不串扰）。
-- [ ] 回归：本族相关 e2e（ai-widgets-demo 10/10 + ai-p4-widgets 3/3）+ component-lab 全量 + smoke 零新增失败。
+- [x] 补齐 4 个 lab 页（维度 18 缺口，P2 低成本裁决）+ RENDERER_LAB_REGISTRY / route 常量模块 / coverage-manifest 同步（C6.x/C7/C8.x 先例）。
+- [x] 新增 `tests/e2e/component-lab/c8-3-host-surfaces.spec.ts`：≥4 场景 programmatic DOM 断言（host-prompts-dlg/host-suggest-pop/host-voice-degrd/host-welcome-reg）。
+- [x] bug 73 模式专项检查：四组件在 dialog 内使用（scope 求值 + 事件派发不串扰）。
+- [x] 回归：本族相关 e2e（ai-widgets-demo 10/10 + ai-p4-widgets 3/3）+ component-lab 全量 + smoke 零新增失败。
 
 Exit Criteria:
 
-- [ ] c8-3-host-surfaces.spec.ts 场景全绿（programmatic DOM 断言）；lab 页 ×4 与 route/registry/manifest 接线完成；相关 e2e 回归零新增失败。
+- [x] c8-3-host-surfaces.spec.ts 场景全绿（programmatic DOM 断言）；lab 页 ×4 与 route/registry/manifest 接线完成；相关 e2e 回归零新增失败。
+
+> Phase 3 结论摘要：4 lab 页（`ai-{prompts,suggestions,voice-input,welcome}-lab-page.tsx`）+ `data-c8-3-host.ts`（4 host schema + probe 注册）+ RENDERER_LAB_REGISTRY ×4 + AI_RENDERER_ROUTES ×4 + coverage-manifest ×4 + route-matrix 自动核对全绿（playground 141/141）。`c8-3-host-surfaces.spec.ts` 4/4 全绿：host-prompts-dlg（**bug 73 专项**：openDialog 内点击 prompt → `${item.label}|${index}`=`Translate|1` 经 ctx 解析）、host-suggest-pop（popover 溢出 +N 展开 → `${item.text}|${index}`=`Refine|3`）、host-voice-degrd（addInitScript 确定性删除 SpeechRecognition → disabled + data-unsupported + `${reason}`=`unsupported` 单次派发）、host-welcome-reg（footer region 内嵌组件渲染 + 内嵌按钮 action 0→1 递增证明 scope 求值）。**Phase 3 发现公共层缺陷并修复（shared: CX-11）**：host-prompts-dlg 暴露 openDialog 表面 args 内嵌事件 args 的成员访问模板（`${item.label}`）被急切求值抛错 → dialog 静默打不开（根因 flux-compiler `action-compiler.ts` `compilePayload` 全 args 通用编译 + flux-action-core `evaluateSurfaceArgs` 急切求值先于 isSchema 保留）；按 checklist §3/roadmap §7 在 flux-compiler 公共层 test-first 修复（isSchemaInput 顶层 arg 经 `__nopPreserveLiteral` envelope 编译为 static-node，与 dispatcher 侧保留契约对齐；action-compiler.test.ts 先红后绿 + 实证；docs/bugs/89 + roadmap CX-11 事后回写插入）。回归：c8-3 4/4 + smoke 110/110 + ai-widgets-demo/ai-p4-widgets 3/3（113 全绿）+ component-lab 全量 326 passed/2 failed/1 skipped——2 failed 均为 **C7 记录在案的 pre-existing**（c5-2 host-timeline data-ownership 冲突，clean HEAD 复现；c3-5 editor Tiptap 批次 flake 单跑绿）；另修复 C8.2 期遗留 manifest primaryScenario 漂移 ×3（ai-tool-call/ai-attachments/ai-citations 与 lab 页标题不一致导致 smoke 恒失败，clean HEAD 复现确认 pre-existing）+ ai 族 34/34 回归全绿 + flux-action-core 207/flux-runtime 1396/flux-react 467 全绿。
 
 ### Phase 4 - 组件回归与审计卡 closure
 
-Status: planned
+Status: completed
 Targets: 审计卡、`docs/logs/2026/08-05.md`、`docs/backlog/component-audit-roadmap.md`（C8.3 行）
 
 - Item Types: `Proof`
 
-- [ ] 全卡复查：4 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
-- [ ] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-ai test` + 相关 e2e spec 全绿；workspace 全量 `pnpm typecheck`/`build`/`lint`/`test` 最终以 Closure Gates 为准（指南 Minimum Rule 18：全量验证归 closure，非 Phase 默认项——此处仅作收口前置预跑）。
-- [ ] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、CX-n 插入（若有）与决策。
-- [ ] roadmap C8.3 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；已交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）。
+- [x] 全卡复查：4 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
+- [x] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-ai test` + 相关 e2e spec 全绿；workspace 全量 `pnpm typecheck`/`build`/`lint`/`test` 最终以 Closure Gates 为准（指南 Minimum Rule 18：全量验证归 closure，非 Phase 默认项——此处仅作收口前置预跑）。
+- [x] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、CX-n 插入（若有）与决策。
+- [x] roadmap C8.3 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；已交付全部执行证据，由 fresh sub-agent session 执行 audit 后收口）。
 
 Exit Criteria:
 
-- [ ] 4 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
-- [ ] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
+- [x] 4 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
+- [x] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
+
+> Phase 4 结论摘要：4 卡全部 `closed`（P0×0/P1×3 fixed/P2×8 fixed/shared CX-11 fixed/P3×1 记录），18 维表与最终代码一致；daily log（`docs/logs/2026/08-05.md` C8.3 节）已记录全部执行证据（修复清单/宿主结果/CX-11 决策/验证输出）；workspace 前置预跑全绿（typecheck/build/lint 32/32 + test 59/59 + e2e 零新增失败）。closure-audit 由独立 fresh sub-agent session 执行（证据见 Closure 节），pass 后 roadmap C8.3 行 `planned → done` + CX-11 行同步标 done。
 
 ## Draft Review Record
 
@@ -154,17 +162,17 @@ Exit Criteria:
 
 > **关闭条件**：本 section 所有条目 + 每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`（guide `When Closing The Plan` + `Closure Audit Rule`）。
 
-- [ ] 4 张审计卡全部 `closed`（P0/P1 清零），18 维表结论与最终代码一致
-- [ ] 本族所有 in-scope confirmed live defects 已修复（test-first + 回归测试）
-- [ ] 事件 payload shape 契约（onSelect/onResult/onError + evaluationBindings ctx）与 eventContracts 收敛一致
-- [ ] 真实浏览器宿主场景 ≥1（含 bug 73 模式专项）programmatic DOM 断言通过
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs（renderers.md/flux-renderers-ai/design.md 等）已同步到 live baseline，或明确写明 No owner-doc update required
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 4 张审计卡全部 `closed`（P0/P1 清零），18 维表结论与最终代码一致
+- [x] 本族所有 in-scope confirmed live defects 已修复（test-first + 回归测试）
+- [x] 事件 payload shape 契约（onSelect/onResult/onError + evaluationBindings ctx）与 eventContracts 收敛一致
+- [x] 真实浏览器宿主场景 ≥1（含 bug 73 模式专项）programmatic DOM 断言通过
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs（renderers.md/flux-renderers-ai/design.md 等）已同步到 live baseline，或明确写明 No owner-doc update required
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -195,13 +203,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行。
+Status Note: 4 Phase 全 completed + 4 审计卡 closed（P0×0/P1×3 fixed/P2×8 fixed/shared CX-11 fixed/P3×1 记录）；事件 ctx 契约（CX-10 家族）5 处派发补齐 + CX-11 公共层修复（openDialog 表面 args schema body 静态化）test-first 落地；宿主场景 4/4（含 bug 73 专项 host-prompts-dlg）；workspace typecheck/build/lint 32/32 + test 59/59 + e2e 零新增失败（component-lab 2 failed 均为 C7 记录在案 pre-existing，clean HEAD 复现）；closure-audit 独立 fresh sub-agent 通过后收口。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待定（mission-driver CLOSURE_VERIFY fresh session）
-- Evidence: 待定
+- Auditor / Agent: 独立 fresh sub-agent session（task `ses_02e102aa3ffeM6jl2rnsa9et6D`，2026-08-05）
+- Evidence: 审计逐项实证 PASS——(1) Phase/Exit Criteria 全 `[x]` 与 live 一致；(2) 4 卡 `closed`（ai-prompts.md:3 等），派发点 ctx 实证（ai-prompts.tsx:83/ai-suggestions.tsx:178/ai-voice-input.tsx:138,:144,:176）；(3) CX-11 代码实证（action-compiler.ts:26-38 preserveSchemaArgs + :47-52 接线 + action-compiler.test.ts:31-59 static-node 断言 + built-in-actions.ts:55 isSchema 保留闭环）；(4) fresh 重跑 flux-renderers-ai 509/509 + flux-compiler 550/550 + c8-3-host-surfaces.spec.ts 4/4；(5) deferred 诚实（3 项均 non-blocking + successor）；(6) renderers.md §11 phantom trigger 移除 + §13 ai-voice-input 行 + daily log 收口记录；(7) roadmap CX-11 行（:57 `planned`，依赖 C8.3）+ docs/bugs/89。唯一 issue 为程序性（Closure Gates 勾选滞后，审计确认 10 项证据均 TRUE，指示执行者补勾后收口——本 Closure 节已执行）。roadmap C8.3 行 + CX-11 行按 §7b 在 audit pass 后翻转 `done`（证据见 `docs/logs/2026/08-05.md` C8.3 节）。
 
 Follow-up:
 
-- 待执行后填写。
+- no remaining plan-owned work（P3 观察 ×1 卡内记录；e2e pre-existing c5-2/c3-5 归 C9/CR 既有 successor 路径）

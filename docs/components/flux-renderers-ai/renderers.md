@@ -514,7 +514,6 @@ export interface AiSuggestionsSchema extends BaseSchema {
   type: 'ai-suggestions';
   items?: Array<AiSuggestionItem> | SchemaValue;
   overflowMode?: 'expand' | 'scroll' | 'popover'; // 默认 'scroll'
-  trigger?: 'hover' | 'click' | 'manual'; // 仅 popover 模式
   maxVisible?: number; // popover 模式下内联可见数（默认 3）
 
   onSelect?: ActionSchema; // { item, index }
@@ -625,6 +624,8 @@ export interface AiMcpManagerSchema extends BaseSchema {
 | ai-citations     | `onSourceClick`                                                      | `{ source, index }`                                                                  |
 | ai-token-usage   | `onClick`                                                            | `{ usage }`                                                                          |
 | ai-suggestions   | `onSelect`                                                           | `{ item, index }`                                                                    |
+| ai-voice-input   | `onResult`                                                           | `{ transcript }`                                                                     |
+| ai-voice-input   | `onError`                                                            | `{ reason: 'unsupported' \| 'permission-denied' \| 'no-result' }`                    |
 | ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                                                                                 |
 
 ## 14. 端到端 Schema 示例
