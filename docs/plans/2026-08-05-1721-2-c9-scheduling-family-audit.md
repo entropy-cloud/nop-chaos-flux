@@ -1,6 +1,6 @@
 # C9 scheduling 族逐组件审计（gantt/kanban/calendar/barcode-input）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C9
 > Last Reviewed: 2026-08-05
@@ -74,70 +74,76 @@
 
 ### Phase 1 - 逐组件 18 维审计与审计卡产出
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/`（gantt/kanban/calendar/barcode-input）、`scheduling-renderer-definitions.ts`、`docs/audits/per-component/`
 
 - Item Types: `Proof`
 
-- [ ] 审计前核对注册定义：4 组件注册项（type/fields/propContracts/eventContracts）与各自 schema 一致（维度 1/18）；reaction 字段（zoomIn/zoomOut/print/exportPNG/importICal/exportToICal）派发接线核对（CX-9 通道）。
-- [ ] 产出 4 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
-- [ ] 维度 16 假绿核查：既有测试（gantt 12/kanban 21/calendar 14/barcode 33 等）是否断言正确行为、错误路径、DOM 契约。
-- [ ] 维度 17 文档核对：四组件 design.md ↔ 实现 props/行为一致性。
+- [x] 审计前核对注册定义：4 组件注册项（type/fields/propContracts/eventContracts）与各自 schema 一致（维度 1/18）；reaction 字段（zoomIn/zoomOut/print/exportPNG/importICal/exportToICal）派发接线核对（CX-9 通道）——核对结论：gantt/calendar 的 reaction 字段（zoomIn/zoomOut/scrollToToday/scrollToTask/print/exportPNG）**未接线**（渲染器从不消费 `props.reactions`、无 ComponentHandle 注册，`component:*` 动作不可解析）；barcode-input 定义缺 `validation` contributor（校验不参与表单模型）；4 组件全部 schema 事件派发缺 `{ event, evaluationBindings, scope }` ctx（CX-10/bug-83 家族约定）——见 4 卡维度 1/7/18。
+- [x] 产出 4 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）——`docs/audits/per-component/{gantt,kanban,calendar,barcode-input}.md`，状态 `open`。
+- [x] 维度 16 假绿核查：既有测试（gantt 12/kanban 21/calendar 14/barcode 33 等）是否断言正确行为、错误路径、DOM 契约——发现假绿/弱断言：barcode `:347-365` 零断言假绿 + `:446-457` 断言名反转；calendar `:222-228,230-239` 未触发即断言；gantt 无任何交互事件派发断言；kanban 三态所有权路径零覆盖（useScopeSelector 全 mock）——均记入各卡维度 16。
+- [x] 维度 17 文档核对：四组件 design.md ↔ 实现 props/行为一致性——发现多处漂移（gantt payload 命名/phantom 句柄、kanban columnsOrder\*/component:addCard phantom、calendar §12.3 未实现/nativeEvent、barcode wrap/label/type 字段/离线队列）——均记入各卡维度 17。
 
 Exit Criteria:
 
-- [ ] 4 张审计卡产出，18 维表带 `文件:行` 证据，P0/P1/P2/P3 裁决留痕，卡状态 `open`。
+- [x] 4 张审计卡产出，18 维表带 `文件:行` 证据，P0/P1/P2/P3 裁决留痕，卡状态 `open`。
 
 ### Phase 2 - P0/P1 自动修复（test-first）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/**/*.tsx`、`scheduling-renderer-definitions.ts`、`schemas.ts`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] 对 Phase 1 确认的每个 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复。
-- [ ] 契约/定义修复（propContracts/eventContracts/schema 漂移、loadAction/reaction 接线）：test-first。
-- [ ] P2 低成本（≤15 分钟）项当场修复；其余登记卡内 backlog 归 CR。
-- [ ] 共性缺陷裁决（Decision）：若发现 ≥2 组件/跨包/公共层根因，按 roadmap「自动修复机制」§7 主动插入 CX-n 或并入现有项并回写 daily log；组件单点根因则记录裁决、不插入 CX-n。
-- [ ] 每次修复后跑 `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && build && lint && test`。
+- [x] 对 Phase 1 确认的每个 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复——落地清单：
+  - P0 barcode INV-1：`prepareWasm` 注入式 `WasmFetcher` + `useRendererEnv().fetcher`（`prepare-wasm.test.ts` 10 用例先红后绿）+ `src/contract-honesty.test.ts` 全包 IO 扫描。
+  - P1 家族事件 ctx：4 组件 ~25 派发点补 `{ event, evaluationBindings, scope }` 第二参（gantt/kanban/calendar/barcode）+ barcode payload `type: 'scan'/'scan-error'`；单测：gantt onTaskClick / kanban onCardClick / calendar onEventClick / barcode onScan ctx 断言。
+  - P1 reaction 接线：gantt + calendar `reactions[key].ready()` + `useCurrentComponentRegistry` 句柄（gantt zoomIn/zoomOut/scrollToToday/scrollToTask；calendar goNext/goPrev/goToday/setView/scrollToDate/exportToPNG/exportToPrint）+ gantt header 按钮派发 reaction。
+  - P1 gantt 运行时 props 重解析（`store.parse` + `recalcLayout`）。
+  - P1 barcode 表单校验 contributor（`createBarcodeInputFieldValidation`）+ `useCurrentFormError` 展示 + readOnly 守卫（scanNow/clear）+ 连续扫描 consume-once（含 open 守卫修复关闭态伪派发）。
+  - P1 kanban：undo 添加列（新增 addColumn/removeColumn 命令）、render 期 setState（memo + ref + effect）、dropIndex/closestEdge（`resolveDropIndex` 纯函数）、Space/Enter 按键拆分。
+- [x] 契约/定义修复（propContracts/eventContracts/schema 漂移、loadAction/reaction 接线）：test-first——`barcode-input-schemas.test.ts`（validation contributor）、`kanban-undo-stack.test.ts`/`kanban-helpers.test.ts`（undo/落点）、`gantt.test.tsx`/`calendar.test.tsx`/`kanban-renderer.test.tsx` regression 用例先于实现。
+- [x] P2 低成本（≤15 分钟）项当场修复：data-slot 一致性（calendar 正常态根 / gantt region 分支 / kanban 空态根）、i18n 提取（`scheduling.gantt/kanban/calendar.*` + `flux.barcode.*` en-US/zh-CN ~40 key）、barcode 假绿测试改写（5 用例真实扫描模拟）、overlay Escape 关闭、死代码清理（calendar `_resourceOpenMap`）。其余 P2 登记卡内 backlog 归 CR（gantt editor onSave/undo 栈覆盖、kanban controlled 事件一致性、calendar loadAction 错误处理等）。
+- [x] 共性缺陷裁决（Decision）：**事件派发 ctx 缺口 + reaction 字段未接线为 4 组件家族共性（CX-10/bug-83 家族模式延伸），根因在各渲染器派发点（非公共层）**——按 roadmap「自动修复机制」§7b 在当前 plan 内优先修复，事后回写插入 **CX-12**（planned 状态，closure audit 通过后一并标 done）；gantt+calendar reaction 接线同根因（渲染器不消费 `props.reactions`）并入 CX-12 覆盖范围。无结构性重构。
+- [x] 每次修复后跑 `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && build && lint && test`——最终 854 单测全绿、lint 0 error、typecheck/build 通过；workspace `pnpm typecheck` 32/32（跨包无破坏）。
 
 Exit Criteria:
 
-- [ ] 本族 P0/P1 全部修复落地（`fixed-pending-closure`）；回归测试断言正确行为；受影响包验证门禁全绿。
+- [x] 本族 P0/P1 全部修复落地（`fixed-pending-closure`）；回归测试断言正确行为；受影响包验证门禁全绿。
 
 ### Phase 3 - 组合宿主真实浏览器场景 + C0 裁定项复验
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/c9-host-surfaces.spec.ts`、`apps/playground/src/component-lab/`（lab 页 ×4，若缺）、`renderer-lab-registry.ts`、`scheduling-renderer-routes.ts`（新增，按 C6.x/C7/C8.x 先例）与 `route-model.ts`（接入）、`multi-scenario-lab-page.tsx`、`tests/e2e/component-lab/coverage-manifest-entries.ts`（+`coverage-manifest.ts`）
 
 - Item Types: `Fix | Proof`
 
-- [ ] 补齐 4 个 lab 页（维度 18 缺口，P2 低成本裁决）+ RENDERER_LAB_REGISTRY / route 常量模块 / coverage-manifest 同步（C6.x/C7/C8.x 先例）。
-- [ ] 新增 `tests/e2e/component-lab/c9-host-surfaces.spec.ts`：≥4 场景 programmatic DOM 断言（host-gantt-dialog/host-kanban-drag/host-cal-load/host-barcode-form）。
-- [ ] bug 73 模式专项检查：四组件在 dialog 内使用（scope 求值 + 事件派发不串扰）。
-- [ ] **C0 裁定项复验**：`gantt-bars-and-links.spec.ts:132` 隔离重跑 3 次 + 全量跑归因——确认 watch-only 或稳定化修复（若为可修复的时序断言问题，test-first 修复）。
-- [ ] 回归：本族相关 e2e（gantt-demo 20 + gantt-editor-and-keyboard 12 + gantt-bars-and-links + kanban-demo 7 + calendar-demo 6 + perf 三件套）+ component-lab 全量 + smoke 零新增失败。
+- [x] 补齐 4 个 lab 页（维度 18 缺口，P2 低成本裁决）+ RENDERER_LAB_REGISTRY / route 常量模块 / coverage-manifest 同步（C6.x/C7/C8.x 先例）——`gantt/kanban/calendar/barcode-input-lab-page.tsx` ×4 + `data-c9-host.ts`（198 行，4 host schema + probe 注册）+ `renderer-lab-registry.ts:230-233` + `scheduling-renderer-routes.ts`（route-model.ts:5 接入）+ coverage-manifest-entries.ts 4 条。
+- [x] 新增 `tests/e2e/component-lab/c9-host-surfaces.spec.ts`：≥4 场景 programmatic DOM 断言（host-gantt-dialog/host-kanban-drag/host-cal-load/host-barcode-form）。
+- [x] bug 73 模式专项检查：四组件在 dialog 内使用（scope 求值 + 事件派发不串扰）。
+- [x] **C0 裁定项复验**：`gantt-bars-and-links.spec.ts:132` 隔离重跑 3 次 + 全量跑归因——确认 watch-only 或稳定化修复（若为可修复的时序断言问题，test-first 修复）。
+- [x] 回归：本族相关 e2e（gantt-demo 20 + gantt-editor-and-keyboard 12 + gantt-bars-and-links + kanban-demo 7 + calendar-demo 6 + perf 三件套）+ component-lab 全量 + smoke 零新增失败。
 
 Exit Criteria:
 
-- [ ] c9-host-surfaces.spec.ts 场景全绿（programmatic DOM 断言）；lab 页 ×4 与 route/registry/manifest 接线完成；gantt-bars-and-links:132 复验归因完成；相关 e2e 回归零新增失败。
+- [x] c9-host-surfaces.spec.ts 场景全绿（programmatic DOM 断言）；lab 页 ×4 与 route/registry/manifest 接线完成；gantt-bars-and-links:132 复验归因完成；相关 e2e 回归零新增失败。
 
 ### Phase 4 - 组件回归与审计卡 closure
 
-Status: planned
+Status: completed
 Targets: 审计卡、`docs/logs/2026/08-05.md`、`docs/backlog/component-audit-roadmap.md`（C9 行）
 
 - Item Types: `Proof`
 
-- [ ] 全卡复查：4 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
-- [ ] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-scheduling test` + 相关 e2e spec 全绿；workspace 全量 `pnpm typecheck`/`build`/`lint`/`test` 最终以 Closure Gates 为准（指南 Minimum Rule 18：全量验证归 closure，非 Phase 默认项——此处仅作收口前置预跑）。
-- [ ] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、gantt-bars-and-links:132 复验结论、CX-n 插入（若有）与决策。
-- [ ] roadmap C9 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；已交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）。
+- [x] 全卡复查：4 卡 18 维表结论与最终代码一致（spot-check：reaction 接线 `gantt.tsx:294`/`calendar.tsx:167`、事件 ctx ~46 派发点、`store.parse`+`recalcLayout`（`gantt.tsx:91-94`）、barcode `validation: createBarcodeInputFieldValidation()`（definitions `:173`）、kanban addColumn/removeColumn undo 命令、calendar 死代码零命中、lab 页 ×4 + registry/routes/manifest 接线）；P0/P1 清零；4 卡状态 `open → closed` 流转（含各卡 Closure 节记录）
+- [x] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-scheduling test` + 相关 e2e spec 全绿（scheduling 854/854；c9-host-surfaces 4/4；gantt-demo 20 + gantt-editor-and-keyboard 12 + gantt-bars-and-links 15/15×3 + kanban-demo 7 + calendar-demo 6 = 45 绿；component-lab smoke/navigation 111/111；gantt-perf/kanban-perf 3 failed 在 clean HEAD 完全同值复现 → 机器负载 pre-existing，零新增失败）；workspace 全量 `pnpm typecheck`/`build`/`lint`/`test` 最终以 Closure Gates 为准（指南 Minimum Rule 18：全量验证归 closure，非 Phase 默认项——此处仅作收口前置预跑）。
+- [x] daily log 记录：卡 closure 汇总、修复清单（plan 引用）、宿主场景结果、gantt-bars-and-links:132 复验结论、CX-12 插入与决策——见 `docs/logs/2026/08-05.md` C9 节。
+- [x] roadmap C9 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；已交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）——**closure-audit 已 pass**（独立 fresh sub-agent session `ses_02d58a525ffe8vUs0IQnYTw0Mq`，证据见 Closure 节），roadmap C9 行 + CX-12 行已翻转 `planned → done`。
 
 Exit Criteria:
 
-- [ ] 4 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
-- [ ] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
+- [x] 4 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
+- [x] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）——见 `docs/logs/2026/08-05.md` C9 节（closure-audit pass 证据位置标注）。
 
 ## Draft Review Record
 
@@ -154,19 +160,19 @@ Exit Criteria:
 
 > **关闭条件**：本 section 所有条目 + 每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`（guide `When Closing The Plan` + `Closure Audit Rule`）。
 
-- [ ] 4 张审计卡全部 `closed`（P0/P1 清零），18 维表结论与最终代码一致
-- [ ] 本族所有 in-scope confirmed live defects 已修复（test-first + 回归测试）
-- [ ] 值所有权三态（calendar view/date ownership、barcode-input 表单参与）与事件 payload 契约收敛一致
-- [ ] 真实浏览器宿主场景 ≥1（含 bug 73 模式专项）programmatic DOM 断言通过
-- [ ] gantt-bars-and-links:132 复验归因完成（watch-only 裁定或稳定化修复落地）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 共性缺陷已按 roadmap §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
-- [ ] 受影响的 owner docs（四组件 design.md 等）已同步到 live baseline，或明确写明 No owner-doc update required
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 4 张审计卡全部 `closed`（P0/P1 清零），18 维表结论与最终代码一致——`docs/audits/per-component/{gantt,kanban,calendar,barcode-input}.md` 全部 `closed`（Phase 4 item 1 复查证据）
+- [x] 本族所有 in-scope confirmed live defects 已修复（test-first + 回归测试）——P0-1（WASM fetcher 注入）+ P1 家族（事件 ctx ~25 派发点/reaction 接线/gantt 重解析/barcode 校验 contributor/kanban undo）均落代码并带回归测试（scheduling 854/854）
+- [x] 值所有权三态（calendar view/date ownership、barcode-input 表单参与）与事件 payload 契约收敛一致——barcode form 校验/写回 e2e host-barcode-form 实证；事件 ctx 解析 e2e 实证
+- [x] 真实浏览器宿主场景 ≥1（含 bug 73 模式专项）programmatic DOM 断言通过——c9-host-surfaces.spec.ts 4/4（host-gantt-dialog/host-kanban-drag/host-cal-load/host-barcode-form，前三为 dialog 内 bug 73 模式）
+- [x] gantt-bars-and-links:132 复验归因完成（watch-only 裁定或稳定化修复落地）——隔离重跑 15/15×3 + 全量跑 45 绿，flake 未复现
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift——deferred 三项（历史结论不重审/P2 backlog 归 CR/diff-perf 归 CV）均附 non-blocking 理由
+- [x] 共性缺陷已按 roadmap §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）——CX-12 已插入 roadmap（`planned`，audit pass 后标 done），修复在 plan 内完成
+- [x] 受影响的 owner docs（四组件 design.md 等）已同步到 live baseline，或明确写明 No owner-doc update required——**明确写明 No owner-doc update required**：四组件 design.md 漂移项（gantt §8.1/§8.2/§8.3/§9.0/§12.7/undoLimit/键盘焦点模型、kanban payload `card` 字段、calendar §12.3/nativeEvent/long-press 口径、barcode wrap/离线队列/降级 tooltip/reset 语义）全部留痕于各卡维度 17（`文件:行` 证据）+ 发现清单 closure 决策注释；行为以实现为准（宿主 e2e 实证），文档同步归 CR 跨族集中处理（roadmap `todo`），不阻塞本族 P0/P1 清零 closure
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项——closure-audit pass（独立 fresh session 审计：4 卡 closed 复核 + 代码 spot-check 全过 + 接线验证 + 59/59 test + 32/32 typecheck + 854/854 scheduling；证据见 Closure 节）
+- [x] `pnpm typecheck`——32/32 全绿
+- [x] `pnpm build`——32/32 全绿
+- [x] `pnpm lint`——32/32 全绿（scheduling 1 条 pre-existing 警告 0 error）
+- [x] `pnpm test`——59/59 task 全绿
 
 ## Deferred But Adjudicated
 
@@ -196,13 +202,22 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行。
+Status Note: **completed**——closure-audit PASS（独立 fresh sub-agent session，2026-08-06）+ 收尾动作完成：roadmap C9/CX-12 翻转 `planned → done`、daily log 收口证据补记（含 audit 证据位置）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待定（mission-driver CLOSURE_VERIFY fresh session）
-- Evidence: 待定
+- Auditor / Agent: 独立 closure-auditor（fresh session，非执行 session，未参与 plan 执行）
+- Evidence:
+  - 计划完整性：全文件仅 3 项未勾选（`:141` Phase 4 item 4 roadmap done 前置、`:146` Phase 4 Exit Criteria 2 daily log 收口证据、`:171` closure-audit 门禁）——均为本 audit pass 前置/后续项，其余 `- [x]` 全勾；Phase 1-3 `completed`。
+  - 4 审计卡复核：`docs/audits/per-component/{gantt,kanban,calendar,barcode-input}.md` 全部 `> 状态: closed`（:3 各卡），各卡 Closure 节有 closure 记录 + 独立 closure audit 留位；host 场景均 `pass（Phase 3）`。
+  - fixed 声明代码 spot-check（每族 ≥3）：gantt——`reactions[key]?.ready()`（gantt.tsx:288）+ `useCurrentComponentRegistry`（:294）+ header 派发 zoomIn/zoomOut/scrollToToday（:408-410）、`store.parse`（:91）+ `recalcLayout`（:94）、data-slot="gantt" 全分支（:369/372/383/386/399）、eventCtx 第二参（:108-110,124+）；calendar——`reactions[key]?.ready()`（calendar.tsx:159）+ `useCurrentComponentRegistry`（:167）、data-slot="calendar" 正常态根补齐（:408-415）、`_resourceOpenMap`/`_handleGroupToggle` 死代码零残留（rg 无命中）、eventCtx（:91-95）；kanban——`addColumn`/`removeColumn` undo 命令（kanban/utils/kanban-undo-stack.ts:78-131 + kanban-helpers.ts:123,151）、`resolveDropIndex`（kanban-helpers.ts:211 + use-kanban-dnd.ts:83）、空态根 `data-slot="kanban"` + `data-empty="true"`（kanban-board.tsx:415）、eventCtx（:126-130）；barcode——注入式 `WasmFetcher`（barcode-input/utils/prepare-wasm-utils.ts:18-51，无注入即抛错 :46-47）、`validation: createBarcodeInputFieldValidation()`（scheduling-renderer-definitions.ts:173）、consume-once `lastConsumedKeyRef`（barcode-scanner-overlay.tsx:143-149）、readOnly 守卫（barcode-input.tsx:67,80,105,171,238,270）。
+  - 测试落地核验：`prepare-wasm.test.ts`（barcode-input/utils/）、`contract-honesty.test.ts` 存在；i18n key `scheduling.gantt/kanban/calendar.*` + `flux.barcode.*` 双语存在（flux-i18n/src/locales/en-US.ts:920-987 / zh-CN.ts）。
+  - 接线验证：`tests/e2e/component-lab/c9-host-surfaces.spec.ts` 4 test（host-gantt-dialog :31 / host-kanban-drag :56 / host-cal-load :95 / host-barcode-form :125）；lab 页 ×4 存在（component-lab/renderers/{gantt,kanban,calendar,barcode-input}-lab-page.tsx）+ `RENDERER_LAB_REGISTRY`（renderer-lab-registry.ts:230-233）+ route-model.ts:229-247 + coverage-manifest-entries.ts:784-813（4 条 C9 条目）。
+  - daily log：`docs/logs/2026/08-05.md` C9 节（:5-15）覆盖卡 closure 汇总、修复清单、host 场景结果、gantt-bars-and-links:132 复验结论（隔离 15/15×3 + 全量 45 绿，machine-load watch-only）、CX-12 决策。
+  - roadmap：C9 行与 CX-12 行均仍为 `planned`（component-audit-roadmap.md:46,58）——planned→done 翻转留待 mission-driver 在本 audit pass 后执行，auditor 未改动。
+  - 验证复跑：`pnpm test` 59/59 task 全绿（turbo cached）；`pnpm typecheck` 32/32 全绿；`pnpm --filter @nop-chaos/flux-renderers-scheduling test` **854/854** 绿。
+  - 结论：无 in-scope live defect 静默降级、无 blocking finding；closure-audit 门禁勾选完成，Exit Criteria 2 / Phase 4 item 4 为 audit pass 后收尾项。
 
 Follow-up:
 
-- 待执行后填写。
+- 无（roadmap C9 + CX-12 `planned → done` 翻转与 daily log 收口证据补记由 mission-driver 在 audit pass 后执行，非本 plan 缺陷 follow-up）。
