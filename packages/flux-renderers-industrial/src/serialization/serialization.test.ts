@@ -710,6 +710,38 @@ describe('validateScadaConfig error branch matrix (plan 2026-08-04-1558-3 Phase 
     expectErrors(baseConfig({ symbols: [rect('g', { type: 'scada-group', children: 'nope' as never })] }), '.children must be an array');
   });
 
+  // plan 2026-08-05-0653-4 Proof-C1（failing-first）：scada-rect（叶子 type）误带 children 时
+  // validator 必须拒绝——任何带 children 的非 scada-group 节点都会被 ConfigAdapter.buildNode 静默
+  // 降级为 Group（丢 fill/stroke/width/height）。修复前：validator 仅检查 children 是否为数组，
+  // 不约束 type，故该 config 通过校验进入 build 后被静默降级（leaf attrs 丢）。修复后：validator
+  // fail-fast 拒绝，错误消息可观测，author 可见。
+  it('rejects children on non-scada-group leaf types (C1: validator fail-fast, no silent Group downgrade)', () => {
+    const result = validateScadaConfig(
+      baseConfig({
+        symbols: [
+          rect('leaf-with-children', {
+            width: 100,
+            height: 50,
+            fill: '#ff0000',
+            stroke: '#333',
+            children: [rect('c1')],
+          }),
+        ],
+      }),
+    );
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => /children.*scada-group/.test(e))).toBe(true);
+  });
+
+  it('still accepts children on scada-group (C1: only leaf-with-children rejected)', () => {
+    const result = validateScadaConfig(
+      baseConfig({
+        symbols: [rect('g', { type: 'scada-group', children: [rect('c1')] })],
+      }),
+    );
+    expect(result.ok).toBe(true);
+  });
+
   it('rejects point declaration missing/empty id (id must-be-a-non-empty-string)', () => {
     expectErrors(baseConfig({ variables: [{ source: 'static', value: 1 } as never] }), 'variables[0].id must be a non-empty string');
     expectErrors(baseConfig({ variables: [{ id: '  ', source: 'static', value: 1 }] }), 'variables[0].id must be a non-empty string');

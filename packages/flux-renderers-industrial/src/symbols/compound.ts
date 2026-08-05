@@ -1,5 +1,6 @@
 import { Group } from 'leafer-ui';
 import type { ScadaSymbolNode } from '../serialization/config-types.js';
+import { deepEqual } from '../serialization/equality.js';
 import { getScadaSymbolDefinition } from './symbol-registry.js';
 import { instantiateSymbol } from './symbol-factory.js';
 import type {
@@ -70,16 +71,14 @@ export function diffInstanceProps(
   for (const [key, value] of Object.entries(node as unknown as Record<string, unknown>)) {
     if (key === 'id' || key === 'type' || key === 'children') continue;
     if (value === undefined) continue;
-    if (deepEquals(value, defaults[key])) continue;
+    // plan 2026-08-05-0653-4 C2：与 `diff.valuesEqual` 共享 `serialization/equality.ts deepEqual`
+    // （own-keys 递归 stable，key 序不影响判等）。旧 `JSON.stringify(a) === JSON.stringify(b)`
+    // 在第三方 registerScadaSymbol object-typed defaults 与 instance key 序不同时假阴性（判不等），
+    // 把等值 object 当 override 写入序列化输出（非最小覆盖集）。共享实现消除该隐患。
+    if (deepEqual(value, defaults[key])) continue;
     overrides[key] = value;
   }
   return overrides as Partial<ScadaSymbolNode>;
-}
-
-function deepEquals(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return a === b;
-  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 export const scadaGroupDefinition: ScadaSymbolDefinition = {

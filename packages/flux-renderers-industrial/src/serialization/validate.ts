@@ -173,10 +173,11 @@ function validateSymbolNode(
     }
     seenIds.add(nodeObj.id as string);
   }
+  // plan 2026-08-05-0653-4 C1：type 提升到外层作用域，供 children 约束（children 仅 scada-group）判别。
+  const type = typeof nodeObj.type === 'string' ? nodeObj.type : '';
   if (typeof nodeObj.type !== 'string' || nodeObj.type.trim() === '') {
     errors.push(`${scope}.type must be a non-empty string`);
   } else {
-    const type = nodeObj.type as string;
     if (type !== 'scada-group' && !isKnownType(type)) {
       errors.push(`unknown symbol type: ${type}`);
     }
@@ -256,6 +257,14 @@ function validateSymbolNode(
     }
   }
   if (nodeObj.children !== undefined) {
+    // plan 2026-08-05-0653-4 C1（open-audit P2-3）：children 仅 scada-group 可用——叶子 type
+    // （scada-rect/scada-pipe/instance 模板等）误带 children 时 ConfigAdapter.buildNode 静默降级为
+    // Group（丢 fill/stroke/width/height）。validator fail-fast 让 author 可见（Decision-C1 默认采 (a)，
+    // 与 §4.2 schema 注「children: 子图元（group 组合）」一致）。buildNode 同步按 type 分支（defense-in-depth）。
+    // 同时继续递归 children（不 short-circuit）以最大化 diagnostic（嵌套结构错误一并 surface）。
+    if (type !== 'scada-group') {
+      errors.push(`${scope}.children is only allowed on scada-group nodes`);
+    }
     if (!Array.isArray(nodeObj.children)) {
       errors.push(`${scope}.children must be an array`);
     } else {

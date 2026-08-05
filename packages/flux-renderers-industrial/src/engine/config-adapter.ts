@@ -81,7 +81,13 @@ export class ConfigAdapter {
 
   private buildNode(node: ScadaSymbolNode, parent: IGroup, parentId?: string): void {
     this.nodeById.set(node.id, node);
-    const isContainer = node.type === GROUP_CONTAINER_TYPE || (node.children?.length ?? 0) > 0;
+    // plan 2026-08-05-0653-4 C1（open-audit P2-3）：isContainer 仅按 type==='scada-group' 判别——
+    // 旧实现的 `(node.children?.length ?? 0) > 0` fallback 把任何带 children 的节点静默降级为 Group，
+    // 叶子 type（scada-rect/scada-pipe/instance 模板等）误带 children 时 leaf 的 fill/stroke/width/height
+    // 经 Group 构造分支丢失。validator（validate.ts）已在主流路径 fail-fast 拒绝叶子带 children；
+    // buildNode 按 type 分支为 defense-in-depth（engine.reset 直调可旁路 validator），叶子带 children 时
+    // 按 leaf 构建（保留 leaf attrs），children 字段被忽略（author 应通过 validator 拒绝捕捉）。
+    const isContainer = node.type === GROUP_CONTAINER_TYPE;
     if (isContainer) {
       const group = new Group({
         name: node.id,

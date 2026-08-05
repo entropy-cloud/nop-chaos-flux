@@ -110,15 +110,43 @@ describe('flux scope path extraction (漏订阅/过订阅 判定)', () => {
   it('extractExpressionDepsViaProbe collects root-level dependencies for arithmetic and member chains', () => {
     // 平台 collector normalize 到根段（normalizeRootPath）——记录所有标识符与成员表达式的 root path。
     // 多标识符表达式（如 `${a + b}`）返回 ['a', 'b']；链式 `${x.y.z}` 返回 ['x']（根段）。
-    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${analog.temp + 1}')).toContain('analog');
-    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${plant.pump.speed * 2}')).toContain('plant');
-    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${analog.temp + plant.pump.speed}')).toEqual(
-      expect.arrayContaining(['analog', 'plant']),
-    );
-    // 编译失败的语法 → 空集（不抛错）
-    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${@@invalid@@}')).toEqual([]);
-    // 静态表达式 → 空集
-    expect(extractExpressionDepsViaProbe(expressionCompiler, env, 'just a string')).toEqual([]);
+    // plan 2026-08-05-0653-4 C4：probe 返 discriminated result——成功（含 paths）断言 `.status === 'ok'` +
+    // `.paths`；compile 失败断言 `.status === 'compile-failed'`；静态表达式（compiled.kind !== 'dynamic'）
+    // 返 `{ status: 'ok', paths: [] }`（与 deps-empty 区分：静态表达式不触发诊断）。
+    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${analog.temp + 1}')).toEqual({
+      status: 'ok',
+      paths: expect.arrayContaining(['analog']),
+    });
+    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${plant.pump.speed * 2}')).toEqual({
+      status: 'ok',
+      paths: expect.arrayContaining(['plant']),
+    });
+    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${analog.temp + plant.pump.speed}')).toEqual({
+      status: 'ok',
+      paths: expect.arrayContaining(['analog', 'plant']),
+    });
+    // 编译失败的语法 → compile-failed（不抛错；不再塌缩为空 paths）。
+    // 注：flux-formula 对形如 `${a +}`/`${@@invalid@@}` 等畸形 `${...}` 一律按 static 字符串字面量处理
+    // （不抛 compile 错），故真实 compile-failed 需 mock compiler 触发（见 scada-points-bridge-diagnostics
+    // Proof-C4）。此处用 mock compiler 直接断言 compile-failed 状态。
+    const throwingCompiler = {
+      compileValue: () => {
+        throw new Error('syntax error');
+      },
+    } as unknown as typeof expressionCompiler;
+    expect(extractExpressionDepsViaProbe(throwingCompiler, env, '${analog.temp}')).toEqual({
+      status: 'compile-failed',
+    });
+    // 静态表达式 → ok 空集（无 scope 读，不触发 deps-empty 诊断）。
+    // flux-formula 把畸形 `${...}`（如 `${a +}`）当 static 字符串字面量——同走 ok 空集分支（不诊断）。
+    expect(extractExpressionDepsViaProbe(expressionCompiler, env, 'just a string')).toEqual({
+      status: 'ok',
+      paths: [],
+    });
+    expect(extractExpressionDepsViaProbe(expressionCompiler, env, '${a +}')).toEqual({
+      status: 'ok',
+      paths: [],
+    });
   });
 
   it('the private eval scope satisfies the ScopeRef contract without side effects', () => {

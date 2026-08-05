@@ -206,6 +206,57 @@ describe('instance 模板复用与属性覆盖深合并 (I8.3, §4.3 优先级�
       custom: { b: { c: 9 } },
     });
   });
+
+  // plan 2026-08-05-0653-4 Proof-C2（failing-first，open-audit P2-6）：第三方 registerScadaSymbol 带
+  // object-typed defaults 时，instance 与 defaults 的 object 字段 key 序若不同，diffInstanceProps 应稳定判等
+  // （不产冗余 override）。修复前：`deepEquals` 用 `JSON.stringify(a) === JSON.stringify(b)`（key 序敏感），
+  // key 序不同 → 判不等 → 把与 defaults 等值（仅 key 序不同）的 object 字段当作 override 写入序列化输出
+  // （非最小覆盖集，重新引入 plan 2026-08-04-2243-2 W5 同类隐患）。修复后：deepEquals 与 diff.valuesEqual
+  // 共享 own-keys 递归 stable deep-equal（key 序不影响判等），key 序重排产 0 冗余 override。
+  it('diffInstanceProps should not emit redundant overrides for object-typed defaults with reordered keys (C2: key-order-insensitive deep-equal)', () => {
+    // defaults.custom = { a: 1, b: { c: 2 } }；instance.custom 与之等值但 key 序重排（b 在 a 前，且 b.c 嵌套）
+    registerScadaSymbol(templateDef(TYPE));
+    const def = templateDef(TYPE);
+    const node: ScadaSymbolNode = {
+      id: 'inst',
+      type: TYPE,
+      x: 0,
+      y: 0,
+      // key 序与 defaults 反向（b 先于 a），但内容等值
+      custom: { b: { c: 2 }, a: 1 },
+    };
+    const diff = diffInstanceProps(node, def);
+    // custom 与 defaults 等值（key 序不同但内容相同）→ 不应出现在 override 集中
+    expect(diff).toEqual({});
+  });
+
+  it('deepEquals via shared equality module should treat nested reordered-key objects as equal (C2: stable deep-equal parity with diff.valuesEqual)', () => {
+    // 直接验证共享 deepEqual 实现：嵌套 object key 序重排判等稳定（与 diff.valuesEqual W5 行为对齐）
+    registerScadaSymbol(templateDef(TYPE));
+    const def = templateDef(TYPE);
+    // defaults.bindings = { fill: { point: 'p1' } }；instance.bindings 与之等值，key 序重排（point 先于 fill 不可能
+    // 因为是单键，故换一个测试：用 custom 嵌套 + 数组混合验证深层 stable）
+    const node: ScadaSymbolNode = {
+      id: 'inst2',
+      type: TYPE,
+      x: 0,
+      y: 0,
+      // custom.a / custom.b.c 与 defaults 等值，custom 整体 key 序与 defaults 反向
+      custom: { b: { c: 2 }, a: 1 },
+    };
+    const diff = diffInstanceProps(node, def);
+    expect(diff).toEqual({});
+    // 反向验证：内容不同（custom.b.c 改值）→ 仍判不等，正确产出 override
+    const node2: ScadaSymbolNode = {
+      id: 'inst3',
+      type: TYPE,
+      x: 0,
+      y: 0,
+      custom: { b: { c: 9 }, a: 1 },
+    };
+    const diff2 = diffInstanceProps(node2, def);
+    expect(diff2).toEqual({ custom: { b: { c: 9 }, a: 1 } });
+  });
 });
 
 describe('复合图元序列化协同 (I8.3, serialization-instance-drift)', () => {

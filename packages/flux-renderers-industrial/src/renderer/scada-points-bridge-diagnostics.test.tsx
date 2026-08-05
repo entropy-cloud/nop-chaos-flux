@@ -388,4 +388,127 @@ describe('scada-canvas points bridge diagnostics (flux error reporting + dedup +
     await new Promise((resolve) => setTimeout(resolve, 30));
     expect(errors.some((e) => e.code === 'flux-deps-empty')).toBe(false);
   });
+
+  // plan 2026-08-05-0653-4 Proof-C3（failing-first，multi-audit P2-4）：诊断通道透传原始 error——
+  // `UseScadaPointsBridgeArgs.onError` 第三参收原始 Error 实例（含 stack），不再降为 message string。
+  // 修复前：签名只收 `(code, message)`，`reportOnce` 把 `error:unknown` 降为 `errorMessage(error)`（string），
+  // `scada-canvas reportDiagnostic` 再包成 fresh `new Error(message)`（无 cause）→ host 监控无法定位
+  // formula evaluator 源。修复后：`onError(code, message, error?)`，error 透传，monitor.onError 收到 cause。
+  it('passes the original error as third onError arg with stack/cause (C3: diagnostic cause transparency)', async () => {
+    const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
+    const errors: Array<{ code: string; message: string; error?: unknown }> = [];
+    const pendingFlushes: Array<() => void> = [];
+    const pointStore = new PointStore();
+    const config = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+    pointStore.loadDeclarations(config.variables ?? []);
+    const runtime: ScadaPointsBridgeRuntime = {
+      pointStore,
+      pipeline: new RefreshPipeline({
+        pointStore,
+        reverseIndex: new ReverseIndex(config.symbols),
+        collector: new DirtyCollector({ scheduleTick: () => () => undefined }),
+        scheduleTick: (cb) => {
+          pendingFlushes.push(cb);
+          return () => undefined;
+        },
+      }),
+      applyAttrs: () => undefined,
+    };
+    const originalError = new Error('evaluation boom with stack');
+    const failingEvaluateCompiler = {
+      compileValue: () => ({ kind: 'static', value: 1 }),
+      evaluateValue: () => {
+        throw originalError;
+      },
+    } as unknown as typeof expressionCompiler;
+    function Probe() {
+      useScadaPointsBridge({
+        config,
+        runtime,
+        expressionCompiler: failingEvaluateCompiler,
+        env,
+        onError: (code, message, error) => errors.push({ code, message, error }),
+      });
+      return null;
+    }
+    render(
+      <ScadaTestProviders environment={environment}>
+        <Probe />
+      </ScadaTestProviders>,
+    );
+    await waitFor(() => expect(errors.length).toBeGreaterThan(0));
+    expect(errors[0].code).toBe('flux-evaluate-failed');
+    // 原始 Error 实例透传（非降为 string）——host 监控可定位 formula evaluator 源
+    expect(errors[0].error).toBe(originalError);
+    expect((errors[0].error as Error).stack).toBeDefined();
+  });
+
+  // plan 2026-08-05-0653-4 Proof-C4（failing-first，multi-audit P2-6）：probe compile/createState/evaluate
+  // 失败塌缩为 `[]` 时，analyzeFluxSubscriptions 见 deps.length===0 且 expressionReadsScope 真就把表达式
+  // 推入 `depsEmptyExpressions`（一次性 flux-deps-empty 上报）；同时 bridge effect 真编译/求值该表达式
+  // 失败上报 `flux-compile-failed`/`flux-evaluate-failed`。失败表达式产 flux-deps-empty 误报 + 真报双报。
+  // 修复后：probe 返 discriminated result，compile/createState/evaluate 失败归非 deps-empty，
+  // analyzeFluxSubscriptions 仅在 status==='deps-empty' 时入 depsEmptyExpressions。
+  //
+  // 注：flux-formula 对畸形 `${...}`（如 `${a +}`）一律按 static 字符串字面量处理（不抛 compile 错），
+  // 故 audit P2-6 描述的「语法坏表达式」场景在生产 compiler 下不会真触发 compile-failed——本 proof 用
+  // mock failingCompiler 直接模拟 compile throw，覆盖 host 自定义 compiler / 未来 compiler 版本 / 真实
+  // createState/evaluate 失败等可触发 compile-failed 的路径。
+  it('does not double-report flux-deps-empty when probe compile fails (C4: probe discriminated result, mock throwing compiler)', async () => {
+    const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
+    const errors: Array<{ code: string; message: string }> = [];
+    const pendingFlushes: Array<() => void> = [];
+    const pointStore = new PointStore();
+    const config = bridgeConfig([{ id: 'broken', flux: '${analog.temp + 1}' }], [
+      {
+        id: 'rect-1',
+        type: 'scada-rect',
+        x: 0,
+        y: 0,
+        bindings: { text: { point: 'broken' } },
+      },
+    ]);
+    pointStore.loadDeclarations(config.variables ?? []);
+    const runtime: ScadaPointsBridgeRuntime = {
+      pointStore,
+      pipeline: new RefreshPipeline({
+        pointStore,
+        reverseIndex: new ReverseIndex(config.symbols),
+        collector: new DirtyCollector({ scheduleTick: () => () => undefined }),
+        scheduleTick: (cb) => {
+          pendingFlushes.push(cb);
+          return () => undefined;
+        },
+      }),
+      applyAttrs: () => undefined,
+    };
+    // mock compiler：compileValue 总是 throw（模拟 host 自定义 compiler / 未来 compiler 版本 /
+    // createState/evaluate 失败等真触发 compile-failed 的路径）。expressionReadsScope('analog.temp + 1')=true
+    // → 修复前 analyzeFluxSubscriptions 会推入 depsEmptyExpressions（误报），bridge effect 同表达式 compile
+    // 失败 → flux-compile-failed（真报）。修复后 probe 返 compile-failed → 跳过（不入 depsEmptyExpressions）。
+    const failingCompiler = {
+      compileValue: () => {
+        throw new Error('compile boom');
+      },
+    } as unknown as typeof expressionCompiler;
+    function Probe() {
+      useScadaPointsBridge({
+        config,
+        runtime,
+        expressionCompiler: failingCompiler,
+        env,
+        onError: (code, message) => errors.push({ code, message }),
+      });
+      return null;
+    }
+    render(
+      <ScadaTestProviders environment={environment}>
+        <Probe />
+      </ScadaTestProviders>,
+    );
+    // 真报保留：bridge effect 编译失败 → flux-compile-failed
+    await waitFor(() => expect(errors.some((e) => e.code === 'flux-compile-failed')).toBe(true));
+    // 误报消除：probe compile 失败归非 deps-empty → 不上报 flux-deps-empty
+    expect(errors.some((e) => e.code === 'flux-deps-empty')).toBe(false);
+  });
 });

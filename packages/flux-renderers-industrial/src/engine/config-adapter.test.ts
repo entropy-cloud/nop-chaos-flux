@@ -140,6 +140,45 @@ describe('ConfigAdapter build (I5.3b)', () => {
     ).toThrow(/unknown scada symbol type/);
     engine.destroy();
   });
+
+  // plan 2026-08-05-0653-4 Proof-C1（failing-first，defense-in-depth）：scada-rect（叶子 type）误带
+  // children 时 ConfigAdapter.buildNode 必须按 type 分支构建（保留 leaf 的 fill/stroke/width/height），
+  // 不再静默降级为 Group。修复前：`isContainer = node.type === GROUP_CONTAINER_TYPE || (node.children?.length ?? 0) > 0`
+  // ——任何带 children 的节点被静默降级为 Group，leaf 的 fill/stroke/width/height 经 Group 构造分支丢失。
+  // 修复后：`isContainer = node.type === GROUP_CONTAINER_TYPE`，叶子带 children 按 leaf 构建（children 被忽略）。
+  // 与 validator fail-fast（serialization.test.ts Proof-C1）互为 defense-in-depth：validator 拦截主流路径
+  // （renderer.parseAndValidateConfig / engine.importConfig），buildNode 守护 validator 旁路（engine.reset 直调）。
+  it('should not silently downgrade leaf-with-children to Group (C1: buildNode preserves leaf attrs by type)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [
+        shape('leaf', 'scada-rect', {
+          width: 100,
+          height: 50,
+          fill: '#ff0000',
+          stroke: '#333',
+          children: [shape('orphan', 'scada-rect')],
+        }),
+      ],
+    } as ScadaConfig);
+    const leaf = engine.getSymbol('leaf')?.node as {
+      tag: string;
+      width: number;
+      height: number;
+      fill: string;
+      stroke: string;
+    };
+    // 按叶子类型构建（Rect），非 Group 降级；leaf attrs 全部保留（不丢 fill/stroke/width/height）
+    expect(leaf.tag).toBe('Rect');
+    expect(leaf.width).toBe(100);
+    expect(leaf.height).toBe(50);
+    expect(leaf.fill).toBe('#ff0000');
+    expect(leaf.stroke).toBe('#333');
+    // children 不入 registry（按 leaf 构建，children 字段被忽略；author 应通过 validator 拒绝捕捉）
+    expect(engine.registry.get('orphan')).toBeUndefined();
+    engine.destroy();
+  });
 });
 
 describe('ConfigAdapter destroy/rebuild (I5.3b)', () => {

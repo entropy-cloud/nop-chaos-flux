@@ -115,11 +115,16 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   //  - flux 表达式错误（`flux-compile-failed`/`flux-evaluate-failed`/`flux-deps-empty`，plan 2026-08-05-0325-1）
   //    额外复用既有 host telemetry 钩子 `env.monitor.onError`（`ExpressionExecutionEnv.monitor`，
   //    phase:'expression'；handler-error 的 'action' phase 超出现 monitor 类型，host telemetry 后置，Follow-up）。
-  // 不违反 §8.1：诊断 ≠ status 升级——此处不动 `setStatus`/`setErrorInfo`/`eventsApi.notifyError`，
-  // 画布保持 ready，不派发 `scada:error`（§8.1 onError 仅 config 校验/构建失败）。
-  // 出口整体 try/catch 自保护——通道自身 throw 不得回流 engine/hook（Failure Paths channel-outlet-throws）。
+  //  不违反 §8.1：诊断 ≠ status 升级——此处不动 `setStatus`/`setErrorInfo`/`eventsApi.notifyError`，
+  //  画布保持 ready，不派发 `scada:error`（§8.1 onError 仅 config 校验/构建失败）。
+  //  出口整体 try/catch 自保护——通道自身 throw 不得回流 engine/hook（Failure Paths channel-outlet-throws）。
+  //
+  // plan 2026-08-05-0653-4 C3（multi-audit P2-4）：第三参 `error?` 透传——host 监控收到的 Error 经
+  // `new Error(message, { cause: error })` 包装，保留原始 stack/cause 链，可定位 formula evaluator 源。
+  // 旧实现 `new Error(message)`（无 cause）丢失原始 stack，host 无法归因。`error?` 可选 → 向后兼容
+  // 现有 2-arg 调用方（`onHandlerError` 路径未提供原始 error，按 message-only 包装）。
   const reportDiagnostic = useCallback(
-    (code: string, message: string) => {
+    (code: string, message: string, error?: unknown) => {
       try {
         console.warn('[scada-canvas]', code, message);
         if (
@@ -127,9 +132,10 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
           code === 'flux-evaluate-failed' ||
           code === 'flux-deps-empty'
         ) {
+          const reportedError = error === undefined ? new Error(message) : new Error(message, { cause: error });
           rendererRuntime.env.monitor?.onError?.({
             phase: 'expression',
-            error: new Error(message),
+            error: reportedError,
             details: { code },
           });
         }

@@ -1,4 +1,5 @@
 import type { ScadaConfig, ScadaConfigDiff, ScadaPointDeclaration, ScadaSymbolNode } from './config-types.js';
+import { deepEqual } from './equality.js';
 
 const SYMBOL_KEYS: Array<keyof ScadaSymbolNode> = [
   'id',
@@ -47,24 +48,11 @@ const POINT_KEYS: Array<keyof ScadaPointDeclaration> = [
 ];
 
 function valuesEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') {
-    return a === b;
-  }
-  // plan 2026-08-04-2243-2 W5：own-keys 递归比较（stable deep-equal），key 序不影响结果。
-  // 旧实现 `JSON.stringify(a) === JSON.stringify(b)` 在异源 config（prev=exportConfig vs
-  // next=host 表达式重算）key 序不同时假阳性 → 全 reloadBindings 重建。按 a 的 own keys 逐项
-  // 在 b 中查表 + 递归，数组按 index 比较（数组序本身是语义），key 插入序不再影响判等。
-  const aRecord = a as Record<string, unknown>;
-  const bRecord = b as Record<string, unknown>;
-  const aKeys = Object.keys(aRecord);
-  const bKeys = Object.keys(bRecord);
-  if (aKeys.length !== bKeys.length) return false;
-  for (const key of aKeys) {
-    if (!Object.prototype.hasOwnProperty.call(bRecord, key)) return false;
-    if (!valuesEqual(aRecord[key], bRecord[key])) return false;
-  }
-  return true;
+  // plan 2026-08-05-0653-4 C2：与 `compound.deepEquals` 共享 `serialization/equality.ts deepEqual`
+  // （从本函数提取）。原 W5 修复（own-keys 递归 stable deep-equal，key 序不影响判等）行为不变；
+  // 共享消除 compound 路径的同类隐患（第三方 registerScadaSymbol object-typed defaults key 序不同时
+  // diffInstanceProps 产冗余 override，见 compound.test.ts Proof-C2）。详见 `equality.ts` 文档。
+  return deepEqual(a, b);
 }
 
 export function diffScadaConfig(prev: ScadaConfig, next: ScadaConfig): ScadaConfigDiff {

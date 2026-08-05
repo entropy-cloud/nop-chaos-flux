@@ -53,36 +53,54 @@ function createTolerantProbeScopeData(): Record<string, unknown> {
  * compile + probe 求值 + 读 `state.root.dependencies.paths`。probe scope 宽容，使空 scope
  * 下依赖收集可达；求值抛错（不可恢复的表达式错误）返回空集（上层按声明跳过 + 去重上报 P1-8）。
  * 禁自研表达式解析——依赖路径产出完全经平台 collector。
+ *
+ * plan 2026-08-05-0653-4 C4（multi-audit P2-6）：返回类型由 `string[]` 改为 discriminated result
+ * ——compile/createState/evaluate 失败分别归 `compile-failed`/`create-state-failed`/`evaluate-failed`
+ * （非 deps-empty，由 bridge effect 的 `flux-compile-failed`/`flux-evaluate-failed` 真报覆盖）；
+ * probe 成功但 deps 不可用（root 非 leaf-state、deps 缺失、wildcard、空 paths）归 `deps-empty`；
+ * probe 成功且 paths 非空归 `ok`。消除旧实现「全部失败塌缩为 `[]`」导致的语法坏表达式双报
+ * （`flux-deps-empty` 误报 + `flux-compile-failed` 真报）。
  */
+export type ExpressionDepsProbeResult =
+  | { status: 'ok'; paths: string[] }
+  | { status: 'compile-failed' }
+  | { status: 'create-state-failed' }
+  | { status: 'evaluate-failed' }
+  | { status: 'deps-empty' };
+
 export function extractExpressionDepsViaProbe(
   compiler: ExpressionCompiler,
   env: RendererEnv,
   expression: string,
-): string[] {
+): ExpressionDepsProbeResult {
   let compiled: ReturnType<ExpressionCompiler['compileValue']>;
   try {
     compiled = compiler.compileValue(expression);
   } catch {
-    return [];
+    return { status: 'compile-failed' };
   }
-  if (compiled.kind !== 'dynamic') return [];
+  // 静态表达式（无 scope 读）→ ok 空集（与 deps-empty 区分：静态表达式不触发诊断）
+  if (compiled.kind !== 'dynamic') return { status: 'ok', paths: [] };
   let state: ReturnType<ExpressionCompiler['createState']>;
   try {
     state = compiler.createState(compiled);
   } catch {
-    return [];
+    return { status: 'create-state-failed' };
   }
   const probeScope = createPrivateEvalScope(createTolerantProbeScopeData());
   try {
     compiler.evaluateWithState(compiled, probeScope, env, state);
   } catch {
-    return [];
+    return { status: 'evaluate-failed' };
   }
   const root = state.root;
-  if (root.kind !== 'leaf-state') return [];
+  if (root.kind !== 'leaf-state') return { status: 'deps-empty' };
   const deps: ScopeDependencySet | undefined = root.dependencies;
-  if (!deps || deps.wildcard) return [];
-  return [...deps.paths];
+  // probe 成功但 deps 不可用（缺失、wildcard、空 paths）→ deps-empty（订阅路径收集失败的真诊断）
+  if (!deps || deps.wildcard) return { status: 'deps-empty' };
+  const paths = [...deps.paths];
+  if (paths.length === 0) return { status: 'deps-empty' };
+  return { status: 'ok', paths };
 }
 
 export interface ExtractFluxScopePathsOptions {
@@ -136,14 +154,22 @@ export function analyzeFluxSubscriptions(
     // 复杂表达式（含运算符/函数调用）→ 平台依赖收集（仅当 compiler/env 提供）
     if (compiler && env && candidate !== source) {
       const expression = normalizeFluxExpression(source);
-      const deps = extractExpressionDepsViaProbe(compiler, env, expression);
-      if (deps.length > 0) {
-        for (const dep of deps) {
+      // plan 2026-08-05-0653-4 C4：probe 返 discriminated result。仅 `deps-empty` 入 depsEmptyExpressions
+      // （probe 成功但 deps 不可用）；`ok` 取 paths；compile/createState/evaluate 失败跳过（由 bridge
+      // effect 的 `flux-compile-failed`/`flux-evaluate-failed` 真报覆盖，不再产 `flux-deps-empty` 误报）。
+      const result = extractExpressionDepsViaProbe(compiler, env, expression);
+      if (result.status === 'ok') {
+        for (const dep of result.paths) {
           if (dep !== '*' && dep.length > 0) paths.add(dep);
         }
-      } else if (expressionReadsScope(candidate)) {
-        depsEmptyExpressions.push(expression);
+      } else if (result.status === 'deps-empty') {
+        // deps-empty 仅在表达式确实读 scope 时入诊断集（保留 expressionReadsScope 启发式：
+        // 排除纯字面量/纯全局名表达式，避免 `${1+2}`/`${Math.PI}` 类误报）
+        if (expressionReadsScope(candidate)) {
+          depsEmptyExpressions.push(expression);
+        }
       }
+      // compile-failed / create-state-failed / evaluate-failed → 跳过（bridge effect 真报覆盖）
     }
   }
   return { paths: [...paths].sort(), depsEmptyExpressions };
@@ -215,7 +241,16 @@ export interface UseScadaPointsBridgeArgs {
   enabled?: boolean;
   expressionCompiler: ExpressionCompiler;
   env: RendererEnv;
-  onError?: (code: string, message: string) => void;
+  /**
+   * 诊断错误回调（非升级通道，§8.1）。
+   *
+   * plan 2026-08-05-0653-4 C3（multi-audit P2-4）：第三参 `error?` 透传原始 error 实例——
+   * 旧签名 `(code, message)` 把 `error: unknown` 降为 `errorMessage(error)`（string），host 监控
+   * 无法定位 formula evaluator 源。第三参可选 → 向后兼容现有 `(code, message)` / `()` 桩。
+   * 参数序刻意保留 `(code, message, error?)` 而非 roadmap 建议的 `(code, error, message)`：
+   * 维持现有 2-arg 桩位置稳定，仅追加 `error?`。
+   */
+  onError?: (code: string, message: string, error?: unknown) => void;
 }
 
 /**
@@ -270,7 +305,9 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
   const reportOnce = useCallback((expression: string, code: string, error: unknown) => {
     if (lastReportedErrors.current.get(expression) === code) return;
     lastReportedErrors.current.set(expression, code);
-    latest.current.onError?.(code, errorMessage(error));
+    // plan 2026-08-05-0653-4 C3：透传原始 error（第三参）——host 监控可经 Error.cause 链
+    // 定位 formula evaluator 源。message 仍由 errorMessage(error) 提取（保持既有文案）。
+    latest.current.onError?.(code, errorMessage(error), error);
   }, []);
 
   // plan 2026-08-05-0325-1（W1 successor）：复杂表达式「读取 scope 但平台 collector 返空 deps」时
