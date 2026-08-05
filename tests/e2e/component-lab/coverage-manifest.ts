@@ -642,6 +642,46 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes:
       'Verify diff-view inside an openDialog surface: split view renders and a real line click dispatches onLineClick with ${lineNumber}|${side}|${type} args resolved; cross-file clamp, reaction wiring and expand/collapse in c6-5-host-surfaces.spec.ts (C6.5)',
   },
+  {
+    id: 'pull-refresh',
+    title: 'Pull Refresh',
+    tier: 'write',
+    primaryScenario: 'Host pull-refresh in dialog + onRefresh payload (C7 bug 73 pattern)',
+    notes:
+      'Verify pull-refresh inside an openDialog surface: a synthesized pull past the threshold dispatches onRefresh with ${direction}|${threshold} args resolved from the payload (C7)',
+  },
+  {
+    id: 'infinite-scroll',
+    title: 'Infinite Scroll',
+    tier: 'write',
+    primaryScenario: 'Host infinite-scroll in dialog + immediateCheck (C7 bug 73 pattern)',
+    notes:
+      'Verify infinite-scroll inside an openDialog surface: immediateCheck fires onLoadMore with ${source} resolved; failure + retry path in c7-host-surfaces.spec.ts (C7)',
+  },
+  {
+    id: 'swipe-cell',
+    title: 'Swipe Cell',
+    tier: 'write',
+    primaryScenario: 'Host swipe-cell row action (C7)',
+    notes:
+      'Verify repeated list rows with swipe-cell: swipe reveals the action region, clicking the action button dispatches onAction with ${side}|${index} resolved (row scope isolation, C7)',
+  },
+  {
+    id: 'countdown',
+    title: 'Countdown',
+    tier: 'write',
+    primaryScenario: 'Host countdown finish (C7)',
+    notes:
+      'Verify a 1.5s countdown reaches zero: data-finished flips true and onFinish dispatches with ${type} = finish resolved (C7)',
+  },
+  {
+    id: 'notice-bar',
+    title: 'Notice Bar',
+    tier: 'write',
+    primaryScenario: 'Host notice-bar close + click (C7)',
+    notes:
+      'Verify the closable bar hides after onClose, the clickable bar exposes role=button and dispatches onClick, and the static bar stays a non-focusable role=status region (C7)',
+  },
 ];
 
 /** Quick lookup by renderer id */

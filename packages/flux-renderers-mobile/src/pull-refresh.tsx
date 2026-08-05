@@ -74,6 +74,12 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   // Without this, resolving the promise after unmount schedules a timer that
   // is never cleared (the cleanup only inspects successTimerRef at unmount).
   const isMountedRef = React.useRef(true);
+  // NEW-C7-01: dispatch scope read via a ref so handleTouchEnd keeps a stable
+  // identity (React Compiler memoization preservation).
+  const nodeScopeRef = React.useRef(props.node.scope);
+  React.useEffect(() => {
+    nodeScopeRef.current = props.node.scope;
+  }, [props.node.scope]);
 
   React.useEffect(() => {
     isMountedRef.current = true;
@@ -132,9 +138,19 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
       // MA-01: a rejected onRefresh must return to 'normal' instead of locking
       // the spinner; MA-12: both branches guard against post-unmount setState.
       // Dispatch lives in the handler body (not in an updater) so React 19
-      // StrictMode does not double-invoke it (MA-02).
+      // StrictMode does not double-invoke it (MA-02). NEW-C7-01: the dispatch
+      // carries the event/evaluationBindings ctx so action args templates can
+      // read ${direction}/${threshold} from the payload (bug 83 / diff-view
+      // P1-10 family convention).
+      const refreshPayload = { type: 'refresh', direction, threshold };
       void Promise.resolve()
-        .then(() => props.events.onRefresh?.({ type: 'refresh', direction, threshold }))
+        .then(() =>
+          props.events.onRefresh?.(refreshPayload, {
+            event: refreshPayload,
+            evaluationBindings: refreshPayload,
+            scope: nodeScopeRef.current,
+          }),
+        )
         .then(() => {
           if (!isMountedRef.current) return;
           statusRef.current = 'success';

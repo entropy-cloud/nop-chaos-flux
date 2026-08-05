@@ -6,6 +6,7 @@ import {
   DATA_RENDERER_ROUTES,
   LAYOUT_RENDERER_ROUTES,
   CONTENT_RENDERER_ROUTES,
+  MOBILE_RENDERER_ROUTES,
   DOMAIN_RENDERER_ROUTES,
   parseRoute,
   buildRoute,
@@ -180,7 +181,8 @@ describe('Route inventory - live renderer coverage', () => {
       formAdvancedRendererDefinitions.length +
       dataRendererDefinitions.length +
       LAYOUT_RENDERER_ROUTES.length +
-      CONTENT_RENDERER_ROUTES.length;
+      CONTENT_RENDERER_ROUTES.length +
+      MOBILE_RENDERER_ROUTES.length;
     expect(ALL_SHARED_RENDERER_ROUTES.length).toBe(liveTotal);
   });
 });

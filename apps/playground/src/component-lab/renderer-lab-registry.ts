@@ -91,6 +91,11 @@ import {
   CarouselLabPage,
   QrcodeLabPage,
   DiffViewLabPage,
+  PullRefreshLabPage,
+  InfiniteScrollLabPage,
+  SwipeCellLabPage,
+  CountdownLabPage,
+  NoticeBarLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -185,4 +190,9 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   carousel: CarouselLabPage,
   qrcode: QrcodeLabPage,
   'diff-view': DiffViewLabPage,
+  'pull-refresh': PullRefreshLabPage,
+  'infinite-scroll': InfiniteScrollLabPage,
+  'swipe-cell': SwipeCellLabPage,
+  countdown: CountdownLabPage,
+  'notice-bar': NoticeBarLabPage,
 };

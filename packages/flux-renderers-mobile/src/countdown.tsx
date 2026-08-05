@@ -191,7 +191,14 @@ export function CountdownRenderer(props: RendererComponentProps<CountdownSchema>
     millisecond: slotProps.millisecond === true,
     format,
     onFinish: () => {
-      void props.events.onFinish?.({ type: 'finish' });
+      // NEW-C7-01: dispatch carries event/evaluationBindings ctx (bug 83
+      // family convention) so action args templates keep working.
+      const finishPayload = { type: 'finish' };
+      void props.events.onFinish?.(finishPayload, {
+        event: finishPayload,
+        evaluationBindings: finishPayload,
+        scope: props.node.scope,
+      });
     },
   });
 

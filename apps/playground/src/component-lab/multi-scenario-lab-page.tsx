@@ -12,6 +12,7 @@ import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-ad
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
+import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import type { BaseSchema, RendererEnv, ActionScope } from '@nop-chaos/flux-core';
 import { attachScopeDebugToSchema } from './scope-debug';
 
@@ -22,6 +23,7 @@ registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
 registerContentRenderers(registry);
 registerLayoutRenderers(registry);
+registerMobileRenderers(registry);
 
 const SchemaRenderer: SchemaRendererComponent = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();

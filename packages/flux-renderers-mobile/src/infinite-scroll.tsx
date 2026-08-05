@@ -68,6 +68,12 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
   React.useEffect(() => {
     onLoadMoreRef.current = props.events.onLoadMore;
   }, [props.events.onLoadMore]);
+  // NEW-C7-01: the dispatch scope is read via a ref so fireLoadMore keeps a
+  // stable identity (React Compiler memoization preservation).
+  const nodeScopeRef = React.useRef(props.node.scope);
+  React.useEffect(() => {
+    nodeScopeRef.current = props.node.scope;
+  }, [props.node.scope]);
 
   // Semantic resolution (kept as explicit booleans so implicit-truthy values
   // do not accidentally engage the guards): `hasMore === false` means the host
@@ -113,8 +119,18 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
   // and non-DEV builds stay silent.
   const fireLoadMore = React.useCallback((source: LoadMoreSource) => {
     isLoadingRef.current = true;
+    // NEW-C7-01: dispatch carries the event/evaluationBindings ctx so action
+    // args templates can read ${source} from the payload (bug 83 family
+    // convention). The scope comes from the renderer node.
+    const payload = { type: 'loadmore', source };
     try {
-      void Promise.resolve(onLoadMoreRef.current?.({ type: 'loadmore', source })).catch((err: unknown) => {
+      void Promise.resolve(
+        onLoadMoreRef.current?.(payload, {
+          event: payload,
+          evaluationBindings: payload,
+          scope: nodeScopeRef.current,
+        }),
+      ).catch((err: unknown) => {
         if (import.meta.env?.DEV) {
           console.error('[flux.infinite-scroll] onLoadMore rejected.', err);
         }

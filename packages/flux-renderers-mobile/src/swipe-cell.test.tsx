@@ -517,4 +517,56 @@ describe('SwipeCellRenderer', () => {
     expect(content.classList.contains('select-none')).toBe(true);
     expect(getComputedStyle(content).userSelect).toBe('none');
   });
+
+  it('lands the revealed region inside the row clip when open (NEW-C7-02)', async () => {
+    // NEW-C7-02: the action region must be VISIBLE inside the row when the
+    // cell is committed open. The pre-fix static translateX(-100%) placed the
+    // left region at [rowLeft - width, rowLeft] — fully outside the row's
+    // overflow:hidden clip in EVERY state — so the revealed gap was empty and
+    // the action buttons were never visible in a real browser (unit tests only
+    // asserted the content offset, never the region's screen position — bug 73
+    // pattern). These assertions FAIL against the pre-fix code.
+    const { view } = renderSwipeCell({ threshold: 30 });
+    const leftRegion = () =>
+      view.container.querySelector('[data-slot="swipe-cell-left"]') as HTMLElement;
+    const rightRegion = () =>
+      view.container.querySelector('[data-slot="swipe-cell-right"]') as HTMLElement;
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+
+    // closed: both regions off-screen (outside the overflow:hidden clip)
+    expect(leftRegion().style.transform).toBe('translateX(-100%)');
+    expect(rightRegion().style.transform).toBe('translateX(100%)');
+
+    // open-left: the left region lands at the row's left edge (visible gap)
+    fireEvent.touchStart(root, touch(50, 50));
+    fireEvent.touchMove(root, touch(120, 50));
+    fireEvent.touchEnd(root);
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-left',
+      ),
+    );
+    expect(leftRegion().style.transform).toBe('translateX(0%)');
+    expect(rightRegion().style.transform).toBe('translateX(100%)');
+  });
+
+  it('lands the right region inside the row clip when open-right (NEW-C7-02)', async () => {
+    const { view } = renderSwipeCell({ threshold: 30 });
+    const leftRegion = () =>
+      view.container.querySelector('[data-slot="swipe-cell-left"]') as HTMLElement;
+    const rightRegion = () =>
+      view.container.querySelector('[data-slot="swipe-cell-right"]') as HTMLElement;
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+
+    fireEvent.touchStart(root, touch(120, 50));
+    fireEvent.touchMove(root, touch(40, 50));
+    fireEvent.touchEnd(root);
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-right',
+      ),
+    );
+    expect(rightRegion().style.transform).toBe('translateX(0%)');
+    expect(leftRegion().style.transform).toBe('translateX(-100%)');
+  });
 });

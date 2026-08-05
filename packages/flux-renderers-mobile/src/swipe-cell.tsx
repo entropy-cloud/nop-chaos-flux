@@ -48,6 +48,13 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
     openStateRef.current = openState;
   }, [openState]);
 
+  // NEW-C7-01: dispatch scope read via a ref so the open/close/action handlers
+  // keep stable identities (React Compiler memoization preservation).
+  const nodeScopeRef = React.useRef(props.node.scope);
+  React.useEffect(() => {
+    nodeScopeRef.current = props.node.scope;
+  }, [props.node.scope]);
+
   const { state, touchHandlers, reset } = useTouch({ threshold: 10 });
 
   // OA-12: measure region widths with ResizeObserver so locale/icon/condition
@@ -114,12 +121,19 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
   const closeCell = React.useCallback(() => {
     // Dispatch lives in the handler body (not in an updater) so StrictMode
     // does not double-invoke onClose (MA-02). The ref mirror preserves the
-    // old `current !== 'closed'` re-entrancy guard.
+    // old `current !== 'closed'` re-entrancy guard. NEW-C7-01: the dispatch
+    // carries event/evaluationBindings ctx so action args templates can read
+    // ${side} (bug 83 family convention).
     const previous = openStateRef.current;
     if (previous === 'closed') return;
     openStateRef.current = 'closed';
     setOpenState('closed');
-    void props.events.onClose?.({ type: 'close', side: previous });
+    const closePayload = { type: 'close', side: previous };
+    void props.events.onClose?.(closePayload, {
+      event: closePayload,
+      evaluationBindings: closePayload,
+      scope: nodeScopeRef.current,
+    });
   }, [props.events]);
 
   const openCell = React.useCallback(
@@ -127,7 +141,12 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
       if (openStateRef.current === target) return;
       openStateRef.current = target;
       setOpenState(target);
-      void props.events.onOpen?.({ type: 'open', side: target });
+      const openPayload = { type: 'open', side: target };
+      void props.events.onOpen?.(openPayload, {
+        event: openPayload,
+        evaluationBindings: openPayload,
+        scope: nodeScopeRef.current,
+      });
     },
     [props.events],
   );
@@ -219,7 +238,12 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
       const slot = region.getAttribute('data-slot');
       const side: 'open-left' | 'open-right' =
         slot === 'swipe-cell-left' ? 'open-left' : 'open-right';
-      void onActionRef.current?.({ type: 'action', side });
+      const actionPayload = { type: 'action', side };
+      void onActionRef.current?.(actionPayload, {
+        event: actionPayload,
+        evaluationBindings: actionPayload,
+        scope: nodeScopeRef.current,
+      });
       closeCell();
     };
     container.addEventListener('click', handler, true);
@@ -296,7 +320,18 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
             top: 0,
             left: 0,
             height: '100%',
-            transform: 'translateX(-100%)',
+            // NEW-C7-02: the region must land INSIDE the revealed gap when the
+            // cell is committed open-left. The old static translateX(-100%)
+            // kept the region at [rowLeft - width, rowLeft] — fully outside the
+            // row's overflow:hidden clip in EVERY state, so the revealed area
+            // was always empty and the action buttons invisible in a real
+            // browser (unit tests only asserted the content offset, never the
+            // region's screen position — bug 73 pattern). The transform now
+            // follows the committed open state and animates with the content
+            // on the same rebound curve.
+            transform:
+              openState === 'open-left' ? 'translateX(0%)' : 'translateX(-100%)',
+            transition: isAnimating ? TRANSITION : 'none',
             display: 'flex',
             alignItems: 'stretch',
           }}
@@ -314,7 +349,11 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
             top: 0,
             right: 0,
             height: '100%',
-            transform: 'translateX(100%)',
+            // NEW-C7-02: symmetric with the left region — translateX(0%) when
+            // committed open-right, translateX(100%) (off-screen right) otherwise.
+            transform:
+              openState === 'open-right' ? 'translateX(0%)' : 'translateX(100%)',
+            transition: isAnimating ? TRANSITION : 'none',
             display: 'flex',
             alignItems: 'stretch',
           }}

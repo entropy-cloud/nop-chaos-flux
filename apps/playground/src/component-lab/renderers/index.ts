@@ -89,3 +89,8 @@ export { VideoLabPage } from './video-lab-page';
 export { CarouselLabPage } from './carousel-lab-page';
 export { QrcodeLabPage } from './qrcode-lab-page';
 export { DiffViewLabPage } from './diff-view-lab-page';
+export { PullRefreshLabPage } from './pull-refresh-lab-page';
+export { InfiniteScrollLabPage } from './infinite-scroll-lab-page';
+export { SwipeCellLabPage } from './swipe-cell-lab-page';
+export { CountdownLabPage } from './countdown-lab-page';
+export { NoticeBarLabPage } from './notice-bar-lab-page';

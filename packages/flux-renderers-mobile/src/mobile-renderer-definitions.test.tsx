@@ -69,4 +69,38 @@ describe('mobileRendererDefinitions', () => {
       'info',
     );
   });
+
+  it('pull-refresh declares onRefresh eventContracts matching its payload (C7 P1-2)', () => {
+    const def = mobileRendererDefinitions.find((d) => d.type === 'pull-refresh');
+    const contract = def?.eventContracts?.onRefresh;
+    expect(contract).toBeTruthy();
+    const fields = (contract?.payload as { fields?: Record<string, unknown> } | undefined)?.fields;
+    expect(Object.keys(fields ?? {})).toEqual(['type', 'direction', 'threshold']);
+  });
+
+  it('infinite-scroll declares onLoadMore eventContracts matching its payload (C7 P1-2)', () => {
+    const def = mobileRendererDefinitions.find((d) => d.type === 'infinite-scroll');
+    const contract = def?.eventContracts?.onLoadMore;
+    expect(contract).toBeTruthy();
+    const fields = (contract?.payload as { fields?: Record<string, unknown> } | undefined)?.fields;
+    expect(Object.keys(fields ?? {})).toEqual(['type', 'source']);
+  });
+
+  it('swipe-cell declares onAction/onOpen/onClose eventContracts matching their payloads (C7 P1-2)', () => {
+    const def = mobileRendererDefinitions.find((d) => d.type === 'swipe-cell');
+    for (const key of ['onAction', 'onOpen', 'onClose'] as const) {
+      const contract = def?.eventContracts?.[key];
+      expect(contract, `swipe-cell ${key} eventContracts`).toBeTruthy();
+      const fields = (contract?.payload as { fields?: Record<string, unknown> } | undefined)?.fields;
+      expect(Object.keys(fields ?? {})).toEqual(['type', 'side']);
+    }
+  });
+
+  it('countdown declares onFinish eventContracts matching its payload (C7 P1-2)', () => {
+    const def = mobileRendererDefinitions.find((d) => d.type === 'countdown');
+    const contract = def?.eventContracts?.onFinish;
+    expect(contract).toBeTruthy();
+    const fields = (contract?.payload as { fields?: Record<string, unknown> } | undefined)?.fields;
+    expect(Object.keys(fields ?? {})).toEqual(['type']);
+  });
 });
