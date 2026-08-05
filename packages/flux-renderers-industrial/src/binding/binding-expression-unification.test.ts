@@ -35,7 +35,7 @@ interface PipelineHarness {
 function createHarness(options?: {
   declarations?: Parameters<PointStore['loadDeclarations']>[0];
   symbols?: ConstructorParameters<typeof ReverseIndex>[0];
-  onError?: (msg: string) => void;
+  onError?: (code: string, message: string, error?: unknown) => void;
 }): PipelineHarness {
   const pointStore = new PointStore();
   pointStore.loadDeclarations(
@@ -104,7 +104,7 @@ describe('I18 表达式一元化 failing-first Proof (binding-expression-unifica
       onError,
     });
     harness.pipeline.flushFrame(harnessApply(harness));
-    const circular = onError.mock.calls.filter((call) => String(call[0]).includes('circular dependency'));
+    const circular = onError.mock.calls.filter((call) => String(call[1]).includes('circular dependency'));
     expect(circular.length).toBeGreaterThan(0);
     // init 值保留（受影响点保持上一有效值——这里 init=1 是初始值，未被环错误覆盖）
     expect(harness.pointStore.getPointValue('a')).toBe(1);
@@ -236,7 +236,7 @@ describe('I18 表达式一元化 failing-first Proof (binding-expression-unifica
     });
     harness.pipeline.flushFrame(harnessApply(harness));
     // 环错误经 evaluateBindingExpression catch 上报（消息含 'circular dependency'）
-    const cycleErrors = onError.mock.calls.filter((c) => String(c[0]).includes('circular dependency'));
+    const cycleErrors = onError.mock.calls.filter((c) => String(c[1]).includes('circular dependency'));
     expect(cycleErrors.length).toBeGreaterThan(0);
   });
 
@@ -258,7 +258,7 @@ describe('I18 表达式一元化 failing-first Proof (binding-expression-unifica
     });
     harness.pipeline.flushFrame(harnessApply(harness));
     // binding.expression 求值失败上报（key 为表达式文本；去重保证只一次）
-    const evalErrors = onError.mock.calls.filter((c) => String(c[0]).includes('expression evaluation failed'));
+    const evalErrors = onError.mock.calls.filter((c) => c[0] === 'flux-evaluate-failed' && String(c[1]).includes('expression evaluation failed'));
     expect(evalErrors.length).toBeGreaterThan(0);
   });
 
@@ -331,7 +331,8 @@ describe('I18 表达式一元化 failing-first Proof (binding-expression-unifica
       onError,
     });
     pipeline.flushFrame(() => undefined);
-    const evalErrors = onError.mock.calls.filter((c) => String(c[0]).includes('expression evaluation failed'));
+    // plan 2026-08-05-2129-3 Phase 3：compileValue 抛 → compile-failed → flux-compile-failed（对称码）。
+    const evalErrors = onError.mock.calls.filter((c) => c[0] === 'flux-compile-failed' && String(c[1]).includes('expression compilation failed'));
     expect(evalErrors.length).toBeGreaterThan(0);
   });
 

@@ -4,13 +4,15 @@ import {
   type RendererEnv,
 } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
-import type { ScadaConfig, ScadaPrimitive } from '../../serialization/config-types.js';
+import type { ScadaConfig, ScadaPrimitive, ScadaSymbolNode } from '../../serialization/config-types.js';
 import { PointStore } from '../../binding/point-store.js';
 import {
   createPrivateEvalScope,
   extractExpressionDepsViaProbe,
   isScadaPrimitive,
+  probeExpressionPaths,
   type ExpressionDepsProbeResult,
+  type FluxEvalContext,
 } from '../../binding/flux-eval.js';
 import { errorMessage } from '../scada-errors.js';
 import { RefreshPipeline, type ApplyAttrs } from '../../binding/dirty-collector.js';
@@ -83,6 +85,50 @@ export function analyzeFluxSubscriptions(
     }
   }
   return { paths: [...paths].sort(), depsEmptyExpressions };
+}
+
+/**
+ * binding.expression 直连 scope 订阅路径收集（plan 2026-08-05-2129-3 Phase 2，multi P1-1）。
+ *
+ * `analyzeFluxSubscriptions` 仅扫描 `config.variables`（flux 点声明）；当 `variables:[]` 但图元
+ * `bindings[].expression` 直连 scope 成员（如 `${scopeVal * 2}`）时，桥接层 `useScopeSelector` 的 paths
+ * 为空 → `enabled:false` + `fallback:{}` → `scopeData` 永久 `{}` → binding.expression 经 `evalScope` 求值
+ * 读 scope 成员得 undefined → NaN（契约 ①「无点表直连 scope」端到端断裂）。
+ *
+ * 本 helper 扫描 `config.symbols[].bindings[].expression`（含嵌套 children，与 `ReverseIndex.addSymbol`
+ * 同序递归），经 `probeExpressionPaths` 提取 scope 路径（与 `collectBindingPointIds` 表达式分支同源），
+ * 仅供桥接层并入 `useScopeSelector` paths 并集。仅取 `binding.expression` 派生路径（不含 `binding.point`
+ * 真实点 id）——避免把点 id 当 scope 路径订阅造成 scope 遮蔽点的语义噪音。无 compiler/env 时返空
+ * （与 `analyzeFluxSubscriptions` 复杂表达式分支退化一致）。reverseIndex 在 config reload（effect）时
+ * 重建滞后于 render，故桥接层在 render 期直接扫描 config（不读 reverseIndex）以保证时序正确。
+ */
+export function collectBindingExpressionScopePaths(
+  config: ScadaConfig,
+  options?: ExtractFluxScopePathsOptions,
+): string[] {
+  if (!options?.compiler || !options?.env) return [];
+  const context: FluxEvalContext = { compiler: options.compiler, env: options.env };
+  // 声明点 id 集：binding.expression 中的 bareword 若匹配某声明点 id，则它是点引用（经 pipeline
+  // evalScope 的 pointValues 解析），不是 scope 成员——排除以免 (a) 把点 id 当 scope 路径订阅造成
+  // scopeData 含该 id 的 undefined 遮蔽点值（merge `{...pointValues, ...scopeData}` scope 胜出），
+  // (b) 无意义的过订阅噪音。仅保留非点 id 的标识符（真正的直连 scope 成员）。
+  const pointIds = new Set((config.variables ?? []).map((decl) => decl.id));
+  const paths = new Set<string>();
+  const walk = (node: ScadaSymbolNode): void => {
+    const bindings = node.bindings;
+    if (bindings) {
+      for (const binding of Object.values(bindings)) {
+        if (binding.expression) {
+          for (const path of probeExpressionPaths(binding.expression, context)) {
+            if (path && path !== '*' && !pointIds.has(path)) paths.add(path);
+          }
+        }
+      }
+    }
+    for (const child of node.children ?? []) walk(child);
+  };
+  for (const symbol of config.symbols ?? []) walk(symbol);
+  return [...paths];
 }
 
 /** 复杂表达式经平台依赖收集产出订阅路径；deps-empty 入诊断集（plan 2026-08-05-0653-4 C4 discriminated result）。 */
@@ -179,12 +225,27 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
   const { config, runtime, enabled = true, expressionCompiler, env, onError } = args;
   // WD-2：复杂表达式订阅路径经平台依赖收集产出（compiler/env 提供给 extractor）。
   // plan 2026-08-05-0325-1：同时取 depsEmptyExpressions（probe 返空 deps 嫌疑）供诊断上报。
-  const { paths, depsEmptyExpressions } = useMemo(
+  const { paths: fluxPaths, depsEmptyExpressions } = useMemo(
     () =>
       config
         ? analyzeFluxSubscriptions(config, { compiler: expressionCompiler, env })
         : { paths: [] as string[], depsEmptyExpressions: [] as string[] },
     [config, expressionCompiler, env],
+  );
+  // plan 2026-08-05-2129-3 Phase 2（multi P1-1）：binding.expression 直连 scope 路径并入订阅并集。
+  // `variables:[]` + binding.expression 场景下，fluxPaths 为空但 bindingScopePaths 非空 →
+  // useScopeSelector enabled → scopeData 含 binding-expression 所读 scope 成员 → binding 经
+  // pipeline evalScope 正确求值（关闭「无点表直连 scope 端到端断裂」false-green）。
+  const bindingScopePaths = useMemo(
+    () => (config ? collectBindingExpressionScopePaths(config, { compiler: expressionCompiler, env }) : []),
+    [config, expressionCompiler, env],
+  );
+  const paths = useMemo(
+    () =>
+      bindingScopePaths.length === 0
+        ? fluxPaths
+        : [...new Set([...fluxPaths, ...bindingScopePaths])].sort(),
+    [fluxPaths, bindingScopePaths],
   );
   const scopeData = useScopeSelector<Record<string, unknown>, Record<string, unknown>>(
     (snapshot) => snapshot,

@@ -76,6 +76,13 @@ describe('I18.2 点表可选契约锁定（Phase 2 contract-lock）', () => {
   describe('5 场景 contract lock-in（design-data-binding.md §9.1 合并优先级）', () => {
     it('① 无点表直连：binding.expression ${scopeMember} 直连 scope 求值', () => {
       // 无 variables，binding 直接读 scope 数据
+      // plan 2026-08-05-2129-3 Phase 2（multi P1-1 false-green 边界）：本隔离测试**仅验 pipeline 层**——
+      // 直接驱动 pipeline.flushFrame 并手工注入 scopeData（createHarness → pipeline.updateScopeData），
+      // 绕过整个桥接层（useScadaPointsBridge 的 useScopeSelector 订阅）。端到端 wiring（桥接层把
+      // binding.expression 直连 scope 路径并入订阅并集 → scopeData 含 scopeMember → 推给 pipeline）
+      // 由 binding-expression-scope-integration.test.tsx 的 integration proof 覆盖（挂载真实桥接/renderer 边界）。
+      // 历史 false-green：修复前桥接层 analyzeFluxSubscriptions 仅扫 variables → paths=[] → scopeData 永久 {}
+      // → 端到端断裂，但本测试因绕过桥接层一直绿。
       const harness = createHarness(
         [],
         [

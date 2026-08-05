@@ -3,12 +3,19 @@ import type { RefreshPipeline } from '../binding/dirty-collector.js';
 import type { DirtyCollector } from '../binding/dirty-collector.js';
 import type { Unsubscribe } from '../binding/point-store.js';
 import { resolveSymbolStyle } from './style-resolver.js';
-import type { ScadaSymbolProps } from './symbol-types.js';
+import type { ScadaSymbolProps, ScadaSymbolStylePatch } from './symbol-types.js';
 
 const DECLARATION_KEYS = new Set(['states', 'bindings', 'animations', 'events']);
 
-/** 状态样式字段在 base（defaults ∪ 实例）未定义时的恢复默认值（退出状态恢复 normal 样式用）。 */
-const STYLE_RESET_DEFAULTS: Record<string, unknown> = {
+/**
+ * 状态样式字段在 base（defaults ∪ 实例）未定义时的恢复默认值（退出状态恢复 normal 样式用）。
+ *
+ * plan 2026-08-05-2129-3 Phase 4（open P1-1）结构守卫：reset map 类型为 `Record<keyof ScadaSymbolStylePatch, unknown>`
+ * ——必须覆盖 `ScadaSymbolStylePatch` 全部键（fill/stroke/strokeWidth/opacity/visible/textColor/shadow/strokeDash），
+ * 编译期穷尽检查：未来新增 style 字段而忘更新此 map 会直接 typecheck 失败（关闭「per-field 枚举总比类型契约
+ * 少一个」类缺陷，如本 Phase 修复的 shadow 离群点）。
+ */
+const STYLE_RESET_DEFAULTS: Record<keyof ScadaSymbolStylePatch, unknown> = {
   visible: true,
   opacity: 1,
   fill: '',
@@ -16,6 +23,11 @@ const STYLE_RESET_DEFAULTS: Record<string, unknown> = {
   strokeWidth: 0,
   textColor: '',
   strokeDash: [],
+  // plan 2026-08-05-2129-3 Phase 4（open P1-1）：shadow reset 值。builtin 图元（rect/ellipse/...）defaults 无
+  // shadow，退出 alarm 态（其 style 无 shadow）时 base.shadow === undefined → 落此 reset 默认。零效 shadow
+  // 对象（blur:0 + transparent）保证视觉无辉光且符合 shadow 类型契约 {x,y,blur,color}（leafer 经 toShapeAttrs
+  // 透传：shadow !== undefined → out.shadow，零效对象被接受为无可见辉光）。
+  shadow: { x: 0, y: 0, blur: 0, color: 'transparent' },
 };
 
 /**
@@ -78,8 +90,10 @@ export class StateVisualApplier {
           continue;
         }
         // revert：曾由状态样式覆盖，现已回到 base → 恢复 base 或重置默认。
-        const revert =
-          base[key] !== undefined ? base[key] : (STYLE_RESET_DEFAULTS[key] as unknown);
+        // STYLE_RESET_DEFAULTS 声明期为 `Record<keyof ScadaSymbolStylePatch, unknown>` 穷尽守卫；
+        // 此处 key 为 string（loop 变量），经 Record<string, unknown> cast 访问（DECLARATION_KEYS 已过滤非 style 键）。
+        const resetDefaults = STYLE_RESET_DEFAULTS as Record<string, unknown>;
+        const revert = base[key] !== undefined ? base[key] : resetDefaults[key];
         if (revert !== undefined) {
           if (this.collector) {
             // W3：revert 经脏收集合帧（与 active 同一帧尾 flush，单一 applyAttrs owner）。
@@ -88,8 +102,11 @@ export class StateVisualApplier {
             // 回退路径（无 collector，既有单测）：revert immediate applyAttrs。
             immediatePatch[key] = revert;
           }
-          applied.delete(key);
         }
+        // plan 2026-08-05-2129-3 Phase 4（open P1-1）防御：hoist `applied.delete(key)` 到 revert 分支内、
+        // `if (revert !== undefined)` 守卫**之外**——即使某键缺失 reset default（结构守卫已使 style 键不可能，
+        // 此处为 belt-and-suspenders），也移除追踪条目，防 applied 集泄漏 + 后续每次 applyState 重试且重败。
+        applied.delete(key);
       }
     }
     this.lastApplied.set(symbolId, applied);

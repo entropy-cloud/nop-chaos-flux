@@ -198,7 +198,10 @@ describe('StateVisualApplier (I8.2 视觉状态应用，消费 I6.3 状态机输
     engine.destroy();
   });
 
-  it('should keep fields without a resettable base value tracked (shadow revert edge)', () => {
+  it('should revert shadow on state exit (reset default covers fields without a base value)', () => {
+    // plan 2026-08-05-2129-3 Phase 4（open P1-1）：翻转既有缺陷测试。修复前 STYLE_RESET_DEFAULTS 缺 shadow
+    // → base 无 shadow 时 revert=undefined → 既不 collect 也不 applied.delete → 报警辉光永久残留 + applied 泄漏。
+    // 该测试此前把缺陷断言为预期（退出 fault 后 shadow 残留）。翻转后：退出 fault → shadow 被清除（reset default）。
     const node: ScadaSymbolNode = {
       ...pumpNode(),
       states: {
@@ -220,15 +223,16 @@ describe('StateVisualApplier (I8.2 视觉状态应用，消费 I6.3 状态机输
     });
     setFlag(0);
     flush();
-    // base 无 shadow 且无重置默认 → 保持状态值（不产生退化写入），后续再进状态仍可覆盖
+    // 修复后：退出 fault → shadow 清除为 reset default（零效 shadow：blur:0 + transparent），非永久残留
     expect((engine.getSymbolProps('pump') as { shadow?: unknown }).shadow).toEqual({
       x: 0,
       y: 0,
-      blur: 4,
-      color: '#ff0000',
+      blur: 0,
+      color: 'transparent',
     });
     setFlag(1);
     flush();
+    // 重入 fault → shadow 再次应用（applied 集未泄漏，revert 后可重新覆盖）
     expect((engine.getSymbolProps('pump') as { shadow?: unknown }).shadow).toEqual({
       x: 0,
       y: 0,

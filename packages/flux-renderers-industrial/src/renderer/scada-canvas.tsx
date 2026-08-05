@@ -175,6 +175,11 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     // （engine `EventBridge.safeRun`/`reportHandlerError` 已去重，此处仅订阅消费者）。
     onHandlerError: (error) =>
       reportDiagnostic('handler-error', error instanceof Error ? error.message : String(error)),
+    // plan 2026-08-05-2129-3 Phase 3（multi P1-2）：pipeline 层 expression-point / binding.expression /
+    // scale.expression 求值失败走同一诊断出口（reportDiagnostic），与桥接层 source:'flux' 通道对称
+    // （错误码 flux-compile-failed/flux-evaluate-failed 由 reportDiagnostic 的 monitor.onError 分支覆盖）。
+    // 此前 createBindingDomain 未接线 onError → pipeline 三类错误静默。
+    onPipelineError: reportDiagnostic,
   });
 
   // plan 2026-08-04-1558-2 Phase 1：component:destroy 后画布状态可见（OP-4）——

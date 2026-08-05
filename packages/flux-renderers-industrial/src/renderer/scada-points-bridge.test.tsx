@@ -299,10 +299,13 @@ describe('scada-canvas points bridge (I10.3)', () => {
   it('clears compiledCache on config change (Phase 3 WD-3: bounded cache lifecycle)', async () => {
     // WD-3：config 变更（含绑定域重载）时 compiledCache 清空——观察编译次数：初次 1 次 + 配置变更
     // 后再次 1 次（cache 已清空），而非累计。多次 scope 变更不重新触发编译（cache 命中）。
+    // plan 2026-08-05-2129-3 Phase 2：config 传 symbols:[]（无 binding.expression）——本用例聚焦
+    // flux 点 compiledCache 生命周期，binding-expression 探针编译（collectBindingExpressionScopePaths）
+    // 由 binding-expression-scope-integration.test.tsx 独立覆盖，此处剥离以保持编译计数可读。
     const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
     const compileSpy = vi.spyOn(expressionCompiler, 'compileValue');
 
-    let currentConfig: ScadaConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]);
+    let currentConfig: ScadaConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }], []);
 
     function ConfigSwitch({ config }: { config: ScadaConfig }) {
       const runtime = useMemo<ScadaPointsBridgeRuntime>(() => {
@@ -351,7 +354,7 @@ describe('scada-canvas points bridge (I10.3)', () => {
     expect(compileSpy).toHaveBeenCalledTimes(1);
 
     // config 变更（新身份）：compiledCache 清空 → 重新编译 1 次
-    currentConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]);
+    currentConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }], []);
     rerender(
       <ScadaTestProviders environment={environment}>
         <ConfigSwitch config={currentConfig} />
@@ -361,7 +364,7 @@ describe('scada-canvas points bridge (I10.3)', () => {
 
     // 长会话模拟：多次 config 变更，编译次数随变更次数线性增长（cache 每次重置，不累积）
     for (let i = 0; i < 5; i++) {
-      currentConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]);
+      currentConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }], []);
       rerender(
         <ScadaTestProviders environment={environment}>
           <ConfigSwitch config={currentConfig} />

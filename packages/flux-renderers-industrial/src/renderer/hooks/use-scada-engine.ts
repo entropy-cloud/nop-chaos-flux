@@ -48,6 +48,13 @@ export interface UseScadaEngineArgs {
    * 经 `latest` ref 转发（对齐 `onSymbolEvent`/`getPointValuesFor` 转发模式）。不升级画布 status（§8.1）。
    */
   onHandlerError?: (error: unknown) => void;
+  /**
+   * pipeline 表达式求值诊断出口（plan 2026-08-05-2129-3 Phase 3，multi P1-2）：pipeline 层
+   * expression-point / binding.expression / scale.expression 求值失败经此出口上报。生产由 scada-canvas
+   * 注入 `reportDiagnostic`（与桥接层 `source:'flux'` 通道同出口），错误码 flux-compile-failed /
+   * flux-evaluate-failed 与桥接层对称。
+   */
+  onPipelineError?: (code: string, message: string, error?: unknown) => void;
 }
 
 function createBindingDomain(
@@ -57,6 +64,7 @@ function createBindingDomain(
   collector: DirtyCollector,
   expressionCompiler?: ExpressionCompiler,
   env?: RendererEnv,
+  onError?: (code: string, message: string, error?: unknown) => void,
 ): { pipeline: RefreshPipeline; animator: Animator } {
   const frameRequest = { current: () => undefined as void };
   const animator = new Animator({
@@ -75,6 +83,11 @@ function createBindingDomain(
     // （覆盖无 states/无绑定图元，SL-1/m1）。
     getSymbolIds: () => engine.getSymbols().map((leaf) => leaf.id),
     animator,
+    // plan 2026-08-05-2129-3 Phase 3（multi P1-2）：pipeline 层 expression-point / binding.expression /
+    // scale.expression 求值失败经 onError 上报。生产装配由 scada-canvas 注入 reportDiagnostic（与桥接层
+    // source:'flux' 通道同出口），使 pipeline 错误可达 console.warn + env.monitor.onError（错误码
+    // flux-compile-failed/flux-evaluate-failed 与桥接层对称）。此前生产 onError 未接线 → 三类错误静默。
+    onError,
   });
   // I8.2 视觉状态应用（open-audit P1-B 接线）：消费 `state:change` 事件应用/恢复状态样式；
   // pipeline 每次重建（mount / reloadBindings）都必须重新 attach（attachTo 返回的退订句柄
@@ -177,6 +190,7 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
       collector,
       latest.current.expressionCompiler,
       latest.current.env,
+      latest.current.onPipelineError,
     );
     const applyAttrs: ApplyAttrs = (attrs) => engine.applyAttrs(attrs);
     const next: ScadaCanvasRuntime = { engine, pointStore, reverseIndex, collector, pipeline, animator, applyAttrs };
@@ -264,6 +278,7 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
         collector,
         latest.current.expressionCompiler,
         latest.current.env,
+        latest.current.onPipelineError,
       );
       // P1-2 首帧刷新：绑定域重建后无条件立即触发一次首同步（`synced=false` 全量路径，
       // 静态/表达式点绑定/状态色/when:'always' 动画首帧即应用）。触发点内置在重建之后、

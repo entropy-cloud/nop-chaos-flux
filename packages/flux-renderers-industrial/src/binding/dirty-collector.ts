@@ -147,6 +147,16 @@ export function findCircularDependencyError(error: unknown): CircularDependencyE
   return undefined;
 }
 
+/**
+ * flux 表达式求值结果（plan 2026-08-05-2129-3 Phase 3，multi P1-2）：区分编译失败 / 求值失败 / 成功，
+ * 使 `reportError` 能 emit 对称错误码 `flux-compile-failed` / `flux-evaluate-failed`（旧实现 compile/evaluate
+ * catch 塌缩为 undefined，caller 无法区分阶段）。
+ */
+type FluxEvalOutcome =
+  | { status: 'ok'; value: ScadaPrimitive | undefined }
+  | { status: 'compile-failed'; error: unknown }
+  | { status: 'evaluate-failed'; error: unknown };
+
 export interface RefreshPipelineOptions {
   pointStore: PointStore;
   reverseIndex: ReverseIndex;
@@ -171,7 +181,17 @@ export interface RefreshPipelineOptions {
   /** 状态动画引擎（状态联动：进入状态启动、退出停止）。 */
   animator?: Animator;
   onStateChange?: (payload: { symbolId: string; state: string }) => void;
-  onError?: (message: string) => void;
+  /**
+   * 表达式求值诊断错误回调（非升级通道，§8.1）。
+   *
+   * plan 2026-08-05-2129-3 Phase 3（multi P1-2）：签名对齐桥接层 `UseScadaPointsBridgeArgs.onError`
+   * `(code, message, error?)`——pipeline 层 expression-point / binding.expression / scale.expression
+   * 求值失败经此通道上报。错误码统一为 `flux-compile-failed`（编译失败）/ `flux-evaluate-failed`
+   * （求值失败 / 环 / 迭代预算超限），与桥接层 `source:'flux'` 三码族 observably symmetric。
+   * 第三参 `error?` 透传原始 error（host 监控可经 cause 链归因）。生产装配由 `createBindingDomain`
+   * 注入 `reportDiagnostic`（scada-canvas.tsx），使 pipeline 错误可达 `console.warn` + `env.monitor.onError`。
+   */
+  onError?: (code: string, message: string, error?: unknown) => void;
   scheduleTick?: FrameScheduler;
   /** 表达式点重算迭代预算（安全网；默认 10000，测试可调小）。 */
   maxExpressionIterations?: number;
@@ -322,7 +342,8 @@ export class RefreshPipeline {
     let budget = this.maxExpressionIterations;
     while (queue.length > 0) {
       if (--budget < 0) {
-        this.options.onError?.('expression recompute exceeded iteration budget');
+        // plan 2026-08-05-2129-3 Phase 3：迭代预算超限为求值期安全网 → flux-evaluate-failed（对称码）。
+        this.options.onError?.('flux-evaluate-failed', 'expression recompute exceeded iteration budget');
         break;
       }
       const pointId = queue.shift() as string;
@@ -343,15 +364,29 @@ export class RefreshPipeline {
     this.lastDeps.set(pointId, this.probeDeps(expression));
     if (!this.options.compiler || !this.options.env) return false;
     try {
-      const value = this.evaluateExpressionPoint(pointId);
-      if (value === undefined) {
-        this.reportError(pointId, 'expression evaluation failed');
+      const outcome = this.evaluateExpressionPoint(pointId);
+      if (outcome.status === 'compile-failed') {
+        this.reportError(pointId, 'flux-compile-failed', 'expression compilation failed', outcome.error);
+        return false;
+      }
+      if (outcome.status === 'evaluate-failed') {
+        this.reportError(pointId, 'flux-evaluate-failed', 'expression evaluation failed', outcome.error);
+        return false;
+      }
+      if (outcome.value === undefined) {
+        this.reportError(pointId, 'flux-evaluate-failed', 'expression evaluation failed');
         return false;
       }
       this.lastError.delete(pointId);
-      return this.options.pointStore.setPointValue(pointId, value);
+      return this.options.pointStore.setPointValue(pointId, outcome.value);
     } catch (error) {
-      this.reportError(pointId, error instanceof Error ? error.message : String(error));
+      // CircularDependencyError 经 evaluateFlux 重新抛出到达此处；cycle 为求值期失败 → flux-evaluate-failed。
+      this.reportError(
+        pointId,
+        'flux-evaluate-failed',
+        error instanceof Error ? error.message : String(error),
+        error,
+      );
       return false;
     }
   }
@@ -359,14 +394,17 @@ export class RefreshPipeline {
   /**
    * 表达式点递归求值（I18 flux 一元化）：经 flux compiler 编译 + 私有求值 scope 求值。
    * 环检测（active 栈）保留（binding-cycle Failure Path）。不回写 store——由调用方写入。
+   *
+   * plan 2026-08-05-2129-3 Phase 3：返 `FluxEvalOutcome`（区分编译/求值失败），供 syncExpressionPoint
+   * emit 对称错误码。buildEvalScope 的懒求值路径仅取 `.value`（不诊断）。
    */
-  private evaluateExpressionPoint(pointId: string): ScadaPrimitive | undefined {
+  private evaluateExpressionPoint(pointId: string): FluxEvalOutcome {
     if (this.active.has(pointId)) {
       throw new CircularDependencyError(pointId);
     }
     const state = this.options.pointStore.getPointState(pointId);
-    if (!state) return undefined;
-    if (state.declaration.source !== 'expression') return state.value;
+    if (!state) return { status: 'ok', value: undefined };
+    if (state.declaration.source !== 'expression') return { status: 'ok', value: state.value };
     this.active.add(pointId);
     try {
       return this.evaluateFlux(state.declaration.expression ?? '');
@@ -377,12 +415,16 @@ export class RefreshPipeline {
 
   /** `${expr}` 编译 + 求值（缓存 compiled）。eval scope 合并 pointValues + scopeData（scope 胜出）。
    *
-   * 异常策略：compile/evaluate 失败吞掉返回 undefined（由 syncExpressionPoint 上报 'expression evaluation failed'）；
-   * 但 `CircularDependencyError` 经 `isCircularDependencyError` 守卫重新抛出，使 binding-cycle 失败路径
-   * 在 syncExpressionPoint 的 try/catch 中以 'circular dependency involving point: ...' 上报（去重）。
+   * plan 2026-08-05-2129-3 Phase 3：返 `FluxEvalOutcome` 区分编译失败 / 求值失败 / 成功，使 caller 能
+   * emit 对称错误码（`flux-compile-failed` / `flux-evaluate-failed`）。旧实现 compile/evaluate catch 塌缩为
+   * undefined → caller 无法区分阶段。
+   *
+   * 异常策略：compile/evaluate 失败捕获并标记 phase 返回（由 caller 上报对应错误码）；
+   * `CircularDependencyError` 经 `findCircularDependencyError` 守卫重新抛出，使 binding-cycle 失败路径
+   * 在 caller 的 try/catch 中以 'circular dependency involving point: ...' 上报（去重）。
    */
-  private evaluateFlux(expression: string): ScadaPrimitive | undefined {
-    if (!this.options.compiler || !this.options.env) return undefined;
+  private evaluateFlux(expression: string): FluxEvalOutcome {
+    if (!this.options.compiler || !this.options.env) return { status: 'ok', value: undefined };
     const normalized = expression.trim().startsWith('${') ? expression.trim() : `\${${expression.trim()}}`;
     let compiled = this.compiledCache.get(normalized);
     if (compiled === undefined) {
@@ -391,18 +433,18 @@ export class RefreshPipeline {
       } catch (error) {
         const cycle = findCircularDependencyError(error);
         if (cycle) throw cycle;
-        return undefined;
+        return { status: 'compile-failed', error };
       }
       this.compiledCache.set(normalized, compiled);
     }
     const scope = this.buildEvalScope();
     try {
       const value = this.options.compiler.evaluateValue(compiled, scope, this.options.env);
-      return isScadaPrimitive(value) ? value : undefined;
+      return { status: 'ok', value: isScadaPrimitive(value) ? value : undefined };
     } catch (error) {
       const cycle = findCircularDependencyError(error);
       if (cycle) throw cycle;
-      return undefined;
+      return { status: 'evaluate-failed', error };
     }
   }
 
@@ -410,15 +452,28 @@ export class RefreshPipeline {
   private evaluateBindingExpression(expression: string): ScadaPrimitive | undefined {
     if (!this.options.compiler || !this.options.env) return undefined;
     try {
-      const value = this.evaluateFlux(expression);
-      if (value === undefined) {
-        this.reportError(expression, 'expression evaluation failed');
+      const outcome = this.evaluateFlux(expression);
+      if (outcome.status === 'compile-failed') {
+        this.reportError(expression, 'flux-compile-failed', 'expression compilation failed', outcome.error);
+        return undefined;
+      }
+      if (outcome.status === 'evaluate-failed') {
+        this.reportError(expression, 'flux-evaluate-failed', 'expression evaluation failed', outcome.error);
+        return undefined;
+      }
+      if (outcome.value === undefined) {
+        this.reportError(expression, 'flux-evaluate-failed', 'expression evaluation failed');
         return undefined;
       }
       this.lastError.delete(expression);
-      return value;
+      return outcome.value;
     } catch (error) {
-      this.reportError(expression, error instanceof Error ? error.message : String(error));
+      this.reportError(
+        expression,
+        'flux-evaluate-failed',
+        error instanceof Error ? error.message : String(error),
+        error,
+      );
       return undefined;
     }
   }
@@ -456,7 +511,8 @@ export class RefreshPipeline {
         if (val !== undefined) return val;
         const state = pointStore.getPointState(path);
         if (state?.declaration.source === 'expression') {
-          const resolved = this.evaluateExpressionPoint(path);
+          const outcome = this.evaluateExpressionPoint(path);
+          const resolved = outcome.status === 'ok' ? outcome.value : undefined;
           if (resolved !== undefined) pointStore.setPointValue(path, resolved);
           return resolved;
         }
@@ -582,9 +638,9 @@ export class RefreshPipeline {
     }
   }
 
-  private reportError(key: string, error: string): void {
+  private reportError(key: string, code: string, message: string, error?: unknown): void {
     if (this.lastError.has(key)) return;
     this.lastError.add(key);
-    this.options.onError?.(error);
+    this.options.onError?.(code, message, error);
   }
 }

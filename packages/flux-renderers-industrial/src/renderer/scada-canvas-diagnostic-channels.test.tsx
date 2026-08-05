@@ -296,3 +296,113 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
     ).toHaveLength(0);
   });
 });
+
+/**
+ * plan 2026-08-05-2129-3 Phase 3（multi P1-2）：pipeline 层 onError 通道生产接线回归。
+ *
+ * 关键：binding.expression / scale.expression / source:'expression' 点的求值失败经 **pipeline 层**
+ * （`RefreshPipeline.onError` → `createBindingDomain` 注入的 `reportDiagnostic`）上报，而非桥接层。
+ * 修复前 `createBindingDomain` 构造 `RefreshPipeline` 时无 `onError` → pipeline 三类求值错误全部静默
+ * （对比：桥接层 `source:'flux'` 通道已接线，即上方 P1-1 用例）。
+ *
+ * 对称性证明：本 describe 覆盖 binding.expression（pipeline 通道），与上方 source:'flux'（桥接通道）
+ * 走**同一** `reportDiagnostic` 出口 + **同一**错误码族（flux-compile-failed/flux-evaluate-failed），
+ * 关闭「三个声明源 observably asymmetric」（multi P1-2 closure surface）。
+ */
+describe('scada-canvas pipeline diagnostic channel wiring (plan 2026-08-05-2129-3 Phase 3)', () => {
+  it('surfaces binding.expression evaluate failures through the pipeline-level diagnostic outlet (multi P1-2)', async () => {
+    const monitorSpy = vi.fn();
+    const dispatch = vi.fn().mockResolvedValue({ ok: true });
+    const environment = createScadaTestEnvironment([], {});
+    environment.runtime.env.monitor = { onError: monitorSpy };
+    // 无 flux 点（variables:[]）+ binding.expression 直连未声明标识符 → pipeline evaluateBindingExpression
+    // 求值期抛（成员访问 undefined）→ evaluate-failed → onError('flux-evaluate-failed', ...) → reportDiagnostic。
+    const bindingConfig = validCanvasConfig({
+      version: 1,
+      variables: [],
+      symbols: [
+        {
+          id: 'sym',
+          type: 'scada-rect',
+          x: 0,
+          y: 0,
+          width: 50,
+          height: 50,
+          bindings: { fill: { expression: '${ghostRef.foo}' } },
+        },
+      ],
+    });
+    renderScadaCanvas(
+      makeScadaCanvasProps({
+        cid: 21,
+        props: { config: configProp(bindingConfig) },
+        node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
+        helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
+      }),
+      environment,
+    );
+    await waitFor(() => expect(scadaTestHandle(21)).toBeDefined());
+
+    // pipeline 层错误经 createBindingDomain 注入的 reportDiagnostic 到达同一诊断出口
+    await waitFor(() => expect(warnReported(warnSpy, 'flux-evaluate-failed')).toBe(true));
+    await waitFor(() => expect(monitorSpy).toHaveBeenCalled());
+    const monitorPayload = monitorSpy.mock.calls[0][0] as { phase: string; details?: { code?: string } };
+    expect(monitorPayload.phase).toBe('expression');
+    expect(monitorPayload.details?.code).toBe('flux-evaluate-failed');
+
+    // 画布保持 ready（诊断 ≠ status 升级，§8.1）
+    expect(document.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status')).toBe('ready');
+    expect(document.querySelector('[data-slot="scada-canvas-error"]')).toBeNull();
+  });
+
+  it('source:flux (bridge) and binding.expression (pipeline) errors share the same diagnostic outlet + code family (symmetry, multi P1-2)', async () => {
+    // 对称性：两个声明源（flux 点 / binding.expression）的求值失败都经同一 reportDiagnostic 出口 +
+    // flux-evaluate-failed 码到达 monitor.onError（关闭「三个声明源 observably asymmetric」）。
+    const monitorSpy = vi.fn();
+    const dispatch = vi.fn().mockResolvedValue({ ok: true });
+    const environment = createScadaTestEnvironment([], { analog: { temp: null } });
+    environment.runtime.env.monitor = { onError: monitorSpy };
+    // 同时含 flux 点（bridge 通道）+ binding.expression（pipeline 通道），两者都求值失败
+    const mixedConfig = validCanvasConfig({
+      version: 1,
+      variables: [{ id: 'temp', source: 'flux', flux: '${analog.temp.value}' }],
+      symbols: [
+        {
+          id: 'sym',
+          type: 'scada-rect',
+          x: 0,
+          y: 0,
+          width: 50,
+          height: 50,
+          text: 'init',
+          bindings: {
+            text: { point: 'temp' },
+            fill: { expression: '${ghostRef.foo}' },
+          },
+        },
+      ],
+    });
+    renderScadaCanvas(
+      makeScadaCanvasProps({
+        cid: 22,
+        props: { config: configProp(mixedConfig) },
+        node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
+        helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
+      }),
+      environment,
+    );
+    await waitFor(() => expect(scadaTestHandle(22)).toBeDefined());
+
+    // 两通道都到达 monitor.onError，phase 均为 expression，code 均属 flux-* 码族
+    await waitFor(() => expect(monitorSpy.mock.calls.length).toBeGreaterThanOrEqual(1));
+    const codes = monitorSpy.mock.calls.map(
+      (call) => (call[0] as { details?: { code?: string } }).details?.code,
+    );
+    // flux 点（bridge）与 binding.expression（pipeline）都 emit flux-evaluate-failed（同码族、同出口）
+    expect(codes.filter((c) => c === 'flux-evaluate-failed').length).toBeGreaterThanOrEqual(1);
+    for (const call of monitorSpy.mock.calls) {
+      const payload = call[0] as { phase: string };
+      expect(payload.phase).toBe('expression');
+    }
+  });
+});

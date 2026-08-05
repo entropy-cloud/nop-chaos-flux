@@ -319,8 +319,9 @@ describe('always-animation startup for stateless/unbound symbols (plan 2026-08-0
   it('reports expression evaluation errors through onError (dirty-collector error path coverage)', () => {
     // I18 表达式一元化：表达式点经 flux compiler 编译/求值，失败上报 'expression evaluation failed'（去重）。
     // `${unclosed.foo}` 在 flux-formula evaluate 阶段对 undefined 标识符取成员属性 → throw → evaluateFlux
-    // catch 吞为 undefined → syncExpressionPoint 上报。
-    const errors: string[] = [];
+    // catch 标记 evaluate-failed → syncExpressionPoint 上报。
+    // plan 2026-08-05-2129-3 Phase 3：onError 签名 (code, message, error?)——求值失败 → flux-evaluate-failed。
+    const errors: Array<{ code: string; message: string }> = [];
     const pointStore = new PointStore();
     pointStore.loadDeclarations([
       { id: 'expr', source: 'expression', expression: '${unclosed.foo}' },
@@ -336,12 +337,14 @@ describe('always-animation startup for stateless/unbound symbols (plan 2026-08-0
       collector,
       compiler: expressionCompiler,
       env,
-      onError: (msg) => errors.push(msg),
+      onError: (code, message) => errors.push({ code, message }),
       scheduleTick: () => () => undefined,
     });
     pipeline.flushFrame(() => undefined);
-    // 表达式求值失败上报（去重：同表达式同错误只一次）
+    // 表达式求值失败上报（去重：同表达式同错误只一次），错误码 flux-evaluate-failed（对称码）
     expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]!.code).toBe('flux-evaluate-failed');
+    expect(errors[0]!.message).toContain('expression evaluation failed');
     const firstCount = errors.length;
     pipeline.flushFrame(() => undefined);
     expect(errors.length).toBe(firstCount); // 去重生效
