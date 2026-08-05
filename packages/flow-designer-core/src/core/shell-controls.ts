@@ -1,11 +1,27 @@
-import type { DesignerEvent, GraphDocument } from '../types.js';
+import type {
+  DesignerEvent,
+  DesignerShellConfig,
+  DesignerShellPanelConfig,
+  GraphDocument,
+} from '../types.js';
 import { cloneDocument } from './clone.js';
 import {
+  DEFAULT_SHELL_MAX_WIDTH,
+  DEFAULT_SHELL_MIN_WIDTH,
   resetShellViewportFromDocument,
   setShellClipboard,
   setShellViewport,
   type DesignerShellState,
 } from './shell-state.js';
+
+function clampShellWidth(
+  panel: DesignerShellPanelConfig | undefined,
+  width: number,
+): number {
+  const min = panel?.minWidth ?? DEFAULT_SHELL_MIN_WIDTH;
+  const max = panel?.maxWidth ?? DEFAULT_SHELL_MAX_WIDTH;
+  return Math.min(Math.max(width, min), max);
+}
 
 export function createShellControls(args: {
   getDocument: () => GraphDocument;
@@ -16,6 +32,7 @@ export function createShellControls(args: {
   emit: (event: DesignerEvent) => void;
   updateDirtyState: () => void;
   shellState: DesignerShellState;
+  shellConfig?: DesignerShellConfig;
   getTransactionDepth: () => number;
 }) {
   function copySelection(activeNodeId: string | null) {
@@ -92,6 +109,26 @@ export function createShellControls(args: {
     args.emit({ type: 'inspectorCollapseChanged', collapsed: args.shellState.inspectorCollapsed });
   }
 
+  function setPaletteWidth(width: number) {
+    const nextWidth = clampShellWidth(args.shellConfig?.palette, width);
+    if (args.shellState.paletteWidth === nextWidth) {
+      return;
+    }
+
+    args.shellState.paletteWidth = nextWidth;
+    args.emit({ type: 'paletteWidthChanged', width: nextWidth });
+  }
+
+  function setInspectorWidth(width: number) {
+    const nextWidth = clampShellWidth(args.shellConfig?.inspector, width);
+    if (args.shellState.inspectorWidth === nextWidth) {
+      return;
+    }
+
+    args.shellState.inspectorWidth = nextWidth;
+    args.emit({ type: 'inspectorWidthChanged', width: nextWidth });
+  }
+
   function setViewport(newViewport: { x: number; y: number; zoom: number }) {
     if (!setShellViewport(args.shellState, newViewport)) {
       return;
@@ -125,6 +162,8 @@ export function createShellControls(args: {
     setPaletteCollapsed,
     toggleInspector,
     setInspectorCollapsed,
+    setPaletteWidth,
+    setInspectorWidth,
     setViewport,
     replaceDocumentFromHost,
   };

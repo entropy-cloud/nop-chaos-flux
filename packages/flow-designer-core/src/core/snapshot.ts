@@ -48,6 +48,8 @@ export function createDesignerSnapshotCache(input: {
       gridEnabled: input.shell.gridEnabled,
       paletteCollapsed: input.shell.paletteCollapsed,
       inspectorCollapsed: input.shell.inspectorCollapsed,
+      paletteWidth: input.shell.paletteWidth,
+      inspectorWidth: input.shell.inspectorWidth,
       viewport: input.shell.viewport,
     },
   };
@@ -94,6 +96,8 @@ export function getDesignerSnapshot(input: {
     input.cache.snapshot.gridEnabled === input.shell.gridEnabled &&
     input.cache.snapshot.paletteCollapsed === input.shell.paletteCollapsed &&
     input.cache.snapshot.inspectorCollapsed === input.shell.inspectorCollapsed &&
+    input.cache.snapshot.paletteWidth === input.shell.paletteWidth &&
+    input.cache.snapshot.inspectorWidth === input.shell.inspectorWidth &&
     input.cache.snapshot.viewport === input.shell.viewport
   ) {
     return input.cache.snapshot;
@@ -113,6 +117,8 @@ export function getDesignerSnapshot(input: {
     gridEnabled: input.shell.gridEnabled,
     paletteCollapsed: input.shell.paletteCollapsed,
     inspectorCollapsed: input.shell.inspectorCollapsed,
+    paletteWidth: input.shell.paletteWidth,
+    inspectorWidth: input.shell.inspectorWidth,
     viewport: input.shell.viewport,
   };
 

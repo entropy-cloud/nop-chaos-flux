@@ -106,6 +106,7 @@ export function createDesignerActionProvider(
         'togglePalette',
         'toggleInspector',
         'setViewport',
+        'setPanelWidths',
         'save',
         'restore',
         'copySelection',
@@ -385,6 +386,14 @@ export function createDesignerActionProvider(
               y: 0,
               zoom: 1,
             },
+          });
+          return toActionResult(result);
+        }
+        case 'setPanelWidths': {
+          const result = adapter.execute({
+            type: 'setPanelWidths',
+            paletteWidth: typeof args.paletteWidth === 'number' ? args.paletteWidth : undefined,
+            inspectorWidth: typeof args.inspectorWidth === 'number' ? args.inspectorWidth : undefined,
           });
           return toActionResult(result);
         }

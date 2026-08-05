@@ -10,6 +10,7 @@ export function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfi
     nodeTypes,
     edgeTypes,
     palette: config.palette,
+    shell: config.shell,
     toolbar: config.toolbar,
     shortcuts: {
       undo: ['Ctrl+Z', 'Cmd+Z'],

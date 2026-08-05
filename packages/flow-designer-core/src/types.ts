@@ -73,6 +73,7 @@ export interface DesignerConfig {
   nodeTypes: NodeTypeConfig[];
   edgeTypes?: EdgeTypeConfig[];
   palette?: PaletteConfig;
+  shell?: DesignerShellConfig;
   toolbar?: ToolbarConfig;
   shortcuts?: ShortcutsConfig;
   features?: DesignerFeatures;
@@ -181,6 +182,18 @@ export interface PaletteConfig {
   groups: PaletteGroupConfig[];
 }
 
+export interface DesignerShellPanelConfig {
+  resizable?: boolean;
+  width?: number;
+  minWidth?: number;
+  maxWidth?: number;
+}
+
+export interface DesignerShellConfig {
+  palette?: DesignerShellPanelConfig;
+  inspector?: DesignerShellPanelConfig;
+}
+
 export interface PaletteGroupConfig {
   id: string;
   label: string;
@@ -265,6 +278,7 @@ export interface NormalizedDesignerConfig {
   nodeTypes: Map<string, NodeTypeConfig>;
   edgeTypes: Map<string, EdgeTypeConfig>;
   palette?: PaletteConfig;
+  shell?: DesignerShellConfig;
   toolbar?: ToolbarConfig;
   shortcuts: ShortcutsConfig;
   features: DesignerFeatures;
@@ -306,6 +320,8 @@ export interface DesignerSnapshot {
   gridEnabled: boolean;
   paletteCollapsed: boolean;
   inspectorCollapsed: boolean;
+  paletteWidth: number;
+  inspectorWidth: number;
   viewport: { x: number; y: number; zoom: number };
 }
 
@@ -325,6 +341,8 @@ export type DesignerEvent =
   | { type: 'gridToggled'; enabled: boolean }
   | { type: 'paletteCollapseChanged'; collapsed: boolean }
   | { type: 'inspectorCollapseChanged'; collapsed: boolean }
+  | { type: 'paletteWidthChanged'; width: number }
+  | { type: 'inspectorWidthChanged'; width: number }
   | { type: 'transactionStarted'; transactionId: string; label?: string }
   | { type: 'transactionCommitted'; transactionId: string }
   | { type: 'transactionRolledBack'; transactionId: string }

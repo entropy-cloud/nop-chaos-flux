@@ -60,6 +60,7 @@ export type DesignerCommand =
   | { type: 'selectEdge'; edgeId: string | null }
   | { type: 'selectNode'; nodeId: string | null }
   | { type: 'setViewport'; viewport: { x: number; y: number; zoom: number } }
+  | { type: 'setPanelWidths'; paletteWidth?: number; inspectorWidth?: number }
   | { type: 'toggleGrid' }
   | { type: 'togglePalette' }
   | { type: 'toggleInspector' }

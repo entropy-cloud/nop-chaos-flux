@@ -70,6 +70,9 @@ export interface DesignerCore {
   toggleInspector(): void;
   setInspectorCollapsed(collapsed: boolean): void;
 
+  setPaletteWidth(width: number): void;
+  setInspectorWidth(width: number): void;
+
   setViewport(viewport: { x: number; y: number; zoom: number }): void;
   replaceDocument(document: GraphDocument, treeDocument?: TreeDocument): void;
   replaceDocumentFromHost(document: GraphDocument, treeDocument?: TreeDocument): void;

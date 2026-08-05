@@ -89,6 +89,8 @@ function createEmptySnapshot(): DesignerSnapshot {
     readonly: false,
     paletteCollapsed: false,
     inspectorCollapsed: false,
+    paletteWidth: 240,
+    inspectorWidth: 352,
   };
 }
 
@@ -199,6 +201,8 @@ describe('Flow Designer Parity Components', () => {
         gridEnabled: true,
         paletteCollapsed: false,
         inspectorCollapsed: false,
+        paletteWidth: 240,
+        inspectorWidth: 352,
       };
 
       render(
@@ -257,6 +261,8 @@ describe('Flow Designer Parity Components', () => {
         gridEnabled: true,
         paletteCollapsed: false,
         inspectorCollapsed: false,
+        paletteWidth: 240,
+        inspectorWidth: 352,
       };
 
       render(
@@ -316,6 +322,8 @@ describe('Flow Designer Parity Components', () => {
         gridEnabled: true,
         paletteCollapsed: false,
         inspectorCollapsed: false,
+        paletteWidth: 240,
+        inspectorWidth: 352,
       };
 
       render(

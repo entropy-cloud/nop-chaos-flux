@@ -294,6 +294,17 @@ const designerCapabilities: HostCapabilityContract = {
       },
       description: 'Set canvas viewport',
     },
+    setPanelWidths: {
+      args: {
+        kind: 'object',
+        fields: {
+          paletteWidth: { kind: 'number' },
+          inspectorWidth: { kind: 'number' },
+        },
+        optional: ['paletteWidth', 'inspectorWidth'],
+      },
+      description: 'Set palette and/or inspector panel widths',
+    },
     save: {
       description: 'Save current document state',
     },

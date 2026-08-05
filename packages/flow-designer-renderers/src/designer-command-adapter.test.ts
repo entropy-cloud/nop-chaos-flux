@@ -253,6 +253,36 @@ describe('createDesignerCommandAdapter', () => {
     expect(secondResult.snapshot.inspectorCollapsed).toBe(true);
   });
 
+  it('maps setPanelWidths command to core palette/inspector width APIs', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+
+    const result = adapter.execute({
+      type: 'setPanelWidths',
+      paletteWidth: 300,
+      inspectorWidth: 420,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.snapshot.paletteWidth).toBe(300);
+    expect(result.snapshot.inspectorWidth).toBe(420);
+  });
+
+  it('setPanelWidths updates only the provided side', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+
+    const result = adapter.execute({ type: 'setPanelWidths', paletteWidth: 300 });
+
+    expect(result.ok).toBe(true);
+    expect(result.snapshot.paletteWidth).toBe(300);
+    expect(result.snapshot.inspectorWidth).toBe(352);
+
+    const snapshot = core.getSnapshot();
+    expect(snapshot.paletteWidth).toBe(300);
+    expect(snapshot.inspectorWidth).toBe(352);
+  });
+
   it('rewires edges in one replace when inserting a chain node', () => {
     const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
     const adapter = createDesignerCommandAdapter(core);

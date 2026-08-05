@@ -77,7 +77,7 @@ export function createDesignerCore(
   let savedRevision = 0;
 
   let selectionState: DesignerSelectionState = createSelectionState();
-  const shellState = createDesignerShellState(doc);
+  const shellState = createDesignerShellState(doc, config.shell);
   const snapshotCache = createDesignerSnapshotCache({
     doc,
     selectionState,
@@ -247,6 +247,7 @@ export function createDesignerCore(
     emit,
     updateDirtyState,
     shellState,
+    shellConfig: config.shell,
     getTransactionDepth: () => transactionStack.length,
   });
 
@@ -438,6 +439,14 @@ export function createDesignerCore(
 
   function setInspectorCollapsed(collapsed: boolean): void {
     shellControls.setInspectorCollapsed(collapsed);
+  }
+
+  function setPaletteWidth(width: number): void {
+    shellControls.setPaletteWidth(width);
+  }
+
+  function setInspectorWidth(width: number): void {
+    shellControls.setInspectorWidth(width);
   }
 
   function setViewport(newViewport: { x: number; y: number; zoom: number }): void {
@@ -643,6 +652,8 @@ export function createDesignerCore(
     setPaletteCollapsed,
     toggleInspector,
     setInspectorCollapsed,
+    setPaletteWidth,
+    setInspectorWidth,
     setViewport,
     replaceDocument: replaceDocumentWithHistory,
     replaceDocumentFromHost,

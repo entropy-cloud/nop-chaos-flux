@@ -79,6 +79,8 @@ export function DesignerCanvasContent(props: {
       gridEnabled: state.gridEnabled,
       paletteCollapsed: state.paletteCollapsed,
       inspectorCollapsed: state.inspectorCollapsed,
+      paletteWidth: state.paletteWidth,
+      inspectorWidth: state.inspectorWidth,
       viewport: state.viewport,
     }),
     (left, right) =>
@@ -94,6 +96,8 @@ export function DesignerCanvasContent(props: {
       left.gridEnabled === right.gridEnabled &&
       left.paletteCollapsed === right.paletteCollapsed &&
       left.inspectorCollapsed === right.inspectorCollapsed &&
+      left.paletteWidth === right.paletteWidth &&
+      left.inspectorWidth === right.inspectorWidth &&
       left.viewport === right.viewport,
   );
   const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);

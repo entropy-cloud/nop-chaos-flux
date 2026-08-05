@@ -444,6 +444,40 @@ describe('createDesignerActionProvider', () => {
     expect(core.getSnapshot().doc.edges).toEqual([]);
     expect(core.getSnapshot().selection.selectedNodeIds).toEqual([]);
   });
+
+  it('registers designer:setPanelWidths and maps it to core shell width APIs', async () => {
+    const core = createDesignerCore(
+      {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 },
+      },
+      {
+        version: '1.0.0',
+        kind: 'flow',
+        nodeTypes: [{ id: 'task', label: 'Task', defaults: {} }],
+        edgeTypes: [{ id: 'default', label: 'Flow', defaults: {} }],
+        palette: { groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task'] }] },
+      },
+    );
+    const provider = createDesignerActionProvider(core);
+
+    expect(provider.listMethods()).toContain('setPanelWidths');
+
+    const result = await provider.invoke(
+      'setPanelWidths',
+      { paletteWidth: 300, inspectorWidth: 420 },
+      {} as unknown as ActionContext,
+    );
+
+    expect(result).toMatchObject({ ok: true });
+    expect(core.getSnapshot().paletteWidth).toBe(300);
+    expect(core.getSnapshot().inspectorWidth).toBe(420);
+  });
 });
 
 describe('DesignerIcon markers', () => {
@@ -585,6 +619,16 @@ describe('flow-designer manifest', () => {
     expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods.copySelection).toBeTruthy();
     expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods.pasteClipboard).toBeTruthy();
     expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods['navigate-back']).toBeUndefined();
+  });
+
+  it('manifest publishes the setPanelWidths method contract', async () => {
+    const { FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest.js');
+    const method = FLOW_DESIGNER_MANIFEST_V1.capabilities.methods.setPanelWidths;
+    expect(method).toBeTruthy();
+    const args = method?.args as { fields?: Record<string, unknown>; optional?: string[] } | undefined;
+    expect(args?.fields?.paletteWidth).toBeTruthy();
+    expect(args?.fields?.inspectorWidth).toBeTruthy();
+    expect(args?.optional).toEqual(['paletteWidth', 'inspectorWidth']);
   });
 
   it('buildDesignerScopeData stays aligned with the published manifest projection', async () => {

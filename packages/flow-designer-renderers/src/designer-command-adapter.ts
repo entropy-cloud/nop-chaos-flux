@@ -227,6 +227,14 @@ export function createDesignerCommandAdapter(
       case 'toggleGrid':
         core.toggleGrid();
         return createSuccess(core);
+      case 'setPanelWidths':
+        if (command.paletteWidth !== undefined) {
+          core.setPaletteWidth(command.paletteWidth);
+        }
+        if (command.inspectorWidth !== undefined) {
+          core.setInspectorWidth(command.inspectorWidth);
+        }
+        return createSuccess(core);
       case 'togglePalette':
         core.togglePalette();
         return createSuccess(core);

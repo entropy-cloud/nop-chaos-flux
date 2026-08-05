@@ -114,6 +114,8 @@ export function DesignerPageBody({
     () => ({
       paletteCollapsed: statusSnapshot.paletteCollapsed,
       inspectorCollapsed: statusSnapshot.inspectorCollapsed,
+      paletteWidth: statusSnapshot.paletteWidth,
+      inspectorWidth: statusSnapshot.inspectorWidth,
       canUndo: statusSnapshot.canUndo,
       canRedo: statusSnapshot.canRedo,
       isDirty: statusSnapshot.isDirty,
@@ -128,8 +130,10 @@ export function DesignerPageBody({
       statusSnapshot.canRedo,
       statusSnapshot.canUndo,
       statusSnapshot.inspectorCollapsed,
+      statusSnapshot.inspectorWidth,
       statusSnapshot.isDirty,
       statusSnapshot.paletteCollapsed,
+      statusSnapshot.paletteWidth,
       statusSnapshot.selection,
       statusSnapshot.readonly,
     ],
@@ -476,6 +480,11 @@ export function DesignerPageBody({
           leftCollapsed={uiSnapshot.paletteCollapsed}
           onLeftToggle={() => dispatch({ type: 'togglePalette' })}
           leftLabel={t('flux.flowDesigner.expandPalette')}
+          leftResizable={config.shell?.palette?.resizable}
+          leftWidth={uiSnapshot.paletteWidth}
+          onLeftWidthChange={(width) => dispatch({ type: 'setPanelWidths', paletteWidth: width })}
+          leftMinWidth={config.shell?.palette?.minWidth}
+          leftMaxWidth={config.shell?.palette?.maxWidth}
           canvas={<DesignerCanvasContent />}
           rightPanel={
             showInspectorPanel
@@ -487,6 +496,11 @@ export function DesignerPageBody({
           rightCollapsed={uiSnapshot.inspectorCollapsed}
           onRightToggle={() => dispatch({ type: 'toggleInspector' })}
           rightLabel={t('flux.flowDesigner.expandInspector')}
+          rightResizable={config.shell?.inspector?.resizable}
+          rightWidth={uiSnapshot.inspectorWidth}
+          onRightWidthChange={(width) => dispatch({ type: 'setPanelWidths', inspectorWidth: width })}
+          rightMinWidth={config.shell?.inspector?.minWidth}
+          rightMaxWidth={config.shell?.inspector?.maxWidth}
           dialogs={
             hasRendererSlotContent(asReactNode(dialogsSlot)) ? asReactNode(dialogsSlot) : undefined
           }

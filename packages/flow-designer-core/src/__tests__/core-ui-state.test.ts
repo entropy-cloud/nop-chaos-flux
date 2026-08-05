@@ -356,3 +356,99 @@ describe('createDesignerCore - viewport and UI state', () => {
     expect(core.getSnapshot().inspectorCollapsed).toBe(false);
   });
 });
+
+describe('createDesignerCore - shell panel widths', () => {
+  it('defaults palette/inspector widths when shell config is absent', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    expect(core.getSnapshot().paletteWidth).toBe(240);
+    expect(core.getSnapshot().inspectorWidth).toBe(352);
+  });
+
+  it('initializes widths from shell config', () => {
+    const core = createDesignerCore(createBasicDocument(), {
+      ...createTestDesignerConfig(),
+      shell: {
+        palette: { width: 280, minWidth: 220, maxWidth: 360 },
+        inspector: { width: 400, minWidth: 300, maxWidth: 480 },
+      },
+    });
+
+    expect(core.getSnapshot().paletteWidth).toBe(280);
+    expect(core.getSnapshot().inspectorWidth).toBe(400);
+  });
+
+  it('clamps configured widths into min/max bounds', () => {
+    const core = createDesignerCore(createBasicDocument(), {
+      ...createTestDesignerConfig(),
+      shell: {
+        palette: { width: 800, minWidth: 200, maxWidth: 400 },
+        inspector: { width: 100, minWidth: 300, maxWidth: 500 },
+      },
+    });
+
+    expect(core.getSnapshot().paletteWidth).toBe(400);
+    expect(core.getSnapshot().inspectorWidth).toBe(300);
+  });
+
+  it('updates shell widths and emits events with clamp', () => {
+    const core = createDesignerCore(createBasicDocument(), {
+      ...createTestDesignerConfig(),
+      shell: {
+        palette: { minWidth: 200, maxWidth: 400 },
+        inspector: { minWidth: 300, maxWidth: 500 },
+      },
+    });
+    const events: any[] = [];
+    core.subscribe((e) => events.push(e));
+
+    core.setPaletteWidth(320);
+    expect(core.getSnapshot().paletteWidth).toBe(320);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toEqual({ type: 'paletteWidthChanged', width: 320 });
+
+    events.length = 0;
+    core.setPaletteWidth(999);
+    expect(core.getSnapshot().paletteWidth).toBe(400);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toEqual({ type: 'paletteWidthChanged', width: 400 });
+
+    events.length = 0;
+    core.setInspectorWidth(450);
+    expect(core.getSnapshot().inspectorWidth).toBe(450);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toEqual({ type: 'inspectorWidthChanged', width: 450 });
+
+    events.length = 0;
+    core.setInspectorWidth(450);
+    expect(events).toHaveLength(0);
+  });
+
+  it('keeps shell widths out of undo/redo history and dirty state', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+    core.save();
+    const before = core.getSnapshot();
+
+    core.setPaletteWidth(300);
+    core.setInspectorWidth(420);
+
+    expect(core.getSnapshot().canUndo).toBe(before.canUndo);
+    expect(core.getSnapshot().canRedo).toBe(before.canRedo);
+    expect(core.getSnapshot().isDirty).toBe(false);
+  });
+
+  it('survives undo/redo cycles because width changes are not history entries', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+    core.save();
+
+    core.setPaletteWidth(300);
+    core.setInspectorWidth(420);
+    core.undo();
+    expect(core.getSnapshot().paletteWidth).toBe(300);
+    expect(core.getSnapshot().inspectorWidth).toBe(420);
+
+    core.redo();
+    expect(core.getSnapshot().paletteWidth).toBe(300);
+    expect(core.getSnapshot().inspectorWidth).toBe(420);
+  });
+});
