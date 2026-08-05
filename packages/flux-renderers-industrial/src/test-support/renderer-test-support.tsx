@@ -2,6 +2,7 @@ import React from 'react';
 import type { ReactNode } from 'react';
 import { render } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
+import { vi } from 'vitest';
 import {
   ActionScopeContext,
   ComponentRegistryContext,
@@ -13,9 +14,16 @@ import {
 } from '@nop-chaos/flux-react';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
-import { createRendererRegistry, type RendererDefinition, type RendererComponentProps } from '@nop-chaos/flux-core';
+import {
+  createRendererRegistry,
+  type RendererDefinition,
+  type RendererComponentProps,
+  type SchemaObject,
+} from '@nop-chaos/flux-core';
 import { ScadaCanvasRenderer } from '../renderer/scada-canvas.js';
 import type { ScadaCanvasSchema } from '../schemas.js';
+import type { ScadaConfig } from '../serialization/config-types.js';
+import { scadaTestHandleKey, type ScadaTestHandle } from '../engine/test-handle.js';
 
 export interface ScadaTestEnvironment {
   runtime: ReturnType<typeof createRendererRuntime>;
@@ -73,4 +81,57 @@ export function renderScadaCanvas(
       <ScadaCanvasRenderer {...props} />
     </ScadaTestProviders>,
   );
+}
+
+export type ScadaCanvasConfigProp = string | (ScadaConfig & SchemaObject);
+
+export function configProp(config: ScadaConfig | { version: number } | string): ScadaCanvasConfigProp {
+  return config as ScadaCanvasConfigProp;
+}
+
+export function validCanvasConfig(overrides: Record<string, unknown> = {}): ScadaConfig {
+  return ({
+    version: 1,
+    symbols: [
+      { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#ff0000' },
+    ],
+    ...overrides,
+  }) as ScadaConfig;
+}
+
+export function scadaTestHandle(cid: number): ScadaTestHandle | undefined {
+  return (window as unknown as Record<string, unknown>)[scadaTestHandleKey(cid)] as
+    | ScadaTestHandle
+    | undefined;
+}
+
+export function makeScadaCanvasProps(
+  overrides: Partial<RendererComponentProps<ScadaCanvasSchema>> & {
+    cid?: number;
+    props?: Record<string, unknown>;
+  } = {},
+): RendererComponentProps<ScadaCanvasSchema> {
+  const { cid = 1, ...rest } = overrides;
+  return {
+    id: 'scada-1',
+    path: 'test.scada-1',
+    schema: { type: 'scada-canvas' } as ScadaCanvasSchema,
+    templateNode: {} as RendererComponentProps<ScadaCanvasSchema>['templateNode'],
+    node: {} as RendererComponentProps<ScadaCanvasSchema>['node'],
+    props: {},
+    meta: {
+      visible: true,
+      hidden: false,
+      disabled: false,
+      changed: false,
+      cid,
+    } as RendererComponentProps<ScadaCanvasSchema>['meta'],
+    regions: {},
+    events: {},
+    reactions: {},
+    helpers: {
+      dispatch: vi.fn().mockResolvedValue({ ok: true }),
+    } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
+    ...rest,
+  };
 }

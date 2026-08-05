@@ -1,60 +1,21 @@
 import { cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RendererComponentProps, SchemaObject } from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
-import { createScadaTestEnvironment, renderScadaCanvas } from '../test-support/renderer-test-support.js';
+import {
+  configProp,
+  createScadaTestEnvironment,
+  makeScadaCanvasProps,
+  renderScadaCanvas,
+  scadaTestHandle,
+  validCanvasConfig,
+} from '../test-support/renderer-test-support.js';
 import type { ScadaCanvasSchema } from '../schemas.js';
-import type { ScadaConfig } from '../serialization/config-types.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
-
-const validConfig = (overrides: Record<string, unknown> = {}): ScadaConfig =>
-  ({
-    version: 1,
-    symbols: [
-      { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#ff0000' },
-    ],
-    ...overrides,
-  }) as ScadaConfig;
-
-function makeProps(
-  overrides: Partial<RendererComponentProps<ScadaCanvasSchema>> & { props?: Record<string, unknown> } = {},
-): RendererComponentProps<ScadaCanvasSchema> {
-  return {
-    id: 'scada-1',
-    path: 'test.scada-1',
-    schema: { type: 'scada-canvas' } as ScadaCanvasSchema,
-    templateNode: {} as RendererComponentProps<ScadaCanvasSchema>['templateNode'],
-    node: {} as RendererComponentProps<ScadaCanvasSchema>['node'],
-    props: {} as RendererComponentProps<ScadaCanvasSchema>['props'],
-    meta: {
-      visible: true,
-      hidden: false,
-      disabled: false,
-      changed: false,
-      cid: 19,
-    } as RendererComponentProps<ScadaCanvasSchema>['meta'],
-    regions: {},
-    events: {},
-    reactions: {},
-    helpers: { dispatch: vi.fn().mockResolvedValue({ ok: true }) } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
-    ...overrides,
-  };
-}
-
-type ScadaCanvasConfigProp = string | (ScadaConfig & SchemaObject);
-
-function configProp(config: ScadaConfig | { version: number } | string): ScadaCanvasConfigProp {
-  return config as ScadaCanvasConfigProp;
-}
-
-const scadaTestHandle = (cid: number) =>
-  (window as unknown as Record<string, unknown>)[`__flux_scada_${cid}`] as
-    | { engine: ScadaCanvasEngine }
-    | undefined;
 
 /** 断言 console.warn spy 收到 `[scada-canvas]', <code>[, <message>]` 诊断调用。 */
 const warnReported = (
@@ -103,7 +64,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
     const environment = createScadaTestEnvironment([], { analog: { temp: null } });
     // 复用既有 host telemetry 钩子（ExpressionExecutionEnv.monitor，phase:'expression'）
     environment.runtime.env.monitor = { onError: monitorSpy };
-    const fluxConfig = validConfig({
+    const fluxConfig = validCanvasConfig({
       version: 1,
       variables: [{ id: 'temp', source: 'flux', flux: '$analog.temp.value' }],
       symbols: [
@@ -120,7 +81,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
       ],
     });
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 19,
         props: { config: configProp(fluxConfig) },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
@@ -150,7 +111,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
   it('dedupes flux error reports: repeated failing scope updates do not grow the diagnostic outlet call count', async () => {
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([], { analog: { temp: null } });
-    const fluxConfig = validConfig({
+    const fluxConfig = validCanvasConfig({
       version: 1,
       variables: [{ id: 'temp', source: 'flux', flux: '$analog.temp.value' }],
       symbols: [
@@ -167,7 +128,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
       ],
     });
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 19,
         props: { config: configProp(fluxConfig) },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
@@ -194,14 +155,14 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
       throw new Error('handler boom');
     });
     const environment = createScadaTestEnvironment([]);
-    const clickConfig = validConfig({
+    const clickConfig = validCanvasConfig({
       version: 1,
       symbols: [
         { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#ff0000' },
       ],
     });
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 19,
         props: { config: configProp(clickConfig), width: 800, height: 600, events: { onSymbolClick: { action: 'noop' } } },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
@@ -238,7 +199,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
     });
     const environment = createScadaTestEnvironment([], { analog: { temp: null } });
     environment.runtime.env.monitor = { onError: throwingMonitor };
-    const fluxConfig = validConfig({
+    const fluxConfig = validCanvasConfig({
       version: 1,
       variables: [{ id: 'temp', source: 'flux', flux: '$analog.temp.value' }],
       symbols: [
@@ -257,7 +218,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
     // 渲染不应抛——通道自身 throw 被出口 try/catch 吞掉
     expect(() =>
       renderScadaCanvas(
-        makeProps({
+        makeScadaCanvasProps({ cid: 19,
           props: { config: configProp(fluxConfig) },
           node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         }),
@@ -289,7 +250,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
       evaluateWithState: () => ({ value: 1, changed: false, reusedReference: false }),
       evaluateValue: () => 1,
     } as unknown as typeof environment.runtime.expressionCompiler;
-    const fluxConfig = validConfig({
+    const fluxConfig = validCanvasConfig({
       version: 1,
       variables: [{ id: 'computed', source: 'flux', flux: '${analog.temp + 1}' }],
       symbols: [
@@ -306,7 +267,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
       ],
     });
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 19,
         props: { config: configProp(fluxConfig) },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],

@@ -1,11 +1,19 @@
 import React from 'react';
 import { cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RendererComponentProps, SchemaObject } from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
-import { createScadaTestEnvironment, renderScadaCanvas, ScadaTestProviders } from '../test-support/renderer-test-support.js';
+import {
+  configProp,
+  createScadaTestEnvironment,
+  makeScadaCanvasProps,
+  renderScadaCanvas,
+  ScadaTestProviders,
+  scadaTestHandle,
+  validCanvasConfig,
+} from '../test-support/renderer-test-support.js';
 import { ScadaCanvasRenderer } from './scada-canvas.js';
 import { decideSyncStrategy } from './hooks/use-scada-config-sync.js';
 import type { ScadaCanvasSchema } from '../schemas.js';
@@ -14,55 +22,18 @@ import type { ScadaConfig } from '../serialization/config-types.js';
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
 
-const validConfig = (overrides: Record<string, unknown> = {}): ScadaConfig =>
-  ({
-    version: 1,
+const lifecycleConfig = (overrides: Record<string, unknown> = {}): ScadaConfig =>
+  validCanvasConfig({
     symbols: [
       { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#ff0000' },
       { id: 'rect-2', type: 'scada-rect', x: 200, y: 20, width: 100, height: 50, fill: '#00ff00' },
     ],
     ...overrides,
-  }) as ScadaConfig;
-
-function makeProps(
-  overrides: Partial<RendererComponentProps<ScadaCanvasSchema>> & { props?: Record<string, unknown> } = {},
-): RendererComponentProps<ScadaCanvasSchema> {
-  return {
-    id: 'scada-1',
-    path: 'test.scada-1',
-    schema: { type: 'scada-canvas' } as ScadaCanvasSchema,
-    templateNode: {} as RendererComponentProps<ScadaCanvasSchema>['templateNode'],
-    node: {} as RendererComponentProps<ScadaCanvasSchema>['node'],
-    props: {} as RendererComponentProps<ScadaCanvasSchema>['props'],
-    meta: {
-      visible: true,
-      hidden: false,
-      disabled: false,
-      changed: false,
-      cid: 7,
-    } as RendererComponentProps<ScadaCanvasSchema>['meta'],
-    regions: {},
-    events: {},
-    reactions: {},
-    helpers: { dispatch: vi.fn().mockResolvedValue({ ok: true }) } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
-    ...overrides,
-  };
-}
+  });
 
 function makeRegion(render: () => unknown) {
   return { render: vi.fn(render) } as unknown as RendererComponentProps<ScadaCanvasSchema>['regions'][string];
 }
-
-type ScadaCanvasConfigProp = string | (ScadaConfig & SchemaObject);
-
-function configProp(config: ScadaConfig | { version: number } | string): ScadaCanvasConfigProp {
-  return config as ScadaCanvasConfigProp;
-}
-
-const scadaTestHandle = (cid: number) =>
-  (window as unknown as Record<string, unknown>)[`__flux_scada_${cid}`] as
-    | { engine: ScadaCanvasEngine; getSymbol: (id: string) => unknown }
-    | undefined;
 
 beforeEach(() => {
   resetLeaferMock();
@@ -76,16 +47,16 @@ afterEach(() => {
 describe('scada-canvas lifecycle (I10.1)', () => {
   it('mounts and creates the engine with cid + exposeTestHandle passed through', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps(), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 7 }), environment);
     await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
     expect(scadaTestHandle(7)?.engine).toBeInstanceOf(ScadaCanvasEngine);
   });
 
   it('parses config and builds the scene (symbols resolvable via the test handle)', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps({ props: { config: configProp(validConfig()) } }), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(lifecycleConfig()) } }), environment);
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
-    const engine = scadaTestHandle(7)?.engine;
+    const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
     expect(engine?.getSymbols().map((leaf) => leaf.id)).toEqual(['rect-1', 'rect-2']);
     expect((scadaTestHandle(7)?.getSymbol('rect-1') as { fill: string })?.fill).toBe('#ff0000');
   });
@@ -94,8 +65,8 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
-        props: { config: configProp(validConfig()), events: { onReady: { action: 'noop' } } },
+      makeScadaCanvasProps({ cid: 7,
+        props: { config: configProp(lifecycleConfig()), events: { onReady: { action: 'noop' } } },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
       }),
@@ -113,7 +84,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
 
   it('unmount destroys the engine idempotently and removes the test handle', async () => {
     const environment = createScadaTestEnvironment([]);
-    const view = renderScadaCanvas(makeProps(), environment);
+    const view = renderScadaCanvas(makeScadaCanvasProps({ cid: 7 }), environment);
     await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
     const app = (scadaTestHandle(7)?.engine as unknown as { app: { destroyed: boolean } }).app;
     view.unmount();
@@ -145,7 +116,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
     try {
       const environment = createScadaTestEnvironment([]);
-      renderScadaCanvas(makeProps(), environment);
+      renderScadaCanvas(makeScadaCanvasProps({ cid: 7 }), environment);
       await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
       const app = (
         scadaTestHandle(7)?.engine as unknown as {
@@ -164,14 +135,14 @@ describe('scada-canvas lifecycle (I10.1)', () => {
 
   it('applies config changes incrementally via applyDiff (node identity preserved, no full reset)', async () => {
     const environment = createScadaTestEnvironment([]);
-    const view = renderScadaCanvas(makeProps({ props: { config: configProp(validConfig()) } }), environment);
+    const view = renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(lifecycleConfig()) } }), environment);
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
     const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
     const originalInnerId = (
       engine.getSymbol('rect-1')?.node as unknown as { innerId: number }
     ).innerId;
 
-    const next = validConfig({
+    const next = lifecycleConfig({
       symbols: [
         { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#123456' },
         { id: 'rect-3', type: 'scada-rect', x: 300, y: 20, width: 60, height: 40, fill: '#0000ff' },
@@ -179,7 +150,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     });
     view.rerender(
       <ScadaTestProviders environment={environment}>
-        <ScadaCanvasRenderer {...makeProps({ props: { config: configProp(next) } })} />
+        <ScadaCanvasRenderer {...makeScadaCanvasProps({ cid: 7, props: { config: configProp(next) } })} />
       </ScadaTestProviders>,
     );
     await waitFor(() =>
@@ -194,7 +165,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
 
   it('importConfig converges the props-sync baseline: import-then-edit builds no duplicate symbols (P1-5)', async () => {
     const environment = createScadaTestEnvironment([]);
-    const view = renderScadaCanvas(makeProps({ props: { config: configProp(validConfig()) } }), environment);
+    const view = renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(lifecycleConfig()) } }), environment);
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
     const handle = environment.componentRegistry.resolve({ componentId: 'scada-1' }) as unknown as {
       capabilities: { invoke: (m: string, p: unknown) => Promise<{ ok: boolean }> };
@@ -224,7 +195,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     };
     view.rerender(
       <ScadaTestProviders environment={environment}>
-        <ScadaCanvasRenderer {...makeProps({ props: { config: configProp(edited) } })} />
+        <ScadaCanvasRenderer {...makeScadaCanvasProps({ cid: 7, props: { config: configProp(edited) } })} />
       </ScadaTestProviders>,
     );
     await waitFor(() => expect((scadaTestHandle(7)?.getSymbol('import-1') as { x: number })?.x).toBe(100));
@@ -243,7 +214,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     const loadingRegion = makeRegion(() => <div data-testid="custom-loading" />);
     const emptyRegion = makeRegion(() => <div data-testid="custom-empty" />);
     const view = renderScadaCanvas(
-      makeProps({ regions: { loading: loadingRegion, empty: emptyRegion } }),
+      makeScadaCanvasProps({ cid: 7, regions: { loading: loadingRegion, empty: emptyRegion } }),
       environment,
     );
     // 缺 config → 空场景构建 → ready（loading region 不再渲染）
@@ -260,7 +231,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     view.rerender(
       <ScadaTestProviders environment={environment}>
         <ScadaCanvasRenderer
-          {...makeProps({
+          {...makeScadaCanvasProps({ cid: 7,
             props: { config: configProp({ version: 2 }) },
             regions: { loading: loadingRegion, empty: emptyRegion },
           })}
@@ -274,9 +245,9 @@ describe('scada-canvas lifecycle (I10.1)', () => {
   it('applies the initial viewport policy (fit fill + center) with exact centering math (P1-6)', async () => {
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 7,
         props: {
-          config: configProp(validConfig()),
+          config: configProp(lifecycleConfig()),
           width: 800,
           height: 600,
           viewport: { fit: 'fill', center: true },
@@ -297,9 +268,9 @@ describe('scada-canvas lifecycle (I10.1)', () => {
   it('applies the center policy at the current scale with exact math (P1-6)', async () => {
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 7,
         props: {
-          config: configProp(validConfig()),
+          config: configProp(lifecycleConfig()),
           width: 800,
           height: 600,
           viewport: { center: true },
@@ -319,9 +290,9 @@ describe('scada-canvas lifecycle (I10.1)', () => {
   it('applies the contain fit with min-scale semantics and exact math (P1-6 regression)', async () => {
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 7,
         props: {
-          config: configProp(validConfig()),
+          config: configProp(lifecycleConfig()),
           width: 800,
           height: 600,
           viewport: { fit: 'contain' },
@@ -341,9 +312,9 @@ describe('scada-canvas lifecycle (I10.1)', () => {
   it('does not re-apply the initial viewport policy on diff updates, only on full resets (gate-4 m-B)', async () => {
     const environment = createScadaTestEnvironment([]);
     const view = renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 7,
         props: {
-          config: configProp(validConfig()),
+          config: configProp(lifecycleConfig()),
           width: 800,
           height: 600,
           viewport: { fit: 'fill', center: true },
@@ -360,10 +331,10 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     view.rerender(
       <ScadaTestProviders environment={environment}>
         <ScadaCanvasRenderer
-          {...makeProps({
+          {...makeScadaCanvasProps({ cid: 7,
             props: {
               config: configProp(
-                validConfig({
+                lifecycleConfig({
                   symbols: [
                     { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#123456' },
                     { id: 'rect-2', type: 'scada-rect', x: 200, y: 20, width: 100, height: 50, fill: '#00ff00' },
@@ -386,9 +357,9 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     view.rerender(
       <ScadaTestProviders environment={environment}>
         <ScadaCanvasRenderer
-          {...makeProps({
+          {...makeScadaCanvasProps({ cid: 7,
             props: {
-              config: configProp(validConfig({ version: 2 })),
+              config: configProp(lifecycleConfig({ version: 2 })),
               width: 800,
               height: 600,
               viewport: { fit: 'fill', center: true },
@@ -404,7 +375,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 7,
         props: { config: '{broken json', events: { onError: { action: 'noop' } } },
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
       }),
@@ -418,7 +389,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
   });
 
   it('applies state styles through the refresh pipeline (binding → state → applyAttrs)', async () => {
-    const stateConfig = validConfig({
+    const stateConfig = lifecycleConfig({
       variables: [{ id: 'level', source: 'static', value: 0 }],
       symbols: [
         {
@@ -440,7 +411,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
       ],
     });
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps({ props: { config: configProp(stateConfig) } }), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(stateConfig) } }), environment);
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
     const handle = environment.componentRegistry.resolve({ componentId: 'scada-1' }) as unknown as {
       capabilities: { invoke: (m: string, p: unknown) => Promise<{ ok: boolean }> };
@@ -455,7 +426,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
   it('renders without a cid attribute when meta.cid is unset (engine auto-assigns)', async () => {
     const environment = createScadaTestEnvironment([]);
     const view = renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 7,
         meta: { visible: true, hidden: false, disabled: false, changed: false } as RendererComponentProps<ScadaCanvasSchema>['meta'],
       }),
       environment,
@@ -470,7 +441,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     const environment = createScadaTestEnvironment([]);
     const emptyRegion = makeRegion(() => undefined);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 7,
         props: { config: configProp({ version: 2 }) },
         regions: { empty: emptyRegion },
       }),
@@ -486,7 +457,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 7,
         props: { config: configProp({ version: 2 }), events: { onError: { action: 'noop' } } },
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
       }),
@@ -512,8 +483,8 @@ describe('scada-canvas lifecycle (I10.1)', () => {
       });
     try {
       renderScadaCanvas(
-        makeProps({
-          props: { config: configProp(validConfig()), events: { onError: { action: 'noop' } } },
+        makeScadaCanvasProps({ cid: 7,
+          props: { config: configProp(lifecycleConfig()), events: { onError: { action: 'noop' } } },
           helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
         }),
         environment,
@@ -540,8 +511,8 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     (globalThis as { ResizeObserver?: unknown }).ResizeObserver = undefined;
     try {
       renderScadaCanvas(
-        makeProps({
-          props: { config: configProp(validConfig()), events: { onError: { action: 'noop' } } },
+        makeScadaCanvasProps({ cid: 7,
+          props: { config: configProp(lifecycleConfig()), events: { onError: { action: 'noop' } } },
           helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
         }),
         environment,
@@ -583,7 +554,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
     try {
       const environment = createScadaTestEnvironment([]);
-      renderScadaCanvas(makeProps(), environment);
+      renderScadaCanvas(makeScadaCanvasProps({ cid: 7 }), environment);
       await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
       for (const observer of observers) {
         observer.cb([]);
@@ -602,7 +573,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
 
   it('destroys idempotently through the component handle (double destroy)', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps(), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 7 }), environment);
     await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
     const handle = environment.componentRegistry.resolve({ componentId: 'scada-1' }) as unknown as {
       capabilities: { invoke: (m: string, p: unknown) => Promise<{ ok: boolean }> };
@@ -636,7 +607,7 @@ describe('scada-canvas lifecycle (I10.1)', () => {
     globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
     try {
       const environment = createScadaTestEnvironment([]);
-      const view = renderScadaCanvas(makeProps(), environment);
+      const view = renderScadaCanvas(makeScadaCanvasProps({ cid: 7 }), environment);
       await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
       const app = (
         scadaTestHandle(7)?.engine as unknown as {
@@ -657,9 +628,9 @@ describe('scada-canvas lifecycle (I10.1)', () => {
 
 describe('sync strategy decision (Failure Paths diff-sync-mismatch)', () => {
   it('first config and version changes resolve to full reset; same version resolves to diff', () => {
-    const v1 = validConfig();
-    const v1Next = validConfig({ symbols: [{ id: 'only', type: 'scada-rect', x: 0, y: 0 }] });
-    const v2 = { ...validConfig(), version: 2 } as unknown as ScadaConfig;
+    const v1 = lifecycleConfig();
+    const v1Next = lifecycleConfig({ symbols: [{ id: 'only', type: 'scada-rect', x: 0, y: 0 }] });
+    const v2 = { ...lifecycleConfig(), version: 2 } as unknown as ScadaConfig;
     expect(decideSyncStrategy(undefined, v1)).toBe('full');
     expect(decideSyncStrategy(v1, v1Next)).toBe('diff');
     expect(decideSyncStrategy(v1, v2)).toBe('full');

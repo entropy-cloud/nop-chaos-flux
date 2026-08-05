@@ -1,19 +1,25 @@
 import { cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RendererComponentProps, SchemaObject } from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
-import { createScadaTestEnvironment, renderScadaCanvas } from '../test-support/renderer-test-support.js';
+import {
+  configProp,
+  createScadaTestEnvironment,
+  makeScadaCanvasProps,
+  renderScadaCanvas,
+  scadaTestHandle,
+  validCanvasConfig,
+} from '../test-support/renderer-test-support.js';
 import type { ScadaCanvasSchema } from '../schemas.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
 
-const validConfig = (): ScadaConfig =>
-  ({
-    version: 1,
+const eventConfig = (): ScadaConfig =>
+  validCanvasConfig({
     variables: [{ id: 'level', source: 'static', value: 10 }],
     symbols: [
       {
@@ -27,45 +33,10 @@ const validConfig = (): ScadaConfig =>
         bindings: { fill: { point: 'level' } },
       },
     ],
-  }) as ScadaConfig;
-
-function configProp(config: ScadaConfig | { version: number } | string): ScadaCanvasConfigProp {
-  return config as unknown as ScadaCanvasConfigProp;
-}
-
-type ScadaCanvasConfigProp = string | (ScadaConfig & SchemaObject);
-
-function makeProps(
-  overrides: Partial<RendererComponentProps<ScadaCanvasSchema>> & { props?: Record<string, unknown> } = {},
-): RendererComponentProps<ScadaCanvasSchema> {
-  const dispatch = vi.fn().mockResolvedValue({ ok: true });
-  return {
-    id: 'scada-1',
-    path: 'test.scada-1',
-    schema: { type: 'scada-canvas' } as ScadaCanvasSchema,
-    templateNode: {} as RendererComponentProps<ScadaCanvasSchema>['templateNode'],
-    node: {} as RendererComponentProps<ScadaCanvasSchema>['node'],
-    props: { config: configProp(validConfig()), width: 800, height: 600 } as RendererComponentProps<ScadaCanvasSchema>['props'],
-    meta: {
-      visible: true,
-      hidden: false,
-      disabled: false,
-      changed: false,
-      cid: 11,
-    } as RendererComponentProps<ScadaCanvasSchema>['meta'],
-    regions: {},
-    events: {},
-    reactions: {},
-    helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
-    ...overrides,
-  };
-}
+  });
 
 async function hitSymbol(environment: ReturnType<typeof createScadaTestEnvironment>, point: { x: number; y: number }) {
-  const handle = (window as unknown as Record<string, unknown>)[`__flux_scada_11`] as {
-    engine: ScadaCanvasEngine;
-  };
-  const engine = handle.engine;
+  const engine = scadaTestHandle(11)?.engine as ScadaCanvasEngine;
   const leaf = engine.getSymbol('rect-1')?.node;
   (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
     ({ target: leaf, path: [leaf] });
@@ -86,15 +57,15 @@ describe('scada-canvas event bridging (I10.3)', () => {
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
-        props: { config: configProp(validConfig()), width: 800, height: 600, events: { onSymbolClick: { action: 'noop' } } },
+      makeScadaCanvasProps({ cid: 11,
+        props: { config: configProp(eventConfig()), width: 800, height: 600, events: { onSymbolClick: { action: 'noop' } } },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
       }),
       environment,
     );
     await waitFor(() =>
-      expect((window as unknown as Record<string, unknown>)[`__flux_scada_11`]).toBeDefined(),
+      expect(scadaTestHandle(11)).toBeDefined(),
     );
     await hitSymbol(environment, { x: 100, y: 200 });
     await waitFor(() => expect(dispatch).toHaveBeenCalled());
@@ -126,9 +97,9 @@ describe('scada-canvas event bridging (I10.3)', () => {
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 11,
         props: {
-          config: configProp(validConfig()),
+          config: configProp(eventConfig()),
           width: 800,
           height: 600,
           events: {
@@ -142,12 +113,9 @@ describe('scada-canvas event bridging (I10.3)', () => {
       environment,
     );
     await waitFor(() =>
-      expect((window as unknown as Record<string, unknown>)[`__flux_scada_11`]).toBeDefined(),
+      expect(scadaTestHandle(11)).toBeDefined(),
     );
-    const handle = (window as unknown as Record<string, unknown>)[`__flux_scada_11`] as {
-      engine: ScadaCanvasEngine;
-    };
-    const engine = handle.engine;
+    const engine = scadaTestHandle(11)?.engine as ScadaCanvasEngine;
     const leaf = engine.getSymbol('rect-1')?.node;
     (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
       ({ target: leaf, path: [leaf] });
@@ -167,15 +135,15 @@ describe('scada-canvas event bridging (I10.3)', () => {
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
-        props: { config: configProp(validConfig()), width: 800, height: 600 },
+      makeScadaCanvasProps({ cid: 11,
+        props: { config: configProp(eventConfig()), width: 800, height: 600 },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
       }),
       environment,
     );
     await waitFor(() =>
-      expect((window as unknown as Record<string, unknown>)[`__flux_scada_11`]).toBeDefined(),
+      expect(scadaTestHandle(11)).toBeDefined(),
     );
     await hitSymbol(environment, { x: 5, y: 5 });
     await new Promise((resolve) => setTimeout(resolve, 20));

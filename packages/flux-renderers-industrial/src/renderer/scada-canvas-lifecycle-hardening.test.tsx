@@ -1,15 +1,19 @@
 import React from 'react';
 import { act, cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import type { RendererComponentProps, SchemaObject } from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { Animator } from '../binding/animator.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
 import {
+  configProp,
   createScadaTestEnvironment,
+  makeScadaCanvasProps,
   renderScadaCanvas,
   ScadaTestProviders,
+  scadaTestHandle,
+  validCanvasConfig,
 } from '../test-support/renderer-test-support.js';
 import { ScadaCanvasRenderer } from './scada-canvas.js';
 import type { ScadaCanvasSchema } from '../schemas.js';
@@ -56,8 +60,7 @@ function installResizeObserverSpy() {
 }
 
 const textConfig = (overrides: Record<string, unknown> = {}): ScadaConfig =>
-  ({
-    version: 1,
+  validCanvasConfig({
     variables: [{ id: 'level', source: 'static', value: 0 }],
     symbols: [
       {
@@ -71,11 +74,10 @@ const textConfig = (overrides: Record<string, unknown> = {}): ScadaConfig =>
       },
     ],
     ...overrides,
-  }) as ScadaConfig;
+  });
 
-const alwaysAnimConfig = (): ScadaConfig =>
-  ({
-    version: 1,
+const alwaysAnimConfig = (overrides: Record<string, unknown> = {}): ScadaConfig =>
+  validCanvasConfig({
     variables: [{ id: 'level', source: 'static', value: 0 }],
     symbols: [
       {
@@ -93,49 +95,8 @@ const alwaysAnimConfig = (): ScadaConfig =>
         animations: [{ kind: 'rotate', when: 'always', period: 500 }],
       },
     ],
-  }) as ScadaConfig;
-
-function makeProps(
-  overrides: Partial<RendererComponentProps<ScadaCanvasSchema>> & { props?: Record<string, unknown> } = {},
-): RendererComponentProps<ScadaCanvasSchema> {
-  return {
-    id: 'scada-1',
-    path: 'test.scada-1',
-    schema: { type: 'scada-canvas' } as ScadaCanvasSchema,
-    templateNode: {} as RendererComponentProps<ScadaCanvasSchema>['templateNode'],
-    node: {} as RendererComponentProps<ScadaCanvasSchema>['node'],
-    props: {} as RendererComponentProps<ScadaCanvasSchema>['props'],
-    meta: {
-      visible: true,
-      hidden: false,
-      disabled: false,
-      changed: false,
-      cid: 7,
-    } as RendererComponentProps<ScadaCanvasSchema>['meta'],
-    regions: {},
-    events: {},
-    reactions: {},
-    helpers: {
-      dispatch: vi.fn().mockResolvedValue({ ok: true }),
-    } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
     ...overrides,
-  };
-}
-
-type ScadaCanvasConfigProp = string | (ScadaConfig & SchemaObject);
-
-function configProp(config: ScadaConfig): ScadaCanvasConfigProp {
-  return config as ScadaCanvasConfigProp;
-}
-
-const scadaTestHandle = (cid: number) =>
-  (window as unknown as Record<string, unknown>)[`__flux_scada_${cid}`] as
-    | {
-        engine: ScadaCanvasEngine;
-        getSymbol: (id: string) => unknown;
-        setPointValues: (values: Record<string, unknown>) => void;
-      }
-    | undefined;
+  });
 
 beforeEach(() => {
   resetLeaferMock();
@@ -151,7 +112,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     const ro = installResizeObserverSpy();
     try {
       const environment = createScadaTestEnvironment([]);
-      renderScadaCanvas(makeProps({ props: { config: configProp(textConfig()) } }), environment);
+      renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig()) } }), environment);
       await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
       const observer = ro.observers[ro.observers.length - 1];
       // schedule a pending resize frame
@@ -171,20 +132,20 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
 
   it('setPointValues injection writes to the latest pipeline after a config reload (SL-3)', async () => {
     const environment = createScadaTestEnvironment([]);
-    const view = renderScadaCanvas(makeProps({ props: { config: configProp(textConfig()) } }), environment);
+    const view = renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig()) } }), environment);
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
     const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
     const node = () => engine.getSymbol('rect-1')?.node as unknown as { text: unknown };
 
     // 注入 live 值（经测试句柄注入通道 → pointStore + pipeline）
-    act(() => scadaTestHandle(7)?.setPointValues({ level: 42 }));
+    act(() => scadaTestHandle(7)?.setPointValues?.({ level: 42 }));
     await waitFor(() => expect(node().text).toBe(42));
 
     // 触发 reload（非空 diff → reloadBindings 重建 pipeline/animator/collector）
     view.rerender(
       <ScadaTestProviders environment={environment}>
         <ScadaCanvasRenderer
-          {...makeProps({
+          {...makeScadaCanvasProps({ cid: 7,
             props: { config: configProp(textConfig({ symbols: [{ id: 'rect-1', type: 'scada-rect', x: 99, y: 20, width: 100, height: 50, bindings: { text: { point: 'level' } } }] })) },
           })}
         />
@@ -192,7 +153,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     );
 
     // reload 后注入通道写向最新 pipeline：setPointValues 生效（SL-3 fix）
-    act(() => scadaTestHandle(7)?.setPointValues({ level: 99 }));
+    act(() => scadaTestHandle(7)?.setPointValues?.({ level: 99 }));
     await waitFor(() => expect(node().text).toBe(99));
   });
 
@@ -200,7 +161,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     const environment = createScadaTestEnvironment([]);
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const view = renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 7,
         props: { config: configProp(textConfig()) },
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
       }),
@@ -233,7 +194,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     view.rerender(
       <ScadaTestProviders environment={environment}>
         <ScadaCanvasRenderer
-          {...makeProps({ props: { config: configProp({ ...textConfig(), symbols: [{ id: 'rect-1', type: 'scada-rect', x: 22, y: 20, width: 100, height: 50, bindings: { text: { point: 'level' } } }] }) } })}
+          {...makeScadaCanvasProps({ cid: 7, props: { config: configProp({ ...textConfig(), symbols: [{ id: 'rect-1', type: 'scada-rect', x: 22, y: 20, width: 100, height: 50, bindings: { text: { point: 'level' } } }] }) } })}
         />
       </ScadaTestProviders>,
     );
@@ -246,20 +207,20 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
 
   it('reloadBindings preserves live point values by id (props full/diff path, OP-1)', async () => {
     const environment = createScadaTestEnvironment([]);
-    const view = renderScadaCanvas(makeProps({ props: { config: configProp(textConfig()) } }), environment);
+    const view = renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig()) } }), environment);
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
     const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
     const node = () => engine.getSymbol('rect-1')?.node as unknown as { text: unknown };
 
     // 写入 live 值（非 init）
-    act(() => scadaTestHandle(7)?.setPointValues({ level: 77 }));
+    act(() => scadaTestHandle(7)?.setPointValues?.({ level: 77 }));
     await waitFor(() => expect(node().text).toBe(77));
 
     // 触发 reload（非空 diff，保留同 id 点 'level'）
     view.rerender(
       <ScadaTestProviders environment={environment}>
         <ScadaCanvasRenderer
-          {...makeProps({ props: { config: configProp(textConfig({ symbols: [{ id: 'rect-1', type: 'scada-rect', x: 5, y: 5, width: 100, height: 50, bindings: { text: { point: 'level' } } }] })) } })}
+          {...makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig({ symbols: [{ id: 'rect-1', type: 'scada-rect', x: 5, y: 5, width: 100, height: 50, bindings: { text: { point: 'level' } } }] })) } })}
         />
       </ScadaTestProviders>,
     );
@@ -270,7 +231,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
 
   it('component:destroy surfaces a destroyed status on the wrapper (OP-4)', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps({ props: { config: configProp(textConfig()) } }), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig()) } }), environment);
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
     const handle = environment.componentRegistry.resolve({ componentId: 'scada-1' }) as unknown as {
       capabilities: { invoke: (m: string, p: unknown) => Promise<{ ok: boolean }> };
@@ -298,7 +259,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     };
     try {
       const environment = createScadaTestEnvironment([]);
-      const view = renderScadaCanvas(makeProps({ props: { config: configProp(alwaysAnimConfig()) } }), environment);
+      const view = renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(alwaysAnimConfig()) } }), environment);
       await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
       const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
       // mount 域 animator 启动（when:'always'）
@@ -310,7 +271,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
       view.rerender(
         <ScadaTestProviders environment={environment}>
           <ScadaCanvasRenderer
-            {...makeProps({
+            {...makeScadaCanvasProps({ cid: 7,
               props: {
                 config: configProp({
                   ...alwaysAnimConfig(),
@@ -356,7 +317,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     const ro = installResizeObserverSpy();
     try {
       const environment = createScadaTestEnvironment([]);
-      renderScadaCanvas(makeProps({ props: { config: configProp(textConfig()) } }), environment);
+      renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig()) } }), environment);
       await waitFor(() => expect(scadaTestHandle(7)).toBeDefined());
       const engine = scadaTestHandle(7)?.engine as ScadaCanvasEngine;
       const spy = vi.spyOn(engine, 'setSize');
@@ -372,7 +333,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
   it('width/height props drive engine.setSize on mount (lifecycle wiring baseline)', async () => {
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({ props: { config: configProp(textConfig()), width: 640, height: 480 } }),
+      makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig()), width: 640, height: 480 } }),
       environment,
     );
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
@@ -387,7 +348,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     // （design-renderer.md §8.3 声称「width/height 变化 → 引擎命令式 API」）。
     const environment = createScadaTestEnvironment([]);
     const view = renderScadaCanvas(
-      makeProps({ props: { config: configProp(textConfig()), width: 320, height: 240 } }),
+      makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig()), width: 320, height: 240 } }),
       environment,
     );
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
@@ -398,7 +359,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     view.rerender(
       <ScadaTestProviders environment={environment}>
         <ScadaCanvasRenderer
-          {...makeProps({ props: { config: configProp(textConfig()), width: 800, height: 600 } })}
+          {...makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig()), width: 800, height: 600 } })}
         />
       </ScadaTestProviders>,
     );
@@ -415,7 +376,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     // （注：version 变更会先被 parseAndValidateConfig 拦截，故经 diff 路径触发 catch。）
     const environment = createScadaTestEnvironment([]);
     const view = renderScadaCanvas(
-      makeProps({ props: { config: configProp(textConfig()) } }),
+      makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig()) } }),
       environment,
     );
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
@@ -428,7 +389,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
     view.rerender(
       <ScadaTestProviders environment={environment}>
         <ScadaCanvasRenderer
-          {...makeProps({
+          {...makeScadaCanvasProps({ cid: 7,
             props: {
               config: configProp(
                 textConfig({ symbols: [{ id: 'rect-1', type: 'scada-rect', x: 99, y: 20, width: 100, height: 50, bindings: { text: { point: 'level' } } }] }),
@@ -453,7 +414,7 @@ describe('scada-canvas lifecycle hardening (plan 2026-08-04-1558-2 Phase 1)', ()
   it('setPointValues injection handle is a no-op when runtime has been destroyed (mount-path guard, plan 2026-08-04-1558-3 Phase 3)', async () => {
     // use-scada-engine setPointValues 注入闭包：runtimeRef.current 为空时直接 return（mount 路径注入边界）。
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps({ props: { config: configProp(textConfig()) } }), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 7, props: { config: configProp(textConfig()) } }), environment);
     await waitFor(() => expect(scadaTestHandle(7)?.getSymbol('rect-1')).toBeDefined());
     const handle = scadaTestHandle(7) as
       | {

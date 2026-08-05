@@ -1,10 +1,17 @@
 import { cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RendererComponentProps, SchemaObject } from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
-import { createScadaTestEnvironment, renderScadaCanvas } from '../test-support/renderer-test-support.js';
+import {
+  configProp,
+  createScadaTestEnvironment,
+  makeScadaCanvasProps,
+  renderScadaCanvas,
+  scadaTestHandle,
+  validCanvasConfig,
+} from '../test-support/renderer-test-support.js';
 import { collectSymbolEvents } from './hooks/use-scada-events.js';
 import type { ScadaCanvasSchema } from '../schemas.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
@@ -16,9 +23,8 @@ const DIALOG_ACTION = { action: 'openDialog', args: { dialogId: 'i11-dialog' } }
 const NAVIGATE_ACTION = { action: 'navigate', args: { url: '#/flux-basic' } };
 const AJAX_ACTION = { action: 'ajax', args: { url: '/api/i11/points', method: 'get' } };
 
-const validConfig = (): ScadaConfig =>
-  ({
-    version: 1,
+const actionsConfig = (): ScadaConfig =>
+  validCanvasConfig({
     variables: [{ id: 'level', source: 'static', value: 10 }],
     symbols: [
       {
@@ -46,45 +52,11 @@ const validConfig = (): ScadaConfig =>
         events: [{ on: 'click', action: AJAX_ACTION }],
       },
     ],
-  }) as ScadaConfig;
-
-function configProp(config: ScadaConfig | { version: number } | string): ScadaCanvasConfigProp {
-  return config as unknown as ScadaCanvasConfigProp;
-}
-
-type ScadaCanvasConfigProp = string | (ScadaConfig & SchemaObject);
-
-function makeProps(
-  overrides: Partial<RendererComponentProps<ScadaCanvasSchema>> & { props?: Record<string, unknown> } = {},
-): RendererComponentProps<ScadaCanvasSchema> {
-  const dispatch = vi.fn().mockResolvedValue({ ok: true });
-  return {
-    id: 'scada-1',
-    path: 'test.scada-1',
-    schema: { type: 'scada-canvas' } as ScadaCanvasSchema,
-    templateNode: {} as RendererComponentProps<ScadaCanvasSchema>['templateNode'],
-    node: {} as RendererComponentProps<ScadaCanvasSchema>['node'],
-    props: { config: configProp(validConfig()), width: 800, height: 600 } as RendererComponentProps<ScadaCanvasSchema>['props'],
-    meta: {
-      visible: true,
-      hidden: false,
-      disabled: false,
-      changed: false,
-      cid: 21,
-    } as RendererComponentProps<ScadaCanvasSchema>['meta'],
-    regions: {},
-    events: {},
-    reactions: {},
-    helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
-    ...overrides,
-  };
-}
+  });
 
 async function waitForEngine(): Promise<ScadaCanvasEngine> {
-  await waitFor(() =>
-    expect((window as unknown as Record<string, unknown>)[`__flux_scada_21`]).toBeDefined(),
-  );
-  return ((window as unknown as Record<string, unknown>)[`__flux_scada_21`] as { engine: ScadaCanvasEngine }).engine;
+  await waitFor(() => expect(scadaTestHandle(21)).toBeDefined());
+  return scadaTestHandle(21)?.engine as ScadaCanvasEngine;
 }
 
 function pointAt(engine: ScadaCanvasEngine, symbolId: string, point: { x: number; y: number }): void {
@@ -133,7 +105,9 @@ describe('scada-canvas 组态内图元事件声明→action 全链路 (I11.1)', 
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({
+        cid: 21,
+        props: { config: configProp(actionsConfig()), width: 800, height: 600 },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
       }),
@@ -170,9 +144,9 @@ describe('scada-canvas 组态内图元事件声明→action 全链路 (I11.1)', 
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 21,
         props: {
-          config: configProp(validConfig()),
+          config: configProp(actionsConfig()),
           width: 800,
           height: 600,
           events: { onSymbolClick: { action: 'showToast', args: { message: 'global hook' } } },
@@ -192,13 +166,13 @@ describe('scada-canvas 组态内图元事件声明→action 全链路 (I11.1)', 
   it('falls back to the schema-level global hook when the symbol has no declaration', async () => {
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
-    const config = validConfig();
+    const config = actionsConfig();
     const noDeclarationConfig = {
       ...config,
       symbols: [{ id: 'rect-c', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50 }],
     } as ScadaConfig;
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 21,
         props: {
           config: configProp(noDeclarationConfig),
           width: 800,
@@ -220,7 +194,9 @@ describe('scada-canvas 组态内图元事件声明→action 全链路 (I11.1)', 
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({
+        cid: 21,
+        props: { config: configProp(actionsConfig()), width: 800, height: 600 },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
       }),
@@ -242,9 +218,9 @@ describe('scada-canvas 组态内图元事件声明→action 全链路 (I11.1)', 
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 21,
         props: {
-          config: configProp(validConfig()),
+          config: configProp(actionsConfig()),
           width: 800,
           height: 600,
           events: { onSymbolClick: { action: 'showToast' } },
@@ -282,7 +258,7 @@ describe('scada-canvas 组态内图元事件声明→action 全链路 (I11.1)', 
       ],
     } as unknown as ScadaConfig;
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 21,
         props: {
           config: configProp(invalidConfig),
           width: 800,
@@ -308,7 +284,9 @@ describe('scada-canvas 组态内图元事件声明→action 全链路 (I11.1)', 
     const dispatch = vi.fn().mockResolvedValue({ ok: true });
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({
+        cid: 21,
+        props: { config: configProp(actionsConfig()), width: 800, height: 600 },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
         helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
       }),

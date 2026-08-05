@@ -1,62 +1,34 @@
 import { cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RendererComponentProps, SchemaObject } from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
-import { createScadaTestEnvironment, renderScadaCanvas } from '../test-support/renderer-test-support.js';
+import {
+  configProp,
+  createScadaTestEnvironment,
+  makeScadaCanvasProps,
+  renderScadaCanvas,
+  scadaTestHandle,
+  validCanvasConfig,
+} from '../test-support/renderer-test-support.js';
 import type { ScadaCanvasSchema } from '../schemas.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
 
-const validConfig = (): ScadaConfig =>
-  ({
-    version: 1,
+const overlayConfig = (): ScadaConfig =>
+  validCanvasConfig({
     symbols: [
       { id: 'rect-a', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#ff0000' },
       { id: 'rect-b', type: 'scada-rect', x: 200, y: 20, width: 100, height: 50, fill: '#00ff00' },
     ],
-  }) as ScadaConfig;
-
-function configProp(config: ScadaConfig | { version: number } | string): ScadaCanvasConfigProp {
-  return config as unknown as ScadaCanvasConfigProp;
-}
-
-type ScadaCanvasConfigProp = string | (ScadaConfig & SchemaObject);
-
-function makeProps(
-  overrides: Partial<RendererComponentProps<ScadaCanvasSchema>> & { props?: Record<string, unknown> } = {},
-): RendererComponentProps<ScadaCanvasSchema> {
-  const dispatch = vi.fn().mockResolvedValue({ ok: true });
-  return {
-    id: 'scada-1',
-    path: 'test.scada-1',
-    schema: { type: 'scada-canvas' } as ScadaCanvasSchema,
-    templateNode: {} as RendererComponentProps<ScadaCanvasSchema>['templateNode'],
-    node: {} as RendererComponentProps<ScadaCanvasSchema>['node'],
-    props: { config: configProp(validConfig()), width: 800, height: 600 } as RendererComponentProps<ScadaCanvasSchema>['props'],
-    meta: {
-      visible: true,
-      hidden: false,
-      disabled: false,
-      changed: false,
-      cid: 31,
-    } as RendererComponentProps<ScadaCanvasSchema>['meta'],
-    regions: {},
-    events: {},
-    reactions: {},
-    helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
-    ...overrides,
-  };
-}
+  });
 
 async function waitForEngine(): Promise<ScadaCanvasEngine> {
-  await waitFor(() =>
-    expect((window as unknown as Record<string, unknown>)[`__flux_scada_31`]).toBeDefined(),
-  );
-  return ((window as unknown as Record<string, unknown>)[`__flux_scada_31`] as { engine: ScadaCanvasEngine }).engine;
+  await waitFor(() => expect(scadaTestHandle(31)).toBeDefined());
+  return scadaTestHandle(31)?.engine as ScadaCanvasEngine;
 }
 
 /** 模拟指针移到指定图元（命中解析 stub 指向该图元节点）。 */
@@ -86,7 +58,7 @@ afterEach(() => {
 describe('scada-canvas hover 命中反馈覆盖物 (I11.2)', () => {
   it('shows an InteractionOverlay rect on symbol:hover and clears it on hover-miss', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps({ node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'] }), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 31, props: { config: configProp(overlayConfig()), width: 800, height: 600 }, node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'] }), environment);
     const engine = await waitForEngine();
     expect(engine.interactionOverlay).toBeDefined();
 
@@ -106,7 +78,7 @@ describe('scada-canvas hover 命中反馈覆盖物 (I11.2)', () => {
     // 悬停同一图元时多次 pointer.move 不再触发 driveHover/overlay.highlight——覆盖物只在首次
     // 命中时绘制，视口变化经 `refresh()` 钩子维护（pan/zoom），图元几何变化重画属 deferred。
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps({ node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'] }), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 31, props: { config: configProp(overlayConfig()), width: 800, height: 600 }, node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'] }), environment);
     const engine = await waitForEngine();
 
     movePointerTo(engine, 'rect-a', { x: 50, y: 50 });
@@ -131,7 +103,7 @@ describe('scada-canvas hover 命中反馈覆盖物 (I11.2)', () => {
 
   it('switches the overlay from A to B without residue (A→B 切换清前一覆盖物)', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps({ node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'] }), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 31, props: { config: configProp(overlayConfig()), width: 800, height: 600 }, node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'] }), environment);
     const engine = await waitForEngine();
 
     movePointerTo(engine, 'rect-a', { x: 50, y: 50 });
@@ -148,7 +120,7 @@ describe('scada-canvas hover 命中反馈覆盖物 (I11.2)', () => {
 
   it('clears the overlay of a symbol removed by applyDiff (覆盖物随图元移除清理)', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps({ node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'] }), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 31, props: { config: configProp(overlayConfig()), width: 800, height: 600 }, node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'] }), environment);
     const engine = await waitForEngine();
 
     movePointerTo(engine, 'rect-a', { x: 50, y: 50 });
@@ -190,7 +162,7 @@ describe('scada-canvas hover 命中反馈覆盖物 (I11.2)', () => {
     } as ScadaConfig;
     const environment = createScadaTestEnvironment([]);
     renderScadaCanvas(
-      makeProps({
+      makeScadaCanvasProps({ cid: 31,
         props: { config: configProp(config), width: 800, height: 600 },
         node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
       }),

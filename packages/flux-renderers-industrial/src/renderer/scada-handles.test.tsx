@@ -1,20 +1,26 @@
 import { cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
+import type { ComponentHandle } from '@nop-chaos/flux-core';
 import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
-import { ScadaTestProviders, createScadaTestEnvironment, renderScadaCanvas } from '../test-support/renderer-test-support.js';
+import {
+  configProp,
+  createScadaTestEnvironment,
+  makeScadaCanvasProps,
+  renderScadaCanvas,
+  ScadaTestProviders,
+  scadaTestHandle,
+  validCanvasConfig,
+} from '../test-support/renderer-test-support.js';
 import { ScadaCanvasRenderer } from './scada-canvas.js';
-import type { ScadaCanvasSchema } from '../schemas.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
 
-const validConfig = (overrides: Record<string, unknown> = {}): ScadaConfig =>
-  ({
-    version: 1,
+const handlesConfig = (overrides: Record<string, unknown> = {}): ScadaConfig =>
+  validCanvasConfig({
     variables: [
       { id: 'level', source: 'static', value: 10 },
       { id: 'speed', source: 'static', value: 100 },
@@ -25,32 +31,7 @@ const validConfig = (overrides: Record<string, unknown> = {}): ScadaConfig =>
       { id: 'rect-2', type: 'scada-rect', x: 200, y: 20, width: 100, height: 50, fill: '#00ff00' },
     ],
     ...overrides,
-  }) as ScadaConfig;
-
-function makeProps(
-  overrides: Partial<RendererComponentProps<ScadaCanvasSchema>> & { props?: Record<string, unknown> } = {},
-): RendererComponentProps<ScadaCanvasSchema> {
-  return {
-    id: 'scada-1',
-    path: 'test.scada-1',
-    schema: { type: 'scada-canvas' } as ScadaCanvasSchema,
-    templateNode: {} as RendererComponentProps<ScadaCanvasSchema>['templateNode'],
-    node: {} as RendererComponentProps<ScadaCanvasSchema>['node'],
-    props: { config: validConfig() } as RendererComponentProps<ScadaCanvasSchema>['props'],
-    meta: {
-      visible: true,
-      hidden: false,
-      disabled: false,
-      changed: false,
-      cid: 9,
-    } as RendererComponentProps<ScadaCanvasSchema>['meta'],
-    regions: {},
-    events: {},
-    reactions: {},
-    helpers: { dispatch: vi.fn().mockResolvedValue({ ok: true }) } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
-    ...overrides,
-  };
-}
+  });
 
 const EXPECTED_METHODS = [
   'fit',
@@ -85,7 +66,7 @@ afterEach(() => {
 describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () => {
   it('registers component:* capabilities aligned with the §8.5 handle table', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps(), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 9, props: { config: configProp(handlesConfig()) } }), environment);
     const handle = await resolveScadaHandle(environment);
     expect(handle.id).toBe('scada-1');
     expect(handle.type).toBe('scada-canvas');
@@ -98,9 +79,9 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
 
   it('fit/center drive the viewport and getSymbols/getSymbol read the scene tree', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps(), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 9, props: { config: configProp(handlesConfig()) } }), environment);
     const handle = await resolveScadaHandle(environment);
-    const engine = ((window as unknown as Record<string, unknown>)[`__flux_scada_9`] as { engine: ScadaCanvasEngine }).engine;
+    const engine = scadaTestHandle(9)?.engine as ScadaCanvasEngine;
 
     const before = engine.getViewport();
     const fitResult = await handle.capabilities.invoke('fit', undefined, {});
@@ -128,7 +109,7 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
 
   it('getSymbol/setPointValue return the §8.5 failure paths (symbol-not-found / point-not-found)', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps(), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 9, props: { config: configProp(handlesConfig()) } }), environment);
     const handle = await resolveScadaHandle(environment);
 
     const missingSymbol = await handle.capabilities.invoke('getSymbol', { id: 'nope' }, {});
@@ -150,7 +131,7 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
 
   it('setPointValue writes through the point store and getPointTable snapshots it', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps(), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 9, props: { config: configProp(handlesConfig()) } }), environment);
     const handle = await resolveScadaHandle(environment);
 
     const write = await handle.capabilities.invoke('setPointValue', { pointId: 'level', value: 42 }, {});
@@ -163,15 +144,13 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
     expect(table.ok).toBe(true);
     expect(table.data).toEqual({ level: 42, speed: 100, calc: 84 });
 
-    const handleWindow = (window as unknown as Record<string, unknown>)[`__flux_scada_9`] as {
-      getPointValue: (pointId: string) => unknown;
-    };
-    expect(handleWindow.getPointValue('level')).toBe(42);
+    const handleWindow = scadaTestHandle(9);
+    expect(handleWindow?.getPointValue('level')).toBe(42);
   });
 
   it('exportConfig/importConfig honor the serialization contract (invalid-config failure path)', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps(), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 9, props: { config: configProp(handlesConfig()) } }), environment);
     const handle = await resolveScadaHandle(environment);
 
     const exported = await handle.capabilities.invoke('exportConfig', undefined, {});
@@ -201,11 +180,9 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
 
   it('importConfig is immediate, persistent and restores ready status without a props config (P1-5)', async () => {
     const environment = createScadaTestEnvironment([]);
-    const view = renderScadaCanvas(makeProps({ props: {} }), environment);
+    const view = renderScadaCanvas(makeScadaCanvasProps({ cid: 9, props: {} }), environment);
     const handle = await resolveScadaHandle(environment);
-    const engine = ((window as unknown as Record<string, unknown>)[`__flux_scada_9`] as {
-      engine: ScadaCanvasEngine;
-    }).engine;
+    const engine = scadaTestHandle(9)?.engine as ScadaCanvasEngine;
 
     // Phase 3 author-less fallback: 缺 config 兜底空场景 → ready（不再 loading）。
     // importConfig 后符号入树；effect 重跑沉降后 import 持久（不被空场景 props 回刷）。
@@ -232,13 +209,12 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
 
   it('destroy tears down the engine; later invocations return not-mounted', async () => {
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps(), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 9, props: { config: configProp(handlesConfig()) } }), environment);
     const handle = await resolveScadaHandle(environment);
-    const handleKey = '__flux_scada_9';
 
     const destroyed = await handle.capabilities.invoke('destroy', undefined, {});
     expect(destroyed.ok).toBe(true);
-    await waitFor(() => expect((window as unknown as Record<string, unknown>)[handleKey]).toBeUndefined());
+    await waitFor(() => expect(scadaTestHandle(9)).toBeUndefined());
 
     const later = await handle.capabilities.invoke('fit', undefined, {});
     expect(later.ok).toBe(false);
@@ -247,7 +223,7 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
 
   it('unmounts unregister the handle from the component registry', async () => {
     const environment = createScadaTestEnvironment([]);
-    const view = renderScadaCanvas(makeProps(), environment);
+    const view = renderScadaCanvas(makeScadaCanvasProps({ cid: 9, props: { config: configProp(handlesConfig()) } }), environment);
     const handle = await resolveScadaHandle(environment);
     expect(handle).toBeDefined();
     view.unmount();
@@ -263,7 +239,7 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
     // - exportConfig：空场景已构建 → 返回空场景 config（ok）。
     // - getSymbols：空场景 → 空数组。
     const environment = createScadaTestEnvironment([]);
-    renderScadaCanvas(makeProps({ props: {} }), environment);
+    renderScadaCanvas(makeScadaCanvasProps({ cid: 9, props: {} }), environment);
     const handle = await resolveScadaHandle(environment);
     const fit = await handle.capabilities.invoke('fit', undefined, {});
     expect(fit.ok).toBe(false);
@@ -286,7 +262,7 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
   it('reloadConfig stable identity → handle not re-registered on same-props re-render (Phase 3 L6)', async () => {
     const environment = createScadaTestEnvironment([]);
     const registerSpy = vi.spyOn(environment.componentRegistry, 'register');
-    const props = makeProps();
+    const props = makeScadaCanvasProps({ cid: 9, props: { config: configProp(handlesConfig()) } });
     const view = renderScadaCanvas(props, environment);
     await resolveScadaHandle(environment);
     const mountCount = registerSpy.mock.calls.length;
