@@ -1,12 +1,11 @@
 import type {
   GraphDocument,
-  GraphNode,
-  GraphEdge,
   DesignerConfig,
   NormalizedDesignerConfig,
   DesignerSnapshot,
   DesignerEvent,
   TreeDocument,
+  TreeCoreCreationResult,
 } from './types.js';
 import type { DesignerCore } from './designer-core-types.js';
 import { cloneDocument } from './core/clone.js';
@@ -33,24 +32,30 @@ import { createDesignerShellState, resetShellViewportFromDocument } from './core
 import { createShellControls } from './core/shell-controls.js';
 import { createDesignerSnapshotCache, getDesignerSnapshot } from './core/snapshot.js';
 import { layoutNodesInDocument } from './core/node-operations.js';
-import {
-  addNodeCommand,
-  updateNodeCommand,
-  moveNodeCommand,
-  deleteNodeCommand,
-  moveNodesCommand,
-  updateMultipleNodesCommand,
-  type NodeCommandContext,
-} from './core-node-commands.js';
-import {
-  addEdgeCommand,
-  reconnectEdgeCommand,
-  updateEdgeCommand,
-  deleteEdgeCommand,
-  type EdgeCommandContext,
-} from './core-edge-commands.js';
+import { buildTreeSessionContext, createTreeSessionSurface, createTreeDesignerCore as createTreeDesignerCoreImpl } from './tree-session-impl.js';
+import { createGraphCommandGate } from './core/graph-command-gate.js';
+
 export interface CreateDesignerCoreOptions {
   readonly?: boolean;
+}
+
+interface TreeCoreSessionInput {
+  initialTree: TreeDocument;
+  lastAcceptedHostEpoch: number;
+}
+
+interface CreateCoreInternalOptions extends CreateDesignerCoreOptions {
+  treeSession?: TreeCoreSessionInput;
+}
+
+export type TreeChangeReason = 'command' | 'undo' | 'redo' | 'restore';
+
+function emitTreeChanged(emit: (event: DesignerEvent) => void, tree: TreeDocument, reason: TreeChangeReason) {
+  emit({ type: 'treeChanged', tree, reason } as DesignerEvent);
+}
+
+function cloneTreeDocumentValue(tree: TreeDocument | undefined): TreeDocument | undefined {
+  return tree ? (JSON.parse(JSON.stringify(tree)) as TreeDocument) : undefined;
 }
 
 export function createDesignerCore(
@@ -58,21 +63,45 @@ export function createDesignerCore(
   config: DesignerConfig,
   options?: CreateDesignerCoreOptions,
 ): DesignerCore {
-  const isReadonly = options?.readonly ?? false;
-  function cloneTreeDocument(tree: TreeDocument | undefined): TreeDocument | undefined {
-    return tree ? (JSON.parse(JSON.stringify(tree)) as TreeDocument) : undefined;
+  if (config.documentMode === 'tree') {
+    throw new Error(
+      'tree-core-factory-required: tree mode must use createTreeDesignerCore(initialTreeDocument, config)',
+    );
   }
+  return createDesignerCoreInternal(initialDoc, config, options);
+}
+
+export function createTreeDesignerCore(
+  initialTreeDocument: TreeDocument,
+  config: DesignerConfig,
+  options?: CreateDesignerCoreOptions,
+): TreeCoreCreationResult {
+  return createTreeDesignerCoreImpl(
+    { createInternal: createDesignerCoreInternal as never },
+    initialTreeDocument,
+    config,
+    options,
+  );
+}
+
+function createDesignerCoreInternal(
+  initialDoc: GraphDocument,
+  config: DesignerConfig,
+  options?: CreateCoreInternalOptions,
+): DesignerCore {
+  const isReadonly = options?.readonly ?? false;
+  const isTreeMode = config.documentMode === 'tree';
+  const treeSession = options?.treeSession;
 
   let doc = cloneDocument(initialDoc);
   const normalizedConfig = normalizeConfig(config);
-  let treeOwner:
-    | { getTreeDocument: () => TreeDocument; setTreeDocument: (document: TreeDocument) => void }
-    | undefined;
+  let currentTreeDocument: TreeDocument | undefined = treeSession?.initialTree;
+  const lastAcceptedHostEpoch = treeSession?.lastAcceptedHostEpoch ?? 0;
   const listeners = new Set<(event: DesignerEvent) => void>();
 
-  let historyState: DesignerHistoryState = createHistoryState(doc, 0);
+  let historyState: DesignerHistoryState = createHistoryState(doc, 0, currentTreeDocument);
   let savedDoc: GraphDocument | null = cloneDocument(doc);
-  let savedTreeDocument: TreeDocument | undefined;
+  let savedTreeDocument: TreeDocument | undefined = cloneTreeDocumentValue(currentTreeDocument);
   let docRevision = 0;
   let savedRevision = 0;
 
@@ -108,6 +137,10 @@ export function createDesignerCore(
     return false;
   }
 
+  function rejectTreeMutation(method: string): void {
+    emit({ type: 'mutationRejected', method, reason: 'tree-owned' });
+  }
+
   function emit(event: DesignerEvent) {
     for (const listener of listeners) {
       listener(event);
@@ -137,13 +170,13 @@ export function createDesignerCore(
   }
 
   function replaceHistoryBaseline(nextDoc: GraphDocument) {
-    historyState = createHistoryState(nextDoc, docRevision, treeOwner?.getTreeDocument());
+    historyState = createHistoryState(nextDoc, docRevision, currentTreeDocument);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
   }
 
   function markHostDocumentSaved(nextDoc: GraphDocument) {
     savedDoc = cloneDocument(nextDoc);
-    savedTreeDocument = cloneTreeDocument(treeOwner?.getTreeDocument());
+    savedTreeDocument = cloneTreeDocumentValue(currentTreeDocument);
     savedRevision = docRevision;
   }
 
@@ -153,7 +186,7 @@ export function createDesignerCore(
       doc,
       docRevision,
       maxHistorySize,
-      treeOwner?.getTreeDocument(),
+      currentTreeDocument,
     );
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
   }
@@ -191,7 +224,29 @@ export function createDesignerCore(
     return () => listeners.delete(listener);
   }
 
-  function buildNodeCtx(): NodeCommandContext {
+  function selectBranch(ownerNodeId: string, branchId: string | null): void {
+    selectionController.selectBranch(ownerNodeId, branchId);
+  }
+
+  function toggleNodeSelection(nodeId: string): { ok: true } | { ok: false; reason: 'missing-node' } {
+    const exists = doc.nodes.some((node) => node.id === nodeId);
+    if (!exists) {
+      return { ok: false, reason: 'missing-node' };
+    }
+    selectionController.toggleNodeSelection(nodeId);
+    return { ok: true };
+  }
+
+  function toggleEdgeSelection(edgeId: string): { ok: true } | { ok: false; reason: 'missing-edge' } {
+    const exists = doc.edges.some((edge) => edge.id === edgeId);
+    if (!exists) {
+      return { ok: false, reason: 'missing-edge' };
+    }
+    selectionController.toggleEdgeSelection(edgeId);
+    return { ok: true };
+  }
+
+  function buildNodeCtx(): import('./core-node-commands.js').NodeCommandContext {
     return {
       get doc() {
         return doc;
@@ -211,11 +266,11 @@ export function createDesignerCore(
       setSelectionState: (s) => {
         selectionState = s;
       },
-      addNodeFn: addNode,
+      addNodeFn: (type, position, data) => addNode(type, position, data),
     };
   }
 
-  function buildEdgeCtx(): EdgeCommandContext {
+  function buildEdgeCtx(): import('./core-edge-commands.js').EdgeCommandContext {
     return {
       get doc() {
         return doc;
@@ -251,124 +306,6 @@ export function createDesignerCore(
     getTransactionDepth: () => transactionStack.length,
   });
 
-  function addNode(
-    type: string,
-    position: { x: number; y: number },
-    data?: Record<string, unknown>,
-  ): GraphNode | null {
-    if (assertReadonly('addNode')) return null;
-    return addNodeCommand(buildNodeCtx(), type, position, data);
-  }
-
-  function updateNode(nodeId: string, data: Record<string, unknown>): void {
-    if (assertReadonly('updateNode')) return;
-    updateNodeCommand(buildNodeCtx(), nodeId, data);
-  }
-
-  function moveNode(nodeId: string, position: { x: number; y: number }): void {
-    if (assertReadonly('moveNode')) return;
-    moveNodeCommand(buildNodeCtx(), nodeId, position);
-  }
-
-  function duplicateNode(nodeId: string): GraphNode | null {
-    if (assertReadonly('duplicateNode')) return null;
-    const source = doc.nodes.find((n) => n.id === nodeId);
-    if (!source) {
-      return null;
-    }
-
-    const nodeType = normalizedConfig.nodeTypes.get(source.type);
-
-    if (nodeType && !checkMaxInstancesLocal(source.type)) {
-      return null;
-    }
-
-    return addNode(
-      source.type,
-      { x: source.position.x + 48, y: source.position.y + 48 },
-      source.data,
-    );
-  }
-
-  function checkMaxInstancesLocal(type: string): boolean {
-    const nodeType = normalizedConfig.nodeTypes.get(type);
-    if (!nodeType) return true;
-    const max = nodeType.constraints?.maxInstances;
-    if (max === undefined) return true;
-    return doc.nodes.filter((n) => n.type === type).length < Number(max);
-  }
-
-  function deleteNode(nodeId: string): void {
-    if (assertReadonly('deleteNode')) return;
-    deleteNodeCommand(buildNodeCtx(), nodeId);
-  }
-
-  function addEdge(
-    source: string,
-    target: string,
-    data?: Record<string, unknown>,
-    sourcePort?: string,
-    targetPort?: string,
-  ): GraphEdge | null {
-    if (assertReadonly('addEdge')) return null;
-    return addEdgeCommand(buildEdgeCtx(), source, target, data, sourcePort, targetPort);
-  }
-
-  function reconnectEdge(
-    edgeId: string,
-    source: string,
-    target: string,
-    sourcePort?: string,
-    targetPort?: string,
-  ): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string } {
-    if (assertReadonly('reconnectEdge')) return { ok: false, error: 'Document is readonly' };
-    return reconnectEdgeCommand(buildEdgeCtx(), edgeId, source, target, sourcePort, targetPort);
-  }
-
-  function updateEdge(edgeId: string, data: Record<string, unknown>): void {
-    if (assertReadonly('updateEdge')) return;
-    updateEdgeCommand(buildEdgeCtx(), edgeId, data);
-  }
-
-  function deleteEdge(edgeId: string): void {
-    if (assertReadonly('deleteEdge')) return;
-    deleteEdgeCommand(buildEdgeCtx(), edgeId);
-  }
-
-  function selectBranch(ownerNodeId: string, branchId: string | null): void {
-    selectionController.selectBranch(ownerNodeId, branchId);
-  }
-
-  function toggleNodeSelection(nodeId: string): { ok: true } | { ok: false; reason: 'missing-node' } {
-    const exists = doc.nodes.some((node) => node.id === nodeId);
-    if (!exists) {
-      return { ok: false, reason: 'missing-node' };
-    }
-
-    selectionController.toggleNodeSelection(nodeId);
-    return { ok: true };
-  }
-
-  function toggleEdgeSelection(edgeId: string): { ok: true } | { ok: false; reason: 'missing-edge' } {
-    const exists = doc.edges.some((edge) => edge.id === edgeId);
-    if (!exists) {
-      return { ok: false, reason: 'missing-edge' };
-    }
-
-    selectionController.toggleEdgeSelection(edgeId);
-    return { ok: true };
-  }
-
-  function moveNodes(deltas: Record<string, { dx: number; dy: number }>): void {
-    if (assertReadonly('moveNodes')) return;
-    moveNodesCommand(buildNodeCtx(), deltas);
-  }
-
-  function updateMultipleNodes(updates: Array<{ nodeId: string; data: Partial<GraphNode> }>): void {
-    if (assertReadonly('updateMultipleNodes')) return;
-    updateMultipleNodesCommand(buildNodeCtx(), updates);
-  }
-
   function undo(): void {
     if (assertReadonly('undo')) return;
     const result = undoHistory(historyState);
@@ -378,14 +315,18 @@ export function createDesignerCore(
 
     historyState = result.state;
     replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
-    if (treeOwner && result.entry.treeDocument) {
-      treeOwner.setTreeDocument(result.entry.treeDocument);
+    const restoredTree = result.entry.treeDocument ? cloneTreeDocumentValue(result.entry.treeDocument) : undefined;
+    if (isTreeMode && restoredTree) {
+      currentTreeDocument = restoredTree;
     }
     resetShellViewportFromDocument(shellState, doc);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'viewportChanged', viewport: shellState.viewport });
     updateDirtyState();
+    if (isTreeMode && currentTreeDocument) {
+      emitTreeChanged(emit, currentTreeDocument, 'undo');
+    }
   }
 
   function redo(): void {
@@ -397,14 +338,18 @@ export function createDesignerCore(
 
     historyState = result.state;
     replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
-    if (treeOwner && result.entry.treeDocument) {
-      treeOwner.setTreeDocument(result.entry.treeDocument);
+    const restoredTree = result.entry.treeDocument ? cloneTreeDocumentValue(result.entry.treeDocument) : undefined;
+    if (isTreeMode && restoredTree) {
+      currentTreeDocument = restoredTree;
     }
     resetShellViewportFromDocument(shellState, doc);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'viewportChanged', viewport: shellState.viewport });
     updateDirtyState();
+    if (isTreeMode && currentTreeDocument) {
+      emitTreeChanged(emit, currentTreeDocument, 'redo');
+    }
   }
 
   function copySelection(): void {
@@ -413,6 +358,10 @@ export function createDesignerCore(
   }
 
   function pasteClipboard(): void {
+    if (isTreeMode) {
+      rejectTreeMutation('pasteClipboard');
+      return;
+    }
     if (assertReadonly('pasteClipboard')) return;
     shellControls.pasteClipboard(addNode);
   }
@@ -454,21 +403,29 @@ export function createDesignerCore(
   }
 
   function replaceDocumentFromHost(nextDoc: GraphDocument, treeDocument?: TreeDocument): void {
+    if (isTreeMode) {
+      rejectTreeMutation('replaceDocumentFromHost');
+      return;
+    }
     if (assertReadonly('replaceDocumentFromHost')) return;
-    if (treeOwner && treeDocument) {
-      treeOwner.setTreeDocument(treeDocument);
+    if (treeDocument) {
+      currentTreeDocument = cloneTreeDocumentValue(treeDocument);
     }
     shellControls.replaceDocumentFromHost(nextDoc);
   }
 
   function replaceDocumentWithHistory(nextDoc: GraphDocument, treeDocument?: TreeDocument): void {
+    if (isTreeMode) {
+      rejectTreeMutation('replaceDocument');
+      return;
+    }
     if (assertReadonly('replaceDocument')) return;
     if (!setDocument(cloneDocument(nextDoc))) {
       return;
     }
 
-    if (treeOwner && treeDocument) {
-      treeOwner.setTreeDocument(treeDocument);
+    if (treeDocument) {
+      currentTreeDocument = cloneTreeDocumentValue(treeDocument);
     }
 
     if (transactionStack.length === 0) {
@@ -480,22 +437,10 @@ export function createDesignerCore(
     updateDirtyState();
   }
 
-  function setTreeOwner(
-    getTreeDocument: () => TreeDocument,
-    setTreeDocument: (document: TreeDocument) => void,
-  ): void {
-    const hadTreeOwner = Boolean(treeOwner);
-    treeOwner = { getTreeDocument, setTreeDocument };
-    if (!hadTreeOwner) {
-      historyState = createHistoryState(doc, docRevision, treeOwner.getTreeDocument());
-      savedTreeDocument = cloneTreeDocument(treeOwner.getTreeDocument());
-    }
-  }
-
   function save(): void {
     if (assertReadonly('save')) return;
     savedDoc = cloneDocument(doc);
-    savedTreeDocument = cloneTreeDocument(treeOwner?.getTreeDocument());
+    savedTreeDocument = cloneTreeDocumentValue(currentTreeDocument);
     savedRevision = docRevision;
     emit({ type: 'dirtyChanged', isDirty: false });
   }
@@ -507,17 +452,23 @@ export function createDesignerCore(
     }
 
     replaceDocument(cloneDocument(savedDoc), savedRevision);
-    if (treeOwner && savedTreeDocument) {
-      treeOwner.setTreeDocument(cloneTreeDocument(savedTreeDocument)!);
+    if (savedTreeDocument) {
+      currentTreeDocument = cloneTreeDocumentValue(savedTreeDocument);
     }
     resetShellViewportFromDocument(shellState, doc);
     if (transactionStack.length === 0) pushHistory();
     emit({ type: 'documentChanged', doc });
     emit({ type: 'dirtyChanged', isDirty: false });
     emit({ type: 'viewportChanged', viewport: shellState.viewport });
+    if (isTreeMode && currentTreeDocument) {
+      emitTreeChanged(emit, currentTreeDocument, 'restore');
+    }
   }
 
   function exportDocument(): string {
+    if (isTreeMode && currentTreeDocument) {
+      return JSON.stringify(currentTreeDocument, null, 2);
+    }
     return JSON.stringify(doc, null, 2);
   }
 
@@ -526,6 +477,10 @@ export function createDesignerCore(
   }
 
   function layoutNodes(positions: Map<string, { x: number; y: number }>): void {
+    if (isTreeMode) {
+      rejectTreeMutation('layoutNodes');
+      return;
+    }
     const nextDoc = layoutNodesInDocument(doc, positions);
     if (!nextDoc) {
       return;
@@ -554,7 +509,7 @@ export function createDesignerCore(
     const nextState = beginTransactionState(
       transactionStack,
       doc,
-      treeOwner?.getTreeDocument(),
+      currentTreeDocument,
       label,
       transactionId,
     );
@@ -583,6 +538,14 @@ export function createDesignerCore(
       pushHistory();
     }
     emit({ type: 'transactionCommitted', transactionId: result.committedId });
+    if (isTreeMode && result.shouldPushHistory && currentTreeDocument) {
+      emit({
+        type: 'treeChanged',
+        tree: currentTreeDocument,
+        reason: 'command',
+        commandType: 'transaction',
+      } as DesignerEvent);
+    }
     return { ok: true, transactionId: result.committedId };
   }
 
@@ -602,8 +565,8 @@ export function createDesignerCore(
 
     transactionStack = result.stack;
     replaceDocument(result.snapshotBefore, getCurrentRevision(historyState) ?? docRevision);
-    if (treeOwner && result.treeSnapshotBefore) {
-      treeOwner.setTreeDocument(result.treeSnapshotBefore);
+    if (result.treeSnapshotBefore) {
+      currentTreeDocument = cloneTreeDocumentValue(result.treeSnapshotBefore);
     }
     resetShellViewportFromDocument(shellState, doc);
     for (const rolledBackId of result.rolledBackIds) {
@@ -616,20 +579,25 @@ export function createDesignerCore(
     return { ok: true, transactionId: result.rolledBackIds[0] };
   }
 
+  const graphGate = createGraphCommandGate({
+    isTreeMode,
+    rejectTreeMutation,
+    assertReadonly,
+    buildNodeCtx,
+    buildEdgeCtx,
+    getDoc: () => doc,
+    normalizedConfig,
+    getSelectionState: () => selectionState,
+    addNodeFn: (type, position, data) => addNode(type, position, data),
+  });
+  const { addNode } = graphGate;
+
   return {
     getSnapshot,
     getDocument,
     getConfig,
     subscribe,
-    addNode,
-    updateNode,
-    moveNode,
-    duplicateNode,
-    deleteNode,
-    addEdge,
-    reconnectEdge,
-    updateEdge,
-    deleteEdge,
+    ...graphGate,
     selectNode: selectionController.selectNode,
     selectEdge: selectionController.selectEdge,
     selectBranch,
@@ -638,8 +606,6 @@ export function createDesignerCore(
     toggleEdgeSelection,
     selectAllNodes: selectionController.selectAllNodes,
     setSelection: selectionController.setSelection,
-    moveNodes,
-    updateMultipleNodes,
     undo,
     redo,
     canUndo,
@@ -657,7 +623,6 @@ export function createDesignerCore(
     setViewport,
     replaceDocument: replaceDocumentWithHistory,
     replaceDocumentFromHost,
-    setTreeOwner,
     save,
     restore,
     exportDocument,
@@ -667,5 +632,41 @@ export function createDesignerCore(
     commitTransaction,
     rollbackTransaction,
     isInTransaction,
+    ...createTreeSessionSurface(buildTreeSessionContext({
+      isTreeMode,
+      getCurrentTreeDocument: () => currentTreeDocument,
+      setCurrentTreeDocument: (value: TreeDocument | undefined) => {
+        currentTreeDocument = value;
+      },
+      lastAcceptedHostEpoch,
+      normalizedConfig,
+      getDoc: () => doc,
+      setDoc: (value: GraphDocument) => {
+        doc = value;
+      },
+      getDocRevision: () => docRevision,
+      setDocRevision: (value: number) => {
+        docRevision = value;
+      },
+      historyState,
+      savedTreeDocument,
+      savedRevision,
+      transactionStack,
+      shellState,
+      isReadonly,
+      assertReadonly,
+      emit,
+      emitTreeChanged: (tree: TreeDocument, reason: import('./types.js').TreeChangeReason) =>
+        emitTreeChanged(emit, tree, reason),
+      replaceDocument,
+      replaceHistoryBaseline,
+      markHostDocumentSaved,
+      pushHistory,
+      canUndo,
+      canRedo,
+      isDirty,
+      updateDirtyState,
+      resetViewport: () => resetShellViewportFromDocument(shellState, doc),
+    })),
   };
 }

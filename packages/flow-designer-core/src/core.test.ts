@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDesignerCore } from './core.js';
+import { createDesignerCore, createTreeDesignerCore } from './core.js';
 import type { DesignerConfig, GraphDocument, TreeDocument } from './types.js';
 
 function createTestDesignerConfig(): DesignerConfig {
@@ -186,52 +186,56 @@ describe('createDesignerCore', () => {
     expect(exported).toContain('"nodes"');
   });
 
-  it('restores tree owner state together with the saved graph baseline', () => {
-    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
-    let treeDocument = createTreeDocument('Saved Tree');
-
-    core.setTreeOwner(
-      () => treeDocument,
-      (next) => {
-        treeDocument = next;
+  it('restores tree document state together with the saved baseline', () => {
+    const config: DesignerConfig = {
+      ...createTestDesignerConfig(),
+      documentMode: 'tree',
+      treeConfig: {
+        layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
+        showGatewayNodes: false,
+        showMergeNodes: false,
       },
-    );
+    };
+    const creation = createTreeDesignerCore(createTreeDocument('Saved Tree'), config);
+    expect(creation.ok).toBe(true);
+    if (!creation.ok) throw new Error('tree core creation failed');
+    const core = creation.core;
 
     core.save();
-
-    treeDocument = createTreeDocument('Mutated Tree');
-    core.updateNode('task-1', { label: 'Task Updated' });
+    const command = core.updateTreeNodeData('root-1', { label: 'Mutated Tree' });
+    expect(command.ok).toBe(true);
 
     expect(core.getSnapshot().isDirty).toBe(true);
-    expect(treeDocument.root.data.label).toBe('Mutated Tree');
+    expect(core.getTreeDocument()?.root.data.label).toBe('Mutated Tree');
 
     core.restore();
 
     expect(core.getSnapshot().isDirty).toBe(false);
-    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe('Task');
-    expect(treeDocument.root.data.label).toBe('Saved Tree');
+    expect(core.getTreeDocument()?.root.data.label).toBe('Saved Tree');
   });
 
-  it('rolls back tree owner state together with transaction graph state', () => {
-    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
-    let treeDocument = createTreeDocument('Before Transaction');
-
-    core.setTreeOwner(
-      () => treeDocument,
-      (next) => {
-        treeDocument = next;
+  it('rolls back tree document state together with transaction state', () => {
+    const config: DesignerConfig = {
+      ...createTestDesignerConfig(),
+      documentMode: 'tree',
+      treeConfig: {
+        layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
+        showGatewayNodes: false,
+        showMergeNodes: false,
       },
-    );
+    };
+    const creation = createTreeDesignerCore(createTreeDocument('Before Transaction'), config);
+    expect(creation.ok).toBe(true);
+    if (!creation.ok) throw new Error('tree core creation failed');
+    const core = creation.core;
 
     const txId = core.beginTransaction('tree rollback');
-    treeDocument = createTreeDocument('After Transaction');
-    core.updateNode('task-1', { label: 'Updated In Tx' });
+    core.updateTreeNodeData('root-1', { label: 'Updated In Tx' });
 
     const result = core.rollbackTransaction(txId);
 
     expect(result).toEqual({ ok: true, transactionId: txId });
-    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe('Task');
-    expect(treeDocument.root.data.label).toBe('Before Transaction');
+    expect(core.getTreeDocument()?.root.data.label).toBe('Before Transaction');
   });
 
   it('rejects duplicate edges when allowMultiEdge is false', () => {

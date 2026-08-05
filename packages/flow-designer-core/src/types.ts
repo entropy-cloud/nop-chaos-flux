@@ -1,4 +1,5 @@
 import type { ActionSchema, DomainHostStatusSummary, SchemaInput } from '@nop-chaos/flux-core';
+import type { DesignerCore } from './designer-core-types.js';
 
 export type ActionIntent = 'neutral' | 'primary' | 'danger' | 'warning' | 'success' | 'info';
 
@@ -97,6 +98,7 @@ export interface NodeTypeConfig {
   roles?: NodeRoleConfig;
   constraints?: NodeConstraintConfig;
   defaults?: Record<string, unknown>;
+  tree?: TreeNodeTypeTreeConfig;
   inspector?: {
     mode?: 'panel' | 'drawer' | 'dialog';
     body: SchemaInput;
@@ -107,6 +109,16 @@ export interface NodeTypeConfig {
     submitAction?: ActionSchema | ActionSchema[];
   };
   quickActions?: SchemaInput;
+}
+
+export interface TreeNodeTypeTreeConfig {
+  allowBranches?: boolean;
+  maxBranches?: number;
+  minBranches?: number;
+  allowChild?: boolean;
+  isTerminal?: boolean;
+  branchEdgeType?: string;
+  layoutSize?: { width: number; height: number };
 }
 
 export interface NodeRoleConfig {
@@ -347,6 +359,9 @@ export type DesignerEvent =
   | { type: 'transactionCommitted'; transactionId: string }
   | { type: 'transactionRolledBack'; transactionId: string }
   | { type: 'lifecycleHookError'; hook: string; error: unknown }
+  | { type: 'mutationRejected'; method: string; reason: 'tree-owned' }
+  | { type: 'presentationChanged'; doc: GraphDocument }
+  | { type: 'treeChanged'; tree: TreeDocument; reason: 'command' | 'undo' | 'redo' | 'restore'; commandType?: 'transaction' }
   | { type: 'nodes:moved' }
   | { type: 'nodes:updated' };
 
@@ -376,14 +391,8 @@ export interface TreeNodeBranch {
 }
 
 export interface TreeNodeTypeConfig extends NodeTypeConfig {
-  tree?: {
-    allowBranches?: boolean;
-    maxBranches?: number;
-    minBranches?: number;
-    allowChild?: boolean;
-    isTerminal?: boolean;
-    branchEdgeType?: string;
-  };
+  /** @deprecated Use `NodeTypeConfig.tree` directly. */
+  tree?: TreeNodeTypeTreeConfig;
 }
 
 export interface TreeConfig {
@@ -394,11 +403,93 @@ export interface TreeConfig {
   };
   showGatewayNodes: boolean;
   showMergeNodes: boolean;
-  autoLayout: boolean;
+  /**
+   * @deprecated Structured tree layout is mandatory in tree mode; any value is ignored.
+   */
+  autoLayout?: boolean;
   chainEdgeType?: string;
   branchEdgeType?: string;
   mergeEdgeType?: string;
+  emptyBranchSize?: { width: number; height: number };
 }
+
+export interface TreeEdgeRuntimeGeometry {
+  kind: 'chain' | 'split' | 'merge';
+  direction: 'TB' | 'LR';
+  ownerId?: string;
+  branchId?: string;
+  continuationId?: string;
+  lineMain?: number;
+  fanoutCross?: number;
+}
+
+export type TreeProjectionErrorCode =
+  | 'duplicate-id'
+  | 'reserved-id'
+  | 'unknown-node-type'
+  | 'invalid-layout-size'
+  | 'invalid-spacing'
+  | 'invalid-tree-payload'
+  | 'cyclic-tree'
+  | 'invalid-tree-config'
+  | 'invalid-tree'
+  | 'shared-node-reference'
+  | 'unsupported-version'
+  | 'config-migration-failed'
+  | 'tree-migration-failed'
+  | 'unsupported-tree-edge-decoration'
+  | 'tree-host-epoch-required'
+  | 'invalid-tree-document-epoch'
+  | 'invalid-tree-document-ack'
+  | 'tree-host-invalid-ack'
+  | 'tree-host-conflict'
+  | 'tree-config-update-ignored-requires-remount'
+  | 'tree-core-factory-required'
+  | 'tree-document-change-action-failed'
+  | 'tree-document-change-action-cancelled'
+  | 'tree-host-backpressure';
+
+export interface TreeProjectionError {
+  code: TreeProjectionErrorCode;
+  message: string;
+  path?: string;
+}
+
+export interface TreeProjectionView {
+  tree: TreeDocument;
+  document: GraphDocument;
+}
+
+export type TreeProjectionResult =
+  | { ok: true; view: TreeProjectionView }
+  | { ok: false; error: TreeProjectionError };
+
+export type TreeCoreCreationResult =
+  | { ok: true; core: DesignerCore }
+  | { ok: false; error: TreeProjectionError };
+
+export interface TreeHostReplacementResult {
+  ok: boolean;
+  error?: TreeProjectionError;
+}
+
+export interface TreeCommandResult {
+  ok: boolean;
+  reason?:
+    | 'missing-node'
+    | 'unknown-node-type'
+    | 'constraint'
+    | 'unavailable'
+    | 'missing-transaction'
+    | 'unchanged';
+  error?: unknown;
+}
+
+export const TREE_INTERNAL_ID_PREFIX = '__fd_internal__/';
+export const TREE_EMPTY_SLOT_NODE_TYPE = '__fd-tree-empty-slot';
+export const TREE_VIRTUAL_DATA_KEY = '__fdVirtual';
+
+export type TreeChangeReason = 'command' | 'undo' | 'redo' | 'restore';
 
 export interface TreeDomainAdapter {
   kind: string;

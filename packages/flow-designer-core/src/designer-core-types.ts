@@ -6,6 +6,8 @@ import type {
   DesignerSnapshot,
   DesignerEvent,
   TreeDocument,
+  TreeHostReplacementResult,
+  TreeCommandResult,
 } from './types.js';
 
 export interface DesignerCore {
@@ -74,9 +76,8 @@ export interface DesignerCore {
   setInspectorWidth(width: number): void;
 
   setViewport(viewport: { x: number; y: number; zoom: number }): void;
-  replaceDocument(document: GraphDocument, treeDocument?: TreeDocument): void;
-  replaceDocumentFromHost(document: GraphDocument, treeDocument?: TreeDocument): void;
-  setTreeOwner(getTreeDocument: () => TreeDocument, setTreeDocument: (document: TreeDocument) => void): void;
+  replaceDocument(document: GraphDocument): void;
+  replaceDocumentFromHost(document: GraphDocument): void;
 
   save(): void;
   restore(): void;
@@ -89,4 +90,20 @@ export interface DesignerCore {
   commitTransaction(transactionId?: string): { ok: boolean; transactionId?: string; reason?: 'unavailable' | 'missing-transaction' };
   rollbackTransaction(transactionId?: string): { ok: boolean; transactionId?: string; reason?: 'unavailable' | 'missing-transaction' };
   isInTransaction(): boolean;
+
+  // Tree session surface (tree mode only).
+  getTreeDocument(): TreeDocument | undefined;
+  getAcceptedHostEpoch(): number;
+  replaceTreeFromHost(tree: TreeDocument, epoch?: number): TreeHostReplacementResult;
+  relayoutTree(): TreeCommandResult;
+  insertChainNode(sourceId: string, nodeType: string, data?: Record<string, unknown>): TreeCommandResult;
+  insertChainNodeAtMerge(targetId: string, nodeType: string, data?: Record<string, unknown>): TreeCommandResult;
+  insertBranchPair(sourceId: string, condNodeType: string, condData?: Record<string, unknown>): TreeCommandResult;
+  addBranch(nodeId: string, branchData?: Record<string, unknown>, childType?: string, childData?: Record<string, unknown>): TreeCommandResult;
+  deleteBranch(nodeId: string, branchId: string): TreeCommandResult;
+  moveBranch(nodeId: string, branchId: string, direction: 'left' | 'right'): TreeCommandResult;
+  deleteTreeNode(nodeId: string): TreeCommandResult;
+  updateTreeNodeData(nodeId: string, data: Record<string, unknown>): TreeCommandResult;
+  updateBranchData(nodeId: string, branchId: string, data: Record<string, unknown>): TreeCommandResult;
+  insertBranchChild(ownerId: string, branchId: string, nodeType: string, data?: Record<string, unknown>): TreeCommandResult;
 }

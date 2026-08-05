@@ -1,27 +1,83 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import type { TreeDocument, DesignerConfig } from './types.js';
-import type { NormalizedDesignerConfig } from './types.js';
-import { projectTree, resetProjectionState } from './tree-projection.js';
+import { describe, expect, it } from 'vitest';
+import type {
+  DesignerConfig,
+  NormalizedDesignerConfig,
+  TreeDocument,
+  TreeProjectionResult,
+  TreeEdgeRuntimeGeometry,
+} from './types.js';
+import {
+  projectAndLayoutTree,
+  MIN_CHAIN_GAP,
+  MIN_SPLIT_GAP_TB,
+  MIN_SPLIT_GAP_LR,
+  MIN_MERGE_GAP,
+  SPLIT_HALF_GAP_MIN_TB,
+  SPLIT_HALF_GAP_MIN_LR,
+  MERGE_HALF_GAP_MIN,
+  TREE_EMPTY_SLOT_NODE_TYPE,
+  TREE_VIRTUAL_DATA_KEY,
+} from './tree-projection.js';
+import { migrateTreeConfig } from './core/config-migration.js';
 import { normalizeConfig } from './core/config.js';
 
-function makeConfig(overrides?: Partial<DesignerConfig>): NormalizedDesignerConfig {
-  return normalizeConfig({
-    version: '1.0',
-    kind: 'test',
-    nodeTypes: [],
-    ...overrides,
-  });
+function createTreeConfig(): DesignerConfig {
+  return {
+    version: '1.0.0',
+    kind: 'flow',
+    nodeTypes: [
+      { id: 'task', label: 'Task', appearance: { minWidth: 220, minHeight: 80 } },
+      { id: 'condition', label: 'Condition', appearance: { minWidth: 220, minHeight: 80 } },
+      { id: 'end', label: 'End', appearance: { minWidth: 220, minHeight: 80 } },
+    ],
+    edgeTypes: [
+      {
+        id: 'chain',
+        label: 'Chain',
+        appearance: { stroke: '#000', strokeWidth: 2, strokeStyle: 'solid' },
+      },
+      {
+        id: 'branch',
+        label: 'Branch',
+        appearance: { stroke: '#000', strokeWidth: 2, strokeStyle: 'solid' },
+      },
+      {
+        id: 'merge',
+        label: 'Merge',
+        appearance: { stroke: '#000', strokeWidth: 2, strokeStyle: 'solid' },
+      },
+      { id: 'default', label: 'Default' },
+    ],
+    documentMode: 'tree',
+    treeConfig: {
+      layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
+      showGatewayNodes: false,
+      showMergeNodes: false,
+      chainEdgeType: 'chain',
+      branchEdgeType: 'branch',
+      mergeEdgeType: 'merge',
+    },
+  };
 }
 
-function makeChainTree(): TreeDocument {
+function projectTree(tree: TreeDocument, config: DesignerConfig): TreeProjectionResult {
+  const migration = migrateTreeConfig(config);
+  if (!migration.ok) {
+    return { ok: false, error: migration.error };
+  }
+  const normalized: NormalizedDesignerConfig = normalizeConfig(migration.config);
+  return projectAndLayoutTree(tree, normalized);
+}
+
+function createChainTree(): TreeDocument {
   return {
-    id: 'chain-test',
-    kind: 'test',
-    name: 'Chain Test',
-    version: '1.0',
+    id: 'chain-tree',
+    kind: 'flow',
+    name: 'Chain',
+    version: '1.0.0',
     root: {
       id: 'root',
-      type: 'start',
+      type: 'task',
       data: { label: 'Root' },
       child: {
         id: 'a',
@@ -31,375 +87,405 @@ function makeChainTree(): TreeDocument {
           id: 'b',
           type: 'task',
           data: { label: 'B' },
-          child: {
-            id: 'end',
-            type: 'end',
-            data: { label: 'End' },
-          },
+          child: { id: 'end', type: 'end', data: { label: 'End' } },
         },
       },
     },
   };
 }
 
-describe('projectTree', () => {
-  beforeEach(() => {
-    resetProjectionState();
-  });
-
-  it('projects a simple chain tree (root → A → B → end)', () => {
-    const tree = makeChainTree();
-    const config = makeConfig();
-    const { nodes, edges } = projectTree(tree, config);
-
-    expect(nodes).toHaveLength(4);
-    expect(nodes.map((n) => n.id)).toEqual(['root', 'a', 'b', 'end']);
-
-    expect(edges).toHaveLength(3);
-    expect(edges[0].source).toBe('root');
-    expect(edges[0].target).toBe('a');
-    expect(edges[1].source).toBe('a');
-    expect(edges[1].target).toBe('b');
-    expect(edges[2].source).toBe('b');
-    expect(edges[2].target).toBe('end');
-  });
-
-  it('projects a tree with branches', () => {
-    const tree: TreeDocument = {
-      id: 'branch-test',
-      kind: 'test',
-      name: 'Branch Test',
-      version: '1.0',
-      root: {
-        id: 'start',
-        type: 'start',
-        data: { label: 'Start' },
-        child: {
-          id: 'gateway',
-          type: 'condition',
-          data: { label: 'Gateway' },
-          branches: [
-            {
-              id: 'b1',
-              data: { label: 'Branch 1' },
-              child: {
-                id: 'task1',
-                type: 'task',
-                data: { label: 'Task 1' },
-              },
-            },
-            {
-              id: 'b2',
-              data: { label: 'Branch 2' },
-              child: {
-                id: 'task2',
-                type: 'task',
-                data: { label: 'Task 2' },
-              },
-            },
-          ],
-          child: {
-            id: 'end',
-            type: 'end',
-            data: { label: 'End' },
-          },
-        },
+function createBranchTree(): TreeDocument {
+  return {
+    id: 'branch-tree',
+    kind: 'flow',
+    name: 'Branch',
+    version: '1.0.0',
+    root: {
+      id: 'root',
+      type: 'task',
+      data: { label: 'Root' },
+      child: {
+        id: 'cond',
+        type: 'condition',
+        data: { label: 'Condition' },
+        branches: [
+          { id: 'b1', data: { label: 'A' }, child: { id: 'leaf-a', type: 'task', data: { label: 'A' } } },
+          { id: 'b2', data: { label: 'B' }, child: { id: 'leaf-b', type: 'task', data: { label: 'B' } } },
+        ],
+        child: { id: 'after', type: 'task', data: { label: 'After' } },
       },
-    };
-    const config = makeConfig();
-    const { nodes, edges } = projectTree(tree, config);
+    },
+  };
+}
 
-    expect(nodes).toHaveLength(5);
-    expect(nodes.map((n) => n.id)).toContain('start');
-    expect(nodes.map((n) => n.id)).toContain('gateway');
-    expect(nodes.map((n) => n.id)).toContain('task1');
-    expect(nodes.map((n) => n.id)).toContain('task2');
-    expect(nodes.map((n) => n.id)).toContain('end');
+function getTreeGeometry(edge: { data: Record<string, unknown> }): TreeEdgeRuntimeGeometry | undefined {
+  return edge.data.__fdTree as TreeEdgeRuntimeGeometry | undefined;
+}
 
-    expect(edges).toHaveLength(5);
+describe('projectAndLayoutTree - structured projection', () => {
+  it('projects a simple chain with chain geometry on every edge', () => {
+    const result = projectTree(createChainTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
-    const chainEdges = edges.filter((e) => e.source === 'start');
-    expect(chainEdges).toHaveLength(1);
-    expect(chainEdges[0].target).toBe('gateway');
+    const { document } = result.view;
+    expect(document.nodes.map((node) => node.id)).toEqual(['root', 'a', 'b', 'end']);
+    expect(document.edges).toHaveLength(3);
+    for (const edge of document.edges) {
+      const geometry = getTreeGeometry(edge);
+      expect(geometry?.kind).toBe('chain');
+      expect(geometry?.direction).toBe('TB');
+      expect(geometry?.ownerId).toBe(edge.source);
+      expect(geometry?.continuationId).toBe(edge.target);
+    }
+  });
 
-    const branchEdges = edges.filter((e) => e.source === 'gateway');
-    expect(branchEdges).toHaveLength(2);
-    expect(branchEdges.map((e) => e.target).sort()).toEqual(['task1', 'task2']);
+  it('keeps chain main-axis positions strictly increasing with min chain gap', () => {
+    const result = projectTree(createChainTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
-    const mergeEdges = edges.filter((e) => e.target === 'end');
+    const { document } = result.view;
+    const root = document.nodes.find((node) => node.id === 'root')!;
+    const a = document.nodes.find((node) => node.id === 'a')!;
+    expect(a.position.y - (root.position.y + 80)).toBeGreaterThanOrEqual(MIN_CHAIN_GAP);
+    expect(a.position.x).toBe(root.position.x);
+  });
+
+  it('projects split and merge edges with shared split/merge lines', () => {
+    const result = projectTree(createBranchTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const { document } = result.view;
+    const splitEdges = document.edges.filter((edge) => getTreeGeometry(edge)?.kind === 'split');
+    const mergeEdges = document.edges.filter((edge) => getTreeGeometry(edge)?.kind === 'merge');
+
+    expect(splitEdges).toHaveLength(2);
     expect(mergeEdges).toHaveLength(2);
-    expect(mergeEdges.map((e) => e.source).sort()).toEqual(['task1', 'task2']);
-  });
 
-  it('projects a tree with branches but no child (no merge)', () => {
-    const tree: TreeDocument = {
-      id: 'no-merge-test',
-      kind: 'test',
-      name: 'No Merge',
-      version: '1.0',
-      root: {
-        id: 'start',
-        type: 'start',
-        data: { label: 'Start' },
-        child: {
-          id: 'gateway',
-          type: 'condition',
-          data: { label: 'Gateway' },
-          branches: [
-            {
-              id: 'b1',
-              data: { label: 'Branch 1' },
-              child: { id: 'task1', type: 'task', data: { label: 'T1' } },
-            },
-            {
-              id: 'b2',
-              data: { label: 'Branch 2' },
-              child: { id: 'task2', type: 'task', data: { label: 'T2' } },
-            },
-          ],
-        },
-      },
-    };
-    const config = makeConfig();
-    const { nodes, edges } = projectTree(tree, config);
+    const splitLines = new Set(splitEdges.map((edge) => getTreeGeometry(edge)?.lineMain));
+    expect(splitLines.size).toBe(1);
+    const mergeLines = new Set(mergeEdges.map((edge) => getTreeGeometry(edge)?.lineMain));
+    expect(mergeLines.size).toBe(1);
+    expect([...splitLines][0]).not.toBe([...mergeLines][0]);
 
-    expect(nodes).toHaveLength(4);
-    expect(edges).toHaveLength(3);
-  });
-
-  it('projects a tree with only root node', () => {
-    const tree: TreeDocument = {
-      id: 'root-only',
-      kind: 'test',
-      name: 'Root Only',
-      version: '1.0',
-      root: {
-        id: 'root',
-        type: 'start',
-        data: { label: 'Root' },
-      },
-    };
-    const config = makeConfig();
-    const { nodes, edges } = projectTree(tree, config);
-
-    expect(nodes).toHaveLength(1);
-    expect(nodes[0].id).toBe('root');
-    expect(edges).toHaveLength(0);
-  });
-
-  it('projects nested branches correctly', () => {
-    const tree: TreeDocument = {
-      id: 'nested',
-      kind: 'test',
-      name: 'Nested',
-      version: '1.0',
-      root: {
-        id: 'start',
-        type: 'start',
-        data: {},
-        child: {
-          id: 'gw1',
-          type: 'condition',
-          data: {},
-          branches: [
-            {
-              id: 'b1',
-              data: {},
-              child: {
-                id: 'gw2',
-                type: 'condition',
-                data: {},
-                branches: [
-                  { id: 'b1a', data: {}, child: { id: 'task1a', type: 'task', data: {} } },
-                  { id: 'b1b', data: {}, child: { id: 'task1b', type: 'task', data: {} } },
-                ],
-                child: { id: 'merge2', type: 'task', data: {} },
-              },
-            },
-            {
-              id: 'b2',
-              data: {},
-              child: { id: 'task2', type: 'task', data: {} },
-            },
-          ],
-          child: { id: 'end', type: 'end', data: {} },
-        },
-      },
-    };
-    const config = makeConfig();
-    const { nodes, edges } = projectTree(tree, config);
-
-    expect(nodes).toHaveLength(8);
-
-    const edgesToEnd = edges.filter((e) => e.target === 'end');
-    expect(edgesToEnd.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it('resolves edge type from treeConfig', () => {
-    const tree = makeChainTree();
-    const config = makeConfig({
-      treeConfig: {
-        layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
-        showGatewayNodes: false,
-        showMergeNodes: false,
-        autoLayout: true,
-        chainEdgeType: 'chain-edge',
-        branchEdgeType: 'branch-edge',
-        mergeEdgeType: 'merge-edge',
-      },
-      edgeTypes: [
-        { id: 'chain-edge', appearance: { stroke: '#000' } },
-        { id: 'branch-edge', appearance: { stroke: '#00f' } },
-        { id: 'merge-edge', appearance: { stroke: '#999' } },
-      ],
-    });
-    const { edges } = projectTree(tree, config);
-
-    for (const edge of edges) {
-      expect(edge.type).toBe('chain-edge');
+    for (const edge of splitEdges) {
+      const geometry = getTreeGeometry(edge)!;
+      expect(geometry.ownerId).toBe('cond');
+      expect(geometry.branchId).toBeTruthy();
+    }
+    for (const edge of mergeEdges) {
+      const geometry = getTreeGeometry(edge)!;
+      expect(geometry.continuationId).toBe('after');
+      expect(geometry.ownerId).toBe('cond');
     }
   });
 
-  it('preserves node data through projection', () => {
-    const tree: TreeDocument = {
-      id: 'data-test',
-      kind: 'test',
-      name: 'Data Test',
-      version: '1.0',
-      root: {
-        id: 'root',
-        type: 'start',
-        data: { label: 'Hello', extra: 42 },
-      },
-    };
-    const config = makeConfig();
-    const { nodes } = projectTree(tree, config);
+  it('enforces the minimum TB split gap of 134 when layerSpacing is lower', () => {
+    const result = projectTree(createBranchTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
-    expect(nodes[0].data).toEqual({ label: 'Hello', extra: 42 });
+    const { document } = result.view;
+    const cond = document.nodes.find((node) => node.id === 'cond')!;
+    const leafA = document.nodes.find((node) => node.id === 'leaf-a')!;
+    const gap = leafA.position.y - (cond.position.y + 80);
+    expect(gap).toBeGreaterThanOrEqual(MIN_SPLIT_GAP_TB);
+    expect(gap).toBeGreaterThanOrEqual(SPLIT_HALF_GAP_MIN_TB * 2);
   });
 
-  it('preserves branch data on branch edges', () => {
-    const tree: TreeDocument = {
-      id: 'branch-data',
-      kind: 'test',
-      name: 'Branch Data',
-      version: '1.0',
-      root: {
-        id: 'gw',
-        type: 'condition',
-        data: {},
-        branches: [
-          {
-            id: 'b1',
-            data: { branchType: 'then', label: 'Success' },
-            child: { id: 't1', type: 'task', data: {} },
-          },
-          {
-            id: 'b2',
-            data: { branchType: 'onError', label: 'Failure' },
-            child: { id: 't2', type: 'task', data: {} },
-          },
-        ],
-        child: { id: 'end', type: 'end', data: {} },
-      },
-    };
-    const config = makeConfig();
-    const { edges } = projectTree(tree, config);
+  it('honors configured layerSpacing above the minimum split gap', () => {
+    const config = createTreeConfig();
+    config.treeConfig!.layout.layerSpacing = 300;
+    const result = projectTree(createBranchTree(), config);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
-    const branchEdges = edges.filter((e) => e.source === 'gw');
-    expect(branchEdges).toHaveLength(2);
-    expect(branchEdges[0].data.branchType).toBe('then');
-    expect(branchEdges[1].data.branchType).toBe('onError');
+    const { document } = result.view;
+    const cond = document.nodes.find((node) => node.id === 'cond')!;
+    const leafA = document.nodes.find((node) => node.id === 'leaf-a')!;
+    expect(leafA.position.y - (cond.position.y + 80)).toBeGreaterThanOrEqual(300);
   });
 
-  it('exposes branch header summaries on branch-owner node data', () => {
-    const tree: TreeDocument = {
-      id: 'branch-summary',
-      kind: 'test',
-      name: 'Branch Summary',
-      version: '1.0',
-      root: {
-        id: 'gw',
-        type: 'condition',
-        data: { label: 'Gateway' },
-        branches: [
-          {
-            id: 'b1',
-            data: { label: 'Branch 1', priority: 1 },
-            child: { id: 't1', type: 'task', data: {} },
-          },
-          {
-            id: 'b2',
-            data: { label: 'Branch 2', priority: 2 },
-            child: { id: 't2', type: 'task', data: {} },
-          },
-        ],
-        child: { id: 'end', type: 'end', data: {} },
-      },
-    };
-    const config = makeConfig();
-    const { nodes } = projectTree(tree, config);
+  it('places merge line below the branch group and above the continuation', () => {
+    const result = projectTree(createBranchTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
-    const owner = nodes.find((node) => node.id === 'gw');
-    expect(owner?.data.branches).toEqual([
-      {
-        id: 'b1',
-        data: { label: 'Branch 1', priority: 1 },
-        childId: 't1',
-        childType: 'task',
-        childLabel: undefined,
-      },
-      {
-        id: 'b2',
-        data: { label: 'Branch 2', priority: 2 },
-        childId: 't2',
-        childType: 'task',
-        childLabel: undefined,
-      },
-    ]);
+    const { document } = result.view;
+    const leafA = document.nodes.find((node) => node.id === 'leaf-a')!;
+    const leafB = document.nodes.find((node) => node.id === 'leaf-b')!;
+    const after = document.nodes.find((node) => node.id === 'after')!;
+    const mergeMain = getTreeGeometry(document.edges.find((edge) => getTreeGeometry(edge)?.kind === 'merge')!)!
+      .lineMain!;
+
+    const leafMaxEnd = Math.max(leafA.position.y + 80, leafB.position.y + 80);
+    expect(mergeMain).toBeGreaterThanOrEqual(leafMaxEnd + MERGE_HALF_GAP_MIN);
+    expect(after.position.y).toBeGreaterThanOrEqual(mergeMain + MERGE_HALF_GAP_MIN);
+    expect(after.position.y - leafMaxEnd).toBeGreaterThanOrEqual(MIN_MERGE_GAP);
   });
 
-  it('resolves edge type from TreeNodeTypeConfig.branchEdgeType', () => {
-    const tree: TreeDocument = {
-      id: 'node-type-edge',
-      kind: 'test',
-      name: 'NodeType Edge',
-      version: '1.0',
-      root: {
-        id: 'gw',
-        type: 'special-gateway',
-        data: {},
-        branches: [
-          { id: 'b1', data: {}, child: { id: 't1', type: 'task', data: {} } },
-          { id: 'b2', data: {}, child: { id: 't2', type: 'task', data: {} } },
-        ],
-        child: { id: 'end', type: 'end', data: {} },
-      },
-    };
-    const config = makeConfig({
-      nodeTypes: [
-        {
-          id: 'special-gateway',
-          label: 'Special',
-          body: { type: 'text' },
-          tree: { branchEdgeType: 'custom-branch' },
-        },
-      ],
-      edgeTypes: [{ id: 'custom-branch', appearance: { stroke: '#f00' } }],
-      treeConfig: {
-        layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
-        showGatewayNodes: false,
-        showMergeNodes: false,
-        autoLayout: true,
-        branchEdgeType: 'config-branch',
-      },
-    });
-    const { edges } = projectTree(tree, config);
+  it('centers fanout and continuation under the branch group', () => {
+    const result = projectTree(createBranchTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
 
-    const branchEdges = edges.filter((e) => e.source === 'gw');
-    expect(branchEdges).toHaveLength(2);
-    for (const edge of branchEdges) {
-      expect(edge.type).toBe('custom-branch');
+    const { document } = result.view;
+    const leafA = document.nodes.find((node) => node.id === 'leaf-a')!;
+    const leafB = document.nodes.find((node) => node.id === 'leaf-b')!;
+    const after = document.nodes.find((node) => node.id === 'after')!;
+    const cond = document.nodes.find((node) => node.id === 'cond')!;
+
+    const groupCenter = Math.round((leafA.position.x + leafB.position.x) / 2);
+    expect(after.position.x + 110).toBe(groupCenter + 110);
+    expect(cond.position.x + 110).toBe(groupCenter + 110);
+  });
+
+  it('rounds all coordinates to integers', () => {
+    const result = projectTree(createBranchTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const { document } = result.view;
+    for (const node of document.nodes) {
+      expect(Number.isInteger(node.position.x)).toBe(true);
+      expect(Number.isInteger(node.position.y)).toBe(true);
     }
+  });
+
+  it('rejects duplicate node ids', () => {
+    const tree = createChainTree();
+    tree.root.child!.id = 'root';
+    const result = projectTree(tree, createTreeConfig());
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('duplicate-id');
+  });
+
+  it('rejects reserved internal ids', () => {
+    const tree = createChainTree();
+    tree.root.id = '__fd_internal__/root';
+    const result = projectTree(tree, createTreeConfig());
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('reserved-id');
+  });
+
+  it('rejects unknown node types', () => {
+    const tree = createChainTree();
+    tree.root.type = 'unknown-type';
+    const result = projectTree(tree, createTreeConfig());
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('unknown-node-type');
+  });
+
+  it('rejects cyclic tree structures', () => {
+    const tree = createChainTree();
+    (tree.root.child as { child?: unknown }).child = tree.root;
+    const result = projectTree(tree, createTreeConfig());
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(['cyclic-tree', 'invalid-tree-payload']).toContain(result.error.code);
+  });
+
+  it('rejects non-JSON-safe payload values', () => {
+    const tree = createChainTree();
+    tree.root.data = { label: 'Root', bad: () => 1 } as unknown as Record<string, unknown>;
+    const result = projectTree(tree, createTreeConfig());
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('invalid-tree-payload');
+  });
+
+  it('rejects missing treeConfig in tree mode', () => {
+    const config = createTreeConfig();
+    delete config.treeConfig;
+    const result = projectTree(createChainTree(), config);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('invalid-tree-config');
+  });
+
+  it('rejects invalid layout sizes', () => {
+    const config = createTreeConfig();
+    config.nodeTypes[0].tree = { layoutSize: { width: -1, height: 80 } };
+    const result = projectTree(createChainTree(), config);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('invalid-layout-size');
+  });
+
+  it('rejects unsupported tree edge decorations', () => {
+    const config = createTreeConfig();
+    config.edgeTypes[0].appearance = {
+      stroke: '#000',
+      strokeWidth: 2,
+      animated: true,
+    };
+    const result = projectTree(createChainTree(), config);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('unsupported-tree-edge-decoration');
+  });
+
+  it('rejects markerEnd on tree edges', () => {
+    const config = createTreeConfig();
+    config.edgeTypes[0].appearance = {
+      stroke: '#000',
+      strokeWidth: 2,
+      markerEnd: 'arrow',
+    };
+    const result = projectTree(createChainTree(), config);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('unsupported-tree-edge-decoration');
+  });
+
+  it('allows legal TreeNodeBranch.data.label on split edges', () => {
+    const result = projectTree(createBranchTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const { document } = result.view;
+    const splitEdge = document.edges.find((edge) => getTreeGeometry(edge)?.kind === 'split')!;
+    expect(splitEdge.data.label).toBeTruthy();
+  });
+});
+
+describe('projectAndLayoutTree - virtual empty branch slots', () => {
+  it('projects an empty branch as a virtual slot with split/merge edges', () => {
+    const tree = createBranchTree();
+    const cond = tree.root.child!;
+    delete cond.branches![1].child;
+
+    const result = projectTree(tree, createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const { document } = result.view;
+    const slot = document.nodes.find((node) => node.type === TREE_EMPTY_SLOT_NODE_TYPE);
+    expect(slot).toBeTruthy();
+    expect(slot!.data[TREE_VIRTUAL_DATA_KEY]).toBe('empty-branch');
+    expect(slot!.data.ownerId).toBe('cond');
+    expect(slot!.data.branchId).toBe('b2');
+
+    const splitEdges = document.edges.filter((edge) => getTreeGeometry(edge)?.kind === 'split');
+    const mergeEdges = document.edges.filter((edge) => getTreeGeometry(edge)?.kind === 'merge');
+    expect(splitEdges.some((edge) => edge.target === slot!.id)).toBe(true);
+    expect(mergeEdges.some((edge) => edge.source === slot!.id)).toBe(true);
+  });
+
+  it('keeps the continuation connected when all branches are empty', () => {
+    const tree: TreeDocument = {
+      id: 'all-empty',
+      kind: 'flow',
+      name: 'All Empty',
+      version: '1.0.0',
+      root: {
+        id: 'cond',
+        type: 'condition',
+        data: { label: 'Condition' },
+        branches: [
+          { id: 'b1', data: { label: 'A' } },
+          { id: 'b2', data: { label: 'B' } },
+        ],
+        child: { id: 'after', type: 'task', data: { label: 'After' } },
+      },
+    };
+
+    const result = projectTree(tree, createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const { document } = result.view;
+    const slots = document.nodes.filter((node) => node.type === TREE_EMPTY_SLOT_NODE_TYPE);
+    expect(slots).toHaveLength(2);
+    const after = document.nodes.find((node) => node.id === 'after')!;
+    expect(after).toBeTruthy();
+    const mergeEdges = document.edges.filter((edge) => getTreeGeometry(edge)?.kind === 'merge');
+    expect(mergeEdges).toHaveLength(2);
+    for (const edge of mergeEdges) {
+      expect(edge.target).toBe('after');
+      expect(edge.source.startsWith('__fd_internal__/slot/')).toBe(true);
+    }
+  });
+
+  it('uses configured emptyBranchSize for slot placement', () => {
+    const config = createTreeConfig();
+    config.treeConfig!.emptyBranchSize = { width: 300, height: 60 };
+    const tree = createBranchTree();
+    delete tree.root.child!.branches![1].child;
+
+    const result = projectTree(tree, config);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const { document } = result.view;
+    const slot = document.nodes.find((node) => node.type === TREE_EMPTY_SLOT_NODE_TYPE)!;
+    expect(slot.position.x).toBeGreaterThan(100);
+  });
+
+  it('rejects emptyBranchSize below the TB minimum', () => {
+    const config = createTreeConfig();
+    config.treeConfig!.emptyBranchSize = { width: 100, height: 40 };
+    const result = projectTree(createBranchTree(), config);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('invalid-layout-size');
+  });
+});
+
+describe('projectAndLayoutTree - LR direction', () => {
+  it('maps main to x and cross to y for LR', () => {
+    const config = createTreeConfig();
+    config.treeConfig!.layout.direction = 'LR';
+    config.treeConfig!.layout.layerSpacing = 0;
+    const result = projectTree(createChainTree(), config);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const { document } = result.view;
+    const root = document.nodes.find((node) => node.id === 'root')!;
+    const a = document.nodes.find((node) => node.id === 'a')!;
+    expect(a.position.x).toBe(root.position.x + 220 + MIN_CHAIN_GAP);
+    expect(a.position.y).toBe(root.position.y);
+
+    const geometry = getTreeGeometry(document.edges[0])!;
+    expect(geometry.direction).toBe('LR');
+  });
+
+  it('enforces the LR split minimum of 204', () => {
+    const config = createTreeConfig();
+    config.treeConfig!.layout.direction = 'LR';
+    const result = projectTree(createBranchTree(), config);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const { document } = result.view;
+    const cond = document.nodes.find((node) => node.id === 'cond')!;
+    const leafA = document.nodes.find((node) => node.id === 'leaf-a')!;
+    expect(leafA.position.x - (cond.position.x + 220)).toBeGreaterThanOrEqual(MIN_SPLIT_GAP_LR);
+    expect(leafA.position.x - (cond.position.x + 220)).toBeGreaterThanOrEqual(SPLIT_HALF_GAP_MIN_LR * 2);
+  });
+});
+
+describe('projectAndLayoutTree - immutable runtime projection', () => {
+  it('keeps runtime __fdTree geometry out of the exported tree', () => {
+    const result = projectTree(createBranchTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const exported = JSON.stringify(result.view.tree);
+    expect(exported).not.toContain('__fdTree');
+    expect(exported).not.toContain('__fd_internal__');
+  });
+
+  it('does not mutate the input tree document', () => {
+    const tree = createBranchTree();
+    const snapshot = JSON.stringify(tree);
+    projectTree(tree, createTreeConfig());
+    expect(JSON.stringify(tree)).toBe(snapshot);
   });
 });
