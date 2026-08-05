@@ -519,18 +519,18 @@ Tree Mode 的数据流遵循以下转换链路：
 
 ```
 TreeDocument (domain input)
-  ↓ projectTree()
+  ↓ createTreeDesignerCore → projectAndLayoutTree()（core-private 单一投影）
 GraphDocument (runtime input)
-  ↓ core.replaceDocument(projectedDoc)
-Existing DesignerCore (stable runtime instance)
+  ↓ 原子安装配对 view（tree + graph）
+DesignerCore (tree session instance, stable per mount)
   ↓ React Flow bridge
 Canvas rendering
 ```
 
-- `TreeDocument`：领域特定的树结构文档，定义在 `packages/flow-designer-core/src/types.ts`（288-340 行）
-- `projectTree()`：投影函数，位于 `packages/flow-designer-core/src/tree-projection.ts`
+- `TreeDocument`：领域特定的树结构文档，定义在 `packages/flow-designer-core/src/types.ts`
+- `projectAndLayoutTree()`：core-private 唯一投影+布局函数，位于 `packages/flow-designer-core/src/tree-projection.ts`；renderer 只通过 `createTreeDesignerCore`、tree commands、`replaceTreeFromHost` 与 `relayoutTree` 间接触发
 - `GraphDocument`：通用图文档，由投影层生成
-- `DesignerCore`：运行时实例；tree 模式在页面生命周期内保持同一个 core，并在 tree 变更后用 `replaceDocument(...)` 同步新的投影文档
+- `DesignerCore`：tree session 实例；tree 模式在页面生命周期内保持同一个 core，host 替换只能走验证过的 `replaceTreeFromHost(tree, epoch)`
 - React Flow：画布渲染层，通过现有 canvas bridge 集成
 
 ### 17.3 结构原语
@@ -600,13 +600,14 @@ interface TreeConfig {
   layout: { direction: 'TB' | 'LR'; nodeSpacing: number; layerSpacing: number };
   showGatewayNodes: boolean;
   showMergeNodes: boolean;
-  autoLayout: boolean;
   chainEdgeType?: string;
   branchEdgeType?: string;
   mergeEdgeType?: string;
+  emptyBranchSize?: { width: number; height: number };
 }
 
-interface TreeNodeTypeConfig extends NodeTypeConfig {
+interface NodeTypeConfig {
+  // ...existing fields...
   tree?: {
     allowBranches?: boolean;
     maxBranches?: number;
@@ -614,23 +615,26 @@ interface TreeNodeTypeConfig extends NodeTypeConfig {
     allowChild?: boolean;
     isTerminal?: boolean;
     branchEdgeType?: string;
+    layoutSize?: { width: number; height: number };
   };
 }
 ```
 
+`TreeNodeTypeConfig` 保留为 deprecated type alias。`treeConfig.autoLayout` 已删除（structured tree layout 在 tree mode 是必选投影步骤）。
+
 ### 17.5 布局
 
-Tree Mode 的布局由 `layoutTreeWithElk()` 提供，封装了现有的 ELK 布局逻辑。
+Tree Mode 的布局是 `projectAndLayoutTree()` 投影的一部分：一次确定性调用完成测量、放置、连线与 runtime 几何。ELK 只服务 graph mode；tree mode 不再调用 ELK 或图启发式布局。
 
 布局参数：
 
 - `direction`：布局方向，从 `treeConfig.layout.direction` 读取（`'TB'` | `'LR'`）
-- `nodeSpacing`：节点间距
-- `layerSpacing`：层级间距
+- `nodeSpacing`：节点间距（非负整数）
+- `layerSpacing`：期望层间距；低于安全下限时按 chain=60、TB split=134、LR split=204、merge=120 生效
 
-实现位置：`packages/flow-designer-core/src/tree-layout.ts`
+实现位置：`packages/flow-designer-core/src/tree-projection.ts`（测量/放置）、`tree-projection.ts`（安全间距常量）。
 
-当 `treeConfig.autoLayout: true` 时，投影完成后自动触发布局更新。
+显式"自动布局"动作调用 tree-owned `relayoutTree()`，对当前 owner tree 幂等重跑同一算法；同步执行，不产生 ELK busy/error 状态。undo/redo/save/restore/rollback 恢复 history 中存储的配对 tree+graph view，不再次运行布局。
 
 ### 17.6 领域适配器模式
 
@@ -660,10 +664,12 @@ Tree Mode 当前实现的范围和约束：
 
 **已支持：**
 
-- TreeDocument 到 GraphDocument 的投影
+- TreeDocument 到 GraphDocument 的单一投影（`projectAndLayoutTree`，core-private）
 - React Flow 画布渲染
-- 布局计算和自动布局
-- 边类型解析和样式应用
+- 固定 footprint 布局、最小间距公式、TB/LR 轴映射
+- 虚拟 empty branch slot、`__fdTree` runtime 几何
+- 边类型解析和样式应用（decoration 白名单校验）
+- tree session host writeback（sessionId / FIFO / ack / epoch / LRU / coalescing）
 - 领域适配器的导入导出能力
 
 **不支持（非目标）：**
@@ -672,5 +678,7 @@ Tree Mode 当前实现的范围和约束：
 - 在 tree mode 中把 React Flow 暴露成任意连线/任意重连的自由 graph 编辑器
 - 通过自由 edge 操作制造 branch merge 结构
 - Gateway 节点和 Merge 节点作为持久化 graph 实体让用户直接编辑
+- tree 节点自由拖拽后持久化 position
+- projected edge delete 反向猜测成 TreeDocument mutation
 
-当 `DesignerConfig.documentMode` 设置为 `'tree'` 时，Flow Designer 进入 Tree Mode 视图，但底层仍然操作 `GraphDocument` 和 `DesignerCore` 实例。
+当 `DesignerConfig.documentMode` 设置为 `'tree'` 时，Flow Designer 进入 Tree Mode 视图：`createTreeDesignerCore` 唯一构造 tree core，graph 工厂收到 tree 模式时抛 `tree-core-factory-required`。

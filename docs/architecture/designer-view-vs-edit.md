@@ -219,7 +219,7 @@ replaceDocument()           | 替换文档
 acceptCurrentDocumentAsSaved() | 标记保存
 ```
 
-`autoLayout` 的说明：虽然布局会修改节点位置（属于数据 mutation），但在 View 模式下也可能需要重新排列节点以便阅读。建议处理方式为：**View 模式下 autoLayout 走只读路径**——计算布局但不 push 历史、不设 dirty 标志、不触发 `documentChanged` 事件。这需要将 layout 与历史/脏状态解耦（建议在 Phase 2 中实现）。
+`autoLayout` 的说明（tree mode）：显式"自动布局"动作调用 tree-owned `relayoutTree()`，以 presentation-only 方式重算当前 tree view——不 push history、不设 dirty、不发 `documentChanged`/change action；坐标未变化时 no-op，变化时仅发 `presentationChanged`。readOnly 下用户触发的 `relayoutTree` 同样允许，其他 tree mutation command 仍按 readOnly 拒绝。graph mode 的 `features.autoLayout` 与异步 ELK busy/error 语义保持不变。
 
 #### 3.1.3 Report Designer Core 的 readOnly 集成
 
@@ -288,22 +288,22 @@ interface ReportDesignerPageSchemaInput {
 
 #### 3.2.2 Toolbar 变换规则
 
-| Toolbar Item                            | View 模式               | Edit 模式     |
-| --------------------------------------- | ----------------------- | ------------- |
-| `back`                                  | ✅ 保留                 | ✅            |
-| `title`                                 | ✅ 保留                 | ✅            |
-| `badge`                                 | ✅ 保留（不显示 dirty） | ✅ 显示 dirty |
-| `text`                                  | ✅ 保留                 | ✅            |
-| `divider`                               | ✅ 保留                 | ✅            |
-| `spacer`                                | ✅ 保留                 | ✅            |
-| `button` with `designer:undo/redo/save` | ❌ 不渲染               | ✅            |
-| `button` with `designer:exportDocument` | ✅ 保留                 | ✅            |
-| `button` with `designer:fitView`        | ✅ 保留                 | ✅            |
-| `button` with `designer:toggleGrid`     | ✅ 保留                 | ✅            |
-| `button` with `designer:toggleMinimap`  | ✅ 保留                 | ✅            |
-| `button` with `designer:autoLayout`     | ✅ 保留                 | ✅            |
-| 其他 `designer:*` mutation action       | ❌ 不渲染               | ✅            |
-| `switch` with `designer:*` mutation     | ❌ 不渲染               | ✅            |
+| Toolbar Item                            | View 模式                                                                     | Edit 模式     |
+| --------------------------------------- | ----------------------------------------------------------------------------- | ------------- |
+| `back`                                  | ✅ 保留                                                                       | ✅            |
+| `title`                                 | ✅ 保留                                                                       | ✅            |
+| `badge`                                 | ✅ 保留（不显示 dirty）                                                       | ✅ 显示 dirty |
+| `text`                                  | ✅ 保留                                                                       | ✅            |
+| `divider`                               | ✅ 保留                                                                       | ✅            |
+| `spacer`                                | ✅ 保留                                                                       | ✅            |
+| `button` with `designer:undo/redo/save` | ❌ 不渲染                                                                     | ✅            |
+| `button` with `designer:exportDocument` | ✅ 保留                                                                       | ✅            |
+| `button` with `designer:fitView`        | ✅ 保留                                                                       | ✅            |
+| `button` with `designer:toggleGrid`     | ✅ 保留                                                                       | ✅            |
+| `button` with `designer:toggleMinimap`  | ✅ 保留                                                                       | ✅            |
+| `button` with `designer:relayoutTree`   | ✅ 保留（tree mode presentation-only；graph mode 仍为 `designer:autoLayout`） | ✅            |
+| 其他 `designer:*` mutation action       | ❌ 不渲染                                                                     | ✅            |
+| `switch` with `designer:*` mutation     | ❌ 不渲染                                                                     | ✅            |
 
 View 模式下：
 

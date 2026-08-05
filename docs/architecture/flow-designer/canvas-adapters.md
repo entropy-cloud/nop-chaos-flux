@@ -92,7 +92,7 @@ This behavior must remain consistent across all React Flow entry points in the r
 
 ## ELK Request Ownership
 
-ELK auto-layout stale-result guards are instance-owned.
+ELK auto-layout stale-result guards are instance-owned and **graph-mode only**. Tree mode never calls ELK: the structured projection `projectAndLayoutTree()` is synchronous, and the explicit relayout action is the presentation-only `relayoutTree()` tree command.
 
 - each `designer-page` renderer instance creates its own ELK layout owner
 - stale detection compares results only against that instance's latest request id
@@ -103,7 +103,7 @@ This keeps layout cancellation aligned with the host-owner boundary instead of u
 
 Initial auto-layout failure follows the same host-owner rule:
 
-- the first tree-mode auto-layout failure must publish a host-visible error summary through the owning `designer-page` status/reporting path
+- the first graph-mode auto-layout failure must publish a host-visible error summary through the owning `designer-page` status/reporting path
 - the failure is not allowed to remain a console-only side channel when the host/debug surface should see it
 
 ## Instance-Local Plus-Button Routing

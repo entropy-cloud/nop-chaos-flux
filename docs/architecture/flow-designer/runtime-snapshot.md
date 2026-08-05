@@ -169,7 +169,7 @@ interface DesignerSnapshot {
 
 - 只有执行过 `save()` 之后，dirty 语义才真正有参照物
 - 底层通过 document revision 与 saved revision 比较，不再在热路径上做 `JSON.stringify` 深比较
-- tree mode 下，这个 saved baseline 同时对应 paired owner `TreeDocument`；`restore()` 回放 dirty 参照物时，不能只恢复 graph document
+- tree mode 下，这个 saved baseline 同时对应 paired owner `TreeDocument`；`restore()` 回放 dirty 参照物时，不能只恢复 graph document。undo/redo/restore/transaction rollback 恢复 history 中存储的配对 tree+graph view，不重新运行布局
 
 ### `gridEnabled`
 

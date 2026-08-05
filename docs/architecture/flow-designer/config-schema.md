@@ -1193,24 +1193,25 @@ interface TreeConfig {
   };
   showGatewayNodes: boolean;
   showMergeNodes: boolean;
-  autoLayout: boolean;
   chainEdgeType?: string;
   branchEdgeType?: string;
   mergeEdgeType?: string;
+  emptyBranchSize?: { width: number; height: number };
 }
 ```
 
 说明：
 
 - `layout.direction`：布局方向，`'TB'` 表示从上到下，`'LR'` 表示从左到右
-- `layout.nodeSpacing`：同级节点之间的间距
-- `layout.layerSpacing`：层级之间的间距
-- `showGatewayNodes`：是否显示网关节点
-- `showMergeNodes`：是否显示合并节点
-- `autoLayout`：是否自动布局
+- `layout.nodeSpacing`：同级节点之间的间距（非负整数）
+- `layout.layerSpacing`：期望层间距；低于安全下限时按 chain=60、TB split=134、LR split=204、merge=120 生效
+- `showGatewayNodes`：是否显示网关节点（当前未实现展示）
+- `showMergeNodes`：是否显示合并节点（当前未实现展示）
 - `chainEdgeType`：链式边的类型
 - `branchEdgeType`：分支边的类型
 - `mergeEdgeType`：合并边的类型
+- `emptyBranchSize`：虚拟空分支 slot 尺寸（默认 220×80；TB ≥120×52，LR ≥140×32）
+- `treeConfig.autoLayout` 已删除（legacy `1.0.0` 迁移时移除）；structured tree layout 在 tree mode 是必选投影步骤
 
 ### 20.1 TreeConfig 示例
 
@@ -1223,19 +1224,19 @@ interface TreeConfig {
   },
   "showGatewayNodes": true,
   "showMergeNodes": true,
-  "autoLayout": true,
   "chainEdgeType": "default",
   "branchEdgeType": "conditional",
   "mergeEdgeType": "merge"
 }
 ```
 
-## 21. TreeNodeTypeConfig
+## 21. TreeNodeTypeConfig（deprecated alias）
 
-树节点类型配置，继承自 `NodeTypeConfig`，并扩展树特定的约束。
+树节点类型配置继承自 `NodeTypeConfig`。自 config `1.1.0` 起，`tree` 字段直接合并进 `NodeTypeConfig.tree`；`TreeNodeTypeConfig` 保留为 deprecated type alias，normalized nodeTypes 使用统一 `NodeTypeConfig`。
 
 ```ts
-interface TreeNodeTypeConfig extends NodeTypeConfig {
+interface NodeTypeConfig {
+  // ...existing fields...
   tree?: {
     allowBranches?: boolean;
     maxBranches?: number;
@@ -1243,6 +1244,7 @@ interface TreeNodeTypeConfig extends NodeTypeConfig {
     allowChild?: boolean;
     isTerminal?: boolean;
     branchEdgeType?: string;
+    layoutSize?: { width: number; height: number };
   };
 }
 ```
@@ -1255,6 +1257,7 @@ interface TreeNodeTypeConfig extends NodeTypeConfig {
 - `allowChild`：是否允许子节点
 - `isTerminal`：是否为终端节点（无子节点）
 - `branchEdgeType`：分支边类型
+- `layoutSize`：tree mode 的固定布局 footprint（有限正整数）；缺失时回退 `appearance.minWidth/minHeight`（deprecated），再回退 220×80。无效值使投影返回 `invalid-layout-size`
 
 ### 21.1 树节点类型示例
 

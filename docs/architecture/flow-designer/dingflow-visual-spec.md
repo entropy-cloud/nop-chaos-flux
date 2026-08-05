@@ -46,102 +46,77 @@
 
 ## 2. Connection Lines
 
-All connections use 2px gray lines (`#cacaca`).
+All tree connections use the projected `__fdTree` runtime geometry carried on each edge by `projectAndLayoutTree`. The renderer no longer guesses split/merge lines from endpoints (`outs[0]`/`ins[0]`) or fixed short-leg constants.
 
-### Arrow
+### Edge Style Contract
 
-- Small downward-pointing triangle above each card (not an SVG marker)
-- Dimensions: `border-width: 8px 6px 4px`, color `#cacaca`
-- Positioned: `top: -12px`, centered horizontally
-- **Not applied** to the start node (发起人) or end node
+- `stroke-linecap: butt`, `stroke-linejoin: round`
+- rendered `strokeWidth` clamped to 1..4px; focus expansion `max(base+1, 3)`
+- No `markerEnd`, no `animated`, no schema label/body, no `strokeDasharray` — tree edge appearance only allows `stroke` / `strokeWidth` / `strokeStyle` (solid) / `color`
 
-### Straight Line (no branch)
+### Straight Line (chain)
 
-When source and target share the same X coordinate:
+When source and target share the same cross coordinate:
 
-- Pure vertical line from source card bottom center to target card top center
+- Pure main-axis line from source edge center to target edge center
 - No intermediate waypoints
 - Path: `M sx,sy L tx,ty`
 
 ### Branch Line (split)
 
-When a node has multiple branch children:
+Each split edge carries `__fdTree: { kind: 'split', direction, ownerId, branchId, lineMain, fanoutCross }`:
 
-1. Vertical line from source card bottom to the **branch horizontal line**
-2. Horizontal line spanning all branch columns
-3. Vertical lines from horizontal line down to each condition card top
+1. Vertical line from source card edge center to the **shared split line** (`lineMain`)
+2. Horizontal segment at `lineMain` to the target branch column cross center
+3. Vertical line down to the target card edge
 
-The branch horizontal line is a single Y coordinate (midY) calculated as:
-
-```
-midY = round((sourceCardBottom + conditionCardTop) / 2)
-```
-
-Path for each branch edge:
+Path for each split edge (TB):
 
 ```
-M sx,sy L sx,midY L tx,midY L tx,ty
+M sx,sy L sx,lineMain L tx,lineMain L tx,ty
 ```
 
-Where `midY = targetY - SHORT_LEG` (horizontal line is close to the target, short vertical down to condition card).
+All split edges of one branch group share the same `lineMain` (split 线位于 owner 与 branch row 之间间隙的中点，TB 下限 134、LR 下限 204）。
 
 ### Merge Line (converge)
 
-When multiple branch paths converge to a single downstream node:
+Each merge edge carries `__fdTree: { kind: 'merge', direction, ownerId, branchId, continuationId, lineMain, fanoutCross }`:
 
-1. Short vertical line from each branch leaf card bottom down to the **merge horizontal line**
-2. Horizontal line spanning to the merge target X
-3. Long vertical line from merge horizontal line down to merge target card top
+1. Vertical line from branch leaf edge center down to the **shared merge line** (`lineMain`)
+2. Horizontal segment at `lineMain` to the continuation cross center
+3. Vertical line down to the continuation card edge
 
-Path for each merge edge:
-
-```
-M sx,sy L sx,midY L tx,midY L tx,ty
-```
-
-Where `midY = sourceY + SHORT_LEG` (horizontal line is close to the source, short vertical down from branch child card).
-
-### SHORT_LEG constant
-
-Both branch and merge edges use a short-leg pattern, but with different leg lengths:
-
-- Branch: `BRANCH_SHORT_LEG = 32px` — horizontal line is close to the target (condition cards)
-- Merge: `MERGE_SHORT_LEG = 84px` — horizontal line is close to the source (branch children), nearly symmetric with the long leg
-
-The merge short leg is longer because the branch child's + button (36px below card) must clear the horizontal line. At 84px, the + button has 48px clearance from the line.
+All merge edges of one branch group share the same `lineMain`（merge 线位于 branch group 与 continuation 之间间隙的中点，默认 120，随组内最大 rendered strokeWidth 动态计算）。merge 水平段（TB）位于整组 branch subtree 之后，不穿节点。
 
 ### Constraint
 
-- No more than **one horizontal turn** per edge (branch or merge)
-- Straight-line edges have **zero** intermediate waypoints
+- 同组 split/merge edges 共享各自 stem；除此之外 edge–edge、edge–node、edge–control 零正面积相交（半开区间矩形 + 完整 butt/round stroked polyline）
+- 允许交集白名单：同一 polyline 相邻 segment 的 bend join；edge 与自身 source/target boundary/handle 端点接触；同组 split/merge 共享 stem；node-attached + 与其 own stem 穿过中心；add-condition pill 与本组 split 线穿过中心；merge + 与 continuation stem 穿过中心；12×12 handle rectangle 跨所属 node boundary 居中
 - All coordinates must be `Math.round()` to avoid sub-pixel rendering artifacts
 
 ---
 
 ## 3. "+" Add-Node Button
 
-Every node has a "+" button below it, including nodes inside branch columns. Additionally, a merge-point "+" button appears at the convergence line where branches rejoin.
+Every node has a "+" button attached to it, including nodes inside branch columns. Additionally, a merge-point "+" button appears at the convergence line where branches rejoin.
 
 ### Card-Attached + Button
 
-| Property                  | Value                                                               |
-| ------------------------- | ------------------------------------------------------------------- |
-| Shape                     | Circle                                                              |
-| Diameter                  | 28px (in flow coordinates)                                          |
-| Color                     | `#3296fa` background, white icon                                    |
-| Shadow                    | `0 2px 4px rgba(50,150,250,0.4)`                                    |
-| Icon                      | Plus, 16px                                                          |
-| Position                  | Centered below card, **absolute positioned** (not in document flow) |
-| Distance from card bottom | 36px (center of button to card bottom edge)                         |
-| Z-index                   | Above connection lines (z-index: 2)                                 |
+| Property | Value                                                                                                                                                                         |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shape    | Circle                                                                                                                                                                        |
+| Diameter | 28px (in flow coordinates)                                                                                                                                                    |
+| Icon     | Plus, 16px                                                                                                                                                                    |
+| Position | **Center-based anchor**: button center at fixed `BTN_CENTER_DIST = 36px` from node main-end edge (TB: `bottom: -(36+14)px`; LR: `right: -(36+14)px`), **absolute positioned** |
+| Z-index  | Above connection lines (z-index: 2)                                                                                                                                           |
 
-**Critical**: The + button must be `position: absolute` so it does NOT affect the node's measured height. The Handle (connection point) must remain at the card bottom edge, not at the button.
+**Critical**: The + button must be `position: absolute` so it does NOT affect the node's measured height. The Handle (connection point) must remain at the card edge, not at the button.
 
 ### Merge-Point + Button
 
-At the convergence line where branches merge back to a single flow, a + button is rendered via ViewportPortal. It is positioned **below** the merge horizontal line at `(centerX, mergeLineY + BTN_DIST)` — the same distance from the line as a card-attached + button is from its card. This button is NOT attached to any node.
+At the shared merge line where branches merge back to a single flow, a + button is rendered via ViewportPortal at `(main: lineMain + BTN_CENTER_DIST + overlayMain/2)` from the merge line, on the continuation cross center. This button is NOT attached to any node.
 
-Both the branch child's card-attached + button and the merge-point + button must have sufficient vertical separation (≥ 30px between centers).
+Both the branch child's card-attached + button and the merge-point + button must maintain ≥ 4px control clearance from other controls and ≥ 8px connector clearance from visible strokes.
 
 ---
 
@@ -165,35 +140,25 @@ This button appears only when a branch group exists. It is NOT a flow node.
 
 ## 5. Spacing Rules
 
-Spacing is derived from the reference CSS layout where each inter-card gap is one `add-node-btn-box` unit (84px tall: padding-top 20px + button 32px + padding-bottom 32px). The + button center sits at 36px from the top of this unit.
+Tree mode uses **fixed layout footprints** (`NodeTypeConfig.tree.layoutSize`, fallback appearance minWidth/minHeight, fallback 220×80) and **minimum effective gaps** rather than fixed CSS-derived row units. `layerSpacing` is a desired value; the effective gap is `max(layerSpacing, 下限)`.
 
-### Row-to-Row Distances (flow coordinates)
+### Minimum Gaps (flow coordinates)
 
-| Context                            | Distance  | Derivation                |
-| ---------------------------------- | --------- | ------------------------- |
-| Card top to next card top (linear) | **156px** | CARD_H(72) + add-node(84) |
-| Branch source → condition cards    | **203px** | 156 + BRANCH_EXTRA(47)    |
-| Branch children → merge target     | **242px** | 156 + MERGE_EXTRA(86)     |
+| Context        | Minimum   | Derivation                                                                    |
+| -------------- | --------- | ----------------------------------------------------------------------------- |
+| Ordinary chain | **60px**  | 36 + 14 + 6 + 4 (center + button + handle + clearance)                        |
+| TB split       | **134px** | 2 × (36 + 14 + 13 + 4)                                                        |
+| LR split       | **204px** | 2 × (36 + 14 + 48 + 4)                                                        |
+| Merge          | **120px** | 2 × (36 + 14 + 8 + ceil(maxGroupStrokeWidth/2)); default group w/ focused 3px |
 
-The branch extra (47px) comes from: branch-box margin-top(15) + border(2) + condition padding-top(30) = 47px.
-
-The merge extra (86px) comes from: the merge row has TWO add-node-btn-boxes stacked (branch child's + branch-box-wrap's) instead of one. Extra = 84px ≈ 86px.
-
-### Key Distances (flow coordinates)
-
-| Measurement                                          | Value                  |
-| ---------------------------------------------------- | ---------------------- |
-| Card height                                          | 72px                   |
-| + button center below card bottom                    | 36px                   |
-| Normal inter-card gap (card bottom to next card top) | 84px                   |
-| Branch inter-card gap                                | 131px (84 + 47)        |
-| Merge inter-card gap                                 | 170px (84 + 86)        |
-| Branch column horizontal spacing                     | 260px center-to-center |
+When `layerSpacing` is below the corresponding floor, chain uses 60, TB split 134, LR split 204, merge 120; spacing above the floor is used as authored.
 
 ### Non-Overlap Guarantees
 
-- **+ button ↔ "添加条件"**: branchLineY sits at midpoint of branch gap. Distance from + button center (36px below card) to branchLineY ≥ 30px. Verified: branch gap 131px → midpoint 65.5px → distance 29.5px ≈ 30px.
-- **+ button ↔ merge + button**: mergeLineY sits at midpoint of merge gap. Distance from branch child's + button (36px below card) to mergeLineY ≥ 40px. Verified: merge gap 170px → midpoint 85px → distance 49px.
+- split 线位于 owner 与 branch row 之间间隙的中点：`splitMain - owner.mainEnd ≥ 67`（TB）/`102`（LR），`branchGroupMainStart - splitMain ≥ 同值`
+- merge 线位于 branch group 与 continuation 之间间隙的中点：两侧 ≥ `MERGE_HALF_GAP_MIN`
+- owner-attached + 与 add-condition pill 至少 4px 净空；leaf-attached +、merge + 与节点/transverse 线至少 8px 净空
+- 除 §2 白名单外，控件/连线/节点零正面积相交
 
 ---
 
@@ -248,23 +213,28 @@ The merge extra (86px) comes from: the merge row has TWO add-node-btn-boxes stac
 - `dtApproval` — Promoter / Approver / CC cards (with colored title bar)
 - `dtCond` — Condition cards (green title, priority badge)
 - `dtEnd` — End node (circle + label)
-- All nodes use `position: relative` wrapper with `Handle` at top/bottom
-- `+` button uses `position: absolute; bottom: -BTN_DIST; left: 50%; transform: translateX(-50%); z-index: 2`
+- Tree nodes use an **outer geometry wrapper** (fixed `layoutSize`, `overflow: visible`) hosting handles and attached controls, plus an **inner body box** (`box-sizing: border-box; width:100%; height:100%; overflow: hidden`); `+` button uses center-based anchor (TB: `bottom: -(36+14)px`; LR: `right: -(36+14)px`)
+- Handles anchor to the outer footprint boundary with explicit rounded `left/top` (odd footprints must keep the visible handle center exactly on the edge anchor)
+- Virtual empty slots render a built-in component (`__fd-tree-empty-slot`) with a centered 120×32 affordance; clicking it opens the add-node menu and dispatches `insertBranchChild`
 
 ### Edge Component
 
-Custom `DingTalkEdge`:
+Custom `DingFlowEdge`:
 
-- Receives `sourceX, sourceY, targetX, targetY` from React Flow
-- Same X → vertical straight line
-- Different X → Manhattan with single bend at `midY = round((sy + ty) / 2)`
+- Reads `edge.data.__fdTree` for kind/direction/lineMain
+- Same cross → vertical straight line
+- Split/merge → Manhattan polyline through the shared `lineMain` with axis mapping for TB/LR
+- `stroke-linecap: butt`, `stroke-linejoin: round`, strokeWidth clamped 1..4
+- No label/marker/animated/body rendering in tree mode
 
 ### Overlays
 
-Two types of ViewportPortal overlays:
+Two types of ViewportPortal overlays, both derived from `__fdTree` geometry:
 
-1. **"添加条件" pill** — at `(centerX, branchLineY)` where branchLineY = `conditionCardTop - SHORT_LEG`. The pill overlaps the branch horizontal line.
-2. **Merge-point + button** — at `(centerX, mergeLineY + BTN_DIST)` where mergeLineY = `branchChildCardBottom + SHORT_LEG`. The button is positioned below the merge horizontal line, at the same distance as a regular + button from its card.
+1. **"添加条件" pill** — at the shared split `lineMain` on the owner cross center (fixed outer border-box 96×26px; TB main size 26, LR main size 96)
+2. **Merge-point + button** — at `lineMain + BTN_CENTER_DIST + overlayMain/2` on the continuation cross center
+
+Overlay recomputation is a pure function of projected edge geometry — no endpoint guessing.
 
 ### Background
 
@@ -303,59 +273,42 @@ Label text: 12px, `#666`.
 
 ### Insertion Behavior
 
+Insertions are tree structural commands dispatched through the command adapter; the tree core re-projects the paired view atomically. No manual position shifting or edge rewiring in the renderer.
+
 #### Chain Insert (Approver / CC)
 
 When clicking + on a card node (non-merge), selecting Approver or CC:
 
-1. Find the outgoing edge from `sourceId` → get `downstreamId`
-2. Create new approval/CC node at `sourceNode.y + ROW_STEP`
-3. Shift `downstreamId` and ALL nodes below by `ROW_STEP`
-4. Remove old edge `source → downstream`
-5. Add edges: `source → newNode`, `newNode → downstream`
-
-New node data:
-
-- Approver: `{ label: 'Approver', desc: 'Please set', color: '#ff943e', icon: 'usercheck' }`
-- CC: `{ label: 'CC', desc: 'Please set', color: '#3296fa', icon: 'send' }`
+1. Dispatch `insertChainNode(sourceId, nodeType, data)`
+2. Core inserts the node between source and its downstream, then re-projects
 
 #### Merge Overlay Insert (Approver / CC)
 
 When clicking + on a merge-point overlay, selecting Approver or CC:
 
 1. `sourceId` is encoded as `merge:${targetId}` — extract the real target ID
-2. Create new node at the merge target's current Y position
-3. Shift the merge target and ALL nodes below by `ROW_STEP`
-4. Rewire: all incoming edges to the target now point to the new node
-5. Add edge: `newNode → target`
+2. Dispatch `insertChainNodeAtMerge(targetId, nodeType, data)`
+3. Core inserts the node between the branch group and the target, then re-projects
 
 #### Branch Insert (Condition)
 
 When selecting "Condition" from any + button:
 
-1. Find the outgoing edge from `effectiveId` → get `downstreamId`
-2. Shift `downstreamId` and ALL nodes below by `BRANCH_EXTRA + ROW_STEP + MERGE_EXTRA`
-3. Create 2 condition cards at `sourceNode.y + ROW_STEP + BRANCH_EXTRA`
-   - Left card at `cx - BRANCH_W/2`, right card at `cx + BRANCH_W/2`
-4. Add branch edges: `source → leftCond` (near-target), `source → rightCond` (near-target)
-5. Add merge edges: `leftCond → downstream` (near-source), `rightCond → downstream` (near-source)
-6. Remove old edge `source → downstream`
+1. From a node + button → dispatch `insertBranchPair(sourceId, condNodeType, condData)`
+2. From a branch-group pill → dispatch `addBranch(nodeId, branchData, childType, childData)`
 
-New condition data: `{ title: 'Condition', desc: 'Please set', priority: N }`
+#### Empty Slot Insert
+
+When clicking a virtual empty slot affordance:
+
+1. `sourceId` is encoded as `slot:${ownerId}:${branchId}`
+2. Dispatch `insertBranchChild(ownerId, branchId, nodeType, data)` — only succeeds while the branch is empty; readOnly disables the affordance
 
 ### State Management
 
-- `nodes` and `edges` are React state (`useState`) — updated on every insertion
-- `idCounter` is a ref starting above initial IDs to avoid collisions
-- Overlays are computed dynamically via `useMemo` from current nodes/edges
+- Tree session (`DesignerCore`) owns the draft; the host receives writeback via `treeDocumentChangeAction` with `{ treeDocument, reason, commandType?, sessionId, dispatchId }` bindings
+- Overlays are computed via `computeDingFlowOverlays()` purely from projected `__fdTree` geometry
 - A module-level `_onPlusClick` callback connects node components to the canvas state handler
-
-### Overlay Recomputation
-
-After any insertion, overlays are recalculated by:
-
-1. Grouping edges by source → nodes with 2+ outgoing edges get an "Add Condition" overlay
-2. Grouping edges by target → nodes with 2+ incoming edges get a "merge +" overlay
-3. Overlay positions derived from current node positions
 
 ---
 

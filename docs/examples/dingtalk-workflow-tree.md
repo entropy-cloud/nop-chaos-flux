@@ -212,7 +212,7 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "dingtalk-workflow",
   "documentMode": "tree",
   "treeConfig": {
@@ -223,7 +223,6 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
     },
     "showGatewayNodes": false,
     "showMergeNodes": false,
-    "autoLayout": true,
     "chainEdgeType": "dt-chain",
     "branchEdgeType": "dt-branch",
     "mergeEdgeType": "dt-merge"
@@ -234,8 +233,7 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
       "label": "流程连线",
       "appearance": {
         "stroke": "#94a3b8",
-        "strokeWidth": 2,
-        "markerEnd": "arrow-closed"
+        "strokeWidth": 2
       }
     },
     {
@@ -243,9 +241,7 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
       "label": "分支连线",
       "appearance": {
         "stroke": "#3b82f6",
-        "strokeWidth": 2,
-        "strokeDasharray": "6 3",
-        "markerEnd": "arrow-closed"
+        "strokeWidth": 2
       }
     },
     {
@@ -253,9 +249,7 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
       "label": "汇合连线",
       "appearance": {
         "stroke": "#94a3b8",
-        "strokeWidth": 1.5,
-        "strokeDasharray": "4 4",
-        "markerEnd": "arrow-closed"
+        "strokeWidth": 1.5
       }
     }
   ],
@@ -298,7 +292,11 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
       "tree": {
         "allowChild": true,
         "allowBranches": false,
-        "isTerminal": false
+        "isTerminal": false,
+        "layoutSize": {
+          "width": 200,
+          "height": 60
+        }
       }
     },
     {
@@ -355,13 +353,34 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
               "name": "data.setType",
               "label": "审批人类型",
               "options": [
-                { "label": "指定成员", "value": 1 },
-                { "label": "直属主管", "value": 2 },
-                { "label": "角色", "value": 3 },
-                { "label": "发起人自选", "value": 4 },
-                { "label": "发起人自己", "value": 5 },
-                { "label": "多级主管", "value": 6 },
-                { "label": "部门", "value": 7 }
+                {
+                  "label": "指定成员",
+                  "value": 1
+                },
+                {
+                  "label": "直属主管",
+                  "value": 2
+                },
+                {
+                  "label": "角色",
+                  "value": 3
+                },
+                {
+                  "label": "发起人自选",
+                  "value": 4
+                },
+                {
+                  "label": "发起人自己",
+                  "value": 5
+                },
+                {
+                  "label": "多级主管",
+                  "value": 6
+                },
+                {
+                  "label": "部门",
+                  "value": 7
+                }
               ]
             },
             {
@@ -369,10 +388,22 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
               "name": "data.examineMode",
               "label": "审批方式",
               "options": [
-                { "label": "依次审批", "value": 1 },
-                { "label": "会签", "value": 2 },
-                { "label": "或签", "value": 3 },
-                { "label": "票签", "value": 4 }
+                {
+                  "label": "依次审批",
+                  "value": 1
+                },
+                {
+                  "label": "会签",
+                  "value": 2
+                },
+                {
+                  "label": "或签",
+                  "value": 3
+                },
+                {
+                  "label": "票签",
+                  "value": 4
+                }
               ]
             },
             {
@@ -380,9 +411,18 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
               "name": "data.rejectStrategy",
               "label": "驳回策略",
               "options": [
-                { "label": "驳回到发起人", "value": 1 },
-                { "label": "驳回到上一节点", "value": 2 },
-                { "label": "终止流程", "value": 4 }
+                {
+                  "label": "驳回到发起人",
+                  "value": 1
+                },
+                {
+                  "label": "驳回到上一节点",
+                  "value": 2
+                },
+                {
+                  "label": "终止流程",
+                  "value": 4
+                }
               ]
             },
             {
@@ -402,8 +442,14 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
               "label": "超时动作",
               "visible": "${data.termAuto === true}",
               "options": [
-                { "label": "自动通过", "value": 0 },
-                { "label": "自动拒绝", "value": 1 }
+                {
+                  "label": "自动通过",
+                  "value": 0
+                },
+                {
+                  "label": "自动拒绝",
+                  "value": 1
+                }
               ]
             },
             {
@@ -427,7 +473,11 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
       "tree": {
         "allowChild": true,
         "allowBranches": false,
-        "isTerminal": false
+        "isTerminal": false,
+        "layoutSize": {
+          "width": 220,
+          "height": 80
+        }
       }
     },
     {
@@ -484,7 +534,11 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
       "tree": {
         "allowChild": true,
         "allowBranches": false,
-        "isTerminal": false
+        "isTerminal": false,
+        "layoutSize": {
+          "width": 200,
+          "height": 60
+        }
       }
     },
     {
@@ -540,9 +594,18 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
               "name": "data.mode",
               "label": "分支类型",
               "options": [
-                { "label": "排他分支（条件路由）", "value": "exclusive" },
-                { "label": "并行分支", "value": "parallel" },
-                { "label": "包容分支", "value": "inclusive" }
+                {
+                  "label": "排他分支（条件路由）",
+                  "value": "exclusive"
+                },
+                {
+                  "label": "并行分支",
+                  "value": "parallel"
+                },
+                {
+                  "label": "包容分支",
+                  "value": "inclusive"
+                }
               ]
             }
           ]
@@ -553,7 +616,11 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
         "allowBranches": true,
         "minBranches": 2,
         "maxBranches": 10,
-        "isTerminal": false
+        "isTerminal": false,
+        "layoutSize": {
+          "width": 200,
+          "height": 60
+        }
       }
     },
     {
@@ -607,7 +674,11 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
         "allowBranches": true,
         "minBranches": 2,
         "maxBranches": 10,
-        "isTerminal": false
+        "isTerminal": false,
+        "layoutSize": {
+          "width": 200,
+          "height": 60
+        }
       }
     },
     {
@@ -674,7 +745,11 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
       "tree": {
         "allowChild": true,
         "allowBranches": false,
-        "isTerminal": false
+        "isTerminal": false,
+        "layoutSize": {
+          "width": 200,
+          "height": 60
+        }
       }
     },
     {
@@ -696,7 +771,11 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
       "tree": {
         "allowChild": false,
         "allowBranches": false,
-        "isTerminal": true
+        "isTerminal": true,
+        "layoutSize": {
+          "width": 120,
+          "height": 40
+        }
       }
     }
   ],
@@ -705,18 +784,39 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
       {
         "label": "流程节点",
         "items": [
-          { "type": "dt-initiator", "label": "发起人" },
-          { "type": "dt-approval", "label": "审批人" },
-          { "type": "dt-cc", "label": "抄送人" },
-          { "type": "dt-subprocess", "label": "子流程" },
-          { "type": "dt-end", "label": "结束" }
+          {
+            "type": "dt-initiator",
+            "label": "发起人"
+          },
+          {
+            "type": "dt-approval",
+            "label": "审批人"
+          },
+          {
+            "type": "dt-cc",
+            "label": "抄送人"
+          },
+          {
+            "type": "dt-subprocess",
+            "label": "子流程"
+          },
+          {
+            "type": "dt-end",
+            "label": "结束"
+          }
         ]
       },
       {
         "label": "分支",
         "items": [
-          { "type": "dt-condition", "label": "条件分支" },
-          { "type": "dt-parallel", "label": "并行分支" }
+          {
+            "type": "dt-condition",
+            "label": "条件分支"
+          },
+          {
+            "type": "dt-parallel",
+            "label": "并行分支"
+          }
         ]
       }
     ]

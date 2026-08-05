@@ -4,7 +4,7 @@
 
 ### `@nop-chaos/flow-designer-core`
 
-负责纯图编辑运行时。
+负责纯图编辑运行时 + tree session 运行时。
 
 建议导出：
 
@@ -17,7 +17,10 @@
 - `PaletteGroupConfig`
 - `DesignerSnapshot`
 - `DesignerCommand`
-- `createDesignerCore()`
+- `createDesignerCore()`（graph mode；`documentMode: 'tree'` 时抛 `tree-core-factory-required`）
+- `createTreeDesignerCore()`（tree mode 唯一工厂，返回 `{ok:true,core} | {ok:false,error}`）
+- `migrateTreeConfig()` / `normalizeConfigVersion()`
+- `TreeProjectionError`、`TreeCoreCreationResult`、`TreeHostReplacementResult`、`TreeCommandResult`、`TreeEdgeRuntimeGeometry`
 
 可按阶段补齐的扩展内容：
 
@@ -26,6 +29,8 @@
 - `migrateDesignerDocument()`
 - `createDesignerMigrationRegistry()`
 - `DesignerMigrationError`
+
+> 已删除的 root export：`projectTree`、`layoutStructuredTree`、`simpleTreeLayout`、`layoutTreeWithElk`。tree mode 唯一投影入口 `projectAndLayoutTree` 为 core-private；`layoutWithElk` 保留为 graph mode 专用。仓库消费者一律迁移到 `createTreeDesignerCore` / tree commands / `replaceTreeFromHost`。
 
 ### `@nop-chaos/flow-designer-renderers`
 
@@ -71,6 +76,10 @@ interface DesignerPageSchema {
   title?: string | SchemaInput;
   document?: GraphDocumentInput;
   treeDocument?: TreeDocumentInput;
+  treeDocumentEpoch?: number; // 有限非负整数；host 替换授权
+  treeDocumentAckSessionId?: string; // host writeback ack（session 匹配）
+  treeDocumentAckDispatchId?: number; // host writeback ack（队首 dispatchId 匹配）
+  treeDocumentChangeAction?: ActionSchema | ActionSchema[]; // 单根 tree change action
   config: DesignerConfig;
   statusPath?: string;
   readOnly?: boolean;
@@ -87,7 +96,7 @@ interface DesignerPageSchema {
 - `config.toolbar` 只配置 built-in default toolbar 的 item 集合，不是完整 schema 容器
 - `title` 是当前已接线的 page-level value-or-region surface，会渲染在 workbench toolbar 上方
 - `toolbar` / `inspector` / `dialogs` 是 page 级 schema override surfaces
-- 当 `config.documentMode === 'tree'` 时，renderer 接收 `treeDocument`，先投影为 `GraphDocument` 建立 host-owned `DesignerCore`；结构编辑只允许走 tree owner / tree commands，不再把 React local tree copy 当成第二 authoring source
+- 当 `config.documentMode === 'tree'` 时，renderer 通过 `createTreeDesignerCore` 建立 tree session；结构编辑只允许走 tree core 命令与 host session 协议（epoch/ack/changeAction），不存在第二 authoring source
 - formal authoring baseline 现在还显式校验文档前置条件：graph mode 缺少 `document` 会报 schema error，tree mode 缺少 `treeDocument` 会报 schema error，不再让这类页面根节点在 tooling 中表现为“形式上有效、运行时才 fallback”
 
 `designer-page` 是宿主入口，不是普通容器的简单别名。它负责：
@@ -311,6 +320,30 @@ Partial merge update of edge data.
 ```
 
 Update branch header data in a tree-mode branch group.
+
+### `designer:insertBranchChild`
+
+```ts
+{
+  action: 'designer:insertBranchChild',
+  ownerId: string,
+  branchId: string,
+  nodeType: string,
+  data?: Record<string, unknown>
+}
+```
+
+Insert a child node into an empty tree-mode branch slot. Succeeds only while the branch is empty (`child === undefined`); failures map to `missing-node` / `unknown-node-type` / `constraint`; readOnly → `unavailable`.
+
+### `designer:relayoutTree`
+
+```ts
+{
+  action: 'designer:relayoutTree';
+}
+```
+
+Presentation-only re-run of the structured tree projection on the current session draft. No history push, no dirty, no change action; emits `presentationChanged` only when coordinates change.
 
 ### `designer:updateMultipleNodes`
 

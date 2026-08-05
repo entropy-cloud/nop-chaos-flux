@@ -380,7 +380,7 @@ Tree → `ActionSchema` JSON 的编译规则：
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "action-flow",
   "documentMode": "tree",
   "treeConfig": {
@@ -391,7 +391,6 @@ Tree → `ActionSchema` JSON 的编译规则：
     },
     "showGatewayNodes": false,
     "showMergeNodes": false,
-    "autoLayout": true,
     "chainEdgeType": "action-chain",
     "branchEdgeType": "action-branch"
   },
@@ -401,8 +400,7 @@ Tree → `ActionSchema` JSON 的编译规则：
       "label": "主链",
       "appearance": {
         "stroke": "#64748b",
-        "strokeWidth": 2,
-        "markerEnd": "arrow-closed"
+        "strokeWidth": 2
       }
     },
     {
@@ -410,9 +408,7 @@ Tree → `ActionSchema` JSON 的编译规则：
       "label": "分支",
       "appearance": {
         "stroke": "#3b82f6",
-        "strokeWidth": 1.5,
-        "strokeDasharray": "6 3",
-        "markerEnd": "arrow-closed"
+        "strokeWidth": 1.5
       }
     }
   ],
@@ -432,14 +428,24 @@ Tree → `ActionSchema` JSON 的编译规则：
         "type": "flex",
         "className": "nop-af-node nop-af-node--entry",
         "items": [
-          { "type": "icon", "icon": "play" },
-          { "type": "text", "body": "${data.label}" }
+          {
+            "type": "icon",
+            "icon": "play"
+          },
+          {
+            "type": "text",
+            "body": "${data.label}"
+          }
         ]
       },
       "tree": {
         "allowChild": true,
         "allowBranches": false,
-        "isTerminal": false
+        "isTerminal": false,
+        "layoutSize": {
+          "width": 120,
+          "height": 40
+        }
       }
     },
     {
@@ -463,8 +469,16 @@ Tree → `ActionSchema` JSON 的编译规则：
             "type": "flex",
             "className": "nop-af-node__header",
             "items": [
-              { "type": "icon", "icon": "zap", "className": "nop-af-node__icon" },
-              { "type": "text", "body": "${data.label}", "className": "nop-af-node__title" }
+              {
+                "type": "icon",
+                "icon": "zap",
+                "className": "nop-af-node__icon"
+              },
+              {
+                "type": "text",
+                "body": "${data.label}",
+                "className": "nop-af-node__title"
+              }
             ]
           },
           {
@@ -517,7 +531,11 @@ Tree → `ActionSchema` JSON 的编译规则：
         "allowChild": true,
         "allowBranches": true,
         "maxBranches": 3,
-        "isTerminal": false
+        "isTerminal": false,
+        "layoutSize": {
+          "width": 200,
+          "height": 70
+        }
       }
     },
     {
@@ -535,15 +553,27 @@ Tree → `ActionSchema` JSON 的编译规则：
         "type": "flex",
         "className": "nop-af-node nop-af-node--parallel",
         "items": [
-          { "type": "icon", "icon": "git-merge", "className": "nop-af-node__icon" },
-          { "type": "text", "body": "${data.label}", "className": "nop-af-node__title" }
+          {
+            "type": "icon",
+            "icon": "git-merge",
+            "className": "nop-af-node__icon"
+          },
+          {
+            "type": "text",
+            "body": "${data.label}",
+            "className": "nop-af-node__title"
+          }
         ]
       },
       "tree": {
         "allowChild": true,
         "allowBranches": true,
         "minBranches": 2,
-        "isTerminal": false
+        "isTerminal": false,
+        "layoutSize": {
+          "width": 200,
+          "height": 60
+        }
       }
     },
     {
@@ -565,7 +595,11 @@ Tree → `ActionSchema` JSON 的编译规则：
       "tree": {
         "allowChild": false,
         "allowBranches": false,
-        "isTerminal": true
+        "isTerminal": true,
+        "layoutSize": {
+          "width": 100,
+          "height": 36
+        }
       }
     }
   ],
@@ -574,8 +608,14 @@ Tree → `ActionSchema` JSON 的编译规则：
       {
         "label": "节点",
         "items": [
-          { "type": "action-step", "label": "动作" },
-          { "type": "action-parallel", "label": "并行" }
+          {
+            "type": "action-step",
+            "label": "动作"
+          },
+          {
+            "type": "action-parallel",
+            "label": "并行"
+          }
         ]
       }
     ]

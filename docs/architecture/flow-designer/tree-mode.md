@@ -15,7 +15,7 @@ Use it when you need to:
 
 - `docs/architecture/flow-designer/design.md` 拥有 Flow Designer 的整体分层架构
 - `docs/architecture/flow-designer/config-schema.md` 拥有 GraphDocument、NodeTypeConfig、EdgeTypeConfig 的完整定义
-- 本文档只定义 TreeDocument 数据模型、隐含 group merge 语义、TreeProjection（tree → graph 投影）、以及 tree 模式下的配置扩展
+- 本文档只定义 TreeDocument 数据模型、隐含 group merge 语义、单一 tree projection（tree → graph 投影）、以及 tree 模式的 host session 协议
 - tree 模式复用 graph 模式的 NodeTypeConfig 渲染能力和 EdgeTypeConfig 边样式，不引入新的渲染概念
 
 ## Core Claim
@@ -23,12 +23,14 @@ Use it when you need to:
 Tree 模式和 graph 模式共享同一个 React Flow 画布，但 DingFlow 一类 tree domain 不是“任意树”，而是更窄的 structured process tree：
 
 - **graph 模式**：用户自由创建 nodes 和 edges，表达任意有向图
-- **tree 模式**：数据是结构化流程树（链式 `child` + 扇出 `branches` + branch-group 隐含 merge），通过投影层展平为 nodes + edges 后喂给 React Flow
+- **tree 模式**：数据是结构化流程树（链式 `child` + 扇出 `branches` + branch-group 隐含 merge），通过唯一投影层展平为 nodes + edges 后喂给 React Flow
 
 两者在渲染层都表现为 `GraphNode[]` + `GraphEdge[]` → React Flow，但交互语义不同：
 
 - graph 模式允许自由创建和重连 edges
 - tree 模式必须通过结构化命令编辑 sequence、branch group 和 continuation，不应把 React Flow 暴露成自由 graph 编辑器
+
+**唯一布局算法**：tree mode 的全部路径（初始 mount、每次结构命令、host 替换、显式 relayout）只调用一个 core-private 的 `projectAndLayoutTree()`。ELK 只服务 graph mode，tree mode 不再调用 ELK 或任何图启发式布局。
 
 ### Branch Selection
 
@@ -51,7 +53,7 @@ TreeNode
 ├── child?: TreeNode            # 链式序列：下一个节点
 └── branches?: TreeNodeBranch[] # 扇出分支：从当前节点展开 N 条子树
     └── each: TreeNodeBranch
-        └── child?: TreeNode    # 该分支的子树
+        └── child?: TreeNode    # 该分支的子树（缺失 = 合法空分支 → 虚拟 slot）
 
 implicit merge(branches)        # 整个 branch group 汇合后，再流向当前节点的 downstream child
 ```
@@ -60,7 +62,7 @@ implicit merge(branches)        # 整个 branch group 汇合后，再流向当�
 | ---------------------- | ------------------------------------------- | ------------------------------------------ |
 | `child`                | 链式序列，A → B → C                         | 纵向/横向直线连接                          |
 | `branches`             | 从一个节点扇出 N 条分支                     | 分叉连接                                   |
-| `TreeNodeBranch.child` | 每条分支独立的子树                          | 分支内的纵向序列                           |
+| `TreeNodeBranch.child` | 每条分支独立的子树（可选）                  | 分支内的纵向序列；缺失时投影为虚拟 slot    |
 | implicit group merge   | 分支组结束后隐含汇合到单一下游 continuation | 汇合线 / merge overlay，不一定是持久化节点 |
 
 这 3 个原语足以描述：
@@ -81,7 +83,7 @@ interface TreeDocument {
   id: string;
   kind: string; // 域标识："dingtalk-workflow", "action-flow", "decision-tree"
   name: string;
-  version: string;
+  version: string; // canonical "1.0.0"（"1.0" 会在入口规范化为 "1.0.0"）
   meta?: Record<string, unknown>;
   root: TreeNode;
 }
@@ -92,7 +94,7 @@ interface TreeDocument {
 ```ts
 interface TreeNode {
   id: string;
-  type: string; // → TreeNodeTypeConfig.id
+  type: string; // → NodeTypeConfig.id
   data: Record<string, unknown>;
 
   // 结构字段
@@ -111,6 +113,8 @@ interface TreeNodeBranch {
 }
 ```
 
+`TreeNodeBranch.child` 可选：缺失表示尚未配置 child 的合法 draft branch，投影为虚拟 empty slot。
+
 ### 设计决策
 
 | 决策                                    | 理由                                                                                                   |
@@ -121,12 +125,13 @@ interface TreeNodeBranch {
 | 没有 `parent` 反向引用                  | 纯树结构不需要；跨引用（route jump）在 `data` 层面用 id 处理                                           |
 | `TreeNodeBranch` 没有 `type` 字段       | 分支项的身份由所属的 `TreeNode` 和 `data` 决定                                                         |
 | 不设 `BranchMode` 枚举                  | 排他/并行/包容是执行语义，不是可视化结构，放 `data`                                                    |
+| 空分支保留 `child?` 语义                | 空分支是合法 draft 状态；投影为虚拟 slot + 连通 merge，不产生 phantom owner edge                       |
 
 ## Config Extensions
 
 Tree 模式复用现有 `NodeTypeConfig`（body、inspector、createDialog、appearance）的全部能力，仅增加结构约束。
 
-### DesignerConfig 扩展
+### DesignerConfig 扩展（版本 1.1.0）
 
 ```ts
 interface DesignerConfig {
@@ -137,37 +142,42 @@ interface DesignerConfig {
   treeConfig?: {
     layout: {
       direction: 'TB' | 'LR'; // Top-Bottom (钉钉) 或 Left-Right
-      nodeSpacing: number;
-      layerSpacing: number;
+      nodeSpacing: number; // 非负整数
+      layerSpacing: number; // 期望值而非绝对值；低于安全下限时按 60/134/204/120 生效
     };
-    showGatewayNodes: boolean; // 是否显示虚拟网关节点
-    showMergeNodes: boolean; // 是否显示虚拟合并节点
-    autoLayout: boolean; // 树模式默认 true（每次修改后自动重排）
+    showGatewayNodes: boolean; // 保留字段（当前未实现展示）
+    showMergeNodes: boolean; // 保留字段（当前未实现展示）
+    chainEdgeType?: string;
+    branchEdgeType?: string;
+    mergeEdgeType?: string;
+    emptyBranchSize?: { width: number; height: number }; // 默认 220×80；TB ≥120×52，LR ≥140×32
   };
 }
 ```
 
-### TreeNodeTypeConfig
+- `treeConfig.autoLayout` 已删除（legacy `1.0.0` 配置迁移时移除）；structured tree layout 在 tree mode 是**必选投影步骤**，`layerSpacing` 是期望值而非绝对值。
+- 版本迁移：`1.0` / `1.0.0` → `1.1.0`；新 config authoring/export 使用 `1.1.0`。
+
+### NodeTypeConfig.tree
 
 ```ts
-interface TreeNodeTypeConfig extends NodeTypeConfig {
+interface NodeTypeConfig {
+  // ...existing fields...
   tree?: {
     allowBranches?: boolean; // 该类型是否允许扇出分支
     maxBranches?: number; // 最大分支数
     minBranches?: number; // 最小分支数（如果允许 branches）
     allowChild?: boolean; // 是否允许链式子节点
     isTerminal?: boolean; // 叶节点，不可有 child
+    branchEdgeType?: string; // 该类型节点的分支边样式覆盖全局
+    layoutSize?: { width: number; height: number }; // 固定布局 footprint（有限正整数）
   };
 }
 ```
 
-`NodeTypeConfig` 上的 `body`、`inspector`、`createDialog`、`quickActions`、`appearance` 全部原样复用，无变化。
-
-当前实现补充：
-
-- 默认 inspector 已优先渲染 `nodeType.inspector.body`，renderer 不再为 tree-domain 节点维护单独的领域表单分支
-- tree 模式 canvas 上的 add-node 菜单项集合直接从 `config.nodeTypes` 派生，而不是维护独立的 renderer 节点目录
-- renderer 仅保留窄的 fallback 过滤/排序逻辑，确保 terminal/root-only 类型不会误出现在添加菜单里
+- `layoutSize` 是 tree mode 的权威节点 footprint；兼容期回退 `appearance.minWidth/minHeight`（已标记 deprecated），再回退 220×80。仓库内所有 tree 示例必须显式 author `layoutSize`。
+- `TreeNodeTypeConfig` 保留为 deprecated type alias，normalized nodeTypes 使用统一 `NodeTypeConfig`。
+- 无效 `layoutSize` / `emptyBranchSize` 使整个投影返回 `invalid-layout-size`，不静默修正。
 
 ### 边样式配置
 
@@ -182,36 +192,34 @@ interface DesignerConfig {
     mergeEdgeType?: string; // 分支汇合连接引用的 EdgeTypeConfig.id
   };
 }
-
-// 节点类型级别覆盖
-interface TreeNodeTypeConfig extends NodeTypeConfig {
-  tree?: {
-    // ...
-    branchEdgeType?: string; // 该类型节点的分支边样式覆盖全局
-  };
-}
 ```
 
-查找优先级：`TreeNodeTypeConfig.tree.branchEdgeType` > `treeConfig.branchEdgeType` > 默认。
+查找优先级：`NodeTypeConfig.tree.branchEdgeType` > `treeConfig.branchEdgeType` > 默认。
+
+**DingFlow tree edge 禁止**：`markerEnd`、`animated`、schema label/body、`defaults` 中的 label/body，以及 `strokeDasharray`（dashed/dotted 均不受支持）。edge type 只允许 `stroke` / `strokeWidth` / `strokeStyle`（仅 solid）/ `color`。`TreeNodeBranch.data.label` 是合法分支数据，不视为 edge label。违规返回 `unsupported-tree-edge-decoration`。
 
 ## Tree Projection
 
-Tree → React Flow 的投影是 tree 模式的核心桥梁。
+Tree → React Flow 的投影是 tree mode 的核心桥梁，且是**唯一**桥梁。
 
 ### 投影算法概要
 
 ```
 TreeDocument
-  → TreeProjection.project(tree, config)
-  → { nodes: GraphNode[], edges: GraphEdge[] }
+  → projectAndLayoutTree(tree, normalizedConfig)   // core-private，单一入口
+  → { ok: true, view: { tree, document } } | { ok: false, error }
   → React Flow 渲染
 ```
 
-投影只做 3 件事：
+一次确定性调用完成：
 
-1. **展平**：递归遍历 TreeNode，每个 TreeNode 产出一个 GraphNode
-2. **连线**：根据 child 和 branches 产出 GraphEdge
-3. **布局**：调用 ELK/dagre 计算 position
+1. 校验/规范化 tree（JSON-safe payload、duplicate/reserved ID、unknown type、cycle、size/spacing）
+2. 递归测量 subtree（main/cross 轴抽象）
+3. 递归放置 node 与虚拟 branch slot（固定 footprint、整数锚点）
+4. 生成 projected nodes/edges，并为每条边写入只读 runtime 几何 `__fdTree`
+5. 校验 tree edge decoration 白名单
+
+`projectAndLayoutTree` 不是 root export；renderer 只能通过 `createTreeDesignerCore`、tree commands、`replaceTreeFromHost` 与 `relayoutTree` 间接触发。`createDesignerCore(GraphDocument, …)` 收到 `documentMode: 'tree'` 时抛 `tree-core-factory-required`。
 
 ### Hidden Group Merge
 
@@ -237,97 +245,47 @@ source
 ### 展平规则
 
 ```
-visit(node, parentIds):
-  // 1. 当前节点
+visit(node):
   emit GraphNode(id=node.id, type=node.type, data=node.data)
 
-  // 2. 有分支
   if node.branches:
     for each branch:
-      // 可选：emit 虚拟网关节点（如 treeConfig.showGatewayNodes）
-      // 从当前节点（或网关）连边到 branch.child
-      if branch.child:
-        visit(branch.child, [node.id])
-        emit edge: node.id → branch.child.id (type=branchEdgeType)
-
-    // 汇合：所有分支末端 → node.child
+      if branch.child: visit(branch.child) + emit split edge node→branch.child
+      else:            emit 虚拟 slot node + emit split edge node→slot
     if node.child:
-      // 可选：emit 虚拟合并节点
-      // 收集所有分支的最深叶节点 → mergeNode → node.child
-      visit(node.child, allBranchLeafIds)
-      emit edges: leafIds → node.child.id (type=mergeEdgeType)
-
-  // 3. 无分支，纯链式
+      for each branch leaf/slot: emit merge edge leaf→node.child
+      visit(node.child)
   else if node.child:
-    visit(node.child, [node.id])
-    emit edge: node.id → node.child.id (type=chainEdgeType)
+    emit chain edge node→node.child
+    visit(node.child)
 ```
+
+虚拟 slot：
+
+- ID namespace：`__fd_internal__/slot/<owner>/<branch>`；输入校验拒绝业务 ID 使用该前缀
+- node type：`__fd-tree-empty-slot`；data 固定 `{ __fdVirtual: 'empty-branch', ownerId, branchId }`
+- 使用 `treeConfig.emptyBranchSize`（默认 220×80；TB ≥120×52，LR ≥140×32）
+- owner→slot 生成 split edge；存在 continuation 时 slot→continuation 生成 merge edge；绝不产生 phantom owner→continuation merge edge
+- slot 由 renderer 内建组件渲染（`unknown-node-type` 校验的唯一豁免类型），不可作为 active business node；点击 affordance 打开 `DingFlowAddNodeMenu`，选择经 defaults/createDialog/submitAction 成功后 dispatch `insertBranchChild`
 
 ### 布局
 
-当前 tree mode 的真实基线不是“单纯把投影结果交给 ELK”，而是两层布局职责：
+tree mode 的布局是**投影的一部分**，不是独立增强层。算法使用轴抽象而不是写死 `x/y`：
 
-1. **结构化 tree layout（默认/同步路径）**
-2. **ELK auto-layout（显式自动布局按钮和初始 mount 后的异步增强路径）**
+- `cross`: 横向展开轴（`TB` 时等价于 `x`；`LR` 时等价于 `y`）
+- `main`: 主流程推进轴（`TB` 时等价于 `y`；`LR` 时等价于 `x`）
 
-也就是说，tree mode 平时必须先有一套稳定、可同步执行、与 TreeDocument 结构严格一致的 nested-tree 布局；ELK 只是后续增强，不是唯一真相。
+#### 安全间距公式
 
-#### Why
-
-钉钉工作流和 Action orchestration 的视觉预期不是“任意 DAG 分层图”，而是更接近 `wflow-web-next` DingFlow 的嵌套树：
-
-- branch owner 自己占据一层
-- 下方是一组 branch columns
-- 每个 branch column 内部继续递归渲染自己的 chain / nested branch group
-- 所有 branch 完成后，continuation 居中落到整组 branch fan-out 的下方，再继续向下
-
-如果只根据投影后的 edges 做普通 graph layering，很容易让 continuation 看起来“只是某个 merge target”，而不是 branch group 的统一后继。
-
-#### Structured Tree Layout Variables
-
-当前实现位于 `packages/flow-designer-core/src/tree-layout.ts` 的 `layoutStructuredTree()`，核心变量是轴抽象而不是写死 `x/y`：
-
-- `cross`: 横向展开轴（`direction: 'TB'` 时等价于 `x`；`direction: 'LR'` 时等价于 `y`）
-- `main`: 主流程推进轴（`direction: 'TB'` 时等价于 `y`；`direction: 'LR'` 时等价于 `x`）
-- `crossStart`: 当前子树在 cross 轴上的起点
-- `mainStart`: 当前节点在 main 轴上的起点
-- `allocatedCross`: 当前节点/子树可使用的 cross 轴宽度
-- `nodeSpacing`: sibling branch columns 之间的间距
-- `layerSpacing`: 节点与其 child / branch group / continuation 之间沿 main 轴的层间距
-
-节点尺寸来自 `NodeTypeConfig.appearance.minWidth/minHeight`；若未提供，则退回默认值。
+- `MIN_CHAIN_GAP = 60`（`BTN_CENTER_DIST 36 + BTN_DIAMETER/2 14 + HANDLE_SIZE/2 6 + CONTROL_CLEARANCE 4`）
+- `MIN_SPLIT_GAP(TB) = 134`、`MIN_SPLIT_GAP(LR) = 204`（split half-gap 67/102）
+- `MIN_MERGE_GAP = 2 * (36 + 14 + 8 + ceil(maxGroupStrokeWidth/2))`，默认组按 focused 3px → 120
+- 生效间距：`max(config.layerSpacing, 下限)`；layerSpacing 低于下限时 ordinary chain=60、TB split=134、LR split=204、merge=120
+- split/merge 线使用各自所在间隙的中点；所有坐标最终 `Math.round()`
 
 #### Measurement Pass
 
-先递归测量每棵子树占用的包围盒：
-
-```text
-measure(node):
-  nodeSize = size(node)
-
-  if no branches:
-    child = measure(node.child?)
-    cross = max(nodeSize.cross, child.cross)
-    main  = nodeSize.main + gap(child)
-
-  if has branches:
-    branchMeasures = measure(branch.child) for each branch
-    branchesCross = sum(branch.cross) + spacing between columns
-    branchesMain = max(branch.main)
-    child = measure(node.child?)  // continuation subtree
-
-    cross = max(nodeSize.cross, branchesCross, child.cross)
-    main  = nodeSize.main
-            + layerSpacing
-            + branchesMain
-            + gap(continuation child)
-```
-
-这里的关键点是：
-
-- branch group 的 cross 尺寸由所有 branch columns 的总宽度决定
-- branch group 的 main 尺寸由“最深 branch”决定
-- continuation 不属于任何单一 branch，而属于整个 branch group 之后的统一后继
+先递归测量每棵子树占用的包围盒（固定 footprint + 生效间距）。
 
 #### Placement Pass
 
@@ -338,69 +296,133 @@ place(node, crossStart, mainStart, allocatedCross):
   place node itself at the center of allocatedCross
 
   if no branches and has child:
-    place child centered below node
+    place child centered below node (chainGap)
 
   if has branches:
     branchesSpan = total measured width of all branch columns
     branchCrossCursor = center(branchesSpan within allocatedCross)
-
-    for each branch:
-      place branch subtree in its own column
-      advance branchCrossCursor by branchWidth + nodeSpacing
-
+    for each branch: place branch subtree in its own column; empty branch → slot
     branchBottom = max(bottom of every branch subtree)
-
     if continuation exists:
-      place continuation centered below the full branch group
+      place continuation centered below the full branch group (mergeGap)
 ```
 
-因此 continuation 的对齐基线是“整组 branches 的包围盒中心”，不是任一条 merge edge 的几何平均值，也不是某个 graph layer 的局部中心。
+因此 continuation 的对齐基线是“整组 branches 的包围盒中心”，不是任一条 merge edge 的几何平均值。
 
 #### Resulting Invariants
 
-当前实现保证这些结构不变量：
-
 - chain child 一定沿 `main` 轴继续推进
 - sibling branches 一定共享同一 branch row 起点
+- 同组所有 split edges 共享同一 `splitMain`；同组所有 merge edges 共享同一 `mergeMain`；二者不同
+- merge 横向/纵向段位于整组 branch subtree 之后，不穿节点
 - branch owner 的 continuation 一定在所有 branch subtree 的最下方之后
 - nested branch group 必须完全落在其所属 branch column 内部
 - `TB` 和 `LR` 只是轴映射不同，结构算法相同
+- 除允许交集白名单（自身源/目标端点、同组共享 stem、node-attached + 与其 own stem、add-condition pill 与 split 线、merge + 与 continuation stem、slot 内部包含）外，节点/控件/连线零正面积相交
 
-#### Relationship With ELK
+### Runtime Geometry（`__fdTree`）
 
-`layoutTreeWithElk()` 仍然保留，用于 tree mode 的异步 auto-layout。但它现在是增强层，不应推翻结构化 tree layout 的 owner 语义。
+每条 projected edge 携带只读 runtime 几何，供 DingFlow 渲染层使用：
 
-因此当前推荐理解是：
+```ts
+interface TreeEdgeRuntimeGeometry {
+  kind: 'chain' | 'split' | 'merge';
+  direction: 'TB' | 'LR';
+  ownerId?: string;
+  branchId?: string;
+  continuationId?: string;
+  lineMain?: number; // split/merge 共享线
+  fanoutCross?: number;
+}
+```
 
-- `layoutStructuredTree()` owns the semantic nested-tree baseline
-- `layoutTreeWithElk()` may refine the projected graph presentation
-- 如果两者结果冲突，以结构化 tree 的 branch/continuation 语义为准，后续应让 ELK 配置向这个语义靠拢，而不是反过来削弱 tree 结构
-
-#### Implementation Notes
-
-- 初始 tree document 投影使用 `computeTreeModeDocument()`，先 `projectTree()` 再 `layoutStructuredTree()`。
-- tree commands（add branch / move branch / insert chain node 等）修改 `TreeDocument` 后，也走同一条“重新投影 + 结构化 tree layout”路径。
-- 这保证首次渲染、属性更新、以及界面交互后的结果共享同一位置变量和同一树形语义。
+- `__fdTree` 是保留 runtime projection data：内部 snapshot/activeEdge/edge binding 可观察，但不属于 TreeDocument/domain data；tree mode 禁止 `updateEdgeData` 写入
+- graph export 保持原 GraphDocument；tree export 序列化 `currentTreeDocument`，不含 `__fd*` 或虚拟节点
+- host projection（`designer-host-projection.ts`）剥离虚拟节点及其 incident edges、`__fd*` 与 stale selection，counts 从 sanitized business graph 重算
 
 ### 反向：Graph → Tree
 
-编辑操作（拖拽节点、添加分支）在 tree 层面操作 TreeDocument，不需要从 graph 反向重建 tree。投影是单向的：
+编辑操作在 tree 层面操作 TreeDocument，不需要从 graph 反向重建 tree。投影是单向的：
 
 ```
-编辑操作 → 修改 TreeDocument → 重新投影 → 更新 React Flow
+编辑命令 → core tree command → projectAndLayoutTree → 原子替换配对 view → 更新 React Flow
 ```
+
+## Tree Core Session And Host Writeback
+
+### 工厂
+
+```ts
+createTreeDesignerCore(initialTreeDocument, config, options): TreeCoreCreationResult
+//  = { ok: true, core: DesignerCore } | { ok: false, error: TreeProjectionError }
+```
+
+- 工厂唯一调用 config migration + `projectAndLayoutTree`；失败返回结构化 error，不创建 error core
+- 初始化 history/saved baseline **之前**安装验证 pair
+- `DesignerCore` 是 session draft owner；domain model 仍是最终持久化 owner
+
+### Host 协议
+
+schema 字段：`treeDocument`、`treeDocumentEpoch`、`treeDocumentAckSessionId`、`treeDocumentAckDispatchId`、`treeDocumentChangeAction`。
+
+- 每个 tree renderer mount 生成不可复用 UUID `treeDocumentSessionId`
+- 所有会改变 tree 的 command / undo / redo / restore 创建有序 writeback item；renderer 严格串行 dispatch：只有队首收到 host acknowledgement 后才发送下一项
+- pending FIFO 最多 32 项（`{dispatchId, tree, digest, sourceCommandCount}`）；相邻 deep-equal 文档去重
+- 有界 `locallyEmittedDigests` LRU（最多 256 个 digest）；epoch 缺省时 delayed echo 仅覆盖该窗口，超出窗口的 host 回显必须提供严格递增 epoch
+- 队列满时合并最新 draft 到单个 `coalescedUnsentTree` 并报告一次 `tree-host-backpressure`；容量释放后 coalesced 项追加到 FIFO 尾部，绝不越过队首
+- host epoch **优先**：有效且严格大于 `lastAcceptedHostEpoch` 时先验证/migrate/project，再原子替换 pair、清空 pending/coalesced、重置 history/saved baseline
+- 仅 epoch 缺省或 `<= lastAcceptedHostEpoch` 时使用 ack 规则：sessionId + 队首 dispatchId + digest 三者匹配才移除队首；旧 session/较小 dispatchId 为 stale no-op；当前 session 更大 ID 或 digest 不匹配返回 `tree-host-invalid-ack`
+- 无 ack 字段时，deep-equal current/stale-digest echo 兼容；其余不同 prop 返回 `tree-host-conflict`
+- host 不提供 change action 时不建立 pending 队列；session 内编辑/save/export 仍可用，但不同 host prop 仍需 epoch 严格增长才能替换
+- action completion 使用 `flux-action-core` 的 canonical `classifyActionResult`：success 保留队首等 ack；neutral/cancelled/failure 移除队首（不重试），分别报告 info/info/error host issue
+- 每次 dispatch 捕获 `sessionGeneration`；epoch replacement / ack / unmount / key remount 使旧 generation 失效，旧 completion 完全 no-op
+- `save`、`relayout`、初始 load 不发 change action
+
+### 结构命令
+
+tree mode 下这些 graph mutation 全部被 core gate 拒绝（no-op / null / `unavailable` + `mutationRejected` 诊断）：`addNode`、`updateNode`、`moveNode`、`moveNodes`、`updateMultipleNodes`、`duplicateNode`、`deleteNode`（graph）、`addEdge`、`reconnectEdge`、`updateEdge`、`deleteEdge`、`pasteClipboard`、`layoutNodes`、`replaceDocument`、`replaceDocumentFromHost`。
+
+允许的结构动作（core tree 命令）：
+
+- `insertChainNode(sourceId, nodeType, data?)`
+- `insertChainNodeAtMerge(targetId, nodeType, data?)`
+- `insertBranchPair(sourceId, condNodeType, condData?)`
+- `addBranch(nodeId, branchData?, childType?, childData?)`
+- `deleteBranch(nodeId, branchId)`（受最小分支数约束）
+- `moveBranch(nodeId, branchId, direction)`
+- `deleteTreeNode(nodeId)`（结构重写矩阵）
+- `updateTreeNodeData(nodeId, data)`
+- `updateBranchData(nodeId, branchId, data)`
+- `insertBranchChild(ownerId, branchId, nodeType, data?)`（仅空分支成功）
+- `relayoutTree()`（presentation-only：不 push history、不设 dirty、不发 change action；坐标变化仅发 `presentationChanged`）
+
+`deleteTreeNode` 重写矩阵：
+
+| 目标上下文                                | 结果                                                      | 失败           |
+| ----------------------------------------- | --------------------------------------------------------- | -------------- |
+| root                                      | 永远拒绝                                                  | `constraint`   |
+| 普通 chain node（无 branches）            | 用其 `child` 替换它在 parent 的 child 引用                | `missing-node` |
+| branch subtree 内普通 node（无 branches） | splice 到所属 branch/parent；branch 首节点删除后变空 slot | `missing-node` |
+| branch owner（有 branches）               | 永远拒绝                                                  | `constraint`   |
+| continuation node 且无 branches           | 普通 chain splice；不触碰 owner 的 branches               | `missing-node` |
+| virtual empty slot                        | 不是业务 TreeNode；删除由 `deleteBranch` 完成             | `unavailable`  |
 
 ## DesignerPageSchema 扩展
 
 ```ts
 interface DesignerPageSchema {
   type: 'designer-page';
-  id?: string;
+  id?: string; // key 变化触发 remount 并使用新 config
   title?: string;
 
   // 二选一
   document?: GraphDocumentInput; // graph 模式（现有）
   treeDocument?: TreeDocumentInput; // tree 模式（新增）
+
+  treeDocumentEpoch?: number; // 有限非负整数
+  treeDocumentAckSessionId?: string;
+  treeDocumentAckDispatchId?: number;
+  treeDocumentChangeAction?: ActionSchema | ActionSchema[];
 
   config: DesignerConfig;
   readOnly?: boolean;
@@ -409,12 +431,10 @@ interface DesignerPageSchema {
 }
 ```
 
-`designer-page` 渲染器根据 `config.documentMode` 决定使用哪条输入路径，但两种模式最终都落到同一个 `DesignerCore` API：
-
-- `graph`：直接以 `document` 初始化 `DesignerCore`
-- `tree`：先把 `treeDocument` 投影成 `GraphDocument`，然后在页面生命周期内复用同一个 `DesignerCore`，后续 tree 输入变化通过 `core.replaceDocument(projectedDoc, treeDocument)` 同步
-
-因此 tree 模式当前冻结基线是：`selection`、`history (undo/redo)`、`snapshot`、以及 `save()` / `restore()` 在 tree 编辑前后保持连续。`TreeDocument` 是 owner truth，history entry 与 saved baseline 都必须同时记录 owner tree 与 projected graph；undo/redo 与 restore 都不能只回滚 graph projection 而把 owner tree 留在更“新”的版本。clipboard 仍由 core 提供单节点 copy/paste，但本文档不再把它写成 tree-mode closure 的额外共享承诺。
+- `treeDocumentChangeAction` 完整进入 authoring/compile surface：TypeScript schema、renderer definition prop contract、formal validation、resolved prop bindings、action failure host issue
+- action dispatch bindings：`{ treeDocument, reason, commandType?, sessionId, dispatchId }`；`reason` 冻结为 `'command' | 'undo' | 'redo' | 'restore' | 'coalesced'`
+- mounted session 的 config 冻结为首次 resolved config snapshot；后续 prop config 变化不热应用，仅当 designer-page `key`/`id` 改变时 remount
+- 非法 epoch/ack 返回 `invalid-tree-document-epoch` / `invalid-tree-document-ack`，不替换 pair
 
 ## Domain Examples
 
@@ -439,7 +459,7 @@ Tree DSL 本身不解释领域语义。以下是不同 domain 如何复用同一
 
 - `data` 放布尔表达式、特征匹配规则、动作定义等
 - 结构完全相同，只有 `data` 的 schema 不同
-- 每种 domain 通过自己的 `DesignerConfig.kind` + `TreeNodeTypeConfig` 定义专用节点类型
+- 每种 domain 通过自己的 `DesignerConfig.kind` + `NodeTypeConfig` 定义专用节点类型
 
 ## Tree vs Graph 选择指南
 
@@ -456,20 +476,24 @@ Tree DSL 本身不解释领域语义。以下是不同 domain 如何复用同一
 
 ## Current Baseline
 
-- `TreeDocument`、`TreeNode`、`TreeNodeBranch`、`TreeConfig`、`TreeDomainAdapter` 已在 `flow-designer-core` 中定义
-- tree projection 和 tree-mode `designer-page` 主路径已接线；渲染器可接受 `treeDocument` 并复用同一个 `DesignerCore`/workbench shell
-- tree-mode 当前已覆盖基础 tree contract、投影渲染、以及本地 tree 编辑态回写
+- `createTreeDesignerCore` 工厂、配置版本迁移（1.0/1.0.0 → 1.1.0）、单一 `projectAndLayoutTree`、tree payload 验证、pair history、中央 mutation gate 已在 `flow-designer-core` 落地
+- 虚拟 empty branch slot、`__fdTree` runtime 几何、min-gap 公式、`insertBranchChild`、`deleteTreeNode` 重写矩阵已落地
+- renderer tree session（sessionId / FIFO / ack / epoch / LRU / coalescing）、host projection sanitization、tree 命令 adapter 封口已落地
+- DingFlow TB/LR 渲染（handles/paths/overlays/plus button/slot affordance）只消费 `__fdTree` 几何
+- playground tree schemas 与 docs examples 已迁移到 config 1.1.0 + 显式 `layoutSize`，无 authored `treeConfig.autoLayout`
 
 ## Remaining Gaps
 
 - 钉钉 `FlowLong JSON ↔ TreeDocument` 双向 domain adapter 仍是后续 domain 落地项
 - action-flow 的 `TreeDocument → ActionSchema` lowering 仍是后续 domain 落地项
 - domain-specific save/export and profile-level authoring surfaces 仍需各自 family doc 单独收口
+- `showGatewayNodes` / `showMergeNodes` 展示实现保留为独立 successor（见 plan 453 Deferred But Adjudicated）
 
 ## Related Documents
 
 - `docs/architecture/flow-designer/design.md` — 整体分层架构
 - `docs/architecture/flow-designer/config-schema.md` — GraphDocument、NodeTypeConfig 完整定义
+- `docs/architecture/flow-designer/dingflow-visual-spec.md` — DingFlow TB/LR 视觉与几何规范
 - `docs/architecture/action-algebra-formal-spec.md` — Action Schema 执行语义
 - `docs/architecture/action-graph-authoring.md` — Action 可视化设计器的 lowering 规则
 - `docs/examples/dingtalk-workflow-tree.md` — 钉钉工作流 tree 配置示例

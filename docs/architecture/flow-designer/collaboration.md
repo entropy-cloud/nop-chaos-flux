@@ -113,7 +113,7 @@ Flow Designer 复用这层，而不是重新做一套页面状态机。
 
 `designer-page` 真正依赖的是通用 `NodeRenderer` 先给它搭好 runtime 边界，再在它自己的组件里创建 graph runtime。
 
-当前实现里，`DesignerPageRenderer` / `TreeModeLayoutWrapper` / `DesignerPageInner` 负责 page-shell 与 tree-document 装配，`DesignerPageBody` 负责 provider registration、region render、dialogs 和 shell 组合，auto-layout 与 keyboard shortcut 副作用则分别下沉到 `use-designer-auto-layout.ts` 与 `use-designer-shortcuts.ts`。tree 模式下 `TreeModeLayoutWrapper` 只创建一次 `DesignerCore`，后续 tree 输入变化通过 `core.replaceDocument(...)` 同步投影结果，而不是重建 core。
+当前实现里，`DesignerPageRenderer` / `TreeModeLayoutWrapper` / `DesignerPageInner` 负责 page-shell 与 tree-document 装配，`DesignerPageBody` 负责 provider registration、region render、dialogs 和 shell 组合，auto-layout 与 keyboard shortcut 副作用则分别下沉到 `use-designer-auto-layout.ts` 与 `use-designer-shortcuts.ts`。tree 模式下 `TreeModeLayoutWrapper` 通过 `createTreeDesignerCore` 只创建一次 tree session core，并挂载 `TreeDocumentSession`（sessionId / FIFO writeback / epoch / ack / digest LRU）；后续 host tree 输入变化只能通过 `replaceTreeFromHost(tree, epoch)` 或 ack 协议生效，而不是重建 core。graph-only 命令在 adapter/provider/canvas/shortcut/quick-action 层统一封口。
 
 ### 调用链图: `designer-page` 首次挂载
 

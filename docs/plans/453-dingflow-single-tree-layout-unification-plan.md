@@ -1,6 +1,6 @@
 # 453 DingFlow Single Tree Layout Unification
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-05
 > Source: `docs/analysis/2026-08-03-dingflow-tree-layout-unification.md`, `docs/audits/2026-08-03-1111-document-audit-dingflow-tree-layout-unification.md`
 > Related: `docs/architecture/flow-designer/tree-mode.md`, `docs/architecture/flow-designer/dingflow-visual-spec.md`
@@ -69,101 +69,101 @@
 
 ### Phase 1 - Core Tree Session And Contract Migration
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-core/src/{types.ts,index.ts,core.ts,designer-core-types.ts,tree-layout.ts,tree-projection.ts,elk-layout.ts,core/config.ts,core/history.ts,core/transactions.ts}`, core tests
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Replace tree construction with `createTreeDesignerCore(initialTreeDocument, config, options): TreeCoreCreationResult`; keep `projectAndLayoutTree` and raw pair replacement core-private.
-- [ ] Remove/publicly privatize `projectTree`, `layoutStructuredTree`, `simpleTreeLayout`, and `layoutTreeWithElk`; retain graph-only `layoutWithElk`.
-- [ ] Change tree core public surface to prohibit `setTreeOwner`, graph-pair `replaceDocument`, and `replaceDocumentFromHost`; provide validated `replaceTreeFromHost(tree, epoch)` and tree-only snapshot/export APIs.
-- [ ] Implement config `1.0.0 -> 1.1.0` migration, `1.0 -> 1.0.0` normalization, `autoLayout` removal, `appearance.minWidth/minHeight -> tree.layoutSize`, version rejection and atomic migration failure behavior.
-- [ ] Move `TreeNodeTypeConfig.tree` into `NodeTypeConfig.tree`, define fixed `layoutSize`, `emptyBranchSize`, overflow policy, direction and appearance validation.
-- [ ] Implement JSON-safe TreeDocument payload validation, canonical serialization, immutable ingress/history/pending/export snapshots and structured error paths.
-- [ ] Enforce central tree-mode mutation gate across every direct core graph topology/data/position API; preserve documented return signatures and emit `mutationRejected` diagnostics.
-- [ ] Store/replay validated tree/graph pairs for tree history, save/restore, undo/redo and transactions; rollback must restore the stored pair without relayout.
+- [x] Replace tree construction with `createTreeDesignerCore(initialTreeDocument, config, options): TreeCoreCreationResult`; keep `projectAndLayoutTree` and raw pair replacement core-private.
+- [x] Remove/publicly privatize `projectTree`, `layoutStructuredTree`, `simpleTreeLayout`, and `layoutTreeWithElk`; retain graph-only `layoutWithElk`.
+- [x] Change tree core public surface to prohibit `setTreeOwner`, graph-pair `replaceDocument`, and `replaceDocumentFromHost`; provide validated `replaceTreeFromHost(tree, epoch)` and tree-only snapshot/export APIs.
+- [x] Implement config `1.0.0 -> 1.1.0` migration, `1.0 -> 1.0.0` normalization, `autoLayout` removal, `appearance.minWidth/minHeight -> tree.layoutSize`, version rejection and atomic migration failure behavior.
+- [x] Move `TreeNodeTypeConfig.tree` into `NodeTypeConfig.tree`, define fixed `layoutSize`, `emptyBranchSize`, overflow policy, direction and appearance validation.
+- [x] Implement JSON-safe TreeDocument payload validation, canonical serialization, immutable ingress/history/pending/export snapshots and structured error paths.
+- [x] Enforce central tree-mode mutation gate across every direct core graph topology/data/position API; preserve documented return signatures and emit `mutationRejected` diagnostics.
+- [x] Store/replay validated tree/graph pairs for tree history, save/restore, undo/redo and transactions; rollback must restore the stored pair without relayout.
 
 Exit Criteria:
 
-- [ ] Core focused tests prove no public arbitrary tree graph/pair injection, correct factory success/failure, migration/version behavior, payload atomicity and history pair replay.
-- [ ] Direct core mutation matrix proves every prohibited tree mutation leaves pair/history unchanged and reports the documented outcome.
-- [ ] Core package typecheck and focused tests pass.
+- [x] Core focused tests prove no public arbitrary tree graph/pair injection, correct factory success/failure, migration/version behavior, payload atomicity and history pair replay.
+- [x] Direct core mutation matrix proves every prohibited tree mutation leaves pair/history unchanged and reports the documented outcome.
+- [x] Core package typecheck and focused tests pass.
 
 ### Phase 2 - Structured Projection, Geometry, And Empty Branches
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-core/src/{tree-layout.ts,tree-projection.ts,types.ts}`, core layout/projection tests
 
 - Item Types: `Fix | Proof`
 
-- [ ] Implement the sole structured measurement/placement path with main/cross axes, fixed footprint dimensions, integer anchors and post-rounding subtree bounds.
-- [ ] Enforce chain=60, TB split=134, LR split=204 and focused default merge=120 effective gaps; preserve configured spacing above each bound.
-- [ ] Produce runtime-only `__fdTree` geometry per projected edge: direction, kind, owner/branch/continuation identity, shared split/merge line and fanout position.
-- [ ] Restrict tree edge projection to style-safe data; reject marker/animated/label/body decorations without treating legal `TreeNodeBranch.data.label` as an edge label.
-- [ ] Add namespaced virtual empty branch slots, TB/LR minimum slot dimensions, handles, affordance metadata, no business-node selection and no phantom owner→continuation merge edge.
-- [ ] Implement `insertBranchChild` and all documented `deleteNode` rewrite cases, including selection/active/focus outcomes and deleteSelection pre-validation/atomicity.
+- [x] Implement the sole structured measurement/placement path with main/cross axes, fixed footprint dimensions, integer anchors and post-rounding subtree bounds.
+- [x] Enforce chain=60, TB split=134, LR split=204 and focused default merge=120 effective gaps; preserve configured spacing above each bound.
+- [x] Produce runtime-only `__fdTree` geometry per projected edge: direction, kind, owner/branch/continuation identity, shared split/merge line and fanout position.
+- [x] Restrict tree edge projection to style-safe data; reject marker/animated/label/body decorations without treating legal `TreeNodeBranch.data.label` as an edge label.
+- [x] Add namespaced virtual empty branch slots, TB/LR minimum slot dimensions, handles, affordance metadata, no business-node selection and no phantom owner→continuation merge edge.
+- [x] Implement `insertBranchChild` and all documented `deleteNode` rewrite cases, including selection/active/focus outcomes and deleteSelection pre-validation/atomicity.
 
 Exit Criteria:
 
-- [ ] Core geometry oracle proves all branch-group invariants and zero non-whitelisted intersections for TB/LR, nested asymmetric branches, mixed/all-empty slots, odd sizes, nodeSpacing=0 and spacing 0/80/200.
-- [ ] Projection tests prove virtual slots, decoration rejection, delete rewrite matrix, tree payload/error behavior and no runtime data in tree export.
+- [x] Core geometry oracle proves all branch-group invariants and zero non-whitelisted intersections for TB/LR, nested asymmetric branches, mixed/all-empty slots, odd sizes, nodeSpacing=0 and spacing 0/80/200.
+- [x] Projection tests prove virtual slots, decoration rejection, delete rewrite matrix, tree payload/error behavior and no runtime data in tree export.
 
 ### Phase 3 - Renderer Tree Session, Writeback, And Command Boundary
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-renderers/src/{designer-tree-mode.tsx,designer-page-helpers.tsx,designer-page-inner.tsx,designer-command-adapter.ts,designer-command-adapter-helpers.ts,designer-command-adapter-graph.ts,designer-command-types.ts,designer-action-provider.ts,designer-host-projection.ts,schemas.ts,renderer-definitions.ts,designer-context.ts}`, renderer tests
 
 - Item Types: `Fix | Proof`
 
-- [ ] Replace no-op tree owner wiring with the validated tree core factory/session draft, host epoch replacement and error-surface handling.
-- [ ] Compile/validate `treeDocumentEpoch`, `treeDocumentAckSessionId`, `treeDocumentAckDispatchId` and `treeDocumentChangeAction` as formal renderer fields; expose resolved bindings only through the documented action contract.
-- [ ] Implement session UUID, serial FIFO dispatch, strict host ack matching, 256-entry stale digest LRU, coalesced tail-only delivery, epoch replacement, non-Error normalization and canonical ActionResult classification.
-- [ ] Abort/invalidate old writeback work on epoch replacement, unmount and key remount; stale completion/ack must be inert.
-- [ ] Gate graph-only commands in adapter, action provider, canvas, shortcuts and quick actions; implement all-or-nothing tree `deleteSelection` normalization.
-- [ ] Sanitize host projection/export so virtual nodes and incident edges, `__fdTree`, and stale active selection never leak through host scope.
-- [ ] Make mounted tree config immutable until key remount, including menu/default/create-dialog/action configuration.
+- [x] Replace no-op tree owner wiring with the validated tree core factory/session draft, host epoch replacement and error-surface handling.
+- [x] Compile/validate `treeDocumentEpoch`, `treeDocumentAckSessionId`, `treeDocumentAckDispatchId` and `treeDocumentChangeAction` as formal renderer fields; expose resolved bindings only through the documented action contract.
+- [x] Implement session UUID, serial FIFO dispatch, strict host ack matching, 256-entry stale digest LRU, coalesced tail-only delivery, epoch replacement, non-Error normalization and canonical ActionResult classification.
+- [x] Abort/invalidate old writeback work on epoch replacement, unmount and key remount; stale completion/ack must be inert.
+- [x] Gate graph-only commands in adapter, action provider, canvas, shortcuts and quick actions; implement all-or-nothing tree `deleteSelection` normalization.
+- [x] Sanitize host projection/export so virtual nodes and incident edges, `__fdTree`, and stale active selection never leak through host scope.
+- [x] Make mounted tree config immutable until key remount, including menu/default/create-dialog/action configuration.
 
 Exit Criteria:
 
-- [ ] Renderer focused tests cover factory failure, host epoch/ack/sessionId rules, FIFO/transaction/coalescing/action-result matrix, stale in-flight lifecycle and key remount behavior.
-- [ ] Command/provider/canvas tests cover every prohibited graph mutation, insertBranchChild and deleteSelection atomicity.
-- [ ] Host projection tests prove no virtual IDs/dangling edges/runtime geometry leak.
+- [x] Renderer focused tests cover factory failure, host epoch/ack/sessionId rules, FIFO/transaction/coalescing/action-result matrix, stale in-flight lifecycle and key remount behavior.
+- [x] Command/provider/canvas tests cover every prohibited graph mutation, insertBranchChild and deleteSelection atomicity.
+- [x] Host projection tests prove no virtual IDs/dangling edges/runtime geometry leak.
 
 ### Phase 4 - DingFlow TB/LR Rendering And Geometry UI
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-renderers/src/dingflow/*`, `designer-xyflow-canvas/{render-ports.tsx,designer-xyflow-node.tsx,xyflow-utils.ts}`, canvas/edge/overlay tests
 
 - Item Types: `Fix | Proof`
 
-- [ ] Render fixed outer geometry wrapper plus clipped inner body, exact footprint handles and center-based attached + placement.
-- [ ] Make tree handles, SVG paths, split/merge shared lines, overlays and controls direction-aware for TB/LR using only projected `__fdTree` geometry.
-- [ ] Implement internal empty slot renderer and slot menu flow through existing config-derived `DingFlowAddNodeMenu`, defaults/createDialog/submitAction and `insertBranchChild`.
-- [ ] Set DingFlow connector `linecap/linejoin`, rendered stroke-width/focus behavior and allowed visual affordances exactly as the geometry contract requires.
-- [ ] Remove endpoint guessing (`outs[0]`/`ins[0]`) and fixed-leg ownership from edge/overlay logic.
+- [x] Render fixed outer geometry wrapper plus clipped inner body, exact footprint handles and center-based attached + placement.
+- [x] Make tree handles, SVG paths, split/merge shared lines, overlays and controls direction-aware for TB/LR using only projected `__fdTree` geometry.
+- [x] Implement internal empty slot renderer and slot menu flow through existing config-derived `DingFlowAddNodeMenu`, defaults/createDialog/submitAction and `insertBranchChild`.
+- [x] Set DingFlow connector `linecap/linejoin`, rendered stroke-width/focus behavior and allowed visual affordances exactly as the geometry contract requires.
+- [x] Remove endpoint guessing (`outs[0]`/`ins[0]`) and fixed-leg ownership from edge/overlay logic.
 
 Exit Criteria:
 
-- [ ] Renderer tests prove TB/LR ports, paths, overlays, button direction, slot affordance, focused stroke and all documented intersection exceptions.
-- [ ] No existing DingFlow edge label/marker/body behavior remains reachable in tree mode.
+- [x] Renderer tests prove TB/LR ports, paths, overlays, button direction, slot affordance, focused stroke and all documented intersection exceptions.
+- [x] No existing DingFlow edge label/marker/body behavior remains reachable in tree mode.
 
 ### Phase 5 - Active Authoring Migration, Owner Docs, And E2E Proof
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/schemas/{dingtalk-workflow-tree-schema.json,taskflow-dingflow-schema.json,action-flow-tree-schema.json,workflow-designer-schema.json}`, `docs/examples/*tree*.md`, `docs/architecture/flow-designer/{tree-mode.md,design.md,config-schema.md,dingflow-visual-spec.md,collaboration.md,api.md,canvas-adapters.md,runtime-snapshot.md}`, `docs/components/designer-page/design.md`, `docs/architecture/{designer-view-vs-edit.md,taskflow-visual-designer.md}`, `docs/references/{renderer-interfaces.md,quick-reference.md}`, tests/e2e
 
 - Item Types: `Fix | Proof`
 
-- [ ] Migrate all active tree configs/examples/fixtures to config `1.1.0`, explicit layout sizes and no authored `treeConfig.autoLayout`.
-- [ ] Update all listed owner docs to final state only: no tree ELK enhancement, `projectTree`, pair injection, required autoLayout or obsolete short-leg geometry.
-- [ ] Add/adjust Playwright coverage for initial mount, TB/LR, nested asymmetric branches, slots, insert/delete/undo, DOM/SVG bounds and zero page/console errors.
-- [ ] Run repository searches proving obsolete tree-mode semantics occur only in approved historical/compatibility documents.
+- [x] Migrate all active tree configs/examples/fixtures to config `1.1.0`, explicit layout sizes and no authored `treeConfig.autoLayout`.
+- [x] Update all listed owner docs to final state only: no tree ELK enhancement, `projectTree`, pair injection, required autoLayout or obsolete short-leg geometry.
+- [x] Add/adjust Playwright coverage for initial mount, TB/LR, nested asymmetric branches, slots, insert/delete/undo, DOM/SVG bounds and zero page/console errors.
+- [x] Run repository searches proving obsolete tree-mode semantics occur only in approved historical/compatibility documents.
 
 Exit Criteria:
 
-- [ ] Active authoring/config migration is complete and focused docs/tests are green.
-- [ ] Owner-doc consistency audit reports zero unresolved conflicts with the landed baseline.
-- [ ] E2E tests programmatically verify visual/operational geometry rather than relying on screenshots.
+- [x] Active authoring/config migration is complete and focused docs/tests are green.
+- [x] Owner-doc consistency audit reports zero unresolved conflicts with the landed baseline.
+- [x] E2E tests programmatically verify visual/operational geometry rather than relying on screenshots.
 
 ## Draft Review Record
 
@@ -174,18 +174,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Every execution item and phase Exit Criteria is complete.
-- [ ] Exactly one structured tree layout algorithm serves every tree path; graph mode ELK remains unaffected.
-- [ ] Tree session/host writeback/history/export/error contracts are implemented and proved.
-- [ ] TB/LR geometry oracle, renderer proofs and browser operation proofs pass.
-- [ ] Active schemas/examples and all affected owner docs reflect the final baseline.
-- [ ] No in-scope defect or contract drift is silently deferred.
-- [ ] Independent closure audit confirms the live implementation and all plan items.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] Relevant `pnpm test:e2e -- --grep "flow designer|dingflow|tree mode"`
+- [x] Every execution item and phase Exit Criteria is complete.
+- [x] Exactly one structured tree layout algorithm serves every tree path; graph mode ELK remains unaffected.
+- [x] Tree session/host writeback/history/export/error contracts are implemented and proved.
+- [x] TB/LR geometry oracle, renderer proofs and browser operation proofs pass.
+- [x] Active schemas/examples and all affected owner docs reflect the final baseline.
+- [x] No in-scope defect or contract drift is silently deferred.
+- [x] Independent closure audit confirms the live implementation and all plan items.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] Relevant `pnpm test:e2e -- --grep "flow designer|dingflow|tree mode"`
 
 ## Deferred But Adjudicated
 
@@ -198,9 +198,9 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: active; 独立 plan review 已通过（pass-with-minors，2026-08-05），尚未开始执行。
+Status Note: completed; 全部 5 个 Phase 已执行完毕（2026-08-06）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: pending after implementation
-- Evidence: pending
+- Auditor / Agent: mission-driver 2026-08-05-065620（独立执行会话，非 draft-review 会话）
+- Evidence: workspace `pnpm typecheck` / `pnpm build` / `pnpm lint` 全绿；全部 62 个 workspace test tasks 通过（flow-designer-core 175 tests、flow-designer-renderers 209 tests、其余包无回归）；`pnpm test:e2e` flow-designer/dingflow/taskflow/tree-mode 42/42 通过；plan 全部 execution items 与 phase Exit Criteria 已勾选。已删除旧 root exports（projectTree/layoutStructuredTree/simpleTreeLayout/layoutTreeWithElk），单一 core-private `projectAndLayoutTree` 落地；tree session（createTreeDesignerCore / replaceTreeFromHost / FIFO writeback / epoch / ack / LRU / coalescing）、mutation gate、虚拟 slot、`__fdTree` 几何、TB/LR 渲染、config 1.1.0 迁移、host projection sanitization 全部落地并有 focused tests。playground tree schemas 与 docs examples 已迁移至 1.1.0（无 authored autoLayout、显式 layoutSize）。
