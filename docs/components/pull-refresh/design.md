@@ -72,6 +72,8 @@ interface PullRefreshEvents {
 }
 ```
 
+- **onRefresh payload（C7 契约，与注册 eventContracts 一致）**：`{ type: 'refresh', direction: 'down', threshold }`——`direction` 恒为 `'down'`（OA-14）；`threshold` 为当前生效的触发距离（px，默认 60）。action args 模板可直接引用 `${direction}`/`${threshold}`（派发携带 evaluationBindings ctx）。
+
 ## 4. 状态机
 
 ```

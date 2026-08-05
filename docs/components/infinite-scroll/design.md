@@ -63,6 +63,8 @@ interface InfiniteScrollEvents {
 }
 ```
 
+- **onLoadMore payload（C7 契约，与注册 eventContracts 一致）**：`{ type: 'loadmore', source }`——`source` 判别触发路径：`'intersection'`（sentinel 触底）/ `'immediate'`（immediateCheck 首屏）/ `'retry'`（用户点击错误重试按钮）。action args 模板可直接引用 `${source}`（派发携带 evaluationBindings ctx）。
+
 ### 与数据层协作
 
 `infinite-scroll` **不持有分页状态**。分页状态（pageNo、pageSize、total、hasMore）由 `crud` 或 data-source 持有。

@@ -18,22 +18,22 @@
 
 ### Flux 决策表
 
-| 能力                   | 采纳                                                      | 不采纳 | 理由                           |
-| ---------------------- | --------------------------------------------------------- | ------ | ------------------------------ |
-| 目标时间（到时停止）   | **实现**：`time`（ms）或 `targetTime`（时间戳）           | —      | 核心能力                       |
-| 自定义格式化           | **实现**：`format`（`HH:mm:ss` / `DD:HH:mm:ss` / 自定义） | —      | 高频需求                       |
-| 毫秒精度               | **实现**：`millisecond`（boolean）                        | —      | 秒杀场景需要                   |
-| 结束回调               | **实现**：`onFinish: ActionSchema`                        | —      | 标准事件                       |
-| 暂停/恢复              | **实现**：`paused`（受控 boolean）                        | —      | 外部控制                       |
-| 每帧回调（自定义渲染） | **暂不实现**                                              | —      | 低频，用 format 已覆盖多数场景 |
-| 前缀/后缀文本          | **实现**：`prefix` / `suffix`（value-or-region）          | —      | 展示辅助                       |
-| 自动开始               | **实现**：默认自动开始；`autoStart: false` 延迟           | —      | 标准行为                       |
+| 能力                   | 采纳                                                      | 不采纳 | 理由                                                          |
+| ---------------------- | --------------------------------------------------------- | ------ | ------------------------------------------------------------- |
+| 目标时间（到时停止）   | **实现**：`time`（ms）或 `targetTime`（时间戳）           | —      | 核心能力                                                      |
+| 自定义格式化           | **实现**：`format`（`HH:mm:ss` / `DD:HH:mm:ss` / 自定义） | —      | 高频需求                                                      |
+| 毫秒精度               | **实现**：`millisecond`（boolean）                        | —      | 秒杀场景需要                                                  |
+| 结束回调               | **实现**：`onFinish: ActionSchema`                        | —      | 标准事件                                                      |
+| 暂停/恢复              | **实现**：`paused`（受控 boolean）                        | —      | 外部控制                                                      |
+| 每帧回调（自定义渲染） | **暂不实现**                                              | —      | 低频，用 format 已覆盖多数场景                                |
+| 前缀/后缀文本          | **实现**：`prefix` / `suffix`（string prop）              | —      | 展示辅助（C7 更正：实现为纯 string prop，非 value-or-region） |
+| 自动开始               | **实现**：默认自动开始；`autoStart: false` 延迟           | —      | 标准行为                                                      |
 
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'countdown'`
 - `sourcePackage: '@nop-chaos/flux-renderers-mobile'`
-- 无 regions（纯展示），支持 `prefix` / `suffix` 作为 value-or-region
+- 无 regions（纯展示），`prefix` / `suffix` 为纯 string prop（C7 更正：早期文档误标 value-or-region）
 
 ## 4. Schema 设计
 
@@ -68,6 +68,8 @@ interface CountdownEvents {
   onFinish?: ActionSchema;
 }
 ```
+
+- **onFinish payload（C7 契约，与注册 eventContracts 一致）**：`{ type: 'finish' }`——归零时派发**恰好一次**（finishedRef 守卫）。派发携带 evaluationBindings ctx。
 
 ### 字段分类
 
@@ -112,7 +114,7 @@ interface CountdownEvents {
 
 - 根节点 `nop-countdown` marker
 - 数字部分使用 `tabular-nums` font-feature 确保等宽数字
-- 前缀/后缀通过 `prefix`/`suffix` region 渲染
+- 前缀/后缀通过 `prefix`/`suffix` string prop 渲染（data-slot countdown-prefix/countdown-suffix）
 
 ## 8. 边界情况
 

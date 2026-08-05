@@ -72,6 +72,8 @@ interface SwipeCellEvents {
 }
 ```
 
+- **三事件 payload（C7 契约，与注册 eventContracts 一致）**：`{ type, side }`——`onAction`/`onOpen` 的 `side` 为本次打开侧（`'open-left'`/`'open-right'`）；`onClose` 的 `side` 为关闭前的打开侧。action args 模板可直接引用 `${side}`（派发携带 evaluationBindings ctx）。
+
 ## 5. 交互状态机
 
 ```
@@ -114,6 +116,7 @@ closed → sliding-right → open-right → closing
 
 - 根节点 `nop-swipe-cell` marker；开合状态通过 `data-state`（closed/open-left/open-right）承载
 - 内部 region 仅用 `data-slot` 标识结构身份，不使用 `nop-X__region` BEM 类
+- **操作区定位契约（NEW-C7-02）**：left/right region 锚定在行左右缘，transform 跟随开合状态——`open-left` 时 left region `translateX(0%)`（落在行裁剪盒内的露出口），其余状态 `translateX(-100%)`（行外）；right region 对称（open-right → `translateX(0%)`，否则 `translateX(100%)`）；region 与 content pane 共用同一回弹曲线 transition（300ms cubic-bezier(0.25,0.46,0.45,0.94)），开合动画同步。早前实现恒为 `translateX(-100%)/+100%`，导致操作区在真实浏览器中永不可见（bug 87）
 - `overflow: hidden` 防止操作区在 closed 状态下可见；并配合 `inert` 真正移出可访问性树/Tab 序列（OA-08：`overflow:hidden` 只裁绘制，不阻止键盘 Tab/读屏到达屏幕外的删除按钮；非当前 open 侧的 wrapper 设 `inert`，open 时清除）
 - 根节点 `touch-action: pan-y`（MA-07）：把水平手势所有权留给渲染器 JS，垂直滚动仍交给浏览器
 - 拖拽中（`isTouching` 或非 closed）content pane 加 `select-none`（MA-24），避免横滑选中文字/图标
