@@ -33,17 +33,17 @@
 
 ### Flux 决策表（数据绑定层）
 
-| 能力                                                     | 采纳        | 不采纳                                            | 理由（依据）                                                                                                                |
-| -------------------------------------------------------- | ----------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 双轨数据模型（点表自包含 + flux 表达式桥接）             | **P0 采用** | 纯 flux 表达式 / 独立订阅协议                     | 讨论 Q3 用户裁决；组态文件自包含可复用 + 接入既有 scope 数据流                                                              |
-| 三源变量（静态/表达式/flux 桥接）                        | **P0 采用** | —                                                 | 双轨落地形态：静态值（画面内固定）、表达式（点表间派生）、flux `$xxx`（scope 桥接）                                         |
-| 合并帧刷新流水线（脏属性收集 → 批量写入 → 单次渲染请求） | **P0 采用** | 逐点 set / 逐点 setState 直刷 React               | roadmap 性能红线 + gate-1-review A5（1 万点端到端实测 16.9–19.7ms 的前提）                                                  |
-| 绑定反向索引（pointId → [{symbolId, property}]）         | **P0 采用** | 绑定求值全树扫描                                  | meta2d `bindDatas` 蓝本（scada-apps §2.1/§6 #2）；场景打开时构建                                                            |
-| 值未变去重（onlyChange 语义）                            | **P0 采用** | —                                                 | FUXA 蓝本（§3.6）；减少引擎属性写入                                                                                         |
-| 状态驱动动画（旋转/闪烁/流动/位移）+ 生命周期            | **P0 采用** | 每帧全量重建 / 依赖引擎动画原语直接驱动业务状态机 | 业务状态机（运行/停止/故障）自研（render-engines §8 #4 半自带判定）；动画原语直接可用                                       |
-| 条件-动作触发（数据变化→状态判定→动作）                  | **P1 采用** | meta2d 完整 Trigger/EventAction 19 动作体系       | 借鉴事件-条件-动作纯数据模型（scada-apps §2.6「直接借鉴」）；本期只落地状态判定+动作钩子，完整触发器体系随 I11 事件联动评估 |
-| 报警状态机（HH/H/L/INFO+ACK+历史）                       | —           | **本期不内置**                                    | FUXA 服务端能力（§3.2），超本 mission 范围；状态判定模型（§4.5）预留报警语义扩展点                                          |
-| 网络协议适配器（websocket/mqtt/http/SSE）                | P2 评估     | meta2d 内嵌网络层（`core.ts:2520-3720`）          | 平台能力复用表：外部 IO 必须经 RendererEnv（INV-1）；协议适配器经 `xui:imports` 注入（INV-2 B 档），见 §9.2                 |
+| 能力                                                     | 采纳        | 不采纳                                            | 理由（依据）                                                                                                                                                             |
+| -------------------------------------------------------- | ----------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 点表可选间接层 + 单一 `${expr}` 语法（I18 一元化）       | **P0 采用** | 独立订阅协议                                      | 讨论 Q3 用户裁决；I18（plan 2026-08-05-2129-1）收敛：`@{pointId}` 方言与 `$xxx` 简写弃用，统一经 flux compiler 求值 `${expr}`，点表 `variables` 可缺省（绑定直连 scope） |
+| 三源变量（静态/表达式/flux 桥接）                        | **P0 采用** | —                                                 | 落地形态：静态值（画面内固定）、表达式（点表间派生 `${a + b}`）、flux 桥接（`${scope.path}` 经 flux-formula 编译）                                                       |
+| 合并帧刷新流水线（脏属性收集 → 批量写入 → 单次渲染请求） | **P0 采用** | 逐点 set / 逐点 setState 直刷 React               | roadmap 性能红线 + gate-1-review A5（1 万点端到端实测 16.9–19.7ms 的前提）                                                                                               |
+| 绑定反向索引（pointId → [{symbolId, property}]）         | **P0 采用** | 绑定求值全树扫描                                  | meta2d `bindDatas` 蓝本（scada-apps §2.1/§6 #2）；场景打开时构建                                                                                                         |
+| 值未变去重（onlyChange 语义）                            | **P0 采用** | —                                                 | FUXA 蓝本（§3.6）；减少引擎属性写入                                                                                                                                      |
+| 状态驱动动画（旋转/闪烁/流动/位移）+ 生命周期            | **P0 采用** | 每帧全量重建 / 依赖引擎动画原语直接驱动业务状态机 | 业务状态机（运行/停止/故障）自研（render-engines §8 #4 半自带判定）；动画原语直接可用                                                                                    |
+| 条件-动作触发（数据变化→状态判定→动作）                  | **P1 采用** | meta2d 完整 Trigger/EventAction 19 动作体系       | 借鉴事件-条件-动作纯数据模型（scada-apps §2.6「直接借鉴」）；本期只落地状态判定+动作钩子，完整触发器体系随 I11 事件联动评估                                              |
+| 报警状态机（HH/H/L/INFO+ACK+历史）                       | —           | **本期不内置**                                    | FUXA 服务端能力（§3.2），超本 mission 范围；状态判定模型（§4.5）预留报警语义扩展点                                                                                       |
+| 网络协议适配器（websocket/mqtt/http/SSE）                | P2 评估     | meta2d 内嵌网络层（`core.ts:2520-3720`）          | 平台能力复用表：外部 IO 必须经 RendererEnv（INV-1）；协议适配器经 `xui:imports` 注入（INV-2 B 档），见 §9.2                                                              |
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -58,15 +58,15 @@
 
 ```typescript
 interface ScadaPointDeclaration {
-  /** 变量 id（组态内唯一；绑定表达式经 @{pointId} 引用） */
+  /** 变量 id（组态内唯一；绑定表达式经 ${expr} 引用，见 §4.2） */
   id: string;
   /** 值源：static | expression | flux */
   source: 'static' | 'expression' | 'flux';
   /** source=static：常量值 */
   value?: ScadaPrimitive;
-  /** source=expression：组态内表达式（可引用 @{pointId}，见 §4.2） */
+  /** source=expression：组态内表达式（经 flux-formula 求值，可引用点表变量，见 §4.2） */
   expression?: string;
-  /** source=flux：桥接 flux scope 表达式（如 $tank.level），经公式编译器求值 */
+  /** source=flux：桥接 flux scope 表达式（如 ${tank.level}），经 flux-formula/flux-compiler 求值 */
   flux?: string;
   /** 量程换算（FUXA TagScale 蓝本）：线性 y = k*x + b，或表达式 */
   scale?: { k?: number; b?: number } | { expression: string };
@@ -89,8 +89,8 @@ interface ScadaPointDeclaration {
 interface ScadaBinding {
   /** 单点绑定：值直接作为属性值（引用点表变量 id，如 "v1"） */
   point?: string;
-  /** 表达式绑定：组态内表达式（引用 @{pointId}），返回属性值 */
-  expression?: string; // 例："@{v1} > 50 ? '#f00' : '#0f0'"
+  /** 表达式绑定：经 flux-formula 求值（引用点表变量或 scope 路径），返回属性值 */
+  expression?: string; // 例："${v1} > 50 ? '#f00' : '#0f0'"
   /** 值→属性映射（文本/颜色映射） */
   map?: Record<string, string | number | boolean>;
   /** 量程→单位换算（仪表类） */
@@ -105,7 +105,7 @@ interface ScadaBinding {
 - 可绑定属性集合（I2.3 属性 schema 子集，`design-symbols.md` §4.2 `ScadaSymbolProps`）：`fill`/`stroke`/`strokeWidth`/`opacity`/`visible`/`text`/`textColor`/`rotation`/`x`/`y`/`width`/`height`/`flow`（管道流动参数）。
 - **format 适用域（plan 2026-08-05-0653-3 B1）**：`format` 仅对**文本类**可绑定属性生效——`text`/`fill`/`stroke`/`textColor`。`format` 把值字符串化（`formatValue(false,'%s')`→`"false"`），对 `visible`/`opacity`/数值/几何属性会把 boolean/number 变成 truthy 字符串而静默产出错误结果（`visible:false` 绑定渲染为可见）。故 `resolveBinding` 按目标 `property` 判定是否施加 format：文本类属性施加，其余属性原值原样透传。binding-scale 的 `expression` 求值不受影响（`applyScale` 经 evaluator 消费）。
 - **scale 消费语义（plan 2026-08-05-0653-3 B4）**：declaration 级 `scale` 仅支持 linear（`{k,b}`）——validator 拒绝 declaration 级 `scale.expression` 并指向 binding-scale（binding 层 `applyScale` 已消费 expression-scale，经 evaluator 求值）。declaration expression-scale 此前经 `point-store.convert` 与 `value-to-state.applyLinearScale` 两处静默丢弃，validator 拒绝同时关闭两处 drop site。
-- **表达式求值边界**：`@{pointId}` 组态内引用 + 算术/比较/三元/字符串拼接子集，由**纯逻辑求值器**实现（Vitest 单测）；`$xxx` flux 表达式（仅存在于点表声明的 `source: 'flux'`）经 flux-formula/flux-compiler 编译求值（平台能力复用表），求值上下文为桥接层创建的**私有求值子 scope**（注入点表上下文，非 schema-visible scope，INV-4 边界，I10.3 落地）。
+- **表达式求值边界（I18 一元化）**：绑定层面（`binding.expression`/`scale.expression`/`source:'expression'` 点）与点声明面（`variables[].flux`）统一经 **flux-formula/flux-compiler 编译求值**，仅认 `${expr}` 语法；点间派生（`${a + b}`）与 scope 桥接（`${scope.path}`）同源同引擎。求值上下文为桥接层创建的**私有求值子 scope**（`createPrivateEvalScope`，`{...pointValues, ...scopeData}` 合并，scope 胜出，注入点表上下文，非 schema-visible scope，INV-4 边界，I10.3/I18 落地）。旧 `@{pointId}` 方言与 `$xxx` 简写已弃用（I18）：validator 对旧 `@{}` warn（错误码 `legacy-at-syntax`，指向 codemod），不 fail；`$xxx` 不再剥离 `$` → 视为未知标识符求值 undefined（Failure Path `dollar-without-brace`）。
 - 多状态呈现（值→状态判定）见 §4.5。
 
 ### 4.3 订阅与节流：刷新流水线（A5 固化，性能红线）
@@ -247,11 +247,11 @@ interface ScadaStateDefinition {
 
 ### 9.1 三源接入
 
-| 源              | 接入方式                                 | 落点                                                                                                                                                                                                                                                                                                        |
-| --------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 静态值          | 组态 JSON `value`                        | 打开场景即写入点表                                                                                                                                                                                                                                                                                          |
-| 表达式          | 组态内 `expression`（`@{pointId}` 子集） | 纯逻辑求值器（§4.2），点表依赖链变化时重算                                                                                                                                                                                                                                                                  |
-| flux scope 桥接 | `flux: "$xxx"`                           | **`useScopeSelector`（带 `paths` 精细化失效）在 renderer 桥接层订阅**（`@nop-chaos/flux-react`，quick-reference.md:521,526），变化 → `setPointValues` 注入点表；flux 表达式经 flux-formula/flux-compiler 编译求值（I10.3 落地）——复用平台能力，禁止重复实现 scope 订阅/表达式编译（roadmap 平台能力复用表） |
+| 源              | 接入方式                                     | 落点                                                                                                                                                                                                                                                                                                        |
+| --------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 静态值          | 组态 JSON `value`                            | 打开场景即写入点表                                                                                                                                                                                                                                                                                          |
+| 表达式          | 组态内 `expression`（`${expr}`，I18 一元化） | 经 flux-formula/flux-compiler 求值（§4.2），点表依赖链变化时经 generation 失效重算                                                                                                                                                                                                                          |
+| flux scope 桥接 | `flux: "${scope.path}"`                      | **`useScopeSelector`（带 `paths` 精细化失效）在 renderer 桥接层订阅**（`@nop-chaos/flux-react`，quick-reference.md:521,526），变化 → `setPointValues` 注入点表；flux 表达式经 flux-formula/flux-compiler 编译求值（I10.3 落地）——复用平台能力，禁止重复实现 scope 订阅/表达式编译（roadmap 平台能力复用表） |
 
 > **复杂表达式订阅诊断 `flux-deps-empty`（plan 2026-08-05-0325-1，W1 successor）**：复杂 flux 表达式
 > （`${analog.temp + 1}` 类，含运算符/函数调用）的订阅路径经平台依赖收集（`extractExpressionDepsViaProbe`）
@@ -265,8 +265,8 @@ interface ScadaStateDefinition {
 > `useMemo` 随 config/compiler/env 稳定，effect 仅在其变化时重跑；`reportOnce` 按 `(expression, code)` 去重
 > 兜底；config reload 时去重记录对称清空 → 同表达式重报。**启发式限制**：`expressionReadsScope` 仅判标识符
 > 存在（`[a-zA-Z_][a-zA-Z0-9_]*`），含全局名（如 `Math.PI*2`）的复杂表达式可能误报为「reads scope」——
-> 属可接受的一次性 best-effort 诊断（不扩平台 collector 能力，仅 surface 静默 disable 嫌疑）。纯路径/`$xxx`
-> 简写表达式不走 probe，不诊断。**静默 disable 残留已 surfaced**：此前该路径完全静默，现经 `flux-deps-empty`
+> 属可接受的一次性 best-effort 诊断（不扩平台 collector 能力，仅 surface 静默 disable 嫌疑）。纯路径
+> 表达式不走 probe，不诊断。**静默 disable 残留已 surfaced**：此前该路径完全静默，现经 `flux-deps-empty`
 > 对 author 可感知。
 
 > **probe result 语义（plan 2026-08-05-0653-4 C4，multi-audit P2-6）**：`extractExpressionDepsViaProbe`
@@ -283,8 +283,8 @@ interface ScadaStateDefinition {
 > **flux 求值 scope 构造与合并优先级（plan 2026-08-05-1253-1 Phase 3，open-audit P2-2）**：`useScadaPointsBridge`
 > 每次 effect 运行构造 flux 表达式私有求值 scope（`createPrivateEvalScope`，INV-4 非 schema-visible），
 > 数据面为 `{...pointValues, ...scopeData}`——**PointStore 全量 point-values 快照**（含 static/expression/flux
-> 全类型点的当前值，`undefined` 不视为 live 值不入快照）在前，**useScopeSelector 订阅的 scope 快照**（flux
-> `$xxx`/`${...}` 引用路径）在后。**合并优先级为既定契约（非缺陷）：scope 在 id 冲突时遮蔽 point**——同名 id
+> 全类型点的当前值，`undefined` 不视为 live 值不入快照）在前，**useScopeSelector 订阅的 scope 快照**（`${...}`
+> 引用路径）在后。**合并优先级为既定契约（非缺陷）：scope 在 id 冲突时遮蔽 point**——同名 id
 > 下 scope 值胜出。此契约经 focused 测试守护（`scada-points-bridge.test.tsx` Proof ①），author 在 point id 与
 > scope 路径同名时应知晓 scope 值优先生效。
 >
@@ -317,10 +317,10 @@ interface ScadaStateDefinition {
 ```
 packages/flux-renderers-industrial/src/binding/       （域核心，无 React 依赖）
 ├── point-store.ts              # 点表 store（三源/去重/死区/换算）（I6.1，纯逻辑单测）
-├── bind-resolver.ts            # 绑定表达式求值（@{pointId} 子集）+ 属性映射（I6.2，纯逻辑单测）
-├── expression-evaluator.ts     # 组态内表达式求值器（依赖链 + 缓存）（I6.2，纯逻辑单测）
-├── reverse-index.ts            # pointId → [{symbolId, property}] 反向索引（I6.1，纯逻辑单测）
-├── dirty-collector.ts          # 帧内脏属性收集 + 帧尾批量写入（I6.1，纯逻辑单测）
+├── bind-resolver.ts            # 绑定表达式求值（${expr} 经注入的 flux compiler）+ 属性映射（I6.2/I18，纯逻辑单测）
+├── flux-eval.ts                # isScadaPrimitive + createPrivateEvalScope（点值/scope 合并求值 scope）（I18 提取）
+├── reverse-index.ts            # pointId → [{symbolId, property}] 反向索引（表达式点依赖收集经 flux 探针，I6.1/I18，纯逻辑单测）
+├── dirty-collector.ts          # 帧内脏属性收集 + 帧尾批量写入（表达式点经注入 compiler 求值 + generation 失效，I6.1/I18，纯逻辑单测）
 ├── value-to-state.ts           # 值→状态判定（区间/布尔/枚举映射）（I6.2，纯逻辑单测）
 └── animator.ts                 # 动画时钟 + 生命周期 + 状态联动（I6.3，纯逻辑单测）
 ```
@@ -337,10 +337,10 @@ packages/flux-renderers-industrial/src/binding/       （域核心，无 React �
 
 ### 12.2 风险与取舍
 
-- **双轨一致性**：flux 桥接值写点表后与组态内表达式/静态值同构（统一经点表归口），避免两套刷新路径；`$xxx` 表达式与 `@{pointId}` 引用语法冲突风险 → 语法前缀隔离（`$`=flux scope、`@{}`=组态点表），I3.1 gate 复核。
+- **表达式统一（I18）**：flux 桥接值写点表后与表达式/静态值同构（统一经点表归口），避免两套刷新路径；I18 收敛后仅单一 `${expr}` 语法（旧 `@{pointId}` 方言与 `$xxx` 简写弃用，经 flux compiler 同源求值），消除双轨语法冲突与自建 DSL 维护成本。
 - **订阅风暴**：点表高频刷新不进 scope（INV-4）；flux 桥接按声明路径订阅（`useScopeSelector` paths 精细化），避免整 scope 订阅。
 - **动画性能**：动画合帧 + 独立时钟（§4.4）；闪烁等高频动画限制为状态触发（避免全画面常驻动画）；若 I14 实测动画路径不达标，按 roadmap「人工确认阈值」处理。
-- **组态内表达式能力边界**：`@{pointId}` 子集刻意收窄（算术/比较/三元/拼接），避免自研 DSL 膨胀（复用边界 INV-3：表达式能力以 flux-formula 为主）；超范围表达式引导作者改用 flux 桥接。
+- **表达式能力边界（I18 后）**：表达式经 flux-formula 编译求值（复用边界 INV-3），不再自研 DSL 子集；validator 对旧 `@{}` 方言 warn（不 fail，错误码 `legacy-at-syntax`）+ 配置 codemod（`scripts/scada-expression-codemod.mjs`）辅助迁移。
 - **架构冲突记录（I15.2）**：与 `docs/architecture/`（form-validation/模块边界）冲突项记录在案（plan Failure Paths `design-contract-conflict`），不提前改架构文档。
 
 ### 12.3 后续阶段

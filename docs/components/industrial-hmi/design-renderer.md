@@ -241,7 +241,7 @@ interface ScadaSymbolNode {
   - `resize`：ResizeObserver 观察容器 → `engine.setSize(w, h)`（防抖到帧）；容器尺寸变更不重建引擎；
 - **props 同步**：
   - `config` 变化 → `diffScadaConfig` → 引擎增量应用（§4.3）或全量 `reset`（diff 不可用/版本变更）；
-  - 点表 flux 桥接：`useScopeSelector`（paths 精细化，从 config 提取 `$xxx` 引用路径；复杂表达式经平台依赖收集产出根级订阅路径，design-data-binding.md §9.1/plan 2026-08-04-1558-2 Phase 3）订阅 scope → 公式编译器求值 → `setPointValues` 注入点表（I10.3）——**不逐点 setState 直刷 React**（性能红线）；
+  - 点表 flux 桥接：`useScopeSelector`（paths 精细化，从 config 提取 `${...}` 引用路径；复杂表达式经平台依赖收集产出根级订阅路径，design-data-binding.md §9.1/plan 2026-08-04-1558-2 Phase 3）订阅 scope → 公式编译器求值 → `setPointValues` 注入点表（I10.3）——**不逐点 setState 直刷 React**（性能红线）；
   - `width`/`height`/`viewport` 变化 → 引擎命令式 API（**`width`/`height` props 变更触发 `engine.setSize`**：plan 2026-08-04-1558-2 Phase 4 WD-1/m10 落地，effect deps 含 width/height；**`viewport` policy 仅在 full/reset 路径应用**：diff 增量重应用会重置用户在画布上的平移/缩放，保持现状契约，不自动重应用）；
 - **React Compiler 基线**：引擎实例为命令式副作用，生命周期放 `useEffect`（`useEffectEvent` 用于事件桥接注册/注销，research-summary §5.2 差距项）；渲染函数内不触碰引擎（INV-5：render path 无副作用）。
 - **销毁状态可见性**（plan 2026-08-04-1558-2 Phase 1 OP-4）：`component:destroy` 后 wrapper `data-status` 反映 `destroyed` 态（非 `ready`），e2e/tooling 不再把已销毁画布报为健康；后续句柄命令返回 `not-mounted`。
