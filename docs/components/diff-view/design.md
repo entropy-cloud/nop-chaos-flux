@@ -30,6 +30,9 @@ interface DiffViewSchema extends BaseSchema {
   type: 'diff-view';
   oldContent?: string;
   newContent?: string;
+  middleContent?: string;
+  files?: DiffFileMeta[];
+  activeFileIndex?: number;
   language?: string;
   viewType?: 'split' | 'unified';
   showLineNumbers?: boolean;
@@ -38,12 +41,12 @@ interface DiffViewSchema extends BaseSchema {
   /** Number of consecutive unchanged lines before collapsing a hunk. 0 or negative disables collapse. Default 10. */
   defaultCollapsedLines?: number;
   wrapLines?: boolean;
-  onMount?: ActionSchema;
-  onUnmount?: ActionSchema;
-  events?: {
-    onLineClick?: ActionSchema;
-    onHunkExpand?: ActionSchema;
-  };
+  onLineClick?: ActionSchema;
+  onHunkExpand?: ActionSchema;
+  toggleViewType?: ReactionField;
+  setViewType?: ReactionField;
+  expandAll?: ReactionField;
+  collapseAll?: ReactionField;
 }
 ```
 
@@ -51,21 +54,25 @@ interface DiffViewSchema extends BaseSchema {
 
 - `oldContent` — 旧版本内容字符串。与 `newContent` 配对作为输入，组件内部使用 diff 库计算差异。
 - `newContent` — 新版本内容字符串。两者同时提供时触发 diff 计算；只提供一侧时或两者相等时显示无差异态。
+- `middleContent` — 基版本内容字符串。三栏对比（three-column）视图时提供，此时 `onLineClick` 的 `side` 可取 `'middle'`。
+- `files` — 多文件变更列表（`DiffFileMeta[]`）。与 `oldContent`/`newContent`/`middleContent` 互斥——提供时忽略单文件字段并发出 console.warn。
+- `activeFileIndex` — 当前查看的文件索引。越界时钳制到 `[0, files.length-1]`。
 - `language` — 语法高亮语言标识（可选）。枚举值同 `code-editor` 的 `EditorLanguage`：`json`、`xml`、`javascript`、`typescript`、`html`、`css`、`sql`、`yaml`、`markdown`、`plaintext`。不提供时不进行语法高亮，仅差异着色。
 - `viewType` — 视图模式。`'split'`（并排分栏，默认）、`'unified'`（统一单栏）。
 - `showLineNumbers` — 是否显示行号。默认 `true`。
 - `showInlineDiff` — 是否显示字符级内联差异高亮。默认 `true`。
 - `defaultCollapsedLines` — 长 hunk 折叠阈值。连续无变更行超过此值时折叠，默认 `10`。设为 `0` 或负数时不折叠。
 - `wrapLines` — 是否自动换行。默认 `false`（水平滚动）。
-- `onLineClick` — 行单击事件。payload `{ lineNumber, side: 'old' | 'middle' | 'new', type: 'add' | 'delete' | 'context' }`。
-- `onHunkExpand` — hunk 展开/折叠事件。payload `{ hunkIndex, expanded }`。
+- `onLineClick` — 行单击事件。payload `{ lineNumber, side: 'old' | 'middle' | 'new', type }`；`side` 在 split/unified 为 `'old'|'new'`、three-column 三栏为 `'old'|'middle'|'new'`；`type` 为行 diff 类型（split/unified：`'add' | 'delete' | 'context'`；three-column：行类型 `'context'|'change-old'|'change-new'|'conflict'|'conflict-start'|'conflict-separator'|'conflict-end'`）。
+- `onHunkExpand` — hunk 展开/折叠事件。payload `{ hunkIndex, expanded }`，`expanded` 为 hunk 当前是否展开（true=展开可见）。
+- `toggleViewType`/`setViewType`/`expandAll`/`collapseAll` — CX-9 反应式字段（`kind:'reaction'`）。schema 作者提供 `{ action, dependsOn }` 后，渲染器挂载即激活（`ReactionHandle.ready()`），`dependsOn` 作用域路径变化时自动派发 `action`（通常为 `component:toggleViewType` 等组件能力动作）。
 
 ## 5. 字段分类
 
 - `oldContent`、`newContent`、`language`、`viewType`: `props`
-- `showLineNumbers`、`defaultCollapsedLines`、`wrapLines`: `props`
+- `showLineNumbers`、`defaultCollapsedLines`、`wrapLines`、`middleContent`、`files`、`activeFileIndex`: `props`
+- `toggleViewType`、`setViewType`、`expandAll`、`collapseAll`: `reaction`（CX-9 反应式字段，激活后按 `dependsOn` 自动派发）
 - `id`、`className`、`disabled`、`visible`、`hidden`: `meta`（继承 BaseSchema 元数据通道）
-- `onMount`、`onUnmount`: `meta`（继承 BaseSchema 生命周期动作）
 - `onLineClick`、`onHunkExpand`: `event`（ActionSchema 事件入口）
 
 ## 6. regions 与 slot 约定
@@ -81,20 +88,18 @@ interface DiffViewSchema extends BaseSchema {
 
 ## 8. 事件、动作与组件句柄能力
 
-- `onLineClick` — 行单击事件，接入 Flux 事件系统。payload 包含行号、所在侧、变更类型。
-- `onHunkExpand` — hunk 展开或折叠的事件通知。
-- `onMount` — 组件挂载完成后触发。
-- `onUnmount` — 组件卸载前触发。
-- 组件句柄（`componentCapabilityContracts`）：
+- `onLineClick` — 行单击事件，接入 Flux 事件系统。payload 包含行号、所在侧、变更类型（split/unified/three-column 三视图均接线）。
+- `onHunkExpand` — hunk 展开或折叠的事件通知。payload `{ hunkIndex, expanded }`，`expanded` 为 hunk 当前是否展开。
+- 组件句柄（经 `useCurrentComponentRegistry` + `componentRegistry.register` 注册，`component:<method>` 动作可经 componentId 寻址）：
 - `component:toggleViewType` — 在当前 `viewType` 和另一模式间切换。失败路径：`not-mounted`、`not-visible`
 - `component:setViewType` — 显式设置 `viewType`，args `{ viewType: 'split' | 'unified' }`。失败路径：`not-mounted`、`not-visible`、`invalid-viewType`
 - `component:expandAll` — 展开所有折叠 hunk。失败路径：`not-mounted`、`not-visible`、`nothing-collapsed`
 - `component:collapseAll` — 折叠所有 hunk（回到 `defaultCollapsedLines` 长折叠）。失败路径：`not-mounted`、`not-visible`、`nothing-expandable`
+- 反应式触发（CX-9）：`toggleViewType`/`setViewType`/`expandAll`/`collapseAll` 四个 `kind:'reaction'` 字段——schema 提供 `{ action, dependsOn }` 时，渲染器挂载即 `ready()` 激活，`dependsOn` 作用域路径变化自动派发 `action`（典型组合：`action: 'component:setViewType', componentId: '<id>'`）。
 
 ## 9. 数据源、表达式、导入能力接入点
 
-- `loadAction?: ActionSchema` — schema 层数据加载主入口，走 runtime.dispatch() 而非独立 fetch。复杂数据场景通过 data-source 节点声明。
-- `oldContent`、`newContent` 可来自任意表达式结果（`"${...}"`）或 source-enabled value。
+- diff-view 无 `loadAction`/`src`/fetch 能力——纯客户端计算，远程内容由外层 source/loader 注入（`oldContent`/`newContent`/`files` 可来自任意表达式结果 `"${...}"` 或 source-enabled value）。
 - 响应式更新：绑定 scope 值变化时重新计算 diff 并刷新视图（非 mount 快照）。
 - oldContent/newContent 变更时 150ms debounce 触发 diff 重计算和语法高亮重生成，避免高频 scope 更新导致连续重复 diff。
 - `language` 也可来自表达式，用于运行时根据内容类型动态指定高亮语言。
@@ -115,9 +120,9 @@ interface DiffViewSchema extends BaseSchema {
 | 左侧 gutter  | `data-diff-gutter="old"`   |
 | 右侧 gutter  | `data-diff-gutter="new"`   |
 
-- inline diff（字符级变更）在 `<span>` 上使用 `data-diff-inline="add"` / `data-diff-inline="delete"` 标记。
+- inline diff（字符级变更）在 `<span>` 上使用 `data-diff-inline="add"` / `data-diff-inline="delete"` 标记（内部 diff-match-patch token `insert` 映射为 DOM 值 `add`）。
 
-- 根节点保留 `nop-diff-view` marker。视图状态通过 `data-view="split"` / `data-view="unified"` 标记，差异行类型通过 `data-diff-type` 标记（add/delete/context/hunk）。行内差异使用 `data-diff-inline="add"` / `data-diff-inline="delete"`。hunk header 使用 `data-slot="diff-hunk-header"`，gutter 使用 `data-slot="diff-gutter"`。hunk 展开/折叠使用 `data-expanded="true|false"`。
+- 根节点保留 `nop-diff-view` marker。视图状态通过 `data-view="split"` / `data-view="unified"` / `data-view="three-column"` 标记，差异行类型通过 `data-diff-type` 标记（add/delete/context/hunk；three-column 行类型为 change-old/change-new/conflict/conflict-start/conflict-separator/conflict-end）。行内差异使用 `data-diff-inline="add"` / `data-diff-inline="delete"`。hunk header 使用 `data-slot="diff-hunk-header"` + `data-diff-type="hunk"`，gutter 使用 `data-slot="diff-gutter"`（three-column 中栏 gutter 为 `data-diff-gutter="mid"`）。hunk 展开/折叠使用 `data-expanded="true|false"`。
 - Test anchor 优先顺序：getByRole > data-slot > .nop-\* > data-testid。
 - viewType 切换使用 CSS Grid 栅格转换 + 150ms ease-out 过渡（split↔unified 时列宽从 1fr 1fr → 1fr）。hunk 展开/折叠使用 max-height + opacity 过渡 200ms ease-in-out，由 overflow: hidden 裁剪。
 - diff 行 hover 时行背景变为 #f8fafc（add/delete 行保留原色底 + hover 叠加层），hunk header hover 显示指针 + 背景加深 5%。
@@ -126,25 +131,26 @@ interface DiffViewSchema extends BaseSchema {
 
 ```
 packages/flux-renderers-content/src/diff-view/
-  index.ts                    # renderer 注册入口
   diff-view-renderer.tsx       # 主组件（type: diff-view）
-  diff-view.types.ts           # DiffViewSchema 类型定义
+  diff-view.css                # widget 自样式
   model/
-    diff-file.ts               # DiffFile 核心模型（UI 无关，参考 git-diff-view DiffFile）
-    diff-parse.ts              # GNU unified diff 解析器（输入→IRawDiff[]）
-    diff-inline.ts             # 字符级 inline diff 计算（diff-match-patch 或 fast-diff）
+    diff-file.ts               # DiffFile 核心模型（UI 无关）
+    diff-parse.ts              # GNU unified diff 解析器 + 内容对 diff 计算
+    diff-inline.ts             # 字符级 inline diff 计算（diff-match-patch）
+    diff-3way.ts               # 三栏对比（3-way）行模型
   adapters/
-    syntax-highlight.ts        # 语法高亮适配器接口 + 实现（lowlight > shiki 作为默认轻量方案）
+    syntax-highlight.ts        # 语法高亮适配器（lowlight）+ HTML 转义
   components/
     diff-split-view.tsx        # 分栏视图容器
     diff-unified-view.tsx      # 统一视图容器
+    diff-three-column-view.tsx # 三栏对比视图容器（含冲突导航）
     diff-hunk.tsx              # Hunk 容器（展开/折叠控制器）
-    diff-line.tsx              # 差异行渲染（模板预渲染 HTML）
-    diff-gutter.tsx            # 行号列
-    diff-header.tsx            # 文件头部（文件名、统计信息）
-    diff-virtual-list.tsx      # 虚拟滚动列表容器
+    diff-line.tsx              # 差异行渲染（模板 HTML + gutter + 行点击）
+    diff-gutter.tsx            # 行号列（Deprecated 存根，行号经 diff-line 内联）
+    diff-header.tsx            # 文件头部（文件名、统计、视图切换、跨文件导航）
+    diff-file-list.tsx         # 跨文件侧栏（搜索/状态过滤/未读标记）
   utils/
-    diff-template.ts           # 预渲染 HTML 模板生成
+    diff-template.ts           # 预渲染 HTML 模板生成（inline token 标记）
     diff-stats.ts              # diff 统计计算（新增行数、删除行数）
 ```
 
@@ -152,15 +158,15 @@ packages/flux-renderers-content/src/diff-view/
 
 **渲染策略**：
 
-- 差异行使用预渲染 HTML 模板（参考 git-diff-view 的 `plainTemplate`/`syntaxTemplate`），通过 `dangerouslySetInnerHTML` 插入，避免 React JSX 处理大量行节点。
-- 语法高亮作为可插拔适配器（`syntax-highlight.ts`），默认使用 `lowlight`（基于 refractor/Prism，轻量），需额外依赖时通过动态 import 延迟加载。
-- inline diff 使用 `diff-match-patch` 计算字符级变更，在模板中生成带背景色的 `<span>`。
-- DiffLine 组件使用 React.memo（比较 line content + type + inline diff tokens 引用），DiffHunk 使用 React.memo（按 hunk index + isHidden 状态）。整个 diff 行列表通过 useMemo 缓存 parse + inline diff 计算结果，仅 oldContent/newContent/language 三引用变化时重建。
+- 差异行使用预渲染 HTML 模板（参考 git-diff-view 的 `plainTemplate`/`syntaxTemplate`），通过 `dangerouslySetInnerHTML` 插入（内容经 `escapeHtml()` 全转义，仅在高亮 `<span>` 等安全位置插入受控结构），避免 React JSX 处理大量行节点。
+- 语法高亮作为可插拔适配器（`syntax-highlight.ts`），默认使用 `lowlight`（基于 refractor/Prism，轻量），带 50 条 LRU 缓存。
+- inline diff 使用 `diff-match-patch` 计算字符级变更，在模板中生成带背景色的 `<span data-diff-inline="add|delete">`。
+- **行级渲染**：当前为 full-line 全量渲染（无虚拟滚动——`diff-perf-scale` 1500+ 行首屏 <5000ms 为性能门禁，见 `tests/e2e/diff-perf.spec.ts`）。行组件使用 React.memo + 自定义 comparator（hunk index/引用身份比较），视图容器 useMemo 缓存 parse + inline diff + 语法高亮结果，仅 oldContent/newContent/language 引用变化时重建。首版规划中的 virtualizationThreshold=500 虚拟化策略未落地（性能门禁已按实际渲染路径校准）。
 
 ## 12. 风险、取舍与后续阶段
 
 - **大 diff 性能**（风险）：1000 行以上的大 diff，React 渲染和重排压力显著。后续阶段需引入虚拟滚动（virtual scrolling），仅渲染可视区域的 diff 行。
-- 首版引入动态虚拟化策略（virtualizationThreshold=500 行），利用固定行高（24px）避免测量 + 二阶段渲染（dangerouslySetInnerHTML 模板在虚拟列表 rows 中仍可用）。低于阈值走全量 DOM 渲染。
+- 虚拟化状态：首版规划的动态虚拟化策略（virtualizationThreshold=500 行 + 固定行高 24px 测量规避 + 二阶段渲染）**当前未落地**——实际为 full-line 全量渲染；性能门禁为 `diff-perf-scale` 1500+ 行首屏 <5000ms（`tests/e2e/diff-perf.spec.ts`，C5.1 按 calendar-perf 先例校准）。超 5000ms 时优先引入虚拟滚动。
 - **语法高亮依赖体积**（取舍）：`lowlight` + 语言包约 50KB gzip，`shiki` 更大。首版采用 `lowlight` 为默认，语法高亮作为可选能力（`language` 非空时启用）；不期望用户为纯文本 diff 承担高亮库代价。
 - **diff 库选择**（取舍）：`diff-match-patch` 算法准确（字符级差异精确到删除和插入），但实现较重（Google 维护的 Java 移植版）。`fast-diff` 更轻量但精度略低。首版使用 `diff-match-patch` 保证准确性，后续若发现性能瓶颈可替换为 `fast-diff`（接口层抽象隔离后可互换）。
 - **模板注入 XSS**（风险）：`dangerouslySetInnerHTML` 使用预渲染模板时必须确保内容经 HTML 转义处理（`&` → `&amp;`、`<` → `&lt;`、`>` → `&gt;`），只在差异高亮 `<span>` 等安全位置插入受控 HTML 结构。
