@@ -257,8 +257,8 @@ interface ScadaStateDefinition {
 > （`${analog.temp + 1}` 类，含运算符/函数调用）的订阅路径经平台依赖收集（`extractExpressionDepsViaProbe`）
 > 产出。当平台 collector 失败（compile/createState/evaluateWithState 任一 catch、root 非 leaf-state、
 > 无 deps、wildcard）→ `paths` 为空 → `useScopeSelector` 静默 disable，表达式永不随 scope 更新且对 author
-> 不透明。该静默 disable 路径经既有**非升级**诊断通道一次性上报 `flux-deps-empty`（per-expression 可定位）：
-> `analyzeFluxSubscriptions` 收集 `depsEmptyExpressions`（probe 返空 deps 且 `expressionReadsScope` 为真），
+> 不透明。该静默 disable 路径经既有**非升级**诊断通道一次性上报 `flux-deps-empty`（per-expression 可定位）:
+> `analyzeFluxSubscriptions` 收集 `depsEmptyExpressions`（probe 返空 deps 且 `expressionReadsScope` 为真）,
 > `useScadaPointsBridge` 经 `reportOnce` 一次性上报 → `scada-canvas reportDiagnostic`（console.warn 保底 +
 > `env.monitor.onError` phase `expression`）。**非升级**：不升画布 status、不派发 `scada:error`（§8.1 降级
 > 契约，与 `flux-compile-failed`/`flux-evaluate-failed` 同通道）。一次性：`depsEmptyExpressions` 经
@@ -268,6 +268,17 @@ interface ScadaStateDefinition {
 > 属可接受的一次性 best-effort 诊断（不扩平台 collector 能力，仅 surface 静默 disable 嫌疑）。纯路径/`$xxx`
 > 简写表达式不走 probe，不诊断。**静默 disable 残留已 surfaced**：此前该路径完全静默，现经 `flux-deps-empty`
 > 对 author 可感知。
+
+> **probe result 语义（plan 2026-08-05-0653-4 C4，multi-audit P2-6）**：`extractExpressionDepsViaProbe`
+> 返回 discriminated result `{ status: 'ok'; paths: string[] } | { status: 'compile-failed' | 'create-state-failed' | 'evaluate-failed' } | { status: 'deps-empty' }`。
+> `analyzeFluxSubscriptions` 仅在 `status === 'deps-empty'` 且 `expressionReadsScope` 为真时把表达式推入
+> `depsEmptyExpressions`；`status === 'ok'` 取 paths（含空 paths：静态表达式 `compiled.kind !== 'dynamic'`
+> 走此分支，不诊断）；compile/createState/evaluate 失败**跳过**（由 bridge effect 的
+> `flux-compile-failed`/`flux-evaluate-failed` 真报覆盖）。消除旧实现「全部失败塌缩为 `[]`」导致的失败表达式
+> 双报（`flux-deps-empty` 误报 + `flux-compile-failed`/`flux-evaluate-failed` 真报）——失败表达式只报真错误码，
+> 不误报 `flux-deps-empty`。注：当前 flux-formula 对畸形 `${...}`（如 `${a +}`）一律按 static 字符串字面量
+> 处理（不抛 compile 错），故生产 compiler 下畸形表达式走 ok 空集分支（不触发任何诊断）；C4 修复主要覆盖
+> host 自定义 compiler / 未来 compiler 版本 / 真实 createState/evaluate 失败等可触发 compile-failed 的路径。
 
 ### 9.2 外部数据通道（INV-1/INV-2）
 

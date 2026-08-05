@@ -1,6 +1,6 @@
 # 04 HMI Config-build, Equality & Diagnostic-channel Fidelity
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-05
 > Source: `docs/components/roadmap-industrial-hmi.md` → Follow-up Backlog → 2026-08-05-0653 post-remediation audit P2（open-audit `[P2-3]`/`[P2-6]`，multi-audit `[P2-4]`/`[P2-6]`）；源审计 `docs/audits/2026-08-05-0653-{open,multi}-audit-industrial-hmi.md`
 > Mission: industrial-hmi
@@ -71,55 +71,55 @@
 
 ### Phase 1 - Config-build correctness（C1）
 
-Status: planned
+Status: completed
 Targets: `src/engine/config-adapter.ts`、`src/serialization/validate.ts`、`docs/components/industrial-hmi/design-renderer.md`
 
 - Item Types: `Decision`、`Proof`、`Fix`
 
-- [ ] **Decision-C1**（裁定）：带 `children` 的叶子 type 处理——「validator 拒绝（`children` 仅 `type==='scada-group'`）」vs「buildNode 按 type 分支（叶子带 children 时按 leaf 构建 + 告警/忽略 children）」。默认采 (a) validator 拒绝（fail-fast，author 可见，与 §4 config schema 一致）；裁定写入 `design-renderer.md`。
-- [ ] **Proof-C1**（failing-first）：`config-adapter.test.ts` 或 `validate.test.ts`——`scada-rect` 带 `children` + `fill`/`stroke`/`width`/`height`：或 validator 拒绝（错误码可观测），或 buildNode 按 leaf 构建保留 fill/stroke/width/height（断言 leaf 节点 attrs 完整）。当前实现丢失 leaf attrs。
-- [ ] **Fix-C1**：按 Decision-C1 落地——`validate.ts` 增 `children` 仅 `scada-group` 约束（含错误消息），或 `config-adapter.ts:84` `isContainer` 改为 `node.type === GROUP_CONTAINER_TYPE`（叶子带 children 不再进 Group 分支）。`design-renderer.md` 同步 Group 降级契约。
+- [x] **Decision-C1**（裁定）：带 `children` 的叶子 type 处理——「validator 拒绝（`children` 仅 `type==='scada-group'`）」vs「buildNode 按 type 分支（叶子带 children 时按 leaf 构建 + 告警/忽略 children）」。默认采 (a) validator 拒绝（fail-fast，author 可见，与 §4 config schema 一致）；裁定写入 `design-renderer.md`。
+- [x] **Proof-C1**（failing-first）：`config-adapter.test.ts` 或 `validate.test.ts`——`scada-rect` 带 `children` + `fill`/`stroke`/`width`/`height`：或 validator 拒绝（错误码可观测），或 buildNode 按 leaf 构建保留 fill/stroke/width/height（断言 leaf 节点 attrs 完整）。当前实现丢失 leaf attrs。
+- [x] **Fix-C1**：按 Decision-C1 落地——`validate.ts` 增 `children` 仅 `scada-group` 约束（含错误消息），或 `config-adapter.ts:84` `isContainer` 改为 `node.type === GROUP_CONTAINER_TYPE`（叶子带 children 不再进 Group 分支）。`design-renderer.md` 同步 Group 降级契约。
 
 Exit Criteria:
 
-- [ ] failing-first 用例由红转绿，leaf 的 fill/stroke/width/height 不丢（按裁定可观测：拒绝或保留）。
-- [ ] `design-renderer.md` 同步 children 约束/Group 降级契约。
-- [ ] 局部 typecheck 通过（engine + serialization 模块）。
+- [x] failing-first 用例由红转绿，leaf 的 fill/stroke/width/height 不丢（按裁定可观测：拒绝或保留）。
+- [x] `design-renderer.md` 同步 children 约束/Group 降级契约。
+- [x] 局部 typecheck 通过（engine + serialization 模块）。
 
 ### Phase 2 - Serialization equality 共享（C2）
 
-Status: planned
+Status: completed
 Targets: 新建 `src/serialization/equality.ts`、`src/serialization/diff.ts`、`src/symbols/compound.ts`
 
 - Item Types: `Proof`、`Fix`
 
-- [ ] **Proof-C2**（failing-first）：`compound.test.ts`——`diffInstanceProps` 对第三方 symbol defaults（object-typed，key 序与 instance 不同）判等稳定，不产冗余 override。当前 `deepEquals`（`JSON.stringify`）key 序敏感会产冗余。
-- [ ] **Fix-C2**：新建 `src/serialization/equality.ts` 导出 `deepEqual(a, b)`（own-keys 递归 stable，从 `diff.ts valuesEqual` 提取或合并）；`diff.ts` `valuesEqual` 改为引用共享实现（行为不变，W5 修复保留）；`compound.ts:79-83` `deepEquals` 改为引用共享实现（消除 key 序敏感）。
+- [x] **Proof-C2**（failing-first）：`compound.test.ts`——`diffInstanceProps` 对第三方 symbol defaults（object-typed，key 序与 instance 不同）判等稳定，不产冗余 override。当前 `deepEquals`（`JSON.stringify`）key 序敏感会产冗余。
+- [x] **Fix-C2**：新建 `src/serialization/equality.ts` 导出 `deepEqual(a, b)`（own-keys 递归 stable，从 `diff.ts valuesEqual` 提取或合并）；`diff.ts` `valuesEqual` 改为引用共享实现（行为不变，W5 修复保留）；`compound.ts:79-83` `deepEquals` 改为引用共享实现（消除 key 序敏感）。
 
 Exit Criteria:
 
-- [ ] `compound.test.ts` failing-first 用例由红转绿，key 序重排不影响 `diffInstanceProps` 判等。
-- [ ] `diff.ts` 现有 W5 回归测试仍全绿（共享实现行为等价）。
-- [ ] 局部 typecheck 通过（serialization + symbols 模块）。
+- [x] `compound.test.ts` failing-first 用例由红转绿，key 序重排不影响 `diffInstanceProps` 判等。
+- [x] `diff.ts` 现有 W5 回归测试仍全绿（共享实现行为等价）。
+- [x] 局部 typecheck 通过（serialization + symbols 模块）。
 
 ### Phase 3 - Diagnostic-channel fidelity（C3 cause 透传 + C4 消双报）
 
-Status: planned
+Status: completed
 Targets: `src/renderer/hooks/use-scada-points-bridge.ts`、`src/renderer/scada-canvas.tsx`、`src/renderer/scada-points-bridge.test.tsx`（probe 直测）、`src/renderer/scada-points-bridge-diagnostics.test.tsx`（onError/flux-\* 诊断测试）、`docs/components/industrial-hmi/{design-renderer,design-data-binding}.md`
 
 - Item Types: `Proof`、`Fix`
 
-- [ ] **Proof-C3**（failing-first）：`scada-points-bridge-diagnostics.test.tsx`——注入会 throw 的 compiler，断言 `onError` 收到第三参 `error`（原始 Error 实例，含 stack）；当前签名只有 `(code, message)`，error 丢失。
-- [ ] **Fix-C3**：`UseScadaPointsBridgeArgs.onError` 签名改 `(code: string, message: string, error?: unknown) => void`（第三参可选 → 向后兼容现有 `(code, message)` / `()` 桩；参数序与 roadmap 建议的 `(code, error, message)` 不同——刻意保留 `(code, message)` 前缀以维持现有桩位置稳定，仅追加 `error?`）；`reportOnce`（`:270-274`）透传 `error`；`scada-canvas.tsx` `reportDiagnostic` 签名增 `error?`，`env.monitor.onError` 处 `new Error(message, error ? { cause: error } : undefined)`（或直传 `toError(error)`，复用 `scada-errors.ts toError`）。`design-renderer.md` 同步诊断通道 cause 语义。
-- [ ] **Proof-C4**（failing-first）：`scada-points-bridge-diagnostics.test.tsx`——语法坏复杂表达式（如 `${a +}`，`expressionReadsScope` 为真）经 `analyzeFluxSubscriptions` 不入 `depsEmptyExpressions`（仅 compile/createState 失败不入），且 bridge effect 仍报 `flux-compile-failed`（真报保留）。当前实现双报。
-- [ ] **Fix-C4**：`extractExpressionDepsViaProbe` 返 discriminated result——`{ status: 'ok'; paths: string[] } | { status: 'compile-failed' | 'create-state-failed' | 'evaluate-failed' } | { status: 'deps-empty' }`（compile/createState/evaluate 失败归非 deps-empty；probe 成功但 deps 空为 `deps-empty`）。`analyzeFluxSubscriptions`（`:137-147`）仅在 `status === 'deps-empty'` 时入 `depsEmptyExpressions`；`status === 'ok'` 时取 paths；其余跳过（由 bridge effect 的 `flux-compile-failed`/`flux-evaluate-failed` 真报覆盖）。**迁移既有直测**：`scada-points-bridge.test.tsx:110-122` 直接断言 `extractExpressionDepsViaProbe(...) returns string[]`（`.toContain('analog')`/`.toEqual([])`）需改为消费 discriminated result（`.status === 'ok'` → `.paths`，失败分支断言 `.status`）。`design-data-binding.md` 同步 probe result 语义。
+- [x] **Proof-C3**（failing-first）：`scada-points-bridge-diagnostics.test.tsx`——注入会 throw 的 compiler，断言 `onError` 收到第三参 `error`（原始 Error 实例，含 stack）；当前签名只有 `(code, message)`，error 丢失。
+- [x] **Fix-C3**：`UseScadaPointsBridgeArgs.onError` 签名改 `(code: string, message: string, error?: unknown) => void`（第三参可选 → 向后兼容现有 `(code, message)` / `()` 桩；参数序与 roadmap 建议的 `(code, error, message)` 不同——刻意保留 `(code, message)` 前缀以维持现有桩位置稳定，仅追加 `error?`）；`reportOnce`（`:270-274`）透传 `error`；`scada-canvas.tsx` `reportDiagnostic` 签名增 `error?`，`env.monitor.onError` 处 `new Error(message, error ? { cause: error } : undefined)`（或直传 `toError(error)`，复用 `scada-errors.ts toError`）。`design-renderer.md` 同步诊断通道 cause 语义。
+- [x] **Proof-C4**（failing-first）：`scada-points-bridge-diagnostics.test.tsx`——语法坏复杂表达式（如 `${a +}`，`expressionReadsScope` 为真）经 `analyzeFluxSubscriptions` 不入 `depsEmptyExpressions`（仅 compile/createState 失败不入），且 bridge effect 仍报 `flux-compile-failed`（真报保留）。当前实现双报。
+- [x] **Fix-C4**：`extractExpressionDepsViaProbe` 返 discriminated result——`{ status: 'ok'; paths: string[] } | { status: 'compile-failed' | 'create-state-failed' | 'evaluate-failed' } | { status: 'deps-empty' }`（compile/createState/evaluate 失败归非 deps-empty；probe 成功但 deps 空为 `deps-empty`）。`analyzeFluxSubscriptions`（`:137-147`）仅在 `status === 'deps-empty'` 时入 `depsEmptyExpressions`；`status === 'ok'` 时取 paths；其余跳过（由 bridge effect 的 `flux-compile-failed`/`flux-evaluate-failed` 真报覆盖）。**迁移既有直测**：`scada-points-bridge.test.tsx:110-122` 直接断言 `extractExpressionDepsViaProbe(...) returns string[]`（`.toContain('analog')`/`.toEqual([])`）需改为消费 discriminated result（`.status === 'ok'` → `.paths`，失败分支断言 `.status`）。`design-data-binding.md` 同步 probe result 语义。
 
 Exit Criteria:
 
-- [ ] C3 failing-first 用例由红转绿，`onError` 第三参透传原始 error，`monitor.onError` 收到 `{cause}`。
-- [ ] C4 failing-first 用例由红转绿，语法坏表达式不误报 `flux-deps-empty`，真报 `flux-compile-failed` 保留。
-- [ ] `design-renderer.md`（cause 语义）+ `design-data-binding.md`（probe result 语义）同步。
-- [ ] 局部 typecheck 通过（renderer/hooks 模块）。
+- [x] C3 failing-first 用例由红转绿，`onError` 第三参透传原始 error，`monitor.onError` 收到 `{cause}`。
+- [x] C4 failing-first 用例由红转绿，语法坏表达式不误报 `flux-deps-empty`，真报 `flux-compile-failed` 保留。
+- [x] `design-renderer.md`（cause 语义）+ `design-data-binding.md`（probe result 语义）同步。
+- [x] 局部 typecheck 通过（renderer/hooks 模块）。
 
 ## Draft Review Record
 
@@ -140,14 +140,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] C1–C4 四项 confirmed live defect 已修复并各带 focused regression proof（断言结果值/可观测行为）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect。
-- [ ] `docs/components/industrial-hmi/design-renderer.md` + `design-data-binding.md` 同步到 live baseline（Group 降级契约、cause 语义、probe result 语义）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] C1–C4 四项 confirmed live defect 已修复并各带 focused regression proof（断言结果值/可观测行为）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect。
+- [x] `docs/components/industrial-hmi/design-renderer.md` + `design-data-binding.md` 同步到 live baseline（Group 降级契约、cause 语义、probe result 语义）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -160,13 +160,22 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 三 Phase 全部落地（Phase 1 C1 / Phase 2 C2 / Phase 3 C3+C4），每项 Fix 前先落 failing-first Proof（红→绿）。包级 647 tests / 46 files 全绿（较基线 640 增 7：C1 buildNode defense + validator reject 2 用例 + C2 key-order stable 2 用例 + C3 cause transparency + C4 消双报）、workspace 全量验证（typecheck 32/32、build 32/32、lint 32/32、test 59/59）全绿。源审计 `2026-08-05-0653-{open,multi}-audit` 已由 sibling plan `2026-08-05-0653-2` 关闭（P1 收口），本 plan 仅回写 roadmap Follow-up Backlog 对应 per-line P2 条目（multi P2-4/P2-6 + open P2-3/P2-6）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<pending>>
-- Evidence: <<pending>>
+- Auditor / Agent: 独立 closure-audit sub-agent（fresh session，mission-driver closure-audit step 2026-08-05）。执行 session 未参与本审核。
+- Verdict: `approved`
+- Evidence:
+  - **C1（live code + test + doc）**：`config-adapter.ts:90` `const isContainer = node.type === GROUP_CONTAINER_TYPE;`（children fallback 已移除，defense-in-depth 守护 `engine.reset` 旁路）；`validate.ts` children 仅 `scada-group` 约束落地（错误消息含 `children.*scada-group`）；`config-adapter.test.ts:151`（buildNode 保 leaf attrs）+ `serialization.test.ts:718`（validator fail-fast 拒绝）failing-first proof 双绿；`design-renderer.md:148-155`/`:169`/`:219` 同步 children 契约 + cause 语义。
+  - **C2（live code + test）**：`serialization/equality.ts` 存在并导出 `deepEqual`（own-keys 递归 stable）；`compound.ts:3` 导入 + `:78` 使用 `deepEqual`（旧 `JSON.stringify` 删除）；`diff.ts:2` 导入 + `:55` `return deepEqual(a, b)`（W5 行为保留）；`compound.test.ts:233` key-order stable proof 绿。
+  - **C3（live code + test + doc）**：`use-scada-points-bridge.ts:253` `onError?: (code, message, error?) => void` 三参签名；`:310` `latest.current.onError?.(code, errorMessage(error), error)` 透传；`scada-canvas.tsx:135` `new Error(message, { cause: error })` 包装；`scada-points-bridge-diagnostics.test.tsx:397` C3 cause transparency proof 绿（断言第三参为原始 Error 含 stack）。
+  - **C4（live code + test + doc）**：`use-scada-points-bridge.ts:65-69` discriminated result 类型；`:80-103` 返各 status 分支；`analyzeFluxSubscriptions:160-172` 仅 `status==='deps-empty'` 入 `depsEmptyExpressions`（compile/createState/evaluate 失败跳过，由 bridge effect 真报覆盖）；`scada-points-bridge.test.tsx:110-146` 直测已迁移消费 discriminated result；`design-data-binding.md:272-281` probe result 语义同步；C4 消双报 proof 绿。
+  - **Anti-hollow**：四处 Fix 均被运行时调用（buildNode 经 engine.reset/applyDiff 调；deepEqual 经 diffInstanceProps/diffScadaConfig 调；onError 经 useScadaPointsBridge effect 调；extractExpressionDepsViaProbe 经 analyzeFluxSubscriptions 调），无空函数体 / return null 占位 / 吞异常。
+  - **Verification**：`pnpm --filter @nop-chaos/flux-renderers-industrial test` → 647 tests / 46 files 全绿（与 plan Status Note 声明一致）；plan Closure Gates 中 `pnpm typecheck`/`build`/`lint`/`test` 已 `[x]` 且与 08-05 daily log 记录的 workspace 全量（32/32 + 59/59）一致。
+  - **Five-point consistency**：`Plan Status: completed` / 三 Phase `Status: completed` / 三 Phase Exit Criteria 全 `[x]` / Closure Gates 全 `[x]` / `docs/logs/2026/08-05.md` 收口记录 → 彼此一致。
+  - **Deferred honesty**：`Deferred But Adjudicated` 为空；`Non-Blocking Follow-ups` 仅含 watch-only residual（`env.monitor` phase 类型扩展）+ sibling plan 引用，无 in-scope live defect / contract drift 被偷偷降级。
 
 Follow-up:
 
-- <<或明确写 no remaining plan-owned work>>
+- 无剩余 plan-owned work。sibling plan `2026-08-05-0653-3`（binding/state B1–B5）已由其自身独立 closure-audit 收口（daily log `08-05.md` 记录 task `ses_0300d86c3ffeYQJYXK2oqgkuD3` approved）。剩余 0653 audit P2（multi P2-1/P2-2/P2-3/P2-5 + open P2-1/P2-2，doc/test-hygiene/perf 类）明确 out-of-scope 留 backlog，不属本 plan closure。
