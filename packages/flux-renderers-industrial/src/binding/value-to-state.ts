@@ -43,9 +43,17 @@ function applyLinearScale(
   return k * value + b;
 }
 
+/**
+ * 默认状态偏好链（plan 2026-08-05-0653-3 B3）：run → normal → off → 首键。
+ * 使 states key 整形/字母化重排不翻转 resting state 语义。优先具名偏好，全部缺席才回落首键。
+ */
+const DEFAULT_STATE_PREFERENCES = ['run', 'normal', 'off'] as const;
+
 function defaultState(declaration: ScadaStateDeclaration): string {
   const keys = Object.keys(declaration.states);
   if (keys.length === 0) return 'run';
-  if (declaration.states.run) return 'run';
+  for (const preferred of DEFAULT_STATE_PREFERENCES) {
+    if (declaration.states[preferred]) return preferred;
+  }
   return keys[0];
 }

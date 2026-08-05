@@ -39,6 +39,13 @@ export interface ScadaStateDeclaration {
   ranges?: Array<{ min?: number; max?: number; state: string }>;
   booleanMap?: { true: string; false: string };
   valueMap?: Record<string, string>;
+  /**
+   * 显式 state-driver 点/属性（plan 2026-08-05-0653-3 B3）：格式 `"pointId"` 或 `"pointId.property"`。
+   * 缺省时 `collectStates` 取反向索引 `lookupSymbol(symbolId)[0]`（插入序，key 序敏感）；
+   * 声明后以指定 pointId（+ 可选 property）作 state-driver，使 key 重排不翻转 state-driver 语义。
+   * 缺省 property 时回落该 pointId 在此图元的首个绑定 property。
+   */
+  stateSource?: string;
 }
 
 export interface ScadaStateDefinition {

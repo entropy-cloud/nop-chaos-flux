@@ -162,6 +162,37 @@ describe('point-store subscriber isolation (plan 2026-08-04-1558-2 Phase 2 OP-3)
     expect(errors).toHaveLength(1);
     expect(errors[0].pointId).toBe('a');
   });
+
+  it('attributes EventHub listener errors to the emitting pointId under re-entrant writes (plan 2026-08-05-0653-3 B5)', () => {
+    const errors: Array<{ pointId: string; error: unknown }> = [];
+    const store = new PointStore({
+      onSubscriberError: (pointId, error) => errors.push({ pointId, error }),
+    });
+    store.loadDeclarations([
+      { id: 'p1', source: 'static', value: 0 },
+      { id: 'p2', source: 'static', value: 0 },
+    ]);
+
+    // Listener A（先注册）：处理 p1 时 re-entrant 回写 p2，把可变 lastNotifyPointId 翻到 'p2'。
+    store.on('point:change', (payload) => {
+      if (payload.pointId === 'p1') {
+        store.setPointValue('p2', 9);
+      }
+    });
+    // Listener B（后注册）：处理 p1 payload 时 throw。此时 lastNotifyPointId 已被 re-entrant 写覆盖为 'p2'。
+    // 错误归属必须仍是 'p1'（正在派发的 pointId），而非覆盖后的 'p2'。
+    store.on('point:change', (payload) => {
+      if (payload.pointId === 'p1') {
+        throw new Error('boom-p1-emit');
+      }
+    });
+
+    store.setPointValue('p1', 1);
+
+    const p1Error = errors.find((e) => (e.error as Error).message === 'boom-p1-emit');
+    expect(p1Error, 'throw 发生在 p1 的 emit 期间，必须归属 p1').toBeDefined();
+    expect(p1Error!.pointId).toBe('p1');
+  });
 });
 
 describe('always-animation startup for stateless/unbound symbols (plan 2026-08-04-1558-2 Phase 2 SL-1/m1)', () => {

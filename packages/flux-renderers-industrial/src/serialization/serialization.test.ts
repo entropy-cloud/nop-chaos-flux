@@ -126,6 +126,30 @@ describe('validateScadaConfig', () => {
     expect(ok).toEqual({ ok: true });
   });
 
+  it('should reject declaration-level scale.expression and point to binding-scale (plan 2026-08-05-0653-3 B4)', () => {
+    const rejected = validateScadaConfig(
+      baseConfig({
+        variables: [{ id: 'es', source: 'static', value: 1, scale: { expression: '@{x} * 2' } }],
+      }),
+    );
+    expect(rejected.ok).toBe(false);
+    expect((rejected as { errors: string[] }).errors.join('; ')).toContain(
+      'scale.expression is not supported at declaration level',
+    );
+    // linear declaration scale still accepted
+    const okLinear = validateScadaConfig(
+      baseConfig({ variables: [{ id: 'ls', source: 'static', value: 1, scale: { k: 2, b: 1 } }] }),
+    );
+    expect(okLinear).toEqual({ ok: true });
+    // binding-level expression scale still accepted (applyScale consumes it)
+    const okBindingExpr = validateScadaConfig(
+      baseConfig({
+        symbols: [rect('be', { bindings: { fill: { point: 'p1', scale: { expression: '@{x}' } } } })],
+      }),
+    );
+    expect(okBindingExpr).toEqual({ ok: true });
+  });
+
   it('should validate optional numeric/string fields', () => {
     const badOpacity = validateScadaConfig(baseConfig({ symbols: [rect('o', { opacity: 'high' as unknown as number })] }));
     expect(badOpacity.ok).toBe(false);
@@ -279,6 +303,22 @@ describe('validateScadaConfig', () => {
       }),
     );
     expect(ok).toEqual({ ok: true });
+  });
+
+  it('should validate states.stateSource shape (plan 2026-08-05-0653-3 B3)', () => {
+    const badStateSource = validateScadaConfig(
+      baseConfig({ symbols: [rect('ss1', { states: { states: { run: {} }, stateSource: '' } })] }),
+    );
+    expect(badStateSource.ok).toBe(false);
+    expect((badStateSource as { errors: string[] }).errors.join('; ')).toContain('.stateSource must be a non-empty string');
+    const badStateSourceType = validateScadaConfig(
+      baseConfig({ symbols: [rect('ss2', { states: { states: { run: {} }, stateSource: 5 as never } })] }),
+    );
+    expect(badStateSourceType.ok).toBe(false);
+    const okStateSource = validateScadaConfig(
+      baseConfig({ symbols: [rect('ss3', { states: { states: { run: {} }, stateSource: 'drv.fill' } })] }),
+    );
+    expect(okStateSource).toEqual({ ok: true });
   });
 
   it('should validate events declaration shape (I11.1：on 枚举 + action 形状)', () => {

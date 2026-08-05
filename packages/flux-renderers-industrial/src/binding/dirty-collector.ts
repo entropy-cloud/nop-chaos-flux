@@ -327,7 +327,7 @@ export class RefreshPipeline {
         const bindings = this.options.reverseIndex.getBindings(target.symbolId);
         const binding = bindings?.[target.property];
         if (!binding) continue;
-        const value = this.resolver.resolveBinding(binding);
+        const value = this.resolver.resolveBinding(binding, target.property);
         if (value !== undefined) {
           this.options.collector.collect({ symbolId: target.symbolId, property: target.property, value });
         }
@@ -341,7 +341,7 @@ export class RefreshPipeline {
     for (const symbolId of symbolIds) {
       const declaration = this.options.getStates?.(symbolId);
       if (!declaration) continue;
-      const primary = this.options.reverseIndex.lookupSymbol(symbolId)[0];
+      const primary = this.resolveStateDriver(symbolId, declaration);
       if (!primary) continue;
       const raw = this.options.pointStore.getPointValue(primary.pointId);
       const state = resolveState(declaration, raw, this.resolveStateScale(symbolId, primary));
@@ -361,6 +361,28 @@ export class RefreshPipeline {
         }
       }
     }
+  }
+
+  /**
+   * state-driver 解析（plan 2026-08-05-0653-3 B3）：优先 consult `declaration.stateSource`，
+   * 缺省时回落反向索引 `lookupSymbol(symbolId)[0]`（插入序）。
+   * `stateSource` 格式 `"pointId"` 或 `"pointId.property"`；缺省 property 时取该 pointId 在此图元的首个绑定 property。
+   */
+  private resolveStateDriver(
+    symbolId: string,
+    declaration: ScadaStateDeclaration,
+  ): SymbolBindingTarget | undefined {
+    const targets = this.options.reverseIndex.lookupSymbol(symbolId);
+    if (targets.length === 0) return undefined;
+    const source = declaration.stateSource;
+    if (source === undefined) return targets[0];
+    const lastDot = source.lastIndexOf('.');
+    const pointId = lastDot === -1 ? source : source.slice(0, lastDot);
+    const property = lastDot === -1 ? undefined : source.slice(lastDot + 1);
+    if (property !== undefined) {
+      return targets.find((t) => t.pointId === pointId && t.property === property);
+    }
+    return targets.find((t) => t.pointId === pointId);
   }
 
   /**

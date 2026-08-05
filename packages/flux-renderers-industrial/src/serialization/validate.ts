@@ -132,6 +132,10 @@ function validateStateDeclaration(value: unknown, errors: string[], scope: strin
   if ('valueMap' in decl && !isPlainObject(decl.valueMap)) {
     errors.push(`${scope}.valueMap must be an object`);
   }
+  // plan 2026-08-05-0653-3 B3：stateSource 为非空字符串（格式 "pointId" 或 "pointId.property"）。
+  if ('stateSource' in decl && (typeof decl.stateSource !== 'string' || decl.stateSource.trim() === '')) {
+    errors.push(`${scope}.stateSource must be a non-empty string`);
+  }
 }
 
 function validateSymbolEvent(value: unknown, errors: string[], scope: string): void {
@@ -289,8 +293,17 @@ function validatePointDeclaration(node: unknown, seenIds: Set<string>, errors: s
   } else if (typeof decl.flux !== 'string' || decl.flux.trim() === '') {
     errors.push(`${scope}.flux must be a non-empty string for source=flux`);
   }
-  if ('scale' in decl && !isPlainObject(decl.scale)) {
-    errors.push(`${scope}.scale must be an object`);
+  if ('scale' in decl) {
+    if (!isPlainObject(decl.scale)) {
+      errors.push(`${scope}.scale must be an object`);
+    } else if ('expression' in (decl.scale as Record<string, unknown>)) {
+      // plan 2026-08-05-0653-3 B4：declaration 级 scale.expression 经 point-store.convert 与
+      // value-to-state.applyLinearScale 两处静默丢弃（无 compiler 求值）。binding 层 applyScale 已消费
+      // expression-scale（经 evaluator），故 declaration 级拒绝并指向 binding-scale，同时关闭两处 drop site。
+      errors.push(
+        `${scope}.scale.expression is not supported at declaration level; use binding-level scale.expression instead`,
+      );
+    }
   }
   if ('deadband' in decl && typeof decl.deadband !== 'number') {
     errors.push(`${scope}.deadband must be a number`);

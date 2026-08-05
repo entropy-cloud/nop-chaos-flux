@@ -109,9 +109,18 @@ describe('resolveState 判定优先级与默认状态 (I6.2)', () => {
     expect(resolveState(declaration, 999)).toBe('run');
   });
 
-  it('should use first key when run is absent', () => {
-    const declaration = { states: { on: {}, off: {} } };
-    expect(resolveState(declaration, 1)).toBe('on');
+  it('should use named default preference chain run→normal→off→first (key-reorder-safe, B3)', () => {
+    // run preferred over normal/off/first
+    expect(resolveState({ states: { stop: {}, run: {}, normal: {} } }, 999)).toBe('run');
+    // normal preferred over off/first when run absent
+    expect(resolveState({ states: { stop: {}, normal: {}, off: {} } }, 999)).toBe('normal');
+    // off preferred over first when run/normal absent
+    expect(resolveState({ states: { on: {}, off: {} } }, 999)).toBe('off');
+    // first key only when run/normal/off all absent
+    expect(resolveState({ states: { idle: {}, active: {} } }, 999)).toBe('idle');
+    // key reorder does not change the result (determinism)
+    expect(resolveState({ states: { off: {}, on: {} } }, 999)).toBe('off');
+    expect(resolveState({ states: { active: {}, idle: {} } }, 999)).toBe('active');
   });
 
   it('should apply linear scale before judging (量程换算先行)', () => {

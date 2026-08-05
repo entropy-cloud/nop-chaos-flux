@@ -654,3 +654,95 @@ describe('RefreshPipeline 销毁门控 + collector 单一 owner (plan 2026-08-04
     destroySpy.mockRestore();
   });
 });
+
+describe('RefreshPipeline stateSource 显式 state-driver (plan 2026-08-05-0653-3 B3)', () => {
+  it('should use declaration.stateSource as state-driver instead of reverse-index [0] (B3)', () => {
+    // 图元绑定两个点：primary（reverse-index 首插入序）=p1，但 stateSource 指定 p2 作 state-driver。
+    const declarations: ScadaPointDeclaration[] = [
+      { id: 'p1', source: 'static', value: 100 },
+      { id: 'p2', source: 'static', value: 0 },
+    ];
+    const symbols: ScadaSymbolNode[] = [
+      {
+        id: 'sym',
+        type: 'scada-rect',
+        x: 0,
+        y: 0,
+        bindings: {
+          opacity: { point: 'p1' },
+          fill: { point: 'p2' },
+        },
+      },
+    ];
+    const getStates = (symbolId: string) =>
+      symbolId === 'sym'
+        ? ({
+            states: { run: { style: { fill: '#0f0' } }, fault: { style: { fill: '#f00' } } },
+            ranges: [{ min: 0, max: 50, state: 'run' }, { min: 51, state: 'fault' }],
+            stateSource: 'p2',
+          } as ScadaStateDeclaration)
+        : undefined;
+    const harness = createHarness({ declarations, symbols, getStates });
+
+    harness.pipeline.flushFrame(harnessApply(harness));
+    // p1=100（reverse-index [0]）但 stateSource=p2=0 → run（p2 在 [0,50] 区间）
+    expect(harness.applied.some((a) => a.sym?.fill === '#0f0')).toBe(true);
+
+    harness.pointStore.setPointValue('p2', 80);
+    harness.pipeline.flushFrame(harnessApply(harness));
+    // p2=80 → fault（>50），即使 p1 仍=100
+    expect(harness.applied.some((a) => a.sym?.fill === '#f00')).toBe(true);
+  });
+
+  it('should fall back to reverse-index [0] when stateSource is absent (B3 backward compat)', () => {
+    const declarations: ScadaPointDeclaration[] = [
+      { id: 'p1', source: 'static', value: 100 },
+      { id: 'p2', source: 'static', value: 0 },
+    ];
+    const symbols: ScadaSymbolNode[] = [
+      {
+        id: 'sym',
+        type: 'scada-rect',
+        x: 0,
+        y: 0,
+        bindings: { opacity: { point: 'p1' }, fill: { point: 'p2' } },
+      },
+    ];
+    const getStates = (symbolId: string) =>
+      symbolId === 'sym'
+        ? ({
+            states: { run: { style: { fill: '#0f0' } }, fault: { style: { fill: '#f00' } } },
+            ranges: [{ min: 0, max: 50, state: 'run' }, { min: 51, state: 'fault' }],
+          } as ScadaStateDeclaration)
+        : undefined;
+    const harness = createHarness({ declarations, symbols, getStates });
+
+    harness.pipeline.flushFrame(harnessApply(harness));
+    // 无 stateSource → [0] = opacity/p1 =100 → fault（>50）
+    expect(harness.applied.some((a) => a.sym?.fill === '#f00')).toBe(true);
+  });
+
+  it('should support stateSource with property qualifier "pointId.property" (B3)', () => {
+    const declarations: ScadaPointDeclaration[] = [{ id: 'drv', source: 'static', value: 60 }];
+    const symbols: ScadaSymbolNode[] = [
+      {
+        id: 'sym',
+        type: 'scada-rect',
+        x: 0,
+        y: 0,
+        bindings: { fill: { point: 'drv' } },
+      },
+    ];
+    const getStates = (symbolId: string) =>
+      symbolId === 'sym'
+        ? ({
+            states: { run: { style: { fill: '#0f0' } }, fault: { style: { fill: '#f00' } } },
+            ranges: [{ min: 0, max: 50, state: 'run' }, { min: 51, state: 'fault' }],
+            stateSource: 'drv.fill',
+          } as ScadaStateDeclaration)
+        : undefined;
+    const harness = createHarness({ declarations, symbols, getStates });
+    harness.pipeline.flushFrame(harnessApply(harness));
+    expect(harness.applied.some((a) => a.sym?.fill === '#f00')).toBe(true);
+  });
+});

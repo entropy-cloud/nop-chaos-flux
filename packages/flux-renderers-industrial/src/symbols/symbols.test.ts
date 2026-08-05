@@ -346,6 +346,54 @@ describe('builtin base shapes (I5.4)', () => {
     expect(rect.strokeWidth).toBe(2);
   });
 
+  // plan 2026-08-05-0653-3 B2：line/arrow/pipe applyProps 经 width/height 变更后重算 points（failing-first proof）。
+  // 修复前 points 仅 create 时由 width/height 推导，applyProps 只 set node.width/height 不重算 points → 零视觉响应。
+  it('scada-line/arrow/pipe applyProps should recompute points on width/height change (B2)', () => {
+    const line = instantiate('scada-line', { width: 100, height: 0 }) as unknown as {
+      points: number[];
+      set: (attrs: Record<string, unknown>) => void;
+    };
+    expect(line.points).toEqual([0, 0, 100, 0]);
+    const lineDef = getScadaSymbolDefinition('scada-line')!;
+    lineDef.applyProps!(line as never, { width: 200 });
+    expect(line.points).toEqual([0, 0, 200, 0]);
+    lineDef.applyProps!(line as never, { height: 50 });
+    expect(line.points).toEqual([0, 0, 200, 50]);
+    lineDef.applyProps!(line as never, { width: 10, height: 20 });
+    expect(line.points).toEqual([0, 0, 10, 20]);
+
+    const arrow = instantiate('scada-arrow', { width: 30, height: 40 }) as unknown as {
+      points: number[];
+      set: (attrs: Record<string, unknown>) => void;
+    };
+    const arrowDef = getScadaSymbolDefinition('scada-arrow')!;
+    arrowDef.applyProps!(arrow as never, { width: 80 });
+    expect(arrow.points).toEqual([0, 0, 80, 40]);
+
+    const pipe = instantiate('scada-pipe', { width: 60, height: 0 }) as unknown as {
+      points: number[];
+      set: (attrs: Record<string, unknown>) => void;
+    };
+    const pipeDef = getScadaSymbolDefinition('scada-pipe')!;
+    pipeDef.applyProps!(pipe as never, { width: 120, height: 30 });
+    expect(pipe.points).toEqual([0, 0, 120, 30]);
+  });
+
+  it('scada-line/arrow/pipe applyProps should still apply non-geometric props (B2 regression guard)', () => {
+    const line = instantiate('scada-line', { width: 100, height: 0 }) as unknown as Record<string, unknown>;
+    const lineDef = getScadaSymbolDefinition('scada-line')!;
+    lineDef.applyProps!(line as never, { stroke: '#abc123', visible: false, opacity: 0.5 });
+    expect(line.stroke).toBe('#abc123');
+    expect(line.visible).toBe(false);
+    expect(line.opacity).toBe(0.5);
+  });
+
+  it('scada-pipe should expose defaultGeometryPoints consistent with line/arrow (B2 bounds parity)', () => {
+    const pipeDef = getScadaSymbolDefinition('scada-pipe')!;
+    expect(pipeDef.defaultGeometryPoints).toBeDefined();
+    expect(pipeDef.defaultGeometryPoints!({ id: 'p', type: 'scada-pipe', width: 70, height: 20 })).toEqual([0, 0, 70, 20]);
+  });
+
   // I15.1 V5 体积面补强（I5 plan Deferred：I9 设备库落地后 20+ 真实工业图元覆盖断言）：
   // 24 个内置图元定义（8 基础形状 + image/video 占位 + group + 4 族 12 个 + pipe-junction）
   // 全量经引擎场景树加载（validate → engine.reset → getSymbols/registry 覆盖），不弱化既有用例。

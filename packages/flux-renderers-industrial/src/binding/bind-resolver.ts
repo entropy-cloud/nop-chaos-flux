@@ -33,6 +33,18 @@ export function isBindableProperty(property: string): property is BindableProper
   return (BINDABLE_PROPERTIES as readonly string[]).includes(property);
 }
 
+/**
+ * 文本类可绑定属性集合（plan 2026-08-05-0653-3 B1）：仅这些 property 的绑定才施加 `format`。
+ * `format` 把值字符串化（`formatValue(false,'%s')` → `"false"`），对 `visible`/`opacity`/数值/几何属性
+ * 会把 boolean/number 变成 truthy 字符串而静默产出错误结果（`visible:false` 绑定渲染为可见）。
+ * 故 `format` 仅对文本/颜色类属性生效，其余属性绑定原值原样透传。
+ */
+const FORMAT_TARGET_PROPERTIES = new Set(['text', 'fill', 'stroke', 'textColor']);
+
+export function isFormatTargetProperty(property: string | undefined): boolean {
+  return property !== undefined && FORMAT_TARGET_PROPERTIES.has(property);
+}
+
 /** 量程换算（FUXA TagScale 蓝本）：线性 y = k*x + b；表达式换算经 evaluate 求值。 */
 export function applyScale(
   value: ScadaPrimitive,
@@ -86,11 +98,14 @@ export function formatValue(value: ScadaPrimitive, format: string): string {
 /**
  * 属性绑定解析（I6.2）：`ScadaBinding` 求值优先级 point → expression → map → scale → format；
  * 输出属性键限制在可绑定属性集合（§4.2）。
+ *
+ * plan 2026-08-05-0653-3 B1：`format` 仅对文本类属性（text/fill/stroke/textColor）生效，
+ * 由可选 `property` 参数判定；其余属性（visible/opacity/数值/几何）绑定不被字符串化。
  */
 export class BindResolver {
   constructor(private readonly deps: BindResolverDeps) {}
 
-  resolveBinding(binding: ScadaBinding): unknown | undefined {
+  resolveBinding(binding: ScadaBinding, property?: string): unknown | undefined {
     let base: ScadaPrimitive | undefined;
     if (binding.point !== undefined) {
       base = this.deps.getPointValue(binding.point);
@@ -106,7 +121,7 @@ export class BindResolver {
     if (binding.scale !== undefined) {
       value = applyScale(value, binding.scale, this.deps.evaluate);
     }
-    if (binding.format !== undefined) {
+    if (binding.format !== undefined && isFormatTargetProperty(property)) {
       value = formatValue(value, binding.format);
     }
     return value;
@@ -116,7 +131,7 @@ export class BindResolver {
     const out: ResolvedBinding[] = [];
     for (const [property, binding] of Object.entries(bindings)) {
       if (!isBindableProperty(property)) continue;
-      const value = this.resolveBinding(binding);
+      const value = this.resolveBinding(binding, property);
       if (value !== undefined) out.push({ property, value });
     }
     return out;

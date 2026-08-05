@@ -62,6 +62,25 @@ export class EventHub<E> {
     }
   }
 
+  /**
+   * 带 per-emit 错误归属的派发（plan 2026-08-05-0653-3 B5）：订阅者异常经 `onError` 回调上报，
+   * 使调用方可在闭包内捕获正确的 context pointId，消除 `lastNotifyPointId` 可变字段在 re-entrant
+   * `setPointValue` 下的覆盖竞态。
+   */
+  emitWith<K extends keyof E>(
+    event: K,
+    onError: (error: unknown) => void,
+    ...args: E[K] extends EventListener<infer Args> ? Args : never[]
+  ): void {
+    for (const cb of this.listeners.get(event) ?? []) {
+      try {
+        cb(...args);
+      } catch (error) {
+        onError(error);
+      }
+    }
+  }
+
   removeAll(): void {
     this.listeners.clear();
   }
@@ -117,13 +136,10 @@ export interface PointStoreOptions {
 export class PointStore {
   private entries = new Map<string, PointEntry>();
   private subscribers = new Map<string, Set<PointChangeListener>>();
-  private readonly events = new EventHub<PointStoreEvents>({
-    onListenerError: (error) => this.reportSubscriberError(this.lastNotifyPointId, error),
-  });
+  private readonly events = new EventHub<PointStoreEvents>();
   private dirtyPointIds = new Set<string>();
   private reportedSubscriberErrors = new Set<string>();
   private readonly onSubscriberError?: (pointId: string, error: unknown) => void;
-  private lastNotifyPointId = '';
 
   constructor(options?: PointStoreOptions) {
     this.onSubscriberError = options?.onSubscriberError;
@@ -260,9 +276,9 @@ export class PointStore {
     entry.dirty = true;
     this.dirtyPointIds.add(pointId);
     const payload: ScadaPointChangeEvent = { pointId, value: next, prev };
-    // OP-3：记录当前通知点 id 供 EventHub onListenerError 上报归属；订阅者异常隔离不中断写入循环。
-    this.lastNotifyPointId = pointId;
-    this.events.emit('point:change', payload);
+    // plan 2026-08-05-0653-3 B5：用 emitWith 携 per-emit 闭包捕获当前 pointId，消除 re-entrant
+    // setPointValue 下 lastNotifyPointId 可变字段被覆盖的归属竞态——错误始终归属正在派发的 pointId。
+    this.events.emitWith('point:change', (error) => this.reportSubscriberError(pointId, error), payload);
     for (const cb of this.subscribers.get(pointId) ?? []) {
       try {
         cb(payload);

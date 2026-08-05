@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BindResolver, applyScale, formatValue, isBindableProperty } from './bind-resolver.js';
+import { BindResolver, applyScale, formatValue, isBindableProperty, isFormatTargetProperty } from './bind-resolver.js';
 import type { ScadaBinding, ScadaPrimitive } from '../serialization/config-types.js';
 
 describe('BindResolver 绑定解析 (I6.2)', () => {
@@ -52,15 +52,15 @@ describe('BindResolver 绑定解析 (I6.2)', () => {
   });
 
   it('should apply format for text properties (格式化)', () => {
-    expect(resolver.resolveBinding({ point: 'speed', format: 'Speed: %d rpm' })).toBe('Speed: 120 rpm');
-    expect(resolver.resolveBinding({ point: 'speed', format: '%f' })).toBe('120.00');
-    expect(resolver.resolveBinding({ point: 'mode', format: 'mode=%s' })).toBe('mode=auto');
+    expect(resolver.resolveBinding({ point: 'speed', format: 'Speed: %d rpm' }, 'text')).toBe('Speed: 120 rpm');
+    expect(resolver.resolveBinding({ point: 'speed', format: '%f' }, 'fill')).toBe('120.00');
+    expect(resolver.resolveBinding({ point: 'mode', format: 'mode=%s' }, 'text')).toBe('mode=auto');
   });
 
   it('should apply the full chain point → map → scale → format', () => {
-    expect(resolver.resolveBinding({ point: 'speed', map: { 120: 100 }, scale: { k: 2 }, format: '%d%%' })).toBe(
-      '200%',
-    );
+    expect(
+      resolver.resolveBinding({ point: 'speed', map: { 120: 100 }, scale: { k: 2 }, format: '%d%%' }, 'text'),
+    ).toBe('200%');
   });
 
   it('should return undefined for unknown points or failed expressions (skip + 不崩溃)', () => {
@@ -118,5 +118,46 @@ describe('isBindableProperty (I6.2)', () => {
     }
     expect(isBindableProperty('custom')).toBe(false);
     expect(isBindableProperty('scale')).toBe(false);
+  });
+});
+
+describe('format target property gating (plan 2026-08-05-0653-3 B1)', () => {
+  it('isFormatTargetProperty should accept only text/fill/stroke/textColor', () => {
+    expect(isFormatTargetProperty('text')).toBe(true);
+    expect(isFormatTargetProperty('fill')).toBe(true);
+    expect(isFormatTargetProperty('stroke')).toBe(true);
+    expect(isFormatTargetProperty('textColor')).toBe(true);
+    expect(isFormatTargetProperty('visible')).toBe(false);
+    expect(isFormatTargetProperty('opacity')).toBe(false);
+    expect(isFormatTargetProperty('width')).toBe(false);
+    expect(isFormatTargetProperty(undefined)).toBe(false);
+  });
+
+  it('resolveBinding should NOT stringify visible:false via format (B1 failing-first)', () => {
+    const localResolver = new BindResolver({
+      getPointValue: (id) => (id === 'sw' ? false : undefined),
+      evaluate: () => undefined,
+    });
+    expect(localResolver.resolveBinding({ point: 'sw', format: '%s' }, 'visible')).toBe(false);
+    expect(localResolver.resolveBinding({ point: 'sw', format: '%s' }, 'opacity')).toBe(false);
+    expect(localResolver.resolveBinding({ point: 'sw', format: '%s' }, 'width')).toBe(false);
+    expect(localResolver.resolveBinding({ point: 'sw', format: '%s' }, 'text')).toBe('false');
+  });
+
+  it('resolveBindings should skip format for non-text target properties (B1)', () => {
+    const localResolver = new BindResolver({
+      getPointValue: (id) => (id === 'sw' ? false : undefined),
+      evaluate: () => undefined,
+    });
+    const resolved = localResolver.resolveBindings({
+      visible: { point: 'sw', format: '%s' },
+      opacity: { point: 'sw', format: '%s' },
+      fill: { point: 'sw', format: '%s' },
+    });
+    expect(resolved).toEqual([
+      { property: 'visible', value: false },
+      { property: 'opacity', value: false },
+      { property: 'fill', value: 'false' },
+    ]);
   });
 });
