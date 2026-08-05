@@ -59,7 +59,8 @@
     "spreadsheet-page",
     "word-editor-page",
     "barcode-input",
-    "diff-view"
+    "diff-view",
+    "timeline"
   ],
   "targetContract": [
     "alert",
@@ -77,6 +78,7 @@
     "dropdown-button",
     "editor",
     "separator",
+    "graph",
     "grid",
     "image",
     "infinite-scroll",
@@ -110,7 +112,6 @@
     "status",
     "steps",
     "swipe-cell",
-    "timeline",
     "transfer",
     "diff-view",
     "video",

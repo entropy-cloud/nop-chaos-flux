@@ -26,7 +26,7 @@
 
 ## 6. regions 与 slot 约定
 
-- `items` 建议为轮播项集合，每项可带 `body` 或媒体配置。
+- `items` 为轮播项集合，每项可带 `image`/`title`/`caption`（首版不支持 body 区域模板；如需自由项模板可后续扩展）。
 
 ## 7. 运行期状态归属
 

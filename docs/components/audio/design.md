@@ -34,6 +34,7 @@
 
 ## 8. 事件、动作与组件句柄能力
 
+- `onLoadError`：媒体资源加载失败（原生 `error` 事件）时触发，与 image/video 家族对齐；触发后维持失败占位 UI（`data-state="error"` + loadFailed 回退文本）。src 更新后错误态自动清除并重试加载。
 - 后续如需句柄，可支持 `component:play`、`component:pause`。
 
 ## 9. 数据源、表达式、导入能力接入点

@@ -1,6 +1,6 @@
 # Components Roadmap
 
-> Last Updated: 2026-06-25
+> Last Updated: 2026-08-04
 > Source: `docs/components/amis-baseline-matrix.md`, `docs/components/index.md`
 
 ## Purpose
@@ -33,6 +33,7 @@
 - D1a. 设计器补充组（2）: `done`（plan: `docs/plans/2026-06-25-0307-1-d1a-designer-node-card-edge-row-registration-plan.md`；`designer-node-card`/`designer-edge-row` 已注册于 `packages/flow-designer-renderers/src/renderer-definitions.ts`，按 id 解析 node/edge 摘要（`designer-summary-helpers.ts`）、渲染 type label/position/source→target/选中态、点击派发 `selectNode`/`selectEdge` command、缺失 id 受控降级；含 playground 摘要 demo（flow-designer 页「节点/边摘要」tab）+ e2e + focused 单测；design.md §12 deferral 已翻转、§3 标「已注册」；主组件 roadmap `todo` 队列清空）
 - **M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈）: `done`** ← 镜像自 `mobile-roadmap.md`（4 子项 M0.1a~M0.1d 已全部落地；plan: `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`；细节与口径以 mobile-roadmap 为准）
 - O1. 非 retained 可选项（13）: 按需启动，不列工作项
+- G1. graph 图查看器（1）: `proposed`（design 立约：`docs/components/graph/design.md` + `example.json`；需求来源 ArbiterOS trace 图——只读交互式图查看器，画布复用 `@xyflow/react`，独立包 `flux-renderers-graph`（NEW）；实现依赖 flow-designer canvas 桥接先例 + dagre 布局；待确认后才可改 `todo`）
 
 ## Status Values
 
@@ -126,6 +127,12 @@
 | Work item             | 组件                                     | 依赖               | 备注                  |
 | --------------------- | ---------------------------------------- | ------------------ | --------------------- |
 | D1a 设计器补充组（2） | `designer-node-card` `designer-edge-row` | L0 designer family | schema 已声明，需注册 |
+
+### Proposed（design 立约，待人确认）
+
+| Work item          | 组件    | Package                      | 依赖 | Reuse                                             |
+| ------------------ | ------- | ---------------------------- | ---- | ------------------------------------------------- |
+| G1 图查看器组（1） | `graph` | `flux-renderers-graph` (NEW) | L0   | `@xyflow/react`（复用 flow-designer 版本）+ dagre |
 
 ---
 

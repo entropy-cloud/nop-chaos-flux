@@ -15,6 +15,9 @@
 | 3   | 排班日历 Calendar  | 2          | Schedule-X v4.6.1, react-big-calendar v1.20.0              | `research-calendar.md` |
 | 4   | 条码扫描 Barcode   | 1          | react-zxing v3.0.0                                         | `research-barcode.md`  |
 | 5   | 版本对比 Diff view | 2          | git-diff-view, react-diff-view v3.3.3                      | `research-diffview.md` |
+| 6   | 图查看器 Graph     | —          | 无独立开源实现调研（需求驱动选型，见下注）                 | `research-graph.md`    |
+
+> 注：`research-graph.md` 是**需求驱动选型调研**（ArbiterOS trace 图 → Flux `graph` renderer 落地评估），非开源实现对比调研，故结构与上表项目 1–5 不同（无「各项目深入分析」节，含需求来源与设计建议）。
 
 ---
 

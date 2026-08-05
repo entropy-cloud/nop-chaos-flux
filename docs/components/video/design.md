@@ -17,11 +17,12 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `src`、`poster`、`title`、`autoPlay`、`loop`、`controls`、`muted`。
+- 建议正式字段为 `src`、`poster`、`title`、`autoPlay`、`loop`、`controls`、`muted`、`width`、`height`。
+- `width`/`height`：视频显示尺寸（数字单位 px，字符串支持任意 CSS 单位），经 inline style 透传。
 
 ## 5. 字段分类
 
-- `src`、`poster`、`autoPlay`、`loop`、`controls`、`muted`: `value`
+- `src`、`poster`、`autoPlay`、`loop`、`controls`、`muted`、`width`、`height`: `value`
 - `title`: `value-or-region`
 
 ## 6. regions 与 slot 约定
@@ -34,6 +35,7 @@
 
 ## 8. 事件、动作与组件句柄能力
 
+- `onLoadError`：媒体资源加载失败（原生 `error` 事件）时触发，与 image/audio 家族对齐；触发后维持失败占位 UI（`data-state="error"` + loadFailed 回退文本）。src 更新后错误态自动清除并重试加载。
 - 后续可支持 `component:play`、`component:pause`。
 
 ## 9. 数据源、表达式、导入能力接入点

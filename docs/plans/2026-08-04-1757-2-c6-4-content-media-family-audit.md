@@ -1,9 +1,9 @@
 # C6.4 content 媒体类逐组件审计（audio/video/carousel/qrcode）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: C6.4
-> Last Reviewed: 2026-08-04
+> Last Reviewed: 2026-08-05
 > Source: `docs/backlog/component-audit-roadmap.md`（C6.x Phase Details）、`docs/audits/component-audit-checklist.md`（18 维 + 审计卡模板 + 自动修复纪律）、`docs/skills/deep-audit-prompts.md`、`docs/architecture/styling-system.md`、`docs/logs/2026/08-04.md`（C6.1/C6.2 节）
 > Related: 依赖 C0（`2026-08-02-2043-1`，completed）完成后开工；与 C6.1（`2026-08-04-0841-2`，completed）/ C6.2（`2026-08-04-0841-3`，completed）同包同族先例；与 C6.3（`2026-08-04-1757-1`）/ C6.5（`2026-08-04-1757-3`）并行独立（均只依赖 C0）。前置基础：08-02 nested-schema 机制（completed）已分类本族字段（audio/video title value-or-region、carousel items 数组、qrcode label value-or-region）；CX-9 反应式结果捕获通道（completed，C4.2）——本族无 kind:'reaction' 字段，仅核对不消费
 
@@ -70,84 +70,84 @@
 
 ### Phase 1 - 逐组件 18 维审计与审计卡产出
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/{audio,video,carousel,qrcode}.tsx`、`content-renderer-definitions.ts`、`schemas.ts`、`docs/audits/per-component/`
 
 - Item Types: `Proof`
 
-- [ ] 审计前核对注册定义：4 组件注册项（type/fields/propContracts/eventContracts）与各自 schema 一致（维度 1/18）。
-- [ ] 产出 4 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
-- [ ] 维度重点核查：值所有权三态（维度 3：**carousel 活动项 local state 经 embla api 桥接核对——「缺 valueOwnership」不得裁为 P1（local 有意设计）；qrcode value 变化 canvas 重绘 echo**）；08-02 字段分类（维度 6：audio/video title、qrcode label value-or-region、carousel items 数组、无 deepFields 残留）。
-- [ ] 事件与 action 契约（维度 7：**onLoadError 事件 shape 与 eventContracts 一致、carousel onChange payload**）与 a11y（维度 8：媒体 aria-label、carousel 键盘）。
-- [ ] 异步生命周期（维度 11：**媒体元素错误事件、竞态、carousel autoplay effect 清理、abort 路径**）与性能边界（维度 15：carousel 大量 slides、qrcode 重绘）。
-- [ ] 测试质量（维度 16）：既有测试断言正确行为而非 not-throw、错误路径、autoplay 清理断言——假绿核查。
-- [ ] 文档对照（维度 17）：4 组件 design.md ↔ 实现 props/行为逐项核对。
-- [ ] playground 覆盖核查（维度 18）：4 组件无 component-lab lab 页——记录缺口并裁决（P2 低成本当场补页，Phase 3 落地）。
+- [x] 审计前核对注册定义：4 组件注册项（type/fields/propContracts/eventContracts）与各自 schema 一致（维度 1/18）。
+- [x] 产出 4 张审计卡：18 维逐项核对（结论 pass/fail/n-a + `文件:行` 证据 + 发现），P0/P1/P2/P3 裁决留痕（checklist §3）。
+- [x] 维度重点核查：值所有权三态（维度 3：**carousel 活动项 local state 经 embla api 桥接核对——「缺 valueOwnership」不得裁为 P1（local 有意设计）；qrcode value 变化 canvas 重绘 echo**）；08-02 字段分类（维度 6：audio/video title、qrcode label value-or-region、carousel items 数组、无 deepFields 残留）。
+- [x] 事件与 action 契约（维度 7：**onLoadError 事件 shape 与 eventContracts 一致、carousel onChange payload**）与 a11y（维度 8：媒体 aria-label、carousel 键盘）。
+- [x] 异步生命周期（维度 11：**媒体元素错误事件、竞态、carousel autoplay effect 清理、abort 路径**）与性能边界（维度 15：carousel 大量 slides、qrcode 重绘）。
+- [x] 测试质量（维度 16）：既有测试断言正确行为而非 not-throw、错误路径、autoplay 清理断言——假绿核查。
+- [x] 文档对照（维度 17）：4 组件 design.md ↔ 实现 props/行为逐项核对。
+- [x] playground 覆盖核查（维度 18）：4 组件无 component-lab lab 页——记录缺口并裁决（P2 低成本当场补页，Phase 3 落地）。
 
 Exit Criteria:
 
 > 本 Phase 交付 4 张审计卡（含裁决），是后续修复的唯一事实来源。
 
-- [ ] `docs/audits/per-component/{audio,video,carousel,qrcode}.md` 卡存在，18 维表完整、`文件:行` 证据可验证。
-- [ ] 卡内发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，否则 `open`；08-02 机制复验结论已记录。
+- [x] `docs/audits/per-component/{audio,video,carousel,qrcode}.md` 卡存在，18 维表完整、`文件:行` 证据可验证。
+- [x] 卡内发现清单带 P0/P1/P2/P3 裁决；无 P0/P1 的卡标记 `closed`，否则 `open`；08-02 机制复验结论已记录。
 
 ### Phase 2 - P0/P1 自动修复（test-first）
 
-Status: planned
+Status: completed
 Targets: 发现涉及的 renderer/子模块文件、schema 文件、契约测试文件、e2e spec
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 按审计卡处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现）。
-- [ ] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
-- [ ] 共性缺陷裁决（Decision）：若发现 ≥2 组件/跨包/公共层根因，按 roadmap §7 主动插入 CX-n 或并入现有项并回写 daily log；组件单点根因则记录裁决、不插入 CX-n。
-- [ ] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
-- [ ] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式）。
+- [x] 按审计卡处理 P0/P1：先写复现/回归测试（断言正确行为，非仅 not-throw），再实现修复；DOM/选择器契约变更追加 focused 契约测试与 e2e（test-first 证据：复现测试先于实现）。
+- [x] P2 低成本（约 15 分钟内）当场修复；其余登记卡内 backlog 归 CR。
+- [x] 共性缺陷裁决（Decision）：若发现 ≥2 组件/跨包/公共层根因，按 roadmap §7 主动插入 CX-n 或并入现有项并回写 daily log；组件单点根因则记录裁决、不插入 CX-n。
+- [x] 修复后卡内发现标 `fixed` + commit/plan 引用；卡状态流转 `open → fixing → fixed-pending-closure`。
+- [x] 复杂/跨包 bug 修复按 AGENTS.md Bug Fix Test Coverage Rule 记录到 `docs/bugs/`（参考 `docs/bugs/73-*.md` 格式）。
 
 Exit Criteria:
 
 > 本 Phase 交付"发现清零或已裁定"，卡状态与代码行为一致。
 
-- [ ] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
-- [ ] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-content typecheck && build && lint && test` 绿（含新增回归测试）。
+- [x] 全部 P0/P1 已修复（卡内标 `fixed` + 证据）或已显式裁定延期（仅允许依赖未落地跨 plan 机制者，标「机制落地后复验」并登记）；无静默跳过。
+- [x] 受影响包 `pnpm --filter @nop-chaos/flux-renderers-content typecheck && build && lint && test` 绿（含新增回归测试）。
 
 ### Phase 3 - 组合宿主真实浏览器场景
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/c6-4-host-surfaces.spec.ts`（新增）、playground demo/lab 页
 
 - Item Types: `Proof | Fix`
 
-- [ ] 设计并实现 ≥1 个本组件真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：新增 **4 个 lab 页**（`audio-lab-page.tsx`/`video-lab-page.tsx`/`carousel-lab-page.tsx`/`qrcode-lab-page.tsx`，补上维度 18 缺口——P2 低成本当场补页裁决）+ **`RENDERER_LAB_REGISTRY` 注册 4 条**（`apps/playground/src/component-lab/renderer-lab-registry.ts`，缺注册则 component-lab-page 不渲染 lab 页且 smoke 覆盖失败——C6.1/C6.2 先例均含 registry 条目）+ `data-c6c4-host.ts` 宿主 schema 模块 + CONTENT_RENDERER_ROUTES 追加 4 条（与 C6.1/C6.2/C6.3 共用常量模块——协调先例：C6.1 建模块 5 条、C6.2 追加 6 条至 11 条、C6.3 追加 3 条至 14 条，本 plan 追加至 18 条）+ `COMPONENT_LAB_COVERAGE_MANIFEST` 4 条（smoke.spec.ts 自动覆盖）+ route-matrix 计数测试同步（lab 路由不经 `DOMAIN_RENDERER_ROUTES`，由 smoke.spec 门禁；route-matrix liveTotal 动态求和自动一致）。
-- [ ] bug 73 模式专项检查：**媒体元素在 dialog 内加载 + 错误回退**（真实浏览器宿主，非仅单测）；carousel 外部 ComponentHandle 控制 + autoplay 切换组合。
-- [ ] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
-- [ ] 既有相关 e2e（`w4a-multimedia-family.spec.ts`）在本族改动后回归。
+- [x] 设计并实现 ≥1 个本组件真实浏览器组合宿主场景（programmatic DOM 断言，禁截图诊断）：新增 **4 个 lab 页**（`audio-lab-page.tsx`/`video-lab-page.tsx`/`carousel-lab-page.tsx`/`qrcode-lab-page.tsx`，补上维度 18 缺口——P2 低成本当场补页裁决）+ **`RENDERER_LAB_REGISTRY` 注册 4 条**（`apps/playground/src/component-lab/renderer-lab-registry.ts`，缺注册则 component-lab-page 不渲染 lab 页且 smoke 覆盖失败——C6.1/C6.2 先例均含 registry 条目）+ `data-c6c4-host.ts` 宿主 schema 模块 + CONTENT_RENDERER_ROUTES 追加 4 条（与 C6.1/C6.2/C6.3 共用常量模块——协调先例：C6.1 建模块 5 条、C6.2 追加 6 条至 11 条、C6.3 追加 3 条至 14 条，本 plan 追加至 18 条）+ `COMPONENT_LAB_COVERAGE_MANIFEST` 4 条（smoke.spec.ts 自动覆盖）+ route-matrix 计数测试同步（lab 路由不经 `DOMAIN_RENDERER_ROUTES`，由 smoke.spec 门禁；route-matrix liveTotal 动态求和自动一致）。
+- [x] bug 73 模式专项检查：**媒体元素在 dialog 内加载 + 错误回退**（真实浏览器宿主，非仅单测）；carousel 外部 ComponentHandle 控制 + autoplay 切换组合。
+- [x] 宿主场景发现的新缺陷按 Phase 2 流程修复（test-first）。
+- [x] 既有相关 e2e（`w4a-multimedia-family.spec.ts`）在本族改动后回归。
 
 Exit Criteria:
 
 > 本 Phase 交付"真实浏览器行为成立"。
 
-- [ ] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；相关既有 e2e 回归绿。
-- [ ] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
+- [x] 宿主场景 spec 通过（Playwright，programmatic DOM 断言）；相关既有 e2e 回归绿。
+- [x] bug 73 模式专项检查结论记录于 daily log（pass 或带证据 fail→已修复）。
 
 ### Phase 4 - 组件回归与审计卡 closure
 
-Status: planned
+Status: completed
 Targets: 审计卡、`docs/logs/2026/08-04.md`、`docs/backlog/component-audit-roadmap.md`（C6.4 行）
 
 - Item Types: `Proof`
 
-- [ ] 全卡复查：4 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
-- [ ] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-content test` + 相关 e2e spec 全绿（e2e 基线 full-green 929 passed/43 skipped/0 failed，本 plan 不得引入新增失败）；workspace 全量 `pnpm typecheck`/`build`/`lint`/`test` + `pnpm test:e2e` 最终以 Closure Gates 为准（指南 Minimum Rule 18：全量验证归 closure，非 Phase 默认项——此处仅作收口前置预跑）。
-- [ ] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、08-02 机制复验结论、CX-n 插入（若有）与决策、与 C6.1/C6.2/C6.3 的 CONTENT_RENDERER_ROUTES 协调结论。（`docs/logs/2026/08-04.md` C6.4 节）
-- [ ] roadmap C6.4 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；已交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）。
+- [x] 全卡复查：4 卡 18 维表结论与最终代码一致；P0/P1 清零；卡状态 `closed`（含 fixed-pending-closure → closed 流转）。
+- [x] 本组件范围回归：`pnpm --filter @nop-chaos/flux-renderers-content test` + 相关 e2e spec 全绿（e2e 基线 full-green 929 passed/43 skipped/0 failed，本 plan 不得引入新增失败）；workspace 全量 `pnpm typecheck`/`build`/`lint`/`test` + `pnpm test:e2e` 最终以 Closure Gates 为准（指南 Minimum Rule 18：全量验证归 closure，非 Phase 默认项——此处仅作收口前置预跑）。
+- [x] daily log 记录：卡 closure 汇总、修复清单（commit/plan 引用）、宿主场景结果、08-02 机制复验结论、CX-n 插入（若有）与决策、与 C6.1/C6.2/C6.3 的 CONTENT_RENDERER_ROUTES 协调结论。（`docs/logs/2026/08-04.md` C6.4 节）
+- [x] roadmap C6.4 行标 `done` 的前置：独立子 agent closure-audit pass（Closure Gates 项，不在本 plan 执行 session 内自审；已交付全部执行证据，由 mission-driver CLOSURE_VERIFY fresh session 执行 audit 后收口）。——2026-08-05 由 mission-driver closure-audit fresh session（MISSION_DRIVER:2026-08-05-065620-mission-driver）audit pass 后收口，roadmap 行已标 `done`。
 
 Exit Criteria:
 
 > 本 Phase 交付"可进入 closure-audit 的完成态"。
 
-- [ ] 4 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
-- [ ] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
+- [x] 4 张审计卡全部 `closed`；`docs/audits/per-component/` 汇总可读。
+- [x] daily log 已记录本 plan 收口证据（含 closure-audit 证据位置）。
 
 ## Draft Review Record
 
@@ -162,16 +162,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 与每个 Phase 的 Exit Criteria 全部勾选后才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 4 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`
-- [ ] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
-- [ ] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查——媒体 dialog 内加载 + 错误回退）
-- [ ] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
-- [ ] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准；无变更则不写）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 4 张审计卡存在、18 维表完整、P0/P1 清零、全部 `closed`
+- [x] 全部 in-scope P0/P1 已 test-first 修复并有回归测试；无被静默降级到 deferred 的 live defect/contract drift
+- [x] ≥1 个真实浏览器组合宿主场景通过（含 bug 73 模式专项检查——媒体 dialog 内加载 + 错误回退）
+- [x] 共性缺陷已按 §7 处理（CX-n 插入/合并或当前 plan 内修复，决策记录在卡与 daily log）
+- [x] 受影响的 owner docs 已同步到 live baseline（design.md/quick-reference/roadmap 表按发现实际影响为准；无变更则不写）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（2026-08-05 mission-driver CLOSURE_VERIFY fresh session `MISSION_DRIVER:2026-08-05-065620-mission-driver` audit pass：live repo 核对 4 卡 closed + eventContracts/scope 注入实证 + 268 unit 绿 + 宿主 e2e 4/4 与 w4a 9/9 实测 pass）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -194,16 +194,19 @@ Exit Criteria:
 - 审计中发现但裁定为 P3（风格 nit/注释）的项仅卡内记录，不处理。
 - 工具脚本新增模式（若有）记入卡内，CG 统一升级。
 - 观察（供 CLOSURE_VERIFY 核对）：`pnpm check:oversized-code-files` 为 pre-existing 红（C5.1 已记录 HEAD 基线 14 文件超 700 行），超限文件治理归 CG/CR，非本 plan scope。
+- 执行期间 c3-5-host-surfaces.spec.ts 2 项（media-rich editor，`git stash` HEAD 基线复现一致）为 pre-existing 机器负载 flake，非本族引入（C6.3 VERIFY 已记录同型）。
 
 ## Closure
 
-Status Note: 未执行（active——draft review pass 后进入执行队列，roadmap C6.4 行已标 `planned`）。
+Status Note: 已执行（四 Phase 全部 completed——4 卡 closed + P1×1 test-first 修复 + P2×9 当场修复 + 宿主 4/4 含 bug 73 专项 + 全量 typecheck/build/lint/test 绿）。closure-audit 由 mission-driver CLOSURE_VERIFY fresh session 于 2026-08-05 pass，roadmap C6.4 行已标 `done`，本 plan 正式收口。执行证据见 `docs/logs/2026/08-04.md` C6.4 节。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待定
-- Evidence: 待定
+- Auditor / Agent: mission-driver CLOSURE_VERIFY 独立 fresh session（`MISSION_DRIVER:2026-08-05-065620-mission-driver`，2026-08-05）
+- Evidence: live repo 逐项核对通过——① 4 张审计卡存在且 `closed`（`docs/audits/per-component/{audio,video,carousel,qrcode}.md`，P0 ×0 / P1 ×1 fixed / P2 全裁定）；② carousel P1-1 eventContracts onChange 实证（`content-renderer-definitions.ts:468-481` + 契约测试 `content-renderer-definitions.test.tsx:294-310`）；③ P2-3 scope 注入实证（`carousel.tsx:71-75`）；④ 4 lab 页 + `RENDERER_LAB_REGISTRY` 4 条（registry `:182-185`）+ `data-c6c4-host.ts` + `CONTENT_RENDERER_ROUTES` 18 条 + `COMPONENT_LAB_COVERAGE_MANIFEST` 4 条 + 宿主 spec `tests/e2e/component-lab/c6-4-host-surfaces.spec.ts`；⑤ 实测：`pnpm --filter @nop-chaos/flux-renderers-content test` 268/268 绿、`c6-4-host-surfaces.spec.ts` 4/4 绿（含 bug 73 模式 host-media-dialog）、`w4a-multimedia-family.spec.ts` 9/9 绿；⑥ design.md 文档补齐实证（audio/video §onLoadError、video width/height）；⑦ roadmap C6.4 行 `done`；⑧ deferred 项分类诚实（P2 aria-label backlog 归 CR、pre-existing flake/oversized-file watch-only，均 non-blocking）。
 
 Follow-up:
 
-- 待定
+- P2 backlog（carousel indicator aria-label 硬编码英文）归 CR work item 集中修复（卡内记录）。
+- `pnpm check:oversized-code-files` pre-existing 红（C5.1 基线 14 文件）与 c3-5-host-surfaces editor 2 项机器负载 flake 均为 watch-only residual，归 CG/CR。
+- no remaining plan-owned work。

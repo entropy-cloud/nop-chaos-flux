@@ -1,0 +1,50 @@
+{
+  "type": "graph",
+  "id": "traceGraph",
+  "label": "Trace 执行流",
+  "nodes": "${trace.nodes}",
+  "edges": "${trace.edges}",
+  "layout": "hierarchy",
+  "orientation": "LR",
+  "searchable": true,
+  "showControls": true,
+  "levelMap": {
+    "error": "danger",
+    "policy_violation": "danger",
+    "warning": "warning",
+    "success": "success",
+    "info": "info"
+  },
+  "onSelectionChange": {
+    "action": "setValue",
+    "args": {
+      "path": "selectedNode",
+      "value": "${event.node}"
+    }
+  },
+  "node": {
+    "type": "container",
+    "className": "min-w-40 rounded-md border border-border bg-background p-2",
+    "body": {
+      "type": "flex",
+      "direction": "column",
+      "gap": "sm",
+      "items": [
+        {
+          "type": "text",
+          "text": "${node.label}",
+          "className": "text-sm font-medium"
+        },
+        {
+          "type": "badge",
+          "level": "${node.level === 'error' || node.level === 'policy_violation' ? 'danger' : node.level === 'warning' ? 'warning' : 'info'}",
+          "text": "${node.type}"
+        }
+      ]
+    }
+  },
+  "empty": {
+    "type": "text",
+    "text": "暂无 trace 数据"
+  }
+}
