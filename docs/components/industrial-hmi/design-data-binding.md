@@ -124,6 +124,7 @@ PointStore.setPointValues(点表写入)           ← 值未变去重（deadband
 帧尾批量写入（rAF/节流窗口结束）：
   - engine.applyAttrs(Record<symbolId, Partial<ScadaSymbolProps>>)（单次批量调用，design-engine.md §8.2/§4.5 合帧义务）
   - **状态样式合帧 owner**（plan 2026-08-04-2243-1 Phase 3 W3 裁定）：active-state 样式 owner = `RefreshPipeline.collectStates`（每帧脏收集批量写，与 binding 同帧合并、状态色胜出）；退出状态恢复 base（revert）owner = `StateVisualApplier`，经同一 `collector.collect` 汇入帧尾单次写（不再 immediate `engine.applyAttrs`）。两模块对同一字段在同帧不并发写，alarm-storm（N 图元同帧状态切换）收敛为 1 次 applyAttrs/帧（消除 N+1）。
+  - **binding-vs-revert 三路裁定**（plan 2026-08-05-0653-2 Phase 4 multi P1-1）：当退出状态的 revert 字段同时存在 binding 时，**binding 胜出**——`StateVisualApplier.applyState` revert 分支检测到该字段有 binding（`instanceProps.bindings?.[key]`）时**跳过 revert collect**，因同帧 `collectBindings` 已把 binding 解析值写入 `pending`（Map last-write-wins），是正确终值。修复前 revert 覆盖 binding 值使图元 alarm→unstyled 退出时停在 base/reset 空值（Failure Paths `revert-shadows-binding`）。无 binding 时 revert 行为不变。边缘 case：binding 源点本轮未变化（collectBindings 不写入）时跳过 revert 会使引擎暂留 active 态值——pre-existing，归 follow-up。
   │
   ▼
 leafer watcher（changed<100 帧内节流）→ partLayout → partRender（合帧局部重绘）
