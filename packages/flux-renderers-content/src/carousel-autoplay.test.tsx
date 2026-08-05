@@ -400,3 +400,71 @@ describe('CarouselRenderer component handle — O-03 identity stability', () => 
     expect(handle?.capabilities?.getDebugData?.()).toMatchObject({ activeIndex: 1 });
   });
 });
+
+describe('CarouselRenderer onChange dispatch — canonical payload + evaluationBindings', () => {
+  it('dispatches onChange with {type, activeIndex, item} and event/evaluationBindings/scope ctx', () => {
+    const fake = newFakeApi();
+    mockApi = fake;
+    const onChange = vi.fn(async () => ({ ok: true }));
+    const props = createMockRendererProps<CarouselSchema>({
+      schema: { type: 'carousel' },
+      props: {
+        items: [
+          { image: '/a.png', title: 'A' },
+          { image: '/b.png', title: 'B' },
+        ],
+      },
+      events: { onChange: onChange as never },
+    });
+    // The real runtime provides nodeInstance.scope; the mock props start with
+    // an empty node, so inject a scope stub to verify the ctx injection.
+    (props.node as { scope?: unknown }).scope = { stub: true };
+    render(<CarouselRenderer {...props} />);
+
+    fake.setSnap(1);
+    act(() => {
+      fake.triggerSelect();
+    });
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const firstCall = onChange.mock.calls[0] as unknown as [unknown, unknown] | undefined;
+    const payload = firstCall?.[0] as {
+      type: string;
+      activeIndex: number;
+      item: { title: string };
+    };
+    expect(payload.type).toBe('change');
+    expect(payload.activeIndex).toBe(1);
+    expect(payload.item?.title).toBe('B');
+    // canonical key only — no redundant `index` duplicate
+    expect('index' in payload).toBe(false);
+    const ctx = firstCall?.[1] as
+      | {
+          event?: unknown;
+          evaluationBindings?: Record<string, unknown>;
+          scope?: unknown;
+        }
+      | undefined;
+    expect(ctx?.event).toBe(payload);
+    expect(ctx?.evaluationBindings?.activeIndex).toBe(1);
+    // family convention: the node scope is injected into the ctx so action
+    // args can read both event payload fields AND surrounding scope values.
+    expect(ctx?.scope).toBeTruthy();
+  });
+
+  it('does not re-dispatch onChange when embla re-selects the same slide', () => {
+    const fake = newFakeApi();
+    mockApi = fake;
+    const onChange = vi.fn(async () => ({ ok: true }));
+    const props = createMockRendererProps<CarouselSchema>({
+      schema: { type: 'carousel' },
+      props: { items: [{ image: '/a.png' }, { image: '/b.png' }] },
+      events: { onChange: onChange as never },
+    });
+    render(<CarouselRenderer {...props} />);
+
+    fake.triggerSelect();
+    fake.triggerSelect();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});

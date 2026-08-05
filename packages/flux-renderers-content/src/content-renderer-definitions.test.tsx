@@ -290,4 +290,21 @@ describe('contentRendererDefinitions', () => {
     expect(root.getAttribute('data-level')).toBe('success');
     expect(root.querySelector('[data-slot="status-badge"]')).toBeTruthy();
   });
+
+  it('carousel declares onChange eventContracts with the canonical activeIndex/item payload', () => {
+    // C6.4 P1-1: the carousel dispatches a payload-carrying onChange
+    // ({activeIndex, item} — design.md §8 single canonical key) so the
+    // definition must declare the eventContracts for the editor contract
+    // surface (cards/alert/steps family precedent).
+    const carousel = contentRendererDefinitions.find((d) => d.type === 'carousel');
+    const contracts = carousel?.eventContracts;
+    expect(contracts?.onChange).toBeTruthy();
+    const payload = contracts?.onChange?.payload;
+    expect(payload).toBeTruthy();
+    expect(payload && payload.kind === 'object' ? payload : null).toBeTruthy();
+    const fields = payload && payload.kind === 'object' ? payload.fields : undefined;
+    expect(fields?.activeIndex).toMatchObject({ kind: 'number' });
+    expect(fields?.item).toBeTruthy();
+    expect(fields && 'index' in fields).toBe(false);
+  });
 });

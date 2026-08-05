@@ -84,3 +84,7 @@ export { SeparatorLabPage } from './separator-lab-page';
 export { AlertLabPage } from './alert-lab-page';
 export { MappingLabPage } from './mapping-lab-page';
 export { StatusLabPage } from './status-lab-page';
+export { AudioLabPage } from './audio-lab-page';
+export { VideoLabPage } from './video-lab-page';
+export { CarouselLabPage } from './carousel-lab-page';
+export { QrcodeLabPage } from './qrcode-lab-page';

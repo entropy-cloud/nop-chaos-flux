@@ -91,4 +91,41 @@ describe('VideoRenderer', () => {
     const title = container.querySelector('[data-slot="video-title"]');
     expect(title?.textContent).toBe('Clip title');
   });
+
+  it('clears the error state and retries when src changes after a load failure', () => {
+    // C6.4 P2-3: the errored flag is reset on src change (useEffect [src]) so a
+    // corrected URL re-renders — the image-family sticky-errored regression
+    // (image P1-1) must not reappear here.
+    const onLoadError = vi.fn(async () => ({ ok: true }));
+    const first = createMockRendererProps<VideoSchema>({
+      schema: { type: 'video' },
+      props: { src: '/missing.mp4' },
+      events: { onLoadError: onLoadError as never },
+    });
+    const { container, rerender } = render(<VideoRenderer {...first} />);
+    fireEvent.error(videoOf(container));
+    expect(container.querySelector('[data-slot="video"][data-state="error"]')).toBeTruthy();
+
+    const second = createMockRendererProps<VideoSchema>({
+      schema: { type: 'video' },
+      props: { src: '/fixed.mp4' },
+      events: { onLoadError: onLoadError as never },
+    });
+    rerender(<VideoRenderer {...second} />);
+    const video = videoOf(container);
+    expect(video).toBeTruthy();
+    expect(video.getAttribute('src')).toBe('/fixed.mp4');
+    expect(container.querySelector('[data-slot="video"][data-state="error"]')).toBeNull();
+  });
+
+  it('passes width and height through as inline styles', () => {
+    const props = createMockRendererProps<VideoSchema>({
+      schema: { type: 'video' },
+      props: { src: '/clip.mp4', width: 640, height: '50%' },
+    });
+    const { container } = render(<VideoRenderer {...props} />);
+    const video = videoOf(container);
+    expect(video.style.width).toBe('640px');
+    expect(video.style.height).toBe('50%');
+  });
 });

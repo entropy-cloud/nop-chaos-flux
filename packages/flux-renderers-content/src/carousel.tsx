@@ -68,7 +68,11 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
         lastIndexRef.current = next;
         const item = items[next];
         const payload = { type: 'change', activeIndex: next, item };
-        void onChange?.(payload, { event: payload, evaluationBindings: payload });
+        void onChange?.(payload, {
+          event: payload,
+          evaluationBindings: payload,
+          scope: props.node.scope,
+        });
       }
     };
     onSelect();
@@ -78,7 +82,7 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
       api.off('select', onSelect);
       api.off('reInit', onSelect);
     };
-  }, [api, items, onChange]);
+  }, [api, items, onChange, props.node.scope]);
 
   // Auto-advance the carousel on an interval. O-04 / F1 / F2: honor
   // prefers-reduced-motion reactively, and pause on hover/focus and while

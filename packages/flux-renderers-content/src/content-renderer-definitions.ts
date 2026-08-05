@@ -465,6 +465,20 @@ export const contentRendererDefinitions: RendererDefinition[] = [
         editorType: 'expression',
       },
     },
+    eventContracts: {
+      onChange: {
+        displayName: 'On Change',
+        description:
+          'Dispatched when the active slide changes (embla select/autoplay/indicators/handle). Payload: { activeIndex, item } — a single canonical activeIndex key aligned with the schema/state field name.',
+        payload: {
+          kind: 'object',
+          fields: {
+            activeIndex: { kind: 'number' },
+            item: { kind: 'unknown' },
+          },
+        },
+      },
+    },
     fields: [
       { key: 'items', kind: 'prop' },
       { key: 'autoPlay', kind: 'prop', valueType: 'boolean' },

@@ -602,6 +602,38 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes:
       'Verify status inside an openDialog surface evaluates the opened row\'s scope values and projects the levelMap semantic color (C6.3)',
   },
+  {
+    id: 'audio',
+    title: 'Audio',
+    tier: 'write',
+    primaryScenario: 'Host media in dialog + error fallback (C6.4 bug 73 pattern)',
+    notes:
+      'Verify audio/video inside an openDialog surface: data-URI audio loads normally, a missing video src shows the error fallback and fires onLoadError (C6.4 bug 73 pattern)',
+  },
+  {
+    id: 'video',
+    title: 'Video',
+    tier: 'write',
+    primaryScenario: 'Host media in dialog + error fallback (C6.4 bug 73 pattern)',
+    notes:
+      'Verify the shared media dialog host scenario: native video error fallback + onLoadError inside a dialog (C6.4 bug 73 pattern)',
+  },
+  {
+    id: 'carousel',
+    title: 'Carousel',
+    tier: 'write',
+    primaryScenario: 'Host carousel external control + onChange payload (C6.4)',
+    notes:
+      'Verify external ComponentHandle next/prev/setValue drive the active slide and the onChange action args read ${activeIndex} (evaluationBindings) and ${slides.length} (scope); autoplay toggle scenario in c6-4-host-surfaces.spec.ts (C6.4)',
+  },
+  {
+    id: 'qrcode',
+    title: 'QR Code',
+    tier: 'write',
+    primaryScenario: 'Host qrcode value update + canvas redraw (C6.4)',
+    notes:
+      'Verify scope-driven value updates re-render the canvas (toDataURL differs), empty value shows the empty fallback and a valid value recovers (C6.4)',
+  },
 ];
 
 /** Quick lookup by renderer id */

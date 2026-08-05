@@ -3,13 +3,14 @@ import type { RendererRouteEntry } from './route-model.js';
 /**
  * C6.1 content text-family lab routes (markdown/html/json-view/link/image) +
  * C6.2 content status/feedback-family lab routes (card/cards/empty/progress/spinner/separator)
- * + C6.3 content value-mapping-family lab routes (alert/mapping/status).
+ * + C6.3 content value-mapping-family lab routes (alert/mapping/status)
+ * + C6.4 content media-family lab routes (audio/video/carousel/qrcode).
  * Extracted from route-model.ts to keep files within the lint max-lines budget.
  *
- * Shared constant across C6.1 (`2026-08-04-0841-2`), C6.2 (`2026-08-04-0841-3`)
- * and C6.3 (`2026-08-04-1757-1`): C6.1 landed first and created this module;
- * C6.2 appended its entries to 11, C6.3 appended to 14 (coordination record:
- * `docs/logs/2026/08-04.md` C6.1 节).
+ * Shared constant across C6.1 (`2026-08-04-0841-2`), C6.2 (`2026-08-04-0841-3`),
+ * C6.3 (`2026-08-04-1757-1`) and C6.4 (`2026-08-04-1757-2`): C6.1 landed first
+ * and created this module; C6.2 appended its entries to 11, C6.3 appended to 14,
+ * C6.4 appended to 18 (coordination record: `docs/logs/2026/08-04.md` C6.1 节).
  */
 export const CONTENT_RENDERER_ROUTES: RendererRouteEntry[] = [
   {
@@ -123,5 +124,37 @@ export const CONTENT_RENDERER_ROUTES: RendererRouteEntry[] = [
     sourcePackage: '@nop-chaos/flux-renderers-content',
     description:
       'Business status display (display-only): labelMap/levelMap/iconMap projection onto the Badge primitive with semantic colors and placeholder miss fallback.',
+  },
+  {
+    id: 'audio',
+    title: 'Audio',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    description:
+      'Audio media renderer: native <audio> element with src/poster/autoPlay/loop/controls passthrough, empty/error fallback states and onLoadError.',
+  },
+  {
+    id: 'video',
+    title: 'Video',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    description:
+      'Video media renderer: native <video> element with src/poster/muted/width/height passthrough, empty/error fallback states and onLoadError.',
+  },
+  {
+    id: 'carousel',
+    title: 'Carousel',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    description:
+      'Embla-backed slide carousel: items with image/title/caption, indicators, prev/next controls, WCAG 2.2.2 autoplay and component:next/prev/setValue handles.',
+  },
+  {
+    id: 'qrcode',
+    title: 'QR Code',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    description:
+      'Canvas-based QR code renderer: value/size/level/foreground/background, label value-or-region, empty/error fallback states and value-change redraw.',
   },
 ];

@@ -8,7 +8,15 @@ import type { QrCodeSchema } from './schemas.js';
 // Controllable qrcode module mock: by default delegates to the real implementation
 // (so existing canvas-rendering tests stay green); flipping `failGeneration` makes
 // `toCanvas` reject so the onLoadError path can be exercised deterministically.
-const qrMock = vi.hoisted(() => ({ failGeneration: false }));
+// `renderedValues` records every value passed to toCanvas so value-change redraw
+// echoes can be asserted behaviorally. `resolveSilently` bypasses the real draw
+// (happy-dom's canvas getContext('2d') is null, so the real lib rejects) for the
+// redraw tests, which assert the CALL sequence rather than the drawn pixels.
+const qrMock = vi.hoisted(() => ({
+  failGeneration: false,
+  resolveSilently: false,
+  renderedValues: [] as string[],
+}));
 
 vi.mock('qrcode', async (importOriginal) => {
   const actual = (await importOriginal()) as {
@@ -18,8 +26,12 @@ vi.mock('qrcode', async (importOriginal) => {
     default: {
       ...actual.default,
       toCanvas: vi.fn((...args: never[]) => {
+        qrMock.renderedValues.push(String(args[1]));
         if (qrMock.failGeneration) {
           return Promise.reject(new Error('encode failed'));
+        }
+        if (qrMock.resolveSilently) {
+          return Promise.resolve();
         }
         return actual.default.toCanvas(...args);
       }),
@@ -30,6 +42,8 @@ vi.mock('qrcode', async (importOriginal) => {
 afterEach(() => {
   cleanup();
   qrMock.failGeneration = false;
+  qrMock.resolveSilently = false;
+  qrMock.renderedValues = [];
 });
 
 function canvasOf(container: HTMLElement) {
@@ -146,5 +160,60 @@ describe('QrCodeRenderer', () => {
     expect(fallback?.querySelector('[data-slot="qrcode-fallback"]')?.textContent).toBe(
       t('flux.common.loadFailed'),
     );
+  });
+
+  it('re-renders the canvas when the value changes (value echo redraw)', async () => {
+    // C6.4 P2-3: the canvas draw effect depends on valueStr, so a scope-driven
+    // value update must re-render the QR matrix with the new payload. The draw
+    // is bypassed (resolveSilently) because happy-dom's canvas 2d context is
+    // null — this test asserts the toCanvas CALL sequence, not the pixels.
+    qrMock.resolveSilently = true;
+    const props = createMockRendererProps<QrCodeSchema>({
+      schema: { type: 'qrcode' },
+      props: { value: 'first-value' },
+    });
+    const { container, rerender } = render(<QrCodeRenderer {...props} />);
+    await waitFor(() => {
+      expect(canvasOf(container)).not.toBeNull();
+    });
+    expect(qrMock.renderedValues).toEqual(['first-value']);
+
+    const next = createMockRendererProps<QrCodeSchema>({
+      schema: { type: 'qrcode' },
+      props: { value: 'second-value' },
+    });
+    rerender(<QrCodeRenderer {...next} />);
+    await waitFor(() => {
+      expect(qrMock.renderedValues).toEqual(['first-value', 'second-value']);
+    });
+  });
+
+  it('recovers from a failed render when the value changes', async () => {
+    qrMock.failGeneration = true;
+    qrMock.resolveSilently = true;
+    const onLoadError = vi.fn(async () => ({ ok: true }));
+    const first = createMockRendererProps<QrCodeSchema>({
+      schema: { type: 'qrcode' },
+      props: { value: 'fail-me' },
+      events: { onLoadError: onLoadError as never },
+    });
+    const { container, rerender } = render(<QrCodeRenderer {...first} />);
+    await waitFor(() => {
+      expect(onLoadError).toHaveBeenCalledTimes(1);
+    });
+    expect(container.querySelector('[data-slot="qrcode"][data-state="error"]')).toBeTruthy();
+
+    qrMock.failGeneration = false;
+    const second = createMockRendererProps<QrCodeSchema>({
+      schema: { type: 'qrcode' },
+      props: { value: 'fixed-value' },
+      events: { onLoadError: onLoadError as never },
+    });
+    rerender(<QrCodeRenderer {...second} />);
+    await waitFor(() => {
+      expect(canvasOf(container)).not.toBeNull();
+    });
+    expect(container.querySelector('[data-slot="qrcode"][data-state="error"]')).toBeNull();
+    expect(onLoadError).toHaveBeenCalledTimes(1);
   });
 });

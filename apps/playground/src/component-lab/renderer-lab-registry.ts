@@ -86,6 +86,10 @@ import {
   AlertLabPage,
   MappingLabPage,
   StatusLabPage,
+  AudioLabPage,
+  VideoLabPage,
+  CarouselLabPage,
+  QrcodeLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -175,4 +179,8 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   alert: AlertLabPage,
   mapping: MappingLabPage,
   status: StatusLabPage,
+  audio: AudioLabPage,
+  video: VideoLabPage,
+  carousel: CarouselLabPage,
+  qrcode: QrcodeLabPage,
 };

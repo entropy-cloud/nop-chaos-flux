@@ -92,4 +92,41 @@ describe('AudioRenderer', () => {
     const title = container.querySelector('[data-slot="audio-title"]');
     expect(title?.textContent).toBe('Track title');
   });
+
+  it('clears the error state and retries when src changes after a load failure', () => {
+    // C6.4 P2-3: the errored flag is reset on src change (useEffect [src]) so a
+    // corrected URL re-renders — the image-family sticky-errored regression
+    // (image P1-1) must not reappear here.
+    const onLoadError = vi.fn(async () => ({ ok: true }));
+    const first = createMockRendererProps<AudioSchema>({
+      schema: { type: 'audio' },
+      props: { src: '/missing.mp3' },
+      events: { onLoadError: onLoadError as never },
+    });
+    const { container, rerender } = render(<AudioRenderer {...first} />);
+    fireEvent.error(audioOf(container));
+    expect(container.querySelector('[data-slot="audio"][data-state="error"]')).toBeTruthy();
+
+    const second = createMockRendererProps<AudioSchema>({
+      schema: { type: 'audio' },
+      props: { src: '/fixed.mp3' },
+      events: { onLoadError: onLoadError as never },
+    });
+    rerender(<AudioRenderer {...second} />);
+    const audio = audioOf(container);
+    expect(audio).toBeTruthy();
+    expect(audio.getAttribute('src')).toBe('/fixed.mp3');
+    expect(container.querySelector('[data-slot="audio"][data-state="error"]')).toBeNull();
+  });
+
+  it('renders the poster image alongside the media element', () => {
+    const props = createMockRendererProps<AudioSchema>({
+      schema: { type: 'audio' },
+      props: { src: '/clip.mp3', poster: '/cover.png' },
+    });
+    const { container } = render(<AudioRenderer {...props} />);
+    const poster = container.querySelector('img[data-slot="audio-poster"]') as HTMLImageElement;
+    expect(poster).toBeTruthy();
+    expect(poster.getAttribute('src')).toBe('/cover.png');
+  });
 });
