@@ -321,3 +321,21 @@ packages/flux-renderers-industrial/src/engine/          （域核心，无 React
 | I14   | 性能基准固化与优化（吞吐/显示 fps 双口径，A4），复用 spike 工程测量方法         |
 | I15.2 | 文档收尾与架构同步（若设计冲突）                                                |
 | I16   | 编辑器后继 mission（sky 层 Editor 覆盖物模型已预留，research-summary §4.1 E12） |
+
+## 13. 附录：LeaferJS 官方示例对照
+
+> 登记时间：2026-08-05（I17.2）。列出与本引擎层设计最相关的 LeaferJS 官方示例/文档链接，供维护者快速锚定 LeaferJS 原生能力用法（对照引擎层各章节）。**定性**：LeaferJS 官方示例是通用 Canvas 能力展示，**无 HMI / 工业组态行业示例**（roadmap I17.2 关键定性）——HMI 组态语义层（点表/状态机动画/符号语义/组态 JSON/React 桥接）全部自研（§2）。版本基线：v2.2.9。
+
+| #   | 官方示例/文档                                                                      | 引擎层对照章节                                   | 用途                                                                                                                |
+| --- | ---------------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| 1   | 创建 App 应用 — `https://www.leaferjs.com/ui/guide/advanced/app.html`              | §4.2 实例生命周期（App 三图层 ground/tree/sky）  | App 创建参数、三层模型，对应引擎 `ScadaCanvasEngine.create` 装配                                                    |
+| 2   | 缩放平移视图 — `https://www.leaferjs.com/ui/guide/advanced/viewport.html`          | §4.4 世界↔视口坐标变换                           | 视口平移/缩放交互，对应引擎 `setViewport`/`zoomAt`/`fit`/`center`                                                   |
+| 3   | 转换坐标 — `https://www.leaferjs.com/ui/guide/advanced/coordinate.html`            | §4.4 坐标工具（worldToViewport/viewportToWorld） | 世界↔视口坐标换算，对应引擎纯逻辑坐标工具                                                                           |
+| 4   | 获取包围盒 — `https://www.leaferjs.com/ui/guide/advanced/bounds.html`              | §4.6 命中策略（bounds 预检）+ §6 交互覆盖层      | 包围盒计算，对应命中两阶段预检与 sky 覆盖物几何                                                                     |
+| 5   | 局部渲染 — `https://www.leaferjs.com/ui/guide/advanced/partRender.html`            | §4.5 渲染循环与脏区/局部重绘                     | 脏区合并重绘，对应引擎合帧义务与渲染性能策略                                                                        |
+| 6   | Group（组元素） — `https://www.leaferjs.com/ui/reference/display/Group.html`       | §4.3 场景树组织 + §6 图元层                      | Group 子树，对应符号工厂实例化与节点索引                                                                            |
+| 7   | viewport 插件（视口） — `https://www.leaferjs.com/ui/plugin/in/viewport/`          | §4.4 视口交互核对结论（zoomLayer 矩阵）          | 插件 wheel/pinch 交互与 zoomLayer 矩阵语义，对应引擎视口兜底钳制                                                    |
+| 8   | 图形编辑器（Editor 插件） — `https://www.leaferjs.com/ui/guide/plugin/editor.html` | §2 决策表（Editor 插件本期不启用）+ §12.3 I16    | 编辑器交互能力对照，对应后继 mission「直接复用 leafer-editor vs 自研」决策（playground `#/leafer-examples` 对照页） |
+| 9   | 自动布局（Flow 插件） — `https://www.leaferjs.com/ui/guide/plugin/flow.html`       | §12.3 I16（编辑器后继 mission）                  | Flow 自动布局能力，编辑器 mission 立项前对照评估                                                                    |
+
+> 综合入口：[官方示例库](https://www.leaferjs.com/examples/) · [Playground 在线调试](https://www.leaferjs.com/playground/) · [API 参考](https://www.leaferjs.com/api/)。长期作为 LeaferJS 升级版本（如未来 v3）的回归对照基线（I17.3 playground `#/leafer-examples` 路由）。

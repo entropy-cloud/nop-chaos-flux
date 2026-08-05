@@ -1,6 +1,6 @@
 # 17 Demo 视觉优化、参考资源登记与 LeaferJS 对照页（I17）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-05
 > Source: `docs/components/roadmap-industrial-hmi.md` I17（Phase Status / Work Items I17.1–I17.3 / Phase Details / Dependency Graph；2026-08-05 立项，Rule 3 结构性调整经人工确认）
 > Mission: industrial-hmi
@@ -71,49 +71,49 @@
 
 ### Phase 1 - scada-demo 坐标重排（I17.1）
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/pages/scada-demo.tsx`、`tests/e2e/scada-demo.spec.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] **Fix**：对 `symbols` 数组做一次坐标重排——参考 LeaferJS Playground 图元样式 + meta2d.js `packages/core/src/diagrams/` 图元形态，8px 对齐基线统一、管道路径轨迹连续（设备-管道连接点几何对齐，如 pump-1 出口 → valve-1 入口 → junction-1 → gauge-1 管链连续）、设备间距规范、文本标签锚定到设备 bounds（消除漂移）；canvas 900×480 + `viewport:{fit:'contain'}` 保持。
-- [ ] **Fix（e2e 坐标同步）**：`tests/e2e/scada-demo.spec.ts` 硬编码 world 坐标按重排后图元中心重算同步（`pump-1` 中心 `:136/:274/:311`、`motor-1` 中心 `:252`，及其余 `clickSymbolAtWorld` 调用）。
-- [ ] **Proof（不变性守护）**：重排前后 `scada-demo.tsx` 内 diff 仅含 x/y/width/height（及必要的 custom.openRatio/points 几何对齐量），`tests/e2e/scada-demo.spec.ts` 内 diff 仅含对应 world 坐标数字——**所有 id/type/testid/bindings/events/点表声明字段零改动**（人工核对 + scoped e2e 回归：`scada-demo` 家族 testid 点击 `scada-btn-*`、设备点击 openDialog、视口 fit/center 命令仍绿）。
+- [x] **Fix**：对 `symbols` 数组做一次坐标重排——参考 LeaferJS Playground 图元样式 + meta2d.js `packages/core/src/diagrams/` 图元形态，8px 对齐基线统一、管道路径轨迹连续（设备-管道连接点几何对齐，如 pump-1 出口 → valve-1 入口 → junction-1 → gauge-1 管链连续）、设备间距规范、文本标签锚定到设备 bounds（消除漂移）；canvas 900×480 + `viewport:{fit:'contain'}` 保持。
+- [x] **Fix（e2e 坐标同步）**：`tests/e2e/scada-demo.spec.ts` 硬编码 world 坐标按重排后图元中心重算同步（`pump-1` 中心 `:136/:274/:311`、`motor-1` 中心 `:252`，及其余 `clickSymbolAtWorld` 调用）。
+- [x] **PROOF（不变性守护）**：重排前后 `scada-demo.tsx` 内 diff 仅含 x/y/width/height（及必要的 custom.openRatio/points 几何对齐量），`tests/e2e/scada-demo.spec.ts` 内 diff 仅含对应 world 坐标数字——**所有 id/type/testid/bindings/events/点表声明字段零改动**（人工核对 + scoped e2e 回归：`scada-demo` 家族 testid 点击 `scada-btn-*`、设备点击 openDialog、视口 fit/center 命令仍绿）。
 
 Exit Criteria:
 
-- [ ] scada-demo 设备-管道-文本标签几何连续、8px 对齐，视觉「画乱」消除。
-- [ ] `tests/e2e/scada-demo.spec.ts` world 坐标同步重排后几何，scoped scada e2e（demo 家族）全绿，testid/bindings/events 语义不变（`scada-demo.tsx` diff 仅几何字段 + spec diff 仅坐标数字）。
+- [x] scada-demo 设备-管道-文本标签几何连续、8px 对齐，视觉「画乱」消除。
+- [x] `tests/e2e/scada-demo.spec.ts` world 坐标同步重排后几何，scoped scada e2e（demo 家族）全绿，testid/bindings/events 语义不变（`scada-demo.tsx` diff 仅几何字段 + spec diff 仅坐标数字）。
 
 ### Phase 2 - 参考资源附录登记（I17.2）
 
-Status: planned
+Status: completed
 Targets: `docs/components/industrial-hmi/design-engine.md`、`docs/components/industrial-hmi/design-symbols.md`
 
 - Item Types: `Fix`
 
-- [ ] **Fix**：`design-engine.md` 新增「官方示例对照」附录——列出最相关 6–8 个 LeaferJS 官方示例链接（创建 App / 缩放平移视图 / 转换坐标 / 获取包围盒 / 局部渲染 / Group / Editor / Flow 自动布局 / viewport 插件），供维护者快速锚定 LeaferJS 原生能力用法。
-- [ ] **Fix**：`design-symbols.md` 新增「第三方图元库参考」附录——meta2d.js diagrams / FUXA SVG 图元库 / OSHMI 三项 + 定性（**关键定性**：LeaferJS 官方示例无 HMI 行业示例；meta2d 亦无 HMI 设备图元；FUXA 是 MIT SCADA/HMI 平台含真实工艺画面；OSHMI GPL-3.0 仅设计层参考）。
+- [x] **Fix**：`design-engine.md` 新增「官方示例对照」附录——列出最相关 6–8 个 LeaferJS 官方示例链接（创建 App / 缩放平移视图 / 转换坐标 / 获取包围盒 / 局部渲染 / Group / Editor / Flow 自动布局 / viewport 插件），供维护者快速锚定 LeaferJS 原生能力用法。
+- [x] **Fix**：`design-symbols.md` 新增「第三方图元库参考」附录——meta2d.js diagrams / FUXA SVG 图元库 / OSHMI 三项 + 定性（**关键定性**：LeaferJS 官方示例无 HMI 行业示例；meta2d 亦无 HMI 设备图元；FUXA 是 MIT SCADA/HMI 平台含真实工艺画面；OSHMI GPL-3.0 仅设计层参考）。
 
 Exit Criteria:
 
-- [ ] 两份 design 文档附录落地，链接经核对有效，定性表述与 roadmap I17.2 一致。
+- [x] 两份 design 文档附录落地，链接经核对有效，定性表述与 roadmap I17.2 一致。
 
 ### Phase 3 - playground LeaferJS 对照页（I17.3）
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/pages/leafer-examples-demo.tsx`（新）、`apps/playground/src/route-model.ts`、`apps/playground/src/App.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] **Fix**：新增 `leafer-examples-demo.tsx`，直接跑 LeaferJS 官方基础示例代码（创建 App / Rect / 动画 / 视口 / Editor / Flow 等）；复核 `leafer-ui` 依赖在 `flux-renderers-industrial` 包内（playground 经包传递可用，无需 playground 重复引入）。
-- [ ] **Fix**：`route-model.ts` 新增 `leafer-examples` 条目（perf-scale 式非 card 路由列表，适当 eyebrow 如 'Reference'），**不进 home 卡片**；`App.tsx` import + `case 'leafer-examples'` 注册路由。
-- [ ] **Proof**：新路由渲染 smoke（`#/leafer-examples` 可达，canvas 存在性断言 + 至少一个官方示例渲染出非空 canvas）；不破坏既有 playground 路由。
+- [x] **Fix**：新增 `leafer-examples-demo.tsx`，直接跑 LeaferJS 官方基础示例代码（创建 App / Rect / 动画 / 视口 / Editor / Flow 等）；复核 `leafer-ui` 依赖在 `flux-renderers-industrial` 包内（playground 经包传递可用，无需 playground 重复引入）。
+- [x] **Fix**：`route-model.ts` 新增 `leafer-examples` 条目（perf-scale 式非 card 路由列表，适当 eyebrow 如 'Reference'），**不进 home 卡片**；`App.tsx` import + `case 'leafer-examples'` 注册路由。
+- [x] **PROOF**：新路由渲染 smoke（`#/leafer-examples` 可达，canvas 存在性断言 + 至少一个官方示例渲染出非空 canvas）；不破坏既有 playground 路由。
 
 Exit Criteria:
 
-- [ ] `#/leafer-examples` 路由可达、跑 LeaferJS 官方基础示例、canvas 存在性 smoke 通过。
-- [ ] 新路由不进 home 卡片（route-model 列表归属核对），既有 playground 路由不回归。
+- [x] `#/leafer-examples` 路由可达、跑 LeaferJS 官方基础示例、canvas 存在性 smoke 通过。
+- [x] 新路由不进 home 卡片（route-model 列表归属核对），既有 playground 路由不回归。
 
 ## Draft Review Record
 
@@ -130,16 +130,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 及每个 Phase Exit Criteria 全 `[x]` 后方可 `Plan Status: completed`。全量验证归此处（plan guide Minimum Rule 18）。
 
-- [ ] scada-demo 坐标重排完成，视觉「画乱」消除，testid/bindings/events 语义不变。
-- [ ] `design-engine.md`/`design-symbols.md` 参考资源附录落地，链接有效、定性准确。
-- [ ] `#/leafer-examples` 路由可达、跑官方示例、不进 home 卡片。
-- [ ] owner docs 与 live baseline 一致（无残留「画乱」表述）。
-- [ ] 不存在被静默降级到 deferred 的 in-scope 项。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] scada-demo 坐标重排完成，视觉「画乱」消除，testid/bindings/events 语义不变。
+- [x] `design-engine.md`/`design-symbols.md` 参考资源附录落地，链接有效、定性准确。
+- [x] `#/leafer-examples` 路由可达、跑官方示例、不进 home 卡片。
+- [x] owner docs 与 live baseline 一致（无残留「画乱」表述）。
+- [x] 不存在被静默降级到 deferred 的 in-scope 项。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -155,13 +155,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 完成（2026-08-06）。三 Phase 全绿：scada-demo 坐标重排（管道统一 y=232、设备-管道几何连续、8px 对齐、文本标签锚定设备 bounds，testid/bindings/events 零改动）+ e2e 坐标同步（pump-1/motor-1 中心重算）；design-engine.md §13 官方示例对照附录（9 链接）+ design-symbols.md §13 第三方图元库参考附录（meta2d/FUXA/OSHMI + 定性）；playground #/leafer-examples 独立路由（不进 home 卡片）跑 LeaferJS 官方基础示例。leafer-ui + @leafer-in/view + @leafer-in/animate 作为 playground 直接依赖引入（v2.2.9，lazy-loaded 隔离保持 App 单测 leafer-free）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent fresh session>>
-- Evidence: <<task id / daily log / findings 摘要>>
+- Auditor / Agent: fresh session `ses_02c871be4ffeTr1Sx3cbR9Cdlm`（independent closure-audit，非执行 session）
+- Evidence: verdict `pass`（0 Blocker / 0 Major / 2 Minor 记录性）。逐项核验：① Phase 1 不变性——`git diff scada-demo.tsx` 仅 x/y/width/height + text x/y，id/type/testid/bindings/events/custom/text/textSize/textColor 零改动，管道全 y=232 且链 x:0→800 几何连续，e2e pump-1 中心 (236,232)×3 / motor-1 中心 (408,80)×1 同步；② Phase 2 两份附录链接有效、定性与 roadmap I17.2 一致；③ Phase 3 route-model 有 leafer-examples 条目、home-page NAV_CARDS 无此路由（不进卡片）、App.tsx lazy import + case 齐全、4 示例渲染；④ 无静默降级 in-scope 项。独立 typecheck pass。M1（roadmap I17 待翻 done）+ M2（leafer-ui 直接依赖记录，非违规）均为记录性，已在本 Status Note 回写。
 
 Follow-up:
 
-- <<no remaining plan-owned work 或具体 successor>>
+- 无剩余 plan-owned 工作。编辑器交互按 `editor-initiation.md` 独立后继 mission（`missions/industrial-hmi-editor.json`）编排，不在本 work item。

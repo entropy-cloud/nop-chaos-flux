@@ -77,7 +77,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **I14. Benchmark 与性能优化** (`done`)
 - **I15. 测试补强、文档与收尾** (`done`)
 - **I16. 组态编辑器后继 mission 立项入口** (`done`) <!-- 预留：仅产出立项材料，不实现；`todo → planned` 于 plan-2026-08-04-0902-2 激活期回写（I3/I15 先例），`planned → done` 由独立 closure-audit（task `ses_03540a864ffeYfVV7vgePBRGY3`）核验后回写（2026-08-04） -->
-- **I17. Demo 视觉优化、参考资源登记与 LeaferJS 对照页** (`todo`) <!-- 2026-08-05 立项：Rule 3 结构性调整（新增 work item）经人工确认；合一 4 类轻量发现（scada-demo 硬编码坐标重排 + design-engine/design-symbols 参考资源附录 + playground leafer-examples 路由）；编辑器实现不在此 work item（按 editor-initiation.md 独立后继 mission）；依赖 I15（文档收尾 + 测试基线就绪） -->
+- **I17. Demo 视觉优化、参考资源登记与 LeaferJS 对照页** (`done`) <!-- 2026-08-05 立项：Rule 3 结构性调整（新增 work item）经人工确认；合一 4 类轻量发现（scada-demo 硬编码坐标重排 + design-engine/design-symbols 参考资源附录 + playground leafer-examples 路由）；编辑器实现不在此 work item（按 editor-initiation.md 独立后继 mission）；依赖 I15（文档收尾 + 测试基线就绪）；2026-08-06 完成（plan 2026-08-05-2129-2 closure-audit approved，full-green: typecheck/build/lint/test 32+32+32+59 + scada-demo e2e 12/12 + leafer-examples e2e 2/2 + playground-entry-pages 67/67） -->
 - **I18. 表达式一元化与点表可选间接层** (`done`) <!-- 2026-08-05 立项：Rule 3 结构性调整（新增 work item）经人工确认（讨论文档 `docs/discussions/2026-08-05-industrial-hmi-expression-convergence-discussion.md` D1-D6）；弃用 `@{pointId}` 自定义表达式语法与 `$xxx` 简写（与平台保留 `$` 内置命名空间冲突，flux-formula.md:196,205），统一为平台唯一语法 `${expr}`；点表降级为可选间接层（`variables` 可缺省、绑定直连 scope/data-source）；移除 `binding/expression-evaluator.ts`（依赖收集改 flux 探针 + generation 失效，环检测保留）；高频遥测 INV-4 out-of-band 通道不变；依赖 I6/I10/I15（binding/桥接/基线）；2026-08-06 完成（plan 2026-08-05-2129-1 closure-audit approved，full-green: typecheck/build/lint/test 32+32+32+59 + scada e2e 21/21） -->
 
 ## Current Baseline

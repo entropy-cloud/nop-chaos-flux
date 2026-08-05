@@ -254,3 +254,15 @@ packages/flux-renderers-industrial/src/symbols/       （域核心，无 React �
 | I8.3      | 复合图元（group/instance/属性覆盖，本档 §4.3）                                                                    |
 | I9.1–I9.4 | 设备/仪表/传感控制/管道图元库（本档 §4.4 分类）——**已完成（2026-08-04，I9 plan 收口，24 内置符号）**              |
 | I8/I9 后  | 评估 `scada-symbol` 图元级 type 注册契约（讨论 §九 待定事项）——**已评估（2026-08-04）：裁定不注册，依据见 §12.2** |
+
+## 13. 附录：第三方图元库参考
+
+> 登记时间：2026-08-05（I17.2）。列出与图元模型设计相关的第三方图元库/SCADA 平台参考资源及定性，供图元库扩展（I8/I9 后继）与编辑器 mission（I16 后继）决策对照。**关键定性**（roadmap I17.2）：LeaferJS 官方示例无 HMI 行业示例（见 design-engine.md §13）；meta2d 亦无 HMI 设备图元；FUXA 是 MIT SCADA/HMI 平台含真实工艺画面；OSHMI GPL-3.0 仅设计层参考。
+
+| #   | 第三方库/平台                                                                                    | 许可证  | 定性（HMI 相关性）                                                                                    | 参考价值                                                                                                                                                                           |
+| --- | ------------------------------------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **meta2d.js** diagrams — `https://github.com/lealife/meta2d.js`（`packages/core/src/diagrams/`） | MIT     | 通用组态图元库（基础几何/箭头/连线/DOM 型/组合），**无 HMI 设备图元**（泵/阀/电机等）                 | 图元注册机制蓝本（§2 Pen `register` + parentId/children 组合），已吸收为本档 `registerScadaSymbol`（§4.1）；图元形态参考（I17.1 坐标重排对照 meta2d diagrams 图元样式）            |
+| 2   | **FUXA** SVG 图元库 — `https://github.com/frangoteam/FUXA`（`src/app/gauges/`）                  | MIT     | **真实 SCADA/HMI 平台**，含工业工艺画面（储罐/管道/泵/阀/仪表 SVG 图元库 + Alarms/Tags 实时数据绑定） | 状态色/报警闪烁蓝本（§10 状态样式解析，FUXA 报警变色）；SVG 图元形态参考（真实工艺画面布局，I17.1 坐标重排参考）；GaugeSettings id/type/property 注册进 GaugesManager（§2 已对照） |
+| 3   | **OSHMI** — `https://github.com/riclolsen/OSHMI`                                                 | GPL-3.0 | 开源 HMI/SCADA（Open Substation HMI），含变电站工艺画面                                               | **仅设计层参考**（GPL-3.0 与本项目 MIT 不兼容，不可引入源码）；工艺画面布局/图元组织思路参考（I0 已下载，本计划仅登记定性）                                                        |
+
+> **吸收结论**：本档图元模型（§4 ScadaSymbolProps schema 分层 + §4.1 `registerScadaSymbol` 注册机制 + §4.3 group/instance 复合 + §10 状态样式解析）已综合 meta2d Pen 字段分层、FUXA GaugesManager 注册与状态色、leafer `@registerUI` tag 工厂的蓝本（§2 决策表）。第三方图元库参考为**设计输入**，不引入第三方源码（I0 调研已下载，本计划仅登记参考链接 + 定性）。
