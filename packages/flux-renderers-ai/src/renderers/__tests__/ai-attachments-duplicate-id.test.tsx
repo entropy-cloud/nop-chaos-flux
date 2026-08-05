@@ -35,7 +35,14 @@ function harness(events: Record<string, (...args: unknown[]) => unknown> = {}) {
         abortRequest: async () => undefined,
       }}
     >
-      <Attachments props={{}} meta={{ className: '', testid: '' }} regions={{}} events={events} path="/x" />
+      <Attachments
+        props={{}}
+        meta={{ className: '', testid: '' }}
+        regions={{}}
+        events={events}
+        path="/x"
+        node={{ scope: undefined }}
+      />
     </AiChatProvider>,
   );
 }

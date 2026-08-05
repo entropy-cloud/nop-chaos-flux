@@ -99,3 +99,8 @@ export { AiMessageListLabPage } from './ai-message-list-lab-page';
 export { AiBubbleLabPage } from './ai-bubble-lab-page';
 export { AiSenderLabPage } from './ai-sender-lab-page';
 export { AiConversationsLabPage } from './ai-conversations-lab-page';
+export { AiToolCallLabPage } from './ai-tool-call-lab-page';
+export { AiAttachmentsLabPage } from './ai-attachments-lab-page';
+export { AiCitationsLabPage } from './ai-citations-lab-page';
+export { AiFeedbackLabPage } from './ai-feedback-lab-page';
+export { AiTokenUsageLabPage } from './ai-token-usage-lab-page';

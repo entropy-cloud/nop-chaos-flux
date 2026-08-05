@@ -1,11 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import type { FluxActionEvent, RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { File as FileIcon, ImageIcon, Paperclip, X } from 'lucide-react';
+import { File as FileIcon, ImageIcon, Loader2, Paperclip, TriangleAlert, X } from 'lucide-react';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
 import type { ChatMessageContentPart } from '../engine/types.js';
 import type { AiAttachmentsSchema, AiAttachmentItem } from '../schemas.js';
+
+/**
+ * C8.2 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
+ * carries `{ event, evaluationBindings, scope }` so action-args templates can
+ * read `${attachments}` / `${reason}` (ai-conversations.tsx:29-33 precedent).
+ */
+function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
+  return {
+    event: payload as FluxActionEvent,
+    evaluationBindings: payload,
+    scope: nodeScope,
+  };
+}
 
 /**
  * Runtime attachment model (renderers.md §9.1). Mirrors the serializable
@@ -77,7 +90,8 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
 
   function reportChange(next: AiAttachment[]) {
     if (!controlledValue) setInternalAttachments(next);
-    void props.events.onChange?.({ type: 'ai:attachments-change', attachments: next });
+    const payload = { type: 'ai:attachments-change', attachments: next };
+    void props.events.onChange?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
   }
 
   function addFiles(incoming: File[]) {
@@ -109,10 +123,12 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
       reportChange([...attachments, ...accepted]);
     }
     if (tooLarge) {
-      void props.events.onError?.({ type: 'ai:attachments-error', reason: 'attachment-too-large' });
+      const errorPayload = { type: 'ai:attachments-error', reason: 'attachment-too-large' };
+      void props.events.onError?.(errorPayload, dispatchCtx(errorPayload, props.node.scope as ScopeRef | undefined));
     }
     if (tooMany) {
-      void props.events.onError?.({ type: 'ai:attachments-error', reason: 'attachment-too-many' });
+      const errorPayload = { type: 'ai:attachments-error', reason: 'attachment-too-many' };
+      void props.events.onError?.(errorPayload, dispatchCtx(errorPayload, props.node.scope as ScopeRef | undefined));
     }
   }
 
@@ -169,7 +185,8 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
     // imperatively-invoked path and any future trigger.
     if (ctx?.isProcessing) return;
     const imageAttachments = attachments.filter((a) => isImageMime(a.contentType) || isImageExt(a.name));
-    void props.events.onUpload?.({ type: 'ai:attachments-upload', attachments });
+    const uploadPayload = { type: 'ai:attachments-upload', attachments };
+    void props.events.onUpload?.(uploadPayload, dispatchCtx(uploadPayload, props.node.scope as ScopeRef | undefined));
     if (imageAttachments.length > 0 && ctx) {
       const parts: ChatMessageContentPart[] = imageAttachments.map((a) => ({
         type: 'image_url',
@@ -267,13 +284,18 @@ function AttachmentItemView(props: {
   const { attachment, mode, onRemove } = props;
   if (mode === 'image' && (isImageMime(attachment.contentType) || isImageExt(attachment.name))) {
     return (
-      <div className="group relative" data-slot="ai-attachments-item">
+      <div
+        className="group relative"
+        data-slot="ai-attachments-item"
+        data-status={attachment.status ?? undefined}
+      >
         <img
           src={attachment.url}
           alt={attachment.name ?? ''}
           className="h-20 w-20 rounded object-cover"
           data-slot="ai-attachments-thumb"
         />
+        <AttachmentStatus status={attachment.status} mode="image" />
         <Button
           type="button"
           variant="ghost"
@@ -292,6 +314,7 @@ function AttachmentItemView(props: {
     <div
       className="flex items-center gap-2 rounded border border-border p-2 text-xs"
       data-slot="ai-attachments-item"
+      data-status={attachment.status ?? undefined}
     >
       {isImageMime(attachment.contentType) ? (
         <ImageIcon className="h-4 w-4" />
@@ -302,6 +325,7 @@ function AttachmentItemView(props: {
       {typeof attachment.size === 'number' ? (
         <span className="text-muted-foreground">{formatBytes(attachment.size)}</span>
       ) : null}
+      <AttachmentStatus status={attachment.status} mode="card" />
       <Button
         type="button"
         variant="ghost"
@@ -315,6 +339,35 @@ function AttachmentItemView(props: {
       </Button>
     </div>
   );
+}
+
+/**
+ * C8.2 P1-2: host-driven upload `status` (renderers.md §9.1 model) must be
+ * visible — `uploading` shows a pending spinner + copy, `error` a destructive
+ * alert + copy (retry = re-click the upload button).
+ */
+function AttachmentStatus({ status, mode }: { status?: AiAttachment['status']; mode: 'image' | 'card' }): React.ReactElement | null {
+  if (status === 'uploading') {
+    return (
+      <span className="flex items-center gap-1 text-[10px] text-muted-foreground" data-slot="ai-attachments-status">
+        <Loader2 className={mode === 'image' ? 'h-3 w-3 animate-spin' : 'h-3 w-3 animate-spin'} aria-hidden="true" />
+        {mode === 'image' ? null : t('flux.ai.uploading')}
+      </span>
+    );
+  }
+  if (status === 'error') {
+    return (
+      <span
+        className="flex items-center gap-1 text-[10px] text-destructive"
+        data-slot="ai-attachments-status"
+        data-status="error"
+      >
+        <TriangleAlert className="h-3 w-3" aria-hidden="true" />
+        {t('flux.ai.uploadFailed')}
+      </span>
+    );
+  }
+  return null;
 }
 
 /** Assemble image attachments as `image_url` content parts (multimodal send). */

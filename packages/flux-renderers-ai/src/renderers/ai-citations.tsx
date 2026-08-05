@@ -1,5 +1,10 @@
 import { Fragment } from 'react';
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import type {
+  FluxActionEvent,
+  RendererComponentProps,
+  RendererRenderOutput,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { ChatMessage, ChatMessageContentPart } from '../engine/types.js';
@@ -9,6 +14,19 @@ const UNSAFE_URL_RE = /^(javascript|data):/i;
 
 function sanitizeUrl(url: string): string | undefined {
   return UNSAFE_URL_RE.test(url) ? undefined : url;
+}
+
+/**
+ * C8.2 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
+ * carries `{ event, evaluationBindings, scope }` so action-args templates can
+ * read `${source.title}` / `${index}` (ai-conversations.tsx:29-33 precedent).
+ */
+function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
+  return {
+    event: payload as FluxActionEvent,
+    evaluationBindings: payload,
+    scope: nodeScope,
+  };
 }
 
 /**
@@ -118,7 +136,10 @@ export function AiCitationsRenderer(props: RendererComponentProps<AiCitationsSch
       cid={props.meta.cid}
       onSourceClick={
         props.events?.onSourceClick
-          ? (source, index) => void props.events.onSourceClick?.({ type: 'ai:citation-click', source, index })
+          ? (source, index) => {
+              const payload = { type: 'ai:citation-click', source, index };
+              void props.events.onSourceClick?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
+            }
           : undefined
       }
     />

@@ -265,9 +265,19 @@ describe('ai-feedback (Widget)', () => {
     });
     const { container } = render(<Feedback {...props} />);
     fireEvent.click(container.querySelector('[data-slot="ai-feedback-copy"]')!);
-    expect(onAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'copy' }));
+    // C8.2 P2-2: assert the full payload + dispatch ctx (not a single key), so
+    // a regression dropping `message` or the evaluationBindings ctx turns red.
+    const [payload, ctx] = onAction.mock.calls[0] as unknown[];
+    expect(payload).toMatchObject({
+      type: 'ai:feedback-action',
+      action: 'copy',
+      message: expect.objectContaining({ id: 'm1' }),
+    });
+    expect(ctx).toMatchObject({
+      event: payload,
+      evaluationBindings: expect.objectContaining({ action: 'copy' }),
+    });
   });
-
   it('renders a custom action set', () => {
     const props = makeProps({
       props: {

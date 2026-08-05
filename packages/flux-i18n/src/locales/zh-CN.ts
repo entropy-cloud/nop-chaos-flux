@@ -82,6 +82,8 @@ export const zhCN: Resource = {
       fileTooLarge: '文件过大',
       tooManyFiles: '文件数量超限',
       removeFile: '移除',
+      uploading: '上传中',
+      uploadFailed: '上传失败',
       citation: '引用 {{n}}',
       citationNoSource: '无可用来源。',
       openSource: '查看来源',

@@ -81,6 +81,8 @@ export const enUS: Resource = {
       fileTooLarge: 'File is too large',
       tooManyFiles: 'Too many files',
       removeFile: 'Remove',
+      uploading: 'Uploading',
+      uploadFailed: 'Upload failed',
       citation: 'Citation {{n}}',
       citationNoSource: 'No source available.',
       openSource: 'Open source',

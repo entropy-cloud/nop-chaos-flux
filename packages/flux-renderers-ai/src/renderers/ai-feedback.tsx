@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import type {
+  FluxActionEvent,
+  RendererComponentProps,
+  RendererRenderOutput,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { ChatMessage } from '../engine/types.js';
@@ -8,6 +13,19 @@ import type { AiFeedbackSchema } from '../schemas.js';
 type FeedbackAction = 'copy' | 'refresh' | 'like' | 'dislike' | 'sources';
 
 const DEFAULT_ACTIONS: FeedbackAction[] = ['copy', 'refresh'];
+
+/**
+ * C8.2 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
+ * carries `{ event, evaluationBindings, scope }` so action-args templates can
+ * read `${action}` / `${message.id}` (ai-conversations.tsx:29-33 precedent).
+ */
+function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
+  return {
+    event: payload as FluxActionEvent,
+    evaluationBindings: payload,
+    scope: nodeScope,
+  };
+}
 
 /**
  * ai-feedback (Widget, P1): message footer action bar (copy / refresh / like /
@@ -38,7 +56,8 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
     } else if (action === 'like' || action === 'dislike') {
       setVoted((prev) => (prev === action ? null : action));
     }
-    void props.events.onAction?.({ type: 'ai:feedback-action', action, message });
+    const payload = { type: 'ai:feedback-action', action, message };
+    void props.events.onAction?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
   }
 
   return (

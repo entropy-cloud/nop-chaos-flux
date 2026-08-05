@@ -172,6 +172,13 @@ module.exports = [
       'max-lines': 'off',
     },
   },
+  // coverage manifest entries are data not logic; exempt from line-count limits
+  {
+    files: ['**/component-lab/coverage-manifest-entries.ts'],
+    rules: {
+      'max-lines': 'off',
+    },
+  },
   // a11y: relax rules in test files
   {
     files: ['**/*.test.{ts,tsx}', '**/__tests__/**', '**/test-support*.{ts,tsx}', '**/*.spec.{ts,tsx}'],

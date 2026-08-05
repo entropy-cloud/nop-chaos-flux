@@ -143,14 +143,36 @@ describe('ai-token-usage — schema-driven renderer', () => {
     expect(container.querySelector('[data-slot="ai-token-usage-total"]')?.textContent).toBe('33');
   });
 
-  it('fires onClick event', () => {
+  it('fires onClick with the usage payload and dispatch ctx (C8.2 P1-1)', () => {
     const onClick = vi.fn();
+    const usage = { total_tokens: 42, prompt_tokens: 40, completion_tokens: 2 };
     const props = makeProps({
-      props: { type: 'ai-token-usage', usage: { total_tokens: 1 } as never },
+      props: { type: 'ai-token-usage', usage: usage as never },
       events: { onClick },
     });
     const { container } = render(<TokenUsage {...props} />);
     fireEvent.click(container.querySelector('[data-slot="ai-token-usage"]')!);
-    expect(onClick).toHaveBeenCalled();
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    const [payload, ctx] = onClick.mock.calls[0] as unknown[];
+    // Full payload: type + resolved usage (family event contract).
+    expect(payload).toEqual({ type: 'ai:token-usage-click', usage });
+    // Dispatch ctx: evaluationBindings expose the payload keys so action-args
+    // templates can resolve `${total}` (CX-10 family convention).
+    const ctxRecord = ctx as { event: unknown; evaluationBindings: unknown; scope: unknown };
+    expect(ctxRecord.event).toBe(payload);
+    expect(ctxRecord.evaluationBindings).toEqual(payload);
+    expect(ctxRecord.scope).toBeUndefined();
+  });
+
+  it('renders an accessible aria-label on the display root (no onClick)', () => {
+    const { container } = render(
+      <AiTokenUsageView usage={{ total_tokens: 10 }} />,
+    );
+    const root = container.querySelector('[data-slot="ai-token-usage"]') as HTMLElement;
+    // C8.2 P2: the display root must not be aria-hidden — the token data is
+    // announced via the tokenUsage label.
+    expect(root.hasAttribute('aria-hidden')).toBe(false);
+    expect(root.getAttribute('aria-label')).toContain('Token usage');
   });
 });

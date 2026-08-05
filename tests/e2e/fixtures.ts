@@ -50,7 +50,15 @@ function getTrackedPageAssert(page: Page): (() => Promise<void>) | undefined {
   return trackedPageAsserts.get(getTrackedPageKey(page));
 }
 
-const KNOWN_NOISE_PATTERNS = ['favicon', 'Download the React DevTools', 'net::ERR_NAME_NOT_RESOLVED'];
+/**
+ * Expected browser-level noise. `ERR_UNKNOWN_URL_SCHEME` is produced when a
+ * component intentionally renders a non-loadable scheme (e.g. the C8.2
+ * ai-attachments safety scenario renders a `javascript:` URL as an <img> src
+ * to prove it is never fetched or executed — Chromium logs the failed load).
+ * Anchors with `javascript:` hrefs do NOT produce this error (no fetch), so
+ * the pattern stays specific to resource loads of non-fetchable schemes.
+ */
+const KNOWN_NOISE_PATTERNS = ['favicon', 'Download the React DevTools', 'net::ERR_NAME_NOT_RESOLVED', 'net::ERR_UNKNOWN_URL_SCHEME'];
 
 function formatConsoleMessage(msg: ConsoleMessage): string {
   return `[console.error] ${msg.text()}`;

@@ -101,6 +101,11 @@ import {
   AiBubbleLabPage,
   AiSenderLabPage,
   AiConversationsLabPage,
+  AiToolCallLabPage,
+  AiAttachmentsLabPage,
+  AiCitationsLabPage,
+  AiFeedbackLabPage,
+  AiTokenUsageLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -205,4 +210,9 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   'ai-bubble': AiBubbleLabPage,
   'ai-sender': AiSenderLabPage,
   'ai-conversations': AiConversationsLabPage,
+  'ai-tool-call': AiToolCallLabPage,
+  'ai-attachments': AiAttachmentsLabPage,
+  'ai-citations': AiCitationsLabPage,
+  'ai-feedback': AiFeedbackLabPage,
+  'ai-token-usage': AiTokenUsageLabPage,
 };

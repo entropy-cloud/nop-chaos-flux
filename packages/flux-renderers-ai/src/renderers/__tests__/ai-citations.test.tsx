@@ -1,18 +1,63 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { cleanup, render, fireEvent, act } from '@testing-library/react';
+import type { ComponentType } from 'react';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
+import { createMockRendererProps } from '../../test-support.js';
 import {
   AiCitationsView,
+  AiCitationsRenderer,
   parseCitations,
   resolveSources,
   extractMessageText,
 } from '../ai-citations.js';
+import type { AiCitationsSchema } from '../../schemas.js';
 import type { ChatMessage } from '../../engine/types.js';
 
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 afterEach(() => {
   cleanup();
+});
+
+const Citations = AiCitationsRenderer as unknown as ComponentType<Record<string, unknown>>;
+
+describe('ai-citations — schema renderer event dispatch ctx (C8.2 P1-1, CX-10 family)', () => {
+  it('onSourceClick dispatches with { source, index } payload + evaluationBindings ctx', () => {
+    const onSourceClick = vi.fn();
+    const message: ChatMessage = {
+      id: 'm9',
+      role: 'assistant',
+      content: '[1]',
+      // No url → the card renders the "Open source" button (no navigation).
+      metadata: { sources: [{ index: 1, title: 'Doc A' }] },
+    };
+    const props = createMockRendererProps<AiCitationsSchema>({
+      schema: { type: 'ai-citations' },
+      props: { type: 'ai-citations', message: message as never },
+      events: { onSourceClick },
+    });
+    const { container } = render(<Citations {...props} />);
+    const trigger = container.querySelector('[data-citation-index="1"]') as HTMLElement;
+    act(() => {
+      fireEvent.click(trigger);
+    });
+    const openBtn = document.querySelector('[data-slot="ai-citation-open"]') as HTMLElement;
+    expect(openBtn).not.toBeNull();
+    act(() => {
+      fireEvent.click(openBtn);
+    });
+
+    expect(onSourceClick).toHaveBeenCalledTimes(1);
+    const [payload, ctx] = onSourceClick.mock.calls[0] as unknown[];
+    expect(payload).toMatchObject({
+      type: 'ai:citation-click',
+      source: expect.objectContaining({ index: 1, title: 'Doc A' }),
+      index: 1,
+    });
+    const ctxRecord = ctx as { event: unknown; evaluationBindings: unknown; scope: unknown };
+    expect(ctxRecord.event).toBe(payload);
+    expect(ctxRecord.evaluationBindings).toEqual(payload);
+  });
 });
 
 describe('ai-citations — [N] parsing', () => {
