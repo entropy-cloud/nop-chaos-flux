@@ -94,3 +94,8 @@ export { InfiniteScrollLabPage } from './infinite-scroll-lab-page';
 export { SwipeCellLabPage } from './swipe-cell-lab-page';
 export { CountdownLabPage } from './countdown-lab-page';
 export { NoticeBarLabPage } from './notice-bar-lab-page';
+export { AiChatLabPage } from './ai-chat-lab-page';
+export { AiMessageListLabPage } from './ai-message-list-lab-page';
+export { AiBubbleLabPage } from './ai-bubble-lab-page';
+export { AiSenderLabPage } from './ai-sender-lab-page';
+export { AiConversationsLabPage } from './ai-conversations-lab-page';

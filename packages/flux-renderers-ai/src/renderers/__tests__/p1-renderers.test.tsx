@@ -62,7 +62,9 @@ describe('ai-conversations (Widget)', () => {
     });
     const { container } = render(<Conversations {...props} />);
     fireEvent.click(container.querySelector('[data-slot="ai-conversations-item-button"]')!);
-    expect(onItemClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }));
+    // C8.1 P1: the second arg is the dispatch ctx — the payload keys double as
+    // evaluationBindings so action-args templates read `${id}` / `${conversation}`.
+    expect(onItemClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }), expect.anything());
   });
 
   it('onItemClick payload carries through ctx.event end-to-end (type + id preserved by normalizer)', () => {
@@ -80,9 +82,18 @@ describe('ai-conversations (Widget)', () => {
     // Capture the exact payload the renderer hands to the runtime event handler
     // (the same value that flows into `createNormalizedActionEvent` inside
     // node-renderer-resolved.tsx), then run it through the real normalizer to
-    // prove `${event.id}` / `${event.conversation}` resolve to real values.
+    // prove the payload keys survive end-to-end. The dispatch ctx (second arg)
+    // mirrors the payload into `evaluationBindings` (C8.1 P1 convention) so
+    // action-args templates read `${id}` / `${conversation}` — the payload
+    // keys resolve as bindings, not via an `event` scope path.
     const emitted = onItemClick.mock.calls[0]?.[0];
     expect(emitted).toMatchObject({ type: 'ai:conversation-click', id: 'c1' });
+
+    const ctx = onItemClick.mock.calls[0]?.[1] as
+      | { evaluationBindings?: Record<string, unknown> }
+      | undefined;
+    expect(ctx?.evaluationBindings).toMatchObject({ id: 'c1' });
+    expect(ctx?.evaluationBindings).toMatchObject({ conversation: conversations[0] });
 
     const ctxEvent = createNormalizedActionEvent(emitted);
     expect(ctxEvent).not.toBeUndefined();
@@ -113,7 +124,8 @@ describe('ai-conversations (Widget)', () => {
     });
     const { container } = render(<Conversations {...props} />);
     fireEvent.click(container.querySelector('[data-slot="ai-conversations-delete"]')!);
-    expect(onItemDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }));
+    // C8.1 P1: payload + dispatch ctx (payload keys → evaluationBindings).
+    expect(onItemDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }), expect.anything());
   });
 
   it('rename commits the new title via onItemRename', () => {
@@ -131,7 +143,10 @@ describe('ai-conversations (Widget)', () => {
     expect(input).not.toBeNull();
     fireEvent.change(input, { target: { value: 'New title' } });
     fireEvent.blur(input);
-    expect(onItemRename).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1', title: 'New title' }));
+    expect(onItemRename).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'c1', title: 'New title' }),
+      expect.anything(),
+    );
   });
 });
 

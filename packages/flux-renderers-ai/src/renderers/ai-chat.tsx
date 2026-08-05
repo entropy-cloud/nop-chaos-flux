@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import type { ActionContext, FluxActionEvent, RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import {
@@ -51,6 +51,21 @@ function cloneMessages(messages: ChatMessage[]): ChatMessage[] {
 function cloneMessage(message: ChatMessage): ChatMessage {
   if (typeof structuredClone === 'function') return structuredClone(message);
   return { ...message };
+}
+
+/**
+ * P1 (C8.1): build the dispatch ctx for a schema event so action-args templates
+ * can read the payload keys (bug 83 / diff-view P1-10 family convention — the
+ * runtime only resolves `evaluationBindings` + scope, never a bare `event`
+ * binding). The payload object doubles as the bindings so `${message}` /
+ * `${error}` / `${conversationId}` / `${branchId}` resolve to real values.
+ */
+function eventCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined): Partial<ActionContext> {
+  return {
+    event: payload as FluxActionEvent,
+    evaluationBindings: payload,
+    scope: nodeScope,
+  };
 }
 
 /**
@@ -136,6 +151,12 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   useEffect(() => {
     eventsRef.current = props.events;
   });
+  // C8.1 P1: node scope via a ref (C7 pull-refresh pattern) so the event
+  // dispatch ctx can carry the live scope without destabilizing hook deps.
+  const nodeScopeRef = useRef(props.node.scope);
+  useEffect(() => {
+    nodeScopeRef.current = props.node.scope;
+  });
 
   // ---- Layer B: ActionScope namespace `ai` registration ----
   const actionScope = useCurrentActionScope();
@@ -194,7 +215,8 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // render. No-ops when the host never wires `onBranchChange`; consumers invoke
   // it via optional chaining so an always-defined stable no-op is equivalent.
   const onBranchChange = useCallback((branchId: string) => {
-    void eventsRef.current.onBranchChange?.({ type: 'ai:branch-change', branchId });
+    const payload = { type: 'ai:branch-change', branchId };
+    void eventsRef.current.onBranchChange?.(payload, eventCtx(payload, nodeScopeRef.current));
   }, []);
   // Decision-A (AI-02): project a SNAPSHOT of the engine messages, not the
   // live internal array. Descendants that read `${messages}` (via
@@ -263,7 +285,8 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
           // AI-09: hand off a snapshot so a host that mutates the delivered
           // message (e.g. on a later regenerate) cannot write back into the
           // engine's internal message object.
-          void events.onResponseComplete({ message: last ? cloneMessage(last) : last });
+          const payload = { message: last ? cloneMessage(last) : last };
+          void events.onResponseComplete(payload, eventCtx(payload, nodeScopeRef.current));
         } else if (current === 'error' && events.onError) {
           // AI-19/F1.5: surface the engine's real error cause (written to
           // `state.lastError` by the engine-half, Plan {1} Phase 4) instead of
@@ -271,15 +294,33 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
           const cause = state.lastError;
           const error =
             cause instanceof Error ? cause : new Error(String(cause ?? 'AI request failed'), { cause: cause });
-          void events.onError({ error });
+          const payload = { error };
+          void events.onError(payload, eventCtx(payload, nodeScopeRef.current));
         } else if (current === 'aborted' && events.onAbort) {
-          void events.onAbort();
+          const payload = {};
+          void events.onAbort(payload, eventCtx(payload, nodeScopeRef.current));
         }
       }
       prev = current;
     });
     return unsubscribe;
   }, [engine]);
+
+  // P1 (C8.1): fire `onConversationChange({ conversationId })` when the resolved
+  // `activeConversationId` prop changes (host-driven conversation switch via
+  // page data / sidebar selection). Silent on initial mount; fires on every
+  // transition, including a clear to `null` (conversation deselection). Reads
+  // the latest handler through `eventsRef` so the effect deps stay minimal.
+  const normalizedConversationId = activeConversationId ?? null;
+  const prevConversationRef = useRef(normalizedConversationId);
+  useEffect(() => {
+    const prev = prevConversationRef.current;
+    prevConversationRef.current = normalizedConversationId;
+    if (prev !== normalizedConversationId) {
+      const payload = { conversationId: normalizedConversationId };
+      void eventsRef.current.onConversationChange?.(payload, eventCtx(payload, nodeScopeRef.current));
+    }
+  }, [normalizedConversationId]);
 
   const headerNode = props.regions.header ? (props.regions.header.render({ scope: hostScope }) as React.ReactNode) : null;
   const beforeNode = props.regions.beforeMessages ? (props.regions.beforeMessages.render({ scope: hostScope }) as React.ReactNode) : null;

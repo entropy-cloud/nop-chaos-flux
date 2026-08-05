@@ -15,7 +15,6 @@ export interface AiChatSchema extends BaseSchema {
   type: 'ai-chat';
   connector?: SchemaValue; // 表达式：返回 AiConnector 实例（host 经 xui:imports 注入）
   engine?: SchemaValue; // 表达式：返回外部 MessageEngine（host 经 page-data 注入，典型 `${engine}` = useConversation.activeEngine）。提供时绑定外部 engine 而非自建，统一 ai-chat 与会话管理/持久化（design.md §11.2/§11.5）。未提供时自建 engine（零回归）。
-  conversationId?: string; // 多会话标识（默认 'default'）
   placeholder?: string;
   emptyState?: SchemaInput; // value-or-region：空消息态；engine 为 null（会话切换瞬间）时也渲染此 region（engine-null-switch）
   systemPrompt?: string;
@@ -23,7 +22,18 @@ export interface AiChatSchema extends BaseSchema {
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
   maxLength?: number;
   showWordLimit?: boolean;
+  showTimestamp?: boolean; // A-4：true 时每个气泡渲染 metadata.createdAt 时间脚注（经 ai-message-list 转发给 ai-bubble）
   initialMessages?: SchemaValue; // 表达式：初始 ChatMessage[]
+  senderExtensions?: SchemaValue; // P6/A6：host 注入的富文本扩展组件（`React.ComponentType<AiSenderExtensionProps>`，典型 `${$ai.tiptapSender}`）
+  conversationController?: SchemaValue; // 表达式：host 侧会话控制器（`AiConversationController`），绑定后 `ai` namespace 会话动作委托给它
+  activeConversationId?: SchemaValue; // scope-owned 会话标识（host 经 useConversation/page-data 管理）；变化时派发 onConversationChange
+  tools?: SchemaValue; // P2 agentic loop：表达式 `AiToolSchema[]`
+  toolExecutor?: SchemaValue; // P2：表达式 `ToolExecutor`
+  maxToolRounds?: number; // P2：工具循环轮数上限（默认 8）
+  componentId?: string; // Layer C：component:<method> 显式标识（默认 node id/testid）
+  componentName?: string; // Layer C：handle 名称（默认 'ai-chat'）
+  branches?: SchemaValue; // A-16：host 管理分支集 `AiBranch[]`
+  activeBranchId?: SchemaValue; // A-16：当前分支 id
 
   // regions
   header?: SchemaInput;
@@ -32,11 +42,11 @@ export interface AiChatSchema extends BaseSchema {
   afterMessages?: SchemaInput;
 
   // events
-  onSend?: ActionSchema;
-  onResponseComplete?: ActionSchema;
-  onError?: ActionSchema;
-  onAbort?: ActionSchema;
-  onConversationChange?: ActionSchema;
+  onResponseComplete?: ActionSchema; // 流式完成：{ message: ChatMessage 快照 }
+  onError?: ActionSchema; // 失败：{ error: Error }（engine lastError 真实 cause）
+  onAbort?: ActionSchema; // 中断：{}
+  onConversationChange?: ActionSchema; // activeConversationId prop 变化：{ conversationId }
+  onBranchChange?: ActionSchema; // A-16 分支切换：{ type:'ai:branch-change', branchId }
 }
 ```
 
@@ -596,25 +606,25 @@ export interface AiMcpManagerSchema extends BaseSchema {
 
 ## 13. Events 总览
 
-| 渲染器           | event                                                                | payload                            |
-| ---------------- | -------------------------------------------------------------------- | ---------------------------------- |
-| ai-chat          | `onSend`                                                             | `{ message: ChatMessage }`         |
-| ai-chat          | `onResponseComplete`                                                 | `{ message: ChatMessage }`         |
-| ai-chat          | `onError`                                                            | `{ error: Error }`                 |
-| ai-chat          | `onAbort`                                                            | `{}`                               |
-| ai-chat          | `onConversationChange`                                               | `{ conversationId }`               |
-| ai-sender        | `onSubmit`                                                           | `{ text: string }`                 |
-| ai-sender        | `onCancel`                                                           | `{}`                               |
-| ai-sender        | `onChange`                                                           | `{ text: string }`                 |
-| ai-bubble        | `onAction`                                                           | `{ action: string, message }`      |
-| ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ id?, conversation? }`           |
-| ai-prompts       | `onSelect`                                                           | `{ item, index }`                  |
-| ai-feedback      | `onAction`                                                           | `{ action, message }`              |
-| ai-attachments   | `onChange` / `onError` / `onUpload`                                  | `{ file?, error? }`                |
-| ai-tool-call     | `onApproval` (P3 HITL)                                               | `{ action, toolCall, toolCallId }` |
-| ai-citations     | `onSourceClick`                                                      | `{ source, index }`                |
-| ai-suggestions   | `onSelect`                                                           | `{ item, index }`                  |
-| ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                               |
+| 渲染器           | event                                                                | payload                                                                              |
+| ---------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| ai-chat          | `onResponseComplete`                                                 | `{ message: ChatMessage }`                                                           |
+| ai-chat          | `onError`                                                            | `{ error: Error }`                                                                   |
+| ai-chat          | `onAbort`                                                            | `{}`                                                                                 |
+| ai-chat          | `onConversationChange`                                               | `{ conversationId }`（resolved activeConversationId prop 变化时派发；含清空到 null） |
+| ai-chat          | `onBranchChange`                                                     | `{ type: 'ai:branch-change', branchId }`                                             |
+| ai-sender        | `onSubmit`                                                           | `{ text: string }`                                                                   |
+| ai-sender        | `onCancel`                                                           | `{}`                                                                                 |
+| ai-sender        | `onChange`                                                           | `{ text: string }`                                                                   |
+| ai-bubble        | `onBranchChange`                                                     | `{ type: 'ai:branch-change', branchId }`                                             |
+| ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ type?: 'ai:conversation-*', id?, conversation?, title? }`                         |
+| ai-prompts       | `onSelect`                                                           | `{ item, index }`                                                                    |
+| ai-feedback      | `onAction`                                                           | `{ action, message }`                                                                |
+| ai-attachments   | `onChange` / `onError` / `onUpload`                                  | `{ file?, error? }`                                                                  |
+| ai-tool-call     | `onApproval` (P3 HITL)                                               | `{ action, toolCall, toolCallId }`                                                   |
+| ai-citations     | `onSourceClick`                                                      | `{ source, index }`                                                                  |
+| ai-suggestions   | `onSelect`                                                           | `{ item, index }`                                                                    |
+| ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                                                                                 |
 
 ## 14. 端到端 Schema 示例
 
@@ -649,7 +659,7 @@ export interface AiMcpManagerSchema extends BaseSchema {
 ```json
 {
   "type": "ai-chat",
-  "conversationId": "${$page.activeConversationId}",
+  "activeConversationId": "${$page.activeConversationId}",
   "connector": "${$ai.connectors.deepseek}",
   "itemRegion": {
     "type": "ai-bubble",
@@ -662,7 +672,7 @@ export interface AiMcpManagerSchema extends BaseSchema {
   },
   "onConversationChange": {
     "action": "setValue",
-    "args": { "path": "activeConversationId", "value": "${$event.conversationId}" }
+    "args": { "path": "activeConversationId", "value": "${conversationId}" }
   },
   "footer": {
     "type": "ai-conversations",

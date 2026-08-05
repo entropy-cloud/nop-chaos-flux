@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import type {
+  FluxActionEvent,
+  RendererComponentProps,
+  RendererRenderOutput,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import { Button, Badge, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Check, Loader2, TriangleAlert, Ban, ChevronDown, ChevronRight } from 'lucide-react';
@@ -277,13 +282,22 @@ export function AiToolCallRenderer(props: RendererComponentProps<AiToolCallSchem
       testid={props.meta.testid}
       onApproval={
         props.events?.onApproval
-          ? (action) =>
-              void props.events.onApproval?.({
+          ? (action) => {
+              // C8.1 P1 (bug 83 family convention): the second dispatch arg
+              // carries `{ event, evaluationBindings, scope }` so action-args
+              // templates can read `${action}` / `${toolCallId}`.
+              const payload = {
                 type: 'ai:tool-call-approval',
                 action,
                 toolCall,
                 toolCallId: toolCall.id,
-              })
+              };
+              void props.events.onApproval?.(payload, {
+                event: payload as FluxActionEvent,
+                evaluationBindings: payload,
+                scope: props.node.scope as ScopeRef | undefined,
+              });
+            }
           : undefined
       }
     />

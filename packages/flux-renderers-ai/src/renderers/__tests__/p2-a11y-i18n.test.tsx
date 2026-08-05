@@ -7,6 +7,7 @@ import { AiConversationsRenderer } from '../ai-conversations.js';
 import { AiToolCallView } from '../ai-tool-call.js';
 import { AiFeedbackRenderer } from '../ai-feedback.js';
 import { UserMessageActions } from '../ai-bubble/user-edit.js';
+import { AiBubbleView } from '../ai-bubble/index.js';
 import { SuggestionPopup } from '../../rich-text/components/suggestion-popup.js';
 import { TemplateBar } from '../../rich-text/components/template-bar.js';
 import { AiChatProvider } from '../../adapters/ai-chat-context.js';
@@ -88,6 +89,41 @@ describe('P2 a11y — ai-conversations rename Input accessible name', () => {
     // Matches the same i18n key the rename button uses.
     const buttonLabel = renameBtn.getAttribute('aria-label');
     expect(label).toBe(buttonLabel);
+  });
+});
+
+describe('P2 a11y — ai-bubble branch picker aria-labels use translations (C8.1 P2-1)', () => {
+  it('group/prev/next labels resolve through t() (no hardcoded English)', () => {
+    const branches = [
+      { id: 'b1', messageId: 'm1' },
+      { id: 'b2', messageId: 'm1' },
+    ];
+    const message: ChatMessage = {
+      id: 'm1',
+      role: 'assistant',
+      content: 'hi',
+      metadata: { createdAt: 0 },
+    };
+    const { container } = render(
+      <AiChatProvider
+        value={{
+          engine: {} as never,
+          messages: [],
+          requestState: 'idle',
+          isProcessing: false,
+          sendMessage: async () => undefined,
+          abortRequest: async () => undefined,
+        }}
+      >
+        <AiBubbleView message={message} branches={branches} activeBranchId="b1" showTimestamp={false} />
+      </AiChatProvider>,
+    );
+    const group = container.querySelector('[data-slot="ai-bubble-branches"]') as HTMLElement;
+    expect(group.getAttribute('aria-label')).toBe('Message branches');
+    const prev = container.querySelector('[data-slot="ai-bubble-branch-prev"]') as HTMLButtonElement;
+    const next = container.querySelector('[data-slot="ai-bubble-branch-next"]') as HTMLButtonElement;
+    expect(prev.getAttribute('aria-label')).toBe('Previous branch');
+    expect(next.getAttribute('aria-label')).toBe('Next branch');
   });
 });
 

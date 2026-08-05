@@ -15,13 +15,13 @@
           "className": "w-64 shrink-0 border rounded-md p-2",
           "onItemClick": {
             "action": "setValue",
-            "args": { "path": "activeConversationId", "value": "${event.id}" }
+            "args": { "path": "activeConversationId", "value": "${id}" }
           },
           "onCreate": { "action": "ai:createConversation" },
-          "onItemDelete": { "action": "ai:deleteConversation", "args": { "id": "${event.id}" } },
+          "onItemDelete": { "action": "ai:deleteConversation", "args": { "id": "${id}" } },
           "onItemRename": {
             "action": "ai:renameConversation",
-            "args": { "id": "${event.id}", "title": "${event.title}" }
+            "args": { "id": "${id}", "title": "${title}" }
           }
         },
         {

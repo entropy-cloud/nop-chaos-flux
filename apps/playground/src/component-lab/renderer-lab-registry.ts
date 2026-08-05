@@ -96,6 +96,11 @@ import {
   SwipeCellLabPage,
   CountdownLabPage,
   NoticeBarLabPage,
+  AiChatLabPage,
+  AiMessageListLabPage,
+  AiBubbleLabPage,
+  AiSenderLabPage,
+  AiConversationsLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -195,4 +200,9 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   'swipe-cell': SwipeCellLabPage,
   countdown: CountdownLabPage,
   'notice-bar': NoticeBarLabPage,
+  'ai-chat': AiChatLabPage,
+  'ai-message-list': AiMessageListLabPage,
+  'ai-bubble': AiBubbleLabPage,
+  'ai-sender': AiSenderLabPage,
+  'ai-conversations': AiConversationsLabPage,
 };

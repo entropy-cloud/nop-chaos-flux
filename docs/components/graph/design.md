@@ -205,7 +205,7 @@ node region 模板内可用绑定（参照 tree node region 模式）：
   "searchable": true,
   "onSelectionChange": {
     "action": "setValue",
-    "args": { "path": "selectedNode", "value": "${event.node}" }
+    "args": { "path": "selectedNode", "value": "${node}" }
   }
 }
 ```

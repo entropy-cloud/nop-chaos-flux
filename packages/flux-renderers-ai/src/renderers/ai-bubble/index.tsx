@@ -1,5 +1,6 @@
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import type { ActionContext, FluxActionEvent, RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { ChatMessage } from '../../engine/types.js';
 import type { AiBranch, AiBubbleSchema } from '../../schemas.js';
 import { useAiChatContext } from '../../adapters/ai-chat-context.js';
@@ -174,14 +175,14 @@ function BranchPicker({
       data-slot="ai-bubble-branches"
       className="inline-flex items-center gap-1 text-xs text-muted-foreground"
       role="group"
-      aria-label="Message branches"
+      aria-label={t('flux.ai.branchGroups')}
     >
       <Button
         type="button"
         variant="ghost"
         size="sm"
         data-slot="ai-bubble-branch-prev"
-        aria-label="Previous branch"
+        aria-label={t('flux.ai.branchPrevious')}
         disabled={count <= 1}
         onClick={() => go(-1)}
         className="h-6 px-1"
@@ -196,7 +197,7 @@ function BranchPicker({
         variant="ghost"
         size="sm"
         data-slot="ai-bubble-branch-next"
-        aria-label="Next branch"
+        aria-label={t('flux.ai.branchNext')}
         disabled={count <= 1}
         onClick={() => go(1)}
         className="h-6 px-1"
@@ -255,7 +256,16 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
       onBranchChange={
         props.events?.onBranchChange
           ? (branchId: string) => {
-              void props.events.onBranchChange?.({ type: 'ai:branch-change', branchId });
+              // C8.1 P1 (bug 83 family convention): the second dispatch arg
+              // carries `{ event, evaluationBindings, scope }` so action-args
+              // templates can read `${branchId}`.
+              const payload = { type: 'ai:branch-change', branchId };
+              const ctx: Partial<ActionContext> = {
+                event: payload as FluxActionEvent,
+                evaluationBindings: payload,
+                scope: props.node.scope as ScopeRef | undefined,
+              };
+              void props.events.onBranchChange?.(payload, ctx);
             }
           : undefined
       }

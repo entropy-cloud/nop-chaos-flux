@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import type { ActionContext, FluxActionEvent, ScopeRef } from '@nop-chaos/flux-core';
 import type { AiConversationInfo } from '../engine/types.js';
 import type { AiConversationsSchema } from '../schemas.js';
 
@@ -22,9 +23,19 @@ export function AiConversationsRenderer(
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState('');
 
+  // C8.1 P1 (bug 83 family convention): pass `{ event, evaluationBindings,
+  // scope }` as the second dispatch arg so action-args templates can read the
+  // payload keys (`${id}`, `${conversation.title}`, `${title}`).
+  const dispatchCtx = (payload: Record<string, unknown>): Partial<ActionContext> => ({
+    event: payload as FluxActionEvent,
+    evaluationBindings: payload,
+    scope: props.node.scope as ScopeRef | undefined,
+  });
+
   function commitRename() {
     if (renamingId && draftTitle.trim().length > 0) {
-      void props.events.onItemRename?.({ type: 'ai:conversation-rename', id: renamingId, title: draftTitle.trim() });
+      const payload = { type: 'ai:conversation-rename', id: renamingId, title: draftTitle.trim() };
+      void props.events.onItemRename?.(payload, dispatchCtx(payload));
     }
     setRenamingId(null);
     setDraftTitle('');
@@ -43,7 +54,10 @@ export function AiConversationsRenderer(
           variant="outline"
           size="sm"
           data-slot="ai-conversations-create"
-          onClick={() => void props.events.onCreate?.({ type: 'ai:conversation-create' })}
+          onClick={() => {
+            const payload = { type: 'ai:conversation-create' };
+            void props.events.onCreate?.(payload, dispatchCtx(payload));
+          }}
         >
           {t('flux.ai.newConversation')}
         </Button>
@@ -85,7 +99,10 @@ export function AiConversationsRenderer(
                   variant="ghost"
                   data-slot="ai-conversations-item-button"
                   className="flex-1 justify-start text-left"
-                  onClick={() => void props.events.onItemClick?.({ type: 'ai:conversation-click', id: conv.id, conversation: conv })}
+                  onClick={() => {
+                    const payload = { type: 'ai:conversation-click', id: conv.id, conversation: conv };
+                    void props.events.onItemClick?.(payload, dispatchCtx(payload));
+                  }}
                 >
                   {conv.title?.trim() || t('flux.ai.emptyConversationTitle')}
                 </Button>
@@ -112,7 +129,10 @@ export function AiConversationsRenderer(
                     size="sm"
                     data-slot="ai-conversations-delete"
                     aria-label={t('flux.ai.deleteConversation')}
-                    onClick={() => void props.events.onItemDelete?.({ type: 'ai:conversation-delete', id: conv.id })}
+                    onClick={() => {
+                      const payload = { type: 'ai:conversation-delete', id: conv.id };
+                      void props.events.onItemDelete?.(payload, dispatchCtx(payload));
+                    }}
                   >
                     ×
                   </Button>

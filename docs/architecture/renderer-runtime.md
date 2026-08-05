@@ -680,7 +680,9 @@ Runtime then normalizes that payload into `ActionContext.event` as a structured 
 
 1. `null` / `undefined` / primitives → `undefined` (no `event` binding; cannot be normalized).
 2. Objects that already carry a string `type` — DOM `Event` instances, React synthetic events, and explicit `FluxActionEvent` payloads — are returned **as-is**, so the original event identity and any `preventDefault` / `stopPropagation` wiring are preserved.
-3. Custom renderer-emitted payloads that lack a string `type` (e.g. `{ id, conversation }`, `{ reason }`, `{ item, index }`) are **preserved**, not dropped — every field stays accessible so schema expressions like `${event.id}` resolve to the real value. `type` is synthesized as `'custom'` so the `FluxActionEvent.type: string` contract still holds. (This also covers malformed/non-string `type` values, e.g. `{ type: 123, id }` → `{ type: 'custom', id }`.)
+3. Custom renderer-emitted payloads that lack a string `type` (e.g. `{ id, conversation }`, `{ reason }`, `{ item, index }`) are **preserved**, not dropped — every field stays accessible. `type` is synthesized as `'custom'` so the `FluxActionEvent.type: string` contract still holds. (This also covers malformed/non-string `type` values, e.g. `{ type: 123, id }` → `{ type: 'custom', id }`.)
+
+> **Action-args payload access (convention)**: action-args templates read payload keys through **`evaluationBindings` (bare names)**, not an `event` scope path — `getEvaluationScope` (`flux-action-core/src/action-core.ts`) merges only `evaluationBindings` + scope; a bare `event` binding exists solely for `preventDefault`/`stopPropagation` evaluation. Renderers emit schema events with a second dispatch-arg ctx `{ event, evaluationBindings, scope }` (the payload object doubles as the bindings) so templates like `${id}` / `${direction}` resolve to real values (bug 83 / diff-view P1-10 family convention; C6.x/C7/mobile + ai main chain C8.1).
 
 The normalized baseline fields are:
 

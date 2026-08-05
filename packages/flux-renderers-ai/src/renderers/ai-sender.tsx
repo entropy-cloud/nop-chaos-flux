@@ -3,6 +3,7 @@ import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/fl
 import { Button, Textarea, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
+import type { ActionContext, FluxActionEvent, ScopeRef } from '@nop-chaos/flux-core';
 import type { AiSenderExtensionProps, AiSenderSchema } from '../schemas.js';
 
 export interface AiSenderViewProps {
@@ -201,6 +202,15 @@ export function AiSenderRenderer(props: RendererComponentProps<AiSenderSchema>):
     | undefined
     | null;
 
+  // C8.1 P1 (bug 83 family convention): pass `{ event, evaluationBindings,
+  // scope }` as the second dispatch arg so action-args templates can read the
+  // payload keys (`${text}`) — the runtime resolves bindings + scope only.
+  const dispatchCtx = (payload: Record<string, unknown>): Partial<ActionContext> => ({
+    event: payload as FluxActionEvent,
+    evaluationBindings: payload,
+    scope: props.node.scope as ScopeRef | undefined,
+  });
+
   return (
     <AiSenderView
       placeholder={resolved.placeholder}
@@ -216,18 +226,21 @@ export function AiSenderRenderer(props: RendererComponentProps<AiSenderSchema>):
       onSubmit={(text) => {
         void ctx?.sendMessage(text);
         if (props.events.onSubmit) {
-          void props.events.onSubmit({ text });
+          const payload = { text };
+          void props.events.onSubmit(payload, dispatchCtx(payload));
         }
       }}
       onCancel={() => {
         void ctx?.abortRequest();
         if (props.events.onCancel) {
-          void props.events.onCancel();
+          const payload = {};
+          void props.events.onCancel(payload, dispatchCtx(payload));
         }
       }}
       onChange={(text) => {
         if (props.events.onChange) {
-          void props.events.onChange({ text });
+          const payload = { text };
+          void props.events.onChange(payload, dispatchCtx(payload));
         }
       }}
     />

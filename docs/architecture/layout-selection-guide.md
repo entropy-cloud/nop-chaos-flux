@@ -180,7 +180,7 @@
   "asideResizable": true,
   "asideSticky": true,
   "aside": [
-    { "type": "tree", "source": "/r/departments", "onSelect": { "action": "loadData", "args": { "deptId": "${event.value.id}" } } }
+    { "type": "tree", "source": "/r/departments", "onSelect": { "action": "loadData", "args": { "deptId": "${value.id}" } } }
   ],
   "header": [
     { "type": "button", "label": "新建用户", "onClick": { "action": "openDialog", "args": { "schema": { "type": "form", "body": [...] } } } }

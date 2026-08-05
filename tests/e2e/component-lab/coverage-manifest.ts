@@ -682,6 +682,46 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes:
       'Verify the closable bar hides after onClose, the clickable bar exposes role=button and dispatches onClick, and the static bar stays a non-focusable role=status region (C7)',
   },
+  {
+    id: 'ai-chat',
+    title: 'AI Chat',
+    tier: 'write',
+    primaryScenario: 'Host AI chat in dialog + streaming (C8.1 bug 73 pattern)',
+    notes:
+      'Verify ai-chat inside an openDialog surface: send + mock streaming render the assistant bubble in the dialog (bug 73 pattern, C8.1)',
+  },
+  {
+    id: 'ai-message-list',
+    title: 'AI Message List',
+    tier: 'read',
+    primaryScenario: 'Host streaming message list (C8.1)',
+    notes:
+      'Verify the streaming message list keeps stable data-slot/data-role markers and aria-busy tracks the engine turn (C8.1)',
+  },
+  {
+    id: 'ai-bubble',
+    title: 'AI Bubble',
+    tier: 'read',
+    primaryScenario: 'Host bubble with timestamp + markdown (C8.1)',
+    notes:
+      'Verify a standalone ai-bubble renders markdown content with nop-ai-bubble marker, data-role/data-placement and the ai-bubble-timestamp <time> element (C8.1)',
+  },
+  {
+    id: 'ai-sender',
+    title: 'AI Sender',
+    tier: 'write',
+    primaryScenario: 'Host sender submit + word limit (C8.1)',
+    notes:
+      'Verify standalone ai-sender Enter-submits the trimmed draft, fires onSubmit { text } and the word limit counter flips to destructive over the cap (C8.1)',
+  },
+  {
+    id: 'ai-conversations',
+    title: 'AI Conversations',
+    tier: 'write',
+    primaryScenario: 'Host conversation list + onConversationChange (C8.1)',
+    notes:
+      'Verify the sidebar item click dispatches onItemClick with the conversation payload and ai-chat fires onConversationChange on activeConversationId change (C8.1)',
+  },
 ];
 
 /** Quick lookup by renderer id */
