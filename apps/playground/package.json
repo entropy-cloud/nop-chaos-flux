@@ -39,6 +39,9 @@
     "@nop-chaos/ui": "workspace:*",
     "@nop-chaos/word-editor-renderers": "workspace:*",
     "@xyflow/react": "^12.10.2",
+    "@leafer-in/animate": "2.2.9",
+    "@leafer-in/view": "2.2.9",
+    "leafer-ui": "2.2.9",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

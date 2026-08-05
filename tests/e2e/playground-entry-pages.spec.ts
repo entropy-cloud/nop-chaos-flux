@@ -434,6 +434,12 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
   'ai-widgets': async (page) => {
     await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
   },
+  'leafer-examples': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'LeaferJS 官方示例对照页', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-testid="leafer-example-canvas"]')).toHaveCount(4, { timeout: 10_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

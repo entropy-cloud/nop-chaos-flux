@@ -18,6 +18,7 @@ export { M5MobileShowcaseDemoPage } from './m5-mobile-showcase-demo';
 export { ScadaDemoPage } from './scada-demo';
 export { ScadaPressureDemoPage } from './scada-pressure-demo';
 export { ScadaPerfScaleDemoPage } from './scada-perf-scale-demo';
+export { LeaferExamplesDemoPage } from './leafer-examples-demo';
 export { ScadaEdgeDemoPage } from './scada-edge-demo';
 export { GanttDemoPage } from './gantt-demo';
 export { CalendarPerfScaleDemoPage } from './calendar-perf-scale-demo';

@@ -140,6 +140,12 @@ importers:
 
   apps/playground:
     dependencies:
+      '@leafer-in/animate':
+        specifier: 2.2.9
+        version: 2.2.9(@leafer-in/color@2.2.9(@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9))(@leafer-ui/draw@2.2.9)(@leafer-ui/interface@2.2.9))(@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9))(@leafer-ui/draw@2.2.9)(@leafer-ui/interface@2.2.9)
+      '@leafer-in/view':
+        specifier: 2.2.9
+        version: 2.2.9(@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9))(@leafer-ui/draw@2.2.9)(@leafer-ui/interface@2.2.9)
       '@nop-chaos/flow-designer-core':
         specifier: workspace:*
         version: link:../../packages/flow-designer-core
@@ -218,6 +224,9 @@ importers:
       '@xyflow/react':
         specifier: ^12.10.2
         version: 12.10.2(@types/react@19.2.14)(immer@11.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      leafer-ui:
+        specifier: 2.2.9
+        version: 2.2.9
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.4)
@@ -1980,11 +1989,33 @@ packages:
   '@jscpd/tokenizer@4.0.5':
     resolution: {integrity: sha512-WzRujQtN5WedxZVDKuoanxmKAFrxcLrHpcA6kaM4z8AhGtWXZ325yseqgL5TZ8OK7Auwu7kQLlqhfk05fGYG7A==}
 
+  '@leafer-in/animate@2.2.9':
+    resolution: {integrity: sha512-e4klP9D/8okPq03EZiOfcfZ2UI8DMV8QU0abIWEMn2X7NxYiMRUozYaX4jqC21fIbJBRmuJ8MjYace1PdIfs6A==}
+    peerDependencies:
+      '@leafer-in/color': ^2.2.9
+      '@leafer-in/interface': ^2.2.9
+      '@leafer-ui/draw': ^2.2.9
+      '@leafer-ui/interface': ^2.2.9
+
+  '@leafer-in/color@2.2.9':
+    resolution: {integrity: sha512-w2reEtPUEW2lIEWkCdUCYN3zL3g3Lf66bxs8xiyXfUDgwwScW1DnWz11NlwYgrV3hstNR03mFRRQiLgCUDoPTw==}
+    peerDependencies:
+      '@leafer-in/interface': ^2.2.9
+      '@leafer-ui/draw': ^2.2.9
+      '@leafer-ui/interface': ^2.2.9
+
   '@leafer-in/interface@2.2.9':
     resolution: {integrity: sha512-6T0Gf1EDKxS4a8sZCT8Q2PZ0a5JhHWswyWfsSXNHrvdJvapHcUE4YordpzXFQeki0KcCiAy2HIrOZ7mvFJ9spQ==}
     peerDependencies:
       '@leafer-ui/interface': ^2.2.9
       '@leafer/interface': ^2.2.9
+
+  '@leafer-in/view@2.2.9':
+    resolution: {integrity: sha512-J8FArVIeYQdd+8G7wGZLFucp2fjTOoDFLObbKAy/lbRhDcE458DhHmzHP5J81sNSsLuZTKLYu23Q4qdojY0HAQ==}
+    peerDependencies:
+      '@leafer-in/interface': ^2.2.9
+      '@leafer-ui/draw': ^2.2.9
+      '@leafer-ui/interface': ^2.2.9
 
   '@leafer-in/viewport@2.2.9':
     resolution: {integrity: sha512-p6vRZnl2uwOddDm8zcKytSQ9mnMTtmFUbNhRNJdHv6D4jm3x8s0EfoXvEol8IYfQjh2oWsXY2Rx+O7XOxFsePQ==}
@@ -7375,10 +7406,29 @@ snapshots:
       reprism: 0.0.11
       spark-md5: 3.0.2
 
+  '@leafer-in/animate@2.2.9(@leafer-in/color@2.2.9(@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9))(@leafer-ui/draw@2.2.9)(@leafer-ui/interface@2.2.9))(@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9))(@leafer-ui/draw@2.2.9)(@leafer-ui/interface@2.2.9)':
+    dependencies:
+      '@leafer-in/color': 2.2.9(@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9))(@leafer-ui/draw@2.2.9)(@leafer-ui/interface@2.2.9)
+      '@leafer-in/interface': 2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9)
+      '@leafer-ui/draw': 2.2.9
+      '@leafer-ui/interface': 2.2.9
+
+  '@leafer-in/color@2.2.9(@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9))(@leafer-ui/draw@2.2.9)(@leafer-ui/interface@2.2.9)':
+    dependencies:
+      '@leafer-in/interface': 2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9)
+      '@leafer-ui/draw': 2.2.9
+      '@leafer-ui/interface': 2.2.9
+
   '@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9)':
     dependencies:
       '@leafer-ui/interface': 2.2.9
       '@leafer/interface': 2.2.9
+
+  '@leafer-in/view@2.2.9(@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9))(@leafer-ui/draw@2.2.9)(@leafer-ui/interface@2.2.9)':
+    dependencies:
+      '@leafer-in/interface': 2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9)
+      '@leafer-ui/draw': 2.2.9
+      '@leafer-ui/interface': 2.2.9
 
   '@leafer-in/viewport@2.2.9(@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9))(@leafer-ui/core@2.2.9)(@leafer-ui/interface@2.2.9)':
     dependencies:

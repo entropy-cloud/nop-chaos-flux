@@ -133,7 +133,7 @@ test.describe('Scada Demo (I13.1)', () => {
     await page.goto('/#/scada-demo', { waitUntil: 'load' });
     const cid = await getScadaCid(page);
 
-    await clickSymbolAtWorld(page, cid, 242, 234); // pump-1 中心（world 坐标，经引擎视口变换）
+    await clickSymbolAtWorld(page, cid, 236, 232); // pump-1 中心（world 坐标，经引擎视口变换）
     await expect(page.locator('[data-slot="dialog-surface"]')).toBeVisible({ timeout: 5_000 });
     await expect(page.getByText('给水泵 P-101 详情')).toBeVisible({ timeout: 3_000 });
     await assertTrackedPageErrors(page);
@@ -249,7 +249,7 @@ test.describe('Scada Demo assertion matrix (I15.1)', () => {
         const handle = (window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape;
         return handle.engine.getViewportPoint({ x, y });
       },
-      { key: `__flux_scada_${cid}`, x: 402, y: 64 }, // motor-1 中心（370,40, 64×48）
+      { key: `__flux_scada_${cid}`, x: 408, y: 80 }, // motor-1 中心（376,56, 64×48）
     );
     const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
     expect(box).toBeTruthy();
@@ -265,13 +265,13 @@ test.describe('Scada Demo assertion matrix (I15.1)', () => {
     await page.goto('/#/scada-demo', { waitUntil: 'load' });
     const cid = await getScadaCid(page);
 
-    // pump-1（矩形语义复合图元，242,234 中心）hover → sky 覆盖物出现
+    // pump-1（矩形语义复合图元，236,232 中心）hover → sky 覆盖物出现
     const viewportPoint = await page.evaluate(
       ({ key, x, y }) => {
         const handle = (window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape;
         return handle.engine.getViewportPoint({ x, y });
       },
-      { key: `__flux_scada_${cid}`, x: 242, y: 234 },
+      { key: `__flux_scada_${cid}`, x: 236, y: 232 },
     );
     const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
     expect(box).toBeTruthy();
@@ -308,7 +308,7 @@ test.describe('Scada Demo assertion matrix (I15.1)', () => {
         const handle = (window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape;
         return handle.engine.getViewportPoint({ x, y });
       },
-      { key: `__flux_scada_${cid}`, x: 242, y: 234 },
+      { key: `__flux_scada_${cid}`, x: 236, y: 232 },
     );
     const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
     expect(box).toBeTruthy();

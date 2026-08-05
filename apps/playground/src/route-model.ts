@@ -539,6 +539,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'I14.1 性能基准测量页：10 万图元首屏创建 / 拖动 fps（双口径）/ 内存（含无 stroke 对照）/ 1 万点实时刷新端到端延迟，e2e 程序化驱动。',
   },
   {
+    id: 'leafer-examples',
+    title: 'LeaferJS Examples',
+    eyebrow: 'Reference',
+    description:
+      'I17.3 LeaferJS 官方基础示例对照页（不进 home 卡片）：创建 Leafer/App + 基础元素 + animate 动画 + Group + 视口缩放/平移，团队学习 + 编辑器 mission 决策对照 + v3 升级回归基线。',
+  },
+  {
     id: 'data-verify',
     title: 'Data Source Verify',
     eyebrow: 'Mechanism Test',
