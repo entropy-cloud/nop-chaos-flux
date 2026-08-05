@@ -1,0 +1,49 @@
+{
+  "name": "@nop-chaos/flux-renderers-graph",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": [
+    "*.css"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": {
+      "default": "./dist/styles.css"
+    }
+  },
+  "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-i18n": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/ui": "workspace:*",
+    "@xyflow/react": "^12.10.2",
+    "dagre": "^0.8.5",
+    "use-sync-external-store": "^1.6.0",
+    "zustand": "^5.0.12"
+  },
+  "peerDependencies": {
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@types/dagre": "^0.7.52",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "Read-only interactive graph viewer renderer: zoom/pan/search/select over @xyflow/react with dagre layout."
+}

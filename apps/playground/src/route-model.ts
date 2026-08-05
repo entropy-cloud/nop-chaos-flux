@@ -252,6 +252,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'Two-pane text diff comparison with split/unified views, syntax highlighting, inline diffs, hunk folding, and virtual scrolling.',
   },
   {
+    id: 'graph-demo',
+    title: 'Graph Viewer',
+    eyebrow: 'Graph',
+    description: 'Read-only interactive graph viewer: dagre hierarchy/flow layouts, node search, single-selection, zoom/pan/fit controls, malformed-data degradation.',
+  },
+  {
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',

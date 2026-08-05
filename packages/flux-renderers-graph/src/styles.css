@@ -1,0 +1,59 @@
+.nop-graph {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  overflow: hidden;
+}
+
+.nop-graph .nop-graph-viewport {
+  position: absolute;
+  inset: 0;
+}
+
+.nop-graph .react-flow__node {
+  cursor: default;
+}
+
+.nop-graph-node {
+  min-width: 120px;
+  max-width: 280px;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow: var(--shadow-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.nop-graph-node[data-selected='true'] {
+  border-color: hsl(var(--primary));
+  box-shadow: var(--shadow-primary-sm);
+}
+
+.nop-graph-node[data-matching='true'] {
+  border-color: hsl(var(--primary));
+}
+
+.nop-graph-node[data-level='danger'] {
+  border-color: hsl(var(--destructive) / 0.55);
+}
+
+.nop-graph-node[data-level='warning'] {
+  border-color: hsl(32 95% 44% / 0.55);
+}
+
+.nop-graph-node[data-level='success'] {
+  border-color: hsl(142 71% 45% / 0.55);
+}
+
+.nop-graph-node-label {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

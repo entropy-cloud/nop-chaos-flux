@@ -9,6 +9,7 @@ import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
+import { registerGraphRenderers } from '@nop-chaos/flux-renderers-graph';
 import { HomePage } from './pages/home-page';
 import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
@@ -49,6 +50,7 @@ import { KanbanDemoPage } from './pages/kanban-demo';
 import { DiffDemoPage } from './pages/diff-demo';
 import { CalendarDemoPage } from './pages/calendar-demo';
 import { BarcodeDemoPage } from './pages/barcode-demo';
+import { GraphDemoPage } from './pages/graph-demo';
 import { CalendarPerfScaleDemoPage } from './pages/calendar-perf-scale-demo';
 import { KanbanPerfScaleDemoPage } from './pages/kanban-perf-scale-demo';
 import { GanttPerfScaleDemoPage } from './pages/gantt-perf-scale-demo';
@@ -102,6 +104,7 @@ registerMobileRenderers(registry);
 registerContentRenderers(registry);
 registerLayoutRenderers(registry);
 registerSchedulingRenderers(registry);
+registerGraphRenderers(registry);
 
 if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefined') {
   window.__NOP_DEBUGGER__ = {
@@ -269,6 +272,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <M5MobileShowcaseDemoPage onBack={goHome} />;
         case 'barcode-input':
           return <BarcodeDemoPage onBack={goHome} />;
+        case 'graph-demo':
+          return <GraphDemoPage onBack={goHome} />;
         case 'diff-view':
           return <DiffDemoPage onBack={goHome} />;
         case 'calendar-perf-scale':

@@ -100,6 +100,12 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-renderers-scheduling': fileURLToPath(
     new URL('./packages/flux-renderers-scheduling/src/index.ts', import.meta.url),
   ),
+  '@nop-chaos/flux-renderers-graph/styles.css': fileURLToPath(
+    new URL('./packages/flux-renderers-graph/src/styles.css', import.meta.url),
+  ),
+  '@nop-chaos/flux-renderers-graph': fileURLToPath(
+    new URL('./packages/flux-renderers-graph/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-code-editor': fileURLToPath(
     new URL('./packages/flux-code-editor/src/index.ts', import.meta.url),
   ),

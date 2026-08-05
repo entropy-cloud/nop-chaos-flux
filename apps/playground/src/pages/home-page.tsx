@@ -8,6 +8,7 @@ type NavigationTarget =
   | 'scheduling-calendar'
   | 'barcode-input'
   | 'diff-view'
+  | 'graph-demo'
   | 'taskflow-designer'
   | 'dingtalk-flow-demo'
   | 'report-designer'
@@ -91,6 +92,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Scheduling',
     description:
       'Two-pane text diff comparison with split/unified views, syntax highlighting, inline diffs, hunk folding, and virtual scrolling.',
+  },
+  {
+    id: 'graph-demo',
+    title: 'Graph Viewer',
+    eyebrow: 'Graph',
+    description:
+      'Read-only interactive graph viewer: dagre hierarchy/flow layouts, node search, single-selection, zoom/pan/fit controls, and malformed-data degradation.',
   },
   {
     id: 'taskflow-designer',

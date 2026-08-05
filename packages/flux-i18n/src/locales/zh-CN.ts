@@ -140,6 +140,10 @@ export const zhCN: Resource = {
       noMore: '没有更多了',
       loadFailed: '加载失败，点击重试',
     },
+    graph: {
+      searchPlaceholder: '搜索节点…',
+      clearSearch: '清除搜索',
+    },
     table: {
       columns: '列设置',
       expand: '展开',

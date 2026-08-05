@@ -139,6 +139,10 @@ export const enUS: Resource = {
       noMore: 'No more data',
       loadFailed: 'Load failed. Click to retry',
     },
+    graph: {
+      searchPlaceholder: 'Search nodes…',
+      clearSearch: 'Clear search',
+    },
     table: {
       columns: 'Columns',
       expand: 'Expand',
