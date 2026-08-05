@@ -211,6 +211,7 @@ type ScadaSymbolStylePatch = Partial<
 - **状态样式解析规则**（纯逻辑，Vitest 单测）：`effectiveStyle = defaults ∪ 实例属性 ∪ statePatch(state)`；优先级：实例属性 > defaults；statePatch 覆盖实例属性（状态优先，FUXA 报警变色蓝本）。
 - 样式值域：颜色/渐变/纹理字符串透传 leafer 样式系统（I8.1 细化）；`visible: false` 用 leafer 节点 `visible` 而非移除节点（保持绑定索引稳定）。
 - 图元库视觉规范（stroke 宽度/状态色）属 I8.2/I9 实现细节，不进本档；canvas 内图元不产 DOM marker。
+- **points-based 形 width/height 绑定契约（plan 2026-08-05-0653-3 B2 Decision）**：`scada-line`/`scada-arrow`/`scada-pipe` 渲染几何 = `[0,0,width,height]`，由 width/height 派生 points。`BINDABLE_PROPERTIES` 广告 width/height 可绑定，故这三个 shape 定义均提供 `applyProps`：width/height 经绑定或 applyProps 变更后重算 `node.points`（保留既有 width 的高度/既有高度的宽度作另一半维度），使绑定产出可见几何响应。三个 shape 均暴露 `defaultGeometryPoints` resolver（pipe 经本 Decision 补齐，与 line/arrow 同构），使 bounds 路径在节点无 `custom.points` 时按 width/height 算包围盒不退化为 0 尺寸。裁定选 (a) applyProps 重算（保留 author 绑定能力），依据：leafer Line `set({points})` 支持运行期改写，无技术约束证伪。
 
 ## 11. 实现拆分建议
 

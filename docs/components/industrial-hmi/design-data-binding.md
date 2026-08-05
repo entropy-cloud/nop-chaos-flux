@@ -103,6 +103,8 @@ interface ScadaBinding {
 > **统一归口**：绑定只引用**点表变量**（`point`/`expression` 均以点表为上下文）；flux 桥接值不在绑定层声明——`source: 'flux'` 的变量声明于点表（§4.1），由桥接层订阅 scope 后写入点表（§9.1），绑定经点表间接消费（单一刷新路径，§4.3）。
 
 - 可绑定属性集合（I2.3 属性 schema 子集，`design-symbols.md` §4.2 `ScadaSymbolProps`）：`fill`/`stroke`/`strokeWidth`/`opacity`/`visible`/`text`/`textColor`/`rotation`/`x`/`y`/`width`/`height`/`flow`（管道流动参数）。
+- **format 适用域（plan 2026-08-05-0653-3 B1）**：`format` 仅对**文本类**可绑定属性生效——`text`/`fill`/`stroke`/`textColor`。`format` 把值字符串化（`formatValue(false,'%s')`→`"false"`），对 `visible`/`opacity`/数值/几何属性会把 boolean/number 变成 truthy 字符串而静默产出错误结果（`visible:false` 绑定渲染为可见）。故 `resolveBinding` 按目标 `property` 判定是否施加 format：文本类属性施加，其余属性原值原样透传。binding-scale 的 `expression` 求值不受影响（`applyScale` 经 evaluator 消费）。
+- **scale 消费语义（plan 2026-08-05-0653-3 B4）**：declaration 级 `scale` 仅支持 linear（`{k,b}`）——validator 拒绝 declaration 级 `scale.expression` 并指向 binding-scale（binding 层 `applyScale` 已消费 expression-scale，经 evaluator 求值）。declaration expression-scale 此前经 `point-store.convert` 与 `value-to-state.applyLinearScale` 两处静默丢弃，validator 拒绝同时关闭两处 drop site。
 - **表达式求值边界**：`@{pointId}` 组态内引用 + 算术/比较/三元/字符串拼接子集，由**纯逻辑求值器**实现（Vitest 单测）；`$xxx` flux 表达式（仅存在于点表声明的 `source: 'flux'`）经 flux-formula/flux-compiler 编译求值（平台能力复用表），求值上下文为桥接层创建的**私有求值子 scope**（注入点表上下文，非 schema-visible scope，INV-4 边界，I10.3 落地）。
 - 多状态呈现（值→状态判定）见 §4.5。
 
@@ -180,6 +182,8 @@ interface ScadaStateDeclaration {
   booleanMap?: { true: string; false: string };
   /** 字符串映射（枚举值→状态） */
   valueMap?: Record<string, string>;
+  /** 显式 state-driver（plan 2026-08-05-0653-3 B3）：格式 "pointId" 或 "pointId.property"；缺省取反向索引插入序 [0] */
+  stateSource?: string;
 }
 interface ScadaStateDefinition {
   /** 状态样式覆盖（normal 样式上的增量覆盖，I2.3 状态样式解析） */
@@ -190,6 +194,7 @@ interface ScadaStateDefinition {
 ```
 
 - 判定链：点表值 → 换算（scale）→ 区间/映射判定 → 状态 → 样式覆盖 + 动画启停；判定纯逻辑（`value-to-state.ts`，Vitest 单测）。
+- **state-driver / resting-state 显式偏好（plan 2026-08-05-0653-3 B3）**：state-driver 选择（`collectStates` 取 `lookupSymbol(...)[0]`）与 default-state 回落（`value-to-state.defaultState`）此前均依赖 JSON key 插入序 → author/序列化整形或字母化 key 重排会静默翻转 state-driver 与 resting state。现 (a) `ScadaStateDeclaration.stateSource` 显式指定 state-driver（格式 `"pointId"` 或 `"pointId.property"`，缺省 property 回落该 pointId 首绑定 property）使 key 重排不翻转 driver；(b) `defaultState` 命名偏好链 `run→normal→off→首键` 使 resting state 不依赖 key 序。两者双保险使绑定语义对 author 可预期。
 - 示例：阀门开度 0-100% → run（开度>0）+ fault（开度=0 且点位故障标志 true）+ stop（默认）；故障态自动 blink（报警闪烁，FUXA 报警语义蓝本）。
 
 ## 5. 字段分类
