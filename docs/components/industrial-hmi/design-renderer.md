@@ -302,7 +302,6 @@ packages/flux-renderers-industrial/src/
 │   └── diff.ts                   # diffScadaConfig（I5.3，Vitest 单测）
 ├── renderer/
 │   ├── scada-canvas.tsx          # 主渲染器：RendererComponentProps 装配 + 桥接（I10.1）
-│   ├── scada-canvas.types.ts     # ScadaCanvasSchema 类型（schemas.ts 再导出）
 │   ├── schemas.ts                # 包 schema 类型 barrel（I4.1）
 │   ├── renderer-definitions.ts   # registerScadaRenderers：fields/events/regions/handles（I4.2 空壳/I10.2 完整）
 │   ├── hooks/
@@ -314,7 +313,7 @@ packages/flux-renderers-industrial/src/
 └── index.ts                      # 公共面：registerScadaRenderers/registerScadaSymbols/registerScadaSymbol + 符号注册表 API + 类型（plan 2026-08-04-1558-1 Phase 2 收敛）
 ```
 
-- **公共导出面**（plan 2026-08-04-1558-1 Phase 2 收敛后）：`registerScadaRenderers` / `registerScadaSymbols` / 符号注册表 API（`registerScadaSymbol`/`unregisterScadaSymbol`/`hasScadaSymbol`/`getScadaSymbolDefinition`/`listScadaSymbols`）/ `builtinScadaSymbolDefinitions` / 类型（`ScadaCanvasSchema`/`ScadaCanvasEvents`/`ScadaConfig`/`ScadaSymbolNode`/`ScadaPointDeclaration`/`ScadaSymbolDefinition`/`ScadaSymbolProps` 等 + 序列化 companion 类型）。engine/binding/symbols 内部实现类（`ScadaCanvasEngine`/`PointStore`/`DirtyCollector`/`BindResolver`/`Animator`/`EventBridge`/viewport 工具等）不再经包入口导出——内部测试走 relative path（`../engine/...`），零外部消费者（audit dim 03 实核）。
+- **公共导出面**（plan 2026-08-04-1558-1 Phase 2 收敛后）：`registerScadaRenderers` / `registerScadaSymbols` / 符号注册表 API（`registerScadaSymbol`/`unregisterScadaSymbol`/`hasScadaSymbol`/`getScadaSymbolDefinition`/`listScadaSymbols`）/ `builtinScadaSymbolDefinitions` / `serializeScadaConfig`（序列化契约函数，design-contract 导出供 host 工具链直调，§4.3 裁定保留导出）/ 类型（`ScadaCanvasSchema`/`ScadaCanvasEvents`/`ScadaConfig`/`ScadaSymbolNode`/`ScadaPointDeclaration`/`ScadaSymbolDefinition`/`ScadaSymbolProps` 等 + 序列化 companion 类型）。engine/binding/symbols 内部实现类（`ScadaCanvasEngine`/`PointStore`/`DirtyCollector`/`BindResolver`/`Animator`/`EventBridge`/viewport 工具等）不再经包入口导出——内部测试走 relative path（`../engine/...`），零外部消费者（audit dim 03 实核）。
 
 - 拆分依据：`renderer-implementation-guidelines.md` Case 4（引擎/绑定/图元为域核心）+ Case 1/3（renderer 壳薄、桥接 hooks 本地化）；`complex-component-design-process.md` 分层（schema → 编译（序列化/校验）→ 运行时（引擎）→ 样式）。
 - 实现阶段映射：I4.1 包基建（schemas.ts/renderer-definitions.ts 骨架）、I4.2 空壳注册、I5.3 序列化（本档 §4.3）、I10.1/I10.2/I10.3 桥接与完整注册、I11.1/I11.2 事件联动与画布交互。

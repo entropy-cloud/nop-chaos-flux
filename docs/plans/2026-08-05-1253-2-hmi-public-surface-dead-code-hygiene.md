@@ -1,6 +1,6 @@
 # 02 Industrial HMI 公共 API 面与死模块 hygiene
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-05
 > Source: `docs/components/roadmap-industrial-hmi.md` §Follow-up Backlog「2026-08-05-0653 post-remediation audit P2」两条仍 open 条目（multi-audit P2-1 / P2-3）；源审计 `docs/audits/2026-08-05-0653-multi-audit-industrial-hmi.md`
 > Mission: industrial-hmi
@@ -62,21 +62,21 @@
 
 ### Phase 1 - §11 公共面枚举一致 + 死模块移除（multi-audit P2-1 + P2-3）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/renderer/scada-canvas.types.ts`、`docs/components/industrial-hmi/design-renderer.md` §11
 
 - Item Types: `Fix`
 
-- [ ] **Fix（P2-1 枚举）**：`design-renderer.md §11` 公共导出面段落（`:317`）在 register 函数 + 类型枚举中补 `serializeScadaConfig`（序列化契约函数，与 §4.3:177 已有 Decision 对齐：design-contract 导出供 host 工具链直调，无 live 内部消费者，保留为契约诚实）。
-- [ ] **Fix（P2-3 死模块）**：删除 `src/renderer/scada-canvas.types.ts`（rg 实核全仓零导入者；`index.ts:16` 已直连 `./schemas.js` 再导出同名类型，无契约 break）。
-- [ ] **Fix（§11 布局）**：`design-renderer.md §11` 实现布局代码块（`:305`）移除 `scada-canvas.types.ts` 行。
-- [ ] **Proof**：`pnpm typecheck` + `pnpm build` 验证删除死模块无隐藏消费者（typecheck 全包通过即证明无 `from './scada-canvas.types'` 或 `from '../scada-canvas.types'` 导入残留）。
+- [x] **Fix（P2-1 枚举）**：`design-renderer.md §11` 公共导出面段落（`:317`）在 register 函数 + 类型枚举中补 `serializeScadaConfig`（序列化契约函数，与 §4.3:177 已有 Decision 对齐：design-contract 导出供 host 工具链直调，无 live 内部消费者，保留为契约诚实）。
+- [x] **Fix（P2-3 死模块）**：删除 `src/renderer/scada-canvas.types.ts`（rg 实核全仓零导入者；`index.ts:16` 已直连 `./schemas.js` 再导出同名类型，无契约 break）。
+- [x] **Fix（§11 布局）**：`design-renderer.md §11` 实现布局代码块（`:305`）移除 `scada-canvas.types.ts` 行。
+- [x] **Proof**：`pnpm typecheck` + `pnpm build` 验证删除死模块无隐藏消费者（typecheck 全包通过即证明无 `from './scada-canvas.types'` 或 `from '../scada-canvas.types'` 导入残留）。
 
 Exit Criteria:
 
-- [ ] `design-renderer.md §11` 公共导出面枚举包含 `serializeScadaConfig`，与 `src/index.ts:54` 实际导出一致。
-- [ ] `src/renderer/scada-canvas.types.ts` 已删除；`pnpm typecheck` + `pnpm build` 全绿（无隐藏消费者）。
-- [ ] `design-renderer.md §11` 实现布局代码块不再列 `scada-canvas.types.ts`。
+- [x] `design-renderer.md §11` 公共导出面枚举包含 `serializeScadaConfig`，与 `src/index.ts:54` 实际导出一致。
+- [x] `src/renderer/scada-canvas.types.ts` 已删除；`pnpm typecheck` + `pnpm build` 全绿（无隐藏消费者）。
+- [x] `design-renderer.md §11` 实现布局代码块不再列 `scada-canvas.types.ts`。
 
 ## Draft Review Record
 
@@ -91,14 +91,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] multi-audit P2-1（§11 枚举遗漏）+ P2-3（死模块）两项 confirmed doc/code drift 已收敛。
-- [ ] `design-renderer.md §11` 与 `src/index.ts` 实际导出逐项一致（含 serializeScadaConfig）。
-- [ ] 死模块删除无隐藏消费者（typecheck/build 全绿）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] multi-audit P2-1（§11 枚举遗漏）+ P2-3（死模块）两项 confirmed doc/code drift 已收敛。
+- [x] `design-renderer.md §11` 与 `src/index.ts` 实际导出逐项一致（含 serializeScadaConfig）。
+- [x] 死模块删除无隐藏消费者（typecheck/build 全绿）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -110,13 +110,19 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: Phase 1 执行完成（2026-08-05）。P2-1：`design-renderer.md §11` 公共导出面枚举补 `serializeScadaConfig`（与 §4.3 Decision + `src/index.ts:54` 实际导出对齐）。P2-3：`src/renderer/scada-canvas.types.ts` 删除（`git rm`，全仓 rg 零导入者）+ §11 实现布局代码块移除该行。验证：`pnpm typecheck` 32/32、`pnpm build` 32/32、`pnpm lint` 32/32、`pnpm test` 59/59 全绿（industrial 包 cache miss 重编译通过，证明无隐藏消费者）。closure-audit gate 留待独立 fresh-session sub-agent。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者>>
-- Evidence: <<task id / daily log link>>
+- Auditor / Agent: independent closure auditor (fresh session, mission-driver `2026-08-05-065334-mission-driver`)
+- Evidence:
+  - Live repo re-verified: `packages/flux-renderers-industrial/src/renderer/scada-canvas.types.ts` 不存在（`ls` 确认已 `git rm`）。
+  - `packages/flux-renderers-industrial/src/index.ts:54` 仍 `export { serializeScadaConfig } from './serialization/serialize.js';`（contract 不变）。
+  - `docs/components/industrial-hmi/design-renderer.md:316` §11 公共导出面枚举已含 `serializeScadaConfig`（与 §4.3:177 Decision + `index.ts:54` 实际导出逐项一致）。
+  - `rg "scada-canvas.types" packages/ apps/` 零命中——§11:305 实现布局已无死模块行，全仓无残留导入者。
+  - Phase 1 全部 item + Exit Criteria `[x]`；Closure Gates 全 `[x]`；Closure Audit 在执行 session 之外的 fresh session 完成（本审计）。
+  - Five-point consistency：Plan Status `completed` / Phase 1 `completed` / Exit Criteria 全勾 / Closure Gates 全勾 / Closure evidence 已填——彼此一致。
 
 Follow-up:
 
-- <<no remaining plan-owned work>>
+- 无剩余 plan-owned work（P2-1 + P2-3 收敛完成；sibling plan `2026-08-05-1253-1` 收热路径 P2；multi P2-2 renderer 测试样板抽取按 Non-Goals 归后续 round）。
