@@ -253,6 +253,27 @@ interface ScadaStateDefinition {
 | 表达式          | 组态内 `expression`（`${expr}`，I18 一元化） | 经 flux-formula/flux-compiler 求值（§4.2），点表依赖链变化时经 generation 失效重算                                                                                                                                                                                                                          |
 | flux scope 桥接 | `flux: "${scope.path}"`                      | **`useScopeSelector`（带 `paths` 精细化失效）在 renderer 桥接层订阅**（`@nop-chaos/flux-react`，quick-reference.md:521,526），变化 → `setPointValues` 注入点表；flux 表达式经 flux-formula/flux-compiler 编译求值（I10.3 落地）——复用平台能力，禁止重复实现 scope 订阅/表达式编译（roadmap 平台能力复用表） |
 
+> **无点表直连 scope 端到端 wiring（plan 2026-08-05-2129-3 Phase 2，multi P1-1 false-green 收口）**：契约 ①
+> （无点表 `variables:[]` + `binding.expression '${scopeMember}'` 直连 scope）的端到端订阅由桥接层**订阅并集**覆盖——
+> `useScadaPointsBridge` 把 `analyzeFluxSubscriptions(config).paths`（flux 点声明派生）与
+> `collectBindingExpressionScopePaths(config)`（扫描 `symbols[].bindings[].expression` 经 `probeExpressionPaths`
+> 提取的 scope 路径，**排除已声明点 id**——bareword 匹配点 id 者为点引用经 `pointValues` 解析，非 scope 成员）并集，
+> 喂给 `useScopeSelector` 的 `paths`。`variables:[]` 时 flux 点派生路径为空，但 binding-expression 派生路径非空 →
+> `enabled:true` → `scopeData` 含 `scopeMember` → 推给 `pipeline.updateScopeData` → binding 经 `evalScope`
+> 求值读取。此前 `analyzeFluxSubscriptions` 仅扫 `variables` → `variables:[]` 时 `paths` 恒空 → `scopeData` 永久
+> `{}` → 端到端断裂（binding 求值得 NaN），但隔离测试 `variables-optional-contract.test.ts` 场景 ① 因直接驱动
+> pipeline + 手工注入 scopeData 绕过桥接层而**一直绿（false-green）**。端到端 wiring 现由
+> `binding-expression-scope-integration.test.tsx`（挂载真实桥接/renderer 边界）守护。桥接层在 render 期直接扫描
+> config（不读 reverseIndex）——reverseIndex 在 config reload effect 期重建滞后于 render， config 直扫保证订阅
+> 与 config 同步（无时序漂移）。
+
+> **错误码对称（plan 2026-08-05-2129-3 Phase 3，multi P1-2）**：pipeline 层 expression-point /
+> binding.expression / scale.expression 求值失败的错误码统一为 `flux-compile-failed`（编译失败）/
+> `flux-evaluate-failed`（求值失败 / 环 / 迭代预算超限），与桥接层 `source:'flux'` 通道**observably symmetric**——
+> 三个声明源都经同一 `reportDiagnostic` 出口（`createBindingDomain` 注入 `RefreshPipeline.onError`）到达
+> `console.warn` + `env.monitor.onError`。修复前 pipeline `onError` 在生产装配中未接线 → binding.expression /
+> scale.expression / source:'expression' 求值错误全部静默（详见 design-renderer.md §8.1 诊断通道）。
+
 > **复杂表达式订阅诊断 `flux-deps-empty`（plan 2026-08-05-0325-1，W1 successor）**：复杂 flux 表达式
 > （`${analog.temp + 1}` 类，含运算符/函数调用）的订阅路径经平台依赖收集（`extractExpressionDepsViaProbe`）
 > 产出。当平台 collector 失败（compile/createState/evaluateWithState 任一 catch、root 非 leaf-state、
