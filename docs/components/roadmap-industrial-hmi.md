@@ -33,6 +33,7 @@
 - **2026-08-05-0653 post-remediation audit P1 remediation plan `2026-08-05-0653-2` 执行完成（2026-08-05，2026-08-05-0653-2-industrial-hmi-audit-p1-remediations，✅）**：两份 0653 审计（open-ended adversarial + multi-dimensional）共 4 条 P1 全部收口。四 Phase 全部落地——Phase 1 拆分 2 个超限测试文件（`scada-points-bridge.test.tsx` 769→主+诊断、`scada-engine.test.ts` 718→主+plugin-sync+events-declarations，5 文件均 <700，恢复 oversized 硬门禁）；Phase 2 修复 `diffScadaConfig` 丢弃 `flow` 字段（`SYMBOL_KEYS` 机械补 `'flow'`，open P1-1，failing-first 5 用例 + 集成 proof 2 用例：diff→engine.applyDiff→pipe-junction.applyProps 链路贯通）；Phase 3 修复 `scada-sensor-control-indicator` 绘制顺序（复合子序 swap `[lamp,housing]`→`[housing,lamp]`，open P1-2，housing 背景层/lamp 上层状态色可见，z-order 可观测 proof 3 用例经 mock children 入序断言关闭「mock 盲于 z-order」类）；Phase 4 修复 W3 revert 覆盖同帧 binding 值（`StateVisualApplier.applyState` revert 分支检测 `instanceBindings?.[key]` 跳过有 binding 的字段，multi P1-1，failing-first 扩展 alarm-storm frame 3 fill-value 断言 + 聚焦回归 3 用例，W3 Decision 注记补 binding-vs-revert 三路裁定，`design-data-binding.md §4.3` 同步）。包级 628 tests / 46 files 全绿、workspace 全量验证（typecheck/build/lint 32/32 + test 59/59）全绿、`pnpm check:oversized-code-files` industrial 包 0 失败（16→14 ERROR）。open-audit P1-1/P1-2 + multi-audit P1-1/P1-2 四项 confirmed live defect 已修复并各带 focused regression proof（断言结果值/可见性）。源审计 `Audit Status: planned → closed`（两份）。15 P2 已在 roadmap Follow-up Backlog「2026-08-05-0653 post-remediation audit P2」子节追踪，按 mission 节奏择期处理。
 - **2026-08-05-0653 post-remediation audit P2 收口（binding/state pipeline 分支）plan `2026-08-05-0653-3` 执行完成（2026-08-05，2026-08-05-0653-3-hmi-binding-state-resolution-correctness，✅）**：open-audit 5 项 P2 silent-defect（B1-B5，均「通过 validate 但运行期静默产出错误视觉/状态/数据归属结果」）收口。三 Phase 全部落地——Phase 1（B1+B2）：`bind-resolver.ts` `resolveBinding` 引入文本类属性集合（`text`/`fill`/`stroke`/`textColor`），仅这些 property 施加 format，`visible:false` 绑定真正隐藏图元（B1，open P2-4）；line/arrow/pipe 增 `applyProps` 从 width/height 重算 points 写回 `node.points`（pipe 补齐 `defaultGeometryPoints`），绑定产出可见几何响应（B2，open P2-8，Decision 裁定方案 (a)）；Phase 2（B3）：`value-to-state.ts` `defaultState` 命名偏好链（run→normal→off→首键）+ `ScadaStateDeclaration.stateSource?`（格式 `"pointId"` 或 `"pointId.property"`）显式 state-driver，`dirty-collector.ts` 优先 consult `declaration.stateSource`，validator 校验引用合法（B3，open P2-5）；Phase 3（B4+B5）：declaration 级 `scale.expression` 经 validator 拒绝并指向 binding-scale（Decision 裁定方案 (b)，同时关闭 `point-store.convert` 与 `value-to-state.applyLinearScale` 两处 drop site，B4，open P2-7）；`applyValue` 改用 `EventHub.emitWith` 携 per-emit 闭包捕获当前 pointId，消除 `lastNotifyPointId` 可变字段（字段已删除），re-entrant 写下错误始终归属正在派发的 pointId（B5，open P2-9）。每项 Fix 前先落 failing-first Proof（红→绿）。`design-data-binding.md`（format 适用域 + scale 消费语义 + state 偏好语义）+ `design-symbols.md`（points-based 形 width/height 绑定契约）同步 live baseline。包级 640 tests / 46 files 全绿、workspace 全量验证（typecheck/build/lint 32/32 + test 59/59）全绿。open-audit P2-4/P2-5/P2-7/P2-8/P2-9 五项 confirmed live defect 已修复并各带 focused regression proof（断言结果值/可观测行为）。剩余 10 项 P2（multi P2-1~P2-6 + open P2-1/P2-2/P2-3/P2-6）仍在 Follow-up Backlog 追踪，归 sibling plan `2026-08-05-0653-4`（config-build/诊断通道分支）或后续 mission 节奏。
 - **2026-08-05-0653 post-remediation audit P2 收口（config-build/equality/诊断通道分支）plan `2026-08-05-0653-4` 执行完成（2026-08-05，2026-08-05-0653-4-hmi-config-build-equality-diagnostic-fidelity，✅）**：0653 audit 剩余 4 项 P2 silent-defect（C1-C4，均「静默丢失信息」——config-build Group 降级丢 leaf attrs / 序列化相等 key 序敏感产冗余 override / 诊断通道丢 error stack/cause / probe 塌缩产 flux-deps-empty 误报）收口。三 Phase 全部落地——Phase 1（C1，open P2-3）：`validate.ts` 增 `children` 仅 `scada-group` 约束（fail-fast，错误消息可观测）+ `config-adapter.ts:84` `isContainer` 收紧为 `node.type === GROUP_CONTAINER_TYPE`（defense-in-depth，叶子带 children 按 leaf 构建保 fill/stroke/width/height）；Phase 2（C2，open P2-6）：新建 `serialization/equality.ts` 导出 `deepEqual(a, b)`（own-keys 递归 stable），`diff.ts valuesEqual` + `compound.ts deepEquals`（已删除）共享之，消除 compound 路径 W5 同类隐患；Phase 3（C3 multi P2-4 + C4 multi P2-6）：`UseScadaPointsBridgeArgs.onError` 签名 `(code, message)` → `(code, message, error?)`，`reportOnce` 透传 error，`reportDiagnostic` 用 `new Error(message, { cause: error })` 包装供 `env.monitor.onError`（host 监控可经 `Error.cause` 定位 formula 源）；`extractExpressionDepsViaProbe` 返 discriminated result（`ok/compile-failed/create-state-failed/evaluate-failed/deps-empty`），`analyzeFluxSubscriptions` 仅 `deps-empty` 入诊断集（消除失败表达式 flux-deps-empty 误报 + flux-compile-failed 真报双报）。每项 Fix 前先落 failing-first Proof（红→绿）。`design-renderer.md`（Group 降级契约 + cause 语义）+ `design-data-binding.md`（probe result 语义）同步 live baseline。包级 647 tests / 46 files 全绿、workspace 全量验证（typecheck/build/lint 32/32 + test 59/59）全绿。open-audit P2-3/P2-6 + multi-audit P2-4/P2-6 四项 confirmed live defect 已修复并各带 focused regression proof（断言结果值/可观测行为）。closure-audit gate 待独立 fresh-session sub-agent 执行（执行 session 不自审，AGENTS.md human gate）。剩余 6 项 P2（multi P2-1/P2-2/P2-3/P2-5 + open P2-1/P2-2）为 doc/test-hygiene/perf 类，留 backlog 按 mission 节奏择期处理。
+- **I18 work item 立项登记（2026-08-05，✅ Rule 3 结构性调整经人工确认）**：表达式设计债收口立项。触发：用户评审质疑三连（`@{pointId}` 自定义语法来源 / 为何不直接复用 flux-formula-flux-compiler（404 行自建 expression-evaluator.ts 与平台复用表「禁止重复实现」相悖）/ 是否需要 `points.` 固定命名约定可直连 data-source 绑定），经文本核验（`docs/discussions/2026-08-05-industrial-hmi-expression-convergence-discussion.md`）三条均成立；且 `$xxx` 简写本身与平台保留 `$` 内置命名空间冲突（flux-formula.md:196,205）。**经人工确认（Rule 3 结构性调整 = 新增 work item 须人工确认，对话决策 D1-D6）**：合并为 **I18 work item** 立项（表达式一元化 + 点表可选间接层），写入 `## Phase Status` / `## Work Items` / `## Phase Details` / `## Dependency Graph` / Cross-Cutting 复用表。**约束落地**：① `@{pointId}` 与 `$xxx` 一并弃用，唯一语法 `${expr}`；② 点表降为可选间接层（`variables` 缺省合法、`points` 非保留名）；③ 高频遥测 INV-4 out-of-band 通道保持不变（性能红线回退需重开人工确认）；④ demo/playground 已核实无 `@{}`/`$xxx` 生产配置，迁移量小。I18 不破坏 runtime 契约、不动 Phase Status 已有 I0–I17 行。**未跑独立 sub-agent 共识审查**：本次为 roadmap 编排层结构性调整（Rule 3 人工确认已落实），非 contract 章节新增，按 Rule 5「文档共识审查」覆盖范围不触发；讨论文档 §七 已声明待人工确认（本条目即确认回写）；若后续 I18 起草 execution plan，按 plan 共识审查条款执行（独立子 agent 审查直到共识）。
 
 ## Purpose
 
@@ -77,6 +78,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **I15. 测试补强、文档与收尾** (`done`)
 - **I16. 组态编辑器后继 mission 立项入口** (`done`) <!-- 预留：仅产出立项材料，不实现；`todo → planned` 于 plan-2026-08-04-0902-2 激活期回写（I3/I15 先例），`planned → done` 由独立 closure-audit（task `ses_03540a864ffeYfVV7vgePBRGY3`）核验后回写（2026-08-04） -->
 - **I17. Demo 视觉优化、参考资源登记与 LeaferJS 对照页** (`todo`) <!-- 2026-08-05 立项：Rule 3 结构性调整（新增 work item）经人工确认；合一 4 类轻量发现（scada-demo 硬编码坐标重排 + design-engine/design-symbols 参考资源附录 + playground leafer-examples 路由）；编辑器实现不在此 work item（按 editor-initiation.md 独立后继 mission）；依赖 I15（文档收尾 + 测试基线就绪） -->
+- **I18. 表达式一元化与点表可选间接层** (`todo`) <!-- 2026-08-05 立项：Rule 3 结构性调整（新增 work item）经人工确认（讨论文档 `docs/discussions/2026-08-05-industrial-hmi-expression-convergence-discussion.md` D1-D6）；弃用 `@{pointId}` 自定义表达式语法与 `$xxx` 简写（与平台保留 `$` 内置命名空间冲突，flux-formula.md:196,205），统一为平台唯一语法 `${expr}`；点表降级为可选间接层（`variables` 可缺省、绑定直连 scope/data-source）；移除 `binding/expression-evaluator.ts`（依赖收集改 flux 探针 + generation 失效，环检测保留）；高频遥测 INV-4 out-of-band 通道不变；依赖 I6/I10/I15（binding/桥接/基线） -->
 
 ## Current Baseline
 
@@ -99,7 +101,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 - 新建 1 个包（`@nop-chaos/flux-renderers-industrial`），依赖引入 `leafer-ui@2.2.9` + `@leafer-in/viewport@2.2.9`（viewport 插件为 A1 固化必需依赖：`tree: { type: 'viewport' }` 显式配置，design-engine.md §4.2/§12.2；版本与 I1.2 spike 一致，I4 plan 已锁定）
 - 1 个新 renderer type：`scada-canvas`（props 内嵌组态 JSON：图元树 + 点表），图元级 type 后续叠加
-- 数据模型：双轨（组态内点表自包含 + flux 表达式 `$xxx` 桥接）
+- 数据模型：点表为**可选间接层** + **唯一 flux 表达式语法 `${expr}`** 绑定（`@{pointId}` 自定义语法与 `$xxx` 简写已弃用——`$xxx` 与平台保留 `$` 内置命名空间冲突，flux-formula.md:196,205；详见 I18 与讨论文档 `2026-08-05-industrial-hmi-expression-convergence-discussion.md`）
 - 测试：纯逻辑层 Vitest 单测 + Playwright e2e 程序化断言（经测试句柄读场景树，不用截图/不引 node-canvas）
 - 性能验收（对标 LeaferJS 官方性能档（数值官方自报，已由 I0 调研校准，`research-download.md` §2.2）：10 万图元可交互 ≥45fps、首屏创建 <2s、内存 ≤320MB；1 万实时数据点端到端刷新 <200ms
 - 调研源码下载目录：`~/sources/industrial-hmi-research/`
@@ -138,7 +140,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | ID   | 内容                                                                                                                                                                                                                          | 依赖       |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
 | I2.1 | **引擎架构设计** `design-engine.md`：LeaferJS 适配层（实例生命周期/场景树）、图层分层（背景/图元/交互/HTML 覆盖层）、世界↔视口坐标变换、渲染循环与脏区/局部重绘、性能策略（实例化、裁剪、合帧）                               | I1.2       |
-| I2.2 | **数据绑定与动画设计** `design-data-binding.md`：点表/变量表模型、绑定表达式（静态/flux `$xxx` 桥接）、订阅与节流（合并帧/脏属性收集）、状态驱动动画（旋转/闪烁/流动/位移）、多状态呈现（运行/停止/故障）                     | I2.1       |
+| I2.2 | **数据绑定与动画设计** `design-data-binding.md`：点表/变量表模型、绑定表达式（静态/可选点表/flux `${expr}` 桥接）、订阅与节流（合并帧/脏属性收集）、状态驱动动画（旋转/闪烁/流动/位移）、多状态呈现（运行/停止/故障）         | I2.1       |
 | I2.3 | **图元模型设计** `design-symbols.md`：Symbol 接口与属性 schema、图元注册机制（对齐 flux registry）、复合图元（group/instance）、基础形状与工业设备图元分类                                                                    | I2.1       |
 | I2.4 | **序列化与 renderer 契约设计** `design-renderer.md`：组态 JSON schema（图元树+点表+绑定+事件）校验与序列化/反序列化、`scada-canvas` fields/events/regions/handles、React 桥接（ref 同步/实例生命周期）、事件→flux action 联动 | I2.2, I2.3 |
 
@@ -260,6 +262,17 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 | I17.2 | **文档参考资源登记**：① `docs/components/industrial-hmi/design-engine.md` 增补「官方示例对照」附录——列出最相关 6-8 个 LeaferJS 官方示例链接（创建 App / 缩放平移视图 / 转换坐标 / 获取包围盒 / 局部渲染 / Group / Editor / Flow 自动布局 / viewport 插件），供未来维护者快速锚定 LeaferJS 原生能力用法；② `docs/components/industrial-hmi/design-symbols.md` 增补「第三方图元库参考」附录——meta2d.js diagrams / FUXA SVG 图元库 / OSHMI 三项及定性（**关键定性**：LeaferJS 官方示例是通用 Canvas 能力展示、无 HMI 行业示例；meta2d 亦无 HMI 设备图元；FUXA 是 MIT SCADA/HMI 平台含真实工艺画面；OSHMI GPL-3.0 仅设计层参考）                                                     | I15.2 |
 | I17.3 | **playground LeaferJS 官方示例对照页**：新增独立路由 `#/leafer-examples`（**不进 home 卡片**，仅学习 / e2e 驱动，对齐 `#/scada-perf-scale` 先例）—— 直接跑 LeaferJS 官方示例代码（创建 App / Rect / 动画 / 视口 / Editor / Flow 等基础样例）。**价值**：① 团队学习 LeaferJS 原生能力；② 编辑器后继 mission 立项前对照 LeaferJS 官方 Editor / Flow 插件能力（评估「直接复用 leafer-editor vs 自研编辑器」决策）；③ 长期作为 LeaferJS 升级版本（如未来 v3）的回归对照基线。**约束**：落地时需复核 `leafer-ui` 依赖已在 `flux-renderers-industrial` 包内（无需 playground 重复引入）；新增路由需同步 `apps/playground/src/route-model.ts` + `App.tsx` + （若进卡片）`home-page.tsx` | I4.1  |
 
+### I18 — 表达式一元化与点表可选间接层
+
+> 2026-08-05 立项（Rule 3 结构性调整经人工确认，讨论文档 `docs/discussions/2026-08-05-industrial-hmi-expression-convergence-discussion.md` D1-D6）。设计债收口：`@{pointId}` 自定义表达式语法（`binding/expression-evaluator.ts` 404 行自建 tokenizer/parser/evaluator）与 `$xxx` 简写（桥接层 `normalizeFluxExpression` 本地扩张，与平台保留 `$` 内置命名空间 `$Math`/`$JSON`/`$Date` 冲突）一并弃用；统一为平台**唯一语法 `${expr}`**，点表降为**可选间接层**。**高频遥测 INV-4 out-of-band 通道（点表 + 脏收集合帧）保持不变**——scope 绑定仅承接低频/中频（性能红线 V2/V4 不回退）。
+
+| ID    | 内容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | 依赖         |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| I18.1 | **语法一元化（binding 域核心）**：`binding.expression` / `ScadaPointDeclaration.expression` / `scale.expression` 统一为 `${expr}`；删除 `binding/expression-evaluator.ts`；`reverse-index.ts` 语法级 `extractPointIdRefs` 移除（表达式点依赖收集改 flux 依赖收集/探针同源）；`dirty-collector.ts` 装配的 evaluate 依赖改 flux 编译求值；点间依赖失效接入 point generation 缓存失效（复用 bridge 已实现 generation-memoize）；环检测保留为流水线层守卫；`serialization/validate.ts` + `schemas.ts` 同步（`@{}` 不再校验、`variables` 可选） | I6.2, I10.3  |
+| I18.2 | **点表可选间接层**：`ScadaConfig.variables` 缺省合法（绑定直连 scope/data-source）；三源声明（static/expression/flux）保留为可选声明（自包含/量程/死区/协议归口场景用）；点表值注入求值 scope 复用 `createPrivateEvalScope` 合并机制；`points` 名称不固化、非保留字（`${points.x}` 仅为普通 scope 标识符）                                                                                                                                                                                                                                 | I18.1        |
+| I18.3 | **迁移与兼容**：demo/playground 无 `@{}`/`$xxx` 生产配置（已核实，全为 `binding.point`），无 demo 迁移；validator 可选容忍旧 `@{}`（warn 指向迁移）+ 配置 codemod；单元测试改写（expression-evaluator.test.ts / reverse-index.test.ts / bind-resolver.test.ts 相关用例迁移为 flux-formula parity 测试）；文档同步（design-data-binding.md §4.1/§4.2/§9.1/决策表、design-symbols.md §4.2、design-renderer.md §4.2、本 roadmap 数据模型行与 I2.2 行已先行回写）                                                                              | I18.1, I18.2 |
+| I18.4 | **验证**：Test Strategy **Must automate** 档（表达式语法为组态公共契约 + 迁移回归路径）；failing-first Proof 先行（`@{pointId}` 表达式被拒 / `${expr}` 求值语义经 flux-formula / 点表缺省直连 scope 绑定 / generation 失效重算 / 环检测保留）；包级 + workspace 全量验证 + scada e2e 回归（demo/edge-cases/perf 基线不回归）；文档共识审查（讨论文档 + 本 work item 引用链）                                                                                                                                                               | I18.1–I18.3  |
+
 ## Phase Details
 
 ### I0 调研与源码下载
@@ -272,7 +285,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### I2 通用引擎层设计
 
-4 份设计文档：引擎架构（场景图适配/图层/坐标变换/渲染循环/性能策略）、数据绑定与动画（点表/双轨桥接/订阅节流/状态动画）、图元模型（Symbol 接口/注册机制/复合图元）、序列化与 renderer 契约（组态 JSON schema/scada-canvas fields/React 桥接/事件联动）。
+4 份设计文档：引擎架构（场景图适配/图层/坐标变换/渲染循环/性能策略）、数据绑定与动画（点表/唯一 `${expr}` 表达式绑定/订阅节流/状态动画；表达式一元化与点表可选间接层经 I18 收口）、图元模型（Symbol 接口/注册机制/复合图元）、序列化与 renderer 契约（组态 JSON schema/scada-canvas fields/React 桥接/事件联动）。
 
 ### I3 设计回顾与修正 #2
 
@@ -334,6 +347,10 @@ e2e 程序化断言补强、边界用例、i18n；`docs/index.md`/架构文档/q
 
 3 项轻量交付：（1）scada-demo 坐标重排（参考 LeaferJS Playground + meta2d diagrams 形态，对硬编码坐标做一次 8px 基线对齐重排，保留 testid/bindings/events 不变 + scoped e2e 回归）；（2）design-engine.md「官方示例对照」附录 + design-symbols.md「第三方图元库参考」附录（LeaferJS 官方示例/meta2d/FUXA/OSHMI 及定性）；（3）playground 新增 `#/leafer-examples` 独立路由（不进 home 卡片，对齐 scada-perf-scale 先例）跑 LeaferJS 官方示例代码。**编辑器实现不在此 work item**——按 `editor-initiation.md` 独立后继 mission 编排。
 
+### I18 表达式一元化与点表可选间接层
+
+设计债收口：删除自建表达式方言（`@{pointId}`），统一为平台唯一 `${expr}` 语法；点表降为可选间接层。4 项交付：（1）binding 域核心语法一元化（删 expression-evaluator.ts、reverse-index 改 flux 依赖收集、bind-resolver evaluate 改 flux 编译求值、环检测保留）；（2）点表可选（`variables` 缺省合法、绑定直连 scope/data-source、点值注入求值 scope 复用 createPrivateEvalScope）；（3）迁移与兼容（demo 免迁移、validator 可选容忍 + codemod、单测改写为 flux-formula parity）；（4）验证（Must automate 档，failing-first，包级 + workspace + scada e2e 回归）。设计依据与决策项（D1-D6）：`docs/discussions/2026-08-05-industrial-hmi-expression-convergence-discussion.md`。**高频遥测 INV-4 out-of-band 通道保持不变**。
+
 ## Dependency Graph
 
 ```mermaid
@@ -355,6 +372,7 @@ flowchart TD
   I14 --> I15["I15 测试与收尾"]
   I15 --> I16["I16 编辑器立项入口(预留)"]
   I15 --> I17["I17 Demo 优化/参考登记/LeaferJS 对照页"]
+  I15 --> I18["I18 表达式一元化/点表可选间接层"]
 ```
 
 ## Cross-Cutting
@@ -368,16 +386,16 @@ flowchart TD
 - **review gate 执行纪律**：每个 gate（I1/I3/I7/I12）由独立子 agent（fresh session）执行，不复用被审阶段的执行上下文；输入 = 任务范围（讨论文件 §八）+ 上游产物（调研报告/设计文档/实现）+ 与 roadmap 的差异清单。修正项落地后该 gate 的 work item 才可标记 `done`。
 - **平台能力复用（Framework / Platform Reuse）**：以下既有能力**禁止重复实现**，设计/实现时直接消费：
 
-  | 能力                                                                               | 提供方                                                                                                                                 | 消费方                |
-  | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-  | scope 数据流与响应式取值（`useScopeSelector`/`useRenderScope`）                    | `@nop-chaos/flux-react`                                                                                                                | I6.1 点表桥接、I10.3  |
-  | action 事件派发与载荷规范化（`useActionDispatcher`/`createNormalizedActionEvent`） | `@nop-chaos/flux-react`                                                                                                                | I6.4、I10.3、I11.1    |
-  | renderer 注册与定义（`RendererComponentProps`/renderer-definitions/registry）      | `@nop-chaos/flux-react` + `flux-renderers-*`                                                                                           | I4.2、I10.1/10.2      |
-  | 表达式编译与求值（formula compiler）                                               | `@nop-chaos/flux-formula`/`flux-compiler`                                                                                              | I6.2 属性绑定、I10.3  |
-  | i18n 文案（`flux-i18n` locale 文件）                                               | `@nop-chaos/flux-i18n`                                                                                                                 | I15.1                 |
-  | UI 组件与样式基元（`cn()`/Button/Dialog 等）                                       | `@nop-chaos/ui`                                                                                                                        | HTML 覆盖层（弹窗等） |
-  | Tailwind v4 样式扫描（`@source "../../../packages"`）                              | `apps/playground/src/styles.css`                                                                                                       | 新包样式（无需改动）  |
-  | 复杂组件设计流程与原则审计                                                         | `docs/references/new-renderer-introduction-audit.md` / `complex-component-design-process.md` / `renderer-implementation-guidelines.md` | I2、I10.2             |
+  | 能力                                                                               | 提供方                                                                                                                                 | 消费方                                 |
+  | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+  | scope 数据流与响应式取值（`useScopeSelector`/`useRenderScope`）                    | `@nop-chaos/flux-react`                                                                                                                | I6.1 点表桥接、I10.3                   |
+  | action 事件派发与载荷规范化（`useActionDispatcher`/`createNormalizedActionEvent`） | `@nop-chaos/flux-react`                                                                                                                | I6.4、I10.3、I11.1                     |
+  | renderer 注册与定义（`RendererComponentProps`/renderer-definitions/registry）      | `@nop-chaos/flux-react` + `flux-renderers-*`                                                                                           | I4.2、I10.1/10.2                       |
+  | 表达式编译与求值（formula compiler）                                               | `@nop-chaos/flux-formula`/`flux-compiler`                                                                                              | I6.2 属性绑定、I10.3、I18 表达式一元化 |
+  | i18n 文案（`flux-i18n` locale 文件）                                               | `@nop-chaos/flux-i18n`                                                                                                                 | I15.1                                  |
+  | UI 组件与样式基元（`cn()`/Button/Dialog 等）                                       | `@nop-chaos/ui`                                                                                                                        | HTML 覆盖层（弹窗等）                  |
+  | Tailwind v4 样式扫描（`@source "../../../packages"`）                              | `apps/playground/src/styles.css`                                                                                                       | 新包样式（无需改动）                   |
+  | 复杂组件设计流程与原则审计                                                         | `docs/references/new-renderer-introduction-audit.md` / `complex-component-design-process.md` / `renderer-implementation-guidelines.md` | I2、I10.2                              |
 
 - **人工确认阈值**：引擎选型变更、`scada-canvas` 公共契约（fields/events）重大变更、benchmark 不达标、文档共识循环超 3 轮、编辑器提前启动——必须停下标记人工决策，不自动推进。
 - **新增包流程**：按 `AGENTS.md` "Adding New Packages"（vite.workspace-alias.ts + 根 tsconfig references + docs/logs）。

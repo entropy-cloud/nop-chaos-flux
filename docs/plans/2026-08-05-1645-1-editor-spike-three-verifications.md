@@ -1,6 +1,6 @@
 # 1 Editor Mission E0 三项 spike 验证（leafer-editor 共存手势仲裁 / Editor 事件族载荷 / 编辑态覆盖物密集场景性能）
 
-> Plan Status: draft
+> Plan Status: completed
 > Last Reviewed: 2026-08-05
 > Source: `docs/components/roadmap-industrial-hmi-editor.md`（E0、Cross-Cutting spike 先行纪律/人工确认阈值/文档共识审查）、`docs/components/industrial-hmi/editor-initiation.md`（§4.3 三项待验证项 / §4 选型考量 / §6 R1/R2 风险）、`docs/analysis/industrial-hmi/gate-3-review.md`（§3 leafer 真实 API 抽查口径 + mock↔真实漂移教训）、`docs/bugs/76-*.md`（hover-miss / 多边形覆盖物默认框 leafer 真实漂移先例）
 > Related: `docs/plans/2026-08-03-1508-2-i1-research-gate-and-spike.md`（I1.2 选型可行性 spike 先例，spike 模式参考）、`docs/plans/2026-08-04-0902-2-i16-editor-initiation-entry.md`（上游 I16.1 立项入口 plan）
@@ -83,85 +83,85 @@ spike 结论作为 E1 选型 gate 的输入：**否决条件精确化（对齐 `
 
 ### Phase 1 - E0.1 viewport+Editor 共存手势仲裁 spike
 
-Status: planned
+Status: completed
 Targets: `~/sources/industrial-hmi-research/spike-editor/`（scratch，不入仓库）、`docs/analysis/industrial-hmi-editor/spike-2026-08-05.md`（spike 报告 E0.1 章节）
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] `Decision`：roadmap Phase Status 回写 E0: `todo` → `planned`（本 plan 激活为 active 时同步执行）。
-- [ ] `Proof`：在 scratch 目录创建 spike 工程（Vite + leafer-ui@2.2.9 + `@leafer-in/editor`@2.2.9 + `@leafer-in/viewport`@2.2.9），编写最小 demo：① `tree: { type: 'viewport' }` 配置 + `move: { drag: 'auto', dragEmpty: true }`（对齐 runtime `scada-engine.ts` appConfig.tree）；② Editor 接入（`new App({ tree: ..., editor: {} })`）；③ 10 矩形作为可编辑图元（覆盖最小可观察场景，无需 10 万量级，性能留 E0.3）。
-- [ ] `Proof`：Playwright headless Chromium 实测（`page.evaluate` 读场景树 + 事件日志，禁截图判定）以下场景的真实行为：① 不选图元时画布平移（wheel/pinch）是否仍可用；② 选中图元时拖拽图元（不触发画布平移）；③ 多选框选（EditSelect.selectArea）手势归属；④ 图元外空白区拖拽（应触发画布平移，`drag: 'auto'` 让位语义）；⑤ 双向手势切换（图元拖拽 ↔ 画布平移）事件冲突点（pointerdown/dragstart 触发序）记录。
-- [ ] `Proof`：真实 API 锚点逐一记录（`leafer-in/packages/editor/src/` + `leafer-editor/packages/partner/` + `editor/simulate.ts`）：① Editor 构造与 tree 关系；② Editor 接管 pointer 事件的路径；③ `drag: 'auto'` 在 Editor 启用时的优先级机制；④ zoomLayer（viewport）与 Editor 的官方设计交互（`editor-initiation.md §4.1` 轻量核证③ 的实际表现）。
-- [ ] `Decision`：基于实测结论判定 E0.1 主路径成立性——成立：记录手势仲裁机制 + 适配层 cost（应极小）；不成立：记录真实冲突点（不可调和）+ 标记 R1 人工确认 + 提出路径 B（自研交互层挂 sky）落地草案供 E1.1 裁定。
-- [ ] `Fix`：将 E0.1 章节写入 spike 报告（实测数据 + 真实 API 锚点 + 主路径成立性判定 + 适配层 cost 估计 + R1 标记若触发）。
+- [x] `Decision`：roadmap Phase Status 回写 E0: `todo` → `planned`（本 plan 激活为 active 时同步执行）。
+- [x] `Proof`：在 scratch 目录创建 spike 工程（Vite + leafer-ui@2.2.9 + `@leafer-in/editor`@2.2.9 + `@leafer-in/viewport`@2.2.9），编写最小 demo：① `tree: { type: 'viewport' }` 配置 + `move: { drag: 'auto', dragEmpty: true }`（对齐 runtime `scada-engine.ts` appConfig.tree）；② Editor 接入（`new App({ tree: ..., editor: {} })`）；③ 10 矩形作为可编辑图元（覆盖最小可观察场景，无需 10 万量级，性能留 E0.3）。
+- [x] `Proof`：Playwright headless Chromium 实测（`page.evaluate` 读场景树 + 事件日志，禁截图判定）以下场景的真实行为：① 不选图元时画布平移（wheel/pinch）是否仍可用；② 选中图元时拖拽图元（不触发画布平移）；③ 多选框选（EditSelect.selectArea）手势归属；④ 图元外空白区拖拽（应触发画布平移，`drag: 'auto'` 让位语义）；⑤ 双向手势切换（图元拖拽 ↔ 画布平移）事件冲突点（pointerdown/dragstart 触发序）记录。
+- [x] `Proof`：真实 API 锚点逐一记录（`leafer-in/packages/editor/src/` + `leafer-editor/packages/partner/` + `editor/simulate.ts`）：① Editor 构造与 tree 关系；② Editor 接接管 pointer 事件的路径；③ `drag: 'auto'` 在 Editor 启用时的优先级机制；④ zoomLayer（viewport）与 Editor 的官方设计交互（`editor-initiation.md §4.1` 轻量核证③ 的实际表现）。
+- [x] `Decision`：基于实测结论判定 E0.1 主路径成立性——成立：记录手势仲裁机制 + 适配层 cost（应极小）；不成立：记录真实冲突点（不可调和）+ 标记 R1 人工确认 + 提出路径 B（自研交互层挂 sky）落地草案供 E1.1 裁定。
+- [x] `Fix`：将 E0.1 章节写入 spike 报告（实测数据 + 真实 API 锚点 + 主路径成立性判定 + 适配层 cost 估计 + R1 标记若触发）。
 
 Exit Criteria:
 
-- [ ] scratch spike 工程就绪（含 leafer-ui + leafer-editor + viewport 三依赖 + Vite 启动）；E0.1 五个测试场景的实测数据可追溯（spike 报告 E0.1 章节含数据表）。
-- [ ] 真实 API 锚点表完成（≥10 项 leafer-editor API 真实行为对照表，对齐 gate-3 §3 抽查格式）。
-- [ ] E0.1 主路径成立性判定有事实依据（不是 mock 推断，是真实 leafer 行为）；若 R1 触发，标记完整且人工确认路径清晰。
+- [x] scratch spike 工程就绪（含 leafer-ui + leafer-editor + viewport 三依赖 + Vite 启动）；E0.1 五个测试场景的实测数据可追溯（spike 报告 E0.1 章节含数据表）。
+- [x] 真实 API 锚点表完成（≥10 项 leafer-editor API 真实行为对照表，对齐 gate-3 §3 抽查格式）。
+- [x] E0.1 主路径成立性判定有事实依据（不是 mock 推断，是真实 leafer 行为）；若 R1 触发，标记完整且人工确认路径清晰。
 
 ### Phase 2 - E0.2 Editor 事件族载荷 spike
 
-Status: planned
+Status: completed
 Targets: `~/sources/industrial-hmi-research/spike-editor/`（scratch，沿用 Phase 1 工程）、`docs/analysis/industrial-hmi-editor/spike-2026-08-05.md`（spike 报告 E0.2 章节）
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] `Proof`：扩展 Phase 1 spike demo，触发以下六大 Editor 事件族并经 `page.evaluate` 抽取真实载荷（JSON 序列化）：① EditorMoveEvent（拖拽移动）；② EditorScaleEvent（缩放，含 shift 锁比例 / alt 锚点场景）；③ EditorRotateEvent（旋转）；④ EditorSkewEvent（斜切）；⑤ EditorGroupEvent（成组/解组）；⑥ InnerEditorEvent（内部编辑器进入/退出/控制点变更）。
-- [ ] `Proof`：多选框选场景载荷抽取（EditSelect.selectArea 触发的事件序 + 选区变更载荷）。
-- [ ] `Proof`：InnerEditor 场景载荷抽取（双击进入内部编辑 / 控制点拖拽 / 退出内部编辑）。
-- [ ] `Proof`：与 flux action 派发链衔接路径核对——基于真实载荷形状评估与 `createNormalizedActionEvent`（runtime mission 既有能力）的衔接：① 哪些事件族可直接映射为 flux action；② 哪些需要适配层转换（如 EditorGroupEvent 的 group/ungroup 操作需映射为组态模型 addSymbol/removeSymbol diff）；③ 适配层 cost 估计。
-- [ ] `Decision`：基于实测载荷判定 E0.2 是否触发 spike-event-drift（与 `research-render-engines.md §5 :122` 列名不一致）——一致：记录确认；不一致：标记 drift 类型（载荷字段缺失 / 字段名变化 / 载荷结构变化）+ 适配层 cost 重估（gate-3 M-1 教训：载荷读取面错误会让事件永不派发）。
-- [ ] `Fix`：将 E0.2 章节写入 spike 报告（六大事件族真实载荷表 + 多选框选/InnerEditor 场景 + flux action 衔接路径评估 + drift 标记若触发）。
+- [x] `Proof`：扩展 Phase 1 spike demo，触发以下六大 Editor 事件族并经 `page.evaluate` 抽取真实载荷（JSON 序列化）：① EditorMoveEvent（拖拽移动）；② EditorScaleEvent（缩放，含 shift 锁比例 / alt 锚点场景）；③ EditorRotateEvent（旋转）；④ EditorSkewEvent（斜切）；⑤ EditorGroupEvent（成组/解组）；⑥ InnerEditorEvent（内部编辑器进入/退出/控制点变更）。
+- [x] `Proof`：多选框选场景载荷抽取（EditSelect.selectArea 触发的事件序 + 选区变更载荷）。
+- [x] `Proof`：InnerEditor 场景载荷抽取（双击进入内部编辑 / 控制点拖拽 / 退出内部编辑）。
+- [x] `Proof`：与 flux action 派发链衔接路径核对——基于真实载荷形状评估与 `createNormalizedActionEvent`（runtime mission 既有能力）的衔接：① 哪些事件族可直接映射为 flux action；② 哪些需要适配层转换（如 EditorGroupEvent 的 group/ungroup 操作需映射为组态模型 addSymbol/removeSymbol diff）；③ 适配层 cost 估计。
+- [x] `Decision`：基于实测载荷判定 E0.2 是否触发 spike-event-drift（与 `research-render-engines.md §5 :122` 列名不一致）——一致：记录确认；不一致：标记 drift 类型（载荷字段缺失 / 字段名变化 / 载荷结构变化）+ 适配层 cost 重估（gate-3 M-1 教训：载荷读取面错误会让事件永不派发）。
+- [x] `Fix`：将 E0.2 章节写入 spike 报告（六大事件族真实载荷表 + 多选框选/InnerEditor 场景 + flux action 衔接路径评估 + drift 标记若触发）。
 
 Exit Criteria:
 
-- [ ] 六大事件族真实载荷表完成（每族含触发条件 + JSON 载荷样本 + 字段语义注释）。
-- [ ] 多选框选 + InnerEditor 场景载荷覆盖（≥2 个非基本场景）。
-- [ ] flux action 派发链衔接路径有评估（直接映射 / 需适配层 / 适配层 cost 三态）；若 spike-event-drift 触发，drift 类型与 cost 重估清晰。
+- [x] 六大事件族真实载荷表完成（每族含触发条件 + JSON 载荷样本 + 字段语义注释）。
+- [x] 多选框选 + InnerEditor 场景载荷覆盖（≥2 个非基本场景）。
+- [x] flux action 派发链衔接路径有评估（直接映射 / 需适配层 / 适配层 cost 三态）；若 spike-event-drift 触发，drift 类型与 cost 重估清晰。
 
 ### Phase 3 - E0.3 编辑态覆盖物密集场景性能 spike
 
-Status: planned
+Status: completed
 Targets: `~/sources/industrial-hmi-research/spike-editor/`（scratch，沿用 Phase 1+2 工程）、`docs/analysis/industrial-hmi-editor/spike-2026-08-05.md`（spike 报告 E0.3 章节 + 编辑态包络数字候选 + 覆盖物挂载形态建议）
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] `Proof`：扩展 spike demo 支持 10 万图元组态（对齐 runtime mission benchmark-report.md §3.1 实例化 88.5ms 基线），程序化生成 + 固定随机种子（对齐 scada-perf-scale-demo.tsx 模式）。
-- [ ] `Proof`：编辑态覆盖物挂载形态对比——方案 A：leafer Editor 内置覆盖物（EditBox/EditSelect，跟随 Editor 实例）；方案 B：独立 sky Group 自研覆盖物（对齐 runtime InteractionOverlay 模式 + `editor-initiation.md §4.2 路径 B`）。两方案分别实测。
-- [ ] `Proof`：Playwright headless Chromium 实测以下性能矩阵（`page.evaluate` 计时 + rAF fps 计数，禁截图判定；`--enable-precise-memory-info` 内存；必要时 `--use-gl=swiftshader`）：① 覆盖物密集度梯度（10/100/1k/10k 选区，每梯度测拖拽响应 fps + 内存增量）；② 编辑操作响应延迟（拖拽/缩放/旋转操作从 pointerdown 到视觉响应的延迟，目标候选 <100ms）；③ 拖拽响应 fps（候选 ≥30fps，编辑态包络低于运行态 ≥45fps 红线）；④ 同时选区+视口平移的复合场景 fps。
-- [ ] `Decision`：基于实测数据判定 E0.3 编辑态包络数字候选——产出三个候选档位（保守 / 中性 / 激进），每个含实测依据；同时给出覆盖物挂载形态建议（方案 A vs B 实测对比 + 建议路径）。
-- [ ] `Decision`：若 E0.3 性能未达最保守候选（拖拽 <30fps），触发 spike-perf-fail + R7 人工确认项预标记（编辑态包络数字确立需人工确认，`editor-initiation.md §5.2 + §6 R7`）；调整覆盖物挂载形态建议。
-- [ ] `Fix`：将 E0.3 章节写入 spike 报告（性能矩阵实测数据表 + 覆盖物挂载形态对比 + 编辑态包络数字候选 + R7 标记若触发）。
+- [x] `Proof`：扩展 spike demo 支持 10 万图元组态（对齐 runtime mission benchmark-report.md §3.1 实例化 88.5ms 基线），程序化生成 + 固定随机种子（对齐 scada-perf-scale-demo.tsx 模式）。
+- [x] `Proof`：编辑态覆盖物挂载形态对比——方案 A：leafer Editor 内置覆盖物（EditBox/EditSelect，跟随 Editor 实例）；方案 B：独立 sky Group 自研覆盖物（对齐 runtime InteractionOverlay 模式 + `editor-initiation.md §4.2 路径 B`）。两方案分别实测。
+- [x] `Proof`：Playwright headless Chromium 实测以下性能矩阵（`page.evaluate` 计时 + rAF fps 计数，禁截图判定；`--enable-precise-memory-info` 内存；必要时 `--use-gl=swiftshader`）：① 覆盖物密集度梯度（10/100/1k/10k 选区，每梯度测拖拽响应 fps + 内存增量）；② 编辑操作响应延迟（拖拽/缩放/旋转操作从 pointerdown 到视觉响应的延迟，目标候选 <100ms）；③ 拖拽响应 fps（候选 ≥30fps，编辑态包络低于运行态 ≥45fps 红线）；④ 同时选区+视口平移的复合场景 fps。
+- [x] `Decision`：基于实测数据判定 E0.3 编辑态包络数字候选——产出三个候选档位（保守 / 中性 / 激进），每个含实测依据；同时给出覆盖物挂载形态建议（方案 A vs B 实测对比 + 建议路径）。
+- [x] `Decision`：若 E0.3 性能未达最保守候选（拖拽 <30fps），触发 spike-perf-fail + R7 人工确认项预标记（编辑态包络数字确立需人工确认，`editor-initiation.md §5.2 + §6 R7`）；调整覆盖物挂载形态建议。
+- [x] `Fix`：将 E0.3 章节写入 spike 报告（性能矩阵实测数据表 + 覆盖物挂载形态对比 + 编辑态包络数字候选 + R7 标记若触发）。
 
 Exit Criteria:
 
-- [ ] 10 万图元组态 spike demo 就绪 + 程序化生成可重现（固定种子）。
-- [ ] 覆盖物挂载形态两方案（A 内置 / B 独立 sky Group）实测数据表完成。
-- [ ] 性能矩阵四组（密集度梯度 / 编辑操作延迟 / 拖拽 fps / 复合场景）实测数据完整。
-- [ ] 编辑态包络数字候选（三档位）有实测依据；覆盖物挂载形态建议清晰；若 R7 触发，标记完整且人工确认路径清晰。
+- [x] 10 万图元组态 spike demo 就绪 + 程序化生成可重现（固定种子）。
+- [x] 覆盖物挂载形态两方案（A 内置 / B 独立 sky Group）实测数据表完成。
+- [x] 性能矩阵四组（密集度梯度 / 编辑操作延迟 / 拖拽 fps / 复合场景）实测数据完整。
+- [x] 编辑态包络数字候选（三档位）有实测依据；覆盖物挂载形态建议清晰；若 R7 触发，标记完整且人工确认路径清晰。
 
 ### Phase 4 - spike 报告整合 + 文档共识审查 + roadmap 回写
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/industrial-hmi-editor/spike-2026-08-05.md`（spike 报告全文）、`docs/components/roadmap-industrial-hmi-editor.md`（头部记录 + Phase Status 回写）、`docs/logs/2026/08-05.md`（每日日志）
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] `Fix`：spike 报告整合——头节（目的/范围/方法/环境）+ E0.1/E0.2/E0.3 三章节 + 真实 API 锚点附录 + 选型路径建议（不裁定）+ 编辑态包络数字候选（不确立）+ R1/R7 人工确认标记（若触发）+ spike 局限性声明（scratch 单层 App vs runtime 3 层 App 的差异，对齐 I1.2 spike 与 runtime benchmark 的差异先例）。
-- [ ] `Decision`：启动独立子 agent（fresh session，不复用本 plan 执行上下文）对 spike 报告执行文档共识审查——输入 = 本 plan + `editor-initiation.md §4` + spike 报告全文；输出 = review 结论 + 修正项清单（Blocker/Major/Minor 分级）。轮次 ≤3，超限升级人工（Rule 5 + Cross-Cutting）。
-- [ ] `Fix`：修正项全部落地——回写 spike 报告；涉及 spike 结论 reversal 的修正项回写 roadmap（Rule 4）+ 标记人工确认项。
-- [ ] `Proof`：spike 报告头部记录共识审查轮次与判定（AGREE / REVISE 各轮次事实）。
-- [ ] `Fix`：spike 结论摘要回写 editor mission roadmap 头部「文档共识审查记录」+ Phase Status（E0: `planned` → `done` 留待 closure-audit 通过；本 plan 暂保持 `planned`）+ Rule 4 review gate 修正项回写（若有）。
-- [ ] `Fix`：daily log 追加 E0 spike 收口条目（按 industrial-hmi runtime mission 先例格式：plan path + Phase 摘要 + 包级/workspace 验证状态 + closure-audit 状态 + Follow-up）。
+- [x] `Fix`：spike 报告整合——头节（目的/范围/方法/环境）+ E0.1/E0.2/E0.3 三章节 + 真实 API 锚点附录 + 选型路径建议（不裁定）+ 编辑态包络数字候选（不确立）+ R1/R7 人工确认标记（若触发）+ spike 局限性声明（scratch 单层 App vs runtime 3 层 App 的差异，对齐 I1.2 spike 与 runtime benchmark 的差异先例）。
+- [x] `Decision`：启动独立子 agent（fresh session，不复用本 plan 执行上下文）对 spike 报告执行文档共识审查——输入 = 本 plan + `editor-initiation.md §4` + spike 报告全文；输出 = review 结论 + 修正项清单（Blocker/Major/Minor 分级）。轮次 ≤3，超限升级人工（Rule 5 + Cross-Cutting）。
+- [x] `Fix`：修正项全部落地——回写 spike 报告；涉及 spike 结论 reversal 的修正项回写 roadmap（Rule 4）+ 标记人工确认项。
+- [x] `Proof`：spike 报告头部记录共识审查轮次与判定（AGREE / REVISE 各轮次事实）。
+- [x] `Fix`：spike 结论摘要回写 editor mission roadmap 头部「文档共识审查记录」+ Phase Status（E0: `planned` → `done` 留待 closure-audit 通过；本 plan 暂保持 `planned`）+ Rule 4 review gate 修正项回写（若有）。
+- [x] `Fix`：daily log 追加 E0 spike 收口条目（按 industrial-hmi runtime mission 先例格式：plan path + Phase 摘要 + 包级/workspace 验证状态 + closure-audit 状态 + Follow-up）。
 
 Exit Criteria:
 
-- [ ] spike 报告全文整合完成（头节 + 3 章节 + 附录 + 标记），结构对齐 industrial-hmi runtime mission 的 gate-/research- 报告先例。
-- [ ] 独立子 agent 文档共识审查完成（轮次 ≤3，AGREE 判定），修正项全部落地，证据记录在报告头部。
-- [ ] editor mission roadmap 头部记录追加 spike 收口摘要；Phase Status 待 closure-audit 后回写 `done`。
-- [ ] daily log 追加 E0 条目。
+- [x] spike 报告全文整合完成（头节 + 3 章节 + 附录 + 标记），结构对齐 industrial-hmi runtime mission 的 gate-/research- 报告先例。
+- [x] 独立子 agent 文档共识审查完成（轮次 ≤3，AGREE 判定），修正项全部落地，证据记录在报告头部。
+- [x] editor mission roadmap 头部记录追加 spike 收口摘要；Phase Status 待 closure-audit 后回写 `done`。
+- [x] daily log 追加 E0 条目。
 
 ## Draft Review Record
 
@@ -181,13 +181,13 @@ Exit Criteria:
 >
 > **纯文档 + scratch spike plan**：本 plan 不涉及任何仓库代码变更（仅修改 `docs/` 下文件 + scratch 目录 `~/sources/industrial-hmi-research/spike-editor/`，不入仓库），`pnpm test`、`pnpm lint`、`pnpm typecheck`、`pnpm build` 这些条目可从 Closure Gates 删除（plan guide「纯文档计划」条款）。但 spike 报告定稿前须经独立子 agent 文档共识审查（Phase 4 已含）。
 
-- [ ] E0.1/E0.2/E0.3 三 Phase 全部 Exit Criteria 勾选。
-- [ ] spike 报告全文整合 + 独立子 agent 文档共识审查达成共识（AGREE 判定，≤3 轮）。
-- [ ] spike 结论摘要回写 editor mission roadmap 头部记录 + Phase Status（`planned` 待 closure-audit 后 → `done`）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope spike 验证项（E0.1/E0.2/E0.3 三项必须全部有事实结论）。
-- [ ] 若 R1/R7 人工确认项触发，标记完整 + 人工确认路径清晰 + roadmap 出现标记。
-- [ ] daily log 追加 E0 条目。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] E0.1/E0.2/E0.3 三 Phase 全部 Exit Criteria 勾选。
+- [x] spike 报告全文整合 + 独立子 agent 文档共识审查达成共识（AGREE 判定，≤3 轮）。
+- [x] spike 结论摘要回写 editor mission roadmap 头部记录 + Phase Status（`planned` 待 closure-audit 后 → `done`）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope spike 验证项（E0.1/E0.2/E0.3 三项必须全部有事实结论）。
+- [x] 若 R1/R7 人工确认项触发，标记完整 + 人工确认路径清晰 + roadmap 出现标记。（R1/R7 均**不触发**，标记完整：R1→editor-initiation §4.3/§6 转路径 B；R7→E1.2 人工确认。）
+- [x] daily log 追加 E0 条目。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。（独立 fresh-session sub-agent `ses_02dbd68e6fferdFWkfmfT0k3q5` closure-audit **PASS**，2026-08-05——见 Closure Audit Evidence。本勾选反映独立审计 verdict + 证据记录，非执行 session 自审。）
 
 ## Deferred But Adjudicated
 
@@ -200,6 +200,22 @@ _（无——本 plan 为 E0 spike，所有验证项必须在 Exit Criteria 收�
 
 ## Closure
 
-Status Note: _待 plan 执行完成后填写_
+Status Note: E0 三项 spike 全部完成（E0.1 手势仲裁主路径成立 / E0.2 事件族 0 漂移 / E0.3 编辑态性能候选达标）。三项否决条件均不触发 → 主路径 A（leafer-editor 插件底座 + 自研组态语义适配层）成立，R1/R7 均不触发。spike 报告经独立子 agent 文档共识审查 3 轮达成 AGREE（R1 REVISE 3m+3n → R2 REVISE 1n → R3 AGREE，未超 3 轮上限）。scratch spike 工程 + 实测数据 + spike 报告 + roadmap 回写 + daily log 全部就绪。本 plan 收口，产物作为 E1.1 选型 gate + E1.2 编辑态包络确认的输入。
 
-Closure Audit Evidence: _待 closure-audit 通过后填写（独立 fresh-session sub-agent task id + verdict + 日期）_
+Closure Audit Evidence:
+
+- Auditor / Agent: 独立 fresh-session sub-agent `ses_02dbd68e6fferdFWkfmfT0k3q5`（fresh session，不复用执行者上下文，2026-08-05 执行 closure-audit）。
+- Verdict: **PASS**（许可执行 session 将 Plan Status → `completed`、E0 Phase Status → `done`、勾选 closure-audit gate）。
+- Evidence (Closure Gates 全部满足):
+  - E0.1/E0.2/E0.3 三 Phase Exit Criteria 全 `[x]` + Phase Status `completed`。
+  - 文档共识审查 3 轮 AGREE（R1 REVISE 3m+3n → R2 REVISE 1n → R3 AGREE，未超 3 轮上限）。
+  - editor mission roadmap 头部记录完整 + Phase Status 正确保持 `planned` 待审计（待 closure-audit 通过后回写 `done`）。
+  - 无 in-scope spike 验证项被静默降级到 deferred / follow-up（E0.1/E0.2/E0.3 三项均落事实结论）。
+  - R1/R7 人工确认项标记完整（均**不触发**：R1 → editor-initiation §4.3/§6 转路径 B 路径清晰；R7 → E1.2 编辑态包络人工确认路径清晰），roadmap 出现标记。
+  - daily log E0 条目存在（`docs/logs/2026/08-05.md`）。
+- Cross-Doc Consistency: 跨文档否决条件一致性（7 处：roadmap line 29/96/191 + editor-initiation §4.3 line 95 + 本 plan Failure Paths line 69-71 + 本 plan Purpose line 14 + Closure Gates line 188）+ 数字一致性 + 无 stale placeholder 全部确认。
+- Audit Recommendation (non-blocking): refresh spike 报告 `docs/analysis/industrial-hmi-editor/spike-2026-08-05.md` header line 4 metadata（已落地）。
+
+Follow-up:
+
+- 无剩余 plan-owned work（E0.1/E0.2/E0.3 三项 spike 验证全部收口；non-blocking follow-up 已登记到本 plan `## Non-Blocking Follow-ups` section，归 editor mission Follow-up Backlog / E1.1 gate 输入，非本 plan 收口范围）。
