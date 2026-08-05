@@ -79,7 +79,7 @@
 
 ### Timeline 受控当前事件（v2：播放/巡检联动）
 
-> v2 立约（未实现）：下列字段需 timeline 受控扩展（`value`/`valueOwnership`/`valueStatePath`/`onChange`）落地后方可运行；当前 runtime 仅支持上方展示型字段。
+> v2 已实现（plan `docs/plans/2026-08-04-2030-2-timeline-v2-controlled-current-event-plan.md`）：下列字段已落地于 timeline 受控扩展（`value`/`valueOwnership`/`valueStatePath`/`onChange`）；未声明 v2 字段时保持纯展示契约。
 
 `value` 驱动当前事件高亮，点击事件项 seek（`onChange` 声明后事件项可点）：
 
@@ -103,6 +103,7 @@
 
 - `value` 按 `item.value` key 匹配，未匹配数字值按索引（clamp）；`value` 未命中时回退 `defaultValue`，再未命中则无高亮（不回退首项，与 steps 的 →0 兜底不同，见 `docs/components/timeline/design.md` §2.1-1）。
 - `valueOwnership`：`local`（默认，内部状态）/ `controlled`（只读 `value`，点击只派发）/ `scope`（读写 `valueStatePath`）。
+- 点击 seek 仅当声明 `onChange` 时事件项可点（`data-clickable` + tabindex + Enter/Space）；payload `{ value, index, item }`。
 - 播放/暂停计时器不内置：由宿主 `xui:imports` 连接器 + `setValue` 递增 `valueStatePath`，进度展示用 `progress`。
 
 ## 字段参考

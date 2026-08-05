@@ -1,7 +1,7 @@
 # Timeline 组件设计
 
-> 状态：runtime（已注册于 `flux-renderers-layout`，W4b done）
-> v2 扩展：受控当前事件语义（value/defaultValue/valueOwnership/valueStatePath/onChange），2026-08-04 立约
+> 状态：runtime（已注册于 `flux-renderers-layout`，W4b done；v2 受控当前事件已实现，plan `docs/plans/2026-08-04-2030-2-timeline-v2-controlled-current-event-plan.md`）
+> v2 扩展：受控当前事件语义（value/defaultValue/valueOwnership/valueStatePath/onChange），2026-08-04 立约、2026-08-05 实现
 > 扩展需求来源：ArbiterOS demo「对话时间线播放」（进度条 + Play + 当前步骤高亮）评估——静态展示已满足，播放控制需受控当前事件支持（见 §2.1 裁定）
 
 ## 1. 组件定位
@@ -35,7 +35,7 @@
 ### 2.1 关键裁定（v2 扩展实现依据）
 
 1. **受控四件套解析（分三层表述，避免与 steps 兜底行为混淆）**：
-   - **helper 层（同构可共享）**：key（`item.value` 字段）匹配优先 → 数字索引（clamp）→ 未匹配返回 -1。此层与 `steps-renderer.tsx:23-62` 的 `resolveStepIndex` 完全一致，实现时可抽取共享 resolve helper（steps/timeline 同族复用），不改变各组件公开契约。
+   - **helper 层（同构可共享）**：key（`item.value` 字段）匹配优先 → 数字索引（clamp）→ 未匹配返回 -1。此层与 `steps-renderer.tsx:23-62` 的 `resolveStepIndex` 完全一致。**实现裁定（2026-08-05 落地）**：首版**不抽共享 helper**——仅 steps/timeline 两处消费者，且 steps 的 `resolveFinalIndex` 含 →0 兜底与 timeline v2 裁定不同，不值得过早抽象；timeline 在 `timeline-renderer.tsx` 本地实现 resolve（key 匹配 + clamp + 未匹配 -1），与 `resolveStepIndex` 语义同构、实现独立；第三个同族消费者出现时再提升 flux-core 共享 helper。
    - **渲染层（v2 新增裁定）**：steps 的 `resolveFinalIndex`（`steps-renderer.tsx:64-73`）在 -1 时依次兜底 `defaultValue` → 0（steps **永无「无 active」态**）；timeline v2 **不沿用该兜底**——未匹配 → 无 active（无高亮）。理由：播放/巡检场景下未命中高亮首项会产生误导。`defaultValue` 仍参与解析链（value 未命中 → defaultValue 命中 → 否则无 active），但**不回退首项**。
    - **valueOwnership 三态**：`local`（内部 state + onChange 自更新）/ `controlled`（只读 value，onChange 派发不 mutate）/ `scope`（`valueStatePath` 读写，缺路径降级 local controlled + dev 告警）——语义与 steps 完全一致（`steps-renderer.tsx:88-151`）。
 2. **active 定位与 reverse 的关系**：当前事件按 `items` 逻辑顺序解析，`reverse` 仅影响渲染顺序（倒序渲染时 active 项出现在对应视觉位置），不改变 value 语义。
@@ -45,7 +45,7 @@
 
 ## 3. Flux 中的 renderer/type 定义
 
-- 实际 `type: 'timeline'`
+- 实际 `type: 'timeline'`（v2 受控当前事件字段已实现：value/defaultValue/valueOwnership/valueStatePath/onChange 落地于 `schemas.ts` + `process-display-definitions.ts` + `timeline-renderer.tsx`）
 - 实际归属 `@nop-chaos/flux-renderers-layout`（流程状态编排族，与 steps/wizard 同包）
 - 已注册：`layout-renderer-definitions.ts`（`timelineRendererDefinition`），渲染器 `timeline-renderer.tsx`
 

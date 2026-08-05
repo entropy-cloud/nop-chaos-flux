@@ -1,6 +1,6 @@
 # Timeline v2 受控当前事件扩展（value/defaultValue/valueOwnership/valueStatePath/onChange）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-05
 > Source: `docs/components/timeline/design.md`（v2 立约节，两轮独立审查通过）；`flux-guide/design-patterns/steps-timeline.md`（v2 受控示例 + 未实现标注）
 > Related: `docs/components/roadmap.md` W4b（timeline 已 done，本 plan 为其后 v2 扩展，closure 在 roadmap 新增 timeline-v2 work item）；`docs/plans/2026-06-24-0718-3-w4b-process-display-family-plan.md`（W4b 先例，steps valueOwnership 三态分层）；`docs/plans/2026-08-04-2030-1-g1-graph-viewer-plan.md`（同需求来源 ArbiterOS，独立 plan）
@@ -82,54 +82,54 @@
 
 ### Phase 1 - schema 与 contracts（Decision + Fix）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-layout/src/{schemas.ts,process-display-definitions.ts}`
 
 - Item Types: `Decision | Fix`
 
-- [ ] **Decision**：resolve helper 抽取边界裁定——是否将 steps 的 `resolveStepIndex` 抽到共享层供 timeline 复用？裁定：**首版不抽共享**（steps 的 `resolveFinalIndex` 含 →0 兜底与 timeline v2 裁定不同，仅 `resolveStepIndex` 可共享；仅两处消费者不值得过早抽象）。timeline 在 `timeline-renderer.tsx` 本地实现 resolve（key 匹配 + clamp + 未匹配 -1），与 steps 的 `resolveStepIndex` 语义同构、实现独立；标记为「第三个同族消费者出现时再提升 flux-core 共享 helper」。裁定写入 design §2.1-1 + log。
-- [ ] **Fix**：`schemas.ts` `TimelineItemSchema` 加 `value?: string|number`（注释 v2：key 匹配枢纽）；`TimelineSchema` 加 `value`/`defaultValue`/`valueOwnership:'local'|'controlled'|'scope'`（默认 local）/`valueStatePath`/`onChange: ActionSchema`（注释 v2，对齐 design §4）。
-- [ ] **Fix**：`process-display-definitions.ts` timeline 段——propContracts 加 value/defaultValue/valueOwnership/valueStatePath（shape 对齐 steps 段）；fields 加这四项 + `{ key: 'onChange', kind: 'event' }`；eventContracts 加 onChange（payload shape `{ value, index, item }`，对齐 steps onChange）。
+- [x] **Decision**：resolve helper 抽取边界裁定——是否将 steps 的 `resolveStepIndex` 抽到共享层供 timeline 复用？裁定：**首版不抽共享**（steps 的 `resolveFinalIndex` 含 →0 兜底与 timeline v2 裁定不同，仅 `resolveStepIndex` 可共享；仅两处消费者不值得过早抽象）。timeline 在 `timeline-renderer.tsx` 本地实现 resolve（key 匹配 + clamp + 未匹配 -1），与 steps 的 `resolveStepIndex` 语义同构、实现独立；标记为「第三个同族消费者出现时再提升 flux-core 共享 helper」。裁定写入 design §2.1-1 + log。
+- [x] **Fix**：`schemas.ts` `TimelineItemSchema` 加 `value?: string|number`（注释 v2：key 匹配枢纽）；`TimelineSchema` 加 `value`/`defaultValue`/`valueOwnership:'local'|'controlled'|'scope'`（默认 local）/`valueStatePath`/`onChange: ActionSchema`（注释 v2，对齐 design §4）。
+- [x] **Fix**：`process-display-definitions.ts` timeline 段——propContracts 加 value/defaultValue/valueOwnership/valueStatePath（shape 对齐 steps 段）；fields 加这四项 + `{ key: 'onChange', kind: 'event' }`；eventContracts 加 onChange（payload shape `{ value, index, item }`，对齐 steps onChange）。
 
 Exit Criteria:
 
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-layout typecheck` 通过（新字段类型正确）。
-- [ ] contracts 与 steps 段范式一致（propContracts/fields/eventContracts 形状对齐）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-layout typecheck` 通过（新字段类型正确）。
+- [x] contracts 与 steps 段范式一致（propContracts/fields/eventContracts 形状对齐）。
 
 ### Phase 2 - 渲染器三态 + seek + marker（Fix + Proof）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-layout/src/timeline-renderer.tsx`（colocated `*.test.tsx`）
 
 - Item Types: `Fix | Proof`
 
-- [ ] **Fix**：value 解析——本地 resolve（key 匹配优先 → 数字索引 clamp → 未匹配 -1）；渲染层裁定：-1 时回退 defaultValue → 再 -1 则无 active（**不回退首项**，与 steps →0 兜底不同，design §2.1-1）。
-- [ ] **Fix**：valueOwnership 三态——local（内部 state + onChange 自更新）/ controlled（只读 value，onChange 只派发不 mutate）/ scope（读写 valueStatePath，缺路径降级 local controlled + dev 告警，复用 steps 的降级模式）。
-- [ ] **Fix**：onChange 派发——payload `{ value, index, item }`（value 为该项 key 或索引）；仅声明 onChange 时事件项可点（`data-clickable` + tabindex + Enter/Space 键盘可达）；未声明 onChange 时纯展示零回归。
-- [ ] **Fix**：active marker——当前事件项加 `data-state="active"`（与 steps `data-current` 既有差异保留）；reverse 下 active 按逻辑顺序解析、渲染位置随倒序（design §2.1-2）。
-- [ ] **Proof**：focused 单测——三态写回（local/controlled/scope + valueStatePath 缺失降级）、value 解析（key 命中/数字 clamp/未匹配→defaultValue→无 active 不回退首项）、reverse 下 active 定位、onChange 派发 payload、未声明 onChange 不可点（纯展示回归）。
+- [x] **Fix**：value 解析——本地 resolve（key 匹配优先 → 数字索引 clamp → 未匹配 -1）；渲染层裁定：-1 时回退 defaultValue → 再 -1 则无 active（**不回退首项**，与 steps →0 兜底不同，design §2.1-1）。
+- [x] **Fix**：valueOwnership 三态——local（内部 state + onChange 自更新）/ controlled（只读 value，onChange 只派发不 mutate）/ scope（读写 valueStatePath，缺路径降级 local controlled + dev 告警，复用 steps 的降级模式）。
+- [x] **Fix**：onChange 派发——payload `{ value, index, item }`（value 为该项 key 或索引）；仅声明 onChange 时事件项可点（`data-clickable` + tabindex + Enter/Space 键盘可达）；未声明 onChange 时纯展示零回归。
+- [x] **Fix**：active marker——当前事件项加 `data-state="active"`（与 steps `data-current` 既有差异保留）；reverse 下 active 按逻辑顺序解析、渲染位置随倒序（design §2.1-2）。
+- [x] **Proof**：focused 单测——三态写回（local/controlled/scope + valueStatePath 缺失降级）、value 解析（key 命中/数字 clamp/未匹配→defaultValue→无 active 不回退首项）、reverse 下 active 定位、onChange 派发 payload、未声明 onChange 不可点（纯展示回归）。
 
 Exit Criteria:
 
-- [ ] timeline-renderer 三态 + 解析链 + seek focused 单测通过。
-- [ ] 未声明 v2 字段时纯展示行为零回归（既有 W4b 用例不受影响）。
+- [x] timeline-renderer 三态 + 解析链 + seek focused 单测通过。
+- [x] 未声明 v2 字段时纯展示行为零回归（既有 W4b 用例不受影响）。
 
 ### Phase 3 - playground + e2e + 状态同步（Proof + Fix）
 
-Status: planned
+Status: completed
 Targets: playground route-model + example（v2 受控）；`tests/e2e/`；`docs/components/roadmap.md`；`flux-guide/design-patterns/steps-timeline.md`；`docs/components/timeline/design.md`
 
 - Item Types: `Proof | Fix`
 
-- [ ] **Proof**：playground 演示页——v2 受控（value 驱动高亮 + onChange seek 联动）+ reverse + 未匹配降级 + scope 模式（valueStatePath 写回）。
-- [ ] **Proof**：e2e（程序化断言）——点击事件项→onChange payload 正确、controlled 只派发不 mutate、scope 写 valueStatePath、value 未匹配无 active 不回退首项、未声明 onChange 不可点、reverse 下 active 视觉位置。
-- [ ] **Fix**：`flux-guide/design-patterns/steps-timeline.md` v2 受控示例标注翻「已实现」；`docs/components/timeline/design.md` §3 实现状态同步（v2 立约→已实现）。
-- [ ] **Fix**：`docs/components/roadmap.md` 新增 timeline-v2 work item（W4b 之后扩展行）并标 `done`（Phase Status 区）。
+- [x] **Proof**：playground 演示页——v2 受控（value 驱动高亮 + onChange seek 联动）+ reverse + 未匹配降级 + scope 模式（valueStatePath 写回）。
+- [x] **Proof**：e2e（程序化断言）——点击事件项→onChange payload 正确、controlled 只派发不 mutate、scope 写 valueStatePath、value 未匹配无 active 不回退首项、未声明 onChange 不可点、reverse 下 active 视觉位置。
+- [x] **Fix**：`flux-guide/design-patterns/steps-timeline.md` v2 受控示例标注翻「已实现」；`docs/components/timeline/design.md` §3 实现状态同步（v2 立约→已实现）。
+- [x] **Fix**：`docs/components/roadmap.md` 新增 timeline-v2 work item（W4b 之后扩展行）并标 `done`（Phase Status 区）。
 
 Exit Criteria:
 
-- [ ] playground 演示页可运行，timeline-v2 e2e 程序化断言在既有 pre-existing 失败基线之上通过
-- [ ] flux-guide v2 标注翻转；roadmap timeline-v2 work item 标 done
+- [x] playground 演示页可运行，timeline-v2 e2e 程序化断言在既有 pre-existing 失败基线之上通过
+- [x] flux-guide v2 标注翻转；roadmap timeline-v2 work item 标 done
 
 ## Draft Review Record
 
@@ -146,15 +146,28 @@ Exit Criteria:
 
 > 关闭条件：本 section 及每个 Phase Exit Criteria 全部 `[x]` 后，经独立子 agent closure-audit，方可将 Plan Status 改 `completed`。
 
-- [ ] timeline v2 五字段（value/defaultValue/valueOwnership/valueStatePath/onChange）落地于 `flux-renderers-layout`，contracts 与 schemas 同步
-- [ ] value 解析链与 steps 同构（resolveStepIndex 语义），渲染层裁定（未匹配→defaultValue→无 active，不回退首项）正确实现
-- [ ] valueOwnership 三态（local/controlled/scope + 缺 valueStatePath 降级）与 steps 范式一致
-- [ ] 未声明 v2 字段时纯展示行为零回归（既有 W4b timeline 用例不受影响）
-- [ ] 行为/契约结果已达成（focused 单测全绿；timeline-v2 e2e 断言在既有 9 项 pre-existing 失败基线之上通过，不与全仓 e2e full-green 混淆）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步到 live baseline（design.md §2.1-1 裁定写入 + §3 实现状态、flux-guide 标注翻转、roadmap timeline-v2 work item）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] timeline v2 五字段（value/defaultValue/valueOwnership/valueStatePath/onChange）落地于 `flux-renderers-layout`，contracts 与 schemas 同步
+- [x] value 解析链与 steps 同构（resolveStepIndex 语义），渲染层裁定（未匹配→defaultValue→无 active，不回退首项）正确实现
+- [x] valueOwnership 三态（local/controlled/scope + 缺 valueStatePath 降级）与 steps 范式一致
+- [x] 未声明 v2 字段时纯展示行为零回归（既有 W4b timeline 用例不受影响）
+- [x] 行为/契约结果已达成（focused 单测全绿；timeline-v2 e2e 断言在既有 9 项 pre-existing 失败基线之上通过，不与全仓 e2e full-green 混淆）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步到 live baseline（design.md §2.1-1 裁定写入 + §3 实现状态、flux-guide 标注翻转、roadmap timeline-v2 work item、renderer-markers-and-selectors.md marker 登记）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure
+
+Status Note: 2026-08-05 收口——Phase 1-3 全部 completed，全量验证 32/32 typecheck/build/lint + 59/59 test task 全绿；w4b e2e 9/9（4 既有 + 5 新增）。timeline v2 五字段 + 三态 + seek + active marker 语义已由独立子 agent 复核 live repo 确认（含渲染层裁定「未匹配→无 active 不回退首项」代码路径抽查）。
+
+Closure Audit Evidence:
+
+- Auditor / Agent: mission-driver fresh sub-agent `ses_02fe894b8ffeZ1OugDo16g4WGL`（独立 closure-audit session）
+- Evidence: 对照 plan 全部 3 Phase 逐项核验 live repo（schemas.ts/process-display-definitions.ts/timeline-renderer.tsx/单测/demo/e2e/docs），focused `timeline-renderer.test.tsx` 17/17 重跑通过；verdict `approved`（0 Blocker/Major，2 Minor 收口于本 closure：roadmap 前置声明与 Plan Status 翻转同步、daily log 记录）；详见 `docs/logs/2026/08-05.md` timeline v2 节
+
+Follow-up:
+
+- 无剩余 plan-owned work。播放引擎/组件句柄/item region 均为 Non-Goals（design §2 不采纳行），如未来出现第三个同族消费者（value 解析链）再提升 flux-core 共享 resolve helper。

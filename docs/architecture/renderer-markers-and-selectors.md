@@ -176,6 +176,15 @@ State attributes in this project are generally presence-only:
 />
 ```
 
+### Timeline v2 controlled current-event markers (registered 2026-08-05)
+
+`timeline` v2 (controlled current event) publishes the following state markers:
+
+- `data-state="active"` on the current-event `timeline-item` (Radix state vocabulary; distinct from steps' `data-current` by contract — do not unify)
+- `data-active-index` on the `timeline-root` (logical-order index of the active event; absent when no active state)
+- `data-clickable` on each `timeline-item` — present only when `onChange` is declared (click-seek reachable, `tabindex` + Enter/Space); absence means display-only
+- `data-ownership` on the `timeline-root` (`local`/`controlled`/`scope`, mirrors steps)
+
 ## Testing Guidance
 
 Prefer the most semantic selector available in this order:
