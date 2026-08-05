@@ -1,7 +1,7 @@
 # 453 DingFlow Single Tree Layout Unification
 
-> Plan Status: draft
-> Last Reviewed: 2026-08-03
+> Plan Status: active
+> Last Reviewed: 2026-08-05
 > Source: `docs/analysis/2026-08-03-dingflow-tree-layout-unification.md`, `docs/audits/2026-08-03-1111-document-audit-dingflow-tree-layout-unification.md`
 > Related: `docs/architecture/flow-designer/tree-mode.md`, `docs/architecture/flow-designer/dingflow-visual-spec.md`
 
@@ -167,10 +167,10 @@ Exit Criteria:
 
 ## Draft Review Record
 
-- Reviewer / Agent: pending independent plan review
-- Verdict: pending
-- Rounds: 0
-- Findings addressed: pending
+- Reviewer / Agent: independent plan review sub-agent, 2026-08-05
+- Verdict: pass-with-minors
+- Rounds: 1
+- Findings addressed: 无 Blocker / Major；Minor 保留（Failure Paths 表缺可重试列、无 `## Non-Blocking Follow-ups` 小节、执行项未逐条标注类型标签），交由执行/关闭审计兜底
 
 ## Closure Gates
 
@@ -198,7 +198,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: draft only; no code execution has occurred.
+Status Note: active; 独立 plan review 已通过（pass-with-minors，2026-08-05），尚未开始执行。
 
 Closure Audit Evidence:
 
