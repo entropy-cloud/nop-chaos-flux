@@ -197,7 +197,7 @@ export function KanbanColumn({
       data-column-id={column.id}
       data-card-count={filteredCards.length}
       role="region"
-      aria-label={`Column: ${columnTitle}`}
+      aria-label={t('scheduling.kanban.columnLabel', { title: columnTitle })}
       className={cn(
         'nop-kanban-column flex flex-col bg-gray-50 rounded-lg border border-gray-200 flex-1 min-w-[200px]',
         collapsed && 'nop-kanban-column-collapsed',

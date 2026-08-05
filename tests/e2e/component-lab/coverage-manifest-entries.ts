@@ -780,4 +780,36 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes:
       'Verify the footer value-or-region renders nested schema components and the embedded button dispatches its action (region evaluation + events, C8.3)',
   },
+  {
+    id: 'gantt',
+    title: 'Gantt',
+    tier: 'write',
+    primaryScenario: 'Host gantt in dialog + onTaskClick payload (C9 bug 73 pattern)',
+    notes:
+      'Verify gantt inside an openDialog surface: task bars render and a bar click dispatches onTaskClick with ${_taskId} resolved via the dispatch ctx (C9)',
+  },
+  {
+    id: 'kanban',
+    title: 'Kanban',
+    tier: 'write',
+    primaryScenario: 'Host kanban in dialog + onCardClick/onCardMove payload (C9 bug 73 pattern)',
+    notes:
+      'Verify kanban inside an openDialog surface: card click dispatches onCardClick with ${cardId}|${index} and a cross-column drag dispatches onCardMove (C9)',
+  },
+  {
+    id: 'calendar',
+    title: 'Calendar',
+    tier: 'write',
+    primaryScenario: 'Host calendar in dialog + loadAction + onEventClick payload (C9 bug 73 pattern)',
+    notes:
+      'Verify calendar inside an openDialog surface: loadAction fires on mount and an event block click dispatches onEventClick with ${event.id}|${event.title} (C9)',
+  },
+  {
+    id: 'barcode-input',
+    title: 'Barcode Input',
+    tier: 'write',
+    primaryScenario: 'Host barcode-input in form + validation + submit echo (C9)',
+    notes:
+      'Verify barcode-input in a form: manual input writes back to the form value, required validation blocks empty submit, and the submit action echoes the committed value (C9)',
+  },
 ];

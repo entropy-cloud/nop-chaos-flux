@@ -169,3 +169,52 @@ describe('shouldMerge', () => {
     expect(shouldMerge(cmd1, cmd2)).toBe(true);
   });
 });
+
+describe('C9 P1-3: addColumn undo/redo', () => {
+  const columnData = {
+    id: 'col3',
+    type: 'column' as const,
+    parentId: 'root',
+    children: [],
+    data: { title: 'New Col' },
+    meta: {},
+  };
+
+  it('undo removes the added column instead of moving it to the front', () => {
+    const board = createSampleBoard();
+    const withColumn = addColumnToBoard(board);
+    const stack = pushCommand(createUndoStack(), {
+      type: 'addColumn',
+      timestamp: Date.now(),
+      params: { columnId: 'col3', columnData, index: 2 },
+    });
+
+    const result = undo(stack, withColumn);
+    expect(result).not.toBeNull();
+    expect(result!.board.root.children).toEqual(['col1', 'col2']);
+    expect(result!.board.col3).toBeUndefined();
+  });
+
+  it('redo re-adds the column at the recorded index', () => {
+    const board = createSampleBoard();
+    const withColumn = addColumnToBoard(board);
+    const stack = pushCommand(createUndoStack(), {
+      type: 'addColumn',
+      timestamp: Date.now(),
+      params: { columnId: 'col3', columnData, index: 2 },
+    });
+    const undone = undo(stack, withColumn);
+    const redone = redo(undone!.stack, undone!.board);
+    expect(redone).not.toBeNull();
+    expect(redone!.board.root.children).toEqual(['col1', 'col2', 'col3']);
+    expect(redone!.board.col3).toBeDefined();
+  });
+
+  function addColumnToBoard(board: BoardData): BoardData {
+    return {
+      ...board,
+      root: { ...board.root, children: [...board.root.children, 'col3'] },
+      col3: columnData,
+    };
+  }
+});

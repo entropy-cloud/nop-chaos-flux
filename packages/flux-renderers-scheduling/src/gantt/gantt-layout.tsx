@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 
 const MIN_GRID_WIDTH = 200;
 const MAX_GRID_WIDTH_PERCENT = 0.7;
@@ -105,7 +106,7 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
         <div
           role="separator"
           tabIndex={0}
-          aria-label="Resize grid panel"
+          aria-label={t('scheduling.gantt.resizePanelLabel')}
           aria-valuenow={gridWidth}
           aria-valuemin={MIN_GRID_WIDTH}
           aria-valuemax={maxGridWidth}

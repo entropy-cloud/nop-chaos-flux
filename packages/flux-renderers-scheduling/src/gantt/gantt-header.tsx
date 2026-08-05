@@ -8,11 +8,14 @@ interface GanttHeaderProps {
   store: GanttStoreApi;
   toolbarRegion?: RenderRegionHandle;
   className?: string;
-  onScrollToToday?: () => void;
   onZoomChange?: (zoomKey: string) => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  /** Fired from the Today button (scroll + schema scrollToToday reaction). */
+  onTodayClick?: () => void;
 }
 
-export function GanttHeader({ store, toolbarRegion, className, onScrollToToday, onZoomChange }: GanttHeaderProps) {
+export function GanttHeader({ store, toolbarRegion, className, onZoomChange, onZoomIn, onZoomOut, onTodayClick }: GanttHeaderProps) {
   const handleZoomIn = () => {
     const zooms = store.getAvailableZooms();
     const idx = zooms.findIndex((z) => z.key === store.currentZoom);
@@ -20,6 +23,7 @@ export function GanttHeader({ store, toolbarRegion, className, onScrollToToday, 
       const next = zooms[idx + 1];
       store.setZoom(next.key);
       onZoomChange?.(next.key);
+      onZoomIn?.();
     }
   };
 
@@ -30,6 +34,7 @@ export function GanttHeader({ store, toolbarRegion, className, onScrollToToday, 
       const prev = zooms[idx - 1];
       store.setZoom(prev.key);
       onZoomChange?.(prev.key);
+      onZoomOut?.();
     }
   };
 
@@ -43,7 +48,7 @@ export function GanttHeader({ store, toolbarRegion, className, onScrollToToday, 
   };
 
   const handleScrollToToday = () => {
-    onScrollToToday?.();
+    onTodayClick?.();
   };
 
   if (toolbarRegion) {

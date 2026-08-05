@@ -1,4 +1,41 @@
-import type { SchemaFieldRule } from '@nop-chaos/flux-core';
+import type { SchemaFieldRule, ValidationRule } from '@nop-chaos/flux-core';
+import type { BarcodeInputSchema } from './barcode-input.types.js';
+
+/**
+ * Form-model validation contributor: required/minLength/maxLength/pattern/
+ * validate rules participate in the host form's validation (submit + field
+ * events). Previously these props only ran renderer-local validation on scan.
+ */
+export function createBarcodeInputFieldValidation(): {
+  kind: 'field';
+  valueKind: 'scalar';
+  getFieldPath(schema: BarcodeInputSchema): string | undefined;
+  collectRules(schema: BarcodeInputSchema): ValidationRule[];
+} {
+  return {
+    kind: 'field',
+    valueKind: 'scalar',
+    getFieldPath(schema) {
+      return schema.name;
+    },
+    collectRules(schema) {
+      const rules: ValidationRule[] = [];
+      if (schema.required) rules.push({ kind: 'required' });
+      if (typeof schema.minLength === 'number') rules.push({ kind: 'minLength', value: schema.minLength });
+      if (typeof schema.maxLength === 'number') rules.push({ kind: 'maxLength', value: schema.maxLength });
+      if (schema.pattern) rules.push({ kind: 'pattern', value: schema.pattern });
+      if (schema.validate?.action) {
+        rules.push({
+          kind: 'async',
+          action: schema.validate.action,
+          debounce: schema.validate.debounce,
+          message: schema.validate.message,
+        });
+      }
+      return rules;
+    },
+  };
+}
 
 const formFieldRules: SchemaFieldRule[] = [
   { key: 'name', kind: 'prop' },

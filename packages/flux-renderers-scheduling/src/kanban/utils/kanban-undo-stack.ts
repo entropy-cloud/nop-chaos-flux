@@ -7,13 +7,15 @@
  * Gantt uses a similar command-based pattern (see gantt/undo-stack.ts).
  */
 import type { BoardData } from '../kanban.types.js';
-import { moveCard, moveColumn, addCard, removeCard } from '../kanban-helpers.js';
+import { moveCard, moveColumn, addCard, removeCard, addColumn, removeColumn } from '../kanban-helpers.js';
 
 export type UndoCommandType =
   | 'moveCard'
   | 'moveColumn'
   | 'addCard'
-  | 'removeCard';
+  | 'removeCard'
+  | 'addColumn'
+  | 'removeColumn';
 
 export interface UndoCommand {
   type: UndoCommandType;
@@ -73,6 +75,16 @@ export function undo(stack: UndoStack, currentBoard: BoardData): { board: BoardD
       board = addCard(currentBoard, command.params.columnId, cardData, command.params.index);
       break;
     }
+    case 'addColumn': {
+      const { columnId } = command.params;
+      board = removeColumn(currentBoard, columnId);
+      break;
+    }
+    case 'removeColumn': {
+      const { columnData, index } = command.params;
+      board = addColumn(currentBoard, columnData, index);
+      break;
+    }
     default:
       return null;
   }
@@ -107,6 +119,16 @@ export function redo(stack: UndoStack, currentBoard: BoardData): { board: BoardD
     case 'removeCard': {
       const { cardId } = command.params;
       board = removeCard(currentBoard, cardId);
+      break;
+    }
+    case 'addColumn': {
+      const { columnData, index } = command.params;
+      board = addColumn(currentBoard, columnData, index);
+      break;
+    }
+    case 'removeColumn': {
+      const { columnId } = command.params;
+      board = removeColumn(currentBoard, columnId);
       break;
     }
     default:

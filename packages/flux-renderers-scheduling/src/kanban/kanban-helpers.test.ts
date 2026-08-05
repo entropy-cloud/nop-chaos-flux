@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { BoardData } from './kanban.types.js';
-import { moveCard, moveColumn, addCard, removeCard, changeCard, addColumn, removeColumn } from './kanban-helpers.js';
+import { moveCard, moveColumn, addCard, removeCard, changeCard, addColumn, removeColumn, resolveDropIndex } from './kanban-helpers.js';
 
 function createSampleBoard(): BoardData {
   return {
@@ -363,5 +363,54 @@ describe('removeColumn', () => {
     const original = JSON.parse(JSON.stringify(board));
     removeColumn(board, 'col1');
     expect(board).toEqual(original);
+  });
+});
+
+describe('resolveDropIndex (C9 P1-4: drop edge + same-column shift)', () => {
+  const base = {
+    fromColumnId: 'col1',
+    toColumnId: 'col2',
+    sourceIndex: 1,
+    dropIndex: 3,
+    edge: null as 'before' | 'after' | null,
+    cardIndex: undefined as number | undefined,
+    targetType: 'kanban-column' as string | undefined,
+  };
+
+  it('column target: append index used as-is', () => {
+    expect(resolveDropIndex(base)).toBe(3);
+  });
+
+  it("'after' a target card inserts at cardIndex + 1", () => {
+    expect(resolveDropIndex({ ...base, targetType: 'kanban-card-target', cardIndex: 2, edge: 'after' })).toBe(3);
+  });
+
+  it("'before' a target card keeps dropIndex (which equals cardIndex)", () => {
+    expect(resolveDropIndex({ ...base, targetType: 'kanban-card-target', cardIndex: 2, edge: 'before', dropIndex: 2 })).toBe(2);
+  });
+
+  it('same-column downward move shifts the target index by one', () => {
+    // col1: [A,B,C,D]; drag B (index 1) after C (cardIndex 2) → insert at 2 post-removal
+    expect(resolveDropIndex({
+      ...base,
+      toColumnId: 'col1',
+      targetType: 'kanban-card-target',
+      cardIndex: 2,
+      edge: 'after',
+      dropIndex: 2,
+    })).toBe(2);
+  });
+
+  it('same-column upward move keeps the target index', () => {
+    // col1: [A,B,C,D]; drag D (index 3) before C (cardIndex 2) → insert at 2 post-removal
+    expect(resolveDropIndex({
+      ...base,
+      toColumnId: 'col1',
+      sourceIndex: 3,
+      targetType: 'kanban-card-target',
+      cardIndex: 2,
+      edge: 'before',
+      dropIndex: 2,
+    })).toBe(2);
   });
 });

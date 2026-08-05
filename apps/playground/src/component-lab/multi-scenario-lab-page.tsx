@@ -14,6 +14,7 @@ import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerAiRenderers } from '@nop-chaos/flux-renderers-ai';
+import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import type { BaseSchema, RendererEnv, ActionScope } from '@nop-chaos/flux-core';
 import { attachScopeDebugToSchema } from './scope-debug';
 
@@ -26,6 +27,7 @@ registerContentRenderers(registry);
 registerLayoutRenderers(registry);
 registerMobileRenderers(registry);
 registerAiRenderers(registry);
+registerSchedulingRenderers(registry);
 
 const SchemaRenderer: SchemaRendererComponent = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();

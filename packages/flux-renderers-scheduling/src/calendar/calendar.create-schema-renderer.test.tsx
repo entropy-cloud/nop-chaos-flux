@@ -49,6 +49,7 @@ describe('Calendar Schema Renderer Integration', () => {
     const { container } = render(
       <SchemaRenderer schema={calendarSchema} schemaUrl="/calendar" env={env} formulaCompiler={formulaCompiler} />,
     );
-    expect(container.textContent).toContain('4 events');
+    const liveRegion = container.querySelector('.sr-only');
+    expect(liveRegion?.textContent).toContain('4');
   });
 });

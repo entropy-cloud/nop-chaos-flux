@@ -4,7 +4,7 @@ import { Calendar } from './calendar/calendar.js';
 import { Gantt } from './gantt/gantt.js';
 import { KanbanBoard } from './kanban/kanban-board.js';
 import { BarcodeInputRenderer } from './barcode-input/barcode-input.js';
-import { barcodeInputFieldRules } from './barcode-input/barcode-input-schemas.js';
+import { barcodeInputFieldRules, createBarcodeInputFieldValidation } from './barcode-input/barcode-input-schemas.js';
 
 export const schedulingRendererDefinitions: RendererDefinition[] = [
   {
@@ -136,6 +136,9 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'onImportError', kind: 'event' },
       // @reserved — timezone selector wired in future design (§12.7)
       { key: 'onTimezoneChange', kind: 'event' },
+      // @reserved — group collapse UI not wired yet (design §12.3); kept
+      // registered for schema-surface stability, same pattern as
+      // onBatchSchedule/onImport/onTimezoneChange.
       { key: 'onGroupToggle', kind: 'event' },
       { key: 'showCrossDayLines', kind: 'prop' },
       { key: 'timezoneSelector', kind: 'prop' },
@@ -167,6 +170,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     defaultSchema: { type: 'barcode-input', name: 'barcode' },
     component: BarcodeInputRenderer,
     fields: barcodeInputFieldRules,
+    validation: createBarcodeInputFieldValidation(),
     wrap: false,
   },
 ];

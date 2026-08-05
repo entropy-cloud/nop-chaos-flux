@@ -1,5 +1,6 @@
 import React, { useState, useSyncExternalStore } from 'react';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { GanttStoreApi } from './gantt.types.js';
 import { diffInDays } from './utils/date.js';
 
@@ -84,7 +85,7 @@ export function GanttLinks({ store, className, onLinkClick }: GanttLinksProps) {
               onKeyDown={(e) => { if (e.key === 'Enter') { handleLinkClick(link.id); setHoveredLink(link.id === hoveredLink ? null : link.id); } }}
               role="button"
               tabIndex={0}
-              aria-label={`Link ${link.id}`}
+              aria-label={t('scheduling.gantt.linkLabel', { id: String(link.id) })}
             />
             {isHovered && (
               <foreignObject
@@ -108,7 +109,7 @@ export function GanttLinks({ store, className, onLinkClick }: GanttLinksProps) {
                   onKeyDown={(e) => { if (e.key === 'Enter') handleDelete(link.id); }}
                   role="button"
                   tabIndex={0}
-                  aria-label="Delete link"
+                  aria-label={t('scheduling.gantt.deleteLinkLabel')}
                 >
                   &times;
                 </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn, Button } from '@nop-chaos/ui';
 import { X } from 'lucide-react';
+import { t } from '@nop-chaos/flux-i18n';
 import type { BoardItem, KanbanCardConfig } from './kanban.types.js';
 import { KanbanCardTags } from './components/kanban-card-tags.js';
 import type { KanbanTag, KanbanMember } from './components/kanban-card-tags.js';
@@ -44,7 +45,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
 
   const cardLabel = title || description || card.id;
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === 'Enter') {
       e.preventDefault();
       clickFn();
       return;
@@ -108,7 +109,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
           size="sm"
           type="button"
           onClick={(e) => { e.stopPropagation(); removeFn(); }}
-          aria-label="Remove card"
+          aria-label={t('scheduling.kanban.removeCardLabel')}
           className="h-5 w-5 p-0 text-gray-400 hover:text-red-500"
         >
           <X className="w-3 h-3" />

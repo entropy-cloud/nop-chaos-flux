@@ -199,3 +199,33 @@ export function collectAllTags(board: BoardData, columns: BoardItem[]): KanbanFi
   }
   return Array.from(tagMap.values());
 }
+
+/**
+ * Resolve the card-insertion index for a DnD drop.
+ *
+ * - 'after' a target card inserts at cardIndex + 1 (the raw dropIndex only
+ *   points *before* the target card).
+ * - Same-column downward moves: the source card is removed before insertion,
+ *   so a target index after the source index shifts by one.
+ */
+export function resolveDropIndex(input: {
+  targetType: string | undefined;
+  cardIndex: number | undefined;
+  dropIndex: number;
+  edge: 'before' | 'after' | null;
+  fromColumnId: string;
+  toColumnId: string;
+  sourceIndex: number;
+}): number {
+  const { targetType, cardIndex, dropIndex, edge, fromColumnId, toColumnId, sourceIndex } = input;
+  let toIndex = dropIndex;
+  if (targetType === 'kanban-card-target') {
+    if (edge === 'after' && typeof cardIndex === 'number') {
+      toIndex = cardIndex + 1;
+    }
+  }
+  if (fromColumnId === toColumnId && sourceIndex < toIndex) {
+    toIndex -= 1;
+  }
+  return toIndex;
+}

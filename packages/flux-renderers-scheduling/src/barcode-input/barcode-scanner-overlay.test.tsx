@@ -222,3 +222,71 @@ describe('BarcodeScannerOverlay', () => {
     });
   });
 });
+
+describe('BarcodeScannerOverlay C9 regression — consume-once guard (P1-2 double dispatch)', () => {
+  it('fires onScan exactly once per detection even when the parent re-renders with a new onScan identity', () => {
+    const onScan = vi.fn();
+    mockUseBarcodeDetect.mockReturnValue({
+      result: { barcode: 'ABC123', format: 'code_128' },
+      isScanning: true,
+      error: null,
+    });
+    const first = render(
+      <BarcodeScannerOverlay
+        open={true}
+        onClose={vi.fn()}
+        onScan={onScan}
+        continuousScan
+      />,
+    );
+    expect(onScan).toHaveBeenCalledTimes(1);
+    expect(onScan).toHaveBeenCalledWith({ barcode: 'ABC123', format: 'code_128' });
+
+    // Parent re-render (new onScan identity, same detection result):
+    first.rerender(
+      <BarcodeScannerOverlay
+        open={true}
+        onClose={vi.fn()}
+        onScan={vi.fn()}
+        continuousScan
+      />,
+    );
+    expect(onScan).toHaveBeenCalledTimes(1);
+    first.unmount();
+  });
+
+  it('still consumes a subsequent distinct detection', () => {
+    const onScan = vi.fn();
+    mockUseBarcodeDetect.mockReturnValue({
+      result: { barcode: 'ABC123', format: 'code_128' },
+      isScanning: true,
+      error: null,
+    });
+    const { rerender, unmount } = render(
+      <BarcodeScannerOverlay
+        open={true}
+        onClose={vi.fn()}
+        onScan={onScan}
+        continuousScan
+      />,
+    );
+    expect(onScan).toHaveBeenCalledTimes(1);
+
+    mockUseBarcodeDetect.mockReturnValue({
+      result: { barcode: 'XYZ999', format: 'ean_13' },
+      isScanning: true,
+      error: null,
+    });
+    rerender(
+      <BarcodeScannerOverlay
+        open={true}
+        onClose={vi.fn()}
+        onScan={onScan}
+        continuousScan
+      />,
+    );
+    expect(onScan).toHaveBeenCalledTimes(2);
+    expect(onScan).toHaveBeenLastCalledWith({ barcode: 'XYZ999', format: 'ean_13' });
+    unmount();
+  });
+});

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { draggable, dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import type { BoardData } from '../kanban.types.js';
-import { moveCard } from '../kanban-helpers.js';
+import { moveCard, resolveDropIndex } from '../kanban-helpers.js';
 
 export interface DragState {
   isDragging: boolean;
@@ -42,11 +42,11 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
     closestEdge: null,
   });
 
-  const stateRef = useRef({ boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState, dragState });
+  const stateRef = useRef({ boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState, dragState, dropState });
 
   useEffect(() => {
-    stateRef.current = { boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState, dragState };
-  }, [boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState, dragState]);
+    stateRef.current = { boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState, dragState, dropState };
+  }, [boardData, onBoardChange, onCardMove, wipOverLimitColumns, setDropState, dragState, dropState]);
 
   useEffect(() => {
     return monitorForElements({
@@ -64,16 +64,31 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
 
         const cardId = source.data.cardId as string;
         const fromColumnId = source.data.columnId as string;
+        const sourceIndex = source.data.cardIndex as number;
 
         const target = location.current.dropTargets[0];
         if (!target) return;
 
         const targetData = target.data;
         const toColumnId = targetData.columnId as string;
-        const toIndex = targetData.dropIndex as number;
+        const dropIndex = targetData.dropIndex as number;
 
-        if (toColumnId == null || toIndex == null) return;
-        if (fromColumnId === toColumnId && (targetData.cardIndex as number) === (source.data.cardIndex as number)) return;
+        if (toColumnId == null || dropIndex == null) return;
+
+        const isCardTarget = targetData.type === 'kanban-card-target';
+        if (isCardTarget) {
+          if (fromColumnId === toColumnId && (targetData.cardIndex as number) === sourceIndex) return;
+        }
+
+        const toIndex = resolveDropIndex({
+          targetType: targetData.type as string | undefined,
+          cardIndex: targetData.cardIndex as number | undefined,
+          dropIndex,
+          edge: stateRef.current.dropState.closestEdge,
+          fromColumnId,
+          toColumnId,
+          sourceIndex: typeof sourceIndex === 'number' ? sourceIndex : -1,
+        });
 
         const { boardData: currentBoard, onBoardChange: changeBoard, onCardMove: moveEvent, wipOverLimitColumns: wipSet } = stateRef.current;
         const newBoard = moveCard(currentBoard, cardId, toColumnId, toIndex);

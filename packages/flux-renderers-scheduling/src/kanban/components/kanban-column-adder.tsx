@@ -44,9 +44,9 @@ export function KanbanColumnAdder({
                 onCancel();
               }
             }}
-            placeholder="Column title"
+            placeholder={t('scheduling.kanban.columnTitlePlaceholder')}
             className="flex-1 text-sm px-2 py-1"
-            aria-label="Column title"
+            aria-label={t('scheduling.kanban.columnTitlePlaceholder')}
           />
           <Button
             variant="ghost"

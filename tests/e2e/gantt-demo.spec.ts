@@ -16,7 +16,9 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
     const liveRegion = page.locator('[aria-live="polite"]');
     await expect(liveRegion).toBeVisible();
     const text = await liveRegion.textContent();
-    expect(text).toMatch(/\d+ tasks? visible/);
+    // Locale-aware: en-US "N tasks visible" / zh-CN "N 个任务可见".
+    expect(text).toMatch(/\d+/);
+    expect(text).toMatch(/(tasks? visible|个任务可见)/);
 
     await assertTrackedPageErrors(page);
   });

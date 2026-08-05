@@ -322,7 +322,7 @@ export function CalendarMonthView({
   const totalHeight = totalSize ?? displayResources.length * 48;
 
   return (
-    <div data-slot="calendar-matrix" role="grid" aria-label="Calendar month view" className="flex flex-col">
+    <div data-slot="calendar-matrix" role="grid" aria-label={t('scheduling.calendar.monthViewLabel')} className="flex flex-col">
       <div role="row" className="flex">
         <div className="w-24 shrink-0 border-r" />
         <div className="flex flex-1">{headerCells}</div>

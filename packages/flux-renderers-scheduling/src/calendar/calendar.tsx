@@ -8,9 +8,9 @@
  * Gantt uses Zustand + Context (deeper tree, cross-component subscriptions).
  * Kanban uses useState + imperative callbacks (flatter tree, snapshot undo).
  */
-import React, { useImperativeHandle, useRef, useState, useEffect, useMemo } from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRenderScope } from '@nop-chaos/flux-react';
+import React, { useImperativeHandle, useRef, useState, useEffect, useMemo, useCallback } from 'react';
+import type { RendererComponentProps, ComponentHandle } from '@nop-chaos/flux-core';
+import { useCurrentComponentRegistry, useRenderScope } from '@nop-chaos/flux-react';
 import { Skeleton, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -87,6 +87,15 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const scope = useRenderScope();
 
+  // CX-10 / bug-83 family convention: schema event dispatches carry a second
+  // dispatch-arg ctx { event, evaluationBindings, scope } so action args
+  // templates can read payload keys as bare bindings.
+  const eventCtx = useCallback((payload: Record<string, unknown>) => ({
+    event: { ...payload, type: typeof payload.type === 'string' ? payload.type : 'custom' },
+    evaluationBindings: payload,
+    scope,
+  }), [scope]);
+
   const { controlledView, controlledDate } = useCalendarOwnership(resolved as Record<string, unknown>);
 
   const { currentDate, dateRange, activeView, setCurrentDate, setActiveView } = useCalendarState({
@@ -99,13 +108,15 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       if (dateOwnership === 'scope' && dateStatePath && scope) {
         scope.merge({ [dateStatePath]: date.toISOString().split('T')[0] });
       }
-      void events.onDateChange?.({ date: date.toISOString(), view: activeView });
+      const payload = { date: date.toISOString(), view: activeView };
+      void events.onDateChange?.(payload, eventCtx(payload));
     },
     onViewChange: (view: CalendarView) => {
       if (viewOwnership === 'scope' && viewStatePath && scope) {
         scope.merge({ [viewStatePath]: view });
       }
-      void events.onViewChange?.({ view, date: currentDate.toISOString() });
+      const payload = { view, date: currentDate.toISOString() };
+      void events.onViewChange?.(payload, eventCtx(payload));
     },
   });
 
@@ -117,12 +128,12 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   useEffect(() => {
     const ev = eventsRef.current;
-    void ev.onMount?.({});
-    void ev.loadAction?.({});
+    void ev.onMount?.({}, eventCtx({}));
+    void ev.loadAction?.({}, eventCtx({}));
     return () => {
-      void ev.onUnmount?.({});
+      void ev.onUnmount?.({}, eventCtx({}));
     };
-  }, []);
+  }, [eventCtx]);
 
   useImperativeHandle(
     ref,
@@ -141,6 +152,80 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     [navigation, setActiveView, setCurrentDate, calendarExport],
   );
 
+  // CX-9 / reaction contract: activate the declared reaction plans so
+  // schema-declared print/exportPNG/importICal/exportToICal actions fire.
+  useEffect(() => {
+    for (const key of ['print', 'exportPNG', 'importICal', 'exportToICal']) {
+      props.reactions[key]?.ready();
+    }
+  }, [props.reactions]);
+
+  // Component handle registration: makes `component:goNext/goPrev/goToday/
+  // setView/scrollToDate/exportToPNG/exportToPrint` actions resolvable
+  // (design.md §8 / design-export.md). Fresh closures are read through refs
+  // so the handle keeps a stable identity across renders.
+  const componentRegistry = useCurrentComponentRegistry();
+  const navRef = useRef(navigation);
+  useEffect(() => { navRef.current = navigation; });
+  const exportRef = useRef(calendarExport);
+  useEffect(() => { exportRef.current = calendarExport; });
+  const viewStateRef = useRef({ activeView, currentDate });
+  useEffect(() => { viewStateRef.current = { activeView, currentDate }; });
+  useEffect(() => {
+    if (!componentRegistry) return;
+    const handle: ComponentHandle = {
+      id: props.id,
+      type: 'calendar',
+      capabilities: {
+        invoke(method, payload) {
+          switch (method) {
+            case 'goNext':
+              navRef.current.goNext();
+              return { ok: true };
+            case 'goPrev':
+              navRef.current.goPrev();
+              return { ok: true };
+            case 'goToday':
+              navRef.current.goToday();
+              return { ok: true };
+            case 'setView': {
+              const view = (payload as { view?: CalendarView } | undefined)?.view;
+              if (!view) return { ok: false, error: new Error('calendar setView requires a view') };
+              setActiveView(view);
+              return { ok: true };
+            }
+            case 'scrollToDate': {
+              const date = (payload as { date?: string } | undefined)?.date;
+              const parsed = date ? parseISODate(date) : undefined;
+              if (!parsed) return { ok: false, error: new Error('calendar scrollToDate requires a valid date') };
+              setCurrentDate(parsed);
+              return { ok: true };
+            }
+            case 'exportToPNG':
+              void exportRef.current.exportToPNG();
+              return { ok: true };
+            case 'exportToPrint':
+              exportRef.current.exportToPrint();
+              return { ok: true };
+            default:
+              return { ok: false, error: new Error(`Unsupported calendar method: ${method}`) };
+          }
+        },
+        hasMethod(method) {
+          return ['goNext', 'goPrev', 'goToday', 'setView', 'scrollToDate', 'exportToPNG', 'exportToPrint'].includes(method);
+        },
+        listMethods() {
+          return ['goNext', 'goPrev', 'goToday', 'setView', 'scrollToDate', 'exportToPNG', 'exportToPrint'];
+        },
+        getDebugData() {
+          const state = viewStateRef.current;
+          return { view: state.activeView, date: state.currentDate.toISOString().slice(0, 10) };
+        },
+      },
+    };
+    return componentRegistry.register(handle, { cid: meta.cid });
+  }, [componentRegistry, props.id, meta.cid, setActiveView, setCurrentDate]);
+
   const { confirmDialog, handleSwapConfirm, cancelSwap, setConfirmDialog } = useCalendarConfirmDialog();
 
   const getCellFromPoint = (x: number, y: number) => {
@@ -156,27 +241,33 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const executeSwap = () => {
     if (!confirmDialog) return;
-    void events.onEventChange?.({
+    const swapPayload = {
       eventId: confirmDialog.event.id,
       fromResource: confirmDialog.event.resourceId ?? '',
       toResource: confirmDialog.targetResource,
       fromDate: confirmDialog.event.start.split('T')[0] ?? confirmDialog.event.start,
       toDate: confirmDialog.targetDate,
       event: confirmDialog.event,
-    });
+    };
+    void events.onEventChange?.(swapPayload, eventCtx(swapPayload));
     setConfirmDialog(null);
   };
 
   const handleDragCreateEvent = (p: { title: string; type: string; start: string; end: string; resourceId: string }) => {
-    const newEvent: CalendarEvent = { id: `new-${Date.now()}`, title: p.title, start: p.start, end: p.end, type: p.type, resourceId: p.resourceId, color: DEFAULT_SHIFT_TYPES.find(t => t.type === p.type)?.color };
-    void events.onEventCreate?.({ event: newEvent });
+    const newEvent: CalendarEvent = { id: `new-${dragCreateCounterRef.current += 1}`, title: p.title, start: p.start, end: p.end, type: p.type, resourceId: p.resourceId, color: DEFAULT_SHIFT_TYPES.find(t => t.type === p.type)?.color };
+    const createPayload = { event: newEvent };
+    void events.onEventCreate?.(createPayload, eventCtx(createPayload));
   };
 
   const [keyboardDragEventId, setKeyboardDragEventId] = useState<string | null>(null);
+  const dragCreateCounterRef = useRef(0);
 
   const moveCalendarEvent = (eventId: string, fromResource: string, toResource: string, fromDate: string, toDate: string) => {
     const event = eventsData.find((e) => e.id === eventId);
-    if (event) void events.onEventChange?.({ eventId, fromResource, toResource, fromDate, toDate, event });
+    if (event) {
+      const payload = { eventId, fromResource, toResource, fromDate, toDate, event };
+      void events.onEventChange?.(payload, eventCtx(payload));
+    }
   };
 
   const handleKeyboardMoveEvent = (eventId: string, direction: 'up' | 'down' | 'left' | 'right') => {
@@ -264,33 +355,6 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     longPressMs: 500,
   });
 
-  const [_resourceOpenMap, _setResourceOpenMap] = useState<Record<string, boolean>>(() => {
-    const map: Record<string, boolean> = {};
-    for (const r of resourcesData) {
-      map[r.id] = r.open !== false;
-    }
-    return map;
-  });
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reconcile open/close state when resourcesData changes, no cascading risk
-    _setResourceOpenMap(() => {
-      const next: Record<string, boolean> = {};
-      for (const r of resourcesData) {
-        next[r.id] = r.open !== false;
-      }
-      return next;
-    });
-  }, [resourcesData]);
-
-  const _handleGroupToggle = (groupId: string) => {
-    _setResourceOpenMap((prev) => {
-      const next = { ...prev, [groupId]: !prev[groupId] };
-      void eventsRef.current.onGroupToggle?.({ groupId, open: next[groupId] });
-      return next;
-    });
-  };
-
   const displayResources = resourcesData.length === 0
     ? (() => {
         const uniqueIds = [...new Set(eventsData.map((e) => e.resourceId).filter(Boolean))];
@@ -336,7 +400,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   }
 
   const onEventClick = (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => {
-    void events.onEventClick?.(payload);
+    void events.onEventClick?.(payload, eventCtx(payload));
   };
 
   const bodyRegion = regions.body;
@@ -347,6 +411,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   return (
     <div
       ref={calendarRef}
+      data-slot="calendar"
       className={cn('nop-calendar flex flex-col', meta.className, resolved.emptyClassName as string | undefined)}
       data-view={activeView}
       data-date={currentDate.toISOString().split('T')[0]}
@@ -354,7 +419,11 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       data-cid={meta.cid || undefined}
     >
       <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {`Viewing ${activeView} view, ${currentDate.toISOString().slice(0, 10)}, ${eventsData.length} events`}
+        {t('scheduling.calendar.viewSummary', {
+          view: activeView,
+          date: currentDate.toISOString().slice(0, 10),
+          count: eventsData.length,
+        })}
       </div>
       <CalendarHeader
         currentDate={currentDate}

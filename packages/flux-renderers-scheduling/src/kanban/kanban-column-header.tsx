@@ -67,7 +67,7 @@ export function KanbanColumnHeader({
             aria-valuemin={minWidth}
             aria-valuemax={maxWidth}
             aria-orientation="vertical"
-            aria-label="Resize column"
+            aria-label={t('scheduling.kanban.resizeColumnLabel')}
             className="nop-kanban-column-resize-handle absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 hover:w-0.5 z-10"
             onPointerDown={onResizeStart}
             onKeyDown={onResizeKeyDown}
@@ -102,7 +102,7 @@ export function KanbanColumnHeader({
           aria-valuemin={minWidth}
           aria-valuemax={maxWidth}
           aria-orientation="vertical"
-          aria-label="Resize column"
+          aria-label={t('scheduling.kanban.resizeColumnLabel')}
           className="nop-kanban-column-resize-handle absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 hover:w-0.5 z-10"
           onPointerDown={onResizeStart}
           onKeyDown={onResizeKeyDown}

@@ -1,19 +1,22 @@
 import type { ChangeEvent } from 'react';
 import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useCurrentForm, useCurrentFormState, useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useCurrentForm, useCurrentFormError, useCurrentFormState, useInputComponentHandle, useRenderScope, useRendererEnv } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, cn } from '@nop-chaos/ui';
 import { ScanLine } from 'lucide-react';
 import { BarcodeScannerOverlay } from './barcode-scanner-overlay.js';
 import { checkCameraAvailability } from './utils/camera-utils.js';
 import { resetWasmPromise as resetWasm } from './utils/prepare-wasm-utils.js';
+import type { WasmFetcher } from './utils/prepare-wasm-utils.js';
 import type { BarcodeInputSchema, BarcodeDetectResult } from './barcode-input.types.js';
 
 export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputSchema>) {
   const { props: resolved, meta, events, helpers: _helpers } = props;
   const { t } = useFluxTranslation();
   const form = useCurrentForm();
+  const env = useRendererEnv();
+  const scope = useRenderScope();
 
   const name = String(resolved.name ?? '');
   const inputValue = useCurrentFormState(
@@ -29,12 +32,25 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const [scannerError, setScannerError] = useState<string | null>(null);
   const errorId = useId();
 
+  // Form-model validation errors (submit-time / async validate) surface in
+  // the same error region as the local scan validation.
+  const formError = useCurrentFormError(name ? { path: name } : { path: '' }, { enabled: !!name });
+
+  // CX-10 / bug-83 family convention: schema event dispatches carry a second
+  // dispatch-arg ctx { event, evaluationBindings, scope } so action args
+  // templates can read payload keys as bare bindings.
+  const eventCtx = useCallback((payload: Record<string, unknown>) => ({
+    event: { ...payload, type: typeof payload.type === 'string' ? payload.type : 'custom' },
+    evaluationBindings: payload,
+    scope,
+  }), [scope]);
+
   useEffect(() => {
-    void events.onMount?.({});
+    void events.onMount?.({}, eventCtx({}));
     return () => {
-      void events.onUnmount?.({});
+      void events.onUnmount?.({}, eventCtx({}));
     };
-  }, [events]);
+  }, [events, eventCtx]);
 
   const scanButton = resolved.scanButton !== false;
   const batchMode = resolved.batchMode === true;
@@ -48,9 +64,11 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const scanOnFocusOpenedRef = useRef(false);
 
   const handleClear = () => {
+    if (resolved.readOnly) return;
     if (name && form) {
       form.setValue(name, '');
     }
+    setValidationError(null);
   };
 
   const mountedRef = useRef(true);
@@ -102,7 +120,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       if (ac.signal.aborted) return;
       console.warn('BarcodeInput: failed to open scanner', err);
       setCameraAvailable(false);
-      setScannerError('Camera unavailable');
+      setScannerError(t('flux.barcode.cameraUnavailable'));
     }
   };
 
@@ -112,31 +130,31 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
 
   const validateScanResult = useCallback((val: string): string | null => {
     if (resolved.required && (!val || val.length === 0)) {
-      return resolved.required === true ? 'This field is required' : String(resolved.required);
+      return resolved.required === true ? t('flux.barcode.required') : String(resolved.required);
     }
     const minL = resolved.minLength;
     if (typeof minL === 'number' && val.length < minL) {
-      return `Minimum length is ${minL} characters`;
+      return t('flux.barcode.minLength', { min: minL });
     }
     const maxL = resolved.maxLength;
     if (typeof maxL === 'number' && val.length > maxL) {
-      return `Maximum length is ${maxL} characters`;
+      return t('flux.barcode.maxLength', { max: maxL });
     }
     if (resolved.pattern) {
       try {
         const re = new RegExp(resolved.pattern);
         if (!re.test(val)) {
-          return `Value does not match pattern: ${resolved.pattern}`;
+          return t('flux.barcode.patternMismatch', { pattern: String(resolved.pattern) });
         }
       } catch {
-        return `Invalid pattern: ${resolved.pattern}`;
+        return t('flux.barcode.invalidPattern', { pattern: String(resolved.pattern) });
       }
     }
     if (resolved.validate?.message) {
       return resolved.validate.message;
     }
     return null;
-  }, [resolved.required, resolved.minLength, resolved.maxLength, resolved.pattern, resolved.validate]);
+  }, [resolved.required, resolved.minLength, resolved.maxLength, resolved.pattern, resolved.validate, t]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
@@ -161,16 +179,40 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
     if (name && form) {
       form.setValue(name, val);
     }
-    void events.onScan?.({ barcode: result.barcode, format: result.format });
+    const scanPayload = { type: 'scan', barcode: result.barcode, format: result.format };
+    void events.onScan?.(scanPayload, eventCtx(scanPayload));
   };
 
   const handleScanError = (error: string) => {
-    void events.onScanError?.({ error: { message: error } });
+    const errorPayload = { type: 'scan-error', error: { message: error } };
+    void events.onScanError?.(errorPayload, eventCtx(errorPayload));
   };
 
   const handleOverlayClose = () => {
     setOverlayOpen(false);
   };
+
+  // INV-1 (renderer-env.md): WASM loading goes through the host RendererEnv
+  // fetcher, never the browser fetch API directly.
+  const wasmFetcher = useCallback<WasmFetcher>(
+    async (url, signal) => {
+      const res = await env.fetcher<ArrayBuffer>(
+        { url, responseType: 'blob' },
+        { scope, env, signal },
+      );
+      return {
+        ok: res.status >= 200 && res.status < 300,
+        status: res.status,
+        arrayBuffer: async () => {
+          const data = res.data as unknown;
+          if (data instanceof ArrayBuffer) return data;
+          if (data instanceof Blob) return data.arrayBuffer();
+          throw new Error(`WASM fetch did not return binary data for ${url}`);
+        },
+      };
+    },
+    [env, scope],
+  );
 
   const handleSubmitForm = () => {
     form?.submit();
@@ -193,6 +235,9 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       return { fellBackToDefault: true };
     },
     scanNow: () => {
+      if (resolved.readOnly) {
+        return { success: false, error: t('flux.barcode.readOnlyField') };
+      }
       scanOnFocusOpenedRef.current = false;
       if (cameraAvailable === null) {
         checkCameraAvailability().then((result) => {
@@ -209,7 +254,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         setOverlayOpen(true);
         return { success: true };
       }
-      return { success: false, error: 'Camera unavailable' };
+      return { success: false, error: t('flux.barcode.cameraUnavailable') };
     },
     stopScan: () => {
       setOverlayOpen(false);
@@ -222,8 +267,10 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
 
   if (!meta.visible) return null;
 
-  const showClearButton = resolved.clearable && inputValue.length > 0;
+  const showClearButton = resolved.clearable && !resolved.readOnly && inputValue.length > 0;
   const inputId = `${props.id || name}-input`;
+
+  const displayError = validationError ?? formError?.message;
 
   return (
     <div data-slot="barcode-input" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-barcode-input nop-input-text', meta.className)}>
@@ -249,6 +296,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
             <InputGroupButton
               size="icon-xs"
               variant="ghost"
+              data-slot="barcode-clear-button"
               aria-label={t('flux.barcode.clearLabel')}
               onClick={handleClear}
             >
@@ -270,12 +318,12 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         </InputGroupAddon>
       </InputGroup>
 
-      {validationError && (
-        <div id={errorId} data-slot="barcode-validation-error" className="text-xs text-destructive mt-1">{validationError}</div>
+      {displayError && (
+        <div id={errorId} data-slot="barcode-validation-error" className="text-xs text-destructive mt-1">{displayError}</div>
       )}
 
       {scannerError && (
-        <div className="text-xs text-destructive mt-1">{scannerError}</div>
+        <div data-slot="barcode-scanner-error" className="text-xs text-destructive mt-1">{scannerError}</div>
       )}
 
       <BarcodeScannerOverlay
@@ -287,6 +335,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         scanInterval={scanInterval}
         torchButton={resolved.torchButton}
         wasmUrl={resolved.wasmUrl}
+        wasmFetcher={wasmFetcher}
         batchMode={batchMode}
         continuousScan={resolved.continuousScan === true}
         autoSubmit={autoSubmit}

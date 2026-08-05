@@ -7,6 +7,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,
+  useCurrentComponentRegistry: () => undefined,
 }));
 
 const mockDragCreate = vi.hoisted(() => ({
@@ -32,11 +33,15 @@ vi.mock('./hooks/use-calendar-navigation.js', () => ({
   }),
 }));
 
+const mockVirtualItems = vi.hoisted(() => ({
+  current: [] as Array<{ index: number; start: number; size: number }>,
+}));
+
 vi.mock('./hooks/use-calendar-virtualizer.js', () => ({
   useCalendarVirtualizer: () => ({
     scrollRef: { current: null },
-    virtualItems: [],
-    totalSize: 0,
+    virtualItems: mockVirtualItems.current,
+    totalSize: mockVirtualItems.current.length * 48,
   }),
 }));
 
@@ -152,7 +157,7 @@ describe('Calendar', () => {
     });
 
     expect(onEventCreate).toHaveBeenCalledTimes(1);
-    expect(onEventCreate).toHaveBeenCalledWith({ event: expect.objectContaining({ title: 'Test Shift', type: 'shift' }) });
+    expect(onEventCreate).toHaveBeenCalledWith({ event: expect.objectContaining({ title: 'Test Shift', type: 'shift' }) }, expect.anything());
     expect(onEventChange).not.toHaveBeenCalled();
   });
 
@@ -163,11 +168,11 @@ describe('Calendar', () => {
       <Calendar {...baseProps} events={{ onMount, onUnmount } as any} />,
     );
     expect(onMount).toHaveBeenCalledTimes(1);
-    expect(onMount).toHaveBeenCalledWith({});
+    expect(onMount).toHaveBeenCalledWith({}, expect.anything());
 
     unmount();
     expect(onUnmount).toHaveBeenCalledTimes(1);
-    expect(onUnmount).toHaveBeenCalledWith({});
+    expect(onUnmount).toHaveBeenCalledWith({}, expect.anything());
 
     expect(onMount.mock.invocationCallOrder[0]).toBeLessThan(onUnmount.mock.invocationCallOrder[0]);
   });
@@ -236,5 +241,40 @@ describe('Calendar', () => {
       <Calendar {...baseProps} props={{ events, resources: [{ id: 'r1', title: 'R1' }] } as any} events={{ onEventClick } as any} />,
     );
     expect(container.querySelector('[data-view]')).toBeTruthy();
+  });
+
+  it('dispatches onEventClick with evaluationBindings ctx when an event block is clicked (CX-10 convention)', () => {
+    const onEventClick = vi.fn();
+    const events = [
+      { id: 'e1', title: 'Clickable Event', start: '2026-07-15', end: '2026-07-15', type: 'shift', resourceId: 'r1' },
+    ];
+    mockVirtualItems.current = [{ index: 0, start: 0, size: 48 }];
+    const { container } = render(
+      <Calendar {...baseProps} props={{ events, resources: [{ id: 'r1', title: 'R1' }] } as any} events={{ onEventClick } as any} />,
+    );
+    const eventBlock = container.querySelector('[data-slot="calendar-event"]') as HTMLElement;
+    expect(eventBlock).toBeTruthy();
+    eventBlock.click();
+    expect(onEventClick).toHaveBeenCalledWith(
+      expect.objectContaining({ event: expect.objectContaining({ id: 'e1' }) }),
+      expect.objectContaining({
+        evaluationBindings: expect.objectContaining({ event: expect.objectContaining({ id: 'e1' }) }),
+        scope: expect.anything(),
+      }),
+    );
+  });
+
+  it('ready()s declared reaction plans on mount (print/exportPNG/importICal/exportToICal)', () => {
+    const print = { ready: vi.fn() };
+    const exportPNG = { ready: vi.fn() };
+    const importICal = { ready: vi.fn() };
+    const exportToICal = { ready: vi.fn() };
+    render(
+      <Calendar {...baseProps} reactions={{ print, exportPNG, importICal, exportToICal } as any} />,
+    );
+    expect(print.ready).toHaveBeenCalledTimes(1);
+    expect(exportPNG.ready).toHaveBeenCalledTimes(1);
+    expect(importICal.ready).toHaveBeenCalledTimes(1);
+    expect(exportToICal.ready).toHaveBeenCalledTimes(1);
   });
 });

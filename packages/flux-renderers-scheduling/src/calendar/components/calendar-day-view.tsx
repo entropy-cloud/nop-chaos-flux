@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import { allocateConcurrentWidths } from '../utils/calendar-time-utils.js';
@@ -59,7 +60,7 @@ export function CalendarDayView({
   })();
 
   return (
-    <div data-slot="calendar-matrix" role="grid" aria-label="Calendar day view" className="flex flex-col overflow-auto">
+    <div data-slot="calendar-matrix" role="grid" aria-label={t('scheduling.calendar.dayViewLabel')} className="flex flex-col overflow-auto">
       <div
         role="rowheader"
         data-slot="calendar-cell"
@@ -99,7 +100,7 @@ export function CalendarDayView({
                 role="row"
                 data-slot="calendar-resource-row"
                 data-resource-id={resource.id}
-                aria-label={`${resource.title || resource.text} schedule for ${dateStr}`}
+                aria-label={t('scheduling.calendar.scheduleFor', { date: `${resource.title || resource.text} ${dateStr}` })}
                 className="relative border-b last:border-b-0"
                 style={{ minHeight: `${totalHours * HOUR_HEIGHT}px` }}
               >

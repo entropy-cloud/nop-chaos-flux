@@ -182,7 +182,7 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
     const ariaLabels = await linkSvg.evaluate((svg) =>
       Array.from(svg.querySelectorAll('[aria-label]')).map((el) => el.getAttribute('aria-label') || ''),
     );
-    expect(ariaLabels.filter((l) => l.startsWith('Link')).length).toBe(9);
+    expect(ariaLabels.filter((l) => l.startsWith('Link') || l.startsWith('链接')).length).toBe(9);
 
     await assertTrackedPageErrors(page);
   });
@@ -191,11 +191,11 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
-    const linkClickArea = page.locator('[data-slot="gantt-link"] [aria-label^="Link"]').first();
+    const linkClickArea = page.locator('[data-slot="gantt-link"] [aria-label^="Link"], [data-slot="gantt-link"] [aria-label^="链接"]').first();
     await linkClickArea.hover();
     await page.waitForTimeout(200);
 
-    const deleteBtn = page.locator('[data-slot="gantt-link"] [aria-label="Delete link"]');
+    const deleteBtn = page.locator('[data-slot="gantt-link"] [aria-label="Delete link"], [data-slot="gantt-link"] [aria-label="删除链接"]');
     await expect(deleteBtn).toBeVisible({ timeout: 3_000 });
 
     await assertTrackedPageErrors(page);
@@ -205,7 +205,7 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
-    const linkClickArea = page.locator('[data-slot="gantt-link"] [aria-label^="Link"]').first();
+    const linkClickArea = page.locator('[data-slot="gantt-link"] [aria-label^="Link"], [data-slot="gantt-link"] [aria-label^="链接"]').first();
     await linkClickArea.click();
 
     await assertTrackedPageErrors(page);
@@ -219,11 +219,11 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
     const initialCount = await linkSvg.evaluate((svg) => svg.querySelectorAll('.nop-gantt-link-line').length);
     expect(initialCount).toBeGreaterThan(0);
 
-    const lastLink = linkSvg.locator('[aria-label^="Link"]').last();
+    const lastLink = linkSvg.locator('[aria-label^="Link"], [aria-label^="链接"]').last();
     await lastLink.hover();
     await page.waitForTimeout(200);
 
-    const deleteBtn = linkSvg.locator('[aria-label="Delete link"]');
+    const deleteBtn = linkSvg.locator('[aria-label="Delete link"], [aria-label="删除链接"]');
     await expect(deleteBtn).toBeVisible({ timeout: 3_000 });
 
     await deleteBtn.click();

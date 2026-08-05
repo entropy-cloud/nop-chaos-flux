@@ -2,6 +2,7 @@ import { LAYOUT_RENDERER_ROUTES } from './layout-renderer-routes.js';
 import { CONTENT_RENDERER_ROUTES } from './content-renderer-routes.js';
 import { MOBILE_RENDERER_ROUTES } from './mobile-renderer-routes.js';
 import { AI_RENDERER_ROUTES } from './ai-renderer-routes.js';
+import { SCHEDULING_RENDERER_ROUTES } from './scheduling-renderer-routes.js';
 
 export type RendererCategory =
   | 'layout'
@@ -11,6 +12,7 @@ export type RendererCategory =
   | 'advanced'
   | 'form'
   | 'data'
+  | 'scheduling'
   | 'domain';
 
 export interface RendererRouteEntry {
@@ -635,12 +637,14 @@ export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [
   ...CONTENT_RENDERER_ROUTES,
   ...MOBILE_RENDERER_ROUTES,
   ...AI_RENDERER_ROUTES,
+  ...SCHEDULING_RENDERER_ROUTES,
 ];
 
 export { LAYOUT_RENDERER_ROUTES };
 export { CONTENT_RENDERER_ROUTES };
 export { MOBILE_RENDERER_ROUTES };
 export { AI_RENDERER_ROUTES };
+export { SCHEDULING_RENDERER_ROUTES };
 
 export type RouteSpec =
   | { kind: 'home' }

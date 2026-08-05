@@ -108,3 +108,7 @@ export { AiPromptsLabPage } from './ai-prompts-lab-page';
 export { AiSuggestionsLabPage } from './ai-suggestions-lab-page';
 export { AiVoiceInputLabPage } from './ai-voice-input-lab-page';
 export { AiWelcomeLabPage } from './ai-welcome-lab-page';
+export { GanttLabPage } from './gantt-lab-page';
+export { KanbanLabPage } from './kanban-lab-page';
+export { CalendarLabPage } from './calendar-lab-page';
+export { BarcodeInputLabPage } from './barcode-input-lab-page';

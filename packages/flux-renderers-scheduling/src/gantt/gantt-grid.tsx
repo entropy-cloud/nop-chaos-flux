@@ -86,7 +86,7 @@ export function GanttGrid({ store, columns = DEFAULT_COLUMNS, onSelectTask, sele
   const paddingBottom = virtualItems.length > 0 ? totalSize - virtualItems[virtualItems.length - 1].end : 0;
 
   return (
-    <div className={cn('nop-gantt-grid h-full overflow-auto min-h-[400px]', className)} data-slot="gantt-grid" role="treegrid" aria-label="Task list" onClick={(e) => { if (e.target === e.currentTarget) onEmptyCellClick?.(); }} onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onEmptyCellClick?.(); }}>
+    <div className={cn('nop-gantt-grid h-full overflow-auto min-h-[400px]', className)} data-slot="gantt-grid" role="treegrid" aria-label={t('scheduling.gantt.taskListLabel')} onClick={(e) => { if (e.target === e.currentTarget) onEmptyCellClick?.(); }} onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onEmptyCellClick?.(); }}>
       <table className="w-full border-collapse table-fixed">
         <thead data-slot="gantt-grid-header">
           <tr>

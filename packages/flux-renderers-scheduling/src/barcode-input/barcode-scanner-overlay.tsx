@@ -8,6 +8,7 @@ import { useBarcodeCamera } from './hooks/use-barcode-camera.js';
 import { useBarcodeDetect } from './hooks/use-barcode-detect.js';
 import { useBarcodeTorch } from './hooks/use-barcode-torch.js';
 import { prepareWasm } from './utils/prepare-wasm-utils.js';
+import type { WasmFetcher } from './utils/prepare-wasm-utils.js';
 import { createBarcodeQueueStore, enqueueItem, dequeueItem, clearQueue, markSubmitted, getPending, getAllItems } from './utils/barcode-queue-utils.js';
 import type { BarcodeFormat, BarcodeDetectResult } from './barcode-input.types.js';
 import { useFocusTrap } from '../shared/hooks/use-focus-trap.js';
@@ -26,6 +27,8 @@ interface BarcodeScannerOverlayProps {
   scanInterval?: number;
   torchButton?: boolean;
   wasmUrl?: string;
+  /** INV-1: injected fetcher backed by RendererEnv (never browser fetch). */
+  wasmFetcher?: WasmFetcher;
   batchMode?: boolean;
   continuousScan?: boolean;
   autoSubmit?: boolean;
@@ -43,6 +46,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     scanInterval,
     torchButton: showTorch,
     wasmUrl,
+    wasmFetcher,
     batchMode,
     continuousScan,
     autoSubmit,
@@ -110,7 +114,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
       setPhase('loading');
       try {
         if (wasmUrl) {
-          await prepareWasm(wasmUrl, signal);
+          await prepareWasm(wasmUrl, signal, wasmFetcher);
         }
         if (signal.aborted) return;
         await start();
@@ -131,30 +135,37 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
       controller.abort();
       stop();
     };
-  }, [open, wasmUrl, stop, start]);
+  }, [open, wasmUrl, stop, start, wasmFetcher]);
 
+  // Consume-once guard: `detect.result` stays non-null between detections and
+  // the parent may re-render with a new onScan identity, which would otherwise
+  // re-fire the same result (double dispatch in continuousScan/batchMode).
+  const lastConsumedKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (detect.result) {
-      if (batchMode) {
-        enqueueItem(queueStore, detect.result.barcode, detect.result.format);
-        if (autoSubmit) {
-          const pending = getPending(queueStore);
-          for (const item of pending) {
-            onScan({ barcode: item.rawValue, format: item.format });
-            markSubmitted(queueStore, item.id);
-          }
+    if (!open) return;
+    if (!detect.result) return;
+    const key = `${detect.result.barcode}|${detect.result.format}`;
+    if (lastConsumedKeyRef.current === key) return;
+    lastConsumedKeyRef.current = key;
+    if (batchMode) {
+      enqueueItem(queueStore, detect.result.barcode, detect.result.format);
+      if (autoSubmit) {
+        const pending = getPending(queueStore);
+        for (const item of pending) {
+          onScan({ barcode: item.rawValue, format: item.format });
+          markSubmitted(queueStore, item.id);
         }
-      } else if (continuousScan) {
-        onScan(detect.result);
-      } else {
-        onScan(detect.result);
-        if (autoSubmit) {
-          onSubmitForm?.();
-        }
-        onClose();
       }
+    } else if (continuousScan) {
+      onScan(detect.result);
+    } else {
+      onScan(detect.result);
+      if (autoSubmit) {
+        onSubmitForm?.();
+      }
+      onClose();
     }
-  }, [detect.result, batchMode, continuousScan, autoSubmit, onScan, onClose, onSubmitForm, queueStore]);
+  }, [open, detect.result, batchMode, continuousScan, autoSubmit, onScan, onClose, onSubmitForm, queueStore]);
 
   useEffect(() => {
     if (detect.error) {
@@ -190,6 +201,19 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useFocusTrap(overlayRef, open);
+
+  // Escape closes the scanner dialog (keyboard parity with the close button).
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
 
   if (!open) return null;
 

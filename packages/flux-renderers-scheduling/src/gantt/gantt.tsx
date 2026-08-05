@@ -1,7 +1,8 @@
 import React, { useRef, useImperativeHandle, useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { Skeleton, cn } from '@nop-chaos/ui';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRenderScope } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
+import type { RendererComponentProps, ComponentHandle } from '@nop-chaos/flux-core';
+import { useCurrentComponentRegistry, useRenderScope } from '@nop-chaos/flux-react';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttSchema } from '../schemas.js';
 import { createGanttStore } from './gantt-store.js';
@@ -60,6 +61,39 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
 
     const [store] = useState(() => createInitialStore(resolved));
 
+    // Re-seed the store when the schema data props change at runtime
+    // (data-source refresh, scope-driven updates). Local edits are preserved
+    // because this only fires on prop reference changes.
+    const lastDataRef = useRef({
+      tasks: resolved.tasks,
+      links: resolved.links,
+      resources: resolved.resources,
+      assignments: resolved.assignments,
+    });
+    useEffect(() => {
+      const prev = lastDataRef.current;
+      const changed =
+        prev.tasks !== resolved.tasks ||
+        prev.links !== resolved.links ||
+        prev.resources !== resolved.resources ||
+        prev.assignments !== resolved.assignments;
+      if (!changed) return;
+      lastDataRef.current = {
+        tasks: resolved.tasks,
+        links: resolved.links,
+        resources: resolved.resources,
+        assignments: resolved.assignments,
+      };
+      const taskData = (resolved.tasks as any[]) ?? [];
+      const linkData = (resolved.links as any[]) ?? [];
+      const resourceData = (resolved.resources as any[]) ?? undefined;
+      const assignmentData = (resolved.assignments as any[]) ?? undefined;
+      store.parse(taskData, linkData, resourceData, assignmentData);
+      // parse() does not bump layoutRevision (the render subscription), so
+      // force a layout recompute + revision bump to re-render the new data.
+      store.recalcLayout();
+    }, [resolved.tasks, resolved.links, resolved.resources, resolved.assignments, store]);
+
     const selectedTaskId = useSyncExternalStore(store.subscribe, () => store.selectedTaskId);
     const editingTaskId = useSyncExternalStore(store.subscribe, () => store.editingTaskId);
 
@@ -68,20 +102,31 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const scopeRef = useRef(scope);
     useEffect(() => { scopeRef.current = scope; }, [scope]);
 
+    // CX-10 / bug-83 family convention: schema event dispatches carry a
+    // second dispatch-arg ctx { event, evaluationBindings, scope } so action
+    // args templates can read payload keys as bare bindings.
+    const eventCtx = useCallback((payload: Record<string, unknown>) => ({
+      event: { ...payload, type: typeof payload.type === 'string' ? payload.type : 'custom' },
+      evaluationBindings: payload,
+      scope: scopeRef.current,
+    }), []);
+
     useEffect(() => {
-      void eventsRef.current.onMount?.({});
+      void eventsRef.current.onMount?.({}, eventCtx({}));
       undoStackRef.current.clear();
       return () => {
-        void eventsRef.current.onUnmount?.({});
+        void eventsRef.current.onUnmount?.({}, eventCtx({}));
       };
-    }, []);
+    }, [eventCtx]);
 
     const handleTaskDragCommit = (taskId: string | number, changes: Record<string, string>) => {
-      void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes }, { scope: scopeRef.current });
+      const payload = { _taskId: taskId, changes };
+      void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
     };
 
     const handleLinkDragCommit = (sourceId: string | number, targetId: string | number, linkType: string) => {
-      void eventsRef.current.onLinkDragEnd?.({ _sourceId: sourceId, _targetId: targetId, _linkType: linkType }, { scope: scopeRef.current });
+      const payload = { _sourceId: sourceId, _targetId: targetId, _linkType: linkType };
+      void eventsRef.current.onLinkDragEnd?.(payload, eventCtx(payload));
     };
 
     const draggable = resolved.draggable !== false;
@@ -91,7 +136,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const { onPointerDown: onDragPointerDown } = useGanttDrag(store, containerRef, draggable ? handleTaskDragCommit : undefined);
     const { onLinkHandlePointerDown } = useGanttLinkDraw(store, svgRef, linkable ? handleLinkDragCommit : undefined, linkable);
     useGanttScroll(gridRef, timelineRef, (scrollLeft, scrollTop) => {
-      void eventsRef.current.onScroll?.({ scrollLeft, scrollTop });
+      const payload = { scrollLeft, scrollTop };
+      void eventsRef.current.onScroll?.(payload, eventCtx(payload));
     });
 
     const openEditor = (id: string | number) => {
@@ -113,7 +159,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           newEnd.setUTCDate(newEnd.getUTCDate() - 1);
           const startVal = newStart.toISOString().slice(0, 10);
           const endVal = newEnd.toISOString().slice(0, 10);
-          void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { start: startVal, end: endVal } }, { scope: scopeRef.current });
+          const payload = { _taskId: taskId, changes: { start: startVal, end: endVal } };
+          void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
           store.updateTask(taskId, { start: startVal, end: endVal });
           undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
           break;
@@ -125,7 +172,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           newEnd.setUTCDate(newEnd.getUTCDate() + 1);
           const startVal = newStart.toISOString().slice(0, 10);
           const endVal = newEnd.toISOString().slice(0, 10);
-          void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { start: startVal, end: endVal } }, { scope: scopeRef.current });
+          const payload = { _taskId: taskId, changes: { start: startVal, end: endVal } };
+          void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
           store.updateTask(taskId, { start: startVal, end: endVal });
           undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
           break;
@@ -135,7 +183,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           newEnd.setUTCDate(newEnd.getUTCDate() - 1);
           if (newEnd > oldStartDt) {
             const endVal = newEnd.toISOString().slice(0, 10);
-            void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { end: endVal } }, { scope: scopeRef.current });
+            const payload = { _taskId: taskId, changes: { end: endVal } };
+            void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
             store.updateTask(taskId, { end: endVal });
             undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { end: oldEnd }, { end: endVal }));
           }
@@ -145,7 +194,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           const newEnd = new Date(oldEndDt);
           newEnd.setUTCDate(newEnd.getUTCDate() + 1);
           const endVal = newEnd.toISOString().slice(0, 10);
-          void eventsRef.current.onTaskDragEnd?.({ _taskId: taskId, changes: { end: endVal } }, { scope: scopeRef.current });
+          const payload = { _taskId: taskId, changes: { end: endVal } };
+          void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
           store.updateTask(taskId, { end: endVal });
           undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { end: oldEnd }, { end: endVal }));
           break;
@@ -198,33 +248,92 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     }, [store, timelineRef]);
 
     const handleZoomChange = useCallback((zoomKey: string) => {
-      void eventsRef.current.onZoomChange?.({ zoom: zoomKey });
-    }, []);
+      const payload = { zoom: zoomKey };
+      void eventsRef.current.onZoomChange?.(payload, eventCtx(payload));
+    }, [eventCtx]);
+
+    const doZoomIn = useCallback(() => {
+      const zooms = store.getAvailableZooms();
+      const idx = zooms.findIndex((z) => z.key === store.currentZoom);
+      if (idx < zooms.length - 1) {
+        store.setZoom(zooms[idx + 1].key);
+        handleZoomChange(zooms[idx + 1].key);
+      }
+    }, [store, handleZoomChange]);
+
+    const doZoomOut = useCallback(() => {
+      const zooms = store.getAvailableZooms();
+      const idx = zooms.findIndex((z) => z.key === store.currentZoom);
+      if (idx > 0) {
+        store.setZoom(zooms[idx - 1].key);
+        handleZoomChange(zooms[idx - 1].key);
+      }
+    }, [store, handleZoomChange]);
 
     useImperativeHandle(
       ref,
       () => ({
-        zoomIn: () => {
-          const zooms = store.getAvailableZooms();
-          const idx = zooms.findIndex((z) => z.key === store.currentZoom);
-          if (idx < zooms.length - 1) {
-            store.setZoom(zooms[idx + 1].key);
-            handleZoomChange(zooms[idx + 1].key);
-          }
-        },
-        zoomOut: () => {
-          const zooms = store.getAvailableZooms();
-          const idx = zooms.findIndex((z) => z.key === store.currentZoom);
-          if (idx > 0) {
-            store.setZoom(zooms[idx - 1].key);
-            handleZoomChange(zooms[idx - 1].key);
-          }
-        },
+        zoomIn: doZoomIn,
+        zoomOut: doZoomOut,
         scrollToToday,
         scrollToTask,
       }),
-      [store, scrollToToday, scrollToTask, handleZoomChange],
+      [doZoomIn, doZoomOut, scrollToToday, scrollToTask],
     );
+
+    // CX-9 / reaction contract: activate the declared reaction plans so
+    // schema-declared zoomIn/zoomOut/scrollToToday/scrollToTask actions fire.
+    useEffect(() => {
+      for (const key of ['zoomIn', 'zoomOut', 'scrollToToday', 'scrollToTask']) {
+        props.reactions[key]?.ready();
+      }
+    }, [props.reactions]);
+
+    // Component handle registration: makes `component:zoomIn/zoomOut/
+    // scrollToToday/scrollToTask` actions resolvable (design.md §8.2/§8.3).
+    const componentRegistry = useCurrentComponentRegistry();
+    useEffect(() => {
+      if (!componentRegistry) return;
+      const handle: ComponentHandle = {
+        id: props.id,
+        type: 'gantt',
+        capabilities: {
+          invoke(method, payload) {
+            switch (method) {
+              case 'zoomIn':
+                doZoomIn();
+                return { ok: true };
+              case 'zoomOut':
+                doZoomOut();
+                return { ok: true };
+              case 'scrollToToday':
+                scrollToToday();
+                return { ok: true };
+              case 'scrollToTask': {
+                const taskId = (payload as { taskId?: string | number } | undefined)?.taskId;
+                if (taskId == null) {
+                  return { ok: false, error: new Error('gantt scrollToTask requires a taskId') };
+                }
+                scrollToTask(taskId);
+                return { ok: true };
+              }
+              default:
+                return { ok: false, error: new Error(`Unsupported gantt method: ${method}`) };
+            }
+          },
+          hasMethod(method) {
+            return method === 'zoomIn' || method === 'zoomOut' || method === 'scrollToToday' || method === 'scrollToTask';
+          },
+          listMethods() {
+            return ['zoomIn', 'zoomOut', 'scrollToToday', 'scrollToTask'];
+          },
+          getDebugData() {
+            return { currentZoom: store.currentZoom, taskCount: store.tasks.size };
+          },
+        },
+      };
+      return componentRegistry.register(handle, { cid: meta.cid });
+    }, [componentRegistry, props.id, meta.cid, store, doZoomIn, doZoomOut, scrollToToday, scrollToTask]);
 
     useSyncExternalStore(store.subscribe, () => store.layoutRevision);
     const visibleTasks = store.getVisibleTasks();
@@ -234,19 +343,22 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
 
     const handleTaskClick = (taskId: string | number) => {
       store.selectTask(taskId);
-      void eventsRef.current.onTaskClick?.({ _taskId: taskId });
+      const payload = { _taskId: taskId };
+      void eventsRef.current.onTaskClick?.(payload, eventCtx(payload));
     };
 
     const handleTaskDoubleClick = (taskId: string | number) => {
-      void eventsRef.current.onTaskDoubleClick?.({ _taskId: taskId });
+      const payload = { _taskId: taskId };
+      void eventsRef.current.onTaskDoubleClick?.(payload, eventCtx(payload));
     };
 
     const handleLinkClick = (linkId: string | number) => {
-      void eventsRef.current.onLinkClick?.({ _linkId: linkId });
+      const payload = { _linkId: linkId };
+      void eventsRef.current.onLinkClick?.(payload, eventCtx(payload));
     };
 
     const handleEmptyCellClick = () => {
-      void eventsRef.current.onEmptyCellClick?.({});
+      void eventsRef.current.onEmptyCellClick?.({}, eventCtx({}));
     };
 
     if (!meta.visible) return null;
@@ -254,7 +366,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     if (resolved.loading) {
       const loadingRegion = regions.loading;
       if (loadingRegion) {
-        return <div data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>{loadingRegion.render() as React.ReactNode}</div>;
+        return <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>{loadingRegion.render() as React.ReactNode}</div>;
       }
       return (
         <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-gantt flex flex-col h-full', meta.className)}>
@@ -268,7 +380,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     if (!resolved.loading && totalTaskCount === 0) {
       const emptyRegion = regions.empty;
       if (emptyRegion) {
-        return <div data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn(meta.className, resolved.emptyClassName as string | undefined)}>{emptyRegion.render() as React.ReactNode}</div>;
+        return <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn(meta.className, resolved.emptyClassName as string | undefined)}>{emptyRegion.render() as React.ReactNode}</div>;
       }
       return (
         <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-gantt', meta.className)} />
@@ -286,14 +398,16 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     return (
       <div ref={containerRef} data-slot="gantt" className={cn('nop-gantt flex flex-col h-full', meta.className)} data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>
         <div aria-live="polite" aria-atomic="true" className="sr-only">
-          {`${store.getVisibleTasks().length} tasks visible`}
+          {t('scheduling.gantt.tasksVisible', { count: store.getVisibleTasks().length })}
         </div>
         <GanttHeader
           store={store}
           toolbarRegion={regions.toolbar as RenderRegionHandle}
-          onScrollToToday={scrollToToday}
           className={resolved.toolbarClassName as string | undefined}
           onZoomChange={handleZoomChange}
+          onZoomIn={() => { doZoomIn(); void props.reactions.zoomIn?.dispatch(); }}
+          onZoomOut={() => { doZoomOut(); void props.reactions.zoomOut?.dispatch(); }}
+          onTodayClick={() => { scrollToToday(); void props.reactions.scrollToToday?.dispatch(); }}
         />
         <GanttLayout
           grid={

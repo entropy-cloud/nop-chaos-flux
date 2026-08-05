@@ -110,6 +110,10 @@ import {
   AiSuggestionsLabPage,
   AiVoiceInputLabPage,
   AiWelcomeLabPage,
+  GanttLabPage,
+  KanbanLabPage,
+  CalendarLabPage,
+  BarcodeInputLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -223,4 +227,8 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   'ai-suggestions': AiSuggestionsLabPage,
   'ai-voice-input': AiVoiceInputLabPage,
   'ai-welcome': AiWelcomeLabPage,
+  gantt: GanttLabPage,
+  kanban: KanbanLabPage,
+  calendar: CalendarLabPage,
+  'barcode-input': BarcodeInputLabPage,
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import type { BoardData, BoardItem } from './kanban.types.js';
 
 vi.mock('@nop-chaos/flux-react', () => ({
@@ -9,8 +9,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useScopeSelector: () => undefined,
 }));
 
-vi.mock('@nop-chaos/flux-i18n', () => ({
-  t: (key: string, params?: Record<string, unknown>) => {
+vi.mock('@nop-chaos/flux-i18n', () => ({  t: (key: string, params?: Record<string, unknown>) => {
     const map: Record<string, string> = {
       'scheduling.kanban.expandColumn': 'Expand column',
       'scheduling.kanban.collapseColumn': 'Collapse column',
@@ -24,6 +23,8 @@ vi.mock('@nop-chaos/flux-i18n', () => ({
       'scheduling.kanban.redo': '重做 (Ctrl+Shift+Z)',
       'scheduling.kanban.activityLog': '活动日志',
       'scheduling.kanban.dragCardHere': '拖拽卡片到此处',
+      'scheduling.kanban.resizeColumnLabel': 'Resize column',
+      'scheduling.kanban.filterError': 'Filter error: {{message}}',
       'scheduling.kanban.addCard': '+ 添加卡片',
       'flux.common.noData': '暂无数据',
       'flux.common.cancel': '取消',
@@ -37,6 +38,19 @@ vi.mock('@nop-chaos/flux-i18n', () => ({
 }));
 
 afterEach(cleanup);
+
+vi.mock('./hooks/use-kanban-virtualizer.js', () => ({
+  useKanbanVirtualizer: (options: any) => ({
+    virtualizer: { scrollToIndex: vi.fn() },
+    totalSize: options.cardCount * 88,
+    virtualItems: Array.from({ length: options.cardCount }, (_, i) => ({
+      index: i,
+      start: i * 88,
+      size: 88,
+      key: String(i),
+    })),
+  }),
+}));
 import { KanbanBoard } from './kanban-board.js';
 import { KanbanColumn } from './kanban-column.js';
 import { KanbanCard } from './kanban-card.js';
@@ -332,5 +346,38 @@ describe('KanbanColumnHeader', () => {
     expect(handle.getAttribute('aria-orientation')).toBe('vertical');
     expect(handle.getAttribute('aria-label')).toBe('Resize column');
     expect(handle.tabIndex).toBe(0);
+  });
+});
+
+describe('KanbanBoard regression — C9 scheduling audit', () => {
+  it('surfaces filterCard compile errors without crashing and without render-phase setState', async () => {
+    const { container } = render(
+      <KanbanBoard {...defaultProps} props={{ ...defaultProps.props, filterCard: '${broken(' } as any} />,
+    );
+    expect(container.querySelector('[data-slot="kanban"]')).toBeTruthy();
+    await waitFor(() => {
+      expect(container.textContent).toContain('Filter error:');
+    });
+  });
+
+  it('Enter on a card fires onCardClick but does NOT start keyboard drag; Space starts keyboard drag without click', () => {
+    const onCardClick = vi.fn();
+    const { container } = render(
+      <KanbanBoard {...defaultProps} events={{ onCardClick } as any} />,
+    );
+    const cardEl = container.querySelector('[data-card-id="card1"]') as HTMLElement;
+    expect(cardEl).toBeTruthy();
+
+    fireEvent.keyDown(cardEl, { key: 'Enter' });
+    expect(onCardClick).toHaveBeenCalledTimes(1);
+    expect(onCardClick).toHaveBeenCalledWith(
+      { cardId: 'card1', columnId: 'col1', index: 0 },
+      expect.objectContaining({ evaluationBindings: { cardId: 'card1', columnId: 'col1', index: 0 } }),
+    );
+    expect(cardEl.getAttribute('data-keyboard-dragging')).toBeNull();
+
+    fireEvent.keyDown(cardEl, { key: ' ' });
+    expect(onCardClick).toHaveBeenCalledTimes(1);
+    expect(cardEl.getAttribute('data-keyboard-dragging')).toBe('true');
   });
 });

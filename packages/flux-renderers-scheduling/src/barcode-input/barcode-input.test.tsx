@@ -35,7 +35,12 @@ function notifyFormStore() {
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
+  useRendererEnv: () => ({
+    fetcher: vi.fn().mockResolvedValue({ status: 200, data: new ArrayBuffer(0) }),
+  }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
+  useCurrentComponentRegistry: () => undefined,
+  useCurrentFormError: () => undefined,
   useCurrentForm: () => ({
     store: mockFormStore,
     setValue: (name: string, val: unknown) => {
@@ -64,9 +69,11 @@ vi.mock('./hooks/use-barcode-camera.js', () => ({
   }),
 }));
 
+const mockDetectResult = vi.hoisted(() => ({ value: null as { barcode: string; format: string } | null }));
+
 vi.mock('./hooks/use-barcode-detect.js', () => ({
   useBarcodeDetect: () => ({
-    result: null,
+    result: mockDetectResult.value,
     isScanning: false,
     error: null,
   }),
@@ -115,6 +122,7 @@ describe('BarcodeInputRenderer', () => {
     vi.clearAllMocks();
     mockFormStoreState.values = {};
     mockFormListeners.clear();
+    mockDetectResult.value = null;
     document.querySelector('[data-slot="barcode-scanner-overlay"]')?.remove();
   });
 
@@ -344,54 +352,90 @@ describe('BarcodeInputRenderer', () => {
   });
 
   describe('Phase 7 — Validation Props (F-61)', () => {
+    async function scanViaButton(container: HTMLElement): Promise<void> {
+      const scanBtn = container.querySelector('[data-slot="barcode-scan-button"]') as HTMLElement;
+      expect(scanBtn).toBeTruthy();
+      act(() => { scanBtn.click(); });
+      // Single-scan mode closes the overlay right after consuming a result,
+      // so wait for the overlay OR the consumed-result side-effect.
+      await waitFor(() => {
+        const overlay = document.querySelector('[data-slot="barcode-scanner-overlay"]');
+        const errorEl = container.querySelector('[data-slot="barcode-validation-error"]');
+        expect(overlay || errorEl).toBeTruthy();
+      });
+    }
+
     it('should show validation error when required is true and scanned value is empty', async () => {
-      const onScan = vi.fn();
+      mockDetectResult.value = { barcode: '', format: 'qr_code' };
       const { container } = render(<BarcodeInputRenderer {...createMockProps({
         props: { name: 'barcode', required: true },
-        events: { onScan },
       })} />);
-      const overlay = document.querySelector('[data-slot="barcode-scanner-overlay"]');
-      if (overlay) {
-        const scanHandler = (overlay as any).__onScan;
-        if (scanHandler) {
-          act(() => scanHandler({ barcode: '', format: 'qr_code' }));
-        }
-      }
-      const errEl = container.querySelector('[data-slot="barcode-validation-error"]');
-      if (errEl) {
+      await scanViaButton(container);
+      await waitFor(() => {
+        const errEl = container.querySelector('[data-slot="barcode-validation-error"]');
         expect(errEl).toBeTruthy();
         expect(errEl?.textContent).toContain('required');
-      }
+      });
     });
 
-    it('should show validation error when scanned value is below minLength', () => {
+    it('should show validation error when scanned value is below minLength', async () => {
+      mockDetectResult.value = { barcode: 'AB', format: 'qr_code' };
       const { container } = render(<BarcodeInputRenderer {...createMockProps({
         props: { name: 'barcode', minLength: 4 },
       })} />);
-      const errEl = container.querySelector('[data-slot="barcode-validation-error"]');
-      // No error yet - will show when a short scan comes in
-      expect(errEl).toBeFalsy();
+      await scanViaButton(container);
+      await waitFor(() => {
+        const errEl = container.querySelector('[data-slot="barcode-validation-error"]');
+        expect(errEl).toBeTruthy();
+        expect(errEl?.textContent).toContain('minLength');
+      });
     });
 
-    it('should show validation error when scanned value exceeds maxLength', () => {
+    it('should show validation error when scanned value exceeds maxLength', async () => {
+      mockDetectResult.value = { barcode: '123456', format: 'qr_code' };
       const { container } = render(<BarcodeInputRenderer {...createMockProps({
         props: { name: 'barcode', maxLength: 5 },
       })} />);
-      expect(container.querySelector('[data-slot="barcode-validation-error"]')).toBeFalsy();
+      await scanViaButton(container);
+      await waitFor(() => {
+        const errEl = container.querySelector('[data-slot="barcode-validation-error"]');
+        expect(errEl).toBeTruthy();
+        expect(errEl?.textContent).toContain('maxLength');
+      });
     });
 
-    it('should render with pattern prop without crashing', () => {
+    it('should show pattern mismatch for a non-matching scan and accept a matching one', async () => {
+      mockDetectResult.value = { barcode: 'ABC', format: 'qr_code' };
       const { container } = render(<BarcodeInputRenderer {...createMockProps({
         props: { name: 'barcode', pattern: '^[0-9]+$' },
       })} />);
-      expect(container.querySelector('[data-slot="barcode-input"]')).toBeTruthy();
+      await scanViaButton(container);
+      await waitFor(() => {
+        const errEl = container.querySelector('[data-slot="barcode-validation-error"]');
+        expect(errEl).toBeTruthy();
+        expect(errEl?.textContent).toContain('pattern');
+      });
+      // Matching scan clears the error.
+      mockDetectResult.value = { barcode: '123', format: 'qr_code' };
+      act(() => { document.querySelector('[data-slot="barcode-scanner-overlay"]')?.remove(); });
+      const scanBtn = container.querySelector('[data-slot="barcode-scan-button"]') as HTMLElement;
+      act(() => { scanBtn.click(); });
+      await waitFor(() => {
+        expect(container.querySelector('[data-slot="barcode-validation-error"]')).toBeFalsy();
+      });
     });
 
-    it('should render with validate action prop without crashing', () => {
+    it('should show validate.message when the validate prop declares one', async () => {
+      mockDetectResult.value = { barcode: 'AB12', format: 'qr_code' };
       const { container } = render(<BarcodeInputRenderer {...createMockProps({
         props: { name: 'barcode', validate: { action: { actionType: 'custom', args: {} } as any, message: 'Invalid barcode' } },
       })} />);
-      expect(container.querySelector('[data-slot="barcode-input"]')).toBeTruthy();
+      await scanViaButton(container);
+      await waitFor(() => {
+        const errEl = container.querySelector('[data-slot="barcode-validation-error"]');
+        expect(errEl).toBeTruthy();
+        expect(errEl?.textContent).toContain('Invalid barcode');
+      });
     });
 
     it('should clear validation error on input change', async () => {
@@ -449,9 +493,10 @@ describe('BarcodeInputRenderer', () => {
         props: { name: 'barcode', readOnly: true },
       })} />);
       const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
-      act(() => { lastCall.scanNow(); });
+      const result = lastCall.scanNow();
+      expect(result).toEqual({ success: false, error: 'flux.barcode.readOnlyField' });
       await waitFor(() => {
-        expect(document.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
+        expect(document.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeFalsy();
       });
     });
   });

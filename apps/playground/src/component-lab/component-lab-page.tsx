@@ -26,6 +26,7 @@ const CATEGORY_LABELS: Record<RendererCategory, string> = {
   advanced: 'Advanced',
   form: 'Form',
   data: 'Data',
+  scheduling: 'Scheduling',
   domain: 'Domain',
 };
 

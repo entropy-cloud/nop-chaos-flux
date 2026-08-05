@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData } from '../kanban.types.js';
 
 interface ColumnInfo {
@@ -82,13 +83,13 @@ export function useKanbanBoardEffects({
       if (!cardId || !colId) return;
 
       if (!keyboardMoveCard) {
-        if (e.key === ' ' || e.key === 'Space' || e.key === 'Enter') {
+        if (e.key === ' ' || e.key === 'Space') {
           e.preventDefault();
           setKeyboardMoveCard({ cardId, columnId: colId });
           cardEl.setAttribute('data-keyboard-dragging', 'true');
           cardEl.setAttribute('aria-grabbed', 'true');
           const cardTitle = cardEl.getAttribute('aria-label') || boardDataRef.current[cardId]?.data?.title || cardId;
-          setDndAnnouncement(`Picked up card: ${cardTitle}. Use arrow keys to move, Escape to cancel.`);
+          setDndAnnouncement(t('scheduling.kanban.pickedUpCard', { title: cardTitle }));
         }
         return;
       }
@@ -101,7 +102,7 @@ export function useKanbanBoardEffects({
             const targetColId = columnsRef.current[curIdx - 1].id;
             moveCardKeyboardRef.current(boardDataRef.current, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
             setKeyboardMoveCard({ cardId, columnId: targetColId });
-            setDndAnnouncement(`Card moved to column: ${columnsRef.current[curIdx - 1]?.title || targetColId}`);
+            setDndAnnouncement(t('scheduling.kanban.cardMovedTo', { title: columnsRef.current[curIdx - 1]?.title || targetColId }));
           }
         },
         ArrowRight: () => {
@@ -110,14 +111,14 @@ export function useKanbanBoardEffects({
             const targetColId = columnsRef.current[curIdx + 1].id;
             moveCardKeyboardRef.current(boardDataRef.current, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
             setKeyboardMoveCard({ cardId, columnId: targetColId });
-            setDndAnnouncement(`Card moved to column: ${columnsRef.current[curIdx + 1]?.title || targetColId}`);
+            setDndAnnouncement(t('scheduling.kanban.cardMovedTo', { title: columnsRef.current[curIdx + 1]?.title || targetColId }));
           }
         },
         Escape: () => {
           cardEl.removeAttribute('data-keyboard-dragging');
           cardEl.removeAttribute('aria-grabbed');
           setKeyboardMoveCard(null);
-          setDndAnnouncement('Card drag cancelled.');
+          setDndAnnouncement(t('scheduling.kanban.cardDragCancelled'));
         },
       };
       const action = dirActions[e.key];

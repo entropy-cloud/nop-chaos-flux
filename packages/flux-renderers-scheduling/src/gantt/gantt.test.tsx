@@ -1,12 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { Gantt } from './gantt.js';
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,
+  useCurrentComponentRegistry: () => undefined,
 }));
 
 vi.mock('./hooks/use-gantt-drag.js', () => ({
@@ -96,9 +97,9 @@ describe('Gantt', () => {
     const { unmount } = render(
       React.createElement(Gantt, { ...baseProps, events: { onMount, onUnmount } as any }),
     );
-    expect(onMount).toHaveBeenCalledWith({});
+    expect(onMount).toHaveBeenCalledWith({}, expect.anything());
     unmount();
-    expect(onUnmount).toHaveBeenCalledWith({});
+    expect(onUnmount).toHaveBeenCalledWith({}, expect.anything());
   });
 
   it('should render with tasks and show real components', () => {
@@ -248,5 +249,97 @@ describe('Gantt', () => {
     );
     expect(t2Toggle).toBeTruthy();
     expect(t2Toggle!.getAttribute('aria-expanded')).toBe('false');
+  });
+});
+
+describe('Gantt regression — C9 scheduling audit (event ctx / reactions / prop re-parse)', () => {
+  const regressionBaseProps = {
+    id: 'gantt-test',
+    path: 'test',
+    schema: { type: 'gantt' as const },
+    templateNode: {} as any,
+    node: {} as any,
+    props: { tasks: [], links: [] } as any,
+    meta: { visible: true, disabled: false } as any,
+    regions: {} as any,
+    events: {} as any,
+    reactions: {} as any,
+    helpers: {} as any,
+  };
+
+  it('should dispatch onTaskClick with evaluationBindings ctx (CX-10 convention)', () => {
+    const onTaskClick = vi.fn();
+    const { container } = render(
+      React.createElement(Gantt, {
+        ...regressionBaseProps,
+        props: { tasks: [{ id: 't1', text: 'T1', start: '2026-01-01', end: '2026-01-10' }], links: [] } as any,
+        events: { onTaskClick } as any,
+      }),
+    );
+    const bar = container.querySelector('[data-slot="gantt-bar"]') as HTMLElement;
+    expect(bar).toBeTruthy();
+    bar.click();
+    expect(onTaskClick).toHaveBeenCalledWith(
+      { _taskId: 't1' },
+      expect.objectContaining({
+        event: expect.objectContaining({ _taskId: 't1' }),
+        evaluationBindings: { _taskId: 't1' },
+        scope: expect.anything(),
+      }),
+    );
+  });
+
+  it('should ready() declared reactions on mount and dispatch zoomIn from the header + button', () => {
+    const zoomIn = { ready: vi.fn(), dispatch: vi.fn() };
+    const zoomOut = { ready: vi.fn(), dispatch: vi.fn() };
+    const scrollToToday = { ready: vi.fn(), dispatch: vi.fn() };
+    const scrollToTask = { ready: vi.fn(), dispatch: vi.fn() };
+    const { container } = render(
+      React.createElement(Gantt, {
+        ...regressionBaseProps,
+        props: {
+          tasks: [{ id: 't1', text: 'T1', start: '2026-01-01', end: '2026-01-10' }],
+          links: [],
+        } as any,
+        reactions: { zoomIn, zoomOut, scrollToToday, scrollToTask } as any,
+      }),
+    );
+    expect(zoomIn.ready).toHaveBeenCalledTimes(1);
+    expect(zoomOut.ready).toHaveBeenCalledTimes(1);
+    expect(scrollToToday.ready).toHaveBeenCalledTimes(1);
+    expect(scrollToTask.ready).toHaveBeenCalledTimes(1);
+
+    const toolbarButtons = container.querySelectorAll('[data-slot="gantt-toolbar"] button');
+    expect(toolbarButtons.length).toBeGreaterThanOrEqual(2);
+    (toolbarButtons[1] as HTMLElement).click();
+    expect(zoomIn.dispatch).toHaveBeenCalledTimes(1);
+    expect(zoomOut.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('should re-parse the store when the tasks prop changes at runtime', async () => {
+    const { container, rerender } = render(
+      React.createElement(Gantt, {
+        ...regressionBaseProps,
+        props: { tasks: [{ id: 't1', text: 'T1', start: '2026-01-01', end: '2026-01-10' }], links: [] } as any,
+      }),
+    );
+    expect(container.querySelector('[data-task-id="t1"]')).toBeTruthy();
+
+    rerender(
+      React.createElement(Gantt, {
+        ...regressionBaseProps,
+        props: {
+          tasks: [
+            { id: 't2', text: 'T2', start: '2026-02-01', end: '2026-02-10' },
+            { id: 't3', text: 'T3', start: '2026-03-01', end: '2026-03-10' },
+          ],
+          links: [] } as any,
+      }),
+    );
+    await waitFor(() => {
+      expect(container.querySelector('[data-task-id="t2"]')).toBeTruthy();
+      expect(container.querySelector('[data-task-id="t3"]')).toBeTruthy();
+      expect(container.querySelector('[data-task-id="t1"]')).toBeNull();
+    });
   });
 });

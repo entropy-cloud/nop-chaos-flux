@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import { getWeekStartEnd, getDateRange, isToday, toISODateString } from '../utils/calendar-date-utils.js';
@@ -72,7 +73,7 @@ export function CalendarWeekView({
   const displayDays = showWeekends ? days : days.filter((d) => d.getUTCDay() !== 0 && d.getUTCDay() !== 6);
 
   return (
-    <div data-slot="calendar-matrix" role="grid" aria-label="Calendar week view" className="flex flex-col overflow-auto">
+    <div data-slot="calendar-matrix" role="grid" aria-label={t('scheduling.calendar.weekViewLabel')} className="flex flex-col overflow-auto">
       <div role="row" className="flex border-b sticky top-0 bg-background z-10">
         <div className="w-12 shrink-0" />
         {displayDays.map((day) => {

@@ -7,7 +7,7 @@
  * Gantt uses Zustand + Context (deeper tree, more inter-component subscriptions).
  * Calendar uses custom hooks (view state localized to scroll/navigation hooks).
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
@@ -122,13 +122,22 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const setBoardDataRef = useRef(setBoardData);
   useEffect(() => { setBoardDataRef.current = setBoardData; }, [setBoardData]);
 
+  // CX-10 / bug-83 family convention: schema event dispatches carry a second
+  // dispatch-arg ctx { event, evaluationBindings, scope } so action args
+  // templates can read payload keys as bare bindings.
+  const eventCtx = useCallback((payload: Record<string, unknown>) => ({
+    event: { ...payload, type: typeof payload.type === 'string' ? payload.type : 'custom' },
+    evaluationBindings: payload,
+    scope: rootScope,
+  }), [rootScope]);
+
   const initialFilterTags = (resolved.filterTags as string[]) || [];
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilterTags);
 
   useEffect(() => {
-    void events.onMount?.({});
-    return () => { void events.onUnmount?.({}); };
-  }, [events]);
+    void events.onMount?.({}, eventCtx({}));
+    return () => { void events.onUnmount?.({}, eventCtx({})); };
+  }, [events, eventCtx]);
 
   const [undoStackState, setUndoStackState] = useState<UndoStack>(() => createUndoStack(1000));
   const [activityLogOpen, setActivityLogOpen] = useState(false);
@@ -196,13 +205,16 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const allTags = collectAllTags(boardData, columns);
 
-  const filterCardFn = (() => {
+  const filterCompileErrorRef = useRef<string | null>(null);
+
+  const filterCardFn = useMemo(() => {
     const raw = resolved.filterCard;
     if (!raw) return undefined;
     if (typeof raw === 'function') return raw as (card: Record<string, any>, text: string) => boolean;
     if (typeof raw === 'string') {
       try {
         const compiled = runtime.expressionCompiler.compileValue(raw);
+        filterCompileErrorRef.current = null;
         if (compiled) {
           return (cardData: Record<string, any>, text: string) => {
             const evalScope = runtime.createChildScope(rootScope, { card: cardData, text });
@@ -214,12 +226,18 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
           };
         }
       } catch (err) {
+        // Compile failure is reported via the effect below (never setState
+        // during render).
         const msg = err instanceof Error ? err.message : String(err);
-        setFilterError(msg);
+        filterCompileErrorRef.current = msg;
       }
     }
     return undefined;
-  })();
+  }, [resolved.filterCard, runtime, rootScope]);
+
+  useEffect(() => {
+    setFilterError(filterCompileErrorRef.current);
+  }, [resolved.filterCard]);
 
   const filter = useKanbanFilter({ filterText: resolved.filterText as string | undefined, filterCard: filterCardFn });
 
@@ -244,7 +262,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     boardData,
     onBoardChange: handleCardMoveBoardChange,
     onCardMove: (payload) => {
-      void events.onCardMove?.(payload);
+      void events.onCardMove?.(payload, eventCtx(payload));
       const card = boardData[payload.cardId];
       recordAction({
         type: 'cardMove',
@@ -264,7 +282,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const { registerColumnHeader, registerBoardDropZone } = useColumnDnd({
     boardData,
     onBoardChange: handleColumnReorderBoardChange,
-    onColumnReorder: (payload) => void events.onColumnReorder?.(payload),
+    onColumnReorder: (payload) => void events.onColumnReorder?.(payload, eventCtx(payload)),
     enabled: columnDraggable,
   });
 
@@ -283,20 +301,28 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       e.preventDefault();
       const newBoard = moveColumn(boardData, columnId, targetIdx);
       handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: idx, toIndex: targetIdx });
-      void events.onColumnReorder?.({ columnId, fromIndex: idx, toIndex: targetIdx });
-      setDndAnnouncement(`Column moved from position ${idx + 1} to position ${targetIdx + 1}`);
+      const payload = { columnId, fromIndex: idx, toIndex: targetIdx };
+      void events.onColumnReorder?.(payload, eventCtx(payload));
+      setDndAnnouncement(t('scheduling.kanban.columnMoved', { from: idx + 1, to: targetIdx + 1 }));
     }
   };
 
-  const handleCardClick = (cardId: string, columnId: string, index: number) => void events.onCardClick?.({ cardId, columnId, index });
-  const handleColumnClick = (columnId: string) => void events.onColumnClick?.({ columnId });
+  const handleCardClick = (cardId: string, columnId: string, index: number) => {
+    const payload = { cardId, columnId, index };
+    void events.onCardClick?.(payload, eventCtx(payload));
+  };
+  const handleColumnClick = (columnId: string) => {
+    const payload = { columnId };
+    void events.onColumnClick?.(payload, eventCtx(payload));
+  };
 
   const handleCardAdd = (columnId: string, cardData?: Record<string, any>) => {
     lastCommandTypeRef.current = 'addCard';
     const cardId = `card-${Date.now()}`;
-    const newCard = { id: cardId, title: cardData?.title || 'New Card', ...cardData };
+    const newCard = { id: cardId, title: cardData?.title || t('scheduling.kanban.newCard'), ...cardData };
     handleSetBoardData(addCard(boardData, columnId, newCard), 'addCard', { cardId, columnId, cardData: newCard, index: -1 });
-    void events.onCardAdd?.({ cardId, columnId, index: -1 });
+    const addPayload = { cardId, columnId, index: -1 };
+    void events.onCardAdd?.(addPayload, eventCtx(addPayload));
   };
 
   const handleCardRemove = (cardId: string) => {
@@ -306,7 +332,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     const cardData = boardData[cardId] ? { ...boardData[cardId].data } : {};
     const index = columnId && boardData[columnId] ? [...boardData[columnId].children].indexOf(cardId) : -1;
     handleSetBoardData(removeCard(boardData, cardId), 'removeCard', { cardId, columnId, cardData, index });
-    void events.onCardRemove?.({ cardId, columnId });
+    const removePayload = { cardId, columnId };
+    void events.onCardRemove?.(removePayload, eventCtx(removePayload));
   };
 
   const handleToggleTag = (tagId: string) => {
@@ -321,14 +348,16 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   };
 
   const confirmAddColumn = () => {
-    const title = newColumnTitle.trim() || 'New Column';
+    const title = newColumnTitle.trim() || t('scheduling.kanban.newColumn');
     const columnId = `col-${Date.now()}`;
     const rootChildren = boardData['root']?.children ? [...boardData['root'].children] : [];
     const newBoard = structuredClone(boardData);
     newBoard[columnId] = { id: columnId, title, children: [], data: { title }, meta: {}, type: 'column' };
     newBoard['root'] = { ...boardData['root'], children: [...rootChildren, columnId] };
-    handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: -1, toIndex: rootChildren.length });
-    void events.onColumnAdd?.({ columnId, index: rootChildren.length });
+    lastCommandTypeRef.current = 'addColumn';
+    handleSetBoardData(newBoard, 'addColumn', { columnId, columnData: newBoard[columnId], index: rootChildren.length });
+    const colAddPayload = { columnId, index: rootChildren.length };
+    void events.onColumnAdd?.(colAddPayload, eventCtx(colAddPayload));
     setAddingColumn(false);
     setNewColumnTitle('');
   };
@@ -380,10 +409,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   if (columns.length === 0) {
     const emptyRegion = regions.empty;
     if (emptyRegion) {
-      return <div data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>{emptyRegion.render() as React.ReactNode}</div>;
+      return <div data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban', meta.className)}>{emptyRegion.render() as React.ReactNode}</div>;
     }
     return (
-      <div data-slot="kanban-empty" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban-empty flex items-center justify-center py-12 text-gray-400 text-sm', meta.className)}>
+      <div data-slot="kanban" data-empty="true" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban nop-kanban-empty flex items-center justify-center py-12 text-gray-400 text-sm', meta.className)}>
         {t('flux.common.noData')}
       </div>
     );
@@ -399,7 +428,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   return (
     <div ref={boardRef} data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}>
       <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {dndAnnouncement || `${columns.length} columns, ${columns.reduce((sum, col) => sum + col.children.length, 0)} cards`}
+        {dndAnnouncement || t('scheduling.kanban.boardSummary', {
+          columns: columns.length,
+          cards: columns.reduce((sum, col) => sum + col.children.length, 0),
+        })}
       </div>
 
       <KanbanToolbar
@@ -414,7 +446,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
       {filterError && (
         <div className="px-4 py-1 text-xs text-destructive bg-destructive/10" role="alert">
-          {`Filter error: ${filterError}`}
+          {t('scheduling.kanban.filterError', { message: filterError })}
           <Button variant="link" size="sm" onClick={() => setFilterError(null)}>{t('flux.common.dismiss')}</Button>
         </div>
       )}
