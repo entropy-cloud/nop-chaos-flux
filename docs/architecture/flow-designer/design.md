@@ -169,6 +169,7 @@ interface DesignerPageSchema {
 - `toolbar`、`inspector`、`dialogs` 是当前已实际挂载的 schema 片段，由 `SchemaRenderer` 渲染
 - `toolbar`、`inspector`、`dialogs` 是 page 级 explicit override surfaces
 - palette 与右侧 inspector 都遵循 `docs/architecture/designer-workbench-shell.md` 的共享规则：canonical panel existence 来自 family config，page regions 只负责 override/mount，而不是决定该侧是否永远可见
+- `config.shell` 是工作台面板调宽配置段：`{ palette?: { resizable?: boolean; width?: number; minWidth?: number; maxWidth?: number }; inspector?: { ... } }`。仅当对应侧 `resizable: true` 时 WorkbenchShell 渲染拖拽/键盘 handle（handle 贴中心侧边缘，`role="separator"` + `aria-valuenow/min/max`，`ArrowLeft/ArrowRight` 步长 16px，clamp 到 `[minWidth, maxWidth]`）；默认宽度 240/352px（等价 15rem/22rem）、min 200、max 600，opt-in 不改变初始布局；宽度状态由 designer core `shellState`（`paletteWidth/inspectorWidth`）持有，经 snapshot 发布、`designer:setPanelWidths` 写入，且不进入 undo/redo 历史与 dirty 状态。折叠/展开语义与调宽互不影响（collapse 时无 handle）
 - Flow Designer 仍可提供 built-in default generators，但这些默认内容属于 `DesignerConfig` 驱动的通用设计器特化结果，而不是 renderer-private permanently-on sidebars
 - `dialogs` region 本身现在已经会被 `DesignerPageRenderer` 挂载；但通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径，两者不应混为一谈
 
@@ -340,6 +341,7 @@ interface DesignerPageSchema {
 - `designer:beginTransaction`
 - `designer:commitTransaction`
 - `designer:rollbackTransaction`
+- `designer:setPanelWidths`（参数 `paletteWidth?` / `inspectorWidth?`，写入 core shell 宽度状态，经 snapshot 发布）
 
 好处：
 
