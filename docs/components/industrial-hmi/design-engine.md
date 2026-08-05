@@ -152,6 +152,14 @@ interface ScadaEngineOptions {
 > **不发射 tree 层 render 事件**（renderer `totalTimes` 递增、`times`/render 事件不递增；画布像素
 > 实测随平移更新，视觉平移正常）——指针路径 fps 以 rAF 显示帧率计量，渲染吞吐以命令路径
 > `setViewport` render 事件计数作 A4 吞吐代理口径（benchmark-report.md 测量口径声明）。
+>
+> **P2-5 增补（fill 分支 clamp-before-center，plan 2026-08-05-1253-1 Phase 1）**：初始视口 fill 分支
+> （`applyInitialViewport`，`use-scada-config-sync.ts`）与 contain 分支（`engine.fit` → `viewport.ts:67`
+> 已 `clampScale`）对齐——fill 的 max-scale 先经 `clampScale` 钳制**再**算居中 `x/y`
+> （`x = cx - sw/(2s)`）。极端 bounds（rawScale 越界 `[MIN_SCALE,MAX_SCALE]`）时，若用未钳 scale 算居中、
+> 引擎 `setViewport` 才经 `clampViewport` 钳 scale → 居中 x/y 按未钳 scale、实际 scale 被钳 → 内容几何中心
+> 不齐视口中心（漂移）。fill 保留 max-scale 语义（不可委托 `engine.fit`——fit 是 min-scale/contain），
+> 仅复用 `clampScale`，不抽共享 helper（fill/contain 语义不同，强行共享会模糊语义）。
 
 ### 4.5 渲染循环与脏区/局部重绘
 

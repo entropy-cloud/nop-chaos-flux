@@ -280,6 +280,24 @@ interface ScadaStateDefinition {
 > 处理（不抛 compile 错），故生产 compiler 下畸形表达式走 ok 空集分支（不触发任何诊断）；C4 修复主要覆盖
 > host 自定义 compiler / 未来 compiler 版本 / 真实 createState/evaluate 失败等可触发 compile-failed 的路径。
 
+> **flux 求值 scope 构造与合并优先级（plan 2026-08-05-1253-1 Phase 3，open-audit P2-2）**：`useScadaPointsBridge`
+> 每次 effect 运行构造 flux 表达式私有求值 scope（`createPrivateEvalScope`，INV-4 非 schema-visible），
+> 数据面为 `{...pointValues, ...scopeData}`——**PointStore 全量 point-values 快照**（含 static/expression/flux
+> 全类型点的当前值，`undefined` 不视为 live 值不入快照）在前，**useScopeSelector 订阅的 scope 快照**（flux
+> `$xxx`/`${...}` 引用路径）在后。**合并优先级为既定契约（非缺陷）：scope 在 id 冲突时遮蔽 point**——同名 id
+> 下 scope 值胜出。此契约经 focused 测试守护（`scada-points-bridge.test.tsx` Proof ①），author 在 point id 与
+> scope 路径同名时应知晓 scope 值优先生效。
+>
+> **point-values 快照 generation-memoize（plan 2026-08-05-1253-1 Phase 3）**：PointStore 暴露
+> `getGeneration()` 变更代际计数器——仅在真正改写点值/点集的入口 bump（`applyValue` 命中真实变更 /
+> `loadDeclarations` / `restoreValues` / `reset`），只读/订阅路径不 bump。bridge effect 据此 memoize 全量快照：
+> generation 不变（scope-only 变更、无 point 写入）时复用缓存快照，不重复 `pointIds()`/`getPointValue()` 全量
+> 遍历；generation 变化时重建。bridge 自身 `setPointValues` 写入会 bump generation，effect 在写入后更新缓存到
+> post-write generation + 合并刚写入值，使下次 scope-only 变更仍能命中缓存（不破坏 memo）。config reload 时
+> 缓存对称重置（强制下次重建）。**不走表达式 AST 过滤 point 引用**（Deferred But Adjudicated）：flux 表达式
+> bare 标识符无法在无 AST 时安全区分 point 引用 vs 函数名/常量，误删被引用点值会引入求值缺陷（风险高于性能
+> 收益）；generation-memoize 已消除「point 值未变时重复重建」的主要开销。
+
 ### 9.2 外部数据通道（INV-1/INV-2）
 
 - 组态画面需要接入实时数据源（socket.io 推送等）时：**外部 IO 必须经 `RendererEnv`**（fetcher/stream/openSocket，`docs/architecture/renderer-env.md`），或经 `xui:imports` 注入协议适配器（INV-2 B 档，`new-renderer-introduction-audit.md` §2 能力归属表）；**禁止引擎/数据层直调 `fetch`/`WebSocket`**（INV-1）。
