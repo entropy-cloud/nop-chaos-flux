@@ -559,6 +559,7 @@ export const enUS: Resource = {
       title: 'Flow Designer',
       autoLayout: 'Auto Layout',
       treeDocumentRequired: 'Tree mode requires treeDocument prop',
+      treeDocumentInvalid: 'Tree document is invalid',
       configRequired: 'Designer requires config prop',
       documentRequired: 'Designer requires document prop',
       flowJson: 'Flow JSON',

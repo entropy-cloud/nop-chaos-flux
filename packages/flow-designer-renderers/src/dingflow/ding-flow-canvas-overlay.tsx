@@ -19,7 +19,7 @@ interface PopoverState {
   sourceId: string;
   screenX: number;
   screenY: number;
-  sourceKind: 'node' | 'branch-group' | 'merge';
+  sourceKind: 'node' | 'branch-group' | 'merge' | 'slot';
   returnFocusRef: React.RefObject<HTMLElement | null>;
 }
 
@@ -79,7 +79,7 @@ export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode 
       sourceId: string,
       clientX: number,
       clientY: number,
-      sourceKind: 'node' | 'branch-group' | 'merge',
+      sourceKind: 'node' | 'branch-group' | 'merge' | 'slot',
       trigger: HTMLButtonElement | null,
     ) => {
       const returnFocusRef = { current: trigger } as React.RefObject<HTMLElement | null>;

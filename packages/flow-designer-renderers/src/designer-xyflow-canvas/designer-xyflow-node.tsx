@@ -15,10 +15,15 @@ import { DingFlowPlusButton } from '../dingflow/index.js';
 import type { TreeNodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { resolveNodeTypeAccent, resolveNodeTypeMeta } from '../designer-node-appearance.js';
 import { PortConnectionA11yContext } from './port-connection-a11y-context.js';
+import { TREE_EMPTY_SLOT_NODE_TYPE } from '@nop-chaos/flow-designer-core';
+import { useDesignerSnapshotSelector } from '../designer-context.js';
 
 function isSchemaInput(value: unknown): value is SchemaInput {
   return isSchema(value);
 }
+
+const EMPTY_SLOT_AFFORDANCE_WIDTH = 120;
+const EMPTY_SLOT_AFFORDANCE_HEIGHT = 32;
 
 export function DesignerXyflowNode(props: NodeProps) {
   const data = props.data as DesignerFlowNodeData;
@@ -27,6 +32,15 @@ export function DesignerXyflowNode(props: NodeProps) {
   const portConnectionA11y = React.useContext(PortConnectionA11yContext);
   const [showToolbar, setShowToolbar] = useState(false);
   const hideToolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const treeDirection = useDesignerSnapshotSelector(
+    () => {
+      const direction = core.getConfig().treeConfig?.layout.direction ?? 'TB';
+      return direction;
+    },
+    (left, right) => left === right,
+  );
+  const isTreeMode = data.__fdTreeMode === true;
+  const isEmptySlot = isTreeMode && data.typeId === TREE_EMPTY_SLOT_NODE_TYPE;
 
   const nodeRenderData = useMemo(
     () => {
@@ -70,8 +84,7 @@ export function DesignerXyflowNode(props: NodeProps) {
   const hasQuickActions = nodeType?.quickActions && isSchemaInput(nodeType.quickActions);
 
   const treeNodeType = nodeType as TreeNodeTypeConfig | undefined;
-  const showPlusButton = onPlusButtonClick && !treeNodeType?.tree?.isTerminal;
-  const isTreeMode = data.__fdTreeMode === true;
+  const showPlusButton = onPlusButtonClick && !treeNodeType?.tree?.isTerminal && !isEmptySlot;
   const typeMeta = resolveNodeTypeMeta(data.typeId, nodeType);
   const accent = resolveNodeTypeAccent(data.typeId, nodeType) ?? 'hsl(var(--primary))';
 
@@ -177,6 +190,70 @@ export function DesignerXyflowNode(props: NodeProps) {
         onCompleteReconnect: portConnectionA11y.onCompleteReconnect,
       };
 
+  const slotData = isEmptySlot
+    ? (props.data as Record<string, unknown> & { ownerId?: string; branchId?: string })
+    : null;
+
+  const handleSlotAffordanceClick = (e: React.MouseEvent) => {
+    if (!isEmptySlot || !slotData || !onPlusButtonClick) {
+      return;
+    }
+    e.stopPropagation();
+    onPlusButtonClick(`slot:${slotData.ownerId}:${slotData.branchId}`, e.clientX, e.clientY, 'slot');
+  };
+
+  if (isEmptySlot) {
+    const width = (typeof data.width === 'number' ? data.width : 220) as number;
+    const height = (typeof data.height === 'number' ? data.height : 80) as number;
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={`Empty branch slot for ${nodeLabel}`}
+        data-testid="designer-tree-empty-slot"
+        data-selected={props.selected ? '' : undefined}
+        className="relative"
+        style={{
+          width,
+          height,
+          overflow: 'visible',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleSlotAffordanceClick(e as unknown as React.MouseEvent);
+          }
+        }}
+        onClick={handleSlotAffordanceClick}
+      >
+        {renderPorts(nodeType?.ports, isTreeMode, undefined, treeDirection)}
+        <div
+          data-slot="designer-tree-empty-slot-affordance"
+          className="flex items-center justify-center gap-1.5 rounded-full border border-dashed border-muted-foreground/50 bg-muted/30 text-muted-foreground/80 text-xs"
+          style={{
+            width: EMPTY_SLOT_AFFORDANCE_WIDTH,
+            height: EMPTY_SLOT_AFFORDANCE_HEIGHT,
+            cursor: 'pointer',
+          }}
+        >
+          <span className="font-bold">+</span>
+          <span>{t('flux.flowDesigner.addNode')}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const geometryWrapperStyle: React.CSSProperties | undefined = isTreeMode
+    ? {
+        width: '100%',
+        height: '100%',
+        overflow: 'visible',
+      }
+    : undefined;
+
   if (!nodeType?.body || !isSchemaInput(nodeType.body)) {
     return (
       <div
@@ -191,7 +268,7 @@ export function DesignerXyflowNode(props: NodeProps) {
         onMouseLeave={scheduleHideToolbar}
         onKeyDown={handleNodeKeyDown}
       >
-        {renderPorts(nodeType?.ports, isTreeMode, portOptions)}
+        {renderPorts(nodeType?.ports, isTreeMode, portOptions, treeDirection)}
         <strong>{data.label}</strong>
         <small>{data.typeLabel}</small>
       </div>
@@ -206,14 +283,14 @@ export function DesignerXyflowNode(props: NodeProps) {
         aria-label={nodeAriaLabel}
         aria-pressed={props.selected}
         className={cn('nop-designer-node', 'relative', nodeType.appearance?.className)}
-        style={appearanceStyle}
+        style={isTreeMode ? geometryWrapperStyle : appearanceStyle}
         data-selected={props.selected ? '' : undefined}
         data-branch-focused={data.__fdBranchFocused ? '' : undefined}
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
         onKeyDown={handleNodeKeyDown}
       >
-        {renderPorts(nodeType.ports, isTreeMode, portOptions)}
+        {renderPorts(nodeType.ports, isTreeMode, portOptions, treeDirection)}
         {isTreeMode && treeNodeType?.tree?.isTerminal ? (
           <div className="flex flex-col items-center justify-center w-full h-full">
             <div
@@ -225,21 +302,31 @@ export function DesignerXyflowNode(props: NodeProps) {
             </div>
           </div>
         ) : (
-          <ClassAliasesContext.Provider value={effectiveClassAliases}>
-            <RenderNodes
-              input={nodeType.body}
-              options={{ bindings: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
-            />
-          </ClassAliasesContext.Provider>
+          <div
+            data-slot="designer-node-body"
+            style={
+              isTreeMode
+                ? { boxSizing: 'border-box', width: '100%', height: '100%', overflow: 'hidden' }
+                : undefined
+            }
+          >
+            <ClassAliasesContext.Provider value={effectiveClassAliases}>
+              <RenderNodes
+                input={nodeType.body}
+                options={{ bindings: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
+              />
+            </ClassAliasesContext.Provider>
+          </div>
         )}
         {showPlusButton && (
           <DingFlowPlusButton
             onClick={(e) => onPlusButtonClick!(props.id, e.clientX, e.clientY, 'node')}
+            direction={treeDirection}
           />
         )}
       </div>
 
-      {(hasQuickActions || isToolbarVisible) && (
+      {(hasQuickActions || isToolbarVisible) && !isEmptySlot && (
         <NodeToolbar isVisible={isToolbarVisible} position={Position.Top}>
           <div
             role="toolbar"

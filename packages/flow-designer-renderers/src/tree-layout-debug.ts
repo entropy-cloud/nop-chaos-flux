@@ -14,6 +14,10 @@ function summarizeNode(node: DesignerSnapshot['doc']['nodes'][number]) {
 }
 
 function summarizeEdge(edge: DesignerSnapshot['doc']['edges'][number]) {
+  const data = edge.data as Record<string, unknown> | undefined;
+  const geometry = data?.__fdTree as
+    | { kind?: string; direction?: string; ownerId?: string; branchId?: string; continuationId?: string; lineMain?: number; fanoutCross?: number }
+    | undefined;
   return {
     id: edge.id,
     type: edge.type,
@@ -21,7 +25,13 @@ function summarizeEdge(edge: DesignerSnapshot['doc']['edges'][number]) {
     target: edge.target,
     sourcePort: edge.sourcePort,
     targetPort: edge.targetPort,
-    leg: (edge.data as Record<string, unknown> | undefined)?.leg,
+    kind: geometry?.kind,
+    direction: geometry?.direction,
+    ownerId: geometry?.ownerId,
+    branchId: geometry?.branchId,
+    continuationId: geometry?.continuationId,
+    lineMain: geometry?.lineMain,
+    fanoutCross: geometry?.fanoutCross,
   };
 }
 

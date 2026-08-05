@@ -71,11 +71,36 @@ function mapTransactionResult(result: {
     : mapCoreResult({ ok: false, reason: result.reason ?? 'unavailable' });
 }
 
+const GRAPH_ONLY_METHODS: ReadonlySet<string> = new Set([
+  'addNode',
+  'addEdge',
+  'deleteEdge',
+  'duplicateNode',
+  'moveNode',
+  'reconnectEdge',
+  'updateEdgeData',
+  'moveNodes',
+  'updateMultipleNodes',
+  'pasteClipboard',
+  'toggleNodeSelection',
+  'toggleEdgeSelection',
+  'selectAllNodes',
+  'setSelection',
+]);
+
 export function createDesignerActionProvider(
   core: DesignerCore,
   adapterInput?: DesignerCommandAdapter,
 ): ActionNamespaceProvider {
   const adapter = adapterInput ?? createDesignerCommandAdapter(core);
+  const isTreeMode = core.getConfig().documentMode === 'tree';
+
+  const treeUnavailable = () => ({
+    ok: false as const,
+    error: undefined,
+    cause: { reason: 'unavailable' as const, result: {} },
+    reason: 'unavailable' as const,
+  });
 
   return {
     kind: 'host',
@@ -99,6 +124,8 @@ export function createDesignerActionProvider(
         'updateBranchData',
         'updateNodeData',
         'updateEdgeData',
+        'insertBranchChild',
+        'relayoutTree',
         'export',
         'undo',
         'redo',
@@ -123,6 +150,10 @@ export function createDesignerActionProvider(
       ];
     },
     invoke(method, payload, ctx) {
+      if (isTreeMode && GRAPH_ONLY_METHODS.has(method)) {
+        return treeUnavailable();
+      }
+
       const validation = validateMethodPayload(method, payload);
       if (!validation.ok) {
         return { ok: false, error: validation.error };
@@ -237,6 +268,30 @@ export function createDesignerActionProvider(
         }
         case 'deleteSelection': {
           const result = adapter.execute({ type: 'deleteSelection' });
+          return toActionResult(result);
+        }
+        case 'insertBranchChild': {
+          const result = adapter.execute({
+            type: 'insertBranchChild',
+            ownerId: args.ownerId as string,
+            branchId: args.branchId as string,
+            nodeType: args.nodeType as string,
+            data: args.data as Record<string, unknown> | undefined,
+          });
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
+          return toActionResult(result);
+        }
+        case 'relayoutTree': {
+          const result = adapter.execute({ type: 'relayoutTree' });
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'duplicateNode': {

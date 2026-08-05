@@ -283,10 +283,9 @@ describe('createDesignerCommandAdapter', () => {
     expect(snapshot.inspectorWidth).toBe(352);
   });
 
-  it('rewires edges in one replace when inserting a chain node', () => {
+  it('rejects insertChainNode in graph mode as unavailable', () => {
     const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
     const adapter = createDesignerCommandAdapter(core);
-    const replaceSpy = vi.spyOn(core, 'replaceDocument');
 
     const result = adapter.execute({
       type: 'insertChainNode',
@@ -295,18 +294,13 @@ describe('createDesignerCommandAdapter', () => {
       data: { label: 'Inserted' },
     });
 
-    expect(result.ok).toBe(true);
-    expect(replaceSpy).toHaveBeenCalledTimes(1);
-
-    const replacedDoc = replaceSpy.mock.calls[0]?.[0];
-    expect(replacedDoc.edges.filter((edge) => edge.source === 'task-1')).toHaveLength(1);
-    expect(replacedDoc.edges.filter((edge) => edge.target === 'end-1')).toHaveLength(1);
+    expect(result).toMatchObject({ ok: false, reason: 'unavailable' });
+    expect(core.getSnapshot().doc.nodes).toHaveLength(3);
   });
 
-  it('rewires incoming edges in one replace when inserting at a merge target', () => {
+  it('rejects insertChainNodeAtMerge in graph mode as unavailable', () => {
     const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
     const adapter = createDesignerCommandAdapter(core);
-    const replaceSpy = vi.spyOn(core, 'replaceDocument');
 
     const result = adapter.execute({
       type: 'insertChainNodeAtMerge',
@@ -315,18 +309,12 @@ describe('createDesignerCommandAdapter', () => {
       data: { label: 'Merge insert' },
     });
 
-    expect(result.ok).toBe(true);
-    expect(replaceSpy).toHaveBeenCalledTimes(1);
-
-    const replacedDoc = replaceSpy.mock.calls[0]?.[0];
-    expect(replacedDoc.edges.filter((edge) => edge.target === 'end-1')).toHaveLength(1);
-    expect(replacedDoc.edges.filter((edge) => edge.source === 'task-1')).toHaveLength(1);
+    expect(result).toMatchObject({ ok: false, reason: 'unavailable' });
   });
 
-  it('rewires outgoing branch edges in one replace when inserting a branch pair', () => {
+  it('rejects insertBranchPair in graph mode as unavailable', () => {
     const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
     const adapter = createDesignerCommandAdapter(core);
-    const replaceSpy = vi.spyOn(core, 'replaceDocument');
 
     const result = adapter.execute({
       type: 'insertBranchPair',
@@ -335,12 +323,7 @@ describe('createDesignerCommandAdapter', () => {
       condData: { label: 'Condition' },
     });
 
-    expect(result.ok).toBe(true);
-    expect(replaceSpy).toHaveBeenCalledTimes(1);
-
-    const replacedDoc = replaceSpy.mock.calls[0]?.[0];
-    expect(replacedDoc.edges.filter((edge) => edge.source === 'task-1')).toHaveLength(2);
-    expect(replacedDoc.edges.filter((edge) => edge.target === 'end-1')).toHaveLength(2);
+    expect(result).toMatchObject({ ok: false, reason: 'unavailable' });
   });
 
   it('deleteSelection removes the selected node and edge set in one transaction', () => {

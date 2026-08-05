@@ -6,7 +6,6 @@ import {
   getNode,
   hasEdge,
   inferAddNodeFailure,
-  relayoutAfterTreeMutation,
   validateEdgeMutation,
   viewportsEqual,
 } from './designer-command-adapter-helpers.js';
@@ -85,7 +84,6 @@ export function executeGraphOnlyCommand(
           return createFailure(core, error);
         }
       }
-      relayoutAfterTreeMutation(core);
       return createSuccess(core);
     case 'deleteNode':
       {
@@ -94,7 +92,6 @@ export function executeGraphOnlyCommand(
           return createFailure(core, error);
         }
       }
-      relayoutAfterTreeMutation(core);
       return createSuccess(core);
     case 'duplicateNode': {
       const node = core.duplicateNode(command.nodeId);

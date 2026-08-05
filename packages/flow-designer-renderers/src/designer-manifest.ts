@@ -231,6 +231,22 @@ const designerCapabilities: HostCapabilityContract = {
       },
       description: 'Update branch header data in a tree-mode branch group',
     },
+    insertBranchChild: {
+      args: {
+        kind: 'object',
+        fields: {
+          ownerId: { kind: 'string' },
+          branchId: { kind: 'string' },
+          nodeType: { kind: 'string' },
+          data: nodeDataShape,
+        },
+      },
+      description: 'Insert a child node into an empty tree-mode branch slot',
+    },
+    relayoutTree: {
+      description: 'Re-run the structured tree projection for the current tree document',
+      idempotent: true,
+    },
     reconnectEdge: {
       args: {
         kind: 'object',

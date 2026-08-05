@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   createElkLayoutOwner,
-  layoutTreeWithElk,
   layoutWithElk,
 } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
@@ -14,7 +13,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
   const [layoutError, setLayoutError] = useState<string | null>(null);
   const [layoutFailure, setLayoutFailure] = useState<Error | null>(null);
   const layoutRequestRef = useRef(0);
-  const initialTreeAutolayoutDoneRef = useRef(false);
+  const initialTreeRelayoutDoneRef = useRef(false);
   const elkOwnerRef = useRef<ReturnType<typeof createElkLayoutOwner> | null>(null);
 
   const getElkOwner = useCallback(() => {
@@ -28,7 +27,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
     return nextOwner;
   }, []);
 
-  const handleAutoLayout = useCallback(async () => {
+  const handleAutoLayout = useCallback(() => {
     const requestId = layoutRequestRef.current + 1;
     layoutRequestRef.current = requestId;
     setLayoutBusy(true);
@@ -42,52 +41,59 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
       return;
     }
 
-    try {
-      if (config.documentMode === 'tree') {
-        const normalizedCfg = core.getConfig();
-        const treeConfig = normalizedCfg.treeConfig;
-        if (!treeConfig) {
+    if (config.documentMode === 'tree') {
+      try {
+        const result = core.relayoutTree();
+        if (layoutRequestRef.current !== requestId) {
           return;
         }
-        const layoutedNodes = await layoutTreeWithElk(
+        if (!result.ok) {
+          const message =
+            result.error instanceof Error ? result.error.message : 'Tree relayout failed';
+          setLayoutError(message);
+          setLayoutFailure(result.error instanceof Error ? result.error : new Error(message));
+        }
+      } catch (error) {
+        if (layoutRequestRef.current === requestId) {
+          const normalizedError =
+            error instanceof Error ? error : new Error('Tree relayout failed', { cause: error });
+          setLayoutError(normalizedError.message);
+          setLayoutFailure(normalizedError);
+        }
+      } finally {
+        if (layoutRequestRef.current === requestId) {
+          setLayoutBusy(false);
+        }
+      }
+      return;
+    }
+
+    void (async () => {
+      try {
+        const positions = await layoutWithElk(
           doc.nodes,
           doc.edges,
-          treeConfig,
-          normalizedCfg.nodeTypes,
+          core.getConfig().nodeTypes,
+          undefined,
           getElkOwner(),
         );
         if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
           return;
         }
-        const positions = new Map(layoutedNodes.map((node) => [node.id, node.position]));
         core.layoutNodes(positions);
-        return;
+      } catch (error) {
+        if (layoutRequestRef.current === requestId) {
+          const normalizedError =
+            error instanceof Error ? error : new Error('Auto-layout failed', { cause: error });
+          setLayoutError(normalizedError.message);
+          setLayoutFailure(normalizedError);
+        }
+      } finally {
+        if (layoutRequestRef.current === requestId) {
+          setLayoutBusy(false);
+        }
       }
-
-      const positions = await layoutWithElk(
-        doc.nodes,
-        doc.edges,
-        core.getConfig().nodeTypes,
-        undefined,
-        getElkOwner(),
-      );
-      if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
-        return;
-      }
-      core.layoutNodes(positions);
-    } catch (error) {
-      if (layoutRequestRef.current === requestId) {
-        const normalizedError =
-          error instanceof Error ? error : new Error('Auto-layout failed', { cause: error });
-        setLayoutError(normalizedError.message);
-        setLayoutFailure(normalizedError);
-      }
-      throw error;
-    } finally {
-      if (layoutRequestRef.current === requestId) {
-        setLayoutBusy(false);
-      }
-    }
+    })();
   }, [config.documentMode, core, getElkOwner]);
 
   useEffect(() => {
@@ -95,54 +101,45 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
       return;
     }
 
-    const normalizedCfg = core.getConfig();
-    const treeConfig = normalizedCfg.treeConfig;
-    if (!treeConfig || treeConfig.autoLayout === false || initialTreeAutolayoutDoneRef.current) {
+    if (initialTreeRelayoutDoneRef.current) {
       return;
     }
+    initialTreeRelayoutDoneRef.current = true;
 
     const doc = core.getDocument();
     if (doc.nodes.length === 0) {
-      initialTreeAutolayoutDoneRef.current = true;
       return;
     }
 
-    initialTreeAutolayoutDoneRef.current = true;
     const requestId = layoutRequestRef.current + 1;
     layoutRequestRef.current = requestId;
     setLayoutBusy(true);
     setLayoutError(null);
     setLayoutFailure(null);
 
-    void layoutTreeWithElk(
-      doc.nodes,
-      doc.edges,
-      treeConfig,
-      normalizedCfg.nodeTypes,
-      getElkOwner(),
-    )
-      .then((layoutedNodes) => {
-        if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
-          return;
-        }
-
-        const positions = new Map(layoutedNodes.map((node) => [node.id, node.position]));
-        core.layoutNodes(positions);
-      })
-      .catch((error: unknown) => {
-        if (layoutRequestRef.current !== requestId) {
-          return;
-        }
+    try {
+      const result = core.relayoutTree();
+      if (layoutRequestRef.current !== requestId) {
+        return;
+      }
+      if (!result.ok) {
+        const message =
+          result.error instanceof Error ? result.error.message : 'Tree relayout failed';
+        setLayoutError(message);
+        setLayoutFailure(result.error instanceof Error ? result.error : new Error(message));
+      }
+    } catch (error: unknown) {
+      if (layoutRequestRef.current === requestId) {
         const normalizedError =
-          error instanceof Error ? error : new Error('Auto-layout failed', { cause: error });
+          error instanceof Error ? error : new Error('Tree relayout failed', { cause: error });
         setLayoutError(normalizedError.message);
         setLayoutFailure(normalizedError);
-      })
-      .finally(() => {
-        if (layoutRequestRef.current === requestId) {
-          setLayoutBusy(false);
-        }
-      });
+      }
+    } finally {
+      if (layoutRequestRef.current === requestId) {
+        setLayoutBusy(false);
+      }
+    }
   }, [config.documentMode, core, getElkOwner]);
 
   useEffect(() => {

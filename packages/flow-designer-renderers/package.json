@@ -30,6 +30,7 @@
   "dependencies": {
     "@nop-chaos/flow-designer-core": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-action-core": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/ui": "workspace:*",

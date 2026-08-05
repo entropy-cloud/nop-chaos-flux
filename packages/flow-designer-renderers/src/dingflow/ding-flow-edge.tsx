@@ -1,14 +1,25 @@
 import { memo } from 'react';
 import type { EdgeProps } from '@xyflow/react';
-import { BaseEdge, EdgeLabelRenderer } from '@xyflow/react';
-import { isSchema } from '@nop-chaos/flux-core';
-import { RenderNodes } from '@nop-chaos/flux-react';
+import { BaseEdge } from '@xyflow/react';
+import type { TreeEdgeRuntimeGeometry } from '@nop-chaos/flow-designer-core';
 import { useEdgeTypeConfig } from '../designer-context.js';
 
-import { BRANCH_SHORT_LEG, MERGE_SHORT_LEG, CONNECTOR_COLOR } from './dingflow-constants.js';
-import type { EdgeLeg } from './dingflow-constants.js';
+import { CONNECTOR_COLOR, MAX_RENDERED_STROKE, MIN_RENDERED_STROKE } from './dingflow-constants.js';
 
-function DingFlowEdgeInner({ sourceX, sourceY, targetX, targetY, markerEnd, data, id, type }: EdgeProps) {
+function getTreeGeometry(data: unknown): TreeEdgeRuntimeGeometry | undefined {
+  if (!data || typeof data !== 'object') {
+    return undefined;
+  }
+  return (data as Record<string, unknown>).__fdTree as TreeEdgeRuntimeGeometry | undefined;
+}
+
+function resolveStrokeWidth(configured: number | undefined, focused: boolean): number {
+  const base = configured ?? 2;
+  const next = focused ? Math.max(base + 1, 3) : base;
+  return Math.min(Math.max(next, MIN_RENDERED_STROKE), MAX_RENDERED_STROKE);
+}
+
+function DingFlowEdgeInner({ sourceX, sourceY, targetX, targetY, data, type }: EdgeProps) {
   const sx = Math.round(sourceX);
   const sy = Math.round(sourceY);
   const tx = Math.round(targetX);
@@ -18,14 +29,17 @@ function DingFlowEdgeInner({ sourceX, sourceY, targetX, targetY, markerEnd, data
   const typeId: string = (edgeData.typeId as string | undefined) ?? type ?? 'default';
   const edgeType = useEdgeTypeConfig(typeId);
   const appearance = edgeType?.appearance;
+  const focused = edgeData.__fdBranchFocused === true;
+  const geometry = getTreeGeometry(data);
 
+  const strokeWidth = resolveStrokeWidth(appearance?.strokeWidth as number | undefined, focused);
   const edgeStyle: Record<string, string | number> = {
-    stroke: edgeData.__fdBranchFocused
+    stroke: focused
       ? 'hsl(var(--primary))'
       : (appearance?.stroke ?? CONNECTOR_COLOR),
-    strokeWidth: edgeData.__fdBranchFocused
-      ? Math.max((appearance?.strokeWidth as number ?? 2) + 1, 3)
-      : (appearance?.strokeWidth ?? 2),
+    strokeWidth,
+    strokeLinecap: 'butt',
+    strokeLinejoin: 'round',
   };
 
   const strokeStyle = appearance?.strokeStyle as string | undefined;
@@ -36,66 +50,31 @@ function DingFlowEdgeInner({ sourceX, sourceY, targetX, targetY, markerEnd, data
   }
 
   let path: string;
-  let labelX: number;
-  let labelY: number;
 
-  if (sx === tx) {
-    path = `M${sx} ${sy}L${tx} ${ty}`;
-    labelX = sx;
-    labelY = Math.round((sy + ty) / 2);
+  if (geometry?.kind === 'split' || geometry?.kind === 'merge') {
+    const isTB = geometry.direction !== 'LR';
+    const lineMain = geometry.lineMain;
+    const ownerCross = isTB ? sx : sy;
+    const targetCross = isTB ? tx : ty;
+    const ownerMain = isTB ? sy : sx;
+    const targetMain = isTB ? ty : tx;
+    if (lineMain === undefined) {
+      path = `M${sx} ${sy}L${tx} ${ty}`;
+    } else if (isTB) {
+      path = `M${ownerCross} ${ownerMain}L${ownerCross} ${lineMain}L${targetCross} ${lineMain}L${targetCross} ${targetMain}`;
+    } else {
+      path = `M${ownerMain} ${ownerCross}L${lineMain} ${ownerCross}L${lineMain} ${targetCross}L${targetMain} ${targetCross}`;
+    }
   } else {
-    const leg = (data as { leg?: EdgeLeg } | undefined)?.leg ?? 'near-target';
-    const midY =
-      leg === 'near-target' ? Math.round(ty - BRANCH_SHORT_LEG) : Math.round(sy + MERGE_SHORT_LEG);
-    path = `M${sx} ${sy}L${sx} ${midY}L${tx} ${midY}L${tx} ${ty}`;
-    labelX = Math.round((sx + tx) / 2);
-    labelY = midY;
+    path = `M${sx} ${sy}L${tx} ${ty}`;
   }
 
-  const label = (data as { label?: string } | undefined)?.label;
-  const hasBody = edgeType?.body && isSchema(edgeType.body);
-
   return (
-    <>
-      <BaseEdge
-        path={path}
-        style={edgeStyle}
-        markerEnd={
-          appearance?.markerEnd && appearance.markerEnd !== 'none'
-            ? `url(#${appearance.markerEnd})`
-            : markerEnd
-        }
-      />
-      {(label || hasBody) && (
-        <EdgeLabelRenderer>
-          <div
-            style={{
-              position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-              fontSize: 12,
-              background: 'var(--fd-panel-bg, var(--nop-surface, #fff))',
-              border: '1px solid var(--fd-border, var(--nop-border, #e0e0e0))',
-              borderRadius: 9999,
-              padding: '2px 8px',
-              pointerEvents: 'all',
-            }}
-          >
-            {hasBody ? (
-              <RenderNodes
-                input={edgeType.body}
-                options={{
-                  bindings: { data: edgeData, ...edgeData },
-                  scopeKey: `edge:${id}`,
-                  pathSuffix: 'edge',
-                }}
-              />
-            ) : (
-              label
-            )}
-          </div>
-        </EdgeLabelRenderer>
-      )}
-    </>
+    <BaseEdge
+      path={path}
+      style={edgeStyle}
+      markerEnd={undefined}
+    />
   );
 }
 

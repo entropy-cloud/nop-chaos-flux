@@ -8,69 +8,6 @@ import type {
 import type { DesignerCommandResult } from './designer-command-types.js';
 import type { DesignerPageSchema } from './schemas.js';
 import type { DesignerContextValue } from './designer-context.js';
-import type {
-  DesignerConfig,
-  GraphDocument,
-  NormalizedDesignerConfig,
-  TreeDocument,
-} from '@nop-chaos/flow-designer-core';
-import { layoutStructuredTree, projectTree } from '@nop-chaos/flow-designer-core';
-
-export function normalizeTreeModeConfig(config: DesignerConfig): NormalizedDesignerConfig {
-  return {
-    version: config.version,
-    kind: config.kind,
-    nodeTypes: new Map(config.nodeTypes.map((nodeType) => [nodeType.id, nodeType])),
-    edgeTypes: new Map((config.edgeTypes ?? []).map((edgeType) => [edgeType.id, edgeType])),
-    palette: config.palette,
-    toolbar: config.toolbar,
-    shortcuts: {
-      undo: ['Ctrl+Z', 'Cmd+Z'],
-      redo: ['Ctrl+Y', 'Cmd+Y', 'Ctrl+Shift+Z', 'Cmd+Shift+Z'],
-      copy: ['Ctrl+C', 'Cmd+C'],
-      paste: ['Ctrl+V', 'Cmd+V'],
-      delete: ['Delete', 'Backspace'],
-      ...config.shortcuts,
-    },
-    features: {
-      undo: true,
-      redo: true,
-      history: true,
-      grid: true,
-      minimap: true,
-      fitView: true,
-      export: true,
-      shortcuts: true,
-      floatingToolbar: true,
-      clipboard: true,
-      autoLayout: false,
-      multiSelect: false,
-      ...config.features,
-    },
-    rules: {
-      allowSelfLoop: false,
-      allowMultiEdge: true,
-      defaultEdgeType: 'default',
-      ...config.rules,
-    },
-    canvas: {
-      background: 'dots',
-      gridSize: 24,
-      minZoom: 0.1,
-      maxZoom: 4,
-      defaultZoom: 1,
-      pannable: true,
-      zoomable: true,
-      snapToGrid: true,
-      ...config.canvas,
-    },
-    hooks: config.hooks,
-    classAliases: config.classAliases,
-    themeStyles: config.themeStyles,
-    documentMode: config.documentMode,
-    treeConfig: config.treeConfig,
-  };
-}
 
 export function normalizeShortcut(input: string): string[] {
   return input
@@ -161,27 +98,6 @@ export function createDesignerContextValue(args: {
     openCreateDialog: args.openCreateDialog,
     onPlusButtonClick: args.onPlusButtonClick,
     reportHostIssue: args.reportHostIssue,
-  };
-}
-
-export function computeTreeModeDocument(
-  treeDocument: TreeDocument,
-  config: DesignerConfig,
-): GraphDocument {
-  const normalizedConfig = normalizeTreeModeConfig(config);
-  const projected = projectTree(treeDocument, normalizedConfig);
-  const treeConfig = normalizedConfig.treeConfig;
-  const nodes = treeConfig
-    ? layoutStructuredTree(treeDocument, projected.nodes, treeConfig, normalizedConfig.nodeTypes)
-    : projected.nodes;
-  return {
-    id: treeDocument.id,
-    kind: treeDocument.kind,
-    name: treeDocument.name,
-    version: treeDocument.version,
-    meta: treeDocument.meta,
-    nodes,
-    edges: projected.edges,
   };
 }
 

@@ -8,71 +8,128 @@
     "root": {
       "id": "k001",
       "type": "dt-initiator",
-      "data": { "label": "发起人", "type": 0 },
+      "data": {
+        "label": "发起人",
+        "type": 0
+      },
       "child": {
         "id": "k002",
         "type": "dt-approval",
-        "data": { "label": "主管审批", "type": 1, "setType": 2, "examineMode": 1 },
+        "data": {
+          "label": "主管审批",
+          "type": 1,
+          "setType": 2,
+          "examineMode": 1
+        },
         "child": {
           "id": "k003",
           "type": "dt-condition",
-          "data": { "label": "条件路由", "type": 4, "mode": "exclusive" },
+          "data": {
+            "label": "条件路由",
+            "type": 4,
+            "mode": "exclusive"
+          },
           "branches": [
             {
               "id": "b1",
               "data": {
                 "label": "长期请假",
                 "priority": 1,
-                "conditionList": [[{ "field": "day", "operator": ">", "value": "7" }]]
+                "conditionList": [
+                  [
+                    {
+                      "field": "day",
+                      "operator": ">",
+                      "value": "7"
+                    }
+                  ]
+                ]
               },
               "child": {
                 "id": "k004",
                 "type": "dt-approval",
-                "data": { "label": "CEO审批", "type": 1, "setType": 1, "examineMode": 2 }
+                "data": {
+                  "label": "CEO审批",
+                  "type": 1,
+                  "setType": 1,
+                  "examineMode": 2
+                }
               }
             },
             {
               "id": "b2",
-              "data": { "label": "短期请假", "priority": 2, "conditionList": [] },
+              "data": {
+                "label": "短期请假",
+                "priority": 2,
+                "conditionList": []
+              },
               "child": {
                 "id": "k004b",
                 "type": "dt-approval",
-                "data": { "label": "直接主管审批", "type": 1, "setType": 2, "examineMode": 1 }
+                "data": {
+                  "label": "直接主管审批",
+                  "type": 1,
+                  "setType": 2,
+                  "examineMode": 1
+                }
               }
             }
           ],
           "child": {
             "id": "k005",
             "type": "dt-cc",
-            "data": { "label": "抄送HR", "type": 2 },
+            "data": {
+              "label": "抄送HR",
+              "type": 2
+            },
             "child": {
               "id": "k006",
               "type": "dt-parallel",
-              "data": { "label": "并行处理", "type": 8, "mode": "parallel" },
+              "data": {
+                "label": "并行处理",
+                "type": 8,
+                "mode": "parallel"
+              },
               "branches": [
                 {
                   "id": "b3",
-                  "data": { "label": "并行分支1", "priority": 1 },
+                  "data": {
+                    "label": "并行分支1",
+                    "priority": 1
+                  },
                   "child": {
                     "id": "k007",
                     "type": "dt-approval",
-                    "data": { "label": "人事确认", "type": 1 }
+                    "data": {
+                      "label": "人事确认",
+                      "type": 1
+                    }
                   }
                 },
                 {
                   "id": "b4",
-                  "data": { "label": "并行分支2", "priority": 2 },
+                  "data": {
+                    "label": "并行分支2",
+                    "priority": 2
+                  },
                   "child": {
                     "id": "k008",
                     "type": "dt-subprocess",
-                    "data": { "label": "工作交接", "type": 5, "callProcess": "workHandover" }
+                    "data": {
+                      "label": "工作交接",
+                      "type": 5,
+                      "callProcess": "workHandover"
+                    }
                   }
                 }
               ],
               "child": {
                 "id": "k009",
                 "type": "dt-end",
-                "data": { "label": "结束", "type": -1 }
+                "data": {
+                  "label": "结束",
+                  "type": -1
+                }
               }
             }
           }
@@ -81,14 +138,17 @@
     }
   },
   "config": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "kind": "dingtalk-workflow",
     "documentMode": "tree",
     "treeConfig": {
-      "layout": { "direction": "TB", "nodeSpacing": 60, "layerSpacing": 100 },
+      "layout": {
+        "direction": "TB",
+        "nodeSpacing": 60,
+        "layerSpacing": 100
+      },
       "showGatewayNodes": false,
       "showMergeNodes": false,
-      "autoLayout": true,
       "chainEdgeType": "dt-chain",
       "branchEdgeType": "dt-branch",
       "mergeEdgeType": "dt-merge"
@@ -110,15 +170,38 @@
               "type": "flex",
               "data-slot": "dt-node-header",
               "items": [
-                { "type": "icon", "icon": "user", "data-slot": "dt-node-icon" },
-                { "type": "text", "body": "${label}", "data-slot": "dt-node-title" }
+                {
+                  "type": "icon",
+                  "icon": "user",
+                  "data-slot": "dt-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${label}",
+                  "data-slot": "dt-node-title"
+                }
               ]
             },
-            { "type": "text", "body": "所有人", "data-slot": "dt-node-subtitle" }
+            {
+              "type": "text",
+              "body": "所有人",
+              "data-slot": "dt-node-subtitle"
+            }
           ]
         },
-        "appearance": { "minWidth": 200, "minHeight": 80 },
-        "tree": { "allowChild": true, "allowBranches": false, "isTerminal": false }
+        "appearance": {
+          "minWidth": 200,
+          "minHeight": 80
+        },
+        "tree": {
+          "allowChild": true,
+          "allowBranches": false,
+          "isTerminal": false,
+          "layoutSize": {
+            "width": 200,
+            "height": 80
+          }
+        }
       },
       {
         "id": "dt-approval",
@@ -136,8 +219,16 @@
               "type": "flex",
               "data-slot": "dt-node-header",
               "items": [
-                { "type": "icon", "icon": "user-check", "data-slot": "dt-node-icon" },
-                { "type": "text", "body": "${label}", "data-slot": "dt-node-title" }
+                {
+                  "type": "icon",
+                  "icon": "user-check",
+                  "data-slot": "dt-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${label}",
+                  "data-slot": "dt-node-title"
+                }
               ]
             },
             {
@@ -147,7 +238,10 @@
             }
           ]
         },
-        "appearance": { "minWidth": 220, "minHeight": 80 },
+        "appearance": {
+          "minWidth": 220,
+          "minHeight": 80
+        },
         "inspector": {
           "body": {
             "type": "container",
@@ -158,9 +252,18 @@
                 "name": "setType",
                 "label": "审批人类型",
                 "options": [
-                  { "label": "指定成员", "value": "1" },
-                  { "label": "主管", "value": "2" },
-                  { "label": "角色", "value": "3" }
+                  {
+                    "label": "指定成员",
+                    "value": "1"
+                  },
+                  {
+                    "label": "主管",
+                    "value": "2"
+                  },
+                  {
+                    "label": "角色",
+                    "value": "3"
+                  }
                 ]
               },
               {
@@ -168,15 +271,32 @@
                 "name": "examineMode",
                 "label": "审批模式",
                 "options": [
-                  { "label": "依次审批", "value": "1" },
-                  { "label": "会签", "value": "2" },
-                  { "label": "或签", "value": "3" }
+                  {
+                    "label": "依次审批",
+                    "value": "1"
+                  },
+                  {
+                    "label": "会签",
+                    "value": "2"
+                  },
+                  {
+                    "label": "或签",
+                    "value": "3"
+                  }
                 ]
               }
             ]
           }
         },
-        "tree": { "allowChild": true, "allowBranches": false, "isTerminal": false }
+        "tree": {
+          "allowChild": true,
+          "allowBranches": false,
+          "isTerminal": false,
+          "layoutSize": {
+            "width": 220,
+            "height": 80
+          }
+        }
       },
       {
         "id": "dt-cc",
@@ -194,15 +314,38 @@
               "type": "flex",
               "data-slot": "dt-node-header",
               "items": [
-                { "type": "icon", "icon": "mail", "data-slot": "dt-node-icon" },
-                { "type": "text", "body": "${label}", "data-slot": "dt-node-title" }
+                {
+                  "type": "icon",
+                  "icon": "mail",
+                  "data-slot": "dt-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${label}",
+                  "data-slot": "dt-node-title"
+                }
               ]
             },
-            { "type": "text", "body": "抄送给相关人员", "data-slot": "dt-node-subtitle" }
+            {
+              "type": "text",
+              "body": "抄送给相关人员",
+              "data-slot": "dt-node-subtitle"
+            }
           ]
         },
-        "appearance": { "minWidth": 200, "minHeight": 80 },
-        "tree": { "allowChild": true, "allowBranches": false, "isTerminal": false }
+        "appearance": {
+          "minWidth": 200,
+          "minHeight": 80
+        },
+        "tree": {
+          "allowChild": true,
+          "allowBranches": false,
+          "isTerminal": false,
+          "layoutSize": {
+            "width": 200,
+            "height": 80
+          }
+        }
       },
       {
         "id": "dt-condition",
@@ -219,12 +362,25 @@
             {
               "type": "flex",
               "data-slot": "dt-node-header",
-              "items": [{ "type": "text", "body": "${label}", "data-slot": "dt-node-title" }]
+              "items": [
+                {
+                  "type": "text",
+                  "body": "${label}",
+                  "data-slot": "dt-node-title"
+                }
+              ]
             },
-            { "type": "text", "body": "排他分支", "data-slot": "dt-node-description" }
+            {
+              "type": "text",
+              "body": "排他分支",
+              "data-slot": "dt-node-description"
+            }
           ]
         },
-        "appearance": { "minWidth": 200, "minHeight": 80 },
+        "appearance": {
+          "minWidth": 200,
+          "minHeight": 80
+        },
         "inspector": {
           "body": {
             "type": "container",
@@ -235,8 +391,14 @@
                 "name": "mode",
                 "label": "分支模式",
                 "options": [
-                  { "label": "排他", "value": "exclusive" },
-                  { "label": "并行", "value": "parallel" }
+                  {
+                    "label": "排他",
+                    "value": "exclusive"
+                  },
+                  {
+                    "label": "并行",
+                    "value": "parallel"
+                  }
                 ]
               }
             ]
@@ -247,7 +409,11 @@
           "allowBranches": true,
           "minBranches": 2,
           "maxBranches": 10,
-          "isTerminal": false
+          "isTerminal": false,
+          "layoutSize": {
+            "width": 200,
+            "height": 80
+          }
         }
       },
       {
@@ -266,20 +432,39 @@
               "type": "flex",
               "data-slot": "dt-node-header",
               "items": [
-                { "type": "icon", "icon": "git-merge", "data-slot": "dt-node-icon" },
-                { "type": "text", "body": "${label}", "data-slot": "dt-node-title" }
+                {
+                  "type": "icon",
+                  "icon": "git-merge",
+                  "data-slot": "dt-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${label}",
+                  "data-slot": "dt-node-title"
+                }
               ]
             },
-            { "type": "text", "body": "同时执行多个分支", "data-slot": "dt-node-subtitle" }
+            {
+              "type": "text",
+              "body": "同时执行多个分支",
+              "data-slot": "dt-node-subtitle"
+            }
           ]
         },
-        "appearance": { "minWidth": 200, "minHeight": 80 },
+        "appearance": {
+          "minWidth": 200,
+          "minHeight": 80
+        },
         "tree": {
           "allowChild": true,
           "allowBranches": true,
           "minBranches": 2,
           "maxBranches": 10,
-          "isTerminal": false
+          "isTerminal": false,
+          "layoutSize": {
+            "width": 200,
+            "height": 80
+          }
         }
       },
       {
@@ -298,14 +483,29 @@
               "type": "flex",
               "data-slot": "dt-node-header",
               "items": [
-                { "type": "icon", "icon": "layers", "data-slot": "dt-node-icon" },
-                { "type": "text", "body": "${label}", "data-slot": "dt-node-title" }
+                {
+                  "type": "icon",
+                  "icon": "layers",
+                  "data-slot": "dt-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${label}",
+                  "data-slot": "dt-node-title"
+                }
               ]
             },
-            { "type": "text", "body": "${callProcess}", "data-slot": "dt-node-subtitle" }
+            {
+              "type": "text",
+              "body": "${callProcess}",
+              "data-slot": "dt-node-subtitle"
+            }
           ]
         },
-        "appearance": { "minWidth": 200, "minHeight": 80 },
+        "appearance": {
+          "minWidth": 200,
+          "minHeight": 80
+        },
         "inspector": {
           "body": {
             "type": "container",
@@ -319,7 +519,15 @@
             ]
           }
         },
-        "tree": { "allowChild": true, "allowBranches": false, "isTerminal": false }
+        "tree": {
+          "allowChild": true,
+          "allowBranches": false,
+          "isTerminal": false,
+          "layoutSize": {
+            "width": 200,
+            "height": 80
+          }
+        }
       },
       {
         "id": "dt-end",
@@ -333,26 +541,44 @@
           "className": "dt-node-root",
           "data-slot": "dt-node",
           "data-node-variant": "end",
-          "items": [{ "type": "text", "body": "${label}", "data-slot": "dt-node-title" }]
+          "items": [
+            {
+              "type": "text",
+              "body": "${label}",
+              "data-slot": "dt-node-title"
+            }
+          ]
         },
-        "appearance": { "minWidth": 120, "minHeight": 40 },
-        "tree": { "allowChild": false, "allowBranches": false, "isTerminal": true }
+        "appearance": {
+          "minWidth": 120,
+          "minHeight": 40
+        },
+        "tree": {
+          "allowChild": false,
+          "allowBranches": false,
+          "isTerminal": true,
+          "layoutSize": {
+            "width": 120,
+            "height": 40
+          }
+        }
       }
     ],
     "edgeTypes": [
       {
         "id": "dt-chain",
         "label": "流程连线",
-        "appearance": { "stroke": "#94a3b8", "strokeWidth": 2, "markerEnd": "arrow-closed" }
+        "appearance": {
+          "stroke": "#94a3b8",
+          "strokeWidth": 2
+        }
       },
       {
         "id": "dt-branch",
         "label": "分支连线",
         "appearance": {
           "stroke": "#3b82f6",
-          "strokeWidth": 2,
-          "strokeStyle": "dashed",
-          "markerEnd": "arrow-closed"
+          "strokeWidth": 2
         }
       },
       {
@@ -360,20 +586,38 @@
         "label": "汇合连线",
         "appearance": {
           "stroke": "#94a3b8",
-          "strokeWidth": 1.5,
-          "strokeStyle": "dotted",
-          "markerEnd": "arrow-closed"
+          "strokeWidth": 1.5
         }
       }
     ],
     "toolbar": {
       "items": [
-        { "type": "back", "label": "返回", "action": "designer:navigate-back" },
-        { "type": "title", "body": "钉钉审批流" },
-        { "type": "badge", "level": "info", "text": "Tree Mode" },
-        { "type": "divider" },
-        { "type": "spacer" },
-        { "type": "button", "action": "designer:export", "icon": "file-json", "label": "JSON" }
+        {
+          "type": "back",
+          "label": "返回",
+          "action": "designer:navigate-back"
+        },
+        {
+          "type": "title",
+          "body": "钉钉审批流"
+        },
+        {
+          "type": "badge",
+          "level": "info",
+          "text": "Tree Mode"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "spacer"
+        },
+        {
+          "type": "button",
+          "action": "designer:export",
+          "icon": "file-json",
+          "label": "JSON"
+        }
       ]
     },
     "features": {

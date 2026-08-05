@@ -160,7 +160,7 @@ export function DesignerPageBody({
       sourceId: string,
       clientX: number,
       clientY: number,
-      sourceKind?: 'node' | 'branch-group' | 'merge',
+      sourceKind?: 'node' | 'branch-group' | 'merge' | 'slot',
     ) => {
       if (isTreeMode) {
         invokeDesignerPlusButtonHandler(core, sourceId, clientX, clientY, sourceKind);

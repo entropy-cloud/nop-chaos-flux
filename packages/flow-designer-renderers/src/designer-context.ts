@@ -31,7 +31,7 @@ export interface DesignerContextValue {
     sourceId: string,
     clientX: number,
     clientY: number,
-    sourceKind?: 'node' | 'branch-group' | 'merge',
+    sourceKind?: 'node' | 'branch-group' | 'merge' | 'slot',
   ) => void;
   reportHostIssue?: (input: {
     message: string;

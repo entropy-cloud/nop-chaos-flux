@@ -7,20 +7,25 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { flowDesignerRendererDefinitions } from './index.js';
 
 const flowDesignerMocks = vi.hoisted(() => ({
-  layoutTreeWithElkMock: vi.fn(async (nodes: unknown[]) => nodes),
   createDesignerCoreMock: vi.fn(),
+  createTreeDesignerCoreMock: vi.fn(),
 }));
-
-export function getLayoutTreeWithElkMock() {
-  return flowDesignerMocks.layoutTreeWithElkMock;
-}
 
 export function getCreateDesignerCoreMock() {
   return flowDesignerMocks.createDesignerCoreMock;
 }
 
+export function getCreateTreeDesignerCoreMock() {
+  return flowDesignerMocks.createTreeDesignerCoreMock;
+}
+
 export function getLatestCreatedDesignerCore() {
   return flowDesignerMocks.createDesignerCoreMock.mock.results.at(-1)?.value;
+}
+
+export function getLatestCreatedTreeDesignerCore() {
+  const result = flowDesignerMocks.createTreeDesignerCoreMock.mock.results.at(-1)?.value;
+  return result && result.ok ? result.core : undefined;
 }
 
 vi.mock('@nop-chaos/flow-designer-core', async () => {
@@ -29,12 +34,17 @@ vi.mock('@nop-chaos/flow-designer-core', async () => {
   );
   return {
     ...actual,
-    layoutTreeWithElk: flowDesignerMocks.layoutTreeWithElkMock,
     createDesignerCore: flowDesignerMocks.createDesignerCoreMock.mockImplementation(
       (
         initialDoc: Parameters<typeof actual.createDesignerCore>[0],
         config: Parameters<typeof actual.createDesignerCore>[1],
       ) => actual.createDesignerCore(initialDoc, config),
+    ),
+    createTreeDesignerCore: flowDesignerMocks.createTreeDesignerCoreMock.mockImplementation(
+      (
+        initialTree: Parameters<typeof actual.createTreeDesignerCore>[0],
+        config: Parameters<typeof actual.createTreeDesignerCore>[1],
+      ) => actual.createTreeDesignerCore(initialTree, config),
     ),
   };
 });
@@ -65,8 +75,8 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
 }
 
 beforeEach(async () => {
-  flowDesignerMocks.layoutTreeWithElkMock.mockClear();
   flowDesignerMocks.createDesignerCoreMock.mockClear();
+  flowDesignerMocks.createTreeDesignerCoreMock.mockClear();
   resetFluxI18n();
   initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
   await changeLanguage('en-US');
@@ -78,14 +88,13 @@ afterEach(() => {
 
 export function createTreeTestConfig(): DesignerConfig {
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     kind: 'test-tree',
     documentMode: 'tree',
     treeConfig: {
       layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
       showGatewayNodes: false,
       showMergeNodes: false,
-      autoLayout: true,
       chainEdgeType: 'chain',
       branchEdgeType: 'branch',
       mergeEdgeType: 'merge',

@@ -18,13 +18,13 @@ import {
 
 const testState: {
   layoutResolvers: Array<(positions: Map<string, { x: number; y: number }>) => void>;
-  rejectNextTreeLayout: boolean;
-  treeLayoutOwners: unknown[];
+  rejectNextGraphLayout: boolean;
+  layoutOwners: unknown[];
   invalidatedOwnerIds: number[];
 } = {
   layoutResolvers: [],
-  rejectNextTreeLayout: false,
-  treeLayoutOwners: [],
+  rejectNextGraphLayout: false,
+  layoutOwners: [],
   invalidatedOwnerIds: [],
 };
 
@@ -62,21 +62,17 @@ vi.mock('@nop-chaos/flow-designer-core', async () => {
         },
       };
     }),
-    layoutTreeWithElk: vi.fn(async (_nodes, _edges, _treeConfig, _nodeTypes, owner) => {
-      testState.treeLayoutOwners.push(owner);
-      if (testState.rejectNextTreeLayout) {
-        testState.rejectNextTreeLayout = false;
-        throw new Error('ELK failed');
+    layoutWithElk: vi.fn((_nodes, _edges, _nodeTypes, _options, owner) => {
+      testState.layoutOwners.push(owner);
+      if (testState.rejectNextGraphLayout) {
+        testState.rejectNextGraphLayout = false;
+        return Promise.reject(new Error('ELK failed'));
       }
 
-      return [];
+      return new Promise((resolve) => {
+        testState.layoutResolvers.push(resolve as never);
+      });
     }),
-    layoutWithElk: vi.fn(
-      () =>
-        new Promise((resolve) => {
-          testState.layoutResolvers.push(resolve);
-        }),
-    ),
   };
 });
 
@@ -159,8 +155,8 @@ function renderDesignerPage(document: GraphDocument) {
 describe('DesignerPage auto layout guards', () => {
   beforeEach(() => {
     testState.layoutResolvers = [];
-    testState.rejectNextTreeLayout = false;
-    testState.treeLayoutOwners = [];
+    testState.rejectNextGraphLayout = false;
+    testState.layoutOwners = [];
     testState.invalidatedOwnerIds = [];
   });
 
@@ -283,35 +279,27 @@ describe('DesignerPage auto layout guards', () => {
       notify,
     };
 
-    testState.rejectNextTreeLayout = true;
+    testState.rejectNextGraphLayout = true;
 
-    render(
+    const view = render(
       <SchemaRenderer
         schema={{
           type: 'page',
           body: [
             {
               type: 'designer-page',
-              treeDocument: {
+              document: {
                 id: 'doc-3',
-                kind: 'test-tree',
+                kind: 'test-graph',
                 name: 'Broken',
                 version: '1.0.0',
-                root: {
-                  id: 'node-1',
-                  type: 'task',
-                  data: { label: 'Task 1' },
-                },
+                nodes: [
+                  { id: 'node-1', type: 'task', position: { x: 0, y: 0 }, data: { label: 'Task 1' } },
+                ],
+                edges: [],
               },
               config: {
                 ...createTestConfig(),
-                documentMode: 'tree',
-                treeConfig: {
-                  layout: { direction: 'TB', nodeSpacing: 80, layerSpacing: 120 },
-                  showGatewayNodes: true,
-                  showMergeNodes: true,
-                  autoLayout: true,
-                },
                 statusPath: 'designerStatus',
               },
               statusPath: 'designerStatus',
@@ -327,6 +315,7 @@ describe('DesignerPage auto layout guards', () => {
       />,
     );
 
+    fireEvent.click(within(view.container).getByRole('button', { name: 'Auto layout' }));
     await waitFor(() => {
       expect(document.querySelector('[data-testid="designer-status-error"]')?.textContent).toBe(
         'ELK failed',
@@ -342,39 +331,31 @@ describe('DesignerPage auto layout guards', () => {
       notify,
     };
 
-    testState.rejectNextTreeLayout = false;
-    const { layoutTreeWithElk } = await import('@nop-chaos/flow-designer-core');
-    vi.mocked(layoutTreeWithElk).mockImplementationOnce(async () => {
+    testState.rejectNextGraphLayout = false;
+    const { layoutWithElk } = await import('@nop-chaos/flow-designer-core');
+    vi.mocked(layoutWithElk).mockImplementationOnce(async () => {
       throw structuredFailure;
     });
 
-    render(
+    const view = render(
       <SchemaRenderer
         schema={{
           type: 'page',
           body: [
             {
               type: 'designer-page',
-              treeDocument: {
+              document: {
                 id: 'doc-4',
-                kind: 'test-tree',
+                kind: 'test-graph',
                 name: 'Broken cause',
                 version: '1.0.0',
-                root: {
-                  id: 'node-1',
-                  type: 'task',
-                  data: { label: 'Task 1' },
-                },
+                nodes: [
+                  { id: 'node-1', type: 'task', position: { x: 0, y: 0 }, data: { label: 'Task 1' } },
+                ],
+                edges: [],
               },
               config: {
                 ...createTestConfig(),
-                documentMode: 'tree',
-                treeConfig: {
-                  layout: { direction: 'TB', nodeSpacing: 80, layerSpacing: 120 },
-                  showGatewayNodes: true,
-                  showMergeNodes: true,
-                  autoLayout: true,
-                },
                 statusPath: 'designerStatus',
               },
               statusPath: 'designerStatus',
@@ -390,33 +371,29 @@ describe('DesignerPage auto layout guards', () => {
       />,
     );
 
+    fireEvent.click(within(view.container).getByRole('button', { name: 'Auto layout' }));
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('error', expect.any(String));
+    });
   });
 
-  it('recreates the ELK owner after cleanup before tree remount work resumes', async () => {
+  it('recreates the ELK owner after cleanup before graph remount work resumes', async () => {
     const firstView = render(
       <SchemaRenderer
         schema={{
           type: 'designer-page',
-          treeDocument: {
+          document: {
             id: 'doc-remount-1',
-            kind: 'test-tree',
+            kind: 'test-graph',
             name: 'Remount 1',
             version: '1.0.0',
-            root: {
-              id: 'node-1',
-              type: 'task',
-              data: { label: 'Task 1' },
-            },
+            nodes: [
+              { id: 'node-1', type: 'task', position: { x: 0, y: 0 }, data: { label: 'Task 1' } },
+            ],
+            edges: [],
           },
           config: {
             ...createTestConfig(),
-            documentMode: 'tree',
-            treeConfig: {
-              layout: { direction: 'TB', nodeSpacing: 80, layerSpacing: 120 },
-              showGatewayNodes: true,
-              showMergeNodes: true,
-              autoLayout: true,
-            },
           },
         } as any}
         env={testEnv as any}
@@ -424,38 +401,31 @@ describe('DesignerPage auto layout guards', () => {
       />,
     );
 
+    fireEvent.click(within(firstView.container).getByRole('button', { name: 'Auto layout' }));
     await waitFor(() => {
-      expect(testState.treeLayoutOwners).toHaveLength(1);
+      expect(testState.layoutOwners).toHaveLength(1);
     });
 
-    const firstOwner = testState.treeLayoutOwners[0];
+    const firstOwner = testState.layoutOwners[0];
     firstView.unmount();
     expect(testState.invalidatedOwnerIds).toHaveLength(1);
 
-    render(
+    const secondView = render(
       <SchemaRenderer
         schema={{
           type: 'designer-page',
-          treeDocument: {
+          document: {
             id: 'doc-remount-2',
-            kind: 'test-tree',
+            kind: 'test-graph',
             name: 'Remount 2',
             version: '1.0.0',
-            root: {
-              id: 'node-2',
-              type: 'task',
-              data: { label: 'Task 2' },
-            },
+            nodes: [
+              { id: 'node-2', type: 'task', position: { x: 0, y: 0 }, data: { label: 'Task 2' } },
+            ],
+            edges: [],
           },
           config: {
             ...createTestConfig(),
-            documentMode: 'tree',
-            treeConfig: {
-              layout: { direction: 'TB', nodeSpacing: 80, layerSpacing: 120 },
-              showGatewayNodes: true,
-              showMergeNodes: true,
-              autoLayout: true,
-            },
           },
         } as any}
         env={testEnv as any}
@@ -463,11 +433,13 @@ describe('DesignerPage auto layout guards', () => {
       />,
     );
 
+    fireEvent.click(within(secondView.container).getByRole('button', { name: 'Auto layout' }));
     await waitFor(() => {
-      expect(testState.treeLayoutOwners).toHaveLength(2);
+      expect(testState.layoutOwners).toHaveLength(2);
     });
 
-    expect(testState.treeLayoutOwners[1]).not.toBe(firstOwner);
+    expect(testState.layoutOwners[1]).not.toBe(firstOwner);
+    secondView.unmount();
   });
 
   it('keeps plus-button handlers isolated per designer instance', () => {

@@ -32,6 +32,7 @@ export interface DesignerXyflowCanvasProps {
   snapshot: DesignerSnapshot;
   canvasConfig?: CanvasConfig;
   nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>;
+  nodeTypeMap?: Map<string, import('@nop-chaos/flow-designer-core').NodeTypeConfig>;
   pendingConnectionSourceId: string | null;
   pendingConnectionSourcePortId: string | null;
   reconnectingEdgeId: string | null;
@@ -76,7 +77,7 @@ export interface DesignerXyflowCanvasProps {
     sourceId: string,
     clientX: number,
     clientY: number,
-    sourceKind?: 'node' | 'branch-group' | 'merge',
+    sourceKind?: 'node' | 'branch-group' | 'merge' | 'slot',
   ) => void;
 }
 
@@ -93,7 +94,7 @@ function TreeModeOverlays({
     sourceId: string,
     clientX: number,
     clientY: number,
-    sourceKind?: 'node' | 'branch-group' | 'merge',
+    sourceKind?: 'node' | 'branch-group' | 'merge' | 'slot',
   ) => void;
 }) {
   const overlays = useMemo(
@@ -156,8 +157,8 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   );
 
   const snapshotNodes = useMemo(
-    () => createXyflowNodes(props.snapshot, props.nodeTypeSizeMap, props.documentMode),
-    [props.snapshot, props.nodeTypeSizeMap, props.documentMode],
+    () => createXyflowNodes(props.snapshot, props.nodeTypeSizeMap, props.documentMode, props.nodeTypeMap),
+    [props.snapshot, props.nodeTypeSizeMap, props.documentMode, props.nodeTypeMap],
   );
   const snapshotEdges = useMemo(
     () => createXyflowEdges(props.snapshot, props.documentMode),

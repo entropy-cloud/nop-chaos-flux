@@ -14,11 +14,6 @@ interface DesignerPageInnerProps {
   config: DesignerConfig;
   core?: ReturnType<typeof createDesignerCore>;
   treeDocument?: TreeDocument;
-  treeOwner?: {
-    getTreeDocument(): TreeDocument;
-    setTreeDocument(next: TreeDocument): void;
-    config: DesignerConfig;
-  };
 }
 
 function readDesignerResolvedProp<T>(
@@ -33,8 +28,6 @@ export function DesignerPageInner({
   document,
   config,
   core: providedCore,
-  treeDocument: _treeDocument,
-  treeOwner,
 }: DesignerPageInnerProps) {
   const env = useRendererEnv();
   const readOnly = readDesignerResolvedProp<boolean>(props, 'readOnly') ?? false;
@@ -47,14 +40,7 @@ export function DesignerPageInner({
     }
     return createDesignerCore(document, config, { readonly: readOnly });
   }, [config, document, providedCore, readOnly]);
-  const commandAdapter = useMemo(
-    () =>
-      createDesignerCommandAdapter(
-        core,
-        config.documentMode === 'tree' ? treeOwner : undefined,
-      ),
-    [core, config.documentMode, treeOwner],
-  );
+  const commandAdapter = useMemo(() => createDesignerCommandAdapter(core), [core]);
   const dispatch = useCallback(
     (command: import('./designer-command-adapter.js').DesignerCommand) => {
       const result = commandAdapter.execute(command);

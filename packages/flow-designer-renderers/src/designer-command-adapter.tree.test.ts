@@ -1,27 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
-import {
-  createDesignerCore,
-  layoutStructuredTree,
-  normalizeConfig,
-  projectTree,
-} from '@nop-chaos/flow-designer-core';
-import type {
-  DesignerConfig,
-  GraphDocument,
-  TreeDocument,
-} from '@nop-chaos/flow-designer-core';
+import { describe, expect, it } from 'vitest';
+import { createTreeDesignerCore } from '@nop-chaos/flow-designer-core';
+import type { DesignerConfig, TreeDocument } from '@nop-chaos/flow-designer-core';
 import { createDesignerCommandAdapter } from './designer-command-adapter.js';
 
 function createDingFlowConfig(): DesignerConfig {
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     kind: 'dingtalk-workflow',
     documentMode: 'tree',
     treeConfig: {
       layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
       showGatewayNodes: false,
       showMergeNodes: false,
-      autoLayout: true,
       chainEdgeType: 'dt-chain',
       branchEdgeType: 'dt-branch',
       mergeEdgeType: 'dt-merge',
@@ -57,9 +47,9 @@ function createDingFlowConfig(): DesignerConfig {
       },
     ],
     edgeTypes: [
-      { id: 'dt-chain', label: '流程连线' },
-      { id: 'dt-branch', label: '分支连线' },
-      { id: 'dt-merge', label: '汇合连线' },
+      { id: 'dt-chain', label: '流程连线', appearance: { strokeWidth: 2 } },
+      { id: 'dt-branch', label: '分支连线', appearance: { strokeWidth: 2 } },
+      { id: 'dt-merge', label: '汇合连线', appearance: { strokeWidth: 2 } },
     ],
     features: { undo: true, redo: true, history: true },
   };
@@ -125,252 +115,147 @@ function createBranchingTreeDocument(): TreeDocument {
   };
 }
 
-function projectTreeToDoc(treeDoc: TreeDocument, config: DesignerConfig): GraphDocument {
-  const normalizedConfig = normalizeConfig(config);
-  const projected = projectTree(treeDoc, normalizedConfig);
-  const treeConfig = normalizedConfig.treeConfig!;
-  const nodes = layoutStructuredTree(treeDoc, projected.nodes, treeConfig, normalizedConfig.nodeTypes);
-  return {
-    id: treeDoc.id,
-    kind: treeDoc.kind,
-    name: treeDoc.name,
-    version: treeDoc.version,
-    nodes,
-    edges: projected.edges,
-  };
+function createAdapter(tree: TreeDocument, config: DesignerConfig) {
+  const creation = createTreeDesignerCore(tree, config);
+  if (!creation.ok) {
+    throw new Error(`tree core creation failed: ${creation.error.code} ${creation.error.message}`);
+  }
+  const core = creation.core;
+  const adapter = createDesignerCommandAdapter(core);
+  return { core, adapter };
 }
 
 describe('createDesignerCommandAdapter tree mode', () => {
   it('adds a node between source and downstream', () => {
     const config = createDingFlowConfig();
-    const doc = projectTreeToDoc(createSimpleTreeDocument(), config);
-    const core = createDesignerCore(doc, config);
-    const adapter = createDesignerCommandAdapter(core);
-
-    const initialSnapshot = core.getSnapshot();
-    expect(initialSnapshot.doc.nodes.length).toBe(3);
-    expect(initialSnapshot.doc.edges.length).toBe(2);
+    const { core, adapter } = createAdapter(createSimpleTreeDocument(), config);
 
     const result = adapter.execute({
       type: 'insertChainNode',
       sourceId: 'n1',
       nodeType: 'dt-approval',
-      data: { label: 'New Approver', desc: 'Please set' },
+      data: { label: '新增审批' },
     });
 
     expect(result.ok).toBe(true);
-    expect(result.error).toBeUndefined();
-
-    const afterSnapshot = core.getSnapshot();
-    expect(afterSnapshot.doc.nodes.length).toBe(4);
-    expect(result.snapshot.doc.nodes.length).toBe(4);
-    expect(afterSnapshot.doc.edges.length).toBe(3);
-
-    const n1Outgoing = afterSnapshot.doc.edges.filter((e) => e.source === 'n1');
-    expect(n1Outgoing.length).toBe(1);
-    const newId = n1Outgoing[0].target;
-    expect(newId).not.toBe('n2');
-
-    const newOutgoing = afterSnapshot.doc.edges.filter((e) => e.source === newId);
-    expect(newOutgoing.length).toBe(1);
-    expect(newOutgoing[0].target).toBe('n2');
+    expect(core.getDocument().nodes).toHaveLength(4);
+    expect(core.getDocument().edges).toHaveLength(3);
+    const tree = core.getTreeDocument()!;
+    expect(tree.root.child!.data.label).toBe('新增审批');
+    expect(tree.root.child!.child!.id).toBe('n2');
   });
 
   it('adds a node after a leaf node with no downstream', () => {
     const config = createDingFlowConfig();
-    const doc = projectTreeToDoc(createSimpleTreeDocument(), config);
-    const core = createDesignerCore(doc, config);
-    const adapter = createDesignerCommandAdapter(core);
+    const { core, adapter } = createAdapter(createSimpleTreeDocument(), config);
 
     const result = adapter.execute({
       type: 'insertChainNode',
-      sourceId: 'n2',
+      sourceId: 'n3',
       nodeType: 'dt-cc',
-      data: { label: 'CC', desc: 'Please set' },
+      data: { label: '抄送' },
     });
 
     expect(result.ok).toBe(true);
-    const afterSnapshot = core.getSnapshot();
-    expect(afterSnapshot.doc.nodes.length).toBe(4);
-    expect(afterSnapshot.doc.edges.length).toBe(3);
-
-    const n2Outgoing = afterSnapshot.doc.edges.filter((e) => e.source === 'n2');
-    expect(n2Outgoing.length).toBe(1);
-    const newId = n2Outgoing[0].target;
-    const newOutgoing = afterSnapshot.doc.edges.filter((e) => e.source === newId);
-    expect(newOutgoing.length).toBe(1);
-    expect(newOutgoing[0].target).toBe('n3');
+    expect(core.getDocument().nodes).toHaveLength(4);
+    expect(core.getTreeDocument()?.root.child!.child!.child!.data.label).toBe('抄送');
   });
 
   it('tracks snapshot identity correctly for useSyncExternalStore', () => {
     const config = createDingFlowConfig();
-    const doc = projectTreeToDoc(createSimpleTreeDocument(), config);
-    const core = createDesignerCore(doc, config);
-    const adapter = createDesignerCommandAdapter(core);
-
-    const before = core.getSnapshot();
-    const beforeDocRef = before.doc;
+    const { adapter } = createAdapter(createSimpleTreeDocument(), config);
+    const before = adapter.getSnapshot();
 
     adapter.execute({
       type: 'insertChainNode',
       sourceId: 'n1',
       nodeType: 'dt-approval',
-      data: { label: 'New', desc: '' },
     });
 
-    const after = core.getSnapshot();
-    expect(after.doc).not.toBe(beforeDocRef);
+    const after = adapter.getSnapshot();
+    expect(after.doc).not.toBe(before.doc);
     expect(after).not.toBe(before);
-    expect(after.doc.nodes.length).not.toBe(beforeDocRef.nodes.length);
   });
 
-  it('updates the source TreeDocument when a tree owner is provided', () => {
+  it('commits tree changes through the core session draft', () => {
     const config = createDingFlowConfig();
-    const initialTree = createSimpleTreeDocument();
-    let ownedTree = structuredClone(initialTree);
-    const doc = projectTreeToDoc(ownedTree, config);
-    const core = createDesignerCore(doc, config);
-    const adapter = createDesignerCommandAdapter(core, {
-      getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => {
-        ownedTree = next;
-      },
-      config,
-    });
+    const { core, adapter } = createAdapter(createSimpleTreeDocument(), config);
 
-    const result = adapter.execute({
+    adapter.execute({
       type: 'insertChainNode',
       sourceId: 'n1',
       nodeType: 'dt-approval',
-      data: { label: 'Tree Owned Approver' },
+      data: { label: '新增审批' },
     });
 
-    expect(result.ok).toBe(true);
-    expect(ownedTree.root.child?.id).not.toBe('n2');
-    expect(ownedTree.root.child?.type).toBe('dt-approval');
-    expect(ownedTree.root.child?.data.label).toBe('Tree Owned Approver');
-    expect(ownedTree.root.child?.child?.id).toBe('n2');
-    expect(core.getSnapshot().doc.nodes).toHaveLength(4);
+    expect(core.getTreeDocument()?.root.child!.data.label).toBe('新增审批');
   });
 
-  it('updates node data through the owned TreeDocument when a tree owner is provided', () => {
+  it('updates node data through the tree session', () => {
     const config = createDingFlowConfig();
-    let ownedTree = structuredClone(createSimpleTreeDocument());
-    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
-    const adapter = createDesignerCommandAdapter(core, {
-      getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => {
-        ownedTree = next;
-      },
-      config,
-    });
+    const { core, adapter } = createAdapter(createSimpleTreeDocument(), config);
 
     const result = adapter.execute({
       type: 'updateNodeData',
       nodeId: 'n2',
-      data: { label: 'Updated Approver' },
+      data: { label: '更新后的审批' },
     });
 
     expect(result.ok).toBe(true);
-    expect(ownedTree.root.child?.data.label).toBe('Updated Approver');
-    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'n2')?.data.label).toBe(
-      'Updated Approver',
-    );
+    expect(core.getTreeDocument()?.root.child!.data.label).toBe('更新后的审批');
   });
 
-  it('deletes a chain node through the owned TreeDocument and reconnects its child', () => {
+  it('deletes a chain node through the tree session and reconnects its child', () => {
     const config = createDingFlowConfig();
-    let ownedTree = structuredClone(createSimpleTreeDocument());
-    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
-    const adapter = createDesignerCommandAdapter(core, {
-      getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => {
-        ownedTree = next;
-      },
-      config,
-    });
+    const { core, adapter } = createAdapter(createSimpleTreeDocument(), config);
 
-    const result = adapter.execute({
-      type: 'deleteNode',
-      nodeId: 'n2',
-    });
+    const result = adapter.execute({ type: 'deleteNode', nodeId: 'n2' });
 
     expect(result.ok).toBe(true);
-    expect(ownedTree.root.child?.id).toBe('n3');
-    expect(core.getSnapshot().doc.nodes.map((node) => node.id)).toEqual(['n1', 'n3']);
+    const tree = core.getTreeDocument()!;
+    expect(tree.root.child!.id).toBe('n3');
+    expect(core.getDocument().nodes.map((node) => node.id)).toEqual(['n1', 'n3']);
   });
 
-  it('adds a branch through the owned TreeDocument', () => {
+  it('adds a branch through the tree session', () => {
     const config = createDingFlowConfig();
-    let ownedTree = structuredClone(createBranchingTreeDocument());
-    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
-    const adapter = createDesignerCommandAdapter(core, {
-      getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => {
-        ownedTree = next;
-      },
-      config,
-    });
+    const { core, adapter } = createAdapter(createBranchingTreeDocument(), config);
 
     const result = adapter.execute({
       type: 'addBranch',
       nodeId: 'n2',
-      branchData: { label: '条件3' },
       childType: 'dt-approval',
       childData: { label: '分支C审批' },
     });
 
     expect(result.ok).toBe(true);
-    expect(ownedTree.root.child?.branches).toHaveLength(3);
-    expect(ownedTree.root.child?.branches?.[2]?.data.priority).toBe(3);
-    expect(ownedTree.root.child?.branches?.[2]?.child?.data.label).toBe('分支C审批');
+    const tree = core.getTreeDocument()!;
+    expect(tree.root.child!.branches).toHaveLength(3);
+    expect(tree.root.child!.branches![2].data.priority).toBe(3);
   });
 
   it('keeps continuation below all branches after adding a branch', () => {
     const config = createDingFlowConfig();
-    let ownedTree = structuredClone(createBranchingTreeDocument());
-    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
-    const adapter = createDesignerCommandAdapter(core, {
-      getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => {
-        ownedTree = next;
-      },
-      config,
-    });
+    const { core, adapter } = createAdapter(createBranchingTreeDocument(), config);
 
-    const result = adapter.execute({
+    adapter.execute({
       type: 'addBranch',
       nodeId: 'n2',
-      branchData: { label: '条件3' },
       childType: 'dt-approval',
       childData: { label: '分支C审批' },
     });
 
-    expect(result.ok).toBe(true);
-
-    const nodeMap = new Map(core.getSnapshot().doc.nodes.map((node) => [node.id, node]));
-    const continuation = nodeMap.get('n5');
-    const branchLeaves = ['n3', 'n4', ownedTree.root.child?.branches?.[2]?.child?.id].filter(
-      (id): id is string => Boolean(id),
-    );
-
-    expect(continuation).toBeDefined();
-    for (const leafId of branchLeaves) {
-      expect(continuation!.position.y).toBeGreaterThan(nodeMap.get(leafId)!.position.y);
+    const nodes = core.getDocument().nodes;
+    const continuation = nodes.find((node) => node.id === 'n5')!;
+    const leaves = nodes.filter((node) => ['n3', 'n4'].includes(node.id));
+    for (const leaf of leaves) {
+      expect(continuation.position.y).toBeGreaterThan(leaf.position.y);
     }
   });
 
-  it('moves a branch through the owned TreeDocument', () => {
+  it('moves a branch through the tree session', () => {
     const config = createDingFlowConfig();
-    let ownedTree = structuredClone(createBranchingTreeDocument());
-    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
-    const adapter = createDesignerCommandAdapter(core, {
-      getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => {
-        ownedTree = next;
-      },
-      config,
-    });
+    const { core, adapter } = createAdapter(createBranchingTreeDocument(), config);
 
     const result = adapter.execute({
       type: 'moveBranch',
@@ -380,98 +265,101 @@ describe('createDesignerCommandAdapter tree mode', () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(ownedTree.root.child?.branches?.map((branch) => branch.id)).toEqual(['b2', 'b1']);
-    expect(ownedTree.root.child?.branches?.map((branch) => branch.data.priority)).toEqual([1, 2]);
+    const tree = core.getTreeDocument()!;
+    expect(tree.root.child!.branches!.map((branch) => branch.id)).toEqual(['b2', 'b1']);
+    expect(tree.root.child!.branches!.map((branch) => branch.data.priority)).toEqual([1, 2]);
   });
 
-  it('deletes a branch through the owned TreeDocument while preserving minimum branch count', () => {
+  it('deletes a branch through the tree session while preserving minimum branch count', () => {
     const config = createDingFlowConfig();
-    let ownedTree = structuredClone(createBranchingTreeDocument());
-    ownedTree.root.child!.branches!.push({
-      id: 'b3',
-      data: { label: '条件3', priority: 3 },
-      child: { id: 'n6', type: 'dt-approval', data: { label: '分支C审批' } },
-    });
-    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
-    const adapter = createDesignerCommandAdapter(core, {
-      getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => {
-        ownedTree = next;
-      },
-      config,
+    const { core, adapter } = createAdapter(createBranchingTreeDocument(), config);
+
+    adapter.execute({
+      type: 'addBranch',
+      nodeId: 'n2',
+      childType: 'dt-approval',
     });
 
-    const result = adapter.execute({
-      type: 'deleteBranch',
-      nodeId: 'n2',
-      branchId: 'b2',
-    });
+    const before = core.getTreeDocument()!.root.child!.branches!.map((branch) => branch.id);
+    expect(before).toHaveLength(3);
+    const addedBranchId = before.find((id) => id !== 'b1' && id !== 'b2')!;
+
+    const result = adapter.execute({ type: 'deleteBranch', nodeId: 'n2', branchId: 'b2' });
 
     expect(result.ok).toBe(true);
-    expect(ownedTree.root.child?.branches?.map((branch) => branch.id)).toEqual(['b1', 'b3']);
-    expect(ownedTree.root.child?.branches?.map((branch) => branch.data.priority)).toEqual([1, 2]);
+    const tree = core.getTreeDocument()!;
+    expect(tree.root.child!.branches!.map((branch) => branch.id)).toEqual(['b1', addedBranchId]);
+    expect(tree.root.child!.branches!.map((branch) => branch.data.priority)).toEqual([1, 2]);
   });
 
-  it('keeps owner tree undo and redo coherent with the projected graph', () => {
+  it('keeps tree undo and redo coherent with the projected graph', () => {
     const config = createDingFlowConfig();
-    let ownedTree = structuredClone(createSimpleTreeDocument());
-    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
-    const adapter = createDesignerCommandAdapter(core, {
-      getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => {
-        ownedTree = next;
-      },
-      config,
-    });
+    const { core, adapter } = createAdapter(createSimpleTreeDocument(), config);
 
-    const inserted = adapter.execute({
+    adapter.execute({
       type: 'insertChainNode',
       sourceId: 'n1',
       nodeType: 'dt-approval',
-      data: { label: 'Undoable approver' },
     });
-
-    expect(inserted.ok).toBe(true);
-    expect(ownedTree.root.child?.data.label).toBe('Undoable approver');
-    expect(core.getSnapshot().doc.nodes).toHaveLength(4);
+    expect(core.getDocument().nodes).toHaveLength(4);
 
     adapter.execute({ type: 'undo' });
-
-    expect(ownedTree.root.child?.id).toBe('n2');
-    expect(core.getSnapshot().doc.nodes).toHaveLength(3);
+    expect(core.getTreeDocument()?.root.child!.child!.id).toBe('n3');
+    expect(core.getDocument().nodes).toHaveLength(3);
 
     adapter.execute({ type: 'redo' });
-
-    expect(ownedTree.root.child?.data.label).toBe('Undoable approver');
-    expect(core.getSnapshot().doc.nodes).toHaveLength(4);
+    expect(core.getDocument().nodes).toHaveLength(4);
   });
 
-  it('rolls back graph transaction when relayout throws during insertChainNode', () => {
+  it('rolls back the tree change when the transaction is rolled back', () => {
     const config = createDingFlowConfig();
-    const doc = projectTreeToDoc(createSimpleTreeDocument(), config);
-    const core = createDesignerCore(doc, config);
-    const adapter = createDesignerCommandAdapter(core);
-    const before = core.getSnapshot();
+    const { core, adapter } = createAdapter(createSimpleTreeDocument(), config);
 
-    const beginSpy = vi.spyOn(core, 'beginTransaction');
-    const commitSpy = vi.spyOn(core, 'commitTransaction');
-    const rollbackSpy = vi.spyOn(core, 'rollbackTransaction');
-    vi.spyOn(core, 'layoutNodes').mockImplementation(() => {
-      throw new Error('relayout failed');
+    const txId = core.beginTransaction('insert-chain-node');
+    const result = adapter.execute({
+      type: 'insertChainNode',
+      sourceId: 'n1',
+      nodeType: 'dt-approval',
     });
+    expect(result.ok).toBe(true);
 
-    expect(() =>
-      adapter.execute({
-        type: 'insertChainNode',
-        sourceId: 'n1',
-        nodeType: 'dt-approval',
-        data: { label: 'Will rollback' },
-      }),
-    ).toThrow('relayout failed');
+    core.rollbackTransaction(txId);
 
-    expect(beginSpy).toHaveBeenCalledWith('insert-chain-node');
-    expect(commitSpy).not.toHaveBeenCalled();
-    expect(rollbackSpy).toHaveBeenCalledOnce();
-    expect(core.getSnapshot().doc).toEqual(before.doc);
+    expect(core.getTreeDocument()?.root.child!.child!.id).toBe('n3');
+    expect(core.getDocument().nodes).toHaveLength(3);
+  });
+
+  it('rejects graph-only commands with unavailable', () => {
+    const config = createDingFlowConfig();
+    const { core, adapter } = createAdapter(createSimpleTreeDocument(), config);
+    const beforeDoc = core.getDocument();
+
+    const addNode = adapter.execute({ type: 'addNode', nodeType: 'dt-approval' });
+    expect(addNode).toMatchObject({ ok: false, reason: 'unavailable' });
+
+    const addEdge = adapter.execute({ type: 'addEdge', source: 'n1', target: 'n2' });
+    expect(addEdge).toMatchObject({ ok: false, reason: 'unavailable' });
+
+    const duplicate = adapter.execute({ type: 'duplicateNode', nodeId: 'n2' });
+    expect(duplicate).toMatchObject({ ok: false, reason: 'unavailable' });
+
+    const paste = adapter.execute({ type: 'pasteClipboard' });
+    expect(paste).toMatchObject({ ok: false, reason: 'unavailable' });
+
+    expect(core.getDocument()).toBe(beforeDoc);
+    expect(core.canUndo()).toBe(false);
+  });
+
+  it('exports the TreeDocument JSON from the export command', () => {
+    const config = createDingFlowConfig();
+    const { adapter } = createAdapter(createBranchingTreeDocument(), config);
+
+    const result = adapter.execute({ type: 'export' });
+
+    expect(result.ok).toBe(true);
+    const parsed = JSON.parse(String(result.exported));
+    expect(parsed.root.id).toBe('n1');
+    expect(String(result.exported)).not.toContain('__fdTree');
+    expect(String(result.exported)).not.toContain('__fd_internal__');
   });
 });

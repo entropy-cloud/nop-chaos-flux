@@ -6,8 +6,7 @@ import {
   createDesignerPageSchemaRenderer,
   createRendererEnv,
   createTreeTestConfig,
-  getLatestCreatedDesignerCore,
-  getLayoutTreeWithElkMock,
+  getLatestCreatedTreeDesignerCore,
 } from './designer-page.test-support.js';
 
 describe('DesignerPageRenderer tree mode', () => {
@@ -18,7 +17,7 @@ describe('DesignerPageRenderer tree mode', () => {
       id: 'tree-1',
       kind: 'test-tree',
       name: 'Test Tree',
-      version: '1.0',
+      version: '1.0.0',
       root: {
         id: 'start',
         type: 'start',
@@ -55,15 +54,14 @@ describe('DesignerPageRenderer tree mode', () => {
     expect(view.container.querySelector('.react-flow__edges')).toBeTruthy();
   });
 
-  it('runs ELK auto-layout once after initial tree-mode mount', async () => {
+  it('does not invoke ELK layout after initial tree-mode mount', async () => {
     const SchemaRenderer = createDesignerPageSchemaRenderer();
-    const layoutTreeWithElkMock = getLayoutTreeWithElkMock();
 
     const treeDocument = {
       id: 'tree-elk-init',
       kind: 'test-tree',
       name: 'Tree ELK Init',
-      version: '1.0',
+      version: '1.0.0',
       root: {
         id: 'start',
         type: 'start',
@@ -94,8 +92,11 @@ describe('DesignerPageRenderer tree mode', () => {
       />,
     );
 
+    const core = getLatestCreatedTreeDesignerCore();
+    expect(core).toBeTruthy();
+    expect(core.getDocument().nodes).toHaveLength(3);
     await waitFor(() => {
-      expect(layoutTreeWithElkMock).toHaveBeenCalledTimes(1);
+      expect(core.getDocument().edges).toHaveLength(2);
     });
   });
 
@@ -106,7 +107,7 @@ describe('DesignerPageRenderer tree mode', () => {
       id: 'branch-tree',
       kind: 'test-tree',
       name: 'Branch Tree',
-      version: '1.0',
+      version: '1.0.0',
       root: {
         id: 'start',
         type: 'start',
@@ -167,13 +168,45 @@ describe('DesignerPageRenderer tree mode', () => {
     expect(view.getByText('Tree mode requires treeDocument prop')).toBeTruthy();
   });
 
-  it('keeps tree mode host-owned instead of mutating a local tree copy', async () => {
+  it('renders an error surface for invalid tree input', async () => {
+    const SchemaRenderer = createDesignerPageSchemaRenderer();
+
+    const treeDocument = {
+      id: 'tree-broken',
+      kind: 'test-tree',
+      name: 'Broken',
+      version: '1.0.0',
+      root: {
+        id: 'start',
+        type: 'unknown-type',
+        data: { label: 'Start' },
+      },
+    };
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-broken"
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config: createTreeTestConfig(),
+        }}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    expect(view.container.querySelector('[data-testid="designer-tree-error-surface"]')).toBeTruthy();
+    expect(view.getByText(/unknown-node-type/)).toBeTruthy();
+  });
+
+  it('keeps the host treeDocument prop untouched while the tree session owns the draft', async () => {
     const SchemaRenderer = createDesignerPageSchemaRenderer();
     const treeDocument = {
       id: 'tree-owner',
       kind: 'test-tree',
       name: 'Tree Owner',
-      version: '1.0',
+      version: '1.0.0',
       root: {
         id: 'start',
         type: 'start',
@@ -204,17 +237,66 @@ describe('DesignerPageRenderer tree mode', () => {
       />,
     );
 
-    const core = getLatestCreatedDesignerCore();
+    const core = getLatestCreatedTreeDesignerCore();
     expect(core).toBeTruthy();
 
-    core.selectNode('task-1');
-    core.updateNode('task-1', { label: 'Changed in graph only' });
+    const command = core.updateTreeNodeData('task-1', { label: 'Changed in session' });
+    expect(command.ok).toBe(true);
 
     await waitFor(() => {
       expect(treeDocument.root.child?.data.label).toBe('Do Work');
-      expect(core.getSnapshot().doc.nodes.find((node: { id: string }) => node.id === 'task-1')?.data.label).toBe(
-        'Changed in graph only',
-      );
+      expect(core.getTreeDocument()?.root.child?.data.label).toBe('Changed in session');
     });
+  });
+
+  it('projects an empty branch to a virtual slot node in tree mode', () => {
+    const SchemaRenderer = createDesignerPageSchemaRenderer();
+
+    const treeDocument = {
+      id: 'tree-slot',
+      kind: 'test-tree',
+      name: 'Slot Tree',
+      version: '1.0.0',
+      root: {
+        id: 'start',
+        type: 'start',
+        data: { label: 'Start' },
+        child: {
+          id: 'gw',
+          type: 'condition',
+          data: { label: 'Gateway' },
+          branches: [
+            {
+              id: 'b1',
+              data: { label: 'Branch 1' },
+              child: { id: 'task-1', type: 'task', data: { label: 'Task 1' } },
+            },
+            {
+              id: 'b2',
+              data: { label: 'Branch 2' },
+            },
+          ],
+          child: { id: 'end', type: 'end', data: { label: 'End' } },
+        },
+      },
+    };
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-slot"
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config: createTreeTestConfig(),
+        }}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const core = getLatestCreatedTreeDesignerCore();
+    expect(core).toBeTruthy();
+    expect(core.getDocument().nodes.some((node: { type: string }) => node.type === '__fd-tree-empty-slot')).toBe(true);
+    expect(view.container.querySelector('.react-flow__edges')).toBeTruthy();
   });
 });

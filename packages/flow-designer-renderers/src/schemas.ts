@@ -1,4 +1,4 @@
-import type { BaseSchema, SchemaInput } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaInput, ActionSchema } from '@nop-chaos/flux-core';
 import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
 
 export interface DesignerPageSchemaInput {
@@ -14,6 +14,10 @@ export interface DesignerPageSchemaInput {
   config: DesignerConfig;
   document?: GraphDocument;
   treeDocument?: TreeDocument;
+  treeDocumentEpoch?: number;
+  treeDocumentAckSessionId?: string;
+  treeDocumentAckDispatchId?: number;
+  treeDocumentChangeAction?: ActionSchema | ActionSchema[];
   statusPath?: string;
   readOnly?: boolean;
   toolbar?: SchemaInput;

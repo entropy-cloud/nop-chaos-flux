@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { GraphNode, GraphEdge } from '@nop-chaos/flow-designer-core';
-import { BRANCH_SHORT_LEG, MERGE_SHORT_LEG, BTN_DIST } from './dingflow-constants.js';
+import type { GraphNode, GraphEdge, TreeEdgeRuntimeGeometry } from '@nop-chaos/flow-designer-core';
 import { computeDingFlowOverlays } from './dingflow-overlays.js';
 
 const DW = 220;
@@ -10,8 +9,14 @@ function node(id: string, x: number, y: number, type = 'task'): GraphNode {
   return { id, type, position: { x, y }, data: { label: id } };
 }
 
-function edge(id: string, source: string, target: string, type = 'default'): GraphEdge {
-  return { id, type, source, target, data: {} };
+function treeEdge(
+  id: string,
+  source: string,
+  target: string,
+  geometry: Partial<TreeEdgeRuntimeGeometry> & { kind: 'chain' | 'split' | 'merge'; direction: 'TB' | 'LR' },
+  type = 'default',
+): GraphEdge {
+  return { id, type, source, target, data: { __fdTree: geometry } };
 }
 
 describe('computeDingFlowOverlays', () => {
@@ -19,488 +24,249 @@ describe('computeDingFlowOverlays', () => {
     expect(computeDingFlowOverlays([], [])).toEqual([]);
   });
 
-  it('returns empty for a simple chain (no branching)', () => {
-    const nodes = [node('a', 0, 0), node('b', 0, 200), node('c', 0, 400)];
-    const edges = [edge('e1', 'a', 'b'), edge('e2', 'b', 'c')];
+  it('returns empty for a simple chain', () => {
+    const nodes = [node('a', 0, 0), node('b', 0, 100)];
+    const edges = [
+      treeEdge('e1', 'a', 'b', { kind: 'chain', direction: 'TB', ownerId: 'a', continuationId: 'b' }),
+    ];
     expect(computeDingFlowOverlays(nodes, edges)).toEqual([]);
   });
 
   it('returns empty when a node has exactly one outgoing edge', () => {
-    const nodes = [node('a', 0, 0), node('b', 0, 200)];
-    const edges = [edge('e1', 'a', 'b')];
+    const nodes = [node('a', 0, 0), node('b', 0, 100)];
+    const edges = [
+      treeEdge('e1', 'a', 'b', { kind: 'split', direction: 'TB', ownerId: 'a', branchId: 'b1' }),
+    ];
     expect(computeDingFlowOverlays(nodes, edges)).toEqual([]);
   });
 
   describe('condition branch overlay', () => {
-    it('creates addCondition overlay when a node fans out to 2+ targets', () => {
-      const condX = 0;
-      const condY = 0;
-      const branchAY = 200;
-      const branchBY = 200;
-
-      const nodes = [
-        node('cond', condX, condY, 'condition'),
-        node('branch-a', -120, branchAY),
-        node('branch-b', 120, branchBY),
-      ];
+    it('creates addCondition overlay on the shared split line', () => {
+      const nodes = [node('cond', 0, 0), node('leaf-a', -100, 200), node('leaf-b', 100, 200)];
       const edges = [
-        edge('e1', 'cond', 'branch-a', 'branch'),
-        edge('e2', 'cond', 'branch-b', 'branch'),
+        treeEdge('s1', 'cond', 'leaf-a', { kind: 'split', direction: 'TB', ownerId: 'cond', branchId: 'b1', lineMain: 150, fanoutCross: 0 }),
+        treeEdge('s2', 'cond', 'leaf-b', { kind: 'split', direction: 'TB', ownerId: 'cond', branchId: 'b2', lineMain: 150, fanoutCross: 0 }),
       ];
-
       const overlays = computeDingFlowOverlays(nodes, edges);
-
-      expect(overlays).toHaveLength(1);
-      const overlay = overlays[0];
-      expect(overlay.kind).toBe('addCondition');
-      expect(overlay.sourceId).toBe('cond');
-      expect(overlay.id).toBe('overlay-addcond-cond');
-
-      const expectedCx = condX + DW / 2;
-      expect(overlay.x).toBe(Math.round(expectedCx));
-
-      const expectedY = branchAY - BRANCH_SHORT_LEG;
-      expect(overlay.y).toBe(Math.round(expectedY));
+      const addCondition = overlays.filter((overlay) => overlay.kind === 'addCondition');
+      expect(addCondition).toHaveLength(1);
+      expect(addCondition[0]).toMatchObject({
+        id: 'overlay-addcond-cond',
+        x: Math.round(0 + DW / 2),
+        y: 150,
+        sourceId: 'cond',
+      });
     });
 
-    it('positions addCondition overlay between source bottom and targets top', () => {
-      const condY = 100;
-      const branchY = 350;
-
-      const nodes = [
-        node('cond', 0, condY, 'condition'),
-        node('b1', -120, branchY),
-        node('b2', 120, branchY),
-      ];
-      const edges = [edge('e1', 'cond', 'b1', 'branch'), edge('e2', 'cond', 'b2', 'branch')];
-
-      const [overlay] = computeDingFlowOverlays(nodes, edges);
-
-      expect(overlay.y).toBeLessThan(branchY);
-      expect(overlay.y).toBeGreaterThan(condY);
-    });
-
-    it('uses custom node width from nodeSizeMap', () => {
-      const nodes = [
-        node('cond', 0, 0, 'condition'),
-        node('b1', -200, 200),
-        node('b2', 200, 200),
-      ];
-      const edges = [edge('e1', 'cond', 'b1', 'branch'), edge('e2', 'cond', 'b2', 'branch')];
-
-      const sizeMap = new Map<string, { minWidth?: number; minHeight?: number }>();
-      sizeMap.set('condition', { minWidth: 300, minHeight: 100 });
-
-      const [overlay] = computeDingFlowOverlays(nodes, edges, sizeMap);
-
-      expect(overlay.x).toBe(Math.round(0 + 300 / 2));
-    });
-
-    it('handles 3-way branch', () => {
-      const nodes = [
-        node('cond', 0, 0, 'condition'),
-        node('b1', -240, 200),
-        node('b2', 0, 200),
-        node('b3', 240, 200),
-      ];
+    it('positions addCondition overlay on the shared split line between owner and targets', () => {
+      const nodes = [node('cond', 0, 0), node('leaf-a', -100, 250), node('leaf-b', 100, 250)];
       const edges = [
-        edge('e1', 'cond', 'b1', 'branch'),
-        edge('e2', 'cond', 'b2', 'branch'),
-        edge('e3', 'cond', 'b3', 'branch'),
+        treeEdge('s1', 'cond', 'leaf-a', { kind: 'split', direction: 'TB', ownerId: 'cond', branchId: 'b1', lineMain: 160 }),
+        treeEdge('s2', 'cond', 'leaf-b', { kind: 'split', direction: 'TB', ownerId: 'cond', branchId: 'b2', lineMain: 160 }),
       ];
-
       const overlays = computeDingFlowOverlays(nodes, edges);
+      const addCondition = overlays.find((overlay) => overlay.kind === 'addCondition')!;
+      expect(addCondition.y).toBeGreaterThan(0 + DH);
+      expect(addCondition.y).toBeLessThan(250);
+    });
 
-      expect(overlays).toHaveLength(1);
-      expect(overlays[0].kind).toBe('addCondition');
-      expect(overlays[0].sourceId).toBe('cond');
+    it('uses the shared split line for overlay x in LR direction', () => {
+      const nodes = [node('cond', 0, 0), node('leaf-a', 250, -100), node('leaf-b', 250, 100)];
+      const edges = [
+        treeEdge('s1', 'cond', 'leaf-a', { kind: 'split', direction: 'LR', ownerId: 'cond', branchId: 'b1', lineMain: 160 }),
+        treeEdge('s2', 'cond', 'leaf-b', { kind: 'split', direction: 'LR', ownerId: 'cond', branchId: 'b2', lineMain: 160 }),
+      ];
+      const overlays = computeDingFlowOverlays(nodes, edges);
+      const addCondition = overlays.find((overlay) => overlay.kind === 'addCondition')!;
+      expect(addCondition.x).toBe(160);
+      expect(addCondition.y).toBe(Math.round(0 + DH / 2));
     });
   });
 
   describe('merge overlay', () => {
-    it('creates mergeAdd overlay when 2+ edges converge on the same target', () => {
-      const branchY = 200;
-      const mergeY = 400;
-
-      const nodes = [
-        node('cond', 0, 0, 'condition'),
-        node('b1', -120, branchY),
-        node('b2', 120, branchY),
-        node('merge', 0, mergeY),
-      ];
+    it('creates mergeAdd overlay on the shared merge line', () => {
+      const nodes = [node('leaf-a', -100, 0), node('leaf-b', 100, 0), node('merge', 0, 300)];
       const edges = [
-        edge('e1', 'cond', 'b1', 'branch'),
-        edge('e2', 'cond', 'b2', 'branch'),
-        edge('e3', 'b1', 'merge', 'merge'),
-        edge('e4', 'b2', 'merge', 'merge'),
+        treeEdge('m1', 'leaf-a', 'merge', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b1', continuationId: 'merge', lineMain: 200 }),
+        treeEdge('m2', 'leaf-b', 'merge', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b2', continuationId: 'merge', lineMain: 200 }),
       ];
-
       const overlays = computeDingFlowOverlays(nodes, edges);
-
-      const mergeOverlay = overlays.find((o) => o.kind === 'mergeAdd');
-      expect(mergeOverlay).toBeDefined();
-      expect(mergeOverlay!.sourceId).toBe('merge:merge');
-      expect(mergeOverlay!.id).toBe('overlay-merge-merge');
-
-      const expectedCx = mergeY !== undefined ? 0 + DW / 2 : 0;
-      expect(mergeOverlay!.x).toBe(Math.round(expectedCx));
-
-      const expectedY = Math.round(branchY + DH + MERGE_SHORT_LEG + BTN_DIST);
-      expect(mergeOverlay!.y).toBe(expectedY);
+      const mergeAdd = overlays.filter((overlay) => overlay.kind === 'mergeAdd');
+      expect(mergeAdd).toHaveLength(1);
+      expect(mergeAdd[0]).toMatchObject({
+        id: 'overlay-merge-merge',
+        sourceId: 'merge:merge',
+      });
     });
 
-    it('positions merge overlay between branch leaf bottom and merge target top', () => {
-      const branchY = 200;
-      const mergeY = 450;
-
-      const nodes = [
-        node('cond', 0, 0, 'condition'),
-        node('b1', -120, branchY),
-        node('b2', 120, branchY),
-        node('merge', 0, mergeY),
-      ];
+    it('positions merge overlay below the merge line and above the merge target', () => {
+      const nodes = [node('leaf-a', -100, 0), node('leaf-b', 100, 0), node('merge', 0, 400)];
       const edges = [
-        edge('e1', 'cond', 'b1', 'branch'),
-        edge('e2', 'cond', 'b2', 'branch'),
-        edge('e3', 'b1', 'merge', 'merge'),
-        edge('e4', 'b2', 'merge', 'merge'),
+        treeEdge('m1', 'leaf-a', 'merge', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b1', continuationId: 'merge', lineMain: 200 }),
+        treeEdge('m2', 'leaf-b', 'merge', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b2', continuationId: 'merge', lineMain: 200 }),
       ];
-
-      const mergeOverlay = computeDingFlowOverlays(nodes, edges).find(
-        (o) => o.kind === 'mergeAdd',
-      );
-
-      expect(mergeOverlay).toBeDefined();
-      expect(mergeOverlay!.y).toBeGreaterThan(branchY + DH);
-      expect(mergeOverlay!.y).toBeLessThan(mergeY);
+      const overlays = computeDingFlowOverlays(nodes, edges);
+      const mergeAdd = overlays.find((overlay) => overlay.kind === 'mergeAdd')!;
+      expect(mergeAdd.y).toBeGreaterThan(200);
+      expect(mergeAdd.y).toBeLessThan(400);
     });
 
-    it('uses custom height from nodeSizeMap for merge Y calculation', () => {
-      const nodes = [
-        node('cond', 0, 0),
-        node('b1', -120, 200),
-        node('b2', 120, 200),
-        node('merge', 0, 450),
-      ];
+    it('uses custom node size from nodeSizeMap for merge placement', () => {
+      const nodes = [node('leaf-a', -100, 0), node('leaf-b', 100, 0), node('merge', 0, 400)];
       const edges = [
-        edge('e1', 'cond', 'b1'),
-        edge('e2', 'cond', 'b2'),
-        edge('e3', 'b1', 'merge'),
-        edge('e4', 'b2', 'merge'),
+        treeEdge('m1', 'leaf-a', 'merge', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b1', continuationId: 'merge', lineMain: 220 }),
+        treeEdge('m2', 'leaf-b', 'merge', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b2', continuationId: 'merge', lineMain: 220 }),
       ];
-
-      const sizeMap = new Map<string, { minWidth?: number; minHeight?: number }>();
-      sizeMap.set('task', { minWidth: 220, minHeight: 120 });
-
-      const mergeOverlay = computeDingFlowOverlays(nodes, edges, sizeMap).find(
-        (o) => o.kind === 'mergeAdd',
-      );
-
-      const expectedY = Math.round(200 + 120 + MERGE_SHORT_LEG + BTN_DIST);
-      expect(mergeOverlay!.y).toBe(expectedY);
+      const nodeSizeMap = new Map([['task', { minWidth: 300, minHeight: 120 }]]);
+      const overlays = computeDingFlowOverlays(nodes, edges, nodeSizeMap);
+      const mergeAdd = overlays.find((overlay) => overlay.kind === 'mergeAdd')!;
+      expect(mergeAdd.x).toBe(Math.round(0 + 300 / 2));
     });
   });
 
-  describe('full dingtalk-style branch + merge scenario', () => {
-    it('produces both addCondition and mergeAdd overlays for a branch group', () => {
-      const condY = 0;
-      const branchY = 200;
-      const continuationY = 400;
-
+  describe('full dingtalk-style scenario', () => {
+    function buildBranchScenario(): { nodes: GraphNode[]; edges: GraphEdge[] } {
       const nodes = [
-        node('initiator', 0, -200),
-        node('cond', 0, condY, 'condition'),
-        node('b1-leaf', -120, branchY),
-        node('b2-leaf', 120, branchY),
-        node('continuation', 0, continuationY),
-        node('end', 0, 600),
+        node('cond', 0, 0),
+        node('branch-a', -120, 200),
+        node('branch-b', 120, 200),
+        node('continuation', 0, 500),
       ];
-
       const edges = [
-        edge('chain-1', 'initiator', 'cond', 'chain'),
-        edge('branch-1', 'cond', 'b1-leaf', 'branch'),
-        edge('branch-2', 'cond', 'b2-leaf', 'branch'),
-        edge('merge-1', 'b1-leaf', 'continuation', 'merge'),
-        edge('merge-2', 'b2-leaf', 'continuation', 'merge'),
-        edge('chain-2', 'continuation', 'end', 'chain'),
+        treeEdge('s1', 'cond', 'branch-a', { kind: 'split', direction: 'TB', ownerId: 'cond', branchId: 'b1', lineMain: 150 }),
+        treeEdge('s2', 'cond', 'branch-b', { kind: 'split', direction: 'TB', ownerId: 'cond', branchId: 'b2', lineMain: 150 }),
+        treeEdge('m1', 'branch-a', 'continuation', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b1', continuationId: 'continuation', lineMain: 400 }),
+        treeEdge('m2', 'branch-b', 'continuation', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b2', continuationId: 'continuation', lineMain: 400 }),
       ];
+      return { nodes, edges };
+    }
 
+    it('produces both addCondition and mergeAdd overlays for a branch group', () => {
+      const { nodes, edges } = buildBranchScenario();
       const overlays = computeDingFlowOverlays(nodes, edges);
-
-      expect(overlays).toHaveLength(2);
-
-      const addCond = overlays.find((o) => o.kind === 'addCondition');
-      const mergeAdd = overlays.find((o) => o.kind === 'mergeAdd');
-
-      expect(addCond).toBeDefined();
-      expect(addCond!.sourceId).toBe('cond');
-      expect(addCond!.y).toBe(Math.round(branchY - BRANCH_SHORT_LEG));
-
-      expect(mergeAdd).toBeDefined();
-      expect(mergeAdd!.sourceId).toBe('merge:continuation');
-      expect(mergeAdd!.y).toBe(Math.round(branchY + DH + MERGE_SHORT_LEG + BTN_DIST));
+      const kinds = overlays.map((overlay) => overlay.kind).sort();
+      expect(kinds).toEqual(['addCondition', 'mergeAdd']);
+      expect(overlays.map((overlay) => overlay.sourceId)).toContain('cond');
+      expect(overlays.map((overlay) => overlay.sourceId)).toContain('merge:continuation');
     });
 
     it('places addCondition overlay above the branch targets', () => {
-      const branchY = 250;
-      const nodes = [
-        node('cond', 0, 0, 'condition'),
-        node('b1', -120, branchY),
-        node('b2', 120, branchY),
-        node('cont', 0, 500),
-      ];
-      const edges = [
-        edge('e1', 'cond', 'b1', 'branch'),
-        edge('e2', 'cond', 'b2', 'branch'),
-        edge('e3', 'b1', 'cont', 'merge'),
-        edge('e4', 'b2', 'cont', 'merge'),
-      ];
-
-      const addCond = computeDingFlowOverlays(nodes, edges).find(
-        (o) => o.kind === 'addCondition',
-      );
-
-      expect(addCond!.y).toBeLessThan(branchY);
+      const { nodes, edges } = buildBranchScenario();
+      const addCondition = computeDingFlowOverlays(nodes, edges).find(
+        (overlay) => overlay.kind === 'addCondition',
+      )!;
+      expect(addCondition.y).toBe(150);
+      expect(addCondition.y).toBeLessThan(200);
     });
 
-    it('places mergeAdd overlay below branch leaves and above merge target', () => {
-      const branchY = 250;
-      const mergeTargetY = 550;
-      const nodes = [
-        node('cond', 0, 0, 'condition'),
-        node('b1', -120, branchY),
-        node('b2', 120, branchY),
-        node('cont', 0, mergeTargetY),
-      ];
-      const edges = [
-        edge('e1', 'cond', 'b1', 'branch'),
-        edge('e2', 'cond', 'b2', 'branch'),
-        edge('e3', 'b1', 'cont', 'merge'),
-        edge('e4', 'b2', 'cont', 'merge'),
-      ];
-
+    it('places mergeAdd overlay below the merge line and above the merge target', () => {
+      const { nodes, edges } = buildBranchScenario();
       const mergeAdd = computeDingFlowOverlays(nodes, edges).find(
-        (o) => o.kind === 'mergeAdd',
-      );
-
-      expect(mergeAdd!.y).toBeGreaterThan(branchY + DH);
-      expect(mergeAdd!.y).toBeLessThan(mergeTargetY);
+        (overlay) => overlay.kind === 'mergeAdd',
+      )!;
+      expect(mergeAdd.y).toBeGreaterThan(400);
+      expect(mergeAdd.y).toBeLessThan(500);
     });
   });
 
   describe('nested branch groups', () => {
     it('produces overlays for inner branch group in nested scenario', () => {
-      const outerCondY = 0;
-      const innerCondY = 200;
-      const innerBranchY = 400;
-      const innerContY = 600;
-      const outerContY = 800;
-
       const nodes = [
-        node('outer-cond', 0, outerCondY, 'condition'),
-        node('b1', -200, innerCondY),
-        node('inner-cond', 200, innerCondY, 'condition'),
-        node('ib1', 120, innerBranchY),
-        node('ib2', 280, innerBranchY),
-        node('inner-cont', 200, innerContY),
-        node('outer-cont', 0, outerContY),
+        node('outer-cond', 0, 0),
+        node('inner-cond', -150, 200),
+        node('inner-leaf-a', -260, 400),
+        node('inner-leaf-b', -40, 400),
+        node('outer-leaf-b', 150, 200),
+        node('outer-cont', 0, 700),
+        node('inner-cont', -150, 600),
       ];
-
       const edges = [
-        edge('ob1', 'outer-cond', 'b1', 'branch'),
-        edge('ob2', 'outer-cond', 'inner-cond', 'branch'),
-        edge('ib1', 'inner-cond', 'ib1', 'branch'),
-        edge('ib2', 'inner-cond', 'ib2', 'branch'),
-        edge('im1', 'ib1', 'inner-cont', 'merge'),
-        edge('im2', 'ib2', 'inner-cont', 'merge'),
-        edge('om1', 'b1', 'outer-cont', 'merge'),
-        edge('om2', 'inner-cont', 'outer-cont', 'merge'),
+        treeEdge('s1', 'outer-cond', 'inner-cond', { kind: 'split', direction: 'TB', ownerId: 'outer-cond', branchId: 'b1', lineMain: 140 }),
+        treeEdge('s2', 'outer-cond', 'outer-leaf-b', { kind: 'split', direction: 'TB', ownerId: 'outer-cond', branchId: 'b2', lineMain: 140 }),
+        treeEdge('s3', 'inner-cond', 'inner-leaf-a', { kind: 'split', direction: 'TB', ownerId: 'inner-cond', branchId: 'ib1', lineMain: 340 }),
+        treeEdge('s4', 'inner-cond', 'inner-leaf-b', { kind: 'split', direction: 'TB', ownerId: 'inner-cond', branchId: 'ib2', lineMain: 340 }),
+        treeEdge('m1', 'inner-leaf-a', 'inner-cont', { kind: 'merge', direction: 'TB', ownerId: 'inner-cond', branchId: 'ib1', continuationId: 'inner-cont', lineMain: 560 }),
+        treeEdge('m2', 'inner-leaf-b', 'inner-cont', { kind: 'merge', direction: 'TB', ownerId: 'inner-cond', branchId: 'ib2', continuationId: 'inner-cont', lineMain: 560 }),
+        treeEdge('m3', 'inner-cont', 'outer-cont', { kind: 'merge', direction: 'TB', ownerId: 'outer-cond', branchId: 'b1', continuationId: 'outer-cont', lineMain: 660 }),
+        treeEdge('m4', 'outer-leaf-b', 'outer-cont', { kind: 'merge', direction: 'TB', ownerId: 'outer-cond', branchId: 'b2', continuationId: 'outer-cont', lineMain: 660 }),
       ];
-
       const overlays = computeDingFlowOverlays(nodes, edges);
-
-      const addCondOverlays = overlays.filter((o) => o.kind === 'addCondition');
-      const mergeOverlays = overlays.filter((o) => o.kind === 'mergeAdd');
-
-      expect(addCondOverlays).toHaveLength(2);
-      const addCondIds = addCondOverlays.map((o) => o.sourceId).sort();
-      expect(addCondIds).toEqual(['inner-cond', 'outer-cond']);
-
-      expect(mergeOverlays).toHaveLength(2);
-      const mergeTargets = mergeOverlays.map((o) => o.sourceId).sort();
-      expect(mergeTargets).toEqual(['merge:inner-cont', 'merge:outer-cont']);
-    });
-
-    it('correctly positions inner and outer addCondition overlays', () => {
-      const innerBranchY = 400;
-      const outerBranchY = 200;
-
-      const nodes = [
-        node('outer-cond', 0, 0, 'condition'),
-        node('b1', -200, outerBranchY),
-        node('inner-cond', 200, outerBranchY, 'condition'),
-        node('ib1', 120, innerBranchY),
-        node('ib2', 280, innerBranchY),
-        node('cont', 0, 600),
-      ];
-
-      const edges = [
-        edge('ob1', 'outer-cond', 'b1', 'branch'),
-        edge('ob2', 'outer-cond', 'inner-cond', 'branch'),
-        edge('ib1', 'inner-cond', 'ib1', 'branch'),
-        edge('ib2', 'inner-cond', 'ib2', 'branch'),
-        edge('m1', 'b1', 'cont', 'merge'),
-        edge('m2', 'ib1', 'cont', 'merge'),
-        edge('m3', 'ib2', 'cont', 'merge'),
-      ];
-
-      const overlays = computeDingFlowOverlays(nodes, edges);
-      const outerAdd = overlays.find((o) => o.sourceId === 'outer-cond');
-      const innerAdd = overlays.find((o) => o.sourceId === 'inner-cond');
-
-      expect(outerAdd!.y).toBe(Math.round(outerBranchY - BRANCH_SHORT_LEG));
-      expect(innerAdd!.y).toBe(Math.round(innerBranchY - BRANCH_SHORT_LEG));
-
-      expect(innerAdd!.y).toBeGreaterThan(outerAdd!.y);
+      const addCondition = overlays.filter((overlay) => overlay.kind === 'addCondition');
+      const mergeAdd = overlays.filter((overlay) => overlay.kind === 'mergeAdd');
+      expect(addCondition.map((overlay) => overlay.sourceId).sort()).toEqual(['inner-cond', 'outer-cond']);
+      expect(mergeAdd.map((overlay) => overlay.sourceId).sort()).toEqual(['merge:inner-cont', 'merge:outer-cont']);
     });
   });
 
   describe('continuation after merge', () => {
     it('merge target can have a chain child without extra overlays', () => {
-      const nodes = [
-        node('cond', 0, 0, 'condition'),
-        node('b1', -120, 200),
-        node('b2', 120, 200),
-        node('merge', 0, 400),
-        node('end', 0, 600),
-      ];
-
+      const nodes = [node('leaf-a', -100, 0), node('leaf-b', 100, 0), node('merge', 0, 300)];
       const edges = [
-        edge('e1', 'cond', 'b1', 'branch'),
-        edge('e2', 'cond', 'b2', 'branch'),
-        edge('e3', 'b1', 'merge', 'merge'),
-        edge('e4', 'b2', 'merge', 'merge'),
-        edge('e5', 'merge', 'end', 'chain'),
+        treeEdge('m1', 'leaf-a', 'merge', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b1', continuationId: 'merge', lineMain: 200 }),
+        treeEdge('m2', 'leaf-b', 'merge', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b2', continuationId: 'merge', lineMain: 200 }),
+        treeEdge('c1', 'merge', 'end', { kind: 'chain', direction: 'TB', ownerId: 'merge', continuationId: 'end' }),
       ];
-
       const overlays = computeDingFlowOverlays(nodes, edges);
-
-      expect(overlays).toHaveLength(2);
-
-      const kinds = overlays.map((o) => o.kind).sort();
-      expect(kinds).toEqual(['addCondition', 'mergeAdd']);
+      const kinds = overlays.map((overlay) => overlay.kind).sort();
+      expect(kinds).toEqual(['mergeAdd']);
     });
 
     it('merge target can fan out again as a new branch source', () => {
-      const nodes = [
-        node('cond1', 0, 0, 'condition'),
-        node('b1', -120, 200),
-        node('b2', 120, 200),
-        node('cond2', 0, 400, 'condition'),
-        node('b3', -120, 600),
-        node('b4', 120, 600),
-        node('end', 0, 800),
-      ];
-
+      const nodes = [node('cond1', 0, 0), node('l1', -100, 150), node('l2', 100, 150), node('cond2', 0, 300), node('l3', -100, 450), node('l4', 100, 450), node('end', 0, 600)];
       const edges = [
-        edge('e1', 'cond1', 'b1', 'branch'),
-        edge('e2', 'cond1', 'b2', 'branch'),
-        edge('e3', 'b1', 'cond2', 'merge'),
-        edge('e4', 'b2', 'cond2', 'merge'),
-        edge('e5', 'cond2', 'b3', 'branch'),
-        edge('e6', 'cond2', 'b4', 'branch'),
-        edge('e7', 'b3', 'end', 'merge'),
-        edge('e8', 'b4', 'end', 'merge'),
+        treeEdge('s1', 'cond1', 'l1', { kind: 'split', direction: 'TB', ownerId: 'cond1', branchId: 'b1', lineMain: 100 }),
+        treeEdge('s2', 'cond1', 'l2', { kind: 'split', direction: 'TB', ownerId: 'cond1', branchId: 'b2', lineMain: 100 }),
+        treeEdge('m1', 'l1', 'cond2', { kind: 'merge', direction: 'TB', ownerId: 'cond1', branchId: 'b1', continuationId: 'cond2', lineMain: 250 }),
+        treeEdge('m2', 'l2', 'cond2', { kind: 'merge', direction: 'TB', ownerId: 'cond1', branchId: 'b2', continuationId: 'cond2', lineMain: 250 }),
+        treeEdge('s3', 'cond2', 'l3', { kind: 'split', direction: 'TB', ownerId: 'cond2', branchId: 'b1', lineMain: 400 }),
+        treeEdge('s4', 'cond2', 'l4', { kind: 'split', direction: 'TB', ownerId: 'cond2', branchId: 'b2', lineMain: 400 }),
+        treeEdge('m3', 'l3', 'end', { kind: 'merge', direction: 'TB', ownerId: 'cond2', branchId: 'b1', continuationId: 'end', lineMain: 550 }),
+        treeEdge('m4', 'l4', 'end', { kind: 'merge', direction: 'TB', ownerId: 'cond2', branchId: 'b2', continuationId: 'end', lineMain: 550 }),
       ];
-
       const overlays = computeDingFlowOverlays(nodes, edges);
-
-      const addCondOverlays = overlays.filter((o) => o.kind === 'addCondition');
-      const mergeOverlays = overlays.filter((o) => o.kind === 'mergeAdd');
-
-      expect(addCondOverlays).toHaveLength(2);
-      expect(mergeOverlays).toHaveLength(2);
-
-      const addCondSources = addCondOverlays.map((o) => o.sourceId).sort();
-      expect(addCondSources).toEqual(['cond1', 'cond2']);
-
-      const mergeTargets = mergeOverlays.map((o) => o.sourceId).sort();
-      expect(mergeTargets).toEqual(['merge:cond2', 'merge:end']);
-    });
-
-    it('merge overlay y is based on the first incoming source node height', () => {
-      const branchAY = 200;
-      const branchBY = 300;
-
-      const nodes = [
-        node('cond', 0, 0, 'condition'),
-        node('b1', -120, branchAY),
-        node('b2', 120, branchBY),
-        node('cont', 0, 500),
-      ];
-
-      const edges = [
-        edge('e1', 'cond', 'b1', 'branch'),
-        edge('e2', 'cond', 'b2', 'branch'),
-        edge('e3', 'b1', 'cont', 'merge'),
-        edge('e4', 'b2', 'cont', 'merge'),
-      ];
-
-      const mergeOverlay = computeDingFlowOverlays(nodes, edges).find(
-        (o) => o.kind === 'mergeAdd',
-      );
-
-      const expectedY = Math.round(branchAY + DH + MERGE_SHORT_LEG + BTN_DIST);
-      expect(mergeOverlay!.y).toBe(expectedY);
+      const addCondition = overlays.filter((overlay) => overlay.kind === 'addCondition');
+      const mergeAdd = overlays.filter((overlay) => overlay.kind === 'mergeAdd');
+      expect(addCondition.map((overlay) => overlay.sourceId).sort()).toEqual(['cond1', 'cond2']);
+      expect(mergeAdd.map((overlay) => overlay.sourceId).sort()).toEqual(['merge:cond2', 'merge:end']);
     });
   });
 
   describe('edge cases', () => {
-    it('skips overlays when source/target node is missing from node map', () => {
-      const nodes = [node('b1', 0, 200), node('b2', 200, 200)];
+    it('skips a merge overlay when the continuation node is missing', () => {
+      const nodes = [node('cond', 0, 0)];
       const edges = [
-        edge('e1', 'missing-source', 'b1'),
-        edge('e2', 'missing-source', 'b2'),
-        edge('e3', 'b1', 'missing-target'),
-        edge('e4', 'b2', 'missing-target'),
+        treeEdge('s1', 'cond', 'missing-leaf', { kind: 'split', direction: 'TB', ownerId: 'cond', branchId: 'b1', lineMain: 150 }),
+        treeEdge('m1', 'missing-leaf', 'missing-cont', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b1', continuationId: 'missing-cont', lineMain: 200 }),
       ];
-
-      expect(computeDingFlowOverlays(nodes, edges)).toEqual([]);
+      const overlays = computeDingFlowOverlays(nodes, edges);
+      const kinds = overlays.map((overlay) => overlay.kind);
+      expect(kinds).toEqual(['addCondition']);
     });
 
-    it('skips overlays when first target node in source group is missing', () => {
-      const nodes = [node('cond', 0, 0, 'condition')];
+    it('keeps slot owner and continuation overlays but never keys on virtual ids', () => {
+      const nodes = [node('cond', 0, 0), node('__fd_internal__/slot/cond/b2', 100, 200), node('after', 0, 400)];
       const edges = [
-        edge('e1', 'cond', 'missing-a'),
-        edge('e2', 'cond', 'missing-b'),
+        treeEdge('s1', 'cond', '__fd_internal__/slot/cond/b2', { kind: 'split', direction: 'TB', ownerId: 'cond', branchId: 'b2', lineMain: 150 }),
+        treeEdge('m1', '__fd_internal__/slot/cond/b2', 'after', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b2', continuationId: 'after', lineMain: 300 }),
       ];
-
-      expect(computeDingFlowOverlays(nodes, edges)).toEqual([]);
-    });
-
-    it('handles nodes with no edges', () => {
-      const nodes = [node('a', 0, 0), node('b', 200, 0)];
-      expect(computeDingFlowOverlays(nodes, [])).toEqual([]);
+      const overlays = computeDingFlowOverlays(nodes, edges);
+      expect(overlays.map((overlay) => overlay.sourceId).sort()).toEqual(['cond', 'merge:after']);
+      expect(overlays.every((overlay) => !overlay.sourceId.startsWith('__fd_internal__'))).toBe(true);
     });
 
     it('produces stable overlay ids', () => {
-      const nodes = [
-        node('cond', 0, 0, 'condition'),
-        node('b1', -120, 200),
-        node('b2', 120, 200),
-        node('cont', 0, 400),
-      ];
+      const nodes = [node('cond', 0, 0), node('a', -100, 200), node('b', 100, 200), node('c', 0, 400)];
       const edges = [
-        edge('e1', 'cond', 'b1', 'branch'),
-        edge('e2', 'cond', 'b2', 'branch'),
-        edge('e3', 'b1', 'cont', 'merge'),
-        edge('e4', 'b2', 'cont', 'merge'),
+        treeEdge('s1', 'cond', 'a', { kind: 'split', direction: 'TB', ownerId: 'cond', branchId: 'b1', lineMain: 150 }),
+        treeEdge('s2', 'cond', 'b', { kind: 'split', direction: 'TB', ownerId: 'cond', branchId: 'b2', lineMain: 150 }),
+        treeEdge('m1', 'a', 'c', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b1', continuationId: 'c', lineMain: 300 }),
+        treeEdge('m2', 'b', 'c', { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b2', continuationId: 'c', lineMain: 300 }),
       ];
-
-      const o1 = computeDingFlowOverlays(nodes, edges);
-      const o2 = computeDingFlowOverlays(nodes, edges);
-
-      expect(o1.map((o) => o.id)).toEqual(o2.map((o) => o.id));
+      const first = computeDingFlowOverlays(nodes, edges).map((overlay) => overlay.id).sort();
+      const second = computeDingFlowOverlays(nodes, edges).map((overlay) => overlay.id).sort();
+      expect(first).toEqual(second);
+      expect(first).toContain('overlay-addcond-cond');
+      expect(first).toContain('overlay-merge-c');
     });
   });
 });

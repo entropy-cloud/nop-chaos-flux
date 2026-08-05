@@ -253,6 +253,9 @@ importers:
       '@nop-chaos/flow-designer-core':
         specifier: workspace:*
         version: link:../flow-designer-core
+      '@nop-chaos/flux-action-core':
+        specifier: workspace:*
+        version: link:../flux-action-core
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core

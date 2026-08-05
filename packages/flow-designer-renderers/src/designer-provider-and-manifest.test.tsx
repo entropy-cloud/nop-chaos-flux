@@ -136,6 +136,7 @@ describe('createDesignerActionProvider', () => {
     const provider = createDesignerActionProvider({
       commitTransaction: () => ({ ok: false, reason: 'missing-transaction' }),
       rollbackTransaction: () => ({ ok: false, reason: 'unavailable' }),
+      getConfig: () => ({ documentMode: 'graph', nodeTypes: new Map() }),
     } as unknown as DesignerCore);
 
     const commitResult = await provider.invoke('commitTransaction', { transactionId: 'missing' }, {} as unknown as ActionContext);
@@ -177,6 +178,7 @@ describe('createDesignerActionProvider', () => {
       setSelection: vi.fn(),
       moveNodes: vi.fn(),
       updateMultipleNodes: vi.fn(),
+      getConfig: () => ({ documentMode: 'graph', nodeTypes: new Map() }),
     } as unknown as DesignerCore);
 
     const toggleNodeResult = await provider.invoke(
@@ -248,6 +250,7 @@ describe('createDesignerActionProvider', () => {
           viewport: { x: 0, y: 0, zoom: 1 },
         },
       }),
+      getConfig: () => ({ documentMode: 'graph', nodeTypes: new Map() }),
     } as unknown as DesignerCore);
 
     const commitResult = await provider.invoke('commitTransaction', { transactionId: 'missing' }, {} as unknown as ActionContext);

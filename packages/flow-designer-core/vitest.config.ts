@@ -17,8 +17,12 @@ export default createSharedVitestConfig({
       'src/core-node-commands.ts',
       'src/elk-layout.ts',
       'src/tree-domain.ts',
-      'src/tree-layout.ts',
       'src/tree-projection.ts',
+      'src/tree-structure.ts',
+      'src/tree-session-impl.ts',
+      'src/core/config-migration.ts',
+      'src/core/graph-command-gate.ts',
+      'src/tree-validation.ts',
     ],
     thresholds: {
       branches: 55,

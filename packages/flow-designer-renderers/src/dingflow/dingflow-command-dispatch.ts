@@ -1,10 +1,27 @@
 import type { DesignerCommand } from '../designer-command-types.js';
 
+export type DingFlowSourceKind = 'node' | 'branch-group' | 'merge' | 'slot';
+
 export function createDingFlowMenuCommand(
   sourceId: string,
   type: string,
-  sourceKind: 'node' | 'branch-group' | 'merge' = sourceId.startsWith('merge:') ? 'merge' : 'node',
+  sourceKind: DingFlowSourceKind = sourceId.startsWith('merge:')
+    ? 'merge'
+    : sourceId.startsWith('slot:')
+      ? 'slot'
+      : 'node',
 ): DesignerCommand {
+  if (sourceKind === 'slot') {
+    const [ownerId, branchId] = sourceId.slice('slot:'.length).split(':');
+    return {
+      type: 'insertBranchChild',
+      ownerId,
+      branchId,
+      nodeType: type,
+      data: { label: type === 'dt-approval' ? 'Approver' : 'CC', desc: 'Please set' },
+    };
+  }
+
   const isMerge = sourceKind === 'merge' || sourceId.startsWith('merge:');
   const effectiveId = isMerge ? sourceId.slice('merge:'.length) : sourceId;
 

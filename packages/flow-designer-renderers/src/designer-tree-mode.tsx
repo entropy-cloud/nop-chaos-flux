@@ -1,90 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
-import { createDesignerCore } from '@nop-chaos/flow-designer-core';
+import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
+import type { DesignerConfig, TreeDocument, TreeProjectionError } from '@nop-chaos/flow-designer-core';
+import { createTreeDesignerCore } from '@nop-chaos/flow-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
+import { useCurrentActionScope, useRendererEnv } from '@nop-chaos/flux-react';
 import type { DesignerPageSchema } from './schemas.js';
-import { computeTreeModeDocument } from './designer-page-helpers.js';
 import { DesignerPageInner } from './designer-page-inner.js';
-
-function toComparableTreeGraphDocument(document: GraphDocument) {
-  return {
-    id: document.id,
-    kind: document.kind,
-    name: document.name,
-    version: document.version,
-    meta: document.meta,
-    nodes: document.nodes,
-    edges: document.edges,
-  };
-}
-
-function areRecordsEqual(
-  left: Record<string, unknown> | undefined,
-  right: Record<string, unknown> | undefined,
-): boolean {
-  if (left === right) {
-    return true;
-  }
-  if (!left || !right) {
-    return left === right;
-  }
-
-  const leftKeys = Object.keys(left);
-  const rightKeys = Object.keys(right);
-  if (leftKeys.length !== rightKeys.length) {
-    return false;
-  }
-
-  return leftKeys.every((key) => {
-    const leftValue = left[key];
-    const rightValue = right[key];
-    if (Array.isArray(leftValue) || Array.isArray(rightValue)) {
-      return Array.isArray(leftValue) && Array.isArray(rightValue) && areArraysEqual(leftValue, rightValue);
-    }
-    if (leftValue && rightValue && typeof leftValue === 'object' && typeof rightValue === 'object') {
-      return areRecordsEqual(
-        leftValue as Record<string, unknown>,
-        rightValue as Record<string, unknown>,
-      );
-    }
-    return Object.is(leftValue, rightValue);
-  });
-}
-
-function areArraysEqual(left: unknown[], right: unknown[]): boolean {
-  if (left === right) {
-    return true;
-  }
-  if (left.length !== right.length) {
-    return false;
-  }
-
-  return left.every((value, index) => {
-    const other = right[index];
-    if (Array.isArray(value) || Array.isArray(other)) {
-      return Array.isArray(value) && Array.isArray(other) && areArraysEqual(value, other);
-    }
-    if (value && other && typeof value === 'object' && typeof other === 'object') {
-      return areRecordsEqual(value as Record<string, unknown>, other as Record<string, unknown>);
-    }
-    return Object.is(value, other);
-  });
-}
-
-function areTreeGraphDocumentsEqual(left: GraphDocument, right: GraphDocument): boolean {
-  const comparableLeft = toComparableTreeGraphDocument(left);
-  const comparableRight = toComparableTreeGraphDocument(right);
-  return (
-    comparableLeft.id === comparableRight.id &&
-    comparableLeft.kind === comparableRight.kind &&
-    comparableLeft.name === comparableRight.name &&
-    comparableLeft.version === comparableRight.version &&
-    areRecordsEqual(comparableLeft.meta, comparableRight.meta) &&
-    areArraysEqual(comparableLeft.nodes, comparableRight.nodes) &&
-    areArraysEqual(comparableLeft.edges, comparableRight.edges)
-  );
-}
+import { TreeDocumentSession, createTreeSessionId } from './tree-session.js';
 
 function readDesignerResolvedProp<T>(
   props: RendererComponentProps<DesignerPageSchema>,
@@ -93,69 +16,144 @@ function readDesignerResolvedProp<T>(
   return props.props[key] as T | undefined;
 }
 
-export function TreeModeLayoutWrapper(
-  props: RendererComponentProps<DesignerPageSchema> & { config: DesignerConfig },
-) {
+function isActionSchemaInput(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    typeof (value as { action?: unknown }).action === 'string'
+  );
+}
+
+function formatTreeProjectionError(error: TreeProjectionError | undefined): string {
+  if (!error) {
+    return t('flux.flowDesigner.treeDocumentInvalid');
+  }
+  return `${error.code}${error.path ? ` @ ${error.path}` : ''}: ${error.message}`;
+}
+
+interface TreeModeLayoutWrapperProps extends RendererComponentProps<DesignerPageSchema> {
+  config: DesignerConfig;
+}
+
+export function TreeModeLayoutWrapper(props: TreeModeLayoutWrapperProps) {
   const { config } = props;
+  const env = useRendererEnv();
+  const actionScope = useCurrentActionScope();
   const inputTreeDocument = readDesignerResolvedProp<TreeDocument>(props, 'treeDocument');
-  const projectedTreeDocument = useMemo(
-    () =>
-      inputTreeDocument
-        ? computeTreeModeDocument(inputTreeDocument, config)
-        : { id: '', kind: '', name: '', version: '', nodes: [], edges: [] },
-    [config, inputTreeDocument],
+  const inputEpoch = readDesignerResolvedProp<number | undefined>(props, 'treeDocumentEpoch');
+  const ackSessionId = readDesignerResolvedProp<string | undefined>(props, 'treeDocumentAckSessionId');
+  const ackDispatchId = readDesignerResolvedProp<number | undefined>(props, 'treeDocumentAckDispatchId');
+  const changeAction = readDesignerResolvedProp<unknown>(props, 'treeDocumentChangeAction');
+
+  const [creationResult] = useState(() =>
+    inputTreeDocument ? createTreeDesignerCore(inputTreeDocument, config) : null,
   );
-  const [core] = useState(() =>
-    createDesignerCore(
-      projectedTreeDocument,
-      config,
-    ),
+  const core = creationResult?.ok ? creationResult.core : null;
+  const sessionRef = useRef<TreeDocumentSession | null>(null);
+  const [, setSessionVersion] = useState(0);
+  const reportHostIssue = useCallback(
+    (input: { message: string; error?: unknown; details?: Record<string, unknown> }) => {
+      reportRuntimeHostIssue({
+        env,
+        level: 'error',
+        message: input.message,
+        error: input.error,
+        phase: 'render',
+        details: input.details,
+      });
+    },
+    [env],
   );
-  const acceptedHostDocumentRef = useRef<GraphDocument>(projectedTreeDocument);
-  const treeOwner = useMemo(
-    () =>
-      inputTreeDocument
-        ? {
-            getTreeDocument: () => inputTreeDocument,
-            setTreeDocument: () => {
-              // Live tree mode is host-owned. Local edits flow through the owning prop/update path.
-            },
-            config,
-          }
-        : undefined,
-    [config, inputTreeDocument],
-  );
+
+  const sessionId = useMemo(() => createTreeSessionId(), []);
+  const normalizedChangeAction = useMemo(() => {
+    if (!isActionSchemaInput(changeAction)) {
+      return undefined;
+    }
+    return changeAction as import('@nop-chaos/flux-core').ActionSchema;
+  }, [changeAction]);
 
   useEffect(() => {
-    if (!inputTreeDocument) {
+    if (!core) {
       return;
     }
+    const session = new TreeDocumentSession(
+      {
+        core,
+        sessionId,
+        changeAction: normalizedChangeAction,
+        helpers: props.helpers,
+        designerScope: props.node.scope,
+        actionScope,
+        reportHostIssue,
+      },
+      {
+        onStateChange: () => setSessionVersion((value) => value + 1),
+      },
+    );
+    sessionRef.current = session;
 
-    const acceptedHostDocument = acceptedHostDocumentRef.current;
-    if (areTreeGraphDocumentsEqual(projectedTreeDocument, acceptedHostDocument)) {
+    const unsubscribe = core.subscribe((event) => {
+      if (event.type !== 'treeChanged') {
+        return;
+      }
+      session.enqueueTreeChange(event.tree, event.reason, event.commandType);
+    });
+
+    void session.dispatchNext();
+
+    return () => {
+      session.dispose();
+      sessionRef.current = null;
+      unsubscribe();
+    };
+  }, [core, sessionId, normalizedChangeAction, props.helpers, props.node.scope, actionScope, reportHostIssue]);
+
+  useEffect(() => {
+    const session = sessionRef.current;
+    if (!session || !inputTreeDocument) {
       return;
     }
-
-    const localDocument = core.getDocument();
-    if (!areTreeGraphDocumentsEqual(localDocument, acceptedHostDocument)) {
-      return;
+    const outcome = session.applyHostInput({
+      treeDocument: inputTreeDocument,
+      epoch: inputEpoch,
+      ackSessionId,
+      ackDispatchId,
+    });
+    if (outcome.error) {
+      reportHostIssue({
+        message: `Tree host input rejected: ${outcome.error}`,
+        details: { reason: outcome.error, sessionId },
+      });
     }
-
-    core.replaceDocument(projectedTreeDocument, inputTreeDocument);
-    acceptedHostDocumentRef.current = projectedTreeDocument;
-  }, [core, inputTreeDocument, projectedTreeDocument]);
+    if (outcome.outcome === 'epoch-replaced') {
+      queueMicrotask(() => setSessionVersion((value) => value + 1));
+    }
+  }, [inputTreeDocument, inputEpoch, ackSessionId, ackDispatchId, sessionId, reportHostIssue]);
 
   if (!inputTreeDocument) {
     return <div>{t('flux.flowDesigner.treeDocumentRequired')}</div>;
+  }
+
+  if (!creationResult) {
+    return <div>{t('flux.flowDesigner.treeDocumentRequired')}</div>;
+  }
+
+  if (!creationResult.ok) {
+    return (
+      <div role="alert" data-testid="designer-tree-error-surface">
+        {formatTreeProjectionError(creationResult.error)}
+      </div>
+    );
   }
 
   return (
     <DesignerPageInner
       rendererProps={props}
       config={config}
-      core={core}
+      core={core ?? undefined}
       treeDocument={inputTreeDocument}
-      treeOwner={treeOwner}
     />
   );
 }

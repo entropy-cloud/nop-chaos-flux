@@ -84,8 +84,14 @@ vi.mock('./designer-context', async () => {
     useDesignerContext: () => React.useContext(DesignerContext) ?? {
       config: { classAliases: undefined },
       dispatch: vi.fn(),
-      core: { getConfig: vi.fn() },
+      core: {
+        getConfig: () => ({ treeConfig: { layout: { direction: 'TB' } } }),
+      },
     },
+    useDesignerSnapshotSelector: (selector: any) =>
+      selector({
+        doc: { nodes: [], edges: [] },
+      }),
     useNodeTypeConfig: (typeId: string) => {
       if (typeId === 'task') {
         return {
@@ -510,7 +516,9 @@ describe('DesignerXyflowCanvasBridge', () => {
   it('restores focus to the canvas after deleting a node from the toolbar', async () => {
     document.body.innerHTML = '';
     const dispatch = vi.fn();
-    const core = { getConfig: vi.fn() } as any;
+    const core = {
+      getConfig: () => ({ treeConfig: { layout: { direction: 'TB' } } }),
+    } as any;
     const canvas = document.createElement('div');
     canvas.tabIndex = 0;
     canvas.setAttribute('role', 'region');

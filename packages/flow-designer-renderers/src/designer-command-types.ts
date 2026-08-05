@@ -54,6 +54,7 @@ export type DesignerCommand =
       targetPort?: string;
     }
   | { type: 'redo' }
+  | { type: 'relayoutTree' }
   | { type: 'restore' }
   | { type: 'save' }
   | { type: 'selectBranch'; nodeId: string; branchId: string | null }
@@ -80,6 +81,13 @@ export type DesignerCommand =
       sourceId: string;
       condNodeType: string;
       condData?: Record<string, unknown>;
+    }
+  | {
+      type: 'insertBranchChild';
+      ownerId: string;
+      branchId: string;
+      nodeType: string;
+      data?: Record<string, unknown>;
     };
 
 export interface DesignerCommandResult {

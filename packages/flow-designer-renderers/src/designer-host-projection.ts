@@ -1,5 +1,5 @@
 import type { FluxValueShape, HostProjectionContract } from '@nop-chaos/flux-core';
-import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
+import type { DesignerSnapshot, GraphEdge } from '@nop-chaos/flow-designer-core';
 
 const positionShape: FluxValueShape = {
   kind: 'object',
@@ -186,10 +186,31 @@ export const DESIGNER_HOST_PROJECTION: HostProjectionContract = {
   fields: DESIGNER_HOST_PROJECTION_FIELDS,
 };
 
+export function isTreeVirtualNodeId(nodeId: string): boolean {
+  return nodeId.startsWith('__fd_internal__/');
+}
+
+export function isTreeVirtualNodeType(type: string): boolean {
+  return type === '__fd-tree-empty-slot';
+}
+
+export function sanitizeProjectedEdgeForHost(edge: GraphEdge): GraphEdge {
+  const data = { ...edge.data };
+  for (const key of Object.keys(data)) {
+    if (key.startsWith('__fd')) {
+      delete data[key];
+    }
+  }
+  const next: GraphEdge = { ...edge, data };
+  if (next.sourcePort === undefined) delete next.sourcePort;
+  if (next.targetPort === undefined) delete next.targetPort;
+  return next;
+}
+
 export function buildDesignerHostProjection(input: { snapshot: DesignerSnapshot }) {
   const { snapshot } = input;
-  const nodeIds = snapshot.selection.selectedNodeIds;
-  const edgeIds = snapshot.selection.selectedEdgeIds;
+  const nodeIds = snapshot.selection.selectedNodeIds.filter((id) => !isTreeVirtualNodeId(id));
+  const edgeIds = snapshot.selection.selectedEdgeIds.filter((id) => !isTreeVirtualNodeId(id));
   const selectionKind = snapshot.activeBranch
     ? 'branch'
     : snapshot.activeNode
@@ -198,19 +219,40 @@ export function buildDesignerHostProjection(input: { snapshot: DesignerSnapshot 
         ? 'edge'
         : 'none';
 
-  const nodes = snapshot.doc.nodes.map((n) => ({
+  const businessNodes = snapshot.doc.nodes.filter(
+    (node) => !isTreeVirtualNodeId(node.id) && !isTreeVirtualNodeType(node.type),
+  );
+  const virtualIds = new Set(
+    snapshot.doc.nodes
+      .filter((node) => isTreeVirtualNodeId(node.id) || isTreeVirtualNodeType(node.type))
+      .map((node) => node.id),
+  );
+  const businessEdges = snapshot.doc.edges.filter(
+    (edge) => !virtualIds.has(edge.source) && !virtualIds.has(edge.target),
+  );
+
+  const nodes = businessNodes.map((n) => ({
     id: n.id,
     type: n.type,
     position: { x: n.position.x, y: n.position.y },
   }));
 
-  const edges = snapshot.doc.edges.map((e) => ({
+  const edges = businessEdges.map((e) => ({
     id: e.id,
     source: e.source,
     target: e.target,
     sourcePort: e.sourcePort,
     taskflowEdgeKind: (e.data?.taskflowEdgeKind as string | undefined),
   }));
+
+  const activeNodeId = snapshot.selection.activeNodeId;
+  const activeNode =
+    activeNodeId && !virtualIds.has(activeNodeId) ? snapshot.activeNode : null;
+  const activeEdgeId = snapshot.selection.activeEdgeId;
+  const activeEdge =
+    activeEdgeId && !virtualIds.has(activeEdgeId) && snapshot.activeEdge
+      ? sanitizeProjectedEdgeForHost(snapshot.activeEdge)
+      : null;
 
   return {
     doc: {
@@ -219,8 +261,8 @@ export function buildDesignerHostProjection(input: { snapshot: DesignerSnapshot 
       name: snapshot.doc.name,
       version: snapshot.doc.version,
       viewport: snapshot.doc.viewport,
-      nodeCount: snapshot.doc.nodes.length,
-      edgeCount: snapshot.doc.edges.length,
+      nodeCount: businessNodes.length,
+      edgeCount: businessEdges.length,
       nodes,
       edges,
     },
@@ -231,12 +273,12 @@ export function buildDesignerHostProjection(input: { snapshot: DesignerSnapshot 
       edgeIds,
       selectedNodeIds: nodeIds,
       selectedEdgeIds: edgeIds,
-      activeNodeId: snapshot.selection.activeNodeId,
-      activeEdgeId: snapshot.selection.activeEdgeId,
+      activeNodeId: activeNode?.id ?? null,
+      activeEdgeId: activeEdge?.id ?? null,
       activeBranchId: snapshot.selection.activeBranchId,
     },
-    activeNode: snapshot.activeNode,
-    activeEdge: snapshot.activeEdge,
+    activeNode,
+    activeEdge,
     activeBranch: snapshot.activeBranch,
     runtime: {
       canUndo: snapshot.canUndo,

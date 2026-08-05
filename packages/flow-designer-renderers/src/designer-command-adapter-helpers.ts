@@ -1,17 +1,9 @@
-import { simpleTreeLayout } from '@nop-chaos/flow-designer-core';
 import type {
   DesignerCore,
   GraphDocument,
   GraphNode,
-  TreeDocument,
 } from '@nop-chaos/flow-designer-core';
 import type { DesignerCommandReason, DesignerCommandResult } from './designer-command-types.js';
-
-export interface TreeCommandOwner {
-  getTreeDocument(): TreeDocument;
-  setTreeDocument(next: TreeDocument): void;
-  config: { documentMode?: 'graph' | 'tree' };
-}
 
 const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playground example.';
 const EDGE_MISSING_NODE_ERROR = 'Edges must connect existing nodes.';
@@ -121,13 +113,4 @@ export function inferAddNodeFailure(
     error: `Unable to add node: ${nodeType}`,
     reason: 'constraint',
   };
-}
-
-export function relayoutAfterTreeMutation(core: DesignerCore): void {
-  const config = core.getConfig();
-  if (config.documentMode !== 'tree' || !config.treeConfig) return;
-  const doc = core.getDocument();
-  const layoutedNodes = simpleTreeLayout(doc.nodes, doc.edges, config.treeConfig, config.nodeTypes);
-  const positions = new Map(layoutedNodes.map((node) => [node.id, node.position]));
-  core.layoutNodes(positions);
 }

@@ -18,7 +18,7 @@ const plusButtonHandlers = new WeakMap<
     sourceId: string,
     clientX: number,
     clientY: number,
-    sourceKind?: 'node' | 'branch-group' | 'merge',
+    sourceKind?: 'node' | 'branch-group' | 'merge' | 'slot',
   ) => void
 >();
 
@@ -28,7 +28,7 @@ export function registerDesignerPlusButtonHandler(
     sourceId: string,
     clientX: number,
     clientY: number,
-    sourceKind?: 'node' | 'branch-group' | 'merge',
+    sourceKind?: 'node' | 'branch-group' | 'merge' | 'slot',
   ) => void,
 ) {
   plusButtonHandlers.set(owner, handler);
@@ -44,7 +44,7 @@ export function invokeDesignerPlusButtonHandler(
   sourceId: string,
   clientX: number,
   clientY: number,
-  sourceKind?: 'node' | 'branch-group' | 'merge',
+  sourceKind?: 'node' | 'branch-group' | 'merge' | 'slot',
 ) {
   plusButtonHandlers.get(owner)?.(sourceId, clientX, clientY, sourceKind);
 }
@@ -53,7 +53,7 @@ interface PopoverState {
   sourceId: string;
   screenX: number;
   screenY: number;
-  sourceKind: 'node' | 'branch-group' | 'merge';
+  sourceKind: 'node' | 'branch-group' | 'merge' | 'slot';
 }
 
 export function DesignerCanvasContent(props: {
@@ -118,7 +118,7 @@ export function DesignerCanvasContent(props: {
       sourceId: string,
       clientX: number,
       clientY: number,
-      sourceKind: 'node' | 'branch-group' | 'merge' = 'node',
+      sourceKind: 'node' | 'branch-group' | 'merge' | 'slot' = 'node',
     ) => {
       setPopover({ sourceId, screenX: clientX, screenY: clientY, sourceKind });
     },
@@ -248,10 +248,15 @@ export function DesignerCanvasContent(props: {
     return map;
   }, [config.nodeTypes]);
 
+  const nodeTypeMap = useMemo(() => {
+    return core.getConfig().nodeTypes;
+  }, [core]);
+
   const canvas = renderDesignerCanvasBridge({
     snapshot,
     canvasConfig: config.canvas,
     nodeTypeSizeMap,
+    nodeTypeMap,
     pendingConnectionSourceId,
     pendingConnectionSourcePortId,
     reconnectingEdgeId,

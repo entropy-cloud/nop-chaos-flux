@@ -207,8 +207,33 @@ function renderHandle(
   );
 }
 
-export function renderPorts(ports: PortConfig[] | undefined, treeMode = false, options?: RenderPortsOptions) {
+export function renderPorts(
+  ports: PortConfig[] | undefined,
+  treeMode = false,
+  options?: RenderPortsOptions,
+  direction: 'TB' | 'LR' = 'TB',
+) {
   if (treeMode) {
+    if (direction === 'LR') {
+      return (
+        <>
+          {renderHandle({
+            portId: 'tree-in',
+            direction: 'input',
+            position: Position.Left,
+            className: '!-left-1.5 !top-1/2 !-translate-y-1/2',
+            testId: 'designer-handle-target-tree-in',
+          })}
+          {renderHandle({
+            portId: 'tree-out',
+            direction: 'output',
+            position: Position.Right,
+            className: '!-right-1.5 !top-1/2 !-translate-y-1/2',
+            testId: 'designer-handle-source-tree-out',
+          })}
+        </>
+      );
+    }
     return (
       <>
         {renderHandle({

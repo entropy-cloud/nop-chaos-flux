@@ -558,6 +558,7 @@ export const zhCN: Resource = {
       title: '流程设计器',
       autoLayout: '自动布局',
       treeDocumentRequired: '树模式需要 treeDocument 属性',
+      treeDocumentInvalid: 'Tree document is invalid',
       configRequired: '设计器需要 config 属性',
       documentRequired: '设计器需要 document 属性',
       flowJson: '流程 JSON',

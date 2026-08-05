@@ -1,5 +1,5 @@
 import type { Edge, Node } from '@xyflow/react';
-import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
+import type { DesignerSnapshot, NodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import type {
   DesignerFlowEdgeData,
   DesignerFlowNodeData,
@@ -20,11 +20,16 @@ function toFiniteNumber(value: unknown): number | undefined {
 function resolveNodeSize(
   node: DesignerSnapshot['doc']['nodes'][number],
   nodeTypeSize: { minWidth?: number; minHeight?: number } | undefined,
+  nodeType?: NodeTypeConfig,
+  isTreeMode?: boolean,
 ) {
   const data = (node.data ?? {}) as Record<string, unknown>;
   const size = (data.size ?? {}) as Record<string, unknown>;
 
+  const treeSize = isTreeMode ? nodeType?.tree?.layoutSize : undefined;
+
   const width =
+    treeSize?.width ??
     toFiniteNumber(data.width) ??
     toFiniteNumber(data.nodeWidth) ??
     toFiniteNumber(size.width) ??
@@ -32,6 +37,7 @@ function resolveNodeSize(
     220;
 
   const height =
+    treeSize?.height ??
     toFiniteNumber(data.height) ??
     toFiniteNumber(data.nodeHeight) ??
     toFiniteNumber(size.height) ??
@@ -45,11 +51,13 @@ export function createXyflowNodes(
   snapshot: DesignerSnapshot,
   nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>,
   documentMode?: 'graph' | 'tree',
+  nodeTypeMap?: Map<string, NodeTypeConfig>,
 ): Node[] {
   const branchFocusedNodeId = snapshot.activeBranch?.childId;
   const isTreeMode = documentMode === 'tree';
   return snapshot.doc.nodes.map((node) => {
-    const resolved = resolveNodeSize(node, nodeTypeSizeMap?.get(node.type));
+    const nodeType = nodeTypeMap?.get(node.type);
+    const resolved = resolveNodeSize(node, nodeTypeSizeMap?.get(node.type), nodeType, isTreeMode);
     return {
       ...(isTreeMode
         ? {
@@ -72,6 +80,8 @@ export function createXyflowNodes(
         typeId: node.type,
         __fdTreeMode: isTreeMode,
         __fdBranchFocused: branchFocusedNodeId === node.id,
+        width: resolved.width,
+        height: resolved.height,
       } satisfies DesignerFlowNodeData,
     };
   });
