@@ -6,6 +6,11 @@ import { Animator } from '../binding/animator.js';
 import { PointStore } from '../binding/point-store.js';
 import { ReverseIndex } from '../binding/reverse-index.js';
 import { DirtyCollector, RefreshPipeline } from '../binding/dirty-collector.js';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createDefaultEnv } from '@nop-chaos/flux-react';
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+const env = createDefaultEnv();
 
 function createBridge(options?: {
   onSymbolEvent?: Mock;
@@ -312,21 +317,25 @@ describe('always-animation startup for stateless/unbound symbols (plan 2026-08-0
   });
 
   it('reports expression evaluation errors through onError (dirty-collector error path coverage)', () => {
-    // 表达式点求值失败 → BindResolver.evaluate 进 !result.ok 分支 → reportError 上报（去重）
+    // I18 表达式一元化：表达式点经 flux compiler 编译/求值，失败上报 'expression evaluation failed'（去重）。
+    // `${unclosed.foo}` 在 flux-formula evaluate 阶段对 undefined 标识符取成员属性 → throw → evaluateFlux
+    // catch 吞为 undefined → syncExpressionPoint 上报。
     const errors: string[] = [];
     const pointStore = new PointStore();
-    // malformed `@{` 表达式触发 ExpressionEvaluator 解析失败（unclosed @{} point reference）
     pointStore.loadDeclarations([
-      { id: 'expr', source: 'expression', expression: '@{unclosed' },
+      { id: 'expr', source: 'expression', expression: '${unclosed.foo}' },
     ]);
-    const reverseIndex = new ReverseIndex([
-      { id: 'sym', type: 'scada-rect', x: 0, y: 0, bindings: { fill: { point: 'expr' } } },
-    ]);
+    const reverseIndex = new ReverseIndex(
+      [{ id: 'sym', type: 'scada-rect', x: 0, y: 0, bindings: { fill: { point: 'expr' } } }],
+      { compiler: expressionCompiler, env },
+    );
     const collector = new DirtyCollector({ scheduleTick: () => () => undefined });
     const pipeline = new RefreshPipeline({
       pointStore,
       reverseIndex,
       collector,
+      compiler: expressionCompiler,
+      env,
       onError: (msg) => errors.push(msg),
       scheduleTick: () => () => undefined,
     });

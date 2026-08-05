@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { BindResolver, applyScale, formatValue, isBindableProperty, isFormatTargetProperty } from './bind-resolver.js';
 import type { ScadaBinding, ScadaPrimitive } from '../serialization/config-types.js';
 
-describe('BindResolver 绑定解析 (I6.2)', () => {
+describe('BindResolver 绑定解析 (I6.2 / I18 flux)', () => {
   const values = new Map<string, ScadaPrimitive>([
     ['level', 55],
     ['mode', 'auto'],
@@ -13,9 +13,9 @@ describe('BindResolver 绑定解析 (I6.2)', () => {
     getPointValue: (pointId: string) => values.get(pointId),
     evaluate: (expression: string) => {
       if (expression.includes('unknown')) return undefined;
-      if (expression === "@{level} > 50 ? '#f00' : '#0f0'") return '#f00';
-      if (expression === "@{level} > 50 ? 'high' : 'low'") return 'high';
-      if (expression === "@{level} > 50 ? 'fast' : 'slow'") return 'fast';
+      if (expression === "${level > 50 ? '#f00' : '#0f0'}") return '#f00';
+      if (expression === "${level > 50 ? 'high' : 'low'}") return 'high';
+      if (expression === "${level > 50 ? 'fast' : 'slow'}") return 'fast';
       return undefined;
     },
   };
@@ -27,11 +27,11 @@ describe('BindResolver 绑定解析 (I6.2)', () => {
   });
 
   it('should resolve expression binding (expression 表达式绑定)', () => {
-    expect(resolver.resolveBinding({ expression: "@{level} > 50 ? '#f00' : '#0f0'" })).toBe('#f00');
+    expect(resolver.resolveBinding({ expression: "${level > 50 ? '#f00' : '#0f0'}" })).toBe('#f00');
   });
 
   it('should prioritize point over expression when both present', () => {
-    expect(resolver.resolveBinding({ point: 'level', expression: "1 + 1" })).toBe(55);
+    expect(resolver.resolveBinding({ point: 'level', expression: '${1 + 1}' })).toBe(55);
   });
 
   it('should apply map value→property mapping (值→属性映射)', () => {
@@ -46,7 +46,7 @@ describe('BindResolver 绑定解析 (I6.2)', () => {
   });
 
   it('should apply scale expression via evaluator', () => {
-    expect(resolver.resolveBinding({ point: 'speed', scale: { expression: "@{level} > 50 ? 'fast' : 'slow'" } })).toBe(
+    expect(resolver.resolveBinding({ point: 'speed', scale: { expression: "${level > 50 ? 'fast' : 'slow'}" } })).toBe(
       'fast',
     );
   });
@@ -65,7 +65,7 @@ describe('BindResolver 绑定解析 (I6.2)', () => {
 
   it('should return undefined for unknown points or failed expressions (skip + 不崩溃)', () => {
     expect(resolver.resolveBinding({ point: 'ghost' })).toBeUndefined();
-    expect(resolver.resolveBinding({ expression: '@{unknown} > 1 ? 1 : 0' })).toBeUndefined();
+    expect(resolver.resolveBinding({ expression: '${unknown > 1 ? 1 : 0}' })).toBeUndefined();
   });
 
   it('should skip unset values', () => {
@@ -93,9 +93,9 @@ describe('applyScale (I6.2)', () => {
     expect(applyScale(10, { b: 5 })).toBe(15);
     expect(applyScale('abc', { k: 2 })).toBe('abc');
     expect(applyScale(10, undefined)).toBe(10);
-    expect(applyScale(10, { expression: '@{x} * 2' }, () => 7)).toBe(7);
-    expect(applyScale(10, { expression: '@{x}' })).toBe(10);
-    expect(applyScale(10, { expression: '@{x}' }, () => undefined)).toBe(10);
+    expect(applyScale(10, { expression: '${x * 2}' }, () => 7)).toBe(7);
+    expect(applyScale(10, { expression: '${x}' })).toBe(10);
+    expect(applyScale(10, { expression: '${x}' }, () => undefined)).toBe(10);
   });
 });
 

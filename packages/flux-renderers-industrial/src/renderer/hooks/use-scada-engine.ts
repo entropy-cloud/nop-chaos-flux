@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import type { ExpressionCompiler, RendererEnv } from '@nop-chaos/flux-core';
 import { ScadaCanvasEngine } from '../../engine/scada-engine.js';
 import { PointStore } from '../../binding/point-store.js';
 import { ReverseIndex } from '../../binding/reverse-index.js';
@@ -35,6 +36,13 @@ export interface UseScadaEngineArgs {
   getPointValuesFor?: (symbolId: string) => Record<string, unknown> | undefined;
   onEngineError?: (code: string, message: string) => void;
   /**
+   * 平台表达式编译器（I18 表达式一元化）：传入 pipeline + reverseIndex 供
+   * binding.expression / scale.expression / source:'expression' 点经 flux compiler 求值。
+   */
+  expressionCompiler?: ExpressionCompiler;
+  /** flux 求值环境（与 expressionCompiler 配对）。 */
+  env?: RendererEnv;
+  /**
    * 用户侧图元事件处理器异常隔离上报消费者（plan 2026-08-04-2242-1 Phase 2）：
    * engine `EventBridge.safeRun` 顶层 try/catch + `reportHandlerError` 去重后的上报出口，
    * 经 `latest` ref 转发（对齐 `onSymbolEvent`/`getPointValuesFor` 转发模式）。不升级画布 status（§8.1）。
@@ -47,6 +55,8 @@ function createBindingDomain(
   pointStore: PointStore,
   reverseIndex: ReverseIndex,
   collector: DirtyCollector,
+  expressionCompiler?: ExpressionCompiler,
+  env?: RendererEnv,
 ): { pipeline: RefreshPipeline; animator: Animator } {
   const frameRequest = { current: () => undefined as void };
   const animator = new Animator({
@@ -57,6 +67,8 @@ function createBindingDomain(
     pointStore,
     reverseIndex,
     collector,
+    compiler: expressionCompiler,
+    env,
     getStates: (symbolId) => engine.getSymbolDeclarations(symbolId)?.states,
     getAnimations: (symbolId) => engine.getSymbolDeclarations(symbolId)?.animations,
     // plan 2026-08-04-1558-2 Phase 2：首次同步遍历全部图元启动 when:'always' 动画
@@ -132,7 +144,12 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
     if (!container) return;
 
     const pointStore = new PointStore();
-    const reverseIndex = new ReverseIndex();
+    const reverseIndex = new ReverseIndex(
+      undefined,
+      latest.current.expressionCompiler && latest.current.env
+        ? { compiler: latest.current.expressionCompiler, env: latest.current.env }
+        : undefined,
+    );
     const collector = new DirtyCollector();
     let engine: ScadaCanvasEngine;
     try {
@@ -153,7 +170,14 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
       latest.current.onEngineError?.('engine-create-failed', errorMessage(error));
       return;
     }
-    const { pipeline, animator } = createBindingDomain(engine, pointStore, reverseIndex, collector);
+    const { pipeline, animator } = createBindingDomain(
+      engine,
+      pointStore,
+      reverseIndex,
+      collector,
+      latest.current.expressionCompiler,
+      latest.current.env,
+    );
     const applyAttrs: ApplyAttrs = (attrs) => engine.applyAttrs(attrs);
     const next: ScadaCanvasRuntime = { engine, pointStore, reverseIndex, collector, pipeline, animator, applyAttrs };
     runtimeRef.current = next;
@@ -233,7 +257,14 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
       current.pipeline.destroy();
       current.animator.destroy();
       const collector = new DirtyCollector();
-      const { pipeline, animator } = createBindingDomain(current.engine, current.pointStore, current.reverseIndex, collector);
+      const { pipeline, animator } = createBindingDomain(
+        current.engine,
+        current.pointStore,
+        current.reverseIndex,
+        collector,
+        latest.current.expressionCompiler,
+        latest.current.env,
+      );
       // P1-2 首帧刷新：绑定域重建后无条件立即触发一次首同步（`synced=false` 全量路径，
       // 静态/表达式点绑定/状态色/when:'always' 动画首帧即应用）。触发点内置在重建之后、
       // setRuntime 之前——config-sync 闭包持有的 runtime 是旧对象，外部触发会打到已销毁的

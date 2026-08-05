@@ -5,8 +5,8 @@ import type { ScadaPointDeclaration } from '../serialization/config-types.js';
 const declarations = (overrides: Array<Partial<ScadaPointDeclaration> & { id: string }> = []): ScadaPointDeclaration[] => [
   { id: 'v1', source: 'static', value: 10 },
   { id: 'v2', source: 'static', value: 'on' },
-  { id: 'v3', source: 'expression', expression: '@{v1} * 2', init: 0 },
-  { id: 'v4', source: 'flux', flux: '$tank.level', init: 5 },
+  { id: 'v3', source: 'expression', expression: '${v1 * 2}', init: 0 },
+  { id: 'v4', source: 'flux', flux: '${tank.level}', init: 5 },
   ...overrides,
 ] as ScadaPointDeclaration[];
 
@@ -31,7 +31,7 @@ describe('PointStore 三源声明加载 (I6.1)', () => {
   });
 
   it('should leave expression/flux points undefined when no init is declared', () => {
-    store.loadDeclarations([{ id: 'e1', source: 'expression', expression: '@{v1} + 1' }]);
+    store.loadDeclarations([{ id: 'e1', source: 'expression', expression: '${v1 + 1}' }]);
     expect(store.getPointValue('e1')).toBeUndefined();
   });
 
@@ -143,14 +143,14 @@ describe('PointStore setPointValue/setPointValues (I6.1)', () => {
 
   it('should not apply scale to expression-sourced points (computed value is final)', () => {
     store.loadDeclarations([
-      { id: 'e1', source: 'expression', expression: '@{v1} * 2', scale: { k: 2 }, init: 0 },
+      { id: 'e1', source: 'expression', expression: '${v1 * 2}', scale: { k: 2 }, init: 0 },
     ]);
     store.setPointValue('e1', 8);
     expect(store.getPointValue('e1')).toBe(8);
   });
 
   it('should leave expression-scale values raw (evaluator 层处理)', () => {
-    store.loadDeclarations([{ id: 'es', source: 'static', value: 0, scale: { expression: '@{v1} + 1' } }]);
+    store.loadDeclarations([{ id: 'es', source: 'static', value: 0, scale: { expression: '${v1 + 1}' } }]);
     store.setPointValue('es', 3);
     expect(store.getPointValue('es')).toBe(3);
   });

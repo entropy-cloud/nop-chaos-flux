@@ -1,107 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
-  getIn,
   type ExpressionCompiler,
   type RendererEnv,
-  type ScopeRef,
-  type ScopeDependencySet,
 } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import type { ScadaConfig, ScadaPrimitive } from '../../serialization/config-types.js';
 import { PointStore } from '../../binding/point-store.js';
+import {
+  createPrivateEvalScope,
+  extractExpressionDepsViaProbe,
+  isScadaPrimitive,
+  type ExpressionDepsProbeResult,
+} from '../../binding/flux-eval.js';
 import { errorMessage } from '../scada-errors.js';
 import { RefreshPipeline, type ApplyAttrs } from '../../binding/dirty-collector.js';
 
-const FLUX_REF_PATTERN = /\$([a-zA-Z_][a-zA-Z0-9_-]*)(\.[a-zA-Z0-9_-]+)*/g;
-
-/** `$xxx`/`$xxx.yyy` 引用提取（`$`=flux scope 前缀，与 `@{pointId}` 组态点表引用前缀隔离）。 */
-export function extractFluxRefs(source: string): string[] {
-  const refs: string[] = [];
-  const pattern = new RegExp(FLUX_REF_PATTERN.source, FLUX_REF_PATTERN.flags);
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(source)) !== null) {
-    refs.push(match[0].slice(1));
-  }
-  return refs;
-}
-
 /**
- * 宽容 probe scope 数据（plan 2026-08-04-1558-2 Phase 3 m2-r2）：任何路径访问返回嵌套 proxy，
- * 让复杂表达式（`${a.b + 1}` 类）在空 scope 下也能完成求值（属性链不抛 TypeError），使平台
- * `evaluateWithState` 的依赖收集可达。proxy 通过 `valueOf`/`toString`/`Symbol.toPrimitive`
- * 兜底为 0/空串，算术与模板运算返回数值/字符串而不抛错。
+ * 复杂表达式经平台依赖收集产出订阅路径：compile + probe 求值 + 读
+ * `state.root.dependencies.paths`。详见 `binding/flux-eval.ts`（I18 表达式一元化提取）。
  */
-function createTolerantProbeScopeData(): Record<string, unknown> {
-  const handler: ProxyHandler<Record<string, unknown>> = {
-    get(_target, property) {
-      if (typeof property !== 'string') return undefined;
-      if (property === '__proto__' || property === 'constructor' || property === 'prototype') return undefined;
-      if (property === 'valueOf') return () => 0;
-      if (property === 'toString') return () => '';
-      if (property === 'length') return 0;
-      return new Proxy({} as Record<string, unknown>, handler);
-    },
-    has() {
-      return true;
-    },
-  };
-  return new Proxy({} as Record<string, unknown>, handler);
-}
-
-/**
- * 复杂表达式经平台依赖收集产出订阅路径（plan 2026-08-04-1558-2 Phase 3 WD-2）：
- * compile + probe 求值 + 读 `state.root.dependencies.paths`。probe scope 宽容，使空 scope
- * 下依赖收集可达；求值抛错（不可恢复的表达式错误）返回空集（上层按声明跳过 + 去重上报 P1-8）。
- * 禁自研表达式解析——依赖路径产出完全经平台 collector。
- *
- * plan 2026-08-05-0653-4 C4（multi-audit P2-6）：返回类型由 `string[]` 改为 discriminated result
- * ——compile/createState/evaluate 失败分别归 `compile-failed`/`create-state-failed`/`evaluate-failed`
- * （非 deps-empty，由 bridge effect 的 `flux-compile-failed`/`flux-evaluate-failed` 真报覆盖）；
- * probe 成功但 deps 不可用（root 非 leaf-state、deps 缺失、wildcard、空 paths）归 `deps-empty`；
- * probe 成功且 paths 非空归 `ok`。消除旧实现「全部失败塌缩为 `[]`」导致的语法坏表达式双报
- * （`flux-deps-empty` 误报 + `flux-compile-failed` 真报）。
- */
-export type ExpressionDepsProbeResult =
-  | { status: 'ok'; paths: string[] }
-  | { status: 'compile-failed' }
-  | { status: 'create-state-failed' }
-  | { status: 'evaluate-failed' }
-  | { status: 'deps-empty' };
-
-export function extractExpressionDepsViaProbe(
-  compiler: ExpressionCompiler,
-  env: RendererEnv,
-  expression: string,
-): ExpressionDepsProbeResult {
-  let compiled: ReturnType<ExpressionCompiler['compileValue']>;
-  try {
-    compiled = compiler.compileValue(expression);
-  } catch {
-    return { status: 'compile-failed' };
-  }
-  // 静态表达式（无 scope 读）→ ok 空集（与 deps-empty 区分：静态表达式不触发诊断）
-  if (compiled.kind !== 'dynamic') return { status: 'ok', paths: [] };
-  let state: ReturnType<ExpressionCompiler['createState']>;
-  try {
-    state = compiler.createState(compiled);
-  } catch {
-    return { status: 'create-state-failed' };
-  }
-  const probeScope = createPrivateEvalScope(createTolerantProbeScopeData());
-  try {
-    compiler.evaluateWithState(compiled, probeScope, env, state);
-  } catch {
-    return { status: 'evaluate-failed' };
-  }
-  const root = state.root;
-  if (root.kind !== 'leaf-state') return { status: 'deps-empty' };
-  const deps: ScopeDependencySet | undefined = root.dependencies;
-  // probe 成功但 deps 不可用（缺失、wildcard、空 paths）→ deps-empty（订阅路径收集失败的真诊断）
-  if (!deps || deps.wildcard) return { status: 'deps-empty' };
-  const paths = [...deps.paths];
-  if (paths.length === 0) return { status: 'deps-empty' };
-  return { status: 'ok', paths };
-}
+export { extractExpressionDepsViaProbe, type ExpressionDepsProbeResult };
 
 export interface ExtractFluxScopePathsOptions {
   compiler?: ExpressionCompiler;
@@ -126,8 +44,11 @@ export interface AnalyzeFluxSubscriptionsResult {
 
 /**
  * config 扫描 → 订阅路径集 + deps-empty 嫌疑表达式集（plan 2026-08-05-0325-1）。
- * 复杂表达式分支复用 `extractExpressionDepsViaProbe`：probe 返 `[]` 且 `expressionReadsScope`
- * 为真时把表达式片段入 `depsEmptyExpressions`（供桥接层一次性上报 `flux-deps-empty`）。
+ *
+ * I18 表达式一元化（plan 2026-08-05-2129-1 Phase 3）：仅认 `${expr}` 平台语法。`$xxx` 简写与
+ * 裸路径分支移除——`analyzeFluxSubscriptions` 仅扫描 `${...}` 入口，复杂表达式分支复用
+ * `extractExpressionDepsViaProbe`：probe 返 `[]` 且 `expressionReadsScope` 为真时把表达式片段入
+ * `depsEmptyExpressions`（供桥接层一次性上报 `flux-deps-empty`）。
  */
 export function analyzeFluxSubscriptions(
   config: ScadaConfig,
@@ -140,48 +61,61 @@ export function analyzeFluxSubscriptions(
   for (const decl of config.variables ?? []) {
     if (decl.source !== 'flux' || typeof decl.flux !== 'string') continue;
     const source = decl.flux.trim();
-    const refs = extractFluxRefs(source);
-    if (refs.length > 0) {
-      for (const ref of refs) paths.add(ref);
+    // I18：仅认 `${expr}` 入口。`$xxx` 简写不再支持（迁移至 `${xxx}`）。
+    const direct = /^\$\{([^{}]+)\}$/.exec(source);
+    if (!direct) {
+      // 非 `${...}` 形态：经 normalizeFluxExpression 兜底为 `${<source>}`，再走平台依赖收集。
+      // 这覆盖 bare-path（如 `analog.temp`）与未包裹表达式（如 `a + b`）。
+      const wrapped = normalizeFluxExpression(source);
+      if (compiler && env) {
+        collectComplexExpressionDeps(compiler, env, wrapped, paths, depsEmptyExpressions);
+      }
       continue;
     }
-    const direct = /^\$\{([^{}]+)\}$/.exec(source);
-    const candidate = (direct?.[1] ?? source).trim();
+    const candidate = direct[1].trim();
     if (/^[a-zA-Z_][a-zA-Z0-9_.-]*$/.test(candidate)) {
       paths.add(candidate);
       continue;
     }
     // 复杂表达式（含运算符/函数调用）→ 平台依赖收集（仅当 compiler/env 提供）
-    if (compiler && env && candidate !== source) {
-      const expression = normalizeFluxExpression(source);
-      // plan 2026-08-05-0653-4 C4：probe 返 discriminated result。仅 `deps-empty` 入 depsEmptyExpressions
-      // （probe 成功但 deps 不可用）；`ok` 取 paths；compile/createState/evaluate 失败跳过（由 bridge
-      // effect 的 `flux-compile-failed`/`flux-evaluate-failed` 真报覆盖，不再产 `flux-deps-empty` 误报）。
-      const result = extractExpressionDepsViaProbe(compiler, env, expression);
-      if (result.status === 'ok') {
-        for (const dep of result.paths) {
-          if (dep !== '*' && dep.length > 0) paths.add(dep);
-        }
-      } else if (result.status === 'deps-empty') {
-        // deps-empty 仅在表达式确实读 scope 时入诊断集（保留 expressionReadsScope 启发式：
-        // 排除纯字面量/纯全局名表达式，避免 `${1+2}`/`${Math.PI}` 类误报）
-        if (expressionReadsScope(candidate)) {
-          depsEmptyExpressions.push(expression);
-        }
-      }
-      // compile-failed / create-state-failed / evaluate-failed → 跳过（bridge effect 真报覆盖）
+    if (compiler && env) {
+      collectComplexExpressionDeps(compiler, env, source, paths, depsEmptyExpressions);
     }
   }
   return { paths: [...paths].sort(), depsEmptyExpressions };
 }
 
+/** 复杂表达式经平台依赖收集产出订阅路径；deps-empty 入诊断集（plan 2026-08-05-0653-4 C4 discriminated result）。 */
+function collectComplexExpressionDeps(
+  compiler: ExpressionCompiler,
+  env: RendererEnv,
+  expression: string,
+  paths: Set<string>,
+  depsEmptyExpressions: string[],
+): void {
+  const result = extractExpressionDepsViaProbe(compiler, env, expression);
+  if (result.status === 'ok') {
+    for (const dep of result.paths) {
+      if (dep !== '*' && dep.length > 0) paths.add(dep);
+    }
+  } else if (result.status === 'deps-empty') {
+    // deps-empty 仅在表达式确实读 scope 时入诊断集（保留 expressionReadsScope 启发式：
+    // 排除纯字面量/纯全局名表达式，避免 `${1+2}`/`${Math.PI}` 类误报）
+    const inner = /^\$\{([^{}]+)\}$/.exec(expression)?.[1].trim() ?? expression;
+    if (expressionReadsScope(inner)) {
+      depsEmptyExpressions.push(expression);
+    }
+  }
+  // compile-failed / create-state-failed / evaluate-failed → 跳过（bridge effect 真报覆盖）
+}
+
 /**
- * config 扫描 → `$xxx` 引用集 → useScopeSelector paths 数组（精细化失效，漏订阅/过订阅由单测固化）。
- * 覆盖三种写法：`$analog.temp`（简写）、`${analog.temp}`（平台表达式纯路径）、裸路径 `analog.temp``。
+ * config 扫描 → 订阅路径集 → useScopeSelector paths 数组（精细化失效，漏订阅/过订阅由单测固化）。
  *
  * plan 2026-08-04-1558-2 Phase 3 WD-2：复杂表达式（`${analog.temp + 1}` 类）当 `compiler`/`env`
- * 选项提供时经平台依赖收集产出订阅路径；不提供时回退到既有文本扫描（仅识别纯路径，复杂表达式无 path）。
+ * 选项提供时经平台依赖收集产出订阅路径；不提供时回退到纯路径扫描（仅识别 `${path}` 纯路径）。
  * plan 2026-08-05-0325-1：降为 `analyzeFluxSubscriptions` 的薄包装（仅返 `.paths`，保留既有签名/导出/测试）。
+ * plan 2026-08-05-2129-1 Phase 3：`$xxx` 简写移除，仅认 `${expr}`。
  */
 export function extractFluxScopePaths(
   config: ScadaConfig,
@@ -190,44 +124,19 @@ export function extractFluxScopePaths(
   return analyzeFluxSubscriptions(config, options).paths;
 }
 
-/** scada `$xxx` 简写 → 平台 `${...}` 表达式语法（flux-formula/flux-compiler 求值入口）。 */
+/**
+ * I18 表达式一元化（plan 2026-08-05-2129-1 Phase 3）：规范入口仅接受 `${` 开头。
+ * `$xxx` 简写剥离/裸路径包裹分支移除——`$xxx` 视为未知标识符（求值 undefined，dollar-without-brace
+ * Failure Path）；裸路径仍经 `${<path>}` 包裹以兼容（normalize 仅做兜底包裹，不做 `$` 剥离）。
+ */
 export function normalizeFluxExpression(flux: string): string {
   const trimmed = flux.trim();
   if (trimmed.startsWith('${')) return trimmed;
-  return `\${${trimmed.replace(/^\$/, '')}}`;
+  return `\${${trimmed}}`;
 }
 
-/**
- * `ScadaPrimitive` 类型守卫（plan 2026-08-04-2243-2 W4）：flux 桥接与 host 句柄
- * （`component:setPointValue`）共用，确保进入点表的值恒为 number|boolean|string，
- * 非 primitive 值在边界处被拒绝（不静默 corrupt 点表）。
- */
-export function isScadaPrimitive(value: unknown): value is ScadaPrimitive {
-  return typeof value === 'number' || typeof value === 'boolean' || typeof value === 'string';
-}
-
-/**
- * 私有求值子 scope（design-data-binding.md §9.1）：注入点表上下文 + scope 快照，
- * 非 schema-visible scope（INV-4 边界），仅供 flux 表达式编译求值读取。
- */
-export function createPrivateEvalScope(data: Record<string, unknown>): ScopeRef {
-  return {
-    id: 'scada-flux-eval',
-    path: '$',
-    value: data,
-    get(path: string) {
-      return getIn(data, path);
-    },
-    has(path: string) {
-      return getIn(data, path) !== undefined;
-    },
-    readOwn: () => data,
-    readVisible: () => data,
-    materializeVisible: () => data,
-    update: () => undefined,
-    merge: () => undefined,
-  };
-}
+/** `ScadaPrimitive` 类型守卫 + 私有求值 scope（I18 提取至 `binding/flux-eval.ts`）。 */
+export { isScadaPrimitive, createPrivateEvalScope };
 
 export interface ScadaPointsBridgeRuntime {
   pointStore: PointStore;
@@ -339,6 +248,15 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
       );
     }
   }, [depsEmptyExpressions, reportOnce]);
+
+  // I18 表达式一元化：把 scope 快照推给 pipeline，供 binding.expression / scale.expression 求值读取 scope 成员。
+  // pipeline 在 scope 变化时（scopeDirty）全量重算绑定，覆盖直连 scope 绑定（无点表）场景。
+  // enabled 门控：disabled 时桥接整体不工作（与主 effect 一致），不向 pipeline 推 scope 也不请求帧。
+  useEffect(() => {
+    if (!runtime || !enabled) return;
+    runtime.pipeline.updateScopeData(scopeData);
+    runtime.pipeline.requestRender(runtime.applyAttrs);
+  }, [scopeData, runtime, enabled]);
 
   useEffect(() => {
     if (!enabled || !config || !runtime) return;

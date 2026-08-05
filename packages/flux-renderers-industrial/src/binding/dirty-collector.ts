@@ -1,9 +1,10 @@
+import { getIn, type ExpressionCompiler, type RendererEnv } from '@nop-chaos/flux-core';
 import type { ScadaAnimation, ScadaPrimitive, ScadaStateDeclaration } from '../serialization/config-types.js';
 import type { ScadaSymbolProps, ScadaSymbolStylePatch } from '../symbols/symbol-types.js';
 import { EventHub, PointStore, type Unsubscribe } from './point-store.js';
 import { ReverseIndex, type SymbolBindingTarget } from './reverse-index.js';
 import { BindResolver } from './bind-resolver.js';
-import { ExpressionEvaluator } from './expression-evaluator.js';
+import { isScadaPrimitive, extractExpressionDepsViaProbe } from './flux-eval.js';
 import { resolveState, type ResolveStateOptions } from './value-to-state.js';
 import { Animator } from './animator.js';
 
@@ -112,10 +113,52 @@ export class DirtyCollector {
 
 const MAX_EXPRESSION_ITERATIONS = 10000;
 
+/**
+ * 表达式点环检测信号（I18 binding-cycle Failure Path）：求值期遇 re-enter 同一点时抛出。
+ * `evaluateFlux` 的 catch 仅吞 compile/evaluate 异常返回 undefined；本类型经 `findCircularDependencyError`
+ * 守卫后重新抛出**原始** `CircularDependencyError`（沿 `Error.cause` 链解包），使环错误能上传到
+ * `syncExpressionPoint` 的 try/catch → `reportError(pointId, 'circular dependency involving point: ...')`，
+ * 保留既有失败路径语义（受影响图元保持上一有效值）。
+ *
+ * 必须解包到原始 `CircularDependencyError` 而非保留包装层——flux-formula `formulaCompiler.exec` 把求值期
+ * 异常包装成 `Error('Expression evaluation failed for: ...')`（cause=原始）后重新抛出，多层嵌套求值会
+ * 叠加多层包装。直接抛包装层会使 `error.message` 变成 'Expression evaluation failed for: ...'，
+ * 失去 binding-cycle 语义；解包后 `error.message` = 'circular dependency involving point: ...'，与
+ * Failure Path 表述一致。
+ */
+export class CircularDependencyError extends Error {
+  readonly isCircularDependency = true;
+  constructor(pointId: string) {
+    super(`circular dependency involving point: ${pointId}`);
+    this.name = 'CircularDependencyError';
+  }
+}
+
+export function findCircularDependencyError(error: unknown): CircularDependencyError | undefined {
+  let current: unknown = error;
+  let depth = 0;
+  while (current && typeof current === 'object' && depth < 10) {
+    if (current instanceof CircularDependencyError) return current;
+    const cause = (current as { cause?: unknown }).cause;
+    if (cause === current || cause === undefined) break;
+    current = cause;
+    depth++;
+  }
+  return undefined;
+}
+
 export interface RefreshPipelineOptions {
   pointStore: PointStore;
   reverseIndex: ReverseIndex;
   collector: DirtyCollector;
+  /**
+   * 平台表达式编译器（I18 表达式一元化）：binding.expression / scale.expression /
+   * source:'expression' 点经 flux compiler 求值。缺省时表达式面不工作（仅点表绑定）。
+   * 由 bridge 层在构造 pipeline 时注入（`useScadaPointsBridge` 持 expressionCompiler）。
+   */
+  compiler?: ExpressionCompiler;
+  /** flux 求值环境（与 compiler 配对，由 bridge 层注入）。 */
+  env?: RendererEnv;
   /** 图元状态声明查询（图元节点 `states` 字段）。 */
   getStates?: (symbolId: string) => ScadaStateDeclaration | undefined;
   /** 图元级动画声明查询（图元节点 `animations` 字段，`when: 'always' | { state }`）。 */
@@ -144,7 +187,6 @@ export interface RefreshPipelineEvents {
  * 样式覆盖 patch 汇入帧内脏收集 → 帧尾 `engine.applyAttrs` 单次批量写（A5 合帧义务）。
  */
 export class RefreshPipeline {
-  private readonly evaluator: ExpressionEvaluator;
   private readonly resolver: BindResolver;
   private readonly scheduleTick: TickScheduler;
   private readonly maxExpressionIterations: number;
@@ -152,6 +194,10 @@ export class RefreshPipeline {
   private readonly lastDeps = new Map<string, string[]>();
   private readonly lastState = new Map<string, string>();
   private readonly lastError = new Set<string>();
+  private readonly compiledCache = new Map<string, ReturnType<ExpressionCompiler['compileValue']>>();
+  private readonly active = new Set<string>();
+  private scopeData: Record<string, unknown> = {};
+  private scopeDirty = false;
   private synced = false;
   private frameScheduled = false;
   private cancelFrame: (() => void) | undefined;
@@ -162,30 +208,16 @@ export class RefreshPipeline {
   constructor(private readonly options: RefreshPipelineOptions) {
     this.scheduleTick = createTickScheduler(options.scheduleTick);
     this.maxExpressionIterations = options.maxExpressionIterations ?? MAX_EXPRESSION_ITERATIONS;
-    this.evaluator = new ExpressionEvaluator({
-      getPointValue: (pointId) => this.resolvePointValue(pointId),
-      hasPoint: (pointId) => this.options.pointStore.has(pointId),
-      getPointExpression: (pointId) => {
-        const state = this.options.pointStore.getPointState(pointId);
-        return state?.declaration.source === 'expression' ? state.declaration.expression : undefined;
-      },
-    });
     this.resolver = new BindResolver({
       getPointValue: (pointId) => this.options.pointStore.getPointValue(pointId),
-      evaluate: (expression) => {
-        const result = this.evaluator.evaluate(expression);
-        if (!result.ok) {
-          this.reportError(expression, result.error);
-          return undefined;
-        }
-        this.lastError.delete(expression);
-        return result.value;
-      },
+      evaluate: (expression) => this.evaluateBindingExpression(expression),
     });
   }
 
-  getEvaluator(): ExpressionEvaluator {
-    return this.evaluator;
+  /** bridge 层注入 scope 快照（I18 表达式一元化）：供 binding/scale 表达式求值读取 scope 成员。 */
+  updateScopeData(data: Record<string, unknown>): void {
+    this.scopeData = data;
+    this.scopeDirty = true;
   }
 
   getResolver(): BindResolver {
@@ -200,6 +232,8 @@ export class RefreshPipeline {
   flushFrame(applyAttrs: ApplyAttrs): boolean {
     // plan 2026-08-04-2243-1 Phase 1 L1：销毁门控——destroy 后 flushFrame no-op 返 false。
     if (this.destroyed) return false;
+    const wasScopeDirty = this.scopeDirty;
+    this.scopeDirty = false;
     let changed: string[];
     if (!this.synced) {
       this.synced = true;
@@ -207,12 +241,22 @@ export class RefreshPipeline {
         this.syncExpressionPoint(pointId);
       }
       this.options.pointStore.drainDirtyPointIds();
-      changed = this.options.pointStore.pointIds();
+      // I18：首次同步含 reverse-index point refs（直连 scope 绑定无点表但有 reverse-index 条目）。
+      changed = [
+        ...new Set([
+          ...this.options.pointStore.pointIds(),
+          ...this.options.reverseIndex.pointIds(),
+        ]),
+      ];
       // SL-1/m1：首次同步启动全部 when:'always' 动画（含无 states/无绑定图元），在脏检查早退之前——
       // 无点/无绑定图元的 always 动画不依赖脏点驱动，否则被下方 `changed.length === 0` 早退跳过。
       this.startAlwaysAnimations();
     } else {
       changed = this.options.pointStore.drainDirtyPointIds();
+      // I18：scope 变化时全量重算绑定（直连 scope 绑定不依赖脏点）。
+      if (wasScopeDirty && changed.length === 0) {
+        changed = this.options.reverseIndex.pointIds();
+      }
     }
     if (changed.length === 0 && !this.options.collector.hasPending()) return false;
     this.recomputeExpressionPoints(changed);
@@ -242,7 +286,8 @@ export class RefreshPipeline {
     this.cancelFrame = undefined;
     this.frameScheduled = false;
     this.options.collector.destroy();
-    this.evaluator.clear();
+    this.compiledCache.clear();
+    this.active.clear();
     this.lastDeps.clear();
     this.lastState.clear();
     this.lastError.clear();
@@ -272,17 +317,6 @@ export class RefreshPipeline {
     }
   }
 
-  /** 表达式点递归求值（经 evaluator 上下文注入）：环检测（active 栈）+ 求值结果回写 store。 */
-  private resolvePointValue(pointId: string): ScadaPrimitive | undefined {
-    const state = this.options.pointStore.getPointState(pointId);
-    if (!state) return undefined;
-    if (state.declaration.source !== 'expression') return state.value;
-    const result = this.evaluator.evaluatePoint(pointId);
-    if (!result.ok) throw new Error(result.error);
-    this.options.pointStore.setPointValue(pointId, result.value);
-    return result.value;
-  }
-
   private recomputeExpressionPoints(changedPointIds: string[]): void {
     const queue = [...changedPointIds];
     let budget = this.maxExpressionIterations;
@@ -292,7 +326,6 @@ export class RefreshPipeline {
         break;
       }
       const pointId = queue.shift() as string;
-      this.evaluator.invalidate(pointId);
       for (const [expressionPointId, deps] of this.lastDeps) {
         if (!deps.includes(pointId)) continue;
         if (this.syncExpressionPoint(expressionPointId)) {
@@ -304,19 +337,140 @@ export class RefreshPipeline {
 
   /** 求值表达式点并回写 store；返回该点值是否变化（变化需传播给依赖它的表达式点）。 */
   private syncExpressionPoint(pointId: string): boolean {
-    const result = this.evaluator.evaluatePoint(pointId);
-    this.lastDeps.set(pointId, this.evaluator.dependenciesOf(this.expressionTextOf(pointId)));
-    if (!result.ok) {
-      this.reportError(pointId, result.error);
+    const state = this.options.pointStore.getPointState(pointId);
+    if (!state || state.declaration.source !== 'expression') return false;
+    const expression = state.declaration.expression ?? '';
+    this.lastDeps.set(pointId, this.probeDeps(expression));
+    if (!this.options.compiler || !this.options.env) return false;
+    try {
+      const value = this.evaluateExpressionPoint(pointId);
+      if (value === undefined) {
+        this.reportError(pointId, 'expression evaluation failed');
+        return false;
+      }
+      this.lastError.delete(pointId);
+      return this.options.pointStore.setPointValue(pointId, value);
+    } catch (error) {
+      this.reportError(pointId, error instanceof Error ? error.message : String(error));
       return false;
     }
-    this.lastError.delete(pointId);
-    return this.options.pointStore.setPointValue(pointId, result.value);
   }
 
-  private expressionTextOf(pointId: string): string {
+  /**
+   * 表达式点递归求值（I18 flux 一元化）：经 flux compiler 编译 + 私有求值 scope 求值。
+   * 环检测（active 栈）保留（binding-cycle Failure Path）。不回写 store——由调用方写入。
+   */
+  private evaluateExpressionPoint(pointId: string): ScadaPrimitive | undefined {
+    if (this.active.has(pointId)) {
+      throw new CircularDependencyError(pointId);
+    }
     const state = this.options.pointStore.getPointState(pointId);
-    return state?.declaration.expression ?? '';
+    if (!state) return undefined;
+    if (state.declaration.source !== 'expression') return state.value;
+    this.active.add(pointId);
+    try {
+      return this.evaluateFlux(state.declaration.expression ?? '');
+    } finally {
+      this.active.delete(pointId);
+    }
+  }
+
+  /** `${expr}` 编译 + 求值（缓存 compiled）。eval scope 合并 pointValues + scopeData（scope 胜出）。
+   *
+   * 异常策略：compile/evaluate 失败吞掉返回 undefined（由 syncExpressionPoint 上报 'expression evaluation failed'）；
+   * 但 `CircularDependencyError` 经 `isCircularDependencyError` 守卫重新抛出，使 binding-cycle 失败路径
+   * 在 syncExpressionPoint 的 try/catch 中以 'circular dependency involving point: ...' 上报（去重）。
+   */
+  private evaluateFlux(expression: string): ScadaPrimitive | undefined {
+    if (!this.options.compiler || !this.options.env) return undefined;
+    const normalized = expression.trim().startsWith('${') ? expression.trim() : `\${${expression.trim()}}`;
+    let compiled = this.compiledCache.get(normalized);
+    if (compiled === undefined) {
+      try {
+        compiled = this.options.compiler.compileValue(normalized);
+      } catch (error) {
+        const cycle = findCircularDependencyError(error);
+        if (cycle) throw cycle;
+        return undefined;
+      }
+      this.compiledCache.set(normalized, compiled);
+    }
+    const scope = this.buildEvalScope();
+    try {
+      const value = this.options.compiler.evaluateValue(compiled, scope, this.options.env);
+      return isScadaPrimitive(value) ? value : undefined;
+    } catch (error) {
+      const cycle = findCircularDependencyError(error);
+      if (cycle) throw cycle;
+      return undefined;
+    }
+  }
+
+  /** binding.expression / scale.expression 求值（经 flux compiler）。 */
+  private evaluateBindingExpression(expression: string): ScadaPrimitive | undefined {
+    if (!this.options.compiler || !this.options.env) return undefined;
+    try {
+      const value = this.evaluateFlux(expression);
+      if (value === undefined) {
+        this.reportError(expression, 'expression evaluation failed');
+        return undefined;
+      }
+      this.lastError.delete(expression);
+      return value;
+    } catch (error) {
+      this.reportError(expression, error instanceof Error ? error.message : String(error));
+      return undefined;
+    }
+  }
+
+  /** 经 flux 探针提取表达式依赖路径（用作 point refs / 依赖链收集）。 */
+  private probeDeps(expression: string): string[] {
+    if (!this.options.compiler || !this.options.env) return [];
+    const normalized = expression.trim().startsWith('${') ? expression.trim() : `\${${expression.trim()}}`;
+    const result = extractExpressionDepsViaProbe(this.options.compiler, this.options.env, normalized);
+    return result.status === 'ok' ? result.paths : [];
+  }
+
+  /**
+   * 私有求值 scope（I18）：合并 pointValues + scopeData（scope 胜出，design-data-binding.md §9.1）。
+   * 表达式点懒求值——eval scope.get(pointId) 触发递归求值（含 active 栈环检测）并回写 store。
+   */
+  private buildEvalScope() {
+    const pointStore = this.options.pointStore;
+    const data: Record<string, unknown> = {};
+    for (const pointId of pointStore.pointIds()) {
+      const state = pointStore.getPointState(pointId);
+      if (state && state.value !== undefined && state.declaration.source !== 'expression') {
+        data[pointId] = state.value;
+      }
+    }
+    for (const [key, value] of Object.entries(this.scopeData)) {
+      if (value !== undefined) data[key] = value;
+    }
+    return {
+      id: 'scada-pipeline-eval',
+      path: '$',
+      value: data,
+      get: (path: string) => {
+        const val = getIn(data, path);
+        if (val !== undefined) return val;
+        const state = pointStore.getPointState(path);
+        if (state?.declaration.source === 'expression') {
+          const resolved = this.evaluateExpressionPoint(path);
+          if (resolved !== undefined) pointStore.setPointValue(path, resolved);
+          return resolved;
+        }
+        return state?.value;
+      },
+      has(path: string) {
+        return this.get(path) !== undefined;
+      },
+      readOwn: () => data,
+      readVisible: () => data,
+      materializeVisible: () => data,
+      update: () => undefined,
+      merge: () => undefined,
+    };
   }
 
   private collectBindings(pointIds: string[]): void {

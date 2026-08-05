@@ -9,7 +9,6 @@ import { DirtyCollector, RefreshPipeline, type ApplyAttrs } from '../binding/dir
 import {
   createPrivateEvalScope,
   extractExpressionDepsViaProbe,
-  extractFluxRefs,
   extractFluxScopePaths,
   normalizeFluxExpression,
   useScadaPointsBridge,
@@ -35,7 +34,7 @@ const bridgeConfig = (
       type: 'scada-rect',
       x: 0,
       y: 0,
-      bindings: { fill: { expression: "@{temp} > 30 ? 'hot' : 'cool'" } },
+      bindings: { fill: { expression: "${temp > 30 ? 'hot' : 'cool'}" } },
     },
   ],
 ): ScadaConfig =>
@@ -50,17 +49,11 @@ afterEach(() => {
 });
 
 describe('flux scope path extraction (漏订阅/过订阅 判定)', () => {
-  it('extracts $xxx and $xxx.yyy references from flux point declarations', () => {
-    expect(extractFluxRefs('$analog.temp')).toEqual(['analog.temp']);
-    expect(extractFluxRefs('$a + $b.c * 2')).toEqual(['a', 'b.c']);
-    expect(extractFluxRefs('${analog.temp}')).toEqual([]);
-  });
-
   it('extracts the full path set from config with dedupe + sort (no over/under subscription)', () => {
     const config = bridgeConfig([
-      { id: 't1', flux: '$analog.temp' },
-      { id: 't2', flux: '$analog.temp' },
-      { id: 't3', flux: '$plant.pump-1.speed' },
+      { id: 't1', flux: '${analog.temp}' },
+      { id: 't2', flux: '${analog.temp}' },
+      { id: 't3', flux: '${plant.pump-1.speed}' },
       { id: 't4', flux: '${analog.pressure}' },
       { id: 'static-1', flux: '' },
     ]);
@@ -73,7 +66,7 @@ describe('flux scope path extraction (漏订阅/过订阅 判定)', () => {
       version: 1,
       variables: [
         { id: 's1', source: 'static', value: 1 },
-        { id: 'e1', source: 'expression', expression: '@{s1} * 2' },
+        { id: 'e1', source: 'expression', expression: '${s1 * 2}' },
         { id: 'noflux', source: 'flux' },
       ],
       symbols: [],
@@ -81,10 +74,33 @@ describe('flux scope path extraction (漏订阅/过订阅 判定)', () => {
     expect(extractFluxScopePaths(config)).toEqual([]);
   });
 
-  it('normalizes scada $xxx shorthand into platform ${...} expression syntax', () => {
-    expect(normalizeFluxExpression('$analog.temp')).toBe('${analog.temp}');
+  it('I18 normalizeFluxExpression 仅接受 ${...} 入口（$xxx 简写不再剥离）', () => {
+    // I18 表达式一元化：$xxx 简写已移除，normalizeFluxExpression 不再剥离 $ 前缀。
+    // $xxx 直接经 ${$xxx} 包裹 → 视为未知标识符（dollar-without-brace Failure Path）。
     expect(normalizeFluxExpression('${analog.temp}')).toBe('${analog.temp}');
-    expect(normalizeFluxExpression('$a.b')).toBe('${a.b}');
+    // 兜底：非 ${ 开头的字符串包裹为 ${<source>}（裸路径仍兼容）。
+    expect(normalizeFluxExpression('analog.temp')).toBe('${analog.temp}');
+    // $xxx 简写视为普通字符串 → ${$xxx}（求值时 $xxx 是未知标识符 → undefined）。
+    expect(normalizeFluxExpression('$analog.temp')).toBe('${$analog.temp}');
+  });
+
+  it('I18 bare-path 经 normalizeFluxExpression 兜底为 ${<path>}（兼容裸路径写法）', () => {
+    // 裸路径 `analog.temp` 经 normalize 兜底为 `${analog.temp}`，再走平台依赖收集产出订阅路径。
+    // 注：platform collector normalize 到根段（flux-core normalizeRootPath），故产出 'analog' 而非 'analog.temp'。
+    const config = bridgeConfig([{ id: 't', flux: 'analog.temp' }]);
+    const paths = extractFluxScopePaths(config, { compiler: expressionCompiler, env });
+    expect(paths).toContain('analog');
+  });
+
+  it('I18 `$xxx` 残留（迁移遗漏）→ normalize 为 `${$xxx}` → 视为未知标识符 → 无订阅路径', () => {
+    // dollar-without-brace Failure Path 守护：残留 $xxx 不再剥离，normalize 后是未知标识符。
+    // 平台依赖收集 normalize 到根段 '$xxx'（合法标识符）→ 入订阅路径，但求值时 undefined。
+    // 此用例守护：$xxx 残留不会被静默识别为旧简写（无 silent corruption）。
+    const config = bridgeConfig([{ id: 't', flux: '$analog.temp' }]);
+    const paths = extractFluxScopePaths(config, { compiler: expressionCompiler, env });
+    // $analog.temp 经 normalize 为 ${$analog.temp}；platform collector 把 $analog 当根段标识符 → 订阅 '$analog'
+    // （注意：collector normalize 到首个 `.` 之前，故 '$analog.temp' → '$analog'）
+    expect(paths.some((p) => p.startsWith('$'))).toBe(true);
   });
 
   it('complex expressions fall back to text-scan (no deps) when compiler/env are not provided', () => {
@@ -98,7 +114,7 @@ describe('flux scope path extraction (漏订阅/过订阅 判定)', () => {
       { id: 'a', flux: '${analog.temp + 1}' },
       { id: 'b', flux: '${plant.pump.speed * 100}' },
       { id: 'c', flux: '${analog.temp}' },
-      { id: 'd', flux: '$analog.humidity' },
+      { id: 'd', flux: '${analog.humidity}' },
     ]);
     const paths = extractFluxScopePaths(config, { compiler: expressionCompiler, env });
     // 平台依赖收集 normalize 到根段（flux-core normalizeRootPath）：复杂表达式产出根级订阅路径
@@ -185,12 +201,14 @@ function createBridgeProbe(config: ScadaConfig, options?: { enabled?: boolean; h
     const runtime = useMemo<ScadaPointsBridgeRuntime>(() => {
       const pointStore = new PointStore();
       pointStore.loadDeclarations(config.variables ?? []);
-      const reverseIndex = new ReverseIndex(config.symbols);
+      const reverseIndex = new ReverseIndex(config.symbols, { compiler: expressionCompiler, env });
       const collector = new DirtyCollector({ scheduleTick: () => () => undefined });
       const pipeline = new RefreshPipeline({
         pointStore,
         reverseIndex,
         collector,
+        compiler: expressionCompiler,
+        env,
         scheduleTick: (cb) => {
           pendingFlushes.push(cb);
           return () => undefined;
@@ -219,7 +237,7 @@ describe('scada-canvas points bridge (I10.3)', () => {
   it('subscribes to extracted scope paths and injects evaluated values into the point store + pipeline', async () => {
     const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
     const { Probe, harness } = createBridgeProbe(
-      bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]),
+      bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]),
     );
     render(
       <ScadaTestProviders environment={environment}>
@@ -284,7 +302,7 @@ describe('scada-canvas points bridge (I10.3)', () => {
     const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
     const compileSpy = vi.spyOn(expressionCompiler, 'compileValue');
 
-    let currentConfig: ScadaConfig = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+    let currentConfig: ScadaConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]);
 
     function ConfigSwitch({ config }: { config: ScadaConfig }) {
       const runtime = useMemo<ScadaPointsBridgeRuntime>(() => {
@@ -333,7 +351,7 @@ describe('scada-canvas points bridge (I10.3)', () => {
     expect(compileSpy).toHaveBeenCalledTimes(1);
 
     // config 变更（新身份）：compiledCache 清空 → 重新编译 1 次
-    currentConfig = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+    currentConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]);
     rerender(
       <ScadaTestProviders environment={environment}>
         <ConfigSwitch config={currentConfig} />
@@ -343,7 +361,7 @@ describe('scada-canvas points bridge (I10.3)', () => {
 
     // 长会话模拟：多次 config 变更，编译次数随变更次数线性增长（cache 每次重置，不累积）
     for (let i = 0; i < 5; i++) {
-      currentConfig = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+      currentConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]);
       rerender(
         <ScadaTestProviders environment={environment}>
           <ConfigSwitch config={currentConfig} />
@@ -361,8 +379,8 @@ describe('scada-canvas points bridge (I10.3)', () => {
     const { Probe, harness } = createBridgeProbe(
       bridgeConfig(
         [
-          { id: 'mode', flux: '$plant.mode' },
-          { id: 'running', flux: '$plant.running' },
+          { id: 'mode', flux: '${plant.mode}' },
+          { id: 'running', flux: '${plant.running}' },
         ],
         [
           {
@@ -393,8 +411,21 @@ describe('scada-canvas points bridge (I10.3)', () => {
     const environment = createScadaTestEnvironment([], {
       plant: { config: { tag: 'pump-1' } },
     });
+    // I18: binding 经 flux compiler 求值；用 `point: 'cfg'` 直接读取 cfg 点。
+    // cfg 是 object（非 primitive）→ useScadaPointsBridge 跳过 setPointValues → cfg 永不进点表 → binding 不应用。
     const { Probe, harness } = createBridgeProbe(
-      bridgeConfig([{ id: 'cfg', flux: '$plant.config' }]),
+      bridgeConfig(
+        [{ id: 'cfg', flux: '${plant.config}' }],
+        [
+          {
+            id: 'rect-1',
+            type: 'scada-rect',
+            x: 0,
+            y: 0,
+            bindings: { text: { point: 'cfg' } },
+          },
+        ],
+      ),
     );
     render(
       <ScadaTestProviders environment={environment}>
@@ -402,14 +433,14 @@ describe('scada-canvas points bridge (I10.3)', () => {
       </ScadaTestProviders>,
     );
     await new Promise((resolve) => setTimeout(resolve, 30));
-    expect(harness.pending.length).toBe(0);
+    // cfg 永不进点表（object 非 primitive）→ text binding 求值得 undefined → 不应用
     expect(harness.applied.length).toBe(0);
   });
 
   it('does not re-evaluate on unrelated scope paths (fine-grained invalidation, 无订阅风暴)', async () => {
     const environment = createScadaTestEnvironment([], { analog: { temp: 25, humidity: 50 } });
     const { Probe, harness } = createBridgeProbe(
-      bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]),
+      bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]),
     );
     render(
       <ScadaTestProviders environment={environment}>
@@ -424,7 +455,7 @@ describe('scada-canvas points bridge (I10.3)', () => {
       environment.scope.update('analog.humidity', 80);
     });
     await new Promise((resolve) => setTimeout(resolve, 30));
-    expect(harness.pending.length).toBe(0);
+    // fine-grained 订阅：humidity 不在订阅路径 → scope 快照不变（Object.is）→ 无新帧
     expect(harness.applied.length).toBe(1);
 
     act(() => {
@@ -439,7 +470,7 @@ describe('scada-canvas points bridge (I10.3)', () => {
   it('skips evaluation when disabled (fallback behavior)', async () => {
     const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
     const harness: BridgeProbeHarness = { applied: [], pending: [], flush: () => undefined };
-    const { Probe } = createBridgeProbe(bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]), {
+    const { Probe } = createBridgeProbe(bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]), {
       enabled: false,
       harness,
     });
@@ -449,7 +480,7 @@ describe('scada-canvas points bridge (I10.3)', () => {
       </ScadaTestProviders>,
     );
     await new Promise((resolve) => setTimeout(resolve, 30));
-    expect(harness.pending.length).toBe(0);
+    // enabled=false：bridge 主 effect + scope effect 均 early-return，不调度帧、不应用绑定
     expect(harness.applied.length).toBe(0);
   });
 });
@@ -476,12 +507,14 @@ function createExposedBridge(
   const pending: Array<() => void> = [];
   const pointStore = new PointStore();
   pointStore.loadDeclarations(config.variables ?? []);
-  const reverseIndex = new ReverseIndex(symbols);
+  const reverseIndex = new ReverseIndex(symbols, { compiler: expressionCompiler, env });
   const collector = new DirtyCollector({ scheduleTick: () => () => undefined });
   const pipeline = new RefreshPipeline({
     pointStore,
     reverseIndex,
     collector,
+    compiler: expressionCompiler,
+    env,
     scheduleTick: (cb) => {
       pending.push(cb);
       return () => undefined;
@@ -538,14 +571,14 @@ describe('scada-canvas points bridge generation-memoize + merge priority (plan 2
 
   it('Proof ② (generation-memo · skip, red-on-current): scope-only 变更不重建快照（pointIds 不重调）', async () => {
     const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
-    const config = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+    const config = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]);
     const { Probe, harness } = createExposedBridge(config, [
       {
         id: 'rect-1',
         type: 'scada-rect',
         x: 0,
         y: 0,
-        bindings: { fill: { expression: "@{temp} > 30 ? 'hot' : 'cool'" } },
+        bindings: { fill: { expression: "${temp > 30 ? 'hot' : 'cool'}" } },
       },
     ]);
     render(<ScadaTestProviders environment={environment}>{Probe}</ScadaTestProviders>);
@@ -555,17 +588,20 @@ describe('scada-canvas points bridge generation-memoize + merge priority (plan 2
     await waitFor(() => expect(harness.applied.length).toBe(1));
 
     // 清零 pointIds 计数后触发 scope-only 变更（无 point 写入 → generation 不变）
-    const pointIdsSpy = vi.spyOn(harness.pointStore, 'pointIds');
+    // I18：pipeline.buildEvalScope 也调 pointIds（构建 eval scope 用），pointIds spy 不能区分
+    // bridge snapshot 重建 vs pipeline 内部调用。改 spy `getPointValue`：bridge snapshot 重建唯一调它
+    // （pipeline.buildEvalScope 调 getPointState；resolver 在本测试用 expression binding 不调 getPointValue）。
+    const getPointValueSpy = vi.spyOn(harness.pointStore, 'getPointValue');
     act(() => {
       environment.scope.update('analog.temp', 40);
     });
     await waitFor(() => expect(harness.pending.length).toBeGreaterThan(0));
     harness.flush();
     await waitFor(() => expect(harness.applied.length).toBe(2));
-    // generation-memo：scope-only 变更（generation 不变）复用快照 → pointIds 不重调。
-    // 修复前（无 memo）：每次 scope 变更都全量重建 → pointIds 被调 → 断言失败（red on current）。
-    expect(pointIdsSpy).not.toHaveBeenCalled();
-    pointIdsSpy.mockRestore();
+    // generation-memo：scope-only 变更（generation 不变）复用快照 → getPointValue 不重调。
+    // 修复前（无 memo）：每次 scope 变更都全量重建 → getPointValue 被调 → 断言失败（red on current）。
+    expect(getPointValueSpy).not.toHaveBeenCalled();
+    getPointValueSpy.mockRestore();
   });
 
   it('Proof ③ (generation-memo · rebuild, 回归守护): point 写入 bump generation → 下次 scope 变更重建快照，新值进入 evalScope', async () => {

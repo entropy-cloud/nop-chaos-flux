@@ -169,6 +169,8 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     onSymbolEvent: (name, payload) => eventsApi.onSymbolEvent(name, payload),
     getPointValuesFor: getPointValuesForLatest,
     onEngineError: handleError,
+    expressionCompiler: rendererRuntime.expressionCompiler,
+    env: rendererRuntime.env,
     // plan 2026-08-04-2242-1 Phase 2：接通用户侧图元事件处理器 throw 的去重上报通道
     // （engine `EventBridge.safeRun`/`reportHandlerError` 已去重，此处仅订阅消费者）。
     onHandlerError: (error) =>

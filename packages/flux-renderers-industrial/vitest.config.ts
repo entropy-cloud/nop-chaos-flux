@@ -11,7 +11,7 @@ export default createSharedVitestConfig({
   environment: 'happy-dom',
   coverage: {
     provider: 'v8',
-    reporter: ['text', 'json-summary'],
+    reporter: ['text', 'json-summary', 'json'],
     include: ['src/**/*.{ts,tsx}'],
     exclude: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/**/__tests__/**', 'src/test-support/**'],
     thresholds: {

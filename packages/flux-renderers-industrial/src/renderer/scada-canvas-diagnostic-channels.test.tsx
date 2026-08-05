@@ -66,7 +66,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
     environment.runtime.env.monitor = { onError: monitorSpy };
     const fluxConfig = validCanvasConfig({
       version: 1,
-      variables: [{ id: 'temp', source: 'flux', flux: '$analog.temp.value' }],
+      variables: [{ id: 'temp', source: 'flux', flux: '${analog.temp.value}' }],
       symbols: [
         {
           id: 'rect-1',
@@ -113,7 +113,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
     const environment = createScadaTestEnvironment([], { analog: { temp: null } });
     const fluxConfig = validCanvasConfig({
       version: 1,
-      variables: [{ id: 'temp', source: 'flux', flux: '$analog.temp.value' }],
+      variables: [{ id: 'temp', source: 'flux', flux: '${analog.temp.value}' }],
       symbols: [
         {
           id: 'rect-1',
@@ -201,7 +201,7 @@ describe('scada-canvas diagnostic channel wiring (plan 2026-08-04-2242-1)', () =
     environment.runtime.env.monitor = { onError: throwingMonitor };
     const fluxConfig = validCanvasConfig({
       version: 1,
-      variables: [{ id: 'temp', source: 'flux', flux: '$analog.temp.value' }],
+      variables: [{ id: 'temp', source: 'flux', flux: '${analog.temp.value}' }],
       symbols: [
         {
           id: 'rect-1',

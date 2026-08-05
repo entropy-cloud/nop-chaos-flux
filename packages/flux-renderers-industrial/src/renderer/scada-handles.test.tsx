@@ -24,7 +24,7 @@ const handlesConfig = (overrides: Record<string, unknown> = {}): ScadaConfig =>
     variables: [
       { id: 'level', source: 'static', value: 10 },
       { id: 'speed', source: 'static', value: 100 },
-      { id: 'calc', source: 'expression', expression: '@{level} * 2' },
+      { id: 'calc', source: 'expression', expression: '${level * 2}' },
     ],
     symbols: [
       { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#ff0000' },
@@ -136,7 +136,7 @@ describe('scada-canvas component handles (I10.2, design-renderer.md §8.5)', () 
 
     const write = await handle.capabilities.invoke('setPointValue', { pointId: 'level', value: 42 }, {});
     expect(write.ok).toBe(true);
-    // P1-2 首帧刷新：表达式点 calc 挂载即求值（@{level} * 2 = 20），进入点表快照；
+    // P1-2 首帧刷新：表达式点 calc 挂载即求值（${level * 2} = 20），进入点表快照；
     // 写入 level 后等 rAF 合帧 flush 触发依赖链重算（calc → 84），断言确定化
     await new Promise((resolve) => setTimeout(resolve, 30));
 

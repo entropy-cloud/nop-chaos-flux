@@ -1,6 +1,11 @@
 import { hasScadaSymbol } from '../symbols/symbol-registry.js';
 
-export type ScadaValidationResult = { ok: true } | { ok: false; errors: string[] };
+export type ScadaValidationResult =
+  | { ok: true; warnings?: string[] }
+  | { ok: false; errors: string[]; warnings?: string[] };
+
+/** I18 迁移期：检测旧 `@{pointId}` 方言表达式，warn（不 fail）+ 错误码 `legacy-at-syntax`。 */
+const LEGACY_AT_PATTERN = /@\{[^}]*\}?/;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -330,6 +335,7 @@ export function validateScadaConfig(
   isKnownType: (type: string) => boolean = hasScadaSymbol,
 ): ScadaValidationResult {
   const errors: string[] = [];
+  const warnings: string[] = [];
   if (!isPlainObject(json)) {
     return { ok: false, errors: ['scada config must be an object'] };
   }
@@ -367,5 +373,60 @@ export function validateScadaConfig(
   if (config.background !== undefined && !isPlainObject(config.background)) {
     errors.push('config.background must be an object');
   }
-  return errors.length > 0 ? { ok: false, errors } : { ok: true };
+
+  // I18 表达式一元化迁移期：扫描旧 `@{pointId}` 方言，warn（不 fail）。
+  // 错误码 `legacy-at-syntax`，指向迁移 codemod（scripts/scada-expression-codemod.mjs）。
+  scanLegacyAtSyntax(config, warnings);
+
+  if (errors.length > 0) return { ok: false, errors, warnings: warnings.length > 0 ? warnings : undefined };
+  return warnings.length > 0 ? { ok: true, warnings } : { ok: true };
+}
+
+/**
+ * 扫描 config 中的旧 `@{pointId}` 方言表达式（I18 迁移期 warn）。
+ * 命中位置：variables[].expression / variables[].scale.expression / symbols[].bindings[].expression /
+ * symbols[].bindings[].scale.expression。warn 文案含错误码 + 位置 + codemod 指引。
+ */
+function scanLegacyAtSyntax(config: Record<string, unknown>, warnings: string[]): void {
+  const variables = config.variables;
+  if (Array.isArray(variables)) {
+    variables.forEach((decl, index) => {
+      if (!isPlainObject(decl)) return;
+      const expression = decl.expression;
+      if (typeof expression === 'string' && LEGACY_AT_PATTERN.test(expression)) {
+        warnings.push(
+          `legacy-at-syntax: variables[${index}].expression uses deprecated '@{pointId}' dialect; run scripts/scada-expression-codemod.mjs to migrate to '${expression.replace(/@\{([^}]*)\}?/g, '\\${$1}')}'`,
+        );
+      }
+      const scale = decl.scale;
+      if (isPlainObject(scale) && typeof scale.expression === 'string' && LEGACY_AT_PATTERN.test(scale.expression)) {
+        warnings.push(
+          `legacy-at-syntax: variables[${index}].scale.expression uses deprecated '@{pointId}' dialect; run scripts/scada-expression-codemod.mjs to migrate`,
+        );
+      }
+    });
+  }
+  const symbols = config.symbols;
+  if (Array.isArray(symbols)) {
+    symbols.forEach((node, sIndex) => {
+      if (!isPlainObject(node)) return;
+      const bindings = node.bindings;
+      if (!isPlainObject(bindings)) return;
+      for (const [prop, binding] of Object.entries(bindings)) {
+        if (!isPlainObject(binding)) continue;
+        const expression = binding.expression;
+        if (typeof expression === 'string' && LEGACY_AT_PATTERN.test(expression)) {
+          warnings.push(
+            `legacy-at-syntax: symbols[${sIndex}].bindings.${prop}.expression uses deprecated '@{pointId}' dialect; run scripts/scada-expression-codemod.mjs to migrate`,
+          );
+        }
+        const scale = binding.scale;
+        if (isPlainObject(scale) && typeof scale.expression === 'string' && LEGACY_AT_PATTERN.test(scale.expression)) {
+          warnings.push(
+            `legacy-at-syntax: symbols[${sIndex}].bindings.${prop}.scale.expression uses deprecated '@{pointId}' dialect; run scripts/scada-expression-codemod.mjs to migrate`,
+          );
+        }
+      }
+    });
+  }
 }

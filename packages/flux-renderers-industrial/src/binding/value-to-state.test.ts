@@ -131,7 +131,7 @@ describe('resolveState 判定优先级与默认状态 (I6.2)', () => {
 
   it('should ignore expression scale (纯逻辑无法求值)', () => {
     const declaration = baseDeclaration({ ranges: [{ min: 0, max: 100, state: 'run' }] });
-    expect(resolveState(declaration, 5, { scale: { expression: '@{x} * 2' } })).toBe('run');
+    expect(resolveState(declaration, 5, { scale: { expression: '${x * 2}' } })).toBe('run');
   });
 
   it('should handle undefined values gracefully', () => {

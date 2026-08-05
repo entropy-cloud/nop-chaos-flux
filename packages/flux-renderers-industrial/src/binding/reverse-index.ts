@@ -1,4 +1,5 @@
 import type { ScadaBinding, ScadaSymbolNode } from '../serialization/config-types.js';
+import { probeExpressionPaths, type FluxEvalContext } from './flux-eval.js';
 
 export interface BindingTarget {
   symbolId: string;
@@ -13,28 +14,20 @@ interface IndexEntry extends BindingTarget {
   pointId: string;
 }
 
-const POINT_REF_PATTERN = /@\{([^{}]+)\}/g;
-
 /**
- * 组态内表达式 `@{pointId}` 引用提取（语法级）。
- * 前缀隔离：`@{}` = 组态点表引用；`$xxx` flux scope 引用不落本层（I10.3）。
+ * 收集绑定引用的 point refs（I18 表达式一元化）：
+ * - `binding.point` → 直接取 point id
+ * - `binding.expression` → 经 flux 探针提取 scope paths（标识符/属性链）作为 point refs
+ *
+ * 当 fluxEvalContext 不可用时，expression 分支不产出 refs（纯点表绑定仍工作）。
  */
-export function extractPointIdRefs(expression: string): string[] {
-  const ids: string[] = [];
-  const pattern = new RegExp(POINT_REF_PATTERN.source, POINT_REF_PATTERN.flags);
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(expression)) !== null) {
-    const id = match[1].trim();
-    if (id) ids.push(id);
-  }
-  return ids;
-}
-
-export function collectBindingPointIds(binding: ScadaBinding): string[] {
+export function collectBindingPointIds(binding: ScadaBinding, context?: FluxEvalContext): string[] {
   const ids = new Set<string>();
   if (binding.point) ids.add(binding.point);
   if (binding.expression) {
-    for (const id of extractPointIdRefs(binding.expression)) ids.add(id);
+    for (const path of probeExpressionPaths(binding.expression, context)) {
+      if (path && path !== '*') ids.add(path);
+    }
   }
   return [...ids];
 }
@@ -47,8 +40,10 @@ export class ReverseIndex {
   private byPoint = new Map<string, IndexEntry[]>();
   private bySymbol = new Map<string, IndexEntry[]>();
   private bindingsBySymbol = new Map<string, Record<string, ScadaBinding>>();
+  private readonly evalContext?: FluxEvalContext;
 
-  constructor(symbols?: ScadaSymbolNode[]) {
+  constructor(symbols?: ScadaSymbolNode[], evalContext?: FluxEvalContext) {
+    this.evalContext = evalContext;
     if (symbols) this.build(symbols);
   }
 
@@ -117,7 +112,7 @@ export class ReverseIndex {
       this.bindingsBySymbol.set(node.id, bindings);
     }
     for (const [property, binding] of Object.entries(bindings)) {
-      for (const pointId of collectBindingPointIds(binding)) {
+      for (const pointId of collectBindingPointIds(binding, this.evalContext)) {
         const entry: IndexEntry = { symbolId: node.id, property, pointId };
         const pointList = this.byPoint.get(pointId) ?? [];
         pointList.push(entry);

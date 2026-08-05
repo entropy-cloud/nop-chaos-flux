@@ -118,8 +118,8 @@ describe('validateScadaConfig', () => {
       baseConfig({
         variables: [
           { id: 's1', source: 'static', value: true },
-          { id: 'e1', source: 'expression', expression: '@{s1} > 1' },
-          { id: 'f1', source: 'flux', flux: '$tank.level', deadband: 0.5 },
+          { id: 'e1', source: 'expression', expression: '${s1 > 1}' },
+          { id: 'f1', source: 'flux', flux: '${tank.level}', deadband: 0.5 },
         ],
       }),
     );
@@ -129,7 +129,7 @@ describe('validateScadaConfig', () => {
   it('should reject declaration-level scale.expression and point to binding-scale (plan 2026-08-05-0653-3 B4)', () => {
     const rejected = validateScadaConfig(
       baseConfig({
-        variables: [{ id: 'es', source: 'static', value: 1, scale: { expression: '@{x} * 2' } }],
+        variables: [{ id: 'es', source: 'static', value: 1, scale: { expression: '${x * 2}' } }],
       }),
     );
     expect(rejected.ok).toBe(false);
@@ -144,7 +144,7 @@ describe('validateScadaConfig', () => {
     // binding-level expression scale still accepted (applyScale consumes it)
     const okBindingExpr = validateScadaConfig(
       baseConfig({
-        symbols: [rect('be', { bindings: { fill: { point: 'p1', scale: { expression: '@{x}' } } } })],
+        symbols: [rect('be', { bindings: { fill: { point: 'p1', scale: { expression: '${x}' } } } })],
       }),
     );
     expect(okBindingExpr).toEqual({ ok: true });
@@ -214,7 +214,7 @@ describe('validateScadaConfig', () => {
     expect(badExpr.ok).toBe(false);
     const ok = validateScadaConfig(
       baseConfig({
-        symbols: [rect('b3', { bindings: { fill: { point: 'p1', format: '#f00' }, text: { expression: '@{p1} > 1' } } })],
+        symbols: [rect('b3', { bindings: { fill: { point: 'p1', format: '#f00' }, text: { expression: '${p1 > 1}' } } })],
       }),
     );
     expect(ok).toEqual({ ok: true });
@@ -493,10 +493,10 @@ describe('diffScadaConfig', () => {
 
   it('should diff variables only when changed', () => {
     const prev = baseConfig({ variables: [{ id: 'v1', source: 'static', value: 1 }] });
-    const next = baseConfig({ variables: [{ id: 'v1', source: 'static', value: 2 }, { id: 'v2', source: 'flux', flux: '$x' }] });
+    const next = baseConfig({ variables: [{ id: 'v1', source: 'static', value: 2 }, { id: 'v2', source: 'flux', flux: '${x}' }] });
     const diff = diffScadaConfig(prev, next);
     expect(diff.variables).toEqual({
-      added: [{ id: 'v2', source: 'flux', flux: '$x' }],
+      added: [{ id: 'v2', source: 'flux', flux: '${x}' }],
       removed: [],
       updated: [{ id: 'v1', patch: { value: 2 } }],
     });

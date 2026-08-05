@@ -31,7 +31,7 @@ const bridgeConfig = (
       type: 'scada-rect',
       x: 0,
       y: 0,
-      bindings: { fill: { expression: "@{temp} > 30 ? 'hot' : 'cool'" } },
+      bindings: { fill: { expression: "${temp > 30 ? 'hot' : 'cool'}" } },
     },
   ],
 ): ScadaConfig =>
@@ -51,7 +51,7 @@ describe('scada-canvas points bridge diagnostics (flux error reporting + dedup +
     const errors: Array<{ code: string; message: string }> = [];
     const pendingFlushes: Array<() => void> = [];
     const pointStore = new PointStore();
-    const config = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+    const config = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]);
     pointStore.loadDeclarations(config.variables ?? []);
     const runtime: ScadaPointsBridgeRuntime = {
       pointStore,
@@ -90,7 +90,8 @@ describe('scada-canvas points bridge diagnostics (flux error reporting + dedup +
     await waitFor(() => expect(errors.length).toBeGreaterThan(0));
     expect(errors[0].code).toBe('flux-evaluate-failed');
     expect(errors[0].message).toContain('evaluation boom');
-    expect(pendingFlushes.length).toBe(0);
+    // 注：scope effect（I18）总会调一次 requestRender → pendingFlushes 可能非 0；这里只断言错误上报，
+    // 不再约束 pendingFlushes === 0（pending 是实现细节，编译失败时 bridge 主 effect 不写入 pointStore）。
   });
 
   it('reports flux-compile-failed through onError and skips the broken declaration', async () => {
@@ -98,7 +99,7 @@ describe('scada-canvas points bridge diagnostics (flux error reporting + dedup +
     const errors: Array<{ code: string; message: string }> = [];
     const pendingFlushes: Array<() => void> = [];
     const pointStore = new PointStore();
-    const config = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+    const config = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]);
     pointStore.loadDeclarations(config.variables ?? []);
     const runtime: ScadaPointsBridgeRuntime = {
       pointStore,
@@ -136,7 +137,7 @@ describe('scada-canvas points bridge diagnostics (flux error reporting + dedup +
     await waitFor(() => expect(errors.length).toBeGreaterThan(0));
     expect(errors[0].code).toBe('flux-compile-failed');
     expect(errors[0].message).toContain('bad flux syntax');
-    expect(pendingFlushes.length).toBe(0);
+    // 注：scope effect（I18）总会调一次 requestRender → pendingFlushes 可能非 0；这里只断言错误上报。
   });
 
   it('dedupes flux error reports per expression until that declaration evaluates successfully, then recovers (P1-8)', async () => {
@@ -145,7 +146,7 @@ describe('scada-canvas points bridge diagnostics (flux error reporting + dedup +
     const pendingFlushes: Array<() => void> = [];
     const applied: Array<Record<string, Record<string, unknown>>> = [];
     const pointStore = new PointStore();
-    const config = bridgeConfig([{ id: 'temp', flux: '$analog.temp.value' }], [
+    const config = bridgeConfig([{ id: 'temp', flux: '${analog.temp.value}' }], [
       {
         id: 'rect-1',
         type: 'scada-rect',
@@ -230,7 +231,7 @@ describe('scada-canvas points bridge diagnostics (flux error reporting + dedup +
     // 两份 config 结构相同（同一表达式 $analog.temp.value）但对象身份不同（模拟 config reload）。
     // runtime 在组件外构造一次（symbols 跨两份 config 相同，ReverseIndex 恒有效），使 hook 实例
     // 与 lastReportedErrors ref 跨 config reload 持续存在——L5 验证的正是该 ref 被对称清空。
-    const baseConfig = bridgeConfig([{ id: 'temp', flux: '$analog.temp.value' }]);
+    const baseConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp.value}' }]);
     const pointStore = new PointStore();
     pointStore.loadDeclarations(baseConfig.variables ?? []);
     const runtime: ScadaPointsBridgeRuntime = {
@@ -255,7 +256,7 @@ describe('scada-canvas points bridge diagnostics (flux error reporting + dedup +
       return null;
     }
 
-    const config1 = bridgeConfig([{ id: 'temp', flux: '$analog.temp.value' }]);
+    const config1 = bridgeConfig([{ id: 'temp', flux: '${analog.temp.value}' }]);
     const { rerender } = render(
       <ScadaTestProviders environment={environment}>
         <Probe config={config1} />
@@ -266,7 +267,7 @@ describe('scada-canvas points bridge diagnostics (flux error reporting + dedup +
     expect(errors[0].code).toBe('flux-evaluate-failed');
 
     // config reload（新身份、同表达式）：L5 fix 清空 lastReportedErrors → 同表达式重新上报
-    const config2 = bridgeConfig([{ id: 'temp', flux: '$analog.temp.value' }]);
+    const config2 = bridgeConfig([{ id: 'temp', flux: '${analog.temp.value}' }]);
     rerender(
       <ScadaTestProviders environment={environment}>
         <Probe config={config2} />
@@ -399,7 +400,7 @@ describe('scada-canvas points bridge diagnostics (flux error reporting + dedup +
     const errors: Array<{ code: string; message: string; error?: unknown }> = [];
     const pendingFlushes: Array<() => void> = [];
     const pointStore = new PointStore();
-    const config = bridgeConfig([{ id: 'temp', flux: '$analog.temp' }]);
+    const config = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }]);
     pointStore.loadDeclarations(config.variables ?? []);
     const runtime: ScadaPointsBridgeRuntime = {
       pointStore,

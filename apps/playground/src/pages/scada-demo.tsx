@@ -56,10 +56,10 @@ const schema = {
           config: {
             version: 1,
             variables: [
-              { id: 'tankLevel', source: 'flux', flux: '$tankLevel' },
-              { id: 'flow', source: 'flux', flux: '$flow' },
-              { id: 'temp', source: 'flux', flux: '$temp' },
-              { id: 'flowOn', source: 'flux', flux: '$flowOn' },
+              { id: 'tankLevel', source: 'flux', flux: 'tankLevel' },
+              { id: 'flow', source: 'flux', flux: 'flow' },
+              { id: 'temp', source: 'flux', flux: 'temp' },
+              { id: 'flowOn', source: 'flux', flux: 'flowOn' },
               { id: 'motorState', source: 'static', value: 1 },
               { id: 'pumpState', source: 'static', value: 1 },
               { id: 'valveOpen', source: 'static', value: 1 },

@@ -49,7 +49,7 @@ describe('scada-canvas lifecycle wiring (plan-2026-08-04-1235-2)', () => {
       version: 1,
       variables: [
         { id: 'temp', source: 'static', value: 30 },
-        { id: 'scaled', source: 'expression', expression: '@{temp} * 2' },
+        { id: 'scaled', source: 'expression', expression: '${temp * 2}' },
         { id: 'mode', source: 'static', value: 1 },
       ],
       symbols: [
@@ -284,7 +284,7 @@ describe('scada-canvas lifecycle wiring (plan-2026-08-04-1235-2)', () => {
     const environment = createScadaTestEnvironment([], { analog: { temp: null } });
     const fluxConfig = wiringConfig({
       version: 1,
-      variables: [{ id: 'temp', source: 'flux', flux: '$analog.temp.value' }],
+      variables: [{ id: 'temp', source: 'flux', flux: '${analog.temp.value}' }],
       symbols: [
         {
           id: 'rect-1',
