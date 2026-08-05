@@ -125,6 +125,75 @@ export function W4bProcessDisplayFamilyDemoPage({
                 { time: '3', title: 'Third' },
               ],
             },
+
+            // 6. timeline v2 — scope 模式（valueStatePath 写回 + onChange seek 联动）
+            {
+              type: 'timeline',
+              testid: 'demo-timeline-v2-scope',
+              valueOwnership: 'scope',
+              valueStatePath: 'tlActive',
+              defaultValue: 't1',
+              onChange: {
+                action: 'setValue',
+                args: { path: 'tlTouched', value: true },
+              },
+              items: [
+                { value: 't1', time: '09:00', title: '事件一', detail: 'key=t1', level: 'default' },
+                { value: 't2', time: '10:00', title: '事件二', detail: 'key=t2', level: 'primary' },
+                { value: 't3', time: '11:00', title: '事件三', detail: 'key=t3', level: 'success' },
+              ],
+            },
+            {
+              type: 'text',
+              testid: 'timeline-v2-scope-report',
+              text: 'tl-active:${tlActive ?? "none"} | touched:${tlTouched ? "yes" : "no"}',
+            },
+
+            // 7. timeline v2 — controlled（value 驱动高亮，onChange 只派发不 mutate）
+            {
+              type: 'timeline',
+              testid: 'demo-timeline-v2-controlled',
+              valueOwnership: 'controlled',
+              value: '${tlCtrl}',
+              onChange: {
+                action: 'setValue',
+                args: { path: 'tlCtrlTouched', value: true },
+              },
+              items: [
+                { value: 'c1', time: '09:00', title: '受控一' },
+                { value: 'c2', time: '10:00', title: '受控二' },
+                { value: 'c3', time: '11:00', title: '受控三' },
+              ],
+            },
+            {
+              type: 'text',
+              testid: 'timeline-v2-controlled-report',
+              text: 'tl-ctrl:${tlCtrl ?? "none"} | touched:${tlCtrlTouched ? "yes" : "no"}',
+            },
+
+            // 8. timeline v2 — reverse + active（active 按逻辑顺序解析、渲染位置随倒序）
+            {
+              type: 'timeline',
+              testid: 'demo-timeline-v2-reverse-active',
+              reverse: true,
+              value: 'r2',
+              items: [
+                { value: 'r1', time: '1', title: '旧事件' },
+                { value: 'r2', time: '2', title: '当前事件' },
+                { value: 'r3', time: '3', title: '最新事件' },
+              ],
+            },
+
+            // 9. timeline v2 — 未匹配降级（value 未命中 → 无 active，不回退首项）
+            {
+              type: 'timeline',
+              testid: 'demo-timeline-v2-unmatched',
+              value: 'missing-key',
+              items: [
+                { value: 'u1', time: '1', title: '未命中 A' },
+                { value: 'u2', time: '2', title: '未命中 B' },
+              ],
+            },
           ],
         },
       ],
@@ -165,7 +234,7 @@ export function W4bProcessDisplayFamilyDemoPage({
                 env={env}
                 formulaCompiler={formulaCompiler}
                 registry={registry as React.ComponentProps<typeof SchemaRenderer>['registry']}
-                data={{}}
+                data={{ tlCtrl: 'c2' }}
               />
             </div>
           </CardContent>
@@ -183,9 +252,11 @@ export function W4bProcessDisplayFamilyDemoPage({
                 <code>orientation</code> 横/纵；value 越界 clamp。不承担多步流程提交 lifecycle（由 wizard 承担）。
               </li>
               <li>
-                <strong>timeline</strong> — 时间线展示集合 renderer；item 含 time/title/detail/icon/level；
+                <strong>timeline</strong> — 时间线展示集合 renderer；item 含 value/time/title/detail/icon/level；
                 <code>mode</code>（left/right/alternate）+ <code>orientation</code> 横/纵 + <code>reverse</code> 反转；
-                展示型无 owner 状态；缺字段项降级不崩。
+                v2 受控当前事件：<code>value</code> 驱动 <code>data-state="active"</code> 高亮 + 点击 seek
+                （<code>onChange</code> 声明后事件项可点），valueOwnership 三态分层（steps 同构）；
+                未匹配 → 无 active（不回退首项）；缺字段项降级不崩。
               </li>
             </ul>
           </CardContent>

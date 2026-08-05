@@ -280,6 +280,8 @@ export type TimelineItemLevel =
 export type TimelineMode = 'left' | 'right' | 'alternate';
 
 export interface TimelineItemSchema extends SchemaObject {
+  /** Event key/value (falls back to index when absent). v2: key-matching hub for the controlled current event. */
+  value?: string | number;
   /** Timestamp/label shown beside the event (value-or-region candidate; plain string here). */
   time?: string;
   /** Event title. */
@@ -302,4 +304,14 @@ export interface TimelineSchema extends BaseSchema {
   orientation?: 'horizontal' | 'vertical';
   /** Render items in reverse chronological order. */
   reverse?: boolean;
+  /** Current event key/value (or numeric index when no key matches). v2: drives the active highlight. */
+  value?: string | number;
+  /** Initial current event value when `value` is not provided. v2: participates in the resolve chain every render, not seed-only. */
+  defaultValue?: string | number;
+  /** Current-event ownership: local / controlled / scope (scope requires `valueStatePath`). v2, default local. */
+  valueOwnership?: 'local' | 'controlled' | 'scope';
+  /** Scope path publishing the writable current-event value. v2: scope-mode read/write path. */
+  valueStatePath?: string;
+  /** Click-seek event (v2; items become clickable only when declared). */
+  onChange?: ActionSchema;
 }

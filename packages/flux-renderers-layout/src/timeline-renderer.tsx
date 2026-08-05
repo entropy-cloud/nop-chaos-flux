@@ -1,5 +1,6 @@
-import React from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import React, { startTransition, useEffect, useRef, useState } from 'react';
+import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
+import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn, resolveLucideIcon } from '@nop-chaos/ui';
 import type {
@@ -8,6 +9,16 @@ import type {
   TimelineMode,
   TimelineSchema,
 } from './schemas.js';
+
+const UNUSED: unique symbol = Symbol('unused');
+
+function warnScopeDegraded() {
+  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+    console.warn(
+      '[nop-timeline] valueOwnership=scope requires valueStatePath; falling back to local controlled.',
+    );
+  }
+}
 
 const LEVEL_DOT_CLASS: Record<TimelineItemLevel, string> = {
   default: 'bg-muted-foreground',
@@ -49,14 +60,134 @@ function timelineItemKey(item: TimelineItemSchema, index: number): string {
   return time ? `timeline:${time}:${index}` : `timeline:${index}`;
 }
 
+function clampIndex(idx: number, count: number): number {
+  if (count <= 0) return 0;
+  if (idx < 0) return 0;
+  if (idx > count - 1) return count - 1;
+  return idx;
+}
+
+function asNumericIndex(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
+  if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) {
+    const parsed = parseInt(value, 10);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
+/**
+ * Resolve the current event index. Key match (`item.value`) takes precedence; a
+ * numeric value is treated as a (clamped) index; an unmatched value returns -1
+ * so the caller can fall back to defaultValue or render no active state.
+ * Semantics mirror `resolveStepIndex` in steps-renderer.tsx (isomorphic, local
+ * implementation — promote to a flux-core shared helper when a third sibling
+ * consumer appears).
+ */
+function resolveEventIndex(value: unknown, items: TimelineItemSchema[]): number {
+  if (items.length === 0) return -1;
+  const target = String(value);
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const key = item.value;
+    if (key !== undefined && key !== null && String(key) === target) return i;
+  }
+  const numeric = asNumericIndex(value);
+  if (numeric !== undefined) return clampIndex(numeric, items.length);
+  return -1;
+}
+
+function useTimelineValue(props: RendererComponentProps<TimelineSchema>) {
+  const schemaProps = props.props;
+  const declaredOwnership = (schemaProps.valueOwnership as string) ?? 'local';
+  const statePath =
+    typeof schemaProps.valueStatePath === 'string' ? schemaProps.valueStatePath : undefined;
+
+  // Effective ownership: scope without valueStatePath degrades to local controlled (+ dev warn).
+  const scopeDegraded = declaredOwnership === 'scope' && !statePath;
+  const ownership = scopeDegraded ? 'local' : (declaredOwnership as 'local' | 'controlled' | 'scope');
+
+  const warnedRef = useRef(false);
+  useEffect(() => {
+    if (scopeDegraded && !warnedRef.current) {
+      warnScopeDegraded();
+      warnedRef.current = true;
+    }
+  }, [scopeDegraded]);
+
+  const renderScope = useRenderScope();
+
+  const scopeValue = useScopeSelector(
+    ownership === 'scope' && statePath
+      ? (scopeData) => getIn(scopeData, statePath) as unknown
+      : () => UNUSED as unknown,
+    Object.is,
+    {
+      enabled: ownership === 'scope' && Boolean(statePath),
+      fallback: undefined,
+      paths: ownership === 'scope' && statePath ? [statePath] : undefined,
+    },
+  );
+  const effectiveScopeValue = scopeValue === (UNUSED as unknown) ? undefined : scopeValue;
+
+  const computeInitial = (): string | number | undefined => {
+    if (ownership === 'controlled') return schemaProps.value as string | number | undefined;
+    if (ownership === 'scope') {
+      return (
+        (effectiveScopeValue as string | number | undefined) ??
+        schemaProps.value ??
+        schemaProps.defaultValue
+      );
+    }
+    return (
+      (schemaProps.value as string | number | undefined) ??
+      (schemaProps.defaultValue as string | number | undefined)
+    );
+  };
+
+  const [localValue, setLocalValue] = useState<string | number | undefined>(computeInitial);
+
+  const currentValue =
+    ownership === 'controlled'
+      ? schemaProps.value
+      : ownership === 'scope'
+        ? effectiveScopeValue ?? schemaProps.value ?? localValue
+        : localValue;
+
+  const setValue = (next: string | number | undefined) => {
+    if (ownership === 'local') {
+      setLocalValue(next);
+    } else if (ownership === 'scope' && statePath) {
+      startTransition(() => {
+        renderScope.update(statePath, next ?? null);
+      });
+      setLocalValue(next);
+    }
+    // controlled: clicks dispatch onChange but do NOT mutate (parent must update value).
+  };
+
+  return { ownership, currentValue, setValue };
+}
+
 export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) {
   const schemaProps = props.props;
   const items = normalizeItems(schemaProps.items);
   const mode = resolveMode(schemaProps.mode);
   const orientation = schemaProps.orientation === 'horizontal' ? 'horizontal' : 'vertical';
   const reverse = schemaProps.reverse === true;
+  const clickable = typeof props.events.onChange === 'function';
+  const { ownership, currentValue, setValue } = useTimelineValue(props);
+
+  // Render-layer adjudication (v2): current value -> key/index match; unmatched
+  // falls back to defaultValue; still unmatched -> NO active state (explicitly
+  // does NOT fall back to the first item, unlike steps' ->0 fallback chain).
+  let activeIndex = resolveEventIndex(currentValue, items);
+  if (activeIndex < 0) {
+    activeIndex = resolveEventIndex(schemaProps.defaultValue, items);
+  }
 
   const ordered = reverse ? [...items].reverse() : items;
+  const rootDisabled = props.meta.disabled === true;
 
   if (ordered.length === 0) {
     return (
@@ -67,6 +198,7 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
         data-slot="timeline-root"
         data-orientation={orientation}
         data-mode={mode}
+        data-ownership={ownership}
         data-empty="true"
       >
         <div data-slot="timeline-empty" className="py-4 text-sm text-muted-foreground">
@@ -82,6 +214,23 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
     return index % 2 === 0 ? 'right' : 'left';
   };
 
+  const handleSeek = (item: TimelineItemSchema, index: number) => {
+    if (rootDisabled || !clickable) return;
+    const eventValue = item.value ?? index;
+    setValue(eventValue as string | number);
+    const payload = {
+      type: 'timeline:change',
+      value: eventValue,
+      index,
+      item,
+    };
+    void props.events.onChange?.(payload, {
+      event: payload,
+      evaluationBindings: payload,
+      scope: props.node.scope,
+    });
+  };
+
   return (
     <ol
       className={cn('nop-timeline', props.meta.className)}
@@ -91,10 +240,14 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
       data-orientation={orientation}
       data-mode={mode}
       data-reverse={reverse || undefined}
+      data-ownership={ownership}
+      data-active-index={activeIndex >= 0 ? activeIndex : undefined}
     >
       {ordered.map((item, index) => {
+        const logicalIndex = reverse ? items.length - 1 - index : index;
         const level = resolveLevel(item.level);
-        const side = sideFor(index);
+        const side = sideFor(logicalIndex);
+        const isActive = logicalIndex === activeIndex;
         const IconComp = resolveLucideIcon(item.icon) as
           | React.ComponentType<Record<string, unknown>>
           | null;
@@ -108,16 +261,31 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
           <li
             key={timelineItemKey(item, index)}
             data-slot="timeline-item"
-            data-item-index={index}
+            data-item-index={logicalIndex}
             data-level={level}
             data-side={side}
+            data-state={isActive ? 'active' : undefined}
+            data-clickable={clickable || undefined}
+            tabIndex={clickable ? 0 : undefined}
+            role={clickable ? 'button' : undefined}
+            aria-current={isActive ? 'time' : undefined}
+            onClick={clickable ? () => handleSeek(item, logicalIndex) : undefined}
+            onKeyDown={
+              clickable
+                ? (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleSeek(item, logicalIndex);
+                    }
+                  }
+                : undefined
+            }
             className={cn(
               'relative flex',
               orientation === 'vertical'
-                ? mode === 'alternate'
-                  ? 'w-full'
-                  : 'w-full'
+                ? 'w-full'
                 : 'flex-col items-center',
+              clickable && 'cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
             )}
           >
             {orientation === 'vertical' && (
@@ -144,6 +312,7 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
               className={cn(
                 'relative z-10 flex size-3 shrink-0 items-center justify-center rounded-full',
                 LEVEL_DOT_CLASS[level],
+                isActive && 'outline-2 outline-offset-2 outline-ring',
                 orientation === 'vertical'
                   ? mode === 'left'
                     ? 'ml-[7px] mt-1'
@@ -185,7 +354,10 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
               {hasTitle ? (
                 <span
                   data-slot="timeline-title"
-                  className="block text-sm font-semibold leading-tight"
+                  className={cn(
+                    'block text-sm font-semibold leading-tight',
+                    isActive && 'text-foreground',
+                  )}
                 >
                   {item.title}
                 </span>

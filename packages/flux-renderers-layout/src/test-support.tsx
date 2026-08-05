@@ -240,9 +240,14 @@ export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
       component: TimelineRendererForTest,
       fields: [
         { key: 'items', kind: 'prop' },
+        { key: 'value', kind: 'prop' },
+        { key: 'defaultValue', kind: 'prop' },
+        { key: 'valueOwnership', kind: 'prop' },
+        { key: 'valueStatePath', kind: 'prop' },
         { key: 'mode', kind: 'prop' },
         { key: 'orientation', kind: 'prop' },
         { key: 'reverse', kind: 'prop', valueType: 'boolean' },
+        { key: 'onChange', kind: 'event' },
       ],
     },
   ]);
