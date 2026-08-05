@@ -38,7 +38,7 @@ export const DiffHunkComponent = memo(function DiffHunkComponent({
   const toggleExpand = useCallback(() => {
     setIsHidden((prev) => {
       const next = !prev;
-      onHunkExpand?.(hunkIndex, next);
+      onHunkExpand?.(hunkIndex, !next);
       return next;
     });
   }, [hunkIndex, onHunkExpand]);
@@ -53,7 +53,7 @@ export const DiffHunkComponent = memo(function DiffHunkComponent({
   if (isHidden) {
     const contextCount = hunk.lines.filter((l) => l.type === 'context').length;
     return (
-      <div data-slot="diff-hunk-header" data-expanded="false" className="nop-diff-hunk nop-diff-hunk-collapsed">
+      <div data-slot="diff-hunk-header" data-diff-type="hunk" data-expanded="false" className="nop-diff-hunk nop-diff-hunk-collapsed">
         <Button
           variant="ghost"
           className="nop-diff-hunk-expand-btn"
@@ -66,7 +66,7 @@ export const DiffHunkComponent = memo(function DiffHunkComponent({
   }
 
   return (
-    <div data-slot="diff-hunk-header" data-expanded="true" className="nop-diff-hunk nop-diff-hunk-expanded">
+    <div data-slot="diff-hunk-header" data-diff-type="hunk" data-expanded="true" className="nop-diff-hunk nop-diff-hunk-expanded">
       <div className="nop-diff-hunk-header-row">
         <span className="nop-diff-hunk-header-text">{hunk.header}</span>
         <Button variant="ghost" className="nop-diff-hunk-collapse-btn" onClick={toggleExpand}>

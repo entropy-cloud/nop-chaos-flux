@@ -1,7 +1,7 @@
-import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
+import { useMemo, useCallback, useState, useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { ThreeWayRowType } from '../model/diff-3way.js';
+import type { ThreeWayRow, ThreeWayRowType } from '../model/diff-3way.js';
 import { computeThreeWayDiff } from '../model/diff-3way.js';
 import { generateConflictMarkerHtml } from '../utils/diff-template.js';
 import { highlight } from '../adapters/syntax-highlight.js';
@@ -12,6 +12,35 @@ interface DiffThreeColumnViewProps {
   newContent: string;
   language?: string;
   showLineNumbers?: boolean;
+  onLineClick?: (lineNumber: number, side: 'old' | 'middle' | 'new', type: string) => void;
+}
+
+function paneRowLineNumber(row: ThreeWayRow, side: 'old' | 'middle' | 'new'): number {
+  return side === 'old'
+    ? row.oldLineNum ?? 0
+    : side === 'middle'
+      ? row.middleLineNum ?? 0
+      : row.newLineNum ?? 0;
+}
+
+function paneRowHandlers(
+  row: ThreeWayRow,
+  side: 'old' | 'middle' | 'new',
+  onLineClick?: (lineNumber: number, side: 'old' | 'middle' | 'new', type: string) => void,
+) {
+  if (!onLineClick) return {};
+  const handleClick = () => onLineClick(paneRowLineNumber(row, side), side, row.type);
+  return {
+    role: 'button' as const,
+    tabIndex: 0,
+    onClick: handleClick,
+    onKeyDown: (e: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleClick();
+      }
+    },
+  };
 }
 
 export function DiffThreeColumnView({
@@ -20,6 +49,7 @@ export function DiffThreeColumnView({
   newContent,
   language,
   showLineNumbers,
+  onLineClick,
 }: DiffThreeColumnViewProps) {
   const { rows, conflictZones } = useMemo(
     () => computeThreeWayDiff(oldContent, middleContent, newContent),
@@ -113,6 +143,7 @@ export function DiffThreeColumnView({
                   isMarker && 'nop-diff-line-conflict-marker',
                   row.type === 'change-old' && 'nop-diff-line-change-old',
                 )}
+                {...paneRowHandlers(row, 'old', onLineClick)}
               >
                 {showLineNumbers && (
                   <span data-slot="diff-gutter" data-diff-gutter="old" className="nop-diff-gutter">
@@ -146,6 +177,7 @@ export function DiffThreeColumnView({
                   isConflict && 'nop-diff-line-conflict',
                   isMarker && 'nop-diff-line-conflict-marker',
                 )}
+                {...paneRowHandlers(row, 'middle', onLineClick)}
               >
                 {showLineNumbers && (
                   <span data-slot="diff-gutter" data-diff-gutter="mid" className="nop-diff-gutter">
@@ -180,6 +212,7 @@ export function DiffThreeColumnView({
                   isMarker && 'nop-diff-line-conflict-marker',
                   row.type === 'change-new' && 'nop-diff-line-change-new',
                 )}
+                {...paneRowHandlers(row, 'new', onLineClick)}
               >
                 {showLineNumbers && (
                   <span data-slot="diff-gutter" data-diff-gutter="new" className="nop-diff-gutter">

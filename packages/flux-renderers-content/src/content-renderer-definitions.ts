@@ -513,6 +513,33 @@ export const contentRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-content',
     defaultSchema: { type: 'diff-view', viewType: 'split', showLineNumbers: true },
     component: DiffViewRenderer,
+    eventContracts: {
+      onLineClick: {
+        displayName: 'On Line Click',
+        description:
+          'Dispatched when a diff line is clicked (split/unified/three-column panes). Payload: { lineNumber, side, type } — side is old|new (split/unified) or old|middle|new (three-column); type is the row diff type (add|delete|context, or the three-way row types in three-column mode).',
+        payload: {
+          kind: 'object',
+          fields: {
+            lineNumber: { kind: 'number' },
+            side: { kind: 'string' },
+            type: { kind: 'string' },
+          },
+        },
+      },
+      onHunkExpand: {
+        displayName: 'On Hunk Expand',
+        description:
+          'Dispatched when a folded hunk is expanded or an expanded hunk is collapsed. Payload: { hunkIndex, expanded }.',
+        payload: {
+          kind: 'object',
+          fields: {
+            hunkIndex: { kind: 'number' },
+            expanded: { kind: 'boolean' },
+          },
+        },
+      },
+    },
     fields: [
       { key: 'oldContent', kind: 'prop' },
       { key: 'newContent', kind: 'prop' },

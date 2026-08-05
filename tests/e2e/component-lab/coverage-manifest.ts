@@ -634,6 +634,14 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes:
       'Verify scope-driven value updates re-render the canvas (toDataURL differs), empty value shows the empty fallback and a valid value recovers (C6.4)',
   },
+  {
+    id: 'diff-view',
+    title: 'Diff View',
+    tier: 'write',
+    primaryScenario: 'Host diff in dialog + line click (C6.5 bug 73 pattern)',
+    notes:
+      'Verify diff-view inside an openDialog surface: split view renders and a real line click dispatches onLineClick with ${lineNumber}|${side}|${type} args resolved; cross-file clamp, reaction wiring and expand/collapse in c6-5-host-surfaces.spec.ts (C6.5)',
+  },
 ];
 
 /** Quick lookup by renderer id */

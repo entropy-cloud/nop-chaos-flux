@@ -4,13 +4,15 @@ import type { RendererRouteEntry } from './route-model.js';
  * C6.1 content text-family lab routes (markdown/html/json-view/link/image) +
  * C6.2 content status/feedback-family lab routes (card/cards/empty/progress/spinner/separator)
  * + C6.3 content value-mapping-family lab routes (alert/mapping/status)
- * + C6.4 content media-family lab routes (audio/video/carousel/qrcode).
+ * + C6.4 content media-family lab routes (audio/video/carousel/qrcode)
+ * + C6.5 content diff-view lab route (diff-view).
  * Extracted from route-model.ts to keep files within the lint max-lines budget.
  *
  * Shared constant across C6.1 (`2026-08-04-0841-2`), C6.2 (`2026-08-04-0841-3`),
- * C6.3 (`2026-08-04-1757-1`) and C6.4 (`2026-08-04-1757-2`): C6.1 landed first
- * and created this module; C6.2 appended its entries to 11, C6.3 appended to 14,
- * C6.4 appended to 18 (coordination record: `docs/logs/2026/08-04.md` C6.1 节).
+ * C6.3 (`2026-08-04-1757-1`), C6.4 (`2026-08-04-1757-2`) and C6.5 (`2026-08-04-1757-3`):
+ * C6.1 landed first and created this module; C6.2 appended its entries to 11,
+ * C6.3 appended to 14, C6.4 appended to 18, C6.5 appended to 19 (coordination
+ * record: `docs/logs/2026/08-04.md` C6.1 节).
  */
 export const CONTENT_RENDERER_ROUTES: RendererRouteEntry[] = [
   {
@@ -156,5 +158,13 @@ export const CONTENT_RENDERER_ROUTES: RendererRouteEntry[] = [
     sourcePackage: '@nop-chaos/flux-renderers-content',
     description:
       'Canvas-based QR code renderer: value/size/level/foreground/background, label value-or-region, empty/error fallback states and value-change redraw.',
+  },
+  {
+    id: 'diff-view',
+    title: 'Diff View',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    description:
+      'Read-only text diff comparison: split/unified/three-column views, hunk folding, cross-file navigation, inline diff markers, component handles and CX-9 reaction wiring.',
   },
 ];

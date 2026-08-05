@@ -307,4 +307,28 @@ describe('contentRendererDefinitions', () => {
     expect(fields?.item).toBeTruthy();
     expect(fields && 'index' in fields).toBe(false);
   });
+
+  it('diff-view declares eventContracts for onLineClick and onHunkExpand (P1-7)', () => {
+    // C6.5 P1-7: onLineClick ({lineNumber, side, type} — design.md §4) and
+    // onHunkExpand ({hunkIndex, expanded}) both carry payloads, so the
+    // definition must declare the eventContracts for the editor contract
+    // surface (carousel/cards/alert family precedent).
+    const diffView = contentRendererDefinitions.find((d) => d.type === 'diff-view');
+    const contracts = diffView?.eventContracts;
+    expect(contracts?.onLineClick).toBeTruthy();
+    const clickPayload = contracts?.onLineClick?.payload;
+    expect(clickPayload && clickPayload.kind === 'object' ? clickPayload : null).toBeTruthy();
+    const clickFields =
+      clickPayload && clickPayload.kind === 'object' ? clickPayload.fields : undefined;
+    expect(clickFields?.lineNumber).toMatchObject({ kind: 'number' });
+    expect(clickFields?.side).toBeTruthy();
+    expect(clickFields?.type).toBeTruthy();
+    expect(contracts?.onHunkExpand).toBeTruthy();
+    const expandPayload = contracts?.onHunkExpand?.payload;
+    expect(expandPayload && expandPayload.kind === 'object' ? expandPayload : null).toBeTruthy();
+    const expandFields =
+      expandPayload && expandPayload.kind === 'object' ? expandPayload.fields : undefined;
+    expect(expandFields?.hunkIndex).toMatchObject({ kind: 'number' });
+    expect(expandFields?.expanded).toBeTruthy();
+  });
 });

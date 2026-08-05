@@ -9,7 +9,11 @@ function buildInlineHtml(tokens: InlineTokenType[]): string {
     if (token.type === 'equal') {
       result += escaped;
     } else {
-      result += `<span data-diff-inline="${token.type}">${escaped}</span>`;
+      // design.md §10 marker contract: data-diff-inline="add"/"delete".
+      // The internal token vocabulary uses diff-match-patch 'insert'/'delete';
+      // the DOM contract value for insertions is 'add'.
+      const marker = token.type === 'insert' ? 'add' : token.type;
+      result += `<span data-diff-inline="${marker}">${escaped}</span>`;
     }
   }
   return result;

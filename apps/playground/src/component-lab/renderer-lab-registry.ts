@@ -90,6 +90,7 @@ import {
   VideoLabPage,
   CarouselLabPage,
   QrcodeLabPage,
+  DiffViewLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -183,4 +184,5 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   video: VideoLabPage,
   carousel: CarouselLabPage,
   qrcode: QrcodeLabPage,
+  'diff-view': DiffViewLabPage,
 };

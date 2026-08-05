@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback, useEffect, useRef, useImperativeHandle, type CSSProperties, type Ref } from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { useState, useMemo, useCallback, useEffect, useRef, type CSSProperties } from 'react';
+import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
+import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffViewSchema, DiffFileMeta } from '../schemas.js';
@@ -13,12 +14,7 @@ import { DiffFileList } from './components/diff-file-list.js';
 
 const DEBOUNCE_MS = 150;
 
-export interface DiffViewHandle {
-  toggleViewType: () => void;
-  setViewType: (type: 'split' | 'unified') => void;
-  expandAll: () => void;
-  collapseAll: () => void;
-}
+const REACTION_FIELD_KEYS = ['toggleViewType', 'setViewType', 'expandAll', 'collapseAll'] as const;
 
 type ExpansionState = 'normal' | 'all-expanded' | 'all-collapsed';
 
@@ -33,7 +29,7 @@ interface SingleFileDiffProps {
   wrapLines?: boolean;
   viewType: 'split' | 'unified';
   onToggleView: () => void;
-  onLineClick: (lineNumber: number, side: 'old' | 'new', type: string) => void;
+  onLineClick: (lineNumber: number, side: 'old' | 'middle' | 'new', type: string) => void;
   onHunkExpand: (hunkIndex: number, expanded: boolean) => void;
   testid?: string;
   className?: string;
@@ -124,6 +120,7 @@ function SingleFileDiff({
           newContent={debouncedNew}
           language={debouncedLang}
           showLineNumbers={showLineNumbers}
+          onLineClick={onLineClick}
         />
       </div>
     );
@@ -207,9 +204,9 @@ function SingleFileDiff({
   );
 }
 
-export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema> & { ref?: Ref<DiffViewHandle> }) {
+export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema>) {
   'use no memo';
-  const { ref, props: resolved, meta, events } = allProps;
+  const { props: resolved, meta, events, reactions, node } = allProps;
 
   const {
     files,
@@ -229,31 +226,77 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
   const [singleViewType, setSingleViewType] = useState<'split' | 'unified'>(schemaViewType);
   const [expansionState, setExpansionState] = useState<ExpansionState>('normal');
   const [remountKey, setRemountKey] = useState(0);
+  const viewTypeRef = useRef(singleViewType);
+  useEffect(() => {
+    viewTypeRef.current = singleViewType;
+  }, [singleViewType]);
+
+  const componentRegistry = useCurrentComponentRegistry();
+
+  useEffect(() => {
+    if (!componentRegistry) {
+      return;
+    }
+    const handle: ComponentHandle = {
+      id: allProps.id,
+      type: 'diff-view',
+      capabilities: {
+        invoke(method, payload) {
+          switch (method) {
+            case 'toggleViewType':
+              setSingleViewType((prev) => (prev === 'split' ? 'unified' : 'split'));
+              return {
+                ok: true,
+                data: { viewType: viewTypeRef.current === 'split' ? 'unified' : 'split' },
+              };
+            case 'setViewType': {
+              const requested = payload?.viewType;
+              if (requested === 'split' || requested === 'unified') {
+                setSingleViewType(requested);
+                return { ok: true, data: { viewType: requested } };
+              }
+              return {
+                ok: false,
+                error: new Error(
+                  `diff-view setViewType requires viewType 'split' or 'unified'`,
+                ),
+              };
+            }
+            case 'expandAll':
+              setExpansionState('all-expanded');
+              setRemountKey((k) => k + 1);
+              return { ok: true };
+            case 'collapseAll':
+              setExpansionState('all-collapsed');
+              setRemountKey((k) => k + 1);
+              return { ok: true };
+            default:
+              return { ok: false, error: new Error(`Unsupported diff-view method: ${method}`) };
+          }
+        },
+        hasMethod(method) {
+          return REACTION_FIELD_KEYS.includes(method as (typeof REACTION_FIELD_KEYS)[number]);
+        },
+        listMethods() {
+          return [...REACTION_FIELD_KEYS];
+        },
+        getDebugData() {
+          return { viewType: viewTypeRef.current };
+        },
+      },
+    };
+    return componentRegistry.register(handle, { cid: meta.cid });
+  }, [allProps.id, componentRegistry, meta.cid]);
+
+  useEffect(() => {
+    for (const key of REACTION_FIELD_KEYS) {
+      reactions[key]?.ready();
+    }
+  }, [reactions]);
 
   const toggleViewType = useCallback(() => {
     setSingleViewType((prev) => (prev === 'split' ? 'unified' : 'split'));
   }, []);
-
-  const handleExpandAll = useCallback(() => {
-    setExpansionState('all-expanded');
-    setRemountKey((k) => k + 1);
-  }, []);
-
-  const handleCollapseAll = useCallback(() => {
-    setExpansionState('all-collapsed');
-    setRemountKey((k) => k + 1);
-  }, []);
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      toggleViewType,
-      setViewType: setSingleViewType,
-      expandAll: handleExpandAll,
-      collapseAll: handleCollapseAll,
-    }),
-    [toggleViewType, setSingleViewType, handleExpandAll, handleCollapseAll],
-  );
 
   if (!meta.visible) return null;
 
@@ -277,8 +320,22 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
         expansionState={expansionState}
         testid={meta.testid}
         className={meta.className}
-        onLineClick={(lineNumber, side, type) => events.onLineClick?.({ lineNumber, side, type })}
-        onHunkExpand={(hunkIndex, expanded) => events.onHunkExpand?.({ hunkIndex, expanded })}
+        onLineClick={(lineNumber, side, type) => {
+          const payload = { lineNumber, side, type };
+          events.onLineClick?.(payload, {
+            event: payload,
+            evaluationBindings: payload,
+            scope: node.scope,
+          });
+        }}
+        onHunkExpand={(hunkIndex, expanded) => {
+          const payload = { hunkIndex, expanded };
+          events.onHunkExpand?.(payload, {
+            event: { ...payload, type: 'diff:hunk-expand' },
+            evaluationBindings: payload,
+            scope: node.scope,
+          });
+        }}
       />
     );
   }
@@ -300,8 +357,22 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
       testid={meta.testid}
       className={meta.className}
       expansionState={expansionState}
-      onLineClick={(lineNumber, side, type) => events.onLineClick?.({ lineNumber, side, type })}
-      onHunkExpand={(hunkIndex, expanded) => events.onHunkExpand?.({ hunkIndex, expanded })}
+      onLineClick={(lineNumber, side, type) => {
+        const payload = { lineNumber, side, type };
+        events.onLineClick?.(payload, {
+          event: payload,
+          evaluationBindings: payload,
+          scope: node.scope,
+        });
+      }}
+      onHunkExpand={(hunkIndex, expanded) => {
+        const payload = { hunkIndex, expanded };
+        events.onHunkExpand?.(payload, {
+          event: { ...payload, type: 'diff:hunk-expand' },
+          evaluationBindings: payload,
+          scope: node.scope,
+        });
+      }}
     />
   );
 }
@@ -330,7 +401,7 @@ interface CrossFileDiffViewProps {
   expansionState?: ExpansionState;
   testid?: string;
   className?: string;
-  onLineClick?: (lineNumber: number, side: 'old' | 'new', type: string) => void;
+  onLineClick?: (lineNumber: number, side: 'old' | 'middle' | 'new', type: string) => void;
   onHunkExpand?: (hunkIndex: number, expanded: boolean) => void;
 }
 
@@ -352,7 +423,7 @@ function CrossFileDiffView({
 }: CrossFileDiffViewProps) {
   'use no memo';
   const containerRef = useRef<HTMLDivElement>(null);
-  const clampedIndex = Math.min(initialIndex, files.length - 1);
+  const clampedIndex = Math.max(0, Math.min(initialIndex, files.length - 1));
   const [activeIndex, setActiveIndex] = useState(clampedIndex);
 
   const handleFileSelect = useCallback((index: number) => {
@@ -387,7 +458,7 @@ function CrossFileDiffView({
   const content = getContentForFile(files, activeIndex);
 
   const handleLineClick = useCallback(
-    (lineNumber: number, side: 'old' | 'new', type: string) => {
+    (lineNumber: number, side: 'old' | 'middle' | 'new', type: string) => {
       onLineClickProp?.(lineNumber, side, type);
     },
     [onLineClickProp],

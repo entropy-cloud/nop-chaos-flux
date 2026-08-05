@@ -48,6 +48,7 @@ export const DiffHeader = memo(function DiffHeader({
             className="nop-diff-nav-prev"
             disabled={!hasPrevFile}
             onClick={onPrevFile}
+            aria-label={t('flux.diff.prevFile')}
             title={t('flux.diff.prevFile')}
           >
             ↑
@@ -57,6 +58,7 @@ export const DiffHeader = memo(function DiffHeader({
             className="nop-diff-nav-next"
             disabled={!hasNextFile}
             onClick={onNextFile}
+            aria-label={t('flux.diff.nextFile')}
             title={t('flux.diff.nextFile')}
           >
             ↓

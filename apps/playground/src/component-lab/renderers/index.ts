@@ -88,3 +88,4 @@ export { AudioLabPage } from './audio-lab-page';
 export { VideoLabPage } from './video-lab-page';
 export { CarouselLabPage } from './carousel-lab-page';
 export { QrcodeLabPage } from './qrcode-lab-page';
+export { DiffViewLabPage } from './diff-view-lab-page';
