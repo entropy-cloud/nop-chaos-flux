@@ -1,6 +1,6 @@
 # G1 graph 图查看器（只读交互式图 renderer + flux-renderers-graph 包骨架）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-05
 > Source: `docs/components/roadmap.md` G1（`proposed`）；`docs/components/graph/design.md` + `example.json`（契约已立约，targetContract）；`docs/analysis/complex-controls/research-graph.md`（选型）
 > Related: `docs/components/examples.manifest.json`（graph 条目 `targetContract`，closure 翻 `runtime`）；`docs/components/timeline/design.md`（同需求来源 ArbiterOS，独立 plan `2026-08-04-2030-2`）
@@ -88,79 +88,79 @@
 
 ### Phase 1 - flux-renderers-graph 包骨架
 
-Status: pending
+Status: completed
 Targets: `packages/flux-renderers-graph/{package.json,tsconfig.json,tsconfig.build.json,vitest.config.ts,src/index.ts,src/styles.css}`；`vite.workspace-alias.ts`；根 `tsconfig.json`
 
 - Item Types: `Fix`
 
-- [ ] **Fix**：新建 `packages/flux-renderers-graph/`，以 `packages/flow-designer-renderers/package.json` 为形状模板：`package.json`（name `@nop-chaos/flux-renderers-graph`；deps 含 `flux-core`/`flux-i18n`/`flux-react`/`@nop-chaos/ui`/`@xyflow/react ^12.10.2`/`use-sync-external-store`/`dagre`；peerDeps `lucide-react`/`react`；scripts build/typecheck/test/lint 对齐）。
-- [ ] **Fix**：`tsconfig.json`（extends `../../tsconfig.base.json`，`noEmit:true`，include src + `../../types/**/*.d.ts`）+ `tsconfig.build.json`（对齐 data/scheduling 包 build 配置）+ `vitest.config.ts`（对齐 scheduling 包 `--passWithNoTests`）。
-- [ ] **Fix**：`src/index.ts`（导出空 `graphRendererDefinitions: RendererDefinition[]` + `registerGraphRenderers(registry)` 占位，对齐 `registerSchedulingRenderers` 模式）+ `src/styles.css`（空，预留 marker 样式）。
-- [ ] **Fix**：`vite.workspace-alias.ts` 增 `@nop-chaos/flux-renderers-graph` 与 `@nop-chaos/flux-renderers-graph/styles.css` 两条别名（对齐 scheduling 包 L97-101 写法）。
-- [ ] **Fix**：根 `tsconfig.json` project references 增 `{ "path": "./packages/flux-renderers-graph" }`（接在 scheduling 之后）。
+- [x] **Fix**：新建 `packages/flux-renderers-graph/`，以 `packages/flow-designer-renderers/package.json` 为形状模板：`package.json`（name `@nop-chaos/flux-renderers-graph`；deps 含 `flux-core`/`flux-i18n`/`flux-react`/`@nop-chaos/ui`/`@xyflow/react ^12.10.2`/`use-sync-external-store`/`dagre`；peerDeps `lucide-react`/`react`；scripts build/typecheck/test/lint 对齐）。
+- [x] **Fix**：`tsconfig.json`（extends `../../tsconfig.base.json`，`noEmit:true`，include src + `../../types/**/*.d.ts`）+ `tsconfig.build.json`（对齐 data/scheduling 包 build 配置）+ `vitest.config.ts`（对齐 scheduling 包 `--passWithNoTests`）。
+- [x] **Fix**：`src/index.ts`（导出空 `graphRendererDefinitions: RendererDefinition[]` + `registerGraphRenderers(registry)` 占位，对齐 `registerSchedulingRenderers` 模式）+ `src/styles.css`（空，预留 marker 样式）。
+- [x] **Fix**：`vite.workspace-alias.ts` 增 `@nop-chaos/flux-renderers-graph` 与 `@nop-chaos/flux-renderers-graph/styles.css` 两条别名（对齐 scheduling 包 L97-101 写法）。
+- [x] **Fix**：根 `tsconfig.json` project references 增 `{ "path": "./packages/flux-renderers-graph" }`（接在 scheduling 之后）。
 
 Exit Criteria:
 
-- [ ] `pnpm install` 成功识别新 workspace 包（无依赖解析错误，dagre 装入）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-graph typecheck` 通过（空骨架可编译）。
-- [ ] playground `import { registerGraphRenderers } from '@nop-chaos/flux-renderers-graph'` 别名可解析（局部验证）。
+- [x] `pnpm install` 成功识别新 workspace 包（无依赖解析错误，dagre 装入）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-graph typecheck` 通过（空骨架可编译）。
+- [x] playground `import { registerGraphRenderers } from '@nop-chaos/flux-renderers-graph'` 别名可解析（局部验证）。
 
 ### Phase 2 - 数据层与画布桥接（Decision + Fix + Proof）
 
-Status: pending
+Status: completed
 Targets: `packages/flux-renderers-graph/src/{schemas.ts,graph-layout.ts,graph-search.ts,graph-store.ts,xyflow-canvas.tsx}`
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] **Decision**：共享helper边界裁定——graph 的 layout/search 是否抽到 flux-core 共享层？裁定：**首版保持在 graph 包内**（仅 graph 一处消费；若未来 steps/timeline 复用图布局再提升）。画布桥接是否直接复用 flow-designer 的 `canvas-bridge.tsx`？裁定：**不直接复用**（flow-designer 桥接含编辑态连接，graph 只读须裁剪），参照其模式新写只读 `xyflow-canvas.tsx`。裁定写入 design §11 + log。
-- [ ] **Fix**：`schemas.ts`——GraphNode/GraphEdge/GraphSchema 类型（design §4.1/§4.2，含 label/levelMap/single-select 注释）。
-- [ ] **Fix**：`graph-layout.ts`——dagre 分层投影纯函数（nodes/edges + layout/orientation → 坐标）；flow 模式直通 xyflow 内置，hierarchy 用 dagre。
-- [ ] **Fix**：`graph-search.ts`——子串匹配 + 循环索引纯函数（keyword + nodes → 匹配列表 + 当前索引）。
-- [ ] **Fix**：`graph-store.ts`——包内 store（视口/布局模式/搜索词+索引/选中节点，Zustand vanilla，参照 flow-designer-core 拆分模式，INV-4 全 local）。
-- [ ] **Fix**：`xyflow-canvas.tsx`——@xyflow/react 只读适配层：禁用节点拖拽/连接手柄/多选/框选（`nodesDraggable:false`/`nodesConnectable:false`/`panOnDrag`/`selectionOnDrag:false`），受控 viewport。
-- [ ] **Proof**：focused 单测——graph-layout（hierarchy LR/TB 投影坐标正确、空数据不抛错）、graph-search（匹配/循环索引/无匹配）、畸形数据过滤（边引用缺失节点跳过、孤立节点、均空）。
+- [x] **Decision**：共享helper边界裁定——graph 的 layout/search 是否抽到 flux-core 共享层？裁定：**首版保持在 graph 包内**（仅 graph 一处消费；若未来 steps/timeline 复用图布局再提升）。画布桥接是否直接复用 flow-designer 的 `canvas-bridge.tsx`？裁定：**不直接复用**（flow-designer 桥接含编辑态连接，graph 只读须裁剪），参照其模式新写只读 `xyflow-canvas.tsx`。裁定写入 design §11 + log。
+- [x] **Fix**：`schemas.ts`——GraphNode/GraphEdge/GraphSchema 类型（design §4.1/§4.2，含 label/levelMap/single-select 注释）。
+- [x] **Fix**：`graph-layout.ts`——dagre 分层投影纯函数（nodes/edges + layout/orientation → 坐标）；flow 模式直通 xyflow 内置，hierarchy 用 dagre。
+- [x] **Fix**：`graph-search.ts`——子串匹配 + 循环索引纯函数（keyword + nodes → 匹配列表 + 当前索引）。
+- [x] **Fix**：`graph-store.ts`——包内 store（视口/布局模式/搜索词+索引/选中节点，Zustand vanilla，参照 flow-designer-core 拆分模式，INV-4 全 local）。
+- [x] **Fix**：`xyflow-canvas.tsx`——@xyflow/react 只读适配层：禁用节点拖拽/连接手柄/多选/框选（`nodesDraggable:false`/`nodesConnectable:false`/`panOnDrag`/`selectionOnDrag:false`），受控 viewport。
+- [x] **Proof**：focused 单测——graph-layout（hierarchy LR/TB 投影坐标正确、空数据不抛错）、graph-search（匹配/循环索引/无匹配）、畸形数据过滤（边引用缺失节点跳过、孤立节点、均空）。
 
 Exit Criteria:
 
-- [ ] layout/search 纯 helper focused 单测通过（含畸形数据过滤分支）。
-- [ ] xyflow-canvas 只读配置正确（多选/框选/连接/拖拽均禁用）。
+- [x] layout/search 纯 helper focused 单测通过（含畸形数据过滤分支）。
+- [x] xyflow-canvas 只读配置正确（多选/框选/连接/拖拽均禁用）。
 
 ### Phase 3 - 渲染、交互与句柄（Fix + Proof）
 
-Status: pending
+Status: completed
 Targets: `packages/flux-renderers-graph/src/{graph-definitions.ts,graph-renderer.tsx,graph-node.tsx}`
 
 - Item Types: `Fix | Proof`
 
-- [ ] **Fix**：`graph-node.tsx`——node region 编译（`props.regions.node.render()`，绑定 node/nodeId/index）+ label 回退（region > labelField > id）+ level 语义类（levelMap → data-level）。
-- [ ] **Fix**：`graph-renderer.tsx`——根组装：读 nodes/edges/layout/orientation/levelMap/fitView/zoomable/pannable/selectable/searchable/showControls；调 layout 投影；接 xyflow-canvas；内置控制条（zoom±/fitView/layout 切换）+ 搜索框（searchable 时）；empty slot（均空）；marker `nop-graph` + data-slot/data-level/data-selected/data-matching/data-state。
-- [ ] **Fix**：单选模型——onSelectionChange/onNodeClick 承载单节点（取消选中均 null）；禁用 React Flow 默认多选。
-- [ ] **Fix**：7 句柄实现（zoomIn/zoomOut/fitView/resetView/setLayout/focusNode/search）+ 失败路径（design §8.2 全表：node-not-found 回退 fitView、setLayout 非法忽略、search 空串清空/无匹配、not-mounted ref null）。
-- [ ] **Fix**：`graph-definitions.ts`——RendererDefinition（type/displayName/category:`data`/sourcePackage/component）+ propContracts（nodes/edges/layout/orientation/label/labelField/typeField/levelField/levelMap/fitView/zoomable/pannable/selectable/searchable/showControls/minZoom/maxZoom）+ fields（node region/empty value-or-region）+ eventContracts（onNodeClick/onNodeDoubleClick/onSelectionChange）。
-- [ ] **Proof**：focused 单测——node region 编译 + label 回退、levelMap 映射、单选 payload（选中/取消选中均 null）、句柄失败路径（focusNode not-found 回退、setLayout 非法忽略、search 空串/无匹配）。
+- [x] **Fix**：`graph-node.tsx`——node region 编译（`props.regions.node.render()`，绑定 node/nodeId/index）+ label 回退（region > labelField > id）+ level 语义类（levelMap → data-level）。
+- [x] **Fix**：`graph-renderer.tsx`——根组装：读 nodes/edges/layout/orientation/levelMap/fitView/zoomable/pannable/selectable/searchable/showControls；调 layout 投影；接 xyflow-canvas；内置控制条（zoom±/fitView/layout 切换）+ 搜索框（searchable 时）；empty slot（均空）；marker `nop-graph` + data-slot/data-level/data-selected/data-matching/data-state。
+- [x] **Fix**：单选模型——onSelectionChange/onNodeClick 承载单节点（取消选中均 null）；禁用 React Flow 默认多选。
+- [x] **Fix**：7 句柄实现（zoomIn/zoomOut/fitView/resetView/setLayout/focusNode/search）+ 失败路径（design §8.2 全表：node-not-found 回退 fitView、setLayout 非法忽略、search 空串清空/无匹配、not-mounted ref null）。
+- [x] **Fix**：`graph-definitions.ts`——RendererDefinition（type/displayName/category:`data`/sourcePackage/component）+ propContracts（nodes/edges/layout/orientation/label/labelField/typeField/levelField/levelMap/fitView/zoomable/pannable/selectable/searchable/showControls/minZoom/maxZoom）+ fields（node region/empty value-or-region）+ eventContracts（onNodeClick/onNodeDoubleClick/onSelectionChange）。
+- [x] **Proof**：focused 单测——node region 编译 + label 回退、levelMap 映射、单选 payload（选中/取消选中均 null）、句柄失败路径（focusNode not-found 回退、setLayout 非法忽略、search 空串/无匹配）。
 
 Exit Criteria:
 
-- [ ] graph renderer 落地，输出 marker，单选模型 + 7 句柄 + 失败路径 focused 单测通过。
-- [ ] 畸形数据（dangling edge/孤立节点/均空）渲染不抛错。
+- [x] graph renderer 落地，输出 marker，单选模型 + 7 句柄 + 失败路径 focused 单测通过。
+- [x] 畸形数据（dangling edge/孤立节点/均空）渲染不抛错。
 
 ### Phase 4 - 注册 + playground + e2e + 状态同步（Proof + Fix）
 
-Status: pending
+Status: completed
 Targets: `src/index.ts`（注册助手填充）；playground route-model + example；`tests/e2e/`；`examples.manifest.json`；`docs/components/roadmap.md`
 
 - Item Types: `Proof | Fix`
 
-- [ ] **Fix**：`registerGraphRenderers(registry)` 填充 + `graphRendererDefinitions` 导出；playground 注册本包。
-- [ ] **Proof**：playground 演示页——flow/hierarchy 双布局 + 搜索 + 单选联动（onSelectionChange 落 scope 驱动分析面板）+ 畸形数据示例（dangling edge）。
-- [ ] **Proof**：e2e（程序化断言）——渲染节点数、搜索定位高亮、单选点击→payload、focusNode 句柄 not-found 回退 fitView、setLayout 切换、空态/畸形数据降级。
-- [ ] **Fix**：`examples.manifest.json` graph `targetContract→runtime`。
-- [ ] **Fix**：`docs/components/roadmap.md` G1 状态机流转——按 roadmap Phase Status 区规则分两步：本 plan 激活（draft review 通过）即代表 G1 提案确认，执行时先把 `proposed` 改 `planned`；`done` 标记必须等本 plan closure audit 通过后才可改（`planned→done`，不得提前）。同步 Phase Status 区 G1 行与 Component Coverage 表（移出 Proposed 区、登记 sourcePackage `@nop-chaos/flux-renderers-graph`）。
+- [x] **Fix**：`registerGraphRenderers(registry)` 填充 + `graphRendererDefinitions` 导出；playground 注册本包。
+- [x] **Proof**：playground 演示页——flow/hierarchy 双布局 + 搜索 + 单选联动（onSelectionChange 落 scope 驱动分析面板）+ 畸形数据示例（dangling edge）。
+- [x] **Proof**：e2e（程序化断言）——渲染节点数、搜索定位高亮、单选点击→payload、focusNode 句柄 not-found 回退 fitView、setLayout 切换、空态/畸形数据降级。
+- [x] **Fix**：`examples.manifest.json` graph `targetContract→runtime`。
+- [x] **Fix**：`docs/components/roadmap.md` G1 状态机流转——按 roadmap Phase Status 区规则分两步：本 plan 激活（draft review 通过）即代表 G1 提案确认，执行时先把 `proposed` 改 `planned`；`done` 标记必须等本 plan closure audit 通过后才可改（`planned→done`，不得提前）。同步 Phase Status 区 G1 行与 Component Coverage 表（移出 Proposed 区、登记 sourcePackage `@nop-chaos/flux-renderers-graph`）。
 
 Exit Criteria:
 
-- [ ] playground 演示页可运行，e2e 程序化断言全绿。
-- [ ] manifest graph 标 `runtime`；roadmap G1 标 `planned`（`done` 在 closure audit 通过后由独立审计翻转）。
+- [x] playground 演示页可运行，e2e 程序化断言全绿。
+- [x] manifest graph 标 `runtime`；roadmap G1 标 `planned`（`done` 在 closure audit 通过后由独立审计翻转）。
 
 ## Draft Review Record
 
@@ -178,14 +178,31 @@ Exit Criteria:
 
 > 关闭条件：本 section 及每个 Phase Exit Criteria 全部 `[x]` 后，经独立子 agent closure-audit，方可将 Plan Status 改 `completed`。
 
-- [ ] `flux-renderers-graph` 包骨架落地并集成 monorepo（alias/root ref/install/typecheck 通过）
-- [ ] graph renderer 落地：只读画布（禁用编辑/多选/框选）+ dagre 布局 + 单选模型 + 7 句柄 + 失败路径 + 畸形数据硬契约
-- [ ] 行为/契约结果已达成（focused 单测 + e2e 程序化断言全绿）
-- [ ] renderer 零请求字段（nodes/edges 经 data-source/scope），符合请求下沉约束
-- [ ] `examples.manifest.json` graph `targetContract→runtime`；roadmap G1 `planned→done`（closure audit 通过后才可改，不得提前）
-- [ ] design.md 实现状态同步（§3/§12 deferral 翻转、Checklist G 包结构勾选）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `flux-renderers-graph` 包骨架落地并集成 monorepo（alias/root ref/install/typecheck 通过）
+- [x] graph renderer 落地：只读画布（禁用编辑/多选/框选）+ dagre 布局 + 单选模型 + 7 句柄 + 失败路径 + 畸形数据硬契约
+- [x] 行为/契约结果已达成（focused 单测 + e2e 程序化断言全绿）
+- [x] renderer 零请求字段（nodes/edges 经 data-source/scope），符合请求下沉约束
+- [x] `examples.manifest.json` graph `targetContract→runtime`；roadmap G1 `planned→done`（closure audit 通过后才可改，不得提前）
+- [x] design.md 实现状态同步（§3/§12 deferral 翻转、Checklist G 包结构勾选）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure
+
+Status Note: G1 graph 图查看器完整落地（包骨架/数据层/画布桥接/渲染交互句柄/注册+playground+e2e+状态同步 4 个 Phase 全部完成），全量验证 `pnpm typecheck` 32/32、`pnpm build` 32/32、`pnpm lint` 32/32、`pnpm test` 59/59 task、e2e graph-demo 8/8、graph 包 42 条单测全绿；`examples.manifest.json` graph 已标 `runtime`；roadmap G1 `planned→done`（本 closure 通过后翻转）；design.md 实现状态同步（§3/§4.3/§11/§12/Checklist G）。
+
+Closure Audit Evidence:
+
+- Auditor / Agent: 独立子 agent（3 轮 fresh-session 审计链）
+  - 首轮 `ses_0300735f6ffekxS3YUIyEUXBK9`：verdict `issues`——Major-1（悬垂边 dev 告警契约缺失：design §6/plan Failure Paths 承诺「跳过 + dev 告警」，renderer 未告警）+ Minor-2（design §10 `data-slot="graph-edge"` 未发布）+ Minor-3（e2e 未直接覆盖 searchable:false 句柄共存）。
+  - 修复：`computeGraphLayout` 返回 `skippedEdges`，renderer 数据变化时 `console.warn` 一次（focused 单测断言）；design.md §10 边 marker 按首版范围裁掉；补 `searchable:false` + 句柄共存单测。
+  - 复审 `ses_030029e93ffekTC9mjIpng7Bj0`：Major-1 修复验证通过；指出日志「searchable:false 由单测覆盖」声称不实（当时无该单测）。
+  - 终审 `ses_02ff7df1effeXnWmcg46OSg7gf`：新增单测与日志修正均验证通过，verdict `approved`。
+- Evidence: 全量验证输出见 `docs/logs/2026/08-05.md`；单测 42 条；e2e `tests/e2e/graph-demo.spec.ts` 8/8。
+
+Follow-up:
+
+- no remaining plan-owned work。deferred 项（edge region / 力导向 / 图分析算法 / 多选框选 / 完整虚拟化 / 播放引擎）均已在 Non-Goals / Out Of Scope 带理由裁定，非 in-scope defect。

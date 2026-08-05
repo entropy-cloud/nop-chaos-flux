@@ -60,7 +60,8 @@
     "word-editor-page",
     "barcode-input",
     "diff-view",
-    "timeline"
+    "timeline",
+    "graph"
   ],
   "targetContract": [
     "alert",
@@ -78,7 +79,6 @@
     "dropdown-button",
     "editor",
     "separator",
-    "graph",
     "grid",
     "image",
     "infinite-scroll",

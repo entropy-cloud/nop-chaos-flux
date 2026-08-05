@@ -32,13 +32,13 @@
       "items": [
         {
           "type": "text",
-          "text": "${node.label}",
+          "text": "${$slot.node.label}",
           "className": "text-sm font-medium"
         },
         {
           "type": "badge",
-          "level": "${node.level === 'error' || node.level === 'policy_violation' ? 'danger' : node.level === 'warning' ? 'warning' : 'info'}",
-          "text": "${node.type}"
+          "level": "${$slot.node.level === 'error' || $slot.node.level === 'policy_violation' ? 'danger' : $slot.node.level === 'warning' ? 'warning' : 'info'}",
+          "text": "${$slot.node.type}"
         }
       ]
     }

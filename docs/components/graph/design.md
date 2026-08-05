@@ -1,6 +1,6 @@
 # Graph 组件设计
 
-> 状态：target contract（未实现，design 立约阶段）
+> 状态：implemented（renderer 已落地于 `@nop-chaos/flux-renderers-graph`，2026-08-05；plan `docs/plans/2026-08-04-2030-1-g1-graph-viewer-plan.md`）
 > 来源调研：`docs/analysis/complex-controls/research-graph.md`（ArbiterOS trace 图需求 + React Flow 选型）
 > 画布参考：`docs/architecture/flow-designer/canvas-adapters.md`（flow-designer 已落地 `@xyflow/react` 12.10.2 桥接模式）
 
@@ -48,7 +48,7 @@ AMIS 无原生图查看器组件（echarts graph series 只覆盖少量图形态
 
 - `type: 'graph'`
 - `category: 'data'`
-- 预期 source package: **`@nop-chaos/flux-renderers-graph`（NEW，独立包）**
+- source package: **`@nop-chaos/flux-renderers-graph`（已落地，2026-08-05）**
   - 理由：引入 `@xyflow/react` + `dagre` 两个重型依赖，放进被广泛引用的 `flux-renderers-data` 会污染通用包 bundle（chart 的 recharts 已在 data 包，不宜再叠加）；参照 `flow-designer-renderers` 独立包 + `flux-renderers-scheduling` 的包级依赖隔离先例。
 - 主要 region: `node`
 - 可选 region: `empty`
@@ -130,6 +130,8 @@ node region 模板内可用绑定（参照 tree node region 模式）：
 | `node`   | 当前节点完整数据（含 data.\* 业务字段） |
 | `nodeId` | 节点 id                                 |
 | `index`  | 节点在 nodes 数组中的索引               |
+
+> 表达式书写注意：region 模板内绑定经 runtime 的 `$slot` slot-frame 机制注入（同 list `item` region），表达式中以 `$slot.<绑定名>` 引用，如 `"text": "${$slot.node.label}"`（与 `example.json` 一致）。
 
 ## 5. 字段分类
 
@@ -224,7 +226,7 @@ node region 模板内可用绑定（参照 tree node region 模式）：
 | 视口容器 | `data-slot="graph-viewport"`                                                                                  |
 | 节点容器 | `data-slot="graph-node"` + `data-level="<语义级>"` + `data-selected`（选中时）+ `data-matching`（搜索命中时） |
 | 节点标签 | `data-slot="graph-node-label"`                                                                                |
-| 边容器   | `data-slot="graph-edge"`                                                                                      |
+| 边容器   | 首版不发布（默认 xyflow 边渲染，label + animated；自定义边渲染归 deferred，见 §2）                            |
 | 控制条   | `data-slot="graph-controls"`                                                                                  |
 | 搜索框   | `data-slot="graph-search-input"`；搜索激活态根节点 `data-state="searching"`                                   |
 | 空态     | `data-slot="graph-empty"`                                                                                     |
@@ -235,6 +237,11 @@ node region 模板内可用绑定（参照 tree node region 模式）：
 ## 11. 实现拆分建议
 
 实现细节（renderer 骨架、region 编译、data-slot、测试布局）参照 `renderer-implementation-guidelines.md` 与 `flux-renderers-layout` 先例。
+
+**实现裁定（2026-08-05，plan `2026-08-04-2030-1` Phase 2）：**
+
+1. **共享 helper 边界**：graph 的 layout/search 纯 helper **首版保持在 graph 包内**（`graph-layout.ts`/`graph-search.ts`），不抽到 flux-core 共享层——当前仅 graph 一处消费；若未来 steps/timeline 复用图布局再提升（`components/timeline` 独立 plan，届时评估）。
+2. **画布桥接**：**不直接复用** flow-designer 的 `canvas-bridge.tsx`（其含编辑态连接/拖拽/命令适配，graph 只读须裁剪），参照其桥接模式新写只读 `xyflow-canvas.tsx`（节点拖拽/连接手柄/多选/框选全部禁用，视口受控）。
 
 ```
 packages/flux-renderers-graph/src/
@@ -255,14 +262,14 @@ packages/flux-renderers-graph/src/
 
 ## 12. 风险、取舍与后续阶段
 
-| 项                                | 取舍与后续                                                                                     |
-| --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| 依赖体积（xyflow + dagre）        | 独立包隔离，不污染 data 包；xyflow 复用仓库既有版本，dagre 轻量（~50KB）                       |
-| hierarchy 布局质量                | dagre 起步；elkjs（P2）提升跨层边质量，不改变 schema                                           |
-| 大数据量（>5k 节点）              | React Flow 视口裁剪兜底；虚拟化增强归后续                                                      |
-| 多观察点循环 / 业务索引语义       | 明确归宿主组合（§2.1-4），graph 不内置；如多产品复现再评估 `cycleIndex` 事件增强               |
-| edge region / 力导向 / 图分析算法 | 均 deferred（§2 不采纳/后续行）                                                                |
-| examples.manifest.json 标注       | 本组件注册为 `targetContract`（design 立约，未实现）；实现后翻转 `runtime` 并更新 roadmap 状态 |
+| 项                                | 取舍与后续                                                                                                       |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 依赖体积（xyflow + dagre）        | 独立包隔离，不污染 data 包；xyflow 复用仓库既有版本，dagre 轻量（~50KB）                                         |
+| hierarchy 布局质量                | dagre 起步；elkjs（P2）提升跨层边质量，不改变 schema                                                             |
+| 大数据量（>5k 节点）              | React Flow 视口裁剪兜底；虚拟化增强归后续                                                                        |
+| 多观察点循环 / 业务索引语义       | 明确归宿主组合（§2.1-4），graph 不内置；如多产品复现再评估 `cycleIndex` 事件增强                                 |
+| edge region / 力导向 / 图分析算法 | 均 deferred（§2 不采纳/后续行）                                                                                  |
+| examples.manifest.json 标注       | 已翻转 `runtime`（2026-08-05，plan `2026-08-04-2030-1`）；roadmap G1 `planned→done` 由该 plan closure audit 翻转 |
 
 ## 13. 原则审计（日期：2026-08-04，审计人：nop-app-erp agent）
 
@@ -302,7 +309,7 @@ packages/flux-renderers-graph/src/
 - D 契约边界：✅（INV-5）
 - E 扩展点边界：✅ region（node/empty）+ event + component handle；无实现细节字段
 - F 样式边界：✅（§10 marker/data-slot/data-level；Widget 自样式 token 化）
-- G 包结构：⏳ 新建包 checklist 于实现计划阶段勾选（package.json/tsconfig/alias/register 等）
+- G 包结构：✅ 已勾选（2026-08-05，plan `2026-08-04-2030-1`：package.json/tsconfig/alias/root ref/register 全部落地，playground 注册 + e2e 全绿）
 
 ### 例外与未决项
 
