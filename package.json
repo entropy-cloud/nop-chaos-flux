@@ -4,7 +4,7 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "turbo run dev --filter=@nop-chaos/flux-playground",
-    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:flux-bundle-pack && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:schema-prop-coverage && pnpm check:audit-suspects && pnpm check:audit-renderer-browser-io",
+    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:flux-bundle-pack && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:schema-prop-coverage && pnpm check:audit-suspects && pnpm check:audit-renderer-browser-io && pnpm check:audit-event-dispatch-ctx",
     "analyze": "turbo run analyze --filter=@nop-chaos/flux-playground",
     "audit:deps": "depcruise --config .dependency-cruiser.cjs apps packages scripts",
     "audit:knip": "knip --config knip.json",
@@ -35,6 +35,7 @@
     "check:schema-prop-coverage": "node scripts/check-schema-prop-coverage.mjs",
     "check:audit-suspects": "node scripts/audit/discover-audit-suspects.mjs",
     "check:audit-renderer-browser-io": "node scripts/audit/find-renderer-browser-io.mjs",
+    "check:audit-event-dispatch-ctx": "node scripts/audit/find-event-dispatch-without-ctx.mjs",
     "check:flux-bundle-pack": "node scripts/check-flux-bundle-pack.mjs",
     "check:audit-reactive-render-reads": "node scripts/audit/find-reactive-render-reads.mjs",
     "check:audit-async-failure-paths": "node scripts/audit/find-async-without-failure-path.mjs",
