@@ -103,6 +103,12 @@ describe('markdown-editor — split/edit/preview view modes', () => {
     expect(screen.getByTestId('markdown-editor-preview')).toBeTruthy();
     expect(document.querySelector('[data-view-mode="preview"]')).toBeTruthy();
   });
+
+  it('exposes the preview area as a polite live region', () => {
+    renderSchema(buildForm('md', '# hi', { viewMode: 'split' }));
+    const preview = screen.getByTestId('markdown-editor-preview');
+    expect(preview.getAttribute('aria-live')).toBe('polite');
+  });
 });
 
 describe('markdown-editor — edit/preview composition & writeback', () => {

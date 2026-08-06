@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { t } from '@nop-chaos/flux-i18n';
 import { DiffFileList } from '../components/diff-file-list.js';
 import type { DiffFileMeta } from '../../schemas.js';
 
@@ -37,7 +38,8 @@ describe('DiffFileList', () => {
 
   it('filters files by search text', () => {
     render(<DiffFileList files={sampleFiles} activeIndex={0} onFileSelect={onFileSelect} />);
-    const input = screen.getByPlaceholderText('Search files...');
+    const input = screen.getByPlaceholderText(t('flux.diff.searchFiles'));
+    expect(input.getAttribute('aria-label')).toBeTruthy();
     fireEvent.change(input, { target: { value: 'src' } });
     expect(screen.getByText('src/index.ts')).toBeTruthy();
     expect(screen.getByText('src/utils.ts')).toBeTruthy();
@@ -47,7 +49,7 @@ describe('DiffFileList', () => {
 
   it('filters files by status tab "added"', () => {
     render(<DiffFileList files={sampleFiles} activeIndex={0} onFileSelect={onFileSelect} />);
-    const addedTab = screen.getByText(/Added/);
+    const addedTab = screen.getByText(t('flux.diff.added', { count: 2 }));
     fireEvent.click(addedTab);
     expect(screen.queryByText('src/index.ts')).toBeNull();
     expect(screen.getByText('src/utils.ts')).toBeTruthy();
@@ -57,7 +59,7 @@ describe('DiffFileList', () => {
 
   it('filters files by status tab "deleted"', () => {
     render(<DiffFileList files={sampleFiles} activeIndex={0} onFileSelect={onFileSelect} />);
-    const deletedTab = screen.getByText(/Deleted/);
+    const deletedTab = screen.getByText(t('flux.diff.deleted', { count: 1 }));
     fireEvent.click(deletedTab);
     expect(screen.queryByText('src/index.ts')).toBeNull();
     expect(screen.queryByText('src/utils.ts')).toBeNull();
@@ -67,7 +69,7 @@ describe('DiffFileList', () => {
 
   it('filters files by status tab "modified"', () => {
     render(<DiffFileList files={sampleFiles} activeIndex={0} onFileSelect={onFileSelect} />);
-    const modifiedTab = screen.getByText(/Modified/);
+    const modifiedTab = screen.getByText(t('flux.diff.modified', { count: 1 }));
     fireEvent.click(modifiedTab);
     expect(screen.getByText('src/index.ts')).toBeTruthy();
     expect(screen.queryByText('src/utils.ts')).toBeNull();
@@ -89,9 +91,9 @@ describe('DiffFileList', () => {
 
   it('shows "No files match" when search yields no results', () => {
     render(<DiffFileList files={sampleFiles} activeIndex={0} onFileSelect={onFileSelect} />);
-    const input = screen.getByPlaceholderText('Search files...');
+    const input = screen.getByPlaceholderText(t('flux.diff.searchFiles'));
     fireEvent.change(input, { target: { value: 'nonexistent' } });
-    expect(screen.getByText('无匹配文件')).toBeTruthy();
+    expect(screen.getByText(t('flux.diff.noFilesMatch'))).toBeTruthy();
   });
 
   it('fires onFileSelect with correct index for every file', () => {

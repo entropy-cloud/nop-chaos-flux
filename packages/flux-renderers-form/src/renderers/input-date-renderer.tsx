@@ -45,7 +45,7 @@ export function InputDateRenderer(props: RendererComponentProps<InputDateSchema>
   );
 
   return (
-    <div className={cn('nop-input-date', props.meta.className)} data-slot="field-control">
+    <div className={cn('nop-input-date', props.meta.className)}>
       <DateFieldControl
         id={props.id}
         cid={props.meta.cid}

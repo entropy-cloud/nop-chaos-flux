@@ -5,6 +5,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import { getIn } from '@nop-chaos/flux-core';
 import type { TextSchema } from './schemas.js';
+import { collectDataAttrs } from './utils.js';
 import { copyToClipboard } from './copy-to-clipboard.js';
 
 const VALID_TAGS = [
@@ -135,10 +136,12 @@ export function TextRenderer(props: RendererComponentProps<TextSchema>) {
     maxLineClass === MAX_LINE_CLAMP_CLASS && typeof maxLine === 'number'
       ? String(Math.floor(maxLine))
       : undefined;
+  const dataAttrs = collectDataAttrs(props.props);
 
   return (
     <Tag
       ref={contentRef}
+      {...dataAttrs}
       className={cn('nop-text', appliedMaxLineClass, props.meta.className)}
       style={
         maxLineCount

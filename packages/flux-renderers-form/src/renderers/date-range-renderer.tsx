@@ -243,7 +243,7 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
   }
 
   return (
-    <div className={cn('nop-date-range', 'relative flex items-center', props.meta.className)} data-slot="field-control">
+    <div className={cn('nop-date-range', 'relative flex items-center', props.meta.className)}>
       <Popover open={open && presentation.interactive} onOpenChange={setOpen}>
         <PopoverTrigger
           render={

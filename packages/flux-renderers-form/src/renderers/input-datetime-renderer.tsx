@@ -57,7 +57,7 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
   );
 
   return (
-    <div className={cn('nop-input-datetime', props.meta.className)} data-slot="field-control">
+    <div className={cn('nop-input-datetime', props.meta.className)}>
       <DateFieldControl
         id={props.id}
         cid={props.meta.cid}

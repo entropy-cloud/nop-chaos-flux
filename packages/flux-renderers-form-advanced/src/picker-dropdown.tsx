@@ -49,6 +49,7 @@ export function PickerDropdown(props: PickerDropdownProps) {
                   <Input
                     type="search"
                     value={props.query}
+                    aria-label={t('flux.picker.search', { defaultValue: 'Search' })}
                     placeholder={t('flux.picker.search', { defaultValue: 'Search' })}
                     style={{ paddingLeft: '2rem' }}
                     onChange={(event) => props.onQueryChange(event.target.value)}

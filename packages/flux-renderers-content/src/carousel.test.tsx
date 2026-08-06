@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { t } from '@nop-chaos/flux-i18n';
 import type { ComponentHandle, ComponentHandleRegistry } from '@nop-chaos/flux-core';
 
 const registerMock = vi.fn();
@@ -85,6 +86,17 @@ describe('CarouselRenderer', () => {
     const dots = container.querySelectorAll('[data-slot="carousel-indicator"]');
     expect(dots.length).toBe(2);
     expect(dots[0]?.getAttribute('data-active')).toBe('true');
+  });
+
+  it('labels indicator dots through flux.carousel.goToSlide with a 1-based index', () => {
+    const props = createMockRendererProps<CarouselSchema>({
+      schema: { type: 'carousel' },
+      props: { items: [{ image: '/a.png' }, { image: '/b.png' }] },
+    });
+    const { container } = render(<CarouselRenderer {...props} />);
+    const dots = container.querySelectorAll('[data-slot="carousel-indicator"]');
+    expect(dots[0]?.getAttribute('aria-label')).toBe(t('flux.carousel.goToSlide', { index: 1 }));
+    expect(dots[1]?.getAttribute('aria-label')).toBe(t('flux.carousel.goToSlide', { index: 2 }));
   });
 
   it('registers a component handle exposing next/prev/setValue', () => {

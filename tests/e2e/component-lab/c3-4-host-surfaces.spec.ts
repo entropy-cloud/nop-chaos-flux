@@ -80,16 +80,16 @@ test('lightweight-editor-host: array-editor + key-value inline edit + submit (bu
   // key-value: edit the seeded pair inline and append a second pair.
   const kv = stage.locator('.nop-key-value').first();
   await expect(kv).toBeVisible({ timeout: 10_000 });
-  const kvKey = kv.getByPlaceholder('Key', { exact: true });
-  const kvValue = kv.getByPlaceholder('Value', { exact: true });
+  const kvKey = kv.getByPlaceholder(/Key|键/, { exact: true });
+  const kvValue = kv.getByPlaceholder(/Value|值/, { exact: true });
   await expect(kvKey).toHaveValue('env');
   await expect(kvValue).toHaveValue('prod');
   await kvValue.fill('staging');
 
   await kv.getByRole('button', { name: ADD_ENTRY }).click();
-  await expect(kv.getByPlaceholder('Key', { exact: true })).toHaveCount(2);
-  await kv.getByPlaceholder('Key', { exact: true }).nth(1).fill('region');
-  await kv.getByPlaceholder('Value', { exact: true }).nth(1).fill('us');
+  await expect(kv.getByPlaceholder(/Key|键/, { exact: true })).toHaveCount(2);
+  await kv.getByPlaceholder(/Key|键/, { exact: true }).nth(1).fill('region');
+  await kv.getByPlaceholder(/Value|值/, { exact: true }).nth(1).fill('us');
 
   await stage.getByRole('button', { name: SUBMIT }).click();
   const echo = stage.getByTestId('le-submit-echo');
@@ -123,8 +123,8 @@ test('lightweight-editor-host: readOnly freezes the whole family (CX-8 same-type
 
   // key-value inputs + chrome disabled.
   const kv = stage.locator('.nop-key-value').first();
-  await expect(kv.getByPlaceholder('Key', { exact: true })).toBeDisabled();
-  await expect(kv.getByPlaceholder('Value', { exact: true })).toBeDisabled();
+  await expect(kv.getByPlaceholder(/Key|键/, { exact: true })).toBeDisabled();
+  await expect(kv.getByPlaceholder(/Value|值/, { exact: true })).toBeDisabled();
   await expect(kv.getByRole('button', { name: ADD_ENTRY })).toBeDisabled();
 
   // icon-picker trigger disabled.

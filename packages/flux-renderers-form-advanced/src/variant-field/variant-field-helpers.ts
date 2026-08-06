@@ -6,6 +6,7 @@ import type {
   SchemaObject,
   TemplateNode,
 } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { VariantFieldSchema, VariantOption } from '../composite-field/composite-schemas.js';
 
 export type BaseNodeInstance = RendererComponentProps['node'];
@@ -104,6 +105,6 @@ export function reportVariantFieldFailure(
   notify: RendererEnv['notify'] | undefined,
   error: unknown,
 ) {
-  const message = error instanceof Error && error.message ? error.message : 'Variant field update failed';
+  const message = error instanceof Error && error.message ? error.message : t('flux.form.variantUpdateFailed');
   notify?.('warning', message);
 }

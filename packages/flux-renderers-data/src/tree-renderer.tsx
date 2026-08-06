@@ -418,7 +418,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const emptyContent = resolveRendererSlotContent(props, 'empty', {
     fallback: t('flux.common.noData'),
   });
-  const treeLabel = String(schemaProps.label || schemaProps.title || props.id || 'Tree');
+  const treeLabel = String(schemaProps.label || schemaProps.title || props.id || t('flux.data.tree'));
   const multiple = schemaProps.multiple === true;
   const statusPath =
     typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;

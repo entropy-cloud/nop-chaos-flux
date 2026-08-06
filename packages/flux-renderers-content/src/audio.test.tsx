@@ -82,6 +82,18 @@ describe('AudioRenderer', () => {
     expect(fallback).toBeTruthy();
   });
 
+  it('announces the error fallback through a live region', () => {
+    const props = createMockRendererProps<AudioSchema>({
+      schema: { type: 'audio' },
+      props: { src: '/missing.mp3' },
+    });
+    const { container } = render(<AudioRenderer {...props} />);
+    const audio = audioOf(container);
+    fireEvent.error(audio);
+    const fallback = container.querySelector('[data-slot="audio-fallback"]');
+    expect(fallback?.getAttribute('aria-live')).toBe('polite');
+  });
+
   it('renders the title region when provided', () => {
     const props = createMockRendererProps<AudioSchema>({
       schema: { type: 'audio' },

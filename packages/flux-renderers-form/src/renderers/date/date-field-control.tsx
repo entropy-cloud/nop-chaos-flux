@@ -201,7 +201,6 @@ export function DateFieldControl(props: DateFieldControlProps) {
   return (
     <div
       className={cn('nop-date-control', 'relative flex items-center')}
-      data-slot="field-control"
       data-has-value={hasValue ? '' : undefined}
       data-invalid={showError ? '' : undefined}
     >

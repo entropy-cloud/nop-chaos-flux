@@ -2,6 +2,7 @@ import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn, resolveLucideIcon } from '@nop-chaos/ui';
 import type { IconSchema, IconSize } from './schemas.js';
+import { collectDataAttrs } from './utils.js';
 
 const ICON_SIZE_TOKEN_PIXELS = {
   sm: 12,
@@ -36,9 +37,11 @@ export function IconRenderer(props: RendererComponentProps<IconSchema>) {
 
   const size = resolveIconSize(props.props.size);
   const color = typeof props.props.color === 'string' ? props.props.color : undefined;
+  const dataAttrs = collectDataAttrs(props.props);
 
   return (
     <IconComp
+      {...dataAttrs}
       className={cn('nop-icon', props.meta.className)}
       data-icon={icon}
       data-testid={props.meta.testid || undefined}

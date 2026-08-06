@@ -330,7 +330,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
   const headerColumnCount = Math.max(1, columns.length);
 
   return (
-    <div className={cn('nop-input-table', 'flex flex-col gap-2', props.meta.className)} data-slot="field-control">
+    <div className={cn('nop-input-table', 'flex flex-col gap-2', props.meta.className)}>
       <div className="overflow-x-auto" data-slot="input-table-scroll">
         <Table data-slot="input-table-table">
           <TableHeader>

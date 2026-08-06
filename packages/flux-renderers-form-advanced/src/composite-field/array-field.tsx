@@ -520,7 +520,6 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   return (
     <div
       className={cn('nop-array-field', props.meta.className)}
-      data-slot="field-control"
     >
       <div data-slot="array-field-body">
         {itemEntries.map(({ item, index, itemIdentity, itemInstancePath }) => {

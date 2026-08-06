@@ -317,7 +317,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
   return (
     <>
-      <div className={cn('nop-detail-field', props.meta.className)} data-slot="field-control">
+      <div className={cn('nop-detail-field', props.meta.className)}>
         <div data-slot="detail-field-viewer">
           {viewerContent ?? (
             <span>

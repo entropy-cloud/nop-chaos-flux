@@ -1,6 +1,7 @@
 import React from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { t } from '@nop-chaos/flux-i18n';
 import type {
   ApiSchema,
   ApiRequestContext,
@@ -235,8 +236,8 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
       />,
     );
 
-    const keyInput = screen.getByPlaceholderText('Key') as HTMLInputElement;
-    const valueInput = screen.getByPlaceholderText('Value') as HTMLInputElement;
+    const keyInput = screen.getByPlaceholderText(t('flux.form.key')) as HTMLInputElement;
+    const valueInput = screen.getByPlaceholderText(t('flux.form.value')) as HTMLInputElement;
     expect(keyInput.value).toBe('env');
     expect(valueInput.value).toBe('prod');
 
@@ -249,10 +250,10 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
     capturedForm!.reset({ metadata: [{ id: 'pair-0', key: 'env', value: 'prod' }] });
 
     await waitFor(() => {
-      expect((screen.getByPlaceholderText('Key') as HTMLInputElement).value).toBe('env');
+      expect((screen.getByPlaceholderText(t('flux.form.key')) as HTMLInputElement).value).toBe('env');
     });
     await waitFor(() => {
-      expect((screen.getByPlaceholderText('Value') as HTMLInputElement).value).toBe('prod');
+      expect((screen.getByPlaceholderText(t('flux.form.value')) as HTMLInputElement).value).toBe('prod');
     });
   });
 
@@ -287,8 +288,8 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
       />,
     );
 
-    const keyInput = screen.getByPlaceholderText('Key') as HTMLInputElement;
-    const valueInput = screen.getByPlaceholderText('Value') as HTMLInputElement;
+    const keyInput = screen.getByPlaceholderText(t('flux.form.key')) as HTMLInputElement;
+    const valueInput = screen.getByPlaceholderText(t('flux.form.value')) as HTMLInputElement;
     expect(keyInput.value).toBe('env');
     expect(valueInput.value).toBe('prod');
 
@@ -301,10 +302,10 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
     capturedForm!.setValue('metadata', [{ id: 'pair-0', key: 'region', value: 'us-east' }]);
 
     await waitFor(() => {
-      expect((screen.getByPlaceholderText('Key') as HTMLInputElement).value).toBe('region');
+      expect((screen.getByPlaceholderText(t('flux.form.key')) as HTMLInputElement).value).toBe('region');
     });
     await waitFor(() => {
-      expect((screen.getByPlaceholderText('Value') as HTMLInputElement).value).toBe('us-east');
+      expect((screen.getByPlaceholderText(t('flux.form.value')) as HTMLInputElement).value).toBe('us-east');
     });
   });
 
@@ -327,8 +328,8 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
   it('key-value UI should reflect values after plain scope data updates', async () => {
     render(<PlainScopeKeyValueHost />);
 
-    const keyInput = screen.getByPlaceholderText('Key') as HTMLInputElement;
-    const valueInput = screen.getByPlaceholderText('Value') as HTMLInputElement;
+    const keyInput = screen.getByPlaceholderText(t('flux.form.key')) as HTMLInputElement;
+    const valueInput = screen.getByPlaceholderText(t('flux.form.value')) as HTMLInputElement;
     expect(keyInput.value).toBe('env');
     expect(valueInput.value).toBe('prod');
 
@@ -340,10 +341,10 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
     fireEvent.click(screen.getByText('Reset plain metadata'));
 
     await waitFor(() => {
-      expect((screen.getByPlaceholderText('Key') as HTMLInputElement).value).toBe('region');
+      expect((screen.getByPlaceholderText(t('flux.form.key')) as HTMLInputElement).value).toBe('region');
     });
     await waitFor(() => {
-      expect((screen.getByPlaceholderText('Value') as HTMLInputElement).value).toBe('us-east');
+      expect((screen.getByPlaceholderText(t('flux.form.value')) as HTMLInputElement).value).toBe('us-east');
     });
   });
 });

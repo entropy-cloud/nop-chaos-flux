@@ -76,10 +76,10 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
   }, [files]);
 
   const tabs: { key: StatusTab; label: string }[] = [
-    { key: 'all', label: `All (${statusCounts.all})` },
-    { key: 'added', label: `Added (${statusCounts.added})` },
-    { key: 'modified', label: `Modified (${statusCounts.modified})` },
-    { key: 'deleted', label: `Deleted (${statusCounts.deleted})` },
+    { key: 'all', label: t('flux.diff.all', { count: statusCounts.all }) },
+    { key: 'added', label: t('flux.diff.added', { count: statusCounts.added }) },
+    { key: 'modified', label: t('flux.diff.modified', { count: statusCounts.modified }) },
+    { key: 'deleted', label: t('flux.diff.deleted', { count: statusCounts.deleted }) },
   ];
 
   return (
@@ -87,7 +87,8 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
       <div style={{ padding: '8px', borderBottom: '1px solid var(--nop-border)' }}>
         <input
           type="text"
-          placeholder="Search files..."
+          aria-label={t('flux.diff.searchFiles')}
+          placeholder={t('flux.diff.searchFiles')}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           style={{ width: '100%', padding: '4px 8px', border: '1px solid var(--nop-border)', borderRadius: 4, fontSize: 13, boxSizing: 'border-box' }}
@@ -139,11 +140,18 @@ interface FileListItemProps {
   onSelect: () => void;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  added: 'A',
-  modified: 'M',
-  deleted: 'D',
-};
+function statusLetter(status: string): string {
+  switch (status) {
+    case 'added':
+      return t('flux.diff.statusAdded');
+    case 'modified':
+      return t('flux.diff.statusModified');
+    case 'deleted':
+      return t('flux.diff.statusDeleted');
+    default:
+      return 'A';
+  }
+}
 
 function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
   const bg = isActive ? 'var(--nop-bg-active, #e5f0ff)' : 'transparent';
@@ -184,7 +192,7 @@ function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
         color: entry.status === 'added' ? '#16a34a' : entry.status === 'deleted' ? '#dc2626' : '#ca8a04',
         background: entry.status === 'added' ? '#dcfce7' : entry.status === 'deleted' ? '#fef2f2' : '#fefce8',
       }}>
-        {STATUS_LABELS[entry.status]}
+        {statusLetter(entry.status)}
       </span>
       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {entry.fileName}

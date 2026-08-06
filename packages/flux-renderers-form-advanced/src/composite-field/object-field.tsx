@@ -482,7 +482,6 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   return (
     <div
       className={cn('nop-object-field', props.meta.className)}
-      data-slot="field-control"
     >
       <FormContext.Provider value={childForm ?? undefined}>
         <ScopeContext.Provider value={childScope}>

@@ -467,3 +467,23 @@ describe('input-number DOM contract', () => {
     expect((container.querySelector('input#age-control') as HTMLInputElement).value).toBe('42');
   });
 });
+
+// ─────────────────────────── field-control 去重契约 ───────────────────────────
+// FieldFrame 是 `data-slot="field-control"` 的唯一契约 owner（field-frame.tsx）。
+// 被 wrap 的 renderer 根节点不得再输出同名 data-slot（重复会破坏下游选择器）。
+
+describe('field-control data-slot dedup contract (FieldFrame owns the marker)', () => {
+  it.each([
+    ['input-number', '.nop-input-number', { type: 'input-number', name: 'n', label: 'N' }],
+    ['input-date', '.nop-input-date', { type: 'input-date', name: 'd', label: 'D' }],
+    ['input-datetime', '.nop-input-datetime', { type: 'input-datetime', name: 'dt', label: 'DT' }],
+    ['input-time', '.nop-input-time', { type: 'input-time', name: 't', label: 'T' }],
+    ['date-range', '.nop-date-range', { type: 'date-range', name: 'r', label: 'R' }],
+  ])('%s renders exactly one data-slot="field-control" and its root drops the duplicate', (_type, rootSelector, field) => {
+    const { container } = renderForm([field as never]);
+    const controls = container.querySelectorAll('[data-slot="field-control"]');
+    expect(controls.length).toBe(1);
+    const root = container.querySelector(rootSelector);
+    expect(root?.getAttribute('data-slot')).toBeNull();
+  });
+});

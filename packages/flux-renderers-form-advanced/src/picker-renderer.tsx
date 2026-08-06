@@ -439,7 +439,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   const confirmSelection = crudMode ? confirmCrudSelection : confirmListSelection;
 
   return (
-    <div className={cn('nop-picker', 'flex items-center gap-2', props.meta.className)} data-slot="field-control">
+    <div className={cn('nop-picker', 'flex items-center gap-2', props.meta.className)}>
       <Button
         ref={triggerRef}
         type="button"

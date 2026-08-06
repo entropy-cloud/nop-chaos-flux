@@ -206,6 +206,50 @@ describe('transfer: shuttle selection + valueKey/labelKey normalization', () => 
     expect(document.querySelector('[data-slot="transfer-pane-candidate"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="transfer-pane-selected"]')).toBeTruthy();
   });
+
+  it('marks listboxes aria-multiselectable only when multiple is enabled', () => {
+    renderSchema({
+      type: 'form',
+      id: 'f',
+      data: { roles: [] },
+      body: [
+        {
+          type: 'transfer',
+          id: 'tr',
+          name: 'roles',
+          label: 'Roles',
+          multiple: true,
+          options: [{ label: 'Admin', value: 'admin' }],
+        },
+      ],
+    });
+    const candidateListbox = document.querySelector(
+      '[data-slot="transfer-pane-candidate"] [role="listbox"]',
+    );
+    expect(candidateListbox?.getAttribute('aria-multiselectable')).toBe('true');
+  });
+
+  it('omits aria-multiselectable on listboxes in single mode', () => {
+    renderSchema({
+      type: 'form',
+      id: 'f',
+      data: { roles: undefined },
+      body: [
+        {
+          type: 'transfer',
+          id: 'tr',
+          name: 'roles',
+          label: 'Roles',
+          multiple: false,
+          options: [{ label: 'Admin', value: 'admin' }],
+        },
+      ],
+    });
+    const candidateListbox = document.querySelector(
+      '[data-slot="transfer-pane-candidate"] [role="listbox"]',
+    );
+    expect(candidateListbox?.getAttribute('aria-multiselectable')).toBeNull();
+  });
 });
 
 export {};

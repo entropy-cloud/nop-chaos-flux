@@ -54,7 +54,7 @@ export function VideoRenderer(props: RendererComponentProps<VideoSchema>) {
         {poster ? (
           <img src={poster} alt="" data-slot="video-poster" className="max-w-full rounded-md" />
         ) : null}
-        <figcaption data-slot="video-fallback" className="text-xs text-muted-foreground">
+        <figcaption data-slot="video-fallback" aria-live="polite" className="text-xs text-muted-foreground">
           {errored ? t('flux.common.loadFailed') : t('flux.common.noSource')}
         </figcaption>
       </figure>

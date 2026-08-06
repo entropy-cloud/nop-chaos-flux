@@ -63,7 +63,7 @@ describe('icon-picker renderer', () => {
       />,
     );
 
-    const trigger = screen.getByRole('button', { name: /选择图标/ });
+    const trigger = screen.getByRole('button', { name: t('flux.form.selectIcon') });
     fireEvent.click(trigger);
 
     await waitFor(() => {

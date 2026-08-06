@@ -1,12 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
-import {
-  asReactNode,
-  resolveDirection,
-  resolveResponsiveDirection,
-  resolveResponsiveWrap,
-} from './utils.js';
+import { asReactNode, collectDataAttrs, resolveDirection, resolveResponsiveDirection, resolveResponsiveWrap } from './utils.js';
 import { resolveGap } from '@nop-chaos/flux-react';
 import type { FlexSchema } from './schemas.js';
 
@@ -63,9 +58,11 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
   );
   const bodyContent = asReactNode(props.regions.body?.render());
   const itemsContent = asReactNode(props.regions.items?.render());
+  const dataAttrs = collectDataAttrs(props.props);
 
   return (
     <div
+      {...dataAttrs}
       className={cn(
         'nop-flex',
         resolveDirection(direction),

@@ -308,7 +308,7 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
               data-slot="carousel-indicator"
               data-index={index}
               data-active={index === activeIndex ? 'true' : undefined}
-              aria-label={`Go to slide ${index + 1}`}
+              aria-label={t('flux.carousel.goToSlide', { index: index + 1 })}
               onClick={() => api?.scrollTo(index)}
               className={cn(
                 'h-2 w-2 rounded-full p-0',

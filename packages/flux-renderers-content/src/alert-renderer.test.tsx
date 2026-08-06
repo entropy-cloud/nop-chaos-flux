@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { t } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import React from 'react';
@@ -174,6 +175,26 @@ describe('AlertRenderer (W2a — content package inline feedback)', () => {
 
     expect(screen.queryByTestId('alert-close')).toBeNull();
     expect(screen.getByTestId('demo-alert')).toBeTruthy();
+  });
+
+  it('labels the close button through flux.common.close (i18n, no hardcoded "Close")', () => {
+    const SchemaRenderer = createContentSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://content/alert-close-a11y"
+        schema={{
+          type: 'page',
+          body: [{ type: 'alert', testid: 'demo-alert', title: 'Closable', closable: true }],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const closeBtn = screen.getByTestId('alert-close');
+    expect(closeBtn.getAttribute('aria-label')).toBe(t('flux.common.close'));
+    expect(closeBtn.getAttribute('aria-label')).not.toBe('Close');
   });
 
   it('falls back to info level when level is omitted or invalid', () => {

@@ -256,10 +256,10 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
   return (
     <div
       className={cn('nop-transfer', 'grid grid-cols-[1fr_auto_1fr] items-stretch gap-3', props.meta.className)}
-      data-slot="field-control"
     >
       <TransferPane
         kind="candidate"
+        multiple={multiple}
         title={selectTitle || t('flux.transfer.candidates', { defaultValue: 'Candidates' })}
         totalCount={candidateOptions.length}
         options={filteredCandidates}
@@ -305,6 +305,7 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
 
       <TransferPane
         kind="selected"
+        multiple={multiple}
         title={resultTitle || t('flux.transfer.selected', { defaultValue: 'Selected' })}
         totalCount={selectedEntries.length}
         options={filteredSelected.map((entry) => ({
@@ -336,6 +337,7 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
 
 interface TransferPaneProps {
   kind: 'candidate' | 'selected';
+  multiple: boolean;
   title: string;
   totalCount: number;
   options: NormalizedOption[];
@@ -413,7 +415,7 @@ function TransferPane(props: TransferPaneProps) {
         {props.options.length === 0 ? (
           <Empty className="p-4 text-sm text-muted-foreground">{props.emptyText}</Empty>
         ) : (
-          <ul className="flex flex-col" role="listbox" aria-multiselectable="true">
+          <ul className="flex flex-col" role="listbox" aria-multiselectable={props.multiple ? 'true' : undefined}>
             {props.options.map((option) => {
               const isChecked = props.checked.has(option.value);
               return (

@@ -520,7 +520,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
   const comboColumnCount = props.props.columnCount;
 
   return (
-    <div className={cn('nop-combo', 'flex flex-col gap-2', props.meta.className)} data-slot="field-control">
+    <div className={cn('nop-combo', 'flex flex-col gap-2', props.meta.className)}>
       {itemEntries.length === 0 && (
         <p className="text-sm text-muted-foreground" data-slot="combo-empty">
           {t('flux.form.noItems', { defaultValue: 'No items' })}

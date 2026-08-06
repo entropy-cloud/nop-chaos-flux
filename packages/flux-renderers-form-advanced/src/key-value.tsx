@@ -108,8 +108,8 @@ function KeyValueRow(props: {
           type="text"
           value={pair.key}
           disabled={disabled}
-          placeholder="Key"
-          aria-label={`Key ${index + 1}`}
+          placeholder={t('flux.form.key')}
+          aria-label={t('flux.form.keyEntry', { index: index + 1 })}
           aria-invalid={keyUi.showError ? true : undefined}
           aria-describedby={keyUi.showError ? keyErrorId : undefined}
           aria-errormessage={keyUi.showError ? keyErrorId : undefined}
@@ -162,8 +162,8 @@ function KeyValueRow(props: {
           type="text"
           value={pair.value}
           disabled={disabled}
-          placeholder="Value"
-          aria-label={`Value ${index + 1}`}
+          placeholder={t('flux.form.value')}
+          aria-label={t('flux.form.valueEntry', { index: index + 1 })}
           aria-invalid={valueUi.showError ? true : undefined}
           aria-describedby={valueUi.showError ? valueErrorId : undefined}
           aria-errormessage={valueUi.showError ? valueErrorId : undefined}
@@ -568,7 +568,6 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   return (
     <div
       className={cn('nop-key-value', 'grid gap-3', props.meta.className)}
-      data-slot="field-control"
     >
       {pairs.map((pair, index) => {
         return (

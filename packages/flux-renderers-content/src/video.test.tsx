@@ -81,6 +81,17 @@ describe('VideoRenderer', () => {
     expect(fallback).toBeTruthy();
   });
 
+  it('announces the error fallback through a live region', () => {
+    const props = createMockRendererProps<VideoSchema>({
+      schema: { type: 'video' },
+      props: { src: '/missing.mp4' },
+    });
+    const { container } = render(<VideoRenderer {...props} />);
+    fireEvent.error(videoOf(container));
+    const fallback = container.querySelector('[data-slot="video-fallback"]');
+    expect(fallback?.getAttribute('aria-live')).toBe('polite');
+  });
+
   it('renders the title region when provided', () => {
     const props = createMockRendererProps<VideoSchema>({
       schema: { type: 'video' },

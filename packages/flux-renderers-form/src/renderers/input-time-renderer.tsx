@@ -96,7 +96,6 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
   return (
     <div
       className={cn('nop-input-time', 'relative flex items-center', props.meta.className)}
-      data-slot="field-control"
     >
       <Input
         ref={inputRef}

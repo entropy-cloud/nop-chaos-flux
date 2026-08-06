@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   Alert,
   AlertDescription,
@@ -106,7 +107,7 @@ export function AlertRenderer(props: RendererComponentProps<AlertSchema>) {
           variant="ghost"
           size="icon"
           className="absolute top-1.5 right-1.5 size-6"
-          aria-label="Close"
+          aria-label={t('flux.common.close')}
           data-testid="alert-close"
           onClick={handleClose}
         >

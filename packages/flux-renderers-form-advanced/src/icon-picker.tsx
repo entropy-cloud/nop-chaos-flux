@@ -62,7 +62,8 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
   const currentForm = useCurrentForm();
   const name = typeof schemaProps.name === 'string' ? schemaProps.name : '';
   const hasName = name.length > 0;
-  const placeholder = typeof schemaProps.placeholder === 'string' ? schemaProps.placeholder : '选择图标';
+  const placeholder =
+    typeof schemaProps.placeholder === 'string' ? schemaProps.placeholder : t('flux.form.selectIcon');
   const searchable = schemaProps.searchable !== false;
   const clearable = schemaProps.clearable !== false;
 
@@ -164,7 +165,6 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
   return (
     <div
       className={cn('nop-icon-picker', 'flex items-center gap-2', props.meta.className)}
-      data-slot="field-control"
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
     >
@@ -199,6 +199,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
                 <Input
                   type="search"
                   value={query}
+                  aria-label={t('flux.form.searchIcon')}
                   placeholder={t('flux.common.search')}
                   className="h-8 pl-8"
                   onChange={(e) => {

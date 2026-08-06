@@ -293,6 +293,7 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
             className="nop-markdown-editor-preview rounded-md border border-border bg-muted/30 p-3 text-sm overflow-auto"
             data-slot="markdown-editor-preview"
             data-testid="markdown-editor-preview"
+            aria-live="polite"
           >
             <PreviewBoundary source={source}>{previewNode}</PreviewBoundary>
           </div>

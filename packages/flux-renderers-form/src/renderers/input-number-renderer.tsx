@@ -211,7 +211,6 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
   return (
     <div
       className={cn('nop-input-number', props.meta.className)}
-      data-slot="field-control"
     >
       <div className="relative flex items-center">
         {prefix ? (
