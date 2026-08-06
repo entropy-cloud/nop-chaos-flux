@@ -90,7 +90,11 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
             ...(bindings.keyName ? { [bindings.keyName]: itemKey } : {}),
           });
 
-          return props.helpers.evaluateCompiled(itemDataProgram, bindingsScope);
+          try {
+            return props.helpers.evaluateCompiled(itemDataProgram, bindingsScope);
+          } finally {
+            props.helpers.disposeScope(bindingsScope.id);
+          }
         },
         keyBy: props.props.keyBy,
         ownerId: props.id,
@@ -113,7 +117,11 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
                 ...(bindings.keyName ? { [bindings.keyName]: key } : {}),
               });
 
-              return props.helpers.evaluateCompiled(itemDataProgram, bindingsScope);
+              try {
+                return props.helpers.evaluateCompiled(itemDataProgram, bindingsScope);
+              } finally {
+                props.helpers.disposeScope(bindingsScope.id);
+              }
             }}
             keyBy={props.props.keyBy}
             instancePath={instancePath}

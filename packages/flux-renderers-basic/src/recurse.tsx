@@ -91,7 +91,11 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
           ...(bindings.keyName ? { [bindings.keyName]: itemKey } : {}),
         });
 
-        return props.helpers.evaluateCompiled(itemDataProgram, bindingsScope);
+        try {
+          return props.helpers.evaluateCompiled(itemDataProgram, bindingsScope);
+        } finally {
+          props.helpers.disposeScope(bindingsScope.id);
+        }
       }
     : loopContext.evaluateItemData;
   const keyBy = props.props.keyBy ?? loopContext.keyBy;
