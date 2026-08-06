@@ -33,22 +33,22 @@
 
 ### Flux 决策表（编辑器架构层）
 
-| 能力                                              | 采纳                         | 不采纳                        | 理由（依据）                                                                                                                                                                                                                                 |
-| ------------------------------------------------- | ---------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| leafer Editor 插件底座（路径 A）                  | **P0 采用**                  | 自研交互层（路径 B）          | E1.1 选型裁定维持路径 A（`selection-gate-2026-08-06.md §3`）：手势仲裁成立 + 事件族 0 漂移 + 适配层 cost 小～中（远 < 自研全量原语）；方案 A 覆盖物 10k 选区仍 32fps ≥30 候选；路径 B 作 fallback 保留（性能可行，作否决条件触发时切换路径） |
-| 编辑态覆盖物形态：方案 A（leafer Editor 内置）    | **P0 采用**                  | 方案 B（独立 sky Group 自研） | E0.3 §3.6 推荐 + E1.2 calibration 评估：典型工业选区 ≤几百两方案持平 ~50fps，方案 A 开箱提供完整交互原语；方案 B 在极端 10k 略优 +4.2fps（仍 ≥30），作 fallback 保留                                                                         |
-| 双态隔离（editable:true 开关）                    | **P0 采用**                  | 两套独立引擎实例              | spike §1.4 适配项「图元可编辑开关：必须显式 `editable:true`」；编辑态给目标图元加 `editable:true`，运行态关闭（同一引擎实例复用配置面，最小化状态泄漏面，见 §4.2）                                                                           |
-| 编辑会话组态存储（与运行组态分离）                | **P0 采用**                  | 直接写回运行组态（无暂存）    | R5 双态隔离要求 + 提交语义衔接 `use-scada-config-sync.ts` full/diff 判定（design-renderer.md §4.3）：编辑会话维护「待提交组态 working copy」，提交时才走 config 同步链                                                                       |
-| 编辑态事件不派发运行态 action                     | **P0 采用**                  | 编辑态预览派发运行态 action   | R5 不泄漏；编辑态交互（拖拽/缩放/选中）应**不派发** `symbol:click`/`symbol:dblclick`/`symbol:hover` 等运行态 action（编辑会话隔离）；InnerEditor 内文本编辑不触发运行事件                                                                    |
-| transform 事件族适配层节流（起止帧）              | **P0 采用**                  | 每帧派发                      | spike §2.5 + selection-gate §5 约束 #3：`editor.move` 高频每帧（n=1k 8–10ms），适配层抽纯 payload + nodeId 后只入栈操作起止帧（E2.4 undo-redo 落点），防逐属性 applyAttrs 泄漏                                                               |
-| 引擎层衔接：复用 scada-engine applyDiff           | **倾向方案**（待 E4.1 裁定） | 独立 editor-engine            | 见 §5 trade-off：复用 minimize 包结构变化 + 复用已有 18 命令面 + applyDiff 增量 + undo 栈衔接扩展点；独立 editor-engine 提供更强隔离但需复制命令面。本文档作为 E4.1 裁定 input，不预判裁定                                                   |
-| 框选 selectArea：`selectKeep:true` 自定义 release | **P0 采用**                  | 默认 release 清空选区         | spike §1.4 + §2.3 双因发现：move:'auto' 冲突 + 默认 release 清空框选结果（finalListLen=0）；编辑态需保留框选结果，双态切换 move 配置或自定义 release                                                                                         |
+| 能力                                              | 采纳                                    | 不采纳                        | 理由（依据）                                                                                                                                                                                                                                 |
+| ------------------------------------------------- | --------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| leafer Editor 插件底座（路径 A）                  | **P0 采用**                             | 自研交互层（路径 B）          | E1.1 选型裁定维持路径 A（`selection-gate-2026-08-06.md §3`）：手势仲裁成立 + 事件族 0 漂移 + 适配层 cost 小～中（远 < 自研全量原语）；方案 A 覆盖物 10k 选区仍 32fps ≥30 候选；路径 B 作 fallback 保留（性能可行，作否决条件触发时切换路径） |
+| 编辑态覆盖物形态：方案 A（leafer Editor 内置）    | **P0 采用**                             | 方案 B（独立 sky Group 自研） | E0.3 §3.6 推荐 + E1.2 calibration 评估：典型工业选区 ≤几百两方案持平 ~50fps，方案 A 开箱提供完整交互原语；方案 B 在极端 10k 略优 +4.2fps（仍 ≥30），作 fallback 保留                                                                         |
+| 双态隔离（editable:true 开关）                    | **P0 采用**                             | 两套独立引擎实例              | spike §1.4 适配项「图元可编辑开关：必须显式 `editable:true`」；编辑态给目标图元加 `editable:true`，运行态关闭（同一引擎实例复用配置面，最小化状态泄漏面，见 §4.2）                                                                           |
+| 编辑会话组态存储（与运行组态分离）                | **P0 采用**                             | 直接写回运行组态（无暂存）    | R5 双态隔离要求 + 提交语义衔接 `use-scada-config-sync.ts` full/diff 判定（design-renderer.md §4.3）：编辑会话维护「待提交组态 working copy」，提交时才走 config 同步链                                                                       |
+| 编辑态事件不派发运行态 action                     | **P0 采用**                             | 编辑态预览派发运行态 action   | R5 不泄漏；编辑态交互（拖拽/缩放/选中）应**不派发** `symbol:click`/`symbol:dblclick`/`symbol:hover` 等运行态 action（编辑会话隔离）；InnerEditor 内文本编辑不触发运行事件                                                                    |
+| transform 事件族适配层节流（起止帧）              | **P0 采用**                             | 每帧派发                      | spike §2.5 + selection-gate §5 约束 #3：`editor.move` 高频每帧（n=1k 8–10ms），适配层抽纯 payload + nodeId 后只入栈操作起止帧（E2.4 undo-redo 落点），防逐属性 applyAttrs 泄漏                                                               |
+| 引擎层衔接：复用 scada-engine applyDiff           | **方案 A 采纳**（2026-08-06 E4.1 裁定） | 独立 editor-engine            | 见 §4.4.1 裁定结论：方案 A 经 subpath `/editor` + 独立注册函数 + 模块图隔离证明（main 入口导入图零触及 `@leafer-in/editor`），bundle 不污染 runtime + 命令面零复制 + 维护成本最低                                                            |
+| 框选 selectArea：`selectKeep:true` 自定义 release | **P0 采用**                             | 默认 release 清空选区         | spike §1.4 + §2.3 双因发现：move:'auto' 冲突 + 默认 release 清空框选结果（finalListLen=0）；编辑态需保留框选结果，双态切换 move 配置或自定义 release                                                                                         |
 
 ## 3. Flux 中的 renderer/type 定义
 
 - 编辑器架构层**注册 1 个新 renderer type**：`scada-editor-canvas`（编辑态画布，与运行态 `scada-canvas` 双态隔离）。完整 fields/events/regions/handles 契约属 E2.6（design-renderer.md）；本档只声明架构层契约：
   - `scada-editor-canvas` 与 `scada-canvas` **是两个独立 renderer type**（双态隔离在 renderer 注册层落地，非同 type 双开关）；编辑态与运行态在同一 React 树中并存时（如预览运行模式）经不同 React 节点挂载。
-  - 包归属：**待 E4.1 裁定**（方案 A 放入既有 `flux-renderers-industrial` vs 方案 B 新建 `flux-renderers-industrial-editor`，依据 §5 trade-off）。
+  - 包归属：**方案 A 裁定**（2026-08-06 E4.1）——放入既有 `flux-renderers-industrial`，经 subpath `/editor` + 独立注册函数 `registerScadaEditorRenderers` 隔离（详见 §4.4.1）。
   - 注册清单（roadmap「组件注册」条款）：`examples.manifest.json`、playground registry、i18n 文案（`flux-i18n`）、quick-reference 组件表（E5/E9 落地）。
 
 ### 与既有 flux 架构的边界（E2.1 Decision）
@@ -166,16 +166,57 @@ App（leafer 三层 ground/tree/sky，scada-editor-canvas renderer 持有）
 
 **E4.1 裁定 input**：
 
-| 维度                   | 方案 A（复用 scada-engine）               | 方案 B（独立 editor-engine）     |
-| ---------------------- | ----------------------------------------- | -------------------------------- |
-| 双态隔离强度           | 中（依赖 editable 开关 + Editor 装配）    | 强（不同引擎类 + 不同 bundle）   |
-| bundle size（runtime） | 增加（leafer-editor 拖入 runtime bundle） | 不变（leafer-editor 在独立包）   |
-| 命令面复制成本         | 零                                        | 中（复制/继承）                  |
-| 序列化面归属           | 复用 `serialization/`                     | 需明确共享 vs 复制               |
-| 维护成本               | 低（命令面单源）                          | 中（双源化风险需显式治理）       |
-| E4.1 倾向              | **方案 A**（最小变化，依赖隔离强度足够）  | 方案 B（更强隔离 + bundle 优化） |
+| 维度                   | 方案 A（复用 scada-engine）                              | 方案 B（独立 editor-engine）                 |
+| ---------------------- | -------------------------------------------------------- | -------------------------------------------- |
+| 双态隔离强度           | 中（依赖 editable 开关 + Editor 装配）                   | 强（不同引擎类 + 不同 bundle）               |
+| bundle size（runtime） | 增加（leafer-editor 拖入 runtime bundle）                | 不变（leafer-editor 在独立包）               |
+| 命令面复制成本         | 零                                                       | 中（复制/继承）                              |
+| 序列化面归属           | 复用 `serialization/`                                    | 需明确共享 vs 复制                           |
+| 维护成本               | 低（命令面单源）                                         | 中（双源化风险需显式治理）                   |
+| E4.1 裁定结论          | **方案 A 采纳**（subpath 隔离，2026-08-06 裁定，§4.4.1） | 不采纳（隔离已由 module 图证明，无需独立包） |
 
 > 本文档作为 E4.1 裁定 input，**不预判裁定**。E4.1 应综合 bundle size 评估（实际打包 leafer-editor 体积）+ 双态隔离强度需求（是否需要 bundle 级隔离）+ 维护成本作出最终决定。**watch-only residual**：bundle size 数字需 E4.1 实际打包后评估（当前未实测）。
+
+### 4.4.1 E4.1 包结构裁定结论（2026-08-06 落地，方案 A）
+
+> **裁定：方案 A**（编辑器实现放入既有 `flux-renderers-industrial`，经 subpath `/editor` + 独立注册函数 `registerScadaEditorRenderers` 隔离，不新建包）。依据本节 trade-off + bundle 实测 + 模块图隔离证明 + 维护成本综合裁定。plan `docs/plans/2026-08-06-2118-2-e4-package-infra-and-dependency.md` Phase 1 落地。
+
+**裁定依据（综合 trade-off 表四维度）**：
+
+1. **bundle size（runtime）— 经模块图证明可隔离，方案 A 不污染 runtime bundle**：
+   - 实测 `@leafer-in/editor@2.2.9` 可发布产物：`editor.esm.min.js` = **~50 KB**（minified）；`editor.esm.js` = ~102 KB（unminified）。`editor-initiation.md §4.1` 口径「leafer-editor 244KB」含 leafer-in 共装 runtime + 双格式（esm/cjs），隔离后 editor 独占 chunk 实测 ~50 KB minified。
+   - **模块图隔离证明**（`grep -rn "@leafer-in/editor" packages/flux-renderers-industrial/src/` = ZERO）：主入口 `src/index.ts` 的导入图（`symbols/register-builtin` → `renderer-definitions` → `renderer/scada-canvas` → engine/binding/serialization）**完全不触及** `@leafer-in/editor` 与 `src/editor/`。bundler（Vite/Rollup）按模块图静态追踪，无 main→editor 边 → `@leafer-in/editor` 永不进入 runtime `scada-canvas` chunk。
+   - 隔离机制（三道）：① subpath export `./editor` → `src/editor/index.ts`（独立入口，主入口 `index.ts` 不 re-export editor 任何符号）；② 独立注册函数 `registerScadaEditorRenderers`（**不并入** `registerScadaRenderers`）；③ playground 经 `import { registerScadaEditorRenderers } from '@nop-chaos/flux-renderers-industrial/editor'` subpath import（禁从主入口 re-export）。对齐既有先例：`@nop-chaos/flux-renderers-ai/rich-text`（Tiptap ~100KB 经 subpath 隔离出主 bundle，App.tsx LazyAiRichTextDemoPage 注释明示）。
+   - 结论：**bundle-isolation-fail Failure Path 不触发**——方案 A 隔离可行，无需升级方案 B。
+
+2. **双态隔离强度 — module/subpath 级足够**：
+   - runtime `scada-canvas` renderer（主入口）与 editor `scada-editor-canvas` renderer（`/editor` subpath）是**两个独立 renderer type**，经两个独立注册函数注册；
+   - 主入口导入图可证排除 `@leafer-in/editor`，等效于 bundle 级隔离（消费者不 import `/editor` 即不拉入 editor 代码）；
+   - 引擎实例隔离（§4.2 三层机制）+ cid 命名空间独立（`__flux_scada_<cid>` vs `__flux_scada_editor_<cid>`）+ 事件派发链隔离（§4.6）在 renderer 注册层 + 适配层落地，与包结构正交。方案 A 的 module 级隔离 + renderer 注册层隔离共同满足 R5。
+
+3. **命令面复制成本 — 零（方案 A 核心优势）**：
+   - editor 适配层经**相对路径**直接 import runtime 引擎面（`scada-engine.ts` 18 命令面 + applyDiff）、序列化面（`serialization/`）、图元注册表（`symbols/`）、句柄面（`renderer/hooks/use-scada-handles.ts`）；
+   - 零命令面复制 / 零 re-export ceremony / 零序列化面双源化风险。方案 B 需 workspace 依赖 + re-export 或复制，维护成本更高。
+
+4. **维护成本 — 最低**：单源命令面 + 单包单 CI 单 vitest 配置；新增图元 / 引擎命令只需在一处落地，editor 自动复用。
+
+**方案 A 隔离策略（E4.2 落地结构）**：
+
+```
+packages/flux-renderers-industrial/
+├── src/
+│   ├── index.ts                  # 主入口：registerScadaRenderers（runtime，不 import editor/）
+│   ├── editor/                   # E4.2 新增 subpath 模块（独立入口，import @leafer-in/editor）
+│   │   ├── index.ts              # registerScadaEditorRenderers + 类型（/editor subpath 入口）
+│   │   ├── schemas.ts            # ScadaEditorCanvasSchema 最小字段（完整属 E5）
+│   │   ├── renderer-definitions.ts # scada-editor-canvas 空壳定义
+│   │   └── styles.css            # editor 样式（空壳期占位）
+│   ├── engine/ ... renderer/ ... # runtime 面（editor/ 经相对路径复用）
+├── package.json                  # exports 新增 "./editor" subpath；deps 新增 @leafer-in/editor@2.2.9
+```
+
+- 工程接线三通道（subpath 级）：① `tsconfig.base.json` paths `@nop-chaos/flux-renderers-industrial/editor` → `src/editor/index.ts`；② `vite.workspace-alias.ts` 同名 alias；③ `package.json` exports `./editor`（types + default）。三通道对齐既有 `/styles.css` subpath 先例 + I4 三通道纪律。
+- **不触发 R-人工**：roadmap「人工确认阈值」不含「新建包」，且本裁定采方案 A（不新建包）；roadmap 总览原占位（不新建包 vs 新建 1 包，授权 E4.1 裁定）已显式授权本裁定，裁定 rationale 完整记录于此（占位已于本裁定回写为「方案 A 裁定」）。
 
 ### 4.5 编辑会话序列化暂存/提交语义（runtime 复用点 #4 衔接扩展，editor-initiation §3）
 
@@ -392,8 +433,7 @@ runtime `use-scada-handles.ts:11-21` 现有 9 方法（fit/center/getSymbols/get
 ## 11. 实现拆分建议（架构层声明，完整拆分属 E2.6 + E5）
 
 ```
-packages/flux-renderers-industrial-editor/src/   （方案 B 倾向；E4.1 裁定最终归属）
-OR packages/flux-renderers-industrial/src/editor/（方案 A 倾向）
+packages/flux-renderers-industrial/src/editor/   （方案 A 裁定落地，E4.1 2026-08-06；经 subpath /editor + 独立注册函数隔离）
 ├── editor-engine.ts            # ScadaEditorEngine（方案 B 独立类，方案 B 落地）/ 编辑会话模型（方案 A 复用 scada-engine）
 ├── editor-session.ts           # ScadaEditorSession：working copy + undo/redo 栈 + selection + mode（域核心，无 React 依赖）
 ├── editor-adapter.ts           # 适配层：leafer Editor 事件族 → 抽纯 payload + nodeId 映射 → 入栈（节流起止帧）

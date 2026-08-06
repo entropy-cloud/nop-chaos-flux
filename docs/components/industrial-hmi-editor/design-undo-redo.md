@@ -47,7 +47,7 @@
 
 - undo-redo**不是独立 renderer type**：undo-redo 是编辑会话模型（`design-architecture.md §4.5` ScadaEditorSession）的核心能力，经 `component:undo()` / `component:redo()` 句柄（`design-architecture.md §8.5`）触发；
 - undo-redo 状态（undoStack/redoStack/canUndo/canRedo）属编辑会话模型域核心（无 React 依赖）；
-- 包归属：与编辑器 renderer 同包（**待 E4.1 裁定**）。
+- 包归属：与编辑器 renderer 同包（**方案 A 裁定**，2026-08-06 E4.1——`flux-renderers-industrial` 的 `src/editor/` subpath，详见 design-architecture.md §4.4.1）。
 
 ### 与既有 flux 架构的边界（E2.4 Decision）
 

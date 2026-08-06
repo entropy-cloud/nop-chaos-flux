@@ -42,7 +42,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: "scada-editor-canvas"`
-- `sourcePackage`: **待 E4.1 裁定**（方案 A 放入 `@nop-chaos/flux-renderers-industrial` / 方案 B 新建 `@nop-chaos/flux-renderers-industrial-editor`，依据 design-architecture.md §4.4 trade-off）。
+- `sourcePackage`: **方案 A 裁定**（2026-08-06 E4.1）——`@nop-chaos/flux-renderers-industrial`（编辑器实现放入既有包，经 subpath `/editor` + 独立注册函数 `registerScadaEditorRenderers` 隔离，详见 design-architecture.md §4.4.1）。
 - 继承 `BaseSchema`；注册方式：`registerScadaEditorRenderers(registry)`（对齐 `registerScadaRenderers` 模式，runtime design-renderer.md §3），E4.2 首期空壳注册（fields/events 随 E5 补全）。
 - 同步清单（roadmap「组件注册」条款）：`examples.manifest.json`、playground registry、i18n 文案（`flux-i18n`，E5/E9 落地）、quick-reference 组件表（E9.2 文档收尾）。
 
@@ -323,11 +323,10 @@ interface ScadaEditorTestHandle {
 - 主题独立性（roadmap Cross-Cutting + runtime design-renderer.md §10）：CSS 变量 + 稳定 class 名，不引入 React ThemeProvider；
 - 不产生 canvas 内 DOM marker（Editor 渲染在 leafer sky 层 + InteractionOverlay 模式，对齐 runtime design-engine.md §10）。
 
-## 11. 实现拆分建议（完整版，落地依赖 E4.1 包结构裁定）
+## 11. 实现拆分建议（完整版，E4.1 裁定方案 A 落地，2026-08-06）
 
 ```
-packages/flux-renderers-industrial-editor/src/   （方案 B 倾向；E4.1 裁定最终归属）
-OR packages/flux-renderers-industrial/src/editor/（方案 A 倾向）
+packages/flux-renderers-industrial/src/editor/   （方案 A 裁定，经 subpath /editor + 独立注册函数隔离；不新建包）
 ├── editor-engine.ts            # ScadaEditorEngine（方案 B 独立类 / 方案 A 复用 scada-engine + 编辑会话模型）
 ├── editor-session.ts           # ScadaEditorSession：working copy + undo/redo 栈 + selection + mode（design-architecture.md §4.5）
 ├── editor-adapter.ts           # 适配层：leafer Editor 事件族 → 抽纯 payload + nodeId 映射 → 入栈（节流起止帧，spike §2.5）

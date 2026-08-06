@@ -43,7 +43,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 属性面板**不是独立 renderer type**：属性面板是 `scada-editor-canvas` 的 `inspector` region（`design-architecture.md §4.1`），由编辑器 renderer 在 React DOM 内渲染（canvas 外层）。
-- 包归属：与编辑器 renderer 同包（**待 E4.1 裁定**）。
+- 包归属：与编辑器 renderer 同包（**方案 A 裁定**，2026-08-06 E4.1——`flux-renderers-industrial` 的 `src/editor/` subpath，详见 design-architecture.md §4.4.1）。
 - 注册机制：属性面板 UI 组件复用 `@nop-chaos/ui` 既有组件（Field/Input/Textarea/Select/NativeSelect/Combobox/Switch/Checkbox/Slider 等，AGENTS.md「UI Component Usage」清单），不引入新 UI 库。
 
 ### 与既有 flux 架构的边界（E2.2 Decision）
