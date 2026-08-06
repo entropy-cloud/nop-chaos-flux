@@ -49,6 +49,16 @@ describe('scada-canvas render smoke', () => {
     expect(canvas).toBeTruthy();
     const handles = Object.keys(window).filter((key) => key.startsWith('__flux_scada_'));
     expect(handles.length).toBeGreaterThan(0);
+    // plan 2026-08-06-0746-2 P2-14（false-green 消除）：原断言仅 `handles.length > 0`
+    // （等价 not.toThrow），未验图元入树或 ready 状态——空/失败场景构建会过。此处补真断言：
+    // (1) 经 test handle 的 getSymbol 验证 rect-1 图元已入 registry（场景图真构建）；
+    // (2) root data-status === 'ready'（构建完成，非 loading/error）。
+    // 守护：把 validConfig.symbols 清空 → getSymbol('rect-1') 返 undefined → 本断言转红。
+    const handle = (
+      window as unknown as Record<string, { getSymbol: (id: string) => unknown }>
+    )[handles[0]];
+    expect(handle.getSymbol('rect-1')).toBeTruthy();
+    expect(root.getAttribute('data-status')).toBe('ready');
   });
 
   it('renders ready (empty scene) when config is missing — author-less schema fallback (plan 2026-08-04-1558-1 Phase 3)', () => {

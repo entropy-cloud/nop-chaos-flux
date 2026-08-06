@@ -460,6 +460,7 @@ describe('I18 表达式一元化 failing-first Proof (binding-expression-unifica
   it('expression 声明无 expression 字段（`?? ""` 兜底，line 342/372 false branch）', () => {
     // 声明 source='expression' 但 expression 字段缺省 → state.declaration.expression ?? '' 兜底空串。
     // 空串经 normalize 为 `${}` → flux-formula 视为 static 字面量（值 '${}'）→ isScadaPrimitive 真 → 写入。
+    const onError = vi.fn();
     const harness = createHarness({
       declarations: [
         { id: 'a', source: 'static', value: 1 },
@@ -467,9 +468,18 @@ describe('I18 表达式一元化 failing-first Proof (binding-expression-unifica
         { id: 'blank', source: 'expression' as unknown as 'expression', init: 0 } as never,
       ],
       symbols: [],
+      onError,
     });
     // 仅触发 syncExpressionPoint('blank') 即可覆盖 ?? 兜底分支（不写入 meaningful 值也无妨）。
     harness.pipeline.flushFrame(harnessApply(harness));
     expect(harness.pointStore.getPointValue('a')).toBe(1);
+    // plan 2026-08-06-0746-2 P2-13（false-green 消除）：原断言仅验无关点 'a'，从未断言 'blank'。
+    // 此处断言 `?? ''` 兜底经 flux 求值的实际产出——空串 '' normalize 为 `${}`，
+    // flux-formula 把 `${}` 视作 static 字面量，求值结果为字面串 '${}' 并写入 store。
+    // 守护：若移除 `?? ''` 兜底（expression 变 undefined），evaluateFlux(undefined.trim()) 抛
+    // TypeError → catch 上报 flux-evaluate-failed → 'blank' 保持 init 值 0 ≠ '${}'，本断言转红。
+    expect(harness.pointStore.getPointValue('blank')).toBe('${}');
+    // 兜底分支正常求值（非 undefined），不应触发求值失败上报。
+    expect(onError).not.toHaveBeenCalled();
   });
 });

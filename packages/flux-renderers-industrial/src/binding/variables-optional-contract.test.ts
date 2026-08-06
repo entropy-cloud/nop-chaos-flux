@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createDefaultEnv } from '@nop-chaos/flux-react';
 import { validateScadaConfig } from '../serialization/validate.js';
@@ -239,8 +239,8 @@ describe('I18.2 点表可选契约锁定（Phase 2 contract-lock）', () => {
 });
 
 describe('I18.2 config 兜底场景（Phase 2 Proof）', () => {
-  it('空 config（仅 version + symbols）：pipeline 仍可构造并 flushFrame', () => {
-    // 无 variables，无 binding —— pipeline 空运行不应崩
+  it('空 config（仅 version + symbols）：pipeline flushFrame 返 false 且不调 applyAttrs', () => {
+    // 无 variables，无 binding —— pipeline 空运行不应崩，且应 observably 无副作用。
     const pointStore = new PointStore();
     const reverseIndex = new ReverseIndex([], { compiler: expressionCompiler, env });
     const collector = new DirtyCollector({ scheduleTick: () => () => {} });
@@ -251,7 +251,13 @@ describe('I18.2 config 兜底场景（Phase 2 Proof）', () => {
       compiler: expressionCompiler,
       env,
     });
-    expect(() => pipeline.flushFrame(() => undefined)).not.toThrow();
+    // plan 2026-08-06-0746-2 P2-15（false-green 消除）：原断言 `not.toThrow()` 不验返值/副作用，
+    // 空配置退化（误返 true / 误调 applyAttrs）会静默放行。此处断言结果值 + applyAttrs 未调。
+    // (1) 无脏块/无表达式点 → flushFrame 返 false（collector.flush 无 pending 返 false）。
+    // (2) applyAttrs mock 未被调（帧内无写入，不应触发批量写）。
+    const applyAttrs = vi.fn();
+    expect(pipeline.flushFrame(applyAttrs)).toBe(false);
+    expect(applyAttrs).not.toHaveBeenCalled();
   });
 
   it('renderer-definitions.ts:55 defaultSchema 结构与 EMPTY_SCADA_CONFIG 一致', () => {
