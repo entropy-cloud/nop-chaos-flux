@@ -267,7 +267,7 @@ interface ScadaEngineOptions {
 
 - **引擎不接数据源**：点表值由数据层（I2.2）合并帧后经 `applyAttrs` 批量写入图元属性（§8.2）；图元事件 → flux action 联动经 `props.events`/`createNormalizedActionEvent`（I2.4）。
 - **图片资源**：图元背景图/纹理经 leafer `ImageManager` URL 引用计数缓存（research-summary §4.1 E6）；URL 加载属外部 IO，由 renderer 桥接层经 `RendererEnv.fetcher`/`importLoader` 归位（INV-1，`new-renderer-introduction-audit.md`），引擎不直调 `fetch`。
-- **表达式**：引擎不参与表达式求值；绑定表达式/flux `$xxx` 由数据层（I2.2）消费 flux-formula/flux-compiler 求值后写属性（平台能力复用表）。
+- **表达式**：引擎不参与表达式求值；绑定表达式 `${expr}` 由数据层（I2.2）经注入的 flux-formula/flux-compiler 求值后写属性（I18 一元化后唯一语法，详见 `design-data-binding.md §4.2`；平台能力复用表）。
 - **i18n**：图元文本的 i18n 文案经 `flux-i18n`（I15.1），引擎只渲染最终文本。
 
 ## 10. 样式与 DOM marker 约定

@@ -300,17 +300,20 @@ packages/flux-renderers-industrial/src/
 │   ├── config-types.ts           # ScadaConfig/ScadaSymbolNode 类型（schemas.ts 再导出）
 │   ├── validate.ts               # validateScadaConfig（I5.3，Vitest 单测）
 │   ├── parse.ts / serialize.ts   # 反序列化/序列化（I5.3，Vitest 单测）
-│   └── diff.ts                   # diffScadaConfig（I5.3，Vitest 单测）
+│   ├── diff.ts                   # diffScadaConfig（I5.3，Vitest 单测）
+│   └── equality.ts               # 共享 deepEqual（plan 2026-08-05-0653-4 C2 / W5）
 ├── renderer/
 │   ├── scada-canvas.tsx          # 主渲染器：RendererComponentProps 装配 + 桥接（I10.1）
-│   ├── schemas.ts                # 包 schema 类型 barrel（I4.1）
-│   ├── renderer-definitions.ts   # registerScadaRenderers：fields/events/regions/handles（I4.2 空壳/I10.2 完整）
+│   ├── scada-errors.ts           # SCADA_ERROR_CODES 注册表 + i18n 映射（plan 2026-08-04-1558-2 Phase 4，§10 错误码段落）
 │   ├── hooks/
 │   │   ├── use-scada-engine.ts   # 引擎实例生命周期（mount/unmount/resize，I10.1）
 │   │   ├── use-scada-config-sync.ts # config diff 同步（I10.1）
 │   │   ├── use-scada-points-bridge.ts # useScopeSelector 点表桥接（I10.3）
-│   │   └── use-scada-events.ts   # 图元事件→createNormalizedActionEvent→dispatch（I10.3/I11.1）
+│   │   ├── use-scada-events.ts   # 图元事件→createNormalizedActionEvent→dispatch（I10.3/I11.1）
+│   │   └── use-scada-handles.ts  # component:* 句柄注册（I10.2/I11.1）
 │   └── （测试句柄挂载/移除属 engine/test-handle.ts，design-engine.md §11；renderer 仅经 ScadaEngineOptions 传 cid/exposeTestHandle，I10.1）
+├── schemas.ts                    # 包 schema 类型 barrel（I4.1，与 index.ts 同级）
+├── renderer-definitions.ts       # registerScadaRenderers：fields/events/regions/handles（I4.2 空壳/I10.2 完整，与 index.ts 同级）
 └── index.ts                      # 公共面：registerScadaRenderers/registerScadaSymbols/registerScadaSymbol + 符号注册表 API + 类型（plan 2026-08-04-1558-1 Phase 2 收敛）
 ```
 
