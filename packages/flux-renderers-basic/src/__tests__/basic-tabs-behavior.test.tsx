@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '../index.js';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
@@ -197,5 +198,49 @@ describe('basicRendererDefinitions tabs behavior', () => {
     expect(tabsContent).toBeTruthy();
     expect(document.querySelector('.nop-tabs-root')).toBeNull();
     expect(document.querySelector('.nop-tabs-content')).toBeNull();
+  });
+});
+
+describe('basicRendererDefinitions tabs onChange type namespace + ctx (CX-10 / 09-03)', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('dispatches onChange with namespaced tabs:change type and full ctx (${type}/${value} resolve)', async () => {
+    const urls: string[] = [];
+    const fetcher = vi.fn(async (api: { url?: string }) => {
+      urls.push(api?.url ?? '');
+      return { ok: true, status: 200, data: null as never };
+    }) as unknown as RendererEnv['fetcher'];
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/tabs-ctx"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tabs',
+              value: 'first',
+              onChange: {
+                action: 'ajax',
+                args: { url: '/type-${type}-value-${value}' },
+              },
+              items: [
+                { key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] },
+                { key: 'second', title: 'Second', body: [{ type: 'text', text: 'Second body' }] },
+              ],
+            },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('First body')).toBeTruthy());
+    fireEvent.click(screen.getByText('Second'));
+
+    await waitFor(() => expect(urls).toContain('/type-tabs:change-value-second'));
   });
 });

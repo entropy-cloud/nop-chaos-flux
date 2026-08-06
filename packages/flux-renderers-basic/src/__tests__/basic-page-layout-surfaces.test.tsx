@@ -551,7 +551,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
   });
 
   it('calls declarative dialog onClose once when closed from the local close control', async () => {
-    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: null })) as RendererEnv['fetcher'];
+    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: null })) as unknown as RendererEnv['fetcher'];
     const SchemaRenderer = createBasicSchemaRenderer();
 
     const view = render(

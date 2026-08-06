@@ -161,6 +161,17 @@ export function useSurfaceRenderer(
 
   const actionScope = useCurrentActionScope();
   const componentRegistry = useCurrentComponentRegistry();
+  // CX-10 / bug-83 family convention: schema event dispatches carry a second
+  // dispatch-arg ctx { event, evaluationBindings, scope } so action args
+  // templates can read payload keys (${surfaceId}) as bare bindings.
+  const eventCtx = React.useCallback(
+    (payload: { surfaceId: string; kind: 'dialog' | 'drawer'; open: boolean }) => ({
+      event: { ...payload, type: 'custom' },
+      evaluationBindings: payload,
+      scope: node.scope,
+    }),
+    [node.scope],
+  );
   const handleSurfaceOpenChange = React.useCallback(
     (nextOpen: boolean) => {
       if (controlledOpen === undefined) {
@@ -173,14 +184,16 @@ export function useSurfaceRenderer(
         }
 
         closeHandledRef.current = true;
-        void eventHandlers.onClose?.({ surfaceId: id, kind, open: false });
+        const payload = { surfaceId: id, kind, open: false };
+        void eventHandlers.onClose?.(payload, eventCtx(payload));
         return;
       }
 
       closeHandledRef.current = false;
-      void eventHandlers.onOpen?.({ surfaceId: id, kind, open: true });
+      const payload = { surfaceId: id, kind, open: true };
+      void eventHandlers.onOpen?.(payload, eventCtx(payload));
     },
-    [controlledOpen, eventHandlers, id, kind, surfaceRuntime],
+    [controlledOpen, eventCtx, eventHandlers, id, kind, surfaceRuntime],
   );
   const surfacePayload = React.useMemo(
     () => ({
@@ -221,9 +234,18 @@ export function useSurfaceRenderer(
       meta,
       regionHandles: regions,
       controlledOpen: controlledOpen !== undefined,
-      onOpen: () => eventHandlers.onOpen?.({ surfaceId: id, kind, open: true }),
-      onClose: () => eventHandlers.onClose?.({ surfaceId: id, kind, open: false }),
-      onConfirm: () => eventHandlers.onConfirm?.({ surfaceId: id, kind, open: true }),
+      onOpen: () => {
+        const payload = { surfaceId: id, kind, open: true };
+        void eventHandlers.onOpen?.(payload, eventCtx(payload));
+      },
+      onClose: () => {
+        const payload = { surfaceId: id, kind, open: false };
+        void eventHandlers.onClose?.(payload, eventCtx(payload));
+      },
+      onConfirm: () => {
+        const payload = { surfaceId: id, kind, open: true };
+        void eventHandlers.onConfirm?.(payload, eventCtx(payload));
+      },
     };
 
     const existing = surfaceRuntime.store.getState().entries.find((candidate) => candidate.id === id);
@@ -281,6 +303,7 @@ export function useSurfaceRenderer(
     componentRegistry,
     controlledOpen,
     declarativeScope,
+    eventCtx,
     eventHandlers,
     id,
     kind,

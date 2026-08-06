@@ -105,7 +105,7 @@ function createTabRegionOptions(item: TabsItemSchema, index: number) {
 function createTabsChangePayload(items: TabsItemSchema[], nextValue: string) {
   const nextIndex = items.findIndex((item, index) => getItemValue(item, index) === nextValue);
   return {
-    type: 'change',
+    type: 'tabs:change',
     value: nextValue,
     activeValue: nextValue,
     index: nextIndex,
@@ -313,6 +313,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     void props.events.onChange?.(payload, {
       event: payload,
       evaluationBindings: payload,
+      scope: props.node.scope,
     });
   };
 
@@ -418,6 +419,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           void props.events.onChange?.(payload, {
             event: payload,
             evaluationBindings: payload,
+            scope: props.node.scope,
           });
         }}
         orientation={orientation}
