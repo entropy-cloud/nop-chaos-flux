@@ -400,3 +400,135 @@ describe('input-image — preview shell', () => {
     });
   });
 });
+
+describe('input-file — schema event dispatch ctx (CX-10 / bug-83 family)', () => {
+  function urlCaptureEnv(urls: string[]): RendererEnv {
+    return {
+      fetcher: async function <T>(api: any, ctx: ApiRequestContext) {
+        urls.push(api?.url ?? '');
+        if (api?.url === '/api/upload') {
+          return {
+            ok: true,
+            status: 200,
+            data: { url: 'https://cdn.example.com/a.txt', name: 'a.txt' } as T,
+          };
+        }
+        if (api?.url === '/api/upload-fail') {
+          return { ok: false, status: 500, data: { message: 'rejected' } as T };
+        }
+        if (api?.url === '/api/delete-fail') {
+          return { ok: false, status: 500, data: { message: 'gone' } as T };
+        }
+        return { ok: true, status: 200, data: ctx.scope?.readOwn?.() as T };
+      },
+      notify: () => undefined,
+    };
+  }
+
+  it('resolves ${item.url} in onUploadSuccess action args via ctx evaluationBindings', async () => {
+    const urls: string[] = [];
+    renderSchema(
+      buildForm('input-file', 'file', {
+        uploadAction: { action: 'ajax', args: { url: '/api/upload' } },
+        onUploadSuccess: { action: 'ajax', args: { url: '/success-${item.url}' } },
+      }),
+      urlCaptureEnv(urls),
+    );
+    const input = document.querySelector<HTMLInputElement>(
+      'input[data-testid="nop-input-file-input"]',
+    )!;
+    setFiles(input, [new File(['x'], 'a.txt')]);
+
+    await waitFor(() => expect(urls).toContain('/success-https://cdn.example.com/a.txt'));
+  });
+
+  it('resolves ${error} in onUploadError action args via ctx evaluationBindings', async () => {
+    const urls: string[] = [];
+    renderSchema(
+      buildForm('input-file', 'file', {
+        uploadAction: { action: 'ajax', args: { url: '/api/upload-fail' } },
+        onUploadError: { action: 'ajax', args: { url: '/error-${error}' } },
+      }),
+      urlCaptureEnv(urls),
+    );
+    const input = document.querySelector<HTMLInputElement>(
+      'input[data-testid="nop-input-file-input"]',
+    )!;
+    setFiles(input, [new File(['x'], 'bad.txt')]);
+
+    await waitFor(() => expect(urls).toContain('/error-rejected'));
+  });
+
+  it('resolves ${reason} in onReject action args via ctx evaluationBindings', async () => {
+    const urls: string[] = [];
+    renderSchema(
+      buildForm('input-file', 'file', {
+        uploadAction: { action: 'ajax', args: { url: '/api/upload' } },
+        maxSize: 1,
+        onReject: { action: 'ajax', args: { url: '/reject-${reason}' } },
+      }),
+      urlCaptureEnv(urls),
+    );
+    const input = document.querySelector<HTMLInputElement>(
+      'input[data-testid="nop-input-file-input"]',
+    )!;
+    setFiles(input, [new File(['hello world'], 'big.txt')]);
+
+    await waitFor(() => expect(urls.some((url) => url.startsWith('/reject-'))).toBe(true));
+    const rejectUrl = urls.find((url) => url.startsWith('/reject-')) ?? '';
+    expect(rejectUrl).not.toBe('/reject-');
+    expect(rejectUrl).not.toContain('${reason}');
+  });
+
+  it('resolves ${file.url} in onDelete and onDeleteSuccess action args', async () => {
+    const urls: string[] = [];
+    renderSchema(
+      buildForm('input-file', 'file', {
+        deleteAction: { action: 'ajax', args: { url: '/api/delete' } },
+        onDelete: { action: 'ajax', args: { url: '/delete-${file.url}' } },
+        onDeleteSuccess: { action: 'ajax', args: { url: '/deleted-${file.url}' } },
+      }, 'https://cdn.example.com/existing.txt'),
+      urlCaptureEnv(urls),
+    );
+
+    const removeButton = document.querySelector<HTMLButtonElement>(
+      '[data-testid="nop-input-file-remove-0"]',
+    );
+    expect(removeButton).toBeTruthy();
+    fireEvent.click(removeButton!);
+
+    await waitFor(() =>
+      expect(urls).toContain('/delete-https://cdn.example.com/existing.txt'),
+    );
+    await waitFor(() =>
+      expect(urls).toContain('/deleted-https://cdn.example.com/existing.txt'),
+    );
+  });
+
+  it('resolves ${file.url} and ${error} in onDeleteFail action args', async () => {
+    const urls: string[] = [];
+    renderSchema(
+      buildForm('input-file', 'file', {
+        deleteAction: { action: 'ajax', args: { url: '/api/delete-fail' } },
+        onDeleteFail: { action: 'ajax', args: { url: '/delete-fail-${file.url}-${error}' } },
+      }, 'https://cdn.example.com/gone.txt'),
+      urlCaptureEnv(urls),
+    );
+
+    const removeButton = document.querySelector<HTMLButtonElement>(
+      '[data-testid="nop-input-file-remove-0"]',
+    );
+    expect(removeButton).toBeTruthy();
+    fireEvent.click(removeButton!);
+
+    await waitFor(() => {
+      const failUrl = urls.find((url) => url.startsWith('/delete-fail-')) ?? '';
+      // ${file.url} must resolve to the real url; the error tail is the
+      // catch-path message (host-dependent), asserted non-empty only.
+      expect(failUrl.startsWith('/delete-fail-https://cdn.example.com/gone.txt-')).toBe(true);
+      expect(failUrl.length).toBeGreaterThan('/delete-fail-https://cdn.example.com/gone.txt-'.length);
+      expect(failUrl).not.toContain('${file.url}');
+      expect(failUrl).not.toContain('${error}');
+    });
+  });
+});

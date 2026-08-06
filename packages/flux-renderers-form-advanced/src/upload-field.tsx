@@ -130,6 +130,19 @@ export function UploadFieldRenderer(
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
 
+  // CX-10 / bug-83 family convention: schema event dispatches carry a second
+  // dispatch-arg ctx { event, evaluationBindings, scope } so action args
+  // templates can read payload keys (${item.url} / ${file.url} / ${error} /
+  // ${reason}) as bare bindings.
+  const eventCtx = (payload: Record<string, unknown>) => ({
+    event: {
+      ...payload,
+      type: typeof payload.type === 'string' ? payload.type : 'custom',
+    },
+    evaluationBindings: payload,
+    scope: parentScope,
+  });
+
   const { value, handlers, presentation } = useFormFieldFromProps(props);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -258,11 +271,12 @@ export function UploadFieldRenderer(
         ),
       );
       commitItems(successItems);
-      void props.events.onUploadSuccess?.({
+      const payload = {
         type: 'upload-success',
         file: { name: file.name, size: file.size, type: file.type },
         item,
-      });
+      };
+      void props.events.onUploadSuccess?.(payload, eventCtx(payload));
     } catch (error) {
       if (!mountedRef.current) {
         return;
@@ -278,11 +292,12 @@ export function UploadFieldRenderer(
             : entry,
         ),
       );
-      void props.events.onUploadError?.({
+      const payload = {
         type: 'upload-error',
         file: { name: file.name, size: file.size, type: file.type },
         error: toUploadError(error),
-      });
+      };
+      void props.events.onUploadError?.(payload, eventCtx(payload));
     } finally {
       abortControllersRef.current.delete(id);
       runtime.disposeScope(uploadScope.id);
@@ -297,11 +312,12 @@ export function UploadFieldRenderer(
   }
 
   function rejectFile(file: File, reason: string) {
-    void props.events.onReject?.({
+    const payload = {
       type: 'reject',
       file: { name: file.name, size: file.size, type: file.type },
       reason,
-    });
+    };
+    void props.events.onReject?.(payload, eventCtx(payload));
   }
 
   async function handleFiles(fileList: FileList | null) {
@@ -364,10 +380,11 @@ export function UploadFieldRenderer(
   async function removeExisting(index: number) {
     const item = committedItems()[index];
 
-    void props.events.onDelete?.({
+    const deletePayload = {
       type: 'delete',
       file: item ? { name: item.name, url: item.url, size: item.size } : undefined,
-    });
+    };
+    void props.events.onDelete?.(deletePayload, eventCtx(deletePayload));
 
     if (deleteAction && item) {
       const deleteScope = runtime.createChildScope(parentScope, {
@@ -378,23 +395,26 @@ export function UploadFieldRenderer(
           scope: deleteScope,
         });
         if (result.ok) {
-          void props.events.onDeleteSuccess?.({
+          const payload = {
             type: 'delete-success',
             file: { name: item.name, url: item.url, size: item.size },
-          });
+          };
+          void props.events.onDeleteSuccess?.(payload, eventCtx(payload));
         } else {
-          void props.events.onDeleteFail?.({
+          const payload = {
             type: 'delete-fail',
             file: { name: item.name, url: item.url, size: item.size },
             error: typeof result.error === 'string' ? result.error : 'Delete failed',
-          });
+          };
+          void props.events.onDeleteFail?.(payload, eventCtx(payload));
         }
       } catch (error) {
-        void props.events.onDeleteFail?.({
+        const payload = {
           type: 'delete-fail',
           file: { name: item.name, url: item.url, size: item.size },
           error: error instanceof Error ? error.message : 'Delete failed',
-        });
+        };
+        void props.events.onDeleteFail?.(payload, eventCtx(payload));
       } finally {
         runtime.disposeScope(deleteScope.id);
       }
