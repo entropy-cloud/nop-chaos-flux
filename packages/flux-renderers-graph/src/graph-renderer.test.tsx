@@ -233,6 +233,24 @@ describe('GraphRenderer', () => {
     );
   });
 
+  it('syncs the layout schema prop into the store at runtime (22-06)', () => {
+    const { utils, rendererProps } = renderGraph({ layout: 'flow' }, {});
+    expect(utils.container.querySelector('[data-slot="graph"]')?.getAttribute('data-layout')).toBe(
+      'flow',
+    );
+    act(() => {
+      utils.rerender(
+        <GraphRenderer
+          {...rendererProps}
+          props={{ ...rendererProps.props, layout: 'hierarchy' }}
+        />,
+      );
+    });
+    expect(utils.container.querySelector('[data-slot="graph"]')?.getAttribute('data-layout')).toBe(
+      'hierarchy',
+    );
+  });
+
   it('search handle: empty keyword clears the search state', () => {
     const { utils } = renderGraph();
     invoke('search', { keyword: 'root' });

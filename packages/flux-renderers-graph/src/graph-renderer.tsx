@@ -324,6 +324,16 @@ export function GraphRenderer(props: RendererComponentProps<GraphSchema>) {
     [],
   );
 
+  // 22-06: schema `layout` prop → store 单向同步（值不等才写回）。prop 是
+  // schema 驱动源（host 表达式/数据源切换布局）；component:setLayout 句柄
+  // 写 store 后 prop 未变，等值跳过避免相互覆盖（双向写入各自收敛）。
+  useEffect(() => {
+    const current = store.getState().layoutMode;
+    if (current !== layout) {
+      store.getState().setLayoutMode(layout);
+    }
+  }, [layout, store]);
+
   // 数据/布局变化后自适应视口（fitView 开启时）
   const dataRevision = `${rawNodes.length}:${rawEdges.length}`;
   useEffect(() => {
