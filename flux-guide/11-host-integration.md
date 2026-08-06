@@ -168,7 +168,7 @@ const rolesPlugin: RendererPlugin = {
 // 传给 <SchemaRenderer plugins={[rolesPlugin]} .../>
 ```
 
-> flux-runtime 内部有等价实现（`filterByRoles`），但当前未从包入口公开导出；如需产品级角色裁剪，或复制该逻辑到宿主插件，或直接用 `env.hasRole` + 字段 `visible: "${...}"` 组合。`xui:roles` 的价值是**编译期整树裁剪**。
+flux-runtime 已内置等价实现并从包入口公开导出：`createRendererRuntime({ plugins: [createXuiRolesPlugin({ hasRole: env.hasRole })] })`，导入自 `@nop-chaos/flux-runtime`（`createXuiRolesPlugin` / `filterByRoles` / `XuiRolesPluginOptions`）。`xui:roles` 的价值是**编译期整树裁剪**；未提供 `hasRole` 时插件为 allow-all 无操作。
 
 ---
 

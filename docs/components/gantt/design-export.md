@@ -37,7 +37,7 @@ Provide PDF, PNG, and Excel export capabilities for the Gantt chart, allowing us
 
 ## Implementation
 
-File: `packages/flux-renderers-scheduling/src/gantt/components/export-handles.tsx`
+> **实现状态：未实现（已移除）**。原参考实现文件及其测试已于 2026-08-06 随死代码家族裁决删除（plan `2026-08-06-2027-1`，测试归档于 `docs/archive/gantt-dead-components-2026-08-06/`，裁决记录见 `docs/logs/2026/08-06.md`）；Gantt 组件 handle 当前仅注册 zoomIn/zoomOut/scrollToToday/scrollToTask（`gantt.tsx`），无 exportPdf/exportPng/exportExcel 消费方。以下为原设计契约留存，供未来 capability 面计划实现时参考。
 
 ```typescript
 interface ExportHandles {
