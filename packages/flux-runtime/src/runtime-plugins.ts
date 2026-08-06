@@ -1,5 +1,8 @@
 import type { RendererPlugin } from '@nop-chaos/flux-core';
 
+export { createXuiRolesPlugin, filterByRoles } from './plugins/xui-roles-plugin.js';
+export type { XuiRolesPluginOptions } from './plugins/xui-roles-plugin.js';
+
 export function sortRendererPlugins(
   plugins: readonly RendererPlugin[] | undefined,
 ): RendererPlugin[] {
