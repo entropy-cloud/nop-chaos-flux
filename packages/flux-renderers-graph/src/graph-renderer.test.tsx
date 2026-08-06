@@ -294,4 +294,52 @@ describe('GraphRenderer', () => {
       expect(() => handle.capabilities.invoke(method, undefined, {} as never)).not.toThrow();
     }
   });
+
+  it('event dispatch ctx: onNodeClick carries { event, evaluationBindings, scope } so ${nodeId} resolves', () => {
+    const onNodeClick = vi.fn();
+    const { rendererProps } = renderGraph({}, { onNodeClick: onNodeClick as RendererEventHandler });
+    // The mock props start with an empty node; inject a scope stub to verify
+    // the ctx injection (mirrors the carousel ctx contract test).
+    (rendererProps.node as { scope?: unknown }).scope = { stub: true };
+
+    simulateNodeClick('b');
+
+    const clickCall = onNodeClick.mock.calls.at(-1) as unknown as [unknown, unknown] | undefined;
+    const ctx = clickCall?.[1] as
+      | {
+          event?: unknown;
+          evaluationBindings?: Record<string, unknown>;
+          scope?: unknown;
+        }
+      | undefined;
+    expect(ctx?.event).toMatchObject({ type: 'onNodeClick', nodeId: 'b' });
+    expect(ctx?.evaluationBindings?.nodeId).toBe('b');
+    expect(ctx?.evaluationBindings?.node).toMatchObject({ id: 'b' });
+    expect(ctx?.scope).toBeTruthy();
+  });
+
+  it('event dispatch ctx: onSelectionChange carries { event, evaluationBindings, scope } so ${nodeId} resolves', () => {
+    const onSelectionChange = vi.fn();
+    const { rendererProps } = renderGraph(
+      {},
+      { onSelectionChange: onSelectionChange as RendererEventHandler },
+    );
+    (rendererProps.node as { scope?: unknown }).scope = { stub: true };
+
+    act(() => {
+      flowCapture!.onSelectionChange({ nodes: [{ id: 'a' }] });
+    });
+
+    const changeCall = onSelectionChange.mock.calls.at(-1) as unknown as [unknown, unknown] | undefined;
+    const ctx = changeCall?.[1] as
+      | {
+          event?: unknown;
+          evaluationBindings?: Record<string, unknown>;
+          scope?: unknown;
+        }
+      | undefined;
+    expect(ctx?.event).toMatchObject({ type: 'onSelectionChange', nodeId: 'a' });
+    expect(ctx?.evaluationBindings?.nodeId).toBe('a');
+    expect(ctx?.scope).toBeTruthy();
+  });
 });

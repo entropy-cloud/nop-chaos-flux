@@ -154,8 +154,15 @@ export function GraphRenderer(props: RendererComponentProps<GraphSchema>) {
     if (!handler) {
       return;
     }
+    // CX-10 / bug-83 family convention: the second dispatch arg carries
+    // { event, evaluationBindings, scope } so action args templates can read
+    // payload keys (${nodeId}) as bare bindings.
     const fullPayload: GraphNodeSelectionPayload = { type, nodeId, node };
-    void handler(fullPayload, { scope: props.node.scope });
+    void handler(fullPayload, {
+      event: fullPayload,
+      evaluationBindings: fullPayload,
+      scope: props.node.scope,
+    });
   };
 
   const syncSelection = (nodeId: string | null) => {
