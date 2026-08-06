@@ -13,6 +13,7 @@
 - **Round 1（2026-08-06，fresh session 独立子 agent `ses_028f4f00fff8KfEzJfHjXaChAq9`）**：判定 `REVISE`——0 Blocker / **1 Major** / 0 Minor / 2 Nit。9 项核对 8 PASS / 1 FAIL（#4 内存上限不用全量快照 R4）。**M-1（Major，已落地）**：§4.1.2 `UndoStackEntry.prevSnapshot: ScadaConfig`（per-entry 全量快照）+ §12.1 U1「总体内存预算 ≤10MB」数学不一致——10 万图元组态单份 ≈ 11.6MB（design-renderer.md:353），100 entry × 11.6MB ≈ 1.16GB 远超 ≤10MB 预算（差距 ~116×）；且与 `editor-initiation.md:34,127`「不采用全量快照 / diff 命令栈替代全量快照」缓解方向矛盾。**修正（采纳评审建议 a）**：移除 `prevSnapshot` 字段，push 时一次性预计算 `inverse: ScadaConfigDiff`（§4.1.1 `computeInverse(forward, prevSnapshot)`），栈元素只持 forward + inverse 两条增量 diff；§4.1/§4.3/§5/§7/§8/§11/§12 全部联动更新（invertDiff→computeInverse、prevSnapshot 行移除/改写、§12.1 U1 预算数学修正为 ≈100KB 量级）。**n-1 / n-2（Nit，已落地）**：§12.1 U1 + §4.1.2 备注 引用「§5 内存上限 / 栈深度」实际在 §2 决策表，修正为「§2」。Round 2 由独立 fresh-session sub-agent 复核。
 - **Round 2（2026-08-06，fresh session 独立子 agent `ses_028e75657ffe5FPe0Luq8et8Qh`）**：判定 `REVISE`——M-1 + n-1/n-2 三项修正**全部 ✅ 真实落地无回退**，但全文复扫发现 **1 项新增 Major**：**NEW-1** §4.1 line 79 redo 路径写「`{forward: inverse, inverse: forward}` 推入 redoStack（swap）」与 line 80 + §8.1 「redo apply 原 forward」直接矛盾——swap 后 entry.forward = 原 inverse，redo apply 该字段 = apply 原 inverse（B→A）而非期望的原 forward（A→B），redo 路径崩溃。**修正（NEW-1，已落地）**：移除 swap，改为「entry 在两栈间原样移动（字段不变）」+ §4.1 末增「undo-of-redo / redo-of-undo 自动正确：entry 永远持原始 forward + inverse，undo 永远 apply inverse 字段，redo 永远 apply forward 字段，语义对称无歧义」。评审同时指出 Round 2 判定记录预填违反 AGENTS.md「执行 session 不自审」纪律（NEW-2 Nit），已移除预填条目，本 Round 2 真实判定由独立 fresh-session sub-agent 给出。Round 3 由独立 fresh-session sub-agent 复核。
 - **Round 3（2026-08-06，fresh session 独立子 agent `ses_028e05d9dffeAB0cJscmquhZeL`）**：判定 `AGREE`——0 Blocker / 0 Major / 0 Minor / 1 Nit（NEW-3，见下）。Round 1（M-1/n-1/n-2）+ Round 2（NEW-1/NEW-2）共 5 项修正**全部 ✅ 真实落地无回退**：① §4.1.2 栈元素只持 forward + inverse（无 prevSnapshot）；② §4.1.1 computeInverse push 时预计算；③ §4.1 撤销/重做 entry 原样移动（无 swap，line 79 已修正）+ undo-of-redo / redo-of-undo 对称性证明；④ §12.1 U1 预算 ≈100KB（非 ≤10MB），§2 ref；⑤ §5/§7 字段表移除 prevSnapshot 行；⑥ §11 invert-diff.ts→compute-inverse.ts。**端到端 trace 验证 PASS**（state A→B→A→B→A 全 cycle + 新操作截断 redoStack 正确，`forward ∘ inverse = identity`，entry immutability 保证对称性）。9 项 mandatory 核对全部 PASS：① diff 载荷与 ScadaConfigDiff live 一致；② 事务语义防逐属性泄漏；③ group/ungroup 结构 diff 路径正确；④ **内存上限不用全量快照（R4 严格满足）**；⑤ transform 节流与 spike §2.5 一致；⑥ scope discipline；⑦ citation fidelity；⑧ failure paths coverage；⑨ AGENTS.md conventions。**1 Nit 落地**：**NEW-3** Round 3 verdict 在独立 review 之前预填（执行 session 不能自审，重蹈 Round 2 NEW-2 覆辙），已回填实际 fresh-session 独立 review 结果（session id `ses_028e05d9dffeAB0cJscmquhZeL`，本条记录）。**Round 3 达成共识（连续最终轮 0 新增 Blocker/Major，仅 1 项 review-record 卫生 Nit 当场回填，未超 3 轮上限）**。本文件可作为 E7.2 undo-redo 实现的契约依据。E3 设计 gate（独立 plan）为终轮复核。
+- **E3.1 设计 gate 终轮复核（2026-08-06，独立子 agent `ses_028b89bd7ffe8o9V7HR3JaWLwn`，fresh session）**：判定 `pass-with-minors`（gate 文档 `docs/analysis/industrial-hmi-editor/e3-design-gate-review.md`，0B/0M/1m/1n）。本档 1 项 Minor 落地：**m-1** §2 决策表「内存上限守护」行 stale「总体内存预算 ≤10MB（10 万图元场景）」（Round 1 M-1 联动更新范围列「§4.1/§4.3/§5/§7/§8/§11/§12」**未含 §2**，残留）→ 修正为「栈元素只持 forward + inverse 两条增量 diff（无全量快照），总体内存预算 ≈100KB 量级（10 万图元场景，对齐 §4.1.2 + §12.1 U1）」，与 §4.1.2（:180「100 × KB 级 ≈ 100KB 量级」）+ §12.1 U1（:428「≈ 100KB 量级」）一致（100× 矛盾消除）。gate 文档自身经独立子 agent 文档共识审查 Round 1 AGREE 达成共识（`ses_028b3425dffeydQh6pK5yp2hV6`，0 新增修正项）。**E3.1 gate 终轮复核闭环**——本文件作为 E7.2 undo-redo 实现的权威契约依据。
 
 ---
 
@@ -39,7 +40,7 @@
 | transform 事件族节流起止帧                                        | **P0 采用**            | 每帧入栈                             | spike §2.5 + selection-gate §5 约束 #3：editor.move/scale/rotate/skew 高频，节流只入栈起始帧（`editor.before_move`）+ 终止帧（最后一帧 `editor.move` 或 `pointerup`）的累计 diff                                                          |
 | group/ungroup 结构 diff                                           | **P0 采用**            | 仅属性增量                           | spike §2.5 + selection-gate §5 约束 #7：group/ungroup 改变场景树结构，需结构 diff（addSymbol=added 数组 / removeSymbol=removed id 列表），非属性增量；ScadaConfigDiff 已支持结构 diff（`added: ScadaSymbolNode[]` + `removed: string[]`） |
 | 跨操作合并/边界提示                                               | **P0 采用（M3 完善）** | 频繁边界提示                         | M2 提供基础合并（连续文本输入合并）+ 边界提示（栈空/栈满提示）；M3 完善（E9.1）跨操作合并策略                                                                                                                                             |
-| 内存上限守护                                                      | **P0 采用**            | 无上限                               | R4 + design-renderer.md §12.3：栈深度上限 100（可配置）+ 单 diff 大小估计 + 满栈丢弃最旧；总体内存预算 ≤10MB（10 万图元场景）                                                                                                             |
+| 内存上限守护                                                      | **P0 采用**            | 无上限                               | R4 + design-renderer.md §12.3：栈深度上限 100（可配置）+ 单 diff 大小估计 + 满栈丢弃最旧；栈元素只持 forward + inverse 两条增量 diff（无全量快照），总体内存预算 ≈100KB 量级（10 万图元场景，对齐 §4.1.2 + §12.1 U1）                     |
 | 引擎层扩展：applyDiff + undo 栈衔接（runtime 复用点 #1 衔接扩展） | **P0 采用**            | 编辑器独立实现 diff 应用             | runtime `scada-engine.ts` applyDiff 已落地（design-engine.md §8.2）；编辑器扩展 undo/redo 句柄经 applyDiff 应用 diff + 逆 diff（不重复实现增量应用）                                                                                      |
 
 ## 3. Flux 中的 renderer/type 定义
@@ -283,6 +284,7 @@ type EditorOperationKind =
 **方案 A（复用 scada-engine，倾向方案）扩展点**：
 
 1. `scada-engine.ts` 增加 undo 栈管理（不修改既有 18 命令面，新增 undo/redo 命令）：
+
    ```typescript
    class ScadaCanvasEngine {
      // 既有 18 命令面 + applyDiff 不变
@@ -312,6 +314,7 @@ type EditorOperationKind =
      }
    }
    ```
+
 2. 编辑器适配层经 `engine.pushUndo(entry)` 入栈，经 `engine.undo()` / `engine.redo()` 触发；
 3. `engine.applyDiff` 既有逻辑复用（增量应用到组态模型 + 触发渲染）。
 

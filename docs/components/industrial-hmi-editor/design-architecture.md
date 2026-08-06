@@ -11,6 +11,7 @@
 > 依据 roadmap Cross-Cutting「文档共识审查」条款，本文件定稿前须经独立子 agent（fresh session，不复用编写者上下文）反复审查直到共识（判据：连续一轮 0 新增修正项；≤3 轮，超限升级人工）。轮次记录如下：
 
 - **Round 1（2026-08-06，fresh session 独立子 agent `ses_029031bedffeYSIyS3Sl64eWuo`）**：判定 `AGREE`——0 Blocker / 0 Major / 0 Minor / 1 Nit。8 项核对逐项 PASS：① 复用点三态标注（10 复用点 + 2 新造面 + 3 衔接扩展）逐项 live 一致（无 reuse-overclaim，抽查 `use-scada-handles.ts:11-21` + `scada-engine.ts` applyDiff:314 + `serialization/*.ts` 经 `rg "editable"` 返回空证实 editable 不进序列化）；② 9 条 spike 设计约束逐条落地（§4.8 9 行映射表 + §4.2/§4.3/§4.6 等价落地，无遗漏无矛盾）；③ 双态隔离机制无状态泄漏路径（§4.2 三层隔离 + 4 项不泄漏验证 live 核对全 PASS）；④ 与 runtime `design-engine.md §6:216` sky Group 预留 + §12.3 后续阶段 I16 + `design-renderer.md §12.3` 一致；⑤ 编辑态包络数字与 `editing-envelope-2026-08-06.md §3` 完全对齐（≥30fps@≤1k primary / <100ms / ≤320MB / extended ≤10k）；⑥ 引擎层衔接 trade-off（方案 A vs 方案 B）作为 E4.1 裁定 input 表达恰当（不预判裁定）；⑦ scope discipline（Non-Goals 明确 + 三次声明「不预判 E4.1 裁定」）；⑧ 12 节结构对齐 runtime design-\*.md 先例。**1 Nit 落地**：**n-1** §4.4 方案 A 复用点枚举「18 命令面」括号内 `zoomAt` 重复（实际 19 个 slash 项）→ 删除重复 `zoomAt`，与 `editor-initiation.md:53` 18 方法口径对齐。**Round 1 达成共识（连续一轮 0 Blocker/0 Major/0 Minor/0 新增 Nit，仅 1 项 cosmetic Nit 当场落地，未超 3 轮上限）**。本文件可作为 E2.2–E2.6 设计 + E4.1 包结构裁定 + E5.1 编辑态画布组件实现的权威架构契约。E3 设计 gate（独立 plan）为终轮复核。
+- **E3.1 设计 gate 终轮复核（2026-08-06，独立子 agent `ses_028b89bd7ffe8o9V7HR3JaWLwn`，fresh session）**：判定 `pass-with-minors`（gate 文档 `docs/analysis/industrial-hmi-editor/e3-design-gate-review.md`，0B/0M/1m/1n）。本档 1 项 Nit 落地：**n-1** §8.5（:362）次级交叉引用「roadmap 总览 line 81」off-by-one（line 81 = 复用点 #4 组态 JSON 序列化，line 82 = #5 组件句柄面）→ 修正为「line 82」（权威引注 editor-initiation §3 #5 正确，仅次级 roadmap 行号修正）。gate 文档自身经独立子 agent 文档共识审查 Round 1 AGREE 达成共识（`ses_028b3425dffeydQh6pK5yp2hV6`，0 新增修正项）。**E3.1 gate 终轮复核闭环**——本文件作为 E4.1 包结构裁定 + E5.1 编辑态画布组件实现的权威架构契约依据。
 
 ---
 
@@ -359,7 +360,7 @@ interface ScadaEditorTestHandle {
 
 ### 8.5 组件句柄扩展（架构层声明，runtime 复用点 #5 衔接扩展）
 
-runtime `use-scada-handles.ts:11-21` 现有 9 方法（fit/center/getSymbols/getSymbol/setPointValue/getPointTable/exportConfig/importConfig/destroy）需扩展编辑操作命令（**runtime 复用点三态「需扩展」**，editor-initiation §3 #5 + roadmap 总览 line 81）：
+runtime `use-scada-handles.ts:11-21` 现有 9 方法（fit/center/getSymbols/getSymbol/setPointValue/getPointTable/exportConfig/importConfig/destroy）需扩展编辑操作命令（**runtime 复用点三态「需扩展」**，editor-initiation §3 #5 + roadmap 总览 line 82）：
 
 | 扩展句柄                                     | 说明                                                          |
 | -------------------------------------------- | ------------------------------------------------------------- |
