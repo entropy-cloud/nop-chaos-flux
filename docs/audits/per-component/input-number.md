@@ -36,7 +36,7 @@ input-number / flux-renderers-form / InputNumberSchema（`schemas.ts:294-313`）
 
 - [P2-1] stepper `aria-label="Increase"`/`"Decrease"` 硬编码（`input-number-renderer.tsx:276,290`）→ 状态: **fixed**（`t('flux.common.increase'|'decrease')`；e2e form-input-enhancements 断言同步改 `[data-slot="stepper-increase"]` 契约——zh-CN 默认 locale 下英文 name 不再成立）
 - [P2-2] design.md §4 schema 表缺 `inputMode`（实现 `input-number-renderer.tsx:69-72` 消费）→ 状态: **fixed**（§4 schema 表 + §4 默认值表补 inputMode，§15 已引用）
-- [P3-1] 嵌套重复 `data-slot="field-control"`（`input-number-renderer.tsx:217` vs FieldFrame）→ 状态: 卡内记录（P3，归 CR）
+- [P3-1] 嵌套重复 `data-slot="field-control"`（`input-number-renderer.tsx:217` vs FieldFrame）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 3 裁决：FieldFrame 为 field-control 唯一 owner，根节点移除重复 data-slot）
 - [P3-2] `validate` 未注册进 fields（schemas.ts:307-311 有声明，input.tsx:657-660 无）→ 状态: 卡内记录（P3；与 input-text 族对比属定义契约差异，CR 集中裁决）
 
 ## 组合宿主场景（真实浏览器验证）

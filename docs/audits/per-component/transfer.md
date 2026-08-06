@@ -37,7 +37,7 @@ transfer / flux-renderers-form-advanced / TransferSchema（`composite-schemas.ts
 - [P0] 无
 - [P1-1] `onSelectAll` 三方声明（`composite-schemas.ts:163` + design.md §4 :47）但定义 fields 未注册（`transfer-renderer.tsx:450-469`）且 toggleAllCandidates 零派发（:163-172）——事件契约漂移（C2.4 P1 同型：声明 vs 渲染器零引用）→ 状态: fixed（fields 补 `{key:'onSelectAll',kind:'event'}` + toggleAllCandidates 内 `props.events.onSelectAll?.()`；test-first：transfer-on-select-all.test.tsx 2 用例先红后绿）
 - [P2-1] 全选 checkbox `aria-label="Select all"` 硬编码（`transfer-renderer.tsx:371`，维度 9 i18n 违规）+ `checkAllLabel` prop 注册但零行为（:461）→ 状态: fixed（`aria-label={checkAllLabel ?? t('flux.transfer.selectAll', {defaultValue:'Select all'})}`；flux-i18n 新增 `flux.transfer.selectAll` en-US/zh-CN；test-first：transfer-checkall-i18n.test.tsx 先红后绿）
-- [P3-1] TransferPane role=listbox `aria-multiselectable="true"` 恒真（:413），single 模式（multiple=false）语义不准确 → 卡内记录，归 CR（低成本可改但需 pane 传 multiple，P3 裁定）
+- [P3-1] TransferPane role=listbox `aria-multiselectable="true"` 恒真（:413），single 模式（multiple=false）语义不准确 → 状态: fixed（plan-2026-08-05-1359-1 Phase 2：multiple 穿透 TransferPaneProps，条件发布）
 - [P3-2] 统计 `（x/y）` 全角括号展示（:375-377）与 design §8 一致，属展示样式 → 卡内记录（不处理）
 
 ## 组合宿主场景（真实浏览器验证）

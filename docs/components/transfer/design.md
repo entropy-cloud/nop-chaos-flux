@@ -61,12 +61,13 @@ export interface TransferSchema extends BoundFieldSchemaBase {
 
 ## 6. 样式与 DOM marker
 
-- 根节点: `data-slot="field-control"` + `nop-transfer`
+- 根节点: `nop-transfer`（transfer 被 FieldFrame 包裹，`data-slot="field-control"` 由 FieldFrame 输出，根节点不再重复）
 - 左栏: `data-slot="transfer-pane-candidate"`
 - 右栏: `data-slot="transfer-pane-selected"`
 - 穿梭按钮: `data-slot="transfer-select"` / `data-slot="transfer-deselect"`
 - 全选 Checkbox: `data-slot="transfer-toggle-all"` (P1)
 - 清空按钮: `data-slot="transfer-clear-all"` (P1)
+- 两个 pane 的 `role="listbox"` 按 `multiple` 语义发布 `aria-multiselectable`：multiple 时 `"true"`，single 时不输出。
 
 ## 7. 已知 Bug
 

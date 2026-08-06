@@ -39,7 +39,7 @@ key-value / flux-renderers-form-advanced / KeyValueSchema（`flux-renderers-form
 - [P2-1] collectRules minItems/maxItems/uniqueBy 消息硬编码英文（key-value.tsx:662-689）绕过 `validation.*` i18n 回退（uniqueKeys 自定义 message 语义保留）→ 状态: fixed（规则去 message 走 buildValidationMessage 回退；key-value.test.tsx collectRules 断言同步）
 - [P2-2] validateChild 行内 required 消息硬编码英文（key-value.tsx:549, 559）→ 状态: fixed（t('validation.required', {label: 'Entry N key/value'})）
 - [P2-3] design.md §3 fields 旧格式「label 为 value-or-region」（docs/components/key-value/design.md:34）→ 状态: fixed（同步为 formFieldRules 现状）
-- [P3-1] 根 data-slot="field-control" 与 FieldFrame :258 重复（key-value.tsx:576，family P3 先例：combo/array-field 同）→ 状态: 卡内记录，归 CR 集中裁定
+- [P3-1] 根 data-slot="field-control" 与 FieldFrame :258 重复（key-value.tsx:576，family P3 先例：combo/array-field 同）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 3 裁决：FieldFrame 为 field-control 唯一 owner，根节点移除重复 data-slot）
 - [P3-2] useCallback 簇（syncField/handleRemove/handleMove）react19 工具命中——既有设计裁定（C3.x 同）→ 状态: 卡内记录
 
 ## 组合宿主场景（真实浏览器验证）

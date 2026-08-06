@@ -127,6 +127,7 @@ min/max 约束不放在 adapter 的 validate 中，而是放在渲染器内部�
 ## 11. 样式与 DOM marker 约定
 
 - 根节点输出 `nop-input-number` marker。
+- 根节点被 FieldFrame 包裹：`data-slot="field-control"` 由 FieldFrame 输出，根节点不再重复。
 - 步进按钮区域输出 `data-slot="stepper"` marker。
 - 步进减按钮输出 `data-slot="stepper-decrease"` marker。
 - 步进加按钮输出 `data-slot="stepper-increase"` marker。

@@ -39,7 +39,7 @@ combo / flux-renderers-form-advanced / ComboSchema（`composite-schemas.ts:99-11
 - [P1-2] `readOnly`/`disabled` 仅锁定复合组件自身 chrome（增删移按钮），item 字段 presentation 只看自身 schema props（`useFieldPresentation` readOnly 源：field-presentation.tsx:51 + form-state.ts:192）——item 内嵌字段保持可编辑、写回照常落 store（**真实浏览器宿主场景 host-itable-disabled 实证**；combo/input-table 同根因 → 共性缺陷，CX-8 事后回写）→ 状态: fixed（ComboItem 以 `FormLayoutContext.Provider staticReadOnly` 传播 item 布局只读（combo-renderer.tsx:117-129, 168-170）；test-first：composite-readonly-propagation.test.tsx 4 用例先红后绿）
 - [P2-1] design.md §4/§5 声明 `multiple` 而 ComboSchema 无此字段（`docs/components/combo/design.md:21,27`）→ 状态: fixed（design.md §4/§5 移除 multiple 声明，与 ComboSchema/定义一致）
 - [P2-2] design.md §10 承诺 `nop-combo__item` 每项 BEM marker（`docs/components/combo/design.md:50`），实现已按 C-06 移除 BEM、稳定契约为 `data-slot="combo-item"`（combo-renderer.tsx:147）→ 状态: fixed（design.md §10 同步为 data-slot 契约）
-- [P3-1] 根 div 输出嵌套 `data-slot="field-control"`（:504，与 FieldFrame :258 重复；form-advanced 族 array-field/object-field/condition-builder 同模式，C2.2 input-number P3 同先例）→ 状态: 卡内记录，归 CR 集中裁定
+- [P3-1] 根 div 输出嵌套 `data-slot="field-control"`（:504，与 FieldFrame :258 重复；form-advanced 族 array-field/object-field/condition-builder 同模式，C2.2 input-number P3 同先例）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 3 裁决：FieldFrame 为 field-control 唯一 owner，根节点移除重复 data-slot）
 
 ## 组合宿主场景（真实浏览器验证）
 

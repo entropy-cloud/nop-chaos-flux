@@ -52,6 +52,7 @@
 
 - 根节点保留 `nop-alert` marker。
 - 视觉层复用 `@nop-chaos/ui` Alert primitive，不在 renderer 中硬编码间距体系。
+- 可关闭按钮 aria-label 经 `t('flux.common.close')`（en-US: Close / zh-CN: 关闭）。
 
 ## 11. 实现拆分建议
 

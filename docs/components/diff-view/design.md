@@ -228,9 +228,9 @@ interface DiffViewSchema extends BaseSchema {
 
 文件列表侧栏：
 
-- 列出所有文件，每项显示：状态徽标（A/M/D）+ 文件名 + 变更统计（+N/-M）
-- 文件名 `input` 搜索过滤
-- 按变更类型标签切换：全部 / Added / Modified / Deleted
+- 列出所有文件，每项显示：状态徽标（A/M/D，经 `t('flux.diff.statusAdded/Modified/Deleted')`）+ 文件名 + 变更统计（+N/-M）
+- 文件名 `input` 搜索过滤（placeholder 经 `t('flux.diff.searchFiles')`，输入框同时挂同源 `aria-label` 提供可访问名称）
+- 按变更类型标签切换：全部 / Added / Modified / Deleted（标签文案经 `t('flux.diff.all/added/modified/deleted')`）
 - 未读蓝色圆点，点击后标记已读
 
 **文件切换**：点击文件列表项时主区域切换到对应文件的 diff 视图。`viewType`/`showLineNumbers`/`showInlineDiff` 跨文件保持。前后文件导航按钮 + Ctrl+↑/Ctrl+↓ 快捷键。

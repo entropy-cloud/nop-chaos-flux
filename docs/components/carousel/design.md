@@ -44,6 +44,7 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点保留 `nop-carousel` marker。
+- 指示点按钮 aria-label 经 `t('flux.carousel.goToSlide', { index })`（1-based；en-US: Go to slide N / zh-CN: 前往第 N 张）。
 
 ## 11. 实现拆分建议
 

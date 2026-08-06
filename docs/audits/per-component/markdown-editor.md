@@ -37,7 +37,7 @@ markdown-editor / flux-renderers-form / MarkdownEditorSchema（`schemas.ts:383-3
 - [P2-1] 工具栏 12 标签（Bold/Italic/Strikethrough/Code/Heading/Quote/Bulleted list/Numbered list/Horizontal rule/Link/Image/Table，`markdown-editor-renderer.tsx:62-81`）+ toolbar aria-label 'Markdown formatting'（:234）+ 默认 placeholder 'Enter markdown…'（:282）硬编码英文 → 状态: **fixed**（flux.markdown.\* 14 keys zh/en + useFluxTranslation 命名空间相对 key（`t('markdown.bold')`）；TOOLBAR_GROUPS 改 titleKey 渲染期 t() 解析——t() 不模块作用域调用（C2.3 教训）；placeholder 默认走 t()、schema placeholder 优先；test-first：markdown-editor-i18n.test.tsx 5 用例（zh-CN 工具栏/aria/placeholder + schema 覆盖 + en-US 契约，先红后绿））
 - [P2-2] design.md §4 字段清单 `mode` 与实现 `viewMode` 漂移（schemas.ts:387-390 已记录改名原因）→ 状态: **fixed**（`docs/components/markdown-editor/design.md` §4/§5 同步 viewMode + toolbar 字段）
 - [P2-3] 四态测试加固（disabled/readOnly/required/空值）+ clear/focus handle 断言 → 状态: **fixed**（markdown-editor.test.tsx +6 用例：disabled/readOnly 阻断 + readOnly 不写值 + required 空值阻断提交 + component:clear/component:focus）
-- [P3-1] 预览实时更新无 aria-live → 状态: 卡内记录（P3，归 CR）
+- [P3-1] 预览实时更新无 aria-live → 状态: fixed（plan-2026-08-05-1359-1 Phase 2：预览容器 aria-live="polite"）
 - [P3-2] rows 固定 8 无 schema prop（textarea 族支持 rows）→ 状态: 卡内记录（P3，归 CR）
 - [P3-3] design.md 无 example.json（多数 form 族组件有）→ 状态: 卡内记录（P3，低优先）
 - [P3-4] 大文档实时预览每键全量 parse 无阈值 → 状态: 卡内记录（P3，归 CR）

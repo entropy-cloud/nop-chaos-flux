@@ -44,6 +44,7 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点保留 `nop-audio` marker。
+- 错误/空态回退容器（`data-slot="audio-fallback"`）挂 `aria-live="polite"`，媒体加载失败时向辅助技术播报回退文案。
 
 ## 11. 实现拆分建议
 

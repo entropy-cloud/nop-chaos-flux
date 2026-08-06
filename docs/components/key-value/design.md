@@ -75,8 +75,10 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点保留 `nop-key-value` marker。
+- 根节点被 FieldFrame 包裹：`data-slot="field-control"` 由 FieldFrame 输出，根节点不再重复。
 - 行布局和按钮样式应来自通用 UI 组件，不内嵌专用视觉协议。
 - 每行上移按钮输出 `data-slot="key-value-move-up"` marker，下移按钮输出 `data-slot="key-value-move-down"` marker；删除按钮沿用 `Remove entry N` aria-label。
+- 行内 Key/Value 输入框 placeholder 与 aria-label 走 i18n：placeholder 经 `t('flux.form.key')`/`t('flux.form.value')`，aria-label 经 `t('flux.form.keyEntry')`/`t('flux.form.valueEntry')`（带 1-based `index` 参数）。
 
 ## 11. 实现拆分建议
 

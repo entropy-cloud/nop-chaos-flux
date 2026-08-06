@@ -1,6 +1,6 @@
 # P2/P3 审计发现汇总分析报告
 
-> 状态：active（2 轮独立子 agent 审查 pass-with-minors，共识达成）
+> 状态：executed（分析报告 §8 行动建议已由 plan `docs/plans/2026-08-05-1359-1-p2p3-rigor-remediation-plan.md` 落地执行完毕：I1–I10 i18n 修复 + a11y 基础修复 + data-slot 15 文件裁决 + 6 design.md + CR 输入清单预提取 `docs/audits/cr-input-inventory.md`；剩余归 CR 项见清单）
 > 日期：2026-08-05
 > 范围：C1–C6.5 逐组件审计（basic/form/form-advanced/data/layout/content 全已收口族；mobile C7 / AI C8 **不在范围**——约 40% 组件未审计，本报告结论仅对已审计族成立）
 > 方法：5 个并行 explore agent 全量提取每张卡的 P2/P3 发现 + live 仓库实证核验 + 2 轮独立子 agent 审查

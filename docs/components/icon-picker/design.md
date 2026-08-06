@@ -44,7 +44,7 @@ interface IconPickerSchema extends BaseSchema {
   name?: string;
   /** 字段标签 */
   label?: string;
-  /** 占位文案，缺省 "选择图标" */
+  /** 占位文案，缺省经 `t('flux.form.selectIcon')` 解析（en-US: Select icon / zh-CN: 选择图标） */
   placeholder?: string;
   /** 是否可搜索，缺省 true */
   searchable?: boolean;
@@ -109,9 +109,10 @@ interface IconPickerSchema extends BaseSchema {
 ## 10. 样式与 DOM marker 约定
 
 - 触发器根节点输出 `nop-icon-picker` marker。
+- 根节点被 FieldFrame 包裹：`data-slot="field-control"` 由 FieldFrame 输出，根节点不再重复。
 - 弹层内图标网格使用 6 列 CSS Grid 布局。
 - 每个图标项固定 `size-4`（16px），hover 态 `bg-accent rounded`，选中态 `border-primary bg-accent`。
-- 搜索框位于弹层顶部，占满宽度。
+- 搜索框位于弹层顶部，占满宽度；搜索输入挂 `aria-label={t('flux.form.searchIcon')}`（可访问名称）。
 - "显示更多"按钮位于网格底部，居中。
 
 ## 11. 图标列表生成

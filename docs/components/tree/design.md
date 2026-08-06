@@ -85,7 +85,7 @@ interface TreeSchema extends BaseSchema {
   label?: string;
   // Renderer-level display title used as the tree aria-label (falls back to node id).
   title?: string;
-  childrenKey?: string;
+  // aria-label 最终兜底经 `t('flux.data.tree')`（label → title → node id → i18n 兜底）。  childrenKey?: string;
   labelField?: string;
   keyField?: string;
   node?: SchemaInput;

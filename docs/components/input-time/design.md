@@ -47,6 +47,7 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点输出 `nop-input-time` marker。
+- 根节点被 FieldFrame 包裹：`data-slot="field-control"` 由 FieldFrame 输出，根节点不再重复（内部 `nop-date-control` 亦不输出）。
 
 ## 11. 实现拆分建议
 

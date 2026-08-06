@@ -36,7 +36,7 @@ alert / flux-renderers-content / AlertSchema（`schemas.ts:231-246`）/ defaultS
 
 - [P1-1] onClose 派发缺 `event`/`evaluationBindings` payload 注入——`${level}` 在 onClose action args 中不可解析（alert-renderer.tsx:70；cards P1-2 同族先例，bug 83）→ 状态: fixed（Phase 2 test-first——`alert-payload-action.test.tsx` CD6「onClose args read ${level}」先红（capture 空）后绿；实现 alert-renderer.tsx:68-77 补 `event: payload` + `evaluationBindings: payload`，steps/button-group/cards 同族惯例；Phase 3 宿主实证 `warning|closed`）
 - [P2-1] component-lab lab 页缺失（维度 18 缺口）→ 状态: fixed（Phase 3 新增 `alert-lab-page.tsx`）
-- [P2-2] close 按钮 aria-label="Close" 硬编码英文（:104）——包内惯例同型（carousel/qrcode），i18n 机制为跨包项 → 状态: backlog（归 CR，>15 分钟）
+- [P2-2] close 按钮 aria-label="Close" 硬编码英文（:104）——包内惯例同型（carousel/qrcode），i18n 机制为跨包项 → 状态: fixed（plan-2026-08-05-1359-1 Phase 1 I2：aria-label 改 t('flux.common.close')）
 - [P2-3] onClose payload `{level}` 零断言（随 P1-1 修复补回归断言）；actions region 内嵌 action 派发零单测（Phase 3 宿主补）→ 状态: fixed（payload 断言随 CD6 用例落地）
 - [P3-1] closable + actions 并存时 close 按钮 absolute 定位可能与 actions 区视觉重叠（ui primitive `has-data-[slot=alert-action]` 规则面向 `alert-action` 单数 slot，renderer 用 `alert-actions` 复数）→ keep（视觉 nit，宿主场景观察）
 - [P3-2] 无 title/body 的空 alert 仅渲染 level icon → keep（合法最小渲染）

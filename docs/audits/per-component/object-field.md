@@ -39,7 +39,7 @@ object-field / flux-renderers-form-advanced / ObjectFieldSchema（`composite-sch
 - [P1-2] ObjectFieldSchema `validateValueAction` 声明（composite-schemas.ts:18）但定义零注册、渲染器零引用（与 C3.1 P1-1 phantom 声明同模式）→ 状态: fixed（从 schema 类型移除；test-first：c3-2-schema-contract-honesty.test.ts 5 用例先红后绿）
 - [P1-3] `readOnly`/`disabled` 不传播到 body 内嵌字段（child 字段 presentation 读 useFormLayout().staticReadOnly，object-field 未提供 FormLayoutContext.Provider）——form 模式子字段可编辑写回、scope 模式写操作 throw（**CX-8 同型缺口，C3.1 已注明 C3.2 按同机制修复**）→ 状态: fixed（FormLayoutContext.Provider staticReadOnly 传播，bodyLayout :238-246；test-first：c3-2-readonly-propagation.test.tsx 先红后绿 + 宿主 host-obj-disabled 真机证明）
 - [P2-1] 无 design.md——裁定: **登记 P2 backlog 归 CR**（flux-guide composite-fields.md 已提供族级文档基线；5 组件拆分成组件级 design.md 由 CR 集中处理，成本 >15 分钟/份）→ 状态: 卡内记录，归 CR
-- [P3-1] 根 div 嵌套 `data-slot="field-control"`（:465，与 FieldFrame 重复；form-advanced 族同模式）→ 状态: 卡内记录，归 CR
+- [P3-1] 根 div 嵌套 `data-slot="field-control"`（:465，与 FieldFrame 重复；form-advanced 族同模式）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 3 裁决：FieldFrame 为 field-control 唯一 owner，根节点移除重复 data-slot）
 - [P3-2] transformIn/transformOut 失败仅 console.warn + env.notify 兜底，无卡内可重试路径（有 AbortController 但失败后不重试——设计上由宿主动作触发重试）→ 状态: 卡内记录，归 CR
 
 ## 组合宿主场景（真实浏览器验证）

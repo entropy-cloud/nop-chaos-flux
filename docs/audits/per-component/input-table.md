@@ -38,7 +38,7 @@ input-table / flux-renderers-form-advanced / InputTableSchema（`composite-schem
 - [P1-1] `removeWhen` 声明于 InputTableSchema（`composite-schemas.ts:135`）但 input-table 定义 fields 未注册（`input-table-renderer.tsx:624-639`）且渲染器零引用——**实证后果：schema 声明 removeWhen 时父 scope 表达式求值抛错使组件 props 解析崩溃（行渲染为 0，test-first 复现）**；与 combo/array-field 的 per-row 删除门控能力不一致（combo-renderer.tsx:570, 313-342 已实现；三处类型/定义/行为三方契约漂移，C2.4 P1 同型）→ 状态: fixed（fields 补 `{key:'removeWhen',kind:'prop',lazyEval:true,params:['record','index','value']}` + InputTableRow `removeBlocked` 门控 + removeItem handle 拦截 + design.md §4 同步；test-first：input-table-remove-when.test.tsx 3 用例先红后绿）
 - [P1-2] `readOnly`/`disabled` 仅锁定复合组件自身 chrome（操作列/添加行），单元格字段 presentation 只看自身 schema props——单元格保持可编辑、写回照常落 store（**真实浏览器宿主场景 host-itable-disabled 实证**；combo/input-table 同根因 → 共性缺陷，CX-8 事后回写）→ 状态: fixed（InputTableRow 以 `FormLayoutContext.Provider staticReadOnly` 传播行布局只读（input-table-row.tsx:137-144, 191-201）；test-first：composite-readonly-propagation.test.tsx 4 用例先红后绿）
 - [P2-1] design.md §10 承诺 `nop-input-table__row` BEM marker（`docs/components/input-table/design.md:49`），实现契约为 `data-slot="input-table-row"` + `data-row-index`（input-table-renderer.tsx:207）→ 状态: fixed（design.md §10 同步）
-- [P3-1] 根 div 输出嵌套 `data-slot="field-control"`（:537，与 FieldFrame 重复；族内同模式，归 CR）
+- [P3-1] 根 div 输出嵌套 `data-slot="field-control"`（:537，与 FieldFrame 重复；族内同模式，归 CR）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 3 裁决：FieldFrame 为 field-control 唯一 owner，根节点移除重复 data-slot）
 
 ## 组合宿主场景（真实浏览器验证）
 

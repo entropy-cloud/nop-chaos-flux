@@ -471,6 +471,7 @@ UI primitive 对齐补充规则：
 - `pagination/`
 - `tree/`
 - `chart/`
+- `statistics/`
 
 ### 表单基础组件
 
@@ -511,6 +512,11 @@ UI primitive 对齐补充规则：
 - `icon-picker/`
 - `transfer/`
 - `input-table/`
+- `object-field/`
+- `array-field/`
+- `detail-field/`
+- `detail-view/`
+- `variant-field/`
 
 ### 移动端原生组件
 

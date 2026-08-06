@@ -38,7 +38,7 @@ carousel / flux-renderers-content / CarouselSchema（`schemas.ts:341-356`）/ de
 - [P2-1] component-lab lab 页缺失（维度 18 缺口）→ 状态: fixed（Phase 3 新增 `carousel-lab-page.tsx`）
 - [P2-2] 空态 data-empty 与其余家族 data-state 语义差异（data-empty 为既有冻结契约，不裁漂移）→ keep（P3 级观察）
 - [P2-3] onChange 派发缺 `scope: props.node.scope` ctx 注入（族内惯例 steps/cards/alert 均有；运行时 fallback 功能等价但惯例缺失）+ onChange 派发行为零行为断言 → 状态: fixed（Phase 2 补 `scope: props.node.scope` + 新增行为测试「dispatches onChange with the canonical activeIndex payload when the embla api reports a new slide」；Phase 3 宿主实证 `${activeIndex}`/`${items.length}` args 解析）
-- [P2-4] indicator aria-label="Go to slide ${index+1}" 硬编码英文（:307）——跨包 i18n 机制项（>15 分钟）→ 状态: backlog（归 CR，alert aria-label P2-2 先例同裁）
+- [P2-4] indicator aria-label="Go to slide ${index+1}" 硬编码英文（:307）——跨包 i18n 机制项（>15 分钟）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 1 I3：t('flux.carousel.goToSlide', { index })）
 - [P3-1] setValue/next/prev handle 在 api 未初始化（null）时返回 ok 但无副作用（:182-196）→ keep（api 初始化前外部调用为竞态边缘，无实际宿主路径）
 - [P3-2] onSelect 初始调用（:74）在 api 就绪时同步触发一次——lastIndexRef 初始 0 与首屏一致无 onChange 误报 → keep（正确行为）
 

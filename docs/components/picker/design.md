@@ -45,6 +45,8 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点输出 `nop-picker` marker。
+- 根节点被 FieldFrame 包裹：`data-slot="field-control"` 由 FieldFrame 输出，根节点不再重复。
+- 弹层搜索输入（`type="search"`）挂 `aria-label={t('flux.picker.search')}`（placeholder 同源键，可访问名称）。
 
 ## 11. 实现拆分建议
 

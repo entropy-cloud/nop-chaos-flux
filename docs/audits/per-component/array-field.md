@@ -38,7 +38,7 @@ array-field / flux-renderers-form-advanced / ArrayFieldSchema（`composite-schem
 - [P1-2] ArrayFieldSchema phantom 声明×4：`sortable`（composite-schemas.ts:28）、`transformInAction`/`transformOutAction`/`validateValueAction`（:30-32）——定义零注册、渲染器零引用（与 C3.1 P1-1 同模式）→ 状态: fixed（从 schema 类型移除；sortable 排序能力登记 CR；test-first：c3-2-schema-contract-honesty.test.ts 5 用例先红后绿）
 - [P1-3] `readOnly`/`disabled` 不传播到 item 内嵌字段（ArrayItemView 未提供 FormLayoutContext.Provider staticReadOnly）——form 模式 item 字段可编辑写回、scope 模式写 itemScope.update throw（**CX-8 同型缺口**）→ 状态: fixed（ArrayItemView FormLayoutContext.Provider staticReadOnly，itemLayout :94-105；test-first：c3-2-readonly-propagation.test.tsx 3 用例先红后绿 + 宿主 host-obj-disabled 真机证明）
 - [P2-1] 无 design.md——裁定: **登记 P2 backlog 归 CR**（flux-guide composite-fields.md §5 已提供族级文档基线）→ 状态: 卡内记录，归 CR
-- [P3-1] 根 div 嵌套 `data-slot="field-control"`（:504，与 FieldFrame 重复）→ 状态: 卡内记录，归 CR
+- [P3-1] 根 div 嵌套 `data-slot="field-control"`（:504，与 FieldFrame 重复）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 3 裁决：FieldFrame 为 field-control 唯一 owner，根节点移除重复 data-slot）
 - [P3-2] 移除 scalar item 时 child contract 未单独 await（unmount 时 applyExternalErrors 清理 :497）——已由 b32-array-submit-and-validate 覆盖提交时序 → 状态: 卡内记录（无行为缺口）
 
 ## 组合宿主场景（真实浏览器验证）

@@ -39,9 +39,9 @@ icon-picker / flux-renderers-form-advanced / IconPickerSchema（icon-picker.tsx:
 - [P2-1] ARIA 契约：trigger aria-haspopup="listbox"（:179）但弹层网格无 role/option 语义 + 图标按钮无 aria-label + 选中态无 aria-selected（:212-237）——读屏无法感知选中 → 状态: fixed（网格 role="listbox" aria-label、按钮 role="option" aria-selected + aria-label；icon-picker-selection.test.tsx 断言）
 - [P2-2] design.md §5 声明 `onChange: event`（docs/components/icon-picker/design.md:83）零注册零派发 phantom 主张（C3.x phantom 同类）→ 状态: fixed（design.md §5 移除）
 - [P2-3] 测试质量缺口：既有 8 用例未覆盖选择写回/搜索/清空/readOnly/高亮（dim 16）→ 状态: fixed（icon-picker-selection.test.tsx 6 用例断言正确行为）
-- [P3-1] 根 data-slot="field-control" 与 FieldFrame :258 重复（icon-picker.tsx:167，family P3 先例）→ 状态: 卡内记录，归 CR 集中裁定
-- [P3-2] 搜索 input 无 aria-label 仅 placeholder（icon-picker.tsx:199-208，C3.1 picker P3 同先例）→ 状态: 卡内记录，归 CR
-- [P3-3] 缺省 placeholder「选择图标」硬编码中文（icon-picker.tsx:65）→ 状态: 卡内记录，归 CR（schema 可覆盖 + zh 默认一致）
+- [P3-1] 根 data-slot="field-control" 与 FieldFrame :258 重复（icon-picker.tsx:167，family P3 先例）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 3 裁决：FieldFrame 为 field-control 唯一 owner，根节点移除重复 data-slot）
+- [P3-2] 搜索 input 无 aria-label 仅 placeholder（icon-picker.tsx:199-208，C3.1 picker P3 同先例）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 2：t('flux.form.searchIcon')）
+- [P3-3] 缺省 placeholder「选择图标」硬编码中文（icon-picker.tsx:65）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 1 I1：t('flux.form.selectIcon')）
 - [P3-4] useCallback 簇（writeValue/selectIcon/clearValue/handleOpenChange）react19 工具命中——既有设计裁定（C3.x 同）→ 状态: 卡内记录
 - [P3-5] 2026-07-13 Deferred 复验：iconTemplate region（design §6「后续可开放」= out-of-scope improvement）、component:open handle（design §8「归后续评估」= optimization candidate）→ 状态: 复验裁定成立，登记 backlog 归 CR
 

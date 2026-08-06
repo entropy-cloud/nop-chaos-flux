@@ -49,6 +49,7 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点输出 `nop-input-table` marker；每行输出 `data-slot="input-table-row"` + `data-row-index`（早期 BEM `nop-input-table__row` 已于 C-06 移除，稳定契约为 data-slot 标记）。
+- 根节点被 FieldFrame 包裹：`data-slot="field-control"` 由 FieldFrame 输出，根节点不再重复。
 
 ## 11. 实现拆分建议
 

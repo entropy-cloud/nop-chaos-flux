@@ -185,6 +185,18 @@ State attributes in this project are generally presence-only:
 - `data-clickable` on each `timeline-item` — present only when `onChange` is declared (click-seek reachable, `tabindex` + Enter/Space); absence means display-only
 - `data-ownership` on the `timeline-root` (`local`/`controlled`/`scope`, mirrors steps)
 
+## Schema-Authored Data Attributes
+
+`schema` 作者可以直接在 flex / text / icon 节点上书写 `data-slot` 与任意 `data-*` 属性（如 `data-node-variant`），渲染器将其原样转发到 DOM 根元素。用途：schema 驱动的结构标记样式（典型场景：Flow Designer 节点 body 用 `data-slot="dt-node"` + `data-node-variant="approval"` 组合，配合 `flow-designer-nodes.css` 的 `[data-slot='dt-node'][data-node-variant='...']` 选择器实现钉钉卡片视觉）。
+
+转发规则（`collectDataAttrs`，`packages/flux-renderers-basic/src/utils.ts`）：
+
+- 白名单：`data-slot`（`data-` 前缀的子集）与全部 `/^data-/` 前缀键。
+- 值类型：仅 string（非空）与有限 number（转字符串）；boolean / 对象 / 空字符串 / 求值失败的表达式结果一律跳过，不输出空属性。
+- 非 `data-*` 的未知键不转发（与现有 open prop model 行为一致——编译期保留在 `props.props`，但渲染器不落 DOM）。
+
+此机制只影响上述三个渲染器；其它渲染器如需同类转发，按同一 helper + 契约测试模式扩展（`__tests__/data-attrs-passthrough.test.tsx`）。
+
 ## Testing Guidance
 
 Prefer the most semantic selector available in this order:

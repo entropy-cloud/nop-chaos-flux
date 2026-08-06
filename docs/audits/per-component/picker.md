@@ -37,9 +37,9 @@ picker / flux-renderers-form-advanced / PickerSchema（`composite-schemas.ts:177
 - [P0] 无
 - [P1-1] CRUD 模式 `$_picker.<templateNodeId>.*` 状态路径（selection/rows）按模板节点 id 共享（picker-renderer.tsx:89-97, 299, 343-347 + picker-helpers.ts:142,158-159）——同一模板节点的重复实例（combo item / input-table 行 / CRUD 行）各自打开弹层时互相覆盖选择与数据（行 scope 污染，bug 73 模式：单测全绿（单实例）但真机多实例共享状态）→ 状态: fixed（状态路径键改按实例唯一 `props.meta.cid`：`$_picker.${cid}.selection/rows` + crud id `${cid}-picker-crud`；test-first：picker-crud-row-isolation.test.tsx 2 用例先红后绿——双行各自打开弹层、行 0 confirm 不被行 1 open 的种子覆盖）
 - [P2-1] labelResolveAction 派发失败后 `labelResolveRequestedRef` 永不复位（picker-renderer.tsx:220-241）——相同未缓存值后续任何时机（重新打开/外部改值）都不会重试解析，stale placeholder 持久 → 状态: fixed（失败/取消分支清除 requestKey，成功分支由缓存兜底；test-first：picker-label-resolve-retry.test.tsx 先红后绿）
-- [P3-1] 弹层搜索 input 无 aria-label（picker-dropdown.tsx:49-55，仅 placeholder）→ 卡内记录，归 CR
+- [P3-1] 弹层搜索 input 无 aria-label（picker-dropdown.tsx:49-55，仅 placeholder）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 2：t('flux.picker.search') aria-label）
 - [P3-2] `searchable` 定义字段未标 valueType:'boolean'（picker-renderer.tsx:512）→ 卡内记录，归 CR
-- [P3-3] 根 div 输出嵌套 `data-slot="field-control"`（:426，与 FieldFrame 重复；族内同模式，归 CR）
+- （处理: plan-2026-08-05-1359-1 Phase 3 fixed——FieldFrame 为 field-control 唯一 owner，picker 根节点移除重复 data-slot）
 
 ## 组合宿主场景（真实浏览器验证）
 

@@ -64,6 +64,7 @@ flux 的组合模型是 **scope-bound**：传给子节点的字面量 prop 值�
 
 - 根节点输出 `nop-markdown-editor` marker。
 - 编辑区 `nop-markdown-editor-input`，预览区 `nop-markdown-editor-preview`。
+- 预览区挂 `aria-live="polite"`（被动更新场景，向辅助技术播报预览内容变化）。
 
 ## 10. 风险、取舍与后续阶段
 
