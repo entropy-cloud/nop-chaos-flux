@@ -54,8 +54,9 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
       });
 
       if (!blob) {
-        setExportError('Failed to generate PNG image');
-        return;
+        const msg = 'Failed to generate PNG image';
+        setExportError(msg);
+        throw new Error(msg);
       }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import html2canvas from 'html2canvas';
 import { useCalendarExport } from './use-calendar-export.js';
 
 vi.mock('html2canvas', () => {
@@ -58,5 +59,33 @@ describe('useCalendarExport', () => {
     result.current.exportToPNG(el, 'test1.png');
     const p2 = result.current.exportToPNG(el, 'test2.png');
     await expect(p2).resolves.toBeUndefined();
+  });
+
+  it('exportToPNG should reject with the error and surface exportError when html2canvas fails', async () => {
+    const { result } = renderHook(() => useCalendarExport());
+    const el = document.createElement('div');
+    const failure = new Error('canvas boom');
+    (html2canvas as unknown as { mockRejectedValueOnce: (value: unknown) => void }).mockRejectedValueOnce(failure);
+
+    await act(async () => {
+      await expect(result.current.exportToPNG(el, 'fail.png')).rejects.toBe(failure);
+    });
+    expect(result.current.exportError).toBe('canvas boom');
+  });
+
+  it('exportToPNG should reject when toBlob produces no blob', async () => {
+    const { result } = renderHook(() => useCalendarExport());
+    const el = document.createElement('div');
+    (html2canvas as unknown as { mockImplementationOnce: (value: unknown) => void }).mockImplementationOnce(() => ({
+      toBlob: (cb: (b: Blob | null) => void) => cb(null),
+      toDataURL: () => '',
+      width: 100,
+      height: 100,
+    }));
+
+    await act(async () => {
+      await expect(result.current.exportToPNG(el, 'noblob.png')).rejects.toThrow('Failed to generate PNG image');
+    });
+    expect(result.current.exportError).toBe('Failed to generate PNG image');
   });
 });

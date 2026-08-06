@@ -222,8 +222,13 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
               return { ok: true };
             }
             case 'exportToPNG':
-              void exportRef.current.exportToPNG();
-              return { ok: true };
+              // Consume the async export so failures never surface as
+              // unhandled rejections and the handle reports the true outcome
+              // (errors are also presented in-UI via exportError).
+              return exportRef.current.exportToPNG().then(
+                () => ({ ok: true }),
+                (error) => ({ ok: false, error }),
+              );
             case 'exportToPrint':
               exportRef.current.exportToPrint();
               return { ok: true };
