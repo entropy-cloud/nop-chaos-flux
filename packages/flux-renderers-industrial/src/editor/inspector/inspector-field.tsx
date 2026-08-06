@@ -1,5 +1,5 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
-import { Input, Textarea, Switch, Label } from '@nop-chaos/ui';
+import { Input, Textarea, Switch, Label, NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import type { PanelField } from './schema-extractor.js';
 
 interface InspectorFieldProps {
@@ -12,7 +12,7 @@ interface InspectorFieldProps {
 /**
  * 单个属性面板字段渲染（design-property-panel.md §5）。
  * 按 widget 类型渲染对应 @nop-chaos/ui 控件。M1 简化：slider 归入 number-input，
- * select 归入 native option list，complex widgets (point-ref/action-editor) 走 json-editor fallback。
+ * select 走 @nop-chaos/ui NativeSelect，complex widgets (point-ref/action-editor) 走 json-editor fallback。
  */
 export function InspectorField(props: InspectorFieldProps) {
   const { field, value, error, onChange } = props;
@@ -66,17 +66,17 @@ export function InspectorField(props: InspectorFieldProps) {
     return (
       <div>
         <Label className="text-xs">{t(label)}</Label>
-        <select
-          className="nop-scada-editor-select text-xs"
+        <NativeSelect
+          size="xs"
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
         >
           {field.entry.enum.map((opt) => (
-            <option key={String(opt)} value={String(opt)}>
+            <NativeSelectOption key={String(opt)} value={String(opt)}>
               {String(opt)}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
+        </NativeSelect>
         {errorEl}
       </div>
     );

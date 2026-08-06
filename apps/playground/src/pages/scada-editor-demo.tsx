@@ -47,12 +47,6 @@ const schema = {
                 },
               },
             },
-            {
-              type: 'button',
-              label: 'Switch Preview',
-              testid: 'editor-btn-preview',
-              onClick: { action: 'component:setPointValue', componentId: 'editor-canvas', args: {} },
-            },
           ],
         },
         {
@@ -115,7 +109,7 @@ export function ScadaEditorDemoPage({ onBack }: ScadaEditorDemoPageProps) {
         </p>
         <h1 className="m-0 mb-2">scada-editor-demo 编辑器演示页</h1>
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)]">
-          E5 M1 MVP 编辑器：palette 图元库面板（24 内置图元，拖拽放置）+ canvas 编辑态画布（双态切换 edit↔preview）
+          E5 M1 MVP 编辑器：palette 图元库面板（24 内置图元，拖拽放置）+ canvas 编辑态画布（双态切换经 mode prop + 测试句柄，schema 句柄留 M2 评估）
           + inspector 属性面板（六类字段分组 + validate 衔接）+ save/load 提交语义。
         </p>
         <div className="mt-8">

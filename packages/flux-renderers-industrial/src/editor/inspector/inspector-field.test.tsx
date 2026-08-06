@@ -69,6 +69,19 @@ describe('InspectorField widget rendering', () => {
     expect(container.textContent).toContain('b');
   });
 
+  it('select widget renders @nop-chaos/ui NativeSelect (E6 m-1 fix: no raw <select>)', () => {
+    const field = makeField({ type: 'string', widget: 'select', enum: ['left', 'center', 'right'] });
+    const { container } = render(<InspectorField field={field} value="left" onChange={() => undefined} />);
+    // NativeSelect renders <select data-slot="native-select"> inside a wrapper（AGENTS.md MANDATORY UI 复用）。
+    const nativeSelect = container.querySelector('[data-slot="native-select"]');
+    expect(nativeSelect).toBeTruthy();
+    expect(nativeSelect?.tagName).toBe('SELECT');
+    // 自定 raw-select 类已移除（m-1 修正）。
+    expect(container.querySelector('.nop-scada-editor-select')).toBeNull();
+    // enum 选项渲染为 <option>。
+    expect(container.querySelectorAll('option')).toHaveLength(3);
+  });
+
   it('renders slider widget', () => {
     const field = makeField({ type: 'number', widget: 'slider', min: 0, max: 1 });
     const { container } = render(<InspectorField field={field} value={0.5} onChange={() => undefined} />);

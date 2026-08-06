@@ -9,6 +9,7 @@ import type { ScadaConfig } from '../serialization/config-types.js';
 import type { ScadaEditorCanvasSchema, ScadaEditorCanvasEvents } from './schemas.js';
 import { useEditorEngine } from './renderer/hooks/use-editor-engine.js';
 import { useEditorHandles } from './renderer/hooks/use-editor-handles.js';
+import { projectSessionChange, type ScadaEditorSession } from './editor-session.js';
 import { EditorPalettePanel } from './palette/editor-palette.js';
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
 
@@ -130,13 +131,22 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
     [dispatchEvent],
   );
 
-  const handleSessionChange = useCallback(() => {
-    dispatchEvent(
-      'scada-editor:sessionChange',
-      { canUndo: false, canRedo: false },
-      eventsRef.current?.onSessionChange,
-    );
-  }, [dispatchEvent]);
+  const handleSessionChange = useCallback(
+    (session: ScadaEditorSession) => {
+      const payload = projectSessionChange(session);
+      dispatchEvent(
+        'scada-editor:sessionChange',
+        {
+          canUndo: payload.canUndo,
+          canRedo: payload.canRedo,
+          selection: payload.selection,
+          mode: payload.mode,
+        },
+        eventsRef.current?.onSessionChange,
+      );
+    },
+    [dispatchEvent],
+  );
 
   const runtime = useEditorEngine({
     containerRef,
@@ -170,7 +180,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   }, [runtime]);
 
   const effectiveStatus: ScadaEditorCanvasStatus = parseError ? 'error' : status;
-  const { loading, empty } = props.regions;
+  const { loading, empty, palette, inspector } = props.regions;
   const activeError = parseError ?? errorInfo;
   const errorText = activeError ? activeError.message : '';
   const errorCode = activeError?.code;
@@ -206,10 +216,9 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         )
       ) : (
         <div className="nop-scada-editor-layout">
-          <EditorPalettePanel
-            runtime={runtime!}
-            onError={handleError}
-          />
+          {asReactNode(palette?.render()) ?? (
+            <EditorPalettePanel runtime={runtime!} onError={handleError} />
+          )}
           {/* eslint-disable jsx-a11y/no-static-element-interactions -- canvas drop target */}
           <div
             className="nop-scada-editor-layout-canvas"
@@ -227,11 +236,16 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
               e.dataTransfer.dropEffect = 'copy';
             }}
           />
-          <EditorInspectorPanel
-            runtime={runtime!}
-            selectedNodeId={selectedNodeId}
-            onError={handleError}
-          />
+          {asReactNode(
+            inspector?.render({ bindings: { nodeId: selectedNodeId } }),
+          ) ?? (
+            <EditorInspectorPanel
+              runtime={runtime!}
+              selectedNodeId={selectedNodeId}
+              onError={handleError}
+            />
+          )}
+          {/* toolbox/statusBar regions reserved for M3/E9.1（design-renderer.md §4.4）；M1 无默认内容，host 经 region override 注入。 */}
         </div>
       )}
     </div>
