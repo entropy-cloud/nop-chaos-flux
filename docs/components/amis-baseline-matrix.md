@@ -115,6 +115,7 @@ The canonicalization rules below explain why the same AMIS source type may appea
 | `crud`             | composite data-workflow renderer        | `crud`, `crud2`                                                                        | `runtime` | `docs/components/crud/design.md`             | landed              |
 | `list`             | ordered collection renderer             | `list`, `static-list`                                                                  | `runtime` | `docs/components/list/design.md`             | wave 1              |
 | `pagination`       | standalone pagination interaction owner | `pagination`                                                                           | `runtime` | `docs/components/pagination/design.md`       | wave 2              |
+| `statistics`       | data statistics display (total figure)  | AMIS `statistics` 简化形态（仅 total 数字展示）                                        | `runtime` | `docs/components/statistics/design.md`       | landed              |
 | `tree`             | hierarchical display renderer           | no direct audited AMIS top-level display tree type; Flux canonical tree display family | `runtime` | `docs/components/tree/design.md`             | landed              |
 | `chart`            | chart renderer                          | `chart`                                                                                | `runtime` | `docs/components/chart/design.md`            | landed              |
 

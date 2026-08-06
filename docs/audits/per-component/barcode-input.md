@@ -44,9 +44,9 @@
 - [P2-1] 硬编码英文校验/相机文案（Q9 清单）→ 状态: **fixed**（i18n key `flux.barcode.*` en-US/zh-CN + t() 提取）
 - [P2-2] 假绿测试修复（`barcode-input.test.tsx:347-365` 零断言、`:367-381` 不模拟扫描）→ 状态: **fixed**（改写为 scan 按钮 + detect mock 真实扫描模拟断言：required/minLength/maxLength/pattern/validate.message 5 用例）
 - [P2-3] clear 按钮/scannerError 无 data-slot（`barcode-input.tsx:249-256,277-279`）→ 状态: **fixed**（`barcode-clear-button`/`barcode-scanner-error`）
-- [P2-4] scannerError 无清除路径（`:104-105`）→ 状态: backlog（归 CR）
+- [P2-4] scannerError 无清除路径（`:104-105`）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 3：clear/输入变化/重扫尝试/overlay 关闭/resetValue 全路径复位；test-first barcode-input.test.tsx Phase 10 +3 用例先红后绿）
 - [P2-5] overlay 无 Escape 关闭（`barcode-scanner-overlay.tsx`）→ 状态: **fixed**（window keydown Escape → onClose）
-- [P3-1] 文档漂移（wrap/label/payload type/continuousScan 默认/离线队列/降级 tooltip/reset 语义，design.md）→ 状态: 记录 → **closure 决策：No owner-doc update required**（漂移项全部留痕于维度 17（`文件:行`），离线 IndexedDB 队列/降级 tooltip 等未实现功能属设计超前，行为以实现为准；文档同步归 CR 跨族集中处理，不阻塞本卡 P0/P1 清零 closure；payload `type: 'scan'`/`'scan-error'` 已按设计实现并经 host-barcode-form e2e 实证）
+- [P3-1] 文档漂移（wrap/label/payload type/continuousScan 默认/离线队列/降级 tooltip/reset 语义，design.md）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 4 dim 17 同步：design.md §12.1 离线 IndexedDB 暂存、§12.2 降级 tooltip 与 online/offline 提示条标注「未实现（设计超前，行为以实现为准）」）
 - [P3-2] 模块级 t()（`barcode-scanner-overlay.tsx:15-18`）、useSyncExternalStore inline 订阅 churn（`:53-54,61-72`）→ 状态: 记录
 
 ## 组合宿主场景（真实浏览器验证）

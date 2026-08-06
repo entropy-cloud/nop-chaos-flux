@@ -59,7 +59,7 @@ interface VariantOption {
 - `variants`: `prop`（`propContracts.variants`：object-array editorType；每项 `content`/`viewer` 为 region，`match.when` 为 literal 保留）
 - `name`、`selector`、`selectorMode`、`defaultVariant`: `value`
 - `detectVariantAction`: `event`
-- `transformInAction`/`transformOutAction`/`validateValueAction`: 声明但 `kind: 'ignored'`（选项级 transformIn 生效）
+- `transformInAction`/`transformOutAction`/`validateValueAction`: 声明但 `kind: 'ignored'`（选项级 transformIn 生效；顶层按变体声明语义，类型面保留但顶层零行为——显式 ignored 标注，非静默 phantom，CR P3-2 文档化）
 
 ## 6. regions 与 slot 约定
 

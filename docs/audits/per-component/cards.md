@@ -36,7 +36,7 @@ cards / flux-renderers-content / CardsSchema（`schemas.ts:207-227`）/ defaultS
 
 - [P1-1] 键盘激活双重派发（`cards-renderer.tsx:157-166` handleKeyDown + ui Card 内建键盘激活叠加）→ 状态: fixed（test-first `cards-keyboard.test.tsx` 先红后绿：Enter/Space 时 onItemClick 双派发（capture-count 2 vs 1）实证，修复后 4 用例全绿）
 - [P1-2] 事件派发未注入 event/evaluationBindings payload（`cards-renderer.tsx:149-154/:220-225` vs steps/button-group 惯例）→ 状态: fixed（test-first `cards-selection-itemaction.test.tsx` +2 用例先红后绿：onItemClick args `${item.label}|${index}|${key}` → `Beta|1|b`、onSelectionChange args `${selectedKeys.join(",")}|${selectionMode}` → `a,c|multiple`；宿主 host-cards-action 真机实证 probe `Beta|2`）
-- [P2-1] 交互态 item `role="button"` + `aria-selected` 非 ARIA 规范组合（ui Card `:25` 覆盖 renderer `role="listitem"`）→ 状态: backlog（归 CR，需 selectable-card 模式设计裁决；不阻塞 supported baseline——屏幕阅读器仍可操作）
+- [P2-1] 交互态 item `role="button"` + `aria-selected` 非 ARIA 规范组合（ui Card `:25` 覆盖 renderer `role="listitem"`）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 1/3：裁决表 D1 终裁 aria-pressed（role=button 标准切换态），cards-renderer.tsx 交互态输出 aria-pressed；测试断言迁移）
 - [P2-2] lab 页缺失（维度 18 缺口）→ 状态: fixed（Phase 3 补 `cards-lab-page.tsx` + 宿主 schema）
 
 ## 组合宿主场景（真实浏览器验证）

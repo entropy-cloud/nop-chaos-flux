@@ -49,7 +49,7 @@ condition-builder / flux-renderers-form-advanced / ConditionBuilderSchema（`con
 - [P2-1] MultiSelect 移除 badge 的 aria-label 硬编码英文 `Remove value ${label}`（`value-input.tsx:367`，dim 9 i18n 违约）→ 状态: fixed（flux-i18n 新增 `conditionBuilder.removeValue` zh/en + t() 消费）
 - [P2-2] 死 i18n key `conditionBuilder.searchField`（双 locale 声明、零引用）→ 状态: fixed（移除）
 - [P2-3] flux-guide `form-advanced-fields.md` §5 示例用 AMIS 词汇 `contains`（内置词汇为 `like`，渲染为裸文案）→ 状态: fixed（示例同步内置词汇）
-- [P2-4] `shared:` 自定义值编辑器为 select/combobox 时，readOnly 冻结仅解除选择接线（onValueChange unwired），combobox 输入视觉仍可交互（宿主 host-cb-custom 实证：选择/键入均不落值，提交值不变——写阻断成立，视觉残留）——根因在 select renderer combobox 路径（`input-choice-renderers.tsx`，form 包公共层，影响所有组合宿主内 readOnly select）→ 状态: backlog（登记 P2 backlog 归 CR，`shared:` 根因公共层——CR 阶段按 roadmap 统一裁决，不插 CX-n（无新根因，C2.3 已审 select renderer））
+- [P2-4] `shared:` 自定义值编辑器为 select/combobox 时，readOnly 冻结仅解除选择接线（onValueChange unwired），combobox 输入视觉仍可交互（宿主 host-cb-custom 实证：选择/键入均不落值，提交值不变——写阻断成立，视觉残留）——根因在 select renderer combobox 路径（`input-choice-renderers.tsx`，form 包公共层，影响所有组合宿主内 readOnly select）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 2：`input-choice-renderers.tsx` combobox 路径 readOnly 视觉冻结——root/input/trigger/clear disabled + chips input readOnly+disabled + aria-readonly 发布；test-first `select-readonly-combobox.test.tsx` 6 用例先红后绿，form 包 735 tests 全绿零回归）
 - [P3-1] `fields` 等消费键补注册前依赖编译器默认 prop 分类（行为等价，补注册后设计 §5 value 分类显式化）→ 状态: fixed（随 P1-3 一并注册，卡内留痕）
 - [P3-2] ConditionCustomOperator.values 类型声明设计文档 §7.2 明示「尚未消费…后续可扩展」——文档诚实的未来扩展点，保留（诚实性测试 allowlist）→ 状态: keep（文档显式）
 - [P3-3] `title` 为 BaseSchema 通用字段重声明（条件构建器不消费，与其它渲染器一致）→ 状态: keep（universal 键）

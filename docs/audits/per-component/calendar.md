@@ -41,8 +41,8 @@
 - [P1-3] 死代码 `_resourceOpenMap`/`_handleGroupToggle`（`calendar.tsx:267-292`）：onGroupToggle 派发不可达（`:289`）、`resources[].open` 未消费（design.md §12.3 未实现）→ 状态: **fixed**（删除死代码；onGroupToggle 标记 `@reserved`（design §12.3 UI 未接线，与 onBatchSchedule 等先例一致），定义保留 schema 面稳定）
 - [P2-1] 正常态根缺 `data-slot="calendar"`（`calendar.tsx:348-355`）；region 分支缺 nop-calendar/data-view/data-date（`:313,326`）→ 状态: **fixed**（正常态根补 `data-slot="calendar"`；region 分支补 nop-calendar 类）
 - [P2-2] 硬编码英文 aria/aria-live（`calendar.tsx:357`、`month:325`、`week:75,113,139`、`day:62,84,102,111`）→ 状态: **fixed**（i18n key `scheduling.calendar.*` en-US/zh-CN + t() 提取）
-- [P2-3] onEventClick 缺 nativeEvent / swap 键名漂移 / long-press 500ms vs 文档 300ms → 状态: 记录 → **closure 决策：No owner-doc update required**（行为以实现为准；文档口径差异留痕于维度 17，同步归 CR，不阻塞本卡 P0/P1 清零 closure）
-- [P2-4] loadAction fire-and-forget 无错误处理（`calendar.tsx:121`）→ 状态: backlog（归 CR）
+- [P2-3] onEventClick 缺 nativeEvent / swap 键名漂移 / long-press 500ms vs 文档 300ms → 状态: fixed（CR plan-2026-08-06-0329-1 Phase 4 dim 17 同步：design.md §8 onEventClick payload 去 nativeEvent、§12.1 swap 键名对齐 executeSwap 实现、§12.2 长按 300ms→500ms 以实现为准）
+- [P2-4] loadAction fire-and-forget 无错误处理（`calendar.tsx:121`）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 3：rejection 捕获 + reportRuntimeHostIssue（env.notify 用户可见错误态），与 form init/load 错误面同构；test-first calendar.test.tsx「surfaces a rejecting loadAction…」先红后绿）
 - [P3-1] 每 render O(R×D×E) 重算 + O(n²) 列打包（`month:65-80,298-318`、`tutils:95-115`）→ 状态: 记录
 - [P3-2] 死 CSS `.nop-batch-scheduler-*`/`.nop-timezone-*`（`calendar.css:170-404`）→ 状态: 记录
 - [P3-3] useImperativeHandle 每 render 重注册（`calendar.tsx:141`）→ 状态: 记录

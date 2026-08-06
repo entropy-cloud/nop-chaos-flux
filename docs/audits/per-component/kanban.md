@@ -43,8 +43,8 @@
 - [P1-5] Space/Enter 双触发：卡片点击（`kanban-card.tsx:46-51`）与键盘拖拽拾取（`use-kanban-board-effects.ts:84-92`）同键共存 → 状态: **fixed**（按键拆分：Enter=click、Space=drag pickup；test-first：`kanban-renderer.test.tsx` Enter/Space 用例 + `kanban-dnd-integration.test.tsx` 更新）
 - [P2-1] 空态根 slot `kanban-empty` 违反跨态根契约（`kanban-board.tsx:386`；`:383` region 空态缺 nop-kanban 类）→ 状态: **fixed**（根 `data-slot="kanban"` + `data-empty="true"`，保留 nop-kanban-empty 类；region 空态补 nop-kanban 类）
 - [P2-2] 硬编码英文（Q9 清单）→ 状态: **fixed**（i18n key `scheduling.kanban.*` en-US/zh-CN + t() 提取）
-- [P2-3] controlled 模式变更事件/activity log 仍派发（`kanban-board.tsx:294-310,323-334`）→ 状态: backlog（归 CR）
-- [P2-4] onCardMove/onCardClick payload 缺 `card: BoardItem`（design.md:190,205）；`statusPath`/注释过时（`scheduling-renderer-definitions.ts:89-92`）→ 状态: 记录 → **closure 决策：No owner-doc update required**（漂移项留痕于维度 17 与 definitions 注释，文档/定义同步归 CR——`card` payload 增强为 P2 backlog 项，不阻塞本卡 P0/P1 清零 closure；行为以实现为准，`${cardId}` 已由 host-kanban-drag e2e 实证）
+- [P2-3] controlled 模式变更事件/activity log 仍派发（`kanban-board.tsx:294-310,323-334`）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 3：onCardMove/onColumnReorder/onCardAdd/onCardRemove + recordAction 按 kanbanOwnership==='controlled' 门控；交互事件 onCardClick/onColumnClick 仍派发；test-first kanban-renderer.test.tsx +2 用例）
+- [P2-4] onCardMove/onCardClick payload 缺 `card: BoardItem`（design.md:190,205）；`statusPath`/注释过时（`scheduling-renderer-definitions.ts:89-92`）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 3/4：onCardMove/onCardClick/onCardAdd/onCardRemove payload 补 `card`；definitions 注释改「consumed kanbanOwnership/kanbanStatePath + statusPath legacy」，design.md §7 同步 statusPath 兼容性声明；test-first 断言 payload 形状）
 - [P3-1] collectAllTags/wipOverLimitColumns 每 render O(n)（`kanban-board.tsx:197,226-231`）→ 状态: 记录
 - [P3-2] `use-kanban-board-effects.ts:141-144` legacy aria-grabbed、drop indicator 无 ARIA → 状态: 记录
 - [P3-3] `kanban-export.ts` 未接线死代码 + 原始浏览器 IO（INV-1 观察）→ 状态: 记录（CR 评估接线或删除）

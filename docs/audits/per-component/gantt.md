@@ -39,12 +39,12 @@
 - [P1-1] reaction 字段（zoomIn/zoomOut/scrollToToday/scrollToTask）未接线：无 `props.reactions` 消费、无 ComponentHandle 注册，`component:zoomIn` 等动作不可解析（`gantt.tsx` 全文件；定义 `scheduling-renderer-definitions.ts:51-54`；design.md §8.2）→ 状态: **fixed**（`gantt.tsx`：`reactions[key].ready()` 挂载激活 + useCurrentComponentRegistry 注册 zoomIn/zoomOut/scrollToToday/scrollToTask 句柄 + header +/-/Today 按钮派发 reaction；test-first：`gantt.test.tsx` regression 3 用例）
 - [P1-2] 运行时 `tasks`/`links`/`resources`/`assignments` prop 更新不重解析 store（`gantt.tsx:61` 一次性 seed）→ 状态: **fixed**（`gantt.tsx` prop 变更 effect：reference 比对 + `store.parse` + `store.recalcLayout()`；test-first：`gantt.test.tsx` re-parse 用例）
 - [P1-3] 全部 schema 事件派发缺 `{ event, evaluationBindings, scope }` ctx（`gantt.tsx:72,75,80,84,94,116,128,138,148,201,237,241,245,249`）→ 状态: **fixed**（全部派发点补 `eventCtx` 第二参，CX-10/bug-83 家族约定；test-first：`gantt.test.tsx` onTaskClick ctx 用例 + e2e host-gantt-dialog `${_taskId}` 解析）
-- [P2-1] 自定义 editor region `onSave` 不持久化（`gantt-editor.tsx:48`）→ 状态: backlog（归 CR）
+- [P2-1] 自定义 editor region `onSave` 不持久化（`gantt-editor.tsx:48`）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 3：onSave 接 store.updateTask 持久化 + undo 命令，test-first gantt-editor.test.tsx +3 用例）
 - [P2-2] loading/empty 自定义 region 分支缺 `data-slot="gantt"`（`gantt.tsx:257,271`）→ 状态: **fixed**
-- [P2-3] 拖拽/链接/删除/编辑器保存绕过 undo 栈（design.md §12.8 部分接线）→ 状态: backlog（归 CR）
-- [P2-4] `use-gantt-keyboard` 监听每次 render 重挂（`use-gantt-keyboard.ts:25,123`）→ 状态: backlog（归 CR）
+- [P2-3] 拖拽/链接/删除/编辑器保存绕过 undo 栈（design.md §12.8 部分接线）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 3：use-gantt-drag/use-gantt-link-draw/gantt-links 删除/键盘 Delete（DeleteTaskCommand + store.restoreSubtree）/编辑器保存全量接线 undo 栈；test-first undo-stack.test.ts +2、keyboard.test +1、editor.test +1）
+- [P2-4] `use-gantt-keyboard` 监听每次 render 重挂（`use-gantt-keyboard.ts:25,123`）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 3：useEffectEvent 稳定化，监听仅随 containerRef 挂载一次；test-first keyboard.test.ts 断言跨 rerender 仅一次 addEventListener）
 - [P3-1] 硬编码英文 aria/aria-live（`gantt.tsx:289`、`gantt-grid.tsx:89`、`gantt-links.tsx:87,111`、`gantt-layout.tsx:108`）→ 状态: **fixed**（i18n key `scheduling.gantt.*` en-US/zh-CN + t() 提取）
-- [P3-2] 文档 phantom：design.md §8.1 payload 命名、§8.3/design-export.md component 句柄、§9.0 loadAction、§12.7 onScheduleProgress、undoLimit；`example.json` `${event.taskId}` → 状态: 记录 → **closure 决策：No owner-doc update required**（漂移项全部留痕于维度 17 与 example.json 引用，文档同步归 CR 跨族集中处理——roadmap `todo`，不阻塞本卡 P0/P1 清零 closure；行为以实现为准，`${_taskId}` 已由 host-gantt-dialog e2e 实证）
+- [P3-2] 文档 phantom：design.md §8.1 payload 命名、§8.3/design-export.md component 句柄、§9.0 loadAction、§12.7 onScheduleProgress、undoLimit；`example.json` `${event.taskId}` → 状态: fixed（CR plan-2026-08-06-0329-1 Phase 4 dim 17 同步：§8.1 payload 改 `_taskId`/`_sourceId`/`_linkType`（CX-12 前缀，以实现为准）、§8.3 句柄表改实现注册面 zoomIn/zoomOut/scrollToToday/scrollToTask + 未实现项标注、§9.0 loadAction/§12.7 onScheduleProgress/§12.8 undoLimit 与 component:undo/redo 全部标注未实现；example.json `${event.taskId}`→`${_taskId}`；design-export.md 句柄标注未实现）
 - [P3-3] `gantt-drop-indicator` 无 nop- 前缀（`use-gantt-drag.ts:35`）→ 状态: 记录
 - [P3-4] 死代码组件（filter-bar/export-handles/scheduler-config/resource-load-\*，未 import）→ 状态: 记录
 - [P3-5] `store.destroy()` 未在卸载时调用（`gantt.tsx:74-76`）→ 状态: 记录

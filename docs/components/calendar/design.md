@@ -139,18 +139,18 @@ Calendar 使用三层 ownership 模型控制 `view` 和 `date` 状态：
 
 ## 8. 事件、动作与组件句柄能力
 
-| 事件/动作                | 类型   | 参数                                     | 说明                                                                                  |
-| ------------------------ | ------ | ---------------------------------------- | ------------------------------------------------------------------------------------- |
-| `onEventClick`           | event  | `{ event, resource, date, nativeEvent }` | 事件/色块点击                                                                         |
-| `onDateChange`           | event  | `{ date, view }`                         | 导航切换（翻月/翻周）                                                                 |
-| `onViewChange`           | event  | `{ view, date }`                         | 视图切换                                                                              |
-| `onMount`                | event  | —                                        | 组件挂载完成后触发                                                                    |
-| `onUnmount`              | event  | —                                        | 组件卸载前触发                                                                        |
-| `component:goNext`       | action | 无                                       | 下一个月/周/日（根据当前视图）。失败路径：`not-mounted`、`not-visible`、`at-boundary` |
-| `component:goPrev`       | action | 无                                       | 上一个月/周/日。失败路径：`not-mounted`、`not-visible`、`at-boundary`                 |
-| `component:goToday`      | action | 无                                       | 回到今天。失败路径：`not-mounted`、`not-visible`                                      |
-| `component:setView`      | action | `{ view }`                               | 切换视图。失败路径：`not-mounted`、`not-visible`、`invalid-view`                      |
-| `component:scrollToDate` | action | `{ date }`                               | 滚动到指定日期。失败路径：`not-mounted`、`not-visible`、`date-out-of-range`           |
+| 事件/动作                | 类型   | 参数                        | 说明                                                                                  |
+| ------------------------ | ------ | --------------------------- | ------------------------------------------------------------------------------------- |
+| `onEventClick`           | event  | `{ event, resource, date }` | 事件/色块点击（实现不含 nativeEvent；行为以实现为准）                                 |
+| `onDateChange`           | event  | `{ date, view }`            | 导航切换（翻月/翻周）                                                                 |
+| `onViewChange`           | event  | `{ view, date }`            | 视图切换                                                                              |
+| `onMount`                | event  | —                           | 组件挂载完成后触发                                                                    |
+| `onUnmount`              | event  | —                           | 组件卸载前触发                                                                        |
+| `component:goNext`       | action | 无                          | 下一个月/周/日（根据当前视图）。失败路径：`not-mounted`、`not-visible`、`at-boundary` |
+| `component:goPrev`       | action | 无                          | 上一个月/周/日。失败路径：`not-mounted`、`not-visible`、`at-boundary`                 |
+| `component:goToday`      | action | 无                          | 回到今天。失败路径：`not-mounted`、`not-visible`                                      |
+| `component:setView`      | action | `{ view }`                  | 切换视图。失败路径：`not-mounted`、`not-visible`、`invalid-view`                      |
+| `component:scrollToDate` | action | `{ date }`                  | 滚动到指定日期。失败路径：`not-mounted`、`not-visible`、`date-out-of-range`           |
 
 ## 9. 数据源、表达式、导入能力接入点
 
@@ -272,7 +272,7 @@ CalendarState 使用 scope-level state path 存储 `view` 和 `date`，允许外
 
 1. **选中**：pointerdown 事件选中当前事件块（`data-event-id`），事件块增加 2px 蓝色边框 + 轻微 scale(1.02) 高亮
 2. **拖拽**：pointermove 跟随鼠标移动，原位置保留半透明 ghost（opacity 0.3），目标单元格 hover 时 show color 变化预览（浅绿表示可放置，浅红表示冲突）
-3. **确认**：pointerup 触发 `onEventChange` update（payload: `{ eventId, fromResourceId, fromDate, toResourceId, toDate }`）
+3. **确认**：pointerup 触发 `onEventChange` update（payload: `{ eventId, fromResource, fromDate, toResource, toDate, event }`——键名以实现为准，见 `calendar.tsx` executeSwap）
 4. **取消**：按 Escape 或拖出组件区域外回滚，事件块回到原始位置
 
 **冲突检测**：目标单元格已被其他事件占满（超过 `maxConcurrent`）时，显示禁止标记且无法放置。冲突检测钩子可配置为允许覆盖（替换原有事件，通过二次确认 dialog 确认）或严格阻止。
@@ -287,7 +287,7 @@ CalendarState 使用 scope-level state path 存储 `view` 和 `date`，允许外
 
 **交互流程**：
 
-1. **进入创建模式**：pointerdown 在空白单元格（不含任何事件）保持 300ms → 单元格背景变为脉冲蓝色 + 震动反馈（移动端）
+1. **进入创建模式**：pointerdown 在空白单元格（不含任何事件）保持 500ms（`use-calendar-drag-create.ts` 默认 `longPressMs = 500`）→ 单元格背景变为脉冲蓝色 + 震动反馈（移动端）
 2. **拖拽覆盖**：pointermove 沿单元格网格方向拖拽，覆盖的单元格高亮为浅蓝色区域，显示待创建区域的起止提示
 3. **选择班次类型**：pointerup 弹窗展示可用班次类型列表（从字典动态加载，如早班/中班/晚班/休息），每类型包含色块预览 + 名称
 4. **确认创建**：选择类型后触发 `onEventCreate`（payload: `{ resourceId, startDate, endDate, type }`），新事件块以对应类型色块渲染

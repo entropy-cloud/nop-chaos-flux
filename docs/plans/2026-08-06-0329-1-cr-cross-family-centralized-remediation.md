@@ -1,6 +1,6 @@
 # CR 跨族集中修复与裁决（shared 缺陷 / P2 backlog / 机制复验 / 跨组件裁决 / e2e 残余）
 
-> Plan Status: active（draft → active：独立子 agent 审查 pass-with-minors，零 Blocker/零 Major，Minor 全部处理，共识达成）
+> Plan Status: completed（执行完成：5 Phase 全 completed + 全量验证绿 + closure-audit pass（独立 fresh sub-agent task `ses_02ae79cffffeOaffBS4f6RwlLg`，verdict approved，零 Blocker/零 Major，4 Minor 非阻塞））
 > Mission: component-audit
 > Work Item: CR
 > Last Reviewed: 2026-08-06
@@ -87,95 +87,95 @@
 
 ### Phase 1 - CR 输入盘点与跨组件裁决
 
-Status: planned
+Status: completed
 Targets: `docs/audits/per-component/*.md`、`docs/audits/cr-input-inventory.md`（消费 p2p3 Phase 5 产物，若已生成）、`docs/plans/2026-08-05-1359-1-p2p3-rigor-remediation-plan.md`
 
 - Item Types: `Decision | Follow-up`
 
-- [ ] **Decision（裁决总表）**：生成 `docs/audits/cr-inventory-adjudication.md` 裁决表——逐条处理审计卡 `rg "归 CR"` 全部引用（~110 处），分类：`handled-by-p2p3`（交叉核对 p2p3 覆盖项）/ `fix`（本 plan 修复）/ `keep`（裁决非缺陷）/ `defer-other`（明确 successor）；每条带 file:line 与一句理由，无静默挂起。**另含 roadmap CX-7 行登记项**（barcode-input `flux.*` 前缀 t() 语义潜伏问题）与 Phase 4 i18n 实证扫描的联动登记。
-- [ ] **Decision（cards P2-1 selectable-card ARIA）**：裁决交互态 item 规范模式——候选：a) `aria-pressed` 保持 role=button；b) role=listbox/option 结构（需 ui Card role 覆盖调整）；c) keep 现状（记录不规范性）。裁决后记录于裁决表与 cards 卡，若裁 fix 则在 Phase 3 落地。
-- [ ] **Decision（wizard 焦点管理）**：复核 wizard 焦点缺口（P3 记录）是否构成可用性阻断——按 p2p3 既有裁定口径复核并终裁 keep/fix，记录依据。
-- [ ] **Decision（list P2-3 hasMore 语义）**：裁决 infinite 无 total/hasMore 时 hasMore 恒 true 的 design §9 两条款张力——对照 pagination 族（crud/table/list）同型语义终裁，记录为跨组件分页语义基准。
-- [ ] **Decision（推荐句柄复核）**：确认 p2p3 Non-Goals 的 keep 裁定覆盖 json-view/collapse/wizard/pagination 四组件推荐句柄（`component:*`），在裁决表中登记"复核通过 + 依据"，不重复修复。
-- [ ] **Decision（button helper 位置）**：裁决 `isSafeNavigationUrl` 复用路径——候选：a) basic 包内联等价实现（重复）；b) 提升到公共层（flux-core 或共享模块，涉及包边界→记录决策 + 执行时若触碰公共导出面按 mission 授权留痕理由）；c) basic 依赖 content 包（依赖方向反转，否决）。裁决结果决定 Phase 2 实施形态。
-- [ ] **Follow-up**：与 p2p3 plan Phase 5 产物交叉核对（若 cr-input-inventory 已生成，核对条目数一致；未生成则本 phase 以卡级 grep 为准并在 plan 中记录）。
+- [x] **Decision（裁决总表）**：生成 `docs/audits/cr-inventory-adjudication.md` 裁决表——逐条处理审计卡 `rg "归 CR"` 全部引用（~110 处），分类：`handled-by-p2p3`（交叉核对 p2p3 覆盖项）/ `fix`（本 plan 修复）/ `keep`（裁决非缺陷）/ `defer-other`（明确 successor）；每条带 file:line 与一句理由，无静默挂起。**另含 roadmap CX-7 行登记项**（barcode-input `flux.*` 前缀 t() 语义潜伏问题）与 Phase 4 i18n 实证扫描的联动登记。
+- [x] **Decision（cards P2-1 selectable-card ARIA）**：裁决交互态 item 规范模式——候选：a) `aria-pressed` 保持 role=button；b) role=listbox/option 结构（需 ui Card role 覆盖调整）；c) keep 现状（记录不规范性）。裁决后记录于裁决表与 cards 卡，若裁 fix 则在 Phase 3 落地。
+- [x] **Decision（wizard 焦点管理）**：复核 wizard 焦点缺口（P3 记录）是否构成可用性阻断——按 p2p3 既有裁定口径复核并终裁 keep/fix，记录依据。
+- [x] **Decision（list P2-3 hasMore 语义）**：裁决 infinite 无 total/hasMore 时 hasMore 恒 true 的 design §9 两条款张力——对照 pagination 族（crud/table/list）同型语义终裁，记录为跨组件分页语义基准。
+- [x] **Decision（推荐句柄复核）**：确认 p2p3 Non-Goals 的 keep 裁定覆盖 json-view/collapse/wizard/pagination 四组件推荐句柄（`component:*`），在裁决表中登记"复核通过 + 依据"，不重复修复。
+- [x] **Decision（button helper 位置）**：裁决 `isSafeNavigationUrl` 复用路径——候选：a) basic 包内联等价实现（重复）；b) 提升到公共层（flux-core 或共享模块，涉及包边界→记录决策 + 执行时若触碰公共导出面按 mission 授权留痕理由）；c) basic 依赖 content 包（依赖方向反转，否决）。裁决结果决定 Phase 2 实施形态。
+- [x] **Follow-up**：与 p2p3 plan Phase 5 产物交叉核对（若 cr-input-inventory 已生成，核对条目数一致；未生成则本 phase 以卡级 grep 为准并在 plan 中记录）。
 
 Exit Criteria:
 
-- [ ] `docs/audits/cr-inventory-adjudication.md` 存在，覆盖 `rg "归 CR"` 全部引用（零未分类条目），每条含 file:line + 分类 + 理由。
-- [ ] 5 项 Decision（cards ARIA / wizard 焦点 / list hasMore / 推荐句柄 / button helper 位置）均有终裁记录。
+- [x] `docs/audits/cr-inventory-adjudication.md` 存在，覆盖 `rg "归 CR"` 全部引用（零未分类条目），每条含 file:line + 分类 + 理由。
+- [x] 5 项 Decision（cards ARIA / wizard 焦点 / list hasMore / 推荐句柄 / button helper 位置）均有终裁记录。
 
 ### Phase 2 - shared 缺陷修复
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-basic/src/button.tsx`、`packages/flux-renderers-form/src/renderers/input-choice-renderers.tsx`、`packages/flux-renderers-content/src/sanitize.ts`（只读参考）、相关测试
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] **Proof（test-first，button href）**：新增 `button-href-safety.test.tsx`：`javascript:` / `vbscript:` URI → 渲染剥离或降级（与 link.tsx 修复后行为同构：不安全 href 不落锚点 href），白名单协议（http/https/mailto/tel）保留；`data:` 语义以 Phase 1 Decision（button helper 位置）中钉死的口径为准（link.tsx 现行 helper 放行全部 `data:`，button 侧是否收窄到 `data:csv` 由该 Decision 裁定，测试断言与之对齐）；先红（当前 `javascript:` 原样进 DOM）后绿。
-- [ ] **Fix（button href）**：按 Phase 1 Decision 的 helper 位置接入协议校验；`button.tsx:238-241` href 分支过滤不安全协议；同步 button 卡 P2-3 状态。
-- [ ] **Proof（test-first，combobox readOnly）**：新增/扩展 `input-choice-renderers`（或 condition-builder 关联）测试：readOnly select（combobox 路径）输入视觉不可交互（输入框 disabled/pointer-events 阻断或等价 DOM 契约断言）；先红后绿。
-- [ ] **Fix（combobox readOnly）**：form 包公共层 `input-choice-renderers.tsx` combobox 路径 readOnly 冻结补全（与选择路径 onValueChange unwired 同构）；同步 condition-builder 卡 P2-4 状态；回归 C2.3 既有 select/radio-group/button-group-select 测试零回归。
-- [ ] 受影响 design.md/quick-reference 若引用 href 契约或 readOnly 视觉语义则同步（按实际影响，无则跳过）。
+- [x] **Proof（test-first，button href）**：新增 `button-href-safety.test.tsx`：`javascript:` / `vbscript:` URI → 渲染剥离或降级（与 link.tsx 修复后行为同构：不安全 href 不落锚点 href），白名单协议（http/https/mailto/tel）保留；`data:` 语义以 Phase 1 Decision（button helper 位置）中钉死的口径为准（link.tsx 现行 helper 放行全部 `data:`，button 侧是否收窄到 `data:csv` 由该 Decision 裁定，测试断言与之对齐）；先红（当前 `javascript:` 原样进 DOM）后绿。
+- [x] **Fix（button href）**：按 Phase 1 Decision 的 helper 位置接入协议校验；`button.tsx:238-241` href 分支过滤不安全协议；同步 button 卡 P2-3 状态。
+- [x] **Proof（test-first，combobox readOnly）**：新增/扩展 `input-choice-renderers`（或 condition-builder 关联）测试：readOnly select（combobox 路径）输入视觉不可交互（输入框 disabled/pointer-events 阻断或等价 DOM 契约断言）；先红后绿。
+- [x] **Fix（combobox readOnly）**：form 包公共层 `input-choice-renderers.tsx` combobox 路径 readOnly 冻结补全（与选择路径 onValueChange unwired 同构）；同步 condition-builder 卡 P2-4 状态；回归 C2.3 既有 select/radio-group/button-group-select 测试零回归。
+- [x] 受影响 design.md/quick-reference 若引用 href 契约或 readOnly 视觉语义则同步（按实际影响，无则跳过）。
 
 Exit Criteria:
 
-- [ ] `rg "javascript:" packages/flux-renderers-basic/src/button.tsx` 相关渲染路径零残留不安全 href 直传（或剥离实现可实证）；button href 安全测试全绿。
-- [ ] combobox readOnly 视觉不可交互测试全绿；form 包 `pnpm --filter @nop-chaos/flux-renderers-form test` + basic 包局部测试通过；审计卡 P2-3/P2-4 状态回写。
+- [x] `rg "javascript:" packages/flux-renderers-basic/src/button.tsx` 相关渲染路径零残留不安全 href 直传（或剥离实现可实证）；button href 安全测试全绿。
+- [x] combobox readOnly 视觉不可交互测试全绿；form 包 `pnpm --filter @nop-chaos/flux-renderers-form test` + basic 包局部测试通过；审计卡 P2-3/P2-4 状态回写。
 
 ### Phase 3 - C 阶段登记 P2 backlog 修复/裁决
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/{calendar,gantt,kanban,barcode-input}/`、`packages/flux-renderers-data/src/list-*.ts`（如涉及）、相关测试
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] **Fix（calendar P2-4）**：`calendar/calendar.tsx:132` loadAction fire-and-forget 补错误处理——rejection 捕获 + 错误态呈现（与 data-source/其他组件 loadAction 错误面同构）；test-first 断言 reject 不静默、有用户可见错误态。
-- [ ] **Fix（barcode-input P2-4）**：scannerError 清除路径（重扫/关闭/清除时复位，`barcode-input.tsx:104-105`）；test-first 断言错误显示后可清除。
-- [ ] **Fix（gantt P2-1/P2-3/P2-4）**：a) 自定义 editor region `onSave` 持久化接线（`gantt-editor.tsx:48`）；b) 拖拽/链接/删除/编辑器保存入 undo 栈（design §12.8 补齐）；c) `use-gantt-keyboard` 监听挂载稳定化（避免每次 render 重挂）；各配 focused 测试。
-- [ ] **Fix（kanban P2-3/P2-4）**：a) controlled 模式变更事件/activity log 不派发（`kanban-board.tsx:294-310,323-334` 按 valueOwnership 门控，与 C8.1 timeline/其他受控组件先例同构）；b) onCardMove/onCardClick payload 补 `card: BoardItem`（design.md:190,205 承诺）；test-first payload 形状断言 + controlled 不派发断言。
-- [ ] **Decision（P3 记录项逐一裁决）**：input-file P3-1/P3-2、input-date/input-datetime P3-1、editor P3-1、checkbox P3-1、checkbox-group P3-1、combo/array-field/object-field P3-1（data-slot 嵌套复核，对照 p2p3 Phase 3 裁决）、input-date P3-2——每项终裁 keep/fix 并写回裁决表（裁 fix 项本 phase 内完成，keep 项写明非阻断理由）。
-- [ ] 受影响审计卡状态同步（backlog → fixed/keep 回写）。
+- [x] **Fix（calendar P2-4）**：`calendar/calendar.tsx:132` loadAction fire-and-forget 补错误处理——rejection 捕获 + 错误态呈现（与 data-source/其他组件 loadAction 错误面同构）；test-first 断言 reject 不静默、有用户可见错误态。
+- [x] **Fix（barcode-input P2-4）**：scannerError 清除路径（重扫/关闭/清除时复位，`barcode-input.tsx:104-105`）；test-first 断言错误显示后可清除。
+- [x] **Fix（gantt P2-1/P2-3/P2-4）**：a) 自定义 editor region `onSave` 持久化接线（`gantt-editor.tsx:48`）；b) 拖拽/链接/删除/编辑器保存入 undo 栈（design §12.8 补齐）；c) `use-gantt-keyboard` 监听挂载稳定化（避免每次 render 重挂）；各配 focused 测试。
+- [x] **Fix（kanban P2-3/P2-4）**：a) controlled 模式变更事件/activity log 不派发（`kanban-board.tsx:294-310,323-334` 按 valueOwnership 门控，与 C8.1 timeline/其他受控组件先例同构）；b) onCardMove/onCardClick payload 补 `card: BoardItem`（design.md:190,205 承诺）；test-first payload 形状断言 + controlled 不派发断言。
+- [x] **Decision（P3 记录项逐一裁决）**：input-file P3-1/P3-2、input-date/input-datetime P3-1、editor P3-1、checkbox P3-1、checkbox-group P3-1、combo/array-field/object-field P3-1（data-slot 嵌套复核，对照 p2p3 Phase 3 裁决）、input-date P3-2——每项终裁 keep/fix 并写回裁决表（裁 fix 项本 phase 内完成，keep 项写明非阻断理由）。
+- [x] 受影响审计卡状态同步（backlog → fixed/keep 回写）。
 
 Exit Criteria:
 
-- [ ] calendar/barcode/gantt/kanban 修复项各配 focused 测试且全绿；scheduling 包 `pnpm --filter @nop-chaos/flux-renderers-scheduling test` 通过。
-- [ ] P3 记录项裁决表无未分类条目；裁 fix 项测试全绿。
-- [ ] 局部 typecheck：scheduling/data/form 相关包 `pnpm --filter @nop-chaos/flux-renderers-{scheduling,data,form} typecheck` 通过。
+- [x] calendar/barcode/gantt/kanban 修复项各配 focused 测试且全绿；scheduling 包 `pnpm --filter @nop-chaos/flux-renderers-scheduling test` 通过。
+- [x] P3 记录项裁决表无未分类条目；裁 fix 项测试全绿。
+- [x] 局部 typecheck：scheduling/data/form 相关包 `pnpm --filter @nop-chaos/flux-renderers-{scheduling,data,form} typecheck` 通过。
 
 ### Phase 4 - dim 17 文档漂移同步 + i18n 残留实证清理
 
-Status: planned
+Status: completed
 Targets: `docs/components/{calendar,gantt,kanban,barcode-input}/design.md`、`packages/flux-renderers-scheduling/src/scheduling-renderer-definitions.ts`、`docs/components/*/design.md`（按留痕清单）、`packages/flux-i18n/src/locales/{en-US,zh-CN}.ts`、相关 `example.json`
 
 - Item Types: `Fix`（文档）| `Fix`
 
-- [ ] **Fix（dim 17 留痕集中同步）**：calendar P2-3（nativeEvent/swap 键名/长按时长口径）、kanban P2-4（statusPath/注释）、barcode P3-1（离线队列/降级 tooltip 标注未实现）、gantt P3-2（§8.1 payload 命名/§8.3 句柄/§9.0 loadAction/§12.7/undoLimit phantom + `example.json` `${event.taskId}` → 裸键）、variant-field P3-2（transform\*Action ignored 文档化）、statistics P2-4（amis-baseline-matrix 补提及）——按"行为以实现为准"口径同步 design.md/definitions/example.json，留痕项清零。
-- [ ] **Fix（i18n 残留实证清理）**：`rg` 实证 scheduling/graph/ai/mobile 包内剩余硬编码英文/中文字面量（对照 p2p3 Phase 1 已清 10 处），剩余项走 `t()`（复用既有键或新增双语键，命名空间惯例 `flux.*`）；`check:i18n-keys` 绿。
-- [ ] **Fix（route-matrix 校验强度核对）**：`apps/playground/src/route-matrix.test.ts` layout/content 包 route 校验强度核对（p2p3 Non-Blocking Follow-ups 登记项）——统一为 def 枚举或记录 keep 裁决。
-- [ ] 受影响审计卡 dim 17 状态回写。
+- [x] **Fix（dim 17 留痕集中同步）**：calendar P2-3（nativeEvent/swap 键名/长按时长口径）、kanban P2-4（statusPath/注释）、barcode P3-1（离线队列/降级 tooltip 标注未实现）、gantt P3-2（§8.1 payload 命名/§8.3 句柄/§9.0 loadAction/§12.7/undoLimit phantom + `example.json` `${event.taskId}` → 裸键）、variant-field P3-2（transform\*Action ignored 文档化）、statistics P2-4（amis-baseline-matrix 补提及）——按"行为以实现为准"口径同步 design.md/definitions/example.json，留痕项清零。
+- [x] **Fix（i18n 残留实证清理）**：`rg` 实证 scheduling/graph/ai/mobile 包内剩余硬编码英文/中文字面量（对照 p2p3 Phase 1 已清 10 处），剩余项走 `t()`（复用既有键或新增双语键，命名空间惯例 `flux.*`）；`check:i18n-keys` 绿。
+- [x] **Fix（route-matrix 校验强度核对）**：`apps/playground/src/route-matrix.test.ts` layout/content 包 route 校验强度核对（p2p3 Non-Blocking Follow-ups 登记项）——统一为 def 枚举或记录 keep 裁决。
+- [x] 受影响审计卡 dim 17 状态回写。
 
 Exit Criteria:
 
-- [ ] dim 17 留痕清单条目全部有同步 commit 或 keep 裁决记录（零悬挂）。
-- [ ] `rg` 实证：上述包内硬编码字面量零残留（测试断言除外）；`pnpm check:i18n-keys` 通过。
+- [x] dim 17 留痕清单条目全部有同步 commit 或 keep 裁决记录（零悬挂）。
+- [x] `rg` 实证：上述包内硬编码字面量零残留（测试断言除外）；`pnpm check:i18n-keys` 通过。
 
 ### Phase 5 - e2e 残余修复（c5-2 host-timeline）与相关回归
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/c5-2-host-surfaces.spec.ts`、`packages/flux-renderers-layout/src/timeline-renderer.tsx`（只读参考，契约侧）、timeline design.md（如契约侧修正）
 
 - Item Types: `Fix | Proof`
 
-- [ ] **Decision（契约对齐方向）**：裁定 c5-2 `:201` `not.toHaveAttribute('data-ownership')` 与 timeline v2 恒发 `data-ownership` 的冲突——方向候选：a) spec 断言更新为接受 v2 契约（`data-ownership` 存在且值为 display-only 语义，timeline-v2 plan 已定契）；b) 渲染器侧 display-only 模式不输出该属性（契约回退，需 timeline-v2 复审）；记录决策与依据（timeline-v2 plan completed + renderer-markers-and-selectors.md 已登记 data-ownership 契约为首选方向）。
-- [ ] **Fix**：按决策落地（默认方向 a：更新 `c5-2-host-surfaces.spec.ts:189-205` 断言为 v2 契约语义，保留 display-only 断言面：marker-only 根 + data-mode/data-orientation + item 数 + CSS 类）；若方向 b 则改 `timeline-renderer.tsx:201,243` 并同步 timeline design.md/renderer-markers 登记。
-- [ ] **Proof**：`npx playwright test tests/e2e/component-lab/c5-2-host-surfaces.spec.ts:189 --reporter=list` 全绿；timeline v2 既有 e2e（w4b-process-display-family.spec.ts）零回归。
-- [ ] 相关族回归：本 plan 触及的 basic/form/form-advanced/scheduling/data/layout 相关 e2e spec（button/form 组合宿主、c3-3 host-cb-custom、c9 host 场景、w4b）复跑零新增失败。
+- [x] **Decision（契约对齐方向）**：裁定 c5-2 `:201` `not.toHaveAttribute('data-ownership')` 与 timeline v2 恒发 `data-ownership` 的冲突——方向候选：a) spec 断言更新为接受 v2 契约（`data-ownership` 存在且值为 display-only 语义，timeline-v2 plan 已定契）；b) 渲染器侧 display-only 模式不输出该属性（契约回退，需 timeline-v2 复审）；记录决策与依据（timeline-v2 plan completed + renderer-markers-and-selectors.md 已登记 data-ownership 契约为首选方向）。
+- [x] **Fix**：按决策落地（默认方向 a：更新 `c5-2-host-surfaces.spec.ts:189-205` 断言为 v2 契约语义，保留 display-only 断言面：marker-only 根 + data-mode/data-orientation + item 数 + CSS 类）；若方向 b 则改 `timeline-renderer.tsx:201,243` 并同步 timeline design.md/renderer-markers 登记。
+- [x] **Proof**：`npx playwright test tests/e2e/component-lab/c5-2-host-surfaces.spec.ts:189 --reporter=list` 全绿；timeline v2 既有 e2e（w4b-process-display-family.spec.ts）零回归。
+- [x] 相关族回归：本 plan 触及的 basic/form/form-advanced/scheduling/data/layout 相关 e2e spec（button/form 组合宿主、c3-3 host-cb-custom、c9 host 场景、w4b）复跑零新增失败。
 
 Exit Criteria:
 
-- [ ] c5-2 host-timeline 用例全绿（fresh 重跑）；w4b 9/9 零回归。
-- [ ] 相关族 e2e 复跑零新增失败（记录在案）。
+- [x] c5-2 host-timeline 用例全绿（fresh 重跑）；w4b 9/9 零回归。
+- [x] 相关族 e2e 复跑零新增失败（记录在案）。
 
 ## Draft Review Record
 
@@ -190,19 +190,19 @@ Exit Criteria:
 
 > 关闭条件：本 section 所有条目 + 每个 Phase Exit Criteria 全部 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 2 个 shared 缺陷（button href 协议校验、combobox readOnly 视觉残留）已 test-first 修复 + 回归测试（Phase 2 Exit）
-- [ ] 全部 C 阶段登记 P2 backlog（calendar/barcode/gantt/kanban/list）已修复或显式裁决 keep（Phase 3 Exit + 裁决表）
-- [ ] 5 项决策 + P3 记录项全部有终裁记录，裁 fix 项已落地（Phase 1/3 Exit）
-- [ ] c5-2 host-timeline e2e 契约冲突已修复（spec 或契约侧），相关 e2e 零新增失败（Phase 5 Exit）
-- [ ] dim 17 文档漂移留痕同步完成 + i18n 残留实证清零（Phase 4 Exit）
-- [ ] `docs/audits/cr-inventory-adjudication.md` 裁决表覆盖全部"归 CR"引用且无未分类条目（Phase 1 Exit）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（guide Rule 16）
-- [ ] 受影响 owner docs（design.md/definitions/locales/审计卡/裁决表/roadmap CR 行）已同步到 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 2 个 shared 缺陷（button href 协议校验、combobox readOnly 视觉残留）已 test-first 修复 + 回归测试（Phase 2 Exit）
+- [x] 全部 C 阶段登记 P2 backlog（calendar/barcode/gantt/kanban/list）已修复或显式裁决 keep（Phase 3 Exit + 裁决表）
+- [x] 5 项决策 + P3 记录项全部有终裁记录，裁 fix 项已落地（Phase 1/3 Exit）
+- [x] c5-2 host-timeline e2e 契约冲突已修复（spec 或契约侧），相关 e2e 零新增失败（Phase 5 Exit）
+- [x] dim 17 文档漂移留痕同步完成 + i18n 残留实证清零（Phase 4 Exit）
+- [x] `docs/audits/cr-inventory-adjudication.md` 裁决表覆盖全部"归 CR"引用且无未分类条目（Phase 1 Exit）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（guide Rule 16）
+- [x] 受影响 owner docs（design.md/definitions/locales/审计卡/裁决表/roadmap CR 行）已同步到 live baseline
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -233,10 +233,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: pending（执行完成后填写）
+Status Note: completed（执行完成——5 Phase 全 completed：2 个 shared 缺陷（button href 协议校验 → flux-core `utils/url.ts` 公共层 + basic 接入；combobox readOnly 视觉冻结 → `input-choice-renderers.tsx` 公共层）test-first 修复；C 阶段登记 P2 backlog（calendar/barcode/gantt×3/kanban×2）全部修复 + cards aria-pressed + picker valueType；5 项决策 + P3 记录项全部终裁（裁决表 `docs/audits/cr-inventory-adjudication.md`）；dim 17 文档漂移 6 组件同步 + i18n 实证清零（CX-7 useFluxTranslation 前缀归一化根因修复 + 8 处硬编码走 t()）+ route-matrix def 枚举强化；c5-2 host-timeline e2e 契约对齐 timeline v2（方向 a）。全量验证：typecheck/build/lint 32/32（lint 0 error，scheduling 1 条预存在 warning）、test 59/59 task 全绿、e2e 1050 passed / 8 failed 全部 pre-existing（clean HEAD stash 实证 5 项 + watch-only perf 3 项，本 plan 零新增失败）。roadmap CR 行 `done`；8+ 审计卡状态回写 fixed；daily log 2026-08-06 记录在案。）
 
-Closure Audit Evidence: pending
+Closure Audit Evidence:
+
+- Auditor / Agent: 独立 fresh sub-agent task `ses_02ae79cffffeOaffBS4f6RwlLg`（closure audit，2026-08-06）
+- Evidence: verdict `approved`——零 Blocker/零 Major；4 Minor 非阻塞（lint warning 位置为 gantt-grid.tsx:41 非 use-gantt-drag.ts:41；裁决表个别行号轻微漂移；roadmap 注记先于 audit 标记；变更未提交）。逐 Phase live repo 证据 + 门禁实测（typecheck/build/lint 32/32、test 59/59）见 audit 报告。
 
 Follow-up:
 
-- pending（仅记录 non-blocking follow-up）
+- CV（`2026-08-06-0329-2`）：全量 e2e 复验归因（watch-only flake 清单：c3-5 Tiptap 批次 ×2、gantt-perf ×2、kanban-perf ×1 等）+ 本 plan 相关族零新增失败的回归保持。
+- 推荐句柄（json-view/collapse/wizard/tag-list/icon-picker/pagination `component:*`）：未来 capability 面组件计划（裁决表 defer-other 汇总）。
+- 裁决表 `defer-other` 条目已汇总为 successor 提示（见裁决表尾部 + Non-Blocking Follow-ups）。

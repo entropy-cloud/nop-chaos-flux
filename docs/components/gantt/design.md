@@ -265,18 +265,18 @@ Gantt 是 interaction owner，其状态分三层：
 
 ### 8.1 事件
 
-| 事件                | 触发时机           | 负载示例                                           |
-| ------------------- | ------------------ | -------------------------------------------------- |
-| `onTaskClick`       | 点击任务条         | `{ taskId, task }`                                 |
-| `onTaskDoubleClick` | 双击任务条         | `{ taskId, task }`                                 |
-| `onTaskDragEnd`     | 拖拽任务结束       | `{ taskId, changes: { start?, end?, progress? } }` |
-| `onLinkClick`       | 点击依赖线         | `{ linkId, link }`                                 |
-| `onLinkDragEnd`     | 创建新依赖结束     | `{ sourceTaskId, targetTaskId, type }`             |
-| `onEmptyCellClick`  | 点击时间线空白     | `{ date, position: { x, y } }`                     |
-| `onZoomChange`      | 缩放级别切换       | `{ zoom: string }`                                 |
-| `onScroll`          | grid/timeline 滚动 | `{ scrollLeft, scrollTop }`                        |
-| `onMount`           | 组件挂载完成后触发 | —                                                  |
-| `onUnmount`         | 组件卸载前触发     | —                                                  |
+| 事件                | 触发时机           | 负载示例（以实现为准，CX-12 `_` 前缀约定） |
+| ------------------- | ------------------ | ------------------------------------------ |
+| `onTaskClick`       | 点击任务条         | `{ _taskId }`                              |
+| `onTaskDoubleClick` | 双击任务条         | `{ _taskId }`                              |
+| `onTaskDragEnd`     | 拖拽任务结束       | `{ _taskId, changes: { start?, end? } }`   |
+| `onLinkClick`       | 点击依赖线         | `{ _linkId }`                              |
+| `onLinkDragEnd`     | 创建新依赖结束     | `{ _sourceId, _targetId, _linkType }`      |
+| `onEmptyCellClick`  | 点击时间线空白     | `{}`                                       |
+| `onZoomChange`      | 缩放级别切换       | `{ zoom: string }`                         |
+| `onScroll`          | grid/timeline 滚动 | `{ scrollLeft, scrollTop }`                |
+| `onMount`           | 组件挂载完成后触发 | —                                          |
+| `onUnmount`         | 组件卸载前触发     | —                                          |
 
 拖拽结束回弹动画 200ms ease-out，缩放切换过渡 300ms ease。
 
@@ -293,20 +293,27 @@ Gantt 是 interaction owner，其状态分三层：
 
 ### 8.3 组件句柄
 
-| 句柄                     | 签名                        | 说明                                                                                         |
-| ------------------------ | --------------------------- | -------------------------------------------------------------------------------------------- |
-| `component:getTask`      | `(taskId) => GanttTask`     | 读取指定任务完整数据（含计算属性）。失败路径：`not-mounted`、`not-visible`、`task-not-found` |
-| `component:getLink`      | `(linkId) => GanttLink`     | 读取指定链接。失败路径：`not-mounted`、`not-visible`、`link-not-found`                       |
-| `component:getState`     | `() => GanttStateSnapshot`  | 读取当前甘特图状态快照。失败路径：`not-mounted`、`not-visible`                               |
-| `component:scrollTo`     | `(date: string) => void`    | 程序化滚动到指定日期。失败路径：`not-mounted`、`not-visible`、`date-out-of-range`            |
-| `component:scrollToTask` | `(taskId) => void`          | 程序化滚动到指定任务。失败路径：`not-mounted`、`not-visible`、`task-not-found`               |
-| `component:setZoom`      | `(zoomKey: string) => void` | 程序化设置缩放级别。失败路径：`not-mounted`、`not-visible`、`invalid-zoom-key`               |
+> **实现状态（CR P3-2 文档同步，行为以实现为准）**：当前实现仅注册 `component:zoomIn` / `component:zoomOut` / `component:scrollToToday` / `component:scrollToTask`（`gantt.tsx` componentRegistry）。下表其余句柄（getTask/getLink/getState/scrollTo/setZoom）为设计超前项，未注册。
+
+| 句柄                      | 签名               | 说明                                                                           |
+| ------------------------- | ------------------ | ------------------------------------------------------------------------------ |
+| `component:zoomIn`        | `() => void`       | 放大缩放级别。失败路径：`not-mounted`、`not-visible`、`at-max-zoom`            |
+| `component:zoomOut`       | `() => void`       | 缩小缩放级别。失败路径：`not-mounted`、`not-visible`、`at-min-zoom`            |
+| `component:scrollToToday` | `() => void`       | 滚动到今天。失败路径：`not-mounted`、`not-visible`                             |
+| `component:scrollToTask`  | `(taskId) => void` | 程序化滚动到指定任务。失败路径：`not-mounted`、`not-visible`、`task-not-found` |
+| ~~`component:getTask`~~   | —                  | 未实现（设计超前）                                                             |
+| ~~`component:getLink`~~   | —                  | 未实现（设计超前）                                                             |
+| ~~`component:getState`~~  | —                  | 未实现（设计超前）                                                             |
+| ~~`component:scrollTo`~~  | —                  | 未实现（设计超前）                                                             |
+| ~~`component:setZoom`~~   | —                  | 未实现（设计超前）                                                             |
 
 ## 9. 数据源、表达式、导入能力接入点
 
 ### 9.0 loadAction 入口
 
 `loadAction?: ActionSchema` — schema 层数据加载主入口，走 runtime.dispatch() 而非独立 fetch。复杂数据场景通过 data-source 节点声明。
+
+> **未实现标注（CR P3-2 文档同步，行为以实现为准）**：gantt schema 字段/定义未注册 `loadAction`（`scheduling-renderer-definitions.ts` gantt 段无此项；calendar 段的 `loadAction` 属 calendar 消费面），渲染器零消费——本小节为设计超前项。
 
 ### 9.1 数据源接入
 
@@ -336,7 +343,7 @@ Gantt 是 interaction owner，其状态分三层：
 ### 9.3 导入能力
 
 - 甘特图自身不承担 Excel/CSV 导入导出（后台职责）。
-- 外部通过 `component:setZoom` / `component:scrollTo` 句柄进行程序化操作。
+- 程序化操作为 `component:zoomIn/zoomOut/scrollToToday/scrollToTask`（实现注册面，见 §8.3）；`component:setZoom`/`component:scrollTo` 未实现。
 
 ## 10. 样式与 DOM marker 约定
 
@@ -651,6 +658,8 @@ function calculateCriticalPath(tasks: GanttTask[], links: GanttLink[]): string[]
 
 **UI 交互**：排程配置面板允许用户选择排程方向、设置约束日期、触发"重新排程"动作（调用后端 action）。排程进度通过 onScheduleProgress 事件反馈。`constraintType`/`constraintDate` 通过 onScheduleProgress 事件向后端传递。
 
+> **未实现标注（CR P3-2 文档同步，行为以实现为准）**：`onScheduleProgress` 事件与排程配置面板在实现中不存在（live grep 零命中）——本节为设计超前项。
+
 ### 12.8 撤销/重做设计要点（Phase 3）
 
 **命令模式**：
@@ -708,9 +717,13 @@ class UndoStack {
 
 **存储限制**：默认 50 步，可通过 `GanttSchema.undoLimit` 配置。超出时删除最早命令。
 
+> **未实现标注（CR P3-2 文档同步，行为以实现为准）**：`GanttSchema.undoLimit` 未实现——实现为 `new UndoStack(50)` 固定 50 步（`gantt.tsx`），schema 无 undoLimit 字段。
+
 **UI 表示**：撤销/重做按钮（Ctrl+Z / Ctrl+Shift+Z），按钮 disabled 状态反映 UndoStack.canUndo/canRedo。
 
 **Flux action 集成**：撤销/重做通过 component:undo / component:redo 句柄暴露。UndoStack 使用命令模式记录 GanttStore 的每次变更（updateTask/addLink 等），操作合并策略：连续拖拽合并为一次。
+
+> **未实现标注（CR P3-2 文档同步，行为以实现为准）**：`component:undo`/`component:redo` 句柄未注册；撤销/重做当前仅通过键盘 Ctrl+Z / Ctrl+Shift+Z（`use-gantt-keyboard`）可达。
 
 ### 12.9 键盘导航 + WAI-ARIA 设计要点（Phase 2）
 

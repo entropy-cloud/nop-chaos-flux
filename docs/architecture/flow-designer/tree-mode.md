@@ -131,6 +131,8 @@ interface TreeNodeBranch {
 
 Tree 模式复用现有 `NodeTypeConfig`（body、inspector、createDialog、appearance）的全部能力，仅增加结构约束。
 
+`NodeTypeConfig.body` 内的 flex / text / icon 节点可直接书写 `data-slot` 与任意 `data-*` 属性（如 `data-node-variant`），渲染器会原样转发到 DOM 根元素（见 `docs/architecture/renderer-markers-and-selectors.md`「Schema-Authored Data Attributes」节），供配套 CSS（如 playground 的 `flow-designer-nodes.css`）按 `[data-slot='dt-node'][data-node-variant='approval']` 选择器做 schema 驱动的卡片视觉。terminal 节点（`tree.isTerminal`）不渲染 body，走内置圆点+标签形态。
+
 ### DesignerConfig 扩展（版本 1.1.0）
 
 ```ts
@@ -197,6 +199,10 @@ interface DesignerConfig {
 查找优先级：`NodeTypeConfig.tree.branchEdgeType` > `treeConfig.branchEdgeType` > 默认。
 
 **DingFlow tree edge 禁止**：`markerEnd`、`animated`、schema label/body、`defaults` 中的 label/body，以及 `strokeDasharray`（dashed/dotted 均不受支持）。edge type 只允许 `stroke` / `strokeWidth` / `strokeStyle`（仅 solid）/ `color`。`TreeNodeBranch.data.label` 是合法分支数据，不视为 edge label。违规返回 `unsupported-tree-edge-decoration`。
+
+**分支线标签**：split edge 渲染时若 `edge.data.label`（来自 `TreeNodeBranch.data.label`，投影时合并进 edge data）为非空字符串，`DingFlowEdge` 在水平线段中点渲染钉钉式标签 pill（白底、`#15bc83` 绿字/边框、rounded-full、max-width 160px 单行截断、`pointer-events: none`）。TB 布局标签位于 split 线上方居中（x=边中点、y=lineMain），LR 布局位于竖直分割线右居中（x=lineMain、y=边中点）。chain/merge 边不渲染标签。
+
+**features 接线**：`DesignerFeatures.minimap` / `DesignerFeatures.controls` 控制画布 MiniMap 与 Controls 的显隐（缺省 true，`false` 显式关闭），由 `designer-canvas` 从 `config.features` 传给画布。Controls 使用 React Flow `position="top-left"`（画布左上角），MiniMap 默认右下角；定位用组件原生 prop，不用 CSS 覆盖（react-flow 面板规则无 layer，会击败 `@layer utilities` 内的定位规则）。
 
 ## Tree Projection
 

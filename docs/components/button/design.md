@@ -9,6 +9,7 @@
 
 - 当前已实现 `label`、`variant`、`size`、`disabled`、`onClick`，以及 `icon`/`rightIcon`（图标前后缀）、`loading`（加载态）、`tooltip`/`disabledTip`（悬浮提示）、`block`（全宽）、`active`（toggle 态）。
 - 链接按钮（`href`/`target`）：已实现——`href` 配置时渲染为 `<a>`，`target` 透传。保持单一 `button` type。
+- 链接按钮 URL 协议安全：`href` 可能数据绑定（`${item.link}`），渲染前经 `isSafeNavigationUrl`（flux-core 公共 helper）校验——`javascript:`/`vbscript:`/`file:`/`blob:` 等非白名单协议不落锚点 `href` 属性（anchor 形态保留、label 照常渲染，与 content link renderer 契约同构）；`http:`/`https:`/`mailto:`/`tel:`/`data:` 及无协议相对路径放行。
 
 ### Flux 决策表
 

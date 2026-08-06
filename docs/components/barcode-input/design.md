@@ -275,6 +275,8 @@ interface BarcodeQueueItem {
 - 上线后自动读取 IndexedDB 队列并触发提交，提交成功后从 IndexedDB 删除
 - IndexedDB 操作封装为 `useBarcodeQueue` hook，提供 `enqueue` / `dequeue` / `flush` / `clear` 方法
 
+> **未实现标注（CR P2-4 文档同步，行为以实现为准）**：IndexedDB 离线暂存（`nop_barcode_queue`/`useBarcodeQueue`）为设计超前项，当前实现未落地。批量扫码队列 UI（`barcode-queue-panel`）与 `onScan` 逐条触发已实现，但离线暂存/上线自动提交链路不存在；离线场景当前表现为摄像头不可用时的文本输入降级。
+
 `batchMode?: boolean` 字段应在实施前补充到 §4 schema。
 
 ### §12.2 离线/降级设计要点（v3）
@@ -315,7 +317,11 @@ navigator.mediaDevices?.getUserMedia 不可用
 
 降级后 UI 变化：扫码按钮隐藏，input 宽度恢复正常（不加扫码按钮的 addon）。预留 `scanButton` schema 字段为 `true` 时按钮依然显示，但点击时显示 tooltip "扫码不可用"。
 
+> **未实现标注（CR P2-4 文档同步，行为以实现为准）**：「`scanButton:true` 时按钮仍显示 + tooltip 扫码不可用」未实现；实际行为为摄像头不可用（`cameraAvailable === false`）时按钮直接隐藏。
+
 **"connection" 事件监听**：使用 `window.addEventListener('online'/'offline')` 监听网络状态变化。离线时在输入框下方显示黄色提示条 "当前离线，扫码结果将在恢复网络后自动提交"，上线后自动触发队列提交并在完成后显示绿色提示 "已自动提交 N 条扫码记录"。
+
+> **未实现标注（CR P2-4 文档同步，行为以实现为准）**：online/offline 监听与离线提示条/自动提交链路未实现（随 IndexedDB 离线暂存一并超前）。
 
 ## 13. Flux 决策表
 

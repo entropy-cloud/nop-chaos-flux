@@ -1,6 +1,6 @@
 # DingTalk 审批流示例视觉对齐（schema data-\* 转发 + 分支标签 + minimap/controls 接线）
 
-> Plan Status: active（draft → active：独立子 agent 审查 2 轮达成共识，见 Draft Review Record）
+> Plan Status: completed（closure-audit pass：独立 fresh sub-agent 核验 Phase 1–5 落地 + e2e/单测复跑全绿，见 Closure 节）
 > Last Reviewed: 2026-08-06
 > Source: 用户要求——`/flow-designer`「钉钉审批流」示例需呈现 `/dingtalk-flow-demo` 的钉钉视觉（彩色卡片、分支标签、线上 + 按钮），但底层使用 plan 453 统一 tree-mode 布局算法 + flow-designer 可配置方案（schema 驱动），支持右下角鸟瞰图与左上角缩放，尽量与 flow-designer 其他部分共享底层。live 诊断证据见 `_tmp/dingflow-inspect1..6.mjs`（Playwright 程序化检查：节点/边/overlay 几何、computed styles、DOM 结构；`docs/logs/2026/08-06.md` 的诊断记录节将在 Phase 5 补写）。
 > Related: `docs/plans/453-dingflow-single-tree-layout-unification-plan.md`（completed，本 plan 的布局算法前置）、`docs/architecture/renderer-markers-and-selectors.md`（样式契约，Phase 1 修改对象）、`docs/architecture/styling-system.md`
@@ -140,19 +140,19 @@ Exit Criteria:
 
 ### Phase 5 - 回归、文档与全量验证
 
-Status: planned
-Targets: `tests/e2e/flow-designer-tree-mode.spec.ts`（如需并入）、`docs/architecture/flow-designer/tree-mode.md`、`docs/logs/2026/08-06.md`
+Status: completed
+Targets: `tests/e2e/flow-designer-dingtalk-visual.spec.ts`、`docs/architecture/flow-designer/tree-mode.md`、`docs/logs/2026/08-06.md`
 
 - Item Types: `Fix | Follow-up`
 
-- [ ] e2e 回归：`flow-designer|dingflow|taskflow|tree-mode` grep 全量 + 新增 dingtalk 视觉 spec，零新增失败。`Proof`
-- [ ] 文档：`tree-mode.md`（或 flow-designer design.md）同步分支标签渲染与 features.minimap/controls 接线到 live baseline；daily log 记录本 plan 收口证据（诊断→修复→验证链，含 `_tmp/dingflow-inspect*.mjs` 引述）。`Fix`
-- [ ] 收尾核对：删除 `_tmp/dingflow-inspect*.mjs` 临时脚本（或归档到 `docs/archive/`）；确认无残留调试代码。`Follow-up`
+- [x] e2e 回归：`flow-designer|dingflow|taskflow|tree-mode|dingtalk` grep 全量 **58 passed / 4 skipped / 0 failed**（首轮 taskflow 2 例并行 flake，单跑 8/8 复绿，非本 plan 引入）；新增 dingtalk 视觉 spec 6 例全绿。`Proof`
+- [x] 文档：`tree-mode.md` 同步分支标签渲染（split edge `data.label` → 钉钉式 pill，TB/LR 对称）+ features.minimap/controls 接线（原生 position="top-left"，不用 CSS 覆盖的原因）+ body data-_ 转发契约引用；daily log 记录本 plan 诊断→修复→验证链（含 `\_tmp/dingflow-inspect_.mjs` 引述）。`Fix`
+- [x] 收尾核对：`_tmp/dingflow-inspect*.mjs` ×6 + probe 脚本已删除；无残留调试代码。`Follow-up`
 
 Exit Criteria:
 
-- [ ] e2e grep 全量通过（含新增 spec），零新增失败。
-- [ ] 文档已同步；临时脚本已清理。
+- [x] e2e grep 全量通过（含新增 spec 6 例），零新增失败。
+- [x] 文档已同步（tree-mode.md + daily log）；临时脚本已清理。
 
 ## Draft Review Record
 
@@ -163,17 +163,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] flex/text/icon 已转发 schema 作者 `data-slot`/`data-*`，契约测试证明行为（含不转发非 data-\* 键）。
-- [ ] flow-designer 钉钉审批流卡片视觉与 demo 一致（computed-style e2e 断言），无白条残留。
-- [ ] 分支线上渲染 branch.data.label 标签（单测 + 浏览器几何断言），LR/TB 均覆盖。
-- [ ] features.minimap/features.controls 接线生效，controls 左上角/minimap 右下角位置钉死并有 e2e 断言。
-- [ ] 布局算法与可配置方案保持 plan 453 基线；无被静默降级的 in-scope live defect（「+ 按钮位置」已实证正确并纳入 e2e 锁定）。
-- [ ] 受影响的 owner docs（renderer-markers-and-selectors.md、flow-designer tree-mode/design 文档、daily log）已同步。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] flex/text/icon 已转发 schema 作者 `data-slot`/`data-*`，契约测试证明行为（含不转发非 data-\* 键、空值跳过、number 字符串化）。
+- [x] flow-designer 钉钉审批流卡片视觉与 demo 一致（computed-style e2e 断言：header 色带 #576a95/#ff943e/#3296fa/#6366f1/#8b5cf6、白字、条件绿 #15bc83、圆点 end 节点），无白条残留。
+- [x] 分支线上渲染 branch.data.label 标签（单测 5 例 + e2e 几何断言 4 标签 y 值落在线上），TB/LR 均覆盖。
+- [x] features.minimap/features.controls 接线生效（先红后绿测试），controls 左上角（position="top-left"）/minimap 右下角位置有 e2e 断言。
+- [x] 布局算法与可配置方案保持 plan 453 基线；「+ 按钮位置」已实证正确并纳入 e2e 锁定（添加分支按钮中心与 split/merge 线重合 ±2px）。
+- [x] 受影响的 owner docs（renderer-markers-and-selectors.md、flow-designer tree-mode.md、daily log 2026/08-06.md）已同步。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -197,12 +197,19 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （执行完成后填写）
+Status Note: 独立 fresh closure-audit 核验通过——Phase 1–5 全部落地且退出标准逐条成立：flex/text/icon 的 `data-*` 转发有契约测试（6 例）与 live DOM 实证（e2e 卡片 variant 断言）；分支标签（split edge `data.label` → 钉钉绿 pill）有单测 5 例 + e2e 几何断言；features.minimap/controls 接线有先红后绿测试 + Controls `position="top-left"` live 实证；全量验证由 mission-driver full-green run 与本次 audit 复跑共同背书。deferred 两项均为 out-of-scope improvement，分类诚实；无剩余 plan-owned work，正式关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立子 agent）
+- Auditor / Agent: 独立 fresh closure-audit sub-agent session（不复用执行者上下文，opencode，2026-08-06）
 - Evidence:
+  - Phase 1：`packages/flux-renderers-basic/src/utils.ts:13`（collectDataAttrs 白名单规则）+ `flex.tsx:61,65` / `text.tsx:139,144` / `icon.tsx:40,44` spread；`__tests__/data-attrs-passthrough.test.tsx` 6 例（flex/text/icon 转发、非 data-\* 不转发、空值/布尔/对象跳过、number 字符串化）；`docs/architecture/renderer-markers-and-selectors.md:188`「Schema-Authored Data Attributes」节；包测试复跑 47 文件/472 测试全绿。
+  - Phase 2：`tests/e2e/flow-designer-dingtalk-visual.spec.ts` 6 例；audit 复跑 `playwright test flow-designer-dingtalk-visual.spec.ts` 6/6 passed（variant 属性、header 色带 #576a95/#ff943e/#3296fa/#6366f1/#8b5cf6 + 白字 + 条件绿 #15bc83、end 圆点、+ 按钮在线上、分支标签在线、minimap 右下/controls 左上）。
+  - Phase 3：`packages/flow-designer-renderers/src/dingflow/ding-flow-edge.tsx:74-109`（split + data.label → EdgeLabelRenderer pill，TB/LR 对称、pointer-events-none、truncate）；`ding-flow-edge.test.tsx:110`「DingFlowEdge branch label」describe 5 例；flow-designer-renderers 复跑 31 文件/216 测试全绿。
+  - Phase 4：`flow-designer-core/src/core/config.ts:28-29`（controls 默认 true）+ `types.ts:223-229`（DesignerFeatures.controls）；`designer-canvas.tsx:396-397`（showMinimap/showControls 接线）；`designer-xyflow-canvas.tsx:382`（`<Controls position="top-left">`）；`designer-canvas-features.test.tsx` 2 例；dingtalk schema `features.minimap/controls: true`（schema JSON 628-629）；flow-designer-core 复跑 9 文件/175 测试全绿。
+  - Phase 5：`docs/architecture/flow-designer/tree-mode.md:134,203,205`（data-_ 转发契约引用、分支标签渲染、features 接线）；`docs/logs/2026/08-06.md` 首条执行记录；`\_tmp/dingflow-inspect_.mjs` 已清理（glob 无匹配）。
+  - 全量：mission-driver full-green run（typecheck/build/lint 32/32 + test 59/59）记录于 daily log；e2e grep 58 passed/4 skip 记录一致，audit 复跑新增 spec 6/6 全绿。
+  - deferred 诚实性：demo 原型 insertBranch 缺陷（`out-of-scope improvement`，legacy 参考页显式 Non-Goals/Out Of Scope，successor 已登记）与其他 renderer data-\* 转发（`out-of-scope improvement`，scope 显式限定 flex/text/icon，机制已沉淀）均非 in-scope defect/contract drift，分类成立。
 
 Follow-up:
 

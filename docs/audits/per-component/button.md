@@ -37,7 +37,7 @@ button / flux-renderers-basic / ButtonSchema（`schemas.ts:222-248`）/ `{type:'
 - [P0-1] countDown 持久化直调 `localStorage`（`button.tsx:95,99,115,143,167-170`）——INV-1 硬红线违反 → 状态: fixed（host 注入 adapter，见修复记录）
 - [P2-1] definition `fields` 缺 `label`/`variant`/`size`（`basic-renderer-definitions.ts:292-307`）→ 状态: fixed
 - [P2-2] `void handleClick(event)` 未 catch dispatch rejection（`button.tsx:232,245`）→ 状态: fixed（实测确认 unhandled rejection 真实存在——test-first 测试触发 vitest Unhandled Rejection，修复后消失）
-- [P2-3] href URL 协议校验缺失（`button.tsx:227-232`；与 content `link.tsx` 同源，根因公共）→ 状态: open（shared，归 CR 集中裁决；本 plan 仅记录）
+- [P2-3] href URL 协议校验缺失（`button.tsx:227-232`；与 content `link.tsx` 同源，根因公共）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 2：`isSafeNavigationUrl` 提升至 flux-core `utils/url.ts` 公共层（content sanitize.ts 再导出），button href 分支接入，不安全协议剥离 href 属性（anchor 形态保留，与 link 同构）；test-first `button-href-safety.test.tsx` 6 用例先红后绿）
 - [P3-1] href 模式 disabled 时无 aria-disabled、修饰键可导航（`button.tsx:226-237`）——仅记录
 
 ## 组合宿主场景（真实浏览器验证）

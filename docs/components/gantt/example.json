@@ -206,21 +206,21 @@
     "action": "showToast",
     "args": {
       "level": "info",
-      "message": "点击任务: ${event.taskId}"
+      "message": "点击任务: ${_taskId}"
     }
   },
   "onTaskDoubleClick": {
     "action": "showToast",
     "args": {
       "level": "info",
-      "message": "双击任务: ${event.taskId}"
+      "message": "双击任务: ${_taskId}"
     }
   },
   "onTaskDragEnd": {
     "action": "showToast",
     "args": {
       "level": "success",
-      "message": "任务 ${event.taskId} 已更新"
+      "message": "任务 ${_taskId} 已更新"
     }
   },
   "zoomIn": {

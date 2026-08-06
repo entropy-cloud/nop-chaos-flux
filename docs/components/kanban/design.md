@@ -256,15 +256,15 @@ interface KanbanEvents {
 
 ## 7. 运行期状态归属
 
-| 状态               | Owner                    | 说明                                                                                                                 |
-| ------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| 卡片/列数据        | **数据源控制**           | `data` 表达式或 `data-source` 输出；内部只读消费，不修改源数据                                                       |
-| 拖拽中状态         | **local**                | `useKanbanDnd` hook 内部管理；拖拽结束后触发 `onCardMove`/`onColumnReorder` 事件                                     |
-| 状态 path 交互坐标 | **scope-owned 或 local** | `kanbanOwnership`/`kanbanStatePath`/`statusPath` 指定 scope path 时为 scope-owned；否则 local                        |
-| 列折叠状态         | **scope-owned 或 local** | `collapsedOwnership` + `collapsedStatePath` 组合控制；`collapsedOwnership` 指定范围时 path 生效，否则 local          |
-| 列顺序             | **scope-owned 或 local** | `columnsOrderOwnership` + `columnsOrderStatePath` 组合控制；`columnsOrderOwnership` 指定范围时 path 生效，否则 local |
-| 过滤文本           | **local**                | 渲染期派生，不持久                                                                                                   |
-| 卡片计数           | **派生**                 | 从 `column.children.length` 实时计算                                                                                 |
+| 状态               | Owner                    | 说明                                                                                                                                                                          |
+| ------------------ | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 卡片/列数据        | **数据源控制**           | `data` 表达式或 `data-source` 输出；内部只读消费，不修改源数据                                                                                                                |
+| 拖拽中状态         | **local**                | `useKanbanDnd` hook 内部管理；拖拽结束后触发 `onCardMove`/`onColumnReorder` 事件                                                                                              |
+| 状态 path 交互坐标 | **scope-owned 或 local** | `kanbanOwnership` + `kanbanStatePath` 组合控制；指定 scope path 时为 scope-owned，否则 local。`statusPath` 为兼容性声明字段（行为以实现为准，板数据读写走 `kanbanStatePath`） |
+| 列折叠状态         | **scope-owned 或 local** | `collapsedOwnership` + `collapsedStatePath` 组合控制；`collapsedOwnership` 指定范围时 path 生效，否则 local                                                                   |
+| 列顺序             | **scope-owned 或 local** | `columnsOrderOwnership` + `columnsOrderStatePath` 组合控制；`columnsOrderOwnership` 指定范围时 path 生效，否则 local                                                          |
+| 过滤文本           | **local**                | 渲染期派生，不持久                                                                                                                                                            |
+| 卡片计数           | **派生**                 | 从 `column.children.length` 实时计算                                                                                                                                          |
 
 > **乐观更新策略**：v1 采用悲观更新模式。拖拽完成后触发 `onCardMove` 事件，等待数据源确认后才真正更新 DOM。中断/失败时回滚到拖拽前位置。
 

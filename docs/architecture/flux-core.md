@@ -463,6 +463,12 @@ Priority order:
 - **`normalizeRootPath(path)`** / **`normalizeRootPaths(paths)`** — extract first path segment(s) for dependency tracking. `*` acts as wildcard.
 - **`createPathBinding`** (`packages/flux-core/src/utils/path-binding.ts`) — creates a path-binding service for projected-owner subtree rebasing, mapping between relative (owner-local) and absolute (parent-scope) coordinates.
 
+## URL Safety Utility
+
+`packages/flux-core/src/utils/url.ts` hosts the shared schema-driven `href` safety gate:
+
+- **`isSafeNavigationUrl(url)`** — allowlist check for navigation hrefs (`http:`/`https:`/`mailto:`/`tel:`/`data:`; scheme-less relative strings are safe; `javascript:`/`vbscript:`/`file:`/`blob:` are rejected). Promoted here as the root-cause location for the shared href-protocol gap (content `link` + basic `button` were each guarding or leaking independently); `flux-renderers-content/src/sanitize.ts` re-exports it so existing content-package consumers keep a stable import path.
+
 ## Designs No Longer Preferred
 
 - prototype-chain objects used directly as the expression execution context

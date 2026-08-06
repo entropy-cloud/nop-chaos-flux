@@ -39,7 +39,7 @@ variant-field / flux-renderers-form-advanced / VariantFieldSchema（`composite-s
 - [P1-3] readOnly 且无 viewer 时 content 回退分支子字段仍可编辑写回（variant-field-view.tsx:157-167 未提供 FormLayoutContext.Provider staticReadOnly——CX-8 同型缺口）→ 状态: fixed（readOnlyLayout FormLayoutContext.Provider staticReadOnly 传播 :162-177；test-first：c3-2-readonly-propagation.test.tsx 先红后绿 + 宿主 host-variant-switch 分支切换真机成立）
 - [P2-1] 无 design.md——裁定: **登记 P2 backlog 归 CR**（flux-guide composite-fields.md 已提供族级文档基线）→ 状态: 卡内记录，归 CR
 - [P3-1] reportVariantFieldFailure 默认文案硬编码英文（variant-field-helpers.ts:107）→ 状态: fixed（plan-2026-08-05-1359-1 Phase 1 I7：t('flux.form.variantUpdateFailed')）
-- [P3-2] 顶层 transformInAction/transformOutAction/validateValueAction 显式 `kind: 'ignored'`（variant-field.tsx:130-132）——语义为「按变体声明」，类型面保留但顶层零行为；卡内记录（有显式 ignored 标注，非静默 phantom——与 P1-2 区分）→ 状态: 卡内记录，归 CR（文档化建议）
+- [P3-2] 顶层 transformInAction/transformOutAction/validateValueAction 显式 `kind: 'ignored'`（variant-field.tsx:130-132）——语义为「按变体声明」，类型面保留但顶层零行为；卡内记录（有显式 ignored 标注，非静默 phantom——与 P1-2 区分）→ 状态: fixed（CR plan-2026-08-06-0329-1 Phase 4：design.md §5 文档化「顶层按变体声明语义，显式 ignored」）
 
 ## 组合宿主场景（真实浏览器验证）
 
