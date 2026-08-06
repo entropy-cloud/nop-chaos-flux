@@ -40,6 +40,17 @@ describe('button href URL protocol safety (CR P2-3 shared, flux-core isSafeNavig
     expect(anchor!.getAttribute('href')).toBeNull();
   });
 
+  it('strips blob: and file: hrefs', () => {
+    for (const unsafe of [
+      'blob:https://example.com/7c0f1c1f-2a1f-4c0f-8b0f-0f0f0f0f0f0f',
+      'file:///etc/passwd',
+    ]) {
+      cleanup();
+      const anchor = renderButtonWithHref(unsafe);
+      expect(anchor!.getAttribute('href')).toBeNull();
+    }
+  });
+
   it('keeps http/https/mailto/tel allowlisted hrefs', () => {
     for (const safe of [
       'https://example.com/path',
