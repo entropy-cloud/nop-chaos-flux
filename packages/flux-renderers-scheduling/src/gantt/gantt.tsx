@@ -75,30 +75,69 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       links: resolved.links,
       resources: resolved.resources,
       assignments: resolved.assignments,
+      cellWidth: resolved.cellWidth,
+      taskBarHeight: resolved.taskBarHeight,
+      zoomLevels: resolved.zoomLevels,
     });
     useEffect(() => {
       const prev = lastDataRef.current;
-      const changed =
+      const configChanged =
+        prev.cellWidth !== resolved.cellWidth ||
+        prev.taskBarHeight !== resolved.taskBarHeight ||
+        prev.zoomLevels !== resolved.zoomLevels;
+      const dataChanged =
         prev.tasks !== resolved.tasks ||
         prev.links !== resolved.links ||
         prev.resources !== resolved.resources ||
         prev.assignments !== resolved.assignments;
-      if (!changed) return;
+      if (!configChanged && !dataChanged) return;
       lastDataRef.current = {
         tasks: resolved.tasks,
         links: resolved.links,
         resources: resolved.resources,
         assignments: resolved.assignments,
+        cellWidth: resolved.cellWidth,
+        taskBarHeight: resolved.taskBarHeight,
+        zoomLevels: resolved.zoomLevels,
       };
-      const taskData = (resolved.tasks as any[]) ?? [];
-      const linkData = (resolved.links as any[]) ?? [];
-      const resourceData = (resolved.resources as any[]) ?? undefined;
-      const assignmentData = (resolved.assignments as any[]) ?? undefined;
-      store.parse(taskData, linkData, resourceData, assignmentData);
+      // 22-10: 配置字段运行时同步（原先仅 createInitialStore 一次性读取）。
+      if (configChanged) {
+        if (typeof resolved.cellWidth === 'number' && resolved.cellWidth !== prev.cellWidth) {
+          store.setCellWidth(resolved.cellWidth);
+        }
+        if (typeof resolved.taskBarHeight === 'number' && resolved.taskBarHeight !== prev.taskBarHeight) {
+          store.setTaskBarHeight(resolved.taskBarHeight);
+        }
+        if (resolved.zoomLevels !== undefined && resolved.zoomLevels !== prev.zoomLevels) {
+          store.setZoomLevels(
+            new Map(
+              (resolved.zoomLevels as import('./gantt.types.js').GanttZoomLevel[]).map((zl) => [zl.key, zl]),
+            ),
+          );
+        }
+      }
+      if (dataChanged) {
+        const taskData = (resolved.tasks as any[]) ?? [];
+        const linkData = (resolved.links as any[]) ?? [];
+        const resourceData = (resolved.resources as any[]) ?? undefined;
+        const assignmentData = (resolved.assignments as any[]) ?? undefined;
+        store.parse(taskData, linkData, resourceData, assignmentData);
+      }
       // parse() does not bump layoutRevision (the render subscription), so
-      // force a layout recompute + revision bump to re-render the new data.
+      // force a layout recompute + revision bump to re-render the new data
+      // (cellWidth/taskBarHeight/zoomLevels changes also need it to take
+      // effect in the rendered scale/bars).
       store.recalcLayout();
-    }, [resolved.tasks, resolved.links, resolved.resources, resolved.assignments, store]);
+    }, [
+      resolved.tasks,
+      resolved.links,
+      resolved.resources,
+      resolved.assignments,
+      resolved.cellWidth,
+      resolved.taskBarHeight,
+      resolved.zoomLevels,
+      store,
+    ]);
 
     const selectedTaskId = useSyncExternalStore(store.subscribe, () => store.selectedTaskId);
     const editingTaskId = useSyncExternalStore(store.subscribe, () => store.editingTaskId);
@@ -128,6 +167,11 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const handleTaskDragCommit = (taskId: string | number, changes: Record<string, string>) => {
       const payload = { _taskId: taskId, changes };
       void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
+    };
+
+    // 22-07: 编辑型变更（编辑器保存 / 行内提交 / 键盘删除）统一派发 onTaskEdit。
+    const dispatchTaskEdit = (payload: Record<string, unknown>) => {
+      void eventsRef.current.onTaskEdit?.(payload, eventCtx(payload));
     };
 
     const handleLinkDragCommit = (sourceId: string | number, targetId: string | number, linkType: string) => {
@@ -233,6 +277,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         const cmd = new DeleteTaskCommand(store, id);
         undoStack.push(cmd);
         cmd.execute();
+        // 22-07: 键盘 Delete 属编辑型变更，派发 onTaskEdit（deleted 标记）。
+        dispatchTaskEdit({ _taskId: id, deleted: true });
       },
     });
 
@@ -432,6 +478,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                 onEmptyCellClick={handleEmptyCellClick}
                 editable={editable}
                 scrollContainerRef={gridRef}
+                onCellCommit={(taskId, column, value) => {
+                  dispatchTaskEdit({ _taskId: taskId, changes: { [column]: value } });
+                }}
               />
             </div>
           }
@@ -480,6 +529,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           onBarDoubleClick={(id) => { store.editTask(id); }}
           className={resolved.editorClassName as string | undefined}
           undoStack={undoStack}
+          onCommit={(taskId, partial) => {
+            dispatchTaskEdit({ _taskId: taskId, changes: partial });
+          }}
         />
       </div>
     );

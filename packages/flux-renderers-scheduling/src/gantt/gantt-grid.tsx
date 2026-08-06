@@ -27,9 +27,11 @@ interface GanttGridProps {
   onEmptyCellClick?: () => void;
   editable?: boolean;
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
+  /** 22-07: 行内编辑提交回调（宿主借此派发 onTaskEdit schema 事件）。 */
+  onCellCommit?: (taskId: string | number, column: string, value: string) => void;
 }
 
-export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, className, columnRegions, onTaskClick, onTaskDoubleClick, onEmptyCellClick, editable, scrollContainerRef }: GanttGridProps) {
+export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, className, columnRegions, onTaskClick, onTaskDoubleClick, onEmptyCellClick, editable, scrollContainerRef, onCellCommit }: GanttGridProps) {
   const resolvedColumns = columns ?? buildDefaultColumns();
   useSyncExternalStore(store.subscribe, () => store.layoutRevision);
   useSyncExternalStore(store.subscribe, () => store.treeRevision);
@@ -66,6 +68,8 @@ export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, classN
 
   const handleCellCommit = (taskId: string | number, column: string, value: string) => {
     store.updateTask(taskId, { [column]: value });
+    // 22-07: 行内编辑变更对外派发通道（宿主 onTaskEdit）。
+    onCellCommit?.(taskId, column, value);
     setEditingCell(null);
   };
 

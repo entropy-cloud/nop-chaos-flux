@@ -7,6 +7,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,
+  useCurrentComponentRegistry: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flux-i18n', () => ({  t: (key: string, params?: Record<string, unknown>) => {
@@ -458,5 +459,50 @@ describe('KanbanBoard CR P2-3 / P2-4 (controlled gating + card payload)', () => 
       expect.anything(),
     );
     expect(onCardClick.mock.calls[0][0].card).toEqual(sampleBoard['card2']);
+  });
+
+  it('local mode confirmAddColumn fires onColumnAdd; controlled mode does NOT (22-04)', () => {
+    const localOnColumnAdd = vi.fn();
+    const { container: localContainer, unmount } = render(
+      <KanbanBoard {...defaultProps} events={{ onColumnAdd: localOnColumnAdd } as any} />,
+    );
+    const startAdd = Array.from(localContainer.querySelectorAll('button')).find(
+      (b) => b.textContent === '+ 添加列' || b.textContent === 'Add column',
+    );
+    expect(startAdd).toBeTruthy();
+    fireEvent.click(startAdd!);
+    const input = localContainer.querySelector('input[aria-label]') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    fireEvent.change(input, { target: { value: 'New Col' } });
+    const confirmBtn = Array.from(localContainer.querySelectorAll('button')).find(
+      (b) => b.textContent === '确认' || b.textContent === 'Confirm',
+    );
+    fireEvent.click(confirmBtn!);
+    expect(localOnColumnAdd).toHaveBeenCalledTimes(1);
+    expect(localOnColumnAdd).toHaveBeenCalledWith(
+      { columnId: expect.any(String), index: 2 },
+      expect.objectContaining({ evaluationBindings: expect.objectContaining({ columnId: expect.any(String) }) }),
+    );
+    unmount();
+
+    const controlledOnColumnAdd = vi.fn();
+    const { container } = render(
+      <KanbanBoard
+        {...defaultProps}
+        props={{ ...defaultProps.props, kanbanOwnership: 'controlled' } as any}
+        events={{ onColumnAdd: controlledOnColumnAdd } as any}
+      />,
+    );
+    const startAddControlled = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === '+ 添加列' || b.textContent === 'Add column',
+    );
+    fireEvent.click(startAddControlled!);
+    const inputControlled = container.querySelector('input[aria-label]') as HTMLInputElement;
+    fireEvent.change(inputControlled, { target: { value: 'New Col' } });
+    const confirmControlled = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === '确认' || b.textContent === 'Confirm',
+    );
+    fireEvent.click(confirmControlled!);
+    expect(controlledOnColumnAdd).not.toHaveBeenCalled();
   });
 });

@@ -174,6 +174,8 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   // CX-9 / reaction contract: activate the declared reaction plans so
   // schema-declared print/exportPNG/importICal/exportToICal actions fire.
+  // 22-05: print/exportPNG 经组件句柄 invoke 路径派发（对齐 gantt.tsx:417-419
+  // 先例）；importICal/exportToICal 为 @reserved（future design §12.6，仅 ready）。
   useEffect(() => {
     for (const key of ['print', 'exportPNG', 'importICal', 'exportToICal']) {
       props.reactions[key]?.ready();
@@ -222,15 +224,20 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
               return { ok: true };
             }
             case 'exportToPNG':
-              // Consume the async export so failures never surface as
-              // unhandled rejections and the handle reports the true outcome
-              // (errors are also presented in-UI via exportError).
+              // 22-05: 句柄 invoke 即派发 schema 声明的 exportPNG reaction
+              // （对齐 gantt.tsx:417-419 先例）。Consume the async export so
+              // failures never surface as unhandled rejections and the handle
+              // reports the true outcome (errors are also presented in-UI via
+              // exportError).
+              void reactionsRef.current.exportPNG?.dispatch();
               return exportRef.current.exportToPNG().then(
                 () => ({ ok: true }),
                 (error) => ({ ok: false, error }),
               );
             case 'exportToPrint':
+              // 22-05: 句柄 invoke 即派发 schema 声明的 print reaction。
               exportRef.current.exportToPrint();
+              void reactionsRef.current.print?.dispatch();
               return { ok: true };
             default:
               return { ok: false, error: new Error(`Unsupported calendar method: ${method}`) };

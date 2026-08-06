@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { GanttStore } from './gantt-store.js';
 import { GanttGrid } from './gantt-grid.js';
 import { GanttBars } from './gantt-bars.js';
@@ -62,6 +62,26 @@ describe('GanttGrid', () => {
     const { container } = render(<GanttGrid store={store} />);
     const rows = container.querySelectorAll('[data-slot="gantt-grid-row"]');
     expect(rows.length).toBe(2);
+  });
+
+  it('invokes onCellCommit when an inline cell edit is committed (22-07)', () => {
+    const store = createStore([
+      { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
+    ]);
+    const onCellCommit = vi.fn();
+    const { container } = render(
+      <GanttGrid store={store} editable {...({ onCellCommit } as any)} />,
+    );
+    const row = container.querySelector('[data-task-id="t1"]') as HTMLElement;
+    expect(row).toBeTruthy();
+    fireEvent.doubleClick(row);
+    const input = container.querySelector('input') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    fireEvent.change(input, { target: { value: 'Renamed' } });
+    fireEvent.blur(input);
+    expect(onCellCommit).toHaveBeenCalledTimes(1);
+    expect(onCellCommit).toHaveBeenCalledWith('t1', 'text', 'Renamed');
+    expect(store.tasks.get('t1')!.text).toBe('Renamed');
   });
 });
 

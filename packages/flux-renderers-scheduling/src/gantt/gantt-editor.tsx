@@ -13,9 +13,11 @@ interface GanttEditorProps {
   onClose?: () => void;
   onBarDoubleClick?: (taskId: string | number) => void;
   undoStack?: UndoStack;
+  /** 22-07: 编辑提交回调（宿主借此派发 onTaskEdit schema 事件）。 */
+  onCommit?: (taskId: string | number, partial: Partial<import('./gantt.types.js').GanttTaskData>) => void;
 }
 
-export function GanttEditor({ store, editorRegion, className, editingTaskId, onClose, undoStack }: GanttEditorProps) {
+export function GanttEditor({ store, editorRegion, className, editingTaskId, onClose, undoStack, onCommit }: GanttEditorProps) {
   const instanceId = useId();
 
   const textRef = useRef<HTMLInputElement>(null);
@@ -39,6 +41,8 @@ export function GanttEditor({ store, editorRegion, className, editingTaskId, onC
     }
     undoStack?.push(new UpdateTaskCommand(store, editingTaskIdValue, before, partial));
     store.updateTask(editingTaskIdValue, partial);
+    // 22-07: 编辑型变更对外派发通道（宿主 onTaskEdit）。
+    onCommit?.(editingTaskIdValue, partial);
   };
 
   const handleSave = () => {

@@ -117,4 +117,32 @@ describe('Calendar component exportToPNG handle', () => {
     const result = await registryMock.state.handle!.capabilities.invoke('exportToPNG', undefined, {});
     expect(result.ok).toBe(true);
   });
+
+  it('dispatches the declared print/exportPNG reactions when the handle methods are invoked (22-05)', async () => {
+    html2canvasMock.mockResolvedValue({
+      toBlob: (callback: (blob: Blob | null) => void) => callback(new Blob()),
+      toDataURL: () => 'data:image/png;base64,test',
+      width: 100,
+      height: 100,
+    });
+    const print = { ready: vi.fn(), dispatch: vi.fn() };
+    const exportPNG = { ready: vi.fn(), dispatch: vi.fn() };
+    (window as unknown as { print: () => void }).print = vi.fn();
+    render(<Calendar {...baseProps} reactions={{ print, exportPNG } as any} />);
+    await waitFor(() => {
+      expect(registryMock.state.handle).toBeTruthy();
+    });
+    const handle = registryMock.state.handle!;
+
+    // component:exportToPrint → print reaction fires
+    handle.capabilities.invoke('exportToPrint', undefined, {});
+    expect(print.dispatch).toHaveBeenCalledTimes(1);
+    expect(exportPNG.dispatch).not.toHaveBeenCalled();
+
+    // component:exportToPNG → exportPNG reaction fires
+    const result = await handle.capabilities.invoke('exportToPNG', undefined, {});
+    expect(result.ok).toBe(true);
+    expect(exportPNG.dispatch).toHaveBeenCalledTimes(1);
+    expect(print.dispatch).toHaveBeenCalledTimes(1);
+  });
 });

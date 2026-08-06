@@ -37,6 +37,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'onTaskClick', kind: 'event' },
       { key: 'onTaskDoubleClick', kind: 'event' },
       { key: 'onTaskDragEnd', kind: 'event' },
+      { key: 'onTaskEdit', kind: 'event' },
       { key: 'onLinkClick', kind: 'event' },
       { key: 'onLinkDragEnd', kind: 'event' },
       { key: 'onEmptyCellClick', kind: 'event' },
@@ -61,6 +62,67 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'kanban' },
     component: KanbanBoard,
+    componentCapabilityContracts: [
+      {
+        handle: 'scrollToCard',
+        displayName: 'Scroll To Card',
+        description: 'Scroll the board so the target card is visible.',
+        args: { kind: 'object', fields: { cardId: { kind: 'string' } } },
+      },
+      {
+        handle: 'scrollToColumn',
+        displayName: 'Scroll To Column',
+        description: 'Scroll the board so the target column is visible.',
+        args: { kind: 'object', fields: { columnId: { kind: 'string' } } },
+      },
+      {
+        handle: 'addCard',
+        displayName: 'Add Card',
+        description: 'Insert a card into the target column (optionally at an index).',
+        args: {
+          kind: 'object',
+          fields: {
+            columnId: { kind: 'string' },
+            card: { kind: 'object', fields: {} },
+            options: { kind: 'object', fields: { index: { kind: 'number' } }, optional: ['index'] },
+          },
+        },
+      },
+      {
+        handle: 'removeCard',
+        displayName: 'Remove Card',
+        description: 'Remove the target card from the board.',
+        args: { kind: 'object', fields: { cardId: { kind: 'string' } } },
+      },
+      {
+        handle: 'moveCard',
+        displayName: 'Move Card',
+        description: 'Move the target card to a column at a data index.',
+        args: {
+          kind: 'object',
+          fields: {
+            cardId: { kind: 'string' },
+            toColumnId: { kind: 'string' },
+            toIndex: { kind: 'number' },
+          },
+        },
+      },
+      {
+        handle: 'collapseColumn',
+        displayName: 'Collapse Column',
+        description: 'Collapse or expand the target column.',
+        args: {
+          kind: 'object',
+          fields: { columnId: { kind: 'string' }, collapsed: { kind: 'boolean' } },
+        },
+      },
+      {
+        handle: 'getData',
+        displayName: 'Get Data',
+        description: 'Return a snapshot of the current board data.',
+        result: { kind: 'object', fields: {} },
+      },
+    ],
     fields: [
       { key: 'data', kind: 'prop' },
       { key: 'configMap', kind: 'prop' },

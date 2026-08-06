@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, act } from '@testing-library/react';
 import { Gantt } from './gantt.js';
 
 vi.mock('@nop-chaos/flux-react', () => ({
@@ -31,8 +31,12 @@ vi.mock('./hooks/use-gantt-scroll.js', () => ({
   useGanttScroll: vi.fn(),
 }));
 
+const keyboardOptionsCapture = vi.hoisted(() => ({ options: null as null | Record<string, unknown> }));
+
 vi.mock('./hooks/use-gantt-keyboard.js', () => ({
-  useGanttKeyboard: vi.fn(),
+  useGanttKeyboard: (options: Record<string, unknown>) => {
+    keyboardOptionsCapture.options = options;
+  },
 }));
 
 describe('Gantt', () => {
@@ -430,5 +434,146 @@ describe('Gantt regression — 22-01 zoom single-step per click (0711 audit P1)'
     (toolbarButtons[1] as HTMLElement).click();
     expect(onZoomChange).toHaveBeenCalledTimes(2);
     expect(reactions.zoomIn.dispatch).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('Gantt regression — 22-07 onTaskEdit (编辑型变更事件外抛)', () => {
+  const editBaseProps = {
+    id: 'gantt-test',
+    path: 'test',
+    schema: { type: 'gantt' as const },
+    templateNode: {} as any,
+    node: {} as any,
+    props: {
+      tasks: [{ id: 't1', text: 'T1', start: '2026-01-01', end: '2026-01-10' }],
+      links: [],
+    } as any,
+    meta: { visible: true, disabled: false } as any,
+    regions: {} as any,
+    events: {} as any,
+    reactions: {} as any,
+    helpers: {} as any,
+  };
+
+  it('keyboard Delete dispatches onTaskEdit with {_taskId, deleted:true} + full ctx (22-07)', () => {
+    const onTaskEdit = vi.fn();
+    render(
+      React.createElement(Gantt, {
+        ...editBaseProps,
+        events: { onTaskEdit } as any,
+      }),
+    );
+    expect(keyboardOptionsCapture.options).toBeTruthy();
+    act(() => {
+      (keyboardOptionsCapture.options!.onDeleteTask as (id: string) => void)('t1');
+    });
+    expect(onTaskEdit).toHaveBeenCalledTimes(1);
+    expect(onTaskEdit).toHaveBeenCalledWith(
+      { _taskId: 't1', deleted: true },
+      expect.objectContaining({
+        event: expect.objectContaining({ _taskId: 't1', deleted: true }),
+        evaluationBindings: expect.objectContaining({ _taskId: 't1', deleted: true }),
+        scope: expect.anything(),
+      }),
+    );
+  });
+});
+
+describe('Gantt regression — 22-10 配置 prop 运行时同步', () => {
+  const configBaseProps = {
+    id: 'gantt-test',
+    path: 'test',
+    schema: { type: 'gantt' as const },
+    templateNode: {} as any,
+    node: {} as any,
+    props: {} as any,
+    meta: { visible: true, disabled: false } as any,
+    regions: {} as any,
+    events: {} as any,
+    reactions: {} as any,
+    helpers: {} as any,
+  };
+
+  const tasks = [{ id: 't1', text: 'T1', start: '2026-01-01', end: '2026-01-10' }];
+  const dayOnly = [
+    { key: 'day', label: 'Day', minCellWidth: 40, scales: [{ unit: 'day', step: 1, format: 'MM/DD' }] },
+  ];
+  const dayWeek = [
+    { key: 'day', label: 'Day', minCellWidth: 40, scales: [{ unit: 'day', step: 1, format: 'MM/DD' }] },
+    { key: 'week', label: 'Week', minCellWidth: 80, scales: [{ unit: 'week', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
+  ];
+
+  it('syncs cellWidth prop changes into the store at runtime (scale cell width follows)', async () => {
+    const { container, rerender } = render(
+      React.createElement(Gantt, {
+        ...configBaseProps,
+        props: { defaultZoom: 'day', zoomLevels: dayOnly, tasks, links: [] } as any,
+      }),
+    );
+    const dayCellWidth = () => {
+      const cell = container.querySelector('[data-slot="gantt-scale-cell"]') as HTMLElement | null;
+      return cell ? parseInt(cell.style.width, 10) : null;
+    };
+    expect(dayCellWidth()).toBe(40);
+
+    rerender(
+      React.createElement(Gantt, {
+        ...configBaseProps,
+        props: { defaultZoom: 'day', zoomLevels: dayOnly, cellWidth: 90, tasks, links: [] } as any,
+      }),
+    );
+    await waitFor(() => {
+      expect(dayCellWidth()).toBe(90);
+    });
+  });
+
+  it('syncs taskBarHeight prop changes into the store at runtime (bar height follows)', async () => {
+    const { container, rerender } = render(
+      React.createElement(Gantt, {
+        ...configBaseProps,
+        props: { defaultZoom: 'day', zoomLevels: dayOnly, taskBarHeight: 28, tasks, links: [] } as any,
+      }),
+    );
+    const barHeight = () => {
+      const bar = container.querySelector('[data-slot="gantt-bar"]') as HTMLElement | null;
+      return bar ? parseInt(bar.style.height, 10) : null;
+    };
+    expect(barHeight()).toBe(28);
+
+    rerender(
+      React.createElement(Gantt, {
+        ...configBaseProps,
+        props: { defaultZoom: 'day', zoomLevels: dayOnly, taskBarHeight: 44, tasks, links: [] } as any,
+      }),
+    );
+    await waitFor(() => {
+      expect(barHeight()).toBe(44);
+    });
+  });
+
+  it('syncs zoomLevels prop changes into the store at runtime (new levels become zoomable)', async () => {
+    const onZoomChange = vi.fn();
+    const { container, rerender } = render(
+      React.createElement(Gantt, {
+        ...configBaseProps,
+        props: { defaultZoom: 'day', zoomLevels: dayOnly, tasks, links: [] } as any,
+        events: { onZoomChange } as any,
+      }),
+    );
+    const zoomInButton = () => container.querySelectorAll('[data-slot="gantt-toolbar"] button')[1] as HTMLElement;
+    zoomInButton().click();
+    expect(onZoomChange).not.toHaveBeenCalled();
+
+    rerender(
+      React.createElement(Gantt, {
+        ...configBaseProps,
+        props: { defaultZoom: 'day', zoomLevels: dayWeek, tasks, links: [] } as any,
+        events: { onZoomChange } as any,
+      }),
+    );
+    await waitFor(() => {
+      zoomInButton().click();
+      expect(onZoomChange).toHaveBeenCalledWith({ zoom: 'week' }, expect.anything());
+    });
   });
 });

@@ -10,7 +10,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
-import { useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentComponentRegistry, useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData, KanbanSchema, KanbanCardConfig } from './kanban.types.js';
@@ -28,7 +28,8 @@ import { KanbanActivityLog } from './components/kanban-activity-log.js';
 import type { KanbanAction } from './components/kanban-activity-log.js';
 import { createUndoStack, pushCommand as pushUndoCommand, undo as undoStackOp, redo as redoStackOp, canUndo, canRedo } from './utils/kanban-undo-stack.js';
 import type { UndoStack, UndoCommandType } from './utils/kanban-undo-stack.js';
-import { addCard, removeCard, moveColumn, getColumns, collectAllTags } from './kanban-helpers.js';
+import { addCard, removeCard, moveCard, moveColumn, getColumns, collectAllTags } from './kanban-helpers.js';
+import { registerKanbanHandle, type KanbanHandleSurface } from './kanban-handle.js';
 
 const EMPTY_BOARD = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
 
@@ -345,14 +346,24 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   };
 
   const handleCardAdd = (columnId: string, cardData?: Record<string, any>) => {
-    lastCommandTypeRef.current = 'addCard';
-    const cardId = `card-${Date.now()}`;
+    handleCardAddAt(columnId, cardData, undefined);
+  };
+
+  // 22-12: handle 驱动与 UI 驱动共用同一条 mutation 通道（undo + 事件 + 活动日志）。
+  // 返回 boolean 供 component:* 句柄报告真实结果；controlled 模式 mutation 被
+  // 丢弃时返回 false（契约注释 :52-55 语义）。
+  const handleCardAddAt = (columnId: string, cardData?: Record<string, any>, index?: number): boolean => {
+    if (isControlled) return false;
+    const cardId = (cardData?.id as string) || `card-${Date.now()}`;
     const newCard = { id: cardId, title: cardData?.title || t('scheduling.kanban.newCard'), ...cardData };
-    handleSetBoardData(addCard(boardData, columnId, newCard), 'addCard', { cardId, columnId, cardData: newCard, index: -1 });
-    const addPayload = { cardId, columnId, index: -1, card: newCard };
+    const newBoard = addCard(boardData, columnId, newCard, index);
+    lastCommandTypeRef.current = 'addCard';
+    handleSetBoardData(newBoard, 'addCard', { cardId, columnId, cardData: newCard, index: index ?? -1 });
+    const addPayload = { cardId, columnId, index: index ?? -1, card: newCard };
     if (!isControlled) {
       void events.onCardAdd?.(addPayload, eventCtx(addPayload));
     }
+    return true;
   };
 
   const handleCardRemove = (cardId: string) => {
@@ -366,6 +377,30 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     if (!isControlled) {
       void events.onCardRemove?.(removePayload, eventCtx(removePayload));
     }
+  };
+
+  // 22-12: component:moveCard 程序式移动（design.md §8）。
+  const handleCardMoveViaHandle = (cardId: string, toColumnId: string, toIndex: number): boolean => {
+    if (isControlled) return false;
+    const card = boardData[cardId];
+    if (!card) return false;
+    const fromColumnId = card.parentId || '';
+    const fromIndex = boardData[fromColumnId] ? [...boardData[fromColumnId].children].indexOf(cardId) : -1;
+    const newBoard = moveCard(boardData, cardId, toColumnId, toIndex);
+    lastCommandTypeRef.current = 'moveCard';
+    handleSetBoardData(newBoard, 'moveCard', { cardId, fromColumnId, toColumnId, fromIndex, toIndex });
+    const movePayload = { cardId, fromColumnId, toColumnId, fromIndex, toIndex, card };
+    if (!isControlled) {
+      void events.onCardMove?.(movePayload, eventCtx(movePayload));
+    }
+    return true;
+  };
+
+  // 22-12: component:collapseColumn 程序式折叠（design.md §8）。
+  const handleCollapseColumn = (columnId: string, collapsed: boolean): boolean => {
+    if (collapsedOwnership === 'controlled') return false;
+    setCollapsedMap((prev) => ({ ...prev, [columnId]: collapsed }));
+    return true;
   };
 
   const handleToggleTag = (tagId: string) => {
@@ -389,7 +424,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     lastCommandTypeRef.current = 'addColumn';
     handleSetBoardData(newBoard, 'addColumn', { columnId, columnData: newBoard[columnId], index: rootChildren.length });
     const colAddPayload = { columnId, index: rootChildren.length };
-    void events.onColumnAdd?.(colAddPayload, eventCtx(colAddPayload));
+    // 22-04: controlled 模式 mutation 被丢弃，mutation 事件不得声称已发生
+    // （对齐同文件 :285/:308/:330/:353/:366 守卫先例）。
+    if (!isControlled) {
+      void events.onColumnAdd?.(colAddPayload, eventCtx(colAddPayload));
+    }
     setAddingColumn(false);
     setNewColumnTitle('');
   };
@@ -399,6 +438,65 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const boardRef = useRef<HTMLDivElement>(null);
   const [keyboardMoveCard, setKeyboardMoveCard] = useState<{ cardId: string; columnId: string } | null>(null);
   const [dndAnnouncement, setDndAnnouncement] = useState('');
+
+  // 22-12: component:* 句柄读取的最新操作面镜像（calendar navRef 模式）。
+  // 每次渲染后刷新；句柄 invoke 经镜像间接调用，保持注册 identity 稳定。
+  const kanbanSurfaceRef = useRef<KanbanHandleSurface>({
+    scrollToCard: () => false,
+    scrollToColumn: () => false,
+    addCard: () => false,
+    removeCard: () => false,
+    moveCard: () => false,
+    collapseColumn: () => false,
+    getData: () => boardDataRef.current,
+    getColumnsCount: () => getColumns(boardDataRef.current).length,
+  });
+  useEffect(() => {
+    kanbanSurfaceRef.current = {
+      scrollToCard: (cardId: string): boolean => {
+        const root = boardRef.current;
+        if (!root) return false;
+        const el = root.querySelector(`[data-card-id="${cardId}"]`);
+        if (!el) return false;
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return true;
+      },
+      scrollToColumn: (columnId: string): boolean => {
+        const root = boardRef.current;
+        if (!root) return false;
+        const el = root.querySelector(`[data-column-id="${columnId}"]`);
+        if (!el) return false;
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return true;
+      },
+      addCard: handleCardAddAt,
+      removeCard: (cardId: string): boolean => {
+        if (isControlled) return false;
+        if (!boardData[cardId]) return false;
+        handleCardRemove(cardId);
+        return true;
+      },
+      moveCard: handleCardMoveViaHandle,
+      collapseColumn: handleCollapseColumn,
+      getData: (): BoardData => boardDataRef.current,
+      getColumnsCount: (): number => getColumns(boardDataRef.current).length,
+    };
+  });
+
+  // 22-12: ComponentHandle 注册（gantt.tsx / calendar.tsx 模式，实现抽离
+  // `kanban-handle.ts`）——使 design.md §8 声明的 component:scrollToCard/
+  // scrollToColumn/addCard/removeCard/moveCard/collapseColumn/getData 运行时
+  // 经 registry 可解析。
+  const componentRegistry = useCurrentComponentRegistry();
+  useEffect(() => {
+    if (!componentRegistry) return;
+    return registerKanbanHandle({
+      componentRegistry,
+      id: props.id,
+      cid: meta.cid,
+      getSurface: () => kanbanSurfaceRef.current,
+    });
+  }, [componentRegistry, props.id, meta.cid]);
 
   useKanbanBoardEffects({
     boardRef,

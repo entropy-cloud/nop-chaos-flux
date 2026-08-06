@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, afterEach } from 'vitest';
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, fireEvent, cleanup } from '@testing-library/react';
 import { GanttStore } from './gantt-store.js';
 import { GanttEditor } from './gantt-editor.js';
 import { UndoStack } from './undo-stack.js';
 import type { GanttTaskData } from './gantt.types.js';
+
+afterEach(cleanup);
 
 function createStore(tasks: GanttTaskData[]) {
   const store = new GanttStore({ cellWidth: 40 });
@@ -142,5 +144,60 @@ describe('GanttEditor CR P2-1 (custom editor region onSave persistence)', () => 
     expect(store.tasks.get('t1')!.text).toBe('Renamed');
     stack.undo();
     expect(store.tasks.get('t1')!.text).toBe('Task 1');
+  });
+});
+
+describe('GanttEditor 22-07 (onCommit edit-change callback)', () => {
+  it('invokes onCommit with the edited task fields on save (host dispatches onTaskEdit)', () => {
+    const store = createStore([
+      { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
+    ]);
+    store.editTask('t1');
+    const onCommit = vi.fn();
+    render(
+      <GanttEditor
+        store={store}
+        editingTaskId="t1"
+        {...({ onCommit } as any)}
+      />,
+    );
+    const textInput = document.querySelector<HTMLInputElement>('input[id$="-edit-text"]');
+    expect(textInput).toBeTruthy();
+    fireEvent.change(textInput!, { target: { value: 'Renamed' } });
+    const saveButton = Array.from(document.querySelectorAll('button')).find(
+      (b) => b.textContent?.includes('保存') || b.textContent?.includes('Save'),
+    );
+    expect(saveButton).toBeTruthy();
+    fireEvent.click(saveButton!);
+    expect(onCommit).toHaveBeenCalledTimes(1);
+    expect(onCommit.mock.calls[0][0]).toBe('t1');
+    expect(onCommit.mock.calls[0][1]).toEqual(expect.objectContaining({ text: 'Renamed' }));
+  });
+
+  it('invokes onCommit when the custom editor region onSave commits (host dispatches onTaskEdit)', () => {
+    const store = createStore([
+      { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
+    ]);
+    store.editTask('t1');
+    const onCommit = vi.fn();
+    let capturedOnSave: ((next?: unknown) => void) | null = null;
+    render(
+      <GanttEditor
+        store={store}
+        editingTaskId="t1"
+        {...({ onCommit } as any)}
+        editorRegion={
+          {
+            render: ({ bindings }: { bindings: { onSave: (next?: unknown) => void } }) => {
+              capturedOnSave = bindings.onSave;
+              return <div>custom</div>;
+            },
+          } as any
+        }
+      />,
+    );
+    capturedOnSave!({ text: 'Region Renamed' });
+    expect(onCommit).toHaveBeenCalledTimes(1);
+    expect(onCommit.mock.calls[0][1]).toEqual(expect.objectContaining({ text: 'Region Renamed' }));
   });
 });

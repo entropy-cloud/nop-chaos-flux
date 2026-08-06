@@ -8,6 +8,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,
+  useCurrentComponentRegistry: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flux-i18n', () => ({

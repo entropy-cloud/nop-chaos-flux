@@ -124,7 +124,14 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     get currentZoom(): string { return gs().currentZoom; },
     set currentZoom(v: string) { store.setState({ currentZoom: v }); },
     get zoomLevels() { return gs().zoomLevels; },
+    // 22-10: 运行时配置同步 setter（re-seed effect 使用）。
+    set zoomLevels(v: Map<string, GanttZoomLevel>) { store.setState({ zoomLevels: v }); },
     get taskBarHeight(): number { return gs().taskBarHeight; },
+    // 22-10: 运行时配置同步 setter（re-seed effect 使用）。
+    set taskBarHeight(v: number) { store.setState({ taskBarHeight: v }); },
+    setCellWidth: (v: number) => { store.setState({ cellWidth: v }); },
+    setTaskBarHeight: (v: number) => { store.setState({ taskBarHeight: v }); },
+    setZoomLevels: (v: Map<string, GanttZoomLevel>) => { store.setState({ zoomLevels: v }); },
     get rowHeight(): number { return gs().rowHeight; },
     get containerWidth(): number { return gs().containerWidth; },
     set containerWidth(v: number) { store.setState({ containerWidth: v }); },

@@ -113,6 +113,10 @@ export interface GanttStoreApi {
   zoomLevels: Map<string, GanttZoomLevel>;
   taskBarHeight: number;
   rowHeight: number;
+  /** 22-10: 运行时配置同步方法（re-seed effect 使用）。 */
+  setCellWidth: (v: number) => void;
+  setTaskBarHeight: (v: number) => void;
+  setZoomLevels: (v: Map<string, GanttZoomLevel>) => void;
   containerWidth: number;
   revision: number;
   taskRevision: number;
@@ -179,6 +183,8 @@ export interface GanttSchema extends BaseSchema {
   onTaskClick?: ActionSchema;
   onTaskDoubleClick?: ActionSchema;
   onTaskDragEnd?: ActionSchema;
+  /** 编辑型变更（编辑器保存 / 行内单元格提交 / 键盘 Delete）。payload：`{ _taskId, changes? }`（更新）或 `{ _taskId, deleted: true }`（删除）。 */
+  onTaskEdit?: ActionSchema;
   onLinkClick?: ActionSchema;
   onLinkDragEnd?: ActionSchema;
   onEmptyCellClick?: ActionSchema;
