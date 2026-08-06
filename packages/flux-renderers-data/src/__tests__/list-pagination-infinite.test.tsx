@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentCapabilityActionContext, ComponentHandleRegistry } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
@@ -432,5 +432,80 @@ describe('list infinite-scroll integration', () => {
     expect(document.querySelector('[data-slot="list-infinite-status"]')?.textContent).toContain(
       t('flux.list.noMore'),
     );
+  });
+});
+
+describe('list/pagination schema event dispatch ctx (CX-10 / bug-83 family)', () => {
+  function urlCaptureEnv(urls: string[]) {
+    return {
+      fetcher: async (api: { url?: string }) => {
+        urls.push(api?.url ?? '');
+        return { ok: true, status: 200, data: null as never };
+      },
+      notify: () => undefined,
+    };
+  }
+
+  it('resolves ${selectionMode} in list onSelectionChange action args via ctx', async () => {
+    const urls: string[] = [];
+    render(
+      <SchemaRenderer
+        schemaUrl="test://list/ctx"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'list',
+              selectionMode: 'single',
+              items: [{ id: 'k1', label: 'A' }],
+              onSelectionChange: {
+                action: 'ajax',
+                args: { url: '/select-${selectionMode}' },
+              },
+              item: { type: 'text', text: '${$slot.item.label}' },
+            },
+          ],
+        }}
+        env={urlCaptureEnv(urls) as never}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(itemLabels()).toEqual(['A']));
+    fireEvent.click(document.querySelector('[data-slot="list-item"]')!);
+
+    await waitFor(() => expect(urls).toContain('/select-single'));
+  });
+
+  it('resolves ${currentPage} in pagination onChange action args via ctx', async () => {
+    const urls: string[] = [];
+    render(
+      <SchemaRenderer
+        schemaUrl="test://list/pagination-ctx"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'pagination',
+              currentPage: 1,
+              pageSize: 10,
+              total: 25,
+              onChange: {
+                action: 'ajax',
+                args: { url: '/page-${currentPage}' },
+              },
+            },
+          ],
+        }}
+        env={urlCaptureEnv(urls) as never}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const pageTwo = document.querySelector<HTMLElement>('[data-page="2"]');
+    expect(pageTwo).toBeTruthy();
+    fireEvent.click(pageTwo!);
+
+    await waitFor(() => expect(urls).toContain('/page-2'));
   });
 });

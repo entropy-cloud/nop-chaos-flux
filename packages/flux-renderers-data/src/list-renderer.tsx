@@ -360,12 +360,19 @@ export function ListRenderer(props: ListOwner) {
 
     setSelectedKeys(next);
 
+    // CX-10 / bug-83 family convention: the second dispatch arg carries
+    // { event, evaluationBindings, scope } so action args templates can read
+    // payload keys (${selectionMode} / ${selectedKeys}) as bare bindings.
     const payload = {
       type: 'list:selection-change',
       selectedKeys: Array.from(next),
       selectionMode,
     };
-    void props.events.onSelectionChange?.(payload, { scope: props.node.scope });
+    void props.events.onSelectionChange?.(payload, {
+      event: payload,
+      evaluationBindings: payload,
+      scope: props.node.scope,
+    });
   };
 
   if (items.length === 0) {

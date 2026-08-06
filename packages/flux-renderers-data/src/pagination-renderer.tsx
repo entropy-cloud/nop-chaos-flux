@@ -160,10 +160,20 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
       return;
     }
     setCurrentPage(next);
-    void props.events.onChange?.(
-      { type: 'pagination:change', currentPage: next, pageSize, total },
-      { scope: props.node.scope },
-    );
+    // CX-10 / bug-83 family convention: the second dispatch arg carries
+    // { event, evaluationBindings, scope } so action args templates can read
+    // payload keys (${currentPage}) as bare bindings.
+    const payload = {
+      type: 'pagination:change',
+      currentPage: next,
+      pageSize,
+      total,
+    };
+    void props.events.onChange?.(payload, {
+      event: payload,
+      evaluationBindings: payload,
+      scope: props.node.scope,
+    });
   };
 
   const handlePageSizeChange = (nextRaw: number) => {
@@ -175,20 +185,29 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
     const nextTotalPages = computeTotalPages(total, next);
     setPageSize(next);
     setCurrentPage(1);
-    void props.events.onPageSizeChange?.(
-      {
-        type: 'pagination:page-size-change',
-        pageSize: next,
-        currentPage: 1,
-        totalPages: nextTotalPages,
-        total,
-      },
-      { scope: props.node.scope },
-    );
-    void props.events.onChange?.(
-      { type: 'pagination:change', currentPage: 1, pageSize: next, total },
-      { scope: props.node.scope },
-    );
+    const payload = {
+      type: 'pagination:page-size-change',
+      pageSize: next,
+      currentPage: 1,
+      totalPages: nextTotalPages,
+      total,
+    };
+    void props.events.onPageSizeChange?.(payload, {
+      event: payload,
+      evaluationBindings: payload,
+      scope: props.node.scope,
+    });
+    const changePayload = {
+      type: 'pagination:change',
+      currentPage: 1,
+      pageSize: next,
+      total,
+    };
+    void props.events.onChange?.(changePayload, {
+      event: changePayload,
+      evaluationBindings: changePayload,
+      scope: props.node.scope,
+    });
   };
 
   const pages = buildPageWindow(currentPage, currentTotalPages);
