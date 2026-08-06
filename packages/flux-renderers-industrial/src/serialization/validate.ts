@@ -21,8 +21,11 @@ function checkNumberField(
   errors: string[],
   scope: string,
 ): void {
-  if (field in node && typeof node[field] !== 'number') {
-    errors.push(`${scope}.${field} must be a number`);
+  // plan 2026-08-06-0900-1 P2-3：收紧为有限数值——`typeof NaN === 'number'`、`typeof Infinity === 'number'`，
+  // 旧 typeof-only 守卫放行 NaN/±Infinity（`JSON.parse('1e400') → Infinity`），消费者读字段 raw 产 NaN/Infinity
+  // （几何/动画周期/死区语义漂移）。现 Number.isFinite 拒绝非有限数值。
+  if (field in node && (typeof node[field] !== 'number' || !Number.isFinite(node[field] as number))) {
+    errors.push(`${scope}.${field} must be a finite number`);
   }
 }
 
@@ -37,8 +40,48 @@ function checkStringField(
   }
 }
 
+// plan 2026-08-06-0900-1 P2-6：声明对象子形状校验 helper。validator 旧实现只校验声明对象 surface 类型，
+// `shadow`/animation `from,to`/`background`/declaration `scale.k,b`/`init` 子字段 malformed 全过——消费者读
+// 声明子字段 raw 产 NaN/undefined。helper 按 schema 逐字段校验类型，malformed 子字段被 validator 拒绝。
+type ShapeFieldType = 'number' | 'string' | 'boolean' | 'object' | 'array';
+function assertShape(
+  value: Record<string, unknown>,
+  schema: Record<string, ShapeFieldType>,
+  scope: string,
+  errors: string[],
+): void {
+  for (const [field, expected] of Object.entries(schema)) {
+    if (!(field in value)) continue;
+    const v = value[field];
+    let ok = false;
+    switch (expected) {
+      case 'number':
+        ok = typeof v === 'number';
+        break;
+      case 'string':
+        ok = typeof v === 'string';
+        break;
+      case 'boolean':
+        ok = typeof v === 'boolean';
+        break;
+      case 'object':
+        ok = isPlainObject(v);
+        break;
+      case 'array':
+        ok = Array.isArray(v);
+        break;
+    }
+    if (!ok) {
+      errors.push(`${scope}.${field} must be a ${expected}`);
+    }
+  }
+}
+
 const ANIMATION_KINDS = ['rotate', 'blink', 'flow', 'move'];
 const SYMBOL_EVENT_ONS = ['click', 'dblclick', 'hover'];
+// plan 2026-08-06-0900-1 P2-9-validateSymbolNode：children 递归深度上限（fail-closed）——
+// ~10k 层嵌套（恶意/损坏 host JSON）不再 stack overflow，溢出返结构化深度错误。
+const MAX_VALIDATE_DEPTH = 100;
 
 function validateBinding(value: unknown, errors: string[], scope: string): void {
   if (!isPlainObject(value)) {
@@ -79,8 +122,15 @@ function validateAnimation(value: unknown, errors: string[], scope: string): voi
   checkNumberField(anim, 'period', errors, scope);
   checkNumberField(anim, 'loop', errors, scope);
   for (const field of ['from', 'to']) {
-    if (field in anim && !(typeof anim[field] === 'number' || isPlainObject(anim[field]))) {
-      errors.push(`${scope}.${field} must be a number or an object`);
+    if (field in anim) {
+      const v = anim[field];
+      if (typeof v === 'number') continue;
+      // plan 2026-08-06-0900-1 P2-6：object 形态时校验子形状（{x:number,y:number}）。
+      if (isPlainObject(v)) {
+        assertShape(v, { x: 'number', y: 'number' }, `${scope}.${field}`, errors);
+      } else {
+        errors.push(`${scope}.${field} must be a number or an object`);
+      }
     }
   }
   if ('when' in anim) {
@@ -164,7 +214,14 @@ function validateSymbolNode(
   errors: string[],
   scope: string,
   isKnownType: (type: string) => boolean,
+  depth = 0,
 ): void {
+  // plan 2026-08-06-0900-1 P2-9-validateSymbolNode：深度上限 fail-closed——超 cap 不再递归，
+  // 防 ~10k 层嵌套（恶意/损坏 host JSON）stack overflow（validator 本应是最外层防线，却自身先崩）。
+  if (depth > MAX_VALIDATE_DEPTH) {
+    errors.push(`${scope} exceeds maximum nesting depth`);
+    return;
+  }
   if (!isPlainObject(node)) {
     errors.push(`${scope} must be an object`);
     return;
@@ -203,6 +260,14 @@ function validateSymbolNode(
   }
   if ('shadow' in nodeObj && !isPlainObject(nodeObj.shadow)) {
     errors.push(`${scope}.shadow must be an object`);
+  } else if (nodeObj.shadow !== undefined) {
+    // plan 2026-08-06-0900-1 P2-6：shadow 子形状校验（旧实现仅 isPlainObject，子字段 malformed 全过）。
+    assertShape(
+      nodeObj.shadow as Record<string, unknown>,
+      { x: 'number', y: 'number', blur: 'number', color: 'string' },
+      `${scope}.shadow`,
+      errors,
+    );
   }
   if ('visible' in nodeObj && typeof nodeObj.visible !== 'boolean') {
     errors.push(`${scope}.visible must be a boolean`);
@@ -274,7 +339,7 @@ function validateSymbolNode(
       errors.push(`${scope}.children must be an array`);
     } else {
       nodeObj.children.forEach((child, index) => {
-        validateSymbolNode(child, seenIds, errors, `${scope}.children[${index}]`, isKnownType);
+        validateSymbolNode(child, seenIds, errors, `${scope}.children[${index}]`, isKnownType, depth + 1);
       });
     }
   }
@@ -317,10 +382,18 @@ function validatePointDeclaration(node: unknown, seenIds: Set<string>, errors: s
       errors.push(
         `${scope}.scale.expression is not supported at declaration level; use binding-level scale.expression instead`,
       );
+    } else {
+      // plan 2026-08-06-0900-1 P2-6：linear scale 子形状校验（k/b 非数值静默 corrupt 点表量程换算）。
+      assertShape(decl.scale as Record<string, unknown>, { k: 'number', b: 'number' }, `${scope}.scale`, errors);
     }
   }
-  if ('deadband' in decl && typeof decl.deadband !== 'number') {
-    errors.push(`${scope}.deadband must be a number`);
+  // plan 2026-08-06-0900-1 P2-6：init 为点初始值，须为 primitive（malformed 静默 corrupt 点表，后果最重）。
+  if ('init' in decl && !isPrimitive(decl.init)) {
+    errors.push(`${scope}.init must be a primitive (number, boolean, or string)`);
+  }
+  if ('deadband' in decl) {
+    // plan 2026-08-06-0900-1 P2-3：deadband 路由 checkNumberField 享 finite 守卫（旧 inline typeof 放行 Infinity）。
+    checkNumberField(decl, 'deadband', errors, scope);
   }
   if ('unit' in decl && typeof decl.unit !== 'string') {
     errors.push(`${scope}.unit must be a string`);
@@ -372,6 +445,9 @@ export function validateScadaConfig(
   }
   if (config.background !== undefined && !isPlainObject(config.background)) {
     errors.push('config.background must be an object');
+  } else if (config.background !== undefined) {
+    // plan 2026-08-06-0900-1 P2-6：background 子形状校验（color 非字符串 malformed 全过）。
+    assertShape(config.background as Record<string, unknown>, { color: 'string' }, 'background', errors);
   }
 
   // I18 表达式一元化迁移期：扫描旧 `@{pointId}` 方言，warn（不 fail）。
@@ -386,7 +462,40 @@ export function validateScadaConfig(
  * 扫描 config 中的旧 `@{pointId}` 方言表达式（I18 迁移期 warn）。
  * 命中位置：variables[].expression / variables[].scale.expression / symbols[].bindings[].expression /
  * symbols[].bindings[].scale.expression。warn 文案含错误码 + 位置 + codemod 指引。
+ *
+ * plan 2026-08-06-0900-1 P2-5：symbols 扫描递归 `scada-group` children（镜像 `validateSymbolNode` 的
+ * children 遍历）——组态最典型形态（group 嵌套子图元 bindings 内的 `@{pointId}` 方言）不再静默不 warn。
  */
+function scanSymbolLegacy(node: unknown, scope: string, warnings: string[], depth = 0): void {
+  // plan 2026-08-06-0900-1 P2-9：与 validateSymbolNode 对称的深度上限 fail-closed，防深嵌套 stack overflow。
+  if (depth > MAX_VALIDATE_DEPTH) return;
+  if (!isPlainObject(node)) return;
+  const bindings = (node as Record<string, unknown>).bindings;
+  if (isPlainObject(bindings)) {
+    for (const [prop, binding] of Object.entries(bindings)) {
+      if (!isPlainObject(binding)) continue;
+      const expression = binding.expression;
+      if (typeof expression === 'string' && LEGACY_AT_PATTERN.test(expression)) {
+        warnings.push(
+          `legacy-at-syntax: ${scope}.bindings.${prop}.expression uses deprecated '@{pointId}' dialect; run scripts/scada-expression-codemod.mjs to migrate`,
+        );
+      }
+      const scale = binding.scale;
+      if (isPlainObject(scale) && typeof scale.expression === 'string' && LEGACY_AT_PATTERN.test(scale.expression)) {
+        warnings.push(
+          `legacy-at-syntax: ${scope}.bindings.${prop}.scale.expression uses deprecated '@{pointId}' dialect; run scripts/scada-expression-codemod.mjs to migrate`,
+        );
+      }
+    }
+  }
+  const children = (node as Record<string, unknown>).children;
+  if (Array.isArray(children)) {
+    children.forEach((child, index) => {
+      scanSymbolLegacy(child, `${scope}.children[${index}]`, warnings, depth + 1);
+    });
+  }
+}
+
 function scanLegacyAtSyntax(config: Record<string, unknown>, warnings: string[]): void {
   const variables = config.variables;
   if (Array.isArray(variables)) {
@@ -409,24 +518,7 @@ function scanLegacyAtSyntax(config: Record<string, unknown>, warnings: string[])
   const symbols = config.symbols;
   if (Array.isArray(symbols)) {
     symbols.forEach((node, sIndex) => {
-      if (!isPlainObject(node)) return;
-      const bindings = node.bindings;
-      if (!isPlainObject(bindings)) return;
-      for (const [prop, binding] of Object.entries(bindings)) {
-        if (!isPlainObject(binding)) continue;
-        const expression = binding.expression;
-        if (typeof expression === 'string' && LEGACY_AT_PATTERN.test(expression)) {
-          warnings.push(
-            `legacy-at-syntax: symbols[${sIndex}].bindings.${prop}.expression uses deprecated '@{pointId}' dialect; run scripts/scada-expression-codemod.mjs to migrate`,
-          );
-        }
-        const scale = binding.scale;
-        if (isPlainObject(scale) && typeof scale.expression === 'string' && LEGACY_AT_PATTERN.test(scale.expression)) {
-          warnings.push(
-            `legacy-at-syntax: symbols[${sIndex}].bindings.${prop}.scale.expression uses deprecated '@{pointId}' dialect; run scripts/scada-expression-codemod.mjs to migrate`,
-          );
-        }
-      }
+      scanSymbolLegacy(node, `symbols[${sIndex}]`, warnings);
     });
   }
 }

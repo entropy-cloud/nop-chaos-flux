@@ -441,3 +441,171 @@ describe('validateScadaConfig error branch matrix (plan 2026-08-04-1558-3 Phase 
     expectErrors(baseConfig({ variables: [{ id: '  ', source: 'static', value: 1 }] }), 'variables[0].id must be a non-empty string');
   });
 });
+
+// plan 2026-08-06-0900-1 Phase 2（open-audit P2-3 数值有限性 + multi-audit P2-9-validateSymbolNode 递归深度）：
+// failing-first Proof（先于 Fix）。修复前：(a) Infinity/NaN/-Infinity 经 typeof==='number' 放行 → ok:true；
+// (b) ~10k 层 children 嵌套递归无 depth cap → stack overflow crash。
+describe('validateScadaConfig numeric finiteness + recursion depth (plan 2026-08-06-0900-1 Phase 2)', () => {
+  it('P2-3: strokeWidth: Infinity（JSON.parse("1e400")）→ ok:false + finite-number 文案', () => {
+    const inf = JSON.parse('1e400'); // → Infinity
+    const result = validateScadaConfig(baseConfig({ symbols: [rect('inf', { strokeWidth: inf })] }));
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('symbols[0].strokeWidth') && e.includes('finite number'))).toBe(true);
+  });
+
+  it('P2-3: x: NaN → ok:false + finite-number 文案', () => {
+    const result = validateScadaConfig(baseConfig({ symbols: [rect('nan', { x: NaN })] }));
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('symbols[0].x') && e.includes('finite number'))).toBe(true);
+  });
+
+  it('P2-3: animation period: -Infinity → ok:false + finite-number 文案', () => {
+    const result = validateScadaConfig(
+      baseConfig({ symbols: [rect('anim', { animations: [{ kind: 'rotate', period: -Infinity as unknown as number }] })] }),
+    );
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('animations[0].period') && e.includes('finite number'))).toBe(
+      true,
+    );
+  });
+
+  it('P2-3: deadband: Infinity → ok:false（deadband 路由 checkNumberField 享 finite 守卫）', () => {
+    const result = validateScadaConfig(
+      baseConfig({ variables: [{ id: 'd', source: 'static', value: 1, deadband: Infinity as unknown as number }] }),
+    );
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('variables[0].deadband') && e.includes('finite number'))).toBe(
+      true,
+    );
+  });
+
+  it('P2-3: 合法有限数值不回归（finite x/strokeWidth/period/deadband → ok:true）', () => {
+    const result = validateScadaConfig(
+      baseConfig({
+        symbols: [rect('ok', { x: 10, y: -5, strokeWidth: 2, animations: [{ kind: 'rotate', period: 1000 }] })],
+        variables: [{ id: 'd', source: 'static', value: 1, deadband: 0.5 }],
+      }),
+    );
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('P2-9-validateSymbolNode: ~10k 层 children 嵌套返 ok:false（深度错误），非 crash', () => {
+    const buildDeepChildren = (depth: number): Record<string, unknown> => {
+      let node: Record<string, unknown> = { id: 'leaf', type: 'scada-rect', x: 0, y: 0 };
+      for (let i = depth - 1; i >= 0; i--) {
+        node = { id: `g${i}`, type: 'scada-group', x: 0, y: 0, children: [node] };
+      }
+      return node;
+    };
+    const config = baseConfig({ symbols: [buildDeepChildren(10_000) as never] });
+    expect(() => validateScadaConfig(config)).not.toThrow();
+    const result = validateScadaConfig(config);
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('maximum nesting depth'))).toBe(true);
+  });
+});
+
+// plan 2026-08-06-0900-1 Phase 3（open-audit P2-5 legacy 递归 + P2-6 assertShape 子形状）：
+// failing-first Proof（先于 Fix）。修复前：(a) scada-group 嵌套子图元 bindings 的 @{pointId} 方言静默不 warn；
+// (b) shadow/from-to/background/scale.k,b/init 子形状 malformed 全过。
+describe('validateScadaConfig legacy recursion + subshape (plan 2026-08-06-0900-1 Phase 3)', () => {
+  it('P2-5: scada-group 嵌套子图元 bindings 的 @{pointId} 方言产 legacy-at-syntax warning（scope 指向嵌套子图元）', () => {
+    const config = baseConfig({
+      symbols: [
+        rect('grp', {
+          type: 'scada-group',
+          children: [rect('child', { bindings: { fill: { expression: '@{temp}' } } })],
+        }),
+      ],
+    });
+    const result = validateScadaConfig(config, () => true);
+    expect(result.ok).toBe(true);
+    expect(result.warnings?.some((w) => w.startsWith('legacy-at-syntax') && w.includes('children[0]') && w.includes('bindings.fill.expression'))).toBe(
+      true,
+    );
+  });
+
+  it('P2-5: 合法顶层 bindings legacy warn 不回归（scope 仍指 symbols[i]）', () => {
+    const config = baseConfig({
+      symbols: [rect('top', { bindings: { fill: { expression: '@{temp}' } } })],
+    });
+    const result = validateScadaConfig(config, () => true);
+    expect(result.warnings?.some((w) => w.startsWith('legacy-at-syntax') && w.includes('symbols[0].bindings.fill.expression') && !w.includes('children'))).toBe(
+      true,
+    );
+  });
+
+  it('P2-6: shadow.blur 非数值 → ok:false（子形状）', () => {
+    const result = validateScadaConfig(
+      baseConfig({ symbols: [rect('sh', { shadow: { x: 1, y: 2, blur: 'x' as never, color: '#000' } })] }),
+    );
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('symbols[0].shadow.blur'))).toBe(true);
+  });
+
+  it('P2-6: shadow.color 非字符串 → ok:false（子形状）', () => {
+    const result = validateScadaConfig(
+      baseConfig({ symbols: [rect('shc', { shadow: { x: 1, y: 2, blur: 3, color: 123 as never } })] }),
+    );
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('symbols[0].shadow.color'))).toBe(true);
+  });
+
+  it('P2-6: animation from.y 非数值（object 形态）→ ok:false（子形状）', () => {
+    const result = validateScadaConfig(
+      baseConfig({ symbols: [rect('an', { animations: [{ kind: 'flow', from: { x: 1, y: 'bad' as never } }] })] }),
+    );
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('animations[0].from.y'))).toBe(true);
+  });
+
+  it('P2-6: background.color 非字符串 → ok:false（子形状）', () => {
+    const result = validateScadaConfig({ ...baseConfig(), background: { color: 123 } as never });
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('background.color'))).toBe(true);
+  });
+
+  it('P2-6: declaration scale.k 非数值 → ok:false（子形状）', () => {
+    const result = validateScadaConfig(
+      baseConfig({ variables: [{ id: 's', source: 'static', value: 1, scale: { k: 'x' as never } }] }),
+    );
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('variables[0].scale.k'))).toBe(true);
+  });
+
+  it('P2-6: declaration scale.b 非数值 → ok:false（子形状）', () => {
+    const result = validateScadaConfig(
+      baseConfig({ variables: [{ id: 'sb', source: 'static', value: 1, scale: { b: true as never } }] }),
+    );
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('variables[0].scale.b'))).toBe(true);
+  });
+
+  it('P2-6: init 非原始值（object）→ ok:false（点表 corrupt 防线）', () => {
+    const result = validateScadaConfig(
+      baseConfig({ variables: [{ id: 'i', source: 'static', value: 1, init: { bad: true } as never }] }),
+    );
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('variables[0].init'))).toBe(true);
+  });
+
+  it('P2-6: 合法声明（含正常 shadow/animation-from/background/scale/init）不回归', () => {
+    const result = validateScadaConfig(
+      baseConfig({
+        symbols: [
+          rect('ok', {
+            shadow: { x: 1, y: 2, blur: 3, color: '#000' },
+            animations: [{ kind: 'flow', from: { x: 0, y: 0 }, to: 100 }],
+          }),
+        ],
+        variables: [
+          { id: 'lin', source: 'static', value: 1, scale: { k: 2, b: 1 }, init: 0 },
+          { id: 'initB', source: 'static', value: 1, init: true },
+          { id: 'initS', source: 'static', value: 1, init: 'idle' },
+        ],
+        background: { color: '#fff' },
+      }),
+    );
+    expect(result).toEqual({ ok: true });
+  });
+});
