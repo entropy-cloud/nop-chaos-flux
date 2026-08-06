@@ -67,7 +67,7 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
       if (next !== lastIndexRef.current) {
         lastIndexRef.current = next;
         const item = items[next];
-        const payload = { type: 'change', activeIndex: next, item };
+        const payload = { type: 'carousel:change', activeIndex: next, item };
         void onChange?.(payload, {
           event: payload,
           evaluationBindings: payload,

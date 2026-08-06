@@ -433,7 +433,7 @@ describe('CarouselRenderer onChange dispatch — canonical payload + evaluationB
       activeIndex: number;
       item: { title: string };
     };
-    expect(payload.type).toBe('change');
+    expect(payload.type).toBe('carousel:change');
     expect(payload.activeIndex).toBe(1);
     expect(payload.item?.title).toBe('B');
     // canonical key only — no redundant `index` duplicate

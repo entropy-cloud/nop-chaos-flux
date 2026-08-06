@@ -149,7 +149,7 @@ describe('CarouselRenderer', () => {
     // (`activeIndex`, aligning with the schema/state field name) — not a redundant `index`
     // duplicate carrying the same value.
     const src = readFileSync('src/carousel.tsx', 'utf8');
-    const changePayload = src.match(/type:\s*'change'[^}]*\}/)?.[0];
+    const changePayload = src.match(/type:\s*'carousel:change'[^}]*\}/)?.[0];
     expect(changePayload).toBeTruthy();
     expect(changePayload).toContain('activeIndex');
     // No redundant duplicate `index` key in the change payload.
