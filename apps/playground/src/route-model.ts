@@ -270,6 +270,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'I15.1 边界用例测试页：最小合法 config / 空画面（symbols: []）/ 非法 JSON（empty region + onError）/ 线多边形 hover 覆盖物验证（m-C），e2e 程序化断言入口。',
   },
   {
+    id: 'scada-editor-demo',
+    title: 'Scada Editor Demo',
+    eyebrow: 'Industrial HMI Editor',
+    description:
+      'E5 M1 MVP 编辑器演示：palette 图元库面板（24 内置图元，拖拽放置）+ canvas 编辑态画布（双态切换）+ inspector 属性面板（六类字段分组 + validate）+ save/load 提交语义。',
+  },
+  {
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',

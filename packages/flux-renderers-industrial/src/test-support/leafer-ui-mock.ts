@@ -323,6 +323,12 @@ export class MockApp extends MockLeafer {
   ground: MockLeafer | undefined;
   tree: MockLeafer;
   sky: MockLeafer | undefined;
+  /**
+   * Mock Editor 实例（E5.1 编辑器测试支持）：仅当 config 含 `editor` key 时装配。
+   * 真实 leafer 经 `@leafer-in/editor` side-effect 注册，使 `new App({ editor: {} })` 装配 app.editor。
+   * mock 对齐：构造期检测 `editor` key → 创建 MockEditor（对齐 mock↔真实层装配纪律）。
+   */
+  editor: MockLeaf | undefined;
   resizeCalls: Array<{ width: number; height: number }> = [];
   destroyed = false;
   /**
@@ -340,6 +346,15 @@ export class MockApp extends MockLeafer {
     if (config.ground !== undefined) this.ground = new MockLeafer({ type: 'ground' });
     this.tree = new MockLeafer((config.tree as Record<string, unknown>) ?? {});
     if (config.sky !== undefined) this.sky = new MockLeafer({ type: 'sky' });
+    // E5.1：config 含 editor key 时装配 MockEditor（对齐 @leafer-in/editor side-effect 注册）。
+    if (config.editor !== undefined) {
+      const editorNode = new MockLeaf({ name: 'Editor', tag: 'Editor' });
+      // Editor 专属方法（spike 约束 #4：cancel 替代 list=[]）。
+      (editorNode as unknown as { cancel: () => void }).cancel = () => {
+        (editorNode as unknown as { target?: unknown }).target = undefined;
+      };
+      this.editor = editorNode;
+    }
     const view = config.view;
     if (typeof document !== 'undefined' && view instanceof HTMLElement) {
       const canvas = document.createElement('canvas');
@@ -353,6 +368,7 @@ export class MockApp extends MockLeafer {
     this.tree.destroy();
     this.ground?.destroy();
     this.sky?.destroy();
+    this.editor?.destroy();
     // T1：zoomLayer === this（不再持独立实例），无需单独 destroy；app 自身经 MockLeaf.destroy 收尾。
     this.canvasView?.remove();
     this.canvasView = undefined;

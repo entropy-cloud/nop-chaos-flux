@@ -53,8 +53,74 @@ export type ScadaSymbolStylePatch = Partial<
 
 export type ScadaSymbolPropType = 'number' | 'string' | 'boolean' | 'array' | 'object' | 'any';
 
+/**
+ * 属性面板字段分组（E5.3，design-property-panel.md §4.2）。
+ * 决定 inspector 面板中字段归入哪个可折叠分组。
+ */
+export type ScadaPropFieldGroup = 'geometry' | 'style' | 'binding' | 'state' | 'animation' | 'event';
+
+/**
+ * 属性面板字段 widget 类型（E5.3，design-property-panel.md §4.2）。
+ * 决定 inspector 面板中字段的编辑控件。
+ */
+export type ScadaPropEditorWidget =
+  | 'number-input'
+  | 'text-input'
+  | 'textarea'
+  | 'color-picker'
+  | 'select'
+  | 'combobox'
+  | 'switch'
+  | 'slider'
+  | 'json-editor'
+  | 'point-ref'
+  | 'action-editor'
+  | 'readonly';
+
+/**
+ * 属性面板字段 visibleWhen 条件（E5.3，design-property-panel.md §4.2）。
+ * 根据同图元其他字段值条件显示/隐藏。
+ */
+export interface ScadaPropVisibleWhen {
+  field: string;
+  equals?: unknown;
+  in?: unknown[];
+}
+
+/**
+ * 图元属性 schema 条目（E5.3 扩展，design-property-panel.md §4.2）。
+ *
+ * **扩展原则**（design-property-panel.md §4.2）：
+ * 1. 既有 `type` 字段不变（runtime 装配零影响）。
+ * 2. 新增字段全 optional（24 内置图元无需改动即可保持兼容）。
+ * 3. runtime 装配（applyProps/create/bind-resolver）不读新字段。
+ */
 export interface ScadaSymbolPropSchemaEntry {
   type: ScadaSymbolPropType;
+  /** 字段所属分组（geometry/style/binding/state/animation/event）。 */
+  group?: ScadaPropFieldGroup;
+  /** 字段显示名（i18n key）。 */
+  label?: string;
+  /** 字段描述（i18n key，hover tooltip）。 */
+  description?: string;
+  /** 编辑控件类型；缺省时由 type 推导。 */
+  widget?: ScadaPropEditorWidget;
+  /** 默认值（fallback；definition.defaults 为权威源）。 */
+  defaultValue?: unknown;
+  /** 数值字段最小值（number-input/slider）。 */
+  min?: number;
+  /** 数值字段最大值（number-input/slider）。 */
+  max?: number;
+  /** 数值字段步长（number-input/slider）。 */
+  step?: number;
+  /** 枚举可选值（select widget）。 */
+  enum?: Array<string | number>;
+  /** 是否必填（衔接 validate）。 */
+  required?: boolean;
+  /** 是否只读。 */
+  readonly?: boolean;
+  /** 条件可见性规则。 */
+  visibleWhen?: ScadaPropVisibleWhen;
 }
 
 export type ScadaSymbolPropSchema = Record<string, ScadaSymbolPropSchemaEntry>;
