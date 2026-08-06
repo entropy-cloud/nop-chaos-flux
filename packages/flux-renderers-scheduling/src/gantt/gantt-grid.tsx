@@ -5,13 +5,15 @@ import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttTask, GanttColumn, GanttStoreApi } from './gantt.types.js';
 
-const DEFAULT_COLUMNS: GanttColumn[] = [
-  { name: 'text', label: 'Task', width: 200, resizable: true },
-  { name: 'start', label: 'Start', width: 100 },
-  { name: 'end', label: 'End', width: 100 },
-  { name: 'duration', label: 'Dur', width: 60 },
-  { name: 'predecessor', label: 'Pred', width: 80 },
-];
+function buildDefaultColumns(): GanttColumn[] {
+  return [
+    { name: 'text', label: t('scheduling.gantt.columnTask'), width: 200, resizable: true },
+    { name: 'start', label: t('scheduling.gantt.start'), width: 100 },
+    { name: 'end', label: t('scheduling.gantt.end'), width: 100 },
+    { name: 'duration', label: t('scheduling.gantt.duration'), width: 60 },
+    { name: 'predecessor', label: t('scheduling.gantt.columnPredecessor'), width: 80 },
+  ];
+}
 
 interface GanttGridProps {
   store: GanttStoreApi;
@@ -27,7 +29,8 @@ interface GanttGridProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function GanttGrid({ store, columns = DEFAULT_COLUMNS, onSelectTask, selectedTaskId, className, columnRegions, onTaskClick, onTaskDoubleClick, onEmptyCellClick, editable, scrollContainerRef }: GanttGridProps) {
+export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, className, columnRegions, onTaskClick, onTaskDoubleClick, onEmptyCellClick, editable, scrollContainerRef }: GanttGridProps) {
+  const resolvedColumns = columns ?? buildDefaultColumns();
   useSyncExternalStore(store.subscribe, () => store.layoutRevision);
   useSyncExternalStore(store.subscribe, () => store.treeRevision);
   const [editingCell, setEditingCell] = useState<{ taskId: string | number; column: string } | null>(null);
@@ -90,7 +93,7 @@ export function GanttGrid({ store, columns = DEFAULT_COLUMNS, onSelectTask, sele
       <table className="w-full border-collapse table-fixed">
         <thead data-slot="gantt-grid-header">
           <tr>
-            {columns.map((col) => (
+            {resolvedColumns.map((col) => (
               <th
                 key={col.name}
                 className="sticky top-0 z-10 bg-gray-100 border-b border-r px-2 py-1.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
@@ -124,7 +127,7 @@ export function GanttGrid({ store, columns = DEFAULT_COLUMNS, onSelectTask, sele
                 onClick={() => handleCellClick(task.id, 'text')}
                 onDoubleClick={() => handleCellDoubleClick(task.id, 'text')}
               >
-                {columns.map((col) => (
+                {resolvedColumns.map((col) => (
                   <td
                     key={col.name}
                     className="border-r px-1 py-0.5 text-xs align-middle"

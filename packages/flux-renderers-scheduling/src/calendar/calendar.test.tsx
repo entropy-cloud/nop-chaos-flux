@@ -1,10 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { Calendar } from './calendar.js';
 
+const mockNotify = vi.hoisted(() => vi.fn());
+
 vi.mock('@nop-chaos/flux-react', () => ({
-  useRendererRuntime: () => ({ dispatch: vi.fn() }),
+  useRendererRuntime: () => ({ dispatch: vi.fn(), env: { notify: mockNotify } }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,
   useCurrentComponentRegistry: () => undefined,
@@ -175,6 +177,19 @@ describe('Calendar', () => {
     expect(onUnmount).toHaveBeenCalledWith({}, expect.anything());
 
     expect(onMount.mock.invocationCallOrder[0]).toBeLessThan(onUnmount.mock.invocationCallOrder[0]);
+  });
+
+  it('surfaces a rejecting loadAction as a user-visible error (CR P2-4)', async () => {
+    mockNotify.mockClear();
+    render(
+      <Calendar
+        {...baseProps}
+        events={{ loadAction: () => Promise.reject(new Error('load boom')) } as any}
+      />,
+    );
+    await waitFor(() => {
+      expect(mockNotify).toHaveBeenCalledWith('error', expect.stringContaining('load boom'));
+    });
   });
 
   it('renders loading skeleton when loading prop is true', () => {

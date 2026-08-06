@@ -363,3 +363,62 @@ describe('useGanttKeyboard', () => {
     expect(() => result.current.updateRowAria('t1', true)).not.toThrow();
   });
 });
+
+describe('useGanttKeyboard CR P2-3 / P2-4', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('onDeleteTask callback is used when provided (undo-recording path)', () => {
+    const container = document.createElement('div');
+    const containerRef = { current: container };
+    const onDeleteTask = vi.fn();
+    const onSelectTask = vi.fn();
+    renderHook(() =>
+      useGanttKeyboard({
+        store: mockStore as any,
+        containerRef,
+        selectedTaskId: 't1',
+        onSelectTask,
+        onDeleteTask,
+      }),
+    );
+    const event = new KeyboardEvent('keydown', { key: 'Delete', bubbles: true });
+    container.dispatchEvent(event);
+    expect(onDeleteTask).toHaveBeenCalledWith('t1');
+    expect(mockStore.deleteTask).not.toHaveBeenCalled();
+    expect(onSelectTask).toHaveBeenCalledWith(null);
+  });
+
+  it('keydown listener attaches exactly once across re-renders (no per-render re-mount)', () => {
+    const container = document.createElement('div');
+    const containerRef = { current: container };
+    const addEventListenerSpy = vi.spyOn(container, 'addEventListener');
+    const removeEventListenerSpy = vi.spyOn(container, 'removeEventListener');
+    const { rerender } = renderHook<
+      { updateRowAria: (taskId: string | number, isSelected: boolean) => void },
+      { selected: string | null }
+    >(
+      ({ selected }: { selected: string | null }) =>
+        useGanttKeyboard({
+          store: mockStore as any,
+          containerRef,
+          selectedTaskId: selected,
+          onSelectTask: vi.fn(),
+          onUndo: vi.fn(),
+          onRedo: vi.fn(),
+        }),
+      { initialProps: { selected: 't1' } },
+    );
+    rerender({ selected: 't2' });
+    rerender({ selected: null });
+    const keydownAdds = addEventListenerSpy.mock.calls.filter(([type]) => type === 'keydown').length;
+    const keydownRemoves = removeEventListenerSpy.mock.calls.filter(([type]) => type === 'keydown').length;
+    expect(keydownAdds).toBe(1);
+    expect(keydownRemoves).toBe(0);
+  });
+});

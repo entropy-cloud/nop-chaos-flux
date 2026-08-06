@@ -3,6 +3,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { GanttStore } from './gantt-store.js';
 import { GanttEditor } from './gantt-editor.js';
+import { UndoStack } from './undo-stack.js';
 import type { GanttTaskData } from './gantt.types.js';
 
 function createStore(tasks: GanttTaskData[]) {
@@ -61,5 +62,85 @@ describe('GanttEditor', () => {
     }
 
     unmount();
+  });
+});
+
+describe('GanttEditor CR P2-1 (custom editor region onSave persistence)', () => {
+  it('onSave persists the edited task to the store and closes the editor', () => {
+    const store = createStore([
+      { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
+    ]);
+    store.editTask('t1');
+    let capturedOnSave: ((next?: unknown) => void) | null = null;
+    render(
+      <GanttEditor
+        store={store}
+        editingTaskId="t1"
+        editorRegion={
+          {
+            render: ({ bindings }: { bindings: { task: unknown; onSave: (next?: unknown) => void } }) => {
+              capturedOnSave = bindings.onSave;
+              return <div data-testid="custom-editor">custom</div>;
+            },
+          } as any
+        }
+      />,
+    );
+    expect(capturedOnSave).not.toBeNull();
+    capturedOnSave!({ text: 'Renamed', start: '2026-02-01', end: '2026-02-05' });
+    const updated = store.tasks.get('t1')!;
+    expect(updated.text).toBe('Renamed');
+    expect(updated.start).toBe('2026-02-01');
+    expect(updated.end).toBe('2026-02-05');
+  });
+
+  it('onSave without a payload keeps the close-only contract (no crash, no mutation)', () => {
+    const store = createStore([
+      { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
+    ]);
+    store.editTask('t1');
+    let capturedOnSave: ((next?: unknown) => void) | null = null;
+    render(
+      <GanttEditor
+        store={store}
+        editingTaskId="t1"
+        editorRegion={
+          {
+            render: ({ bindings }: { bindings: { onSave: (next?: unknown) => void } }) => {
+              capturedOnSave = bindings.onSave;
+              return <div>custom</div>;
+            },
+          } as any
+        }
+      />,
+    );
+    expect(() => capturedOnSave!()).not.toThrow();
+    expect(store.tasks.get('t1')!.text).toBe('Task 1');
+  });
+
+  it('editor save records an undo command (undo restores the previous task data)', () => {
+    const store = createStore([
+      { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-10' },
+    ]);
+    store.editTask('t1');
+    const stack = new UndoStack();
+    render(
+      <GanttEditor
+        store={store}
+        editingTaskId="t1"
+        undoStack={stack}
+        editorRegion={
+          {
+            render: ({ bindings }: { bindings: { onSave: (next?: unknown) => void } }) => {
+              bindings.onSave({ text: 'Renamed' });
+              return <div>custom</div>;
+            },
+          } as any
+        }
+      />,
+    );
+    expect(store.tasks.get('t1')!.text).toBe('Renamed');
+    stack.undo();
+    expect(store.tasks.get('t1')!.text).toBe('Task 1');
   });
 });

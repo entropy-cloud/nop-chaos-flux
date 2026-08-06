@@ -86,9 +86,12 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'columnHeaderClassName', kind: 'prop' },
       { key: 'cardClassName', kind: 'prop' },
       { key: 'columnFooterClassName', kind: 'prop' },
-      // reserved: future controlled-mode support
+      // consumed: kanbanOwnership/kanbanStatePath gate board ownership
+      // (controlled -> rawData read-only; scope -> kanbanStatePath writes)
       { key: 'kanbanOwnership', kind: 'prop' },
       { key: 'kanbanStatePath', kind: 'prop' },
+      // legacy: declared for schema compatibility (design §7); board
+      // ownership reads kanbanStatePath only (CR P2-4 sync)
       { key: 'statusPath', kind: 'prop' },
       { key: 'onMount', kind: 'event' },
       { key: 'onUnmount', kind: 'event' },

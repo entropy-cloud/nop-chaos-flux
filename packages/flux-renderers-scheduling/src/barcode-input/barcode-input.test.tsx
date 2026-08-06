@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, act, waitFor } from '@testing-library/react';
+import { render, act, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { BarcodeInputRenderer } from './barcode-input.js';
@@ -497,6 +497,54 @@ describe('BarcodeInputRenderer', () => {
       expect(result).toEqual({ success: false, error: 'flux.barcode.readOnlyField' });
       await waitFor(() => {
         expect(document.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeFalsy();
+      });
+    });
+  });
+
+  describe('Phase 10 — scannerError clear path (CR P2-4)', () => {
+    async function triggerScannerError(container: HTMLElement) {
+      const scanBtn = container.querySelector('[data-slot="barcode-scan-button"]') as HTMLButtonElement;
+      act(() => { scanBtn.click(); });
+      await waitFor(() => {
+        expect(container.querySelector('[data-slot="barcode-scanner-error"]')).toBeTruthy();
+      });
+    }
+
+    beforeEach(async () => {
+      const { checkCameraAvailability } = await import('./utils/camera-utils.js');
+      vi.mocked(checkCameraAvailability).mockRejectedValueOnce(new Error('camera unavailable'));
+    });
+
+    it('a scanNow retry clears a previously shown scanner error', async () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps()} />);
+      await triggerScannerError(container);
+
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      act(() => { lastCall.scanNow(); });
+      await waitFor(() => {
+        expect(container.querySelector('[data-slot="barcode-scanner-error"]')).toBeNull();
+      });
+    });
+
+    it('the clear handle resets a previously shown scanner error', async () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps()} />);
+      await triggerScannerError(container);
+
+      const lastCall = mockUseInputComponentHandle.mock.calls.at(-1)?.[0];
+      act(() => { lastCall.clearValue(); });
+      await waitFor(() => {
+        expect(container.querySelector('[data-slot="barcode-scanner-error"]')).toBeNull();
+      });
+    });
+
+    it('typing a new value clears a previously shown scanner error', async () => {
+      const { container } = render(<BarcodeInputRenderer {...createMockProps()} />);
+      await triggerScannerError(container);
+
+      const input = container.querySelector('input') as HTMLInputElement;
+      act(() => { fireEvent.change(input, { target: { value: '6901234567892' } }); });
+      await waitFor(() => {
+        expect(container.querySelector('[data-slot="barcode-scanner-error"]')).toBeNull();
       });
     });
   });

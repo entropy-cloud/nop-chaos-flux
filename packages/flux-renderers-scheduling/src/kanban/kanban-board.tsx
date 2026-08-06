@@ -47,6 +47,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const kanbanStatePath = resolved.kanbanStatePath as string | undefined;
   const collapsedOwnership = (resolved.collapsedOwnership as string) || 'local';
   const collapsedStatePath = resolved.collapsedStatePath as string | undefined;
+  // CR P2-3: in controlled mode board mutations are dropped (setBoardData
+  // no-ops on rawData), so mutation events (onCardMove/onColumnReorder/
+  // onCardAdd/onCardRemove) and the activity log must not claim changes that
+  // never happened. Interaction events (onCardClick/onColumnClick) still fire.
+  const isControlled = kanbanOwnership === 'controlled';
 
   const fallbackBoard = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
 
@@ -262,8 +267,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     boardData,
     onBoardChange: handleCardMoveBoardChange,
     onCardMove: (payload) => {
-      void events.onCardMove?.(payload, eventCtx(payload));
+      if (isControlled) return;
       const card = boardData[payload.cardId];
+      const movePayload = { ...payload, card };
+      void events.onCardMove?.(movePayload, eventCtx(movePayload));
       recordAction({
         type: 'cardMove',
         actor: { id: 'local', name: t('scheduling.kanban.currentUser') },
@@ -282,7 +289,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const { registerColumnHeader, registerBoardDropZone } = useColumnDnd({
     boardData,
     onBoardChange: handleColumnReorderBoardChange,
-    onColumnReorder: (payload) => void events.onColumnReorder?.(payload, eventCtx(payload)),
+    onColumnReorder: (payload) => {
+      if (isControlled) return;
+      void events.onColumnReorder?.(payload, eventCtx(payload));
+    },
     enabled: columnDraggable,
   });
 
@@ -302,13 +312,16 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       const newBoard = moveColumn(boardData, columnId, targetIdx);
       handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex: idx, toIndex: targetIdx });
       const payload = { columnId, fromIndex: idx, toIndex: targetIdx };
-      void events.onColumnReorder?.(payload, eventCtx(payload));
+      if (!isControlled) {
+        void events.onColumnReorder?.(payload, eventCtx(payload));
+      }
       setDndAnnouncement(t('scheduling.kanban.columnMoved', { from: idx + 1, to: targetIdx + 1 }));
     }
   };
 
   const handleCardClick = (cardId: string, columnId: string, index: number) => {
-    const payload = { cardId, columnId, index };
+    const card = boardData[cardId];
+    const payload = { cardId, columnId, index, card };
     void events.onCardClick?.(payload, eventCtx(payload));
   };
   const handleColumnClick = (columnId: string) => {
@@ -321,8 +334,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     const cardId = `card-${Date.now()}`;
     const newCard = { id: cardId, title: cardData?.title || t('scheduling.kanban.newCard'), ...cardData };
     handleSetBoardData(addCard(boardData, columnId, newCard), 'addCard', { cardId, columnId, cardData: newCard, index: -1 });
-    const addPayload = { cardId, columnId, index: -1 };
-    void events.onCardAdd?.(addPayload, eventCtx(addPayload));
+    const addPayload = { cardId, columnId, index: -1, card: newCard };
+    if (!isControlled) {
+      void events.onCardAdd?.(addPayload, eventCtx(addPayload));
+    }
   };
 
   const handleCardRemove = (cardId: string) => {
@@ -332,8 +347,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     const cardData = boardData[cardId] ? { ...boardData[cardId].data } : {};
     const index = columnId && boardData[columnId] ? [...boardData[columnId].children].indexOf(cardId) : -1;
     handleSetBoardData(removeCard(boardData, cardId), 'removeCard', { cardId, columnId, cardData, index });
-    const removePayload = { cardId, columnId };
-    void events.onCardRemove?.(removePayload, eventCtx(removePayload));
+    const removePayload = { cardId, columnId, index, card };
+    if (!isControlled) {
+      void events.onCardRemove?.(removePayload, eventCtx(removePayload));
+    }
   };
 
   const handleToggleTag = (tagId: string) => {

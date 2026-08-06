@@ -12,7 +12,7 @@
  * which would be expensive for large Gantt datasets with cross-linked tasks.
  * The cost is more complex command implementations that must store only deltas.
  */
-import type { GanttId, GanttTaskData, GanttLinkType, GanttLinkData } from './gantt.types.js';
+import type { GanttId, GanttTaskData, GanttLinkType, GanttLinkData, GanttTask } from './gantt.types.js';
 import { GanttStore } from './gantt-store.js';
 
 export interface Command {
@@ -151,6 +151,63 @@ export class RemoveLinkCommand implements Command {
 
   redo(): void {
     this.store.removeLink(this.linkId);
+  }
+
+  mergeable(_other: Command): boolean {
+    return false;
+  }
+}
+
+export class DeleteTaskCommand implements Command {
+  type = 'deleteTask';
+  private store: GanttStore;
+  private rootTaskId: GanttId;
+  private deletedTasks: GanttTaskData[] = [];
+  private deletedLinks: GanttLinkData[] = [];
+
+  constructor(store: GanttStore, rootTaskId: GanttId) {
+    this.store = store;
+    this.rootTaskId = rootTaskId;
+  }
+
+  /** Capture the affected subtree (task + descendants + incident links). */
+  private captureSubtree(): void {
+    const state = this.store.getSnapshot();
+    const ids = new Set<GanttId>();
+    const collect = (id: GanttId) => {
+      if (ids.has(id)) return;
+      ids.add(id);
+      for (const t of state.tasks.values()) {
+        if (t.parent === id) collect(t.id);
+      }
+    };
+    collect(this.rootTaskId);
+    this.deletedTasks = [...state.tasks.values()]
+      .filter((t) => ids.has(t.id))
+      .map((t) => {
+        const { $x, $y, $w, $h, $level, $branchSize, $posInBranch, $source, $target, ...data } = t as GanttTask;
+        void $x; void $y; void $w; void $h; void $level; void $branchSize; void $posInBranch; void $source; void $target;
+        return data as GanttTaskData;
+      });
+    this.deletedLinks = [...state.links.values()]
+      .filter((l) => ids.has(l.source) || ids.has(l.target))
+      .map((l) => ({ id: l.id, source: l.source, target: l.target, type: l.type, lag: l.lag }));
+  }
+
+  execute(): void {
+    if (this.deletedTasks.length === 0) {
+      this.captureSubtree();
+    }
+    this.store.deleteTask(this.rootTaskId);
+  }
+
+  undo(): void {
+    if (this.deletedTasks.length === 0) return;
+    this.store.restoreSubtree(this.deletedTasks, this.deletedLinks);
+  }
+
+  redo(): void {
+    this.store.deleteTask(this.rootTaskId);
   }
 
   mergeable(_other: Command): boolean {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import type { GanttId, GanttResource } from '../gantt.types.js';
 import type { ResourceLoadResult } from './resource-load.js';
 
@@ -13,14 +14,14 @@ export function ResourceLoadGrid({ resources, loadResults }: ResourceLoadGridPro
 
   return (
     <div className="nop-gantt-resource-grid h-full overflow-auto border-r border-gray-200" data-slot="gantt-resource-grid">
-      <table className="w-full border-collapse table-fixed" aria-label="Resource load">
+      <table className="w-full border-collapse table-fixed" aria-label={t('scheduling.gantt.resourceLoadLabel')}>
         <thead>
           <tr>
             <th className="sticky top-0 z-10 bg-gray-100 border-b px-2 py-1.5 text-left text-xs font-semibold text-gray-600">
-              {'Resource'}
+              {t('scheduling.gantt.resourceColumn')}
             </th>
             <th className="sticky top-0 z-10 bg-gray-100 border-b px-2 py-1.5 text-right text-xs font-semibold text-gray-600 w-16">
-              {'Load'}
+              {t('scheduling.gantt.loadColumn')}
             </th>
           </tr>
         </thead>

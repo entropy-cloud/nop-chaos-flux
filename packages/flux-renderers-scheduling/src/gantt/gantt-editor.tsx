@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button,
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttStoreApi } from './gantt.types.js';
+import { UpdateTaskCommand, type UndoStack } from './undo-stack.js';
 
 interface GanttEditorProps {
   store: GanttStoreApi;
@@ -11,9 +12,10 @@ interface GanttEditorProps {
   editingTaskId?: string | number | null;
   onClose?: () => void;
   onBarDoubleClick?: (taskId: string | number) => void;
+  undoStack?: UndoStack;
 }
 
-export function GanttEditor({ store, editorRegion, className, editingTaskId, onClose }: GanttEditorProps) {
+export function GanttEditor({ store, editorRegion, className, editingTaskId, onClose, undoStack }: GanttEditorProps) {
   const instanceId = useId();
 
   const textRef = useRef<HTMLInputElement>(null);
@@ -28,6 +30,17 @@ export function GanttEditor({ store, editorRegion, className, editingTaskId, onC
 
   const editingTask = editingTaskId ? store.tasks.get(editingTaskId) : null;
 
+  const commitTask = (editingTaskIdValue: string | number, partial: Partial<import('./gantt.types.js').GanttTaskData>) => {
+    const current = store.tasks.get(editingTaskIdValue);
+    if (!current) return;
+    const before: Partial<import('./gantt.types.js').GanttTaskData> = {};
+    for (const key of Object.keys(partial) as Array<keyof typeof current>) {
+      if (key in current) before[key] = current[key];
+    }
+    undoStack?.push(new UpdateTaskCommand(store, editingTaskIdValue, before, partial));
+    store.updateTask(editingTaskIdValue, partial);
+  };
+
   const handleSave = () => {
     if (!editingTaskId || !textRef.current) return;
     const partial: Partial<import('./gantt.types.js').GanttTaskData> = { text: textRef.current.value };
@@ -35,7 +48,7 @@ export function GanttEditor({ store, editorRegion, className, editingTaskId, onC
     if (endRef.current?.value) partial.end = endRef.current.value;
     if (durationRef.current?.value) partial.duration = parseInt(durationRef.current.value, 10);
     if (progressRef.current?.value) partial.progress = parseInt(progressRef.current.value, 10);
-    store.updateTask(editingTaskId, partial);
+    commitTask(editingTaskId, partial);
     closeEditor();
   };
 
@@ -45,7 +58,22 @@ export function GanttEditor({ store, editorRegion, className, editingTaskId, onC
     return (
       <Dialog open={open} onOpenChange={(o) => { if (!o) closeEditor(); }}>
         <DialogContent className={cn('sm:max-w-md', className)}>
-          {editorRegion.render({ bindings: { task: editingTask, onSave: closeEditor, onCancel: closeEditor } })}
+          {editorRegion.render({
+            bindings: {
+              task: editingTask,
+              // CR P2-1: the custom editor region's onSave now persists the
+              // edited task back to the store (previously it only closed the
+              // dialog — edits were silently dropped) and records an undo
+              // command. onCancel keeps the old close-only semantics.
+              onSave: (nextTask?: Partial<import('./gantt.types.js').GanttTaskData>) => {
+                if (nextTask && editingTaskId != null) {
+                  commitTask(editingTaskId, nextTask);
+                }
+                closeEditor();
+              },
+              onCancel: closeEditor,
+            },
+          })}
         </DialogContent>
       </Dialog>
     );

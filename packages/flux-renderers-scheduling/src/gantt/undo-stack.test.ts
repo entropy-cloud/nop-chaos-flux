@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GanttStore } from './gantt-store.js';
-import { UndoStack, UpdateTaskCommand, AddLinkCommand, RemoveLinkCommand, BatchUpdateTaskCommand } from './undo-stack.js';
+import { UndoStack, UpdateTaskCommand, AddLinkCommand, RemoveLinkCommand, BatchUpdateTaskCommand, DeleteTaskCommand } from './undo-stack.js';
 
 function createTestStore(): GanttStore {
   const store = new GanttStore({ cellWidth: 40 });
@@ -211,5 +211,60 @@ describe('UndoStack', () => {
     cmd.redo();
     expect(store.tasks.get('t1')!.text).toBe('Typed Update');
     expect(store.tasks.get('t1')!.start).toBe('2026-02-01');
+  });
+});
+
+describe('DeleteTaskCommand (CR P2-3)', () => {
+  it('deletes a task subtree and restores it on undo (tasks + links)', () => {
+    const store = new GanttStore({ cellWidth: 40 });
+    store.parse(
+      [
+        {
+          id: 'p1',
+          text: 'Parent',
+          start: '2026-01-01',
+          end: '2026-01-10',
+          children: [
+            { id: 'c1', text: 'Child', start: '2026-01-02', end: '2026-01-05' },
+          ],
+        },
+        { id: 'other', text: 'Other', start: '2026-02-01', end: '2026-02-05' },
+      ],
+      [],
+    );
+    store.addLink('c1', 'other', 'finish_to_start');
+
+    const cmd = new DeleteTaskCommand(store, 'p1');
+    cmd.execute();
+
+    expect(store.tasks.has('p1')).toBe(false);
+    expect(store.tasks.has('c1')).toBe(false);
+    expect(store.tasks.has('other')).toBe(true);
+    expect(store.links.size).toBe(0);
+
+    cmd.undo();
+    expect(store.tasks.has('p1')).toBe(true);
+    expect(store.tasks.has('c1')).toBe(true);
+    expect(store.tasks.get('p1')!.text).toBe('Parent');
+    expect(store.tasks.get('c1')!.parent).toBe('p1');
+    expect(store.links.size).toBe(1);
+
+    cmd.redo();
+    expect(store.tasks.has('p1')).toBe(false);
+    expect(store.tasks.has('c1')).toBe(false);
+    expect(store.links.size).toBe(0);
+  });
+
+  it('undo restores the original task data (dates/text)', () => {
+    const store = new GanttStore({ cellWidth: 40 });
+    store.parse([{ id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-03', progress: 50 }], []);
+    const cmd = new DeleteTaskCommand(store, 't1');
+    cmd.execute();
+    cmd.undo();
+    const restored = store.tasks.get('t1')!;
+    expect(restored.text).toBe('Task 1');
+    expect(restored.start).toBe('2026-01-01');
+    expect(restored.end).toBe('2026-01-03');
+    expect(restored.progress).toBe(50);
   });
 });

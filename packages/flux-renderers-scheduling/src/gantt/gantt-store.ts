@@ -300,6 +300,22 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
       store.setState({ tasks: tasksAfterSourceTarget });
     },
 
+    restoreSubtree(tasks: GanttTaskData[], links: GanttLinkData[]): void {
+      const state = gs();
+      const newTasks = new Map(state.tasks);
+      const newLinks = new Map(state.links);
+      for (const t of tasks) {
+        newTasks.set(t.id, { ...t, $x: 0, $y: 0, $w: 0, $h: 0, $level: 0, $branchSize: 0, $posInBranch: 0, $source: [], $target: [] } as GanttTask);
+      }
+      for (const l of links) {
+        newLinks.set(l.id, { ...l, type: normalizeLinkType(l.type), $p: '' } as GanttLink);
+      }
+      store.setState({ tasks: newTasks, links: newLinks, revision: state.revision + 1, taskRevision: state.taskRevision + 1 });
+      computeComputedPropertiesInternal();
+      const s2 = gs();
+      store.setState({ layoutRevision: s2.layoutRevision + 1 });
+    },
+
     setZoom(zoomKey: string, anchorScrollLeft?: number, anchorContainerWidth?: number): void {
       const state = gs();
       if (!state.zoomLevels.has(zoomKey)) return;

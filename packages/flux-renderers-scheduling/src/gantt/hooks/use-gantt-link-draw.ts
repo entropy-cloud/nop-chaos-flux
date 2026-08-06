@@ -1,12 +1,14 @@
 import { useRef, useEffect, useState } from 'react';
 import type { GanttStore } from '../gantt-store.js';
 import type { GanttLinkType } from '../gantt.types.js';
+import { AddLinkCommand, type UndoStack } from '../undo-stack.js';
 
 export function useGanttLinkDraw(
   store: GanttStore,
   svgRef: React.RefObject<SVGSVGElement | null>,
   onCommit?: (sourceId: string | number, targetId: string | number, linkType: string) => void,
   enabled?: boolean,
+  undoStack?: UndoStack,
 ) {
   const drawingRef = useRef<{
     sourceId: string | number;
@@ -81,7 +83,14 @@ export function useGanttLinkDraw(
           const targetSide = (targetHandle as HTMLElement)?.getAttribute('data-handle-side') as 'start' | 'end' || 'start';
           const linkType = inferLinkType(drawingRef.current.sourceSide, targetSide);
           onCommitRef.current?.(drawingRef.current.sourceId, targetId, linkType);
-          store.addLink(drawingRef.current.sourceId, targetId, linkType);
+          // CR P2-3: link creation records an undo command (design §12.8).
+          const cmd = new AddLinkCommand(store, drawingRef.current.sourceId, targetId, linkType);
+          if (undoStack) {
+            undoStack.push(cmd);
+            cmd.execute();
+          } else {
+            store.addLink(drawingRef.current.sourceId, targetId, linkType);
+          }
         }
       }
       cleanup();
@@ -128,7 +137,13 @@ export function useGanttLinkDraw(
     if (!drawingRef.current) return;
     if (targetTaskId !== String(drawingRef.current.sourceId)) {
       onCommitRef.current?.(drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
-      store.addLink(drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
+      const cmd = new AddLinkCommand(store, drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
+      if (undoStack) {
+        undoStack.push(cmd);
+        cmd.execute();
+      } else {
+        store.addLink(drawingRef.current.sourceId, targetTaskId, 'finish_to_start');
+      }
     }
     cleanup();
   };

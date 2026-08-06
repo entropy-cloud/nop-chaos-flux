@@ -22,7 +22,7 @@ import { useGanttLinkDraw } from './hooks/use-gantt-link-draw.js';
 import { useGanttScroll } from './hooks/use-gantt-scroll.js';
 import { useGanttKeyboard } from './hooks/use-gantt-keyboard.js';
 import { dateToPixel } from './utils/layout.js';
-import { UndoStack, UpdateTaskCommand } from './undo-stack.js';
+import { UndoStack, UpdateTaskCommand, RemoveLinkCommand, DeleteTaskCommand } from './undo-stack.js';
 
 export interface GanttHandle {
   zoomIn: () => void;
@@ -37,9 +37,9 @@ export function createInitialStore(resolved: Record<string, unknown>): GanttStor
     defaultZoom: (resolved.defaultZoom as string) ?? 'week',
     taskBarHeight: (resolved.taskBarHeight as number) ?? 28,
     zoomLevels: (resolved.zoomLevels as any[]) ?? [
-      { key: 'day', label: 'Day', minCellWidth: 40, scales: [{ unit: 'day', step: 1, format: 'MM/DD' }] },
-      { key: 'week', label: 'Week', minCellWidth: 80, scales: [{ unit: 'week', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
-      { key: 'month', label: 'Month', minCellWidth: 60, scales: [{ unit: 'month', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
+      { key: 'day', label: t('scheduling.gantt.zoomDay'), minCellWidth: 40, scales: [{ unit: 'day', step: 1, format: 'MM/DD' }] },
+      { key: 'week', label: t('scheduling.gantt.zoomWeek'), minCellWidth: 80, scales: [{ unit: 'week', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
+      { key: 'month', label: t('scheduling.gantt.zoomMonth'), minCellWidth: 60, scales: [{ unit: 'month', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
     ],
   });
   const taskData = (resolved.tasks as any[]) ?? [];
@@ -60,6 +60,12 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const svgRef = useRef<SVGSVGElement>(null);
 
     const [store] = useState(() => createInitialStore(resolved));
+
+    // Command-based undo stack (design.md §12.8). A stable instance created
+    // before the interaction hooks so drag/link/keyboard/editor mutations can
+    // record undo commands (CR P2-3). useState (not useRef) keeps the instance
+    // out of render-time ref access (react-hooks/refs lint).
+    const [undoStack] = useState(() => new UndoStack());
 
     // Re-seed the store when the schema data props change at runtime
     // (data-source refresh, scope-driven updates). Local edits are preserved
@@ -113,11 +119,11 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
 
     useEffect(() => {
       void eventsRef.current.onMount?.({}, eventCtx({}));
-      undoStackRef.current.clear();
+      undoStack.clear();
       return () => {
         void eventsRef.current.onUnmount?.({}, eventCtx({}));
       };
-    }, [eventCtx]);
+    }, [eventCtx, undoStack]);
 
     const handleTaskDragCommit = (taskId: string | number, changes: Record<string, string>) => {
       const payload = { _taskId: taskId, changes };
@@ -133,8 +139,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const editable = resolved.editable !== false;
     const linkable = resolved.linkable !== false;
 
-    const { onPointerDown: onDragPointerDown } = useGanttDrag(store, containerRef, draggable ? handleTaskDragCommit : undefined);
-    const { onLinkHandlePointerDown } = useGanttLinkDraw(store, svgRef, linkable ? handleLinkDragCommit : undefined, linkable);
+    const { onPointerDown: onDragPointerDown } = useGanttDrag(store, containerRef, draggable ? handleTaskDragCommit : undefined, undoStack);
+    const { onLinkHandlePointerDown } = useGanttLinkDraw(store, svgRef, linkable ? handleLinkDragCommit : undefined, linkable, undoStack);
     useGanttScroll(gridRef, timelineRef, (scrollLeft, scrollTop) => {
       const payload = { scrollLeft, scrollTop };
       void eventsRef.current.onScroll?.(payload, eventCtx(payload));
@@ -162,7 +168,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           const payload = { _taskId: taskId, changes: { start: startVal, end: endVal } };
           void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
           store.updateTask(taskId, { start: startVal, end: endVal });
-          undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
+          undoStack.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
           break;
         }
         case 'move-down': {
@@ -175,7 +181,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           const payload = { _taskId: taskId, changes: { start: startVal, end: endVal } };
           void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
           store.updateTask(taskId, { start: startVal, end: endVal });
-          undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
+          undoStack.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
           break;
         }
         case 'resize-left': {
@@ -186,7 +192,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
             const payload = { _taskId: taskId, changes: { end: endVal } };
             void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
             store.updateTask(taskId, { end: endVal });
-            undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { end: oldEnd }, { end: endVal }));
+            undoStack.push(new UpdateTaskCommand(store, taskId, { end: oldEnd }, { end: endVal }));
           }
           break;
         }
@@ -197,7 +203,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           const payload = { _taskId: taskId, changes: { end: endVal } };
           void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
           store.updateTask(taskId, { end: endVal });
-          undoStackRef.current.push(new UpdateTaskCommand(store, taskId, { end: oldEnd }, { end: endVal }));
+          undoStack.push(new UpdateTaskCommand(store, taskId, { end: oldEnd }, { end: endVal }));
           break;
         }
         case 'select': {
@@ -207,14 +213,12 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       }
     };
 
-    const undoStackRef = useRef<UndoStack>(new UndoStack());
-
     const handleUndo = () => {
-      undoStackRef.current.undo();
+      undoStack.undo();
     };
 
     const handleRedo = () => {
-      undoStackRef.current.redo();
+      undoStack.redo();
     };
 
     useGanttKeyboard({
@@ -225,6 +229,11 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       onOpenEditor: openEditor,
       onUndo: handleUndo,
       onRedo: handleRedo,
+      onDeleteTask: (id) => {
+        const cmd = new DeleteTaskCommand(store, id);
+        undoStack.push(cmd);
+        cmd.execute();
+      },
     });
 
     const scrollToToday = useCallback(() => {
@@ -444,7 +453,15 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                   scrollContainerRef={timelineRef}
                 />
                 <svg ref={svgRef} className="absolute inset-0 pointer-events-none overflow-visible" style={{ zIndex: 5 }}>
-                  <GanttLinks store={store} onLinkClick={handleLinkClick} />
+                  <GanttLinks
+                    store={store}
+                    onLinkClick={handleLinkClick}
+                    onLinkRemove={(linkId) => {
+                      const cmd = new RemoveLinkCommand(store, linkId);
+                      undoStack.push(cmd);
+                      cmd.execute();
+                    }}
+                  />
                   {store.getVisibleTasks().filter(t => t.baselines?.length).map(task => (
                     <BaselineBars key={String(task.id)} task={task} scaleRange={store.scaleRange} cellWidth={store.cellWidth} taskBarHeight={store.taskBarHeight} />
                   ))}
@@ -462,6 +479,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           onClose={() => { store.editTask(null); }}
           onBarDoubleClick={(id) => { store.editTask(id); }}
           className={resolved.editorClassName as string | undefined}
+          undoStack={undoStack}
         />
       </div>
     );

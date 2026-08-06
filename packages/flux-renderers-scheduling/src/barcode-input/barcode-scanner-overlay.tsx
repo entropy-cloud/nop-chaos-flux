@@ -264,7 +264,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
           className={cn('w-full h-full object-contain', phase !== 'scanning' && 'hidden')}
           playsInline
           muted
-          aria-label="Camera feed for barcode scanning"
+          aria-label={t('flux.barcode.cameraFeedLabel')}
         />
 
         <Button

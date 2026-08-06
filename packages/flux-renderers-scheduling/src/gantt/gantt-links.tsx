@@ -8,9 +8,10 @@ interface GanttLinksProps {
   store: GanttStoreApi;
   className?: string;
   onLinkClick?: (linkId: string | number) => void;
+  onLinkRemove?: (linkId: string | number) => void;
 }
 
-export function GanttLinks({ store, className, onLinkClick }: GanttLinksProps) {
+export function GanttLinks({ store, className, onLinkClick, onLinkRemove }: GanttLinksProps) {
   useSyncExternalStore(store.subscribe, () => store.linkRevision);
   useSyncExternalStore(store.subscribe, () => store.layoutRevision);
   const [hoveredLink, setHoveredLink] = useState<string | number | null>(null);
@@ -27,7 +28,11 @@ export function GanttLinks({ store, className, onLinkClick }: GanttLinksProps) {
   const hasLinks = links.length > 0;
 
   const handleDelete = (linkId: string | number) => {
-    store.removeLink(linkId);
+    if (onLinkRemove) {
+      onLinkRemove(linkId);
+    } else {
+      store.removeLink(linkId);
+    }
   };
 
   const handleLinkClick = (linkId: string | number) => {

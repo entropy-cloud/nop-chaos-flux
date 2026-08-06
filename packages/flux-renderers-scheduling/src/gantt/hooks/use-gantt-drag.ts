@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import type { GanttStore } from '../gantt-store.js';
+import { UpdateTaskCommand, type UndoStack } from '../undo-stack.js';
 
 export type GanttDragMode = 'move' | 'resize-start' | 'resize-end';
 type DragMode = GanttDragMode | null;
@@ -20,6 +21,7 @@ export function useGanttDrag(
   store: GanttStore,
   _containerRef: React.RefObject<HTMLElement | null>,
   onCommit?: (taskId: string | number, changes: Record<string, string>) => void,
+  undoStack?: UndoStack,
 ) {
   const dragRef = useRef<DragState | null>(null);
   const ghostRef = useRef<HTMLElement | null>(null);
@@ -114,6 +116,8 @@ export function useGanttDrag(
             end: newEnd.toISOString().slice(0, 10),
           };
           onCommitRef.current?.(task.id, changes);
+          // CR P2-3: drag commits record an undo command (design §12.8).
+          undoStack?.push(new UpdateTaskCommand(store, task.id, { start: task.start, end: task.end }, changes));
           store.updateTask(task.id, changes);
         } else if (dragRef.current.mode === 'resize-end' && dayDelta !== 0) {
           const oldEnd = new Date(task.end);
@@ -122,6 +126,7 @@ export function useGanttDrag(
           if (newEnd > new Date(task.start)) {
             const changes = { end: newEnd.toISOString().slice(0, 10) };
             onCommitRef.current?.(task.id, changes);
+            undoStack?.push(new UpdateTaskCommand(store, task.id, { end: task.end }, changes));
             store.updateTask(task.id, changes);
           }
         } else if (dragRef.current.mode === 'resize-start' && dayDelta !== 0) {
@@ -131,6 +136,7 @@ export function useGanttDrag(
           if (newStart < new Date(task.end)) {
             const changes = { start: newStart.toISOString().slice(0, 10) };
             onCommitRef.current?.(task.id, changes);
+            undoStack?.push(new UpdateTaskCommand(store, task.id, { start: task.start }, changes));
             store.updateTask(task.id, changes);
           }
         }

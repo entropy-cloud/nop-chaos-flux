@@ -10,7 +10,8 @@
  */
 import React, { useImperativeHandle, useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import type { RendererComponentProps, ComponentHandle } from '@nop-chaos/flux-core';
-import { useCurrentComponentRegistry, useRenderScope } from '@nop-chaos/flux-react';
+import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
+import { useCurrentComponentRegistry, useRenderScope, useRendererRuntime } from '@nop-chaos/flux-react';
 import { Skeleton, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -51,6 +52,7 @@ const DEFAULT_SHIFT_TYPES = [
 
 export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?: React.Ref<CalendarHandle> }) {
   const { ref, props: resolved, meta, regions, events, helpers: _helpers } = props;
+  const runtime = useRendererRuntime();
 
   const eventsRef = useRef(events);
   useEffect(() => { eventsRef.current = events; }, [events]);
@@ -129,11 +131,29 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   useEffect(() => {
     const ev = eventsRef.current;
     void ev.onMount?.({}, eventCtx({}));
-    void ev.loadAction?.({}, eventCtx({}));
+    const loadPromise = ev.loadAction?.({}, eventCtx({}));
+    if (loadPromise) {
+      // CR P2-4: loadAction is a fire-and-forget data-load hook; a rejection
+      // must not go silent (unhandled rejection). Surface it through the host
+      // runtime issue channel (env.notify → user-visible error toast), same
+      // surface as the form renderer's init/load action error reporting.
+      loadPromise.catch((error) => {
+        reportRuntimeHostIssue({
+          env: runtime.env,
+          level: 'error',
+          message: `Calendar loadAction failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+          error,
+          phase: 'action',
+          path: props.path,
+        });
+      });
+    }
     return () => {
       void ev.onUnmount?.({}, eventCtx({}));
     };
-  }, [eventCtx]);
+  }, [eventCtx, props.path, runtime.env]);
 
   useImperativeHandle(
     ref,

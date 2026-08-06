@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 import type { GanttStore } from '../gantt-store.js';
 import { t } from '@nop-chaos/flux-i18n';
 
@@ -10,6 +10,7 @@ interface UseGanttKeyboardOptions {
   onOpenEditor?: (id: string | number) => void;
   onUndo?: () => void;
   onRedo?: () => void;
+  onDeleteTask?: (id: string | number) => void;
 }
 
 export function useGanttKeyboard({
@@ -20,6 +21,7 @@ export function useGanttKeyboard({
   onOpenEditor,
   onUndo,
   onRedo,
+  onDeleteTask,
 }: UseGanttKeyboardOptions) {
 
   const updateRowAria = (taskId: string | number, isSelected: boolean) => {
@@ -36,80 +38,89 @@ export function useGanttKeyboard({
 
   const getSelectedId = (): string | number | null => store.selectedTaskId ?? selectedTaskId;
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!containerRef.current) return;
+  // CR P2-4: the keydown handler is an effect event — the listener attaches
+  // exactly once (containerRef only) instead of re-attaching on every render.
+  // Previously the effect depended on volatile identities (updateRowAria and
+  // inline callbacks), so each render detached + re-attached the listener.
+  const handleKeyDown = useEffectEvent((e: KeyboardEvent) => {
+    if (!containerRef.current) return;
 
-      switch (e.key) {
-        case 'ArrowDown':
-        case 'ArrowUp': {
-          e.preventDefault();
-          const tasks = store.getVisibleTasks();
-          if (tasks.length === 0) return;
-          const currentId = getSelectedId();
-          let idx = currentId ? tasks.findIndex((t) => t.id === currentId) : -1;
-          if (e.key === 'ArrowDown') idx = Math.min(idx + 1, tasks.length - 1);
-          else idx = Math.max(idx - 1, 0);
-          if (idx >= 0) {
-            onSelectTask(tasks[idx].id);
-            updateRowAria(tasks[idx].id, true);
-          }
-          break;
+    switch (e.key) {
+      case 'ArrowDown':
+      case 'ArrowUp': {
+        e.preventDefault();
+        const tasks = store.getVisibleTasks();
+        if (tasks.length === 0) return;
+        const currentId = getSelectedId();
+        let idx = currentId ? tasks.findIndex((t) => t.id === currentId) : -1;
+        if (e.key === 'ArrowDown') idx = Math.min(idx + 1, tasks.length - 1);
+        else idx = Math.max(idx - 1, 0);
+        if (idx >= 0) {
+          onSelectTask(tasks[idx].id);
+          updateRowAria(tasks[idx].id, true);
         }
-        case 'ArrowLeft': {
-          if (!getSelectedId()) break;
-          e.preventDefault();
-          const task = store.tasks.get(getSelectedId()!);
-          if (!task) break;
-          const children = store.getVisibleDescendantCount(getSelectedId()!);
-          if (children > 0 && store.isOpen(getSelectedId()!)) {
-            store.toggleOpen(getSelectedId()!);
-          }
-          break;
-        }
-        case 'ArrowRight': {
-          if (!getSelectedId()) break;
-          e.preventDefault();
-          const task = store.tasks.get(getSelectedId()!);
-          if (!task) break;
-          const children = store.getVisibleDescendantCount(getSelectedId()!);
-          if (children > 0 && !store.isOpen(getSelectedId()!)) {
-            store.toggleOpen(getSelectedId()!);
-          }
-          break;
-        }
-        case 'Enter': {
-          e.preventDefault();
-          const id = getSelectedId();
-          if (id && onOpenEditor) {
-            onOpenEditor(id);
-          }
-          break;
-        }
-        case 'Delete':
-        case 'Backspace': {
-          const id = getSelectedId();
-          if (!id) break;
-          e.preventDefault();
-          store.deleteTask(id);
-          onSelectTask(null);
-          containerRef.current?.focus();
-          break;
-        }
-        case 'z':
-        case 'Z': {
-          if ((e.ctrlKey || e.metaKey) && !e.shiftKey && onUndo) {
-            e.preventDefault();
-            onUndo();
-          } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && onRedo) {
-            e.preventDefault();
-            onRedo();
-          }
-          break;
-        }
+        break;
       }
-    };
+      case 'ArrowLeft': {
+        if (!getSelectedId()) break;
+        e.preventDefault();
+        const task = store.tasks.get(getSelectedId()!);
+        if (!task) break;
+        const children = store.getVisibleDescendantCount(getSelectedId()!);
+        if (children > 0 && store.isOpen(getSelectedId()!)) {
+          store.toggleOpen(getSelectedId()!);
+        }
+        break;
+      }
+      case 'ArrowRight': {
+        if (!getSelectedId()) break;
+        e.preventDefault();
+        const task = store.tasks.get(getSelectedId()!);
+        if (!task) break;
+        const children = store.getVisibleDescendantCount(getSelectedId()!);
+        if (children > 0 && !store.isOpen(getSelectedId()!)) {
+          store.toggleOpen(getSelectedId()!);
+        }
+        break;
+      }
+      case 'Enter': {
+        e.preventDefault();
+        const id = getSelectedId();
+        if (id && onOpenEditor) {
+          onOpenEditor(id);
+        }
+        break;
+      }
+      case 'Delete':
+      case 'Backspace': {
+        const id = getSelectedId();
+        if (!id) break;
+        e.preventDefault();
+        // CR P2-3: deletion records an undo command (design §12.8).
+        if (onDeleteTask) {
+          onDeleteTask(id);
+        } else {
+          store.deleteTask(id);
+        }
+        onSelectTask(null);
+        containerRef.current?.focus();
+        break;
+      }
+      case 'z':
+      case 'Z': {
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && onUndo) {
+          e.preventDefault();
+          onUndo();
+        } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && onRedo) {
+          e.preventDefault();
+          onRedo();
+        }
+        break;
+      }
+    }
+  });
 
+  useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     el.addEventListener('keydown', handleKeyDown);
@@ -119,9 +130,7 @@ export function useGanttKeyboard({
     return () => {
       el.removeEventListener('keydown', handleKeyDown);
     };
-  /* eslint-disable react-hooks/exhaustive-deps, react-compiler/react-compiler */
-  }, [containerRef, selectedTaskId, onSelectTask, onOpenEditor, onUndo, onRedo, updateRowAria]);
-  /* eslint-enable react-hooks/exhaustive-deps, react-compiler/react-compiler */
+  }, [containerRef]);
 
   return { updateRowAria };
 }

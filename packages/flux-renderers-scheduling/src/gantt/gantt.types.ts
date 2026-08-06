@@ -140,6 +140,7 @@ export interface GanttStoreApi {
   deleteTask: (id: GanttId) => void;
   addLink: (source: GanttId, target: GanttId, type: GanttLinkType) => GanttLink;
   removeLink: (id: GanttId) => void;
+  restoreSubtree: (tasks: GanttTaskData[], links: GanttLinkData[]) => void;
   setZoom: (zoomKey: string, anchorScrollLeft?: number, anchorContainerWidth?: number) => void;
   getAvailableZooms: () => GanttZoomLevel[];
   destroy: () => void;

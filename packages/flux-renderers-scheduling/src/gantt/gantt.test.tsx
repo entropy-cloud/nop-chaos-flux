@@ -141,9 +141,11 @@ describe('Gantt', () => {
     );
     const gridHeaderCells = container.querySelectorAll('[data-slot="gantt-grid-header-cell"]');
     expect(gridHeaderCells.length).toBeGreaterThanOrEqual(4);
-    expect(container.textContent).toContain('Task');
-    expect(container.textContent).toContain('Start');
-    expect(container.textContent).toContain('End');
+    // Column labels come from i18n keys (scheduling.gantt.*), resolved in the
+    // default zh-CN locale (CR Phase 4 hardcoded-string cleanup).
+    expect(container.textContent).toContain('任务');
+    expect(container.textContent).toContain('开始');
+    expect(container.textContent).toContain('结束');
   });
 
   it('should render scale cells from time axis', () => {

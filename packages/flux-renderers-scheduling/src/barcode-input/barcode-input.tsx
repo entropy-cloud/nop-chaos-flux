@@ -69,6 +69,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       form.setValue(name, '');
     }
     setValidationError(null);
+    setScannerError(null);
   };
 
   const mountedRef = useRef(true);
@@ -105,6 +106,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
     if (resolved.readOnly) return;
     scanOnFocusOpenedRef.current = false;
     scanAbortRef.current?.abort();
+    setScannerError(null);
     const ac = new AbortController();
     scanAbortRef.current = ac;
     try {
@@ -165,6 +167,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       form.setValue(name, val);
     }
     setValidationError(null);
+    setScannerError(null);
   };
 
   const handleScanResult = (result: BarcodeDetectResult) => {
@@ -190,6 +193,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
 
   const handleOverlayClose = () => {
     setOverlayOpen(false);
+    setScannerError(null);
   };
 
   // INV-1 (renderer-env.md): WASM loading goes through the host RendererEnv
@@ -232,6 +236,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       if (name && form) {
         form.setValue(name, '');
       }
+      setScannerError(null);
       return { fellBackToDefault: true };
     },
     scanNow: () => {
@@ -239,6 +244,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         return { success: false, error: t('flux.barcode.readOnlyField') };
       }
       scanOnFocusOpenedRef.current = false;
+      setScannerError(null);
       if (cameraAvailable === null) {
         checkCameraAvailability().then((result) => {
           setCameraAvailable(result.isAvailable);
