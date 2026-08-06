@@ -1,6 +1,6 @@
 # Follow-up Backlog 收口（F3/F4 微修 + R1 P2 候选 R2 复核与路由）
 
-> Plan Status: active（draft → active：独立子 agent 审查 pass-with-minors，零 Blocker/零 Major，Minor 全部处理，共识达成）
+> Plan Status: completed（active → completed：4 Phase 全 completed，closure-audit 由独立 fresh session 执行通过，共识达成）
 > Mission: component-audit
 > Work Item: Follow-up Backlog
 > Last Reviewed: 2026-08-06
@@ -186,7 +186,7 @@ Exit Criteria:
 - [x] roadmap Follow-up Backlog 三条勾选；daily log 记录存在（Phase 4 Exit）
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope confirmed live defect（R2 确认属实的项均已修复或显式 successor 登记）
 - [x] 受影响的 owner docs（mission json、quick-reference、timeline design.md、roadmap、terminology、plan 453、daily log、分析文件）已同步到 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -214,10 +214,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: pending（执行完成后填写）
+Status Note: 已收口（2026-08-06）——Follow-up Backlog 三条目全部勾选（roadmap `[x]`）；F3 mission json 计数 112→113、F4 swipe-cell effect-mirror 清理（MA-02 守卫语义保持，mobile 包 171 测试全绿）；15 条 R1 P2 候选全数 R2 复核 + 路由（10 项 fix-in-this-plan 落地 / 5 项 successor 显式登记 / 1 项观察 keep），裁决表 `docs/audits/multi-audit-r2-verdicts.md` 零悬挂；workspace 验证 typecheck/build/lint 32/32 + test 59/59 全绿，`pnpm check` 仅 14 既有 pre-existing oversized 红（零新增）；commit `037e2c9f`。
 
-Closure Audit Evidence: pending
+Closure Audit Evidence:
+
+- Auditor / Agent: 独立 fresh sub-agent（task `ses_028fd4690ffePhm7lRybJugQNf`，2026-08-06，fresh session 不复用执行上下文）
+- Evidence: verdict **approved**，零 Blocker/零 Major，1 Minor（commit 引用在执行后提交 `037e2c9f` 已落地）；逐项 live 复核 Phase 1-4 exit criteria（裁决表 15 条 + file:line 抽查、mission json 113、swipe-cell 无 effect-mirror + setOpenState 仅 2 调用点、swipe-cell.test.tsx:245/:261 守卫用例、mobile 包实测 171 绿、action-core 实测 207 绿、quick-reference/timeline design.md/timeline 卡/roadmap :63/:109/plan 453/terminology/prepare-wasm-utils fail-closed/tree-mode.md:228、roadmap Follow-up Backlog 三条 `[x]`、8 分析文件 R2 回写、daily log 条目）；successor 诚实性核查（14-4/15-1/15-2/17-2/19-3 显式登记、15-2 confirmed defect 未降级）；plan 文本一致性（Plan Status / 4 Phase Status / Exit Criteria / Closure Gates 互洽，audit gate 在执行 session 勾选前保持 `[ ]`，auditor 通过后勾选）。
 
 Follow-up:
 
-- pending（仅记录 non-blocking follow-up）
+- no remaining plan-owned work（5 项 successor 已登记于裁决表 + Deferred But Adjudicated，属其他 owner 域交接物，非本 plan debt）
