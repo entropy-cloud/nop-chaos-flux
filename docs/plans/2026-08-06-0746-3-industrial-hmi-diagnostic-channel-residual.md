@@ -1,6 +1,6 @@
 # 03 Industrial HMI Diagnostic Channel Residual（handler-error telemetry + cycle depth）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: industrial-hmi
 > Work Item: 2026-08-05-2129 post-remediation audit P2（diagnostic-channel residual 子集）
 > Last Reviewed: 2026-08-06
@@ -77,40 +77,40 @@
 
 ### Phase 1 - handler-error telemetry 对称（P2-5）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/renderer/scada-canvas.tsx`（`onHandlerError` + `reportDiagnostic`）；telemetry 面（Decision 裁定）
 
 - Item Types: `Decision | Proof | Fix`
 
-- [ ] **Decision（telemetry 路由）**：裁定 handler-error 到达 host 的路径。优先方案（最小公共面变更）：`handler-error` 经已存在、已接 `'action'` phase 的 `ErrorMonitorPayload` 面（`renderer-api.ts:166`）转发到 host，而非扩 `ExpressionExecutionEnv.monitor` 的 `'expression'` 字面量限定。若 host 侧仅暴露 `ExpressionExecutionEnv.monitor`（窄面），则裁定是否 (i) 在 renderer 内经 `rendererRuntime.env` 的更宽 error-reporting 面（如 renderer-plugin 的 `onError(error, payload: ErrorMonitorPayload)`）转发，或 (ii) 新增 optional `onActionError` 通道。Decision 写入 `design-renderer.md` + 本 plan，记录拒绝的替代方案（如「扩 `ExpressionExecutionEnv.monitor.phase` 联合」会模糊窄面语义，故不选）。
-- [ ] **Proof（failing-first，先于 Fix）**：先写失败用例——构造图元 click handler throw 场景，断言 host monitor 收到 `phase:'action'` + `error instanceof Error` + `error.cause` 为原始 throw 值。当前实现下确认转红（handler-error 未到 monitor / cause 丢失），作为 Fix 完成后的转绿判据。
-- [ ] **Fix-a（透传原始 Error）**：`scada-canvas.tsx:176-177` `onHandlerError` 改为 `reportDiagnostic('handler-error', error instanceof Error ? error.message : String(error), error)`（补第 3 参 `error`），使 `:135` 走 `new Error(message, { cause: error })` 分支保留 cause 链。
-- [ ] **Fix-b（action-phase telemetry）**：`reportDiagnostic`（或 Decision 裁定的路由）对 `handler-error` 经 action-phase 面转发到 host 监控（phase:'action'，含原 Error + `{ code: 'handler-error' }`）。保持「诊断≠status 升级」（§8.1 不动 setStatus/不派发 scada:error）。Fix-a/b 落地后上述 failing-first Proof 转绿。
+- [x] **Decision（telemetry 路由）**：裁定 handler-error 经已存在、已接 `'action'` phase 的**宽** telemetry 面 `RendererPlugin.onError`（`flux-core/src/types/renderer-api.ts:166` `ErrorMonitorPayload`，phase 联合含 `'action'`；`flux-action-core/action-execution.ts:153` 已用此面转发 action 错误）转发到 host，由 `rendererRuntime.plugins` 迭代调用，phase:'action' + 原 Error（cause 链保留）。**拒绝**扩 `ExpressionExecutionEnv.monitor` 的 `'expression'` 字面量限定（会模糊窄面语义——窄面刻意限定 expression-phase，且需改公共类型）与新增 optional `onActionError` 通道（属不必要的重复面——`plugins[].onError` 宽面已覆盖）。对称性：flux-\* expression 错误 → 窄面 `env.monitor.onError`（phase:'expression'）；handler-error action 错误 → 宽面 `plugins[].onError`（phase:'action'）。Decision 写入 `design-renderer.md` §8.1（plan 2026-08-06-0746-3 Phase 1 Decision 注记）+ 本 plan。
+- [x] **Proof（failing-first，先于 Fix）**：先写失败用例——`scada-canvas-diagnostic-channels.test.tsx` 新增 describe「handler-error action-phase telemetry symmetry」(plan 2026-08-06-0746-3 Phase 1, multi P2-5)：构造图元 click handler throw 场景，断言 host plugin.onError 收 `phase:'action'` + `error instanceof Error` + `error.cause` 为原始 throw 值（cause 链保留）+ 画布保持 ready（§8.1 不升级）。修复前 handler-error 既不透传 error 也无 telemetry 路径 → 红；Fix 后绿。另含「plugin onError throw 自隔离不阻断其余 plugin」回归用例。
+- [x] **Fix-a（透传原始 Error）**：`scada-canvas.tsx` `onHandlerError` 改为 `reportDiagnostic('handler-error', error instanceof Error ? error.message : String(error), error)`（补第 3 参 `error`），使 `reportDiagnostic` 走 `new Error(message, { cause: error })` 分支保留 cause 链。
+- [x] **Fix-b（action-phase telemetry）**：`reportDiagnostic` 增 `else if (code === 'handler-error')` 分支：经 `rendererRuntime.plugins` 迭代 `plugin.onError(reportedError, { phase: 'action', error: reportedError, details: { code: 'handler-error' } })`（per-plugin try/catch 隔离，镜像 action-execution.ts）。`reportedError` 经 `error === undefined ? new Error(message) : new Error(message, { cause: error })` 统一构造（cause 链保留）。保持「诊断≠status 升级」（§8.1 不动 setStatus/不派发 scada:error）。Fix-a/b 落地后上述 failing-first Proof 转绿。
 
 Exit Criteria:
 
 > 本 Phase 交付 = handler-error 与 flux-\* expression 错误在「cause 链 + host telemetry」上对称。只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续的局部检查（Minimum Rule 18）。
 
-- [ ] handler-error 经 action-phase 面到达 host 监控（proof 断言 `phase:'action'` + Error 实例 + cause），与 flux-\* 的 expression-phase telemetry 对称。
-- [ ] handler-error 透传原始 Error（cause 链保留），不再 message-only。
-- [ ] 诊断≠升级契约不破（§8.1：仍不 setStatus/不派发 scada:error）。
-- [ ] 局部 typecheck 通过（证明 telemetry 面 Decision 落地无类型漂移；跨包变更若发生则 typecheck 覆盖）。
+- [x] handler-error 经 action-phase 面到达 host 监控（proof 断言 `phase:'action'` + Error 实例 + cause），与 flux-\* 的 expression-phase telemetry 对称。
+- [x] handler-error 透传原始 Error（cause 链保留），不再 message-only。
+- [x] 诊断≠升级契约不破（§8.1：仍不 setStatus/不派发 scada:error）。
+- [x] 局部 typecheck 通过（证明 telemetry 面 Decision 落地无类型漂移；跨包变更未发生——未改公共类型）。
 
 ### Phase 2 - cycle depth 上限（P2-6）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/binding/dirty-collector.ts`（`findCircularDependencyError`）
 
 - Item Types: `Proof | Fix`
 
-- [ ] **Proof（failing-first，先于 Fix）**：先写失败用例——构造 ≥12 层 expression chain 形成 cycle（a→b→...→l→a），断言 `findCircularDependencyError` 返 `CircularDependencyError`（非 undefined）→ 上游上报含 'circular dependency involving point'。当前上限 `10` 下确认转红（深链返 undefined → 误判 generic eval）；补充「≤10 层 cycle 仍正确识别」回归守护用例（防上限调整回归浅链）+ 自环 `cause===current` 守卫用例。
-- [ ] **Fix**：`findCircularDependencyError`（`:137-148`）深度上限 `10` 提至 ~1000（或移除，仅保留 `cause === current`/`undefined` break 守卫防无限循环）。注释更新：说明守卫已防自环/链终止，上限仅为防御性兜底而非语义约束。落地后上述 failing-first Proof 转绿。
+- [x] **Proof（failing-first，先于 Fix）**：`binding-expression-unification.test.ts` 新增 describe「findCircularDependencyError cause-chain depth cap」(plan 2026-08-06-0746-3 Phase 2, multi P2-6)：构造 12 层 wrapper 包裹 `CircularDependencyError`（模拟多层嵌套求值的包装叠加），断言 `findCircularDependencyError` 返原 `CircularDependencyError` 实例（toBe identity）。修复前上限 `10` 下确认转红（12/50 层返 undefined → 误判 generic eval）；补充「≤10 层 cycle 仍正确识别」回归守护（5 层，防上限调整回归浅链）+ 自环 `cause===current` 守卫用例（防无限循环）+ 普通 error 返 undefined 用例（防误报）。
+- [x] **Fix**：`findCircularDependencyError` 深度上限 `10` 提至 `MAX_CAUSE_CHAIN_DEPTH = 1000`（新增模块级常量）。注释更新：说明 `cause === current`/`undefined` break 守卫已防自环/链终止，上限仅为防御性兜底而非语义约束（兜底恶意/损坏极深链防栈耗尽）。落地后上述 failing-first Proof 转绿。
 
 Exit Criteria:
 
-- [ ] ≥12 层 expression cycle 被识别为 `CircularDependencyError`（proof 断言），非误判 generic eval。
-- [ ] 浅链（≤10）cycle 识别不回归（回归守护用例绿）。
-- [ ] 无无限循环风险（`cause === current`/`undefined` 守卫保留，proof 含自环 cause===current 用例）。
+- [x] ≥12 层 expression cycle 被识别为 `CircularDependencyError`（proof 断言 toBe identity），非误判 generic eval。
+- [x] 浅链（≤10）cycle 识别不回归（回归守护用例绿——5 层仍识别）。
+- [x] 无无限循环风险（`cause === current`/`undefined` 守卫保留，proof 含自环 cause===current 用例）。
 
 ## Draft Review Record
 
@@ -123,15 +123,15 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] P2-5：handler-error 透传原始 Error + 经 action-phase 面到达 host 监控，与 flux-\* expression 错误对称（proof 断言 phase/Error/cause）。
-- [ ] P2-6：深链 cycle 识别（≥12 层），浅链不回归，无无限循环。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 项（P2-4 明确为已收口的 Non-Goal，非本 plan in-scope）。
-- [ ] owner doc 同步：`design-renderer.md`（handler-error action-phase telemetry + §8.1 诊断≠升级不变）、`design-data-binding.md`（§9.1 通道对称）反映 live baseline。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] P2-5：handler-error 透传原始 Error + 经 action-phase 面到达 host 监控，与 flux-\* expression 错误对称（proof 断言 phase/Error/cause）。
+- [x] P2-6：深链 cycle 识别（≥12 层），浅链不回归，无无限循环。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 项（P2-4 明确为已收口的 Non-Goal，非本 plan in-scope）。
+- [x] owner doc 同步：`design-renderer.md`（handler-error action-phase telemetry + §8.1 诊断≠升级不变）、`design-data-binding.md`（§9.1 通道对称 + 环检测 cause 链深度）反映 live baseline。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Non-Blocking Follow-ups
 
@@ -140,13 +140,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 两 Phase 全部落地，两条诊断通道 debuggability residual P2 收口——handler-error 与 flux-\* expression 错误在「cause 链 + host telemetry」上对称（P2-5），findCircularDependencyError cause-chain 深度上限覆盖现实工业过程管线多层 expression chain（P2-6）。每项 Fix 前先落 failing-first Proof（红→绿）。owner docs 同步 live baseline。workspace 全量 typecheck/build/lint/test 全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 fresh-session sub-agent（task `ses_02b749de7ffea3gWZyXOU7bQlf`，general agent，不复用执行者上下文）
+- Verdict: `approved`（零 Blocker / 零 Major / 零 Minor）
+- Evidence: 逐项核验 Phase 1（scada-canvas.tsx `onHandlerError` 透传 error + `reportDiagnostic` handler-error 分支经 `rendererRuntime.plugins` 转发 phase:'action' + cause 链 + §8.1 不升级；proof 断言 phase/Error.cause identity）、Phase 2（`MAX_CAUSE_CHAIN_DEPTH=1000` + break 守卫保留；proof 断言 12/50 层 toBe identity + 浅链回归 + 自环守卫）、Decision 诚实（`ExpressionErrorMonitorPayload.phase` 字面量未改、`ErrorMonitorPayload` phase 联合未改、test-support 3rd 参可选向后兼容）、owner docs 一致（§8.1/§9.1 描述 action-phase telemetry + 深度上限 1000 为 LANDED，无 stale 文本）、scope 诚实（P2-4 为已收口 Non-Goal 非 deferred）、文本一致性（Status/Exit Criteria/Closure Gates 彼此一致）。workspace 全量验证：typecheck 32/32、build 32/32、lint 32/32、test 59/59（industrial 696/54）全绿。
 
 Follow-up:
 
-- <<明确写 no remaining plan-owned work，或记录 non-blocking follow-up>>
+- no remaining plan-owned work（其余 2026-08-05-2129 P2 归 sibling plan 或后续 mission 节奏；P2-5 Decision 若未来 host 统一 telemetry 面，可回头收敛窄/宽面双轨——见 Non-Blocking Follow-ups）。

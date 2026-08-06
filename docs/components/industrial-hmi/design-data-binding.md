@@ -274,6 +274,26 @@ interface ScadaStateDefinition {
 > `console.warn` + `env.monitor.onError`。修复前 pipeline `onError` 在生产装配中未接线 → binding.expression /
 > scale.expression / source:'expression' 求值错误全部静默（详见 design-renderer.md §8.1 诊断通道）。
 
+> **诊断通道 telemetry 面对称（plan 2026-08-06-0746-3 Phase 1，multi P2-5）**：`reportDiagnostic` 出口的两类
+> 诊断各走与错误语义匹配的 telemetry 面到达 host——flux 表达式错误（`flux-compile-failed`/
+> `flux-evaluate-failed`/`flux-deps-empty`）经**窄**面 `RendererEnv.monitor.onError`
+> （`ExpressionExecutionEnv.monitor`，phase:'expression'）；`handler-error`（用户侧图元事件处理器 throw）经
+> **宽**面 `RendererPlugin.onError`（`ErrorMonitorPayload`，phase:'action'），由 `rendererRuntime.plugins`
+> 迭代转发（per-plugin try/catch 隔离）。两条路径都透传原始 Error（`new Error(message, { cause: error })`
+> 保留 cause 链），与窄面 `'expression'` 字面量限定不冲突（不扩公共类型）。修复前 handler-error 既丢原始
+> Error（message-only）又无任何 telemetry 路径到达 host（仅 flux-\* 码转发 monitor）。**诊断≠升级**契约不变：
+> 两条路径都不升画布 status、不派发 `scada:error`（§8.1）。
+
+> **环检测 cause 链深度上限（plan 2026-08-06-0746-3 Phase 2，multi P2-6）**：`findCircularDependencyError`
+> （`dirty-collector.ts`）沿 `Error.cause` 链解包 `CircularDependencyError`（多层嵌套求值经 flux-formula
+> `formulaCompiler.exec` 叠加多层 `Error('Expression evaluation failed for: ...')` 包装）。cause-chain 遍历
+> 深度上限由硬编码 `10` 提至 `MAX_CAUSE_CHAIN_DEPTH = 1000`，覆盖现实工业过程管线多层 expression chain
+> （`${a}` → `${b}` → ... → `${k}` cycle）的包装深度。`cause === current`（自环）/ `cause === undefined`
+> （链终止）break 守卫保留，已防无限循环；上限仅为防御性兜底（恶意/损坏极深链防栈耗尽）而非语义约束。修复前
+> 10+ 层 chain 的 cycle 在 depth 上限处退出 → 返 undefined → 上游上报 `flux-evaluate-failed`（generic eval
+> 失败），host 无法区分真 cycle vs runtime TypeError；修复后深链 cycle 正确识别为 `CircularDependencyError`
+> → 上报 `circular dependency involving point: ...`。
+
 > **复杂表达式订阅诊断 `flux-deps-empty`（plan 2026-08-05-0325-1，W1 successor）**：复杂 flux 表达式
 > （`${analog.temp + 1}` 类，含运算符/函数调用）的订阅路径经平台依赖收集（`extractExpressionDepsViaProbe`）
 > 产出。当平台 collector 失败（compile/createState/evaluateWithState 任一 catch、root 非 leaf-state、
