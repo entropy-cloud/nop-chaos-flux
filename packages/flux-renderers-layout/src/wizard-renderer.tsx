@@ -1,15 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import type {
-  ActionSchema,
-  RendererComponentProps,
-  RendererRenderOutput,
-} from '@nop-chaos/flux-core';
-import {
-  unwrapBooleanLiteral,
-  unwrapPreservedLiteral,
-  useCurrentComponentRegistry,
-  useStatusPathPublication,
-} from '@nop-chaos/flux-react';
+import React, { useMemo, useState } from 'react';
+import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import { useCurrentComponentRegistry, useStatusPathPublication } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, XIcon } from 'lucide-react';
@@ -17,8 +8,18 @@ import type {
   WizardLastCommitStatus,
   WizardSchema,
   WizardStatusSummary,
-  WizardStepSchema,
 } from './schemas.js';
+import { CompiledWizardStep, WizardStepBody } from './wizard-step-body.js';
+import {
+  asReactNode,
+  computeCanGoTo,
+  findStepIndexByKey,
+  isStepDisabled,
+  isStepVisible,
+  resolveStepKey,
+  resolveStepLifecycleAction,
+  toStepKeyString,
+} from './wizard-step-helpers.js';
 
 // ───────────────────────────── Interaction state (step switching) ─────────────────────────────
 // Per design §6.1: step navigation is the interaction owner layer. This is intentionally
@@ -45,145 +46,10 @@ const INITIAL_LIFECYCLE: WizardLifecycleState = {
   stepError: undefined,
 };
 
-// Compiled step (post-schema-compiler shape): carries regionKey references.
-interface CompiledWizardStep extends WizardStepSchema {
-  titleRegionKey?: string;
-  bodyRegionKey?: string;
-  actionsRegionKey?: string;
-}
-
-// ───────────────────────────── Helpers ─────────────────────────────
-
-function resolveStepKey(step: WizardStepSchema, index: number): string | number {
-  if (step.key !== undefined && step.key !== null && step.key !== '') {
-    return step.key;
-  }
-  return index;
-}
-
-function toStepKeyString(key: string | number): string {
-  return String(key);
-}
-
-function isStepVisible(step: WizardStepSchema): boolean {
-  return step.visible !== false && step.visible !== 'false' && step.visible !== 0;
-}
-
-export function isStepDisabled(step: WizardStepSchema): boolean {
-  return unwrapBooleanLiteral(step.disabled);
-}
-
-function findStepIndexByKey(steps: WizardStepSchema[], key: string | number): number {
-  return steps.findIndex((step, idx) => resolveStepKey(step, idx) === key);
-}
-
-function asReactNode(value: RendererRenderOutput): React.ReactNode {
-  return value as React.ReactNode;
-}
-
-/**
- * Resolve a per-step lifecycle action (beforeEnter/beforeLeave).
- *
- * The schema-definition compiler delivers these `event`-kind fields as
- * `{ __nopPreserveLiteral: true, value }` envelopes (template-preserved so the
- * action args are never polluted by row/step-scope evaluation at compile
- * time). Unwrap before dispatch; bare authoring-form actions pass through.
- */
-function resolveStepLifecycleAction(
-  step: WizardStepSchema,
-  key: 'beforeEnter' | 'beforeLeave',
-): ActionSchema | ActionSchema[] | undefined {
-  const raw = step[key];
-  const unwrapped = unwrapPreservedLiteral(raw);
-  return (unwrapped ?? raw) as ActionSchema | ActionSchema[] | undefined;
-}
-
-/**
- * Compute the next navigable index, skipping hidden and (in linear mode) uncommitted steps.
- * Per design §10 + §12: linear mode blocks jumping past the furthest committed step unless
- * `allowStepJump` overrides. Hidden steps are skipped entirely: linear progression allows
- * reaching any target with no visible step between the high-water mark and the target
- * (C5.1 P1-3 — visible:false steps must not block linear advancement).
- */
-function computeCanGoTo(
-  steps: WizardStepSchema[],
-  targetIndex: number,
-  linear: boolean,
-  allowStepJump: boolean,
-  furthestReachedIndex: number,
-): boolean {
-  if (targetIndex < 0 || targetIndex >= steps.length) return false;
-  const target = steps[targetIndex];
-  if (!isStepVisible(target)) return false;
-  if (isStepDisabled(target)) return false;
-  if (linear && !allowStepJump && targetIndex > furthestReachedIndex) {
-    for (let i = furthestReachedIndex + 1; i < targetIndex; i += 1) {
-      if (isStepVisible(steps[i])) return false;
-    }
-  }
-  return true;
-}
-
-// ───────────────────────────── Step body view ─────────────────────────────
-
-interface WizardStepBodyProps {
-  owner: RendererComponentProps<WizardSchema>;
-  step: CompiledWizardStep;
-  index: number;
-  isActive: boolean;
-  mountOnEnter: boolean;
-  unmountOnExit: boolean;
-  hasBeenMounted: boolean;
-  markMounted: () => void;
-}
-
-function WizardStepBody(props: WizardStepBodyProps) {
-  const { owner, step, index, isActive, mountOnEnter, unmountOnExit, hasBeenMounted, markMounted } =
-    props;
-
-  useEffect(() => {
-    if (isActive && !hasBeenMounted) {
-      markMounted();
-    }
-  }, [isActive, hasBeenMounted, markMounted]);
-
-  const shouldRender = isActive
-    ? true
-    : mountOnEnter && hasBeenMounted && !unmountOnExit;
-
-  if (!shouldRender) return null;
-
-  const bodyRegion =
-    typeof step.bodyRegionKey === 'string' ? owner.regions[step.bodyRegionKey] : undefined;
-  const content = bodyRegion ? asReactNode(bodyRegion.render()) : null;
-
-  if (content === null || content === undefined || content === false) {
-    return (
-      <div
-        data-slot="wizard-step-body"
-        data-step-index={index}
-        data-empty="true"
-        hidden={!isActive ? true : undefined}
-      >
-        {content ?? null}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      data-slot="wizard-step-body"
-      data-step-index={index}
-      data-active={isActive || undefined}
-      hidden={!isActive ? true : undefined}
-      className="flex flex-col gap-4"
-    >
-      {content}
-    </div>
-  );
-}
-
-// ───────────────────────────── Wizard root ─────────────────────────────
+// `isStepDisabled` re-exported for consumers importing the public renderer API
+// (wizard-boolean-literal-compile-through.test.ts); implementation lives in
+// wizard-step-helpers.ts.
+export { isStepDisabled };
 
 export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
   const schemaProps = props.props;
