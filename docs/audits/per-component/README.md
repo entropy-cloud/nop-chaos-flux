@@ -1,6 +1,6 @@
-# 审计卡模板 v1（冻结于 C0，2026-08-02）
+# 审计卡模板 v2（修订于 CG，2026-08-06）
 
-> 用途：`docs/audits/per-component/<renderer-type>.md` 审计卡的标准载体。v1 冻结声明见 `docs/audits/component-audit-checklist.md` §4（本文件为其落盘副本，模板语义修订属 CG work item「checklist v2」，不得在 C\* 执行中擅自改动）。
+> 用途：`docs/audits/per-component/<renderer-type>.md` 审计卡的标准载体。v1 冻结于 C0（2026-08-02）；模板语义修订属 CG work item「checklist v2」——本文件为 `docs/audits/component-audit-checklist.md` v2 的落盘副本（checklist §4），模板语义修订仅经 CG work item 执行，不得在 C\* 执行中擅自改动。v1 → v2 变更见 checklist「变更摘要」节（维度 5/7/9/12/16 增补执行经验；维度编号不重构、历史卡不回写）。
 > 规则：审计卡文件名 = renderer type；一个文件一次审计（更新同文件，不生成日期副本）；发现编号 `P<n>-<seq>` 在卡内递增；`shared:` 前缀标记跨组件问题；P0/P1 未清零不得 `closed`。详见 checklist §3/§5。
 
 ```md

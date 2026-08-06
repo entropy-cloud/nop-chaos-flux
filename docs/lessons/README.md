@@ -50,6 +50,21 @@ Each note should include the sections that best fit the case. Common sections ar
 ## Index
 
 - [01 Over-Abstracted Compiler Fix Before Minimal Branch-Point Check](01-over-abstracted-compiler-fix-before-minimal-branch-point-check.md)
+- [02 Unit-Green But Real-Browser Broken (bug 73 模式)](02-unit-green-but-real-browser-broken-bug-73-pattern.md)
+- [03 Schema Event Dispatch Requires `{ event, evaluationBindings, scope }` Ctx](03-schema-event-dispatch-requires-event-evaluation-bindings-scope-ctx.md)
+- [04 Surface Args With Embedded Schema Body Get Eagerly Evaluated (CX-11)](04-surface-args-embedded-schema-body-eager-evaluation-cx-11.md)
+- [05 `kind:'reaction'` Fields Must Be Wired: ready() + ComponentHandle](05-reaction-field-wiring-requires-ready-and-component-handle.md)
+
+---
+
+## Component-Audit Lessons (CG)
+
+The following entries were extracted from the component-audit mission (C0–C9 + CX-1..CX-12, 2026-08-02..08-06) closure during the CG (Guard Sedimentation) work item. Each describes a repeatable failure pattern found across families, how it was detected, and what guard prevents it going forward.
+
+- **02** — 单测绿但真实浏览器失败（bug 73 模式）：单元测试证明逻辑正确性的一半；渲染/布局/环境 API/StrictMode 面必须由真实浏览器 programmatic 断言兜底（每卡必检 host 场景）。
+- **03** — schema 事件派发必须携带 `{ event, evaluationBindings, scope }` ctx：runtime args 求值只合并 evaluationBindings + scope，单参派发 = 模板键静默空值（CX-10/CX-12 家族）。
+- **04** — surface args 内嵌 schema body 急切求值（CX-11）：isSchema 顶层 arg 必须经 `__nopPreserveLiteral` envelope 静态化，否则成员访问模板抛错导致 dialog/drawer 静默打不开。
+- **05** — `kind:'reaction'` 字段必须三件套接线（reactionsRef 捕获 + ready() 激活 + ComponentHandle 注册），否则 force() 结果被吞、`component:*` 不可解析（CX-9/CX-12）。
 
 ---
 

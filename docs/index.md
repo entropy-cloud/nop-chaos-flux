@@ -225,7 +225,7 @@ Example behavior is best cross-checked with:
 ## Directory Roles
 
 - `docs/context/` - mandatory AI context layer: static project baseline (identity, documentation freshness, verification commands), AI autonomy policy, source-of-truth precedence, and codebase map; read `project-context.md` first to decide whether work may start. Current work-in-progress is found via unfinished plans in `docs/plans/`, not maintained here.
-- `docs/audits/` - audit methods (`00-audit-execution-guide.md`) and stored audit records from deep-audit/adversarial-review/goal-driver sweeps
+- `docs/audits/` - audit methods (`00-audit-execution-guide.md`) and stored audit records from deep-audit/adversarial-review/goal-driver sweeps; component-audit master indexes: `arm-index.md`（audit-remediation 轮）、`per-component/pc-index.md`（逐组件轮 113 卡汇总索引，2026-08-06 CG 建成）与逐组件审计卡 `per-component/`、审计清单 `component-audit-checklist.md`（v2）
 - `docs/architecture/` - governing principles, normative architecture, platform-extension architecture, and focused subsystem docs for the current baseline
 - start architecture navigation from `docs/architecture/README.md`; use `docs/references/architecture-doc-status-matrix.md` for role/owner/placement decisions
 - `docs/components/` - per-component design inputs; each component keeps its own directory with schema, capability, and implementation notes
