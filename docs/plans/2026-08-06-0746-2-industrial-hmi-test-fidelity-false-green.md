@@ -1,6 +1,6 @@
 # 02 Industrial HMI Test Fidelity / False-Green Elimination（2026-08-05-2129 audit P2 子集）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: industrial-hmi
 > Work Item: 2026-08-05-2129 post-remediation audit P2（test-fidelity 子集）
 > Last Reviewed: 2026-08-06
@@ -66,23 +66,27 @@
 
 ### Phase 1 - 四条 false-green 强化
 
-Status: planned
+Status: completed
 Targets: `expression-codemod.test.ts`、`binding-expression-unification.test.ts`、`scada-canvas-smoke.test.tsx`、`variables-optional-contract.test.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] **P2-12（codemod 等价副本 → 生产函数）**：`expression-codemod.test.ts` 删除内联 `migrateContent` 副本（`:21-` 区段），改为 `import { migrateContent } from '<workspace-root>/scripts/scada-expression-codemod.mjs'`（相对路径以实测为准）；新增一条用例覆盖 `QUOTED_DOLLAR_PATTERN`（如 `migrateContent("flux: '$analog.temp'")` 断言改写为 `${analog.temp}` 且 count>0），关闭「生产改 patterns 测试不感知」。**可行性注记**：生产脚本 top-level `import { readFileSync, writeFileSync } from 'node:fs'`（`scada-expression-codemod.mjs:22`），但 `migrateContent` 本体纯函数（fs 仅 `migrateFile` 用）；本包 vitest 为 node 兼容环境（`node:fs` 可解析），故跨 workspace 相对导入可行（旧注释 `:15-18`「无法跨 workspace 导入」为过虑）。**fallback**：若实测导入失败（如 vitest config 限制），退路为保留内联副本但 (a) 补齐 `QUOTED_DOLLAR_PATTERN` 达 parity + (b) 加一条「读生产 patterns 断言内联副本同步」守护测试（ divergence 即转红）。Proof：临时改坏生产 `QUOTED_DOLLAR_PATTERN` 确认新用例转红（failing-first），恢复后转绿。
-- [ ] **P2-13（blank 兜底断言）**：`binding-expression-unification.test.ts:459-473` 在触发 `syncExpressionPoint('blank')` 后补 `expect(harness.pointStore.getPointValue('blank')).toBe(...)`（`expression ?? ''` 空串兜底经 flux 求值的实际产出，以 live 行为准——空串 `${}` 求值结果）。Proof：临时让 `?? ''` 兜底返非空串确认断言转红，恢复后转绿。
-- [ ] **P2-14（scene build 真断言）**：`scada-canvas-smoke.test.tsx` test 1（`:35-52`）在 `handles.length>0` 之后补：经 `window.__flux_scada_<cid>` 句柄断言 `getSymbol('rect-1')` 为 truthy（图元入树）+ `root.getAttribute('data-status')==='ready'`。Proof：临时把 `validConfig.symbols` 清空确认 `getSymbol('rect-1')` 断言转红，恢复后转绿。
-- [ ] **P2-15（空 config flushFrame 真断言）**：`variables-optional-contract.test.ts:242-254` 把 `not.toThrow()` 替换/补强为 `expect(pipeline.flushFrame(() => undefined)).toBe(false)`（无脏块返 false）+ 断言 `applyAttrs` mock（经 harness 注入）`not.toHaveBeenCalled()`。Proof：临时让 flushFrame 误返 true / 误调 applyAttrs 确认断言转红，恢复后转绿。
+- [x] **P2-12（codemod 等价副本 → 生产函数）**：`expression-codemod.test.ts` 删除内联 `migrateContent` 副本（`:21-` 区段），改为 `import { migrateContent } from '<workspace-root>/scripts/scada-expression-codemod.mjs'`（相对路径以实测为准）；新增一条用例覆盖 `QUOTED_DOLLAR_PATTERN`（如 `migrateContent("flux: '$analog.temp'")` 断言改写为 `${analog.temp}` 且 count>0），关闭「生产改 patterns 测试不感知」。**可行性注记**：生产脚本 top-level `import { readFileSync, writeFileSync } from 'node:fs'`（`scada-expression-codemod.mjs:22`），但 `migrateContent` 本体纯函数（fs 仅 `migrateFile` 用）；本包 vitest 为 node 兼容环境（`node:fs` 可解析），故跨 workspace 相对导入可行（旧注释 `:15-18`「无法跨 workspace 导入」为过虑）。**fallback**：若实测导入失败（如 vitest config 限制），退路为保留内联副本但 (a) 补齐 `QUOTED_DOLLAR_PATTERN` 达 parity + (b) 加一条「读生产 patterns 断言内联副本同步」守护测试（ divergence 即转红）。Proof：临时改坏生产 `QUOTED_DOLLAR_PATTERN` 确认新用例转红（failing-first），恢复后转绿。
+  - **执行裁定（fallback 已采纳）**：primary path 经实测不可行——生产 `scada-expression-codemod.mjs:89` top-level `main(process.argv)` 在 import 时即执行（vitest 的 `process.argv` 非空 → `migrateFile` 读不存在路径 → `process.exit(1)` 终止 worker），且 `tsconfig.base.json` `allowJs:false` + 自定义 `types/node-fs.d.ts`（仅声明 `node:path` 的 `join/dirname/relative/extname`、`ImportMeta.dirname`）禁止跨 workspace `.mjs` 导入。采用 plan sanctioned fallback：(a) 内联副本补齐 `QUOTED_DOLLAR_PATTERN`（parity，3 patterns）+ regex source 与生产逐字对齐（`\-` 规范化以过 ESLint `no-useless-escape`）；(b) 守护测试读生产源码，精确比对每个 pattern 的 regex source（规范化后）+ `migrateContent` 实际 used-pattern 集合，divergence 即转红。Proof（failing-first 经手验）：临时改坏生产 `AT_SYNTAX_PATTERN`/`DOLLAR_SHORTHAND_PATTERN` regex → 守护测试转红，恢复后转绿。新增 `QUOTED_DOLLAR_PATTERN` 专属用例（独立引号 `'$xxx'` 当前 count=0，刻画生产当前跳过该 pattern 的行为；生产启用即转红）。
+- [x] **P2-13（blank 兜底断言）**：`binding-expression-unification.test.ts:459-473` 在触发 `syncExpressionPoint('blank')` 后补 `expect(harness.pointStore.getPointValue('blank'))`（`expression ?? ''` 空串兜底经 flux 求值的实际产出，以 live 行为准——空串 `${}` 求值结果）。Proof：临时让 `?? ''` 兜底返非空串确认断言转红，恢复后转绿。
+  - **执行结果**：经 live 探测确认 `getPointValue('blank')` 返字面串 `'${}'`（空串经 normalize 为 `${}`，flux-formula 视作 static 字面量）。补 `expect(harness.pointStore.getPointValue('blank')).toBe('${}')` + `expect(onError).not.toHaveBeenCalled()`（兜底正常求值不应上报）。Proof（failing-first 经手验）：临时移除 `?? ''` 兜底（expression 变 undefined）→ `evaluateFlux(undefined.trim())` 抛 TypeError → 'blank' 保持 init `0` ≠ `'${}'`，断言转红，恢复后转绿。
+- [x] **P2-14（scene build 真断言）**：`scada-canvas-smoke.test.tsx` test 1（`:35-52`）在 `handles.length>0` 之后补：经 `window.__flux_scada_<cid>` 句柄断言 `getSymbol('rect-1')` 为 truthy（图元入树）+ `root.getAttribute('data-status')==='ready'`。Proof：临时把 `validConfig.symbols` 清空确认 `getSymbol('rect-1')` 断言转红，恢复后转绿。
+  - **执行结果**：经 test handle（renderer 默认 `exposeTestHandle:true`）`getSymbol('rect-1')` 断言图元入树 + `root.getAttribute('data-status')==='ready'`。Proof（failing-first 经手验）：临时把 `validConfig.symbols` 清空 → `getSymbol('rect-1')` 返 undefined → 断言转红，恢复后转绿。
+- [x] **P2-15（空 config flushFrame 真断言）**：`variables-optional-contract.test.ts:242-254` 把 `not.toThrow()` 替换/补强为 `expect(pipeline.flushFrame(() => undefined)).toBe(false)`（无脏块返 false）+ 断言 `applyAttrs` mock（经 harness 注入）`not.toHaveBeenCalled()`。Proof：临时让 flushFrame 误返 true / 误调 applyAttrs 确认断言转红，恢复后转绿。
+  - **执行结果**：`not.toThrow()` 替换为 `expect(pipeline.flushFrame(applyAttrs)).toBe(false)` + `expect(applyAttrs).not.toHaveBeenCalled()`。Proof（failing-first 经手验）：临时把 `dirty-collector.ts:281` 空脏早退 `return false` 改 `return true` → flushFrame 返 true ≠ false，断言转红，恢复后转绿。
 
 Exit Criteria:
 
 > 本 Phase 交付 = 4 条 false-green 消除。只写本 Phase 真正交付的可观测结果 + 保证后续能继续的局部检查（plan guide Minimum Rule 18，全量验证归 Closure Gates）。
 
-- [ ] 4 条被强化测试在「正确行为」下绿；每条均经手验「被测行为退化时转红」（failing-first 记录于 commit/proof）。
-- [ ] `expression-codemod.test.ts` 不再含内联 `migrateContent` 副本，改为 import 生产函数；`QUOTED_DOLLAR_PATTERN` 有专属覆盖用例。
-- [ ] 包级 `pnpm --filter @nop-chaos/flux-renderers-industrial test` 全绿（局部 typecheck 通过，证明 import .mjs 无类型/解析问题）。
+- [x] 4 条被强化测试在「正确行为」下绿；每条均经手验「被测行为退化时转红」（failing-first 记录于 commit/proof）。
+- [x] `expression-codemod.test.ts` 的内联 `migrateContent` 副本经守护测试与生产 `scada-expression-codemod.mjs` 锁定同步（regex source 精确比对 + used-pattern 集合断言，生产改 patterns 即转红）；`QUOTED_DOLLAR_PATTERN` 有专属覆盖用例。**注**：primary path（import 生产函数）经实测不可行——生产 `.mjs` top-level `main(process.argv)` 副作用致 import 即 `process.exit`，且 `allowJs:false` + 自定义 `types/node-fs.d.ts` 禁止跨 workspace 导入；采用 plan sanctioned fallback（内联副本 parity + 生产源码守护测试），同等关闭「生产改 patterns 测试不感知」的 false-green。
+- [x] 包级 `pnpm --filter @nop-chaos/flux-renderers-industrial test` 全绿（全量 `pnpm typecheck/build/lint/test` 亦全绿，见 Closure Gates）。
 
 ## Draft Review Record
 
@@ -95,14 +99,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 4 条 false-green（P2-12/P2-13/P2-14/P2-15）均已强化为「断言结果值/可观测行为」，且各经 failing-first 验证（退化转红）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 项。
-- [ ] 受影响 owner doc：本计划为测试强化，无 design-\*.md 契约/行为变更（执行时复核确认）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 4 条 false-green（P2-12/P2-13/P2-14/P2-15）均已强化为「断言结果值/可观测行为」，且各经 failing-first 验证（退化转红）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 项。
+- [x] 受影响 owner doc：本计划为测试强化，无 design-\*.md 契约/行为变更（执行时复核确认）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Non-Blocking Follow-ups
 
@@ -110,13 +114,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: Phase 1 四条 test-fidelity P2（P2-12/13/14/15）均由「弱断言/not.toThrow/等价副本」强化为「断言结果值/可观测行为」，每条经 failing-first 手验（退化场景转红 → 恢复转绿）。全量 `pnpm typecheck/build/lint/test` 全绿（32/32 build+typecheck+lint tasks，59/59 test tasks）。无产品运行时/源码改动（仅 4 个测试文件），故无 design-\*.md 契约变更。Closure Gates 中的 closure-audit 条目由独立子 agent（fresh session）执行（执行 session 不自审）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: independent closure auditor（fresh session，glm-5.2）
+- Evidence: live repo 复核（git diff + 源文件 + 重跑 4 测试文件 49/49 绿）。findings 摘要：
+  1. 4 条 false-green 均已强化为断言结果值/可观测行为——P2-12 sync guard 读生产源码精确比对 regex source + used-pattern 集合（生产改 regex 即转红，已推理验证）；P2-13 断言 `getPointValue('blank')==='${}'` + onError 未调；P2-14 断言 `getSymbol('rect-1')` truthy + `data-status==='ready'`；P2-15 断言 `flushFrame→false` + applyAttrs 未调。无残留 `not.toThrow()`/无关点断言。
+  2. P2-12 fallback 经 live 三重确认合法（`scada-expression-codemod.mjs:89` top-level `main(process.argv)` + `tsconfig.base.json` `allowJs:false` + `types/node-fs.d.ts` 未声明 `writeFileSync`），Exit Criteria line 88 已诚实修订。
+  3. `git diff --stat` 仅 4 测试文件 + plan + roadmap（doc），无产品源码/运行时改动。Zero Blocker / Zero Major → approved。
 
 Follow-up:
 
-- <<明确写 no remaining plan-owned work，或记录 non-blocking follow-up>>
+- 其余 2026-08-05-2129 P2（multi P2-1..P2-11、open P2-1..P2-10）归 sibling plan（`2026-08-06-0746-1` doc-drift / `2026-08-06-0746-3` diagnostic residual）或后续 mission 节奏——非本 plan owned work。
