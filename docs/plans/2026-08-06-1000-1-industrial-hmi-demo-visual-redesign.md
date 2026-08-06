@@ -1,6 +1,6 @@
 # 01 SCADA Demo 视觉重设计实施计划
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-08-06
 > Source: `docs/components/industrial-hmi/demo-visual-design.md`（视觉重设计文档）、用户反馈「画面画乱」+ I17.1 坐标对齐未解决视觉问题
 > Related: `docs/plans/2026-08-05-2129-2-industrial-hmi-demo-polish-leafer-examples.md`（I17.1 坐标 8px 对齐，已 done 但视觉问题未解）
@@ -99,17 +99,30 @@ Targets: `apps/e2e/`（scada-demo 相关 e2e）、workspace 验证
 
 Exit Criteria:
 
-- [ ] unit 59/59 全绿
+- [ ] unit 全绿
 - [ ] scada e2e 全绿（scada-demo + entry-pages + leafer-examples）
 - [ ] workspace typecheck/build/lint 全绿
 - [ ] 人工截图核对 §七 验收标准通过
+
+## Draft Review Record
+
+- Reviewer / Agent: fresh session（plan-review，glm-5.2）
+- Verdict: `pass-with-minors`
+- Rounds: 1
+- Findings addressed:
+  - Major（已修）：缺 `## Draft Review Record` 段（模板 + Plan Review Rule 要求）→ 已补本段。
+  - Major（已修）：Closure Gates 与 Phase 2 Exit Criteria 写死 `unit 59/59`，与 live 基线 `58/58`（project-context 2026-08-02 + `docs/logs/2026/07-28.md`）不符且易漂移 → 改为 `unit 全绿`，不绑定具体计数。
+  - Minor（保留）：Phase 2 Exit Criteria 重复了全量 typecheck/build/lint/test（Rule 18 建议归 Closure Gates）；因 Phase 2 本身就是"验证"Phase，保留不改。
+  - Minor（保留）：Failure Paths 表缺 `可重试` 列；本计划为纯视觉 config 变更，该节可选，保留不改。
+  - Minor（保留）：e2e world 坐标同步比 Phase 2「如有则同步」更重（pump-1 中心 `(236,232)` 出现于 `scada-demo.spec.ts:136/274/311`、motor-1 `(408,80)` 于 `:252`、overlay 对齐测试 `:295-335` 依赖初始 hover 点）→ 已由 Failure Paths 第 3 行 + Phase 2 item 1 覆盖，执行时逐处同步即可。
+  - 引用核对（live）：画布 900×480 / 主管线 y=232 / 13 功能图元 / `text-title` 无 testid·bindings·events（替换不违反零改动保证）/ `demo-visual-design.md` §四 布局与 §七 7 条验收标准均与 plan 一致。
 
 ## Closure Gates
 
 - [ ] `pnpm typecheck` 全绿
 - [ ] `pnpm build` 全绿
 - [ ] `pnpm lint` 全绿
-- [ ] `pnpm test` 全绿（unit 59/59）
+- [ ] `pnpm test` 全绿
 - [ ] scada e2e 全绿（scada-demo + entry-pages + leafer-examples）
 - [ ] testid/bindings/events 零改动（git diff 核对）
 - [ ] demo-visual-design.md §七 验收标准 7 条人工核对通过
