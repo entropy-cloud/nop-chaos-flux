@@ -133,7 +133,7 @@ test.describe('Scada Demo (I13.1)', () => {
     await page.goto('/#/scada-demo', { waitUntil: 'load' });
     const cid = await getScadaCid(page);
 
-    await clickSymbolAtWorld(page, cid, 236, 232); // pump-1 中心（world 坐标，经引擎视口变换）
+    await clickSymbolAtWorld(page, cid, 350, 278); // pump-1 中心（world 坐标，经引擎视口变换；视觉重设计 2026-08-06 后 320,248 60×60）
     await expect(page.locator('[data-slot="dialog-surface"]')).toBeVisible({ timeout: 5_000 });
     await expect(page.getByText('给水泵 P-101 详情')).toBeVisible({ timeout: 3_000 });
     await assertTrackedPageErrors(page);
@@ -250,7 +250,7 @@ test.describe('Scada Demo assertion matrix (I15.1)', () => {
         const handle = (window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape;
         return handle.engine.getViewportPoint({ x, y });
       },
-      { key: `__flux_scada_${cid}`, x: 408, y: 80 }, // motor-1 中心（376,56, 64×48）
+      { key: `__flux_scada_${cid}`, x: 136, y: 134 }, // motor-1 中心（96,104 80×60，视觉重设计 2026-08-06）
     );
     const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
     expect(box).toBeTruthy();
@@ -266,13 +266,13 @@ test.describe('Scada Demo assertion matrix (I15.1)', () => {
     await page.goto('/#/scada-demo', { waitUntil: 'load' });
     const cid = await getScadaCid(page);
 
-    // pump-1（矩形语义复合图元，236,232 中心）hover → sky 覆盖物出现
+    // pump-1（矩形语义复合图元，350,278 中心，视觉重设计 2026-08-06）hover → sky 覆盖物出现
     const viewportPoint = await page.evaluate(
       ({ key, x, y }) => {
         const handle = (window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape;
         return handle.engine.getViewportPoint({ x, y });
       },
-      { key: `__flux_scada_${cid}`, x: 236, y: 232 },
+      { key: `__flux_scada_${cid}`, x: 350, y: 278 },
     );
     const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
     expect(box).toBeTruthy();
@@ -303,13 +303,13 @@ test.describe('Scada Demo assertion matrix (I15.1)', () => {
         `__flux_scada_${cid}`,
       );
 
-    // hover pump-1 → sky 覆盖物出现（初始视口 V0 下读覆盖物几何 R0）
+    // hover pump-1 → sky 覆盖物出现（初始视口 V0 下读覆盖物几何 R0；视觉重设计后中心 350,278）
     const viewportPoint = await page.evaluate(
       ({ key, x, y }) => {
         const handle = (window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape;
         return handle.engine.getViewportPoint({ x, y });
       },
-      { key: `__flux_scada_${cid}`, x: 236, y: 232 },
+      { key: `__flux_scada_${cid}`, x: 350, y: 278 },
     );
     const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
     expect(box).toBeTruthy();
