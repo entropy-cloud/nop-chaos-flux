@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
-import { formRendererDefinitions } from '../index.js';
-import { crudRendererDefinition } from '@nop-chaos/flux-renderers-data';
+import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
+import { crudRendererDefinition } from '../index.js';
 import { env as baseEnv } from '../test-support.js';
 import type { BaseSchema } from '@nop-chaos/flux-core';
 
@@ -16,6 +16,10 @@ type SchemaInput = BaseSchema | BaseSchema[];
  * 这是 e2e 测试中 auth-resource "创建新资源" 的 flux 层面等价测试。
  * 如果此测试通过但 e2e 失败，说明问题在 e2e 基础设施（FormDialog.submit() 时序），
  * 而非 flux 引擎本身。
+ *
+ * 注：本测试原位于 flux-renderers-form（imports @nop-chaos/flux-renderers-data 构成
+ * 双向 devDep 环，turbo build 图检测循环），2026-08-06 随 0529-1 Phase 1 移至 data 包
+ * （data 已声明 devDep on form，方向单向无环）。
  */
 describe('dialog form submit → refreshNearest → CRUD reload', () => {
   it('CRUD table refreshes after dialog form submit', async () => {

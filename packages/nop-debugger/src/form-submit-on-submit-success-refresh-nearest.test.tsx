@@ -1,18 +1,22 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { createNopDebugger } from '@nop-chaos/nop-debugger';
+import { createNopDebugger } from './index.js';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
-import { formRendererDefinitions } from '../index.js';
-import { env as baseEnv } from '../test-support.js';
+import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 
 /**
  * 验证 dialog form submit → onSubmitSuccess → refreshNearest 的调用链。
  *
  * 用 nop-debugger 记录 action 执行过程，验证 onSubmitSuccess 回调
  * 是否触发 closeSurface 和 refreshNearest。
+ *
+ * 注：本测试原位于 flux-renderers-form（imports @nop-chaos/nop-debugger 构成
+ * 双向 devDep 环，turbo build 图检测循环），2026-08-06 随 0529-1 Phase 1 移至
+ * nop-debugger 包（nop-debugger 已声明 devDep on form，方向单向无环）。
  */
 describe('form submit → onSubmitSuccess → refreshNearest', () => {
   it('submitForm fires but onSubmitSuccess (closeSurface/refreshNearest) does not trigger', async () => {
@@ -24,6 +28,14 @@ describe('form submit → onSubmitSuccess → refreshNearest', () => {
       exposeAutomationApi: true,
     });
 
+    const baseEnv: RendererEnv = {
+      async fetcher<T>() {
+        return { ok: true, status: 200, data: null as T };
+      },
+      notify() {
+        return undefined;
+      },
+    };
     const env = ctrl.decorateEnv(baseEnv);
 
     const SchemaRenderer = createSchemaRenderer([

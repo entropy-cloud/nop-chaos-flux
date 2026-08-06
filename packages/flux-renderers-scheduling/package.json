@@ -51,6 +51,7 @@
     }
   },
   "devDependencies": {
+    "@nop-chaos/flux-formula": "workspace:*",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
