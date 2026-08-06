@@ -51,6 +51,7 @@ export function useVariantFieldController({
     props.helpers.evaluate,
     parentScope,
     props.helpers.createScope,
+    props.helpers.disposeScope,
   );
   const initialKey = resolveInitialVariant(
     variants,
@@ -59,6 +60,7 @@ export function useVariantFieldController({
     props.helpers.evaluate,
     parentScope,
     props.helpers.createScope,
+    props.helpers.disposeScope,
   );
   const [userSelectedKey, setUserSelectedKey] = React.useState<string | undefined>(undefined);
   const [detectedKey, setDetectedKey] = React.useState<string | undefined>(undefined);

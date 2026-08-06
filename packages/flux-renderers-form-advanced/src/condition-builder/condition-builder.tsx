@@ -106,8 +106,14 @@ function createFormulaEvaluator(
           contextScope = helpers.createScope(sourceData as Record<string, unknown>);
         }
       }
-      const value = helpers.evaluate(formula, contextScope);
-      return { value, error: false };
+      try {
+        const value = helpers.evaluate(formula, contextScope);
+        return { value, error: false };
+      } finally {
+        if (contextScope !== scope) {
+          helpers.disposeScope(contextScope.id);
+        }
+      }
     } catch (err) {
       console.warn('[condition-builder] formula eval error:', err);
       return { value: formula, error: true };

@@ -36,8 +36,10 @@ export interface TreeLazyNodeState {
  * `helpers.executeSource` because `executeSource` does not currently propagate
  * the caller-provided scope through `mergeActionContext` — the render scope
  * would override the child scope and the patched parameter would be invisible
- * to the fetcher. `dispatch({ scope })` routes the scope correctly via
- * `mergeActionContext(input, { scope })`.
+ * to the fetcher. Both paths create a patched one-shot scope and pair it with
+ * `disposeScope`: the formula path disposes immediately after the synchronous
+ * evaluation, the action path disposes once the async dispatch has settled
+ * (the scope must stay alive while the fetcher reads it).
  */
 export async function executeTreeSource(
   config: TreeSourceConfig,
@@ -45,24 +47,29 @@ export async function executeTreeSource(
   patch: Record<string, unknown>,
   signal?: AbortSignal,
 ): Promise<{ ok: boolean; data?: unknown; error?: unknown }> {
-  const scope = helpers.createScope(patch);
   if (config.formula !== undefined) {
+    const scope = helpers.createScope(patch);
     try {
       const value = helpers.evaluate(config.formula, scope);
       return { ok: true, data: value };
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };
+    } finally {
+      helpers.disposeScope(scope.id);
     }
   }
   if (!config.action) {
     return { ok: false, error: new Error('Tree source requires action or formula') };
   }
   const actionInput = { ...config } as unknown as ActionSchema;
+  const scope = helpers.createScope(patch);
   try {
     const result = await helpers.dispatch(actionInput, { scope, signal });
     return result;
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };
+  } finally {
+    helpers.disposeScope(scope.id);
   }
 }
 

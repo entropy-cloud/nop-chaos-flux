@@ -191,10 +191,16 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
       if (!currentForm || !autoFillProgram || !row) {
         return;
       }
-      const resolved = props.helpers.evaluateCompiled(
-        autoFillProgram,
-        props.helpers.createScope({ row }),
-      ) as Record<string, unknown>;
+      const rowScope = props.helpers.createScope({ row });
+      let resolved: Record<string, unknown>;
+      try {
+        resolved = props.helpers.evaluateCompiled(
+          autoFillProgram,
+          rowScope,
+        ) as Record<string, unknown>;
+      } finally {
+        props.helpers.disposeScope(rowScope.id);
+      }
       for (const [targetPath, value] of Object.entries(resolved)) {
         currentForm.setValue(targetPath, value);
       }

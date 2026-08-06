@@ -17,6 +17,7 @@ export function matchesVariant(
   evaluate?: RendererComponentProps['helpers']['evaluate'],
   scope?: ScopeRef,
   createScope?: RendererComponentProps['helpers']['createScope'],
+  disposeScope?: RendererComponentProps['helpers']['disposeScope'],
 ): boolean {
   void scope;
   const match = option.match;
@@ -52,7 +53,12 @@ export function matchesVariant(
       return false;
     }
 
-    return Boolean(evaluate<boolean>(whenSource, createScope({ value })));
+    const valueScope = createScope({ value });
+    try {
+      return Boolean(evaluate<boolean>(whenSource, valueScope));
+    } finally {
+      disposeScope?.(valueScope.id);
+    }
   }
   return false;
 }
@@ -63,9 +69,12 @@ export function detectMatchedVariant(
   evaluate?: RendererComponentProps['helpers']['evaluate'],
   scope?: ScopeRef,
   createScope?: RendererComponentProps['helpers']['createScope'],
+  disposeScope?: RendererComponentProps['helpers']['disposeScope'],
 ): string | undefined {
   for (const option of variants) {
-    if (option.match && matchesVariant(option, value, evaluate, scope, createScope)) {
+    if (
+      matchesVariant(option, value, evaluate, scope, createScope, disposeScope)
+    ) {
       return option.key;
     }
   }
@@ -79,8 +88,16 @@ export function resolveInitialVariant(
   evaluate?: RendererComponentProps['helpers']['evaluate'],
   scope?: ScopeRef,
   createScope?: RendererComponentProps['helpers']['createScope'],
+  disposeScope?: RendererComponentProps['helpers']['disposeScope'],
 ): string | undefined {
-  const matchedKey = detectMatchedVariant(variants, value, evaluate, scope, createScope);
+  const matchedKey = detectMatchedVariant(
+    variants,
+    value,
+    evaluate,
+    scope,
+    createScope,
+    disposeScope,
+  );
   if (matchedKey) {
     return matchedKey;
   }
