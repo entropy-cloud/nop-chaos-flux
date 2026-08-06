@@ -386,3 +386,50 @@ describe('useScadaConfigSync applyInitialViewport fill branch clamp-before-cente
     expect(fitSpy.mock.calls[0][1]).toBe(0);
   });
 });
+
+// plan 2026-08-06-0900-3 Phase 1（multi-audit P2-7）：fill 分支零尺寸方向兜底。
+// 失败用例（修复前）：fill 分支 `clampScale(Math.max(size.width/bounds.width, ...))` 无 1e-6 floor，
+// bounds={0,0} → size/0 = Infinity → clampScale(Infinity) = MIN_SCALE（zoom OUT），
+// 与 contain/fit 分支（viewport.ts:65-67 有 floor → MAX_SCALE zoom IN）对零尺寸内容方向相反。
+// 修复后：补 Math.max(1e-6, bounds.width/height) floor，零尺寸收敛到 MAX_SCALE（与 contain 方向一致）。
+describe('useScadaConfigSync applyInitialViewport fill branch zero-size floor (plan 2026-08-06-0900-3 Phase 1 / multi P2-7)', () => {
+  // 零尺寸 symbol：bounds = {x:0, y:0, width:0, height:0}（rect 无 width/height 默认 0）。
+  const zeroSizeSym = (): ScadaSymbolNode => ({ id: 'zero', type: 'scada-rect', x: 0, y: 0 });
+
+  it('Proof: fill 分支零尺寸 bounds → setViewport 收到 scale === MAX_SCALE（与 contain 方向一致，非 MIN_SCALE）', () => {
+    const setViewport = vi.fn();
+    const reset = vi.fn();
+    const applyDiff = vi.fn();
+    const reload = vi.fn();
+    const runtime = {
+      engine: {
+        reset,
+        applyDiff,
+        setViewport,
+        getSize: () => ({ width: 800, height: 600 }),
+      },
+    };
+
+    renderHook(
+      (props: { config: ScadaConfig; runtime: typeof runtime }) =>
+        useScadaConfigSync({
+          config: props.config,
+          runtime: props.runtime as unknown as ScadaCanvasRuntime,
+          reloadBindings: reload,
+          viewport: { fit: 'fill' },
+        }),
+      { initialProps: { config: { version: 1, variables: [], symbols: [zeroSizeSym()] }, runtime } },
+    );
+
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledTimes(1);
+    const state = setViewport.mock.calls[0][0];
+    // 修复前：clampScale(Infinity) = MIN_SCALE（0.1，zoom OUT，与 contain 方向相反）。
+    // 修复后：1e-6 floor → size/1e-6 = huge → clampScale(huge) = MAX_SCALE（zoom IN，与 contain 一致）。
+    expect(state.scale).toBe(MAX_SCALE);
+    expect(state.scale).not.toBe(MIN_SCALE);
+    // x/y 仍有限（零尺寸内容收敛到 MAX_SCALE 不应产 NaN 视口）
+    expect(Number.isFinite(state.x)).toBe(true);
+    expect(Number.isFinite(state.y)).toBe(true);
+  });
+});

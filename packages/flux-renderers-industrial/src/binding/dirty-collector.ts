@@ -267,6 +267,10 @@ export class RefreshPipeline {
   flushFrame(applyAttrs: ApplyAttrs): boolean {
     // plan 2026-08-04-2243-1 Phase 1 L1：销毁门控——destroy 后 flushFrame no-op 返 false。
     if (this.destroyed) return false;
+    // P2-1 {binding,state} > animation 同属性优先级（plan 2026-08-06-0900-3 Phase 3）：
+    // animator 经 collect 写入同一 pending Map，下方 collectBindings/collectStates 先于 collector.flush
+    // → 脏帧 binding/state 覆盖同属性 animator 当帧增量（last-write-wins）。precedence 确定可预期，
+    // 详见 design-data-binding.md §4.3「{binding,state} > animation 同属性优先级契约」。
     const wasScopeDirty = this.scopeDirty;
     this.scopeDirty = false;
     let changed: string[];

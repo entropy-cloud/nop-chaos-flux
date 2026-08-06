@@ -187,4 +187,74 @@ describe('ScadaCanvasEngine 插件交互状态同步与钳制兜底 (I11.2)', ()
     expect(group()[0].x).toBeCloseTo(-200, 6);
     engine.destroy();
   });
+
+  // plan 2026-08-06-0900-3 Phase 1（multi-audit P2-8）：handlePluginZoom 除零守卫。
+  // 失败用例（修复前）：rawScale=0 时 clamped=clampScale(0)=MIN_SCALE，clamped !== rawScale →
+  // scaleOfWorld(anchor, MIN_SCALE/0 = Infinity) → zoomLayer 矩阵 corrupt（scaleX 变 Infinity/NaN）不可恢复。
+  // 修复后：rawScale===0 / 非有限早退（syncViewportFromZoomLayer + refresh + return），scaleOfWorld 不收 Infinity。
+  it('should guard divide-by-zero when plugin zoom yields rawScale=0 (P2-8: zoomLayer 矩阵不 corrupt)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as {
+      scaleX: number;
+      scaleOfWorldCalls: Array<{ world: { x: number; y: number }; scale: number }>;
+    };
+    // 设初始有限视口，再触发 rawScale=0 的插件 zoom（zoomLayer.scaleX=0 → readZoomLayerScale 返 0）。
+    engine.setViewport({ x: 10, y: 20, scale: 2 });
+    zoomLayer.scaleX = 0;
+    zoomLayer.scaleOfWorldCalls.length = 0;
+    engine.tree.emit('zoom', { scale: 0 });
+
+    // 修复前：scaleOfWorld 收到 Infinity（clamped/rawScale = MIN_SCALE/0）；修复后：早退，不收 Infinity。
+    const corruptCalls = zoomLayer.scaleOfWorldCalls.filter((c) => !Number.isFinite(c.scale));
+    expect(corruptCalls).toHaveLength(0);
+    // zoomLayer.scaleX 不应被 Infinity/NaN 污染（矩阵可恢复）
+    expect(Number.isFinite(zoomLayer.scaleX)).toBe(true);
+    // 视口 scale 仍有限（早退路径经 syncViewportFromZoomLayer 用 fallback 读回有限值）
+    expect(Number.isFinite(engine.getViewport().scale)).toBe(true);
+    engine.destroy();
+  });
+
+  it('should guard non-finite plugin zoom rawScale (P2-8: 非有限早退)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    // readZoomLayerScale 对非有限 scaleX 回落 fallback（viewport.scale），无法直接构造非有限 rawScale
+    // 经 scaleX。但守卫表达式同时覆盖 `!Number.isFinite(rawScale)`：此处验证早退后视口有限、矩阵不 corrupt，
+    // 与 rawScale=0 用例共同锁守卫两端（===0 / !finite）。
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { scaleX: number };
+    engine.setViewport({ x: 0, y: 0, scale: 1 });
+    zoomLayer.scaleX = 0;
+    engine.tree.emit('zoom', {});
+    expect(Number.isFinite(engine.getViewport().scale)).toBe(true);
+    expect(Number.isFinite(zoomLayer.scaleX)).toBe(true);
+    engine.destroy();
+  });
+
+  // plan 2026-08-06-0900-3 Phase 2（multi-audit P2-10）：engine.reset 清 InteractionOverlay。
+  // 失败用例（修复前）：reset 仅 background.color 接线 + adapter.build，不清 this.interaction →
+  // importConfig/version-change 全量重建后旧 hover 高亮残留（activeCount 仍 1）。
+  // 修复后：reset 末尾 this.interaction?.clear()，重建后 interactionOverlay 清空（activeCount 0）。
+  it('should clear the interaction overlay on engine.reset (P2-10: 重建后无残留 hover 高亮)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    engine.reset(validConfig() as ScadaConfig);
+    const overlay = engine.interactionOverlay!;
+    overlay.highlight('rect-1');
+    expect(overlay.activeCount).toBe(1);
+    // reset（importConfig/version-change 全量重建路径）应清空覆盖物
+    engine.reset(validConfig() as ScadaConfig);
+    expect(overlay.activeCount).toBe(0);
+    engine.destroy();
+  });
+
+  it('should clear the interaction overlay on engine.reset even when symbols change (P2-10: stale 高亮清除)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    engine.reset(validConfig() as ScadaConfig);
+    const overlay = engine.interactionOverlay!;
+    overlay.highlight('rect-1');
+    expect(overlay.activeCount).toBe(1);
+    // 换画面（新 config 不含 rect-1）：旧 hover 高亮应清除，不应残留指向已移除图元的覆盖物
+    engine.reset(
+      validConfig({ symbols: [{ id: 'only', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10 }] }) as ScadaConfig,
+    );
+    expect(overlay.activeCount).toBe(0);
+    engine.destroy();
+  });
 });

@@ -36,7 +36,7 @@ export interface UseScadaHandlesArgs {
  * 句柄方法转发到引擎命令句柄 + 点表 store；卸载时退订。失败路径对齐 §8.5 失败路径表。
  */
 export function useScadaHandles(args: UseScadaHandlesArgs): void {
-  const { componentRegistry, id, cid, runtime, destroy, onDestroyed, reloadConfig } = args;
+  const { componentRegistry, id, cid, destroy, onDestroyed, reloadConfig } = args;
   const latest = useRef(args);
   useEffect(() => {
     latest.current = args;
@@ -153,5 +153,8 @@ export function useScadaHandles(args: UseScadaHandlesArgs): void {
       type: 'scada-canvas',
       capabilities,
     });
-  }, [componentRegistry, id, cid, runtime, destroy, onDestroyed, reloadConfig]);
+    // P2-11 deps 卫生（plan 2026-08-06-0900-3 Phase 2）：移除 runtime——invoke 经 latest.current.runtime
+    // ref 读最新 runtime（含 reload 后的新域），无需 closure 捕获；deps 含 runtime 时每次 config reload
+    // （reloadBindings → setRuntime 新对象身份）冗余反注/重注册全部 handle（无正确性影响，纯冗余）。
+  }, [componentRegistry, id, cid, destroy, onDestroyed, reloadConfig]);
 }

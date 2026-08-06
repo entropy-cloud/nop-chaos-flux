@@ -118,7 +118,13 @@ function applyInitialViewport(
     // 与 contain 分支（viewport.ts:67 fit 已 clampScale）对齐。极端 bounds（rawScale 越界 [0.1,20]）
     // 时若用未钳 scale 算居中、引擎 setViewport 才钳 scale → x/y 按未钳 scale、实际 scale 被钳 → 内容漂移。
     const size = runtime.engine.getSize();
-    const scale = clampScale(Math.max(size.width / bounds.width, size.height / bounds.height));
+    // P2-7 零尺寸方向兜底（plan 2026-08-06-0900-3 Phase 1）：补 1e-6 width/height floor，
+    // 与 contain/fit 分支（viewport.ts:65-67 有 floor）方向一致——零尺寸内容 size/0=Infinity →
+    // clampScale(Infinity)=MIN_SCALE（zoom OUT，与 contain 反向）；floor 后 size/1e-6=huge →
+    // clampScale(huge)=MAX_SCALE（zoom IN，与 contain 一致）。
+    const scale = clampScale(
+      Math.max(size.width / Math.max(1e-6, bounds.width), size.height / Math.max(1e-6, bounds.height)),
+    );
     runtime.engine.setViewport({
       x: bounds.x + bounds.width / 2 - size.width / (2 * scale),
       y: bounds.y + bounds.height / 2 - size.height / (2 * scale),

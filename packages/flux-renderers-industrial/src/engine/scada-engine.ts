@@ -196,6 +196,9 @@ export class ScadaCanvasEngine {
       this.app.ground.fill = config.background.color;
     }
     this.adapter.build(config);
+    // P2-10 reset 清覆盖物（plan 2026-08-06-0900-3 Phase 2）：importConfig/version-change 全量重建后
+    // 清空 InteractionOverlay，消除旧 hover 高亮残留（reset 是全量替换语义，旧图元覆盖物不应驻留）。
+    this.interaction?.clear();
   }
 
   applyAttrs(attrsBySymbolId: Record<string, Partial<ScadaSymbolProps>>): void {
@@ -432,6 +435,15 @@ export class ScadaCanvasEngine {
       scaleX?: number;
     };
     const rawScale = readZoomLayerScale(zoomLayer.scaleX, this.viewport.scale);
+    // P2-8 除零守卫（plan 2026-08-06-0900-3 Phase 1）：rawScale=0 / 非有限早退——
+    // clampScale(0)=MIN_SCALE，clamped !== rawScale → scaleOfWorld(anchor, MIN_SCALE/0=Infinity) →
+    // zoomLayer 矩阵 corrupt（scaleX 变 Infinity/NaN）不可恢复。早退前 syncViewportFromZoomLayer
+    // 用 fallback 读回有限视口态、刷新覆盖物，scaleOfWorld 不收 Infinity。
+    if (rawScale === 0 || !Number.isFinite(rawScale)) {
+      this.syncViewportFromZoomLayer();
+      this.interaction?.refresh();
+      return;
+    }
     const clamped = clampScale(rawScale);
     if (clamped !== rawScale) {
       // plan 2026-08-04-2243-2 D3：wheel/pinch 越界钳制以**光标 screen 锚**钳制（替代原点 {0,0} 兜底）。

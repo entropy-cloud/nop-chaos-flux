@@ -76,6 +76,13 @@ export function useScadaEvents(args: UseScadaEventsArgs): ScadaEventsApi {
   const eventIndex = useMemo(() => collectSymbolEvents(args.config), [args.config]);
   const lastHoverSymbolRef = useRef<string | undefined>(undefined);
 
+  // P2-10 config-change 重置 hover 基线（plan 2026-08-06-0900-3 Phase 2）：config 变更（reset/reload）
+  // 后图元集合可能整体替换，lastHoverSymbolRef 指向的旧 symbolId 已过期——重置使 hover 状态机基线
+  // 与新 config 对齐（与 engine.reset 清 interactionOverlay 同口径，覆盖 hook 侧 stale 基线）。
+  useEffect(() => {
+    lastHoverSymbolRef.current = undefined;
+  }, [args.config]);
+
   const dispatchEvent = useCallback(
     (type: string, payload: Record<string, unknown>, action: unknown) => {
       const normalized = createNormalizedActionEvent({ type, ...payload });
