@@ -56,6 +56,10 @@ export interface ColumnResizeApi {
   widths: Record<string, number>;
   getColumnWidth(column: TableColumnSchema, index: number): number;
   startResize(column: TableColumnSchema, index: number, startClientX: number): () => void;
+  // Keyboard entry point (WCAG 2.1 SC 2.1.1): ArrowLeft/ArrowRight step the
+  // width by `delta` px, clamped to [minWidth, maxWidth], and commit through the
+  // same ownership path as a pointer drag (mirrors use-row-drag-sort H6).
+  stepResize(column: TableColumnSchema, index: number, delta: number): void;
 }
 
 interface ActiveResize {
@@ -336,10 +340,26 @@ export function useColumnResize(
     }
   }, []);
 
+  const stepResize = useCallback(
+    (column: TableColumnSchema, index: number, delta: number) => {
+      const key = columnKey(column, index);
+      const minWidth = resolveColumnMinWidth(column);
+      const maxWidth = resolveColumnMaxWidth(column);
+      const current = widths[key] ?? resolveColumnWidth(column);
+      let next = current + delta;
+      if (next < minWidth) next = minWidth;
+      if (maxWidth !== undefined && next > maxWidth) next = maxWidth;
+      if (next === current) return;
+      persistWidth({ ...widths, [key]: next });
+    },
+    [columnKey, persistWidth, widths],
+  );
+
   return {
     widths,
     getColumnWidth,
     startResize,
+    stepResize,
     persistWidth,
   } as ColumnResizeApi & { persistWidth: (next: Record<string, number>) => void };
 }

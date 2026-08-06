@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, type ReactNode } from 'react';
-import { Button } from '@nop-chaos/ui';
+import { Button, Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffFileMeta } from '../../schemas.js';
 import { computeDiffFile } from '../model/diff-parse.js';
@@ -85,13 +85,13 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
   return (
     <div className="nop-diff-file-list" data-slot="diff-file-list" style={{ width: 240, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--nop-border)', overflow: 'hidden' }}>
       <div style={{ padding: '8px', borderBottom: '1px solid var(--nop-border)' }}>
-        <input
-          type="text"
+        <Input
+          type="search"
           aria-label={t('flux.diff.searchFiles')}
           placeholder={t('flux.diff.searchFiles')}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          style={{ width: '100%', padding: '4px 8px', border: '1px solid var(--nop-border)', borderRadius: 4, fontSize: 13, boxSizing: 'border-box' }}
+          className="h-8 w-full text-xs"
         />
       </div>
       <div style={{ display: 'flex', borderBottom: '1px solid var(--nop-border)', fontSize: 12 }}>

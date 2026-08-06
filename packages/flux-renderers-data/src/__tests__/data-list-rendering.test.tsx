@@ -170,6 +170,7 @@ describe('dataRendererDefinitions list rendering', () => {
 
     expect(document.querySelector('[data-slot="list-item"][data-selected="true"]')).toBeNull();
     expect(items[0].getAttribute('aria-selected')).toBeNull();
+    expect(items[0].getAttribute('aria-current')).toBeNull();
   });
 
   it('applies single-selection mutual exclusion and reports selection change', async () => {
@@ -210,7 +211,8 @@ describe('dataRendererDefinitions list rendering', () => {
 
     await waitFor(() => {
       expect(items[0].getAttribute('data-selected')).toBe('true');
-      expect(items[0].getAttribute('aria-selected')).toBe('true');
+      expect(items[0].getAttribute('aria-current')).toBe('true');
+      expect(items[0].getAttribute('aria-selected')).toBeNull();
     });
     await waitFor(() => expect(screen.getByText('selection:reported')).toBeTruthy());
 

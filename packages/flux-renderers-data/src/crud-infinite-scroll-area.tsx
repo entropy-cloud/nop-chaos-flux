@@ -23,7 +23,11 @@ export function CrudInfiniteScrollArea({
 }) {
   return (
     <div className="nop-crud-infinite" data-slot="crud-infinite">
-      <div data-slot="crud-infinite-status">
+      <div
+        data-slot="crud-infinite-status"
+        role="status"
+        aria-live="polite"
+      >
         {loadDataOnce
           ? t('flux.crud.loadedAll', { count: filteredRowCount })
           : atLastPage

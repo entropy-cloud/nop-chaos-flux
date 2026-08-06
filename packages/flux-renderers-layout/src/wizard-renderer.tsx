@@ -123,6 +123,35 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
   const currentStep = steps[currentStepIndex];
   const currentStepKey = currentStep ? resolveStepKey(currentStep, currentStepIndex) : undefined;
 
+  // 20-09 (APG wizard): after a step change, move focus into the new step body's
+  // first focusable element so keyboard/screen-reader users get a feedback
+  // anchor instead of silently losing the focus position. Skipped on initial
+  // mount (only runs when the index actually changes).
+  const bodyRegionRef = React.useRef<HTMLDivElement | null>(null);
+  const prevStepIndexRef = React.useRef<number>(currentStepIndex);
+  React.useLayoutEffect(() => {
+    const prev = prevStepIndexRef.current;
+    prevStepIndexRef.current = currentStepIndex;
+    if (prev === currentStepIndex) return;
+    const bodyEl = bodyRegionRef.current;
+    if (!bodyEl) return;
+    const activeBody = bodyEl.querySelector<HTMLElement>(
+      '[data-slot="wizard-step-body"]:not([hidden])',
+    );
+    if (!activeBody) return;
+    const focusable = activeBody.querySelector<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+    );
+    focusable?.focus();
+  }, [currentStepIndex]);
+
+  // 20-09: polite live region announcing the current step (aria-current="step"
+  // updates are not reliably announced by screen readers).
+  const currentStepTitle = currentStep
+    ? (typeof currentStep.title === 'string' ? currentStep.title : null) ??
+      (currentStepKey !== undefined ? toStepKeyString(currentStepKey) : '')
+    : '';
+
   const canGoPrev = useMemo(() => {
     for (let i = currentStepIndex - 1; i >= 0; i -= 1) {
       if (isStepVisible(steps[i]) && !isStepDisabled(steps[i])) return true;
@@ -575,6 +604,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       ) : null}
 
       <div
+        ref={bodyRegionRef}
         data-slot="wizard-body-region"
         className={mode === 'vertical' ? 'mt-4' : 'mt-4'}
       >
@@ -638,6 +668,15 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
             </Button>
           </>
         )}
+      </div>
+
+      <div
+        data-slot="wizard-status"
+        role="status"
+        aria-live="polite"
+        className="sr-only"
+      >
+        {currentStepTitle}
       </div>
 
       {(lifecycle.lastCommitStatus === 'error' ||

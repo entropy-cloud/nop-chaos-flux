@@ -415,7 +415,7 @@ function TransferPane(props: TransferPaneProps) {
         {props.options.length === 0 ? (
           <Empty className="p-4 text-sm text-muted-foreground">{props.emptyText}</Empty>
         ) : (
-          <ul className="flex flex-col" role="listbox" aria-multiselectable={props.multiple ? 'true' : undefined}>
+          <ul className="flex flex-col">
             {props.options.map((option) => {
               const isChecked = props.checked.has(option.value);
               return (

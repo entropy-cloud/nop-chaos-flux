@@ -43,6 +43,7 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点保留 `nop-steps` marker。
+- **步骤指示器 accessible name（WCAG 4.1.2，已落地）**：`data-slot="steps-indicator"` 按钮（`variant="ghost"`）在 finish/error 态只渲染 lucide 图标（lucide 无 a11y prop 时自动 `aria-hidden`），故按钮显式携带 `aria-label` = `${t('flux.steps.step')} ${index + 1}: ${item.title ?? item.value ?? item.key ?? index + 1}`，读屏用户 Tab 到指示器时可得知步骤序号与标题。
 
 ## 11. 实现拆分建议
 

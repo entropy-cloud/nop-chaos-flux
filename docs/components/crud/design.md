@@ -234,6 +234,7 @@ Flux 不复制 AMIS 的字符串数组工具栏协议作为正式契约，但要
 - 依赖 selection 的操作直接写进 `listActions`
 - 是否禁用、显示哪些统计、传哪些 id，统一通过 `$crud.hasSelection`、`$crud.selectedRowKeys`、`$crud.selectionCount` 表达
 - `bulkActions` 不再属于支持中的 authoring surface；迁移输入必须先转成 canonical `listActions`
+- **分页块 a11y（WCAG 4.1.2，已落地）**：`pagination` block 的 `PaginationPrevious` 在首页时与 `PaginationNext` 对称输出 `aria-disabled="true"`，且 `onClick` 首页边界直接 return（不派发 no-op 翻页）；禁用态仍保留 `pointer-events-none opacity-50` 视觉。
 
 ### 6.4 查询区建模
 
@@ -352,7 +353,7 @@ interface CrudStatusSummary {
 
 #### Infinite scroll 累计合并（E1d）
 
-`pagination.mode: 'infinite'` 时，CRUD 内部 table 的 `pagination.enabled = false`、`pageSize = currentPage * pageSize`（累计行数）。table 底部 sentinel `<div data-slot="crud-infinite-sentinel">` 经 `IntersectionObserver` 触发 next-page：`scope.update(paginationStatePath, { currentPage: currentPage + 1, pageSize })` + `handleRefresh()`。toolbar 的 `pagination` / `switch-per-page` block 在 infinite 模式下不渲染（其他 block 不受影响）。`clientMode.loadDataOnce === true` → sentinel 始终不渲染，状态区显示"已加载全部 N 条"。at-last-page（`currentPage >= Math.ceil(total / pageSize)`）→ sentinel 仍渲染但 onLoadMore no-op，状态区显示"没有更多了"。
+`pagination.mode: 'infinite'` 时，CRUD 内部 table 的 `pagination.enabled = false`、`pageSize = currentPage * pageSize`（累计行数）。table 底部 sentinel `<div data-slot="crud-infinite-sentinel">` 经 `IntersectionObserver` 触发 next-page：`scope.update(paginationStatePath, { currentPage: currentPage + 1, pageSize })` + `handleRefresh()`。toolbar 的 `pagination` / `switch-per-page` block 在 infinite 模式下不渲染（其他 block 不受影响）。`clientMode.loadDataOnce === true` → sentinel 始终不渲染，状态区显示"已加载全部 N 条"。at-last-page（`currentPage >= Math.ceil(total / pageSize)`）→ sentinel 仍渲染但 onLoadMore no-op，状态区显示"没有更多了"。**状态区 a11y（WCAG 4.1.3，已落地）**：状态文本容器 `data-slot="crud-infinite-status"` 带 `role="status"` + `aria-live="polite"`（对照 mobile `infinite-scroll` 先例），加载中/已加载完毕/加载失败文本变更对读屏用户可见播报。
 
 ### 7.1 选择字段语义（`CrudSelectionConfig`）
 

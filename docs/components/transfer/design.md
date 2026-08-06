@@ -67,7 +67,7 @@ export interface TransferSchema extends BoundFieldSchemaBase {
 - 穿梭按钮: `data-slot="transfer-select"` / `data-slot="transfer-deselect"`
 - 全选 Checkbox: `data-slot="transfer-toggle-all"` (P1)
 - 清空按钮: `data-slot="transfer-clear-all"` (P1)
-- 两个 pane 的 `role="listbox"` 按 `multiple` 语义发布 `aria-multiselectable`：multiple 时 `"true"`，single 时不输出。
+- 两个 pane 的选项列表为普通 `<ul>`（无 listbox 组合角色）：20-05（WCAG 4.1.2/1.3.1）移除 `role="listbox"` / `aria-multiselectable` —— listbox 要求子节点 `role="option"` 且方向键导航语义，实际交互元素是每行 Checkbox（勾选语义已充分表达选择状态），组合角色与实现不匹配。
 
 ## 7. 已知 Bug
 

@@ -207,7 +207,7 @@ describe('transfer: shuttle selection + valueKey/labelKey normalization', () => 
     expect(document.querySelector('[data-slot="transfer-pane-selected"]')).toBeTruthy();
   });
 
-  it('marks listboxes aria-multiselectable only when multiple is enabled', () => {
+  it('does not expose a composite listbox role (selection lives in the checkboxes)', () => {
     renderSchema({
       type: 'form',
       id: 'f',
@@ -223,13 +223,17 @@ describe('transfer: shuttle selection + valueKey/labelKey normalization', () => 
         },
       ],
     });
-    const candidateListbox = document.querySelector(
-      '[data-slot="transfer-pane-candidate"] [role="listbox"]',
-    );
-    expect(candidateListbox?.getAttribute('aria-multiselectable')).toBe('true');
+    // 20-05 (WCAG 4.1.2/1.3.1): the option list is a plain <ul> — no listbox
+    // composite role and no aria-multiselectable (the checkboxes express the
+    // selection semantics).
+    expect(
+      document.querySelector('[data-slot="transfer-pane-candidate"] [role="listbox"]'),
+    ).toBeNull();
+    expect(document.querySelector('[aria-multiselectable]')).toBeNull();
+    expect(document.querySelector('[data-slot="transfer-option-candidate"]')).toBeTruthy();
   });
 
-  it('omits aria-multiselectable on listboxes in single mode', () => {
+  it('omits listbox roles in single mode as well', () => {
     renderSchema({
       type: 'form',
       id: 'f',
@@ -245,10 +249,10 @@ describe('transfer: shuttle selection + valueKey/labelKey normalization', () => 
         },
       ],
     });
-    const candidateListbox = document.querySelector(
-      '[data-slot="transfer-pane-candidate"] [role="listbox"]',
-    );
-    expect(candidateListbox?.getAttribute('aria-multiselectable')).toBeNull();
+    expect(
+      document.querySelector('[data-slot="transfer-pane-candidate"] [role="listbox"]'),
+    ).toBeNull();
+    expect(document.querySelector('[aria-multiselectable]')).toBeNull();
   });
 });
 

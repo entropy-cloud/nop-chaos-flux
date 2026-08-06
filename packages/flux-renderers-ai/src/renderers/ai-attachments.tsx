@@ -196,13 +196,12 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
     }
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      inputRef.current?.click();
-    }
-  }
-
+  // 11-01 (WCAG 4.1.2 / 2.1.1): the drop surface must NOT masquerade as a
+  // button. It previously declared role="button" + tabIndex + a keydown that
+  // opened the file picker, which hijacked the inner Pick button's keyboard
+  // activation (interactive content nested inside a button surface). The drop
+  // zone keeps drop/paste handlers only; the Pick button is the keyboard entry
+  // point.
   const effectiveMode = mode === 'auto' ? detectMode(attachments) : mode;
 
   return (
@@ -213,10 +212,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
       data-dragging={dragging ? '' : undefined}
       data-cid={props.meta.cid || undefined}
       data-testid={props.meta.testid || undefined}
-      role="button"
-      tabIndex={0}
-      aria-label={t('flux.ai.attachFiles')}
-      onKeyDown={handleKeyDown}
+      role="region"
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -300,7 +296,10 @@ function AttachmentItemView(props: {
           type="button"
           variant="ghost"
           size="sm"
-          className="absolute right-0 top-0 h-5 w-5 p-0 opacity-0 group-hover:opacity-100"
+          // 20-06 (WCAG 2.4.7 Focus Visible): the remove control stays in the
+          // tab order but is transparent off-hover; keyboard focus must make it
+          // visible too (not only group-hover).
+          className="absolute right-0 top-0 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
           data-slot="ai-attachments-remove"
           aria-label={t('flux.ai.removeFile')}
           onClick={onRemove}

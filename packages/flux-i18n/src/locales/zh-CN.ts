@@ -58,6 +58,9 @@ export const zhCN: Resource = {
       previous: '上一页',
       next: '下一页',
     },
+    steps: {
+      step: '步骤',
+    },
     ai: {
       send: '发送',
       stop: '停止',
@@ -237,7 +240,6 @@ export const zhCN: Resource = {
       quarterYear: '季度年份',
     },
     markdown: {
-      toolbarLabel: 'Markdown 格式化',
       bold: '粗体',
       italic: '斜体',
       strikethrough: '删除线',

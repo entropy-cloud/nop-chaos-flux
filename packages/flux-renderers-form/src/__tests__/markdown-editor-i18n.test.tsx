@@ -49,11 +49,14 @@ describe('markdown-editor — localized labels (P2-1 i18n)', () => {
     expect(screen.getByTestId('md-toolbar-heading').getAttribute('aria-label')).toBe('标题');
   });
 
-  it('toolbar group aria-label is localized (zh-CN: Markdown 格式化)', () => {
+  it('toolbar container exposes no composite role or group label (20-07: role removed)', () => {
     resetFluxI18n();
     initFluxI18n({ lng: 'zh-CN', fallbackLng: 'zh-CN' });
     renderSchema(buildForm());
-    expect(screen.getByRole('toolbar').getAttribute('aria-label')).toBe('Markdown 格式化');
+    const toolbar = document.querySelector('[data-slot="markdown-editor-toolbar"]');
+    expect(toolbar).toBeTruthy();
+    expect(toolbar?.getAttribute('role')).toBeNull();
+    expect(toolbar?.getAttribute('aria-label')).toBeNull();
   });
 
   it('empty-textarea placeholder is localized (zh-CN: 输入 Markdown…)', () => {
@@ -75,7 +78,6 @@ describe('markdown-editor — localized labels (P2-1 i18n)', () => {
   it('en-US labels remain the canonical English strings', () => {
     renderSchema(buildForm());
     expect(screen.getByTestId('md-toolbar-bold').getAttribute('aria-label')).toBe('Bold');
-    expect(screen.getByRole('toolbar').getAttribute('aria-label')).toBe('Markdown formatting');
     const textarea = screen.getByTestId('markdown-editor-textarea') as HTMLTextAreaElement;
     expect(textarea.placeholder).toBe('Enter markdown…');
   });

@@ -65,6 +65,7 @@ flux 的组合模型是 **scope-bound**：传给子节点的字面量 prop 值�
 - 根节点输出 `nop-markdown-editor` marker。
 - 编辑区 `nop-markdown-editor-input`，预览区 `nop-markdown-editor-preview`。
 - 预览区挂 `aria-live="polite"`（被动更新场景，向辅助技术播报预览内容变化）。
+- 工具栏 `data-slot="markdown-editor-toolbar"` 不带 `role="toolbar"` 组合角色（20-07 Decision：APG toolbar 需 roving tabindex + 方向键导航，而本工具栏 12 个按钮已是独立 tab stop、全部键盘可达——无 WCAG 2.1.1 失败；含分组分隔符的布局使 roving 模式收益低。去掉组合角色消除「读屏播报工具栏但无方向键导航」的结构失配，各按钮 aria-label 保留）。
 
 ## 10. 风险、取舍与后续阶段
 

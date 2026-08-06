@@ -52,7 +52,9 @@ test.describe('W1c list collection renderer — flux-renderers-data', () => {
 
     await items.nth(0).click();
     await expect(items.nth(0)).toHaveAttribute('data-selected', 'true');
-    await expect(items.nth(0)).toHaveAttribute('aria-selected', 'true');
+    // 20-08 (ARIA 1.2): listitem selection is exposed via aria-current, not
+    // aria-selected (unsupported on the listitem role).
+    await expect(items.nth(0)).toHaveAttribute('aria-current', 'true');
     // onItemClick fires against the per-item scope (context-carry verified in focused unit tests)
     await expect(page.getByRole('dialog', { name: 'Item click' })).toBeVisible({ timeout: 5_000 });
     await page.getByRole('button', { name: /Close|关闭|Cancel|取消/ }).click();

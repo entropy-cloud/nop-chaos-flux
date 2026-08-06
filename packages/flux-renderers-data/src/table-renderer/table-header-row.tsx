@@ -32,6 +32,8 @@ function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
 
+const COLUMN_RESIZE_KEYBOARD_STEP = 10;
+
 interface TableHeaderRowProps {
   props: RendererComponentProps<TableSchema>;
   columns: TableColumnSchema[];
@@ -136,6 +138,27 @@ function renderLeafHeaderCell(
     event.preventDefault();
     event.stopPropagation();
     resizeApi.startResize(column, index, event.clientX);
+  };
+  // Keyboard resize (WCAG 2.1 SC 2.1.1): the handle is a focusable separator,
+  // so ArrowLeft/ArrowRight step the column width along the same commit path as
+  // a pointer drag (mirrors use-row-drag-sort H6).
+  const resizeKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (!resizable || !resizeApi) return;
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    event.stopPropagation();
+    resizeApi.stepResize(column, index, event.key === 'ArrowLeft' ? -COLUMN_RESIZE_KEYBOARD_STEP : COLUMN_RESIZE_KEYBOARD_STEP);
+  };
+  const resizeHandleProps = {
+    'data-slot': 'table-column-resize-handle' as const,
+    'aria-label': t('flux.table.resizeColumn'),
+    role: 'separator' as const,
+    'aria-orientation': 'vertical' as const,
+    tabIndex: 0,
+    onPointerDown: resizeStart,
+    onKeyDown: resizeKeyDown,
+    className: 'absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-primary/40',
+    style: { touchAction: 'none' },
   };
   const resolvedWidth = resizeApi?.getColumnWidth(column, index) ?? column.width;
   const cellProps = fixedColumnLayout.getColumnCellProps(column, index);
@@ -285,30 +308,14 @@ function renderLeafHeaderCell(
             </DropdownMenu>
           )}
           {resizable ? (
-            <span
-              data-slot="table-column-resize-handle"
-              aria-label={t('flux.table.resizeColumn')}
-              role="separator"
-              aria-orientation="vertical"
-              onPointerDown={resizeStart}
-              className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-primary/40"
-              style={{ touchAction: 'none' }}
-            />
+            <span {...resizeHandleProps} />
           ) : null}
         </div>
       ) : (
         <>
           {labelContent}
           {resizable ? (
-            <span
-              data-slot="table-column-resize-handle"
-              aria-label={t('flux.table.resizeColumn')}
-              role="separator"
-              aria-orientation="vertical"
-              onPointerDown={resizeStart}
-              className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-primary/40"
-              style={{ touchAction: 'none' }}
-            />
+            <span {...resizeHandleProps} />
           ) : null}
         </>
       )}

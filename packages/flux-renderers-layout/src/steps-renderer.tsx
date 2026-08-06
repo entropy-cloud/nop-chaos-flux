@@ -265,6 +265,10 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
               data-status={status}
               disabled={disabled}
               aria-current={isCurrent ? 'step' : undefined}
+              // 20-04 (WCAG 4.1.2): finish/error indicators contain only a lucide
+              // icon (auto aria-hidden), so the focusable button must carry its
+              // accessible name explicitly, tied to the step title.
+              aria-label={`${t('flux.steps.step')} ${index + 1}: ${item.title ?? item.value ?? item.key ?? index + 1}`}
               onClick={() => handleClick(item, index)}
               className={cn(
                 'nop-steps-indicator relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors',

@@ -136,6 +136,7 @@
 - **E1c 树表展开 ownership**：树表 children 行展开态为 table-local interaction state（与 expandable detail row 一致，裁定 (b) local-only，不级联到 selection，无 `expandOwnership`/`expandStatePath`）。
 - **E1c 行排序 ownership**：行拖拽排序结果按 `orderField` 写回，优先通过 scope owner path（不在 table 内发请求）；缺 `orderField` 时按 Failure Path `e1c-drag-no-orderField` 退化。drag handle（`role="button"` + `tabIndex:0`）键盘可激活：ArrowUp/ArrowDown 沿与鼠标 drop 相同的 commit 路径重排（H6/WCAG 2.1 SC 4.1.2/2.1.1）；handle 的 `onClick` 调 `stopPropagation`，无移动 click 不冒泡到 `onRowClick`/`expandRowByClick`（H19/T8）。`scope` 误配（缺 `orderStatePath`）发 dev 告警（H12，镜像列宽 hook）。
 - **E1c 列宽 scope-level 持久化**：`columnWidthsOwnership: 'scope'` + `columnWidthsStatePath` 时 resize 结果写 `Record<columnName, width>` 到 scope；拖动期间经 transient overlay 提供实时反馈，`pointerup` 持久化的是**拖到**的宽度（非拖动前），缺 path 时按 Failure Path `e1c-widths-scope-no-path` 退化为 local。`controlled` 为只读上游：resize handle 不在本地落宽，需经 `onWidthsChange` 通道（`useColumnResize` 的 hook option，镜像 `useRowDragSort.onReorder`）把变更通知上层；`controlled && !onWidthsChange` 时发 G10 式 dev 告警（与 drag-sort 同通道），handle 不静默假死。window pointer 监听器由 React 生命周期（unmount effect teardown）拥有，并监听 `pointercancel`，中途卸载/触屏滚动接管不泄漏监听器、不卡 `activeResizeRef`。
+- **E1c 列宽键盘 resize（WCAG 2.1 SC 2.1.1，已落地）**：resize handle（`data-slot="table-column-resize-handle"`，`role="separator"` + `aria-orientation="vertical"`）带 `tabIndex: 0` 进入 Tab 序，ArrowLeft/ArrowRight 按 10px 步进沿与 pointer drag 相同的 commit 路径调整列宽（`useColumnResize.stepResize`），宽度钳制在列级 `minWidth`/`maxWidth` 内；与行拖拽 handle（H6）同一键盘先例。
 - 当前 header search/filter 已有可观察的基础行为：列头菜单可驱动 keyword/filter state 并影响本地数据处理；但 richer filter source/search UX、统一 ownership 收口和更完整回归证据仍属于后续 table-heavy parity。
 - 当前 header search/filter 已有可观察且更稳定的行为：列头菜单可驱动 keyword/filter state、通过 active trigger 表达当前列已有筛选，并提供按列 clear action 一次性清理 keyword + option filters。更丰富的 filter source/search UX 与 ownership 收口仍属于后续 table-heavy parity。
 - row-level `onRowClick` / `expandRowByClick` 现已具备与鼠标一致的 Enter/Space 键盘激活路径；交互行保持原生 table row 语义，不改写成 fake button role。
@@ -221,7 +222,7 @@
 - 如果未来需要进一步下沉复杂度，更可能正确的方向是 table family shared runtime/helper 收敛，而不是在 `table-renderer.tsx` 之上再发明第二层通用 controller 协议。
 - 拆分判断应遵循 `docs/references/renderer-implementation-guidelines.md`：对 `table` 这类 orchestration renderer，优先保留薄 shell + shared hooks/helpers 的结构，不机械追求 local headless 化。
 - **E1b capability 模块（已落地）**：
-  - `useColumnResize`（`table-renderer/use-column-resize.ts`）：列宽 local 状态管理 + min/max clamp + pointer drag handler。能力维度 hook，符合 owner 模型。
+  - `useColumnResize`（`table-renderer/use-column-resize.ts`）：列宽 local 状态管理 + min/max clamp + pointer drag handler + 键盘步进（`stepResize`，ArrowLeft/Right）。能力维度 hook，符合 owner 模型。
   - `combine-cells`（`table-renderer/combine-cells.ts`）：纯 helper，按 amis `combineNum` 语义计算 rowSpan plan；virtual 开启时退化为 no-merge plan。
   - `table-summary-row`（`table-renderer/table-summary-row.tsx`：聚合行渲染组件，cells 按 column name 对齐，cell value 支持 `${expr}` 经 `helpers.evaluate` 求值。`prefixRow` 渲染为独立 `<TableBody>`（位于 thead 后、数据行前）；`affixRow` 渲染为 `<TableFooter>` 复用 UI 原语。
 - **E1c capability 模块（已落地）**：

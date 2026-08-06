@@ -177,6 +177,7 @@ interface WizardStatusSummary {
 - 根节点保留 `nop-wizard` marker
 - step 导航、进度条、body、actions 使用稳定 `data-slot`
 - 视觉变体不应影响 owner 边界与状态语义
+- **步骤切换 a11y（APG wizard，已落地）**：步骤索引变化后（初始 mount 除外），焦点移入新步骤体（`data-slot="wizard-step-body"` 且未 `hidden`）内第一个可聚焦元素（`button/input/select/textarea/a[href]/[tabindex]`，跳过 disabled）；`aria-current="step"` 更新不被多数读屏宣布，故根节点另带 `data-slot="wizard-status"` `role="status"` + `aria-live="polite"` 的 sr-only 播报区，内容为当前步骤标题（步骤切换时对读屏用户播报）。
 
 ## 12. 风险与取舍
 

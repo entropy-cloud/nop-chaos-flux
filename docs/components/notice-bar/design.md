@@ -89,6 +89,7 @@ interface NoticeBarEvents {
 - `loop: false` 时滚动到末条停止
 - **OA-15**：轮播切换由独立 `setTimeout` 驱动，**不依赖** marquee 动画的 `animationiteration` 事件。这样即使某条文本不溢出容器（`scrollWidth <= clientWidth`，marquee 不启动），多文本 bar 仍能正常轮播。marquee 动画只负责视觉滚动，不再驱动 index 变更
 - **OA-20**：轮播停留时长 `carouselDwell` 按当前项是否溢出分流——不溢出时为固定 `CAROUSEL_INTERVAL_MS`（默认 3000ms，保留 OA-15 的非溢出轮播）；溢出时为 `max(CAROUSEL_INTERVAL_MS, 一个完整 marquee 周期)`，保证溢出项跑完一整圈再切换（否则 3000ms 会把长 marquee 截断在约 25% 处）
+- **20-03 暂停机制（WCAG 2.2.2 Pause, Stop, Hide，已落地）**：hover（`mouseenter`/`mouseleave`）与 focus（`focusin`/`focusout`）暂停 JS 轮播 tick（`setTimeout` 不调度），同时把 marquee 动画 `animation-play-state` 置为 `paused`；`prefers-reduced-motion: reduce` 下轮播 tick 完全停用（CSS 动画另有 `ui/src/styles/base.css` 全局兜底压缩至 0.01ms），媒体查询变化时响应式恢复（对照 `carousel.tsx:87-168` 先例）
 
 ### 滚动方向（`direction`）
 

@@ -57,6 +57,9 @@ export const enUS: Resource = {
       previous: 'Previous page',
       next: 'Next page',
     },
+    steps: {
+      step: 'Step',
+    },
     ai: {
       send: 'Send',
       stop: 'Stop',
@@ -236,7 +239,6 @@ export const enUS: Resource = {
       quarterYear: 'Quarter year',
     },
     markdown: {
-      toolbarLabel: 'Markdown formatting',
       bold: 'Bold',
       italic: 'Italic',
       strikethrough: 'Strikethrough',

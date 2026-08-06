@@ -44,9 +44,10 @@ const LABEL = 'find-event-dispatch-without-ctx';
 const ALLOWLIST = new Set([
   // notice-bar onClose/onClick forward the native React MouseEvent / KeyboardEvent
   // (renderer-runtime.md:673-675 requires DOM entry points to forward the event).
-  'packages/flux-renderers-mobile/src/notice-bar.tsx:160',
-  'packages/flux-renderers-mobile/src/notice-bar.tsx:166',
-  'packages/flux-renderers-mobile/src/notice-bar.tsx:172',
+  // Line numbers shifted by the 20-03 pause/reduced-motion fix (2026-08-07).
+  'packages/flux-renderers-mobile/src/notice-bar.tsx:198',
+  'packages/flux-renderers-mobile/src/notice-bar.tsx:204',
+  'packages/flux-renderers-mobile/src/notice-bar.tsx:210',
   // button onClick forwards the native React MouseEvent (C3.x adjudicated).
   'packages/flux-renderers-basic/src/button.tsx:220',
   // chart onClick/onHover forward the native event; the `{}` dispatch ctx is

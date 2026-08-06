@@ -61,6 +61,42 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
   const [currentIndex, setCurrentIndex] = React.useState<number>(0);
   const [textWidth, setTextWidth] = React.useState<number>(0);
   const [containerWidth, setContainerWidth] = React.useState<number>(0);
+  // 20-03 (WCAG 2.2.2 Pause, Stop, Hide): hover/focus pause the JS carousel tick
+  // AND the marquee animation; prefers-reduced-motion disables the tick entirely
+  // (the CSS animation is additionally compressed by the global base.css
+  // fallback). Mirrors the carousel.tsx:87-168 pause-source precedent.
+  const [interactionPaused, setInteractionPaused] = React.useState<boolean>(false);
+  const [reducedMotion, setReducedMotion] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(mql.matches);
+    update();
+    mql.addEventListener('change', update);
+    return () => mql.removeEventListener('change', update);
+  }, []);
+
+  // 20-03: hover/focus pause listeners attach to the root via effect (mirrors
+  // the carousel.tsx container-listener precedent) so the static container
+  // never carries JSX interaction handlers.
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const enter = () => setInteractionPaused(true);
+    const leave = () => setInteractionPaused(false);
+    root.addEventListener('mouseenter', enter);
+    root.addEventListener('mouseleave', leave);
+    root.addEventListener('focusin', enter);
+    root.addEventListener('focusout', leave);
+    return () => {
+      root.removeEventListener('mouseenter', enter);
+      root.removeEventListener('mouseleave', leave);
+      root.removeEventListener('focusin', enter);
+      root.removeEventListener('focusout', leave);
+    };
+  }, []);
 
   React.useLayoutEffect(() => {
     if (!scrollableConfig) {
@@ -144,6 +180,8 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
     // firing setCurrentIndex + rescheduling every 3s while hidden.
     if (!visible) return;
     if (textList.length <= 1) return;
+    // 20-03: hover/focus pause and prefers-reduced-motion disable the JS tick.
+    if (interactionPaused || reducedMotion) return;
     if (!loop && currentIndex >= textList.length - 1) return;
     const id = setTimeout(() => {
       setCurrentIndex((idx) => {
@@ -153,7 +191,7 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
       });
     }, carouselDwellMs);
     return () => clearTimeout(id);
-  }, [textList.length, currentIndex, loop, carouselDwellMs, visible]);
+  }, [textList.length, currentIndex, loop, carouselDwellMs, visible, interactionPaused, reducedMotion]);
 
   const handleClose = (event: React.MouseEvent<HTMLButtonElement>) => {
     setVisible(false);
@@ -201,6 +239,7 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
   return (
     <div
       {...interactiveProps}
+      ref={rootRef}
       className={cn(
         'nop-notice-bar flex items-center gap-2 overflow-hidden px-3 py-2',
         props.meta.className,
@@ -234,6 +273,7 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
                   animationTimingFunction: 'linear',
                   animationIterationCount: loop ? 'infinite' : '1',
                   animationDirection,
+                  animationPlayState: interactionPaused ? 'paused' : undefined,
                 }
               : undefined
           }

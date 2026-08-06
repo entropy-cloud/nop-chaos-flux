@@ -126,8 +126,12 @@ export function CrudToolbarBlocks(props: {
             className="flex items-center gap-2"
           >
             <PaginationPrevious
-              onClick={() => onPageChange(Math.max(1, pagination.currentPage - 1))}
+              onClick={() => {
+                if (pagination.currentPage <= 1) return;
+                onPageChange(pagination.currentPage - 1);
+              }}
               className={pagination.currentPage <= 1 ? 'pointer-events-none opacity-50' : undefined}
+              aria-disabled={pagination.currentPage <= 1 ? true : undefined}
             />
             <span className="text-sm text-muted-foreground">
               {t('flux.pagination.page', {

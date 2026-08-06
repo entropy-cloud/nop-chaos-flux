@@ -127,7 +127,7 @@ function ListItemView(props: ListItemViewProps) {
       data-item-key={itemKey}
       data-selected={selected || undefined}
       role="listitem"
-      aria-selected={selectionMode !== 'none' ? selected : undefined}
+      aria-current={selectionMode !== 'none' ? (selected ? 'true' : undefined) : undefined}
       tabIndex={interactive ? 0 : undefined}
       className={cn(
         'min-w-0 px-3 text-sm transition-colors',
