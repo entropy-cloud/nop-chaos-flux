@@ -52,7 +52,10 @@ export function useTableSelection(
       }
       return true;
     },
-    { paths: selectionStatePath ? [selectionStatePath] : undefined },
+    {
+      enabled: selectionOwnership === 'scope' && !!selectionStatePath,
+      paths: selectionStatePath ? [selectionStatePath] : undefined,
+    },
   );
 
   const normalizedRows = rows;

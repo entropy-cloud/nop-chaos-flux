@@ -123,7 +123,10 @@ export function useTableSort(
       return toSingleSortState(getIn(scopeData, sortStatePath));
     },
     (a, b) => a?.column === b?.column && a?.direction === b?.direction,
-    { paths: sortStatePath && !multiSortEnabled ? [sortStatePath] : undefined },
+    {
+      enabled: sortOwnership === 'scope' && !!sortStatePath && !multiSortEnabled,
+      paths: sortStatePath && !multiSortEnabled ? [sortStatePath] : undefined,
+    },
   );
 
   const scopeMultiEntries = useScopeSelector(
@@ -134,7 +137,10 @@ export function useTableSort(
       return toMultiSortState(getIn(scopeData, sortStatePath));
     },
     (a, b) => (a && b ? entriesEqual(a, b) : a === b),
-    { paths: sortStatePath && multiSortEnabled ? [sortStatePath] : undefined },
+    {
+      enabled: sortOwnership === 'scope' && !!sortStatePath && multiSortEnabled,
+      paths: sortStatePath && multiSortEnabled ? [sortStatePath] : undefined,
+    },
   );
 
   const isMultiMode = multiSortEnabled || localMultiActive;

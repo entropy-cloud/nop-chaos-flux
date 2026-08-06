@@ -45,13 +45,19 @@ export function useTableVisibleColumns(
     (scopeData) =>
       toggledStatePath ? toStringArray(getIn(scopeData, toggledStatePath)) : undefined,
     areStringArraysEqual,
-    { paths: toggledStatePath ? [toggledStatePath] : undefined },
+    {
+      enabled: !!toggledStatePath,
+      paths: toggledStatePath ? [toggledStatePath] : undefined,
+    },
   );
   const scopeOrderedColumns = useScopeSelector(
     (scopeData) =>
       orderedStatePath ? toStringArray(getIn(scopeData, orderedStatePath)) : undefined,
     areStringArraysEqual,
-    { paths: orderedStatePath ? [orderedStatePath] : undefined },
+    {
+      enabled: !!orderedStatePath,
+      paths: orderedStatePath ? [orderedStatePath] : undefined,
+    },
   );
 
   const enabled = schemaProps.columnSettings?.enabled === true;

@@ -60,7 +60,10 @@ export function useTableFilter(
         return true;
       });
     },
-    { paths: filterStatePath ? [filterStatePath] : undefined },
+    {
+      enabled: filterOwnership === 'scope' && !!filterStatePath,
+      paths: filterStatePath ? [filterStatePath] : undefined,
+    },
   );
 
   const filterState = useMemo(

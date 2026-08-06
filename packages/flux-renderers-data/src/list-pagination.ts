@@ -106,8 +106,10 @@ export function useListPagination(args: UseListPaginationArgs): ResolvedListPagi
         pageSize: ps >= 1 ? ps : fallbackPageSize,
       };
     },
-    (a, b) => a.currentPage === b.currentPage && a.pageSize === b.pageSize,
-    { paths: scopePaths },
+    (a, b) =>
+      (a === b) ||
+      (!!a && !!b && a.currentPage === b.currentPage && a.pageSize === b.pageSize),
+    { enabled: ownership === 'scope', paths: scopePaths },
   );
 
   useEffect(() => {

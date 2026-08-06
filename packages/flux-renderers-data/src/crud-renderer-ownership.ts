@@ -16,6 +16,10 @@ interface CrudComponentRegistryLike {
   resolve(args: { componentId: string }): CrudQueryFormHandle | undefined;
 }
 
+// Disabled-subscription fallback that preserves the selector's zero-value shape
+// so callers can keep dereferencing `state.toggledColumns`/`state.orderedColumns`.
+const EMPTY_VISIBLE_COLUMN_STATE = { toggledColumns: undefined, orderedColumns: undefined } as const;
+
 function createCrudQueryEventPayload(args: {
   type: 'crud:query-submit' | 'crud:query-reset';
   query: Record<string, unknown>;
@@ -93,6 +97,8 @@ export function useCrudVisibleColumnNames(args: {
       areStringArraysEqual(a?.toggledColumns, b?.toggledColumns) &&
       areStringArraysEqual(a?.orderedColumns, b?.orderedColumns),
     {
+      enabled: !!(toggledColumnsStatePath || orderedColumnsStatePath),
+      fallback: EMPTY_VISIBLE_COLUMN_STATE,
       paths: [toggledColumnsStatePath, orderedColumnsStatePath].filter(
         (path): path is string => typeof path === 'string' && path.length > 0,
       ),

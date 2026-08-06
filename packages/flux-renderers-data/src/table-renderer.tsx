@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
@@ -163,23 +163,29 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const schemaProps = useSchemaProps(props);
   const tableSchemaProps = schemaProps as TableSchema;
   const rawColumns = schemaProps.columns;
-  const [stableColumns, setStableColumns] = useState<TableColumnSchema[]>(() =>
-    isValidColumnArray(rawColumns) ? rawColumns : EMPTY_TABLE_COLUMNS,
+  // 04-01: last-good render-time derivation (React "adjust state during render"
+  // pattern). Valid columns apply immediately; invalid expression results keep
+  // the last valid array and surface a dev warning on arrival. Replaces the
+  // props→state dual-mirror (useState + prevRawRef + useEffect + startTransition)
+  // — there is no real sync loop to guard against (a rawColumns reference change
+  // simply re-renders with the fresh value), so the mirror only added an extra
+  // render hop and a stale-value window.
+  const [lastGoodColumns, setLastGoodColumns] = useState<TableColumnSchema[] | null>(() =>
+    isValidColumnArray(rawColumns) ? rawColumns : null,
   );
-  const prevRawRef = useRef(rawColumns);
-  // Sync external prop to stable state
-  useEffect(() => {
-    if (rawColumns === prevRawRef.current) return;
-    prevRawRef.current = rawColumns;
-    if (isValidColumnArray(rawColumns)) {
-      startTransition(() => setStableColumns(rawColumns));
+  const [prevRawColumns, setPrevRawColumns] = useState(rawColumns);
+  const rawColumnsValid = isValidColumnArray(rawColumns);
+  if (rawColumns !== prevRawColumns) {
+    setPrevRawColumns(rawColumns);
+    if (rawColumnsValid) {
+      setLastGoodColumns(rawColumns);
     } else if (isDevRuntime()) {
       console.warn(
         `[TableRenderer] Dynamic columns expression returned invalid format. Falling back to previous columns.`,
       );
     }
-  }, [rawColumns]);
-  const columns = stableColumns;
+  }
+  const columns = rawColumnsValid ? rawColumns : (lastGoodColumns ?? EMPTY_TABLE_COLUMNS);
   const source = Array.isArray(schemaProps.source)
     ? (schemaProps.source as Array<Record<string, any>>)
     : EMPTY_TABLE_ROWS;

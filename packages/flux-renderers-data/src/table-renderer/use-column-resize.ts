@@ -171,7 +171,10 @@ export function useColumnResize(
       if (aKeys.length !== bKeys.length) return false;
       return aKeys.every((key) => a[key] === b[key]);
     },
-    { paths: statePath && effectiveOwnership === 'scope' ? [statePath] : undefined },
+    {
+      enabled: effectiveOwnership === 'scope' && !!statePath,
+      paths: statePath && effectiveOwnership === 'scope' ? [statePath] : undefined,
+    },
   );
 
   const widths: Record<string, number> = useMemo(() => {

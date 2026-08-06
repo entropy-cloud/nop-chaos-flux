@@ -58,6 +58,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const fallbackBoard = EMPTY_BOARD;
 
+  // 05-01: 订阅门控——非 scope ownership 不订阅 scope（enabled:false 时
+  // useScopeSelector 走 fallback，零订阅渲染），scope 模式收窄到 state path。
   const scopeBoardData = useScopeSelector(
     (data: Record<string, unknown>) => {
       if (!kanbanStatePath) return undefined;
@@ -67,6 +69,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       return val as BoardData | undefined;
     },
      shallowEqual,
+     {
+       enabled: kanbanOwnership === 'scope' && !!kanbanStatePath,
+       paths: kanbanStatePath ? [kanbanStatePath] : undefined,
+     },
   );
 
   const scopeCollapsedValue = useScopeSelector(
@@ -78,6 +84,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       return val as Record<string, boolean> | undefined;
     },
     Object.is,
+    {
+      enabled: collapsedOwnership === 'scope' && !!collapsedStatePath,
+      paths: collapsedStatePath ? [collapsedStatePath] : undefined,
+    },
   );
 
   const [localBoardData, setLocalBoardData] = useState<BoardData>(rawData ?? fallbackBoard);

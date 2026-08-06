@@ -18,21 +18,35 @@ export function useCalendarOwnership(
   const isScopeView = viewOwnership === 'scope' && !!viewStatePath;
   const isScopeDate = dateOwnership === 'scope' && !!dateStatePath;
 
-  const scopeViewRaw = useScopeSelector((s: Record<string, unknown>) => {
-    if (!isScopeView || !viewStatePath) return undefined;
-    const keys = viewStatePath.split('.');
-    let val: unknown = s;
-    for (const k of keys) { if (val && typeof val === 'object') val = (val as Record<string, unknown>)[k]; else return undefined; }
-    return val as CalendarView | undefined;
-  });
+  const scopeViewRaw = useScopeSelector(
+    (s: Record<string, unknown>) => {
+      if (!isScopeView || !viewStatePath) return undefined;
+      const keys = viewStatePath.split('.');
+      let val: unknown = s;
+      for (const k of keys) { if (val && typeof val === 'object') val = (val as Record<string, unknown>)[k]; else return undefined; }
+      return val as CalendarView | undefined;
+    },
+    Object.is,
+    {
+      enabled: isScopeView,
+      paths: viewStatePath ? [viewStatePath] : undefined,
+    },
+  );
 
-  const scopeDateRaw = useScopeSelector((s: Record<string, unknown>) => {
-    if (!isScopeDate || !dateStatePath) return undefined;
-    const keys = dateStatePath.split('.');
-    let val: unknown = s;
-    for (const k of keys) { if (val && typeof val === 'object') val = (val as Record<string, unknown>)[k]; else return undefined; }
-    return val as string | undefined;
-  });
+  const scopeDateRaw = useScopeSelector(
+    (s: Record<string, unknown>) => {
+      if (!isScopeDate || !dateStatePath) return undefined;
+      const keys = dateStatePath.split('.');
+      let val: unknown = s;
+      for (const k of keys) { if (val && typeof val === 'object') val = (val as Record<string, unknown>)[k]; else return undefined; }
+      return val as string | undefined;
+    },
+    Object.is,
+    {
+      enabled: isScopeDate,
+      paths: dateStatePath ? [dateStatePath] : undefined,
+    },
+  );
 
   const scopeView = isScopeView ? scopeViewRaw : undefined;
   const scopeDate = isScopeDate ? scopeDateRaw : undefined;
