@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { isSafeNavigationUrl } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import {
   Button,
@@ -235,10 +236,23 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
     'data-countdown': countDownActive ? String(countDownLeft) : undefined,
   };
 
-  const button = props.props.href ? (
+  // URL protocol guard (shared contract with content link renderer,
+  // `isSafeNavigationUrl` from flux-core): href may be data-bound
+  // (`${item.link}`), and an unsafe scheme (javascript:/vbscript:/…)
+  // would execute on click. Unsafe hrefs degrade to a non-navigable
+  // anchor (label still renders, href attribute stripped) — fail-safe,
+  // same shape as the link renderer.
+  const rawHref = props.props.href;
+  const href =
+    typeof rawHref === 'string' && rawHref.length > 0
+      ? (isSafeNavigationUrl(rawHref) ? rawHref : undefined)
+      : undefined;
+  const renderAsAnchor = typeof rawHref === 'string' && rawHref.length > 0;
+
+  const button = renderAsAnchor ? (
     <a
       ref={anchorRef}
-      href={props.props.href}
+      href={href}
       target={props.props.target}
       {...commonProps}
       onClick={(event) => void handleClick(event)}

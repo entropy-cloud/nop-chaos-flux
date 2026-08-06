@@ -57,6 +57,7 @@ export type { RuntimeHostIssueInput } from './utils/runtime-host-reporting.js';
 export { validationErrorsEqual } from './utils/validation-utils.js';
 export { normalizeInstancePath } from './utils/instance-path.js';
 export { cancelPendingDebounce, scheduleDebounce } from './utils/debounce.js';
+export { isSafeNavigationUrl } from './utils/url.js';
 export { matchesFluxValueShape, validateHostMethodPayload } from './schema-diagnostics/value-shape-runtime.js';
 
 export { setMessageFormatter, getMessageFormatter } from './i18n-sink.js';
