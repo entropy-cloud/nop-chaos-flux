@@ -130,7 +130,7 @@
 
 `window.__flux_scada_<cid>`（恒开，生产裁剪属 host 配置）：
 
-- `engine`：`getSymbols()` / `getSymbol(id)` / `getSymbolProps(id)`（**leafer 属性面**，如 text 节点 `fontSize`）/ `getViewport()` / `getViewportPoint(world)` / `setViewport` / `fit` / `center` / `reset`
+- `engine`：`getSymbols()` / `getSymbol(id)` / `getSymbolProps(id)`（**`ScadaSymbolProps` schema 键名**，与 `setSymbolProps` 对称，如 text 节点 `textSize`）/ `getViewport()` / `getViewportPoint(world)` / `setViewport` / `fit` / `center` / `reset`
 - `tree`：`on('render')`（帧事件/性能测量）
 - `app`：`app.sky`（hover 覆盖物 rect 断言）
 - `getPointValue(pointId)` / `setPointValues(values)`（dev/test 批量注入通道）

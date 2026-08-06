@@ -235,7 +235,7 @@ interface ScadaEngineOptions {
 ### 8.2 引擎命令句柄（renderer/外层可调）
 
 - `applyAttrs(attrsBySymbolId: Record<string, Partial<ScadaSymbolProps>>)`：**批量属性写入入口**（I2.2 刷新流水线帧尾调用；单次调用内合并全部脏属性，遵守 §4.5 合帧义务——引擎侧不再提供逐点写 API；`ScadaSymbolProps` 见 design-symbols.md §4.2）；
-- `getSymbol(id)` / `getSymbols()` / `getSymbolProps(id)`：场景树只读访问（图元便捷封装，design-symbols.md §8）；`getSymbolProps` 返回 leafer 节点属性面（经 `toNodePatch` 映射后的键名，如 text 节点 `fontSize`，非 `ScadaSymbolProps` 原始键名——e2e 断言指南 I15.1 需知悉）；`setSymbolProps(id, patch)` = `applyAttrs({ [id]: patch })` 便捷封装；
+- `getSymbol(id)` / `getSymbols()` / `getSymbolProps(id)`：场景树只读访问（图元便捷封装，design-symbols.md §8）；`getSymbolProps` 返回 `ScadaSymbolProps` schema 键名（plan 2026-08-06-0900-2 P2-10：经 `fromNodeAttrs`——`toNodePatch` 的逆映射——把 leafer 节点属性面反映射回 schema 名，使读返回与 `setSymbolProps`/`toNodePatch` 写期望键名对称：`fontSize→textSize`、`scaleX+scaleY→scale`、`dashPattern→strokeDash`、`textAlign→align`、Text 节点 `fill→textColor`/非 Text `fill→fill` 透传；host `getSymbolProps(id)`→`setSymbolProps(id, roundtrip)` 往返不再喂错键）；`setSymbolProps(id, patch)` = `applyAttrs({ [id]: patch })` 便捷封装；
 - `fit()` / `center()` / `setViewport(...)` / `zoomAt(...)`：视口命令（I11.2 画布浏览交互）；
 - `setSize(w, h)`：画布尺寸更新（resize 同步，I10.1 ResizeObserver 调用；不重建引擎）；
 - `applyDiff(diff: ScadaConfigDiff)`：组态 JSON 增量 diff 应用（I5.3/I2.4 序列化契约；symbol 增删/属性变更增量生效，避免全量重建）；

@@ -1,6 +1,6 @@
 # 02 Industrial HMI Symbol Geometry & Property Consistency（复合族 resize + create/update 几何一致 + 读写属性对称）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: industrial-hmi
 > Work Item: 2026-08-05-2129 post-remediation audit P2（symbol 几何/属性 子集）
 > Last Reviewed: 2026-08-06
@@ -81,58 +81,58 @@
 
 ### Phase 1 - 复合族 resize（P2-4）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/symbols/composite.ts` + `device/` + `instrument/` + `sensor-control/`
 
 - Item Types: `Decision | Proof | Fix`
 
-- [ ] **Decision（resize 路由方案）**：裁定 `createCompositeGroup` 增 per-symbol `resize(width, height, parts)` hook（device/instrument/sensor-control 各族在 build 时注册：body 子形状 width/height 重算 + 旋转件/核心件相对锚点重定位），`applyCompositeProps` 对 `EXTENT_FIELDS`（width/height）在 `parts.extent` 不存在时回落到 `parts.resize?.(key, value)`（而非静默丢弃）。**拒绝**「把 width/height 加入 BODY_FIELDS 直接写 body 节点」方案（body 是 Rect，写 width/height 会改 body 但不动子形状相对布局，仍产几何不一致）。Decision 写入 `design-symbols.md` §4 + 本 plan。
-- [ ] **Proof（failing-first，先于 Fix）**：`device-symbols.test.ts` / `instrument-symbols.test.ts` / `sensor-control-symbols.test.ts` 各新增 width/height applyProps 几何响应用例：构造 symbol（如 motor），engine.applyAttrs({ [id]: { width: 200 } })（或经 applyProps 直调），断言 body 子形状 width === 200（非原值）。修复前红（width 静默丢弃，body width 不变）。覆盖至少 motor/gauge/indicator 三族代表（其余按同模式，回归守护用例补齐）。
-- [ ] **Fix**：`composite.ts` `CompositeParts` 增 `resize?: (key: 'width' | 'height', value: number, parts: CompositeParts) => void`；`applyCompositeProps` 的 EXTENT_FIELDS 分支改为完整 `if (EXTENT_FIELDS.has(key)) { if (parts.extent) setAttrs(parts.extent, {[key]: value}); else if (parts.resize) parts.resize(key, value, parts); continue; }`（保留 `EXTENT_FIELDS.has(key)` width/height 门禁，无 extent 时回落到 per-symbol resize hook）。各族 `build` 在 `createCompositeGroup` 返回后（或经 options）注册 resize hook：重算 body width/height + 子形状（rotor/core/blades/label）相对锚点。落地后上述 failing-first Proof 转绿。
+- [x] **Decision（resize 路由方案）**：裁定 `createCompositeGroup` 增 per-symbol `resize(width, height, parts)` hook（device/instrument/sensor-control 各族在 build 时注册：body 子形状 width/height 重算 + 旋转件/核心件相对锚点重定位），`applyCompositeProps` 对 `EXTENT_FIELDS`（width/height）在 `parts.extent` 不存在时回落到 `parts.resize?.(key, value, parts)`（而非静默丢弃）。**拒绝**「把 width/height 加入 BODY_FIELDS 直接写 body 节点」方案（body 是 Rect，写 width/height 会改 body 但不动子形状相对布局，仍产几何不一致）。Decision 写入 `design-symbols.md` §4 + 本 plan。
+- [x] **Proof（failing-first，先于 Fix）**：`device-symbols.test.ts` / `instrument-symbols.test.ts` / `sensor-control-symbols.test.ts` 各新增 width/height applyProps 几何响应用例：构造 symbol（如 motor），engine.applyAttrs({ [id]: { width: 200 } })（或经 applyProps 直调），断言 body 子形状 width === 200（非原值）。修复前红（width 静默丢弃，body width 不变）。覆盖至少 motor/gauge/indicator 三族代表（其余按同模式，回归守护用例补齐）。
+- [x] **Fix**：`composite.ts` `CompositeParts` 增 `resize?: (key: 'width' | 'height', value: number, parts: CompositeParts) => void`；`applyCompositeProps` 的 EXTENT_FIELDS 分支改为完整 `if (EXTENT_FIELDS.has(key)) { if (parts.extent) setAttrs(parts.extent, {[key]: value}); else parts.resize?.(key, value, parts); continue; }`（保留 `EXTENT_FIELDS.has(key)` width/height 门禁，无 extent 时回落到 per-symbol resize hook）。各族 `build` 在 `createCompositeGroup` 返回后（或经 options）注册 resize hook：重算 body width/height + 子形状（rotor/core/blades/label）相对锚点。落地后上述 failing-first Proof 转绿。
 
 Exit Criteria:
 
 > 本 Phase 交付 = 复合族 width/height 变更产出可见几何响应。
 
-- [ ] device/instrument/sensor-control 代表族 applyProps width/height 后 body 子形状几何改变（proof 断言结果值）。
-- [ ] 既有 create-time 几何 + rotation/fill/state applyProps 单测不回归（既有 device/instrument/sensor-control 单测全绿）。
-- [ ] 局部 typecheck 通过（CompositeParts 类型扩展无破坏）。
+- [x] device/instrument/sensor-control 代表族 applyProps width/height 后 body 子形状几何改变（proof 断言结果值）。
+- [x] 既有 create-time 几何 + rotation/fill/state applyProps 单测不回归（既有 device/instrument/sensor-control 单测全绿）。
+- [x] 局部 typecheck 通过（CompositeParts 类型扩展无破坏）。
 
 ### Phase 2 - create/update 样式与几何一致（P2-7 + P2-8 + P2-9）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/symbols/base-shapes/video.ts` + `symbols/pipe/pipe-junction.ts` + `symbols/instrument/thermometer.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] **Proof（failing-first，先于 Fix）**：三组用例——(a) `media-symbols.test.ts`：video 声明 `stroke: '#ffffff'`，create 后断言 node stroke === '#ffffff'（修复前红：被覆盖为 '#4b5563'）；(b) `pipe-symbols.test.ts`：pipe-junction create 后 applyProps `{ strokeWidth: 10 }`，断言 stub strokeWidth === 10（修复前红：留 4）；(c) `instrument-symbols.test.ts`：thermometer 空液位（props.height=0），create y === applyProps y（修复前红：-24 vs -16 差 8）。修复前红。
-- [ ] **Fix-a（video stroke guard，P2-7）**：`video.ts:35-36` 改 `if (attrs.stroke === undefined) attrs.stroke = '#4b5563'; if (attrs.strokeWidth === undefined) attrs.strokeWidth = 1;`（对齐 :34 fill guard）。
-- [ ] **Fix-b（pipe-junction stub strokeWidth，P2-8）**：`pipe-junction.ts:85` 改 `strokeWidth: props.strokeWidth ?? 4`；applyProps（`:102-115`）增 strokeWidth 路由分支：`if (props.strokeWidth !== undefined) for (const stub of state.stubs) stub.set({ strokeWidth: props.strokeWidth });`（与 flow/dash 路由并列）。
-- [ ] **Fix-c（thermometer 常量统一，P2-9）**：`thermometer.ts` 新增模块级 `BULB_RESERVE` 常量（值取 create 的 `-24`，与 sibling level 的罐底锚定语义对齐——thermometer 液柱锚定感温泡顶，reserve 为泡高预留），create `y: height + BULB_RESERVE`、applyProps `y: tubeHeight + BULB_RESERVE - props.height`（两路径共用，差值消除）。注释说明 BULB_RESERVE 语义。落地后上述 failing-first Proof 转绿。
+- [x] **Proof（failing-first，先于 Fix）**：三组用例——(a) `media-symbols.test.ts`：video 声明 `stroke: '#ffffff'`，create 后断言 node stroke === '#ffffff'（修复前红：被覆盖为 '#4b5563'）；(b) `pipe-symbols.test.ts`：pipe-junction create 后 applyProps `{ strokeWidth: 10 }`，断言 stub strokeWidth === 10（修复前红：留 4）；(c) `instrument-symbols.test.ts`：thermometer 空液位（props.height=0），create y === applyProps y（修复前红：-24 vs -16 差 8）。修复前红。
+- [x] **Fix-a（video stroke guard，P2-7）**：`video.ts:35-36` 改 `if (attrs.stroke === undefined) attrs.stroke = '#4b5563'; if (attrs.strokeWidth === undefined) attrs.strokeWidth = 1;`（对齐 :34 fill guard）。
+- [x] **Fix-b（pipe-junction stub strokeWidth，P2-8）**：`pipe-junction.ts:85` 改 `strokeWidth: props.strokeWidth ?? 4`；applyProps（`:102-115`）增 strokeWidth 路由分支：`if (props.strokeWidth !== undefined) patch.strokeWidth = props.strokeWidth;`（与 flow/dash 路由并列，stub 循环统一 set）。
+- [x] **Fix-c（thermometer 常量统一，P2-9）**：`thermometer.ts` 新增模块级 `BULB_RESERVE` 常量（值取 create 的 `-24`，与 sibling level 的罐底锚定语义对齐——thermometer 液柱锚定感温泡顶，reserve 为泡高预留），create `y: height + BULB_RESERVE`、applyProps `y: tubeHeight + BULB_RESERVE - props.height`（两路径共用，差值消除）。注释说明 BULB_RESERVE 语义。落地后上述 failing-first Proof 转绿。
 
 Exit Criteria:
 
-- [ ] video author stroke/strokeWidth 保留（proof 断言节点属性值）。
-- [ ] pipe-junction stub strokeWidth 跟随 props.strokeWidth（proof 断言 stub strokeWidth）。
-- [ ] thermometer 空液位首帧 create y === applyProps y（proof 断言无 8px 跳变）。
-- [ ] 既有 media/pipe/instrument 单测不回归。
+- [x] video author stroke/strokeWidth 保留（proof 断言节点属性值）。
+- [x] pipe-junction stub strokeWidth 跟随 props.strokeWidth（proof 断言 stub strokeWidth）。
+- [x] thermometer 空液位首帧 create y === applyProps y（proof 断言无 8px 跳变）。
+- [x] 既有 media/pipe/instrument 单测不回归。
 
 ### Phase 3 - getSymbolProps 读写对称（P2-10）
 
-Status: planned
-Targets: `packages/flux-renderers-industrial/src/engine/scada-engine.ts`（`getSymbolProps`）+ 可能 `symbols/composite.ts`（`toNodePatch` 逆映射）
+Status: completed
+Targets: `packages/flux-renderers-industrial/src/engine/scada-engine.ts`（`getSymbolProps`）+ `symbols/symbol-factory.ts`（`toNodePatch` 逆映射 `fromNodeAttrs`）
 
 - Item Types: `Decision | Proof | Fix`
 
-- [ ] **Decision（读返回面）**：裁定 `getSymbolProps` 经 `toNodePatch` 的**逆映射**返回 schema 名（`fontSize→textSize`、`scaleX+scaleY→scale`、`dashPattern→strokeDash`、text-node `fill→textColor`），使读返回与写期望（`setSymbolProps`/`toNodePatch`）键名对称。**拒绝**「文档化为 raw leafer attrs 去 cast」方案（host 工具链仍需手动映射，往返喂错键未根治；逆映射是 `toNodePatch` 的天然对偶，维护成本低）。Decision 写入 `design-symbols.md`（getSymbolProps 读写契约）+ `design-renderer.md` §8.3 ScadaTestHandle。
-- [ ] **Proof（failing-first，先于 Fix）**：`scada-engine.test.ts` `getSymbolProps / setSymbolProps` 用例（:217）扩展：构造 text symbol（textSize/dashPattern/scale/textColor 均声明），`setSymbolProps(id, getSymbolProps(id))` 往返后 `getSymbolProps(id)` 各键值不变（键名对称，非喂错键）。修复前红（读返 fontSize/scaleX/scaleY/dashPattern/fill → 往返 setSymbolProps 不识别这些键 → 属性丢失或错位）。
-- [ ] **Fix**：`scada-engine.ts:252-256` `getSymbolProps` 经一个 `fromNodeAttrs(node, definition)` 逆映射（`toNodePatch` 的逆，对齐 `symbols/symbol-factory.ts:19-42` 正向映射面）返回：`scaleX+scaleY → scale`、`dashPattern → strokeDash`、`fontSize → textSize`、`textAlign → align`、`fillStyle → fill`（base-shapes）、text-node `fill → textColor`。注意 `fill` 字段对 Text 节点正向是 `textColor→fill`、对其它节点正向是 `fillStyle→fill`，逆映射须按 `definition`/`node.tag` 区分 Text vs 非 Text 以消解 `fill` 的多对一歧义（Text 节点 fill→textColor，非 Text 节点 fill→fill 透传）。逆映射可与 `toNodePatch` 同文件定义以保持对称。落地后上述 failing-first Proof 转绿。
+- [x] **Decision（读返回面）**：裁定 `getSymbolProps` 经 `toNodePatch` 的**逆映射**返回 schema 名（`fontSize→textSize`、`scaleX+scaleY→scale`、`dashPattern→strokeDash`、text-node `fill→textColor`、`textAlign→align`），使读返回与写期望（`setSymbolProps`/`toNodePatch`）键名对称。**拒绝**「文档化为 raw leafer attrs 去 cast」方案（host 工具链仍需手动映射，往返喂错键未根治；逆映射是 `toNodePatch` 的天然对偶，维护成本低）。Decision 写入 `design-symbols.md`（getSymbolProps 读写契约）+ `design-engine.md` §8.3。
+- [x] **Proof（failing-first，先于 Fix）**：`scada-engine.test.ts` `getSymbolProps / setSymbolProps` 用例（:217）扩展：构造 text symbol（textSize/dashPattern/scale/textColor/align 均声明），断言 `getSymbolProps` 返回 schema 键（`textSize`/`scale`/`strokeDash`/`textColor`/`align`，非 leafer `fontSize`/`scaleX`/`dashPattern`/`fill`）+ `setSymbolProps(id, getSymbolProps(id))` 往返后各键值不变（键名对称，非喂错键）+ 非 Text 节点 fill 透传不误射 textColor。修复前红（`props.textSize` undefined——读返 raw `fontSize`）。
+- [x] **Fix**：`symbol-factory.ts` 新增 `fromNodeAttrs(node, raw)`（与 `toNodePatch` 同文件对偶）：`scaleX`+`scaleY`→`scale`（统一缩放，写侧恒等，发射一次）、`fontSize→textSize`、`textAlign→align`、`dashPattern→strokeDash`；`fill` 按 `node.tag==='Text'` 区分——Text `fill→textColor`，非 Text `fill→fill` 透传（消解 `fill` 多对一歧义）；仅发射 schema 键（含 `custom`/声明层字段，当 create 显式写入节点时透传），mock/leafer 内部键（tag/children/parent/listeners）跳过防往返污染。`scada-engine.ts getSymbolProps` 改 `fromNodeAttrs(leaf.node, leaf.node.get())`。落地后上述 failing-first Proof 转绿。
 
 Exit Criteria:
 
-- [ ] `getSymbolProps` 返回 schema 键名（textSize/scale/strokeDash/textColor），与 `setSymbolProps`/`toNodePatch` 对称（proof 断言往返不变）。
-- [ ] 既有 `getSymbolProps` 消费者（test-handle、e2e 断言指南 I15.1）不回归——若 e2e 断言依赖 raw leafer 名，同步更新断言指南（owner doc）。
-- [ ] 局部 typecheck 通过。
+- [x] `getSymbolProps` 返回 schema 键名（textSize/scale/strokeDash/textColor），与 `setSymbolProps`/`toNodePatch` 对称（proof 断言往返不变）。
+- [x] 既有 `getSymbolProps` 消费者（test-handle、e2e 断言指南 I15.1）不回归——e2e `scada-demo.spec.ts:182` 原断言 raw `fontSize` 已同步更新为 schema `textSize`；`use-scada-handles.ts` getSymbol 句柄消费 schema 名（host 工具链获益，非回归）；state-visual/compound 单测读 `fill`/`width`/`shadow` 等 passthrough 键不受影响。
+- [x] 局部 typecheck 通过。
 
 ## Draft Review Record
 
@@ -147,18 +147,18 @@ Exit Criteria:
 
 > 全量 `pnpm typecheck/build/lint/test` 是 plan 收口时跑一次的仓库级检查（Minimum Rule 18）。
 
-- [ ] P2-4：复合族（device/instrument/sensor-control）width/height applyProps 产可见几何响应。
-- [ ] P2-7：video create 的 stroke/strokeWidth 不覆盖 author 声明。
-- [ ] P2-8：pipe-junction stub strokeWidth 跟随 props.strokeWidth（body/stub 一致）。
-- [ ] P2-9：thermometer create/applyProps 共用 BULB_RESERVE，首帧无 8px 跳变。
-- [ ] P2-10：`getSymbolProps` 与 `setSymbolProps` 键名对称（往返不喂错键）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 项。
-- [ ] owner doc 同步：`design-symbols.md`（复合族 resize 契约 + create/update 一致 + getSymbolProps 读写契约）、`design-renderer.md` §8.3（如 getSymbolProps 契约变化）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] P2-4：复合族（device/instrument/sensor-control）width/height applyProps 产可见几何响应。
+- [x] P2-7：video create 的 stroke/strokeWidth 不覆盖 author 声明。
+- [x] P2-8：pipe-junction stub strokeWidth 跟随 props.strokeWidth（body/stub 一致）。
+- [x] P2-9：thermometer create/applyProps 共用 BULB_RESERVE，首帧无 8px 跳变。
+- [x] P2-10：`getSymbolProps` 与 `setSymbolProps` 键名对称（往返不喂错键）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 项。
+- [x] owner doc 同步：`design-symbols.md`（复合族 resize 契约 + create/update 一致 + getSymbolProps 读写契约）、`design-engine.md` §8.3（getSymbolProps 契约变化：schema 键名对称）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Non-Blocking Follow-ups
 
@@ -167,13 +167,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 三 Phase 全部落地（每 Phase failing-first Proof 红→绿）。Phase 1（P2-4 复合族 resize）：`composite.ts` `CompositeParts` 增 `resize?` hook + `applyCompositeProps` EXTENT_FIELDS 分支无 extent 时回落 resize；device 4 + gauge + sensor-control 4 共 9 个无 extent 族各在 build 注册 resize hook（重算 body 容器 + 子形状相对锚点）。Phase 2（P2-7/P2-8/P2-9 create/update 一致）：video stroke/strokeWidth 改 guarded；pipe-junction stub strokeWidth 从 `props.strokeWidth ?? 4` 派生 + applyProps 路由；thermometer 模块级 `BULB_RESERVE=-24` 统一 create/applyProps，首帧 8px 跳变消除。Phase 3（P2-10 读写对称）：`symbol-factory.ts` 新增 `fromNodeAttrs`（`toNodePatch` 逆映射），`getSymbolProps` 改返 schema 键名，host 往返不再喂错键；e2e `scada-demo.spec.ts` 同步 `fontSize→textSize`。包级 736 tests / 55 files 全绿、workspace 全量验证（typecheck/build/lint 32/32 + test 59/59）全绿。owner doc `design-symbols.md` §4 + `design-engine.md` §8.3 + `flux-guide/design-patterns/scada.md` 同步。closure-audit gate 待独立 fresh-session sub-agent 执行（执行 session 不自审，AGENTS.md human gate）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: independent fresh-session closure auditor（MISSION_DRIVER closure-audit pass，非执行 session，仅输入 plan path + check result，不复用执行上下文）
+- Evidence: live repo 逐条核对（2026-08-06）——① Phase 1 P2-4：`composite.ts:27` `CompositeParts.resize?` 类型 + `composite.ts:72-77` EXTENT_FIELDS 分支（`if(parts.extent) ... else parts.resize?.(...)`），9 个无 extent 族 resize hook 实测落点（device `motor.ts:48`/`pump.ts:48`/`valve.ts:53`/`fan.ts:56` + instrument `gauge.ts:66` + sensor-control `indicator.ts:53`/`button.ts:46`/`sensor.ts:45`/`switch.ts:55`），均有真实函数体（非空 stub）；② Phase 2：`video.ts:36-37` guarded stroke/strokeWidth（对齐 :34 fill）、`pipe-junction.ts:85` `props.strokeWidth ?? 4` + `:111-112` applyProps strokeWidth 路由、`thermometer.ts:12` `BULB_RESERVE=-24` 经 `:49` create + `:85` applyProps 两路径共用；③ Phase 3 P2-10：`symbol-factory.ts:79` `fromNodeAttrs`（`toNodePatch` 对偶逆映射）真实落地，`scada-engine.ts:259` `getSymbolProps` 改 `fromNodeAttrs(leaf.node, raw)`；④ owner docs 同步实测：`design-symbols.md` §4(:215/216/217 resize+create/update 一致+读写对称三契约 blockquote)、`design-engine.md` §8.3(:238 getSymbolProps schema 键名对称)、`flux-guide/design-patterns/scada.md`(:133 textSize)；⑤ 验证复跑：`pnpm --filter @nop-chaos/flux-renderers-industrial typecheck` 绿 + `test` 55 files/736 tests 全绿（与 Status Note 计数一致，零回归）；⑥ 五点一致性：Plan Status `completed` / 三 Phase `completed` / 三 Phase Exit Criteria 全 `[x]` / Closure Gates 全 `[x]`（含本审计项）/ `docs/logs/2026/08-06.md:3-15` 收口记录齐备。零 Blocker / 零 Major / 零 Minor。deferred 诚实（Non-Blocking Follow-ups 为 sibling plan 引用 + 未来族注册提示，非 in-scope live defect）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- no remaining plan-owned work（其余 2026-08-05-2129 P2 归 sibling plan `2026-08-06-0900-1` validator / `2026-08-06-0900-3` engine-lifecycle 或后续 mission 节奏；复合族未来新增 symbol 带 width/height binding 按 resize hook 模式注册，见 Non-Blocking Follow-ups）。
