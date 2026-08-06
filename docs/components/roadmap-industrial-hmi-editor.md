@@ -17,6 +17,9 @@
 - **E0.2 spike 完成（2026-08-05，✅ 事件族 0 漂移）**：扩展 scratch demo（+ `@leafer-in/text-editor@2.2.9` 触发 InnerEditor），真实手势触发六大事件族 + 多选 + InnerEditor + 框选，`page.evaluate` 抽取真实 JSON 载荷（`results-e0.2-2026-08-05.json`）。**spike-event-drift 不触发**：六大事件族类名与 `research-render-engines.md §5:122` 完全一致，仅 InnerEditorEvent 在 §5:122 未枚举（⚠️ 无害漂移，登记 Follow-up 补文档）。flux action 衔接：leafer 事件携带循环 Leaf 引用**不能直传** `createNormalizedActionEvent`，需薄适配层抽纯 payload + nodeId；move/scale/rotate/skew 高频需节流（undo-redo 起止帧，E2.4 落点）；group/ungroup 需结构 diff（中 cost）。新发现：框选 selectArea 在 move:'auto' 关闭时拖拽过程渐进式选择成功（峰值 listLen=5）但**默认 release 清空选区**（isMoveMode/selectKeep 配置细节，E2 设计需 `selectKeep:true` 或自定义 release）。R1 不触发。
 - **E0.3 spike 完成（2026-08-05，✅ 编辑态性能候选达标）**：scratch 10 万图元组态（mulberry32 固定种子 42，buildMs 239ms / final 内存 102.8MB 远低于 320MB 红线），方案 A（leafer Editor 内置覆盖物）vs 方案 B（独立 sky Group 自研覆盖物）内部 rAF 驱动 fps 矩阵（规避 page.mouse IPC 污染）。实测（headless+swiftshader 下界）：两方案 ≤1k 选区 ~50fps；10k 选区 A=32.2fps / B=36.4fps（均 ≥30 候选）；editor.move per-call 同步 8–10ms（n≤1k）/ 20.7ms（n=10k）；复合场景（n=1000 选区+视口平移）drag 49.9fps + pan 41.4fps。**编辑态包络候选三档位**（保守 ≥30fps@≤10k / 中性 ≥30fps@≤1k / 激进 ≥45fps@≤1k）均有实测支撑。**覆盖物挂载形态建议方案 A**（实际选区远小于 10k，两方案持平；方案 A 开箱提供完整交互原语，方案 B 作 fallback 路径 B）。**R7 不触发**（最保守候选实测达标，最低 32.2fps ≥ 30；最终包络经 E1.2 + R7 人工确认确立）；spike-perf-fail 不触发。
 - **E0 spike 收口（2026-08-05，✅ 三项全绿 + 共识达成 + closure-audit PASS）**：三项否决条件均不触发（主路径 A 成立），R1/R7 均不触发。spike 报告经独立子 agent 文档共识审查 3 轮达成 AGREE（R1 REVISE 3m+3n → R2 REVISE 1n(n-4 选型路径建议否决条件口径) → R3 AGREE，未超 3 轮上限）。独立 fresh-session sub-agent closure-audit（`ses_02dbd68e6fferdFWkfmfT0k3q5`，2026-08-05）verdict = **PASS**（6 Closure Gates 全满足 + 跨文档否决条件 7 处一致 + 数字一致 + 无 stale placeholder）。**E0 Phase Status `planned` → `done`**。spike 报告作为 E1.1 选型 gate + E1.2 编辑态包络确认输入。
+- **E1.1 选型 gate 完成（2026-08-06，✅ 路径 A 维持 + R1 不触发）**：独立 fresh-session sub-agent `ses_0291d6101ffeZ40pbkdt3CFZH8` 执行选型 gate review（6 项核对：E0.1 手势仲裁真实测量 / E0.2 事件族 0 漂移 + 适配层 cost 小～中 / E0.3 性能 main-path-neutral R7-only / 9 条设计约束全部确认 as-is / 覆盖物方案 A 采纳 / 无反转级事实错误），产出选型裁定文档 `docs/analysis/industrial-hmi-editor/selection-gate-2026-08-06.md`。**Verdict: 维持路径 A（leafer-editor 插件底座 + 自研组态语义适配层）**——两条否决条件（手势仲裁不成立 / API 漂移成本 ≥ 自研成本）均不触发。**R1（选型变更）不触发**，E1.2/E1.3 推进。1 项 watch-only residual（rAF 驱动 fps 测量口径 nuance——未含端到端指针延迟，非反转触发项，登记 Follow-up Backlog 供 E2/E6/E9.2 设计规避）。9 条关键设计约束全部确认作为 E2.1/E2.4/E2.6/E4.2 权威输入。
+- **E1.2 编辑态包络裁定建议完成（2026-08-06，✅ 中性档采纳 + R7 待人工确认）**：产出编辑态包络规格文档 `docs/analysis/industrial-hmi-editor/editing-envelope-2026-08-06.md`。**calibration 估计**（定性类比，不对 fps 候选乘数值化系数；数值化确认显式留 E6/E9.2）：runtime 3 层 App 实例化开销 ~1.56×（373ms/239ms）**不进 per-frame 热路径**（注册表/样式/组态构建一次性 + React 桥接经适配层节流非每帧），编辑态 fps 主导因素（editor.move per-call 同步 + 覆盖物渲染）spike 已覆盖且 leafer 代码路径在 scratch/runtime 一致。**裁定建议值**：① 拖拽响应 ≥30fps @ 选区 ≤1k（中性档采纳，1.6× 余量吸收 runtime 边际影响）；② 编辑操作响应 <100ms（per-call 8–10ms 远低于）；③ 选区规模 ≤1k primary（保守档 ≤10k 降级 extended，7% 余量风险，留 E6/E9.2 确认）；④ 内存 ≤320MB（运行态红线不变，编辑态 final 102.8MB 远低于）；⑤ 编辑器本体 runtime 最终验证留 E6（M1 gate）+ E9.2（M3 benchmark 复测）。三档对比：保守 7% 余量风险降级 / 中性 1.6× 余量采纳 / 激进 10% 余量 + headless 帧钟波动不可靠不采纳。**R7（编辑态包络数字确立）标记完整**——AI 产出裁定建议 + 标记，人工最终确认（包络数字属 benchmark 验收阈值类，roadmap Cross-Cutting「人工确认阈值」+ `editor-initiation.md §6 R7`）；R7 人工确认路径清晰。`envelope-below-candidate` Failure Path 不触发（中性档达标，无需降档至保守以下）。roadmap 总览 line 89 回写裁定建议值。
+- **E1.3 共识审查 Round 1 达成 AGREE（2026-08-06，✅ 0 修正项）**：独立 fresh-session sub-agent `ses_0291740fbffeAbZiLlKe5S9KA0` 对两份 E1 产物（selection-gate-2026-08-06.md + editing-envelope-2026-08-06.md）执行文档共识审查 Round 1（7 项核对：citation fidelity / veto-condition framing / R7 framing honesty / 内部一致性 / 跨文档一致性 / scope discipline / calibration honesty），判定 `AGREE`——**0 Blocker / 0 Major / 0 Minor / 0 Nit**。**Round 1 达成共识（连续一轮 0 新增修正项，未超 3 轮上限）**。两份 E1 产物作为 E2 阶段权威输入就绪（R7 人工确认前的裁定建议）。
 
 ## Purpose
 
@@ -45,7 +48,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 > 本 mission 固定 5 个 **review gate**（E1/E3/E6/E8/E10）：每个 gate 由独立 agent（fresh session，不复用执行上下文）对照上游产物审查，输出修正项并落地回写；修正若涉及范围/顺序/选型变更，标记为需人工确认项并暂停推进。
 
 - **E0. 三项 spike 验证** (`done`) <!-- viewport+Editor 共存手势仲裁 / Editor 事件族载荷 / 编辑态覆盖物密集场景性能；scratch 目录 ~/sources/industrial-hmi-research/spike-editor/；2026-08-05 立项；E0.1+E0.2+E0.3 全绿 + 共识审查 3 轮 AGREE + closure-audit PASS（独立 sub-agent ses_02dbd68e6…，2026-08-05）→ 主路径 A 成立，R1/R7 均不触发 -->
-- **E1. 选型 gate + 编辑态包络确认** (`todo`) <!-- spike 结论 → 主路径（leafer-editor vs 自研）+ 编辑态 benchmark 包络数字；R1+R7 人工确认项 -->
+- **E1. 选型 gate + 编辑态包络确认** (`done`) <!-- spike 结论 → 主路径（leafer-editor vs 自研）+ 编辑态 benchmark 包络数字；R1+R7 人工确认项；2026-08-06 plan `2026-08-06-1931-1` 激活 todo→planned；2026-08-06 closure-audit PASS（独立 sub-agent ses_02911fceef…）→ planned→done；选型维持路径 A（R1 不触发），编辑态包络中性档 ≥30fps@≤1k（R7 待人工确认），共识审查 Round 1 AGREE -->
 - **E2. 编辑器设计文档** (`todo`) <!-- 编辑器架构 / 属性面板 schema / 连线 / undo-redo / 工具箱 / 双态隔离 6 份 design-*.md -->
 - **E3. 设计 gate** (`todo`) <!-- 独立 review -->
 - **E4. M1 MVP 编辑器实现** (`todo`) <!-- 双态切换 + 图元库面板 + 拖拽放置 + 属性面板 schema（几何/样式/绑定）+ 保存/加载 + 编辑期校验 -->
@@ -86,7 +89,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 - 不新建包（首选）或新建 1 包（**待 E4.1 裁定**，基于 E2.1 架构设计输入）：编辑器实现可放入既有 `flux-renderers-industrial`（按 editor-initiation.md 不引入新依赖建议）或新建 `flux-renderers-industrial-editor`（与 runtime 解耦，避免 leafer-editor 拖入 runtime bundle）。
 - 新增 1 个 renderer type：`scada-editor-canvas`（编辑态画布，与运行态 `scada-canvas` 双态隔离）
-- 编辑态 benchmark 包络（待 E1 spike 后裁定 + R7 人工确认）：建议拖拽响应 ≥30fps、编辑操作响应 <100ms（`editor-initiation.md §5.2`）
+- 编辑态 benchmark 包络（E1.2 裁定建议值，**R7 待人工确认**；详见 `docs/analysis/industrial-hmi-editor/editing-envelope-2026-08-06.md`）：① 拖拽响应 ≥30fps @ 选区 ≤1k（中性档采纳，spike 1k≈50fps 1.6× 余量吸收 runtime 边际影响）；② 编辑操作响应 <100ms（per-call 同步 8–10ms 远低于）；③ 选区规模 ≤1k primary（保守档 ≤10k 降级 extended，留 E6/E9.2 确认）；④ 内存 ≤320MB（运行态红线不变，编辑态 final 102.8MB 远低于）；⑤ 编辑器本体 runtime 最终验证留 E6（M1 gate）+ E9.2（M3 benchmark 复测）
 - spike 源码下载目录：`~/sources/industrial-hmi-research/spike-editor/`（scratch，不入仓库）
 
 ---
@@ -198,6 +201,15 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 第一个固定 review gate：独立 agent 对照 spike 报告 + `editor-initiation.md §4` 裁定选型主路径（leafer-editor vs 自研交互层）+ 确立编辑态 benchmark 包络数字（R1+R7 人工确认项）。
 
+**E2 输入交接清单**（E1 产物作为 E2 阶段权威输入，详见 `selection-gate-2026-08-06.md §7` + `editing-envelope-2026-08-06.md §6`）：
+
+1. **选型裁定**：路径 A（leafer-editor 插件底座 + 自研组态语义适配层）维持，R1 不触发（`selection-gate-2026-08-06.md §3`）。
+2. **9 条关键设计约束**（`selection-gate-2026-08-06.md §5`，全部确认 as-is）：① editable:true 双态切换 / ② 真实点击选中 / ③ editor.move 适配层抽纯 payload+nodeId（禁直传 leafer 事件）+ transform 节流起止帧 / ④ editor.cancel() 替代 list=[] / ⑤ scale→width-height + rotateGap:45 / ⑥ 框选 selectKeep:true / ⑦ group/ungroup 结构 diff / ⑧ InnerEditor 依赖 inner-editor 插件 / ⑨ 覆盖物方案 A（Editor 内置）。
+3. **编辑态包络规格**（`editing-envelope-2026-08-06.md §3`，R7 待人工确认）：① 拖拽响应 ≥30fps @ 选区 ≤1k；② 编辑操作响应 <100ms；③ 选区规模 ≤1k primary（≤10k extended 留 E6/E9.2）；④ 内存 ≤320MB；⑤ 编辑器本体 runtime 最终验证留 E6/E9.2。
+4. **覆盖物挂载形态**：方案 A（leafer Editor 内置）采纳；方案 B 作 fallback 路径 B 保留（性能可行）。
+5. **runtime 复用点**（`editor-initiation.md §3` + roadmap Cross-Cutting 复用表）：2 类需新造面（图元属性 schema 统一抽取 / 编辑态交互覆盖物族 + undo 事务语义）+ 3 处衔接语义扩展（引擎层 diff 事务 / 序列化暂存提交 / 事件预览派发）。
+6. **watch-only residual**：rAF 驱动 fps 测量口径 nuance（大规模选区首次拖拽 simulateTarget 初始化延迟，E2.1/E6/E9.2 保持感知）。
+
 ### E2 编辑器设计文档
 
 6 份设计文档：编辑器架构（双态隔离 / 编辑态画布 / 与 runtime 引擎衔接）、属性面板 schema（图元定义属性 schema 统一抽取）、连线（pipe-junction 端点吸附）、undo-redo（diff 命令栈）、工具箱（对齐/分布/层级/复制粘贴）、renderer 契约（scada-editor-canvas fields/events/handles）。
@@ -289,6 +301,7 @@ flowchart TD
 > 来源：本 mission 启动时（2026-08-05）从 industrial-hmi runtime mission 迁移的编辑器相关延迟项 + 本 mission 新登记发现。每条带来源可追溯。
 
 - **[E0-spike] InnerEditorEvent 在 `research-render-engines.md §5:122` 未枚举**（来源：E0 spike plan `2026-08-05-1645-1` Phase 2 / spike 报告 §2.4）。描述：六大 Editor 事件族类名与 §5:122 完全一致，但 InnerEditorEvent 存在于 `leafer-in/packages/editor/src/event/` 并由 `@leafer-in/editor` 导出，§5:122 列名遗漏——⚠️ 无害漂移（不影响适配层，plan §4.3 已单列）。建议：补 `research-render-engines.md §5:122` 列名（加 InnerEditorEvent）。收口标记：未收口（按 mission 节奏择期处理，非阻断）。
+- **[E1.1-sg] rAF 驱动 fps 测量口径 nuance（watch-only residual）**（来源：E1 plan `2026-08-06-1931-1` Phase 1 / selection-gate-2026-08-06.md §6）。描述：spike §3.3 fps 数字（32.2–50fps）经内部 rAF 驱动 `editor.move()` 测得，反映 TransformTool per-frame 吞吐，**未单独捕获端到端指针交互延迟**（含命中检测 + simulateTarget 首次初始化）——大规模选区（如 10k）首次拖拽启动时 simulateTarget 跨 N 元素初始化可能产生未反映在稳态 fps 中的延迟尖峰。不足以反转选型（per-call 同步 8–20ms 远低于 100ms 候选；E0.1 手势仲裁经真实指针验证）。建议：E2.1 架构设计 + E6（M1 gate）/ E9.2（M3 benchmark 复测）应对「大规模选区首次拖拽 simulateTarget 初始化延迟」保持感知，必要时在 runtime 3 层 App 下加测端到端指针延迟。收口标记：未收口（watch-only，非阻断；E6/E9.2 复核）。
 
 ## Rule
 
