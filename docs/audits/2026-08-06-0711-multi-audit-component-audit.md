@@ -266,6 +266,7 @@
 - **建议**: 改 `'carousel:change'`/`'tabs:change'`，同步源文锁断言与 design.md；可并入 graph 17-2 的 G1 plan 链。
 - **误报排除**: mobile 家族裸 type 已被审计卡与源文测试锁定为基线，不拉入本发现（避免校准 10 过度扩张）；carousel 与 cards/alert 同包对比成立。
 - **复核状态**: 维度复核通过
+- **修复状态**: fixed（2026-08-06，plan `docs/plans/2026-08-06-2306-1-event-dispatch-ctx-full-scan.md` Phase 5：`carousel.tsx` → `'carousel:change'`、`tabs.tsx createTabsChangePayload` → `'tabs:change'`；源文锁断言（carousel.test.tsx 正则）与三份 design.md 同步；tabs 两处派发补 `scope` 键）。
 
 ### 维度 10：样式系统合规性
 
@@ -691,6 +692,7 @@
 - **建议**: 补 `event: fullPayload, evaluationBindings: fullPayload`。
 - **误报排除**: 事件本身有派发（非历史接线问题），本发现是 payload 约定一致性问题，项目内有多处先例与文档基线。
 - **复核状态**: 维度复核通过
+- **修复状态**: fixed（2026-08-06，plan `docs/plans/2026-08-06-2306-1-event-dispatch-ctx-full-scan.md` Phase 4：`graph-renderer.tsx:158` 补 `event: fullPayload, evaluationBindings: fullPayload`；onNodeClick/onSelectionChange 契约测试实证 `${nodeId}`；`check:audit-event-dispatch-ctx` 门禁动态索引形态覆盖）。
 
 #### [P2] 22-10 gantt `zoomLevels`/`cellWidth`/`taskBarHeight` prop 运行时变化不生效
 
@@ -720,6 +722,7 @@
 - **建议**: 6 个派发点补 `{ event, evaluationBindings, scope }`；补契约测试（先红后绿）。
 - **误报排除**: 非「Seed only」类文档化设计；同文件 beforeEnter/beforeLeave 带 bindings 证明是遗漏而非设计差异。
 - **复核状态**: 未复核（R2 深挖新增，建议并入 22-09 修复计划后由修复测试锁定）
+- **修复状态**: fixed（2026-08-06，plan `docs/plans/2026-08-06-2306-1-event-dispatch-ctx-full-scan.md` Phase 4：`wizard-renderer.tsx` 6 点补 `{ event, evaluationBindings, scope }`；契约测试实证 `${currentStepKey}` 解析（onChange/onStepCommit/onComplete/onStepError 四类事件）；wizard design.md 事件契约节同步；`check:audit-event-dispatch-ctx` 门禁覆盖）。
 
 #### [P2] 22-12（R2 深挖）kanban 设计文档声明的 7 个 `component:*` 句柄零代码注册，运行时全部不可达
 

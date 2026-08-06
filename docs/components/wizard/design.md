@@ -65,6 +65,8 @@ interface WizardStepSchema extends BaseSchemaWithoutType {
 - `statusPath`: `value`
 - `onChange` / `onStepCommit` / `onComplete` / `onStepError`: `event`
 
+事件契约：上述 4 个 schema 事件派发均携带全量 dispatch-arg ctx `{ event, evaluationBindings, scope }`（payload 兼作 bindings，payload `type` 分别为 `wizard:change`/`wizard:step-commit`/`wizard:complete`/`wizard:step-error`），action args 模板键（`${currentStepKey}`/`${currentStepIndex}` 等）可解析（CX-10 / bug-83 家族约定，`check:audit-event-dispatch-ctx` 门禁覆盖；`beforeEnter`/`beforeLeave` 守卫派发同带 evaluationBindings）。
+
 ## 6. 状态 ownership
 
 ### 6.1 Step Switching

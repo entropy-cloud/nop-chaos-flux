@@ -347,15 +347,15 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 当前 live 事件集：
 
-| 事件     | 参数             | 说明       |
-| -------- | ---------------- | ---------- |
-| `change` | `value`, `index` | 激活项变化 |
+| 事件          | 参数             | 说明                                                |
+| ------------- | ---------------- | --------------------------------------------------- |
+| `tabs:change` | `value`, `index` | 激活项变化（payload `type` 命名空间化，09-03 家族） |
 
 建议事件字段命名：
 
 - `onChange`
 
-事件 payload 应直接走 Flux `ActionSchema` 事件分发，不需要保留 AMIS 的字符串脚本 `onSelect: "alert(key)"` 形式。
+事件 payload 应直接走 Flux `ActionSchema` 事件分发，不需要保留 AMIS 的字符串脚本 `onSelect: "alert(key)"` 形式。`onChange` 派发携带全量 dispatch-arg ctx `{ event, evaluationBindings, scope }`（payload 兼作 bindings），action args 模板键（`${value}`/`${activeIndex}`/`${item}` 等）可解析（CX-10 / bug-83 家族约定，`check:audit-event-dispatch-ctx` 门禁覆盖）。
 
 ## 13. 动作与组件能力
 

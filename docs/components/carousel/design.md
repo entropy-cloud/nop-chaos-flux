@@ -36,6 +36,8 @@
 
 - 推荐句柄为 `component:next`、`component:prev`、`component:setValue`。
 - `onChange` payload 采用单一规范键 `activeIndex`（对齐 schema/state 字段名），不再冗余重复 `index`（Decision A，见 `docs/plans/2026-06-25-0510-2-new-package-advertised-contract-and-lifecycle-honesty-plan.md` WS-C）。
+- `onChange` 事件 payload `type` 为命名空间化 `'carousel:change'`（09-03 家族：同包 cards/alert 均命名空间化，renderer-runtime.md 要求 meaningful namespaced type）。
+- `onChange` 派发携带全量 dispatch-arg ctx `{ event, evaluationBindings, scope }`（payload 兼作 bindings），action args 模板键（`${activeIndex}` 等）可解析（CX-10 / bug-83 家族约定，`check:audit-event-dispatch-ctx` 门禁覆盖）。
 
 ## 9. 数据源、表达式、导入能力接入点
 

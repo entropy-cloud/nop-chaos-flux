@@ -45,6 +45,7 @@
 - **是什么**：4 处 `onClose/onOpen/onConfirm?.(payload)` 单参派发。onConfirm 是 dialog 提交回调用法最高频的集成点。
 - **为什么值得关心**：scheduling/ai 全家族已按 bug-83/CX-10 约定补齐 ctx，basic 的 surface 事件是残留缺口；schema 作者在 onConfirm/onClose action args 里写 payload 模板键会静默失效。
 - **信心水平**：确定（4 处派发点 + 卡文本 + CG 分析文本三方对读）。
+- **修复状态**：fixed（2026-08-06，plan `docs/plans/2026-08-06-2306-1-event-dispatch-ctx-full-scan.md` Phase 2：`use-surface-renderer.ts` 5 处派发（含 :225 漏计点）补 `eventCtx(payload)` 全量 ctx；契约测试实证 `${surfaceId}` 解析 + onConfirm/onClose 同 id；`check:audit-event-dispatch-ctx` 门禁覆盖）。
 
 ### [P2] upload-field 家族（input-file/input-image）7 个事件 payload 携带但单参派发，无 ctx；CG 的「design §8.1 豁免」依据是循环引用
 
@@ -54,6 +55,7 @@
 - **是什么**：payload 形状与 design §8.1 一致但缺 ctx 第二参；`args: { url: "${item.url}" }` 类模板键静默空值（成员访问甚至抛 TypeError，CX-11 先例）。
 - **为什么值得关心**：上传成功/失败回调是表单类组件最常用的宿主同步点；与 22-09/22-11 同型缺口应并入 multi-audit 提议的「事件 ctx 全量扫描」修复计划（该计划已覆盖 graph/wizard，本发现为其扩面输入：dialog/drawer 4 点 + upload-field 7 点）。
 - **信心水平**：确定（代码 + design 原文 + CG 文本三方对读）。
+- **修复状态**：fixed（2026-08-06，plan `docs/plans/2026-08-06-2306-1-event-dispatch-ctx-full-scan.md` Phase 3：`upload-field.tsx` 7 处派发补 `eventCtx(payload)` 全量 ctx；契约测试实证 `${item.url}`/`${file.url}`/`${error}`/`${reason}` 解析；`check:audit-event-dispatch-ctx` 门禁覆盖）。
 
 ---
 
