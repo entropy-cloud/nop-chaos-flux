@@ -11,7 +11,7 @@ import type { ScadaStateDeclaration } from '../../serialization/config-types.js'
  */
 
 export type { CompositeParts } from '../composite.js';
-export { createCompositeGroup } from '../composite.js';
+export { createCompositeGroup, setAttrs } from '../composite.js';
 
 /** 传感控制族默认状态声明（run=绿/stop=灰/fault=红+闪烁）。 */
 export const sensorControlStates: ScadaStateDeclaration = {

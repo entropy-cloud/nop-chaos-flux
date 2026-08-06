@@ -82,7 +82,7 @@ export const scadaPipeJunctionDefinition: ScadaSymbolDefinition = {
         y: centerY,
         points: [0, 0, connection.x * width - centerX, connection.y * height - centerY],
         stroke: props.stroke ?? props.fill,
-        strokeWidth: 4,
+        strokeWidth: props.strokeWidth ?? 4,
         strokeCap: 'round',
         ...(connection.direction === 'in' ? {} : { endArrow: true }),
       }) as LeafNode,
@@ -108,6 +108,8 @@ export const scadaPipeJunctionDefinition: ScadaSymbolDefinition = {
       if (props.flow.enabled === true && props.dashOffset === undefined) patch.dashOffset = 0;
     }
     if (props.dashOffset !== undefined) patch.dashOffset = props.dashOffset;
+    // plan 2026-08-06-0900-2 P2-8：strokeWidth 路由到 stubs，使 strokeWidth 变更后 body/stub 粗细一致。
+    if (props.strokeWidth !== undefined) patch.strokeWidth = props.strokeWidth;
     if (Object.keys(patch).length > 0) {
       for (const stub of state.stubs) stub.set(patch);
     }

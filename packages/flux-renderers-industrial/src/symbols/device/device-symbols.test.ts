@@ -460,3 +460,64 @@ describe('I9.1 device full path (注册 → 校验 → 实例化 → 场景树�
     expect(registerBuiltinScadaSymbols()).toBeUndefined();
   });
 });
+
+// plan 2026-08-06-0900-2 Phase 1（open P2-4 复合族 resize 几何响应 proof）：
+// device 族（motor/pump/valve/fan）无 extent part——width/height 经 applyProps 原 `EXTENT_FIELDS.has(key) && parts.extent`
+// 短路静默丢弃（composite.ts:64）。修复后 applyCompositeProps 回落到 per-symbol `parts.resize` hook 重算 body + 子形状相对锚点。
+describe('I9.1 device composite resize via applyProps (plan 2026-08-06-0900-2 Phase 1 open P2-4)', () => {
+  it('motor: width applyProps 重算 body width 并重定位 rotor 到新中心', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [deviceNode('m1', 'scada-device-motor')] });
+    expect(childOf(engine.getSymbol('m1')!.node, 'body').width).toBe(64);
+    engine.setSymbolProps('m1', { width: 200 });
+    expect(childOf(engine.getSymbol('m1')!.node, 'body').width).toBe(200);
+    // rotor 中心 = width/2（新几何响应，非原值 32）
+    expect(childOf(engine.getSymbol('m1')!.node, 'rotor').x).toBe(100);
+    engine.destroy();
+  });
+
+  it('motor: height applyProps 重算 body height 并重定位 rotor（两维独立路由）', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [deviceNode('m1', 'scada-device-motor')] });
+    engine.setSymbolProps('m1', { height: 96 });
+    expect(childOf(engine.getSymbol('m1')!.node, 'body').height).toBe(96);
+    expect(childOf(engine.getSymbol('m1')!.node, 'rotor').y).toBe(48);
+    engine.destroy();
+  });
+
+  it('pump: width applyProps 重算 body width/cornerRadius 并重定位 impeller', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [deviceNode('p1', 'scada-device-pump')] });
+    engine.setSymbolProps('p1', { width: 120 });
+    const body = childOf(engine.getSymbol('p1')!.node, 'body');
+    expect(body.width).toBe(120);
+    expect(body.cornerRadius).toBe(60);
+    expect(childOf(engine.getSymbol('p1')!.node, 'impeller').x).toBe(60);
+    engine.destroy();
+  });
+
+  it('valve: width applyProps 重算 body width 并重定位 core（保留 openRatio rotation）', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [{ id: 'v1', type: 'scada-device-valve', x: 0, y: 0, custom: { openRatio: 0 } }],
+    });
+    expect(childOf(engine.getSymbol('v1')!.node, 'core').rotation).toBe(90);
+    engine.setSymbolProps('v1', { width: 128 });
+    expect(childOf(engine.getSymbol('v1')!.node, 'body').width).toBe(128);
+    // core 相对锚点重定位（x = width/2 - height*0.22 = 64 - 32*0.22）
+    expect(childOf(engine.getSymbol('v1')!.node, 'core').x).toBeCloseTo(64 - 32 * 0.22, 6);
+    // openRatio rotation 不被 resize 覆盖
+    expect(childOf(engine.getSymbol('v1')!.node, 'core').rotation).toBe(90);
+    engine.destroy();
+  });
+
+  it('fan: width applyProps 重算 body width 并重定位 blades 中心', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [deviceNode('f1', 'scada-device-fan')] });
+    engine.setSymbolProps('f1', { width: 120 });
+    expect(childOf(engine.getSymbol('f1')!.node, 'body').width).toBe(120);
+    expect(childOf(engine.getSymbol('f1')!.node, 'blades').x).toBe(60);
+    engine.destroy();
+  });
+});

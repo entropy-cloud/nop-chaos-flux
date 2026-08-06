@@ -17,6 +17,14 @@ export interface CompositeParts {
   core?: LeafNode;
   extent?: LeafNode;
   text?: LeafNode;
+  /**
+   * 容器几何重算 hook（plan 2026-08-06-0900-2 P2-4）：
+   * 无 extent part 的复合族（device/instrument-gauge/sensor-control）width/height 经 applyProps
+   * 变更时，由 `applyCompositeProps` 的 EXTENT_FIELDS 分支回落调用——重算 body 容器尺寸 +
+   * 子形状（rotor/core/blades/label 等）相对锚点，使 width/height binding/diff 产可见几何响应。
+   * 有 extent part 的族（level/thermometer/progress）width/height 仍路由到 liquid/bar 长度件（既定语义）。
+   */
+  resize?: (key: 'width' | 'height', value: number, parts: CompositeParts) => void;
 }
 
 export interface CompositeApplyOptions {
@@ -61,8 +69,11 @@ export function applyCompositeProps(
       else setAttrs(root, { [key]: value });
       continue;
     }
-    if (EXTENT_FIELDS.has(key) && parts.extent) {
-      setAttrs(parts.extent, { [key]: value });
+    if (EXTENT_FIELDS.has(key)) {
+      // plan 2026-08-06-0900-2 P2-4：width/height 门禁保留——有 extent part（liquid/bar 长度件）路由到 extent；
+      // 无 extent part 时回落 per-symbol resize hook（重算 body + 子形状相对锚点），不再静默丢弃。
+      if (parts.extent) setAttrs(parts.extent, { [key]: value });
+      else parts.resize?.(key as 'width' | 'height', value as number, parts);
       continue;
     }
     if (BODY_FIELDS.has(key)) {

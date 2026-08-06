@@ -1,5 +1,5 @@
 import { Rect } from 'leafer-ui';
-import { createCompositeGroup, createSensorControlSymbol } from './common.js';
+import { createCompositeGroup, createSensorControlSymbol, setAttrs } from './common.js';
 import type { LeafNode } from '../symbol-types.js';
 
 export const scadaSensorControlButtonType = 'scada-sensor-control-button';
@@ -37,9 +37,18 @@ export const scadaSensorControlButtonDefinition = createSensorControlSymbol({
       stroke: '#90a4ae',
       strokeWidth: 1,
     }) as LeafNode;
-    return createCompositeGroup(props, [
+    const { root, parts } = createCompositeGroup(props, [
       { name: 'body', node: base },
       { name: 'cap', node: cap },
     ]);
+    // plan 2026-08-06-0900-2 P2-4：button 无 extent part，width/height 经 applyProps 回落此 hook，
+    // 重算 body 容器尺寸 + cap 宽高（保留 cap 内边距锚点 x=4/y=3）。
+    parts.resize = (key, value) => {
+      setAttrs(base, { [key]: value });
+      const w = (base as unknown as { width: number }).width;
+      const h = (base as unknown as { height: number }).height;
+      setAttrs(cap, { width: w - 8, height: h - 6 });
+    };
+    return { root, parts };
   },
 });

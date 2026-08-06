@@ -173,13 +173,14 @@ test.describe('Scada Demo assertion matrix (I15.1)', () => {
       expect(types, `scene tree should contain ${expected}`).toContain(expected);
     }
 
-    // getSymbolProps 返回 leafer 节点属性面（m-6：toNodePatch 映射后键名，如 text 节点 fontSize）
+    // plan 2026-08-06-0900-2 P2-10：getSymbolProps 经 fromNodeAttrs 反映射回 schema 键名
+    // （旧 raw leafer `fontSize` → schema `textSize`，与 setSymbolProps/toNodePatch 写侧对称）
     const textProps = await page.evaluate(
       (key) => ((window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape).engine.getSymbolProps('text-title'),
       `__flux_scada_${cid}`,
     );
     expect(textProps).toBeTruthy();
-    expect(typeof (textProps as { fontSize?: unknown }).fontSize).toBe('number');
+    expect(typeof (textProps as { textSize?: unknown }).textSize).toBe('number');
 
     const pumpProps = await page.evaluate(
       (key) => ((window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape).engine.getSymbolProps('pump-1'),

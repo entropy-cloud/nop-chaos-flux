@@ -1,5 +1,5 @@
 import { Ellipse, Rect } from 'leafer-ui';
-import { createCompositeGroup, deviceRunRotateAnimation, createDeviceSymbol } from './common.js';
+import { createCompositeGroup, deviceRunRotateAnimation, createDeviceSymbol, setAttrs } from './common.js';
 import type { LeafNode } from '../symbol-types.js';
 
 export const scadaDevicePumpType = 'scada-device-pump';
@@ -40,9 +40,19 @@ export const scadaDevicePumpDefinition = createDeviceSymbol({
       stroke: '#00695c',
       strokeWidth: 2,
     }) as LeafNode;
-    return createCompositeGroup(props, [
+    const { root, parts } = createCompositeGroup(props, [
       { name: 'body', node: body },
       { name: 'impeller', node: impeller },
     ]);
+    // plan 2026-08-06-0900-2 P2-4：width/height 经 applyProps 回落此 hook，重算 body 容器（含 cornerRadius）+ impeller 中心/半径。
+    parts.resize = (key, value) => {
+      setAttrs(body, { [key]: value });
+      const w = (body as unknown as { width: number }).width;
+      const h = (body as unknown as { height: number }).height;
+      setAttrs(body, { cornerRadius: w * 0.5 });
+      const r = Math.min(w, h) * 0.32;
+      setAttrs(impeller, { x: w / 2, y: h / 2, width: r * 2, height: r * 2 });
+    };
+    return { root, parts };
   },
 });

@@ -26,6 +26,12 @@ const makeContainer = () => {
 const childrenOf = (root: LeafNode): Array<Record<string, unknown>> =>
   (root as unknown as { children: Array<Record<string, unknown>> }).children ?? [];
 
+const childOf = (root: LeafNode, name: string): Record<string, unknown> => {
+  const found = childrenOf(root).find((child) => child.name === name);
+  if (!found) throw new Error(`child ${name} not found`);
+  return found;
+};
+
 const stubOf = (root: LeafNode, index: number): Record<string, unknown> => {
   const list = childrenOf(root).filter((child) => (child.name as string)?.startsWith('stub-'));
   if (!list[index]) throw new Error(`stub ${index} not found`);
@@ -193,6 +199,41 @@ describe('I9.4 scada-pipe-junction (连接点 + 流动方向动画 + 与设备�
     engine.setSymbolProps('j1', { custom: { label: 'J-01' } });
     expect(stubOf(engine.getSymbol('j1')!.node, 0).dashPattern).toBeUndefined();
     engine.destroy();
+  });
+
+  // plan 2026-08-06-0900-2 Phase 2（open P2-8 pipe-junction stub strokeWidth proof）：
+  // pipe-junction.ts:85 stubs 硬编码 strokeWidth:4 且 applyProps 不路由 → strokeWidth 变更加粗 body 但 stubs 留细。
+  // 修复后 stub strokeWidth 从 props.strokeWidth ?? 4 派生 + applyProps 路由 strokeWidth 到 stubs（body/stub 一致）。
+  describe('scada-pipe-junction stub strokeWidth follows props.strokeWidth (plan 2026-08-06-0900-2 Phase 2 open P2-8)', () => {
+    it('create 时 stub strokeWidth 从 props.strokeWidth 派生（非硬编码 4）', () => {
+      const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+      engine.reset({
+        version: 1,
+        symbols: [
+          junctionNode('j1', {
+            strokeWidth: 10,
+            custom: { connections: [{ id: 'a', x: 0, y: 0.5, direction: 'in' }] },
+          }),
+        ],
+      });
+      expect(stubOf(engine.getSymbol('j1')!.node, 0).strokeWidth).toBe(10);
+      engine.destroy();
+    });
+
+    it('applyProps 路由 strokeWidth 到 stubs（body/stub 粗细一致）', () => {
+      const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+      engine.reset({
+        version: 1,
+        symbols: [junctionNode('j1', { custom: { connections: [{ id: 'a', x: 0, y: 0.5, direction: 'in' }] } })],
+      });
+      // 默认 strokeWidth=6 → stub 派生 6（非硬编码 4）
+      expect(stubOf(engine.getSymbol('j1')!.node, 0).strokeWidth).toBe(6);
+      engine.setSymbolProps('j1', { strokeWidth: 12 });
+      expect(stubOf(engine.getSymbol('j1')!.node, 0).strokeWidth).toBe(12);
+      // body 同步加粗（经 applyCompositeProps 路由 strokeWidth→body）
+      expect(childOf(engine.getSymbol('j1')!.node, 'body').strokeWidth).toBe(12);
+      engine.destroy();
+    });
   });
 
   it('should validate the flow parameter shape', () => {

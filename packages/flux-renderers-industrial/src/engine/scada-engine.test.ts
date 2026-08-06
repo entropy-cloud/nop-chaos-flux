@@ -224,6 +224,64 @@ describe('ScadaCanvasEngine commands (I5.1/I5.2 wiring)', () => {
     expect(engine.getSymbolProps('nope')).toBeUndefined();
   });
 
+  // plan 2026-08-06-0900-2 Phase 3（open P2-10 getSymbolProps 读写对称 proof）：
+  // getSymbolProps 原 `node.get() as ScadaSymbolProps` 返回 leafer 内部属性名（fontSize/scaleX+scaleY/dashPattern/
+  // fill-for-textColor），而写侧 setSymbolProps/toNodePatch 期望 schema 名 → host getSymbol→setSymbolProps 往返喂错键。
+  // 修复后 getSymbolProps 经 toNodePatch 的逆映射返回 schema 名，往返键名对称。
+  it('getSymbolProps returns schema key names symmetric with setSymbolProps (plan 2026-08-06-0900-2 Phase 3 open P2-10)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [
+        {
+          id: 't1',
+          type: 'scada-text',
+          x: 5,
+          y: 6,
+          text: 'hi',
+          textSize: 18,
+          textColor: '#abcdef',
+          scale: 2,
+          strokeDash: [4, 2],
+          align: 'center',
+        },
+      ],
+    } as unknown as ScadaConfig);
+    const props = engine.getSymbolProps('t1') as unknown as Record<string, unknown>;
+    // schema 键名（非 leafer fontSize/scaleX/scaleY/dashPattern/fill）
+    expect(props.textSize).toBe(18);
+    expect(props.scale).toBe(2);
+    expect(props.strokeDash).toEqual([4, 2]);
+    expect(props.textColor).toBe('#abcdef');
+    expect(props.align).toBe('center');
+    expect(props.text).toBe('hi');
+    // leafer 别名不泄漏
+    expect(props.fontSize).toBeUndefined();
+    expect(props.scaleX).toBeUndefined();
+    expect(props.scaleY).toBeUndefined();
+    expect(props.dashPattern).toBeUndefined();
+
+    // 往返稳定：setSymbolProps(id, getSymbolProps(id)) 后各 schema 键值不变
+    engine.setSymbolProps('t1', props);
+    const roundtrip = engine.getSymbolProps('t1') as unknown as Record<string, unknown>;
+    expect(roundtrip.textSize).toBe(18);
+    expect(roundtrip.scale).toBe(2);
+    expect(roundtrip.strokeDash).toEqual([4, 2]);
+    expect(roundtrip.textColor).toBe('#abcdef');
+    expect(roundtrip.align).toBe('center');
+    engine.destroy();
+  });
+
+  it('getSymbolProps keeps fill passthrough for non-Text nodes (rect fill stays schema fill)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(validConfig() as ScadaConfig);
+    const props = engine.getSymbolProps('rect-1') as unknown as Record<string, unknown>;
+    expect(props.fill).toBe('#ff0000');
+    // rect 非 Text → 不误射 textColor
+    expect(props.textColor).toBeUndefined();
+    engine.destroy();
+  });
+
   it('pan-then-zoomAt keeps the anchor world point fixed on screen with no matrix drift (P1-9)', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     const zoomLayer = engine.app.tree.zoomLayer as unknown as { x: number; y: number; scaleX: number };

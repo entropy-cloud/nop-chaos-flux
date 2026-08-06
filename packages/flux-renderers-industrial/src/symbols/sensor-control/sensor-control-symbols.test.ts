@@ -350,3 +350,49 @@ describe('I9.3 sensor-control full path (注册 → 校验 → 实例化 → 场
     engine.destroy();
   });
 });
+
+// plan 2026-08-06-0900-2 Phase 1（open P2-4 复合族 resize 几何响应 proof）：
+// sensor-control 族（indicator/button/sensor/switch）无 extent part——width/height 经 applyProps 原短路静默丢弃。
+// 修复后回落 resize hook 重算 body/housing/container + 子形状相对锚点。
+describe('I9.3 sensor-control composite resize via applyProps (plan 2026-08-06-0900-2 Phase 1 open P2-4)', () => {
+  it('indicator: width applyProps 重算 housing width 并重定位 lamp', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [sensorNode('i1', 'scada-sensor-control-indicator')] });
+    engine.setSymbolProps('i1', { width: 200 });
+    expect(childOf(engine.getSymbol('i1')!.node, 'housing').width).toBe(200);
+    // lamp（body）中心 = width/2
+    expect(childOf(engine.getSymbol('i1')!.node, 'body').x).toBe(100);
+    engine.destroy();
+  });
+
+  it('button: width applyProps 重算 body width 并联动 cap 宽度', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [sensorNode('b1', 'scada-sensor-control-button')] });
+    engine.setSymbolProps('b1', { width: 120 });
+    expect(childOf(engine.getSymbol('b1')!.node, 'body').width).toBe(120);
+    expect(childOf(engine.getSymbol('b1')!.node, 'cap').width).toBe(112);
+    engine.destroy();
+  });
+
+  it('sensor: width applyProps 重算 body width 并重定位 probe', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [sensorNode('s1', 'scada-sensor-control-sensor')] });
+    engine.setSymbolProps('s1', { width: 80 });
+    expect(childOf(engine.getSymbol('s1')!.node, 'body').width).toBe(80);
+    expect(childOf(engine.getSymbol('s1')!.node, 'probe').x).toBe(40);
+    engine.destroy();
+  });
+
+  it('switch: width applyProps 重算 body width 并保持 lever on/off 位态', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [{ id: 'w1', type: 'scada-sensor-control-switch', x: 0, y: 0, custom: { on: true } }],
+    });
+    engine.setSymbolProps('w1', { width: 100 });
+    expect(childOf(engine.getSymbol('w1')!.node, 'body').width).toBe(100);
+    // lever 仍在 on 位（右位）= width - height + 3 = 100 - 28 + 3 = 75
+    expect(childOf(engine.getSymbol('w1')!.node, 'core').x).toBe(75);
+    engine.destroy();
+  });
+});

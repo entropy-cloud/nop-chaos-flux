@@ -22,7 +22,7 @@ import {
   type Size,
   type ViewportState,
 } from './viewport.js';
-import { toNodePatch } from '../symbols/symbol-factory.js';
+import { toNodePatch, fromNodeAttrs } from '../symbols/symbol-factory.js';
 import { deepMergeInstanceProps } from '../symbols/compound.js';
 import type { ScadaSymbolProps } from '../symbols/symbol-types.js';
 import type { PointStore } from '../binding/point-store.js';
@@ -252,8 +252,11 @@ export class ScadaCanvasEngine {
   getSymbolProps(id: string): ScadaSymbolProps | undefined {
     const leaf = this.registry.get(id);
     if (!leaf) return undefined;
-    // 返回 leafer 节点属性面（toNodePatch 映射后键名，如 fontSize 非 textSize）——e2e 断言指南 I15.1 知悉（gate-3-review m-6）
-    return leaf.node.get() as ScadaSymbolProps;
+    // plan 2026-08-06-0900-2 P2-10：经 `fromNodeAttrs`（`toNodePatch` 的逆映射）反向映射回 schema 键名，
+    // 使读返回与 `setSymbolProps`/`toNodePatch` 写期望对称——host getSymbol→setSymbolProps 往返不再喂错键。
+    // 旧实现直返 `node.get()`（raw leafer 属性面：fontSize/scaleX+scaleY/dashPattern/fill-for-textColor）。
+    const raw = leaf.node.get() as Record<string, unknown>;
+    return fromNodeAttrs(leaf.node, raw) as ScadaSymbolProps;
   }
 
   setSymbolProps(id: string, patch: Partial<ScadaSymbolProps>): void {

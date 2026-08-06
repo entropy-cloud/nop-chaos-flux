@@ -1,5 +1,5 @@
 import { Rect } from 'leafer-ui';
-import { createCompositeGroup, createDeviceSymbol } from './common.js';
+import { createCompositeGroup, createDeviceSymbol, setAttrs } from './common.js';
 import type { LeafNode } from '../symbol-types.js';
 
 export const scadaDeviceValveType = 'scada-device-valve';
@@ -45,10 +45,23 @@ export const scadaDeviceValveDefinition = createDeviceSymbol({
       strokeWidth: 2,
       rotation: (1 - openRatio) * 90,
     }) as LeafNode;
-    return createCompositeGroup(props, [
+    const { root, parts } = createCompositeGroup(props, [
       { name: 'body', node: body },
       { name: 'core', node: core },
     ]);
+    // plan 2026-08-06-0900-2 P2-4：width/height 经 applyProps 回落此 hook，重算 body 容器 + core 相对锚点（保留 openRatio rotation）。
+    parts.resize = (key, value) => {
+      setAttrs(body, { [key]: value });
+      const w = (body as unknown as { width: number }).width;
+      const h = (body as unknown as { height: number }).height;
+      setAttrs(core, {
+        x: w / 2 - h * 0.22,
+        y: h / 2 - h * 0.22,
+        width: h * 0.44,
+        height: h * 0.44,
+      });
+    };
+    return { root, parts };
   },
   applyProps: (node, parts, props) => {
     const ratio = props.custom?.openRatio;

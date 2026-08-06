@@ -1,5 +1,5 @@
 import { Ellipse, Rect } from 'leafer-ui';
-import { createCompositeGroup, createSensorControlSymbol } from './common.js';
+import { createCompositeGroup, createSensorControlSymbol, setAttrs } from './common.js';
 import type { LeafNode } from '../symbol-types.js';
 
 export const scadaSensorControlIndicatorType = 'scada-sensor-control-indicator';
@@ -39,7 +39,7 @@ export const scadaSensorControlIndicatorDefinition = createSensorControlSymbol({
       stroke: '#263238',
       strokeWidth: 1,
     }) as LeafNode;
-    return createCompositeGroup(props, [
+    const { root, parts } = createCompositeGroup(props, [
       // plan 2026-08-05-0653-2 Phase 3 (open P1-2)：子序 swap 为 [housing, lamp]——
       // leafer `Group` 后入子在上层渲染，原序 [lamp, housing] 使不透明 housing（#455a64，
       // 覆盖全 bounds）绘制在 lamp 之上，灯体被完全遮挡（Failure Paths `indicator-lamp-hidden`）。
@@ -48,5 +48,14 @@ export const scadaSensorControlIndicatorDefinition = createSensorControlSymbol({
       { name: 'housing', node: housing },
       { name: 'body', node: lamp },
     ]);
+    // plan 2026-08-06-0900-2 P2-4：indicator 无 extent part，width/height 经 applyProps 回落此 hook，
+    // 重算 housing 容器尺寸 + lamp（body）中心/尺寸（housing 非 named part，经闭包引用）。
+    parts.resize = (key, value) => {
+      setAttrs(housing, { [key]: value });
+      const w = (housing as unknown as { width: number }).width;
+      const h = (housing as unknown as { height: number }).height;
+      setAttrs(lamp, { x: w / 2, y: h / 2, width: h * 0.72, height: h * 0.72 });
+    };
+    return { root, parts };
   },
 });

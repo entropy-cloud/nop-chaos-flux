@@ -32,8 +32,9 @@ export const scadaVideoDefinition: ScadaSymbolDefinition = {
     if (attrs.width === undefined) attrs.width = 160;
     if (attrs.height === undefined) attrs.height = 90;
     if (attrs.fill === undefined) attrs.fill = SCADA_VIDEO_PLACEHOLDER;
-    attrs.stroke = '#4b5563';
-    attrs.strokeWidth = 1;
+    // plan 2026-08-06-0900-2 P2-7：stroke/strokeWidth 改 guarded（与上方 fill 行对称），author 声明不被覆盖。
+    if (attrs.stroke === undefined) attrs.stroke = '#4b5563';
+    if (attrs.strokeWidth === undefined) attrs.strokeWidth = 1;
     // 静态占位帧：真实视频解码/播放接线归 I10（renderer 桥接层）；URL 暂存节点属性
     const url = urlOf(props.custom);
     const node = new Rect(attrs);

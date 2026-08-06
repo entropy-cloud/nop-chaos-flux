@@ -203,8 +203,27 @@ describe('I9.2 scada-instrument-thermometer (液柱管/感温泡 + 温度换算)
     flush();
     const liquid = childOf(engine.getSymbol('t1')!.node, 'liquid');
     expect(liquid.height).toBe(80);
-    expect(liquid.y).toBe(24);
+    // plan 2026-08-06-0900-2 P2-9：BULB_RESERVE=-24 统一（原 applyProps 离群 -16 → 24，现与 create -24 对齐 → 16）
+    expect(liquid.y).toBe(16);
     expect(childOf(engine.getSymbol('t1')!.node, 'bulb').tag).toBe('Ellipse');
+    engine.destroy();
+  });
+});
+
+// plan 2026-08-06-0900-2 Phase 2（open P2-9 thermometer anchor 常量统一 proof）：
+// thermometer.ts create `y: height - 24` vs applyProps `y: tubeHeight - 16 - props.height` 离群，
+// 空液位首帧 binding tick 跳 8px（sibling level 两路径一致）。修复后共用 BULB_RESERVE 常量，首帧无跳变。
+describe('I9.2 thermometer create/applyProps anchor consistency (plan 2026-08-06-0900-2 Phase 2 open P2-9)', () => {
+  it('空液位首帧 create y === applyProps y（无 8px 跳变）', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({
+      version: 1,
+      symbols: [instrumentNode('t1', 'scada-instrument-thermometer', { height: 140 })],
+    });
+    const createY = (childOf(engine.getSymbol('t1')!.node, 'liquid').y as number);
+    // 首帧 binding tick：空液位（height=0），applyProps 液柱锚定应与 create 一致
+    engine.setSymbolProps('t1', { height: 0 });
+    expect(childOf(engine.getSymbol('t1')!.node, 'liquid').y).toBe(createY);
     engine.destroy();
   });
 });
@@ -323,5 +342,34 @@ describe('instrument label 居中：显式 width 主路径 (plan 2026-08-04-1558
     const thermo = instantiateInstrument('scada-instrument-thermometer', { width: 40, height: 140 });
     expect(childOf(thermo, 'label').textAlign).toBe('center');
     expect(childOf(thermo, 'label').width).toBe(40);
+  });
+});
+
+// plan 2026-08-06-0900-2 Phase 1（open P2-4 复合族 resize 几何响应 proof）：
+// gauge 无 extent part（无 liquid/bar）——width/height 经 applyProps 原短路静默丢弃。修复后回落 resize hook 重算 body/needle/label。
+describe('I9.2 instrument composite resize via applyProps (plan 2026-08-06-0900-2 Phase 1 open P2-4)', () => {
+  it('gauge: width applyProps 重算 body width 并重定位 needle/label', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [instrumentNode('g1', 'scada-instrument-gauge')] });
+    expect(childOf(engine.getSymbol('g1')!.node, 'body').width).toBe(120);
+    engine.setSymbolProps('g1', { width: 200 });
+    const body = childOf(engine.getSymbol('g1')!.node, 'body');
+    expect(body.width).toBe(200);
+    // body/needle 中心 = width/2（新几何响应）
+    expect(body.x).toBe(100);
+    expect(childOf(engine.getSymbol('g1')!.node, 'needle').x).toBe(100);
+    // label width 跟随容器宽度
+    expect(childOf(engine.getSymbol('g1')!.node, 'label').width).toBe(200);
+    engine.destroy();
+  });
+
+  it('gauge: height applyProps 重算 body height 并重定位 needle/label（两维独立路由）', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [instrumentNode('g1', 'scada-instrument-gauge')] });
+    engine.setSymbolProps('g1', { height: 200 });
+    expect(childOf(engine.getSymbol('g1')!.node, 'body').height).toBe(200);
+    expect(childOf(engine.getSymbol('g1')!.node, 'body').y).toBe(100);
+    expect(childOf(engine.getSymbol('g1')!.node, 'needle').y).toBe(100);
+    engine.destroy();
   });
 });

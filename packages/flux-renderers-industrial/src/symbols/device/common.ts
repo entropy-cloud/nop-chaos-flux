@@ -16,7 +16,7 @@ import type { CompositeParts } from '../composite.js';
  */
 
 export type { CompositeParts, CompositeApplyOptions } from '../composite.js';
-export { applyCompositeProps, createCompositeGroup } from '../composite.js';
+export { applyCompositeProps, createCompositeGroup, setAttrs } from '../composite.js';
 
 export const devicePropSchema = compositePropSchema;
 

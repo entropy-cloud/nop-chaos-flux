@@ -91,6 +91,20 @@ describe('media placeholder symbols (I8.1: scada-image/scada-video)', () => {
     expect(node.url).toBeUndefined();
   });
 
+  // plan 2026-08-06-0900-2 Phase 2（open P2-7 video stroke guard proof）：
+  // video.ts:35-36 create 无条件覆盖 stroke/strokeWidth，author 声明被丢弃。修复后 guarded（与 fill 行对称）。
+  it('scada-video should preserve author-declared stroke/strokeWidth (plan 2026-08-06-0900-2 Phase 2 open P2-7)', () => {
+    const node = instantiate('scada-video', { stroke: '#ffffff', strokeWidth: 3 });
+    expect(node.stroke).toBe('#ffffff');
+    expect(node.strokeWidth).toBe(3);
+  });
+
+  it('scada-video should still apply default stroke/strokeWidth when author omits them', () => {
+    const node = instantiate('scada-video');
+    expect(node.stroke).toBe('#4b5563');
+    expect(node.strokeWidth).toBe(1);
+  });
+
   it('validate should accept string custom.url on media symbols and reject non-string urls', () => {
     const ok = validateScadaConfig({
       version: 1,

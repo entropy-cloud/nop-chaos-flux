@@ -1,5 +1,5 @@
 import { Ellipse, Rect } from 'leafer-ui';
-import { createCompositeGroup, deviceRunRotateAnimation, createDeviceSymbol } from './common.js';
+import { createCompositeGroup, deviceRunRotateAnimation, createDeviceSymbol, setAttrs } from './common.js';
 import type { LeafNode } from '../symbol-types.js';
 
 export const scadaDeviceMotorType = 'scada-device-motor';
@@ -40,9 +40,18 @@ export const scadaDeviceMotorDefinition = createDeviceSymbol({
       stroke: '#e65100',
       strokeWidth: 2,
     }) as LeafNode;
-    return createCompositeGroup(props, [
+    const { root, parts } = createCompositeGroup(props, [
       { name: 'body', node: body },
       { name: 'rotor', node: rotor },
     ]);
+    // plan 2026-08-06-0900-2 P2-4：width/height 经 applyProps 回落此 hook，重算 body 容器 + rotor 中心/半径。
+    parts.resize = (key, value) => {
+      setAttrs(body, { [key]: value });
+      const w = (body as unknown as { width: number }).width;
+      const h = (body as unknown as { height: number }).height;
+      const r = Math.min(w, h) * 0.3;
+      setAttrs(rotor, { x: w / 2, y: h / 2, width: r * 2, height: r * 2 });
+    };
+    return { root, parts };
   },
 });

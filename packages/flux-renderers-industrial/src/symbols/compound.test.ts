@@ -463,9 +463,10 @@ describe('V5 复合图元全路径（注册 → 校验 → 实例化 → 场景�
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     engine.reset(config);
     expect(engine.registry.size()).toBe(5);
-    const p1 = engine.getSymbolProps('p1') as unknown as { width: number; scaleX: number; fill: string; custom: unknown };
+    // plan 2026-08-06-0900-2 P2-10：getSymbolProps 经 fromNodeAttrs 反映射回 schema 名（scale 非 raw scaleX）
+    const p1 = engine.getSymbolProps('p1') as unknown as { width: number; scale: number; fill: string; custom: unknown };
     expect(p1.width).toBe(60);
-    expect(p1.scaleX).toBe(2);
+    expect(p1.scale).toBe(2);
     expect(p1.fill).toBe('#ffffff');
     expect(p1.custom).toEqual({ a: 1, b: { c: 2 } });
     expect(engine.getSymbol('p3')?.parentId).toBe('nested');

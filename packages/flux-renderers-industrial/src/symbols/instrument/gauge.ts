@@ -1,5 +1,5 @@
 import { Ellipse, Line, Text } from 'leafer-ui';
-import { createCompositeGroup, createInstrumentSymbol } from './common.js';
+import { createCompositeGroup, createInstrumentSymbol, setAttrs } from './common.js';
 import type { LeafNode } from '../symbol-types.js';
 
 export const scadaInstrumentGaugeType = 'scada-instrument-gauge';
@@ -56,10 +56,22 @@ export const scadaInstrumentGaugeDefinition = createInstrumentSymbol({
       fill: props.textColor,
       textAlign: 'center',
     }) as LeafNode;
-    return createCompositeGroup(props, [
+    const { root, parts } = createCompositeGroup(props, [
       { name: 'body', node: body },
       { name: 'needle', node: needle },
       { name: 'label', node: label },
     ]);
+    // plan 2026-08-06-0900-2 P2-4：gauge 无 extent part，width/height 经 applyProps 回落此 hook，
+    // 重算 body 表盘尺寸/中心 + needle 中心/points（量程半径）+ label 锚点/宽度。
+    parts.resize = (key, value) => {
+      setAttrs(body, { [key]: value });
+      const w = (body as unknown as { width: number }).width;
+      const h = (body as unknown as { height: number }).height;
+      const r = Math.min(w, h) / 2;
+      setAttrs(body, { x: w / 2, y: h / 2 });
+      setAttrs(needle, { x: w / 2, y: h / 2, points: [0, 0, 0, -r * 0.72] });
+      setAttrs(label, { y: h / 2 + r * 0.45, width: w });
+    };
+    return { root, parts };
   },
 });

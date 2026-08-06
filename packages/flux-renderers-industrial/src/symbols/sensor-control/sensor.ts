@@ -1,5 +1,5 @@
 import { Ellipse, Rect } from 'leafer-ui';
-import { createCompositeGroup, createSensorControlSymbol } from './common.js';
+import { createCompositeGroup, createSensorControlSymbol, setAttrs } from './common.js';
 import type { LeafNode } from '../symbol-types.js';
 
 export const scadaSensorControlSensorType = 'scada-sensor-control-sensor';
@@ -36,9 +36,17 @@ export const scadaSensorControlSensorDefinition = createSensorControlSymbol({
       stroke: '#00695c',
       strokeWidth: 2,
     }) as LeafNode;
-    return createCompositeGroup(props, [
+    const { root, parts } = createCompositeGroup(props, [
       { name: 'body', node: stem },
       { name: 'probe', node: probe },
     ]);
+    // plan 2026-08-06-0900-2 P2-4：sensor 无 extent part，width/height 经 applyProps 回落此 hook，
+    // 重算 body 容器尺寸 + probe 中心 x/尺寸（随 width 派生）。
+    parts.resize = (key, value) => {
+      setAttrs(stem, { [key]: value });
+      const w = (stem as unknown as { width: number }).width;
+      setAttrs(probe, { x: w / 2, width: w * 0.6, height: w * 0.6 });
+    };
+    return { root, parts };
   },
 });

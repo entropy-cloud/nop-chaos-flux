@@ -9,7 +9,7 @@ import type { LeafNode, ScadaSymbolDefinition, ScadaSymbolProps, SymbolCreateCon
  */
 
 export type { CompositeParts } from '../composite.js';
-export { createCompositeGroup } from '../composite.js';
+export { createCompositeGroup, setAttrs } from '../composite.js';
 
 export interface InstrumentSymbolOptions {
   type: string;
