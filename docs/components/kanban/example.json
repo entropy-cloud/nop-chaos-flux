@@ -38,6 +38,7 @@
       "variant": "ghost",
       "onClick": {
         "action": "component:addCard",
+        "componentId": "recruitment-kanban",
         "args": {
           "columnId": "${$slot.column.id}"
         }

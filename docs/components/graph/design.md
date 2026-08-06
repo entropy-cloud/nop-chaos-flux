@@ -149,13 +149,13 @@ node region 模板内可用绑定（参照 tree node region 模式）：
 
 ## 7. 运行期状态归属
 
-| State                      | Ownership | 说明                                                                                              |
-| -------------------------- | --------- | ------------------------------------------------------------------------------------------------- |
-| 视口（zoom/pan/center）    | local     | 内部 state（React Flow 受控 viewport），不写 scope；经 component handle 控制                      |
-| 布局模式（flow/hierarchy） | local     | 初始值来自 schema `layout`；运行时切换仅经 `component:setLayout` 句柄内部更新，不外发事件（§8.2） |
-| 搜索词 + 匹配循环索引      | local     | 内部 state，不写 scope（搜索期间的高频更新不订阅风暴）                                            |
-| 选中节点                   | local     | 高亮渲染内部化；经 `onSelectionChange`/`onNodeClick` 事件发布，宿主用 action 自行落 scope         |
-| 空态/加载态                | local     | 派生自 nodes/edges 数据与 data-source 状态                                                        |
+| State                      | Ownership | 说明                                                                                                                                                  |
+| -------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 视口（zoom/pan/center）    | local     | 内部 state（React Flow 受控 viewport），不写 scope；经 component handle 控制                                                                          |
+| 布局模式（flow/hierarchy） | local     | 初始值来自 schema `layout`；运行时 schema prop 变化单向同步 store（22-06，值不等才写回）；命令式切换经 `component:setLayout` 句柄（§8.2），不外发事件 |
+| 搜索词 + 匹配循环索引      | local     | 内部 state，不写 scope（搜索期间的高频更新不订阅风暴）                                                                                                |
+| 选中节点                   | local     | 高亮渲染内部化；经 `onSelectionChange`/`onNodeClick` 事件发布，宿主用 action 自行落 scope                                                             |
+| 空态/加载态                | local     | 派生自 nodes/edges 数据与 data-source 状态                                                                                                            |
 
 **判定依据（INV-4）**：以上状态均为「渲染器内部交互状态」，无跨组件读取需求 → 保持 local，不升级 scope；跨组件命令式控制经 component handle（§8）；宿主同步经事件（§8）。
 

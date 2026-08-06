@@ -22,14 +22,16 @@ File: `packages/flux-renderers-scheduling/src/calendar/utils/calendar-print.css`
 ## PNG Export
 
 - Uses `html2canvas` to capture calendar root element as image
-- `component:exportPNG` imperative handle
+- `component:exportToPNG` imperative handle（注册于组件句柄，`exportToPNG` capability）
+- 句柄 invoke 同时派发 schema 声明的 `exportPNG` reaction（22-05 接线，2026-08-07）
 - Parameters: `{ fileName?: string, scale?: number }`
 - Default scale: 2 (Retina quality)
 - Download as PNG Blob
 
 ## Print Export
 
-- `component:print` imperative handle — calls `window.print()`
+- `component:exportToPrint` imperative handle — calls `window.print()`
+- 句柄 invoke 同时派发 schema 声明的 `print` reaction（22-05 接线，2026-08-07）
 - Browser print dialog appears
 - Print stylesheet applied automatically via `@media print`
 

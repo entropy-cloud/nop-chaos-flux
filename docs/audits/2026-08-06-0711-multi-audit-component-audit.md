@@ -616,6 +616,7 @@
 - **建议**: onColumnAdd 补 `if (!isControlled)` 守卫；考虑 controlled 模式只读反馈。
 - **误报排除**: 直接违反本文件自述契约，非设计决定；不在豁免名单内。
 - **复核状态**: 维度复核通过
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-06-2306-3-scheduling-graph-wiring-phantom-contracts.md` Phase 2：`kanban-board.tsx` confirmAddColumn 派发补 `if (!isControlled)` 守卫；test-first「local 派发 / controlled 不派发」用例先红后绿）。
 
 #### [P2] 22-05 calendar `print`/`exportPNG` reaction ready() 后全包无任何派发点：声明即死的动作契约
 
@@ -634,6 +635,7 @@
 - **建议**: 句柄 invoke 路径补 `props.reactions.exportPNG?.dispatch()`/`print?.dispatch()`；或按 importICal 同样标注 @reserved 并澄清。
 - **误报排除**: 上轮 19-2（8e35766d）修复的是 exportToPNG 错误传播（handle 返回 ok/error），本发现是 reaction 派发通道缺失，不同链路；calendar.test.tsx:282-293 只断言 ready() 被调。
 - **复核状态**: 维度复核通过
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-06-2306-3-scheduling-graph-wiring-phantom-contracts.md` Phase 3：`calendar.tsx` 句柄 invoke 路径补 `exportPNG/print?.dispatch()`（对齐 gantt.tsx:417-419 先例）；importICal/exportToICal 维持 @reserved；test-first「invoke exportToPrint→print.dispatch / exportToPNG→exportPNG.dispatch」用例先红后绿）。
 
 #### [P2] 22-06 graph `layout` schema prop 仅挂载时生效，运行时 prop 变化不再同步 store
 
@@ -649,6 +651,7 @@
 - **建议**: 增加 layout 同步 effect（值不等才 setLayoutMode）+ 测试。
 - **误报排除**: graph 是 G1 新包；store 的 layoutMode 是受控状态，prop 与 store 单向初始化缺口无文档裁定；gantt 有 prop→store 同步先例。
 - **复核状态**: 维度复核通过
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-06-2306-3-scheduling-graph-wiring-phantom-contracts.md` Phase 3：`graph-renderer.tsx` 补 layout prop→store 同步 effect（值不等才 setLayoutMode，避免与 component:setLayout 双向覆盖）；test-first「rerender layout flow→hierarchy data-layout 变化」用例先红后绿；graph design.md §7 同步）。
 
 #### [P2] 22-07 gantt 数据变更路径（编辑器保存 / 行内编辑 / 键盘删除）无任何事件外抛
 
@@ -670,6 +673,7 @@
 - **建议**: 新增 onTaskEdit 事件并在三处派发，或 design doc 显式声明「编辑变更不对外派发」契约。
 - **误报排除**: gantt 事件契约是当前 live 契约，缺失编辑事件是真实闭环缺口；无历史裁定豁免。
 - **复核状态**: 维度复核通过
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-06-2306-3-scheduling-graph-wiring-phantom-contracts.md` Phase 4：新增 onTaskEdit schema 事件——gantt.types.ts 契约 + scheduling-renderer-definitions.ts 注册 + gantt-editor `onCommit` / gantt-grid `onCellCommit` 回调 + gantt.tsx `dispatchTaskEdit` 统一派发（键盘 Delete 带 `deleted: true`），全量 ctx 对齐 CX-12；test-first 四用例先红后绿；gantt design.md §5/§8.1 同步）。
 
 #### [P2] 22-08 kanban `columnsOrderOwnership`/`columnsOrderStatePath` 设计文档契约零代码消费
 
@@ -680,6 +684,7 @@
 - **建议**: 二选一——在 board 层实现该三态，或从 design.md 删除/标注 @reserved。
 - **误报排除**: reopened 裁定文档无此条；属文档契约与 live 代码双向漂移的真实误导成本。
 - **复核状态**: 维度复核通过
+- **修复状态**: 已裁决 fixed（2026-08-07，plan `docs/plans/2026-08-06-2306-3-scheduling-graph-wiring-phantom-contracts.md` Phase 2：与 22-12 合并裁决为**文档降级 @reserved**——列排序随 boardData（kanbanStatePath）整体 scope-owned 已覆盖持久化需求，独立三态属超前面增强（Deferred But Adjudicated 登记）；design.md §4.2/§5/§7/§11.2 标注；全仓 `packages/*/src` grep `columnsOrder` 零命中）。
 
 #### [P2] 22-09 graph 事件派发 ctx 缺 `evaluationBindings`/`event`，action args 模板 payload 键不可解析
 
@@ -705,6 +710,7 @@
 - **建议**: re-seed effect 补配置字段同步，或文档标注「配置字段仅挂载生效」。
 - **误报排除**: 挂载期接线是通的（非 22-1 家族漏传）；仅剩运行时同步缺口，低优先真实问题。
 - **复核状态**: 维度复核通过
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-06-2306-3-scheduling-graph-wiring-phantom-contracts.md` Phase 4：`gantt-store.ts` 补 `taskBarHeight`/`zoomLevels` setter；`gantt.tsx` re-seed effect 扩展 cellWidth/taskBarHeight/zoomLevels 配置字段同步 + recalcLayout；test-first 三用例（scale cell 宽度 / bar 高度 / zoom 可用级别）先红后绿）。
 
 #### [P2] 22-11（R2 深挖）wizard 全部 schema 事件派发 ctx 缺 evaluationBindings/event，action args 模板 payload 键不可解析
 
@@ -741,6 +747,7 @@
 - **建议**: 按 gantt/calendar 模式注册 ComponentHandle（至少 addCard/removeCard/moveCard/collapseColumn/getData），或显式将 design.md §8 降级为「未来能力」并同步 example.json。
 - **误报排除**: 非 22-08 重复（22-08 针对 columnsOrder\* 字段）；C9 卡仅以文档漂移留痕未做代码侧处理，本轮 R1 未收录。
 - **复核状态**: 未复核（R2 深挖新增，建议与 22-08 合并裁决）
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-06-2306-3-scheduling-graph-wiring-phantom-contracts.md` Phase 2：按 gantt/calendar 模式经 `useCurrentComponentRegistry` 注册 ComponentHandle 七句柄（scrollToCard/scrollToColumn/addCard/removeCard/moveCard/collapseColumn/getData）+ scheduling-renderer-definitions.ts kanban 条目补 componentCapabilityContracts；`component:addCard` 经 registry 可解析；example.json toolbar 用例补 componentId 恢复可运行；`kanban-handle.test.tsx` 7 用例先红后绿）。
 
 ---
 

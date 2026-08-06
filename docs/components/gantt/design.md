@@ -92,6 +92,7 @@ interface GanttSchema extends BaseSchema {
   onTaskClick?: ActionSchema;
   onTaskDoubleClick?: ActionSchema;
   onTaskDragEnd?: ActionSchema;
+  onTaskEdit?: ActionSchema; // 编辑型变更（保存/行内提交/键盘删除）；payload 见 §8.1
   onLinkClick?: ActionSchema;
   onLinkDragEnd?: ActionSchema;
   onEmptyCellClick?: ActionSchema; // 点击时间线空白区域
@@ -227,7 +228,7 @@ interface GanttAssignment {
 - `toolbarClassName`, `taskBarClassName`, `editorClassName`, `emptyClassName`: `props`（per-slot 额外 CSS class）
 - `onMount`, `onUnmount`: `meta`（继承 BaseSchema 生命周期动作）
 - `id`, `className`, `disabled`, `visible`, `hidden`: `meta`（继承 BaseSchema 元数据通道）
-- `onTaskClick`, `onTaskDoubleClick`, `onTaskDragEnd`, `onLinkClick`, `onLinkDragEnd`, `onEmptyCellClick`, `onZoomChange`, `onScroll`: `event`（ActionSchema 事件入口）
+- `onTaskClick`, `onTaskDoubleClick`, `onTaskDragEnd`, `onTaskEdit`, `onLinkClick`, `onLinkDragEnd`, `onEmptyCellClick`, `onZoomChange`, `onScroll`: `event`（ActionSchema 事件入口）
 - `zoomIn`, `zoomOut`, `scrollToToday`, `scrollToTask`: `action`
 
 ## 6. regions 与 slot 约定
@@ -265,18 +266,19 @@ Gantt 是 interaction owner，其状态分三层：
 
 ### 8.1 事件
 
-| 事件                | 触发时机           | 负载示例（以实现为准，CX-12 `_` 前缀约定） |
-| ------------------- | ------------------ | ------------------------------------------ |
-| `onTaskClick`       | 点击任务条         | `{ _taskId }`                              |
-| `onTaskDoubleClick` | 双击任务条         | `{ _taskId }`                              |
-| `onTaskDragEnd`     | 拖拽任务结束       | `{ _taskId, changes: { start?, end? } }`   |
-| `onLinkClick`       | 点击依赖线         | `{ _linkId }`                              |
-| `onLinkDragEnd`     | 创建新依赖结束     | `{ _sourceId, _targetId, _linkType }`      |
-| `onEmptyCellClick`  | 点击时间线空白     | `{}`                                       |
-| `onZoomChange`      | 缩放级别切换       | `{ zoom: string }`                         |
-| `onScroll`          | grid/timeline 滚动 | `{ scrollLeft, scrollTop }`                |
-| `onMount`           | 组件挂载完成后触发 | —                                          |
-| `onUnmount`         | 组件卸载前触发     | —                                          |
+| 事件                | 触发时机                                                | 负载示例（以实现为准，CX-12 `_` 前缀约定）                                     |
+| ------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `onTaskClick`       | 点击任务条                                              | `{ _taskId }`                                                                  |
+| `onTaskDoubleClick` | 双击任务条                                              | `{ _taskId }`                                                                  |
+| `onTaskDragEnd`     | 拖拽任务结束                                            | `{ _taskId, changes: { start?, end? } }`                                       |
+| `onTaskEdit`        | 编辑型变更（编辑器保存 / 行内单元格提交 / 键盘 Delete） | `{ _taskId, changes? }`（更新路径）或 `{ _taskId, deleted: true }`（删除路径） |
+| `onLinkClick`       | 点击依赖线                                              | `{ _linkId }`                                                                  |
+| `onLinkDragEnd`     | 创建新依赖结束                                          | `{ _sourceId, _targetId, _linkType }`                                          |
+| `onEmptyCellClick`  | 点击时间线空白                                          | `{}`                                                                           |
+| `onZoomChange`      | 缩放级别切换                                            | `{ zoom: string }`                                                             |
+| `onScroll`          | grid/timeline 滚动                                      | `{ scrollLeft, scrollTop }`                                                    |
+| `onMount`           | 组件挂载完成后触发                                      | —                                                                              |
+| `onUnmount`         | 组件卸载前触发                                          | —                                                                              |
 
 拖拽结束回弹动画 200ms ease-out，缩放切换过渡 300ms ease。
 

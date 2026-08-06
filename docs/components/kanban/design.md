@@ -124,10 +124,10 @@ interface KanbanSchema extends BaseSchema {
   /** 事件 */
   events?: KanbanEvents;
 
-  /** 列排序状态 path（scope-owned） */
+  /** @reserved — 列排序随 boardData（kanbanStatePath）整体 scope-owned；独立三态属超前面增强，未实现 */
   columnsOrderStatePath?: string;
 
-  /** 列排序 ownership */
+  /** @reserved — 同上，列排序独立 ownership 未实现（22-08 裁决文档降级） */
   columnsOrderOwnership?: 'local' | 'controlled' | 'scope';
 
   /** 折叠状态 path */
@@ -208,39 +208,39 @@ interface KanbanEvents {
 
 ## 5. 字段分类
 
-| 字段                                               | 分类                   | 说明                                          |
-| -------------------------------------------------- | ---------------------- | --------------------------------------------- |
-| `data`                                             | props (source-enabled) | 表达式或 data-source 输出；BoardData 扁平字典 |
-| `configMap`                                        | props                  | 静态配置                                      |
-| `columnHeader`                                     | region                 | 列头区域模板                                  |
-| `columnHeaderToolbar`                              | region                 | 列头工具栏区域模板                            |
-| `cardTemplate`                                     | region                 | 卡片区域模板                                  |
-| `columnFooter`                                     | region                 | 列底部区域模板                                |
-| `empty`                                            | region                 | 空态区域模板                                  |
-| `columnsConfig`                                    | props                  | 列元配置（静态/表达式）                       |
-| `filterText`                                       | props                  | 搜索关键词（表达式绑定）                      |
-| `filterCard`                                       | props                  | 过滤函数表达式                                |
-| `filterTags`                                       | props                  | 标签筛选 ID 数组                              |
-| `columnWidth`                                      | props                  | 列宽策略                                      |
-| `columnDraggable`                                  | props                  | 列拖拽开关                                    |
-| `draggable`                                        | props                  | 全局拖拽开关                                  |
-| `columnsOrderStatePath`                            | props                  | scope path 字符串                             |
-| `collapsedStatePath`                               | props                  | scope path 字符串                             |
-| `columnsOrderOwnership`                            | props                  | 列排序 ownership                              |
-| `collapsedOwnership`                               | props                  | 列折叠 ownership                              |
-| `columnHeaderClassName`                            | props                  | 列头额外 CSS class                            |
-| `cardClassName`                                    | props                  | 卡片额外 CSS class                            |
-| `columnFooterClassName`                            | props                  | 列底部额外 CSS class                          |
-| `onMount`、`onUnmount`                             | event                  | 继承 BaseSchema 生命周期动作                  |
-| `kanbanOwnership`、`kanbanStatePath`、`statusPath` | props                  | 交互坐标 ownership 路径                       |
-| `id`、`className`、`disabled`、`visible`、`hidden` | meta                   | 继承 BaseSchema 元数据通道                    |
-| `loading`                                          | region                 | 加载态区域模板                                |
-| `events.onCardMove`                                | event                  | ActionSchema                                  |
-| `events.onCardClick`                               | event                  | ActionSchema                                  |
-| `events.onColumnReorder`                           | event                  | ActionSchema                                  |
-| `events.onColumnClick`                             | event                  | ActionSchema                                  |
-| `events.onCardAdd`                                 | event                  | ActionSchema                                  |
-| `events.onCardRemove`                              | event                  | ActionSchema                                  |
+| 字段                                               | 分类                   | 说明                                                                             |
+| -------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
+| `data`                                             | props (source-enabled) | 表达式或 data-source 输出；BoardData 扁平字典                                    |
+| `configMap`                                        | props                  | 静态配置                                                                         |
+| `columnHeader`                                     | region                 | 列头区域模板                                                                     |
+| `columnHeaderToolbar`                              | region                 | 列头工具栏区域模板                                                               |
+| `cardTemplate`                                     | region                 | 卡片区域模板                                                                     |
+| `columnFooter`                                     | region                 | 列底部区域模板                                                                   |
+| `empty`                                            | region                 | 空态区域模板                                                                     |
+| `columnsConfig`                                    | props                  | 列元配置（静态/表达式）                                                          |
+| `filterText`                                       | props                  | 搜索关键词（表达式绑定）                                                         |
+| `filterCard`                                       | props                  | 过滤函数表达式                                                                   |
+| `filterTags`                                       | props                  | 标签筛选 ID 数组                                                                 |
+| `columnWidth`                                      | props                  | 列宽策略                                                                         |
+| `columnDraggable`                                  | props                  | 列拖拽开关                                                                       |
+| `draggable`                                        | props                  | 全局拖拽开关                                                                     |
+| `columnsOrderStatePath`                            | props                  | **@reserved**——未实现（22-08 裁决）；列排序随 `kanbanStatePath` 整体 scope-owned |
+| `collapsedStatePath`                               | props                  | scope path 字符串                                                                |
+| `columnsOrderOwnership`                            | props                  | **@reserved**——未实现（22-08 裁决）；独立列排序三态属超前面增强                  |
+| `collapsedOwnership`                               | props                  | 列折叠 ownership                                                                 |
+| `columnHeaderClassName`                            | props                  | 列头额外 CSS class                                                               |
+| `cardClassName`                                    | props                  | 卡片额外 CSS class                                                               |
+| `columnFooterClassName`                            | props                  | 列底部额外 CSS class                                                             |
+| `onMount`、`onUnmount`                             | event                  | 继承 BaseSchema 生命周期动作                                                     |
+| `kanbanOwnership`、`kanbanStatePath`、`statusPath` | props                  | 交互坐标 ownership 路径                                                          |
+| `id`、`className`、`disabled`、`visible`、`hidden` | meta                   | 继承 BaseSchema 元数据通道                                                       |
+| `loading`                                          | region                 | 加载态区域模板                                                                   |
+| `events.onCardMove`                                | event                  | ActionSchema                                                                     |
+| `events.onCardClick`                               | event                  | ActionSchema                                                                     |
+| `events.onColumnReorder`                           | event                  | ActionSchema                                                                     |
+| `events.onColumnClick`                             | event                  | ActionSchema                                                                     |
+| `events.onCardAdd`                                 | event                  | ActionSchema                                                                     |
+| `events.onCardRemove`                              | event                  | ActionSchema                                                                     |
 
 ## 6. regions 与 slot 约定
 
@@ -256,15 +256,15 @@ interface KanbanEvents {
 
 ## 7. 运行期状态归属
 
-| 状态               | Owner                    | 说明                                                                                                                                                                          |
-| ------------------ | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 卡片/列数据        | **数据源控制**           | `data` 表达式或 `data-source` 输出；内部只读消费，不修改源数据                                                                                                                |
-| 拖拽中状态         | **local**                | `useKanbanDnd` hook 内部管理；拖拽结束后触发 `onCardMove`/`onColumnReorder` 事件                                                                                              |
-| 状态 path 交互坐标 | **scope-owned 或 local** | `kanbanOwnership` + `kanbanStatePath` 组合控制；指定 scope path 时为 scope-owned，否则 local。`statusPath` 为兼容性声明字段（行为以实现为准，板数据读写走 `kanbanStatePath`） |
-| 列折叠状态         | **scope-owned 或 local** | `collapsedOwnership` + `collapsedStatePath` 组合控制；`collapsedOwnership` 指定范围时 path 生效，否则 local                                                                   |
-| 列顺序             | **scope-owned 或 local** | `columnsOrderOwnership` + `columnsOrderStatePath` 组合控制；`columnsOrderOwnership` 指定范围时 path 生效，否则 local                                                          |
-| 过滤文本           | **local**                | 渲染期派生，不持久                                                                                                                                                            |
-| 卡片计数           | **派生**                 | 从 `column.children.length` 实时计算                                                                                                                                          |
+| 状态               | Owner                             | 说明                                                                                                                                                                          |
+| ------------------ | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 卡片/列数据        | **数据源控制**                    | `data` 表达式或 `data-source` 输出；内部只读消费，不修改源数据                                                                                                                |
+| 拖拽中状态         | **local**                         | `useKanbanDnd` hook 内部管理；拖拽结束后触发 `onCardMove`/`onColumnReorder` 事件                                                                                              |
+| 状态 path 交互坐标 | **scope-owned 或 local**          | `kanbanOwnership` + `kanbanStatePath` 组合控制；指定 scope path 时为 scope-owned，否则 local。`statusPath` 为兼容性声明字段（行为以实现为准，板数据读写走 `kanbanStatePath`） |
+| 列折叠状态         | **scope-owned 或 local**          | `collapsedOwnership` + `collapsedStatePath` 组合控制；`collapsedOwnership` 指定范围时 path 生效，否则 local                                                                   |
+| 列顺序             | **随 boardData 整体 scope-owned** | **@reserved（22-08 裁决）**：`columnsOrderOwnership`/`columnsOrderStatePath` 独立三态未实现；列排序随 `kanbanStatePath` 指向的 boardData 整体持久化，无独立 path              |
+| 过滤文本           | **local**                         | 渲染期派生，不持久                                                                                                                                                            |
+| 卡片计数           | **派生**                          | 从 `column.children.length` 实时计算                                                                                                                                          |
 
 > **乐观更新策略**：v1 采用悲观更新模式。拖拽完成后触发 `onCardMove` 事件，等待数据源确认后才真正更新 DOM。中断/失败时回滚到拖拽前位置。
 
@@ -283,10 +283,12 @@ interface KanbanEvents {
 
 ### 组件句柄
 
+> 全部 7 个句柄已注册（22-12 落地，经 `useCurrentComponentRegistry` + `componentCapabilityContracts`，2026-08-07）。mutation 句柄（addCard/removeCard/moveCard/collapseColumn）在 controlled/受控模式下返回失败（mutation 被丢弃，不得声称已发生）。
+
 - `component:scrollToCard(cardId: string)`：滚动到指定卡片位置。失败路径：`not-mounted`、`not-visible`、`card-not-found`
 - `component:scrollToColumn(columnId: string)`：滚动到指定列。失败路径：`not-mounted`、`not-visible`、`column-not-found`
-- `component:addCard(columnId: string, card: BoardItem, options?: { index?: number })`：（P2）新增卡片到指定列。失败路径：`not-mounted`、`not-visible`、`column-full`（WIP 限制时）
-- `component:removeCard(cardId: string)`：（P2）移除卡片。失败路径：`not-mounted`、`not-visible`、`card-not-found`
+- `component:addCard(columnId: string, card: BoardItem, options?: { index?: number })`：新增卡片到指定列。失败路径：`not-mounted`、`not-visible`、`column-full`（WIP 限制时）
+- `component:removeCard(cardId: string)`：移除卡片。失败路径：`not-mounted`、`not-visible`、`card-not-found`
 - `component:moveCard(cardId: string, toColumnId: string, toIndex: number)`：程序式移动卡片。失败路径：`not-mounted`、`not-visible`、`card-not-found`、`column-not-found`、`column-full`
 - `component:collapseColumn(columnId: string, collapsed: boolean)`：切换列折叠。失败路径：`not-mounted`、`not-visible`、`column-not-found`
 - `component:getData(): BoardData`：获取当前看板数据快照。失败路径：`not-mounted`、`not-visible`
@@ -365,7 +367,7 @@ src/kanban/
 ### 11.2 Hook 职责
 
 - **useKanbanDnd**：封装 `@atlaskit/pragmatic-drag-and-drop` 的 `draggable`/`dropTargetForElements`/`attachClosestEdge` 注册。暴露 `isDragging`、`isDraggingOver`、`closestEdge` 等响应式状态。管理拖拽开始→拖拽结束的完整生命周期。KanbanCard 组件使用 React.memo（比较 card.content + column.id + index），拖拽过程中通过 CSS pointer-events: none 减少非活跃卡片的渲染触发。KanbanColumn 使用 React.memo 按 column.id + children.length + 折叠状态 决定是否重渲染。
-- **useKanbanStore**：接收 `data` prop → 归一化为 `BoardData`。管理列顺序（`columnsOrderStatePath`）和折叠状态（`collapsedStatePath`）。提供列和卡片的只读访问方法。
+- **useKanbanStore**：接收 `data` prop → 归一化为 `BoardData`。管理折叠状态（`collapsedStatePath`）。提供列和卡片的只读访问方法。~~列排序独立 path（`columnsOrderStatePath`）~~ 未实现（@reserved，22-08 裁决——列排序随 boardData 整体 scope-owned）。
 
 ### 11.3 纯函数 utils
 

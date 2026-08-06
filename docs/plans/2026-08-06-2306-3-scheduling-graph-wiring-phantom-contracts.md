@@ -1,6 +1,6 @@
 # 3 scheduling/graph 接线与 phantom 契约裁决（22-04/22-05/22-06/22-07/22-08/22-10/22-12）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: scheduling/graph 集成接线与 phantom 契约（follow-up backlog 家族：22-04 / 22-05 / 22-06 / 22-07 / 22-08 / 22-10 / 22-12）
 > Last Reviewed: 2026-08-06
@@ -60,16 +60,28 @@
 
 本档选择：`必须自动化`（组件公共契约——`component:*` 句柄可解析性、事件派发、prop→store 同步均为可断言契约行为；Proof 先于 Fix）。
 
+## 裁决记录（Phase 1 Decision 留痕，2026-08-07 执行）
+
+| Finding                               | 裁决                   | One-line 理由                                                                                                                                                 | 落地    |
+| ------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 22-04 kanban onColumnAdd 漏守卫       | **实现**               | 同文件 :285/:308/:330/:353 四处 mutation 均带守卫，:392 遗漏构成同一契约自证违反；补 `if (!isControlled)`                                                     | Phase 2 |
+| 22-05 calendar print/exportPNG 无派发 | **实现**               | 句柄 invoke 路径已存在（calendar.tsx:224-234），补 dispatch 对齐 gantt.tsx:417-419 先例即可闭合「声明即死」；importICal/exportToICal 维持 @reserved           | Phase 3 |
+| 22-06 graph layout prop 单向初始化    | **实现**               | schema 驱动源与 store 双向可写（句柄 setLayout 已存在），prop 变化不同步构成 schema 驱动切换静默失效；补值不等才同步 effect                                   | Phase 3 |
+| 22-07 gantt 编辑变更零事件            | **实现**               | 宿主同步依赖编辑型变更；新增 onTaskEdit（`{ _taskId, changes? , deleted? }`）三路径派发（editor 保存 / grid 行内提交 / keyboard Delete），全量 ctx 对齐 CX-12 | Phase 4 |
+| 22-08 kanban columnsOrder\* phantom   | **文档降级 @reserved** | 列排序随 boardData（kanbanStatePath）整体 scope-owned 已覆盖持久化需求；独立三态属超前面增强，design.md 标注 @reserved（Deferred But Adjudicated 已登记）     | Phase 2 |
+| 22-10 gantt 配置 prop 仅挂载生效      | **实现**               | 宿主动态下发缩放配置是真实场景；re-seed effect 补 cellWidth/taskBarHeight/zoomLevels 同步（store 补后两者 setter）                                            | Phase 4 |
+| 22-12 kanban component:\* 零注册      | **实现**               | 同族 gantt/calendar 均注册，kanban 是唯一零句柄组件；`component:addCard` example.json 用法恢复可运行                                                          | Phase 2 |
+
 ## Execution Plan
 
 ### Phase 1 - 裁决表与测试先红（Proof + Decision）
 
-Status: planned
+Status: completed
 Targets: `docs/audits/cr-inventory-adjudication.md`（或本 plan 内裁决记录）、各组件 `__tests__/`
 
 - Item Types: `Proof | Decision`
 
-- [ ] **Decision**：对 7 条逐条给出「实现 or 文档降级」裁决并留痕（写入本 plan 或裁决记录）：
+- [x] **Decision**：对 7 条逐条给出「实现 or 文档降级」裁决并留痕（写入本 plan 或裁决记录）：
   - 22-04 → 实现（补守卫）
   - 22-05 → 实现（reaction dispatch 接线，对齐 gantt.tsx:417-419）或 @reserved 标注（二选一裁决，默认实现——comment 声称 actions fire）
   - 22-06 → 实现（layout 同步 effect）
@@ -77,77 +89,77 @@ Targets: `docs/audits/cr-inventory-adjudication.md`（或本 plan 内裁决记�
   - 22-08 → 裁决：columnsOrder\* 随 boardData 整体 scope-owned，独立三态属超前面 → 默认 design.md 标注 @reserved（与 22-12 一并裁决）；若裁决实现则补 Phase 5 工作量
   - 22-10 → 实现（re-seed effect 补配置字段同步）
   - 22-12 → 实现（ComponentHandle 注册，gantt/calendar 模式）
-- [ ] **Proof（test-first）**：为「实现」裁决项写失败测试——kanban onColumnAdd controlled 不派发用例；calendar print/exportPNG 句柄 invoke 派发用例；graph layout prop 变化同步 store 用例；gantt onTaskEdit 三路径派发用例 + 配置 prop 运行时同步用例；kanban component:\* 注册可解析用例（`component:addCard` 等经 registry 解析）。
+- [x] **Proof（test-first）**：为「实现」裁决项写失败测试——kanban onColumnAdd controlled 不派发用例；calendar print/exportPNG 句柄 invoke 派发用例；graph layout prop 变化同步 store 用例；gantt onTaskEdit 三路径派发用例 + 配置 prop 运行时同步用例；kanban component:\* 注册可解析用例（`component:addCard` 等经 registry 解析）。
 
 Exit Criteria:
 
-- [ ] 7 条裁决记录完整（每条含 one-line 理由），零未裁决。
-- [ ] 全部「实现」项测试先红（修复前失败），@reserved 裁决项记录文档降级范围。
+- [x] 7 条裁决记录完整（每条含 one-line 理由），零未裁决。
+- [x] 全部「实现」项测试先红（修复前失败），@reserved 裁决项记录文档降级范围。
 
 ### Phase 2 - kanban 接线（22-04 + 22-12 + 22-08）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx`、`packages/flux-renderers-scheduling/src/scheduling-renderer-definitions.ts`、`__tests__/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] 22-04：`onColumnAdd` 派发补 `if (!isControlled)` 守卫；controlled 模式只读反馈（沿用同文件 :285/:308/:330/:353 先例）。
-- [ ] 22-12：按 gantt/calendar 模式经 `useCurrentComponentRegistry` 注册 ComponentHandle（scrollToCard/scrollToColumn/addCard/removeCard/moveCard/collapseColumn/getData），scheduling-renderer-definitions.ts kanban 条目补 componentCapabilityContracts；`component:addCard` 经 registry 可解析。
-- [ ] 22-08：按 Phase 1 裁决落地（默认 design.md 标注 @reserved + 同步 `docs/components/kanban/example.json` 移除 `component:addCard` 用例或改为可运行用法）。
-- [ ] kanban-renderer.test.tsx 扩展（守卫 + 句柄 + 契约）+ scheduling 包 typecheck/test。
+- [x] 22-04：`onColumnAdd` 派发补 `if (!isControlled)` 守卫；controlled 模式只读反馈（沿用同文件 :285/:308/:330/:353 先例）。
+- [x] 22-12：按 gantt/calendar 模式经 `useCurrentComponentRegistry` 注册 ComponentHandle（scrollToCard/scrollToColumn/addCard/removeCard/moveCard/collapseColumn/getData），scheduling-renderer-definitions.ts kanban 条目补 componentCapabilityContracts；`component:addCard` 经 registry 可解析。
+- [x] 22-08：按 Phase 1 裁决落地（默认 design.md 标注 @reserved + 同步 `docs/components/kanban/example.json` 移除 `component:addCard` 用例或改为可运行用法）。
+- [x] kanban-renderer.test.tsx 扩展（守卫 + 句柄 + 契约）+ scheduling 包 typecheck/test。
 
 Exit Criteria:
 
-- [ ] kanban 测试绿（onColumnAdd controlled 不派发、component:\* 可解析）；design.md/example.json 与 live 一致（22-08 收敛）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && test` 绿。
+- [x] kanban 测试绿（onColumnAdd controlled 不派发、component:\* 可解析）；design.md/example.json 与 live 一致（22-08 收敛）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && test` 绿。
 
 ### Phase 3 - calendar + graph 接线（22-05 + 22-06）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/calendar/calendar.tsx`、`packages/flux-renderers-graph/src/graph-renderer.tsx`、各自 `__tests__/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] 22-05：print/exportPNG 句柄 invoke 路径补 `props.reactions.print?.dispatch()`/`exportPNG?.dispatch()`（对齐 gantt.tsx:417-419），或按 Phase 1 裁决标注 @reserved；日历包内保证「ready 即有派发」或「@reserved 显式标注」二态闭合。
-- [ ] 22-06：graph layout prop 同步 effect（值不等才 `setLayoutMode`）+ 测试（layout 从 flow 切 hierarchy 时布局实际变化）。
-- [ ] scheduling/graph 包 typecheck + 测试绿。
+- [x] 22-05：print/exportPNG 句柄 invoke 路径补 `props.reactions.print?.dispatch()`/`exportPNG?.dispatch()`（对齐 gantt.tsx:417-419），或按 Phase 1 裁决标注 @reserved；日历包内保证「ready 即有派发」或「@reserved 显式标注」二态闭合。
+- [x] 22-06：graph layout prop 同步 effect（值不等才 `setLayoutMode`）+ 测试（layout 从 flow 切 hierarchy 时布局实际变化）。
+- [x] scheduling/graph 包 typecheck + 测试绿。
 
 Exit Criteria:
 
-- [ ] calendar print/exportPNG 派发（或 @reserved 标注）与注释一致；graph layout 运行时同步用例绿。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-{scheduling,graph} typecheck && test` 绿。
+- [x] calendar print/exportPNG 派发（或 @reserved 标注）与注释一致；graph layout 运行时同步用例绿。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-{scheduling,graph} typecheck && test` 绿。
 
 ### Phase 4 - gantt 接线（22-07 + 22-10）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/gantt/`（gantt-editor.tsx / gantt-grid.tsx / use-gantt-keyboard.ts / gantt.tsx / gantt-store.ts）、`__tests__/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] 22-10：re-seed effect（gantt.tsx:79-101）补 zoomLevels/cellWidth/taskBarHeight 配置字段同步（taskBarHeight/zoomLevels 需先在 `gantt-store.ts` 补 setter）+ 测试（运行时改 prop → store 更新）。
-- [ ] 22-07：按 Phase 1 裁决——默认新增 onTaskEdit schema 事件（gantt.types.ts 事件契约 + scheduling-renderer-definitions.ts + gantt-editor 保存 / gantt-grid 行内提交 / use-gantt-keyboard Delete 三处派发，带全量 ctx 对齐 CX-12），或 design doc 显式声明「编辑变更不对外派发」。
-- [ ] gantt 测试扩展 + scheduling 包 typecheck/test。
+- [x] 22-10：re-seed effect（gantt.tsx:79-101）补 zoomLevels/cellWidth/taskBarHeight 配置字段同步（taskBarHeight/zoomLevels 需先在 `gantt-store.ts` 补 setter）+ 测试（运行时改 prop → store 更新）。
+- [x] 22-07：按 Phase 1 裁决——默认新增 onTaskEdit schema 事件（gantt.types.ts 事件契约 + scheduling-renderer-definitions.ts + gantt-editor 保存 / gantt-grid 行内提交 / use-gantt-keyboard Delete 三处派发，带全量 ctx 对齐 CX-12），或 design doc 显式声明「编辑变更不对外派发」。
+- [x] gantt 测试扩展 + scheduling 包 typecheck/test。
 
 Exit Criteria:
 
-- [ ] gantt 配置同步用例绿；onTaskEdit（或文档声明）三路径闭合；gantt design.md 与 live 一致。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && test` 绿。
+- [x] gantt 配置同步用例绿；onTaskEdit（或文档声明）三路径闭合；gantt design.md 与 live 一致。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck && test` 绿。
 
 ### Phase 5 - 文档同步与收口
 
-Status: planned
+Status: completed
 Targets: `docs/components/{kanban,gantt,calendar,graph}/design.md`、`example.json`、`docs/logs/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] kanban/gantt/calendar/graph design.md 事件契约/句柄/ownership 描述与 live 实现逐一对齐（含 22-08 @reserved、22-07 契约、22-05 派发或 @reserved、22-12 句柄清单）；`docs/components/kanban/example.json` `component:addCard` 用法同步。
-- [ ] 全仓 grep 复验 phantom 清零（`columnsOrder` 仅 design.md @reserved 语境；`component:addCard` 有注册）。
-- [ ] daily log 收口记录。
+- [x] kanban/gantt/calendar/graph design.md 事件契约/句柄/ownership 描述与 live 实现逐一对齐（含 22-08 @reserved、22-07 契约、22-05 派发或 @reserved、22-12 句柄清单）；`docs/components/kanban/example.json` `component:addCard` 用法同步。
+- [x] 全仓 grep 复验 phantom 清零（`columnsOrder` 仅 design.md @reserved 语境；`component:addCard` 有注册）。
+- [x] daily log 收口记录。
 
 Exit Criteria:
 
-- [ ] design.md 契约描述 ↔ live 代码无 phantom 漂移（grep 可复现）；受影响 e2e（c9-host-surfaces 等）零新增失败。
-- [ ] daily log 记录裁决表与验证结果。
+- [x] design.md 契约描述 ↔ live 代码无 phantom 漂移（grep 可复现）；受影响 e2e（c9-host-surfaces 等）零新增失败。
+- [x] daily log 记录裁决表与验证结果。
 
 ## Draft Review Record
 
@@ -160,16 +172,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 7 条发现全部裁决并落地（实现 or @reserved 文档降级），phantom 契约清零
-- [ ] 全部「实现」项回归测试绿（onColumnAdd 守卫、component:\* 可解析、print/exportPNG 派发、graph layout 同步、onTaskEdit、gantt 配置同步）
-- [ ] design.md/example.json 与 live 代码双向一致
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 项
-- [ ] 受影响的 owner docs 已同步（kanban/gantt/calendar/graph design.md + example.json + daily log）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 7 条发现全部裁决并落地（实现 or @reserved 文档降级），phantom 契约清零
+- [x] 全部「实现」项回归测试绿（onColumnAdd 守卫、component:\* 可解析、print/exportPNG 派发、graph layout 同步、onTaskEdit、gantt 配置同步）
+- [x] design.md/example.json 与 live 代码双向一致
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 项
+- [x] 受影响的 owner docs 已同步（kanban/gantt/calendar/graph design.md + example.json + daily log）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -195,13 +207,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成后填写）
+Status Note: 2026-08-07 收口——7 条发现全数裁决落地（22-04/22-05/22-06/22-07/22-10/22-12 实现 + 回归测试 16 条先红后绿；22-08 @reserved 文档降级，全仓 grep 零代码命中）；5 Phase 全 completed；scheduling 864/864、graph 45/45 单测绿；全量 typecheck/build/lint/test 绿（`pnpm check` 仅 14 个既有 pre-existing oversized 登记文件零新增）；design.md/example.json 与 live 双向一致；closure-audit 独立 fresh session pass 后关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立子 agent）
-- Evidence: —
+- Auditor / Agent: 独立 fresh sub-agent session（task `ses_0274fe9a6ffeU6sohpRW8oaWO6`，不复用执行上下文）
+- Evidence: 逐条 live 核对 7 发现（22-04 kanban-board.tsx:429-431 守卫 / 22-05 calendar.tsx:232,240 dispatch / 22-06 graph-renderer.tsx:330-335 同步 effect / 22-07 gantt.tsx:281,481-483,532-534 三路径 / 22-08 design.md @reserved + packages grep 零命中 / 22-10 gantt.tsx:82-140 配置同步 / 22-12 kanban-handle.ts 注册 + 7 contracts）；fresh 复跑 scheduling 864/864 + graph 45/45 + 受影响 e2e 43 passed 零失败；plan 文本一致性（Phase 全 completed、checklist 全勾、Deferred 分类诚实）；1 条 Minor（roadmap 22-10 残留重复 `[ ]` 行）已由执行 session 清除。Verdict: **approved**。
 
 Follow-up:
 
-- 待关闭时填写
+- 无剩余 plan-owned work。05-xx useScopeSelector 门控 + 其余 P2 条目（02-xx/04-01/09-xx/10-xx/11-xx/12-xx/13-xx/18-xx/20-xx）按 roadmap 后续轮次路由。
