@@ -378,7 +378,9 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
               maskColor="var(--fd-minimap-mask, rgba(255, 255, 255, 0.55))"
             />
           )}
-          {showControls && <Controls className="fd-xyflow-controls" showInteractive={false} />}
+          {showControls && (
+            <Controls className="fd-xyflow-controls" showInteractive={false} position="top-left" />
+          )}
           {props.documentMode === 'tree' && props.onPlusButtonClick && (
             <TreeModeOverlays
               nodes={props.snapshot.doc.nodes}

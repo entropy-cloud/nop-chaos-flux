@@ -1,10 +1,12 @@
 import { memo } from 'react';
 import type { EdgeProps } from '@xyflow/react';
-import { BaseEdge } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer } from '@xyflow/react';
 import type { TreeEdgeRuntimeGeometry } from '@nop-chaos/flow-designer-core';
 import { useEdgeTypeConfig } from '../designer-context.js';
 
 import { CONNECTOR_COLOR, MAX_RENDERED_STROKE, MIN_RENDERED_STROKE } from './dingflow-constants.js';
+
+const BRANCH_LABEL_MAX_WIDTH = 160;
 
 function getTreeGeometry(data: unknown): TreeEdgeRuntimeGeometry | undefined {
   if (!data || typeof data !== 'object') {
@@ -69,12 +71,43 @@ function DingFlowEdgeInner({ sourceX, sourceY, targetX, targetY, data, type }: E
     path = `M${sx} ${sy}L${tx} ${ty}`;
   }
 
+  const branchLabel =
+    geometry?.kind === 'split' &&
+    typeof edgeData.label === 'string' &&
+    edgeData.label.trim().length > 0
+      ? edgeData.label.trim()
+      : undefined;
+
+  let labelX = 0;
+  let labelY = 0;
+  if (branchLabel && geometry?.lineMain !== undefined) {
+    const isTB = geometry.direction !== 'LR';
+    labelX = isTB ? Math.round((sx + tx) / 2) : Math.round(geometry.lineMain);
+    labelY = isTB ? Math.round(geometry.lineMain) : Math.round((sy + ty) / 2);
+  }
+
   return (
-    <BaseEdge
-      path={path}
-      style={edgeStyle}
-      markerEnd={undefined}
-    />
+    <>
+      <BaseEdge
+        path={path}
+        style={edgeStyle}
+        markerEnd={undefined}
+      />
+      {branchLabel ? (
+        <EdgeLabelRenderer>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none nopan nodrag absolute z-[4] flex max-w-[160px] items-center truncate rounded-full border border-[#15bc83] bg-white px-2.5 py-0.5 text-[11px] leading-4 text-[#15bc83]"
+            style={{
+              transform: `translate(${labelX}px, ${labelY}px) translate(-50%, -50%)`,
+              maxWidth: BRANCH_LABEL_MAX_WIDTH,
+            }}
+          >
+            <span className="truncate">{branchLabel}</span>
+          </div>
+        </EdgeLabelRenderer>
+      ) : null}
+    </>
   );
 }
 

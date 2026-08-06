@@ -26,6 +26,7 @@ export function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfi
       history: true,
       grid: true,
       minimap: true,
+      controls: true,
       fitView: true,
       export: true,
       shortcuts: true,

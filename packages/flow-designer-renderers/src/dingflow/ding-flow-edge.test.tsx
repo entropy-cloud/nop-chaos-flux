@@ -106,3 +106,86 @@ describe('DingFlowEdge', () => {
     expect(style.strokeWidth).toBe(2);
   });
 });
+
+describe('DingFlowEdge branch label', () => {
+  function renderEdgeWithLabel(props: Partial<EdgeProps>) {
+    const view = render(
+      <DingFlowEdge
+        id="edge-1"
+        source="node-1"
+        target="node-2"
+        sourceX={0}
+        sourceY={0}
+        targetX={100}
+        targetY={80}
+        selected={false}
+        {...(props as EdgeProps)}
+      />,
+    );
+    return view;
+  }
+
+  it('renders a label pill on the TB split line midpoint with data.label', () => {
+    const { container } = renderEdgeWithLabel({
+      data: {
+        label: '长期请假',
+        __fdTree: { kind: 'split', direction: 'TB', ownerId: 'node-1', branchId: 'b1', lineMain: 40, fanoutCross: 60 },
+      },
+    });
+    const pill = container.querySelector('[data-testid="ding-edge-label-renderer"] div');
+    expect(pill).toBeTruthy();
+    expect(pill?.textContent).toBe('长期请假');
+    expect(pill?.getAttribute('style')).toContain('translate(50px, 40px)');
+    expect(pill?.classList.contains('pointer-events-none')).toBe(true);
+  });
+
+  it('renders the label on the LR split line at the main axis', () => {
+    const { container } = renderEdgeWithLabel({
+      data: {
+        label: '并行分支1',
+        __fdTree: { kind: 'split', direction: 'LR', ownerId: 'node-1', branchId: 'b1', lineMain: 40, fanoutCross: 60 },
+      },
+    });
+    const pill = container.querySelector('[data-testid="ding-edge-label-renderer"] div');
+    expect(pill).toBeTruthy();
+    expect(pill?.textContent).toBe('并行分支1');
+    expect(pill?.getAttribute('style')).toContain('translate(40px, 40px)');
+  });
+
+  it('does not render a label for chain edges', () => {
+    const { container } = renderEdgeWithLabel({
+      data: {
+        label: '不显示',
+        __fdTree: { kind: 'chain', direction: 'TB', ownerId: 'node-1', continuationId: 'node-2' },
+      },
+    });
+    const pill = container.querySelector('[data-testid="ding-edge-label-renderer"] div');
+    expect(pill).toBeNull();
+  });
+
+  it('does not render a label for merge edges', () => {
+    const { container } = renderEdgeWithLabel({
+      data: {
+        label: '不显示',
+        __fdTree: { kind: 'merge', direction: 'TB', ownerId: 'cond', branchId: 'b1', continuationId: 'node-2', lineMain: 40 },
+      },
+    });
+    const pill = container.querySelector('[data-testid="ding-edge-label-renderer"] div');
+    expect(pill).toBeNull();
+  });
+
+  it('does not render a label when data.label is absent or empty', () => {
+    const without = renderEdgeWithLabel({
+      data: { __fdTree: { kind: 'split', direction: 'TB', ownerId: 'node-1', branchId: 'b1', lineMain: 40 } },
+    });
+    expect(without.container.querySelector('[data-testid="ding-edge-label-renderer"] div')).toBeNull();
+
+    const empty = renderEdgeWithLabel({
+      data: {
+        label: '',
+        __fdTree: { kind: 'split', direction: 'TB', ownerId: 'node-1', branchId: 'b1', lineMain: 40 },
+      },
+    });
+    expect(empty.container.querySelector('[data-testid="ding-edge-label-renderer"] div')).toBeNull();
+  });
+});

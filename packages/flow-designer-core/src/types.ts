@@ -226,6 +226,7 @@ export interface DesignerFeatures {
   history?: boolean;
   grid?: boolean;
   minimap?: boolean;
+  controls?: boolean;
   fitView?: boolean;
   export?: boolean;
   shortcuts?: boolean;

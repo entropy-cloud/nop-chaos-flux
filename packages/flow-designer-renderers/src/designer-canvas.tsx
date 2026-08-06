@@ -393,6 +393,8 @@ export function DesignerCanvasContent(props: {
       dispatch({ type: 'addNode', nodeType: nodeTypeId, position });
     },
     documentMode: config.documentMode,
+    showMinimap: config.features?.minimap !== false,
+    showControls: config.features?.controls !== false,
     onPlusButtonClick: config.documentMode === 'tree' ? handlePlusButtonClick : undefined,
   });
 
