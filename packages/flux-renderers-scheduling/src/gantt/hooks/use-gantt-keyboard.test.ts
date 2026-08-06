@@ -364,6 +364,61 @@ describe('useGanttKeyboard', () => {
   });
 });
 
+describe('useGanttKeyboard 22-02 editable-target guard (0711 audit P1)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  const renderWithInput = (options: Record<string, unknown>): HTMLInputElement => {
+    const container = document.createElement('div');
+    const input = document.createElement('input');
+    container.appendChild(input);
+    renderHook(() =>
+      useGanttKeyboard({
+        store: mockStore as any,
+        containerRef: { current: container },
+        selectedTaskId: 't1',
+        onSelectTask: vi.fn(),
+        ...options,
+      }),
+    );
+    return input;
+  };
+
+  it('Delete from an input inside the container does not delete the task and is not preventDefaulted', () => {
+    const onDeleteTask = vi.fn();
+    const input = renderWithInput({ onDeleteTask });
+    const event = new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true });
+    input.dispatchEvent(event);
+    expect(onDeleteTask).not.toHaveBeenCalled();
+    expect(mockStore.deleteTask).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('Backspace from an input inside the container does not delete the task and is not preventDefaulted', () => {
+    const onDeleteTask = vi.fn();
+    const input = renderWithInput({ onDeleteTask });
+    const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true });
+    input.dispatchEvent(event);
+    expect(onDeleteTask).not.toHaveBeenCalled();
+    expect(mockStore.deleteTask).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('Enter from an input inside the container does not open the editor', () => {
+    const onOpenEditor = vi.fn();
+    const input = renderWithInput({ onOpenEditor });
+    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    input.dispatchEvent(event);
+    expect(onOpenEditor).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+});
+
 describe('useGanttKeyboard CR P2-3 / P2-4', () => {
   beforeEach(() => {
     vi.clearAllMocks();

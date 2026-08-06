@@ -345,3 +345,90 @@ describe('Gantt regression — C9 scheduling audit (event ctx / reactions / prop
     });
   });
 });
+
+describe('Gantt regression — 22-01 zoom single-step per click (0711 audit P1)', () => {
+  const zoomBaseProps = {
+    id: 'gantt-test',
+    path: 'test',
+    schema: { type: 'gantt' as const },
+    templateNode: {} as any,
+    node: {} as any,
+    props: {} as any,
+    meta: { visible: true, disabled: false } as any,
+    regions: {} as any,
+    events: {} as any,
+    reactions: {} as any,
+    helpers: {} as any,
+  };
+
+  const zoomProps = {
+    defaultZoom: 'day',
+    zoomLevels: [
+      { key: 'day', label: 'Day', minCellWidth: 40, scales: [{ unit: 'day', step: 1, format: 'MM/DD' }] },
+      { key: 'week', label: 'Week', minCellWidth: 80, scales: [{ unit: 'week', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
+      { key: 'month', label: 'Month', minCellWidth: 60, scales: [{ unit: 'month', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
+    ],
+    tasks: [{ id: 't1', text: 'T1', start: '2026-01-01', end: '2026-01-10' }],
+    links: [],
+  };
+
+  const renderZoomGantt = (events: any, reactions: any) =>
+    render(
+      React.createElement(Gantt, {
+        ...zoomBaseProps,
+        props: zoomProps as any,
+        events,
+        reactions,
+      }),
+    );
+
+  const makeReactions = () => ({
+    zoomIn: { ready: vi.fn(), dispatch: vi.fn() },
+    zoomOut: { ready: vi.fn(), dispatch: vi.fn() },
+    scrollToToday: { ready: vi.fn(), dispatch: vi.fn() },
+    scrollToTask: { ready: vi.fn(), dispatch: vi.fn() },
+  });
+
+  it('single + click from day advances exactly one level (day→week) with single onZoomChange dispatch', async () => {
+    const onZoomChange = vi.fn();
+    const reactions = makeReactions();
+    const { container } = renderZoomGantt({ onZoomChange }, reactions);
+
+    // Day zoom renders a single scale row (day unit only).
+    const scaleRowCount = () => container.querySelectorAll('[data-slot="gantt-scale"] > div').length;
+    expect(scaleRowCount()).toBe(1);
+
+    const toolbarButtons = container.querySelectorAll('[data-slot="gantt-toolbar"] button');
+    (toolbarButtons[1] as HTMLElement).click();
+
+    expect(onZoomChange).toHaveBeenCalledTimes(1);
+    expect(onZoomChange).toHaveBeenCalledWith({ zoom: 'week' }, expect.anything());
+    expect(reactions.zoomIn.dispatch).toHaveBeenCalledTimes(1);
+    expect(reactions.zoomOut.dispatch).not.toHaveBeenCalled();
+
+    // Week zoom renders two scale rows (week + day units) — store.currentZoom is week.
+    await waitFor(() => {
+      expect(scaleRowCount()).toBe(2);
+    });
+  });
+
+  it('two + clicks from day advance day→week→month step by step, one dispatch each', () => {
+    const onZoomChange = vi.fn();
+    const reactions = makeReactions();
+    const { container } = renderZoomGantt({ onZoomChange }, reactions);
+
+    const toolbarButtons = container.querySelectorAll('[data-slot="gantt-toolbar"] button');
+    (toolbarButtons[1] as HTMLElement).click();
+    (toolbarButtons[1] as HTMLElement).click();
+
+    expect(onZoomChange).toHaveBeenCalledTimes(2);
+    expect(onZoomChange.mock.calls[0][0]).toEqual({ zoom: 'week' });
+    expect(onZoomChange.mock.calls[1][0]).toEqual({ zoom: 'month' });
+    expect(reactions.zoomIn.dispatch).toHaveBeenCalledTimes(2);
+
+    // Third click at the top level does nothing — no over-stepping.
+    (toolbarButtons[1] as HTMLElement).click();
+    expect(onZoomChange).toHaveBeenCalledTimes(2);
+    expect(reactions.zoomIn.dispatch).toHaveBeenCalledTimes(2);
+  });
+});

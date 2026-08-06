@@ -30,6 +30,8 @@ import { createUndoStack, pushCommand as pushUndoCommand, undo as undoStackOp, r
 import type { UndoStack, UndoCommandType } from './utils/kanban-undo-stack.js';
 import { addCard, removeCard, moveColumn, getColumns, collectAllTags } from './kanban-helpers.js';
 
+const EMPTY_BOARD = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
+
 export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const { props: resolved, meta, regions, events, helpers } = props;
   const runtime = useRendererRuntime();
@@ -53,7 +55,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   // never happened. Interaction events (onCardClick/onColumnClick) still fire.
   const isControlled = kanbanOwnership === 'controlled';
 
-  const fallbackBoard = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
+  const fallbackBoard = EMPTY_BOARD;
 
   const scopeBoardData = useScopeSelector(
     (data: Record<string, unknown>) => {
@@ -86,6 +88,19 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const boardDataRef = useRef(boardData);
   useEffect(() => { boardDataRef.current = boardData; }, [boardData]);
+
+  // 22-03: re-seed local board state when the schema data prop changes at
+  // runtime (async data-source arrive, scope-driven refresh). New data wins
+  // over local edits — same semantics as the gantt re-seed precedent. The
+  // first render is skipped (ref equals the initial value); every later
+  // reference change, including the first undefined→data arrival, re-seeds.
+  const lastRawDataRef = useRef(rawData);
+  useEffect(() => {
+    if (kanbanOwnership !== 'local') return;
+    if (lastRawDataRef.current === rawData) return;
+    lastRawDataRef.current = rawData;
+    setLocalBoardData(rawData ?? EMPTY_BOARD);
+  }, [rawData, kanbanOwnership, setLocalBoardData]);
 
   const columns = getColumns(boardData);
 

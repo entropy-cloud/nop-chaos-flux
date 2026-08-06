@@ -349,6 +349,38 @@ describe('KanbanColumnHeader', () => {
   });
 });
 
+describe('KanbanBoard 22-03 local-mode data re-seed (0711 audit P1)', () => {
+  it('re-seeds local board data when async data arrives after loading and on later data changes', async () => {
+    const board2: BoardData = {
+      root: { id: 'root', type: 'root', children: ['colX'], data: {}, meta: {} },
+      colX: {
+        id: 'colX', type: 'column', parentId: 'root',
+        children: [],
+        data: { title: 'Arrived' }, meta: {},
+      },
+    };
+    const { container, rerender } = render(
+      <KanbanBoard {...defaultProps} props={{ ...defaultProps.props, loading: true, data: undefined } as any} />,
+    );
+    expect(container.querySelectorAll('.nop-kanban-skeleton').length).toBe(3);
+
+    // Async data arrives: columns must render, empty state must not show.
+    rerender(<KanbanBoard {...defaultProps} props={{ ...defaultProps.props, loading: false, data: sampleBoard } as any} />);
+    await waitFor(() => {
+      expect(container.querySelector('[data-column-id="col1"]')).toBeTruthy();
+      expect(container.querySelector('[data-column-id="col2"]')).toBeTruthy();
+      expect(container.textContent).not.toContain('暂无数据');
+    });
+
+    // A second reference change re-seeds again.
+    rerender(<KanbanBoard {...defaultProps} props={{ ...defaultProps.props, loading: false, data: board2 } as any} />);
+    await waitFor(() => {
+      expect(container.querySelector('[data-column-id="colX"]')).toBeTruthy();
+      expect(container.querySelector('[data-column-id="col1"]')).toBeNull();
+    });
+  });
+});
+
 describe('KanbanBoard regression — C9 scheduling audit', () => {
   it('surfaces filterCard compile errors without crashing and without render-phase setState', async () => {
     const { container } = render(

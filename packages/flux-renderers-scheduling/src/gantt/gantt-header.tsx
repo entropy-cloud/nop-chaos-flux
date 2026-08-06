@@ -20,9 +20,8 @@ export function GanttHeader({ store, toolbarRegion, className, onZoomChange, onZ
     const zooms = store.getAvailableZooms();
     const idx = zooms.findIndex((z) => z.key === store.currentZoom);
     if (idx < zooms.length - 1) {
-      const next = zooms[idx + 1];
-      store.setZoom(next.key);
-      onZoomChange?.(next.key);
+      // Single driver (22-01): the parent's onZoomIn performs store.setZoom +
+      // onZoomChange. Calling them here too would double-dispatch.
       onZoomIn?.();
     }
   };
@@ -31,9 +30,6 @@ export function GanttHeader({ store, toolbarRegion, className, onZoomChange, onZ
     const zooms = store.getAvailableZooms();
     const idx = zooms.findIndex((z) => z.key === store.currentZoom);
     if (idx > 0) {
-      const prev = zooms[idx - 1];
-      store.setZoom(prev.key);
-      onZoomChange?.(prev.key);
       onZoomOut?.();
     }
   };

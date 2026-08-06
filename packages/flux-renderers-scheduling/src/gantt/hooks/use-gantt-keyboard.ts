@@ -45,6 +45,12 @@ export function useGanttKeyboard({
   const handleKeyDown = useEffectEvent((e: KeyboardEvent) => {
     if (!containerRef.current) return;
 
+    // 22-02: keydown from editable targets (inline-edit inputs) bubbles to
+    // the gantt container. Let them through untouched — no preventDefault,
+    // no task deletion, no editor opening.
+    const target = e.target as HTMLElement | null;
+    if (target && target.closest('input, textarea, [contenteditable]')) return;
+
     switch (e.key) {
       case 'ArrowDown':
       case 'ArrowUp': {
