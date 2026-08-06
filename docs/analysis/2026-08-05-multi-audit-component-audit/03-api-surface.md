@@ -28,4 +28,4 @@
 
 ## 维度复核结论
 
-待复核。
+R2 复核完成（2026-08-06，plan `2026-08-06-0556-1` Phase 1），裁决见 `docs/audits/multi-audit-r2-verdicts.md`：03-01 与 01-03 同根，R2 属实——3 个 root 导出符号零外部消费者（rg 实证）；路由 fix-in-this-plan（方案 a：补 JSDoc + docs 条目，保持导出），已落地（JSDoc 于 `crud-renderer-state.ts:264`、`resolve-gap.ts:1`、`progress.tsx:21`）。

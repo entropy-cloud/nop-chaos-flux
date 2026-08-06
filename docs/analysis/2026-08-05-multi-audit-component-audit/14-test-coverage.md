@@ -77,4 +77,4 @@
 
 ## 维度复核结论
 
-已路由（2026-08-06，0529-1 Phase 3 登记区 + `docs/backlog/component-audit-roadmap.md`「扫描发现路由登记」）：14-1 → 0529-2（覆盖缺口修复）；14-2 → 0529-1 Phase 2（fixed，拆分 3 模块）；14-3/14-4（P2 候选）维持待复核（roadmap Follow-up Backlog）。
+已路由（2026-08-06，0529-1 Phase 3 登记区 + `docs/backlog/component-audit-roadmap.md`「扫描发现路由登记」）：14-1 → 0529-2（覆盖缺口修复）；14-2 → 0529-1 Phase 2（fixed，拆分 3 模块）；14-3/14-4（P2 候选）R2 复核完成（plan `2026-08-06-0556-1` Phase 1）：14-3 属实 → 本 plan 内 fixed（innerHeight 原值保存 + try/finally 恢复）；14-4 属实 → successor（flow-designer 域），裁决见 `docs/audits/multi-audit-r2-verdicts.md`。

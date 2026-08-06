@@ -41,12 +41,10 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
   // in the handler body. This is required because the onOpen/onClose dispatch
   // was moved OUT of the setOpenState updater (MA-02): the updater must stay
   // pure so React 19 StrictMode does not double-dispatch on each gesture. The
-  // ref is updated synchronously on every state transition so rapid successive
-  // calls still see the latest intent (matching the old updater `current`).
+  // ref is written synchronously by the handlers on every state transition so
+  // rapid successive calls still see the latest intent (matching the old
+  // updater `current`).
   const openStateRef = React.useRef<SwipeOpenState>('closed');
-  React.useEffect(() => {
-    openStateRef.current = openState;
-  }, [openState]);
 
   // NEW-C7-01: dispatch scope read via a ref so the open/close/action handlers
   // keep stable identities (React Compiler memoization preservation).

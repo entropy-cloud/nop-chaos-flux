@@ -44,4 +44,4 @@
 
 ## 维度复核结论
 
-待复核。
+R2 复核完成（2026-08-06，plan `2026-08-06-0556-1` Phase 1），裁决见 `docs/audits/multi-audit-r2-verdicts.md`：17-1 属实（terminology.md 缺 4 条词条，本 plan 内已补 TB/LR、TreeDocument/TreeDocumentSession、受控当前事件、WorkbenchShell）；17-2 属实（graph payload type 命名空间不一致，successor 登记至 graph G1 plan 链）；17-3 维持观察（keep）。

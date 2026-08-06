@@ -103,4 +103,4 @@
 
 ## 维度复核结论
 
-已路由（2026-08-06，0529-1 Phase 3 登记区 + `docs/backlog/component-audit-roadmap.md`「扫描发现路由登记」）：16-1 → 0529-2（与 01-02 同根因）；16-2 → 0529-2（index.md phantom service + 遗漏补齐）；16-3..16-7（P2 候选）维持待复核（roadmap Follow-up Backlog）。
+已路由（2026-08-06，0529-1 Phase 3 登记区 + `docs/backlog/component-audit-roadmap.md`「扫描发现路由登记」）：16-1 → 0529-2（与 01-02 同根因）；16-2 → 0529-2（index.md phantom service + 遗漏补齐）；16-3..16-7（P2 候选）R2 复核完成（plan `2026-08-06-0556-1` Phase 1），16-3/16-4/16-6/16-7 属实 → 本 plan 内 fixed，16-5 属实 → 本 plan 内 fixed（tree-mode.md 措辞修正），裁决见 `docs/audits/multi-audit-r2-verdicts.md`。

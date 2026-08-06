@@ -42,6 +42,7 @@ timeline / flux-renderers-layout / TimelineSchema（`schemas.ts:295-305`）+ Tim
 ## 组合宿主场景（真实浏览器验证）
 
 - 场景: timeline 展示（mode/orientation/reverse，Phase 3）| 断言: host-timeline（c5-2-host-surfaces.spec.ts:189）——left/alternate mode + data-level 映射 + reverse 顺序反转（Third/Second/First）+ horizontal orientation + **根 marker-only + CSS 驱动布局真机实证**（getComputedStyle display:flex/flexDirection column|row）+ 无 data-ownership 副作用 | 结果: **pass**
+  - **v2 事后注记（2026-08-06，plan `2026-08-06-0556-1` 收口）**：C5.2 审计时 timeline v2（受控当前事件）未落地，「无 data-ownership 副作用」pass 结论基于首版契约；v2（plan `2026-08-04-2030-2`）落地后 `timeline-renderer.tsx:201,243` **恒发 `data-ownership`**（data-ownership 恒发契约，与 c5-2-host-surfaces.spec.ts:201 注释一致），首版「无副作用」结论不再成立。e2e 断言面修正归 CR plan Phase 5（`docs/plans/2026-08-06-0329-1-*.md`），本注记仅记录事实。
 
 ## 修复记录
 

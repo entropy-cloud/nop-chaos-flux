@@ -1,6 +1,5 @@
 const wasmPromises = new Map<string, Promise<void>>();
 
-const DEFAULT_WASM_URL = 'https://unpkg.com/@zxing/library@0.21.3/umd/zxing_reader.wasm';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
@@ -41,7 +40,13 @@ async function fetchWithRetry(
 }
 
 export function prepareWasm(wasmUrl?: string, signal?: AbortSignal, fetcher?: WasmFetcher): Promise<void> {
-  const url = wasmUrl ?? DEFAULT_WASM_URL;
+  // Fail-closed: no bundled default endpoint (INV-1/R5). The caller must
+  // provide an explicit wasmUrl (schema prop); live callers always do
+  // (barcode-scanner-overlay guards `if (wasmUrl)` before calling).
+  if (!wasmUrl) {
+    throw new Error('prepareWasm requires an explicit wasmUrl (fail-closed, no bundled default endpoint)');
+  }
+  const url = wasmUrl;
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   if (!fetcher) {
     throw new Error('prepareWasm requires an injected WasmFetcher (RendererEnv IO boundary)');
@@ -62,6 +67,6 @@ export function resetWasmPromise(url?: string): void {
   if (url) {
     wasmPromises.delete(url);
   } else {
-    wasmPromises.delete(DEFAULT_WASM_URL);
+    wasmPromises.clear();
   }
 }

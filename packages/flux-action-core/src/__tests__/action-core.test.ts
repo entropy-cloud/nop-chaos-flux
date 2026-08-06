@@ -51,8 +51,21 @@ function createMockScope(data: Record<string, unknown>): ScopeRef {
     readOwn: () => ({ ...data }),
     readVisible: () => ({ ...data }),
     materializeVisible: () => ({ ...data }),
-    update: () => {},
-    merge: () => {},
+    update: (path: string, value: unknown) => {
+      const segments = path.split('.');
+      let current: unknown = data;
+      for (const seg of segments.slice(0, -1)) {
+        if (current == null || typeof current !== 'object') return;
+        current = (current as Record<string, unknown>)[seg];
+      }
+      const last = segments[segments.length - 1];
+      if (current != null && typeof current === 'object') {
+        (current as Record<string, unknown>)[last] = value;
+      }
+    },
+    merge: (patch: Record<string, unknown>) => {
+      Object.assign(data, patch);
+    },
   };
 }
 
@@ -315,7 +328,12 @@ describe('withEvaluationBindings', () => {
   it('delegates update and merge to original scope', () => {
     const scope = createMockScope({ x: 1 });
     const wrapped = withEvaluationBindings(scope, { y: 2 });
-    expect(() => wrapped.update('x', 99)).not.toThrow();
-    expect(() => wrapped.merge({ x: 99 })).not.toThrow();
+    wrapped.update('x', 99);
+    expect(wrapped.get('x')).toBe(99);
+    expect(scope.get('x')).toBe(99);
+    wrapped.merge({ x: 88 });
+    expect(wrapped.get('x')).toBe(88);
+    expect(scope.get('x')).toBe(88);
+    expect(wrapped.get('y')).toBe(2);
   });
 });

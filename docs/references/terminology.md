@@ -537,6 +537,30 @@ It keeps a module-level store plus a `Set<listener>`, performs reference-replaci
 
 Architecture in `docs/components/flux-renderers-ai/engine.md` §8.2 and `docs/components/flux-renderers-ai/design.md`.
 
+## `TB` / `LR`
+
+The two tree-mode layout directions used by the DingFlow tree projection (`docs/architecture/flow-designer/tree-mode.md`): `TB` = top-bottom (钉钉 default), `LR` = left-right.
+
+The algorithm uses an axis abstraction instead of hardcoded `x/y`: `cross` is the horizontal expansion axis (`x` for `TB`, `y` for `LR`), `main` is the flow-advance axis (`y` for `TB`, `x` for `LR`). Spacing floors differ per direction (`MIN_SPLIT_GAP` 134 for `TB`, 204 for `LR`).
+
+## `TreeDocument` / `TreeDocumentSession`
+
+The structured tree data model that drives DingFlow tree mode (`docs/architecture/flow-designer/tree-mode.md` §TreeDocument). It is the single source for the tree → graph projection: structural edits, history, host writeback, and link geometry all operate on `TreeDocument` through a validated tree projection session.
+
+The session protocol (`createTreeDesignerCore` + host `changeAction`/ack) separates "dispatch success" from "host confirmation": the success path keeps the queue head until the host acks (see `docs/architecture/flow-designer/tree-mode.md` host session section).
+
+## `受控当前事件`（controlled current event）
+
+The value-driven "current event" contract shared by `timeline`（v2）and `steps`: `value`/`defaultValue`/`valueOwnership`/`valueStatePath`/`onChange` 四件套（timeline）或等价三态分层（steps）。当前事件高亮由 `value` 驱动（`data-state="active"`），点击事件项派发 `onChange` 请求宿主更新 value；解析链 key 匹配优先 → 数值索引 clamp（timeline v2 未匹配 → 无 active，不回退首项）。
+
+`valueOwnership` 三态：`local`（内部 state + onChange 自更新）/ `controlled`（只读 value，onChange 派发不 mutate）/ `scope`（`valueStatePath` 读写，缺路径降级 local controlled + dev 告警）。见 `docs/components/timeline/design.md`、`docs/components/steps/design.md`（同族）。
+
+## `WorkbenchShell`
+
+The shared designer shell component exported from `flux-react` (`packages/flux-react/src/index.tsx` re-export, defined in `workbench/`), used by the flow-designer workbench to own the outer layout: side rails, panel widths, and responsive suppression below tablet/phone breakpoints (`docs/architecture/designer-workbench-shell.md`).
+
+Panel widths are set through shell controls (`setPanelWidths` family), and the panel resize contract is opt-in per family config — never a default of the shared shell.
+
 ## Related Documents
 
 - `docs/references/maintenance-checklist.md`

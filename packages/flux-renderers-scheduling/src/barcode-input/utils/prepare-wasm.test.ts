@@ -49,6 +49,11 @@ describe('prepareWasm', () => {
     expect(globalFetch).not.toHaveBeenCalled();
   });
 
+  it('should throw when no wasmUrl is provided (fail-closed, no bundled default endpoint)', () => {
+    const { fetcher } = makeFetcher();
+    expect(() => prepareWasm(undefined, undefined, fetcher)).toThrow(/explicit wasmUrl/);
+  });
+
   it('should throw when no fetcher is injected (RendererEnv IO boundary)', () => {
     expect(() => prepareWasm(WASM_URL)).toThrow(/injected WasmFetcher/);
   });
@@ -101,18 +106,18 @@ describe('prepareWasm', () => {
     expect(() => prepareWasm(WASM_URL, abortController.signal, fetcher)).toThrow('Aborted');
   });
 
-  it('should only clear default URL when resetWasmPromise is called without argument', async () => {
+  it('should clear all cached entries when resetWasmPromise is called without argument', async () => {
     const { fetcher } = makeFetcher();
 
     const p1 = prepareWasm('https://example.com/a.wasm', undefined, fetcher);
-    const p2 = prepareWasm('https://unpkg.com/@zxing/library@0.21.3/umd/zxing_reader.wasm', undefined, fetcher);
+    const p2 = prepareWasm(WASM_URL, undefined, fetcher);
     expect(p1).toBeDefined();
     expect(p2).toBeDefined();
 
     resetWasmPromise();
     const p3 = prepareWasm('https://example.com/a.wasm', undefined, fetcher);
-    const p4 = prepareWasm('https://unpkg.com/@zxing/library@0.21.3/umd/zxing_reader.wasm', undefined, fetcher);
-    expect(p3).toBe(p1);
+    const p4 = prepareWasm(WASM_URL, undefined, fetcher);
+    expect(p3).not.toBe(p1);
     expect(p4).not.toBe(p2);
   });
 });

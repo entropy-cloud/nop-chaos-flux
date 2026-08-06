@@ -1,3 +1,10 @@
+/**
+ * Gap token map (gap-0 … gap-8) shared with the styling system.
+ *
+ * Exported from the package root barrel as a stable public utility. Currently
+ * referenced by docs only (styling-system.md); kept public as an intentional
+ * maintenance surface (see docs/audits/multi-audit-r2-verdicts.md 01-03).
+ */
 export const GAP_TOKENS: Record<string, string> = {
   none: 'gap-0',
   xs: 'gap-1',

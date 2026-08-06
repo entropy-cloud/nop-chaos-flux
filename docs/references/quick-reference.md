@@ -26,6 +26,8 @@ Code source of truth: `packages/flux-core/src/types/`, `packages/flux-react/src/
 | flux-renderers-mobile                                | @nop-chaos/flux-renderers-mobile        | 7     |
 | flux-renderers-content                               | @nop-chaos/flux-renderers-content       | 7     |
 | flux-renderers-layout                                | @nop-chaos/flux-renderers-layout        | 7     |
+| flux-renderers-ai                                    | @nop-chaos/flux-renderers-ai            | 7     |
+| flux-renderers-graph                                 | @nop-chaos/flux-renderers-graph         | 7     |
 | flux-renderers-scheduling                            | @nop-chaos/flux-renderers-scheduling    | 7     |
 | ui                                                   | @nop-chaos/ui                           | 7     |
 | flux-code-editor                                     | @nop-chaos/flux-code-editor             | 7     |

@@ -258,6 +258,29 @@ describe('SwipeCellRenderer', () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
+  it('suppresses re-dispatch on a rapid successive open gesture for the same target (MA-02 guard)', async () => {
+    const onOpen = vi.fn(() => undefined);
+    const { view } = renderSwipeCell({ threshold: 30, onOpen });
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+
+    fireEvent.touchStart(root, touch(50, 50));
+    fireEvent.touchMove(root, touch(120, 50));
+    fireEvent.touchEnd(root);
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-left',
+      ),
+    );
+
+    // Second gesture fires before React commits; the handler-internal ref guard
+    // (openStateRef.current === target) must suppress the duplicate dispatch.
+    fireEvent.touchStart(root, touch(60, 50));
+    fireEvent.touchMove(root, touch(140, 50));
+    fireEvent.touchEnd(root);
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
   it('does not commit on touchCancel and leaves the cell closed (OA-05)', () => {
     const { view, onOpen } = renderSwipeCell({ threshold: 30 });
     const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;

@@ -17,6 +17,10 @@ export interface NormalizedProgress {
  * - missing/non-finite `max` falls back to 100.
  * - missing/non-finite `value` falls back to 0.
  * - `value` is clamped into [0, max] so the bar can never render past full.
+ *
+ * Exported from the package root barrel as a stable public utility. Currently
+ * consumed only within this package; kept public as an intentional
+ * maintenance surface (see docs/audits/multi-audit-r2-verdicts.md 01-03).
  */
 export function normalizeProgressValue(value: unknown, max: unknown): NormalizedProgress {
   const safeMax =

@@ -86,85 +86,85 @@
 
 ### Phase 1 - R1 P2 候选 R2 复核（Proof）
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/2026-08-05-multi-audit-component-audit/*.md`（8 文件）、`docs/audits/2026-08-05-0656-open-audit-component-audit.md`、live 代码/文档（各 finding 对应路径）
 
 - Item Types: `Proof | Decision`
 
-- [ ] **Proof（R2 复核 01-03/03-01）**：live 核对 3 个 root 导出符号（createCrudNormalizedSourceContext / GAP_TOKENS / normalizeProgressValue）在 src 之外（含 playground、宿主、e2e、其他包）的消费者计数——`rg` 全仓（排除定义文件与 barrel 自身）实证零消费者或发现遗漏消费者；记录复核结论。
-- [ ] **Proof（R2 复核 14-3）**：`g5-g12-g17-data-lifecycle.test.tsx` afterEach 现状核对（cleanup/restoreAllMocks 不含 innerHeight 还原）；确认 `:211` 赋值后无其他 restore 路径。
-- [ ] **Proof（R2 复核 14-4）**：`canvas-bridge.test.tsx` 结构核对——setup/mock 区 `:1-212` 行数与固定空快照 mock 是否如 R1 所述；评估提取 test-support.tsx + 真实 fixture 的成本（>15 分钟？）。
-- [ ] **Proof（R2 复核 15-1）**：`tree-session-impl.ts:310-311` relayoutTree 变更检测实现核对；确认是否非热路径（用户触发）与建议方案（修订计数/浅比较）可行性。
-- [ ] **Proof（R2 复核 15-2）**：`shell-controls.ts:17-24` clamp 对 NaN 行为实证（Math.max(NaN,min) === NaN）+ `designer-action-provider.ts:447-453` 放行路径；确认 fail-closed 缺口属实及修复面大小（Number.isFinite 守卫 + {ok:false} 返回）。
-- [ ] **Proof（R2 复核 15-3）**：`prepare-wasm-utils.ts:3` 默认 URL 可达性核对——`wasmUrl` 未提供且 fetcher 注入时是否真的会请求 unpkg；对照 barcode-input 调用点（`barcode-input.tsx` 是否总是传 wasmUrl）。
-- [ ] **Proof（R2 复核 16-3/16-4/16-5/16-6/16-7）**：逐条核对文档与 live 差异（quick-reference 表缺行、timeline design.md:27-28 残留、tree-mode.md:222 与 index.ts:9-10、roadmap:63 计数、plan 453:3 日期）——已在本 plan Current Baseline 初核，R2 以文件当前内容终核。
-- [ ] **Proof（R2 复核 17-1/17-2）**：terminology.md 缺词条核对（rg TB/WorkbenchShell/TreeDocument/受控当前事件）；graph-renderer.tsx:152-157 payload type 命名与 renderer-runtime.md:697-700 命名空间约定核对。
-- [ ] **Proof（R2 复核 19-3）**：`designer-page-body.tsx:193-200` JSON.parse catch→null 路径核对；确认 env.monitor/reportHostIssue 在 designer-renderers 的可用性（同包其他错误路径用法）。
-- [ ] **Proof（R2 复核 23-3）**：`action-core.test.ts:315-320` 断言面核对；确认 `withEvaluationBindings` 委托契约（update/merge 应落到原 scope）与修复断言面（`wrapped.get('x') === 99`、bindings 可见）。
-- [ ] **Decision（路由总表）**：基于 R2 结论生成路由分类——`fix-in-this-plan`（低成本、mission 授权面内）/ `keep`（记录非缺陷理由）/ `successor`（flow-designer/graph 域或结构性变更，登记 successor 路径）；逐条写理由，零未分类。
+- [x] **Proof（R2 复核 01-03/03-01）**：live 核对 3 个 root 导出符号（createCrudNormalizedSourceContext / GAP_TOKENS / normalizeProgressValue）在 src 之外（含 playground、宿主、e2e、其他包）的消费者计数——`rg` 全仓（排除定义文件与 barrel 自身）实证零消费者或发现遗漏消费者；记录复核结论。
+- [x] **Proof（R2 复核 14-3）**：`g5-g12-g17-data-lifecycle.test.tsx` afterEach 现状核对（cleanup/restoreAllMocks 不含 innerHeight 还原）；确认 `:211` 赋值后无其他 restore 路径。
+- [x] **Proof（R2 复核 14-4）**：`canvas-bridge.test.tsx` 结构核对——setup/mock 区 `:1-212` 行数与固定空快照 mock 是否如 R1 所述；评估提取 test-support.tsx + 真实 fixture 的成本（>15 分钟？）。
+- [x] **Proof（R2 复核 15-1）**：`tree-session-impl.ts:310-311` relayoutTree 变更检测实现核对；确认是否非热路径（用户触发）与建议方案（修订计数/浅比较）可行性。
+- [x] **Proof（R2 复核 15-2）**：`shell-controls.ts:17-24` clamp 对 NaN 行为实证（Math.max(NaN,min) === NaN）+ `designer-action-provider.ts:447-453` 放行路径；确认 fail-closed 缺口属实及修复面大小（Number.isFinite 守卫 + {ok:false} 返回）。
+- [x] **Proof（R2 复核 15-3）**：`prepare-wasm-utils.ts:3` 默认 URL 可达性核对——`wasmUrl` 未提供且 fetcher 注入时是否真的会请求 unpkg；对照 barcode-input 调用点（`barcode-input.tsx` 是否总是传 wasmUrl）。
+- [x] **Proof（R2 复核 16-3/16-4/16-5/16-6/16-7）**：逐条核对文档与 live 差异（quick-reference 表缺行、timeline design.md:27-28 残留、tree-mode.md:228 与 index.ts:9-10、roadmap:63 计数、plan 453:3 日期）——已在本 plan Current Baseline 初核，R2 以文件当前内容终核。
+- [x] **Proof（R2 复核 17-1/17-2）**：terminology.md 缺词条核对（rg TB/WorkbenchShell/TreeDocument/受控当前事件）；graph-renderer.tsx:152-157 payload type 命名与 renderer-runtime.md:697-700 命名空间约定核对。
+- [x] **Proof（R2 复核 19-3）**：`designer-page-body.tsx:193-200` JSON.parse catch→null 路径核对；确认 env.monitor/reportHostIssue 在 designer-renderers 的可用性（同包其他错误路径用法）。
+- [x] **Proof（R2 复核 23-3）**：`action-core.test.ts:315-320` 断言面核对；确认 `withEvaluationBindings` 委托契约（update/merge 应落到原 scope）与修复断言面（`wrapped.get('x') === 99`、bindings 可见）。
+- [x] **Decision（路由总表）**：基于 R2 结论生成路由分类——`fix-in-this-plan`（低成本、mission 授权面内）/ `keep`（记录非缺陷理由）/ `successor`（flow-designer/graph 域或结构性变更，登记 successor 路径）；逐条写理由，零未分类。
 
 Exit Criteria:
 
-- [ ] `docs/audits/multi-audit-r2-verdicts.md` 存在：15 条 R1 P2 候选每条有 R2 结论（属实/已修复/误报）+ file:line + 路由（fix-in-this-plan/keep/successor + 理由），零悬挂。
-- [ ] 各复核结论与 live 文件内容一致（可复核：裁决表引用的路径/行号存在）。
+- [x] `docs/audits/multi-audit-r2-verdicts.md` 存在：15 条 R1 P2 候选每条有 R2 结论（属实/已修复/误报）+ file:line + 路由（fix-in-this-plan/keep/successor + 理由），零悬挂。
+- [x] 各复核结论与 live 文件内容一致（可复核：裁决表引用的路径/行号存在）。
 
 ### Phase 2 - F3 + F4 修复（Fix + Proof）
 
-Status: planned
+Status: completed
 Targets: `missions/component-audit.json`、`packages/flux-renderers-mobile/src/swipe-cell.tsx`、`packages/flux-renderers-mobile/src/swipe-cell.test.tsx`（或既有测试文件）
 
 - Item Types: `Fix | Proof`
 
-- [ ] **Fix（F3）**：`missions/component-audit.json:3` description 组件计数 112 → 113。
-- [ ] **Proof（F4 前置）**：确认 `setOpenState` 调用点全文件仅 2 处（`:130`、`:143`，rg 实证；`:38` 为 useState 声明、`:42` 为注释不计数）且均在同一 handler 内先写 `openStateRef`；确认无第三条状态变更路径（含外部受控/事件回调侧）；确认 swipe-cell 测试已有「快速连续手势守卫」或「StrictMode 双调用不重复派发」用例（无则 Phase 2 补，MA-02 语义）。
-- [ ] **Fix（F4）**：移除 `swipe-cell.tsx:41-50` 冗余 useEffect（或保留但注释修正为「ref 由 handler 同步写，effect 无承担职责」——以 R2 裁定为准，默认移除）；MA-02 语义由 handler 内同步写 ref 保持。
-- [ ] **Proof（F4 回归）**：swipe-cell 相关测试（`swipe-cell.test.tsx`、`__tests__/mobile-markers-contract.test.tsx`、`__tests__/event-and-i18n-contract.test.tsx`）全绿；mobile 包 `pnpm --filter @nop-chaos/flux-renderers-mobile test` 通过。
+- [x] **Fix（F3）**：`missions/component-audit.json:3` description 组件计数 112 → 113。
+- [x] **Proof（F4 前置）**：确认 `setOpenState` 调用点全文件仅 2 处（`:130`、`:143`，rg 实证；`:38` 为 useState 声明、`:42` 为注释不计数）且均在同一 handler 内先写 `openStateRef`；确认无第三条状态变更路径（含外部受控/事件回调侧）；确认 swipe-cell 测试已有「快速连续手势守卫」或「StrictMode 双调用不重复派发」用例（无则 Phase 2 补，MA-02 语义）。
+- [x] **Fix（F4）**：移除 `swipe-cell.tsx:41-50` 冗余 useEffect（或保留但注释修正为「ref 由 handler 同步写，effect 无承担职责」——以 R2 裁定为准，默认移除）；MA-02 语义由 handler 内同步写 ref 保持。
+- [x] **Proof（F4 回归）**：swipe-cell 相关测试（`swipe-cell.test.tsx`、`__tests__/mobile-markers-contract.test.tsx`、`__tests__/event-and-i18n-contract.test.tsx`）全绿；mobile 包 `pnpm --filter @nop-chaos/flux-renderers-mobile test` 通过。
 
 Exit Criteria:
 
-- [ ] `rg "112 个注册组件" missions/component-audit.json` 零命中（已 113）。
-- [ ] `swipe-cell.tsx` 无 effect-mirror 冗余（或注释已修正）；`setOpenState` 全路径核对记录在案；mobile 包测试全绿。
+- [x] `rg "112 个注册组件" missions/component-audit.json` 零命中（已 113）。
+- [x] `swipe-cell.tsx` 无 effect-mirror 冗余（或注释已修正）；`setOpenState` 全路径核对记录在案；mobile 包测试全绿。
 
 ### Phase 3 - 低成本 P2 修复落地（Fix + Proof）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/__tests__/g5-g12-g17-data-lifecycle.test.tsx`、`packages/flux-action-core/src/__tests__/action-core.test.ts`、`docs/references/quick-reference.md`、`docs/components/timeline/design.md`、`docs/audits/per-component/timeline.md`、`docs/backlog/component-audit-roadmap.md`、`docs/plans/453-dingflow-single-tree-layout-unification-plan.md`、`docs/references/terminology.md`、`packages/flux-renderers-scheduling/src/barcode-input/utils/prepare-wasm-utils.ts`（按 R2 裁决）
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] **Fix（14-3）**：`g5-g12-g17-data-lifecycle.test.tsx:211` innerHeight 原值保存 + afterEach（或同测试块尾部）恢复；既有断言不变。
-- [ ] **Fix（23-3）**：`action-core.test.ts:315-320` 断言强化——`wrapped.update('x', 99)` 后 `wrapped.get('x') === 99`（原 scope 真被委托）+ merge 同理 + bindings 可见正向断言；标题与断言一致。
-- [ ] **Fix（16-3）**：`quick-reference.md:14-44` Package Directory Map 补 flux-renderers-ai（layer 7）与 flux-renderers-graph（layer 7）两行（与 live 包名/别名一致）。
-- [ ] **Fix（16-4）**：`timeline/design.md:27-28` 「待实现」改「已实现」并引用 timeline-v2 plan（`2026-08-04-2030-2`）；`docs/audits/per-component/timeline.md:44` 补 v2 事后注记（data-ownership 恒发契约）；e2e 断言面归 CR Phase 5，本 plan 不触碰。
-- [ ] **Fix（16-6）**：roadmap `:63` 组件计数补 graph 说明——「组件合计 113（component-audit 逐卡范围）+ graph 1（flux-renderers-graph，G1 plan `2026-08-04-2030-1` 独立闭环，非本路线逐卡范围），注册合计 114」；同口径同步 `:109` 组件清单节。
-- [ ] **Fix（16-7）**：plan 453 `:3` Last Reviewed 2026-08-05 → 2026-08-06。
-- [ ] **Fix（17-1）**：`terminology.md` 补 4-6 条词条（TB/LR、受控当前事件、WorkbenchShell、TreeDocument/TreeDocumentSession，或按 live 用法为准），条目风格与既有词条一致。
-- [ ] **Fix/Decision（15-3）**：按 R2 结论处理 barcode 默认 URL——候选：a) 删除 DEFAULT_WASM_URL 改「未提供 wasmUrl 且未配置默认 → throw（fail-closed）」（若调用点恒传 wasmUrl，行为不变）；b) 保留默认值但补文档化注释 + 架构文档登记（R5 缺口）；c) keep（若 R2 证明不可达且宿主无义务）。裁决记录 + 相应落地 + focused 测试（若 a，先红后绿）。
-- [ ] **Fix/Decision（01-03/03-01 API 表面）**：按 R2 结论裁决——a) 补 JSDoc + docs 条目（保持导出，成本低）；b) 从 root barrel 摘除（结构性，ask-first 边界，需记录理由 + 确认无外部消费者后执行）；c) keep（记录不规范性）。默认 a（非结构性），b 需显式理由记录。
-- [ ] **Decision（14-4/15-1/15-2/16-5/17-2/19-3）**：flow-designer/graph 域项按 R2 结论路由——纯文档低成本项（16-5 tree-mode.md 措辞修正「root export 但渲染器须经 core 会话间接使用」若裁属实）本 plan 内修；代码修复项（14-4 setup 提取、15-1 优化、15-2 NaN 守卫、17-2 payload 命名、19-3 JSON.parse 结构化失败）归 successor（flow-designer/graph owner plan 链），登记 successor 路径 + 理由。
-- [ ] **Proof（局部验证）**：受影响包局部测试/typecheck——data 包（14-3）、action-core 包（23-3）、scheduling 包（15-3，若动代码）focused 测试绿。
+- [x] **Fix（14-3）**：`g5-g12-g17-data-lifecycle.test.tsx:211` innerHeight 原值保存 + afterEach（或同测试块尾部）恢复；既有断言不变。
+- [x] **Fix（23-3）**：`action-core.test.ts:315-320` 断言强化——`wrapped.update('x', 99)` 后 `wrapped.get('x') === 99`（原 scope 真被委托）+ merge 同理 + bindings 可见正向断言；标题与断言一致。
+- [x] **Fix（16-3）**：`quick-reference.md:14-44` Package Directory Map 补 flux-renderers-ai（layer 7）与 flux-renderers-graph（layer 7）两行（与 live 包名/别名一致）。
+- [x] **Fix（16-4）**：`timeline/design.md:27-28` 「待实现」改「已实现」并引用 timeline-v2 plan（`2026-08-04-2030-2`）；`docs/audits/per-component/timeline.md:44` 补 v2 事后注记（data-ownership 恒发契约）；e2e 断言面归 CR Phase 5，本 plan 不触碰。
+- [x] **Fix（16-6）**：roadmap `:63` 组件计数补 graph 说明——「组件合计 113（component-audit 逐卡范围）+ graph 1（flux-renderers-graph，G1 plan `2026-08-04-2030-1` 独立闭环，非本路线逐卡范围），注册合计 114」；同口径同步 `:109` 组件清单节。
+- [x] **Fix（16-7）**：plan 453 `:3` Last Reviewed 2026-08-05 → 2026-08-06。
+- [x] **Fix（17-1）**：`terminology.md` 补 4-6 条词条（TB/LR、受控当前事件、WorkbenchShell、TreeDocument/TreeDocumentSession，或按 live 用法为准），条目风格与既有词条一致。
+- [x] **Fix/Decision（15-3）**：按 R2 结论处理 barcode 默认 URL——候选：a) 删除 DEFAULT_WASM_URL 改「未提供 wasmUrl 且未配置默认 → throw（fail-closed）」（若调用点恒传 wasmUrl，行为不变）；b) 保留默认值但补文档化注释 + 架构文档登记（R5 缺口）；c) keep（若 R2 证明不可达且宿主无义务）。裁决记录 + 相应落地 + focused 测试（若 a，先红后绿）。
+- [x] **Fix/Decision（01-03/03-01 API 表面）**：按 R2 结论裁决——a) 补 JSDoc + docs 条目（保持导出，成本低）；b) 从 root barrel 摘除（结构性，ask-first 边界，需记录理由 + 确认无外部消费者后执行）；c) keep（记录不规范性）。默认 a（非结构性），b 需显式理由记录。
+- [x] **Decision（14-4/15-1/15-2/16-5/17-2/19-3）**：flow-designer/graph 域项按 R2 结论路由——纯文档低成本项（16-5 tree-mode.md 措辞修正「root export 但渲染器须经 core 会话间接使用」若裁属实）本 plan 内修；代码修复项（14-4 setup 提取、15-1 优化、15-2 NaN 守卫、17-2 payload 命名、19-3 JSON.parse 结构化失败）归 successor（flow-designer/graph owner plan 链），登记 successor 路径 + 理由。
+- [x] **Proof（局部验证）**：受影响包局部测试/typecheck——data 包（14-3）、action-core 包（23-3）、scheduling 包（15-3，若动代码）focused 测试绿。
 
 Exit Criteria:
 
-- [ ] 14-3/16-3/16-4/16-6/16-7/17-1 修复落地且文件内容可核验（live diff 可见）。
-- [ ] 23-3 断言强化测试全绿（断言正确行为，非 not-throw）；15-3/01-03 按裁决落地 + 理由记录。
-- [ ] 16-5 若裁修复则已修正；其余 flow-designer/graph 代码项有 successor 登记，零静默。
+- [x] 14-3/16-3/16-4/16-6/16-7/17-1 修复落地且文件内容可核验（live diff 可见）。
+- [x] 23-3 断言强化测试全绿（断言正确行为，非 not-throw）；15-3/01-03 按裁决落地 + 理由记录。
+- [x] 16-5 若裁修复则已修正；其余 flow-designer/graph 代码项有 successor 登记，零静默。
 
 ### Phase 4 - 裁决表回写与 roadmap 收口（Follow-up）
 
-Status: planned
+Status: completed
 Targets: `docs/audits/multi-audit-r2-verdicts.md`、`docs/backlog/component-audit-roadmap.md`（Follow-up Backlog 节）、`docs/logs/2026/08-06.md`、`docs/analysis/2026-08-05-multi-audit-component-audit/*.md`（R1 态回写）
 
 - Item Types: `Fix | Follow-up`
 
-- [ ] **Fix（裁决表终态）**：`multi-audit-r2-verdicts.md` 每条补终态（fixed + commit 引用 / keep + 理由 / successor + 路径），与 Phase 1/3 结果一致。
-- [ ] **Follow-up（roadmap）**：roadmap Follow-up Backlog 三条勾选为 `[x]`（F3/F4/R1 P2 候选），注明本 plan 路径。
-- [ ] **Follow-up（R1 态回写）**：8 个分析维度文件「维度复核结论: 待复核」回写为「R2 复核完成，裁决见 multi-audit-r2-verdicts.md」（执行期顺手完成）。
-- [ ] **Fix（daily log）**：`docs/logs/2026/08-06.md` 记录本 plan 收口（F3/F4 修复、R2 裁决摘要、修复清单、测试计数）。
+- [x] **Fix（裁决表终态）**：`multi-audit-r2-verdicts.md` 每条补终态（fixed + commit 引用 / keep + 理由 / successor + 路径），与 Phase 1/3 结果一致。
+- [x] **Follow-up（roadmap）**：roadmap Follow-up Backlog 三条勾选为 `[x]`（F3/F4/R1 P2 候选），注明本 plan 路径。
+- [x] **Follow-up（R1 态回写）**：8 个分析维度文件「维度复核结论: 待复核」回写为「R2 复核完成，裁决见 multi-audit-r2-verdicts.md」（执行期顺手完成）。
+- [x] **Fix（daily log）**：`docs/logs/2026/08-06.md` 记录本 plan 收口（F3/F4 修复、R2 裁决摘要、修复清单、测试计数）。
 
 Exit Criteria:
 
-- [ ] roadmap Follow-up Backlog 三条 `[x]`；裁决表零悬挂；daily log 记录存在。
+- [x] roadmap Follow-up Backlog 三条 `[x]`；裁决表零悬挂；daily log 记录存在。
 
 ## Draft Review Record
 
@@ -179,18 +179,18 @@ Exit Criteria:
 
 > 关闭条件：本 section 所有条目 + 每个 Phase Exit Criteria 全部 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] F3 mission json 计数 112 → 113 已落地（Phase 2 Exit）
-- [ ] F4 swipe-cell effect-mirror 冗余已清理，MA-02 守卫语义保持，mobile 包测试全绿（Phase 2 Exit）
-- [ ] 15 条 R1 P2 候选全部有 R2 结论 + 路由 + 终态（fixed/keep/successor），裁决表零悬挂（Phase 1/4 Exit）
-- [ ] 低成本修复项（14-3/16-3/16-4/16-6/16-7/17-1/23-3 + 15-3/01-03 裁决）全部落地或显式登记（Phase 3 Exit）
-- [ ] roadmap Follow-up Backlog 三条勾选；daily log 记录存在（Phase 4 Exit）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope confirmed live defect（R2 确认属实的项均已修复或显式 successor 登记）
-- [ ] 受影响的 owner docs（mission json、quick-reference、timeline design.md、roadmap、terminology、plan 453、daily log、分析文件）已同步到 live baseline
+- [x] F3 mission json 计数 112 → 113 已落地（Phase 2 Exit）
+- [x] F4 swipe-cell effect-mirror 冗余已清理，MA-02 守卫语义保持，mobile 包测试全绿（Phase 2 Exit）
+- [x] 15 条 R1 P2 候选全部有 R2 结论 + 路由 + 终态（fixed/keep/successor），裁决表零悬挂（Phase 1/4 Exit）
+- [x] 低成本修复项（14-3/16-3/16-4/16-6/16-7/17-1/23-3 + 15-3/01-03 裁决）全部落地或显式登记（Phase 3 Exit）
+- [x] roadmap Follow-up Backlog 三条勾选；daily log 记录存在（Phase 4 Exit）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope confirmed live defect（R2 确认属实的项均已修复或显式 successor 登记）
+- [x] 受影响的 owner docs（mission json、quick-reference、timeline design.md、roadmap、terminology、plan 453、daily log、分析文件）已同步到 live baseline
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 

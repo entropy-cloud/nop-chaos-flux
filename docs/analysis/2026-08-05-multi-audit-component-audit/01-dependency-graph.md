@@ -59,4 +59,4 @@
 
 ## 维度复核结论
 
-已路由（2026-08-06，0529-1 Phase 3 登记区 + `docs/backlog/component-audit-roadmap.md`「扫描发现路由登记」）：01-01 → 0529-1 Phase 1（fixed，gate exit 0）；01-02 → 0529-2（与 16-1 同根因）；01-03（P2 候选）维持待复核（roadmap Follow-up Backlog）。
+已路由（2026-08-06，0529-1 Phase 3 登记区 + `docs/backlog/component-audit-roadmap.md`「扫描发现路由登记」）：01-01 → 0529-1 Phase 1（fixed，gate exit 0）；01-02 → 0529-2（与 16-1 同根因）；01-03（P2 候选）R2 复核完成（plan `2026-08-06-0556-1` Phase 1），属实 → fix-in-this-plan（JSDoc + docs 条目），裁决见 `docs/audits/multi-audit-r2-verdicts.md`。

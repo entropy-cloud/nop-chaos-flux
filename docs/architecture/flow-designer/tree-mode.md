@@ -30,7 +30,7 @@ Tree 模式和 graph 模式共享同一个 React Flow 画布，但 DingFlow 一�
 - graph 模式允许自由创建和重连 edges
 - tree 模式必须通过结构化命令编辑 sequence、branch group 和 continuation，不应把 React Flow 暴露成自由 graph 编辑器
 
-**唯一布局算法**：tree mode 的全部路径（初始 mount、每次结构命令、host 替换、显式 relayout）只调用一个 core-private 的 `projectAndLayoutTree()`。ELK 只服务 graph mode，tree mode 不再调用 ELK 或任何图启发式布局。
+**唯一布局算法**：tree mode 的全部路径（初始 mount、每次结构命令、host 替换、显式 relayout）只调用一个 core 会话内单一入口 `projectAndLayoutTree()`（root export，但仅供 core 会话内部接线使用）。ELK 只服务 graph mode，tree mode 不再调用 ELK 或任何图启发式布局。
 
 ### Branch Selection
 
@@ -212,7 +212,7 @@ Tree → React Flow 的投影是 tree mode 的核心桥梁，且是**唯一**桥
 
 ```
 TreeDocument
-  → projectAndLayoutTree(tree, normalizedConfig)   // core-private，单一入口
+  → projectAndLayoutTree(tree, normalizedConfig)   // root export，core 会话单一入口
   → { ok: true, view: { tree, document } } | { ok: false, error }
   → React Flow 渲染
 ```
@@ -225,7 +225,7 @@ TreeDocument
 4. 生成 projected nodes/edges，并为每条边写入只读 runtime 几何 `__fdTree`
 5. 校验 tree edge decoration 白名单
 
-`projectAndLayoutTree` 不是 root export；renderer 只能通过 `createTreeDesignerCore`、tree commands、`replaceTreeFromHost` 与 `relayoutTree` 间接触发。`createDesignerCore(GraphDocument, …)` 收到 `documentMode: 'tree'` 时抛 `tree-core-factory-required`。
+`projectAndLayoutTree` 是 `flow-designer-core` 的 root export（`src/index.ts:9-10` 连同 `validateTreeDocument`/`canonicalizeTreeDocument`/`isJsonSafeTreePayload`/`resolveTreeNodeFootprint` 一起显式导出），但渲染器**必须**经 `createTreeDesignerCore` 会话间接使用——tree commands、`replaceTreeFromHost` 与 `relayoutTree` 间接触发，不直接导入调用。`createDesignerCore(GraphDocument, …)` 收到 `documentMode: 'tree'` 时抛 `tree-core-factory-required`。
 
 ### Hidden Group Merge
 

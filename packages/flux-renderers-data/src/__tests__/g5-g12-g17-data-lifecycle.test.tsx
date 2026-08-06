@@ -208,15 +208,19 @@ describe('G5: infinite scroll fills a short first page (continuation)', () => {
     const sentinel = document.querySelector('[data-slot="list-infinite-sentinel"]')!;
     sentinel.getBoundingClientRect = () =>
       ({ top: 100, bottom: 101, left: 0, right: 10, width: 10, height: 1 }) as DOMRect;
+    const previousInnerHeight = window.innerHeight;
     window.innerHeight = 600;
-
-    expect(triggerListIntersection()).toBe(true);
-    // pageSize 3, total 12 -> 4 pages. A single intersection auto-continues through
-    // pages 2..4 (3 extra loads) until hasMore becomes false and the sentinel leaves.
-    await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(3));
-    await waitFor(() =>
-      expect(document.querySelector('[data-slot="list-infinite-sentinel"]')).toBeNull(),
-    );
+    try {
+      expect(triggerListIntersection()).toBe(true);
+      // pageSize 3, total 12 -> 4 pages. A single intersection auto-continues through
+      // pages 2..4 (3 extra loads) until hasMore becomes false and the sentinel leaves.
+      await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(3));
+      await waitFor(() =>
+        expect(document.querySelector('[data-slot="list-infinite-sentinel"]')).toBeNull(),
+      );
+    } finally {
+      window.innerHeight = previousInnerHeight;
+    }
   });
 });
 

@@ -261,6 +261,14 @@ export function normalizeCrudSourceValue(value: unknown): CrudResolvedSource {
   };
 }
 
+/**
+ * Normalizes a CRUD source value into a compact source context
+ * (rows/total/page/pageSize) for host-side consumption.
+ *
+ * Exported from the package root barrel as a stable public utility. Currently
+ * has no external consumers; kept public as an intentional maintenance
+ * surface (see docs/audits/multi-audit-r2-verdicts.md 01-03).
+ */
 export function createCrudNormalizedSourceContext(value: unknown): CrudNormalizedSourceContext {
   const normalized = normalizeCrudSourceValue(value);
   return {
