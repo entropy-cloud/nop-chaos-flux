@@ -70,7 +70,7 @@ Targets: 全仓（31-32 包）
 
 - [x] **Proof**：`pnpm typecheck`、`pnpm build`、`pnpm lint`、`pnpm test` 全量依次运行，记录包数/task 数/测试计数（与 CR/p2p3 收口状态一致）。
 - [x] **Fix（仅回归）**：若出现失败，定位是否由 CR/p2p3 引入——回归则最小修复 + 回归测试；非本路线引入则与 clean HEAD 对照归因并记录（不静默）。
-- [x] `pnpm check`（repo-wide 静态检查）——先记录既有 pre-existing red 集（如 `check:oversized-code-files` 14 文件 >700 行，08-04 VERIFY 轮记录在案，归 CR/CG 治理），再核对新增命中；新增命中则处理或记录。
+- [x] `pnpm check`（repo-wide 静态检查）——先记录既有 pre-existing red 真实清单（`check:oversized-code-files` 16 文件、`check:workspace-manifest-deps` 5 ERROR 等，实测清单与数字以 `2026-08-06-0529-1` Phase 2 产出为准），再核对新增命中；新增命中则处理或记录。**校正注记（0529-1 收口后）**：0529-1 已修复 manifest-deps（exit 0）并拆分 2 个 mission 自引/自增命中，当前 pre-existing red = oversized 14 既有文件（命名清单见 `docs/logs/2026/08-06.md`）+ 0 新增；full-green 承诺口径以「已登记 pre-existing red 清单之外的零新增命中」为准（AGENTS.md 验证清单同步口径）。
 
 Exit Criteria:
 

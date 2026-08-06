@@ -77,4 +77,4 @@
 
 ## 维度复核结论
 
-待复核。
+已路由（2026-08-06，0529-1 Phase 3 登记区 + `docs/backlog/component-audit-roadmap.md`「扫描发现路由登记」）：14-1 → 0529-2（覆盖缺口修复）；14-2 → 0529-1 Phase 2（fixed，拆分 3 模块）；14-3/14-4（P2 候选）维持待复核（roadmap Follow-up Backlog）。

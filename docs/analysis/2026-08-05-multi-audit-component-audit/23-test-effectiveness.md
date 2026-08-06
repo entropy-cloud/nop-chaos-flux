@@ -63,4 +63,4 @@
 
 ## 维度复核结论
 
-待复核。
+已路由（2026-08-06，0529-1 Phase 3 登记区 + `docs/backlog/component-audit-roadmap.md`「扫描发现路由登记」）：23-1/23-2 R2 复核确认属实 → 已追加 CR plan Phase 3 checklist（0529-1 Phase 4 吸收机制）；23-3（P2 候选）维持待复核（roadmap Follow-up Backlog）。

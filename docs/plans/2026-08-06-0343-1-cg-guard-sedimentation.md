@@ -34,7 +34,7 @@
 
 - **不做产品代码变更**：不动 renderers/runtime/core 行为；本 plan 唯一的代码落点是 `scripts/audit/` 工具脚本与根 package.json 脚本注册（若评估落地）。
 - **不重开审计**：不重跑 18 维、不重审已 closed 卡、不为新发现开新卡（新发现若出现，记录并归 successor，不静默吞掉）。
-- **不处理 `pnpm check` 既有 pre-existing red**（如 `check:oversized-code-files` 14 文件 >700 行，CV Phase 1 记录在案）——治理归属 successor，非本 plan 修复面。
+- **不处理 `pnpm check` 既有 pre-existing red**（如 `check:oversized-code-files` >700 行超限文件——真实清单与数字以 `2026-08-06-0529-1` Phase 2 修正后为准：14 既有文件 + 0 新增（mission 自引/自增 2 命中已由 0529-1 拆分），命名清单见 `docs/logs/2026/08-06.md`）——治理归属 successor，非本 plan 修复面。
 - **不重构 CI/管道**：不做 pipeline 级改动，工具升级限定在 scripts + package.json 脚本层面。
 - **不创建新 skill 提示词**：审计方法沉淀走 checklist v2 + lessons（skills 归独立维护，同 MG 先例）。
 
@@ -181,7 +181,7 @@ Exit Criteria:
 
 ## Deferred But Adjudicated
 
-### `pnpm check` 既有 pre-existing red（check:oversized-code-files 14 文件等）
+### `pnpm check` 既有 pre-existing red（check:oversized-code-files 14 既有文件等，数字以 0529-1 修正后为准）
 
 - Classification: `out-of-scope improvement`
 - Why Not Blocking Closure: 属治理债而非本 mission 引入的缺陷；CV Phase 1 已记录对照基线并标注"归 CR/CG 治理"——本条目将其精化：治理归属独立 successor（非 CG 本 plan 范围，CG 只做 guard 沉淀），与 CV 记录不矛盾；与 component-audit 结果面无耦合。
@@ -208,6 +208,6 @@ Closure Audit Evidence: 独立 fresh session（mission-driver CLOSURE_VERIFY，2
 
 Follow-up:
 
-- `check:oversized-code-files` 16 文件治理（>700 行，CV 实测 2026-08-06）登记为独立治理 successor，不并入本 plan。
+- `check:oversized-code-files` 14 既有文件治理（>700 行，0529-1 修正后基线）登记为独立治理 successor，不并入本 plan。
 - pc-index 未来可扩展为脚本生成（若卡格式再冻结一轮）；本轮手写 + grep 对账即可。
 - 事件派发 ctx / reaction 接线的静态检测工具，待 AST 工具链能力提升后再评估（Phase 2 已实证裁定 not-mechanizable 并记录命中样本分类）。

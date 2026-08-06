@@ -15,7 +15,7 @@
 
 - **roadmap 状态**：全部 C\*（C0–C9）与 CX-1..CX-12 `done`；CR `todo`；CV `todo`（依赖 CR）；CG `todo`（依赖 CV）。C6.3 行已于 2026-08-06 由 mission-driver 机械同步 `planned → done`（父 plan completed + closure-audit pass，见 `2026-08-04-1757-1` Closure Audit Evidence）。
 - **预提取状态**：p2p3 plan（active）Phase 5 将产出 `docs/audits/cr-input-inventory.md`（当前未生成）；审计卡 `rg "归 CR"` 现存 ~110 处引用（45 张卡），其中 p2p3 Phase 1–4 覆盖项（i18n I1–I10、搜索框/aria-live/transfer a11y、data-slot 15 文件、object-field/array-field/detail-field/detail-view/variant-field/statistics 6 个 design.md）**不在本 plan 重复**，仅做交叉核对。
-- **P1 债务**：全部 C 阶段 P1 均已同 plan 修复（live 核对：无 open P1 backlog），CR 无 P1 修复义务。
+- **P1 债务**：执行时点全部 C 阶段 P1 均已同 plan 修复（live 核对：无 C 阶段 open P1 backlog）。**注意**：multi-audit 扫描存在 P0/P1 与 P1 候选（01-01 P0 / 01-02·14-1·14-2·16-1·16-2 P1 / 19-1·19-2·23-1·23-2 P1 候选），路由见 `2026-08-06-0529-1` Phase 3 登记区——其中 R2 确认属实的 4 条（19-1/19-2/23-1/23-2）已由 0529-1 Phase 4 显式追加进本 plan Phase 3 checklist（见 Phase 3「扫描 P1 候选吸收」行），由 CR 后续执行轮次认领修复。
 - **已确认 live shared 缺陷（本 plan 修复义务）**：
   - button href 无 URL 协议校验（`packages/flux-renderers-basic/src/button.tsx:238-241` 直接 `href={props.props.href}`；`javascript:` URI 可点击执行脚本；C6.1 已修 content `link.tsx` 引入 `isSafeNavigationUrl`（`packages/flux-renderers-content/src/sanitize.ts`），button 同源未接——C1.3 卡 P2-3 shared 登记）。
   - condition-builder P2-4 shared：readOnly 组合宿主内 select/combobox 视觉仍可交互（根因 form 包公共层 `input-choice-renderers.tsx` combobox 路径，C3.3 卡登记；写阻断成立、视觉残留）。
@@ -136,6 +136,10 @@ Targets: `packages/flux-renderers-scheduling/src/{calendar,gantt,kanban,barcode-
 - [x] **Fix（kanban P2-3/P2-4）**：a) controlled 模式变更事件/activity log 不派发（`kanban-board.tsx:294-310,323-334` 按 valueOwnership 门控，与 C8.1 timeline/其他受控组件先例同构）；b) onCardMove/onCardClick payload 补 `card: BoardItem`（design.md:190,205 承诺）；test-first payload 形状断言 + controlled 不派发断言。
 - [x] **Decision（P3 记录项逐一裁决）**：input-file P3-1/P3-2、input-date/input-datetime P3-1、editor P3-1、checkbox P3-1、checkbox-group P3-1、combo/array-field/object-field P3-1（data-slot 嵌套复核，对照 p2p3 Phase 3 裁决）、input-date P3-2——每项终裁 keep/fix 并写回裁决表（裁 fix 项本 phase 内完成，keep 项写明非阻断理由）。
 - [x] 受影响审计卡状态同步（backlog → fixed/keep 回写）。
+- [ ] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：19-1 tree-session success 无 ack 看门狗（`flow-designer-renderers/src/tree-session.ts:259-263`）——为 inFlight 补 ack 超时/放弃上报路径（或 success 移出队首）并补 success-无-ack-后续入队回归测试（R2 确认属实，路由见 `2026-08-06-0529-1` Phase 3 登记区）。
+- [ ] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：19-2 calendar exportToPNG 错误传播（`calendar/calendar.tsx:224-226` void + `{ok:true}`、`use-calendar-export.ts:66-74` rethrow）——二选一：handle 内 .catch 消费（错误已由 setExportError 呈现），或 async 返回 `{ok:false,error}`；避免 unhandled rejection + 谎报成功（R2 确认属实）。
+- [ ] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：23-1 xui-roles-plugin 死代码（`flux-runtime/src/plugins/xui-roles-plugin.ts` + 12 测试）——barrel 导出（补契约测试）或删除并归档测试，二选一裁决（R2 确认属实：无 barrel 导出、无 exports 深路径）。
+- [ ] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：23-2 gantt/components 死代码家族（export-handles/filter-bar/scheduler-config/resource-load-view 等 6 文件 + 测试）——接线（gantt handle 增加 exportPNG 等）或删除，resource-load.ts 纯函数可保留但移除死 UI 消费者（R2 确认属实：全家族零生产引用）。
 
 Exit Criteria:
 

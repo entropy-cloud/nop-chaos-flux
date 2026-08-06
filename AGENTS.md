@@ -23,8 +23,11 @@ pnpm typecheck              # all packages
 pnpm build                  # all packages
 pnpm test                   # all packages
 pnpm lint                   # all packages
+pnpm check                  # repo-wide static checks (see note below)
 pnpm --filter @nop-chaos/flux-runtime typecheck   # per package
 ```
+
+`pnpm check` runs the repository's static-check chain (workspace-manifest-deps, oversized-code-files, i18n keys, etc.). Treat it as part of the verification checklist: **zero new hits beyond the registered pre-existing red list** (the registered list lives in `docs/logs/` — e.g. `check:oversized-code-files` pre-existing over-limit files that are registered governance debt). If your change adds a new hit, split/register it before finishing; do not claim "full-green" while `pnpm check` reports unregistered red.
 
 Always run `typecheck`, `build`, and `lint` after making **CODE** changes. Run tests when relevant.
 
@@ -238,6 +241,7 @@ Before finishing any task:
 - [ ] `pnpm build` passes
 - [ ] `pnpm lint` passes (if applicable)
 - [ ] `pnpm test` passes (if applicable)
+- [ ] `pnpm check` passes — zero new hits beyond the registered pre-existing red list (see Commands section)
 - [ ] Formatting handled by Husky pre-commit hook (no manual `format:check` needed)
 - [ ] `docs/logs/` updated (for significant changes)
 - [ ] Relevant architecture docs updated (if design changed)

@@ -193,3 +193,12 @@
 - `mobile-renderer-definitions.ts:185 text="Notice"`——notice-bar schema 内容默认值（作者可配置内容字段），非 UI chrome。
 
 `pnpm check:i18n-keys` 绿（本 plan 新增键全部双 locale 配对）。
+
+## 扫描发现补充输入（0529-1 Phase 3 登记，2026-08-06）
+
+> 来源：`docs/analysis/2026-08-05-multi-audit-component-audit/{01,14,16,19,23}.md`（R1 扫描）——`rg "归 CR"` 之外的新增裁决输入，完整去向见 `docs/backlog/component-audit-roadmap.md`「扫描发现路由登记」区与 `docs/plans/2026-08-06-0529-1` Phase 3/4。
+
+- 01-01（P0 workspace-manifest-deps）→ 0529-1 Phase 1（非本表裁决面，已修复）。
+- 01-02 / 16-1（boundaries.md 漂移）、16-2（index.md phantom service）、14-1（useDesignerShortcuts 零覆盖）→ 0529-2（文档漂移/覆盖修复 plan，非本表裁决面）。
+- 14-2（oversized gate）→ 0529-1 Phase 2（已拆分修复）。
+- 19-1 / 19-2 / 23-1 / 23-2（P1 候选，0529-1 Phase 4 R2 确认**属实**）→ **归 CR 修复**，已显式追加进本 plan Phase 3 checklist（「扫描 P1 候选吸收」行 ×4），由 CR 后续执行轮次认领；本表原 19 fix 计数不重复计入（追加项以 Phase 3 checklist 为执行面）。
