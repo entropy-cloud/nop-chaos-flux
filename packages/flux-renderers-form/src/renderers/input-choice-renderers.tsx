@@ -279,6 +279,13 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   });
   const loadingWithRemote = loading || remoteLoading;
   const effectiveDisabled = loadingWithRemote || presentation.effectiveDisabled;
+  // readOnly freezes the combobox visually as well as logically: the root,
+  // input, trigger and clear are all disabled so the control no longer looks
+  // interactive (C3.3 condition-builder host empirical finding — the write
+  // path was already unwired via effectiveInteractive, the visual residue
+  // was the remaining gap). aria-readonly keeps the read-only semantics
+  // distinguishable from a plain disabled field for assistive tech.
+  const comboboxFrozen = effectiveDisabled || presentation.readOnly;
   const effectiveInteractive = presentation.interactive && !loadingWithRemote;
   const remoteSearchActive = remoteOptions !== null;
   const visibleOptions = remoteSearchActive
@@ -381,6 +388,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     'aria-label': ariaLabel,
     'aria-required': (props.props.required ? true : undefined) as boolean | undefined,
     'aria-invalid': (presentation.showError ? true : undefined) as boolean | undefined,
+    'aria-readonly': presentation.readOnly ? true : undefined,
     'aria-describedby': errorId,
     'aria-errormessage': errorId,
     onFocus: handlers.onFocus,
@@ -469,7 +477,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           value={comboboxValue as ChoiceOption | ChoiceOption[] | null}
           onValueChange={effectiveInteractive ? handleValueChange : undefined}
           multiple={multiple}
-          disabled={effectiveDisabled}
+          disabled={comboboxFrozen}
           itemToStringLabel={(option: ChoiceOption) => option.label}
           isItemEqualToValue={(a: ChoiceOption, b: ChoiceOption) => Object.is(a.value, b.value)}
           onInputValueChange={(nextQuery: string) => setInputValue(nextQuery)}
@@ -486,7 +494,8 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
               <ComboboxChipsInput
                 {...controlProps}
                 placeholder={searchable ? (searchPlaceholder ?? '') : ''}
-                readOnly={!searchable}
+                readOnly={!searchable || presentation.readOnly}
+                disabled={comboboxFrozen}
               />
             </ComboboxChips>
           ) : searchable ? (
@@ -495,21 +504,21 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
               className="w-full"
               placeholder={loadingWithRemote ? loadingText : (searchPlaceholder ?? triggerPlaceholder)}
               showClear={clearable}
-              disabled={effectiveDisabled}
+              disabled={comboboxFrozen}
             />
           ) : (
             <div className="flex w-full items-center gap-1">
               <ComboboxTrigger
                 {...controlProps}
                 className="flex-1 h-8 rounded-lg border border-input bg-transparent px-2.5 pr-2 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive data-placeholder:text-muted-foreground"
-                disabled={effectiveDisabled}
+                disabled={comboboxFrozen}
               >
                 <span className="flex-1 truncate text-left">
                   <ComboboxValue placeholder={triggerPlaceholder} />
                 </span>
               </ComboboxTrigger>
               {clearable && comboboxValue ? (
-                <ComboboxClear disabled={effectiveDisabled} aria-label={t('flux.common.clear')} />
+                <ComboboxClear disabled={comboboxFrozen} aria-label={t('flux.common.clear')} />
               ) : null}
             </div>
           )}
