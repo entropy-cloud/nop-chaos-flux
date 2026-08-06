@@ -636,3 +636,4 @@ describe('WizardRenderer (W2a — layered interaction/lifecycle state)', () => {
     });
   });
 });
+

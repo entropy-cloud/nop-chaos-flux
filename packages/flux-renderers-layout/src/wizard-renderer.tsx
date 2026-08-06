@@ -256,14 +256,19 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
     // derivations read a consistent value next pass.
     setFurthestReached((prev) => (targetIndex > prev ? targetIndex : prev));
     const targetKey = resolveStepKey(steps[targetIndex], targetIndex);
-    void props.events.onChange?.(
-      {
-        type: 'wizard:change',
-        currentStepKey: targetKey,
-        currentStepIndex: targetIndex,
-      },
-      { scope: props.node.scope },
-    );
+    // CX-10 / bug-83 family convention: schema event dispatches carry a second
+    // dispatch-arg ctx { event, evaluationBindings, scope } so action args
+    // templates can read payload keys (${currentStepKey}) as bare bindings.
+    const changePayload = {
+      type: 'wizard:change',
+      currentStepKey: targetKey,
+      currentStepIndex: targetIndex,
+    };
+    void props.events.onChange?.(changePayload, {
+      event: changePayload,
+      evaluationBindings: changePayload,
+      scope: props.node.scope,
+    });
   };
 
   const goNext = (): Promise<void> => {
@@ -318,28 +323,35 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
               lastCommitStatus: 'validationError',
               stepError: t('flux.wizard.validationFailed'),
             });
-            void props.events.onStepError?.(
-              {
-                type: 'wizard:step-error',
-                currentStepKey,
-                currentStepIndex,
-                reason: 'validation-failed',
-              },
-              { scope: props.node.scope },
-            );
+            const stepErrorPayload = {
+              type: 'wizard:step-error',
+              currentStepKey,
+              currentStepIndex,
+              reason: 'validation-failed',
+            };
+            void props.events.onStepError?.(stepErrorPayload, {
+              event: stepErrorPayload,
+              evaluationBindings: stepErrorPayload,
+              scope: props.node.scope,
+            });
             return;
           }
         }
       }
 
       // ─── User-defined commit action ───
+      const commitPayload = {
+        type: 'wizard:step-commit',
+        currentStepKey,
+        currentStepIndex,
+      };
       const result = await props.events.onStepCommit?.(
+        commitPayload,
         {
-          type: 'wizard:step-commit',
-          currentStepKey,
-          currentStepIndex,
+          event: commitPayload,
+          evaluationBindings: commitPayload,
+          scope: props.node.scope,
         },
-        { scope: props.node.scope },
       );
 
       const ok = !result || (result as { ok?: boolean })?.ok !== false;
@@ -351,15 +363,17 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           lastCommitStatus: 'error',
           stepError: t('flux.wizard.commitFailed'),
         });
-        void props.events.onStepError?.(
-          {
-            type: 'wizard:step-error',
-            currentStepKey,
-            currentStepIndex,
-            reason: 'commit-failed',
-          },
-          { scope: props.node.scope },
-        );
+        const stepErrorPayload = {
+          type: 'wizard:step-error',
+          currentStepKey,
+          currentStepIndex,
+          reason: 'commit-failed',
+        };
+        void props.events.onStepError?.(stepErrorPayload, {
+          event: stepErrorPayload,
+          evaluationBindings: stepErrorPayload,
+          scope: props.node.scope,
+        });
         return;
       }
 
@@ -371,14 +385,16 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       });
 
       if (isLastStep) {
-        void props.events.onComplete?.(
-          {
-            type: 'wizard:complete',
-            currentStepKey,
-            currentStepIndex,
-          },
-          { scope: props.node.scope },
-        );
+        const completePayload = {
+          type: 'wizard:complete',
+          currentStepKey,
+          currentStepIndex,
+        };
+        void props.events.onComplete?.(completePayload, {
+          event: completePayload,
+          evaluationBindings: completePayload,
+          scope: props.node.scope,
+        });
         return;
       }
 
@@ -392,16 +408,18 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
         lastCommitStatus: 'error',
         stepError: error instanceof Error ? error.message : String(error),
       });
-      void props.events.onStepError?.(
-        {
-          type: 'wizard:step-error',
-          currentStepKey,
-          currentStepIndex,
-          reason: 'commit-threw',
-          error,
-        },
-        { scope: props.node.scope },
-      );
+      const stepErrorPayload = {
+        type: 'wizard:step-error',
+        currentStepKey,
+        currentStepIndex,
+        reason: 'commit-threw',
+        error,
+      };
+      void props.events.onStepError?.(stepErrorPayload, {
+        event: stepErrorPayload,
+        evaluationBindings: stepErrorPayload,
+        scope: props.node.scope,
+      });
     }
   };
 
