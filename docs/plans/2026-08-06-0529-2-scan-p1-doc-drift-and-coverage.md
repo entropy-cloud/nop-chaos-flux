@@ -1,6 +1,6 @@
 # 2 扫描 P1 契约漂移与覆盖缺口修复（boundaries.md / components index.md / useDesignerShortcuts）
 
-> Plan Status: active（draft → active：独立子 agent 审查 pass，零 Blocker/零 Major，共识达成）
+> Plan Status: completed（2026-08-06：3 Phase 全 completed + closure-audit round 2 APPROVED 后定稿）
 > Last Reviewed: 2026-08-06
 > Source: `docs/audits/2026-08-05-0656-open-audit-component-audit.md`（F1 P1 包裹的扫描 P1：01-02/16-1 boundaries.md 漂移、14-1 useDesignerShortcuts 零覆盖、16-2 docs/components/index.md phantom `service`）、`docs/analysis/2026-08-05-multi-audit-component-audit/{01,14,16}.md`（R1 扫描）
 > Related: `docs/plans/2026-08-06-0529-1-gate-truthfulness-and-finding-routing.md`（路由登记，修复在本 plan）、`docs/plans/2026-08-06-0529-3-button-href-security-remediation.md`（button href 安全）；CR（`docs/plans/2026-08-06-0329-1-cr-cross-family-centralized-remediation.md`）Phase 1 裁决表互见
@@ -58,48 +58,47 @@
 
 ### Phase 1 - boundaries.md unstable-only 清单同步（P1）
 
-Status: planned
-Targets: `docs/architecture/flux-runtime-module-boundaries.md`、`packages/flux-react/src/index.tsx`（只读参照）
+Status: completed
 
 - Item Types: `Fix | Proof`
 
-- [ ] **Proof**：复核 live 根导出面——`index.tsx:6-18`（contexts 组）、`:27`（RenderNodes/resolveRendererSlotContent）与 `unstable.ts:1-17` 当前集合，记录「哪些符号在 stable、哪些在 unstable」的真实清单。
-- [ ] **Fix**：`boundaries.md:467-471` unstable-only 示例清单重写——移除 `RenderNodes` 与 `FormContext`/`ScopeContext`/`RuntimeContext`；替换为 live 实测仍在 `@nop-chaos/flux-react/unstable` 的真实导出示例（按 `unstable.ts` 当前内容）；同步调整 `createReadonlyScopeBinding` 段（若该段描述与 live 不符则一并修正，以 live 为准）。
-- [ ] **Proof**：`node scripts/check-active-doc-code-anchors.mjs` exit 0；grep 确认文档不再把 RenderNodes/contexts 标为 unstable-only。
+- [x] **Proof**：复核 live 根导出面——`index.tsx:6-18`（contexts 组）、`:27`（RenderNodes/resolveRendererSlotContent）与 `unstable.ts:1-17` 当前集合，记录「哪些符号在 stable、哪些在 unstable」的真实清单。
+- [x] **Fix**：`boundaries.md:467-471` unstable-only 示例清单重写——移除 `RenderNodes` 与 `FormContext`/`ScopeContext`/`RuntimeContext`；替换为 live 实测仍在 `@nop-chaos/flux-react/unstable` 的真实导出示例（按 `unstable.ts` 当前内容）；同步调整 `createReadonlyScopeBinding` 段（若该段描述与 live 不符则一并修正，以 live 为准）。
+- [x] **Proof**：`node scripts/check-active-doc-code-anchors.mjs` exit 0；grep 确认文档不再把 RenderNodes/contexts 标为 unstable-only。
 
 Exit Criteria:
 
-- [ ] boundaries.md 的 unstable-only 示例清单与 `flux-react` root/unstable 实际导出一致（grep 对账）；锚点检查零失效。
+- [x] boundaries.md 的 unstable-only 示例清单与 `flux-react` root/unstable 实际导出一致（grep 对账）；锚点检查零失效。
 
 ### Phase 2 - docs/components/index.md phantom `service` 移除与条目补齐（P1）
 
-Status: planned
+Status: completed
 Targets: `docs/components/index.md`、`packages/flux-renderers-data/src/w2a-data-composition-definitions.ts`（只读参照）、`packages/flux-renderers-graph/src/graph-definitions.ts`（只读参照）
 
 - Item Types: `Fix | Proof`
 
-- [ ] **Proof**：以注册数组 live 核对 data/content/form/form-advanced/layout/mobile/ai/scheduling/graph 各族实际注册清单（grep `*-renderer-definitions.ts` 注册数组），记录当前真值作为清单重写数据源。
-- [ ] **Fix**：`:319` data 族清单移除 `service`，补齐 `statistics`（data）、`graph`（graph 包，含包归属注明）；content/layout 等族清单补齐 `diff-view`（content）、form 族补齐 `button-group-select`；`service` 移入 removed/历史说明（对齐 `amis-baseline-matrix.md:121` 口径）；`:363` 的「当前无此项」矛盾修正（如仍有未注册项则列真值，否则删除该句）。
-- [ ] **Proof**：`check-active-doc-code-anchors` exit 0；grep 确认 index.md 清单与注册数组逐条一致（零 phantom、零遗漏），`rg "service" docs/components/index.md` 仅剩 removed 说明语境。
+- [x] **Proof**：以注册数组 live 核对 data/content/form/form-advanced/layout/mobile/ai/scheduling/graph 各族实际注册清单（grep `*-renderer-definitions.ts` 注册数组），记录当前真值作为清单重写数据源。
+- [x] **Fix**：`:319` data 族清单移除 `service`，补齐 `statistics`（data）、`graph`（graph 包，含包归属注明）；content/layout 等族清单补齐 `diff-view`（content）、form 族补齐 `button-group-select`；`service` 移入 removed/历史说明（对齐 `amis-baseline-matrix.md:121` 口径）；`:363` 的「当前无此项」矛盾修正（如仍有未注册项则列真值，否则删除该句）。
+- [x] **Proof**：`check-active-doc-code-anchors` exit 0；grep 确认 index.md 清单与注册数组逐条一致（零 phantom、零遗漏），`rg "service" docs/components/index.md` 仅剩 removed 说明语境。
 
 Exit Criteria:
 
-- [ ] index.md 各族清单与 live 注册数组逐条一致；`service` 仅存在于 removed 说明；`:363` 矛盾消除；锚点检查零失效。
+- [x] index.md 各族清单与 live 注册数组逐条一致；`service` 仅存在于 removed 说明；`:363` 矛盾消除；锚点检查零失效。
 
 ### Phase 3 - useDesignerShortcuts 测试覆盖（P1）
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-renderers/src/use-designer-shortcuts.ts`（只读参照，测试驱动）、新增 `packages/flow-designer-renderers/src/use-designer-shortcuts.test.tsx`
 
 - Item Types: `Proof | Fix`
 
-- [ ] **Proof（test-first）**：新增 `use-designer-shortcuts.test.tsx`——①真实 dispatch 断言：undo/redo/copy/paste/delete/save 6 分支触发对应 action（`{type:'undo'|'redo'|'copySelection'|'pasteClipboard'|'deleteSelection'|'save'}`，对照 `use-designer-shortcuts.ts:49-77` 实际分支与 auto-layout 同型 hook 测试范式）；另加负面断言：Escape 不触发任何 dispatch（hook 无 escape 分支，与 live 直通行为一致）；②3 守卫负面断言：`isEditableTarget` 命中（input/textarea 等可编辑元素）不触发、`isInsideDesigner` 外区域不触发、`readOnly` 不触发；③`core.getConfig().features.shortcuts === false` 时零副作用。
-- [ ] **Proof**：新增测试基于现有行为断言，首跑应绿；仅当测试设施（mock core/rootRef）缺失时才先行补齐 mock，不以改动产品行为换取绿（Non-Goals 已禁止行为变更；若测试暴露真实行为缺陷则按 Exit Criteria 走「记录 + 最小修复」）。
-- [ ] **Fix（仅当测试暴露真实缺陷）**：若测试发现守卫/映射与 `designer-page-body.tsx` 实际接线不符的真实缺陷，按最小修复 + Bug Fix Test Coverage Rule 记录于 daily log；否则仅保留测试。
+- [x] **Proof（test-first）**：新增 `use-designer-shortcuts.test.tsx`——①真实 dispatch 断言：undo/redo/copy/paste/delete/save 6 分支触发对应 action（`{type:'undo'|'redo'|'copySelection'|'pasteClipboard'|'deleteSelection'|'save'}`，对照 `use-designer-shortcuts.ts:49-77` 实际分支与 auto-layout 同型 hook 测试范式）；另加负面断言：Escape 不触发任何 dispatch（hook 无 escape 分支，与 live 直通行为一致）；②3 守卫负面断言：`isEditableTarget` 命中（input/textarea 等可编辑元素）不触发、`isInsideDesigner` 外区域不触发、`readOnly` 不触发；③`core.getConfig().features.shortcuts === false` 时零副作用。
+- [x] **Proof**：新增测试基于现有行为断言，首跑应绿；仅当测试设施（mock core/rootRef）缺失时才先行补齐 mock，不以改动产品行为换取绿（Non-Goals 已禁止行为变更；若测试暴露真实行为缺陷则按 Exit Criteria 走「记录 + 最小修复」）。
+- [x] **Fix（仅当测试暴露真实缺陷）**：若测试发现守卫/映射与 `designer-page-body.tsx` 实际接线不符的真实缺陷，按最小修复 + Bug Fix Test Coverage Rule 记录于 daily log；否则仅保留测试。
 
 Exit Criteria:
 
-- [ ] 新增测试文件覆盖 3 守卫负面断言 + 6 快捷键映射（undo/redo/copy/paste/delete/save）+ Escape 不派发负面断言 + feature 开关关闭路径；`pnpm --filter @nop-chaos/flow-designer-renderers test` 全绿；rg 确认该 hook 已有测试引用（零覆盖清零）。
+- [x] 新增测试文件覆盖 3 守卫负面断言 + 6 快捷键映射（undo/redo/copy/paste/delete/save）+ Escape 不派发负面断言 + feature 开关关闭路径；`pnpm --filter @nop-chaos/flow-designer-renderers test` 全绿；rg 确认该 hook 已有测试引用（零覆盖清零）。
 
 ## Draft Review Record
 
@@ -114,16 +113,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 所有条目 + 每个 Phase Exit Criteria 全部 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] boundaries.md unstable-only 清单与 live 导出一致（P1 01-02/16-1 收敛）
-- [ ] docs/components/index.md 无 phantom `service`、无遗漏注册组件（P1 16-2 收敛）
-- [ ] useDesignerShortcuts 零覆盖清零（P1 14-1 收敛，hook 测试全绿）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs（boundaries.md、index.md、daily log）已同步到 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] boundaries.md unstable-only 清单与 live 导出一致（P1 01-02/16-1 收敛）
+- [x] docs/components/index.md 无 phantom `service`、无遗漏注册组件（P1 16-2 收敛）
+- [x] useDesignerShortcuts 零覆盖清零（P1 14-1 收敛，hook 测试全绿）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs（boundaries.md、index.md、daily log）已同步到 live baseline
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -137,10 +136,10 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: pending（执行完成后填写）
+Status Note: completed（2026-08-06，3 Phase 全 completed + closure-audit pass 后定稿）
 
-Closure Audit Evidence: pending
+Closure Audit Evidence: 独立 fresh sub-agent 两轮：round 1（task `ses_0292e6cfdffeCqZr3FqEdy8PBT`）1 Major（daily log 执行记录缺失、owner-docs gate 早勾）→ 补录 `docs/logs/2026/08-06.md` 执行条目 + roadmap 4 行裁决列回写 fixed 后；round 2（task `ses_0292a8e4bffeZ5T27Xgqx5LKIm`）**APPROVED**，零 Blocker/零 Major，1 Minor 非阻塞（plan Closure 节在审计时仍 pending，按约定定稿后才回填，本行即该回填）；验证：typecheck/build/lint 32/32、test 59/59（flow-designer-renderers 225 含新 9 用例）、anchors 308 docs exit 0、`pnpm check` 链仅 oversized 14 既有 pre-existing 红（stash 基线对照零新增）
 
 Follow-up:
 
-- pending（仅记录 non-blocking follow-up）
+- none（Non-Blocking Follow-ups 的「同批修正」已在 Phase 2 内落地：scheduling/graph 族清单 + 3 个目录条目补入，记录于 daily log 08-06）

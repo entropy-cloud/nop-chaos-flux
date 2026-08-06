@@ -464,13 +464,13 @@ The facade package currently owns the release-shaped host contract only:
 
 It does not change code ownership of runtime/compiler/react modules. Internal runtime semantics still belong to their existing packages.
 
-Current unstable-only examples:
+Current unstable-only examples (live `@nop-chaos/flux-react/unstable` re-export set; `RenderNodes` and the raw contexts such as `FormContext` / `ScopeContext` / `RuntimeContext` were stabilized into the root barrel on 2026-05-26 and are no longer unstable-only):
 
-- `RenderNodes`
-- raw context exports such as `FormContext` / `ScopeContext` / `RuntimeContext`
-- internal helper surfaces such as `createHelpers`, `mergeActionContext`, `publishOwnerStatus`, and `createProjectedScopeStore`
+- internal helper surfaces such as `createHelpers`, `mergeActionContext`, `EMPTY_SCOPE_DATA`, and `rendererHooks`
+- raw context exports that are not yet part of the stable barrel, such as `RenderInstancePathContext` / `StructuralLoopContext` / `useRequiredContext`
+- runtime-owned internals re-exported for bridge use, such as `publishOwnerStatus`, `executeApiObject`, and `createProjectedScopeStore`
 
-`createReadonlyScopeBinding` remains runtime-owned (`packages/flux-runtime/src/status-owner.ts`) and is currently reachable from `@nop-chaos/flux-runtime` root, the `@nop-chaos/flux-react` root (the path `crud-renderer.tsx` actually imports), and the convenience re-export at `@nop-chaos/flux-react/unstable`; treat the `flux-react` exports as renderer-facing convenience surfaces rather than proof that ownership moved into `flux-react`.
+`createReadonlyScopeBinding` remains runtime-owned (`packages/flux-runtime/src/status-owner.ts`) and is currently reachable from `@nop-chaos/flux-runtime` root and the `@nop-chaos/flux-react` root (the path `crud-renderer.tsx` actually imports); treat the `flux-react` export as a renderer-facing convenience surface rather than proof that ownership moved into `flux-react`.
 
 The same rule now applies to `@nop-chaos/flow-designer-renderers`: the root entry keeps the stable schema/manifest registration surface, while Xyflow bridge primitives, palette/canvas internals, and designer context helpers move behind `@nop-chaos/flow-designer-renderers/unstable`.
 

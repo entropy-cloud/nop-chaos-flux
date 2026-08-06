@@ -308,7 +308,7 @@ UI primitive 对齐补充规则：
 
 **内容 / 反馈 / 多媒体（`flux-renderers-content`）**
 
-- `separator`、`spinner`、`progress`、`empty`、`card`、`link`、`image`、`json-view`、`markdown`、`html`、`cards`、`alert`、`mapping`、`status`、`audio`、`video`、`carousel`、`qrcode`
+- `separator`、`spinner`、`progress`、`empty`、`card`、`link`、`image`、`json-view`、`markdown`、`html`、`cards`、`alert`、`mapping`、`status`、`audio`、`video`、`carousel`、`qrcode`、`diff-view`
 
 **布局 / 流程 / 动作（`flux-renderers-layout`）**
 
@@ -316,11 +316,21 @@ UI primitive 对齐补充规则：
 
 **数据（`flux-renderers-data`）**
 
-- `table`、`tree`、`list`、`data-source`、`service`、`pagination`、`chart`、`crud`
+- `table`、`tree`、`list`、`data-source`、`pagination`、`chart`、`crud`、`statistics`
+
+> **`service` removed** — AMIS `service` 的"数据加载 + body/empty/error/loading 状态切换"能力，在 Flux 中由 `data-source`（负责数据请求与状态发布）+ `container`/`dynamic-renderer`（负责条件渲染）组合替代。Flux 不提供 `type:'service'` 组件（口径与 `docs/components/amis-baseline-matrix.md` 一致）。
+
+**图数据（`flux-renderers-graph`）**
+
+- `graph`
+
+**企业调度（`flux-renderers-scheduling`）**
+
+- `gantt`、`kanban`、`calendar`、`barcode-input`
 
 **表单 owner / 核心字段（`flux-renderers-form`）**
 
-- `form`、`fieldset`、`input-text`、`input-email`、`input-password`、`input-number`、`textarea`、`select`、`checkbox`、`switch`、`radio-group`、`checkbox-group`、`input-date`、`input-datetime`、`input-time`、`date-range`、`input-month`、`input-quarter`、`input-year`、`markdown-editor`
+- `form`、`fieldset`、`input-text`、`input-email`、`input-password`、`input-number`、`textarea`、`select`、`checkbox`、`switch`、`radio-group`、`checkbox-group`、`input-date`、`input-datetime`、`input-time`、`date-range`、`input-month`、`input-quarter`、`input-year`、`markdown-editor`、`button-group-select`
 
 **复合 / 高级字段（`flux-renderers-form-advanced`）**
 
@@ -360,7 +370,7 @@ UI primitive 对齐补充规则：
 
 完整 retained baseline 请以 `docs/components/amis-baseline-matrix.md` 为准。
 
-当前无此项：原先列出的 `alert` / `audio` / `card` / `cards` / `carousel` / `collapse` / `combo` / `date-range` / `dropdown-button` / `editor` / `separator` / `grid` / `list` / `image` / `input-date` / `input-datetime` / `input-file` / `input-image` / `input-month` / `input-quarter` / `input-table` / `input-time` / `input-year` / `progress` / `link` / `mapping` / `markdown` / `html` / `json-view` / `pagination` / `picker` / `qrcode` / `service` / `spinner` / `empty` / `status` / `steps` / `timeline` / `transfer` / `video` / `wizard` / `button-group` 等均已 shipped，已移入上方“当前代码已注册的通用 renderer”清单。
+当前无此项：原先列出的 `alert` / `audio` / `card` / `cards` / `carousel` / `collapse` / `combo` / `date-range` / `dropdown-button` / `editor` / `separator` / `grid` / `list` / `image` / `input-date` / `input-datetime` / `input-file` / `input-image` / `input-month` / `input-quarter` / `input-table` / `input-time` / `input-year` / `progress` / `link` / `mapping` / `markdown` / `html` / `json-view` / `pagination` / `picker` / `qrcode` / `spinner` / `empty` / `status` / `steps` / `timeline` / `transfer` / `video` / `wizard` / `button-group` 等均已 shipped，已移入上方“当前代码已注册的通用 renderer”清单。
 
 ### schema 已声明但尚未注册的领域 renderer
 
@@ -397,7 +407,7 @@ UI primitive 对齐补充规则：
 - `input-date-range` / `input-datetime-range` / `input-time-range` 不分别保留，统一到 `date-range`
 - AMIS 顶层 `editor` 的代码编辑语义不保留为正式 `editor` type，而是收敛到 `code-editor`
 - `tree` / `input-tree` / `tree-select` 分属 display renderer、embedded field、popup field 三个边界，不混成一个大组件
-- `service` 与 `data-source` 分层：`data-source` 是非视觉 source owner，`service` 是可视数据组合容器
+- `service` 不保留为正式 type（removed）：AMIS `service` 的"数据加载 + body/empty/error/loading 状态切换"能力由 `data-source`（非视觉 source owner，负责数据请求与状态发布）+ `container`/`dynamic-renderer`（负责条件渲染）组合替代
 - 集合类字段和容器优先坚持单一正式字段，例如 `items`，避免默认引入 `itemsSource` 一类平行字段
 - `dialog` / `drawer` 共享同一个 surface runtime family；`openDialog` / `openDrawer` / `closeSurface` 是 authoring 入口，不代表第二套 runtime
 
@@ -457,6 +467,7 @@ UI primitive 对齐补充规则：
 - `video/`
 - `carousel/`
 - `qrcode/`
+- `diff-view/`
 
 ### 数据与工作流组件
 
@@ -464,7 +475,6 @@ UI primitive 对齐补充规则：
 - `reaction/`
 - `scope-debug/`
 - `data-source/`
-- `service/`
 - `table/`
 - `crud/`
 - `list/`
@@ -472,6 +482,7 @@ UI primitive 对齐补充规则：
 - `tree/`
 - `chart/`
 - `statistics/`
+- `graph/`
 
 ### 表单基础组件
 
@@ -487,6 +498,7 @@ UI primitive 对齐补充规则：
 - `radio-group/`
 - `checkbox-group/`
 - `switch/`
+- `button-group-select/`
 - `input-date/`
 - `input-datetime/`
 - `input-time/`
