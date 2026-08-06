@@ -147,6 +147,10 @@ export const enUS: Resource = {
     graph: {
       searchPlaceholder: 'Search nodes…',
       clearSearch: 'Clear search',
+      zoomIn: 'Zoom in',
+      zoomOut: 'Zoom out',
+      fitView: 'Fit view',
+      toggleLayout: 'Toggle layout',
     },
     table: {
       columns: 'Columns',
@@ -969,6 +973,14 @@ export const enUS: Resource = {
         linkLabel: 'Link {{id}}',
         deleteLinkLabel: 'Delete link',
         resizePanelLabel: 'Resize grid panel',
+        columnTask: 'Task',
+        columnPredecessor: 'Pred',
+        zoomDay: 'Day',
+        zoomWeek: 'Week',
+        zoomMonth: 'Month',
+        resourceLoadLabel: 'Resource load',
+        resourceColumn: 'Resource',
+        loadColumn: 'Load',
       },
     },
     mobile: {
@@ -1014,6 +1026,7 @@ export const enUS: Resource = {
         cameraUnavailable: 'Camera unavailable',
         readOnlyField: 'Field is read-only',
         clearButtonLabel: 'Clear value',
+        cameraFeedLabel: 'Camera feed for barcode scanning',
       },
   },
 };

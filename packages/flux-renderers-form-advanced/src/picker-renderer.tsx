@@ -525,7 +525,7 @@ export const pickerRendererDefinition: RendererDefinition = {
     { key: 'valueKey', kind: 'prop' },
     { key: 'labelKey', kind: 'prop' },
     { key: 'columns', kind: 'prop' },
-    { key: 'searchable', kind: 'prop' },
+    { key: 'searchable', kind: 'prop', valueType: 'boolean' },
     { key: 'autoFill', kind: 'prop', lazyEval: true, params: ['row'] },
     { key: 'pickerDialog', kind: 'prop' },
     { key: 'multiple', kind: 'prop', valueType: 'boolean' },

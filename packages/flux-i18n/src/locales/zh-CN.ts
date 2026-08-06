@@ -148,6 +148,10 @@ export const zhCN: Resource = {
     graph: {
       searchPlaceholder: '搜索节点…',
       clearSearch: '清除搜索',
+      zoomIn: '放大',
+      zoomOut: '缩小',
+      fitView: '适应视图',
+      toggleLayout: '切换布局',
     },
     table: {
       columns: '列设置',
@@ -968,6 +972,14 @@ export const zhCN: Resource = {
         linkLabel: '链接 {{id}}',
         deleteLinkLabel: '删除链接',
         resizePanelLabel: '调整网格面板',
+        columnTask: '任务',
+        columnPredecessor: '前置',
+        zoomDay: '日',
+        zoomWeek: '周',
+        zoomMonth: '月',
+        resourceLoadLabel: '资源负载',
+        resourceColumn: '资源',
+        loadColumn: '负载',
       },
     },
     mobile: {
@@ -1013,6 +1025,7 @@ export const zhCN: Resource = {
         cameraUnavailable: '摄像头不可用',
         readOnlyField: '字段为只读',
         clearButtonLabel: '清除值',
+        cameraFeedLabel: '条码扫描摄像头画面',
       },
   },
 };

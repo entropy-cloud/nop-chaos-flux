@@ -37,7 +37,7 @@ function getUiI18nBridge(): UiI18nBridge {
 
 let fluxI18nInstance: i18n | null = null;
 
-function normalizeTranslationKey(key: string): string {
+export function normalizeTranslationKey(key: string): string {
   return key.startsWith(`${FLUX_NAMESPACE}.`) ? key.slice(FLUX_NAMESPACE.length + 1) : key;
 }
 

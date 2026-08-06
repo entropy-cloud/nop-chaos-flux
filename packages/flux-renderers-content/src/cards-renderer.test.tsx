@@ -177,7 +177,8 @@ describe('CardsRenderer (W2a — content package card collection)', () => {
 
     fireEvent.click(cards[0] as HTMLElement);
     expect(cards[0].getAttribute('data-selected')).toBe('true');
-    expect(cards[0].getAttribute('aria-selected')).toBe('true');
+    expect(cards[0].getAttribute('aria-pressed')).toBe('true');
+    expect(cards[0].getAttribute('aria-selected')).toBeNull();
     expect(screen.getByText('sel:reported')).toBeTruthy();
 
     fireEvent.click(cards[1] as HTMLElement);

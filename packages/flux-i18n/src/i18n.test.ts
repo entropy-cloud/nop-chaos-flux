@@ -100,6 +100,24 @@ describe('flux i18n', () => {
     });
   });
 
+  it('resolves flux.-prefixed keys through useFluxTranslation (CX-7 latent trap)', async () => {
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+
+    function Probe() {
+      const { t: translate } = useFluxTranslation();
+      return React.createElement(
+        'div',
+        { 'data-testid': 'prefixed' },
+        translate('flux.barcode.required'),
+      );
+    }
+
+    render(React.createElement(Probe));
+
+    // barcode-input-style prefixed keys must resolve, not echo the raw key.
+    expect(screen.getByTestId('prefixed').textContent).toBe('This field is required');
+  });
+
   // I1 message-key half (LOCKED Flux runtime contract): a renderer-owned
   // default string resolved through t() is reactive to locale and re-resolves
   // in BOTH directions (zh→en→zh) without remount. The schema-string

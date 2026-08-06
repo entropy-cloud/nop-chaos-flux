@@ -577,7 +577,7 @@ export function GraphRenderer(props: RendererComponentProps<GraphSchema>) {
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Zoom in"
+            aria-label={t('flux.graph.zoomIn')}
             data-slot="graph-control-zoom-in"
             onClick={() => zoomBy(ZOOM_STEP)}
           >
@@ -586,7 +586,7 @@ export function GraphRenderer(props: RendererComponentProps<GraphSchema>) {
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Zoom out"
+            aria-label={t('flux.graph.zoomOut')}
             data-slot="graph-control-zoom-out"
             onClick={() => zoomBy(1 / ZOOM_STEP)}
           >
@@ -595,7 +595,7 @@ export function GraphRenderer(props: RendererComponentProps<GraphSchema>) {
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Fit view"
+            aria-label={t('flux.graph.fitView')}
             data-slot="graph-control-fit"
             onClick={() => instanceRef.current?.fitView({ padding: FIT_VIEW_PADDING })}
           >
@@ -604,7 +604,7 @@ export function GraphRenderer(props: RendererComponentProps<GraphSchema>) {
           <Button
             variant="ghost"
             size="sm"
-            aria-label="Toggle layout"
+            aria-label={t('flux.graph.toggleLayout')}
             data-slot="graph-control-layout"
             onClick={() =>
               store.getState().setLayoutMode(layoutMode === 'flow' ? 'hierarchy' : 'flow')

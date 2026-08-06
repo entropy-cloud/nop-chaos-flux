@@ -167,7 +167,12 @@ function CardItemView(props: CardItemViewProps) {
       data-item-key={itemKey}
       data-selected={selected || undefined}
       role="listitem"
-      aria-selected={selectionMode !== 'none' ? selected : undefined}
+      // CR P2-1 (selectable-card ARIA adjudication): the interactive card's
+      // role is forced to "button" by the ui Card primitive (onClick present),
+      // where aria-selected is not a normative attribute. aria-pressed is the
+      // ARIA-conformant toggle state for button role. Non-interactive items
+      // stay plain listitems (no ui Card role override, no pressed state).
+      aria-pressed={selectionMode !== 'none' ? selected : undefined}
       tabIndex={interactive ? 0 : undefined}
       onClick={interactive ? handleClick : undefined}
       className={cn(

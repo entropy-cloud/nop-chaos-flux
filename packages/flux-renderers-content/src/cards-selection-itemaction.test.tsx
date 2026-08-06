@@ -224,7 +224,7 @@ describe('CD1: selectionMode none disables BOTH visual highlight and selection s
     const cards = document.querySelectorAll('[data-slot="cards-item"]');
     expect(cards[0].className).not.toContain('cursor-pointer');
     expect(cards[0].getAttribute('tabindex')).toBeNull();
-    expect(cards[0].getAttribute('aria-selected')).toBeNull();
+    expect(cards[0].getAttribute('aria-pressed')).toBeNull();
   });
 });
 
