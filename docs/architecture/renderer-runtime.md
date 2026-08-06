@@ -252,6 +252,20 @@ Current helper lifecycle baseline:
 - renderers that retain child scopes across renders must dispose those scopes explicitly when the owning renderer no longer materializes them
 - one-off event payloads that only need expression visibility should prefer `evaluationBindings` overlays over creating disposable runtime-owned child scopes
 
+### One-shot evaluation scope discipline (09-01 / 09-02)
+
+One-shot query semantics — evaluating a per-row / per-item / per-event expression that is consumed synchronously or by a single dispatch — MUST NOT leave a runtime-owned child scope behind. Every unpaired `helpers.createScope` registers a scope + store + disposer closure into the runtime's `ownedScopeDisposers` (see `runtime-factory.ts` `createChildScope` / `disposeScope`), accumulating until the runtime itself is destroyed.
+
+Rules for one-shot evaluations:
+
+1. **Prefer `evaluationBindings`** for one-shot query semantics that flow into a single action dispatch (event payloads, search queries, row payloads): `helpers.dispatch(action, { evaluationBindings: payload })` makes payload keys visible to action-arg templates as bare bindings without creating a runtime-owned scope. See the event-context convention `{ event, evaluationBindings, scope: rootScope }` (kanban-board eventCtx, table `createTableEventContext`).
+2. **When a child scope is genuinely required, pair it with an immediate `disposeScope`**:
+   - synchronous evaluation (render-time `useMemo` / `useCallback`, formula preview, source materialization): `try { evaluate(target, scope) } finally { helpers.disposeScope(scope.id) }` — dispose right after evaluation;
+   - async dispatch that reads the scope (host fetchers observe `ctx.scope`): keep the scope alive for the whole dispatch and dispose after the promise settles — `.finally(() => helpers.disposeScope(scope.id))` — never dispose before dispatch.
+3. **Never create a child scope for a payload that is only visible to one action**: route it through `evaluationBindings` (rule 1) or dispose it at settle time (rule 2) — do not leave it in `ownedScopeDisposers`.
+
+Correct pairing precedents in the renderer packages: `upload-field`, `list-renderer`, `crud`, `use-table-row-scope-cache` (long-lived caches dispose on eviction/unmount), and the one-shot patterns applied to `loop`/`recurse` `itemData`, table `checkableWhen`, variant-field expression matching, picker `autoFill`, condition-builder formula source scopes, and the tree/table/select dispatch-time search scopes.
+
 ### Evaluation bindings versus child scopes
 
 The current design baseline treats `evaluationBindings` and child scopes as two different tools with different costs.

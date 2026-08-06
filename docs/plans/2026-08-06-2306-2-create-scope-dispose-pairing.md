@@ -1,6 +1,6 @@
 # 2 createScope/disposeScope 配对纪律（09-01 + 09-02，10 处一次性求值 scope 泄漏）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: 一次性 scope 生命周期配对（follow-up backlog 家族：09-01 / 09-02）
 > Last Reviewed: 2026-08-06
@@ -68,65 +68,65 @@
 
 ### Phase 1 - 泄漏点清单与测试先红（Proof）
 
-Status: planned
+Status: completed
 Targets: 各泄漏点所在包 `__tests__/`
 
 - Item Types: `Proof`
 
-- [ ] 逐处编写 focused 测试（spy `helpers.createScope`/`disposeScope`，或断言求值结果正确 + scope dispose 被调用）：use-table-selection（checkableWhen 行判定）、loop/recurse（bindingsScope 求值）、variant-field-matching（when 匹配）、use-table-lazy-children、condition-builder、tree-control-controllers、picker-renderer、table-event-context、use-select-remote-search。
-- [ ] **Decision（修复通道分型）**：逐处裁决「配对 disposeScope」或「evaluationBindings 一次性通道」——`helpers.evaluate/evaluateCompiled` 只接受 `(target, scope)` 无 bindings 参数，故 **render 期同步求值点（7 处）默认走配对 disposeScope**（同步求值后立即 dispose，简单可靠）；**dispatch 点（use-table-lazy-children/tree-control-controllers/use-select-remote-search/table-event-context）**因 scope 流入异步 action 求值，默认走 evaluationBindings 迁移或 promise settle 后（`.finally()`）dispose；variant-field 的注入式 createScope 需扩展签名（`disposeScope` 注入）或 controller 侧捕获。每条记录裁决理由。
-- [ ] 确认测试在修复前失败（dispose 未调用断言红，或行为等价基线测试先行登记）。
+- [x] 逐处编写 focused 测试（spy `helpers.createScope`/`disposeScope`，或断言求值结果正确 + scope dispose 被调用）：use-table-selection（checkableWhen 行判定）、loop/recurse（bindingsScope 求值）、variant-field-matching（when 匹配）、use-table-lazy-children、condition-builder、tree-control-controllers、picker-renderer、table-event-context、use-select-remote-search。
+- [x] **Decision（修复通道分型）**：逐处裁决「配对 disposeScope」或「evaluationBindings 一次性通道」——`helpers.evaluate/evaluateCompiled` 只接受 `(target, scope)` 无 bindings 参数，故 **render 期同步求值点（7 处）默认走配对 disposeScope**（同步求值后立即 dispose，简单可靠）；**dispatch 点（use-table-lazy-children/tree-control-controllers/use-select-remote-search）**因 scope 流入异步 action 求值且 host fetcher 直接读 `ctx.scope`（tree 测试实证），保留 scope 并 **promise settle 后（`.finally()`）dispose**（先试 evaluationBindings 纯迁移，被 tree-lazy-children/tree-remote-search 既有测试证伪——fetcher 读 `ctx.scope.readVisible()` 的可见性契约依赖 patched child scope，故弃用）；variant-field 的注入式 createScope 扩展签名（`disposeScope` 注入，controller 传 `props.helpers.disposeScope`）；table-event-context 不建子 scope，按既有约定 `{ event, evaluationBindings, scope: rootScope }`（kanban-board.tsx:148-152 先例）。裁决理由已逐处记录于 Phase 2/3 条目。
+- [x] 确认测试在修复前失败（dispose 未调用断言红，或行为等价基线测试先行登记）。
 
 Exit Criteria:
 
-- [ ] 每处泄漏点对应测试文件存在且修复前红（或无法 spy 时至少行为等价基线测试绿，dispose 断言以可观测方式登记）。
+- [x] 每处泄漏点对应测试文件存在且修复前红（或无法 spy 时至少行为等价基线测试绿，dispose 断言以可观测方式登记）。
 
 ### Phase 2 - render 期 4 处修复
 
-Status: planned
+Status: completed
 Targets: `use-table-selection.ts`、`loop.tsx`、`recurse.tsx`、`variant-field-matching.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] use-table-selection.ts:97-121——求值后配对 `helpers.disposeScope(scopeId)`（try/finally 或求值后立即 dispose），或按 renderer-runtime.md 指引改 evaluationBindings 一次性通道（该点属 render 期同步求值，默认配对 dispose）；行为等价。
-- [ ] loop.tsx:82-94,105-117、recurse.tsx:88——同一模式（同步求值后立即 dispose）。
-- [ ] variant-field-matching.ts:45-56——按 Phase 1 裁决（注入式 createScope 签名扩展或 controller 侧捕获后配对 dispose）。
-- [ ] 各包 typecheck + focused 测试绿 + 该包既有测试全绿。
+- [x] use-table-selection.ts:97-121——求值后配对 `helpers.disposeScope(scopeId)`（try/finally 或求值后立即 dispose），或按 renderer-runtime.md 指引改 evaluationBindings 一次性通道（该点属 render 期同步求值，默认配对 dispose）；行为等价。
+- [x] loop.tsx:82-94,105-117、recurse.tsx:88——同一模式（同步求值后立即 dispose）。
+- [x] variant-field-matching.ts:45-56——按 Phase 1 裁决（注入式 createScope 签名扩展：新增 `disposeScope` 参数，matchesVariant/detectMatchedVariant/resolveInitialVariant 透传，controller 传 `props.helpers.disposeScope`）。
+- [x] 各包 typecheck + focused 测试绿 + 该包既有测试全绿。
 
 Exit Criteria:
 
-- [ ] 4 处 render 期点均无未配对 createScope（live grep 复验 + dispose 断言测试绿）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-{data,basic,form-advanced} typecheck` 通过、单测绿。
+- [x] 4 处 render 期点均无未配对 createScope（live grep 复验 + dispose 断言测试绿）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-{data,basic,form-advanced} typecheck` 通过、单测绿。
 
 ### Phase 3 - 交互/事件路径 6 处修复
 
-Status: planned
+Status: completed
 Targets: `use-table-lazy-children.ts`、`condition-builder.tsx`、`tree-control-controllers.ts`、`picker-renderer.tsx`、`table-event-context.ts`、`use-select-remote-search.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] 6 处逐一按 Phase 1 裁决落地：dispatch 点（use-table-lazy-children/tree-control-controllers/use-select-remote-search）scope 流入异步 action——迁移 evaluationBindings 或 promise settle 后（`.finally()`）配对 dispose，不得在 dispatch 前立即 dispose；table-event-context 按既有约定 `{ event, evaluationBindings, scope: rootScope }` 不创建子 scope（kanban-board.tsx:148-152 先例）；condition-builder/picker-renderer 同步求值点直接配对 dispose。
-- [ ] 各包 typecheck + focused 测试绿 + 该包既有测试全绿。
+- [x] 6 处逐一按 Phase 1 裁决落地：dispatch 点（use-table-lazy-children/tree-control-controllers/use-select-remote-search）scope 流入异步 action——保留 scope 于 promise settle 后（`.finally()`）配对 dispose（host fetcher 读 `ctx.scope` 契约；tree 既有测试实证 evaluationBindings 纯迁移不可行），不得在 dispatch 前立即 dispose；table-event-context 按既有约定 `{ event, evaluationBindings, scope: rootScope }` 不创建子 scope（kanban-board.tsx:148-152 先例，签名收敛为 `{ event, scope }`，四 hook 10 调用点传 `renderScope`，3 个既有 hook 级测试断言同步新契约）；condition-builder/picker-renderer 同步求值点直接配对 dispose。
+- [x] 各包 typecheck + focused 测试绿 + 该包既有测试全绿。
 
 Exit Criteria:
 
-- [ ] 6 处交互路径点均无未配对 createScope（live grep 复验 + dispose 断言测试绿）。
-- [ ] data/form-advanced/form 包 typecheck + 单测绿。
+- [x] 6 处交互路径点均无未配对 createScope（live grep 复验 + dispose 断言测试绿）。
+- [x] data/form-advanced/form 包 typecheck + 单测绿。
 
 ### Phase 4 - owner-doc 补强与收口
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/renderer-runtime.md`、`docs/logs/`
 
 - Item Types: `Fix | Decision`
 
-- [ ] renderer-runtime.md 一次性求值节（:253/:257-271 附近）补强：明确「一次性查询语义不得创建 runtime-owned scope；优先 evaluationBindings；确需 createScope 时必须立即配对 disposeScope」，并给 1 个正确示例（可引用 upload-field/list-renderer 先例）。
-- [ ] 全仓复扫 `createScope(` 无配对点（`rg` 抽查）+ 受影响 4 包单测全绿 + daily log 收口记录。
+- [x] renderer-runtime.md 一次性求值节（:253/:257-271 附近）补强：新增「One-shot evaluation scope discipline (09-01/09-02)」节——明确「一次性查询语义不得创建 runtime-owned scope（ownedScopeDisposers 累积机制）；优先 evaluationBindings；确需 createScope 时必须立即配对 disposeScope（同步求值 try/finally / 异步 dispatch settle 后 `.finally()`）」，并列出 upload-field/list-renderer/crud/row-scope-cache 等配对先例。
+- [x] 全仓复扫 `createScope(` 无配对点（`rg` 抽查）+ 受影响 4 包单测全绿 + daily log 收口记录。
 
 Exit Criteria:
 
-- [ ] renderer-runtime.md 指引文本与 live 行为一致（无 createScope 无 dispose 的 in-scope 残留）。
-- [ ] daily log 记录修复清单与验证结果。
+- [x] renderer-runtime.md 指引文本与 live 行为一致（无 createScope 无 dispose 的 in-scope 残留）。
+- [x] daily log 记录修复清单与验证结果。
 
 ## Draft Review Record
 
@@ -139,16 +139,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 10 处 in-scope 泄漏点全部配对（或迁移 evaluationBindings），全仓 live 复扫零 in-scope 残留
-- [ ] 每处 focused 测试落地且绿（dispose 断言适用于配对方案处；evaluationBindings 方案处为行为等价断言）
-- [ ] renderer-runtime.md 一次性求值指引已补强
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 项
-- [ ] 受影响的 owner docs 已同步（renderer-runtime.md + daily log；无其他 owner-doc 变更）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 10 处 in-scope 泄漏点全部配对（或迁移 evaluationBindings），全仓 live 复扫零 in-scope 残留
+- [x] 每处 focused 测试落地且绿（dispose 断言适用于配对方案处；evaluationBindings 方案处为行为等价断言）
+- [x] renderer-runtime.md 一次性求值指引已补强
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 项
+- [x] 受影响的 owner docs 已同步（renderer-runtime.md + daily log；无其他 owner-doc 变更）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -166,12 +166,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成后填写）
+Status Note: 4 Phase 全 completed（2026-08-07）。验证基线 full-green：`pnpm typecheck` 32/32、`pnpm build` 32/32、`pnpm lint` 32/32（scheduling 1 条预存在 warning）、`pnpm test` 59/59 task 全绿；`pnpm check` 链仅 `check:oversized-code-files` 红（14 既有 pre-existing 命名清单零新增：tree-control-controllers.ts 725→733、table-renderer.tsx 736→735 均为 HEAD 已超限登记文件），其余 10 项逐项全绿。Closure-audit gate 由独立 fresh sub-agent session 执行，证据见下。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立子 agent）
-- Evidence: —
+- Auditor / Agent: 独立 fresh sub-agent（closure audit session）
+- Evidence: 全量复核本 plan（4 Phase 项 + Exit Criteria 全 [x]，Status 全 completed，Plan Status: completed，Closure Gates 除独立审计项外全 [x]）。live 源码复扫 10 处泄漏点：use-table-selection.ts:105-116（try/finally）、use-table-lazy-children.ts:60/89（.finally() settle 后 dispose）、loop.tsx:87/96 + 114/123、recurse.tsx:88/97、variant-field-matching.ts:56/60（disposeScope 注入参数，controller.ts:53-54/62-63 传 props.helpers.disposeScope）、tree-control-controllers.ts:51/58 + 65/72（formula 同步 + action await settle 后 finally）、picker-renderer.tsx:194/202、condition-builder.tsx:106/114（仅 created 时 dispose）、use-select-remote-search.ts:53/86（.finally()）——所有 createScope 均配对 disposeScope；table-event-context.ts 不创建子 scope（{ event, evaluationBindings, scope }），9 个 createTableEventContext 调用点均传 root renderScope/args.scope，无残留 createScope。9 个 focused 测试文件全部存在且断言 dispose 配对 + 行为等价（table-selection-checkable、table-lazy-children、table-event-context、basic-loop-recurse、variant-field-matching、tree-control-controllers、picker-autofill、condition-builder-source、use-select-remote-search）。docs 核验：renderer-runtime.md:255 「One-shot evaluation scope discipline (09-01/09-02)」节存在且与 live 行为一致；roadmap 09-01/09-02 均 [x]；audit doc 09-01/09-02 修复状态: fixed；daily log 2026/08-07.md 含 plan 条目。独立跑测（fresh session）：@nop-chaos/flux-renderers-data 101 files / 731 tests、flux-renderers-basic 50 files / 487 tests、flux-renderers-form-advanced 134 files / 1046 tests、flux-renderers-form 87 files / 735 tests 全绿，与 executor 声称计数一致。Verdict: pass（0 Blocker / 0 Major / 0 Minor）。
 
 Follow-up:
 

@@ -241,6 +241,7 @@
 - **建议**: 求值后配对 `helpers.disposeScope`（try/finally 或 memo 清理期），或按 `renderer-runtime.md:257-271` 改用 evaluationBindings 一次性通道。
 - **误报排除**: 非 calibration 8（这是 runtime 资源生命周期而非 UI 状态）；配对义务是 owner doc 明确契约且同包先例证明团队已理解执行。
 - **复核状态**: 子项复核通过（保持 P2）
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-06-2306-2-create-scope-dispose-pairing.md` Phase 2：use-table-selection.ts checkableWhen 每行 scope try/finally 配对 dispose；loop.tsx 两处 evaluateItemData 闭包 + recurse.tsx 求值后 finally dispose；variant-field-matching.ts 扩展注入 disposeScope 参数由 controller 传入并在表达式求值后 finally dispose；focused 测试先红后绿，live grep 复验零残留）。
 
 #### [P2] 09-02 交互/事件路径 createScope 无配对 disposeScope（6 处）
 
@@ -251,6 +252,7 @@
 - **建议**: 并入 09-01 同一修复计划（配对 disposeScope 或 evaluationBindings 一次性通道）。
 - **误报排除**: 非已裁定接受项——reopened 条目 4 只覆盖 object-field/table-quick-edit/designer-page 的 draft 缓存。
 - **复核状态**: 子项复核通过（保持 P2）
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-06-2306-2-create-scope-dispose-pairing.md` Phase 3：use-table-lazy-children/use-select-remote-search/tree-control-controllers 三个 dispatch 点 scope 在 promise settle 后 `.finally()` dispose；condition-builder 公式 source scope 求值后 finally dispose；picker-renderer autoFill row scope finally dispose；table-event-context 改 `{ event, evaluationBindings: payload, scope: rootScope }` 约定不创建子 scope（kanban 先例）；focused 测试先红后绿，live grep 复验零残留）。
 
 #### [P2] 09-03 carousel/tabs 事件 payload 的 type 字段无命名空间（'change'），与同包新组件契约不一致
 
