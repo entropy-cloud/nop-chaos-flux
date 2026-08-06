@@ -19,6 +19,8 @@ import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '@nop-chaos/flux-renderers-form-advanced';
 import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
+import { layoutRendererDefinitions } from '@nop-chaos/flux-renderers-layout';
+import { contentRendererDefinitions } from '@nop-chaos/flux-renderers-content';
 
 describe('Route model - parseRoute', () => {
   it('parses empty hash as home', () => {
@@ -156,6 +158,26 @@ describe('Route inventory - live renderer coverage', () => {
       expect(
         routeIds.has(def.type),
         `data renderer '${def.type}' missing from route inventory`,
+      ).toBe(true);
+    }
+  });
+
+  it('layout renderer routes cover all registered layout renderer types (def-enumeration)', () => {
+    const routeIds = new Set(LAYOUT_RENDERER_ROUTES.map((r) => r.id));
+    for (const def of layoutRendererDefinitions) {
+      expect(
+        routeIds.has(def.type),
+        `layout renderer '${def.type}' missing from route inventory`,
+      ).toBe(true);
+    }
+  });
+
+  it('content renderer routes cover all registered content renderer types (def-enumeration)', () => {
+    const routeIds = new Set(CONTENT_RENDERER_ROUTES.map((r) => r.id));
+    for (const def of contentRendererDefinitions) {
+      expect(
+        routeIds.has(def.type),
+        `content renderer '${def.type}' missing from route inventory`,
       ).toBe(true);
     }
   });

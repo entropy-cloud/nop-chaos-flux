@@ -198,7 +198,11 @@ test('timeline-host: display modes with marker-only roots (host-timeline)', asyn
   await expect(left).toBeVisible({ timeout: 10_000 });
   await expect(left).toHaveAttribute('data-mode', 'left');
   await expect(left).toHaveAttribute('data-orientation', 'vertical');
-  await expect(left).not.toHaveAttribute('data-ownership');
+  // Timeline v2 contract: data-ownership is always emitted on timeline-root
+  // (display-only marker, mirrors steps; renderer-markers-and-selectors.md).
+  // Host scenario declares no valueOwnership → default 'local'. CR Phase 5
+  // aligned this assertion with the v2 contract (was: not.toHaveAttribute).
+  await expect(left).toHaveAttribute('data-ownership', 'local');
   await expect(left.locator('[data-slot="timeline-item"]')).toHaveCount(3);
   await expect(left.locator('[data-slot="timeline-item"]').nth(1)).toHaveAttribute(
     'data-level',

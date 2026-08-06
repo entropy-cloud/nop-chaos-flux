@@ -151,15 +151,14 @@ test('condition-builder-host: custom editor write-back + disabled freeze (P1-2 p
   await page.getByRole('option', { name: 'Viewer' }).last().click();
   await expect(editableEditor).toContainText('Viewer', { timeout: 10_000 });
 
-  // Frozen copy: chrome disabled; selecting an option in the editor popup is
-  // a no-op (the selection handler is unwired under the readOnly projection)
-  // and the displayed + committed value stay 'Editor'.
+  // Frozen copy: chrome disabled; the value control's combobox is fully
+  // frozen (CR P2-4 readOnly visual freeze: root/input/trigger disabled) —
+  // the menu cannot open at all and the committed value stays 'Editor'.
   await expect(frozen.getByRole('button', { name: ADD_CONDITION })).toBeDisabled();
   const frozenEditor = frozen.locator('[role="combobox"][aria-label="value"]');
   await expect(frozenEditor).toContainText('Editor', { timeout: 10_000 });
-  await frozenEditor.click();
-  await page.getByRole('option', { name: 'Viewer' }).last().click();
-  await page.keyboard.press('Escape');
+  await expect(frozenEditor).toBeDisabled();
+  await expect(page.getByRole('option', { name: 'Viewer' })).toHaveCount(0);
   await expect(frozenEditor).toContainText('Editor', { timeout: 5_000 });
 
   await stage.getByRole('button', { name: SUBMIT }).click();
