@@ -74,7 +74,6 @@ export function useTableSort(
   schemaProps: TableSchema,
   onSortChange: RendererComponentProps<TableSchema>['events']['onSortChange'],
   columns: NonNullable<TableSchema['columns']>,
-  helpers: RendererComponentProps<TableSchema>['helpers'],
 ): UseTableSortApi {
   const controlledSortInput = schemaProps as TableSchema & {
     sortColumn?: unknown;
@@ -252,9 +251,7 @@ export function useTableSort(
         onSortChange?.(
           null,
           createTableEventContext(payload, {
-            helpers,
-            scopeKey: 'sort',
-            pathSuffix: 'sort',
+            scope: renderScope,
             event: payload,
           }),
         );
@@ -295,14 +292,12 @@ export function useTableSort(
       onSortChange?.(
         null,
         createTableEventContext(payload, {
-          helpers,
-          scopeKey: 'sort',
-          pathSuffix: 'sort',
+          scope: renderScope,
           event: payload,
         }),
       );
     },
-    [columns, helpers, multiSortEnabled, onSortChange, renderScope, sortEntries, sortOwnership, sortState, sortStatePath],
+    [columns, multiSortEnabled, onSortChange, renderScope, sortEntries, sortOwnership, sortState, sortStatePath],
   );
 
   return { sortState, sortEntries, handleSort };

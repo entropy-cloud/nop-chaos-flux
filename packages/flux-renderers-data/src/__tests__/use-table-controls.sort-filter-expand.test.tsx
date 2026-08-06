@@ -63,15 +63,7 @@ describe('useTableSort', () => {
         direction: null,
         sort: { column: 'name', direction: null },
       },
-      scope: {
-        value: {
-          type: 'table:sort-change',
-          column: 'name',
-          direction: null,
-          sort: { column: 'name', direction: null },
-        },
-        options: { scopeKey: 'sort', pathSuffix: 'sort' },
-      },
+      scope: { update: renderScopeUpdate },
       evaluationBindings: {
         type: 'table:sort-change',
         column: 'name',
@@ -192,16 +184,7 @@ describe('useTableFilter', () => {
         keyword: '',
         filter: { column: 'name', filters: [], keyword: '' },
       },
-      scope: {
-        value: {
-          type: 'table:filter-change',
-          column: 'name',
-          filters: [],
-          keyword: '',
-          filter: { column: 'name', filters: [], keyword: '' },
-        },
-        options: { scopeKey: 'filter', pathSuffix: 'filter' },
-      },
+      scope: { update: renderScopeUpdate },
       evaluationBindings: {
         type: 'table:filter-change',
         column: 'name',

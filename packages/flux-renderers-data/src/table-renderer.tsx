@@ -220,17 +220,15 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   } = useTableVisibleColumns(tableSchemaProps, columns);
   const [inlineColumnSettingsOpen, setInlineColumnSettingsOpen] = useState(false);
   const { paginationEnabled, serverPaged, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage } =
-    useTablePagination(tableSchemaProps, props.events.onPageChange, helpers);
+    useTablePagination(tableSchemaProps, props.events.onPageChange);
   const { sortState, sortEntries, handleSort } = useTableSort(
     tableSchemaProps,
     props.events.onSortChange,
     tableColumns,
-    helpers,
   );
   const { filterState, handleFilter, handleSearch, clearFilters } = useTableFilter(
     tableSchemaProps,
     props.events.onFilterChange,
-    helpers,
     (nextFilterState) => {
       if (tableSchemaProps.paginationOwnership === 'controlled') {
         return;

@@ -86,6 +86,7 @@ export function useTableLazyChildren(input: {
         })
         .finally(() => {
           inFlightRef.current.delete(rowKey);
+          helpers.disposeScope(scope.id);
         });
     },
     [childrenSource, helpers, setNodeState],

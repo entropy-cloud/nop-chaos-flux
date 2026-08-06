@@ -57,14 +57,7 @@ describe('useTableSelection', () => {
         selectedRowKeys: ['2'],
         selection: { selectedRowKeys: ['2'] },
       },
-      scope: {
-        value: {
-          type: 'table:selection-change',
-          selectedRowKeys: ['2'],
-          selection: { selectedRowKeys: ['2'] },
-        },
-        options: { scopeKey: 'selection', pathSuffix: 'selection' },
-      },
+      scope: { update: renderScopeUpdate },
       evaluationBindings: {
         type: 'table:selection-change',
         selectedRowKeys: ['2'],

@@ -47,15 +47,7 @@ describe('useTablePagination', () => {
     expect(renderScopeUpdate).not.toHaveBeenCalled();
     expect(onPageChange).toHaveBeenLastCalledWith(undefined, {
       event: undefined,
-      scope: {
-        value: {
-          type: 'table:page-change',
-          page: 1,
-          pageSize: 20,
-          pagination: { currentPage: 1, pageSize: 20 },
-        },
-        options: { scopeKey: 'pagination', pathSuffix: 'pagination' },
-      },
+      scope: { update: renderScopeUpdate },
       evaluationBindings: {
         type: 'table:page-change',
         page: 1,
@@ -149,15 +141,7 @@ describe('useTablePagination', () => {
     expect(api.currentPage).toBe(1);
     expect(onPageChange).toHaveBeenLastCalledWith(undefined, {
       event: undefined,
-      scope: {
-        value: {
-          type: 'table:page-change',
-          page: 1,
-          pageSize: 5,
-          pagination: { currentPage: 1, pageSize: 5 },
-        },
-        options: { scopeKey: 'pagination', pathSuffix: 'pagination' },
-      },
+      scope: { update: renderScopeUpdate },
       evaluationBindings: {
         type: 'table:page-change',
         page: 1,

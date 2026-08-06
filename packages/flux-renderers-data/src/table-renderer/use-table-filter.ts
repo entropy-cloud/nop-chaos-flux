@@ -8,7 +8,6 @@ import type { FilterState } from './types.js';
 export function useTableFilter(
   schemaProps: TableSchema,
   onFilterChange: RendererComponentProps<TableSchema>['events']['onFilterChange'],
-  helpers: RendererComponentProps<TableSchema>['helpers'],
   onFilterStateChange?: (nextState: FilterState) => void,
 ) {
   const renderScope = useRenderScope();
@@ -125,15 +124,13 @@ export function useTableFilter(
       onFilterChange?.(
         null,
         createTableEventContext(payload, {
-          helpers,
-          scopeKey: 'filter',
-          pathSuffix: 'filter',
+          scope: renderScope,
           event: payload,
         }),
       );
       onFilterStateChange?.(newFilters);
     },
-    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, onFilterStateChange, renderScope],
+    [filterOwnership, filterState, filterStatePath, onFilterChange, onFilterStateChange, renderScope],
   );
 
   const handleSearch = useCallback(
@@ -180,15 +177,13 @@ export function useTableFilter(
       onFilterChange?.(
         null,
         createTableEventContext(payload, {
-          helpers,
-          scopeKey: 'filter',
-          pathSuffix: 'filter',
+          scope: renderScope,
           event: payload,
         }),
       );
       onFilterStateChange?.(newFilters);
     },
-    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, onFilterStateChange, renderScope],
+    [filterOwnership, filterState, filterStatePath, onFilterChange, onFilterStateChange, renderScope],
   );
 
   const clearFilters = useCallback(
@@ -231,15 +226,13 @@ export function useTableFilter(
       onFilterChange?.(
         null,
         createTableEventContext(payload, {
-          helpers,
-          scopeKey: 'filter',
-          pathSuffix: 'filter',
+          scope: renderScope,
           event: payload,
         }),
       );
       onFilterStateChange?.(newFilters);
     },
-    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, onFilterStateChange, renderScope],
+    [filterOwnership, filterState, filterStatePath, onFilterChange, onFilterStateChange, renderScope],
   );
 
   return useMemo(

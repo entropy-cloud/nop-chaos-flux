@@ -1,12 +1,12 @@
 import { startTransition, useCallback, useState } from 'react';
-import { getIn, shallowEqual, type FluxActionEvent, type RendererComponentProps } from '@nop-chaos/flux-core';
+import { getIn, shallowEqual, type FluxActionEvent, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { toPositiveNumber } from './table-data.js';
 import { createTableEventContext } from './table-event-context.js';
 
 function createPaginationEventContext(args: {
-  helpers: RendererComponentProps<TableSchema>['helpers'];
+  scope: ScopeRef;
   page: number;
   pageSize: number;
   uiEvent?: FluxActionEvent;
@@ -22,9 +22,7 @@ function createPaginationEventContext(args: {
   };
 
   return createTableEventContext(payload, {
-    helpers: args.helpers,
-    scopeKey: 'pagination',
-    pathSuffix: 'pagination',
+    scope: args.scope,
     event: args.uiEvent,
   });
 }
@@ -32,7 +30,6 @@ function createPaginationEventContext(args: {
 export function useTablePagination(
   schemaProps: TableSchema,
   onPageChange: RendererComponentProps<TableSchema>['events']['onPageChange'],
-  helpers: RendererComponentProps<TableSchema>['helpers'],
 ) {
   const renderScope = useRenderScope();
   const paginationOwnership = schemaProps.paginationOwnership ?? 'local';
@@ -87,14 +84,14 @@ export function useTablePagination(
       onPageChange?.(
         uiEvent,
         createPaginationEventContext({
-          helpers,
+          scope: renderScope,
           page,
           pageSize,
           uiEvent: uiEvent as FluxActionEvent | undefined,
         }),
       );
     },
-    [paginationOwnership, paginationStatePath, pageSize, onPageChange, helpers, renderScope],
+    [paginationOwnership, paginationStatePath, pageSize, onPageChange, renderScope],
   );
 
   const handlePageSizeChange = useCallback(
@@ -110,14 +107,14 @@ export function useTablePagination(
       onPageChange?.(
         uiEvent,
         createPaginationEventContext({
-          helpers,
+          scope: renderScope,
           page: 1,
           pageSize: newPageSize,
           uiEvent: uiEvent as FluxActionEvent | undefined,
         }),
       );
     },
-    [paginationOwnership, paginationStatePath, onPageChange, helpers, renderScope],
+    [paginationOwnership, paginationStatePath, onPageChange, renderScope],
   );
 
   const clampPage = useCallback(
@@ -143,7 +140,7 @@ export function useTablePagination(
       onPageChange?.(
         uiEvent,
         createPaginationEventContext({
-          helpers,
+          scope: renderScope,
           page: clampedPage,
           pageSize,
           uiEvent: uiEvent as FluxActionEvent | undefined,
@@ -154,7 +151,6 @@ export function useTablePagination(
     },
     [
       currentPage,
-      helpers,
       onPageChange,
       pageSize,
       paginationEnabled,

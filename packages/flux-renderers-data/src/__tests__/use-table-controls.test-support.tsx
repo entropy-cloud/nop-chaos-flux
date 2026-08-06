@@ -25,10 +25,17 @@ export function resetTableControlTestState() {
   renderScopeUpdate.mockReset();
 }
 
+let scopeCounter = 0;
+
 export function createHelpers() {
   return {
-    createScope: vi.fn((value: unknown, options?: unknown) => ({ value, options })),
+    createScope: vi.fn((value: unknown, options?: unknown) => ({
+      id: `test-scope-${scopeCounter++}`,
+      value,
+      options,
+    })),
     evaluate: vi.fn((target: unknown) => target),
+    disposeScope: vi.fn(),
   } as any;
 }
 
@@ -41,7 +48,6 @@ export function PaginationProbe(props: {
   const api = useTablePagination(
     props.schemaProps,
     props.onPageChange,
-    props.helpers ?? createHelpers(),
   );
   React.useEffect(() => {
     props.onReady(api);
@@ -80,7 +86,6 @@ export function SortProbe(props: {
     props.schemaProps,
     props.onSortChange,
     props.columns,
-    props.helpers ?? createHelpers(),
   );
   React.useEffect(() => {
     props.onReady(api);
@@ -98,7 +103,6 @@ export function FilterProbe(props: {
   const api = useTableFilter(
     props.schemaProps,
     props.onFilterChange,
-    props.helpers ?? createHelpers(),
     props.onFilterStateChange,
   );
   React.useEffect(() => {

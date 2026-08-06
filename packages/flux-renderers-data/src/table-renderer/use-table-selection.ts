@@ -102,16 +102,18 @@ export function useTableSelection(
     const checkable = new Set<string>();
     for (const row of normalizedRows) {
       let isCheckable = true;
+      const rowScope = helpers.createScope({
+        ...row.record,
+        $slot: { record: row.record, index: row.sourceIndex },
+      });
       try {
-        const rowScope = helpers.createScope({
-          ...row.record,
-          $slot: { record: row.record, index: row.sourceIndex },
-        });
         const wrapped = `\${${checkableWhen}}`;
         const result = helpers.evaluate(wrapped, rowScope);
         isCheckable = Boolean(result);
       } catch {
         isCheckable = false;
+      } finally {
+        helpers.disposeScope(rowScope.id);
       }
       if (isCheckable) {
         checkable.add(row.rowKey);
@@ -214,15 +216,12 @@ export function useTableSelection(
       onSelectionChange?.(
         null,
         createTableEventContext(payload, {
-          helpers,
-          scopeKey: 'selection',
-          pathSuffix: 'selection',
+          scope: renderScope,
           event: payload,
         }),
       );
     },
     [
-      helpers,
       normalizedRows,
       onSelectionChange,
       renderScope,
@@ -285,15 +284,12 @@ export function useTableSelection(
       onSelectionChange?.(
         null,
         createTableEventContext(payload, {
-          helpers,
-          scopeKey: 'selection',
-          pathSuffix: 'selection',
+          scope: renderScope,
           event: payload,
         }),
       );
     },
     [
-      helpers,
       isRadio,
       onSelectionChange,
       renderScope,
@@ -327,14 +323,12 @@ export function useTableSelection(
       onSelectionChange?.(
         null,
         createTableEventContext(payload, {
-          helpers,
-          scopeKey: 'selection',
-          pathSuffix: 'selection',
+          scope: renderScope,
           event: payload,
         }),
       );
     },
-    [selectionOwnership, selectionStatePath, onSelectionChange, helpers, renderScope],
+    [selectionOwnership, selectionStatePath, onSelectionChange, renderScope],
   );
 
   return {
