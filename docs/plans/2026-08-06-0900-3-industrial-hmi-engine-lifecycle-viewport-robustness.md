@@ -1,6 +1,6 @@
 # 03 Industrial HMI Engine Lifecycle & Viewport Robustness（视口数学兜底 + 生命周期清理 + 动画/binding 优先级裁定）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: industrial-hmi
 > Work Item: 2026-08-05-2129 post-remediation audit P2（engine/lifecycle/视口 子集）
 > Last Reviewed: 2026-08-06
@@ -83,70 +83,70 @@
 
 ### Phase 1 - 视口数学兜底（P2-7 fill floor + P2-8 wheel-zoom 除零）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/renderer/hooks/use-scada-config-sync.ts` + `engine/scada-engine.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] **Proof（failing-first，先于 Fix）**：(a) `use-scada-config-sync` 单测：构造 `applyInitialViewport` fill policy + `bounds={x:0,y:0,width:0,height:0}`（或 computeSymbolBounds 返零尺寸），断言 `engine.setViewport` 收到 `scale === MAX_SCALE`（修复前红：scale === MIN_SCALE 或 Infinity）；(b) `scada-engine` 单测：构造 `handlePluginZoom` 入参使 `rawScale === 0`（zoomLayer.scaleX=0），断言 `zoomLayer.scaleOfWorld` **未**被调用（或调用时 ratio 有限），zoomLayer 矩阵不 corrupt（修复前红：scaleOfWorld 收 Infinity）。修复前红。
-- [ ] **Fix-a（fill floor，P2-7）**：`use-scada-config-sync.ts:121` 改 `clampScale(Math.max(size.width / Math.max(1e-6, bounds.width), size.height / Math.max(1e-6, bounds.height)))`，零尺寸收敛到 Infinity→MAX_SCALE（与 contain `viewport.ts:65-67` floor 方向一致）。
-- [ ] **Fix-b（wheel-zoom 除零守卫，P2-8）**：`scada-engine.ts handlePluginZoom` 在 `readZoomLayerScale` 后增早退守卫：`if (rawScale === 0 || !Number.isFinite(rawScale)) { this.syncViewportFromZoomLayer(); this.interaction?.refresh(); return; }`，`scaleOfWorld` 不收 Infinity。落地后上述 failing-first Proof 转绿。
+- [x] **Proof（failing-first，先于 Fix）**：(a) `use-scada-config-sync` 单测：构造 `applyInitialViewport` fill policy + `bounds={x:0,y:0,width:0,height:0}`（或 computeSymbolBounds 返零尺寸），断言 `engine.setViewport` 收到 `scale === MAX_SCALE`（修复前红：scale === MIN_SCALE 或 Infinity）；(b) `scada-engine` 单测：构造 `handlePluginZoom` 入参使 `rawScale === 0`（zoomLayer.scaleX=0），断言 `zoomLayer.scaleOfWorld` **未**被调用（或调用时 ratio 有限），zoomLayer 矩阵不 corrupt（修复前红：scaleOfWorld 收 Infinity）。修复前红。
+- [x] **Fix-a（fill floor，P2-7）**：`use-scada-config-sync.ts:121` 改 `clampScale(Math.max(size.width / Math.max(1e-6, bounds.width), size.height / Math.max(1e-6, bounds.height)))`，零尺寸收敛到 Infinity→MAX_SCALE（与 contain `viewport.ts:65-67` floor 方向一致）。
+- [x] **Fix-b（wheel-zoom 除零守卫，P2-8）**：`scada-engine.ts handlePluginZoom` 在 `readZoomLayerScale` 后增早退守卫：`if (rawScale === 0 || !Number.isFinite(rawScale)) { this.syncViewportFromZoomLayer(); this.interaction?.refresh(); return; }`，`scaleOfWorld` 不收 Infinity。落地后上述 failing-first Proof 转绿。
 
 Exit Criteria:
 
 > 本 Phase 交付 = fill 零尺寸方向正确 + wheel-zoom 除零不 corrupt 矩阵。
 
-- [ ] fill 零尺寸 bounds → scale === MAX_SCALE（proof 断言 setViewport scale）。
-- [ ] rawScale=0 时 zoomLayer 矩阵不 corrupt（proof 断言 scaleOfWorld 未收 Infinity）。
-- [ ] 既有视口/zoom 单测不回归（既有 use-scada-config-sync / scada-engine 单测全绿）。
+- [x] fill 零尺寸 bounds → scale === MAX_SCALE（proof 断言 setViewport scale）。
+- [x] rawScale=0 时 zoomLayer 矩阵不 corrupt（proof 断言 scaleOfWorld 未收 Infinity）。
+- [x] 既有视口/zoom 单测不回归（既有 use-scada-config-sync / scada-engine 单测全绿）。
 
 ### Phase 2 - 生命周期清理对称（P2-10 reset 清覆盖物 + P2-11 handles deps）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/engine/scada-engine.ts` + `renderer/hooks/use-scada-events.ts` + `renderer/hooks/use-scada-handles.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] **Proof（failing-first，先于 Fix）**：(a) `scada-engine` / lifecycle 单测：hover 一 symbol 产生 interactionOverlay 高亮，调 `engine.reset(newConfig)`，断言 interactionOverlay 清空（无高亮）+ （经 hook）`lastHoverSymbolRef.current === undefined`（修复前红：高亮残留）；(b) `use-scada-handles` 单测：模拟 config reload（setRuntime 触发），断言 componentRegistry register/unregister 计数不随 reload 递增（修复前红：每 reload 重注册）。修复前红。
-- [ ] **Fix-a（reset 清 interaction，P2-10）**：`scada-engine.ts:191-199` `reset` 末尾增 `this.interaction?.clear();`（`InteractionOverlay.clear(symbolId?)` 已存在于 `engine/interaction-overlay.ts:159`，无参调用清空全部覆盖物）。
-- [ ] **Fix-b（events hook 重置 lastHoverSymbolRef，P2-10）**：`use-scada-events.ts` 增 config-change effect（deps `[args.config]`）重置 `lastHoverSymbolRef.current = undefined`（与 engine.reset 同口径，覆盖 hook 侧 stale 基线）。
-- [ ] **Fix-c（handles deps 卫生，P2-11）**：`use-scada-handles.ts` handle 注册 effect deps 移除 `runtime`（invoke 已经 `latest.current.runtime` ref 读最新，无需 closure 捕获），保留 `componentRegistry`/`id` 等 identity 稳定 deps。落地后上述 failing-first Proof 转绿。
+- [x] **Proof（failing-first，先于 Fix）**：(a) `scada-engine` / lifecycle 单测：hover 一 symbol 产生 interactionOverlay 高亮，调 `engine.reset(newConfig)`，断言 interactionOverlay 清空（无高亮）+ （经 hook）`lastHoverSymbolRef.current === undefined`（修复前红：高亮残留）；(b) `use-scada-handles` 单测：模拟 config reload（setRuntime 触发），断言 componentRegistry register/unregister 计数不随 reload 递增（修复前红：每 reload 重注册）。修复前红。
+- [x] **Fix-a（reset 清 interaction，P2-10）**：`scada-engine.ts:191-199` `reset` 末尾增 `this.interaction?.clear();`（`InteractionOverlay.clear(symbolId?)` 已存在于 `engine/interaction-overlay.ts:159`，无参调用清空全部覆盖物）。
+- [x] **Fix-b（events hook 重置 lastHoverSymbolRef，P2-10）**：`use-scada-events.ts` 增 config-change effect（deps `[args.config]`）重置 `lastHoverSymbolRef.current = undefined`（与 engine.reset 同口径，覆盖 hook 侧 stale 基线）。
+- [x] **Fix-c（handles deps 卫生，P2-11）**：`use-scada-handles.ts` handle 注册 effect deps 移除 `runtime`（invoke 已经 `latest.current.runtime` ref 读最新，无需 closure 捕获），保留 `componentRegistry`/`id` 等 identity 稳定 deps。落地后上述 failing-first Proof 转绿。
 
 Exit Criteria:
 
-- [ ] `engine.reset` 后 interactionOverlay 清空 + lastHoverSymbolRef 重置（proof 断言无残留高亮）。
-- [ ] config reload 后 handle 注册计数不递增（proof 断言计数稳定）。
-- [ ] 既有 lifecycle / handles / events 单测不回归。
+- [x] `engine.reset` 后 interactionOverlay 清空 + lastHoverSymbolRef 重置（proof 断言无残留高亮）。
+- [x] config reload 后 handle 注册计数不递增（proof 断言计数稳定）。
+- [x] 既有 lifecycle / handles / events 单测不回归。
 
 ### Phase 3 - 动画/binding 优先级 Decision + 文档化 + 测试锁定（P2-1）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/binding/dirty-collector.ts`（flushFrame precedence 注释）+ `docs/components/industrial-hmi/design-data-binding.md`
 
 - Item Types: `Decision | Proof`
 
-- [ ] **Decision（precedence 裁定）**：裁定并记录 flushFrame 的同属性 precedence：**{binding（collectBindings）, state（collectStates）} 合帧 applyAttrs > animation 增量**（脏帧 binding/state 覆盖 animation 当帧增量；animation 在**无 binding 的属性**上正常生效）。维持现状语义（不改 flushFrame 顺序），仅文档化 + 测试锁定，消除「未文档化未测试」的不确定性。**不新增** validate/registration warn（避免 noisy；precedence 是确定性的，author 按契约可预期）。Decision 写入 `design-data-binding.md`（§4.x 动画/binding 优先级契约）。
-- [ ] **Proof（行为锁定，刻画现状）**：`binding/refresh-pipeline-animation-lifecycle.test.ts`（或同族测试文件）新增三组锁定用例：(a) 同属性（rotation）—— symbol 同时声明 rotation binding 与 rotate animation，flushFrame 后断言节点 rotation === binding 求值（binding 覆盖 animation 当帧增量）；(b) 无 binding 属性（如 dashOffset 仅 animation）—— animation 增量正常推进，binding 不干扰；(c) **多帧稳定性**——连续多帧 flushFrame（binding 值不变 + animation 持续推进），断言同属性每帧终值始终 === binding 求值（precedence 跨帧稳定、无 inter-frame 跳变，刻画审计关注的「闪烁」实为确定性的 binding 覆盖）。三组均刻画现状（绿），作为 precedence 契约的回归守护。
-- [ ] **Doc（owner doc 同步）**：`design-data-binding.md` 新增「动画/binding 同属性优先级」段：binding/state 合帧 > animation 增量；animation 仅在无 binding 属性生效；flushFrame collectBindings/collectStates → collector.flush 顺序是 precedence 的事实源。`dirty-collector.ts flushFrame`（:267+）补一行注释指向该 doc 段。
+- [x] **Decision（precedence 裁定）**：裁定并记录 flushFrame 的同属性 precedence：**{binding（collectBindings）, state（collectStates）} 合帧 applyAttrs > animation 增量**（脏帧 binding/state 覆盖 animation 当帧增量；animation 在**无 binding 的属性**上正常生效）。维持现状语义（不改 flushFrame 顺序），仅文档化 + 测试锁定，消除「未文档化未测试」的不确定性。**不新增** validate/registration warn（避免 noisy；precedence 是确定性的，author 按契约可预期）。Decision 写入 `design-data-binding.md`（§4.3 动画/binding 优先级契约）。
+- [x] **Proof（行为锁定，刻画现状）**：`binding/refresh-pipeline-animation-lifecycle.test.ts`（或同族测试文件）新增三组锁定用例：(a) 同属性（rotation）—— symbol 同时声明 rotation binding 与 rotate animation，flushFrame 后断言节点 rotation === binding 求值（binding 覆盖 animation 当帧增量）；(b) 无 binding 属性（如 dashOffset 仅 animation）—— animation 增量正常推进，binding 不干扰；(c) **多帧稳定性**——连续多帧 flushFrame（binding 值不变 + animation 持续推进），断言同属性每帧终值始终 === binding 求值（precedence 跨帧稳定、无 inter-frame 跳变，刻画审计关注的「闪烁」实为确定性的 binding 覆盖）。三组均刻画现状（绿），作为 precedence 契约的回归守护。
+- [x] **Doc（owner doc 同步）**：`design-data-binding.md` 新增「动画/binding 同属性优先级」段：binding/state 合帧 > animation 增量；animation 仅在无 binding 属性生效；flushFrame collectBindings/collectStates → collector.flush 顺序是 precedence 的事实源。`dirty-collector.ts flushFrame`（:267+）补一行注释指向该 doc 段。
 
 Exit Criteria:
 
-- [ ] flushFrame {binding,state}>animation precedence 经三组测试锁定（同属性 binding 覆盖 + 无 binding 属性 animation 正常 + 多帧跨帧稳定性）。
-- [ ] `design-data-binding.md` 记录 precedence 契约 + `dirty-collector.ts flushFrame` 注释指向。
-- [ ] 既有 animation-lifecycle / refresh-pipeline 单测不回归。
+- [x] flushFrame {binding,state}>animation precedence 经三组测试锁定（同属性 binding 覆盖 + 无 binding 属性 animation 正常 + 多帧跨帧稳定性）。
+- [x] `design-data-binding.md` 记录 precedence 契约 + `dirty-collector.ts flushFrame` 注释指向。
+- [x] 既有 animation-lifecycle / refresh-pipeline 单测不回归。
 
 ### Phase 4 - roadmap P2-4 ✅ marker 回写（doc-hygiene）
 
-Status: planned
+Status: completed
 Targets: `docs/components/roadmap-industrial-hmi.md`（Follow-up Backlog「2026-08-05-2129」子节 multi P2-4 行）
 
 - Item Types: `Follow-up`
 
-- [ ] **回写 marker**：roadmap Follow-up Backlog「2026-08-05-2129 post-remediation audit P2」子节 multi-audit `[P2-4]` 条目（roadmap:564）末尾追加「**已由 plan `2026-08-05-0653-4` C3（onError 签名 + reportDiagnostic cause 包装）+ plan `2026-08-05-2129-3` Phase 3（FluxEvalOutcome discriminated result + 错误码对称）收口（2026-08-06，✅）**」，与同节兄弟条目格式对齐。live 证据：`dirty-collector.ts:382-406` syncExpressionPoint 透传 outcome.error + `:656-659` reportError 4 参转发。
+- [x] **回写 marker**：roadmap Follow-up Backlog「2026-08-05-2129 post-remediation audit P2」子节 multi-audit `[P2-4]` 条目（roadmap:568）末尾追加「**已由 plan `2026-08-05-0653-4` C3（onError 签名 + reportDiagnostic cause 包装）+ plan `2026-08-05-2129-3` Phase 3（FluxEvalOutcome discriminated result + 错误码对称）收口（2026-08-06，✅）**」，与同节兄弟条目格式对齐。live 证据：`dirty-collector.ts:382-406` syncExpressionPoint 透传 outcome.error + `:656-659` reportError 4 参转发。
 
 Exit Criteria:
 
-- [ ] roadmap:564 P2-4 条目带 ✅ marker + 收口 plan 引用 + 一句话落地摘要，格式与同节兄弟一致。
+- [x] roadmap:568 P2-4 条目带 ✅ marker + 收口 plan 引用 + 一句话落地摘要，格式与同节兄弟一致。
 
 ## Draft Review Record
 
@@ -161,19 +161,19 @@ Exit Criteria:
 
 > 全量 `pnpm typecheck/build/lint/test` 是 plan 收口时跑一次的仓库级检查（Minimum Rule 18）。
 
-- [ ] P2-7：fill 分支零尺寸 bounds → scale === MAX_SCALE（与 contain 方向一致）。
-- [ ] P2-8：`handlePluginZoom` rawScale=0/非有限早退，zoomLayer 矩阵不 corrupt。
-- [ ] P2-10：`engine.reset` 清 interactionOverlay + `use-scada-events` config-change 重置 lastHoverSymbolRef。
-- [ ] P2-11：`use-scada-handles` effect deps 移除 runtime，reload 不冗余重注册。
-- [ ] P2-1：flushFrame {binding,state}>animation precedence 文档化 + 两组行为锁定测试。
-- [ ] P2-4 doc-hygiene：roadmap:564 ✅ marker 回写（P2-4 已由 0653-4 C3 + 2129-3 Phase 3 收口，非本 plan live defect）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 项（P2-4 为已收口的 doc-hygiene Non-Goal，明确非 live defect）。
-- [ ] owner doc 同步：`design-engine.md`（§4.4 fill floor + wheel-zoom 守卫）、`design-renderer.md`（reset 清覆盖物）、`design-data-binding.md`（动画/binding precedence）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] P2-7：fill 分支零尺寸 bounds → scale === MAX_SCALE（与 contain 方向一致）。
+- [x] P2-8：`handlePluginZoom` rawScale=0/非有限早退，zoomLayer 矩阵不 corrupt。
+- [x] P2-10：`engine.reset` 清 interactionOverlay + `use-scada-events` config-change 重置 lastHoverSymbolRef。
+- [x] P2-11：`use-scada-handles` effect deps 移除 runtime，reload 不冗余重注册。
+- [x] P2-1：flushFrame {binding,state}>animation precedence 文档化 + 两组行为锁定测试。
+- [x] P2-4 doc-hygiene：roadmap:568 ✅ marker 回写（P2-4 已由 0653-4 C3 + 2129-3 Phase 3 收口，非本 plan live defect）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 项（P2-4 为已收口的 doc-hygiene Non-Goal，明确非 live defect）。
+- [x] owner doc 同步：`design-engine.md`（§4.4 fill floor + wheel-zoom 守卫）、`design-renderer.md`（reset 清覆盖物）、`design-data-binding.md`（动画/binding precedence）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Non-Blocking Follow-ups
 
@@ -182,13 +182,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 四 Phase 全部落地（每 Phase failing-first Proof 红→绿，Phase 3 行为锁定刻画现状绿），5 条 in-scope P2（P2-7/8/10/11 + open P2-1）+ 1 条 doc-hygiene marker 回写（P2-4）收口。owner doc 三处同步（design-engine.md §4.4 / design-renderer.md §8.3 / design-data-binding.md §4.3 + dirty-collector.ts 注释）。workspace 全量验证全绿（typecheck/build/lint 32/32 + test 59/59；industrial 746 tests / 55 files，较 736 baseline +10 tests）。2129 audit P2 至此全部收口或归 sibling plan。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 fresh-session sub-agent `ses_02b0a89e1ffe3g4PH72YEnDDLd`（general subagent，非执行 session）
+- Verdict: `pass`（零 Blocker / 零 Major / 零 Minor）
+- Evidence: 逐条 live 核对四 Phase fix 落地 + 红→绿对应（`use-scada-config-sync.ts:126` fill floor / `scada-engine.ts:442-446` 除零守卫 + `:201` reset clear / `use-scada-events.ts:82-84` config-change effect / `use-scada-handles.ts:39,159` deps 移除 runtime / `dirty-collector.ts:270-273` precedence 注释 / `design-data-binding.md:130` precedence 契约 / roadmap:568+571+572+574+575+583 ✅ markers）；断言均验结果值（scale===MAX_SCALE、activeCount===0、registerCount===1、rotation===45）；零 build artifact；P2-4 doc-hygiene Non-Goal 非 live defect 无静默降级；re-run 5 受影响测试文件 55 tests 全绿 + industrial typecheck/lint 0 error。daily log `docs/logs/2026/08-06.md`（2129 0900-3 收口条目）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- no remaining plan-owned work（2129 P2 全部收口或归 sibling plan）。
+- P2-1 animation "decorative override" 语义改写 + 无 binding 属性短路径性能优化为 Non-Goal，未来需重开 Decision 经人工确认（Rule 3）。

@@ -160,6 +160,17 @@ interface ScadaEngineOptions {
 > 引擎 `setViewport` 才经 `clampViewport` 钳 scale → 居中 x/y 按未钳 scale、实际 scale 被钳 → 内容几何中心
 > 不齐视口中心（漂移）。fill 保留 max-scale 语义（不可委托 `engine.fit`——fit 是 min-scale/contain），
 > 仅复用 `clampScale`，不抽共享 helper（fill/contain 语义不同，强行共享会模糊语义）。
+>
+> **P2-7 增补（fill 分支零尺寸 floor，plan 2026-08-06-0900-3 Phase 1）**：fill 分支补 `Math.max(1e-6, bounds.width/height)`
+> floor，与 contain/fit 分支（`viewport.ts:65-67` 已有 floor）方向一致——零尺寸内容 `size/0=Infinity` →
+> `clampScale(Infinity)=MIN_SCALE`（zoom OUT，与 contain 反向）；floor 后 `size/1e-6=huge` →
+> `clampScale(huge)=MAX_SCALE`（zoom IN，与 contain 一致）。零尺寸内容两分支同向收敛到 MAX_SCALE。
+>
+> **P2-8 增补（wheel-zoom 除零守卫，plan 2026-08-06-0900-3 Phase 1）**：`handlePluginZoom` 在
+> `readZoomLayerScale` 后增早退守卫 `if (rawScale === 0 || !Number.isFinite(rawScale)) { syncViewportFromZoomLayer(); interaction?.refresh(); return; }`。
+> `rawScale=0` 时 `clampScale(0)=MIN_SCALE`，`clamped !== rawScale` 会使 `scaleOfWorld(anchor, MIN_SCALE/0=Infinity)`
+> → zoomLayer 矩阵 corrupt（scaleX 变 Infinity/NaN）不可恢复。早退守卫使 `scaleOfWorld` 不收 Infinity，
+> 经 `syncViewportFromZoomLayer` 用 fallback 读回有限视口态，矩阵可恢复。
 
 ### 4.5 渲染循环与脏区/局部重绘
 

@@ -246,6 +246,7 @@ interface ScadaSymbolNode {
   - `width`/`height`/`viewport` 变化 → 引擎命令式 API（**`width`/`height` props 变更触发 `engine.setSize`**：plan 2026-08-04-1558-2 Phase 4 WD-1/m10 落地，effect deps 含 width/height；**`viewport` policy 仅在 full/reset 路径应用**：diff 增量重应用会重置用户在画布上的平移/缩放，保持现状契约，不自动重应用）；
 - **React Compiler 基线**：引擎实例为命令式副作用，生命周期放 `useEffect`（`useEffectEvent` 用于事件桥接注册/注销，research-summary §5.2 差距项）；渲染函数内不触碰引擎（INV-5：render path 无副作用）。
 - **销毁状态可见性**（plan 2026-08-04-1558-2 Phase 1 OP-4）：`component:destroy` 后 wrapper `data-status` 反映 `destroyed` 态（非 `ready`），e2e/tooling 不再把已销毁画布报为健康；后续句柄命令返回 `not-mounted`。
+- **reset 清覆盖物对称**（plan 2026-08-06-0900-3 Phase 2 multi P2-10）：`engine.reset(config)`（importConfig/version-change 全量重建路径）末尾清 `InteractionOverlay`（`this.interaction?.clear()`），重建后无残留 hover 高亮；`use-scada-events` config-change effect 重置 `lastHoverSymbolRef`，使 hover 状态机基线与新 config 对齐（与 reset 清覆盖物同口径，覆盖 hook 侧 stale 基线）。`use-scada-handles` handle 注册 effect deps 移除 `runtime`（invoke 经 ref 读最新），config reload 不冗余重注册 handle（multi P2-11）。
 
 ### 8.4 测试句柄契约（A2 固化，I2.4 Decision）
 
