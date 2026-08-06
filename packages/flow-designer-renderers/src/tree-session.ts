@@ -257,8 +257,18 @@ export class TreeDocumentSession {
     const resultClass = classifyActionResult(result);
 
     if (resultClass === 'success') {
+      // Dispatch success is treated as host confirmation (the action ran with
+      // `{ ok: true }`): dequeue the head like the ack-accepted path does and
+      // adopt its digest so later host echoes of this tree hit the fast path
+      // instead of being judged stale. A subsequent explicit host ack for the
+      // same dispatch degrades to a stale-ack no-op, which is correct because
+      // the change is already confirmed.
+      const head = queue[0];
+      queue.shift();
+      this.state.acceptedBaselineDigest = head.digest;
       this.state.inFlight = null;
       this.notify();
+      void this.dispatchNext(generation);
       return;
     }
 

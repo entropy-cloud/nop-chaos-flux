@@ -186,6 +186,55 @@ describe('TreeDocumentSession - FIFO dispatch', () => {
     expect(reportHostIssue).toHaveBeenCalled();
   });
 
+  it('advances the queue head on success and dispatches newly enqueued changes without re-sending the old head', async () => {
+    const { session, core, dispatch } = createHarness({ actionResult: { ok: true } });
+    core.replaceTreeFromHost(cloneWithLabel(createTree(), 'Base'), 1);
+    session.applyHostInput({ treeDocument: cloneWithLabel(createTree(), 'Base'), epoch: 1 });
+
+    core.insertChainNode('root', 'task', { label: 'Two' });
+    const firstHead = session.state.pendingQueue[0];
+    expect(firstHead).toBeTruthy();
+    void session.dispatchNext();
+    await vi.waitFor(() => {
+      expect(session.state.inFlight).toBeNull();
+    });
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(session.state.pendingQueue).toHaveLength(0);
+    expect(session.getAcceptedBaselineDigest()).toBe(firstHead.digest);
+
+    core.insertChainNode('root', 'task', { label: 'Three' });
+    const newHead = session.state.pendingQueue[0];
+    expect(newHead.dispatchId).toBe(firstHead.dispatchId + 1);
+    void session.dispatchNext();
+    await vi.waitFor(() => {
+      expect(dispatch).toHaveBeenCalledTimes(2);
+    });
+    const secondBindings = dispatch.mock.calls[1][1].evaluationBindings;
+    expect(secondBindings.dispatchId).toBe(newHead.dispatchId);
+    expect(secondBindings.treeDocument.root.child!.data.label).toBe('Three');
+  });
+
+  it('does not judge a host echo as stale after a successful dispatch without ack', async () => {
+    const { session, core } = createHarness({ actionResult: { ok: true } });
+    core.replaceTreeFromHost(cloneWithLabel(createTree(), 'Base'), 1);
+    session.applyHostInput({ treeDocument: cloneWithLabel(createTree(), 'Base'), epoch: 1 });
+
+    core.insertChainNode('root', 'task', { label: 'Two' });
+    const treeAfter = core.getTreeDocument()!;
+    void session.dispatchNext();
+    await vi.waitFor(() => {
+      expect(session.state.inFlight).toBeNull();
+    });
+
+    // Local core moves on with a newer change while the host has not acked
+    // the previous dispatch; an echo of the confirmed tree must still be a
+    // fast-path echo (digest adopted on success-shift), not stale-echo.
+    core.insertChainNode('root', 'task', { label: 'Three' });
+
+    const outcome = session.applyHostInput({ treeDocument: treeAfter });
+    expect(outcome.outcome).toBe('echo');
+  });
+
   it('coalesces the latest change when the queue is full and appends on release', async () => {
     const { session, core } = createHarness({ actionResult: { ok: true } });
     core.replaceTreeFromHost(cloneWithLabel(createTree(), 'Base'), 1);
