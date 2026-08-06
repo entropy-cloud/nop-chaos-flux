@@ -99,7 +99,9 @@ async function main() {
     }
   }
 
-  if (manifest.exports?.['./style.css'] !== './dist/style.css') {
+  const styleExport = manifest.exports?.['./style.css'];
+  const stylePath = typeof styleExport === 'string' ? styleExport : styleExport?.default;
+  if (stylePath !== './dist/style.css') {
     throw new Error('Packed manifest does not export ./style.css');
   }
 

@@ -414,6 +414,10 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
   'ai-widgets': async (page) => {
     await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
   },
+  'graph-demo': async (page) => {
+    await expect(page.locator('[data-slot="graph"]').first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-slot="graph-node"]').first()).toBeVisible({ timeout: 15_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

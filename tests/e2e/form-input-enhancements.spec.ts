@@ -62,7 +62,7 @@ test.describe('E3 form input enhancements', () => {
     await expect(moveDownButtons.nth(count - 1)).toBeDisabled();
     await expect(moveDownButtons.nth(0)).toBeEnabled();
 
-    const keyInputs = page.getByPlaceholder('Key');
+    const keyInputs = page.getByPlaceholder(/Key|键/, { exact: true });
     await expect(keyInputs.nth(0)).toHaveValue('env');
     await expect(keyInputs.nth(1)).toHaveValue('region');
 
