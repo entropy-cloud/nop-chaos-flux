@@ -10,6 +10,9 @@ import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial';
+// Editor registration via `/editor` subpath (NOT main entry) — preserves bundle isolation:
+// `@leafer-in/editor` stays out of the runtime `scada-canvas` bundle (design-architecture.md §4.4.1).
+import { registerScadaEditorRenderers } from '@nop-chaos/flux-renderers-industrial/editor';
 import { HomePage } from './pages/home-page';
 import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
@@ -114,6 +117,7 @@ registerContentRenderers(registry);
 registerLayoutRenderers(registry);
 registerSchedulingRenderers(registry);
 registerScadaRenderers(registry);
+registerScadaEditorRenderers(registry);
 
 if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefined') {
   window.__NOP_DEBUGGER__ = {
