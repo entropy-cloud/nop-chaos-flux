@@ -50,8 +50,9 @@ export function useSelectRemoteSearch(input: {
         setError(undefined);
       });
       const actionInput = searchSource as ActionSchema;
+      const searchScope = helpers.createScope({ searchQuery: trimmed });
       helpers
-        .dispatch(actionInput, { scope: helpers.createScope({ searchQuery: trimmed }), signal: controller.signal })
+        .dispatch(actionInput, { scope: searchScope, signal: controller.signal })
         .then((result) => {
           if (controller.signal.aborted) return;
           if (result.ok) {
@@ -82,6 +83,7 @@ export function useSelectRemoteSearch(input: {
           if (!controller.signal.aborted) {
             startTransition(() => setLoading(false));
           }
+          helpers.disposeScope(searchScope.id);
         });
     }, 300);
     return () => {
