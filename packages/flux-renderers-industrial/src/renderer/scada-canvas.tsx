@@ -113,8 +113,10 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   //  - `console.warn('[scada-canvas]', code, message)` 保底可见（dev+prod；去重已在上游
   //    `useScadaPointsBridge.reportOnce`/`EventBridge.reportHandlerError` 完成，故每唯一错误仅 fire 一次）；
   //  - flux 表达式错误（`flux-compile-failed`/`flux-evaluate-failed`/`flux-deps-empty`，plan 2026-08-05-0325-1）
-  //    额外复用既有 host telemetry 钩子 `env.monitor.onError`（`ExpressionExecutionEnv.monitor`，
-  //    phase:'expression'；handler-error 的 'action' phase 超出现 monitor 类型，host telemetry 后置，Follow-up）。
+  //    经窄 telemetry 面 `env.monitor.onError`（`ExpressionExecutionEnv.monitor`，phase:'expression'）。
+  //  - handler-error（用户侧图元事件处理器 throw）经**宽** telemetry 面 `RendererPlugin.onError`
+  //    （`ErrorMonitorPayload`，phase:'action'，plan 2026-08-06-0746-3 Phase 1 / multi P2-5）——与 flux-*
+  //    的 expression-phase telemetry 对称（action 错误与 expression 错误都可达 host 监控）。
   //  不违反 §8.1：诊断 ≠ status 升级——此处不动 `setStatus`/`setErrorInfo`/`eventsApi.notifyError`，
   //  画布保持 ready，不派发 `scada:error`（§8.1 onError 仅 config 校验/构建失败）。
   //  出口整体 try/catch 自保护——通道自身 throw 不得回流 engine/hook（Failure Paths channel-outlet-throws）。
@@ -122,28 +124,50 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   // plan 2026-08-05-0653-4 C3（multi-audit P2-4）：第三参 `error?` 透传——host 监控收到的 Error 经
   // `new Error(message, { cause: error })` 包装，保留原始 stack/cause 链，可定位 formula evaluator 源。
   // 旧实现 `new Error(message)`（无 cause）丢失原始 stack，host 无法归因。`error?` 可选 → 向后兼容
-  // 现有 2-arg 调用方（`onHandlerError` 路径未提供原始 error，按 message-only 包装）。
+  // 现有 2-arg 调用方。
+  //
+  // plan 2026-08-06-0746-3 Phase 1 Decision（multi P2-5，handler-error telemetry 对称）：
+  // handler-error 经已存在、已接 `'action'` phase 的宽 telemetry 面 `RendererPlugin.onError`
+  // （`renderer-api.ts` `ErrorMonitorPayload`，phase 联合含 `'action'`；`flux-action-core/action-execution.ts`
+  // 已用此面转发 action 错误）转发到 host，而非扩 `ExpressionExecutionEnv.monitor` 的 `'expression'` 字面量
+  // 限定。拒绝的替代方案：扩 `ExpressionErrorMonitorPayload.phase` 联合 admit `'action'` 会模糊窄面语义
+  // （窄面刻意限定 expression-phase），故不选；新增 optional `onActionError` 通道属不必要的重复面，亦不选。
   const reportDiagnostic = useCallback(
     (code: string, message: string, error?: unknown) => {
       try {
         console.warn('[scada-canvas]', code, message);
+        const reportedError =
+          error === undefined ? new Error(message) : new Error(message, { cause: error });
         if (
           code === 'flux-compile-failed' ||
           code === 'flux-evaluate-failed' ||
           code === 'flux-deps-empty'
         ) {
-          const reportedError = error === undefined ? new Error(message) : new Error(message, { cause: error });
           rendererRuntime.env.monitor?.onError?.({
             phase: 'expression',
             error: reportedError,
             details: { code },
           });
+        } else if (code === 'handler-error') {
+          // handler-error 经宽 telemetry 面（phase:'action'）转发 host——与 flux-* 窄面（phase:'expression'）对称。
+          // 单 plugin onError throw 隔离（镜像 action-execution.ts 的 per-plugin try/catch），不阻断其余 plugin。
+          for (const plugin of rendererRuntime.plugins) {
+            try {
+              plugin.onError?.(reportedError, {
+                phase: 'action',
+                error: reportedError,
+                details: { code: 'handler-error' },
+              });
+            } catch {
+              // 单 plugin onError throw 隔离：不阻断其余 plugin / 通道
+            }
+          }
         }
       } catch {
         // 诊断通道自身异常隔离：不得回流 engine/hook
       }
     },
-    [rendererRuntime.env],
+    [rendererRuntime.env, rendererRuntime.plugins],
   );
 
   const runtimeRef = useRef<ScadaCanvasRuntime | null>(null);
@@ -173,8 +197,15 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     env: rendererRuntime.env,
     // plan 2026-08-04-2242-1 Phase 2：接通用户侧图元事件处理器 throw 的去重上报通道
     // （engine `EventBridge.safeRun`/`reportHandlerError` 已去重，此处仅订阅消费者）。
+    // plan 2026-08-06-0746-3 Phase 1 Fix-a（multi P2-5）：透传原始 error 第三参——reportDiagnostic
+    // 走 `new Error(message, { cause: error })` 包装保留 cause 链，host 监控可归因 handler 源
+    // （旧实现仅传 message，cause 链丢失）。
     onHandlerError: (error) =>
-      reportDiagnostic('handler-error', error instanceof Error ? error.message : String(error)),
+      reportDiagnostic(
+        'handler-error',
+        error instanceof Error ? error.message : String(error),
+        error,
+      ),
     // plan 2026-08-05-2129-3 Phase 3（multi P1-2）：pipeline 层 expression-point / binding.expression /
     // scale.expression 求值失败走同一诊断出口（reportDiagnostic），与桥接层 source:'flux' 通道对称
     // （错误码 flux-compile-failed/flux-evaluate-failed 由 reportDiagnostic 的 monitor.onError 分支覆盖）。

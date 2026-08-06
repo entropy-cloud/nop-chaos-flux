@@ -483,3 +483,59 @@ describe('I18 表达式一元化 failing-first Proof (binding-expression-unifica
     expect(onError).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * plan 2026-08-06-0746-3 Phase 2（multi P2-6）failing-first Proof：findCircularDependencyError
+ * cause-chain 深度上限。
+ *
+ * 关键（修复前转红 → 修复后转绿）：旧上限硬编码 `10`，对 10+ 层 expression chain（工业过程管线现实场景，
+ * 如 `${a}` → `${b}` → ... → `${k}` 经多层嵌套求值叠加多层 `Error('Expression evaluation failed for: ...')`
+ * 包装）的 cycle 会误判为 generic eval 失败（返 undefined → 上游上报 `flux-evaluate-failed` 而非
+ * `circular dependency`，host 无法区分真 cycle vs runtime TypeError）。提高上限（~1000，保留 cause===current/
+ * undefined break 守卫防无限循环）后深链 cycle 被正确识别。
+ */
+describe('findCircularDependencyError cause-chain depth cap (plan 2026-08-06-0746-3 Phase 2, multi P2-6)', () => {
+  /** 构造 N 层 wrapper（外→内）包裹原始 CircularDependencyError，模拟多层嵌套求值的包装叠加。 */
+  const wrapChain = (original: unknown, wrappers: number): unknown => {
+    let chain: unknown = original;
+    for (let i = 0; i < wrappers; i++) {
+      chain = new Error(`Expression evaluation failed for: wrap-${i}`, { cause: chain });
+    }
+    return chain;
+  };
+
+  it('识别 ≥12 层 expression chain 的 cycle（修复前上限 10 转红，提至 ~1000 后转绿）', () => {
+    const original = new CircularDependencyError('deep-pipeline-cycle');
+    const chain = wrapChain(original, 12);
+    // 12 层 wrapper → CircularDependencyError 在 depth 12。旧上限 10 时 loop 在 depth=10 退出 → undefined（红）；
+    // 提至 ~1000 后 depth 12 < 1000 → 命中 instanceof 返回原实例（绿）。
+    const found = findCircularDependencyError(chain);
+    expect(found).toBe(original);
+    expect(found?.message).toBe('circular dependency involving point: deep-pipeline-cycle');
+  });
+
+  it('更深的 chain（50 层）仍识别（覆盖工业过程管线超长链现实场景）', () => {
+    const original = new CircularDependencyError('very-deep');
+    const chain = wrapChain(original, 50);
+    expect(findCircularDependencyError(chain)).toBe(original);
+  });
+
+  it('浅链（≤10 层）cycle 识别不回归（防上限调整误伤浅链）', () => {
+    // 5 层 wrapper——旧/新上限下都应识别（回归守护）。
+    const original = new CircularDependencyError('shallow');
+    const chain = wrapChain(original, 5);
+    expect(findCircularDependencyError(chain)).toBe(original);
+  });
+
+  it('自环 cause===current 守卫保留（防无限循环，即使上限提高）', () => {
+    // cause 自环：手动构造对象 cause 指向自身。即使 depth 上限提高，`cause === current` break 守卫
+    // 必须阻止无限循环。非 CircularDependencyError → 返 undefined。
+    const selfRef = { message: 'self loop' } as unknown as { cause: unknown };
+    selfRef.cause = selfRef;
+    expect(findCircularDependencyError(selfRef)).toBeUndefined();
+  });
+
+  it('无 cause 链的普通 error 仍返 undefined（上限提高不引入误报）', () => {
+    expect(findCircularDependencyError(new Error('plain runtime TypeError'))).toBeUndefined();
+  });
+});

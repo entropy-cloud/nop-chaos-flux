@@ -18,6 +18,7 @@ import {
   createRendererRegistry,
   type RendererDefinition,
   type RendererComponentProps,
+  type RendererPlugin,
   type SchemaObject,
 } from '@nop-chaos/flux-core';
 import { ScadaCanvasRenderer } from '../renderer/scada-canvas.js';
@@ -37,11 +38,15 @@ export interface ScadaTestEnvironment {
 export function createScadaTestEnvironment(
   definitions: RendererDefinition[],
   data: Record<string, unknown> = {},
+  options?: { plugins?: RendererPlugin[] },
 ): ScadaTestEnvironment {
   const runtime = createRendererRuntime({
     registry: createRendererRegistry(definitions),
     env: createDefaultEnv(),
     expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    // plan 2026-08-06-0746-3 Phase 1：可选 plugins 注入——handler-error action-phase telemetry proof
+    // 经 plugin.onError spy 断言 host 宽面（ErrorMonitorPayload, phase:'action'）可达。
+    plugins: options?.plugins,
   });
   const page = runtime.createPageRuntime(data);
   const actionScope = runtime.createActionScope({ id: 'scada-test-action-scope' });

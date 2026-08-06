@@ -406,3 +406,129 @@ describe('scada-canvas pipeline diagnostic channel wiring (plan 2026-08-05-2129-
     }
   });
 });
+
+/**
+ * plan 2026-08-06-0746-3 Phase 1（multi P2-5）failing-first Proof：handler-error telemetry 对称。
+ *
+ * 关键（修复前转红 → 修复后转绿）：handler-error 经**宽** telemetry 面 `RendererPlugin.onError`
+ * （`ErrorMonitorPayload`，phase:'action'）到达 host，且透传原始 Error（cause 链保留），与 flux-* expression
+ * 错误经**窄** telemetry 面 `env.monitor.onError`（phase:'expression'）对称。修复前 handler-error 既不透传
+ * error（message-only），也无任何 telemetry 路径到达 host（reportDiagnostic 仅对 flux-* 码转发 monitor）。
+ *
+ * 断言 host monitor 收到：phase:'action' + error instanceof Error + error.cause 为原始 throw 值（cause 链保留）。
+ */
+describe('scada-canvas handler-error action-phase telemetry symmetry (plan 2026-08-06-0746-3 Phase 1, multi P2-5)', () => {
+  it('forwards a thrown user-side action to host plugins[].onError with phase:action + original Error cause, canvas stays ready', async () => {
+    const pluginOnError = vi.fn();
+    // 捕获原始 throw 实例，断言 cause 链保留（reportDiagnostic 经 new Error(message, { cause: error }) 包装）
+    let thrownError: Error | undefined;
+    const dispatch = vi.fn();
+    dispatch.mockImplementation(() => {
+      thrownError = new Error('handler boom');
+      throw thrownError;
+    });
+    const environment = createScadaTestEnvironment([], {}, {
+      plugins: [{ name: 'test-action-monitor', onError: pluginOnError }],
+    });
+    const clickConfig = validCanvasConfig({
+      version: 1,
+      symbols: [
+        { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#ff0000' },
+      ],
+    });
+    renderScadaCanvas(
+      makeScadaCanvasProps({
+        cid: 31,
+        props: {
+          config: configProp(clickConfig),
+          width: 800,
+          height: 600,
+          events: { onSymbolClick: { action: 'noop' } },
+        },
+        node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
+        helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
+      }),
+      environment,
+    );
+    await waitFor(() => expect(scadaTestHandle(31)).toBeDefined());
+    const engine = scadaTestHandle(31)?.engine as ScadaCanvasEngine;
+    const leaf = engine.getSymbol('rect-1')?.node;
+    (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
+      ({ target: leaf, path: [leaf] });
+
+    engine.tree.emit('tap', { x: 20, y: 25 });
+
+    // host 宽 telemetry 面可达：plugin.onError 收 phase:'action'
+    await waitFor(() => expect(pluginOnError).toHaveBeenCalled());
+    const [reportedError, payload] = pluginOnError.mock.calls[0] as [
+      Error,
+      { phase: string; error: unknown; details?: { code?: string } },
+    ];
+    expect(payload.phase).toBe('action');
+    expect(payload.details?.code).toBe('handler-error');
+    // 原始 Error 实例透传（非 message-only string），cause 链保留
+    expect(reportedError).toBeInstanceOf(Error);
+    expect(thrownError).toBeDefined();
+    expect((reportedError as Error).cause).toBe(thrownError);
+    expect(payload.error).toBe(reportedError);
+
+    // 画布保持 ready（诊断 ≠ status 升级，§8.1）；不派发 scada:error
+    expect(document.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status')).toBe('ready');
+    expect(
+      dispatch.mock.calls.filter(
+        ([, ctx]) => (ctx as { event?: { type?: string } } | undefined)?.event?.type === 'scada:error',
+      ),
+    ).toHaveLength(0);
+  });
+
+  it('handler-error action-phase outlet self-isolates when a plugin onError throws (does not break other plugins or reflux)', async () => {
+    const throwingPluginOnError = vi.fn(() => {
+      throw new Error('plugin dead');
+    });
+    const survivingPluginOnError = vi.fn();
+    const dispatch = vi.fn();
+    dispatch.mockImplementation(() => {
+      throw new Error('handler boom 2');
+    });
+    const environment = createScadaTestEnvironment([], {}, {
+      plugins: [
+        { name: 'throwing-plugin', onError: throwingPluginOnError },
+        { name: 'surviving-plugin', onError: survivingPluginOnError },
+      ],
+    });
+    const clickConfig = validCanvasConfig({
+      version: 1,
+      symbols: [
+        { id: 'rect-1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#ff0000' },
+      ],
+    });
+    renderScadaCanvas(
+      makeScadaCanvasProps({
+        cid: 32,
+        props: {
+          config: configProp(clickConfig),
+          width: 800,
+          height: 600,
+          events: { onSymbolClick: { action: 'noop' } },
+        },
+        node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
+        helpers: { dispatch } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
+      }),
+      environment,
+    );
+    await waitFor(() => expect(scadaTestHandle(32)).toBeDefined());
+    const engine = scadaTestHandle(32)?.engine as ScadaCanvasEngine;
+    const leaf = engine.getSymbol('rect-1')?.node;
+    (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
+      ({ target: leaf, path: [leaf] });
+
+    // 一个 plugin onError throw 不阻断其余 plugin，也不回流 engine
+    expect(() => engine.tree.emit('tap', { x: 20, y: 25 })).not.toThrow();
+    await waitFor(() => expect(throwingPluginOnError).toHaveBeenCalled());
+    await waitFor(() => expect(survivingPluginOnError).toHaveBeenCalled());
+    // console.warn 保底仍先执行
+    expect(warnReported(warnSpy, 'handler-error')).toBe(true);
+    // 画布仍 ready（出口 throw 未升级 status、未回流 engine）
+    expect(document.querySelector('[data-slot="scada-canvas"]')?.getAttribute('data-status')).toBe('ready');
+  });
+});
