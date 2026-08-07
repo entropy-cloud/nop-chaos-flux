@@ -315,6 +315,73 @@ flowchart TD
 - **[E0-spike] InnerEditorEvent 在 `research-render-engines.md §5:122` 未枚举**（来源：E0 spike plan `2026-08-05-1645-1` Phase 2 / spike 报告 §2.4）。描述：六大 Editor 事件族类名与 §5:122 完全一致，但 InnerEditorEvent 存在于 `leafer-in/packages/editor/src/event/` 并由 `@leafer-in/editor` 导出，§5:122 列名遗漏——⚠️ 无害漂移（不影响适配层，plan §4.3 已单列）。建议：补 `research-render-engines.md §5:122` 列名（加 InnerEditorEvent）。收口标记：未收口（按 mission 节奏择期处理，非阻断）。
 - **[E1.1-sg] rAF 驱动 fps 测量口径 nuance（watch-only residual）**（来源：E1 plan `2026-08-06-1931-1` Phase 1 / selection-gate-2026-08-06.md §6）。描述：spike §3.3 fps 数字（32.2–50fps）经内部 rAF 驱动 `editor.move()` 测得，反映 TransformTool per-frame 吞吐，**未单独捕获端到端指针交互延迟**（含命中检测 + simulateTarget 首次初始化）——大规模选区（如 10k）首次拖拽启动时 simulateTarget 跨 N 元素初始化可能产生未反映在稳态 fps 中的延迟尖峰。不足以反转选型（per-call 同步 8–20ms 远低于 100ms 候选；E0.1 手势仲裁经真实指针验证）。建议：E2.1 架构设计 + E6（M1 gate）/ E9.2（M3 benchmark 复测）应对「大规模选区首次拖拽 simulateTarget 初始化延迟」保持感知，必要时在 runtime 3 层 App 下加测端到端指针延迟。收口标记：未收口（watch-only，非阻断；E6/E9.2 复核）。
 
+### 2026-08-07-1835 post-remediation audit P2
+
+> 来源：两份 open 审计的 P2 findings——`docs/audits/2026-08-07-1835-open-audit-industrial-hmi-editor.md`（8 条，含 P1-C 簇内 C4）+ `docs/audits/2026-08-07-1835-multi-audit-industrial-hmi-editor.md`（32 条）。两份审计自带 summary 表少计（7/22），实际逐条 finding 点数 = 40。这些 P2 不驱动独立 plan，按 mission 节奏择期处理。对应 P1 已由 plan `2026-08-07-1835-1`（9 P1 内部正确性，✅ 完成 2026-08-07，closure audit `pass-with-minors`）+ `2026-08-07-1835-2`（11 P1 契约/结构/UI/测试/性能，pending）收口。源审计 Audit Status 仍 `planned`（待 plan {2} 收口后再 close）。
+
+**来自 open-audit（8 条）：**
+
+1. **[P2] Connection drag `pointermove` 未 preventDefault → 可能与 viewport-pan 冲突**（来源：open-audit L131）。`use-editor-engine.ts:628-631`。需浏览器验证。
+2. **[P2] `recomputeConnectionAnchor` 除以 `junction.width/height` 无零守卫 → 零尺寸 pipe-junction 写入 Infinity/NaN，序列化 `JSON.stringify(Infinity)→null` 损坏往返**（来源：open-audit L133）。`connection/connection-link.ts:44-49`。
+3. **[P2] `SnapHighlightMark.tooltip` 死字段 + 非 i18n（硬编码中文 `吸附到 ${nodeId}`）**（来源：open-audit L135）。`connection/connection-overlay.ts:61` + `connection-overlay-renderer.ts:35-49`。
+4. **[P2] `cloneNode` 浅拷 `custom`（`{...node}` only）→ 嵌套 custom 子对象在 working/committedBaseline/clipboard 间共享**（来源：open-audit L137）。`editor-session.ts:123-127` + `clipboard.ts:105-109`。当前 mutator 整体替换 custom，无 live 损坏；latent aliasing trap。
+5. **[P2] `alignSelection`/`distributeSelection` 用顶层 bounds、忽略 group-relative 坐标（文档化 T1）**（来源：open-audit L139）。`toolbox/align-distribute.ts:6-13,38-46`。与 P1-C2/C3 同根因，随其修复自然收敛。
+6. **[P2] Inspector `json-editor` 每次无效按键即写裸字符串到 `workingConfig`**（来源：open-audit L141）。`inspector/inspector-field.tsx:42-48`。
+7. **[P2] `extractNodeIds` fallback `leaf.name`/`id` → group 容器 `name===node.id` 时可能双重解析**（来源：open-audit L143）。`editor-adapter.ts:118-143`。
+8. **[P2-C4] `listAllConnections` dangling 检测用顶层 id → group child target 被误报 dangling**（来源：open-audit L95，P1-C 簇内）。`connection/connection-adapter.ts:263`。diagnostic-only，与 P1-C2 共享 `collectAllSymbols` 发现逻辑。
+
+**来自 multi-audit（32 条）：**
+
+_正确性/接线（7）：_
+
+9. **[P2] `viewport` prop 注册但 mount 从不应用**（来源：multi L305）。`renderer-definitions.ts:36`；无消费者。
+10. **[P2] `data-status="destroyed"` 不可达 + `component:destroy` 生命周期未接线**（来源：multi L306）。与 P1-06 复合。
+11. **[P2] `statusBar.render()` 无参调用、无内置 fallback**（来源：multi L307）。默认 fallback null，`nop-scada-editor-status-bar` marker §10 不发射。
+12. **[P2] Renderer 读未注册的 `loading`/`empty` regions**（来源：multi L308）。`scada-editor-canvas.tsx:184,203,209` vs `renderer-definitions.ts:39-42`，恒 undefined。
+13. **[P2] `empty` region 渲染在 `error` 分支内带 error binding（语义错配）**（来源：multi L309）。`scada-editor-canvas.tsx:208-217`。
+14. **[P2] Toolbox 子标记（`-btn`/`-sep`/`-status`/`-import-textarea`）发射但从未样式化**（来源：multi L310）。四 className 无 CSS 规则，不在 §10 marker 契约。
+15. **[P2] Connection pointer-down 同时触发 leafer Editor select + 开（近空）transform transaction**（来源：multi L311）。`editor-adapter.ts:84-94` + `use-editor-engine.ts:620-639`。
+
+_错误传播/健壮性（4）：_
+
+16. **[P2] `errorMessage()` 在 onError 边界丢 `Error.cause`/stack**（来源：multi L315）。`renderer/scada-errors.ts:3-5`。
+17. **[P2] Mutator + toolbox 处理器对 `engine.applyDiff` 无 try/catch**（来源：multi L316）。`editor-engine.ts:222`/`:342`。
+18. **[P2] Mount effect ~600 行 setup 无 try/catch**（来源：multi L317）。`use-editor-engine.ts:213-808`。
+19. **[P2] `attachEditorAdapter` 缺 leafer Editor 实例时返 noop（生产 fail-open）**（来源：multi L318）。`editor-adapter.ts:36-51`。
+
+_React 19/状态（2）：_
+
+20. **[P2] 冗余手写 `useMemo`/`useCallback`（React Compiler 处理）**（来源：multi L322）。canvas 7 + inspector 4 + palette 1；`use-editor-engine.ts:160-181` 的 2 个 `useCallback` 是 load-bearing，保留。opportunistic。
+21. **[P2] Toolbox `clipboardCount` React state 镜像 canonical `editorClipboard` 闭包 → 程序化 copy/cut 不更新计数 → Paste 按钮保持 disabled**（来源：multi L323）。`toolbox-panel.tsx:34,41,73,79,85`。
+
+_测试质量（7）：_
+
+22. **[P2] `editor.move` 集成测试不验证几何实际移动**（来源：multi L327）。`scada-editor-canvas-ops.test.tsx:272-284`。
+23. **[P2] `group/ungroup callable` 测试纯 `not.toThrow()`（单元素 no-op）**（来源：multi L328）。`scada-editor-canvas-ops.test.tsx:309-315`。
+24. **[P2] Toolbox status-message 测试从不验证 i18n 文本内容**（来源：multi L329）。`toolbox-panel.test.tsx:219-265`。
+25. **[P2] Toolbox runtime-call 断言止于「被调用」**（来源：multi L330）。`toolbox-panel.test.tsx:108-158`。
+26. **[P2] Inspector `onChange` 测试止于「patch is defined」**（来源：multi L331）。`inspector-panel.test.tsx:122-137`。
+27. **[P2] e2e coalesce 测试依赖真实 `Date.now()`（timing-fragile）**（来源：multi L332）。`scada-editor-canvas-undo-redo.test.tsx:239-263`。
+28. **[P2] Connection pointer-drag e2e 不复核 linkage 坐标**（来源：multi L333）。`scada-editor-canvas-connection.test.tsx:341-369`。
+
+_公开面/文档（9）：_
+
+29. **[P2] `not-mounted` 失败路径返自由格式英文句子非 registry code**（来源：multi L337）。`use-editor-handles.ts:57`。
+30. **[P2] 导出类型 `ScadaEditorViewportPolicy` 与应使用它的 schema 字段脱节**（来源：multi L338）。`schemas.ts:9` vs `:31`。
+31. **[P2] `editor-mount-failed` 错误码注册/发射但 §8.5.2 未文档化**（来源：multi L339）。`editor-errors.ts:15` + design §8.5.2。
+32. **[P2] `ScadaEditorTestHandle` 暴露 7 个超出 §8.4 契约块的顶层方法**（来源：multi L340）。`editor-test-handle.ts:43-55`。
+33. **[P2] Design §11 列 `use-editor-session.ts`/`use-editor-events.ts`——两者均不存在**（来源：multi L341）。`design-renderer.md:357-360` + `design-architecture.md:443-446`。
+34. **[P2] Design §11 文件路径与实际位置互调（swapped-by-doc）**（来源：multi L342）。`design-renderer.md:330,354`。
+35. **[P2] `editor-working-helpers.ts` 存在但两处 §11 文件树均缺**（来源：multi L343）。`design-renderer.md:328-364`。
+36. **[P2] `quick-reference.md` failure-code 列表不全（4/10）**（来源：multi L344）。`docs/references/quick-reference.md:827`。
+37. **[P2] `flux-guide/design-patterns/scada-editor.md` toolbox sub-handle 列表是部分子集（12/17）**（来源：multi L345）。`flux-guide/design-patterns/scada-editor.md:82`。
+
+_边界/工具（3）：_
+
+38. **[P2] Editor 从 runtime `renderer/scada-errors.ts` 导入 trivial `errorMessage`**（来源：multi L349）。`use-editor-engine.ts:3`。
+39. **[P2] ESLint `max-lines`(710) 已配但不对 `use-editor-engine.ts`(824) 触发**（来源：multi L350）。`eslint.config.js:153`；`check:oversized-code-files` 已兜底。
+40. **[P2] Leafer canvas `view`=外层容器；绝对定位 canvas 可能覆盖兄弟 panel**（来源：multi L351）。`editor-engine.ts:75-84` + `styles.css:14-18`。需浏览器验证。
+
 ## Rule
 
 1. 本文件状态仅由 plan 生命周期驱动（`docs/backlog/00-roadmap-authoring-guide.md`）：draft review 通过 → `planned`；closure audit 通过 → `done`。
