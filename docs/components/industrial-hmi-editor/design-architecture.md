@@ -434,19 +434,30 @@ runtime `use-scada-handles.ts:11-21` 现有 9 方法（fit/center/getSymbols/get
 
 ```
 packages/flux-renderers-industrial/src/editor/   （方案 A 裁定落地，E4.1 2026-08-06；经 subpath /editor + 独立注册函数隔离）
-├── editor-engine.ts            # ScadaEditorEngine（方案 B 独立类，方案 B 落地）/ 编辑会话模型（方案 A 复用 scada-engine）
-├── editor-session.ts           # ScadaEditorSession：working copy + undo/redo 栈 + selection + mode（域核心，无 React 依赖）
-├── editor-adapter.ts           # 适配层：leafer Editor 事件族 → 抽纯 payload + nodeId 映射 → 入栈（节流起止帧）
-├── editor-test-handle.ts       # window.__flux_scada_editor_<cid> 挂载/移除（对齐 engine/test-handle.ts 模式）
-├── renderer/
-│   ├── scada-editor-canvas.tsx # 主渲染器：RendererComponentProps 装配 + 桥接（E5.1）
-│   └── hooks/
-│       ├── use-editor-engine.ts    # Editor 实例生命周期（mount/unmount/resize）
-│       ├── use-editor-session.ts   # 编辑会话模型 + undo/redo 状态（E5/E7 落地）
-│       └── use-editor-events.ts    # Editor 事件族 → 适配层（不派发运行态 action）
-├── schemas.ts                   # ScadaEditorCanvasSchema 类型（E2.6 完整）
+├── index.ts                     # 公共面：registerScadaEditorRenderers + 类型
 ├── renderer-definitions.ts      # registerScadaEditorRenderers：fields/events/regions/handles（E2.6 完整 + E4.2 注册）
-└── index.ts                     # 公共面：registerScadaEditorRenderers + 类型
+├── schemas.ts                   # ScadaEditorCanvasSchema 类型（E2.6 完整）
+├── scada-editor-canvas.tsx      # 主渲染器：RendererComponentProps 装配 + 桥接（E5.1；live 在 editor/ 顶层）
+├── editor-session.ts            # ScadaEditorSession：working copy + undo/redo 栈 + selection + mode（域核心，无 React 依赖）
+├── editor-adapter.ts            # 适配层：leafer Editor 事件族 → 抽纯 payload + nodeId 映射 → 入栈（节流起止帧）
+├── editor-test-handle.ts        # window.__flux_scada_editor_<cid> 挂载/移除（对齐 engine/test-handle.ts 模式）
+├── editor-working-helpers.ts    # 编辑器共享 helper（collectWorldBounds 等 group 子树世界坐标累加）
+├── test-handle-factory.ts       # 测试句柄工厂
+├── runtime-factories.ts         # 运行时工厂（engine/app/editor 实例构造）
+├── runtime-mutators.ts          # working copy mutator（结构/属性 diff 入栈 + 同步）
+├── connection-wiring.ts         # 连线 pointer 事件流接线
+├── toolbox-runtime.ts           # 工具箱运行时面（EditorEngineRuntime 接口）
+├── inspector/                   # 属性面板（schema-extractor/field-errors/inspector-field.tsx/inspector-panel.tsx）
+├── palette/editor-palette.tsx   # 图元库面板
+├── connection/                  # 连线（anchor-snap/connection-adapter/connection-drag-controller/connection-link/connection-overlay/connection-overlay-renderer）
+├── undo-redo/                   # undo-redo（compute-inverse/undo-stack/operation-coalesce/undo-redo-adapter）
+├── toolbox/                     # 工具箱（align-distribute/z-order/clipboard/toolbox-panel.tsx）
+├── renderer/
+│   ├── editor-engine.ts         # ScadaEditorEngine（方案 A 复用 scada-engine + 编辑会话模型）
+│   ├── editor-errors.ts         # SCADA_ERROR_CODES + 编辑器扩展错误码 + i18n 映射
+│   └── hooks/
+│       ├── use-editor-engine.ts # Editor 实例生命周期 + 编辑会话模型 + undo/redo + 事件族（折叠入单一 hook）
+│       └── use-editor-handles.ts # component:* 句柄注册（runtime 9 + 编辑 8）
 ```
 
 - 拆分依据（对齐 runtime design-renderer.md §11 + `renderer-implementation-guidelines.md` Case 4）：编辑会话模型 + 适配层为域核心（无 React 依赖，纯逻辑单测可先行）；renderer 组件 + hooks 为 React 视图结构层。

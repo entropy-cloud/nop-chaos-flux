@@ -261,12 +261,22 @@ interface ScadaEditorTestHandle {
   clearSelection(): void;
   save(): string; // 返回 serializedConfig
   load(config: string | ScadaConfig): void;
-  /** 3 sub-handle（undoRedo/connection/toolbox 各自声明）+ property-panel/architecture 折叠入 session 字段 + 顶层方法（5 份 sibling 设计各自声明，整合为单一 test-handle） */
+  /** 顶层便捷方法（§8.5.2 编辑扩展句柄的测试投影；E7.2 落地，plan 2026-08-08-0900-2 #32 文档化） */
+  addSymbol(node: ScadaSymbolNode): void; // 测试投影 component:addSymbol
+  removeSymbol(nodeId: string): void; // 测试投影 component:removeSymbol
+  updateSymbol(nodeId: string, patch: Partial<ScadaSymbolNode>): void; // 测试投影 component:updateSymbol
+  group(nodeIds: string[]): void; // 测试投影 component:group
+  ungroup(groupId: string): void; // 测试投影 component:ungroup
+  undo(): void; // 测试投影 component:undo（与 undoRedo.undo 等价）
+  redo(): void; // 测试投影 component:redo（与 undoRedo.redo 等价）
+  /** 3 sub-handle（undoRedo/connection/toolbox 各自声明）+ property-panel/architecture 折叠入 session 字段（详见 5 份 sibling 设计） */
   undoRedo: ScadaEditorUndoRedoTestHandle; // design-undo-redo.md §8.3
   connection: ScadaEditorConnectionTestHandle; // design-connection.md §8.3
   toolbox: ScadaEditorToolboxTestHandle; // design-toolbox.md §8.3
 }
 ```
+
+> plan 2026-08-08-0900-2 Phase 2 / #32：契约块与 `editor-test-handle.ts` 实际导出对齐——顶层 `addSymbol/removeSymbol/updateSymbol/group/ungroup/undo/redo` 7 方法（§8.5.2 编辑扩展句柄的测试投影）此前未在 §8.4 块登记，现补齐文档化（测试句柄属内部调试面，保留并文档化而非裁剪）。
 
 > 完整契约经 `window.__flux_scada_editor_<cid>` 暴露；e2e 经 `page.evaluate` 程序化断言场景树/编辑会话/选区/undo 栈（roadmap 测试纪律：禁截图判定）。
 
@@ -298,7 +308,9 @@ interface ScadaEditorTestHandle {
 | `component:save()`                      | 提交（§4.5：序列化 working copy + 经 onSave 或同步链触发下游）                                                                      | `not-mounted`                                                                                |
 | `component:load(config)`                | 加载（替换 working copy + 重置 undo/redo 栈）                                                                                       | `not-mounted`/`invalid-config`                                                               |
 
-**错误码注册表 + i18n 文案**：复用 runtime `SCADA_ERROR_CODES` 注册模式（design-renderer.md §8.5）+ 新增编辑器错误码（`invalid-node`/`duplicate-id`/`invalid-patch`/`empty-selection`/`not-a-group`/`no-undo`/`no-redo`），code→i18n key 映射复用 `scadaErrorI18nKey` 模式但走 editor 专用映射函数（`editor-errors.ts` 内独立实现，前缀 `industrial.scada.editor.error.<code>`；runtime `scadaErrorI18nKey` 硬编码前缀 `industrial.scada.error` + SCADA_ERROR_CODES 数组守卫，editor 新增码不在 runtime 数组内会返回 `.unknown` fallback，故 editor 需自有映射），locale 文案在 `flux-i18n`（E5 落地）。
+**错误码注册表 + i18n 文案**：复用 runtime `SCADA_ERROR_CODES` 注册模式（design-renderer.md §8.5）+ 新增编辑器错误码（`editor-mount-failed`/`invalid-node`/`duplicate-id`/`invalid-patch`/`empty-selection`/`not-a-group`/`no-undo`/`no-redo`），code→i18n key 映射复用 `scadaErrorI18nKey` 模式但走 editor 专用映射函数（`editor-errors.ts` 内独立实现，前缀 `industrial.scada.editor.error.<code>`；runtime `scadaErrorI18nKey` 硬编码前缀 `industrial.scada.error` + SCADA_ERROR_CODES 数组守卫，editor 新增码不在 runtime 数组内会返回 `.unknown` fallback，故 editor 需自有映射），locale 文案在 `flux-i18n`（E5 落地）。
+
+> plan 2026-08-08-0900-2 Phase 3 / #31：`editor-mount-failed` 已在 `editor-errors.ts` registry 注册并在 mount 失败路径发射，现补 §8.5.2 文档化（此前码已注册发射但未文档化）。语义：编辑器 mount 阶段（leafer Editor/App 装配 / 初始 config parse-validate）失败时发射，触发 `onError` + 置 `data-status="error"`。
 
 ## 9. 数据源、表达式、导入能力接入点
 
@@ -330,40 +342,49 @@ interface ScadaEditorTestHandle {
 
 ```
 packages/flux-renderers-industrial/src/editor/   （方案 A 裁定，经 subpath /editor + 独立注册函数隔离；不新建包）
-├── editor-engine.ts            # ScadaEditorEngine（方案 B 独立类 / 方案 A 复用 scada-engine + 编辑会话模型）
-├── editor-session.ts           # ScadaEditorSession：working copy + undo/redo 栈 + selection + mode（design-architecture.md §4.5）
-├── editor-adapter.ts           # 适配层：leafer Editor 事件族 → 抽纯 payload + nodeId 映射 → 入栈（节流起止帧，spike §2.5）
-├── editor-test-handle.ts       # window.__flux_scada_editor_<cid> 挂载/移除（§8.4 完整契约）
-├── inspector/                  # 属性面板（design-property-panel.md §11）
-│   ├── schema-extractor.ts     # extractPanelFields（纯逻辑单测先行）
-│   ├── field-errors.ts         # parseFieldErrors（纯逻辑单测）
-│   └── panel-*.tsx             # UI 组件（@nop-chaos/ui）
-├── connection/                 # 连线（design-connection.md §11）
-│   ├── anchor-snap.ts          # 端点吸附算法（纯逻辑单测先行）
-│   ├── connection-adapter.ts   # 端点拾起/拖动/释放交互
-│   ├── connection-link.ts      # recomputeConnectionAnchor 联动算法（纯逻辑单测先行）
-│   └── connection-overlay.ts   # 吸附高亮/虚线提示
-├── undo-redo/                  # undo-redo（design-undo-redo.md §11）
-│   ├── compute-inverse.ts      # computeInverse（push 时预计算 inverse diff，纯逻辑单测先行）
-│   ├── undo-stack.ts           # UndoStackEntry 栈管理
-│   ├── operation-coalesce.ts   # 跨操作合并规则（M2 基础 + M3 完善）
-│   └── undo-redo-adapter.ts    # 编辑操作事件 → 入栈（事务语义 + 节流起止帧）
-├── toolbox/                    # 工具箱（design-toolbox.md §11）
-│   ├── align-distribute.ts     # 对齐分布算法（纯逻辑单测先行）
-│   ├── z-order.ts              # 层级（symbols 数组重排，纯逻辑单测先行）
-│   ├── clipboard.ts            # 剪贴板模型 + copy/cut/paste
-│   └── toolbox-panel.tsx       # 工具箱 UI
-├── renderer/
-│   ├── scada-editor-canvas.tsx # 主渲染器：RendererComponentProps 装配 + 桥接（E5.1）
-│   ├── editor-errors.ts        # SCADA_ERROR_CODES + 编辑器扩展错误码 + i18n 映射（§8.5.2）
-│   └── hooks/
-│       ├── use-editor-engine.ts    # Editor 实例生命周期（mount/unmount/resize，§8.3）
-│       ├── use-editor-session.ts   # 编辑会话模型 + undo/redo 状态
-│       ├── use-editor-events.ts    # Editor 事件族 → 适配层（不派发运行态 action，§8.2）
-│       └── use-editor-handles.ts   # component:* 句柄注册（runtime 9 + 编辑 8，§8.5）
-├── schemas.ts                   # ScadaEditorCanvasSchema 类型（§4.1 完整）
+├── index.ts                     # 公共面：registerScadaEditorRenderers + 类型
 ├── renderer-definitions.ts      # registerScadaEditorRenderers：fields/events/regions/handles（§4.3 完整 + E4.2 注册）
-└── index.ts                     # 公共面：registerScadaEditorRenderers + 类型
+├── schemas.ts                   # ScadaEditorCanvasSchema 类型（§4.1 完整）
+├── scada-editor-canvas.tsx      # 主渲染器：RendererComponentProps 装配 + 桥接（E5.1；live 在 editor/ 顶层）
+├── editor-session.ts            # ScadaEditorSession：working copy + undo/redo 栈 + selection + mode（design-architecture.md §4.5）
+├── editor-adapter.ts            # 适配层：leafer Editor 事件族 → 抽纯 payload + nodeId 映射 → 入栈（节流起止帧，spike §2.5）
+├── editor-test-handle.ts        # window.__flux_scada_editor_<cid> 挂载/移除（§8.4 完整契约）
+├── editor-working-helpers.ts    # 编辑器共享 helper（collectWorldBounds 等 group 子树世界坐标累加）
+├── test-handle-factory.ts       # 测试句柄工厂（构造 ScadaEditorTestHandle 实例）
+├── runtime-factories.ts         # 运行时工厂（engine/app/editor 实例构造）
+├── runtime-mutators.ts          # working copy mutator（addSymbol/removeSymbol/updateSymbol/group/ungroup 经此入栈 + 同步）
+├── connection-wiring.ts         # 连线接线（pointer 事件流 → ConnectionDragController → working copy 写回 + undo 入栈）
+├── toolbox-runtime.ts           # 工具箱运行时面（EditorEngineRuntime 接口，toolbox-panel 消费）
+├── inspector/                   # 属性面板（design-property-panel.md §11）
+│   ├── schema-extractor.ts      # extractPanelFields（纯逻辑单测先行）
+│   ├── field-errors.ts          # parseFieldErrors（纯逻辑单测）
+│   ├── inspector-field.tsx      # 单字段 UI（@nop-chaos/ui，含 json-editor fallback）
+│   └── inspector-panel.tsx      # 属性面板 UI（六类分组字段集）
+├── palette/
+│   └── editor-palette.tsx       # 图元库面板 UI（只读浏览 + 拖拽放置）
+├── connection/                  # 连线（design-connection.md §11）
+│   ├── anchor-snap.ts           # 端点吸附算法（纯逻辑单测先行）
+│   ├── connection-adapter.ts    # 端点拾起/拖动/释放交互 + 程序化连线/断开/查询（纯逻辑）
+│   ├── connection-drag-controller.ts # pointer 事件 → 状态机驱动器（依赖注入，纯逻辑单测先行）
+│   ├── connection-link.ts       # recomputeConnectionAnchor 联动算法（纯逻辑单测先行）
+│   ├── connection-overlay.ts    # overlay 状态机（吸附高亮/虚线提示投影，纯逻辑）
+│   └── connection-overlay-renderer.ts # overlay React 渲染（消费 overlay 状态 → DOM）
+├── undo-redo/                   # undo-redo（design-undo-redo.md §11）
+│   ├── compute-inverse.ts       # computeInverse（push 时预计算 inverse diff，纯逻辑单测先行）
+│   ├── undo-stack.ts            # UndoStackEntry 栈管理
+│   ├── operation-coalesce.ts    # 跨操作合并规则（M2 基础 + M3 完善）
+│   └── undo-redo-adapter.ts     # 编辑操作事件 → 入栈（事务语义 + 节流起止帧）
+├── toolbox/                     # 工具箱（design-toolbox.md §11）
+│   ├── align-distribute.ts      # 对齐分布算法（纯逻辑单测先行）
+│   ├── z-order.ts               # 层级（symbols 数组重排，纯逻辑单测先行）
+│   ├── clipboard.ts             # 剪贴板模型 + copy/cut/paste
+│   └── toolbox-panel.tsx        # 工具箱 UI
+├── renderer/
+│   ├── editor-engine.ts         # ScadaEditorEngine（方案 A 复用 scada-engine + 编辑会话模型）
+│   ├── editor-errors.ts         # SCADA_ERROR_CODES + 编辑器扩展错误码 + i18n 映射（§8.5.2）
+│   └── hooks/
+│       ├── use-editor-engine.ts # Editor 实例生命周期 + 编辑会话模型 + undo/redo + 事件族 + 句柄注册（折叠，§8.3）
+│       └── use-editor-handles.ts # component:* 句柄注册（runtime 9 + 编辑 8，§8.5）
 ```
 
 - 拆分依据（对齐 runtime design-renderer.md §11 + `renderer-implementation-guidelines.md` Case 4）：编辑会话模型 + 适配层 + 5 域核心算法为域核心（无 React 依赖，纯逻辑单测先行）；renderer 组件 + hooks 为 React 视图结构层。

@@ -314,12 +314,12 @@ flowchart TD
 
 > 来源：本 mission 启动时（2026-08-05）从 industrial-hmi runtime mission 迁移的编辑器相关延迟项 + 本 mission 新登记发现。每条带来源可追溯。
 
-- **[E0-spike] InnerEditorEvent 在 `research-render-engines.md §5:122` 未枚举**（来源：E0 spike plan `2026-08-05-1645-1` Phase 2 / spike 报告 §2.4）。描述：六大 Editor 事件族类名与 §5:122 完全一致，但 InnerEditorEvent 存在于 `leafer-in/packages/editor/src/event/` 并由 `@leafer-in/editor` 导出，§5:122 列名遗漏——⚠️ 无害漂移（不影响适配层，plan §4.3 已单列）。建议：补 `research-render-engines.md §5:122` 列名（加 InnerEditorEvent）。收口标记：未收口（按 mission 节奏择期处理，非阻断）。
+- **[E0-spike] InnerEditorEvent 在 `research-render-engines.md §5:122` 未枚举**（来源：E0 spike plan `2026-08-05-1645-1` Phase 2 / spike 报告 §2.4）。描述：六大 Editor 事件族类名与 §5:122 完全一致，但 InnerEditorEvent 存在于 `leafer-in/packages/editor/src/event/` 并由 `@leafer-in/editor` 导出，§5:122 列名遗漏——⚠️ 无害漂移（不影响适配层，plan §4.3 已单列）。建议：补 `research-render-engines.md §5:122` 列名（加 InnerEditorEvent）。收口标记：✅ 已收口（plan `2026-08-08-0900-2` Phase 3 / [E0-spike] 补 InnerEditorEvent，见 `docs/analysis/industrial-hmi/research-render-engines.md:122`）。
 - **[E1.1-sg] rAF 驱动 fps 测量口径 nuance（watch-only residual）**（来源：E1 plan `2026-08-06-1931-1` Phase 1 / selection-gate-2026-08-06.md §6）。描述：spike §3.3 fps 数字（32.2–50fps）经内部 rAF 驱动 `editor.move()` 测得，反映 TransformTool per-frame 吞吐，**未单独捕获端到端指针交互延迟**（含命中检测 + simulateTarget 首次初始化）——大规模选区（如 10k）首次拖拽启动时 simulateTarget 跨 N 元素初始化可能产生未反映在稳态 fps 中的延迟尖峰。不足以反转选型（per-call 同步 8–20ms 远低于 100ms 候选；E0.1 手势仲裁经真实指针验证）。建议：E2.1 架构设计 + E6（M1 gate）/ E9.2（M3 benchmark 复测）应对「大规模选区首次拖拽 simulateTarget 初始化延迟」保持感知，必要时在 runtime 3 层 App 下加测端到端指针延迟。收口标记：未收口（watch-only，非阻断；E6/E9.2 复核）。
 
 ### 2026-08-07-1835 post-remediation audit P2
 
-> ✅ 行为耦合子集已由 plan `2026-08-08-0900-1`（5 Phase 全交付 + workspace full-green）收口；test-fidelity/docs-drift/cleanup 子集由 successor plan `2026-08-08-0900-2` 处理。
+> ✅ 行为耦合子集已由 plan `2026-08-08-0900-1`（5 Phase 全交付 + workspace full-green）收口；test-fidelity/docs-drift/cleanup 子集已由 plan `2026-08-08-0900-2`（4 Phase 全交付 + workspace full-green：97 files / 1302 tests）收口。40 条 P2 findings 全部落定。
 
 > 来源：两份 open 审计的 P2 findings——`docs/audits/2026-08-07-1835-open-audit-industrial-hmi-editor.md`（8 条，含 P1-C 簇内 C4）+ `docs/audits/2026-08-07-1835-multi-audit-industrial-hmi-editor.md`（32 条）。两份审计自带 summary 表少计（7/22），实际逐条 finding 点数 = 40。这些 P2 不驱动独立 plan，按 mission 节奏择期处理。对应 P1 已由 plan `2026-08-07-1835-1`（9 P1 内部正确性，✅ 完成 2026-08-07，closure audit `pass-with-minors`）+ `2026-08-07-1835-2`（11 P1 契约/结构/UI/测试/性能，✅ 完成 2026-08-08，5 Phase 全交付 + workspace full-green + 反向验证）收口。源审计 Audit Status 已 `closed`（两份 P1 全部收口，plan {2} 回写）。
 

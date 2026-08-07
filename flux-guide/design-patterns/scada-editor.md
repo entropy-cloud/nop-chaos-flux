@@ -83,7 +83,7 @@ diff 命令栈（forward + inverse 增量，**无全量快照**，R4 内存约�
 - 操作：`switchMode` / `setSelection` / `clearSelection` / `save` / `load` / `addSymbol` / `removeSymbol` / `updateSymbol` / `group` / `ungroup` / `undo` / `redo`
 - `connection`：`connect` / `disconnect` / `listConnections`（连线编辑）
 - `undoRedo`：`undo` / `redo` / `getStackState` / `pushUndo`
-- `toolbox`：`fit` / `center` / `zoomAt` / `align` / `distribute` / `toTop` / `copy` / `cut` / `paste` / `exportConfig` / `importConfig` / `listSymbolLibrary`
+- `toolbox`（plan 2026-08-08-0900-2 Phase 3 / #37 补齐到 18 方法全集）：`fit` / `center` / `zoomAt` / `resetView` / `getViewport` / `align` / `distribute` / `toTop` / `toBottom` / `moveUp` / `moveDown` / `copy` / `cut` / `paste` / `getClipboard` / `exportConfig` / `importConfig` / `listSymbolLibrary`
 
 ## 字段参考
 

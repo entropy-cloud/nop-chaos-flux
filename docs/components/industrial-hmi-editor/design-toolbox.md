@@ -255,6 +255,11 @@ interface ScadaEditorToolboxTestHandle {
 
 - 工具箱 UI 使用 `@nop-chaos/ui` 既有组件（Button / ButtonGroup / Tooltip / DropdownMenu / Separator 等，AGENTS.md「UI Component Usage」）；
 - 根容器 marker（架构层声明）：`nop-scada-editor-toolbox` + `data-slot="scada-editor-toolbox"`；
+- 子标记（plan 2026-08-08-0900-2 Phase 4 / #14 文档化——发射为识别钩子，无专用 CSS 规则；视觉样式经 `@nop-chaos/ui` 组件 + `data-slot` 查询锚点承载）：
+  - `nop-scada-editor-toolbox-btn`（每个按钮）—— 识别钩子，无专用样式（按钮视觉由 `@nop-chaos/ui` Button 提供）；
+  - `nop-scada-editor-toolbox-sep`（每个分隔符）—— 识别钩子，无专用样式（Separator 视觉由 `@nop-chaos/ui` 提供）；
+  - `nop-scada-editor-toolbox-status` + `data-slot="scada-editor-toolbox-status"`（状态消息 span）—— 测试查询锚点（`data-slot`）+ 识别钩子；
+  - `nop-scada-editor-toolbox-import-textarea` + `data-slot="scada-editor-toolbox-import-textarea"`（导入对话框 textarea）—— 测试查询锚点 + 识别钩子；
 - 不产生 canvas 内 DOM marker（工具箱是 DOM UI）；
 - 主题独立性：CSS 变量 + 稳定 class 名（不引入 React ThemeProvider，roadmap Cross-Cutting）。
 

@@ -119,7 +119,7 @@
   - 控制点：`EditBox` 提供 `rect` 选中框、`circle` 旋转点、`resizePoints/rotatePoints` 8 向控制点、`dragPoint` 拖拽状态（`display/EditBox.ts:29-41`；`EditPoint` 于 `display/EditPoint.ts:6`）。
   - 成组/解组/进出组/层级/锁定：`group/ungroup/openGroup/closeGroup`（`Editor.ts:254-295`）、`toTop/toBottom`（:386-398）、`lock/unlock`（:374-382）。
   - 配置（`config.ts:5-45`）：`moveable/resizeable/flipable/rotateable/skewable`、`multipleSelect/boxSelect/hover`、`select: 'press'`、`editSize` 等。
-  - 编辑事件族：`EditorEvent/EditorGroupEvent/EditorMoveEvent/EditorScaleEvent/EditorRotateEvent/EditorSkewEvent`（`leafer-in/packages/editor/src/event/`）。
+  - 编辑事件族：`EditorEvent/EditorGroupEvent/EditorMoveEvent/EditorScaleEvent/EditorRotateEvent/EditorSkewEvent/InnerEditorEvent`（`leafer-in/packages/editor/src/event/`；plan 2026-08-08-0900-2 [E0-spike] 补 InnerEditorEvent——inner editor 打开/关闭生命周期 `BEFORE_OPEN/OPEN/BEFORE_CLOSE/CLOSE`）。
 - **聚合**：`leafer-editor` 仅一行 `export * from '@leafer-editor/web'`（`leafer-editor/src/index.ts:1`），`packages/partner` 聚合 `@leafer-in/editor/viewport/view/scroll/arrow/find/export/resize/color/scale-fixed` 等官方插件（`leafer-editor/packages/partner/package.json`）。Editor 本体是**独立 Group 节点**（`Editor.ts:96-98` 将 editMask/selector/editBox 挂为自身子节点），作为 sky 层叠加。
 
 ---
