@@ -411,10 +411,10 @@ test.describe.skip('Subagent-A: Report Designer basic interaction', () => {
 
   test('toolbar buttons are all clickable without errors', async ({ page }) => {
     await page.goto('/#/report-designer', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('.rd-toolbar')).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[data-slot="spreadsheet-toolbar"]')).toBeVisible({ timeout: 30_000 });
     await assertTrackedPageErrors(page);
 
-    const toolbarButtons = page.locator('.rd-toolbar button');
+    const toolbarButtons = page.locator('[data-slot="spreadsheet-toolbar"] button');
     const count = await toolbarButtons.count();
     expect(count).toBeGreaterThan(0);
 

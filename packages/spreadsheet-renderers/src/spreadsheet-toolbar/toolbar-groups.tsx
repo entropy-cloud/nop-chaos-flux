@@ -28,7 +28,7 @@ import { ToolbarButton } from './toolbar-button.js';
 import type { SpreadsheetToolbarProps } from './types.js';
 
 function Separator() {
-  return <span className="rd-toolbar-separator" data-slot="spreadsheet-toolbar-separator" />;
+  return <span data-slot="spreadsheet-toolbar-separator" />;
 }
 
 export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
@@ -40,7 +40,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
 
   return (
     <>
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.undoShortcut"
           icon={<Undo2 />}
@@ -55,7 +55,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.copyShortcut"
           icon={<Copy />}
@@ -82,7 +82,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.boldShortcut"
           icon={<Bold />}
@@ -109,7 +109,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.alignLeft"
           icon={<AlignLeft />}
@@ -136,7 +136,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.bgYellow"
           onClick={() => props.onStyleTool('bg-yellow')}
@@ -163,7 +163,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.fontRed"
           icon={<Type />}
@@ -187,7 +187,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.mergeCells"
           icon={<TableCellsMerge />}
@@ -208,7 +208,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.fillDown"
           icon={<ArrowDown />}
@@ -223,7 +223,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.insertRow"
           icon={<Plus />}
@@ -250,7 +250,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.comment"
           icon={<MessageSquare />}
@@ -264,7 +264,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.freezePanes"
           icon={<Snowflake />}

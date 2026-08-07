@@ -40,14 +40,16 @@ describe('ReportDesignerDemo', () => {
     initFluxI18n();
 
     const { container } = render(<ReportDesignerDemo />);
-    const toolbar = container.querySelector('.rd-toolbar') as HTMLElement | null;
+    const toolbar = container.querySelector('[data-slot="spreadsheet-toolbar"]') as HTMLElement | null;
 
     expect(toolbar).toBeTruthy();
     if (!toolbar) {
       throw new Error('Expected spreadsheet toolbar root');
     }
 
-    expect(toolbar.className).toContain('rd-toolbar--single-row');
+    expect(toolbar.getAttribute('data-slot')).toBe('spreadsheet-toolbar');
+    expect(container.querySelector('[data-slot="spreadsheet-toolbar-group"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-toolbar-status"]')).toBeTruthy();
   });
 
   it('does not render the toolbar cell value editor after selecting a cell', async () => {

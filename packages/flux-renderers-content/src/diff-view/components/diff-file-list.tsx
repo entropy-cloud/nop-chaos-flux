@@ -105,11 +105,11 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
               flex: 1,
               padding: '6px 4px',
               border: 'none',
-              background: statusTab === tab.key ? 'var(--nop-bg-active, #e5f0ff)' : 'transparent',
+              background: statusTab === tab.key ? 'var(--nop-diff-active-bg)' : 'transparent',
               cursor: 'pointer',
               fontWeight: statusTab === tab.key ? 600 : 400,
               fontSize: 12,
-              color: statusTab === tab.key ? 'var(--nop-accent, #1677ff)' : 'var(--nop-text, #333)',
+              color: statusTab === tab.key ? 'var(--nop-diff-accent)' : 'var(--nop-diff-muted-text)',
             }}
           >
             {tab.label}
@@ -118,7 +118,7 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
       </div>
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         {filteredEntries.length === 0 ? (
-          <div style={{ padding: 16, textAlign: 'center', fontSize: 13, color: '#999' }}>{t('flux.diff.noFilesMatch')}</div>
+          <div style={{ padding: 16, textAlign: 'center', fontSize: 13, color: 'var(--nop-diff-muted-text)' }}>{t('flux.diff.noFilesMatch')}</div>
         ) : (
           filteredEntries.map((entry) => (
             <FileListItem
@@ -154,8 +154,8 @@ function statusLetter(status: string): string {
 }
 
 function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
-  const bg = isActive ? 'var(--nop-bg-active, #e5f0ff)' : 'transparent';
-  const hoverBg = 'var(--nop-bg-hover, #f5f5f5)';
+  const bg = isActive ? 'var(--nop-diff-active-bg)' : 'transparent';
+  const hoverBg = 'var(--nop-diff-hover-bg)';
 
   return (
     <div
@@ -177,7 +177,7 @@ function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
       onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = hoverBg; }}
       onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
     >
-      {!entry.visited && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#1677ff', flexShrink: 0 }} />}
+      {!entry.visited && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--nop-diff-accent)', flexShrink: 0 }} />}
       {entry.visited && <span style={{ width: 6, height: 6, flexShrink: 0 }} />}
       <span style={{
         display: 'inline-flex',
@@ -189,8 +189,18 @@ function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
         fontSize: 11,
         fontWeight: 600,
         flexShrink: 0,
-        color: entry.status === 'added' ? '#16a34a' : entry.status === 'deleted' ? '#dc2626' : '#ca8a04',
-        background: entry.status === 'added' ? '#dcfce7' : entry.status === 'deleted' ? '#fef2f2' : '#fefce8',
+        color:
+          entry.status === 'added'
+            ? 'var(--nop-diff-stat-added-text)'
+            : entry.status === 'deleted'
+              ? 'var(--nop-diff-stat-removed-text)'
+              : 'var(--nop-diff-stat-modified-text)',
+        background:
+          entry.status === 'added'
+            ? 'var(--nop-diff-stat-added-bg)'
+            : entry.status === 'deleted'
+              ? 'var(--nop-diff-stat-removed-bg)'
+              : 'var(--nop-diff-stat-modified-bg)',
       }}>
         {statusLetter(entry.status)}
       </span>
@@ -198,8 +208,8 @@ function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
         {entry.fileName}
       </span>
       <span style={{ fontSize: 12, whiteSpace: 'nowrap', flexShrink: 0 }}>
-        <span style={{ color: '#16a34a' }}>+{entry.added}</span>
-        <span style={{ color: '#dc2626', marginLeft: 4 }}>-{entry.removed}</span>
+        <span style={{ color: 'var(--nop-diff-stat-added-text)' }}>+{entry.added}</span>
+        <span style={{ color: 'var(--nop-diff-stat-removed-text)', marginLeft: 4 }}>-{entry.removed}</span>
       </span>
     </div>
   );

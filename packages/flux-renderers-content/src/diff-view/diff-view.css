@@ -48,6 +48,16 @@
   /* Stat badges */
   --nop-diff-stat-added-text: oklch(48% 0.16 145);
   --nop-diff-stat-removed-text: oklch(52% 0.2 25);
+  --nop-diff-stat-modified-text: oklch(60% 0.14 85);
+  --nop-diff-stat-added-bg: oklch(97% 0.04 145);
+  --nop-diff-stat-removed-bg: oklch(97% 0.02 25);
+  --nop-diff-stat-modified-bg: oklch(98% 0.025 95);
+
+  /* File list (diff-file-list) */
+  --nop-diff-active-bg: oklch(95% 0.03 240);
+  --nop-diff-hover-bg: oklch(97% 0.005 250);
+  --nop-diff-muted-text: oklch(65% 0.01 250);
+  --nop-diff-accent: oklch(56% 0.17 255);
 
   /* View toggle */
   --nop-diff-toggle-bg: oklch(95% 0.005 250);

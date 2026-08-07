@@ -22,7 +22,7 @@ test('renders the core report designer surfaces', async ({ page }) => {
   await expect(page.locator('[data-slot="workbench-left-panel"]')).toBeVisible();
   await expect(page.locator('[data-slot="workbench-canvas"]')).toBeVisible();
   await expect(page.locator('[data-slot="workbench-right-panel"]')).toBeVisible();
-  await expect(page.locator('.rd-toolbar')).toBeVisible();
+  await expect(page.locator('[data-slot="spreadsheet-toolbar"]')).toBeVisible();
   await expect(page.locator('[data-slot="report-field-panel-source"]').first()).toBeVisible();
   await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible();
   await expect(page.locator('.ss-sheet-tab[data-active]')).toBeVisible();
@@ -165,7 +165,7 @@ test('clicking a spreadsheet cell keeps the inspector surface active', async ({ 
 test('toolbar exposes localized spreadsheet controls on the live surface', async ({ page }) => {
   await openReportDesignerDemo(page);
 
-  const toolbarLayout = await page.locator('.rd-toolbar').evaluate((el) => {
+  const toolbarLayout = await page.locator('[data-slot="spreadsheet-toolbar"]').evaluate((el) => {
     const style = window.getComputedStyle(el as HTMLElement);
     const rect = (el as HTMLElement).getBoundingClientRect();
     const buttonRects = Array.from(el.querySelectorAll('button')).slice(0, 20).map((button) => {
@@ -174,16 +174,22 @@ test('toolbar exposes localized spreadsheet controls on the live surface', async
     });
     return {
       flexWrap: style.flexWrap,
+      display: style.display,
+      backgroundColor: style.backgroundColor,
+      borderBottomWidth: style.borderBottomWidth,
       height: rect.height,
       rowCount: [...new Set(buttonRects)].length,
     };
   });
 
   expect(toolbarLayout.flexWrap).toBe('nowrap');
+  expect(toolbarLayout.display).toBe('flex');
+  expect(toolbarLayout.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  expect(toolbarLayout.borderBottomWidth).toBe('1px');
   expect(toolbarLayout.rowCount).toBe(1);
   expect(toolbarLayout.height).toBeLessThan(80);
 
-  const toolbarButtons = page.locator('.rd-toolbar button');
+  const toolbarButtons = page.locator('[data-slot="spreadsheet-toolbar"] button');
   const count = await toolbarButtons.count();
   expect(count).toBeGreaterThan(10);
   await expect(toolbarButtons.first()).toBeVisible();

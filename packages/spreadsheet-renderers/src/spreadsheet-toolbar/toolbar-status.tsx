@@ -6,12 +6,12 @@ export function SpreadsheetToolbarStatus(props: {
   frozen: boolean;
 }) {
   return (
-    <div className="rd-toolbar-status" data-slot="spreadsheet-toolbar-status">
-      <span className="rd-toolbar-cell-addr" data-slot="spreadsheet-toolbar-cell-address">
+    <div data-slot="spreadsheet-toolbar-status">
+      <span data-slot="spreadsheet-toolbar-cell-address">
         {props.selectedCell ? props.cellAddress : ''}
       </span>
       {props.frozen ? (
-        <span className="rd-toolbar-frozen-badge" data-slot="spreadsheet-toolbar-frozen-badge">
+        <span data-slot="spreadsheet-toolbar-frozen-badge">
           {t('flux.spreadsheet.frozen')}
         </span>
       ) : null}

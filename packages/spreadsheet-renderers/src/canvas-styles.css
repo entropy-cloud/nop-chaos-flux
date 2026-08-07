@@ -345,8 +345,7 @@
   color: rgb(180, 83, 9);
 }
 
-[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar'],
-.report-designer-demo [data-slot='spreadsheet-toolbar'] {
+[data-slot='spreadsheet-toolbar'] {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -359,16 +358,14 @@
   overflow-y: hidden;
 }
 
-[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar-group'],
-.report-designer-demo [data-slot='spreadsheet-toolbar-group'] {
+[data-slot='spreadsheet-toolbar-group'] {
   display: flex;
   align-items: center;
   gap: 1px;
   flex-shrink: 0;
 }
 
-[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar-separator'],
-.report-designer-demo [data-slot='spreadsheet-toolbar-separator'] {
+[data-slot='spreadsheet-toolbar-separator'] {
   display: inline-block;
   width: 0;
   height: 18px;
@@ -377,8 +374,7 @@
   flex-shrink: 0;
 }
 
-[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar-status'],
-.report-designer-demo [data-slot='spreadsheet-toolbar-status'] {
+[data-slot='spreadsheet-toolbar-status'] {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -387,8 +383,7 @@
   flex-shrink: 0;
 }
 
-[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar-cell-address'],
-.report-designer-demo [data-slot='spreadsheet-toolbar-cell-address'] {
+[data-slot='spreadsheet-toolbar-cell-address'] {
   font-size: 12px;
   font-weight: 500;
   color: rgb(71, 85, 105);
@@ -396,8 +391,7 @@
   text-align: right;
 }
 
-[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar-frozen-badge'],
-.report-designer-demo [data-slot='spreadsheet-toolbar-frozen-badge'] {
+[data-slot='spreadsheet-toolbar-frozen-badge'] {
   font-size: 10px;
   padding: 1px 6px;
   border-radius: 3px;
@@ -405,8 +399,7 @@
   color: rgb(29, 78, 216);
 }
 
-[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar'] [data-toolbar-active],
-.report-designer-demo [data-slot='spreadsheet-toolbar'] [data-toolbar-active] {
+[data-slot='spreadsheet-toolbar'] [data-toolbar-active] {
   background-color: #e0e7ff;
 }
 

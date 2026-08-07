@@ -8,7 +8,7 @@ export type { SpreadsheetToolbarProps, StyleToolType } from './spreadsheet-toolb
 export function SpreadsheetToolbar(props: SpreadsheetToolbarProps) {
   return (
     <>
-      <div className="rd-toolbar rd-toolbar--single-row" data-slot="spreadsheet-toolbar">
+      <div data-slot="spreadsheet-toolbar">
         <SpreadsheetToolbarGroups {...props} />
         <SpreadsheetToolbarStatus
           selectedCell={props.selectedCell}
