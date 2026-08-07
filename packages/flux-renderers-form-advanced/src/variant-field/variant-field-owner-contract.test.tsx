@@ -16,7 +16,12 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
-  FieldFrame: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  FieldFrame: ({ label, children }: { label?: React.ReactNode; children?: React.ReactNode }) => (
+    <>
+      {label}
+      {children}
+    </>
+  ),
   FormContext: { Provider: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
   FormLayoutContext: { Provider: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
   ScopeContext: { Provider: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
@@ -34,7 +39,20 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useRendererRuntime: () => state.runtime,
   useScopeSelector: () => ({ kind: 'text', value: 'alpha' }),
   useCurrentFormState: () => undefined,
-  resolveRendererSlotContent: () => undefined,
+  resolveRendererSlotContent: (
+    props: { props?: Record<string, unknown>; regions?: Record<string, { render?: () => unknown }> },
+    slotKey: string,
+  ) => {
+    const regionContent = props.regions?.[slotKey]?.render?.();
+    if (regionContent !== undefined && regionContent !== null) {
+      return regionContent;
+    }
+    const propValue = props.props?.[slotKey];
+    if (propValue !== undefined && propValue !== null) {
+      return propValue;
+    }
+    return undefined;
+  },
   toFieldRemarkProps: () => undefined,
 }));
 
@@ -64,7 +82,20 @@ vi.mock('@nop-chaos/ui', () => ({
 
 vi.mock('@nop-chaos/flux-renderers-form', () => ({
   formFieldRules: [],
-  resolveFieldLabelContent: () => undefined,
+  resolveFieldLabelContent: (props: {
+    props?: Record<string, unknown>;
+    regions?: Record<string, { render?: () => unknown }>;
+  }) => {
+    const regionContent = props.regions?.label?.render?.();
+    if (regionContent !== undefined && regionContent !== null) {
+      return regionContent;
+    }
+    const propValue = props.props?.label;
+    if (propValue !== undefined && propValue !== null) {
+      return propValue;
+    }
+    return undefined;
+  },
 }));
 
 vi.mock('./variant-field-runtime.js', () => ({
@@ -425,5 +456,115 @@ describe('variant-field generic owner contracts', () => {
     );
     expect(state.parentForm.setValue).toHaveBeenCalledWith('payload', { amount: 12 });
     expect(state.parentForm.touchField).toHaveBeenCalledWith('payload');
+  });
+
+  it('renders a region-form label extracted into regions.label by the compiler', () => {
+    state.parentScope = {
+      id: 'page-scope',
+      path: '$page',
+      get: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      has: vi.fn(() => true),
+      readOwn: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      readVisible: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      materializeVisible: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      update: vi.fn(),
+      merge: vi.fn(),
+    };
+    state.parentValidationOwner = {
+      scopeId: 'page-owner',
+      notifyFieldHidden: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
+      getScopeState: vi.fn(() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
+      validateAll: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} })),
+    };
+
+    render(
+      <VariantFieldRenderer
+        id="variant"
+        path="$.body[0]"
+        schema={{ type: 'variant-field', name: 'kind', variants: [] } as unknown as VariantFieldSchema}
+        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as unknown as TemplateNode<VariantFieldSchema>}
+        node={{} as unknown as NodeInstance<VariantFieldSchema>}
+        meta={{} as unknown as ResolvedNodeMeta}
+        props={{
+          name: 'kind',
+          label: 'label',
+          selectorMode: 'tabs',
+          variants: [{ key: 'text', label: 'Text', content: [{ type: 'input-text', name: 'value' }] }],
+        }}
+        regions={{
+          label: {
+            key: 'label',
+            templateNode: null,
+            render: () => <span>自定义</span>,
+          },
+        }}
+        events={{}}
+        helpers={{
+          evaluate: vi.fn(),
+          createScope: vi.fn(),
+          dispatch: vi.fn(),
+          render: vi.fn(),
+          evaluateCompiled: vi.fn(),
+          executeSource: vi.fn(),
+        } as unknown as RendererHelpers}
+        reactions={{}}
+      />,
+    );
+
+    expect(screen.getByText('自定义')).toBeTruthy();
+  });
+
+  it('renders a plain string label value unchanged', () => {
+    state.parentScope = {
+      id: 'page-scope',
+      path: '$page',
+      get: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      has: vi.fn(() => true),
+      readOwn: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      readVisible: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      materializeVisible: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      update: vi.fn(),
+      merge: vi.fn(),
+    };
+    state.parentValidationOwner = {
+      scopeId: 'page-owner',
+      notifyFieldHidden: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
+      getScopeState: vi.fn(() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
+      validateAll: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} })),
+    };
+
+    render(
+      <VariantFieldRenderer
+        id="variant"
+        path="$.body[0]"
+        schema={{ type: 'variant-field', name: 'kind', variants: [] } as unknown as VariantFieldSchema}
+        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as unknown as TemplateNode<VariantFieldSchema>}
+        node={{} as unknown as NodeInstance<VariantFieldSchema>}
+        meta={{} as unknown as ResolvedNodeMeta}
+        props={{
+          name: 'kind',
+          label: '字段名',
+          selectorMode: 'tabs',
+          variants: [{ key: 'text', label: 'Text', content: [{ type: 'input-text', name: 'value' }] }],
+        }}
+        regions={{}}
+        events={{}}
+        helpers={{
+          evaluate: vi.fn(),
+          createScope: vi.fn(),
+          dispatch: vi.fn(),
+          render: vi.fn(),
+          evaluateCompiled: vi.fn(),
+          executeSource: vi.fn(),
+        } as unknown as RendererHelpers}
+        reactions={{}}
+      />,
+    );
+
+    expect(screen.getByText('字段名')).toBeTruthy();
   });
 });

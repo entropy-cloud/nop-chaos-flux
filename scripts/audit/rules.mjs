@@ -14,7 +14,7 @@ export { react19OptimizationRules } from './react19-rules.mjs';
 
 const allowedFieldFrameOwnerPrefixes = ['packages/flux-react/src/'];
 const documentedFieldFrameBypassAllowlist = new Set([
-  'packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx',
+  'packages/flux-renderers-form-advanced/src/variant-field/variant-field-view.tsx',
 ]);
 
 const knownReactiveReadSafePaths = [

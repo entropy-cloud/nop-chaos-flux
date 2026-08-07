@@ -14,7 +14,7 @@ import {
   useRendererRuntime,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import { formFieldRules } from '@nop-chaos/flux-renderers-form';
+import { formFieldRules, resolveFieldLabelContent } from '@nop-chaos/flux-renderers-form';
 import type { VariantFieldSchema } from '../composite-field/composite-schemas.js';
 import { useVariantFieldController } from './variant-field-controller.js';
 import type { VariantResolvedOption } from './variant-field-helpers.js';
@@ -73,6 +73,8 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const resolvedDescriptionContent = resolveRendererSlotContent(props, 'description');
   const hintContent = resolvedHintContent as React.ReactNode;
   const descriptionContent = resolvedDescriptionContent as React.ReactNode;
+  const resolvedLabelContent = resolveFieldLabelContent(props);
+  const labelContent = resolvedLabelContent as React.ReactNode;
 
   return (
     <VariantFieldView
@@ -82,6 +84,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       descriptionContent={descriptionContent}
       effectiveDisabled={schemaProps.disabled === true}
       hintContent={hintContent}
+      labelContent={labelContent}
       meta={props.meta}
       onVariantSwitch={triggerVariantSwitch}
       readOnly={readOnly}
