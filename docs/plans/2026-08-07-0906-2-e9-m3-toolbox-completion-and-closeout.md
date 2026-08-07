@@ -1,6 +1,6 @@
 # 2 Editor Mission E9 M3 工具箱完整 + 收尾
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-07
 > Source: `docs/components/roadmap-industrial-hmi-editor.md`（E9 work items E9.1/E9.2、Phase Details E9、Work Items §E9 表、Phase Status E9=`todo`、Cross-Cutting 平台能力复用/双态隔离/spike 先行纪律/测试纪律/人工确认阈值/文档共识审查/组件注册）、`docs/components/industrial-hmi/editor-initiation.md`（§2.1 画布工具箱 P2 M3 功能域 + §2.2 M3 里程碑边界「对齐/分布/层级/复制粘贴/图元库管理 + 导入导出完善 + 撤销深化」+ §3 复用点 #1 引擎层视口命令 + #3 图元注册表只读 + #5 句柄面 exportConfig/importConfig + §6 R5 双态隔离/R7 编辑态包络）、`docs/components/industrial-hmi-editor/design-toolbox.md`（E2.5，五项工具复用映射 §4.1 视图工具/§4.2 对齐分布层级/§4.3 复制粘贴/§4.4 导入导出/§4.5 图元库只读 + 实现拆分 §11 + 风险清单 T1–T5 §12.1）、`docs/components/industrial-hmi-editor/design-undo-redo.md`（E2.4，§4.4 跨操作合并 M3 完善 + §4.5 边界提示）、`docs/components/industrial-hmi-editor/design-renderer.md`（E2.6，§8.4 toolbox sub-handle + §3 同步清单「组件注册：examples.manifest.json / playground registry / i18n / quick-reference 组件表」）、`docs/analysis/industrial-hmi-editor/editing-envelope-2026-08-06.md`（编辑态包络裁定建议值 §3，E9.2 benchmark 复测对照基线）
 > Related: `docs/plans/2026-08-07-0443-1-e7-m2-connections-and-undo-redo.md`（E7 M2 实现，E9 消费 undo 栈 + 句柄面）、`docs/plans/2026-08-07-0906-1-e8-m2-overall-gate.md`（E8 M2 gate，E9 前置）、`docs/plans/2026-08-06-1931-1-e5-m1-mvp-editor-implementation.md`（E5 M1 实现，工具箱 region 占位来源）
@@ -122,55 +122,55 @@ E9 是编辑器 mission 的**第三个也是最后一个实现里程碑**：E0�
 
 ### Phase 1 - E9.1 工具箱完整
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/editor/toolbox/`（新建子目录）、`packages/flux-renderers-industrial/src/editor/renderer/hooks/use-editor-handles.ts`（工具箱句柄扩展，若需）、`packages/flux-renderers-industrial/src/editor/editor-test-handle.ts`（toolbox sub-handle）、`packages/flux-renderers-industrial/src/editor/scada-editor-canvas.tsx`（toolbox region 默认内容）、`packages/flux-renderers-industrial/src/editor/undo-redo/operation-coalesce.ts`（撤销深化扩展）
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof`：前置验证——核对 E8 `done`（**具体判定：roadmap Phase Status E8 = `done`，E8 plan `Plan Status: completed`，closure-audit PASS**）；核对 runtime `scada-engine.ts` 18 命令面 fit/center/setViewport/zoomAt/getViewport live（design-toolbox.md §4.1 映射）；核对 `use-scada-handles.ts` exportConfig/importConfig live；核对 `listScadaSymbols()` live；未就绪则等待（Failure Paths `upstream-not-ready`）。
-- [ ] `Proof`：`toolbox/align-distribute.ts` 对齐/分布算法**单测先行**——对齐六方向（左/右/水平居中/顶/底/垂直居中）+ 分布两方向（水平等距/垂直等距）；基于 selection（≥2 对齐 / ≥3 分布）包围盒重排 x/y（保持 width/height）；forward diff `{updated:[...]}` operationKind=`transform-move`；selection 不足返回 `insufficient-selection`；T1 group 嵌套场景边界处理（M3 扁平算法，跨 group 嵌套对齐可选限制）。纯逻辑无 React 依赖（design-toolbox.md §4.2.1）。单测断言可观测结果（重排后各图元 x/y 精确值 + diff 结构）。
-- [ ] `Proof`：`toolbox/z-order.ts` 层级算法**单测先行**——toTop/toBottom/moveUp/moveDown 经 symbols 数组重排（design-toolbox.md §4.2.2，**不调 leafer Editor toTop**，Failure Paths `zorder-double-source`）；产出结构 diff（removed=[id]+added=[node]）；单元素场景 + 数组边界。纯逻辑。单测断言重排后数组顺序 + 结构 diff。
-- [ ] `Proof`：`toolbox/clipboard.ts` copy/cut/paste 核心**单测先行**——copy 深拷贝不修改 working copy；cut 深拷贝 + removed diff；paste 分配新 id（`${原id}-copy-${counter}`，编辑会话 counter，Failure Paths `clipboard-id-collision`）+ 位移偏移 + added diff + 新 selection；多次粘贴 id 唯一（design-toolbox.md §4.3 + T4）。纯逻辑核心。单测断言 id 唯一性 + diff 结构 + clipboard 状态。
-- [ ] `Fix`：`toolbox/toolbox-panel.tsx` 工具箱 UI——消费 `@nop-chaos/ui`（Button/ButtonGroup/Tooltip/DropdownMenu/Separator）；五项工具按钮编排（视图/对齐分布/层级/复制粘贴/导入导出/图元库浏览）；disabled 状态（selection 为空禁用对齐/分布/层级/复制剪切）；根 marker `nop-scada-editor-toolbox`+`data-slot="scada-editor-toolbox"`；经 `props.regions.toolbox?.render(...) ?? <内置>` consult（与 E6 m-2 override 同模式）。
-- [ ] `Fix`：视图工具接通——缩放（按钮 + wheel）调 `engine.zoomAt()`（minScale/maxScale 钩制 + statusBar 边界提示）/ fit `engine.fit()`（空场景 `not-visible`）/ center `engine.center()` / reset `engine.setViewport({x:0,y:0,scale:1})` / statusBar 显示 `engine.getViewport()`；**不重复实现** runtime 命令面（复用点 #1，Failure Paths `reuse-overclaim`）。
-- [ ] `Fix`：导入导出完善——导出调 `component:exportConfig()`；导入弹确认对话框（提示清空编辑历史，默认取消，Failure Paths `import-history-loss`）→ host 文件选择/clipboard → `validateScadaConfig` 校验 → `component:importConfig(config)`（重置 undo/redo 栈）；错误码 `invalid-config`。
-- [ ] `Fix`：图元库管理只读浏览——复用 `listScadaSymbols()` 24 内置只读；**禁止** registerScadaSymbol/unregisterScadaSymbol 写入（design-toolbox.md §4.5）。
-- [ ] `Fix`：撤销深化——扩展 `undo-redo/operation-coalesce.ts`（E7 M2 基础合并 + §4.5 边界提示逻辑已落地）：design-undo-redo.md §4.4 跨操作合并策略 M3 完善（连续同方向对齐/分布合并窗口 / 层级连续操作合并）+ §4.5 边界提示与新工具栈条目集成（栈空/栈满/截断 redo statusBar 或 toast，已落地逻辑接通工具箱新操作 kind）；对齐/分布/层级/剪切/粘贴入 undo 栈（复用 E7 栈 + computeInverse 自动处理结构 diff 逆）。
-- [ ] `Fix`：toolbox 测试句柄 sub-handle（design-toolbox.md §8.3 `ScadaEditorToolboxTestHandle`）：fit/center/zoomAt + align/distribute/toTop/toBottom + copy/cut/paste/getClipboard + exportConfig/importConfig + listSymbolLibrary，挂 `window.__flux_scada_editor_<cid>.toolbox`。
-- [ ] `Proof`：工具箱 e2e（Playwright 程序化断言经测试句柄）：对齐 → working copy x/y 重排 + undo 栈 +1；分布 → 等间距；层级 toTop → symbols 数组顺序变化 + undo 往返；复制粘贴 → 新 id + clipboard 状态 + undo 往返；导入 → 确认对话框 + 重置栈；视图工具 → viewport 变化（getViewport 断言）；撤销深化边界提示；**禁截图判定**；R5 隔离断言（工具箱操作不派发 `symbol:*` action，Failure Paths `dual-state-leak`）。
+- [x] `Proof`：前置验证——核对 E8 `done`（**具体判定：roadmap Phase Status E8 = `done`，E8 plan `Plan Status: completed`，closure-audit PASS**）；核对 runtime `scada-engine.ts` 18 命令面 fit/center/setViewport/zoomAt/getViewport live（design-toolbox.md §4.1 映射）；核对 `use-scada-handles.ts` exportConfig/importConfig live；核对 `listScadaSymbols()` live；未就绪则等待（Failure Paths `upstream-not-ready`）。
+- [x] `Proof`：`toolbox/align-distribute.ts` 对齐/分布算法**单测先行**——对齐六方向（左/右/水平居中/顶/底/垂直居中）+ 分布两方向（水平等距/垂直等距）；基于 selection（≥2 对齐 / ≥3 分布）包围盒重排 x/y（保持 width/height）；forward diff `{updated:[...]}` operationKind=`transform-move`；selection 不足返回 `insufficient-selection`；T1 group 嵌套场景边界处理（M3 扁平算法，跨 group 嵌套对齐可选限制）。纯逻辑无 React 依赖（design-toolbox.md §4.2.1）。单测断言可观测结果（重排后各图元 x/y 精确值 + diff 结构）。
+- [x] `Proof`：`toolbox/z-order.ts` 层级算法**单测先行**——toTop/toBottom/moveUp/moveDown 经 symbols 数组重排（design-toolbox.md §4.2.2，**不调 leafer Editor toTop**，Failure Paths `zorder-double-source`）；产出结构 diff（removed=[id]+added=[node]）；单元素场景 + 数组边界。纯逻辑。单测断言重排后数组顺序 + 结构 diff。
+- [x] `Proof`：`toolbox/clipboard.ts` copy/cut/paste 核心**单测先行**——copy 深拷贝不修改 working copy；cut 深拷贝 + removed diff；paste 分配新 id（`${原id}-copy-${counter}`，编辑会话 counter，Failure Paths `clipboard-id-collision`）+ 位移偏移 + added diff + 新 selection；多次粘贴 id 唯一（design-toolbox.md §4.3 + T4）。纯逻辑核心。单测断言 id 唯一性 + diff 结构 + clipboard 状态。
+- [x] `Fix`：`toolbox/toolbox-panel.tsx` 工具箱 UI——消费 `@nop-chaos/ui`（Button/ButtonGroup/Tooltip/DropdownMenu/Separator）；五项工具按钮编排（视图/对齐分布/层级/复制粘贴/导入导出/图元库浏览）；disabled 状态（selection 为空禁用对齐/分布/层级/复制剪切）；根 marker `nop-scada-editor-toolbox`+`data-slot="scada-editor-toolbox"`；经 `props.regions.toolbox?.render(...) ?? <内置>` consult（与 E6 m-2 override 同模式）。
+- [x] `Fix`：视图工具接通——缩放（按钮 + wheel）调 `engine.zoomAt()`（minScale/maxScale 钩制 + statusBar 边界提示）/ fit `engine.fit()`（空场景 `not-visible`）/ center `engine.center()` / reset `engine.setViewport({x:0,y:0,scale:1})` / statusBar 显示 `engine.getViewport()`；**不重复实现** runtime 命令面（复用点 #1，Failure Paths `reuse-overclaim`）。
+- [x] `Fix`：导入导出完善——导出调 `component:exportConfig()`；导入弹确认对话框（提示清空编辑历史，默认取消，Failure Paths `import-history-loss`）→ host 文件选择/clipboard → `validateScadaConfig` 校验 → `component:importConfig(config)`（重置 undo/redo 栈）；错误码 `invalid-config`。
+- [x] `Fix`：图元库管理只读浏览——复用 `listScadaSymbols()` 24 内置只读；**禁止** registerScadaSymbol/unregisterScadaSymbol 写入（design-toolbox.md §4.5）。
+- [x] `Fix`：撤销深化——扩展 `undo-redo/operation-coalesce.ts`（E7 M2 基础合并 + §4.5 边界提示逻辑已落地）：design-undo-redo.md §4.4 跨操作合并策略 M3 完善（连续同方向对齐/分布合并窗口 / 层级连续操作合并）+ §4.5 边界提示与新工具栈条目集成（栈空/栈满/截断 redo statusBar 或 toast，已落地逻辑接通工具箱新操作 kind）；对齐/分布/层级/剪切/粘贴入 undo 栈（复用 E7 栈 + computeInverse 自动处理结构 diff 逆）。
+- [x] `Fix`：toolbox 测试句柄 sub-handle（design-toolbox.md §8.3 `ScadaEditorToolboxTestHandle`）：fit/center/zoomAt + align/distribute/toTop/toBottom + copy/cut/paste/getClipboard + exportConfig/importConfig + listSymbolLibrary，挂 `window.__flux_scada_editor_<cid>.toolbox`。
+- [x] `Proof`：工具箱 e2e（Playwright 程序化断言经测试句柄）：对齐 → working copy x/y 重排 + undo 栈 +1；分布 → 等间距；层级 toTop → symbols 数组顺序变化 + undo 往返；复制粘贴 → 新 id + clipboard 状态 + undo 往返；导入 → 确认对话框 + 重置栈；视图工具 → viewport 变化（getViewport 断言）；撤销深化边界提示；**禁截图判定**；R5 隔离断言（工具箱操作不派发 `symbol:*` action，Failure Paths `dual-state-leak`）。
 
 Exit Criteria:
 
 > Phase 1 交付工具箱五项工具 + 撤销深化 + 工具箱 e2e。工具箱操作入 undo 栈，复用 runtime 命令面/句柄面，R5 隔离不泄漏。
 
-- [ ] `toolbox/` 4 模块（align-distribute/z-order/clipboard/toolbox-panel）落地，纯逻辑模块（align-distribute+z-order+clipboard 核心）单测 green。
-- [ ] 视图工具复用 runtime `scada-engine.ts` 命令面（fit/center/setViewport/zoomAt/getViewport），导入导出复用 runtime 句柄（exportConfig/importConfig），图元库复用 `listScadaSymbols()` 只读——**无重复实现**（grep 证实 E9 无 runtime 命令面/serialize/registerScadaSymbol 重写）。
-- [ ] 工具箱操作入 undo 栈（对齐/分布/层级/剪切/粘贴）；撤销深化（跨操作合并 + 边界提示）落地。
-- [ ] 工具箱 e2e 经测试句柄断言 working copy/clipboard/undoStack/viewport（非截图判定）；R5 隔离断言（不派发 `symbol:*` action）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck` green + `test` green（Phase 1 新增测试通过）。
+- [x] `toolbox/` 4 模块（align-distribute/z-order/clipboard/toolbox-panel）落地，纯逻辑模块（align-distribute+z-order+clipboard 核心）单测 green。
+- [x] 视图工具复用 runtime `scada-engine.ts` 命令面（fit/center/setViewport/zoomAt/getViewport），导入导出复用 runtime 句柄（exportConfig/importConfig），图元库复用 `listScadaSymbols()` 只读——**无重复实现**（grep 证实 E9 无 runtime 命令面/serialize/registerScadaSymbol 重写）。
+- [x] 工具箱操作入 undo 栈（对齐/分布/层级/剪切/粘贴）；撤销深化（跨操作合并 + 边界提示）落地。
+- [x] 工具箱 e2e 经测试句柄断言 working copy/clipboard/undoStack/viewport（非截图判定）；R5 隔离断言（不派发 `symbol:*` action）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck` green + `test` green（Phase 1 新增测试通过）。
 
 ### Phase 2 - E9.2 M3 收尾（benchmark 复测 + 文档收尾）
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/industrial-hmi-editor/`（benchmark 复测报告，新建）、`docs/index.md`（导航）、`docs/references/quick-reference.md`（组件表）、`flux-guide/`（design-patterns editor 篇）、`docs/components/roadmap-industrial-hmi-editor.md`（头部记录 + Phase Status）、`docs/logs/2026/`
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof`：编辑态 benchmark 复测——对照 `editing-envelope-2026-08-06.md §3` 五项包络裁定建议值（① 拖拽响应 fps 阈值 ≥30fps @ 选区 ≤1k primary + ≤10k extended；② 编辑操作响应延迟 <100ms；③ 覆盖物密集场景上限（选区规模）≤1k primary / ≤10k extended；④ 内存 ≤320MB；⑤ 编辑器本体 runtime 最终验证 meta-item），在 runtime 3 层 App（`apps/playground` 编辑器 demo，非 scratch）下复测编辑器本体性能（fps 矩阵 + per-call 延迟 + 内存 + 选区规模验证）；**另加测端到端指针延迟抽查**（来自 `[E1.1-sg]` watch-only residual，非 §3 ⑤，复核「大规模选区首次拖拽 simulateTarget 初始化延迟」）。产出复测报告 `docs/analysis/industrial-hmi-editor/editing-envelope-retest-<date>.md`（fps 矩阵 + 延迟 + 内存 + 与 E1.2 裁定建议值对比 + 违背项记录 + 指针延迟抽查记录）。Failure Paths `envelope-below-candidate` 若触发则标记 R7 人工确认。
-- [ ] `Proof`：推进 R7 人工最终确认标记——基于复测报告，在 roadmap 头部 + 复测报告标记 R7 当前状态「E9.2 runtime 3 层 App 复测完成，数据见复测报告，待人工最终确认」（AI 产出数据 + 标记，人工最终确认阈值，不自确认）。
-- [ ] `Fix`：`docs/index.md` 导航新增 editor 篇——industrial-hmi-editor 设计文档（design-\*.md 6 份）+ spike 报告 + selection-gate + editing-envelope + 各 gate review 文档索引。
-- [ ] `Fix`：`docs/references/quick-reference.md` 组件表新增 `scada-editor-canvas`（renderer type + fields/events/regions/handles 摘要 + 双态隔离说明）。
-- [ ] `Fix`：flux-guide design-patterns 新增 editor 篇（编辑态画布 schema 示例 + 双态切换 + 工具箱使用 + save/load 提交语义）。
-- [ ] `Fix`：架构文档增量——roadmap「组件注册」同步核对（`examples.manifest.json` + playground registry + i18n 文案 `scada-editor-canvas` 键完整）；design-toolbox.md 实现收口标注（E9.1 落地标注）。
-- [ ] `Fix`：roadmap 头部「文档共识审查记录」块新增 E9 记录条目（工具箱完整 + 撤销深化 + benchmark 复测 + 文档收尾摘要 + R7 状态推进）；daily log 记录本 plan 产出摘要。
+- [x] `Proof`：编辑态 benchmark 复测——对照 `editing-envelope-2026-08-06.md §3` 五项包络裁定建议值（① 拖拽响应 fps 阈值 ≥30fps @ 选区 ≤1k primary + ≤10k extended；② 编辑操作响应延迟 <100ms；③ 覆盖物密集场景上限（选区规模）≤1k primary / ≤10k extended；④ 内存 ≤320MB；⑤ 编辑器本体 runtime 最终验证 meta-item），在 runtime 3 层 App（`apps/playground` 编辑器 demo，非 scratch）下复测编辑器本体性能（fps 矩阵 + per-call 延迟 + 内存 + 选区规模验证）；**另加测端到端指针延迟抽查**（来自 `[E1.1-sg]` watch-only residual，非 §3 ⑤，复核「大规模选区首次拖拽 simulateTarget 初始化延迟」）。产出复测报告 `docs/analysis/industrial-hmi-editor/editing-envelope-retest-<date>.md`（fps 矩阵 + 延迟 + 内存 + 与 E1.2 裁定建议值对比 + 违背项记录 + 指针延迟抽查记录）。Failure Paths `envelope-below-candidate` 若触发则标记 R7 人工确认。
+- [x] `Proof`：推进 R7 人工最终确认标记——基于复测报告，在 roadmap 头部 + 复测报告标记 R7 当前状态「E9.2 runtime 3 层 App 复测完成，数据见复测报告，待人工最终确认」（AI 产出数据 + 标记，人工最终确认阈值，不自确认）。
+- [x] `Fix`：`docs/index.md` 导航新增 editor 篇——industrial-hmi-editor 设计文档（design-\*.md 6 份）+ spike 报告 + selection-gate + editing-envelope + 各 gate review 文档索引。
+- [x] `Fix`：`docs/references/quick-reference.md` 组件表新增 `scada-editor-canvas`（renderer type + fields/events/regions/handles 摘要 + 双态隔离说明）。
+- [x] `Fix`：flux-guide design-patterns 新增 editor 篇（编辑态画布 schema 示例 + 双态切换 + 工具箱使用 + save/load 提交语义）。
+- [x] `Fix`：架构文档增量——roadmap「组件注册」同步核对（`examples.manifest.json` + playground registry + i18n 文案 `scada-editor-canvas` 键完整）；design-toolbox.md 实现收口标注（E9.1 落地标注）。
+- [x] `Fix`：roadmap 头部「文档共识审查记录」块新增 E9 记录条目（工具箱完整 + 撤销深化 + benchmark 复测 + 文档收尾摘要 + R7 状态推进）；daily log 记录本 plan 产出摘要。
 
 Exit Criteria:
 
 > Phase 2 交付 benchmark 复测报告 + 文档收尾。R7 状态推进至「复测完成待人工最终确认」。
 
-- [ ] 编辑态 benchmark 复测报告产出（对照 editing-envelope §3 五项包络，runtime 3 层 App 复测数据 + 违背项记录）；R7 状态推进标记（待人工最终确认）。
-- [ ] 文档收尾完成：`docs/index.md` 导航 editor 篇 + quick-reference 组件表 `scada-editor-canvas` + flux-guide design-patterns editor 篇 + 架构文档增量。
-- [ ] roadmap 头部 + daily log 已记录；E10 输入交接清单（M3 实现 + benchmark 复测报告 + R7 待人工 + 文档收尾 + deferred 指向 InnerEditor/OS clipboard/断开连接工具 M3 后）就绪。
+- [x] 编辑态 benchmark 复测报告产出（对照 editing-envelope §3 五项包络，runtime 3 层 App 复测数据 + 违背项记录）；R7 状态推进标记（待人工最终确认）。
+- [x] 文档收尾完成：`docs/index.md` 导航 editor 篇 + quick-reference 组件表 `scada-editor-canvas` + flux-guide design-patterns editor 篇 + 架构文档增量。
+- [x] roadmap 头部 + daily log 已记录；E10 输入交接清单（M3 实现 + benchmark 复测报告 + R7 待人工 + 文档收尾 + deferred 指向 InnerEditor/OS clipboard/断开连接工具 M3 后）就绪。
 
 ## Draft Review Record
 
@@ -185,19 +185,19 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。全量验证属 plan 收口时跑一次（Minimum Rule 18）。
 
-- [ ] E9.1 工具箱五项工具全部交付（视图工具复用 / 对齐分布 / 层级 / 复制粘贴 / 图元库只读 / 导入导出完善 + 撤销深化 + toolbox 测试句柄 + 工具箱 e2e）。
-- [ ] runtime 复用点不重复实现（视口命令 fit/center/setViewport/zoomAt / 序列化 serialize / exportConfig/importConfig 句柄 / listScadaSymbols 只读全部复用，editor 代码 import runtime 面）。
-- [ ] R5 双态隔离不泄漏（工具箱操作不派发 `symbol:*` action；e2e 断言）。
-- [ ] design-toolbox.md T1–T5 风险防护落地（T3 z 序经 symbols 数组 / T4 clipboard id 唯一 / T5 导入确认对话框；T1/T2 接受 + M3 后选项标注）。
-- [ ] E9.2 编辑态 benchmark 复测报告产出（对照 editing-envelope §3）；R7 状态推进至「复测完成待人工最终确认」。
-- [ ] 文档收尾完成（docs/index.md 导航 / quick-reference 组件表 / flux-guide design-patterns / 架构文档增量）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（E10 gate 能力 / InnerEditor / OS clipboard / 断开连接工具正确排除，非降级）。
-- [ ] 受影响 owner docs（roadmap 头部 + Phase Status E9 / design-toolbox.md 收口 / daily log）已同步到 live baseline。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] E9.1 工具箱五项工具全部交付（视图工具复用 / 对齐分布 / 层级 / 复制粘贴 / 图元库只读 / 导入导出完善 + 撤销深化 + toolbox 测试句柄 + 工具箱 e2e）。
+- [x] runtime 复用点不重复实现（视口命令 fit/center/setViewport/zoomAt / 序列化 serialize / exportConfig/importConfig 句柄 / listScadaSymbols 只读全部复用，editor 代码 import runtime 面）。
+- [x] R5 双态隔离不泄漏（工具箱操作不派发 `symbol:*` action；e2e 断言）。
+- [x] design-toolbox.md T1–T5 风险防护落地（T3 z 序经 symbols 数组 / T4 clipboard id 唯一 / T5 导入确认对话框；T1/T2 接受 + M3 后选项标注）。
+- [x] E9.2 编辑态 benchmark 复测报告产出（对照 editing-envelope §3）；R7 状态推进至「复测完成待人工最终确认」。
+- [x] 文档收尾完成（docs/index.md 导航 / quick-reference 组件表 / flux-guide design-patterns / 架构文档增量）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（E10 gate 能力 / InnerEditor / OS clipboard / 断开连接工具正确排除，非降级）。
+- [x] 受影响 owner docs（roadmap 头部 + Phase Status E9 / design-toolbox.md 收口 / daily log）已同步到 live baseline。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`（32/32 ✓）
+- [x] `pnpm build`（32/32 ✓）
+- [x] `pnpm lint`（`turbo run lint` 32/32 ✓ + 全部 check 脚本（react19/anchors/css/fields/finite/schema-prop）通过；`check-i18n-keys` 为**预先存在**的 workspace 级 failure——经 `git stash` + checkout E8 commit d9763c63 核实，该 check 在 E8 baseline 即 exit 1，报告的 133+ 未定义键全部为 AI/code-editor 等无关包的 `flux.*` 键，E9 改动新增 0 个 `flux.*` 键，非 E9 引入、非 E9 范围）
+- [x] `pnpm test`（59/59 tasks ✓；industrial 89 files / 1199 tests，coverage 90.25% branches ≥ 90% threshold）
 
 ## Deferred But Adjudicated
 
@@ -237,13 +237,25 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: E9 M3 工具箱完整 + 收尾全交付。Phase 1（E9.1 工具箱 4 模块 + 句柄 + 测试句柄 + operation-coalesce M3 完善 + e2e）与 Phase 2（E9.2 benchmark 复测报告 + 文档收尾 + R7 推进）均已落地。closure-audit 由独立 fresh-session sub-agent（MISSION_DRIVER closure-audit task）执行：live repo 核对五项工具复用映射无重复实现、模块非空且已接线（toolbox-panel 经 scada-editor-canvas.tsx:250 渲染可达）、R5 隔离断言成立、deferred 项分类诚实（E10/InnerEditor/OS clipboard/断开连接工具均为 out-of-scope improvement）、owner-docs 同步（roadmap 头部 + design-toolbox.md 收口标注 + daily log 08-07 + docs/index.md + quick-reference + flux-guide）。R7 编辑态包络经 runtime 3 层 App 复测 primary ①②④ 全部达标，**待人工最终确认**（AI 不自确认）。无剩余 plan-owned work；E10 输入交接清单就绪。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待独立 fresh-session sub-agent closure-audit>>
-- Evidence: <<待填>>
+- Auditor / Agent: independent fresh-session sub-agent（MISSION_DRIVER closure-audit task `MISSION_DRIVER:2026-08-07-133524-mission-driver`，独立 session，不复用执行者上下文）
+- Evidence:
+  - Phase 1 live（`packages/flux-renderers-industrial/src/editor/toolbox/`）：align-distribute.ts（150 行）+ z-order.ts（144 行）+ clipboard.ts（110 行）+ toolbox-panel.tsx（196 行）+ 4 配套单测（align-distribute/z-order/clipboard/toolbox-panel .test.ts/.test.tsx）；anti-hollow 核对：源码无 `return null`/空函数体/TODO，`tryCoalesce` + `coalesceGroup` + `DEFAULT_COALESCE_WINDOW_MS=500`（operation-coalesce.ts:22,41）真实实现。
+  - 接线核对（anti-hollow）：`scada-editor-canvas.tsx:15` import EditorToolboxPanel + `:250` `props.regions.toolbox?.render(...) ?? <EditorToolboxPanel>` 真实渲染（runtime 可达）；`editor-test-handle.ts:93` `toolbox` 子句柄挂载（fit/center/zoomAt + align/distribute/toTop/toBottom + copy/cut/paste/getClipboard + exportConfig/importConfig + listSymbolLibrary）。
+  - runtime 复用点不重复实现：grep 证实 toolbox 模块 import engine.fit/center/setViewport/zoomAt/getViewport + serialize/parse/validate + listScadaSymbols，无 runtime 命令面/serialize/registerScadaSymbol 重写（Failure Path `reuse-overclaim` 不触发）。
+  - Phase 2 live（benchmark 复测）：`docs/analysis/industrial-hmi-editor/editing-envelope-retest-2026-08-07.md`（59 行真实数据）—— ② per-call max 13.1ms <100ms / ① 拖拽 best 50.2fps @1k ≥30fps / ④ 内存 50.2MB ≤320MB，primary 包络三项硬数字全部达标余量充足；`envelope-below-candidate` 不触发；[E1.1-sg] 指针延迟抽查记录在案（1k 首次拖拽 jank ~7.5fps、稳态 50fps，维持 watch-only residual 非阻断）。可重复命令 `npx playwright test tests/e2e/scada-editor-perf.spec.ts --workers=1`。
+  - 文档收尾 live：`docs/index.md:87` editor 篇导航 / `docs/references/quick-reference.md:822` scada-editor-canvas 组件表 / `flux-guide/design-patterns/scada-editor.md`（5632B）新增 / `docs/components/industrial-hmi-editor/design-toolbox.md:5` E9.1 实现收口标注 / `docs/components/examples.manifest.json:64` runtime 数组含 scada-editor-canvas。
+  - roadmap 同步：`docs/components/roadmap-industrial-hmi-editor.md:3` 最后更新 2026-08-07 E9 + R7 待人工确认 / `:33` E9 记录条目 / `:70` Phase Status E9=planned（→ done 留待 E10 gate + closure-audit，本 plan closure-audit 现已通过；roadmap Phase Status E9 → done 的最终回写属 E10 gate 范围，对齐 roadmap 注释「→ done 留待 E10 gate + closure-audit」）。
+  - daily log：`docs/logs/2026/08-07.md:3` E9 M3 工具箱完整 + 收尾记录条目。
+  - workspace full-green：Closure Gates 记录 typecheck/build 32/32 ✓ + lint（turbo 32/32 ✓，`check-i18n-keys` 为预先存在 workspace 级 failure，经 git stash + checkout E8 commit d9763c63 核实 E9 新增 0 个 `flux.*` 键，非 E9 引入/范围）+ test 59/59 ✓（industrial 89 files / 1199 tests，coverage 90.25% branches ≥ 90% threshold）。
+  - deferred 诚实核对：E10 整体 gate（out-of-scope improvement，successor E10.1/E10.2）/ InnerEditor（out-of-scope improvement，spike 约束 #8 + design-renderer §1 非目标）/ OS clipboard（out-of-scope improvement，design-toolbox T2）/ 断开连接工具 + 撤销历史面板 UI（out-of-scope improvement，design-connection §12.3 + design-undo-redo §4.5）——均带 Why Not Blocking Closure + Successor，无 in-scope live defect/contract drift 降级。
+  - 五点一致性：Plan Status: completed / Phase 1+2 Status: completed / Phase 1+2 Exit Criteria: 全 [x] / Closure Gates: 全 [x] / Closure evidence: 本节真实数据——彼此一致，无残留未勾选 in-scope item。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- 无剩余 plan-owned work。E10（M3 整体 gate + 整体收尾，独立 review）输入交接就绪：M3 实现 + benchmark 复测报告 + R7 待人工最终确认 + 文档收尾 + deferred 指向 InnerEditor/OS clipboard/断开连接工具 M3 后。
+- roadmap Phase Status E9 → done 最终回写属 E10 gate 范围（roadmap 注释已声明此约束）。
+- Non-blocking follow-ups（不属 plan-owned work）：[E1.1-sg] rAF fps 测量口径 nuance（E9.2 复测已抽查，维持 watch-only）/ InnerEditorEvent §5:122 枚举遗漏（watch-only）/ ActionSchema 编辑器（M3 后）。

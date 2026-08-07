@@ -2,6 +2,7 @@
 
 > 日期：2026-08-06
 > 版本：v1（E2.5 产出）
+> 实现收口：**E9.1 已落地**（2026-08-07，plan `docs/plans/2026-08-07-0906-2-e9-m3-toolbox-completion-and-closeout.md` Phase 1）—— `packages/flux-renderers-industrial/src/editor/toolbox/` 4 模块（align-distribute.ts/z-order.ts/clipboard.ts/toolbox-panel.tsx）+ use-editor-engine.ts 工具箱扩展句柄 + editor-test-handle.ts toolbox 子句柄 + operation-coalesce.ts M3 跨操作合并完善 + scada-editor-canvas-toolbox.test.tsx e2e。五项工具复用映射全部按本档 §4.1/§4.2/§4.3/§4.4/§4.5 落地（grep 证实无 runtime 命令面/serialize/registerScadaSymbol 重写）；T3（z 序经 symbols 数组）/T4（clipboard id 唯一）/T5（导入确认对话框）风险防护落地。
 > 上游：编辑器架构 `design-architecture.md`（E2.1，§4.3 视口命令 + §8.5 句柄面扩展）、属性面板 `design-property-panel.md`（E2.2）、连线 `design-connection.md`（E2.3）、undo-redo `design-undo-redo.md`（E2.4，跨操作合并 M3 完善）、runtime 引擎层 `docs/components/industrial-hmi/design-engine.md`（§8.2 18 命令面 fit/center/setViewport/zoomAt + exportConfig/importConfig）、runtime renderer 句柄 `docs/components/industrial-hmi/design-renderer.md`（§8.5 component handles）、立项材料 `docs/components/industrial-hmi/editor-initiation.md`（§2.1 工具箱功能域 P2 M3）
 > 下游：E9.1 工具箱完整实现（消费本档五项工具 + 复用映射）；E2.6 renderer 契约（消费 toolbox region 契约 + 句柄面扩展）
 > 依据：roadmap `docs/components/roadmap-industrial-hmi-editor.md`（E2.5 + Cross-Cutting 平台能力复用）+ E2 plan `docs/plans/2026-08-06-1931-2-e2-editor-design-documents.md`

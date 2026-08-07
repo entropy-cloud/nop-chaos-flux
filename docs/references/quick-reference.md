@@ -819,6 +819,16 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 
 1 万点批量刷新合并帧（渲染增量 = 1）、10 万图元首屏 <2s / 拖动 ≥45fps / 内存 ≤320MB（`docs/analysis/industrial-hmi/benchmark-report.md` 口径）；点表刷新不逐点 setState 直刷 React。
 
+### `scada-editor-canvas`（编辑态画布，E5–E9）
+
+编辑态画布（`@nop-chaos/flux-renderers-industrial/editor`，`registerScadaEditorRenderers`）：基于 leafer-editor 的双态编辑器，**与运行态 `scada-canvas` 严格双态隔离**（R5：编辑操作不派发 `symbol:*` 运行事件）。
+
+- **Schema**：`ScadaEditorCanvasSchema`。Props：`config`（组态 JSON，与 scada-canvas 同构）/ `width`/`height`/`mode`（`edit`↔`preview`）/ `commitPolicy`（缺省 `manual`）/ `viewport`。Regions：`palette`/`inspector`/`toolbox`/`statusBar`（缺省内置面板，host 可 override）。Events（整体 prop）：`onReady`/`onError`/`onSelectionChange`/`onModeChange`/`onSessionChange`/`onSave`/`onLoad`。
+- **Component Handles**：`save`/`load`（manual 提交语义）/ `addSymbol`/`removeSymbol`/`updateSymbol`/`group`/`ungroup`/`undo`/`redo`（均入 undo 栈，不派发 `symbol:*`）。失败路径：`invalid-config`/`invalid-node`/`symbol-not-found`/`editor-mount-failed`。
+- **Test Handle**：`window.__flux_scada_editor_<cid>`（与运行态 `__flux_scada_<cid>` 命名空间隔离）—— `session`（workingConfig/canUndo/canRedo/selection/mode）+ `engine`/`editor`/`app` + 操作方法 + `connection`/`undoRedo`/`toolbox` 子句柄。canvas 一律 Playwright 程序化断言、禁截图、不引 node-canvas。
+- **Undo/Redo**：diff 命令栈（forward+inverse 增量，无全量快照，R4）；transform 事务节流（一拖拽 = 一 undo 步）；工具箱操作入栈。
+- **编辑态包络**（R7 待人工最终确认）：拖拽 ≥30fps @ 选区 ≤1k（primary）/ 编辑操作 per-call <100ms / 内存 ≤320MB（`docs/analysis/industrial-hmi-editor/editing-envelope-2026-08-06.md` 裁定建议 + `editing-envelope-retest-2026-08-07.md` runtime 复测）。
+
 ```
 
 ```
