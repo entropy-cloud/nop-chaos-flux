@@ -120,6 +120,7 @@ export const graphRendererDefinitions: RendererDefinition[] = [
         payload: {
           kind: 'object',
           fields: {
+            type: { kind: 'literal', value: 'graph:node-click' },
             nodeId: { kind: 'string' },
             node: { kind: 'object', fields: {} },
           },
@@ -130,6 +131,7 @@ export const graphRendererDefinitions: RendererDefinition[] = [
         payload: {
           kind: 'object',
           fields: {
+            type: { kind: 'literal', value: 'graph:node-double-click' },
             nodeId: { kind: 'string' },
             node: { kind: 'object', fields: {} },
           },
@@ -141,6 +143,7 @@ export const graphRendererDefinitions: RendererDefinition[] = [
         payload: {
           kind: 'object',
           fields: {
+            type: { kind: 'literal', value: 'graph:selection-change' },
             nodeId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'literal', value: null }] },
             node: {
               kind: 'union',

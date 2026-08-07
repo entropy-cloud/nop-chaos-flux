@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createTreeDesignerCore, createDesignerCore } from './core.js';
 import type { DesignerConfig, TreeDocument, DesignerEvent } from './types.js';
+import { normalizeConfig } from './core/config.js';
+import { projectAndLayoutTree } from './tree-projection.js';
+import { createDesignerShellState } from './core/shell-state.js';
+import { buildTreeSessionContext, createTreeSessionSurface } from './tree-session-impl.js';
 
 function createTreeConfig(overrides?: Partial<DesignerConfig>): DesignerConfig {
   return {
@@ -378,5 +382,106 @@ describe('createTreeDesignerCore - relayout and export', () => {
     expect(parsed.root.id).toBe('root');
     expect(exported).not.toContain('__fdTree');
     expect(exported).not.toContain('nodes');
+  });
+});
+
+describe('relayoutTree change detection branches (15-1)', () => {
+  function createSessionHarness() {
+    const normalizedConfig = normalizeConfig(createTreeConfig());
+    const tree = createChainTree();
+    const projection = projectAndLayoutTree(tree, normalizedConfig);
+    if (!projection.ok) throw new Error('projection failed');
+    const state = {
+      treeDocument: projection.view.tree,
+      doc: projection.view.document,
+      docRevision: 0,
+      events: [] as DesignerEvent[],
+    };
+    const shellState = createDesignerShellState(state.doc);
+    const ctx = buildTreeSessionContext({
+      isTreeMode: true,
+      getCurrentTreeDocument: () => state.treeDocument,
+      setCurrentTreeDocument: (value) => {
+        state.treeDocument = value;
+      },
+      lastAcceptedHostEpoch: 0,
+      normalizedConfig,
+      getDoc: () => state.doc,
+      setDoc: (value) => {
+        state.doc = value;
+      },
+      getDocRevision: () => state.docRevision,
+      setDocRevision: (value) => {
+        state.docRevision = value;
+      },
+      historyState: {} as never,
+      savedTreeDocument: undefined,
+      savedRevision: 0,
+      transactionStack: [],
+      shellState,
+      isReadonly: false,
+      assertReadonly: () => false,
+      emit: (event) => {
+        state.events.push(event);
+      },
+      emitTreeChanged: () => {},
+      replaceDocument: () => {},
+      replaceHistoryBaseline: () => {},
+      markHostDocumentSaved: () => {},
+      pushHistory: () => {},
+      canUndo: () => false,
+      canRedo: () => false,
+      isDirty: () => false,
+      updateDirtyState: () => {},
+      resetViewport: () => {},
+    });
+    const surface = createTreeSessionSurface(ctx);
+    return { surface, state };
+  }
+
+  it('no-op branch: relayout over a synchronized pair emits nothing (15-1)', () => {
+    const { surface, state } = createSessionHarness();
+    const before = state.doc.nodes.map((node) => ({ id: node.id, position: node.position }));
+
+    const result = surface.relayoutTree();
+
+    expect(result.ok).toBe(true);
+    expect(state.events.some((event) => event.type === 'presentationChanged')).toBe(false);
+    expect(state.doc.nodes.map((node) => ({ id: node.id, position: node.position }))).toEqual(
+      before,
+    );
+  });
+
+  it('changed branch: relayout over a desynced pair emits presentationChanged and restores projection positions (15-1)', () => {
+    const { surface, state } = createSessionHarness();
+    const expectedPositions = state.doc.nodes.map((node) => ({
+      id: node.id,
+      position: node.position,
+    }));
+    state.doc = {
+      ...state.doc,
+      nodes: state.doc.nodes.map((node) => ({ ...node, position: { x: 0, y: 0 } })),
+    };
+
+    const result = surface.relayoutTree();
+
+    expect(result.ok).toBe(true);
+    expect(state.events.some((event) => event.type === 'presentationChanged')).toBe(true);
+    expect(state.doc.nodes.map((node) => ({ id: node.id, position: node.position }))).toEqual(
+      expectedPositions,
+    );
+  });
+
+  it('changed branch emits while the tree version stays unchanged, proving a revision-count comparison cannot be equivalent (15-1)', () => {
+    const { surface, state } = createSessionHarness();
+    state.doc = {
+      ...state.doc,
+      nodes: state.doc.nodes.map((node) => ({ ...node, position: { x: 1, y: 1 } })),
+    };
+
+    surface.relayoutTree();
+
+    expect(state.events.some((event) => event.type === 'presentationChanged')).toBe(true);
+    expect(state.events.at(-1)).toMatchObject({ type: 'presentationChanged' });
   });
 });

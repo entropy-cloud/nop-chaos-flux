@@ -190,14 +190,21 @@ export function DesignerPageBody({
     React.useState<DesignerCreateDialogState | null>(null);
   const [creatingNode, setCreatingNode] = React.useState(false);
   const jsonOffsetRef = useRef({ x: 0, y: 0 });
-  const jsonDocument = useMemo(() => {
-    if (!jsonOpen) return null;
-    try {
-      return JSON.parse(core.exportDocument());
-    } catch {
-      return null;
-    }
-  }, [core, jsonOpen]);
+  const jsonResult = useMemo<{ ok: true; doc: unknown } | { ok: false; error: unknown } | null>(
+    () => {
+      if (!jsonOpen) {
+        return null;
+      }
+      try {
+        return { ok: true as const, doc: JSON.parse(core.exportDocument()) };
+      } catch (error) {
+        return { ok: false as const, error };
+      }
+    },
+    [core, jsonOpen],
+  );
+  const jsonDocument = jsonResult?.ok ? (jsonResult.doc as Record<string, unknown>) : null;
+  const jsonError = jsonResult && !jsonResult.ok ? jsonResult.error : null;
 
   const handleOpenCreateDialog = useCallback(
     (
@@ -229,6 +236,23 @@ export function DesignerPageBody({
     },
     [env],
   );
+
+  useEffect(() => {
+    if (jsonError === null) {
+      return;
+    }
+
+    const message = t('flux.flowDesigner.flowJsonParseError');
+    reportHostIssue({
+      message,
+      error: jsonError,
+      details: {
+        reason: 'designer-json-export-parse-failed',
+        documentId: statusSnapshot.doc.id,
+        documentMode: config.documentMode,
+      },
+    });
+  }, [config.documentMode, jsonError, reportHostIssue, statusSnapshot.doc.id]);
 
   const handleConfirmCreateDialog = useCallback(async () => {
     if (!pendingCreateDialog || creatingNode) {
@@ -525,6 +549,15 @@ export function DesignerPageBody({
           </DialogHeader>
           <div data-slot="designer-json-panel-body" className="px-4 pb-4">
             {jsonDocument && <DataViewer data={jsonDocument} />}
+            {jsonError !== null && (
+              <p
+                data-slot="designer-json-panel-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {t('flux.flowDesigner.flowJsonParseError')}
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>

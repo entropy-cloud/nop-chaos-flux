@@ -254,6 +254,12 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         core.toggleGrid();
         return createSuccess(core);
       case 'setPanelWidths':
+        if (command.paletteWidth !== undefined && !Number.isFinite(command.paletteWidth)) {
+          return createFailure(core, 'Invalid palette width.', 'invalid-width');
+        }
+        if (command.inspectorWidth !== undefined && !Number.isFinite(command.inspectorWidth)) {
+          return createFailure(core, 'Invalid inspector width.', 'invalid-width');
+        }
         if (command.paletteWidth !== undefined) {
           core.setPaletteWidth(command.paletteWidth);
         }

@@ -451,4 +451,29 @@ describe('createDesignerCore - shell panel widths', () => {
     expect(core.getSnapshot().paletteWidth).toBe(300);
     expect(core.getSnapshot().inspectorWidth).toBe(420);
   });
+
+  it('rejects NaN palette/inspector widths fail-closed without changing state or emitting (15-2)', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+    const events: any[] = [];
+    core.subscribe((e) => events.push(e));
+
+    core.setPaletteWidth(NaN);
+    core.setInspectorWidth(NaN);
+
+    expect(core.getSnapshot().paletteWidth).toBe(240);
+    expect(core.getSnapshot().inspectorWidth).toBe(352);
+    expect(events.some((event) => event.type === 'paletteWidthChanged')).toBe(false);
+    expect(events.some((event) => event.type === 'inspectorWidthChanged')).toBe(false);
+
+    const snapshot = core.getSnapshot();
+    expect(Number.isFinite(snapshot.paletteWidth)).toBe(true);
+    expect(Number.isFinite(snapshot.inspectorWidth)).toBe(true);
+  });
+
+  it('keeps finite width updates working after a NaN rejection (15-2)', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+    core.setPaletteWidth(NaN);
+    core.setPaletteWidth(320);
+    expect(core.getSnapshot().paletteWidth).toBe(320);
+  });
 });

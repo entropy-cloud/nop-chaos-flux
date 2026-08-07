@@ -17,7 +17,11 @@ import {
 function clampShellWidth(
   panel: DesignerShellPanelConfig | undefined,
   width: number,
+  currentWidth: number,
 ): number {
+  if (!Number.isFinite(width)) {
+    return currentWidth;
+  }
   const min = panel?.minWidth ?? DEFAULT_SHELL_MIN_WIDTH;
   const max = panel?.maxWidth ?? DEFAULT_SHELL_MAX_WIDTH;
   return Math.min(Math.max(width, min), max);
@@ -110,7 +114,7 @@ export function createShellControls(args: {
   }
 
   function setPaletteWidth(width: number) {
-    const nextWidth = clampShellWidth(args.shellConfig?.palette, width);
+    const nextWidth = clampShellWidth(args.shellConfig?.palette, width, args.shellState.paletteWidth);
     if (args.shellState.paletteWidth === nextWidth) {
       return;
     }
@@ -120,7 +124,7 @@ export function createShellControls(args: {
   }
 
   function setInspectorWidth(width: number) {
-    const nextWidth = clampShellWidth(args.shellConfig?.inspector, width);
+    const nextWidth = clampShellWidth(args.shellConfig?.inspector, width, args.shellState.inspectorWidth);
     if (args.shellState.inspectorWidth === nextWidth) {
       return;
     }

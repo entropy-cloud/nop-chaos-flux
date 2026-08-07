@@ -27,6 +27,9 @@ function resolveShellWidth(
   fallbackWidth: number,
 ): number {
   const width = panel?.width ?? fallbackWidth;
+  if (!Number.isFinite(width)) {
+    return fallbackWidth;
+  }
   const min = panel?.minWidth ?? DEFAULT_SHELL_MIN_WIDTH;
   const max = panel?.maxWidth ?? DEFAULT_SHELL_MAX_WIDTH;
   return Math.min(Math.max(width, min), max);

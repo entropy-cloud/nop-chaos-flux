@@ -575,6 +575,7 @@ export const zhCN: Resource = {
       configRequired: '设计器需要 config 属性',
       documentRequired: '设计器需要 document 属性',
       flowJson: '流程 JSON',
+      flowJsonParseError: '无法解析流程 JSON 导出内容。',
       cancel: '取消',
       create: '创建',
       creating: '创建中...',

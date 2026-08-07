@@ -330,7 +330,7 @@ describe('GraphRenderer', () => {
           scope?: unknown;
         }
       | undefined;
-    expect(ctx?.event).toMatchObject({ type: 'onNodeClick', nodeId: 'b' });
+    expect(ctx?.event).toMatchObject({ type: 'graph:node-click', nodeId: 'b' });
     expect(ctx?.evaluationBindings?.nodeId).toBe('b');
     expect(ctx?.evaluationBindings?.node).toMatchObject({ id: 'b' });
     expect(ctx?.scope).toBeTruthy();
@@ -356,8 +356,51 @@ describe('GraphRenderer', () => {
           scope?: unknown;
         }
       | undefined;
-    expect(ctx?.event).toMatchObject({ type: 'onSelectionChange', nodeId: 'a' });
+    expect(ctx?.event).toMatchObject({ type: 'graph:selection-change', nodeId: 'a' });
     expect(ctx?.evaluationBindings?.nodeId).toBe('a');
     expect(ctx?.scope).toBeTruthy();
+  });
+
+  it('event payload type is namespaced (17-2): onNodeClick dispatches graph:node-click', () => {
+    const onNodeClick = vi.fn();
+    renderGraph({}, { onNodeClick: onNodeClick as RendererEventHandler });
+
+    simulateNodeClick('b');
+
+    const payload = onNodeClick.mock.calls.at(-1)?.[0] as { type: string; nodeId: string };
+    expect(payload.type).toBe('graph:node-click');
+    expect(payload.nodeId).toBe('b');
+  });
+
+  it('event payload type is namespaced (17-2): onNodeDoubleClick dispatches graph:node-double-click', () => {
+    const onNodeDoubleClick = vi.fn();
+    renderGraph({}, { onNodeDoubleClick: onNodeDoubleClick as RendererEventHandler });
+
+    act(() => {
+      flowCapture!.onNodeDoubleClick(null, { id: 'a' });
+    });
+
+    const payload = onNodeDoubleClick.mock.calls.at(-1)?.[0] as {
+      type: string;
+      nodeId: string;
+    };
+    expect(payload.type).toBe('graph:node-double-click');
+    expect(payload.nodeId).toBe('a');
+  });
+
+  it('event payload type is namespaced (17-2): onSelectionChange dispatches graph:selection-change', () => {
+    const onSelectionChange = vi.fn();
+    renderGraph({}, { onSelectionChange: onSelectionChange as RendererEventHandler });
+
+    act(() => {
+      flowCapture!.onSelectionChange({ nodes: [{ id: 'c' }] });
+    });
+
+    const payload = onSelectionChange.mock.calls.at(-1)?.[0] as {
+      type: string;
+      nodeId: string | null;
+    };
+    expect(payload.type).toBe('graph:selection-change');
+    expect(payload.nodeId).toBe('c');
   });
 });

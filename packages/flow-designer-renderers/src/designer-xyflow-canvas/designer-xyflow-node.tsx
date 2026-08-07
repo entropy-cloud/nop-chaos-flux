@@ -202,6 +202,19 @@ export function DesignerXyflowNode(props: NodeProps) {
     onPlusButtonClick(`slot:${slotData.ownerId}:${slotData.branchId}`, e.clientX, e.clientY, 'slot');
   };
 
+  const openSlotMenuFromElement = (element: HTMLElement) => {
+    if (!isEmptySlot || !slotData || !onPlusButtonClick) {
+      return;
+    }
+    const rect = element.getBoundingClientRect();
+    onPlusButtonClick(
+      `slot:${slotData.ownerId}:${slotData.branchId}`,
+      rect.left + rect.width / 2,
+      rect.top + rect.height / 2,
+      'slot',
+    );
+  };
+
   if (isEmptySlot) {
     const width = (typeof data.width === 'number' ? data.width : 220) as number;
     const height = (typeof data.height === 'number' ? data.height : 80) as number;
@@ -224,7 +237,7 @@ export function DesignerXyflowNode(props: NodeProps) {
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            handleSlotAffordanceClick(e as unknown as React.MouseEvent);
+            openSlotMenuFromElement(e.currentTarget);
           }
         }}
         onClick={handleSlotAffordanceClick}

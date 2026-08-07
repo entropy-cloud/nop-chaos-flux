@@ -46,7 +46,7 @@ function mapPublishedResult(method: string, actionResult: ReturnType<typeof toAc
 function mapCoreResult(
   result:
     | { ok: true; transactionId?: string }
-    | { ok: false; reason: 'missing-node' | 'missing-edge' | 'missing-selection-target' | 'missing-transaction' | 'unavailable' },
+    | { ok: false; reason: 'missing-node' | 'missing-edge' | 'missing-selection-target' | 'missing-transaction' | 'invalid-width' | 'unavailable' },
   data?: unknown,
 ) {
   if (result.ok) {
@@ -152,6 +152,18 @@ export function createDesignerActionProvider(
     invoke(method, payload, ctx) {
       if (isTreeMode && GRAPH_ONLY_METHODS.has(method)) {
         return treeUnavailable();
+      }
+
+      if (method === 'setPanelWidths') {
+        const raw = (payload ?? {}) as Record<string, unknown>;
+        const paletteWidth = raw.paletteWidth;
+        const inspectorWidth = raw.inspectorWidth;
+        if (
+          (typeof paletteWidth === 'number' && !Number.isFinite(paletteWidth)) ||
+          (typeof inspectorWidth === 'number' && !Number.isFinite(inspectorWidth))
+        ) {
+          return mapCoreResult({ ok: false, reason: 'invalid-width' });
+        }
       }
 
       const validation = validateMethodPayload(method, payload);
@@ -447,8 +459,14 @@ export function createDesignerActionProvider(
         case 'setPanelWidths': {
           const result = adapter.execute({
             type: 'setPanelWidths',
-            paletteWidth: typeof args.paletteWidth === 'number' ? args.paletteWidth : undefined,
-            inspectorWidth: typeof args.inspectorWidth === 'number' ? args.inspectorWidth : undefined,
+            paletteWidth:
+              typeof args.paletteWidth === 'number' && Number.isFinite(args.paletteWidth)
+                ? args.paletteWidth
+                : undefined,
+            inspectorWidth:
+              typeof args.inspectorWidth === 'number' && Number.isFinite(args.inspectorWidth)
+                ? args.inspectorWidth
+                : undefined,
           });
           return toActionResult(result);
         }

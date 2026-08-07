@@ -576,6 +576,7 @@ export const enUS: Resource = {
       configRequired: 'Designer requires config prop',
       documentRequired: 'Designer requires document prop',
       flowJson: 'Flow JSON',
+      flowJsonParseError: 'Failed to parse the flow JSON export.',
       cancel: 'Cancel',
       create: 'Create',
       creating: 'Creating...',

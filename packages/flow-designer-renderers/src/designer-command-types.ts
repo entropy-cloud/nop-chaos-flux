@@ -2,6 +2,7 @@ import type { DesignerSnapshot, GraphEdge, GraphNode } from '@nop-chaos/flow-des
 
 export type DesignerCommandReason =
   | 'constraint'
+  | 'invalid-width'
   | 'missing-transaction'
   | 'duplicate-edge'
   | 'missing-edge'

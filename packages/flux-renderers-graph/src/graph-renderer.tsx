@@ -34,6 +34,14 @@ interface GraphNodeSelectionPayload {
   [key: string]: unknown;
 }
 
+// 17-2: payload `type` 使用命名空间值（对齐 renderer-runtime.md normalizeActionEvent
+// 字符串 type 契约）；事件键名（onNodeClick 等）仍作 props.events 索引不变。
+const GRAPH_EVENT_PAYLOAD_TYPES: Readonly<Record<string, string>> = {
+  onNodeClick: 'graph:node-click',
+  onNodeDoubleClick: 'graph:node-double-click',
+  onSelectionChange: 'graph:selection-change',
+};
+
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
@@ -157,7 +165,11 @@ export function GraphRenderer(props: RendererComponentProps<GraphSchema>) {
     // CX-10 / bug-83 family convention: the second dispatch arg carries
     // { event, evaluationBindings, scope } so action args templates can read
     // payload keys (${nodeId}) as bare bindings.
-    const fullPayload: GraphNodeSelectionPayload = { type, nodeId, node };
+    const fullPayload: GraphNodeSelectionPayload = {
+      type: GRAPH_EVENT_PAYLOAD_TYPES[type] ?? type,
+      nodeId,
+      node,
+    };
     void handler(fullPayload, {
       event: fullPayload,
       evaluationBindings: fullPayload,
