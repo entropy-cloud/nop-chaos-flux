@@ -1,6 +1,6 @@
 # 3 kanban 公共组件 helpers prop 精确类型（13-02）
 
-> Plan Status: active（draft → active：独立子 agent 两轮审查，首轮 pass-with-minors（2 Minor：ReactNode 断言理由措辞、@ts-expect-error 强制力归属）已修订解决，复检 pass-with-minors（仅 2 条 cosmetic 措辞已处理），零 Blocker/零 Major，共识达成）
+> Plan Status: completed（draft → active：独立子 agent 两轮审查，首轮 pass-with-minors（2 Minor：ReactNode 断言理由措辞、@ts-expect-error 强制力归属）已修订解决，复检 pass-with-minors（仅 2 条 cosmetic 措辞已处理），零 Blocker/零 Major，共识达成 → completed：2026-08-07 mission-driver 完整执行，2 Phase 全 completed，closure-audit 由独立 fresh session 收口）
 > Last Reviewed: 2026-08-07
 > Source: `docs/audits/2026-08-06-0711-multi-audit-component-audit.md`（[P2] 13-02 :417-429）、`docs/backlog/component-audit-roadmap.md`（Follow-up Backlog 13-02 行，`[ ]`）
 > Related: `packages/flux-core/src/types/renderer-core.ts:73`（RendererHelpers 类型）、`packages/flux-renderers-scheduling/src/kanban/`
@@ -58,38 +58,38 @@
 
 ### Phase 1 - 类型收紧与断言清理
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/kanban/kanban-card.tsx`、`kanban-column.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix` `kanban-card.tsx`：`KanbanCardProps.helpers` 类型改为 `Pick<RendererHelpers, 'render'>`（从 `@nop-chaos/flux-core` 类型导入，与 renderer-core.ts:73 对齐）；`:76` 移除 `as React.ReactNode` 冗余断言（render 返回的 `unknown` 在 fragment 子元素位置可直接消费——live 探针实证同型写法 typecheck 通过；不做非 fragment 位置的 `ReactNode` 赋值替换）。
-- [ ] `Fix` `kanban-column.tsx`：`KanbanColumnProps.helpers` 同型收紧为 `Pick<RendererHelpers, 'render'>`（透传链保持类型兼容；kanban-board.tsx:641 处全量 `RendererHelpers` 结构兼容 `Pick<...>`，无需改动）。
-- [ ] `Proof` 类型契约测试：新增/扩展现有 kanban 测试中 1 条类型级断言（如以 `satisfies` 或类型断言验证 `{ render: () => null }` 可作 helpers、缺 render 的 `{}` 不可赋值——用 `@ts-expect-error` 形态锁定，防回归到 `any`；反例 `{}` 不得带 `as any`，否则指令失效）。测试文件：就近放置于既有 `kanban/kanban-renderer.test.tsx`（现有 `helpers: {} as any` 用例处），或新增 `kanban-types.test.tsx`（按既有测试布局就近放置）。
-- [ ] `Proof` `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck` + 该包相关测试（kanban 系）绿。
+- [x] `Fix` `kanban-card.tsx`：`KanbanCardProps.helpers` 类型改为 `Pick<RendererHelpers, 'render'>`（从 `@nop-chaos/flux-core` 类型导入，与 renderer-core.ts:73 对齐）；`:76` 移除 `as React.ReactNode` 冗余断言（render 返回的 `unknown` 在 fragment 子元素位置可直接消费——live 探针实证同型写法 typecheck 通过；不做非 fragment 位置的 `ReactNode` 赋值替换）。
+- [x] `Fix` `kanban-column.tsx`：`KanbanColumnProps.helpers` 同型收紧为 `Pick<RendererHelpers, 'render'>`（透传链保持类型兼容；kanban-board.tsx:641 处全量 `RendererHelpers` 结构兼容 `Pick<...>`，无需改动）。
+- [x] `Proof` 类型契约测试：新增/扩展现有 kanban 测试中 1 条类型级断言（如以 `satisfies` 或类型断言验证 `{ render: () => null }` 可作 helpers、缺 render 的 `{}` 不可赋值——用 `@ts-expect-error` 形态锁定，防回归到 `any`；反例 `{}` 不得带 `as any`，否则指令失效）。测试文件：就近放置于既有 `kanban/kanban-renderer.test.tsx`（现有 `helpers: {} as any` 用例处），或新增 `kanban-types.test.tsx`（按既有测试布局就近放置）。
+- [x] `Proof` `pnpm --filter @nop-chaos/flux-renderers-scheduling typecheck` + 该包相关测试（kanban 系）绿。
 
 Exit Criteria:
 
 > 本 Phase 交付类型收口与验证；后续收口依赖其绿态。
 
-- [ ] `kanban-card.tsx` / `kanban-column.tsx` 两处 `helpers?: any` 已收紧为 `Pick<RendererHelpers, 'render'>`（rg 实证 `helpers?: any` 在该两文件零命中），冗余断言已清理。
-- [ ] scheduling 包 typecheck 绿（`@ts-expect-error` 反例由 `tsc -p tsconfig.json` 的 TS2578 未使用指令检查强制执行——vitest 不 typecheck，测试绿不能替代 tsc）+ 类型契约测试绿。
+- [x] `kanban-card.tsx` / `kanban-column.tsx` 两处 `helpers?: any` 已收紧为 `Pick<RendererHelpers, 'render'>`（rg 实证 `helpers?: any` 在该两文件零命中），冗余断言已清理。
+- [x] scheduling 包 typecheck 绿（`@ts-expect-error` 反例由 `tsc -p tsconfig.json` 的 TS2578 未使用指令检查强制执行——vitest 不 typecheck，测试绿不能替代 tsc）+ 类型契约测试绿。
 
 ### Phase 2 - 文档同步与 roadmap 翻转
 
-Status: planned
+Status: completed
 Targets: `docs/backlog/component-audit-roadmap.md`、`docs/logs/2026/08-07.md`
 
 - Item Types: `Follow-up`
 
-- [ ] `Follow-up` roadmap Follow-up Backlog `13-02` 行翻转 `[x]`，注明收口 plan 路径。
-- [ ] `Follow-up` `docs/logs/2026/08-07.md` 记录：类型收紧落地、类型契约测试、验证结果。
+- [x] `Follow-up` roadmap Follow-up Backlog `13-02` 行翻转 `[x]`，注明收口 plan 路径。
+- [x] `Follow-up` `docs/logs/2026/08-07.md` 记录：类型收紧落地、类型契约测试、验证结果。
 
 Exit Criteria:
 
 > 纯文档收口，repo-observable 为 roadmap 行与日志条目。
 
-- [ ] roadmap `13-02` 行 `[x]` 且链接本 plan；`docs/logs/2026/08-07.md` 已记录本 plan 执行与验证结果。
+- [x] roadmap `13-02` 行 `[x]` 且链接本 plan；`docs/logs/2026/08-07.md` 已记录本 plan 执行与验证结果。
 
 ## Draft Review Record
 
@@ -103,16 +103,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] KanbanCard/KanbanColumn helpers 类型已收紧且冗余断言清理（rg 实证）
-- [ ] scheduling 包 typecheck + 相关测试绿（含类型契约测试）
-- [ ] `pnpm check` 全链绿（`check:oversized-code-files` 既有 14 文件登记债除外）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 缺陷
-- [ ] owner docs 无行为变更（类型仅收窄，无契约语义变化——No owner-doc update required）；roadmap `13-02` 行已同步
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] KanbanCard/KanbanColumn helpers 类型已收紧且冗余断言清理（rg 实证）
+- [x] scheduling 包 typecheck + 相关测试绿（含类型契约测试）
+- [x] `pnpm check` 全链绿（`check:oversized-code-files` 既有 12 文件登记债除外）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 缺陷
+- [x] owner docs 无行为变更（类型仅收窄，无契约语义变化——No owner-doc update required）；roadmap `13-02` 行已同步
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -124,13 +124,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成时填写）
+Status Note: 2026-08-07 mission-driver 完整执行——Phase 1/2 全 completed；类型收口 + 契约测试 + 文档同步 + roadmap 13-02 行翻转，验证链全绿（typecheck/build/lint 32/32、test 59/59、check 仅 12 既有 pre-existing oversized 登记债），closure-audit 独立 fresh session approved。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待填）
-- Evidence: （待填）
+- Auditor / Agent: 独立 fresh sub-agent session `ses_0256348e8ffeQ1mOGyuFlG6XLB`（2026-08-07，执行 session 外）
+- Evidence: Verdict `approved`（0 Blocker/0 Major/1 Minor）。Gate-by-gate 全 PASS：① rg `helpers\?: any|helpers: any|as any` 两 kanban 文件零命中，props 收紧为 `Pick<RendererHelpers, 'render'>`（flux-core 导入，与 renderer-core.ts:73 对齐），`as React.ReactNode` 已移除；② 独立复跑 `tsc -p tsconfig.json` exit 0 + 77 files/878 tests 绿（含 kanban-types.test.tsx 3 用例；反例 `{}` 无 `as any`，tsconfig include src 使指令受 tsc TS2578 强制，回退 any 时指令未用实证 TS2578）；③ 11 项 check 脚本独立复跑全 exit 0，oversized 恰为 12 既有登记债（新测试文件不在两清单）；④ 无 in-scope 缺陷被降级（Non-Goals/Deferred 与 diff 一致）；⑤ roadmap 13-02 `[x]` + 日志条目，类型仅收窄无需 owner-doc；⑥ 本独立 session 即该 gate 证据；⑦-⑩ typecheck/build/lint/test executor 报告 32/32 与 59/59，独立复验类型敏感面一致。1 Minor：plan 门禁文案「14 文件」→ 实测登记债 12 文件，已按建议在 closure 记录时修正为 12。
 
 Follow-up:
 
-- （待填；预期 no remaining plan-owned work）
+- （无——plan 内无剩余 work；其余调度组件同类 `helpers?: any` 治理登记为非阻塞候选，见 Non-Blocking Follow-ups 节）
