@@ -2,6 +2,7 @@ import React from 'react';
 import { cn, Button } from '@nop-chaos/ui';
 import { X } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
+import type { RendererHelpers } from '@nop-chaos/flux-core';
 import type { BoardItem, KanbanCardConfig } from './kanban.types.js';
 import { KanbanCardTags } from './components/kanban-card-tags.js';
 import type { KanbanTag, KanbanMember } from './components/kanban-card-tags.js';
@@ -15,7 +16,7 @@ export interface KanbanCardProps {
   onCardClick?: (cardId: string, columnId: string, index: number) => void;
   onCardRemove?: (cardId: string) => void;
   className?: string;
-  helpers?: any;
+  helpers?: Pick<RendererHelpers, 'render'>;
   registerCard?: (el: HTMLElement, cardId: string, columnId: string, index: number) => () => void;
   tabIndex?: number;
   onRovingKeyDown?: (e: React.KeyboardEvent, index: number) => void;
@@ -73,7 +74,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
 
   const innerContent = config?.render ? (
     <>
-      {helpers?.render(config.render) as React.ReactNode}
+      {helpers?.render(config.render)}
       <KanbanCardTags color={color} tags={tags} members={members} />
     </>
   ) : cardTemplateRegion ? (

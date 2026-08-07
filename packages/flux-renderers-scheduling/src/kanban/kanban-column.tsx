@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { cn, Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import type { RendererHelpers } from '@nop-chaos/flux-core';
 import type { BoardData, BoardItem, KanbanCardConfig } from './kanban.types.js';
 import { KanbanColumnHeader } from './kanban-column-header.js';
 import { KanbanCard } from './kanban-card.js';
@@ -37,7 +38,7 @@ export interface KanbanColumnProps {
   columnFooterClassName?: string;
   selectedTagIds?: string[];
   filterCardFn?: (card: BoardItem) => boolean;
-  helpers?: any;
+  helpers?: Pick<RendererHelpers, 'render'>;
   dropTargetCardIndex?: number | null;
   dropClosestEdge?: 'before' | 'after' | null;
   registerColumn?: (el: HTMLElement, columnId: string, cardCount: number) => () => void;
