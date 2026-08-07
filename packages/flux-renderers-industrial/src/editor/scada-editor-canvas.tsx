@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { ActionSchema, RendererComponentProps, RendererHelpers, ScopeRef } from '@nop-chaos/flux-core';
 import { createNormalizedActionEvent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
@@ -88,108 +88,90 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
     eventsRef.current = events;
   });
 
+  // plan 2026-08-08-0900-2 Phase 4 / #20：移除冗余 useCallback（React Compiler + latest-ref 模式处理）。
+  // useMemo 保留：parsedConfig 经 useEditorEngine useEffect identity check（args.initialConfig === loadedConfigRef.current），
+  // 移除会导致每次渲染新对象 → load 循环（load-bearing，非冗余）。
   const { config: parsedConfig, error: parseError } = useMemo(
     () => parseAndValidateConfig(props.props.config),
     [props.props.config],
   );
 
-  const dispatchEvent = useCallback(
-    (type: string, payload: Record<string, unknown>, action: unknown) => {
-      const normalized = createNormalizedActionEvent({ type, ...payload });
-      if (!action || typeof action !== 'object') return undefined;
-      return helpersRef.current.dispatch(action as ActionSchema, {
-        event: normalized,
-        scope: scopeRef.current,
-      });
-    },
-    [],
-  );
+  const dispatchEvent = (type: string, payload: Record<string, unknown>, action: unknown) => {
+    const normalized = createNormalizedActionEvent({ type, ...payload });
+    if (!action || typeof action !== 'object') return undefined;
+    return helpersRef.current.dispatch(action as ActionSchema, {
+      event: normalized,
+      scope: scopeRef.current,
+    });
+  };
 
-  const handleReady = useCallback(() => {
+  const handleReady = () => {
     setStatus('ready');
     setErrorInfo(undefined);
     dispatchEvent('scada-editor:ready', { type: 'scada-editor:ready' }, eventsRef.current?.onReady);
-  }, [dispatchEvent]);
+  };
 
-  const handleError = useCallback(
-    (code: string, message: string) => {
-      setStatus('error');
-      setErrorInfo({ code, message });
-      dispatchEvent('scada-editor:error', { code, message }, eventsRef.current?.onError);
-    },
-    [dispatchEvent],
-  );
+  const handleError = (code: string, message: string) => {
+    setStatus('error');
+    setErrorInfo({ code, message });
+    dispatchEvent('scada-editor:error', { code, message }, eventsRef.current?.onError);
+  };
 
-  const handleSelectionChange = useCallback(
-    (nodeIds: string[]) => {
-      setSelection(nodeIds);
-      dispatchEvent(
-        'scada-editor:selectionChange',
-        { listNodeIds: nodeIds },
-        eventsRef.current?.onSelectionChange,
-      );
-    },
-    [dispatchEvent],
-  );
+  const handleSelectionChange = (nodeIds: string[]) => {
+    setSelection(nodeIds);
+    dispatchEvent(
+      'scada-editor:selectionChange',
+      { listNodeIds: nodeIds },
+      eventsRef.current?.onSelectionChange,
+    );
+  };
 
-  const handleModeChange = useCallback(
-    (mode: 'edit' | 'preview') => {
-      dispatchEvent('scada-editor:modeChange', { mode }, eventsRef.current?.onModeChange);
-    },
-    [dispatchEvent],
-  );
+  const handleModeChange = (mode: 'edit' | 'preview') => {
+    dispatchEvent('scada-editor:modeChange', { mode }, eventsRef.current?.onModeChange);
+  };
 
-  const handleSessionChange = useCallback(
-    (session: ScadaEditorSession) => {
-      const payload = projectSessionChange(session);
-      dispatchEvent(
-        'scada-editor:sessionChange',
-        {
-          canUndo: payload.canUndo,
-          canRedo: payload.canRedo,
-          selection: payload.selection,
-          mode: payload.mode,
-        },
-        eventsRef.current?.onSessionChange,
-      );
-      // 反应式 tick：session 任意 mutator（属性编辑 / undo 入栈 / 移动联动）后 bump 计数器，
-      // 触发本组件 + 子 panel 重渲染，使 toolbox Undo/Redo disabled、inspector fieldErrors
-      // 从最新 session 派生（不再依赖 selection 变更才刷新）。
-      bumpSessionVersion();
-    },
-    [dispatchEvent],
-  );
+  const handleSessionChange = (session: ScadaEditorSession) => {
+    const payload = projectSessionChange(session);
+    dispatchEvent(
+      'scada-editor:sessionChange',
+      {
+        canUndo: payload.canUndo,
+        canRedo: payload.canRedo,
+        selection: payload.selection,
+        mode: payload.mode,
+      },
+      eventsRef.current?.onSessionChange,
+    );
+    // 反应式 tick：session 任意 mutator（属性编辑 / undo 入栈 / 移动联动）后 bump 计数器，
+    // 触发本组件 + 子 panel 重渲染，使 toolbox Undo/Redo disabled、inspector fieldErrors
+    // 从最新 session 派生（不再依赖 selection 变更才刷新）。
+    bumpSessionVersion();
+  };
 
   // plan 2026-08-07-1835-2 Phase 2 / multi P1-04：save 经 runtime-mutators save() → latest.onSave
   // 触发此处 → 派发 scada-editor:save schema 事件（payload=serializedConfig）。此前 schema 声明 onSave 但 0 dispatch。
-  const handleSave = useCallback(
-    (serializedConfig: string) => {
-      dispatchEvent(
-        'scada-editor:save',
-        { serializedConfig },
-        eventsRef.current?.onSave,
-      );
-    },
-    [dispatchEvent],
-  );
+  const handleSave = (serializedConfig: string) => {
+    dispatchEvent(
+      'scada-editor:save',
+      { serializedConfig },
+      eventsRef.current?.onSave,
+    );
+  };
 
   // plan 2026-08-07-1835-2 Phase 2 / multi P1-04：load 经 runtime-mutators load() → latest.onLoad
   // 触发此处 → 派发 scada-editor:load schema 事件（payload=parsed config）。
-  const handleLoad = useCallback(
-    (config: ScadaConfig) => {
-      dispatchEvent(
-        'scada-editor:load',
-        { config },
-        eventsRef.current?.onLoad,
-      );
-    },
-    [dispatchEvent],
-  );
+  const handleLoad = (config: ScadaConfig) => {
+    dispatchEvent(
+      'scada-editor:load',
+      { config },
+      eventsRef.current?.onLoad,
+    );
+  };
 
   // plan 2026-08-07-1835-2 Phase 2 / multi P1-06：component:destroy() 句柄触发 → 置 destroyed 态（§8.3 OP-4）。
-  const handleDestroyed = useCallback(() => {
+  const handleDestroyed = () => {
     setStatus('destroyed');
-  }, []);
+  };
 
   const runtime = useEditorEngine({
     containerRef,

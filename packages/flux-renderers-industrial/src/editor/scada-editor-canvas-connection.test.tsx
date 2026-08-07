@@ -363,6 +363,11 @@ describe('scada-editor-canvas connection (E7.1, design-connection.md)', () => {
     expect(conns).toHaveLength(1);
     expect(conns[0].connection.target).toBe('device-1');
     expect(conns[0].junctionId).toBe('junction-1');
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #28：复核 linkage 坐标（snap 锚点归一化值）。
+    // pointerup at (380,130) = device-1 right-middle world；snap 算法找到 right 边 (1,0.5) 锚点
+    // （归一化相对目标设备几何，非 junction 相对——与 programmaticConnect 的 junction 归一化路径不同）。
+    expect(conns[0].connection.x).toBe(1);
+    expect(conns[0].connection.y).toBe(0.5);
     // m-2: undo stack top operationKind is 'connection-update' (not 'update-symbol')
     expect(handle.undoRedo.getStackState().topOperationKind).toBe('connection-update');
     expect(handle.undoRedo.getStackState().canUndo).toBe(true);

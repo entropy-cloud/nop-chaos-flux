@@ -17,7 +17,7 @@ describe('ConnectionOverlayRenderer (E8 M-1)', () => {
     const added: unknown[] = [];
     const renderer = new ConnectionOverlayRenderer(makeEngine((n) => added.push(n)));
     const state: ConnectionOverlayState = {
-      highlights: [{ kind: 'snap-dot', world: { x: 10, y: 20 }, tooltip: 't', nodeId: 'n' }],
+      highlights: [{ kind: 'snap-dot', world: { x: 10, y: 20 }, nodeId: 'n' }],
       dragLines: [{ kind: 'drag-line', from: { x: 0, y: 0 }, to: { x: 10, y: 20 } }],
     };
     renderer.update(state);
@@ -35,7 +35,7 @@ describe('ConnectionOverlayRenderer (E8 M-1)', () => {
     const renderer = new ConnectionOverlayRenderer(makeEngine(undefined));
     expect(() =>
       renderer.update({
-        highlights: [{ kind: 'snap-dot', world: { x: 1, y: 1 }, tooltip: 't', nodeId: 'n' }],
+        highlights: [{ kind: 'snap-dot', world: { x: 1, y: 1 }, nodeId: 'n' }],
         dragLines: [],
       }),
     ).not.toThrow();
@@ -45,7 +45,7 @@ describe('ConnectionOverlayRenderer (E8 M-1)', () => {
     const added: Array<{ destroyed?: boolean }> = [];
     const renderer = new ConnectionOverlayRenderer(makeEngine((n) => added.push(n as { destroyed?: boolean })));
     renderer.update({
-      highlights: [{ kind: 'snap-dot', world: { x: 1, y: 1 }, tooltip: 't', nodeId: 'n' }],
+      highlights: [{ kind: 'snap-dot', world: { x: 1, y: 1 }, nodeId: 'n' }],
       dragLines: [{ kind: 'drag-line', from: { x: 0, y: 0 }, to: { x: 1, y: 1 } }],
     });
     renderer.clear();
@@ -56,7 +56,7 @@ describe('ConnectionOverlayRenderer (E8 M-1)', () => {
     const added: Array<{ destroyed?: boolean }> = [];
     const renderer = new ConnectionOverlayRenderer(makeEngine((n) => added.push(n as { destroyed?: boolean })));
     renderer.update({
-      highlights: [{ kind: 'snap-dot', world: { x: 1, y: 1 }, tooltip: 't', nodeId: 'n' }],
+      highlights: [{ kind: 'snap-dot', world: { x: 1, y: 1 }, nodeId: 'n' }],
       dragLines: [],
     });
     const firstBatch = [...added];

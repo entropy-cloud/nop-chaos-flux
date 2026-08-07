@@ -120,19 +120,30 @@ describe('EditorInspectorPanel (Phase 1 stub)', () => {
   });
 
   it('field onChange calls runtime.updateWorkingNode', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #26：从「patch defined」推进到「patch 字段值正确 + workingConfig 反映」。
     let updatedNode: string | undefined;
     let updatedPatch: Record<string, unknown> | undefined;
     const runtime = makeRuntime(config);
     runtime.updateWorkingNode = (nodeId: string, patch: Partial<ScadaSymbolNode>) => {
       updatedNode = nodeId;
       updatedPatch = patch as Record<string, unknown>;
+      // 真实 mutator 语义：patch 应用到 workingConfig node（使 workingConfig 反映）。
+      const target = runtime.session.workingConfig.symbols.find((s) => s.id === nodeId);
+      if (target) Object.assign(target, patch);
     };
     const { container } = render(<EditorInspectorPanel runtime={runtime} selectedNodeId="node-1" onError={() => undefined} />);
     // Find a number input (x field) and change its value.
     const numberInputs = container.querySelectorAll('input[type="number"]');
     expect(numberInputs.length).toBeGreaterThan(0);
+    // 第一个 number input 是 x 字段（初始值 10 = node-1.x），确认字段身份后再断言 patch 字段值。
+    expect((numberInputs[0] as HTMLInputElement).value).toBe('10');
     fireEvent.change(numberInputs[0], { target: { value: '200' } });
     expect(updatedNode).toBe('node-1');
     expect(updatedPatch).toBeDefined();
+    // patch 字段值正确（非仅 defined）
+    expect(updatedPatch!.x).toBe(200);
+    // workingConfig 反映（updateWorkingNode 已应用 patch 到 node）
+    const reflectNode = runtime.session.workingConfig.symbols.find((s) => s.id === 'node-1');
+    expect(reflectNode?.x).toBe(200);
   });
 });

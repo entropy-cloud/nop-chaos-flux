@@ -14,7 +14,6 @@ describe('deriveOverlayState (design-connection.md §6)', () => {
     expect(state.highlights).toHaveLength(1);
     expect(state.highlights[0].kind).toBe('snap-dot');
     expect(state.highlights[0].nodeId).toBe('dev-1');
-    expect(state.highlights[0].tooltip).toContain('dev-1');
     // anchor world = (180, 230)
     expect(state.highlights[0].world).toEqual({ x: 180, y: 230 });
     expect(state.dragLines).toHaveLength(1);

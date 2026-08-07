@@ -14,8 +14,6 @@ export interface SnapHighlightMark {
   kind: 'snap-dot';
   /** 候选图元边缘锚点世界坐标（圆点中心）。 */
   world: WorldPoint;
-  /** tooltip 文本「吸附到 <图元 id>」。 */
-  tooltip: string;
   /** 候选 nodeId（高亮参考）。 */
   nodeId: string;
 }
@@ -58,7 +56,6 @@ export function deriveOverlayState(args: {
     highlights.push({
       kind: 'snap-dot',
       world: anchorWorld,
-      tooltip: `吸附到 ${args.candidate.nodeId}`,
       nodeId: args.candidate.nodeId,
     });
     dragLines.push({ kind: 'drag-line', from: args.pointerWorld, to: anchorWorld });

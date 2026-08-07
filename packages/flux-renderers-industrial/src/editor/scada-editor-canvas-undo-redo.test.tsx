@@ -237,19 +237,47 @@ describe('scada-editor-canvas undo-redo (E7.2, design-undo-redo.md)', () => {
   });
 
   it('coalesces consecutive same-field edits into 1 undo step (§4.4 M2 basic coalesce)', async () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #27：注入可控时钟（vi.spyOn Date.now）替代真实 wall-clock，
+    // 消除 timing-fragile（原实现依赖两次 updateSymbol 在真实 500ms 内完成，CI 慢机可能 false-red）。
     const { container } = renderEditor('coalesce');
     const cid = await waitForReadyAndCid(container);
     const handle = readScadaEditorTestHandle(cid)!;
+    const baseTime = 1_000_000;
+    const dateSpy = vi.spyOn(Date, 'now');
+    try {
+      // 两次同字段编辑，时间戳控制在 500ms 窗口内 → coalesce
+      dateSpy.mockReturnValue(baseTime);
+      handle.updateSymbol('editor-rect', { x: 11 });
+      dateSpy.mockReturnValue(baseTime + 100); // +100ms，在 500ms 窗口内
+      handle.updateSymbol('editor-rect', { x: 22 });
+      expect(handle.undoRedo.getStackState().undoStackDepth).toBe(1);
 
-    // two edits to the SAME field (x) within 500ms → coalesce into 1 step
-    handle.updateSymbol('editor-rect', { x: 11 });
-    handle.updateSymbol('editor-rect', { x: 22 });
-    expect(handle.undoRedo.getStackState().undoStackDepth).toBe(1);
+      // undo once → reverts to ORIGINAL x (not intermediate 11), proving merge
+      handle.undo();
+      expect(handle.session.workingConfig.symbols.find((s) => s.id === 'editor-rect')!.x).toBe(100);
+      expect(handle.session.canUndo).toBe(false);
+    } finally {
+      dateSpy.mockRestore();
+    }
+  });
 
-    // undo once → reverts to ORIGINAL x (not intermediate 11), proving merge
-    handle.undo();
-    expect(handle.session.workingConfig.symbols.find((s) => s.id === 'editor-rect')!.x).toBe(100);
-    expect(handle.session.canUndo).toBe(false);
+  it('does NOT coalesce same-field edits > 500ms apart (§4.4 window boundary)', async () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #27：boundary 测试——可控时钟下证明 > 500ms 不合
+    // （强化「时钟控制真实生效」，而非依赖两次调用恰好快到同毫秒）。
+    const { container } = renderEditor('coalesce-window');
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const baseTime = 2_000_000;
+    const dateSpy = vi.spyOn(Date, 'now');
+    try {
+      dateSpy.mockReturnValue(baseTime);
+      handle.updateSymbol('editor-rect', { x: 11 });
+      dateSpy.mockReturnValue(baseTime + 501); // +501ms，超出 500ms 窗口 → 不合
+      handle.updateSymbol('editor-rect', { x: 22 });
+      expect(handle.undoRedo.getStackState().undoStackDepth).toBe(2);
+    } finally {
+      dateSpy.mockRestore();
+    }
   });
 
   it('does NOT coalesce different-field edits (§4.4: same field required)', async () => {

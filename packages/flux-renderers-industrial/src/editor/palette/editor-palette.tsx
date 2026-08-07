@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { Button } from '@nop-chaos/ui';
 import { listScadaSymbols } from '../../symbols/symbol-registry.js';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
@@ -15,7 +15,8 @@ interface EditorPalettePanelProps {
  * **不重复注册图元定义**（复用 runtime 注册表）。拖入放置经 `addSymbol` 句柄写 working copy（E5.2 落地）。
  */
 export function EditorPalettePanel(props: EditorPalettePanelProps) {
-  const symbols = useMemo(() => listScadaSymbols(), []);
+  // plan 2026-08-08-0900-2 Phase 4 / #20：移除冗余 useMemo（React Compiler 自动 memoize；listScadaSymbols 纯查询）。
+  const symbols = listScadaSymbols();
   const idCounter = useRef(0);
 
   const handleDragStart = (event: React.DragEvent<HTMLButtonElement>, type: string) => {

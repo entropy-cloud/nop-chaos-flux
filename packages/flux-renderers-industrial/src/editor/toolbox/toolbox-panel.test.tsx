@@ -25,11 +25,14 @@ const config: ScadaConfig = {
 
 function makeRuntime(overrides: Partial<EditorEngineRuntime> = {}): EditorEngineRuntime & {
   calls: Record<string, unknown[]>;
+  allCalls: Record<string, unknown[][]>;
 } {
   const calls: Record<string, unknown[]> = {};
+  const allCalls: Record<string, unknown[][]> = {};
   const track = <T extends (...args: never[]) => unknown>(name: string, fn: T) => {
     return (...args: never[]) => {
       calls[name] = args;
+      (allCalls[name] ??= []).push(args);
       return fn(...args);
     };
   };
@@ -70,8 +73,9 @@ function makeRuntime(overrides: Partial<EditorEngineRuntime> = {}): EditorEngine
     importConfig: track('import', () => true),
     listSymbolLibrary: () => [{ type: 'scada-rect', name: 'Rect' }],
     ...overrides,
-  } as unknown as EditorEngineRuntime & { calls: Record<string, unknown[]> };
+  } as unknown as EditorEngineRuntime & { calls: Record<string, unknown[]>; allCalls: Record<string, unknown[][]> };
   rt.calls = calls;
+  rt.allCalls = allCalls;
   return rt;
 }
 
@@ -106,16 +110,25 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
   });
 
   it('view tool buttons call engine command face (fit/center/reset/zoom)', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #25：从「被调用」推进到「调用参数 / 副作用可观测」。
     const { container, runtime } = renderPanel([]);
     fireEvent.click(buttonByText(container, 'Fit'));
     fireEvent.click(buttonByText(container, 'Center'));
     fireEvent.click(buttonByText(container, '1:1'));
     fireEvent.click(buttonByText(container, '+'));
     fireEvent.click(buttonByText(container, '−'));
-    expect(runtime.calls.fitView).toBeDefined();
-    expect(runtime.calls.centerView).toBeDefined();
-    expect(runtime.calls.resetView).toBeDefined();
-    expect(runtime.calls.zoomView).toBeDefined();
+    // 每按钮恰好调用 1 次（计数可观测）
+    expect(runtime.allCalls.fitView).toHaveLength(1);
+    expect(runtime.allCalls.centerView).toHaveLength(1);
+    expect(runtime.allCalls.resetView).toHaveLength(1);
+    // zoom 参数可观测：+ 传 1.2，− 传 1/1.2（顺序匹配点击顺序）
+    expect(runtime.allCalls.zoomView).toHaveLength(2);
+    expect(runtime.allCalls.zoomView[0][0]).toBe(1.2);
+    expect(runtime.allCalls.zoomView[1][0]).toBeCloseTo(1 / 1.2, 5);
+    // 副作用可观测：status 消息反映 viewport（证明 handler 跑完整路径 + 读 getViewport）
+    const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
+    expect(status?.textContent).toContain('视口');
+    expect(status?.textContent).toContain('@1.00x');
   });
 
   it('align buttons disabled when selection < 2', () => {
@@ -125,11 +138,13 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
   });
 
   it('align buttons enabled + call alignSelection when selection >= 2', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #25：断言传入方向参数（非仅「被调用」）。
     const { container, runtime } = renderPanel(['a', 'b']);
     const alignBtn = buttonByText(container, '⌅L');
     expect(alignBtn.disabled).toBe(false);
     fireEvent.click(alignBtn);
     expect(runtime.calls.align).toBeDefined();
+    expect(runtime.calls.align[0]).toBe('left');
   });
 
   it('distribute buttons disabled when selection < 3', () => {
@@ -138,9 +153,11 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
   });
 
   it('distribute buttons enabled + call distributeSelection when selection >= 3', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #25：断言传入方向参数。
     const { container, runtime } = renderPanel(['a', 'b', 'c']);
     fireEvent.click(buttonByText(container, '↕'));
     expect(runtime.calls.distribute).toBeDefined();
+    expect(runtime.calls.distribute[0]).toBe('vertical');
   });
 
   it('z-order buttons disabled when no selection', () => {
@@ -149,12 +166,17 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
   });
 
   it('z-order buttons call reorderZOrder when selection present', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #25：断言传入 z-order action 参数（4 个按钮 4 个不同 action）。
     const { container, runtime } = renderPanel(['a']);
     fireEvent.click(buttonByText(container, '⤒'));
     fireEvent.click(buttonByText(container, '↑'));
     fireEvent.click(buttonByText(container, '↓'));
     fireEvent.click(buttonByText(container, '⤓'));
-    expect(runtime.calls.zorder).toBeDefined();
+    expect(runtime.allCalls.zorder).toHaveLength(4);
+    expect(runtime.allCalls.zorder[0][0]).toBe('toTop');
+    expect(runtime.allCalls.zorder[1][0]).toBe('moveUp');
+    expect(runtime.allCalls.zorder[2][0]).toBe('moveDown');
+    expect(runtime.allCalls.zorder[3][0]).toBe('toBottom');
   });
 
   it('copy/cut disabled when no selection; paste disabled when clipboard empty', () => {
@@ -166,20 +188,30 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
   });
 
   it('copy/cut/paste call runtime methods when enabled', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #25：副作用可观测——status 消息反映 copy/cut/paste 计数。
     const { container, runtime } = renderPanel(['a']);
     fireEvent.click(buttonByText(container, 'Copy'));
     expect(runtime.calls.copy).toBeDefined();
+    let status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
+    expect(status?.textContent).toContain('已复制');
     fireEvent.click(buttonByText(container, 'Cut'));
     expect(runtime.calls.cut).toBeDefined();
+    status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
+    expect(status?.textContent).toContain('剪切');
     // after copy, clipboard non-empty → paste enabled
     fireEvent.click(buttonByText(container, 'Paste'));
     expect(runtime.calls.paste).toBeDefined();
+    status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
+    expect(status?.textContent).toContain('已粘贴');
   });
 
   it('export button calls exportConfig', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #25：副作用可观测——status 消息含「已导出」。
     const { container, runtime } = renderPanel([]);
     fireEvent.click(buttonByText(container, 'Export'));
     expect(runtime.calls.export).toBeDefined();
+    const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
+    expect(status?.textContent).toContain('已导出');
   });
 
   it('undo/redo call runtime undo/redo', () => {
@@ -217,11 +249,13 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
   });
 
   it('fit returning false surfaces not-visible status message', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #24：验证 i18n 文本内容（t(notVisible) => '无可见图元'）。
     const emptyScene = makeRuntime({ fitView: () => false });
     const { container } = renderPanel([], emptyScene);
     fireEvent.click(buttonByText(container, 'Fit'));
     const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
     expect(status).not.toBeNull();
+    expect(status?.textContent).toContain('无可见图元');
   });
 
   it('paste with empty clipboard surfaces clipboard-empty message', () => {
@@ -233,27 +267,34 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
   });
 
   it('align no-op (returns false) surfaces no-change message', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #24：验证 i18n 文本内容（t(noChange) => '无变化'）。
     const noOp = makeRuntime({ alignSelection: () => false });
     const { container } = renderPanel(['a', 'b'], noOp);
     fireEvent.click(buttonByText(container, '⌅L'));
-    expect(container.querySelector('[data-slot="scada-editor-toolbox-status"]')).not.toBeNull();
+    const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
+    expect(status?.textContent).toContain('无变化');
   });
 
   it('distribute no-op (returns false) surfaces no-change message', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #24：验证 i18n 文本内容。
     const noOp = makeRuntime({ distributeSelection: () => false });
     const { container } = renderPanel(['a', 'b', 'c'], noOp);
     fireEvent.click(buttonByText(container, '↔'));
-    expect(container.querySelector('[data-slot="scada-editor-toolbox-status"]')).not.toBeNull();
+    const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
+    expect(status?.textContent).toContain('无变化');
   });
 
   it('z-order no-op (returns false) surfaces no-change message', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #24：验证 i18n 文本内容。
     const noOp = makeRuntime({ reorderZOrder: () => false });
     const { container } = renderPanel(['a'], noOp);
     fireEvent.click(buttonByText(container, '⤒'));
-    expect(container.querySelector('[data-slot="scada-editor-toolbox-status"]')).not.toBeNull();
+    const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
+    expect(status?.textContent).toContain('无变化');
   });
 
   it('import confirm with failing importConfig surfaces invalid-config message', () => {
+    // plan 2026-08-08-0900-2 Phase 1 / P2 #24：验证 i18n 文本内容（t(invalidConfig) => '配置非法，导入失败'）。
     const rt = makeRuntime({ importConfig: () => false });
     const { container } = renderPanel([], rt);
     fireEvent.click(buttonByText(container, 'Import'));
@@ -261,7 +302,8 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     fireEvent.change(textarea, { target: { value: 'garbage' } });
     const confirmBtn = document.querySelector('[data-slot="scada-editor-toolbox-confirm"]') as HTMLButtonElement;
     fireEvent.click(confirmBtn);
-    expect(container.querySelector('[data-slot="scada-editor-toolbox-status"]')).not.toBeNull();
+    const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
+    expect(status?.textContent).toContain('配置非法，导入失败');
   });
 
   it('redo button calls runtime redo when canRedo', () => {
