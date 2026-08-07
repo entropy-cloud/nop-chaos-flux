@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
-import type { BaseSchema, RendererComponentProps, TemplateNode } from '@nop-chaos/flux-core';
+import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   createReadonlyScopeBinding,
   hasRendererSlotContent,
@@ -19,7 +19,6 @@ import { TableRenderer } from './table-renderer.js';
 import {
   applyQueryToRows,
   DEFAULT_PAGE_SIZE,
-  DEFAULT_PAGE_SIZE_OPTIONS,
   EMPTY_ROWS,
   normalizeCrudSourceValue,
   useCrudHandle,
@@ -30,8 +29,9 @@ import { useCrudLoadAction } from './crud-renderer-load.js';
 import {
   CrudToolbarBlocks,
   normalizeToolbarBlocks,
-  type ToolbarBlockDefinition,
+  resolveToolbarBlocks,
 } from './crud-renderer-toolbar.js';
+import { buildCrudCarrierSchema, buildCrudTableSchema } from './crud-renderer-schema-builders.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
 import {
   createCrudOwnerPaths,
@@ -342,27 +342,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const headerBlocksRaw = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header');
   const footerBlocksRaw = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer');
 
-  function resolveToolbarBlocks(
-    blocks: ToolbarBlockDefinition[],
-    mode: 'pages' | 'infinite',
-  ): ToolbarBlockDefinition[] {
-    let resolved = blocks;
-    if (mode === 'infinite') {
-      resolved = resolved.filter(
-        (block) => block.type !== 'pagination' && block.type !== 'switch-per-page',
-      );
-    }
-    if (isMobile) {
-      resolved = resolved.filter((block) => block.type !== 'switch-per-page');
-    }
-    if (hasListActions) {
-      resolved = resolved.filter((block) => block.type !== 'listActions');
-    }
-    return resolved;
-  }
-
-  const headerBlocks = resolveToolbarBlocks(headerBlocksRaw, paginationMode);
-  const footerBlocks = resolveToolbarBlocks(footerBlocksRaw, paginationMode);
+  const headerBlocks = resolveToolbarBlocks(headerBlocksRaw, paginationMode, isMobile, hasListActions);
+  const footerBlocks = resolveToolbarBlocks(footerBlocksRaw, paginationMode, isMobile, hasListActions);
 
   const hasExternalPaginationControl =
     headerBlocksRaw.some((b) => b.type === 'pagination' || b.type === 'switch-per-page') ||
@@ -379,73 +360,24 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       }
     : undefined;
 
-  const tableSchema = (() => {
-    const base: Record<string, unknown> = {
-      type: 'table',
-      id: `${props.id}-table`,
-      source: filteredRows as BaseSchema['data'],
-      columns: normalizedSchema.columns ?? [],
-      rowKey: normalizedSchema.rowKey,
-      selectionOwnership: 'scope',
-      selectionStatePath,
-      paginationOwnership: 'scope',
-      paginationStatePath,
-      sortOwnership: 'scope',
-      sortStatePath,
-      filterOwnership: 'scope',
-      filterStatePath,
-      pagination: {
-        enabled: paginationMode === 'pages',
-        serverPaged: useLoadAction && !loadAllData,
-        total: useLoadAction && !loadAllData ? resolvedSource.total : undefined,
-        currentPage: paginationState.currentPage,
-        pageSize:
-          paginationMode === 'infinite'
-            ? Math.max(paginationState.pageSize, paginationState.currentPage * paginationState.pageSize)
-            : paginationState.pageSize,
-        pageSizeOptions: DEFAULT_PAGE_SIZE_OPTIONS,
-        showSizeChanger: paginationMode === 'pages',
-        mode: paginationMode,
-        hideBar: hasExternalPaginationControl || undefined,
-      },
-      // loadAction 模式下把 fetch 中状态透传给内部 table，四态-加载态有真实 UI
-      // （TableLoadingOverlay）。infinite 模式由 infinite-status 区表达加载，
-      // 不再叠加整表 overlay。
-      loading: useLoadAction && paginationMode === 'pages' ? loadResult.loading : undefined,
-      empty: tableEmptyContent,
-      quickSaveAction: normalizedSchema.quickSaveAction,
-      quickSaveItemAction: normalizedSchema.quickSaveItemAction,
-    };
-
-    if (normalizedSchema.selection) {
-      base.rowSelection = {
-        type: normalizedSchema.selection.type ?? 'checkbox',
-        selectedRowKeys,
-        keepOnPageChange: normalizedSchema.selection.keepOnPageChange,
-        maxSelectionLength: normalizedSchema.selection.maxSelectionLength,
-        checkableWhen: normalizedSchema.selection.checkableWhen,
-        toggleOnRowClick: normalizedSchema.selection.toggleOnRowClick,
-      };
-    }
-
-    if (normalizedSchema.onRefresh) {
-      base.onRefresh = normalizedSchema.onRefresh;
-    }
-
-    if (normalizedSchema.onRowClick) {
-      base.onRowClick = normalizedSchema.onRowClick;
-    }
-
-    if (normalizedSchema.columnSettings) {
-      base.columnSettings = normalizedSchema.columnSettings;
-    }
-
-    if (normalizedSchema.responsive) {
-      base.responsive = normalizedSchema.responsive;
-    }
-
-    return base as TableSchema;
-  })();
+  const tableSchema = buildCrudTableSchema({
+    id: props.id,
+    source: filteredRows,
+    schema: normalizedSchema,
+    selectionStatePath,
+    paginationStatePath,
+    sortStatePath,
+    filterStatePath,
+    paginationMode,
+    paginationState,
+    useLoadAction,
+    loadAllData,
+    total: resolvedSource.total,
+    loading: loadResult.loading,
+    selectedRowKeys,
+    empty: tableEmptyContent,
+    hideBar: hasExternalPaginationControl,
+  });
   const tableResolvedProps: RendererComponentProps<TableSchema>['props'] = {
     ...tableSchema,
     disabled: props.props.disabled,
@@ -520,17 +452,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const listTotalPages = Math.max(1, Math.ceil(filteredRows.length / paginationState.pageSize));
   const listAtLastPage = paginationState.currentPage >= listTotalPages;
 
-  function extractRegionSchema(
-    region: { templateNode: unknown } | undefined,
-  ): BaseSchema | undefined {
-    if (!region?.templateNode) return undefined;
-    const nodes = Array.isArray(region.templateNode) ? region.templateNode : [region.templateNode];
-    const schemas = nodes.map((n) => (n as TemplateNode).schema);
-    if (schemas.length === 0) return undefined;
-    if (schemas.length === 1) return schemas[0] as BaseSchema;
-    return schemas as unknown as BaseSchema;
-  }
-
   // Build the nested carrier schema (list/cards) inline. The React Compiler auto-memoizes this,
   // and the carrier wrapper below is keyed on pagination/selection state AND data version so the
   // nested `helpers.render` subtree remounts (and re-evaluates template bindings) when data loads
@@ -539,36 +460,16 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   // causing the "cards empty until next page" bug.
   // item/card are consumed from compiled region handles instead of raw props.schema (compile-once).
   const carrierSchema: BaseSchema | null = nonTableMode
-    ? (() => {
-        const carrierRows =
-          listMode === 'cards'
-            ? filteredRows.slice(
-                (paginationState.currentPage - 1) * paginationState.pageSize,
-                paginationState.currentPage * paginationState.pageSize,
-              )
-            : filteredRows;
-        const base = {
-          items: carrierRows as BaseSchema['data'],
-          selectionMode: 'none' as const,
-          keyField: normalizedSchema.rowKey,
-          empty: tableEmptyContent,
-        };
-        if (listMode === 'list') {
-          return {
-            ...base,
-            type: 'list' as const,
-            item: extractRegionSchema(props.regions.item),
-            pagination: { enabled: true, mode: 'page' as const, pageSize: paginationState.pageSize },
-            paginationOwnership: 'scope' as const,
-            paginationStatePath,
-          };
-        }
-        return {
-          ...base,
-          type: 'cards' as const,
-          card: extractRegionSchema(props.regions.card),
-        };
-      })()
+    ? buildCrudCarrierSchema({
+        listMode: listMode as 'cards' | 'list',
+        filteredRows,
+        paginationState,
+        rowKey: normalizedSchema.rowKey,
+        empty: tableEmptyContent,
+        itemRegion: props.regions.item as { templateNode: unknown } | undefined,
+        cardRegion: props.regions.card as { templateNode: unknown } | undefined,
+        paginationStatePath,
+      })
     : null;
 
   const carrierNode =

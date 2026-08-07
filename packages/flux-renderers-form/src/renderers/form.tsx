@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { reportRuntimeHostIssue, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   FormContext,
   FormLayoutContext,
@@ -21,109 +21,9 @@ import { resolveGap } from '@nop-chaos/flux-react';
 import type { FormSchema } from '../schemas.js';
 import { compileFormLevelValidationModel } from './form-rules.js';
 
-function createFormLifecycleScope(
-  scope: ScopeRef,
-  importBindings: Readonly<Record<string, unknown>>,
-  _formName: string | undefined,
-  _getFormValues: () => Record<string, unknown>,
-): ScopeRef {
-  const hasImports = Object.keys(importBindings).length > 0;
-
-  if (!hasImports) {
-    return scope;
-  }
-
-  let visibleView: Record<string, unknown> | undefined;
-  let materialized: Record<string, unknown> | undefined;
-
-  function getDynamicBindings(): Record<string, unknown> {
-    return { ...importBindings };
-  }
-
-  return {
-    id: scope.id,
-    path: scope.path,
-    parent: scope.parent,
-    store: scope.store,
-    get value() {
-      return this.readVisible();
-    },
-    get(path) {
-      const bindings = getDynamicBindings();
-      if (Object.prototype.hasOwnProperty.call(bindings, path)) {
-        return bindings[path];
-      }
-
-      return scope.get(path);
-    },
-    has(path) {
-      const bindings = getDynamicBindings();
-      if (Object.prototype.hasOwnProperty.call(bindings, path)) {
-        return true;
-      }
-
-      return scope.has(path);
-    },
-    readOwn() {
-      return scope.readOwn();
-    },
-    readVisible() {
-      const bindings = getDynamicBindings();
-      visibleView = Object.assign(
-        Object.create(scope.readVisible()) as Record<string, unknown>,
-        bindings,
-      );
-
-      return visibleView as Record<string, any>;
-    },
-    materializeVisible() {
-      const bindings = getDynamicBindings();
-      materialized = {
-        ...scope.materializeVisible(),
-        ...bindings,
-      };
-
-      return materialized as Record<string, any>;
-    },
-    update(path, value) {
-      scope.update(path, value);
-    },
-    merge(data) {
-      scope.merge(data);
-    },
-    replace(data) {
-      scope.replace?.(data);
-    },
-  };
-}
-
-function resolveLifecycleWriteScope(parentScope: ScopeRef): ScopeRef {
-  const visible = parentScope.readVisible();
-  const parentVisible = parentScope.parent?.readVisible();
-  const looksLikeSurfaceShell =
-    typeof visible.dialogId === 'string' || typeof visible.drawerId === 'string';
-  const parentLooksLikeSurfaceShell =
-    typeof parentVisible?.dialogId === 'string' || typeof parentVisible?.drawerId === 'string';
-
-  return looksLikeSurfaceShell && parentScope.parent && !parentLooksLikeSurfaceShell
-    ? parentScope.parent
-    : parentScope;
-}
-
-function reportFormInitActionError(
-  runtime: ReturnType<typeof useRendererRuntime>,
-  path: string,
-  error: unknown,
-) {
-  reportRuntimeHostIssue({
-    env: runtime.env,
-    level: 'error',
-    message: 'Form initAction failed',
-    error,
-    phase: 'action',
-    path,
-  });
-}
+import { createFormLifecycleScope, resolveLifecycleWriteScope } from './form-lifecycle-helpers.js';
+import { useFormInitAction } from './form-init-action.js';
+import { useFormLoadAction } from './form-load-action.js';
 
 export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   'use no memo';
@@ -236,10 +136,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const activationKey = props.node.instancePath?.length
     ? props.node.instancePath.map((f) => `${f.repeatedTemplateId}:${f.instanceKey}`).join('/')
     : `${props.id}:${props.path}`;
-  const lastInitKeyRef = useRef<string | undefined>(undefined);
-  const inFlightInitKeyRef = useRef<string | undefined>(undefined);
-  const initActionAbortRef = useRef<AbortController | null>(null);
-
   useEffect(() => {
     const submitScope = (props.props as FormSchema).submitScope;
     const surfaceRuntimeForHook = submitScope === 'surface' ? currentSurfaceRuntime : undefined;
@@ -388,156 +284,31 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     props.props,
   ]);
 
-  useEffect(() => {
-    if (!initAction || !importsReady || !autoInit) {
-      return;
-    }
+  useFormInitAction({
+    initAction,
+    importsReady,
+    autoInit,
+    activationKey,
+    lifecycleScope,
+    ownedForm,
+    runtime,
+    path: props.path,
+  });
 
-    if (lastInitKeyRef.current === activationKey) {
-      return;
-    }
-
-    if (inFlightInitKeyRef.current === activationKey) {
-      return;
-    }
-
-    initActionAbortRef.current?.abort();
-    const controller = new AbortController();
-    initActionAbortRef.current = controller;
-    inFlightInitKeyRef.current = activationKey;
-
-    void initAction(undefined, { scope: lifecycleScope, form: ownedForm, signal: controller.signal })
-      .then(() => {
-        if (initActionAbortRef.current === controller) {
-          lastInitKeyRef.current = activationKey;
-        }
-      })
-      .catch((error) => {
-        if (
-          controller.signal.aborted ||
-          (error instanceof Error && error.name === 'AbortError') ||
-          ((error as { name?: string } | null | undefined)?.name === 'AbortError')
-        ) {
-          return;
-        }
-
-        reportFormInitActionError(runtime, props.path, error);
-
-        if (inFlightInitKeyRef.current === activationKey) {
-          inFlightInitKeyRef.current = undefined;
-        }
-      })
-      .finally(() => {
-        if (inFlightInitKeyRef.current === activationKey && initActionAbortRef.current === controller) {
-          inFlightInitKeyRef.current = undefined;
-        }
-        if (initActionAbortRef.current === controller) {
-          initActionAbortRef.current = null;
-        }
-      });
-
-    return () => {
-      if (initActionAbortRef.current === controller) {
-        controller.abort();
-        initActionAbortRef.current = null;
-        // Refs outlive the effect body, so an abort strands the in-flight marker;
-        // clear it or the next effect body bails for the same activationKey and
-        // init is silently dropped. `.finally` is controller-identity-guarded so a
-        // stale aborted promise cannot clear a fresh re-run's marker.
-        if (inFlightInitKeyRef.current === activationKey) {
-          inFlightInitKeyRef.current = undefined;
-        }
-      }
-    };
-  }, [activationKey, autoInit, importsReady, initAction, lifecycleScope, ownedForm, props.path, runtime]);
 
   const loadAction = props.events['loadAction'];
   const autoLoad = (props.props as FormSchema).autoLoad !== false;
-  const loadActionKeyRef = useRef<string | undefined>(undefined);
-  const loadAbortRef = useRef<AbortController | null>(null);
-  const loadRequestIdRef = useRef(0);
-  // latest instances via refs so the load action effect does not re-run (and
-  // abort the in-flight request) on every render — only on activation/action
-  // change. `lifecycleScope`/`ownedForm` identities are volatile across renders.
-  const loadLifecycleScopeRef = useRef(lifecycleScope);
-  const loadOwnedFormRef = useRef(ownedForm);
-  useEffect(() => {
-    loadLifecycleScopeRef.current = lifecycleScope;
-    loadOwnedFormRef.current = ownedForm;
+
+  useFormLoadAction({
+    loadAction,
+    autoLoad,
+    importsReady,
+    activationKey,
+    lifecycleScope,
+    ownedForm,
+    runtime,
+    path: props.path,
   });
-
-  useEffect(() => {
-    if (!loadAction || !autoLoad || !importsReady) {
-      return;
-    }
-
-    if (loadActionKeyRef.current === activationKey) {
-      return;
-    }
-
-    loadAbortRef.current?.abort();
-    const controller = new AbortController();
-    loadAbortRef.current = controller;
-    loadActionKeyRef.current = activationKey;
-    const requestId = ++loadRequestIdRef.current;
-
-    void loadAction(undefined, {
-      scope: loadLifecycleScopeRef.current,
-      form: loadOwnedFormRef.current,
-      signal: controller.signal,
-    })
-      .then((result) => {
-        if (loadRequestIdRef.current !== requestId) {
-          return;
-        }
-        if (result.ok && !result.cancelled && result.data != null) {
-          loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
-        }
-      })
-      .catch((error) => {
-        if (
-          controller.signal.aborted ||
-          (error instanceof Error && error.name === 'AbortError') ||
-          ((error as { name?: string } | null | undefined)?.name === 'AbortError')
-        ) {
-          return;
-        }
-        reportFormInitActionError(runtime, props.path, error);
-      })
-      .finally(() => {
-        if (loadAbortRef.current === controller) {
-          loadAbortRef.current = null;
-        }
-      });
-
-    return () => {
-      if (loadAbortRef.current === controller) {
-        controller.abort();
-        loadAbortRef.current = null;
-      }
-    };
-  }, [activationKey, autoLoad, importsReady, loadAction, runtime, props.path]);
-
-  useEffect(() => {
-    if (!loadAction || !importsReady) {
-      ownedForm.setRefreshHandler(undefined);
-      return;
-    }
-
-    ownedForm.setRefreshHandler(async () => {
-      const result = await loadAction(undefined, {
-        scope: loadLifecycleScopeRef.current,
-        form: loadOwnedFormRef.current,
-      });
-      if (result.ok && !result.cancelled && result.data != null) {
-        loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
-      }
-    });
-
-    return () => {
-      ownedForm.setRefreshHandler(undefined);
-    };
-  }, [loadAction, importsReady, ownedForm]);
 
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;

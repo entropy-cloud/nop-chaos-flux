@@ -5,10 +5,8 @@ import {
   type ActionSchema,
   type RendererComponentProps,
   type RenderRegionHandle,
-  type SchemaValue,
   type ValueAdapter,
 } from '@nop-chaos/flux-core';
-import type { SourceTransientState } from '@nop-chaos/flux-react';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { useDictOptions } from './use-dict-options.js';
 import { useSelectRemoteSearch } from './use-select-remote-search.js';
@@ -37,21 +35,32 @@ import { useFormFieldFromProps } from '../field-utils.js';
 import type {
   CheckboxSchema,
   RadioGroupSchema,
-  SelectOptionGroup,
   SelectSchema,
   SwitchSchema,
 } from '../schemas.js';
 import { SelectMobile } from './select-mobile-renderer.js';
 import { StaticComboboxList, VirtualizedComboboxList } from './select-combobox-lists.js';
 import { shouldStackChoicesVertically } from './mobile-touch-utils.js';
+import {
+  getChoiceOptionKey,
+  getSourceErrorMessage,
+  resolveChoiceComboboxValue,
+  resolveChoiceMobileTriggerText,
+  resolveChoiceVisibleGroups,
+  resolveChoiceVisibleOptions,
+  sanitizeChoiceGroups,
+  sanitizeChoiceOptions,
+  type ChoiceOption,
+  type OptionTemplateRenderer,
+} from './input-choice-utils.js';
+import type { SourceTransientState } from '@nop-chaos/flux-react';
 
-export type ChoiceOption = {
-  [key: string]: SchemaValue;
-  label: string;
-  value: string | number | boolean;
-  disabled?: boolean;
-  disabledTip?: string;
-};
+export type { ChoiceOption, OptionTemplateRenderer } from './input-choice-utils.js';
+export {
+  getChoiceOptionKey,
+  getSourceErrorMessage,
+  sanitizeChoiceOptions,
+} from './input-choice-utils.js';
 
 const SELECT_METHODS = ['clear', 'focus', 'open'] as const;
 const FOCUS_ONLY_METHODS = ['focus'] as const;
@@ -86,125 +95,6 @@ const choiceSingleAdapter: ValueAdapter<unknown, unknown> & { __syncIn: true; __
   },
 };
 export { choiceSingleAdapter };
-
-export function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
-  if (sourceState?.status !== 'error') {
-    return undefined;
-  }
-
-  if (typeof sourceState.error === 'string' && sourceState.error) {
-    return sourceState.error;
-  }
-
-  if (
-    sourceState.error &&
-    typeof sourceState.error === 'object' &&
-    'message' in sourceState.error &&
-    typeof (sourceState.error as { message?: unknown }).message === 'string'
-  ) {
-    return (sourceState.error as { message: string }).message;
-  }
-
-  return t('flux.form.failedToLoadOptions');
-}
-
-export function getChoiceOptionKey(value: ChoiceOption['value']): string {
-  return String(value);
-}
-
-export function sanitizeChoiceOptions(value: unknown): ChoiceOption[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.flatMap((entry) => {
-    if (!entry || typeof entry !== 'object') {
-      return [];
-    }
-
-    const candidate = entry as {
-      label?: unknown;
-      value?: unknown;
-      disabled?: unknown;
-      disabledTip?: unknown;
-    };
-    if (
-      typeof candidate.label !== 'string' ||
-      !(
-        typeof candidate.value === 'string' ||
-        typeof candidate.value === 'number' ||
-        typeof candidate.value === 'boolean'
-      )
-    ) {
-      return [];
-    }
-
-    return [
-      {
-        ...(entry as Record<string, unknown>),
-        label: candidate.label,
-        value: candidate.value,
-        disabled: candidate.disabled === true ? true : undefined,
-        disabledTip: typeof candidate.disabledTip === 'string' ? candidate.disabledTip : undefined,
-      },
-    ];
-  });
-}
-
-function sanitizeChoiceGroups(value: unknown): SelectOptionGroup[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.flatMap((entry) => {
-    if (!entry || typeof entry !== 'object') {
-      return [];
-    }
-
-    const candidate = entry as { label?: unknown; options?: unknown };
-    if (typeof candidate.label !== 'string' || !Array.isArray(candidate.options)) {
-      return [];
-    }
-
-    const options = sanitizeChoiceOptions(candidate.options);
-    if (options.length === 0) {
-      return [];
-    }
-
-    return [{ label: candidate.label, options }];
-  });
-}
-
-function matchChoiceLabel(label: string, query: string, ignoreCase: boolean): boolean {
-  if (!query) {
-    return true;
-  }
-
-  const lowerLabel = ignoreCase ? label.toLowerCase() : label;
-  const lowerQuery = ignoreCase ? query.toLowerCase() : query;
-
-  // 精确匹配（最高优先级）
-  if (lowerLabel === lowerQuery) {
-    return true;
-  }
-
-  // 前缀匹配
-  if (lowerLabel.startsWith(lowerQuery)) {
-    return true;
-  }
-
-  // 子串匹配
-  if (lowerLabel.includes(lowerQuery)) {
-    return true;
-  }
-
-  return false;
-}
-
-export type OptionTemplateRenderer = (
-  option: ChoiceOption,
-  index: number,
-) => ReactNode | undefined;
 
 export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const name = String(props.props.name ?? '');
@@ -288,49 +178,28 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const comboboxFrozen = effectiveDisabled || presentation.readOnly;
   const effectiveInteractive = presentation.interactive && !loadingWithRemote;
   const remoteSearchActive = remoteOptions !== null;
-  const visibleOptions = remoteSearchActive
-    ? searchMergeMode === 'replace'
-      ? remoteOptions
-      : [...rawOptions, ...remoteOptions]
-    : query
-      ? rawOptions.filter((option) => matchChoiceLabel(option.label, query, ignoreCase))
-      : rawOptions;
-  const visibleGroups = remoteSearchActive
-    ? []
-    : useGroups
-      ? (query
-          ? groups
-              .map((group) => ({
-                label: group.label,
-                options: group.options.filter((option) =>
-                  matchChoiceLabel(option.label, query, ignoreCase),
-                ),
-              }))
-              .filter((group) => group.options.length > 0)
-          : groups)
-      : [];
+  const visibleOptions = resolveChoiceVisibleOptions({
+    rawOptions,
+    remoteOptions,
+    searchMergeMode,
+    query,
+    ignoreCase,
+  });
+  const visibleGroups = resolveChoiceVisibleGroups({
+    groups,
+    remoteSearchActive,
+    useGroups,
+    query,
+    ignoreCase,
+  });
 
   const noMatchText = props.props.noMatchText ? String(props.props.noMatchText) : undefined;
-  const valueArray = Array.isArray(value) ? (value as unknown[]) : [];
-  const hasEchoValue = value !== undefined && value !== null && value !== '';
-  const comboboxValue = multiple
-    ? [
-        ...allOptions.filter((option) =>
-          valueArray.some((candidate) => Object.is(candidate, option.value)),
-        ),
-        ...valueArray
-          .filter(
-            (candidate) => !allOptions.some((option) => Object.is(option.value, candidate)),
-          )
-          .map((primitive) => ({
-            label: String(primitive),
-            value: primitive as ChoiceOption['value'],
-          })),
-      ]
-    : (allOptions.find((option) => Object.is(option.value, value)) ??
-        (hasEchoValue
-          ? { label: noMatchText ?? String(value), value: value as ChoiceOption['value'] }
-          : null));
+  const comboboxValue = resolveChoiceComboboxValue({
+    allOptions,
+    value,
+    multiple,
+    noMatchText,
+  });
 
   const handleValueChange = (next: unknown) => {
     if (!effectiveInteractive) {
@@ -344,17 +213,15 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     }
   };
 
-  const mobileTriggerText = multiple
-    ? valueArray
-        .map(
-          (candidate) =>
-            allOptions.find((option) => Object.is(option.value, candidate))?.label ??
-            String(candidate),
-        )
-        .join(', ')
-    : (allOptions.find((option) => Object.is(option.value, value))?.label ??
-        (hasEchoValue ? noMatchText ?? String(value) : ''));
-  const mobileHasSelection = multiple ? valueArray.length > 0 : hasEchoValue;
+  const mobileTriggerText = resolveChoiceMobileTriggerText({
+    allOptions,
+    value,
+    multiple,
+    noMatchText,
+  });
+  const mobileHasSelection = multiple
+    ? (Array.isArray(value) ? (value as unknown[]).length : 0) > 0
+    : value !== undefined && value !== null && value !== '';
 
   const toggleMobileOption = (option: ChoiceOption) => {
     if (!effectiveInteractive || option.disabled) {

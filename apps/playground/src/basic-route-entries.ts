@@ -1,0 +1,118 @@
+import type { RendererRouteEntry } from './route-model.js';
+
+export const BASIC_RENDERER_ROUTES: RendererRouteEntry[] = [
+  {
+    id: 'page',
+    title: 'Page',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Root page container with header, body, and footer regions.',
+  },
+  {
+    id: 'container',
+    title: 'Container',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Generic layout container with body, header, and footer regions.',
+  },
+  {
+    id: 'fragment',
+    title: 'Fragment',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Scope-isolated fragment; optionally injects extra data into child scope.',
+  },
+  {
+    id: 'flex',
+    title: 'Flex',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Flexbox container for horizontal or vertical child layout.',
+  },
+  {
+    id: 'dialog',
+    title: 'Dialog',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Modal dialog with body and actions regions.',
+  },
+  {
+    id: 'drawer',
+    title: 'Drawer',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Side-panel drawer with body and actions regions.',
+  },
+  {
+    id: 'tabs',
+    title: 'Tabs',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Tabbed navigation with per-item body regions.',
+  },
+  {
+    id: 'loop',
+    title: 'Loop',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Iterates over an array and renders each item via a body region.',
+  },
+  {
+    id: 'recurse',
+    title: 'Recurse',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description:
+      'Recursive tree renderer that walks nested item arrays to a configurable max depth.',
+  },
+  {
+    id: 'text',
+    title: 'Text',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Renders a text string from schema or scope expression.',
+  },
+  {
+    id: 'icon',
+    title: 'Icon',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Renders a named Lucide icon.',
+  },
+  {
+    id: 'badge',
+    title: 'Badge',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Renders a styled badge/tag from text and semantic level.',
+  },
+  {
+    id: 'button',
+    title: 'Button',
+    category: 'actions',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Action button with configurable variant, size, and onClick handler.',
+  },
+  {
+    id: 'scope-debug',
+    title: 'Scope Debug',
+    category: 'advanced',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description:
+      'Debug-only JSON viewer that reacts to current scope changes and can be inserted at any schema position.',
+  },
+  {
+    id: 'dynamic-renderer',
+    title: 'Dynamic Renderer',
+    category: 'advanced',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Renders a schema node whose type is resolved at runtime from the current scope.',
+  },
+  {
+    id: 'reaction',
+    title: 'Reaction',
+    category: 'logic',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description: 'Side-effect trigger: fires actions when watched scope values change.',
+  },
+];

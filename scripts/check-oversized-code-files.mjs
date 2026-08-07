@@ -41,6 +41,16 @@ const OVERSIZED_EXEMPTIONS = [
     reason:
       'Single `compileSingleNode` closure. Documented inline decision at node-compiler.ts:57-65 (Plan 444 / 02-N1, reaffirmed AUDIT-01 / Plan 2026-06-27-0850-1 Phase 1): the closure shares substantial mutable state (symbolTable, regions, compiledPropEntries, sourcePropKeys, rawEventPlans); helpers are already extracted. Splitting would require passing significant shared state between modules, reducing clarity.',
   },
+  {
+    path: 'packages/flux-i18n/src/locales/en-US.ts',
+    reason:
+      'Pure data declaration body (`Resource` type, 45 self-contained `flux.*` namespaces with zero logic). Adjudicated Plan 2026-08-07-1053-1 Phase 1/Phase 2: the repo-wide `check:i18n-keys` gate parses the full object literal inline from exactly these two file paths (scripts/check-i18n-keys.mjs, `export const <name>: Resource = {...}` regex); physical splitting requires spread aggregation that defeats the gate parser or a second-gate surgery that is out of scope ("不改变门禁规则本身"). i18next consumes the bundle atomically; per-namespace modules add no cohesion value.',
+  },
+  {
+    path: 'packages/flux-i18n/src/locales/zh-CN.ts',
+    reason:
+      'Pure data declaration body (`Resource` type, 45 self-contained `flux.*` namespaces with zero logic). Adjudicated Plan 2026-08-07-1053-1 Phase 1/Phase 2: the repo-wide `check:i18n-keys` gate parses the full object literal inline from exactly these two file paths (scripts/check-i18n-keys.mjs, `export const <name>: Resource = {...}` regex); physical splitting requires spread aggregation that defeats the gate parser or a second-gate surgery that is out of scope ("不改变门禁规则本身"). i18next consumes the bundle atomically; per-namespace modules add no cohesion value.',
+  },
 ];
 const exemptPaths = new Set(OVERSIZED_EXEMPTIONS.map((entry) => entry.path));
 

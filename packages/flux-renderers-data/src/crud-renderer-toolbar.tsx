@@ -191,3 +191,24 @@ export function CrudToolbarBlocks(props: {
     </div>
   );
 }
+
+export function resolveToolbarBlocks(
+  blocks: ToolbarBlockDefinition[],
+  mode: 'pages' | 'infinite',
+  isMobile: boolean,
+  hasListActions: boolean,
+): ToolbarBlockDefinition[] {
+  let resolved = blocks;
+  if (mode === 'infinite') {
+    resolved = resolved.filter(
+      (block) => block.type !== 'pagination' && block.type !== 'switch-per-page',
+    );
+  }
+  if (isMobile) {
+    resolved = resolved.filter((block) => block.type !== 'switch-per-page');
+  }
+  if (hasListActions) {
+    resolved = resolved.filter((block) => block.type !== 'listActions');
+  }
+  return resolved;
+}
