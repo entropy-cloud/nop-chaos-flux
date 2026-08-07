@@ -233,6 +233,11 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
 
   const componentRegistry = useCurrentComponentRegistry();
 
+  const reactionsRef = useRef(reactions);
+  useEffect(() => {
+    reactionsRef.current = reactions;
+  }, [reactions]);
+
   useEffect(() => {
     if (!componentRegistry) {
       return;
@@ -245,6 +250,9 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
           switch (method) {
             case 'toggleViewType':
               setSingleViewType((prev) => (prev === 'split' ? 'unified' : 'split'));
+              // 1-9: 句柄 invoke 即派发 schema reaction（对齐 calendar 22-05 /
+              // gantt 22-13「触发即派发」家族标准）。
+              void reactionsRef.current.toggleViewType?.dispatch();
               return {
                 ok: true,
                 data: { viewType: viewTypeRef.current === 'split' ? 'unified' : 'split' },
@@ -253,6 +261,7 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
               const requested = payload?.viewType;
               if (requested === 'split' || requested === 'unified') {
                 setSingleViewType(requested);
+                void reactionsRef.current.setViewType?.dispatch();
                 return { ok: true, data: { viewType: requested } };
               }
               return {
@@ -265,10 +274,12 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
             case 'expandAll':
               setExpansionState('all-expanded');
               setRemountKey((k) => k + 1);
+              void reactionsRef.current.expandAll?.dispatch();
               return { ok: true };
             case 'collapseAll':
               setExpansionState('all-collapsed');
               setRemountKey((k) => k + 1);
+              void reactionsRef.current.collapseAll?.dispatch();
               return { ok: true };
             default:
               return { ok: false, error: new Error(`Unsupported diff-view method: ${method}`) };
@@ -296,6 +307,8 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
 
   const toggleViewType = useCallback(() => {
     setSingleViewType((prev) => (prev === 'split' ? 'unified' : 'split'));
+    // 1-9: UI toggle 触发即派发 schema reaction（对齐「触发即派发」家族标准）。
+    void reactionsRef.current.toggleViewType?.dispatch();
   }, []);
 
   if (!meta.visible) return null;

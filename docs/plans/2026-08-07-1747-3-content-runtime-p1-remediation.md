@@ -1,6 +1,6 @@
 # 3 content/runtime P1 修复（diff-view reaction 派发 + async-data child scope 泄漏）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-07
 > Source: `docs/audits/2026-08-07-1747-open-audit-component-audit.md`（1-9/1-10）
 > Related: `docs/plans/2026-08-06-2306-3-scheduling-graph-wiring-phantom-contracts.md`（22-05 家族「ready() 永不派发」先例）、`docs/plans/2026-08-06-2306-2-create-scope-dispose-pairing.md`（createScope/disposeScope 配对纪律）
@@ -54,36 +54,36 @@
 
 ### Phase 1 - diff-view reaction 派发（UI toggle + handle invoke 双路径）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/diff-view/diff-view-renderer.tsx` + diff-view 测试
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof` 先红：① UI toggle 路径——mock `props.reactions.*.dispatch`，点击视图切换控件（toggleViewType）后断言 dispatch 被调用（toggleViewType/setViewType/expandAll/collapseAll 四字段至少 UI 可达的逐一断言）；② handle invoke 路径——`component:toggleViewType/setViewType/expandAll/collapseAll` invoke 后断言对应 dispatch 被调用（对齐 gantt 22-13/calendar 22-05 模式）。
-- [ ] `Fix` 1-9：`diff-view-renderer.tsx` UI toggle（:297-299 useCallback 及其接线点 :319/:355）补 `void reactions[key]?.dispatch()`（`reactions` 为 allProps 顶层解构，非 `props.reactions`）；:240-277 handle invoke 四分支补 dispatch（视觉行为后派发）；对齐「触发即派发」家族标准。
-- [ ] `Proof` 修复后用例全绿；content 包 286 既有测试零回归。
+- [x] `Proof` 先红：① UI toggle 路径——mock `props.reactions.*.dispatch`，点击视图切换控件（toggleViewType）后断言 dispatch 被调用（toggleViewType/setViewType/expandAll/collapseAll 四字段至少 UI 可达的逐一断言）；② handle invoke 路径——`component:toggleViewType/setViewType/expandAll/collapseAll` invoke 后断言对应 dispatch 被调用（对齐 gantt 22-13/calendar 22-05 模式）。
+- [x] `Fix` 1-9：`diff-view-renderer.tsx` UI toggle（:297-299 useCallback 及其接线点 :319/:355）补 `void reactions[key]?.dispatch()`（`reactions` 为 allProps 顶层解构，非 `props.reactions`）；:240-277 handle invoke 四分支补 dispatch（视觉行为后派发）；对齐「触发即派发」家族标准。
+- [x] `Proof` 修复后用例全绿；content 包 286 既有测试零回归。
 
 Exit Criteria:
 
-- [ ] UI toggle 与 handle invoke 双路径用例断言 reaction dispatch 调用（修复前红记录）。
-- [ ] content 包 typecheck 通过、focused 测试全绿。
+- [x] UI toggle 与 handle invoke 双路径用例断言 reaction dispatch 调用（修复前红记录）。
+- [x] content 包 typecheck 通过、focused 测试全绿。
 
 ### Phase 2 - async-data child scope 生命周期（settle 后 dispose）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/async-data/{api-data-source-controller-runtime.ts,data-source-runtime-utils.ts,source-registry.ts}` + data-source 测试
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof` 先红：① 多次 run/poll 周期——spy `createChildScope`/`disposeScope`，断言每个 run/poll 周期创建的 requestScope/mappingScope 在请求 settle 后都被 dispose（修复前 dispose 零调用）；② controller dispose 后——断言无残留 ownedScopeDisposers 条目（runtime 层检查或 spy 断言）。
-- [ ] `Fix` 1-10：run/poll 周期创建的 child scope（requestScope/mappingScope）于请求 settle（finally）后 `disposeScope` 回收；controller dispose（source-registry.ts:285-308）补 child scope 回收；保持 AbortError 路径与既有 dispose 语义（不破坏 data-source-poll-timer-dispose-race 既有测试）。
-- [ ] `Proof` 修复后用例全绿；runtime 包 1399 既有测试零回归（data-source 家族全部绿）。
+- [x] `Proof` 先红：① 多次 run/poll 周期——spy `createChildScope`/`disposeScope`，断言每个 run/poll 周期创建的 requestScope/mappingScope 在请求 settle 后都被 dispose（修复前 dispose 零调用）；② controller dispose 后——断言无残留 ownedScopeDisposers 条目（runtime 层检查或 spy 断言）。
+- [x] `Fix` 1-10：run/poll 周期创建的 child scope（requestScope/mappingScope）于请求 settle（finally）后 `disposeScope` 回收；controller dispose（source-registry.ts:285-308）补 child scope 回收；保持 AbortError 路径与既有 dispose 语义（不破坏 data-source-poll-timer-dispose-race 既有测试）。
+- [x] `Proof` 修复后用例全绿；runtime 包 1399 既有测试零回归（data-source 家族全部绿）。
 
 Exit Criteria:
 
-- [ ] run/poll 周期用例断言每个周期 scope 成对 dispose（修复前红记录）。
-- [ ] controller dispose 用例断言无残留（修复前红记录）。
-- [ ] runtime 包 typecheck 通过、data-source 相关 focused 测试全绿。
+- [x] run/poll 周期用例断言每个周期 scope 成对 dispose（修复前红记录）。
+- [x] controller dispose 用例断言无残留（修复前红记录）。
+- [x] runtime 包 typecheck 通过、data-source 相关 focused 测试全绿。
 
 ## Draft Review Record
 
@@ -96,13 +96,13 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 2 条 in-scope P1 发现全部修复并 test-first 落地（Proof 先红记录可查）
-- [ ] 无 in-scope live defect 被静默降级到 deferred / follow-up
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`（content/runtime 包 focused + 全量）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 2 条 in-scope P1 发现全部修复并 test-first 落地（Proof 先红记录可查）
+- [x] 无 in-scope live defect 被静默降级到 deferred / follow-up
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`（content/runtime 包 focused + 全量）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 
 ## Deferred But Adjudicated
 
@@ -114,12 +114,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成或关闭时填写）
+Status Note: 2 Phase 全 completed（2026-08-07）。验证基线 full-green：`pnpm typecheck` 32/32、`pnpm build` 32/32、`pnpm lint` 32/32（scheduling 1 条预存在 warning）、`pnpm test` 59/59 task 全绿（content 289 = 286+3、runtime 1402 = 1399+3）；`pnpm check` exit 0（oversized-code-files 仅 2 条既有豁免 locale 文件）。Closure-audit gate 由独立 fresh sub-agent session 执行，证据见下。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （closure-audit 由独立 fresh session 执行后填写）
-- Evidence: （task id / daily log link / findings 摘要）
+- Auditor / Agent: 独立 fresh sub-agent（closure audit session，task `ses_02368dd3bffeZvqHeZw6fRmZov`）
+- Evidence: 全量复核本 plan（2 Phase 项 + Exit Criteria 全 [x]，Status 全 completed，Plan Status: completed，Closure Gates 全 [x]）。live 源码复验：diff-view 4 处 dispatch 站点（toggleViewType/setViewType/expandAll/collapseAll + UI toggle）存在，非法 setViewType 返回 `{ok:false}` 不派发，reactionsRef 模式无闭包陈旧（handle 注册 deps 不变）；async-data `async-data/` 目录 grep 恰 2 处 createChildScope 全部配对（requestScope finally dispose 覆盖 success/abort/error 三路径、mappingScope try/finally dispose、stop()/reset() drain childScopeIds），AbortError 语义与 data-source-poll-timer-dispose-race 4/4 零回归。独立复跑：content 35 files/289 tests、runtime 1402 passed（+1 既有 benchmark skip）、两包 typecheck 通过、`pnpm check` exit 0（oversized 2 条均为既有豁免 locale）。Verdict: **pass**（0 Blocker / 0 Major / 2 Minor：① plan 基线行号漂移（文件在审计起草后重构，代码站点均存在且修复正确）；② 测试 3 的 `vi.waitFor` 首轮同步检查时序观察——disposeScope 幂等 + disposeScopeTree 对未注册 id 无操作，无泄漏无二次副作用）。
 
 Follow-up:
 

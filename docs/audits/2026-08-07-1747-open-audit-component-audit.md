@@ -1,4 +1,4 @@
-> Audit Status: planned（原 open，2026-08-07-1747 mission-driver 起草轮处理：12 条 P1 全部路由——gantt 22-13/1-7、kanban 1-4/1-5/1-11、calendar 1-8、barcode 1-6 入 `docs/plans/2026-08-07-1747-1-scheduling-p1-remediation.md`；form/data 1-1/1-2/1-3/1-12 入 `docs/plans/2026-08-07-1747-2-form-data-p1-remediation.md`；content/runtime 1-9/1-10 入 `docs/plans/2026-08-07-1747-3-content-runtime-p1-remediation.md`；20 条 P2 已移入 `docs/backlog/component-audit-roadmap.md` Follow-up Backlog「2026-08-07-1747 两轮审计 P2」节）
+> Audit Status: closed（原 open，2026-08-07-1747 mission-driver 起草轮处理：12 条 P1 全部路由——gantt 22-13/1-7、kanban 1-4/1-5/1-11、calendar 1-8、barcode 1-6 入 `docs/plans/2026-08-07-1747-1-scheduling-p1-remediation.md`；form/data 1-1/1-2/1-3/1-12 入 `docs/plans/2026-08-07-1747-2-form-data-p1-remediation.md`；content/runtime 1-9/1-10 入 `docs/plans/2026-08-07-1747-3-content-runtime-p1-remediation.md`；20 条 P2 已移入 `docs/backlog/component-audit-roadmap.md` Follow-up Backlog「2026-08-07-1747 两轮审计 P2」节。3 份 plan 全部 completed（1747-3 于 2026-08-07 收口，1-9/1-10 修复状态: fixed 见下）→ closed）
 > Audit Type: open-ended
 > Mission: component-audit
 
@@ -86,6 +86,7 @@
 - **为什么值得关心**: schema 作者声明 `toggleViewType: { action }` 后 action 全路径不可达（静默死契约）；无测试覆盖（diff-view 测试未断言 reaction 派发）。
 - **信心水平**: 确定（grep 实证零 dispatch）。
 - **发现来源视角**: 契约考古学家。
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-07-1747-3-content-runtime-p1-remediation.md` Phase 1——UI toggle useCallback + handle invoke 四分支补 `reactions.*.dispatch()`（reactionsRef 防闭包过期），test-first 3 用例先红后绿：UI 点击 toggle 派发 + 四句柄 invoke 逐一派发 + 非法 viewType 不派发；content 289 tests 全绿）。
 
 ### [P1] 1-10 async-data 每次 run/poll 创建 child scope 永不 dispose：ownedScopeDisposers 无界增长
 
@@ -94,6 +95,7 @@
 - **为什么值得关心**: 长生命周期宿主 + 轮询源的核心内存泄漏路径；scope 泄漏还会连带保留其 zustand store 与依赖链。
 - **信心水平**: 确定（代码路径 + grep 实证）。
 - **发现来源视角**: 10x 规模运维者。
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-07-1747-3-content-runtime-p1-remediation.md` Phase 2——runRequest finally 配对 dispose requestScope + `applyResultMapping` 求值后配对 dispose mappingScope + controller stop()/reset() 回收仍未 settle 的 childScopeIds（source-registry entry.dispose 路径）；test-first 3 用例先红后绿：多轮 poll 周期成对 dispose、result-mapping scope 成对 dispose、controller dispose 无残留；runtime 1402 tests 全绿，data-source 家族零回归）。
 
 ### [P1] 1-11 kanban 过滤态下 roving 键盘导航索引错位：ArrowDown/Up 焦点永不移动
 

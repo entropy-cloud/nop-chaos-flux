@@ -33,6 +33,7 @@ export function createApiDataSourceControllerMutableState(
     state: createInitialDataSourceState(input.initialData),
     refreshDedup: input.control?.dedup ?? 'cancel-previous',
     asyncOwnerId: input.ownerId,
+    childScopeIds: new Set<string>(),
   };
 }
 

@@ -1,4 +1,4 @@
-> Audit Status: planned（原 open，2026-08-07-1747 mission-driver 起草轮处理：P1 22-13 已路由——与 open-audit 同批 gantt 发现并入 `docs/plans/2026-08-07-1747-1-scheduling-p1-remediation.md` Phase 1；19 条 P2 已移入 `docs/backlog/component-audit-roadmap.md` Follow-up Backlog「2026-08-07-1747 两轮审计 P2」节）
+> Audit Status: closed（原 open，2026-08-07-1747 mission-driver 起草轮处理：P1 22-13 已路由——与 open-audit 同批 gantt 发现并入 `docs/plans/2026-08-07-1747-1-scheduling-p1-remediation.md` Phase 1；19 条 P2 已移入 `docs/backlog/component-audit-roadmap.md` Follow-up Backlog「2026-08-07-1747 两轮审计 P2」节。plan 1747-1/1747-2/1747-3 全部 completed（2026-08-07），P1 22-13 修复状态: fixed 见 finding 条目 → closed）
 > Audit Type: multi-dimensional
 > Mission: component-audit
 
@@ -75,6 +75,7 @@
 - **建议**: handle invoke 四分支补 `void props.reactions[key]?.dispatch()`（scrollToTask 滚动后派发，对齐 calendar.tsx:232,240 模式）；补 test-first 用例锁定"句柄 invoke 即派发"；同步 design.md §8.2 过时表述（"非独立可调用 action"与实现矛盾）。
 - **误报排除**: 非已修复项——2306-3 只修了 calendar print/exportPNG 与 gantt 工具栏路径；非文档契约（design.md §8.3 声明"行为以实现为准"，而实现自身已在工具栏路径建立"操作→派发"行为，组件内双路径不对称是真实缺陷）。
 - **复核状态**: 子项复核通过（保持 P1）
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-07-1747-1-scheduling-p1-remediation.md` Phase 1——gantt handle invoke 四分支补 `void props.reactions[key]?.dispatch()` + handle 注册 effect deps 补 `props.reactions` 防闭包陈旧；`gantt-handle.test.tsx` 4 句柄 dispatch + 缺 taskId 不派发，先红后绿；scheduling 893 tests 全绿）
 
 ---
 

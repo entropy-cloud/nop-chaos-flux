@@ -100,15 +100,20 @@ export function applyResultMapping(input: {
     { source: 'custom', pathSuffix: 'data-source-result-mapping' },
   );
 
-  if (input.compiledResultMapping.isStatic) {
-    return input.compiledResultMapping.value;
-  }
+  // 1-10: 一次性求值 scope 求值后立即配对 dispose（同步求值，无异步消费者）。
+  try {
+    if (input.compiledResultMapping.isStatic) {
+      return input.compiledResultMapping.value;
+    }
 
-  return input.runtime.expressionCompiler.evaluateValue(
-    input.compiledResultMapping,
-    mappingScope,
-    input.runtime.env,
-  );
+    return input.runtime.expressionCompiler.evaluateValue(
+      input.compiledResultMapping,
+      mappingScope,
+      input.runtime.env,
+    );
+  } finally {
+    input.runtime.disposeScope?.(mappingScope.id);
+  }
 }
 
 export function writeDataToScope(input: {

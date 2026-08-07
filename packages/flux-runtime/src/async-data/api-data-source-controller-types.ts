@@ -60,4 +60,6 @@ export interface ApiDataSourceControllerMutableState {
   state: DataSourceState;
   refreshDedup: NonNullable<OperationControlConfig['dedup']>;
   asyncOwnerId: string | undefined;
+  /** Child scope ids created by run/poll cycles; drained on settle and on controller dispose */
+  childScopeIds: Set<string>;
 }

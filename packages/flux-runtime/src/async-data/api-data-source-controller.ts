@@ -98,6 +98,12 @@ export function createDataSourceController(
     abortActiveControllers(mutable.activeControllers);
     mutable.abortController = undefined;
     mutable.activeRequestCount = 0;
+    // 1-10: controller dispose 一并回收仍未 settle 的 run/poll 周期 child scope
+    //（source-registry entry.dispose → controller.stop() 路径）。
+    for (const scopeId of mutable.childScopeIds) {
+      input.runtime.disposeScope(scopeId);
+    }
+    mutable.childScopeIds.clear();
     updateControllerState(input, mutable, (current) => ({
       ...current,
       started: false,
@@ -158,6 +164,11 @@ export function createDataSourceController(
       abortActiveControllers(mutable.activeControllers);
       mutable.abortController = undefined;
       mutable.activeRequestCount = 0;
+
+      for (const scopeId of mutable.childScopeIds) {
+        input.runtime.disposeScope(scopeId);
+      }
+      mutable.childScopeIds.clear();
 
       if (input.targetPath) {
         input.scope.update(input.targetPath, undefined);

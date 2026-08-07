@@ -214,6 +214,7 @@ export function createApiDataSourceRequestRunner(
     let runSettled = false;
     let controller: AbortController | undefined;
     let requestSequence = 0;
+    let requestScope: ScopeRef | undefined;
 
     try {
       run =
@@ -245,7 +246,7 @@ export function createApiDataSourceRequestRunner(
       mutable.activeRequestCount += 1;
       const activeController = controller;
 
-      const requestScope = input.runtime.createChildScope(
+      requestScope = input.runtime.createChildScope(
         input.scope,
         {},
         {
@@ -253,6 +254,7 @@ export function createApiDataSourceRequestRunner(
           pathSuffix: 'data-source-request',
         },
       );
+      mutable.childScopeIds.add(requestScope.id);
       const ajaxAction = evaluateSingleAjaxAction(input, requestScope);
       input.onDependenciesChange?.(ajaxAction?.dependencies);
       const preparedRequest = ajaxAction
@@ -468,6 +470,14 @@ export function createApiDataSourceRequestRunner(
 
       if (controller && mutable.abortController === controller) {
         mutable.abortController = undefined;
+      }
+
+      // 1-10: 每个 run/poll 周期创建的 requestScope 于请求 settle（含
+      // AbortError/失败路径）后配对 dispose，避免 ownedScopeDisposers 无界增长。
+      if (requestScope) {
+        mutable.childScopeIds.delete(requestScope.id);
+        input.runtime.disposeScope(requestScope.id);
+        requestScope = undefined;
       }
 
       if (

@@ -252,6 +252,73 @@ describe('DiffViewRenderer', () => {
     expect(readyFns.collapseAll).not.toHaveBeenCalled();
   });
 
+  it('dispatches toggleViewType reaction when the view toggle is clicked (1-9)', () => {
+    const reactions = {
+      toggleViewType: { ready: vi.fn(), dispatch: vi.fn() },
+      setViewType: { ready: vi.fn(), dispatch: vi.fn() },
+      expandAll: { ready: vi.fn(), dispatch: vi.fn() },
+      collapseAll: { ready: vi.fn(), dispatch: vi.fn() },
+    };
+    render(<DiffViewRenderer {...createMockProps()} reactions={reactions as never} />);
+    expect(document.querySelector('[data-view="split"]')).toBeTruthy();
+    fireEvent.click(document.querySelector('.nop-diff-view-toggle') as HTMLElement);
+    expect(reactions.toggleViewType.dispatch).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('[data-view="unified"]')).toBeTruthy();
+    expect(reactions.setViewType.dispatch).not.toHaveBeenCalled();
+    expect(reactions.expandAll.dispatch).not.toHaveBeenCalled();
+    expect(reactions.collapseAll.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('dispatches the declared reactions when handle methods are invoked (1-9)', () => {
+    const reactions = {
+      toggleViewType: { ready: vi.fn(), dispatch: vi.fn() },
+      setViewType: { ready: vi.fn(), dispatch: vi.fn() },
+      expandAll: { ready: vi.fn(), dispatch: vi.fn() },
+      collapseAll: { ready: vi.fn(), dispatch: vi.fn() },
+    };
+    render(<DiffViewRenderer {...createMockProps()} reactions={reactions as never} />);
+    const handle = lastHandle();
+
+    act(() => {
+      expect(handle.capabilities.invoke('toggleViewType', {}, {} as never)).toMatchObject({ ok: true });
+    });
+    expect(reactions.toggleViewType.dispatch).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      expect(handle.capabilities.invoke('setViewType', { viewType: 'unified' }, {} as never)).toMatchObject({
+        ok: true,
+      });
+    });
+    expect(reactions.setViewType.dispatch).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      expect(handle.capabilities.invoke('expandAll', {}, {} as never)).toMatchObject({ ok: true });
+    });
+    expect(reactions.expandAll.dispatch).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      expect(handle.capabilities.invoke('collapseAll', {}, {} as never)).toMatchObject({ ok: true });
+    });
+    expect(reactions.collapseAll.dispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not dispatch the setViewType reaction when invoke rejects an invalid viewType (1-9)', () => {
+    const reactions = {
+      toggleViewType: { ready: vi.fn(), dispatch: vi.fn() },
+      setViewType: { ready: vi.fn(), dispatch: vi.fn() },
+      expandAll: { ready: vi.fn(), dispatch: vi.fn() },
+      collapseAll: { ready: vi.fn(), dispatch: vi.fn() },
+    };
+    render(<DiffViewRenderer {...createMockProps()} reactions={reactions as never} />);
+    const handle = lastHandle();
+    const result = handle.capabilities.invoke('setViewType', { viewType: 'sideways' }, {} as never) as {
+      ok: boolean;
+    };
+    expect(result.ok).toBe(false);
+    expect(reactions.setViewType.dispatch).not.toHaveBeenCalled();
+    expect(reactions.toggleViewType.dispatch).not.toHaveBeenCalled();
+  });
+
   it('clamps a negative activeFileIndex to the first file (P1-5)', () => {
     render(
       <DiffViewRenderer
