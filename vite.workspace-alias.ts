@@ -124,6 +124,9 @@ export const workspacePackageAliases = {
   '@nop-chaos/ui/lib/utils': fileURLToPath(
     new URL('./packages/ui/src/lib/utils.ts', import.meta.url),
   ),
+  '@nop-chaos/ui/lib/i18n': fileURLToPath(
+    new URL('./packages/ui/src/lib/i18n.ts', import.meta.url),
+  ),
   '@nop-chaos/ui': fileURLToPath(new URL('./packages/ui/src/index.ts', import.meta.url)),
   '@nop-chaos/spreadsheet-core': fileURLToPath(
     new URL('./packages/spreadsheet-core/src/index.ts', import.meta.url),

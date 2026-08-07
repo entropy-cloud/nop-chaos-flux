@@ -2,4 +2,4 @@
 // and break browser ESM with "does not provide an export" or `require('react')`).
 // Uses React 19 native useSyncExternalStore + flux-react's WithSelector impl.
 export { useSyncExternalStore } from 'react';
-export { useSyncExternalStoreWithSelector } from '../../flux-react/src/use-sync-external-store-with-selector';
+export { useSyncExternalStoreWithSelector } from '@nop-chaos/flux-react';

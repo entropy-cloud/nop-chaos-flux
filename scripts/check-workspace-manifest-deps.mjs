@@ -1,4 +1,5 @@
 import { readFile } from 'fs/promises';
+import { existsSync, statSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { execFile } from 'child_process';
@@ -9,6 +10,9 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = path.join(__dirname, '..');
 const workspaceImportPattern =
   /from\s+['"](@nop-chaos\/[^'"]+)['"]|import\s*\(['"](@nop-chaos\/[^'"]+)['"]\)|import\s+['"](@nop-chaos\/[^'"]+)['"]/g;
+const relativeImportPattern =
+  /from\s+['"](\.{1,2}\/[^'"]+)['"]|import\s*\(\s*['"](\.{1,2}\/[^'"]+)['"]|import\s+['"](\.{1,2}\/[^'"]+)['"]/g;
+const extensionProbes = ['.ts', '.tsx', '.js', '.mjs', '.cjs', '.json', '.css'];
 
 function normalizeWorkspaceSpecifier(specifier) {
   const parts = specifier.split('/');
@@ -16,14 +20,13 @@ function normalizeWorkspaceSpecifier(specifier) {
 }
 
 async function getTrackedFiles() {
-  const { stdout } = await execFileAsync(
-    'git',
-    ['ls-files', 'packages/*/src/**/*.ts', 'packages/*/src/**/*.tsx'],
-    {
-      cwd: rootDir,
-      maxBuffer: 10 * 1024 * 1024,
-    },
-  );
+  // git pathspec `packages/*/src/**/*.ts` does NOT match root-level src files
+  // (`src/**/` requires at least one directory level), so list all tracked
+  // files and filter in JS instead of relying on glob pathspecs.
+  const { stdout } = await execFileAsync('git', ['ls-files'], {
+    cwd: rootDir,
+    maxBuffer: 10 * 1024 * 1024,
+  });
 
   return stdout
     .split(/\r?\n/)
@@ -35,6 +38,10 @@ async function getTrackedFiles() {
       }
 
       if (!filePath.includes('/src/')) {
+        return false;
+      }
+
+      if (!/\.(ts|tsx)$/.test(filePath)) {
         return false;
       }
 
@@ -81,6 +88,66 @@ function collectWorkspaceImports(content) {
   return imports;
 }
 
+function isFile(targetPath) {
+  return existsSync(targetPath) && statSync(targetPath).isFile();
+}
+
+// Extension probing mirrors TS module resolution: the specifier may omit the
+// extension, use the ESM-style `.js` suffix for a `.ts` source, or point at a
+// directory with an index file.
+function resolveRelativeImport(filePath, specifier) {
+  const dir = path.dirname(filePath);
+  const base = path.resolve(dir, specifier);
+  const candidates = [
+    base,
+    ...extensionProbes.map((ext) => base + ext),
+    ...(base.endsWith('.js')
+      ? [base.slice(0, -3) + '.ts', base.slice(0, -3) + '.tsx']
+      : []),
+    path.join(base, 'index.ts'),
+    path.join(base, 'index.tsx'),
+    path.join(base, 'index.js'),
+  ];
+  for (const candidate of candidates) {
+    if (isFile(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+// Returns the package name owning a src tree path (`packages/<name>/src/...`),
+// or null when the path is not under a package src tree.
+function packageNameUnderSrcTree(filePath) {
+  const relative = path.relative(rootDir, filePath);
+  const parts = relative.split(path.sep);
+  if (parts.length >= 3 && parts[0] === 'packages' && parts[2] === 'src') {
+    return parts[1];
+  }
+  return null;
+}
+
+function collectCrossPackageRelativeImports(filePath, content, packagePath) {
+  const problems = [];
+  let match;
+
+  while ((match = relativeImportPattern.exec(content))) {
+    const specifier = match[1] ?? match[2] ?? match[3];
+    if (!specifier) continue;
+
+    const resolved = resolveRelativeImport(filePath, specifier);
+    if (!resolved) continue;
+
+    const targetPackage = packageNameUnderSrcTree(resolved);
+    const owningName = packagePath.split('/')[1];
+    if (targetPackage && targetPackage !== owningName) {
+      problems.push({ filePath, packagePath, specifier, targetPackage });
+    }
+  }
+
+  return problems;
+}
+
 async function main() {
   const files = await getTrackedFiles();
   const packageCache = new Map();
@@ -117,22 +184,33 @@ async function main() {
         problems.push({ filePath, packagePath, specifier });
       }
     }
+
+    const crossPackageImports = collectCrossPackageRelativeImports(filePath, content, packagePath);
+    for (const problem of crossPackageImports) {
+      problems.push(problem);
+    }
   }
 
   if (problems.length > 0) {
     console.error(
-      '[check-workspace-manifest-deps] ERROR: undeclared workspace imports found in package sources:',
+      '[check-workspace-manifest-deps] ERROR: undeclared workspace imports or cross-package relative imports found in package sources:',
     );
     for (const problem of problems) {
-      console.error(
-        `  - ${problem.filePath}: ${problem.specifier} missing from ${problem.packagePath}/package.json`,
-      );
+      if (problem.targetPackage) {
+        console.error(
+          `  - ${problem.filePath}: relative import "${problem.specifier}" resolves into ${problem.targetPackage}/src (cross-package relative src import; use a bare workspace specifier)`,
+        );
+      } else {
+        console.error(
+          `  - ${problem.filePath}: ${problem.specifier} missing from ${problem.packagePath}/package.json`,
+        );
+      }
     }
     process.exit(1);
   }
 
   console.log(
-    '[check-workspace-manifest-deps] All package source workspace imports are declared in local manifests',
+    '[check-workspace-manifest-deps] All package source workspace imports are declared in local manifests; no cross-package relative src imports',
   );
 }
 

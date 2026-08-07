@@ -74,6 +74,7 @@
       "@nop-chaos/ui/base.css": ["./packages/ui/src/styles/base.css"],
       "@nop-chaos/ui/chart": ["./packages/ui/src/components/ui/chart.tsx"],
       "@nop-chaos/ui/lib/utils": ["./packages/ui/src/lib/utils.ts"],
+      "@nop-chaos/ui/lib/i18n": ["./packages/ui/src/lib/i18n.ts"],
       "@nop-chaos/ui": ["./packages/ui/src/index.ts"],
       "@nop-chaos/spreadsheet-core": ["./packages/spreadsheet-core/src/index.ts"],
       "@nop-chaos/spreadsheet-renderers/canvas-styles.css": [

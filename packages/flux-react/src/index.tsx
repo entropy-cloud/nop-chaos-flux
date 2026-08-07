@@ -107,3 +107,4 @@ export {
   unwrapPreservedLiteral,
   unwrapBooleanLiteral,
 } from './preserve-literal.js';
+export { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';

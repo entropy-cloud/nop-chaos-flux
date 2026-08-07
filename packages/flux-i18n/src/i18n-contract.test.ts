@@ -10,7 +10,7 @@ import {
 } from './i18n.js';
 
 async function getUiT() {
-  const uiI18n = await import('../../ui/src/lib/i18n.js');
+  const uiI18n = await import('@nop-chaos/ui/lib/i18n');
   return uiI18n.t;
 }
 

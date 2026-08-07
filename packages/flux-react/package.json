@@ -26,8 +26,7 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
-    "@nop-chaos/ui": "workspace:*",
-    "use-sync-external-store": "^1.6.0"
+    "@nop-chaos/ui": "workspace:*"
   },
   "peerDependencies": {
     "lucide-react": "^1.17.0",
@@ -36,7 +35,6 @@
   "devDependencies": {
     "@nop-chaos/flux-compiler": "workspace:*",
     "@testing-library/react": "^16.3.0",
-    "@types/use-sync-external-store": "^1.5.0",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },

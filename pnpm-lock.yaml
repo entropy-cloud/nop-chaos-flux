@@ -275,6 +275,9 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0(react@19.2.4)
     devDependencies:
+      '@nop-chaos/flux-compiler':
+        specifier: workspace:*
+        version: link:../flux-compiler
       '@nop-chaos/flux-formula':
         specifier: workspace:*
         version: link:../flux-formula
@@ -484,6 +487,9 @@ importers:
         specifier: ^19.0.0
         version: 19.2.4
     devDependencies:
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.14
@@ -511,9 +517,6 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
-      use-sync-external-store:
-        specifier: ^1.6.0
-        version: 1.6.0(react@19.2.4)
     devDependencies:
       '@nop-chaos/flux-compiler':
         specifier: workspace:*
@@ -521,9 +524,6 @@ importers:
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@types/use-sync-external-store':
-        specifier: ^1.5.0
-        version: 1.5.0
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.4)
@@ -892,6 +892,9 @@ importers:
         specifier: workspace:*
         version: link:../ui
     devDependencies:
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../flux-formula
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.4)
@@ -960,6 +963,9 @@ importers:
         specifier: ^5.0.12
         version: 5.0.12(@types/react@19.2.14)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
     devDependencies:
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../flux-formula
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.4)

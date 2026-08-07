@@ -49,6 +49,7 @@ async function createReleaseDir() {
   const releaseManifest = {
     name: packageJson.name,
     version: packageJson.version,
+    description: packageJson.description,
     type: packageJson.type,
     sideEffects: packageJson.sideEffects,
     files: packageJson.files,
