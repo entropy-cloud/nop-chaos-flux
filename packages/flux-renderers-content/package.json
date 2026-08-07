@@ -24,8 +24,7 @@
     "@nop-chaos/ui": "workspace:*",
     "qrcode": "^1.5.4",
     "diff-match-patch": "^1.0.5",
-    "lowlight": "^3.1.0",
-    "@tanstack/react-virtual": "^3.11.0"
+    "lowlight": "^3.1.0"
   },
   "peerDependencies": {
     "dompurify": "^3.4.11",

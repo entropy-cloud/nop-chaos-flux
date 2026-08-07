@@ -12,6 +12,11 @@ const workspaceImportPattern =
   /from\s+['"](@nop-chaos\/[^'"]+)['"]|import\s*\(['"](@nop-chaos\/[^'"]+)['"]\)|import\s+['"](@nop-chaos\/[^'"]+)['"]/g;
 const relativeImportPattern =
   /from\s+['"](\.{1,2}\/[^'"]+)['"]|import\s*\(\s*['"](\.{1,2}\/[^'"]+)['"]|import\s+['"](\.{1,2}\/[^'"]+)['"]/g;
+// All bare-import specifier forms for the reverse (declared-but-unreferenced)
+// check: static `from`, dynamic `import()`, side-effect `import`, CJS
+// `require()`, and test-only `vi.mock()`/`jest.mock()` references.
+const bareImportPattern =
+  /(?:from\s+|import\s*\(\s*|import\s+|require\(\s*|mock\(\s*)['"]([^'"]+)['"]/g;
 const extensionProbes = ['.ts', '.tsx', '.js', '.mjs', '.cjs', '.json', '.css'];
 
 function normalizeWorkspaceSpecifier(specifier) {
@@ -105,6 +110,28 @@ function collectWorkspaceImports(content) {
   return imports;
 }
 
+// Reduces a bare specifier to its top-level package name (`@scope/pkg/sub` ->
+// `@scope/pkg`, `pkg/sub` -> `pkg`) so subpath imports still count as
+// references to the declared dependency.
+function normalizeExternalSpecifier(specifier) {
+  const parts = specifier.split('/');
+  return parts.length >= 2 && specifier.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
+}
+
+function collectExternalReferences(content, references) {
+  let match;
+
+  while ((match = bareImportPattern.exec(content))) {
+    const specifier = match[1];
+    if (!specifier || specifier.startsWith('.') || specifier.startsWith('@nop-chaos/')) {
+      continue;
+    }
+    references.add(normalizeExternalSpecifier(specifier));
+  }
+
+  return references;
+}
+
 function isFile(targetPath) {
   return existsSync(targetPath) && statSync(targetPath).isFile();
 }
@@ -168,6 +195,7 @@ function collectCrossPackageRelativeImports(filePath, content, packagePath) {
 async function main() {
   const files = await getTrackedFiles();
   const packageCache = new Map();
+  const contentsByFile = new Map();
   const problems = [];
 
   for (const filePath of files) {
@@ -183,6 +211,7 @@ async function main() {
       }
       throw error;
     }
+    contentsByFile.set(filePath, content);
 
     if (!packageCache.has(packagePath)) {
       packageCache.set(packagePath, await readJson(`${packagePath}/package.json`));
@@ -208,12 +237,44 @@ async function main() {
     }
   }
 
+  // Reverse direction: a `dependencies` entry with zero src references is a
+  // dead dependency (e.g. flux-renderers-graph's `use-sync-external-store`,
+  // leftover after its only consumer module was deleted). peer/dev deps are
+  // exempt: peers are host-provided and dev deps serve test/build config.
+  for (const packagePath of packageCache.keys()) {
+    const pkgJson = packageCache.get(packagePath);
+    const declaredExternal = Object.keys(pkgJson.dependencies ?? {}).filter(
+      (dep) => !dep.startsWith('@nop-chaos/'),
+    );
+    if (declaredExternal.length === 0) {
+      continue;
+    }
+
+    const references = new Set();
+    for (const filePath of files) {
+      if (!filePath.startsWith(`${packagePath}/src/`)) {
+        continue;
+      }
+      collectExternalReferences(contentsByFile.get(filePath) ?? '', references);
+    }
+
+    for (const specifier of declaredExternal) {
+      if (!references.has(specifier)) {
+        problems.push({ packagePath, specifier, unused: true });
+      }
+    }
+  }
+
   if (problems.length > 0) {
     console.error(
-      '[check-workspace-manifest-deps] ERROR: undeclared workspace imports or cross-package relative imports found in package sources:',
+      '[check-workspace-manifest-deps] ERROR: undeclared workspace imports, cross-package relative imports, or declared-but-unreferenced dependencies found:',
     );
     for (const problem of problems) {
-      if (problem.targetPackage) {
+      if (problem.unused) {
+        console.error(
+          `  - ${problem.packagePath}/package.json: dependency "${problem.specifier}" is declared but not referenced in ${problem.packagePath}/src`,
+        );
+      } else if (problem.targetPackage) {
         console.error(
           `  - ${problem.filePath}: relative import "${problem.specifier}" resolves into ${problem.targetPackage}/src (cross-package relative src import; use a bare workspace specifier)`,
         );
@@ -227,7 +288,7 @@ async function main() {
   }
 
   console.log(
-    '[check-workspace-manifest-deps] All package source workspace imports are declared in local manifests; no cross-package relative src imports',
+    '[check-workspace-manifest-deps] All package source workspace imports are declared in local manifests; no cross-package relative src imports; no declared-but-unreferenced dependencies',
   );
 }
 

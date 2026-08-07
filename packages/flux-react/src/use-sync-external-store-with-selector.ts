@@ -1,3 +1,23 @@
+/**
+ * fork of npm `use-sync-external-store/with-selector` (hand-copied implementation,
+ * not a re-export of the npm package).
+ *
+ * Signature difference vs npm: `getServerSnapshot` is relaxed from required to
+ * `(() => TSnapshot) | undefined` — React 19's native `useSyncExternalStore`
+ * treats the third argument as optional, and this fork keeps that semantics.
+ * Client rendering never invokes `getServerSnapshot`; it only applies on SSR
+ * hydration (beyond the happy-dom unit-test surface).
+ *
+ * Maintenance warning: behavior changes must stay aligned with the 6 real
+ * consumption points of this fork — 5 in-package relative imports
+ * (`hooks.ts`, `dialog-host.tsx`, `dialog-host-surface.tsx`,
+ * `hooks/use-form-hooks.ts`, `node-renderer-resolved.tsx`) plus 1 cross-package
+ * bare import (`flux-bundle/src/use-sync-external-store-shim.ts`). The other
+ * 12 consumers across 5 packages (flow-designer-renderers, nop-debugger,
+ * report-designer-renderers, spreadsheet-renderers, word-editor-renderers,
+ * incl. test files) import the npm `use-sync-external-store/shim/with-selector`
+ * and are NOT part of this fork's sync surface.
+ */
 import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 
 type SelectionInst<TSelection> =

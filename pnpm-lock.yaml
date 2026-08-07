@@ -637,9 +637,6 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
-      '@tanstack/react-virtual':
-        specifier: ^3.11.0
-        version: 3.13.24(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       diff-match-patch:
         specifier: ^1.0.5
         version: 1.0.5
@@ -851,9 +848,6 @@ importers:
       dagre:
         specifier: ^0.8.5
         version: 0.8.5
-      use-sync-external-store:
-        specifier: ^1.6.0
-        version: 1.6.0(react@19.2.4)
       zustand:
         specifier: ^5.0.12
         version: 5.0.12(@types/react@19.2.14)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
@@ -1203,9 +1197,6 @@ importers:
 
   packages/word-editor-renderers:
     dependencies:
-      '@hufe921/canvas-editor':
-        specifier: ^0.9.130
-        version: 0.9.130
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core

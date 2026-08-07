@@ -24,7 +24,6 @@
     "@nop-chaos/ui": "workspace:*",
     "@xyflow/react": "^12.10.2",
     "dagre": "^0.8.5",
-    "use-sync-external-store": "^1.6.0",
     "zustand": "^5.0.12"
   },
   "peerDependencies": {

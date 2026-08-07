@@ -11,6 +11,7 @@ const rootDir = resolve(here, '..', '..');
 const scriptPath = resolve(rootDir, 'scripts', 'check-workspace-manifest-deps.mjs');
 
 const stagedFiles = [];
+const stagedDirs = [];
 
 // `temp` is in `ignoreDirectoryNames` (scripts/audit/shared.mjs) so the other
 // audit-gate tests (find-renderer-browser-io / find-event-dispatch-without-ctx)
@@ -32,6 +33,10 @@ afterEach(async () => {
     await rm(filePath, { force: true });
   }
   stagedFiles.length = 0;
+  for (const dirPath of stagedDirs) {
+    await rm(dirPath, { recursive: true, force: true });
+  }
+  stagedDirs.length = 0;
 });
 
 describe('check-workspace-manifest-deps', () => {
@@ -45,6 +50,39 @@ describe('check-workspace-manifest-deps', () => {
       stderr: expect.stringContaining('__manifest_scan_fixture__.ts'),
       stderr: expect.stringContaining('../../../ui/src/index.js'),
     });
+  });
+
+  it('flags declared-but-unreferenced dependencies, then goes green once referenced (reverse rule)', async () => {
+    const packageDir = join(rootDir, 'packages', '__manifest-reverse-fixture__');
+    const packageJsonPath = join(packageDir, 'package.json');
+    const fixtureSrcPath = join(packageDir, 'src', 'temp', 'index.ts');
+    stagedDirs.push(packageDir);
+
+    await mkdir(dirname(fixtureSrcPath), { recursive: true });
+    await writeFile(
+      packageJsonPath,
+      JSON.stringify(
+        {
+          name: '@nop-chaos/__manifest-reverse-fixture__',
+          dependencies: { 'dead-dep-fixture': '^1.0.0' },
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+    await writeFile(fixtureSrcPath, "export const value = 1;\n", 'utf8');
+
+    await expect(runGate()).rejects.toMatchObject({
+      stderr: expect.stringContaining('dead-dep-fixture'),
+      stderr: expect.stringContaining('declared but not referenced'),
+    });
+
+    await writeFile(fixtureSrcPath, "import 'dead-dep-fixture';\nexport const value = 1;\n", 'utf8');
+    const { stdout } = await runGate();
+    expect(stdout).toContain(
+      'All package source workspace imports are declared in local manifests',
+    );
   });
 
   it('leaves tracked-file behavior unchanged (zero false positives on the real repo)', async () => {
