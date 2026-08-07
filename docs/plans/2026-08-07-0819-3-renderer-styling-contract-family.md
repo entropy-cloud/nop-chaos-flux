@@ -1,6 +1,6 @@
 # 03 渲染器样式契约族修复
 
-> Plan Status: active（draft → active：独立子 agent 两轮审查，首轮 revised（1 Blocker + 1 Major）已修订解决，复检 pass-with-minors 且 4 条 Minor 全部处理，零 Blocker/零 Major，共识达成）
+> Plan Status: completed（draft → active → completed：独立子 agent 两轮审查，首轮 revised（1 Blocker + 1 Major）已修订解决，复检 pass-with-minors 且 4 条 Minor 全部处理，零 Blocker/零 Major，共识达成；closure-audit 独立 fresh session 通过后收口）
 > Last Reviewed: 2026-08-07
 > Source: `docs/audits/2026-08-06-0711-multi-audit-component-audit.md`（10-01/10-02/10-03）、`docs/backlog/component-audit-roadmap.md` Follow-up Backlog
 > Related: `docs/architecture/styling-system.md`、`docs/architecture/theme-compatibility.md`、`docs/architecture/renderer-markers-and-selectors.md`
@@ -63,68 +63,68 @@
 
 ### Phase 1 - 10-01 spreadsheet 包 CSS 去 playground 锚定
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-renderers/src/canvas-styles.css`、`apps/playground/src/styles.css`
 
 - Item Types: `Fix`
 
-- [ ] 将 `canvas-styles.css:349,363,371,381,391,400,409` 7 处 `.report-designer-demo` 选择器变体并入独立的 `[data-slot='spreadsheet-toolbar']`（及同组子槽位）裸选择器，与 `[data-slot='spreadsheet-default-toolbar']` 锚定规则保持同声明体；包内不再引用 `.report-designer-demo`。
-- [ ] 核实 playground 演示页工具栏样式保持（flex/gap/padding/背景/边框/min-height 等），如存在包 CSS 无法覆盖的 playground 专属差异，下沉到 `apps/playground/src/styles.css`（当前复核结论：7 处变体与正统锚定声明体一致，无差异可下沉）。
-- [ ] `canvas-styles.test.ts` 保持绿；`pnpm check:package-css-exports` 绿。
+- [x] 将 `canvas-styles.css:349,363,371,381,391,400,409` 7 处 `.report-designer-demo` 选择器变体并入独立的 `[data-slot='spreadsheet-toolbar']`（及同组子槽位）裸选择器，与 `[data-slot='spreadsheet-default-toolbar']` 锚定规则保持同声明体；包内不再引用 `.report-designer-demo`。
+- [x] 核实 playground 演示页工具栏样式保持（flex/gap/padding/背景/边框/min-height 等），如存在包 CSS 无法覆盖的 playground 专属差异，下沉到 `apps/playground/src/styles.css`（当前复核结论：7 处变体与正统锚定声明体一致，无差异可下沉）。
+- [x] `canvas-styles.test.ts` 保持绿；`pnpm check:package-css-exports` 绿。
 
 Exit Criteria:
 
-- [ ] `rg "report-designer-demo" packages/spreadsheet-renderers/` 零命中；`canvas-styles.css` 存在独立的 `[data-slot='spreadsheet-toolbar']`（及同组子槽位）裸选择器，声明体与 default-toolbar 锚定规则一致。
-- [ ] **demo 页视觉保持验证**：`apps/playground/src/pages/report-designer-demo` 渲染后工具栏仍有背景/边框/间距（程序化断言：e2e 或 vitest computed-style 断言背景色/display flex/边框非默认），不能只靠 rg 零命中。
-- [ ] spreadsheet-renderers 包 `pnpm --filter @nop-chaos/spreadsheet-renderers test` 全绿 + `pnpm check:package-css-exports` 绿。
+- [x] `rg "report-designer-demo" packages/spreadsheet-renderers/` 零命中；`canvas-styles.css` 存在独立的 `[data-slot='spreadsheet-toolbar']`（及同组子槽位）裸选择器，声明体与 default-toolbar 锚定规则一致。
+- [x] **demo 页视觉保持验证**：`apps/playground/src/pages/report-designer-demo` 渲染后工具栏仍有背景/边框/间距（程序化断言：e2e 或 vitest computed-style 断言背景色/display flex/边框非默认），不能只靠 rg 零命中。
+- [x] spreadsheet-renderers 包 `pnpm --filter @nop-chaos/spreadsheet-renderers test` 全绿 + `pnpm check:package-css-exports` 绿。
 
 ### Phase 2 - 10-02 rd-toolbar 死类名清理 + e2e 基准更新
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-renderers/src/spreadsheet-toolbar.tsx`、`spreadsheet-toolbar/toolbar-status.tsx`、`spreadsheet-toolbar/toolbar-groups.tsx`、`apps/playground/src/pages/report-designer-demo.test.tsx`、`tests/e2e/report-designer-demo.spec.ts`、`tests/e2e/exploratory/subagent-a-independent-review.spec.ts`
 
 - Item Types: `Fix`
 
-- [ ] 删除 16 处 `rd-*` 类名（`rd-toolbar`/`rd-toolbar--single-row` 等），仅留 `data-slot`（DOM 契约不变）。
-- [ ] **同步更新 playground 单测断言**：`apps/playground/src/pages/report-designer-demo.test.tsx:43,50` 用 `querySelector('.rd-toolbar')` + `className` 包含 `rd-toolbar--single-row` 断言——`rd-*` 删除后该测试抛错，且既有 exit 准则的 `rg` 只扫 `packages/ tests/e2e/` 不覆盖 `apps/`。改断言为 `[data-slot='spreadsheet-toolbar']` 定位 + 非 className 的可观测属性（如 computed-style flex 方向或 data-slot 存在性）。
-- [ ] e2e 定位基准更新：`report-designer-demo.spec.ts:25,168,186` 与 `subagent-a-independent-review.spec.ts:414,417` 的 `.rd-toolbar` 改为 `[data-slot='spreadsheet-toolbar']` 定位。
-- [ ] 相关 e2e 回归：`report-designer-demo` spec 全绿（`npx playwright test tests/e2e/report-designer-demo.spec.ts`）。
+- [x] 删除 16 处 `rd-*` 类名（`rd-toolbar`/`rd-toolbar--single-row` 等），仅留 `data-slot`（DOM 契约不变）。
+- [x] **同步更新 playground 单测断言**：`apps/playground/src/pages/report-designer-demo.test.tsx:43,50` 用 `querySelector('.rd-toolbar')` + `className` 包含 `rd-toolbar--single-row` 断言——`rd-*` 删除后该测试抛错，且既有 exit 准则的 `rg` 只扫 `packages/ tests/e2e/` 不覆盖 `apps/`。改断言为 `[data-slot='spreadsheet-toolbar']` 定位 + 非 className 的可观测属性（如 computed-style flex 方向或 data-slot 存在性）。
+- [x] e2e 定位基准更新：`report-designer-demo.spec.ts:25,168,186` 与 `subagent-a-independent-review.spec.ts:414,417` 的 `.rd-toolbar` 改为 `[data-slot='spreadsheet-toolbar']` 定位。
+- [x] 相关 e2e 回归：`report-designer-demo` spec 全绿（`npx playwright test tests/e2e/report-designer-demo.spec.ts`）。
 
 Exit Criteria:
 
-- [ ] `rg "rd-toolbar|rd-toolbar--" packages/ tests/e2e/ apps/` 零命中（含 playground 单测与 e2e spec）；`rg "rd-" packages/spreadsheet-renderers/src/ apps/` 仅剩非 BEM 前缀命中（如有则逐一核对）。
-- [ ] **playground 单测回归绿**：`report-designer-demo.test.tsx` 断言已改为 data-slot 定位（`pnpm --filter playground test` 或全量 `pnpm test` 中该文件绿）。
-- [ ] spreadsheet 包 `pnpm --filter @nop-chaos/spreadsheet-renderers test` 全绿；report-designer-demo e2e 全绿。
+- [x] `rg "rd-toolbar|rd-toolbar--" packages/ tests/e2e/ apps/` 零命中（含 playground 单测与 e2e spec）；`rg "rd-" packages/spreadsheet-renderers/src/ apps/` 仅剩非 BEM 前缀命中（如有则逐一核对）。
+- [x] **playground 单测回归绿**：`report-designer-demo.test.tsx` 断言已改为 data-slot 定位（`pnpm --filter playground test` 或全量 `pnpm test` 中该文件绿）。
+- [x] spreadsheet 包 `pnpm --filter @nop-chaos/spreadsheet-renderers test` 全绿；report-designer-demo e2e 全绿。
 
 ### Phase 3 - 10-03 diff-view token 化
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/diff-view/components/diff-file-list.tsx`、`packages/flux-renderers-content/src/diff-view/diff-view.css`
 
 - Item Types: `Fix`
 
-- [ ] `diff-view.css` 补齐缺失 token：状态徽标文字/背景色沿用 `--nop-diff-stat-*` 家族命名风格（既有 :49-50 `--nop-diff-stat-added-text`/`--nop-diff-stat-removed-text`），新增 modified 对应色；fallback 与现 hex 一致。
-- [ ] `diff-file-list.tsx` 硬编码色改 `var(--nop-diff-*, <fallback>)`：状态色（:192-193 add/del/modified fg+bg）用家族 token；`:108/:157` 的 `--nop-bg-active`、`:112` `--nop-text`、`:158` `--nop-bg-hover` 非家族 token 与 `:180` 裸 `#1677ff`、`:121` `#999` 逐一核对后改家族 token 或加注保留理由。
-- [ ] content 包 `pnpm --filter @nop-chaos/flux-renderers-content test` 全绿（含既有 diff 测试）。
+- [x] `diff-view.css` 补齐缺失 token：状态徽标文字/背景色沿用 `--nop-diff-stat-*` 家族命名风格（既有 :49-50 `--nop-diff-stat-added-text`/`--nop-diff-stat-removed-text`），新增 modified 对应色；fallback 与现 hex 一致。
+- [x] `diff-file-list.tsx` 硬编码色改 `var(--nop-diff-*, <fallback>)`：状态色（:192-193 add/del/modified fg+bg）用家族 token；`:108/:157` 的 `--nop-bg-active`、`:112` `--nop-text`、`:158` `--nop-bg-hover` 非家族 token 与 `:180` 裸 `#1677ff`、`:121` `#999` 逐一核对后改家族 token 或加注保留理由。
+- [x] content 包 `pnpm --filter @nop-chaos/flux-renderers-content test` 全绿（含既有 diff 测试）。
 
 Exit Criteria:
 
-- [ ] `rg "#16a34a|#dc2626|#ca8a04|#dcfce7|#fef2f2|#fefce8|#999|#1677ff" packages/flux-renderers-content/src/diff-view/components/` 零命中（fallback hex 仅允许出现在 `diff-view.css` token 定义处，`components/` 目录内不残留裸 hex）。
-- [ ] content 包测试全绿。
+- [x] `rg "#16a34a|#dc2626|#ca8a04|#dcfce7|#fef2f2|#fefce8|#999|#1677ff" packages/flux-renderers-content/src/diff-view/components/` 零命中（fallback hex 仅允许出现在 `diff-view.css` token 定义处，`components/` 目录内不残留裸 hex）。
+- [x] content 包测试全绿。
 
 ### Phase 4 - 台账收口
 
-Status: planned
+Status: completed
 Targets: `docs/backlog/component-audit-roadmap.md`、`docs/logs/2026/08-07.md`
 
 - Item Types: `Fix`
 
-- [ ] roadmap Follow-up Backlog `10-01`/`10-02`/`10-03` 三行翻转 `[x]` 附收口注记。
-- [ ] daily log `docs/logs/2026/08-07.md` 追加本 plan 收口条目。
+- [x] roadmap Follow-up Backlog `10-01`/`10-02`/`10-03` 三行翻转 `[x]` 附收口注记。
+- [x] daily log `docs/logs/2026/08-07.md` 追加本 plan 收口条目。
 
 Exit Criteria:
 
-- [ ] roadmap 三行 `[x]`；daily log 有条目。
+- [x] roadmap 三行 `[x]`；daily log 有条目。
 
 ## Draft Review Record
 
@@ -137,20 +137,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 10-01 包 CSS 不再锚定 playground 类名（rg 零命中），7 处变体已并入裸选择器且 demo 工具栏计算样式保持
-- [ ] 10-02 `rd-*` 死类名已删除，e2e 定位基准已更新且回归绿
-- [ ] 10-03 diff 状态色已 token 化（rg 零命中硬编码 hex）
-- [ ] roadmap Follow-up Backlog 10-01/10-02/10-03 三行已翻转 `[x]` 附收口注记
-- [ ] daily log 已记录（`docs/logs/2026/08-07.md`）
-- [ ] 不存在被静默降级到 deferred 的 in-scope confirmed live defect
-- [ ] 受影响的 owner docs 已同步（styling-system/theme-compatibility 契约未变则核实时注明；diff token 命名如扩展需在 diff-view design.md 或 css 文件头注明）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增命中）
-- [ ] 相关 e2e 回归绿（report-designer-demo spec；diff-view 相关 spec）
+- [x] 10-01 包 CSS 不再锚定 playground 类名（rg 零命中），7 处变体已并入裸选择器且 demo 工具栏计算样式保持
+- [x] 10-02 `rd-*` 死类名已删除，e2e 定位基准已更新且回归绿
+- [x] 10-03 diff 状态色已 token 化（rg 零命中硬编码 hex）
+- [x] roadmap Follow-up Backlog 10-01/10-02/10-03 三行已翻转 `[x]` 附收口注记
+- [x] daily log 已记录（`docs/logs/2026/08-07.md`）
+- [x] 不存在被静默降级到 deferred 的 in-scope confirmed live defect
+- [x] 受影响的 owner docs 已同步（styling-system/theme-compatibility 契约未变则核实时注明；diff token 命名如扩展需在 diff-view design.md 或 css 文件头注明）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（零新增命中）
+- [x] 相关 e2e 回归绿（report-designer-demo spec；diff-view 相关 spec）
 
 ## Deferred But Adjudicated
 
@@ -162,13 +162,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成或关闭时填写）
+Status Note: 三条样式契约违例（10-01/10-02/10-03）已修复并经独立 closure-audit 复核通过。10-01：包 CSS 零 `.report-designer-demo` 锚定，7 处变体并入裸 `[data-slot='spreadsheet-toolbar']` 选择器，demo 工具栏计算样式（display flex / 背景非透明 / 1px 下边框 / 单行）经 e2e 断言保持；10-02：16 处 `rd-*` 类名全删仅留 data-slot，e2e 定位基准与 playground 单测断言已切 data-slot 且回归绿；10-03：diff-view 文件列表 10 处硬编码色/非家族 token 全改 `var(--nop-diff-*)`，css 补齐 stat-modified/active/hover/muted/accent token。roadmap 三行已翻转 `[x]`，audit 三 findings 标注 fixed，daily log 已记录。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立审计者或独立子 agent）
-- Evidence: （task id / daily log link / findings 摘要）
+- Auditor / Agent: 独立 fresh 子 agent session（closure-audit，任务级复核，非执行 session）
+- Evidence: 复核于 2026-08-07 live repo 执行——① `rg "report-designer-demo" packages/spreadsheet-renderers/` 零命中，`canvas-styles.css:348` 存在裸 `[data-slot='spreadsheet-toolbar']` 选择器（另 :402 子槽位变体），声明体与 default-toolbar 锚定一致；② `rg "rd-toolbar|rd-toolbar--" packages/ tests/e2e/ apps/` 零命中，`rd-` 仅剩非 BEM 残词（word-wrap/keyboard-_/card-_ 子串，逐一核对）；`spreadsheet-toolbar.tsx:11` 为 `<div data-slot="spreadsheet-toolbar">` 无 className；③ 8 个硬编码 hex 与 `nop-bg-active|nop-bg-hover|nop-text,` 在 `diff-view/components/` 及 `diff-view/` 全域零命中，`diff-view.css:49-60` 补齐全部家族 token；④ plan 文本 4 Phase Status 全 completed、全部 `- [x]`、Exit Criteria 全 `[x]`，roadmap 10-01/10-02/10-03 三行 `[x]` 附收口注记（`component-audit-roadmap.md:275-277`），audit 三 findings 修复状态 fixed（`2026-08-06-0711-multi-audit-component-audit.md:289,304,320`），daily log 条目在 `docs/logs/2026/08-07.md:5`；⑤ 实测 `pnpm --filter @nop-chaos/spreadsheet-renderers test` 140/140 绿、`pnpm --filter @nop-chaos/flux-renderers-content test` 286/286 绿；⑥ `pnpm check` 链 11 项非 oversized 逐项 exit 0，仅 `check:oversized-code-files` 红且恰为 12 个已登记 pre-existing 超限文件（14 登记减 2 拆分退出：crud-renderer-state.ts 794→477、table-renderer.tsx 737→645，见 `docs/logs/2026/08-07.md:35-38`），零新增命中；⑦ report-designer-demo e2e 工具条用例以 data-slot 定位并断言计算样式（`tests/e2e/report-designer-demo.spec.ts:168-186`），subagent-a spec:414,417 data-slot 定位处于 `test.describe.skip` 内（既有）。
 
 Follow-up:
 
-- （只记录 non-blocking follow-up；confirmed live defect 不得出现在这里）
+- 无 remaining plan-owned work（roadmap 其余 open 行归后续计划轮次）

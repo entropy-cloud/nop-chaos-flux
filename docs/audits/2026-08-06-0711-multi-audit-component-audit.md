@@ -286,6 +286,7 @@
 - **建议**: 移除 demo 类变体，工具栏样式锚定用包内 `[data-slot='spreadsheet-toolbar']` 自身；playground 差异样式下沉到 playground styles.css。
 - **误报排除**: 非 calibration 8（widget 自样式）——问题不是自样式本身而是锚定到包外宿主类名。
 - **复核状态**: 子项复核通过（保持 P2）
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-07-0819-3-renderer-styling-contract-family.md` Phase 1：7 处变体经 live 复核为与正统锚定**同声明体的第二锚点**（demo 页无 default-toolbar wrapper，变体是 demo 样式唯一来源），并入独立 `[data-slot='spreadsheet-toolbar']`（及同组子槽位）裸选择器，声明体不变；包 CSS `rg "report-designer-demo"` 零命中；demo 工具栏视觉经 e2e 计算样式断言保持（display flex/背景非透明/边框 1px），report-designer-demo e2e 9/9 绿；playground 经复核无差异样式可下沉）。
 
 #### [P2] 10-02 spreadsheet-toolbar 携带无样式定义的 BEM 死类名 `rd-toolbar` / `rd-toolbar--single-row` 系列（约 15 处）
 
@@ -300,6 +301,7 @@
 - **建议**: 删除全部 `rd-*` 类名仅留 data-slot，同步更新 e2e 定位。
 - **误报排除**: 非普通命名不优雅——已违反协议文本 + 死类 + 测试基准误导组合；v1 基线不接受迁移残留留在主路径。
 - **复核状态**: 维度复核通过
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-07-0819-3-renderer-styling-contract-family.md` Phase 2：16 处 `rd-*` 类名全删（toolbar.tsx/status/groups）仅留 data-slot，DOM 契约不变；playground 单测断言改 `[data-slot='spreadsheet-toolbar']` 定位 + data-slot 存在性/子槽位断言；e2e 定位基准（report-designer-demo.spec.ts:25,168,186 + subagent-a-independent-review.spec.ts:414,417）改 data-slot；`rg "rd-toolbar|rd-toolbar--" packages/ tests/e2e/ apps/` 零命中；report-designer-demo e2e 9/9 绿）。
 
 #### [P2] 10-03 diff-view 文件列表组件绕过包内 token 体系，内联硬编码语义色（10 处）
 
@@ -315,6 +317,7 @@
 - **建议**: 状态色映射到 `--nop-diff-*` 家族 token，组件内用 `var(--nop-diff-*, fallback)`。
 - **误报排除**: calibration 8 允许 widget 自样式，但 theme-compatibility.md 对 package-owned 视觉颜色须读 CSS 变量是独立条款，且同文件已有 token 体系被绕过。
 - **复核状态**: 维度复核通过
+- **修复状态**: fixed（2026-08-07，plan `docs/plans/2026-08-07-0819-3-renderer-styling-contract-family.md` Phase 3：`diff-view.css` 补齐 `--nop-diff-stat-modified-text` + `--nop-diff-stat-{added,removed,modified}-bg` 及文件列表家族 token（active-bg/hover-bg/muted-text/accent，oklch 与现 hex 视觉等价）；`diff-file-list.tsx` 10 处硬编码色/非家族 token 全改 `var(--nop-diff-*)`；`rg "...hexes..." components/` 零命中（fallback hex 仅留 diff-view.css token 定义处）；content 286 tests 绿）。
 
 ### 维度 11：UI 组件使用合规性
 
