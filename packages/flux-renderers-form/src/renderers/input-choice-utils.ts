@@ -140,13 +140,24 @@ export function resolveChoiceVisibleOptions(input: {
 }): ChoiceOption[] {
   const { rawOptions, remoteOptions, searchMergeMode, query, ignoreCase } = input;
   const remoteSearchActive = remoteOptions !== null;
-  return remoteSearchActive
-    ? searchMergeMode === 'replace'
-      ? remoteOptions
-      : [...rawOptions, ...remoteOptions]
-    : query
+  if (!remoteSearchActive) {
+    return query
       ? rawOptions.filter((option) => matchChoiceLabel(option.label, query, ignoreCase))
       : rawOptions;
+  }
+
+  if (searchMergeMode === 'replace') {
+    return remoteOptions;
+  }
+
+  // append mode with a settled empty remote result for a non-empty query means
+  // the remote search found nothing: show the empty list (ComboboxEmpty)
+  // instead of the unfiltered raw options (2-6).
+  if (remoteOptions.length === 0 && query) {
+    return [];
+  }
+
+  return [...rawOptions, ...remoteOptions];
 }
 
 export function resolveChoiceVisibleGroups(input: {

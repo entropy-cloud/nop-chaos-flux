@@ -106,6 +106,7 @@ export function createRuntimeOwnedFactories(input: {
     ctx?: Partial<ActionContext>,
   ) => Promise<ActionResult>;
   validationRegistry: ValidationRegistry;
+  disposeScope?: (scopeId: string) => void;
   disposeScopeTree: (scopeId: string) => void;
 }) {
   const ownedValidationScopes = input.ownedValidationScopes ?? new Set<ValidationScopeRuntime>();
@@ -277,7 +278,7 @@ export function createRuntimeOwnedFactories(input: {
     inputValue: { disposeScope?: (scopeId: string) => void } = {},
   ): SurfaceRuntime {
     const surfaceRuntime = createManagedSurfaceRuntime({
-      disposeScope: inputValue.disposeScope ?? input.disposeScopeTree,
+      disposeScope: inputValue.disposeScope ?? input.disposeScope ?? input.disposeScopeTree,
       createValidationOwner: (ownerInput) => input.createValidationScopeRuntime(ownerInput),
       releaseValidationOwner: (owner) => {
         ownedValidationScopes.delete(owner);

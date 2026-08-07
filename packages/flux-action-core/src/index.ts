@@ -3,7 +3,6 @@ export {
   createCancelledResult,
   createTimedOutResult,
   createActionKey,
-  buildActionMonitorPayload,
   classifyActionResult,
   isFailureClass,
   withEvaluationBindings,

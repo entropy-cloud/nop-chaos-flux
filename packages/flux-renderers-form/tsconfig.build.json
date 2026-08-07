@@ -16,6 +16,8 @@
     "src/**/test-utils*",
     "src/**/*-test-utils*",
     "src/**/*-fixtures*",
-    "src/**/*-test-support*"
+    "src/**/*-test-support*",
+    "src/**/test-support*",
+    "src/**/test-dom-polyfills*"
   ]
 }

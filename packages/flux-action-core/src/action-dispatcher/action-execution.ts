@@ -1,6 +1,5 @@
 import type {
   ActionContext,
-  ActionMonitorPayload,
   ActionResult,
   ActionSchema,
   CompiledActionNode,
@@ -8,7 +7,6 @@ import type {
 } from '@nop-chaos/flux-core';
 import { withRetry, withTimeout } from '../operation-control.js';
 import {
-  buildActionMonitorPayload,
   classifyActionResult,
   createActionKey,
   createCancelledResult,
@@ -30,7 +28,6 @@ import {
   normalizeCompiledActionProgram,
   applyActionControl,
 } from './program-utils.js';
-import { finishAction } from './action-runners.js';
 import { runBuiltInAction } from './built-in-actions.js';
 import { runComponentAction, runNamespacedAction, runNamedAction } from './action-runners.js';
 
@@ -77,19 +74,18 @@ function hasOwnDefined<T extends object, K extends keyof T>(value: T, key: K): b
 }
 
 function getFailureMetadata(
-  actionPayload: ActionMonitorPayload,
   error: unknown,
 ): Partial<Pick<ActionResult, 'componentId' | 'componentName' | 'componentType' | 'namespace' | 'sourceScopeId' | 'providerKind'>> {
   const errorMetadata =
     error && typeof error === 'object' ? (error as Partial<ActionResult>) : undefined;
 
   return {
-    componentId: errorMetadata?.componentId ?? actionPayload.componentId,
-    componentName: errorMetadata?.componentName ?? actionPayload.componentName,
-    componentType: errorMetadata?.componentType ?? actionPayload.componentType,
-    namespace: errorMetadata?.namespace ?? actionPayload.namespace,
-    sourceScopeId: errorMetadata?.sourceScopeId ?? actionPayload.sourceScopeId,
-    providerKind: errorMetadata?.providerKind ?? actionPayload.providerKind,
+    componentId: errorMetadata?.componentId,
+    componentName: errorMetadata?.componentName,
+    componentType: errorMetadata?.componentType,
+    namespace: errorMetadata?.namespace,
+    sourceScopeId: errorMetadata?.sourceScopeId,
+    providerKind: errorMetadata?.providerKind,
   };
 }
 
@@ -216,8 +212,6 @@ async function runParallelActions(
   ctx: ActionDispatcherContext,
   action: CompiledActionNode,
   actionCtx: ActionContext,
-  startedAt: number,
-  actionPayload: ActionMonitorPayload,
 ): Promise<ActionResult | undefined> {
   if (!action.parallel || action.parallel.length === 0) {
     return undefined;
@@ -240,12 +234,12 @@ async function runParallelActions(
   const representativeError =
     representativeFailure ? createParallelFailureError(representativeFailure) : undefined;
 
-  return finishAction(ctx, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+  return {
     ok: results.every((result) => !isFailureClass(result)),
     data: results,
     results,
     error: representativeError,
-  });
+  };
 }
 
 async function runSingleAction(
@@ -259,8 +253,6 @@ async function runSingleAction(
     effectiveSignal && actionCtx.signal !== effectiveSignal
       ? { ...actionCtx, signal: effectiveSignal }
       : actionCtx;
-  const startedAt = Date.now();
-  const actionPayload = buildActionMonitorPayload(action, activeCtx);
 
   try {
     const processedAction =
@@ -278,20 +270,14 @@ async function runSingleAction(
         : action;
 
     if (!shouldRunActionWhen(processedAction, activeCtx, ctx.evaluator)) {
-      return finishAction(ctx, actionPayload, startedAt, {
+      return {
         ok: true,
         skipped: true,
-      });
+      };
     }
 
     if (processedAction.parallel && processedAction.parallel.length > 0) {
-      const parallelResult = await runParallelActions(
-        ctx,
-        processedAction,
-        activeCtx,
-        startedAt,
-        actionPayload,
-      );
+      const parallelResult = await runParallelActions(ctx, processedAction, activeCtx);
       if (parallelResult) {
         return parallelResult;
       }
@@ -300,8 +286,6 @@ async function runSingleAction(
     const builtInResult = await runBuiltInAction(
       processedAction,
       activeCtx,
-      startedAt,
-      actionPayload,
       effectiveSignal,
       ctx,
     );
@@ -309,43 +293,25 @@ async function runSingleAction(
       return builtInResult;
     }
 
-    const componentResult = await runComponentAction(
-      processedAction,
-      activeCtx,
-      startedAt,
-      actionPayload,
-      ctx,
-    );
+    const componentResult = await runComponentAction(processedAction, activeCtx, ctx);
     if (componentResult) {
       return componentResult;
     }
 
-    const namedResult = await runNamedAction(
-      processedAction,
-      activeCtx,
-      startedAt,
-      actionPayload,
-      ctx,
-    );
+    const namedResult = await runNamedAction(processedAction, activeCtx, ctx);
     if (namedResult) {
       return namedResult;
     }
 
-    const namespacedResult = await runNamespacedAction(
-      processedAction,
-      activeCtx,
-      startedAt,
-      actionPayload,
-      ctx,
-    );
+    const namespacedResult = await runNamespacedAction(processedAction, activeCtx, ctx);
     if (namespacedResult) {
       return namespacedResult;
     }
 
-    return finishAction(ctx, actionPayload, startedAt, {
+    return {
       ok: false,
       error: new Error(`Unsupported action: ${processedAction.action}`),
-    });
+    };
     // Errors routed through action execution state machine — internal state transitions
   } catch (error) {
     if (isAbortError(error)) {
@@ -355,7 +321,7 @@ async function runSingleAction(
 
     reportActionError(ctx, error, activeCtx);
 
-    const metadata = getFailureMetadata(actionPayload, error);
+    const metadata = getFailureMetadata(error);
 
     const result = {
       ok: false,
@@ -576,19 +542,19 @@ async function dispatch(
           );
 
           if (classifyActionResult(previous) === 'failure') {
-            previous = {
+            previous = preserveCaughtFailureMarker(result, {
               ...result,
               onErrorError: hasOwnDefined(previous, 'error') ? previous.error : previous,
-            };
+            });
           }
           // Errors routed through action execution state machine — internal state transitions
         } catch (error) {
           reportActionError(ctx, error, currentActionCtx);
 
-          previous = {
+          previous = preserveCaughtFailureMarker(result, {
             ...result,
             onErrorError: error,
-          };
+          });
         }
       }
 

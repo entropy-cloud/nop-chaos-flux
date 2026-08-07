@@ -47,7 +47,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       }),
     [runtime, nodeImports, currentActionScope, props.templateNode.schemaUrl, props.path],
   );
-  const importsReady = true;
 
   const formId = typeof props.props.id === 'string' ? props.props.id : props.id;
   const formName = typeof props.props.name === 'string' ? props.props.name : undefined;
@@ -286,7 +285,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
 
   useFormInitAction({
     initAction,
-    importsReady,
     autoInit,
     activationKey,
     lifecycleScope,
@@ -302,7 +300,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   useFormLoadAction({
     loadAction,
     autoLoad,
-    importsReady,
     activationKey,
     lifecycleScope,
     ownedForm,

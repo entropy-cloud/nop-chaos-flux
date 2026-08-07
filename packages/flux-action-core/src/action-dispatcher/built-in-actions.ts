@@ -1,6 +1,5 @@
 import type {
   ActionContext,
-  ActionMonitorPayload,
   ActionResult,
   BuiltInActionInvocation,
   CompiledActionNode,
@@ -14,7 +13,6 @@ import {
   type ActionEvaluator,
 } from '../action-core.js';
 import type { ActionDispatcherContext } from './types.js';
-import { finishAction } from './action-runners.js';
 
 /**
  * Raw-preserved args keys per built-in action definition (action-class fields
@@ -63,8 +61,6 @@ function evaluateSurfaceArgs(
 export async function runBuiltInAction(
   action: CompiledActionNode,
   ctx: ActionContext,
-  startedAt: number,
-  actionPayload: ActionMonitorPayload,
   signal: AbortSignal | undefined,
   internals: ActionDispatcherContext,
 ): Promise<ActionResult | undefined> {
@@ -102,10 +98,10 @@ export async function runBuiltInAction(
     case 'ajax': {
       const api = evaluateActionArgs(action, ctx, internals.evaluator);
       if (!api) {
-        return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+        return {
           ok: false,
           error: new Error('ajax requires args payload'),
-        });
+        };
       }
       invocation = {
         action: 'ajax',
@@ -119,10 +115,10 @@ export async function runBuiltInAction(
     case 'openDialog': {
       const dialog = evaluateSurfaceArgs(action, ctx, internals.evaluator);
       if (!dialog) {
-        return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+        return {
           ok: false,
           error: new Error('openDialog requires args payload'),
-        });
+        };
       }
       invocation = {
         action: 'openDialog',
@@ -136,10 +132,10 @@ export async function runBuiltInAction(
     case 'openDrawer': {
       const drawer = evaluateSurfaceArgs(action, ctx, internals.evaluator);
       if (!drawer) {
-        return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+        return {
           ok: false,
           error: new Error('openDrawer requires args payload'),
-        });
+        };
       }
       invocation = {
         action: 'openDrawer',
@@ -259,10 +255,10 @@ export async function runBuiltInAction(
     case 'refreshSource': {
       const targetId = action.targeting.targetId;
       if (!targetId) {
-        return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+        return {
           ok: false,
           error: new Error('refreshSource requires targetId'),
-        });
+        };
       }
       invocation = {
         action: 'refreshSource',
@@ -322,5 +318,5 @@ export async function runBuiltInAction(
   }
 
   const result = normalizeActionResult(await internals.adapter.invokeBuiltInAction(invocation, ctx));
-  return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+  return result;
 }

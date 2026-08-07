@@ -10,20 +10,20 @@ type FormLoadAction = NonNullable<RendererComponentProps<FormSchema>['events']['
  * abort-supersede in-flight requests, hydrate values on success, and expose a
  * refresh handler on the owned form. `lifecycleScope`/`ownedForm` are
  * snapshotted into refs so the effects do not re-run (and abort the in-flight
- * request) on every render.
+ * request) on every render. Imports are always prepared by the time the form
+ * renders (preload failure blocks compilation), so no import-ready gate is
+ * needed here.
  */
 export function useFormLoadAction(input: {
   loadAction: FormLoadAction | undefined;
   autoLoad: boolean;
-  importsReady: boolean;
   activationKey: string;
   lifecycleScope: ScopeRef;
   ownedForm: ReturnType<RendererRuntime['createFormRuntime']>;
   runtime: RendererRuntime;
   path: string;
 }): void {
-  const { loadAction, autoLoad, importsReady, activationKey, lifecycleScope, ownedForm, runtime, path } =
-    input;
+  const { loadAction, autoLoad, activationKey, lifecycleScope, ownedForm, runtime, path } = input;
   const loadActionKeyRef = useRef<string | undefined>(undefined);
   const loadAbortRef = useRef<AbortController | null>(null);
   const loadRequestIdRef = useRef(0);
@@ -38,7 +38,7 @@ export function useFormLoadAction(input: {
   });
 
   useEffect(() => {
-    if (!loadAction || !autoLoad || !importsReady) {
+    if (!loadAction || !autoLoad) {
       return;
     }
 
@@ -102,10 +102,10 @@ export function useFormLoadAction(input: {
         }
       }
     };
-  }, [activationKey, autoLoad, importsReady, loadAction, runtime, path]);
+  }, [activationKey, autoLoad, loadAction, runtime, path]);
 
   useEffect(() => {
-    if (!loadAction || !importsReady) {
+    if (!loadAction) {
       ownedForm.setRefreshHandler(undefined);
       return;
     }
@@ -127,5 +127,5 @@ export function useFormLoadAction(input: {
     return () => {
       ownedForm.setRefreshHandler(undefined);
     };
-  }, [loadAction, importsReady, ownedForm]);
+  }, [loadAction, ownedForm]);
 }

@@ -8,11 +8,12 @@ type FormInitAction = NonNullable<RendererComponentProps<FormSchema>['events']['
 /**
  * Owns the form `initAction` activation effect: run once per activation key,
  * abort-supersede in-flight runs, and route failures to the host diagnostics
- * seam (never a user-visible error).
+ * seam (never a user-visible error). Imports are always prepared by the time
+ * the form renders (preload failure blocks compilation), so no import-ready
+ * gate is needed here.
  */
 export function useFormInitAction(input: {
   initAction: FormInitAction | undefined;
-  importsReady: boolean;
   autoInit: boolean;
   activationKey: string;
   lifecycleScope: ScopeRef;
@@ -20,14 +21,13 @@ export function useFormInitAction(input: {
   runtime: RendererRuntime;
   path: string;
 }): void {
-  const { initAction, importsReady, autoInit, activationKey, lifecycleScope, ownedForm, runtime, path } =
-    input;
+  const { initAction, autoInit, activationKey, lifecycleScope, ownedForm, runtime, path } = input;
   const lastInitKeyRef = useRef<string | undefined>(undefined);
   const inFlightInitKeyRef = useRef<string | undefined>(undefined);
   const initActionAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!initAction || !importsReady || !autoInit) {
+    if (!initAction || !autoInit) {
       return;
     }
 
@@ -87,5 +87,5 @@ export function useFormInitAction(input: {
         }
       }
     };
-  }, [activationKey, autoInit, importsReady, initAction, lifecycleScope, ownedForm, path, runtime]);
+  }, [activationKey, autoInit, initAction, lifecycleScope, ownedForm, path, runtime]);
 }

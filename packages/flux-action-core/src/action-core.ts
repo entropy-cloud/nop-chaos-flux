@@ -1,6 +1,5 @@
 import type {
   ActionContext,
-  ActionMonitorPayload,
   ActionResult,
   CompiledActionNode,
   CompiledRuntimeValue,
@@ -46,19 +45,6 @@ export function createActionKey(action: CompiledActionNode, ctx: ActionContext):
     requestUrl ??
     '';
   return `${owner}:${action.action}:${target}`;
-}
-
-export function buildActionMonitorPayload(
-  action: CompiledActionNode,
-  ctx: ActionContext,
-): ActionMonitorPayload {
-  return {
-    actionType: action.action,
-    instancePath: ctx.instancePath,
-    nodeId: ctx.nodeInstance?.templateNode.id,
-    path: ctx.nodeInstance?.templateNode.templatePath,
-    interactionId: ctx.interactionId,
-  };
 }
 
 export type ActionResultClass = 'success' | 'failure' | 'cancelled' | 'neutral';

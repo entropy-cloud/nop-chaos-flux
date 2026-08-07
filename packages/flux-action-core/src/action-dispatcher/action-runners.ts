@@ -1,6 +1,5 @@
 import type {
   ActionContext,
-  ActionMonitorPayload,
   ActionResult,
   ComponentActionInvocation,
   CompiledActionNode,
@@ -43,20 +42,9 @@ function attachThrownMetadata(
   };
 }
 
-export function finishAction(
-  _ctx: ActionDispatcherContext,
-  _actionPayload: ActionMonitorPayload,
-  _startedAt: number,
-  result: ActionResult,
-): ActionResult {
-  return result;
-}
-
 export async function runComponentAction(
   action: CompiledActionNode,
   ctx: ActionContext,
-  startedAt: number,
-  actionPayload: ActionMonitorPayload,
   internals: ActionDispatcherContext,
 ): Promise<ActionResult | undefined> {
   if (!isComponentAction(action.action)) {
@@ -65,10 +53,10 @@ export async function runComponentAction(
 
   const method = extractComponentMethod(action.action);
   if (!method) {
-    return finishAction(internals, { ...actionPayload, dispatchMode: 'component' }, startedAt, {
+    return {
       ok: false,
       error: new Error('component:<method> requires a method name after the colon'),
-    });
+    };
   }
 
   const target = {
@@ -78,15 +66,10 @@ export async function runComponentAction(
   };
 
   if (!target.componentId && target._targetCid === undefined) {
-    return finishAction(
-      internals,
-      { ...actionPayload, dispatchMode: 'component', method },
-      startedAt,
-      {
-        ok: false,
-        error: new Error('component:<method> requires _targetCid or componentId'),
-      },
-    );
+    return {
+      ok: false,
+      error: new Error('component:<method> requires _targetCid or componentId'),
+    };
   }
 
   const payload = evaluateActionArgs(action, ctx, internals.evaluator);
@@ -110,19 +93,12 @@ export async function runComponentAction(
     });
   }
 
-  return finishAction(
-    internals,
-    { ...actionPayload, dispatchMode: 'component', method },
-    startedAt,
-    result,
-  );
+  return result;
 }
 
 export async function runNamespacedAction(
   action: CompiledActionNode,
   ctx: ActionContext,
-  startedAt: number,
-  actionPayload: ActionMonitorPayload,
   internals: ActionDispatcherContext,
 ): Promise<ActionResult | undefined> {
   if (!isNamespacedAction(action.action)) {
@@ -131,10 +107,10 @@ export async function runNamespacedAction(
 
   const parsed = parseNamespacedAction(action.action);
   if (!parsed) {
-    return finishAction(internals, { ...actionPayload, dispatchMode: 'namespace' }, startedAt, {
+    return {
       ok: false,
       error: new Error(`Invalid namespaced action: ${action.action}`),
-    });
+    };
   }
 
   const payload = evaluateActionArgs(action, ctx, internals.evaluator);
@@ -166,24 +142,12 @@ export async function runNamespacedAction(
     });
   }
 
-  return finishAction(
-    internals,
-    {
-      ...actionPayload,
-      dispatchMode: 'namespace',
-      namespace: parsed.namespace,
-      method: parsed.method,
-    },
-    startedAt,
-    result,
-  );
+  return result;
 }
 
 export async function runNamedAction(
   action: CompiledActionNode,
   ctx: ActionContext,
-  startedAt: number,
-  actionPayload: ActionMonitorPayload,
   internals: ActionDispatcherContext,
 ): Promise<ActionResult | undefined> {
   if (action.action.indexOf(':') >= 0) {
@@ -224,15 +188,5 @@ export async function runNamedAction(
     });
   }
 
-  return finishAction(
-    internals,
-    {
-      ...actionPayload,
-      dispatchMode: 'namespace',
-      namespace: XUI_ACTIONS_NAMESPACE,
-      method: action.action,
-    },
-    startedAt,
-    result,
-  );
+  return result;
 }

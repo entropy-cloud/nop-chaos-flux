@@ -127,6 +127,12 @@ export function createRendererRuntime(input: {
   let nextMountedCid = defaultCidState.nextCid;
   const ownedActionScopes = new Set<ActionScope>();
   const ownedScopeDisposers = new Map<string, () => void>();
+
+  function disposeOwnedScope(scopeId: string) {
+    ownedScopeDisposers.get(scopeId)?.();
+    sourceRegistryRef.current?.disposeScopeTree(scopeId);
+    reactionRegistryRef.current?.disposeScopeTree(scopeId);
+  }
   const runtimeRef: { current?: RendererRuntime } = {};
   const nodeRuntime = createNodeRuntime({
     expressionCompiler,
@@ -233,6 +239,7 @@ export function createRendererRuntime(input: {
       return actionDispatcherRef.current(action, ctx);
     },
     validationRegistry,
+    disposeScope: disposeOwnedScope,
     disposeScopeTree: (scopeId) => {
       sourceRegistryRef.current?.disposeScopeTree(scopeId);
       reactionRegistryRef.current?.disposeScopeTree(scopeId);
@@ -373,9 +380,7 @@ export function createRendererRuntime(input: {
       return scope;
     },
     disposeScope(scopeId) {
-      ownedScopeDisposers.get(scopeId)?.();
-      sourceRegistryRef.current?.disposeScopeTree(scopeId);
-      reactionRegistryRef.current?.disposeScopeTree(scopeId);
+      disposeOwnedScope(scopeId);
     },
     createHostProjectionScope({
       parentScope,
@@ -605,23 +610,29 @@ export function createRendererRuntime(input: {
         ? `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}:${ownerInstanceKey}`
         : (ctx.nodeInstance?.templateNode.id ?? ctx.scope.id);
       const pendingId = `${ownerId}-pending`;
-      const openingScope = createScopeRef({
-        id: `${ownerId}:${kind}-opening-scope`,
-        path: `${ctx.scope.path}.${kind}.opening`,
-        parent: ctx.scope,
+      const openingScope = runtime.createChildScope(ctx.scope, {}, {
+        pathSuffix: `${kind}.opening`,
+        scopeKey: `${ownerId}:${kind}-opening-scope`,
+      });
+      const scope = runtime.createChildScope(openingScope, patch ?? {}, {
+        pathSuffix: kind,
+        scopeKey: `${ownerId}:${kind}-scope`,
+        isolate,
       });
 
-      return createScopeRef({
-        id: `${ownerId}:${kind}-scope`,
-        path: `${ctx.scope.path}.${kind}`,
-        parent: openingScope,
-        isolate,
-        initialData: {
-          dialogId: pendingId,
-          ...(patch ?? {}),
-          ...(kind === 'drawer' ? { drawerId: pendingId } : {}),
-        },
+      // The opening scope id is not `${scope.id}:`-prefixed, so tree-dispose
+      // prefix matching can never reach it; dispose both scope stores together
+      // when the surface scope is closed.
+      ownedScopeDisposers.set(scope.id, () => {
+        (scope as ScopeRef & { dispose?: () => void }).dispose?.();
+        (openingScope as ScopeRef & { dispose?: () => void }).dispose?.();
       });
+
+      scope.update('dialogId', pendingId);
+      if (kind === 'drawer') {
+        scope.update('drawerId', pendingId);
+      }
+      return scope;
     },
   });
 
