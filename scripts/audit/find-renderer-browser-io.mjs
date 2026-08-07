@@ -49,6 +49,11 @@ const RULES = [
     message: 'Direct location navigation in renderer package — INV-1: must go through RendererEnv.navigate',
     pattern: /\blocation\s*\.\s*(?:href|assign|replace)\b/g,
   },
+  {
+    id: 'renderer-remote-dynamic-import',
+    message: 'Dynamic import() of remote module in renderer package — INV-1: must go through RendererEnv.importLoader',
+    pattern: /\bimport\s*\(\s*(?:['"`](?:https?:)?\/\/|['"`]data:|['"`]blob:)/g,
+  },
 ];
 
 function isCodePosition(content, index) {
@@ -119,7 +124,7 @@ async function main() {
   const results = [];
   for (const filePath of files) {
     const relativePath = toPosixPath(filePath);
-    if (!/^packages\/flux-renderers-/.test(relativePath)) {
+    if (!/^packages\/(flux-renderers-|flow-designer-renderers|spreadsheet-renderers|report-designer-renderers|word-editor-renderers)\//.test(relativePath)) {
       continue;
     }
     if (isTestFile(relativePath)) {
