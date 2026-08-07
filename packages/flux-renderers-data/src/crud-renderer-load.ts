@@ -200,18 +200,28 @@ export function useCrudLoadAction(args: {
 
     // Declare the scope paths this CRUD instance owns itself: its owner state
     // slice, the internal load-revision counter, and any configured
-    // status/data publication targets. Writes to these paths are CRUD-internal
-    // bookkeeping (or CRUD-originated data publication) — they must not
-    // re-trigger the reaction (a captured load result would otherwise feed a
-    // fetch → state-write → fetch loop). External bindings (dependsOn roots)
-    // and non-owned paths still fire normally.
+    // status/data publication targets, plus the per-slice state paths
+    // (pagination/query/sort/filter/selection). Writes to these paths are
+    // CRUD-internal bookkeeping (or CRUD-originated data publication) — they
+    // must not re-trigger the reaction (a captured load result would otherwise
+    // feed a fetch → state-write → fetch loop). Custom state paths (e.g. a
+    // scope-authored `paginationStatePath`) must be declared too, otherwise a
+    // CRUD-driven write fires BOTH the reactive force() dispatch and the
+    // imperative load effect dispatch — the double-fetch defect (2-8).
     proxyHandle.__setIgnoreWritesTo?.(
-      [
-        ownerStatePath,
-        '__crudLoadRevision',
-        ...(statusPath ? [statusPath] : []),
-        ...(dataStatePath ? [dataStatePath] : []),
-      ],
+      Array.from(
+        new Set([
+          ownerStatePath,
+          '__crudLoadRevision',
+          paginationStatePath,
+          queryStatePath,
+          sortStatePath,
+          filterStatePath,
+          selectionStatePath,
+          ...(statusPath ? [statusPath] : []),
+          ...(dataStatePath ? [dataStatePath] : []),
+        ]),
+      ),
     );
     proxyHandle.__setBindingsProvider?.(() => {
       const activeScope = scope ?? nodeScope;

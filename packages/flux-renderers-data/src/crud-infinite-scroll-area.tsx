@@ -17,9 +17,10 @@ export function CrudInfiniteScrollArea({
     loading: boolean;
     error: unknown;
     setError: (err: unknown) => void;
+    setLoading: (next: boolean) => void;
   };
   infiniteSentinelRef: RefObject<HTMLDivElement | null> | null;
-  onRetry: () => void;
+  onRetry: () => Promise<unknown> | void;
 }) {
   return (
     <div className="nop-crud-infinite" data-slot="crud-infinite">
@@ -52,7 +53,28 @@ export function CrudInfiniteScrollArea({
           size="sm"
           onClick={() => {
             infiniteState.setError(undefined);
-            onRetry();
+            const result = onRetry();
+            if (result && typeof (result as Promise<unknown>).then === 'function') {
+              infiniteState.setLoading(true);
+              void Promise.resolve(result)
+                .then((value) => {
+                  const ok =
+                    value && typeof value === 'object'
+                      ? (value as { ok?: boolean }).ok
+                      : undefined;
+                  if (ok === false) {
+                    infiniteState.setError(
+                      (value as { error?: unknown }).error ?? new Error('Load failed'),
+                    );
+                  }
+                })
+                .catch((err: unknown) => {
+                  infiniteState.setError(err);
+                })
+                .finally(() => {
+                  infiniteState.setLoading(false);
+                });
+            }
           }}
         >
           {t('flux.common.retry')}

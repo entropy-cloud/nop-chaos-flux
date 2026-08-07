@@ -230,4 +230,72 @@ describe('CRUD loadAction kind:reaction regression (Phase 6)', () => {
       expect(calls.filter((c) => c.method === 'load').length).toBeGreaterThanOrEqual(2);
     });
   });
+
+  it('2-8: custom paginationStatePath change fires exactly one load (no reactive + imperative double fetch)', async () => {
+    cleanup();
+    const calls: LoadCall[] = [];
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-custom-path-single-fetch"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'custom-path-crud',
+              loadAction: { action: 'probe:load', dependsOn: ['myPages'] },
+              paginationOwnership: 'scope',
+              paginationStatePath: 'myPages.pagination',
+              columns: [{ name: 'name', label: 'Name' }],
+              rowKey: 'id',
+            },
+          ],
+        }}
+        data={{ myPages: { pagination: { currentPage: 1, pageSize: 10 } } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={createLoadProbe(calls, (b) =>
+          makePageData(
+            (b?.pagination as { currentPage?: number })?.currentPage ?? 1,
+            (b?.pagination as { pageSize?: number })?.pageSize ?? 10,
+          ),
+        )}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(calls.filter((c) => c.method === 'load')).toHaveLength(1);
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Item 1')).toBeTruthy();
+    });
+
+    // Click next page. The CRUD's own pagination write lands on the custom
+    // path `myPages.pagination`, which the loadAction's dependsOn root
+    // `myPages` covers. Without the ignore-list declaration the reactive
+    // force() channel AND the imperative load effect would both dispatch —
+    // exactly two requests for one page change. The ignore list must suppress
+    // the reactive channel and converge to a single imperative dispatch (2-8).
+    const nextButton = document.querySelector('[aria-label="Next page"]');
+    expect(nextButton).toBeTruthy();
+    fireEvent.click(nextButton as Element);
+
+    await waitFor(() => {
+      const loadCalls = calls.filter((c) => c.method === 'load');
+      expect(loadCalls).toHaveLength(2);
+      expect(loadCalls[1]?.evaluationBindings?.pagination).toEqual({
+        currentPage: 2,
+        pageSize: 10,
+      });
+    });
+
+    // Let the (pre-fix) reactive channel settle a duplicate dispatch if any.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(calls.filter((c) => c.method === 'load')).toHaveLength(2);
+    await waitFor(() => {
+      expect(screen.getByText('Item 11')).toBeTruthy();
+    });
+  });
 });

@@ -291,6 +291,56 @@ describe('PaginationRenderer (W2a — standalone pagination interaction owner)',
     expect(paginationRoot().getAttribute('data-total-pages')).toBe('10');
   });
 
+  it('2-11: clamps a stale currentPage at render time after the total shrinks (last page, no out-of-range page)', () => {
+    const SchemaRenderer = createDataSchemaRenderer();
+    const schema = {
+      type: 'page',
+      body: [
+        {
+          type: 'pagination',
+          testid: 'shrink-pagination',
+          currentPage: 5,
+          pageSize: 10,
+          total: '${count}',
+        },
+      ],
+    };
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://data/pagination-shrink"
+        schema={schema}
+        data={{ count: 200 }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    // total=200, pageSize=10 → 20 pages; currentPage 5 is in range.
+    expect(paginationRoot().getAttribute('data-total-pages')).toBe('20');
+    expect(paginationRoot().getAttribute('data-current-page')).toBe('5');
+
+    // Server refresh shrinks the total to 25 → 3 pages. The local currentPage
+    // (5) is now out of range; the render must clamp to the last page (3) and
+    // disable "next" instead of showing a stale out-of-range page.
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://data/pagination-shrink"
+        schema={schema}
+        data={{ count: 25 }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(paginationRoot().getAttribute('data-total')).toBe('25');
+    expect(paginationRoot().getAttribute('data-total-pages')).toBe('3');
+    expect(paginationRoot().getAttribute('data-current-page')).toBe('3');
+    expect(screen.getByTestId('pagination-next').getAttribute('aria-disabled')).toBe('true');
+    // No out-of-range page link (4/5) is rendered.
+    expect(screen.queryByText('5')).toBeNull();
+  });
+
   it('publishes the pagination status summary through statusPath (design §7 shape)', async () => {
     const SchemaRenderer = createDataSchemaRenderer();
     render(

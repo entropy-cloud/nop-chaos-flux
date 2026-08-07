@@ -322,17 +322,17 @@ CRUD 把只读摘要发布到 scope 的 `$crud`，可在任意子节点表达式
 
 ## 7. 常用补充能力
 
-| 能力       | 字段                                                                                    | 说明                             |
-| ---------- | --------------------------------------------------------------------------------------- | -------------------------------- |
-| 列排序     | `columns[].sortable`                                                                    | 排序状态所有权 `sortOwnership`   |
-| 列筛选     | `columns[].filterable` / `filterOptions`                                                | 过滤状态所有权 `filterOwnership` |
-| 行内快编   | `columns[].quickEdit` + `quickSaveItemAction`（行按钮用 `actionType: "quickSaveItem"`） | 见上文 §6                        |
-| 列显隐管理 | `columnSettings: { enabled: true }`                                                     | 支持拖序（runtime 部分待补）     |
-| 响应式展开 | `responsive: { mode: "expand", breakpoint: "sm" }`                                      | 窄屏展开为卡片                   |
-| 前端全量   | `clientMode: { loadDataOnce: true }`                                                    | 一次拉全，分页/过滤前端完成      |
-| 轮询       | `polling: { enabled: true, sourceId: "pagedUsers", stopWhen: "${done}" }`               | toggle 上游 data-source 启停     |
-| 折叠查询区 | `filterTogglable: { defaultCollapsed: true }`                                           | 折叠态显示激活筛选摘要           |
-| 无限滚动   | `pagination: { mode: "infinite" }`                                                      | 底部 sentinel 触发下一页         |
-| 自定义空态 | `empty: { "type": "empty", "description": "暂无数据" }`                                 | value-or-region                  |
+| 能力       | 字段                                                                                    | 说明                                                                                |
+| ---------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 列排序     | `columns[].sortable`                                                                    | 排序状态所有权 `sortOwnership`                                                      |
+| 列筛选     | `columns[].filterable` / `filterOptions`                                                | 过滤状态所有权 `filterOwnership`                                                    |
+| 行内快编   | `columns[].quickEdit` + `quickSaveItemAction`（行按钮用 `actionType: "quickSaveItem"`） | 见上文 §6                                                                           |
+| 列显隐管理 | `columnSettings: { enabled: true }`                                                     | 支持拖序（runtime 部分待补）                                                        |
+| 响应式展开 | `responsive: { mode: "expand", breakpoint: "sm" }`                                      | 窄屏展开为卡片                                                                      |
+| 前端全量   | `clientMode: { loadDataOnce: true }`                                                    | 一次拉全，分页/过滤前端完成                                                         |
+| 轮询       | `polling: { enabled: true, sourceId: "pagedUsers" }`                                    | toggle 上游 data-source 启停；`interval`/`stopWhen` 停止条件配置在 data-source 自身 |
+| 折叠查询区 | `filterTogglable: { defaultCollapsed: true }`                                           | 折叠态显示激活筛选摘要                                                              |
+| 无限滚动   | `pagination: { mode: "infinite" }`                                                      | 底部 sentinel 触发下一页                                                            |
+| 自定义空态 | `empty: { "type": "empty", "description": "暂无数据" }`                                 | value-or-region                                                                     |
 
 > 状态所有权统一三档：`local`（缺省，组件内部）/ `controlled`（外部受控）/ `scope`（持久化到 `xxxStatePath`）。

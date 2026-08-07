@@ -333,6 +333,67 @@ describe('CRUD polling orchestration (E1d)', () => {
     });
     expect(startCalls).not.toContain('ds-a');
   });
+
+  it('2-10: starts polling when the upstream data-source registers AFTER the CRUD (schema order [crud, data-source])', async () => {
+    const invokeStartSpy = vi.fn();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://crud/polling-late-ds"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'polling-late-crud',
+              source: '${payload}',
+              polling: { enabled: true, sourceId: 'late-ds' },
+              columns: [{ name: 'name', label: 'Name' }],
+            },
+            {
+              type: 'data-source',
+              id: 'late-ds',
+              name: 'payload',
+              action: 'ajax',
+              args: { url: '/api/late' },
+              initFetch: false,
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onComponentRegistryChange={(registry) => {
+          if (!registry) {
+            return;
+          }
+          const handle = registry.resolve({ componentId: 'late-ds' });
+          if (handle?.capabilities) {
+            const original = handle.capabilities.invoke.bind(handle.capabilities);
+            handle.capabilities.invoke = (
+              method: string,
+              payload?: Record<string, unknown>,
+              ctx?: ComponentCapabilityActionContext,
+            ) => {
+              if (method === 'start') {
+                invokeStartSpy();
+              }
+              return (original as any)(method, payload, ctx);
+            };
+          }
+        }}
+      />,
+    );
+
+    // The CRUD's polling effect runs before the data-source registers; the
+    // retry timer must recover once the handle appears — polling starts
+    // automatically without any user interaction.
+    await waitFor(
+      () => {
+        expect(invokeStartSpy).toHaveBeenCalled();
+      },
+      { timeout: 3000 },
+    );
+  });
 });
 
 describe('CRUD filterTogglable (E1d)', () => {
@@ -413,181 +474,5 @@ describe('CRUD filterTogglable (E1d)', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Keyword')).toBeTruthy();
     });
-  });
-});
-
-describe('CRUD infinite scroll (E1d)', () => {
-  function triggerIntersection(sentinelSelector: string) {
-    const sentinel = document.querySelector(sentinelSelector);
-    if (!sentinel) {
-      throw new Error(`Sentinel ${sentinelSelector} not found`);
-    }
-    act(() => {
-      const observer = (window as unknown as { __crudInfiniteObserver?: IntersectionObserver })
-        .__crudInfiniteObserver;
-      if (observer) {
-        (observer as unknown as { __fireIntersection: (el: Element) => void }).__fireIntersection(
-          sentinel,
-        );
-      } else {
-        sentinel.dispatchEvent(new CustomEvent('crud-infinite-intersect'));
-      }
-    });
-  }
-
-  it('triggers next-page load when sentinel intersects', async () => {
-    const onNextPage = vi.fn();
-
-    render(
-      <SchemaRenderer
-        schemaUrl="test://crud/infinite-trigger"
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'crud',
-              id: 'crud-infinite',
-              source: [
-                { id: '1', name: 'Alice' },
-                { id: '2', name: 'Bob' },
-                { id: '3', name: 'Charlie' },
-                { id: '4', name: 'Dave' },
-                { id: '5', name: 'Eve' },
-                { id: '6', name: 'Fiona' },
-                { id: '7', name: 'George' },
-                { id: '8', name: 'Hannah' },
-                { id: '9', name: 'Ivan' },
-                { id: '10', name: 'Judy' },
-                { id: '11', name: 'Kevin' },
-                { id: '12', name: 'Linda' },
-              ],
-              pagination: { mode: 'infinite' },
-              pageSizeStatePath: 'infinite.pageSize',
-              paginationOwnership: 'scope',
-              paginationStatePath: 'infinite.pagination',
-              onRefresh: { action: 'probe:onNextPage' },
-              columns: [{ name: 'name', label: 'Name' }],
-            },
-          ],
-        }}
-        data={{ infinite: { pagination: { currentPage: 1, pageSize: 5 } } }}
-        env={env}
-        formulaCompiler={formulaCompiler}
-        onActionScopeChange={(actionScope) => {
-          if (!actionScope) {
-            return;
-          }
-          actionScope.registerNamespace('probe', {
-            kind: 'host',
-            invoke(method: string) {
-              if (method === 'onNextPage') {
-                onNextPage();
-                return { ok: true };
-              }
-              return { ok: false, error: new Error(`Unsupported: ${method}`) };
-            },
-          });
-        }}
-      />,
-    );
-
-    await waitFor(() => {
-      const sentinel = document.querySelector('[data-slot="crud-infinite-sentinel"]');
-      expect(sentinel).toBeTruthy();
-    });
-
-    triggerIntersection('[data-slot="crud-infinite-sentinel"]');
-
-    await waitFor(() => {
-      expect(onNextPage).toHaveBeenCalled();
-    });
-  });
-
-  it('disables infinite trigger when clientMode.loadDataOnce is true', async () => {
-    render(
-      <SchemaRenderer
-        schemaUrl="test://crud/infinite-loadOnce"
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'crud',
-              id: 'crud-infinite-loadOnce',
-              source: [{ id: '1', name: 'Alice' }],
-              pagination: { mode: 'infinite' },
-              clientMode: { loadDataOnce: true },
-              paginationOwnership: 'scope',
-              paginationStatePath: 'infinite.pagination',
-              columns: [{ name: 'name', label: 'Name' }],
-            },
-          ],
-        }}
-        env={env}
-        formulaCompiler={formulaCompiler}
-      />,
-    );
-
-    await waitFor(() => {
-      const marker = document.querySelector('[data-slot="crud-infinite-status"]');
-      expect(marker).toBeTruthy();
-      expect(marker?.textContent ?? '').toContain(t('flux.crud.loadedAll', { count: 1 }));
-    });
-
-    expect(document.querySelector('[data-slot="crud-infinite-sentinel"]')).toBeNull();
-  });
-
-  it('stops triggering next-page load at last page', async () => {
-    const onNextPage = vi.fn();
-
-    render(
-      <SchemaRenderer
-        schemaUrl="test://crud/infinite-last"
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'crud',
-              id: 'crud-infinite-last',
-              source: [
-                { id: '1', name: 'Alice' },
-                { id: '2', name: 'Bob' },
-              ],
-              pagination: { mode: 'infinite' },
-              paginationOwnership: 'scope',
-              paginationStatePath: 'infiniteLast.pagination',
-              onRefresh: { action: 'probe:onNextPage' },
-              columns: [{ name: 'name', label: 'Name' }],
-            },
-          ],
-        }}
-        data={{ infiniteLast: { pagination: { currentPage: 1, pageSize: 5 }, total: 2 } }}
-        env={env}
-        formulaCompiler={formulaCompiler}
-        onActionScopeChange={(actionScope) => {
-          if (!actionScope) {
-            return;
-          }
-          actionScope.registerNamespace('probe', {
-            kind: 'host',
-            invoke(method: string) {
-              if (method === 'onNextPage') {
-                onNextPage();
-                return { ok: true };
-              }
-              return { ok: false, error: new Error(`Unsupported: ${method}`) };
-            },
-          });
-        }}
-      />,
-    );
-
-    await waitFor(() => {
-      const sentinel = document.querySelector('[data-slot="crud-infinite-sentinel"]');
-      expect(sentinel).toBeTruthy();
-    });
-
-    triggerIntersection('[data-slot="crud-infinite-sentinel"]');
-
-    expect(onNextPage).not.toHaveBeenCalled();
   });
 });

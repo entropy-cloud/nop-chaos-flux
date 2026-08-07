@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { ActionContext } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
@@ -251,5 +251,82 @@ describe('CRUD loadAction × infinite accumulate (1-2)', () => {
       const status = document.querySelector('[data-slot="crud-infinite-status"]');
       expect(status?.textContent ?? '').toContain(t('flux.crud.loadFailed'));
     });
+  });
+
+  it('2-9: retries the failed page instead of bumping to the next one (loadAction mode)', async () => {
+    cleanup();
+    const requestedPages: number[] = [];
+    let failPage2 = true;
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-loadaction-infinite-retry"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'crud-infinite-retry',
+              loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
+              pagination: { mode: 'infinite' },
+              columns: [{ name: 'name', label: 'Name' }],
+              rowKey: 'id',
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={(actionScope) => {
+          if (!actionScope) {
+            return;
+          }
+          (actionScope as {
+            registerNamespace(ns: string, config: unknown): void;
+          }).registerNamespace('probe', {
+            kind: 'host',
+            invoke(method: string, _payload: Record<string, unknown> | undefined, ctx: ActionContext) {
+              if (method === 'load') {
+                const bindings = ctx.evaluationBindings ?? {};
+                const current = (bindings as { pagination?: { currentPage?: number } })
+                  .pagination?.currentPage ?? 1;
+                requestedPages.push(current);
+                if (current === 2 && failPage2) {
+                  failPage2 = false;
+                  return { ok: false, error: new Error('Server down') };
+                }
+                return { ok: true, data: makePageData(current, 10) };
+              }
+              return { ok: false, error: new Error(`Unsupported method: ${method}`) };
+            },
+          });
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Item 1')).toBeTruthy();
+    });
+    expect(requestedPages).toEqual([1]);
+
+    // Load-more to page 2 → the fetch fails → the retry button appears.
+    triggerIntersection('[data-slot="crud-infinite-sentinel"]');
+    await waitFor(() => {
+      const status = document.querySelector('[data-slot="crud-infinite-status"]');
+      expect(status?.textContent ?? '').toContain(t('flux.crud.loadFailed'));
+    });
+
+    // Retry must re-request page 2 (the failed page), NOT bump to page 3.
+    fireEvent.click(screen.getByRole('button', { name: t('flux.common.retry') }));
+    await waitFor(() => {
+      expect(requestedPages).toEqual([1, 2, 2]);
+    });
+
+    // The page-2 rows land on the retry (accumulated on top of page 1).
+    await waitFor(() => {
+      expect(screen.getByText('Item 11')).toBeTruthy();
+    });
+    expect(screen.getByText('Item 1')).toBeTruthy();
+    expect(screen.getByText('Item 20')).toBeTruthy();
   });
 });

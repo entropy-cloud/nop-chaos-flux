@@ -81,6 +81,12 @@ export interface UseCrudPollingArgs {
   scope: ScopeRef | undefined;
 }
 
+// When the CRUD mounts before its upstream data-source (schema order
+// `[crud, data-source]`), the handle is not resolvable yet. Retry resolution on
+// a bounded timer so polling starts automatically once the data-source
+// registers, instead of being silently disabled forever (2-10).
+const RESOLVE_RETRY_MS = 250;
+
 export interface UseCrudPollingResult {
   /** schema `enabled` resolved against the user toggle */
   effectiveEnabled: boolean;
@@ -112,23 +118,41 @@ export function useCrudPolling(args: UseCrudPollingArgs): UseCrudPollingResult {
       return;
     }
 
-    const handle = resolveDataSourceHandle(componentRegistry, sourceId);
-    handleRef.current = handle;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let warned = false;
 
-    if (!handle) {
-      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-        console.warn(
-          `[crud polling] polling.enabled is true but no upstream data-source was found${sourceId ? ` for sourceId "${sourceId}"` : ''}; polling is disabled`,
-        );
+    const attempt = () => {
+      const handle = resolveDataSourceHandle(componentRegistry, sourceId);
+      handleRef.current = handle;
+
+      if (!handle) {
+        // The upstream data-source may not be registered yet (schema order
+        // `[crud, data-source]`): warn once, then retry on a timer until it
+        // appears or the effect tears down (2-10).
+        if (!warned) {
+          warned = true;
+          if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+            console.warn(
+              `[crud polling] polling.enabled is true but no upstream data-source was found${sourceId ? ` for sourceId "${sourceId}"` : ''}; retrying until it registers`,
+            );
+          }
+        }
+        retryTimer = setTimeout(attempt, RESOLVE_RETRY_MS);
+        return;
       }
-      return;
-    }
 
-    invokeCapability(handle, 'start');
-    lastActionRef.current = 'start';
+      invokeCapability(handle, 'start');
+      lastActionRef.current = 'start';
+    };
+
+    attempt();
 
     return () => {
-      invokeCapability(handle, 'cancel');
+      if (retryTimer !== undefined) {
+        clearTimeout(retryTimer);
+        retryTimer = undefined;
+      }
+      invokeCapability(handleRef.current, 'cancel');
       lastActionRef.current = 'cancel';
     };
   }, [effectiveEnabled, sourceId, componentRegistry, scope]);

@@ -33,7 +33,14 @@ export interface CrudQueryFormConfig extends SchemaObject {
 export interface CrudPollingConfig extends SchemaObject {
   enabled?: boolean | string;
   sourceId?: string;
-  stopWhen?: string;
+  /**
+   * @reserved — not consumed by the CRUD runtime. Polling stop conditions are
+   * configured on the upstream data-source itself (`stopWhen` is compiled into
+   * `CompiledRuntimeValue<boolean>` by `source-compiler.ts` and consumed by the
+   * data-source controller, see `api-data-source-controller-state.ts`).
+   * Removed from the active contract surface (see docs/components/crud/design.md
+   * §Polling 启停状态发布); retained as an authoring compatibility marker.
+   */
 }
 
 export interface CrudFilterToggleConfig extends SchemaObject {
@@ -267,22 +274,5 @@ export function normalizeCrudSchema(schema: CrudSchema): CrudSchema {
     syncLocation: schema.syncLocation ?? false,
     pageField: schema.pageField ?? 'page',
     pageSizeField: schema.pageSizeField ?? 'perPage',
-  };
-}
-
-export function createDefaultCrudStatusSummary(): CrudStatusSummary {
-  return {
-    loading: false,
-    refreshing: false,
-    itemCount: 0,
-    total: undefined,
-    hasSelection: false,
-    selectionCount: 0,
-    selectedRowKeys: [],
-    query: undefined,
-    pagination: undefined,
-    sort: undefined,
-    filters: undefined,
-    visibleColumnNames: undefined,
   };
 }

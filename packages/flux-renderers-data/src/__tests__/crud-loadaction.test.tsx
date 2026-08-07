@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ActionContext } from '@nop-chaos/flux-core';
 import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
@@ -333,5 +333,155 @@ describe('CRUD loadAction', () => {
     });
 
     expect(notify).toHaveBeenCalledWith('error', 'Server down');
+  });
+
+  it('2-2: exposes a true $crud.refreshing window during a refresh cycle (loadAction mode)', async () => {
+    cleanup();
+    let loadCount = 0;
+    let resolveRefresh: ((value: unknown) => void) | undefined;
+    let crudHandle: { capabilities: { invoke(method: string, payload?: unknown, ctx?: unknown): unknown } } | undefined;
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-refreshing-loadaction"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'refreshing-crud',
+              loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
+              footerToolbar: [
+                { type: 'text', text: 'Refreshing: ${$crud.refreshing ? "yes" : "no"}' },
+              ],
+              columns: [{ name: 'name', label: 'Name' }],
+              rowKey: 'id',
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onComponentRegistryChange={(registry) => {
+          if (!registry) {
+            return;
+          }
+          crudHandle = registry.resolve({ componentId: 'refreshing-crud' }) as typeof crudHandle;
+        }}
+        onActionScopeChange={(actionScope) => {
+          if (!actionScope) return;
+          (actionScope as {
+            registerNamespace(ns: string, config: unknown): void;
+          }).registerNamespace('probe', {
+            kind: 'host',
+            invoke(method: string) {
+              if (method === 'load') {
+                loadCount += 1;
+                if (loadCount === 1) {
+                  return { ok: true, data: makePageData(1, 10) };
+                }
+                return new Promise((resolve) => {
+                  resolveRefresh = resolve;
+                });
+              }
+              return { ok: false, error: new Error(`Unsupported method: ${method}`) };
+            },
+          });
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Item 1')).toBeTruthy();
+      expect(screen.getByText('Refreshing: no')).toBeTruthy();
+    });
+
+    // Trigger a refresh via the CRUD handle. The second load dispatch stays
+    // pending → the summary must report refreshing=true while rows are present.
+    await act(async () => {
+      await crudHandle?.capabilities.invoke('refresh', undefined, {});
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Refreshing: yes')).toBeTruthy();
+    });
+
+    resolveRefresh?.({ ok: true, data: makePageData(1, 10) });
+    await waitFor(() => {
+      expect(screen.getByText('Refreshing: no')).toBeTruthy();
+    });
+    expect(loadCount).toBe(2);
+  });
+
+  it('2-2: exposes a true $crud.refreshing window during a refresh dispatch (source mode)', async () => {
+    cleanup();
+    let resolveRefresh: ((value: unknown) => void) | undefined;
+    let crudHandle: { capabilities: { invoke(method: string, payload?: unknown, ctx?: unknown): unknown } } | undefined;
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-refreshing-source"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'refreshing-source-crud',
+              source: [{ id: '1', name: 'Item 1' }],
+              onRefresh: { action: 'probe:refresh' },
+              footerToolbar: [
+                { type: 'text', text: 'Refreshing: ${$crud.refreshing ? "yes" : "no"}' },
+              ],
+              columns: [{ name: 'name', label: 'Name' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onComponentRegistryChange={(registry) => {
+          if (!registry) {
+            return;
+          }
+          crudHandle = registry.resolve({
+            componentId: 'refreshing-source-crud',
+          }) as typeof crudHandle;
+        }}
+        onActionScopeChange={(actionScope) => {
+          if (!actionScope) return;
+          (actionScope as {
+            registerNamespace(ns: string, config: unknown): void;
+          }).registerNamespace('probe', {
+            kind: 'host',
+            invoke(method: string) {
+              if (method === 'refresh') {
+                return new Promise((resolve) => {
+                  resolveRefresh = resolve;
+                });
+              }
+              return { ok: false, error: new Error(`Unsupported method: ${method}`) };
+            },
+          });
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Refreshing: no')).toBeTruthy();
+    });
+
+    // The onRefresh dispatch stays pending → refreshing must be true during the
+    // in-flight window, then false once the dispatch settles.
+    const refreshPromise = crudHandle?.capabilities.invoke('refresh', undefined, {}) as
+      | Promise<unknown>
+      | undefined;
+    await waitFor(() => {
+      expect(screen.getByText('Refreshing: yes')).toBeTruthy();
+    });
+
+    resolveRefresh?.({ ok: true });
+    await refreshPromise;
+    await waitFor(() => {
+      expect(screen.getByText('Refreshing: no')).toBeTruthy();
+    });
   });
 });

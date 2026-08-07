@@ -139,14 +139,20 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
   const total = initialTotal;
 
   const currentTotalPages = computeTotalPages(total, pageSize);
-  const canGoPrev = currentPage > 1;
-  const canGoNext = currentPage < currentTotalPages;
+  // Render-time clamp (design §7): `total` follows the schema prop at render
+  // time (H2), so a server refresh that shrinks the total can leave the local
+  // currentPage out of range. Clamp the RENDERED page into [1, currentTotalPages]
+  // without mutating the local interaction state — the next user navigation
+  // commits a normalized value through handlePageChange (2-11).
+  const clampedCurrentPage = normalizeCurrentPage(currentPage, currentTotalPages);
+  const canGoPrev = clampedCurrentPage > 1;
+  const canGoNext = clampedCurrentPage < currentTotalPages;
 
   const statusPath =
     typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
   useStatusPathPublication(props.node.scope.parent ?? props.node.scope, statusPath, {
     kind: 'pagination' as const,
-    currentPage,
+    currentPage: clampedCurrentPage,
     pageSize,
     total,
     totalPages: currentTotalPages,
@@ -210,7 +216,7 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
     });
   };
 
-  const pages = buildPageWindow(currentPage, currentTotalPages);
+  const pages = buildPageWindow(clampedCurrentPage, currentTotalPages);
   const showFirst = shouldShowFirstPage(pages);
   const showLeadingEllipsis = shouldShowLeadingEllipsis(pages);
   const showTrailingEllipsis = shouldShowTrailingEllipsis(pages, currentTotalPages);
@@ -222,7 +228,7 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="pagination-root"
-      data-current-page={currentPage}
+      data-current-page={clampedCurrentPage}
       data-page-size={pageSize}
       data-total={total}
       data-total-pages={currentTotalPages}
@@ -237,7 +243,7 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
               onClick={(event) => {
                 event.preventDefault();
                 if (canGoPrev) {
-                  handlePageChange(currentPage - 1);
+                  handlePageChange(clampedCurrentPage - 1);
                 }
               }}
             />
@@ -248,7 +254,7 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
               <PaginationItem>
                 <PaginationLink
                   data-page={1}
-                  isActive={currentPage === 1}
+                  isActive={clampedCurrentPage === 1}
                   onClick={(event) => {
                     event.preventDefault();
                     handlePageChange(1);
@@ -269,8 +275,8 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
             <PaginationItem key={page}>
               <PaginationLink
                 data-page={page}
-                isActive={page === currentPage}
-                aria-current={page === currentPage ? 'page' : undefined}
+                isActive={page === clampedCurrentPage}
+                aria-current={page === clampedCurrentPage ? 'page' : undefined}
                 onClick={(event) => {
                   event.preventDefault();
                   handlePageChange(page);
@@ -291,7 +297,7 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
               <PaginationItem>
                 <PaginationLink
                   data-page={currentTotalPages}
-                  isActive={currentPage === currentTotalPages}
+                  isActive={clampedCurrentPage === currentTotalPages}
                   onClick={(event) => {
                     event.preventDefault();
                     handlePageChange(currentTotalPages);
@@ -311,7 +317,7 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
               onClick={(event) => {
                 event.preventDefault();
                 if (canGoNext) {
-                  handlePageChange(currentPage + 1);
+                  handlePageChange(clampedCurrentPage + 1);
                 }
               }}
             />

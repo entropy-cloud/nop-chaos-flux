@@ -11,7 +11,7 @@ describe('20-02 crud infinite scroll live region (WCAG 4.1.3)', () => {
         loadDataOnce={false}
         filteredRowCount={0}
         atLastPage={false}
-        infiniteState={{ loading: true, error: undefined, setError: () => {} }}
+        infiniteState={{ loading: true, error: undefined, setError: () => {}, setLoading: () => {} }}
         infiniteSentinelRef={null}
         onRetry={() => {}}
       />,
@@ -29,7 +29,7 @@ describe('20-02 crud infinite scroll live region (WCAG 4.1.3)', () => {
         loadDataOnce={false}
         filteredRowCount={0}
         atLastPage={false}
-        infiniteState={{ loading: false, error: new Error('boom'), setError: () => {} }}
+        infiniteState={{ loading: false, error: new Error('boom'), setError: () => {}, setLoading: () => {} }}
         infiniteSentinelRef={null}
         onRetry={() => {}}
       />,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
@@ -67,6 +67,11 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const env = useRendererEnv();
   const isMobile = useIsMobile();
   const refreshCountRef = useRef(0);
+  // Source mode (no loadAction): the fetch is dispatched through the onRefresh
+  // event; track its in-flight window so `$crud.refreshing` / statusPath can
+  // express the refresh state (2-2). loadAction mode derives it from
+  // `loadResult.loading && hasRows` (mirrors data-source isRefreshing precedent).
+  const [sourceRefreshInFlight, setSourceRefreshInFlight] = useState(false);
 
   const ownerPaths = createCrudOwnerPaths({ id: props.id, cid: props.meta.cid, schema: normalizedSchema });
   // H18: stabilize defaultQuery identity on the (now-memoized) normalizedSchema so
@@ -206,7 +211,9 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
   const summary: CrudStatusSummary = {
     loading: useLoadAction ? loadResult.loading : false,
-    refreshing: false,
+    refreshing: useLoadAction
+      ? loadResult.loading && filteredRows.length > 0
+      : sourceRefreshInFlight,
     itemCount: filteredRows.length,
     total: resolvedSource.total,
     hasSelection: selectedRowKeys.length > 0,
@@ -239,7 +246,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       selectedRowKeys,
     };
 
-    return onRefresh?.(refreshSummary, {
+    const dispatchResult = onRefresh?.(refreshSummary, {
       scope: scope ?? ctx?.scope ?? nodeScope,
       event: refreshSummary,
       actionScope: ctx?.actionScope,
@@ -256,6 +263,23 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         $crud: summary,
       },
     });
+
+    if (!useLoadAction) {
+      // Source mode: the fetch is dispatched through the onRefresh event; keep
+      // the summary's `refreshing` true until the dispatch settles so the
+      // refresh-in-flight state is observable (2-2).
+      setSourceRefreshInFlight(true);
+      if (dispatchResult && typeof (dispatchResult as Promise<unknown>).then === 'function') {
+        void Promise.resolve(dispatchResult).then(
+          () => setSourceRefreshInFlight(false),
+          () => setSourceRefreshInFlight(false),
+        );
+      } else {
+        setSourceRefreshInFlight(false);
+      }
+    }
+
+    return dispatchResult;
   };
 
   const queryFormId = createCrudQueryFormId(props.id, props.path);
@@ -313,6 +337,23 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       pageSize: paginationState.pageSize,
     });
     return loadMorePromise;
+  };
+
+  // Retry the CURRENT (failed) page instead of bumping to the next one: the
+  // failed load-more already advanced `currentPage`, so re-dispatching with the
+  // live pagination state re-requests the failed page (2-9). loadAction mode
+  // re-runs the imperative load effect with the current page; source mode
+  // re-fires onRefresh with the current page — the source slice is not skipped.
+  const handleRetry = (): Promise<unknown> | void => {
+    if (loadDataOnce || atLastPage) {
+      return;
+    }
+    if (!useLoadAction) {
+      return handleRefresh();
+    }
+    const retryPromise = loadResult.loadMore();
+    loadResult.reload();
+    return retryPromise;
   };
 
   // autoJumpToTopOnPagerChange (amis: autoJumpToTopOnPagerChange): scroll the
@@ -601,7 +642,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
           atLastPage={atLastPage}
           infiniteState={infiniteState}
           infiniteSentinelRef={infiniteSentinelEnabled ? infiniteSentinelRef : null}
-          onRetry={handleLoadMore}
+          onRetry={handleRetry}
         />
       ) : null}
 

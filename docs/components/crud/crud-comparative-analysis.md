@@ -293,7 +293,7 @@ form
 | `fieldset`         | `flux-renderers-form/src/renderers/fieldset.tsx` | `<fieldset>/<legend>` + `collapsible`   |
 | `tabs`             | `flux-renderers-basic/src/tabs.tsx`              | 多模式标签页                            |
 | `wizard`           | `flux-renderers-layout/src/wizard-renderer.tsx`  | 步骤表单                                |
-| `form.columnCount` | `flux-renderers-form/src/renderers/form.tsx:556` | 表单级多列网格                          |
+| `form.columnCount` | `flux-renderers-form/src/renderers/form.tsx:316` | 表单级多列网格                          |
 
 **flux 的 form 多列布局**：
 

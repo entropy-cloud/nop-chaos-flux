@@ -164,7 +164,7 @@
 - `responsive`
 - `autoGenerateQueryForm`
 - `clientMode`
-- `polling`（`{ enabled?: boolean | string; sourceId?: string; stopWhen?: string }`，E1d）
+- `polling`（`{ enabled?: boolean | string; sourceId?: string }`，E1d；`stopWhen` @reserved——停止条件配置在**上游 data-source**，见 §Polling 启停状态发布）
 - `filterTogglable`（`boolean | { defaultCollapsed?: boolean; collapsedLabel?: string; expandedLabel?: string }`，E1d）
 - `pagination.mode`（`'pages' | 'infinite'`，缺省 `'pages'`，E1d；顶层 `pagination: { mode }` 配置入口）
 - `quickSaveAction` / `quickSaveItemAction`
@@ -349,7 +349,7 @@ interface CrudStatusSummary {
 
 #### Polling 启停状态发布（E1d）
 
-`polling.enabled` truthy 时，`useCrudPolling` 在 CRUD mount/effect 阶段经 `componentRegistry.resolve({ componentId: polling.sourceId })` 寻址上游 data-source handle，调用其 `start` capability（data-source renderer 注册的 capability 之一）；CRUD unmount 或 `effectiveEnabled` 转 false 时调用 `cancel` capability。`polling.sourceId` 缺省时回退到 nearest data-source。`interval` / `stopWhen` 由上游 data-source 自身配置，CRUD 不重造请求层。Polling 状态本身不新增 schema 字段——`$crud.refreshing`/`statusPath.refreshing` 已由既有 status summary 暴露；toolbar polling-toggle block（`toolbarLayout.header/footer` 含 `{ type: 'polling-toggle' }`）暴露 user-controlled override。
+`polling.enabled` truthy 时，`useCrudPolling` 在 CRUD mount/effect 阶段经 `componentRegistry.resolve({ componentId: polling.sourceId })` 寻址上游 data-source handle，调用其 `start` capability（data-source renderer 注册的 capability 之一）；CRUD unmount 或 `effectiveEnabled` 转 false 时调用 `cancel` capability。`polling.sourceId` 缺省时回退到 nearest data-source。`interval` / `stopWhen` 由上游 data-source 自身配置，CRUD 不重造请求层——**`CrudPollingConfig.stopWhen` 已移除（@reserved）**：停止条件一律配置在 data-source 上（`stopWhen` 经 `source-compiler.ts` 编译为 `CompiledRuntimeValue<boolean>`，由 data-source 控制器消费，见 `api-data-source-controller-state.ts`），CRUD 侧配置会静默无效（2-1 裁决：移除字段，对齐 calendar @reserved 先例）。`$crud.refreshing`/`statusPath.refreshing` 由 status summary 暴露：loadAction 模式为 `loading && 已有行`（对齐 data-source `isRefreshing` 先例，首载不置 refreshing）；source 模式为 `onRefresh` 派发 in-flight 窗口（2-2）。toolbar polling-toggle block（`toolbarLayout.header/footer` 含 `{ type: 'polling-toggle' }`）暴露 user-controlled override。
 
 #### Infinite scroll 累计合并（E1d）
 
@@ -482,10 +482,10 @@ interface CrudStatusSummary {
 
 ### 工具栏简化
 
-| 断点              | 行为                                                                                                                       | 实现                                                                                                                                            |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| < 768px (mobile)  | `switch-per-page`（每页条数切换）block 隐藏；toolbar layout 由横排 `flex-wrap ... justify-between` 改为纵列堆叠 `flex-col` | `crud-renderer.tsx` `resolveToolbarBlocks` 复用既有 headerBlocks 过滤机制；`crud-renderer-toolbar.tsx` `CrudToolbarBlocks` 消费 `useIsMobile()` |
-| ≥ 768px (desktop) | 全部 toolbar block 渲染；横向 `justify-between` 布局                                                                       | 维持现状，无回归                                                                                                                                |
+| 断点              | 行为                                                                                                                       | 实现                                                                                                                                                                                                  |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | `switch-per-page`（每页条数切换）block 隐藏；toolbar layout 由横排 `flex-wrap ... justify-between` 改为纵列堆叠 `flex-col` | `crud-renderer-toolbar.tsx:195` `resolveToolbarBlocks`（live 实现文件，`crud-renderer.tsx` 调用）复用既有 headerBlocks 过滤机制；`crud-renderer-toolbar.tsx` `CrudToolbarBlocks` 消费 `useIsMobile()` |
+| ≥ 768px (desktop) | 全部 toolbar block 渲染；横向 `justify-between` 布局                                                                       | 维持现状，无回归                                                                                                                                                                                      |
 
 保留的小屏 block：`listActions`（selection-aware 列表动作）、`statistics`（总数）、`pagination`（上一页/下一页 + 页码指示）、`polling-toggle`。隐藏的低频 block：`switch-per-page`。`bulkActions` 不在 toolbar 协议内（已由 `normalizeToolbarBlocks` 丢弃，归 `listActions`），无单独折叠动作（业务出现高频多选场景时再细化，见 mobile-roadmap Non-Blocking Follow-ups）。
 
