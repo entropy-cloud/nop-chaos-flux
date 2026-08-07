@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createUndoStack, pushCommand, undo, redo, canUndo, canRedo, shouldMerge } from './kanban-undo-stack.js';
+import { removeCard } from '../kanban-helpers.js';
 import type { BoardData } from '../kanban.types.js';
 import type { UndoCommand } from './kanban-undo-stack.js';
 
@@ -217,4 +218,57 @@ describe('C9 P1-3: addColumn undo/redo', () => {
       col3: columnData,
     };
   }
+});
+
+describe('C9 P1: removeCard undo restores full card including meta (1-5)', () => {
+  it('undo replays the captured meta alongside card data', () => {
+    const board = createSampleBoard();
+    board.card1.meta = {
+      color: '#ff0000',
+      tags: [{ id: 't1', text: 'urgent', color: '#ff0000' }],
+      members: [{ id: 'm1', name: 'Alice', color: '#00ff00' }],
+    };
+    const stack = pushCommand(createUndoStack(), {
+      type: 'removeCard',
+      timestamp: Date.now(),
+      params: {
+        cardId: 'card1',
+        columnId: 'col1',
+        index: 0,
+        cardData: { ...board.card1.data },
+        cardMeta: { ...board.card1.meta },
+      },
+    });
+    const afterRemove = removeCard(board, 'card1');
+    expect(afterRemove.card1).toBeUndefined();
+
+    const result = undo(stack, afterRemove);
+    expect(result).not.toBeNull();
+    const restored = result!.board.card1;
+    expect(restored).toBeDefined();
+    // addCard 语义：data 承载完整 cardData（含注入的 id，与正常新增路径一致）
+    expect(restored!.data).toEqual({ id: 'card1', title: 'Task 1' });
+    expect(restored!.meta).toEqual({
+      color: '#ff0000',
+      tags: [{ id: 't1', text: 'urgent', color: '#ff0000' }],
+      members: [{ id: 'm1', name: 'Alice', color: '#00ff00' }],
+    });
+    expect(result!.board.col1.children[0]).toBe('card1');
+  });
+
+  it('redo re-applies the removal after the undo', () => {
+    const board = createSampleBoard();
+    board.card1.meta = { color: '#ff0000' };
+    const stack = pushCommand(createUndoStack(), {
+      type: 'removeCard',
+      timestamp: Date.now(),
+      params: { cardId: 'card1', columnId: 'col1', index: 0, cardData: { title: 'Task 1' }, cardMeta: { color: '#ff0000' } },
+    });
+    const afterRemove = removeCard(board, 'card1');
+    const undone = undo(stack, afterRemove)!;
+    const redone = redo(undone.stack, undone.board);
+    expect(redone).not.toBeNull();
+    expect(redone!.board.card1).toBeUndefined();
+    expect(redone!.board.col1.children).toEqual(['card2']);
+  });
 });

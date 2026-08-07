@@ -152,43 +152,47 @@ export function KanbanColumn({
 
   const columnTitle = (column.title || column.data?.title || '') as string;
 
-  const [rovingIndex, setRovingIndex] = useState<number | null>(null);
+  // 1-11: roving 焦点以 card id 追踪（而非显示索引）——过滤态下 displayCards
+  // 索引与 data-card-index（真实 board 索引）错位，索引查询会落空。
+  const [rovingCardId, setRovingCardId] = useState<string | null>(null);
 
-  const handleCardKeyDown = (e: React.KeyboardEvent, idx: number) => {
+  const handleCardKeyDown = (e: React.KeyboardEvent, displayIdx: number) => {
     const cards = displayCards;
     switch (e.key) {
       case 'ArrowDown': {
         e.preventDefault();
-        const next = Math.min(idx + 1, cards.length - 1);
-        setRovingIndex(next);
+        const next = Math.min(displayIdx + 1, cards.length - 1);
+        setRovingCardId(cards[next]?.id ?? null);
         break;
       }
       case 'ArrowUp': {
         e.preventDefault();
-        const prev = Math.max(idx - 1, 0);
-        setRovingIndex(prev);
+        const prev = Math.max(displayIdx - 1, 0);
+        setRovingCardId(cards[prev]?.id ?? null);
         break;
       }
       case 'Home': {
         e.preventDefault();
-        setRovingIndex(0);
+        setRovingCardId(cards[0]?.id ?? null);
         break;
       }
       case 'End': {
         e.preventDefault();
-        setRovingIndex(cards.length - 1);
+        setRovingCardId(cards[cards.length - 1]?.id ?? null);
         break;
       }
     }
   };
 
+  const rovingIndex = rovingCardId == null ? null : displayCards.findIndex((c) => c.id === rovingCardId);
+
   const cardContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (rovingIndex == null || !cardContainerRef.current) return;
-    const cardEl = cardContainerRef.current.querySelector(`[data-card-index="${rovingIndex}"]`) as HTMLElement | null;
+    if (rovingCardId == null || !cardContainerRef.current) return;
+    const cardEl = cardContainerRef.current.querySelector(`[data-card-id="${rovingCardId}"]`) as HTMLElement | null;
     cardEl?.focus();
-  }, [rovingIndex]);
+  }, [rovingCardId]);
 
   return (
     <div
@@ -264,7 +268,8 @@ export function KanbanColumn({
                       helpers={helpers}
                       registerCard={registerCard}
                       tabIndex={virtualItem.index === (rovingIndex ?? 0) ? 0 : -1}
-                      onRovingKeyDown={handleCardKeyDown}
+                      // 1-11: roving 用显示索引（virtualItem.index），与 data-card-index（真实 board 索引）解耦
+                      onRovingKeyDown={(e) => handleCardKeyDown(e, virtualItem.index)}
                     />
                   </div>
                 );
@@ -289,7 +294,8 @@ export function KanbanColumn({
                     helpers={helpers}
                     registerCard={registerCard}
                     tabIndex={idx === (rovingIndex ?? 0) ? 0 : -1}
-                    onRovingKeyDown={handleCardKeyDown}
+                    // 1-11: roving 用显示索引（idx），与 data-card-index（真实 board 索引）解耦
+                    onRovingKeyDown={(e) => handleCardKeyDown(e, idx)}
                   />
                   {dropTargetCardIndex === idx && dropClosestEdge === 'after' && (
                     <div className="nop-kanban-drop-indicator" />

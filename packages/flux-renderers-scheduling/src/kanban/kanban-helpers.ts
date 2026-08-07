@@ -9,6 +9,11 @@ export function moveCard(board: BoardData, cardId: string, targetColumnId: strin
   const card = result[cardId];
   if (!card) return result;
 
+  // 1-4: 先校验目标列存在，再摘除旧列——目标列缺失时 board 原样返回，
+  // 卡片不得被孤儿化（旧实现先摘除后 return，卡片从所有列 children 消失）。
+  const targetColumn = result[targetColumnId];
+  if (!targetColumn) return result;
+
   const oldParentId = card.parentId;
   if (oldParentId && result[oldParentId]) {
     const oldParent = result[oldParentId];
@@ -17,9 +22,6 @@ export function moveCard(board: BoardData, cardId: string, targetColumnId: strin
       oldParent.children.splice(idx, 1);
     }
   }
-
-  const targetColumn = result[targetColumnId];
-  if (!targetColumn) return result;
 
   const clampedIndex = Math.max(0, Math.min(targetIndex, targetColumn.children.length));
   targetColumn.children.splice(clampedIndex, 0, cardId);
@@ -43,7 +45,7 @@ export function moveColumn(board: BoardData, columnId: string, targetIndex: numb
   return result;
 }
 
-export function addCard(board: BoardData, columnId: string, cardData: Record<string, any>, index?: number): BoardData {
+export function addCard(board: BoardData, columnId: string, cardData: Record<string, any>, index?: number, meta?: Record<string, any>): BoardData {
   const result = cloneBoard(board);
   const cardId = cardData.id as string;
   if (!cardId) return result;
@@ -56,7 +58,8 @@ export function addCard(board: BoardData, columnId: string, cardData: Record<str
     title: cardData.title as string | undefined,
     content: cardData.content as string | undefined,
     data: cardData,
-    meta: {},
+    // 1-5: 正常新增保持 `meta: {}` 契约；undo 恢复路径显式传入捕获的 meta。
+    meta: meta ?? {},
   };
 
   result[cardId] = card;

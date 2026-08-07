@@ -203,35 +203,20 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   };
 
   const handleUndo = () => {
-    let restoredBoard: BoardData | null = null;
-    const bd = boardDataRef.current;
-    setUndoStackState((s) => {
-      const result = undoStackOp(s, bd);
-      if (result) {
-        restoredBoard = result.board;
-        return result.stack;
-      }
-      return s;
-    });
-    if (restoredBoard) {
-      setBoardData(restoredBoard);
-    }
+    // 1-5: undo 确定性执行——旧实现经 setUndoStackState updater 副作用捕获
+    // restoredBoard（React 19 updater 仅在渲染期调用，是否急切执行依赖时序，
+    // 静默 no-op 导致 undo 偶发失效）；改为直接读当前栈并同步落位。
+    const result = undoStackOp(undoStackState, boardDataRef.current);
+    if (!result) return;
+    setUndoStackState(result.stack);
+    setBoardData(result.board);
   };
 
   const handleRedo = () => {
-    let restoredBoard: BoardData | null = null;
-    const bd = boardDataRef.current;
-    setUndoStackState((s) => {
-      const result = redoStackOp(s, bd);
-      if (result) {
-        restoredBoard = result.board;
-        return result.stack;
-      }
-      return s;
-    });
-    if (restoredBoard) {
-      setBoardData(restoredBoard);
-    }
+    const result = redoStackOp(undoStackState, boardDataRef.current);
+    if (!result) return;
+    setUndoStackState(result.stack);
+    setBoardData(result.board);
   };
 
   const allTags = collectAllTags(boardData, columns);
@@ -381,8 +366,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     const card = boardData[cardId];
     const columnId = card?.parentId || '';
     const cardData = boardData[cardId] ? { ...boardData[cardId].data } : {};
+    // 1-5: 捕获完整卡片（data + meta）——undo 恢复时 color/tags/members 不丢失。
+    const cardMeta = boardData[cardId] ? { ...boardData[cardId].meta } : {};
     const index = columnId && boardData[columnId] ? [...boardData[columnId].children].indexOf(cardId) : -1;
-    handleSetBoardData(removeCard(boardData, cardId), 'removeCard', { cardId, columnId, cardData, index });
+    handleSetBoardData(removeCard(boardData, cardId), 'removeCard', { cardId, columnId, cardData, cardMeta, index });
     const removePayload = { cardId, columnId, index, card };
     if (!isControlled) {
       void events.onCardRemove?.(removePayload, eventCtx(removePayload));
@@ -394,6 +381,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     if (isControlled) return false;
     const card = boardData[cardId];
     if (!card) return false;
+    // 1-4: 目标列不存在 → 失败（{ok:false}），不落位、不派发 onCardMove——
+    // moveCard helper 也保证目标缺失时卡片不被摘除，双重防护。
+    if (!boardData[toColumnId]) return false;
     const fromColumnId = card.parentId || '';
     const fromIndex = boardData[fromColumnId] ? [...boardData[fromColumnId].children].indexOf(cardId) : -1;
     const newBoard = moveCard(boardData, cardId, toColumnId, toIndex);

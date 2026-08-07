@@ -197,6 +197,61 @@ describe('KanbanBoard component handle registration (22-12)', () => {
     });
   });
 
+  it('moveCard handle returns ok:false and fires no onCardMove when the target column is missing (1-4)', async () => {
+    const onCardMove = vi.fn();
+    const { container } = render(<KanbanBoard {...defaultProps} events={{ onCardMove } as any} />);
+    await waitFor(() => {
+      expect(registryMock.state.handle).toBeTruthy();
+    });
+    const result = registryMock.state.handle!.capabilities.invoke('moveCard', {
+      cardId: 'card1',
+      toColumnId: 'missing-col',
+      toIndex: 0,
+    }, {});
+    expect(result).toMatchObject({ ok: false });
+    expect(onCardMove).not.toHaveBeenCalled();
+    const card = container.querySelector('[data-card-id="card1"]');
+    expect(card?.getAttribute('data-column-id')).toBe('col1');
+  });
+
+  it('undo of a card removal restores the full card including meta (1-5)', async () => {
+    const boardWithMeta: BoardData = {
+      ...sampleBoard,
+      card1: {
+        ...sampleBoard.card1,
+        meta: {
+          color: '#ff0000',
+          tags: [{ id: 't1', text: 'urgent', color: '#ff0000' }],
+          members: [{ id: 'm1', name: 'Alice', color: '#00ff00' }],
+        },
+      },
+    };
+    const { container } = render(<KanbanBoard {...defaultProps} props={{ data: boardWithMeta } as any} />);
+    await waitFor(() => {
+      expect(registryMock.state.handle).toBeTruthy();
+    });
+    const handle = registryMock.state.handle!;
+    expect(handle.capabilities.invoke('removeCard', { cardId: 'card1' }, {})).toEqual({ ok: true });
+    await waitFor(() => {
+      expect(container.querySelector('[data-card-id="card1"]')).toBeNull();
+    });
+    const undoButton = container.querySelector('button[title="撤销 (Ctrl+Z)"]') as HTMLElement;
+    expect(undoButton).toBeTruthy();
+    undoButton.click();
+    await waitFor(() => {
+      expect(container.querySelector('[data-card-id="card1"]')).toBeTruthy();
+    });
+    const snapshot = handle.capabilities.invoke('getData', undefined, {}) as { ok: boolean; data: BoardData };
+    expect(snapshot.data.card1.meta).toEqual({
+      color: '#ff0000',
+      tags: [{ id: 't1', text: 'urgent', color: '#ff0000' }],
+      members: [{ id: 'm1', name: 'Alice', color: '#00ff00' }],
+    });
+    expect(snapshot.data.card1.data.title).toBe('Task 1');
+    const restoredCard = container.querySelector('[data-card-id="card1"]');
+    expect(restoredCard?.querySelector('.nop-kanban-card-color-dot')).toBeTruthy();
+  });
+
   it('collapseColumn handle collapses the column (design.md §8)', async () => {
     const { container } = render(<KanbanBoard {...defaultProps} />);
     await waitFor(() => {

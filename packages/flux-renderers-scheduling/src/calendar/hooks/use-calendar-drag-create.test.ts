@@ -217,4 +217,74 @@ describe('useCalendarDragCreate', () => {
     expect(result.current.dragCreateState.active).toBe(false);
     expect(result.current.showTypeSelector).toBe(false);
   });
+
+  it('quick click (<500ms release) leaves no long-press timer, no window listeners, and no later selector popup (1-8)', () => {
+    const onEventCreate = vi.fn();
+    const { result } = renderHook(() =>
+      useCalendarDragCreate({
+        onEventCreate,
+        getCellFromPoint: () => ({ date: '2026-07-20', resourceId: 'r1' }),
+        longPressMs: 500,
+      }),
+    );
+
+    const pe = createPointerEvent(100, 200);
+    act(() => {
+      result.current.startCellDrag('2026-07-20', 'r1', pe);
+    });
+
+    // 快速松手（<500ms）：pointerup 必须无条件清除长按定时器与窗口监听
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointerup', { clientX: 100, clientY: 200 }));
+    });
+    expect(result.current.dragCreateState.active).toBe(false);
+
+    // 定时器不得在后续触发置位
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(result.current.dragCreateState.active).toBe(false);
+    expect(result.current.showTypeSelector).toBe(false);
+
+    // 监听已清理：后续任意 pointerup 不弹选择器
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointerup', { clientX: 300, clientY: 300 }));
+    });
+    expect(result.current.showTypeSelector).toBe(false);
+    expect(onEventCreate).not.toHaveBeenCalled();
+  });
+
+  it('pointercancel clears the timer and window listeners without leaving an active intermediate state (1-8)', () => {
+    const onEventCreate = vi.fn();
+    const { result } = renderHook(() =>
+      useCalendarDragCreate({
+        onEventCreate,
+        getCellFromPoint: () => ({ date: '2026-07-20', resourceId: 'r1' }),
+        longPressMs: 500,
+      }),
+    );
+
+    const pe = createPointerEvent(100, 200);
+    act(() => {
+      result.current.startCellDrag('2026-07-20', 'r1', pe);
+    });
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointercancel', { clientX: 100, clientY: 200 }));
+    });
+    expect(result.current.dragCreateState.active).toBe(false);
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(result.current.dragCreateState.active).toBe(false);
+    expect(result.current.showTypeSelector).toBe(false);
+
+    // 窗口监听已清理：后续 pointerup 不弹选择器
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointerup', { clientX: 400, clientY: 400 }));
+    });
+    expect(result.current.showTypeSelector).toBe(false);
+    expect(onEventCreate).not.toHaveBeenCalled();
+  });
 });

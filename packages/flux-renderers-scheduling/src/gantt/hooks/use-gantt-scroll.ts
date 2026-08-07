@@ -4,6 +4,8 @@ export function useGanttScroll(
   gridRef: React.RefObject<HTMLElement | null>,
   timelineRef: React.RefObject<HTMLElement | null>,
   onScroll?: (scrollLeft: number, scrollTop: number) => void,
+  /** 1-7: 就绪信号——loading/empty 首挂载（refs 为空）时监听不挂；ready 翻真后必挂。 */
+  active = true,
 ) {
   const rafRef = useRef<number | null>(null);
   const syncRef = useRef(false);
@@ -11,6 +13,10 @@ export function useGanttScroll(
   useEffect(() => { onScrollRef.current = onScroll; }, [onScroll]);
 
   useEffect(() => {
+    // 1-7: 监听对「就绪信号」响应，不依赖稳定 ref 对象 + 首挂载 early-return。
+    // 首挂载处于 loading/empty（refs 为空）时 active=false 不挂；数据到达
+    // active 翻真后 effect 重跑，此时 refs 已非空，grid↔timeline 同步必挂。
+    if (!active) return;
     const syncScroll = (source: 'grid' | 'timeline') => {
       if (syncRef.current) return;
       syncRef.current = true;
@@ -48,5 +54,5 @@ export function useGanttScroll(
       timeline.removeEventListener('scroll', onTimelineScroll);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [gridRef, timelineRef]);
+  }, [gridRef, timelineRef, active]);
 }

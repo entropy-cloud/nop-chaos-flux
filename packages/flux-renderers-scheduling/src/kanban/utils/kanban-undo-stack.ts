@@ -71,8 +71,10 @@ export function undo(stack: UndoStack, currentBoard: BoardData): { board: BoardD
       break;
     }
     case 'removeCard': {
-      const { cardData } = command.params;
-      board = addCard(currentBoard, command.params.columnId, cardData, command.params.index);
+      const { cardData, cardMeta } = command.params;
+      // 1-5: 恢复完整卡片——cardData 只捕获 data 字段（不含 id），replay 时
+      // 注入 cardId；meta 一并还原（addCard 第 5 参）。
+      board = addCard(currentBoard, command.params.columnId, { ...cardData, id: command.params.cardId }, command.params.index, cardMeta);
       break;
     }
     case 'addColumn': {

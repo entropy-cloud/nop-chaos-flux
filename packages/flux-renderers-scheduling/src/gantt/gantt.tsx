@@ -183,12 +183,17 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const editable = resolved.editable !== false;
     const linkable = resolved.linkable !== false;
 
+    // 1-7: 就绪信号——loading/empty 首挂载不渲染主容器（containerRef/gridRef/
+    // timelineRef 为空），键盘/滚动监听不得依赖「首挂载 ref 非空」假设；数据
+    // 到达（ready 翻真）后监听必挂。
+    const ganttReady = !resolved.loading && store.tasks.size > 0;
+
     const { onPointerDown: onDragPointerDown } = useGanttDrag(store, containerRef, draggable ? handleTaskDragCommit : undefined, undoStack);
     const { onLinkHandlePointerDown } = useGanttLinkDraw(store, svgRef, linkable ? handleLinkDragCommit : undefined, linkable, undoStack);
     useGanttScroll(gridRef, timelineRef, (scrollLeft, scrollTop) => {
       const payload = { scrollLeft, scrollTop };
       void eventsRef.current.onScroll?.(payload, eventCtx(payload));
-    });
+    }, ganttReady);
 
     const openEditor = (id: string | number) => {
       store.editTask(id);
@@ -280,6 +285,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         // 22-07: 键盘 Delete 属编辑型变更，派发 onTaskEdit（deleted 标记）。
         dispatchTaskEdit({ _taskId: id, deleted: true });
       },
+      active: ganttReady,
     });
 
     const scrollToToday = useCallback(() => {
@@ -357,12 +363,18 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
             switch (method) {
               case 'zoomIn':
                 doZoomIn();
+                // 22-13: 句柄 invoke 即派发 schema reaction（对齐 calendar.tsx
+                // :232,240 22-05「句柄 invoke 即派发」家族标准，与工具栏路径
+                // :463-465 对称）。
+                void props.reactions.zoomIn?.dispatch();
                 return { ok: true };
               case 'zoomOut':
                 doZoomOut();
+                void props.reactions.zoomOut?.dispatch();
                 return { ok: true };
               case 'scrollToToday':
                 scrollToToday();
+                void props.reactions.scrollToToday?.dispatch();
                 return { ok: true };
               case 'scrollToTask': {
                 const taskId = (payload as { taskId?: string | number } | undefined)?.taskId;
@@ -370,6 +382,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                   return { ok: false, error: new Error('gantt scrollToTask requires a taskId') };
                 }
                 scrollToTask(taskId);
+                // 22-13: 滚动后派发；失败路径（缺 taskId）不派发。
+                void props.reactions.scrollToTask?.dispatch();
                 return { ok: true };
               }
               default:
@@ -388,7 +402,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         },
       };
       return componentRegistry.register(handle, { cid: meta.cid });
-    }, [componentRegistry, props.id, meta.cid, store, doZoomIn, doZoomOut, scrollToToday, scrollToTask]);
+    }, [componentRegistry, props.id, meta.cid, store, doZoomIn, doZoomOut, scrollToToday, scrollToTask, props.reactions]);
 
     useSyncExternalStore(store.subscribe, () => store.layoutRevision);
     const visibleTasks = store.getVisibleTasks();

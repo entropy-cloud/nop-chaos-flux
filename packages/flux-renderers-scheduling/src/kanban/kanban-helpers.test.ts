@@ -103,6 +103,14 @@ describe('moveCard', () => {
     moveCard(board, 'card1', 'col2', 0);
     expect(board).toEqual(original);
   });
+
+  it('returns the board unchanged (card NOT detached) when the target column is missing (1-4)', () => {
+    const board = createSampleBoard();
+    const result = moveCard(board, 'card1', 'no-such-column', 0);
+    expect(result.col1.children).toEqual(['card1', 'card2']);
+    expect(result.card1.parentId).toBe('col1');
+    expect(result['no-such-column']).toBeUndefined();
+  });
 });
 
 describe('moveColumn', () => {

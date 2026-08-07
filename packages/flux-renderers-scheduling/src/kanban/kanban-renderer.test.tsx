@@ -506,3 +506,43 @@ describe('KanbanBoard CR P2-3 / P2-4 (controlled gating + card payload)', () => 
     expect(controlledOnColumnAdd).not.toHaveBeenCalled();
   });
 });
+
+describe('KanbanBoard roving keyboard navigation under an active filter (1-11)', () => {
+  const filteredBoard: BoardData = {
+    root: { id: 'root', type: 'root', children: ['col1'], data: {}, meta: {} },
+    col1: {
+      id: 'col1', type: 'column', parentId: 'root',
+      children: ['card1', 'card2', 'card3'],
+      data: { title: 'To Do' }, meta: {},
+    },
+    card1: { id: 'card1', type: 'card', parentId: 'col1', children: [], data: { title: 'Alpha', description: 'keep' }, meta: {} },
+    card2: { id: 'card2', type: 'card', parentId: 'col1', children: [], data: { title: 'Beta', description: 'hidden' }, meta: {} },
+    card3: { id: 'card3', type: 'card', parentId: 'col1', children: [], data: { title: 'Gamma', description: 'keep' }, meta: {} },
+  };
+
+  it('ArrowDown from the first visible card focuses the next visible card (not the hidden middle card)', () => {
+    const { container } = render(
+      <KanbanBoard {...defaultProps} props={{ data: filteredBoard, filterText: 'keep' } as any} />,
+    );
+    const visibleCards = container.querySelectorAll('[data-card-id]');
+    expect(visibleCards.length).toBe(2);
+
+    const first = container.querySelector('[data-card-id="card1"]') as HTMLElement;
+    first.focus();
+    expect(document.activeElement?.getAttribute('data-card-id')).toBe('card1');
+
+    fireEvent.keyDown(first, { key: 'ArrowDown' });
+    expect(document.activeElement?.getAttribute('data-card-id')).toBe('card3');
+  });
+
+  it('ArrowUp from the last visible card focuses the previous visible card (1-11)', () => {
+    const { container } = render(
+      <KanbanBoard {...defaultProps} props={{ data: filteredBoard, filterText: 'keep' } as any} />,
+    );
+    const last = container.querySelector('[data-card-id="card3"]') as HTMLElement;
+    last.focus();
+
+    fireEvent.keyDown(last, { key: 'ArrowUp' });
+    expect(document.activeElement?.getAttribute('data-card-id')).toBe('card1');
+  });
+});

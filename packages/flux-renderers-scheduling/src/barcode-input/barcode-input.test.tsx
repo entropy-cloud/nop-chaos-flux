@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, act, waitFor, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, act, waitFor, fireEvent, cleanup } from '@testing-library/react';
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { BarcodeInputRenderer } from './barcode-input.js';
@@ -118,12 +118,17 @@ function createMockProps(overrides?: Partial<RendererComponentProps<BarcodeInput
 }
 
 describe('BarcodeInputRenderer', () => {
+  // vitest globals 关闭时 RTL 不会自动 cleanup——不卸载则 overlay portal 节点
+  // 残留 document.body，旧 hack 手动 .remove() 与 React 提交删除竞争（间歇性
+  // "removeChild: node is not a child" DOMException）。显式 cleanup 让 React
+  // 正常卸载树与 portal，根除该竞态。
+  afterEach(cleanup);
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockFormStoreState.values = {};
     mockFormListeners.clear();
     mockDetectResult.value = null;
-    document.querySelector('[data-slot="barcode-scanner-overlay"]')?.remove();
   });
 
   it('should render barcode-input with scan button', () => {

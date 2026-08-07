@@ -64,6 +64,7 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
     activeRef.current = false;
     startInfoRef.current = null;
     currentDragRef.current = null;
+    setPressing(false);
     setDragCreateState({
       active: false,
       startDate: null,
@@ -75,7 +76,14 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
     });
   };
 
+  // 1-8: 会话期（pointerdown → pointerup/pointercancel）全程挂窗口监听——
+  // 旧实现只在 500ms 定时器触发（active=true）后才挂监听，快速点击（<500ms）
+  // 的 pointerup 无监听消费，定时器照常置位 → 下一次任意 pointerup 误弹选择器。
+  const [pressing, setPressing] = useState(false);
+
   useEffect(() => {
+    if (!pressing) return;
+
     const clearTimer = () => {
       if (longPressTimer.current) {
         clearTimeout(longPressTimer.current);
@@ -105,36 +113,56 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
       }
     };
 
-    const handlePointerUp = (_e: PointerEvent) => {
-      clearTimer();
-      if (!activeRef.current) return;
+    const resetSession = () => {
+      activeRef.current = false;
+      startInfoRef.current = null;
+      currentDragRef.current = null;
+      pointerDownPos.current = null;
+      setDragCreateState({
+        active: false,
+        startDate: null,
+        startResource: null,
+        currentDate: null,
+        currentResource: null,
+        currentX: 0,
+        currentY: 0,
+      });
+    };
 
+    const handlePointerUp = (_e: PointerEvent) => {
+      // 无条件清除定时器——快速点击（<500ms）也必须终结会话，不留「定时器
+      // 稍后置位」的中间态。
+      clearTimer();
+      setPressing(false);
+      if (!activeRef.current) {
+        resetSession();
+        return;
+      }
       const start = startInfoRef.current;
       if (start) {
         setShowTypeSelector(true);
       } else {
-        activeRef.current = false;
-        setDragCreateState({
-          active: false,
-          startDate: null,
-          startResource: null,
-          currentDate: null,
-          currentResource: null,
-          currentX: 0,
-          currentY: 0,
-        });
+        resetSession();
       }
     };
 
-    if (dragCreateState.active) {
-      window.addEventListener('pointermove', handlePointerMove);
-      window.addEventListener('pointerup', handlePointerUp);
-      return () => {
-        window.removeEventListener('pointermove', handlePointerMove);
-        window.removeEventListener('pointerup', handlePointerUp);
-      };
-    }
-  }, [dragCreateState.active, getCellFromPoint]);
+    const handlePointerCancel = (_e: PointerEvent) => {
+      // 1-8: pointercancel 与 pointerup 同等终结：清定时器、清监听、复位会话。
+      clearTimer();
+      setPressing(false);
+      resetSession();
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerCancel);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerCancel);
+      clearTimer();
+    };
+  }, [pressing, getCellFromPoint]);
 
   useEffect(() => {
     return () => {
@@ -147,6 +175,7 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
 
   const startCellDrag = (date: string, resourceId: string, pointerEvent: React.PointerEvent) => {
     pointerDownPos.current = { x: pointerEvent.clientX, y: pointerEvent.clientY, date, resourceId };
+    setPressing(true);
 
     longPressTimer.current = setTimeout(() => {
       activeRef.current = true;
@@ -168,6 +197,7 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
+    setPressing(false);
     activeRef.current = false;
     startInfoRef.current = null;
     currentDragRef.current = null;

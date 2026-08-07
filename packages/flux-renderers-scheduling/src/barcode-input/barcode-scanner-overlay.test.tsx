@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, fireEvent, cleanup } from '@testing-library/react';
 import { BarcodeScannerOverlay } from './barcode-scanner-overlay.js';
 
 const mockUseBarcodeDetect = vi.hoisted(() => vi.fn<any>(() => ({
@@ -31,6 +31,10 @@ vi.mock('./hooks/use-barcode-torch.js', () => ({
 }));
 
 describe('BarcodeScannerOverlay', () => {
+  // 见 barcode-input.test.tsx 同款注释：显式 cleanup 卸载树 + portal，
+  // 根除 overlay portal 节点残留导致的间歇性 removeChild 竞态。
+  afterEach(cleanup);
+
   beforeEach(() => {
     vi.clearAllMocks();
   });

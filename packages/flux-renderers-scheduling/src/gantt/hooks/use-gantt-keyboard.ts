@@ -11,6 +11,8 @@ interface UseGanttKeyboardOptions {
   onUndo?: () => void;
   onRedo?: () => void;
   onDeleteTask?: (id: string | number) => void;
+  /** 1-7: 就绪信号——loading/empty 首挂载（refs 为空）时监听不挂；ready 翻真后必挂。 */
+  active?: boolean;
 }
 
 export function useGanttKeyboard({
@@ -22,6 +24,7 @@ export function useGanttKeyboard({
   onUndo,
   onRedo,
   onDeleteTask,
+  active = true,
 }: UseGanttKeyboardOptions) {
 
   const updateRowAria = (taskId: string | number, isSelected: boolean) => {
@@ -127,6 +130,10 @@ export function useGanttKeyboard({
   });
 
   useEffect(() => {
+    // 1-7: 监听对「就绪信号」响应，不依赖稳定 ref 对象 + 首挂载 early-return。
+    // 首挂载处于 loading/empty（refs 为空）时 active=false 不挂；数据到达
+    // active 翻真后 effect 重跑，此时 refs 已非空，监听必挂。
+    if (!active) return;
     const el = containerRef.current;
     if (!el) return;
     el.addEventListener('keydown', handleKeyDown);
@@ -136,7 +143,7 @@ export function useGanttKeyboard({
     return () => {
       el.removeEventListener('keydown', handleKeyDown);
     };
-  }, [containerRef]);
+  }, [containerRef, active]);
 
   return { updateRowAria };
 }
