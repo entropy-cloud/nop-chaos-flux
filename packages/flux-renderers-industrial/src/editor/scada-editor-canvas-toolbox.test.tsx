@@ -297,19 +297,23 @@ describe('scada-editor-canvas toolbox symbol library (design-toolbox.md §4.5 re
 });
 
 describe('scada-editor-canvas toolbox coalesce deepening (design-undo-redo.md §4.4 M3)', () => {
-  it('consecutive same-direction align coalesce into 1 undo step', async () => {
-    const { container } = renderEditor('coalesce-align');
+  it('consecutive same-coalesceGroup z-order operations merge into 1 undo step + undo reverts both', async () => {
+    // align/distribute coalesce merge semantics (same coalesceGroup + ≤500ms window) are covered
+    // exhaustively at the pure-logic unit level in operation-coalesce.test.ts. This e2e verifies
+    // the wiring end-to-end via z-order, whose forward/inverse are full-array reorders so the
+    // coalesced round-trip (forward=latest, inverse=earliest) is consistent.
+    const { container } = renderEditor('coalesce-zorder', threeRects);
     const cid = await waitForReadyAndCid(container);
     const handle = readScadaEditorTestHandle(cid)!;
-    handle.setSelection(['editor-rect', 'editor-rect-2']);
-    handle.toolbox.align('left');
-    // perturb then align again same direction within window
-    handle.updateSymbol('editor-rect-2', { x: 300 });
-    handle.setSelection(['editor-rect', 'editor-rect-2']);
-    handle.toolbox.align('left');
-    // two align:left within window → coalesced; but the updateSymbol between adds its own step.
-    // Verify at least that align entries share coalesce group by checking stack grew predictably.
-    expect(handle.undoRedo.getStackState().undoStackDepth).toBeGreaterThanOrEqual(1);
+    const before = handle.undoRedo.getStackState().undoStackDepth;
+    handle.setSelection(['r1']);
+    handle.toolbox.toTop(); // [r2, r3, r1]
+    handle.setSelection(['r2']);
+    handle.toolbox.toTop(); // from [r2,r3,r1] → [r3, r1, r2]; same coalesceGroup `zorder:toTop` within window → coalesces
+    expect(handle.undoRedo.getStackState().undoStackDepth).toBe(before + 1);
+    // single undo reverts BOTH coalesced ops (merged inverse = first entry inverse → pre-first state)
+    handle.undo();
+    expect(handle.session.workingConfig.symbols.map((s) => s.id)).toEqual(['r1', 'r2', 'r3']);
   });
 });
 
