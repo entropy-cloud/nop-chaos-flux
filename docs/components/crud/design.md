@@ -355,6 +355,8 @@ interface CrudStatusSummary {
 
 `pagination.mode: 'infinite'` 时，CRUD 内部 table 的 `pagination.enabled = false`、`pageSize = currentPage * pageSize`（累计行数）。table 底部 sentinel `<div data-slot="crud-infinite-sentinel">` 经 `IntersectionObserver` 触发 next-page：`scope.update(paginationStatePath, { currentPage: currentPage + 1, pageSize })` + `handleRefresh()`。toolbar 的 `pagination` / `switch-per-page` block 在 infinite 模式下不渲染（其他 block 不受影响）。`clientMode.loadDataOnce === true` → sentinel 始终不渲染，状态区显示"已加载全部 N 条"。at-last-page（`currentPage >= Math.ceil(total / pageSize)`）→ sentinel 仍渲染但 onLoadMore no-op，状态区显示"没有更多了"。**状态区 a11y（WCAG 4.1.3，已落地）**：状态文本容器 `data-slot="crud-infinite-status"` 带 `role="status"` + `aria-live="polite"`（对照 mobile `infinite-scroll` 先例），加载中/已加载完毕/加载失败文本变更对读屏用户可见播报。
 
+**loadAction 模式的累计合并（1-2 修复落地）**：`loadAction` + `infinite` 组合下，逐页请求沿用 offset 契约——`currentPage` 递增、`pageSize` 保持基础值，每次响应的 rows 按 **concat 直接拼接**进累计集合（`crud-renderer-load.ts` `onSettle` 中 `page > lastSettledPage` 才 append，reload/查询变更/服务端纠正等非递增场景整页替换；不做 key 去重，offset 分页保证无重复）。累计行数经 table `pageSize = currentPage * pageSize` 增长表达（累计页越多展示越多），sentinel 在末页（at-last-page）或视口填满后自然停止触发。`handleLoadMore` 在该模式下返回 settle 驱动的 thenable（`useCrudLoadAction.loadMore()`），使 `useInfiniteScroll` 的 loading/error 状态与 G5 并发守卫对 loadAction 路径同样生效。
+
 ### 7.1 选择字段语义（`CrudSelectionConfig`）
 
 `selection` 配置块在 `keepOnPageChange` / `maxSelectionLength` / `checkableWhen` 上的最终语义如下（crud 透传到底层 `table` 的 `useTableSelection` 真实消费）。`maxKeepSelectionLength` 已从 schema 删除（不采纳）。

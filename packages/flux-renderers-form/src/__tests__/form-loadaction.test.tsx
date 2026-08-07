@@ -1,7 +1,6 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, waitFor } from '@testing-library/react';
-
 const mocks = vi.hoisted(() => ({
   useCurrentActionScope: vi.fn(),
   useCurrentComponentRegistry: vi.fn(),
@@ -132,6 +131,16 @@ function setupMocks(runtime: any, parentScope: any) {
   mocks.useCurrentComponentRegistry.mockReturnValue(undefined);
   mocks.useCurrentPage.mockReturnValue(undefined);
   mocks.useRenderScope.mockReturnValue(parentScope);
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
 }
 
 describe('FormRenderer loadAction', () => {
@@ -265,5 +274,128 @@ describe('FormRenderer loadAction', () => {
     await waitFor(() => {
       expect(ownedForm.setValues).not.toHaveBeenCalled();
     });
+  });
+
+  it('restarts autoLoad when React StrictMode replays the effect (setup -> cleanup -> setup)', async () => {
+    const parentScope = makeScope({ id: 'parent', visible: {} });
+    const ownedForm = makeOwnedForm();
+    const runtime = makeRuntime(ownedForm);
+    setupMocks(runtime, parentScope);
+
+    const dispatch = vi.fn().mockResolvedValue({
+      ok: true,
+      cancelled: false,
+      data: { name: 'Bob', role: 'admin' },
+    });
+
+    render(
+      <React.StrictMode>
+        <FormRenderer
+          {...buildProps({
+            props: { ...FORM_AUTOLOAD_PROPS },
+            events: { loadAction: dispatch },
+          })}
+        />
+      </React.StrictMode>,
+    );
+
+    // The first (aborted) effect run must not strand the activation key: the
+    // replayed setup must restart autoLoad instead of silently dropping it.
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledTimes(2);
+    });
+
+    await waitFor(() => {
+      expect(ownedForm.setValues).toHaveBeenCalledWith({ name: 'Bob', role: 'admin' });
+    });
+  });
+
+  it('re-initiates autoLoad for the same activation after a non-abort failure', async () => {
+    const parentScope = makeScope({ id: 'parent', visible: {} });
+    const ownedForm = makeOwnedForm();
+    const runtime = makeRuntime(ownedForm);
+    setupMocks(runtime, parentScope);
+
+    const failingDispatch = vi.fn().mockRejectedValue(new Error('network'));
+    const { rerender } = render(
+      <FormRenderer
+        {...buildProps({
+          props: { ...FORM_AUTOLOAD_PROPS },
+          events: { loadAction: failingDispatch },
+        })}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(failingDispatch).toHaveBeenCalledTimes(1);
+    });
+
+    // A dependency flip (new loadAction identity, same activation key) re-runs
+    // the effect; a failed autoLoad must be retryable, not permanently disabled.
+    const retryDispatch = vi.fn().mockResolvedValue({
+      ok: true,
+      cancelled: false,
+      data: { name: 'Retry', role: 'user' },
+    });
+
+    rerender(
+      <FormRenderer
+        {...buildProps({
+          props: { ...FORM_AUTOLOAD_PROPS },
+          events: { loadAction: retryDispatch },
+        })}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(retryDispatch).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(ownedForm.setValues).toHaveBeenCalledWith({ name: 'Retry', role: 'user' });
+    });
+  });
+
+  it('does not let a stale autoLoad response overwrite refresh data', async () => {
+    const parentScope = makeScope({ id: 'parent', visible: {} });
+    const ownedForm = makeOwnedForm();
+    const runtime = makeRuntime(ownedForm);
+    setupMocks(runtime, parentScope);
+
+    const staleRequest = deferred<any>();
+    const refreshRequest = deferred<any>();
+    const dispatch = vi
+      .fn()
+      .mockImplementationOnce(() => staleRequest.promise)
+      .mockImplementationOnce(() => refreshRequest.promise);
+
+    render(
+      <FormRenderer
+        {...buildProps({
+          props: { ...FORM_AUTOLOAD_PROPS },
+          events: { loadAction: dispatch },
+        })}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledTimes(1);
+    });
+
+    const refreshHandler = ownedForm.setRefreshHandler.mock.calls[0][0];
+    const refreshPromise = refreshHandler();
+    refreshRequest.resolve({ ok: true, cancelled: false, data: { name: 'Fresh' } });
+    await refreshPromise;
+    expect(ownedForm.setValues).toHaveBeenCalledWith({ name: 'Fresh' });
+
+    // The slow autoLoad response must be dropped once refresh superseded it.
+    // Flush the microtask queue so the stale `.then` has definitely run before
+    // asserting (waitFor's first check runs synchronously and would pass
+    // before the stale resolution is processed).
+    staleRequest.resolve({ ok: true, cancelled: false, data: { name: 'Stale' } });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(ownedForm.setValues).toHaveBeenCalledTimes(1);
+    expect(ownedForm.setValues).not.toHaveBeenCalledWith({ name: 'Stale' });
   });
 });

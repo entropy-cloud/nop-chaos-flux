@@ -15,6 +15,15 @@ function searchFailureMessage(error: unknown): string {
 
 export interface SelectRemoteSearchResult {
   remoteOptions: ChoiceOption[] | null;
+  /**
+   * Every option that ever arrived from a remote search, deduped by value.
+   * Unlike `remoteOptions` (reset to null when the query empties), this pool
+   * persists so the selected-value echo can still resolve the label of a
+   * remotely-searched-and-selected value after the search query clears
+   * (1-12). It is an echo-only pool: consumers must not feed it back into the
+   * visible-options path.
+   */
+  remoteEchoCache: ChoiceOption[];
   loading: boolean;
   error: string | undefined;
 }
@@ -29,6 +38,7 @@ export function useSelectRemoteSearch(input: {
   const { query, searchSource, searchable, helpers, disabled } = input;
   const active = searchable && Boolean(searchSource) && !disabled;
   const [remoteOptions, setRemoteOptions] = useState<ChoiceOption[] | null>(null);
+  const [remoteEchoCache, setRemoteEchoCache] = useState<ChoiceOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
 
@@ -64,7 +74,23 @@ export function useSelectRemoteSearch(input: {
               disabledTip: typeof item.disabledTip === 'string' ? item.disabledTip : undefined,
               ...item,
             } satisfies ChoiceOption)) as ChoiceOption[];
-            startTransition(() => setRemoteOptions(options));
+            startTransition(() => {
+              setRemoteOptions(options);
+              // Echo-only retention (1-12): the search results survive the
+              // query reset so a selected remote value keeps its label.
+              setRemoteEchoCache((previous) => {
+                const seen = new Set(previous.map((option) => String(option.value)));
+                const merged = [...previous];
+                for (const option of options) {
+                  const key = String(option.value);
+                  if (!seen.has(key)) {
+                    seen.add(key);
+                    merged.push(option);
+                  }
+                }
+                return merged;
+              });
+            });
           } else {
             startTransition(() => {
               setError(searchFailureMessage(result.error));
@@ -92,5 +118,5 @@ export function useSelectRemoteSearch(input: {
     };
   }, [active, helpers, query, searchSource]);
 
-  return { remoteOptions, loading, error };
+  return { remoteOptions, remoteEchoCache, loading, error };
 }

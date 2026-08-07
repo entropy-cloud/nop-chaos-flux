@@ -16,6 +16,9 @@
  *   2. dynamic index: `const handler = props.events[type]` then `void handler(payload, ctx)`
  *      (graph fireNodeEvent form; the handler call site is checked like a direct call)
  *   3. optional-call `?.()` is the primary shape but plain `()` is matched too.
+ *   4. aliased receivers: `owner.events.<name>?.(...)` / `parentProps.events.<name>?.(...)`
+ *      (props destructured/aliased into a sub-component prop, e.g. list/cards
+ *      `owner.events.onItemClick`, table `parentProps.events.onRowClick`).
  *
  * Compliant second args:
  *   - object literal containing both `event` and `evaluationBindings` keys
@@ -25,10 +28,14 @@
  * Not flagged (adjudicated contract categories):
  *   - zero-arg notification dispatches (`onAdd?.()`) — no payload, no keys to
  *     bind; C3.x 空参契约裁决 (component-audit-checklist v2 dim 7)
+ *   - native DOM / React synthetic event forwards — the raw event (`event`/`e`)
+ *     is passed as the FIRST arg and the ctx object is intentionally absent;
+ *     the runtime normalizes via `normalizeActionEvent`
+ *     (renderer-runtime.md:673-675, CG C3.x ruling). Class-level adjudication
+ *     (first-arg shape), so alias receivers are covered without per-site
+ *     allowlist entries; the allowlist below keeps the sites that predate it.
  *   - dynamic-index lifecycle dispatches whose first arg is `undefined`/`null`
  *     (form lifecycle actions `submitAction(undefined, { scope, form, ... })`)
- *   - native DOM / React synthetic event forwards (renderer-runtime.md:673-675,
- *     CG C3.x ruling) — registered in ALLOWLIST below
  */
 
 import { readFile } from 'fs/promises';
@@ -57,7 +64,10 @@ const ALLOWLIST = new Set([
   'packages/flux-renderers-data/src/chart-renderer.tsx:612',
 ]);
 
-const DISPATCH_RECEIVER = /(?:props\.events|eventHandlers)\.([A-Za-z_$][\w$]*)(\?\.)?\(/g;
+// Any `<ident>.events.<name>` receiver (props/owner/parentProps/... aliases)
+// plus the bare `eventHandlers.<name>` form. A schema event dispatch reached
+// through an aliased receiver is the same contract surface as `props.events`.
+const DISPATCH_RECEIVER = /(?:[A-Za-z_$][\w$]*\.events|eventHandlers)\.([A-Za-z_$][\w$]*)(\?\.)?\(/g;
 const DYNAMIC_INDEX = /props\.events\s*\[/g;
 const HELPER_CALL = /^[A-Za-z_$][\w$]*\s*\(/;
 const BARE_IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
@@ -300,6 +310,14 @@ function checkCallArgs({ content, relativePath, line, callOpenIndex }) {
   if (args.length === 0) {
     return null;
   }
+  // Native DOM / React synthetic event forwards pass the raw event as the
+  // FIRST arg and intentionally lack the ctx object; the runtime normalizes
+  // via `normalizeActionEvent` (renderer-runtime.md:673-675, CG C3.x ruling).
+  // Class-level adjudication (first-arg shape `event`/`e`), so aliased
+  // receivers are covered without per-site allowlist entries.
+  if (/^e(?:vent)?$/.test(args[0])) {
+    return null;
+  }
   if (args.length >= 2 && isCompliantSecondArg(args[1])) {
     return null;
   }
@@ -390,6 +408,11 @@ async function main() {
         // Lifecycle dispatches (`props.events['initAction']` family) call with
         // `undefined` first arg — no payload, no ctx keys to lose; skip.
         if (args.length === 0 || args[0] === 'undefined' || args[0] === 'null') {
+          continue;
+        }
+        // Native DOM / React synthetic event forwards — same class-level
+        // adjudication as the direct form (first-arg shape `event`/`e`).
+        if (/^e(?:vent)?$/.test(args[0])) {
           continue;
         }
         if (args.length >= 2 && isCompliantSecondArg(args[1])) {

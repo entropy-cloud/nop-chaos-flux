@@ -121,6 +121,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const useLoadAction = Boolean(loadReaction);
   const loadAllData = normalizedSchema.loadAllData === true;
   const dataStatePath = normalizedSchema.dataStatePath;
+  const paginationMode = resolvePaginationMode(normalizedSchema.pagination, undefined);
+  const loadDataOnce = normalizedSchema.clientMode?.loadDataOnce === true;
 
   const queryStatePath = ownerPaths.queryStatePath;
   const queryDraftStatePath = `${queryStatePath}.$draft`;
@@ -133,6 +135,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     enabled: useLoadAction,
     loadReaction,
     loadAllData,
+    accumulateRows: paginationMode === 'infinite' && !loadDataOnce && !loadAllData,
     onError: props.events.onError,
     helpers: props.helpers,
     env,
@@ -279,8 +282,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     scope,
   });
 
-  const paginationMode = resolvePaginationMode(normalizedSchema.pagination, undefined);
-  const loadDataOnce = normalizedSchema.clientMode?.loadDataOnce === true;
   const atLastPage = isAtLastPage(resolvedSource.total, paginationState.currentPage, paginationState.pageSize);
   const infiniteActive = paginationMode === 'infinite' && !loadDataOnce;
   const infiniteSentinelEnabled = infiniteActive && filteredRows.length > 0;
@@ -293,17 +294,25 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     if (normalizedSchema.autoClearSelectionOnRefresh) {
       scope?.update(selectionStatePath, []);
     }
+    // When the renderer owns fetching (no loadAction), drive the refresh and
+    // return its promise so the infinite-scroll hook can track loading/error
+    // and guard concurrent triggers (G5). With a loadAction, the owner hook
+    // drives fetching (the page bump below re-dispatches it); arm a
+    // settle-driven promise so the infinite hook still gets thenable feedback
+    // and its G5 concurrent guard stays effective.
+    if (!useLoadAction) {
+      scope?.update(paginationStatePath, {
+        currentPage: paginationState.currentPage + 1,
+        pageSize: paginationState.pageSize,
+      });
+      return handleRefresh();
+    }
+    const loadMorePromise = loadResult.loadMore();
     scope?.update(paginationStatePath, {
       currentPage: paginationState.currentPage + 1,
       pageSize: paginationState.pageSize,
     });
-    // When the renderer owns fetching (no loadAction), drive the refresh and
-    // return its promise so the infinite-scroll hook can track loading/error
-    // and guard concurrent triggers (G5). With a loadAction, the owner hook
-    // drives fetching; do not double-trigger here.
-    if (!useLoadAction) {
-      return handleRefresh();
-    }
+    return loadMorePromise;
   };
 
   // autoJumpToTopOnPagerChange (amis: autoJumpToTopOnPagerChange): scroll the

@@ -27,12 +27,21 @@ export interface CrudLoadActionResult {
   loading: boolean;
   error: Error | undefined;
   reload: () => void;
+  /**
+   * Arms a promise that resolves with the settle result when the NEXT load
+   * dispatch settles. Used by the infinite-scroll load-more path: the renderer
+   * bumps `currentPage` (the load effect drives fetching) and returns this
+   * promise so the infinite hook can track loading/error and guard concurrent
+   * triggers (G5).
+   */
+  loadMore: () => Promise<ActionResult>;
 }
 
 export function useCrudLoadAction(args: {
   enabled: boolean;
   loadReaction: ReactionHandle | undefined;
   loadAllData: boolean;
+  accumulateRows: boolean;
   onError: RendererComponentProps<CrudSchema>['events']['onError'];
   helpers: RendererHelpers;
   env: RendererEnv | undefined;
@@ -59,6 +68,7 @@ export function useCrudLoadAction(args: {
     enabled,
     loadReaction,
     loadAllData,
+    accumulateRows,
     onError,
     helpers,
     env,
@@ -93,6 +103,15 @@ export function useCrudLoadAction(args: {
   // reaction's ajax but its result is not captured, so a nonce state is bumped
   // to make the effect re-run and re-dispatch.
   const [reloadNonce, setReloadNonce] = useState(0);
+  // Page whose rows currently live in state. In infinite+loadAction mode a
+  // strictly higher page number appends (accumulate); anything else (reload,
+  // query change, server-correction) replaces the accumulated set.
+  const lastSettledPageRef = useRef(0);
+  // Single-slot resolver armed by `loadMore()`: resolved with the settle
+  // result when the next load dispatch settles (or with a no-op result when
+  // the dispatch effect bails without dispatching), so the infinite hook can
+  // drive loading/error and the G5 concurrent guard from a real thenable.
+  const loadMoreResolveRef = useRef<((result: ActionResult) => void) | undefined>(undefined);
 
   // Per-instance child scope projection of the CRUD scope variables
   // (pagination/query/sort/filters/selection). The loadAction dispatches against
@@ -106,6 +125,22 @@ export function useCrudLoadAction(args: {
   const reload = useCallback(() => {
     loadedAllRef.current = false;
     setReloadNonce((value) => value + 1);
+  }, []);
+
+  const settleLoadMore = useCallback(
+    (result: ActionResult) => {
+      const resolve = loadMoreResolveRef.current;
+      loadMoreResolveRef.current = undefined;
+      resolve?.(result);
+    },
+    [],
+  );
+
+  const loadMore = useCallback(() => {
+    const promise = new Promise<ActionResult>((resolve) => {
+      loadMoreResolveRef.current = resolve;
+    });
+    return promise;
   }, []);
 
   const reportError = useCallback(
@@ -213,6 +248,7 @@ export function useCrudLoadAction(args: {
       onSettle: (result) => {
         if (result.cancelled) {
           // A newer dispatch owns loading state; do not touch it.
+          settleLoadMore(result);
           return;
         }
         if (!result.ok) {
@@ -224,6 +260,7 @@ export function useCrudLoadAction(args: {
                 : new Error('loadAction failed');
           reportError(err, lastBindingsRef.current);
           setLoading(false);
+          settleLoadMore(result);
           return;
         }
 
@@ -237,7 +274,19 @@ export function useCrudLoadAction(args: {
             normalized.total = customTotal;
           }
         }
-        setRows(normalized.rows);
+        // Infinite+loadAction accumulate contract (design.md): each page load
+        // appends its rows via concat — the table expresses the accumulated
+        // count via pageSize growth (`currentPage * pageSize`). Strictly
+        // forward page numbers append; anything else (reload, query change,
+        // server correction) replaces. No key dedup: server offset pagination
+        // guarantees disjoint pages.
+        const page = pagination.currentPage;
+        if (accumulateRows && page > lastSettledPageRef.current) {
+          setRows((previousRows) => [...previousRows, ...normalized.rows]);
+        } else {
+          setRows(normalized.rows);
+        }
+        lastSettledPageRef.current = page;
         setTotal(normalized.total);
 
         if (normalized.serverPagination && (scope ?? nodeScope)) {
@@ -254,6 +303,7 @@ export function useCrudLoadAction(args: {
         }
 
         setLoading(false);
+        settleLoadMore(result);
       },
     });
 
@@ -265,14 +315,16 @@ export function useCrudLoadAction(args: {
       proxyHandle.__setIgnoreWritesTo?.(undefined);
       proxyHandle.__setLoadCallbacks?.(undefined);
     };
-  }, [enabled, loadReaction, scope, nodeScope, ownerStatePath, statusPath, dataStatePath, totalField, paginationStatePath, queryStatePath, sortStatePath, filterStatePath, selectionStatePath, pagination.pageSize, pageField, pageSizeField, loadAllData, pagination, reportError, helpers]);
+  }, [enabled, loadReaction, scope, nodeScope, ownerStatePath, statusPath, dataStatePath, totalField, paginationStatePath, queryStatePath, sortStatePath, filterStatePath, selectionStatePath, pagination.pageSize, pageField, pageSizeField, loadAllData, accumulateRows, pagination, reportError, helpers, settleLoadMore]);
 
   useEffect(() => {
     if (!enabled || !loadReaction) {
+      settleLoadMore({ ok: true, cancelled: true });
       return;
     }
 
     if (loadAllData && loadedAllRef.current) {
+      settleLoadMore({ ok: true, cancelled: true });
       return;
     }
 
@@ -325,6 +377,7 @@ export function useCrudLoadAction(args: {
     reloadNonce,
     pageField,
     pageSizeField,
+    settleLoadMore,
   ]);
 
   useEffect(() => {
@@ -337,7 +390,7 @@ export function useCrudLoadAction(args: {
   }, [helpers]);
 
   return useMemo(
-    () => ({ rows, total, loading, error, reload }),
-    [rows, total, loading, error, reload],
+    () => ({ rows, total, loading, error, reload, loadMore }),
+    [rows, total, loading, error, reload, loadMore],
   );
 }

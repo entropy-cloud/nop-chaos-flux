@@ -140,6 +140,71 @@ describe('dataRendererDefinitions list rendering', () => {
     ).toBeTruthy();
   });
 
+  it('resolves ${key} in onItemClick action args via the dispatch evaluationBindings', async () => {
+    const received: unknown[] = [];
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/list-onitemclick-key"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'list',
+              items: [
+                { id: 1, name: 'Alice' },
+                { id: 2, name: 'Bob' },
+              ],
+              onItemClick: {
+                action: 'probe:recordKey',
+                args: { key: '${key}' },
+              },
+              item: { type: 'text', text: '${$slot.item.name}' },
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={(actionScope) => {
+          if (!actionScope) {
+            return;
+          }
+          (actionScope as {
+            registerNamespace(ns: string, config: unknown): void;
+          }).registerNamespace('probe', {
+            kind: 'host',
+            invoke(method: string, payload: Record<string, unknown> | undefined) {
+              if (method === 'recordKey') {
+                received.push(payload);
+                return { ok: true };
+              }
+              return { ok: false, error: new Error(`Unsupported method: ${method}`) };
+            },
+          });
+        }}
+      />,
+    );
+
+    fireEvent.click(await screen.findByText('Alice'));
+
+    await waitFor(() => {
+      expect(received).toHaveLength(1);
+    });
+    // `${key}` must resolve from the payload through evaluationBindings —
+    // without the ctx it stays undefined (1-3 live defect).
+    expect(received[0]).toMatchObject({ key: '1' });
+
+    // Keyboard path (Enter) carries the same ctx.
+    const bobItem = screen.getByText('Bob').closest('[data-slot="list-item"]');
+    expect(bobItem).toBeTruthy();
+    fireEvent.keyDown(bobItem as Element, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(received).toHaveLength(2);
+    });
+    expect(received[1]).toMatchObject({ key: '2' });
+  });
+
   it('keeps selection off when selectionMode is "none" (not selectable)', async () => {
     const SchemaRenderer = createDataSchemaRenderer();
     render(

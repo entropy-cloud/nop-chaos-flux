@@ -158,6 +158,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const query = filterEnabled ? inputValue : '';
   const {
     remoteOptions,
+    remoteEchoCache,
     loading: remoteLoading,
     error: remoteError,
   } = useSelectRemoteSearch({
@@ -167,6 +168,16 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     helpers: props.helpers,
     disabled: presentation.effectiveDisabled,
   });
+  // Echo lookup pool: merge remote search results (current + retained echo
+  // cache) into the label-lookup pool so a remotely-searched-and-selected
+  // value resolves its label in resolveChoiceComboboxValue /
+  // resolveChoiceMobileTriggerText even after the query clears and
+  // `remoteOptions` resets to null (1-12). The visible-list path keeps using
+  // `resolveChoiceVisibleOptions` and is unaffected.
+  const echoOptions =
+    remoteOptions !== null || remoteEchoCache.length > 0
+      ? [...allOptions, ...(remoteOptions ?? []), ...remoteEchoCache]
+      : allOptions;
   const loadingWithRemote = loading || remoteLoading;
   const effectiveDisabled = loadingWithRemote || presentation.effectiveDisabled;
   // readOnly freezes the combobox visually as well as logically: the root,
@@ -195,7 +206,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 
   const noMatchText = props.props.noMatchText ? String(props.props.noMatchText) : undefined;
   const comboboxValue = resolveChoiceComboboxValue({
-    allOptions,
+    allOptions: echoOptions,
     value,
     multiple,
     noMatchText,
@@ -214,7 +225,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   };
 
   const mobileTriggerText = resolveChoiceMobileTriggerText({
-    allOptions,
+    allOptions: echoOptions,
     value,
     multiple,
     noMatchText,

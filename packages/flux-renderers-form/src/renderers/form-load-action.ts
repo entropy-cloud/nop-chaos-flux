@@ -74,6 +74,13 @@ export function useFormLoadAction(input: {
           return;
         }
         reportFormInitActionError(runtime, path, error);
+        // A real failure must not strand the activation key: the effect body
+        // bails on `loadActionKeyRef.current === activationKey`, so keeping the
+        // key would permanently disable autoLoad for this activation. Clear it
+        // (controller-identity-guarded) so a later effect re-run can retry.
+        if (loadActionKeyRef.current === activationKey && loadAbortRef.current === controller) {
+          loadActionKeyRef.current = undefined;
+        }
       })
       .finally(() => {
         if (loadAbortRef.current === controller) {
@@ -85,6 +92,14 @@ export function useFormLoadAction(input: {
       if (loadAbortRef.current === controller) {
         controller.abort();
         loadAbortRef.current = null;
+        // Refs outlive the effect body, so an abort strands the activation key;
+        // clear it or the next effect body bails for the same activationKey and
+        // autoLoad is silently dropped (StrictMode double-mount). `.catch` is
+        // controller-identity-guarded so a stale aborted promise cannot clear a
+        // fresh re-run's key.
+        if (loadActionKeyRef.current === activationKey) {
+          loadActionKeyRef.current = undefined;
+        }
       }
     };
   }, [activationKey, autoLoad, importsReady, loadAction, runtime, path]);
@@ -96,6 +111,10 @@ export function useFormLoadAction(input: {
     }
 
     ownedForm.setRefreshHandler(async () => {
+      // A refresh supersedes any in-flight autoLoad response: bump the request
+      // id so the autoLoad `then` guard (`loadRequestIdRef.current !==
+      // requestId`) drops the stale result instead of overwriting fresh data.
+      loadRequestIdRef.current = loadRequestIdRef.current + 1;
       const result = await loadAction(undefined, {
         scope: loadLifecycleScopeRef.current,
         form: loadOwnedFormRef.current,

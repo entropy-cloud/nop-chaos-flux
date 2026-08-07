@@ -98,10 +98,15 @@ function ListItemView(props: ListItemViewProps) {
 
   const handleClick = (_event: React.MouseEvent<HTMLDivElement>) => {
     onSelect(itemKey);
-    void owner.events.onItemClick?.(
-      { type: 'list:item-click', item, index, key: itemKey },
-      { scope: itemScope },
-    );
+    // CX-10 / bug-83 family convention: the second dispatch arg carries
+    // { event, evaluationBindings, scope } so action args templates can read
+    // payload keys (${item} / ${index} / ${key}) as bare bindings.
+    const payload = { type: 'list:item-click', item, index, key: itemKey };
+    void owner.events.onItemClick?.(payload, {
+      event: payload,
+      evaluationBindings: payload,
+      scope: itemScope,
+    });
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -115,10 +120,12 @@ function ListItemView(props: ListItemViewProps) {
 
     event.preventDefault();
     onSelect(itemKey);
-    void owner.events.onItemClick?.(
-      { type: 'list:item-click', item, index, key: itemKey },
-      { scope: itemScope },
-    );
+    const payload = { type: 'list:item-click', item, index, key: itemKey };
+    void owner.events.onItemClick?.(payload, {
+      event: payload,
+      evaluationBindings: payload,
+      scope: itemScope,
+    });
   };
 
   return (

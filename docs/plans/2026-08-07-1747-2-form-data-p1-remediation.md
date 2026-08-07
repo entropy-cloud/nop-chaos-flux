@@ -1,6 +1,6 @@
 # 2 form/data 渲染器 P1 修复（form-load-action 生命周期 + CRUD infinite 累计 + list 事件 ctx + remote search 回显）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-07
 > Source: `docs/audits/2026-08-07-1747-open-audit-component-audit.md`（1-1/1-2/1-3/1-12）
 > Related: `docs/plans/2026-08-06-2306-1-event-dispatch-ctx-full-scan.md`（事件 ctx 全量扫描先例，已收口）、`docs/plans/2026-08-07-1053-1-oversized-code-files-governance-debt.md`（1053-1 拆分载体转移）
@@ -52,73 +52,73 @@
 
 ### Phase 1 - form loadAction 生命周期（StrictMode / 重试 / refresh 竞态）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/form-load-action.ts` + `form-load-action.test.tsx`
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof` 先红三条（扩展 form-loadaction.test.tsx，或新建 StrictMode 用例）：① StrictMode 双挂载（`renderInStrictMode` 或手工 setup→cleanup→setup 序列）——断言 autoLoad 请求被启动两次（或 aborted 后二次 setup 重启请求），数据最终 hydrate；② loadAction reject（非 AbortError）后翻转某 dep（如 importsReady false→true、或卸载重挂）强制 effect 重跑同 activation——断言 autoLoad 重新发起（initAction 同语义对照）；③ refresh 触发后 autoLoad 慢响应 resolve——断言旧数据不覆写新数据（`setValues` 只被 refresh 数据调用）。
-- [ ] `Fix` 1-1：`form-load-action.ts` 对齐 `form-init-action.ts:64-66,77-89` 纪律——cleanup 清除 `loadActionKeyRef`（防 StrictMode 丢弃）；catch/finally 按 controller 身份守卫清除 key（失败可重试）；refresh handler bump `loadRequestIdRef`（或独立请求 id）使 stale autoLoad 响应被 :61 守卫丢弃。
-- [ ] `Proof` 修复后三条用例全绿；form 包 736 既有测试零回归。
+- [x] `Proof` 先红三条（扩展 form-loadaction.test.tsx，或新建 StrictMode 用例）：① StrictMode 双挂载（`renderInStrictMode` 或手工 setup→cleanup→setup 序列）——断言 autoLoad 请求被启动两次（或 aborted 后二次 setup 重启请求），数据最终 hydrate；② loadAction reject（非 AbortError）后翻转某 dep（如 importsReady false→true、或卸载重挂）强制 effect 重跑同 activation——断言 autoLoad 重新发起（initAction 同语义对照）；③ refresh 触发后 autoLoad 慢响应 resolve——断言旧数据不覆写新数据（`setValues` 只被 refresh 数据调用）。
+- [x] `Fix` 1-1：`form-load-action.ts` 对齐 `form-init-action.ts:64-66,77-89` 纪律——cleanup 清除 `loadActionKeyRef`（防 StrictMode 丢弃）；catch/finally 按 controller 身份守卫清除 key（失败可重试）；refresh handler bump `loadRequestIdRef`（或独立请求 id）使 stale autoLoad 响应被 :61 守卫丢弃。
+- [x] `Proof` 修复后三条用例全绿；form 包 736 既有测试零回归。
 
 Exit Criteria:
 
-- [ ] StrictMode 用例断言 aborted 后二次 setup 重启请求且最终数据 hydrate（修复前红记录）。
-- [ ] 失败重试用例断言同 activation 可重新发起（修复前红记录）。
-- [ ] refresh 竞态用例断言 stale 响应不覆写（修复前红记录）。
-- [ ] form 包 typecheck 通过、focused 测试全绿。
+- [x] StrictMode 用例断言 aborted 后二次 setup 重启请求且最终数据 hydrate（修复前红记录）。
+- [x] 失败重试用例断言同 activation 可重新发起（修复前红记录）。
+- [x] refresh 竞态用例断言 stale 响应不覆写（修复前红记录）。
+- [x] form 包 typecheck 通过、focused 测试全绿。
 
 ### Phase 2 - CRUD loadAction × infinite 累计合并
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/{crud-renderer.tsx,crud-renderer-load.ts,use-infinite-scroll.ts,crud-renderer-schema-builders.ts}` + crud-lifecycle.test.tsx
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof` 先红（loadAction×infinite 组合用例，对照 crud-lifecycle.test.tsx:419-593 source 路径既有形态）：① 首页 + 翻页两次——断言 rows 累计（第 1 页 rows + 第 2 页 rows），非整页替换；② 短页不足一屏——断言不发生无谓竞速翻页至末页（请求次数有限、最终展示全部累计 rows）；③ 翻页失败——断言 loading/error 状态由 useInfiniteScroll 表达（thenable 返回）。
-- [ ] `Fix` 1-2：`handleLoadMore` loadAction 模式返回 thenable（驱动 loading/error + G5 并发守卫）；`crud-renderer-load.ts:240` 在 infinite+loadAction 模式下 append 合并 rows（**裁决：按累计 pageSize 直接拼接（concat）**，与 pageSize 增长契约 design.md:41/:354-356 一致；不做 key 去重——server 分页按 offset 契约保证无重复）；确认 sentinel 在累计后自然消失，无竞速翻页。
-- [ ] `Fix` 1-2 文档同步：`docs/components/crud/design.md:354-356` 累计合并表述与实现对齐（append 语义写明）。
-- [ ] `Proof` 修复后用例全绿；crud 既有 753 测试零回归（source 路径行为不变）。
+- [x] `Proof` 先红（loadAction×infinite 组合用例，对照 crud-lifecycle.test.tsx:419-593 source 路径既有形态）：① 首页 + 翻页两次——断言 rows 累计（第 1 页 rows + 第 2 页 rows），非整页替换；② 短页不足一屏——断言不发生无谓竞速翻页至末页（请求次数有限、最终展示全部累计 rows）；③ 翻页失败——断言 loading/error 状态由 useInfiniteScroll 表达（thenable 返回）。
+- [x] `Fix` 1-2：`handleLoadMore` loadAction 模式返回 thenable（驱动 loading/error + G5 并发守卫）；`crud-renderer-load.ts:240` 在 infinite+loadAction 模式下 append 合并 rows（**裁决：按累计 pageSize 直接拼接（concat）**，与 pageSize 增长契约 design.md:41/:354-356 一致；不做 key 去重——server 分页按 offset 契约保证无重复）；确认 sentinel 在累计后自然消失，无竞速翻页。
+- [x] `Fix` 1-2 文档同步：`docs/components/crud/design.md:354-356` 累计合并表述与实现对齐（append 语义写明）。
+- [x] `Proof` 修复后用例全绿；crud 既有 753 测试零回归（source 路径行为不变）。
 
 Exit Criteria:
 
-- [ ] infinite+loadAction 组合用例断言 rows 累计与末页稳定（修复前红记录）。
-- [ ] handleLoadMore 返回 thenable（测试断言 loading 态出现/并发守卫生效）。
-- [ ] data 包 typecheck 通过、focused 测试全绿。
+- [x] infinite+loadAction 组合用例断言 rows 累计与末页稳定（修复前红记录）。
+- [x] handleLoadMore 返回 thenable（测试断言 loading 态出现/并发守卫生效）。
+- [x] data 包 typecheck 通过、focused 测试全绿。
 
 ### Phase 3 - list onItemClick 事件 ctx + 扫描器别名 receiver
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/list-renderer.tsx` + list 契约测试 + `scripts/audit/find-event-dispatch-without-ctx.mjs`
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof` 先红：契约用例——schema `onItemClick: { action }` + `args: { key: '${key}' }`，点击 list item 后断言 action 收到解析后的 `key`（修复前 `${key}` 解析失败）。
-- [ ] `Fix` 1-3：`list-renderer.tsx:101-104,118-121` 两处派发补 `{ event, evaluationBindings, scope }`（对齐 :281-285/:364-375 同文件先例；event 为完整 payload，evaluationBindings 含 payload 成员）；payload/type 不变。
-- [ ] `Fix` 1-3 扫描器：`find-event-dispatch-without-ctx.mjs:60` `DISPATCH_RECEIVER` 补别名 receiver 形态（`owner.events.X`、及 `props` 解构后的其它常见别名），修复后全仓重跑 `check:audit-event-dispatch-ctx`——零假绿（allowlist 不变）；扩展形态的命中能力经 `scripts/__tests__/` 合成夹具负例单测锁定（修复后 list-renderer 已合规、零命中，故正则判别力由负例单测实证，而非 live 命中）。
-- [ ] `Proof` 修复后契约用例全绿；门禁重跑 exit 0；data 包 753 既有测试零回归。
+- [x] `Proof` 先红：契约用例——schema `onItemClick: { action }` + `args: { key: '${key}' }`，点击 list item 后断言 action 收到解析后的 `key`（修复前 `${key}` 解析失败）。
+- [x] `Fix` 1-3：`list-renderer.tsx:101-104,118-121` 两处派发补 `{ event, evaluationBindings, scope }`（对齐 :281-285/:364-375 同文件先例；event 为完整 payload，evaluationBindings 含 payload 成员）；payload/type 不变。
+- [x] `Fix` 1-3 扫描器：`find-event-dispatch-without-ctx.mjs:60` `DISPATCH_RECEIVER` 补别名 receiver 形态（`owner.events.X`、及 `props` 解构后的其它常见别名），修复后全仓重跑 `check:audit-event-dispatch-ctx`——零假绿（allowlist 不变）；扩展形态的命中能力经 `scripts/__tests__/` 合成夹具负例单测锁定（修复后 list-renderer 已合规、零命中，故正则判别力由负例单测实证，而非 live 命中）。
+- [x] `Proof` 修复后契约用例全绿；门禁重跑 exit 0；data 包 753 既有测试零回归。
 
 Exit Criteria:
 
-- [ ] onItemClick 契约用例断言 `${key}` 解析成功（修复前红记录）。
-- [ ] 扫描器对 `owner.events.X` 形态命中检查通过（新增形态单测或实证一条命中），全仓零假绿。
-- [ ] data 包 typecheck 通过、focused 测试全绿。
+- [x] onItemClick 契约用例断言 `${key}` 解析成功（修复前红记录）。
+- [x] 扫描器对 `owner.events.X` 形态命中检查通过（新增形态单测或实证一条命中），全仓零假绿。
+- [x] data 包 typecheck 通过、focused 测试全绿。
 
 ### Phase 4 - remote search 选中值回显标签
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/{input-choice-renderers.tsx,input-choice-utils.ts}` + `select-remote-search.test.tsx`
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof` 先红：remote search 选中远端选项后重渲染——断言 trigger/chip 文本为选项标签而非原始 id（append 与 replace 两种模式）。
-- [ ] `Fix` 1-12：选中值回显路径的 allOptions 并入 remoteOptions（`input-choice-renderers.tsx:114` 或 `input-choice-utils.ts:180-223` 消费侧合并），使 `resolveChoiceComboboxValue`/`TriggerText` 能匹配远端选中值；本地过滤行为与可见列表不受影响（可见列表走 `resolveChoiceVisibleOptions(rawOptions, remoteOptions)` 独立路径，合并不回写该路径）。注：`input-choice-renderers.tsx:140` `virtualEnabled` 阈值基于 `allOptions.length`，合并后计数变化需在既有 virtual 测试上确认无回归。
-- [ ] `Proof` 修复后用例全绿；form 包 736 既有测试零回归（含 2-6 相关既有行为不回归）。
+- [x] `Proof` 先红：remote search 选中远端选项后重渲染——断言 trigger/chip 文本为选项标签而非原始 id（append 与 replace 两种模式）。
+- [x] `Fix` 1-12：选中值回显路径的 allOptions 并入 remoteOptions（`input-choice-renderers.tsx:114` 或 `input-choice-utils.ts:180-223` 消费侧合并），使 `resolveChoiceComboboxValue`/`TriggerText` 能匹配远端选中值；本地过滤行为与可见列表不受影响（可见列表走 `resolveChoiceVisibleOptions(rawOptions, remoteOptions)` 独立路径，合并不回写该路径）。注：`input-choice-renderers.tsx:140` `virtualEnabled` 阈值基于 `allOptions.length`，合并后计数变化需在既有 virtual 测试上确认无回归。
+- [x] `Proof` 修复后用例全绿；form 包 736 既有测试零回归（含 2-6 相关既有行为不回归）。
 
 Exit Criteria:
 
-- [ ] remote search 回显用例断言标签文本（append/replace 双模式，修复前红记录）。
-- [ ] form 包 typecheck 通过、focused 测试全绿。
+- [x] remote search 回显用例断言标签文本（append/replace 双模式，修复前红记录）。
+- [x] form 包 typecheck 通过、focused 测试全绿。
 
 ## Draft Review Record
 
@@ -131,14 +131,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 4 条 in-scope P1 发现全部修复并 test-first 落地（Proof 先红记录可查）
-- [ ] 事件 ctx 门禁别名 receiver 形态已补，全仓重跑零假绿（allowlist 不变）
-- [ ] 无 in-scope live defect 被静默降级到 deferred / follow-up
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`（form/data 包 focused + 全量）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 4 条 in-scope P1 发现全部修复并 test-first 落地（Proof 先红记录可查）
+- [x] 事件 ctx 门禁别名 receiver 形态已补，全仓重跑零假绿（allowlist 不变）
+- [x] 无 in-scope live defect 被静默降级到 deferred / follow-up
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`（form/data 包 focused + 全量）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 
 ## Deferred But Adjudicated
 
@@ -150,13 +150,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成或关闭时填写）
+Status Note: 4 条 in-scope P1（1-1/1-2/1-3/1-12）全部 test-first 修复落地（Proof 均先红后绿，红记录见各 Phase）；事件 ctx 门禁别名 receiver 形态已补且全仓重跑零假绿（allowlist 不变，判别力由 `scripts/__tests__/` 合成夹具负例单测锁定）；`docs/components/crud/design.md` 累计合并表述与实现对齐；P2（2-1/2-2/2-6/2-8/2-9/2-10 等）按登记留 roadmap Follow-up Backlog（non-blocking）；同根 P2 2-7 随 Phase 3 一并收口并勾选注明。全量验证：`pnpm typecheck`/`pnpm build`/`pnpm lint` 32/32、`pnpm test` 59/59（全 workspace；form 741、data 758、scripts 9）、`pnpm check` exit 0（oversized 2 个 over-limit 为 1053-1 registered 豁免，零新增命中）。审计状态：`docs/audits/2026-08-07-1747-open-audit-component-audit.md` 保持 `planned`（同时为 plan 1747-3 content/runtime 的 source，随 1747-3 收口时再关闭）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （closure-audit 由独立 fresh session 执行后填写）
-- Evidence: （task id / daily log link / findings 摘要）
+- Auditor / Agent: 独立 fresh sub-agent closure-audit session（2026-08-07，task `ses_0238a67abffe2iC2TA6Q2ovXDd`）
+- Evidence: Phase 1 `form-load-action.ts:81-83,100-102,117` + `form-loadaction.test.tsx:279/313/359` — vitest 8/8、form pkg 741/741；Phase 2 `crud-renderer.tsx:310-315` + `crud-renderer-load.ts:283-289` + `design.md:354-358` — `crud-loadaction-infinite.test.tsx` 3/3、data pkg 758/758；Phase 3 `list-renderer.tsx:105-109,124-128` + `find-event-dispatch-without-ctx.mjs:70,318` — 门禁脚本 exit 0、夹具单测 3/3、`data-list-rendering.test.tsx` 9/9；Phase 4 `use-select-remote-search.ts:41,81-92` + `input-choice-renderers.tsx:177-180,208-232` — `select-remote-search.test.tsx` 8/8；lint（form/data）exit 0、git status = 12M + 3 untracked 与 scope 一致。Findings: 1 minor（roadmap 2-7 未勾选）——已由执行 session 收口勾选注明，其余零 Blocker/零 Major。
 
 Follow-up:
 
-- 无 remaining plan-owned work（P2 已归 backlog）。
+- 无 remaining plan-owned work（P2 已归 backlog；2-7 已随本 plan 收口）。
+- 审计文件随 plan 1747-3 收口时关闭（保持 planned 态）。
