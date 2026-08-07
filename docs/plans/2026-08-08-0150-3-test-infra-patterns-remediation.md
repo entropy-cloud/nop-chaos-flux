@@ -1,6 +1,6 @@
 # 3 测试基建模式治理（document-io-test-utils 显式 install / scopeCounter 局部化 / designer Space 断言永真）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: P2-backlog:test-infra-patterns
 > Last Reviewed: 2026-08-08
@@ -59,63 +59,63 @@
 
 ### Phase 1 - document-io-test-utils 显式 install（14-2）
 
-Status: planned
+Status: completed
 Targets: `packages/word-editor-core/src/__tests__/document-io-test-utils.ts`、`document-io-datasets.test.ts`、`document-io-persist.test.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：重构 `document-io-test-utils.ts`——模块级 `beforeEach`/`afterEach` 移除，新增导出 `installDocumentIoTestHooks()`（内部做 `localStorageState.current = createLocalStorageMock()` + `vi.stubGlobal` + afterEach 清理注册）；常量导出保持。
-- [ ] Fix：两个 importer 文件各自文件级调用 `installDocumentIoTestHooks()`。
-- [ ] Proof：新增/更新用例验证显式化语义——常量-only 导入不触发全局 stub（新建小型合成测试：仅 import 常量 + 断言 `globalThis.localStorage` 未被 stub）；两个既有测试文件全绿。
+- [x] Fix：重构 `document-io-test-utils.ts`——模块级 `beforeEach`/`afterEach` 移除，新增导出 `installDocumentIoTestHooks()`（内部做 `localStorageState.current = createLocalStorageMock()` + `vi.stubGlobal` + afterEach 清理注册）；常量导出保持。
+- [x] Fix：两个 importer 文件各自文件级调用 `installDocumentIoTestHooks()`。
+- [x] Proof：新增/更新用例验证显式化语义——常量-only 导入不触发全局 stub（新建小型合成测试：仅 import 常量 + 断言 `globalThis.localStorage` 未被 stub）；两个既有测试文件全绿。
 
 Exit Criteria:
 
-- [ ] `document-io-test-utils.ts` 无模块级副作用（`rg '^beforeEach|^afterEach' document-io-test-utils.ts` 零命中——注意 `installDocumentIoTestHooks()` 内部必然包含两者，锚定模块顶层形态）；常量-only 导入合成用例证明不注册全局 hook
-- [ ] `pnpm --filter @nop-chaos/word-editor-core test` 全绿（含两个 importer 文件）
+- [x] `document-io-test-utils.ts` 无模块级副作用（`rg '^beforeEach|^afterEach' document-io-test-utils.ts` 零命中——注意 `installDocumentIoTestHooks()` 内部必然包含两者，锚定模块顶层形态）；常量-only 导入合成用例证明不注册全局 hook
+- [x] `pnpm --filter @nop-chaos/word-editor-core test` 全绿（含两个 importer 文件）
 
 ### Phase 2 - scopeCounter 局部化（14-4）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/__tests__/table-selection-checkable-scope-dispose.test.tsx`、`use-table-controls.test-support.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：`table-selection-checkable-scope-dispose.test.tsx:12` 模块顶层 `let scopeCounter` 移入 `createSpyHelpers` 局部作用域（或改用 `created.length` 派生 id——两者均符合本项要求，选一即可；断言为配对相对断言，不依赖绝对 id）。
-- [ ] Fix：`use-table-controls.test-support.tsx:28` 同模式计数器局部化收敛。
-- [ ] Proof：`pnpm check:audit-test-global-leaks` 复跑——14-4 所在两文件命中行消失（49 命中 → 47，两文件各去 1 条；按实际桶变化核对，零新增）；data 包测试全绿（断言全为配对相对断言，不受 id 派生方式影响）。
+- [x] Fix：`table-selection-checkable-scope-dispose.test.tsx:12` 模块顶层 `let scopeCounter` 移入 `createSpyHelpers` 局部作用域（或改用 `created.length` 派生 id——两者均符合本项要求，选一即可；断言为配对相对断言，不依赖绝对 id）。
+- [x] Fix：`use-table-controls.test-support.tsx:28` 同模式计数器局部化收敛。
+- [x] Proof：`pnpm check:audit-test-global-leaks` 复跑——14-4 所在两文件命中行消失（49 命中 → 47，两文件各去 1 条；按实际桶变化核对，零新增）；data 包测试全绿（断言全为配对相对断言，不受 id 派生方式影响）。
 
 Exit Criteria:
 
-- [ ] `rg '^let .*Counter = 0' table-selection-checkable-scope-dispose.test.tsx use-table-controls.test-support.tsx` 零命中（模块顶层形态）；局部作用域或 derived id 均可
-- [ ] `pnpm check:audit-test-global-leaks` 该两文件零命中；`pnpm --filter @nop-chaos/flux-renderers-data test` 全绿
+- [x] `rg '^let .*Counter = 0' table-selection-checkable-scope-dispose.test.tsx use-table-controls.test-support.tsx` 零命中（模块顶层形态）；局部作用域或 derived id 均可
+- [x] `pnpm check:audit-test-global-leaks` 该两文件零命中；`pnpm --filter @nop-chaos/flux-renderers-data test` 全绿
 
 ### Phase 3 - designer Space 断言对齐精确值 + fail-closed 用例（14-5+23-3）
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-renderers/src/designer-xyflow-node.keyboard.test.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：Space 用例 `Number.isFinite` 断言改精确中心值断言（200/90，与 Enter 用例 :100-103 对齐——同一 handler 路径）。
-- [ ] Proof：新增 fail-closed 用例——stub 零尺寸矩形（left:0/top:0/right:0/bottom:0），按 live 行为断言：`openSlotMenuFromElement`（designer-xyflow-node.tsx:205-216）当前**无 NaN 保护**（零尺寸矩形 → 中心 (0,0) 有限值、不抛错），故断言**精确 (0,0)** + `onPlusButtonClick` 仍被调用 1 次（锁定"坐标按矩形中心推导、零矩形落到原点"的真实语义，而非 `Number.isFinite` 永真）。
+- [x] Fix：Space 用例 `Number.isFinite` 断言改精确中心值断言（200/90，与 Enter 用例 :100-103 对齐——同一 handler 路径）。
+- [x] Proof：新增 fail-closed 用例——stub 零尺寸矩形（left:0/top:0/right:0/bottom:0），按 live 行为断言：`openSlotMenuFromElement`（designer-xyflow-node.tsx:205-216）当前**无 NaN 保护**（零尺寸矩形 → 中心 (0,0) 有限值、不抛错），故断言**精确 (0,0)** + `onPlusButtonClick` 仍被调用 1 次（锁定"坐标按矩形中心推导、零矩形落到原点"的真实语义，而非 `Number.isFinite` 永真）。
 
 Exit Criteria:
 
-- [ ] Space 用例断言精确中心值（无 `Number.isFinite` 永真断言残留）；fail-closed 用例断言精确 (0,0) + 调用计数（live 行为锁定）
-- [ ] `pnpm --filter @nop-chaos/flow-designer-renderers test` 全绿（含键盘测试族既有用例零回归）
+- [x] Space 用例断言精确中心值（无 `Number.isFinite` 永真断言残留）；fail-closed 用例断言精确 (0,0) + 调用计数（live 行为锁定）
+- [x] `pnpm --filter @nop-chaos/flow-designer-renderers test` 全绿（含键盘测试族既有用例零回归）
 
 ### Phase 4 - 收口
 
-Status: planned
+Status: completed
 Targets: `docs/backlog/component-audit-roadmap.md`、`docs/logs/2026/08-08.md`
 
 - Item Types: `Follow-up`
 
-- [ ] roadmap Follow-up Backlog 三条（14-2/14-4/14-5+23-3）勾选并注明本 plan 引用（14-5+23-3 在 roadmap 行内注记登记收口）；daily log 登记执行记录与 fail-closed 行为裁定。
+- [x] roadmap Follow-up Backlog 三条（14-2/14-4/14-5+23-3）勾选并注明本 plan 引用（14-5+23-3 在 roadmap 行内注记登记收口）；daily log 登记执行记录与 fail-closed 行为裁定。
 
 Exit Criteria:
 
-- [ ] roadmap 条目 `[ ]`→`[x]`（附 plan 引用）；daily log 收口记录已写
+- [x] roadmap 条目 `[ ]`→`[x]`（附 plan 引用）；daily log 收口记录已写
 
 ## Draft Review Record
 
@@ -135,16 +135,16 @@ Exit Criteria:
 
 > 关闭条件：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 14-2 document-io-test-utils 显式 install 落地（常量/hook 解耦 + 两 importer 迁移 + 常量-only 合成用例）
-- [ ] 14-4 scopeCounter 局部化落地（两文件模块顶层计数器零残留，`check:audit-test-global-leaks` 两文件零命中）
-- [ ] 14-5+23-3 Space 精确断言 + fail-closed 用例落地
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 缺陷
-- [ ] roadmap Follow-up Backlog 三条已勾选并注明 plan 引用；daily log 已登记
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 14-2 document-io-test-utils 显式 install 落地（常量/hook 解耦 + 两 importer 迁移 + 常量-only 合成用例）
+- [x] 14-4 scopeCounter 局部化落地（两文件模块顶层计数器零残留，`check:audit-test-global-leaks` 两文件零命中）
+- [x] 14-5+23-3 Space 精确断言 + fail-closed 用例落地
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 缺陷
+- [x] roadmap Follow-up Backlog 三条已勾选并注明 plan 引用；daily log 已登记
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -161,14 +161,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 2026-08-08 关闭——测试基建模式 3 条全部收口：14-2 document-io-test-utils 显式 install（常量/hook 解耦 + 两 importer 迁移 + 常量-only 合成用例证明）、14-4 scopeCounter 两文件局部化（`check:audit-test-global-leaks` 49→47 零新增）、14-5+23-3 Space 精确断言 (200,90) + 零矩形 fail-closed 用例（live 行为裁定：`openSlotMenuFromElement` 无 NaN 保护、零矩形中心落原点 (0,0)）。全量验证 green：typecheck 32/32、build 32/32、lint 32/32、test 59/59、`pnpm check` exit 0（oversized 2 条为既有 locale 豁免）。roadmap Follow-up Backlog 三条已勾选并附 plan 引用（14-5+23-3 行内注记登记），daily log 已登记。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent（fresh session）`ses_0225ce868ffe2FRnNl7DnKS0LE`
+- Evidence: verdict `approved`——逐 Phase 复核 live repo：Phase 1 `rg '^beforeEach|^afterEach'` 零命中 + installDocumentIoTestHooks 导出 + 两 importer 文件级调用 + 合成用例存在（word-editor-core 14 files/248 tests 实测绿）；Phase 2 两文件模块顶层 let 零残留 + 扫描器 47 命中两文件缺席（data 包 109 files/765 tests 实测绿）；Phase 3 Space 用例无 Number.isFinite 残留 + fail-closed 精确 (0,0)/调用计数（live 核对 designer-xyflow-node.tsx:205-216 无 NaN 保护，flow-designer-renderers 35 files/236 tests 实测绿）；Phase 4 roadmap 三行 `[x]` + daily log 计数与独立实跑一致；计划文本一致（4 Phase completed、无未勾 in-scope 项、deferred 分类诚实、diff 8 改 1 新全为测试/文档文件零产品代码）。Minor（non-blocking）：plan 引用的 `designer-xyflow-node.tsx` 实际位于 `designer-xyflow-canvas/` 子目录（行号精确，既有路径漂移）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
-- <<或者明确写 no remaining plan-owned work>>
+- 全仓其他 test-support 模块的隐式 hook 模式排查（canvas-bridge 已显式先例，其余包如有同型模块由未来治理轮次处理；Non-Blocking Follow-ups 已登记）
+- no remaining plan-owned work
