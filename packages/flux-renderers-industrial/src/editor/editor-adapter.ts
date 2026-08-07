@@ -8,7 +8,9 @@ import type { ScadaSymbolNode } from '../serialization/config-types.js';
  * 1. **禁直传 leafer 循环引用事件**——Editor 事件载荷的 target/editor/value/drag 均为 Leaf 实例
  *    （含循环引用），直传 `createNormalizedActionEvent` 会序列化栈溢出。适配层抽纯 primitive payload + nodeId。
  * 2. **不派发 `symbol:*` action**——编辑态事件族只更新 working copy 几何 + session.selection（R5 Layer 3）。
- * 3. **节流起止帧占位**——M1 单选场景，transform 族每事件读 target 几何写回 working copy（M2 多选完善节流）。
+ * 3. **事务语义节流起止帧**（design-undo-redo.md §4.2，E7.2 M2 落地）——transform 族首帧 beginTransaction
+ *    快照 working copy，每帧只更新 working copy（不入栈），pointerup commitTransaction 一次性 diff 入栈
+ *    （一拖拽 = 一 undo 步，防逐帧入栈爆炸 U2）。
  *
  * 几何写回 spike 约束 #5：scale 默认 editSize:'size' → 改写 width/height（非 scale 因子）；
  * rotate rotateGap:45 吸附；skew 触发 = ctrl+resize-line。M1 读 target 几何（x/y/width/height/rotation）写回。
@@ -18,6 +20,10 @@ export interface EditorAdapterListeners {
   onSelectionChange?: (nodeIds: string[]) => void;
   /** working copy 几何变更回调（经 updateSymbol 句柄写回 working copy）。 */
   onGeometryChange?: (nodeId: string, patch: Partial<ScadaSymbolNode>) => void;
+  /** transform 事务起始回调（design-undo-redo.md §4.2：第一个 transform 帧触发，host 经 undoRedo.beginTransaction 快照 working copy）。 */
+  onTransformStart?: () => void;
+  /** transform 事务终止回调（pointerup 触发，host 经 undoRedo.commitTransaction 入栈 1 个 diff）。 */
+  onTransformEnd?: () => void;
 }
 
 /**
@@ -53,9 +59,30 @@ export function attachEditorAdapter(
     listeners.onSelectionChange?.(nodeIds);
   };
 
+  // transform 事务状态（design-undo-redo.md §4.2：节流起止帧，一拖拽 = 一 diff）。
+  let inTransformTransaction = false;
+
+  const beginTransformTransaction = (): void => {
+    if (inTransformTransaction) return;
+    inTransformTransaction = true;
+    listeners.onTransformStart?.();
+    // 事务终止经 pointerup 触发（一次性 window listener，spike §2.5 pointerup = 事务边界）。
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pointerup', endTransformTransaction, { once: true });
+    }
+  };
+
+  const endTransformTransaction = (): void => {
+    if (!inTransformTransaction) return;
+    inTransformTransaction = false;
+    listeners.onTransformEnd?.();
+  };
+
   // transform 族（editor.move/scale/rotate/skew）：读 target 几何 → 写回 working copy（spike 约束 #5）。
-  // M1 单选场景：每事件读 target 节点几何（x/y/width/height/rotation）→ onGeometryChange。
+  // 事务语义（design-undo-redo.md §4.2）：首帧 beginTransaction 快照 working copy，每帧只更新 working copy（不入栈），
+  // pointerup commitTransaction 一次性 diff 入栈（一拖拽 = 一 undo 步，防逐帧入栈爆炸 U2）。
   const onTransform = (): void => {
+    beginTransformTransaction();
     const target = editor.target;
     const nodeIds = extractNodeIds(engine, target);
     for (const nodeId of nodeIds) {
@@ -75,6 +102,9 @@ export function attachEditorAdapter(
   return () => {
     for (const { event, fn } of handlers) {
       editor.off?.(event, fn);
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pointerup', endTransformTransaction);
     }
   };
 }

@@ -7,6 +7,8 @@ import { validEditorConfig } from '../../../test-support/editor-config-fixtures.
 import { useEditorHandles, type UseEditorHandlesArgs } from './use-editor-handles.js';
 import type { ComponentCapabilities, ComponentHandleRegistry } from '@nop-chaos/flux-core';
 import type { EditorEngineRuntime } from './use-editor-engine.js';
+import { UndoStack } from '../../undo-redo/undo-stack.js';
+import { UndoRedoAdapter } from '../../undo-redo/undo-redo-adapter.js';
 
 vi.mock('leafer-ui', () => import('../../../test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
@@ -49,6 +51,7 @@ function makeRuntime(): EditorEngineRuntime {
     committedBaseline: validEditorConfig(),
     selection: [] as string[],
     mode: 'edit' as const,
+    undoStack: new UndoStack(),
   };
   return {
     engine: {} as never,
@@ -69,6 +72,11 @@ function makeRuntime(): EditorEngineRuntime {
     removeWorkingSymbol: (id: string) => {
       session.workingConfig.symbols = session.workingConfig.symbols.filter((s) => s.id !== id);
     },
+    undoRedo: new UndoRedoAdapter(session.undoStack),
+    undo: () => undefined,
+    redo: () => undefined,
+    groupSymbols: () => undefined,
+    ungroupSymbols: () => undefined,
   };
 }
 
@@ -97,7 +105,17 @@ describe('useEditorHandles', () => {
     expect(caps?.hasMethod?.('save')).toBe(true);
     expect(caps?.hasMethod?.('load')).toBe(true);
     expect(caps?.hasMethod?.('unknownMethod')).toBe(false);
-    expect(caps?.listMethods?.()).toEqual(['addSymbol', 'removeSymbol', 'updateSymbol', 'save', 'load']);
+    expect(caps?.listMethods?.()).toEqual([
+      'addSymbol',
+      'removeSymbol',
+      'updateSymbol',
+      'save',
+      'load',
+      'undo',
+      'redo',
+      'group',
+      'ungroup',
+    ]);
   });
 
   it('addSymbol adds to working copy', () => {
@@ -213,5 +231,136 @@ describe('useEditorHandles', () => {
     render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
     const result = registry.getCapabilities('e')!.invoke('unknownMethod', {}, {} as never) as { ok: boolean };
     expect(result.ok).toBe(false);
+  });
+
+  it('undo returns no-undo when stack empty', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('undo', {}, {} as never) as { ok: boolean; error?: Error };
+    expect(result.ok).toBe(false);
+    expect((result as { error?: { message?: string } }).error?.message).toBe('no-undo');
+  });
+
+  it('undo succeeds when stack non-empty', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    let undoCalled = false;
+    runtime.undo = () => {
+      undoCalled = true;
+    };
+    // push an entry so canUndo is true
+    runtime.session.undoStack.push({
+      forward: { added: [], removed: [], updated: [{ id: 'editor-rect', patch: { x: 1 } }] },
+      inverse: { added: [], removed: [], updated: [{ id: 'editor-rect', patch: { x: 0 } }] },
+      operationKind: 'update-symbol',
+      timestamp: 0,
+    });
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('undo', {}, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(true);
+    expect(undoCalled).toBe(true);
+  });
+
+  it('redo returns no-redo when stack empty', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('redo', {}, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(false);
+  });
+
+  it('redo succeeds when redo stack non-empty', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    let redoCalled = false;
+    runtime.redo = () => {
+      redoCalled = true;
+    };
+    // push + undo to create a redo entry
+    runtime.session.undoStack.push({
+      forward: { added: [], removed: [], updated: [{ id: 'editor-rect', patch: { x: 1 } }] },
+      inverse: { added: [], removed: [], updated: [{ id: 'editor-rect', patch: { x: 0 } }] },
+      operationKind: 'update-symbol',
+      timestamp: 0,
+    });
+    runtime.session.undoStack.popForUndo();
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('redo', {}, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(true);
+    expect(redoCalled).toBe(true);
+  });
+
+  it('group rejects empty selection', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('group', { nodeIds: [] }, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(false);
+  });
+
+  it('group rejects missing nodeIds', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('group', {}, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(false);
+  });
+
+  it('group calls groupSymbols', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    let grouped: string[] | null = null;
+    runtime.groupSymbols = (ids: string[]) => {
+      grouped = ids;
+    };
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('group', { nodeIds: ['a', 'b'] }, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(true);
+    expect(grouped).toEqual(['a', 'b']);
+  });
+
+  it('ungroup rejects missing groupId', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('ungroup', {}, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(false);
+  });
+
+  it('ungroup rejects unknown groupId', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('ungroup', { groupId: 'missing' }, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(false);
+  });
+
+  it('ungroup rejects non-group node', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('ungroup', { groupId: 'editor-rect' }, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(false);
+  });
+
+  it('ungroup calls ungroupSymbols for valid group', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    runtime.session.workingConfig.symbols.push({
+      id: 'g1',
+      type: 'scada-group',
+      x: 0,
+      y: 0,
+      children: [{ id: 'c1', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10 }],
+    } as never);
+    let ungroupedId: string | null = null;
+    runtime.ungroupSymbols = (id: string) => {
+      ungroupedId = id;
+    };
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('ungroup', { groupId: 'g1' }, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(true);
+    expect(ungroupedId).toBe('g1');
   });
 });

@@ -12,6 +12,9 @@ import { resolveSymbolStyle } from './style-resolver.js';
 import { instantiateSymbol, toNodePatch } from './symbol-factory.js';
 import { registerBuiltinScadaSymbols, builtinScadaSymbolDefinitions } from './register-builtin.js';
 import { scadaPipeDefinition } from './base-shapes/pipe.js';
+import { scadaEllipseDefinition } from './base-shapes/ellipse.js';
+import { scadaRectDefinition } from './base-shapes/rect.js';
+import { scadaRoundRectDefinition } from './base-shapes/round-rect.js';
 import { validateScadaConfig } from '../serialization/validate.js';
 import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import type { ScadaSymbolDefinition, ScadaSymbolProps } from './symbol-types.js';
@@ -435,5 +438,31 @@ describe('registry hygiene across tests', () => {
   it('custom test registrations should not leak', () => {
     expect(hasScadaSymbol('scada-test-a')).toBe(false);
     expect(hasScadaSymbol('scada-rect')).toBe(true);
+  });
+});
+
+describe('base-shape create defensive defaults (width/height undefined branch coverage)', () => {
+  const ctx = {
+    id: 'test',
+    props: { x: 0, y: 0 } as ScadaSymbolProps,
+    engine: {},
+    config: { world: { x: 0, y: 0, scale: 1 } },
+  };
+  it('ellipse create sets default width/height when undefined', () => {
+    const node = scadaEllipseDefinition.create(ctx);
+    expect(node.width).toBe(100);
+    expect(node.height).toBe(100);
+  });
+
+  it('rect create sets default width/height when undefined', () => {
+    const node = scadaRectDefinition.create(ctx);
+    expect(node.width).toBe(100);
+    expect(node.height).toBe(100);
+  });
+
+  it('round-rect create sets default width/height when undefined', () => {
+    const node = scadaRoundRectDefinition.create(ctx);
+    expect(node.width).toBe(100);
+    expect(node.height).toBe(100);
   });
 });

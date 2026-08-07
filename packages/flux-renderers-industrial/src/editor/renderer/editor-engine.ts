@@ -70,6 +70,7 @@ export class ScadaEditorEngine {
     // leafer App 三层（design-architecture.md §4.3 + spike §1.3/§1.5）：
     // ground 背景 / tree 图元层（viewport 插件 + move:drag:'auto' + dragEmpty）/ sky 交互覆盖层。
     // `editor: {}` 装配 Editor 实例 → app.editor（挂 sky 层，方案 A：leafer Editor 内置 EditBox/EditSelect）。
+    // M2 多选/框选（E7.2 Phase 3，spike 约束 #6）：selectArea 框选 + selectKeep 释放不清空选区。
     // `editor` 字段不在 leafer-ui IAppConfig 类型中（由 @leafer-in/editor 运行时注册），经类型断言透传。
     const appConfig = {
       view: options.container,
@@ -78,7 +79,7 @@ export class ScadaEditorEngine {
       ground: {},
       tree: { type: 'viewport', move: { drag: 'auto', dragEmpty: true } },
       sky: {},
-      editor: {},
+      editor: { selectArea: true, selectKeep: true },
     } as unknown as IAppConfig;
     this.app = new App(appConfig);
   }

@@ -1,4 +1,5 @@
 import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
+import { UndoStack } from './undo-redo/undo-stack.js';
 
 /**
  * 编辑会话模式（design-architecture.md §4.5）。
@@ -15,28 +16,34 @@ export type ScadaEditorMode = 'edit' | 'preview';
 export type ScadaCommitPolicy = 'manual' | 'auto';
 
 /**
- * 编辑会话模型 M1 子集（design-architecture.md §4.5）。
+ * 编辑会话模型（design-architecture.md §4.5 + design-undo-redo.md §4.1.2/§4.6 方案 A）。
  *
- * **M1 不含 undoStack/redoStack**——undo-redo 属 E2.4 设计 / E7.2 落地（design-undo-redo.md §1
- * 明确「M1 不实现 undo-redo」）。`onSessionChange` 载荷 canUndo/canRedo 在 M1 恒为 false。
- *
- * 域内部持有（INV-4）：workingConfig/committedBaseline/selection/mode 不进 flux scope，
+ * 域内部持有（INV-4）：workingConfig/committedBaseline/selection/mode + undoStack/redoStack 不进 flux scope，
  * 经 ref 持有，提交时经 config 同步链传出。
+ *
+ * **undo-redo 命令栈归属编辑会话模型域核心**（design-undo-redo.md §3 + §4.6 两方案契约一致，差异仅在引擎类结构）。
+ * 本 plan 将栈落 editor-session（§4.6 方案 A 的 conformant realization：编辑器域持有栈，undo/redo 经 runtime
+ * applyDiff 应用 forward/inverse，不改 runtime 命令面）。canUndo/canRedo = 栈长度派生（非恒 false）。
  */
 export interface ScadaEditorSession {
   /** 编辑会话 working copy（编辑期变更全部落点；R5 隔离——不直改下游 config）。 */
   workingConfig: ScadaConfig;
   /** 上次提交的基线（用于 diff 计算 + 提交语义判定）。 */
   committedBaseline: ScadaConfig;
-  /** 当前选区（nodeId 列表；M1 仅单选，数组长度 ≤1）。 */
+  /** 当前选区（nodeId 列表）。 */
   selection: string[];
   /** 当前模式（edit / preview）。 */
   mode: ScadaEditorMode;
+  /**
+   * undo-redo 命令栈（E7.2 落地，design-undo-redo.md §4.1.2）。
+   * 域内部 ref 持有——不进 scope，不进序列化。canUndo/canRedo/undoStackDepth 经此派生。
+   */
+  undoStack: UndoStack;
 }
 
 /**
  * `onSessionChange` 载荷（design-renderer.md §4.1 + §8.1）。
- * M1 中 canUndo/canRedo 恒为 false（无 undo/redo 栈）。
+ * canUndo/canRedo 经 undo-redo 栈派生（E7.2 落地，非恒 false）。
  */
 export interface ScadaEditorSessionChangePayload {
   canUndo: boolean;
@@ -46,32 +53,34 @@ export interface ScadaEditorSessionChangePayload {
 }
 
 /**
- * 构造初始编辑会话（M1 子集，无 undo/redo 栈）。
+ * 构造初始编辑会话（含 undo/redo 栈，E7.2 落地）。
  *
  * working copy + committedBaseline 均深拷贝入参 config（编辑期 working copy 变更不回流 props config，
- * R5 双态隔离 Layer 2）。selection 缺省空（无选中），mode 缺省 edit。
+ * R5 双态隔离 Layer 2）。selection 缺省空（无选中），mode 缺省 edit。undoStack 缺省新空栈。
  */
 export function createScadaEditorSession(
   config: ScadaConfig,
-  options: { mode?: ScadaEditorMode; selection?: string[] } = {},
+  options: { mode?: ScadaEditorMode; selection?: string[]; undoStack?: UndoStack } = {},
 ): ScadaEditorSession {
   return {
     workingConfig: cloneConfig(config),
     committedBaseline: cloneConfig(config),
     selection: options.selection ? [...options.selection] : [],
     mode: options.mode ?? 'edit',
+    undoStack: options.undoStack ?? new UndoStack(),
   };
 }
 
 /**
- * 重置会话（load 句柄消费，design-renderer.md §4.5）：替换 working copy + committedBaseline +
- * 清空 selection + 重置 mode 为 edit（loaded config 是新画面起点）。
+ * 重置会话（load 句柄消费，design-renderer.md §4.5 + design-undo-redo.md §8.2）：替换 working copy +
+ * committedBaseline + 清空 selection + 重置 mode 为 edit + **清空 undo/redo 栈**（编辑历史不保留）。
  */
 export function resetSession(session: ScadaEditorSession, config: ScadaConfig): void {
   session.workingConfig = cloneConfig(config);
   session.committedBaseline = cloneConfig(config);
   session.selection = [];
   session.mode = 'edit';
+  session.undoStack.clear();
 }
 
 /** working copy 节点查找（含 group 子树）。 */
@@ -91,11 +100,11 @@ export function findNodeInSymbols(symbols: ScadaSymbolNode[], id: string): Scada
   return undefined;
 }
 
-/** 投影 session → onSessionChange 载荷（canUndo/canRedo M1 恒 false）。 */
+/** 投影 session → onSessionChange 载荷（canUndo/canRedo 经 undoStack 派生，E7.2 落地）。 */
 export function projectSessionChange(session: ScadaEditorSession): ScadaEditorSessionChangePayload {
   return {
-    canUndo: false,
-    canRedo: false,
+    canUndo: session.undoStack.canUndo,
+    canRedo: session.undoStack.canRedo,
     selection: [...session.selection],
     mode: session.mode,
   };

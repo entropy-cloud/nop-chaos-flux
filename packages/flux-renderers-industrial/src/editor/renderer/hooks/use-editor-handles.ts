@@ -4,9 +4,10 @@ import type { ScadaConfig, ScadaSymbolNode } from '../../../serialization/config
 import type { EditorEngineRuntime } from './use-editor-engine.js';
 
 /**
- * editor 扩展句柄方法名（design-renderer.md §8.5.2，M1 子集）。
+ * editor 扩展句柄方法名（design-renderer.md §8.5.2）。
  * runtime 9 句柄（fit/center/getSymbols/...）属 runtime `use-scada-handles`，经独立注册；
- * editor 扩展 M1 子集：addSymbol/removeSymbol/updateSymbol/save/load（不含 group/ungroup/undo/redo）。
+ * editor 扩展：addSymbol/removeSymbol/updateSymbol/save/load（M1）+ undo/redo（E7.2）+
+ * group/ungroup（E7.2 Phase 3）。
  */
 const EDITOR_HANDLE_METHODS = [
   'addSymbol',
@@ -14,6 +15,10 @@ const EDITOR_HANDLE_METHODS = [
   'updateSymbol',
   'save',
   'load',
+  'undo',
+  'redo',
+  'group',
+  'ungroup',
 ] as const;
 
 export interface UseEditorHandlesArgs {
@@ -91,6 +96,33 @@ export function useEditorHandles(args: UseEditorHandlesArgs): void {
             const config = (payload as { config?: unknown } | undefined)?.config;
             if (config === undefined) return { ok: false, error: new Error('invalid-config') };
             current.load(config as string | ScadaConfig);
+            return { ok: true };
+          }
+          case 'undo': {
+            if (!current.session.undoStack.canUndo) return { ok: false, error: new Error('no-undo') };
+            current.undo();
+            return { ok: true };
+          }
+          case 'redo': {
+            if (!current.session.undoStack.canRedo) return { ok: false, error: new Error('no-redo') };
+            current.redo();
+            return { ok: true };
+          }
+          case 'group': {
+            const nodeIds = (payload as { nodeIds?: unknown } | undefined)?.nodeIds;
+            if (!Array.isArray(nodeIds) || nodeIds.length === 0) {
+              return { ok: false, error: new Error('empty-selection') };
+            }
+            current.groupSymbols(nodeIds as string[]);
+            return { ok: true };
+          }
+          case 'ungroup': {
+            const groupId = (payload as { groupId?: unknown } | undefined)?.groupId;
+            if (typeof groupId !== 'string') return { ok: false, error: new Error('symbol id required') };
+            const node = current.session.workingConfig.symbols.find((s) => s.id === groupId);
+            if (!node) return { ok: false, error: new Error('symbol-not-found') };
+            if (node.type !== 'scada-group') return { ok: false, error: new Error('not-a-group') };
+            current.ungroupSymbols(groupId);
             return { ok: true };
           }
           default:

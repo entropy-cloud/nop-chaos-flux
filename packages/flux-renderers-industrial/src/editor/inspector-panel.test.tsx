@@ -6,6 +6,8 @@ import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
 import type { EditorEngineRuntime } from './renderer/hooks/use-editor-engine.js';
 import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
+import { UndoStack } from './undo-redo/undo-stack.js';
+import { UndoRedoAdapter } from './undo-redo/undo-redo-adapter.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
@@ -22,7 +24,7 @@ const config: ScadaConfig = {
 function makeRuntime(workingConfig: ScadaConfig): EditorEngineRuntime {
   return {
     engine: {} as never,
-    session: { workingConfig, committedBaseline: workingConfig, selection: [], mode: 'edit' },
+    session: { workingConfig, committedBaseline: workingConfig, selection: [], mode: 'edit', undoStack: new UndoStack() },
     switchMode: () => undefined,
     setSelection: () => undefined,
     clearSelection: () => undefined,
@@ -32,6 +34,11 @@ function makeRuntime(workingConfig: ScadaConfig): EditorEngineRuntime {
     updateWorkingNode: () => undefined,
     addWorkingSymbol: () => undefined,
     removeWorkingSymbol: () => undefined,
+    undoRedo: new UndoRedoAdapter(new UndoStack()),
+    undo: () => undefined,
+    redo: () => undefined,
+    groupSymbols: () => undefined,
+    ungroupSymbols: () => undefined,
   };
 }
 

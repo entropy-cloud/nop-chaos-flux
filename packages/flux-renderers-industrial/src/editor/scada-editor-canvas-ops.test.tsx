@@ -268,4 +268,35 @@ describe('scada-editor-canvas operations (add/update/remove via test handle)', (
     const workingNode = handle.session.workingConfig.symbols.find((s) => s.id === 'editor-rect');
     expect(workingNode).toBeDefined();
   });
+
+  it('undo/redo handles drive undo-redo stack (E7.2: canUndo/canRedo derived from stack)', async () => {
+    const { container } = renderEditor('undo-redo-handles');
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    // initially empty
+    expect(handle.session.canUndo).toBe(false);
+    expect(handle.session.canRedo).toBe(false);
+    // perform an undoable op (update)
+    handle.updateSymbol('editor-rect', { x: 500 });
+    expect(handle.session.canUndo).toBe(true);
+    expect(handle.undoRedo.getStackState().undoStackDepth).toBe(1);
+    // undo → geometry reverts
+    handle.undo();
+    expect(handle.session.workingConfig.symbols.find((s) => s.id === 'editor-rect')?.x).toBe(100);
+    expect(handle.session.canUndo).toBe(false);
+    expect(handle.session.canRedo).toBe(true);
+    // redo → geometry restored
+    handle.redo();
+    expect(handle.session.workingConfig.symbols.find((s) => s.id === 'editor-rect')?.x).toBe(500);
+    expect(handle.session.canUndo).toBe(true);
+    expect(handle.session.canRedo).toBe(false);
+  });
+
+  it('group/ungroup handles are callable (Phase 3 wires real behavior)', async () => {
+    const { container } = renderEditor('group-ungroup-handles');
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    expect(() => handle.group(['editor-rect'])).not.toThrow();
+    expect(() => handle.ungroup('editor-rect')).not.toThrow();
+  });
 });

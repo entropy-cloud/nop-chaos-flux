@@ -6,6 +6,7 @@ import {
   projectSessionChange,
   type ScadaEditorSession,
 } from './editor-session.js';
+import { UndoStack } from './undo-redo/undo-stack.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 
 const baseConfig: ScadaConfig = {
@@ -115,12 +116,13 @@ describe('findWorkingNode', () => {
 });
 
 describe('projectSessionChange (onSessionChange payload)', () => {
-  it('projects canUndo/canRedo as false in M1 (no undo/redo stack)', () => {
+  it('projects canUndo/canRedo as derived from undoStack (E7.2)', () => {
     const session: ScadaEditorSession = {
       workingConfig: baseConfig,
       committedBaseline: baseConfig,
       selection: ['rect-1'],
       mode: 'edit',
+      undoStack: new UndoStack(),
     };
     const payload = projectSessionChange(session);
     expect(payload.canUndo).toBe(false);
@@ -129,12 +131,31 @@ describe('projectSessionChange (onSessionChange payload)', () => {
     expect(payload.mode).toBe('edit');
   });
 
+  it('projects canUndo true after an entry is pushed onto undoStack', () => {
+    const stack = new UndoStack();
+    stack.push({
+      forward: { added: [], removed: [], updated: [] },
+      inverse: { added: [], removed: [], updated: [] },
+      operationKind: 'add-symbol',
+      timestamp: 1,
+    });
+    const session: ScadaEditorSession = {
+      workingConfig: baseConfig,
+      committedBaseline: baseConfig,
+      selection: ['rect-1'],
+      mode: 'edit',
+      undoStack: stack,
+    };
+    expect(projectSessionChange(session).canUndo).toBe(true);
+  });
+
   it('projects a copy of selection (not the live array)', () => {
     const session: ScadaEditorSession = {
       workingConfig: baseConfig,
       committedBaseline: baseConfig,
       selection: ['rect-1'],
       mode: 'edit',
+      undoStack: new UndoStack(),
     };
     const payload = projectSessionChange(session);
     payload.selection.push('mutated');

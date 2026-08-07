@@ -18,6 +18,13 @@ import { parseScadaConfig } from '../../../serialization/parse.js';
 import { validateScadaConfig } from '../../../serialization/validate.js';
 import { diffScadaConfig } from '../../../serialization/diff.js';
 import type { ScadaConfig, ScadaSymbolNode } from '../../../serialization/config-types.js';
+import {
+  listAllConnections,
+  programmaticConnect,
+  programmaticDisconnect,
+  recomputeJunctionAfterMove,
+} from '../../connection/connection-adapter.js';
+import { UndoRedoAdapter } from '../../undo-redo/undo-redo-adapter.js';
 
 export interface UseEditorEngineArgs {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -61,6 +68,16 @@ export interface EditorEngineRuntime {
   addWorkingSymbol: (node: ScadaSymbolNode) => void;
   /** 从 working copy 删除图元。 */
   removeWorkingSymbol: (nodeId: string) => void;
+  /** undo-redo 适配层（事务边界 + 入栈协调；E7.2 落地）。 */
+  undoRedo: UndoRedoAdapter;
+  /** 撤销（design-renderer.md §8.5.2）。 */
+  undo: () => void;
+  /** 重做（design-renderer.md §8.5.2）。 */
+  redo: () => void;
+  /** 成组（design-renderer.md §8.5.2，Phase 3）。 */
+  groupSymbols: (nodeIds: string[]) => void;
+  /** 解组（design-renderer.md §8.5.2，Phase 3）。 */
+  ungroupSymbols: (groupId: string) => void;
 }
 
 /**
@@ -148,14 +165,31 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       notifySession();
     };
     const handleGeometryChange = (nodeId: string, patch: Partial<ScadaSymbolNode>) => {
+      // transform 事务语义（design-undo-redo.md §4.2）：适配层 editor.move/scale/rotate/skew 每帧只更新 working copy（不入栈），
+      // 防逐帧入栈爆炸（U2）。undo 入栈由事务终止（pointerup → onTransformEnd → commitTransaction）触发，一拖拽 = 一 diff。
       applyPatchToWorkingNode(session, nodeId, patch);
+      // 图元移动联动（design-connection.md §4.4 + §4.5）：目标设备移动后重算所有指向它的 connection.x/y。
+      recomputeLinkagesForMovedNode(session, nodeId);
       syncWorkingCopy();
+      notifySession();
+    };
+    // transform 事务边界（design-undo-redo.md §4.2）：首帧快照 working copy，pointerup 一次性 diff 入栈。
+    const handleTransformStart = () => {
+      undoRedo.beginTransaction('transform-move', session.workingConfig);
+    };
+    const handleTransformEnd = () => {
+      undoRedo.commitTransaction(session.workingConfig);
       notifySession();
     };
     detachAdapterRef.current = attachEditorAdapter(engine, {
       onSelectionChange: handleSelectionChange,
       onGeometryChange: handleGeometryChange,
+      onTransformStart: handleTransformStart,
+      onTransformEnd: handleTransformEnd,
     });
+
+    // undo-redo 适配层（E7.2，design-undo-redo.md §4.2 事务语义 + §4.1.2 命令栈）。
+    const undoRedo = new UndoRedoAdapter(session.undoStack);
 
     // 引擎已同步的 config 快照（防引用共享：engine.build 存引用，working copy 变更后 diff 需对快照而非 live config）。
     let engineSyncedConfig = cloneConfigSnapshot(session.workingConfig);
@@ -171,20 +205,85 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     };
 
     const updateWorkingNode = (nodeId: string, patch: Partial<ScadaSymbolNode>) => {
+      const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
       applyPatchToWorkingNode(session, nodeId, patch);
+      // 图元移动联动（design-connection.md §4.4 + §4.5）：仅当几何字段变更时重算指向该节点 / 该节点持有的 connection.x/y。
+      if (patch.x !== undefined || patch.y !== undefined || patch.width !== undefined || patch.height !== undefined) {
+        recomputeLinkagesForMovedNode(session, nodeId);
+      }
+      // 入栈（update-symbol；property-edit 经 tryCoalesce 合并连续同字段编辑，design-undo-redo.md §4.4）。
+      undoRedo.pushOperation('update-symbol', prevSnapshot, session.workingConfig);
       syncWorkingCopy();
       notifySession();
     };
 
     const addWorkingSymbol = (node: ScadaSymbolNode) => {
+      const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
       session.workingConfig.symbols = [...session.workingConfig.symbols, node];
+      undoRedo.pushOperation('add-symbol', prevSnapshot, session.workingConfig);
       syncWorkingCopy();
       notifySession();
     };
 
     const removeWorkingSymbol = (nodeId: string) => {
+      const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
       session.workingConfig.symbols = session.workingConfig.symbols.filter((n) => n.id !== nodeId);
       session.selection = session.selection.filter((id) => id !== nodeId);
+      undoRedo.pushOperation('remove-symbol', prevSnapshot, session.workingConfig);
+      syncWorkingCopy();
+      notifySession();
+    };
+
+    /** 应用一条 undo/redo diff 到 working copy + engine（不重新入栈）。 */
+    const applyUndoRedoDiff = (diff: import('../../../serialization/config-types.js').ScadaConfigDiff) => {
+      session.workingConfig = undoRedo.applyDiff(session.workingConfig, diff);
+      engine.applyDiff(diff, session.workingConfig);
+      engineSyncedConfig = cloneConfigSnapshot(session.workingConfig);
+      notifySession();
+    };
+
+    const undo = () => {
+      const diff = undoRedo.undo();
+      if (diff) applyUndoRedoDiff(diff);
+    };
+
+    const redo = () => {
+      const diff = undoRedo.redo();
+      if (diff) applyUndoRedoDiff(diff);
+    };
+
+    const groupSymbols = (nodeIds: string[]) => {
+      // design-undo-redo.md §4.3：group 结构 diff（removed=子图元 id / added=新 Group 节点含 children）。
+      const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
+      const childSet = new Set(nodeIds);
+      const children = session.workingConfig.symbols.filter((s) => childSet.has(s.id));
+      if (children.length === 0) return;
+      const remaining = session.workingConfig.symbols.filter((s) => !childSet.has(s.id));
+      const groupId = `scada-group-${Date.now()}`;
+      const groupNode: ScadaSymbolNode = {
+        id: groupId,
+        type: 'scada-group',
+        x: 0,
+        y: 0,
+        children: children.map((c) => ({ ...c })),
+      };
+      session.workingConfig = { ...session.workingConfig, symbols: [...remaining, groupNode] };
+      session.selection = [groupId];
+      undoRedo.pushOperation('group', prevSnapshot, session.workingConfig);
+      syncWorkingCopy();
+      notifySession();
+    };
+
+    const ungroupSymbols = (groupId: string) => {
+      // design-undo-redo.md §4.3：ungroup 结构 diff（removed=Group id / added=子图元提升顶层）。
+      const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
+      const groupNode = session.workingConfig.symbols.find((s) => s.id === groupId);
+      if (!groupNode || groupNode.type !== 'scada-group' || !groupNode.children) return;
+      const promoted = groupNode.children.map((c) => ({ ...c }));
+      const remaining = session.workingConfig.symbols.filter((s) => s.id !== groupId);
+      session.workingConfig = { ...session.workingConfig, symbols: [...remaining, ...promoted] };
+      session.selection = promoted.map((c) => c.id);
+      undoRedo.pushOperation('ungroup', prevSnapshot, session.workingConfig);
       syncWorkingCopy();
       notifySession();
     };
@@ -252,19 +351,51 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       updateWorkingNode,
       addWorkingSymbol,
       removeWorkingSymbol,
+      undoRedo,
+      undo,
+      redo,
+      groupSymbols,
+      ungroupSymbols,
     };
     runtimeRef.current = next;
     setRuntime(next);
 
     // 测试句柄挂载（design-renderer.md §8.4：session 投影 + editor/engine/app + 操作方法）。
     if (latest.current.cid !== undefined) {
+      const connectionHandle: ScadaEditorTestHandle['connection'] = {
+        connect(connectArgs) {
+          const junctionNode = findNodeInWorking(session.workingConfig.symbols, connectArgs.junctionId);
+          const targetNode = findNodeInWorking(session.workingConfig.symbols, connectArgs.targetNodeId);
+          if (!junctionNode || !targetNode) return;
+          const result = programmaticConnect({
+            junctionNode,
+            connectionId: connectArgs.connectionId,
+            targetNodeId: connectArgs.targetNodeId,
+            targetAnchor: connectArgs.targetAnchor,
+            direction: connectArgs.direction,
+            junction: { x: junctionNode.x ?? 0, y: junctionNode.y ?? 0, width: junctionNode.width ?? 0, height: junctionNode.height ?? 0 },
+            targetDevice: { x: targetNode.x ?? 0, y: targetNode.y ?? 0, width: targetNode.width ?? 0, height: targetNode.height ?? 0 },
+          });
+          updateWorkingNode(connectArgs.junctionId, { custom: { ...junctionNode.custom, connections: result.connections } });
+        },
+        disconnect(disconnectArgs) {
+          const junctionNode = findNodeInWorking(session.workingConfig.symbols, disconnectArgs.junctionId);
+          if (!junctionNode) return;
+          const result = programmaticDisconnect({ junctionNode, connectionId: disconnectArgs.connectionId });
+          if (!result) return;
+          updateWorkingNode(disconnectArgs.junctionId, { custom: { ...junctionNode.custom, connections: result.connections } });
+        },
+        listConnections() {
+          return listAllConnections({ symbols: session.workingConfig.symbols });
+        },
+      };
       const handle: ScadaEditorTestHandle = {
         get session() {
           return {
             workingConfig: session.workingConfig,
             committedBaseline: session.committedBaseline,
-            canUndo: false,
-            canRedo: false,
+            canUndo: session.undoStack.canUndo,
+            canRedo: session.undoStack.canRedo,
             selection: [...session.selection],
             mode: session.mode,
           };
@@ -286,6 +417,32 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
         addSymbol: addWorkingSymbol,
         removeSymbol: removeWorkingSymbol,
         updateSymbol: updateWorkingNode,
+        group: groupSymbols,
+        ungroup: ungroupSymbols,
+        undo,
+        redo,
+        connection: connectionHandle,
+        undoRedo: {
+          undo,
+          redo,
+          getStackState() {
+            return {
+              canUndo: session.undoStack.canUndo,
+              canRedo: session.undoStack.canRedo,
+              undoStackDepth: session.undoStack.undoStackDepth,
+              redoStackDepth: session.undoStack.redoStackDepth,
+              topOperationKind: session.undoStack.topOperationKind,
+            };
+          },
+          pushUndo(forward, prevSnapshot, operationKind) {
+            undoRedo.pushForward(
+              (operationKind as import('../../undo-redo/undo-stack.js').EditorOperationKind) ?? 'update-symbol',
+              forward,
+              prevSnapshot,
+            );
+            notifySession();
+          },
+        },
       };
       mountScadaEditorTestHandle(latest.current.cid, handle);
     }
@@ -356,4 +513,44 @@ function findNodeInWorking(symbols: ScadaSymbolNode[], id: string): ScadaSymbolN
     }
   }
   return undefined;
+}
+
+/**
+ * 图元移动联动（design-connection.md §4.4 + §4.5）：被移动的节点若是某个 pipe-junction connection 的目标设备，
+ * 则重算该 connection 的 x/y；若被移动的节点本身是 pipe-junction 主体，重算其全部 connection。
+ *
+ * 遍历 working copy 中所有 pipe-junction 节点的 connections，凡 target === nodeId 或 节点本身是 junction 的，
+ * 经 recomputeJunctionAfterMove 重算 → updateWorkingNode 写回（不派发 symbol:* action，R5 隔离）。
+ */
+function recomputeLinkagesForMovedNode(session: ScadaEditorSession, movedNodeId: string): void {
+  const symbols = session.workingConfig.symbols;
+  const movedIsJunction = findNodeInWorking(symbols, movedNodeId)?.type === 'scada-pipe-junction';
+  const junctionsToRecompute: string[] = [];
+  if (movedIsJunction) {
+    junctionsToRecompute.push(movedNodeId);
+  }
+  // 收集所有 target 指向被移动节点的 pipe-junction。
+  for (const node of symbols) {
+    if (node.type !== 'scada-pipe-junction') continue;
+    const conns = node.custom?.connections;
+    if (!Array.isArray(conns)) continue;
+    if (movedNodeId !== node.id && conns.some((c) => (c as { target?: string }).target === movedNodeId)) {
+      junctionsToRecompute.push(node.id);
+    }
+  }
+  for (const junctionId of junctionsToRecompute) {
+    const junctionNode = findNodeInWorking(symbols, junctionId);
+    if (!junctionNode || junctionNode.type !== 'scada-pipe-junction') continue;
+    const updates = recomputeJunctionAfterMove({ junctionNode, symbols });
+    if (!updates || updates.length === 0) continue;
+    const existing = Array.isArray(junctionNode.custom?.connections) ? [...junctionNode.custom!.connections as never[]] : [];
+    const byId = new Map(updates.map((u) => [u.connectionId, u.point]));
+    const nextConnections = existing.map((c) => {
+      const point = byId.get((c as { id: string }).id);
+      return point ? { ...(c as object), x: point.x, y: point.y } : c;
+    });
+    applyPatchToWorkingNode(session, junctionId, {
+      custom: { ...junctionNode.custom, connections: nextConnections },
+    });
+  }
 }
