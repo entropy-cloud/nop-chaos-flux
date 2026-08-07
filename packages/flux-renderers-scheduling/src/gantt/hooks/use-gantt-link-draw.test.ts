@@ -155,6 +155,48 @@ describe('useGanttLinkDraw', () => {
     await waitFor(() => expect(result.current.isLinking).toBe(false));
   });
 
+  it('should terminate link drawing on pointercancel: temp line removed, no link committed, listeners removed (2-14)', async () => {
+    const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svgEl.setAttribute('width', '800');
+    svgEl.setAttribute('height', '600');
+    document.body.appendChild(svgEl);
+    const svgRef = { current: svgEl };
+    const { result } = renderHook(() => useGanttLinkDraw(mockStore as any, svgRef));
+
+    const handle = document.createElement('div');
+    handle.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onLinkHandlePointerDown(e, 't1', 'end');
+    });
+    document.body.appendChild(handle);
+
+    act(() => {
+      handle.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 100, bubbles: true }));
+    });
+
+    await waitFor(() => expect(result.current.isLinking).toBe(true));
+    expect(svgEl.querySelector('line')).not.toBeNull();
+
+    // Touch-scroll / OS gesture interrupt: pointercancel terminates the session.
+    act(() => {
+      document.dispatchEvent(new PointerEvent('pointercancel', { clientX: 300, clientY: 100 }));
+    });
+
+    await waitFor(() => expect(result.current.isLinking).toBe(false));
+    expect(svgEl.querySelector('line')).toBeNull();
+
+    // Listeners removed: a later pointerup over a target must NOT add a link.
+    const taskBar = document.createElement('div');
+    taskBar.setAttribute('data-task-id', 't2');
+    document.body.appendChild(taskBar);
+    vi.spyOn(document, 'elementFromPoint').mockReturnValue(taskBar);
+
+    act(() => {
+      document.dispatchEvent(new PointerEvent('pointerup', { clientX: 300, clientY: 100 }));
+    });
+
+    expect(mockStore.addLink).not.toHaveBeenCalled();
+  });
+
   it('should add link via startKeyboardLink and completeKeyboardLink', async () => {
     const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svgEl.setAttribute('width', '800');

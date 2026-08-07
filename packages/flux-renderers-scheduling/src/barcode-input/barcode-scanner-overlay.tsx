@@ -82,6 +82,10 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     enabled: open && camera.isActive,
     interval: scanInterval ?? 300,
     formats,
+    // 2-13: batch mode must pass consecutive same-value detections through
+    // (each physical scan produces processing); non-batch keeps the
+    // single-value suppression window as anti-misfire.
+    dedupe: !batchMode,
   });
 
   const { stop, start } = camera;
@@ -140,15 +144,19 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   // Consume-once guard: `detect.result` stays non-null between detections and
   // the parent may re-render with a new onScan identity, which would otherwise
   // re-fire the same result (double dispatch in continuousScan/batchMode).
-  const lastConsumedKeyRef = useRef<string | null>(null);
+  // The guard keys on the result OBJECT identity: a re-render reuses the same
+  // object (skipped), while a new detection is always a fresh object — in
+  // batch mode consecutive same-value scans are distinct objects and each is
+  // consumed (2-13), unlike the old `barcode|format` string key which dropped
+  // them.
+  const lastConsumedResultRef = useRef<BarcodeDetectResult | null>(null);
   useEffect(() => {
     if (!open) return;
     if (!detect.result) return;
-    const key = `${detect.result.barcode}|${detect.result.format}`;
-    if (lastConsumedKeyRef.current === key) return;
-    lastConsumedKeyRef.current = key;
+    if (lastConsumedResultRef.current === detect.result) return;
+    lastConsumedResultRef.current = detect.result;
     if (batchMode) {
-      enqueueItem(queueStore, detect.result.barcode, detect.result.format);
+      enqueueItem(queueStore, detect.result.barcode, detect.result.format, { alwaysAppend: batchMode });
       if (autoSubmit) {
         const pending = getPending(queueStore);
         for (const item of pending) {
@@ -347,7 +355,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
               <span className="text-[10px] text-white/40 uppercase mr-2">{item.format}</span>
               {item.status === 'submitted' && <><Check className="w-3.5 h-3.5 text-green-400 shrink-0" aria-hidden="true" /><span className="sr-only">{t('flux.barcode.submittedLabel')}</span></>}
               {item.status === 'error' && <><XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" aria-hidden="true" /><span className="sr-only">{t('flux.barcode.errorLabel')}</span></>}
-              {item.status === 'duplicate' && <span className="text-[10px] text-yellow-400 shrink-0">dup</span>}
+              {item.status === 'duplicate' && <span className="text-[10px] text-yellow-400 shrink-0">{t('flux.barcode.duplicate')}</span>}
               {item.status === 'pending' && (
                 <Button
                   variant="ghost"

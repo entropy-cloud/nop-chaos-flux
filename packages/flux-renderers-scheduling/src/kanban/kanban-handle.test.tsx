@@ -139,6 +139,42 @@ describe('KanbanBoard component handle registration (22-12)', () => {
     }
   });
 
+  it('scrollToCard handle returns ok:true for an existing card id (23-4)', async () => {
+    render(<KanbanBoard {...defaultProps} />);
+    await waitFor(() => {
+      expect(registryMock.state.handle).toBeTruthy();
+    });
+    const result = registryMock.state.handle!.capabilities.invoke('scrollToCard', { cardId: 'card1' }, {});
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('scrollToCard handle returns ok:false for a missing card id (23-4)', async () => {
+    render(<KanbanBoard {...defaultProps} />);
+    await waitFor(() => {
+      expect(registryMock.state.handle).toBeTruthy();
+    });
+    const result = registryMock.state.handle!.capabilities.invoke('scrollToCard', { cardId: 'missing-card' }, {});
+    expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
+  });
+
+  it('scrollToColumn handle returns ok:true for an existing column id (23-4)', async () => {
+    render(<KanbanBoard {...defaultProps} />);
+    await waitFor(() => {
+      expect(registryMock.state.handle).toBeTruthy();
+    });
+    const result = registryMock.state.handle!.capabilities.invoke('scrollToColumn', { columnId: 'col1' }, {});
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('scrollToColumn handle returns ok:false for a missing column id (23-4)', async () => {
+    render(<KanbanBoard {...defaultProps} />);
+    await waitFor(() => {
+      expect(registryMock.state.handle).toBeTruthy();
+    });
+    const result = registryMock.state.handle!.capabilities.invoke('scrollToColumn', { columnId: 'missing-col' }, {});
+    expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
+  });
+
   it('getData returns the current board snapshot (design.md §8)', async () => {
     render(<KanbanBoard {...defaultProps} />);
     await waitFor(() => {

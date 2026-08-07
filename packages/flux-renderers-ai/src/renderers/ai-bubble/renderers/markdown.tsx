@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -99,6 +99,17 @@ function CodeBlock({
   children?: React.ReactNode;
 }) {
   const [copied, setCopied] = useState(false);
+  // 2-20: the copied-reset timer must be cleared on unmount (no setState on
+  // an unmounted component).
+  const copiedResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (copiedResetTimerRef.current) {
+        clearTimeout(copiedResetTimerRef.current);
+        copiedResetTimerRef.current = null;
+      }
+    };
+  }, []);
 
   function handleCopy() {
     const text = extractElementText(children);
@@ -108,7 +119,10 @@ function CodeBlock({
     void Promise.resolve(copyToClipboard(text))
       .then(() => {
         setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
+        if (copiedResetTimerRef.current) {
+          clearTimeout(copiedResetTimerRef.current);
+        }
+        copiedResetTimerRef.current = setTimeout(() => setCopied(false), 1500);
       })
       .catch(() => {
         // swallow: keep the button in its pre-copy state

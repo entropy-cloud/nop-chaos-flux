@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type {
   FluxActionEvent,
   RendererComponentProps,
@@ -39,6 +39,17 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
   const actions = normalizeActions(resolved.actions);
   const [voted, setVoted] = useState<'like' | 'dislike' | null>(null);
   const [copied, setCopied] = useState(false);
+  // 2-20: the copied-reset timer must be cleared on unmount (no setState on
+  // an unmounted component).
+  const copiedResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (copiedResetTimerRef.current) {
+        clearTimeout(copiedResetTimerRef.current);
+        copiedResetTimerRef.current = null;
+      }
+    };
+  }, []);
 
   function fire(action: FeedbackAction) {
     if (action === 'copy' && message) {
@@ -48,7 +59,10 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
       void copyMessageText(message)
         .then(() => {
           setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
+          if (copiedResetTimerRef.current) {
+            clearTimeout(copiedResetTimerRef.current);
+          }
+          copiedResetTimerRef.current = setTimeout(() => setCopied(false), 1500);
         })
         .catch(() => {
           // swallow: keep the button in its pre-copy state

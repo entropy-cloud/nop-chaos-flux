@@ -1,11 +1,53 @@
-import { afterEach, describe, it, expect } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { cleanup, render, fireEvent, act } from '@testing-library/react';
+import { t } from '@nop-chaos/flux-i18n';
 import { MarkdownContentRenderer } from '../renderers/markdown.js';
 import type { ChatMessage } from '../../../engine/types.js';
 import type { BubbleContentRendererProps } from '../types.js';
 
 afterEach(() => {
   cleanup();
+});
+
+// ============================================================================
+// 2-20: code-block copy reset timer must be cleared on unmount (no setState
+// after unmount). Same class of leak as ai-feedback's copied-reset timer.
+// ============================================================================
+describe('MarkdownContentRenderer — code copy reset timer cleanup (2-20)', () => {
+  it('clears the copied-reset timer on unmount', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+
+    try {
+      const message = makeMessage({ content: '```js\nconst x = 1;\n```' });
+      const { container, unmount } = render(
+        <MarkdownContentRenderer {...makeProps({ message, content: message.content })} />,
+      );
+      const copyBtn = container.querySelector('[data-slot="ai-bubble-copy-code"]') as HTMLElement;
+      expect(copyBtn).toBeTruthy();
+
+      fireEvent.click(copyBtn);
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(copyBtn.textContent).toBe(t('flux.ai.copied'));
+
+      // Unmount must clear the pending 1500ms reset timer.
+      unmount();
+      expect(clearTimeoutSpy).toHaveBeenCalled();
+
+      // Advancing past the reset window after unmount must not throw.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+    } finally {
+      clearTimeoutSpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
 });
 
 function makeMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {

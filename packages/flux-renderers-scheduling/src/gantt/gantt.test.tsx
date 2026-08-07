@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, waitFor, act } from '@testing-library/react';
+import { render, waitFor, act, fireEvent } from '@testing-library/react';
 import { Gantt } from './gantt.js';
 
 vi.mock('@nop-chaos/flux-react', () => ({
@@ -473,6 +473,77 @@ describe('Gantt regression — 22-07 onTaskEdit (编辑型变更事件外抛)', 
       expect.objectContaining({
         event: expect.objectContaining({ _taskId: 't1', deleted: true }),
         evaluationBindings: expect.objectContaining({ _taskId: 't1', deleted: true }),
+        scope: expect.anything(),
+      }),
+    );
+  });
+
+  it('inline cell commit dispatches onTaskEdit with {_taskId, changes} + full ctx through the REAL grid path (23-2)', async () => {
+    const onTaskEdit = vi.fn();
+    const { container } = render(
+      React.createElement(Gantt, {
+        ...editBaseProps,
+        events: { onTaskEdit } as any,
+      }),
+    );
+
+    // Real UI path: double-click the text cell → inline Input → Enter.
+    const textCell = container.querySelector('[data-slot="gantt-grid-row"] [data-slot="gantt-grid-cell"]') as HTMLElement;
+    expect(textCell).toBeTruthy();
+    fireEvent.doubleClick(textCell);
+
+    const input = container.querySelector('[data-slot="gantt-grid"] input') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    fireEvent.change(input, { target: { value: 'Renamed' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onTaskEdit).toHaveBeenCalledTimes(1);
+    expect(onTaskEdit).toHaveBeenCalledWith(
+      { _taskId: 't1', changes: { text: 'Renamed' } },
+      expect.objectContaining({
+        event: expect.objectContaining({ _taskId: 't1', changes: { text: 'Renamed' } }),
+        evaluationBindings: expect.objectContaining({ _taskId: 't1', changes: { text: 'Renamed' } }),
+        scope: expect.anything(),
+      }),
+    );
+  });
+
+  it('editor save dispatches onTaskEdit with {_taskId, changes} + full ctx through the REAL editor path (23-2)', async () => {
+    const onTaskEdit = vi.fn();
+    const { container } = render(
+      React.createElement(Gantt, {
+        ...editBaseProps,
+        events: { onTaskEdit } as any,
+      }),
+    );
+
+    // Real UI path: double-click the task bar → editor dialog opens.
+    const bar = container.querySelector('[data-slot="gantt-bar"][data-task-id="t1"]') as HTMLElement;
+    expect(bar).toBeTruthy();
+    fireEvent.doubleClick(bar);
+
+    await waitFor(() => {
+      const textInput = document.querySelector<HTMLInputElement>('input[id$="-edit-text"]');
+      expect(textInput).toBeTruthy();
+    });
+    const textInput = document.querySelector<HTMLInputElement>('input[id$="-edit-text"]')!;
+    fireEvent.change(textInput, { target: { value: 'Editor Renamed' } });
+
+    const saveButton = Array.from(document.querySelectorAll('button')).find(
+      (b) => b.textContent?.includes('保存') || b.textContent?.includes('Save'),
+    );
+    expect(saveButton).toBeTruthy();
+    fireEvent.click(saveButton!);
+
+    expect(onTaskEdit).toHaveBeenCalledTimes(1);
+    expect(onTaskEdit).toHaveBeenCalledWith(
+      {
+        _taskId: 't1',
+        changes: expect.objectContaining({ text: 'Editor Renamed', start: '2026-01-01', end: '2026-01-10' }),
+      },
+      expect.objectContaining({
+        event: expect.objectContaining({ _taskId: 't1' }),
+        evaluationBindings: expect.objectContaining({ _taskId: 't1', changes: expect.objectContaining({ text: 'Editor Renamed' }) }),
         scope: expect.anything(),
       }),
     );

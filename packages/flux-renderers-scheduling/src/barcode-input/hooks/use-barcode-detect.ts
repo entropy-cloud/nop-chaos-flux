@@ -5,6 +5,10 @@ interface UseBarcodeDetectOptions {
   interval?: number;
   formats?: BarcodeFormat[];
   enabled?: boolean;
+  /** 2-13: suppress consecutive same-value detections (anti-misfire). Batch
+   *  mode passes `dedupe: false` so repeated identical barcodes each produce
+   *  a detection instead of being silently dropped. */
+  dedupe?: boolean;
 }
 
 interface UseBarcodeDetectReturn {
@@ -99,7 +103,8 @@ export function useBarcodeDetect(
         if (signal.aborted) return;
 
         if (decoded) {
-          if (decoded.barcode !== lastResultRef.current) {
+          const dedupe = currentOptions?.dedupe ?? true;
+          if (!dedupe || decoded.barcode !== lastResultRef.current) {
             lastResultRef.current = decoded.barcode;
             setResult(decoded);
           }

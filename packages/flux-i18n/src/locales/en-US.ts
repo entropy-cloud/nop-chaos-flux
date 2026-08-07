@@ -379,6 +379,10 @@ export const enUS: Resource = {
       previous: 'Previous slide',
       next: 'Next slide',
       goToSlide: 'Go to slide {{index}}',
+      slideLabel: 'Slide {{index}}',
+    },
+    qrcode: {
+      ariaLabel: 'QR code for {{value}}',
     },
     sidebar: {
       title: 'Sidebar',
@@ -1014,6 +1018,10 @@ export const enUS: Resource = {
         readOnlyField: 'Field is read-only',
         clearButtonLabel: 'Clear value',
         cameraFeedLabel: 'Camera feed for barcode scanning',
+        cameraPermissionDenied: 'Camera permission denied',
+        cameraNotFound: 'No camera found',
+        cameraError: 'Camera error: {{message}}',
+        duplicate: 'Duplicate',
       },
   },
 };

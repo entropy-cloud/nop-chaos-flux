@@ -267,7 +267,7 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
                       data-slot="carousel-item-placeholder"
                       className="flex h-32 w-full items-center justify-center text-xs text-muted-foreground"
                     >
-                      {`Slide ${index + 1}`}
+                      {t('flux.carousel.slideLabel', { index: index + 1 })}
                     </div>
                   )}
                   {title || caption ? (

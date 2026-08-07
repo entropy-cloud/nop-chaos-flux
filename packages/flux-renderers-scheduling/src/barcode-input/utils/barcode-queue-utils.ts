@@ -13,10 +13,15 @@ export function createBarcodeQueueStore() {
 
 export type BarcodeQueueStore = ReturnType<typeof createBarcodeQueueStore>;
 
-export function enqueueItem(store: BarcodeQueueStore, rawValue: string, format: string): BarcodeQueueItem {
+export function enqueueItem(
+  store: BarcodeQueueStore,
+  rawValue: string,
+  format: string,
+  options?: { alwaysAppend?: boolean },
+): BarcodeQueueItem {
   const state = store.getState();
   const existing = state.items.find((i) => i.rawValue === rawValue);
-  if (existing) {
+  if (existing && options?.alwaysAppend !== true) {
     if (existing.status === 'pending') {
       store.setState({
         items: state.items.map((i) => i.id === existing.id ? { ...i, status: 'duplicate' as const } : i),
@@ -37,6 +42,10 @@ export function enqueueItem(store: BarcodeQueueStore, rawValue: string, format: 
     return store.getState().items.find((i) => i.id === existing.id)!;
   }
 
+  // 2-13 batch-mode adjudication: every scan appends a NEW pending entry even
+  // when an identical rawValue already exists (pending or submitted), so each
+  // consecutive same-value scan produces submittable processing instead of
+  // being folded into a duplicate marker that autoSubmit never delivers.
   const item: BarcodeQueueItem = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     rawValue,

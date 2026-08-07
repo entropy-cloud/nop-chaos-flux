@@ -143,7 +143,7 @@ export function useKanbanBoardEffects({
     if (dragState.isDragging && dragState.draggingCardId) {
       const cardEl = boardRef.current.querySelector(`[data-card-id="${dragState.draggingCardId}"]`);
       if (cardEl) { cardEl.setAttribute('data-dragging', 'true'); cardEl.setAttribute('aria-grabbed', 'true'); }
-      setDndAnnouncement(`Dragging card: ${boardData[dragState.draggingCardId]?.data?.title || dragState.draggingCardId}`);
+      setDndAnnouncement(t('scheduling.kanban.draggingCard', { title: boardData[dragState.draggingCardId]?.data?.title || dragState.draggingCardId }));
     } else if (!dragState.isDragging) { setDndAnnouncement(''); }
   }, [dragState.isDragging, dragState.draggingCardId, boardData, boardRef, setDndAnnouncement]);
 }

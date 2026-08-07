@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import { useBarcodeCamera } from './use-barcode-camera.js';
+
+// 2-17: camera error messages go through the i18n t() channel — pin the
+// locale so the assertions lock the translated (not hardcoded) strings.
+initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 function setupGetUserMediaMock() {
   const mockStream = {
@@ -79,6 +84,17 @@ describe('useBarcodeCamera', () => {
     });
     expect(result.current.isActive).toBe(false);
     expect(result.current.error).toBe('No camera found');
+  });
+
+  it('should map generic getUserMedia failures through t() with the underlying message (2-17)', async () => {
+    const { getUserMedia } = setupGetUserMediaMock();
+    getUserMedia.mockRejectedValue(new DOMException('boom', 'AbortError'));
+    const { result } = renderHook(() => useBarcodeCamera());
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(result.current.isActive).toBe(false);
+    expect(result.current.error).toBe('Camera error: boom');
   });
 
   it('should support multiple start/stop cycles', async () => {

@@ -318,6 +318,10 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       moveCalendarEvent(event.id, event.resourceId ?? '', event.resourceId ?? '', oldStartStr, newStart.toISOString().slice(0, 10));
     } else {
       const resourceIdx = resourcesData.findIndex((r) => r.id === event.resourceId);
+      // 2-15: unknown resourceId — fail closed (no move). Without this guard,
+      // 'down' with resourceIdx === -1 computes targetIdx = 0 and silently
+      // lands the event on the first resource.
+      if (resourceIdx === -1) return;
       const targetIdx = direction === 'up' ? resourceIdx - 1 : resourceIdx + 1;
       if (targetIdx >= 0 && targetIdx < resourcesData.length) {
         const targetResource = resourcesData[targetIdx];

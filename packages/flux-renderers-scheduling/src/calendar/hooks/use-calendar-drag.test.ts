@@ -108,4 +108,45 @@ describe('useCalendarDrag', () => {
 
     expect(result.current.dragState.active).toBe(false);
   });
+
+  it('should terminate drag on window pointercancel without committing a drop (2-14)', () => {
+    const onEventChange = vi.fn();
+    const getCellFromPoint = vi.fn().mockReturnValue({ date: '2026-07-21', resourceId: 'r2' });
+
+    const { result } = renderHook(() =>
+      useCalendarDrag({
+        events: [],
+        resources: [],
+        onEventChange,
+        getCellFromPoint,
+      }),
+    );
+
+    const event = makeEvent({ id: 'e1', title: '早班', resourceId: 'r1', start: '2026-07-20', end: '2026-07-20' });
+    const pe = createPointerEvent(100, 200);
+
+    act(() => {
+      result.current.startDrag(event, pe);
+    });
+    expect(result.current.dragState.active).toBe(true);
+
+    // Move over a valid target cell first so a commit WOULD be dispatched.
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointermove', { clientX: 300, clientY: 400 }));
+    });
+    expect(result.current.dragState.targetResource).toBe('r2');
+
+    // Touch-scroll / OS gesture interrupt: pointercancel cancels, no drop.
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointercancel', { clientX: 300, clientY: 400 }));
+    });
+    expect(result.current.dragState.active).toBe(false);
+    expect(onEventChange).not.toHaveBeenCalled();
+
+    // Listeners removed: a later pointerup must NOT dispatch onEventChange.
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointerup', { clientX: 300, clientY: 400 }));
+    });
+    expect(onEventChange).not.toHaveBeenCalled();
+  });
 });

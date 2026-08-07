@@ -224,6 +224,59 @@ describe('BarcodeScannerOverlay', () => {
       // In batch autoSubmit, enqueue + submit = onScan called with item
       expect(onScan).toHaveBeenCalled();
     });
+
+    it('batch mode enqueues consecutive same-value detections as separate submittable items (2-13)', () => {
+      const onScan = vi.fn();
+      const onClose = vi.fn();
+
+      mockUseBarcodeDetect.mockReturnValue({
+        result: { barcode: 'SAME123', format: 'code_128' } as any,
+        isScanning: true,
+        error: null,
+      });
+
+      const { rerender, unmount } = render(
+        <BarcodeScannerOverlay
+          open={true}
+          onClose={onClose}
+          onScan={onScan}
+          onScanError={vi.fn()}
+          autoSubmit={true}
+          batchMode={true}
+        />,
+      );
+
+      // First scan: enqueued + auto-submitted exactly once.
+      expect(onScan).toHaveBeenCalledTimes(1);
+      expect(onScan).toHaveBeenCalledWith({ barcode: 'SAME123', format: 'code_128' });
+
+      // Second scan of the SAME value (fresh detection object): must NOT be
+      // dropped — consume-once guard keys on object identity, batch mode
+      // always appends a new pending entry that autoSubmit delivers.
+      mockUseBarcodeDetect.mockReturnValue({
+        result: { barcode: 'SAME123', format: 'code_128' } as any,
+        isScanning: true,
+        error: null,
+      });
+      rerender(
+        <BarcodeScannerOverlay
+          open={true}
+          onClose={onClose}
+          onScan={onScan}
+          onScanError={vi.fn()}
+          autoSubmit={true}
+          batchMode={true}
+        />,
+      );
+
+      expect(onScan).toHaveBeenCalledTimes(2);
+      expect(onScan).toHaveBeenLastCalledWith({ barcode: 'SAME123', format: 'code_128' });
+
+      // Both detections produced queue entries (first submitted + second pending).
+      const queueItems = document.querySelectorAll('[role="listitem"]');
+      expect(queueItems.length).toBe(2);
+      unmount();
+    });
   });
 });
 

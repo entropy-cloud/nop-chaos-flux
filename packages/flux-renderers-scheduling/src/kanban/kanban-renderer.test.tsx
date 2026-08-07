@@ -433,18 +433,14 @@ describe('KanbanBoard CR P2-3 / P2-4 (controlled gating + card payload)', () => 
     fireEvent.keyDown(cardEl, { key: 'Enter' });
     expect(onCardClick).toHaveBeenCalledTimes(1);
 
-    // Mutation events do NOT fire in controlled mode (mutation dropped).
-    const addCardButton = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === '新增卡片' || b.textContent === 'Add card',
-    ) ?? Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('card'));
-    if (addCardButton) {
-      fireEvent.click(addCardButton);
-      expect(onCardAdd).not.toHaveBeenCalled();
-    } else {
-      // Column footer render path unavailable in this harness — assert via
-      // the toolbar-less board that no mutation event fired on interactions.
-      expect(onCardAdd).not.toHaveBeenCalled();
-    }
+    // 23-1: click the REAL add-card button (column footer, text via the
+    // i18n mock `'+ 添加卡片'`) — mutation events must NOT fire in controlled
+    // mode (mutation dropped). The previous if/else find-conditions never
+    // matched this label, so the else branch made the assertion trivially true.
+    const addCardButtons = screen.getAllByText('+ 添加卡片');
+    expect(addCardButtons.length).toBeGreaterThan(0);
+    fireEvent.click(addCardButtons[0]!);
+    expect(onCardAdd).not.toHaveBeenCalled();
   });
 
   it('local mode card click payload carries the card object (design.md:205)', () => {

@@ -25,17 +25,16 @@ export interface UseCalendarDragCreateOptions {
 }
 
 export interface UseCalendarDragCreateResult {
+  /** Retained (2-4): the drag-create session state surface — consumed by the
+   *  hook's own behavior tests; production reads it via the behavior API. */
   dragCreateState: DragCreateState;
   startCellDrag: (date: string, resourceId: string, pointerEvent: React.PointerEvent) => void;
   cancelCreate: () => void;
   confirmCreate: (shiftType: string, title?: string) => void;
   showTypeSelector: boolean;
-  availableTypes: string[];
   selectType: (type: string) => void;
   dismissTypeSelector: () => void;
 }
-
-const DEFAULT_SHIFT_TYPES = ['shift', 'leave', 'appointment', 'maintenance'];
 
 export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): UseCalendarDragCreateResult {
   const { onEventCreate, getCellFromPoint, longPressMs = 500 } = options;
@@ -51,7 +50,6 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
   });
 
   const [showTypeSelector, setShowTypeSelector] = useState(false);
-  const [availableTypes] = useState<string[]>(DEFAULT_SHIFT_TYPES);
 
   const pointerDownPos = useRef<{ x: number; y: number; date: string; resourceId: string } | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -256,7 +254,6 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
     cancelCreate,
     confirmCreate,
     showTypeSelector,
-    availableTypes,
     selectType,
     dismissTypeSelector,
   };

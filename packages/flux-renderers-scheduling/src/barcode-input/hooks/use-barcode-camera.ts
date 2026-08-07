@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { checkCameraAvailability } from '../utils/camera-utils.js';
 
 interface BarcodeCameraState {
@@ -93,10 +94,10 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
       if (signal.aborted) return;
       console.warn('[useBarcodeCamera] getUserMedia failed:', err.name, err.message);
       const message = err.name === 'NotAllowedError'
-        ? 'Camera permission denied'
+        ? t('flux.barcode.cameraPermissionDenied')
         : err.name === 'NotFoundError'
-          ? 'No camera found'
-          : `Camera error: ${err.message}`;
+          ? t('flux.barcode.cameraNotFound')
+          : t('flux.barcode.cameraError', { message: err.message });
       setState({ isActive: false, error: message });
     }
   }, [stop, videoRef]);

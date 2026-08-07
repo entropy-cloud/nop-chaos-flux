@@ -378,6 +378,10 @@ export const zhCN: Resource = {
       previous: '上一张',
       next: '下一张',
       goToSlide: '前往第 {{index}} 张',
+      slideLabel: '第 {{index}} 张',
+    },
+    qrcode: {
+      ariaLabel: '{{value}} 的二维码',
     },
     sidebar: {
       title: '侧边栏',
@@ -1013,6 +1017,10 @@ export const zhCN: Resource = {
         readOnlyField: '字段为只读',
         clearButtonLabel: '清除值',
         cameraFeedLabel: '条码扫描摄像头画面',
+        cameraPermissionDenied: '摄像头权限被拒绝',
+        cameraNotFound: '未找到摄像头',
+        cameraError: '摄像头错误：{{message}}',
+        duplicate: '重复',
       },
   },
 };

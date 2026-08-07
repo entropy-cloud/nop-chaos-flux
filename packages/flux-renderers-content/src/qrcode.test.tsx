@@ -132,6 +132,21 @@ describe('QrCodeRenderer', () => {
     expect(label?.textContent).toBe('Scan me');
   });
 
+  it('falls back to the flux.qrcode.ariaLabel translated label when no label content is set (2-18)', async () => {
+    qrMock.resolveSilently = true;
+    const props = createMockRendererProps<QrCodeSchema>({
+      schema: { type: 'qrcode' },
+      props: { value: 'QR-2-18' },
+    });
+    const { container } = render(<QrCodeRenderer {...props} />);
+    await waitFor(() => {
+      expect(canvasOf(container)).not.toBeNull();
+    });
+    expect(canvasOf(container)?.getAttribute('aria-label')).toBe(
+      t('flux.qrcode.ariaLabel', { value: 'QR-2-18' }),
+    );
+  });
+
   it('uses the fallback size when size is invalid', () => {
     const props = createMockRendererProps<QrCodeSchema>({
       schema: { type: 'qrcode' },

@@ -152,12 +152,22 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
       cancelDrag();
     };
 
+    // 2-14: pointercancel (touch-scroll interrupt / OS gesture) terminates the
+    // drag session without committing — mirror the use-calendar-drag-create
+    // pointercancel pattern (1747-1, 1-8): clear state, no drop dispatch.
+    const handlePointerCancel = () => {
+      if (!activeRef.current) return;
+      cancelDrag();
+    };
+
     if (dragState.active) {
       window.addEventListener('pointermove', handlePointerMove);
       window.addEventListener('pointerup', handlePointerUp);
+      window.addEventListener('pointercancel', handlePointerCancel);
       return () => {
         window.removeEventListener('pointermove', handlePointerMove);
         window.removeEventListener('pointerup', handlePointerUp);
+        window.removeEventListener('pointercancel', handlePointerCancel);
       };
     }
   }, [dragState.active]);

@@ -144,6 +144,14 @@ export function useGanttDrag(
       cleanup();
     };
 
+    const onPointerCancel = (_ev: PointerEvent) => {
+      // 2-14: pointercancel (touch-scroll interrupt / OS gesture) terminates
+      // the drag session exactly like Escape — ghost + drop indicator are
+      // cleared, window listeners removed, and NO drop is committed.
+      if (!dragRef.current) return;
+      cleanup();
+    };
+
     const onKeyDown = (ev: KeyboardEvent) => {
       if (ev.key === 'Escape') {
         cleanup();
@@ -153,6 +161,7 @@ export function useGanttDrag(
     const cleanup = () => {
       document.removeEventListener('pointermove', onPointerMove);
       document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerCancel);
       document.removeEventListener('keydown', onKeyDown);
       if (ghostRef.current) {
         ghostRef.current.remove();
@@ -172,6 +181,7 @@ export function useGanttDrag(
 
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerCancel);
     document.addEventListener('keydown', onKeyDown);
   };
 

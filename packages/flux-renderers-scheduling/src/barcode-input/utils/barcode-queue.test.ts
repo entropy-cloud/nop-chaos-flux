@@ -89,4 +89,25 @@ describe('BarcodeQueue (Zustand)', () => {
     const dups = getAllItems(store).filter((i) => i.status === 'duplicate');
     expect(dups.length).toBe(2);
   });
+
+  it('alwaysAppend appends a NEW pending entry for the same pending value (2-13 batch)', () => {
+    const item1 = enqueueItem(store, '1234567890', 'ean_13', { alwaysAppend: true });
+    const item2 = enqueueItem(store, '1234567890', 'ean_13', { alwaysAppend: true });
+    expect(item1.status).toBe('pending');
+    expect(item2.id).not.toBe(item1.id);
+    expect(item2.status).toBe('pending');
+    expect(getAllItems(store).length).toBe(2);
+    // Both entries are submittable — autoSubmit/batchConfirm deliver both.
+    expect(getPending(store).length).toBe(2);
+  });
+
+  it('alwaysAppend appends a new pending entry even after the same value was submitted (2-13 batch)', () => {
+    const item1 = enqueueItem(store, 'X123', 'code_128', { alwaysAppend: true });
+    markSubmitted(store, item1.id);
+    const item2 = enqueueItem(store, 'X123', 'code_128', { alwaysAppend: true });
+    expect(item2.status).toBe('pending');
+    expect(item2.id).not.toBe(item1.id);
+    expect(getAllItems(store).length).toBe(2);
+    expect(getPending(store).length).toBe(1);
+  });
 });

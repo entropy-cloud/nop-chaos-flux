@@ -215,7 +215,11 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           const startVal = newStart.toISOString().slice(0, 10);
           const endVal = newEnd.toISOString().slice(0, 10);
           const payload = { _taskId: taskId, changes: { start: startVal, end: endVal } };
-          void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
+          // 2-19 adjudication: keyboard date edits are EDIT-type changes —
+          // dispatched through onTaskEdit (design §8.1 split), NOT the
+          // drag-end channel. Hosts persisting via onTaskEdit no longer miss
+          // keyboard rescheduling.
+          dispatchTaskEdit(payload);
           store.updateTask(taskId, { start: startVal, end: endVal });
           undoStack.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
           break;
@@ -228,7 +232,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           const startVal = newStart.toISOString().slice(0, 10);
           const endVal = newEnd.toISOString().slice(0, 10);
           const payload = { _taskId: taskId, changes: { start: startVal, end: endVal } };
-          void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
+          dispatchTaskEdit(payload);
           store.updateTask(taskId, { start: startVal, end: endVal });
           undoStack.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
           break;
@@ -239,7 +243,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           if (newEnd > oldStartDt) {
             const endVal = newEnd.toISOString().slice(0, 10);
             const payload = { _taskId: taskId, changes: { end: endVal } };
-            void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
+            dispatchTaskEdit(payload);
             store.updateTask(taskId, { end: endVal });
             undoStack.push(new UpdateTaskCommand(store, taskId, { end: oldEnd }, { end: endVal }));
           }
@@ -250,7 +254,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           newEnd.setUTCDate(newEnd.getUTCDate() + 1);
           const endVal = newEnd.toISOString().slice(0, 10);
           const payload = { _taskId: taskId, changes: { end: endVal } };
-          void eventsRef.current.onTaskDragEnd?.(payload, eventCtx(payload));
+          dispatchTaskEdit(payload);
           store.updateTask(taskId, { end: endVal });
           undoStack.push(new UpdateTaskCommand(store, taskId, { end: oldEnd }, { end: endVal }));
           break;

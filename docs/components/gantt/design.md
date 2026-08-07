@@ -61,16 +61,21 @@ interface GanttSchema extends BaseSchema {
   columns?: GanttColumn[];
 
   // === 时间刻度 ===
+  // @deprecated 使用 `zoomLevels` 代替（实现侧 gantt.types.ts 已弃用，运行时永不 resolve 进 props）
   scales?: GanttScale[];
   zoomLevels?: GanttZoomLevel[]; // 预定义缩放级别
   defaultZoom?: string; // 默认缩放级别 key
   cellWidth?: number; // 最小单元格像素宽度（按 unit 自动推算）
-  startDate?: string; // 时间线起始 ISO 日期（缺省从任务推算）
-  endDate?: string; // 时间线结束 ISO 日期（缺省从任务推算）
+  // @deprecated 日期在任务级 `GanttTaskData.start`/`.end` 上，时间线范围由任务推导（gantt.types.ts 已弃用）
+  startDate?: string;
+  // @deprecated 同 startDate（gantt.types.ts 已弃用）
+  endDate?: string;
 
   // === 树层级 ===
-  childrenField?: string; // 子节点字段名，默认 'children'
-  initiallyExpanded?: boolean; // 默认展开所有层级
+  // @deprecated 层级直接使用任务上的 `children: GanttTaskData[]`（gantt.types.ts 已弃用）
+  childrenField?: string;
+  // @deprecated 展开/收起是运行时状态驱动（gantt.types.ts 已弃用）
+  initiallyExpanded?: boolean;
 
   // === 拖拽 ===
   draggable?: boolean; // 任务条拖拽总开关，默认 true
@@ -79,6 +84,7 @@ interface GanttSchema extends BaseSchema {
 
   // === 任务条 ===
   taskBarHeight?: number; // 任务条高度 px，默认 28
+  // @deprecated 使用 `taskBarHeight` 代替（gantt.types.ts 已弃用）
   progressBarHeight?: number; // 进度条高度 px，默认 4
 
   // === 工作日历（首版占位，后续实现） ===
@@ -209,18 +215,19 @@ interface GanttAssignment {
 
 ### 推荐默认值
 
-- `childrenField: 'children'`
 - `defaultZoom: 'week'`
 - `columns: [{ name: 'text', label: '任务名称', width: 200 }]`
-- `scales: [{ unit: 'day', step: 1, format: '%d' }, { unit: 'month', format: '%Y/%m' }]`（默认双行）
 - `draggable: true`
 - `editable: true`
 - `taskBarHeight: 28`
 
+> 22-14 同步：`childrenField`/`scales` 已随 §4/§5 @deprecated 标注移除出推荐默认值（实现侧已弃用，配置静默无效）。
+
 ## 5. 字段分类
 
 - `tasks`, `links`, `resources`, `assignments`: `props (source-enabled)`
-- `columns`, `scales`, `zoomLevels`, `defaultZoom`, `childrenField`, `initiallyExpanded`, `cellWidth`, `startDate`, `endDate`, `taskBarHeight`, `progressBarHeight`, `showWeekends`, `showToday`, `draggable`, `editable`, `linkable`, `calendar`: `props`
+- `columns`, `zoomLevels`, `defaultZoom`, `cellWidth`, `taskBarHeight`, `showWeekends`, `showToday`, `draggable`, `editable`, `linkable`, `calendar`: `props`
+- ~~`scales`, `startDate`, `endDate`, `childrenField`, `initiallyExpanded`, `progressBarHeight`~~: `props`（**@deprecated**，实现侧 `gantt.types.ts` 已弃用且未注册进 scheduling-renderer-definitions，配置静默无效；22-14 同步）
 - `ganttOwnership`, `ganttStatePath`, `statusPath`: `props`（交互坐标 ownership 路径）
 - `taskBar`, `toolbar`, `editor`: `region`
 - `empty`, `loading`: `value-or-region`
@@ -266,19 +273,19 @@ Gantt 是 interaction owner，其状态分三层：
 
 ### 8.1 事件
 
-| 事件                | 触发时机                                                | 负载示例（以实现为准，CX-12 `_` 前缀约定）                                     |
-| ------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `onTaskClick`       | 点击任务条                                              | `{ _taskId }`                                                                  |
-| `onTaskDoubleClick` | 双击任务条                                              | `{ _taskId }`                                                                  |
-| `onTaskDragEnd`     | 拖拽任务结束                                            | `{ _taskId, changes: { start?, end? } }`                                       |
-| `onTaskEdit`        | 编辑型变更（编辑器保存 / 行内单元格提交 / 键盘 Delete） | `{ _taskId, changes? }`（更新路径）或 `{ _taskId, deleted: true }`（删除路径） |
-| `onLinkClick`       | 点击依赖线                                              | `{ _linkId }`                                                                  |
-| `onLinkDragEnd`     | 创建新依赖结束                                          | `{ _sourceId, _targetId, _linkType }`                                          |
-| `onEmptyCellClick`  | 点击时间线空白                                          | `{}`                                                                           |
-| `onZoomChange`      | 缩放级别切换                                            | `{ zoom: string }`                                                             |
-| `onScroll`          | grid/timeline 滚动                                      | `{ scrollLeft, scrollTop }`                                                    |
-| `onMount`           | 组件挂载完成后触发                                      | —                                                                              |
-| `onUnmount`         | 组件卸载前触发                                          | —                                                                              |
+| 事件                | 触发时机                                                                                                                         | 负载示例（以实现为准，CX-12 `_` 前缀约定）                                     |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `onTaskClick`       | 点击任务条                                                                                                                       | `{ _taskId }`                                                                  |
+| `onTaskDoubleClick` | 双击任务条                                                                                                                       | `{ _taskId }`                                                                  |
+| `onTaskDragEnd`     | 拖拽任务结束                                                                                                                     | `{ _taskId, changes: { start?, end? } }`                                       |
+| `onTaskEdit`        | 编辑型变更（编辑器保存 / 行内单元格提交 / 键盘 Delete / 键盘日期编辑 move-up/move-down/resize-left/resize-right——2-19 契约裁决） | `{ _taskId, changes? }`（更新路径）或 `{ _taskId, deleted: true }`（删除路径） |
+| `onLinkClick`       | 点击依赖线                                                                                                                       | `{ _linkId }`                                                                  |
+| `onLinkDragEnd`     | 创建新依赖结束                                                                                                                   | `{ _sourceId, _targetId, _linkType }`                                          |
+| `onEmptyCellClick`  | 点击时间线空白                                                                                                                   | `{}`                                                                           |
+| `onZoomChange`      | 缩放级别切换                                                                                                                     | `{ zoom: string }`                                                             |
+| `onScroll`          | grid/timeline 滚动                                                                                                               | `{ scrollLeft, scrollTop }`                                                    |
+| `onMount`           | 组件挂载完成后触发                                                                                                               | —                                                                              |
+| `onUnmount`         | 组件卸载前触发                                                                                                                   | —                                                                              |
 
 拖拽结束回弹动画 200ms ease-out，缩放切换过渡 300ms ease。
 

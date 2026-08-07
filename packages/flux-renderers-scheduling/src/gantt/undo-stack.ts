@@ -60,31 +60,6 @@ export class UpdateTaskCommand implements Command {
   }
 }
 
-export class BatchUpdateTaskCommand implements Command {
-  type = 'batchUpdateTask';
-  private commands: UpdateTaskCommand[];
-
-  constructor(commands: UpdateTaskCommand[]) {
-    this.commands = commands;
-  }
-
-  execute(): void {
-    for (const cmd of this.commands) cmd.execute();
-  }
-
-  undo(): void {
-    for (const cmd of this.commands) cmd.undo();
-  }
-
-  redo(): void {
-    for (const cmd of this.commands) cmd.redo();
-  }
-
-  mergeable(_other: Command): boolean {
-    return false;
-  }
-}
-
 export class AddLinkCommand implements Command {
   type = 'addLink';
   private store: GanttStore;

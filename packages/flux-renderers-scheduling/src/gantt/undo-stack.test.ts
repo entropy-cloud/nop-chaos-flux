@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GanttStore } from './gantt-store.js';
-import { UndoStack, UpdateTaskCommand, AddLinkCommand, RemoveLinkCommand, BatchUpdateTaskCommand, DeleteTaskCommand } from './undo-stack.js';
+import { UndoStack, UpdateTaskCommand, AddLinkCommand, RemoveLinkCommand, DeleteTaskCommand } from './undo-stack.js';
 
 function createTestStore(): GanttStore {
   const store = new GanttStore({ cellWidth: 40 });
@@ -137,19 +137,6 @@ describe('UndoStack', () => {
     limitStack.push(new UpdateTaskCommand(store, 't2', { text: 'g' }, { text: 'h' }));
     limitStack.push(new UpdateTaskCommand(store, 't1', { text: 'i' }, { text: 'j' }));
     expect(limitStack['commands'].length).toBe(3);
-  });
-
-  it('batch update command undoes all', () => {
-    const cmd1 = new UpdateTaskCommand(store, 't1', { text: store.tasks.get('t1')!.text }, { text: 'B1' });
-    const cmd2 = new UpdateTaskCommand(store, 't2', { text: store.tasks.get('t2')!.text }, { text: 'B2' });
-    const batch = new BatchUpdateTaskCommand([cmd1, cmd2]);
-    batch.execute();
-    expect(store.tasks.get('t1')!.text).toBe('B1');
-    expect(store.tasks.get('t2')!.text).toBe('B2');
-
-    batch.undo();
-    expect(store.tasks.get('t1')!.text).toBe('Task 1');
-    expect(store.tasks.get('t2')!.text).toBe('Task 2');
   });
 
   it('can undo multiple steps', () => {

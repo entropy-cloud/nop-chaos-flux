@@ -164,6 +164,36 @@ describe('useGanttDrag', () => {
     expect(mockStore.updateTask).not.toHaveBeenCalled();
   });
 
+  it('should terminate on pointercancel: ghost cleared, no commit, listeners removed (2-14)', () => {
+    const containerRef = { current: document.createElement('div') };
+    const onCommit = vi.fn();
+    const { result } = renderHook(() => useGanttDrag(mockStore as any, containerRef, onCommit));
+    const target = createTarget();
+
+    target.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onPointerDown(e, 't1', 'move');
+    });
+    target.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 200, bubbles: true }));
+    expect(document.querySelector('.nop-gantt-bar-ghost')).not.toBeNull();
+
+    // Move away from the origin so a later commit WOULD change the task.
+    document.dispatchEvent(new PointerEvent('pointermove', { clientX: 180, clientY: 200 }));
+
+    // Touch-scroll / OS gesture interrupt: pointercancel terminates the drag.
+    document.dispatchEvent(new PointerEvent('pointercancel', { clientX: 180, clientY: 200 }));
+
+    expect(document.querySelector('.nop-gantt-bar-ghost')).toBeNull();
+    expect(target.style.opacity).toBe('1');
+    expect(document.querySelector('.gantt-drop-indicator')?.getAttribute('style')).toContain('display: none');
+    expect(mockStore.updateTask).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+
+    // Listeners removed: a subsequent pointerup must NOT commit the drop.
+    document.dispatchEvent(new PointerEvent('pointerup', { clientX: 180, clientY: 200 }));
+    expect(mockStore.updateTask).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
   it('should cleanup ghost on unmount', () => {
     const containerRef = { current: document.createElement('div') };
     const { unmount } = renderHook(() => useGanttDrag(mockStore as any, containerRef));

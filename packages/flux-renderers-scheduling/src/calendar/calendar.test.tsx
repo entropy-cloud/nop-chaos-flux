@@ -69,7 +69,6 @@ vi.mock('./hooks/use-calendar-drag-create.js', () => ({
       cancelCreate: vi.fn(),
       confirmCreate: vi.fn(),
       showTypeSelector: false,
-      availableTypes: [],
       selectType: (type: string) => {
         options.onEventCreate?.({
           title: type,

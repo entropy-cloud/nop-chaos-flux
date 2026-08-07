@@ -106,7 +106,7 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
         ref={canvasRef}
         data-slot="qrcode-canvas"
         role="img"
-        aria-label={typeof labelContent === 'string' ? labelContent : `QR code for ${valueStr}`}
+        aria-label={typeof labelContent === 'string' ? labelContent : t('flux.qrcode.ariaLabel', { value: valueStr })}
         className="rounded-md"
       />
       {hasLabel ? (

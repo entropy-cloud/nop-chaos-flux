@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { cleanup, render, fireEvent } from '@testing-library/react';
+import { cleanup, render, fireEvent, act } from '@testing-library/react';
 import type { ComponentType } from 'react';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import { createMockRendererProps } from '../../test-support.js';
@@ -117,5 +117,42 @@ describe('ai-feedback — event dispatch payload + ctx (dim 7)', () => {
     fireEvent.click(container.querySelector('[data-slot="ai-feedback-copy"]')!);
     const [payload] = onAction.mock.calls[0] as unknown[];
     expect(payload).toMatchObject({ type: 'ai:feedback-action', action: 'copy', message: MESSAGE });
+  });
+});
+
+describe('ai-feedback — copy reset timer cleanup (2-20)', () => {
+  it('clears the copied-reset timer on unmount so no setState fires after unmount', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+
+    try {
+      const props = makeProps({
+        props: { type: 'ai-feedback', actions: ['copy'], message: MESSAGE as never },
+        events: { onAction: vi.fn() },
+      });
+      const { container, unmount } = render(<Feedback {...props} />);
+      const copyBtn = container.querySelector('[data-slot="ai-feedback-copy"]') as HTMLElement;
+
+      fireEvent.click(copyBtn);
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(copyBtn.textContent).toBe('Copied');
+
+      // Unmount must clear the pending 1500ms reset timer.
+      unmount();
+      expect(clearTimeoutSpy).toHaveBeenCalled();
+
+      // Advancing past the reset window after unmount must not throw.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+    } finally {
+      clearTimeoutSpy.mockRestore();
+      vi.useRealTimers();
+    }
   });
 });

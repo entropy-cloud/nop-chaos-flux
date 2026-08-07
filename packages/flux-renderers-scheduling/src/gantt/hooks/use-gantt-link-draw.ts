@@ -100,13 +100,22 @@ export function useGanttLinkDraw(
       if (ev.key === 'Escape') cleanup();
     };
 
+    // 2-14: pointercancel (touch-scroll interrupt / OS gesture) must terminate
+    // the drawing session like Escape — temp line removed, listeners dropped,
+    // NO link committed by a later pointerup.
+    const onPointerCancel = () => {
+      cleanup();
+    };
+
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerCancel);
     document.addEventListener('keydown', onKeyDown);
 
     cleanupRef.current = () => {
       document.removeEventListener('pointermove', onPointerMove);
       document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerCancel);
       document.removeEventListener('keydown', onKeyDown);
       cleanup();
     };

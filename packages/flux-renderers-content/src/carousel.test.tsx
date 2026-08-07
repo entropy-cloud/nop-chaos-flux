@@ -99,6 +99,17 @@ describe('CarouselRenderer', () => {
     expect(dots[1]?.getAttribute('aria-label')).toBe(t('flux.carousel.goToSlide', { index: 2 }));
   });
 
+  it('renders the item placeholder through flux.carousel.slideLabel (2-18)', () => {
+    const props = createMockRendererProps<CarouselSchema>({
+      schema: { type: 'carousel' },
+      props: { items: [{ title: 'No image slide' }] },
+    });
+    const { container } = render(<CarouselRenderer {...props} />);
+    const placeholder = container.querySelector('[data-slot="carousel-item-placeholder"]');
+    expect(placeholder).toBeTruthy();
+    expect(placeholder?.textContent).toBe(t('flux.carousel.slideLabel', { index: 1 }));
+  });
+
   it('registers a component handle exposing next/prev/setValue', () => {
     const props = createMockRendererProps<CarouselSchema>({
       schema: { type: 'carousel' },
