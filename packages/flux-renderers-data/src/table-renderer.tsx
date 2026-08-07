@@ -51,8 +51,8 @@ import { isDevRuntime, readChildren, useTableTree } from './table-renderer/use-t
 import { useTableLazyChildren } from './table-renderer/use-table-lazy-children.js';
 import { useRowDragSort } from './table-renderer/use-row-drag-sort.js';
 import { useAutoFillHeight } from './table-renderer/use-auto-fill-height.js';
-import { extractLeafColumns, hasNestedColumns } from './table-renderer/table-header-tree.js';
-import type { TableResponsiveConfig } from './schemas.js';
+import { extractLeafColumns } from './table-renderer/table-header-tree.js';
+import { useResponsiveExpandState } from './table-renderer/responsive.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -60,92 +60,6 @@ function asReactNode(value: unknown): React.ReactNode {
 
 const EMPTY_TABLE_COLUMNS: TableColumnSchema[] = [];
 const EMPTY_TABLE_ROWS: Array<Record<string, any>> = [];
-const RESPONSIVE_BREAKPOINTS = {
-  xs: 480,
-  sm: 640,
-  md: 768,
-  lg: 1024,
-} as const;
-
-function resolveResponsiveBreakpoint(breakpoint: TableResponsiveConfig['breakpoint']) {
-  if (typeof breakpoint === 'number' && Number.isFinite(breakpoint) && breakpoint > 0) {
-    return breakpoint;
-  }
-
-  if (typeof breakpoint === 'string') {
-    return (
-      RESPONSIVE_BREAKPOINTS[breakpoint as keyof typeof RESPONSIVE_BREAKPOINTS] ??
-      RESPONSIVE_BREAKPOINTS.md
-    );
-  }
-
-  return RESPONSIVE_BREAKPOINTS.md;
-}
-
-function splitResponsiveColumns(columns: TableColumnSchema[]) {
-  const leftFixedColumns = columns.filter((column) => column.fixed === 'left');
-  const rightFixedColumns = columns.filter((column) => column.fixed === 'right');
-  const nonFixedColumns = columns.filter(
-    (column) => column.fixed !== 'left' && column.fixed !== 'right',
-  );
-  const primaryColumn = nonFixedColumns[0];
-  const primaryColumnNames = new Set<string>();
-
-  leftFixedColumns.forEach((column, index) => {
-    primaryColumnNames.add(column.name ?? `left-${index}`);
-  });
-
-  rightFixedColumns.forEach((column, index) => {
-    primaryColumnNames.add(column.name ?? `right-${index}`);
-  });
-
-  if (primaryColumn) {
-    primaryColumnNames.add(primaryColumn.name ?? '__primary__');
-  }
-
-  const primaryColumns = columns.filter((column, index) =>
-    primaryColumnNames.has(
-      column.name ??
-        (column.fixed === 'left'
-          ? `left-${index}`
-          : column.fixed === 'right'
-            ? `right-${index}`
-            : '__primary__'),
-    ),
-  );
-  const hiddenColumns = columns.filter((column) => !primaryColumns.includes(column));
-
-  return {
-    primaryColumns: primaryColumns.length > 0 ? primaryColumns : columns.slice(0, 1),
-    hiddenColumns,
-  };
-}
-
-function useIsBelowResponsiveBreakpoint(breakpoint: number) {
-  const [isBelow, setIsBelow] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
-    return window.innerWidth < breakpoint;
-  });
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const update = () => {
-      setIsBelow(window.innerWidth < breakpoint);
-    };
-
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, [breakpoint]);
-
-  return isBelow;
-}
 
 function createTableOwnerKey(
   props: RendererComponentProps<TableSchema>,
@@ -246,22 +160,13 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   );
   const { expandedRowKeys, handleToggleExpand } = useTableExpand(tableSchemaProps);
 
-  const responsiveBreakpoint = resolveResponsiveBreakpoint(schemaProps.responsive?.breakpoint);
-  const isBelowResponsiveBreakpoint = useIsBelowResponsiveBreakpoint(responsiveBreakpoint);
-  const responsiveExpandActive =
-    schemaProps.responsive?.mode === 'expand' && isBelowResponsiveBreakpoint;
-  // P1-2: responsive.defaultExpanded — when expand mode is active and the flag
-  // is set, all detail rows start expanded. The same local set drives toggles
-  // with inverted semantics: membership = "collapsed override" (expandAllByDefault
-  // true) vs "expanded" (normal mode), so user collapse/expand still works.
-  const expandAllByDefault =
-    responsiveExpandActive && schemaProps.responsive?.defaultExpanded === true;
-  const responsiveColumns = useMemo(() => splitResponsiveColumns(tableColumns), [tableColumns]);
-  const mainColumns = responsiveExpandActive ? responsiveColumns.primaryColumns : tableColumns;
-  const responsiveHiddenColumns = responsiveExpandActive
-    ? responsiveColumns.hiddenColumns
-    : EMPTY_TABLE_COLUMNS;
-  const nestedHeadersActive = !responsiveExpandActive && hasNestedColumns(mainColumns);
+  const {
+    responsiveExpandActive,
+    expandAllByDefault,
+    mainColumns,
+    responsiveHiddenColumns,
+    nestedHeadersActive,
+  } = useResponsiveExpandState(tableSchemaProps, tableColumns);
   const leafBodyColumns = useMemo(
     () => (nestedHeadersActive ? extractLeafColumns(mainColumns) : mainColumns),
     [mainColumns, nestedHeadersActive],

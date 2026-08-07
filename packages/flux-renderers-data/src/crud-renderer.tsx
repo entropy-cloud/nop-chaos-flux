@@ -23,10 +23,10 @@ import {
   EMPTY_ROWS,
   normalizeCrudSourceValue,
   useCrudHandle,
-  useCrudLoadAction,
   useCrudRuntimeState,
   useCrudStatusPublisher,
 } from './crud-renderer-state.js';
+import { useCrudLoadAction } from './crud-renderer-load.js';
 import {
   CrudToolbarBlocks,
   normalizeToolbarBlocks,
