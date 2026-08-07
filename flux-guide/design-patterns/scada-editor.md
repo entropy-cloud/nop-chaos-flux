@@ -63,8 +63,12 @@
 
 ## 提交语义（save/load）
 
-- **manual 提交**（缺省）：编辑态 working copy 与运行态不自动同步；`component:save` 序列化 working copy 返回 config 字符串（并提升 committedBaseline）；`component:load(config)` 装入外部 config 替换 working copy + 重置 session。
-- 编辑器扩展句柄：`component:addSymbol` / `component:removeSymbol` / `component:updateSymbol` / `component:group` / `component:ungroup` / `component:undo` / `component:redo`（均入 undo 栈）。
+- **manual 提交**（缺省）：编辑态 working copy 与运行态不自动同步；`component:save` 序列化 working copy 返回 config 字符串（并提升 committedBaseline）+ 派发 `scada-editor:save`（payload=serializedConfig，host `events.onSave` 接收）；`component:load(config)` 装入外部 config 替换 working copy + 重置 session + 派发 `scada-editor:load`（payload=parsed config，host `events.onLoad` 接收）。
+- **auto 提交**（`commitPolicy:'auto'`）：每次 session 变更（编辑/undo/redo/load）自动触发 save + `onSave`（编辑即持久化；transform 拖拽逐帧跳过，事务终止兜底，防逐帧序列化）。
+- **runtime 9 句柄**（与运行态 `scada-canvas` 同名集）：`component:fit` / `center` / `getSymbols` / `getSymbol` / `setPointValue`（编辑态返回 not-supported）/ `getPointTable`（返回空）/ `exportConfig` / `importConfig` / `destroy`（置 `data-status="destroyed"`）。
+- 编辑器扩展句柄：`component:addSymbol` / `removeSymbol` / `updateSymbol` / `save` / `load` / `group` / `ungroup` / `undo` / `redo`（均入 undo 栈）。
+- **controlled 推回**：host 改 `config` prop → runtime.load(next)；改 `mode` prop → runtime.switchMode(next)（方案 A，effect watcher；初次 mount 跳过避免循环）。
+- **默认 UI affordance + 键盘层**：默认 toolbox 补 Delete/Group/Ungroup 按钮；canvas 容器接键盘——Delete/Backspace 删除、Ctrl+Z/Y 撤销/重做、Ctrl+G/Ctrl+Shift+G 成组/解组、方向键微调（Shift=10px）。palette drop 落指针处（非固定坐标）。
 
 ## Undo/Redo
 

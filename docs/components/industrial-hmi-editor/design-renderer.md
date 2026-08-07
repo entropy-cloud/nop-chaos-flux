@@ -139,12 +139,14 @@ interface ScadaEditorCanvasEvents {
 
 ### 4.5 提交语义（save/load，对齐 design-architecture.md §4.5）
 
-| commitPolicy     | 触发                                           | 路径                                                                                                                                                                                                                                                                                    |
-| ---------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `manual`（缺省） | 用户显式调用 `component:save()` 句柄           | working copy → `serializeScadaConfig(workingConfig)` → 经 `props.events.onSave` 派发（载荷含 serializedConfig）或上层 host 写回源（如服务端 / localStorage）→ 触发 `scada-canvas` props.config 变化 → `diffScadaConfig(committedBaseline, workingConfig)` → `engine.applyDiff` 增量应用 |
-| `auto`           | 每次编辑操作入栈后（onSessionChange 派发时机） | 同 manual 路径，但每次变更即同步（高频，可能影响性能，建议仅用于「编辑即生效」场景）                                                                                                                                                                                                    |
+| commitPolicy     | 触发                                                     | 路径                                                                                                                                                                                                                                                                                                            |
+| ---------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `manual`（缺省） | 用户显式调用 `component:save()` 句柄                     | working copy → `serializeScadaConfig(workingConfig)` → 经 `props.events.onSave` 派发（载荷含 serializedConfig）或上层 host 写回源（如服务端 / localStorage）→ 触发 `scada-canvas` props.config 变化 → `diffScadaConfig(committedBaseline, workingConfig)` → `engine.applyDiff` 增量应用                         |
+| `auto`           | 每次编辑操作后 notifySession（onSessionChange 派发时机） | 同 manual 路径，但每次变更即 save+onSave（编辑即持久化）。**实现（plan 2026-08-07-1835-2 Phase 2 / P1-05 方案 A）**：`notifySession` 在 `commitPolicy='auto'` 且非事务期（`undoRedo.isInTransaction=false`）时触发 `ctx.save()`；transform 拖拽逐帧由 `commitTransaction` 的 notifySession 兜底（防逐帧序列化） |
 
-`component:load(config)` 句柄替换 working copy + 重置 undo/redo 栈（design-undo-redo.md §8.2）；`component:exportConfig()` 导出 working copy 序列化结果（不修改 committedBaseline）。
+`component:load(config)` 句柄替换 working copy + 重置 undo/redo 栈（design-undo-redo.md §8.2）+ 派发 `scada-editor:load`（payload=parsed config，host `events.onLoad` 接收，plan 2026-08-07-1835-2 Phase 2 / P1-04）；`component:exportConfig()` 导出 working copy 序列化结果（不修改 committedBaseline）。
+
+**controlled 推回（plan 2026-08-07-1835-2 Phase 2 / P1-09 方案 A）**：host 改 `config` prop → `useEditorEngine` effect watcher 监听 `initialConfig` 变化 → `runtime.load(next)`（初次 mount 跳过，避免 load↔config 循环）；host 改 `mode` prop → `runtime.switchMode(next)`。三态 ownership（local/controlled/scope）仍为 future work（§4.5 已注明）。
 
 ### 4.6 运行期状态归属
 
@@ -270,9 +272,9 @@ interface ScadaEditorTestHandle {
 
 ### 8.5 组件句柄（component:<method>，runtime 9 + 编辑 8）
 
-> runtime 复用点 #5（editor-initiation §3 + roadmap Cross-Cutting）：runtime 9 句柄保留（`use-scada-handles.ts:11-21` SCADA_HANDLE_METHODS 常量），编辑扩展句柄经同一 `ComponentHandleRegistry`（编辑器 renderer 实例化时注册）。
+> runtime 复用点 #5（editor-initiation §3 + roadmap Cross-Cutting）：runtime 9 句柄 + 编辑扩展 9 句柄**合并注册**（plan 2026-08-07-1835-2 Phase 2 / P1-06：`useEditorHandles` 注册全部 18 方法，runtime 9 委派 EditorEngineRuntime 等价能力，destroy 置 `data-status="destroyed"`；此前 runtime 9 对 editor 实例不可达）。
 
-#### 8.5.1 runtime 9 句柄（runtime `scada-canvas` 既有，编辑器复用）
+#### 8.5.1 runtime 9 句柄（runtime `scada-canvas` 既有，编辑器合并注册——plan 2026-08-07-1835-2 Phase 2 / P1-06）
 
 | 句柄                                                          | 说明                                                                                                                                  | 失败路径                                              |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |

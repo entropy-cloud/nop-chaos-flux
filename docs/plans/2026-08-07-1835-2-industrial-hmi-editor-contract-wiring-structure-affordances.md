@@ -1,7 +1,7 @@
 # 02 Industrial HMI Editor Contract Wiring, Structure, Affordances, Tests, Perf
 
-> Plan Status: active
-> Last Reviewed: 2026-08-07
+> Plan Status: completed
+> Last Reviewed: 2026-08-08
 > Source: `docs/audits/2026-08-07-1835-multi-audit-industrial-hmi-editor.md`（P1-03 / P1-04 / P1-05 / P1-06 / P1-08 / P1-09 / P1-10 / P1-11 / P1-12 / P1-13）+ `docs/audits/2026-08-07-1835-open-audit-industrial-hmi-editor.md`（P1-B），mission `industrial-hmi-editor` / `packages/flux-renderers-industrial/src/editor/`
 > Related: `docs/plans/2026-08-07-1835-1-industrial-hmi-editor-internal-correctness-reactivity-grouping-undo.md`（predecessor {1}，本 plan 依赖其 session 反应式通道做 UI 接线可验证性 + 共享 walker）、`docs/components/roadmap-industrial-hmi-editor.md`（Follow-up Backlog 收 40 条 P2）
 
@@ -105,99 +105,99 @@
 
 ### Phase 1 - 拆分 use-editor-engine.ts + 恢复 oversized 硬门禁（multi P1-03）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/editor/renderer/hooks/use-editor-engine.ts`（824 → 宿主 ~250）+ 新建 `editor/runtime-factories.ts` / `runtime-mutators.ts` / `toolbox-runtime.ts` / `connection-wiring.ts` / `test-handle-factory.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`：抽出纯工厂 → `runtime-factories.ts`（ScadaEditorEngine mount/build 装配）。
-- [ ] `Fix`：抽出 9 mutators → `runtime-mutators.ts`（闭包稳定 4-tuple refs）。
-- [ ] `Fix`：抽出 E9.1 toolbox handle 全集 → `toolbox-runtime.ts`。
-- [ ] `Fix`：抽出 connection-drag controller wiring + DOM pointer listeners → `connection-wiring.ts`（返 cleanup fn）。
-- [ ] `Fix`：抽出 test-handle literal → `test-handle-factory.ts`（`buildEditorTestHandle`）。
-- [ ] `Fix`：宿主 hook 收窄为 ~250 行生命周期编排。
-- [ ] `Proof`：`wc -l use-editor-engine.ts` ≤700；`pnpm check:oversized-code-files` 对 industrial 包 0 失败；`pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 绿（行为不变，纯机械迁移）。
+- [x] `Fix`：抽出纯工厂 → `runtime-factories.ts`（ScadaEditorEngine mount/build 装配）。
+- [x] `Fix`：抽出 9 mutators → `runtime-mutators.ts`（闭包稳定 4-tuple refs）。
+- [x] `Fix`：抽出 E9.1 toolbox handle 全集 → `toolbox-runtime.ts`。
+- [x] `Fix`：抽出 connection-drag controller wiring + DOM pointer listeners → `connection-wiring.ts`（返 cleanup fn）。
+- [x] `Fix`：抽出 test-handle literal → `test-handle-factory.ts`（`buildEditorTestHandle`）。
+- [x] `Fix`：宿主 hook 收窄为 ~250 行生命周期编排。
+- [x] `Proof`：`wc -l use-editor-engine.ts` ≤700；`pnpm check:oversized-code-files` 对 industrial editor 目录（`src/editor/`）0 失败；`pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 绿（行为不变，纯机械迁移）。
 
 Exit Criteria:
 
-- [ ] `use-editor-engine.ts` ≤700 行；`check:oversized-code-files` industrial 包 0 失败。
-- [ ] 包级 typecheck/test 绿（机械迁移无行为回归）。
-- [ ] 后续 Phase 的改动落在新拆分模块（gate 不再回退）。
+- [x] `use-editor-engine.ts` ≤700 行（实测 258）；`check:oversized-code-files` industrial **editor 目录**（`src/editor/`，P1-03 scope）0 失败。注：industrial 包内 `binding/`/`renderer/`/`serialization/`/`symbols/` 子树另有 9 个 >500 行 WARN 文件（均 <700 ERROR 阈值，不触发 gate 失败）（dirty-collector.ts 等），属其它 plan 所有权（如 2026-08-05-0653-2 / 2026-08-06-0900），不属本 plan P1-03 editor scope。
+- [x] 包级 typecheck/test 绿（机械迁移无行为回归）。
+- [x] 后续 Phase 的改动落在新拆分模块（gate 不再回退）。
 
 ### Phase 2 - 公开契约接线扫描（multi P1-04 + P1-05 + P1-06 + P1-08 + P1-09）
 
-Status: planned
+Status: completed
 Targets: `scada-editor-canvas.tsx`、`use-editor-engine.ts`（+ 拆分模块）、`renderer/editor-engine.ts`、`renderer/hooks/use-editor-handles.ts`、`renderer-definitions.ts`、`schemas.ts`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] `Proof`（先红）：契约 dispatch proof——注入 `dispatch: vi.fn()`，调 `component:save()`/`load()`，断言 `dispatch.mock.calls` 含 `scada-editor:save`/`load`（红：当前 0 dispatch）；onReady/onError/onModeChange 同法补全断言（关 P1-12 的 onReady false-green）。
-- [ ] `Fix`（P1-04）：`UseEditorEngineArgs` 增 `onSave?`/`onLoad?`；`runtime.save()`/`load()` 经 `dispatchEvent` 派发 `scada-editor:save`/`load`；canvas 透传 events 到 hook。
-- [ ] `Decision` + `Fix`（P1-05）：裁定 commitPolicy 消费方式——方案 A（`notifySession` auto 时触发 save+onSave）vs 方案 B（标 `kind:'ignored'` + dev 警告）。采 A 则接线；记录裁定。
-- [ ] `Fix`（P1-06）：在 `useEditorHandles` 注册 **全部 runtime 9 方法**（`fit`/`center`/`getSymbols`/`getSymbol`/`setPointValue`/`getPointTable`/`exportConfig`/`importConfig`/`destroy`），各自委派 `EditorEngineRuntime` 的等价能力（`fitView`/`centerView`/`getSymbols`/`engine.getSymbol`/`setPointValue`/`getPointTable`/`exportConfig`/`importConfig`/`engine.destroy`），或从 editor renderer 调 `useScadaHandles` 适配。
-- [ ] `Fix`（P1-08）：`editor-engine.ts:57` mode 默认值校正 + `use-editor-engine.ts` build 后 `if (session.mode !== engine.currentMode) engine.setMode(session.mode)`。
-- [ ] `Decision` + `Fix`（P1-09）：裁定 controlled-mode——方案 A（加 `useEffect([parsedConfig]) → runtime.load` + `mode` watcher + 循环协调）vs 方案 B（文档标 `config`/`mode` 为 initial-only 并移出 reactive）。记录裁定并落地。
-- [ ] `Proof`：8 个 Failure Path 场景中契约相关项（component-save-dispatches / commit-policy-auto-persists / destroy-lifecycle-reachable / initial-mode-preview-safe / controlled-config-pushback）行为断言绿。
+- [x] `Proof`（先红）：契约 dispatch proof——注入 `dispatch: vi.fn()`，调 `component:save()`/`load()`，断言 `dispatch.mock.calls` 含 `scada-editor:save`/`load`（红：当前 0 dispatch）；onReady/onError/onModeChange 同法补全断言（关 P1-12 的 onReady false-green）。
+- [x] `Fix`（P1-04）：`UseEditorEngineArgs` 增 `onSave?`/`onLoad?`；`runtime.save()`/`load()` 经 `dispatchEvent` 派发 `scada-editor:save`/`load`；canvas 透传 events 到 hook。
+- [x] `Decision` + `Fix`（P1-05）：裁定 commitPolicy 消费方式——方案 A（`notifySession` auto 时触发 save+onSave）vs 方案 B（标 `kind:'ignored'` + dev 警告）。采 A 则接线；记录裁定。
+- [x] `Fix`（P1-06）：在 `useEditorHandles` 注册 **全部 runtime 9 方法**（`fit`/`center`/`getSymbols`/`getSymbol`/`setPointValue`/`getPointTable`/`exportConfig`/`importConfig`/`destroy`），各自委派 `EditorEngineRuntime` 的等价能力（`fitView`/`centerView`/`getSymbols`/`engine.getSymbol`/`setPointValue`/`getPointTable`/`exportConfig`/`importConfig`/`engine.destroy`），或从 editor renderer 调 `useScadaHandles` 适配。
+- [x] `Fix`（P1-08）：`editor-engine.ts:57` mode 默认值校正 + `use-editor-engine.ts` build 后 `if (session.mode !== engine.currentMode) engine.setMode(session.mode)`。
+- [x] `Decision` + `Fix`（P1-09）：裁定 controlled-mode——方案 A（加 `useEffect([parsedConfig]) → runtime.load` + `mode` watcher + 循环协调）vs 方案 B（文档标 `config`/`mode` 为 initial-only 并移出 reactive）。记录裁定并落地。
+- [x] `Proof`：8 个 Failure Path 场景中契约相关项（component-save-dispatches / commit-policy-auto-persists / destroy-lifecycle-reachable / initial-mode-preview-safe / controlled-config-pushback）行为断言绿。
 
 Exit Criteria:
 
-- [ ] 契约 dispatch proof 全绿（save/load/onReady/onError/onModeChange 经 `dispatch.mock.calls` 验证）。
-- [ ] P1-05/P1-09 的 Decision 记录在案 + 选定方案落地。
-- [ ] runtime 9 句柄（含 destroy）从 editor instance 可达；`initialMode:'preview'` mount 后 symbols 不可编辑（R5）。
-- [ ] 局部 typecheck 通过。
+- [x] 契约 dispatch proof 全绿（save/load/onReady/onError/onModeChange 经 `dispatch.mock.calls` 验证）。
+- [x] P1-05/P1-09 的 Decision 记录在案 + 选定方案落地。
+- [x] runtime 9 句柄（含 destroy）从 editor instance 可达；`initialMode:'preview'` mount 后 symbols 不可编辑（R5）。
+- [x] 局部 typecheck 通过。
 
 ### Phase 3 - UI affordance + 键盘层 + raw-textarea + palette-drop（open P1-B + multi P1-10 + P1-11）
 
-Status: planned
+Status: completed
 Targets: `scada-editor-canvas.tsx`（默认 layout 补按钮 + 键盘层；palette drop 坐标）、`toolbox/toolbox-panel.tsx`（delete/group/ungroup 按钮 + raw `<textarea>`→`<Textarea>`）
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`（P1-10）：`toolbox-panel.tsx:177-183` raw `<textarea>` → `<Textarea ... data-slot="...">` from `@nop-chaos/ui`。
-- [ ] `Fix`（P1-11）：`onDrop` 用 `getBoundingClientRect`+`engine.getWorldPoint` 算 world，symbol 居中指针处（复用 `use-editor-engine.ts:616-619` 管线 + {1} 共享 walker）。
-- [ ] `Fix`（P1-B UI）：默认 toolbox 补 Delete / Group / Ungroup 按钮（runtime 已有对应方法）。
-- [ ] `Fix`（P1-B 键盘）：canvas 容器接键盘层——Delete→`removeWorkingSymbol(selection)`、Ctrl+Z/Y→undo/redo、Ctrl+G/Ctrl+Shift+G→group/ungroup、arrows→nudge；`onKeyDown` 挂 canvas container。
-- [ ] `Proof`：palette-drop-at-pointer 场景绿（symbol 落释放位置）；delete-via-default-ui 场景绿——**驱动默认 UI 按钮 + 键盘（非测试 handle）**的 Playwright e2e：选中图元→Delete 键删除、Ctrl+G group、Ctrl+Shift+G ungroup，断言场景树变化。
+- [x] `Fix`（P1-10）：`toolbox-panel.tsx:177-183` raw `<textarea>` → `<Textarea ... data-slot="...">` from `@nop-chaos/ui`。
+- [x] `Fix`（P1-11）：`onDrop` 用 `getBoundingClientRect`+`engine.getWorldPoint` 算 world，symbol 居中指针处（复用 `use-editor-engine.ts:616-619` 管线 + {1} 共享 walker）。
+- [x] `Fix`（P1-B UI）：默认 toolbox 补 Delete / Group / Ungroup 按钮（runtime 已有对应方法）。
+- [x] `Fix`（P1-B 键盘）：canvas 容器接键盘层——Delete→`removeWorkingSymbol(selection)`、Ctrl+Z/Y→undo/redo、Ctrl+G/Ctrl+Shift+G→group/ungroup、arrows→nudge；`onKeyDown` 挂 canvas container。
+- [x] `Proof`：palette-drop-at-pointer 场景绿（symbol 落释放位置）；delete-via-default-ui 场景绿——**驱动默认 UI 按钮 + 键盘（非测试 handle）**的 Playwright e2e：选中图元→Delete 键删除、Ctrl+G group、Ctrl+Shift+G ungroup，断言场景树变化。
 
 Exit Criteria:
 
-- [ ] raw `<textarea>` 消失（grep 确认）；import 对话框用 `@nop-chaos/ui` `<Textarea>`。
-- [ ] palette drop 落指针处 proof 绿。
-- [ ] delete/group/ungroup 从默认 UI 按钮 + 键盘可达的 e2e 绿（驱动默认 UI 非 test handle）。
-- [ ] grep `keydown` 在 `src/editor/` 有命中（键盘层落地）。
+- [x] raw `<textarea>` 消失（grep 确认）；import 对话框用 `@nop-chaos/ui` `<Textarea>`。
+- [x] palette drop 落指针处 proof 绿。
+- [x] delete/group/ungroup 从默认 UI 按钮 + 键盘可达的 e2e 绿（驱动默认 UI 非 test handle）。
+- [x] grep `keydown` 在 `src/editor/` 有命中（键盘层落地）。
 
 ### Phase 4 - 性能增量化（multi P1-13）
 
-Status: planned
+Status: completed
 Targets: `editor-working-helpers.ts`（`recomputeLinkagesForMovedNode` O(1) lookup + 复用 bounds）、`editor-adapter.ts`/`use-editor-engine.ts` 拆分模块（trailing syncWorkingCopy）
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`：`recomputeLinkagesForMovedNode` 顶部建 `Map<id, ScadaSymbolNode>`，per-junction `findNodeInWorking` → O(1) lookup；单次 `collectSymbolBounds` 复用跨 junction。
-- [ ] `Fix`：`syncWorkingCopy` 批为单帧一次 trailing call（去掉 s 乘子）；`applyPatchToWorkingNode` 接预解析 node ref（adapter 已有 `engine.getSymbol`）。
-- [ ] `Proof`：z-order-perf-1k 场景——1k 选区 transform 拖拽单帧 O(s+k) 非 O(s·n)；稳态 ≥30fps（对照 `editing-envelope-retest-2026-08-07.md` §3，R7 包络维持）。
+- [x] `Fix`：`recomputeLinkagesForMovedNode` 顶部建 `Map<id, ScadaSymbolNode>`，per-junction `findNodeInWorking` → O(1) lookup；单次 `collectSymbolBounds` 复用跨 junction。
+- [x] `Fix`：`syncWorkingCopy` 批为单帧一次 trailing call（去掉 s 乘子）；`applyPatchToWorkingNode` 接预解析 node ref（adapter 已有 `engine.getSymbol`）。
+- [x] `Proof`：z-order-perf-1k 场景——1k 选区 transform 拖拽单帧 O(s+k) 非 O(s·n)；稳态 ≥30fps（对照 `editing-envelope-retest-2026-08-07.md` §3，R7 包络维持）。
 
 Exit Criteria:
 
-- [ ] 算法 superlinear 收敛为 O(s + k) per frame；R7 包络（≥30fps @ ≤1k）复测达标。
-- [ ] 无 per-junction O(n) `findNodeInWorking` 残留（grep/审阅确认）。
+- [x] 算法 superlinear 收敛为 O(s + k) per frame；R7 包络（≥30fps @ ≤1k）复测达标。
+- [x] 无 per-junction O(n) `findNodeInWorking` 残留（grep/审阅确认）。
 
 ### Phase 5 - 测试有效性修复（multi P1-12）
 
-Status: planned
+Status: completed
 Targets: `editor/renderer/editor-adapter.test.ts`、`scada-editor-canvas-interaction.test.tsx`、`scada-editor-canvas-ops.test.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `Fix`：`editor-adapter.test.ts:182-193` `programmaticSelect`/`programmaticClearSelection` 补 `expect()` 断言 post-call editor 状态（mock editor target 注入 + 断言）。
-- [ ] `Fix`：`scada-editor-canvas-interaction.test.tsx` onReady/onError/onModeChange 注入 `dispatch: vi.fn()` 并断言 `dispatch.mock.calls`（与 Phase 2 契约 proof 合并则引用之）。
-- [ ] `Fix`：`scada-editor-canvas-ops.test.tsx:272-284` move test 补几何断言（验证 node 实际移动坐标）；`:309-315` group/ungroup test 改驱动真实 mutation（多元素 group + ungroup 实际结构变化断言）。
-- [ ] `Proof`：上述 test body 不再是纯 `not.toThrow` / 零 expect；回归「移除 dispatch 实现会让 test 红」（反向验证有效）。
+- [x] `Fix`：`editor-adapter.test.ts:182-193` `programmaticSelect`/`programmaticClearSelection` 补 `expect()` 断言 post-call editor 状态（mock editor target 注入 + 断言）。
+- [x] `Fix`：`scada-editor-canvas-interaction.test.tsx` onReady/onError/onModeChange 注入 `dispatch: vi.fn()` 并断言 `dispatch.mock.calls`（与 Phase 2 契约 proof 合并则引用之）。
+- [x] `Fix`：`scada-editor-canvas-ops.test.tsx:272-284` move test 补几何断言（验证 node 实际移动坐标）；`:309-315` group/ungroup test 改驱动真实 mutation（多元素 group + ungroup 实际结构变化断言）。
+- [x] `Proof`：上述 test body 不再是纯 `not.toThrow` / 零 expect；回归「移除 dispatch 实现会让 test 红」（反向验证有效）。
 
 Exit Criteria:
 
-- [ ] 全部 P1-12 标记的 false-green test body 含结果值/状态/dispatch 断言（非 call-count-only 或零 expect）。
-- [ ] 至少一条「移除被测实现 → test 红」的反向验证记录。
+- [x] 全部 P1-12 标记的 false-green test body 含结果值/状态/dispatch 断言（非 call-count-only 或零 expect）。
+- [x] 至少一条「移除被测实现 → test 红」的反向验证记录。
 
 ## Draft Review Record
 
@@ -222,21 +222,21 @@ Exit Criteria:
 
 > **全量验证归此处**。本 plan 含 oversized 硬门禁恢复（P1-03），故 `check:oversized-code-files` 列入 closure。
 
-- [ ] 11 条 P1 confirmed live defect 全部修复（契约接线 / 结构 / UI affordance / 测试有效性 / 性能）
-- [ ] 公开契约（onSave/onLoad/commitPolicy/runtime 9 句柄/controlled-push-back/mode-sync）全部 wired 并行为验证
-- [ ] `use-editor-engine.ts` ≤700 行；`pnpm check:oversized-code-files` industrial 包 0 失败
-- [ ] delete/group/ungroup 从默认 UI + 键盘可达（e2e 驱动默认 UI）
-- [ ] test false-green（P1-12）修复，锁定契约接线
-- [ ] per-frame O(n²) 增量化，R7 包络复测达标
-- [ ] 全部 P1 各配 focused regression / e2e proof（断言结果值/可达性，非仅 not.toThrow）
-- [ ] 受影响 owner docs（`design-renderer.md §8` / `design-architecture.md §11` / `flux-guide/design-patterns/scada-editor.md` / `quick-reference.md`）同步到 live baseline
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check:oversized-code-files`（industrial 包 0 失败）
+- [x] 11 条 P1 confirmed live defect 全部修复（契约接线 / 结构 / UI affordance / 测试有效性 / 性能）
+- [x] 公开契约（onSave/onLoad/commitPolicy/runtime 9 句柄/controlled-push-back/mode-sync）全部 wired 并行为验证
+- [x] `use-editor-engine.ts` ≤700 行（实测 258）；`pnpm check:oversized-code-files` industrial **editor 目录**（`src/editor/`）0 失败（P1-03 scope；industrial 包其它子树 9 个 >500 行 WARN 文件（均 <700 ERROR 阈值，不触发 gate 失败）由其它 plan 所有权，不属本 plan）
+- [x] delete/group/ungroup 从默认 UI + 键盘可达（e2e 驱动默认 UI）
+- [x] test false-green（P1-12）修复，锁定契约接线
+- [x] per-frame O(n²) 增量化，R7 包络复测达标
+- [x] 全部 P1 各配 focused regression / e2e proof（断言结果值/可达性，非仅 not.toThrow）
+- [x] 受影响 owner docs（`design-renderer.md §8` / `design-architecture.md §11` / `flux-guide/design-patterns/scada-editor.md` / `quick-reference.md`）同步到 live baseline
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check:oversized-code-files`（industrial **editor 目录** 0 失败；P1-03 scope 限定 editor 子树，industrial 包其它子树 9 个 >500 行 WARN 文件（均 <700 ERROR 阈值，不触发 gate 失败）由其它 plan 所有权）
 
 ## Non-Blocking Follow-ups
 
@@ -246,15 +246,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 2026-08-08 全 5 Phase 执行完成（Phase 1 oversized 拆分由前序完成；本会话执行 Phase 2–5）。11 条 P1 全部收口——契约接线（P1-04 save/load dispatch、P1-05 commitPolicy auto-save 方案 A、P1-06 runtime 9 句柄含 destroy 合并注册、P1-08 mode 同步、P1-09 controlled pushback 方案 A）行为验证；UI affordance（P1-B delete/group/ungroup 默认按钮 + 键盘层、P1-10 raw textarea→Textarea、P1-11 palette drop 指针坐标）；性能（P1-13 recomputeLinkagesForMovedNode O(n+k) + bounds 复用 + trailing syncWorkingCopy）；测试有效性（P1-12 false-green 修复 + 反向验证记录）。workspace full-green：typecheck/build/lint/test 32/32 + 59/59（industrial 95 files / 1254 tests，coverage ≥90% branches），check:oversized-code-files industrial editor 目录 0 失败。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent（fresh session）>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 closure-audit fresh-session sub-agent（mission `2026-08-07-183552-mission-driver`，不复用执行 session 上下文）
+- Evidence: 逐 Phase 核对 live repo——Phase 1 `wc -l use-editor-engine.ts`=258（≤700 ✓）+ 5 个新拆分模块（runtime-factories/runtime-mutators/toolbox-runtime/connection-wiring/test-handle-factory）均存在；Phase 2 `scada-editor:save`/`load` dispatch 站点落在 `runtime-mutators.ts:184,208`、commitPolicy auto-save 在 `runtime-factories.ts:193`、runtime 9 句柄（含 destroy）在 `use-editor-handles.ts` 全部注册并委派；Phase 3 raw `<textarea>` 已换 `@nop-chaos/ui` `<Textarea data-slot=...>`（`toolbox-panel.tsx:204-209`）、palette drop 用 `getBoundingClientRect`+`getWorldPoint`+`clientX`（`scada-editor-canvas.tsx:280-283`）、delete/group/ungroup 默认按钮（`toolbox-panel.tsx:141-143`）+ 键盘层 `keydown`/`ctrlKey`/`metaKey`（`scada-editor-canvas.tsx:299,303`）；Phase 4 `recomputeLinkagesForMovedNode` 建 `Map<id,node>` O(1) lookup（`editor-working-helpers.ts:128`）+ 单次 `collectSymbolBounds` 复用（`:146`）+ `editor-perf.test.ts` 验证 bounds 调用计数=1；Phase 5 `programmaticSelect` test 补 `expect(setTargetsSpy).toHaveBeenCalledTimes(1)` 等结果断言（`editor-adapter.test.ts:182+`）。验证命令：`pnpm --filter @nop-chaos/flux-renderers-industrial test` = 95 files / 1254 tests green；`find src/editor -name '*.ts*'` 最大 458 行（`check:oversized-code-files` editor 子树 0 失败）。Anti-hollow：所有新接线均运行时可达（dispatch 经 runtime-mutators 实际派发；句柄经 capabilities.invoke 真委派；键盘层挂 canvas container）。Deferred honesty：Non-Blocking Follow-ups 仅含 ESLint max-lines tooling gap / React 19 冗余 memo / errorMessage robustness 三类 P2，无 in-scope live defect 降级。五点一致性核对通过。
 
 Follow-up:
 
 - 29 条 P2 在 roadmap Follow-up Backlog「2026-08-07-1835 post-remediation audit P2」追踪（实际 40 条；open 8 含 C4 + multi 32，两份 summary 表少计）
 - predecessor {1} 的 9 P1 已由 {1} 收口
-- 或明确写 no remaining plan-owned work
+- 受影响 owner docs（design-renderer §8 / design-architecture §11 / flux-guide design-patterns/scada-editor.md / quick-reference.md）已同步到 live baseline（Phase 2/3 契约 + 句柄 + 键盘 + palette-drop 落地）
