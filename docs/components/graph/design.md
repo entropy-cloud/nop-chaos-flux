@@ -42,7 +42,7 @@ AMIS 无原生图查看器组件（echarts graph series 只覆盖少量图形态
 1. **画布引擎**：`@xyflow/react`（复用 flow-designer 同版本 12.10.2，无新增依赖），桥接模式参照 `flow-designer-renderers/src/designer-xyflow-canvas/`。graph 只读：不注册编辑类交互（connect/drag/delete），禁用节点拖拽与连接手柄。
 2. **hierarchy 布局**：dagre 起步（轻量、与 React Flow 组合常见），按 `orientation`（`LR`/`TB`，默认 `LR`）分层；数据变化时增量重布局（依赖变化才重跑，避免每渲染都布局）。elkjs 作为 P2 候选（更高质量布局），不改变 schema。
 3. **搜索 open-state/焦点模型**：graph 无展开态，搜索只需「匹配节点高亮 + 循环定位（fitView 到匹配节点 + 选中 + 节点闪烁 marker）」。循环索引是 renderer 内部 local 状态（`data-state="searching"` 发布），不清零不写 scope（同 tree E3 的「搜索期间不写本地态」原则的镜像：graph 的本地态是搜索索引本身）。
-4. **多观察点循环**：不内置。`onNodeClick` 事件每次派发 `{ nodeId, node }`（node 为完整节点数据，业务字段在 `data` 容器，见 §4.1）；宿主在事件 action 中管理循环索引（scope 存 `cycleIndex`），渲染器不感知。裁定理由：循环语义是业务领域（trace 特有）而非通用图能力。
+4. **多观察点循环**：不内置。`onNodeClick` 事件每次派发 `{ type: 'graph:node-click', nodeId, node }`（node 为完整节点数据，业务字段在 `data` 容器，见 §4.1；type 为命名空间值，见 §8.1）；宿主在事件 action 中管理循环索引（scope 存 `cycleIndex`），渲染器不感知。裁定理由：循环语义是业务领域（trace 特有）而非通用图能力。
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -163,11 +163,13 @@ node region 模板内可用绑定（参照 tree node region 模式）：
 
 ### 8.1 事件（`onXxx: ActionSchema`）
 
-| 事件                | payload                                                                          | 说明                                                       |
-| ------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `onNodeClick`       | `{ nodeId, node }`（node 为完整节点数据）                                        | 单次点击派发；多观察点循环由宿主 action 管理索引（§2.1-4） |
-| `onNodeDoubleClick` | `{ nodeId, node }`                                                               | 双击定位/展开详情                                          |
-| `onSelectionChange` | `{ nodeId: string \| null, node: GraphNode \| null }`（取消选中时两者均为 null） | 选中变化发布，联动分析面板等宿主组合                       |
+| 事件                | payload                                                                                                            | 说明                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `onNodeClick`       | `{ type: 'graph:node-click', nodeId, node }`（node 为完整节点数据）                                                | 单次点击派发；多观察点循环由宿主 action 管理索引（§2.1-4） |
+| `onNodeDoubleClick` | `{ type: 'graph:node-double-click', nodeId, node }`                                                                | 双击定位/展开详情                                          |
+| `onSelectionChange` | `{ type: 'graph:selection-change', nodeId: string \| null, node: GraphNode \| null }`（取消选中时后两者均为 null） | 选中变化发布，联动分析面板等宿主组合                       |
+
+> 注：payload `type` 为命名空间值（17-2），对齐 `normalizeActionEvent` 的字符串 `type` 契约（`docs/architecture/renderer-runtime.md` §normalizeActionEvent）——事件键名（`onNodeClick` 等）仅作 `props.events` 索引不变，payload 内的 `type` 字段自描述事件语义，宿主 action 可按命名空间 type 过滤。
 
 > 注：graph 为**单选模型**（见 §4.2 `selectable`）——禁用 React Flow 默认多选与 shift/ctrl 框选，`onSelectionChange`/`onNodeClick` 永远承载单节点。
 
