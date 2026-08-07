@@ -3,7 +3,7 @@ import { Button, Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffFileMeta } from '../../schemas.js';
 import { computeDiffFile } from '../model/diff-parse.js';
-import { computeDiffStats } from '../utils/diff-stats.js';
+import { computeDiffStats } from '../utils.js';
 
 interface FileEntryData {
   index: number;

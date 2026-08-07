@@ -3,7 +3,7 @@ import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { ThreeWayRow, ThreeWayRowType } from '../model/diff-3way.js';
 import { computeThreeWayDiff } from '../model/diff-3way.js';
-import { generateConflictMarkerHtml } from '../utils/diff-template.js';
+import { generateConflictMarkerHtml } from '../utils.js';
 import { highlight } from '../adapters/syntax-highlight.js';
 
 interface DiffThreeColumnViewProps {

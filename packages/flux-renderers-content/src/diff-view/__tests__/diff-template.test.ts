@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateLineContentHtml } from '../utils/diff-template.js';
+import { generateLineContentHtml } from '../utils.js';
 import type { InlineToken } from '../model/diff-inline.js';
 
 describe('generateLineContentHtml DOM marker contract (design.md §10)', () => {

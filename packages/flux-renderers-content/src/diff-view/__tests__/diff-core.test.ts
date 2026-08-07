@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseUnifiedDiff, parseToDiffFile } from '../model/diff-parse.js';
 import { computeInlineDiff, computeInlineTokensForLine } from '../model/diff-inline.js';
-import { computeDiffStats } from '../utils/diff-stats.js';
+import { computeDiffStats } from '../utils.js';
 
 describe('parseUnifiedDiff', () => {
   it('parses a simple unified diff', () => {

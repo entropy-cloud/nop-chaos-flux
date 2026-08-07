@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { DiffStats } from '../utils/diff-stats.js';
+import type { DiffStats } from '../utils.js';
 
 interface DiffHeaderProps {
   stats: DiffStats;

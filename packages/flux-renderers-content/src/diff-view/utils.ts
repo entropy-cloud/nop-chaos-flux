@@ -1,6 +1,29 @@
-import type { InlineToken as InlineTokenType } from '../model/diff-inline.js';
-import { escapeHtml } from '../adapters/syntax-highlight.js';
-import type { ThreeWayRowType } from '../model/diff-3way.js';
+import type { DiffFile } from './model/diff-file.js';
+import type { InlineToken as InlineTokenType } from './model/diff-inline.js';
+import { escapeHtml } from './adapters/syntax-highlight.js';
+import type { ThreeWayRowType } from './model/diff-3way.js';
+
+export interface DiffStats {
+  added: number;
+  removed: number;
+  total: number;
+}
+
+export function computeDiffStats(file: DiffFile): DiffStats {
+  let added = 0;
+  let removed = 0;
+  let total = 0;
+
+  for (const hunk of file.hunks) {
+    for (const line of hunk.lines) {
+      total++;
+      if (line.type === 'add') added++;
+      else if (line.type === 'delete') removed++;
+    }
+  }
+
+  return { added, removed, total };
+}
 
 function buildInlineHtml(tokens: InlineTokenType[]): string {
   let result = '';

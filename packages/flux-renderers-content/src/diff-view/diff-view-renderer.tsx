@@ -5,7 +5,7 @@ import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffViewSchema, DiffFileMeta } from '../schemas.js';
 import { computeDiffFile } from './model/diff-parse.js';
-import { computeDiffStats } from './utils/diff-stats.js';
+import { computeDiffStats } from './utils.js';
 import { DiffHeader } from './components/diff-header.js';
 import { DiffSplitView } from './components/diff-split-view.js';
 import { DiffUnifiedView } from './components/diff-unified-view.js';

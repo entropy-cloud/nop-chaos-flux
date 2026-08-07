@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { generateLineContentHtml } from '../utils/diff-template.js';
+import { generateLineContentHtml } from '../utils.js';
 import type { DiffLine } from '../model/diff-file.js';
 import type { InlineToken } from '../model/diff-inline.js';
 
