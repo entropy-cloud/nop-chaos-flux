@@ -1,6 +1,6 @@
 # 2 公共 API 面与依赖卫生（flux-react fork JSDoc/直接单测 + graph 死依赖移除）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: P2-backlog:public-api-deps-hygiene
 > Last Reviewed: 2026-08-08
@@ -62,63 +62,63 @@
 
 ### Phase 1 - fork 直接单测 + JSDoc（03-01）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/__tests__/use-sync-external-store-with-selector.test.tsx`、`packages/flux-react/src/use-sync-external-store-with-selector.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof：新建 `use-sync-external-store-with-selector.test.tsx`，test-first 用例——(a) selector 相等性缓存：同一 snapshot 值重复通知时 selection 结果稳定且 selector 不重复调用（spy 计数）；(b) getServerSnapshot 可选签名契约：第三参显式传 `undefined`（签名 `(() => TSnapshot) | undefined` 位置参数，不能字面省略否则 strict TS 报错）时 renderHook 正常渲染且订阅走 `getSnapshot`（spy 断言），提供真实函数时客户端渲染**不调用** getServerSnapshot（spy 零调用断言——锁定 React 客户端语义）；SSR server 快照分支不可在 happy-dom 观测，写入用例注释而非断言（与 Goal 边界一致）；(c) isEqual 自定义：默认 objectIs（引用相等）vs 自定义 `(a,b)=>a.x===b.x`（浅比较时 snapshot 变化但 selection 稳定不重渲染）；(d) 订阅生命周期：unsubscribe 清理正确、selector 抛错路径。以用例本身为契约锁定（fork 行为已存在，本批用例为锁定而非改行为）。
-- [ ] Fix：补 fork JSDoc——来源（hand-copied from npm `use-sync-external-store/with-selector`）、与 npm 签名差异（`getServerSnapshot` 可选化，React 19 原生第三参语义）、维护警示（行为变更需同步 6 处真实消费点：flux-react 同包 5 处 + flux-bundle shim bare 1 处；全仓另有 12 处 npm shim 消费点（5 包，含 nop-debugger/spreadsheet-renderers 及测试文件）不属于 fork 同步面）。
+- [x] Proof：新建 `use-sync-external-store-with-selector.test.tsx`，test-first 用例——(a) selector 相等性缓存：同一 snapshot 值重复通知时 selection 结果稳定且 selector 不重复调用（spy 计数）；(b) getServerSnapshot 可选签名契约：第三参显式传 `undefined`（签名 `(() => TSnapshot) | undefined` 位置参数，不能字面省略否则 strict TS 报错）时 renderHook 正常渲染且订阅走 `getSnapshot`（spy 断言），提供真实函数时客户端渲染**不调用** getServerSnapshot（spy 零调用断言——锁定 React 客户端语义）；SSR server 快照分支不可在 happy-dom 观测，写入用例注释而非断言（与 Goal 边界一致）；(c) isEqual 自定义：默认 objectIs（引用相等）vs 自定义 `(a,b)=>a.x===b.x`（浅比较时 snapshot 变化但 selection 稳定不重渲染）；(d) 订阅生命周期：unsubscribe 清理正确、selector 抛错路径。以用例本身为契约锁定（fork 行为已存在，本批用例为锁定而非改行为）。
+- [x] Fix：补 fork JSDoc——来源（hand-copied from npm `use-sync-external-store/with-selector`）、与 npm 签名差异（`getServerSnapshot` 可选化，React 19 原生第三参语义）、维护警示（行为变更需同步 6 处真实消费点：flux-react 同包 5 处 + flux-bundle shim bare 1 处；全仓另有 12 处 npm shim 消费点（5 包，含 nop-debugger/spreadsheet-renderers 及测试文件）不属于 fork 同步面）。
 
 Exit Criteria:
 
-- [ ] 新增单测全绿（相等性缓存/getServerSnapshot 可选签名契约/isEqual 自定义/订阅清理）；`pnpm --filter @nop-chaos/flux-react test` 全绿（含既有用例零回归）
-- [ ] fork 文件头 JSDoc 已补（含来源、签名差异说明、6 处真实消费点同步警示）
+- [x] 新增单测全绿（相等性缓存/getServerSnapshot 可选签名契约/isEqual 自定义/订阅清理）；`pnpm --filter @nop-chaos/flux-react test` 全绿（含既有用例零回归）
+- [x] fork 文件头 JSDoc 已补（含来源、签名差异说明、6 处真实消费点同步警示）
 
 ### Phase 2 - graph 死依赖移除（03-02）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-graph/package.json`、`pnpm-lock.yaml`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：`package.json:27` 删除 `"use-sync-external-store": "^1.6.0"`。
-- [ ] Fix：`pnpm install`（或 `pnpm install --lockfile-only` 按仓库惯例）同步 `pnpm-lock.yaml`，确认 lockfile 中 graph 的 importer 依赖声明消失（包条目因 zustand peer 依赖与其他声明方保留属预期，不要求全仓条目消失）。
-- [ ] Proof：`rg "use-sync-external-store" packages/flux-renderers-graph/` 零命中（package.json 与 lockfile importer 节均无）；`pnpm --filter @nop-chaos/flux-renderers-graph typecheck && build && test` 绿。
+- [x] Fix：`package.json:27` 删除 `"use-sync-external-store": "^1.6.0"`。
+- [x] Fix：`pnpm install`（或 `pnpm install --lockfile-only` 按仓库惯例）同步 `pnpm-lock.yaml`，确认 lockfile 中 graph 的 importer 依赖声明消失（包条目因 zustand peer 依赖与其他声明方保留属预期，不要求全仓条目消失）。
+- [x] Proof：`rg "use-sync-external-store" packages/flux-renderers-graph/` 零命中（package.json 与 lockfile importer 节均无）；`pnpm --filter @nop-chaos/flux-renderers-graph typecheck && build && test` 绿。
 
 Exit Criteria:
 
-- [ ] `rg "use-sync-external-store" packages/flux-renderers-graph/` 零命中；graph 包 typecheck/build/test 绿
-- [ ] `pnpm check:workspace-manifest-deps` exit 0（无新增警告）
+- [x] `rg "use-sync-external-store" packages/flux-renderers-graph/` 零命中；graph 包 typecheck/build/test 绿
+- [x] `pnpm check:workspace-manifest-deps` exit 0（无新增警告）
 
 ### Phase 3 - 「声明但未引用」反向检查裁决（03-02 可选建议）
 
-Status: planned
+Status: completed
 Targets: `scripts/check-workspace-manifest-deps.mjs`、`scripts/__tests__/check-workspace-manifest-deps.test.ts`
 
 - Item Types: `Decision | Fix`
 
-- [ ] Decision：裁决是否在 `check-workspace-manifest-deps` 增加「package.json 声明但 src 零引用」反向规则——依据：审计 §9.1 建议 + 03-02 暴露盲区；成本：单脚本规则 + 合成夹具测试；收益：死依赖可见化防回归。倾向实施（若裁决实施则继续本 Phase 两条；若裁决不实施，将理由记入 Deferred But Adjudicated 并跳过）。
-- [ ] Fix（若实施）：反向规则——对 renderer 包 dependencies 声明的非 workspace 依赖做 src 引用计数，零引用时报红；排除字段（如 peerDependencies 语义、类型引用仅 `import type` 也算引用）按仓库惯例定义。
-- [ ] Proof（若实施）：合成夹具测试——声明但零引用依赖被检出（先红）；既有 graph `use-sync-external-store` 移除后反向规则对真实仓库 exit 0。
+- [x] Decision：裁决是否在 `check-workspace-manifest-deps` 增加「package.json 声明但 src 零引用」反向规则——依据：审计 §9.1 建议 + 03-02 暴露盲区；成本：单脚本规则 + 合成夹具测试；收益：死依赖可见化防回归。倾向实施（若裁决实施则继续本 Phase 两条；若裁决不实施，将理由记入 Deferred But Adjudicated 并跳过）。
+- [x] Fix（若实施）：反向规则——对 renderer 包 dependencies 声明的非 workspace 依赖做 src 引用计数，零引用时报红；排除字段（如 peerDependencies 语义、类型引用仅 `import type` 也算引用）按仓库惯例定义。
+- [x] Proof（若实施）：合成夹具测试——声明但零引用依赖被检出（先红）；既有 graph `use-sync-external-store` 移除后反向规则对真实仓库 exit 0。
 
 Exit Criteria:
 
-- [ ] 裁决已记录（实施/不实施 + 理由）；若实施：反向规则测试先红后绿 + `pnpm check:workspace-manifest-deps` exit 0；若不实施：Deferred But Adjudicated 登记
-- [ ] `pnpm test:scripts` 全绿（若实施）；`pnpm check` 聚合 exit 0
+- [x] 裁决已记录（实施/不实施 + 理由）；若实施：反向规则测试先红后绿 + `pnpm check:workspace-manifest-deps` exit 0；若不实施：Deferred But Adjudicated 登记
+- [x] `pnpm test:scripts` 全绿（若实施）；`pnpm check` 聚合 exit 0
 
 ### Phase 4 - 收口
 
-Status: planned
+Status: completed
 Targets: `docs/backlog/component-audit-roadmap.md`、`docs/logs/2026/08-08.md`
 
 - Item Types: `Follow-up`
 
-- [ ] roadmap Follow-up Backlog 两条（03-01/03-02）勾选并注明本 plan 引用；daily log 登记执行记录与反向检查裁决。
+- [x] roadmap Follow-up Backlog 两条（03-01/03-02）勾选并注明本 plan 引用；daily log 登记执行记录与反向检查裁决。
 
 Exit Criteria:
 
-- [ ] roadmap 两条 `[ ]`→`[x]`（附 plan 引用）；daily log 收口记录已写
+- [x] roadmap 两条 `[ ]`→`[x]`（附 plan 引用）；daily log 收口记录已写
 
 ## Draft Review Record
 
@@ -136,40 +136,41 @@ Exit Criteria:
 
 > 关闭条件：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 03-01 fork JSDoc + 直接单测（四组语义锁定）已落地
-- [ ] 03-02 graph 死依赖已移除 + lockfile 同步（rg 零命中）
-- [ ] 反向检查裁决已记录并落地（或 Deferred But Adjudicated 登记理由）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 缺陷
-- [ ] roadmap Follow-up Backlog 两条已勾选并注明 plan 引用；daily log 已登记
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 03-01 fork JSDoc + 直接单测（四组语义锁定）已落地
+- [x] 03-02 graph 死依赖已移除 + lockfile 同步（rg 零命中）
+- [x] 反向检查裁决已记录并落地（或 Deferred But Adjudicated 登记理由）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 缺陷
+- [x] roadmap Follow-up Backlog 两条已勾选并注明 plan 引用；daily log 已登记
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
-### 「声明但未引用」反向检查（若 Phase 3 裁决不实施）
+### 「声明但未引用」反向检查（Phase 3 裁决）
 
 - Classification: `optimization candidate`
-- Why Not Blocking Closure: 03-02 修复本体（死依赖移除）已落地；反向检查是防回归增强，不实施不构成当前 supported baseline 缺陷。
+- 裁决结果：**实施**（2026-08-08）——`check-workspace-manifest-deps` 新增反向规则：`dependencies` 声明的非 workspace 依赖做全包 src 引用计数（静态 `from`、动态 `import()`、副作用 `import`、`require()`、`vi.mock()`/`jest.mock()` 均计引用；subpath 规约到顶层包名；`import type` 计引用），零引用报红；`peerDependencies`（host 提供）与 `devDependencies`（测试/构建配置面）排除。作用域**全包**而非仅 renderer 包：全仓普查显示零引用依赖全部落在 renderer 家族（graph/content/word-editor-renderers），renderer-only carve-out 无收益反增复杂度。
+- 裁决连带发现并修复：规则全仓试跑暴露另外 2 条同类死依赖（反向检查的目的即是让它们可见）——`flux-renderers-content` 的 `@tanstack/react-virtual`（`diff-virtual-list.tsx` 于 8d723dd2 死模块清理时删除，package.json 声明残留）与 `word-editor-renderers` 的 `@hufe921/canvas-editor`（真实消费者为 word-editor-core 自身声明；renderers src 零导入，`types/hufe921__canvas-editor.d.ts` shim 目录已不存在）。两条均已删除并同步 pnpm-lock.yaml，content/word-editor-renderers typecheck+build+test 全绿。
+- Why Not Blocking Closure: 不适用（已实施，非 deferred）。
 - Successor Required: `no`
-- Successor Path: 无（不实施时审计 §9.1 建议视为已裁决不采纳）
+- Successor Path: 无
 
 ## Non-Blocking Follow-ups
 
-- 全仓其他包的同类死依赖排查——反向检查（若实施）落地后由门禁统一覆盖，无需人工逐包。
+- 全仓其他包的同类死依赖排查——反向检查落地后由门禁统一覆盖（实施后即生效：规则上线时全仓已清零，后续死依赖引入即报红），无需人工逐包。
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 两条 in-scope P2（03-01 fork JSDoc + 直接单测、03-02 graph 死依赖移除）已收口；Phase 3 反向检查裁决为实施并落地（连带清除 content `@tanstack/react-virtual`、word-editor-renderers `@hufe921/canvas-editor` 两条同类残留死依赖）；roadmap 两条已勾选、daily log 已登记，无被静默降级的 in-scope 项；全部验证命令（focused 单测 / test:scripts / pnpm check / typecheck / build / lint / test）独立复跑通过——closure audit 通过，plan 可关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 closure auditor（fresh session，无执行上下文）
+- Evidence: 全量 live-repo 复核（2026-08-08，auditor 独立复跑命令零缓存）——①逐条核对 4 Phase 全部 item/Exit Criteria `[x]`、Phase Status 全 `completed`；②代码核对：`use-sync-external-store-with-selector.test.tsx` 7 条用例覆盖相等性缓存 spy 计数/getServerSnapshot 可选契约（显式 undefined + 客户端零调用）/isEqual 默认 vs 自定义/订阅清理 + selector 抛错；fork JSDoc 头含来源、React 19 第三参语义、6 处消费点警示（rg 复核恰 5 同包 + 1 flux-bundle，npm shim 恰 12 文件 5 包）；graph/package.json 与 lockfile importer 零 `use-sync-external-store`；`check-workspace-manifest-deps.mjs:240-266` 反向规则（dependencies 零 src 引用报红、peer/dev 排除、`import type`/subpath/vi.mock 计引用）+ 夹具测试先红后绿（`dead-dep-fixture`）；content/word-editor-renderers 两条连带死依赖删除后 typecheck/build/test 全绿、全仓 gate exit 0；③命令复跑：`pnpm test:scripts` 6 files/15 tests 全绿；`pnpm check:workspace-manifest-deps` exit 0；`pnpm check` exit 0；`pnpm typecheck`/`build`/`lint` 32/32、`pnpm test` 59/59 全 exit 0；focused `use-sync-external-store-with-selector.test.tsx` 7/7；④roadmap 03-01/03-02 `[x]` 附 plan 引用；daily log `docs/logs/2026/08-08.md` 与实际执行一致；无 `> Source Audits:` front-matter（roadmap-sourced）故无审计状态翻转；git status 恰为预期 10 modified + 1 untracked，夹具零残留；deferred 节诚实记录 Phase 3 裁决为实施（非假 deferral）。审计结论 `approved`（1 Minor：Closure Gates 机械勾选，已由本 finalization 完成）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
-- <<或者明确写 no remaining plan-owned work>>
+- no remaining plan-owned work
