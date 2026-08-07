@@ -1,6 +1,6 @@
 # 2 dingtalk-flow-demo 遗留原型 demo 页统一/废弃决策（含 legacy 常量清理）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-07
 > Source: `docs/plans/2026-08-06-0814-dingtalk-visual-alignment-plan.md` Deferred But Adjudicated「dingtalk-flow-demo 条件插入布局缺陷」（`out-of-scope improvement`，Successor Required: yes，Successor Path: demo 页统一/废弃决策（含 legacy 常量清理）另立 plan）
 > Related: `docs/plans/2026-08-06-0814-dingtalk-visual-alignment-plan.md`（completed）、`docs/plans/453-dingflow-single-tree-layout-unification-plan.md`（completed，统一 tree-mode 布局算法）、`docs/architecture/flow-designer/tree-mode.md`
@@ -60,57 +60,57 @@
 
 ### Phase 1 - 裁决
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/pages/ding-talk-flow-demo.tsx`、`apps/playground/src/pages/dingtalk-flow/`、`apps/playground/src/route-model.ts`、`apps/playground/src/App.tsx`
 
 - Item Types: `Decision`
 
-- [ ] (Decision) 裁决「统一 vs 废弃」：对照 0814 plan 意图（用户要求的目标形态已在 flow-designer 实现；demo 为 legacy 参考原型）与 live 证据（统一形态 e2e 6 例契约已锁定、legacy 有 insertBranch 已知缺陷、常量已被统一算法取代）。倾向：**废弃**（统一形态已完整承载钉钉视觉，legacy 无独立演示价值；保留会造成双实现歧义）。若出现「flow-designer 形态未覆盖某 legacy 演示能力」的 live 证据，则改判统一（路由复用）并在裁决记录中说明。
-- [ ] (Decision) 记录裁决理由到 daily log：包含「两套实现并存 vs 单一实现」的维护成本对比、legacy 已知缺陷、e2e 契约覆盖现状。
+- [x] (Decision) 裁决「统一 vs 废弃」：对照 0814 plan 意图（用户要求的目标形态已在 flow-designer 实现；demo 为 legacy 参考原型）与 live 证据（统一形态 e2e 6 例契约已锁定、legacy 有 insertBranch 已知缺陷、常量已被统一算法取代）。倾向：**废弃**（统一形态已完整承载钉钉视觉，legacy 无独立演示价值；保留会造成双实现歧义）。若出现「flow-designer 形态未覆盖某 legacy 演示能力」的 live 证据，则改判统一（路由复用）并在裁决记录中说明。
+- [x] (Decision) 记录裁决理由到 daily log：包含「两套实现并存 vs 单一实现」的维护成本对比、legacy 已知缺陷、e2e 契约覆盖现状。
 
 Exit Criteria:
 
 > 只写本 Phase 交付的可观测结果 + 保证后续 Phase 能继续的局部检查。
 
-- [ ] 裁决结论落定（daily log 记录：`废弃` 或 `统一`），且裁决依据（live 核对结论）可复现
-- [ ] 裁决结论明确决定 Phase 2 的落地路径（删除 vs 路由复用），无中间态
+- [x] 裁决结论落定（daily log 记录：`废弃` 或 `统一`），且裁决依据（live 核对结论）可复现
+- [x] 裁决结论明确决定 Phase 2 的落地路径（删除 vs 路由复用），无中间态
 
 ### Phase 2 - 落地（按裁决执行）
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/route-model.ts`、`apps/playground/src/App.tsx`、`apps/playground/src/pages/ding-talk-flow-demo.tsx`、`apps/playground/src/pages/dingtalk-flow/`、`apps/playground/src/pages/ding-talk-flow-demo.test.tsx`、`apps/playground/src/pages/index.ts`、`apps/playground/src/pages/types.ts`、`apps/playground/src/pages/home-page.tsx`、`apps/playground/src/app.test.tsx`、`apps/playground/src/app-diagnostics-route.test.tsx`
 
 - Item Types: `Fix`
 
-- [ ] (Fix) 按裁决执行：
+- [x] (Fix) 按裁决执行：
   - 若**废弃**：删除 `ding-talk-flow-demo.tsx` + `dingtalk-flow/` 6 文件 + `ding-talk-flow-demo.test.tsx`；`route-model.ts` 删除 `dingtalk-flow-demo` 条目；`App.tsx` 删除 import 与 case 分支；`pages/index.ts` 删除导出；`pages/types.ts` 删除 `PageId` 成员；`home-page.tsx` 删除卡片；2 个 `vi.mock` 测试文件同步移除对应 mock 与用例。
   - 若**统一**：`dingtalk-flow-demo` 路由改为复用 flow-designer 钉钉示例入口（或删除路由由 `/flow-designer` 承接），同样删除 legacy 文件与测试。
-- [ ] (Fix) 清理 legacy 常量：删除 `BRANCH_SHORT_LEG`/`MERGE_SHORT_LEG` 定义与消费（随文件删除自然清零；若裁决保留任何文件则显式清理常量引用）。
-- [ ] (Proof) `rg -n "dingtalk-flow-demo|ding-talk-flow-demo|BRANCH_SHORT_LEG|MERGE_SHORT_LEG" apps/ tests/` 零残留（白名单外），证明无悬空引用。
+- [x] (Fix) 清理 legacy 常量：删除 `BRANCH_SHORT_LEG`/`MERGE_SHORT_LEG` 定义与消费（随文件删除自然清零；若裁决保留任何文件则显式清理常量引用）。
+- [x] (Proof) `rg -n "dingtalk-flow-demo|ding-talk-flow-demo|BRANCH_SHORT_LEG|MERGE_SHORT_LEG" apps/ tests/` 零残留（白名单外），证明无悬空引用。
 
 Exit Criteria:
 
-- [ ] 路由/页面/文件/常量按裁决清理完毕；`rg` 零残留（白名单外）
-- [ ] playground 局部 typecheck 通过（`pnpm --filter playground typecheck` 或等价局部验证），无断链 import
+- [x] 路由/页面/文件/常量按裁决清理完毕；`rg` 零残留（白名单外）
+- [x] playground 局部 typecheck 通过（`pnpm --filter playground typecheck` 或等价局部验证），无断链 import
 
 ### Phase 3 - 测试与宿主同步
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/playground-entry-pages.spec.ts`、`tests/e2e/exploratory/domain-page-interactions.spec.ts`、`tests/e2e/exploratory/domain-page-zero-error.spec.ts`、`tests/e2e/exploratory/subagent-a-independent-review.spec.ts`、`docs/logs/2026/08-07.md`
 
 - Item Types: `Fix | Proof`
 
-- [ ] (Fix) 同步 4 处 e2e 引用：`playground-entry-pages.spec.ts:21`（`dingtalk-flow-demo` 路由断言）、`domain-page-interactions.spec.ts:25,166-168`、`domain-page-zero-error.spec.ts:14`、`subagent-a-independent-review.spec.ts:159`——按裁决改为指向 `/flow-designer` 钉钉示例（若废弃则删除该路由条目；若统一则更新断言目标）。
-- [ ] (Proof) 复跑受影响 e2e：`npx playwright test playground-entry-pages.spec.ts` + `domain-page-interactions.spec.ts` + `domain-page-zero-error.spec.ts` + `subagent-a-independent-review.spec.ts`（或按 AGENTS.md 测试执行策略跑相关 spec），全绿；`flow-designer-dingtalk-visual.spec.ts` 保持 6/6。
-- [ ] (Proof) `pnpm --filter playground test` 全绿（含更新后的 `app.test.tsx`/`app-diagnostics-route.test.tsx`/`ding-talk-flow-demo.test.tsx`（删除或改向））。
-- [ ] (Follow-up) daily log 记录裁决 + 落地 + 验证；0814 plan Deferred 条目可标记已收口（按 Rule 21 不回写历史 plan 文本，仅在 daily log 记录）。
+- [x] (Fix) 同步 4 处 e2e 引用：`playground-entry-pages.spec.ts:21`（`dingtalk-flow-demo` 路由断言）、`domain-page-interactions.spec.ts:25,166-168`、`domain-page-zero-error.spec.ts:14`、`subagent-a-independent-review.spec.ts:159`——按裁决改为指向 `/flow-designer` 钉钉示例（若废弃则删除该路由条目；若统一则更新断言目标）。
+- [x] (Proof) 复跑受影响 e2e：`npx playwright test playground-entry-pages.spec.ts` + `domain-page-interactions.spec.ts` + `domain-page-zero-error.spec.ts` + `subagent-a-independent-review.spec.ts`（或按 AGENTS.md 测试执行策略跑相关 spec），全绿；`flow-designer-dingtalk-visual.spec.ts` 保持 6/6。
+- [x] (Proof) `pnpm --filter playground test` 全绿（含更新后的 `app.test.tsx`/`app-diagnostics-route.test.tsx`/`ding-talk-flow-demo.test.tsx`（删除或改向））。
+- [x] (Follow-up) daily log 记录裁决 + 落地 + 验证；0814 plan Deferred 条目可标记已收口（按 Rule 21 不回写历史 plan 文本，仅在 daily log 记录）。
 
 Exit Criteria:
 
-- [ ] 4 处 e2e 引用已同步且相关 spec 全绿（含 flow-designer-dingtalk-visual 回归）
-- [ ] `rg "dingtalk-flow-demo" tests/ apps/` 零残留（白名单外）
-- [ ] `pnpm --filter playground test` 全绿
-- [ ] daily log 有裁决与收口记录
+- [x] 4 处 e2e 引用已同步且相关 spec 全绿（含 flow-designer-dingtalk-visual 回归）
+- [x] `rg "dingtalk-flow-demo" tests/ apps/` 零残留（白名单外）
+- [x] `pnpm --filter playground test` 全绿
+- [x] daily log 有裁决与收口记录
 
 ## Draft Review Record
 
@@ -125,16 +125,16 @@ Exit Criteria:
 
 > 关闭条件：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] `/dingtalk-flow-demo` 遗留原型已按裁决落地（废弃下线 或 统一复用），无两套实现并存
-- [ ] legacy 常量（BRANCH_SHORT_LEG/MERGE_SHORT_LEG 等）已清理，`rg` 零残留
-- [ ] 4 处 e2e 引用已同步，受影响 e2e 全绿；flow-designer-dingtalk-visual 契约无回归
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 项（裁决已明确，无中间态）
-- [ ] 受影响的 owner docs 已同步（daily log；0814 plan 历史文本按 Rule 21 不回写）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `/dingtalk-flow-demo` 遗留原型已按裁决落地（废弃下线 或 统一复用），无两套实现并存
+- [x] legacy 常量（BRANCH_SHORT_LEG/MERGE_SHORT_LEG 等）已清理，`rg` 零残留
+- [x] 4 处 e2e 引用已同步，受影响 e2e 全绿；flow-designer-dingtalk-visual 契约无回归
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 项（裁决已明确，无中间态）
+- [x] 受影响的 owner docs 已同步（daily log；0814 plan 历史文本按 Rule 21 不回写）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -151,13 +151,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成或关闭时填写）
+Status Note: 2026-08-07 收口——裁决「废弃」落地完成：`/dingtalk-flow-demo` legacy 原型（`ding-talk-flow-demo.tsx` + `dingtalk-flow/` 6 文件 + 单测）全数删除，路由条目（live 位置 `domain-route-entries.ts`，plan 基线 271 行为 1053-1 拆分前旧行号）与 `App.tsx` case/import、`pages/index.ts` 导出、`pages/types.ts` PageId、`home-page.tsx` 卡片、2 个 vi.mock 测试全部清理；`BRANCH_SHORT_LEG`/`MERGE_SHORT_LEG` 常量随文件删除清零；4 处 e2e 引用同步（entry-pages 62/62、zero-error + interactions + subagent-a 70/17-skipped、flow-designer-dingtalk-visual 6/6 无回归）；`rg "dingtalk-flow-demo|ding-talk-flow-demo|BRANCH_SHORT_LEG|MERGE_SHORT_LEG" apps/ tests/` 零残留；`pnpm --filter @nop-chaos/flux-playground typecheck` + test（21 files/142 passed）绿；全量 `pnpm typecheck`/`pnpm build`/`pnpm lint`/`pnpm test`（32/32/32/59-task）绿、`pnpm check` exit 0（仅既有登记豁免 en-US/zh-CN）。0814 plan Deferred 项（Successor Required: yes）已收口（Rule 21 不回写历史 plan 文本，记录于 daily log 与本 Closure 节）；work item 未登记于 `docs/backlog/`（无 ❌ 行），roadmap 无变更。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立审计者或独立子 agent）
-- Evidence: （task id / daily log link / findings 摘要）
+- Auditor / Agent: 独立子 agent（fresh session）`ses_024ce2ef7ffe3ZxmtdU15q7FMB`
+- Evidence: verdict `approved`（0 Blocker / 0 Major；1 Minor——Phase 2 Targets 中 `route-model.ts` 行号 vs live `domain-route-entries.ts`，已在 daily log 说明，无歧义）。独立审计逐项回看 live repo（未采信 [x]）：7 个 legacy 文件 git 删除实证 + `ls` 缺席；route-model.ts:271 与 live 拆分后位置（domain-route-entries.ts）差异已在 daily log 诚实记录；entry-pages `expect(assertionIds).toEqual(routeIds)` 覆盖不变式经 live 双源核对成立；flow-designer 为唯一实现（dingtalk-visual 6/6 绿）；0814 plan 文本未动（Rule 21）；diff 23 files +44/−1051 与摘要一致；验证输出（typecheck/build/lint 32/32、playground 142 tests、e2e 62+70/17、pnpm check exit 0）与 daily log 相互印证。
 
 Follow-up:
 
-- （只记录 non-blocking follow-up；confirmed live defect 不得出现在这里）
+- 无 remaining plan-owned work（non-blocking follow-ups 均已按语境处理：skill 文档导航表已更新标注；`docs/analysis/.../04-e2e-domain-pages.md` 由 spec afterAll 重生成零残留；历史 logs/plans/archive 引用属白名单，不回写）。

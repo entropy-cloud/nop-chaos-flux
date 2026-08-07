@@ -139,17 +139,16 @@ expect(debuggerCheck.failures).toHaveLength(0);
 
 ### Domain 页面（9 个）
 
-| Hash 路由              | 页面                | 关键交互                                |
-| ---------------------- | ------------------- | --------------------------------------- |
-| `#/flux-basic`         | Renderer Playground | 表单填写、提交、校验、对话框、API、表格 |
-| `#/flow-designer`      | Flow Designer       | 画布拖拽、节点编辑、连线、缩放          |
-| `#/dingtalk-flow-demo` | 钉钉审批流          | 静态流程展示、画布交互                  |
-| `#/report-designer`    | Report Designer     | 电子表格编辑、单元格操作                |
-| `#/debugger-lab`       | Debugger Lab        | 调试器 API 按钮触发                     |
-| `#/condition-builder`  | 条件构建器          | 条件组合、嵌套、删除                    |
-| `#/code-editor`        | Code Editor         | 代码编辑、自动补全                      |
-| `#/word-editor`        | Word Editor         | 文档编辑、保存、模板                    |
-| `#/performance-table`  | Performance Table   | 大数据表格渲染、翻页、排序              |
+| Hash 路由             | 页面                | 关键交互                                                                                                                |
+| --------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `#/flux-basic`        | Renderer Playground | 表单填写、提交、校验、对话框、API、表格                                                                                 |
+| `#/flow-designer`     | Flow Designer       | 画布拖拽、节点编辑、连线、缩放（含「钉钉审批流」示例 tab，legacy `/dingtalk-flow-demo` 原型页已于 2026-08-07 废弃下线） |
+| `#/report-designer`   | Report Designer     | 电子表格编辑、单元格操作                                                                                                |
+| `#/debugger-lab`      | Debugger Lab        | 调试器 API 按钮触发                                                                                                     |
+| `#/condition-builder` | 条件构建器          | 条件组合、嵌套、删除                                                                                                    |
+| `#/code-editor`       | Code Editor         | 代码编辑、自动补全                                                                                                      |
+| `#/word-editor`       | Word Editor         | 文档编辑、保存、模板                                                                                                    |
+| `#/performance-table` | Performance Table   | 大数据表格渲染、翻页、排序                                                                                              |
 
 ### Component Lab 页面（43+ renderer）
 
