@@ -337,4 +337,122 @@ describe('scada-editor-canvas connection (E7.1, design-connection.md)', () => {
     expect(after.y).toBeCloseTo(-0.7);
     void before;
   });
+
+  it('M-1: pointer drag on junction creates connection via production state machine wiring', async () => {
+    const SchemaRenderer = createSchemaRenderer(industrialEditorRendererDefinitions);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://editor-conn/pointer-drag"
+        schema={{ type: 'scada-editor-canvas', config: connectionConfig() as never }}
+        env={createDefaultEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const canvas = container.querySelector('[data-slot="scada-editor-canvas"]') as HTMLElement;
+
+    // (a) pointerdown within junction-1 body (50,50 ∈ [0,0,100,100]) → enter endpoint drag mode
+    canvas.dispatchEvent(new PointerEvent('pointerdown', { clientX: 50, clientY: 50, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+    // (b) pointermove to device-1 right-middle anchor world (380,130) within snap threshold → snap candidate
+    canvas.dispatchEvent(new PointerEvent('pointermove', { clientX: 380, clientY: 130, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+    // (c) pointerup → commit
+    canvas.dispatchEvent(new PointerEvent('pointerup', { clientX: 380, clientY: 130, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+
+    const conns = handle.connection.listConnections();
+    expect(conns).toHaveLength(1);
+    expect(conns[0].connection.target).toBe('device-1');
+    expect(conns[0].junctionId).toBe('junction-1');
+    // m-2: undo stack top operationKind is 'connection-update' (not 'update-symbol')
+    expect(handle.undoRedo.getStackState().topOperationKind).toBe('connection-update');
+    expect(handle.undoRedo.getStackState().canUndo).toBe(true);
+  });
+
+  it('M-1: pointer drag with no snap target is a noop (no connection written)', async () => {
+    const SchemaRenderer = createSchemaRenderer(industrialEditorRendererDefinitions);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://editor-conn/pointer-noop"
+        schema={{ type: 'scada-editor-canvas', config: connectionConfig() as never }}
+        env={createDefaultEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const canvas = container.querySelector('[data-slot="scada-editor-canvas"]') as HTMLElement;
+
+    canvas.dispatchEvent(new PointerEvent('pointerdown', { clientX: 50, clientY: 50, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+    // pointermove far from any candidate anchor → no snap
+    canvas.dispatchEvent(new PointerEvent('pointermove', { clientX: 5000, clientY: 5000, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+    canvas.dispatchEvent(new PointerEvent('pointerup', { clientX: 5000, clientY: 5000, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+
+    expect(handle.connection.listConnections()).toHaveLength(0);
+    expect(handle.undoRedo.getStackState().canUndo).toBe(false);
+  });
+
+  it('M-1: pointerdown not on a junction does not start a connection drag', async () => {
+    const SchemaRenderer = createSchemaRenderer(industrialEditorRendererDefinitions);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://editor-conn/pointer-miss"
+        schema={{ type: 'scada-editor-canvas', config: connectionConfig() as never }}
+        env={createDefaultEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const canvas = container.querySelector('[data-slot="scada-editor-canvas"]') as HTMLElement;
+
+    // pointerdown on empty area (500,500 — not within any junction/device bounds)
+    canvas.dispatchEvent(new PointerEvent('pointerdown', { clientX: 500, clientY: 500, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+    canvas.dispatchEvent(new PointerEvent('pointermove', { clientX: 380, clientY: 130, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+    canvas.dispatchEvent(new PointerEvent('pointerup', { clientX: 380, clientY: 130, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+
+    expect(handle.connection.listConnections()).toHaveLength(0);
+  });
+
+  it('M-1: pointer events ignored in preview mode (edit-mode guard)', async () => {
+    const SchemaRenderer = createSchemaRenderer(industrialEditorRendererDefinitions);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://editor-conn/preview-guard"
+        schema={{ type: 'scada-editor-canvas', config: connectionConfig() as never }}
+        env={createDefaultEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    handle.switchMode('preview');
+    const canvas = container.querySelector('[data-slot="scada-editor-canvas"]') as HTMLElement;
+
+    canvas.dispatchEvent(new PointerEvent('pointerdown', { clientX: 50, clientY: 50, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+    canvas.dispatchEvent(new PointerEvent('pointermove', { clientX: 380, clientY: 130, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+    canvas.dispatchEvent(new PointerEvent('pointerup', { clientX: 380, clientY: 130, bubbles: true, pointerId: 1, pointerType: 'mouse' }));
+
+    expect(handle.connection.listConnections()).toHaveLength(0);
+  });
+
+  it('m-2: programmatic connect pushes connection-update operationKind', async () => {
+    const SchemaRenderer = createSchemaRenderer(industrialEditorRendererDefinitions);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://editor-conn/opkind"
+        schema={{ type: 'scada-editor-canvas', config: connectionConfig() as never }}
+        env={createDefaultEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    handle.connection.connect({
+      junctionId: 'junction-1',
+      connectionId: 'c-opkind',
+      targetNodeId: 'device-1',
+      targetAnchor: { x: 1, y: 0.5 },
+    });
+    expect(handle.undoRedo.getStackState().topOperationKind).toBe('connection-update');
+  });
 });

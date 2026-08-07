@@ -57,7 +57,7 @@ describe('scada-editor-canvas operations (add/update/remove via test handle)', (
     const { container } = renderEditor('add');
     const cid = await waitForReadyAndCid(container);
     const handle = readScadaEditorTestHandle(cid)!;
-    expect(handle.session.workingConfig.symbols).toHaveLength(1);
+    expect(handle.session.workingConfig.symbols).toHaveLength(2);
     // Simulate palette add via test handle load (inspector/palette built-in add uses runtime.addWorkingSymbol).
     handle.load({
       version: 1,
@@ -67,7 +67,7 @@ describe('scada-editor-canvas operations (add/update/remove via test handle)', (
         { id: 'added-1', type: 'scada-ellipse', x: 50, y: 50, width: 40, height: 40 },
       ],
     });
-    expect(handle.session.workingConfig.symbols).toHaveLength(2);
+    expect(handle.session.workingConfig.symbols).toHaveLength(3);
   });
 
   it('clearSelection clears selection', async () => {

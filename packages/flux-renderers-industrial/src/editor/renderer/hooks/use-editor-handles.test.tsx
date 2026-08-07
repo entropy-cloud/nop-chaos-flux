@@ -315,9 +315,18 @@ describe('useEditorHandles', () => {
       grouped = ids;
     };
     render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
-    const result = registry.getCapabilities('e')!.invoke('group', { nodeIds: ['a', 'b'] }, {} as never) as { ok: boolean };
+    const result = registry.getCapabilities('e')!.invoke('group', { nodeIds: ['editor-rect', 'editor-rect-2'] }, {} as never) as { ok: boolean };
     expect(result.ok).toBe(true);
-    expect(grouped).toEqual(['a', 'b']);
+    expect(grouped).toEqual(['editor-rect', 'editor-rect-2']);
+  });
+
+  it('m-3: group rejects nonexistent nodeIds with symbol-not-found', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('group', { nodeIds: ['editor-rect', 'nope'] }, {} as never) as { ok: boolean; error: Error };
+    expect(result.ok).toBe(false);
+    expect(result.error.message).toBe('symbol-not-found');
   });
 
   it('ungroup rejects missing groupId', () => {

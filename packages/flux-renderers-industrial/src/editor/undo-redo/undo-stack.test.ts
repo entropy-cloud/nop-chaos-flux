@@ -17,6 +17,12 @@ describe('UndoStack push / canUndo / canRedo / depth', () => {
     expect(stack.undoStackDepth).toBe(1);
   });
 
+  it('R4: stack entry holds only forward+inverse+operationKind+timestamp (no prevSnapshot field)', () => {
+    const e = entry('add-symbol');
+    expect(Object.keys(e).sort()).toEqual(['forward', 'inverse', 'operationKind', 'timestamp']);
+    expect((e as unknown as Record<string, unknown>).prevSnapshot).toBeUndefined();
+  });
+
   it('push truncates redo stack (U6: new op breaks redo chain)', () => {
     const stack = new UndoStack();
     stack.push(entry('add-symbol', 1));

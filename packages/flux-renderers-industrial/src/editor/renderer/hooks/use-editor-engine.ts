@@ -24,6 +24,8 @@ import {
   programmaticDisconnect,
   recomputeJunctionAfterMove,
 } from '../../connection/connection-adapter.js';
+import { ConnectionDragController } from '../../connection/connection-drag-controller.js';
+import { ConnectionOverlayRenderer } from '../../connection/connection-overlay-renderer.js';
 import { UndoRedoAdapter } from '../../undo-redo/undo-redo-adapter.js';
 
 export interface UseEditorEngineArgs {
@@ -103,6 +105,8 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
   const observerRef = useRef<ResizeObserver | undefined>(undefined);
   const rafIdRef = useRef(0);
   const detachAdapterRef = useRef<(() => void) | undefined>(undefined);
+  /** 连线拖拽激活标记（端点拖动模式时抑制 transform 写回，design-connection.md §4.2 关键约束 1 互斥）。 */
+  const connectionDragActiveRef = useRef(false);
 
   const cancelPendingResize = useCallback(() => {
     if (rafIdRef.current !== 0) {
@@ -165,6 +169,8 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       notifySession();
     };
     const handleGeometryChange = (nodeId: string, patch: Partial<ScadaSymbolNode>) => {
+      // 连线端点拖动模式启用时 Editor transform 不写回（design-connection.md §4.2 关键约束 1 互斥）。
+      if (connectionDragActiveRef.current) return;
       // transform 事务语义（design-undo-redo.md §4.2）：适配层 editor.move/scale/rotate/skew 每帧只更新 working copy（不入栈），
       // 防逐帧入栈爆炸（U2）。undo 入栈由事务终止（pointerup → onTransformEnd → commitTransaction）触发，一拖拽 = 一 diff。
       applyPatchToWorkingNode(session, nodeId, patch);
@@ -213,6 +219,25 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       }
       // 入栈（update-symbol；property-edit 经 tryCoalesce 合并连续同字段编辑，design-undo-redo.md §4.4）。
       undoRedo.pushOperation('update-symbol', prevSnapshot, session.workingConfig);
+      syncWorkingCopy();
+      notifySession();
+    };
+
+    /**
+     * 写入 pipe-junction custom.connections（m-2 修正：operationKind='connection-update'，
+     * design-undo-redo.md §4.2 事务边界表）。pointer 驱动 + 测试句柄程序化 connect 共用此路径。
+     */
+    const writeConnection = (
+      junctionId: string,
+      connections: import('../../connection/connection-adapter.js').ConnectionWriteResult['connections'],
+    ) => {
+      const junctionNode = findNodeInWorking(session.workingConfig.symbols, junctionId);
+      if (!junctionNode) return;
+      const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
+      applyPatchToWorkingNode(session, junctionId, {
+        custom: { ...junctionNode.custom, connections },
+      });
+      undoRedo.pushOperation('connection-update', prevSnapshot, session.workingConfig);
       syncWorkingCopy();
       notifySession();
     };
@@ -339,6 +364,48 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       }
     };
 
+    // 连线拖拽控制器 + overlay 渲染器（E8 M-1 修正：接通连线三段式 pointer 交互状态机到生产路径，
+    // design-connection.md §4.2）。控制器驱动纯逻辑状态机（begin/update/commit）+ overlay 投影，
+    // DOM pointer 事件经此入口。提交经 onCommit 写 working copy + undo 栈（operationKind='connection-update'，m-2 修正）。
+    const overlayRenderer = new ConnectionOverlayRenderer(engine);
+    const connectionController = new ConnectionDragController(
+      {
+        getSymbols: () => session.workingConfig.symbols,
+        findNode: (id) => findNodeInWorking(session.workingConfig.symbols, id),
+        viewportToWorld: (p) => engine.getWorldPoint(p),
+      },
+      {
+        onOverlayUpdate: (state) => overlayRenderer.update(state),
+        onCommit: (result) => {
+          writeConnection(result.junctionId, result.connections);
+        },
+      },
+    );
+    const toViewportPoint = (e: PointerEvent) => {
+      const rect = container.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    };
+    const onConnectionPointerDown = (e: PointerEvent) => {
+      if (session.mode !== 'edit') return;
+      const junction = connectionController.hitTestJunction(toViewportPoint(e));
+      if (!junction) return;
+      connectionDragActiveRef.current = true;
+      connectionController.beginDrag(junction.id);
+      e.preventDefault();
+    };
+    const onConnectionPointerMove = (e: PointerEvent) => {
+      if (!connectionDragActiveRef.current) return;
+      connectionController.moveDrag(toViewportPoint(e));
+    };
+    const onConnectionPointerUp = () => {
+      if (!connectionDragActiveRef.current) return;
+      connectionDragActiveRef.current = false;
+      connectionController.endDrag();
+    };
+    container.addEventListener('pointerdown', onConnectionPointerDown);
+    container.addEventListener('pointermove', onConnectionPointerMove);
+    container.addEventListener('pointerup', onConnectionPointerUp);
+
     const next: EditorEngineRuntime = {
       engine,
       session,
@@ -376,14 +443,15 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
             junction: { x: junctionNode.x ?? 0, y: junctionNode.y ?? 0, width: junctionNode.width ?? 0, height: junctionNode.height ?? 0 },
             targetDevice: { x: targetNode.x ?? 0, y: targetNode.y ?? 0, width: targetNode.width ?? 0, height: targetNode.height ?? 0 },
           });
-          updateWorkingNode(connectArgs.junctionId, { custom: { ...junctionNode.custom, connections: result.connections } });
+          // m-2 修正：连线写入经 writeConnection 走 'connection-update' operationKind（design-undo-redo.md §4.2）。
+          writeConnection(connectArgs.junctionId, result.connections);
         },
         disconnect(disconnectArgs) {
           const junctionNode = findNodeInWorking(session.workingConfig.symbols, disconnectArgs.junctionId);
           if (!junctionNode) return;
           const result = programmaticDisconnect({ junctionNode, connectionId: disconnectArgs.connectionId });
           if (!result) return;
-          updateWorkingNode(disconnectArgs.junctionId, { custom: { ...junctionNode.custom, connections: result.connections } });
+          writeConnection(disconnectArgs.junctionId, result.connections);
         },
         listConnections() {
           return listAllConnections({ symbols: session.workingConfig.symbols });
@@ -465,6 +533,11 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     latest.current.onReady?.();
 
     return () => {
+      container.removeEventListener('pointerdown', onConnectionPointerDown);
+      container.removeEventListener('pointermove', onConnectionPointerMove);
+      container.removeEventListener('pointerup', onConnectionPointerUp);
+      connectionController.cancel();
+      overlayRenderer.clear();
       releaseRuntime();
     };
   }, [containerRef, cancelPendingResize, releaseRuntime]);

@@ -163,7 +163,7 @@ describe('scada-editor-canvas undo-redo (E7.2, design-undo-redo.md)', () => {
     expect(() => handle.undo()).not.toThrow();
     expect(() => handle.redo()).not.toThrow();
     // working copy unchanged
-    expect(handle.session.workingConfig.symbols).toHaveLength(1);
+    expect(handle.session.workingConfig.symbols).toHaveLength(2);
   });
 
   it('load clears undo/redo stack (design-undo-redo.md §8.2: edit history not preserved)', async () => {

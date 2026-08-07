@@ -90,7 +90,7 @@ describe('scada-editor-canvas dual-state isolation (R5, design-architecture.md Â
     const cid = await waitForReadyAndCid(renderEditor(502, validEditorConfig()).container);
     const handle = readScadaEditorTestHandle(cid);
     expect(handle).toBeDefined();
-    expect(handle!.session.workingConfig.symbols).toHaveLength(1);
+    expect(handle!.session.workingConfig.symbols).toHaveLength(2);
     expect(handle!.session.workingConfig.symbols[0].id).toBe('editor-rect');
     expect(handle!.session.committedBaseline.symbols[0].id).toBe('editor-rect');
     expect(handle!.session.mode).toBe('edit');

@@ -71,7 +71,7 @@ export function useEditorHandles(args: UseEditorHandlesArgs): void {
           }
           case 'removeSymbol': {
             const nodeId = (payload as { nodeId?: unknown } | undefined)?.nodeId;
-            if (typeof nodeId !== 'string') return { ok: false, error: new Error('symbol id required') };
+            if (typeof nodeId !== 'string') return { ok: false, error: new Error('invalid-node') };
             const exists = current.session.workingConfig.symbols.some((s) => s.id === nodeId);
             if (!exists) return { ok: false, error: new Error('symbol-not-found') };
             current.removeWorkingSymbol(nodeId);
@@ -113,12 +113,15 @@ export function useEditorHandles(args: UseEditorHandlesArgs): void {
             if (!Array.isArray(nodeIds) || nodeIds.length === 0) {
               return { ok: false, error: new Error('empty-selection') };
             }
-            current.groupSymbols(nodeIds as string[]);
+            const ids = nodeIds as string[];
+            const allExist = ids.every((id) => current.session.workingConfig.symbols.some((s) => s.id === id));
+            if (!allExist) return { ok: false, error: new Error('symbol-not-found') };
+            current.groupSymbols(ids);
             return { ok: true };
           }
           case 'ungroup': {
             const groupId = (payload as { groupId?: unknown } | undefined)?.groupId;
-            if (typeof groupId !== 'string') return { ok: false, error: new Error('symbol id required') };
+            if (typeof groupId !== 'string') return { ok: false, error: new Error('invalid-node') };
             const node = current.session.workingConfig.symbols.find((s) => s.id === groupId);
             if (!node) return { ok: false, error: new Error('symbol-not-found') };
             if (node.type !== 'scada-group') return { ok: false, error: new Error('not-a-group') };

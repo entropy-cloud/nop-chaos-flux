@@ -95,10 +95,11 @@ export class UndoRedoAdapter {
   ): UndoStackEntry | undefined {
     const forward = diffScadaConfig(prev, current);
     if (!hasChanges(forward)) return undefined;
+    const inverse = computeInverse(forward, prev);
     // coalesce 决策：update-symbol/property-edit 尝试与栈顶合并。
     const coalesced = tryCoalesce(this.stack.peekUndoTop(), {
       forward,
-      inverse: computeInverse(forward, prev),
+      inverse,
       operationKind: kind,
       timestamp: now(),
     });
@@ -106,7 +107,6 @@ export class UndoRedoAdapter {
       this.stack.replaceUndoTop(coalesced);
       return coalesced;
     }
-    const inverse = computeInverse(forward, prev);
     const entry: UndoStackEntry = { forward, inverse, operationKind: kind, timestamp: now() };
     this.stack.push(entry);
     return entry;
