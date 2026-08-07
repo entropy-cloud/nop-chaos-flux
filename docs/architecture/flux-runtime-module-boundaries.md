@@ -94,11 +94,35 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
   - schema shape validation rule implementations
 - `packages/flux-compiler/src/schema-compiler/authoring-transform.ts`
   - authoring-time schema transformations (canonicalization, sugar lowering)
+- `packages/flux-compiler/src/schema-compiler/shape-validation-analyze.ts`
+  - schema shape validation analysis entry (field classification + region parameter validation driving per-node validation)
+- `packages/flux-compiler/src/schema-compiler/shape-validation-node-fields.ts`
+  - per-node field shape validation helpers (authoring-time value shape checks)
+- `packages/flux-compiler/src/schema-compiler/shape-validation-predicates.ts`
+  - shape-validation predicate and context helpers (`ActionValidationContext`, component-target contract resolution typing)
+- `packages/flux-compiler/src/schema-compiler/shape-validation-traversal.ts`
+  - shape validation tree traversal (validation traversal state, host-action context propagation)
+- `packages/flux-compiler/src/schema-compiler/flux-value-shape-validation.ts`
+  - `FluxValueShape` runtime-shape validation helpers
+- `packages/flux-compiler/src/schema-compiler/action-selector-validation.ts`
+  - action selector classification (built-in / component / namespaced) and capability checks during compile
+- `packages/flux-compiler/src/schema-compiler/runtime-value-compilation.ts`
+  - compiled runtime value helpers (array/object value states, value evaluation result shaping)
+- `packages/flux-compiler/src/schema-compiler/validation-compiler.ts`
+  - schema input validation entry (`createValidateSchemaInput`) for compiled schema validation
 - `packages/flux-compiler/src/action-compiler.ts`
   - compiled action program assembly for static/ad-hoc precompile paths
   - `extractLegacyPayload` has been deleted; legacy payload extraction is no longer needed
 - `packages/flux-compiler/src/compile-symbol-table.ts`
   - compile-time `$` symbol visibility substrate
+- `packages/flux-compiler/src/schema-compiler-helpers.ts`
+  - shared schema-compiler helpers (compile depth cap, plugin appliers, schema root preparation)
+- `packages/flux-compiler/src/reaction-compiler.ts`
+  - compiled reaction plan assembly (watches, dependsOn roots, static-ness analysis)
+- `packages/flux-compiler/src/source-compiler.ts`
+  - compiled data-source assembly (formula-backed and action-backed source compilation)
+- `packages/flux-compiler/src/validation-lowering.ts`
+  - authoring-time validation rule lowering (required/minLength/minItems/triggers → `CompiledValidationRule`)
 
 Keep compiler-specific shape handling in `flux-compiler`.
 
@@ -144,6 +168,10 @@ Do not move generic validation helpers back into compiler modules when they can 
   - external error injection and reconciliation
 - `packages/flux-runtime/src/form-runtime-owner-lifecycle.ts`
   - form runtime lifecycle state machine (active/refreshing/disposed), dispose and refresh logic
+- `packages/flux-runtime/src/form-runtime-owner-validation-utils.ts`
+  - owner-local validation utility helpers shared by `FormRuntimeOwner` (lifecycle-blocked validation results, debounce cancellation glue)
+- `packages/flux-runtime/src/form-store-diagnostics-bridge.ts`
+  - form store diagnostics bridge (owner-matched diagnostics snapshots/summaries from live `FormRuntime` instances)
 - `packages/flux-runtime/src/runtime-host-projection-scope.ts`
   - host projection scope store for projected scope views
 - `packages/flux-runtime/src/runtime-owned-factories.ts`
@@ -258,6 +286,10 @@ Runtime compiler ownership rule:
   - request execution, cache/publish flow, request dedup, stale-settle handling, and refresh orchestration
 - `packages/flux-runtime/src/async-data/api-data-source-controller-helpers.ts`
   - helper functions for API data source controller (abort helpers, state transforms, request-state shaping)
+- `packages/flux-runtime/src/async-data/request-in-flight-registry.ts`
+  - per-key in-flight request dedup registry (same-key concurrent requests share one run and abort on dispose)
+- `packages/flux-runtime/src/async-data/blob-download.ts`
+  - blob download execution helpers (content-disposition filename extraction, object-URL revoke timing)
 
 ### Source and reaction runtime (`flux-runtime`)
 
@@ -269,6 +301,8 @@ Runtime compiler ownership rule:
   - source invalidation/refresh routing
   - source debug snapshot ownership
   - migrated from `let disposed = false` to `AbortController` for async cancellation
+- `packages/flux-runtime/src/async-data/source-observer.ts`
+  - source observation helpers (snapshot shaping, input-equality guards for observed sources)
 - action-backed remote data-source controllers own refresh/poll/status/publication lifecycle; their remote producer requests should target the ajax action / `ActionRuntimeAdapter` path while preserving owner-local orchestration
 - source-enabled prop helpers in `flux-react` are host wiring over these runtime-owned source modules, not an ownership boundary of their own
 - `packages/flux-runtime/src/async-data/reaction-runtime.ts`
@@ -284,14 +318,19 @@ Runtime compiler ownership rule:
   - per-fire `AbortController` chain (new fire aborts in-flight) composed via `composeAbortSignals(...)` in `abort-signal-helpers.ts`
 - `runtime-factory.ts` exposes `registerRendererReaction(input)` on `RendererRuntime`, parallel to `registerReaction`; it returns a `ReactionHandle` (not the internal `ForceableReactionRegistration`) because the React lazy proxy needs `dispatch`/`force`/`ready`/`pause`/`resume`
 - `runtime-factory.ts` still uses the boolean `disposed` pattern for synchronous dispose gating (by design)
+- `packages/flux-runtime/src/abort-signal-helpers.ts`
+  - `composeAbortSignals` shared per-fire cancellation composition (used by the renderer reaction handle)
 - `packages/flux-runtime/src/surface-runtime.ts`
   - shared dialog/drawer surface ownership
   - stack-based open/close behavior and disposal hooks
+- `packages/flux-runtime/src/surface-hooks.ts`
+  - surface lifecycle hook dispatch (`dispatchInOwner` — close/submit-success/submit-error hooks with `$formData` / `$result` / `$hook` bindings)
 - `packages/flux-runtime/src/status-owner.ts`
   - readonly status-summary publication helpers such as `statusPath` projection and owner-status binding helpers
   - cleanup-safe `statusPath` publication semantics, including the supported `publishOwnerStatus(scope, statusPath, undefined)` unmount cleanup path
-- focused helpers such as `packages/flux-runtime/src/scope-change.ts` and `packages/flux-runtime/src/runtime-plugins.ts`
+- `packages/flux-runtime/src/scope-change.ts`
   - changed-path dependency matching
+- `packages/flux-runtime/src/runtime-plugins.ts`
   - plugin ordering and similar hot-path coordination helpers
 
 ### Action/capability/import host boundaries
@@ -302,6 +341,16 @@ Runtime compiler ownership rule:
 - `packages/flux-runtime/src/component-handle-registry.ts`
   - lexical component-handle registration and lookup by `cid`, `componentId`, or `componentName`
   - debugger-facing handle debug-data ownership
+- `packages/flux-runtime/src/composite-field-handle.ts`
+  - composite field (array-form) component handle creation (`addItem` / `removeItem` / `moveItem`)
+- `packages/flux-runtime/src/form-component-handle.ts`
+  - form component handle creation (`submit` / `validate` / `reset` / `refresh` / value methods)
+- `packages/flux-runtime/src/input-component-handle.ts`
+  - input component handle creation (`clear` / `reset` / `focus` / `open` / scan methods)
+- `packages/flux-runtime/src/surface-component-handle.ts`
+  - dialog/drawer surface component handle creation (`open` / `close` / `toggle`)
+- `packages/flux-runtime/src/refresh-nearest.ts`
+  - nearest refresh target resolution across component handles and data sources (`refresh-nearest` API)
 - `packages/flux-runtime/src/imports.ts`
   - import-module load dedupe
   - action-scope-local imported namespace registration lifecycle
@@ -331,6 +380,14 @@ Important boundary note:
   - form store state updates
   - page store state updates
   - surface store state updates
+- `packages/flux-runtime/src/form-store-owned.ts`
+  - owned form store projection (per-owner summary state, owned field-state separation, `createOwnedFormStore`)
+- `packages/flux-runtime/src/page-store.ts`
+  - page store creation and state updates (data, refresh tick)
+- `packages/flux-runtime/src/surface-store.ts`
+  - surface store creation and state updates (entry stack, uncontrolled-open tracking)
+- `packages/flux-runtime/src/projected-scope-store.ts`
+  - projected scope store creation for reactive scope projections (`createProjectedScopeStore`)
 - `packages/flux-runtime/src/form-runtime-state.ts`
   - initial form field-state derivation
 - `packages/flux-runtime/src/form-runtime-array.ts`

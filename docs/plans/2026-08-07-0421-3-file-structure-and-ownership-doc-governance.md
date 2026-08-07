@@ -1,6 +1,6 @@
 # 3 文件结构治理与所有权文档同步（02-01/02-02/02-03/02-04）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: Follow-up Backlog 文件结构治理与所有权文档同步（02-01 / 02-02 / 02-03 / 02-04）
 > Last Reviewed: 2026-08-07
@@ -62,60 +62,60 @@
 
 ### Phase 1 - diff-view/utils 合并（02-04）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-content/src/diff-view/utils/`（diff-stats.ts + diff-template.ts）→ `diff-view/utils.ts`（或并入 adapters/）
 
 - Item Types: `Fix`（结构治理）
 
-- [ ] 合并 `diff-stats.ts` + `diff-template.ts` 为单文件 `diff-view/utils.ts`（62 行），更新全部 import（5 处相对导入，`rg "diff-view/utils/diff-stats|diff-template"` 全仓核对后逐个更新）。
-- [ ] 删除 `utils/` 二级目录；确认 diff-view 包 typecheck + 既有测试全绿。
+- [x] 合并 `diff-stats.ts` + `diff-template.ts` 为单文件 `diff-view/utils.ts`（62 行），更新全部 import（5 处相对导入，`rg "diff-view/utils/diff-stats|diff-template"` 全仓核对后逐个更新）。
+- [x] 删除 `utils/` 二级目录；确认 diff-view 包 typecheck + 既有测试全绿。
 
 Exit Criteria:
 
-- [ ] `packages/flux-renderers-content` typecheck + test 全绿；`rg "diff-view/utils/diff-stats|diff-template"` 零命中。
+- [x] `packages/flux-renderers-content` typecheck + test 全绿；`rg "diff-view/utils/diff-stats|diff-template"` 零命中。
 
 ### Phase 2 - crud-renderer-state.ts 拆分（02-01）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/crud-renderer-state.ts` → 新 `crud-renderer-load.ts`
 
 - Item Types: `Fix`（结构治理）
 
-- [ ] 提取 `useCrudLoadAction` + `CrudLoadActionResult` 及 load 专属依赖至 `crud-renderer-load.ts`（约 320 行），state 文件保留纯 state 规约函数（normalizePagination/normalizeSort/normalizeCrudFilters 等）。
-- [ ] 更新全部 import（crud-renderer.tsx 等消费方），复核 re-export 面不破坏现有外部 import（若有）。
-- [ ] 确认两文件行数（目标 state <500、load 约 320）并核对 `check:oversized-code-files` 不再命中 crud-renderer-state.ts。
+- [x] 提取 `useCrudLoadAction` + `CrudLoadActionResult` 及 load 专属依赖至 `crud-renderer-load.ts`（约 320 行），state 文件保留纯 state 规约函数（normalizePagination/normalizeSort/normalizeCrudFilters 等）。
+- [x] 更新全部 import（crud-renderer.tsx 等消费方），复核 re-export 面不破坏现有外部 import（若有）。
+- [x] 确认两文件行数（目标 state <500、load 约 320）并核对 `check:oversized-code-files` 不再命中 crud-renderer-state.ts。
 
 Exit Criteria:
 
-- [ ] data 包 typecheck + test 全绿；`crud-renderer-state.ts` 退出 >700 行命中区（或 ≤500）；`check:oversized-code-files` 相对 14 文件基线零新增。
+- [x] data 包 typecheck + test 全绿；`crud-renderer-state.ts` 退出 >700 行命中区（或 ≤500）；`check:oversized-code-files` 相对 14 文件基线零新增。
 
 ### Phase 3 - table-renderer.tsx responsive 提取（02-02）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/table-renderer.tsx` → 新 `table-renderer/responsive.ts`
 
 - Item Types: `Fix`（结构治理）
 
-- [ ] 提取 responsive 实现（resolveResponsiveBreakpoint、splitResponsiveColumns、useIsBelowResponsiveBreakpoint 及消费逻辑约 85 行）至 `table-renderer/responsive.ts`，主文件降至 ~650 行。
-- [ ] 更新 import 并复核 responsive 行为（isBelowResponsiveBreakpoint/responsiveExpandActive 语义不变）。
+- [x] 提取 responsive 实现（resolveResponsiveBreakpoint、splitResponsiveColumns、useIsBelowResponsiveBreakpoint 及消费逻辑约 85 行）至 `table-renderer/responsive.ts`，主文件降至 ~650 行。
+- [x] 更新 import 并复核 responsive 行为（isBelowResponsiveBreakpoint/responsiveExpandActive 语义不变）。
 
 Exit Criteria:
 
-- [ ] data 包 typecheck + test 全绿；`table-renderer.tsx` ≤ ~650 行；既有 responsive 相关测试（table-e1b/enhancements 等）原样通过。
+- [x] data 包 typecheck + test 全绿；`table-renderer.tsx` ≤ ~650 行；既有 responsive 相关测试（table-e1b/enhancements 等）原样通过。
 
 ### Phase 4 - flux-runtime-module-boundaries.md 补全（02-03）
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/flux-runtime-module-boundaries.md`、`packages/flux-runtime/src/`、`packages/flux-compiler/src/`
 
 - Item Types: `Fix`（文档治理）
 
-- [ ] 以 live 模块清单为据补齐缺失条目（form-store-owned.ts、form-runtime-owner-validation-utils.ts、refresh-nearest.ts、surface-hooks.ts、async-data/request-in-flight-registry.ts、form-store-diagnostics-bridge.ts、flux-compiler schema-compiler 缺条目的 8 子模块等），含职责一句话 + 归属。
-- [ ] 检查 anchors 零失效（`docs/` 内指向该文档的锚点 `rg` 核对）；文件不超 40 KB。
+- [x] 以 live 模块清单为据补齐缺失条目（form-store-owned.ts、form-runtime-owner-validation-utils.ts、refresh-nearest.ts、surface-hooks.ts、async-data/request-in-flight-registry.ts、form-store-diagnostics-bridge.ts、flux-compiler schema-compiler 缺条目的 8 子模块等），含职责一句话 + 归属。
+- [x] 检查 anchors 零失效（`docs/` 内指向该文档的锚点 `rg` 核对）；文件不超 40 KB。
 
 Exit Criteria:
 
-- [ ] 文档条目与 live 模块一一对应（抽查：`ls packages/flux-runtime/src/*.ts` 逐项对照）；锚点零失效。
+- [x] 文档条目与 live 模块一一对应（抽查：`ls packages/flux-runtime/src/*.ts` 逐项对照）；锚点零失效。
 
 ## Draft Review Record
 
@@ -128,14 +128,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 4 条 in-scope 发现全部落地（结构拆分 + 文档补全），既有测试全绿
-- [ ] `check:oversized-code-files` 零新增命中（相对 14 文件 pre-existing 基线）
-- [ ] 无行为变更：无测试改写弱化（原样迁移）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 4 条 in-scope 发现全部落地（结构拆分 + 文档补全），既有测试全绿
+- [x] `check:oversized-code-files` 零新增命中（相对 14 文件 pre-existing 基线——实测 12 文件，`crud-renderer-state.ts`/`table-renderer.tsx` 均退出 >700 命中区，零新增）
+- [x] 无行为变更：无测试改写弱化（原样迁移）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -152,13 +152,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （未完成）
+Status Note: 已完成。独立 closure-audit（fresh session）全部通过——Phase 1/2/3 结构拆分落地且行为等价、Phase 4 文档条目与 live 模块一一对应，repo 级门禁全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待定）
-- Evidence: （待定）
+- Auditor / Agent: ses_02673dda9ffeq5O426HztlMV6R（independent closure audit）
+- Evidence: P1：`diff-view/utils.ts` 存在且含 4 个导出，`utils/` 目录已删，`rg "diff-view/utils/diff-stats|diff-template" packages/` 零命中；content typecheck 过 + 286 tests 绿。P2：`crud-renderer-load.ts`（343 行）含 useCrudLoadAction/CrudLoadActionResult，`crud-renderer-state.ts` 477 行且无 useCrudLoadAction，crud-renderer.tsx 改从新文件导入；data typecheck 过 + 753 tests 绿。P3：`table-renderer/responsive.ts`（122 行）含 resolveResponsiveBreakpoint/splitResponsiveColumns/useIsBelowResponsiveBreakpoint/useResponsiveExpandState，`table-renderer.tsx` 645 行，responsiveExpandActive/mainColumns/responsiveHiddenColumns/nestedHeadersActive/expandAllByDefault 经 hook 消费完好，data-responsive-expand attr + expandAllByDefault prop wiring 在位。P4：全量条目循环 MISSING:NONE（含复查 scope-change.ts/runtime-plugins.ts 双 bullet 条目修复）；doc 33,396 B < 40 KB。Gates：`pnpm typecheck` 32/32、`pnpm lint` 32/32、`pnpm check:active-doc-code-anchors` 308 docs 通过、`check:oversized-code-files` ERROR 恰好 12 文件注册基线（无 crud-renderer-state.ts/table-renderer.tsx，零新增）。单条发现（scope-change.ts/runtime-plugins.ts 缺 bullet 条目）已由执行者修复并复核通过。
 
 Follow-up:
 
-- （待定）
+- no remaining plan-owned work
