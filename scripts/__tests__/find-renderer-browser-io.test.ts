@@ -1,6 +1,7 @@
-import { describe, expect, it, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { execFile } from 'node:child_process';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -11,18 +12,32 @@ const rootDir = resolve(here, '..', '..');
 const scriptPath = resolve(rootDir, 'scripts', 'audit', 'find-renderer-browser-io.mjs');
 const fixtureDir = resolve(here, 'fixtures', 'inv1-browser-io');
 
-const stagedDirs = [];
+// Fixtures live in a throwaway temp tree (os.tmpdir) mirrored as
+// `packages/<pkg>/<file>`, NOT in real package dirs — a killed test process
+// can never leave violating fixtures behind in the repo. The temp root and
+// directory names avoid `ignoreDirectoryNames` (shared.mjs), and the gate is
+// exec'd with `FLUX_AUDIT_SCAN_ROOT=<temp root>` so it scans the temp tree.
+let scanRoot;
+let stagedDirs;
+
+beforeEach(async () => {
+  scanRoot = await mkdtemp(join(tmpdir(), 'flux-inv1-scan-fixtures-'));
+  stagedDirs = [];
+});
 
 async function stageFixture(packageDir, fileName) {
-  const tempDir = join(rootDir, 'packages', packageDir, '__inv1_scan_fixture__');
-  await mkdir(tempDir, { recursive: true });
-  stagedDirs.push(tempDir);
+  const targetDir = join(scanRoot, 'packages', packageDir);
+  await mkdir(targetDir, { recursive: true });
+  stagedDirs.push(targetDir);
   const content = await readFile(join(fixtureDir, fileName), 'utf8');
-  await writeFile(join(tempDir, fileName), content, 'utf8');
+  await writeFile(join(targetDir, fileName), content, 'utf8');
 }
 
 function runGate() {
-  return execFileAsync(process.execPath, [scriptPath], { cwd: rootDir, env: process.env });
+  return execFileAsync(process.execPath, [scriptPath], {
+    cwd: rootDir,
+    env: { ...process.env, FLUX_AUDIT_SCAN_ROOT: scanRoot },
+  });
 }
 
 afterEach(async () => {
@@ -30,6 +45,7 @@ afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
   }
   stagedDirs.length = 0;
+  await rm(scanRoot, { recursive: true, force: true });
 });
 
 describe('find-renderer-browser-io', () => {
@@ -38,6 +54,14 @@ describe('find-renderer-browser-io', () => {
     await expect(runGate()).rejects.toMatchObject({
       stdout: expect.stringContaining('renderer-direct-fetch'),
       stdout: expect.stringContaining('flow-designer-renderers-fixture.ts:2'),
+    });
+  });
+
+  it('hits direct fetch in a flux-renderers-* package (prefix-scope coverage)', async () => {
+    await stageFixture('flux-renderers-data', 'flux-renderers-data-fixture.ts');
+    await expect(runGate()).rejects.toMatchObject({
+      stdout: expect.stringContaining('renderer-direct-fetch'),
+      stdout: expect.stringContaining('flux-renderers-data-fixture.ts:2'),
     });
   });
 

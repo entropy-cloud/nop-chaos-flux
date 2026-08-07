@@ -23,38 +23,55 @@ async function getTrackedFiles() {
   // git pathspec `packages/*/src/**/*.ts` does NOT match root-level src files
   // (`src/**/` requires at least one directory level), so list all tracked
   // files and filter in JS instead of relying on glob pathspecs.
-  const { stdout } = await execFileAsync('git', ['ls-files'], {
-    cwd: rootDir,
-    maxBuffer: 10 * 1024 * 1024,
-  });
+  // Untracked source files (`git ls-files --others --exclude-standard`) are
+  // merged in too: package split/migration mid-states often introduce
+  // cross-package relative imports before anything is committed, and they must
+  // fail locally rather than only at CI (where everything is already tracked).
+  const [tracked, untracked] = await Promise.all([
+    execFileAsync('git', ['ls-files'], {
+      cwd: rootDir,
+      maxBuffer: 10 * 1024 * 1024,
+    }),
+    execFileAsync('git', ['ls-files', '--others', '--exclude-standard'], {
+      cwd: rootDir,
+      maxBuffer: 10 * 1024 * 1024,
+    }),
+  ]);
 
-  return stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .filter((filePath) => {
-      if (!filePath.startsWith('packages/')) {
-        return false;
-      }
+  const seen = new Set();
+  const files = [];
 
-      if (!filePath.includes('/src/')) {
-        return false;
-      }
+  for (const line of [...tracked.stdout.split(/\r?\n/), ...untracked.stdout.split(/\r?\n/)]) {
+    const filePath = line.trim();
+    if (!filePath || seen.has(filePath)) {
+      continue;
+    }
+    seen.add(filePath);
 
-      if (!/\.(ts|tsx)$/.test(filePath)) {
-        return false;
-      }
+    if (!filePath.startsWith('packages/')) {
+      continue;
+    }
 
-      if (filePath.includes('/dist/')) {
-        return false;
-      }
+    if (!filePath.includes('/src/')) {
+      continue;
+    }
 
-      if (filePath.endsWith('.d.ts')) {
-        return false;
-      }
+    if (!/\.(ts|tsx)$/.test(filePath)) {
+      continue;
+    }
 
-      return true;
-    });
+    if (filePath.includes('/dist/')) {
+      continue;
+    }
+
+    if (filePath.endsWith('.d.ts')) {
+      continue;
+    }
+
+    files.push(filePath);
+  }
+
+  return files;
 }
 
 function owningPackagePath(filePath) {

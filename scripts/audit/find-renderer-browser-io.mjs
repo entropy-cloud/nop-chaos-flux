@@ -1,7 +1,27 @@
 import { readFile } from 'fs/promises';
-import { collectSourceFiles, getLineNumber, getLineText, isTestFile, rootDir, toPosixPath } from './shared.mjs';
+import path from 'path';
+import {
+  collectSourceFiles,
+  getLineNumber,
+  getLineText,
+  isTestFile,
+  rootDir,
+} from './shared.mjs';
 
 const LABEL = 'find-renderer-browser-io';
+
+// `FLUX_AUDIT_SCAN_ROOT` overrides both the scan root and the relative-path
+// base so the committed script tests can host fixtures in a throwaway temp
+// tree (outside the repo) while still exec-ing this real gate. The relative
+// paths stay `packages/<pkg>/...`, keeping the renderer-scope regex below
+// meaningful for both real and fixture scans.
+const scanRoot = process.env.FLUX_AUDIT_SCAN_ROOT
+  ? path.resolve(process.env.FLUX_AUDIT_SCAN_ROOT)
+  : rootDir;
+
+function toScanRelativePath(filePath) {
+  return path.relative(scanRoot, filePath).split(path.sep).join('/');
+}
 
 const RULES = [
   {
@@ -118,13 +138,18 @@ function isCodePosition(content, index) {
 async function main() {
   const files = [];
   for (const root of ['apps', 'packages', 'tests']) {
-    files.push(...(await collectSourceFiles(`${rootDir}/${root}`)));
+    files.push(...(await collectSourceFiles(`${scanRoot}/${root}`)));
   }
 
   const results = [];
   for (const filePath of files) {
-    const relativePath = toPosixPath(filePath);
-    if (!/^packages\/(flux-renderers-|flow-designer-renderers|spreadsheet-renderers|report-designer-renderers|word-editor-renderers)\//.test(relativePath)) {
+    const relativePath = toScanRelativePath(filePath);
+    // The `flux-renderers-*` family is a prefix match (10 packages); the other
+    // four renderer families are exact package names. (The 2026-08-07 "widen"
+    // commit wrote `(flux-renderers-|...)` with a trailing `/`, which required a
+    // literal `/` right after the prefix and silently dropped all
+    // flux-renderers-* packages from the scan — fixed 2026-08-08.)
+    if (!/^packages\/(?:flux-renderers-[^/]+|flow-designer-renderers|spreadsheet-renderers|report-designer-renderers|word-editor-renderers)\//.test(relativePath)) {
       continue;
     }
     if (isTestFile(relativePath)) {

@@ -22,6 +22,75 @@ export function toPosixPath(filePath) {
   return path.relative(rootDir, filePath).split(path.sep).join('/');
 }
 
+// Returns the code-only text of the given 1-based line (strings preserved,
+// `//` line comments and `/*...*/` block comments stripped, block-comment state
+// carried across lines). Pattern matches inside comments must not hit; this is
+// the comment-aware base for `filterMatch` decisions.
+export function getCodeTextForLine(content, line) {
+  const lines = content.split(/\r?\n/);
+  const targetIndex = line - 1;
+  if (targetIndex < 0 || targetIndex >= lines.length) {
+    return '';
+  }
+
+  let inBlockComment = false;
+  let out = '';
+
+  for (let lineIndex = 0; lineIndex <= targetIndex; lineIndex += 1) {
+    const lineText = lines[lineIndex] ?? '';
+    out = '';
+    let inString = false;
+    let stringQuote = '';
+
+    for (let column = 0; column < lineText.length; column += 1) {
+      const char = lineText[column];
+      const nextChar = lineText[column + 1] ?? '';
+
+      if (inBlockComment) {
+        if (char === '*' && nextChar === '/') {
+          inBlockComment = false;
+          column += 1;
+        }
+        continue;
+      }
+
+      if (inString) {
+        out += char;
+        if (char === '\\') {
+          column += 1;
+          out += lineText[column] ?? '';
+          continue;
+        }
+        if (char === stringQuote) {
+          inString = false;
+        }
+        continue;
+      }
+
+      if (char === '/' && nextChar === '/') {
+        break;
+      }
+
+      if (char === '/' && nextChar === '*') {
+        inBlockComment = true;
+        column += 1;
+        continue;
+      }
+
+      if (char === "'" || char === '"' || char === '`') {
+        inString = true;
+        stringQuote = char;
+        out += char;
+        continue;
+      }
+
+      out += char;
+    }
+  }
+
+  return out;
+}
+
 export function isTestFile(filePath) {
   return /(?:\.test\.|\.spec\.|__tests__|test-support)/.test(filePath);
 }

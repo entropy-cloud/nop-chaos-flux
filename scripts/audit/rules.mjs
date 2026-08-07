@@ -3,6 +3,7 @@ import {
   findMatchingBrace,
   findMatchingParen,
   findStatementEnd,
+  getCodeTextForLine,
   getLineNumber,
   hasTopLevelComma,
   isTestFile,
@@ -492,13 +493,17 @@ export const runtimeRawSchemaReadRules = [
     patterns: [
       /\btemplateNode\.schema\b/g,
       /\bprops\.schema\b/g,
+      /\bas\s+TemplateNode\)\.schema\b/g,
+      /\bas\s+BaseSchema\)\.schema\b/g,
     ],
-    filterMatch: ({ lineText, content, relativePath }) => {
-      if (
-        lineText.includes('//') &&
-        !lineText.split('//')[0].includes('templateNode.schema') &&
-        !lineText.split('//')[0].includes('props.schema')
-      ) {
+    filterMatch: ({ lineText, content, relativePath, line }) => {
+      const codeText = getCodeTextForLine(content, line);
+      const hasSchemaRead =
+        codeText.includes('templateNode.schema') ||
+        codeText.includes('props.schema') ||
+        /\bas\s+(?:TemplateNode|BaseSchema)\)\.schema\b/.test(codeText);
+
+      if (!hasSchemaRead) {
         return false;
       }
 
@@ -527,6 +532,20 @@ export const runtimeRawSchemaReadRules = [
           lineText.includes('getAuthoredVariantOption(authoredSchema') ||
           lineText.includes('authoredNextOption') ||
           lineText.includes('authoredSchema,'))
+      ) {
+        return false;
+      }
+
+      // Narrow adjudicated exclusion (2026-08-08, plan
+      // `2026-08-08-0150-1`): `crud-renderer-schema-builders.ts`
+      // `extractRegionSchema` composes/carries region-handle schemas into the
+      // carrier schema — region handle schema combination/carriage, not a
+      // compile-once violation (consistent with the audit ruling). The
+      // `(n as TemplateNode).schema` cast is the only such form in the repo,
+      // so a path + exact line-shape branch keeps the exclusion narrow.
+      if (
+        relativePath.includes('crud-renderer-schema-builders.ts') &&
+        /\bnodes\.map\(\(n\)\s*=>\s*\(n\s+as\s+TemplateNode\)\.schema\b/.test(codeText)
       ) {
         return false;
       }
