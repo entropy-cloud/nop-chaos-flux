@@ -319,6 +319,8 @@ flowchart TD
 
 ### 2026-08-07-1835 post-remediation audit P2
 
+> ✅ 行为耦合子集已由 plan `2026-08-08-0900-1`（5 Phase 全交付 + workspace full-green）收口；test-fidelity/docs-drift/cleanup 子集由 successor plan `2026-08-08-0900-2` 处理。
+
 > 来源：两份 open 审计的 P2 findings——`docs/audits/2026-08-07-1835-open-audit-industrial-hmi-editor.md`（8 条，含 P1-C 簇内 C4）+ `docs/audits/2026-08-07-1835-multi-audit-industrial-hmi-editor.md`（32 条）。两份审计自带 summary 表少计（7/22），实际逐条 finding 点数 = 40。这些 P2 不驱动独立 plan，按 mission 节奏择期处理。对应 P1 已由 plan `2026-08-07-1835-1`（9 P1 内部正确性，✅ 完成 2026-08-07，closure audit `pass-with-minors`）+ `2026-08-07-1835-2`（11 P1 契约/结构/UI/测试/性能，✅ 完成 2026-08-08，5 Phase 全交付 + workspace full-green + 反向验证）收口。源审计 Audit Status 已 `closed`（两份 P1 全部收口，plan {2} 回写）。
 
 **来自 open-audit（8 条）：**
