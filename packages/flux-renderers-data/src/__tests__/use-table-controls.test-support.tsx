@@ -25,9 +25,8 @@ export function resetTableControlTestState() {
   renderScopeUpdate.mockReset();
 }
 
-let scopeCounter = 0;
-
 export function createHelpers() {
+  let scopeCounter = 0;
   return {
     createScope: vi.fn((value: unknown, options?: unknown) => ({
       id: `test-scope-${scopeCounter++}`,

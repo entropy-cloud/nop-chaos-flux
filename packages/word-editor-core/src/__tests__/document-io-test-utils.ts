@@ -29,12 +29,14 @@ export const localStorageState = {
   current: createLocalStorageMock(),
 };
 
-beforeEach(() => {
-  localStorageState.current = createLocalStorageMock();
-  vi.stubGlobal('localStorage', localStorageState.current);
-});
+export function installDocumentIoTestHooks() {
+  beforeEach(() => {
+    localStorageState.current = createLocalStorageMock();
+    vi.stubGlobal('localStorage', localStorageState.current);
+  });
 
-afterEach(() => {
-  setRecoveryLoadErrorHandler(undefined);
-  vi.unstubAllGlobals();
-});
+  afterEach(() => {
+    setRecoveryLoadErrorHandler(undefined);
+    vi.unstubAllGlobals();
+  });
+}

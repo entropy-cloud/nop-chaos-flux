@@ -11,7 +11,9 @@ import {
   clearDocument,
   setRecoveryLoadErrorHandler,
 } from '../document-io.js';
-import { localStorageState, STORAGE_KEY } from './document-io-test-utils.js';
+import { installDocumentIoTestHooks, localStorageState, STORAGE_KEY } from './document-io-test-utils.js';
+
+installDocumentIoTestHooks();
 
 describe('saveDocument', () => {
   it('returns saved data and stores it when bridge has value', () => {

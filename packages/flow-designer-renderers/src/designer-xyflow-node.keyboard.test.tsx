@@ -66,7 +66,7 @@ function renderEmptySlot() {
   );
 }
 
-function stubSlotRect(element: HTMLElement) {
+function stubSlotRect(element: HTMLElement, overrides: Partial<DOMRect> = {}) {
   element.getBoundingClientRect = () =>
     ({
       left: 100,
@@ -77,6 +77,7 @@ function stubSlotRect(element: HTMLElement) {
       height: 80,
       x: 100,
       y: 50,
+      ...overrides,
       toJSON: () => ({}),
     }) as DOMRect;
 }
@@ -104,7 +105,7 @@ describe('DesignerXyflowNode - empty slot keyboard activation (13-01)', () => {
     expect(sourceKind).toBe('slot');
   });
 
-  it('opens the slot add menu on Space with finite element-center coordinates', () => {
+  it('opens the slot add menu on Space with the element-center coordinates', () => {
     renderEmptySlot();
     const slot = screen.getByTestId('designer-tree-empty-slot');
     stubSlotRect(slot);
@@ -113,8 +114,28 @@ describe('DesignerXyflowNode - empty slot keyboard activation (13-01)', () => {
 
     expect(onPlusButtonClick).toHaveBeenCalledTimes(1);
     const [, clientX, clientY] = onPlusButtonClick.mock.calls[0] as [string, number, number];
-    expect(Number.isFinite(clientX)).toBe(true);
-    expect(Number.isFinite(clientY)).toBe(true);
+    expect(clientX).toBe(200);
+    expect(clientY).toBe(90);
+  });
+
+  it('falls back to origin coordinates for an unlaid-out zero-size slot rect', () => {
+    renderEmptySlot();
+    const slot = screen.getByTestId('designer-tree-empty-slot');
+    stubSlotRect(slot, { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 });
+
+    fireEvent.keyDown(slot, { key: ' ' });
+
+    expect(onPlusButtonClick).toHaveBeenCalledTimes(1);
+    const [sourceId, clientX, clientY, sourceKind] = onPlusButtonClick.mock.calls[0] as [
+      string,
+      number,
+      number,
+      string,
+    ];
+    expect(sourceId).toBe('slot:node-1:branch-1');
+    expect(clientX).toBe(0);
+    expect(clientY).toBe(0);
+    expect(sourceKind).toBe('slot');
   });
 
   it('keeps the pointer path using the mouse event coordinates (behavior unchanged)', () => {

@@ -9,11 +9,10 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useScopeSelector: () => undefined,
 }));
 
-let scopeCounter = 0;
-
 function createSpyHelpers() {
   const created: string[] = [];
   const disposed: string[] = [];
+  let scopeCounter = 0;
   const helpers = {
     createScope: vi.fn((patch: Record<string, unknown>) => {
       const id = `checkable-scope-${scopeCounter++}`;

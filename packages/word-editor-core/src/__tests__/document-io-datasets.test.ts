@@ -6,7 +6,9 @@ import {
   setRecoveryLoadErrorHandler,
 } from '../document-io.js';
 import type { Dataset } from '../dataset-model.js';
-import { DATASET_STORAGE_KEY, localStorageState } from './document-io-test-utils.js';
+import { DATASET_STORAGE_KEY, installDocumentIoTestHooks, localStorageState } from './document-io-test-utils.js';
+
+installDocumentIoTestHooks();
 
 describe('saveDatasets', () => {
   it('saves and loads datasets round-trip', () => {
