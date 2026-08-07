@@ -6,8 +6,9 @@
 /* 根容器（design-renderer.md §10：data-slot="scada-editor-canvas"）。 */
 .nop-scada-editor-canvas {
   position: relative;
-  width: 100%;
-  height: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -83,11 +84,24 @@
   text-align: center;
 }
 
-/* 编辑器布局骨架：palette | canvas | inspector 三栏。 */
+/* 编辑器布局骨架：列方向栈——toolbox（顶栏）/ body（palette | canvas | inspector 三栏）/ statusBar（底栏）。
+   plan 2026-08-08-0900-1 Phase 4 / P2 #40：layout 为外层 column flex 容器，
+   body 行含 palette|canvas|inspector；canvas-area 是 body 的 flex 子——leafer canvas 填充 canvas 区，不覆盖兄弟 panel。 */
 .nop-scada-editor-layout {
   display: flex;
+  flex-direction: column;
+  position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+}
+
+.nop-scada-editor-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .nop-scada-editor-layout-canvas {
@@ -95,6 +109,28 @@
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
+  /* plan 2026-08-08-0900-1 Phase 4 / P2 #40：canvas containment——leafer <canvas>（absolute inset:0）
+     在此 div 内填充，clip 防溢出到 palette/inspector 兄弟区。 */
+  overflow: hidden;
+}
+
+.nop-scada-editor-layout > .nop-scada-editor-toolbox {
+  flex: 0 0 auto;
+}
+
+.nop-scada-editor-layout > .nop-scada-editor-status-bar {
+  flex: 0 0 auto;
+}
+
+/* 空场景提示（plan 2026-08-08-0900-1 Phase 3 / P2 #12：ready 但无图元时 canvas 区 overlay）。 */
+.nop-scada-editor-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--nop-body-copy, #64748b);
+  font-size: 13px;
+  pointer-events: none;
 }
 
 .nop-scada-editor-palette-item {

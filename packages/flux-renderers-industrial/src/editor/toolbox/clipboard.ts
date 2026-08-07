@@ -105,6 +105,8 @@ function reassignIdsRecursive(node: ScadaSymbolNode, newId: string): void {
 function cloneNodeDeep(node: ScadaSymbolNode): ScadaSymbolNode {
   const clone: ScadaSymbolNode = { ...node };
   if (node.children) clone.children = node.children.map(cloneNodeDeep);
-  if (node.custom) clone.custom = { ...node.custom };
+  // plan 2026-08-08-0900-1 Phase 1 / P2 #4：深克隆 custom（含 connections 等嵌套数组）——
+  // 先前 `{...node.custom}` 浅克隆使 clipboard 与源节点共享 connections 数组引用，粘贴/undo 后串改。
+  if (node.custom) clone.custom = structuredClone(node.custom);
   return clone;
 }

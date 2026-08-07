@@ -137,13 +137,64 @@ describe('InspectorField widget rendering', () => {
     expect(captured).toEqual({ b: 2 });
   });
 
-  it('json-editor onChange falls back to string for invalid JSON', () => {
+  // plan 2026-08-08-0900-1 Phase 1 / P2 #6：parse 失败时不写裸字符串到 workingConfig，仅显示 field-error。
+  it('json-editor does NOT call onChange for invalid JSON (shows field-error instead)', () => {
     const field = makeField({ type: 'object', widget: 'json-editor' });
-    let captured: unknown;
-    const { container } = render(<InspectorField field={field} value={null} onChange={(v) => { captured = v; }} />);
+    let captured: unknown = 'UNCHANGED';
+    const { container } = render(<InspectorField field={field} value={{ a: 1 }} onChange={(v) => { captured = v; }} />);
     const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: 'not json' } });
-    expect(captured).toBe('not json');
+    // onChange 未被调用（workingConfig 不被裸字符串 corrupt）。
+    expect(captured).toBe('UNCHANGED');
+    // 显示 field-error（含 parse 失败提示）。
+    const errorEl = container.querySelector('.nop-scada-editor-field-error');
+    expect(errorEl).toBeTruthy();
+    // 草稿文本保留（用户可继续修正）。
+    expect(textarea.value).toBe('not json');
+  });
+
+  it('json-editor clears field-error once input becomes valid JSON again', () => {
+    const field = makeField({ type: 'object', widget: 'json-editor' });
+    const { container } = render(<InspectorField field={field} value={{ a: 1 }} onChange={() => undefined} />);
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'not json' } });
+    expect(container.querySelector('.nop-scada-editor-field-error')).toBeTruthy();
+    fireEvent.change(textarea, { target: { value: '{"a": 2}' } });
+    expect(container.querySelector('.nop-scada-editor-field-error')).toBeNull();
+  });
+
+  it('json-editor preserves draft across rapid invalid keystrokes', () => {
+    const field = makeField({ type: 'object', widget: 'json-editor' });
+    let captured: unknown = 'INITIAL';
+    const { container } = render(<InspectorField field={field} value={null} onChange={(v) => { captured = v; }} />);
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: '{' } });
+    expect(captured).toBe('INITIAL');
+    fireEvent.change(textarea, { target: { value: '{"x"' } });
+    expect(captured).toBe('INITIAL');
+    fireEvent.change(textarea, { target: { value: '{"x": 1}' } });
+    expect(captured).toEqual({ x: 1 });
+  });
+
+  it('json-editor syncs draft when value changes externally', () => {
+    const field = makeField({ type: 'object', widget: 'json-editor' });
+    const { container, rerender } = render(<InspectorField field={field} value={{ a: 1 }} onChange={() => undefined} />);
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    expect(textarea.value).toContain('"a"');
+    rerender(<InspectorField field={field} value={{ b: 2 }} onChange={() => undefined} />);
+    expect(textarea.value).toContain('"b"');
+  });
+
+  it('json-editor does not clobber draft when parent echoes back emitted value', () => {
+    const field = makeField({ type: 'object', widget: 'json-editor' });
+    let emitted: unknown = null;
+    const { container, rerender } = render(<InspectorField field={field} value={null} onChange={(v) => { emitted = v; }} />);
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: '{"x": 1}' } });
+    expect(emitted).toEqual({ x: 1 });
+    // parent echoes back the exact emitted reference → draft preserved (no canonical re-format clobber).
+    rerender(<InspectorField field={field} value={emitted} onChange={() => undefined} />);
+    expect(textarea.value).toBe('{"x": 1}');
   });
 
   it('color-picker onChange produces string', () => {

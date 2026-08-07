@@ -66,6 +66,39 @@ describe('recomputeConnectionAnchor (design-connection.md §4.5)', () => {
     // target world = (100, 100); normalized = (100-50)/20=2.5, (100-50)/20=2.5
     expect(point).toEqual({ x: 2.5, y: 2.5 });
   });
+
+  // plan 2026-08-08-0900-1 Phase 1 / P2 #2：零尺寸 junction 不产生 Infinity/NaN（防 JSON.stringify(Infinity)→null 往返损坏）。
+  it('zero-size junction yields finite point (no Infinity/NaN) surviving serialize round-trip', () => {
+    const zeroJunction: LinkGeometry = { x: 10, y: 20, width: 0, height: 0 };
+    const point = recomputeConnectionAnchor({
+      connection: { id: 'c1', target: 'dev', direction: 'out' },
+      junction: zeroJunction,
+      targetDevice,
+      targetAnchor: { x: 1, y: 0.5 },
+    });
+    expect(Number.isFinite(point.x)).toBe(true);
+    expect(Number.isFinite(point.y)).toBe(true);
+    expect(Number.isNaN(point.x)).toBe(false);
+    expect(Number.isNaN(point.y)).toBe(false);
+    // round-trip：connection.x/y 经 JSON 序列化→解析后仍为有限数（非 null）。
+    const connection = { id: 'c1', x: point.x, y: point.y, direction: 'out' as const, target: 'dev' };
+    const roundTripped = JSON.parse(JSON.stringify(connection)) as { x: unknown; y: unknown };
+    expect(typeof roundTripped.x).toBe('number');
+    expect(typeof roundTripped.y).toBe('number');
+    expect(Number.isFinite(roundTripped.x as number)).toBe(true);
+    expect(Number.isFinite(roundTripped.y as number)).toBe(true);
+  });
+
+  it('zero-width junction (height>0) yields finite point', () => {
+    const point = recomputeConnectionAnchor({
+      connection: { id: 'c1', target: 'dev', direction: 'out' },
+      junction: { x: 0, y: 0, width: 0, height: 100 },
+      targetDevice: { x: 50, y: 0, width: 10, height: 10 },
+      targetAnchor: { x: 0, y: 0 },
+    });
+    expect(Number.isFinite(point.x)).toBe(true);
+    expect(Number.isFinite(point.y)).toBe(true);
+  });
 });
 
 describe('resolveTargetAnchor', () => {

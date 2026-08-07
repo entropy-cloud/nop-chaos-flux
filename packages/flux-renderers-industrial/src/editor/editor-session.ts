@@ -122,6 +122,9 @@ function cloneConfig(config: ScadaConfig): ScadaConfig {
 
 function cloneNode(node: ScadaSymbolNode): ScadaSymbolNode {
   const clone: ScadaSymbolNode = { ...node };
+  // plan 2026-08-08-0900-1 Phase 1 / P2 #4：深克隆 custom——浅 `{...node}` 使 working / committedBaseline /
+  // clipboard 间共享 custom 子对象引用，undo/redo 或 group 后改 custom.connections 串改多份。structuredClone 隔离。
+  if (node.custom) clone.custom = structuredClone(node.custom);
   if (node.children) clone.children = node.children.map(cloneNode);
   return clone;
 }

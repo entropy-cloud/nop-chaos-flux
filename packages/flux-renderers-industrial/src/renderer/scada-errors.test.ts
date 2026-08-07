@@ -3,10 +3,45 @@ import { resolveScadaErrorText, scadaErrorI18nKey, SCADA_ERROR_CODES, errorMessa
 
 describe('scada-errors utilities', () => {
   it('errorMessage extracts message from Error and stringifies non-Error', () => {
-    expect(errorMessage(new Error('boom'))).toBe('boom');
+    const boomMsg = errorMessage(new Error('boom'));
+    expect(boomMsg).toContain('boom');
     expect(errorMessage('plain string')).toBe('plain string');
     expect(errorMessage({ custom: 'object' })).toBe('[object Object]');
     expect(errorMessage(null)).toBe('null');
+  });
+
+  // plan 2026-08-08-0900-1 Phase 2 / P2 #16：errorMessage 保留 Error.cause 链与截断 stack（不丢诊断信息）。
+  it('errorMessage preserves Error.cause chain', () => {
+    const root = new Error('root cause');
+    const wrapped = new Error('surface error', { cause: root });
+    const msg = errorMessage(wrapped);
+    expect(msg).toContain('surface error');
+    expect(msg).toContain('root cause');
+  });
+
+  it('errorMessage preserves nested cause chain (caused by: ...)', () => {
+    const deepest = new Error('deepest');
+    const mid = new Error('mid', { cause: deepest });
+    const top = new Error('top', { cause: mid });
+    const msg = errorMessage(top);
+    expect(msg).toContain('top');
+    expect(msg).toContain('mid');
+    expect(msg).toContain('deepest');
+  });
+
+  it('errorMessage preserves a truncated stack fragment', () => {
+    const err = new Error('with stack');
+    const msg = errorMessage(err);
+    expect(msg).toContain('with stack');
+    // stack frames present → message longer than the bare text.
+    expect(msg.length).toBeGreaterThan('with stack'.length);
+  });
+
+  it('errorMessage handles non-Error cause gracefully', () => {
+    const err = new Error('surface', { cause: 'string-cause' });
+    const msg = errorMessage(err);
+    expect(msg).toContain('surface');
+    expect(msg).toContain('string-cause');
   });
 
   it('toError wraps non-Error values and passes through Error instances', () => {

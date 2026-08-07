@@ -88,9 +88,11 @@ export function useEditorHandles(args: UseEditorHandlesArgs): void {
           return { ok: true };
         }
         const current = latest.current.runtime;
-        if (!current) return { ok: false, error: new Error('scada editor is not mounted') };
+        // plan 2026-08-08-0900-1 Phase 5 / P2 #29：返回 registry code（runtime SCADA_ERROR_CODES 'not-mounted'），
+        // 而非自由格式英文 Error（对齐 scada-errors.ts 已注册码面 + isRuntimeErrorCode 消费）。
+        if (!current) return { ok: false, error: new Error('not-mounted') };
         if (current.engine.isDestroyed()) {
-          return { ok: false, error: new Error('scada editor is destroyed') };
+          return { ok: false, error: new Error('not-mounted') };
         }
 
         switch (method) {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { ActionSchema, RendererComponentProps, RendererHelpers, ScopeRef } from '@nop-chaos/flux-core';
 import { createNormalizedActionEvent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
@@ -13,6 +13,8 @@ import { projectSessionChange, type ScadaEditorSession } from './editor-session.
 import { EditorPalettePanel } from './palette/editor-palette.js';
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
 import { EditorToolboxPanel } from './toolbox/toolbox-panel.js';
+import { collectWorldBounds } from './editor-working-helpers.js';
+import type { Bounds } from '../engine/viewport.js';
 
 export type ScadaEditorCanvasStatus = 'loading' | 'ready' | 'error' | 'destroyed';
 
@@ -192,8 +194,6 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   const runtime = useEditorEngine({
     containerRef,
     cid: props.meta.cid,
-    width: props.props.width,
-    height: props.props.height,
     initialConfig: parsedConfig ?? EMPTY_EDITOR_CONFIG,
     initialMode: props.props.mode,
     commitPolicy: props.props.commitPolicy,
@@ -225,7 +225,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   }, [runtime]);
 
   const effectiveStatus: ScadaEditorCanvasStatus = parseError ? 'error' : status;
-  const { loading, empty, palette, inspector, toolbox, statusBar } = props.regions;
+  const { loading, empty, palette, inspector, toolbox, statusBar, error: errorRegion } = props.regions;
   const activeError = parseError ?? errorInfo;
   const errorText = activeError ? activeError.message : '';
   const errorCode = activeError?.code;
@@ -233,126 +233,187 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   const selectedNodeId = selection[0];
   const cidAttr = props.meta.cid !== undefined ? String(props.meta.cid) : undefined;
 
+  // plan 2026-08-08-0900-1 Phase 4 / P2 #40：width/height props 尺寸化根容器（编辑器足迹），
+  // canvas 区由 layout-canvas div（flex:1）+ ResizeObserver 驱动 engine.setSize（不再 width/height→canvas 拉伸）。
+  const rootStyle: CSSProperties = {};
+  if (props.props.width !== undefined) rootStyle.width = props.props.width;
+  if (props.props.height !== undefined) rootStyle.height = props.props.height;
+
+  // plan 2026-08-08-0900-1 Phase 3 / P2 #9：消费 viewport prop（fit/center policy）→ mount 后应用到 engine。
+  // plan 2026-08-08-0900-1 Phase 5 / P2 #30：接线 ScadaEditorViewportPolicy 类型（不再 inline 重复）。
+  const viewportPolicy = props.props.viewport;
+  const viewportAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!runtime || !viewportPolicy) return;
+    if (viewportAppliedRef.current) return;
+    viewportAppliedRef.current = true;
+    const bounds = computeAggregateViewportBounds(runtime.session.workingConfig.symbols);
+    if (!bounds) return;
+    if (viewportPolicy.fit === 'contain') runtime.engine.fit(bounds, 0);
+    if (viewportPolicy.center) runtime.engine.center(bounds);
+    // mount-once viewport policy application（host 改 viewport prop 不重算，对齐「mount 时消费」语义）。
+  }, [runtime, viewportPolicy]);
+
+  // plan 2026-08-08-0900-1 Phase 4 / P2 #40：canvas containment——data-slot 落在 canvas-area div
+  // （containerRef），palette/inspector 为其兄弟（外层 flex layout）。leafer <canvas> inset:0 填充 canvas 区，
+  // 不再覆盖兄弟 panel。loading/error 经 absolute overlay 覆盖 canvas 区。
+  const showLayoutBody = runtime !== null && effectiveStatus !== 'loading' && effectiveStatus !== 'error';
+
   return (
     <div
-      ref={containerRef}
       data-testid={props.meta.testid || undefined}
-      data-cid={cidAttr}
-      data-slot="scada-editor-canvas"
-      data-status={effectiveStatus}
-      data-mode={props.props.mode ?? 'edit'}
-      className={cn('nop-scada-editor-canvas', props.meta.className)}
+      className={cn('nop-scada-editor-layout', props.meta.className)}
+      style={rootStyle}
     >
-      {effectiveStatus === 'loading' ? (
-        asReactNode(loading?.render()) ?? (
-          <div data-slot="scada-editor-loading" className="nop-scada-editor-loading">
-            {t('industrial.scada.editor.loading')}
-          </div>
-        )
-      ) : effectiveStatus === 'error' ? (
-        asReactNode(empty?.render({ bindings: { error: activeError } })) ?? (
-          <div
-            data-slot="scada-editor-error"
-            className="nop-scada-editor-error"
-            data-code={errorCode}
-          >
-            {errorText || t('industrial.scada.editor.canvasError')}
-          </div>
-        )
-      ) : (
-        <div className="nop-scada-editor-layout">
-          {asReactNode(palette?.render()) ?? (
-            <EditorPalettePanel runtime={runtime!} onError={handleError} />
-          )}
-          {/* eslint-disable jsx-a11y/no-static-element-interactions -- canvas drop + keyboard target */}
-          <div
-            className="nop-scada-editor-layout-canvas"
-            tabIndex={0}
-            onDrop={(e) => {
+      {showLayoutBody
+        ? asReactNode(toolbox?.render({ bindings: { selection } })) ?? (
+            <EditorToolboxPanel runtime={runtime} selection={selection} onError={handleError} />
+          )
+        : null}
+      {/* plan 2026-08-08-0900-1 Phase 4 / P2 #40：body 行含 palette | canvas | inspector 三栏，
+          toolbox（顶）/ statusBar（底）为列方向兄弟——避免 toolbox 宽按钮挤压缩 canvas 到 0。 */}
+      <div className="nop-scada-editor-body">
+        {showLayoutBody
+          ? asReactNode(palette?.render()) ?? <EditorPalettePanel runtime={runtime} onError={handleError} />
+          : null}
+        {/* eslint-disable jsx-a11y/no-static-element-interactions -- canvas drop + keyboard target */}
+        <div
+          ref={containerRef}
+          data-cid={cidAttr}
+          data-slot="scada-editor-canvas"
+          data-status={effectiveStatus}
+          data-mode={props.props.mode ?? 'edit'}
+          className="nop-scada-editor-canvas nop-scada-editor-layout-canvas"
+          tabIndex={0}
+        onDrop={(e) => {
+          e.preventDefault();
+          const type = e.dataTransfer.getData('application/x-scada-symbol-type');
+          if (type && runtime) {
+            idCounter.current += 1;
+            const id = `${type}-${idCounter.current}`;
+            // plan 2026-08-07-1835-2 Phase 3 / multi P1-11：palette drop 落在指针处
+            // （此前硬编码 x:50,y:50 堆叠）。用 canvas rect + engine.getWorldPoint 换算世界坐标，
+            // symbol 居中指针处（复用 connection 子系统的 getBoundingClientRect + getWorldPoint 管线）。
+            const rect = e.currentTarget.getBoundingClientRect();
+            const viewX = e.clientX - rect.left;
+            const viewY = e.clientY - rect.top;
+            const world = runtime.engine.getWorldPoint({ x: viewX, y: viewY });
+            runtime.addWorkingSymbol({
+              id,
+              type,
+              x: Math.round(world.x - 50),
+              y: Math.round(world.y - 50),
+              width: 100,
+              height: 100,
+            });
+          }
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        }}
+        // plan 2026-08-07-1835-2 Phase 3 / open P1-B：键盘层——Delete/Ctrl+Z/Y/Ctrl+G/Ctrl+Shift+G/arrows
+        // （此前 grep keydown 0 hits，delete/group/ungroup 仅 component:* handle 可达）。
+        onKeyDown={(e) => {
+          if (!runtime) return;
+          const sel = selection;
+          const ctrl = e.ctrlKey || e.metaKey;
+          const key = e.key.toLowerCase();
+          if (key === 'delete' || key === 'backspace') {
+            if (sel.length === 0) return;
+            e.preventDefault();
+            for (const id of sel) runtime.removeWorkingSymbol(id);
+          } else if (ctrl && !e.shiftKey && key === 'z') {
+            e.preventDefault();
+            runtime.undo();
+          } else if ((ctrl && !e.shiftKey && key === 'y') || (ctrl && e.shiftKey && key === 'z')) {
+            e.preventDefault();
+            runtime.redo();
+          } else if (ctrl && !e.shiftKey && key === 'g') {
+            if (sel.length >= 2) {
               e.preventDefault();
-              const type = e.dataTransfer.getData('application/x-scada-symbol-type');
-              if (type && runtime) {
-                idCounter.current += 1;
-                const id = `${type}-${idCounter.current}`;
-                // plan 2026-08-07-1835-2 Phase 3 / multi P1-11：palette drop 落在指针处
-                // （此前硬编码 x:50,y:50 堆叠）。用 canvas rect + engine.getWorldPoint 换算世界坐标，
-                // symbol 居中指针处（复用 connection 子系统的 getBoundingClientRect + getWorldPoint 管线）。
-                const rect = e.currentTarget.getBoundingClientRect();
-                const viewX = e.clientX - rect.left;
-                const viewY = e.clientY - rect.top;
-                const world = runtime.engine.getWorldPoint({ x: viewX, y: viewY });
-                runtime.addWorkingSymbol({
-                  id,
-                  type,
-                  x: Math.round(world.x - 50),
-                  y: Math.round(world.y - 50),
-                  width: 100,
-                  height: 100,
-                });
-              }
-            }}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = 'copy';
-            }}
-            // plan 2026-08-07-1835-2 Phase 3 / open P1-B：键盘层——Delete/Ctrl+Z/Y/Ctrl+G/Ctrl+Shift+G/arrows
-            // （此前 grep keydown 0 hits，delete/group/ungroup 仅 component:* handle 可达）。
-            onKeyDown={(e) => {
-              if (!runtime) return;
-              const sel = selection;
-              const ctrl = e.ctrlKey || e.metaKey;
-              const key = e.key.toLowerCase();
-              if (key === 'delete' || key === 'backspace') {
-                if (sel.length === 0) return;
-                e.preventDefault();
-                for (const id of sel) runtime.removeWorkingSymbol(id);
-              } else if (ctrl && !e.shiftKey && key === 'z') {
-                e.preventDefault();
-                runtime.undo();
-              } else if ((ctrl && !e.shiftKey && key === 'y') || (ctrl && e.shiftKey && key === 'z')) {
-                e.preventDefault();
-                runtime.redo();
-              } else if (ctrl && !e.shiftKey && key === 'g') {
-                if (sel.length >= 2) {
-                  e.preventDefault();
-                  runtime.groupSymbols(sel);
-                }
-              } else if (ctrl && e.shiftKey && key === 'g') {
-                e.preventDefault();
-                for (const id of sel) {
-                  const node = runtime.session.workingConfig.symbols.find((s) => s.id === id);
-                  if (node?.type === 'scada-group') runtime.ungroupSymbols(id);
-                }
-              } else if (key === 'arrowleft' || key === 'arrowright' || key === 'arrowup' || key === 'arrowdown') {
-                if (sel.length === 0) return;
-                e.preventDefault();
-                const step = e.shiftKey ? 10 : 1;
-                const dx = key === 'arrowleft' ? -step : key === 'arrowright' ? step : 0;
-                const dy = key === 'arrowup' ? -step : key === 'arrowdown' ? step : 0;
-                for (const id of sel) {
-                  const node = runtime.session.workingConfig.symbols.find((s) => s.id === id);
-                  if (node) runtime.updateWorkingNode(id, { x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy });
-                }
-              }
-            }}
-          />
-          {asReactNode(
-            inspector?.render({ bindings: { nodeId: selectedNodeId } }),
-          ) ?? (
-            <EditorInspectorPanel
-              runtime={runtime!}
-              selectedNodeId={selectedNodeId}
-              onError={handleError}
-            />
-          )}
-          {asReactNode(toolbox?.render({ bindings: { selection } })) ?? (
-            <EditorToolboxPanel runtime={runtime!} selection={selection} onError={handleError} />
-          )}
-          {asReactNode(statusBar?.render()) ?? null}
-        </div>
-      )}
+              runtime.groupSymbols(sel);
+            }
+          } else if (ctrl && e.shiftKey && key === 'g') {
+            e.preventDefault();
+            for (const id of sel) {
+              const node = runtime.session.workingConfig.symbols.find((s) => s.id === id);
+              if (node?.type === 'scada-group') runtime.ungroupSymbols(id);
+            }
+          } else if (key === 'arrowleft' || key === 'arrowright' || key === 'arrowup' || key === 'arrowdown') {
+            if (sel.length === 0) return;
+            e.preventDefault();
+            const step = e.shiftKey ? 10 : 1;
+            const dx = key === 'arrowleft' ? -step : key === 'arrowright' ? step : 0;
+            const dy = key === 'arrowup' ? -step : key === 'arrowdown' ? step : 0;
+            for (const id of sel) {
+              const node = runtime.session.workingConfig.symbols.find((s) => s.id === id);
+              if (node) runtime.updateWorkingNode(id, { x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy });
+            }
+          }
+        }}
+      >
+        {/* plan 2026-08-08-0900-1 Phase 3 / P2 #12：empty region 正确归所——ready 但无图元时显示空场景提示（canvas 区内 overlay）。 */}
+        {showLayoutBody && runtime.session.workingConfig.symbols.length === 0
+          ? asReactNode(empty?.render()) ?? (
+              <div data-slot="scada-editor-empty" className="nop-scada-editor-empty">
+                {t('industrial.scada.editor.emptyScene')}
+              </div>
+            )
+          : null}
+
+        {effectiveStatus === 'loading'
+          ? asReactNode(loading?.render()) ?? (
+              <div data-slot="scada-editor-loading" className="nop-scada-editor-loading">
+                {t('industrial.scada.editor.loading')}
+              </div>
+            )
+          : null}
+        {effectiveStatus === 'error'
+          ? // plan 2026-08-08-0900-1 Phase 3 / P2 #13：error 分支用 error region（非 empty region），消除语义错配。
+            asReactNode(errorRegion?.render({ bindings: { error: activeError } })) ?? (
+              <div data-slot="scada-editor-error" className="nop-scada-editor-error" data-code={errorCode}>
+                {errorText || t('industrial.scada.editor.canvasError')}
+              </div>
+            )
+          : null}
+      </div>
+      {showLayoutBody
+        ? asReactNode(inspector?.render({ bindings: { nodeId: selectedNodeId } })) ?? (
+            <EditorInspectorPanel runtime={runtime} selectedNodeId={selectedNodeId} onError={handleError} />
+          )
+        : null}
+      </div>
+      {showLayoutBody
+        ? asReactNode(statusBar?.render()) ?? (
+            // plan 2026-08-08-0900-1 Phase 3 / P2 #11：statusBar 内置 fallback（发射 marker），不再恒 null。
+            <div data-slot="scada-editor-status-bar" className="nop-scada-editor-status-bar" />
+          )
+        : null}
     </div>
   );
 }
 
 export const ScadaEditorCanvas = ScadaEditorCanvasRenderer;
+
+/**
+ * 计算全部图元（含 group 嵌套）的聚合世界包围盒（plan 2026-08-08-0900-1 Phase 3 / P2 #9 viewport policy 消费用）。
+ * 复用 collectWorldBounds（与 toolbox-runtime computeBounds 同语义）；跳过零尺寸节点。
+ */
+function computeAggregateViewportBounds(symbols: ScadaConfig['symbols']): Bounds | undefined {
+  const worldBounds = collectWorldBounds(symbols, 0, 0);
+  let out: Bounds | undefined;
+  for (const b of worldBounds) {
+    if (b.width <= 0 || b.height <= 0) continue;
+    if (out === undefined) {
+      out = { x: b.x, y: b.y, width: b.width, height: b.height };
+    } else {
+      const minX = Math.min(out.x, b.x);
+      const minY = Math.min(out.y, b.y);
+      const maxX = Math.max(out.x + out.width, b.x + b.width);
+      const maxY = Math.max(out.y + out.height, b.y + b.height);
+      out = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    }
+  }
+  return out;
+}

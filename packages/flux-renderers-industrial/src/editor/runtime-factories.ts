@@ -136,14 +136,15 @@ export function mountEditorEngine(
  * 装配 runtime 核心（undoRedo + 可变 holder + notifySession/setSessionSelection/syncWorkingCopy）+
  * Editor 事件族适配层（R5 隔离：抽纯 payload + nodeId → 更新 working copy + session.selection）。
  *
- * 返回共享 `EditorRuntimeContext` + adapter detach 函数。
+ * 返回共享 `EditorRuntimeContext` + adapter detach 函数；装配失败返回 null（plan 2026-08-08-0900-1 Phase 2 / P2 #18：
+ * 经 onError 派发 editor-mount-failed，不使整 hook 静默半初始化；调用方据 null 退出 + 销毁 engine）。
  */
 export function createRuntimeCore(
   engine: ScadaEditorEngine,
   session: ScadaEditorSession,
   latest: { current: UseEditorEngineArgs },
   connectionDragActiveRef: { current: boolean },
-): { ctx: EditorRuntimeContext; detachAdapter: () => void } {
+): { ctx: EditorRuntimeContext; detachAdapter: () => void } | null {
   const undoRedo = new UndoRedoAdapter(session.undoStack);
   const synced = { config: cloneConfigSnapshot(session.workingConfig) };
   const clipboard = { current: null as EditorClipboard | null };
@@ -162,9 +163,16 @@ export function createRuntimeCore(
     const diff = diffScadaConfig(synced.config, session.workingConfig);
     const hasChanges =
       diff.added.length > 0 || diff.removed.length > 0 || diff.updated.length > 0 || diff.variables !== undefined;
-    if (hasChanges) {
+    if (!hasChanges) return;
+    // plan 2026-08-08-0900-1 Phase 2 / P2 #17：applyDiff 失败可回滚——还原 working copy 到 engine 实际态
+    // （synced.config）+ 弹出 mutator 刚入栈条目（或中止事务）+ 经 onError 派发 editor-internal-error。
+    try {
       engine.applyDiff(diff, session.workingConfig);
       synced.config = cloneConfigSnapshot(session.workingConfig);
+    } catch (error) {
+      session.workingConfig = cloneConfigSnapshot(synced.config);
+      undoRedo.rollbackOnApplyFailure();
+      latest.current.onError?.('editor-internal-error', errorMessage(error));
     }
   };
 
@@ -230,14 +238,23 @@ export function createRuntimeCore(
     undoRedo.commitTransaction(session.workingConfig);
     notifySession();
   };
-  const detachAdapter = attachEditorAdapter(engine, {
-    onSelectionChange: handleSelectionChange,
-    onGeometryChange: handleGeometryChange,
-    onTransformStart: handleTransformStart,
-    onTransformEnd: handleTransformEnd,
-  });
-
-  return { ctx, detachAdapter };
+  // plan 2026-08-08-0900-1 Phase 2 / P2 #18：装配段 try/catch——adapter 装配或上游步骤抛错时不静默半初始化，
+  // 经 onError 派发 editor-mount-failed + 返回 null（调用方据 null 销毁 engine + 退出 mount）。
+  let detachAdapter: () => void = () => undefined;
+  try {
+    detachAdapter = attachEditorAdapter(engine, {
+      onSelectionChange: handleSelectionChange,
+      onGeometryChange: handleGeometryChange,
+      onTransformStart: handleTransformStart,
+      onTransformEnd: handleTransformEnd,
+      onError: (code, message) => latest.current.onError?.(code, message),
+    });
+    return { ctx, detachAdapter };
+  } catch (error) {
+    detachAdapter();
+    latest.current.onError?.('editor-mount-failed', errorMessage(error));
+    return null;
+  }
 }
 
 export type { ScadaConfig, ScadaSymbolNode, AlignDirection, DistributeDirection, ZOrderAction };

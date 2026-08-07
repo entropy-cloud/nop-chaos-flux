@@ -225,6 +225,37 @@ describe('listAllConnections (with dangling mark)', () => {
     expect(list).toHaveLength(1);
     expect(list[0].junctionId).toBe('j1');
   });
+
+  // plan 2026-08-08-0900-1 Phase 1 / P2 #8（Proof-only 复核，不重复修）：
+  // connection-adapter.ts:263-269 已递归 collectIds（含 group 子树），group child 作为 connection target
+  // 不再被误报 dangling。复核通过 → 记 residual，无 Fix。
+  it('does NOT misreport a group child as dangling when it is a connection target (P2 #8 residual proof)', () => {
+    const syms: ScadaSymbolNode[] = [
+      {
+        id: 'g',
+        type: 'scada-group',
+        x: 0,
+        y: 0,
+        children: [
+          { id: 'child-dev', type: 'scada-rect', x: 5, y: 6, width: 10, height: 12 },
+        ],
+      },
+      {
+        id: 'j1',
+        type: 'scada-pipe-junction',
+        x: 0,
+        y: 0,
+        width: 10,
+        height: 10,
+        custom: { connections: [{ id: 'c1', x: 0, y: 0, direction: 'out', target: 'child-dev' }] },
+      },
+    ];
+    const list = listAllConnections({ symbols: syms });
+    expect(list).toHaveLength(1);
+    expect(list[0].connection.target).toBe('child-dev');
+    // group child target 在递归 collectIds 收集的 id 集中 → 不误报 dangling。
+    expect(list[0].dangling).toBe(false);
+  });
 });
 
 describe('recomputeJunctionAfterMove (linkage)', () => {

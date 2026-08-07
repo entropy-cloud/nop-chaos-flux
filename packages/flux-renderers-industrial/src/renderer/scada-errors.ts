@@ -1,7 +1,26 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 
 export function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  if (!(error instanceof Error)) return String(error);
+  const parts: string[] = [error.message];
+  // plan 2026-08-08-0900-1 Phase 2 / P2 #16：保留 Error.cause 链（防 chained error 上下文丢失）。
+  let cause: unknown = (error as Error & { cause?: unknown }).cause;
+  while (cause instanceof Error) {
+    parts.push(`caused by: ${cause.message}`);
+    cause = (cause as Error & { cause?: unknown }).cause;
+  }
+  if (cause !== undefined && cause !== null) {
+    parts.push(`caused by: ${String(cause)}`);
+  }
+  // plan 2026-08-08-0900-1 Phase 2 / P2 #16：保留截断 stack 帧（诊断用，限首 3 帧，防超长 + 去重复 header）。
+  if (typeof error.stack === 'string') {
+    const frames = error.stack
+      .split('\n')
+      .filter((line) => line.trim().startsWith('at'))
+      .slice(0, 3);
+    if (frames.length > 0) parts.push(frames.join('\n'));
+  }
+  return parts.join('\n');
 }
 
 export function toError(error: unknown): Error {

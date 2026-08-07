@@ -129,6 +129,21 @@ export class UndoStack {
     return this.undoStack[this.undoStack.length - 1];
   }
 
+  /** 查看 redoStack 栈顶（不 pop；plan 2026-08-08-0900-1 Phase 2 / P2 #17 失败可回滚的 redo 用）。 */
+  peekRedoTop(): UndoStackEntry | undefined {
+    return this.redoStack[this.redoStack.length - 1];
+  }
+
+  /**
+   * 弹出 undoStack 栈顶 entry（不入 redoStack）。
+   *
+   * plan 2026-08-08-0900-1 Phase 2 / P2 #17：applyDiff 失败回滚专用——mutator 先 pushOperation 再
+   * syncWorkingCopy，applyDiff 抛错时弹出刚入栈条目，使栈状态与 working copy 保持一致。
+   */
+  dropUndoTop(): UndoStackEntry | undefined {
+    return this.undoStack.pop();
+  }
+
   /** 替换栈顶 entry（合并用：把栈顶替换为合并后的新 entry）。 */
   replaceUndoTop(entry: UndoStackEntry): void {
     if (this.undoStack.length === 0) {

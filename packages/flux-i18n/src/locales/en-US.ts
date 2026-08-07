@@ -953,12 +953,14 @@ export const enUS: Resource = {
         editor: {
           loading: 'Loading editor…',
           canvasError: 'Editor canvas error',
+          emptyScene: 'Empty scene — drag symbols from the palette to start editing',
           inspector: {
             title: 'Properties',
             id: 'ID',
             type: 'Type',
             noSelection: 'No symbol selected',
             empty: '(empty)',
+            invalidJson: 'Invalid JSON format',
           },
           group: {
             geometry: 'Geometry',

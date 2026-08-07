@@ -104,6 +104,24 @@ describe('clipboard (design-toolbox.md §4.3)', () => {
       expect(pasted.custom).not.toBe(node.custom);
     });
 
+    // plan 2026-08-08-0900-1 Phase 1 / P2 #4：clipboard 深克隆 nested custom——
+    // copy 产物 custom.connections 不与源节点共享数组引用（防粘贴/undo 后串改）。
+    it('deep-clones nested custom.connections (no shared array reference)', () => {
+      const node: ScadaSymbolNode = {
+        id: 'j1',
+        type: 'scada-pipe-junction',
+        custom: { connections: [{ id: 'c1', x: 0.5, y: 0.5, direction: 'out', target: 'dev' }] },
+      };
+      const cb = buildClipboardCopy([node]);
+      const sourceConn = (node.custom as { connections: Array<{ x: number }> }).connections;
+      const clipConn = (cb.symbols[0].custom as { connections: Array<{ x: number }> }).connections;
+      // 数组与元素均不共享引用。
+      expect(clipConn).not.toBe(sourceConn);
+      expect(clipConn[0]).not.toBe(sourceConn[0]);
+      clipConn[0].x = 0.123;
+      expect(sourceConn[0].x).toBe(0.5);
+    });
+
     it('copy then cut then paste composition works', () => {
       const nodes = [rect('x', 5, 5)];
       const copyCb = buildClipboardCopy(nodes);

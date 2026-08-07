@@ -174,6 +174,43 @@ export class UndoRedoAdapter {
     return entry?.forward;
   }
 
+  // ---- plan 2026-08-08-0900-1 Phase 2 / P2 #17：失败可回滚的 undo/redo（peek + commit 两段式）----
+  // entry 仅在 apply 成功后才从栈中移动，避免 applyDiff 抛错时 entry 被吞（栈/working copy 失配）。
+
+  /** 查看 undoStack 栈顶的 inverse diff（不移动 entry）。 */
+  peekUndoDiff(): ScadaConfigDiff | undefined {
+    return this.stack.peekUndoTop()?.inverse;
+  }
+
+  /** apply 成功后提交 undo（移动 entry undo→redo）。 */
+  commitUndo(): void {
+    this.stack.popForUndo();
+  }
+
+  /** 查看 redoStack 栈顶的 forward diff（不移动 entry）。 */
+  peekRedoDiff(): ScadaConfigDiff | undefined {
+    return this.stack.peekRedoTop()?.forward;
+  }
+
+  /** apply 成功后提交 redo（移动 entry redo→undo）。 */
+  commitRedo(): void {
+    this.stack.popForRedo();
+  }
+
+  /**
+   * syncWorkingCopy 路径 applyDiff 失败回滚（plan 2026-08-08-0900-1 Phase 2 / P2 #17）。
+   *
+   * - 事务中（transform 每帧 sync）：中止事务（per-frame sync 失败 → 事务无法干净 commit）。
+   * - 非事务（mutator 刚 pushOperation/pushForward 再 sync）：弹出刚入栈的栈顶条目。
+   */
+  rollbackOnApplyFailure(): void {
+    if (this.inTransaction) {
+      this.abortTransaction();
+      return;
+    }
+    this.stack.dropUndoTop();
+  }
+
   /** apply 一条 diff 到 config（host 经此维护 working copy 一致性）。 */
   applyDiff(config: ScadaConfig, diff: ScadaConfigDiff): ScadaConfig {
     return applyDiffToConfig(config, diff);

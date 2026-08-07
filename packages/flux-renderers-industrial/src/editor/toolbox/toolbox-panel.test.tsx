@@ -284,4 +284,39 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     fireEvent.click(buttonByText(container, 'Fit'));
     expect(container.querySelector('[data-slot="scada-editor-toolbox-status"]')).not.toBeNull();
   });
+
+  // plan 2026-08-08-0900-1 Phase 5 / P2 #21：canPaste 从 canonical clipboard 派生（非 React state mirror）。
+  it('#21 Paste disabled→enabled after copy (canPaste derived from canonical clipboard)', () => {
+    // Mutable clipboard mock: starts empty, copySelection populates it.
+    let clipboardSymbols: unknown[] = [];
+    const rt = makeRuntime({
+      copySelection: () => {
+        clipboardSymbols = [{ id: 'a' }];
+        return clipboardSymbols.length;
+      },
+      getClipboard: () => clipboardSymbols.length > 0 ? { symbols: clipboardSymbols as never[], operation: 'copy' as const } : null,
+    });
+    const { container } = renderPanel(['a'], rt);
+    // Initially clipboard empty → Paste disabled.
+    expect(buttonByText(container, 'Paste').disabled).toBe(true);
+    // Copy populates canonical clipboard → Paste enabled on re-render.
+    fireEvent.click(buttonByText(container, 'Copy'));
+    expect(buttonByText(container, 'Paste').disabled).toBe(false);
+  });
+
+  it('#21 Paste re-disabled when clipboard cleared externally (no stale state mirror)', () => {
+    // Simulates external clipboard clear (e.g., load/undo/test handle) — with state mirror this would stay enabled.
+    let clipboardSymbols: unknown[] = [{ id: 'a' }];
+    const rt = makeRuntime({
+      getClipboard: () => clipboardSymbols.length > 0 ? { symbols: clipboardSymbols as never[], operation: 'copy' as const } : null,
+    });
+    const { container } = renderPanel(['a'], rt);
+    // Clipboard non-empty → Paste enabled.
+    expect(buttonByText(container, 'Paste').disabled).toBe(false);
+    // External clear: clipboard emptied outside toolbox.
+    clipboardSymbols = [];
+    // Trigger re-render (parent bumpSessionVersion analog — status change forces re-render).
+    fireEvent.click(buttonByText(container, 'Fit'));
+    expect(buttonByText(container, 'Paste').disabled).toBe(true);
+  });
 });

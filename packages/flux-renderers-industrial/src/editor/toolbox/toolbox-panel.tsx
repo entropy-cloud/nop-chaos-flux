@@ -31,14 +31,16 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
   const { runtime, selection } = props;
   const { t } = useFluxTranslation();
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const [clipboardCount, setClipboardCount] = useState<number>(0);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState<string>('');
 
   const hasSelection = selection.length > 0;
   const canAlign = selection.length >= 2;
   const canDistribute = selection.length >= 3;
-  const canPaste = clipboardCount > 0;
+  // plan 2026-08-08-0900-1 Phase 5 / P2 #21：canPaste 从 canonical clipboard 派生（非 React state mirror）。
+  // 此前 clipboardCount state mirror 在外部清空 clipboard（load/undo/test handle）后不同步 → Paste 恒 enabled。
+  // 改读 runtime.getClipboard()：parent bumpSessionVersion + 本组件 statusMessage 变更均触发重渲染，保证反应式。
+  const canPaste = (runtime.getClipboard()?.symbols.length ?? 0) > 0;
 
   const flashStatus = (msg: string) => setStatusMessage(msg);
 
@@ -70,19 +72,16 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
 
   const handleCopy = () => {
     const n = runtime.copySelection();
-    setClipboardCount(n);
     flashStatus(`${t('industrial.scada.editor.toolbox.copied')}: ${n}`);
   };
 
   const handleCut = () => {
     const n = runtime.cutSelection();
-    setClipboardCount(n);
     flashStatus(`${t('industrial.scada.editor.toolbox.cut')}: ${n}`);
   };
 
   const handlePaste = () => {
     const newIds = runtime.paste();
-    setClipboardCount(runtime.getClipboard()?.symbols.length ?? 0);
     flashStatus(`${t('industrial.scada.editor.toolbox.pasted')}: ${newIds.length}`);
   };
 

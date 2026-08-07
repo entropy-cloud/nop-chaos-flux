@@ -103,11 +103,13 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-renderers-industrial/styles.css': fileURLToPath(
     new URL('./packages/flux-renderers-industrial/src/styles.css', import.meta.url),
   ),
-  '@nop-chaos/flux-renderers-industrial/editor': fileURLToPath(
-    new URL('./packages/flux-renderers-industrial/src/editor/index.ts', import.meta.url),
-  ),
+  // plan 2026-08-08-0900-1 Phase 4 / P2 #40：editor/styles.css 别名须在 editor（前缀匹配）之前，
+  // 否则 vite 把 editor/styles.css 解析成 editor/index.ts/styles.css（ENOTDIR）。
   '@nop-chaos/flux-renderers-industrial/editor/styles.css': fileURLToPath(
     new URL('./packages/flux-renderers-industrial/src/editor/styles.css', import.meta.url),
+  ),
+  '@nop-chaos/flux-renderers-industrial/editor': fileURLToPath(
+    new URL('./packages/flux-renderers-industrial/src/editor/index.ts', import.meta.url),
   ),
   '@nop-chaos/flux-renderers-industrial': fileURLToPath(
     new URL('./packages/flux-renderers-industrial/src/index.ts', import.meta.url),

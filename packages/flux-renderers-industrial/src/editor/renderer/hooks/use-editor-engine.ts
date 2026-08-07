@@ -146,7 +146,14 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     if (!mounted) return;
     const { engine, session } = mounted;
 
-    const { ctx, detachAdapter } = createRuntimeCore(engine, session, latest, connectionDragActiveRef);
+    // plan 2026-08-08-0900-1 Phase 2 / P2 #18：createRuntimeCore 装配失败返回 null（adapter 装配抛错等）。
+    // 据此销毁 engine + 退出 mount（onError 已在 createRuntimeCore 内派发 editor-mount-failed）。
+    const core = createRuntimeCore(engine, session, latest, connectionDragActiveRef);
+    if (!core) {
+      engine.destroy();
+      return;
+    }
+    const { ctx, detachAdapter } = core;
     detachAdapterRef.current = detachAdapter;
 
     const mutators = buildRuntimeMutators(ctx);

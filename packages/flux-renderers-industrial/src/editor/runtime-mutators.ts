@@ -90,22 +90,36 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     notifySession();
   };
 
-  /** 应用一条 undo/redo diff 到 working copy + engine（不重新入栈）。 */
-  const applyUndoRedoDiff = (diff: ScadaConfigDiff) => {
-    session.workingConfig = undoRedo.applyDiff(session.workingConfig, diff);
-    engine.applyDiff(diff, session.workingConfig);
-    synced.config = cloneConfigSnapshot(session.workingConfig);
-    notifySession();
+  /**
+   * 应用一条 undo/redo diff 到 working copy + engine（不重新入栈）。
+   *
+   * plan 2026-08-08-0900-1 Phase 2 / P2 #17：applyDiff 失败可回滚——entry 经 peekUndoDiff/peekRedoDiff
+   * 预读（不移动），仅 apply 成功后才 commitUndo/commitRedo 移动 entry。失败时还原 working copy +
+   * 经 onError 派发 editor-internal-error（entry 保留在原栈，栈/working copy 保持一致）。
+   */
+  const applyUndoRedoDiff = (diff: ScadaConfigDiff, commit: () => void) => {
+    const beforeWorking = cloneConfigSnapshot(session.workingConfig);
+    try {
+      session.workingConfig = undoRedo.applyDiff(session.workingConfig, diff);
+      engine.applyDiff(diff, session.workingConfig);
+      synced.config = cloneConfigSnapshot(session.workingConfig);
+      commit();
+      notifySession();
+    } catch (error) {
+      // 回滚 working copy 到 apply 前态 + 派发 editor-internal-error（entry 未 commit，保留在原栈）。
+      session.workingConfig = beforeWorking;
+      latest.current.onError?.('editor-internal-error', errorMessage(error));
+    }
   };
 
   const undo = () => {
-    const diff = undoRedo.undo();
-    if (diff) applyUndoRedoDiff(diff);
+    const diff = undoRedo.peekUndoDiff();
+    if (diff) applyUndoRedoDiff(diff, () => undoRedo.commitUndo());
   };
 
   const redo = () => {
-    const diff = undoRedo.redo();
-    if (diff) applyUndoRedoDiff(diff);
+    const diff = undoRedo.peekRedoDiff();
+    if (diff) applyUndoRedoDiff(diff, () => undoRedo.commitRedo());
   };
 
   const groupSymbols = (nodeIds: string[]) => {

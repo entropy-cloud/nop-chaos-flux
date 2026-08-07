@@ -28,7 +28,7 @@ export interface ScadaEditorCanvasSchema extends BaseSchema {
   /** 提交策略（manual 缺省 / auto）；缺省 manual。 */
   commitPolicy?: 'manual' | 'auto';
   /** 视口策略（fit/center，复用 runtime 引擎命令）。 */
-  viewport?: { fit?: 'contain' | 'fill'; center?: boolean };
+  viewport?: ScadaEditorViewportPolicy;
   /** 图元库面板 region（E5.2）。 */
   palette?: SchemaObject;
   /** 属性面板 region（E5.3）。 */

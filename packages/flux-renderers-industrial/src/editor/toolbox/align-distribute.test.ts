@@ -152,3 +152,35 @@ describe('distributeSelection (design-toolbox.md §4.2.1)', () => {
     }
   });
 });
+
+// plan 2026-08-08-0900-1 Phase 4 / P2 #5（复核 Proof）：align/distribute group-relative 收敛状态。
+// 结论：扁平算法（M3 T1 接受）对「同父兄弟」自洽（local 坐标一致）；「跨层级混选」是文档化的 M3 限制，
+// 非 P1-C2/C3 回归（P1-C2/C3 修的是 selection 可达性 + fit/center 世界 bounds，未改 align 的扁平语义）。
+describe('alignSelection group-relative convergence recheck (plan 2026-08-08-0900-1 Phase 4 / P2 #5)', () => {
+  it('top-level symbols: align left correct (local === world for top-level)', () => {
+    const nodes = [rect('a', 10, 0), rect('b', 100, 0)];
+    const res = alignSelection(nodes, 'left');
+    expect(patchOf(res, 'b')?.x).toBe(10);
+  });
+
+  it('same-group children: align left self-consistent in local space', () => {
+    // group child coordinates are parent-relative; aligning siblings within the same group
+    // operates in a consistent local coordinate space → alignment is correct relative to siblings.
+    const children = [rect('c1', 5, 0), rect('c2', 30, 0)];
+    const res = alignSelection(children, 'left');
+    expect(patchOf(res, 'c2')?.x).toBe(5);
+  });
+
+  it('mixed-level selection: flat algorithm uses each node local coords (accepted M3 T1 limitation)', () => {
+    // top-level node + nested group child: their x/y live in different coordinate spaces.
+    // align-distribute does not resolve group-relative offsets (documented M3 flat-algorithm, T1 trade-off).
+    const top = rect('top', 200, 0);
+    const child = rect('child', 5, 0); // local to its parent group
+    const res = alignSelection([top, child], 'left');
+    // The flat algorithm aligns by raw x values (200 vs 5) → min=5 → top-level pulled to 5
+    // (a local coord belonging to the child's parent space). This is the known M3 limitation, not a regression.
+    expect(res.ok).toBe(true);
+    expect(patchOf(res, 'top')?.x).toBe(5);
+    expect(patchOf(res, 'child')?.x).toBeUndefined();
+  });
+});

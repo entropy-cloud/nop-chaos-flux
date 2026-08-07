@@ -1,3 +1,4 @@
+import { useState, type ChangeEvent } from 'react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { Input, Textarea, Switch, Label, NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import type { PanelField } from './schema-extractor.js';
@@ -31,25 +32,7 @@ export function InspectorField(props: InspectorFieldProps) {
   }
 
   if (widget === 'json-editor') {
-    const text = typeof value === 'string' ? value : JSON.stringify(value ?? null, null, 2);
-    return (
-      <div>
-        <Label className="text-xs">{t(label)}</Label>
-        <Textarea
-          className="text-xs font-mono"
-          rows={3}
-          value={text}
-          onChange={(e) => {
-            try {
-              onChange(JSON.parse(e.target.value));
-            } catch {
-              onChange(e.target.value);
-            }
-          }}
-        />
-        {errorEl}
-      </div>
-    );
+    return <JsonEditorField field={field} value={value} error={error} onChange={onChange} />;
   }
 
   if (widget === 'switch') {
@@ -104,6 +87,62 @@ export function InspectorField(props: InspectorFieldProps) {
         }}
       />
       {errorEl}
+    </div>
+  );
+}
+
+/**
+ * json-editor 子字段（plan 2026-08-08-0900-1 Phase 1 / P2 #6）。
+ *
+ * 先前实现：parse 失败时 `catch → onChange(rawString)` 把裸字符串写进 workingConfig，
+ * 与 schema 期望的对象类型不符（corrupt working copy）。
+ *
+ * 修正：引入局部 draft 文本态，parse 失败时显示 field-error 且**不**调 onChange（仅 parse 成功才提交）。
+ * 外部 value 变化时同步 draft（React 推荐的「render 期 derived state」模式，避免 useEffect 镜像）；
+ * 经 isSelfUpdate flag 区分「自身提交的回写」与「外部变更」，避免提交后 canonical 重格式化打断输入。
+ */
+function JsonEditorField(props: { field: PanelField; value: unknown; error?: string; onChange: (value: unknown) => void }) {
+  const { field, value, error, onChange } = props;
+  const { t } = useFluxTranslation();
+  const label = field.entry.label ?? field.key;
+  const externalText = typeof value === 'string' ? value : JSON.stringify(value ?? null, null, 2);
+
+  const [prevValue, setPrevValue] = useState<unknown>(value);
+  const [draft, setDraft] = useState<string>(externalText);
+  const [parseError, setParseError] = useState<string | undefined>(undefined);
+  const [selfUpdate, setSelfUpdate] = useState(false);
+
+  // 外部 value 变化时同步 draft（仅当非自身提交回写——避免 canonical 重格式化 clobber 正在输入的文本）。
+  if (value !== prevValue) {
+    setPrevValue(value);
+    if (selfUpdate) {
+      setSelfUpdate(false);
+    } else {
+      setDraft(externalText);
+      setParseError(undefined);
+    }
+  }
+
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    const next = e.target.value;
+    setDraft(next);
+    try {
+      const parsed = JSON.parse(next);
+      setSelfUpdate(true);
+      onChange(parsed);
+      setParseError(undefined);
+    } catch {
+      // plan 2026-08-08-0900-1 Phase 1 / P2 #6：parse 失败不写裸字符串到 workingConfig，仅显示 field-error。
+      setParseError(t('industrial.scada.editor.inspector.invalidJson'));
+    }
+  };
+
+  const showError = parseError ?? error;
+  return (
+    <div>
+      <Label className="text-xs">{t(label)}</Label>
+      <Textarea className="text-xs font-mono" rows={3} value={draft} onChange={handleChange} />
+      {showError ? <div className="nop-scada-editor-field-error">{showError}</div> : null}
     </div>
   );
 }

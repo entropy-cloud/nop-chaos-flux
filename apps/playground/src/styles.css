@@ -7,6 +7,8 @@
 @import '@nop-chaos/flux-renderers-content/styles.css';
 @import '@nop-chaos/flux-renderers-scheduling/styles.css';
 @import '@nop-chaos/flux-renderers-ai/styles.css';
+@import '@nop-chaos/flux-renderers-industrial/styles.css';
+@import '@nop-chaos/flux-renderers-industrial/editor/styles.css';
 @import './styles-theme-utilities.css';
 @source "../../../packages";
 

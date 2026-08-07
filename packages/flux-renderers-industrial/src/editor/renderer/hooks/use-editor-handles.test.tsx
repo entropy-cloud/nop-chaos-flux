@@ -160,6 +160,48 @@ describe('useEditorHandles', () => {
     expect(runtime.session.workingConfig.symbols.find((s: { id: string }) => s.id === 'new-1')).toBeDefined();
   });
 
+  // plan 2026-08-08-0900-1 Phase 3 / P2 #10（复核 Proof-only）：component:destroy() 句柄可达——
+  // 触发 engine.destroy + onDestroyed 状态面（→ canvas setStatus('destroyed') → data-status="destroyed" 可达）。
+  it('destroy handle invokes engine.destroy + onDestroyed (P2 #10 lifecycle reachable)', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    const destroySpy = vi.spyOn(runtime.engine as unknown as { destroy: () => void }, 'destroy');
+    const onDestroyed = vi.fn();
+    render(
+      <HookHost
+        componentRegistry={registry as unknown as ComponentHandleRegistry}
+        id="e"
+        cid={1}
+        runtime={runtime}
+        onDestroyed={onDestroyed}
+      />,
+    );
+    const result = registry.getCapabilities('e')!.invoke('destroy', {}, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(true);
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+    expect(onDestroyed).toHaveBeenCalledTimes(1);
+  });
+
+  it('destroy handle is reachable even when engine already destroyed (idempotent onDestroyed)', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    vi.spyOn(runtime.engine as unknown as { isDestroyed: () => boolean }, 'isDestroyed').mockReturnValue(true);
+    const onDestroyed = vi.fn();
+    render(
+      <HookHost
+        componentRegistry={registry as unknown as ComponentHandleRegistry}
+        id="e"
+        cid={1}
+        runtime={runtime}
+        onDestroyed={onDestroyed}
+      />,
+    );
+    const result = registry.getCapabilities('e')!.invoke('destroy', {}, {} as never) as { ok: boolean };
+    expect(result.ok).toBe(true);
+    // engine.destroy() skipped (already destroyed), but onDestroyed still fires (status面 reachable).
+    expect(onDestroyed).toHaveBeenCalledTimes(1);
+  });
+
   it('addSymbol rejects invalid node', () => {
     const registry = new MockHandleRegistry();
     const runtime = makeRuntime();
@@ -256,6 +298,26 @@ describe('useEditorHandles', () => {
     render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={null} />);
     const result = registry.getCapabilities('e')!.invoke('save', {}, {} as never) as { ok: boolean };
     expect(result.ok).toBe(false);
+  });
+
+  // plan 2026-08-08-0900-1 Phase 5 / P2 #29：not-mounted 返回 registry code（非自由格式英文 Error）。
+  it('#29 not-mounted returns registry error code (not free-form English)', () => {
+    const registry = new MockHandleRegistry();
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={null} />);
+    const result = registry.getCapabilities('e')!.invoke('fit', {}, {} as never) as { ok: boolean; error?: Error };
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect(result.error!.message).toBe('not-mounted');
+  });
+
+  it('#29 destroyed engine returns not-mounted registry code', () => {
+    const registry = new MockHandleRegistry();
+    const runtime = makeRuntime();
+    vi.spyOn(runtime.engine as unknown as { isDestroyed: () => boolean }, 'isDestroyed').mockReturnValue(true);
+    render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
+    const result = registry.getCapabilities('e')!.invoke('save', {}, {} as never) as { ok: boolean; error?: Error };
+    expect(result.ok).toBe(false);
+    expect(result.error!.message).toBe('not-mounted');
   });
 
   it('unknown method returns error', () => {

@@ -3,6 +3,7 @@ import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { industrialEditorRendererDefinitions } from './renderer-definitions.js';
 import { registerScadaEditorRenderers } from './index.js';
 import { ScadaEditorCanvasRenderer } from './scada-editor-canvas.js';
+import type { ScadaEditorCanvasSchema, ScadaEditorViewportPolicy } from './schemas.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
@@ -50,6 +51,10 @@ describe('industrialEditorRendererDefinitions (E5.1 完整 fields)', () => {
     expect(byKey.get('inspector')).toMatchObject({ key: 'inspector', kind: 'region' });
     expect(byKey.get('toolbox')).toMatchObject({ key: 'toolbox', kind: 'region' });
     expect(byKey.get('statusBar')).toMatchObject({ key: 'statusBar', kind: 'region' });
+    // plan 2026-08-08-0900-1 Phase 3 / P2 #12：loading/empty/error regions 已注册（不再恒 undefined，host 可覆盖）。
+    expect(byKey.get('loading')).toMatchObject({ key: 'loading', kind: 'region' });
+    expect(byKey.get('empty')).toMatchObject({ key: 'empty', kind: 'region' });
+    expect(byKey.get('error')).toMatchObject({ key: 'error', kind: 'region' });
   });
 
   it('should register via registerScadaEditorRenderers without conflicts', () => {
@@ -75,5 +80,18 @@ describe('industrialEditorRendererDefinitions (E5.1 完整 fields)', () => {
     registerScadaEditorRenderers(registry);
     registerScadaEditorRenderers(registry);
     expect(registry.list()).toHaveLength(1);
+  });
+
+  // plan 2026-08-08-0900-1 Phase 5 / P2 #30：ScadaEditorViewportPolicy 类型与 schema viewport 字段接线。
+  it('#30 ScadaEditorCanvasSchema.viewport is typed as ScadaEditorViewportPolicy (no dangling export)', () => {
+    // Type-level proof: schema viewport field IS ScadaEditorViewportPolicy (bidirectional assignability).
+    const sample: ScadaEditorViewportPolicy = { fit: 'contain', center: true };
+    const schema: ScadaEditorCanvasSchema = { type: 'scada-editor-canvas', viewport: sample };
+    // If the schema field used an inline duplicate type, this assignment would still work structurally.
+    // The real proof is the typecheck pass: the schema field is declared as ScadaEditorViewportPolicy (not inline).
+    expect(schema.viewport).toEqual(sample);
+    // Bidirectional: schema.viewport is assignable back to ScadaEditorViewportPolicy.
+    const back: ScadaEditorViewportPolicy | undefined = schema.viewport;
+    expect(back).toEqual(sample);
   });
 });

@@ -40,6 +40,11 @@ export const industrialEditorRendererDefinitions: RendererDefinition[] = [
       { key: 'inspector', kind: 'region' },
       { key: 'toolbox', kind: 'region' },
       { key: 'statusBar', kind: 'region' },
+      // plan 2026-08-08-0900-1 Phase 3 / P2 #12：注册 loading/empty/error regions——
+      // 此前 canvas 读 regions.loading/empty 但未注册（恒 undefined，host 无法覆盖）。注册使三态显示可被 host 覆盖。
+      { key: 'loading', kind: 'region' },
+      { key: 'empty', kind: 'region' },
+      { key: 'error', kind: 'region' },
     ],
   },
 ];

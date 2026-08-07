@@ -24,6 +24,11 @@ export interface EditorAdapterListeners {
   onTransformStart?: () => void;
   /** transform 事务终止回调（pointerup 触发，host 经 undoRedo.commitTransaction 入栈 1 个 diff）。 */
   onTransformEnd?: () => void;
+  /**
+   * 装配失败回调（plan 2026-08-08-0900-1 Phase 2 / P2 #19）：Editor 实例缺失时经此派发 editor-mount-failed，
+   * 非静默失活。mock 环境 Editor 就绪（分支不触发）；生产装配失败才命中。
+   */
+  onError?: (code: string, message: string) => void;
 }
 
 /**
@@ -32,6 +37,9 @@ export interface EditorAdapterListeners {
  * 返回 detach 函数——unmount / 模式切换时退订，防泄漏（R5 不泄漏验证 #4）。
  * transform 族（editor.move/scale/rotate/skew）→ 读 target 几何 → onGeometryChange 写回 working copy；
  * select 族（editor.select）→ onSelectionChange 更新 session.selection。
+ *
+ * plan 2026-08-08-0900-1 Phase 2 / P2 #19：Editor 实例缺失时不再静默 noop——经 onError 派发 editor-mount-failed
+ * （仍返回 noop detach 不阻断渲染）。mock 环境装配 MockEditor（editor 就绪，分支不触发），生产装配失败才命中。
  */
 export function attachEditorAdapter(
   engine: ScadaEditorEngine,
@@ -46,7 +54,8 @@ export function attachEditorAdapter(
       }
     | undefined;
   if (!editor || typeof editor.on !== 'function') {
-    // Editor 实例未就绪（mock 环境或装配失败）——返回 noop detach，适配层不阻断渲染。
+    // Editor 实例未就绪——经 onError 派发 editor-mount-failed（非静默失活），仍返回 noop detach 不阻断渲染。
+    listeners.onError?.('editor-mount-failed', 'Editor instance is not available; adapter cannot attach');
     return () => undefined;
   }
 
@@ -81,10 +90,13 @@ export function attachEditorAdapter(
   // transform 族（editor.move/scale/rotate/skew）：读 target 几何 → 写回 working copy（spike 约束 #5）。
   // 事务语义（design-undo-redo.md §4.2）：首帧 beginTransaction 快照 working copy，每帧只更新 working copy（不入栈），
   // pointerup commitTransaction 一次性 diff 入栈（一拖拽 = 一 undo 步，防逐帧入栈爆炸 U2）。
+  // plan 2026-08-08-0900-1 Phase 3 / P2 #15：空选区守卫——target 为空（connection pointer-down 双触发等场景）
+  // 不开 transform transaction，避免空事务污染 undo 栈。
   const onTransform = (): void => {
-    beginTransformTransaction();
     const target = editor.target;
     const nodeIds = extractNodeIds(engine, target);
+    if (nodeIds.length === 0) return;
+    beginTransformTransaction();
     for (const nodeId of nodeIds) {
       const geometry = readTargetGeometry(engine, nodeId);
       if (geometry) {
@@ -139,7 +151,9 @@ function extractNodeIds(engine: ScadaEditorEngine, target: unknown): string[] {
       }
     }
   }
-  return ids;
+  // plan 2026-08-08-0900-1 Phase 1 / P2 #7：去重——list 含同一节点两次（或 name/id fallback 命中同值，
+  // 如 group 容器 name===node.id）时只保留唯一来源，避免 onSelectionChange 收重复 nodeId。
+  return [...new Set(ids)];
 }
 
 /**

@@ -61,6 +61,67 @@ describe('createScadaEditorSession (M1 subset, no undo/redo stack)', () => {
     const baselineChild = (session.committedBaseline.symbols[1] as { children: Array<{ x: number }> }).children[0];
     expect(baselineChild.x).toBe(5);
   });
+
+  // plan 2026-08-08-0900-1 Phase 1 / P2 #4：nested custom 深克隆——working.custom 子对象变更不串改 baseline.custom。
+  it('deep-clones nested custom (working.custom mutation does not leak to baseline)', () => {
+    const configWithCustom: ScadaConfig = {
+      version: 1,
+      variables: [],
+      symbols: [
+        {
+          id: 'j1',
+          type: 'scada-pipe-junction',
+          x: 0,
+          y: 0,
+          width: 80,
+          height: 40,
+          custom: { connections: [{ id: 'c1', x: 0.5, y: 0.5, direction: 'out', target: 'dev' }] },
+        },
+      ],
+    };
+    const session = createScadaEditorSession(configWithCustom);
+    const workingConnections = (
+      session.workingConfig.symbols[0].custom as { connections: Array<{ x: number }> }
+    ).connections;
+    workingConnections[0].x = 0.99;
+    const baselineConnections = (
+      session.committedBaseline.symbols[0].custom as { connections: Array<{ x: number }> }
+    ).connections;
+    expect(baselineConnections[0].x).toBe(0.5);
+    // custom 对象本身也不共享引用。
+    expect(session.workingConfig.symbols[0].custom).not.toBe(session.committedBaseline.symbols[0].custom);
+  });
+
+  it('deep-clones nested custom inside group children', () => {
+    const configWithGroupCustom: ScadaConfig = {
+      version: 1,
+      variables: [],
+      symbols: [
+        {
+          id: 'g1',
+          type: 'scada-group',
+          x: 0,
+          y: 0,
+          children: [
+            {
+              id: 'j1',
+              type: 'scada-pipe-junction',
+              x: 0,
+              y: 0,
+              width: 10,
+              height: 10,
+              custom: { connections: [{ id: 'c1', x: 0.1, y: 0.2, direction: 'out' }] },
+            },
+          ],
+        },
+      ],
+    };
+    const session = createScadaEditorSession(configWithGroupCustom);
+    const workingChild = session.workingConfig.symbols[0].children![0];
+    (workingChild.custom as { connections: Array<{ x: number }> }).connections[0].x = 0.9;
+    const baselineChild = session.committedBaseline.symbols[0].children![0];
+    expect((baselineChild.custom as { connections: Array<{ x: number }> }).connections[0].x).toBe(0.1);
+  });
 });
 
 describe('resetSession (load 句柄消费)', () => {

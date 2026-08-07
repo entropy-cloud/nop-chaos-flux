@@ -131,6 +131,40 @@ describe('attachEditorAdapter', () => {
     detach();
   });
 
+  // plan 2026-08-08-0900-1 Phase 3 / P2 #15：空选区 pointer-down/move 不开 transform transaction——
+  // connection pointer-down 与 leafer Editor select 双触发时，空 target 不再误开事务。
+  it('onTransform does NOT begin a transaction when target is empty (P2 #15 guard)', () => {
+    let transformStarted = false;
+    const detach = attachEditorAdapter(engine!, {
+      onSelectionChange: () => undefined,
+      onGeometryChange: () => undefined,
+      onTransformStart: () => {
+        transformStarted = true;
+      },
+    });
+    const editor = engine!.editor as { emit?: (e: string) => void; target?: unknown };
+    editor.target = undefined;
+    editor.emit?.('editor.move');
+    expect(transformStarted).toBe(false);
+    detach();
+  });
+
+  it('onTransform still begins a transaction when target has a real selection', () => {
+    let transformStarted = false;
+    const detach = attachEditorAdapter(engine!, {
+      onSelectionChange: () => undefined,
+      onGeometryChange: () => undefined,
+      onTransformStart: () => {
+        transformStarted = true;
+      },
+    });
+    const editor = engine!.editor as { emit?: (e: string) => void; target?: unknown };
+    editor.target = engine!.getSymbol('a1')?.node;
+    editor.emit?.('editor.move');
+    expect(transformStarted).toBe(true);
+    detach();
+  });
+
   it('onSelectionChange extracts nodeIds via name fallback for non-registered nodes', () => {
     let captured: string[] | undefined;
     const detach = attachEditorAdapter(engine!, {
@@ -177,6 +211,39 @@ describe('attachEditorAdapter', () => {
     expect(captured).toEqual([]);
     detach();
   });
+
+  // plan 2026-08-08-0900-1 Phase 1 / P2 #7：group 容器 name===node.id 时 extractNodeIds 不双重解析——
+  // list 含同一节点两次（或同值多源）时结果去重，onSelectionChange 不收重复 nodeId。
+  it('onSelectionChange deduplicates ids when list contains the same node twice', () => {
+    let captured: string[] | undefined;
+    const detach = attachEditorAdapter(engine!, {
+      onSelectionChange: (ids) => {
+        captured = ids;
+      },
+      onGeometryChange: () => undefined,
+    });
+    const editor = engine!.editor as { emit?: (e: string) => void; list?: unknown[] };
+    const a1Node = engine!.getSymbol('a1')?.node;
+    editor.list = [a1Node, a1Node];
+    editor.emit?.('editor.select');
+    expect(captured).toEqual(['a1']);
+    detach();
+  });
+
+  it('onSelectionChange deduplicates name-fallback duplicates', () => {
+    let captured: string[] | undefined;
+    const detach = attachEditorAdapter(engine!, {
+      onSelectionChange: (ids) => {
+        captured = ids;
+      },
+      onGeometryChange: () => undefined,
+    });
+    const editor = engine!.editor as { emit?: (e: string) => void; list?: unknown[] };
+    editor.list = [{ name: 'dup' }, { name: 'dup' }];
+    editor.emit?.('editor.select');
+    expect(captured).toEqual(['dup']);
+    detach();
+  });
 });
 
 describe('programmaticSelect / programmaticClearSelection', () => {
@@ -213,6 +280,26 @@ describe('attachEditorAdapter with no editor instance', () => {
     } as unknown as ScadaEditorEngine;
     const detach = attachEditorAdapter(fakeEngine, {});
     expect(typeof detach).toBe('function');
+    detach();
+  });
+
+  // plan 2026-08-08-0900-1 Phase 2 / P2 #19：Editor 实例缺失不再静默 noop——经 onError 派发 editor-mount-failed
+  // （非静默失活）。mock 环境 Editor 就绪（分支不触发），生产装配失败才命中此分支。
+  it('dispatches editor-mount-failed via onError when editor instance is missing (non-silent)', () => {
+    const onError = vi.fn();
+    const fakeEngine = { editor: undefined } as unknown as ScadaEditorEngine;
+    const detach = attachEditorAdapter(fakeEngine, { onError });
+    expect(typeof detach).toBe('function');
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledWith('editor-mount-failed', expect.any(String));
+    detach();
+  });
+
+  it('dispatches editor-mount-failed when editor.on is not a function', () => {
+    const onError = vi.fn();
+    const fakeEngine = { editor: { on: 'not-a-fn' } } as unknown as ScadaEditorEngine;
+    const detach = attachEditorAdapter(fakeEngine, { onError });
+    expect(onError).toHaveBeenCalledWith('editor-mount-failed', expect.any(String));
     detach();
   });
 });

@@ -951,12 +951,14 @@ export const zhCN: Resource = {
         editor: {
           loading: '编辑器加载中…',
           canvasError: '编辑器画布错误',
+          emptyScene: '空场景——从左侧图元库拖入图元开始编辑',
           inspector: {
             title: '属性',
             id: 'ID',
             type: '类型',
             noSelection: '未选中图元',
             empty: '（空）',
+            invalidJson: 'JSON 格式无效',
           },
           group: {
             geometry: '几何',

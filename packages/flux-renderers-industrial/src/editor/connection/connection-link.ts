@@ -43,10 +43,17 @@ export function recomputeConnectionAnchor(args: {
 }): { x: number; y: number } {
   const targetWorldX = args.targetDevice.x + args.targetAnchor.x * args.targetDevice.width;
   const targetWorldY = args.targetDevice.y + args.targetAnchor.y * args.targetDevice.height;
+  // plan 2026-08-08-0900-1 Phase 1 / P2 #2：零尺寸 pipe-junction 除零守卫——width/height 为 0（或非有限）
+  // 时退化到 junction 自身坐标（归一化 0），不写 Infinity/NaN。否则 JSON.stringify(Infinity)→null 损坏往返。
   return {
-    x: (targetWorldX - args.junction.x) / args.junction.width,
-    y: (targetWorldY - args.junction.y) / args.junction.height,
+    x: safeDiv(targetWorldX - args.junction.x, args.junction.width),
+    y: safeDiv(targetWorldY - args.junction.y, args.junction.height),
   };
+}
+
+/** 除法零守卫：除数为 0 时返回 0（退化到 junction 自身坐标，P2 #2），防 Infinity/NaN 写入序列化。 */
+function safeDiv(numerator: number, divisor: number): number {
+  return divisor === 0 ? 0 : numerator / divisor;
 }
 
 /**
