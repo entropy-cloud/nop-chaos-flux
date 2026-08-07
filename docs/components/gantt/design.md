@@ -284,7 +284,11 @@ Gantt 是 interaction owner，其状态分三层：
 
 ### 8.2 动作
 
-这些顶层 action 字段（`zoomIn`、`zoomOut`、`scrollToToday`、`scrollToTask`）设计用于工具栏按钮绑定，通过 toolbar region 中的按钮以 `component:zoomIn` 等方式引用。它们不是独立可调用的 action（不注册到 action 调度器），而是通过 `useImperativeHandle` 暴露的组件句柄方法的快捷声明。
+这些顶层 action 字段（`zoomIn`、`zoomOut`、`scrollToToday`、`scrollToTask`）声明为 `kind: 'reaction'`（CX-9 通道），渲染器消费 `props.reactions`：
+
+- 挂载时 `reactions[key].ready()` 激活；
+- **两条触发路径都派发**：工具栏按钮（`gantt.tsx` header）与 `component:*` 句柄 invoke（22-13 收口后对称，对齐 calendar 22-05「句柄 invoke 即派发」家族标准）——`scrollToTask` 缺 `taskId` 的失败路径不派发；
+- 行为实现经 `useImperativeHandle` 暴露的组件句柄方法（zoomIn/zoomOut/scrollToToday/scrollToTask）执行，句柄经 `componentRegistry` 注册，`component:*` 可解析。
 
 | 动作            | 作用               | 参数         |
 | --------------- | ------------------ | ------------ |
