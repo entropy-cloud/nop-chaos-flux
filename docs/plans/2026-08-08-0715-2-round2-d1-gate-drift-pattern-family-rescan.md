@@ -1,6 +1,6 @@
 # D1 门禁漂移回扫与四模式族回扫（10 个 flux-renderers-\* 包）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit-round2
 > Work Item: D1
 > Last Reviewed: 2026-08-08
@@ -69,58 +69,58 @@
 
 ### Phase 1 - 门禁全量重跑与零新增复验
 
-Status: planned
+Status: completed
 Targets: root `package.json` 28 项 `check:*` 脚本、`scripts/__tests__/`（7 文件）、`docs/logs/2026/08-08.md`
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] 确认 D0 基线已就绪（D0 Phase 3 交付：28 项逐项输出 + `pnpm test:scripts` 通过数）。
-- [ ] 逐项重跑 28 项 `check:*`（含 14 项 `check:audit-*`），与 D0 基线逐项比对，记录零新增判定。
-- [ ] `pnpm test:scripts` 门禁回归套件复跑（7 文件），确认扫描器自身无回归。
-- [ ] 扫描器回归专项（Decision）：对 browser-io（6d2497ea 漏扫教训）核查扫描范围正则与 committed 夹具覆盖；任一扫描器有回归 → 修复门禁 + 补回归测试（test-first），先于业务代码裁决。
-- [ ] 新增命中裁决（Decision）：新增命中 = 门禁回归（修门禁）或 CV 后代码漂移（P0/P1 入 Phase 2 修复队列 / P2 入 DR / P3 入 D2）；任何"临时改门禁规则消化"的路径被禁止，规则变更必须带 committed 回归测试。
+- [x] 确认 D0 基线已就绪（D0 Phase 3 交付：28 项逐项输出 + `pnpm test:scripts` 通过数）。
+- [x] 逐项重跑 28 项 `check:*`（含 14 项 `check:audit-*`），与 D0 基线逐项比对，记录零新增判定。
+- [x] `pnpm test:scripts` 门禁回归套件复跑（7 文件），确认扫描器自身无回归。
+- [x] 扫描器回归专项（Decision）：对 browser-io（6d2497ea 漏扫教训）核查扫描范围正则与 committed 夹具覆盖；任一扫描器有回归 → 修复门禁 + 补回归测试（test-first），先于业务代码裁决。
+- [x] 新增命中裁决（Decision）：新增命中 = 门禁回归（修门禁）或 CV 后代码漂移（P0/P1 入 Phase 2 修复队列 / P2 入 DR / P3 入 D2）；任何"临时改门禁规则消化"的路径被禁止，规则变更必须带 committed 回归测试。
 
 Exit Criteria:
 
-- [ ] 28 项 `check:*` 逐项零新增命中（与 D0 基线一致或更优）或新增命中全部裁决完毕（归属明确：门禁修复已 test-first 落地 / 代码漂移已入对应修复队列）。
-- [ ] `pnpm test:scripts` 全绿（无扫描器回归）；browser-io 扫描范围专项核查记录（正则 + 夹具覆盖复核）。
+- [x] 28 项 `check:*` 逐项零新增命中（与 D0 基线一致或更优）或新增命中全部裁决完毕（归属明确：门禁修复已 test-first 落地 / 代码漂移已入对应修复队列）。
+- [x] `pnpm test:scripts` 全绿（无扫描器回归）；browser-io 扫描范围专项核查记录（正则 + 夹具覆盖复核）。
 
 ### Phase 2 - 四模式族回扫 + P0/P1 自动修复
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-{ai,basic,content,data,form,form-advanced,graph,layout,mobile,scheduling}/src`、`docs/audits/per-component/<type>.md`、`docs/backlog/component-audit-round2-roadmap.md`（CX-n 插入）
 
 - Item Types: `Fix | Proof | Decision | Follow-up`
 
-- [ ] 事件派发 ctx 回扫：`check:audit-event-dispatch-ctx` 全量输出 + 人工抽查（CV 后新增派发点携带 `{ event, evaluationBindings, scope }`、template `${key}` 可解析验证、allowlist/豁免点复验）；P0/P1 修复（test-first）。
-- [ ] `kind:'reaction'` 三件套回扫：`rg "kind: 'reaction'" packages/flux-renderers-*/src` 全量登记 vs 各渲染器 reactions 消费/句柄注册矩阵（reactionsRef 捕获 + `ready()` 激活 + ComponentHandle 注册，三缺一即未接线；非 renderer 包命中为基线声明面不在回扫范围）；P0/P1 修复（test-first）。
-- [ ] scope 生命周期回扫：`rg "createScope"` 渲染期 + 事件路径新点配对（createScope/disposeScope 成对，`check:audit-test-global-leaks` 佐证）；P0/P1 修复（test-first）。
-- [ ] i18n 硬编码回扫：`rg "[\u4e00-\u9fa5]" packages/flux-renderers-*/src -g '*.{ts,tsx}' --glob '!**/__tests__/**'` 中文字面量 + 硬编码英文抽样（范围限定 10 个 renderer 包，checklist v2 维度 9 的 rg 兜底做法）；P0/P1 修复（test-first）。
-- [ ] 共性缺陷模式判定（Decision）：同一根因影响 ≥2 组件/跨包/公共层 → 按自动修复机制 §7 插入 `CX-13+` work item（roadmap 表 + 依赖图 + Cross-Cutting 同步）或在 plan 内多阶段优先修复后回写 CX-n 记录；不默认推给 DR。
-- [ ] 裁决与登记：每条发现 `文件:行` + P0/P1（fixed，附 plan 引用）/ P2（登记入 DR 路由清单）/ P3（登记入 D2 裁决表）；审计卡追加节回写（状态流转 `open → fixing → fixed-pending-closure`）。
+- [x] 事件派发 ctx 回扫：`check:audit-event-dispatch-ctx` 全量输出 + 人工抽查（CV 后新增派发点携带 `{ event, evaluationBindings, scope }`、template `${key}` 解析可验证、allowlist/豁免点复验）；P0/P1 修复（test-first）。
+- [x] `kind:'reaction'` 三件套回扫：`rg "kind: 'reaction'" packages/flux-renderers-*/src` 全量登记 vs 各渲染器 reactions 消费/句柄注册矩阵（reactionsRef 捕获 + `ready()` 激活 + ComponentHandle 注册，三缺一即未接线；非 renderer 包命中为基线声明面不在回扫范围）；P0/P1 修复（test-first）。
+- [x] scope 生命周期回扫：`rg "createScope"` 渲染期 + 事件路径新点配对（createScope/disposeScope 成对，`check:audit-test-global-leaks` 佐证）；P0/P1 修复（test-first）。
+- [x] i18n 硬编码回扫：`rg "[\u4e00-\u9fa5]" packages/flux-renderers-*/src -g '*.{ts,tsx}' --glob '!**/__tests__/**'` 中文字面量 + 硬编码英文抽样（范围限定 10 个 renderer 包，checklist v2 维度 9 的 rg 兜底做法）；P0/P1 修复（test-first）。
+- [x] 共性缺陷模式判定（Decision）：同一根因影响 ≥2 组件/跨包/公共层 → 按自动修复机制 §7 插入 `CX-13+` work item（roadmap 表 + 依赖图 + Cross-Cutting 同步）或在 plan 内多阶段优先修复后回写 CX-n 记录；不默认推给 DR。
+- [x] 裁决与登记：每条发现 `文件:行` + P0/P1（fixed，附 plan 引用）/ P2（登记入 DR 路由清单）/ P3（登记入 D2 裁决表）；审计卡追加节回写（状态流转 `open → fixing → fixed-pending-closure`）。
 
 Exit Criteria:
 
-- [ ] 四模式族回扫全部完成：事件 ctx / reaction 三件套 / scope 配对 / i18n 各一份发现清单（`文件:行` + 裁决），CV 后新增代码与 allowlist/豁免点复验覆盖。
-- [ ] 所有 in-scope P0/P1 已修复（test-first 证据：复现/回归测试先行）+ 受影响包 `pnpm --filter <pkg> typecheck/build/lint/test` 绿；共性缺陷已按 §7 插入 CX-n（或无共性缺陷的显式声明）。
-- [ ] P2 路由清单与 P3 裁决表登记完成（无悬挂：每条发现均有归属）；审计卡追加节已回写。
+- [x] 四模式族回扫全部完成：事件 ctx / reaction 三件套 / scope 配对 / i18n 各一份发现清单（`文件:行` + 裁决），CV 后新增代码与 allowlist/豁免点复验覆盖。
+- [x] 所有 in-scope P0/P1 已修复（test-first 证据：复现/回归测试先行）+ 受影响包 `pnpm --filter <pkg> typecheck/build/lint/test` 绿；共性缺陷已按 §7 插入 CX-n（或无共性缺陷的显式声明）。
+- [x] P2 路由清单与 P3 裁决表登记完成（无悬挂：每条发现均有归属）；审计卡追加节已回写。
 
 ### Phase 3 - 收口验证与记录
 
-Status: planned
+Status: completed
 Targets: 全仓库验证命令、`docs/logs/2026/08-08.md`、`docs/backlog/component-audit-round2-roadmap.md`
 
 - Item Types: `Proof | Follow-up`
 
-- [ ] 受影响的 `check:audit-*` 门禁复跑确认零新增命中（含本 plan 修复面）。
-- [ ] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` 全量（closure 前的仓库级验证，见 Closure Gates）。
-- [ ] daily log 记录：回扫发现汇总（计数 + 裁决分布）、CX-n 插入（如触发）、P2/P3 路由清单位置、门禁状态终值。
-- [ ] roadmap D1 行状态流转申请（closure audit 通过后 `planned → done`；本 plan 不自行翻转）。
+- [x] 受影响的 `check:audit-*` 门禁复跑确认零新增命中（含本 plan 修复面）。
+- [x] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` 全量（closure 前的仓库级验证，见 Closure Gates）。
+- [x] daily log 记录：回扫发现汇总（计数 + 裁决分布）、CX-n 插入（如触发）、P2/P3 路由清单位置、门禁状态终值。
+- [x] roadmap D1 行状态流转申请（closure audit 通过后 `planned → done`；本 plan 不自行翻转）。
 
 Exit Criteria:
 
-- [ ] daily log 含本 plan 收口证据（发现汇总 + 裁决 + 门禁终值）；roadmap D1 行已标注执行证据引用。
-- [ ] 无 plan-owned 剩余工作（P2 已路由 DR、P3 已路由 D2、CX-n 已插入或显式声明无）。
+- [x] daily log 含本 plan 收口证据（发现汇总 + 裁决 + 门禁终值）；roadmap D1 行已标注执行证据引用。
+- [x] 无 plan-owned 剩余工作（P2 已路由 DR、P3 已路由 D2、CX-n 已插入或显式声明无）。
 
 ## Draft Review Record
 
@@ -133,19 +133,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 28 项 `check:*` 零新增命中（与 D0 基线比对），`pnpm test:scripts` 全绿（扫描器自身无回归，browser-io 专项复核在案）
-- [ ] 四模式族回扫完成，全部发现带 `文件:行` 证据 + P0/P1/P2/P3 裁决；CV 后新增代码与 allowlist/豁免点复验覆盖
-- [ ] 所有 in-scope P0/P1 已修复（test-first 证据）并带回归测试；受影响包验证绿
-- [ ] 共性缺陷模式已按 §7 插入 CX-n（或显式声明无共性缺陷）
-- [ ] P2 路由 DR、P3 路由 D2 无悬挂；审计卡追加节已回写
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步（checklist v2 若语义变动、`docs/audits/` 索引、daily log）或明确写明 No owner-doc update required
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增命中）
+- [x] 28 项 `check:*` 零新增命中（与 D0 基线比对），`pnpm test:scripts` 全绿（扫描器自身无回归，browser-io 专项复核在案）
+- [x] 四模式族回扫完成，全部发现带 `文件:行` 证据 + P0/P1/P2/P3 裁决；CV 后新增代码与 allowlist/豁免点复验覆盖
+- [x] 所有 in-scope P0/P1 已修复（test-first 证据）并带回归测试；受影响包验证绿
+- [x] 共性缺陷模式已按 §7 插入 CX-n（或显式声明无共性缺陷）
+- [x] P2 路由 DR、P3 路由 D2 无悬挂；审计卡追加节已回写
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步（checklist v2 若语义变动、`docs/audits/` 索引、daily log）或明确写明 No owner-doc update required
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（零新增命中）
 
 ## Deferred But Adjudicated
 
@@ -169,13 +169,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行
+Status Note: 2026-08-08 执行完毕。3 Phase 全 completed；纯回扫轮零产品代码变更（P0/P1/P2/P3 全零命中，无 test-first 修复触发）。交付物：28 项 `check:*` 逐项重跑 27/28 exit 0 与 D0 基线逐位一致（`check:duplicates:detail` exit 1 非门禁 raw jscpd dump 归因维持，数字 454 clones / 3.04% 与 D0 一致）+ `pnpm test:scripts` 6 files/15 tests 全绿 + 扫描器回归专项核查在案（browser-io 扫描范围正则 + committed 夹具正例复核）+ 四模式族回扫零命中清单（事件 ctx 门禁零命中 + 7 allowlist 逐行 live 复验、reaction 三件套 13 声明全接线矩阵、scope 12 组 createScope/disposeScope 全配对 + test-global-leaks 47/2 一致、i18n 零生产代码硬编码）+ 共性缺陷显式声明无（不插入 CX-13+）+ 审计卡追加节回写 5 卡（gantt/calendar/crud/diff-view/reaction）+ 全量验证 typecheck/build/lint 32/32、test 59/59、聚合 `pnpm check` exit 0；roadmap D1 行 `todo`→`done`（附执行证据引用）；daily log `docs/logs/2026/08-08.md` D1 节收口。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待填写
-- Evidence: 待填写
+- Auditor / Agent: 独立子 agent（fresh session，mission-driver closure-audit 专用派发，2026-08-08）
+- Evidence: live repo 复核通过——root `package.json` 28 项 `check:*`（14 项 `check:audit-*`）计数一致；聚合 `pnpm check` exit 0；`check:audit-event-dispatch-ctx` / `check:audit-renderer-browser-io` / `check:audit-runtime-raw-schema-reads` / `check:audit-test-global-leaks` 四门禁 exit 0 复跑（7 条 allowlist 逐行 live 复验：notice-bar.tsx:198/204/210、button.tsx:220、chart-renderer.tsx:605/609/612 均为原生事件转发）；`pnpm test:scripts` 6 files/15 tests 全绿；`pnpm typecheck` 32/32、`pnpm test` 59/59（FULL TURBO，本 plan 零代码变更）；`kind: 'reaction'` renderer 包内 13 声明（crud 1 + diff-view 4 + scheduling 8）live 核对与 5 卡接线矩阵一致；i18n 生产代码零硬编码（残余命中仅为注释 + `t(key,{defaultValue})` 规范形态 + 仅测试引用的 config-test-support.tsx 夹具）；审计卡 5 节追加（gantt/calendar/crud/diff-view/reaction）与 `docs/logs/2026/08-08.md` D1 节、roadmap D1 行 `done` 证据一致；P2/P3 零登记项 + 显式 successor 路由，无静默降级
 
 Follow-up:
 
-- 待执行后填写
+- no remaining plan-owned work（P2/P3 零登记项、CX-n 显式声明无；Non-Blocking Follow-ups 节维持无预期 follow-up）。

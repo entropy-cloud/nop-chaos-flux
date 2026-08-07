@@ -61,6 +61,13 @@
   - test-first 证据：`gantt.test.tsx` regression describe（onTaskClick ctx / reactions ready+dispatch / tasks 重解析）先于实现 commit 编写（红 → 绿）。
 - e2e 宿主场景见 Phase 3（`tests/e2e/component-lab/c9-host-surfaces.spec.ts`）。
 
+## 第二轮回扫记录（D1 门禁漂移与模式族回扫，2026-08-08）
+
+- **`kind:'reaction'` 三件套回扫（CX-9/CX-12 后新接线点复验）**：声明 4 处（`scheduling-renderer-definitions.ts:52-55` zoomIn/zoomOut/scrollToToday/scrollToTask）vs 消费矩阵——ready() 激活 `gantt.tsx:351-355` ✓；ComponentHandle 注册 `gantt.tsx:359-409`（invoke 即派发，22-13 家族标准）✓；UI 工具栏派发 `gantt.tsx:481-483` ✓。reactionsRef 未用但 `props.reactions` 为稳定 identity（reaction-handle-proxy useMemo 单例）+ 句柄 effect deps 含 `props.reactions` 重注册，与 ref 模式功能等价。裁决：**零命中（P0/P1/P2/P3 均无）**。
+- **事件派发 ctx 回扫**：`check:audit-event-dispatch-ctx` 全量零命中；本组件无 allowlist 项。裁决：零命中。
+- **scope 生命周期回扫**：createScope 消费点（`gantt.tsx` 无独立 createScope，走 store 内部）零新点。裁决：零命中。
+- 回扫范围 = CV（2026-08-06）后新增/修改代码 + 第一轮 allowlist/豁免点复验；详见 plan `2026-08-08-0715-2` Phase 2 与 `docs/logs/2026/08-08.md` D1 节。
+
 ## Closure
 
 - 18 维核对完成（dim 1/3/7/8/9/14/16/17/18 发现已修复或留痕回填）；P0×0/P1×3 fixed/P2×1 fixed/P3×1 fixed；P2×3 backlog 归 CR、P3 记录项不阻塞；文档漂移（dim 17）留痕 + No owner-doc update required 决策记录；卡状态 `closed`（Phase 4 全量回归绿后流转，checklist §3：P0/P1 清零）

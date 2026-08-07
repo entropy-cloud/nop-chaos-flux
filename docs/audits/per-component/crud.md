@@ -68,6 +68,13 @@ crud / flux-renderers-data / CrudSchema（`crud-schema.ts:142-212`）/ `{type:'c
 - 验证: `pnpm --filter @nop-chaos/flux-renderers-data typecheck && build && lint && test` 全绿（**712 tests，+7**：includescope ×2 + depends-on ×1 + schema-contract ×4）；flux-runtime 1396 绿；flux-react 458 绿；flux-core 507 绿；e2e：c4-2-host-surfaces **5/5** + crud-demo 6/6 + component-lab crud 系 13 全绿 + dialog-dropdown-row-edit 1/1 + c4-1-host-surfaces 3/3 + crud-table-body-diag 1skip（回归 25 passed/1 skipped）；workspace `pnpm typecheck`/`build`/`lint`/`test` 全绿（Phase 4 全量复核）；bug 79 记录
 - 卡状态流转: open（Phase 1 产出）→ fixing（Phase 2 修复，P1×3 + P2×2 全部 fixed）→ fixed-pending-closure（Phase 3 宿主实证 5/5 真机 pass）→ closed（Phase 4 全卡复查）
 
+## 第二轮回扫记录（D1 门禁漂移与模式族回扫，2026-08-08）
+
+- **`kind:'reaction'` 三件套回扫（CX-9 后新接线点复验）**：声明 1 处（`crud-renderer-definition.ts:428` loadAction）vs 消费矩阵——消费 `crud-renderer.tsx:125`（loadReaction → useCrudLoadAction）；ready() 激活 `crud-renderer-load.ts:320` ✓（挂载 effect cleanup 见 `:396` disposeScope 同 effect）；dispatch 走反应式 force() + 命令式 load effect 双通道（2-8 双 fetch 已裁决收口）；loadAction 为内部数据加载机制（非 `component:*` 句柄能力，无需 ComponentHandle——与 gantt/calendar/diff-view 的能力句柄不同面）。裁决：**零命中**。
+- **事件派发 ctx 回扫**：`check:audit-event-dispatch-ctx` 全量零命中；本组件无 allowlist 项；`crud-renderer.tsx` 事件派发均经 useCrudLoadAction/ctx 通道（CX-10/bug-79 家族规范）。裁决：零命中。
+- **scope 生命周期回扫**：`crud-renderer-load.ts:194` createScope（CRUD scope 投影 child scope）↔ `:396` disposeScope 配对 ✓；`crud-renderer.tsx` 渲染期无新 createScope 点。裁决：零命中。
+- 回扫范围 = CV（2026-08-06）后新增/修改代码 + 第一轮 allowlist/豁免点复验；详见 plan `2026-08-08-0715-2` Phase 2 与 `docs/logs/2026/08-08.md` D1 节。
+
 ## Closure
 
 - 全卡复查（Phase 4）：18 维 + 21-23 维结论与最终代码一致（includeScope 扁平提取/反应式结果捕获/自写忽略/totalField/autoJumpToTop/loading overlay/ownership 契约对齐/死代码移除均可 live 核验）；P0 ×0、P1 ×3、P2 ×2 全部 fixed；P3 ×3 keep（文档显式）；卡状态 `closed`

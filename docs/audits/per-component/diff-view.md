@@ -88,6 +88,14 @@ diff-view / flux-renderers-content / DiffViewSchema（`schemas.ts:16-42`）/ def
 - **bug 记录**：`docs/bugs/85-diff-view-handle-and-reaction-dead-wiring-fix.md`（P1-8/P1-4 死接线）。
 - 验证: `pnpm --filter @nop-chaos/flux-renderers-content typecheck/build/lint/test` 全绿（**279 tests**，baseline 268 + 新增 11）
 
+## 第二轮回扫记录（D1 门禁漂移与模式族回扫，2026-08-08）
+
+- **`kind:'reaction'` 三件套回扫（CX-9/CX-12 后新接线点复验）**：声明 4 处（`content-renderer-definitions.ts:557-560` toggleViewType/setViewType/expandAll/collapseAll）vs 消费矩阵——reactionsRef 捕获 `diff-view-renderer.tsx:236-239` ✓；ready() 激活 `:302-306` ✓；ComponentHandle 注册 `:241-300`（invoke 即派发，1-9 家族标准）✓；UI 路径派发 `:311`（toggleViewType 经 reactionsRef）✓。裁决：**零命中**。
+- **事件派发 ctx 回扫**：`check:audit-event-dispatch-ctx` 全量零命中；本组件无 allowlist 项；`diff-view-renderer.tsx:338-339` onLineClick 携带 `{ event, evaluationBindings, scope }` ctx ✓。裁决：零命中。
+- **scope 生命周期回扫**：`diff-view` 家族无独立 createScope 点。裁决：零命中。
+- **i18n 硬编码回扫**：diff-view 家族组件文本均走 `t()` key（diff-header/diff-line 无中文字面量），`rg "[\u4e00-\u9fa5]"` 命中仅注释。裁决：零命中。
+- 回扫范围 = CV（2026-08-06）后新增/修改代码 + 第一轮 allowlist/豁免点复验；详见 plan `2026-08-08-0715-2` Phase 2 与 `docs/logs/2026/08-08.md` D1 节。
+
 ## Closure
 
 - 全卡复查（Phase 4）：18 维表 + deep-audit 21-23 结论与最终代码一致；P0 ×0 / P1 ×10 fixed（P1-1..P1-10 全部 test-first + 宿主实证）/ P2 当场修复 ×4（P2-1 lab 页/P2-3 aria-label/P2-4 design.md；P2-2 i18n backlog 归 CR）/ P3 keep ×5；卡状态 `closed`

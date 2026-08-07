@@ -50,6 +50,11 @@ reaction / flux-renderers-basic / ReactionSchema（flux-core `types/schema.ts:30
 - 共性缺陷裁决（roadmap §7b）: 缺 defaultSchema 为同一根因影响 3 组件（recurse/reaction/dynamic-renderer）的共性 P2 → 当前 plan 内修复，事后回写 CX-n（planned，引用本 plan 为执行证据，见 roadmap Work Item Status）
 - 验证: `pnpm --filter @nop-chaos/flux-renderers-basic typecheck/build/lint/test` 全绿（455 tests）；workspace typecheck/build/lint 全绿见 Phase 4 记录
 
+## 第二轮回扫记录（D1 门禁漂移与模式族回扫，2026-08-08）
+
+- **`kind:'reaction'` 三件套回扫（跨 renderer 包全量登记，CX-9/CX-12 基线）**：`rg "kind: 'reaction'" packages/flux-renderers-*/src` **全量 13 处声明**（crud loadAction ×1 + gantt zoomIn/zoomOut/scrollToToday/scrollToTask ×4 + calendar print/exportPNG/importICal/exportToICal ×4 + diff-view toggleViewType/setViewType/expandAll/collapseAll ×4）vs 消费矩阵——**13/13 全部接线**（ready() 激活 + ComponentHandle 注册 + 派发路径，逐点证据见 gantt/calendar/crud/diff-view 卡回扫节）；非 renderer 包命中（flux-core 6 / runtime 2 / compiler 2 / react 1 共 11 处代码位）为编译期/runtime 机制声明面（`renderer-reaction-handle.ts`、`node-renderer-resolved.tsx` 等），不在本 plan 回扫范围，归 D2/DR 裁决面。裁决：**零命中**。
+- 回扫范围 = CV（2026-08-06）后新增/修改代码 + 第一轮 allowlist/豁免点复验；详见 plan `2026-08-08-0715-2` Phase 2 与 `docs/logs/2026/08-08.md` D1 节。
+
 ## Closure
 
 - 独立 closure audit: 见 plan `2026-08-02-2043-3` Closure Audit Evidence（由独立子 agent fresh session 执行，执行 session 不自审）。
