@@ -1,0 +1,23 @@
+{
+  "name": "component-audit-round2",
+  "description": "nop-chaos-flux 逐组件审计第二轮（post-closure，驱动 docs/backlog/component-audit-round2-roadmap.md）：① 门禁漂移回扫与四模式族回扫（事件派发 ctx / kind:'reaction' 三件套接线 / createScope-disposeScope 配对 / i18n 硬编码）对全部 renderer 包（10 个 flux-renderers-* 包；4 个 host renderer 包归 D3.x 逐面审计）CV 之后新增代码重扫，全量 check:* 门禁（root 28 项含 check:audit-* 14 项，D0 以 live package.json 核对）零新增命中复验；② 113 卡 149 条 P3 逐条裁决与残余收口（@reserved 契约核对、6 条 watch-only e2e 复核、各 plan Non-Blocking Follow-ups 归集）；③ 4 个 host 大面（flow-designer / spreadsheet / report-designer / word-editor 共 8 包）首次逐面审计——18 维降维 + designer 特有维度（host 契约 / 事务 / undo / 拖拽 / e2e 可操作性），每面 ≥1 真实浏览器宿主场景（bug 73 模式专项，programmatic DOM 断言）；④ 第一轮 + post-closure 缺口 bug note 回补（docs/bugs/ 编号 90 起，盘点表 docs/audits/round2-bug-note-gaps.md 零悬挂）；⑤ lessons 06–08 方法论沉淀（审计必漏定律与 post-closure audit 制度 / 工具门禁沉淀法 / 声明即契约 ghost contract 检测法）。P0/P1 缺陷由执行 agent 在同一 plan 内自动修复（test-first + 回归测试 + 自动验证门禁，审计与修复之间无人工握手——自动修复机制、豁免裁决与共性插入（CX-n）纪律**沿用第一轮 roadmap `docs/backlog/component-audit-roadmap.md`「自动修复机制」节（§1–§7）**，编号自 CX-13 起），不默认囤积到 DR。代码变更授权范围同 component-audit：全部保护区域（flux-core/src/、Schema/contract validation、ui/src/index.ts、Renderer 定义、样式契约）；4 个 host 大面包不在保护区域表，默认 implement，结构性重构（公共 API/包边界）执行前仍需人工确认。industrial-hmi（feat-industrial-hmi 分支内容，含 flux-renderers-industrial 包）不在本轮范围（分支未合并，审计另立 successor mission）。",
+  "model": "opencode-go/deepseek-v4-flash",
+  "variant": "max",
+  "roadmapPath": "docs/backlog/component-audit-round2-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": ".",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "fix(component-audit-round2): <description>"
+}

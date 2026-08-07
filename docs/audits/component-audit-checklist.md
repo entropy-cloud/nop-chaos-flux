@@ -116,5 +116,94 @@
 - **命名偏差声明**：审计卡是"持久台账"（非 `docs/audits/00-audit-execution-guide.md` 定义的一次性审计记录 `YYYY-MM-DD-HHmm-<kind>-<topic>.md`），由 roadmap 明确定位为 mission 生命周期内的累积台账，故文件名不采用时间戳；但**每次 closure audit 记录本身**仍按执行指南命名（`YYYY-MM-DD-HHmm-closure-audit-<component>.md`），审计卡 Closure 节记录其位置。
 - 发现编号 `P<n>-<seq>` 在卡内递增；`shared:` 前缀标记跨组件问题。
 - 每族 work item 的 plan 内必须包含：覆盖组件列表、18 维核对表、真实浏览器场景清单、Exit Criteria（审计卡全部 closed + 相关命令绿）。
-- 复用既有 skill：`docs/skills/deep-audit-prompts.md`（23 维深审，复杂交互渲染器必选 21-23）、`docs/skills/open-ended-adversarial-review-prompt.md`（对抗式）、`docs/skills/unit-test-logic-and-contract-coverage-audit-prompt.md`、`docs/skills/react19-best-practices-review.md`、`docs/skills/ux-design-pattern-audit-prompt.md`、`docs/skills/code-quality-audit-prompt.md`。
+- 复用既有 skill：`docs/skills/deep-audit-prompts.md`（23 维深审，复杂交互渲染器必选 21-23）、`docs/skills/open-ended-adversarial-review-prompt.md`（对抗式）、`docs/skills/unit-test-logic-and-contract-coverage-audit-prompts.md`、`docs/skills/react19-best-practices-review.md`、`docs/skills/ux-design-pattern-audit-prompt.md`、`docs/skills/code-quality-audit-prompt.md`。
 - 审计工具脚本基线在 C0 统一跑取并记录；各维度的脚本提示见第 2 节维度表。
+
+## 6. Host 大面审计卡模板（D0 新增，round-2 host 面专用）
+
+> **版本注**：本节由 D0（plan `2026-08-08-0715-1`，2026-08-08）新增，供 D3.1–D3.4（flow-designer / spreadsheet / report-designer / word-editor 四个 host 大面、8 包）逐面审计使用。**既有 18 维组件级 checklist（§2）与组件审计卡模板（§4）语义不改写**——本节是其 host 面降维应用。
+> 审计单元：**面（surface feature）**而非注册 renderer type（host 面组件非注册渲染器，无 per-component 卡先例）。面清单见 `docs/audits/host-surface/surface-inventory.md`；范围核对（8 包 src 结构/导出面/宿主 e2e 场景/owner docs 契约基准）见 `docs/audits/host-surface/README.md`。审计卡存放：`docs/audits/host-surface/<surface>.md`。
+
+### 6.1 维度降维表（18 维 → host 面语义化）
+
+| #   | 原组件级维度                | host 面语义化检查要点                                                                                                                                                                                                        |
+| --- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Schema 契约                 | 面级 page/schema 定义（`define*PageSchema`/`*RendererDefinitions` 注册）与 types 一致；host 传入 schema 字段的降级路径；`__nopPreserveLiteral` envelope 消费                                                                 |
+| 2   | RendererComponentProps 合规 | 面组件只从 `props.props/meta/regions/events/helpers` 取数；不直访 store；标准 hooks（`useRendererRuntime`/`useScopeSelector`/`useCurrentPage`）；无 ad-hoc context/prop-drilling                                             |
+| 3   | 值所有权三态                | 文档/选区/视图状态三态路径（local/controlled/scope）；host snapshot 同步（`deriveHostSnapshot` 类）；越界 clamp；重置/清空                                                                                                   |
+| 4   | 表单参与                    | host 面表单参与（如有）；校验/提交路径数据形状；field metadata                                                                                                                                                               |
+| 5   | DOM 与选择器契约            | marker class 与 `data-slot` 稳定输出（如 `spreadsheet-toolbar`、`designer-*`）；canvas 自绘面样式锚定契约（`canvas-adapters.md`/`spreadsheet-canvas-css.md`）；无 BEM 死类（rd-\* 先例已清理）                               |
+| 6   | 嵌套 schema 分类            | 面内嵌 schema/action 分类正确（region/event/value）；行/槽位 scope 不污染嵌套 action args                                                                                                                                    |
+| 7   | 事件与 action 契约          | 面事件派发带 `{ event, evaluationBindings, scope }` ctx（`check:audit-event-dispatch-ctx` 覆盖 + 人工抽查模板 `${key}` 解析）；`kind:'reaction'` 三件套接线；`component:*` 句柄注册（`hostContract` capability publication） |
+| 8   | a11y                        | 工具栏/画布/面板键盘完整操作路径；焦点管理与焦点陷阱（dialog/弹出层）；aria-label/title 语义；canvas 自绘面读屏替代                                                                                                          |
+| 9   | i18n                        | 无硬编码文案（`rg "[\u4e00-\u9fa5]" packages/<pkg>/src` 兜底）；`t()` key 全 locale 存在                                                                                                                                     |
+| 10  | 四态覆盖                    | 空文档/加载/错误（如 JSON.parse 失败路径）/禁用（readOnly）各态渲染正确不崩溃                                                                                                                                                |
+| 11  | 异步生命周期                | loadAction/数据源/保存/恢复：abort/竞态/失败写 error 态/重试；Promise 不裸奔                                                                                                                                                 |
+| 12  | 组合宿主场景                | **每面 ≥1 真实浏览器宿主场景（bug 73 模式专项，programmatic DOM 断言禁截图）**——如 dialog 内使用、CRUD 行内、无 scope 上下文；断言 action args 模板 `${key}` 真机解析                                                        |
+| 13  | 样式契约                    | 面组件自样式面（widget 语义）与 marker 类（布局语义）边界；主题独立性（CSS 变量，无 React ThemeProvider）；`check:audit-styling-suspects`                                                                                    |
+| 14  | React 19 规范               | 无冗余 useCallback/useMemo；无 effect+setState 镜像；渲染期派生优先                                                                                                                                                          |
+| 15  | 性能边界                    | 虚拟化表格/canvas 渲染路径；selector 精度；监听器/订阅清理；无限循环风险                                                                                                                                                     |
+| 16  | 测试质量                    | focused 单测断言正确行为（非 not-throw）；事件双参契约断言（payload 全等 + ctx 三键）；宿主场景 e2e 存在且断言真实交互                                                                                                       |
+| 17  | 文档对照                    | 面 owner docs（README §1 契约基准清单）↔ 实现一致；无 phantom 引用（声明即契约双向核对）                                                                                                                                     |
+| 18  | 注册、包边界与 IO/安全红线  | core/renderers 包边界合规（domain core 无 react 依赖）；`src/index.ts` 导出面；**INV-1 env IO 边界**（`check:audit-renderer-browser-io` 覆盖 4 个 host renderer 包）；安全红线（URL 协议校验/sanitize/附件路径）             |
+
+### 6.2 Designer 特有维度（host 大面必检，组件级模板无对应）
+
+| #   | 维度                   | 检查要点                                                                                                                                                                                                                      |
+| --- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| H1  | host 契约              | `RendererEnv` 注入面（IO/会话/事件宿主）；`hostContract`（`*_MANIFEST_V1`/`resolve*Manifest`/`*HostContract`/`*_CAPABILITY_PUBLICATION`）与宿主消费方双向核对；action-provider（`create*ActionProvider`）注册与 host 方法映射 |
+| H2  | 事务与 undo 语义       | 命令/事务链（Begin/Commit/Rollback、Undo/RedoSpreadsheetCommand、designer command adapter）——撤销/重做行为、事务边界、失败回滚                                                                                                |
+| H3  | 拖拽完整性             | 拖拽全生命周期：pointerdown/move/up/**pointercancel 守卫**（2-14 家族先例）；drop 落点索引（closestEdge 调整先例）；拖拽中状态清理（ghost/indicator 残留）                                                                    |
+| H4  | 键盘交互完整性         | 面级 keydown 排除输入目标（isEditable 守卫，22-02 家族先例）；快捷键映射与冲突；roving tabindex（如 toolbar）；键盘可达性等价于鼠标路径                                                                                       |
+| H5  | 剪贴板                 | 复制/粘贴路径（clipboard data 契约、`ClipboardData`/`ClipboardCell` 类）；剪贴板权限/降级（INV-1 清单外 best-effort 须 capability-checked）                                                                                   |
+| H6  | e2e 可操作性           | 面在真实浏览器可交互断言（每面 ≥1 宿主场景，programmatic DOM）；e2e 定位基准用 data-slot/marker（禁截图、禁脆弱 class）；新场景落 `tests/e2e/`                                                                                |
+| H7  | MA4.3 测试覆盖缺口回归 | M 轮 MA4.3（`arm-MA4-designer-office-test-coverage.md`）对 4 host 面的覆盖缺口逐面回归——补测或显式登记剩余缺口                                                                                                                |
+
+### 6.3 审计卡模板（host 面）
+
+```md
+# 审计卡：<surface>（<package>，D3.x 面）
+
+> 状态: open | fixing | fixed-pending-closure | closed
+> 审查日期: YYYY-MM-DD
+> 审查 plan: <plan 文件>
+> 面定义: <surface-inventory.md 行> | 注册定义: <path:line> | 渲染器: <path:line>
+> 契约基准: <host-surface/README.md §1 对应包行>（owner docs 清单）
+
+## 面身份
+
+<surface / 包 / host 契约（hostContract/manifest）摘要 / 表单参与? / 布局 or widget?>
+
+## 维度审查记录（18 维降维 + Designer 特有维度）
+
+| # | 维度 | 结论 | 证据 | 发现 |
+
+## 发现清单
+
+- [P0-1] <描述>（`文件:行`）→ 状态: fixed（自动修复，test-first）
+- [P1-1] <描述>（`文件:行`）→ 状态: ...
+- [P2-1] <描述>（`文件:行`）→ 状态: ...（低成本当场修复，否则入审计卡 backlog 归 DR）
+- [P3-1] <描述>（`文件:行`）→ 状态: ...（卡内记录）
+
+## 组合宿主场景（真实浏览器验证，bug 73 模式专项）
+
+- 场景: <在 X 内使用 Y> | 断言: <programmatic DOM 断言（禁截图）> | 结果: pass/fail + 证据
+- 每面 ≥1 个场景；场景落 `tests/e2e/`；断言含 action args 模板 `${key}` 真机解析
+
+## 修复记录
+
+- plan / commit / 验证命令输出（typecheck/build/lint/test 相关项）
+- test-first 证据: <复现测试文件:行 先于实现 commit> / <实现 commit>
+
+## Closure
+
+- 独立 closure audit: pass | fail + 记录位置（fresh session）
+```
+
+### 6.4 保护区域地图（host 面授权核对，D0 记录）
+
+- 4 host 大面 8 包**不在** Protected Areas 表（`docs/context/ai-autonomy-policy.md` 全表 6 行）→ 默认 **`implement`**。
+- `packages/ui/src/index.ts` 公共导出：**`ask-first`**（host 面审计如需新增 ui 组件必须停下问人工）。
+- 结构性重构（公共 API、包边界）：执行前需**人工确认**。
+- Renderer 定义 fields（`check-renderer-definition-fields-only`）与样式契约（`docs/architecture/styling-system.md`）：**`plan-first`**。
+- Auth/security 边界：**`ask-first`**（host 面如涉及 file/IO/import() 远程加载按 INV-1 与 security-design-requirements.md 执行）。
