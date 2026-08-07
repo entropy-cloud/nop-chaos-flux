@@ -91,7 +91,17 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
 - `packages/flux-compiler/src/schema-compiler/shape-validation-utils.ts`
   - utility functions for schema shape validation
 - `packages/flux-compiler/src/schema-compiler/shape-validation-rules.ts`
-  - schema shape validation rule implementations
+  - re-export hub for schema shape validation rule implementations (single-line re-exports)
+- `packages/flux-compiler/src/schema-compiler/shape-validation-rules-structural.ts`
+  - structural path / depends-on-root shape validation rules
+- `packages/flux-compiler/src/schema-compiler/shape-validation-rules-api-schema.ts`
+  - api-schema shape validation rules
+- `packages/flux-compiler/src/schema-compiler/shape-validation-rules-action.ts`
+  - action shape validation rules (analyzeSchemaInput recursion path)
+- `packages/flux-compiler/src/schema-compiler/shape-validation-rules-source.ts`
+  - source shape validation rules
+- `packages/flux-compiler/src/schema-compiler/shape-validation-rules-reaction.ts`
+  - reaction shape validation rules
 - `packages/flux-compiler/src/schema-compiler/authoring-transform.ts`
   - authoring-time schema transformations (canonicalization, sugar lowering)
 - `packages/flux-compiler/src/schema-compiler/shape-validation-analyze.ts`

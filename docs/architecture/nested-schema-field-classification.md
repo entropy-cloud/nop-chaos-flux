@@ -257,7 +257,7 @@ export interface SchemaFieldRule {
 
 约束全部在 definition 声明，`validateActionShape` 按 definition 消费——`validateApiSchemaShape` 的 action 场景由此取代（source/data-source 场景保留）。
 
-**覆盖清单以代码为双重锚**：`BUILT_IN_ACTION_REGISTRY`（16 canonical，含 refreshNearest 补正）**∪** `runBuiltInAction` switch（`flux-action-core/src/action-dispatcher/built-in-actions.ts`）。编译按 definition 分类 args 字段；校验按 definition 递归（`args.body` 走 analyzeSchemaInput；action 链继承既有递归 `shape-validation-rules.ts:278-326`）。ajax 的硬编码 args 分支已删除（definition 接管：argsRequired + fieldRules；`validateApiSchemaShape` 的 action 场景已移除，仅 source/data-source 场景保留），由 `docs/plans/2026-08-02-3-ajax-validation-migration.md`（Plan 3）执行完成（2026-08-02）。
+**覆盖清单以代码为双重锚**：`BUILT_IN_ACTION_REGISTRY`（16 canonical，含 refreshNearest 补正）**∪** `runBuiltInAction` switch（`flux-action-core/src/action-dispatcher/built-in-actions.ts`）。编译按 definition 分类 args 字段；校验按 definition 递归（`args.body` 走 analyzeSchemaInput；action 链继承既有递归 `shape-validation-rules-action.ts`）。ajax 的硬编码 args 分支已删除（definition 接管：argsRequired + fieldRules；`validateApiSchemaShape` 的 action 场景已移除，仅 source/data-source 场景保留），由 `docs/plans/2026-08-02-3-ajax-validation-migration.md`（Plan 3）执行完成（2026-08-02）。
 
 **兑现边界（选项①，已选定）**：`evaluateSurfaceArgs`（`built-in-actions.ts:19-40`）只对顶层 isSchema 键原始值覆盖——`onClose`/`onSubmitSuccess` 是 action 结构（非 isSchema），在 dispatch scope 仍会被整体求值。**扩展 evaluateSurfaceArgs 对契约标注 action 类键做原始值保留**，契约测试锁定"onClose/onSubmitSuccess 不被 dispatch scope 求值"。
 

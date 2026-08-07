@@ -1,6 +1,6 @@
 # 3 公共层 + form 域 P2 修复（action-core seam/runtime surface scope/form 守卫与构建 + 治理文档）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit
 > Work Item: P2-backlog:runtime-action-form
 > Last Reviewed: 2026-08-07
@@ -73,70 +73,70 @@
 
 ### Phase 1 - flux-action-core 公共层（finishAction 死管道 + onErrorError 抑制标记）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-action-core/src/action-dispatcher/action-runners.ts`、`action-execution.ts`、`docs/architecture/action-scope-and-imports.md`
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] 2-3 `finishAction` 裁决：live 核对 15+ 调用点的 `ActionMonitorPayload`/`dispatchMode` 构造与丢弃点；二选一——(a) 移除 `finishAction` seam 与死参数构造（runner 签名瘦身），或 (b) 恢复 monitor 细节流语义（如 monitor 持久化/promise 回传）；裁决记录于 daily log；`action-scope-and-imports.md:617,1397` 按最终设计状态同步。
-- [ ] 2-16 `action-execution.ts:578-591` 重包装补 `preserveCaughtFailureMarker` 透传（对齐 :402/:455 retry 路径）；用例：嵌套 onError 失败链 → `reportUnhandledFailureClass`（:165，WeakSet 抑制检查所在地；`reportActionError` :140-163 不查 WeakSet）单元级抑制生效（单一错误上报），先红后绿。
+- [x] 2-3 `finishAction` 裁决：live 核对 15+ 调用点的 `ActionMonitorPayload`/`dispatchMode` 构造与丢弃点；二选一——(a) 移除 `finishAction` seam 与死参数构造（runner 签名瘦身），或 (b) 恢复 monitor 细节流语义（如 monitor 持久化/promise 回传）；裁决记录于 daily log；`action-scope-and-imports.md:617,1397` 按最终设计状态同步。
+- [x] 2-16 `action-execution.ts:578-591` 重包装补 `preserveCaughtFailureMarker` 透传（对齐 :402/:455 retry 路径）；用例：嵌套 onError 失败链 → `reportUnhandledFailureClass`（:165，WeakSet 抑制检查所在地；`reportActionError` :140-163 不查 WeakSet）单元级抑制生效（单一错误上报），先红后绿。
 
 Exit Criteria:
 
-- [ ] 2-3 裁决落地（`rg "finishAction" packages/flux-action-core/src/` 与裁决形态一致；或 monitor 语义已恢复并有用例）。
-- [ ] 2-16 嵌套失败用例先红后绿；flux-action-core 包测试绿。
+- [x] 2-3 裁决落地（`rg "finishAction" packages/flux-action-core/src/` 与裁决形态一致；或 monitor 语义已恢复并有用例）。
+- [x] 2-16 嵌套失败用例先红后绿；flux-action-core 包测试绿。
 
 ### Phase 2 - flux-runtime surface scope dispose 收口
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/runtime-factory.ts`、`surface-runtime.ts`、`runtime-owned-factories.ts`、`surface-teardown-gc.test.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] 2-12 `createSurfaceScope` 生命周期收口：surface scope（主 scope 与 `openingScope` :608-612 两个 raw `createScopeRef` 产物）纳入 dispose 管理（经 `createChildScope` 或显式 disposer 注册——opening scope 的 id 非 `${mainScopeId}:` 前缀，tree-dispose 前缀匹配不覆盖，须显式登记），`disposeOwnedScope` 对 surface scope 走真实 `scope.dispose()`（对齐 async-data 1-10 已落地模式）；生产链 dispose 实测（surface 打开→关闭→scope store 无残留）。
-- [ ] `surface-teardown-gc.test.ts:25-29` 去 mock：改走生产链断言（mock disposeScope 移除或仅作旁证），「L1 regression gate」恢复判别力。
+- [x] 2-12 `createSurfaceScope` 生命周期收口：surface scope（主 scope 与 `openingScope` :608-612 两个 raw `createScopeRef` 产物）纳入 dispose 管理（经 `createChildScope` 或显式 disposer 注册——opening scope 的 id 非 `${mainScopeId}:` 前缀，tree-dispose 前缀匹配不覆盖，须显式登记），`disposeOwnedScope` 对 surface scope 走真实 `scope.dispose()`（对齐 async-data 1-10 已落地模式）；生产链 dispose 实测（surface 打开→关闭→scope store 无残留）。
+- [x] `surface-teardown-gc.test.ts:25-29` 去 mock：改走生产链断言（mock disposeScope 移除或仅作旁证），「L1 regression gate」恢复判别力。
 
 Exit Criteria:
 
-- [ ] surface 生命周期用例走生产链先红后绿（关闭后 scope 无残留）；flux-runtime 包测试绿。
-- [ ] `surface-teardown-gc.test.ts` 不再注入绕过生产链的 disposeScope mock（或注释说明旁证用途）。
+- [x] surface 生命周期用例走生产链先红后绿（关闭后 scope 无残留）；flux-runtime 包测试绿。
+- [x] `surface-teardown-gc.test.ts` 不再注入绕过生产链的 disposeScope mock（或注释说明旁证用途）。
 
 ### Phase 3 - form 域（importsReady 守卫 + append 空结果 + 纯函数单测 + 构建排除）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/form.tsx`、`input-choice-utils.ts`、`tsconfig.build.json`、相关测试
 
 - Item Types: `Fix | Proof`
 
-- [ ] 2-5 `form.tsx:50` `importsReady` 守卫收敛：live 核对两个 hook 的 `!importsReady` 门控与 `preparedImports` 意图——移除死守卫（清理参数）或恢复真实就绪门控语义（二选一裁决）；行为不变由既有 form 测试锁定。
-- [ ] 2-6 `resolveChoiceVisibleOptions` append 模式：`remoteOptions === []` 且 query 非空时展示空列表 + ComboboxEmpty（对齐 replace 模式），本地过滤分支语义不变；用例：append + 远端空结果 → 不展示全量 raw。
-- [ ] 14-3 input-choice-utils 纯函数直接单测：sanitize/matchChoice boolean 矩阵、mobile trigger 文本选择等 9 个纯函数（1747-2 拆分产物）补直接单测。
-- [ ] 01-01 `tsconfig.build.json` exclude 补 `src/**/test-support*` 与 `src/test-dom-polyfills*`（src 根级形态，roadmap 措辞 `src/**/test-support*` 对根级文件同样匹配）；重跑 build 后 `dist/` 无 `test-support`/`test-dom-polyfills` 产物。
+- [x] 2-5 `form.tsx:50` `importsReady` 守卫收敛：live 核对两个 hook 的 `!importsReady` 门控与 `preparedImports` 意图——移除死守卫（清理参数）或恢复真实就绪门控语义（二选一裁决）；行为不变由既有 form 测试锁定。
+- [x] 2-6 `resolveChoiceVisibleOptions` append 模式：`remoteOptions === []` 且 query 非空时展示空列表 + ComboboxEmpty（对齐 replace 模式），本地过滤分支语义不变；用例：append + 远端空结果 → 不展示全量 raw。
+- [x] 14-3 input-choice-utils 纯函数直接单测：sanitize/matchChoice boolean 矩阵、mobile trigger 文本选择等 9 个纯函数（1747-2 拆分产物）补直接单测。
+- [x] 01-01 `tsconfig.build.json` exclude 补 `src/**/test-support*` 与 `src/test-dom-polyfills*`（src 根级形态，roadmap 措辞 `src/**/test-support*` 对根级文件同样匹配）；重跑 build 后 `dist/` 无 `test-support`/`test-dom-polyfills` 产物。
 
 Exit Criteria:
 
-- [ ] 2-5 裁决落地（死守卫移除或语义恢复），form 测试绿（行为零回归）。
-- [ ] 2-6 用例先红后绿；form 包测试绿。
-- [ ] 14-3 纯函数用例绿（以 `input-choice-utils.ts` 导出纯函数面为覆盖清单：每个导出纯函数至少 1 条直接单测，用例名与函数名对应可 grep 验证）。
-- [ ] `ls packages/flux-renderers-form/dist/ | grep -i "test-support\|test-dom"` 零命中；`pnpm --filter @nop-chaos/flux-renderers-form build` 绿。
+- [x] 2-5 裁决落地（死守卫移除或语义恢复），form 测试绿（行为零回归）。
+- [x] 2-6 用例先红后绿；form 包测试绿。
+- [x] 14-3 纯函数用例绿（以 `input-choice-utils.ts` 导出纯函数面为覆盖清单：每个导出纯函数至少 1 条直接单测，用例名与函数名对应可 grep 验证）。
+- [x] `ls packages/flux-renderers-form/dist/ | grep -i "test-support\|test-dom"` 零命中；`pnpm --filter @nop-chaos/flux-renderers-form build` 绿。
 
 ### Phase 4 - 治理文档漂移 + flux-compiler 死 re-export
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/flux-runtime-module-boundaries.md`、`docs/architecture/nested-schema-field-classification.md`、`docs/audits/per-component/pc-index.md`、`packages/flux-compiler/src/schema-compiler/shape-validation-rules.ts`
 
 - Item Types: `Fix | Decision`
 
-- [ ] 02-05 `flux-runtime-module-boundaries.md:90-96` 补 5 个 shape-validation 子模块条目（shape-validation-rules-{structural,api-schema,action,source,reaction}.ts），hub 条目改 re-export hub 描述。
-- [ ] 16-4 `nested-schema-field-classification.md:260` 行段引用更新为 `shape-validation-rules-action.ts`（analyzeSchemaInput 递归路径）或去行段。
-- [ ] 16-1 `pc-index.md:370` `check:oversized-code-files` 行更新为 live 终态（exit 0，2 豁免，plan 2026-08-07-1053-1）。
-- [ ] 2-4 部分：`shape-validation-rules.ts:6` re-export `validateStructuralPathField` 无消费者（live 核对：唯一消费者直接 import 子模块；hub 其余 6 个 re-export 被 `shape-validation-node-fields.ts:14-23` 消费，**保留**）——移除该单一死 re-export；hub 保持 re-export hub 形态（与 02-05「hub 条目改 re-export hub 描述」一致，无冲突）。
+- [x] 02-05 `flux-runtime-module-boundaries.md:90-96` 补 5 个 shape-validation 子模块条目（shape-validation-rules-{structural,api-schema,action,source,reaction}.ts），hub 条目改 re-export hub 描述。
+- [x] 16-4 `nested-schema-field-classification.md:260` 行段引用更新为 `shape-validation-rules-action.ts`（analyzeSchemaInput 递归路径）或去行段。
+- [x] 16-1 `pc-index.md:370` `check:oversized-code-files` 行更新为 live 终态（exit 0，2 豁免，plan 2026-08-07-1053-1）。
+- [x] 2-4 部分：`shape-validation-rules.ts:6` re-export `validateStructuralPathField` 无消费者（live 核对：唯一消费者直接 import 子模块；hub 其余 6 个 re-export 被 `shape-validation-node-fields.ts:14-23` 消费，**保留**）——移除该单一死 re-export；hub 保持 re-export hub 形态（与 02-05「hub 条目改 re-export hub 描述」一致，无冲突）。
 
 Exit Criteria:
 
-- [ ] 三份治理文档与 live 代码一致（module-boundaries 生产模块条目人工核对无缺漏——`check:active-doc-code-anchors` 只验证锚点、不验证模块完整性、pc-index 台账行为 live 终态）。
-- [ ] `check:active-doc-code-anchors` / `pnpm check` 无新增失效。
-- [ ] shape-validation-rules.ts re-export 清理或登记裁决；flux-compiler 包测试绿。
+- [x] 三份治理文档与 live 代码一致（module-boundaries 生产模块条目人工核对无缺漏——`check:active-doc-code-anchors` 只验证锚点、不验证模块完整性、pc-index 台账行为 live 终态）。
+- [x] `check:active-doc-code-anchors` / `pnpm check` 无新增失效。
+- [x] shape-validation-rules.ts re-export 清理或登记裁决；flux-compiler 包测试绿。
 
 ## Draft Review Record
 
@@ -149,19 +149,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope 已确认 P2 缺陷（2-3/2-5/2-6/2-12/2-16）已修复并带 focused 测试
-- [ ] 01-01 构建排除修复（dist 零 test-support 泄漏）
-- [ ] 14-3 纯函数单测补齐；2-4 flux-compiler re-export 清理或登记
-- [ ] 02-05/16-1/16-4 治理文档漂移修正
-- [ ] 不存在被静默降级到 deferred 的 in-scope 缺陷
-- [ ] roadmap Follow-up Backlog 对应条目勾选（2-3/2-4/2-5/2-6/2-12/2-16/01-01/02-05/14-3/16-1/16-4）并注明 plan 引用
-- [ ] 受影响的 owner docs 已同步（action-scope-and-imports.md、flux-runtime-module-boundaries.md、nested-schema-field-classification.md、pc-index.md）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check` 零新增命中
+- [x] 所有 in-scope 已确认 P2 缺陷（2-3/2-5/2-6/2-12/2-16）已修复并带 focused 测试
+- [x] 01-01 构建排除修复（dist 零 test-support 泄漏）
+- [x] 14-3 纯函数单测补齐；2-4 flux-compiler re-export 清理或登记
+- [x] 02-05/16-1/16-4 治理文档漂移修正
+- [x] 不存在被静默降级到 deferred 的 in-scope 缺陷
+- [x] roadmap Follow-up Backlog 对应条目勾选（2-3/2-4/2-5/2-6/2-12/2-16/01-01/02-05/14-3/16-1/16-4）并注明 plan 引用
+- [x] 受影响的 owner docs 已同步（action-scope-and-imports.md、flux-runtime-module-boundaries.md、nested-schema-field-classification.md、pc-index.md）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check` 零新增命中
 
 ## Deferred But Adjudicated
 
@@ -174,13 +174,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行完成后填写。
+Status Note: 2026-08-07 全部 4 Phase 执行完成并验证（typecheck/build/lint 32/32、test 59/59、`pnpm check` exit 0、doc anchors 零失效）。执行裁决记录：2-3 option (a) 移除 finishAction seam；2-5 移除死守卫；2-4 移除单一死 re-export；2-16 为防御性对齐（live 实测重复 toast 路径不可达，回归锁 3 条）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待定
-- Evidence: 待定
+- Auditor / Agent: 独立子 agent（fresh session）`ses_022b188f2ffeiyDVb0NxabEtcw`
+- Evidence: 2026-08-07 独立 closure-audit 11/11 PASS——`rg "finishAction" packages/flux-action-core/src/` 零命中；`buildActionMonitorPayload` 全仓零命中（flux-core 类型声明除外，零构造零使用）；两处 `onErrorError` 重包装均包 `preserveCaughtFailureMarker`（action-execution.ts:545-548/:554-557）；`createSurfaceScope` 双 scope 走 `createChildScope` + 组合 disposer（runtime-factory.ts:613-629），`runtime.disposeScope`/factories input 共用 `disposeOwnedScope`；GC 测试零 disposeScope mock（仅 spy 生产 createChildScope + 实效应断言）；`rg "importsReady" packages/flux-renderers-form/src/` 零命中；append 空远端分支（input-choice-utils.ts:156-158）；9 纯函数逐名覆盖（31 用例）；clean build 后 dist 零 test-support/test-dom 泄漏；hub 6 re-export 保留 + `validateStructuralPathField` 零命中；四份治理文档与 roadmap 11 行 ❌→✅ 复核一致、plan 零未勾选项；typecheck 32/32、四包测试绿（action-core 210 / runtime 1402 / form 772 / compiler 550）、`pnpm check` exit 0。
 
 Follow-up:
 
-- 待执行完成后填写（non-blocking follow-up 或 no remaining plan-owned work）。
+- 无 plan-owned 剩余工作（11 条 in-scope 项全部收口，closure-audit pass）；non-blocking follow-up：其余工程治理条目（01-02/03-01/03-02/03-03/14-1/14-2/14-4/14-5+23-3）归后续工程治理轮次，不影响本 plan 收口。

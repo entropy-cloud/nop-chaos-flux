@@ -614,13 +614,13 @@ These names are reserved for chained-action evaluation. They are not ordinary `S
 For namespaced host providers and renderer-owned host bridges, the triggering `result` should preserve structured failure context instead of only publishing a flattened message:
 
 - if the host/core failure payload is not already an `Error`, adapt it to `ActionResult.error` with the original payload preserved on `Error.cause`
-- if a renderer-owned bridge adds host-specific context such as Flow Designer command `reason` or a create-dialog submitAction failed result, keep that structured context reachable from `ActionResult.cause` and any emitted monitor details
+- if a renderer-owned bridge adds host-specific context such as Flow Designer command `reason` or a create-dialog submitAction failed result, keep that structured context reachable from `ActionResult.cause`
 - structured `{ ok: false, cancelled: true }` and `{ ok: false, cancelled: true, timedOut: true }` results remain the canonical cancellation vocabulary even when a renderer decides to notify or report the failure locally
 
 The same preservation rule applies to imported namespace setup failures:
 
 - schema preload and runtime import-load wrappers may add alias/schema context to the outer error message, but they should keep the original loader rejection on `Error.cause` even when that rejection is a non-`Error` structured payload
-- monitor/report surfaces that forward import failures should report that normalized wrapper `Error` instead of replacing the rejection with a fresh cause-less string error
+- report surfaces that forward import failures (env diagnostic hooks, plugin `onError`) should report that normalized wrapper `Error` instead of replacing the rejection with a fresh cause-less string error
 
 In practice this means payload should be authored under `args`:
 
@@ -1394,14 +1394,11 @@ Normative implementation semantics:
 
 ## Diagnostics
 
-Action monitoring should be extended so namespaced actions can be inspected clearly.
+There is no action-monitor mechanism: dispatch results are plain `ActionResult` values and the old `finishAction` monitor seam was removed (plan `2026-08-07-2228-3`). Failure observability is provided by:
 
-The action-scope layer should also expose a minimal debug snapshot contract on `ActionScope`:
-
-- `getDebugSnapshot?.()` returns the current scope id, parent id, and registered namespace entries
-- each namespace entry can include provider kind (`host` / `import`) and listed methods when the provider exposes them
-
-This keeps debugger and host tooling out of `ActionScope` private maps while still allowing stable inspection-oriented integrations.
+- the `onActionError` diagnostic hook and plugin `onError` callbacks, which receive thrown errors before they are normalized into `{ ok: false, error }` results
+- the env `notify('error', …)` path, which reports unhandled failure-class results exactly once
+- the `ActionScope` debug snapshot contract below, which keeps debugger and host tooling out of `ActionScope` private maps while still allowing stable inspection-oriented integrations
 
 Useful fields include:
 
