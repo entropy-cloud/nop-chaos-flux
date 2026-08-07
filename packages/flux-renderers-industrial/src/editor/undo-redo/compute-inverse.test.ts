@@ -205,4 +205,48 @@ describe('computeInverse (design-undo-redo.md §4.1.1)', () => {
     });
     expect(next.symbols.map((s) => s.id)).toEqual(['a', 'b', 'c']);
   });
+
+  it('skips inverse.added for removed ids absent from prevSnapshot', () => {
+    const inverse = computeInverse({ added: [], removed: ['ghost'], updated: [] }, prev);
+    expect(inverse.added).toEqual([]);
+  });
+
+  it('skips inverse.updated for updated ids absent from prevSnapshot', () => {
+    const inverse = computeInverse(
+      { added: [], removed: [], updated: [{ id: 'ghost', patch: { x: 1 } }] },
+      prev,
+    );
+    expect(inverse.updated).toEqual([]);
+  });
+
+  it('variables inverse tolerates prevSnapshot without variables + missing var ids', () => {
+    const noVars: ScadaConfig = { version: 1, symbols: [] };
+    const inverse = computeInverse(
+      {
+        added: [],
+        removed: [],
+        updated: [],
+        variables: {
+          added: [],
+          removed: ['ghost'],
+          updated: [{ id: 'ghost2', patch: { value: 1 } }],
+        },
+      },
+      noVars,
+    );
+    expect(inverse.variables).toBeDefined();
+    expect(inverse.variables!.added).toEqual([]);
+    expect(inverse.variables!.updated).toEqual([]);
+  });
+
+  it('applyDiffToConfig applies variables-only-removed diff when config has no variables', () => {
+    const noVars: ScadaConfig = { version: 1, symbols: [] };
+    const next = applyDiffToConfig(noVars, {
+      added: [],
+      removed: [],
+      updated: [],
+      variables: { added: [], removed: ['v1'], updated: [] },
+    });
+    expect(next.variables).toEqual([]);
+  });
 });

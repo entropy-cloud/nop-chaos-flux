@@ -2,35 +2,41 @@ import type { ScadaConfigDiff, ScadaSymbolNode } from '../../serialization/confi
 import type { EditorOperationKind, UndoStackEntry } from './undo-stack.js';
 
 /**
- * 跨操作合并（M2 基础，design-undo-redo.md §4.4）。
+ * 跨操作合并（M2 基础 + M3 完善，design-undo-redo.md §4.4）。
  *
  * M2 合并规则（§4.4 表）：
  * - 同 nodeId + 同字段 + 时间窗口 ≤500ms 的 `update-symbol`/`property-edit` 合并为 1 个 diff（最终值）。
  * - 连续 transform（同 op，时间窗口内）**不合**——每次 pointerup 是独立事务（spike §2.5 节流起止帧已隐含事务边界）。
  * - 连续 connection 端点拖动（同 connectionId）**不合**——每次 pointerup 是独立事务。
  *
- * M3 完善（E9.1）：更复杂合并策略 + 用户可配置合并窗口 + 撤销粒度感知优化。
+ * M3 完善（E9.1，§4.4 跨操作合并策略扩展）：
+ * - 连续同方向对齐/分布合并：entry.coalesceGroup 非空（如 `align:left`/`distribute:horizontal`）+
+ *   栈顶同 group + 时间窗口内 → 合并为 1 步（forward 取最终态，inverse 保留栈顶原态）。
+ * - 连续层级操作合并：entry.coalesceGroup（如 `zorder:toTop`）同规则。
+ * - transform 族 drag 事务不设 coalesceGroup，不参与 group 合并（保持 pointerup 独立事务语义）。
  *
  * 纯逻辑（无 React / leafer 依赖），Vitest 单测先行。
  */
 
-/** M2 默认合并窗口（design-undo-redo.md §4.4 表）。 */
+/** M2/M3 默认合并窗口（design-undo-redo.md §4.4 表）。 */
 export const DEFAULT_COALESCE_WINDOW_MS = 500;
 
 /**
  * 判定新 entry 是否应与栈顶合并，并返回合并后的 entry（或 undefined 表示不合）。
  *
- * 合中条件（全部满足）：
- * 1. 栈顶存在 + 栈顶 operationKind ∈ {`update-symbol`, `property-edit`}；
- * 2. 新 entry operationKind ∈ {`update-symbol`, `property-edit`}；
- * 3. 新 entry 与栈顶 forward.updated **恰好同 1 个 nodeId + 同字段集合**；
- * 4. 时间差 ≤ windowMs；
- * 5. forward.added/removed 均为空（纯属性更新，非结构 diff）。
+ * 两条合并路径（先试 M2 属性合并，再试 M3 group 合并）：
  *
- * 合并产出：
- * - forward.updated = [{ id, patch: { ...栈顶原 patch, ...新 patch } }]（新值覆盖，最终值）；
- * - inverse.updated = [{ id, patch: 栈顶 inverse 的原值 patch }]（保留入栈前的原始值，撤销回到最初）；
- * - operationKind = `property-edit`；timestamp = 新 entry timestamp。
+ * **M2 属性合并**（`update-symbol`/`property-edit`）：
+ * 1. 栈顶 + 新 entry operationKind ∈ {`update-symbol`, `property-edit`}；
+ * 2. forward.updated 恰好同 1 个 nodeId + 同字段集合；added/removed 空；
+ * 3. 时间差 ≤ windowMs。
+ * 合并产出：forward.updated = 最终值（新 patch 覆盖）；inverse.updated = 栈顶原值（撤销回最初）。
+ *
+ * **M3 group 合并**（对齐/分布/层级连续操作）：
+ * 1. 栈顶 + 新 entry 均有非空且相等的 `coalesceGroup`；
+ * 2. 时间差 ≤ windowMs。
+ * 合并产出：forward = 新 entry forward（最新态）；inverse = 栈顶 inverse（最初态）；
+ * operationKind/coalesceGroup 沿用；timestamp = 新 entry。
  */
 export function tryCoalesce(
   top: UndoStackEntry | undefined,
@@ -38,6 +44,20 @@ export function tryCoalesce(
   windowMs: number = DEFAULT_COALESCE_WINDOW_MS,
 ): UndoStackEntry | undefined {
   if (!top) return undefined;
+
+  // M3 group 合并路径（对齐/分布/层级连续操作）。
+  if (top.coalesceGroup && top.coalesceGroup === incoming.coalesceGroup) {
+    if (incoming.timestamp - top.timestamp > windowMs) return undefined;
+    return {
+      forward: incoming.forward,
+      inverse: top.inverse,
+      operationKind: incoming.operationKind,
+      timestamp: incoming.timestamp,
+      coalesceGroup: incoming.coalesceGroup,
+    };
+  }
+
+  // M2 属性合并路径（同 nodeId + 同字段）。
   if (!isCoalescable(top.operationKind) || !isCoalescable(incoming.operationKind)) return undefined;
   if (incoming.timestamp - top.timestamp > windowMs) return undefined;
 

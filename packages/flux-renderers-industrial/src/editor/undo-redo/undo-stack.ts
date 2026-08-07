@@ -15,6 +15,14 @@ export interface UndoStackEntry {
   operationKind: EditorOperationKind;
   /** 操作时间戳（跨操作合并时间窗口判定 §4.4）。 */
   timestamp: number;
+  /**
+   * 跨操作合并分组键（M3 完善，design-undo-redo.md §4.4）。
+   *
+   * 非空时，连续同 group + 时间窗口内的 entry 经 tryCoalesce 合并为 1 步（用户可感知的合并粒度）。
+   * 用于对齐/分布/层级连续操作合并（如连续 toTop / 连续 align:left）。transform 族 drag 事务
+   * 不设 group（每次 pointerup = 独立事务，不合，§4.4 表）。缺省 undefined = 不参与 group 合并。
+   */
+  coalesceGroup?: string;
 }
 
 /**
@@ -35,7 +43,8 @@ export type EditorOperationKind =
   | 'ungroup'
   | 'connection-update'
   | 'connection-link'
-  | 'property-edit';
+  | 'property-edit'
+  | 'z-order';
 
 /** 栈深度上限（design-undo-redo.md §2 + §4.5 边界提示，U7 满栈丢弃最旧）。 */
 export const MAX_UNDO_STACK_DEPTH = 100;

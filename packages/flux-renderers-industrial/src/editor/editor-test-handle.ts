@@ -1,6 +1,7 @@
-import type { ScadaConfig } from '../serialization/config-types.js';
+import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
 import type { ScadaEditorMode } from './editor-session.js';
 import type { ScadaPipeConnection } from '../symbols/pipe/pipe-junction.js';
+import type { AlignDirection, DistributeDirection } from './toolbox/align-distribute.js';
 
 /**
  * `window.__flux_scada_editor_<cid>` 测试句柄契约（design-renderer.md §8.4）。
@@ -87,6 +88,33 @@ export interface ScadaEditorTestHandle {
       prevSnapshot: import('../serialization/config-types.js').ScadaConfig,
       operationKind?: string,
     ): void;
+  };
+  /** toolbox 测试句柄子能力（design-toolbox.md §8.3，E9.1 落地）。 */
+  toolbox: {
+    /** 程序化触发视图工具（e2e 用；返回 viewport 状态）。 */
+    fit(): boolean;
+    center(): boolean;
+    zoomAt(factor: number): void;
+    resetView(): void;
+    getViewport(): { x: number; y: number; scale: number };
+    /** 程序化对齐/分布/层级。 */
+    align(direction: AlignDirection): boolean;
+    distribute(direction: DistributeDirection): boolean;
+    toTop(): boolean;
+    toBottom(): boolean;
+    moveUp(): boolean;
+    moveDown(): boolean;
+    /** 程序化复制/剪切/粘贴。 */
+    copy(): number;
+    cut(): number;
+    paste(): string[];
+    /** 查询 clipboard 状态。 */
+    getClipboard(): { symbols: ScadaSymbolNode[]; operation: 'copy' | 'cut' } | null;
+    /** 程序化导入/导出（复用 serialization 面）。 */
+    exportConfig(): string;
+    importConfig(config: string | ScadaConfig): boolean;
+    /** 列出图元库（只读，复用 listScadaSymbols）。 */
+    listSymbolLibrary(): Array<{ type: string; name: string; category?: string }>;
   };
 }
 

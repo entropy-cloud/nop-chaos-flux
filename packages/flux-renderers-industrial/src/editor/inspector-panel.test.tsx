@@ -39,6 +39,20 @@ function makeRuntime(workingConfig: ScadaConfig): EditorEngineRuntime {
     redo: () => undefined,
     groupSymbols: () => undefined,
     ungroupSymbols: () => undefined,
+    fitView: () => false,
+    centerView: () => false,
+    resetView: () => undefined,
+    zoomView: () => undefined,
+    alignSelection: () => false,
+    distributeSelection: () => false,
+    reorderZOrder: () => false,
+    copySelection: () => 0,
+    cutSelection: () => 0,
+    paste: () => [],
+    getClipboard: () => null,
+    exportConfig: () => '{}',
+    importConfig: () => false,
+    listSymbolLibrary: () => [],
   };
 }
 

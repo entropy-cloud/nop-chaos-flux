@@ -12,6 +12,7 @@ import { useEditorHandles } from './renderer/hooks/use-editor-handles.js';
 import { projectSessionChange, type ScadaEditorSession } from './editor-session.js';
 import { EditorPalettePanel } from './palette/editor-palette.js';
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
+import { EditorToolboxPanel } from './toolbox/toolbox-panel.js';
 
 export type ScadaEditorCanvasStatus = 'loading' | 'ready' | 'error' | 'destroyed';
 
@@ -180,7 +181,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   }, [runtime]);
 
   const effectiveStatus: ScadaEditorCanvasStatus = parseError ? 'error' : status;
-  const { loading, empty, palette, inspector } = props.regions;
+  const { loading, empty, palette, inspector, toolbox, statusBar } = props.regions;
   const activeError = parseError ?? errorInfo;
   const errorText = activeError ? activeError.message : '';
   const errorCode = activeError?.code;
@@ -245,7 +246,10 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
               onError={handleError}
             />
           )}
-          {/* toolbox/statusBar regions reserved for M3/E9.1（design-renderer.md §4.4）；M1 无默认内容，host 经 region override 注入。 */}
+          {asReactNode(toolbox?.render({ bindings: { selection } })) ?? (
+            <EditorToolboxPanel runtime={runtime!} selection={selection} onError={handleError} />
+          )}
+          {asReactNode(statusBar?.render()) ?? null}
         </div>
       )}
     </div>

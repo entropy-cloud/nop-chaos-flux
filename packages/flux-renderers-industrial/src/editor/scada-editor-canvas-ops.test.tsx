@@ -170,6 +170,20 @@ describe('scada-editor-canvas operations (add/update/remove via test handle)', (
     expect(node?.fill).toBe('#00ff00');
   });
 
+  it('updateSymbol with each geometry field triggers recompute guard without crash', async () => {
+    const { container } = renderEditor('update-geometry-fields');
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    // Exercise each branch of the geometry-change recompute guard (y/width/height only).
+    handle.updateSymbol('editor-rect', { y: 30 });
+    handle.updateSymbol('editor-rect', { width: 120 });
+    handle.updateSymbol('editor-rect', { height: 80 });
+    const node = handle.session.workingConfig.symbols.find((s) => s.id === 'editor-rect');
+    expect(node?.y).toBe(30);
+    expect(node?.width).toBe(120);
+    expect(node?.height).toBe(80);
+  });
+
   it('switchMode via test handle to preview then back', async () => {
     const { container } = renderEditor('switch');
     const cid = await waitForReadyAndCid(container);

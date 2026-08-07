@@ -22,11 +22,31 @@ import {
   listAllConnections,
   programmaticConnect,
   programmaticDisconnect,
-  recomputeJunctionAfterMove,
 } from '../../connection/connection-adapter.js';
 import { ConnectionDragController } from '../../connection/connection-drag-controller.js';
 import { ConnectionOverlayRenderer } from '../../connection/connection-overlay-renderer.js';
 import { UndoRedoAdapter } from '../../undo-redo/undo-redo-adapter.js';
+import { listScadaSymbols } from '../../../symbols/symbol-registry.js';
+import {
+  alignSelection,
+  distributeSelection,
+  type AlignDirection,
+  type DistributeDirection,
+} from '../../toolbox/align-distribute.js';
+import { reorderZOrder, type ZOrderAction } from '../../toolbox/z-order.js';
+import {
+  buildClipboardCopy,
+  buildClipboardCut,
+  buildClipboardPaste,
+  type EditorClipboard,
+} from '../../toolbox/clipboard.js';
+import type { Bounds } from '../../../engine/viewport.js';
+import {
+  cloneConfigSnapshot,
+  applyPatchToWorkingNode,
+  findNodeInWorking,
+  recomputeLinkagesForMovedNode,
+} from '../../editor-working-helpers.js';
 
 export interface UseEditorEngineArgs {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -80,6 +100,35 @@ export interface EditorEngineRuntime {
   groupSymbols: (nodeIds: string[]) => void;
   /** 解组（design-renderer.md §8.5.2，Phase 3）。 */
   ungroupSymbols: (groupId: string) => void;
+  // ---- E9.1 工具箱扩展（design-toolbox.md 五项工具） ----
+  /** 视图工具：fit 适应画布（复用 engine.fit，runtime 复用点 #1）。空场景返回 false。 */
+  fitView: () => boolean;
+  /** 视图工具：center 居中（复用 engine.center）。空场景返回 false。 */
+  centerView: () => boolean;
+  /** 视图工具：reset 恢复初始视口（复用 engine.setViewport）。 */
+  resetView: () => void;
+  /** 视图工具：缩放（复用 engine.zoomAt，minScale/maxScale 钳制由 viewport 层处理）。 */
+  zoomView: (factor: number) => void;
+  /** 对齐（design-toolbox.md §4.2.1，基于 selection 包围盒重排；入 undo 栈 operationKind=transform-move）。 */
+  alignSelection: (direction: AlignDirection) => boolean;
+  /** 分布（design-toolbox.md §4.2.1）。 */
+  distributeSelection: (direction: DistributeDirection) => boolean;
+  /** 层级（design-toolbox.md §4.2.2，经 symbols 数组重排，不调 leafer Editor toTop 防 T3）。 */
+  reorderZOrder: (action: ZOrderAction) => boolean;
+  /** 复制（深拷贝 selection → 编辑器内 clipboard，不修改 working copy）。 */
+  copySelection: () => number;
+  /** 剪切（深拷贝 + 移除 selection；入 undo 栈 operationKind=remove-symbol）。 */
+  cutSelection: () => number;
+  /** 粘贴（分配新 id 防 T4 + 位移偏移；入 undo 栈 operationKind=add-symbol；新 selection = 新 id）。 */
+  paste: () => string[];
+  /** 读取编辑器内 clipboard 状态（测试句柄/UI 用）。 */
+  getClipboard: () => { symbols: ScadaSymbolNode[]; operation: 'copy' | 'cut' } | null;
+  /** 导出（复用 runtime serialize 面，返回序列化 config 字符串）。 */
+  exportConfig: () => string;
+  /** 导入（弹确认对话框由 UI 层处理；本方法经 validateScadaConfig 校验后替换 working copy + 重置 undo 栈 T5）。 */
+  importConfig: (config: string | ScadaConfig) => boolean;
+  /** 图元库只读浏览（复用 listScadaSymbols，design-toolbox.md §4.5）。 */
+  listSymbolLibrary: () => Array<{ type: string; name: string; category?: string }>;
 }
 
 /**
@@ -313,6 +362,189 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       notifySession();
     };
 
+    // ---- E9.1 工具箱（design-toolbox.md 五项工具） ----
+    // 编辑器内 clipboard（域内部闭包持有，不进 scope，不接 OS clipboard T2）。
+    let editorClipboard: EditorClipboard | null = null;
+    // 粘贴 id 计数器（编辑会话维护，保证 paste id 唯一，防 T4）。
+    let pasteCounter = 0;
+
+    /** 计算顶层 symbols 的包围盒（视图工具 fit/center 用，M3 扁平算法）。 */
+    const computeBounds = (): Bounds | undefined => {
+      let out: Bounds | undefined;
+      for (const node of session.workingConfig.symbols) {
+        const x = node.x ?? 0;
+        const y = node.y ?? 0;
+        const w = node.width ?? 0;
+        const h = node.height ?? 0;
+        const b: Bounds = { x, y, width: w, height: h };
+        if (out === undefined) {
+          out = b;
+        } else {
+          const minX = Math.min(out.x, x);
+          const minY = Math.min(out.y, y);
+          const maxX = Math.max(out.x + out.width, x + w);
+          const maxY = Math.max(out.y + out.height, y + h);
+          out = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+        }
+      }
+      return out;
+    };
+
+    const fitView = (): boolean => {
+      const bounds = computeBounds();
+      if (!bounds) return false;
+      engine.fit(bounds, 0);
+      return true;
+    };
+
+    const centerView = (): boolean => {
+      const bounds = computeBounds();
+      if (!bounds) return false;
+      engine.center(bounds);
+      return true;
+    };
+
+    const resetView = (): void => {
+      engine.setViewport({ x: 0, y: 0, scale: 1 });
+    };
+
+    const zoomView = (factor: number): void => {
+      const vp = engine.getViewport();
+      engine.zoomAt({ x: vp.x + (engine.getSize().width ?? 0) / 2, y: vp.y + (engine.getSize().height ?? 0) / 2 }, factor);
+    };
+
+    /** 读取 selection 对应的 working copy 节点（顶层 symbols 过滤）。 */
+    const selectionNodes = (): ScadaSymbolNode[] => {
+      const set = new Set(session.selection);
+      return session.workingConfig.symbols.filter((s) => set.has(s.id));
+    };
+
+    const applyAlignOrDistribute = (
+      result: { ok: boolean; error?: string; diff?: import('../../../serialization/config-types.js').ScadaConfigDiff },
+      coalesceGroup: string,
+    ): boolean => {
+      if (!result.ok || !result.diff) return false;
+      const forward = result.diff;
+      if (forward.updated.length === 0) return false;
+      const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
+      for (const u of forward.updated) {
+        applyPatchToWorkingNode(session, u.id, u.patch);
+      }
+      undoRedo.pushForward('transform-move', forward, prevSnapshot, false, coalesceGroup);
+      syncWorkingCopy();
+      notifySession();
+      return true;
+    };
+
+    const alignSelectionFn = (direction: AlignDirection): boolean => {
+      const nodes = selectionNodes();
+      const res = alignSelection(nodes, direction);
+      return applyAlignOrDistribute(res, `align:${direction}`);
+    };
+
+    const distributeSelectionFn = (direction: DistributeDirection): boolean => {
+      const nodes = selectionNodes();
+      const res = distributeSelection(nodes, direction);
+      return applyAlignOrDistribute(res, `distribute:${direction}`);
+    };
+
+    const reorderZOrderFn = (action: ZOrderAction): boolean => {
+      const res = reorderZOrder(session.workingConfig.symbols, session.selection, action);
+      if (!res.ok || !res.newOrder || !res.movedIds || res.movedIds.length === 0) return false;
+      const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
+      // 结构 diff（full-replace）：removed=旧顺序全部 id，added=新顺序全部节点。
+      // applyDiffToConfig 先 remove 全部再 append 新顺序 → 正确重排（z 序 = 数组顺序，design-engine.md §4.3）。
+      const forward: import('../../../serialization/config-types.js').ScadaConfigDiff = {
+        added: res.newOrder.map((n) => ({ ...n })),
+        removed: prevSnapshot.symbols.map((s) => s.id),
+        updated: [],
+      };
+      session.workingConfig = { ...session.workingConfig, symbols: res.newOrder.map((n) => ({ ...n })) };
+      undoRedo.pushForward('z-order', forward, prevSnapshot, false, `zorder:${action}`);
+      // z 序是纯重排（节点内容不变），diffScadaConfig 检测不到 → 直接用结构 diff 同步 engine 树顺序。
+      engine.applyDiff(forward, session.workingConfig);
+      engineSyncedConfig = cloneConfigSnapshot(session.workingConfig);
+      notifySession();
+      return true;
+    };
+
+    const copySelectionFn = (): number => {
+      const nodes = selectionNodes();
+      if (nodes.length === 0) return 0;
+      editorClipboard = buildClipboardCopy(nodes);
+      return nodes.length;
+    };
+
+    const cutSelectionFn = (): number => {
+      const nodes = selectionNodes();
+      if (nodes.length === 0) return 0;
+      const { clipboard, forward } = buildClipboardCut(nodes);
+      editorClipboard = clipboard;
+      const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
+      // 经 remove 路径移除 selection（与 removeWorkingSymbol 同语义，单次入栈）。
+      const removedSet = new Set(forward.removed);
+      session.workingConfig = {
+        ...session.workingConfig,
+        symbols: session.workingConfig.symbols.filter((s) => !removedSet.has(s.id)),
+      };
+      session.selection = session.selection.filter((id) => !removedSet.has(id));
+      undoRedo.pushForward('remove-symbol', forward, prevSnapshot);
+      syncWorkingCopy();
+      notifySession();
+      return nodes.length;
+    };
+
+    const pasteFn = (): string[] => {
+      if (!editorClipboard) return [];
+      const { forward, newIds, counterConsumed } = buildClipboardPaste(editorClipboard, pasteCounter);
+      pasteCounter += counterConsumed;
+      const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
+      session.workingConfig = {
+        ...session.workingConfig,
+        symbols: [...session.workingConfig.symbols, ...forward.added.map((n) => ({ ...n }))],
+      };
+      session.selection = [...newIds];
+      undoRedo.pushForward('add-symbol', forward, prevSnapshot);
+      syncWorkingCopy();
+      // 同步 Editor 选区到新粘贴图元（经 engine 选区视觉一致）。
+      const nodes = newIds
+        .map((id) => engine.getSymbol(id)?.node)
+        .filter((n): n is NonNullable<typeof n> => n !== undefined);
+      engine.setEditorTargets(nodes);
+      notifySession();
+      return newIds;
+    };
+
+    const getClipboardFn = (): { symbols: ScadaSymbolNode[]; operation: 'copy' | 'cut' } | null => {
+      if (!editorClipboard) return null;
+      return { symbols: editorClipboard.symbols, operation: editorClipboard.operation };
+    };
+
+    const exportConfigFn = (): string => serializeScadaConfig(session.workingConfig);
+
+    const importConfigFn = (config: string | ScadaConfig): boolean => {
+      // 导入确认对话框由 UI 层（toolbox-panel）处理（T5）；本方法经 validate 校验后替换 working copy + 重置 undo 栈。
+      try {
+        const parsed = parseScadaConfig(config);
+        const result = validateScadaConfig(parsed);
+        if (!result.ok) {
+          latest.current.onError?.('invalid-config', result.errors.join('; '));
+          return false;
+        }
+        resetSession(session, parsed);
+        engineSyncedConfig = cloneConfigSnapshot(session.workingConfig);
+        engine.build(session.workingConfig);
+        notifySession();
+        return true;
+      } catch (error) {
+        latest.current.onError?.('invalid-config', errorMessage(error));
+        return false;
+      }
+    };
+
+    const listSymbolLibraryFn = () =>
+      listScadaSymbols().map((d) => ({ type: d.type, name: d.name, category: d.category }));
+
     const switchMode = (mode: ScadaEditorMode) => {
       if (session.mode === mode) return;
       session.mode = mode;
@@ -423,6 +655,20 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       redo,
       groupSymbols,
       ungroupSymbols,
+      fitView,
+      centerView,
+      resetView,
+      zoomView,
+      alignSelection: alignSelectionFn,
+      distributeSelection: distributeSelectionFn,
+      reorderZOrder: reorderZOrderFn,
+      copySelection: copySelectionFn,
+      cutSelection: cutSelectionFn,
+      paste: pasteFn,
+      getClipboard: getClipboardFn,
+      exportConfig: exportConfigFn,
+      importConfig: importConfigFn,
+      listSymbolLibrary: listSymbolLibraryFn,
     };
     runtimeRef.current = next;
     setRuntime(next);
@@ -511,6 +757,26 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
             notifySession();
           },
         },
+        toolbox: {
+          fit: fitView,
+          center: centerView,
+          zoomAt: zoomView,
+          resetView,
+          getViewport: () => engine.getViewport(),
+          align: alignSelectionFn,
+          distribute: distributeSelectionFn,
+          toTop: () => reorderZOrderFn('toTop'),
+          toBottom: () => reorderZOrderFn('toBottom'),
+          moveUp: () => reorderZOrderFn('moveUp'),
+          moveDown: () => reorderZOrderFn('moveDown'),
+          copy: copySelectionFn,
+          cut: cutSelectionFn,
+          paste: pasteFn,
+          getClipboard: getClipboardFn,
+          exportConfig: exportConfigFn,
+          importConfig: importConfigFn,
+          listSymbolLibrary: listSymbolLibraryFn,
+        },
       };
       mountScadaEditorTestHandle(latest.current.cid, handle);
     }
@@ -556,74 +822,3 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
   return runtime;
 }
 
-/** Shallow snapshot of config for diff comparison (symbols array cloned). */
-function cloneConfigSnapshot(config: ScadaConfig): ScadaConfig {
-  return {
-    ...config,
-    symbols: config.symbols.map((s) => ({ ...s })),
-    ...(config.variables ? { variables: [...config.variables] } : {}),
-  };
-}
-
-/** 在 working copy 中按 id 递归查找节点并应用 patch（含 group 子树）。 */
-function applyPatchToWorkingNode(
-  session: ScadaEditorSession,
-  nodeId: string,
-  patch: Partial<ScadaSymbolNode>,
-): void {
-  const node = findNodeInWorking(session.workingConfig.symbols, nodeId);
-  if (node) {
-    Object.assign(node, patch);
-  }
-}
-
-function findNodeInWorking(symbols: ScadaSymbolNode[], id: string): ScadaSymbolNode | undefined {
-  for (const node of symbols) {
-    if (node.id === id) return node;
-    if (node.children) {
-      const found = findNodeInWorking(node.children, id);
-      if (found) return found;
-    }
-  }
-  return undefined;
-}
-
-/**
- * 图元移动联动（design-connection.md §4.4 + §4.5）：被移动的节点若是某个 pipe-junction connection 的目标设备，
- * 则重算该 connection 的 x/y；若被移动的节点本身是 pipe-junction 主体，重算其全部 connection。
- *
- * 遍历 working copy 中所有 pipe-junction 节点的 connections，凡 target === nodeId 或 节点本身是 junction 的，
- * 经 recomputeJunctionAfterMove 重算 → updateWorkingNode 写回（不派发 symbol:* action，R5 隔离）。
- */
-function recomputeLinkagesForMovedNode(session: ScadaEditorSession, movedNodeId: string): void {
-  const symbols = session.workingConfig.symbols;
-  const movedIsJunction = findNodeInWorking(symbols, movedNodeId)?.type === 'scada-pipe-junction';
-  const junctionsToRecompute: string[] = [];
-  if (movedIsJunction) {
-    junctionsToRecompute.push(movedNodeId);
-  }
-  // 收集所有 target 指向被移动节点的 pipe-junction。
-  for (const node of symbols) {
-    if (node.type !== 'scada-pipe-junction') continue;
-    const conns = node.custom?.connections;
-    if (!Array.isArray(conns)) continue;
-    if (movedNodeId !== node.id && conns.some((c) => (c as { target?: string }).target === movedNodeId)) {
-      junctionsToRecompute.push(node.id);
-    }
-  }
-  for (const junctionId of junctionsToRecompute) {
-    const junctionNode = findNodeInWorking(symbols, junctionId);
-    if (!junctionNode || junctionNode.type !== 'scada-pipe-junction') continue;
-    const updates = recomputeJunctionAfterMove({ junctionNode, symbols });
-    if (!updates || updates.length === 0) continue;
-    const existing = Array.isArray(junctionNode.custom?.connections) ? [...junctionNode.custom!.connections as never[]] : [];
-    const byId = new Map(updates.map((u) => [u.connectionId, u.point]));
-    const nextConnections = existing.map((c) => {
-      const point = byId.get((c as { id: string }).id);
-      return point ? { ...(c as object), x: point.x, y: point.y } : c;
-    });
-    applyPatchToWorkingNode(session, junctionId, {
-      custom: { ...junctionNode.custom, connections: nextConnections },
-    });
-  }
-}

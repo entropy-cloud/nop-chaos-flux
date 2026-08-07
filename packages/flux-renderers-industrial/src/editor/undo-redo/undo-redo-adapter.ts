@@ -86,46 +86,66 @@ export class UndoRedoAdapter {
    * 这些操作不经事务（每操作 = 1 个 diff）：host 在 apply 前/后快照 → 计算 diff + inverse → 入栈。
    * 本方法接收 host 已算好的 prev/current，内部 diff + computeInverse + 入栈（+ coalesce 决策）。
    *
+   * @param coalesceGroup M3 跨操作合并分组键（对齐/分布/层级连续操作合并，design-undo-redo.md §4.4）
+   *
    * 返回入栈（或合并后替换栈顶）的 entry；返回 undefined 表示空 diff。
    */
   pushOperation(
     kind: EditorOperationKind,
     prev: ScadaConfig,
     current: ScadaConfig,
+    coalesceGroup?: string,
   ): UndoStackEntry | undefined {
     const forward = diffScadaConfig(prev, current);
     if (!hasChanges(forward)) return undefined;
     const inverse = computeInverse(forward, prev);
-    // coalesce 决策：update-symbol/property-edit 尝试与栈顶合并。
+    // coalesce 决策：M2 属性合并（update-symbol/property-edit）+ M3 group 合并（coalesceGroup 非空）。
     const coalesced = tryCoalesce(this.stack.peekUndoTop(), {
       forward,
       inverse,
       operationKind: kind,
       timestamp: now(),
+      ...(coalesceGroup !== undefined ? { coalesceGroup } : {}),
     });
     if (coalesced) {
       this.stack.replaceUndoTop(coalesced);
       return coalesced;
     }
-    const entry: UndoStackEntry = { forward, inverse, operationKind: kind, timestamp: now() };
+    const entry: UndoStackEntry = {
+      forward,
+      inverse,
+      operationKind: kind,
+      timestamp: now(),
+      ...(coalesceGroup !== undefined ? { coalesceGroup } : {}),
+    };
     this.stack.push(entry);
     return entry;
   }
 
   /**
    * 直接构造 forward diff 入栈（add/remove 结构 diff，host 已知 diff 形状）。
-   * 用于 addSymbol/removeSymbol/group/ungroup 经 host 直接构造结构 diff 的路径。
+   * 用于 addSymbol/removeSymbol/group/ungroup/clipboard/z-order 经 host 直接构造结构 diff 的路径。
+   *
+   * @param coalesceGroup M3 跨操作合并分组键（连续 z-order/对齐操作合并）
+   * @param coalesce 是否尝试 M2 属性合并（默认 false；结构 diff 不走属性合并，走 group 合并）
    */
   pushForward(
     kind: EditorOperationKind,
     forward: ScadaConfigDiff,
     prevSnapshot: ScadaConfig,
     coalesce: boolean = false,
+    coalesceGroup?: string,
   ): UndoStackEntry | undefined {
     if (!hasChanges(forward)) return undefined;
     const inverse = computeInverse(forward, prevSnapshot);
-    const entry: UndoStackEntry = { forward, inverse, operationKind: kind, timestamp: now() };
-    if (coalesce) {
+    const entry: UndoStackEntry = {
+      forward,
+      inverse,
+      operationKind: kind,
+      timestamp: now(),
+      ...(coalesceGroup !== undefined ? { coalesceGroup } : {}),
+    };
+    if (coalesce || coalesceGroup !== undefined) {
       const merged = tryCoalesce(this.stack.peekUndoTop(), entry);
       if (merged) {
         this.stack.replaceUndoTop(merged);
