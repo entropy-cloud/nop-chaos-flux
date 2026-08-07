@@ -529,6 +529,8 @@ Current unstable-only examples (live `@nop-chaos/flux-react/unstable` re-export 
 
 `createReadonlyScopeBinding` remains runtime-owned (`packages/flux-runtime/src/status-owner.ts`) and is currently reachable from `@nop-chaos/flux-runtime` root and the `@nop-chaos/flux-react` root (the path `crud-renderer.tsx` actually imports); treat the `flux-react` export as a renderer-facing convenience surface rather than proof that ownership moved into `flux-react`.
 
+`useSyncExternalStoreWithSelector` is exported from the `@nop-chaos/flux-react` root (2026-08-07, plan `2026-08-07-1023-2` 18-01 方案 B): the flux-react-internal fork was promoted to the stable barrel so the `@nop-chaos/flux` facade's ESM shim (`flux-bundle/src/use-sync-external-store-shim.ts`) can consume it through the bare specifier `@nop-chaos/flux-react` instead of a cross-package `../../flux-react/src/...` relative import. The npm `use-sync-external-store` shim stays out of flux-react (its dependency was removed as unused); the flux-bundle vite alias that redirects `use-sync-external-store/*` to the facade shim remains load-bearing for @tiptap/react's CJS shim imports in the browser bundle.
+
 The same rule now applies to `@nop-chaos/flow-designer-renderers`: the root entry keeps the stable schema/manifest registration surface, while Xyflow bridge primitives, palette/canvas internals, and designer context helpers move behind `@nop-chaos/flow-designer-renderers/unstable`.
 
 ## Namespaced Host Provider Result Contract
