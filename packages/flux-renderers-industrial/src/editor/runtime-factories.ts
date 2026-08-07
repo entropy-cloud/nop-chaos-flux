@@ -1,0 +1,244 @@
+import { ScadaEditorEngine } from './renderer/editor-engine.js';
+import { errorMessage } from '../renderer/scada-errors.js';
+import {
+  createScadaEditorSession,
+  type ScadaEditorMode,
+  type ScadaEditorSession,
+} from './editor-session.js';
+import { attachEditorAdapter } from './editor-adapter.js';
+import { serializeScadaConfig } from '../serialization/serialize.js';
+import { parseScadaConfig } from '../serialization/parse.js';
+import { validateScadaConfig } from '../serialization/validate.js';
+import { diffScadaConfig } from '../serialization/diff.js';
+import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
+import {
+  cloneConfigSnapshot,
+  applyPatchToWorkingNode,
+  recomputeLinkagesForMovedNode,
+} from './editor-working-helpers.js';
+import { UndoRedoAdapter } from './undo-redo/undo-redo-adapter.js';
+import type { EditorClipboard } from './toolbox/clipboard.js';
+import type { AlignDirection, DistributeDirection } from './toolbox/align-distribute.js';
+import type { ZOrderAction } from './toolbox/z-order.js';
+
+/**
+ * Editor runtime 拆分模块（plan 2026-08-07-1835-2 Phase 1 / multi P1-03）：
+ * 从 `use-editor-engine.ts` 抽出的纯工厂 + 核心上下文装配。无 React 依赖，
+ * 经共享 `EditorRuntimeContext` 闭包与 runtime-mutators / toolbox-runtime / connection-wiring
+ * / test-handle-factory 共享同一份语义（机械迁移，行为不变）。
+ */
+
+export interface UseEditorEngineArgs {
+  containerRef: { current: HTMLDivElement | null };
+  cid?: number;
+  width?: number;
+  height?: number;
+  /** 初始 config（props.config 经 parse/validate 后的 ScadaConfig）。 */
+  initialConfig: ScadaConfig;
+  /** 初始模式（缺省 edit）。 */
+  initialMode?: ScadaEditorMode;
+  /** 提交策略（manual 缺省 / auto；plan 2026-08-07-1835-2 Phase 2 / multi P1-05）。auto 时每次 session 变更触发 save + onSave。 */
+  commitPolicy?: 'manual' | 'auto';
+  /** Editor 装配 + 初始 config 装载完成。 */
+  onReady?: () => void;
+  /** 装配/构建失败（config 校验失败等）。 */
+  onError?: (code: string, message: string) => void;
+  /** 选区变更（派发 onSelectionChange schema 事件）。 */
+  onSelectionChange?: (nodeIds: string[]) => void;
+  /** 模式变更（派发 onModeChange schema 事件）。 */
+  onModeChange?: (mode: ScadaEditorMode) => void;
+  /** session 变更（派发 onSessionChange schema 事件；canUndo/canRedo M1 恒 false）。 */
+  onSessionChange?: (session: ScadaEditorSession) => void;
+  /** 保存（manual 提交 / auto 持久化；载荷含 serializedConfig，plan 2026-08-07-1835-2 Phase 2 / multi P1-04）。 */
+  onSave?: (serializedConfig: string) => void;
+  /** 装入外部 config（load 句柄触发；plan 2026-08-07-1835-2 Phase 2 / multi P1-04）。 */
+  onLoad?: (config: ScadaConfig) => void;
+}
+
+/**
+ * Editor runtime 共享上下文（plan 2026-08-07-1835-2 Phase 1）。
+ *
+ * 持有 engine/session/undoRedo + 可变 holder（synced/clipboard/paste/group）+ 核心回调
+ * （notifySession/setSessionSelection/syncWorkingCopy）。各 `build*` 工厂以此闭包稳定引用，
+ * 与原先单一 hook effect 内闭包语义等价（机械迁移）。
+ */
+export interface EditorRuntimeContext {
+  engine: ScadaEditorEngine;
+  session: ScadaEditorSession;
+  undoRedo: UndoRedoAdapter;
+  latest: { current: UseEditorEngineArgs };
+  /** 连线拖拽激活标记（端点拖动模式时抑制 transform 写回）。 */
+  connectionDragActiveRef: { current: boolean };
+  /** 引擎已同步的 config 快照 holder（防引用共享：diff 需对快照而非 live config）。 */
+  synced: { config: ScadaConfig };
+  /** 编辑器内 clipboard holder（域内部，不进 scope）。 */
+  clipboard: { current: EditorClipboard | null };
+  /** 粘贴 id 计数器 holder（防 T4）。 */
+  paste: { counter: number };
+  /** group id 单调计数器 holder（plan 2026-08-07-1835-1 Phase 2 / open P1-D）。 */
+  group: { counter: number };
+  notifySession: () => void;
+  setSessionSelection: (next: string[]) => void;
+  syncWorkingCopy: () => void;
+  /**
+   * save 句柄（plan 2026-08-07-1835-2 Phase 2 / multi P1-04/05）：由 runtime-mutators 装配后回填。
+   * notifySession 在 commitPolicy='auto' 时调用此句柄触发 save + onSave（编辑即持久化）。
+   * 经回填而非构造期注入，避免与 mutators 的构造环依赖（mutators 闭包捕获 notifySession）。
+   */
+  save?: () => string;
+}
+
+/**
+ * ScadaEditorEngine mount/build 装配（design-renderer.md §8.3 + design-architecture.md §4.3）。
+ *
+ * 创建 engine + session，注入初始 config 装载（editable:true 注入）。失败时经 onError 上报并返回 null。
+ */
+export function mountEditorEngine(
+  container: HTMLDivElement,
+  latest: { current: UseEditorEngineArgs },
+): { engine: ScadaEditorEngine; session: ScadaEditorSession } | null {
+  let engine: ScadaEditorEngine;
+  try {
+    engine = ScadaEditorEngine.create({
+      container,
+      cid: latest.current.cid,
+      width: latest.current.width,
+      height: latest.current.height,
+    });
+  } catch (error) {
+    latest.current.onError?.('editor-mount-failed', errorMessage(error));
+    return null;
+  }
+
+  const session = createScadaEditorSession(latest.current.initialConfig, {
+    mode: latest.current.initialMode ?? 'edit',
+  });
+
+  try {
+    engine.build(session.workingConfig);
+  } catch (error) {
+    latest.current.onError?.('editor-mount-failed', errorMessage(error));
+    engine.destroy();
+    return null;
+  }
+
+  // plan 2026-08-07-1835-2 Phase 2 / multi P1-08：build 后校正 engine.mode → session.mode。
+  // engine.mode 默认 'edit'，build 用 engine.mode 决定 editable 注入；若 initialMode='preview'，
+  // session.mode='preview' 但 engine.mode 仍 'edit'（desync）。此处显式同步，使 preview 态图元不可编辑（R5）。
+  if (engine.currentMode !== session.mode) {
+    engine.setMode(session.mode);
+  }
+
+  return { engine, session };
+}
+
+/**
+ * 装配 runtime 核心（undoRedo + 可变 holder + notifySession/setSessionSelection/syncWorkingCopy）+
+ * Editor 事件族适配层（R5 隔离：抽纯 payload + nodeId → 更新 working copy + session.selection）。
+ *
+ * 返回共享 `EditorRuntimeContext` + adapter detach 函数。
+ */
+export function createRuntimeCore(
+  engine: ScadaEditorEngine,
+  session: ScadaEditorSession,
+  latest: { current: UseEditorEngineArgs },
+  connectionDragActiveRef: { current: boolean },
+): { ctx: EditorRuntimeContext; detachAdapter: () => void } {
+  const undoRedo = new UndoRedoAdapter(session.undoStack);
+  const synced = { config: cloneConfigSnapshot(session.workingConfig) };
+  const clipboard = { current: null as EditorClipboard | null };
+  const paste = { counter: 0 };
+  const group = { counter: 0 };
+
+  /**
+   * selection 单一写入入口（plan 2026-08-07-1835-1 Phase 1 / multi P1-07）：
+   * 同时更新 canonical `session.selection` 与 React mirror（经 onSelectionChange 回调）。
+   */
+  const setSessionSelection = (next: string[]) => {
+    session.selection = [...next];
+    latest.current.onSelectionChange?.(next);
+  };
+  const syncWorkingCopy = () => {
+    const diff = diffScadaConfig(synced.config, session.workingConfig);
+    const hasChanges =
+      diff.added.length > 0 || diff.removed.length > 0 || diff.updated.length > 0 || diff.variables !== undefined;
+    if (hasChanges) {
+      engine.applyDiff(diff, session.workingConfig);
+      synced.config = cloneConfigSnapshot(session.workingConfig);
+    }
+  };
+
+  const ctx: EditorRuntimeContext = {
+    engine,
+    session,
+    undoRedo,
+    latest,
+    connectionDragActiveRef,
+    synced,
+    clipboard,
+    paste,
+    group,
+    notifySession: () => latest.current.onSessionChange?.(session),
+    setSessionSelection,
+    syncWorkingCopy,
+  };
+
+  /**
+   * plan 2026-08-07-1835-2 Phase 2 / multi P1-05：commitPolicy='auto' 时 notifySession 触发 save + onSave
+   * （编辑即持久化；方案 A 裁定）。事务期间（transform 拖拽逐帧）跳过，由 commitTransaction 的 notifySession
+   * 兜底（防逐帧序列化）。save 句柄由 runtime-mutators 装配后回填到 ctx.save。
+   */
+  ctx.notifySession = () => {
+    latest.current.onSessionChange?.(session);
+    if (latest.current.commitPolicy === 'auto' && ctx.save && !undoRedo.isInTransaction) {
+      ctx.save();
+    }
+  };
+  const notifySession = ctx.notifySession;
+
+  const handleSelectionChange = (nodeIds: string[]) => {
+    setSessionSelection(nodeIds);
+    notifySession();
+  };
+  // plan 2026-08-07-1835-2 Phase 4 / multi P1-13：几何变更 trailing sync 批处理。
+  // 适配层 onTransform 对选区内 s 个图元逐个同步触发 onGeometryChange；此前每帧每节点调 syncWorkingCopy（O(n) diff）
+  // → 单帧 O(s·n)。现用 microtask trailing：一帧内首节点调度一次 microtask，后续节点跳过；microtask 在帧末
+  // 一次性 syncWorkingCopy + notifySession，单帧收敛为 O(n + k)（去掉 s 乘子）。
+  let geometrySyncPending = false;
+  const handleGeometryChange = (nodeId: string, patch: Partial<ScadaSymbolNode>) => {
+    // 连线端点拖动模式启用时 Editor transform 不写回（design-connection.md §4.2 关键约束 1 互斥）。
+    if (connectionDragActiveRef.current) return;
+    // transform 事务语义（design-undo-redo.md §4.2）：适配层 editor.move/scale/rotate/skew 每帧只更新 working copy（不入栈），
+    // 防逐帧入栈爆炸（U2）。undo 入栈由事务终止（pointerup → onTransformEnd → commitTransaction）触发，一拖拽 = 一 diff。
+    applyPatchToWorkingNode(session, nodeId, patch);
+    // 图元移动联动（design-connection.md §4.4 + §4.5）：目标设备移动后重算所有指向它的 connection.x/y。
+    recomputeLinkagesForMovedNode(session, nodeId);
+    if (!geometrySyncPending) {
+      geometrySyncPending = true;
+      queueMicrotask(() => {
+        geometrySyncPending = false;
+        syncWorkingCopy();
+        notifySession();
+      });
+    }
+  };
+  // transform 事务边界（design-undo-redo.md §4.2）：首帧快照 working copy，pointerup 一次性 diff 入栈。
+  const handleTransformStart = () => {
+    undoRedo.beginTransaction('transform-move', session.workingConfig);
+  };
+  const handleTransformEnd = () => {
+    undoRedo.commitTransaction(session.workingConfig);
+    notifySession();
+  };
+  const detachAdapter = attachEditorAdapter(engine, {
+    onSelectionChange: handleSelectionChange,
+    onGeometryChange: handleGeometryChange,
+    onTransformStart: handleTransformStart,
+    onTransformEnd: handleTransformEnd,
+  });
+
+  return { ctx, detachAdapter };
+}
+
+export type { ScadaConfig, ScadaSymbolNode, AlignDirection, DistributeDirection, ZOrderAction };
+export { serializeScadaConfig, parseScadaConfig, validateScadaConfig };

@@ -167,10 +167,15 @@ export function commitConnectionDrag(
 export function recomputeJunctionAfterMove(args: {
   junctionNode: JunctionNode;
   symbols: ScadaSymbolNode[];
+  /**
+   * plan 2026-08-07-1835-2 Phase 4 / multi P1-13：预计算的 bounds（调用方跨多 junction 复用，
+   * 避免每次重算 collectSymbolBounds 的 O(n)）。省略时内部自行计算（向后兼容单 junction 调用）。
+   */
+  precomputedBounds?: ScadaSymbolBounds[];
 }): Array<{ connectionId: string; point: { x: number; y: number } }> | undefined {
   const connections = readConnections(args.junctionNode.custom);
   if (connections.length === 0) return undefined;
-  const bounds = collectSymbolBounds(args.symbols);
+  const bounds = args.precomputedBounds ?? collectSymbolBounds(args.symbols);
   const deviceBoundsById = new Map<string, LinkGeometry>();
   // plan 2026-08-07-1835-1 Phase 2 / multi P1-02：junction 主体几何也用世界坐标（含 group parent offset 累加）。
   // 此前读 `args.junctionNode.x` 把 local 当 world，嵌套 junction 的联动重算 x/y 全错位。

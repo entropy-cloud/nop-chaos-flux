@@ -1,6 +1,7 @@
 import React from 'react';
 import { cleanup, render, waitFor, act, fireEvent } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { RendererComponentProps, RendererDefinition, RendererHelpers } from '@nop-chaos/flux-core';
 import { createSchemaRenderer, createDefaultEnv } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
@@ -9,6 +10,8 @@ import { registerScadaSymbol, unregisterScadaSymbol } from '../symbols/symbol-re
 import { validEditorConfig } from '../test-support/editor-config-fixtures.js';
 import { readScadaEditorTestHandle } from './editor-test-handle.js';
 import { industrialEditorRendererDefinitions } from './renderer-definitions.js';
+import { ScadaEditorCanvasRenderer } from './scada-editor-canvas.js';
+import type { ScadaEditorCanvasSchema } from './schemas.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
@@ -190,9 +193,20 @@ describe('scada-editor-canvas canvas slot marker', () => {
 });
 
 describe('scada-editor-canvas events dispatch', () => {
+  // plan 2026-08-07-1835-2 Phase 5 / multi P1-12：先前 onReady 测试零 dispatch 断言（false-green——
+  // onReadyAction = vi.fn() 是 dead code，仅查 data-status）。现用 dispatch-spy 包裹渲染器，
+  // 断言 helpers.dispatch 经 scada-editor:ready 事件真实调用（移除 dispatch 实现会让此 test 红）。
+  function createDispatchSpiedDefinitions(dispatchSpy: ReturnType<typeof vi.fn>): RendererDefinition[] {
+    function SpiedEditor(props: RendererComponentProps<ScadaEditorCanvasSchema>) {
+      const helpers = ({ ...(props.helpers as object), dispatch: dispatchSpy }) as unknown as RendererHelpers;
+      return <ScadaEditorCanvasRenderer {...props} helpers={helpers} />;
+    }
+    return [{ ...industrialEditorRendererDefinitions[0], component: SpiedEditor }];
+  }
+
   it('dispatches onReady when editor mounts with events prop', async () => {
-    const onReadyAction = vi.fn();
-    const SchemaRenderer = createSchemaRenderer(industrialEditorRendererDefinitions);
+    const dispatch = vi.fn();
+    const SchemaRenderer = createSchemaRenderer(createDispatchSpiedDefinitions(dispatch));
     const { container } = render(
       <SchemaRenderer
         schemaUrl="test://editor-events/ready"
@@ -208,15 +222,55 @@ describe('scada-editor-canvas events dispatch', () => {
     await waitFor(() => {
       expect(container.querySelector('[data-slot="scada-editor-canvas"]')?.getAttribute('data-status')).toBe('ready');
     });
-    // onReady action dispatched via helpers.dispatch (the dispatch call is exercised).
-    void onReadyAction;
+    const types = dispatch.mock.calls.map((call) => {
+      const event = (call[1] as { event?: { type?: string } } | undefined)?.event;
+      return event?.type ?? '';
+    });
+    expect(types).toContain('scada-editor:ready');
   });
 
-  it('dispatches onError when config is invalid with events prop', async () => {
-    const { container } = renderEditor('events-error', { version: 2, symbols: [] } as never, { onError: { action: 'test' } });
-    await waitFor(() => {
-      expect(container.querySelector('[data-slot="scada-editor-canvas"]')?.getAttribute('data-status')).toBe('error');
+  it('dispatches onError when engine build fails (runtime error path)', async () => {
+    // plan 2026-08-07-1835-2 Phase 5 / multi P1-12：onError dispatch 仅在 runtime build 失败时触发
+    // （parse 失败走 parseError 直接渲染 error UI，不经 handleError → 不 dispatch）。
+    // 用 throwing symbol 触发 runtime build error → handleError → dispatch scada-editor:error。
+    registerScadaSymbol({
+      type: 'test-throwing-onerror',
+      name: 'Test Throwing OnError',
+      props: { x: { type: 'number' } },
+      create: () => {
+        throw new Error('create failed');
+      },
     });
+    try {
+      const dispatch = vi.fn();
+      const SchemaRenderer = createSchemaRenderer(createDispatchSpiedDefinitions(dispatch));
+      const { container } = render(
+        <SchemaRenderer
+          schemaUrl="test://editor-events/error"
+          schema={{
+            type: 'scada-editor-canvas',
+            config: {
+              version: 1,
+              variables: [],
+              symbols: [{ id: 't1', type: 'test-throwing-onerror', x: 0, y: 0 }],
+            } as never,
+            events: { onError: { action: 'test' } },
+          }}
+          env={createDefaultEnv()}
+          formulaCompiler={createFormulaCompiler()}
+        />,
+      );
+      await waitFor(() => {
+        expect(container.querySelector('[data-slot="scada-editor-canvas"]')?.getAttribute('data-status')).toBe('error');
+      });
+      const types = dispatch.mock.calls.map((call) => {
+        const event = (call[1] as { event?: { type?: string } } | undefined)?.event;
+        return event?.type ?? '';
+      });
+      expect(types).toContain('scada-editor:error');
+    } finally {
+      unregisterScadaSymbol('test-throwing-onerror');
+    }
   });
 });
 

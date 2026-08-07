@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, ButtonGroup, Separator, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@nop-chaos/ui';
+import { Button, ButtonGroup, Separator, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Textarea } from '@nop-chaos/ui';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
@@ -108,6 +108,27 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
     flashStatus(t('industrial.scada.editor.toolbox.redone'));
   };
 
+  // plan 2026-08-07-1835-2 Phase 3 / open P1-B：delete/group/ungroup 从默认 UI 按钮可达
+  // （此前仅 component:* handle 注册，默认 panel 不接；M2 基础操作不再只靠测试 handle）。
+  // disabled prop 已保证非空/足量选区；runtime 方法自守（groupSymbols 空 children / ungroup 非 group 均安全 no-op）。
+  const handleDelete = () => {
+    for (const id of selection) runtime.removeWorkingSymbol(id);
+    flashStatus(t('industrial.scada.editor.toolbox.deleted'));
+  };
+
+  const handleGroup = () => {
+    runtime.groupSymbols(selection);
+    flashStatus(t('industrial.scada.editor.toolbox.grouped'));
+  };
+
+  const handleUngroup = () => {
+    for (const id of selection) {
+      const node = runtime.session.workingConfig.symbols.find((s) => s.id === id);
+      if (node?.type === 'scada-group') runtime.ungroupSymbols(id);
+    }
+    flashStatus(t('industrial.scada.editor.toolbox.ungrouped'));
+  };
+
   const btn = (label: string, onClick: () => void, disabled: boolean, title: string) => (
     <Button variant="ghost" size="sm" disabled={disabled} onClick={onClick} title={title} className="nop-scada-editor-toolbox-btn">
       {label}
@@ -116,6 +137,12 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
 
   return (
     <div data-slot="scada-editor-toolbox" className={cn('nop-scada-editor-toolbox')}>
+      <ButtonGroup>
+        {btn('Del', handleDelete, !hasSelection, t('industrial.scada.editor.toolbox.delete') || 'Delete')}
+        {btn('Group', handleGroup, selection.length < 2, t('industrial.scada.editor.toolbox.group') || 'Group')}
+        {btn('Ungroup', handleUngroup, !hasSelection, t('industrial.scada.editor.toolbox.ungroup') || 'Ungroup')}
+      </ButtonGroup>
+      <Separator orientation="vertical" className="nop-scada-editor-toolbox-sep" />
       <ButtonGroup>
         {btn('Fit', () => handleView(() => runtime.fitView(), 'Fit'), false, t('industrial.scada.editor.toolbox.fit'))}
         {btn('Center', () => handleView(() => runtime.centerView(), 'Center'), false, t('industrial.scada.editor.toolbox.center'))}
@@ -174,7 +201,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
               {t('industrial.scada.editor.toolbox.importConfirmDesc')}
             </DialogDescription>
           </DialogHeader>
-          <textarea
+          <Textarea
             className="nop-scada-editor-toolbox-import-textarea"
             value={importText}
             onChange={(e) => setImportText(e.target.value)}

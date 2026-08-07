@@ -180,15 +180,29 @@ describe('attachEditorAdapter', () => {
 });
 
 describe('programmaticSelect / programmaticClearSelection', () => {
-  it('programmaticSelect sets editor targets', () => {
+  it('programmaticSelect sets editor targets for known ids', () => {
+    // plan 2026-08-07-1835-2 Phase 5 / multi P1-12：先前零 expect（false-green）；现断言 setEditorTargets 被调用
+    // 且传入已解析的 leaf node（验证 nodeId → node 解析 + 选中装配真实发生）。
+    const setTargetsSpy = vi.spyOn(engine!, 'setEditorTargets');
     programmaticSelect(engine!, ['a1']);
-    programmaticClearSelection(engine!);
-    // No throw = pass (mock editor.cancel is available via MockLeaf)
+    expect(setTargetsSpy).toHaveBeenCalledTimes(1);
+    const passedNodes = setTargetsSpy.mock.calls[0][0];
+    expect(Array.isArray(passedNodes)).toBe(true);
+    expect(passedNodes.length).toBe(1);
   });
 
-  it('programmaticSelect ignores unknown ids', () => {
+  it('programmaticClearSelection clears editor selection', () => {
+    const clearSpy = vi.spyOn(engine!, 'clearEditorSelection');
+    programmaticClearSelection(engine!);
+    expect(clearSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('programmaticSelect ignores unknown ids (empty targets array)', () => {
+    const setTargetsSpy = vi.spyOn(engine!, 'setEditorTargets');
     programmaticSelect(engine!, ['nonexistent']);
-    // No throw, no targets set for unknown ids.
+    // unknown id → getSymbol 返回 undefined → filter 掉 → 空数组传入 setEditorTargets（不抛、不跳过装配调用）。
+    expect(setTargetsSpy).toHaveBeenCalledTimes(1);
+    expect(setTargetsSpy.mock.calls[0][0]).toEqual([]);
   });
 });
 

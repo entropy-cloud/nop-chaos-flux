@@ -1,6 +1,6 @@
 import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
 import type { ScadaEditorSession } from './editor-session.js';
-import { recomputeJunctionAfterMove } from './connection/connection-adapter.js';
+import { recomputeJunctionAfterMove, collectSymbolBounds } from './connection/connection-adapter.js';
 
 /**
  * working copy 纯函数助手集（design-connection.md §4.4/§4.5 + design-undo-redo.md §4.1.1）。
@@ -116,16 +116,23 @@ export function applyPatchToWorkingNode(
  * plan 2026-08-07-1835-1 Phase 2 / open P1-C1：junction 发现循环改递归 `collectAllSymbols`，
  * 嵌套在 group 子树内的 pipe-junction 现在可达（此前 `for of symbols` 顶层只漏掉嵌套 junction，
  * target 移动后 connection x/y 永不重算）。
+ *
+ * plan 2026-08-07-1835-2 Phase 4 / multi P1-13：消除 per-frame O(n²)。此前 k-loop 内逐 junction 调 O(n)
+ * `findNodeInWorking`（k junctions × O(n) = O(k·n)），且 recomputeJunctionAfterMove 内部每次重算
+ * `collectSymbolBounds`（再 O(n)）。现顶部一次 `collectAllSymbols` 建 `Map<id,node>` O(1) lookup +
+ * 一次 collectSymbolBounds 复用跨 junction（传 precomputedBounds），单帧收敛为 O(n + k)。
  */
 export function recomputeLinkagesForMovedNode(session: ScadaEditorSession, movedNodeId: string): void {
   const symbols = session.workingConfig.symbols;
-  const movedIsJunction = findNodeInWorking(symbols, movedNodeId)?.type === 'scada-pipe-junction';
+  const allSymbols = collectAllSymbols(symbols);
+  const nodeById = new Map<string, ScadaSymbolNode>(allSymbols.map((n) => [n.id, n]));
+  const movedIsJunction = nodeById.get(movedNodeId)?.type === 'scada-pipe-junction';
   const junctionsToRecompute: string[] = [];
   if (movedIsJunction) {
     junctionsToRecompute.push(movedNodeId);
   }
   // 收集所有 target 指向被移动节点的 pipe-junction（递归含 group 嵌套）。
-  for (const node of collectAllSymbols(symbols)) {
+  for (const node of allSymbols) {
     if (node.type !== 'scada-pipe-junction') continue;
     const conns = node.custom?.connections;
     if (!Array.isArray(conns)) continue;
@@ -133,10 +140,14 @@ export function recomputeLinkagesForMovedNode(session: ScadaEditorSession, moved
       junctionsToRecompute.push(node.id);
     }
   }
+  if (junctionsToRecompute.length === 0) return;
+  // plan 2026-08-07-1835-2 Phase 4 / P1-13：bounds 复用——一次 collectSymbolBounds 跨全部 junction
+  // （recomputeJunctionAfterMove 接 precomputedBounds 跳过内部重算，去掉 k × O(n) bounds 重建）。
+  const sharedBounds = collectSymbolBounds(symbols);
   for (const junctionId of junctionsToRecompute) {
-    const junctionNode = findNodeInWorking(symbols, junctionId);
+    const junctionNode = nodeById.get(junctionId);
     if (!junctionNode || junctionNode.type !== 'scada-pipe-junction') continue;
-    const updates = recomputeJunctionAfterMove({ junctionNode, symbols });
+    const updates = recomputeJunctionAfterMove({ junctionNode, symbols, precomputedBounds: sharedBounds });
     if (!updates || updates.length === 0) continue;
     const existing = Array.isArray(junctionNode.custom?.connections) ? [...(junctionNode.custom!.connections as never[])] : [];
     const byId = new Map(updates.map((u) => [u.connectionId, u.point]));
@@ -144,8 +155,8 @@ export function recomputeLinkagesForMovedNode(session: ScadaEditorSession, moved
       const point = byId.get((c as { id: string }).id);
       return point ? { ...(c as object), x: point.x, y: point.y } : c;
     });
-    applyPatchToWorkingNode(session, junctionId, {
-      custom: { ...junctionNode.custom, connections: nextConnections },
-    });
+    // plan 2026-08-07-1835-2 Phase 4 / P1-13：applyPatch 直接写预解析 node ref（nodeById.get），
+    // 不再经 applyPatchToWorkingNode 的 O(n) findNodeInWorking 重查。
+    Object.assign(junctionNode, { custom: { ...junctionNode.custom, connections: nextConnections } });
   }
 }

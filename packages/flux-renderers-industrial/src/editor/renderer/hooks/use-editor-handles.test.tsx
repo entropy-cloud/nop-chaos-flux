@@ -53,8 +53,17 @@ function makeRuntime(): EditorEngineRuntime {
     mode: 'edit' as const,
     undoStack: new UndoStack(),
   };
+  // plan 2026-08-07-1835-2 Phase 2 / P1-06：engine mock 补 runtime 9 句柄委派所需方法
+  // （isDestroyed/getSymbols/getSymbolProps/getViewport/destroy）。
+  const engineMock = {
+    isDestroyed: () => false,
+    destroy: () => undefined,
+    getSymbols: () => [],
+    getSymbolProps: (_id: string) => undefined,
+    getViewport: () => ({ x: 0, y: 0, scale: 1 }),
+  };
   return {
-    engine: {} as never,
+    engine: engineMock as never,
     session,
     switchMode: () => undefined,
     setSelection: () => undefined,
@@ -119,7 +128,17 @@ describe('useEditorHandles', () => {
     expect(caps?.hasMethod?.('save')).toBe(true);
     expect(caps?.hasMethod?.('load')).toBe(true);
     expect(caps?.hasMethod?.('unknownMethod')).toBe(false);
+    // plan 2026-08-07-1835-2 Phase 2 / P1-06：runtime 9 句柄合并注册（fit/center/.../destroy 在前）。
     expect(caps?.listMethods?.()).toEqual([
+      'fit',
+      'center',
+      'getSymbols',
+      'getSymbol',
+      'setPointValue',
+      'getPointTable',
+      'exportConfig',
+      'importConfig',
+      'destroy',
       'addSymbol',
       'removeSymbol',
       'updateSymbol',

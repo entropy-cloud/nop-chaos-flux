@@ -158,6 +158,37 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
     [dispatchEvent],
   );
 
+  // plan 2026-08-07-1835-2 Phase 2 / multi P1-04：save 经 runtime-mutators save() → latest.onSave
+  // 触发此处 → 派发 scada-editor:save schema 事件（payload=serializedConfig）。此前 schema 声明 onSave 但 0 dispatch。
+  const handleSave = useCallback(
+    (serializedConfig: string) => {
+      dispatchEvent(
+        'scada-editor:save',
+        { serializedConfig },
+        eventsRef.current?.onSave,
+      );
+    },
+    [dispatchEvent],
+  );
+
+  // plan 2026-08-07-1835-2 Phase 2 / multi P1-04：load 经 runtime-mutators load() → latest.onLoad
+  // 触发此处 → 派发 scada-editor:load schema 事件（payload=parsed config）。
+  const handleLoad = useCallback(
+    (config: ScadaConfig) => {
+      dispatchEvent(
+        'scada-editor:load',
+        { config },
+        eventsRef.current?.onLoad,
+      );
+    },
+    [dispatchEvent],
+  );
+
+  // plan 2026-08-07-1835-2 Phase 2 / multi P1-06：component:destroy() 句柄触发 → 置 destroyed 态（§8.3 OP-4）。
+  const handleDestroyed = useCallback(() => {
+    setStatus('destroyed');
+  }, []);
+
   const runtime = useEditorEngine({
     containerRef,
     cid: props.meta.cid,
@@ -165,11 +196,14 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
     height: props.props.height,
     initialConfig: parsedConfig ?? EMPTY_EDITOR_CONFIG,
     initialMode: props.props.mode,
+    commitPolicy: props.props.commitPolicy,
     onReady: handleReady,
     onError: handleError,
     onSelectionChange: handleSelectionChange,
     onModeChange: handleModeChange,
     onSessionChange: handleSessionChange,
+    onSave: handleSave,
+    onLoad: handleLoad,
   });
 
   useEditorHandles({
@@ -177,6 +211,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
     id: props.id,
     cid: props.meta.cid,
     runtime,
+    onDestroyed: handleDestroyed,
   });
 
   // canvas slot 落点（design-renderer.md §10）：leafer App 在 containerRef 内创建 <canvas>，
@@ -229,21 +264,76 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
           {asReactNode(palette?.render()) ?? (
             <EditorPalettePanel runtime={runtime!} onError={handleError} />
           )}
-          {/* eslint-disable jsx-a11y/no-static-element-interactions -- canvas drop target */}
+          {/* eslint-disable jsx-a11y/no-static-element-interactions -- canvas drop + keyboard target */}
           <div
             className="nop-scada-editor-layout-canvas"
+            tabIndex={0}
             onDrop={(e) => {
               e.preventDefault();
               const type = e.dataTransfer.getData('application/x-scada-symbol-type');
               if (type && runtime) {
                 idCounter.current += 1;
                 const id = `${type}-${idCounter.current}`;
-                runtime.addWorkingSymbol({ id, type, x: 50, y: 50, width: 100, height: 100 });
+                // plan 2026-08-07-1835-2 Phase 3 / multi P1-11：palette drop 落在指针处
+                // （此前硬编码 x:50,y:50 堆叠）。用 canvas rect + engine.getWorldPoint 换算世界坐标，
+                // symbol 居中指针处（复用 connection 子系统的 getBoundingClientRect + getWorldPoint 管线）。
+                const rect = e.currentTarget.getBoundingClientRect();
+                const viewX = e.clientX - rect.left;
+                const viewY = e.clientY - rect.top;
+                const world = runtime.engine.getWorldPoint({ x: viewX, y: viewY });
+                runtime.addWorkingSymbol({
+                  id,
+                  type,
+                  x: Math.round(world.x - 50),
+                  y: Math.round(world.y - 50),
+                  width: 100,
+                  height: 100,
+                });
               }
             }}
             onDragOver={(e) => {
               e.preventDefault();
               e.dataTransfer.dropEffect = 'copy';
+            }}
+            // plan 2026-08-07-1835-2 Phase 3 / open P1-B：键盘层——Delete/Ctrl+Z/Y/Ctrl+G/Ctrl+Shift+G/arrows
+            // （此前 grep keydown 0 hits，delete/group/ungroup 仅 component:* handle 可达）。
+            onKeyDown={(e) => {
+              if (!runtime) return;
+              const sel = selection;
+              const ctrl = e.ctrlKey || e.metaKey;
+              const key = e.key.toLowerCase();
+              if (key === 'delete' || key === 'backspace') {
+                if (sel.length === 0) return;
+                e.preventDefault();
+                for (const id of sel) runtime.removeWorkingSymbol(id);
+              } else if (ctrl && !e.shiftKey && key === 'z') {
+                e.preventDefault();
+                runtime.undo();
+              } else if ((ctrl && !e.shiftKey && key === 'y') || (ctrl && e.shiftKey && key === 'z')) {
+                e.preventDefault();
+                runtime.redo();
+              } else if (ctrl && !e.shiftKey && key === 'g') {
+                if (sel.length >= 2) {
+                  e.preventDefault();
+                  runtime.groupSymbols(sel);
+                }
+              } else if (ctrl && e.shiftKey && key === 'g') {
+                e.preventDefault();
+                for (const id of sel) {
+                  const node = runtime.session.workingConfig.symbols.find((s) => s.id === id);
+                  if (node?.type === 'scada-group') runtime.ungroupSymbols(id);
+                }
+              } else if (key === 'arrowleft' || key === 'arrowright' || key === 'arrowup' || key === 'arrowdown') {
+                if (sel.length === 0) return;
+                e.preventDefault();
+                const step = e.shiftKey ? 10 : 1;
+                const dx = key === 'arrowleft' ? -step : key === 'arrowright' ? step : 0;
+                const dy = key === 'arrowup' ? -step : key === 'arrowdown' ? step : 0;
+                for (const id of sel) {
+                  const node = runtime.session.workingConfig.symbols.find((s) => s.id === id);
+                  if (node) runtime.updateWorkingNode(id, { x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy });
+                }
+              }
             }}
           />
           {asReactNode(

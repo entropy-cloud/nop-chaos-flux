@@ -270,17 +270,24 @@ describe('scada-editor-canvas operations (add/update/remove via test handle)', (
   });
 
   it('editor.move event updates working copy geometry via adapter', async () => {
+    // plan 2026-08-07-1835-2 Phase 5 / multi P1-12：先前仅 not.toThrow + toBeDefined（false-green）；
+    // 现改写 mock leaf 几何后断言 working copy 真实同步了新坐标（移除 adapter 写回实现会让 test 红）。
     const { container } = renderEditor('adapter-move');
     const cid = await waitForReadyAndCid(container);
     const handle = readScadaEditorTestHandle(cid)!;
     const editor = handle.editor as { emit?: (e: string) => void; target?: unknown };
-    const engine = handle.engine as { getSymbol?: (id: string) => { node: object } | undefined };
-    const node = engine.getSymbol?.('editor-rect')?.node;
-    editor.target = node;
+    const engine = handle.engine as { getSymbol?: (id: string) => { node: Record<string, unknown> } | undefined };
+    const leaf = engine.getSymbol?.('editor-rect');
+    expect(leaf).toBeDefined();
+    // 模拟拖拽：改写 mock leaf 几何（adapter readTargetGeometry 经 node.get() 读取）。
+    leaf!.node.x = 321;
+    leaf!.node.y = 198;
+    editor.target = leaf!.node;
     editor.emit?.('editor.move');
-    // After editor.move, working copy geometry should be updated from target.
     const workingNode = handle.session.workingConfig.symbols.find((s) => s.id === 'editor-rect');
     expect(workingNode).toBeDefined();
+    expect(workingNode!.x).toBe(321);
+    expect(workingNode!.y).toBe(198);
   });
 
   it('undo/redo handles drive undo-redo stack (E7.2: canUndo/canRedo derived from stack)', async () => {
@@ -306,11 +313,24 @@ describe('scada-editor-canvas operations (add/update/remove via test handle)', (
     expect(handle.session.canRedo).toBe(false);
   });
 
-  it('group/ungroup handles are callable (Phase 3 wires real behavior)', async () => {
+  it('group/ungroup handles drive real structural mutation', async () => {
+    // plan 2026-08-07-1835-2 Phase 5 / multi P1-12：先前纯 not.toThrow（false-green）；现断言
+    // group 后产生 scada-group 节点 + children 提升，ungroup 后结构还原（验证真实 mutation）。
     const { container } = renderEditor('group-ungroup-handles');
     const cid = await waitForReadyAndCid(container);
     const handle = readScadaEditorTestHandle(cid)!;
-    expect(() => handle.group(['editor-rect'])).not.toThrow();
-    expect(() => handle.ungroup('editor-rect')).not.toThrow();
+    const before = handle.session.workingConfig.symbols.length;
+    handle.group(['editor-rect', 'editor-rect-2']);
+    const afterGroup = handle.session.workingConfig.symbols;
+    expect(afterGroup.length).toBe(before - 1);
+    const groupNode = afterGroup.find((s) => s.type === 'scada-group');
+    expect(groupNode).toBeDefined();
+    expect(groupNode!.children).toHaveLength(2);
+    // ungroup → children 提升回顶层，结构长度还原
+    handle.ungroup(groupNode!.id);
+    const afterUngroup = handle.session.workingConfig.symbols;
+    expect(afterUngroup.some((s) => s.id === 'editor-rect')).toBe(true);
+    expect(afterUngroup.some((s) => s.id === 'editor-rect-2')).toBe(true);
+    expect(afterUngroup.some((s) => s.type === 'scada-group')).toBe(false);
   });
 });
