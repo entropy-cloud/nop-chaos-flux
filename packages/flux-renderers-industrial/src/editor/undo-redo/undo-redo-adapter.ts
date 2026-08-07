@@ -185,7 +185,9 @@ function hasChanges(diff: ScadaConfigDiff): boolean {
     diff.added.length > 0 ||
     diff.removed.length > 0 ||
     diff.updated.length > 0 ||
-    diff.variables !== undefined
+    diff.variables !== undefined ||
+    // plan 2026-08-07-1835-1 Phase 3 / open P1-E：z-order reordered 增量也算有变更（纯重排无 added/removed）。
+    (diff.reordered !== undefined && diff.reordered.length > 0)
   );
 }
 

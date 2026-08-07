@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
 import type { ScadaSymbolNode } from '../../serialization/config-types.js';
@@ -25,23 +24,17 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
   const { runtime, selectedNodeId } = props;
   const { t } = useFluxTranslation();
 
-  const node = useMemo<ScadaSymbolNode | undefined>(() => {
-    if (!selectedNodeId) return undefined;
-    return findNode(runtime.session.workingConfig.symbols, selectedNodeId);
-  }, [runtime, selectedNodeId]);
-
-  const definition = useMemo(() => (node ? getScadaSymbolDefinition(node.type) : undefined), [node]);
-
-  const fieldGroups = useMemo(() => {
-    if (!definition) return [];
-    return extractPanelFields(definition);
-  }, [definition]);
-
-  const fieldErrors = useMemo(() => {
-    const result = validateScadaConfig(runtime.session.workingConfig);
-    if (result.ok) return {};
-    return parseFieldErrors(result.errors, selectedNodeId, runtime.session.workingConfig);
-  }, [runtime, selectedNodeId]);
+  // 反应式：父 canvas 经 sessionVersion bump 触发重渲染，本组件每次都从最新 runtime.session 重派生。
+  // 不使用 useMemo（React Compiler 自动 memoize；且 useMemo deps 需显式纳入 sessionVersion 才能刷新）。
+  const node: ScadaSymbolNode | undefined = selectedNodeId
+    ? findNode(runtime.session.workingConfig.symbols, selectedNodeId)
+    : undefined;
+  const definition = node ? getScadaSymbolDefinition(node.type) : undefined;
+  const fieldGroups = definition ? extractPanelFields(definition) : [];
+  const validation = validateScadaConfig(runtime.session.workingConfig);
+  const fieldErrors = validation.ok
+    ? {}
+    : parseFieldErrors(validation.errors, selectedNodeId, runtime.session.workingConfig);
 
   if (node && definition) {
     const handleFieldChange = (field: PanelField, value: unknown) => {

@@ -46,6 +46,8 @@ import {
   applyPatchToWorkingNode,
   findNodeInWorking,
   recomputeLinkagesForMovedNode,
+  collectAllSymbols,
+  collectWorldBounds,
 } from '../../editor-working-helpers.js';
 
 export interface UseEditorEngineArgs {
@@ -212,9 +214,17 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
 
     // 适配层 attach：Editor 事件族 → 抽纯 payload + nodeId → 更新 working copy + session.selection（R5 隔离）。
     const notifySession = () => latest.current.onSessionChange?.(session);
+    /**
+     * selection 单一写入入口（plan 2026-08-07-1835-1 Phase 1 / multi P1-07）：
+     * 同时更新 canonical `session.selection` 与 React mirror（经 onSelectionChange 回调）。
+     * 消除 6 条 mutation 路径中 5 条静默直写 session.selection 导致 React mirror 过期的隐患。
+     */
+    const setSessionSelection = (next: string[]) => {
+      session.selection = [...next];
+      latest.current.onSelectionChange?.(next);
+    };
     const handleSelectionChange = (nodeIds: string[]) => {
-      session.selection = [...nodeIds];
-      latest.current.onSelectionChange?.(nodeIds);
+      setSessionSelection(nodeIds);
       notifySession();
     };
     const handleGeometryChange = (nodeId: string, patch: Partial<ScadaSymbolNode>) => {
@@ -302,7 +312,7 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     const removeWorkingSymbol = (nodeId: string) => {
       const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
       session.workingConfig.symbols = session.workingConfig.symbols.filter((n) => n.id !== nodeId);
-      session.selection = session.selection.filter((id) => id !== nodeId);
+      setSessionSelection(session.selection.filter((id) => id !== nodeId));
       undoRedo.pushOperation('remove-symbol', prevSnapshot, session.workingConfig);
       syncWorkingCopy();
       notifySession();
@@ -333,7 +343,14 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       const children = session.workingConfig.symbols.filter((s) => childSet.has(s.id));
       if (children.length === 0) return;
       const remaining = session.workingConfig.symbols.filter((s) => !childSet.has(s.id));
-      const groupId = `scada-group-${Date.now()}`;
+      // plan 2026-08-07-1835-1 Phase 2 / open P1-D：group id 用单调计数器 + 碰撞自增（替代 Date.now()），
+      // 同毫秒连续 group 也不再碰撞。对齐 clipboard/connection id 站点纪律。
+      const existingIds = new Set(collectAllSymbols(session.workingConfig.symbols).map((s) => s.id));
+      let groupId: string;
+      do {
+        groupCounter += 1;
+        groupId = `scada-group-${groupCounter}`;
+      } while (existingIds.has(groupId));
       const groupNode: ScadaSymbolNode = {
         id: groupId,
         type: 'scada-group',
@@ -342,7 +359,7 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
         children: children.map((c) => ({ ...c })),
       };
       session.workingConfig = { ...session.workingConfig, symbols: [...remaining, groupNode] };
-      session.selection = [groupId];
+      setSessionSelection([groupId]);
       undoRedo.pushOperation('group', prevSnapshot, session.workingConfig);
       syncWorkingCopy();
       notifySession();
@@ -356,7 +373,7 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       const promoted = groupNode.children.map((c) => ({ ...c }));
       const remaining = session.workingConfig.symbols.filter((s) => s.id !== groupId);
       session.workingConfig = { ...session.workingConfig, symbols: [...remaining, ...promoted] };
-      session.selection = promoted.map((c) => c.id);
+      setSessionSelection(promoted.map((c) => c.id));
       undoRedo.pushOperation('ungroup', prevSnapshot, session.workingConfig);
       syncWorkingCopy();
       notifySession();
@@ -367,23 +384,30 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     let editorClipboard: EditorClipboard | null = null;
     // 粘贴 id 计数器（编辑会话维护，保证 paste id 唯一，防 T4）。
     let pasteCounter = 0;
+    // group id 单调计数器（plan 2026-08-07-1835-1 Phase 2 / open P1-D）：替代 `Date.now()` mint，
+    // 保证同毫秒连续两次 group 也得唯一 id（对齐 clipboard pasteCounter / generateConnectionId 纪律）。
+    let groupCounter = 0;
 
-    /** 计算顶层 symbols 的包围盒（视图工具 fit/center 用，M3 扁平算法）。 */
+    /**
+     * 计算全部节点（含 group 嵌套）的世界包围盒（视图工具 fit/center 用）。
+     *
+     * plan 2026-08-07-1835-1 Phase 2 / open P1-C3：递归 collectWorldBounds 累加 parent offset，
+     * group 节点（无 width/height 但有 children）的世界范围由 children 决定 → 全选 group 后 fit/center
+     * 不再退化（{0,0,0,0}）。
+     */
     const computeBounds = (): Bounds | undefined => {
+      const worldBounds = collectWorldBounds(session.workingConfig.symbols, 0, 0);
       let out: Bounds | undefined;
-      for (const node of session.workingConfig.symbols) {
-        const x = node.x ?? 0;
-        const y = node.y ?? 0;
-        const w = node.width ?? 0;
-        const h = node.height ?? 0;
-        const b: Bounds = { x, y, width: w, height: h };
+      for (const b of worldBounds) {
+        // 跳过零尺寸节点（无 width/height 的 group 容器自身；其 children 已贡献 bounds）。
+        if (b.width <= 0 || b.height <= 0) continue;
         if (out === undefined) {
-          out = b;
+          out = { x: b.x, y: b.y, width: b.width, height: b.height };
         } else {
-          const minX = Math.min(out.x, x);
-          const minY = Math.min(out.y, y);
-          const maxX = Math.max(out.x + out.width, x + w);
-          const maxY = Math.max(out.y + out.height, y + h);
+          const minX = Math.min(out.x, b.x);
+          const minY = Math.min(out.y, b.y);
+          const maxX = Math.max(out.x + out.width, b.x + b.width);
+          const maxY = Math.max(out.y + out.height, b.y + b.height);
           out = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
         }
       }
@@ -413,10 +437,15 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       engine.zoomAt({ x: vp.x + (engine.getSize().width ?? 0) / 2, y: vp.y + (engine.getSize().height ?? 0) / 2 }, factor);
     };
 
-    /** 读取 selection 对应的 working copy 节点（顶层 symbols 过滤）。 */
+    /**
+     * 读取 selection 对应的 working copy 节点（递归含 group 子树）。
+     *
+     * plan 2026-08-07-1835-1 Phase 2 / open P1-C2：改用 collectAllSymbols 解析 selection → group-child
+     * 多选不再被「顶层 symbols.filter」过滤丢弃，align/distribute/copy/cut 操作正确接收嵌套节点。
+     */
     const selectionNodes = (): ScadaSymbolNode[] => {
       const set = new Set(session.selection);
-      return session.workingConfig.symbols.filter((s) => set.has(s.id));
+      return collectAllSymbols(session.workingConfig.symbols).filter((s) => set.has(s.id));
     };
 
     const applyAlignOrDistribute = (
@@ -452,16 +481,19 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       const res = reorderZOrder(session.workingConfig.symbols, session.selection, action);
       if (!res.ok || !res.newOrder || !res.movedIds || res.movedIds.length === 0) return false;
       const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
-      // 结构 diff（full-replace）：removed=旧顺序全部 id，added=新顺序全部节点。
-      // applyDiffToConfig 先 remove 全部再 append 新顺序 → 正确重排（z 序 = 数组顺序，design-engine.md §4.3）。
+      // plan 2026-08-07-1835-1 Phase 3 / open P1-E：z-order 增量 diff（替代先前 full-replace added/removed）。
+      // forward.reordered = 新顺序 id 列表；inverse.reordered = 旧顺序 id 列表（computeInverse 从 prevSnapshot
+      // 自动派生）。栈条目 O(n) strings 而非 O(n) 全量节点对象，R4「无全量快照」严格满足。
+      const newOrderIds = res.newOrder.map((n) => n.id);
       const forward: import('../../../serialization/config-types.js').ScadaConfigDiff = {
-        added: res.newOrder.map((n) => ({ ...n })),
-        removed: prevSnapshot.symbols.map((s) => s.id),
+        added: [],
+        removed: [],
         updated: [],
+        reordered: newOrderIds,
       };
       session.workingConfig = { ...session.workingConfig, symbols: res.newOrder.map((n) => ({ ...n })) };
       undoRedo.pushForward('z-order', forward, prevSnapshot, false, `zorder:${action}`);
-      // z 序是纯重排（节点内容不变），diffScadaConfig 检测不到 → 直接用结构 diff 同步 engine 树顺序。
+      // z 序是纯重排（节点内容不变）；reordered 经 engine.applyReorder 重排 leafer root.children。
       engine.applyDiff(forward, session.workingConfig);
       engineSyncedConfig = cloneConfigSnapshot(session.workingConfig);
       notifySession();
@@ -487,7 +519,7 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
         ...session.workingConfig,
         symbols: session.workingConfig.symbols.filter((s) => !removedSet.has(s.id)),
       };
-      session.selection = session.selection.filter((id) => !removedSet.has(id));
+      setSessionSelection(session.selection.filter((id) => !removedSet.has(id)));
       undoRedo.pushForward('remove-symbol', forward, prevSnapshot);
       syncWorkingCopy();
       notifySession();
@@ -503,7 +535,7 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
         ...session.workingConfig,
         symbols: [...session.workingConfig.symbols, ...forward.added.map((n) => ({ ...n }))],
       };
-      session.selection = [...newIds];
+      setSessionSelection([...newIds]);
       undoRedo.pushForward('add-symbol', forward, prevSnapshot);
       syncWorkingCopy();
       // 同步 Editor 选区到新粘贴图元（经 engine 选区视觉一致）。
@@ -532,6 +564,8 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
           return false;
         }
         resetSession(session, parsed);
+        // resetSession 清空了 selection（canonical），同步 React mirror（multi P1-07 load 路径）。
+        latest.current.onSelectionChange?.([]);
         engineSyncedConfig = cloneConfigSnapshot(session.workingConfig);
         engine.build(session.workingConfig);
         notifySession();
@@ -554,19 +588,17 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     };
 
     const setSelection = (nodeIds: string[]) => {
-      session.selection = [...nodeIds];
+      setSessionSelection(nodeIds);
       const nodes = nodeIds
         .map((id) => engine.getSymbol(id)?.node)
         .filter((n): n is NonNullable<typeof n> => n !== undefined);
       engine.setEditorTargets(nodes);
-      latest.current.onSelectionChange?.(nodeIds);
       notifySession();
     };
 
     const clearSelection = () => {
-      session.selection = [];
+      setSessionSelection([]);
       engine.clearEditorSelection();
-      latest.current.onSelectionChange?.([]);
       notifySession();
     };
 
@@ -588,6 +620,8 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
           return;
         }
         resetSession(session, config);
+        // resetSession 清空了 selection（canonical），同步 React mirror（multi P1-07 load 路径）。
+        latest.current.onSelectionChange?.([]);
         engineSyncedConfig = cloneConfigSnapshot(session.workingConfig);
         engine.build(session.workingConfig);
         notifySession();

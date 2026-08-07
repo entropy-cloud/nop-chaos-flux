@@ -230,7 +230,43 @@ export class ScadaEditorEngine {
     for (const update of diff.updated) {
       this.applyUpdate(update.id, update.patch);
     }
+    // plan 2026-08-07-1835-1 Phase 3 / open P1-E：reordered 增量。leafer scene-graph 的 z 序由
+    // 节点在 parent.children 数组中的顺序决定；这里按 reordered id 列表重排 root.children（顶层 symbols）。
+    if (diff.reordered !== undefined && diff.reordered.length > 0) {
+      this.applyReorder(diff.reordered);
+    }
     if (nextConfig) this.config = nextConfig;
+  }
+
+  /**
+   * 按 reordered id 列表重排顶层 root.children（leafer scene-graph z 序 = 数组顺序）。
+   *
+   * 节点对象引用复用（无重建）；与 reorderSymbolsById 同样双射校验，不一致时退回原序（防御误用）。
+   */
+  private applyReorder(reorderedIds: string[]): void {
+    if (!this.root) return;
+    const rootGroup = this.root as unknown as {
+      children?: Array<{ name?: string }>;
+    };
+    const children = rootGroup.children;
+    if (!children || !Array.isArray(children)) return;
+    if (reorderedIds.length !== children.length) return;
+    const childByName = new Map(children.map((c) => [c.name ?? '', c] as const));
+    for (const id of reorderedIds) {
+      if (!childByName.has(id)) return;
+    }
+    if (new Set(reorderedIds).size !== reorderedIds.length) return;
+    // leafer Group API：先全部 remove 再按新序 add（leafer 内部会维护 children 数组顺序）。
+    const rootAsGroup = this.root as unknown as {
+      remove?: (node: unknown) => void;
+      add?: (node: unknown) => void;
+    };
+    if (typeof rootAsGroup.remove !== 'function' || typeof rootAsGroup.add !== 'function') return;
+    for (const c of children) rootAsGroup.remove(c);
+    for (const id of reorderedIds) {
+      const c = childByName.get(id);
+      if (c) rootAsGroup.add(c);
+    }
   }
 
   /** 按 id 获取图元节点（含 group 子树）。 */

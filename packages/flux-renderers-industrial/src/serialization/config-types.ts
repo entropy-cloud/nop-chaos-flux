@@ -110,4 +110,14 @@ export interface ScadaConfigDiff {
   removed: string[];
   updated: Array<{ id: string; patch: Partial<ScadaSymbolNode> }>;
   variables?: ScadaVariablesDiff;
+  /**
+   * 顶层 symbols 数组的全新顺序（id 列表）。
+   *
+   * plan 2026-08-07-1835-1 Phase 3 / open P1-E：z-order 增量 diff。z 序 = 顶层 symbols 数组顺序，
+   * 节点内容不变 → 无法用 added/removed/updated 表达。专用 `reordered` 字段持新顺序 id 列表（O(n) strings，
+   * 远小于全量节点对象的 O(n) full-replace），forward.reordered = 新顺序，inverse.reordered = 旧顺序。
+   * applyDiff 时按 reordered id 列表重排现有节点（节点本身引用复用，无 clone）。
+   * 缺省 undefined：常规 diff（add/remove/update）不携带。
+   */
+  reordered?: string[];
 }

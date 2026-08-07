@@ -80,6 +80,12 @@ export function computeInverse(forward: ScadaConfigDiff, prevSnapshot: ScadaConf
     inverse.variables = computeVariablesInverse(forward.variables, prevSnapshot);
   }
 
+  // plan 2026-08-07-1835-1 Phase 3 / open P1-E：z-order 增量逆 diff。
+  // forward.reordered = 新顺序 id 列表 → inverse.reordered = prevSnapshot 顶层 id 顺序（还原原序）。
+  if (forward.reordered !== undefined) {
+    inverse.reordered = prevSnapshot.symbols.map((s) => s.id);
+  }
+
   return inverse;
 }
 
@@ -115,7 +121,10 @@ function computeVariablesInverse(forward: ScadaVariablesDiff, prevSnapshot: Scad
  * 将一条 diff 应用到 config（返回新 config；用于 forward/inverse apply）。
  *
  * 编辑器域工具（runtime applyDiff 应用到 leafer 树；编辑会话域 applyDiffToConfig 应用到 working copy 数据）。
- * applied 顺序 removed → added → updated（与 runtime config-adapter applyDiff 一致）。
+ * applied 顺序 removed → added → updated → reordered（与 runtime config-adapter applyDiff 一致）。
+ *
+ * plan 2026-08-07-1835-1 Phase 3 / open P1-E：reordered 按 id 列表重排现有顶层 symbols（节点引用复用，
+ * 无 clone）；id 集合不匹配（缺/多）时退回原序，防御误用。
  */
 export function applyDiffToConfig(config: ScadaConfig, diff: ScadaConfigDiff): ScadaConfig {
   const removed = new Set(diff.removed);
@@ -123,19 +132,43 @@ export function applyDiffToConfig(config: ScadaConfig, diff: ScadaConfigDiff): S
     ...config,
     symbols: removeNodes(config.symbols, removed),
   };
+  let symbols = next.symbols;
   // added
   if (diff.added.length > 0) {
-    next.symbols = [...next.symbols, ...diff.added.map((n) => ({ ...n }))];
+    symbols = [...symbols, ...diff.added.map((n) => ({ ...n }))];
   }
   // updated
   if (diff.updated.length > 0) {
-    next.symbols = applyUpdates(next.symbols, diff.updated);
+    symbols = applyUpdates(symbols, diff.updated);
   }
+  // reordered（z-order 增量）：按 id 列表重排现有顶层 symbols。
+  if (diff.reordered !== undefined && diff.reordered.length > 0) {
+    symbols = reorderSymbolsById(symbols, diff.reordered);
+  }
+  next.symbols = symbols;
   // variables
   if (diff.variables) {
     next.variables = applyVariablesDiff(config.variables ?? [], diff.variables);
   }
   return next;
+}
+
+/**
+ * 按 reordered id 列表重排顶层 symbols。
+ *
+ * id 集合必须与现有顶层 id 集合一一对应；不一致时退回原序（防御 forward diff 与 working copy 不同步的误用，
+ * 例如 transform drag 期间 working copy 已被其他 op 修改）。
+ */
+function reorderSymbolsById(symbols: ScadaSymbolNode[], reorderedIds: string[]): ScadaSymbolNode[] {
+  if (reorderedIds.length !== symbols.length) return symbols;
+  const byId = new Map(symbols.map((s) => [s.id, s] as const));
+  // 校验 id 集合一致（无缺/无多）。
+  for (const id of reorderedIds) {
+    if (!byId.has(id)) return symbols;
+  }
+  // 长度 + id 集合均一致 → set 大小一致即可（双射）。
+  if (new Set(reorderedIds).size !== reorderedIds.length) return symbols;
+  return reorderedIds.map((id) => byId.get(id)!);
 }
 
 function removeNodes(symbols: ScadaSymbolNode[], removed: Set<string>): ScadaSymbolNode[] {

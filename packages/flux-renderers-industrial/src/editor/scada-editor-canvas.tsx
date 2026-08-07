@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
 import type { ActionSchema, RendererComponentProps, RendererHelpers, ScopeRef } from '@nop-chaos/flux-core';
 import { createNormalizedActionEvent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
@@ -68,6 +68,11 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   const [status, setStatus] = useState<ScadaEditorCanvasStatus>('loading');
   const [errorInfo, setErrorInfo] = useState<ScadaEditorCanvasErrorInfo | undefined>();
   const [selection, setSelection] = useState<string[]>([]);
+  // session 反应式通道（plan 2026-08-07-1835-1 Phase 1 / open P1-A）：
+  // `runtime.session.*` 是 ref-held 可变对象（INV-4），不进 React 状态；notifySession 经 handleSessionChange
+  // 派发 schema 事件外，还 bump 此计数器，触发本组件重渲染 → 子 panel（toolbox Undo/Redo disabled、
+  // inspector fieldErrors）随之重渲染并读最新 session 状态。属性编辑后 Undo 按钮立即启用（无需重选）。
+  const [, bumpSessionVersion] = useReducer((n: number) => n + 1, 0);
   const idCounter = useRef(0);
   const { t } = useFluxTranslation();
 
@@ -145,6 +150,10 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         },
         eventsRef.current?.onSessionChange,
       );
+      // 反应式 tick：session 任意 mutator（属性编辑 / undo 入栈 / 移动联动）后 bump 计数器，
+      // 触发本组件 + 子 panel 重渲染，使 toolbox Undo/Redo disabled、inspector fieldErrors
+      // 从最新 session 派生（不再依赖 selection 变更才刷新）。
+      bumpSessionVersion();
     },
     [dispatchEvent],
   );

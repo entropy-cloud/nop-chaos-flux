@@ -1,4 +1,5 @@
 import type { ScadaSymbolNode } from '../../serialization/config-types.js';
+import { collectWorldBounds } from '../editor-working-helpers.js';
 import {
   beginConnectionDrag,
   collectSymbolBounds,
@@ -117,22 +118,34 @@ export class ConnectionDragController {
   }
 }
 
-/** 在 working copy 中找世界坐标命中的 pipe-junction 主体（含 group 子树递归）。 */
+/**
+ * 在 working copy 中找世界坐标命中的 pipe-junction 主体（含 group 子树递归）。
+ *
+ * plan 2026-08-07-1835-1 Phase 2 / multi P1-02：命中检测消费 collectWorldBounds 累加 parent offset，
+ * group world (300,200) 内嵌的 junction 在世界坐标 (305,205) 处可以被命中（不再偏差 300px）。
+ */
 function findJunctionAtPoint(symbols: ScadaSymbolNode[], world: WorldPoint): ScadaSymbolNode | undefined {
-  for (const node of symbols) {
-    if (node.type === 'scada-pipe-junction' && containsPoint(node, world)) return node;
-    if (node.children) {
-      const found = findJunctionAtPoint(node.children, world);
-      if (found) return found;
+  // world bounds（id → 世界几何，含 parent offset 累加）。
+  const worldBoundsById = new Map(collectWorldBounds(symbols, 0, 0).map((b) => [b.id, b] as const));
+  const walk = (nodes: ScadaSymbolNode[]): ScadaSymbolNode | undefined => {
+    for (const node of nodes) {
+      if (node.type === 'scada-pipe-junction') {
+        const b = worldBoundsById.get(node.id);
+        if (b && containsPointBounds(b, world)) return node;
+      }
+      if (node.children) {
+        const found = walk(node.children);
+        if (found) return found;
+      }
     }
-  }
-  return undefined;
+    return undefined;
+  };
+  return walk(symbols);
 }
 
-function containsPoint(node: ScadaSymbolNode, world: WorldPoint): boolean {
-  const x = node.x ?? 0;
-  const y = node.y ?? 0;
-  const w = node.width ?? 0;
-  const h = node.height ?? 0;
-  return world.x >= x && world.x <= x + w && world.y >= y && world.y <= y + h;
+function containsPointBounds(
+  b: { x: number; y: number; width: number; height: number },
+  world: WorldPoint,
+): boolean {
+  return world.x >= b.x && world.x <= b.x + b.width && world.y >= b.y && world.y <= b.y + b.height;
 }

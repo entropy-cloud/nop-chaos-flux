@@ -1,5 +1,6 @@
 import type { ScadaPipeConnection } from '../../symbols/pipe/pipe-junction.js';
 import type { ScadaSymbolNode } from '../../serialization/config-types.js';
+import { collectWorldBounds } from '../editor-working-helpers.js';
 import {
   findSnapCandidate,
   generateConnectionId,
@@ -47,24 +48,12 @@ export interface ConnectionDragState {
 /**
  * 抽取 working copy 中所有图元的世界几何（候选查询 + 联动用）。
  *
- * 含 group 子树（递归 children），扁平化为 bounds 列表。
+ * 含 group 子树（递归 children），扁平化为 bounds 列表。plan 2026-08-07-1835-1 Phase 2 / multi P1-02：
+ * 消费共享 `collectWorldBounds` walker，累加 parent offset → group child 的世界坐标正确（不再把 local 当 world，
+ * 偏差 300px 的吸附/命中/联动失效关闭）。
  */
 export function collectSymbolBounds(symbols: ScadaSymbolNode[]): ScadaSymbolBounds[] {
-  const out: ScadaSymbolBounds[] = [];
-  const walk = (nodes: ScadaSymbolNode[]): void => {
-    for (const node of nodes) {
-      out.push({
-        id: node.id,
-        x: node.x ?? 0,
-        y: node.y ?? 0,
-        width: node.width ?? 0,
-        height: node.height ?? 0,
-      });
-      if (node.children) walk(node.children);
-    }
-  };
-  walk(symbols);
-  return out;
+  return collectWorldBounds(symbols, 0, 0);
 }
 
 /**
@@ -183,16 +172,25 @@ export function recomputeJunctionAfterMove(args: {
   if (connections.length === 0) return undefined;
   const bounds = collectSymbolBounds(args.symbols);
   const deviceBoundsById = new Map<string, LinkGeometry>();
+  // plan 2026-08-07-1835-1 Phase 2 / multi P1-02：junction 主体几何也用世界坐标（含 group parent offset 累加）。
+  // 此前读 `args.junctionNode.x` 把 local 当 world，嵌套 junction 的联动重算 x/y 全错位。
+  let junctionWorld: LinkGeometry | undefined;
   for (const b of bounds) {
-    if (b.id !== args.junctionNode.id) deviceBoundsById.set(b.id, b);
+    if (b.id === args.junctionNode.id) {
+      junctionWorld = b;
+    } else {
+      deviceBoundsById.set(b.id, b);
+    }
   }
+  // fallback：未在 bounds 中找到（理论不应发生，junctionNode 来自 working copy）→ 退回 local 坐标。
+  const junction = junctionWorld ?? {
+    x: args.junctionNode.x ?? 0,
+    y: args.junctionNode.y ?? 0,
+    width: args.junctionNode.width ?? 0,
+    height: args.junctionNode.height ?? 0,
+  };
   const result = recomputeJunctionConnections({
-    junction: {
-      x: args.junctionNode.x ?? 0,
-      y: args.junctionNode.y ?? 0,
-      width: args.junctionNode.width ?? 0,
-      height: args.junctionNode.height ?? 0,
-    },
+    junction,
     connections,
     deviceBoundsById,
   });
@@ -256,11 +254,22 @@ export function programmaticDisconnect(args: {
  * 查询 working copy 全部 connections（测试句柄 listConnections 消费，§8.3）。
  *
  * 含 dangling 标记（target 不存在或 target === undefined 视为 dangling，§4.4）。
+ *
+ * plan 2026-08-07-1835-1 Phase 2 / open P2-C4（同 P1-C2 共享 collectAllSymbols 发现）：dangling 检测的
+ * 存在 id 集合改用递归收集（含 group 子树），group child target 不再被误报 dangling（diagnostic-only）。
  */
 export function listAllConnections(args: {
   symbols: ScadaSymbolNode[];
 }): Array<{ junctionId: string; connection: ScadaPipeConnection; dangling: boolean }> {
-  const ids = new Set(args.symbols.map((s) => s.id));
+  // 递归收集全部节点 id（含 group 子树），消除「顶层 id only」误报 dangling。
+  const ids = new Set<string>();
+  const collectIds = (nodes: ScadaSymbolNode[]): void => {
+    for (const node of nodes) {
+      ids.add(node.id);
+      if (node.children) collectIds(node.children);
+    }
+  };
+  collectIds(args.symbols);
   const out: Array<{ junctionId: string; connection: ScadaPipeConnection; dangling: boolean }> = [];
   const walk = (nodes: ScadaSymbolNode[]): void => {
     for (const node of nodes) {

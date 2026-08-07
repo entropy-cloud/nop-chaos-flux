@@ -103,11 +103,10 @@ describe('connection drag state machine', () => {
     expect(candidate?.nodeId).not.toBe('j1');
   });
 
-  it('commitConnectionDrag: redrag overwrites existing connection', () => {
+    it('commitConnectionDrag: redrag overwrites existing connection', () => {
     const existing = [{ id: 'j1-conn-0', x: 0.5, y: 0, direction: 'out' as const, target: 'old' }];
     const node = junctionNode(existing);
-    const state = beginConnectionDrag({
-      junctionId: 'j1',
+    const state = beginConnectionDrag({      junctionId: 'j1',
       connectionId: 'j1-conn-0',
       existingConnection: existing[0],
     });
@@ -271,5 +270,41 @@ describe('programmaticConnect / programmaticDisconnect defensive branches', () =
 
   it('programmaticDisconnect returns undefined when junctionNode is undefined', () => {
     expect(programmaticDisconnect({ junctionNode: undefined, connectionId: 'c1' })).toBeUndefined();
+  });
+});
+
+describe('plan 2026-08-07-1835-1 Phase 2/3 defensive branches', () => {
+  it('commitConnectionDrag handles undefined junctionNode (treats as empty connections list)', () => {
+    // covers the `junctionNode ? readConnections(...) : []` falsy branch.
+    const state = beginConnectionDrag({ junctionId: 'j1' });
+    updateDragCandidate(state, {
+      worldPoint: { x: 380, y: 130 },
+      candidates: collectSymbolBounds(symbols),
+    });
+    expect(state.currentCandidate).toBeDefined();
+    const result = commitConnectionDrag(state, undefined);
+    expect(result).toBeDefined();
+    expect(result!.written.target).toBe(state.currentCandidate!.nodeId);
+    expect(result!.connections).toHaveLength(1);
+  });
+
+  it('recomputeJunctionAfterMove: junctionNode missing from symbols falls back to local coords', () => {
+    // Construct a junctionNode that is NOT in the symbols list — collectSymbolBounds won't include it,
+    // exercising the `junctionWorld ?? fallback` defensive branch.
+    const orphan: JunctionNode = {
+      id: 'orphan-junction',
+      type: 'scada-pipe-junction',
+      x: 50,
+      y: 50,
+      width: 20,
+      height: 20,
+      custom: { connections: [{ id: 'c1', x: 0, y: 0, direction: 'out', target: 'dev-1' }] },
+    };
+    const result = recomputeJunctionAfterMove({ junctionNode: orphan, symbols });
+    expect(result).toBeDefined();
+    // dev-1 right-middle world = (380, 130); junction fallback local = (50, 50), size 20×20.
+    // normalized = (380-50)/20, (130-50)/20 = (16.5, 4).
+    expect(result![0].point.x).toBeCloseTo(16.5, 3);
+    expect(result![0].point.y).toBeCloseTo(4, 3);
   });
 });
