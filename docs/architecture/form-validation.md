@@ -715,7 +715,7 @@ The underlying V10 concern — _a non-numeric input must not produce contradicto
 2. `minItems` / `maxItems` guard on `Array.isArray(input.value)` and short-circuit for any non-array value.
 3. therefore a value of the wrong type produces exactly one, non-contradictory result (no error) rather than both "too short" and "too long" or a misleading type-coercion error.
 
-This non-contradiction property is locked by focused tests in `packages/flux-runtime/src/__tests__/validation-rule-semantics-and-lifecycle.test.ts` and by the per-kind type-guard cases in `validators.test.ts`.
+This non-contradiction property is locked by focused tests in `packages/flux-runtime/src/__tests__/validation-rule-semantics.test.ts` and by the per-kind type-guard cases in `validators.test.ts`.
 
 ### Expression-Based Rule Parameters (V13 adjudication)
 

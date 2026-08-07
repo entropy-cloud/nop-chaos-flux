@@ -27,7 +27,7 @@ Every `watch-only` / `out-of-scope-feature` item below carries a `Why Not Blocki
 | V7  | covered-by | B3.2 `b32-array-submit-and-validate.test.tsx` (C7: submit validates all rows; validation not tied to added-vs-loaded origin) + B1.2 V5 (array col default no-suppress)                                         |
 | V11 | watch-only | Built-in format rules delegate to stable stdlib regex (email/phone/url/id-card); no Flux-specific regression path observed; P2 low-frequency. B1.2 deferred V11/V12 as optional-only-if-Flux-worthy.           |
 | V12 | watch-only | Rule-kind vocabulary already separates presence (`required`) from content (pattern/length); B1.2 Rule Template Model notes cover semantics; formal vocabulary table = optimization-candidate, no drift signal. |
-| V15 | covered-by | B1.2 `validation-rule-semantics-and-lifecycle.test.ts` (V15: pattern failure renders author message, never raw regex source)                                                                                   |
+| V15 | covered-by | B1.2 `validation-rule-semantics.test.ts` (V15: pattern failure renders author message, never raw regex source)                                                                                                 |
 | V24 | watch-only | Validation summaries already render field labels (construct-true); label-over-name fallback is a rendering detail; P2 low-frequency, no drift signal.                                                          |
 
 ## 02-table-and-crud.md (21)
@@ -194,7 +194,7 @@ Every `watch-only` / `out-of-scope-feature` item below carries a `Why Not Blocki
 
 Per plan Phase 1 item 3, 5 `covered-by` verdicts independently re-verified against the cited B1–B6 evidence (live repo):
 
-1. **V15** → `packages/flux-runtime/src/__tests__/validation-rule-semantics-and-lifecycle.test.ts` contains the V15 pattern-message assertion (author message, no regex source). ✓ confirmed.
+1. **V15** → `packages/flux-runtime/src/__tests__/validation-rule-semantics.test.ts` contains the V15 pattern-message assertion (author message, no regex source). ✓ confirmed.
 2. **T9** → B3.3 landed fixed-left + selection-column offset anchor in `packages/flux-renderers-data/src/__tests__/`. ✓ confirmed (T9 in B3.3 signal set).
 3. **L4** → `packages/flux-react/src/__tests__/dialog-host-close-behavior.test.tsx:89` (closeOnOutside) + `packages/flux-renderers-basic/src/__tests__/surface-enhancements.test.tsx:186` (showCloseButton) — independent props, orthogonality locked. ✓ confirmed (live grep).
 4. **CB2** → `packages/flux-renderers-form-advanced/src/condition-builder/config-display.test.tsx:85-169` tests maxDepth (block at 0, allow < max) + maxItemsPerGroup (block at limit). ✓ confirmed (live grep).
