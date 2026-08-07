@@ -156,7 +156,6 @@ test.describe.skip('Subagent-A: Cross-page navigation stress', () => {
     const headings: Record<string, string> = {
       'flux-basic': 'Renderer Playground',
       'flow-designer': '工作流',
-      'dingtalk-flow-demo': 'Back',
       'report-designer': 'Report Designer Playground',
       'debugger-lab': 'Debugger Lab',
       'condition-builder': '条件构建器测试',

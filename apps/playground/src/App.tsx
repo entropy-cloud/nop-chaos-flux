@@ -17,7 +17,6 @@ import { ComplexPagesShowcase } from './complex-pages';
 import { CodeEditorPage } from './pages/code-editor-page';
 import { FlowDesignerPage } from './pages/flow-designer-page';
 import { TaskFlowDesignerPage } from './pages/taskflow-designer-page';
-import { DingTalkFlowDemo } from './pages/ding-talk-flow-demo';
 import { PerformanceTablePage } from './pages/performance-table-page';
 import { ComponentHandlesDemoPage } from './pages/component-handles-demo';
 import { EventPreventionDemoPage } from './pages/event-prevention-demo';
@@ -196,8 +195,6 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <CalendarDemoPage onBack={goHome} />;
         case 'taskflow-designer':
           return <TaskFlowDesignerPage debuggerController={debuggerController} onBack={goHome} />;
-        case 'dingtalk-flow-demo':
-          return <DingTalkFlowDemo onBack={goHome} />;
         case 'report-designer':
           return <LazyReportDesignerPage onBack={goHome} />;
         case 'debugger-lab':

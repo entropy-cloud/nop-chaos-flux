@@ -4,7 +4,6 @@ export type PageId =
   | 'home'
   | 'flux-basic'
   | 'flow-designer'
-  | 'dingtalk-flow-demo'
   | 'report-designer'
   | 'debugger-lab'
   | 'condition-builder'

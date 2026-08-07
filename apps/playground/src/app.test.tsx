@@ -128,10 +128,6 @@ vi.mock('./pages/flow-designer-page', () => ({
   FlowDesignerPage: () => <div data-testid="flow-designer-page" />,
 }));
 
-vi.mock('./pages/ding-talk-flow-demo', () => ({
-  DingTalkFlowDemo: () => <div data-testid="dingtalk-flow-demo-page" />,
-}));
-
 vi.mock('./pages/report-designer-page', () => ({
   ReportDesignerPage: () => <div data-testid="report-designer-page" />,
 }));

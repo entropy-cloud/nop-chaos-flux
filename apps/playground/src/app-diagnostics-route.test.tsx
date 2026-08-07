@@ -75,10 +75,6 @@ vi.mock('./pages/taskflow-designer-page', () => ({
   TaskFlowDesignerPage: () => <div data-testid="taskflow-designer-page">taskflow-designer</div>,
 }));
 
-vi.mock('./pages/ding-talk-flow-demo', () => ({
-  DingTalkFlowDemo: () => <div data-testid="dingtalk-flow-page">dingtalk</div>,
-}));
-
 vi.mock('./pages/performance-table-page', () => ({
   PerformanceTablePage: (props: unknown) => {
     performanceTablePageSpy(props);

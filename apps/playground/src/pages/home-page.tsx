@@ -10,7 +10,6 @@ type NavigationTarget =
   | 'diff-view'
   | 'graph-demo'
   | 'taskflow-designer'
-  | 'dingtalk-flow-demo'
   | 'report-designer'
   | 'debugger-lab'
   | 'condition-builder'
@@ -106,13 +105,6 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'TaskFlow',
     description:
       'TaskFlow visual designer with graph and tree modes, nop-task DSL export/import/inspector.',
-  },
-  {
-    id: 'dingtalk-flow-demo',
-    title: 'DingTalk Flow Demo',
-    eyebrow: 'Style Prototype',
-    description:
-      'Static DingTalk approval flow visual reference. See Flow Designer for the full tree-mode editor.',
   },
   {
     id: 'report-designer',

@@ -22,7 +22,6 @@ const PAGES = [
   { route: 'report-designer', title: 'Report Designer' },
   { route: 'word-editor', title: 'Word Editor' },
   { route: 'taskflow-designer', title: 'TaskFlow Designer' },
-  { route: 'dingtalk-flow-demo', title: 'DingTalk Flow Demo' },
   { route: 'code-editor', title: 'Code Editor' },
   { route: 'component-handles', title: 'Component Handles' },
   { route: 'flux-basic', title: 'Flux Basic' },
@@ -163,28 +162,7 @@ test('taskflow-designer: page loads and canvas renders', async ({ page }) => {
   saveResult('taskflow-designer', errors, dbg.errors, dbg.failures);
 });
 
-// ─── 5. dingtalk-flow-demo ─────────────────────────────────────────────────
-
-test('dingtalk-flow-demo: canvas renders and buttons clickable', async ({ page }) => {
-  const errors = collectPageErrors(page);
-  await page.goto('/#/dingtalk-flow-demo', { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
-
-  await expect(page.getByRole('button', { name: /Back/i })).toBeVisible({ timeout: 15_000 });
-  await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
-
-  const buttons = page.getByRole('button');
-  const count = await buttons.count();
-  for (let i = 0; i < Math.min(count, 3); i++) {
-    await buttons.nth(i).click({ timeout: 1000 }).catch(() => {});
-    await page.waitForTimeout(200);
-  }
-
-  expect(filterKnownNoise(errors)).toEqual([]);
-  const dbg = await checkDebugger(page);
-  saveResult('dingtalk-flow-demo', errors, dbg.errors, dbg.failures);
-});
-
-// ─── 6. code-editor ─────────────────────────────────────────────────────────
+// ─── 5. code-editor ─────────────────────────────────────────────────────────
 
 test('code-editor: switch language tabs and type code', async ({ page }) => {
   const errors = collectPageErrors(page);
@@ -213,7 +191,7 @@ test('code-editor: switch language tabs and type code', async ({ page }) => {
   saveResult('code-editor', errors, dbg.errors, dbg.failures);
 });
 
-// ─── 7. component-handles ───────────────────────────────────────────────────
+// ─── 6. component-handles ───────────────────────────────────────────────────
 
 test('component-handles: trigger available handle buttons', async ({ page }) => {
   const errors = collectPageErrors(page);
@@ -234,7 +212,7 @@ test('component-handles: trigger available handle buttons', async ({ page }) => 
   saveResult('component-handles', errors, dbg.errors, dbg.failures);
 });
 
-// ─── 8. flux-basic ──────────────────────────────────────────────────────────
+// ─── 7. flux-basic ──────────────────────────────────────────────────────────
 
 test('flux-basic: form fill, buttons, and scroll', async ({ page }) => {
   const errors = collectPageErrors(page);

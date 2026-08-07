@@ -1,7 +1,6 @@
 export { HomePage } from './home-page';
 export { FluxBasicPage } from './flux-basic-page';
 export { FlowDesignerPage } from './flow-designer-page';
-export { DingTalkFlowDemo } from './ding-talk-flow-demo';
 export { ReportDesignerPage } from './report-designer-page';
 export { DebuggerLabPage } from './debugger-lab-page';
 export { ConditionBuilderPage } from './condition-builder-page';
