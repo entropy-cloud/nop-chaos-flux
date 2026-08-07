@@ -35,6 +35,7 @@
 - 它绑定一个外部值
 - 但该外部值可以匹配多个 variant
 - 字段级 chrome（`label` / `required` / `hint` / `error` / `data-field-*`）应复用共享 `FieldFrame`，`variant-field` 自身只负责 selector、active variant subtree 和变体切换逻辑
+- `label` 是 value-or-region 字段（`formLabelFieldRule`），支持字符串值形式与 `label: { type: 'text', ... }` region 形式；`variant-field.tsx` 用 `resolveFieldLabelContent(props)` 解析后经 `labelContent` prop 下传 `VariantFieldView` → `FieldFrame label={labelContent}`（2026-08-07 收口 12-01 后，region 形式不再静默丢失）
 
 推荐 shape：
 
