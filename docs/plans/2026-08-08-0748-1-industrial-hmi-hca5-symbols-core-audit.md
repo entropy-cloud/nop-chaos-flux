@@ -1,6 +1,6 @@
 # 01 Industrial HMI Component Audit — HCA5 Symbols Core（符号框架 23 维包级深审 + 自动修复）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-08
 > Mission: industrial-hmi-component-audit
 > Work Item: HCA5. Symbols core 审计
@@ -149,7 +149,7 @@ Exit Criteria:
 
 ## Deferred But Adjudicated
 
-> 本 plan 起草时无已知可延期项。Phase 1 Decision 若裁定 `check-scada-symbol-keys.mjs` 继续 watch-only，在此补条目（Classification: optimization candidate + Why Not Blocking Closure）。
+> Phase 1 Decision 裁定为「现在落地」（非 watch-only），`scripts/check-scada-symbol-keys.mjs` 已实现并接入 `pnpm check`，无延期项。P3-1/P3-2/P3-3 为 P3 级（已 triage 归 HCA-CR / HCA6，Classification: optimization candidate / 防御纵深 / 符号定义责任；非 live defect，Why Not Blocking Closure：框架行为可辩护 + author-controlled 输入 + validate 层限结构，低风险，集中修复 ROI 更高）。
 
 ## Non-Blocking Follow-ups
 
@@ -158,13 +158,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写：为什么这个 plan 可以关闭>>
+Status Note: symbols core 8 文件逐文件 23 维包级深审完成，审计记录 `docs/audits/2026-08-08-0748-hca5-symbols-core.md` 含逐文件 finding 表 + 每条 `文件:行` 证据 + 全 finding 已 triage。Phase 1 当场发现并确认 1 条 P1 live defect（P1-1 `fontFamily`/`fontWeight`/`align` 跨层 diff 漏键复发，与 0653-2 `flow` 漏键同根因）→ Phase 2 test-first 修复（failing-first proof 3 test → 补 `ScadaSymbolNode` + `SYMBOL_KEYS` → 转绿）。`SYMBOL_KEYS` 派生 lint 守卫 governance 项裁定「现在落地」并已实现 `scripts/check-scada-symbol-keys.mjs`（三向断言，当场报出 P1-1 drift 证明有效）+ 接入 `pnpm check`。owner doc `design-symbols.md` 经核对与 live 无 drift。P3×3 归 HCA-CR/HCA6。收口验证全绿：industrial package 1307 tests / 97 files pass，workspace typecheck 32/32，guard script pass。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 closure-audit 子 agent fresh session `ses_020af9e38ffecjI3QKWlWe7MGf`（三件套输入：plan 摘要 + diff 摘要 + 验证输出，不复用执行 session 历史）
+- Evidence: 8 项检查全 PASS——审计记录完整（8 文件逐文件 finding 表 + 全 triage + guard Decision + 先验修复回归 + owner doc 一致性 + HCA-BL 喂入）；P1-1 fix 正确（config-types.ts:89-91 + diff.ts:31-33 三字段补齐，symbol-types.ts:36-38 为 drift 源已核）；failing-first proof 断言实际 patch 值（serialization-diff.test.ts:223-265，非 not.toThrow）；guard 脚本三向断言有效；无静默 P0/P1 降级（P3×3 实质 P3）；owner doc design-symbols.md:114-116 列三字段无 drift；scope 纪律（序列化编辑为 P1-1 跨层根因最小修复）。**独立重跑验证全绿**：`pnpm --filter @nop-chaos/flux-renderers-industrial test` 97 files / 1307 tests pass；`pnpm typecheck` 32/32 FULL TURBO；`node scripts/check-scada-symbol-keys.mjs` pass（30/27/30）。VERDICT: PASS。commit `dd6f111f`。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里；或明确写 no remaining plan-owned work>>
+- HCA6（symbol shapes 23 图元审计）依赖本 plan 收口后的 symbols core 基线，现可启动。
+- 本层 P3 高成本项（P3-1 deep-merge 深度上限 / P3-2 composite 静默丢弃 / P3-3 binding-vs-revert 边缘）归 HCA-CR 跨层集中修复。
+- P1-1 bug 候选喂入 HCA-BL 正式归档。
+- no remaining plan-owned work.
