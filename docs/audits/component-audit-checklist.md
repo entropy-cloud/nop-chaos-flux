@@ -122,7 +122,8 @@
 ## 6. Host 大面审计卡模板（D0 新增，round-2 host 面专用）
 
 > **版本注**：本节由 D0（plan `2026-08-08-0715-1`，2026-08-08）新增，供 D3.1–D3.4（flow-designer / spreadsheet / report-designer / word-editor 四个 host 大面、8 包）逐面审计使用。**既有 18 维组件级 checklist（§2）与组件审计卡模板（§4）语义不改写**——本节是其 host 面降维应用。
-> 审计单元：**面（surface feature）**而非注册 renderer type（host 面组件非注册渲染器，无 per-component 卡先例）。面清单见 `docs/audits/host-surface/surface-inventory.md`；范围核对（8 包 src 结构/导出面/宿主 e2e 场景/owner docs 契约基准）见 `docs/audits/host-surface/README.md`。审计卡存放：`docs/audits/host-surface/<surface>.md`。
+> **模板有效性回写（DG，2026-08-09，plan `2026-08-08-2034-3` Phase 4）**：D3.1–D3.4 四轮 37 卡全部按本节模板产出并 closed——模板整体有效。执行教训：① 18 维降维 + H1–H7 组合命中率最高的是 H2（事务 undo 传播，bug 111）/H3（拖拽完整性）/H4（键盘守卫）/H5（剪贴板命令缺口，bug 91）/H7（MA4.3 缺口回归）；② 「每面 ≥1 真实浏览器宿主场景」纪律在 host 面必须落实为**独立宿主页优先**（spreadsheet 从 0 独立 spec 到 10 用例、report-designer 新增 `#/report-designer-host` 宿主页 + 5 用例）——无独立宿主页的大面必须先补宿主页再审计；③ 面级投影/生命周期风险（host snapshot 同步、StrictMode core dispose（bug 112）、undo 传播）是 host 面最高产缺陷类别，H 维度之外必须人工覆盖；④ 面级事件 ctx 靠人工核对不可持续——event-dispatch-ctx 门禁已于 DG 扩展覆盖 4 个 host renderer 包（14 包正则 + committed 回归测试，见 `docs/audits/round2-index.md` Audit Tool Baseline 节）。方法沉淀见 `docs/lessons/09-*`。
+> 审计单元：**面（surface feature）**而非注册 renderer type（host 面组件非注册渲染器，无 per-component 卡先例）。面清单见 `docs/audits/host-surface/surface-inventory.md`；范围核对（8 包 src 结构/导出面/宿主 e2e 场景/owner docs 契约基准）见 `docs/audits/host-surface/README.md`。审计卡存放：`docs/audits/host-surface/<surface>.md`。汇总索引：`docs/audits/round2-index.md`（DG 建成）。
 
 ### 6.1 维度降维表（18 维 → host 面语义化）
 

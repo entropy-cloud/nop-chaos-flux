@@ -57,7 +57,7 @@ we-1 文档渲染面：`word-editor-page` host-owner renderer 组装（Workbench
 - [P3-1] outline-panel render 期同步读桥 + dead outlineRevision（MA5 P3-10 确认；outline-panel.tsx:74-90,103-107）→ 状态: 卡内记录（画布大文档渲染期全量 getValue 性能风险，watch）
 - [P3-2] 空文档默认内容硬编码英文 'Hello World'（editor-canvas.tsx:92）→ 状态: 卡内记录（默认占位内容，非交互文案）
 - [P3-3] outline extractHeadings 随机 id（Math.random）+ pageNo 恒 1 假数据（outline-panel.tsx:37-40）→ 状态: 卡内记录（导航定位依赖 titleId，随机 id 仅回退）
-- [P3-4] manifest docsPath 指向 `docs/components/word-editor-page/design.md`（与 owner doc 双文档并存，内容一致性待人工核对）→ 状态: 卡内记录（文档治理项，登记 daily log）
+- [P3-4] manifest docsPath 指向 `docs/components/word-editor-page/design.md`（与 owner doc 双文档并存，内容一致性待人工核对）→ 状态: 卡内记录（文档治理项，登记 daily log）｜**DG 裁决（2026-08-09，plan `2026-08-08-2034-3` Phase 1）: 双文档分工并存收敛**——`docs/components/word-editor-page/design.md` = 单 renderer 契约 doc（manifest docsPath 指向，live `word-editor-manifest.ts:188` 核对一致）；`docs/architecture/word-editor/design.md` = family owner doc（含 `@reserved` ghost 声明注记 DR-15、persist 措辞 DR-16 终态）。分工 = renderer 契约查询走 component doc、family 架构走 owner doc（docs/index.md:65-66 双向路由已建立；与 designer-page/report-designer-page/spreadsheet-page 双 doc 先例一致）。内容一致性核对：两 doc 对同一 live baseline 表述一致（host projection 四字段/保存真理/i18n 命名空间），owner doc 已含 DR-15/16 终态，component doc §3 fields 列表与 DR-15 保持终态（initialCharts/initialCodes 维持 prop + @reserved 语义见 owner doc）——无需合并/去重，收敛为单一权威路由。结论落 daily log（08-09 DG 节）。
 
 ## 组合宿主场景（真实浏览器验证，bug 73 模式专项）
 

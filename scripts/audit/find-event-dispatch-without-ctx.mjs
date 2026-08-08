@@ -7,7 +7,9 @@
  * args templates (`${surfaceId}`, `${item.url}`, `${nodeId}`, ...) resolve to
  * real values — `getEvaluationScope` merges only `evaluationBindings` + scope.
  *
- * Scans renderer package src dirs (packages/flux-renderers-*) (non-test) for
+ * Scans renderer package src dirs (packages/flux-renderers-* + the four host
+ * renderer packages flow-designer-renderers / spreadsheet-renderers /
+ * report-designer-renderers / word-editor-renderers) (non-test) for
  * dispatch call sites and
  * flags those whose second arg is missing / lacks `event` + `evaluationBindings`.
  *
@@ -39,9 +41,24 @@
  */
 
 import { readFile } from 'fs/promises';
-import { collectSourceFiles, getLineNumber, getLineText, isTestFile, rootDir, toPosixPath } from './shared.mjs';
+import path from 'path';
+import { collectSourceFiles, getLineNumber, getLineText, isTestFile, rootDir } from './shared.mjs';
 
 const LABEL = 'find-event-dispatch-without-ctx';
+
+// `FLUX_AUDIT_SCAN_ROOT` overrides both the scan root and the relative-path
+// base so the committed script tests can host fixtures in a throwaway temp
+// tree (outside the repo) while still exec-ing this real gate (0150-1
+// stagedDirs governance, DG 2026-08-09; aligned with find-renderer-browser-io).
+// The relative paths stay `packages/<pkg>/...`, keeping the renderer-scope
+// regex below meaningful for both real and fixture scans.
+const scanRoot = process.env.FLUX_AUDIT_SCAN_ROOT
+  ? path.resolve(process.env.FLUX_AUDIT_SCAN_ROOT)
+  : rootDir;
+
+function toScanRelativePath(filePath) {
+  return path.relative(scanRoot, filePath).split(path.sep).join('/');
+}
 
 // Adjudicated dispatch sites that intentionally lack the event ctx. Key:
 // `file:line` (line of the dispatch call). Categories:
@@ -332,15 +349,21 @@ function checkCallArgs({ content, relativePath, line, callOpenIndex }) {
 async function main() {
   const files = [];
   for (const root of ['apps', 'packages', 'tests']) {
-    files.push(...(await collectSourceFiles(`${rootDir}/${root}`)));
+    files.push(...(await collectSourceFiles(`${scanRoot}/${root}`)));
   }
 
   const results = [];
   const allowlisted = [];
 
   for (const filePath of files) {
-    const relativePath = toPosixPath(filePath);
-    if (!/^packages\/flux-renderers-/.test(relativePath)) {
+    const relativePath = toScanRelativePath(filePath);
+    // The `flux-renderers-*` family is a prefix match (10 packages); the other
+    // four renderer families are exact package names. DG 2026-08-09 widened
+    // this gate from the flux-renderers-* prefix only to the full renderer
+    // scope, closing the D3.1–D3.4 registered blind spot (the four host
+    // renderer packages previously relied on per-plan manual verification).
+    // The form matches the find-renderer-browser-io.mjs 14-package scope.
+    if (!/^packages\/(?:flux-renderers-[^/]+|flow-designer-renderers|spreadsheet-renderers|report-designer-renderers|word-editor-renderers)\//.test(relativePath)) {
       continue;
     }
     if (isTestFile(relativePath)) {

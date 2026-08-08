@@ -44,4 +44,5 @@
 
 - D3.x 各 plan 的逐面审计卡写入本目录（`docs/audits/host-surface/<surface>.md`）；每面卡须引用 §1 契约基准 + §2 宿主场景。
 - 本清单为 D0 快照；D3.x 执行中发现的新 spec/新包模块在此增量登记。
+- **汇总索引**：37 卡汇总索引 + P0/P1 + CX-n 模式索引见 `docs/audits/round2-index.md`（DG Phase 3 建成，2026-08-09）。
 - **D3.4 增量（2026-08-08）**：§2 word-editor 行补充新增 spec `word-editor-recovery.spec.ts`（6 用例：we-7 导入恢复 seed/损坏 JSON fail-closed + we-3 选区回显 + we-4 P1-1/P1-2 确认点，2026-08-08 全绿）；word-editor 宿主场景 5 spec 齐备（覆盖矩阵与收口增量见 `surface-inventory.md` D3.4 节）。

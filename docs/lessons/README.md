@@ -57,6 +57,8 @@ Each note should include the sections that best fit the case. Common sections ar
 - [06 Audit Closure Only Guarantees "No Known Issues This Round"（审计必漏定律）](06-audit-closure-only-guarantees-no-known-issues.md)
 - [07 Tool-Gate Sedimentation With Committed Regression Tests（工具门禁沉淀法）](07-tool-gate-sedimentation-with-committed-regression-tests.md)
 - [08 Ghost Contract: Declaration Is Contract, Two-Way Verification（声明即契约检测法）](08-ghost-contract-declaration-is-contract-detection.md)
+- [09 Host 大面审计模板方法：18 维降维 + H1–H7 + 每面 ≥1 真实浏览器宿主场景](09-host-surface-audit-template-and-host-scene-discipline.md)
+- [10 模式族回扫方法 + 门禁盲区教训：扫描器正则覆盖范围必须含 host 包](10-pattern-family-rescan-scan-scope-must-cover-host-packages.md)
 
 ---
 
