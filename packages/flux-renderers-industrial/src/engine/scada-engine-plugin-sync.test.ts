@@ -214,6 +214,37 @@ describe('ScadaCanvasEngine 插件交互状态同步与钳制兜底 (I11.2)', ()
     engine.destroy();
   });
 
+  // plan 2026-08-08-1910-3 Phase 1 / A3（open-audit P1）：零缩放守卫自毁。
+  // 失败用例（修复前）：readZoomLayerScale 对 scaleX===0 返回 0（Number.isFinite(0)===true → 不走 fallback）→
+  // handlePluginZoom 守卫检测到 0 却调 syncViewportFromZoomLayer（再读回 0）→ viewport.scale 固化为 0（不可恢复）。
+  // 修复后：readZoomLayerScale 显式拒 0 → 回退 this.viewport.scale（非零有限），viewport.scale 保持非零有限。
+  it('should keep viewport.scale non-zero finite when plugin zoom yields scaleX=0 (A3: readZoomLayerScale rejects 0)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { scaleX: number };
+    engine.setViewport({ x: 10, y: 20, scale: 2 });
+    zoomLayer.scaleX = 0;
+    engine.tree.emit('zoom', { scale: 0 });
+    const scale = engine.getViewport().scale;
+    expect(Number.isFinite(scale)).toBe(true);
+    expect(scale).toBeGreaterThan(0);
+    engine.destroy();
+  });
+
+  // plan 2026-08-08-1910-3 Phase 1 / A3：handlePluginMove 零守卫（defense-in-depth）。
+  // 失败用例（修复前）：handlePluginMove 无零守卫 → move 事件带 scaleX===0 时直接 syncViewportFromZoomLayer
+  // → viewport.scale 固化为 0。修复后：补与 handlePluginZoom 同形零守卫 + readZoomLayerScale 拒 0。
+  it('should keep viewport.scale non-zero finite when plugin move yields scaleX=0 (A3: handlePluginMove guard)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    const zoomLayer = engine.app.tree.zoomLayer as unknown as { scaleX: number };
+    engine.setViewport({ x: 10, y: 20, scale: 2 });
+    zoomLayer.scaleX = 0;
+    engine.tree.emit('move', {});
+    const scale = engine.getViewport().scale;
+    expect(Number.isFinite(scale)).toBe(true);
+    expect(scale).toBeGreaterThan(0);
+    engine.destroy();
+  });
+
   it('should guard non-finite plugin zoom rawScale (P2-8: 非有限早退)', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     // readZoomLayerScale 对非有限 scaleX 回落 fallback（viewport.scale），无法直接构造非有限 rawScale

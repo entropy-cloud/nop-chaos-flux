@@ -68,6 +68,11 @@ function asReactNode(value: unknown): ReactNode {
  */
 export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSchema>) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  // A4 runtime meta 契约（plan 2026-08-08-1910-3 Phase 2，open-audit P1）：遵守 `props.meta.disabled`/`visible`，
+  // 与同包编辑器画布 `scada-editor-canvas.tsx:217` 同契约纪律。disabled 时不派发 pan/zoom/click 交互
+  // （EventBridge 经 onSymbolEvent 闭包早退，helpers.dispatch 不执行）；visible:false 时不渲染画布。
+  const disabled = props.meta.disabled === true;
+  const visible = props.meta.visible !== false;
   const [status, setStatus] = useState<ScadaCanvasStatus>('loading');
   const [errorInfo, setErrorInfo] = useState<ScadaCanvasErrorInfo | undefined>();
   const { t } = useFluxTranslation();
@@ -190,7 +195,10 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     interactionLayer: true,
     width: props.props.width,
     height: props.props.height,
-    onSymbolEvent: (name, payload) => eventsApi.onSymbolEvent(name, payload),
+    // A4 disabled 门控（plan 2026-08-08-1910-3 Phase 2）：disabled 时不挂图元事件回调 →
+    // 引擎 EventBridge 闭包 `latest.current.onSymbolEvent?.(...)` 经 optional chaining 早退 →
+    // helpers.dispatch 不执行、hover 覆盖物不跟随。disabled 解除后 latest ref 自动重接（runtime toggle 友好）。
+    onSymbolEvent: disabled ? undefined : (name, payload) => eventsApi.onSymbolEvent(name, payload),
     getPointValuesFor: getPointValuesForLatest,
     onEngineError: handleError,
     expressionCompiler: rendererRuntime.expressionCompiler,
@@ -290,6 +298,11 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   const { loading, empty } = props.regions;
   const effectiveStatus: ScadaCanvasStatus = parseError ? 'error' : status;
 
+  // A4 visible 门控（plan 2026-08-08-1910-3 Phase 2）：所有 hooks 之后才可早退（React hooks 规则）。
+  // visible:false → 不渲染画布（null）；无 containerRef 落点 → useScadaEngine mount effect 不创建引擎。
+  // 生产框架层 `node-renderer-resolved` 也会对 !visible 整体卸载，renderer 层守卫为同契约 defense-in-depth。
+  if (!visible) return null;
+
   return (
     <div
       ref={containerRef}
@@ -299,6 +312,8 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
       data-status={effectiveStatus}
       role="application"
       aria-label={t('industrial.scada.canvasLabel')}
+      aria-disabled={disabled || undefined}
+      inert={disabled || undefined}
       className={cn('nop-scada-canvas h-full w-full', props.meta.className)}
     >
       {effectiveStatus === 'loading' ? (

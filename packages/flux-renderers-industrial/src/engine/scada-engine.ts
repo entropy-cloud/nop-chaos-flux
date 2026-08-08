@@ -483,6 +483,21 @@ export class ScadaCanvasEngine {
   };
 
   private readonly handlePluginMove = (): void => {
+    const zoomLayer = this.app.tree.zoomLayer as unknown as {
+      x?: number;
+      y?: number;
+      scaleX?: number;
+    };
+    const rawScale = readZoomLayerScale(zoomLayer.scaleX, this.viewport.scale);
+    // A3 零守卫（plan 2026-08-08-1910-3 Phase 1，defense-in-depth）：与 handlePluginZoom 同形——
+    // rawScale=0 / 非有限早退，syncViewportFromZoomLayer 用 fallback 读回有限视口态、刷新覆盖物。
+    // readZoomLayerScale 修复后 rawScale 不再为 0（回退 viewport.scale），守卫兜底防御未来回归
+    // （move 事件带瞬时 scaleX=0 不再固化成永久 viewport.scale=0 不可恢复态）。
+    if (rawScale === 0 || !Number.isFinite(rawScale)) {
+      this.syncViewportFromZoomLayer();
+      this.interaction?.refresh();
+      return;
+    }
     this.syncViewportFromZoomLayer();
     // 插件 move 路径（拖拽平移）→ 活动覆盖物重定位（P1-7）
     this.interaction?.refresh();
@@ -502,7 +517,11 @@ export class ScadaCanvasEngine {
 }
 
 function readZoomLayerScale(scaleX: unknown, fallback: number): number {
-  return typeof scaleX === 'number' && Number.isFinite(scaleX) ? scaleX : fallback;
+  // A3 零缩放守卫（plan 2026-08-08-1910-3 Phase 1）：显式拒 0——Number.isFinite(0)===true 会让
+  // scaleX===0 直返 0（不走 fallback），经 syncViewportFromZoomLayer 把 viewport.scale 固化为 0
+  // （不可恢复：viewportToWorld 除以 0 → Infinity/NaN → EventBridge world 坐标 corrupt → zoomLayer
+  // 矩阵不可逆）。拒 0 后回退 this.viewport.scale（命令路径经 clampScale MIN_SCALE=0.1，恒非零有限）。
+  return typeof scaleX === 'number' && Number.isFinite(scaleX) && scaleX !== 0 ? scaleX : fallback;
 }
 
 function readZoomLayerPosition(value: unknown, fallback: number): number {
