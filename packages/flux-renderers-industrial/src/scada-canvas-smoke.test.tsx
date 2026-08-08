@@ -82,4 +82,20 @@ describe('scada-canvas render smoke', () => {
     expect(container.querySelector('[data-slot="scada-canvas-canvas"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="scada-canvas-loading"]')).toBeNull();
   });
+
+  it('emits a11y role/aria-label on the canvas wrapper (HCA1 P2-1 / HCAX-2)', () => {
+    const SchemaRenderer = createSchemaRenderer(industrialRendererDefinitions);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://industrial/smoke-a11y"
+        schema={{ type: 'scada-canvas', config: validConfig }}
+        env={createDefaultEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+    const root = container.querySelector('[data-slot="scada-canvas"]') as HTMLElement;
+    expect(root).toBeTruthy();
+    expect(root.getAttribute('role')).toBe('application');
+    expect(root.getAttribute('aria-label')).toBe('Industrial SCADA canvas');
+  });
 });
