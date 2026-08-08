@@ -189,6 +189,8 @@ export class ScadaCanvasEngine {
   }
 
   reset(config: ScadaConfig): void {
+    // HCA2-P3-ENG-1：destroy 后公共命令 no-op（对齐 binding 层门控纪律），不操作已销毁 app。
+    if (this.destroyed) return;
     // 组态 JSON `background.color` 接线（open-audit P1-A）：reset 期应用 ground 层填充，
     // 与构造期 `ScadaEngineOptions.background` 同口径（config 经 props 到达，mount 期不可用）。
     // `background.grid` 为 watch-only（validate 接受但无 runtime 消费面，design-renderer.md §4.2）。
@@ -202,6 +204,7 @@ export class ScadaCanvasEngine {
   }
 
   applyAttrs(attrsBySymbolId: Record<string, Partial<ScadaSymbolProps>>): void {
+    if (this.destroyed) return;
     for (const [id, patch] of Object.entries(attrsBySymbolId)) {
       const leaf = this.registry.get(id);
       if (!leaf) continue;
@@ -267,30 +270,35 @@ export class ScadaCanvasEngine {
   }
 
   fit(bounds: Bounds, padding = 0): ViewportState {
+    if (this.destroyed) return { ...this.viewport };
     const next = fit(bounds, this.size, padding);
     this.applyViewportState(next);
     return next;
   }
 
   center(bounds: Bounds): ViewportState {
+    if (this.destroyed) return { ...this.viewport };
     const next = center(this.viewport, bounds, this.size);
     this.applyViewportState(next);
     return next;
   }
 
   setViewport(state: ViewportState): ViewportState {
+    if (this.destroyed) return { ...this.viewport };
     const next = setViewportState(this.viewport, state);
     this.applyViewportState(next);
     return next;
   }
 
   zoomAt(worldPoint: Point, factor: number): ViewportState {
+    if (this.destroyed) return { ...this.viewport };
     const next = zoomAtState(this.viewport, worldPoint, factor);
     this.applyViewportState(next);
     return next;
   }
 
   setSize(width: number, height: number): void {
+    if (this.destroyed) return;
     this.size = { width, height };
     this.app.resize({ width, height });
   }
@@ -312,6 +320,7 @@ export class ScadaCanvasEngine {
   }
 
   applyDiff(diff: ScadaConfigDiff, nextConfig?: ScadaConfig): void {
+    if (this.destroyed) return;
     this.adapter.applyDiff(diff, nextConfig);
     // 交互覆盖物随图元增删/移动同步（I11.2，applyDiff 增删同步）：移除图元清其覆盖物，更新图元重定位
     if (this.interaction) {

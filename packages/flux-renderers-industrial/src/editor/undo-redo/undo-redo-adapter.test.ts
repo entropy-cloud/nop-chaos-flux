@@ -229,3 +229,76 @@ describe('UndoRedoAdapter transaction with variables (structuredCloneSafe covera
     expect(entry!.inverse.variables).toBeDefined();
   });
 });
+
+// HCA11-P3-1（归 HCA-CR）：cloneNodeDeep（事务快照）未深克隆 custom，与 P2-1（已修）/ editor-session.cloneNode
+// 同型残留。事务期间 in-place 改 custom.connections 会串改 prevAtOpStart 快照 → diff 漏 custom 变更。
+describe('UndoRedoAdapter transaction snapshot deep-clones custom (HCA11-P3-1)', () => {
+  it('in-place custom mutation during transaction is captured in diff (snapshot isolated)', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    const config: ScadaConfig = {
+      version: 1,
+      symbols: [
+        {
+          id: 'j1',
+          type: 'scada-pipe-junction',
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 10,
+          custom: { connections: [{ x: 0.5 }] },
+        },
+      ],
+    };
+    adapter.beginTransaction('transform-move', config);
+    // In-place mutate custom + geometry during the transaction (simulating a mutator that
+    // mutates working copy by reference). Before fix: custom shared ref → prev snapshot corrupted.
+    (config.symbols[0].custom as { connections: Array<{ x: number }> }).connections[0].x = 0.99;
+    config.symbols[0].x = 50;
+    const entry = adapter.commitTransaction(config);
+    expect(entry).toBeDefined();
+    // forward diff must capture BOTH geometry and custom change.
+    // Before fix: custom shared ref → diffScadaConfig sees prev.custom === current.custom → custom omitted.
+    const patch = entry!.forward.updated[0].patch as Record<string, unknown>;
+    expect(patch.x).toBe(50);
+    expect(patch.custom).toBeDefined();
+    // inverse must hold the ORIGINAL custom (0.5) for correct undo.
+    const inversePatch = entry!.inverse.updated[0].patch as Record<string, unknown>;
+    expect(inversePatch.custom).toBeDefined();
+    expect(
+      (inversePatch.custom as { connections: Array<{ x: number }> }).connections[0].x,
+    ).toBe(0.5);
+  });
+
+  it('snapshot custom is not the same reference as source (isolation)', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    const config: ScadaConfig = {
+      version: 1,
+      symbols: [
+        {
+          id: 'j1',
+          type: 'scada-pipe-junction',
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 10,
+          custom: { connections: [] },
+        },
+      ],
+    };
+    adapter.beginTransaction('transform-move', config);
+    config.symbols[0].x = 5;
+    const entry = adapter.commitTransaction(config);
+    expect(entry).toBeDefined();
+    // After commit, mutating current custom must not affect a re-snapshot path.
+    // (Structural assertion: forward patch.custom is a clone, not the live ref.)
+    config.symbols[0].x = 9;
+    // re-open a new transaction to snapshot again — prev isolation must hold across transactions.
+    adapter.beginTransaction('transform-move', config);
+    (config.symbols[0].custom as { connections: unknown[] }).connections.push({ x: 1 });
+    config.symbols[0].x = 20;
+    const entry2 = adapter.commitTransaction(config);
+    expect(entry2).toBeDefined();
+    const patch2 = entry2!.forward.updated[0].patch as Record<string, unknown>;
+    expect(patch2.custom).toBeDefined();
+  });
+});

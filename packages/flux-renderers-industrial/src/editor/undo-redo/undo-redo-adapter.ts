@@ -252,6 +252,10 @@ function structuredCloneSafe(config: ScadaConfig): ScadaConfig {
 
 function cloneNodeDeep(node: ScadaSymbolNode): ScadaSymbolNode {
   const clone: ScadaSymbolNode = { ...node };
+  // HCA11-P3-1（扩展 P2-1 / P2 #4）：深克隆 custom——与 editor-session.cloneNode + editor-working-helpers.cloneNodeDeep
+  // 同纪律，使事务快照 prevAtOpStart 与 working copy 间 custom 子对象引用隔离，任一 in-place 改
+  // custom.connections 不串改快照（否则 diffScadaConfig 漏 custom 变更，undo 丢数据）。
+  if (node.custom) clone.custom = structuredClone(node.custom);
   if (node.children) clone.children = node.children.map(cloneNodeDeep);
   return clone;
 }

@@ -400,3 +400,43 @@ describe('ScadaCanvasEngine commands (I5.1/I5.2 wiring)', () => {
     expect(engine.getViewportPoint({ x: 30, y: 60 })).toEqual({ x: 40, y: 80 });
   });
 });
+
+// HCA2-P3-ENG-1（归 HCA-CR）：engine 公共命令 API 缺 destroyed 门控——destroy 后再调操作已销毁 app。
+// 对照 binding 层（DirtyCollector/RefreshPipeline 公共入口 destroy 后 no-op）。防御纵深：no-op 不抛。
+describe('ScadaCanvasEngine destroyed guard (HCA2-P3-ENG-1)', () => {
+  it('reset is a no-op after destroy (registry stays cleared)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(validConfig() as ScadaConfig);
+    expect(engine.registry.size()).toBe(2);
+    engine.destroy();
+    expect(engine.registry.size()).toBe(0);
+    // destroy 后 reset 不应重建场景树（registry 应保持 0）。
+    engine.reset(validConfig() as ScadaConfig);
+    expect(engine.registry.size()).toBe(0);
+  });
+
+  it('viewport commands are no-ops after destroy (viewport unchanged)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.setViewport({ x: 10, y: 20, scale: 2 });
+    const before = engine.getViewport();
+    engine.destroy();
+    engine.setViewport({ x: 99, y: 99, scale: 9 });
+    engine.zoomAt({ x: 0, y: 0 }, 5);
+    engine.fit({ x: 0, y: 0, width: 100, height: 100 });
+    engine.center({ x: 0, y: 0, width: 100, height: 100 });
+    expect(engine.getViewport()).toEqual(before);
+  });
+
+  it('applyAttrs / setSymbolProps / applyDiff / setSize / importConfig are no-ops after destroy', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset(validConfig() as ScadaConfig);
+    engine.destroy();
+    // 这些命令 destroy 后应 no-op，不抛、不操作已销毁 app。
+    expect(() => engine.applyAttrs({ 'rect-1': { fill: '#000' } })).not.toThrow();
+    expect(() => engine.setSymbolProps('rect-1', { fill: '#000' })).not.toThrow();
+    expect(() => engine.applyDiff({ added: [], removed: ['rect-1'], updated: [] })).not.toThrow();
+    expect(() => engine.setSize(10, 10)).not.toThrow();
+    expect(() => engine.importConfig(JSON.stringify(validConfig()))).not.toThrow();
+    expect(engine.registry.size()).toBe(0);
+  });
+});

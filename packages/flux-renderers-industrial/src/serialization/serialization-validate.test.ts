@@ -609,3 +609,47 @@ describe('validateScadaConfig legacy recursion + subshape (plan 2026-08-06-0900-
     expect(result).toEqual({ ok: true });
   });
 });
+
+// HCA4-P3-1 / HCA4-P3-2（归 HCA-CR）：校验覆盖缺口——align 字段 + background.grid 子形状。
+describe('validateScadaConfig coverage gaps (HCA4-P3-1/P3-2)', () => {
+  it('HCA4-P3-1: rejects invalid align value (not left|center|right)', () => {
+    const badAlign = validateScadaConfig(
+      baseConfig({ symbols: [rect('a', { align: 'diagonal' as unknown as 'left' })] }),
+    );
+    expect(badAlign.ok).toBe(false);
+    expect((badAlign as { errors: string[] }).errors.some((e) => e.includes('align'))).toBe(true);
+  });
+
+  it('HCA4-P3-1: accepts valid align values (left|center|right)', () => {
+    for (const align of ['left', 'center', 'right'] as const) {
+      const result = validateScadaConfig(baseConfig({ symbols: [rect('a', { align })] }));
+      expect(result.ok).toBe(true);
+    }
+  });
+
+  it('HCA4-P3-2: rejects malformed background.grid (size not number)', () => {
+    const result = validateScadaConfig({
+      ...baseConfig(),
+      background: { color: '#fff', grid: { size: 'big' as unknown as number, color: '#ccc' } },
+    });
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('background.grid'))).toBe(true);
+  });
+
+  it('HCA4-P3-2: rejects malformed background.grid (color not string)', () => {
+    const result = validateScadaConfig({
+      ...baseConfig(),
+      background: { grid: { size: 10, color: 123 as unknown as string } },
+    });
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('background.grid'))).toBe(true);
+  });
+
+  it('HCA4-P3-2: accepts well-formed background.grid', () => {
+    const result = validateScadaConfig({
+      ...baseConfig(),
+      background: { color: '#fff', grid: { size: 20, color: '#ccc' } },
+    });
+    expect(result).toEqual({ ok: true });
+  });
+});

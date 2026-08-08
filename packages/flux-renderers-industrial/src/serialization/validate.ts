@@ -287,6 +287,10 @@ function validateSymbolNode(
   for (const field of ['fill', 'stroke', 'text', 'textColor', 'fontFamily', 'fontWeight']) {
     checkStringField(nodeObj, field, errors, scope);
   }
+  // HCA4-P3-1：align 为受限枚举（'left'|'center'|'right'，config-types.ts:91），malformed 值旧实现静默放行。
+  if ('align' in nodeObj && !['left', 'center', 'right'].includes(nodeObj.align as string)) {
+    errors.push(`${scope}.align must be one of: left | center | right`);
+  }
   if ('custom' in nodeObj && !isPlainObject(nodeObj.custom)) {
     errors.push(`${scope}.custom must be an object`);
   } else if (nodeObj.custom !== undefined) {
@@ -448,6 +452,15 @@ export function validateScadaConfig(
   } else if (config.background !== undefined) {
     // plan 2026-08-06-0900-1 P2-6：background 子形状校验（color 非字符串 malformed 全过）。
     assertShape(config.background as Record<string, unknown>, { color: 'string' }, 'background', errors);
+    // HCA4-P3-2：background.grid 子形状（{size:number;color:string}）未校验——malformed grid 旧实现静默放行。
+    const grid = (config.background as Record<string, unknown>).grid;
+    if (grid !== undefined) {
+      if (!isPlainObject(grid)) {
+        errors.push('background.grid must be an object');
+      } else {
+        assertShape(grid as Record<string, unknown>, { size: 'number', color: 'string' }, 'background.grid', errors);
+      }
+    }
   }
 
   // I18 表达式一元化迁移期：扫描旧 `@{pointId}` 方言，warn（不 fail）。

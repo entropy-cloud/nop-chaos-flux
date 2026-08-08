@@ -38,31 +38,39 @@ export function wireConnectionDrag(
     const rect = container.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
+  // HCA11-P2-2：pointerup 终止态挂 window（{ once: true }），对齐 editor-adapter.ts:80 transform 事务。
+  // 释放点在容器外（inspector/palette/browser 边缘）时 container 级 pointerup 不 fire，window 级捕获。
+  // 幂等：if (!connectionDragActiveRef.current) return 使容器内 + window 双触发安全（once 自动移除 window listener）。
+  const endConnectionDrag = (): void => {
+    if (!connectionDragActiveRef.current) return;
+    connectionDragActiveRef.current = false;
+    connectionController.endDrag();
+  };
   const onConnectionPointerDown = (e: PointerEvent) => {
     if (session.mode !== 'edit') return;
     const junction = connectionController.hitTestJunction(toViewportPoint(e));
     if (!junction) return;
     connectionDragActiveRef.current = true;
     connectionController.beginDrag(junction.id);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pointerup', endConnectionDrag, { once: true });
+    }
     e.preventDefault();
   };
   const onConnectionPointerMove = (e: PointerEvent) => {
     if (!connectionDragActiveRef.current) return;
     connectionController.moveDrag(toViewportPoint(e));
   };
-  const onConnectionPointerUp = () => {
-    if (!connectionDragActiveRef.current) return;
-    connectionDragActiveRef.current = false;
-    connectionController.endDrag();
-  };
   container.addEventListener('pointerdown', onConnectionPointerDown);
   container.addEventListener('pointermove', onConnectionPointerMove);
-  container.addEventListener('pointerup', onConnectionPointerUp);
 
   return () => {
     container.removeEventListener('pointerdown', onConnectionPointerDown);
     container.removeEventListener('pointermove', onConnectionPointerMove);
-    container.removeEventListener('pointerup', onConnectionPointerUp);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pointerup', endConnectionDrag);
+    }
+    connectionDragActiveRef.current = false;
     connectionController.cancel();
     overlayRenderer.clear();
   };
