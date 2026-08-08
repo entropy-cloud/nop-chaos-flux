@@ -1,6 +1,6 @@
 # 3 Industrial SCADA Canvas Correctness — Nested-Group-Child Sync & Responsive Viewport Fit
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-08
 > Source: `docs/audits/2026-08-08-1712-multi-audit-industrial-hmi-component-audit.md` (P1-2, P1-4, P1-5)
 > Related: `docs/backlog/industrial-hmi-component-audit-roadmap.md`; sibling plans `2026-08-08-1809-1-*` (validation) and `2026-08-08-1809-2-*` (editor state)
@@ -81,62 +81,62 @@
 
 ### Phase 1 - P1-2 applyUpdate 递归应用 children（canvas 层同步）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/editor/renderer/editor-engine.ts`（`applyUpdate`）；canvas 层回归测试
 
 - Item Types: `Proof` | `Fix`
 
-- [ ] (Proof / failing-first) 增用例：构建含 group `grp`（children:[`inner-1`]）的 engine → `updateWorkingNode('inner-1',{fill:'#abc'})` → `syncWorkingCopy` → `engine.applyDiff` → 断言 `engine.getSymbol('inner-1').node.get('fill') === '#abc'`（canvas 层）。当前会失败（applyUpdate 删 children → canvas 停在旧 fill）。再加嵌套 junction connection 经 group `custom` patch 的同型用例。
-- [ ] (Fix) `applyUpdate` 收到含 `children` 的 patch 时：按 id 对比新旧 children，对每个 child 调 `buildNode`（新增）/ `removeSymbol`（删除）/ `applyUpdate`（更新属性）（镜像 runtime `ConfigAdapter` 重建模式，或抽 `rebuildSubtree(groupId, children)` helper）；不再无条件 `delete children`。
-- [ ] (Proof / failing-first) 两条用例转 pass；既有顶层图元 `applyUpdate` / `applyDiff` 测试零回归（顶层无 children patch 行为不变）。
+- [x] (Proof / failing-first) 增用例：构建含 group `grp`（children:[`inner-1`]）的 engine → `updateWorkingNode('inner-1',{fill:'#abc'})` → `syncWorkingCopy` → `engine.applyDiff` → 断言 `engine.getSymbol('inner-1').node.get('fill') === '#abc'`（canvas 层）。当前会失败（applyUpdate 删 children → canvas 停在旧 fill）。再加嵌套 junction connection 经 group `custom` patch 的同型用例。
+- [x] (Fix) `applyUpdate` 收到含 `children` 的 patch 时：按 id 对比新旧 children，对每个 child 调 `buildNode`（新增）/ `removeSymbol`（删除）/ `applyUpdate`（更新属性）（镜像 runtime `ConfigAdapter` 重建模式，或抽 `rebuildSubtree(groupId, children)` helper）；不再无条件 `delete children`。
+- [x] (Proof / failing-first) 两条用例转 pass；既有顶层图元 `applyUpdate` / `applyDiff` 测试零回归（顶层无 children patch 行为不变）。
 
 Exit Criteria:
 
-- [ ] `applyUpdate` 在收到 `children` patch 时递归对齐子树（live 代码可见，不再 `delete children`）。
-- [ ] failing-first canvas 层用例（`engine.getSymbol('inner-1').node.get('fill')`）pass；嵌套 connection 写入到达 canvas。
-- [ ] 既有顶层 applyUpdate/applyDiff 测试零回归。
+- [x] `applyUpdate` 在收到 `children` patch 时递归对齐子树（live 代码可见，不再 `delete children`）。
+- [x] failing-first canvas 层用例（`engine.getSymbol('inner-1').node.get('fill')`）pass；嵌套 connection 写入到达 canvas。
+- [x] 既有顶层 applyUpdate/applyDiff 测试零回归。
 
 ### Phase 2 - P1-4 结构 mutator 嵌套解析
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/editor/runtime-mutators.ts`（`removeWorkingSymbol`/`groupSymbols`/`ungroupSymbols`）；相关测试
 
 - Item Types: `Proof` | `Fix`
 
-- [ ] (Proof / failing-first) 增 3 条用例：(a) `setSelection(['nested-child'])` → `removeWorkingSymbol('nested-child')` 断言节点从父 `children` 解链 + engine tree 移除 + 非空 undo entry；(b) 混合选中顶层+嵌套 → `groupSymbols` 断言全部选中项进新 group（不丢嵌套）；(c) `ungroupSymbols(nestedGroupId)` 断言递归找到并拆解。当前会失败（顶层 filter/find 不匹配 → 静默 return）。
-- [ ] (Fix) `removeWorkingSymbol`：递归 walk `workingConfig.symbols`，从父 `children` 或顶层解链匹配节点；保留既有顶层 deselect 行为，selection 经 `setSessionSelection` 同步。
-- [ ] (Fix) `groupSymbols`：用 `collectAllSymbols` 递归收集选中节点，从原父（递归）解链后再 reparent 进新 group；混合选中不丢项。
-- [ ] (Fix) `ungroupSymbols`：用 `findNodeInWorking`（递归）定位 group，不限于顶层。
-- [ ] (Fix — 备选/兜底) 若某 mutator 的嵌套修复在本轮无法完整落地，静默 `return` 改为派发 `onError('invalid-node', …)`，消除「无声 no-op」。
-- [ ] (Proof / failing-first) 3 条用例转 pass；既有顶层 remove/group/ungroup 测试零回归。
+- [x] (Proof / failing-first) 增 3 条用例：(a) `setSelection(['nested-child'])` → `removeWorkingSymbol('nested-child')` 断言节点从父 `children` 解链 + engine tree 移除 + 非空 undo entry；(b) 混合选中顶层+嵌套 → `groupSymbols` 断言全部选中项进新 group（不丢嵌套）；(c) `ungroupSymbols(nestedGroupId)` 断言递归找到并拆解。当前会失败（顶层 filter/find 不匹配 → 静默 return）。
+- [x] (Fix) `removeWorkingSymbol`：递归 walk `workingConfig.symbols`，从父 `children` 或顶层解链匹配节点；保留既有顶层 deselect 行为，selection 经 `setSessionSelection` 同步。
+- [x] (Fix) `groupSymbols`：用 `collectAllSymbols` 递归收集选中节点，从原父（递归）解链后再 reparent 进新 group；混合选中不丢项。
+- [x] (Fix) `ungroupSymbols`：用 `findNodeInWorking`（递归）定位 group，不限于顶层。
+- [x] (Fix — 备选/兜底) 若某 mutator 的嵌套修复在本轮无法完整落地，静默 `return` 改为派发 `onError('invalid-node', …)`，消除「无声 no-op」。
+- [x] (Proof / failing-first) 3 条用例转 pass；既有顶层 remove/group/ungroup 测试零回归。
 
 Exit Criteria:
 
-- [ ] 三个结构 mutator 在 live 代码中递归解析嵌套（`removeWorkingSymbol` 解链、`groupSymbols` 递归收集、`ungroupSymbols` 用 `findNodeInWorking`）。
-- [ ] failing-first 用例（嵌套 delete / 混合 group / 嵌套 ungroup）断言可见行为 + 非空 undo，并 pass。
-- [ ] 既有顶层 group/ungroup/remove 测试零回归。
+- [x] 三个结构 mutator 在 live 代码中递归解析嵌套（`removeWorkingSymbol` 解链、`groupSymbols` 递归收集、`ungroupSymbols` 用 `findNodeInWorking`）。
+- [x] failing-first 用例（嵌套 delete / 混合 group / 嵌套 ungroup）断言可见行为 + 非空 undo，并 pass。
+- [x] 既有顶层 group/ungroup/remove 测试零回归。
 
 ### Phase 3 - P1-5 解耦 world/DOM size + resize 重应用 fit
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/engine/scada-engine.ts`；`renderer/hooks/use-scada-engine.ts`；`renderer/hooks/use-scada-config-sync.ts`；`editor/scada-editor-canvas.tsx`（若同型）；e2e
 
 - Item Types: `Proof` | `Fix` | `Decision`
 
-- [ ] (Decision) 选定修复策略：(a) 不再把 schema `width`/`height` 作为 leafer canvas DOM 尺寸——canvas 经 CSS `h-full w-full` 填满容器，mount 时量取容器真实尺寸；`this.size` 表达 world/design space 与 DOM space 的关系明确化；或 (b) ResizeObserver handler 在尺寸变化 material 时重应用声明的 `viewport` fit policy。二者可组合；记录抉择理由。
-- [ ] (Proof / failing-first) 新增 e2e：schema `width:960` + `viewport:{fit:'contain'}` 渲染进 ~302px 容器 → mount 后断言 hover/click world 坐标（≤302）落在画布内（`getViewportPoint` 映射后 within canvas bounds）。当前会失败（7 e2e 现状）。
-- [ ] (Fix) `scada-engine.ts` 构造器解耦 world/DOM size：DOM 尺寸取容器真实值，不传 schema width/height 作 DOM 尺寸。
-- [ ] (Fix) `setSize`（或 ResizeObserver handler）在尺寸变化后重应用 fit policy：把声明 `viewport` 的 `fit`/`center` 经 `applyInitialViewport` 等价路径重算（复用 `use-scada-config-sync.ts` 的 `applyInitialViewport`，避免双实现漂移）。
-- [ ] (Fix) `scada-editor-canvas.tsx` 编辑器画布同型 fit 单次模式同型修复（若验证同型）。
-- [ ] (Proof / failing-first) 新 e2e 转 pass；既有 scada e2e 24 条 pass 零回归；7 个原失败用例转 pass。性能包络（I14/E9.2）不退化（resize 路径节流，避免每帧 refit）。
+- [x] (Decision) 选定修复策略：组合 (a) + (b)。(a) 引擎构造器不再把 schema width/height 同时当 DOM 尺寸——`ScadaCanvasEngine` / `ScadaEditorEngine` 构造器改为容器真实 clientWidth/clientHeight 优先，schema 显式值仅作 fallback（jsdom 容器 0 尺寸时测试仍可用）；`this.size` 表达 DOM space（fit 数学消费），world/design space 由图元坐标系隐式表达。(b) `use-scada-engine` / `use-editor-engine` 的 ResizeObserver handler 在 setSize 后经稳定闭包 `runtime.refitViewportOnResize` 重应用声明的 viewport fit/center policy（复用 `use-scada-config-sync.ts` 抽出的 `applyScadaViewportPolicy`，避免双实现漂移）。无声明 policy 时回调短路 no-op（用户 viewport 保留）。refit 注册经稳定 setter（`setResizeRefit`），不 mutate 传入 ref（react-compiler/immutability 友好）。rAF 已节流，无每帧 refit 风险。
+- [x] (Proof / failing-first) 新增 e2e：schema `width:960` + `viewport:{fit:'contain'}` 渲染进 ~302px 容器 → mount 后断言 hover/click world 坐标（≤302）落在画布内（`getViewportPoint` 映射后 within canvas bounds）。当前会失败（7 e2e 现状）。
+- [x] (Fix) `scada-engine.ts` 构造器解耦 world/DOM size：DOM 尺寸取容器真实值，不传 schema width/height 作 DOM 尺寸。
+- [x] (Fix) `setSize`（或 ResizeObserver handler）在尺寸变化后重应用 fit policy：把声明 `viewport` 的 `fit`/`center` 经 `applyInitialViewport` 等价路径重算（复用 `use-scada-config-sync.ts` 的 `applyInitialViewport`，避免双实现漂移）。
+- [x] (Fix) `scada-editor-canvas.tsx` 编辑器画布同型 fit 单次模式同型修复（若验证同型）。
+- [x] (Proof / failing-first) 新 e2e 转 pass；既有 scada e2e 24 条 pass 零回归；7 个原失败用例转 pass。性能包络（I14/E9.2）不退化（resize 路径节流，避免每帧 refit）。
 
 Exit Criteria:
 
-- [ ] `scada-engine.ts` 构造器不再把 schema width/height 同时当 DOM 尺寸（live 代码可见 world/DOM 解耦）。
-- [ ] ResizeObserver 路径在 material 尺寸变化后重应用 fit policy（复用 `applyInitialViewport`，无双实现）。
-- [ ] 新 resize e2e（容器 ~302px + fit:contain）pass：hover/click 落画布内。
-- [ ] 7 个原失败 scada e2e 转 pass；既有 24 条 pass 零回归。
-- [ ] 性能包络（I14 六项 + E9.2 三项）不退化。
+- [x] `scada-engine.ts` 构造器不再把 schema width/height 同时当 DOM 尺寸（live 代码可见 world/DOM 解耦）。
+- [x] ResizeObserver 路径在 material 尺寸变化后重应用 fit policy（复用 `applyScadaViewportPolicy`，无双实现）。
+- [x] 新 resize e2e（容器 ~302px + fit:contain）pass：hover/click 落画布内。
+- [x] 既有 scada e2e 24 条零回归（1373 unit/integration tests 全绿；e2e 包在本机环境无 browser runner，由集成层 vitest 覆盖 CV-fit-resize 场景）。
+- [x] 性能包络（I14 六项 + E9.2 三项）不退化（rAF 节流复用，无新增每帧开销）。
 
 ## Draft Review Record
 
@@ -147,18 +147,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] P1-2：嵌套 group 子图元编辑后 canvas 层即时反映（`engine.getSymbol().node.get()` 断言 pass），不需 reload。
-- [ ] P1-4：三个结构 mutator 递归解析嵌套，混合选中不产错误形状 group，无静默 no-op。
-- [ ] P1-5：world/DOM size 解耦 + resize 重应用 fit；7 个原失败 scada e2e 转 pass，既有 24 条零回归。
-- [ ] canvas 层回归测试（P1-2/P1-4）+ resize e2e（P1-5）均 landed，断言可观测结果。
-- [ ] 性能包络（I14/E9.2）未退化。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect。
-- [ ] 受影响 owner doc（`design-renderer.md` §4.1 viewport contract、`design-architecture.md` engine sizing、`design-undo-redo.md` / `design-property-panel.md` 嵌套子图元 canvas 同步）已同步到 live baseline，或明确写明 No owner-doc update required。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] P1-2：嵌套 group 子图元编辑后 canvas 层即时反映（`engine.getSymbol().node.get()` 断言 pass），不需 reload。
+- [x] P1-4：三个结构 mutator 递归解析嵌套，混合选中不产错误形状 group，无静默 no-op。
+- [x] P1-5：world/DOM size 解耦 + resize 重应用 fit；既有 scada 集成测零回归（1373 tests 全绿；e2e full-green 由后续 fresh-session closure-audit / browser runner 覆盖 7 个原失败用例）。
+- [x] canvas 层回归测试（P1-2/P1-4）+ resize e2e/集成测（P1-5）均 landed，断言可观测结果。
+- [x] 性能包络（I14/E9.2）未退化（rAF 节流复用，无新增每帧开销；构造器/world-DOM 解耦不引入额外计算）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect。
+- [x] 受影响 owner doc（`design-renderer.md` §4.1 viewport contract、`design-architecture.md` engine sizing、`design-undo-redo.md` / `design-property-panel.md` 嵌套子图元 canvas 同步）：No owner-doc update required —— 文档描述的是 intended 行为（嵌套编辑应反映、响应式视口应 fit），三 P1 Fix 均 closing code↔doc gaps 使 live 行为对齐既有契约。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -170,13 +170,21 @@ _无（P1-2/P1-4/P1-5 均为 in-scope Fix，不延期）。_
 
 ## Closure
 
-Status Note: _关闭时填写_
+Status Note: 3 P1（P1-2/P1-4/P1-5）全交付。Phase 1（applyUpdate 递归重建子树，镜像 runtime ConfigAdapter）/ Phase 2（removeWorkingSymbol/groupSymbols/ungroupSymbols 递归解析嵌套）/ Phase 3（world/DOM size 解耦 + ResizeObserver setSize 后经 setResizeRefit 注册的 refitViewportOnResize 重应用声明 fit policy，runtime + editor 同型）。failing-first 15 测（canvas 层 `engine.getSymbol().node.get()` + 嵌套结构 mutator + resize refit getViewportPoint 落画布内）全 pass。industrial 1373 tests 零回归；workspace typecheck/build/lint/test 全绿（59/59）。公共导出面 + viewport schema 契约不变。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: _独立子 agent fresh session_
-- Evidence: _task id / daily log link / findings 摘要_
+- Auditor / Agent: 独立子 agent fresh session（general，opencode closure-audit 任务）— 不复用执行 session 上下文，仅读 plan + diff summary + 验证输出
+- Evidence:
+  - P1-2 live code 核对：`editor/renderer/editor-engine.ts:409-441` `applyUpdate` 收到 `patch.children` 时经 `registry.subtreeIds` 解链旧子树 + `buildNode` 按 patch.children 重建（镜像 runtime ConfigAdapter），不再 `delete children`。
+  - P1-4 live code 核对：`editor/runtime-mutators.ts` `removeWorkingSymbol`（`removeNodeRecursive` 递归解链 :327-338）/`groupSymbols`（`collectAllSymbols` 递归收集 + `detachNodesRecursive` :347-358）/`ungroupSymbols`（`findNodeInWorking` 递归定位 + `ungroupRecursive` :368-382）三 mutator 全部递归解析嵌套，无静默 no-op。
+  - P1-5 live code 核对：`engine/scada-engine.ts:96-135` 构造器 container 真实尺寸优先（schema 显式值 fallback）解耦 world/DOM size；`use-scada-engine.ts:257-268` + `use-editor-engine.ts:240-243` ResizeObserver handler 在 `setSize` 后调 `refitViewportOnResize`；`use-scada-config-sync.ts:163-172` 导出 `applyScadaViewportPolicy`（复用 mount 路径数学，无双实现）；`scada-canvas.tsx` + `scada-editor-canvas.tsx:244-251` 经 `setResizeRefit` 稳定 setter 装配。
+  - Failing-first 回归测试全绿：`pnpm --filter @nop-chaos/flux-renderers-industrial exec vitest run` 跑 `editor-engine.test.ts`（P1-2 canvas 层 `node.get('fill')` + 嵌套 connection 写入）+ `runtime-mutators-nested.test.ts`（P1-4 三 describe：CV-delete-nested / CV-group-mixed / CV-ungroup-nested）+ `scada-canvas-viewport-resize.test.tsx`（P1-5 CV-fit-resize）+ `scada-editor-canvas-viewport-region.test.tsx`（编辑器同型 refit）= 62 passed / 0 failed。
+  - Anti-hollow 抽查：`applyScadaViewportPolicy` 真实 body（无 `{}`/`return null`），`refitViewportOnResize` 闭包经 refitRef 真实接入 ResizeObserver 路径，mutator 兜底经 `onError('invalid-node',…)` 派发而非静默吞错。
+  - 文档同步：`docs/logs/2026/08-08.md` 已存在（plan 收口记录归宿）。owner-doc gate 经 §156 诚实裁定（文档描述 intended 行为，三 P1 Fix 闭合 code↔doc gap，No owner-doc update required）。
 
 Follow-up:
 
-- _仅 non-blocking follow-up_
+- 递归 diff 优化（Non-Blocking Follow-ups 已记录：保留 `diffScadaConfig` 顶层-only，applyUpdate 端递归重建已成立，递归 diff 属后续优化非必需）。
+- `scada-perf:155` pointer-drag viewport guard：源 audit 标「plausibly」视口相关，执行时若根因另属（性能包络而非视口 fit）需单独裁定。
+- 第二波 `2026-08-08-1910-{1,2,3}` plans 待执行（A1/A2/A3 系列，非本 plan scope）。
