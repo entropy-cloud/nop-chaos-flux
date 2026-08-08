@@ -78,6 +78,36 @@ describe('DiffViewRenderer', () => {
     expect(view).toBeTruthy();
   });
 
+  it('clears the three-column flash timer on unmount (P3-3)', () => {
+    vi.useFakeTimers();
+    try {
+      const { unmount } = render(
+        <DiffViewRenderer
+          {...createMockProps({
+            middleContent: 'line1\nbase\nline3\nline4',
+          })}
+        />,
+      );
+      expect(document.querySelectorAll('.nop-diff-line-flash').length).toBeGreaterThan(0);
+      expect(vi.getTimerCount()).toBeGreaterThan(0);
+
+      unmount();
+      expect(vi.getTimerCount()).toBe(0);
+
+      render(
+        <DiffViewRenderer
+          {...createMockProps({
+            middleContent: 'line1\nbase\nline3\nline4',
+          })}
+        />,
+      );
+      vi.advanceTimersByTime(500);
+      expect(document.querySelectorAll('.nop-diff-line-flash').length).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('renders nothing when meta.visible is false', () => {
     const { container } = render(
       <DiffViewRenderer

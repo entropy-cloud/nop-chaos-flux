@@ -80,11 +80,13 @@ export function DiffThreeColumnView({
     const container = containerRef.current;
     if (!container) return;
     const els = container.querySelectorAll(`[data-line="${targetLine}"]`);
+    const flashTimers: ReturnType<typeof setTimeout>[] = [];
     els.forEach((el) => {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       el.classList.add('nop-diff-line-flash');
-      setTimeout(() => el.classList.remove('nop-diff-line-flash'), 500);
+      flashTimers.push(setTimeout(() => el.classList.remove('nop-diff-line-flash'), 500));
     });
+    return () => flashTimers.forEach((timer) => clearTimeout(timer));
   }, [currentDiffIndex, conflictZones]);
 
 
