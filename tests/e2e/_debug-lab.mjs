@@ -1,0 +1,11 @@
+import { chromium } from '@playwright/test';
+const browser = await chromium.launch();
+const page = await browser.newPage();
+const errors = [];
+page.on('pageerror', (e) => errors.push('pageerror: ' + e.message.slice(0, 300)));
+page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 300)); });
+await page.goto('http://127.0.0.1:4175/#/lab/diff-view', { waitUntil: 'commit' });
+await page.waitForTimeout(8000);
+console.log('component-lab count:', await page.locator('[data-testid="component-lab"]').count());
+console.log('errors:', JSON.stringify(errors.slice(0, 6)));
+await browser.close();
