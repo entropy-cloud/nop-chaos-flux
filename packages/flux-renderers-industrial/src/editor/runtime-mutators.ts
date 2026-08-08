@@ -75,7 +75,14 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
 
   const addWorkingSymbol = (node: ScadaSymbolNode) => {
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
-    session.workingConfig.symbols = [...session.workingConfig.symbols, node];
+    // plan 2026-08-08-1809-2 Phase 1 / F3：拖拽落点 / palette 点击的 id 由组件内不重置的 idCounter 生成，
+    // 与 working copy 已装入图元碰撞 → tree-registry last-write-wins 静默覆盖。此处把去重收敛进单一 owner
+    // （addWorkingSymbol），对齐 groupSymbols（runtime-mutators.ts:134-139）/ clipboard paste（clipboard.ts）
+    // 的碰撞自增纪律——所有进入 working copy 的 add 路径（drop / palette click / test handle / component handle）
+    // 都不再产出重复 id。
+    const existingIds = new Set(collectAllSymbols(session.workingConfig.symbols).map((s) => s.id));
+    const resolvedNode = resolveUniqueNodeId(node, existingIds);
+    session.workingConfig.symbols = [...session.workingConfig.symbols, resolvedNode];
     undoRedo.pushOperation('add-symbol', prevSnapshot, session.workingConfig);
     syncWorkingCopy();
     notifySession();
@@ -104,6 +111,23 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
       engine.applyDiff(diff, session.workingConfig);
       synced.config = cloneConfigSnapshot(session.workingConfig);
       commit();
+      // plan 2026-08-08-1809-2 Phase 3 / P1-3：commit 后修剪 selection 到新 working config 仍存在的 id。
+      // undo 一个 add（或 redo 一个 remove）后 selection 可能持有已不存在的 id → inspector/toolbox 在死 id
+      // 上静默 no-op。用 collectAllSymbols（递归，前向兼容 plan {3} P1-4 嵌套 id）收集现存集，过滤死 id，
+      // 经 setSessionSelection 统一同步 canonical + React mirror + 触发 onSelectionChange，并校正 engine targets。
+      const liveIds = new Set(collectAllSymbols(session.workingConfig.symbols).map((s) => s.id));
+      const pruned = session.selection.filter((id) => liveIds.has(id));
+      if (pruned.length !== session.selection.length) {
+        setSessionSelection(pruned);
+        if (pruned.length === 0) {
+          engine.clearEditorSelection();
+        } else {
+          const resolvedNodes = pruned
+            .map((id) => engine.getSymbol(id)?.node)
+            .filter((n): n is NonNullable<typeof n> => n !== undefined);
+          engine.setEditorTargets(resolvedNodes);
+        }
+      }
       notifySession();
     } catch (error) {
       // 回滚 working copy 到 apply 前态 + 派发 editor-internal-error（entry 未 commit，保留在原栈）。
@@ -209,6 +233,11 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
         latest.current.onError?.('invalid-config', result.errors.join('; '));
         return;
       }
+      // plan 2026-08-08-1809-2 Phase 2 / P1-1：全量 config 替换前中止 adapter 事务态。事务的 prevAtOpStart
+      // 指向 pre-load working copy，load 后已无意义；若不中止，拖拽途中被 programmatic load 打断时，
+      // pointerup 的 commitTransaction 会算 diff(OLD prevAtOpStart, NEW post-load) 巨型 diff 推入空栈，
+      // 使 undo 还原到错误的 pre-load config。在 resetSession 之前调用（resetSession 清栈但不清事务态）。
+      undoRedo.abortTransaction();
       resetSession(session, config);
       // resetSession 清空了 selection（canonical），同步 React mirror（multi P1-07 load 路径）。
       latest.current.onSelectionChange?.([]);
@@ -246,3 +275,23 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
 }
 
 export type { EditorOperationKind };
+
+/**
+ * 解析节点 id 到与现有集不碰撞的唯一值（plan 2026-08-08-1809-2 Phase 1 / F3）。
+ *
+ * - 不碰撞 → 原样返回（同一 node ref，零分配）。
+ * - 碰撞 → 按 `${base}-${n}` 碰撞自增（解析尾随数字，无则从 1 起），与 groupSymbols 的
+ *   `do { counter += 1 } while (existingIds.has(...))` 同形。
+ */
+function resolveUniqueNodeId(node: ScadaSymbolNode, existingIds: Set<string>): ScadaSymbolNode {
+  if (!existingIds.has(node.id)) return node;
+  const match = /^(.*)-(\d+)$/.exec(node.id);
+  const base = match ? match[1] : node.id;
+  let n = match ? parseInt(match[2], 10) : 1;
+  let candidate: string;
+  do {
+    n += 1;
+    candidate = `${base}-${n}`;
+  } while (existingIds.has(candidate));
+  return { ...node, id: candidate };
+}

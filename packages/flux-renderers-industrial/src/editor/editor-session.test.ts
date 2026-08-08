@@ -159,6 +159,22 @@ describe('createScadaEditorSession config cloning branches', () => {
   });
 });
 
+// plan 2026-08-08-1809-2 Phase 1 / F1（Proof）：缺失 variables 的合法 config 进入 createScadaEditorSession
+// 不抛（守卫已在 commit c2dd1627b 落地于 cloneConfig:118 `variables !== undefined` 条件展开）。
+// 既有 fixture 恒带 variables:[]，从未覆盖缺失路径；本用例锁定该守卫防回归。
+describe('createScadaEditorSession — missing variables guard (F1 regression lock)', () => {
+  it('does not throw when variables is omitted and preserves symbols + undefined variables', () => {
+    const configNoVars: ScadaConfig = {
+      version: 1,
+      symbols: [{ id: 'x', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10 }],
+    } as ScadaConfig;
+    const session = createScadaEditorSession(configNoVars);
+    expect(session.workingConfig.symbols).toEqual(configNoVars.symbols);
+    expect(session.workingConfig.variables).toBeUndefined();
+    expect(session.committedBaseline.variables).toBeUndefined();
+  });
+});
+
 describe('findWorkingNode', () => {
   it('finds top-level node by id', () => {
     const session = createScadaEditorSession(baseConfig);

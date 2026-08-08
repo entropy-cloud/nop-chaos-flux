@@ -227,6 +227,10 @@ export function buildToolboxRuntime(ctx: EditorRuntimeContext): EditorToolboxRun
         latest.current.onError?.('invalid-config', result.errors.join('; '));
         return false;
       }
+      // plan 2026-08-08-1809-2 Phase 2 / P1-1：与 load() 同边界——全量 config 替换前中止 adapter 事务态
+      // （与 HCA11 importConfig/load parity 同精神）。事务 prevAtOpStart 在 import 后无意义，不中止会被
+      // 随后 commitTransaction 推入巨型 diff。在 resetSession 之前调用。
+      undoRedo.abortTransaction();
       resetSession(session, parsed);
       // resetSession 清空了 selection（canonical），同步 React mirror（multi P1-07 load 路径）。
       latest.current.onSelectionChange?.([]);
