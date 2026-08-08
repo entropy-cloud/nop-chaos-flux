@@ -1,6 +1,6 @@
 # 01 Industrial HMI Component Audit — HCA10 Editor Undo-Redo（diff 命令栈 23 维包级深审 + 自动修复）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-08
 > Mission: industrial-hmi-component-audit
 > Work Item: HCA10. Editor undo-redo 审计
@@ -99,12 +99,12 @@ editor undo-redo 是复杂交互层（逆计算 + 事务 + 合并 + 内存守护
 
 ### Phase 1 - 逐文件 23 维包级深审 + finding triage
 
-Status: planned
-Targets: `packages/flux-renderers-industrial/src/editor/undo-redo/`（4 源文件）、`docs/audits/2026-08-08-*-hca10-editor-undo-redo.md`
+Status: completed
+Targets: `packages/flux-renderers-industrial/src/editor/undo-redo/`（4 源文件）、`docs/audits/2026-08-08-1230-hca10-editor-undo-redo.md`
 
 - Item Types: `Proof | Decision`
 
-- [ ] 逐文件过 `docs/skills/deep-audit-prompts.md` 23 维（**维度 21 显示与定位 / 22 集成接线 / 23 测试有效性 必选触发**）。重点维度：
+- [x] 逐文件过 `docs/skills/deep-audit-prompts.md` 23 维（**维度 21 显示与定位 / 22 集成接线 / 23 测试有效性 必选触发**）。重点维度：
   - **逆计算正确性**（compute-inverse.ts，**维度 21**）：`ScadaConfigDiff` → 逆 diff 的对称性——added→removed / removed→added（需原值恢复）/ updated→reverse（需前值）；字段穷尽性（symbols/connections/variables 等子形状）；缺失前值的守卫；嵌套结构（group children）逆计算。
   - **事务边界与原子性**（compute-inverse.ts + undo-redo-adapter.ts）：multi-diff 事务的原子应用/回滚；中途失败不部分应用；事务标记传递。
   - **命令栈正确性**（undo-stack.ts）：undo/redo 双栈 + pointer 游标一致性；canUndo/canRedo 边界（空栈、满栈、单条）；redo-after-new-commit 清空 redo 栈；内存上限守护（最大条目数/字节）+ FIFO 淘汰。
@@ -113,49 +113,49 @@ Targets: `packages/flux-renderers-industrial/src/editor/undo-redo/`（4 源文�
   - **载荷契约**：与 `serialization/diff.ts` `ScadaConfigDiff` 形状一致（HCA4 基线）；`engine.applyDiff` 增量应用路径正确。
   - **错误处理**：空 diff / 缺失前值 / 超大 diff（10 万图元）/ NaN 数值的降级。
   - **类型安全**：diff entry cast、prevValue/nextValue 窄化、unknown 操作类型守卫。
-- [ ] 重点抽查边界值：空 undo 栈 / 空 redo 栈 / 单条命令 / 栈满淘汰 / 500ms 边界（恰等于）/ 缺失前值 updated diff / redo-after-commit / 事务中途失败 / 10 万图元超大 diff / group 子结构逆计算。
-- [ ] 产出 `docs/audits/2026-08-08-*-hca10-editor-undo-redo.md`：逐文件 finding 表（维度 / 结论 / `文件:行` 证据 / P0-P3 triage）。
+- [x] 重点抽查边界值：空 undo 栈 / 空 redo 栈 / 单条命令 / 栈满淘汰 / 500ms 边界（恰等于）/ 缺失前值 updated diff / redo-after-commit / 事务中途失败 / 10 万图元超大 diff / group 子结构逆计算。
+- [x] 产出 `docs/audits/2026-08-08-1230-hca10-editor-undo-redo.md`：逐文件 finding 表（维度 / 结论 / `文件:行` 证据 / P0-P3 triage）。
 
 Exit Criteria:
 
 > 写法原则：只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续的局部检查；全量验证归 Closure Gates。
 
-- [ ] 审计记录文件存在，含 4 文件逐文件 finding 表 + 每条 `文件:行` 证据经 live 核对。
-- [ ] 所有 finding 已 triage 为 P0/P1/P2/P3 之一（无未分类项）。
+- [x] 审计记录文件存在，含 4 文件逐文件 finding 表 + 每条 `文件:行` 证据经 live 核对。
+- [x] 所有 finding 已 triage 为 P0/P1/P2/P3 之一（无未分类项）。
 
 ### Phase 2 - P0/P1 自动修复 + P2 低成本修复（test-first）
 
-Status: planned
+Status: completed
 Targets: Phase 1 finding 中标 P0/P1 的源文件 + 对应 `*.test.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] 对每条 P0/P1 finding：先写 failing-first focused test（断言正确结果值 / 行为，非 not.toThrow），再修代码使转绿。
-- [ ] P2 低成本（<~30 行 / 单文件 / 无公共面变更）当场修复并带回归测试；P2 高成本入审计卡 backlog（归 HCA-CR）。
-- [ ] 每条 fix 在审计记录文件回写状态（fixed / recorded）+ fix 落点 `文件:行`。
+- [x] 对每条 P0/P1 finding：先写 failing-first focused test（断言正确结果值 / 行为，非 not.toThrow），再修代码使转绿。
+- [x] P2 低成本（<~30 行 / 单文件 / 无公共面变更）当场修复并带回归测试；P2 高成本入审计卡 backlog（归 HCA-CR）。
+- [x] 每条 fix 在审计记录文件回写状态（fixed / recorded）+ fix 落点 `文件:行`。
 
 Exit Criteria:
 
-- [ ] 所有 P0/P1 finding 的 failing-first test 存在且转绿（断言结果值）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 全绿（包级局部验证）。
-- [ ] 审计记录 finding 状态已回写。
+- [x] 所有 P0/P1 finding 的 failing-first test 存在且转绿（断言结果值）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 全绿（包级局部验证）。
+- [x] 审计记录 finding 状态已回写。
 
 ### Phase 3 - owner doc 一致性核对 + 回归抽查 + bug 喂入
 
-Status: planned
+Status: completed
 Targets: `docs/components/industrial-hmi-editor/design-undo-redo.md`、`docs/components/industrial-hmi/editor-initiation.md`（R4 节）、审计记录、HCA-BL 引用
 
 - Item Types: `Fix | Follow-up`
 
-- [ ] 核对 `design-undo-redo.md`（diff 命令栈 / 逆计算 / 合并 / 内存守护）+ `editor-initiation.md` R4（undo-redo 内存 10 万图元）与 live undo-redo 一致；仅当发现 drift 时同步（无 drift 不写）。
-- [ ] 抽查载荷基线回归（`serialization/diff.ts` `ScadaConfigDiff` 形状与 undo-redo 消费一致——HCA4 基线）。
-- [ ] 把本层复杂 / 跨层 bug 候选汇总到审计记录「喂入 HCA-BL」节（正式归档动作在 HCA-BL，本 plan 不产出 `docs/bugs/` 卡片）。
+- [x] 核对 `design-undo-redo.md`（diff 命令栈 / 逆计算 / 合并 / 内存守护）+ `editor-initiation.md` R4（undo-redo 内存 10 万图元）与 live undo-redo 一致；仅当发现 drift 时同步（无 drift 不写）。
+- [x] 抽查载荷基线回归（`serialization/diff.ts` `ScadaConfigDiff` 形状与 undo-redo 消费一致——HCA4 基线）。
+- [x] 把本层复杂 / 跨层 bug 候选汇总到审计记录「喂入 HCA-BL」节（正式归档动作在 HCA-BL，本 plan 不产出 `docs/bugs/` 卡片）。
 
 Exit Criteria:
 
-- [ ] design-undo-redo.md + editor-initiation.md R4 经 rg/读核对待无 drift（或有同步 commit）。
-- [ ] 载荷基线回归抽查通过。
-- [ ] HCA-BL 喂入节存在（含 bug 候选清单 + `文件:行`，或明确「无复杂/跨层 bug 候选」+ 理由）。
+- [x] design-undo-redo.md + editor-initiation.md R4 经 rg/读核对待无 drift（或有同步 commit）。
+- [x] 载荷基线回归抽查通过。
+- [x] HCA-BL 喂入节存在（含 bug 候选清单 + `文件:行`，或明确「无复杂/跨层 bug 候选」+ 理由）。
 
 ## Draft Review Record
 
@@ -170,16 +170,16 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。全量 `pnpm typecheck/build/lint/test` 是 plan 收口时跑一次的仓库级检查（见 guide Minimum Rule 18）。
 
-- [ ] 4 源文件逐文件深审完成，审计记录文件存在且 finding 全 triage。
-- [ ] 所有 in-scope 确认的 P0/P1 live defect 已 test-first 修复（failing-first proof 存在）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] 受影响 owner doc 与 live baseline 一致（或明确无 drift）。
-- [ ] 必要 focused verification 已完成。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 4 源文件逐文件深审完成，审计记录文件存在且 finding 全 triage。
+- [x] 所有 in-scope 确认的 P0/P1 live defect 已 test-first 修复（failing-first proof 存在）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
+- [x] 受影响 owner doc 与 live baseline 一致（或明确无 drift）。
+- [x] 必要 focused verification 已完成。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -192,14 +192,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 完成。4 源文件 23 维包级深审（维度 21/22/23 必选触发）产出审计记录 `docs/audits/2026-08-08-1230-hca10-editor-undo-redo.md`。零 P0；1 项 P1（undo-stack.replaceUndoTop 不清空 redoStack，U6 redo-after-new-commit 违约）+ 1 项 P2 低成本（operation-coalesce.singleNodeUpdate 未拒绝 variables/reordered 致 M2 合并载荷丢失）均 test-first 修复（failing-first proof 先于 fix，4 条回归测试断言结果值）；1 项 P3（合并窗口时间戳源 Date.now 非单调）归 HCA-CR backlog。owner doc（design-undo-redo.md U6/§4.5 + editor-initiation.md R4）与 live 一致（P1-1 修复后 live 匹配 doc，doc 本身无需改）。载荷基线（ScadaConfigDiff，HCA4）回归抽查通过。无复杂/跨层 bug 候选需归 docs/bugs/。全量 `pnpm typecheck/build/lint/test` 全绿（industrial 97 文件 / 1315 测试，+4 新回归）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 closure auditor（fresh session `ses_0203aed46ffenCYxzgSchG4gT1`）
+- Evidence: P1-1（`undo-stack.ts:148-156` replaceUndoTop 末尾清空 redoStack）+ P2-1（`operation-coalesce.ts:103-110` singleNodeUpdate 增 variables/reordered 守卫）两处 fix 经 live 复核——两 defect trace 成立（真实违约），fix 正确且完整（pushOperation/pushForward 两 coalesce 路径均经 replaceUndoTop 截断 redo）；4 条 failing-first 回归测试断言结果值（redoStackDepth===0 / canRedo===false / forward.updated[0].patch.x===20 / tryCoalesce===undefined），独立 `vitest run src/editor/undo-redo/` = 4 文件 / 66 测试全绿（含 4 新）；全包 97 文件 / 1315 测试；P3 时间戳时钟源诚实归 HCA-CR（非 live defect 静默降级）；owner doc U6/§4.5 本就正确（无 drift）；plan 内部一致（执行 session 未自审勾选 closure-audit gate，plan 待本 pass 后升级 completed）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
-- <<或者明确写 no remaining plan-owned work>>
+- P3-1 合并窗口时间戳源（Date.now wall clock）→ HCA-CR 跨层集中修复（单 tab 短窗口低概率，非 plan-owned live defect）。
+- 无其他 plan-owned remaining work（所有 in-scope P0/P1/P2 已 test-first 修复）。
