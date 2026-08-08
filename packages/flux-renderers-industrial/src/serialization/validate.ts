@@ -1,6 +1,6 @@
 import { hasScadaSymbol } from '../symbols/symbol-registry.js';
 import { scanLegacyAtSyntax } from './legacy-scan.js';
-import { assertShape, checkNumberField, isPlainObject } from './validators/helpers.js';
+import { assertShape, checkNumberField, isPlainObject, MAX_SYMBOLS, MAX_VARIABLES } from './validators/helpers.js';
 import { validatePointDeclaration, validateSymbolNode } from './validators/index.js';
 
 export type ScadaValidationResult =
@@ -22,15 +22,24 @@ export function validateScadaConfig(
   }
   if (!Array.isArray(config.symbols)) {
     errors.push('config.symbols must be an array');
+  } else if (config.symbols.length > MAX_SYMBOLS) {
+    // plan 2026-08-08-1809-1 Phase 2（F4）：顶层 symbols 广度上限（fail-closed O(1) 早退）——
+    // 仅按 length 判定，不 forEach 遍历，防不可信 config 注入数百万节点致主线程冻结。
+    errors.push(`config.symbols exceeds maximum symbol count (${MAX_SYMBOLS})`);
   } else {
     const seenSymbolIds = new Set<string>();
+    // plan 2026-08-08-1809-1 Phase 2：跨整棵 symbol 树的累计节点计数器（透传进 validateSymbolNode 递归）。
+    const nodeCounter = { count: 0, exceeded: false };
     config.symbols.forEach((node, index) => {
-      validateSymbolNode(node, seenSymbolIds, errors, `symbols[${index}]`, isKnownType);
+      validateSymbolNode(node, seenSymbolIds, errors, `symbols[${index}]`, isKnownType, 0, nodeCounter);
     });
   }
   if (config.variables !== undefined) {
     if (!Array.isArray(config.variables)) {
       errors.push('config.variables must be an array');
+    } else if (config.variables.length > MAX_VARIABLES) {
+      // plan 2026-08-08-1809-1 Phase 2（F4）：variables 广度上限（fail-closed O(1) 早退）。
+      errors.push(`config.variables exceeds maximum variable count (${MAX_VARIABLES})`);
     } else {
       const seenPointIds = new Set<string>();
       config.variables.forEach((decl, index) => {

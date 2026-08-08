@@ -653,3 +653,106 @@ describe('validateScadaConfig coverage gaps (HCA4-P3-1/P3-2)', () => {
     expect(result).toEqual({ ok: true });
   });
 });
+
+// plan 2026-08-08-1809-1 Phase 1（open-audit F2：assertShape 'number' 分支不拒 NaN/±Infinity）：
+// failing-first Proof（先于 Fix）。修复前：assertShape number 分支仅 `typeof v === 'number'`，
+// 故 grid.size=Infinity（JSON.parse('1e400')）/ animation.from.x=NaN / declaration scale.k=Infinity 直过——
+// 修复后这些子字段必须报 finite-number 错误。对照 checkNumberField（已 finite）同形。
+describe('validateScadaConfig assertShape finite number (plan 2026-08-08-1809-1 Phase 1 / F2)', () => {
+  it('F2: background.grid.size = 1e400 (→Infinity) → ok:false + finite-number 文案', () => {
+    const inf = JSON.parse('1e400'); // → Infinity
+    const result = validateScadaConfig({
+      ...baseConfig(),
+      background: { color: '#fff', grid: { size: inf, color: '#ccc' } },
+    });
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('background.grid.size') && e.includes('finite number'))).toBe(
+      true,
+    );
+  });
+
+  it('F2: background.grid.size = NaN → ok:false + finite-number 文案', () => {
+    const result = validateScadaConfig({
+      ...baseConfig(),
+      background: { color: '#fff', grid: { size: NaN, color: '#ccc' } },
+    });
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('background.grid.size') && e.includes('finite number'))).toBe(
+      true,
+    );
+  });
+
+  it('F2: animation.from = {x: NaN} → ok:false + finite-number 文案', () => {
+    const result = validateScadaConfig(
+      baseConfig({
+        symbols: [rect('an', { animations: [{ kind: 'flow', from: { x: NaN, y: 0 } }] })],
+      }),
+    );
+    expect(result.ok).toBe(false);
+    expect(
+      (result as { errors: string[] }).errors.some((e) => e.includes('animations[0].from.x') && e.includes('finite number')),
+    ).toBe(true);
+  });
+
+  it('F2: declaration scale.k = 1e400 (→Infinity) → ok:false + finite-number 文案', () => {
+    const inf = JSON.parse('1e400'); // → Infinity
+    const result = validateScadaConfig(
+      baseConfig({ variables: [{ id: 's', source: 'static', value: 1, scale: { k: inf as unknown as number, b: 0 } }] }),
+    );
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('variables[0].scale.k') && e.includes('finite number'))).toBe(
+      true,
+    );
+  });
+});
+
+// plan 2026-08-08-1809-1 Phase 2（open-audit F4：validate 无广度/总量上限 → 不可信 config DoS）：
+// failing-first Proof（先于 Fix）。修复前：(a) `symbols: new Array(MAX_SYMBOLS+1)` 仅 Array.isArray 后 forEach
+// 全量递归（无 length 守卫），sparse 空洞 forEach 跳过 → ok:true 放行；(b) 深嵌套/超宽 children 总节点数
+// 超 MAX_TOTAL_NODES 无计数早退。修复后两类超阈 config 必须 {ok:false} + 结构化 error（O(1) 早退 / 递归早退）。
+import { MAX_SYMBOLS, MAX_VARIABLES, MAX_TOTAL_NODES } from './validators/helpers.js';
+describe('validateScadaConfig breadth/total-node DoS guards (plan 2026-08-08-1809-1 Phase 2 / F4)', () => {
+  it('F4: symbols.length > MAX_SYMBOLS → ok:false + 超限文案（O(1) length 守卫，不遍历）', () => {
+    // sparse array of length MAX_SYMBOLS+1：修复前 forEach 跳过空洞 → ok:true；修复后 length 守卫早退。
+    const result = validateScadaConfig({ version: 1, symbols: new Array(MAX_SYMBOLS + 1) as never });
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('symbols') && e.includes('maximum symbol count'))).toBe(true);
+  });
+
+  it('F4: variables.length > MAX_VARIABLES → ok:false + 超限文案（O(1) length 守卫）', () => {
+    const result = validateScadaConfig({ version: 1, symbols: [], variables: new Array(MAX_VARIABLES + 1) as never });
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('variables') && e.includes('maximum variable count'))).toBe(
+      true,
+    );
+  });
+
+  it('F4: 嵌套 children 总节点数超 MAX_TOTAL_NODES → ok:false + 超限文案（递归期计数早退）', () => {
+    // 单 root scada-group + (MAX_TOTAL_NODES+2) 个 dense undefined children：递归期每节点计数 +1，
+    // 超 MAX_TOTAL_NODES 即 push 总量 error 并停止深入。修复前：无总量守卫（仅 depth），不会报 total-node error。
+    const result = validateScadaConfig({
+      version: 1,
+      symbols: [
+        { id: 'root', type: 'scada-group', x: 0, y: 0, children: Array.from({ length: MAX_TOTAL_NODES + 2 }) as never },
+      ],
+    });
+    expect(result.ok).toBe(false);
+    expect((result as { errors: string[] }).errors.some((e) => e.includes('maximum total node count'))).toBe(true);
+  });
+
+  it('F4: 阈内大规模 config 不被误拒（length == MAX_SYMBOLS 的 sparse symbols 通过 length 守卫，内部空洞 forEach 跳过 → ok:true）', () => {
+    const result = validateScadaConfig({ version: 1, symbols: new Array(MAX_SYMBOLS) as never });
+    expect(result.ok).toBe(true);
+  });
+
+  it('F4: 阈内合法 nested children 零回归（既有 nested fixtures 行为不变）', () => {
+    const result = validateScadaConfig(
+      baseConfig({
+        symbols: [
+          rect('g', { type: 'scada-group', children: [rect('c1'), rect('c2', { x: 10 }), rect('c3')] }),
+        ],
+      }),
+    );
+    expect(result.ok).toBe(true);
+  });
+});

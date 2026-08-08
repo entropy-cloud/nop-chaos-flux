@@ -1,4 +1,5 @@
 import {
+  MAX_TOTAL_NODES,
   MAX_VALIDATE_DEPTH,
   assertShape,
   checkNumberField,
@@ -10,6 +11,13 @@ import { validateBinding } from './binding.js';
 import { validateStateDeclaration } from './state-declaration.js';
 import { validateSymbolEvent } from './symbol-event.js';
 
+// plan 2026-08-08-1809-1 Phase 2（F4）：跨整棵 symbol 树的累计节点计数器。
+// `count` 每进入一个节点 +1；超 MAX_TOTAL_NODES 时置 `exceeded` 并 push 总量 error（仅一次），早退停止深入。
+export interface NodeCounter {
+  count: number;
+  exceeded: boolean;
+}
+
 export function validateSymbolNode(
   node: unknown,
   seenIds: Set<string>,
@@ -17,7 +25,19 @@ export function validateSymbolNode(
   scope: string,
   isKnownType: (type: string) => boolean,
   depth = 0,
+  counter: NodeCounter = { count: 0, exceeded: false },
 ): void {
+  // plan 2026-08-08-1809-1 Phase 2（F4）：总节点数上限（fail-closed 早退）——每进入一个节点计数 +1，
+  // 超 MAX_TOTAL_NODES 即 push 结构化 error（仅一次）并 return（不再校验本节点、不递归 children），
+  // 与 MAX_VALIDATE_DEPTH 早退同纪律。防超宽/深嵌套不可信 config 全量递归致主线程冻结。
+  counter.count += 1;
+  if (counter.count > MAX_TOTAL_NODES) {
+    if (!counter.exceeded) {
+      errors.push(`config exceeds maximum total node count (${MAX_TOTAL_NODES})`);
+      counter.exceeded = true;
+    }
+    return;
+  }
   // plan 2026-08-06-0900-1 P2-9-validateSymbolNode：深度上限 fail-closed——超 cap 不再递归，
   // 防 ~10k 层嵌套（恶意/损坏 host JSON）stack overflow（validator 本应是最外层防线，却自身先崩）。
   if (depth > MAX_VALIDATE_DEPTH) {
@@ -145,7 +165,7 @@ export function validateSymbolNode(
       errors.push(`${scope}.children must be an array`);
     } else {
       nodeObj.children.forEach((child, index) => {
-        validateSymbolNode(child, seenIds, errors, `${scope}.children[${index}]`, isKnownType, depth + 1);
+        validateSymbolNode(child, seenIds, errors, `${scope}.children[${index}]`, isKnownType, depth + 1, counter);
       });
     }
   }
