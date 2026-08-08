@@ -28,6 +28,7 @@ export function createCommandHandlerRegistry(): CommandHandlerRegistry {
 export const READ_ONLY_COMMANDS = new Set([
   'spreadsheet:setActiveSheet',
   'spreadsheet:setSelection',
+  'spreadsheet:setViewport',
   'spreadsheet:copyCells',
   'spreadsheet:selectAll',
   'spreadsheet:selectRow',

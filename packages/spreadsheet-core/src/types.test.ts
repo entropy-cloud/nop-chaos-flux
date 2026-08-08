@@ -9,6 +9,10 @@ import {
   rangeSize,
   createEmptyDocument,
   createSpreadsheetCore,
+  createDefaultSelection,
+  createDefaultViewport,
+  createDefaultHistory,
+  createDefaultLayout,
 } from './index.js';
 
 describe('cellAddress', () => {
@@ -206,5 +210,41 @@ describe('SpreadsheetConfig public contract', () => {
       defaultColumnWidth: 96,
       maxUndoDepth: 150,
     });
+  });
+});
+
+describe('default factories (MA4.3 H7 coverage closure)', () => {
+  it('createDefaultSelection returns the none selection', () => {
+    expect(createDefaultSelection()).toEqual({ kind: 'none' });
+  });
+
+  it('createDefaultViewport returns the identity viewport', () => {
+    expect(createDefaultViewport()).toEqual({ scrollX: 0, scrollY: 0, zoom: 1 });
+  });
+
+  it('createDefaultHistory returns the empty history', () => {
+    expect(createDefaultHistory()).toEqual({
+      canUndo: false,
+      canRedo: false,
+      undoDepth: 0,
+      redoDepth: 0,
+    });
+  });
+
+  it('createDefaultLayout returns the 100x26 visible range without frozen panes', () => {
+    const layout = createDefaultLayout();
+    expect(layout.visibleRange).toEqual({
+      sheetId: '',
+      startRow: 0,
+      startCol: 0,
+      endRow: 100,
+      endCol: 26,
+    });
+    expect(layout.frozen).toBeUndefined();
+  });
+
+  it('createDefaultViewport is the initial runtime viewport of a new core', () => {
+    const core = createSpreadsheetCore({ document: createEmptyDocument('factory-viewport') });
+    expect(core.getSnapshot().viewport).toEqual(createDefaultViewport());
   });
 });

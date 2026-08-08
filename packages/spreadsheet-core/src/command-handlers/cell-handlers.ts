@@ -31,6 +31,7 @@ import {
   applySetCellValue,
   applySetCellFormula,
   applySetCellStyle,
+  applySetCellNumberFormat,
   applyMergeRange,
   applyUnmergeRange,
   applyMergeCellsCenter,
@@ -144,7 +145,12 @@ export const handleSetCellWrapText: CommandHandler<SetCellWrapTextCommand> = (st
 export const handleSetCellNumberFormat: CommandHandler<SetCellNumberFormatCommand> = (
   store,
   command,
-) => applyStyleHandler(store, command, {});
+) => {
+  const state = store.getState();
+  const nextDoc = applySetCellNumberFormat(state.document, command.target, command.format);
+  store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
+  return { ok: true, changed: true };
+};
 
 export const handleFillDown: CommandHandler<FillDownCommand> = (store, command) => {
   const state = store.getState();

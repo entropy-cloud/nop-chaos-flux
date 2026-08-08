@@ -85,8 +85,7 @@ export function applySetCellStyle(
   doc: SpreadsheetDocument,
   target: SpreadsheetCellRef | SpreadsheetRange,
   styleId: string,
-): SpreadsheetDocument {
-  if ('startRow' in target) {
+): SpreadsheetDocument {  if ('startRow' in target) {
     const range = normalizeRange(target as SpreadsheetRange);
     const { doc: updated, sheet } = ensureSheetCells(doc, range.sheetId);
     const entries: Array<{ row: number; col: number; cell: CellDocument }> = [];
@@ -117,6 +116,57 @@ export function applySetCellStyle(
   const newCell: CellDocument = {
     ...(existing ?? { address: key, row: cell.row, col: cell.col }),
     styleId,
+    address: key,
+    row: cell.row,
+    col: cell.col,
+  };
+  const cells = { ...sheet.cells, [key]: newCell };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
+    ),
+  };
+  return { ...updated, workbook };
+}
+
+export function applySetCellNumberFormat(
+  doc: SpreadsheetDocument,
+  target: SpreadsheetCellRef | SpreadsheetRange,
+  format: string,
+): SpreadsheetDocument {
+  const entries: Array<{ row: number; col: number; cell: CellDocument }> = [];
+
+  if ('startRow' in target) {
+    const range = normalizeRange(target as SpreadsheetRange);
+    const { doc: updated, sheet } = ensureSheetCells(doc, range.sheetId);
+    for (let row = range.startRow; row <= range.endRow; row++) {
+      for (let col = range.startCol; col <= range.endCol; col++) {
+        const key = cellAddress(row, col);
+        const existing = sheet.cells?.[key];
+        entries.push({
+          row,
+          col,
+          cell: {
+            ...(existing ?? { address: key, row, col }),
+            numberFormat: format,
+            address: key,
+            row,
+            col,
+          },
+        });
+      }
+    }
+    return replaceSheet(updated, range.sheetId, setCells(sheet, entries));
+  }
+
+  const cell = target as SpreadsheetCellRef;
+  const { doc: updated, sheet } = ensureSheetCells(doc, cell.sheetId);
+  const key = cellAddress(cell.row, cell.col);
+  const existing = sheet.cells?.[key];
+  const newCell: CellDocument = {
+    ...(existing ?? { address: key, row: cell.row, col: cell.col }),
+    numberFormat: format,
     address: key,
     row: cell.row,
     col: cell.col,
