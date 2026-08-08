@@ -256,4 +256,58 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
       { timeout: 3000 },
     );
   });
+
+  it('hides the table built-in pagination bar when footerToolbar has a pagination renderer (no double paginator)', async () => {
+    cleanup();
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      status: 0,
+      data: {
+        items: [
+          { id: '1', userName: 'PagedUser1' },
+          { id: '2', userName: 'PagedUser2' },
+          { id: '3', userName: 'PagedUser3' },
+          { id: '4', userName: 'PagedUser4' },
+          { id: '5', userName: 'PagedUser5' },
+        ],
+        total: 5,
+      },
+    })) as never;
+
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-footer-toolbar-pagination"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'crud-grid',
+              name: 'crud-grid',
+              loadAction: { action: 'ajax', args: { url: '@query:NopAuthUser__findPage' } },
+              footerToolbar: [{ type: 'statistics' }, { type: 'pagination' }],
+              columns: [{ name: 'userName', label: '用户名' }],
+            },
+          ],
+        }}
+        env={{ notify: () => undefined, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('PagedUser1')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    // 表格内置分页栏（TablePaginationBar，含"每页行数"选择器）必须隐藏，
+    // 分页只由 footerToolbar 区域的 pagination renderer 提供（回归：双分页器）。
+    expect(document.querySelector('[data-slot="table-pagination"]')).toBeNull();
+    expect(document.querySelector('[data-slot="crud-footer-toolbar"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="pagination-root"]')).toBeTruthy();
+  });
 });

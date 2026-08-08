@@ -34,3 +34,25 @@ export function isAtLastPage(
   const lastPage = Math.max(1, Math.ceil(total / pageSize));
   return currentPage >= lastPage;
 }
+
+export interface RenderRegionLike {
+  templateNode?: unknown;
+}
+
+export function regionHasRendererType(
+  region: RenderRegionLike | undefined,
+  type: string,
+): boolean {
+  if (!region?.templateNode) {
+    return false;
+  }
+  const nodes = Array.isArray(region.templateNode)
+    ? region.templateNode
+    : [region.templateNode];
+  return nodes.some((node) => {
+    if (!node || typeof node !== 'object') {
+      return false;
+    }
+    return (node as { type?: unknown }).type === type;
+  });
+}
