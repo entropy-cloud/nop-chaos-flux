@@ -1,6 +1,6 @@
 # 2 Industrial SCADA P2 Polish — Runtime Lifecycle & Symbols Author Safety
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-09
 > Source: `docs/backlog/industrial-hmi-component-audit-roadmap.md` Follow-up Backlog（来自 `docs/audits/2026-08-08-1712-open-audit-*.md` + `docs/audits/2026-08-08-1712-multi-audit-*.md` 的 P2 findings）
 > Related: `docs/plans/2026-08-09-0121-1-industrial-scada-e2e-residual-healing.md`（plan {1}，独立于本 plan）；`docs/plans/2026-08-08-1809-*` / `2026-08-08-1910-*`（P0/P1 已收口的前序波次）
@@ -103,51 +103,51 @@ P2 findings 非核心回归路径，但涉及生命周期安全（本轮-2/3）�
 
 ### Workstream A - Engine 生命周期 + Renderer Hooks + Binding 资源安全
 
-Status: planned
+Status: completed
 Targets: `engine/scada-engine.ts`、`engine/event-bridge.ts`、`renderer/scada-canvas.tsx`、`renderer/hooks/use-scada-*.ts`、`binding/animator.ts`、`binding/refresh-pipeline.ts`、`binding/point-store.ts`、`serialization/validators/binding.ts`（F10）
 
 - Item Types: `Fix | Proof`
 
-- [ ] **本轮-2**：`scada-engine.ts` `interactionOverlay` getter 加 `if (this.destroyed) return` 早退（grep 定位 `get interactionOverlay`），防止销毁后惰性重建 overlay 到已销毁 app。
-- [ ] **本轮-3**：`scada-canvas.tsx` engineRef/runtimeRef 同步 effect 加 cleanup（`return () => { engineRef.current = null; runtimeRef.current = null; }`），防止 unmount 后 ref 悬挂（闭合本轮-2 可达链）。
-- [ ] **本轮-1**：逐 hook 审查 `useCallback`/`useMemo` 使用，移除 React Compiler 基线下冗余的 memo（scada-canvas.tsx 7 处、use-scada-events.ts 8 处、use-scada-points-bridge.ts 4 处——grep 逐处裁定保留/移除；仅移除 Compiler 已自动覆盖的纯优化 memo，保留有正确性语义的 ref-stable 回调）。
-- [ ] **本轮-10**：`use-scada-config-sync.ts` config 变更 effect 消除 identity 抖动（reloadBindings→setRuntime→identity 变→effect 再跑空 diff）——裁定是收紧 setRuntime identity 还是改 effect deps。
-- [ ] **本轮-13**：`use-scada-points-bridge.ts` compiledCache/lastReportedErrors 清理 effect deps 加 `expressionCompiler`（旧编译产物喂新 evaluator）。
-- [ ] **F7**：`animator.ts` tick 跳过 paused 项 collect，或全 paused 时 `stopClock`（pause 后不停 rAF 时钟致每帧重算并 flush 相同增量）。
-- [ ] **F8**：`refresh-pipeline.ts` `recomputeExpressionPoints` 建反向索引 `Map<depPointId, Set<exprPointId>>`，改 O(扇出) 查找替代 `lastDeps` 线性扫描；加深链表达式点基准用例。
-- [ ] **本轮-4/F9**：`event-bridge.ts` + `point-store.ts` 错误去重键加 call site/symbolId/pointId 维度（或改频次去重），Set 加 LRU 上限或生命周期清理（防止无界增长）。
-- [ ] **F10**：`serialization/validators/binding.ts` `binding.scale` 校验从 `isPlainObject` 升级为与 declaration scale 同形 finite k/b 校验（复用 1809-1 产出的 `isFiniteNumber` helper，已确认存在于 `serialization/validators/helpers.ts:18`）。
+- [x] **本轮-2**：`scada-engine.ts` `interactionOverlay` getter 加 `if (this.destroyed) return` 早退（grep 定位 `get interactionOverlay`），防止销毁后惰性重建 overlay 到已销毁 app。
+- [x] **本轮-3**：`scada-canvas.tsx` engineRef/runtimeRef 同步 effect 加 cleanup（`return () => { engineRef.current = null; runtimeRef.current = null; }`），防止 unmount 后 ref 悬挂（闭合本轮-2 可达链）。
+- [x] **本轮-1**：逐 hook 审查 `useCallback`/`useMemo` 使用，移除 React Compiler 基线下冗余的 memo（scada-canvas.tsx 7 处、use-scada-events.ts 8 处、use-scada-points-bridge.ts 4 处——grep 逐处裁定保留/移除；仅移除 Compiler 已自动覆盖的纯优化 memo，保留有正确性语义的 ref-stable 回调）。
+- [x] **本轮-10**：`use-scada-config-sync.ts` config 变更 effect 消除 identity 抖动（reloadBindings→setRuntime→identity 变→effect 再跑空 diff）——裁定是收紧 setRuntime identity 还是改 effect deps。
+- [x] **本轮-13**：`use-scada-points-bridge.ts` compiledCache/lastReportedErrors 清理 effect deps 加 `expressionCompiler`（旧编译产物喂新 evaluator）。
+- [x] **F7**：`animator.ts` tick 跳过 paused 项 collect，或全 paused 时 `stopClock`（pause 后不停 rAF 时钟致每帧重算并 flush 相同增量）。
+- [x] **F8**：`refresh-pipeline.ts` `recomputeExpressionPoints` 建反向索引 `Map<depPointId, Set<exprPointId>>`，改 O(扇出) 查找替代 `lastDeps` 线性扫描；加深链表达式点基准用例。
+- [x] **本轮-4/F9**：`event-bridge.ts` + `point-store.ts` 错误去重键加 call site/symbolId/pointId 维度（或改频次去重），Set 加 LRU 上限或生命周期清理（防止无界增长）。
+- [x] **F10**：`serialization/validators/binding.ts` `binding.scale` 校验从 `isPlainObject` 升级为与 declaration scale 同形 finite k/b 校验（复用 1809-1 产出的 `isFiniteNumber` helper，已确认存在于 `serialization/validators/helpers.ts:18`）。
 
 Exit Criteria:
 
-- [ ] 本轮-2/3：引擎销毁后 interactionOverlay getter 早退 + ref cleanup landed；focused 测断言 destroyed 后 get interactionOverlay 不重建。
-- [ ] 本轮-1：renderer hooks 冗余 memo 移除 landed，现有 unit 测零回归（行为不变）。
-- [ ] 本轮-10/13：focused 测断言 effect 单跑 / cache 在 expressionCompiler 换身份后清理。
-- [ ] F7：focused 测断言全 paused 后 rAF clock 停止（或 tick 跳过 paused）。
-- [ ] F8：focused 测断言深链表达式点（≥3 级依赖）触发只重算受影响子集（非全量 O(n²) 扫描）。
-- [ ] 本轮-4/F9：focused 测断言错误去重 Set 有上限 + 同文案异因错误不被互吞。
-- [ ] F10：focused 测断言 `binding.scale` 带 NaN/Infinity/缺 k/b 的 k→Error（与 declaration scale 同形）。
+- [x] 本轮-2/3：引擎销毁后 interactionOverlay getter 早退 + ref cleanup landed；focused 测断言 destroyed 后 get interactionOverlay 不重建。
+- [x] 本轮-1：renderer hooks 冗余 memo 移除 landed，现有 unit 测零回归（行为不变）。
+- [x] 本轮-10/13：focused 测断言 effect 单跑 / cache 在 expressionCompiler 换身份后清理。
+- [x] F7：focused 测断言全 paused 后 rAF clock 停止（或 tick 跳过 paused）。
+- [x] F8：focused 测断言深链表达式点（≥3 级依赖）触发只重算受影响子集（非全量 O(n²) 扫描）。
+- [x] 本轮-4/F9：focused 测断言错误去重 Set 有上限 + 同文案异因错误不被互吞。
+- [x] F10：focused 测断言 `binding.scale` 带 NaN/Infinity/缺 k/b 的 k→Error（与 declaration scale 同形）。
 
 ### Workstream B - Symbols 作者安全 + 几何 Polish
 
-Status: planned
+Status: completed
 Targets: `symbols/visual-state.ts`、`symbols/base-shapes/round-rect.ts`、`symbols/pipe/pipe-junction.ts`、`symbols/composite.ts`、`symbols/base-shapes/common.ts`、`serialization/validators/binding.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] **本轮-5**：`visual-state.ts` revert 仲裁从读 `getConfigNode`（raw 实例）改为合并 defaults（防止自定义符号 defaults 级 binding 被 revert 覆盖）。
-- [ ] **本轮-6**：`round-rect.ts` cornerRadius 从固定 `8` 改为按尺寸缩放（`Math.min(width, height) * ratio`）或 per-instance 可配置；裁定方向后 landed。
-- [ ] **本轮-7**：`pipe-junction.ts` bidirectional 连线补 `startArrow`（当前只给 `endArrow`，语义误导）。
-- [ ] **本轮-8**：`composite.ts` `createCompositeGroup` 空 children 守卫（`body = children[0]?.node` 从 undefined 崩溃改为结构化 fallback或 early-return + onError）。
-- [ ] **本轮-9**：`composite.ts`/`common.ts` `toShapeAttrs` 把 width/height/fill/stroke 不写到 `Group`（无渲染意义，改变 leafer bounds 语义）；裁定在 toShapeAttrs 源头过滤还是在 createCompositeGroup 调用点不透传。（执行时 re-grep 确认 A1 P0 的 `around:'center'` 修复未 incidental 触碰 toShapeAttrs。）
+- [x] **本轮-5**：`visual-state.ts` revert 仲裁从读 `getConfigNode`（raw 实例）改为合并 defaults（防止自定义符号 defaults 级 binding 被 revert 覆盖）。
+- [x] **本轮-6**：`round-rect.ts` cornerRadius 从固定 `8` 改为按尺寸缩放（`Math.min(width, height) * ratio`）或 per-instance 可配置；裁定方向后 landed。
+- [x] **本轮-7**：`pipe-junction.ts` bidirectional 连线补 `startArrow`（当前只给 `endArrow`，语义误导）。
+- [x] **本轮-8**：`composite.ts` `createCompositeGroup` 空 children 守卫（`body = children[0]?.node` 从 undefined 崩溃改为结构化 fallback或 early-return + onError）。
+- [x] **本轮-9**：`composite.ts`/`common.ts` `toShapeAttrs` 把 width/height/fill/stroke 不写到 `Group`（无渲染意义，改变 leafer bounds 语义）；裁定在 toShapeAttrs 源头过滤还是在 createCompositeGroup 调用点不透传。（执行时 re-grep 确认 A1 P0 的 `around:'center'` 修复未 incidental 触碰 toShapeAttrs。）
 
 Exit Criteria:
 
-- [ ] 本轮-5：focused 测断言自定义符号带 defaults 级 binding 经 revert 后 defaults 保留。
-- [ ] 本轮-6：focused 测断言不同 width/height 下 cornerRadius 合理缩放（不固定 8）。
-- [ ] 本轮-7：focused 测断言 bidirectional 连线两端都有 arrow（非仅 endArrow）。
-- [ ] 本轮-8：focused 测断言空 children composite 不崩溃（fallback/early-return/onError）。
-- [ ] 本轮-9：focused 测断言 Group 节点不含 width/height/fill/stroke attrs（grep `Group` 节点属性）。
+- [x] 本轮-5：focused 测断言自定义符号带 defaults 级 binding 经 revert 后 defaults 保留。
+- [x] 本轮-6：focused 测断言不同 width/height 下 cornerRadius 合理缩放（不固定 8）。
+- [x] 本轮-7：focused 测断言 bidirectional 连线两端都有 arrow（非仅 endArrow）。
+- [x] 本轮-8：focused 测断言空 children composite 不崩溃（fallback/early-return/onError）。
+- [x] 本轮-9：focused 测断言 Group 节点不含 width/height/fill/stroke attrs（grep `Group` 节点属性）。
 
 ## Draft Review Record
 
@@ -158,20 +158,31 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 14 个 P2 findings 逐条收口（fix landed / watch-only residual with Why Not Blocking / out-of-scope with 证据）。
-- [ ] 不存在被静默降级到 deferred 的 confirmed live defect（P2 findings 本身非 confirmed live defect，但若有在修复中发现的新 live defect 不得降级）。
-- [ ] 受影响 owner doc（`design-symbols.md`、`design-engine.md`、`design-renderer.md`）：若 P2 fix 改变了 documented behavior 则同步更新；否则 No owner-doc update required。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`。
-- [ ] `pnpm build`。
-- [ ] `pnpm lint`。
-- [ ] `pnpm test`。
+- [x] 14 个 P2 findings 逐条收口（fix landed / watch-only residual with Why Not Blocking / out-of-scope with 证据）。
+- [x] 不存在被静默降级到 deferred 的 confirmed live defect（P2 findings 本身非 confirmed live defect，但若有在修复中发现的新 live defect 不得降级）。
+- [x] 受影响 owner doc（`design-symbols.md`、`design-engine.md`、`design-renderer.md`）：若 P2 fix 改变了 documented behavior 则同步更新；否则 No owner-doc update required。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`。
+- [x] `pnpm build`。
+- [x] `pnpm lint`。
+- [x] `pnpm test`。
+
+## Owner-doc update note
+
+本轮 P2 fix 的行为变更属实现级（lifecycle 守卫 / 资源管理 / 作者陷阱防护 / 几何 polish），不改变 design-symbols.md / design-engine.md / design-renderer.md 已文档化的对外契约：
+
+- 本轮-2/3（lifecycle 守卫）、本轮-4/F9（去重上限）、F7（pause 停时钟）、F8（反向索引）、本轮-10/13（effect/cache 清理）均属内部资源/生命周期纪律，无对外行为面变更。
+- 本轮-1（memo 清理）是 React Compiler 纪律对齐，无行为变化。
+- 本轮-6（cornerRadius 缩放）：round-rect cornerRadius 从固定 8 改为按 min(w,h)\*0.08 缩放（100×100 仍 8，向后兼容）+ 可选 per-instance override。design-symbols.md 未把固定 8 文档化为契约（仅描述 round-rect 族存在），故无需更新。
+- 本轮-7/8/9（pipe-junction 双向箭头 / composite 空 children 守卫 / Group attrs 不泄漏）属作者安全 + 渲染正确性补强，未改变已文档化的图元契约。
+- F10（binding.scale finite 校验）：收紧校验（拒 NaN/Infinity），与 declaration scale 已文档化的 finite 契约对齐，非新契约。
+  故 No owner-doc update required（裁定：无 documented behavior 改变）。
 
 ## Deferred But Adjudicated
 
 > 执行中若发现某 P2 finding 的修复成本远超 polish 级别（如 F8 反向索引需重构 refresh-pipeline 数据结构），在此记录降级裁定。
 
-_起草时无已知可延期项。_
+_起草时无已知可延期项。_ 执行中亦无降级——F8 反向索引以与 lastDeps 同生命周期的 `reverseDeps` Map 落地（setExpressionDeps 单一入口同步维护），未触发数据结构重构，按 polish 级成本收口。
 
 ## Non-Blocking Follow-ups
 
@@ -181,13 +192,23 @@ _起草时无已知可延期项。_
 
 ## Closure
 
-Status Note: _（完成时填写）_
+Status Note: 全部 14 个 P2 findings 收口（Workstream A 9 项 + Workstream B 5 项，含 F10 归 A）。fix landed + focused 测 landed。typecheck/build/lint/test 全绿（32/32 包；industrial 1409 测 / 90.1%+ branches；workspace 59/59 任务）。closure-audit PASS（独立 fresh session，pass-with-minors，0 Blocker / 0 Major / 1 Minor）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: _（独立子 agent fresh session）_
-- Evidence: _（task id / daily log / focused 测结果摘要）_
+- Auditor / Agent: 独立子 agent fresh session `ses_01d30f469ffe5eiZOIzZ0mkj03`（general，非执行 session）。
+- Verdict: `pass-with-minors`（0 Blocker / 0 Major / 1 Minor）。
+- Evidence: 三件套（plan + diff summary + verification output）fresh-context 审计 + 直读 live source 逐条复核 14 findings 全 CONFIRMED（`scada-engine.ts:172`、`animator.ts:130-253`、`refresh-pipeline.ts:55/194/328-348`、`event-bridge.ts:158-178`、`point-store.ts:314-324`、`binding.ts:22-43`、`scada-canvas.tsx:106-249`、`use-scada-config-sync.ts:261`、`use-scada-points-bridge.ts:288`、`visual-state.ts:76-80`、`round-rect.ts:38-41`、`pipe-junction.ts:88-91`、`composite.ts:104-129`）；高风险 focused 测（F7/F8/F9/F10/本轮-8/9）断言正确行为非 not-throw；独立重跑 `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck`（clean）+ `test`（104 files / 1409 passed / 96.56% stmt / 90.1% branch）与执行 session 声称一致；Non-Goals 受尊重（git status 确认未触 editor/parse/export/index）。
+- Minor（m-1，不阻塞 closure）：本轮-1 scope 落地缩窄——plan body 列 use-scada-events.ts(8) + use-scada-points-bridge.ts(4) 内部 memo，执行 session 裁定保留（身份流入 eventsApi/reportOnce 等 effect deps，test 环境无 React Compiler 故移除有 churn 风险）并已记为 follow-up；canvas 级 4 处 useCallback 移除 landed 零回归，满足本轮-1 exit criterion。属文档化判断非正确性缺口。
+
+执行 session 自检证据（非 closure-audit）：
+
+- Workstream A fix：`scada-engine.ts` interactionOverlay destroyed 早退；`scada-canvas.tsx` engineRef/runtimeRef effect cleanup + 移除 4 处冗余 useCallback（handleReady/handleError/reportDiagnostic/getPointValuesForLatest，保留 useMemo(parsedConfig)/handleDestroyed/reloadConfig——身份进 effect deps，test 环境无 compiler 故保留）；`use-scada-config-sync.ts` config===prevRef 早退；`use-scada-points-bridge.ts` cleanup effect deps 增 expressionCompiler；`animator.ts` pause 全 paused 时 stopClock + tick 跳过 paused；`refresh-pipeline.ts` reverseDeps 反向索引（setExpressionDeps 单一入口）；`event-bridge.ts`+`point-store.ts` 去重键加 site/pointId 维度 + 256 上限；`binding.ts` scale finite k/b 校验。
+- Workstream B fix：`visual-state.ts` instanceBindings 合并 defaults；`round-rect.ts` cornerRadius=min(w,h)\*0.08 + per-instance override（+ ScadaSymbolProps/ScadaSymbolNode/SYMBOL_KEYS 同步）；`pipe-junction.ts` bidirectional 补 startArrow；`composite.ts` 空 children fallback 透明 body + Group attrs 仅 root 级字段。
+- Focused 测：animator F7（pause 停时钟 + partial pause 不停）、refresh-pipeline F8（4 级链 + 50 无关点）、event-bridge/point-store 本轮-4/F9（异 site/pointId 不互吞 + 256 cap reset）、binding F10（NaN/Infinity/expression 非空）、round-rect 本轮-6（缩放 + override）、pipe-junction 本轮-7（双向箭头）、composite 本轮-8/9（空 children + Group attrs）、engine 本轮-2（destroyed getter）、visual-state 本轮-5（defaults binding revert 保留）、config-sync 本轮-10（同身份不重跑）、points-bridge 本轮-13（compiler 换身份清 cache）。
+- 验证：`pnpm typecheck` 32/32；`pnpm build` 32/32；`pnpm lint` 32/32（check-scada-symbol-keys guard passed）；`pnpm test` 59/59 任务全绿（industrial 1409 测）。
 
 Follow-up:
 
-- _（完成时填写）_
+- editor/serialization/export/docs 层 P2（本轮-11/12, F5/F6/F11, P2-1～P2-11）：留待后续 mission-driver 轮的 editor+contract polish plan（与本 plan Non-Goals 一致）。
+- 本轮-1 余项：use-scada-events/use-scada-points-bridge 内部 memo 链经裁定保留（身份流入 eventsApi/reportOnce 等 effect deps 或公共返回，test 环境无 React Compiler 故移除有 churn 风险）——后续若 test 管线接入 compiler 可继续清理（closure-audit m-1 认可此文档化判断）。
