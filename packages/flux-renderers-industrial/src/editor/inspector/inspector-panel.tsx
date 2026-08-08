@@ -16,7 +16,7 @@ interface EditorInspectorPanelProps {
 /**
  * 属性面板（E5.3，design-property-panel.md §5 + §6）。
  *
- * 消费 useEditorSession 选中图元 → extractPanelFields 生成六类分组字段集 →
+ * 消费 runtime.session 选中图元 → extractPanelFields 生成六类分组字段集 →
  * 字段 widget 渲染（复用 @nop-chaos/ui）→ onChange 经 updateSymbol 句柄写 working copy。
  * validate 衔接：字段编辑后调 validateScadaConfig（runtime 单一事实源，不新建第二套规则）。
  */
