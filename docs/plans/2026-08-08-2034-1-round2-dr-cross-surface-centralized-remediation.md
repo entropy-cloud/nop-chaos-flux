@@ -175,7 +175,7 @@ Exit Criteria:
 - [x] 复杂 bug 行内 bug note 补写完成（117 起 + README 索引）
 - [x] 受影响的 owner docs 同步（design.md 措辞裁决、DR 表/roadmap/daily log 收口登记）
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -229,8 +229,8 @@ Status Note: 4 Phase 全 completed + Plan Status `completed`；执行证据见 `
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （由独立子 agent fresh session 执行后填写）
-- Evidence: （由独立子 agent fresh session 执行后填写）
+- Auditor / Agent: 独立子 agent（fresh session，mission-driver closure audit，2026-08-08）
+- Evidence: verdict `approved`，零 Blocker/Major。逐项核对：① 4 Phase 全 completed + 全 checklist `[x]`（唯一未勾选即本 closure-audit 门）；② live repo 复核——DR-1/2 flow-designer（`designer-command-adapter.ts:86/131/200/225/240/252/278/283/302/309` + `designer-command-adapter-graph.ts:62/102/114/132/159/194` + `designer-node-appearance.ts:5-20` labelKey 化）、DR-3/5/6 spreadsheet（`use-editing.ts:65/73/80`、`page-model.ts:10/18`、`use-find-replace.ts:27/30/33/51/64/66`）、DR-7..11 report-designer（`preview-commands.ts:23/28`、`core.ts:371`、`core-dispatch.ts:291/310/340`、`codec-commands.ts:21/26`、`types.ts:172`、canvas 拖放 4 处）、DR-12/13/14 word-editor（toolbar/dialogs/panels 40+ 处 `flux.wordEditor.*`、`template-tags.ts` labelKey/descriptionKey）全部在案；`check:i18n-keys` 实测 exit 0；③ 契约裁决——DR-4 死管线实测移除（`use-spreadsheet-shell.ts` 零 `setCellValue`/`setCommentText`，残留仅为 `spreadsheet:setCellValue` 命令 type 字符串）、DR-15 `@reserved` 标注在案（`types.ts:31/36`）、DR-16 design.md:178 措辞对齐 live throw 语义；④ Tiptap——`editor-renderer.tsx:458` `frameRootTag: 'div'`（与 combo/picker/array-field 同款既有机制，`frame-slot-meta.test.tsx` 覆盖机制）+ `editor-renderer.test.tsx` label-activation 回归断言在案 + w3d-editor/c3-5 30/30 复跑绿（3 轮 repeat）记录；⑤ bug note 117 + `docs/bugs/README.md:138` 索引在案；⑥ roadmap DR 行 `done`（含执行证据）+ `docs/logs/2026/08-08.md` DR 节收口；⑦ P3 残留复核结论在案（keep 99/dismissed 24 抽查 + 卡内 30 行复核 + 跨面共性候选 ss-3 P3-2/ss-6 P3-2/ss-10 P3-4/ss-3 P3-4 裁决 keep → CX-13+ 人工确认门）；⑧ Deferred 分类诚实（watch-only residual / out-of-scope improvement，均附 Why Not Blocking，无 in-scope defect 静默降级）；⑨ 验证复核——`pnpm check` 实测 exit 0，4 个受影响包（form-advanced/word-editor-renderers/spreadsheet-renderers/flow-designer-renderers）typecheck 实测全绿。
 
 Follow-up:
 
