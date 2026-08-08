@@ -7,6 +7,9 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { env } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 function renderKeyValue() {
   const SchemaRenderer = createSchemaRenderer([

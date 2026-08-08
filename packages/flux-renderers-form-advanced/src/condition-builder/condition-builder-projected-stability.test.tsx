@@ -9,6 +9,9 @@ import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { env, formStateProbeRenderer } from '../test-support.js';
 import { formAdvancedRendererDefinitions } from '../index.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 // Records the projected scope reference handed to the custom value editor on
 // each render, so the test can assert it is stable across re-renders (H30).

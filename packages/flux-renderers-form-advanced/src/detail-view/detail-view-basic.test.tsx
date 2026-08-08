@@ -1,6 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { baseEnv, createPageSchemaRenderer, formulaCompiler } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 describe('detail-view renderer basic behavior', () => {
   it('renders the trigger button when not readOnly', async () => {

@@ -7,6 +7,9 @@ import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { describe, expect, it } from 'vitest';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { baseEnv, formulaCompiler } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 function createTestRenderer() {
   return createSchemaRenderer([

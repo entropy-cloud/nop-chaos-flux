@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 /**
  * C3.2 P1-2: `surface.size` (dialog) and `surface.placement` (drawer) are

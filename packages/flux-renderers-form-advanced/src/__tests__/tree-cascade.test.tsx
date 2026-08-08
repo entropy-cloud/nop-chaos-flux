@@ -12,6 +12,9 @@ import {
 } from '../tree-options.js';
 import { allFormDefs } from './tree-checkbox-fields-test-helpers.js';
 import { env, formStateProbeRenderer } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 // E0b Phase 1 裁定: 删除 showIcon / showOutline 字段。
 // Note: 因为 `SchemaObject` 基类带字符串索引签名（`[key: string]: SchemaValue`），

@@ -1,0 +1,6 @@
+/*
+ * Bare selector with no package/component scoping prefix — must be flagged.
+ */
+[data-slot='bare-unscoped'] {
+  color: blue;
+}

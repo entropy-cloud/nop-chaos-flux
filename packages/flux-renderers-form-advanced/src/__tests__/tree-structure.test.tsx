@@ -5,6 +5,9 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { allFormDefs } from './form-tree-checkbox-fields.shared.js';
 import { env } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 describe('tree controls - DOM structure, markers, and expand/collapse', () => {
   it('lets FieldFrame own tree control field chrome while tree controls publish control slots', async () => {

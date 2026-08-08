@@ -9,6 +9,9 @@ import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { Button } from '@nop-chaos/ui';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 function ScopeSelectorProbeRenderer() {
   const snapshot = useScopeSelector(

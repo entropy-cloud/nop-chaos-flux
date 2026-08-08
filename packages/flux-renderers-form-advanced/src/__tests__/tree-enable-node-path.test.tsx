@@ -9,6 +9,9 @@ import {
   env,
   submitCalls,
 } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 describe('input-tree enableNodePath — TR7', () => {
   it('emits value path string when enableNodePath is true (single select)', async () => {

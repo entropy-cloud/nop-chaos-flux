@@ -7,6 +7,9 @@ import {
   formulaCompiler,
   makeCapturingFetcher,
 } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 describe('detail-field renderer commit behavior', () => {
   it('cancel closes dialog without writing back to parent form', async () => {

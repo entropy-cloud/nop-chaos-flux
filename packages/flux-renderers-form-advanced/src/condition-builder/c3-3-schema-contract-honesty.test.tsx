@@ -9,6 +9,9 @@ import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { env, formStateProbeRenderer, scopeStateProbeRenderer } from '../test-support.js';
 import { formAdvancedRendererDefinitions, conditionBuilderRendererDefinition } from '../index.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 /**
  * C3.3 P1-3 guard: every schema-declared prop must be either a universal

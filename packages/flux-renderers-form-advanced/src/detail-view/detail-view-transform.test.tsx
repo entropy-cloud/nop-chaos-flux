@@ -13,6 +13,9 @@ import {
   formulaCompiler,
   scopeStateProbeRenderer,
 } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 const detailViewLikeRenderer: RendererDefinition = {
   type: 'detail-view-like',

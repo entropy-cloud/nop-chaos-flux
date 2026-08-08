@@ -7,6 +7,9 @@ import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { createSchemaRenderer, useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
 import { env, formStateProbeRenderer, formulaCompiler } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 

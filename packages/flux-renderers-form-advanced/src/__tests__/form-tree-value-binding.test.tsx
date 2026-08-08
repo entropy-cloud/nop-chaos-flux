@@ -11,6 +11,9 @@ import {
   submitCalls,
 } from '../test-support.js';
 import { allFormDefs } from './tree-checkbox-fields-test-helpers.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 describe('tree controls - value binding and form integration', () => {
   it('submits input-tree values through the shared form field path', async () => {

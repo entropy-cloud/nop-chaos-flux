@@ -6,6 +6,9 @@ import {
   createPageSchemaRenderer,
   formulaCompiler,
 } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 describe('variant-field renderer transform behavior', () => {
   it('runs target variant transformInAction when switching variants', async () => {

@@ -17,6 +17,9 @@ import {
 } from './config-test-support.js';
 import type { ConditionGroupValue, ConditionItemValue } from './types.js';
 import type { EvaluateConditionFormula } from './condition-builder.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 const allDefs = [
   ...basicRendererDefinitions,

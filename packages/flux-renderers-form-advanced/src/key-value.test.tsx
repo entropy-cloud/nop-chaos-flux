@@ -9,6 +9,9 @@ import { describe, expect, it } from 'vitest';
 import { formAdvancedRendererDefinitions } from './index.js';
 import { keyValueRendererDefinition } from './key-value.js';
 import { baseEnv, formulaCompiler } from './test-support.js';
+import { installFormAdvancedTestHooks } from './test-support.js';
+
+installFormAdvancedTestHooks();
 
 type KeyValueValidation = {
   getFieldPath(schema: Record<string, unknown>, ctx?: unknown): string | undefined;

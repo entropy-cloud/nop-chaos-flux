@@ -6,6 +6,7 @@ import {
   getCodeTextForLine,
   getLineNumber,
   hasTopLevelComma,
+  isCodePosition,
   isTestFile,
   scanTopLevelLets,
 } from './shared.mjs';
@@ -254,6 +255,10 @@ function scanBroadScopeSelectors({ rule, relativePath, content }) {
   let match;
 
   while ((match = selectorPattern.exec(content)) !== null) {
+    if (!isCodePosition(content, match.index)) {
+      continue;
+    }
+
     const openIndex = content.indexOf('(', match.index);
     const closeIndex = findMatchingParen(content, openIndex);
     if (closeIndex < 0) {
@@ -282,8 +287,17 @@ function scanJsonStringifyChangeDetection({ rule, relativePath, content }) {
   let match;
 
   while ((match = pattern.exec(content)) !== null) {
+    if (!isCodePosition(content, match.index)) {
+      continue;
+    }
+
     const line = getLineNumber(content, match.index);
-    const windowText = lines.slice(Math.max(0, line - 3), Math.min(lines.length, line + 3)).join('\n');
+    const windowStart = Math.max(0, line - 3);
+    const windowEnd = Math.min(lines.length, line + 3);
+    const windowText = lines
+      .slice(windowStart, windowEnd)
+      .map((_, windowLine) => getCodeTextForLine(content, windowStart + windowLine + 1))
+      .join('\n');
     const lineText = lines[line - 1] ?? '';
 
     const looksLikeSerialization =
@@ -314,7 +328,8 @@ function scanBareDataSlotSelectors({ rule, relativePath, content }) {
 
   for (let index = 0; index < lines.length; index += 1) {
     const lineText = lines[index] ?? '';
-    const trimmed = lineText.trim();
+    const codeText = getCodeTextForLine(content, index + 1);
+    const trimmed = codeText.trim();
 
     if (!trimmed.includes('[data-slot')) {
       continue;
@@ -345,7 +360,10 @@ export const reactiveRenderReadRules = [
       /\bscope\.readOwn\s*\(/g,
       /\b(?:runtime|store)\.getState\s*\(/g,
     ],
-    filterMatch: ({ relativePath, lineText, content, line }) => {
+    filterMatch: ({ match, relativePath, lineText, content, line }) => {
+      if (!isCodePosition(content, match.index)) {
+        return false;
+      }
       return !shouldIgnoreReactiveRenderRead(relativePath, lineText, content, line);
     },
   },
@@ -374,7 +392,10 @@ export const asyncFailureRules = [
       /\bvoid\s+[A-Za-z_$][\w$.]*\([^;\n]*\)\s*;?/g,
       /\.then\s*\([^\n]*\)\s*\.finally\s*\(/g,
     ],
-    filterMatch: ({ relativePath, lineText, content, line }) => {
+    filterMatch: ({ match, relativePath, lineText, content, line }) => {
+      if (!isCodePosition(content, match.index)) {
+        return false;
+      }
       return !shouldIgnoreAsyncFailure(relativePath, lineText, content, line);
     },
   },
@@ -428,6 +449,9 @@ export const fieldFrameBypassRules = [
       );
     },
     patterns: [/\bFieldFrame\b/g],
+    filterMatch: ({ match, content }) => {
+      return isCodePosition(content, match.index);
+    },
   },
 ];
 
@@ -448,7 +472,10 @@ export const testLeakRules = [
       /\bglobalThis\.[A-Za-z_$][\w$]*\s*=(?!=)\s*/g,
       /\bwindow\.[A-Za-z_$][\w$]*\s*=(?!=)\s*/g,
     ],
-    filterMatch: ({ lineText, content }) => {
+    filterMatch: ({ match, lineText, content }) => {
+      if (!isCodePosition(content, match.index)) {
+        return false;
+      }
       return !shouldIgnoreTestGlobalPatch(lineText, content);
     },
   },
@@ -622,7 +649,10 @@ export const hardcodedTypeDispatchRules = [
       /\bschema\.type\s*===?\s*['"][a-z-]+['"]/g,
       /\btemplateNode\.type\s*===?\s*['"][a-z-]+['"]/g,
     ],
-    filterMatch: ({ relativePath, lineText }) => {
+    filterMatch: ({ match, relativePath, lineText, content }) => {
+      if (!isCodePosition(content, match.index)) {
+        return false;
+      }
       if (shouldIgnoreHardcodedTypeDispatch(relativePath, lineText)) {
         return false;
       }

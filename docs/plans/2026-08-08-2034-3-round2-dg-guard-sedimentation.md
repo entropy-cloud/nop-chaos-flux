@@ -196,7 +196,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- 门禁升级后如发现新盲区（如 test-global-leaks 对 host 包作用域有限——D3.1 登记）：登记 daily log，后续工具治理轮次承接。
+- 门禁升级后如发现新盲区（如 test-global-leaks 对 host 包作用域有限——D3.1 登记）：登记 daily log，后续工具治理轮次承接。——**已承接落地（2026-08-09）**：plan `2026-08-09-0444-1` Phase 5 Proof——test-global-leaks include 为 `isTestFile`（无包限制），word-editor-renderers 9 命中 live 在案 + 其余 3 host 包经 brace-tracked 复扫确认零真实模块顶层态（零命中为正确结果），committed 夹具锁定 host 检测，D3.1 登记闭合。
 - 其余不阻塞治理项登记 daily log。
 - 无剩余 plan-owned work（收口后 mission round-2 全部 work item done）。
 

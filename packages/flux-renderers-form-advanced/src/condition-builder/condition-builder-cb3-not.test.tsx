@@ -9,6 +9,9 @@ import { env, formStateProbeRenderer } from '../test-support.js';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { sanitizeNode } from './utils.js';
 import { renderGroup } from './config-test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 // B6.1 CB3 regression lock:
 // - showNot renders a NOT toggle on EVERY group, including groups added at runtime.

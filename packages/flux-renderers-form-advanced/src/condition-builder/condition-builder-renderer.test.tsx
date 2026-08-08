@@ -11,6 +11,9 @@ import {
   scopeStateProbeRenderer,
 } from '../test-support.js';
 import { formAdvancedRendererDefinitions } from '../index.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 const allDefs = [
   ...basicRendererDefinitions,

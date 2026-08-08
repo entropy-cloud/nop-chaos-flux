@@ -6,6 +6,9 @@ import {
   formulaCompiler,
   scopeStateProbeRenderer,
 } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 describe('detail-view renderer concurrency behavior', () => {
   it('drops stale open completions when a newer detail-view open request wins', async () => {

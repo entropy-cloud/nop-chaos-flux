@@ -87,7 +87,7 @@
 - ① 149 P3（+ 08-07 审计新增）逐条裁决：低成本（约 15 分钟内）当场修复；其余记录留痕或驳回（附理由），裁决表 `docs/audits/round2-p3-adjudication.md`（零悬挂要求，对齐 `cr-inventory-adjudication.md` 先例）。
 - ② `@reserved` 契约核对：`rg "@reserved" packages/*/src` + design.md 标注 vs live 消费；确认仍为零消费者则维持 @reserved 并回写状态，发现新消费者则裁决激活或撤销标注。
 - ③ 6 条 watch-only e2e 复核：Tiptap 批次（c3-5-host-surfaces:27/81 + w3d-editor:28）隔离复跑判断真缺陷 vs 环境；gantt-perf/kanban-perf 在 60Hz 环境复测阈值可达性（若本机仍 50Hz 则维持归因记录并标注「需 60Hz 环境最终确认」）；ai-attachments 已解 flake 多轮复跑确认不再现（不占 6 席）。
-- ④ Non-Blocking Follow-ups 归集收口（如 2228-1 的 ERP 设计文档 watch-only 项维持 watch-only 并记录复核结论）。
+- ④ Non-Blocking Follow-ups 归集收口（如 2228-1 的 ERP 设计文档 watch-only 项维持 watch-only 并记录复核结论）。**工具治理轮次条目收口（2026-08-09，行内注记）**：plan `docs/plans/2026-08-09-0444-1-round2-tool-governance-scanner-and-test-infra.md` completed——4 类 deferred 全部终态：① 其他 audit 扫描器（styling/performance/broad-scope/react19/async）块注释/字符串盲区修复（`getCodeTextForLine`/`isCodePosition` 复用 + react19 `getCodeWindow`，committed 回归测试 12 条先红后绿，`styles.css:110` 假阳性消失，全量复扫零新增命中）；② test-global-leaks const 容器识别增强（校准为仅变异容器 + 泛型构造器，47 基线 + 11 条 landed 裁决零悬挂）；③ test-support 隐式 hook 排查（7 模块裁决：form-advanced `installFormAdvancedTestHooks()` 显式化 + 79 importer 迁移，6 模块 keep-with-reason 记录理由）；④ host 包覆盖 Proof（word-editor 9 命中 live 在案 + 其余 3 host 包零真实模块顶层态 = 覆盖成立，committed 夹具锁定）。来源登记：0150-1 Non-Blocking Follow-ups（同类盲区）、0150-3 Deferred But Adjudicated + Non-Blocking Follow-ups（const 变体 + test-support 隐式 hook）、2034-3 Non-Blocking Follow-ups + daily log D3.1（host 包作用域）全部回写终态。
 
 ### DB — Bug 沉淀回补
 

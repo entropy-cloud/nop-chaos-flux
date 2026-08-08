@@ -1,0 +1,10 @@
+/**
+ * Block comment blind spot regression (2026-08-09 tool-governance round):
+ * a `[data-slot` mention inside a block comment must NOT be flagged by
+ * find-styling-suspects. This mirrors the live `flux-renderers-ai/src/styles.css`
+ * P6 comment (lines 106-110) that previously produced a false positive at :110.
+ * [data-slot='fake-comment-mention'] must not be reported.
+ */
+.some-real-rule {
+  color: red;
+}

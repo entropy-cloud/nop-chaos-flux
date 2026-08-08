@@ -68,17 +68,28 @@ export function installTestDomPolyfills(): () => void {
 
 let restoreDomPolyfills: (() => void) | undefined;
 
-beforeAll(() => {
-  restoreDomPolyfills = installTestDomPolyfills();
-});
+// Explicit opt-in for the test-environment side effects (DOM polyfills, i18n
+// bootstrap, harness reset). Importing this module must NOT register hooks —
+// constants/helpers (e.g. `installTestDomPolyfills`, `formulaCompiler`) are
+// consumed by tests that do not render (2026-08-09 tool-governance round,
+// Phase 4; canvas-bridge/document-io explicit-install precedent).
+export function installFormAdvancedTestHooks() {
+  beforeAll(() => {
+    restoreDomPolyfills = installTestDomPolyfills();
+  });
 
-afterAll(() => {
-  restoreDomPolyfills?.();
-  restoreDomPolyfills = undefined;
-});
+  afterAll(() => {
+    restoreDomPolyfills?.();
+    restoreDomPolyfills = undefined;
+  });
 
-resetFluxI18n();
-initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+
+  beforeEach(() => {
+    formTestHarness.reset();
+  });
+}
 
 export const baseEnv: RendererEnv = {
   fetcher: async function <T>() {
@@ -220,10 +231,6 @@ export const formTestHarness: FormTestHarness = {
     currentFormTestHarness = createFormTestHarness();
   },
 };
-
-beforeEach(() => {
-  formTestHarness.reset();
-});
 
 export function makeCapturingFetcher(submitValues: Record<string, unknown>[]) {
   return async function <T>(

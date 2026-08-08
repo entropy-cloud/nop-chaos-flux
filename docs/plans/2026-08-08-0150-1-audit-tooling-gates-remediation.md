@@ -158,7 +158,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- 其他 audit 工具（styling-suspects/performance-suspects 等）的同类块注释盲区排查——本次仅修已知命中面，不影响当前门禁成立。
+- 其他 audit 工具（styling-suspects/performance-suspects 等）的同类块注释盲区排查——本次仅修已知命中面，不影响当前门禁成立。——**已承接落地（2026-08-09）**：plan `2026-08-09-0444-1` Phase 2 全量行级规则注释剥离（styling/performance/broad-scope/react19/async，committed 回归测试 12 条先红后绿，全量复扫零新增命中），本条目终态 closed。
 - `scripts/__tests__/find-event-dispatch-without-ctx.test.ts:14-33` 存在与 14-1 同根的 `stagedDirs` 模块顶层可变数组 + `packages/*/` 夹具写入模式（`__event_dispatch_ctx_fixture__`）——同型治理归未来工具治理轮次（本次不扩大范围）；若本次 Phase 3 的 env scan-root 方案落地良好，后续可按同机制迁移。
 
 ## Closure

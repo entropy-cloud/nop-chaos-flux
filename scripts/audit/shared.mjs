@@ -7,6 +7,22 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export const rootDir = path.join(__dirname, '..', '..');
 export const scanRoots = ['apps', 'packages', 'tests'];
+
+// `FLUX_AUDIT_SCAN_ROOT` overrides the scan root for the shared
+// `scanFilesWithRules` runners (find-styling-suspects / find-test-global-leaks /
+// find-performance-suspects / find-reactive-render-reads /
+// find-react19-optimization-candidates / find-async-without-failure-path / ...)
+// so committed script tests can host fixtures in a throwaway temp tree while
+// still exec-ing the real gates (0150-1 stagedDirs governance, DG 2026-08-09;
+// aligned with find-event-dispatch-without-ctx / find-renderer-browser-io).
+export const scanRootOverride = process.env.FLUX_AUDIT_SCAN_ROOT
+  ? path.resolve(process.env.FLUX_AUDIT_SCAN_ROOT)
+  : null;
+
+export function toScanRelativePath(filePath) {
+  const base = scanRootOverride ?? rootDir;
+  return path.relative(base, filePath).split(path.sep).join('/');
+}
 export const scanExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.css']);
 export const ignoreDirectoryNames = new Set([
   '.git',
@@ -89,6 +105,69 @@ export function getCodeTextForLine(content, line) {
   }
 
   return out;
+}
+
+// Returns true when the given absolute content index is in real code (not
+// inside a `//` line comment, `/*...*/` block comment, or string literal).
+// Ported from find-event-dispatch-without-ctx.mjs — the position-aware base
+// for pattern rules whose matches must not hit inside comments/strings.
+export function isCodePosition(content, index) {
+  let inString = false;
+  let stringQuote = '';
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let i = 0; i < index; i += 1) {
+    const char = content[i];
+    const nextChar = content[i + 1] ?? '';
+
+    if (inLineComment) {
+      if (char === '\n') {
+        inLineComment = false;
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (char === '*' && nextChar === '/') {
+        inBlockComment = false;
+        i += 1;
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (char === '\\') {
+        i += 1;
+        continue;
+      }
+      if (char === stringQuote) {
+        inString = false;
+        stringQuote = '';
+      }
+      continue;
+    }
+
+    if (char === '/' && nextChar === '/') {
+      inLineComment = true;
+      i += 1;
+      continue;
+    }
+
+    if (char === '/' && nextChar === '*') {
+      inBlockComment = true;
+      i += 1;
+      continue;
+    }
+
+    if (char === "'" || char === '"' || char === '`') {
+      inString = true;
+      stringQuote = char;
+      continue;
+    }
+  }
+
+  return !inString && !inLineComment && !inBlockComment;
 }
 
 export function isTestFile(filePath) {
@@ -296,6 +375,96 @@ export function hasTopLevelComma(text) {
   });
 }
 
+// Single-pass comment/string stripper preserving line structure (strings and
+// comments become blanks). Used by `scanTopLevelLets` to evaluate const
+// container mutation evidence on code-only text (2026-08-09 tool-governance
+// round): a never-mutated `const` container cannot leak state across test
+// cases, so only containers with real mutation evidence are flagged.
+function stripCommentsAndStrings(content) {
+  const lines = content.split(/\r?\n/);
+  const out = [];
+  let inBlock = false;
+
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const lineText = lines[lineIndex] ?? '';
+    let text = '';
+    let inString = false;
+    let stringQuote = '';
+
+    for (let column = 0; column < lineText.length; column += 1) {
+      const char = lineText[column];
+      const nextChar = lineText[column + 1] ?? '';
+
+      if (inBlock) {
+        if (char === '*' && nextChar === '/') {
+          inBlock = false;
+          column += 1;
+        }
+        text += ' ';
+        continue;
+      }
+
+      if (inString) {
+        if (char === '\\') {
+          column += 1;
+          text += '  ';
+          continue;
+        }
+        if (char === stringQuote) {
+          inString = false;
+        }
+        text += ' ';
+        continue;
+      }
+
+      if (char === '/' && nextChar === '/') {
+        column = lineText.length;
+        continue;
+      }
+
+      if (char === '/' && nextChar === '*') {
+        inBlock = true;
+        column += 1;
+        text += '  ';
+        continue;
+      }
+
+      if (char === "'" || char === '"' || char === '`') {
+        inString = true;
+        stringQuote = char;
+        text += char;
+        continue;
+      }
+
+      text += char;
+    }
+    out.push(text);
+  }
+
+  return out.join('\n');
+}
+
+// Mutation evidence for a module-top `const` container: mutator method calls
+// (push/set/add/...), member/index assignment (including compound/increment),
+// or Object.assign/defineProperty targeting the declared name. Evidence is
+// evaluated on code-only text so comments/strings cannot fabricate it.
+function isMutatedConstContainer(codeOnly, declarationLine) {
+  const nameMatch = declarationLine.match(/^const\s+([A-Za-z_$][\w$]*)/);
+  if (!nameMatch) {
+    return false;
+  }
+  const name = nameMatch[1];
+  const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const mutatorCall = new RegExp(
+    `\\b${esc}\\s*\\.\\s*(?:push|pop|shift|unshift|splice|sort|reverse|fill|copyWithin|set|add|delete|clear)\\s*\\(`,
+  );
+  const memberAssign = new RegExp(
+    `\\b${esc}(?:\\s*\\.\\s*\\w+|\\s*\\[\\s*[^\\]]*\\s*\\])+\\s*(?:=(?!=)|\\+=|-=|\\*=|\\/=|\\+\\+|--)`,
+  );
+  const helperAssign = new RegExp(`Object\\.(?:assign|defineProperty)\\s*\\(\\s*${esc}\\b`);
+  return mutatorCall.test(codeOnly) || memberAssign.test(codeOnly) || helperAssign.test(codeOnly);
+}
+
 export function scanTopLevelLets({ rule, relativePath, content }) {
   const results = [];
   const lines = content.split(/\r?\n/);
@@ -304,20 +473,51 @@ export function scanTopLevelLets({ rule, relativePath, content }) {
   let inString = false;
   let stringQuote = '';
 
+  // Module-top mutable containers declared with `const`: array/object literals
+  // and Map/Set/WeakMap/WeakSet/Array/Object constructors hold mutable state
+  // that can leak across test cases just like `let` module-top state (0150-3
+  // Deferred But Adjudicated, adopted 2026-08-09). Only containers with real
+  // mutation evidence are flagged — a never-mutated `const` fixture cannot
+  // leak state (live hit-surface calibration, 2026-08-09 tool-governance
+  // round). Primitive values, frozen containers (`Object.freeze`), `as const`
+  // assertions, regex literals and function references are excluded.
+  const constContainerPattern =
+    /^const\s+[A-Za-z_$][\w$]*\s*=\s*(?:\[|\{|\bnew\s+(?:Map|Set|WeakMap|WeakSet|Array|Object)\s*(?:<(?:[^>=]|=>)*>)?\s*\()/;
+  const codeOnly = stripCommentsAndStrings(content);
+
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
     const lineText = lines[lineIndex] ?? '';
     const trimmed = lineText.trim();
 
-    if (braceDepth === 0 && /^let\s+[A-Za-z_$][\w$]*\s*(?::|=|;)/.test(trimmed)) {
-      results.push(
-        createResult(
-          rule,
-          relativePath,
-          lineIndex + 1,
-          lineText,
-          trimmed.match(/^let\s+[A-Za-z_$][\w$]*/)?.[0] ?? 'let',
-        ),
-      );
+    // Skip the declaration checks while the line starts inside a block
+    // comment (commented-out code must not register as module state).
+    if (!inBlockComment && braceDepth === 0) {
+      if (/^let\s+[A-Za-z_$][\w$]*\s*(?::|=|;)/.test(trimmed)) {
+        results.push(
+          createResult(
+            rule,
+            relativePath,
+            lineIndex + 1,
+            lineText,
+            trimmed.match(/^let\s+[A-Za-z_$][\w$]*/)?.[0] ?? 'let',
+          ),
+        );
+      } else if (
+        constContainerPattern.test(trimmed) &&
+        !/Object\.freeze\s*\(/.test(trimmed) &&
+        !/\bas\s+const\b/.test(trimmed) &&
+        isMutatedConstContainer(codeOnly, trimmed)
+      ) {
+        results.push(
+          createResult(
+            rule,
+            relativePath,
+            lineIndex + 1,
+            lineText,
+            trimmed.match(/^const\s+[A-Za-z_$][\w$]*/)?.[0] ?? 'const',
+          ),
+        );
+      }
     }
 
     let lineComment = false;
@@ -382,13 +582,14 @@ export function scanTopLevelLets({ rule, relativePath, content }) {
 
 export async function scanFilesWithRules(rules) {
   const files = [];
+  const base = scanRootOverride ?? rootDir;
   for (const root of scanRoots) {
-    files.push(...(await collectSourceFiles(path.join(rootDir, root))));
+    files.push(...(await collectSourceFiles(path.join(base, root))));
   }
 
   const allResults = [];
   for (const filePath of files) {
-    const relativePath = toPosixPath(filePath);
+    const relativePath = toScanRelativePath(filePath);
     const activeRules = rules.filter((rule) => rule.include(relativePath));
     if (activeRules.length === 0) {
       continue;

@@ -5,6 +5,9 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { conditionBuilderRendererDefinition } from '../index.js';
 import { baseEnv, formulaCompiler } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 describe('condition-builder markers', () => {
   it('uses data-slot markers for internal group and item structure', async () => {

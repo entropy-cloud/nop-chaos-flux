@@ -5,6 +5,9 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { allFormDefs } from './form-tree-checkbox-fields.shared.js';
 import { env } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 interface MockVirtualItem {
   key: string;

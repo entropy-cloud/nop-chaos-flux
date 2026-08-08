@@ -1,6 +1,9 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 describe('variant-field unmount protection', () => {
   it('does not update state after unmount when detectVariantAction is in flight', async () => {

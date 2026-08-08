@@ -4,6 +4,9 @@ import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { baseEnv, createPageSchemaRenderer, formulaCompiler } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 let viewerMountCount = 0;
 

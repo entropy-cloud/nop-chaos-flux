@@ -12,6 +12,9 @@ import {
   contactGroupRenderer,
   env,
 } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 

@@ -1,7 +1,28 @@
-import { createResult, getLineNumber, isTestFile } from './shared.mjs';
+import { createResult, getCodeTextForLine, getLineNumber, isCodePosition, isTestFile } from './shared.mjs';
 
 function hasUseNoMemoDirective(content) {
   return /^\s*['"]use no memo['"]\s*;?\s*$/m.test(content);
+}
+
+// Comment-stripped window around `line` (1-based). Window heuristics must not
+// be influenced by comment mentions of the target keywords (block-comment
+// blind spot, 2026-08-09 tool-governance round). `eslint-disable` directives
+// live in comments and are read from the RAW window at the call sites.
+function getCodeWindow(content, line, before, after) {
+  const lines = content.split(/\r?\n/);
+  const windowStart = Math.max(0, line - before);
+  const windowEnd = Math.min(lines.length, line + after);
+  return lines
+    .slice(windowStart, windowEnd)
+    .map((_, windowLine) => getCodeTextForLine(content, windowStart + windowLine + 1))
+    .join('\n');
+}
+
+function getRawWindow(content, line, before, after) {
+  const lines = content.split(/\r?\n/);
+  const windowStart = Math.max(0, line - before);
+  const windowEnd = Math.min(lines.length, line + after);
+  return lines.slice(windowStart, windowEnd).join('\n');
 }
 
 function scanRedundantReactMemo({ rule, relativePath, content }) {
@@ -10,21 +31,22 @@ function scanRedundantReactMemo({ rule, relativePath, content }) {
   }
 
   const results = [];
-  const lines = content.split(/\r?\n/);
   const memoPattern = /\b(?:React\.)?memo\s*\(/g;
   let match;
 
   while ((match = memoPattern.exec(content)) !== null) {
-    const line = getLineNumber(content, match.index);
-    const windowStart = Math.max(0, line - 3);
-    const windowEnd = Math.min(lines.length, line + 3);
-    const windowText = lines.slice(windowStart, windowEnd).join('\n');
-
-    if (windowText.includes('eslint-disable') && windowText.includes('react-compiler')) {
+    if (!isCodePosition(content, match.index)) {
       continue;
     }
 
-    const lineText = lines[line - 1] ?? '';
+    const line = getLineNumber(content, match.index);
+    const rawWindow = getRawWindow(content, line, 3, 3);
+
+    if (rawWindow.includes('eslint-disable') && rawWindow.includes('react-compiler')) {
+      continue;
+    }
+
+    const lineText = content.split(/\r?\n/)[line - 1] ?? '';
     results.push(
       createResult(rule, relativePath, line, lineText, 'React.memo (redundant with React Compiler)'),
     );
@@ -39,21 +61,22 @@ function scanRedundantUseCallback({ rule, relativePath, content }) {
   }
 
   const results = [];
-  const lines = content.split(/\r?\n/);
   const pattern = /\buseCallback\s*\(/g;
   let match;
 
   while ((match = pattern.exec(content)) !== null) {
-    const line = getLineNumber(content, match.index);
-    const windowStart = Math.max(0, line - 2);
-    const windowEnd = Math.min(lines.length, line + 2);
-    const windowText = lines.slice(windowStart, windowEnd).join('\n');
-
-    if (windowText.includes('eslint-disable') && windowText.includes('react-compiler')) {
+    if (!isCodePosition(content, match.index)) {
       continue;
     }
 
-    const lineText = lines[line - 1] ?? '';
+    const line = getLineNumber(content, match.index);
+    const rawWindow = getRawWindow(content, line, 2, 2);
+
+    if (rawWindow.includes('eslint-disable') && rawWindow.includes('react-compiler')) {
+      continue;
+    }
+
+    const lineText = content.split(/\r?\n/)[line - 1] ?? '';
     results.push(
       createResult(rule, relativePath, line, lineText, 'useCallback (redundant with React Compiler)'),
     );
@@ -68,21 +91,22 @@ function scanRedundantUseMemo({ rule, relativePath, content }) {
   }
 
   const results = [];
-  const lines = content.split(/\r?\n/);
   const pattern = /\buseMemo\s*\(/g;
   let match;
 
   while ((match = pattern.exec(content)) !== null) {
-    const line = getLineNumber(content, match.index);
-    const windowStart = Math.max(0, line - 2);
-    const windowEnd = Math.min(lines.length, line + 2);
-    const windowText = lines.slice(windowStart, windowEnd).join('\n');
-
-    if (windowText.includes('eslint-disable') && windowText.includes('react-compiler')) {
+    if (!isCodePosition(content, match.index)) {
       continue;
     }
 
-    const lineText = lines[line - 1] ?? '';
+    const line = getLineNumber(content, match.index);
+    const rawWindow = getRawWindow(content, line, 2, 2);
+
+    if (rawWindow.includes('eslint-disable') && rawWindow.includes('react-compiler')) {
+      continue;
+    }
+
+    const lineText = content.split(/\r?\n/)[line - 1] ?? '';
     results.push(
       createResult(rule, relativePath, line, lineText, 'useMemo (redundant with React Compiler)'),
     );
@@ -97,15 +121,16 @@ function scanDerivedStatePattern({ rule, relativePath, content }) {
   }
 
   const results = [];
-  const lines = content.split(/\r?\n/);
   const effectSetStatePattern = /useEffect\s*\(\s*\(\)\s*=>\s*\{[^}]*\bset[A-Z]\w*\s*\(/g;
   let match;
 
   while ((match = effectSetStatePattern.exec(content)) !== null) {
+    if (!isCodePosition(content, match.index)) {
+      continue;
+    }
+
     const line = getLineNumber(content, match.index);
-    const windowStart = Math.max(0, line - 1);
-    const windowEnd = Math.min(lines.length, line + 15);
-    const windowText = lines.slice(windowStart, windowEnd).join('\n');
+    const windowText = getCodeWindow(content, line, 1, 15);
 
     if (windowText.includes('async') || windowText.includes('await') || windowText.includes('fetch')) {
       continue;
@@ -115,7 +140,7 @@ function scanDerivedStatePattern({ rule, relativePath, content }) {
       continue;
     }
 
-    const lineText = lines[line - 1] ?? '';
+    const lineText = content.split(/\r?\n/)[line - 1] ?? '';
     results.push(
       createResult(
         rule,
@@ -132,15 +157,16 @@ function scanDerivedStatePattern({ rule, relativePath, content }) {
 
 function scanStartTransitionUsage({ rule, relativePath, content }) {
   const results = [];
-  const lines = content.split(/\r?\n/);
   const pattern = /\bstartTransition\s*\(/g;
   let match;
 
   while ((match = pattern.exec(content)) !== null) {
+    if (!isCodePosition(content, match.index)) {
+      continue;
+    }
+
     const line = getLineNumber(content, match.index);
-    const windowStart = Math.max(0, line - 3);
-    const windowEnd = Math.min(lines.length, line + 5);
-    const windowText = lines.slice(windowStart, windowEnd).join('\n');
+    const windowText = getCodeWindow(content, line, 3, 5);
 
     if (
       windowText.includes('validate') ||
@@ -149,7 +175,7 @@ function scanStartTransitionUsage({ rule, relativePath, content }) {
       windowText.includes('save') ||
       windowText.includes('form.')
     ) {
-      const lineText = lines[line - 1] ?? '';
+      const lineText = content.split(/\r?\n/)[line - 1] ?? '';
       results.push(
         createResult(
           rule,

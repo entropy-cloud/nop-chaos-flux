@@ -153,11 +153,11 @@ Exit Criteria:
 - Classification: `optimization candidate`
 - Why Not Blocking Closure: 14-2 的 `localStorageState` 显式化后已不构成新命中面；扫描器增强（审计 §9.2 建议）属工具演进，不实施不影响当前门禁成立（14-4 类新命中已清零）。
 - Successor Required: `no`
-- Successor Path: 无（归未来 audit 工具治理轮次）
+- Successor Path: 无（归未来 audit 工具治理轮次）——**已承接落地（2026-08-09）**：plan `2026-08-09-0444-1-round2-tool-governance-scanner-and-test-infra.md` Phase 3 落地 const 容器识别（仅变异容器校准 + 泛型构造器 + committed 回归测试，47 基线 + 11 landed 裁决零悬挂），本条目终态 closed。
 
 ## Non-Blocking Follow-ups
 
-- 全仓其他 test-support 模块的隐式 hook 模式排查（canvas-bridge 已显式先例，其余包如有同型模块由未来治理轮次处理）。
+- 全仓其他 test-support 模块的隐式 hook 模式排查（canvas-bridge 已显式先例，其余包如有同型模块由未来治理轮次处理）。——**已承接落地（2026-08-09）**：plan `2026-08-09-0444-1` Phase 4 全仓 7 模块裁决（form-advanced `installFormAdvancedTestHooks()` 显式化 + 79 importer 迁移；6 模块 keep-with-reason 记录理由），本条目终态 closed。
 
 ## Closure
 

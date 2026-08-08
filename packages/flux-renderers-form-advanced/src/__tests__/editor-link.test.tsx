@@ -10,6 +10,9 @@ import {
   buildEditorExtensions,
   isSafeLinkUrl,
 } from '../editor-renderer.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 /**
  * C3.5 P1-1/P1-2 test-first: the default toolbar advertises a `link` button,

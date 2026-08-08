@@ -6,6 +6,9 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { allFormDefs } from './form-tree-checkbox-fields.shared.js';
 import { env as defaultEnv } from '../test-support.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 // Importing test-support triggers i18n init (en-US locale) — required so
 // `t('flux.common.search')` resolves to 'Search' (not the Chinese fallback).

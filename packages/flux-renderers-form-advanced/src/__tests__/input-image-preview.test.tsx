@@ -6,6 +6,9 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { buttonRenderer, formTestHarness, formulaCompiler } from '../test-support.js';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 const { submitCalls } = formTestHarness;
 
