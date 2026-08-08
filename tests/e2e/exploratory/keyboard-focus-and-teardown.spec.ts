@@ -185,7 +185,7 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
     await canvas.click();
     await page.keyboard.type('run-02 word keyboard probe');
 
-    const exprButton = page.getByTitle('Insert Expression');
+    const exprButton = page.getByTestId('insert-expression');
     await expect(exprButton).toBeVisible();
     await exprButton.click();
     await expect(page.getByText('插入模板表达式')).toBeVisible();

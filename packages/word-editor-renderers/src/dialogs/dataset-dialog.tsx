@@ -104,7 +104,9 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
     >
       <DialogContent size="lg" className="flex flex-col max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Edit Dataset' : 'Create Dataset'}</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? t('flux.wordEditor.editDataset') : t('flux.wordEditor.createDataset')}
+          </DialogTitle>
         </DialogHeader>
 
         <DialogBody className="flex-1 overflow-hidden min-h-0">
@@ -118,7 +120,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                   id={`${dialogIdPrefix}-name`}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter dataset name"
+                  placeholder={t('flux.wordEditor.datasetNamePlaceholder')}
                   size="sm"
                 />
               </div>
@@ -131,7 +133,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                   onChange={(e) => setDescription(e.target.value)}
                   rows={2}
                   className="resize-none"
-                  placeholder="Enter dataset description"
+                  placeholder={t('flux.wordEditor.datasetDescriptionPlaceholder')}
                 />
               </div>
 
@@ -143,8 +145,8 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                   onChange={(e) => setType(e.target.value as DatasetSourceType)}
                   className="w-full"
                 >
-                  <NativeSelectOption value="sql">SQL</NativeSelectOption>
-                  <NativeSelectOption value="api">API</NativeSelectOption>
+                  <NativeSelectOption value="sql">{t('flux.wordEditor.typeSql')}</NativeSelectOption>
+                  <NativeSelectOption value="api">{t('flux.wordEditor.typeApi')}</NativeSelectOption>
                   <NativeSelectOption value="mongo">
                     {t('flux.wordEditor.mongo')}
                   </NativeSelectOption>
@@ -189,7 +191,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                                 id={`${dialogIdPrefix}-${columnKey}-name`}
                                 value={column.name || ''}
                                 onChange={(e) => handleColumnChange(index, 'name', e.target.value)}
-                                placeholder="Column name"
+                                placeholder={t('flux.wordEditor.columnNamePlaceholder')}
                                 size="sm"
                               />
                             </div>
@@ -201,7 +203,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                                 id={`${dialogIdPrefix}-${columnKey}-label`}
                                 value={column.label || ''}
                                 onChange={(e) => handleColumnChange(index, 'label', e.target.value)}
-                                placeholder="Column label"
+                                placeholder={t('flux.wordEditor.columnLabelPlaceholder')}
                                 size="sm"
                               />
                             </div>
@@ -216,8 +218,8 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                                 size="xs"
                                 className="w-full"
                               >
-                                <NativeSelectOption value="sql">SQL</NativeSelectOption>
-                                <NativeSelectOption value="api">API</NativeSelectOption>
+                                <NativeSelectOption value="sql">{t('flux.wordEditor.typeSql')}</NativeSelectOption>
+                                <NativeSelectOption value="api">{t('flux.wordEditor.typeApi')}</NativeSelectOption>
                                 <NativeSelectOption value="mongo">
                                   {t('flux.wordEditor.mongo')}
                                 </NativeSelectOption>

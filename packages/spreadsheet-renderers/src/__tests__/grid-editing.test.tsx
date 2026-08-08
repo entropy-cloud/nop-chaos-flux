@@ -1,9 +1,15 @@
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createSpreadsheetBridge } from '../index.js';
 import { SpreadsheetGridHarness } from './spreadsheet-grid-harness.js';
+
+beforeAll(() => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+});
 
 afterEach(() => {
   cleanup();

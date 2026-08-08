@@ -2,12 +2,15 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import * as FluxReact from '@nop-chaos/flux-react';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { InsertControls } from '../toolbar/insert-controls.js';
 
 describe('InsertControls', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     cleanup();
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
   });
 
   afterEach(() => {

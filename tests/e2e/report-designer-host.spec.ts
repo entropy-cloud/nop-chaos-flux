@@ -32,13 +32,13 @@ test('renders the report-designer host page surfaces', async ({ page }) => {
   await expect(page.locator('[data-slot="workbench-right-panel"]')).toBeVisible();
   await expect(page.locator('[data-slot="report-designer-inspector-shell"]')).toBeVisible();
 
-  const undoButton = page.getByRole('button', { name: 'Undo' });
-  const redoButton = page.getByRole('button', { name: 'Redo' });
+  const undoButton = page.getByTestId('report-toolbar-undo');
+  const redoButton = page.getByTestId('report-toolbar-redo');
   await expect(undoButton).toBeVisible();
   await expect(undoButton).toBeDisabled();
   await expect(redoButton).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Preview' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+  await expect(page.getByTestId('report-toolbar-preview')).toBeVisible();
+  await expect(page.getByTestId('report-toolbar-save')).toBeVisible();
 });
 
 test('undo/redo round-trip propagates to the spreadsheet canvas (P1-111 e2e confirmation)', async ({
@@ -62,13 +62,13 @@ test('undo/redo round-trip propagates to the spreadsheet canvas (P1-111 e2e conf
     'true',
   );
 
-  const undoButton = page.getByRole('button', { name: 'Undo' });
+  const undoButton = page.getByTestId('report-toolbar-undo');
   await expect(undoButton).toBeEnabled();
   await undoButton.click();
 
   await expect(cellA1).toContainText('Alpha', { timeout: 10000 });
 
-  const redoButton = page.getByRole('button', { name: 'Redo' });
+  const redoButton = page.getByTestId('report-toolbar-redo');
   await expect(redoButton).toBeEnabled();
   await redoButton.click();
 
@@ -90,7 +90,7 @@ test('save clears the aggregated dirty state', async ({ page }) => {
 
   await expect(dirtyProbe).toHaveAttribute('data-dirty', 'true');
 
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByTestId('report-toolbar-save').click();
 
   await expect(dirtyProbe).toHaveAttribute('data-dirty', 'false', { timeout: 10000 });
 });
@@ -109,9 +109,9 @@ test('preview runs the host preview adapter and exposes the stop control while r
     }
   });
 
-  await page.getByRole('button', { name: 'Preview' }).click();
+  await page.getByTestId('report-toolbar-preview').click();
 
-  await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible({ timeout: 5000 });
+  await expect(page.getByTestId('report-toolbar-stopPreview')).toBeVisible({ timeout: 5000 });
 
   const previewCalls = await page.evaluate(() => {
     const host = window as unknown as {
@@ -122,7 +122,7 @@ test('preview runs the host preview adapter and exposes the stop control while r
   expect(previewCalls.length).toBeGreaterThanOrEqual(1);
   expect(previewCalls[0]).toMatchObject({ mode: 'inline' });
 
-  await expect(page.getByRole('button', { name: 'Stop' })).toBeHidden({ timeout: 5000 });
+  await expect(page.getByTestId('report-toolbar-stopPreview')).toBeHidden({ timeout: 5000 });
 });
 
 test('empty template fallback renders without crashing', async ({ page }) => {
@@ -132,7 +132,7 @@ test('empty template fallback renders without crashing', async ({ page }) => {
 
   await expect(
     page.locator('[data-slot="report-designer-header"] h2'),
-  ).toContainText('Untitled Report', { timeout: 10000 });
+  ).toContainText('未命名报表', { timeout: 10000 });
   await expect(page.locator('[data-slot="report-designer-spreadsheet-canvas"]')).toBeVisible();
   await assertTrackedPageErrors(page);
 });

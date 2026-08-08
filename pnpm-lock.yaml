@@ -1031,6 +1031,9 @@ importers:
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
+      '@nop-chaos/flux-i18n':
+        specifier: workspace:*
+        version: link:../flux-i18n
       '@nop-chaos/spreadsheet-core':
         specifier: workspace:*
         version: link:../spreadsheet-core

@@ -115,18 +115,18 @@ test.describe('Word Editor Recovery (we-7 import + we-3 selection + we-4 confirm
     const addDatasetButton = page.getByRole('button', { name: /Add Dataset|添加数据集/ }).first();
     await expect(addDatasetButton).toBeVisible({ timeout: 15_000 });
     await addDatasetButton.click();
-    await expect(page.getByText('Create Dataset')).toBeVisible();
+    await expect(page.getByText(/Create Dataset|创建数据集/)).toBeVisible();
 
-    await page.getByPlaceholder('Enter dataset name').fill('FieldSource');
+    await page.getByPlaceholder(/Enter dataset name|输入数据集名称/).fill('FieldSource');
     await page.getByRole('button', { name: '添加列' }).click();
-    await page.getByPlaceholder('Column name').fill('amount');
-    await page.getByPlaceholder('Column label').fill('Amount');
+    await page.getByPlaceholder(/Column name|列名/).fill('amount');
+    await page.getByPlaceholder(/Column label|列标签/).fill('Amount');
     await page.getByRole('dialog').getByRole('button', { name: '保存' }).click();
 
     await expect(page.getByText('FieldSource')).toBeVisible();
 
     await page.getByText('FieldSource').click();
-    await expect(page.getByText('Edit Dataset')).toBeVisible();
+    await expect(page.getByText(/Edit Dataset|编辑数据集/)).toBeVisible();
     await page.getByRole('button', { name: '取消' }).click();
 
     await page.getByRole('tab', { name: '字段' }).click();

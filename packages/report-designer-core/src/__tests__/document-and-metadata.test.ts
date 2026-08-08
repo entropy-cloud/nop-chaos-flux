@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
   createReportTemplateDocument,
@@ -21,6 +22,11 @@ import {
   isSameTarget,
   type ReportSemanticDocument,
 } from '../index.js';
+
+beforeAll(() => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+});
 
 describe('createReportTemplateDocument', () => {
   it('should create a report template from spreadsheet', () => {

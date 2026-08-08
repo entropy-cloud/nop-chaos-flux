@@ -1,4 +1,5 @@
 import type { SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { SpreadsheetHostSnapshot } from './bridge.js';
 
 export function getRuntimeActiveSheet(snapshot: SpreadsheetRuntimeSnapshot) {
@@ -6,7 +7,7 @@ export function getRuntimeActiveSheet(snapshot: SpreadsheetRuntimeSnapshot) {
 }
 
 export function getRuntimeActiveSheetName(snapshot: SpreadsheetRuntimeSnapshot): string {
-  return getRuntimeActiveSheet(snapshot)?.name ?? 'Unknown';
+  return getRuntimeActiveSheet(snapshot)?.name ?? t('flux.spreadsheet.unknown');
 }
 
 export function getRuntimeActiveSheetCellCount(snapshot: SpreadsheetRuntimeSnapshot): number {
@@ -14,5 +15,8 @@ export function getRuntimeActiveSheetCellCount(snapshot: SpreadsheetRuntimeSnaps
 }
 
 export function buildSpreadsheetStatusLabel(hostSnapshot: SpreadsheetHostSnapshot): string {
-  return `Active sheet: ${hostSnapshot.activeSheet?.name ?? 'Unknown'} | Selection: ${hostSnapshot.selection.kind}`;
+  return t('flux.spreadsheet.statusLabel', {
+    name: hostSnapshot.activeSheet?.name ?? t('flux.spreadsheet.unknown'),
+    selection: hostSnapshot.selection.kind,
+  });
 }

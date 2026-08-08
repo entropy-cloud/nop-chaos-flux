@@ -28,10 +28,10 @@ export function FieldList({ store, onFieldClick, showHeader = true }: FieldListP
 
   const getTypeLabel = (type: string): string => {
     const labels: Record<string, string> = {
-      sql: 'SQL',
-      api: 'API',
-      mongo: 'Mongo',
-      static: 'Static',
+      sql: t('flux.wordEditor.typeSql'),
+      api: t('flux.wordEditor.typeApi'),
+      mongo: t('flux.wordEditor.mongo'),
+      static: t('flux.wordEditor.static'),
     };
     return labels[type] || type;
   };
@@ -119,7 +119,8 @@ export function FieldList({ store, onFieldClick, showHeader = true }: FieldListP
                     size="icon-xs"
                     onClick={() => handleFieldClick(column)}
                     className="absolute top-3 right-3 opacity-0 transition-all group-hover:opacity-100"
-                    title="Copy field reference"
+                    title={t('flux.wordEditor.insertFieldReference')}
+                    aria-label={t('flux.wordEditor.insertFieldReference')}
                   >
                     <Copy className="w-3.5 h-3.5 text-[var(--nop-body-copy)]" />
                   </Button>

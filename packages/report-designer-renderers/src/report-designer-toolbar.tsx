@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { reportRuntimeHostIssue, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useOwnScopeSelector, useRendererRuntime } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Badge, Button, Switch, cn } from '@nop-chaos/ui';
 import type { ReportToolbarSchema } from './schemas.js';
 import { DEFAULT_TOOLBAR_ITEMS } from './report-designer-toolbar-defaults.js';
@@ -41,7 +42,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
         message:
           result.error instanceof Error && result.error.message
             ? result.error.message
-            : 'Report toolbar action failed',
+            : t('flux.reportDesigner.toolbarActionFailed'),
         error: result.error,
         phase: 'action',
         path: props.path,
@@ -55,7 +56,10 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
       reportRuntimeHostIssue({
         env: runtime.env,
         level: 'warning',
-        message: error instanceof Error && error.message ? error.message : 'Report toolbar action failed',
+        message:
+          error instanceof Error && error.message
+            ? error.message
+            : t('flux.reportDesigner.toolbarActionFailed'),
         error,
         phase: 'action',
         path: props.path,
@@ -102,13 +106,17 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
           }
           case 'badge': {
             const text = evalTextTemplate(item.text ?? item.body, runtimeSnapshot);
+            const localized =
+              item.id === 'fieldCount' && /^\d+$/.test(text)
+                ? t('flux.reportDesigner.fieldCount', { count: text })
+                : text;
             return (
               <Badge
                 key={item.id ?? `badge-${index}`}
                 className="shrink-0"
                 variant={item.level === 'secondary' ? 'secondary' : 'default'}
               >
-                {text}
+                {localized}
               </Badge>
             );
           }
@@ -135,11 +143,12 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
                 disabled={disabled}
                 className="shrink-0"
                 data-active={active || undefined}
+                data-testid={item.id ? `report-toolbar-${item.id}` : undefined}
                   onClick={() => {
                     void handleButtonClick(item);
                   }}
               >
-                {item.label}
+                {item.label ? t(item.label) : undefined}
               </Button>
             );
           }
@@ -147,14 +156,15 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
             const checked = evalBooleanLike(item.active, runtimeSnapshot) === true;
             const disabled = evalBooleanLike(item.disabled, runtimeSnapshot) === true;
             const switchId = `report-toolbar-switch-${item.id ?? index}`;
+            const localizedLabel = item.label ? t(item.label) : undefined;
             return (
               <span
                 key={item.id ?? `switch-${index}`}
                 className="flex shrink-0 items-center gap-1.5 whitespace-nowrap"
               >
-                {item.label ? (
+                {localizedLabel ? (
                   <span className="text-sm text-muted-foreground" id={switchId}>
-                    {item.label}
+                    {localizedLabel}
                   </span>
                 ) : null}
                 <Switch
@@ -163,8 +173,8 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
                    onCheckedChange={() => {
                      void handleButtonClick(item);
                    }}
-                  aria-label={item.label ?? item.id ?? `switch-${index}`}
-                  aria-labelledby={item.label ? switchId : undefined}
+                  aria-label={localizedLabel ?? item.id ?? `switch-${index}`}
+                  aria-labelledby={localizedLabel ? switchId : undefined}
                 />
               </span>
             );

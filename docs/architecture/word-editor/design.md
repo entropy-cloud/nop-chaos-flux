@@ -123,6 +123,7 @@ The Word Editor page is rendered as the `word-editor-page` host-owner renderer a
 - `initialDocument` for loading existing templates
 - `datasets` for pre-configured data sources
 - `statusPath` for a narrow external host summary when needed
+- `initialCharts` / `initialCodes` are **`@reserved` ghost schema declarations** (adjudicated 2026-08-08, DR-15): zero consumers, they never flow into the host document; they are kept for schema compatibility and removal is a public renderer-fields change requiring human confirmation
 
 Current live workbench behavior is:
 
@@ -174,7 +175,7 @@ Save and autosave truth rules:
 - dataset persistence is part of the successful save commit only; datasets must not be written ahead of host save success / abort adjudication
 - async save completion must not recreate local UI state after unmount; save-success banners and timers are renderer-local affordances only while the page is still mounted
 - in-repo live renderer call sites use the canonical `flux.wordEditor.*` i18n namespace; legacy unprefixed forms are not the current source baseline
-- document/dataset persistence helpers are browser-optional: in SSR or non-browser environments they must return explicit safe fallbacks (`false`, `null`, `[]`) instead of touching `localStorage`
+- document/dataset persistence helpers are browser-optional: in SSR or non-browser environments, read helpers (`loadDocument`, `loadDatasets`) return explicit safe fallbacks (`null` / `[]`) instead of touching `localStorage`; write helpers (`persistSavedDocument`, `saveDatasets`) throw `SaveDocumentError` (`storage-unavailable` / `storage-write-failed`) when storage is unavailable, and callers are expected to catch — the renderer autosave path catches as best-effort, the `word-editor:save` provider path normalizes the throw into an `ActionResult` failure
 - mount-time recovery is persisted-first: when recovered saved state exists, host projection `document` should hydrate from that recovered persisted snapshot instead of continuing to expose schema `initialDocument`
 - `datasets` are also persisted-first on remount: schema `datasets` seed the initial store only when no recovered dataset state exists, and must not overwrite later persisted user edits on every mount
 - template-tag insertion must preserve the canonical tag kind published by `@nop-chaos/word-editor-core`; self-closing tags such as `c:out` stay self-closing instead of being downgraded into `tag-open`

@@ -22,24 +22,10 @@ export function useSpreadsheetShell(
   const cellValue = String(cell?.value ?? '');
   const commentText = typeof comment === 'string' ? comment : (comment?.text ?? '');
 
-  const setCellValue = useCallback(
-    (_value: React.SetStateAction<string>) => {
-    },
-    [],
-  );
-
-  const setCommentText = useCallback(
-    (_value: React.SetStateAction<string>) => {
-    },
-    [],
-  );
-
   return {
     addLog,
     cellValue,
-    setCellValue,
     commentText,
-    setCommentText,
     gridRef,
   };
 }

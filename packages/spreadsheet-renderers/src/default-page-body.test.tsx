@@ -67,7 +67,6 @@ function createInteractions() {
     showCommentInput: false,
     setShowCommentInput: vi.fn(),
     commentText: '',
-    setCommentText: vi.fn(),
     hasComment: false,
     gridRef: { current: null },
     isInRange: vi.fn(() => false),

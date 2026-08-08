@@ -1,22 +1,23 @@
 import type { NodeTypeConfig, TreeNodeTypeConfig } from '@nop-chaos/flow-designer-core';
+import { t } from '@nop-chaos/flux-i18n';
 
-const DEFAULT_NODE_TYPE_META: Record<string, { label: string; icon?: string }> = {
-  'dt-initiator': { label: '发起人', icon: 'user' },
-  'dt-approval': { label: '审批节点', icon: 'user-check' },
-  'dt-cc': { label: '抄送人', icon: 'mail' },
-  'dt-condition': { label: '条件分支', icon: 'git-branch' },
-  'dt-parallel': { label: '并行分支', icon: 'git-merge' },
-  'dt-subprocess': { label: '子流程', icon: 'layers' },
-  'dt-end': { label: '结束', icon: 'square' },
-  'action-entry': { label: '入口', icon: 'play' },
-  'action-step': { label: '动作', icon: 'zap' },
-  'action-end': { label: '结束', icon: 'square' },
-  start: { label: '开始节点', icon: 'play' },
-  end: { label: '结束节点', icon: 'square' },
-  task: { label: '任务节点', icon: 'clipboard-list' },
-  condition: { label: '条件分支', icon: 'git-branch' },
-  parallel: { label: '并行网关', icon: 'git-merge' },
-  loop: { label: '循环节点', icon: 'repeat' },
+const DEFAULT_NODE_TYPE_META: Record<string, { labelKey: string; icon?: string }> = {
+  'dt-initiator': { labelKey: 'flux.flowDesigner.nodeType.dtInitiator', icon: 'user' },
+  'dt-approval': { labelKey: 'flux.flowDesigner.nodeType.dtApproval', icon: 'user-check' },
+  'dt-cc': { labelKey: 'flux.flowDesigner.nodeType.dtCc', icon: 'mail' },
+  'dt-condition': { labelKey: 'flux.flowDesigner.nodeType.dtCondition', icon: 'git-branch' },
+  'dt-parallel': { labelKey: 'flux.flowDesigner.nodeType.dtParallel', icon: 'git-merge' },
+  'dt-subprocess': { labelKey: 'flux.flowDesigner.nodeType.dtSubprocess', icon: 'layers' },
+  'dt-end': { labelKey: 'flux.flowDesigner.nodeType.dtEnd', icon: 'square' },
+  'action-entry': { labelKey: 'flux.flowDesigner.nodeType.actionEntry', icon: 'play' },
+  'action-step': { labelKey: 'flux.flowDesigner.nodeType.actionStep', icon: 'zap' },
+  'action-end': { labelKey: 'flux.flowDesigner.nodeType.actionEnd', icon: 'square' },
+  start: { labelKey: 'flux.flowDesigner.nodeType.start', icon: 'play' },
+  end: { labelKey: 'flux.flowDesigner.nodeType.end', icon: 'square' },
+  task: { labelKey: 'flux.flowDesigner.nodeType.task', icon: 'clipboard-list' },
+  condition: { labelKey: 'flux.flowDesigner.nodeType.condition', icon: 'git-branch' },
+  parallel: { labelKey: 'flux.flowDesigner.nodeType.parallel', icon: 'git-merge' },
+  loop: { labelKey: 'flux.flowDesigner.nodeType.loop', icon: 'repeat' },
 };
 
 const DEFAULT_NODE_TYPE_COLORS: Record<string, string> = {
@@ -57,7 +58,7 @@ export function resolveNodeTypeAccent(
 export function resolveNodeTypeMeta(typeId: string, nodeType?: NodeTypeConfig) {
   const fallback = DEFAULT_NODE_TYPE_META[typeId];
   return {
-    label: nodeType?.label ?? fallback?.label ?? typeId,
+    label: nodeType?.label ?? (fallback ? t(fallback.labelKey) : typeId),
     icon: nodeType?.icon ?? fallback?.icon,
   };
 }

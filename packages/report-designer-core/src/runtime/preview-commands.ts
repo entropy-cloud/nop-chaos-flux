@@ -8,6 +8,7 @@ import type {
   ReportDesignerRuntimeSnapshot,
   ReportTemplateDocument,
 } from '../types.js';
+import { t } from '@nop-chaos/flux-i18n';
 import { getPreviewProviderId } from './registry.js';
 import { createAdapterContext } from './adapter-context.js';
 import { cloneDocument } from './metadata.js';
@@ -19,12 +20,12 @@ export function resolvePreviewAdapter(args: {
 }): { adapter: PreviewAdapter; providerId: string } | { error: Error } {
   const providerId = getPreviewProviderId(args.config, args.profile);
   if (!providerId) {
-    return { error: new Error('No preview provider configured') };
+    return { error: new Error(t('flux.reportDesigner.noPreviewProvider')) };
   }
 
   const adapter = args.adapters.previews.get(providerId);
   if (!adapter) {
-    return { error: new Error(`Preview adapter not found: ${providerId}`) };
+    return { error: new Error(t('flux.reportDesigner.previewAdapterNotFound', { providerId })) };
   }
 
   return { adapter, providerId };

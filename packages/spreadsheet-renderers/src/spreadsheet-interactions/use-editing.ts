@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
 
 type EditSaveState =
@@ -61,7 +62,7 @@ export function useEditing(
       return;
     }
     const addr = cellAddress(cell.row, cell.col);
-    core.setEditSaveStatus('saving', 'Saving cell...');
+    core.setEditSaveStatus('saving', t('flux.spreadsheet.savingCell'));
     const result = await bridge.dispatch({
       type: 'spreadsheet:setCellValue',
       cell: { sheetId, address: addr, row: cell.row, col: cell.col },
@@ -69,12 +70,15 @@ export function useEditing(
     });
 
     if ('cancelled' in result && result.cancelled) {
-      core.setEditSaveStatus('cancelled', 'Cell save cancelled');
+      core.setEditSaveStatus('cancelled', t('flux.spreadsheet.cellSaveCancelled'));
       return;
     }
 
     if (!result.ok) {
-      core.setEditSaveStatus('failed', getResultMessage('Cell save failed', result.error));
+      core.setEditSaveStatus(
+        'failed',
+        getResultMessage(t('flux.spreadsheet.cellSaveFailed'), result.error),
+      );
       return;
     }
 

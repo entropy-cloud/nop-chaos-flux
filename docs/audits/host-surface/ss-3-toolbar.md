@@ -43,9 +43,9 @@ ss-3 工具栏面：`SpreadsheetToolbar`（toolbar 容器）→ `SpreadsheetTool
 ## 发现清单
 
 - [P3-1] undo/redo 按钮 disabled 不联动 canUndo/canRedo（`toolbar-groups.tsx:44-55` 仅 mutationDisabled）→ 空栈点击 ok:false 'Nothing to undo' 落 addLog（默认宿主无反馈）；体验项 → 状态: 卡内记录（DR 候选）
-- [P3-2] unfreeze 按钮不联动 frozen 态（`toolbar-groups.tsx:274-279` 仅 mutationDisabled）→ 无冻结时点击产生 no-op 命令污染 undo 栈 + dirty 误标（applySimpleDocumentMutation 无条件 pushUndo，`internal-state.ts:81-90` 机制级，10 面共享）→ 状态: 卡内记录（与 ss-6 P3 互见）
+- [P3-2] unfreeze 按钮不联动 frozen 态（`toolbar-groups.tsx:274-279` 仅 mutationDisabled）→ 无冻结时点击产生 no-op 命令污染 undo 栈 + dirty 误标（applySimpleDocumentMutation 无条件 pushUndo，`internal-state.ts:81-90` 机制级，10 面共享）→ 状态: 卡内记录（与 ss-6 P3 互见）｜**DR plan Phase 4 裁决（2026-08-08）: keep（P3 语义维持）**——live 核对确认，无数据损坏/无用户可见功能损失；CX-13+ 插入建议已登记（`round2-dr-adjudication.md` §2），人工确认后路由
 - [P3-3] `FillSeriesCommand.seriesType` 声明（host 契约 formatting:211-235 + commands-style.ts:88-93）但 handler 忽略（`applyFillSeries` 无 seriesType 参数，cell-operations.ts:258）→ 'auto' 语义无实现（无求值引擎前等价 linear）→ 状态: 卡内记录
-- [P3-4] 按钮错误反馈依赖宿主 onLog 接线（fire() 吞错 + default-page-body 无 onLog 消费）→ 状态: 卡内记录（宿主接线改进候选）
+- [P3-4] 按钮错误反馈依赖宿主 onLog 接线（fire() 吞错 + default-page-body 无 onLog 消费）→ 状态: 卡内记录（宿主接线改进候选）｜**DR plan Phase 4 裁决（2026-08-08）: keep（P3 语义维持）**——默认宿主非用户可见无功能损失；CX-13+ 插入建议已登记，人工确认后路由
 
 ## 组合宿主场景（真实浏览器验证，bug 73 模式专项）
 

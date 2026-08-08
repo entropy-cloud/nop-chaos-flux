@@ -65,10 +65,10 @@ export function DatasetPanel({
 
   const getTypeLabel = (type: string): string => {
     const labels: Record<string, string> = {
-      sql: 'SQL',
-      api: 'API',
-      mongo: 'Mongo',
-      static: 'Static',
+      sql: t('flux.wordEditor.typeSql'),
+      api: t('flux.wordEditor.typeApi'),
+      mongo: t('flux.wordEditor.mongo'),
+      static: t('flux.wordEditor.static'),
     };
     return labels[type] || type;
   };
@@ -160,7 +160,12 @@ export function DatasetPanel({
                           <span className="mt-2 flex items-center gap-1 text-[10px] text-[var(--nop-body-copy)]">
                             <Database className="w-3 h-3 opacity-70" />
                             <span>
-                              {dataset.columns.length} column{dataset.columns.length !== 1 ? 's' : ''}
+                              {t(
+                                dataset.columns.length === 1
+                                  ? 'flux.wordEditor.columnCountOne'
+                                  : 'flux.wordEditor.columnCountOther',
+                                { count: dataset.columns.length },
+                              )}
                             </span>
                           </span>
                         )}

@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import {
   createEmptyDocument,
   createReportDesignerCore,
@@ -8,6 +9,11 @@ import {
   type ReportSelectionTarget,
   type ReportDesignerConfig,
 } from './test-utils.js';
+
+beforeAll(() => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+});
 
 function cloneStructured<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;

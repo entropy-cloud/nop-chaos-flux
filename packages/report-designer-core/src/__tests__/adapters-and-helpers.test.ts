@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, beforeAll } from 'vitest';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
   createReportDesignerCore,
@@ -12,6 +13,11 @@ import {
   type FieldDropAdapter,
   type FieldSourceProvider,
 } from '../index.js';
+
+beforeAll(() => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+});
 
 const defaultConfig: ReportDesignerConfig = {
   kind: 'report-template',

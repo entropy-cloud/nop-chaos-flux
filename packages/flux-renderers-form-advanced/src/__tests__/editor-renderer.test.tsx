@@ -6,6 +6,7 @@ import {
   DEFAULT_EDITOR_TOOLBAR,
   resolveToolbarButtons,
 } from '../editor-schemas.js';
+import { editorRendererDefinition } from '../editor-renderer.js';
 
 beforeEach(() => {
   resetFluxI18n();
@@ -15,6 +16,18 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   resetFluxI18n();
+});
+
+describe('editor renderer definition — label-activation safety (w3d-editor:28 race)', () => {
+  it('uses a div frame root so the toolbar button is not the label implicit control', () => {
+    // The editor field frame previously defaulted to a <label> root. The
+    // first labelable descendant is the bold toolbar <button>, so clicking the
+    // contenteditable forwarded label activation to the button: toggleBold
+    // stored marks (stray <strong> on fresh input) and the focus juggling
+    // dropped the first typed keystrokes. A div root keeps the toolbar buttons
+    // out of label activation semantics.
+    expect(editorRendererDefinition.frameRootTag).toBe('div');
+  });
 });
 
 describe('editor — sanitize boundary (reuse DOMPurify gate)', () => {

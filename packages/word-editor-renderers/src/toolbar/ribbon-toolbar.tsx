@@ -60,7 +60,8 @@ export function RibbonToolbar({
           icon={Search}
           onClick={() => setShowSearch(!showSearch)}
           active={showSearch}
-          title="Search & Replace"
+          title="flux.wordEditor.searchAndReplace"
+          testId="search-replace"
         />
       </div>
       <SearchReplace

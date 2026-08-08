@@ -1,4 +1,5 @@
 import { createStore } from 'zustand/vanilla';
+import { t } from '@nop-chaos/flux-i18n';
 import type {
   ReportDesignerConfig,
   ReportTemplateDocument,
@@ -367,7 +368,7 @@ export function createReportDesignerCore(
 
   async function dispatch(command: ReportDesignerCommand): Promise<ReportDesignerCommandResult> {
     if (isReadonly && MUTATION_COMMAND_TYPES.has(command.type)) {
-      return { ok: false, changed: false, error: 'Document is readonly' };
+      return { ok: false, changed: false, error: t('flux.reportDesigner.documentReadonly') };
     }
 
     return dispatchReportDesignerCommand(dispatchCtx, command);

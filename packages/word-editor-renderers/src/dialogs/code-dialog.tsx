@@ -68,7 +68,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
     >
       <DialogContent size="sm">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Edit Code' : 'Create Code'}</DialogTitle>
+          <DialogTitle>{isEditMode ? t('flux.wordEditor.editCode') : t('flux.wordEditor.createCode')}</DialogTitle>
         </DialogHeader>
 
         <DialogBody>
@@ -80,7 +80,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
               id={`${dialogIdPrefix}-name`}
               value={codeName}
               onChange={(e) => setCodeName(e.target.value)}
-              placeholder="Enter code name"
+              placeholder={t('flux.wordEditor.codeNamePlaceholder')}
               size="sm"
             />
           </div>
@@ -106,7 +106,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
               id={`${dialogIdPrefix}-dataset-id`}
               value={datasetId}
               onChange={(e) => setDatasetId(e.target.value)}
-              placeholder="Enter dataset ID"
+              placeholder={t('flux.wordEditor.codeDatasetIdPlaceholder')}
               size="sm"
             />
           </div>
@@ -119,7 +119,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
               id={`${dialogIdPrefix}-value-field`}
               value={valueField}
               onChange={(e) => setValueField(e.target.value)}
-              placeholder="Enter value field"
+              placeholder={t('flux.wordEditor.valueFieldPlaceholder')}
               size="sm"
             />
           </div>

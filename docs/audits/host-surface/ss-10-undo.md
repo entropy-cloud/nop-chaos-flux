@@ -45,7 +45,7 @@ ss-10 undo 面：Undo/RedoSpreadsheetCommand + Begin/Commit/RollbackSpreadsheetT
 - [P3-1] undo/redo 后 dirty 恒 true（`history-handlers.ts:70/:87`——undo 回到已保存文档状态不恢复 dirty=false）→ 状态: 卡内记录（保存语义简化，宿主可经 acceptCurrentDocumentAsSaved 自行管理）
 - [P3-2] 空栈错误消息 'Nothing to undo'/'Nothing to redo' 硬编码英文（history-handlers.ts:63/:79）落命令结果 → 默认宿主非用户可见（addLog 无消费）→ 状态: 卡内记录（i18n 化归 DR 候选）
 - [P3-3] `handleRollbackTransaction` 无事务时返回 changed:true（`history-handlers.ts:45-58`）→ 状态: 卡内记录（语义噪声）
-- [P3-4] no-op 命令（unfreeze 无冻结等）经 applySimpleDocumentMutation 无条件 pushUndo 污染 undo 栈 + dirty 误标（internal-state.ts:81-90 机制级，ss-3/ss-6 P3 互见）→ 状态: 卡内记录（机制级治理候选，跨面共性登记 daily log 供 DR/CX 裁）
+- [P3-4] no-op 命令（unfreeze 无冻结等）经 applySimpleDocumentMutation 无条件 pushUndo 污染 undo 栈 + dirty 误标（internal-state.ts:81-90 机制级，ss-3/ss-6 P3 互见）→ 状态: 卡内记录（机制级治理候选，跨面共性登记 daily log 供 DR/CX 裁）｜**DR plan Phase 4 裁决（2026-08-08）: keep（P3 语义维持）**——live 核对确认，无数据损坏/无用户可见功能损失；CX-13+ 插入建议已登记（`round2-dr-adjudication.md` §2），人工确认后路由
 
 ## 组合宿主场景（真实浏览器验证，bug 73 模式专项）
 

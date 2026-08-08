@@ -8,7 +8,6 @@ export function useClipboard(
   sheetId: string,
   selectedCell: { row: number; col: number } | null,
   getSelectedRange: () => SpreadsheetRange | null,
-  setCellValue: (value: string) => void,
   addLog: (msg: string) => void,
 ) {
   const handleCopy = useCallback(async () => {
@@ -54,9 +53,8 @@ export function useClipboard(
     const range = getSelectedRange();
     if (!range) return;
     await bridge.dispatch({ type: 'spreadsheet:clearCells', target: range });
-    setCellValue('');
     addLog('Cleared selection');
-  }, [getSelectedRange, bridge, setCellValue, addLog]);
+  }, [getSelectedRange, bridge, addLog]);
 
   return { handleCopy, handleCut, handlePaste, handleClear };
 }

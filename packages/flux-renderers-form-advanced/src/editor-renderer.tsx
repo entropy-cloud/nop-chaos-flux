@@ -450,6 +450,12 @@ export const editorRendererDefinition: RendererDefinition = {
   category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: EditorRenderer,
+  // Rich-text toolbar contains <button> controls: a <label> root would make
+  // the first labelable descendant (the bold toolbar button) the label's
+  // implicit control, so clicking the contenteditable forwards activation to
+  // the toolbar button — toggling bold marks and stealing the first typed
+  // keystrokes (w3d-editor:28 click+type race, adjudicated 2026-08-08).
+  frameRootTag: 'div',
   fields: [...formFieldRules, ...editorFieldRules],
   validation: {
     kind: 'field',

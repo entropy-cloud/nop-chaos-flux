@@ -169,12 +169,12 @@ export function ReportSpreadsheetCanvas({
       });
 
       if (spreadsheetResult.cancelled) {
-        throw new Error('Field drop cancelled');
+        throw new Error(t('flux.reportDesigner.fieldDropCancelled'));
       }
       if (!spreadsheetResult.ok) {
         throw spreadsheetResult.error instanceof Error
           ? spreadsheetResult.error
-          : new Error('Field drop failed before designer update');
+          : new Error(t('flux.reportDesigner.fieldDropFailedBeforeUpdate'));
       }
 
       const designerResult = await designerBridge.dispatchDesigner({
@@ -203,12 +203,16 @@ export function ReportSpreadsheetCanvas({
         if (!rollbackResult.ok) {
           throw rollbackResult.error instanceof Error
             ? rollbackResult.error
-            : new Error('Field drop rollback failed');
+            : new Error(t('flux.reportDesigner.fieldDropRollbackFailed'));
         }
 
         throw designerResult.error instanceof Error
           ? designerResult.error
-          : new Error(designerResult.cancelled ? 'Field drop cancelled' : 'Field drop failed');
+          : new Error(
+              designerResult.cancelled
+                ? t('flux.reportDesigner.fieldDropCancelled')
+                : t('flux.reportDesigner.fieldDropFailed'),
+            );
       }
     }).catch((error: unknown) => {
       reportRuntimeHostIssue({

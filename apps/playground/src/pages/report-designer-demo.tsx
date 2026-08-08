@@ -264,7 +264,6 @@ export function ReportDesignerDemo() {
     showCommentInput,
     setShowCommentInput,
     commentText,
-    setCommentText,
     handleAddComment,
     handleDeleteComment,
     hasComment,
@@ -483,14 +482,14 @@ export function ReportDesignerDemo() {
               onFind={() => {}}
               onReplace={() => {}}
               onReplaceAll={() => {}}
-              showCommentInput={showCommentInput}
-              onToggleCommentInput={() => setShowCommentInput((v) => !v)}
-              commentText={commentText}
-              onCommentTextChange={setCommentText}
-              onAddComment={handleAddComment}
-              onDeleteComment={handleDeleteComment}
-              hasComment={hasComment}
-            />
+               showCommentInput={showCommentInput}
+               onToggleCommentInput={() => setShowCommentInput((v) => !v)}
+               commentText={commentText}
+               onCommentTextChange={() => undefined}
+               onAddComment={handleAddComment}
+               onDeleteComment={handleDeleteComment}
+               hasComment={hasComment}
+             />
           </div>
         }
         leftPanel={

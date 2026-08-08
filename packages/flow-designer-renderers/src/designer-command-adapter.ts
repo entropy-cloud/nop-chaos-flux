@@ -1,4 +1,5 @@
 import type { DesignerCore } from '@nop-chaos/flow-designer-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type {
   DesignerCommand,
   DesignerCommandAdapter,
@@ -82,7 +83,7 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
     }
     return createFailure(
       core,
-      result.error ?? 'Tree command failed.',
+      result.error ?? t('flux.flowDesigner.command.treeCommandFailed'),
       result.reason === 'missing-node' || result.reason === 'unknown-node-type' || result.reason === 'constraint'
         ? (result.reason as DesignerCommandReason)
         : 'unavailable',
@@ -125,7 +126,11 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         const selectedNodeIds = [...snapshot.selection.selectedNodeIds];
         const selectedEdgeIds = [...snapshot.selection.selectedEdgeIds];
         if (selectedEdgeIds.length > 0) {
-          return createFailure(core, 'Edge deletion is unavailable in tree mode.', 'unavailable');
+          return createFailure(
+            core,
+            t('flux.flowDesigner.command.edgeDeletionUnavailableInTreeMode'),
+            'unavailable',
+          );
         }
         if (selectedNodeIds.length === 0) {
           if (snapshot.activeNode?.id) {
@@ -190,7 +195,11 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
 
   function execute(command: DesignerCommand): DesignerCommandResult {
     if (isTreeMode && isGraphOnly(command)) {
-      return createFailure(core, `${command.type} is unavailable in tree mode.`, 'unavailable');
+      return createFailure(
+        core,
+        t('flux.flowDesigner.command.commandUnavailableInTreeMode', { command: command.type }),
+        'unavailable',
+      );
     }
 
     const treeResult = executeTreeCommand(command);
@@ -211,7 +220,11 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         if (!isTreeMode) {
           return deleteGraphSelection(core);
         }
-        return createFailure(core, 'deleteSelection is unavailable in tree mode.', 'unavailable');
+        return createFailure(
+          core,
+          t('flux.flowDesigner.command.deleteSelectionUnavailableInTreeMode'),
+          'unavailable',
+        );
       }
       case 'copySelection':
         core.copySelection();
@@ -222,7 +235,11 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
       case 'duplicateNode': {
         const node = core.duplicateNode(command.nodeId);
         if (!node) {
-          return createFailure(core, `Unknown node: ${command.nodeId}`, 'missing-node');
+          return createFailure(
+            core,
+            t('flux.flowDesigner.command.unknownNode', { nodeId: command.nodeId }),
+            'missing-node',
+          );
         }
         return createSuccess(core, { data: node });
       }
@@ -232,7 +249,7 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
       }
       case 'redo':
         if (!core.canRedo()) {
-          return createFailure(core, 'Redo is not available.', 'unavailable');
+          return createFailure(core, t('flux.flowDesigner.command.redoNotAvailable'), 'unavailable');
         }
         core.redo();
         return createSuccess(core);
@@ -258,10 +275,14 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         return createSuccess(core);
       case 'setPanelWidths':
         if (command.paletteWidth !== undefined && !Number.isFinite(command.paletteWidth)) {
-          return createFailure(core, 'Invalid palette width.', 'invalid-width');
+          return createFailure(core, t('flux.flowDesigner.command.invalidPaletteWidth'), 'invalid-width');
         }
         if (command.inspectorWidth !== undefined && !Number.isFinite(command.inspectorWidth)) {
-          return createFailure(core, 'Invalid inspector width.', 'invalid-width');
+          return createFailure(
+            core,
+            t('flux.flowDesigner.command.invalidInspectorWidth'),
+            'invalid-width',
+          );
         }
         if (command.paletteWidth !== undefined) {
           core.setPaletteWidth(command.paletteWidth);
@@ -278,14 +299,16 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         return createSuccess(core);
       case 'undo':
         if (!core.canUndo()) {
-          return createFailure(core, 'Undo is not available.', 'unavailable');
+          return createFailure(core, t('flux.flowDesigner.command.undoNotAvailable'), 'unavailable');
         }
         core.undo();
         return createSuccess(core);
       default:
         return createFailure(
           core,
-          `Unsupported command: ${(command as { type: string }).type}`,
+          t('flux.flowDesigner.command.unsupportedCommand', {
+            command: (command as { type: string }).type,
+          }),
           'unavailable',
         );
     }

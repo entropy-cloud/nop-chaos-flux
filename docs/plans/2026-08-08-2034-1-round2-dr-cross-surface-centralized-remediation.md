@@ -1,6 +1,6 @@
 # DR 跨面集中修复与裁决（16 条 P2 路由 + Tiptap editor 面 + P3 残留复核）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit-round2
 > Work Item: DR
 > Last Reviewed: 2026-08-08
@@ -81,77 +81,77 @@
 
 ### Phase 1 - i18n 族集中修复（DR-1/2/3/5/6/7/8/9/10/11/12/13/14）
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-renderers/src/`（designer-command-adapter.ts / designer-command-adapter-graph.ts / designer-node-appearance.ts）、`packages/spreadsheet-renderers/src/spreadsheet-interactions/`（use-editing.ts / use-find-replace.ts）+ `packages/spreadsheet-renderers/src/page-model.ts`、`packages/report-designer-core/src/`（core.ts / core-dispatch.ts / types.ts）+ `packages/report-designer-core/src/runtime/`（preview-commands.ts / codec-commands.ts）+ `packages/report-designer-renderers/src/`（report-spreadsheet-canvas.tsx / report-designer-toolbar*.ts*）、`packages/word-editor-renderers/src/toolbar/` + `dialogs/` + `panels/`（insert-controls.tsx / paragraph-controls.tsx / template-controls.tsx / search-replace.tsx / ribbon-toolbar.tsx / page-controls.tsx / chart-dialog.tsx / code-dialog.tsx / expr-insert-dialog.tsx / dataset-dialog.tsx / dataset-panel.tsx / field-list.tsx）、`packages/word-editor-core/src/template-tags.ts`、`packages/flux-i18n/src/locales/{zh-CN,en-US}.ts`、关联 e2e spec、`docs/audits/round2-dr-adjudication.md`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 逐条核对 DR-1..DR-14 的 `文件:行` live 在案（裁决表逐条核对，任何漂移以 live 为准并更正表内引用——如 DR-1 命令适配器错误消息以 live 重枚举为准（live 11 处：adapter.ts :85/:128/:193/:214/:235/:261/:264/:281/:288 + graph.ts :61/:146，表内 :222/:232/:278 为过时引用）、DR-2 默认标签数按 live 16 条、DR-6 查找消息以 live 重枚举为准（live 6 处 :25/:27/:30/:48/:61/:63））。
-- [ ] i18n 化修复（每条 = 复用既有 key 族 + 新增 key 双 locale 同步）：DR-1（fd-7 错误消息，live 重枚举 11 处）、DR-2（fd-2 默认标签 **16 条**（`designer-node-appearance.ts:3-16`），host 配置 label 时动态解析回退）、DR-3（ss-2 编辑状态消息 3 处）、DR-5（ss-4 页头状态行）、DR-6（ss-9 查找结果，live 重枚举 6 处：:25/:27/:30/:48/:61/:63）、DR-7（rd-4 预览 2 处 + 按钮标签 + 兜底）、DR-8（rd-5 readonly/save/fields badge）、DR-9（rd-6 undo/redo 消息 + 按钮标签）、DR-10（rd-7 codec 2 处 + Untitled 默认名）、DR-11（rd-2 拖放 3 处）、DR-12（we-2 工具栏/对话框 ~30 处）、DR-13（we-4 数据集对话框族 + Copy field reference 语义裁决：按钮实为插入 → 改 label 或改行为，裁决记录）、DR-14（we-6 模板标签元数据 15 条，`word-editor-core/src/template-tags.ts`）。
-- [ ] test-first 纪律：用户可见文案断言（locale 双断言 + 渲染后 `innerText`/`title`/`aria-label` 断言，programmatic DOM 禁截图）；行为无变化处至少 1 条关键断言锁定。
-- [ ] 关联 e2e 选择器同步：word-editor.spec 等按 title/文本定位的既有选择器改为稳定定位（data-slot/testid 优先），新增/更新断言跑绿；`check:i18n-keys` exit 0。
-- [ ] DR-13「Copy field reference」语义裁决（Decision）：改 label（Insert field reference）vs 改行为——以设计文档 + live 消费为准裁决，结论回写 DR 表条目。
-- [ ] 局部验证：受影响 4 host renderer 包 + 关联 core 包（report-designer-core / word-editor-core / spreadsheet-core 如涉及）typecheck + 包级测试绿 + 关联 e2e spec 绿（保证 Phase 2/3 可继续）。
+- [x] 逐条核对 DR-1..DR-14 的 `文件:行` live 在案（裁决表逐条核对，任何漂移以 live 为准并更正表内引用——如 DR-1 命令适配器错误消息以 live 重枚举为准（live 11 处：adapter.ts :85/:128/:193/:214/:235/:261/:264/:281/:288 + graph.ts :61/:146，表内 :222/:232/:278 为过时引用）、DR-2 默认标签数按 live 16 条、DR-6 查找消息以 live 重枚举为准（live 6 处 :25/:27/:30/:48/:61/:63））。
+- [x] i18n 化修复（每条 = 复用既有 key 族 + 新增 key 双 locale 同步）：DR-1（fd-7 错误消息，live 重枚举 11 处）、DR-2（fd-2 默认标签 **16 条**（`designer-node-appearance.ts:3-16`），host 配置 label 时动态解析回退）、DR-3（ss-2 编辑状态消息 3 处）、DR-5（ss-4 页头状态行）、DR-6（ss-9 查找结果，live 重枚举 6 处：:25/:27/:30/:48/:61/:63）、DR-7（rd-4 预览 2 处 + 按钮标签 + 兜底）、DR-8（rd-5 readonly/save/fields badge）、DR-9（rd-6 undo/redo 消息 + 按钮标签）、DR-10（rd-7 codec 2 处 + Untitled 默认名）、DR-11（rd-2 拖放 3 处）、DR-12（we-2 工具栏/对话框 ~30 处）、DR-13（we-4 数据集对话框族 + Copy field reference 语义裁决：按钮实为插入 → 改 label 或改行为，裁决记录）、DR-14（we-6 模板标签元数据 15 条，`word-editor-core/src/template-tags.ts`）。
+- [x] test-first 纪律：用户可见文案断言（locale 双断言 + 渲染后 `innerText`/`title`/`aria-label` 断言，programmatic DOM 禁截图）；行为无变化处至少 1 条关键断言锁定。
+- [x] 关联 e2e 选择器同步：word-editor.spec 等按 title/文本定位的既有选择器改为稳定定位（data-slot/testid 优先），新增/更新断言跑绿；`check:i18n-keys` exit 0。
+- [x] DR-13「Copy field reference」语义裁决（Decision）：改 label（Insert field reference）vs 改行为——以设计文档 + live 消费为准裁决，结论回写 DR 表条目。
+- [x] 局部验证：受影响 4 host renderer 包 + 关联 core 包（report-designer-core / word-editor-core / spreadsheet-core 如涉及）typecheck + 包级测试绿 + 关联 e2e spec 绿（保证 Phase 2/3 可继续）。
 
 Exit Criteria:
 
-- [ ] DR-1..DR-14 全部 i18n 化落地（live `rg "硬编码英文原文"` 零残留，豁免清单显式记录），DR 表逐条勾销。
-- [ ] 新增 key 双 locale + `check:i18n-keys` exit 0；关联 e2e 全绿；受影响包 typecheck + 测试绿。
+- [x] DR-1..DR-14 全部 i18n 化落地（live `rg "硬编码英文原文"` 零残留，豁免清单显式记录），DR 表逐条勾销。
+- [x] 新增 key 双 locale + `check:i18n-keys` exit 0；关联 e2e 全绿；受影响包 typecheck + 测试绿。
 
 ### Phase 2 - 契约裁决（DR-4 / DR-15 / DR-16）
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-renderers/src/spreadsheet-interactions/`（use-spreadsheet-shell.ts / use-selection.ts / use-clipboard.ts / use-comments.ts）+ `packages/spreadsheet-renderers/src/spreadsheet-toolbar/`（spreadsheet-toolbar.tsx）、`packages/word-editor-renderers/src/types.ts` + `renderers.tsx`（+ 测试锁定 `word-editor-page-host-scope-projections.test.tsx`）、`packages/word-editor-core/src/document-io.ts`、`docs/architecture/word-editor/design.md`、`docs/audits/round2-dr-adjudication.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **DR-4（ss-2）no-op 死管线裁决**：`setCellValue`/`setCommentText` 声明无行为（use-spreadsheet-shell.ts:25-35，消费点 use-selection.ts:239-241/use-clipboard.ts:57/use-comments.ts:45；`cell-editor.tsx` **不存在**——无渲染方即 DR-4 要点，spreadsheet-renderers 无该文件）——**默认裁决：移除死管线**（props/state 清理，纯内部重构非公共 API）或恢复接线（如移除超出低风险范围则登记显式裁决理由）；comment 功能 UI 不可达 = 记录为 out-of-scope improvement（Why Not Blocking：无消费者无功能损失）；test-first 锁定移除后零引用 + 既有行为不回归。
-- [ ] **DR-15（we-1）ghost schema 裁决**：`initialCharts`/`initialCodes` 零消费者（测试锁定不流入 host document）——**默认裁决：维持声明 + `@reserved` 标注 + design.md 注记**（零消费者零功能损失，避免公共 renderer fields 面变更）；**移除方案 = 公共 API 变更 → 留人工确认门**（plan-first，本 plan 只记录裁决路径，不擅自移除）。
-- [ ] **DR-16（we-5）persist 措辞裁决**：`persistSavedDocument` storage-unavailable throw（document-io.ts:369-384）vs design.md:177「must return explicit safe fallbacks」——**默认裁决：design.md 措辞对齐 live throw 语义**（文档变更，零产品行为变化；调用方全 catch 无功能损失）；返回语义改 `SavedDocumentData | null` = 公共 API 变更 → 留人工确认门。
-- [ ] 裁决全部回写 DR 表对应条目（勾销/维持标注 + 理由），daily log 记录三项裁决结论。
-- [ ] 局部验证：spreadsheet-renderers + word-editor-core/renderers typecheck + 包级测试绿。
+- [x] **DR-4（ss-2）no-op 死管线裁决**：`setCellValue`/`setCommentText` 声明无行为（use-spreadsheet-shell.ts:25-35，消费点 use-selection.ts:239-241/use-clipboard.ts:57/use-comments.ts:45；`cell-editor.tsx` **不存在**——无渲染方即 DR-4 要点，spreadsheet-renderers 无该文件）——**默认裁决：移除死管线**（props/state 清理，纯内部重构非公共 API）或恢复接线（如移除超出低风险范围则登记显式裁决理由）；comment 功能 UI 不可达 = 记录为 out-of-scope improvement（Why Not Blocking：无消费者无功能损失）；test-first 锁定移除后零引用 + 既有行为不回归。
+- [x] **DR-15（we-1）ghost schema 裁决**：`initialCharts`/`initialCodes` 零消费者（测试锁定不流入 host document）——**默认裁决：维持声明 + `@reserved` 标注 + design.md 注记**（零消费者零功能损失，避免公共 renderer fields 面变更）；**移除方案 = 公共 API 变更 → 留人工确认门**（plan-first，本 plan 只记录裁决路径，不擅自移除）。
+- [x] **DR-16（we-5）persist 措辞裁决**：`persistSavedDocument` storage-unavailable throw（document-io.ts:369-384）vs design.md:177「must return explicit safe fallbacks」——**默认裁决：design.md 措辞对齐 live throw 语义**（文档变更，零产品行为变化；调用方全 catch 无功能损失）；返回语义改 `SavedDocumentData | null` = 公共 API 变更 → 留人工确认门。
+- [x] 裁决全部回写 DR 表对应条目（勾销/维持标注 + 理由），daily log 记录三项裁决结论。
+- [x] 局部验证：spreadsheet-renderers + word-editor-core/renderers typecheck + 包级测试绿。
 
 Exit Criteria:
 
-- [ ] DR-4/DR-15/DR-16 三条均有明确裁决结论（实施或维持 + 理由），DR 表逐条勾销零悬挂；公共面变更路径显式标注「人工确认门」。
-- [ ] 受影响包 typecheck + 测试绿；DR-16 文档措辞对齐后 `check:active-doc-code-anchors` 无新增命中。
+- [x] DR-4/DR-15/DR-16 三条均有明确裁决结论（实施或维持 + 理由），DR 表逐条勾销零悬挂；公共面变更路径显式标注「人工确认门」。
+- [x] 受影响包 typecheck + 测试绿；DR-16 文档措辞对齐后 `check:active-doc-code-anchors` 无新增命中。
 
 ### Phase 3 - Tiptap editor 面竞态修复（w3d-editor:28 + c3-5 ×2 复核）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/`（Tiptap 富文本编辑面：editor 初始化/挂载/keystroke 路径，live 核对文件）、`tests/e2e/`（c3-5-host-surfaces.spec.ts / w3d-editor 相关 spec）、`docs/audits/round2-dr-adjudication.md`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 根因定位（Decision）：w3d-editor:28「click+type keystroke 丢失竞态」——live 核对 Tiptap editor 挂载/焦点/命令时序（D2 证据：隔离复跑 3/15 绿，keystroke 变体 "hel"/"hello edi"）；对 c3-5-host-surfaces:27/:81 同族做同根因核验（D2 已裁定根因纳入 editor 面）。
-- [ ] test-first：稳定复现测试先行（如 editor 挂载后立即 type 的 keystroke 保序/防丢断言，或等 Tiptap 实例就绪信号），再实现修复（如 readiness gate / keystroke 队列化 / focus 保序）。
-- [ ] 修复 + 回归测试（断言正确行为非 not-throw）；w3d-editor:28 与 c3-5 ×2 隔离复跑 ≥3 轮稳定绿；如仍间歇按 D2 归因纪律记录（不静默吞掉）。
-- [ ] 复杂 bug 行内 bug note 补写（**117 起**，按 `00-bug-fix-note-writing-guide.md` 模板）+ `docs/bugs/README.md` 索引同步。
-- [ ] watch-only 清单更新：w3d-editor:28 / c3-5 ×2 修复确认后从清单移除（或降级记录），终态回写 DR 表 + daily log（供 DV 使用）。
+- [x] 根因定位（Decision）：w3d-editor:28「click+type keystroke 丢失竞态」——live 核对 Tiptap editor 挂载/焦点/命令时序（D2 证据：隔离复跑 3/15 绿，keystroke 变体 "hel"/"hello edi" 等）；对 c3-5-host-surfaces:27/:81 同族做同根因核验（D2 已裁定根因纳入 editor 面）。
+- [x] test-first：稳定复现测试先行（如 editor 挂载后立即 type 的 keystroke 保序/防丢断言，或等 Tiptap 实例就绪信号），再实现修复（如 readiness gate / keystroke 队列化 / focus 保序）。
+- [x] 修复 + 回归测试（断言正确行为非 not-throw）；w3d-editor:28 与 c3-5 ×2 隔离复跑 ≥3 轮稳定绿；如仍间歇按 D2 归因纪律记录（不静默吞掉）。
+- [x] 复杂 bug 行内 bug note 补写（**117 起**，按 `00-bug-fix-note-writing-guide.md` 模板）+ `docs/bugs/README.md` 索引同步。
+- [x] watch-only 清单更新：w3d-editor:28 / c3-5 ×2 修复确认后从清单移除（或降级记录），终态回写 DR 表 + daily log（供 DV 使用）。
 
 Exit Criteria:
 
-- [ ] w3d-editor:28 竞态修复 + 回归测试在案（红→绿证据），c3-5 ×2 复核结论明确；隔离复跑稳定绿记录在案。
-- [ ] bug note 117 行内补写 + README 索引同步；watch-only 清单终态更新（gantt-perf/kanban-perf 50Hz 维持「需 60Hz 环境确认」）。
+- [x] w3d-editor:28 竞态修复 + 回归测试在案（红→绿证据），c3-5 ×2 复核结论明确；隔离复跑稳定绿记录在案。
+- [x] bug note 117 行内补写 + README 索引同步；watch-only 清单终态更新（gantt-perf/kanban-perf 50Hz 维持「需 60Hz 环境确认」）。
 
 ### Phase 4 - P3 残留复核 + 收口登记
 
-Status: planned
+Status: completed
 Targets: `docs/audits/round2-p3-adjudication.md`、`docs/audits/round2-dr-adjudication.md`、`docs/backlog/component-audit-round2-roadmap.md`（DR 行）、`docs/logs/2026/08-08.md`
 
 - Item Types: `Proof | Follow-up`
 
-- [ ] P3 残留复核（Proof）：裁决表 keep 99 / dismissed 24 抽查（≥10 条 live 核对理由成立）+ **DR 表 §2 卡内 P3 30 行复核**（fd ×9 + ss ×21，以正文表为准；同步更正 §2 摘要「18 条」为 live 30 行）+ **卡内跨面共性候选逐条裁决**（ss-3 P3-2 / ss-6 P3-2 / ss-10 P3-4：unfreeze 等 no-op 命令无条件 pushUndo 污染 undo 栈 + dirty 误标（internal-state.ts:81-90 机制级，10 面共享）→ 裁决 keep（P3 语义维持）或路由 DR/CX 修复；ss-3 P3-4：按钮错误反馈依赖宿主 onLog 接线（fire() 吞错）→ 裁决 keep 或宿主接线改进路由）——结论回写卡 + DR 表 §2 注记，无静默升级为 P2。
-- [ ] 卡状态回写复核（Proof）：卡内「跨面共性登记 daily log 供 DR/CX 裁」条目逐条落裁决结论（daily log + DR 表待裁节登记；CX-13+ 插入建议不执行，人工确认门）。
-- [ ] DR 表勾销终验：16 条全部标注终态（fixed / adjudicated-keep + 理由），零悬挂声明复核（表条目 ↔ live 证据双向核对）。
-- [ ] 新发现跨面共性缺陷登记：daily log + DR 表待裁节，CX-13+ 插入建议（不执行，人工确认门）。
-- [ ] 收口登记：roadmap DR 行 `todo`→`done`（附执行证据）、daily log 收口节、bug note 索引终验。
-- [ ] 回归验证：受影响包全绿 + 关联 e2e 全绿；`pnpm check` exit 0 复核。
+- [x] P3 残留复核（Proof）：裁决表 keep 99 / dismissed 24 抽查（≥10 条 live 核对理由成立）+ **DR 表 §2 卡内 P3 30 行复核**（fd ×9 + ss ×21，以正文表为准；同步更正 §2 摘要「18 条」为 live 30 行）+ **卡内跨面共性候选逐条裁决**（ss-3 P3-2 / ss-6 P3-2 / ss-10 P3-4：unfreeze 等 no-op 命令无条件 pushUndo 污染 undo 栈 + dirty 误标（internal-state.ts:81-90 机制级，10 面共享）→ 裁决 keep（P3 语义维持）或路由 DR/CX 修复；ss-3 P3-4：按钮错误反馈依赖宿主 onLog 接线（fire() 吞错）→ 裁决 keep 或宿主接线改进路由）——结论回写卡 + DR 表 §2 注记，无静默升级为 P2。
+- [x] 卡状态回写复核（Proof）：卡内「跨面共性登记 daily log 供 DR/CX 裁」条目逐条落裁决结论（daily log + DR 表待裁节登记；CX-13+ 插入建议不执行，人工确认门）。
+- [x] DR 表勾销终验：16 条全部标注终态（fixed / adjudicated-keep + 理由），零悬挂声明复核（表条目 ↔ live 证据双向核对）。
+- [x] 新发现跨面共性缺陷登记：daily log + DR 表待裁节，CX-13+ 插入建议（不执行，人工确认门）。
+- [x] 收口登记：roadmap DR 行 `todo`→`done`（附执行证据）、daily log 收口节、bug note 索引终验。
+- [x] 回归验证：受影响包全绿 + 关联 e2e 全绿；`pnpm check` exit 0 复核。
 
 Exit Criteria:
 
-- [ ] P3 残留复核结论在案（抽查清单 + 结论）；DR 表零悬挂勾销；roadmap DR 行 `done` + daily log 收口节 + bug note 索引一致。
-- [ ] 本 plan 所有 in-scope 项勾选完成，无未处置残留（closable 状态交独立 closure-audit 裁决）。
+- [x] P3 残留复核结论在案（抽查清单 + 结论）；DR 表零悬挂勾销；roadmap DR 行 `done` + daily log 收口节 + bug note 索引一致。
+- [x] 本 plan 所有 in-scope 项勾选完成，无未处置残留（closable 状态交独立 closure-audit 裁决）。
 
 ## Draft Review Record
 
@@ -169,18 +169,18 @@ Exit Criteria:
 
 > **关闭条件**：本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选 `[x]` 后，才能将 `Plan Status` 改为 `completed`。全量验证归此处（guide Rule 18）；closure-audit 由独立 fresh session 执行，执行 session 不得自审勾选。
 
-- [ ] 16 条 DR 路由全部终态（fixed 或 adjudicated-keep + 理由），DR 表零悬挂勾销
-- [ ] Tiptap editor 面竞态修复 + 回归测试在案，watch-only 清单按修复后终态更新
-- [ ] P3 残留复核结论在案，无静默升级
-- [ ] 复杂 bug 行内 bug note 补写完成（117 起 + README 索引）
-- [ ] 受影响的 owner docs 同步（design.md 措辞裁决、DR 表/roadmap/daily log 收口登记）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 16 条 DR 路由全部终态（fixed 或 adjudicated-keep + 理由），DR 表零悬挂勾销（终验时新增执行中发现缺陷 DR-17 一并勾销，DR 表 17 条全终态）
+- [x] Tiptap editor 面竞态修复 + 回归测试在案，watch-only 清单按修复后终态更新
+- [x] P3 残留复核结论在案，无静默升级
+- [x] 复杂 bug 行内 bug note 补写完成（117 起 + README 索引）
+- [x] 受影响的 owner docs 同步（design.md 措辞裁决、DR 表/roadmap/daily log 收口登记）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`
 
 ## Deferred But Adjudicated
 
@@ -225,13 +225,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待执行完成时填写）
+Status Note: 4 Phase 全 completed + Plan Status `completed`；执行证据见 `docs/logs/2026/08-08.md` DR 节。closure-audit 由独立 fresh session 执行并记录证据（本 session 不自审勾选 Closure Gates 的 closure-audit 项）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立子 agent 填写）
-- Evidence: （待独立子 agent 填写）
+- Auditor / Agent: （由独立子 agent fresh session 执行后填写）
+- Evidence: （由独立子 agent fresh session 执行后填写）
 
 Follow-up:
 
-- （待执行完成时填写）
+- CX-13+ 插入建议（ss-3 P3-2/ss-6 P3-2/ss-10 P3-4 no-op undo 栈污染、ss-3 P3-4 onLog 宿主接线）：DR 表 §2 待裁节 + daily log 登记，人工确认后插入路线图（本 plan 未执行）。
+- DR-15/DR-16 公共面变更路径：人工确认门，确认后另立 plan 或本 mission 后续轮次。

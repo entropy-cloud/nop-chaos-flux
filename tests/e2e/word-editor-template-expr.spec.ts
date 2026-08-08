@@ -32,14 +32,14 @@ test.describe('Template Expression Insertion', () => {
   test('Insert Expression button is visible in toolbar', async ({ page }) => {
     await openWordEditor(page);
 
-    const insertExprButton = page.getByTitle('Insert Expression');
+    const insertExprButton = page.getByTestId('insert-expression');
     await expect(insertExprButton).toBeVisible({ timeout: 15000 });
   });
 
   test('clicking Insert Expression opens ExprInsertDialog', async ({ page }) => {
     await openWordEditor(page);
 
-    const insertExprButton = page.getByTitle('Insert Expression');
+    const insertExprButton = page.getByTestId('insert-expression');
     await expect(insertExprButton).toBeVisible({ timeout: 15000 });
     await insertExprButton.click();
 
@@ -49,7 +49,7 @@ test.describe('Template Expression Insertion', () => {
   test('EL Expression type is selected by default', async ({ page }) => {
     await openWordEditor(page);
 
-    await page.getByTitle('Insert Expression').click();
+    await page.getByTestId('insert-expression').click();
 
     const elTab = page.getByRole('tab', { name: 'EL 表达式' });
     await expect(elTab).toBeVisible();
@@ -60,7 +60,7 @@ test.describe('Template Expression Insertion', () => {
   test('XPL Tag type can be selected', async ({ page }) => {
     await openWordEditor(page);
 
-    await page.getByTitle('Insert Expression').click();
+    await page.getByTestId('insert-expression').click();
 
     const xplTab = page.getByRole('tab', { name: 'XPL 标签' });
     await xplTab.click();
@@ -72,7 +72,7 @@ test.describe('Template Expression Insertion', () => {
   test('tag name dropdown shows available tags', async ({ page }) => {
     await openWordEditor(page);
 
-    await page.getByTitle('Insert Expression').click();
+    await page.getByTestId('insert-expression').click();
 
     await page.getByRole('tab', { name: 'XPL 标签' }).click();
 
@@ -98,7 +98,7 @@ test.describe('Template Expression Insertion', () => {
   test('Cancel closes the dialog', async ({ page }) => {
     await openWordEditor(page);
 
-    await page.getByTitle('Insert Expression').click();
+    await page.getByTestId('insert-expression').click();
 
     await expect(page.getByText('插入模板表达式')).toBeVisible();
 
@@ -112,7 +112,7 @@ test.describe('Template Expression Insertion', () => {
 
     const marker = `customer.name_${Date.now()}`;
     await page.locator('canvas').first().click();
-    await page.getByTitle('Insert Expression').click();
+    await page.getByTestId('insert-expression').click();
     await page.getByPlaceholder('${entity.fieldName}').fill(marker);
     await page.getByRole('button', { name: /确定|确认|Insert/i }).click();
 

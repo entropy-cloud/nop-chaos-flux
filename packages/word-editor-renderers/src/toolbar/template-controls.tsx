@@ -23,11 +23,27 @@ export function TemplateControls({
         <ToolbarButton
           icon={Code2}
           onClick={() => setShowExprDialog(true)}
-          title="Insert Expression"
+          title="flux.wordEditor.insertExpression"
+          testId="insert-expression"
         />
-        <ToolbarButton icon={GitBranch} onClick={() => onInsertTag('c:if')} title="If Block" />
-        <ToolbarButton icon={Repeat} onClick={() => onInsertTag('c:for')} title="For Loop" />
-        <ToolbarButton icon={FileOutput} onClick={() => onInsertTag('c:out')} title="Output" />
+        <ToolbarButton
+          icon={GitBranch}
+          onClick={() => onInsertTag('c:if')}
+          title="flux.wordEditor.ifBlock"
+          testId="insert-if-block"
+        />
+        <ToolbarButton
+          icon={Repeat}
+          onClick={() => onInsertTag('c:for')}
+          title="flux.wordEditor.forLoop"
+          testId="insert-for-loop"
+        />
+        <ToolbarButton
+          icon={FileOutput}
+          onClick={() => onInsertTag('c:out')}
+          title="flux.wordEditor.output"
+          testId="insert-output"
+        />
       </ToolbarGroup>
       <ExprInsertDialog
         open={showExprDialog}

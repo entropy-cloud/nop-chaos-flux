@@ -1,4 +1,5 @@
 import type { SchemaInput } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type {
   SpreadsheetDocument,
   SpreadsheetCellRef,
@@ -168,7 +169,7 @@ export function createReportTemplateDocument(
   return {
     id: crypto.randomUUID(),
     kind: 'report-template',
-    name: name ?? 'Untitled Report',
+    name: name ?? t('flux.reportDesigner.untitledReport'),
     version: '1.0.0',
     spreadsheet,
     semantic: createDefaultSemantic(),

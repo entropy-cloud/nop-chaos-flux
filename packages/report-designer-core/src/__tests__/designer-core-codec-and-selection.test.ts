@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeAll } from 'vitest';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import {
   createEmptyDocument,
   createReportDesignerCore,
@@ -6,6 +7,11 @@ import {
   type ReportDesignerConfig,
   type ReportSelectionTarget,
 } from './test-utils.js';
+
+beforeAll(() => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+});
 
 const defaultConfig: ReportDesignerConfig = {
   kind: 'report-template',
@@ -30,6 +36,28 @@ describe('createReportDesignerCore codec and selection behavior', () => {
     expect(result.changed).toBe(false);
     expect(result.error).toBeInstanceOf(Error);
     expect((result.error as Error).message).toBe('No codec configured in profile');
+  });
+
+  it('localizes codec errors per locale', async () => {
+    const spreadsheetDoc = createEmptyDocument();
+    const doc = createReportTemplateDocument(spreadsheetDoc);
+    const core = createReportDesignerCore({ document: doc, config: defaultConfig });
+
+    const result = await core.dispatch({
+      type: 'report-designer:importTemplate',
+      payload: {},
+    });
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe('No codec configured in profile');
+
+    await changeLanguage('zh-CN');
+    const zhResult = await core.dispatch({
+      type: 'report-designer:importTemplate',
+      payload: {},
+    });
+    expect(zhResult.ok).toBe(false);
+    expect((zhResult.error as Error).message).toBe('配置文件中未配置编解码器');
+    await changeLanguage('en-US');
   });
 
   it('importTemplate participates in undo history', async () => {

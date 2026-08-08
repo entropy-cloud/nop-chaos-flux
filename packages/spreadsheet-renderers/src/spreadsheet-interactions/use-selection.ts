@@ -4,6 +4,7 @@ import {
   type SpreadsheetRange,
   type SpreadsheetSelection,
 } from '@nop-chaos/spreadsheet-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
 
 export interface DragState {
@@ -62,8 +63,6 @@ export function useSelection(
   bridge: SpreadsheetBridge,
   sheetId: string,
   addLog: (msg: string) => void,
-  setCommentText: (text: string) => void,
-  setCellValue: (value: string) => void,
 ) {
   const totalRows = 100;
   const totalCols = 26;
@@ -92,7 +91,7 @@ export function useSelection(
         }
       } catch (error) {
         if (!isAbortLike(error)) {
-          addLog(formatFailureMessage('Selection failed', error));
+          addLog(formatFailureMessage(t('flux.spreadsheet.selectionFailed'), error));
         }
       }
     },
@@ -123,7 +122,7 @@ export function useSelection(
       });
     } catch (error) {
       if (!isAbortLike(error)) {
-        addLog(formatFailureMessage('Cell save failed', error));
+        addLog(formatFailureMessage(t('flux.spreadsheet.cellSaveFailed'), error));
       }
     }
   }, [addLog, bridge, sheetId]);
@@ -235,10 +234,6 @@ export function useSelection(
           endCol: col,
         };
         setPreviewRange(null);
-        const cell = snapshot.activeSheet?.cells?.[cellAddress(row, col)];
-        setCellValue(String(cell?.value ?? ''));
-        const comment = cell?.comment;
-        setCommentText(typeof comment === 'string' ? comment : (comment?.text ?? ''));
         void (async () => {
           await commitEditingCell();
           await settleSelectionDispatch(
@@ -249,14 +244,7 @@ export function useSelection(
       }
       hasDraggedRef.current = false;
     },
-    [
-      snapshot,
-      commitEditingCell,
-      setCommentText,
-      setCellValue,
-      requestSelectedCell,
-      settleSelectionDispatch,
-    ],
+    [commitEditingCell, requestSelectedCell, settleSelectionDispatch],
   );
 
   const handleCellMouseDown = useCallback(

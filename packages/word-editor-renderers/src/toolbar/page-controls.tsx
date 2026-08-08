@@ -156,12 +156,19 @@ export function PageControls({ bridge, store }: PageControlsProps) {
             <DialogTitle>{t('flux.wordEditor.pageMargins')}</DialogTitle>
           </DialogHeader>
           <DialogBody className="space-y-2">
-            {(['Top', 'Right', 'Bottom', 'Left'] as const).map((label, i) => (
-              <div key={label} className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground w-14">{label}</span>
+            {(
+              [
+                ['flux.wordEditor.marginTop', 0],
+                ['flux.wordEditor.marginRight', 1],
+                ['flux.wordEditor.marginBottom', 2],
+                ['flux.wordEditor.marginLeft', 3],
+              ] as const
+            ).map(([labelKey, i]) => (
+              <div key={labelKey} className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground w-14">{t(labelKey)}</span>
                 <Input
                   type="number"
-                  aria-label={`${label} margin`}
+                  aria-label={t('flux.wordEditor.marginAriaLabel', { margin: t(labelKey) })}
                   value={margins[i]}
                   onChange={(e) => {
                     const newMargins = [...margins] as [number, number, number, number];

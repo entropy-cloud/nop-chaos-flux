@@ -25,7 +25,7 @@ async function openDatasetDialog(page: import('@playwright/test').Page) {
   const addDatasetButton = page.getByRole('button', { name: /Add Dataset|添加数据集/ }).first();
   await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
   await addDatasetButton.click();
-  await expect(page.getByText('Create Dataset')).toBeVisible();
+  await expect(page.getByText(/Create Dataset|创建数据集/)).toBeVisible();
 }
 
 test.describe('Dataset Sidebar Panel', () => {
@@ -47,7 +47,7 @@ test.describe('Dataset Sidebar Panel', () => {
 
     await openDatasetDialog(page);
 
-    await page.getByPlaceholder('Enter dataset name').fill('TestDataset');
+    await page.getByPlaceholder(/Enter dataset name|输入数据集名称/).fill('TestDataset');
     await page.getByRole('dialog').getByRole('button', { name: '保存' }).click();
 
     await expect(page.getByText('TestDataset')).toBeVisible();
@@ -76,14 +76,14 @@ test.describe('Dataset Sidebar Panel', () => {
 
     await openDatasetDialog(page);
 
-    await page.getByPlaceholder('Enter dataset name').fill('EditTarget');
+    await page.getByPlaceholder(/Enter dataset name|输入数据集名称/).fill('EditTarget');
     await page.getByRole('button', { name: '保存' }).click();
 
     await expect(page.getByText('EditTarget')).toBeVisible();
 
     await page.getByText('EditTarget').click();
 
-    await expect(page.getByText('Edit Dataset')).toBeVisible();
-    await expect(page.getByPlaceholder('Enter dataset name')).toHaveValue('EditTarget');
+    await expect(page.getByText(/Edit Dataset|编辑数据集/)).toBeVisible();
+    await expect(page.getByPlaceholder(/Enter dataset name|输入数据集名称/)).toHaveValue('EditTarget');
   });
 });

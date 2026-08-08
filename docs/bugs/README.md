@@ -135,3 +135,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/114-word-editor-loaddocument-null-root-crash-fix.md`
 - `docs/bugs/115-word-editor-dataset-unlabeled-column-lost-on-recovery-fix.md`
 - `docs/bugs/116-word-editor-dataset-panel-fields-unreachable-dead-menu-fix.md`
+- `docs/bugs/117-tiptap-editor-label-activation-race-fix.md`

@@ -476,7 +476,7 @@ test.describe.skip('Subagent-A: Word Editor basic interaction', () => {
     });
     await assertTrackedPageErrors(page);
 
-    const hyperlinkBtn = page.getByTitle('Insert Hyperlink');
+    const hyperlinkBtn = page.getByTestId('insert-hyperlink');
     if (await hyperlinkBtn.isVisible().catch(() => false)) {
       await hyperlinkBtn.click();
       await page.waitForTimeout(500);
@@ -487,7 +487,7 @@ test.describe.skip('Subagent-A: Word Editor basic interaction', () => {
       await page.waitForTimeout(300);
     }
 
-    const exprBtn = page.getByTitle('Insert Expression');
+    const exprBtn = page.getByTestId('insert-expression');
     if (await exprBtn.isVisible().catch(() => false)) {
       await exprBtn.click();
       await page.waitForTimeout(500);

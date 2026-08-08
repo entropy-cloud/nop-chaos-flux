@@ -75,7 +75,6 @@ export function DefaultSpreadsheetPageBody(props: {
     showCommentInput,
     setShowCommentInput,
     commentText,
-    setCommentText,
     hasComment,
     gridRef,
     isInRange,
@@ -189,7 +188,7 @@ export function DefaultSpreadsheetPageBody(props: {
             showCommentInput={showCommentInput}
             onToggleCommentInput={() => setShowCommentInput((value) => !value)}
             commentText={commentText}
-            onCommentTextChange={setCommentText}
+            onCommentTextChange={() => undefined}
             onAddComment={() => fire(handleAddComment)}
             onDeleteComment={() => fire(handleDeleteComment)}
             hasComment={hasComment}

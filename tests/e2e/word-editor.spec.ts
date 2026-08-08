@@ -38,24 +38,24 @@ test.describe('Word Editor Page', () => {
     await expect(page.getByTestId('toolbar-italic')).toBeVisible();
     await expect(page.getByTestId('toolbar-underline')).toBeVisible();
 
-    await expect(page.getByRole('button', { name: 'Align Left' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Center' })).toBeVisible();
+    await expect(page.getByTestId('paragraph-align-left')).toBeVisible();
+    await expect(page.getByTestId('paragraph-align-center')).toBeVisible();
 
-    await expect(page.getByRole('button', { name: 'Insert Table (3×3)' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Insert Hyperlink' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Insert Chart' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Insert Barcode/QR Code' })).toBeVisible();
+    await expect(page.getByTestId('insert-table')).toBeVisible();
+    await expect(page.getByTestId('insert-hyperlink')).toBeVisible();
+    await expect(page.getByTestId('insert-chart')).toBeVisible();
+    await expect(page.getByTestId('insert-code')).toBeVisible();
 
-    await expect(page.getByRole('button', { name: 'Insert Expression' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'If Block' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'For Loop' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Output' })).toBeVisible();
+    await expect(page.getByTestId('insert-expression')).toBeVisible();
+    await expect(page.getByTestId('insert-if-block')).toBeVisible();
+    await expect(page.getByTestId('insert-for-loop')).toBeVisible();
+    await expect(page.getByTestId('insert-output')).toBeVisible();
 
     await expect(page.getByRole('button', { name: /放大|Zoom In/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /缩小|Zoom Out/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /打印|Print/ })).toBeVisible();
 
-    await expect(page.getByRole('button', { name: 'Search & Replace' })).toBeVisible();
+    await expect(page.getByTestId('search-replace')).toBeVisible();
   });
 
   test('displays left panel with Datasets and Fields tabs', async ({ page }) => {
@@ -119,13 +119,13 @@ test.describe('Word Editor Page', () => {
   test('hyperlink toolbar action opens its dialog surface', async ({ page }) => {
     await openWordEditor(page);
 
-    const hyperlinkButton = page.getByTitle('Insert Hyperlink');
+    const hyperlinkButton = page.getByTestId('insert-hyperlink');
     await expect(hyperlinkButton).toBeVisible({ timeout: 15000 });
     await hyperlinkButton.click();
 
     await expect(page.getByText('插入超链接')).toBeVisible();
 
-    await expect(page.getByPlaceholder('Display text')).toBeVisible();
+    await expect(page.getByPlaceholder('显示文本')).toBeVisible();
     await expect(page.getByPlaceholder('URL (https://...)')).toBeVisible();
 
     await page.getByRole('button', { name: '取消' }).first().click();
@@ -135,7 +135,7 @@ test.describe('Word Editor Page', () => {
   test('expression toolbar action opens its dialog surface', async ({ page }) => {
     await openWordEditor(page);
 
-    const exprButton = page.getByTitle('Insert Expression');
+    const exprButton = page.getByTestId('insert-expression');
     await expect(exprButton).toBeVisible({ timeout: 15000 });
     await exprButton.click();
 
@@ -154,14 +154,14 @@ test.describe('Word Editor Page', () => {
     await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
     await addDatasetButton.click();
 
-    await expect(page.getByRole('heading', { name: 'Create Dataset' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '创建数据集' })).toBeVisible();
 
-    await expect(page.getByPlaceholder('Enter dataset name')).toBeVisible();
-    await expect(page.getByPlaceholder('Enter dataset description')).toBeVisible();
+    await expect(page.getByPlaceholder('输入数据集名称')).toBeVisible();
+    await expect(page.getByPlaceholder('输入数据集描述')).toBeVisible();
 
     const typeSelect = page
       .locator('select')
-      .filter({ hasText: /SQL|API|Mongo|Static/ })
+      .filter({ hasText: /SQL|API|Mongo|静态/ })
       .first();
     await expect(typeSelect).toBeVisible();
   });
@@ -180,40 +180,40 @@ test.describe('Word Editor Page', () => {
   test('search toolbar action opens the search panel', async ({ page }) => {
     await openWordEditor(page);
 
-    const searchButton = page.getByTitle('Search & Replace');
+    const searchButton = page.getByTestId('search-replace');
     await expect(searchButton).toBeVisible({ timeout: 15000 });
     await searchButton.click();
 
-    await expect(page.getByPlaceholder('Search...')).toBeVisible();
-    await expect(page.getByPlaceholder('Replace...')).toBeVisible();
+    await expect(page.getByPlaceholder('搜索...')).toBeVisible();
+    await expect(page.getByPlaceholder('替换...')).toBeVisible();
   });
 
   test('chart toolbar action opens its dialog surface', async ({ page }) => {
     await openWordEditor(page);
 
-    const chartButton = page.getByTitle('Insert Chart');
+    const chartButton = page.getByTestId('insert-chart');
     await expect(chartButton).toBeVisible({ timeout: 15000 });
     await chartButton.click();
 
-    await expect(page.getByText('Create Chart')).toBeVisible();
+    await expect(page.getByText('创建图表')).toBeVisible();
 
-    await expect(page.getByPlaceholder('Enter chart name')).toBeVisible();
+    await expect(page.getByPlaceholder('输入图表名称')).toBeVisible();
 
-    await expect(page.getByPlaceholder('Select dataset (e.g., dataset1)')).toBeVisible();
-    await expect(page.getByPlaceholder('Category field name (e.g., category)')).toBeVisible();
+    await expect(page.getByPlaceholder('选择数据集（如 dataset1）')).toBeVisible();
+    await expect(page.getByPlaceholder('分类字段名（如 category）')).toBeVisible();
   });
 
   test('barcode toolbar action opens its dialog surface', async ({ page }) => {
     await openWordEditor(page);
 
-    const codeButton = page.getByTitle('Insert Barcode/QR Code');
+    const codeButton = page.getByTestId('insert-code');
     await expect(codeButton).toBeVisible({ timeout: 15000 });
     await codeButton.click();
 
-    await expect(page.getByText('Create Code')).toBeVisible();
+    await expect(page.getByText('创建编码')).toBeVisible();
 
-    await expect(page.getByPlaceholder('Enter code name')).toBeVisible();
-    await expect(page.getByPlaceholder('Enter dataset ID')).toBeVisible();
-    await expect(page.getByPlaceholder('Enter value field')).toBeVisible();
+    await expect(page.getByPlaceholder('输入编码名称')).toBeVisible();
+    await expect(page.getByPlaceholder('输入数据集 ID')).toBeVisible();
+    await expect(page.getByPlaceholder('输入值字段')).toBeVisible();
   });
 });

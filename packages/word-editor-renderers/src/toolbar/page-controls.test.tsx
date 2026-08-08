@@ -157,10 +157,10 @@ describe('PageControls', () => {
 
     fireEvent.click(screen.getAllByTitle('设置页边距')[0]!);
     const marginDialog = await screen.findByRole('dialog');
-    expect(within(marginDialog).getByRole('spinbutton', { name: 'Top margin' })).toBeTruthy();
-    expect(within(marginDialog).getByRole('spinbutton', { name: 'Right margin' })).toBeTruthy();
-    expect(within(marginDialog).getByRole('spinbutton', { name: 'Bottom margin' })).toBeTruthy();
-    expect(within(marginDialog).getByRole('spinbutton', { name: 'Left margin' })).toBeTruthy();
+    expect(within(marginDialog).getByRole('spinbutton', { name: '上边距' })).toBeTruthy();
+    expect(within(marginDialog).getByRole('spinbutton', { name: '右边距' })).toBeTruthy();
+    expect(within(marginDialog).getByRole('spinbutton', { name: '下边距' })).toBeTruthy();
+    expect(within(marginDialog).getByRole('spinbutton', { name: '左边距' })).toBeTruthy();
     expect(screen.queryByTitle('Watermark')).toBeNull();
   });
 

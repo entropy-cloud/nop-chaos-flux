@@ -1,4 +1,5 @@
 import type { DesignerCore } from '@nop-chaos/flow-designer-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { DesignerCommand, DesignerCommandResult } from './designer-command-types.js';
 import {
   createFailure,
@@ -58,7 +59,7 @@ export function executeGraphOnlyCommand(
         ),
       );
       if (!edge) {
-        return createFailure(core, error ?? 'Unable to add edge.');
+        return createFailure(core, error ?? t('flux.flowDesigner.command.unableToAddEdge'));
       }
 
       return createSuccess(core, { data: edge });
@@ -96,7 +97,11 @@ export function executeGraphOnlyCommand(
     case 'duplicateNode': {
       const node = core.duplicateNode(command.nodeId);
       if (!node) {
-        return createFailure(core, `Unknown node: ${command.nodeId}`, 'missing-node');
+        return createFailure(
+          core,
+          t('flux.flowDesigner.command.unknownNode', { nodeId: command.nodeId }),
+          'missing-node',
+        );
       }
 
       return createSuccess(core, { data: node });
@@ -104,7 +109,11 @@ export function executeGraphOnlyCommand(
     case 'moveNode': {
       const node = getNode(core.getDocument(), command.nodeId);
       if (!node) {
-        return createFailure(core, `Unknown node: ${command.nodeId}`, 'missing-node');
+        return createFailure(
+          core,
+          t('flux.flowDesigner.command.unknownNode', { nodeId: command.nodeId }),
+          'missing-node',
+        );
       }
 
       if (node.position.x === command.position.x && node.position.y === command.position.y) {
@@ -118,7 +127,11 @@ export function executeGraphOnlyCommand(
     }
     case 'reconnectEdge': {
       if (!hasEdge(core.getDocument(), command.edgeId)) {
-        return createFailure(core, `Unknown edge: ${command.edgeId}`, 'missing-edge');
+        return createFailure(
+          core,
+          t('flux.flowDesigner.command.unknownEdge', { edgeId: command.edgeId }),
+          'missing-edge',
+        );
       }
 
       const validation = validateEdgeMutation(
@@ -143,7 +156,7 @@ export function executeGraphOnlyCommand(
       if (!result.ok) {
         return createFailure(
           core,
-          result.error ?? 'Unable to reconnect edge.',
+          result.error ?? t('flux.flowDesigner.command.unableToReconnectEdge'),
           (result.reason as import('./designer-command-types.js').DesignerCommandReason | undefined) ??
             'missing-edge',
         );
@@ -176,7 +189,11 @@ export function executeGraphOnlyCommand(
     }
     case 'updateEdgeData':
       if (!hasEdge(core.getDocument(), command.edgeId)) {
-        return createFailure(core, `Unknown edge: ${command.edgeId}`, 'missing-edge');
+        return createFailure(
+          core,
+          t('flux.flowDesigner.command.unknownEdge', { edgeId: command.edgeId }),
+          'missing-edge',
+        );
       }
       core.updateEdge(command.edgeId, command.data);
       return createSuccess(core);

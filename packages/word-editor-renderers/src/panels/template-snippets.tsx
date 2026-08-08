@@ -56,14 +56,14 @@ export function TemplateSnippets({ onInsertTag }: TemplateSnippetsProps) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="text-sm font-medium text-[var(--nop-text-strong)]">
-                            {tag.label}
+                            {tag.labelKey ? t(tag.labelKey) : tag.label}
                           </h3>
                           <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-[var(--nop-surface-soft)] text-[var(--nop-body-copy)] border border-[var(--nop-border)]">
                             {tag.name}
                           </span>
                         </div>
                         <p className="text-[11px] text-[var(--nop-body-copy)] line-clamp-2">
-                          {tag.description}
+                          {tag.descriptionKey ? t(tag.descriptionKey) : tag.description}
                         </p>
                       </div>
                     </div>

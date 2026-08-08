@@ -97,37 +97,44 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
       <ToolbarButton
         icon={Table}
         onClick={() => bridge?.command?.executeInsertTable(3, 3)}
-        title="Insert Table (3×3)"
+        title="flux.wordEditor.insertTable"
+        testId="insert-table"
       />
       <ToolbarButton
         icon={ImagePlus}
         onClick={() => imageInputRef.current?.click()}
-        title="Insert Image"
+        title="flux.wordEditor.insertImage"
+        testId="insert-image"
       />
       <ToolbarButton
         icon={Link2}
         onClick={() => setShowLinkDialog(true)}
-        title="Insert Hyperlink"
+        title="flux.wordEditor.insertHyperlink"
+        testId="insert-hyperlink"
       />
       <ToolbarButton
         icon={BarChart3}
         onClick={() => setShowChartDialog(true)}
-        title="Insert Chart"
+        title="flux.wordEditor.insertChart"
+        testId="insert-chart"
       />
       <ToolbarButton
         icon={QrCode}
         onClick={() => setShowCodeDialog(true)}
-        title="Insert Barcode/QR Code"
+        title="flux.wordEditor.insertCode"
+        testId="insert-code"
       />
       <ToolbarButton
         icon={SeparatorHorizontal}
         onClick={() => bridge?.command?.executeSeparator([])}
-        title="Separator"
+        title="flux.wordEditor.separator"
+        testId="insert-separator"
       />
       <ToolbarButton
         icon={ArrowDownToLine}
         onClick={() => bridge?.command?.executePageBreak()}
-        title="Page Break"
+        title="flux.wordEditor.pageBreak"
+        testId="insert-page-break"
       />
       <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageSelect} hidden />
       <Dialog open={showLinkDialog} onOpenChange={handleDialogClose}>
@@ -137,15 +144,15 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
           </DialogHeader>
           <DialogBody className="space-y-3">
             <Input
-              aria-label="Display text"
-              placeholder="Display text"
+              aria-label={t('flux.wordEditor.displayText')}
+              placeholder={t('flux.wordEditor.displayText')}
               value={hyperlinkDisplay}
               onChange={(e) => setHyperlinkDisplay(e.target.value)}
               size="sm"
             />
             <Input
-              aria-label="URL"
-              placeholder="URL (https://...)"
+              aria-label={t('flux.wordEditor.urlAriaLabel')}
+              placeholder={t('flux.wordEditor.urlPlaceholder')}
               value={hyperlinkUrl}
               onChange={(e) => setHyperlinkUrl(e.target.value)}
               size="sm"

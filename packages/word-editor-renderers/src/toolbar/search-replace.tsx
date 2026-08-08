@@ -67,7 +67,7 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
           <Input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Search..."
+            placeholder={t('flux.wordEditor.searchPlaceholder')}
             size="sm"
             className="pl-7 w-32"
           />
@@ -76,9 +76,16 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
           icon={ArrowLeft}
           onClick={handlePrev}
           disabled={!searchText}
-          title="Previous"
+          title="flux.wordEditor.previous"
+          testId="search-previous"
         />
-        <ToolbarButton icon={ArrowRight} onClick={handleNext} disabled={!searchText} title="Next" />
+        <ToolbarButton
+          icon={ArrowRight}
+          onClick={handleNext}
+          disabled={!searchText}
+          title="flux.wordEditor.next"
+          testId="search-next"
+        />
         {resultCount > 0 && <span className="text-xs text-muted-foreground">{resultCount}</span>}
       </div>
       <ToolbarSeparator />
@@ -88,7 +95,7 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
           <Input
             value={replaceText}
             onChange={(e) => setReplaceText(e.target.value)}
-            placeholder="Replace..."
+            placeholder={t('flux.wordEditor.replacePlaceholder')}
             size="sm"
             className="pl-7 w-32"
           />
@@ -104,7 +111,7 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
         </Button>
       </div>
       <ToolbarSeparator />
-      <ToolbarButton icon={X} onClick={handleClose} title="Close" />
+      <ToolbarButton icon={X} onClick={handleClose} title="flux.wordEditor.close" testId="search-close" />
     </div>
   );
 }

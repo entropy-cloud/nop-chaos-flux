@@ -8,6 +8,7 @@ import type {
   ReportDesignerRuntimeSnapshot,
   ReportTemplateDocument,
 } from '../types.js';
+import { t } from '@nop-chaos/flux-i18n';
 import { getCodecId } from './registry.js';
 import { createAdapterContext } from './adapter-context.js';
 
@@ -17,12 +18,12 @@ export function resolveCodecAdapter(args: {
 }): { adapter: TemplateCodecAdapter; codecId: string } | { error: Error } {
   const codecId = getCodecId(args.profile);
   if (!codecId) {
-    return { error: new Error('No codec configured in profile') };
+    return { error: new Error(t('flux.reportDesigner.noCodecConfigured')) };
   }
 
   const adapter = args.adapters.codecs.get(codecId);
   if (!adapter) {
-    return { error: new Error(`Codec not found: ${codecId}`) };
+    return { error: new Error(t('flux.reportDesigner.codecNotFound', { codecId })) };
   }
 
   return { adapter, codecId };

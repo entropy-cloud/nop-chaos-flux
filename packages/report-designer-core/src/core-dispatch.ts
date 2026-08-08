@@ -7,6 +7,7 @@ import type {
   FieldDragState,
   InspectorRuntimeState,
 } from './types.js';
+import { t } from '@nop-chaos/flux-i18n';
 import { getTargetMeta } from './types.js';
 import type { ReportDesignerCommand, ReportDesignerCommandResult } from './commands.js';
 import type { ReportDesignerAdapterRegistry, ReportDesignerProfile } from './adapters.js';
@@ -287,7 +288,7 @@ export async function dispatchReportDesignerCommand(
       case 'report-designer:undo': {
         const current = store.getState();
         if (current.undoStack.length === 0) {
-          return { ok: false, changed: false, error: 'Nothing to undo' };
+          return { ok: false, changed: false, error: t('flux.reportDesigner.nothingToUndo') };
         }
         const undoStack = [...current.undoStack];
         const prevDocument = undoStack.pop()!;
@@ -306,7 +307,7 @@ export async function dispatchReportDesignerCommand(
       case 'report-designer:redo': {
         const current = store.getState();
         if (current.redoStack.length === 0) {
-          return { ok: false, changed: false, error: 'Nothing to redo' };
+          return { ok: false, changed: false, error: t('flux.reportDesigner.nothingToRedo') };
         }
         const redoStack = [...current.redoStack];
         const nextDocument = redoStack.pop()!;
@@ -336,11 +337,12 @@ export async function dispatchReportDesignerCommand(
         return {
           ok: false,
           changed: false,
-          error: `Unknown command: ${
-            typeof (command as { type?: unknown }).type === 'string'
-              ? (command as { type: string }).type
-              : 'unknown'
-          }`,
+          error: t('flux.reportDesigner.unknownCommand', {
+            command:
+              typeof (command as { type?: unknown }).type === 'string'
+                ? (command as { type: string }).type
+                : 'unknown',
+          }),
         };
     }
   } catch (err) {

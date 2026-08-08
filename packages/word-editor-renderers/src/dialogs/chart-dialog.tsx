@@ -164,7 +164,9 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
     >
       <DialogContent size="lg" className="flex flex-col max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Edit Chart' : 'Create Chart'}</DialogTitle>
+          <DialogTitle>
+            {initialData ? t('flux.wordEditor.editChart') : t('flux.wordEditor.createChart')}
+          </DialogTitle>
         </DialogHeader>
 
         <DialogBody className="flex-1 overflow-hidden min-h-0">
@@ -178,7 +180,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
                   id={`${dialogIdPrefix}-name`}
                   value={chartName}
                   onChange={(e) => setChartName(e.target.value)}
-                  placeholder="Enter chart name"
+                  placeholder={t('flux.wordEditor.chartNamePlaceholder')}
                   size="sm"
                 />
               </div>
@@ -215,7 +217,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
                   id={`${dialogIdPrefix}-dataset-id`}
                   value={datasetId}
                   onChange={(e) => setDatasetId(e.target.value)}
-                  placeholder="Select dataset (e.g., dataset1)"
+                  placeholder={t('flux.wordEditor.datasetIdPlaceholder')}
                   size="sm"
                 />
               </div>
@@ -226,7 +228,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
                   id={`${dialogIdPrefix}-category-field`}
                   value={categoryField}
                   onChange={(e) => setCategoryField(e.target.value)}
-                  placeholder="Category field name (e.g., category)"
+                  placeholder={t('flux.wordEditor.categoryFieldPlaceholder')}
                   size="sm"
                 />
               </div>
@@ -237,7 +239,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
                   id={`${dialogIdPrefix}-value-fields`}
                   value={valueField}
                   onChange={(e) => setValueField(e.target.value)}
-                  placeholder="Comma-separated values (e.g., value1, value2)"
+                  placeholder={t('flux.wordEditor.valueFieldsPlaceholder')}
                   size="sm"
                 />
               </div>
@@ -248,7 +250,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
                   id={`${dialogIdPrefix}-series-field`}
                   value={seriesField}
                   onChange={(e) => setSeriesField(e.target.value)}
-                  placeholder="Comma-separated series (e.g., series1, series2)"
+                  placeholder={t('flux.wordEditor.seriesFieldPlaceholder')}
                   size="sm"
                 />
               </div>

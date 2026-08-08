@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from './bridge.js';
 import {
   useSnapshotSelector,
@@ -119,7 +120,6 @@ export interface SpreadsheetInteractionsReturn {
   showCommentInput: boolean;
   setShowCommentInput: React.Dispatch<React.SetStateAction<boolean>>;
   commentText: string;
-  setCommentText: React.Dispatch<React.SetStateAction<string>>;
   handleAddComment: () => Promise<void>;
   handleDeleteComment: () => Promise<void>;
   hasComment: boolean;
@@ -166,7 +166,7 @@ export function useSpreadsheetInteractions(
   const selectedCell = snapshot.activeCell
     ? { row: snapshot.activeCell.row, col: snapshot.activeCell.col }
     : null;
-  const { addLog, cellValue, setCellValue, commentText, setCommentText, gridRef } =
+  const { addLog, cellValue, commentText, gridRef } =
     useSpreadsheetShell(snapshot, selectedCell, onLog);
 
   const {
@@ -197,8 +197,6 @@ export function useSpreadsheetInteractions(
     bridge,
     sheetId,
     addLog,
-    setCommentText,
-    setCellValue,
   );
 
   const {
@@ -225,7 +223,7 @@ export function useSpreadsheetInteractions(
   const handleCommandError = useCallback(
     (error: unknown) => {
       if (!isAbortLike(error)) {
-        addLog(formatFailureMessage('Spreadsheet command failed', error));
+        addLog(formatFailureMessage(t('flux.spreadsheet.commandFailed'), error));
       }
     },
     [addLog],
@@ -239,7 +237,6 @@ export function useSpreadsheetInteractions(
     sheetId,
     selectedCell,
     getSelectedRange,
-    setCellValue,
     addLog,
   );
 
@@ -286,7 +283,7 @@ export function useSpreadsheetInteractions(
   } = useFindReplace(bridge, sheetId, selectionCell, addLog);
 
   const { showCommentInput, setShowCommentInput, handleAddComment, handleDeleteComment } =
-    useComments(bridge, sheetId, selectionCell, readOnly, addLog, commentText, setCommentText);
+    useComments(bridge, sheetId, selectionCell, readOnly, addLog, commentText);
 
   const {
     dropTargetCell,
@@ -317,7 +314,7 @@ export function useSpreadsheetInteractions(
     if (editingCell) {
       void handleEditSave().catch((error) => {
         if (!isAbortLike(error)) {
-          addLog(formatFailureMessage('Cell save failed', error));
+          addLog(formatFailureMessage(t('flux.spreadsheet.cellSaveFailed'), error));
         }
       });
     }
@@ -327,7 +324,6 @@ export function useSpreadsheetInteractions(
     bridge,
     sheetId,
     selectedCell: selectionCell,
-    setCellValue,
     readOnly,
   });
 
@@ -406,7 +402,6 @@ export function useSpreadsheetInteractions(
     showCommentInput,
     setShowCommentInput,
     commentText,
-    setCommentText,
     handleAddComment,
     handleDeleteComment,
     hasComment,

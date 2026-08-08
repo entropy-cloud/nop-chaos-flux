@@ -162,7 +162,7 @@ export function SpreadsheetDemo() {
             showCommentInput={interactions.showCommentInput}
             onToggleCommentInput={() => interactions.setShowCommentInput((value) => !value)}
             commentText={interactions.commentText}
-            onCommentTextChange={interactions.setCommentText}
+            onCommentTextChange={() => undefined}
             onAddComment={() => void interactions.handleAddComment()}
             onDeleteComment={() => void interactions.handleDeleteComment()}
             hasComment={interactions.hasComment}

@@ -6,7 +6,6 @@ export function useCellValueSync(input: {
   bridge: SpreadsheetBridge;
   sheetId: string;
   selectedCell: { row: number; col: number } | null;
-  setCellValue: React.Dispatch<React.SetStateAction<string>>;
   readOnly: boolean;
 }) {
   return useCallback(

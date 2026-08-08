@@ -27,7 +27,13 @@ export interface WordEditorPageSchemaInput {
   onSave?: ActionSchema;
   initialDocument?: WordDocument;
   datasets?: Dataset[];
+  /**
+   * @reserved Zero-consumer ghost declaration (adjudicated 2026-08-08, DR-15):
+   * never flows into the host document; kept for schema compatibility — removal is
+   * a public renderer-fields change and requires human confirmation (plan-first).
+   */
   initialCharts?: DocChart[];
+  /** @reserved Zero-consumer ghost declaration (adjudicated 2026-08-08, DR-15); see initialCharts. */
   initialCodes?: DocCode[];
   toolbar?: BaseSchema | BaseSchema[];
   leftPanel?: BaseSchema | BaseSchema[];

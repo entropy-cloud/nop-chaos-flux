@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { deriveHostSnapshot } from './bridge.js';
 import {
   buildSpreadsheetStatusLabel,
@@ -9,6 +10,11 @@ import {
 } from './page-model.js';
 
 describe('spreadsheet page model helpers', () => {
+  beforeAll(() => {
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  });
+
   it('resolves active sheet from runtime snapshot', () => {
     const core = createSpreadsheetCore({ document: createEmptyDocument('sheet-active') });
     const runtime = core.getSnapshot();
@@ -66,5 +72,28 @@ describe('spreadsheet page model helpers', () => {
     expect(buildSpreadsheetStatusLabel(host)).toBe(
       `Active sheet: ${host.activeSheet?.name ?? 'Unknown'} | Selection: cell`,
     );
+  });
+
+  it('localizes the status label and unknown fallback per locale', async () => {
+    const core = createSpreadsheetCore({ document: createEmptyDocument('status-zh') });
+    const sheetId = core.getSnapshot().activeSheetId;
+
+    await core.dispatch({
+      type: 'spreadsheet:setSelection',
+      selection: {
+        kind: 'cell',
+        sheetId,
+        anchor: { sheetId, address: 'C3', row: 2, col: 2 },
+      },
+    });
+
+    const host = deriveHostSnapshot(core.getSnapshot());
+    const { changeLanguage } = await import('@nop-chaos/flux-i18n');
+    await changeLanguage('zh-CN');
+    const zhLabel = buildSpreadsheetStatusLabel(host);
+    expect(zhLabel).toContain('当前工作表:');
+    expect(zhLabel).toContain('选中: cell');
+    await changeLanguage('en-US');
+    expect(buildSpreadsheetStatusLabel(host)).toContain('Active sheet:');
   });
 });

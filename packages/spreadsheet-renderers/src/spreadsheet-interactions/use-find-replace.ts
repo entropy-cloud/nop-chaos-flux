@@ -1,5 +1,6 @@
 import { startTransition, useCallback, useState } from 'react';
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { SpreadsheetBridge } from '../bridge.js';
 
 export function useFindReplace(
@@ -22,12 +23,14 @@ export function useFindReplace(
     if (result.ok && result.data) {
       const found = result.data as { address: string; value: string };
       startTransition(() => {
-        setFindResults(`Found at ${found.address}: "${found.value}"`);
+        setFindResults(
+          t('flux.spreadsheet.foundAt', { address: found.address, value: found.value }),
+        );
       });
-      addLog(`Found: ${found.address}`);
+      addLog(t('flux.spreadsheet.foundLog', { address: found.address }));
     } else {
       startTransition(() => {
-        setFindResults('Not found');
+        setFindResults(t('flux.spreadsheet.notFound'));
       });
     }
   }, [findQuery, bridge, addLog]);
@@ -45,7 +48,7 @@ export function useFindReplace(
       options: { query: findQuery },
       replacement: replaceText,
     });
-    addLog('Replaced');
+    addLog(t('flux.spreadsheet.replacedLog'));
   }, [selectedCell, findQuery, replaceText, sheetId, bridge, addLog]);
 
   const handleReplaceAll = useCallback(async () => {
@@ -58,9 +61,9 @@ export function useFindReplace(
     if (result.ok) {
       const count = (result.data as { count?: number })?.count ?? 0;
       startTransition(() => {
-        setFindResults(`Replaced ${count} occurrences`);
+        setFindResults(t('flux.spreadsheet.replacedCount', { count }));
       });
-      addLog(`Replaced all: ${count}`);
+      addLog(t('flux.spreadsheet.replacedAllLog', { count }));
     }
   }, [findQuery, replaceText, bridge, addLog]);
 

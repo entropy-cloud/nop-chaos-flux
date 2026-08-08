@@ -9,7 +9,6 @@ export function useComments(
   readOnly: boolean,
   addLog: (msg: string) => void,
   commentText: string,
-  setCommentText: React.Dispatch<React.SetStateAction<string>>,
 ) {
   const [showCommentInput, setShowCommentInput] = useState(false);
 
@@ -42,9 +41,8 @@ export function useComments(
         col: selectedCell.col,
       },
     });
-    setCommentText('');
     addLog('Deleted comment');
-  }, [selectedCell, sheetId, bridge, addLog, setCommentText, readOnly]);
+  }, [selectedCell, sheetId, bridge, addLog, readOnly]);
 
   return {
     showCommentInput,
