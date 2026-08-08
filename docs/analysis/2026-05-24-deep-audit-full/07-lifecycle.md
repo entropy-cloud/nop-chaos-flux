@@ -6,7 +6,7 @@
 
 本轮按维度 07 要求审计了 `useEffect` / `useLayoutEffect` 的数据获取、订阅、DOM 操作、状态同步、轮询、缓存、定时器、事件监听、cleanup、render-phase setState/store set 与 StrictMode-safe cleanup。未发现新的可报告问题。
 
-补充说明：必读 owner 文档中指定的 `docs/bugs/15-setstate-during-render.md` 在当前路径不存在；按 `AGENTS.md` 规则检索后读取了实际文件 `docs/bugs/15-render-nodes-setstate-during-render-fix.md`。主 agent 提供的 `render-nodes.tsx:340 readOwn()` 基线已按要求排除：当前代码位于 `useLayoutEffect` commit-phase，不是 render-phase store read/write 重犯。
+补充说明：必读 owner 文档中指定的 `docs/bugs/15-setstate-during-render.md` 在当前路径不存在；按 `AGENTS.md` 规则检索后读取了实际文件 `docs/bugs/15a-render-nodes-setstate-during-render-fix.md`。主 agent 提供的 `render-nodes.tsx:340 readOwn()` 基线已按要求排除：当前代码位于 `useLayoutEffect` commit-phase，不是 render-phase store read/write 重犯。
 
 ## 读过的关键 effect 文件 / 分类与排除理由
 

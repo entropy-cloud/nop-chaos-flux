@@ -455,4 +455,4 @@ pnpm test:e2e -- --grep "flow designer|dingflow|tree mode"
 - `docs/architecture/flow-designer/dingflow-visual-spec.md`
 - `docs/architecture/flow-designer/design.md`
 - `docs/architecture/flow-designer/config-schema.md`
-- `docs/bugs/44-flow-designer-tree-merge-layering-layout-fix.md`
+- `docs/bugs/44b-flow-designer-tree-merge-layering-layout-fix.md`

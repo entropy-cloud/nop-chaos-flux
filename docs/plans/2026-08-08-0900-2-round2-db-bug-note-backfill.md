@@ -141,7 +141,7 @@ Exit Criteria:
 ## Non-Blocking Follow-ups
 
 - 既有 note 文件的内容陈旧问题（如有）：归日常维护，不属本 plan（历史文档不回写纪律）。
-- 重号文件名（15×4、16×2、17×2、44×2、67×2、74×2）治理：影响索引清晰度但不阻塞（文件名即规范 id，README 逐条登记即可区分），归未来治理轮次。
+- 重号文件名（15×4、16×2、17×2、44×2、67×2、74×2）治理：影响索引清晰度但不阻塞（文件名即规范 id，README 逐条登记即可区分），归未来治理轮次。**已收口（2026-08-09）**：由 plan `docs/plans/2026-08-09-0444-2-round2-bug-note-duplicate-number-filenames.md` 治理完成——6 重号编号 14 文件后缀去重（15a-d/16a-b/17a-b/44a-b/67a-b/74a-b，README 登记顺序即后缀序）+ README「Current Entries」索引同步（comm 零缺口 126 = 126）+ 维护面 24 处完整文件名引用与 3 处编号短语消歧（保留区 plans 10 + archive 14 历史保留）；`pnpm check` exit 0。
 
 ## Closure
 

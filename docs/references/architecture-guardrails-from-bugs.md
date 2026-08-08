@@ -49,7 +49,7 @@ Why:
 
 Bug evidence:
 
-- `docs/bugs/15-render-nodes-setstate-during-render-fix.md`
+- `docs/bugs/15a-render-nodes-setstate-during-render-fix.md`
 
 Primary architecture anchors:
 

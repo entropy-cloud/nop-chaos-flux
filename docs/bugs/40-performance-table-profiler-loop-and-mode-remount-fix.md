@@ -50,4 +50,4 @@
 
 ## Related Notes
 
-- `docs/bugs/44-performance-table-full-stress-root-array-form-hang-fix.md` documents a later `Full Stress` regression on the same page. That later issue partially repeated the `Profiler` feedback-loop mistake, but also added a separate root-array inline form hang in `Scenario D`.
+- `docs/bugs/44a-performance-table-full-stress-root-array-form-hang-fix.md` documents a later `Full Stress` regression on the same page. That later issue partially repeated the `Profiler` feedback-loop mistake, but also added a separate root-array inline form hang in `Scenario D`.

@@ -43,7 +43,7 @@ The audit confirms the signal library is Flux-principles-compliant. See `amis-bu
 
 ## Request-Sink Audit (2026-06-25)
 
-A second independent sub-agent specifically audited the **api / data-source / action** layer (B2/B3/B6 entries: A1–A19, T11/T23/T25/T27, U1–U6, C13, AG3/AG4) against Flux's hard rule that a component schema field must NOT be a data-loading entry point (`docs/bugs/15-component-level-initfetch-analysis-and-fix.md`). **Verdict: 0 violations — no amis `initApi` / component-level `api` introduced.**
+A second independent sub-agent specifically audited the **api / data-source / action** layer (B2/B3/B6 entries: A1–A19, T11/T23/T25/T27, U1–U6, C13, AG3/AG4) against Flux's hard rule that a component schema field must NOT be a data-loading entry point (`docs/bugs/15b-component-level-initfetch-analysis-and-fix.md`). **Verdict: 0 violations — no amis `initApi` / component-level `api` introduced.**
 
 Every `interval` / `silent` / `sendOn` / `initFetch` / `cache` / `dedup` / `resultMapping` / `mergeStrategy` reference is bound to `data-source` / `DataSourceController` / `ApiSchema` (the request OWNER, per `api-data-source.md` X4 layering), never to a consumer component. Each data-loading-adjacent entry maps cleanly to one of the three bug-15 compliant patterns:
 

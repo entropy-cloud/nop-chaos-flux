@@ -5,7 +5,7 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 ## Rules
 
 - use numbered filenames such as `01-...`, `02-...`, `03-...`
-- when number prefixes repeat across domains, treat the full filename as the canonical bug id in links and discussions
+- when number prefixes repeat across domains, disambiguate with a letter suffix (`15a-...`, `15b-...`, …) and treat the full filename as the canonical bug id in links and discussions
 - keep notes short and focused on memory, not full implementation history
 - use `docs/bugs/00-bug-fix-note-writing-guide.md` as the writing template
 - keep current design truth in `docs/architecture/`; use bug notes only for historical problem and fix context
@@ -27,14 +27,14 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/12-flow-designer-visual-parity-canvas-node-style-fix.md`
 - `docs/bugs/13-flow-designer-minimap-centered-square-mask-fix.md`
 - `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`
-- `docs/bugs/15-render-nodes-setstate-during-render-fix.md`
-- `docs/bugs/15-component-level-initfetch-analysis-and-fix.md`
-- `docs/bugs/15-report-designer-fill-series-trailing-digit-fix.md`
-- `docs/bugs/15-flux-runtime-source-reaction-recursion-and-dependency-guard-regression.md`
-- `docs/bugs/16-dialog-drag-pointer-capture-boundary-clamp-fix.md`
-- `docs/bugs/16-report-designer-fill-handle-drag-single-cell-fix.md`
-- `docs/bugs/17-json-viewer-class-override-breaks-highlighting-fix.md`
-- `docs/bugs/17-report-designer-field-drop-edit-exit-cursor-stuck-fix.md`
+- `docs/bugs/15a-render-nodes-setstate-during-render-fix.md`
+- `docs/bugs/15b-component-level-initfetch-analysis-and-fix.md`
+- `docs/bugs/15c-report-designer-fill-series-trailing-digit-fix.md`
+- `docs/bugs/15d-flux-runtime-source-reaction-recursion-and-dependency-guard-regression.md`
+- `docs/bugs/16a-dialog-drag-pointer-capture-boundary-clamp-fix.md`
+- `docs/bugs/16b-report-designer-fill-handle-drag-single-cell-fix.md`
+- `docs/bugs/17a-json-viewer-class-override-breaks-highlighting-fix.md`
+- `docs/bugs/17b-report-designer-field-drop-edit-exit-cursor-stuck-fix.md`
 - `docs/bugs/18-tailwind-source-wrong-relative-path-flux-lib-unscanned.md`
 - `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md`
 - `docs/bugs/22-spreadsheet-integration-test-scope-reactive-read-fix.md`
@@ -59,8 +59,8 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/41-variant-field-strictmode-mounted-guard-tab-switch-fix.md`
 - `docs/bugs/42-crud-selection-always-on-table-body-empty-fix.md`
 - `docs/bugs/43-flow-designer-node-edge-text-empty-expression-pre-evaluation-fix.md`
-- `docs/bugs/44-performance-table-full-stress-root-array-form-hang-fix.md`
-- `docs/bugs/44-flow-designer-tree-merge-layering-layout-fix.md`
+- `docs/bugs/44a-performance-table-full-stress-root-array-form-hang-fix.md`
+- `docs/bugs/44b-flow-designer-tree-merge-layering-layout-fix.md`
 - `docs/bugs/45-tag-list-non-required-runtime-validation-fix.md`
 - `docs/bugs/46-debugger-strictmode-owned-component-registry-dispose-fix.md`
 - `docs/bugs/47-performance-table-row-action-page-scope-writeback-fix.md`
@@ -83,16 +83,16 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/64-tabs-fragment-scope-isolate-blocks-parent-data-inheritance-fix.md`
 - `docs/bugs/65-crud-query-form-id-mismatch-authoring-vs-compiler-fix.md`
 - `docs/bugs/66-rich-text-editor-toolbar-click-blur-clears-selection-fix.md`
-- `docs/bugs/67-dialog-drag-portal-event-propagation-fix.md`
-- `docs/bugs/67-input-number-native-spin-buttons-fix.md`
+- `docs/bugs/67a-dialog-drag-portal-event-propagation-fix.md`
+- `docs/bugs/67b-input-number-native-spin-buttons-fix.md`
 - `docs/bugs/68-select-trigger-arrow-position-fix.md`
 - `docs/bugs/69-action-expression-eval-failure-silently-swallowed.md`
 - `docs/bugs/70-master-detail-left-panel-overflow-scroll-not-working.md`
 - `docs/bugs/71-scheduling-deep-audit-blind-spot-display-operability-test-effectiveness.md`
 - `docs/bugs/72-gantt-bars-empty-store-strictmode-race-fix.md`
 - `docs/bugs/73-dialog-form-input-not-updating-store-in-real-browser.md`
-- `docs/bugs/74-dropdown-items-open-dialog-stale-row-submit.md`
-- `docs/bugs/74-icon-picker-required-validation-silent-noop-fix.md`
+- `docs/bugs/74a-dropdown-items-open-dialog-stale-row-submit.md`
+- `docs/bugs/74b-icon-picker-required-validation-silent-noop-fix.md`
 - `docs/bugs/75-container-semantic-layout-props-inert-fix.md`
 - `docs/bugs/76-editor-link-toolbar-zero-behavior-unregistered-command-fix.md`
 - `docs/bugs/77-tree-lazy-children-strictmode-mounted-ref-fix.md`

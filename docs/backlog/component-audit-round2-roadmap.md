@@ -91,7 +91,7 @@
 
 ### DB — Bug 沉淀回补
 
-盘点（D0 产物 + live 核对）：以「根因非平凡 / 跨包 / 修复加了回归测试 / 重构可重引入」门槛筛第一轮 C1–C9 + CR + 08-06/08-07/08-08 收口批次的已修复缺陷，候选已知 ~15 条（见 Work Item Status 行），盘点表 `docs/audits/round2-bug-note-gaps.md` 零悬挂（每条：缺陷、修复 plan/commit、门槛命中理由、note 去向）。逐条按 `docs/bugs/00-bug-fix-note-writing-guide.md` 模板补写（编号 **90 起**，短小聚焦记忆点，不重复实现 diff），并更新 `docs/bugs/README.md`「Current Entries」。注：后续 D3.x 各 plan 修复的复杂 bug 按纪律**行内补写**（不积压到本 work item）；DB 只回补历史缺口。
+盘点（D0 产物 + live 核对）：以「根因非平凡 / 跨包 / 修复加了回归测试 / 重构可重引入」门槛筛第一轮 C1–C9 + CR + 08-06/08-07/08-08 收口批次的已修复缺陷，候选已知 ~15 条（见 Work Item Status 行），盘点表 `docs/audits/round2-bug-note-gaps.md` 零悬挂（每条：缺陷、修复 plan/commit、门槛命中理由、note 去向）。逐条按 `docs/bugs/00-bug-fix-note-writing-guide.md` 模板补写（编号 **90 起**，短小聚焦记忆点，不重复实现 diff），并更新 `docs/bugs/README.md`「Current Entries」。注：后续 D3.x 各 plan 修复的复杂 bug 按纪律**行内补写**（不积压到本 work item）；DB 只回补历史缺口。**docs-governance 治理轮次条目收口（2026-08-09，行内注记）**：plan `docs/plans/2026-08-09-0444-2-round2-bug-note-duplicate-number-filenames.md` completed——6 重号编号 14 文件后缀去重（15a-d/16a-b/17a-b/44a-b/67a-b/74a-b，README 登记顺序即后缀序）+ `docs/bugs/README.md` Rules 补 letter-suffix 消歧说明 + Current Entries 同步（comm 零缺口 126 = 126）+ 维护面 24 处完整文件名引用 + 3 处编号短语消歧 + `docs/bugs/40-*.md:53` 内部互引防断链；保留区（plans 10 + archive 14 + 短语 1）Rule 21 历史保留；DB plan Non-Blocking Follow-ups 重号条目已回写收口；`pnpm check` exit 0 + `check:docs-garbled` exit 0。
 
 ### DL — Lessons 沉淀（06–08）
 
