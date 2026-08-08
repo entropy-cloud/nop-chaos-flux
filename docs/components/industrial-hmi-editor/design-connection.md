@@ -268,10 +268,12 @@ interface ScadaEditorConnectionTestHandle {
 packages/flux-renderers-industrial-editor/src/   （方案 B；E4.1 裁定最终归属）
 OR packages/flux-renderers-industrial/src/editor/（方案 A）
 ├── connection/
-│   ├── anchor-snap.ts         # 端点吸附算法（归一化点 + 吸附候选查询，纯逻辑单测先行）
-│   ├── connection-adapter.ts  # 端点拾起/拖动/释放交互（适配层，与 Editor 事件族互斥）
-│   ├── connection-link.ts     # recomputeConnectionAnchor 联动算法（纯逻辑单测先行）
-│   └── connection-overlay.ts  # 吸附高亮/虚线提示（InteractionOverlay 模式扩展）
+│   ├── anchor-snap.ts                  # 端点吸附算法（归一化点 + 吸附候选查询，纯逻辑单测先行）
+│   ├── connection-adapter.ts           # 端点拾起/拖动/释放交互 + 程序化连线/断开/查询（适配层，与 Editor 事件族互斥）
+│   ├── connection-drag-controller.ts   # pointer 事件 → 状态机驱动器（依赖注入，纯逻辑单测先行）
+│   ├── connection-link.ts              # recomputeConnectionAnchor 联动算法（纯逻辑单测先行）
+│   ├── connection-overlay.ts           # overlay 状态机（吸附高亮/虚线提示投影，纯逻辑）
+│   └── connection-overlay-renderer.ts  # overlay React 渲染（消费 overlay 状态 → sky 层覆盖物 DOM）
 └── （编辑器主 renderer / 适配层 / 编辑会话模型 等，见 design-architecture.md §11）
 ```
 

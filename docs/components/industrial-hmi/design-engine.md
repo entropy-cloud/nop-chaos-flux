@@ -307,6 +307,9 @@ packages/flux-renderers-industrial/src/engine/          （域核心，无 React
 ├── viewport.ts                  # 纯逻辑坐标工具：worldToViewport/fit/center/zoomAt（I5.2，Vitest 单测）
 ├── config-adapter.ts            # 组态 JSON → leafer 场景树构建/销毁/重建/applyDiff 增量应用（I5.3，配合 I2.4 序列化）
 ├── hit.ts                       # 命中封装：getByPoint 事件→symbolId 解析（I6.4）
+├── event-bridge.ts              # world↔screen 事件桥接/坐标解析（pointer 事件 → EventBridge → symbol:click/hover world 坐标，§6/§8.2）
+├── interaction-overlay.ts       # sky 交互覆盖物生命周期/模式管理（运行时 hover 高亮/报警闪烁；InteractionOverlay.refresh() 按视口重算，§6）
+├── batch-add-probe.ts           # batch.add 对照探针（逐节点 add vs Group.add 批量入树，dev/test 专用，gate-3 §10 m-8 / I14.1）
 └── test-handle.ts               # window.__flux_scada_<cid> 挂载/移除（I5.1，A2；cid 经 ScadaEngineOptions.cid 传入，唯一所有权属引擎侧）
 ```
 

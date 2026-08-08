@@ -332,9 +332,8 @@ OR packages/flux-renderers-industrial/src/editor/（方案 A）
 ├── inspector/
 │   ├── schema-extractor.ts      # extractPanelFields(definition) → PanelFieldGroup[]（纯逻辑单测先行）
 │   ├── field-errors.ts          # parseFieldErrors(validateErrors) → 字段级错误映射（纯逻辑单测）
-│   ├── panel-field.tsx          # PanelField UI 组件（按 widget 渲染，复用 @nop-chaos/ui）
-│   ├── panel-group.tsx          # PanelFieldGroup UI 组件（按 group 分组折叠）
-│   └── inspector-panel.tsx      # 属性面板根组件（消费 useEditorSession 选中图元 + extractPanelFields）
+│   ├── inspector-field.tsx      # 单字段 UI 组件（按 widget 渲染，复用 @nop-chaos/ui）
+│   └── inspector-panel.tsx      # 属性面板根组件（消费 runtime.session 选中图元 + extractPanelFields；分组折叠内聚于本组件，无独立 panel-group 模块）
 └── （编辑器主 renderer / 适配层 / 编辑会话模型 等，见 design-architecture.md §11）
 ```
 
