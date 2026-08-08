@@ -141,6 +141,7 @@ export function createHostProjectionScope(input: {
     },
     dispose() {
       disposed = true;
+      (this as HostProjectionScopeRef & { __fdDisposed__?: boolean }).__fdDisposed__ = true;
       (hostScope as ScopeRef & { dispose?: () => void }).dispose?.();
     },
   };

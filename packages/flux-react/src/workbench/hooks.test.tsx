@@ -194,4 +194,35 @@ describe('useHostScope', () => {
 
     expect(testState.capturedScope?.readOwn()).toEqual(initialOwn);
   });
+
+  it('recreates the host scope after it was disposed (StrictMode remount guard)', () => {
+    const view = renderProbe({
+      host: { status: 'ready' },
+    });
+
+    const original = testState.capturedScope as ScopeRef & {
+      dispose?: () => void;
+      __fdDisposed__?: boolean;
+    };
+    expect(original.readOwn()).toEqual({ host: { status: 'ready' } });
+
+    original.dispose?.();
+    expect(original.readOwn()).toEqual({});
+    expect(original.__fdDisposed__).toBe(true);
+
+    view.rerender(
+      <RuntimeContext.Provider value={view.runtime}>
+        <ScopeContext.Provider value={view.page.scope}>
+          <HostScopeProbe
+            scopeData={{ host: { status: 'ready' } }}
+            onCapture={(scope) => {
+              testState.capturedScope = scope;
+            }}
+          />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    expect(testState.capturedScope?.readOwn()).toEqual({ host: { status: 'ready' } });
+  });
 });

@@ -3,7 +3,7 @@ import type { ActionNamespaceProvider, ActionScope, ScopeRef } from '@nop-chaos/
 import type { DomainBridge } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope } from '../hooks.js';
 
-type DisposableScopeRef = ScopeRef & { dispose?: () => void };
+type DisposableScopeRef = ScopeRef & { dispose?: () => void; __fdDisposed__?: boolean };
 
 interface HostScopeStore {
   current: ScopeRef;
@@ -66,10 +66,14 @@ export function useHostScope(
   const scope = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   useLayoutEffect(() => {
-    const current = store.current;
+    const current = store.current as DisposableScopeRef;
     const expectedIdPrefix = `${path}:${scopeLabel}-host:`;
 
-    if (current.parent === parentScope && current.id.startsWith(expectedIdPrefix)) {
+    if (
+      current.__fdDisposed__ !== true &&
+      current.parent === parentScope &&
+      current.id.startsWith(expectedIdPrefix)
+    ) {
       return;
     }
 
