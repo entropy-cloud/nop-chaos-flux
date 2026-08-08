@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
+import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
+import { resetLeaferMock, MockRect } from '../test-support/leafer-ui-mock.js';
 import { registerBuiltinScadaSymbols } from './register-builtin.js';
-import { clearScadaSymbolRegistry } from './symbol-registry.js';
+import { clearScadaSymbolRegistry, registerScadaSymbol, unregisterScadaSymbol } from './symbol-registry.js';
 import { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { PointStore } from '../binding/point-store.js';
 import { ReverseIndex } from '../binding/reverse-index.js';
@@ -10,6 +10,8 @@ import { RefreshPipeline } from '../binding/refresh-pipeline.js';
 import { Animator } from '../binding/animator.js';
 import { StateVisualApplier } from './visual-state.js';
 import { InteractionOverlay, INTERACTION_STYLE_PRESETS } from '../engine/interaction-overlay.js';
+import { toShapeAttrs } from './base-shapes/common.js';
+import type { ScadaSymbolDefinition } from './symbol-types.js';
 import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
@@ -491,5 +493,74 @@ describe('InteractionOverlay (I8.2 sky 交互覆盖层，leafer-state-primitive-
     expect(engine.getConfigNode('inner')?.x).toBe(1);
     expect(engine.getConfigNode('nope')).toBeUndefined();
     engine.destroy();
+  });
+});
+
+// plan 2026-08-09-0121-2 Workstream B 本轮-5：revert 仲裁合并 defaults 级 binding。
+describe('StateVisualApplier revert honors defaults-level bindings (plan 本轮-5)', () => {
+  const TYPE = 'scada-defaults-binding-test';
+  const defWithDefaultsBinding = (): ScadaSymbolDefinition => ({
+    type: TYPE,
+    name: 'DefaultsBinding',
+    category: 'shape',
+    props: {
+      x: { type: 'number' },
+      y: { type: 'number' },
+      width: { type: 'number' },
+      height: { type: 'number' },
+      fill: { type: 'string' },
+      bindings: { type: 'object' },
+      states: { type: 'object' },
+    },
+    defaults: {
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      fill: '#ffffff',
+      // binding 声明在 defaults 级（实例无 bindings）
+      bindings: { fill: { point: 'flag' } },
+      states: {
+        states: {
+          fault: { style: { fill: '#ff0000' } },
+          normal: {},
+        },
+        valueMap: { 0: 'normal', 1: 'fault' },
+      },
+    },
+    create: ({ props }) => new MockRect(toShapeAttrs(props)) as never,
+  });
+
+  beforeEach(() => {
+    resetLeaferMock();
+    clearScadaSymbolRegistry();
+    registerBuiltinScadaSymbols();
+    registerScadaSymbol(defWithDefaultsBinding());
+  });
+
+  it('revert skips a property that has a defaults-level binding (binding value preserved, 本轮-5)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    // 实例无 bindings（binding 仅来自 defaults）；states 也来自 defaults。
+    engine.reset({
+      version: 1,
+      symbols: [{ id: 'sym', type: TYPE, x: 0, y: 0, width: 50, height: 50 }],
+    });
+    const applier = new StateVisualApplier(engine);
+    // 模拟 collectBindings 已把 binding 解析值写入节点 fill。
+    engine.applyAttrs({ sym: { fill: '#binding-color' } });
+    expect((engine.getSymbol('sym')?.node as unknown as { fill: string }).fill).toBe('#binding-color');
+
+    // 进入 fault 态（fault.style.fill 覆盖 active，由 collectStates 写；此处仅追踪）
+    applier.applyState('sym', 'fault');
+    // 退出回 normal：revert 仲裁。instanceProps.bindings 为空（实例无 bindings），
+    // 旧实现读 raw 实例 → instanceBindings.fill 为 falsy → revert 把 fill 覆盖回 base #ffffff。
+    // 本轮-5：合并 defaults.bindings → instanceBindings.fill 真值 → revert 跳过 → binding 值保留。
+    applier.applyState('sym', 'normal');
+    expect((engine.getSymbol('sym')?.node as unknown as { fill: string }).fill).toBe('#binding-color');
+    engine.destroy();
+  });
+
+  afterAll(() => {
+    unregisterScadaSymbol(TYPE);
   });
 });

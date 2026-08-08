@@ -111,6 +111,18 @@ describe('ScadaCanvasEngine lifecycle (I5.1)', () => {
     b.destroy();
   });
 
+  // plan 2026-08-09-0121-2 Workstream A 本轮-2：destroyed 后 interactionOverlay getter 早退，不惰性重建 overlay。
+  it('interactionOverlay getter returns undefined after destroy (no lazy rebuild on destroyed app, 本轮-2)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    // 销毁前 getter 惰性创建 overlay（与 InteractionOverlay 构造对齐，读 app.sky）。
+    const overlayBefore = engine.interactionOverlay;
+    expect(overlayBefore).toBeDefined();
+    engine.destroy();
+    expect(engine.isDestroyed()).toBe(true);
+    // 销毁后 getter 早退——不再 ??= 重建一个绑到已 destroy app 的 InteractionOverlay。
+    expect(engine.interactionOverlay).toBeUndefined();
+  });
+
   it('reset should rebuild the scene tree', () => {
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     engine.reset(validConfig() as ScadaConfig);

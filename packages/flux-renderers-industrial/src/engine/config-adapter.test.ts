@@ -77,7 +77,8 @@ describe('ConfigAdapter build (I5.3b)', () => {
     expect(rect.height).toBe(50);
     expect(rect.fill).toBe('#ff0000');
     const round = engine.getSymbol('rr')?.node as { cornerRadius: number };
-    expect(round.cornerRadius).toBe(8);
+    // plan 2026-08-09-0121-2 Workstream B 本轮-6：cornerRadius 按尺寸缩放 min(w,h)*0.08；rr=60×40 → 40*0.08=3.2。
+    expect(round.cornerRadius).toBe(3.2);
     const text = engine.getSymbol('t')?.node as unknown as { text: string; fontSize: number; fill: string };
     expect(text.text).toBe('hello');
     expect(text.fontSize).toBe(16);

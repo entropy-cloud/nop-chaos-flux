@@ -1,4 +1,4 @@
-import { Group } from 'leafer-ui';
+import { Group, Rect } from 'leafer-ui';
 import { toShapeAttrs } from './base-shapes/common.js';
 import type { LeafNode, ScadaSymbolPropSchema, ScadaSymbolProps } from './symbol-types.js';
 
@@ -35,6 +35,11 @@ export interface CompositeApplyOptions {
 const ROOT_FIELDS = new Set(['x', 'y', 'visible', 'opacity', 'scale']);
 const BODY_FIELDS = new Set(['fill', 'stroke', 'strokeWidth', 'strokeDash', 'shadow', 'textColor']);
 const EXTENT_FIELDS = new Set(['width', 'height']);
+// plan 2026-08-09-0121-2 Workstream B 本轮-9：Group 节点只承接 root 级字段（位置/可见/透明/scale/rotation）。
+// width/height/fill/stroke/strokeWidth/shadow/text/fillStyle 对 Group 无渲染意义（Group 是容器，非绘制图元），
+// 且写 width/height 会改变 leafer bounds 语义（A1 P0 around:'center' 修复未触碰 toShapeAttrs，确认安全）。
+// 在 createCompositeGroup 调用点过滤（不污染 toShapeAttrs——base-shapes 的 Rect 等仍需 fill/stroke/width）。
+const GROUP_ATTR_KEYS = new Set(['x', 'y', 'rotation', 'visible', 'opacity', 'scaleX', 'scaleY']);
 
 /** 节点属性写入（leafer `set` 契约；mock 面同形状）。 */
 export function setAttrs(node: LeafNode, attrs: Record<string, unknown>): void {
@@ -96,9 +101,33 @@ export function createCompositeGroup(
   props: ScadaSymbolProps,
   children: Array<{ name: string; node: LeafNode }>,
 ): { root: LeafNode; parts: CompositeParts } {
+  // 本轮-9：Group 仅承接 root 级 attrs（过滤掉 width/height/fill/stroke 等无渲染意义字段）。
   const attrs = toShapeAttrs(props);
-  const root = new Group(attrs) as LeafNode;
-  const parts: CompositeParts = { root, body: children[0]?.node };
+  const groupAttrs: Record<string, unknown> = {};
+  for (const key of Object.keys(attrs)) {
+    if (GROUP_ATTR_KEYS.has(key)) groupAttrs[key] = attrs[key];
+  }
+  const root = new Group(groupAttrs) as LeafNode;
+  // plan 2026-08-09-0121-2 Workstream B 本轮-8（空 children 守卫）：children 为空时旧实现 body=undefined，
+  // 后续 applyCompositeProps 的 BODY_FIELDS 路由 setAttrs(undefined) 崩溃。改为结构化 fallback——
+  // console.warn 上报作者错误 + 透明占位 body（visible:false，几何取 props.width/height 保 bounds 合理），
+  // 使 BODY_FIELDS 路由有合法落点（不崩），复合仍可作空容器渲染。
+  let bodyNode = children[0]?.node;
+  if (children.length === 0) {
+    console.warn(
+      '[scada-composite] createCompositeGroup received no children parts; falling back to a transparent body. ' +
+        'Define at least a "body" child in the composite create() to avoid this.',
+    );
+    bodyNode = new Rect({
+      x: 0,
+      y: 0,
+      width: (props.width as number) ?? 0,
+      height: (props.height as number) ?? 0,
+      visible: false,
+    }) as LeafNode;
+    (root as unknown as { add: (node: LeafNode) => void }).add(bodyNode);
+  }
+  const parts: CompositeParts = { root, body: bodyNode };
   for (const child of children) {
     (root as unknown as { add: (node: LeafNode) => void }).add(child.node);
     if (child.name === 'body') parts.body = child.node;

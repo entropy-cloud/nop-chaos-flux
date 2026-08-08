@@ -27,6 +27,8 @@ export interface ScadaSymbolProps {
   strokeWidth?: number;
   strokeDash?: number[];
   dashOffset?: number;
+  /** plan 2026-08-09-0121-2 Workstream B 本轮-6：圆角矩形 per-instance 角半径（缺省按尺寸缩放）。 */
+  cornerRadius?: number;
   /** 渐变/纹理参数（I8.1 落地：对象=leafer 渐变/图片 paint，字符串=透传 fill 字符串；透传 leafer 样式系统，取 fill 之前生效）。 */
   fillStyle?: ScadaFillStyle;
   shadow?: { x: number; y: number; blur: number; color: string };

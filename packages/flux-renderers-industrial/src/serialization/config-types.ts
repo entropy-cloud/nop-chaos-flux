@@ -76,6 +76,8 @@ export interface ScadaSymbolNode {
   strokeWidth?: number;
   strokeDash?: number[];
   dashOffset?: number;
+  /** plan 2026-08-09-0121-2 Workstream B 本轮-6：圆角矩形 per-instance 角半径（与 ScadaSymbolProps.cornerRadius 对齐，保证 diff/序列化往返）。 */
+  cornerRadius?: number;
   fillStyle?: Record<string, unknown> | string;
   shadow?: { x: number; y: number; blur: number; color: string };
   text?: string;

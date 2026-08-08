@@ -49,6 +49,10 @@ export class RefreshPipeline {
   private readonly maxExpressionIterations: number;
   private readonly events = new EventHub<RefreshPipelineEvents>();
   private readonly lastDeps = new Map<string, string[]>();
+  // plan 2026-08-09-0121-2 Workstream A F8：表达式点依赖反向索引（depPointId → 依赖它的 exprPointId 集），
+  // 使 recomputeExpressionPoints 由 O(n²) 线性扫描 lastDeps 降为 O(扇出) 查找。与 lastDeps 同步维护
+  // （setExpressionDeps 单一入口：先撤旧反向边、再加新反向边），保证陈旧索引不漏触发/重复求值。
+  private readonly reverseDeps = new Map<string, Set<string>>();
   private readonly lastState = new Map<string, string>();
   private readonly lastError = new Set<string>();
   private readonly compiledCache = new Map<string, ReturnType<ExpressionCompiler['compileValue']>>();
@@ -146,6 +150,8 @@ export class RefreshPipeline {
     this.compiledCache.clear();
     this.active.clear();
     this.lastDeps.clear();
+    // plan 2026-08-09-0121-2 Workstream A F8：反向索引与 lastDeps 同生命周期释放。
+    this.reverseDeps.clear();
     this.lastState.clear();
     this.lastError.clear();
   }
@@ -184,8 +190,10 @@ export class RefreshPipeline {
         break;
       }
       const pointId = queue.shift() as string;
-      for (const [expressionPointId, deps] of this.lastDeps) {
-        if (!deps.includes(pointId)) continue;
+      // plan 2026-08-09-0121-2 Workstream A F8：反向索引 O(扇出) 查找替代 lastDeps 全量线性扫描。
+      const dependents = this.reverseDeps.get(pointId);
+      if (!dependents) continue;
+      for (const expressionPointId of dependents) {
         if (this.syncExpressionPoint(expressionPointId)) {
           queue.push(expressionPointId);
         }
@@ -198,7 +206,8 @@ export class RefreshPipeline {
     const state = this.options.pointStore.getPointState(pointId);
     if (!state || state.declaration.source !== 'expression') return false;
     const expression = state.declaration.expression ?? '';
-    this.lastDeps.set(pointId, this.probeDeps(expression));
+    // plan 2026-08-09-0121-2 Workstream A F8：经 setExpressionDeps 单一入口同时维护 lastDeps + 反向索引。
+    this.setExpressionDeps(pointId, this.probeDeps(expression));
     if (!this.options.compiler || !this.options.env) return false;
     try {
       const outcome = this.evaluateExpressionPoint(pointId);
@@ -309,6 +318,33 @@ export class RefreshPipeline {
     const normalized = expression.trim().startsWith('${') ? expression.trim() : `\${${expression.trim()}}`;
     const result = extractExpressionDepsViaProbe(this.options.compiler, this.options.env, normalized);
     return result.status === 'ok' ? result.paths : [];
+  }
+
+  /**
+   * 表达式点依赖单一写入口（plan 2026-08-09-0121-2 Workstream A F8）：同步维护 lastDeps（exprPointId→deps）
+   * 与反向索引 reverseDeps（depPointId→Set<exprPointId>）。deps 变化时先撤旧反向边再加新反向边，
+   * 保证 recomputeExpressionPoints 的 O(扇出) 查找不读陈旧索引（Failure Paths FP-3 容差：下一帧 dirty-collector 修正）。
+   */
+  private setExpressionDeps(pointId: string, deps: string[]): void {
+    const prev = this.lastDeps.get(pointId);
+    if (prev) {
+      for (const dep of prev) {
+        const set = this.reverseDeps.get(dep);
+        if (set) {
+          set.delete(pointId);
+          if (set.size === 0) this.reverseDeps.delete(dep);
+        }
+      }
+    }
+    this.lastDeps.set(pointId, deps);
+    for (const dep of deps) {
+      let set = this.reverseDeps.get(dep);
+      if (!set) {
+        set = new Set<string>();
+        this.reverseDeps.set(dep, set);
+      }
+      set.add(pointId);
+    }
   }
 
   /**

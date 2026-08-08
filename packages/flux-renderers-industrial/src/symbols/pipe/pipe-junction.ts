@@ -86,6 +86,9 @@ export const scadaPipeJunctionDefinition: ScadaSymbolDefinition = {
         strokeWidth: props.strokeWidth ?? 4,
         strokeCap: 'round',
         ...(connection.direction === 'in' ? {} : { endArrow: true }),
+        // plan 2026-08-09-0121-2 Workstream B 本轮-7：bidirectional 连线补 startArrow——
+        // 双向语义需两端都有箭头，旧实现仅给 endArrow（与 'out' 同形，语义误导）。
+        ...(connection.direction === 'bidirectional' ? { startArrow: true } : {}),
       }) as LeafNode,
     );
     if (props.flow?.enabled === true) {

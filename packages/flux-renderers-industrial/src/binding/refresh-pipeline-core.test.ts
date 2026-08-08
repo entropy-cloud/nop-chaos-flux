@@ -104,6 +104,51 @@ describe('RefreshPipeline 端到端刷新流水线 (I6.2)', () => {
     expect(harness.applied[0].sym).toEqual({ text: 21 });
   });
 
+  // plan 2026-08-09-0121-2 Workstream A F8：反向索引 O(扇出) 查找替代 lastDeps O(n²) 线性扫描。
+  // 4 级深链 a→b→c→d + 并存大量无关表达式点；改 a 后只链上 b/c/d 重算并传播到绑定，无关点不受影响。
+  it('F8: deep (>=3 level) expression chain recompute propagates correctly via reverse index', () => {
+    const unrelated: ScadaPointDeclaration[] = [];
+    const unrelatedSyms: ScadaSymbolNode[] = [];
+    for (let i = 0; i < 50; i++) {
+      unrelated.push({ id: `u${i}`, source: 'static', value: i });
+      unrelated.push({ id: `ue${i}`, source: 'expression', expression: '${u' + i + ' + 1}' });
+      unrelatedSyms.push({
+        id: `usym${i}`,
+        type: 'scada-rect',
+        x: 0,
+        y: 0,
+        bindings: { text: { point: `ue${i}` } },
+      });
+    }
+    const harness = createHarness({
+      declarations: [
+        { id: 'a', source: 'static', value: 1 },
+        { id: 'b', source: 'expression', expression: '${a * 2}' },
+        { id: 'c', source: 'expression', expression: '${b * 3}' },
+        { id: 'd', source: 'expression', expression: '${c + 1}' },
+        ...unrelated,
+      ],
+      symbols: [
+        { id: 'chain', type: 'scada-rect', x: 0, y: 0, bindings: { text: { point: 'd' } } },
+        ...unrelatedSyms,
+      ],
+    });
+    harness.pipeline.flushFrame(harnessApply(harness));
+    // a=1 → b=2 → c=6 → d=7
+    expect(harness.pointStore.getPointValue('d')).toBe(7);
+    expect(harness.applied[0].chain).toEqual({ text: 7 });
+
+    harness.applied.length = 0;
+    harness.pointStore.setPointValue('a', 5);
+    harness.pipeline.flushFrame(harnessApply(harness));
+    // a=5 → b=10 → c=30 → d=31，反向索引正确传播 4 级链
+    expect(harness.pointStore.getPointValue('d')).toBe(31);
+    expect(harness.applied[0].chain).toEqual({ text: 31 });
+    // 无关表达式点 ue0..ue49 不应被改 a 影响（仍 u+1）
+    expect(harness.pointStore.getPointValue('ue0')).toBe(1);
+    expect(harness.pointStore.getPointValue('ue49')).toBe(50);
+  });
+
   it('should detect binding cycles and keep last valid values (binding-cycle Failure Path)', () => {
     const onError = vi.fn();
     const harness = createHarness({

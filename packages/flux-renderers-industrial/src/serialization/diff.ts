@@ -17,6 +17,8 @@ const SYMBOL_KEYS: Array<keyof ScadaSymbolNode> = [
   'strokeWidth',
   'strokeDash',
   'dashOffset',
+  // plan 2026-08-09-0121-2 Workstream B 本轮-6：cornerRadius（round-rect per-instance 角半径）。
+  'cornerRadius',
   'fillStyle',
   'shadow',
   'text',

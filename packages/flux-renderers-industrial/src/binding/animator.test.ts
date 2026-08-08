@@ -166,6 +166,41 @@ describe('Animator 时钟与生命周期 (I6.3)', () => {
     harness.animator.resume('s1', 'blink');
     expect(harness.animator.isPlaying('s1', 'rotate')).toBe(true);
   });
+
+  // plan 2026-08-09-0121-2 Workstream A F7：pause 全部 active 后停止 rAF 时钟，避免每帧重算冻结增量。
+  it('F7: pausing all animations stops the rAF clock (no requestFrame after pause, resume restarts)', () => {
+    const requestFrame = vi.fn();
+    const harness = createClock({ requestFrame });
+    harness.animator.start('s1', { kind: 'rotate', period: 1000 });
+    harness.advance(100);
+    harness.runTick();
+    expect(requestFrame).toHaveBeenCalledTimes(1);
+
+    harness.animator.pause('s1');
+    // 全 paused → stopClock：调度被取消，advance + runTick 不应再触达 tick / requestFrame。
+    harness.advance(100);
+    harness.runTick();
+    expect(requestFrame).toHaveBeenCalledTimes(1);
+
+    // resume → ensureClock 重启时钟，下一 tick 恢复推进 + requestFrame。
+    harness.animator.resume('s1');
+    harness.advance(100);
+    harness.runTick();
+    expect(requestFrame).toHaveBeenCalledTimes(2);
+  });
+
+  it('F7: partial pause keeps the clock running for the non-paused animation', () => {
+    const requestFrame = vi.fn();
+    const harness = createClock({ requestFrame });
+    harness.animator.start('s1', { kind: 'rotate', period: 1000 });
+    harness.animator.start('s1', { kind: 'blink', period: 500 });
+    harness.advance(100);
+    harness.runTick();
+    harness.animator.pause('s1', 'rotate'); // 仅 pause rotate，blink 仍 playing → clock 不停
+    harness.advance(100);
+    harness.runTick();
+    expect(requestFrame).toHaveBeenCalledTimes(2); // blink 推进，clock 继续
+  });
 });
 
 describe('Animator 30ms 限频与插值计算 (I6.3)', () => {

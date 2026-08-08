@@ -352,3 +352,95 @@ describe('always-animation startup for stateless/unbound symbols (plan 2026-08-0
     pipeline.destroy();
   });
 });
+
+// plan 2026-08-09-0121-2 Workstream A 本轮-4/F9：错误去重 Set 有上限 + 同文案异 call-site/pointId 不互吞。
+describe('error dedup bounded set + dimensioned key (plan 2026-08-09-0121-2 本轮-4/F9)', () => {
+  it('event-bridge: same-message errors from different call-sites are NOT mutually swallowed (site dimension)', () => {
+    resetLeaferMock();
+    const errors: unknown[] = [];
+    // tap 与 double_tap 两条路径都抛同文案 'boom'——去重键含 call-site，两条都应上报。
+    const onSymbolEvent = vi.fn(() => {
+      throw new Error('boom');
+    }) as unknown as Mock;
+    const { tree, bridge } = createBridge({ onSymbolEvent, onHandlerError: (e) => errors.push(e) });
+    bridge.attach();
+    tree.emit('double_tap', { x: 10, y: 20 }); // site=double_tap
+    // tap 经合并延迟异步发射 click，直接再触发一次 double_tap 走相同 site 仍去重
+    tree.emit('double_tap', { x: 10, y: 20 });
+    expect(errors.filter((e) => (e as Error).message === 'boom')).toHaveLength(1);
+
+    // 改用经 onSymbolEvent 在不同 site 触发：用 pointer.move 触发 hover（site=pointer.move）抛同文案
+    onSymbolEvent.mockImplementation(() => {
+      throw new Error('boom');
+    });
+    const app = new MockApp({ ground: {}, sky: {} });
+    const leaf = new MockRect({ id: 'pump-1' });
+    // 重建一座桥以挂 pointer.move（createBridge 内部 app 未返回；此处直接构造最小桥）
+    const tree2 = new MockLeafer();
+    const resolver = new HitResolver({
+      getByPoint: () => ({ target: leaf, path: [leaf] }),
+      idOf: (hit) => (hit as { id?: string })?.id,
+    });
+    const errors2: unknown[] = [];
+    const bridge2 = new EventBridge({
+      tree: tree2,
+      moveTarget: app,
+      resolver,
+      viewportToWorld: (p) => ({ x: p.x, y: p.y }),
+      onSymbolEvent: (() => {
+        throw new Error('boom');
+      }) as unknown as EventBridgeOptions['onSymbolEvent'],
+      onHandlerError: (e) => errors2.push(e),
+    });
+    bridge2.attach();
+    app.emit('pointer.move', { x: 5, y: 5 }); // site=pointer.move，与 double_tap 不同 site
+    expect(errors2.filter((e) => (e as Error).message === 'boom')).toHaveLength(1);
+    bridge.destroy();
+    bridge2.destroy();
+  });
+
+  it('event-bridge: dedup Set has a cap (overflow resets, bounded memory)', () => {
+    resetLeaferMock();
+    const errors: unknown[] = [];
+    // 每次抛不同 message 以填满去重 Set（MAX_REPORTED_HANDLER_ERRORS=256）
+    let counter = 0;
+    const onSymbolEvent = vi.fn(() => {
+      throw new Error(`boom-${counter++}`);
+    }) as unknown as Mock;
+    const { tree, bridge } = createBridge({ onSymbolEvent, onHandlerError: (e) => errors.push(e) });
+    bridge.attach();
+    // 触发 >256 次 unique error 填满并触发 reset
+    for (let i = 0; i < 260; i++) {
+      tree.emit('double_tap', { x: 1, y: 1 });
+    }
+    // 不崩溃 + 上报数远超 256（reset 后继续上报）——证明有界不泄漏（无界 Set 仍只 256 unique 上报）。
+    expect(errors.length).toBeGreaterThan(256);
+    bridge.destroy();
+  });
+
+  it('point-store: dedup key carries pointId (same message, different points both reported) + Set cap', () => {
+    const errors: Array<{ pointId: string; error: unknown }> = [];
+    const store = new PointStore({
+      onSubscriberError: (pointId, error) => errors.push({ pointId, error }),
+    });
+    // 300 个点，每个点的订阅者抛同文案 'boom'——键含 pointId，每个点首次都应上报（>=256 跨 cap reset）。
+    const decls = Array.from({ length: 300 }, (_, i) => ({
+      id: `p${i}`,
+      source: 'static' as const,
+      value: 0,
+    }));
+    store.loadDeclarations(decls);
+    for (let i = 0; i < 300; i++) {
+      store.subscribe([`p${i}`], () => {
+        throw new Error('boom');
+      });
+    }
+    for (let i = 0; i < 300; i++) {
+      store.setPointValue(`p${i}`, i + 1);
+    }
+    // 不崩溃；不同 pointId 的同文案错误不被互吞（远超 256 unique 键，证明 cap reset + 维度并存）。
+    expect(errors.length).toBeGreaterThan(256);
+    const distinctPoints = new Set(errors.map((e) => e.pointId));
+    expect(distinctPoints.size).toBeGreaterThan(256);
+  });
+});

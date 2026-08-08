@@ -178,6 +178,47 @@ describe('scada-canvas lifecycle wiring (plan-2026-08-04-1235-2)', () => {
     expect(readyCount()).toBe(3);
   });
 
+  // plan 2026-08-09-0121-2 Workstream A 本轮-10：config 身份未变时 effect 早退，消除 reloadBindings→
+  // setRuntime 新身份→effect 再跑空 diff 的冗余第二轮（effect 单跑契约）。
+  it('does NOT re-run the sync body when config identity is unchanged across re-renders (本轮-10)', async () => {
+    const environment = createScadaTestEnvironment([]);
+    const stableConfig = configProp(wiringConfig());
+    const view = renderScadaCanvas(
+      makeScadaCanvasProps({
+        cid: 9,
+        props: { config: stableConfig },
+        node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
+        helpers: { dispatch: vi.fn().mockResolvedValue({ ok: true }) } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
+      }),
+      environment,
+    );
+    await waitFor(() => expect(scadaTestHandle(9)).toBeDefined());
+    const engine = (scadaTestHandle(9) as unknown as { engine: ScadaCanvasEngine }).engine;
+    const resetSpy = vi.spyOn(engine, 'reset');
+    const applyDiffSpy = vi.spyOn(engine, 'applyDiff');
+
+    // 同身份 config 多次 re-render：本轮-10 早退（config===prevRef）→ 不 reset、不 applyDiff。
+    for (let i = 0; i < 3; i++) {
+      view.rerender(
+        <ScadaTestProviders environment={environment}>
+          <ScadaCanvasRenderer
+            {...makeScadaCanvasProps({
+              cid: 9,
+              props: { config: stableConfig },
+              node: { scope: environment.scope } as RendererComponentProps<ScadaCanvasSchema>['node'],
+              helpers: { dispatch: vi.fn().mockResolvedValue({ ok: true }) } as unknown as RendererComponentProps<ScadaCanvasSchema>['helpers'],
+            })}
+          />
+        </ScadaTestProviders>,
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(resetSpy).not.toHaveBeenCalled();
+    expect(applyDiffSpy).not.toHaveBeenCalled();
+    resetSpy.mockRestore();
+    applyDiffSpy.mockRestore();
+  });
+
   it('applies config.background.color to the ground layer and config.viewport as the initial viewport, re-applied on full resets (P1-A)', async () => {
     const environment = createScadaTestEnvironment([]);
     const view = renderScadaCanvas(

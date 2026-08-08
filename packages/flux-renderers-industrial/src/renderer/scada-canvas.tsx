@@ -96,20 +96,24 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     interactionLayer: true,
   });
 
-  const handleReady = useCallback(() => {
+  // plan 2026-08-09-0121-2 Workstream A 本轮-1（React Compiler 纪律对齐）：handleReady/handleError/
+  // reportDiagnostic/getPointValuesForLatest 改为 plain const——其消费者（useScadaConfigSync.onBuilt/
+  // onBuildError、useScadaEngine.onEngineError/onPipelineError/onHandlerError/getPointValuesFor、
+  // useScadaPointsBridge.onError）均经 latest-ref 转发，回调身份不进任何 effect deps，React Compiler
+  // 基线下 plain 函数自动 memoize；test 环境（无 compiler）下每渲染重建也无正确性影响（仅 perf）。
+  // 保留 useMemo(parsedConfig)/handleDestroyed/reloadConfig：parsedConfig 身份流入 config-sync/points-bridge
+  // effect deps；handleDestroyed/reloadConfig 在 useScadaHandles effect deps 内（身份 churn 致 handle 重注册）。
+  const handleReady = () => {
     setStatus('ready');
     setErrorInfo(undefined);
     void eventsApi.notifyReady();
-  }, [eventsApi]);
+  };
 
-  const handleError = useCallback(
-    (code: string, message: string) => {
-      setStatus('error');
-      setErrorInfo({ code, message });
-      void eventsApi.notifyError({ code, message });
-    },
-    [eventsApi],
-  );
+  const handleError = (code: string, message: string) => {
+    setStatus('error');
+    setErrorInfo({ code, message });
+    void eventsApi.notifyError({ code, message });
+  };
 
   const rendererRuntime = useRendererRuntime();
 
@@ -137,47 +141,44 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   // 已用此面转发 action 错误）转发到 host，而非扩 `ExpressionExecutionEnv.monitor` 的 `'expression'` 字面量
   // 限定。拒绝的替代方案：扩 `ExpressionErrorMonitorPayload.phase` 联合 admit `'action'` 会模糊窄面语义
   // （窄面刻意限定 expression-phase），故不选；新增 optional `onActionError` 通道属不必要的重复面，亦不选。
-  const reportDiagnostic = useCallback(
-    (code: string, message: string, error?: unknown) => {
-      try {
-        console.warn('[scada-canvas]', code, message);
-        const reportedError =
-          error === undefined ? new Error(message) : new Error(message, { cause: error });
-        if (
-          code === 'flux-compile-failed' ||
-          code === 'flux-evaluate-failed' ||
-          code === 'flux-deps-empty'
-        ) {
-          rendererRuntime.env.monitor?.onError?.({
-            phase: 'expression',
-            error: reportedError,
-            details: { code },
-          });
-        } else if (code === 'handler-error') {
-          // handler-error 经宽 telemetry 面（phase:'action'）转发 host——与 flux-* 窄面（phase:'expression'）对称。
-          // 单 plugin onError throw 隔离（镜像 action-execution.ts 的 per-plugin try/catch），不阻断其余 plugin。
-          for (const plugin of rendererRuntime.plugins) {
-            try {
-              plugin.onError?.(reportedError, {
-                phase: 'action',
-                error: reportedError,
-                details: { code: 'handler-error' },
-              });
-            } catch {
-              // 单 plugin onError throw 隔离：不阻断其余 plugin / 通道
-            }
+  const reportDiagnostic = (code: string, message: string, error?: unknown) => {
+    try {
+      console.warn('[scada-canvas]', code, message);
+      const reportedError =
+        error === undefined ? new Error(message) : new Error(message, { cause: error });
+      if (
+        code === 'flux-compile-failed' ||
+        code === 'flux-evaluate-failed' ||
+        code === 'flux-deps-empty'
+      ) {
+        rendererRuntime.env.monitor?.onError?.({
+          phase: 'expression',
+          error: reportedError,
+          details: { code },
+        });
+      } else if (code === 'handler-error') {
+        // handler-error 经宽 telemetry 面（phase:'action'）转发 host——与 flux-* 窄面（phase:'expression'）对称。
+        // 单 plugin onError throw 隔离（镜像 action-execution.ts 的 per-plugin try/catch），不阻断其余 plugin。
+        for (const plugin of rendererRuntime.plugins) {
+          try {
+            plugin.onError?.(reportedError, {
+              phase: 'action',
+              error: reportedError,
+              details: { code: 'handler-error' },
+            });
+          } catch {
+            // 单 plugin onError throw 隔离：不阻断其余 plugin / 通道
           }
         }
-      } catch {
-        // 诊断通道自身异常隔离：不得回流 engine/hook
       }
-    },
-    [rendererRuntime.env, rendererRuntime.plugins],
-  );
+    } catch {
+      // 诊断通道自身异常隔离：不得回流 engine/hook
+    }
+  };
 
   const runtimeRef = useRef<ScadaCanvasRuntime | null>(null);
 
-  const getPointValuesForLatest = useCallback((symbolId: string) => {
+  const getPointValuesForLatest = (symbolId: string) => {
     const current = runtimeRef.current;
     if (!current) return undefined;
     const values: Record<string, unknown> = {};
@@ -186,7 +187,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
       if (value !== undefined) values[target.pointId] = value;
     }
     return Object.keys(values).length > 0 ? values : undefined;
-  }, []);
+  };
 
   const { runtime, reloadBindings, destroy, setResizeRefit } = useScadaEngine({
     containerRef,
@@ -229,10 +230,22 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
 
   useEffect(() => {
     engineRef.current = runtime?.engine;
+    // plan 2026-08-09-0121-2 Workstream A 本轮-3（lifecycle 安全）：cleanup 清悬挂 ref，防 unmount 后
+    // engineRef.current 仍指向已 destroy 的引擎（闭合本轮-2 可达链——overlay getter 早退 + ref 清空双保险，
+    // 即使有异步闭包在 unmount 后读 engineRef.current?.interactionOverlay 也不再触达死引擎惰性重建）。
+    return () => {
+      engineRef.current = undefined;
+    };
   }, [runtime]);
 
   useEffect(() => {
     runtimeRef.current = runtime;
+    // plan 2026-08-09-0121-2 Workstream A 本轮-3：与 engineRef 对称 cleanup，unmount 后 runtimeRef 清空，
+    // 防 reloadConfig/getPointValuesForLatest 等经 runtimeRef.current 读到已释放 runtime（pipeline.destroy 后
+    // 再 requestRender 写向死 collector）。
+    return () => {
+      runtimeRef.current = null;
+    };
   }, [runtime]);
 
   // plan 2026-08-04-1558-3 Phase 1：canvas slot 落点——把 data-slot 与 marker 语义落到真实 leafer

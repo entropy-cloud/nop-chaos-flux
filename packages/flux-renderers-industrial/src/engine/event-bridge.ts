@@ -70,6 +70,10 @@ export interface EventBridgeOptions {
  * symbolId，仅覆盖物消费不派发 action，design-engine.md §8.1 事件表外）；A→B 切换不发 miss（hover(B)
  * 到达时消费方自清前一目标）。
  */
+// plan 2026-08-09-0121-2 Workstream A 本轮-4/F9：handler-error 去重 Set 上限（防无界增长）。
+// 超限即整体清空（report-once-until-reset 语义，可接受同错误在 reset 后再报一次），与 point-store 同形。
+const MAX_REPORTED_HANDLER_ERRORS = 256;
+
 export class EventBridge {
   private attached = false;
   private lastHovered: string | undefined;
@@ -90,6 +94,7 @@ export class EventBridge {
     if (!this.attached) return;
     this.attached = false;
     this.lastHovered = undefined;
+    this.reportedHandlerErrors.clear();
     this.options.tree.off('tap', this.handleTap);
     this.options.tree.off('double_tap', this.handleDoubleTap);
     this.options.moveTarget.off('pointer.move', this.handlePointerMove);
@@ -97,7 +102,7 @@ export class EventBridge {
   }
 
   private readonly handleTap = (event: unknown): void => {
-    this.safeRun(() => {
+    this.safeRun('tap', () => {
       const point = this.pointOf(event);
       if (!point) return;
       const symbolId = this.resolveSymbol(point);
@@ -106,7 +111,7 @@ export class EventBridge {
   };
 
   private readonly handleDoubleTap = (event: unknown): void => {
-    this.safeRun(() => {
+    this.safeRun('double_tap', () => {
       const point = this.pointOf(event);
       if (!point) return;
       const symbolId = this.resolveSymbol(point);
@@ -115,7 +120,7 @@ export class EventBridge {
   };
 
   private readonly handlePointerMove = (event: unknown): void => {
-    this.safeRun(() => {
+    this.safeRun('pointer.move', () => {
       const point = this.pointOf(event);
       if (point) this.handleHover(point);
     });
@@ -123,7 +128,7 @@ export class EventBridge {
 
   /** 指针离开画布（moveTarget `pointer.leave`）：前一命中图元 hover 退出（覆盖物清除）。 */
   private readonly handlePointerLeave = (): void => {
-    this.safeRun(() => {
+    this.safeRun('pointer.leave', () => {
       if (this.lastHovered === undefined) return;
       const prev = this.lastHovered;
       this.lastHovered = undefined;
@@ -150,18 +155,25 @@ export class EventBridge {
     }
   }
 
-  private safeRun(fn: () => void): void {
+  private safeRun(site: string, fn: () => void): void {
     try {
       fn();
     } catch (error) {
-      this.reportHandlerError(error);
+      this.reportHandlerError(site, error);
     }
   }
 
-  private reportHandlerError(error: unknown): void {
+  private reportHandlerError(site: string, error: unknown): void {
     const message = error instanceof Error ? error.message : String(error);
-    if (this.reportedHandlerErrors.has(message)) return;
-    this.reportedHandlerErrors.add(message);
+    // plan 2026-08-09-0121-2 Workstream A 本轮-4/F9：去重键加 call-site 维度——同文案不同 call-site
+    // （tap vs pointer.move）的错误不再互吞；仅同 site 同 message 去重（保留 report-once 反风暴语义）。
+    const key = `${site}:${message}`;
+    if (this.reportedHandlerErrors.has(key)) return;
+    // Set 上限（防无界增长）：超限整体清空，可接受同错误 reset 后再报一次（与 point-store 同形）。
+    if (this.reportedHandlerErrors.size >= MAX_REPORTED_HANDLER_ERRORS) {
+      this.reportedHandlerErrors.clear();
+    }
+    this.reportedHandlerErrors.add(key);
     this.options.onHandlerError?.(error);
   }
 

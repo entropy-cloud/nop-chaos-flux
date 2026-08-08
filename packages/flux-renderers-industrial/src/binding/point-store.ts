@@ -121,6 +121,10 @@ function errorMessageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+// plan 2026-08-09-0121-2 Workstream A 本轮-4/F9：subscriber-error 去重 Set 上限（防长会话无界增长）。
+// 超限整体清空（report-once-until-reset，可接受同错误 reset 后再报一次），与 event-bridge 同形。
+const MAX_REPORTED_SUBSCRIBER_ERRORS = 256;
+
 /**
  * 点表 store（I6.1）：三源声明加载 + 统一写入归口（去重/死区/量程换算）+ 订阅协议 + point:change 事件。
  *
@@ -310,6 +314,11 @@ export class PointStore {
   private reportSubscriberError(pointId: string, error: unknown): void {
     const key = `${pointId}:${errorMessageOf(error)}`;
     if (this.reportedSubscriberErrors.has(key)) return;
+    // plan 2026-08-09-0121-2 Workstream A 本轮-4/F9：去重 Set 上限（防无界增长）。键已含 pointId 维度
+    // （同文案异 pointId 错误不互吞）；超限整体清空，可接受同错误 reset 后再报一次（report-once-until-reset）。
+    if (this.reportedSubscriberErrors.size >= MAX_REPORTED_SUBSCRIBER_ERRORS) {
+      this.reportedSubscriberErrors.clear();
+    }
     this.reportedSubscriberErrors.add(key);
     this.onSubscriberError?.(pointId, error);
   }

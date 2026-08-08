@@ -4,6 +4,10 @@ import { registerBuiltinScadaSymbols } from './register-builtin.js';
 import { clearScadaSymbolRegistry, registerScadaSymbol, unregisterScadaSymbol, hasScadaSymbol } from './symbol-registry.js';
 import { instantiateSymbol } from './symbol-factory.js';
 import {
+  applyCompositeProps,
+  createCompositeGroup,
+} from './composite.js';
+import {
   deepMergeInstanceProps,
   diffInstanceProps,
   instantiateInstance,
@@ -483,5 +487,66 @@ describe('V5 复合图元全路径（注册 → 校验 → 实例化 → 场景�
     engine.destroy();
     expect(unregisterScadaSymbol(TYPE)).toBe(true);
     expect(validateScadaConfig(config).ok).toBe(false);
+  });
+});
+
+// plan 2026-08-09-0121-2 Workstream B 本轮-8/9：空 children 守卫 + Group attrs 不泄漏。
+describe('createCompositeGroup author safety (plan 2026-08-09-0121-2 本轮-8/9)', () => {
+  beforeEach(() => {
+    resetLeaferMock();
+    clearScadaSymbolRegistry();
+    registerBuiltinScadaSymbols();
+  });
+
+  it('本轮-9: Group node does NOT receive width/height/fill/stroke (only root-level attrs)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const body = new MockRect({ name: 'body' });
+    const { root } = createCompositeGroup(
+      {
+        x: 5,
+        y: 6,
+        width: 100,
+        height: 80,
+        rotation: 10,
+        visible: true,
+        opacity: 0.5,
+        scale: 2,
+        fill: '#ff0000',
+        stroke: '#000000',
+        strokeWidth: 4,
+      },
+      [{ name: 'body', node: body as never }],
+    );
+    const group = root as unknown as Record<string, unknown>;
+    // root 级字段透传
+    expect(group.x).toBe(5);
+    expect(group.y).toBe(6);
+    expect(group.rotation).toBe(10);
+    expect(group.visible).toBe(true);
+    expect(group.opacity).toBe(0.5);
+    expect(group.scaleX).toBe(2);
+    expect(group.scaleY).toBe(2);
+    // 渲染/尺寸字段不泄漏到 Group（无渲染意义，改变 leafer bounds 语义）
+    expect(group.width).toBeUndefined();
+    expect(group.height).toBeUndefined();
+    expect(group.fill).toBeUndefined();
+    expect(group.stroke).toBeUndefined();
+    expect(group.strokeWidth).toBeUndefined();
+    warn.mockRestore();
+  });
+
+  it('本轮-8: empty children does NOT crash — falls back to a transparent body (structured fallback)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const props: ScadaSymbolProps = { x: 0, y: 0, width: 60, height: 40 } as ScadaSymbolProps;
+    const result = createCompositeGroup(props, []);
+    // 不崩溃：parts.body 为合法 fallback 节点（透明 Rect），非 undefined。
+    expect(result.parts.body).toBeDefined();
+    expect((result.parts.body as unknown as { tag: string }).tag).toBe('Rect');
+    // 警告上报作者错误
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('no children'));
+    // applyCompositeProps 路由 BODY_FIELDS 到 fallback body 不崩溃
+    applyCompositeProps(result.root, result.parts, { fill: '#123' });
+    expect((result.parts.body as unknown as { fill?: string }).fill).toBe('#123');
+    warn.mockRestore();
   });
 });

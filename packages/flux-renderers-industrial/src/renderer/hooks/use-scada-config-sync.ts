@@ -252,6 +252,15 @@ export function useScadaConfigSync(
         return;
       }
     }
+    // plan 2026-08-09-0121-2 Workstream A 本轮-10（effect identity 抖动）：config 身份未变时早退，
+    // 消除 reloadBindings→setRuntime(新对象身份)→effect 再跑空 diff 的冗余第二轮。reloadBindings 已在
+    // 首轮于新 runtime（runtimeRef.current）上重建绑定域（loadDeclarations + reverseIndex.build + pipeline），
+    // 故 runtime 身份变更但 config 未变时无需再 sync——也避免二轮重应用 applyInitialViewportState（重置用户
+    // pan/zoom）与重复 onBuilt。prevRef 仅在成功 sync 后置为 config，故 config===prevRef 精确刻画「已为本
+    // config 完成 sync」。host 后续传新身份 config 时 config!==prevRef 正常进入（diff/full）。
+    if (config === prevRef.current) {
+      return;
+    }
     const strategy = decideSyncStrategy(prevRef.current, config);
     try {
       if (strategy === 'full') {

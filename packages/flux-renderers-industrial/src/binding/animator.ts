@@ -124,6 +124,12 @@ export class Animator {
       active.elapsed += this.now() - active.runStartAt;
       active.paused = true;
     }
+    // plan 2026-08-09-0121-2 Workstream A F7（资源管理）：全部 active 进入 paused 时停止时钟，
+    // 避免 rAF 每帧空转重算冻结增量（elapsed 不再推进 → progress 恒定 → increments 每帧相同）。
+    // resume 时 ensureClock 重启时钟。playing.size===0 已由 stop() 路径 stopClock，此处只处理「有项但全 paused」。
+    if (this.playing.size > 0 && this.allPaused()) {
+      this.stopClock();
+    }
   }
 
   resume(symbolId: string, kind?: ScadaAnimationKind): void {
@@ -183,6 +189,16 @@ export class Animator {
     return active ? [active] : [];
   }
 
+  /** plan 2026-08-09-0121-2 Workstream A F7：是否全部 active 都处于 paused（用于 pause 后停时钟判定）。 */
+  private allPaused(): boolean {
+    for (const byKind of this.playing.values()) {
+      for (const active of byKind.values()) {
+        if (!active.paused) return false;
+      }
+    }
+    return true;
+  }
+
   private ensureClock(): void {
     if (this.clockScheduled || this.playing.size === 0) return;
     this.clockScheduled = true;
@@ -207,8 +223,12 @@ export class Animator {
       return;
     }
     this.lastTickAt = now;
+    let advanced = false;
     for (const [symbolId, byKind] of this.playing) {
       for (const [kind, active] of byKind) {
+        // plan 2026-08-09-0121-2 Workstream A F7：paused 项 elapsed 冻结、progress 恒定、
+        // increments 每帧相同，跳过 collect 避免无谓重算 + flush 相同增量。
+        if (active.paused) continue;
         const elapsed = this.elapsedOf(active, now);
         const cycle = cycleOf(active.animation);
         const loop = active.animation.loop ?? 0;
@@ -221,11 +241,15 @@ export class Animator {
         for (const increment of increments) {
           this.options.collect?.({ symbolId, property: increment.property, value: increment.value });
         }
+        advanced = true;
       }
     }
-    if (this.playing.size > 0) {
+    // F7：有推进的 active 才续帧；全 paused（或有项但本轮全跳过）时停时钟，resume 时重启。
+    if (advanced) {
       this.options.requestFrame?.();
       this.ensureClock();
+    } else if (this.playing.size > 0 && this.allPaused()) {
+      this.stopClock();
     }
   }
 

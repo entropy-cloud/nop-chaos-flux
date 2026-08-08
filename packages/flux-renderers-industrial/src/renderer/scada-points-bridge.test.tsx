@@ -376,6 +376,64 @@ describe('scada-canvas points bridge (I10.3)', () => {
     compileSpy.mockRestore();
   });
 
+  // plan 2026-08-09-0121-2 Workstream A 本轮-13：compiledCache 在 expressionCompiler 换身份后清理。
+  it('clears compiledCache when expressionCompiler identity changes (本轮-13: deps include expressionCompiler)', async () => {
+    const environment = createScadaTestEnvironment([], { analog: { temp: 25 } });
+    const config: ScadaConfig = bridgeConfig([{ id: 'temp', flux: '${analog.temp}' }], []);
+    let compiler = createExpressionCompiler(createFormulaCompiler());
+    const compileSpyA = vi.spyOn(compiler, 'compileValue');
+
+    function CompilerSwapProbe() {
+      const runtime = useMemo<ScadaPointsBridgeRuntime>(() => {
+        const pointStore = new PointStore();
+        pointStore.loadDeclarations(config.variables ?? []);
+        const reverseIndex = new ReverseIndex(config.symbols);
+        const pendingFlushes: Array<() => void> = [];
+        const collector = new DirtyCollector({ scheduleTick: () => () => undefined });
+        const pipeline = new RefreshPipeline({
+          pointStore,
+          reverseIndex,
+          collector,
+          scheduleTick: (cb) => {
+            pendingFlushes.push(cb);
+            return () => undefined;
+          },
+        });
+        return { pointStore, pipeline, applyAttrs: () => undefined };
+      }, []);
+      useScadaPointsBridge({
+        config,
+        runtime,
+        expressionCompiler: compiler,
+        env,
+        onError: () => undefined,
+      });
+      return null;
+    }
+
+    const { rerender } = render(
+      <ScadaTestProviders environment={environment}>
+        <CompilerSwapProbe />
+      </ScadaTestProviders>,
+    );
+    await waitFor(() => expect(compileSpyA).toHaveBeenCalledTimes(1));
+
+    // config 身份不变，仅换 expressionCompiler 身份。本轮-13：cleanup effect deps 含 expressionCompiler
+    // → compiledCache 清空 → 下次求值用新 compiler 重新 compileValue。
+    compiler = createExpressionCompiler(createFormulaCompiler());
+    const compileSpyB = vi.spyOn(compiler, 'compileValue');
+    rerender(
+      <ScadaTestProviders environment={environment}>
+        <CompilerSwapProbe />
+      </ScadaTestProviders>,
+    );
+    // 触发一次 scope 变更驱动 re-eval；新 compiler 应被调用编译（cache 已清空）。
+    act(() => environment.scope.update('analog.temp', 40));
+    await waitFor(() => expect(compileSpyB).toHaveBeenCalledTimes(1));
+    compileSpyA.mockRestore();
+    compileSpyB.mockRestore();
+  });
+
   it('evaluates string and boolean flux values (non-numeric primitives)', async () => {
     const environment = createScadaTestEnvironment([], {
       plant: { mode: 'auto', running: true },

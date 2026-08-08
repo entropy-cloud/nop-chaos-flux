@@ -277,11 +277,15 @@ export function useScadaPointsBridge(args: UseScadaPointsBridgeArgs): void {
   // 接通 onError 后该缺陷变可观测）。对称清空使新 config 的同表达式错误能正常重新上报。
   // plan 2026-08-05-1253-1 Phase 3：对称重置 pointSnapshot 缓存——config reload（reloadBindings→
   // loadDeclarations 已 bump generation，但新 pointStore 实例 generation 序列不同），强制下次重建。
+  // plan 2026-08-09-0121-2 Workstream A 本轮-13：deps 增 expressionCompiler——host 换 compiler 身份时
+  // （旧编译产物 compiled 喂新 evaluator 会错配/抛错），清空 compiledCache/lastReportedErrors/snapshot，
+  // 使新一轮编译求值用新 compiler 重产 compiled。env 同属 compiler 配对求值环境，但 env 变化经下方
+  // main effect 的 scopeData 重算覆盖（compiled 不依赖 env，仅 evaluate 步骤用 env），故 deps 只需 compiler。
   useEffect(() => {
     compiledCache.current.clear();
     lastReportedErrors.current.clear();
     pointSnapshotRef.current = { generation: -1, snapshot: {} };
-  }, [config]);
+  }, [config, expressionCompiler]);
 
   const reportOnce = useCallback((expression: string, code: string, error: unknown) => {
     if (lastReportedErrors.current.get(expression) === code) return;

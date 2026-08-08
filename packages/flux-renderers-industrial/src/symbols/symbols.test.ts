@@ -200,7 +200,46 @@ describe('builtin base shapes (I5.4)', () => {
   it('scada-round-rect should create a rounded Rect', () => {
     const node = instantiate('scada-round-rect', { width: 50, height: 50 });
     expect(node.tag).toBe('Rect');
-    expect(node.cornerRadius).toBe(8);
+    // plan 2026-08-09-0121-2 Workstream B 本轮-6：cornerRadius 按尺寸缩放（min(w,h)*0.08），50×50 → 4。
+    expect(node.cornerRadius).toBe(4);
+  });
+
+  it('scada-round-rect cornerRadius scales with size and respects explicit override (plan 本轮-6)', () => {
+    // 默认 100×100 → 8（向后兼容），200×200 → 16，10×10 → 0.8（不再固定 8）。
+    expect(instantiate('scada-round-rect', { width: 100, height: 100 }).cornerRadius).toBe(8);
+    expect(instantiate('scada-round-rect', { width: 200, height: 200 }).cornerRadius).toBe(16);
+    expect(instantiate('scada-round-rect', { width: 10, height: 10 }).cornerRadius).toBe(0.8);
+    // 显式 cornerRadius 优先，仍钳到 min(w,h)/2 防过度圆化。
+    expect(instantiate('scada-round-rect', { width: 100, height: 100, cornerRadius: 20 }).cornerRadius).toBe(20);
+    expect(instantiate('scada-round-rect', { width: 40, height: 40, cornerRadius: 100 }).cornerRadius).toBe(20);
+  });
+
+  it('scada-pipe-junction bidirectional connection has both startArrow and endArrow (plan 本轮-7)', () => {
+    const node = instantiate('scada-pipe-junction', {
+      width: 80,
+      height: 40,
+      custom: {
+        connections: [
+          { id: 'in', x: 0, y: 0.5, direction: 'in' },
+          { id: 'out', x: 1, y: 0.5, direction: 'out' },
+          { id: 'bi', x: 0.5, y: 0, direction: 'bidirectional' },
+        ],
+      },
+    }) as unknown as { children: Array<Record<string, unknown>> };
+    const stubs = node.children.filter((c) => typeof c.name === 'string' && (c.name as string).startsWith('stub-'));
+    const byDir = (id: string) => stubs.find((s) => (s.name as string) === `stub-${id}`);
+    // 'in' 无箭头
+    const inStub = byDir('in') as Record<string, unknown>;
+    expect(inStub.endArrow).toBeUndefined();
+    expect(inStub.startArrow).toBeUndefined();
+    // 'out' 仅 endArrow
+    const outStub = byDir('out') as Record<string, unknown>;
+    expect(outStub.endArrow).toBe(true);
+    expect(outStub.startArrow).toBeUndefined();
+    // 'bidirectional' 两端都有箭头（本轮-7 修复点：补 startArrow）
+    const biStub = byDir('bi') as Record<string, unknown>;
+    expect(biStub.endArrow).toBe(true);
+    expect(biStub.startArrow).toBe(true);
   });
 
   it('scada-ellipse should create an Ellipse', () => {

@@ -69,7 +69,15 @@ export class StateVisualApplier {
     const leaf = this.engine.registry.get(symbolId);
     if (!leaf?.definition) return;
     const instanceProps = (this.engine.getConfigNode(symbolId) ?? {}) as ScadaSymbolProps;
-    const instanceBindings = instanceProps.bindings;
+    // plan 2026-08-09-0121-2 Workstream B 本轮-5（revert 仲裁合并 defaults）：binding 检测从读 raw 实例
+    // （getConfigNode，缺 defaults 级 binding）改为合并 defaults.bindings ∪ instance.bindings，防自定义符号
+    // 把 binding 声明在 defaults 级时 revert 仍覆盖 binding 值（revert-shadows-binding 在 defaults 级 binding
+    // 上的离群点）。浅合并足够：判断「该字段是否存在 binding 声明」只需任一层定义即跳过 revert。
+    const defaultsBindings = leaf.definition.defaults?.bindings;
+    const instanceBindings: typeof instanceProps.bindings = {
+      ...(defaultsBindings as object),
+      ...(instanceProps.bindings as object),
+    };
     const base = resolveSymbolStyle(leaf.definition, instanceProps) as unknown as Record<string, unknown>;
     const styled = resolveSymbolStyle(leaf.definition, instanceProps, state) as unknown as Record<string, unknown>;
     const applied = this.lastApplied.get(symbolId) ?? new Set<string>();

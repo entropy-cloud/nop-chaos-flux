@@ -165,6 +165,11 @@ export class ScadaCanvasEngine {
   /** 交互覆盖层（I8.2，sky 层 hover/selected 等反馈）：`interactionLayer` 选项开启时惰性可用。 */
   get interactionOverlay(): InteractionOverlay | undefined {
     if (!this.options.interactionLayer) return undefined;
+    // plan 2026-08-09-0121-2 Workstream A 本轮-2（lifecycle 安全）：destroyed 后早退，防销毁后惰性重建
+    // overlay 到已销毁 app（destroy() 已置 interaction=undefined 并 app.destroy()；此处防 getter 再被触达
+    // 时 ??= 重建一个绑到死 app 的 InteractionOverlay → 其内部读 app.sky 已不可用）。与 reset/applyDiff 等
+    // 公共命令的 destroyed 早退纪律同形。
+    if (this.destroyed) return undefined;
     this.interaction ??= new InteractionOverlay(this);
     return this.interaction;
   }
