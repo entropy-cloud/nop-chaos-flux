@@ -1,0 +1,23 @@
+{
+  "name": "ai-invariant-loop",
+  "description": "nop-chaos-flux AI engine 不变式驱动的持续审计闭环（驱动 docs/backlog/ai-invariant-loop-roadmap.md）：把 AI engine/conversation 历经 4 轮审计仍反复在同族兄弟路径上复发（并发守卫族 Bug07→AI-01→1757、stale-closure 族 P1-3→0707 deleteConversation、storage 静默族 P1-2→0707 clearAll——三大族最终均已修复，但每族历经 2–3 轮才完整捕获全部兄弟实例）的「修实例不修类别」反模式，改造为自驱动飞轮：把已知失败模式沉淀为可执行不变式门禁（参数化穷举测试 + 表完备性门禁 + check:ai-engine-invariants 入 pnpm check/CI，回归自动被抓）→ 按不变式确定性审计全部变更型方法（sendMessage/send/runTurn/abort/regenerate/clear/setMessages + create/rename/delete/switch/clearAll）找违背 → 裁决成工作项 → 修复（强制类别清扫：修任一实例必 grep 全部同类兄弟，只修实例=closure 拒绝）→ 新失败类再沉淀为新不变式（门禁集合单调棘轮，只增不减）。每 Cycle 7 步（I0 盘点/I1 沉淀/I2 审计/I3 裁决/I4 修复/I5 验证/I6 收口）；I6 发现有新失败类 → 按 Loop Rule 预授权自动派生下轮 I1/I2（附触发证据，类 component-audit CX-n 机制），不需逐次人工重启；零新族零违背 → 稳态暂停，CI 变红/结构变更/周期复探三条件复触发。代码变更授权范围：AI 包不在 Protected Areas 表默认 implement，engine/adapter P0/P1 修复预授权自动，结构性重构（engine 公共 API/adapter 契约）执行前人工确认；新不变式门禁入 pnpm check 视为 check 脚本变更需 committed 回归测试。",
+  "model": "opencode-go/deepseek-v4-flash",
+  "variant": "max",
+  "roadmapPath": "docs/backlog/ai-invariant-loop-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": "packages/flux-renderers-ai",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "fix(ai-invariant-loop): <description>"
+}
