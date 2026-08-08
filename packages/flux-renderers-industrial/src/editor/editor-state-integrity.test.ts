@@ -231,3 +231,133 @@ describe('P1-3 — undo/redo prunes stale selection', () => {
     expect(session.selection).toEqual(['a']);
   });
 });
+
+// plan 2026-08-08-1910-2 Phase 2 / A6：applyUndoRedoDiff 的 engine.applyDiff 半途抛错时引擎场景回滚。
+// 旧实现 catch 仅回滚 working copy，不回滚 engine（leafer 无事务，applyDiff remove→build→update→reorder
+// 半途抛错时场景树已半变）+ 不回滚 synced.config → 若 synced.config===beforeWorking，下轮 syncWorkingCopy
+// diff 为空 → 引擎永不愈合，画布与 working copy/栈永久背离。
+describe('A6 — applyUndoRedoDiff engine rollback on applyDiff throw', () => {
+  let s: Setup;
+  beforeEach(() => {
+    s = setup();
+  });
+  afterEach(() => {
+    s.detachAdapter();
+    s.engine.destroy();
+    s.container.remove();
+    vi.restoreAllMocks();
+  });
+
+  it('engine.applyDiff throws → engine rebuilt to beforeWorking + synced.config aligned (no permanent divergence)', () => {
+    const { session, mutators, engine, ctx, onError } = s;
+    // 栈序：add foo（entry-1）→ remove foo（entry-2，栈顶）。working = [a]。
+    mutators.addWorkingSymbol({ id: 'foo', type: 'scada-rect', x: 0, y: 0, width: 5, height: 5 });
+    mutators.removeWorkingSymbol('foo');
+    expect(session.workingConfig.symbols.map((n) => n.id)).toEqual(['a']);
+    const beforeUndoIds = session.workingConfig.symbols.map((n) => n.id);
+
+    // 让下一次 engine.applyDiff 半途抛错（模拟 remove→build→update 链中段失败：leafer scene 已半变）。
+    // mock 先按 diff.added 把节点注册进 registry（scene-graph 半变），再抛——精确再现 applyDiff
+    // 无内部回滚、半途抛错时场景树已半变的缺陷。undo() → applyUndoRedoDiff → engine.applyDiff 是
+    // catch 监视的唯一 applyDiff 调用。
+    vi.spyOn(engine, 'applyDiff').mockImplementationOnce(() => {
+      engine.registry.add({ id: 'foo', node: {} as never, parentId: undefined });
+      throw new Error('boom: simulated mid-apply failure');
+    });
+
+    mutators.undo(); // inverse of remove → re-add foo → engine.applyDiff 半途抛错 → catch
+
+    // 1) working copy 回滚到 beforeUndo（foo 不在）。
+    expect(session.workingConfig.symbols.map((n) => n.id)).toEqual(beforeUndoIds);
+    // 2) 引擎场景回滚到 beforeUndo：engine registry 不含 foo（半变残留已重建清除）。
+    expect(engine.getSymbol('foo')).toBeUndefined();
+    expect(engine.getSymbol('a')).toBeDefined();
+    // 3) synced.config 与 working copy 对齐 → 下轮 syncWorkingCopy diff 为空（不永久背离）。
+    expect(ctx.synced.config.symbols.map((n) => n.id)).toEqual(beforeUndoIds);
+    // 4) onError 派发 editor-internal-error（host 可见）。
+    expect(onError).toHaveBeenCalledWith('editor-internal-error', expect.any(String));
+  });
+});
+
+// plan 2026-08-08-1910-2 Phase 4 / A8：删除被连线的设备节点时 prune 其它 junction 上
+// target===被删id 的 connection 声明。旧实现 removeWorkingSymbol/cutSelection 仅 filter 节点，
+// 不扫其它 junction 的 connection.target → 保存后成永久 dangling 数据污染。
+describe('A8 — removeWorkingSymbol / cutSelection prune dangling connection declarations', () => {
+  let s: Setup;
+  beforeEach(() => {
+    s = setup();
+  });
+  afterEach(() => {
+    s.detachAdapter();
+    s.engine.destroy();
+    s.container.remove();
+    vi.restoreAllMocks();
+  });
+
+  function loadWiredConfig(): void {
+    s.mutators.load({
+      version: 1,
+      variables: [],
+      symbols: [
+        {
+          id: 'J',
+          type: 'scada-pipe-junction',
+          x: 0,
+          y: 0,
+          width: 50,
+          height: 50,
+          custom: {
+            connections: [
+              { id: 'J-conn-0', x: 0.5, y: 0, direction: 'out', target: 'dev-1' },
+              { id: 'J-conn-1', x: 0, y: 0.5, direction: 'out', target: 'dev-2' },
+            ],
+          },
+        },
+        { id: 'dev-1', type: 'scada-rect', x: 200, y: 100, width: 60, height: 60 },
+        { id: 'dev-2', type: 'scada-rect', x: 400, y: 100, width: 60, height: 60 },
+      ],
+    });
+  }
+
+  function junctionConnections(): Array<{ id: string; target: string }> {
+    const j = s.session.workingConfig.symbols.find((n) => n.id === 'J')!;
+    return (j.custom as { connections: Array<{ id: string; target: string }> }).connections;
+  }
+
+  it('removeWorkingSymbol(pruned dev) drops connection declarations targeting it; sibling connection kept', () => {
+    loadWiredConfig();
+    s.mutators.removeWorkingSymbol('dev-1');
+    const conns = junctionConnections();
+    // target===dev-1 的 connection 已 prune。
+    expect(conns.find((c) => c.target === 'dev-1')).toBeUndefined();
+    // 指向 dev-2 的 sibling connection 保留。
+    expect(conns.find((c) => c.target === 'dev-2')).toBeDefined();
+    expect(conns.map((c) => c.target)).toEqual(['dev-2']);
+  });
+
+  it('undo after removeWorkingSymbol restores the pruned connection (snapshot-based)', () => {
+    loadWiredConfig();
+    s.mutators.removeWorkingSymbol('dev-1');
+    expect(junctionConnections().map((c) => c.target)).toEqual(['dev-2']);
+    s.mutators.undo();
+    // undo 经 prevSnapshot 恢复 → 两条 connection 全部回来。
+    const targets = junctionConnections().map((c) => c.target).sort();
+    expect(targets).toEqual(['dev-1', 'dev-2']);
+    // dev-1 节点也恢复。
+    expect(s.session.workingConfig.symbols.find((n) => n.id === 'dev-1')).toBeDefined();
+  });
+
+  it('cutSelection prunes dangling connection declarations; undo restores them', () => {
+    loadWiredConfig();
+    s.mutators.setSelection(['dev-1']);
+    s.toolbox.cutSelection();
+    const conns = junctionConnections();
+    expect(conns.find((c) => c.target === 'dev-1')).toBeUndefined();
+    expect(conns.map((c) => c.target)).toEqual(['dev-2']);
+    // undo 恢复 pruned connection + 被剪节点。
+    s.mutators.undo();
+    const targets = junctionConnections().map((c) => c.target).sort();
+    expect(targets).toEqual(['dev-1', 'dev-2']);
+    expect(s.session.workingConfig.symbols.find((n) => n.id === 'dev-1')).toBeDefined();
+  });
+});

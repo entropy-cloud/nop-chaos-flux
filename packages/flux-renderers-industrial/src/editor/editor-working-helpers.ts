@@ -1,6 +1,7 @@
 import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
 import type { ScadaEditorSession } from './editor-session.js';
 import { recomputeJunctionAfterMove, collectSymbolBounds } from './connection/connection-adapter.js';
+import { readConnections } from './connection/anchor-snap.js';
 
 /**
  * working copy 纯函数助手集（design-connection.md §4.4/§4.5 + design-undo-redo.md §4.1.1）。
@@ -163,4 +164,43 @@ export function recomputeLinkagesForMovedNode(session: ScadaEditorSession, moved
     // 不再经 applyPatchToWorkingNode 的 O(n) findNodeInWorking 重查。
     Object.assign(junctionNode, { custom: { ...junctionNode.custom, connections: nextConnections } });
   }
+}
+
+/**
+ * 递归 prune 连接声明：删除其它 junction 上 `connection.target` 命中 `removedIds` 的 connection 条目
+ * （含 group 子树递归）。
+ *
+ * plan 2026-08-08-1910-2 Phase 4 / A8：`removeWorkingSymbol`/`cutSelection` 删节点时仅 filter 节点，
+ * 不清理其它 junction 上指向被删 id 的 connection 声明 → 保存后成永久 dangling 数据污染
+ * （`listAllConnections` 的 dangling 检测恰恰证明此态被容忍而非清除）。本函数在删除边界主动 prune，
+ * 经上层 snapshot-based undo（`pushOperation` 用 prevSnapshot）或 forward.updated 记录使 undo 可恢复。
+ *
+ * 不可变纪律：仅在节点确有 connection 被 prune 时重建 `{...node, custom: {...}}`；group 节点仅在其
+ * 子树变化时重建 `{...node, children: ...}`（与 removeNodeRecursive / diffScadaConfig 的 equality 检测一致）。
+ *
+ * @returns 新 symbols 数组（与输入不共享被改节点的 custom/children 引用）
+ */
+export function pruneDanglingConnections(symbols: ScadaSymbolNode[], removedIds: Set<string>): ScadaSymbolNode[] {
+  const walk = (nodes: ScadaSymbolNode[]): ScadaSymbolNode[] => {
+    const out: ScadaSymbolNode[] = [];
+    for (const node of nodes) {
+      let next = node;
+      const conns = readConnections(node.custom);
+      if (conns.length > 0) {
+        const filtered = conns.filter((c) => c.target === undefined || !removedIds.has(c.target));
+        if (filtered.length !== conns.length) {
+          next = { ...node, custom: { ...node.custom, connections: filtered } };
+        }
+      }
+      if (next.children) {
+        const newChildren = walk(next.children);
+        if (newChildren !== next.children) {
+          next = { ...next, children: newChildren };
+        }
+      }
+      out.push(next);
+    }
+    return out;
+  };
+  return walk(symbols);
 }

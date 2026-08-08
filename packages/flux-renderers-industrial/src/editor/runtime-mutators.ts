@@ -6,6 +6,7 @@ import {
   recomputeLinkagesForMovedNode,
   findNodeInWorking,
   collectAllSymbols,
+  pruneDanglingConnections,
 } from './editor-working-helpers.js';
 import { resetSession } from './editor-session.js';
 import type { ConnectionWriteResult } from './connection/connection-adapter.js';
@@ -95,9 +96,13 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     // collectAllSymbols 解析嵌套 id 的纪律不对称，CV-delete-nested）。现用递归 walker 从任意
     // 深度（顶层或 group.children）解链匹配节点；group 节点经 `{...node, children: ...}` 重建
     // 保持上层 immutability 纪律（与既有顶层 filter + groupSymbols 的 spread 同风格）。
+    let nextSymbols = removeNodeRecursive(session.workingConfig.symbols, nodeId);
+    // plan 2026-08-08-1910-2 Phase 4 / A8：prune 其它 junction 上 target===被删id 的 connection 声明，
+    // 防保存后永久 dangling 数据污染。snapshot-based undo（prevSnapshot）保留原 connections 供 undo 恢复。
+    nextSymbols = pruneDanglingConnections(nextSymbols, new Set([nodeId]));
     session.workingConfig = {
       ...session.workingConfig,
-      symbols: removeNodeRecursive(session.workingConfig.symbols, nodeId),
+      symbols: nextSymbols,
     };
     setSessionSelection(session.selection.filter((id) => id !== nodeId));
     undoRedo.pushOperation('remove-symbol', prevSnapshot, session.workingConfig);
@@ -138,8 +143,17 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
       }
       notifySession();
     } catch (error) {
-      // 回滚 working copy 到 apply 前态 + 派发 editor-internal-error（entry 未 commit，保留在原栈）。
+      // plan 2026-08-08-1910-2 Phase 2 / A6：回滚 working copy + 引擎场景到 apply 前态。
+      // leafer 无事务，engine.applyDiff（remove→build→update→reorder）半途抛错时场景树已半变
+      // （如 removed 已生效但 buildNode 抛错）。catch 仅回滚 working copy 不回滚引擎 → 画布半变；
+      // 若 synced.config===beforeWorking（steady state），下轮 syncWorkingCopy diff 为空 → 引擎永不愈合，
+      // 画布与 working copy/栈永久背离。
+      // Decision（strategy a）：catch 中 `engine.build(beforeWorking)` 全量重建。leafer 无事务，全量重建
+      // 是唯一可靠回滚（destroyRoot + registry.clear + rebuild 保证场景 === beforeWorking）；O(n) 但仅在
+      // 错误路径（罕见），性能可接受。同步 synced.config=beforeWorking 闭合空 diff 背离。
       session.workingConfig = beforeWorking;
+      engine.build(beforeWorking);
+      synced.config = cloneConfigSnapshot(beforeWorking);
       latest.current.onError?.('editor-internal-error', errorMessage(error));
     }
   };

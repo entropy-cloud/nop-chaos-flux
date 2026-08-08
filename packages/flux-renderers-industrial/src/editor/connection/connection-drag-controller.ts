@@ -10,6 +10,7 @@ import {
 } from './connection-adapter.js';
 import { EMPTY_OVERLAY_STATE, deriveOverlayState, type ConnectionOverlayState } from './connection-overlay.js';
 import type { WorldPoint } from './anchor-snap.js';
+import { readConnections } from './anchor-snap.js';
 
 /**
  * 连线拖拽控制器（design-connection.md §4.2 三段式交互的生产驱动器，E8 M-1 修正）。
@@ -69,11 +70,18 @@ export class ConnectionDragController {
   /**
    * (a) 端点拾起：进入端点拖动模式（§4.2 a）。
    * 返回 true 表示拖拽已启动；junctionId 不存在或非 pipe-junction 返回 false。
+   *
+   * plan 2026-08-08-1910-2 Phase 1 / A2：读现有 connections 喂 id 生成器。生产 UI 经此入口连续
+   * 拖拽时，每次生成不碰撞 connectionId（conn-0 → conn-1 → ...），使 commit 端 findIndex 恒 -1 → push
+   * 而非覆盖（junction 扇出到多设备是 SCADA 核心原语）。
    */
   beginDrag(junctionId: string): boolean {
     const junctionNode = this.deps.findNode(junctionId);
     if (!junctionNode || junctionNode.type !== 'scada-pipe-junction') return false;
-    this.dragState = beginConnectionDrag({ junctionId });
+    this.dragState = beginConnectionDrag({
+      junctionId,
+      existingConnections: readConnections(junctionNode.custom),
+    });
     return true;
   }
 

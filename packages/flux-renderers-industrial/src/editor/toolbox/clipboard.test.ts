@@ -135,4 +135,78 @@ describe('clipboard (design-toolbox.md §4.3)', () => {
       expect(cutRes.forward.removed).toEqual(['x']);
     });
   });
+
+  // plan 2026-08-08-1910-2 Phase 3 / A7：clipboard connection target/id 重写。
+  // reassignIdsRecursive 只改 node.id + 子树 id，不改 node.custom.connections。粘贴含连线的 junction：
+  // connection.id 仍是原件的（重复 id）；connection.target 仍指原件 target id（副本连错对象）。
+  describe('A7 — buildClipboardPaste rewrites connection target/id (clipboard.ts)', () => {
+    function junctionWithConn(id: string, connId: string, targetId: string): ScadaSymbolNode {
+      return {
+        id,
+        type: 'scada-pipe-junction',
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 50,
+        custom: { connections: [{ id: connId, x: 0.5, y: 0, direction: 'out', target: targetId }] },
+      };
+    }
+
+    it('paste junction + its target together → copy connection.target points at copy target; connection.id is unique', () => {
+      const j = junctionWithConn('J', 'J-conn-0', 'device-1');
+      const dev = rect('device-1', 200, 100);
+      const cb = buildClipboardCopy([j, dev]);
+      const { forward } = buildClipboardPaste(cb, 0);
+
+      // 副本 id 映射：J → J-copy-1，device-1 → device-1-copy-2。
+      const pastedJ = forward.added.find((n) => n.type === 'scada-pipe-junction')!;
+      const pastedDev = forward.added.find((n) => n.id.endsWith('device-1-copy-2'))!;
+      expect(pastedJ.id).toBe('J-copy-1');
+      expect(pastedDev.id).toBe('device-1-copy-2');
+
+      const conns = (pastedJ.custom as { connections: Array<{ id: string; target: string }> }).connections;
+      expect(conns).toHaveLength(1);
+      // target 重写指向副本 device-1-copy-2（非原件 device-1）。
+      expect(conns[0].target).toBe('device-1-copy-2');
+      // connection.id 重写为基于副本 junction id（不与原件 J-conn-0 重复）。
+      expect(conns[0].id).not.toBe('J-conn-0');
+      expect(conns[0].id.startsWith('J-copy-1-')).toBe(true);
+    });
+
+    it('paste junction whose target is NOT in selection → target kept as-is (dangling-tolerant, diagnostic detects)', () => {
+      // device-1 不在选区：副本 junction 的 connection.target 仍指原件 device-1（dangling）。
+      const j = junctionWithConn('J', 'J-conn-0', 'device-1');
+      const cb = buildClipboardCopy([j]);
+      const { forward } = buildClipboardPaste(cb, 0);
+      const pastedJ = forward.added.find((n) => n.type === 'scada-pipe-junction')!;
+      const conns = (pastedJ.custom as { connections: Array<{ id: string; target: string }> }).connections;
+      expect(conns[0].target).toBe('device-1');
+      expect(conns[0].id).not.toBe('J-conn-0');
+    });
+
+    it('paste junction with multiple connections → each connection.id unique within the copy', () => {
+      const j: ScadaSymbolNode = {
+        id: 'J',
+        type: 'scada-pipe-junction',
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 50,
+        custom: {
+          connections: [
+            { id: 'J-conn-0', x: 0.5, y: 0, direction: 'out', target: 'device-1' },
+            { id: 'J-conn-1', x: 0, y: 0.5, direction: 'out', target: 'device-2' },
+          ],
+        },
+      };
+      const cb = buildClipboardCopy([j, rect('device-1'), rect('device-2')]);
+      const { forward } = buildClipboardPaste(cb, 0);
+      const pastedJ = forward.added.find((n) => n.type === 'scada-pipe-junction')!;
+      const conns = (pastedJ.custom as { connections: Array<{ id: string; target: string }> }).connections;
+      expect(conns).toHaveLength(2);
+      // 两条 connection.id 互不碰撞（均基于副本 junction id 重新生成）。
+      expect(new Set(conns.map((c) => c.id)).size).toBe(2);
+      expect(conns.map((c) => c.target).sort()).toEqual(['device-1-copy-2', 'device-2-copy-3']);
+    });
+  });
 });

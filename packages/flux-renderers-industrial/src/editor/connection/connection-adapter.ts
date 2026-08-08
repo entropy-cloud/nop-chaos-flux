@@ -63,17 +63,25 @@ export function collectSymbolBounds(symbols: ScadaSymbolNode[]): ScadaSymbolBoun
  * 以备释放到空白区恢复（§4.3 M2 默认行为）。
  *
  * 返回新建的 ConnectionDragState（host 经此驱动 overlay 高亮 + cursor 切换）。
+ *
+ * plan 2026-08-08-1910-2 Phase 1 / A2：`existingConnections` 喂 id 生成器。生产 UI 的连线拖拽
+ * 唯一入口（`wireConnectionDrag` pointerdown → `beginDrag`）不传 `connectionId`，故每次拖拽都经
+ * `generateConnectionId` 推导。此前恒传空数组 → 恒 `conn-0` → 第二次拖拽 commit 用 conn-0 findIndex
+ * 命中第一条 → 静默覆盖（junction 最多持 1 条连线）。现由 host 读现有 connections 传入，生成 conn-N
+ * 不碰撞 → commit 端 push 而非覆盖。
  */
 export function beginConnectionDrag(args: {
   junctionId: string;
   connectionId?: string;
   existingConnection?: ScadaPipeConnection;
+  /** 现有 connections（id 生成器碰撞避让用，prod 经 beginDrag 注入）。 */
+  existingConnections?: ScadaPipeConnection[];
 }): ConnectionDragState {
   const existing = args.existingConnection;
   const isRedrag = args.connectionId !== undefined && existing !== undefined;
   return {
     junctionId: args.junctionId,
-    connectionId: args.connectionId ?? generateConnectionId(args.junctionId, []),
+    connectionId: args.connectionId ?? generateConnectionId(args.junctionId, args.existingConnections ?? []),
     isRedrag,
     originalConnection: isRedrag && existing ? { ...existing } : undefined,
   };

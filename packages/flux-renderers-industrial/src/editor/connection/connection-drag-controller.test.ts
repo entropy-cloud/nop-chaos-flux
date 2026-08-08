@@ -213,3 +213,62 @@ describe('ConnectionDragController (E8 M-1)', () => {
     expect(onCommit).not.toHaveBeenCalled();
   });
 });
+
+// plan 2026-08-08-1910-2 Phase 1 / A2：生产连线拖拽 id 不碰撞。
+// 生产 UI 经 beginDrag 入口（不传 connectionId）连续拖两次到不同 target，两条 connections 必须并存
+// （junction 扇出到多设备是 SCADA 核心原语）。缺陷纯 prod：beginDrag 不读现有 connections 喂 id 生成器 →
+// 恒 conn-0 → 第二次 commit 用 conn-0 findIndex 命中（idx≥0）覆盖第一条。e2e 走 programmaticConnect
+// （显式 connectionId → idx 恒 -1 → push），故绕过缺陷。
+describe('A2 — production multi-drag keeps both connections (no overwrite)', () => {
+  function makeMultiConfig(): ScadaConfig {
+    return {
+      version: 1,
+      variables: [],
+      symbols: [
+        {
+          id: 'J',
+          type: 'scada-pipe-junction',
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          custom: { connections: [] },
+        },
+        { id: 'target-A', type: 'scada-rect', x: 300, y: 100, width: 80, height: 60 },
+        { id: 'target-B', type: 'scada-rect', x: 500, y: 100, width: 80, height: 60 },
+      ],
+    };
+  }
+
+  it('two consecutive drags from J to target-A then target-B keep both connections (conn-0 + conn-1)', () => {
+    const config = makeMultiConfig();
+    // onCommit 经 host writeConnection 写回 junction custom.connections（生产路径语义）。
+    const applyCommit = (junctionId: string, connections: unknown[]): void => {
+      const j = findNode(config.symbols, junctionId);
+      if (j) j.custom = { ...j.custom, connections };
+    };
+    const controller = new ConnectionDragController(makeDeps(config), {
+      onOverlayUpdate: () => {},
+      onCommit: (r) => applyCommit(r.junctionId, r.connections),
+    });
+
+    // 第一次拖拽：J → target-A（target-A right-middle world = (380, 130)）。
+    controller.beginDrag('J');
+    controller.moveDrag({ x: 380, y: 130 });
+    controller.endDrag();
+
+    // 第二次拖拽：J → target-B（target-B right-middle world = (580, 130)）。
+    controller.beginDrag('J');
+    controller.moveDrag({ x: 580, y: 130 });
+    controller.endDrag();
+
+    const j = findNode(config.symbols, 'J')!;
+    const conns = (j.custom as { connections: Array<{ id: string; target: string }> }).connections;
+    // 两条 connections 并存（不被第二次覆盖）。
+    expect(conns).toHaveLength(2);
+    expect(conns.map((c) => c.target).sort()).toEqual(['target-A', 'target-B']);
+    // connectionId 不碰撞（conn-0 + conn-1）。
+    expect(conns.map((c) => c.id).sort()).toEqual(['J-conn-0', 'J-conn-1']);
+    expect(new Set(conns.map((c) => c.id)).size).toBe(2);
+  });
+});

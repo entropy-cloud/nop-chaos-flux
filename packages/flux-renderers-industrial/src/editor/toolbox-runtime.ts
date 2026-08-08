@@ -5,6 +5,7 @@ import {
   applyPatchToWorkingNode,
   collectAllSymbols,
   collectWorldBounds,
+  pruneDanglingConnections,
 } from './editor-working-helpers.js';
 import { resetSession } from './editor-session.js';
 import { serializeScadaConfig } from '../serialization/serialize.js';
@@ -174,17 +175,24 @@ export function buildToolboxRuntime(ctx: EditorRuntimeContext): EditorToolboxRun
   const cutSelectionFn = (): number => {
     const nodes = selectionNodes();
     if (nodes.length === 0) return 0;
-    const { clipboard: cb, forward } = buildClipboardCut(nodes);
+    const { clipboard: cb, forward: cutForward } = buildClipboardCut(nodes);
     clipboard.current = cb;
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
+    const removedSet = new Set(cutForward.removed);
     // 经 remove 路径移除 selection（与 removeWorkingSymbol 同语义，单次入栈）。
-    const removedSet = new Set(forward.removed);
+    let nextSymbols = session.workingConfig.symbols.filter((s) => !removedSet.has(s.id));
+    // plan 2026-08-08-1910-2 Phase 4 / A8：同 removeWorkingSymbol——prune 其它 junction 上
+    // target∈removedSet 的 connection 声明，防保存后永久 dangling 数据污染。
+    nextSymbols = pruneDanglingConnections(nextSymbols, removedSet);
     session.workingConfig = {
       ...session.workingConfig,
-      symbols: session.workingConfig.symbols.filter((s) => !removedSet.has(s.id)),
+      symbols: nextSymbols,
     };
     setSessionSelection(session.selection.filter((id) => !removedSet.has(id)));
-    undoRedo.pushForward('remove-symbol', forward, prevSnapshot);
+    // pushOperation（snapshot-based）：forward = diffScadaConfig(prev, current) 自动含 removed +
+    // updated（pruned junction custom）；inverse 从 prevSnapshot 恢复 pruned connection + 被剪节点，
+    // 使 undo 完整恢复（与 removeWorkingSymbol 同型，原 pushForward 手工 forward 仅记 removed 无法恢复 prune）。
+    undoRedo.pushOperation('remove-symbol', prevSnapshot, session.workingConfig);
     syncWorkingCopy();
     notifySession();
     return nodes.length;
