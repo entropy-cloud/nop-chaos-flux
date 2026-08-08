@@ -47,6 +47,7 @@
     "check:audit-react19-optimization-candidates": "node scripts/audit/find-react19-optimization-candidates.mjs",
     "check:audit-runtime-raw-schema-reads": "node scripts/audit/find-runtime-raw-schema-reads.mjs",
     "check:audit-hardcoded-type-dispatch": "node scripts/audit/find-hardcoded-type-dispatch.mjs",
+    "check:audit-canvas-wrapper-a11y": "node scripts/audit/find-canvas-wrapper-a11y-gaps.mjs",
     "check:duplicates": "node scripts/check-duplicates.mjs",
     "check:duplicates:detail": "jscpd packages/ --config .jscpd.json",
     "flux-guide:validate": "pnpm build && node --experimental-loader ./flux-guide/scripts/css-stub.mjs flux-guide/scripts/validate.mjs",

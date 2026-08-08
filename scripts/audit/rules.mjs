@@ -9,8 +9,10 @@ import {
   scanTopLevelLets,
 } from './shared.mjs';
 import { react19OptimizationRules } from './react19-rules.mjs';
+import { canvasWrapperA11yRules } from './canvas-a11y-rules.mjs';
 
 export { react19OptimizationRules } from './react19-rules.mjs';
+export { canvasWrapperA11yRules } from './canvas-a11y-rules.mjs';
 
 const allowedFieldFrameOwnerPrefixes = ['packages/flux-react/src/'];
 const documentedFieldFrameBypassAllowlist = new Set([
@@ -622,4 +624,5 @@ export const allAuditSuspectRules = [
   ...rendererMarkerRules,
   ...runtimeRawSchemaReadRules,
   ...hardcodedTypeDispatchRules,
+  ...canvasWrapperA11yRules,
 ];
