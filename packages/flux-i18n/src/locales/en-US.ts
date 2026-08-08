@@ -708,6 +708,8 @@ export const enUS: Resource = {
       addFieldsHint: 'Add fields to {{name}}',
       noDescription: 'No description',
       datasetOptions: 'Dataset options',
+      deleteDataset: 'Delete Dataset',
+      deleteDatasetConfirm: 'Delete dataset "{{name}}"? This cannot be undone.',
       columnDescriptionPlaceholder: 'Column description',
       removeColumn: 'Remove column',
       removeColumnWithIndex: 'Remove column {{index}}',

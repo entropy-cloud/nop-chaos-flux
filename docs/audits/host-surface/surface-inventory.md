@@ -166,6 +166,52 @@
 - **MA5 P3-09 `bridge.ts:75-86` `as never` → 收敛**：仍存在 → H1 面登记裁决 = **P2 低成本当场修复**（Phase 4：`buildAggregatedRuntimeSummary` 参数改窄接口 `SpreadsheetRuntimeSummaryInput`，bridge 传类型安全对象；行为由既有 `bridge.test.ts` deriveDesignerHostSnapshot 断言锁定）。
 - **MA5 P2-03 inspector auto-open race → 收敛（复核）**：`page-renderer.tsx:383-403` 的 useEffect deps 已含 `actionScope`（修复方向 1 已落地），auto-open 与 namespace 注册同 commit 生效。
 
+## D3.4 增量登记（2026-08-08，plan `2026-08-08-1315-3` Phase 1 交付）
+
+### 面级 e2e 覆盖矩阵（既有 4 spec ↔ we-1..we-7）
+
+| e2e spec                                               | we-1 | we-2 | we-3 | we-4 | we-5 | we-6 | we-7 |
+| ------------------------------------------------------ | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| word-editor（页面渲染/canvas/键入/工具栏/对话框/保存） | ✓    | ✓    | ~    | ✓    | ✓    | ✓    |      |
+| word-editor-dataset（数据集 CRUD + 持久化）            |      |      |      | ✓    | ✓    |      |      |
+| word-editor-persistence（保存 + reload 恢复）          | ✓    |      |      |      | ✓    |      | ~    |
+| word-editor-template-expr（表达式/标签对话框链路）     |      | ✓    |      |      |      | ✓    |      |
+
+**缺口清单（= Phase 5 新增场景候选）**：
+
+- **we-3 选区**：无真实浏览器场景断言 selection 回显（格式按钮仅点击无选中态断言；toolbar 点击 → rangeStyleChange → 按钮 active 态链路无 e2e）——**Phase 5 新增候选**。
+- **we-7 导入**：loadDocument 仅经 reload 间接覆盖；显式「seed localStorage → 打开 → 恢复渲染」与「损坏 JSON → 恢复错误上报」场景无 e2e——**Phase 5 新增候选**。
+- **we-6 导出**：预览页（doc-preview-page）playground 无路由，无 e2e——维持单元级覆盖（doc-preview-page.test.tsx 在案，显式决策不新增路由）。
+- **we-2 工具栏**：既有 spec 已逐按钮断言，无缺口。
+
+### 已知遗留输入终态核对（2026-08-08 live）
+
+- **MA43-P1-08（5 个 normalize 函数零测试）→ 收敛**：`document-io-normalize.test.ts` 在案（normalizeWordDocument/normalizeDocCharts/normalizeDocCodes/normalizeDataset/normalizeDatasets 直接测试，`__tests__/document-io-normalize.test.ts`）；arm-index fixed 标注与 live 一致。
+- **MA43-P1-09（resolveWordEditorManifest 零测试）→ 收敛**：`word-editor-manifest.test.ts` describe('resolveWordEditorManifest')（'1.0'/'1'/'latest' 三版本别名 + '2.0'/'0.9'/''/'bad' 未知版本 undefined）。
+- **MA43-P1-10（wordEditorHostContract 零直接验证）→ 收敛**：同文件 describe('wordEditorHostContract')（family/defaultVersion/resolveManifest 绑定/capabilityPublication 全等断言）。
+- **MA5 P3-01（word-editor-renderers 整包零测试）→ 过期记录作废**：live `__tests__/` 19 个测试文件（panels/dialogs/toolbar/hooks/page/manifest/action-provider/preview）。
+- **MA5 P2-02（window probe stale savedDocument）→ 收敛**：`use-word-editor-state.ts:242` 已用 `savedDocumentRef.current` 惰性读取（修复方向已落地）。
+- **MA4 包簇 8 P2 行（parseFieldReference/validateFieldReference/parseTemplate/extractFieldReferences/hasFieldReferences 零测试）→ 确认仍零直接测试**（template-expr.test.ts 仅覆盖 URL/标签构造面，5 函数无 describe）——H7 回归项，Phase 4 补测（低成本 test-only）。
+- **MA5 P3-07（dead handleDatasetMenu）/ P3-10（outline render 期读桥 + dead outlineRevision）/ P3-11（lucide 直引 4 文件）→ live 确认在案**——we-4/we-1 面发现登记。
+
+### 面清单核对结论（2026-08-08 live）
+
+- we-1 `word-editor-page.tsx` + `editor-canvas.tsx`（CanvasEditorBridge 封装）✓ 在案
+- we-2 `toolbar/`（ribbon-toolbar + font/paragraph/insert/template/page/search-replace/shared）✓ 在案
+- we-3 `editor-store.ts` `EditorSelectionState`（18 字段）+ bridge onRangeStyleChange 接线 ✓ 在案
+- we-4 `dataset-store.ts` + `dataset-model.ts` + dataset-panel/field-list/dataset-dialog ✓ 在案
+- we-5 `document-io.ts` recovery 路径（persist/load/recovery + 失败态 + SSR 守卫）✓ 在案
+- we-6 `template-expr.ts`/`template-model.ts`/`template-tags.ts` + `preview/doc-preview-page.tsx` ✓ 在案
+- we-7 `document-io.ts` load 路径（loadDocument/loadDatasets + normalize 族）✓ 在案
+
+### D3.4 收口增量（2026-08-08，plan `2026-08-08-1315-3` Phase 5）
+
+- **新增 spec 登记**：`tests/e2e/word-editor-recovery.spec.ts`（6 用例，2026-08-08 全绿）——we-7 导入（seed 合法文档恢复渲染 + 损坏 JSON `"null"`/语法错误 fail-closed 不崩溃）、we-3 选区（toolbar-bold aria-pressed 回显断言）、we-4 确认点（P1-1 选中后 Fields tab 展示字段 / P1-2 行菜单删除确认）。缺口全部闭合。
+- **P1 修复登记（4 条 test-first，bug note 114–116）**：114 loadDocument null 根崩溃（we-7，document-io.ts 根守卫）；115 空 label 列数据集恢复丢弃（we-4，dataset-dialog canSave 门）；116 数据集选中路径缺失 + 死菜单按钮（we-4，行点击 select + DropdownMenu Edit/Delete）。
+- **P2 路由登记（DR-12..DR-16）**：we-2 工具栏 i18n 族 / we-4 数据集 i18n 族 / we-6 模板标签 i18n / we-1 ghost schema 声明 / we-5 persist 契约措辞（`round2-dr-adjudication.md` 16 条零悬挂）。
+- **低成本 P2 当场修复（4 条）**：EditorCanvas charts/codes 死参数移除（we-1）；Ctrl+F 空 case 移除 + 快捷键单测（we-2）；5 个 field-reference 函数补测（we-6，test-only）；（we-4 P1 修复附带 testid/menu/删除入口）。
+- **owner doc 注记**：`docs/architecture/word-editor/design.md` 无行为契约变更（修复均为缺陷收敛 + 面板交互补全，design.md 条款未改——「selection 选中语义」修复已超出原文档粒度，收口登记本行）；manifest docsPath 双文档并存（we-1 P3-4）登记 daily log 待 DG 治理。
+
 ## 引用关系
 
 - D3.1 plan 引用: 本清单 fd-1..fd-13 + `docs/audits/host-surface/README.md` §1/§2（flow-designer 行）。

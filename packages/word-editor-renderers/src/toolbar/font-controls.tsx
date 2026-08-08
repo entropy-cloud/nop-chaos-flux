@@ -50,12 +50,6 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
         title="flux.wordEditor.redo"
         testId="toolbar-redo"
       />
-      <ToolbarButton
-        icon={Redo2}
-        onClick={() => runCommand(() => command?.executeRedo())}
-        disabled={!selection.redo}
-        title="flux.wordEditor.redo"
-      />
       <ToolbarSeparator />
       <ToolbarButton
         icon={Paintbrush}

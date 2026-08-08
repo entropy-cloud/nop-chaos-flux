@@ -402,6 +402,48 @@ describe('loadDocument', () => {
       }),
     );
   });
+
+  it('returns null for valid JSON with a null root instead of crashing', () => {
+    const onRecoveryError = vi.fn();
+    setRecoveryLoadErrorHandler(onRecoveryError);
+    localStorageState.current._store[STORAGE_KEY] = 'null';
+
+    expect(loadDocument()).toBeNull();
+    expect(onRecoveryError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: 'document',
+        reason: 'json-parse-failed',
+      }),
+    );
+  });
+
+  it('returns null for valid JSON with a scalar root instead of crashing', () => {
+    const onRecoveryError = vi.fn();
+    setRecoveryLoadErrorHandler(onRecoveryError);
+    localStorageState.current._store[STORAGE_KEY] = '42';
+
+    expect(loadDocument()).toBeNull();
+    expect(onRecoveryError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: 'document',
+        reason: 'json-parse-failed',
+      }),
+    );
+  });
+
+  it('returns null for a JSON array root instead of crashing', () => {
+    const onRecoveryError = vi.fn();
+    setRecoveryLoadErrorHandler(onRecoveryError);
+    localStorageState.current._store[STORAGE_KEY] = '[]';
+
+    expect(loadDocument()).toBeNull();
+    expect(onRecoveryError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: 'document',
+        reason: 'json-parse-failed',
+      }),
+    );
+  });
 });
 
 describe('clearDocument', () => {

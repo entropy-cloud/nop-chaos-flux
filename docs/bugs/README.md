@@ -132,3 +132,6 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/111-report-designer-undo-does-not-revert-canvas-fix.md`
 - `docs/bugs/112-report-designer-page-core-disposed-under-strict-mode-fix.md`
 - `docs/bugs/113-report-designer-toolbar-negated-boolean-templates-fix.md`
+- `docs/bugs/114-word-editor-loaddocument-null-root-crash-fix.md`
+- `docs/bugs/115-word-editor-dataset-unlabeled-column-lost-on-recovery-fix.md`
+- `docs/bugs/116-word-editor-dataset-panel-fields-unreachable-dead-menu-fix.md`

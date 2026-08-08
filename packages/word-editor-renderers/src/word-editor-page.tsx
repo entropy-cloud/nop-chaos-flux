@@ -232,6 +232,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
             store={datasetStore}
             onAddDataset={actions.handleAddDataset}
             onEditDataset={actions.handleEditDataset}
+            onDeleteDataset={actions.handleDeleteDataset}
             showHeader={false}
           />
         </TabsContent>

@@ -9,6 +9,11 @@ import {
   buildTagOpenString,
   buildTagSelfcloseString,
   buildFieldExpression,
+  parseFieldReference,
+  validateFieldReference,
+  parseTemplate,
+  extractFieldReferences,
+  hasFieldReferences,
 } from '../template-expr.js';
 import type { TemplateExpr } from '../template-expr.js';
 
@@ -260,5 +265,92 @@ describe('roundtrip: exprToUrl → parseExprFromUrl', () => {
     const url = exprToUrl(expr);
     const parsed = parseExprFromUrl(url);
     expect(parsed).toEqual(expr);
+  });
+});
+
+describe('parseFieldReference', () => {
+  it('parses a valid ${dataset.field} reference', () => {
+    expect(parseFieldReference('${orders.amount}')).toEqual({
+      dataset: 'orders',
+      field: 'amount',
+      fullReference: '${orders.amount}',
+    });
+  });
+
+  it('returns null for references without ${} wrapping', () => {
+    expect(parseFieldReference('orders.amount')).toBeNull();
+  });
+
+  it('returns null for nested paths or invalid identifiers', () => {
+    expect(parseFieldReference('${orders.items.amount}')).toBeNull();
+    expect(parseFieldReference('${2orders.amount}')).toBeNull();
+  });
+
+  it('returns null for empty input', () => {
+    expect(parseFieldReference('')).toBeNull();
+  });
+});
+
+describe('validateFieldReference', () => {
+  it('accepts a valid reference', () => {
+    expect(validateFieldReference('${orders.amount}')).toEqual({ valid: true });
+  });
+
+  it('rejects references without exactly two parts', () => {
+    expect(validateFieldReference('${orders}').valid).toBe(false);
+    expect(validateFieldReference('${orders.items.amount}').valid).toBe(false);
+  });
+
+  it('rejects invalid dataset or field names', () => {
+    expect(validateFieldReference('${2orders.amount}').valid).toBe(false);
+    expect(validateFieldReference('${orders.2amount}').valid).toBe(false);
+  });
+});
+
+describe('parseTemplate', () => {
+  it('splits text and field references into segments', () => {
+    const result = parseTemplate('Hello ${orders.amount} total');
+    expect(result.hasExpressions).toBe(true);
+    expect(result.segments).toEqual([
+      { type: 'text', value: 'Hello ' },
+      { type: 'field-reference', value: '${orders.amount}' },
+      { type: 'text', value: ' total' },
+    ]);
+  });
+
+  it('returns a single text segment when there are no expressions', () => {
+    const result = parseTemplate('plain text');
+    expect(result.hasExpressions).toBe(false);
+    expect(result.segments).toEqual([{ type: 'text', value: 'plain text' }]);
+  });
+
+  it('handles trailing text after the last reference', () => {
+    const result = parseTemplate('${a.b} and ${c.d} done');
+    expect(result.segments.map((s) => s.value)).toEqual(['${a.b}', ' and ', '${c.d}', ' done']);
+  });
+});
+
+describe('extractFieldReferences', () => {
+  it('extracts all references from a template', () => {
+    const refs = extractFieldReferences('${orders.amount} + ${orders.tax}');
+    expect(refs).toEqual([
+      { dataset: 'orders', field: 'amount', fullReference: '${orders.amount}' },
+      { dataset: 'orders', field: 'tax', fullReference: '${orders.tax}' },
+    ]);
+  });
+
+  it('returns an empty list when there are no references', () => {
+    expect(extractFieldReferences('no fields')).toEqual([]);
+  });
+});
+
+describe('hasFieldReferences', () => {
+  it('returns true when a reference exists', () => {
+    expect(hasFieldReferences('value ${orders.amount}')).toBe(true);
+  });
+
+  it('returns false for plain text or malformed references', () => {
+    expect(hasFieldReferences('value ${orders}')).toBe(false);
+    expect(hasFieldReferences('plain')).toBe(false);
   });
 });

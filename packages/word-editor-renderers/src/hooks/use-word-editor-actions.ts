@@ -76,6 +76,15 @@ export function useWordEditorActions({
     [editingDatasetId, datasetStore, editorStore, setDatasetDialogOpen, setEditingDatasetId],
   );
 
+  const handleDeleteDataset = useCallback(
+    (datasetId: string) => {
+      if (datasetStore.remove(datasetId)) {
+        editorStore.setDirty(true);
+      }
+    },
+    [datasetStore, editorStore],
+  );
+
   const handleFieldClick = useCallback(
     (datasetName: string, columnName: string) => {
       bridge.insertFieldExpression(datasetName, columnName);
@@ -134,6 +143,7 @@ export function useWordEditorActions({
     handleAddDataset,
     handleEditDataset,
     handleSaveDataset,
+    handleDeleteDataset,
     handleFieldClick,
     handleInsertExpr,
     handleInsertTag,

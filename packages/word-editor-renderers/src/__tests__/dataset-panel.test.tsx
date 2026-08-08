@@ -22,6 +22,26 @@ vi.mock('@nop-chaos/ui', () => {
       <div data-testid="scroll-area">{children}</div>
     ),
     cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
+    Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogBody: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DropdownMenuTrigger: ({ render }: { render: React.ReactNode }) => <div>{render}</div>,
+    DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DropdownMenuItem: ({
+      children,
+      onClick,
+    }: {
+      children: React.ReactNode;
+      onClick?: () => void;
+    }) => (
+      <button type="button" data-testid="button" onClick={onClick}>
+        {children}
+      </button>
+    ),
   };
 });
 
@@ -38,6 +58,7 @@ function createMockStore(
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    select: vi.fn(),
   } as unknown as DatasetStoreApi;
 }
 

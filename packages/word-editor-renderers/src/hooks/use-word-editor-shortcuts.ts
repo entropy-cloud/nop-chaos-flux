@@ -72,9 +72,6 @@ export function useWordEditorShortcuts(options: UseWordEditorShortcutsOptions): 
           event.preventDefault();
           onSave?.();
           break;
-        case 'f':
-          event.preventDefault();
-          break;
         case 'p':
           event.preventDefault();
           bridge?.command?.executePrint();

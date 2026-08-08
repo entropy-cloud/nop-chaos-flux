@@ -5,15 +5,12 @@ import type { EditorStoreApi } from '@nop-chaos/word-editor-core';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import { captureDocumentSnapshot, createSavedDocumentData, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core';
 import type { PaperSettings, SavedDocumentData, WordDocument } from '@nop-chaos/word-editor-core';
-import type { DocChart, DocCode } from '@nop-chaos/word-editor-core';
 
 export interface EditorCanvasProps {
   editorStore: EditorStoreApi;
   bridge: CanvasEditorBridge;
   initialDocument?: WordDocument;
   recoveredDocument?: SavedDocumentData | null;
-  charts?: DocChart[];
-  codes?: DocCode[];
   onAutosave?: (saved: SavedDocumentData) => void;
 }
 
@@ -22,24 +19,12 @@ export function EditorCanvas({
   bridge,
   initialDocument,
   recoveredDocument,
-  charts,
-  codes,
   onAutosave,
 }: EditorCanvasProps) {
   const descriptionId = useId();
   const regionLabel = t('flux.wordEditor.canvasRegionLabel');
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartsRef = useRef<DocChart[] | undefined>(charts);
-  const codesRef = useRef<DocCode[] | undefined>(codes);
   const onAutosaveRef = useRef(onAutosave);
-
-  useEffect(() => {
-    chartsRef.current = charts;
-  }, [charts]);
-
-  useEffect(() => {
-    codesRef.current = codes;
-  }, [codes]);
 
   useEffect(() => {
     onAutosaveRef.current = onAutosave;

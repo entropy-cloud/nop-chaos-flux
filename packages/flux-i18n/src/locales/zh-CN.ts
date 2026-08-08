@@ -707,6 +707,8 @@ export const zhCN: Resource = {
       addFieldsHint: '向 {{name}} 添加字段',
       noDescription: '无描述',
       datasetOptions: '数据集选项',
+      deleteDataset: '删除数据集',
+      deleteDatasetConfirm: '确定删除数据集「{{name}}」吗？此操作不可撤销。',
       columnDescriptionPlaceholder: '列描述',
       removeColumn: '删除列',
       removeColumnWithIndex: '删除第 {{index}} 列',

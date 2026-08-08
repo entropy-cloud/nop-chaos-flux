@@ -409,23 +409,29 @@ export function loadDocument(): SavedDocumentData | null {
     return null;
   }
 
-  let parsed: Record<string, unknown>;
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(raw) as Record<string, unknown>;
+    parsed = JSON.parse(raw);
   } catch (error) {
     reportRecoveryLoadError({ target: 'document', reason: 'json-parse-failed', error });
     return null;
   }
 
-  const data = normalizeWordDocument(parsed.data);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    reportRecoveryLoadError({ target: 'document', reason: 'json-parse-failed' });
+    return null;
+  }
+
+  const record = parsed as Record<string, unknown>;
+  const data = normalizeWordDocument(record.data);
   if (!data) {
     return null;
   }
 
   return {
     data,
-    paperSettings: normalizePaperSettings(parsed.paperSettings),
-    savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date(0).toISOString(),
+    paperSettings: normalizePaperSettings(record.paperSettings),
+    savedAt: typeof record.savedAt === 'string' ? record.savedAt : new Date(0).toISOString(),
   };
 }
 

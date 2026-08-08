@@ -63,8 +63,14 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
     setColumns(newColumns);
   };
 
+  const hasCompleteName = name.trim().length > 0;
+  const hasCompleteColumns = columns.every(
+    (col) => (col.name?.trim() ?? '') && (col.label?.trim() ?? ''),
+  );
+  const canSave = hasCompleteName && hasCompleteColumns;
+
   const handleSave = () => {
-    if (!name.trim()) {
+    if (!canSave) {
       return;
     }
 
@@ -260,7 +266,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
           <Button variant="ghost" size="sm" onClick={onClose}>
             {t('flux.common.cancel')}
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={!name.trim()}>
+          <Button size="sm" onClick={handleSave} disabled={!canSave}>
             {t('flux.common.save')}
           </Button>
         </DialogFooter>
