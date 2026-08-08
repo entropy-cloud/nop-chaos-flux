@@ -42,3 +42,4 @@
 - **coalesce-merge = 新提交**：任何「替换 / 合并栈顶」的操作必须截断 redo（U6），与 `push` 同语义。
 - **coalesce 必须拒绝它无法完整搬运载荷的 diff**：合并逻辑只构造 `updated`，故带 `variables` / `reordered` 的 diff 必须被拒（否则载荷静默丢失）。
 - 重构 coalesce / replaceUndoTop 时，两个不变量（redo 截断 + 载荷完整性）都要保留；failing-first 测试锁定之。
+- **Lesson 回链（HCA-LL）**：已沉淀为 industrial 专项检查点——`docs/audits/component-audit-checklist.md` §2.1 IND-5（undo-redo 事务边界 / 合并窗口不变量）。catalog 终态见 `docs/plans/2026-08-08-1527-2` §裁定结果 L-ED-1。

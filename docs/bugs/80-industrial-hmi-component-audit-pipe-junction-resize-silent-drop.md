@@ -35,3 +35,4 @@
 
 - 自定义 `applyProps` 若借用 `applyCompositeProps`，且 parts 无 extent / resize hook，必须自行处理 `width` / `height` 重算（composite 框架会静默丢弃）。
 - 重构 pipe-junction 的 applyProps 时，确保 resize 重算路径保留；create 与 applyProps 的几何公式必须保持一致（failing-first 测试锁定此不变量）。
+- **Lesson 回链（HCA-LL）**：已沉淀为 industrial 专项检查点——`docs/audits/component-audit-checklist.md` §2.1 IND-4（applyProps 路由 / extent-resize / create↔applyProps 几何 parity）。catalog 终态见 `docs/plans/2026-08-08-1527-2` §裁定结果 L-SYM-1。

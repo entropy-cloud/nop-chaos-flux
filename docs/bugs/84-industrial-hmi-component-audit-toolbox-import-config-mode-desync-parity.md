@@ -35,3 +35,4 @@
 
 - 所有 import / load 入口在 `engine.build` 后必须同步 `engine.mode → session.mode`（P1-08 parity）。
 - 新增 import/load 路径时，复制此 setMode 同步；该 parity 缺口跨多点（runtime-mutators.load / toolbox-runtime.importConfig），易在新站点复发。
+- **Lesson 回链（HCA-LL）**：已沉淀为 industrial 专项检查点——`docs/audits/component-audit-checklist.md` §2.1 IND-5（import/load 跨点 parity）+ IND-6（跨点 parity 识别方法）。catalog 终态见 `docs/plans/2026-08-08-1527-2` §裁定结果 L-ED-2。

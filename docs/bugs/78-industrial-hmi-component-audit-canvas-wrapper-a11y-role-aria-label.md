@@ -43,3 +43,4 @@
 
 - canvas 交互面无原生 a11y 语义，wrapper 必须显式 `role="application"` + `aria-label` + i18n key。
 - 新增 canvas 类 renderer 时，复制此 a11y 契约；closure 时以 DOM 属性级断言（非仅 not.toThrow）守护。
+- **Lesson 回链（HCA-LL）**：已沉淀为 industrial 专项检查点——`docs/audits/component-audit-checklist.md` §2.1 IND-1（canvas wrapper a11y）+ `docs/skills/deep-audit-prompts.md` 维度 20 industrial 包级提示 + `docs/architecture/renderer-markers-and-selectors.md`「Canvas / scene-graph interaction surfaces」节。catalog 终态见 `docs/plans/2026-08-08-1527-2` §裁定结果 L-A11Y-1。

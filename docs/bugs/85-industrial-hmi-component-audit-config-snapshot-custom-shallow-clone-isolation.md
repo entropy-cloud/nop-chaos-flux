@@ -38,3 +38,4 @@
 
 - 所有 config / node clone 路径必须深克隆 `custom`（R5 Layer 2 隔离纪律）——`children` 已递归，`custom` 同样必须 `structuredClone`。
 - 新增快照 / clone 路径时，用 `cloneConfigSnapshot`（整体）或显式 `structuredClone(node.custom)`；该隔离缺口跨多站点（session / working-helpers / mutators / undo-redo-adapter），易在新 clone 路径复发（HCA11 P3-1 记录 `undo-redo-adapter.cloneNodeDeep` 同型残留，归 HCA-CR）。
+- **Lesson 回链（HCA-LL）**：已沉淀为 industrial 专项检查点——`docs/audits/component-audit-checklist.md` §2.1 IND-4 / IND-5（custom 深克隆隔离）+ `docs/skills/deep-audit-prompts.md` 项目校准说明（跨点 custom 克隆一致性）。catalog 终态见 `docs/plans/2026-08-08-1527-2` §裁定结果 L-ED-3。

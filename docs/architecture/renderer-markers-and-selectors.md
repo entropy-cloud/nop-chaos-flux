@@ -74,6 +74,15 @@ Selector priority:
 2. use `data-slot` when you need stable component-internal structure targeting
 3. use Flux root markers when you need renderer-level identity
 
+### Canvas / scene-graph interaction surfaces (non-native a11y)
+
+When a renderer hosts a third-party scene-graph/canvas engine (e.g. leafer in `scada-canvas` / `scada-editor-canvas`, or a flow-designer canvas) that paints onto a plain `<div>`, that wrapper has **no native landmark/region semantics**. Screen readers cannot identify the canvas region's purpose. Such wrappers must explicitly expose:
+
+- `role="application"` — tells assistive technology this is a rich interactive application region (not generic flow content)
+- `aria-label` (resolved via i18n key, not hardcoded) — the accessible name of the canvas region
+
+Same-type renderers (e.g. runtime + editor variants) must apply the contract consistently. This a11y defect is invisible to pure-logic unit tests; guard it with DOM attribute-level assertions (`getAttribute('role')` / `getAttribute('aria-label')`), not `not.toThrow`. Source: `docs/bugs/78` (HCAX-2), lesson sunk via `docs/plans/2026-08-08-1527-2` (HCA-LL). Flow-designer canvas roots using `role="button"` are documented in `docs/architecture/flow-designer/design.md`.
+
 ### Layer 2: Flux semantic markers
 
 Flux renderer markers exist to describe renderer-owned business structure.

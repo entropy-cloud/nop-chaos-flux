@@ -1,6 +1,6 @@
 # 02 Industrial HMI Component Audit — HCA-LL Lesson 总结（架构/工程经验沉淀到 checklist v2 / skills / 架构文档）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-08
 > Mission: industrial-hmi-component-audit
 > Work Item: HCA-LL. Lesson 总结
@@ -69,54 +69,54 @@
 
 ### Phase 1 - Lesson 目录编制（catalog + 裁定）
 
-Status: planned
+Status: completed
 Targets: 9 bug 卡 + 各层审计记录 + HCA-CR 24 residual 表 + roadmap §HCA-LL 6 主题
 
 - Item Types: `Decision`
 
-- [ ] 从 9 bug 卡（`docs/bugs/77–85`）逐张提炼 lesson 候选（根因模式 / 复发风险 / 是否值得沉淀 vs 仅 bug 卡已足够）。
-- [ ] 从各层审计记录 + HCA-CR residual 裁定表（24 P3 residual + 2 watch-only）提炼「同类问题如何裁定」经验（如防御纵深 vs 真实缺陷的边界、跨点 parity 识别、公共 API footgun 裁定）。
-- [ ] 对齐 roadmap §HCA-LL 已列 6 主题（a11y / schema 契约 / error code / 四态 / React19 / 文件行数），补 catalog 缺口主题（如 canvas 场景图生命周期、序列化校验完整性、custom 数据隔离纪律）。
-- [ ] 逐候选裁定终态：`沉淀（目标工件 + 落点）` / `不沉淀（理由：bug 卡已足够 / 无复发价值）`，落 catalog 表写入本 plan「裁定结果」节。
+- [x] 从 9 bug 卡（`docs/bugs/77–85`）逐张提炼 lesson 候选（根因模式 / 复发风险 / 是否值得沉淀 vs 仅 bug 卡已足够）。
+- [x] 从各层审计记录 + HCA-CR residual 裁定表（24 P3 residual + 2 watch-only）提炼「同类问题如何裁定」经验（如防御纵深 vs 真实缺陷的边界、跨点 parity 识别、公共 API footgun 裁定）。
+- [x] 对齐 roadmap §HCA-LL 已列 6 主题（a11y / schema 契约 / error code / 四态 / React19 / 文件行数），补 catalog 缺口主题（如 canvas 场景图生命周期、序列化校验完整性、custom 数据隔离纪律）。
+- [x] 逐候选裁定终态：`沉淀（目标工件 + 落点）` / `不沉淀（理由：bug 卡已足够 / 无复发价值）`，落 catalog 表写入本 plan「裁定结果」节。
 
 Exit Criteria:
 
-- [ ] 本 plan「裁定结果」节含全量 lesson 候选，每条有终态（沉淀+落点 / 不沉淀+理由），零「optional / consider」模糊措辞。
-- [ ] roadmap §HCA-LL 6 主题全部覆盖（沉淀或显式裁定不沉淀+理由）。
+- [x] 本 plan「裁定结果」节含全量 lesson 候选（16 项 = 15 沉淀 + 1 不沉淀），每条有终态（沉淀+落点 / 不沉淀+理由），零「optional / consider」模糊措辞。
+- [x] roadmap §HCA-LL 6 主题全部覆盖（沉淀或显式裁定不沉淀+理由）。
 
 ### Phase 2 - 沉淀到 durable 工件 + 三向回链
 
-Status: planned
+Status: completed
 Targets: `docs/audits/component-audit-checklist.md`、`docs/skills/deep-audit-prompts.md`、相关 `docs/architecture/*.md`
 
 - Item Types: `Fix | Follow-up`
 
-- [ ] `Fix`：`docs/audits/component-audit-checklist.md` v2 增 industrial 专项维度节——canvas 场景图引擎（视口数学/命中/覆盖物生命周期/destroyed 门控）、数据绑定管线（点表/脏收集合帧/动画时钟）、序列化校验完整性（子形状/malformed/枚举字段）、符号库（applyProps 路由/extent-resize/custom 深克隆隔离）、编辑器子系统（状态机/事务边界/合并窗口/pointer 挂载层级），每维度含「检查什么 + 对应 bug 卡回链」。
-- [ ] `Fix`：`docs/skills/deep-audit-prompts.md`「项目校准说明」/ 相关维度（生命周期维度 07 / 错误处理 / React 集成 / 测试质量 / 架构边界）增 industrial 包级提示（如「canvas renderer wrapper 必查 role/aria-label」「跨点 custom 克隆一致性」「error code 升级码 vs 命令句柄码不可混用」「useCallback 在 canvas 生命周期 renderer 逐个审查」）。
-- [ ] `Fix`：相关架构文档（如 `renderer-runtime.md` 四态契约 / `renderer-markers-and-selectors.md` a11y）仅当 lesson 揭示 live doc gap 时同步（无 gap 不改，不凑条目）。
-- [ ] `Follow-up`：三向回链——沉淀条目回链源 bug 卡（`docs/bugs/77–85`）；bug 卡「Notes For Future Refactors」回链对应 lesson 落点；审计记录「喂入 HCA-LL」节（若存在）回链 catalog 终态。
+- [x] `Fix`：`docs/audits/component-audit-checklist.md` v2 增 industrial 专项维度节——canvas 场景图引擎（视口数学/命中/覆盖物生命周期/destroyed 门控）、数据绑定管线（点表/脏收集合帧/动画时钟）、序列化校验完整性（子形状/malformed/枚举字段）、符号库（applyProps 路由/extent-resize/custom 深克隆隔离）、编辑器子系统（状态机/事务边界/合并窗口/pointer 挂载层级），每维度含「检查什么 + 对应 bug 卡回链」。
+- [x] `Fix`：`docs/skills/deep-audit-prompts.md`「项目校准说明」/ 相关维度（生命周期维度 07 / 错误处理 / React 集成 / 测试质量 / 架构边界）增 industrial 包级提示（如「canvas renderer wrapper 必查 role/aria-label」「跨点 custom 克隆一致性」「error code 升级码 vs 命令句柄码不可混用」「useCallback 在 canvas 生命周期 renderer 逐个审查」）。
+- [x] `Fix`：相关架构文档（如 `renderer-runtime.md` 四态契约 / `renderer-markers-and-selectors.md` a11y）仅当 lesson 揭示 live doc gap 时同步（无 gap 不改，不凑条目）。
+- [x] `Follow-up`：三向回链——沉淀条目回链源 bug 卡（`docs/bugs/77–85`）；bug 卡「Notes For Future Refactors」回链对应 lesson 落点；审计记录「喂入 HCA-LL」节（若存在）回链 catalog 终态。
 
 Exit Criteria:
 
-- [ ] `component-audit-checklist.md` v2 industrial 专项维度节存在，每维度含检查点 + bug 卡回链（live 文件可观测）。
-- [ ] `deep-audit-prompts.md` 项目校准 / 相关维度含 industrial 提示（live 文件可观测）。
-- [ ] 架构文档同步项（若有）已落地，无 gap 处未凑条目。
-- [ ] 三向回链成立（抽查：≥3 条沉淀 lesson ↔ bug 卡双向链接可追溯）。
+- [x] `component-audit-checklist.md` v2 industrial 专项维度节存在，每维度含检查点 + bug 卡回链（live 文件可观测）。
+- [x] `deep-audit-prompts.md` 项目校准 / 相关维度含 industrial 提示（live 文件可观测）。
+- [x] 架构文档同步项（若有）已落地，无 gap 处未凑条目。
+- [x] 三向回链成立（抽查：≥3 条沉淀 lesson ↔ bug 卡双向链接可追溯）。
 
 ### Phase 3 - roadmap 状态 + 收口
 
-Status: planned
+Status: completed
 Targets: `docs/backlog/industrial-hmi-component-audit-roadmap.md` §HCA-LL
 
 - Item Types: `Follow-up`
 
-- [ ] roadmap §HCA-LL 行状态预留 closure audit 通过后改 `done` 的说明（实际改写在 closure audit pass 后）。
-- [ ] 「已完成审计卡索引」/ 框架复用表无需改（本 plan 产出 checklist v2 / skills 增量，非审计卡）；若 checklist v2 改动影响「18 维 ↔ 23 维关系」子节，同步该子节。
+- [x] roadmap §HCA-LL 行状态预留 closure audit 通过后改 `done` 的说明（实际改写在 closure audit pass 后）。
+- [x] 「已完成审计卡索引」/ 框架复用表无需改（本 plan 产出 checklist v2 / skills 增量，非审计卡）；若 checklist v2 改动影响「18 维 ↔ 23 维关系」子节，同步该子节。
 
 Exit Criteria:
 
-- [ ] roadmap §HCA-LL 行说明就绪（待 closure audit pass 回写 `done`）。
-- [ ] checklist v2 改动与 roadmap「框架/平台复用」表 / 「审计维度对照」节无矛盾。
+- [x] roadmap §HCA-LL 行说明就绪（待 closure audit pass 回写 `done`）。
+- [x] checklist v2 改动与 roadmap「框架/平台复用」表 / 「审计维度对照」节无矛盾。
 
 ## Draft Review Record
 
@@ -131,13 +131,13 @@ Exit Criteria:
 
 > 纯文档/skills 计划：无代码变更，`pnpm test`/`lint`/`typecheck`/`build` 从本节删除（见 guide 纯文档计划规则）。
 
-- [ ] 全量 lesson 候选已裁定终态（沉淀 / 不沉淀），零模糊措辞。
-- [ ] 裁定「沉淀」的候选已落入 `component-audit-checklist.md` v2 / `deep-audit-prompts.md`（/ 架构文档），落点 live 可观测。
-- [ ] roadmap §HCA-LL 6 主题全覆盖（沉淀或显式裁定不沉淀+理由）。
-- [ ] 三向回链成立（沉淀 lesson ↔ bug 卡 ↔ 审计记录，抽查可追溯）。
-- [ ] 无 live doc gap 被静默跳过（有 gap 已同步，无 gap 未凑条目）。
-- [ ] roadmap §HCA-LL 行状态一致（closure audit 通过后 `done`）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] 全量 lesson 候选已裁定终态（沉淀 / 不沉淀），零模糊措辞。
+- [x] 裁定「沉淀」的候选已落入 `component-audit-checklist.md` v2 / `deep-audit-prompts.md`（/ 架构文档），落点 live 可观测。
+- [x] roadmap §HCA-LL 6 主题全覆盖（沉淀或显式裁定不沉淀+理由）。
+- [x] 三向回链成立（沉淀 lesson ↔ bug 卡 ↔ 审计记录，抽查可追溯）。
+- [x] 无 live doc gap 被静默跳过（有 gap 已同步，无 gap 未凑条目）。
+- [x] roadmap §HCA-LL 行状态一致：closure audit 通过后已回写 `done`（roadmap line 64，fresh session 回写；见下 Closure Audit Evidence）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 未自审本项（见下 Closure Audit Evidence）。
 
 ## Deferred But Adjudicated
 
@@ -150,12 +150,24 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<closure audit 通过后填写：沉淀 lesson 计数 + 工件落点 + 三向回链成立 + roadmap §HCA-LL done>>
+Status Note: **plan 关闭（2026-08-08，closure audit fresh session PASS）**：16 lesson 候选裁定（15 沉淀 + 1 不沉淀文件行数）；沉淀落点——`docs/audits/component-audit-checklist.md` §2.1 增 industrial 专项维度 IND-1~IND-6 + §3.1 裁定方法论 + 「18 维↔23 维」关系子节同步；`docs/skills/deep-audit-prompts.md` 项目校准说明增 industrial 指针块 + 维度 07/19/20 增 industrial 包级提示；`docs/architecture/renderer-markers-and-selectors.md` 补 canvas `role="application"` a11y gap（唯一 live doc gap）；9 bug 卡（77–85）双向回链成立；roadmap §HCA-LL `planned`→`done` 已回写 + 框架复用表/审计维度对照节同步。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent fresh session>>
-- Evidence: <<task id / 工件 diff 摘要 / 回链抽查>>
+- Auditor / Agent: 独立子 agent fresh session（closure audit，不复用执行 session 上下文）。
+- 工件落点 live 核对（grep/read，全通过）：
+  - `docs/audits/component-audit-checklist.md` §2.1「Industrial 包专项审计维度（v2 增量）」存在（line 39），IND-1 canvas 引擎 / IND-2 绑定管线 / IND-3 序列化 / IND-4 符号库 / IND-5 编辑器子系统 / IND-6 跨切全在（lines 45-99）；§3.1 裁定方法论 + 「18 维↔23 维关系」子节同步（line 132）。
+  - `docs/skills/deep-audit-prompts.md`「Industrial 包专项提示」节存在（line 530）+ 项目校准说明指针块（line 532）+ 维度 07 useCallback（line 538/950）+ 维度 19 error code（line 1740）+ 维度 20 a11y（line 1799）industrial 包级提示全在。
+  - `docs/architecture/renderer-markers-and-selectors.md`「Canvas / scene-graph interaction surfaces」a11y gap 段存在（lines 79-84），含 `role="application"` + `aria-label` i18n 要求 + 回链 `docs/bugs/78`（HCAX-2）+ 本 plan（HCA-LL）。
+- 三向回链抽查（≥3 条，双向可追溯，全通过）：
+  - bug 78（HCAX-2）↔ L-A11Y-1：bug 卡 line 46「Lesson 回链（HCA-LL）」回链 catalog L-A11Y-1 + IND-1 + 维度 20 + RMS；反向 catalog 表 L-A11Y-1 行回链 bug 78。
+  - bug 79（HCA5 P1-1）↔ L-SCHEMA-1：bug 卡 line 44 回链 L-SCHEMA-1 + IND-3 三向 wire 类型同步；反向 catalog L-SCHEMA-1 行回链 bug 79。
+  - bug 85（HCA11 P2-1）↔ L-ED-3：bug 卡 line 41 回链 L-ED-3 + IND-4/IND-5 custom 深克隆隔离；反向 catalog L-ED-3 行回链 bug 85。
+  - 其余 6 张 bug 卡（77/80/81/82/83/84）的「Lesson 回链（HCA-LL）」节亦逐张存在，反向 catalog 表行均有对应回链（L-ERR-1/L-SYM-1/L-SCHEMA-3/L-ENG-1/L-ED-1/L-ED-2）。
+- Anti-Hollow 抽查：industrial 专项维度非空壳——IND-1~IND-6 每维度含「检查什么 + 对应 bug 卡回链」具体检查点（非 `{}`/`return null` 占位）；deep-audit-prompts 增量为可执行提示词（被审计流程 consume：维度子 agent 派发时内联）。
+- Deferred honesty：Phase 1 裁定为「不沉淀」的 L-FILE-1 有明确理由（已被 dim 02 + `check:oversized-code-files` 硬门禁 + HCA-CG 工具治理覆盖，无复发价值），非延期未处理；Deferred But Adjudicated 节起草即空，无非 blocking 区藏 live defect。
+- roadmap §HCA-LL 状态：closure audit fresh session 已回写 `docs/backlog/industrial-hmi-component-audit-roadmap.md` line 64 `planned`→`done` + line 3「最后更新」注释同步（见 roadmap diff）。
+- 五点一致性：Plan Status `completed` / 3 Phase Status `completed` / 各 Phase Exit Criteria 全 `[x]` / Closure Gates 全 `[x]` / 本 Closure Audit Evidence 一致。
 
 Follow-up:
 
@@ -164,6 +176,36 @@ Follow-up:
 
 ## 裁定结果
 
-> Phase 1 产出（待执行时填充）。全量 lesson 候选逐条裁定终态。
+> Phase 1 产出（2026-08-08）。全量 lesson 候选逐条裁定终态，措辞已从 9 bug 卡（`docs/bugs/77–85`）+ 各层审计记录 + HCA-CR residual 裁定表（`docs/plans/2026-08-08-1430-2` §裁定结果 / §Deferred But Adjudicated）拉取对账。
+>
+> **合计**：16 候选 = 15 项「沉淀」（落 `component-audit-checklist.md` v2 industrial 专项维度 / `deep-audit-prompts.md` 项目校准·相关维度 / `renderer-markers-and-selectors.md` a11y gap）+ 1 项「不沉淀」（文件行数，理由：已被 dim 02 + `check:oversized-code-files` 硬门禁 + HCA-CG 工具治理覆盖，无复发价值）。
+>
+> roadmap §HCA-LL 已列 6 主题全覆盖：a11y（L-A11Y-1 沉淀）/ schema 契约（L-SCHEMA-1/2/3 沉淀）/ error code（L-ERR-1 沉淀）/ 四态（L-STATE-1 沉淀）/ React19（L-R19-1 沉淀）/ 文件行数（L-FILE-1 显式裁定不沉淀+理由）。
+>
+> **落点缩写**：`CL:<dim>` = `component-audit-checklist.md` §2.1 industrial 专项维度 `<dim>`；`DA:<loc>` = `deep-audit-prompts.md` `<loc>`；`RMS` = `renderer-markers-and-selectors.md`。
 
-<<待 Phase 1 执行时填充 catalog 表：候选 | 源（bug 卡 / 审计层 / residual ID）| 根因模式 | 复发风险 | 裁定（沉淀+落点 / 不沉淀+理由）>>
+### 裁定为「沉淀」— 15 项
+
+| 候选       | 主题（roadmap 主题↔补充）                    | 源（bug 卡 / 审计层 / residual）                                                                                   | 根因模式                                                                                                                                                                                                       | 复发风险                                                               | 裁定（落点）                                                                                                                                                                                      |
+| ---------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L-A11Y-1   | a11y（roadmap）                              | Bug 78（HCAX-2；HCA1 P2-1 + HCA7 P2-2）                                                                            | canvas 场景由 leafer 在普通 div 渲染，wrapper 无原生 landmark/region 语义；须显式 `role="application"` + `aria-label` + i18n key                                                                               | 高（跨包同型：scada-canvas + scada-editor-canvas 均遗漏）              | 沉淀 → CL:canvas-engine（a11y 子项）+ DA:dim20 a11y（industrial 包级提示：canvas renderer wrapper 必查 role/aria-label）+ RMS（a11y gap：补 canvas `role="application"` 指引）                    |
+| L-SCHEMA-1 | schema 契约 / 序列化完整性（roadmap + 补充） | Bug 79（HCA5 P1-1）                                                                                                | 三向 wire 类型须同步：消费侧 `ScadaSymbolProps` ↔ 序列化 `ScadaSymbolNode` ↔ diff `SYMBOL_KEYS`；wire 类型漏声明字段 → diff 静默丢弃增量更新                                                                   | 极高（已复发 1 次：`flow`→`fontFamily`/`fontWeight`/`align`）          | 沉淀 → CL:serialization（三向类型同步检查点 + 引用 guard 脚本 `check-scada-symbol-keys.mjs` 模式：复发类漏键须机械三向断言）                                                                      |
+| L-SCHEMA-2 | schema 契约（roadmap）                       | HCA7 P1-1（closure remediation，3 类留痕；非 bug 卡）                                                              | editor renderer 的 schema interface 须与 `renderer-definitions.ts` fields 逐字同步；类型漂移致 prop 丢失                                                                                                       | 中                                                                     | 沉淀 → DA:项目校准说明（industrial 包级提示：editor renderer schema↔definitions 同步）。注：CL §2 dim 1 已覆盖通用 schema 契约，本条补 deep-audit 包级提示缺口                                    |
+| L-SCHEMA-3 | schema 契约 / 编辑器子系统（roadmap + 补充） | Bug 81（HCA8 P2-FE-1）                                                                                             | inspector 错误归因路径格式须与 `validate.ts` 错误字符串逐字对齐（含嵌套 `children[M]` 层级）；前缀错位致嵌套字段错误静默丢弃                                                                                   | 中（跨边界：inspector↔serialization validate）                         | 沉淀 → CL:editor-subsystem（错误归因格式 parity 子项）                                                                                                                                            |
+| L-ERR-1    | error code 设计（roadmap）                   | Bug 77（HCAX-1）                                                                                                   | 错误码两类语义不可混用：升级码（config 校验失败 / engine 创建失败 → 触发 empty error region）vs 命令句柄码（命令执行失败，不升级）；两码字面相似易当拼写差异忽略                                               | 高（两码 `invalid-config`/`config-invalid` 字面相似）                  | 沉淀 → DA:dim19 错误传播（industrial 包级提示：error code 升级码 vs 命令句柄码不可混用）+ CL:canvas-engine（error code 分类一致性子项）                                                           |
+| L-STATE-1  | 四态契约（roadmap）                          | HCA7 P2-3（closure remediation，3 类留痕；非 bug 卡）                                                              | `props.meta.disabled` 是四态一部分，instance-renderer（如 editor-engine）必须消费；漏消费致禁用态交互仍可触发                                                                                                  | 中                                                                     | 沉淀 → DA:项目校准说明（industrial 包级提示：editor renderer 必须消费 props.meta.disabled）。注：CL §2 dim 10 已覆盖通用四态，本条补 deep-audit 包级提示缺口                                      |
+| L-R19-1    | React 19（roadmap）                          | HCA1 P3-1（3 类留痕；非 bug 卡）                                                                                   | canvas 生命周期 renderer（leafer 挂载/卸载/视口 sync）的 useCallback 须逐个审查，非一刀切移除也非一刀切添加；React Compiler 基线下仍有生命周期稳定回调需求                                                     | 中                                                                     | 沉淀 → DA:项目校准说明（industrial 包级提示：useCallback 在 canvas 生命周期 renderer 逐个审查）。注：`react19-best-practices-review.md` + CL §2 dim 14 已覆盖通用规则，本条补 industrial 例外口径 |
+| L-ENG-1    | canvas 场景图引擎（补充）                    | Bug 82（HCA2 P2-ENG-1）                                                                                            | 全量重建公共 API（`importConfig`）必须委托到 canonical `reset` 路径，勿另起 build 路径；否则后置清理（应用 background / 清 InteractionOverlay）发散                                                            | 高（复发 1 次：P2-10 reset 清覆盖物 → P2-ENG-1 importConfig 旁路同型） | 沉淀 → CL:canvas-engine（全量重建路径 parity 子项）                                                                                                                                               |
+| L-SYM-1    | 符号库（补充）                               | Bug 80（HCA6 P2-1）                                                                                                | 自定义 `applyProps` 借用 `applyCompositeProps` 且 parts 无 extent/resize hook 时，composite 框架 `EXTENT_FIELDS` 静默丢弃 `width`/`height`；必须自行重算且 create↔applyProps 几何公式一致                      | 中（composite 族图元特有）                                             | 沉淀 → CL:symbol-library（applyProps 路由 / extent-resize / create↔applyProps 几何 parity 子项）                                                                                                  |
+| L-ED-1     | 编辑器子系统（补充）                         | Bug 83（HCA10 P1-1 + P2-1，合并）                                                                                  | undo-redo 两不变量：① coalesce-merge = 新提交，必须截断 redo（U6，与 push 同语义）；② coalesce 必须拒绝它无法完整搬运载荷的 diff（带 `variables`/`reordered` 的 diff 不能被只构造 `updated` 的合并搬运）       | 中（状态机语义隐藏）                                                   | 沉淀 → CL:editor-subsystem（事务边界 / 合并窗口不变量子项）                                                                                                                                       |
+| L-ED-2     | 编辑器子系统（补充）                         | Bug 84（HCA11 P1-1）                                                                                               | 所有 import/load 入口在 `engine.build` 后必须同步 `engine.mode → session.mode`（P1-08 parity）；跨点 parity 缺口（runtime-mutators.load 有同步、toolbox-runtime.importConfig 无）致 session/engine mode desync | 高（跨多点 parity 缺口）                                               | 沉淀 → CL:editor-subsystem（import/load 跨点 parity 子项）+ CL:cross-cutting（跨点 parity 识别方法）                                                                                              |
+| L-ED-3     | 编辑器子系统（补充）                         | Bug 85（HCA11 P2-1）                                                                                               | 所有 config/node clone 路径必须深克隆 `custom`（R5 Layer 2 隔离纪律）；`children` 已递归，`custom` 同样必须 `structuredClone`；浅克隆致 working copy 改动串改多份快照                                          | 高（跨多站点：session/working-helpers/mutators/undo-redo-adapter）     | 沉淀 → CL:editor-subsystem（快照 custom 深克隆隔离子项）                                                                                                                                          |
+| L-ADJ-1    | 裁定方法论（HCA-CR residual 提炼）           | HCA-CR residual：HCA2-P3-ENG-3 / HCA5-P3-1 / HCA6-P3-4 / HCA8-P3×11 等（`docs/plans/2026-08-08-1430-2` §裁定结果） | 防御纵深 vs 真实缺陷边界：当主路径已有前置守卫（validator 拒绝重复 id / validate MAX_DEPTH fail-closed / validate finite 守 NaN / compositePropSchema 验证），冗余 guard 为 watch-only residual 而非 Fix       | —（裁定教材）                                                          | 沉淀 → CL:§3.1 优先级裁决（industrial 裁定指引：防御纵深缺口在主路径已有前置守卫且无可复现路径时裁定 residual + Why-Not-Blocking）                                                                |
+| L-ADJ-2    | 裁定方法论（HCA-CR residual + bug 提炼）     | Bug 82 / Bug 84 + HCA-CR residual 裁定                                                                             | 跨点 parity 识别方法：同语义多入口（import/load/rebuild/setMode）须交叉比对所有站点，单点修复不闭合；复发类问题须配机械 guard（`check-scada-symbol-keys.mjs` 模式）或显式跨点审计                              | —（裁定教材）                                                          | 沉淀 → CL:cross-cutting（跨点 parity 识别 + 复发配机械 guard 方法）                                                                                                                               |
+| L-ADJ-3    | 裁定方法论（HCA-CR residual 提炼）           | HCA-CR residual：HCA2-P3-ENG-2（`config-adapter.ts:55,71-79`，applyDiff nextConfig 省略返旧 config）               | 公共 API 可选参数 footgun 裁定：可选参数省略时返旧值/降级是 footgun，但当主路径恒传该参数（renderer use-scada-config-sync 恒传 nextConfig）则主路径无影响，裁定 watch-only residual + Successor=no             | —（裁定教材）                                                          | 沉淀 → CL:§3.1 优先级裁决（industrial 裁定指引：公共 API 可选参数 footgun 在主路径恒传时裁定 residual）                                                                                           |
+
+### 裁定为「不沉淀」— 1 项
+
+| 候选     | 主题（roadmap 主题） | 源                                                                       | 不沉淀理由（明确，非延期）                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| -------- | -------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L-FILE-1 | 文件行数（roadmap）  | HCA3 dirty-collector 665 行已拆（3 文件 ≤500）/ HCA4 validate 524→537 行 | 已被既有工件全覆盖，无新复发价值：① CL §2 dim 02（模块职责与文件边界）+ `deep-audit-prompts.md` dim 02 已定义文件行数检查口径；② `pnpm check:oversized-code-files` / ESLint `max-lines` 硬门禁已机械守护（`>700` error / `>500` warning）；③ HCA3 dirty-collector 拆分已落地，HCA4 validate 537 行拆分 Decision 明确归 **HCA-CG 所有权**（单一职责内聚 + 拆分缝已记录），非 LL 沉淀范围。故不沉淀，仅在本 catalog 显式记录裁定理由以闭合 roadmap §HCA-LL 第 6 主题。 |

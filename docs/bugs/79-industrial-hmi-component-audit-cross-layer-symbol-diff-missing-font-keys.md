@@ -41,3 +41,4 @@
 
 - 新增 `ScadaSymbolProps` 字段且被 shape create/applyProps 消费时，必须同步声明到 `ScadaSymbolNode` + `SYMBOL_KEYS`（diff 才会比较）。guard 脚本会捕获漂移，勿绕过 `pnpm check`。
 - 该漏键已复发过一次（`flow` → `fontFamily`/`fontWeight`/`align`），属高频重构再引入点；重构 symbols wire 类型时优先跑 guard。
+- **Lesson 回链（HCA-LL）**：已沉淀为 industrial 专项检查点——`docs/audits/component-audit-checklist.md` §2.1 IND-3（三向 wire 类型同步 + 复发配机械 guard）+ `docs/skills/deep-audit-prompts.md` 项目校准说明。catalog 终态见 `docs/plans/2026-08-08-1527-2` §裁定结果 L-SCHEMA-1。

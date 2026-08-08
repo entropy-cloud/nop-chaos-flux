@@ -43,3 +43,4 @@
 
 - 错误码设计：**升级码 vs 命令句柄码不可混用**。新增 config 校验失败路径必须用 `config-invalid`（升级），命令执行失败才用 `invalid-config`。
 - 新增 renderer / public API 校验路径时，核对出口码与 `editor-errors.ts` elevated 判定 / `scada-errors.ts` 分类表一致。
+- **Lesson 回链（HCA-LL）**：已沉淀为 industrial 专项检查点——`docs/audits/component-audit-checklist.md` §2.1 IND-1（error code 分类一致性）+ `docs/skills/deep-audit-prompts.md` 维度 19 industrial 包级提示 + 项目校准说明。catalog 终态见 `docs/plans/2026-08-08-1527-2` §裁定结果 L-ERR-1。

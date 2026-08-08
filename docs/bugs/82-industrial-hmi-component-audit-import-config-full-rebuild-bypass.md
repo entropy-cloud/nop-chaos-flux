@@ -37,3 +37,4 @@
 
 - 全量重建公共 API 必须委托到 canonical `reset` 路径，勿另起 build 路径（否则后置清理 / 背景应用会发散）。
 - 该发散已复发过一次（P2-10 reset 清覆盖物 → P2-ENG-1 importConfig 旁路同型）；新增全量重建入口时优先复用 `reset`。
+- **Lesson 回链（HCA-LL）**：已沉淀为 industrial 专项检查点——`docs/audits/component-audit-checklist.md` §2.1 IND-1（全量重建路径 parity）+ IND-6（跨点 parity 识别）。catalog 终态见 `docs/plans/2026-08-08-1527-2` §裁定结果 L-ENG-1。

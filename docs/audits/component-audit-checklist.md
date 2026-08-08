@@ -36,6 +36,76 @@
 | 17  | 文档对照                    | design.md ↔ 实现 props/行为一致；quick-reference.md 词条存在且准确；schemas/flux-guide 文档与实现同步；无 phantom 引用（`文件:行` 可验证）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | 18  | 注册、包边界与 IO/安全红线  | 包内定义注册 + surface 双注册齐全；bundle/`src/index.ts` 导出；playground 演示页存在；依赖方向合规（不反向依赖）；复用 `@nop-chaos/ui` 组件（禁裸 HTML）；**env IO 边界（INV-1）**：渲染器外部 IO（fetch/XMLHttpRequest/WebSocket/EventSource/localStorage/sessionStorage/IndexedDB/RTCPeerConnection/window.open/history.pushState/import() 等）必须经 `RendererEnv`，禁直接调用浏览器 IO API（`docs/references/new-renderer-introduction-audit.md` INV-1）；复用边界（INV-3/INV-4）：不重造 FormRuntime/action/dialog 现有能力、域内部 state 不进 schema-visible scope；安全红线：dangerouslySetInnerHTML sanitize、URL 协议校验、附件名/路径；辅助脚本 `check:audit-runtime-raw-schema-reads`、`check:audit-fieldframe-bypasses`、`check:audit-hardcoded-type-dispatch`、`check:audit-non-retained-renderer-references`、`check:audit-suspects` |
 
+## 2.1 Industrial 包专项审计维度（v2 增量）
+
+> 来源：`docs/plans/2026-08-08-1527-2-industrial-hmi-hca-ll-lesson-sink.md`（HCA-LL lesson 沉淀，2026-08-08）。
+> 适用范围：`@nop-chaos/flux-renderers-industrial` 内部子系统（engine / binding / serialization / symbols / editor），**超出 §2 18 维 renderer checklist 覆盖范围**的部分。Renderer 壳（scada-canvas / scada-editor-canvas）仍用 §2 18 维；本节是内部模块层（非注册 renderer）的补充检查点，与 `docs/skills/deep-audit-prompts.md` 23 维包级深审并用。
+> 每维度含「检查什么」+「对应 bug 卡回链」（`docs/bugs/77–85`）。回链格式：`bug #NN (主题)`。
+
+### IND-1 Canvas 场景图引擎
+
+| 检查点                | 检查什么                                                                                                                                                                                                    | bug 卡回链                                                |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 全量重建路径 parity   | 所有「全量重建」公共 API（`importConfig` / `reset` / `load`）必须委托到 canonical `reset` 路径，后置处理（应用 `config.background.color` 到 ground + 清 InteractionOverlay）一致，勿另起 build 路径旁路清理 | bug #82 (HCA2 P2-ENG-1)                                   |
+| 覆盖物生命周期        | InteractionOverlay（hover 高亮 / 连线 drag / 选中框）在重建/销毁/取消时必须清除，无残留；全量重建路径与 reset 清覆盖物语义一致                                                                              | bug #82 + HCA-CR HCA11-P2-2                               |
+| pointer 挂载层级      | 拖拽类手势的 pointerup 必须挂 `window`（非 container），容器外释放时 ref 复位 + overlay 清除；cleanup 兜底 removeEventListener                                                                              | bug #84 邻域 / HCA-CR HCA11-P2-2 (`connection-wiring.ts`) |
+| destroyed 门控        | 公共命令族（reset/applyAttrs/setViewport/zoomAt/fit/center/setSize/applyDiff/setSymbolProps）在 engine.destroy 后必须 no-op，不操作已销毁 app                                                               | HCA-CR HCA2-P3-ENG-1                                      |
+| error code 分类一致性 | config 校验失败用升级码 `config-invalid`（触发 empty error region）；命令执行失败用命令句柄码 `invalid-config`（不升级）；两码不可混用；`editor-errors.ts` elevated 判定与 `scada-errors.ts` 分类表一致     | bug #77 (HCAX-1)                                          |
+| canvas wrapper a11y   | leafer 渲染容器 wrapper div 必须显式 `role="application"` + `aria-label`（i18n key）；以 DOM 属性级断言守护                                                                                                 | bug #78 (HCAX-2)                                          |
+
+### IND-2 数据绑定管线
+
+| 检查点        | 检查什么                                                                                                                                                | bug 卡回链                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| 脏收集合帧    | dirty-collector 必须合帧批处理（非每绑定单独刷新）；拆分后各文件 ≤500 行（HCA3 已拆 dirty-collector 104 + expression-errors 65 + refresh-pipeline 469） | HCA3 审计记录（文件行数治理，非 bug 卡） |
+| 动画时钟      | animator 时钟源须稳定；值→状态映射在动画进行/取消时正确回退                                                                                             | —（HCA3 零 P0/P1 基线）                  |
+| 点表/反向索引 | point-store / reverse-index 增删一致，无悬挂引用                                                                                                        | —（HCA3 零 P0/P1 基线）                  |
+
+### IND-3 序列化校验完整性
+
+| 检查点              | 检查什么                                                                                                                                                                                                                                                                                                       | bug 卡回链                                  |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| 三向 wire 类型同步  | 消费侧 `ScadaSymbolProps` ↔ 序列化 `ScadaSymbolNode` ↔ diff `SYMBOL_KEYS` 三者字段集须一致；新增 `ScadaSymbolProps` 字段且被 shape create/applyProps 消费时，必须同步声明到 `ScadaSymbolNode` + `SYMBOL_KEYS`；复发类漏键须配机械 guard（`scripts/check-scada-symbol-keys.mjs` 三向断言），勿绕过 `pnpm check` | bug #79 (HCA5 P1-1，已复发 1 次)            |
+| 子形状校验          | background.grid 等子形状（`{size:number;color:string}`）必须 assertShape；枚举字段（`align: 'left'\|'center'\|'right'`）必须枚举校验，非静默通过                                                                                                                                                               | HCA-CR HCA4-P3-1 (align) / HCA4-P3-2 (grid) |
+| malformed/深度守卫  | validate 对 malformed / 超深嵌套 fail-closed（`MAX_VALIDATE_DEPTH=100`）；NaN 节点字段 finite 守卫                                                                                                                                                                                                             | HCA-CR HCA5-P3-1 / HCA6-P3-4                |
+| 错误归因格式 parity | inspector 错误归因路径前缀须与 `validate.ts` 错误字符串逐字对齐（含嵌套 `symbols[N].children[M]` 层级）；用递归 scope path（`findSymbolScopePath`）非父级顶层索引                                                                                                                                              | bug #81 (HCA8 P2-FE-1)                      |
+
+### IND-4 符号库（symbol shapes）
+
+| 检查点                          | 检查什么                                                                                                                                                                                                                                                 | bug 卡回链                               |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| applyProps 路由 / extent-resize | 自定义 `applyProps` 借用 `applyCompositeProps` 且 parts 无 `extent` 字段也无 `parts.resize` hook 时，composite 框架 `EXTENT_FIELDS` 静默丢弃 `width`/`height`——必须自行重算 body/stub 几何；create↔applyProps 几何公式必须一致（failing-first 测试锁定） | bug #80 (HCA6 P2-1)                      |
+| composite 族图元完整性          | 逐图元核查 extent(3) 或 resize hook(9) 注册，无静默丢弃尺寸的缺口                                                                                                                                                                                        | bug #80 复核（12 composite 全覆盖）      |
+| 视觉状态 revert                 | visual-state binding-vs-revert 边缘 case 须有 fallback（已记录非新缺陷）                                                                                                                                                                                 | HCA-CR HCA5-P3-3 (out-of-scope)          |
+| custom 深克隆隔离               | 所有 config/node clone 路径必须深克隆 `custom`（`structuredClone(node.custom)` 或 `cloneConfigSnapshot` 整体）；`children` 已递归，`custom` 同样必须深克隆，浅克隆致 working copy 串改多份快照                                                           | bug #85 (HCA11 P2-1) + HCA-CR HCA11-P3-1 |
+
+### IND-5 编辑器子系统
+
+| 检查点                              | 检查什么                                                                                                                                                                                                                                    | bug 卡回链                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| undo-redo 事务边界 / 合并窗口不变量 | ① coalesce-merge（`replaceUndoTop`）= 新提交，必须截断 redo（`this.redoStack = []`，U6，与 push 同语义）；② coalesce 必须拒绝它无法完整搬运载荷的 diff（`singleNodeUpdate` 拒绝带 `variables`/`reordered` 的 diff，因合并只构造 `updated`） | bug #83 (HCA10 P1-1 + P2-1)             |
+| import/load 跨点 parity             | 所有 import/load 入口（`runtime-mutators.load` / `toolbox-runtime.importConfig` / …）在 `engine.build` 后必须同步 `engine.mode → session.mode`（P1-08 parity）；新增入口复制此 setMode 同步                                                 | bug #84 (HCA11 P1-1)                    |
+| 快照 custom 隔离                    | 见 IND-4 custom 深克隆隔离（跨站点：session / working-helpers / mutators / undo-redo-adapter）                                                                                                                                              | bug #85 (HCA11 P2-1)                    |
+| 错误归因格式 parity                 | 见 IND-3 错误归因格式 parity（inspector↔validate 跨边界）                                                                                                                                                                                   | bug #81 (HCA8 P2-FE-1)                  |
+| pointer 挂载层级                    | 见 IND-1 pointer 挂载层级（connection-wiring 容器外释放）                                                                                                                                                                                   | HCA-CR HCA11-P2-2                       |
+| 状态机正确性                        | connection pick/drag/release 状态机、吸附阈值、联动重算、覆盖物 sky 渲染清理须闭环                                                                                                                                                          | HCA9 审计记录（#1 watch-only residual） |
+
+### IND-6 跨切关注（cross-cutting）
+
+| 检查点           | 检查什么                                                                                                                                                     | bug 卡回链                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------- |
+| 跨点 parity 识别 | 同语义多入口（import/load/rebuild/setMode/clean-overlay）须交叉比对所有站点；单点修复不闭合，须全站点对齐                                                    | bug #82 + bug #84 + HCA-CR |
+| 复发配机械 guard | 标记为「复发」的 bug（bug #79 第 2 次复发 / bug #82 复发 P2-10 / bug #84 复发 P1-08 / bug #85 R5 多站点残留）必须配机械 guard 脚本或显式跨点审计，非仅点修复 | bug #79 / #82 / #84 / #85  |
+| 全量重建语义统一 | 见 IND-1 全量重建路径 parity                                                                                                                                 | bug #82                    |
+
+### 与 §3.1 优先级裁决的 industrial 补充（裁定方法论）
+
+> 来源：HCA-CR 24 residual + 2 watch-only 裁定表（`docs/plans/2026-08-08-1430-2` §裁定结果 / §Deferred But Adjudicated）。这是「同类问题如何裁定」的现成教材。
+
+- **防御纵深 vs 真实缺陷边界**：当主路径已有前置守卫（validator 拒绝重复 id / validate `MAX_DEPTH` fail-closed / validate finite 守 NaN / compositePropSchema 验证），冗余 guard 缺口在「无可复现路径」时裁定 **watch-only residual**（附 Why-Not-Blocking + Successor=no），不自动升级 Fix。回链：HCA-CR HCA2-P3-ENG-3 / HCA5-P3-1 / HCA6-P3-4 / HCA8-P3×11。
+- **公共 API 可选参数 footgun**：可选参数省略时返旧值/降级是 footgun，但当主路径恒传该参数（renderer 恒传 nextConfig）则主路径无影响，裁定 **watch-only residual**（Successor=no）。回链：HCA-CR HCA2-P3-ENG-2。
+- **cosmetic / latent / 低概率时序**：extent 族内边距丢失（cosmetic）/ onError prop 声明但无错误上浮路径（latent）/ 合并窗口 `Date.now()` 非单调（单 tab 短窗口低概率）——不构成 supported baseline 行为缺口，裁定 residual，Successor=no。回链：HCA-CR HCA6-P3-2 / HCA8-P3-PAL-1 / HCA10-P3-1。
+
 ## 3. 优先级裁决
 
 | 级别 | 定义                                                                                                         | 处理                                                                |
@@ -59,6 +129,7 @@
 - 本 18 维是**组件级**核对表（每组件每维须有结论），`docs/skills/deep-audit-prompts.md` 的 23 维是**包级/跨组件**深审手册；两者编号不互通。对应关系（本表 → deep-audit 维度，执行时调用其方法）：2→09、3→04+05、4→08、8→20、11→06、13→10、14→07、15→15、16→14、17→16、18→01+02+03+15；本表 **7（事件与 action 契约）在 23 维中无直接对应**，按卡内要点独立执行；其余维度（1/5/6/9/10/12）为本表独有的组件级检查，不映射。
 - **复杂交互渲染器**（gantt/kanban/calendar/diff-view/condition-builder/combo 等）必须追加 deep-audit 维度 21（显示与定位正确性）/22（集成接线与可操作性）/23（测试有效性与假绿）——`deep-audit-prompts.md` 标注"含复杂交互渲染器时必选"。
 - 包级维度（01 依赖图/02 模块职责/03 API 表面积/17 命名/18 跨包模式）不在组件卡内逐项判，但在 CR 阶段对 `shared:` 缺陷统一裁决时调用。
+- **§2.1 industrial 专项维度（v2 增量）**与 23 维的关系：§2.1 是 industrial 包内部子系统（engine/binding/serialization/symbols/editor）的检查点，超出 18 维 renderer checklist 覆盖范围；与 23 维包级深审并用而非互斥——23 维提供方法论（每个维度的深挖+复核流程），§2.1 提供 industrial 特有的检查点清单与 bug 卡回链。§2.1 IND-1~IND-5 与 23 维对应：IND-1↔19(错误传播)+20(a11y)+21/22(复杂交互)；IND-3↔08(验证系统)；IND-4/IND-5↔04(状态所有权)+21/22；§2.1 裁定方法论↔§3.1 优先级裁决。
 
 ## 4. 审计卡模板
 

@@ -35,3 +35,4 @@
 
 - 错误归因路径格式必须与 `validate.ts` 的错误字符串格式逐字对齐（含嵌套 `children[M]` 层级）。
 - 重构 field-error 路由 / `findSymbolScopePath` 时，保留递归 scope path 语义；新增校验错误格式时同步更新两侧。
+- **Lesson 回链（HCA-LL）**：已沉淀为 industrial 专项检查点——`docs/audits/component-audit-checklist.md` §2.1 IND-3 / IND-5（错误归因格式 parity：inspector↔validate 跨边界）。catalog 终态见 `docs/plans/2026-08-08-1527-2` §裁定结果 L-SCHEMA-3。
