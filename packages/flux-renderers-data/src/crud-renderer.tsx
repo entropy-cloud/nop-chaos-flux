@@ -225,7 +225,10 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     filters: filterState,
     visibleColumnNames,
   };
-  const crudScope = createReadonlyScopeBinding(scope, '$crud', () => summary);
+  const crudScope = createReadonlyScopeBinding(scope, '$crud', () => summary, () => ({
+    // AMIS 兼容：批量操作 URL 模板 ${ids}（或 selectionField 自定义名）解析到选中行键
+    [normalizedSchema.selectionField ?? 'ids']: selectedRowKeys,
+  }));
 
   const handleRefresh = (ctx?: CrudRefreshContext): Promise<unknown> | void => {
     if (normalizedSchema.autoClearSelectionOnRefresh) {

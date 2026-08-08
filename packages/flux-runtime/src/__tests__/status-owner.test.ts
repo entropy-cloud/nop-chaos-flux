@@ -207,4 +207,63 @@ describe('createReadonlyScopeBinding', () => {
       expect(snapshot2).toBe(snapshot1);
     });
   });
+
+  describe('getExtraBindings', () => {
+    it('exposes extra top-level bindings through get/has', () => {
+      const scope = createScopeRef({ id: 'parent', path: '$parent', initialData: {} });
+      const binding = createReadonlyScopeBinding(
+        scope,
+        '$crud',
+        () => ({ selection: ['1'] }),
+        () => ({ ids: ['1', '2'] }),
+      );
+      expect(binding.get('ids')).toEqual(['1', '2']);
+      expect(binding.has('ids')).toBe(true);
+      expect(binding.has('missing')).toBe(false);
+    });
+
+    it('includes extra bindings in readOwn and readVisible overlays', () => {
+      const scope = createScopeRef({ id: 'parent', path: '$parent', initialData: { x: 1 } });
+      const binding = createReadonlyScopeBinding(
+        scope,
+        '$crud',
+        () => ({ selection: ['1'] }),
+        () => ({ ids: ['1', '2'] }),
+      );
+      expect(binding.readOwn()).toMatchObject({ x: 1, ids: ['1', '2'], $crud: { selection: ['1'] } });
+      expect(binding.readVisible()).toMatchObject({ ids: ['1', '2'] });
+      expect(binding.materializeVisible()).toMatchObject({ ids: ['1', '2'] });
+    });
+
+    it('reuses cached overlay when extra bindings are shallow-equal but new references', () => {
+      let currentIds: string[] = ['1', '2'];
+      const scope = createScopeRef({ id: 'parent', path: '$parent', initialData: {} });
+      const binding = createReadonlyScopeBinding(
+        scope,
+        '$crud',
+        () => ({ selectionCount: 2 }),
+        () => ({ ids: currentIds.join(',') }),
+      );
+      const vis1 = binding.readVisible();
+      currentIds = ['1', '2'];
+      const vis2 = binding.readVisible();
+      expect(vis2).toBe(vis1);
+    });
+
+    it('produces new overlay when extra binding values change', () => {
+      let currentIds: string[] = ['1', '2'];
+      const scope = createScopeRef({ id: 'parent', path: '$parent', initialData: {} });
+      const binding = createReadonlyScopeBinding(
+        scope,
+        '$crud',
+        () => ({ selection: currentIds }),
+        () => ({ ids: currentIds }),
+      );
+      const vis1 = binding.readVisible();
+      currentIds = ['1', '2', '3'];
+      const vis2 = binding.readVisible();
+      expect(vis2).not.toBe(vis1);
+      expect((vis2 as { ids: string[] }).ids).toEqual(['1', '2', '3']);
+    });
+  });
 });

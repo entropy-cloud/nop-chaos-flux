@@ -17,6 +17,7 @@ export function createReadonlyScopeBinding<TSummary>(
   scope: ScopeRef,
   bindingKey: string,
   getSummary: () => TSummary,
+  getExtraBindings?: () => Record<string, unknown>,
 ): ScopeRef {
   type SummaryVersion =
     | TSummary
@@ -56,12 +57,12 @@ export function createReadonlyScopeBinding<TSummary>(
     return true;
   };
 
-  const buildSummaryVersion = (summary: TSummary): SummaryVersion => {
-    if (!summary || typeof summary !== 'object') {
-      return summary;
+  const buildSummaryVersion = <T,>(value: T): SummaryVersion => {
+    if (!value || typeof value !== 'object') {
+      return value as unknown as SummaryVersion;
     }
 
-    const record = summary as Record<string, unknown>;
+    const record = value as Record<string, unknown>;
     const keys = Object.keys(record).sort();
     return {
       keys,
@@ -71,6 +72,8 @@ export function createReadonlyScopeBinding<TSummary>(
 
   let lastVersionedSummary: TSummary | undefined;
   let lastStableSummaryVersion: SummaryVersion | undefined;
+  let lastVersionedExtra: Record<string, unknown> | undefined;
+  let lastStableExtraVersion: SummaryVersion | undefined;
 
   const getSummaryVersion = (summary: TSummary): SummaryVersion => {
     if (
@@ -94,20 +97,80 @@ export function createReadonlyScopeBinding<TSummary>(
     lastStableSummaryVersion = nextVersion;
     return nextVersion;
   };
+  const EMPTY_EXTRA_VERSION: SummaryVersion = { keys: [], values: [] };
+  const getExtraVersion = (extra: Record<string, unknown> | undefined): SummaryVersion => {
+    if (!extra || Object.keys(extra).length === 0) {
+      return EMPTY_EXTRA_VERSION;
+    }
+
+    if (
+      lastStableExtraVersion !== undefined &&
+      lastVersionedExtra !== undefined &&
+      Object.is(lastVersionedExtra, extra)
+    ) {
+      return lastStableExtraVersion;
+    }
+
+    const nextVersion = buildSummaryVersion(extra);
+    if (
+      lastStableExtraVersion !== undefined &&
+      summaryVersionEqual(lastStableExtraVersion, nextVersion)
+    ) {
+      lastVersionedExtra = extra;
+      return lastStableExtraVersion;
+    }
+
+    lastVersionedExtra = extra;
+    lastStableExtraVersion = nextVersion;
+    return nextVersion;
+  };
   const buildOwnSnapshot = () => ({
     ...scope.readOwn(),
     [bindingKey]: getSummary(),
+    ...(getExtraBindings ? getExtraBindings() : {}),
   });
+  const toVersionParts = (version: SummaryVersion): { keys: string[]; values: unknown[] } => {
+    const candidate = version as { keys?: readonly string[]; values?: readonly unknown[] };
+    return {
+      keys: Array.isArray(candidate.keys) ? [...candidate.keys] : [],
+      values: Array.isArray(candidate.values) ? [...candidate.values] : [],
+    };
+  };
+  let lastCombinedSummaryVersion: SummaryVersion | undefined;
+  let lastCombinedExtraVersion: SummaryVersion | undefined;
+  let lastCombinedVersion: SummaryVersion | undefined;
+  const getCombinedVersion = (): SummaryVersion => {
+    const summaryVersion = getSummaryVersion(getSummary());
+    const extraVersion = getExtraVersion(getExtraBindings?.());
+    if (
+      lastCombinedVersion &&
+      Object.is(lastCombinedSummaryVersion, summaryVersion) &&
+      Object.is(lastCombinedExtraVersion, extraVersion)
+    ) {
+      return lastCombinedVersion;
+    }
+    const summaryParts = toVersionParts(summaryVersion);
+    const extraParts = toVersionParts(extraVersion);
+    lastCombinedSummaryVersion = summaryVersion;
+    lastCombinedExtraVersion = extraVersion;
+    lastCombinedVersion = {
+      keys: [...summaryParts.keys, ...extraParts.keys],
+      values: [...summaryParts.values, ...extraParts.values],
+    } as SummaryVersion;
+    return lastCombinedVersion;
+  };
   const { readSnapshot, store } = createProjectedScopeStore(scope, buildOwnSnapshot, () =>
-    getSummaryVersion(getSummary()),
+    getCombinedVersion(),
   );
 
   let lastParentVisible: Record<string, any> | undefined;
   let lastSummaryVersionForVisible: unknown;
+  let lastExtraVersionForVisible: unknown;
   let cachedVisible: Record<string, any> | undefined;
 
   let lastParentMat: Record<string, any> | undefined;
   let lastSummaryVersionForMat: unknown;
+  let lastExtraVersionForMat: unknown;
   let cachedMat: Record<string, any> | undefined;
 
   return {
@@ -122,6 +185,13 @@ export function createReadonlyScopeBinding<TSummary>(
         }
 
         return getIn(getSummary(), segments.slice(1).join('.'));
+      }
+
+      if (getExtraBindings) {
+        const extra = getExtraBindings();
+        if (path in extra) {
+          return extra[path];
+        }
       }
 
       return scope.get(path);
@@ -141,6 +211,13 @@ export function createReadonlyScopeBinding<TSummary>(
         return true;
       }
 
+      if (getExtraBindings) {
+        const extra = getExtraBindings();
+        if (path in extra) {
+          return true;
+        }
+      }
+
       return scope.has(path);
     },
     readOwn() {
@@ -150,17 +227,26 @@ export function createReadonlyScopeBinding<TSummary>(
       const parentVisible = scope.readVisible();
       const summary = getSummary();
       const summaryVersion = getSummaryVersion(summary);
+      const extraBindings = getExtraBindings ? getExtraBindings() : undefined;
+      const extraVersion = getExtraVersion(extraBindings);
       if (
         cachedVisible &&
         lastParentVisible === parentVisible &&
-        summaryVersionEqual(lastSummaryVersionForVisible as SummaryVersion, summaryVersion)
+        summaryVersionEqual(lastSummaryVersionForVisible as SummaryVersion, summaryVersion) &&
+        summaryVersionEqual(lastExtraVersionForVisible as SummaryVersion, extraVersion)
       ) {
         return cachedVisible;
       }
       lastParentVisible = parentVisible;
       lastSummaryVersionForVisible = summaryVersion;
+      lastExtraVersionForVisible = extraVersion;
       const overlay = Object.create(parentVisible) as Record<string, any>;
       overlay[bindingKey] = summary;
+      if (extraBindings) {
+        for (const [key, value] of Object.entries(extraBindings)) {
+          overlay[key] = value;
+        }
+      }
       cachedVisible = overlay;
       return cachedVisible;
     },
@@ -168,18 +254,23 @@ export function createReadonlyScopeBinding<TSummary>(
       const parentMat = scope.materializeVisible();
       const summary = getSummary();
       const summaryVersion = getSummaryVersion(summary);
+      const extraBindings = getExtraBindings ? getExtraBindings() : undefined;
+      const extraVersion = getExtraVersion(extraBindings);
       if (
         cachedMat &&
         lastParentMat === parentMat &&
-        summaryVersionEqual(lastSummaryVersionForMat as SummaryVersion, summaryVersion)
+        summaryVersionEqual(lastSummaryVersionForMat as SummaryVersion, summaryVersion) &&
+        summaryVersionEqual(lastExtraVersionForMat as SummaryVersion, extraVersion)
       ) {
         return cachedMat;
       }
       lastParentMat = parentMat;
       lastSummaryVersionForMat = summaryVersion;
+      lastExtraVersionForMat = extraVersion;
       cachedMat = {
         ...parentMat,
         [bindingKey]: summary,
+        ...(extraBindings ?? {}),
       };
       return cachedMat;
     },

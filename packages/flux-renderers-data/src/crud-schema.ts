@@ -196,6 +196,9 @@ export interface CrudSchema extends BaseSchema {
   selection?: CrudSelectionConfig;
   pageField?: string;
   pageSizeField?: string;
+  /** 选中行键发布到按钮 action scope 的变量名（AMIS 兼容：批量操作 URL 用 ${ids}）。
+   * 默认 `'ids'`，与 pageField/pageSizeField 相同的参数名映射模式。 */
+  selectionField?: string;
   defaultParams?: Record<string, SchemaValue>;
   /** Reserved — URL state sync is not implemented (design §9); retained for authoring compatibility. */
   syncLocation?: boolean;
@@ -276,5 +279,6 @@ export function normalizeCrudSchema(schema: CrudSchema): CrudSchema {
     syncLocation: schema.syncLocation ?? false,
     pageField: schema.pageField ?? 'page',
     pageSizeField: schema.pageSizeField ?? 'perPage',
+    selectionField: schema.selectionField ?? 'ids',
   };
 }
