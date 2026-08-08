@@ -34,12 +34,14 @@ export interface CrudPollingConfig extends SchemaObject {
   enabled?: boolean | string;
   sourceId?: string;
   /**
-   * @reserved — not consumed by the CRUD runtime. Polling stop conditions are
-   * configured on the upstream data-source itself (`stopWhen` is compiled into
+   * @reserved — the `stopWhen` field was removed from this interface (2-1
+   * adjudication): polling stop conditions are configured on the upstream
+   * data-source itself (`stopWhen` is compiled into
    * `CompiledRuntimeValue<boolean>` by `source-compiler.ts` and consumed by the
    * data-source controller, see `api-data-source-controller-state.ts`).
-   * Removed from the active contract surface (see docs/components/crud/design.md
-   * §Polling 启停状态发布); retained as an authoring compatibility marker.
+   * The remaining `enabled`/`sourceId` fields ARE consumed by `useCrudPolling`
+   * (crud orchestrates the upstream data-source start/cancel capability).
+   * See docs/components/crud/design.md §Polling 启停状态发布.
    */
 }
 
