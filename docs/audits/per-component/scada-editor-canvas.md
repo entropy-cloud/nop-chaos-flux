@@ -1,6 +1,6 @@
 # 审计卡：scada-editor-canvas（flux-renderers-industrial）
 
-> 状态: fixed-pending-closure
+> 状态: closed
 > 审查日期: 2026-08-08
 > 审查 plan: inline（component-audit mission，industrial-hmi-editor mission 产出组件）
 > 注册定义: `packages/flux-renderers-industrial/src/editor/renderer-definitions.ts:17` | 渲染器: `packages/flux-renderers-industrial/src/editor/scada-editor-canvas.tsx:68` | design.md: `docs/components/industrial-hmi/design-renderer.md` | playground: `apps/playground/src/pages/scada-editor-demo.tsx` | e2e: `tests/e2e/scada-editor-interaction-correctness.spec.ts`, `tests/e2e/scada-editor-perf.spec.ts`
@@ -54,4 +54,16 @@ scada-editor-canvas / @nop-chaos/flux-renderers-industrial（`/editor` subpath�
 
 ## Closure
 
-- 独立 closure audit: pending（fresh session）
+- 独立 closure audit: **PASS**（fresh session `ses_0202ae215ffeqrZBtX2DOumfch`，2026-08-08）
+- Evidence（live `文件:行` 复核，6 finding 全部 LANDED，行为完成非仅接口存在）：
+  - **P1-1** schema region 声明 LANDED：`editor/schemas.ts:1` import `SchemaInput` + `:41` loading? / `:43` empty? / `:45` error?；`editor/renderer-definitions.ts:165-167` 三 region 注册 `kind:'region'`，与 fields 一致。
+  - **P2-1** propContracts(7)+eventContracts(7) LANDED：`editor/renderer-definitions.ts:30-79` 7 propContracts（config/width/height/mode/commitPolicy/viewport/events）+ `:80-149` 7 eventContracts（onReady/onError/onSelectionChange/onModeChange/onSessionChange/onSave/onLoad，含 payload shape）。
+  - **P2-2** a11y role/aria-label（HCAX-2）LANDED：`scada-editor-canvas.tsx:270` `role="application"` + `:271` `aria-label={t('industrial.scada.editor.canvasLabel')}`；i18n `zh-CN.ts:955` / `en-US.ts:957` 双 locale key 存在。
+  - **P2-3** disabled meta 响应 LANDED：`scada-editor-canvas.tsx:217` `disabled` 派生 + `:272` `aria-disabled` + `:273` `inert` + `:275` drop guard + `:305` keyboard guard（四态守护齐全）。
+  - **P2-4（shared）** error code `config-invalid`（HCAX-1）LANDED：`scada-editor-canvas.tsx:42` 与 runtime `scada-canvas.tsx:46` 同用 `config-invalid`（校验失败升级码）；`invalid-config` 为独立命令句柄失败码（非升级），语义切分一致（`scada-errors.ts:55` / `editor-errors.ts:19`）。
+  - **P3-1** palette title LANDED：`editor-palette.tsx:51` `title={def.name}`（非 `def.type`）。
+  - 18 维：5 fail 维度（dim 1/7/8/10/18）全部 fixed，无遗留；HCAX-1/HCAX-2 共性 fix 在 editor 与 runtime 落地一致。
+- Closure remediation（fresh session 抽查发现，已落地）：
+  - owner doc drift：`docs/components/industrial-hmi-editor/design-renderer.md` §4.1 schema 块补 `loading?`/`empty?`/`error?` region 声明；§4.3 fields 表补 `loading`/`empty`/`error` region 行；§10 marker 表补 `scada-editor-empty` 行 + 画布交互面 a11y/disabled 四态说明。
+  - disabled 回归守护：新增 `scada-editor-canvas-disabled-meta.test.tsx`（3 测：role/aria-label a11y + disabled→aria-disabled/inert + 非 disabled 保持可交互），断言结果值非 not.toThrow。
+- 验证：`pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/build/lint/test` 全绿（98 test files / 1319 tests）。

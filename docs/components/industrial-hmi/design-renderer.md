@@ -289,6 +289,7 @@ interface ScadaSymbolNode {
 - `data-slot="scada-canvas-canvas"` 落在真实 leafer `<canvas>` DOM 元素上（plan 2026-08-04-1558-3 Phase 1：引擎创建后由 renderer effect 标注），DOM 断言直接命中渲染画布（TE-3 黑屏兜底基础）；wrapper 占位 div 仅保留 `nop-scada-canvas-canvas` marker class 供 CSS 定位规则稳定命中（F8）；
 - HTML 覆盖层（hover/selected 反馈）渲染在 leafer sky 层（`InteractionOverlay`），**不产 DOM marker / 不占 data-slot**——此前的 `scada-canvas-overlay` slot 行永不渲染，已移除；
 - canvas 渲染层不额外产 DOM marker（引擎内部绘制）；测试锚点优先顺序：`window.__flux_scada_<cid>`（程序化断言）> data-slot > `nop-*`（对齐既有约定）。
+- **画布交互面 a11y（HCAX-2 / HCA1 P2-1）**：根容器 `data-slot="scada-canvas"` div 携带 `role="application"` + `aria-label={t('industrial.scada.canvasLabel')}`（i18n key 经 `flux-i18n` 双 locale 注册：zh-CN `工业组态画面` / en-US `Industrial SCADA canvas`），为读屏/键盘用户提供画布角色语义（canvas 元素本身无原生 a11y 角色，LeaferJS 交互层非标准 web content）。
 
 ## 11. 实现拆分建议
 

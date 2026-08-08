@@ -1,6 +1,6 @@
 # 审计卡：scada-canvas（flux-renderers-industrial）
 
-> 状态: fixed-pending-closure
+> 状态: closed
 > 审查日期: 2026-08-08
 > 审查 plan: inline（component-audit mission，industrial-hmi mission 产出组件）
 > 注册定义: `packages/flux-renderers-industrial/src/renderer-definitions.ts:47` | 渲染器: `packages/flux-renderers-industrial/src/renderer/scada-canvas.tsx:69` | design.md: `docs/components/industrial-hmi/design-renderer.md` | playground: `apps/playground/src/pages/scada-demo.tsx` | e2e: `tests/e2e/scada-demo.spec.ts`, `tests/e2e/scada-edge-cases.spec.ts`
@@ -50,4 +50,12 @@ scada-canvas / @nop-chaos/flux-renderers-industrial / ScadaCanvasSchema（`schem
 
 ## Closure
 
-- 独立 closure audit: pending（fresh session）
+- 独立 closure audit: **PASS**（fresh session `ses_0202b17cbffeXMF0hmlW22VM6N`，2026-08-08）
+- Evidence（live `文件:行` 复核，行为完成非仅接口存在）：
+  - **P2-1** a11y role/aria-label LANDED：`scada-canvas.tsx:298` `role="application"` + `:299` `aria-label={t('industrial.scada.canvasLabel')}`；i18n `zh-CN.ts:935` / `en-US.ts:936` 双 locale key 存在。JSX 每渲染发射到根交互面，i18n 驱动（非硬编码）。
+  - **P3-1** 6 处 `useCallback`（`:94/:100/:135/:175/:218/:278`）确认为 P3 recorded（非阻塞），分类诚实，归 HCA-LL/HCA-CR（本卡 `Deferred But Adjudicated`）。
+  - 18 维 tally：14 pass / 2 n-a（dim 3 值所有权 + dim 4 表单参与）/ 2 fail（dim 8 a11y 已修 + dim 14 React19 P3 recorded）；无未分类维度，无未修阻塞性 fail。
+- Closure remediation（fresh session 抽查发现，已落地）：
+  - owner doc drift：`docs/components/industrial-hmi/design-renderer.md` §10 补画布交互面 a11y（role/aria-label + i18n 双 locale）说明。
+  - a11y 回归守护：`scada-canvas-smoke.test.tsx` 增 `role/aria-label` DOM 断言（HCA1 P2-1 / HCAX-2）。
+- 验证：`pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/build/lint/test` 全绿（98 test files / 1319 tests）。

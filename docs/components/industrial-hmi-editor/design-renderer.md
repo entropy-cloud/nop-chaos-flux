@@ -81,6 +81,12 @@ interface ScadaEditorCanvasSchema extends BaseSchema {
   inspector?: RegionSchema; // 属性面板
   toolbox?: RegionSchema; // 工具箱
   statusBar?: RegionSchema; // 状态栏（含 undo/redo 边界提示，design-undo-redo.md §4.5）
+  /** 加载态 region（编辑器引擎装配中） */
+  loading?: RegionSchema;
+  /** 空态 region（ready 但无图元） */
+  empty?: RegionSchema;
+  /** 错误态 region（config 校验/构建失败） */
+  error?: RegionSchema;
   /** 事件（schema 级，整体 prop，对齐 runtime design-renderer.md §5 D-1） */
   events?: ScadaEditorCanvasEvents;
 }
@@ -123,6 +129,7 @@ interface ScadaEditorCanvasEvents {
 | `width`/`height`                                                                                    | `{ kind: 'prop' }`                | 画布尺寸（缺省容器自适应）                                                                                                                                                                                                                 |
 | `mode`/`commitPolicy`/`viewport`                                                                    | `{ kind: 'prop' }`                | 编辑态运行模式 + 提交策略 + 初始视口                                                                                                                                                                                                       |
 | `palette`/`inspector`/`toolbox`/`statusBar`                                                         | `{ kind: 'region' }`              | DOM 子区域                                                                                                                                                                                                                                 |
+| `loading`/`empty`/`error`                                                                           | `{ kind: 'region' }`              | 加载/空/错误态 DOM 子区域（plan 2026-08-08-0900-1 Phase 3 / P2 #12：注册使三态显示可被 host 覆盖）                                                                                                                                         |
 | `events`（onSessionChange/onSave/onLoad/onModeChange/onSelectionChange/onReady/onError 为对象字段） | `{ kind: 'prop' }`                | **整体 prop（非 events.\* event 规则）**（runtime design-renderer.md §5 D-1 裁定：flux-compiler classifyField 仅按顶层 key 精确匹配；ActionSchema 字面量经 props 通道保留，事件派发经 `createNormalizedActionEvent` + `helpers.dispatch`） |
 | `id`/`className`/`disabled`/`visible`/`hidden`/`testid`                                             | `{ kind: 'meta' }`                | 继承 BaseSchema 元数据通道                                                                                                                                                                                                                 |
 
@@ -331,12 +338,14 @@ interface ScadaEditorTestHandle {
 | 工具箱      | `nop-scada-editor-toolbox`       | `scada-editor-toolbox`       |
 | 状态栏      | `nop-scada-editor-status-bar`    | `scada-editor-status-bar`    |
 | 加载占位    | `nop-scada-editor-loading`       | `scada-editor-loading`       |
+| 空场景提示  | `nop-scada-editor-empty`         | `scada-editor-empty`         |
 | 错误提示    | `nop-scada-editor-error`         | `scada-editor-error`         |
 
 - 根容器尺寸策略：`width: 100%; height: 100%`（`width`/`height` props 显式覆盖）；canvas 绝对定位铺满根容器（对齐 runtime design-renderer.md §10）；
 - DOM regions 使用 `@nop-chaos/ui` 既有样式体系（不新增 token 命名空间，对齐 `new-renderer-introduction-audit.md §3F`）；
 - 主题独立性（roadmap Cross-Cutting + runtime design-renderer.md §10）：CSS 变量 + 稳定 class 名，不引入 React ThemeProvider；
 - 不产生 canvas 内 DOM marker（Editor 渲染在 leafer sky 层 + InteractionOverlay 模式，对齐 runtime design-engine.md §10）。
+- **画布交互面 a11y + disabled 四态（HCAX-2 / HCA7 P2-2 + P2-3）**：canvas 区 `data-slot="scada-editor-canvas"` div 携带 `role="application"` + `aria-label={t('industrial.scada.editor.canvasLabel')}`（i18n key 经 `flux-i18n` 双 locale 注册），为读屏/键盘用户提供画布角色语义；`props.meta.disabled === true` 时追加 `aria-disabled="true"` + `inert` 属性，且 `onDrop`/`onKeyDown` 处理器前置 `if (disabled) return` 守卫——host 设 disabled 时编辑器 drop/键盘交互全部禁用（四态契约：loading/error/empty/ready + disabled）。
 
 ## 11. 实现拆分建议（完整版，E4.1 裁定方案 A 落地，2026-08-06）
 
