@@ -62,6 +62,42 @@
 | we-6 | 导出                  | 导出路径（template-expr/template-model）                            |
 | we-7 | 导入                  | 导入路径（document-io load）                                        |
 
+## D3.1 增量登记（2026-08-08，plan `2026-08-08-0900-1` Phase 1 交付）
+
+### 面级 e2e 覆盖矩阵（12 spec ↔ fd-1..fd-13）
+
+| e2e spec                             | fd-1 | fd-2 | fd-3 | fd-4 | fd-5 | fd-6 | fd-7 | fd-8 | fd-9 | fd-10 | fd-11 | fd-12 | fd-13 |
+| ------------------------------------ | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ----- | ----- | ----- | ----- |
+| flow-designer-css-diag               | ✓    |      |      |      |      |      |      |      |      |       |       |       |       |
+| flow-designer-dingtalk-visual        | ✓    | ✓    | ✓    |      |      |      |      |      |      |       |       | ✓     |       |
+| flow-designer-edge-creation          |      |      | ✓    |      |      |      | ✓    |      |      | ✓     |       |       |       |
+| flow-designer-label-text             |      | ✓    | ✓    |      |      |      |      |      |      |       |       |       |       |
+| flow-designer-minimap-pan            |      |      |      |      |      |      |      |      |      |       |       | ✓     |       |
+| flow-designer-resizable              |      |      |      |      | ✓    |      |      |      | ✓    | ✓     |       | ✓     |       |
+| flow-designer-tree-mode              |      | ✓    | ✓    | ✓    |      | ✓    |      |      |      |       |       |       |       |
+| flow-designer-ui                     |      |      |      |      | ✓    |      | ✓    |      |      |       |       |       | ✓     |
+| flow-designer-collapsible            |      |      |      |      | ✓    |      |      |      |      |       |       |       |       |
+| node-title-subtitle-gap              |      | ✓    |      |      |      |      |      |      |      |       |       |       |       |
+| designer-summary-renderers           |      | ✓    | ✓    |      | ✓    |      | ✓    |      |      |       |       |       |       |
+| taskflow-designer-ui                 | ✓    | ✓    | ✓    |      |      | ✓    | ✓    |      |      |       |       |       |       |
+| flow-designer-undo-clipboard（新增） |      |      |      |      | ✓    |      | ✓    | ✓    |      | ✓     | ✓     |       |       |
+| flow-designer-slot-drag（新增）      |      |      |      | ✓    |      | ✓    | ✓    |      | ✓    |       |       |       |       |
+
+**缺口清单（= Phase 5 新增场景候选，2026-08-08 全部闭合）**：
+
+- **fd-4 槽位**：槽位键盘激活（Enter/Space → 加号菜单）无真实浏览器场景（13-01 修复仅单元覆盖 `designer-xyflow-node.keyboard.test.tsx`）——**已闭合**：新增 `flow-designer-slot-drag.spec.ts`（tree mode plus button → Add node 菜单 → 选型 → 节点 +1，同一 onPlusButtonClick 链路的真实浏览器验证）；空槽位键盘路径维持单元级覆盖（playground 两 tree 示例无空分支，覆盖决策在案）。
+- **fd-8 事务与 undo**：undo/redo 无任何 e2e 场景——**已闭合**：新增 `flow-designer-undo-clipboard.spec.ts`（Delete → Ctrl+Z 恢复 → Ctrl+Y 再删）。
+- **fd-9 拖拽**：节点拖拽（moveNode）与 palette 拖放建节点无 e2e（resizable 面板拖拽为间接覆盖）——**已闭合**：`flow-designer-slot-drag.spec.ts` 鼠标拖拽节点（down/move/up 全生命周期 → transform 提交断言）。
+- **fd-10 键盘**：快捷键映射（undo/delete/copy/paste）无 e2e（建边/面板箭头为间接覆盖）——**已闭合**：`flow-designer-undo-clipboard.spec.ts` 全快捷键映射真机解析。
+- **fd-11 剪贴板**：复制/粘贴无任何 e2e——**已闭合**：`flow-designer-undo-clipboard.spec.ts` Ctrl+C/V（当场暴露并修复 P1 pasteClipboard 命令缺口，见 fd-11 卡 + bug 91）。
+- **fd-13 JSON.parse**：失败路径仅单元覆盖——维持单元级覆盖（显式决策，见 fd-13 卡）。
+
+### 已知遗留输入终态核对（2026-08-08 live）
+
+- **19-3 JSON.parse 静默 null（fd-13）→ 收敛**：renderers 包唯一用户可见 JSON.parse 站点 `designer-page-body.tsx:193-255`（try/catch → `reportHostIssue` + 用户可见文案 `flux.flowDesigner.flowJsonParseError`），回归测试 `designer-page-json-export.test.tsx:20` 在案；`tree-validation.ts:100`/`tree-session-impl.ts` 等 core 站点为内部往返序列化（canonicalize 自产自销），非静默 null 风险。
+- **15-2 NaN fail-closed（fd-4 相关）→ 收敛**：0150-3 已补 fail-closed 用例 `designer-xyflow-node.keyboard.test.tsx:121-139`（零尺寸矩形 → 有限 (0,0) 回退 + 调用计数锁定），无 NaN 传播路径；不另行登记 P1。
+- **MA4.3 缺口（H7 回归基准）**：`createDesignerStoreAdapter`（MA43-P1-01）**已补测**（`adapters/designer-store-adapter.test.ts` 7 用例，2026-07-27 后补齐）；`resolveDesignerManifest`/`designerHostContract`/`DESIGNER_CAPABILITY_PUBLICATION` **仍零直接测试**（H7 缺口，Phase 2/3 回归项）；`DesignerCanvasContent` 仅间接测试（H7 记录项）。
+
 ## 引用关系
 
 - D3.1 plan 引用: 本清单 fd-1..fd-13 + `docs/audits/host-surface/README.md` §1/§2（flow-designer 行）。

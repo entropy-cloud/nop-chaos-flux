@@ -74,3 +74,5 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/59-api-cache-bounded-key-digest-fix.md`
 - `docs/bugs/60-table-operation-slot-scope-isolation-fix.md`
 - `docs/bugs/61-performance-table-strictmode-row-scope-runtime-key-fix.md`
+- `docs/bugs/90-designer-toolbar-stale-disabled-template-not-re-resolved-fix.md`
+- `docs/bugs/91-paste-clipboard-command-gap-design-adapter-silent-unavailable-fix.md`
