@@ -64,8 +64,13 @@ export class ScadaEditorEngine {
     cid?: number;
   }) {
     this.cid = options.cid ?? ScadaEditorEngine.nextCid++;
-    const width = options.width ?? options.container.clientWidth ?? 0;
-    const height = options.height ?? options.container.clientHeight ?? 0;
+    // plan 2026-08-08-1809-3 Phase 3 / P1-5：与 ScadaCanvasEngine 同型 world/DOM size 解耦。
+    // 编辑器画布同型 responsive 风险（schema width 当 DOM → 窄容器下 viewport 失真）。
+    // 容器真实尺寸优先，schema 显式值作 fallback（测试容器 clientWidth=0 时仍可传显式 width）。
+    const containerWidth = options.container.clientWidth;
+    const containerHeight = options.container.clientHeight;
+    const width = containerWidth || options.width || 0;
+    const height = containerHeight || options.height || 0;
     this.size = { width, height };
     // leafer App 三层（design-architecture.md §4.3 + spike §1.3/§1.5）：
     // ground 背景 / tree 图元层（viewport 插件 + move:drag:'auto' + dragEmpty）/ sky 交互覆盖层。
@@ -74,8 +79,9 @@ export class ScadaEditorEngine {
     // `editor` 字段不在 leafer-ui IAppConfig 类型中（由 @leafer-in/editor 运行时注册），经类型断言透传。
     const appConfig = {
       view: options.container,
-      width: options.width,
-      height: options.height,
+      // plan 2026-08-08-1809-3 Phase 3 / P1-5：DOM 尺寸用解耦后的值（容器真实尺寸优先），不再直传 schema。
+      width,
+      height,
       ground: {},
       tree: { type: 'viewport', move: { drag: 'auto', dragEmpty: true } },
       sky: {},
@@ -404,6 +410,27 @@ export class ScadaEditorEngine {
     const leaf = this.registry.get(id);
     if (!leaf) return;
     const node = leaf.node as LeafNode;
+    // plan 2026-08-08-1809-3 Phase 1 / P1-2：嵌套 group 子图元编辑 / 嵌套 junction connection 写入经
+    // `diffScadaConfig`（顶层迭代；递归 diff 属 Non-Goal）→ group 的 `patch.children`。旧实现无条件
+    // `delete (attrPatch).children` → canvas 停在旧态而 workingConfig 已前进（WYSIWYG 断裂，仅全量
+    // engine.build 能恢复）。镜像 runtime `ConfigAdapter.applyUpdate`（config-adapter.ts:141-154）重建模式：
+    // 收到 `patch.children` 时按当前 registry.subtreeIds 解链旧子树 + 经 buildNode 按 patch.children 重建，
+    // 使 canvas 层与 workingConfig 同步（不需 reload）。节点对象 identity 变化（重建而非就地 mutate）符合
+    // scene-graph 增删语义；group 自身 attr 变化经下方通用 attrPatch 路径应用（与 runtime 对齐）。
+    if (patch.children !== undefined) {
+      for (const subtreeId of this.registry.subtreeIds(id)) {
+        if (subtreeId === id) continue;
+        const child = this.registry.get(subtreeId);
+        if (child) {
+          (node as IGroup).remove(child.node);
+          this.registry.remove(subtreeId);
+        }
+      }
+      const editable = this.mode === 'edit';
+      for (const child of patch.children) {
+        this.buildNode(child, node as IGroup, id, editable);
+      }
+    }
     const attrPatch: Partial<ScadaSymbolProps> = { ...patch };
     delete (attrPatch as Partial<ScadaSymbolNode>).children;
     if (leaf.definition?.applyProps) {

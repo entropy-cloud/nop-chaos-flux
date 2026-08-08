@@ -108,6 +108,21 @@ function applyInitialViewport(
   if (!policy) return;
   const bounds = computeSymbolBounds(config.symbols);
   if (!bounds) return;
+  applyViewportPolicy(runtime, bounds, policy);
+}
+
+/**
+ * 应用声明的 viewport fit/center policy（plan 2026-08-08-1809-3 Phase 3 / P1-5）。
+ *
+ * 从 `applyInitialViewport` 抽出 bounds→viewport 的核心数学（fit contain/fill + center），
+ * 使 mount 期（applyInitialViewportState）与 resize 期（refitViewportOnResize）共用同一实现，
+ * 消除双实现漂移（plan 裁定：复用 applyInitialViewport）。无 policy 时调用方应短路（本函数仍兜底 return）。
+ */
+function applyViewportPolicy(
+  runtime: ScadaCanvasRuntime,
+  bounds: Bounds,
+  policy: { fit?: 'contain' | 'fill'; center?: boolean },
+): void {
   if (policy.fit === 'contain') {
     runtime.engine.fit(bounds, 0);
   } else if (policy.fit === 'fill') {
@@ -136,6 +151,24 @@ function applyInitialViewport(
     // 消除双实现漂移；scale 取当前视口（fill 先跑时即 fill scale，纯 center 时保持 1）。
     runtime.engine.center(bounds);
   }
+}
+
+/**
+ * 计算 / 应用 viewport policy 的公共入口（plan 2026-08-08-1809-3 Phase 3 / P1-5 resize refit 消费）。
+ *
+ * 由 use-scada-engine 的 ResizeObserver handler 经 runtime.refitViewportOnResize 回调消费：
+ * 收到 material resize 后用最新 config + 声明 policy 重算 fit，复用本模块 bounds/policy 数学，
+ * 不在 use-scada-engine 重写第二份（避免双实现漂移）。无 policy / 无 bounds 时为 no-op。
+ */
+export function applyScadaViewportPolicy(
+  runtime: ScadaCanvasRuntime,
+  config: ScadaConfig,
+  policy: { fit?: 'contain' | 'fill'; center?: boolean } | undefined,
+): void {
+  if (!policy) return;
+  const bounds = computeSymbolBounds(config.symbols);
+  if (!bounds) return;
+  applyViewportPolicy(runtime, bounds, policy);
 }
 
 /**
@@ -170,6 +203,12 @@ export interface UseScadaConfigSyncArgs {
     options?: { preserveValues?: boolean },
   ) => void;
   viewport?: { fit?: 'contain' | 'fill'; center?: boolean };
+  /**
+   * resize refit 注册器（plan 2026-08-08-1809-3 Phase 3 / P1-5）：由 use-scada-engine 提供的稳定 setter，
+   * 本 hook 在 runtime 可用时把 refit 闭包经此 setter 注册（不 mutate 任何传入 ref，react-compiler 友好）。
+   * use-scada-engine 的 ResizeObserver handler 经 runtime.refitViewportOnResize 调用注册的闭包。
+   */
+  setResizeRefit?: (fn: (() => void) | undefined) => void;
   onBuilt?: () => void;
   onBuildError?: (code: string, message: string) => void;
 }
@@ -184,7 +223,7 @@ export interface UseScadaConfigSyncArgs {
 export function useScadaConfigSync(
   args: UseScadaConfigSyncArgs,
 ): { syncImported: (config: ScadaConfig) => void } {
-  const { config, runtime, reloadBindings, viewport, onBuilt, onBuildError } = args;
+  const { config, runtime, reloadBindings, viewport, onBuilt, onBuildError, setResizeRefit } = args;
   const prevRef = useRef<ScadaConfig | undefined>(undefined);
   const latest = useRef({ viewport, onBuilt, onBuildError, runtime, reloadBindings, config });
   useEffect(() => {
@@ -280,6 +319,23 @@ export function useScadaConfigSync(
       );
     }
   }, []);
+
+  // plan 2026-08-08-1809-3 Phase 3 / P1-5：装配 resize refit 回调（复用 applyScadaViewportPolicy）。
+  // runtime 可用后把 refit 闭包写入 refitRef.current（不 mutate runtime 对象，react-compiler/immutability 友好）；
+  // use-scada-engine 的 ResizeObserver handler 经 runtime.refitViewportOnResize（稳定闭包读 refitRef.current）调用。
+  // 回调闭包读 latest.current（始终最新 config + policy）。无声明 policy 时 applyScadaViewportPolicy 短路 no-op
+  // → 用户 viewport 保留（不破坏纯浏览场景）。
+  useEffect(() => {
+    if (!runtime || !setResizeRefit) return;
+    setResizeRefit(() => {
+      const { config: currentConfig, viewport: currentViewport } = latest.current;
+      if (!currentConfig) return;
+      applyScadaViewportPolicy(runtime, currentConfig, currentViewport);
+    });
+    return () => {
+      setResizeRefit?.(undefined);
+    };
+  }, [runtime, setResizeRefit]);
 
   return { syncImported };
 }

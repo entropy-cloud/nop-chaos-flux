@@ -24,6 +24,15 @@ export interface ScadaCanvasRuntime {
   pipeline: RefreshPipeline;
   animator: Animator;
   applyAttrs: ApplyAttrs;
+  /**
+   * ResizeObserver 触发 setSize 后的可选 viewport refit 回调（plan 2026-08-08-1809-3 Phase 3 / P1-5）。
+   *
+   * 由 use-scada-config-sync 装配（捕获最新 config + 声明 viewport policy → applyScadaViewportPolicy）；
+   * use-scada-engine 的 ResizeObserver handler 在 setSize 后调用此回调，使响应式容器缩放后
+   * fit policy 仍成立（旧实现 setSize 仅 resize 不 refit → 窄容器下 hover/click 落画布外）。
+   * 无声明 policy 时回调为 no-op（用户 viewport 保留）。运行时域内部，不进 schema-visible scope。
+   */
+  refitViewportOnResize?: () => void;
 }
 
 export interface UseScadaEngineArgs {
@@ -125,6 +134,16 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
   // observer/rafId 提为 ref：mount cleanup 与命令式 destroy 共用断开逻辑（SL-2）。
   const observerRef = useRef<ResizeObserver | undefined>(undefined);
   const rafIdRef = useRef(0);
+  // plan 2026-08-08-1809-3 Phase 3 / P1-5：resize refit 回调 holder。runtime 对象构造期挂稳定闭包
+  // `refitViewportOnResize: () => refitRef.current?.()`（不 mutate runtime，react-compiler 友好）；
+  // use-scada-config-sync 经 setResizeRefit（稳定 setter）更新 ref.current（捕获最新 config + policy）。
+  const refitRef = useRef<(() => void) | undefined>(undefined);
+  // plan 2026-08-08-1809-3 Phase 3 / P1-5：refit 注册器（稳定身份）。refitRef 在本 hook 内创建，
+  // 其 .current 写入发生在本闭包内（react-compiler 允许自建 ref 的 mutation）；消费方（config-sync）
+  // 经此 setter 调用注册 refit，不直接 mutate 传入的 ref（避免 react-compiler/immutability 违规）。
+  const setResizeRefit = useCallback((fn: (() => void) | undefined) => {
+    refitRef.current = fn;
+  }, []);
 
   const cancelPendingResize = useCallback(() => {
     if (rafIdRef.current !== 0) {
@@ -194,7 +213,18 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
       latest.current.onPipelineError,
     );
     const applyAttrs: ApplyAttrs = (attrs) => engine.applyAttrs(attrs);
-    const next: ScadaCanvasRuntime = { engine, pointStore, reverseIndex, collector, pipeline, animator, applyAttrs };
+    const next: ScadaCanvasRuntime = {
+      engine,
+      pointStore,
+      reverseIndex,
+      collector,
+      pipeline,
+      animator,
+      applyAttrs,
+      // plan 2026-08-08-1809-3 Phase 3 / P1-5：稳定闭包读 refitRef.current（由 use-scada-config-sync 装配）。
+      // 不 mutate runtime 对象（react-compiler/immutability 友好）；refitRef.current 变化即更新 refit 行为。
+      refitViewportOnResize: () => refitRef.current?.(),
+    };
     runtimeRef.current = next;
     setRuntime(next);
 
@@ -226,7 +256,15 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
         cancelPendingResize();
         rafIdRef.current = requestAnimationFrame(() => {
           rafIdRef.current = 0;
-          if (runtimeRef.current?.engine) runtimeRef.current.engine.setSize(width, height);
+          const current = runtimeRef.current;
+          if (!current?.engine) return;
+          // plan 2026-08-08-1809-3 Phase 3 / P1-5：setSize 后重应用声明的 viewport fit policy。
+          // 旧实现仅 setSize 不 refit → schema width:960 + fit:contain 渲染进 ~302px 容器时，
+          // mount 期按 960 算 scale≈1，ResizeObserver 把 DOM 缩到 302 后 scale 不变 → 内容落画布外。
+          // refitViewportOnResize 由 use-scada-config-sync 装配（复用 applyScadaViewportPolicy，
+          // 无声明 policy 时 no-op → 用户 viewport 保留）。rAF 已节流，无每帧 refit 风险。
+          current.engine.setSize(width, height);
+          current.refitViewportOnResize?.();
         });
       });
       observerRef.current.observe(container);
@@ -299,5 +337,5 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
     releaseRuntime();
   }, [releaseRuntime]);
 
-  return { runtime, reloadBindings, destroy };
+  return { runtime, reloadBindings, destroy, setResizeRefit };
 }

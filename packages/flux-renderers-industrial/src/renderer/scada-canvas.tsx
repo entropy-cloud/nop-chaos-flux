@@ -183,7 +183,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     return Object.keys(values).length > 0 ? values : undefined;
   }, []);
 
-  const { runtime, reloadBindings, destroy } = useScadaEngine({
+  const { runtime, reloadBindings, destroy, setResizeRefit } = useScadaEngine({
     containerRef,
     cid: props.meta.cid,
     exposeTestHandle: true,
@@ -249,6 +249,8 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
     runtime,
     reloadBindings,
     viewport: props.props.viewport,
+    // plan 2026-08-08-1809-3 Phase 3 / P1-5：传 resize refit 注册器，使响应式容器缩放后 fit policy 重应用。
+    setResizeRefit,
     onBuilt: handleReady,
     onBuildError: handleError,
   });

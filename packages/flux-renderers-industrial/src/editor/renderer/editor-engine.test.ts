@@ -432,3 +432,230 @@ describe('ScadaEditorEngine group buildNode branches', () => {
     engine.destroy();
   });
 });
+
+// plan 2026-08-08-1809-3 Phase 1 / P1-2：嵌套 group 子图元的 inspector 编辑 / connection 写入经
+// `diffScadaConfig`（顶层迭代）→ group 的 `patch.children` → `editor-engine.applyUpdate`。
+// 旧实现 applyUpdate 无条件 `delete children` → canvas 停在旧态而 workingConfig 已前进。
+// 以下用例在 canvas 层断言（`engine.getSymbol(id).node.get(...)`），failing-first。
+describe('ScadaEditorEngine applyUpdate with children patch (P1-2 nested canvas sync)', () => {
+  it('rebuilds subtree when group children patch arrives → canvas reflects new child fill', () => {
+    const engine = ScadaEditorEngine.create({ container });
+    engine.build({
+      version: 1,
+      variables: [],
+      symbols: [
+        {
+          id: 'grp',
+          type: 'scada-group',
+          x: 0,
+          y: 0,
+          children: [
+            { id: 'inner-1', type: 'scada-rect', x: 5, y: 5, width: 30, height: 30, fill: '#000000' },
+          ],
+        },
+      ],
+    });
+    // Simulate diffScadaConfig output when inner-1.fill changes: top-level iteration
+    // sees grp.children changed → patch.children carries the updated child subtree.
+    engine.applyDiff(
+      {
+        added: [],
+        removed: [],
+        updated: [
+          {
+            id: 'grp',
+            patch: {
+              children: [
+                { id: 'inner-1', type: 'scada-rect', x: 5, y: 5, width: 30, height: 30, fill: '#aabbcc' },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        version: 1,
+        variables: [],
+        symbols: [
+          {
+            id: 'grp',
+            type: 'scada-group',
+            x: 0,
+            y: 0,
+            children: [
+              { id: 'inner-1', type: 'scada-rect', x: 5, y: 5, width: 30, height: 30, fill: '#aabbcc' },
+            ],
+          },
+        ],
+      },
+    );
+    const inner = engine.getSymbol('inner-1');
+    expect(inner, 'inner-1 leaf should remain registered after subtree rebuild').toBeDefined();
+    // canvas-layer assertion (P1-2): node reflects new fill, not stale #000000.
+    expect(inner!.node.get('fill')).toBe('#aabbcc');
+    engine.destroy();
+  });
+
+  it('nested junction custom.connections patch reaches canvas (CV-nested-conn-write)', () => {
+    const engine = ScadaEditorEngine.create({ container });
+    engine.build({
+      version: 1,
+      variables: [],
+      symbols: [
+        {
+          id: 'grp',
+          type: 'scada-group',
+          children: [
+            { id: 'dev-1', type: 'scada-rect', x: 0, y: 0, width: 40, height: 40 },
+            {
+              id: 'jun-1',
+              type: 'scada-pipe-junction',
+              x: 100,
+              y: 100,
+              width: 20,
+              height: 20,
+              custom: { connections: [] },
+            },
+          ],
+        },
+      ],
+    });
+    // Baseline: junction with 0 connections → composite root has only body (1 child).
+    const junBefore = engine.getSymbol('jun-1');
+    const junChildrenBefore = (junBefore!.node as unknown as { children: unknown[] }).children;
+    expect(junChildrenBefore.length, 'junction root = body + 0 stubs').toBe(1);
+
+    // Simulate writeConnection on a nested junction → diff produces patch.children on grp.
+    // pipe-junction create reads custom.connections → each connection renders as a stub Line child.
+    engine.applyDiff(
+      {
+        added: [],
+        removed: [],
+        updated: [
+          {
+            id: 'grp',
+            patch: {
+              children: [
+                { id: 'dev-1', type: 'scada-rect', x: 0, y: 0, width: 40, height: 40 },
+                {
+                  id: 'jun-1',
+                  type: 'scada-pipe-junction',
+                  x: 100,
+                  y: 100,
+                  width: 20,
+                  height: 20,
+                  custom: {
+                    // connection.x/y are normalized (0..1) relative to junction size.
+                    connections: [{ id: 'c1', target: 'dev-1', x: 0.5, y: 0.5, direction: 'out' }],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        version: 1,
+        variables: [],
+        symbols: [
+          {
+            id: 'grp',
+            type: 'scada-group',
+            children: [
+              { id: 'dev-1', type: 'scada-rect', x: 0, y: 0, width: 40, height: 40 },
+              {
+                id: 'jun-1',
+                type: 'scada-pipe-junction',
+                x: 100,
+                y: 100,
+                width: 20,
+                height: 20,
+                custom: {
+                  connections: [{ id: 'c1', target: 'dev-1', x: 0.5, y: 0.5, direction: 'out' }],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    );
+    const jun = engine.getSymbol('jun-1');
+    expect(jun, 'jun-1 leaf should remain registered after subtree rebuild').toBeDefined();
+    // canvas-layer assertion (P1-2): rebuilt junction root = body + 1 stub (connection write reached canvas).
+    const junChildren = (jun!.node as unknown as { children: unknown[] }).children;
+    expect(junChildren.length).toBe(2);
+    engine.destroy();
+  });
+
+  it('children patch with added + removed grandchildren realigns subtree', () => {
+    const engine = ScadaEditorEngine.create({ container });
+    engine.build({
+      version: 1,
+      variables: [],
+      symbols: [
+        {
+          id: 'grp',
+          type: 'scada-group',
+          children: [
+            { id: 'keep', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10, fill: '#111111' },
+            { id: 'gone', type: 'scada-rect', x: 20, y: 20, width: 10, height: 10, fill: '#222222' },
+          ],
+        },
+      ],
+    });
+    engine.applyDiff(
+      {
+        added: [],
+        removed: [],
+        updated: [
+          {
+            id: 'grp',
+            patch: {
+              children: [
+                { id: 'keep', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10, fill: '#333333' },
+                { id: 'new', type: 'scada-rect', x: 30, y: 30, width: 10, height: 10, fill: '#444444' },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        version: 1,
+        variables: [],
+        symbols: [
+          {
+            id: 'grp',
+            type: 'scada-group',
+            children: [
+              { id: 'keep', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10, fill: '#333333' },
+              { id: 'new', type: 'scada-rect', x: 30, y: 30, width: 10, height: 10, fill: '#444444' },
+            ],
+          },
+        ],
+      },
+    );
+    expect(engine.getSymbol('gone'), 'removed grandchild should be dropped from registry').toBeUndefined();
+    const keep = engine.getSymbol('keep');
+    const fresh = engine.getSymbol('new');
+    expect(keep?.node.get('fill')).toBe('#333333');
+    expect(fresh?.node.get('fill')).toBe('#444444');
+    engine.destroy();
+  });
+
+  it('top-level node applyUpdate without children patch is unchanged (regression guard)', () => {
+    const engine = ScadaEditorEngine.create({ container });
+    engine.build(configWithRect);
+    engine.applyDiff(
+      { added: [], removed: [], updated: [{ id: 'r1', patch: { fill: '#00ff00' } }] },
+      {
+        version: 1,
+        variables: [],
+        symbols: [
+          { id: 'r1', type: 'scada-rect', x: 10, y: 20, width: 100, height: 50, fill: '#00ff00' },
+          { id: 'r2', type: 'scada-ellipse', x: 200, y: 20, width: 80, height: 60 },
+        ],
+      },
+    );
+    expect(engine.getSymbol('r1')?.node.get('fill')).toBe('#00ff00');
+    engine.destroy();
+  });
+});

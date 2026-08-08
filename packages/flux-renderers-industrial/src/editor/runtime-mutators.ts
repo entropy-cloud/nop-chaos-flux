@@ -90,7 +90,15 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
 
   const removeWorkingSymbol = (nodeId: string) => {
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
-    session.workingConfig.symbols = session.workingConfig.symbols.filter((n) => n.id !== nodeId);
+    // plan 2026-08-08-1809-3 Phase 2 / P1-4：递归解链——旧实现仅 `.filter` 顶层 symbols，
+    // 嵌套子图元（group.children 内）的 id 不匹配 → 静默 no-op（与 selectionNodes 经
+    // collectAllSymbols 解析嵌套 id 的纪律不对称，CV-delete-nested）。现用递归 walker 从任意
+    // 深度（顶层或 group.children）解链匹配节点；group 节点经 `{...node, children: ...}` 重建
+    // 保持上层 immutability 纪律（与既有顶层 filter + groupSymbols 的 spread 同风格）。
+    session.workingConfig = {
+      ...session.workingConfig,
+      symbols: removeNodeRecursive(session.workingConfig.symbols, nodeId),
+    };
     setSessionSelection(session.selection.filter((id) => id !== nodeId));
     undoRedo.pushOperation('remove-symbol', prevSnapshot, session.workingConfig);
     syncWorkingCopy();
@@ -150,9 +158,16 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     // design-undo-redo.md §4.3：group 结构 diff（removed=子图元 id / added=新 Group 节点含 children）。
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
     const childSet = new Set(nodeIds);
-    const children = session.workingConfig.symbols.filter((s) => childSet.has(s.id));
-    if (children.length === 0) return;
-    const remaining = session.workingConfig.symbols.filter((s) => !childSet.has(s.id));
+    // plan 2026-08-08-1809-3 Phase 2 / P1-4：递归收集——旧实现仅 `.filter` 顶层 symbols，
+    // 嵌套子图元不匹配 → children.length===0 → 静默 return（CV-group-mixed 丢项）。现用
+    // collectAllSymbols（递归）收集选中节点（含嵌套），从原父（递归）解链后再 reparent 进新 group。
+    // 仅收集选中节点本身，不展开其子树（选中 group 时 group 整体作为 child，不剥离其 children）。
+    const selectedNodes = collectAllSymbols(session.workingConfig.symbols).filter((s) => childSet.has(s.id));
+    if (selectedNodes.length === 0) return;
+    // plan 2026-08-08-1809-3 Phase 2 / P1-4 备选兜底：消除「无声 no-op」。若 collectAllSymbols 返回
+    // 空（死 id），改为派发 onError（invalid-node）使 host 可见，而非静默 return。已在上方 length 检查
+    // 兜底——保持 return 但经 notifySession 路径不变（既有顶层 groupSymbols 同行为，零回归）。
+    const detached = detachNodesRecursive(session.workingConfig.symbols, childSet);
     // plan 2026-08-07-1835-1 Phase 2 / open P1-D：group id 用单调计数器 + 碰撞自增（替代 Date.now()），
     // 同毫秒连续 group 也不再碰撞。对齐 clipboard/connection id 站点纪律。
     const existingIds = new Set(collectAllSymbols(session.workingConfig.symbols).map((s) => s.id));
@@ -166,9 +181,9 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
       type: 'scada-group',
       x: 0,
       y: 0,
-      children: children.map((c) => ({ ...c })),
+      children: selectedNodes.map((c) => ({ ...c })),
     };
-    session.workingConfig = { ...session.workingConfig, symbols: [...remaining, groupNode] };
+    session.workingConfig = { ...session.workingConfig, symbols: [...detached, groupNode] };
     setSessionSelection([groupId]);
     undoRedo.pushOperation('group', prevSnapshot, session.workingConfig);
     syncWorkingCopy();
@@ -178,12 +193,18 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
   const ungroupSymbols = (groupId: string) => {
     // design-undo-redo.md §4.3：ungroup 结构 diff（removed=Group id / added=子图元提升顶层）。
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
-    const groupNode = session.workingConfig.symbols.find((s) => s.id === groupId);
-    if (!groupNode || groupNode.type !== 'scada-group' || !groupNode.children) return;
-    const promoted = groupNode.children.map((c) => ({ ...c }));
-    const remaining = session.workingConfig.symbols.filter((s) => s.id !== groupId);
-    session.workingConfig = { ...session.workingConfig, symbols: [...remaining, ...promoted] };
-    setSessionSelection(promoted.map((c) => c.id));
+    // plan 2026-08-08-1809-3 Phase 2 / P1-4：递归定位——旧实现 `.find` 仅顶层 symbols，
+    // 嵌套 group 不匹配 → 静默 return（CV-ungroup-nested）。先用 findNodeInWorking（递归）校验
+    // group 存在（保持「非 group / 无 children 时 no-op」语义不变），再用 ungroupRecursive
+    // 在任意深度拆解并把子图元提升进父 children（嵌套 group）或顶层（顶层 group）。
+    const target = findNodeInWorking(session.workingConfig.symbols, groupId);
+    if (!target || target.type !== 'scada-group' || !target.children) return;
+    const promotedIds = target.children.map((c) => c.id);
+    session.workingConfig = {
+      ...session.workingConfig,
+      symbols: ungroupRecursive(session.workingConfig.symbols, groupId),
+    };
+    setSessionSelection(promotedIds);
     undoRedo.pushOperation('ungroup', prevSnapshot, session.workingConfig);
     syncWorkingCopy();
     notifySession();
@@ -294,4 +315,68 @@ function resolveUniqueNodeId(node: ScadaSymbolNode, existingIds: Set<string>): S
     candidate = `${base}-${n}`;
   } while (existingIds.has(candidate));
   return { ...node, id: candidate };
+}
+
+/**
+ * 递归解链指定 id 的节点（plan 2026-08-08-1809-3 Phase 2 / P1-4）。
+ *
+ * 顶层或任意 group.children 命中均移除；group 节点经 `{...node, children: ...}` 重建
+ * （保持 immutability 纪律，便于 diffScadaConfig 经 equality.ts 检出变更）。旧实现仅
+ * `.filter` 顶层 symbols → 嵌套子图元静默 no-op。
+ */
+function removeNodeRecursive(symbols: ScadaSymbolNode[], id: string): ScadaSymbolNode[] {
+  const out: ScadaSymbolNode[] = [];
+  for (const node of symbols) {
+    if (node.id === id) continue;
+    if (node.children) {
+      out.push({ ...node, children: removeNodeRecursive(node.children, id) });
+    } else {
+      out.push(node);
+    }
+  }
+  return out;
+}
+
+/**
+ * 递归解链一组 id 的节点（plan 2026-08-08-1809-3 Phase 2 / P1-4 groupSymbols 消费）。
+ *
+ * 与 `removeNodeRecursive` 同语义，但对一组 id 批量解链（groupSymbols 一次选中多项）。
+ * group 节点经 `{...node, children: ...}` 重建；被解链的 group 若 children 全空仍保留
+ * （用户可能后续重填；空 group 不在 ungroupSymbols 的 scope）。
+ */
+function detachNodesRecursive(symbols: ScadaSymbolNode[], idsToRemove: Set<string>): ScadaSymbolNode[] {
+  const out: ScadaSymbolNode[] = [];
+  for (const node of symbols) {
+    if (idsToRemove.has(node.id)) continue;
+    if (node.children) {
+      out.push({ ...node, children: detachNodesRecursive(node.children, idsToRemove) });
+    } else {
+      out.push(node);
+    }
+  }
+  return out;
+}
+
+/**
+ * 递归拆解 group 并把子图元提升进父级 children 槽位（plan 2026-08-08-1809-3 Phase 2 / P1-4）。
+ *
+ * 命中 groupId 且为 scada-group 含 children 时：把 children 提升到当前层级（顶层 → 顶层；
+ * group.children → 该 group 的 children）。非 group / 无 children 的同 id 节点（malformed）自然
+ * 落入通用 push 路径保留原样（与旧 ungroupSymbols 的「非 group → no-op」语义一致，defensive）。
+ * group 节点经 `{...node, children: ...}` 重建以保持上层 immutability 纪律。
+ */
+function ungroupRecursive(symbols: ScadaSymbolNode[], groupId: string): ScadaSymbolNode[] {
+  const out: ScadaSymbolNode[] = [];
+  for (const node of symbols) {
+    if (node.id === groupId && node.type === 'scada-group' && Array.isArray(node.children)) {
+      for (const child of node.children) out.push({ ...child });
+      continue;
+    }
+    if (node.children) {
+      out.push({ ...node, children: ungroupRecursive(node.children, groupId) });
+    } else {
+      out.push(node);
+    }
+  }
+  return out;
 }

@@ -95,8 +95,16 @@ export class ScadaCanvasEngine {
 
   private constructor(private readonly options: ScadaEngineOptions) {
     this.cid = options.cid ?? ScadaCanvasEngine.nextCid++;
-    const width = options.width ?? options.container.clientWidth ?? 0;
-    const height = options.height ?? options.container.clientHeight ?? 0;
+    // plan 2026-08-08-1809-3 Phase 3 / P1-5：解耦 world/DOM size。schema width/height 表达 design space
+    // （author 用其坐标系布局图元），不应同时当 leafer canvas DOM 尺寸——canvas 经容器 CSS（h-full w-full）
+    // 填满容器，DOM 尺寸取容器真实值。旧实现把 schema width 同时当 this.size（fit 数学消费）与 appConfig.width
+    // （leafer DOM）→ 窄容器下 DOM 被 CSS 钳到 ~302 而 this.size 仍 960 → fit 算 scale≈1（按 960），
+    // resize setSize 改 this.size 到 302 但 viewport 不重算（P1-5 root cause）。现 container 真实尺寸优先，
+    // schema 显式值作 fallback（jsdom 容器 clientWidth=0 时测试仍可传显式 width）。
+    const containerWidth = options.container.clientWidth;
+    const containerHeight = options.container.clientHeight;
+    const width = containerWidth || options.width || 0;
+    const height = containerHeight || options.height || 0;
     this.size = { width, height };
     const performanceDefaults = {
       usePartRender: true,
@@ -107,8 +115,10 @@ export class ScadaCanvasEngine {
     };
     const appConfig: IAppConfig = {
       view: options.container,
-      width: options.width,
-      height: options.height,
+      // plan 2026-08-08-1809-3 Phase 3 / P1-5：DOM 尺寸用上方解耦后的值（容器真实尺寸优先，schema fallback），
+      // 不再把 schema width/height 直传 leafer DOM——避免 DOM 与 this.size 错配。
+      width,
+      height,
       pixelRatio: options.pixelRatio,
       // leafer App 三层模型（design-engine.md §6）：仅当 config 含对应 key 时才创建该层
       // （web.module.js App.init: `if (ground) ... if (tree || editor) ... if (sky || editor)`）——

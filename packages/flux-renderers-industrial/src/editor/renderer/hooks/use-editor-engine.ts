@@ -83,6 +83,15 @@ export interface EditorEngineRuntime {
   importConfig: (config: string | ScadaConfig) => boolean;
   /** 图元库只读浏览（复用 listScadaSymbols，design-toolbox.md §4.5）。 */
   listSymbolLibrary: () => Array<{ type: string; name: string; category?: string }>;
+  /**
+   * ResizeObserver 触发 setSize 后的可选 viewport refit 回调（plan 2026-08-08-1809-3 Phase 3 / P1-5）。
+   *
+   * 与 runtime ScadaCanvasRuntime.refitViewportOnResize 同型：由 scada-editor-canvas 装配
+   * （捕获最新 viewport policy + working config bounds），ResizeObserver handler 在 setSize 后调用，
+   * 使编辑器画布在响应式容器缩放后 fit policy 仍成立（同型修复，与 runtime 一致）。
+   * 无声明 policy 时为 no-op。运行时域内部，不进 schema-visible scope。
+   */
+  refitViewportOnResize?: () => void;
 }
 
 /**
@@ -113,6 +122,16 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
   const detachAdapterRef = useRef<(() => void) | undefined>(undefined);
   /** 连线拖拽激活标记（端点拖动模式时抑制 transform 写回，design-connection.md §4.2 关键约束 1 互斥）。 */
   const connectionDragActiveRef = useRef(false);
+  // plan 2026-08-08-1809-3 Phase 3 / P1-5：resize refit 回调 holder（与 runtime use-scada-engine 同型）。
+  // runtime 对象构造期挂稳定闭包（不 mutate runtime，react-compiler 友好）；scada-editor-canvas 经
+  // setResizeRefit（稳定 setter）更新 ref.current（捕获最新 policy + working config bounds）。
+  const refitRef = useRef<(() => void) | undefined>(undefined);
+  // plan 2026-08-08-1809-3 Phase 3 / P1-5：refit 注册器（稳定身份）。refitRef 在本 hook 内创建，
+  // 其 .current 写入发生在本闭包内（react-compiler 允许自建 ref 的 mutation）；消费方（scada-editor-canvas）
+  // 经此 setter 调用注册 refit，不直接 mutate 传入的 ref（避免 react-compiler/immutability 违规）。
+  const setResizeRefit = useCallback((fn: (() => void) | undefined) => {
+    refitRef.current = fn;
+  }, []);
 
   const cancelPendingResize = useCallback(() => {
     if (rafIdRef.current !== 0) {
@@ -194,6 +213,8 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       exportConfig: toolbox.exportConfig,
       importConfig: toolbox.importConfig,
       listSymbolLibrary: toolbox.listSymbolLibrary,
+      // plan 2026-08-08-1809-3 Phase 3 / P1-5：稳定闭包读 refitRef.current（由 scada-editor-canvas 装配）。
+      refitViewportOnResize: () => refitRef.current?.(),
     };
     runtimeRef.current = next;
     setRuntime(next);
@@ -213,7 +234,13 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
         cancelPendingResize();
         rafIdRef.current = requestAnimationFrame(() => {
           rafIdRef.current = 0;
-          runtimeRef.current?.engine.setSize(width, height);
+          const current = runtimeRef.current;
+          if (!current?.engine) return;
+          // plan 2026-08-08-1809-3 Phase 3 / P1-5：setSize 后重应用声明的 viewport fit policy（同 runtime）。
+          // 编辑器画布同型 responsive 风险；refitViewportOnResize 由 scada-editor-canvas 装配，
+          // 无声明 policy 时 no-op。rAF 已节流。
+          current.engine.setSize(width, height);
+          current.refitViewportOnResize?.();
         });
       });
       observerRef.current.observe(container);
@@ -261,5 +288,5 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     current.switchMode(args.initialMode);
   }, [args.initialMode]);
 
-  return runtime;
+  return { runtime, setResizeRefit };
 }

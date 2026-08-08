@@ -118,7 +118,12 @@ async function waitForReady(container: HTMLElement): Promise<number> {
   return Number(root.getAttribute('data-cid'));
 }
 
-type EngineViewport = { getViewport: () => { x: number; y: number; scale: number } };
+type EngineViewport = {
+  getViewport: () => { x: number; y: number; scale: number };
+  setViewport: (state: { x: number; y: number; scale: number }) => void;
+  getSize: () => { width: number; height: number };
+  getViewportPoint: (world: { x: number; y: number }) => { x: number; y: number };
+};
 function engineOf(cid: number): EngineViewport {
   return readScadaEditorTestHandle(cid)!.engine as unknown as EngineViewport;
 }
@@ -266,6 +271,87 @@ describe('scada-editor-canvas viewport prop consumption (plan 2026-08-08-0900-1 
     const cid = await waitForReady(container);
     // no bounds → fit/center skipped → default viewport preserved.
     expect(engineOf(cid).getViewport()).toEqual({ x: 0, y: 0, scale: 1 });
+  });
+});
+
+describe('scada-editor-canvas viewport refit on resize (plan 2026-08-08-1809-3 Phase 3 / P1-5)', () => {
+  type ROEntry = { target: Element; contentRect: { width: number; height: number } };
+  function installControllableResizeObserver() {
+    const observers: Array<{ cb: (entries: ROEntry[]) => void }> = [];
+    class MockResizeObserver {
+      cb: (entries: ROEntry[]) => void;
+      constructor(cb: (entries: ROEntry[]) => void) {
+        this.cb = cb;
+        observers.push(this);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+    const NativeRO = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+    return {
+      observers,
+      restore: () => {
+        globalThis.ResizeObserver = NativeRO;
+      },
+    };
+  }
+
+  it('resize to a narrow container refits so viewport reflects the new size (CV-fit-resize editor)', async () => {
+    const ro = installControllableResizeObserver();
+    try {
+      const env = makeEnvironment();
+      const { container } = render(
+        <Providers env={env}>
+          <ScadaEditorCanvasRenderer
+            {...makeEditorProps({ cid: 830, viewport: { fit: 'contain' } })}
+          />
+        </Providers>,
+      );
+      const cid = await waitForReady(container);
+      const engine = engineOf(cid);
+      const scaleBefore = engine.getViewport().scale;
+
+      // Simulate the responsive container shrinking to a narrow width.
+      for (const observer of ro.observers) {
+        observer.cb([{ target: container, contentRect: { width: 200, height: 150 } }]);
+      }
+      await waitFor(() => expect(engine.getSize()).toEqual({ width: 200, height: 150 }));
+
+      // After refit, the viewport scale recomputes against the new (narrow) size.
+      const scaleAfter = engine.getViewport().scale;
+      expect(scaleAfter).not.toBe(scaleBefore);
+      expect(engine.getViewportPoint({ x: 100, y: 80 }).x).toBeLessThanOrEqual(200);
+    } finally {
+      ro.restore();
+    }
+  });
+
+  it('omitting viewport policy preserves user viewport on resize (no spurious editor refit)', async () => {
+    const ro = installControllableResizeObserver();
+    try {
+      const env = makeEnvironment();
+      const { container } = render(
+        <Providers env={env}>
+          <ScadaEditorCanvasRenderer {...makeEditorProps({ cid: 831 })} />
+        </Providers>,
+      );
+      const cid = await waitForReady(container);
+      const engine = engineOf(cid);
+      engine.setViewport({ x: 5, y: 5, scale: 3 });
+      const userViewport = engine.getViewport();
+
+      for (const observer of ro.observers) {
+        observer.cb([{ target: container, contentRect: { width: 400, height: 300 } }]);
+      }
+      await waitFor(() => expect(engine.getSize()).toEqual({ width: 400, height: 300 }));
+
+      const after = engine.getViewport();
+      expect(after).toEqual(userViewport);
+    } finally {
+      ro.restore();
+    }
   });
 });
 

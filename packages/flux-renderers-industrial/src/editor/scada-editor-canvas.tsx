@@ -173,7 +173,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
     setStatus('destroyed');
   };
 
-  const runtime = useEditorEngine({
+  const { runtime, setResizeRefit } = useEditorEngine({
     containerRef,
     cid: props.meta.cid,
     initialConfig: parsedConfig ?? EMPTY_EDITOR_CONFIG,
@@ -228,14 +228,28 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   const viewportAppliedRef = useRef(false);
   useEffect(() => {
     if (!runtime || !viewportPolicy) return;
-    if (viewportAppliedRef.current) return;
-    viewportAppliedRef.current = true;
-    const bounds = computeAggregateViewportBounds(runtime.session.workingConfig.symbols);
-    if (!bounds) return;
-    if (viewportPolicy.fit === 'contain') runtime.engine.fit(bounds, 0);
-    if (viewportPolicy.center) runtime.engine.center(bounds);
-    // mount-once viewport policy application（host 改 viewport prop 不重算，对齐「mount 时消费」语义）。
-  }, [runtime, viewportPolicy]);
+    if (!viewportAppliedRef.current) {
+      viewportAppliedRef.current = true;
+      const bounds = computeAggregateViewportBounds(runtime.session.workingConfig.symbols);
+      if (bounds) {
+        if (viewportPolicy.fit === 'contain') runtime.engine.fit(bounds, 0);
+        if (viewportPolicy.center) runtime.engine.center(bounds);
+      }
+    }
+    // plan 2026-08-08-1809-3 Phase 3 / P1-5：装配 resize refit 回调（与 runtime scada-canvas 同型修复）。
+    // 旧实现 mount-once 后 ResizeObserver 仅 setSize 不 refit → 响应式容器下 viewport 失真。
+    // 经 setResizeRefit 稳定 setter 注册 refit 闭包（不 mutate 传入 ref，react-compiler/immutability 友好）；
+    // use-editor-engine 的 ResizeObserver handler 经 runtime.refitViewportOnResize（稳定闭包读 refitRef）调用。
+    // 复用本组件既有的 computeAggregateViewportBounds + engine.fit/center（无双实现漂移）。
+    setResizeRefit(() => {
+      if (!viewportPolicy) return;
+      const bounds = computeAggregateViewportBounds(runtime.session.workingConfig.symbols);
+      if (!bounds) return;
+      if (viewportPolicy.fit === 'contain') runtime.engine.fit(bounds, 0);
+      if (viewportPolicy.center) runtime.engine.center(bounds);
+    });
+    return () => setResizeRefit(undefined);
+  }, [runtime, viewportPolicy, setResizeRefit]);
 
   // plan 2026-08-08-0900-1 Phase 4 / P2 #40：canvas containment——data-slot 落在 canvas-area div
   // （containerRef），palette/inspector 为其兄弟（外层 flex layout）。leafer <canvas> inset:0 填充 canvas 区，
