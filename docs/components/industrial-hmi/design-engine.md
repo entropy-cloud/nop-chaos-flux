@@ -171,6 +171,17 @@ interface ScadaEngineOptions {
 > `rawScale=0` 时 `clampScale(0)=MIN_SCALE`，`clamped !== rawScale` 会使 `scaleOfWorld(anchor, MIN_SCALE/0=Infinity)`
 > → zoomLayer 矩阵 corrupt（scaleX 变 Infinity/NaN）不可恢复。早退守卫使 `scaleOfWorld` 不收 Infinity，
 > 经 `syncViewportFromZoomLayer` 用 fallback 读回有限视口态，矩阵可恢复。
+>
+> **A3 增补（零缩放守卫自毁灭，plan 2026-08-08-1910-3 Phase 1）**：P2-8 早退守卫曾存在「自毁环路」——
+> `readZoomLayerScale(scaleX, fallback)` 对 `scaleX===0` 返回 `0`（`Number.isFinite(0)===true` → 不走 fallback），
+> 故 `handlePluginZoom` 守卫检测到 0 后调 `syncViewportFromZoomLayer()`，后者再次读回 `0` 并落地
+> `viewport.scale=0`（守卫注释声称「早退前用 fallback 读回有限视口态」，与实现矛盾）。一旦 `viewport.scale=0`：
+> `viewportToWorld` 除以 0 产 Infinity/NaN → 经 EventBridge 进 `symbol:click/hover` world 坐标 →
+> `applyViewportState` 算 `scale=Infinity` 再 `zoomLayer.scaleOfWorld(anchor, Infinity)` → 矩阵不可逆 corrupt。
+> 收口：①`readZoomLayerScale` 显式拒 0（`&& scaleX !== 0`）→ 回退 `this.viewport.scale`（命令路径经
+> `clampScale` MIN_SCALE=0.1，恒非零有限）；②`handlePluginMove` 补与 `handlePluginZoom` 同形零守卫
+> （defense-in-depth——move 事件带瞬时 `scaleX===0` 不再固化成永久不可恢复态）。归纳不变式：任意 zoom/move
+> 事件后 `viewport.scale` 保持非零有限。
 
 ### 4.5 渲染循环与脏区/局部重绘
 

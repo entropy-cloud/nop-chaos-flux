@@ -190,6 +190,7 @@ interface ScadaSymbolNode {
 | 组态 JSON 内部字段（variables/symbols/bindings/...）                                | ignored（renderer 级） | 图元级字段不进 renderer-definitions（§4.2 注）；由 `config` 字段整体承载                |
 
 - renderer-definitions `fields` 规则（I10.2 落地，I15.2 D-1 同步回写）：`config: { key: 'config', kind: 'prop' }`、`width/height/viewport/events: { kind: 'prop' }`、`loading/empty: { kind: 'region' }`。**`events` 注册为整体 prop（非 `events.*` event 规则）**：flux-compiler `classifyField` 仅按顶层 key 精确匹配、无点号路径支持（probe 实测 `events.onClick` 规则不产生 eventPlans），ActionSchema 字面量经 props 通道保留，事件派发由 renderer 桥接层经 `createNormalizedActionEvent` + `helpers.dispatch` 落地（renderer-boundary-audit.md D-1 契约裁定 :65-70，I15.2 已同步闭环）；与组态内图元事件声明（§8.2）并存。
+- **A4 增补（runtime scada-canvas 遵守 `meta.disabled`/`meta.visible` 契约，plan 2026-08-08-1910-3 Phase 2）**：runtime `scada-canvas` 现与同包编辑器画布（`scada-editor-canvas.tsx:217`）同契约纪律——`meta.disabled===true` 时不下挂图元事件回调（引擎 EventBridge 闭包经 optional chaining 早退 → `helpers.dispatch` 不执行、hover 覆盖物不跟随），wrapper 加 `aria-disabled`/`inert`；`meta.visible===false` 时 renderer 层 return null（不渲染画布，无 containerRef 落点 → 不创建引擎）。此前 runtime 画布只读 `meta.testid`/`cid`/`className`，忽略 `disabled`/`visible`——只读监控画面（host 设 `disabled:true`）仍可误触 pan/zoom/click。生产框架层 `node-renderer-resolved` 也会对 `!visible` 整体卸载，renderer 层守卫为同契约 defense-in-depth。
 
 ## 6. regions 与 slot 约定
 
