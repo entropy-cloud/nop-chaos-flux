@@ -346,7 +346,11 @@ export class ScadaCanvasEngine {
     if (!result.ok) {
       throw new Error(`invalid scada config: ${result.errors.join('; ')}`);
     }
-    this.adapter.build(config);
+    // plan 2026-08-08-0748-2 Phase 2（HCA2 P2-ENG-1）：importConfig 是「全量替换」语义，与 reset 同族。
+    // 改调 reset（而非直调 adapter.build）使两条全量重建路径后置处理一致——reset 应用 config.background.color
+    // 到 ground 层 + 清 InteractionOverlay（消除旧 hover 高亮残留）+ adapter.build。此前 importConfig 旁路
+    // 这两步，raw 公共 API 直调（测试 / host 工具链）留陈旧覆盖物 + 忽略导入背景色。
+    this.reset(config);
   }
 
   forceRender(): void {

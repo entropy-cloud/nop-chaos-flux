@@ -257,4 +257,32 @@ describe('ScadaCanvasEngine 插件交互状态同步与钳制兜底 (I11.2)', ()
     expect(overlay.activeCount).toBe(0);
     engine.destroy();
   });
+
+  // plan 2026-08-08-0748-2 Phase 2（HCA2 P2-ENG-1）：engine.importConfig 全量重建路径与 reset 一致。
+  // 失败用例（修复前）：importConfig 只 parse+validate+adapter.build，既不清 InteractionOverlay 也不应用
+  // config.background.color（reset 两件事都做）→ raw 公共 API 直调留陈旧 hover 覆盖物 + 忽略导入背景色。
+  // 修复后：importConfig 改调 this.reset(config)（应用背景 + 清覆盖物 + build），与 reset 全量重建语义一致。
+  it('importConfig should clear the interaction overlay and apply background color like reset (P2-ENG-1)', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), interactionLayer: true });
+    engine.reset(validConfig() as ScadaConfig);
+    const overlay = engine.interactionOverlay!;
+    overlay.highlight('rect-1');
+    expect(overlay.activeCount).toBe(1);
+    // importConfig 全量替换（与 reset 同语义）：旧 hover 覆盖物应清除 + 导入背景色应应用
+    engine.importConfig(
+      JSON.stringify({
+        version: 1,
+        background: { color: '#112233' },
+        symbols: [{ id: 'only', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10 }],
+      }),
+    );
+    // 修复前：activeCount 仍 1（陈旧覆盖物残留指向已移除的 rect-1）；修复后：0
+    expect(overlay.activeCount).toBe(0);
+    // 修复前：ground.fill 未应用导入背景色；修复后：'#112233'
+    expect((engine.ground as unknown as { fill?: string }).fill).toBe('#112233');
+    // 新 config 符号入树、旧符号移除
+    expect(engine.getSymbol('only')).toBeDefined();
+    expect(engine.getSymbol('rect-1')).toBeUndefined();
+    engine.destroy();
+  });
 });
