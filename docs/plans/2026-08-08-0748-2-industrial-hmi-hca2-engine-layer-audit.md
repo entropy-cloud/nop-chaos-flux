@@ -1,6 +1,6 @@
 # 02 Industrial HMI Component Audit — HCA2 Engine Layer（canvas 场景图引擎 23 维包级深审 + 自动修复）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-08
 > Mission: industrial-hmi-component-audit
 > Work Item: HCA2. Engine 层审计
@@ -74,56 +74,56 @@ engine 是 canvas 场景图核心 + 复杂交互层（视口数学 / 命中测�
 
 ### Phase 1 - 逐文件 23 维包级深审（维度 21-23 必选）+ finding triage
 
-Status: planned
-Targets: `packages/flux-renderers-industrial/src/engine/`（9 文件）、`docs/audits/2026-08-08-*-hca2-engine-layer.md`
+Status: completed
+Targets: `packages/flux-renderers-industrial/src/engine/`（9 文件）、`docs/audits/2026-08-08-0748-hca2-engine-layer.md`
 
 - Item Types: `Proof | Decision`
 
-- [ ] 逐文件过 `docs/skills/deep-audit-prompts.md` 23 维（**维度 21 显示与定位 / 22 集成接线 / 23 测试有效性 必选**），重点：视口数学正确性（clampScale fit/contain/fill 三分支方向一致 + scaleOfWorld 矩阵可恢复）、命中测试边界（空 bounds / 重叠图元 / 旋转缩放变换后）、覆盖物生命周期（interaction-overlay create/update/dispose 对称 + reset 清空）、event-bridge 事件映射完备 + 监听器清理、tree-registry 增删查边界（重复 id / 不存在 id / clear 后查）、config-adapter diff 构建（增删改幂等 / 大场景）、引擎 reset/destroy 清理对称（LeaferJS app dispose / 监听器 / 定时器 / 覆盖物）。
+- [x] 逐文件过 `docs/skills/deep-audit-prompts.md` 23 维（**维度 21 显示与定位 / 22 集成接线 / 23 测试有效性 必选**），重点：视口数学正确性（clampScale fit/contain/fill 三分支方向一致 + scaleOfWorld 矩阵可恢复）、命中测试边界（空 bounds / 重叠图元 / 旋转缩放变换后）、覆盖物生命周期（interaction-overlay create/update/dispose 对称 + reset 清空）、event-bridge 事件映射完备 + 监听器清理、tree-registry 增删查边界（重复 id / 不存在 id / clear 后查）、config-adapter diff 构建（增删改幂等 / 大场景）、引擎 reset/destroy 清理对称（LeaferJS app dispose / 监听器 / 定时器 / 覆盖物）。
   - **维度 22 边界说明**：本 plan 的 dim 22 = engine 内部子模块接线（event-bridge↔scada-engine、config-adapter→tree-registry、reset/destroy 对称）+ engine 公共 API 可操作性；完整 schema→store→DOM→event 链路可操作性在 HCA1（renderer hook 层）审，本 plan 不重复。
-- [ ] 重点抽查边界值：scale=0 / NaN / Infinity / 负数 / 空 config / 单图元 / 超大场景（10k+）/ 重复 reset / destroy 后再调用。
-- [ ] 产出 `docs/audits/2026-08-08-*-hca2-engine-layer.md`：逐文件 finding 表（维度 / 结论 / `文件:行` 证据 / P0-P3 triage）+ 维度 21-23 专项节。
+- [x] 重点抽查边界值：scale=0 / NaN / Infinity / 负数 / 空 config / 单图元 / 超大场景（10k+）/ 重复 reset / destroy 后再调用。
+- [x] 产出 `docs/audits/2026-08-08-*-hca2-engine-layer.md`：逐文件 finding 表（维度 / 结论 / `文件:行` 证据 / P0-P3 triage）+ 维度 21-23 专项节。
 
 Exit Criteria:
 
 > 只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续的局部检查。
 
-- [ ] 审计记录文件存在，含 9 文件逐文件 finding 表 + 维度 21-23 专项节 + 每条 `文件:行` 证据经 live 核对。
-- [ ] 所有 finding 已 triage 为 P0/P1/P2/P3 之一（无未分类项）。
+- [x] 审计记录文件存在，含 9 文件逐文件 finding 表 + 维度 21-23 专项节 + 每条 `文件:行` 证据经 live 核对。
+- [x] 所有 finding 已 triage 为 P0/P1/P2/P3 之一（无未分类项）。
 
 ### Phase 2 - P0/P1 自动修复（test-first，Proof 先于 Fix）+ P2 低成本修复
 
-Status: planned
+Status: completed
 Targets: Phase 1 finding 中标 P0/P1 的源文件 + 对应 `*.test.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] 对每条 P0/P1 finding：**先写 failing-first focused test**（断言正确结果值 / 行为，非 not.toThrow / call-count），确认红，再修代码使转绿。
-- [ ] P2 低成本（<~30 行 / 单文件 / 无公共面变更）当场修复并带回归测试；P2 高成本入审计卡 backlog（归 HCA-CR）。
-- [ ] 每条 fix 在审计记录文件回写状态（fixed / recorded）+ fix 落点 `文件:行`。
+- [x] 对每条 P0/P1 finding：**先写 failing-first focused test**（断言正确结果值 / 行为，非 not.toThrow / call-count），确认红，再修代码使转绿。（本 plan Phase 1 零 P0/P1 live defect——engine 层先验修复 P1-9/P2-7/P2-8/P2-10/P1-7 已收口基线；本轮仅 P2-ENG-1 一项 P2，N/A。）
+- [x] P2 低成本（<~30 行 / 单文件 / 无公共面变更）当场修复并带回归测试；P2 高成本入审计卡 backlog（归 HCA-CR）。——P2-ENG-1（importConfig 改调 reset，1 行公共面内部行为对齐 + failing-first proof `scada-engine-plugin-sync.test.ts` P2-ENG-1，红→绿）当场修复；P3-ENG-1（destroy 门控）/P3-ENG-2（applyDiff nextConfig footgun）/P3-ENG-3（registry 重复 id）为 P3 记录 / 归 HCA-CR。
+- [x] 每条 fix 在审计记录文件回写状态（fixed / recorded）+ fix 落点 `文件:行`。——审计记录 P2-ENG-1 标 **fixed** + 落点 `scada-engine.ts:343-352`；P3-ENG-1/2/3 标 recorded / 归 HCA-CR。
 
 Exit Criteria:
 
-- [ ] 所有 P0/P1 finding 的 failing-first test 存在、确认过红、转绿（断言结果值）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 全绿（包级局部验证）。
-- [ ] 审计记录 finding 状态已回写。
+- [x] 所有 P0/P1 finding 的 failing-first test 存在、确认过红、转绿（断言结果值）。（零 P0/P1，N/A；P2-ENG-1 failing-first proof 已确认红 `expected 1 to be +0`→转绿。）
+- [x] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 全绿（包级局部验证）。（1307 tests / 97 files 绿；typecheck + lint 绿。）
+- [x] 审计记录 finding 状态已回写。
 
 ### Phase 3 - owner doc 一致性核对 + 回归抽查 + bug 喂入
 
-Status: planned
+Status: completed
 Targets: `docs/components/industrial-hmi/design-engine.md`、审计记录、HCA-BL 引用
 
 - Item Types: `Proof | Fix | Follow-up`
 
-- [ ] 核对 `design-engine.md` 与 live engine 一致（视口数学契约 §4.4、reset/destroy 行为、event-bridge 事件清单、tree-registry 模型）；仅当发现 drift 时同步（无 drift 不写）。
-- [ ] 抽查先验修复回归（P2-7/P2-8/P2-10/P2-11 行为仍成立）。
-- [ ] 把本层复杂 / 跨层 bug 候选汇总到审计记录「喂入 HCA-BL」节（正式归档动作在 HCA-BL，本 plan 不产出 `docs/bugs/` 卡片）。
+- [x] 核对 `design-engine.md` 与 live engine 一致（视口数学契约 §4.4、reset/destroy 行为、event-bridge 事件清单、tree-registry 模型）；仅当发现 drift 时同步（无 drift 不写）。——核对见审计记录「owner doc 一致性核对」节：视口数学 §4.4 / reset·destroy §4.2 / event-bridge §8.1 / tree-registry §4.3·§7 全部一致；唯一 drift = importConfig（§8.2「序列化契约转发」预期 vs impl 旁路），Phase 2 修复后 impl 兑现 doc 契约，**doc 本身正确无需同步**。
+- [x] 抽查先验修复回归（P2-7/P2-8/P2-10/P2-11 行为仍成立）。——见审计记录「先验修复回归抽查」节：P2-8 除零 / P2-10 reset 清覆盖物 / P1-9 锚点 / D3 光标锚 / P1-7 覆盖物 screen 坐标均有专项测试锁，`pnpm --filter @nop-chaos/flux-renderers-industrial test` 全绿（97 files / 1307 tests）。
+- [x] 把本层复杂 / 跨层 bug 候选汇总到审计记录「喂入 HCA-BL」节（正式归档动作在 HCA-BL，本 plan 不产出 `docs/bugs/` 卡片）。——见审计记录「喂入 HCA-BL」节：P2-ENG-1（单层、低复杂、同 P2-10 同类，建议审计卡留痕，HCA-BL 视情况合并归档）。
 
 Exit Criteria:
 
-- [ ] `design-engine.md` 经 rg/读核对待无 drift（或有同步 commit）。
-- [ ] 先验修复回归抽查通过。
-- [ ] HCA-BL 喂入节存在（含 bug 候选清单 + `文件:行`）。
+- [x] `design-engine.md` 经 rg/读核对待无 drift（或有同步 commit）。（核对 5 契约 4 一致 + 1 drift 已由 Phase 2 impl 修复对齐 doc，doc 无需同步。）
+- [x] 先验修复回归抽查通过。（1307 tests 绿，先验修复专项测试文件均绿。）
+- [x] HCA-BL 喂入节存在（含 bug 候选清单 + `文件:行`）。
 
 ## Draft Review Record
 
@@ -138,35 +138,41 @@ Exit Criteria:
 
 > 全量 `pnpm typecheck/build/lint/test` 是 plan 收口时跑一次的仓库级检查（见 guide Minimum Rule 18）。
 
-- [ ] engine 9 文件逐文件深审完成（维度 21-23 必选），审计记录文件存在且 finding 全 triage。
-- [ ] 所有 in-scope 确认的 P0/P1 live defect 已 test-first 修复（failing-first proof 存在）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] owner doc `design-engine.md` 与 live baseline 一致（或明确无 drift）。
-- [ ] 必要 focused verification 已完成。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] engine 9 文件逐文件深审完成（维度 21-23 必选），审计记录文件存在且 finding 全 triage。
+- [x] 所有 in-scope 确认的 P0/P1 live defect 已 test-first 修复（failing-first proof 存在）。（零 P0/P1；先验 P1-9/P2-7/P2-8/P2-10/P1-7 已收口基线；本轮 P2-ENG-1 failing-first proof 红→绿。）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。（P3-ENG-1/2/3 经独立审计核为真实 P3 防御纵深 / 无 live reproducer，非隐藏 P1。）
+- [x] owner doc `design-engine.md` 与 live baseline 一致（或明确无 drift）。（5 契约 4 一致 + importConfig drift 经 Phase 2 impl 修复对齐 doc；doc 本身正确无需同步。）
+- [x] 必要 focused verification 已完成。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。（见 Closure Audit Evidence。）
+- [x] `pnpm typecheck`（32/32 tasks OK）
+- [x] `pnpm build`（32/32 tasks OK）
+- [x] `pnpm lint`（32/32 tasks OK）
+- [x] `pnpm test`（全 workspace EXIT=0 / 0 FAIL；industrial 97 files / 1307 tests）
 
 ## Deferred But Adjudicated
 
 > 本 plan 起草时无已知可延期项。Phase 1 若发现 P2 高成本项，入审计卡 backlog 并在此记录 Classification + Why Not Blocking Closure。
 
+- **P3-ENG-1**（engine 公共命令缺 destroyed 门控）：Classification = P3 防御纵深；Why Not Blocking = 主路径无可复现路径（hook 卸载置空 ref / test handle 移除 / binding pipeline 已门控），binding 层（DirtyCollector/RefreshPipeline）已有对称门控；归 HCA-CR。
+- **P3-ENG-2**（applyDiff nextConfig 省略时 config 陈旧）：Classification = P3 公共 API footgun；Why Not Blocking = renderer 恒传 nextConfig，主路径无影响。
+- **P3-ENG-3**（TreeRegistry.add 不查重）：Classification = P3 防御纵深；Why Not Blocking = validator 主路径拒绝重复 id。
+
 ## Non-Blocking Follow-ups
 
-- 本层 P2 高成本项归 HCA-CR 跨层集中修复。
+- 本层 P2 高成本项归 HCA-CR 跨层集中修复（本轮无 P2 高成本项；P3-ENG-1 归此）。
 - engine 层与 binding（HCA3）的接合面（订阅 / flushFrame 触发）由 HCA3 审计时交叉核验。
 
 ## Closure
 
-Status Note: <<收口时填写：为什么这个 plan 可以关闭>>
+Status Note: HCA2 engine 层 23 维包级深审完成（维度 21-23 必选），9 文件逐文件 finding 全 triage。零 P0/P1 live defect（先验 P1-9/P2-7/P2-8/P2-10/P1-7 已收口基线）；本轮唯一可修 finding P2-ENG-1（importConfig 全量重建路径与 reset 不一致——旁路 background 应用 + 覆盖物清理）经 test-first 修复（failing-first proof 红→绿）+ 全量 typecheck/build/lint/test 绿。owner doc `design-engine.md` 与 live 一致（importConfig drift 经 impl 修复对齐 doc 契约，doc 无需同步）。3 项 P3 防御纵深 / footgun 归 HCA-CR backlog，均经独立审计核为非阻塞。独立 fresh-session closure audit 判定 PASS。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent fresh session `ses_020e3ccfdffeCOapJ5YGnsNr7m`（explore 类型，fresh context，仅输入三件套：plan 摘要 + diff 摘要 + 验证输出）。
+- Evidence: VERDICT: PASS。独立核验项：(1) 审计记录含 9 文件逐文件 finding表 + 维度 21/22/23 专项节 + 全 finding triage + `文件:行` 证据；(2) P2-ENG-1 fix 正确——importConfig 改调 reset（应用 background + 清覆盖物 + build），回归测试断言结果值（activeCount=0 / ground.fill / 符号注册）；(3) 无静默降级 P0/P1（P3-ENG-1/2/3 经核为真实 P3）；(4) owner doc §4.4/§4.2/§8.1/§8.2 与 live 一致；(5) 先验修复 P2-8/P2-10/P1-9/D3 在 live code + 专项测试均存；(6) scope 纪律——仅 scada-engine.ts + 测试文件改动，无越界。独立重跑验证：typecheck 32/32、build 32/32、lint 32/32、industrial test 97 files/1307 tests 绿。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里；或明确写 no remaining plan-owned work>>
+- P3-ENG-1（engine 公共命令 destroyed 门控）归 HCA-CR 跨层集中修复。
+- engine↔binding 接合面（订阅 / flushFrame）由 HCA3 交叉核验。
+- 无剩余 plan-owned confirmed live defect。
