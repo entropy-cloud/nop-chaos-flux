@@ -1,6 +1,6 @@
 # Industrial HMI Component Audit Roadmap
 
-> 最后更新：2026-08-08
+> 最后更新：2026-08-08（HCA6 done）
 > 来源：用户要求"仿照 component-audit 对 industrial-hmi / industrial-hmi-editor 两个 mission 中新增的各个组件/模块进行审计并修复，同时插入 bug 和 lesson 总结工作"
 > 细则：`docs/audits/component-audit-checklist.md`（18 维清单 + 审计卡模板 + 裁决规则）；内部模块追加 `docs/skills/deep-audit-prompts.md` 23 维包级深审（复杂交互层必选 21-23）
 > Mission：`missions/industrial-hmi-component-audit.json`
@@ -52,7 +52,7 @@
 | HCA3. Binding 层审计（point-store/reverse-index/dirty-collector/value-to-state/animator/bind-resolver/flux-eval）                                                       | `done`    | 7 文件  | HCA0       | 数据绑定管线核心：点表/脏收集合帧/动画时钟/flux 求值；审计记录 `docs/audits/2026-08-08-0748-hca3-binding-layer.md`（零 P0/P1；dirty-collector 665 行已拆分为 3 文件均 ≤ 500 行）                                                                            |
 | HCA4. Serialization 层审计（config-types/validate/diff/equality/parse/serialize）                                                                                       | `done`    | 6 文件  | HCA0       | JSON 契约管线：校验/序列化/diff/判等；审计记录 `docs/audits/2026-08-08-1051-hca4-serialization-layer.md`（零 P0/P1；validate.ts 524 行拆分 Decision = 移交 HCA-CG w/ 拆分缝；P3×2 校验覆盖缺口归 HCA-CR）                                                   |
 | HCA5. Symbols core 审计（symbol-types/registry/factory/style-resolver/visual-state/composite/compound/register-builtin）                                                | `done`    | 8 文件  | HCA0       | 符号框架：注册/工厂/样式/视觉状态/复合装配/组合；审计记录 `docs/audits/2026-08-08-0748-hca5-symbols-core.md`（P1-1 `fontFamily`/`fontWeight`/`align` 跨层 diff 漏键复发已 test-first 修复 + `check-scada-symbol-keys.mjs` guard 落地；P3×3 归 HCA-CR/HCA6） |
-| HCA6. Symbol shapes 审计（base-shapes 11 + device 5 + instrument 5 + sensor-control 5 + pipe-junction）                                                                 | `todo`    | 27 文件 | HCA5       | 23 内置图元：create/applyProps 几何正确性/状态响应/diff-resize                                                                                                                                                                                              |
+| HCA6. Symbol shapes 审计（base-shapes 11 + device 5 + instrument 5 + sensor-control 5 + pipe-junction）                                                                 | `done`    | 27 文件 | HCA5       | 23 内置图元：create/applyProps 几何正确性/状态响应/diff-resize；审计记录 `docs/audits/2026-08-08-1121-hca6-symbol-shapes.md`（零 P0/P1；HCA5 P3-2 复核：12 composite 全有 extent/resize，pipe-junction 升级 P2-1 landed fix；P3×4 归 HCA-CR）               |
 | HCA7. Editor renderer 层审计（scada-editor-canvas renderer + editor-engine + 2 hooks + 定义/schema）                                                                    | `planned` | 7 文件  | HCA0       | 审计卡 `docs/audits/per-component/scada-editor-canvas.md`（fixed-pending-closure）；P1-1 schema 漂移 + P2-1~P2-4 + P3-1 已修复，待 closure audit                                                                                                            |
 | HCA8. Editor panels 审计（palette/inspector 4 files/toolbox 4 files）                                                                                                   | `todo`    | 9 文件  | HCA7       | React UI 面板：@nop-chaos/ui 复用/schema 抽取/字段路由/对齐分布/z-order/clipboard                                                                                                                                                                           |
 | HCA9. Editor connection 审计（adapter/drag-controller/anchor-snap/link/overlay/overlay-renderer）                                                                       | `todo`    | 6 文件  | HCA7       | 连线子系统：状态机/吸附/联动/覆盖物投影/sky 渲染                                                                                                                                                                                                            |
@@ -151,7 +151,7 @@ symbol-types（157）/ symbol-registry（44）/ symbol-factory（106）/ style-r
 
 ### HCA6 Symbol shapes 审计
 
-base-shapes 11 文件（10 图元 + common.ts helper）+ device 5 + instrument 5 + sensor-control 5 + pipe-junction。23 维包级深审。重点：create/applyProps 几何正确性、diff-resize 响应、状态驱动视觉、动画绑定、width/height binding 响应。
+base-shapes 11 文件（10 图元 + common.ts helper）+ device 5 + instrument 5 + sensor-control 5 + pipe-junction。23 维包级深审。重点：create/applyProps 几何正确性、diff-resize 响应、状态驱动视觉、动画绑定、width/height binding 响应。**已完成**（审计记录 `docs/audits/2026-08-08-1121-hca6-symbol-shapes.md`，closure audit PASS）：零 P0/P1；HCA5 P3-2 转交项逐图元复核——12 composite 全部有 extent(3 level/thermometer/progress) 或 resize hook(9)，无静默丢弃；pipe-junction（自定义 applyProps 借用 applyCompositeProps 但 parts 无 extent/resize）升级 P2-1 landed fix（width/height resize test-first，重算 body + stubs points）；10 base-shapes 全响应 width/height；P3×4（switch on/off 推断边缘 / extent 族内边距 cosmetic / polygon 空点 / NaN 防御纵深）归 HCA-CR。
 
 ### HCA7 Editor renderer 层审计
 
@@ -211,7 +211,7 @@ graph TD
     HCA0 --> HCA4[HCA4 Serialization 层]
     HCA0 --> HCA5[HCA5 Symbols core]
     HCA0 --> HCA7[HCA7 Editor renderer 层 ✅]
-    HCA5 --> HCA6[HCA6 Symbol shapes]
+    HCA5 --> HCA6[HCA6 Symbol shapes ✅]
     HCA7 --> HCA8[HCA8 Editor panels]
     HCA7 --> HCA9[HCA9 Editor connection]
     HCA7 --> HCA10[HCA10 Editor undo-redo]
