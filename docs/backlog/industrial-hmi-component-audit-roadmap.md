@@ -50,7 +50,7 @@
 | HCA1. Renderer 层审计（scada-canvas renderer + 5 hooks + 定义/schema）                                                                                                  | `planned` | 9 文件  | HCA0       | 审计卡 `docs/audits/per-component/scada-canvas.md`（fixed-pending-closure）；P2-1 a11y + P3-1 useCallback 已修复，待 closure audit                                                                                                                          |
 | HCA2. Engine 层审计（scada-engine/config-adapter/event-bridge/hit/interaction-overlay/tree-registry/viewport）                                                          | `done`    | 9 文件  | HCA0       | canvas 场景图核心：视口数学/命中测试/事件桥/覆盖物生命周期/diff 构建；审计记录 `docs/audits/2026-08-08-0748-hca2-engine-layer.md`（零 P0/P1；P2-ENG-1 importConfig↔reset 全量重建一致性已修，P3×3 归 HCA-CR）                                               |
 | HCA3. Binding 层审计（point-store/reverse-index/dirty-collector/value-to-state/animator/bind-resolver/flux-eval）                                                       | `done`    | 7 文件  | HCA0       | 数据绑定管线核心：点表/脏收集合帧/动画时钟/flux 求值；审计记录 `docs/audits/2026-08-08-0748-hca3-binding-layer.md`（零 P0/P1；dirty-collector 665 行已拆分为 3 文件均 ≤ 500 行）                                                                            |
-| HCA4. Serialization 层审计（config-types/validate/diff/equality/parse/serialize）                                                                                       | `todo`    | 6 文件  | HCA0       | JSON 契约：校验/序列化/diff/判等；validate 524 行超阈值                                                                                                                                                                                                     |
+| HCA4. Serialization 层审计（config-types/validate/diff/equality/parse/serialize）                                                                                       | `done`    | 6 文件  | HCA0       | JSON 契约管线：校验/序列化/diff/判等；审计记录 `docs/audits/2026-08-08-1051-hca4-serialization-layer.md`（零 P0/P1；validate.ts 524 行拆分 Decision = 移交 HCA-CG w/ 拆分缝；P3×2 校验覆盖缺口归 HCA-CR）                                                   |
 | HCA5. Symbols core 审计（symbol-types/registry/factory/style-resolver/visual-state/composite/compound/register-builtin）                                                | `done`    | 8 文件  | HCA0       | 符号框架：注册/工厂/样式/视觉状态/复合装配/组合；审计记录 `docs/audits/2026-08-08-0748-hca5-symbols-core.md`（P1-1 `fontFamily`/`fontWeight`/`align` 跨层 diff 漏键复发已 test-first 修复 + `check-scada-symbol-keys.mjs` guard 落地；P3×3 归 HCA-CR/HCA6） |
 | HCA6. Symbol shapes 审计（base-shapes 11 + device 5 + instrument 5 + sensor-control 5 + pipe-junction）                                                                 | `todo`    | 27 文件 | HCA5       | 23 内置图元：create/applyProps 几何正确性/状态响应/diff-resize                                                                                                                                                                                              |
 | HCA7. Editor renderer 层审计（scada-editor-canvas renderer + editor-engine + 2 hooks + 定义/schema）                                                                    | `planned` | 7 文件  | HCA0       | 审计卡 `docs/audits/per-component/scada-editor-canvas.md`（fixed-pending-closure）；P1-1 schema 漂移 + P2-1~P2-4 + P3-1 已修复，待 closure audit                                                                                                            |
@@ -143,7 +143,7 @@ point-store（330）/ reverse-index（126）/ dirty-collector（665→拆分 104
 
 ### HCA4 Serialization 层审计
 
-config-types（123）/ validate（524）/ diff（129）/ equality（56）/ parse（25）/ serialize（27）。23 维包级深审。重点：校验完整性（子形状/malformed）、deepEqual 数组守卫、diff 正确性、序列化往返保真、**validate 524 行超 500 阈值**。
+config-types（131）/ validate（524）/ diff（138）/ equality（56）/ parse（25）/ serialize（27）。23 维包级深审。重点：校验完整性（子形状/malformed）、deepEqual 数组守卫、diff 正确性、序列化往返保真、**validate 524 行超 500 阈值**。**已完成**（审计记录 `docs/audits/2026-08-08-1051-hca4-serialization-layer.md`）：零 P0/P1；validate.ts 524 行拆分 Decision = 移交 HCA-CG（WARN 桶低位 + 单一职责内聚 + 拆分致过度碎片化，拆分缝已记录供 HCA-CG 采用）；P3-1（align 校验遗漏）/ P3-2（background.grid 校验遗漏）归 HCA-CR backlog。
 
 ### HCA5 Symbols core 审计
 
@@ -186,7 +186,7 @@ editor-session（130）/ editor-adapter（205）/ editor-working-helpers（162�
 - **error code 设计**：升级码 vs 不升级码不可混用（HCAX-1）
 - **四态契约**：`props.meta.disabled` 是四态一部分，instance-renderer 必须消费（HCA7 P2-3）
 - **React 19**：useCallback 在 canvas 生命周期 renderer 中的必要性应逐个审查（HCA1 P3-1）
-- **文件行数**：~~dirty-collector 665 行~~（HCA3 已拆分为 3 文件 ≤ 500 行）/ validate 524 行超阈值，评估拆分（HCA4）
+- **文件行数**：~~dirty-collector 665 行~~（HCA3 已拆分为 3 文件 ≤ 500 行）/ ~~validate 524 行超阈值~~（HCA4 已审，拆分 Decision = 移交 HCA-CG w/ 拆分缝）
 - 输出：更新 `docs/skills/deep-audit-prompts.md` / `docs/audits/component-audit-checklist.md` v2 / 架构文档
 
 ### HCA-CR 跨层集中修复

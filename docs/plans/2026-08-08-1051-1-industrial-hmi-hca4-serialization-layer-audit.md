@@ -1,6 +1,6 @@
 # 01 Industrial HMI Component Audit — HCA4 Serialization Layer（JSON 契约管线 23 维包级深审 + 自动修复 + validate.ts 拆分裁决）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-08
 > Mission: industrial-hmi-component-audit
 > Work Item: HCA4. Serialization 层审计
@@ -72,58 +72,60 @@ serialization 是契约管线层（parse / validate / diff / equality / serializ
 
 ### Phase 1 - 逐文件 23 维包级深审 + finding triage + validate.ts 拆分 Decision
 
-Status: planned
-Targets: `packages/flux-renderers-industrial/src/serialization/`（6 文件）、`docs/audits/2026-08-08-*-hca4-serialization.md`
+Status: completed
+Targets: `packages/flux-renderers-industrial/src/serialization/`（6 文件）、`docs/audits/2026-08-08-1051-hca4-serialization-layer.md`
 
 - Item Types: `Proof | Decision`
 
-- [ ] 逐文件过 `docs/skills/deep-audit-prompts.md` 23 维（serialization 非复杂交互层，维度 21-23 可选触发），重点维度：校验完整性（子形状/malformed/未知字段处理）、`deepEqual` 数组/对象守卫与深度上限边界、`computeConfigDiff` 结构正确性（added/removed/updated 分类 + variables diff）、序列化往返保真（parse→serialize→parse 等价）、`MAX_VALIDATE_DEPTH` 超大嵌套守卫、null/NaN/Infinity/空 config 边界、legacy `@{}` 语法扫描覆盖。
-- [ ] 重点抽查边界值：空 config（`{version:1,variables:[],symbols:[]}`）/ 缺字段 / 重复 point id / 超深嵌套 symbol / NaN 几何值 / 非 plain-object symbol / malformed JSON（parse）、`diff(∅,X)` 与 `diff(X,∅)`、`deepEqual([],[])` / `deepEqual({a:1},{a:'1'})`。
-- [ ] 产出 `docs/audits/2026-08-08-*-hca4-serialization.md`：逐文件 finding 表（维度 / 结论 / `文件:行` 证据 / P0-P3 triage）。
-- [ ] 对 `validate.ts` 524 行超阈值给首次 Decision（现在落地拆分：per-shape 校验器抽 `validators/` + legacy 扫描抽 `legacy-scan.ts`，公共导出经 `validate.ts` re-export 保持不变 / 移交 HCA-CG，写明 Why Not Blocking Closure + 拆分缝）。
+- [x] 逐文件过 `docs/skills/deep-audit-prompts.md` 23 维（serialization 非复杂交互层，维度 21-23 可选触发），重点维度：校验完整性（子形状/malformed/未知字段处理）、`deepEqual` 数组/对象守卫与深度上限边界、`diffScadaConfig` 结构正确性（added/removed/updated 分类 + variables diff）、序列化往返保真（parse→serialize→parse 等价）、`MAX_VALIDATE_DEPTH` 超大嵌套守卫、null/NaN/Infinity/空 config 边界、legacy `@{}` 语法扫描覆盖。
+- [x] 重点抽查边界值：空 config（`{version:1,variables:[],symbols:[]}`）/ 缺字段 / 重复 point id / 超深嵌套 symbol / NaN 几何值 / 非 plain-object symbol / malformed JSON（parse）、`diff(∅,X)` 与 `diff(X,∅)`、`deepEqual([],[])` / `deepEqual({a:1},{a:'1'})`。
+- [x] 产出 `docs/audits/2026-08-08-1051-hca4-serialization-layer.md`：逐文件 finding 表（维度 / 结论 / `文件:行` 证据 / P0-P3 triage）。
+- [x] 对 `validate.ts` 524 行超阈值给首次 Decision（**裁定：移交 HCA-CG**——单一职责内聚、WARN 桶低位 524/700、拆分须同时抽 helpers 致过度碎片化、owner 归 HCA-CG；拆分缝 + re-export 方案已记录于审计卡，供 HCA-CG 执行时采用）。
 
 Exit Criteria:
 
 > 写法原则：只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续的局部检查；全量验证归 Closure Gates。
 
-- [ ] 审计记录文件存在，含 6 文件逐文件 finding 表 + 每条 `文件:行` 证据经 live 核对。
-- [ ] 所有 finding 已 triage 为 P0/P1/P2/P3 之一（无未分类项）。
-- [ ] `validate.ts` 拆分 Decision 已记录（含理由 + 若落地则给出拆分缝 + 公共 re-export 方案）。
+- [x] 审计记录文件存在，含 6 文件逐文件 finding 表 + 每条 `文件:行` 证据经 live 核对。
+- [x] 所有 finding 已 triage 为 P0/P1/P2/P3 之一（无未分类项）——零 P0/P1、P2-BND-1（governance）、P3-1（align 校验遗漏）、P3-2（background.grid 校验遗漏）。
+- [x] `validate.ts` 拆分 Decision 已记录（含理由 + 若落地则给出拆分缝 + 公共 re-export 方案）。
 
 ### Phase 2 - P0/P1 自动修复 + P2 低成本修复（test-first）+ validate.ts 拆分落地（若 Decision=本 plan）
 
-Status: planned
+Status: completed
 Targets: Phase 1 finding 中标 P0/P1 的源文件 + 对应 `*.test.ts`；若 Decision=落地，`validate.ts` + 新拆分文件 + `validate.ts` re-export
+
+> Phase 1 深审结论：零 P0/P1 live defect（先验 0900-1/0653-4/2129-1 三轮硬化已收口主路径）。validate.ts 拆分 Decision = 移交 HCA-CG（非本 plan 落地）。故本 Phase 无代码变更；P3-1/P3-2 归 HCA-CR backlog，P2-BND-1 归 HCA-CG。各 finding 状态已回写审计卡。
 
 - Item Types: `Fix | Proof`
 
-- [ ] 对每条 P0/P1 finding：先写 failing-first focused test（断言正确结果值 / 行为，非 not.toThrow），再修代码使转绿。
-- [ ] P2 低成本（<~30 行 / 单文件 / 无公共面变更）当场修复并带回归测试；P2 高成本入审计卡 backlog（归 HCA-CR）。
-- [ ] 若 Phase 1 Decision = 本 plan 落地拆分：按拆分缝执行（per-shape 校验器 → `validators/`，legacy 扫描 → `legacy-scan.ts`），`validate.ts` 仅保留主入口 + helper + re-export，各文件 ≤ 500 行 WARN 桶；公共导出面（`validateScadaConfig`/`ScadaValidationResult`）签名与导出位置不变；`serialization-validate.test.ts` 全量回归转绿。
-- [ ] 每条 fix 在审计记录文件回写状态（fixed / recorded）+ fix 落点 `文件:行`。
+- [x] 对每条 P0/P1 finding：先写 failing-first focused test（断言正确结果值 / 行为，非 not.toThrow），再修代码使转绿。（零 P0/P1，无 fix 对象）
+- [x] P2 低成本（<~30 行 / 单文件 / 无公共面变更）当场修复并带回归测试；P2 高成本入审计卡 backlog（归 HCA-CR）。（P2-BND-1 = governance 项，经 Phase 1 Decision 移交 HCA-CG + 拆分缝；P3-1/P3-2 = P3 归 HCA-CR backlog——见审计卡 Finding Triage 汇总）
+- [x] 若 Phase 1 Decision = 本 plan 落地拆分：按拆分缝执行（per-shape 校验器 → `validators/`，legacy 扫描 → `legacy-scan.ts`），`validate.ts` 仅保留主入口 + helper + re-export，各文件 ≤ 500 行 WARN 桶；公共导出面（`validateScadaConfig`/`ScadaValidationResult`）签名与导出位置不变；`serialization-validate.test.ts` 全量回归转绿。（Decision = 移交 HCA-CG，N/A；拆分缝已记录审计卡供 HCA-CG 采用）
+- [x] 每条 fix 在审计记录文件回写状态（fixed / recorded）+ fix 落点 `文件:行`。（P2-BND-1 = deferred-to-HCA-CG w/ 拆分缝；P3-1/P3-2 = backlog-HCA-CR；已回写审计卡 Finding Triage 汇总）
 
 Exit Criteria:
 
-- [ ] 所有 P0/P1 finding 的 failing-first test 存在且转绿（断言结果值）。
-- [ ] 若拆分落地：`validate.ts` 及新拆分文件均 ≤ 500 行（`wc -l` 实测），公共导出不变（`rg "^export" validate.ts` 含 `validateScadaConfig`/`ScadaValidationResult`），`pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 全绿。
-- [ ] 审计记录 finding 状态已回写。
+- [x] 所有 P0/P1 finding 的 failing-first test 存在且转绿（断言结果值）。（零 P0/P1，vacuously satisfied）
+- [x] 若拆分落地：`validate.ts` 及新拆分文件均 ≤ 500 行（`wc -l` 实测），公共导出不变（`rg "^export" validate.ts` 含 `validateScadaConfig`/`ScadaValidationResult`），`pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 全绿。（Decision = 移交 HCA-CG，N/A；公共导出面不变已核对：`validateScadaConfig`/`ScadaValidationResult` 仍由 `validate.ts:406,3` 导出）
+- [x] 审计记录 finding 状态已回写。
 
 ### Phase 3 - owner doc 一致性核对 + 回归抽查 + bug 喂入
 
-Status: planned
+Status: completed
 Targets: `docs/components/industrial-hmi/design-renderer.md`（+ `design-data-binding.md` / `design-engine.md` 散见章节）、审计记录、HCA-BL 引用
 
 - Item Types: `Fix | Follow-up`
 
-- [ ] 核对 serialization 散见 owner doc 章节（design-renderer.md config lifecycle / validate 错误码、design-data-binding.md config model / ScadaBinding、design-engine.md importConfig 经 parse/validate）与 live serialization 一致；仅当发现 drift 或拆分改变模块清单时同步（无 drift 不写）。
-- [ ] 抽查先验修复回归（validator fail-closed / equality 守卫 / 表达式一元化 行为仍成立）。
-- [ ] 把本层复杂 / 跨层 bug 候选汇总到审计记录「喂入 HCA-BL」节（正式归档动作在 HCA-BL，本 plan 不产出 `docs/bugs/` 卡片）。
+- [x] 核对 serialization 散见 owner doc 章节（design-renderer.md config lifecycle / validate 错误码、design-data-binding.md config model / ScadaBinding、design-engine.md importConfig 经 parse/validate）与 live serialization 一致；仅当发现 drift 或拆分改变模块清单时同步（无 drift 不写）。（审计卡「散见 owner doc 一致性核对」表三章节经 rg/读核对待无 drift；拆分 Decision=移交 HCA-CG 不改模块清单 → 无需同步）
+- [x] 抽查先验修复回归（validator fail-closed / equality 守卫 / 表达式一元化 行为仍成立）。（审计卡「Phase 3 先验修复回归抽查」表三项全 ✅：serialization-validate.test.ts / serialization-equality.test.ts / expression-codemod.test.ts 回归 + pnpm test 1307 green）
+- [x] 把本层复杂 / 跨层 bug 候选汇总到审计记录「喂入 HCA-BL」节（正式归档动作在 HCA-BL，本 plan 不产出 `docs/bugs/` 卡片）。（审计卡「喂入 HCA-BL」节：本层无复杂/跨层 bug 候选——零 P0/P1，2 个 P3 为局部覆盖缺口无跨层影响）
 
 Exit Criteria:
 
-- [ ] 散见 owner doc 章节经 rg/读核对待无 drift（或有同步 commit；若拆分改变模块清单，design-renderer.md §config-lifecycle 同步）。
-- [ ] 先验修复回归抽查通过。
-- [ ] HCA-BL 喂入节存在（含 bug 候选清单 + `文件:行`）。
+- [x] 散见 owner doc 章节经 rg/读核对待无 drift（或有同步 commit；若拆分改变模块清单，design-renderer.md §config-lifecycle 同步）。（无 drift；拆分 Decision=移交 HCA-CG 不改模块清单）
+- [x] 先验修复回归抽查通过。
+- [x] HCA-BL 喂入节存在（含 bug 候选清单 + `文件:行`）。（明确「无复杂/跨层 bug 候选」+ 理由）
 
 ## Draft Review Record
 
@@ -140,37 +142,48 @@ Exit Criteria:
 >
 > 全量 `pnpm typecheck/build/lint/test` 是 plan 收口时跑一次的仓库级检查（见 guide Minimum Rule 18），不在 Phase Exit Criteria 重复。
 
-- [ ] serialization 6 文件逐文件深审完成，审计记录文件存在且 finding 全 triage。
-- [ ] 所有 in-scope 确认的 P0/P1 live defect 已 test-first 修复（failing-first proof 存在）。
-- [ ] `validate.ts` 524 行超阈值 Decision 已裁定并执行（落地拆分各 ≤ 500 行 / 或移交 HCA-CG 并记入 Deferred But Adjudicated）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] serialization 公共导出面（`validateScadaConfig`/`parseScadaConfig`/`serializeScadaConfig`/`computeConfigDiff`/`deepEqual`/config-types）签名不变（除非审计确认 contract drift 并已收敛）。
-- [ ] 受影响 owner doc 章节（design-renderer.md / design-data-binding.md / design-engine.md）与 live baseline 一致（或明确无 drift）。
-- [ ] 必要 focused verification 已完成。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] serialization 6 文件逐文件深审完成，审计记录文件存在且 finding 全 triage。
+- [x] 所有 in-scope 确认的 P0/P1 live defect 已 test-first 修复（failing-first proof 存在）。（零 P0/P1；先验 0900-1/0653-4/2129-1 三轮硬化已收口主路径，Phase 3 回归抽查 ✅）
+- [x] `validate.ts` 524 行超阈值 Decision 已裁定并执行（落地拆分各 ≤ 500 行 / 或移交 HCA-CG 并记入 Deferred But Adjudicated）。（DA-1：移交 HCA-CG，拆分缝已记录审计卡）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。（2 个 P3 为真实低影响覆盖缺口，消费者 graceful fallback；closure-audit 独立复核确认 P3-1/P3-2 非 P0/P1 降级）
+- [x] serialization 公共导出面（`validateScadaConfig`/`parseScadaConfig`/`serializeScadaConfig`/`computeConfigDiff`/`deepEqual`/config-types）签名不变（除非审计确认 contract drift 并已收敛）。（零代码变更；closure-audit 复核 `validateScadaConfig`/`ScadaValidationResult` 仍由 `validate.ts:406,3` 导出）
+- [x] 受影响 owner doc 章节（design-renderer.md / design-data-binding.md / design-engine.md）与 live baseline 一致（或明确无 drift）。（审计卡「散见 owner doc 一致性核对」三章节无 drift）
+- [x] 必要 focused verification 已完成。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。（ses_020a453a9ffek94PcJx7hmGYA7 verdict=pass，零 blocking，逐条 file:line 复核证据见下）
+- [x] `pnpm typecheck`（32/32 FULL TURBO cached）
+- [x] `pnpm build`（32/32 cached）
+- [x] `pnpm lint`（32/32 cached）
+- [x] `pnpm test`（59/59 cached；industrial 97 files / 1307 tests green，closure-audit 独立复核确认）
 
 ## Deferred But Adjudicated
 
 > 本 plan 起草时无已知可延期项。Phase 1 `validate.ts` 拆分 Decision 若裁定移交 HCA-CG，在此补条目（Classification: optimization candidate + Why Not Blocking Closure + Successor Path: HCA-CG）。
 
+- **[DA-1] validate.ts 524 行超 500 WARN 阈值拆分**
+  - Classification: optimization candidate（行数 governance，非 live defect）
+  - Adjudication: 移交 HCA-CG（跨层行数治理集中批次）
+  - Why Not Blocking Closure: (1) WARN 桶低位 524/700，距 ERROR 硬门禁 36% 余量，非 CI 阻塞；(2) validate.ts 单一职责内聚（config 校验），per-shape 校验器共享 helper → 拆分须同时抽 helpers/ 致 524 行拆 3+ 文件过度碎片化，边际收益低；(3) validate.ts 不在包公共 index 导出（仅 `serializeScadaConfig` 经 index），拆分不改变公共 API；(4) HCA-CG 是集中治理超阈值文件的指定批次，borderline 单文件宜聚合裁决。
+  - Successor Path: HCA-CG（拆分缝 + re-export 方案已记录审计卡 `docs/audits/2026-08-08-1051-hca4-serialization-layer.md`「validate.ts 拆分 Decision」节）
+  - 公共导出不变契约：`validateScadaConfig` / `ScadaValidationResult` 仍由 `validate.ts` 导出（re-export 保持）
+
 ## Non-Blocking Follow-ups
 
 - 本层 P2 高成本项归 HCA-CR 跨层集中修复。
 - serialization 契约若后续被 editor undo-redo（HCA10 diff/compute-inverse）或 binding（HCA3 状态解析）二次消费发现接合面问题，归 HCA-CR 裁决。
+- **[Follow-up-1]** P3-1（validate.ts:287 align 字段校验遗漏）+ P3-2（validate.ts:448-451 background.grid 子形状校验遗漏）归 HCA-CR backlog；低成本（各 <10 行，补 checkStringField/checkUnion + assertShape），可在 HCA-CR 或 validate.ts 拆分（HCA-CG）时一并修复。
 
 ## Closure
 
-Status Note: <<收口时填写：为什么这个 plan 可以关闭>>
+Status Note: serialization 层（6 文件 ~900 行）23 维包级深审完成，审计记录 `docs/audits/2026-08-08-1051-hca4-serialization-layer.md` 含逐文件 finding 表 + 全 triage。**零 P0/P1 live defect**——先验 0900-1（validator fail-closed + 子形状 + MAX_VALIDATE_DEPTH）/ 0653-4（共享 deepEqual）/ 2129-1（表达式一元化）三轮硬化已收口主路径，Phase 3 回归抽查 ✅。2 个 P3（align / background.grid 校验覆盖缺口，消费者 graceful fallback 无数据丢失）归 HCA-CR backlog。validate.ts 524 行超阈值 Decision = 移交 HCA-CG（DA-1：WARN 桶低位 + 单一职责内聚 + 拆分致过度碎片化，拆分缝已记录供 HCA-CG 采用）。公共导出面不变（零代码变更）。散见 owner doc 三章节无 drift。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent fresh session `ses_020a453a9ffek94PcJx7hmGYA7`
+- Verdict: `pass`（零 blocking issue）
+- Evidence: 逐条 file:line 复核——6 源文件行数（131/524/138/56/25/27）实测对齐；P3-1（validate.ts:287 align 遗漏 vs config-types.ts:91）/ P3-2（validate.ts:450 background.grid 遗漏 vs config-types.ts:105）真实且为 P3（graceful fallback）；validate.ts 不在包 index 公共导出（仅 serializeScadaConfig 经 index.ts:54）；reordered 由 editor/toolbox-runtime.ts:152-157 产出非 diffScadaConfig（by-design 非缺陷）；deepEqual 经 equality.ts:28 单一事实源（diff.ts:2 + compound.ts:3 共享）；tests 独立复核 97 files / 1307 passed green。Phase 2 vacuous satisfaction 合法（零 P0/P1 + Decision=defer 确证）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里；或明确写 no remaining plan-owned work>>
+- DA-1：validate.ts 拆分 → HCA-CG（拆分缝已记录审计卡）。
+- Follow-up-1：P3-1（align 校验遗漏）+ P3-2（background.grid 校验遗漏）→ HCA-CR backlog。
+- 无剩余 plan-owned work。
