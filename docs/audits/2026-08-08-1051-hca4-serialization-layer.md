@@ -99,11 +99,11 @@
 
 ## Finding Triage 汇总
 
-| 编号     | 严重程度         | 文件:行                                        | 一句话摘要                                                                           | 处置                                                     |
-| -------- | ---------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------- |
-| P2-BND-1 | P2（governance） | `validate.ts` 全文（524 行）                   | validate.ts 524 行超 500 WARN 阈值，单一职责内聚                                     | **移交 HCA-CG**（Why Not Blocking Closure + 拆分缝见上） |
-| P3-1     | P3               | `validate.ts:287` vs `config-types.ts:91`      | validateSymbolNode 字符串校验循环遗漏 `align` 字段（graceful fallback 无数据丢失）   | 归 HCA-CR backlog                                        |
-| P3-2     | P3               | `validate.ts:448-451` vs `config-types.ts:105` | background.grid 子形状（{size:number;color:string}）未校验（视觉 glitch 无数据损坏） | 归 HCA-CR backlog                                        |
+| 编号     | 严重程度         | 文件:行                                        | 一句话摘要                                                                           | 处置                                                                                                                                                    |
+| -------- | ---------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P2-BND-1 | P2（governance） | `validate.ts` 全文（524 行）                   | validate.ts 524 行超 500 WARN 阈值，单一职责内聚                                     | **移交 HCA-CG**（Why Not Blocking Closure + 拆分缝见上）                                                                                                |
+| P3-1     | P3               | `validate.ts:287` vs `config-types.ts:91`      | validateSymbolNode 字符串校验循环遗漏 `align` 字段（graceful fallback 无数据丢失）   | **fixed** at HCA-CR：validate.ts 增 align 枚举校验（`'left'\|'center'\|'right'`）+ failing-first 2 测（`serialization-validate.test.ts`）               |
+| P3-2     | P3               | `validate.ts:448-451` vs `config-types.ts:105` | background.grid 子形状（{size:number;color:string}）未校验（视觉 glitch 无数据损坏） | **fixed** at HCA-CR：validate.ts background 校验增 grid assertShape（size:number/color:string）+ failing-first 3 测（`serialization-validate.test.ts`） |
 
 **P0/P1 live defect：零。** serialization 层经先验 0900-1（validator fail-closed + equality 守卫 + 深度上限 + 子形状校验）/ 0653-4（共享 deepEqual）/ 2129-1（表达式一元化）三轮硬化后，23 维深审未发现 P0/P1 live defect。2 个 P3 为低影响覆盖缺口（消费者 graceful fallback），归 HCA-CR backlog。
 

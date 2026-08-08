@@ -137,12 +137,12 @@
 
 ### 5.2 P3 backlog（→ HCA-CR 跨层集中修复）
 
-| 编号      | 文件:行                                   | 摘要                                                                                                                   | Triage |
-| --------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------ |
-| HCA9-P3-1 | `connection-drag-controller.ts:87`        | moveDrag 每 pointermove 全量 collectSymbolBounds O(n)；design §4.2 关键约束 3 建议复用 hit.ts 预检。编辑器规模可接受。 | P3     |
-| HCA9-P3-2 | `anchor-snap.ts:130`                      | 等距吸附候选 tie-break 为首入数组（确定性但未文档化）。                                                                | P3     |
-| HCA9-P3-3 | `anchor-snap.ts:58`                       | 源码注释「共 12 锚点」 vs EDGE_ANCHORS 实际 8 条（去重后）；措辞易误导。                                               | P3     |
-| HCA9-P3-4 | `connection-overlay-renderer.ts:28,41-43` | sky overlay 颜色硬编码 `#22c55e`/`#ffffff`；可抽常量便于调参（非 DOM/CSS，主题独立性规则不直接适用）。                 | P3     |
+| 编号      | 文件:行                                   | 摘要                                                                                                                   | Triage                                                                  |
+| --------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| HCA9-P3-1 | `connection-drag-controller.ts:87`        | moveDrag 每 pointermove 全量 collectSymbolBounds O(n)；design §4.2 关键约束 3 建议复用 hit.ts 预检。编辑器规模可接受。 | residual-adjudicated at HCA-CR（optimization candidate，Successor: no） |
+| HCA9-P3-2 | `anchor-snap.ts:130`                      | 等距吸附候选 tie-break 为首入数组（确定性但未文档化）。                                                                | residual-adjudicated at HCA-CR（watch-only，Successor: no）             |
+| HCA9-P3-3 | `anchor-snap.ts:58`                       | 源码注释「共 12 锚点」 vs EDGE_ANCHORS 实际 8 条（去重后）；措辞易误导。                                               | residual-adjudicated at HCA-CR（watch-only 注释，Successor: no）        |
+| HCA9-P3-4 | `connection-overlay-renderer.ts:28,41-43` | sky overlay 颜色硬编码 `#22c55e`/`#ffffff`；可抽常量便于调参（非 DOM/CSS，主题独立性规则不直接适用）。                 | residual-adjudicated at HCA-CR（watch-only，Successor: no）             |
 
 ### 5.3 跨层观察（→ HCA11 复核，非 HCA9 defect）
 
