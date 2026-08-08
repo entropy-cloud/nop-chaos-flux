@@ -99,6 +99,8 @@
 - 算法：按水平/垂直方向排序后等间距重排 x/y；
 - forward diff 同对齐（多图元 transform-move）。
 
+> **坐标语义裁定（M3 扁平算法 / T1 接受，plan `2026-08-09-0648-3` Phase 2 同步）**：对齐/分布按各图元**顶层 bounds 的局部 `x/y/width/height`** 计算，**不解析 group 嵌套相对坐标**（不把 group 子节点的 parent-relative local 换算成 world）。理由：① 与 snap/hit/linkage 统一 `collectWorldBounds`（世界坐标）不同，对齐/分布是**基于选区包围盒的多图元相对位置算法**，不是对场景的命中/吸附；② 同父兄弟的 local 坐标系一致，对齐在 local 空间自洽；仅「跨层级混选」（顶层节点 + 嵌套 group 子节点）会按各自原始 x/y 直接比较，结果落在混合坐标空间——此为**已接受的 M3 限制（T1 trade-off）**，非 P1-C2/C3 回归。代码 docstring（`align-distribute.ts:5-6`）+ 测试注释（`align-distribute.test.ts:174-185`「documented M3 flat-algorithm, T1 trade-off」）与本节三处口径一致。升级为 world 解析属未来 feature，非当前 contract 缺陷。
+
 #### 4.2.2 层级（toTop/toBottom = symbols 数组重排）
 
 **z 序规则**（design-engine.md §4.3）：组态 JSON symbols 数组顺序即 z 序（同层节点数组序即渲染顺序，无额外 zIndex 字段）。
