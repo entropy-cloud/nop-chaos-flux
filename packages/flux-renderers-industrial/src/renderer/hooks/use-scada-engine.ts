@@ -278,12 +278,19 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
   useEffect(() => {
     const current = runtimeRef.current;
     if (!current) return;
-    // plan 2026-08-04-1558-2 Phase 4 WD-1/m10：width/height props 变更触发 engine.setSize
-    // （补全 width/height effect deps——design-renderer.md §8.3 声称「width/height 变化 → 引擎命令式 API」）
-    const targetWidth = latest.current.width ?? containerRef.current?.clientWidth ?? 0;
-    const targetHeight = latest.current.height ?? containerRef.current?.clientHeight ?? 0;
+    // plan 2026-08-09-0121-1 Phase 2（e2e-residual-healing）：container-driven DOM sizing。
+    // schema width/height 表达 world design space，不是 leafer canvas DOM 尺寸——post-P1-5 DOM 必须跟随
+    // container 真实尺寸（与构造器 container-first + ResizeObserver 一致）。旧实现把 schema width 当 DOM
+    // 尺寸，mount 期 setSize(960,520) 覆盖构造器的 container 尺寸(303)，applyInitialViewportState 用错配
+    // size(960) fit → scale≈1，而 ready 在 ResizeObserver 修正前触发 → pointer 落画布外（hover/click 离屏
+    // residual 根因）。现 container 优先，schema 仅在 container=0（jsdom 无布局）时 fallback。
+    // setSize 后 refit 保持 viewport 与 size 一致（与 ResizeObserver handler 对称）。
+    const container = containerRef.current;
+    const targetWidth = container?.clientWidth || latest.current.width || 0;
+    const targetHeight = container?.clientHeight || latest.current.height || 0;
     if (targetWidth > 0 && targetHeight > 0) {
       current.engine.setSize(targetWidth, targetHeight);
+      current.refitViewportOnResize?.();
     }
   }, [runtime, containerRef, args.width, args.height]);
 

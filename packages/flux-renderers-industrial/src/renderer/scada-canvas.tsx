@@ -325,7 +325,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
           </div>
         )
       ) : (
-        <div className="nop-scada-canvas-canvas" />
+        <div className="nop-scada-canvas-canvas pointer-events-none" />
       )}
     </div>
   );
