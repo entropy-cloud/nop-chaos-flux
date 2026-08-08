@@ -41,6 +41,21 @@ export function useKeyboard(
         return;
       }
 
+      if (e.key === 'Escape') {
+        setShowFindReplace(false);
+        setShowCommentInput(false);
+        const activeElement = document.activeElement;
+        if (
+          root &&
+          activeElement instanceof HTMLElement &&
+          root.contains(activeElement) &&
+          (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement)
+        ) {
+          root.focus();
+        }
+        return;
+      }
+
       if (isEditableTarget(e.target)) return;
       const ctrl = e.ctrlKey || e.metaKey;
 
@@ -100,9 +115,6 @@ export function useKeyboard(
           e.preventDefault();
           invokeWithCatch(handleClear, onCommandError);
         }
-      } else if (e.key === 'Escape') {
-        setShowFindReplace(false);
-        setShowCommentInput(false);
       }
     };
 

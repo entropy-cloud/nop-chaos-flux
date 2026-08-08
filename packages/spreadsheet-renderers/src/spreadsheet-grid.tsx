@@ -96,6 +96,8 @@ export function SpreadsheetGrid({
     selectionAnchorCell,
     selectedRowInfo,
     selectedColumnInfo,
+    selectedRowIndexes: selection.kind === 'row' ? selection.rows : undefined,
+    selectedColumnIndexes: selection.kind === 'column' ? selection.columns : undefined,
     sortRange,
     activeSheetId,
     cells: snapshot.activeSheet?.cells,

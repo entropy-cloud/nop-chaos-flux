@@ -12,6 +12,8 @@ export interface UseContextMenuActionsParams {
   selectionAnchorCell: { row: number; col: number } | null;
   selectedRowInfo: { start: number; end: number; count: number } | null;
   selectedColumnInfo: { start: number; end: number; count: number } | null;
+  selectedRowIndexes?: number[];
+  selectedColumnIndexes?: number[];
   sortRange: SpreadsheetRange | null;
   activeSheetId: string;
   cells: WorksheetDocument['cells'];
@@ -46,10 +48,78 @@ export function useContextMenuActions(params: UseContextMenuActionsParams): Cont
     selectionAnchorCell,
     selectedRowInfo,
     selectedColumnInfo,
+    selectedRowIndexes,
+    selectedColumnIndexes,
     sortRange,
     activeSheetId,
     cells,
   } = params;
+
+  const deleteSelectedRows = useCallback(async (): Promise<void> => {
+    const indexes = selectedRowIndexes?.length
+      ? [...selectedRowIndexes].sort((a, b) => a - b)
+      : selectedRowInfo?.start != null
+        ? [selectedRowInfo.start]
+        : selectionAnchorCell?.row != null
+          ? [selectionAnchorCell.row]
+          : [];
+    if (!activeSheetId || indexes.length === 0) {
+      return;
+    }
+    const contiguous = indexes.length === 1 || indexes[indexes.length - 1] - indexes[0] + 1 === indexes.length;
+    if (contiguous) {
+      await bridge.dispatch({
+        type: 'spreadsheet:deleteRow',
+        sheetId: activeSheetId,
+        row: indexes[0],
+        count: indexes.length,
+      });
+      return;
+    }
+    await bridge.dispatch({ type: 'spreadsheet:beginTransaction', label: 'Delete rows' });
+    for (let i = indexes.length - 1; i >= 0; i--) {
+      await bridge.dispatch({
+        type: 'spreadsheet:deleteRow',
+        sheetId: activeSheetId,
+        row: indexes[i],
+        count: 1,
+      });
+    }
+    await bridge.dispatch({ type: 'spreadsheet:commitTransaction' });
+  }, [activeSheetId, bridge, selectedRowIndexes, selectedRowInfo, selectionAnchorCell]);
+
+  const deleteSelectedColumns = useCallback(async (): Promise<void> => {
+    const indexes = selectedColumnIndexes?.length
+      ? [...selectedColumnIndexes].sort((a, b) => a - b)
+      : selectedColumnInfo?.start != null
+        ? [selectedColumnInfo.start]
+        : selectionAnchorCell?.col != null
+          ? [selectionAnchorCell.col]
+          : [];
+    if (!activeSheetId || indexes.length === 0) {
+      return;
+    }
+    const contiguous = indexes.length === 1 || indexes[indexes.length - 1] - indexes[0] + 1 === indexes.length;
+    if (contiguous) {
+      await bridge.dispatch({
+        type: 'spreadsheet:deleteColumn',
+        sheetId: activeSheetId,
+        col: indexes[0],
+        count: indexes.length,
+      });
+      return;
+    }
+    await bridge.dispatch({ type: 'spreadsheet:beginTransaction', label: 'Delete columns' });
+    for (let i = indexes.length - 1; i >= 0; i--) {
+      await bridge.dispatch({
+        type: 'spreadsheet:deleteColumn',
+        sheetId: activeSheetId,
+        col: indexes[i],
+        count: 1,
+      });
+    }
+    await bridge.dispatch({ type: 'spreadsheet:commitTransaction' });
+  }, [activeSheetId, bridge, selectedColumnIndexes, selectedColumnInfo, selectionAnchorCell]);
 
   const handleContextCopy = useCallback(async () => {
     if (!selectedRange) {
@@ -122,20 +192,8 @@ export function useContextMenuActions(params: UseContextMenuActionsParams): Cont
   }, [activeSheetId, bridge, selectedRowInfo, selectionAnchorCell]);
 
   const handleContextDeleteRow = useCallback(async () => {
-    if (!activeSheetId) {
-      return;
-    }
-    const row = selectedRowInfo?.start ?? selectionAnchorCell?.row;
-    if (row == null) {
-      return;
-    }
-    await bridge.dispatch({
-      type: 'spreadsheet:deleteRow',
-      sheetId: activeSheetId,
-      row,
-      count: selectedRowInfo?.count,
-    });
-  }, [activeSheetId, bridge, selectedRowInfo, selectionAnchorCell]);
+    await deleteSelectedRows();
+  }, [deleteSelectedRows]);
 
   const handleContextInsertColumn = useCallback(async () => {
     if (!activeSheetId) {
@@ -170,20 +228,8 @@ export function useContextMenuActions(params: UseContextMenuActionsParams): Cont
   }, [activeSheetId, bridge, selectedColumnInfo, selectionAnchorCell]);
 
   const handleContextDeleteColumn = useCallback(async () => {
-    if (!activeSheetId) {
-      return;
-    }
-    const col = selectedColumnInfo?.start ?? selectionAnchorCell?.col;
-    if (col == null) {
-      return;
-    }
-    await bridge.dispatch({
-      type: 'spreadsheet:deleteColumn',
-      sheetId: activeSheetId,
-      col,
-      count: selectedColumnInfo?.count,
-    });
-  }, [activeSheetId, bridge, selectedColumnInfo, selectionAnchorCell]);
+    await deleteSelectedColumns();
+  }, [deleteSelectedColumns]);
 
   const handleContextMerge = useCallback(async () => {
     if (!selectedRange) {

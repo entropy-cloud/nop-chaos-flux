@@ -4,6 +4,7 @@ import type { SpreadsheetHostSnapshot } from '../bridge.js';
 export const DEFAULT_ROW_HEIGHT = 24;
 export const DEFAULT_COL_WIDTH = 80;
 export const ROW_HEADER_WIDTH = 40;
+export const GRID_HEADER_HEIGHT = 22;
 export const OVERSCAN = 5;
 
 export function computeRowOffsets(rows: number, rowHeights: Record<number, number>): number[] {
@@ -118,7 +119,7 @@ export function getSelectedAxisInfo(
   return {
     start,
     end,
-    count: end - start + 1,
+    count: sorted.length,
   };
 }
 

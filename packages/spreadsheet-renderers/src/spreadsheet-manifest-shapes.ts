@@ -137,8 +137,13 @@ export const findResultShape: FluxValueShape = {
     {
       kind: 'object',
       fields: {
-        cell: cellRefShape,
+        sheetId: { kind: 'string' },
+        address: { kind: 'string' },
+        row: { kind: 'number' },
+        col: { kind: 'number' },
         value: { kind: 'unknown' },
+        matchStart: { kind: 'number' },
+        matchEnd: { kind: 'number' },
       },
       optional: ['value'],
     },

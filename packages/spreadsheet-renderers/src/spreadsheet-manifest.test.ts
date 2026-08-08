@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import type { FindResult } from '@nop-chaos/spreadsheet-core';
 import {
   resolveSpreadsheetManifest,
   spreadsheetHostContract,
   SPREADSHEET_MANIFEST_V1,
+  SPREADSHEET_HOST_METHOD_CONTRACTS,
 } from './spreadsheet-manifest.js';
+import type { HostCapabilityContract } from '@nop-chaos/flux-core';
 
 describe('resolveSpreadsheetManifest', () => {
   it('resolves version "1.0"', () => {
@@ -56,5 +59,39 @@ describe('spreadsheetHostContract', () => {
       capableRegions: ['toolbar', 'body', 'dialogs'],
       transitiveInheritance: true,
     });
+  });
+});
+
+describe('find result shape contract (declaration-is-contract)', () => {
+  const methods = SPREADSHEET_HOST_METHOD_CONTRACTS as HostCapabilityContract['methods'];
+
+  function declaredFields(method: string): string[] {
+    const contract = methods[method];
+    let shape = contract?.result;
+    if (shape?.kind === 'union') {
+      shape = shape.anyOf.find((branch) => branch.kind === 'object');
+    }
+    if (!shape || shape.kind !== 'object') {
+      return [];
+    }
+    return Object.keys(shape.fields ?? {});
+  }
+
+  it('declares find/findNext result fields matching the FindResult type', () => {
+    const typeKeys: (keyof FindResult)[] = [
+      'sheetId',
+      'address',
+      'row',
+      'col',
+      'value',
+      'matchStart',
+      'matchEnd',
+    ];
+    for (const method of ['find', 'findNext']) {
+      const fields = declaredFields(method);
+      for (const key of typeKeys) {
+        expect(fields, `${method} result should declare ${String(key)}`).toContain(key);
+      }
+    }
   });
 });

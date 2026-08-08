@@ -312,4 +312,64 @@ describe('spreadsheet context menu structure commands', () => {
       expect(activeSheet?.cells?.D1).toBeUndefined();
     });
   });
+
+  it('deletes exactly the selected rows for a non-contiguous multi-row selection', async () => {
+    const documentModel = createEmptyDocument('contextmenu-delete-noncontiguous-rows');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'top',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'second',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A3', row: 2, col: 0 },
+      value: 'third',
+    });
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    await core.dispatch({ type: 'spreadsheet:selectRow', sheetId, row: 0 });
+    await core.dispatch({ type: 'spreadsheet:selectRow', sheetId, row: 2, extend: true });
+
+    await waitFor(() => {
+      expect(core.getSnapshot().selection.rows).toEqual([0, 2]);
+    });
+
+    const rowHeaders = container.querySelectorAll('td[data-slot="spreadsheet-row-header"]');
+    fireEvent.contextMenu(rowHeaders[0]!);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="context-menu-content"]')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('spreadsheet-context-delete-row'));
+
+    await waitFor(() => {
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const values = Object.values(activeSheet?.cells ?? {}).map((cell) => cell.value);
+      expect(values).not.toContain('top');
+      expect(values).not.toContain('third');
+      expect(activeSheet?.cells?.A1?.value).toBe('second');
+    });
+
+    await core.dispatch({ type: 'spreadsheet:undo' });
+
+    await waitFor(() => {
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      expect(activeSheet?.cells?.A1?.value).toBe('top');
+      expect(activeSheet?.cells?.A2?.value).toBe('second');
+      expect(activeSheet?.cells?.A3?.value).toBe('third');
+    });
+  });
 });

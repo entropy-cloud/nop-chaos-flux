@@ -6,6 +6,7 @@ import { mapCellStyle } from '../cell-style-map.js';
 import {
   DEFAULT_COL_WIDTH,
   DEFAULT_ROW_HEIGHT,
+  GRID_HEADER_HEIGHT,
   ROW_HEADER_WIDTH,
   isCellWithinSelection,
 } from './constants.js';
@@ -99,6 +100,7 @@ function getSpacerColSpan(viewport: SpreadsheetGridViewportState) {
 function SpreadsheetGridCell({
   row,
   col,
+  viewport,
   snapshot,
   activeSheetId,
   selectedCell,
@@ -128,6 +130,7 @@ function SpreadsheetGridCell({
 }: {
   row: number;
   col: number;
+  viewport: SpreadsheetGridViewportState;
   snapshot: SpreadsheetGridProps['snapshot'];
   activeSheetId: string;
   selectedCell: SpreadsheetGridProps['selectedCell'];
@@ -189,6 +192,13 @@ function SpreadsheetGridCell({
     ...cellStyle.style,
     width: columnWidths[col] ?? DEFAULT_COL_WIDTH,
   };
+
+  const frozenColCount = (frozen?.col ?? 0) > 0 ? (frozen?.col ?? 0) : 0;
+  const isFrozenColCell = frozenColCount > 0 && col < frozenColCount;
+  if (isFrozenColCell) {
+    style.position = 'sticky';
+    style.left = `${ROW_HEADER_WIDTH + (viewport.colOffsets[col] ?? 0)}px`;
+  }
 
   return (
     <td
@@ -408,13 +418,24 @@ export function SpreadsheetGridTableShell({
               <td colSpan={spacerColSpan} />
             </tr>
           ) : null}
-          {viewport.visibleRowIndices.map((row) => (
+          {viewport.visibleRowIndices.map((row) => {
+            const frozenRowCount = (frozen?.row ?? 0) > 0 ? (frozen?.row ?? 0) : 0;
+            const isFrozenRow = frozenRowCount > 0 && row < frozenRowCount;
+            return (
             <tr
               key={row}
               role="row"
               aria-rowindex={row + 1}
-              style={{ height: rowHeights[row] ?? DEFAULT_ROW_HEIGHT }}
-              className={frozen && row < (frozen.row ?? 0) ? 'frozen-row' : ''}
+              style={{
+                height: rowHeights[row] ?? DEFAULT_ROW_HEIGHT,
+                ...(isFrozenRow
+                  ? {
+                      position: 'sticky',
+                      top: GRID_HEADER_HEIGHT + (viewport.rowOffsets[row] ?? 0),
+                    }
+                  : {}),
+              }}
+              className={isFrozenRow ? 'frozen-row' : ''}
             >
               <td
                 data-slot="spreadsheet-row-header"
@@ -465,6 +486,7 @@ export function SpreadsheetGridTableShell({
                   key={`${row}-${col}`}
                   row={row}
                   col={col}
+                  viewport={viewport}
                   snapshot={snapshot}
                   activeSheetId={activeSheetId}
                   selectedCell={selectedCell}
@@ -495,7 +517,8 @@ export function SpreadsheetGridTableShell({
               ))}
               {viewport.rightSpacerWidth > 0 ? <td style={{ width: viewport.rightSpacerWidth, padding: 0 }} /> : null}
             </tr>
-          ))}
+            );
+          })}
           {viewport.bottomSpacerHeight > 0 ? (
             <tr style={{ height: viewport.bottomSpacerHeight }}>
               <td colSpan={spacerColSpan} />
