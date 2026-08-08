@@ -23,4 +23,17 @@ describe('default-spacing.css contract', () => {
     expect(styles).not.toContain("\n  [data-slot='field-hint'] {");
     expect(styles).not.toContain("\n  [data-slot='field-description'] {");
   });
+
+  it('drives horizontal field label width through --field-label-width with an auto fallback', () => {
+    expect(styles).toContain(
+      ".nop-field[data-label-align='left'] [data-slot='field-label']",
+    );
+    expect(styles).toContain(
+      ".nop-field[data-label-align='right'] [data-slot='field-label']",
+    );
+    expect(styles).toContain('width: var(--field-label-width, auto);');
+    expect(styles).toContain('overflow-wrap: break-word;');
+    expect(styles).not.toContain('width: var(--field-label-width);');
+    expect(styles).not.toContain('width: var(--field-label-width, 96px)');
+  });
 });

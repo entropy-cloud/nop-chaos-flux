@@ -107,6 +107,8 @@
     display: flex;
     align-items: center;
     flex-shrink: 0;
+    width: var(--field-label-width, auto);
+    overflow-wrap: break-word;
     padding-top: 6px;
   }
 
