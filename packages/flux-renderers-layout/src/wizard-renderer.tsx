@@ -606,7 +606,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       <div
         ref={bodyRegionRef}
         data-slot="wizard-body-region"
-        className={mode === 'vertical' ? 'mt-4' : 'mt-4'}
+        className="mt-4"
       >
         {stepCount === 0 ? (
           <div data-slot="wizard-empty">{t('flux.wizard.noSteps')}</div>

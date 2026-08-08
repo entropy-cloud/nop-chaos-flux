@@ -229,4 +229,39 @@ describe('WizardRenderer C5.1 audit contract regression', () => {
     expect(wizardRoot().getAttribute('data-last-commit-status')).toBe('success');
     expect(wizardRoot().getAttribute('data-current-step-index')).toBe('2');
   });
+
+  it('renders the body region with the mt-4 spacing class in both orientations (P3-1)', () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    const schema = {
+      type: 'page',
+      body: [
+        {
+          type: 'wizard',
+          mode: 'horizontal' as const,
+          steps: [{ title: 'A', body: [{ type: 'text', text: 'A' }] }],
+        },
+      ],
+    };
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://layout/wizard-body-region"
+        schema={schema}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    expect(document.querySelector('[data-slot="wizard-body-region"]')?.className).toBe('mt-4');
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://layout/wizard-body-region"
+        schema={{ ...schema, body: [{ ...schema.body[0], mode: 'vertical' }] }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    expect(document.querySelector('[data-slot="wizard-body-region"]')?.className).toBe('mt-4');
+  });
 });
