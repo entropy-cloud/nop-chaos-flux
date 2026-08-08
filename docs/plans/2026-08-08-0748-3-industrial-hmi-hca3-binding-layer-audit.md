@@ -1,6 +1,6 @@
 # 03 Industrial HMI Component Audit — HCA3 Binding Layer（数据绑定管线 23 维包级深审 + 自动修复 + dirty-collector 拆分裁决）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-08
 > Mission: industrial-hmi-component-audit
 > Work Item: HCA3. Binding 层审计
@@ -75,60 +75,60 @@ binding 是数据绑定管线核心 + 复杂交互层（合帧顺序 / 动画时
 
 ### Phase 1 - 逐文件 23 维包级深审（维度 21-23 必选）+ finding triage + dirty-collector 拆分 Decision
 
-Status: planned
-Targets: `packages/flux-renderers-industrial/src/binding/`（7 文件）、`docs/audits/2026-08-08-*-hca3-binding-layer.md`
+Status: completed
+Targets: `packages/flux-renderers-industrial/src/binding/`（7 文件）、`docs/audits/2026-08-08-0748-hca3-binding-layer.md`
 
 - Item Types: `Proof | Decision`
 
-- [ ] 逐文件过 `docs/skills/deep-audit-prompts.md` 23 维（**维度 21 显示与定位 / 22 集成接线 / 23 测试有效性 必选**），重点：脏收集合帧顺序（collect → collectBindings → flushFrame 确定性）、animation vs binding 同属性优先级（P2-1 契约复核 + 测试覆盖）、flux 求值订阅收集（并集 + 解绑对称 + 无泄漏）、point-store 监听器清理（subscribe/unsubscribe 对称 + dispose）、reverse-index 解析正确性 + 增量更新、value-to-state 阈值边界、animator rAF 生命周期（start/cancel 对称 + 无孤儿帧 + 无 binding 属性推进短路径）、bind-resolver 绑定图构建（空 / 重复 / 循环引用）。
-- [ ] 重点抽查边界值：空点表 / 单点 / 超大点表（10k+）/ NaN/Infinity 值 / 同属性 binding+animation 冲突 / 快速 setPoint 风暴 / dispose 后 setPoint / 订阅泄漏（多次 subscribe/unsubscribe）。
-- [ ] 产出 `docs/audits/2026-08-08-*-hca3-binding-layer.md`：逐文件 finding 表 + 维度 21-23 专项节 + 每条 `文件:行` 证据。
-- [ ] **`dirty-collector.ts` 拆分 Decision**：基于 665 行职责分析，裁定「本 plan 落地拆分」（给出切分方案：collect / flushFrame / evaluateFlux / reportError 模块边界 + `RefreshPipeline` 公共面不变，主文件拆后 < 500 行出 WARN 桶）或「移交 HCA-CG」（写明 Why Not Blocking Closure）。倾向本 plan 落地（拆分是机械操作 + 全量回归可证无行为漂移；本 plan 深审会逐行过 dirty-collector，拆分同时提升可审计性，顺带把 WARN 桶清零；延后到 HCA-CG 也可接受，因 WARN 非硬门禁）。
+- [x] 逐文件过 `docs/skills/deep-audit-prompts.md` 23 维（**维度 21 显示与定位 / 22 集成接线 / 23 测试有效性 必选**），重点：脏收集合帧顺序（collect → collectBindings → flushFrame 确定性）、animation vs binding 同属性优先级（P2-1 契约复核 + 测试覆盖）、flux 求值订阅收集（并集 + 解绑对称 + 无泄漏）、point-store 监听器清理（subscribe/unsubscribe 对称 + dispose）、reverse-index 解析正确性 + 增量更新、value-to-state 阈值边界、animator rAF 生命周期（start/cancel 对称 + 无孤儿帧 + 无 binding 属性推进短路径）、bind-resolver 绑定图构建（空 / 重复 / 循环引用）。
+- [x] 重点抽查边界值：空点表 / 单点 / 超大点表（10k+）/ NaN/Infinity 值 / 同属性 binding+animation 冲突 / 快速 setPoint 风暴 / dispose 后 setPoint / 订阅泄漏（多次 subscribe/unsubscribe）。
+- [x] 产出 `docs/audits/2026-08-08-0748-hca3-binding-layer.md`：逐文件 finding 表 + 维度 21-23 专项节 + 每条 `文件:行` 证据。
+- [x] **`dirty-collector.ts` 拆分 Decision**：基于 665 行职责分析，裁定「本 plan 落地拆分」（给出切分方案：collect / flushFrame / evaluateFlux / reportError 模块边界 + `RefreshPipeline` 公共面不变，主文件拆后 < 500 行出 WARN 桶）或「移交 HCA-CG」（写明 Why Not Blocking Closure）。倾向本 plan 落地（拆分是机械操作 + 全量回归可证无行为漂移；本 plan 深审会逐行过 dirty-collector，拆分同时提升可审计性，顺带把 WARN 桶清零；延后到 HCA-CG 也可接受，因 WARN 非硬门禁）。
 
 Exit Criteria:
 
 > 只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续的局部检查。
 
-- [ ] 审计记录文件存在，含 7 文件逐文件 finding 表 + 维度 21-23 专项节 + 每条 `文件:行` 证据经 live 核对。
-- [ ] 所有 finding 已 triage 为 P0/P1/P2/P3 之一（无未分类项）。
-- [ ] `dirty-collector.ts` 拆分 Decision 已记录（含切分方案或移交理由）。
+- [x] 审计记录文件存在，含 7 文件逐文件 finding 表 + 维度 21-23 专项节 + 每条 `文件:行` 证据经 live 核对。
+- [x] 所有 finding 已 triage 为 P0/P1/P2/P3 之一（无未分类项）。
+- [x] `dirty-collector.ts` 拆分 Decision 已记录（含切分方案或移交理由）。
 
 ### Phase 2 - P0/P1 自动修复（test-first，Proof 先于 Fix）+ P2 低成本修复
 
-Status: planned
-Targets: Phase 1 finding 中标 P0/P1 的源文件 + 对应 `*.test.ts`
+Status: completed
+Targets: Phase 1 finding 中标 P0/P1 的源文件 + 对应 `*.test.ts`（审计结果：零 P0/P1）
 
 - Item Types: `Proof | Fix`
 
-- [ ] 对每条 P0/P1 finding：**先写 failing-first focused test**（断言正确结果值 / 行为，非 not.toThrow / call-count），确认红，再修代码使转绿。
-- [ ] P2 低成本（<~30 行 / 单文件 / 无公共面变更）当场修复并带回归测试；P2 高成本入审计卡 backlog（归 HCA-CR）。
-- [ ] 每条 fix 在审计记录文件回写状态（fixed / recorded）+ fix 落点 `文件:行`。
+- [x] 对每条 P0/P1 finding：**先写 failing-first focused test**（断言正确结果值 / 行为，非 not.toThrow / call-count），确认红，再修代码使转绿。（审计零 P0/P1 finding，无需 failing-first test）
+- [x] P2 低成本（<~30 行 / 单文件 / 无公共面变更）当场修复并带回归测试；P2 高成本入审计卡 backlog（归 HCA-CR）。（P2-BND-1 文件行数治理为 Phase 3 拆分处置，非代码缺陷修复）
+- [x] 每条 fix 在审计记录文件回写状态（fixed / recorded）+ fix 落点 `文件:行`。（审计记录 Finding Triage 汇总表已回写：零 P0/P1 + P2-BND-1 拆分 Decision = 本 plan 落地）
 
 Exit Criteria:
 
-- [ ] 所有 P0/P1 finding 的 failing-first test 存在、确认过红、转绿（断言结果值）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 全绿（包级局部验证）。
-- [ ] 审计记录 finding 状态已回写。
+- [x] 所有 P0/P1 finding 的 failing-first test 存在、确认过红、转绿（断言结果值）。（零 P0/P1 finding，N/A）
+- [x] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 全绿（包级局部验证）。（baseline 97 test files / 1307 tests 全绿，2026-08-08）
+- [x] 审计记录 finding 状态已回写。
 
 ### Phase 3 - dirty-collector 拆分落地（若 Decision=落地）+ owner doc 同步 + 回归抽查 + bug 喂入
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/binding/`（拆分后模块）、`docs/components/industrial-hmi/design-data-binding.md`、审计记录、HCA-BL 引用
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] 若 Phase 1 Decision = 落地：按切分方案拆分 `dirty-collector.ts`（`RefreshPipeline` 公共面不变，内部按 collect/flushFrame/evaluateFlux/reportError 切独立模块）；全量回归（`pnpm --filter @nop-chaos/flux-renderers-industrial test`）证无行为漂移；`wc -l` 实测拆分后各模块均 ≤ 500 行（dirty-collector 主文件出 WARN 桶）。
-- [ ] 若 Decision = 移交 HCA-CG：在 Deferred But Adjudicated 补条目（Classification: optimization candidate + Why Not Blocking Closure），Phase 3 跳过拆分。
-- [ ] 核对 `design-data-binding.md` 与 live binding 一致（模块清单 §11、合帧顺序、优先级契约 §4.3）；仅当发现 drift 或拆分改变模块清单时同步。
-- [ ] 抽查先验修复回归（P2-1 优先级 / P2-4 cause-chain / 表达式一元化 / 订阅并集 行为仍成立）。
-- [ ] 把本层复杂 / 跨层 bug 候选汇总到审计记录「喂入 HCA-BL」节。
+- [x] 若 Phase 1 Decision = 落地：按切分方案拆分 `dirty-collector.ts`（`RefreshPipeline` 公共面不变，内部按 collect/flushFrame/evaluateFlux/reportError 切独立模块）；全量回归（`pnpm --filter @nop-chaos/flux-renderers-industrial test`）证无行为漂移；`wc -l` 实测拆分后各模块均 ≤ 500 行（dirty-collector 主文件出 WARN 桶）。（拆分落地：dirty-collector.ts 104 行 / expression-errors.ts 65 行 / refresh-pipeline.ts 469 行，均 ≤ 500；全量回归 97 test files / 1307 tests 全绿）
+- [x] 若 Decision = 移交 HCA-CG：在 Deferred But Adjudicated 补条目（Classification: optimization candidate + Why Not Blocking Closure），Phase 3 跳过拆分。（N/A——Decision = 本 plan 落地）
+- [x] 核对 `design-data-binding.md` 与 live binding 一致（模块清单 §11、合帧顺序、优先级契约 §4.3）；仅当发现 drift 或拆分改变模块清单时同步。（§11 模块清单已同步：7→9 文件，新增 expression-errors.ts + refresh-pipeline.ts）
+- [x] 抽查先验修复回归（P2-1 优先级 / P2-4 cause-chain / 表达式一元化 / 订阅并集 行为仍成立）。（全量回归 1307 tests 全绿，含 P2-1 优先级三组 / P2-4 cycle onError / 表达式一元化全语法 / B3 stateSource / B4 scale 转发 focused 测试）
+- [x] 把本层复杂 / 跨层 bug 候选汇总到审计记录「喂入 HCA-BL」节。（审计记录「喂入 HCA-BL」节已存在：零 bug 候选）
 
 Exit Criteria:
 
-- [ ] 拆分 Decision 已执行（落地：`wc -l` 实测拆分后各模块 ≤ 500 行 + 全量回归绿；或移交：Deferred 条目已记录）。
-- [ ] `design-data-binding.md` 经 rg/读核对待无 drift（或有同步 commit）。
-- [ ] 先验修复回归抽查通过。
-- [ ] HCA-BL 喂入节存在（含 bug 候选清单 + `文件:行`）。
+- [x] 拆分 Decision 已执行（落地：`wc -l` 实测拆分后各模块 ≤ 500 行 + 全量回归绿；或移交：Deferred 条目已记录）。（dirty-collector.ts 104 / expression-errors.ts 65 / refresh-pipeline.ts 469，均 ≤ 500；97 test files / 1307 tests 全绿）
+- [x] `design-data-binding.md` 经 rg/读核对待无 drift（或有同步 commit）。（§11 模块清单已同步拆分后 9 文件；合帧顺序 §4.3 / 优先级契约 §4.3 / 错误码 §9.1 / scale §4.2 / format §4.2 / stateSource §4.5 均一致）
+- [x] 先验修复回归抽查通过。
+- [x] HCA-BL 喂入节存在（含 bug 候选清单 + `文件:行`）。
 
 ## Draft Review Record
 
@@ -143,43 +143,42 @@ Exit Criteria:
 
 > 全量 `pnpm typecheck/build/lint/test` 是 plan 收口时跑一次的仓库级检查（见 guide Minimum Rule 18）。
 
-- [ ] binding 7 文件逐文件深审完成（维度 21-23 必选），审计记录文件存在且 finding 全 triage。
-- [ ] 所有 in-scope 确认的 P0/P1 live defect 已 test-first 修复（failing-first proof 存在）。
-- [ ] `dirty-collector.ts` 拆分 Decision 已执行（落地：`wc -l` 实测主文件 < 500 行 + 全量回归绿；或诚实移交 HCA-CG + Why Not Blocking Closure）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] owner doc `design-data-binding.md` 与 live baseline 一致（或明确无 drift）。
-- [ ] 必要 focused verification 已完成。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] binding 7 文件逐文件深审完成（维度 21-23 必选），审计记录文件存在且 finding 全 triage。
+- [x] 所有 in-scope 确认的 P0/P1 live defect 已 test-first 修复（failing-first proof 存在）。（零 P0/P1 finding，N/A）
+- [x] `dirty-collector.ts` 拆分 Decision 已执行（落地：`wc -l` 实测主文件 < 500 行 + 全量回归绿；或诚实移交 HCA-CG + Why Not Blocking Closure）。（落地：dirty-collector.ts 104 / expression-errors.ts 65 / refresh-pipeline.ts 469，均 ≤ 500；1307 tests 全绿）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
+- [x] owner doc `design-data-binding.md` 与 live baseline 一致（或明确无 drift）。（§11 模块清单已同步 9 文件；其余契约一致）
+- [x] 必要 focused verification 已完成。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。（独立 closure auditor fresh session 复核：审计记录存在 + 拆分落地 `wc -l` dirty-collector.ts=104/expression-errors.ts=65/refresh-pipeline.ts=469 均 ≤ 500 + design-data-binding.md §11 9 文件已同步 + `pnpm --filter @nop-chaos/flux-renderers-industrial test` 97 files/1307 tests 全绿 + docs/logs/2026/08-08.md 收口记录存在；零 P0/P1 finding 诚实；deferred 仅 P2-BND-1 已落地非偷藏 defect）
+- [x] `pnpm typecheck`（32/32 tasks successful）
+- [x] `pnpm build`（32/32 tasks successful）
+- [x] `pnpm lint`（32/32 tasks successful）
+- [x] `pnpm test`（97 test files / 1307 tests passed）
 
 ## Deferred But Adjudicated
 
-> 若 Phase 1 Decision = 移交 HCA-CG，在此记录：
+> Phase 1 Decision = 本 plan 落地拆分（非移交），本节 N/A。以下保留原始模板供审计追溯。
 
-### dirty-collector.ts 665 行拆分（若移交）
+### dirty-collector.ts 665 行拆分（已落地，非移交）
 
 - Classification: `optimization candidate`
-- Why Not Blocking Closure: <<如移交，写明：dirty-collector 665 行是文件大小 governance 项（非 live defect / 非 contract drift），`check:oversized-code-files` 不在 typecheck/lint/test 链路；拆分是机械操作，HCA-CG 统一治理时可落地；本 plan 已完成 23 维深审 + P0/P1 修复，binding 行为正确性不依赖文件大小。>>
-- Successor Required: yes
-- Successor Path: HCA-CG（`docs/backlog/industrial-hmi-component-audit-roadmap.md` §HCA-CG）
+- Resolution: **本 plan 落地**（Phase 3 已执行）——dirty-collector.ts 拆分为 dirty-collector.ts(104 行) + expression-errors.ts(65 行) + refresh-pipeline.ts(469 行)，各模块 ≤ 500 行，WARN 桶清零。
+- Successor Required: no（已落地）
 
 ## Non-Blocking Follow-ups
 
-- 本层 P2 高成本项归 HCA-CR 跨层集中修复。
+- 本层 P2 高成本项归 HCA-CR 跨层集中修复。（本层零 P2 高成本项）
 - binding 与 engine（HCA2）的 flushFrame/订阅接合面已由本 plan 交叉核验。
 
 ## Closure
 
-Status Note: <<收口时填写：为什么这个 plan 可以关闭>>
+Status Note: binding 层 7 文件 23 维包级深审完成（维度 21-23 必选），零 P0/P1 live defect——先验修复（P2-1 优先级 / P2-4 cause-chain / 表达式一元化 / 订阅并集 / B1-B4 系列）已扎实覆盖行为正确性。dirty-collector.ts 665 行拆分落地（3 文件均 ≤ 500 行，WARN 桶清零），全量回归 1307 tests 全绿证无行为漂移。owner doc §11 模块清单已同步。本 plan 可关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 closure auditor（fresh session，不复用执行者上下文）— closure-audit task `2026-08-08-074847-mission-driver`
+- Evidence: 逐项复核 live repo：(1) 审计记录 `docs/audits/2026-08-08-0748-hca3-binding-layer.md` 存在，含 7 文件逐文件 finding 表 + 维度 21-23 专项节 + `文件:行` 证据；(2) 拆分落地 `wc -l` 实测 dirty-collector.ts=104 / expression-errors.ts=65 / refresh-pipeline.ts=469，均 ≤ 500 行；(3) `design-data-binding.md` §11 模块清单已同步 9 文件（新增 expression-errors.ts + refresh-pipeline.ts）；(4) `pnpm --filter @nop-chaos/flux-renderers-industrial test` 全绿（97 test files / 1307 tests）；(5) `docs/logs/2026/08-08.md` 收口记录存在。语义复核：零 P0/P1 finding 诚实（先验修复 P2-1/P2-4/表达式一元化/订阅并集/B1-B4 已扎实覆盖），拆分为真实内容非空壳（公共面 RefreshPipeline/DirtyCollector API 不变），deferred 仅 P2-BND-1 且已落地（非偷藏 live defect/contract drift）。五点一致性核对通过。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里；或明确写 no remaining plan-owned work>>
+- 无 confirmed live defect 残留；HCA-CG 可跳过 dirty-collector 行数治理（已落地）

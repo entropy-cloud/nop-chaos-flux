@@ -362,7 +362,9 @@ packages/flux-renderers-industrial/src/binding/       （域核心，无 React �
 ├── bind-resolver.ts            # 绑定表达式求值（${expr} 经注入的 flux compiler）+ 属性映射（I6.2/I18，纯逻辑单测）
 ├── flux-eval.ts                # isScadaPrimitive + createPrivateEvalScope（点值/scope 合并求值 scope）（I18 提取）
 ├── reverse-index.ts            # pointId → [{symbolId, property}] 反向索引（表达式点依赖收集经 flux 探针，I6.1/I18，纯逻辑单测）
-├── dirty-collector.ts          # 帧内脏属性收集 + 帧尾批量写入（表达式点经注入 compiler 求值 + generation 失效，I6.1/I18，纯逻辑单测）
+├── dirty-collector.ts          # 帧内脏属性收集 + 帧尾批量写入（DirtyCollector 类 + 帧类型，I6.1，纯逻辑单测）
+├── expression-errors.ts        # 表达式求值期错误类型（CircularDependencyError + cause-chain 解包 + FluxEvalOutcome）（HCA3 拆分）
+├── refresh-pipeline.ts         # 刷新流水线编排（RefreshPipeline 类：脏点→表达式重算→绑定求值→状态判定→合帧批量写）（HCA3 拆分）
 ├── value-to-state.ts           # 值→状态判定（区间/布尔/枚举映射）（I6.2，纯逻辑单测）
 └── animator.ts                 # 动画时钟 + 生命周期 + 状态联动（I6.3，纯逻辑单测）
 ```

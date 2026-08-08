@@ -49,7 +49,7 @@
 | HCA0. 编排基线（模块清单核对、工具基线重跑、审计卡模板复用、保护区域地图）                                                                                              | `done`    | —       | —          | 101 源文件清单已核对（2026-08-08，`find` 排除 test/fixtures/index/test-support）；18 维 checklist + 23 维 deep-audit 复用 component-audit 基线                                                                |
 | HCA1. Renderer 层审计（scada-canvas renderer + 5 hooks + 定义/schema）                                                                                                  | `planned` | 9 文件  | HCA0       | 审计卡 `docs/audits/per-component/scada-canvas.md`（fixed-pending-closure）；P2-1 a11y + P3-1 useCallback 已修复，待 closure audit                                                                            |
 | HCA2. Engine 层审计（scada-engine/config-adapter/event-bridge/hit/interaction-overlay/tree-registry/viewport）                                                          | `done`    | 9 文件  | HCA0       | canvas 场景图核心：视口数学/命中测试/事件桥/覆盖物生命周期/diff 构建；审计记录 `docs/audits/2026-08-08-0748-hca2-engine-layer.md`（零 P0/P1；P2-ENG-1 importConfig↔reset 全量重建一致性已修，P3×3 归 HCA-CR） |
-| HCA3. Binding 层审计（point-store/reverse-index/dirty-collector/value-to-state/animator/bind-resolver/flux-eval）                                                       | `todo`    | 7 文件  | HCA0       | 数据绑定管线核心：点表/脏收集合帧/动画时钟/flux 求值；dirty-collector 665 行超阈值                                                                                                                            |
+| HCA3. Binding 层审计（point-store/reverse-index/dirty-collector/value-to-state/animator/bind-resolver/flux-eval）                                                       | `done`    | 7 文件  | HCA0       | 数据绑定管线核心：点表/脏收集合帧/动画时钟/flux 求值；审计记录 `docs/audits/2026-08-08-0748-hca3-binding-layer.md`（零 P0/P1；dirty-collector 665 行已拆分为 3 文件均 ≤ 500 行）                              |
 | HCA4. Serialization 层审计（config-types/validate/diff/equality/parse/serialize）                                                                                       | `todo`    | 6 文件  | HCA0       | JSON 契约：校验/序列化/diff/判等；validate 524 行超阈值                                                                                                                                                       |
 | HCA5. Symbols core 审计（symbol-types/registry/factory/style-resolver/visual-state/composite/compound/register-builtin）                                                | `todo`    | 8 文件  | HCA0       | 符号框架：注册/工厂/样式/视觉状态/复合装配/组合                                                                                                                                                               |
 | HCA6. Symbol shapes 审计（base-shapes 11 + device 5 + instrument 5 + sensor-control 5 + pipe-junction）                                                                 | `todo`    | 27 文件 | HCA5       | 23 内置图元：create/applyProps 几何正确性/状态响应/diff-resize                                                                                                                                                |
@@ -64,7 +64,7 @@
 | HCA-LL. Lesson 总结（各层审计的架构/工程经验提炼）                                                                                                                      | `todo`    | —       | HCA-BL     | 沉淀到 checklist v2 / skills / 架构文档；防止同类问题再发                                                                                                                                                     |
 | HCA-CR. 跨层集中修复与裁决（剩余 shared 缺陷、各审计卡 P2 backlog、机制落地后复验项）                                                                                   | `todo`    | —       | HCA1–HCA11 | 汇总 `shared:` 缺陷，统一裁决 CX-n 或归 CR                                                                                                                                                                    |
 | HCA-CV. 全量验证（typecheck/build/lint/test + e2e full-green + 回归 + 性能基线复测）                                                                                    | `todo`    | —       | HCA-CR     | industrial 101 files / 1302+ tests + 6 e2e specs full-green                                                                                                                                                   |
-| HCA-CG. Guard 沉淀（审计卡汇总索引、lessons、工具脚本升级、文件行数治理）                                                                                               | `todo`    | —       | HCA-CV     | dirty-collector 665 行 / validate 524 行超阈值拆分评估；checklist v2 增 industrial 专项                                                                                                                       |
+| HCA-CG. Guard 沉淀（审计卡汇总索引、lessons、工具脚本升级、文件行数治理）                                                                                               | `todo`    | —       | HCA-CV     | ~~dirty-collector 665 行~~（HCA3 已拆分落地）/ validate 524 行超阈值拆分评估；checklist v2 增 industrial 专项                                                                                                 |
 
 ## 已完成审计卡索引
 
@@ -139,7 +139,7 @@ scada-engine（499 行）/ config-adapter（180）/ event-bridge（190）/ hit�
 
 ### HCA3 Binding 层审计
 
-point-store（330）/ reverse-index（126）/ dirty-collector（665）/ value-to-state（59）/ animator（269）/ bind-resolver（139）/ flux-eval（111）。23 维包级深审 + 维度 21-23。重点：脏收集合帧顺序、animation vs binding 优先级、flux 求值订阅收集、点表监听清理、**dirty-collector 665 行超 500 阈值**。
+point-store（330）/ reverse-index（126）/ dirty-collector（665→拆分 104+65+469）/ value-to-state（59）/ animator（269）/ bind-resolver（139）/ flux-eval（111）。23 维包级深审 + 维度 21-23。**已完成**（审计记录 `docs/audits/2026-08-08-0748-hca3-binding-layer.md`）：零 P0/P1；dirty-collector 665 行拆分为 dirty-collector.ts(104) + expression-errors.ts(65) + refresh-pipeline.ts(469)，各 ≤ 500 行 WARN 桶清零。
 
 ### HCA4 Serialization 层审计
 
@@ -186,7 +186,7 @@ editor-session（130）/ editor-adapter（205）/ editor-working-helpers（162�
 - **error code 设计**：升级码 vs 不升级码不可混用（HCAX-1）
 - **四态契约**：`props.meta.disabled` 是四态一部分，instance-renderer 必须消费（HCA7 P2-3）
 - **React 19**：useCallback 在 canvas 生命周期 renderer 中的必要性应逐个审查（HCA1 P3-1）
-- **文件行数**：dirty-collector 665 行 / validate 524 行超阈值，评估拆分（HCA3/HCA4）
+- **文件行数**：~~dirty-collector 665 行~~（HCA3 已拆分为 3 文件 ≤ 500 行）/ validate 524 行超阈值，评估拆分（HCA4）
 - 输出：更新 `docs/skills/deep-audit-prompts.md` / `docs/audits/component-audit-checklist.md` v2 / 架构文档
 
 ### HCA-CR 跨层集中修复
@@ -199,7 +199,7 @@ editor-session（130）/ editor-adapter（205）/ editor-working-helpers（162�
 
 ### HCA-CG Guard 沉淀
 
-审计卡汇总索引、lessons 沉淀、checklist v2（增 industrial 专项维度）、工具脚本升级（canvas renderer 专项检查）、文件行数治理（dirty-collector / validate 拆分落地）。
+审计卡汇总索引、lessons 沉淀、checklist v2（增 industrial 专项维度）、工具脚本升级（canvas renderer 专项检查）、文件行数治理（~~dirty-collector 665 行 HCA3 已拆分落地~~ / validate 524 行拆分落地）。
 
 ## Dependency Graph
 
