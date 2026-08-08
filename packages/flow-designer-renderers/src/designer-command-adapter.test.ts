@@ -52,6 +52,23 @@ function createDocumentWithEdgeChain(): GraphDocument {
 }
 
 describe('createDesignerCommandAdapter', () => {
+  it('copySelection then pasteClipboard duplicates the copied node in graph mode', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+    core.selectNode('task-1');
+
+    const copy = adapter.execute({ type: 'copySelection' });
+    expect(copy.ok).toBe(true);
+    expect(core.getSnapshot().doc.nodes).toHaveLength(3);
+
+    const paste = adapter.execute({ type: 'pasteClipboard' });
+    expect(paste.ok).toBe(true);
+    expect(core.getSnapshot().doc.nodes).toHaveLength(4);
+    const pasted = core.getSnapshot().doc.nodes.find((node) => node.id !== 'start-1' && node.id !== 'task-1' && node.id !== 'end-1');
+    expect(pasted).toBeTruthy();
+    expect(pasted?.type).toBe('task');
+  });
+
   it('normalizes shared command results for reconnect success and rejection', () => {
     const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
     const adapter = createDesignerCommandAdapter(core);

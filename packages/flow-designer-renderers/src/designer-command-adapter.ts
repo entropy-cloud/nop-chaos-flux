@@ -216,6 +216,9 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
       case 'copySelection':
         core.copySelection();
         return createSuccess(core);
+      case 'pasteClipboard':
+        core.pasteClipboard();
+        return createSuccess(core);
       case 'duplicateNode': {
         const node = core.duplicateNode(command.nodeId);
         if (!node) {

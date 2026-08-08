@@ -23,6 +23,12 @@ function readExpressionValue(data: Record<string, unknown>, expression: string):
 }
 
 function evaluateTemplateExpression(data: Record<string, unknown>, expression: string): string {
+  const negationMatch = expression.match(/^!\s*(.+)$/);
+  if (negationMatch) {
+    const resolved = readExpressionValue(data, negationMatch[1].trim());
+    return resolved ? 'false' : 'true';
+  }
+
   const ternaryMatch = expression.match(/^(.+?)\?\s*'([^']*)'\s*:\s*'([^']*)'$/);
   if (ternaryMatch) {
     const [, condition, whenTrue, whenFalse] = ternaryMatch;
@@ -71,6 +77,15 @@ vi.mock('@nop-chaos/flux-react', () => ({
     env: { notify: mockState.notify },
     evaluate: (target: string, scope: { materializeVisible?: () => Record<string, unknown> }) => {
       const data = scope?.materializeVisible?.() ?? {};
+      const singleExpression = target.match(/^\$\{([^}]+)\}$/);
+      if (singleExpression) {
+        const resolved = readExpressionValue(data, singleExpression[1].trim());
+        const negation = singleExpression[1].trim().match(/^!\s*(.+)$/);
+        if (negation) {
+          return !readExpressionValue(data, negation[1].trim());
+        }
+        return resolved;
+      }
       return target.replace(/\$\{([^}]+)\}/g, (_, expression: string) =>
         evaluateTemplateExpression(data, expression),
       );
@@ -192,6 +207,30 @@ describe('flow designer controls', () => {
     expect(screen.getByText('Test Flow')).toBeTruthy();
     expect(screen.getByText('Container: Test Flow')).toBeTruthy();
     expect(screen.getByText('1 nodes')).toBeTruthy();
+  });
+
+  it('re-resolves toolbar button disabled templates when the snapshot changes', () => {
+    mockState.context.config = {
+      ...mockState.context.config,
+      toolbar: {
+        items: [
+          { type: 'button', label: 'Undo', action: 'designer:undo', disabled: '${!canUndo}' },
+          { type: 'button', label: 'Redo', action: 'designer:redo', disabled: '${!canRedo}' },
+        ],
+      },
+    };
+
+    mockState.snapshot = createSnapshot({ canUndo: false, canRedo: false });
+    const { rerender } = render(<DesignerToolbarContent />);
+
+    expect((screen.getByRole('button', { name: 'Undo' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Redo' }) as HTMLButtonElement).disabled).toBe(true);
+
+    mockState.snapshot = createSnapshot({ canUndo: true, canRedo: true });
+    rerender(<DesignerToolbarContent />);
+
+    expect((screen.getByRole('button', { name: 'Undo' }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole('button', { name: 'Redo' }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('routes built-in toolbar switches through ActionScope', async () => {

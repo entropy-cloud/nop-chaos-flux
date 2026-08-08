@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { reportRuntimeHostIssue, shallowEqual } from '@nop-chaos/flux-core';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
@@ -109,7 +109,7 @@ export function DesignerToolbarContent(props: {
     [env],
   );
 
-  const items = useMemo(() => {
+  const items = (() => {
     const allItems = config.toolbar?.items ?? [];
     const filteredItems = props.readOnly
       ? allItems.filter((item) => {
@@ -157,7 +157,7 @@ export function DesignerToolbarContent(props: {
       }
       return { key, item };
     });
-  }, [config.toolbar?.items, resolveToolbarValue, props.readOnly]);
+  })();
 
   if (items.length === 0) {
     return null;
