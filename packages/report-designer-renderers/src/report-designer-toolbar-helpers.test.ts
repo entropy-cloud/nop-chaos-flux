@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { evalTextTemplate, toCommand, readState, mergeToolbarItems, type ToolbarItem } from './report-designer-toolbar-helpers.js';
+import {
+  evalTextTemplate,
+  evalBooleanLike,
+  toCommand,
+  readState,
+  mergeToolbarItems,
+  type ToolbarItem,
+} from './report-designer-toolbar-helpers.js';
 
 describe('evalTextTemplate', () => {
   it('returns empty string for undefined', () => {
@@ -47,6 +54,21 @@ describe('evalTextTemplate', () => {
     expect(evalTextTemplate('${fieldCount} fields', { designer: { fieldCount: 5 } })).toBe(
       '5 fields',
     );
+  });
+});
+
+describe('evalBooleanLike negation', () => {
+  it('negates a designer state boolean through ${!path} expressions', () => {
+    expect(
+      evalBooleanLike('${!designer.canUndo}', { designer: { canUndo: false } }),
+    ).toBe(true);
+    expect(evalBooleanLike('${!designer.canUndo}', { designer: { canUndo: true } })).toBe(false);
+    expect(evalBooleanLike('${!designer.canRedo}', { designer: { canRedo: false } })).toBe(true);
+  });
+
+  it('returns undefined when the negated state is not a boolean', () => {
+    expect(evalBooleanLike('${!designer.canUndo}', { designer: {} })).toBeUndefined();
+    expect(evalBooleanLike('${!designer.canUndo}', {})).toBeUndefined();
   });
 });
 

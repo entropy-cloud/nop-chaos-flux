@@ -247,6 +247,7 @@ export async function dispatchReportDesignerCommand(
             ...ctx.pushUndoEntry(current),
             document: imported,
             savedDocument: imported,
+            spreadsheetSyncSource: undefined,
             selectionTarget: undefined,
             inspector: {
               ...current.inspector,
@@ -294,6 +295,7 @@ export async function dispatchReportDesignerCommand(
         store.setState((s) => ({
           ...s,
           document: prevDocument,
+          spreadsheetSyncSource: undefined,
           undoStack,
           redoStack,
         }));
@@ -312,6 +314,7 @@ export async function dispatchReportDesignerCommand(
         store.setState((s) => ({
           ...s,
           document: nextDocument,
+          spreadsheetSyncSource: undefined,
           undoStack,
           redoStack,
         }));

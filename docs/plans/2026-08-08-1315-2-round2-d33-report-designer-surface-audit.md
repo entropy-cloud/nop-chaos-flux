@@ -1,6 +1,6 @@
 # D3.3 report-designer 大面审计（report-designer-core + report-designer-renderers）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit-round2
 > Work Item: D3.3
 > Last Reviewed: 2026-08-08
@@ -73,92 +73,92 @@
 
 ### Phase 1 - 审计准备与基线核对
 
-Status: planned
+Status: completed
 Targets: `docs/audits/host-surface/surface-inventory.md`、`docs/audits/host-surface/README.md`、`packages/report-designer-{core,renderers}/src`、`docs/audits/arm-MA4-designer-office-test-coverage.md`、`docs/audits/arm-MA5-designer-operability.md`、`tests/e2e/report-designer-demo.spec.ts`、新建 `docs/audits/host-surface/rd-{1..7}-*.md`
 
 - Item Types: `Proof | Decision | Follow-up`
 
-- [ ] 面清单核对：rd-1..rd-7 每面引用 README §1 契约基准（report-designer 9 份 owner docs）+ §2 宿主场景（`report-designer-demo.spec.ts`）；live 核对每面核心文件（rd-1 `page-renderer*.tsx`（host projection/init/snapshots）+ `report-spreadsheet-canvas.tsx`；rd-2 `report-field-panel.tsx` + `REPORT_FIELD_DRAG_MIME`；rd-3 `report-designer-inspector.tsx` + `inspector-shell-renderer.tsx`；rd-4 预览路径；rd-5 保存链路（`nop-report-profile.md`）；rd-6 命令事务 + `codec-design.md` 编解码契约；rd-7 `ReportTemplateDocument`/`createReportTemplateDocument`）。
-- [ ] 已知遗留输入终态核对（Decision）：MA4.3 九条缺口（MA43-P0-01..05 + P1-02..05）逐条 live 核对当前覆盖终态（直接测试落 `__tests__/commands.test.ts`/`__tests__/adapters-and-helpers.test.ts`/`__tests__/report-designer-manifest-and-helpers.test.ts`/`host-action-provider.test.ts` 等在案——逐条确认 direct coverage，与 arm-index fixed 标注核对）；MA5 P3-09 `bridge.ts:75-86` `as never` 复核（仍存在则 H1 面登记裁决）。
-- [ ] 面级 e2e 覆盖矩阵：`report-designer-demo.spec.ts` 9 用例 ↔ rd-1..rd-7 映射，缺口显式列出（缺口 = Phase 5 新增场景候选）。
-- [ ] 卡文件骨架建立：7 张 `docs/audits/host-surface/rd-{1..7}-*.md`（§6.3 模板：面身份 / 维度审查记录表 / 发现清单 / 组合宿主场景 / 修复记录 / Closure），卡头 `> 审查 plan:` 指本 plan。
+- [x] 面清单核对：rd-1..rd-7 每面引用 README §1 契约基准（report-designer 9 份 owner docs）+ §2 宿主场景（`report-designer-demo.spec.ts`）；live 核对每面核心文件（rd-1 `page-renderer*.tsx`（host projection/init/snapshots）+ `report-spreadsheet-canvas.tsx`；rd-2 `report-field-panel.tsx` + `REPORT_FIELD_DRAG_MIME`；rd-3 `report-designer-inspector.tsx` + `inspector-shell-renderer.tsx`；rd-4 预览路径；rd-5 保存链路（`nop-report-profile.md`）；rd-6 命令事务 + `codec-design.md` 编解码契约；rd-7 `ReportTemplateDocument`/`createReportTemplateDocument`）。
+- [x] 已知遗留输入终态核对（Decision）：MA4.3 九条缺口（MA43-P0-01..05 + P1-02..05）逐条 live 核对当前覆盖终态（直接测试落 `__tests__/commands.test.ts`/`__tests__/adapters-and-helpers.test.ts`/`__tests__/report-designer-manifest-and-helpers.test.ts`/`host-action-provider.test.ts` 等在案——逐条确认 direct coverage，与 arm-index fixed 标注核对一致，全部收敛非 re-fix）；MA5 P3-09 `bridge.ts:75-86` `as never` 复核 = 仍存在 → H1 面登记裁决（P2 低成本当场修复，Phase 4 落地）。
+- [x] 面级 e2e 覆盖矩阵：`report-designer-demo.spec.ts` 9 用例 ↔ rd-1..rd-7 映射（rd-1 ✓用例1/3/4/6/9、rd-2 ✓用例2/8、rd-3 ✓用例2/5、rd-4/rd-5/rd-6/rd-7 ✗ 无直接覆盖），缺口显式列出（= Phase 5 新增场景候选，全部闭合）落 surface-inventory D3.3 增量登记。
+- [x] 卡文件骨架建立：7 张 `docs/audits/host-surface/rd-{1..7}-*.md`（§6.3 模板：面身份 / 维度审查记录表 / 发现清单 / 组合宿主场景 / 修复记录 / Closure），卡头 `> 审查 plan:` 指本 plan。
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-- [ ] `docs/audits/host-surface/rd-*.md` 7 张骨架存在且每张含面身份 + 契约基准引用 + 覆盖矩阵映射行。
-- [ ] 遗留输入复核结论与 e2e 覆盖矩阵缺口落面清单（surface-inventory.md 增量登记或 README 行内注记）。
+- [x] `docs/audits/host-surface/rd-*.md` 7 张骨架存在且每张含面身份 + 契约基准引用 + 覆盖矩阵映射行。
+- [x] 遗留输入复核结论与 e2e 覆盖矩阵缺口落面清单（surface-inventory.md 增量登记或 README 行内注记）。
 
 ### Phase 2 - 批次 A 面审计（rd-1..rd-4）
 
-Status: planned
+Status: completed
 Targets: `packages/report-designer-renderers/src/page-renderer*.tsx`、`report-spreadsheet-canvas.tsx`、`report-field-panel.tsx`、`report-designer-inspector.tsx`、`inspector-shell-renderer.tsx`、`report-designer-toolbar*.ts`、`bridge.ts`、`host-action-provider.ts`、`host-data.ts`、`packages/report-designer-core/src/adapters.ts`、`docs/audits/host-surface/rd-{1..4}-*.md`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 逐面审计（每面一张卡）：§6.1 18 维降维逐维核对（Schema 契约 / RendererComponentProps 合规 / 值所有权三态（host snapshot 同步 `deriveDesignerHostSnapshot`）/ 表单参与 / DOM 与选择器契约 / 嵌套 schema 分类 / 事件与 action 契约（事件派发 ctx 人工核对 + reaction 三件套 + `component:*` 句柄）/ a11y / i18n 硬编码 `rg` 兜底 / 四态覆盖 / 异步生命周期 / 组合宿主场景 / 样式契约 / React 19 规范 / 性能边界 / 测试质量 / 文档对照 / 注册包边界与 IO 安全红线（INV-1））+ §6.2 H1（host 契约：`REPORT_DESIGNER_MANIFEST_V1`/`reportDesignerHostContract`/`createReportDesignerBridge`/`createReportDesignerActionProvider` 与宿主消费双向核对）+ H2（命令事务：command + undo 语义）+ H3（拖拽：`REPORT_FIELD_DRAG_MIME` payload 契约 + pointercancel 守卫 + drop 落点）+ H4（键盘：isEditable 守卫 + 面板键盘路径）+ H5（剪贴板：复制/粘贴路径如有）+ H6（e2e 可操作性）+ H7（MA4.3 缺口回归）。
-- [ ] 声明即契约双向核对（08 检测法）：`reportDesignerRendererDefinitions`/`defineReportDesignerPageSchema` 注册项 vs 消费矩阵；`component:*` 句柄登记 vs 派发点；schema 字段声明 vs design.md/config-schema.md/inspector-design.md。
-- [ ] 发现分级 P0/P1/P2/P3（带 `文件:行` 证据）逐条入卡；P0/P1 留待 Phase 4 修复，P2 当场低成本则立即修复否则登记待 Phase 4 路由 DR，P3 卡内记录。
-- [ ] 面内宿主场景初验（每面 ≥1，程序化 DOM 断言；可复用 `report-designer-demo.spec.ts` 已覆盖面）。
+- [x] 逐面审计（每面一张卡）：§6.1 18 维降维逐维核对（Schema 契约 / RendererComponentProps 合规 / 值所有权三态（host snapshot 同步 `deriveDesignerHostSnapshot`）/ 表单参与 / DOM 与选择器契约 / 嵌套 schema 分类 / 事件与 action 契约（事件派发 ctx 人工核对——零 schema 事件派发点，action 面经 actionScope namespace 双注册 + 12 方法三向一致核对 / reaction 三件套不适用 / `component:*` 句柄零登记零派发）/ a11y / i18n 硬编码 `rg` 兜底（生产代码零中文字面量）/ 四态覆盖 / 异步生命周期 / 组合宿主场景 / 样式契约 / React 19 规范 / 性能边界 / 测试质量 / 文档对照 / 注册包边界与 IO 安全红线（INV-1 实跑零命中））+ §6.2 H1（host 契约：`REPORT_DESIGNER_MANIFEST_V1`/`reportDesignerHostContract`/`createReportDesignerBridge`/`createReportDesignerActionProvider` 与宿主消费双向核对——12 方法 manifest ↔ provider ↔ core-dispatch 四向一致；MA5 P3-09 as never 复核 = 仍存在 → P2 裁决）+ H2（命令事务：command + undo 语义——**发现 P1-1 undo/redo/importTemplate 不回传 spreadsheet canvas**）+ H3（拖拽：`REPORT_FIELD_DRAG_MIME` payload 契约 + HTML5 DnD 无 pointercancel 需求 + drop 落点 + 失败回滚）+ H4（键盘：canInsertToSelection 守卫 + insert 按钮路径 + demo canvas Enter/Space）+ H5（剪贴板：无路径）+ H6（e2e 可操作性）+ H7（MA4.3 九条缺口逐条回归收敛）。
+- [x] 声明即契约双向核对（08 检测法）：`reportDesignerRendererDefinitions`/`defineReportDesignerPageSchema` 注册项 vs 消费矩阵（12 fields 全消费）；`component:*` 句柄登记 vs 派发点（零登记零派发）；schema 字段声明 vs design.md/config-schema.md/inspector-design.md（document/config/adapters/profile/statusPath 全对齐，readOnly 声明可达）。
+- [x] 发现分级 P0/P1/P2/P3（带 `文件:行` 证据）逐条入卡；**P1-1 留待 Phase 4 修复（test-first 已先行复现红）**，P2 当场低成本修复（MA5 P3-09 as never 已修）+ 其余登记待 Phase 4 路由 DR，P3 卡内记录。
+- [x] 面内宿主场景初验（每面 ≥1，程序化 DOM 断言；rd-1/2/3 复用 `report-designer-demo.spec.ts` 已覆盖面 pass，rd-4 缺口登记待 Phase 5 新增）。
 
 Exit Criteria:
 
-- [ ] rd-1..rd-4 四张卡完成维度审查记录 + 发现清单（P0/P1/P2/P3 分级 + `文件:行` 证据），卡状态 `open` 或 `fixing`。
-- [ ] 每面 ≥1 宿主场景记录（结果 pass/fail + 证据，fail 项登记为对应发现）。
+- [x] rd-1..rd-4 四张卡完成维度审查记录 + 发现清单（P0/P1/P2/P3 分级 + `文件:行` 证据），卡状态 `open` 或 `fixing`。
+- [x] 每面 ≥1 宿主场景记录（结果 pass/fail + 证据，fail 项登记为对应发现；rd-4 缺口 = Phase 5 新增场景）。
 
 ### Phase 3 - 批次 B 面审计（rd-5..rd-7）
 
-Status: planned
+Status: completed
 Targets: `packages/report-designer-core/src/core.ts`、`commands.ts`、`adapters.ts`、`runtime/`、`packages/report-designer-renderers/src/bridge.ts`、`host-data.ts`、`report-designer-manifest.ts`、`docs/audits/host-surface/rd-{5..7}-*.md`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] 逐面审计（rd-5 保存：host 保存链路（saveDocument 类路径）+ `nop-report-profile.md` 契约对照 + 失败路径（错误态/重试）；rd-6 undo：命令事务撤销/重做/失败回滚 + `codec-design.md` 编解码契约双向核对；rd-7 模板：`ReportTemplateDocument`/`createReportTemplateDocument` 模板创建/语义 + 空模板态）。
-- [ ] 维度核对同 Phase 2 清单（含 H1 host 契约 / H2 事务 undo / H5 剪贴板专项）。
-- [ ] 发现分级入卡（同 Phase 2 裁决口径）；MA4.3/MA5 遗留输入逐条终态 Decision（收敛 / 残留 / 新发现）。
-- [ ] 面内宿主场景初验（每面 ≥1）。
+- [x] 逐面审计（rd-5 保存：host 保存链路（saveDocument 类路径 = core save 导出 + 宿主经 action provider 持久化委托）+ `nop-report-profile.md` 契约对照 + 失败路径（readonly 拦截 + dispatch throw 转换）；rd-6 undo：命令事务撤销/重做/失败回滚 + `codec-design.md` 编解码契约双向核对——**发现并 test-first 修复 P1-1（undo/redo/importTemplate 不回传 spreadsheet canvas，stale syncSource guard）**；rd-7 模板：`ReportTemplateDocument`/`createReportTemplateDocument` 模板创建/语义 + 空模板态（无效 document fallback））。
+- [x] 维度核对同 Phase 2 清单（含 H1 host 契约（save/preview/import/export envelope 形状 ↔ manifest）/ H2 事务 undo（save 不入栈 + importTemplate 入栈 + undo 后 savedDocument 保留 dirty:true 语义）/ H5 剪贴板专项 = 不适用）。
+- [x] 发现分级入卡（同 Phase 2 裁决口径）；MA4.3/MA5 遗留输入逐条终态 Decision（收敛——九条 MA4.3 全收敛、P2-03 收敛、P3-09 收敛（Phase 4 修复）；无残留）。
+- [x] 面内宿主场景初验（每面 ≥1；rd-5/6/7 真缺口登记，Phase 5 新增宿主页场景）。
 
 Exit Criteria:
 
-- [ ] rd-5..rd-7 三张卡完成维度审查记录 + 发现清单 + 宿主场景记录。
-- [ ] 遗留输入全部终态 Decision 与全部 P0/P1 清单汇总（`文件:行`）可在 7 张卡中逐一查见。
+- [x] rd-5..rd-7 三张卡完成维度审查记录 + 发现清单 + 宿主场景记录。
+- [x] 遗留输入全部终态 Decision 与全部 P0/P1 清单汇总（`文件:行`）可在 7 张卡中逐一查见（P1-1 唯一 P1，跨 rd-1/rd-6 卡在案）。
 
 ### Phase 4 - P0/P1 自动修复（test-first）+ 行内 bug note
 
-Status: planned
+Status: completed
 Targets: 修复站点 `packages/report-designer-{core,renderers}/src/**`、回归测试 `packages/report-designer-{core,renderers}/src/**/*.test.{ts,tsx}`、`docs/bugs/`（107 起顺序递增）、`docs/audits/host-surface/rd-*.md` 状态回写、`docs/audits/round2-dr-adjudication.md`（P2 路由追加）
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] 全部 P0/P1：先写复现/断言测试（红）→ 实现修复（绿），证据（测试文件:行 + commit）入卡「修复记录」。
-- [ ] 低成本 P2 当场修复（同 test-first 纪律）；其余 P2 显式追加登记 `docs/audits/round2-dr-adjudication.md`（ID 顺延，表 §3 维护节已约定；条目 = 卡内 P2 清单，零悬挂）。
-- [ ] 复杂 bug（根因非平凡 / 跨包 / 加回归测试）行内补写 `docs/bugs/` note（编号 107 起顺序递增——执行时以 live `docs/bugs/` 最大编号 +1 为准，按 `00-bug-fix-note-writing-guide.md` 模板）+ `docs/bugs/README.md` 索引同步。
-- [ ] 卡状态回写：已修发现 `[P0-x]/[P1-x]` 行标注 `fixed`（+ plan/commit 引用），卡状态 `fixed-pending-closure`。
-- [ ] 局部验证：`report-designer-core` + `report-designer-renderers` 包级 typecheck + focused 测试全绿（保证 Phase 5 可继续）。
+- [x] 全部 P0/P1：先写复现/断言测试（红）→ 实现修复（绿），证据（测试文件:行 + commit）入卡「修复记录」。**P1 共 1 条**：P1-1 undo/redo/importTemplate 不回传 spreadsheet canvas（`page-renderer-shell.test.tsx` 复现先红 → `core-dispatch.ts` 清 syncSource + `page-renderer.tsx` applied-clone ref 修复 → 绿；`designer-core-codec-and-selection.test.ts` syncSource 清除语义双保险）。
+- [x] 低成本 P2 当场修复（同 test-first 纪律）：MA5 P3-09 `bridge.ts` `as never`（rd-1 H1 裁决 P2）——`buildAggregatedRuntimeSummary` 参数改窄接口 `SpreadsheetRuntimeSummaryInput` + bridge 传类型安全对象（typecheck 红→绿，行为由既有 `bridge.test.ts` 锁定）；其余 P2 显式追加登记 `docs/audits/round2-dr-adjudication.md`（**DR-7..DR-11 五条** = 卡内 P2 清单，零悬挂）。
+- [x] 复杂 bug（根因非平凡 / 跨包 / 加回归测试）行内补写 `docs/bugs/` note（编号 107 起顺序递增——执行时以 live 最大编号 +1 为准 = **111**，按 `00-bug-fix-note-writing-guide.md` 模板 7 节）+ `docs/bugs/README.md` 索引同步。
+- [x] 卡状态回写：已修发现 `[P1-1]`/`[P2-1]` 行标注 `fixed`（+ plan/commit 引用），卡状态 `fixed-pending-closure`（收口后 closed）。
+- [x] 局部验证：`report-designer-core` + `report-designer-renderers` 包级 typecheck + focused 测试全绿（core 185 / renderers 199，保证 Phase 5 可继续）。
 
 Exit Criteria:
 
-- [ ] 全部 P0/P1 修复落地（卡内 test-first 证据逐条在案），无未处置 P0/P1。
-- [ ] P2 路由登记无悬挂（`round2-dr-adjudication.md` 条目 = 卡内 P2 清单）。
-- [ ] bug note 行内补写完成（README 索引同步）；两包 typecheck + 包级测试绿。
+- [x] 全部 P0/P1 修复落地（卡内 test-first 证据逐条在案——P1-1 红→绿证据入 rd-1/rd-6 卡修复记录），无未处置 P0/P1。
+- [x] P2 路由登记无悬挂（`round2-dr-adjudication.md` 11 条 = 卡内 P2 清单：DR-7..DR-11 五条 rd 面 + 4 条当场修复不路由）。
+- [x] bug note 行内补写完成（**111**，README 索引同步）；两包 typecheck + 包级测试绿。
 
 ### Phase 5 - 宿主场景补全与收口验证
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/`（新增 spec）、`docs/audits/host-surface/`、`docs/backlog/component-audit-round2-roadmap.md`（D3.3 行）、`docs/logs/2026/08-08.md`、`docs/audits/host-surface/surface-inventory.md` + `README.md`（增量登记）
 
-- Item Types: `Proof | Follow-up`
+- Item Types: `Fix | Proof | Follow-up`
 
-- [ ] 面覆盖矩阵缺口补场景：Phase 1 缺口清单中尚未覆盖的面新增 e2e spec 落 `tests/e2e/`（programmatic DOM 断言，data-slot/marker 定位，行动作 args 模板 `${key}` 真机解析）；每面最终 ≥1 宿主场景（含复用 `report-designer-demo.spec.ts` 的面）。
-- [ ] 运行 report-designer 相关全部 e2e spec（现有 1 spec + 新增）全绿；失败项按 D2 watch-only 归因纪律逐条归因（禁止静默吞掉）。
-- [ ] 收口登记：roadmap D3.3 行 `todo`→`done`（附执行证据引用）、daily log 收口节、surface-inventory/README 增量登记（新 spec/新模块）。
-- [ ] 审计卡全部 `closed`（或 `fixed-pending-closure` + 显式 DR 路由）；P2/P3 零悬挂声明。
+- [x] 面覆盖矩阵缺口补场景：Phase 1 缺口清单（rd-4 预览 / rd-5 保存 / rd-6 undo / rd-7 模板）新增 e2e spec 落 `tests/e2e/`（`report-designer-host.spec.ts` 5 用例，programmatic DOM 断言，data-slot/marker 定位）；新建宿主页 `apps/playground/src/pages/report-designer-host-demo.tsx` + `report-designer-host-page.tsx`（route `#/report-designer-host`，真实 `report-designer-page` renderer 宿主：toolbar 派发 undo/redo/save/preview + 画布编辑 + 字段面板 + inspector shell + 空模板 toggle + window hook 导出；domain-route-entries + App.tsx + playground-entry-pages ROUTE_ASSERTIONS 同步）；**宿主页验收当场暴露 2 条新 P1（StrictMode core dispose、toolbar 取反模板死代码）——均 test-first 修复（bug note 112/113）并回写卡**；每面最终 ≥1 宿主场景。
+- [x] 运行 report-designer 相关全部 e2e spec（demo 9 用例 + host 5 用例 + playground-entry-pages 64 用例）**78 全绿**；失败项按 D2 watch-only 归因纪律逐条归因（本批零失败）。
+- [x] 收口登记：roadmap D3.3 行 `todo`→`done`（附执行证据引用）、daily log 收口节、surface-inventory/README 增量登记（新 spec 行 + 新宿主页 + P1-111/112/113 与 DR-7..11 登记）。
+- [x] 审计卡全部 `closed`（P0 零 / P1 3 条全 fixed / P2 当场修复 1 条 + 路由 5 条 / P3 卡内记录）；P2/P3 零悬挂声明。
 
 Exit Criteria:
 
-- [ ] 7 面每面 ≥1 宿主场景证据在案（e2e spec 引用 + 断言内容）；新增 spec 全绿。
-- [ ] roadmap D3.3 行 `done` + daily log 收口节 + 增量登记完成；卡状态与发现清单逐条一致（无未勾选 in-scope 项）。
+- [x] 7 面每面 ≥1 宿主场景证据在案（e2e spec 引用 + 断言内容）；新增 spec 全绿（5/5）。
+- [x] roadmap D3.3 行 `done` + daily log 收口节 + 增量登记完成；卡状态与发现清单逐条一致（无未勾选 in-scope 项）。
 
 ## Draft Review Record
 
@@ -177,17 +177,17 @@ Exit Criteria:
 
 > **关闭条件**：本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选 `[x]` 后，才能将 `Plan Status` 改为 `completed`。全量验证归此处（guide Rule 18）；closure-audit 由独立 fresh session 执行，执行 session 不得自审勾选。
 
-- [ ] 全部 in-scope P0/P1 已修复（卡内 test-first 证据），无静默降级
-- [ ] P2 全部显式路由 DR（`round2-dr-adjudication.md` 零悬挂），P3 卡内记录
-- [ ] 7 面审计卡全部 closed（或 fixed-pending-closure + 显式路由），面级宿主场景 ≥1 全覆盖
-- [ ] 复杂 bug 行内 bug note 补写完成（README 索引同步）
-- [ ] 受影响的 owner docs 同步（行为变更 → `docs/architecture/report-designer/` 对应文件；roadmap/daily log/surface-inventory/README 收口登记）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] 全部 in-scope P0/P1 已修复（卡内 test-first 证据——P1-111/112/113 三条红→绿在案），无静默降级
+- [x] P2 全部显式路由 DR（`round2-dr-adjudication.md` DR-7..DR-11 零悬挂），P3 卡内记录
+- [x] 7 面审计卡全部 closed，面级宿主场景 ≥1 全覆盖（demo 9 用例 + host 5 用例）
+- [x] 复杂 bug 行内 bug note 补写完成（**111/112/113**，README 索引同步）
+- [x] 受影响的 owner docs 同步（roadmap D3.3 行/daily log/surface-inventory/README 收口登记）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（task `ses_01f0649b3ffeqLuHEbeiX9iC80`，Verdict `approved`，证据见 Closure 节）；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`
 
 ## Deferred But Adjudicated
 
@@ -212,13 +212,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待执行后填写）
+Status Note: 5 Phase 全 completed；7 面审计卡全 closed；**P1 修复 3 条 test-first**（111 undo/redo/importTemplate 不回传画布——stale syncSource guard + applied-clone ref；112 StrictMode core dispose——ref-diff 托管；113 toolbar `!` 取反模板死代码——NUL hack 移除直读 readStatePath，红→绿证据在卡）+ 低成本 P2 修复 1 条（MA5 P3-09 `as never` 收敛）+ **P2 路由 5 条**（DR-7..DR-11 零悬挂）+ **bug note 111–113**（README 索引同步）；独立宿主页（report-designer-host）+ 独立 spec 5 用例全绿（关联 78 用例全绿，P1-111/113 e2e 确认点）；MA4.3 九条缺口全部复核收敛；全量验证 typecheck/build/lint 32/32、test 59/59、check exit 0；e2e 全量 1033 passed / 43 skipped / 14 failed 全为 D2 watch-only 归因清单（Tiptap c3-5 ×1、diff-view 批次 ×6、gantt ×3、gantt-perf/kanban-perf 50Hz ×3、w3d-editor:28 ×1——零新增，非本 plan 引入）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待定）
-- Evidence: （待定）
+- Auditor / Agent: 独立子 agent（fresh session，task `ses_01f0649b3ffeqLuHEbeiX9iC80`）
+- Evidence: Verdict `approved`（2 条 non-blocking process notes：① 交付物需收口 commit（本 commit 完成，标题含 full-green verification）；② 卡内跨卡 P1 编号并号（111/112/113 bug note 编号消歧，无碍））。审计核验：5 Phase 全 completed 无残留 `[ ]`；7 卡 closed + 卡内 test-first 证据（红→绿）逐条在案；代码修复 live 核对（core-dispatch syncSource 清除 / page-renderer applied-clone + ref-diff 托管 / host-data+bridge 窄接口无 as never / toolbar-helpers 无 NUL 字节）；回归测试断言正确行为；bug note 111-113 + README 索引；DR-7..11 零悬挂；宿主页 + spec 5 用例 + 路由 + entry-pages 断言；roadmap 行 done + daily log + surface-inventory 增量登记；验证命令独立复跑：core 185 / renderers 202 / typecheck 32/32 / build 32/32 / lint 32/32 / check exit 0 / e2e host+demo 14 用例全绿；诚实延期检查 pass（无已确认 live defect 静默延期）。
 
 Follow-up:
 
-- （待定）
+- 门禁盲区登记供 DG 承接：`check:audit-event-dispatch-ctx` 不覆盖 report-designer-renderers（人工核零 schema 事件派发点，D3.1/D3.2 同款登记维持）。
+- P2 集中修复消费 `round2-dr-adjudication.md` DR-7..DR-11（rd-2/4/5/6/7 i18n 族，roadmap DR 行）。
+- 快捷键面（Ctrl+Z/Y/S）与两套 undo UI 并存分歧（rd-6 P3-2/P3-3）为卡内 watch 项，DR 候选。
+- 跨面共性模式待裁：StrictMode effect-dispose 家族（bug 112 与 bug 90 同机制）已登记 daily log，人工确认后插 CX-13+。

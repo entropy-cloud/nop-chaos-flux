@@ -403,8 +403,13 @@ export function ReportDesignerPageRenderer(
   }, [actionScope, core, env, props.path, resolvedDesigner]);
 
   useEffect(() => {
+    const previousCore = lastReportDesignerCoreRef.current;
+    if (previousCore && previousCore !== core) {
+      previousCore.dispose();
+    }
+    lastReportDesignerCoreRef.current = core;
     return () => {
-      core.dispose();
+      lastReportDesignerCoreRef.current = null;
     };
   }, [core]);
 
@@ -425,6 +430,7 @@ export function ReportDesignerPageRenderer(
   const syncingSpreadsheetFromReportRef = useRef(false);
   const lastSyncedSpreadsheetRef = useRef(spreadsheetSnapshot.document);
   const lastAppliedReportSpreadsheetRef = useRef(snapshot.document.spreadsheet);
+  const lastReportDesignerCoreRef = useRef<ReportDesignerCore | null>(null);
 
   useEffect(() => {
     const nextReportSpreadsheet = snapshot.document.spreadsheet;
@@ -443,7 +449,7 @@ export function ReportDesignerPageRenderer(
 
     syncingSpreadsheetFromReportRef.current = true;
     spreadsheetCore.replaceDocument(snapshot.document.spreadsheet);
-    lastSyncedSpreadsheetRef.current = nextReportSpreadsheet;
+    lastSyncedSpreadsheetRef.current = spreadsheetCore.getSnapshot().document;
     syncingSpreadsheetFromReportRef.current = false;
   }, [snapshot.document.spreadsheet, snapshot.spreadsheetSyncSource, spreadsheetCore]);
 

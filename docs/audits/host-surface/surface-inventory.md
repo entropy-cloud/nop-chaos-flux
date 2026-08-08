@@ -130,6 +130,42 @@
 - **MA5 P3-06 no-op 回调 → 确认 live**（`use-spreadsheet-shell.ts:25-35` `setCellValue`/`setCommentText` 空回调，消费点 use-selection.ts:239-241/use-clipboard.ts:57/use-comments.ts:45；toolbar cell-editor UI 已移除但状态管线残留）→ ss-2/ss-7 面裁决。
 - **MA5 P3-12 计数语义 → 确认 live**（`spreadsheet-grid/constants.ts:105-123` `getSelectedAxisInfo` count 返回 span `end-start+1` 而非实际选中数；消费点 spreadsheet-grid.tsx:75-76 + use-context-menu-actions.ts:104/137/168）→ ss-7 面 P1/P2 登记。
 
+## D3.3 增量登记（2026-08-08，plan `2026-08-08-1315-2` Phase 1 交付）
+
+### 面级 e2e 覆盖矩阵（既有 spec ↔ rd-1..rd-7）
+
+| e2e spec                                        | rd-1 | rd-2 | rd-3 | rd-4 | rd-5 | rd-6 | rd-7 |
+| ----------------------------------------------- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| report-designer-demo（用例 1 核心面渲染）       | ✓    |      |      |      |      |      |      |
+| report-designer-demo（用例 2 字段项+inspector） |      | ✓    | ✓    |      |      |      |      |
+| report-designer-demo（用例 3 行列头）           | ✓    |      |      |      |      |      |      |
+| report-designer-demo（用例 4 sticky 滚动）      | ✓    |      |      |      |      |      |      |
+| report-designer-demo（用例 5 cell 点击）        |      |      | ✓    |      |      |      |      |
+| report-designer-demo（用例 6 工具栏本地化）     | ✓    |      |      |      |      |      |      |
+| report-designer-demo（用例 8 字段拖拽写值）     |      | ✓    |      |      |      |      |      |
+| report-designer-demo（用例 9 sheet tab）        | ✓    |      |      |      |      |      |      |
+| report-designer-host（**新增，Phase 5 落地**）  | ✓    | ✓    | ✓    | ✓    | ✓    | ✓    | ✓    |
+
+**缺口清单（= Phase 5 新增场景候选，2026-08-08 全部闭合）**：
+
+- **rd-4 预览**：无任何 e2e（demo 页无 preview adapter/入口）——**已闭合**：新增 `report-designer-host.spec.ts`（宿主页 toolbar Preview → mock preview adapter → running/完成态 + result 断言）。
+- **rd-5 保存**：无任何 e2e（demo 页无 save 入口）——**已闭合**：新增 spec（edit → Save → dirty 清除断言；save 数据导出 data 断言）。
+- **rd-6 undo**：无任何 e2e（demo 页无 report-designer undo 入口）——**已闭合**：新增 spec（edit → Undo 回退 → Redo 恢复，构成 P1-111 修复的 e2e 确认点）。
+- **rd-7 模板**：无任何 e2e（模板创建/导入导出链路）——**已闭合**：新增 spec（无效 document → 空模板 fallback 态断言）。
+
+### D3.3 收口增量（2026-08-08）
+
+- **新增宿主页 + spec 登记**：`apps/playground/src/pages/report-designer-host-demo.tsx` + `report-designer-host-page.tsx`（route `#/report-designer-host`，真实 `report-designer-page` renderer 宿主）；`tests/e2e/report-designer-host.spec.ts`（5 用例，2026-08-08 全绿）；`playground-entry-pages.spec.ts` 补 report-designer-host 路由断言。
+- **P1 修复登记（3 条 test-first，bug note 111–113）**：111 undo/redo/importTemplate 不回传画布（page-renderer syncSource guard + applied-clone ref）；112 StrictMode core dispose（ref-diff 托管）；113 toolbar `!` 取反模板死代码（直读 readStatePath）。
+- **P2 路由登记（DR-7..DR-11）**：rd-4 预览 i18n / rd-5 保存 i18n / rd-6 undo i18n / rd-7 模板 i18n / rd-2 拖放 i18n（`round2-dr-adjudication.md` 11 条零悬挂）。
+- **MA5 P3-09 收敛**：`as never` 类型修复（`SpreadsheetRuntimeSummaryInput` 窄接口）。
+
+### 已知遗留输入终态核对（2026-08-08 live）
+
+- **MA4.3 九条缺口（H7 回归基准）→ 全部收敛（纯复核非 re-fix）**：MA43-P0-01 `isReportDesignerCommand`（`__tests__/commands.test.ts:4-81` 直接测试）；MA43-P0-02/03 `resolveReportDesignerManifest`/`REPORT_DESIGNER_CAPABILITY_PUBLICATION`（`__tests__/report-designer-manifest-and-helpers.test.ts` 两 describe）；MA43-P0-04 `useReportDesignerHostScope`（同文件 renderHook）；MA43-P0-05 `readReportFieldDragPayload`（同文件 :176 起）；MA43-P1-02 `registerPreview`（`__tests__/adapters-and-helpers.test.ts:238`）；MA43-P1-03 readonly guard（`designer-core.test.ts:316-372`，含非 mutation 命令放行）；MA43-P1-04 `toReportDesignerActionResult`（`host-action-provider.test.ts:146-212`）；MA43-P1-05 `createReportFieldDragPayload`/`writeReportFieldDragPayload`（`__tests__/report-designer-manifest-and-helpers.test.ts:108-175`）——arm-index fixed 标注与 live 一致。
+- **MA5 P3-09 `bridge.ts:75-86` `as never` → 收敛**：仍存在 → H1 面登记裁决 = **P2 低成本当场修复**（Phase 4：`buildAggregatedRuntimeSummary` 参数改窄接口 `SpreadsheetRuntimeSummaryInput`，bridge 传类型安全对象；行为由既有 `bridge.test.ts` deriveDesignerHostSnapshot 断言锁定）。
+- **MA5 P2-03 inspector auto-open race → 收敛（复核）**：`page-renderer.tsx:383-403` 的 useEffect deps 已含 `actionScope`（修复方向 1 已落地），auto-open 与 namespace 注册同 commit 生效。
+
 ## 引用关系
 
 - D3.1 plan 引用: 本清单 fd-1..fd-13 + `docs/audits/host-surface/README.md` §1/§2（flow-designer 行）。

@@ -129,3 +129,6 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/108-spreadsheet-multi-select-count-span-fix.md`
 - `docs/bugs/109-spreadsheet-setcellnumberformat-noop-fix.md`
 - `docs/bugs/110-spreadsheet-find-result-shape-contract-drift-fix.md`
+- `docs/bugs/111-report-designer-undo-does-not-revert-canvas-fix.md`
+- `docs/bugs/112-report-designer-page-core-disposed-under-strict-mode-fix.md`
+- `docs/bugs/113-report-designer-toolbar-negated-boolean-templates-fix.md`

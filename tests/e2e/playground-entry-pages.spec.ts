@@ -24,6 +24,14 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     ).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('.report-designer-demo')).toBeVisible();
   },
+  'report-designer-host': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'Report Designer Host Playground', level: 1 }),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[data-slot="report-designer-toolbar"]')).toBeVisible({
+      timeout: 15_000,
+    });
+  },
   'debugger-lab': async (page) => {
     await expect(page.getByRole('heading', { name: 'Debugger Lab', level: 1 })).toBeVisible({
       timeout: 15_000,

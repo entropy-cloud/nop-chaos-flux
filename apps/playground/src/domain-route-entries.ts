@@ -63,6 +63,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'report-designer-page, field panel, inspector shell, toolbar, spreadsheet canvas.',
   },
   {
+    id: 'report-designer-host',
+    title: 'Report Designer Host',
+    eyebrow: 'Host Page Renderer',
+    description: 'report-designer-page host renderer: toolbar actions (undo/redo/save/preview), field panel, inspector shell, canvas sync, empty template fallback.',
+  },
+  {
     id: 'spreadsheet',
     title: 'Spreadsheet',
     eyebrow: 'Spreadsheet Host',

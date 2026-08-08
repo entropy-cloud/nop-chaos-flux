@@ -16,13 +16,18 @@ export interface ReportDesignerAggregatedRuntimeSummary {
   dirty: boolean;
 }
 
+export interface SpreadsheetRuntimeSummaryInput {
+  history?: { canUndo: boolean; canRedo: boolean };
+  dirty?: boolean;
+}
+
 export function buildAggregatedRuntimeSummary(
   snapshot: ReportDesignerRuntimeSnapshot,
-  spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
+  spreadsheetSnapshot?: SpreadsheetRuntimeSummaryInput,
 ): ReportDesignerAggregatedRuntimeSummary {
   return {
-    canUndo: snapshot.canUndo || Boolean(spreadsheetSnapshot?.history.canUndo),
-    canRedo: snapshot.canRedo || Boolean(spreadsheetSnapshot?.history.canRedo),
+    canUndo: snapshot.canUndo || Boolean(spreadsheetSnapshot?.history?.canUndo),
+    canRedo: snapshot.canRedo || Boolean(spreadsheetSnapshot?.history?.canRedo),
     dirty: snapshot.dirty || Boolean(spreadsheetSnapshot?.dirty),
   };
 }

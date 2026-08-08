@@ -204,4 +204,55 @@ describe('ReportDesignerPageRenderer shell contracts', { timeout: 15000 }, () =>
       expect(insertButton.disabled).toBe(false);
     });
   });
+
+  it('propagates report-designer undo/redo back to the spreadsheet canvas', async () => {
+    const spreadsheet = createEmptyDocument('page-renderer-undo-sync');
+    const sheetId = spreadsheet.workbook.sheets[0].id;
+
+    renderReportDesignerPage({
+      document: createReportTemplateDocument(spreadsheet, 'Undo Sync Report') as any,
+      config: createRuntimeConfig(),
+      toolbar: [
+        {
+          type: 'action-button',
+          label: 'Set A1',
+          onClick: {
+            action: 'spreadsheet:setCellValue',
+            args: {
+              cell: { sheetId, address: 'A1', row: 0, col: 0 },
+              value: 'v1',
+            },
+          },
+        },
+        {
+          type: 'action-button',
+          label: 'Undo report',
+          onClick: { action: 'report-designer:undo' },
+        },
+        {
+          type: 'action-button',
+          label: 'Redo report',
+          onClick: { action: 'report-designer:redo' },
+        },
+      ],
+    });
+
+    const cellA1 = () =>
+      document.querySelector('td.ss-cell[data-row="0"][data-col="0"]') as HTMLElement | null;
+
+    await waitFor(() => expect(cellA1()).toBeTruthy());
+    expect(cellA1()?.textContent).toBe('');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Set A1' }));
+
+    await waitFor(() => expect(cellA1()?.textContent).toBe('v1'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Undo report' }));
+
+    await waitFor(() => expect(cellA1()?.textContent).toBe(''));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Redo report' }));
+
+    await waitFor(() => expect(cellA1()?.textContent).toBe('v1'));
+  });
 });

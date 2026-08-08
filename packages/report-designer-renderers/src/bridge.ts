@@ -73,17 +73,12 @@ export function deriveDesignerHostSnapshot(
   designer: ReportDesignerRuntimeSnapshot,
 ): ReportDesignerHostSnapshot {
   const runtime = buildAggregatedRuntimeSummary(designer, {
-    document: { workbook: spreadsheet.workbook },
-    activeSheetId: spreadsheet.activeSheet?.id ?? '',
-    selection: { kind: 'none' },
     history: {
       canUndo: spreadsheet.runtime.canUndo,
       canRedo: spreadsheet.runtime.canRedo,
     },
-    readonly: spreadsheet.runtime.readonly,
     dirty: spreadsheet.runtime.dirty,
-    viewport: spreadsheet.runtime.viewport,
-  } as never);
+  });
 
   return {
     ...spreadsheet,

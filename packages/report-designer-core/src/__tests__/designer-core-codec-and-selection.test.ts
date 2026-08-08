@@ -168,4 +168,55 @@ describe('createReportDesignerCore codec and selection behavior', () => {
 
     expect(core.getSnapshot().document.spreadsheet.workbook.sheets[0]!.cells?.A1).toBeUndefined();
   });
+
+  it('clears spreadsheetSyncSource when the document is replaced from the report side', async () => {
+    const spreadsheetDoc = createEmptyDocument();
+    const doc = createReportTemplateDocument(spreadsheetDoc);
+    const core = createReportDesignerCore({ document: doc, config: defaultConfig });
+
+    const nextSpreadsheet = cloneStructured(doc.spreadsheet);
+    core.syncSpreadsheetDocument(nextSpreadsheet);
+    expect(core.getSnapshot().spreadsheetSyncSource).toBe(nextSpreadsheet);
+
+    await core.dispatch({ type: 'report-designer:undo' });
+    expect(core.getSnapshot().spreadsheetSyncSource).toBeUndefined();
+
+    const imported = cloneStructured(doc);
+    imported.semantic = {
+      ...(imported.semantic ?? {}),
+      workbookMeta: { title: 'Imported Report' },
+    };
+    const codecCore = createReportDesignerCore({
+      document: doc,
+      config: defaultConfig,
+      profile: {
+        id: 'json-profile',
+        kind: 'report-template',
+        fieldSourceIds: [],
+        fieldDropIds: [],
+        codecId: 'json-codec',
+      },
+      adapters: {
+        codecs: new Map([
+          [
+            'json-codec',
+            {
+              id: 'json-codec',
+              importDocument: vi.fn(async () => imported),
+              exportDocument: vi.fn(async () => ({})),
+            },
+          ],
+        ]),
+      },
+    });
+    codecCore.syncSpreadsheetDocument(nextSpreadsheet);
+    expect(codecCore.getSnapshot().spreadsheetSyncSource).toBe(nextSpreadsheet);
+
+    const importResult = await codecCore.dispatch({
+      type: 'report-designer:importTemplate',
+      payload: { foo: 'bar' },
+    });
+    expect(importResult.ok).toBe(true);
+    expect(codecCore.getSnapshot().spreadsheetSyncSource).toBeUndefined();
+  });
 });
