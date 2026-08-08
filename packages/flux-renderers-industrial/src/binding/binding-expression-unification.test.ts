@@ -3,10 +3,11 @@ import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux
 import { createDefaultEnv } from '@nop-chaos/flux-react';
 import { PointStore } from './point-store.js';
 import { ReverseIndex } from './reverse-index.js';
-import { DirtyCollector, RefreshPipeline, findCircularDependencyError, CircularDependencyError } from './dirty-collector.js';
+import { DirtyCollector, type ApplyAttrs } from './dirty-collector.js';
+import { RefreshPipeline } from './refresh-pipeline.js';
+import { findCircularDependencyError, CircularDependencyError } from './expression-errors.js';
 import { collectBindingPointIds } from './reverse-index.js';
 import { extractExpressionDepsViaProbe } from './flux-eval.js';
-import type { ApplyAttrs } from './dirty-collector.js';
 import type { ExpressionCompiler, RendererEnv } from '@nop-chaos/flux-core';
 
 /**

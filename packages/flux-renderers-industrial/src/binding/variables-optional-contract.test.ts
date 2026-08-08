@@ -4,8 +4,8 @@ import { createDefaultEnv } from '@nop-chaos/flux-react';
 import { validateScadaConfig } from '../serialization/validate.js';
 import { PointStore } from './point-store.js';
 import { ReverseIndex } from './reverse-index.js';
-import { DirtyCollector, RefreshPipeline } from './dirty-collector.js';
-import type { ApplyAttrs } from './dirty-collector.js';
+import { DirtyCollector, type ApplyAttrs } from './dirty-collector.js';
+import { RefreshPipeline } from './refresh-pipeline.js';
 import type { ScadaConfig, ScadaPointDeclaration, ScadaSymbolNode } from '../serialization/config-types.js';
 
 /**

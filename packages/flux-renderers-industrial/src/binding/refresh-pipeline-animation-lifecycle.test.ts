@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { PointStore } from './point-store.js';
 import { ReverseIndex } from './reverse-index.js';
-import { DirtyCollector, RefreshPipeline } from './dirty-collector.js';
+import { DirtyCollector } from './dirty-collector.js';
+import { RefreshPipeline } from './refresh-pipeline.js';
 import type { ApplyAttrs } from './dirty-collector.js';
 import { Animator } from './animator.js';
 import type {

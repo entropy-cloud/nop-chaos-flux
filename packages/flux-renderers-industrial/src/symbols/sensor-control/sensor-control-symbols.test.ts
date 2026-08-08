@@ -5,7 +5,8 @@ import { clearScadaSymbolRegistry, hasScadaSymbol } from '../symbol-registry.js'
 import { ScadaCanvasEngine } from '../../engine/scada-engine.js';
 import { PointStore } from '../../binding/point-store.js';
 import { ReverseIndex } from '../../binding/reverse-index.js';
-import { DirtyCollector, RefreshPipeline } from '../../binding/dirty-collector.js';
+import { DirtyCollector } from '../../binding/dirty-collector.js';
+import { RefreshPipeline } from '../../binding/refresh-pipeline.js';
 import { Animator } from '../../binding/animator.js';
 import { StateVisualApplier } from '../visual-state.js';
 import { validateScadaConfig } from '../../serialization/validate.js';

@@ -1,7 +1,7 @@
 import { PointStore } from './point-store.js';
 import { ReverseIndex } from './reverse-index.js';
-import { DirtyCollector, RefreshPipeline } from './dirty-collector.js';
-import type { ApplyAttrs } from './dirty-collector.js';
+import { DirtyCollector, type ApplyAttrs } from './dirty-collector.js';
+import { RefreshPipeline } from './refresh-pipeline.js';
 import type {
   ScadaPointDeclaration,
   ScadaStateDeclaration,

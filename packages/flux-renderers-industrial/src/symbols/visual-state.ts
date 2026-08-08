@@ -1,5 +1,5 @@
 import type { ScadaCanvasEngine } from '../engine/scada-engine.js';
-import type { RefreshPipeline } from '../binding/dirty-collector.js';
+import type { RefreshPipeline } from '../binding/refresh-pipeline.js';
 import type { DirtyCollector } from '../binding/dirty-collector.js';
 import type { Unsubscribe } from '../binding/point-store.js';
 import { resolveSymbolStyle } from './style-resolver.js';

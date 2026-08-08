@@ -15,7 +15,8 @@ import {
   type FluxEvalContext,
 } from '../../binding/flux-eval.js';
 import { errorMessage } from '../scada-errors.js';
-import { RefreshPipeline, type ApplyAttrs } from '../../binding/dirty-collector.js';
+import { type ApplyAttrs } from '../../binding/dirty-collector.js';
+import { RefreshPipeline } from '../../binding/refresh-pipeline.js';
 
 /**
  * 复杂表达式经平台依赖收集产出订阅路径：compile + probe 求值 + 读

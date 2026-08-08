@@ -5,7 +5,8 @@ import { MockApp, MockLeafer, MockRect, resetLeaferMock } from '../test-support/
 import { Animator } from '../binding/animator.js';
 import { PointStore } from '../binding/point-store.js';
 import { ReverseIndex } from '../binding/reverse-index.js';
-import { DirtyCollector, RefreshPipeline } from '../binding/dirty-collector.js';
+import { DirtyCollector } from '../binding/dirty-collector.js';
+import { RefreshPipeline } from '../binding/refresh-pipeline.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createDefaultEnv } from '@nop-chaos/flux-react';
 
