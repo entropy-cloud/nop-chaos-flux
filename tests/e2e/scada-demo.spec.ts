@@ -471,3 +471,77 @@ test.describe('Scada Demo assertion matrix (I15.1)', () => {
     await assertTrackedPageErrors(page);
   });
 });
+
+// ── A1（P0）复合图元中心点几何回归网（plan 2026-08-08-1910-1 Phase 1）──
+// 真实 leafer boxBounds 断言：复合图元内层中心点放置的 Ellipse/Group 须设 around:'center'，
+// 否则 leafer 默认 top-left 锚定 → 内层表盘/叶轮/转子偏到右下并溢出符号框。
+// mock（leafer-ui-mock）不建模 bounds，故此断言主走 e2e（真实浏览器读 getBounds('box','local')）。
+// 注：leafer `boxBounds` getter 返回 inner box（恒 {x:0,y:0,w,h}），不反映 around 锚定；
+// `getBounds('box','local')` 返回 parent-local 空间 box（含 around 平移），故用后者。
+test.describe('A1 composite center-point geometry (plan 2026-08-08-1910-1)', () => {
+  test('gauge body box fills the symbol footprint (center-point anchored, no bottom-right overflow)', async ({ page }) => {
+    await page.goto('/#/scada-demo', { waitUntil: 'domcontentloaded' });
+    const cid = await getScadaCid(page);
+
+    // gauge-1: scada-instrument-gauge, width 120, height 120 → body Ellipse center-point placed at (60,60)
+    const bodyLocal = await page.evaluate((key) => {
+      const handle = (window as unknown as Record<string, unknown>)[key] as { getSymbol(id: string): any };
+      const body = handle.getSymbol('gauge-1')?.children?.find((c: any) => c.name === 'body');
+      if (!body) return null;
+      const b = body.getBounds('box', 'local');
+      return { x: b.x, y: b.y, width: b.width, height: b.height, around: body.around };
+    }, `__flux_scada_${cid}`);
+
+    expect(bodyLocal, 'gauge body should exist').not.toBeNull();
+    // Fix: around='center' → body center at (60,60) → box spans (0,0)-(120,120) = footprint
+    // Bug (no around): top-left at (60,60) → box {x:60,y:60,w:120,h:120} (overflows)
+    expect(bodyLocal!.x).toBeCloseTo(0, 6);
+    expect(bodyLocal!.y).toBeCloseTo(0, 6);
+    expect(bodyLocal!.around).toBe('center');
+    await assertTrackedPageErrors(page);
+  });
+
+  test('pump impeller is centered at the body center (no eccentric overflow)', async ({ page }) => {
+    await page.goto('/#/scada-demo', { waitUntil: 'domcontentloaded' });
+    const cid = await getScadaCid(page);
+
+    // pump-1: scada-device-pump, width 60, height 60 → body center (30,30)
+    // impeller Ellipse center-point placed at (30,30), width=38.4 (circle)
+    const impellerLocal = await page.evaluate((key) => {
+      const handle = (window as unknown as Record<string, unknown>)[key] as { getSymbol(id: string): any };
+      const impeller = handle.getSymbol('pump-1')?.children?.find((c: any) => c.name === 'impeller');
+      if (!impeller) return null;
+      const b = impeller.getBounds('box', 'local');
+      return {
+        centerX: b.x + b.width / 2,
+        centerY: b.y + b.height / 2,
+        around: impeller.around,
+      };
+    }, `__flux_scada_${cid}`);
+
+    expect(impellerLocal, 'pump impeller should exist').not.toBeNull();
+    // Fix: around='center' → impeller center at (30,30) = body center
+    // Bug (no around): top-left at (30,30) → center at (49.2,49.2) (eccentric, overflows)
+    expect(impellerLocal!.centerX).toBeCloseTo(30, 0);
+    expect(impellerLocal!.centerY).toBeCloseTo(30, 0);
+    expect(impellerLocal!.around).toBe('center');
+    await assertTrackedPageErrors(page);
+  });
+
+  test('sensor-control indicator lamp is center-point anchored', async ({ page }) => {
+    await page.goto('/#/scada-demo', { waitUntil: 'domcontentloaded' });
+    const cid = await getScadaCid(page);
+
+    // indicator-1: scada-sensor-control-indicator, width 56, height 32 → lamp body center at (28,16)
+    const lampInfo = await page.evaluate((key) => {
+      const handle = (window as unknown as Record<string, unknown>)[key] as { getSymbol(id: string): any };
+      const lamp = handle.getSymbol('indicator-1')?.children?.find((c: any) => c.name === 'body');
+      if (!lamp) return null;
+      return { around: lamp.around };
+    }, `__flux_scada_${cid}`);
+
+    expect(lampInfo, 'indicator lamp should exist').not.toBeNull();
+    expect(lampInfo!.around).toBe('center');
+    await assertTrackedPageErrors(page);
+  });
+});

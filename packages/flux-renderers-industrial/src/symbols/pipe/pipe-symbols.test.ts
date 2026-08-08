@@ -300,6 +300,55 @@ describe('I9.4 scada-pipe-junction (连接点 + 流动方向动画 + 与设备�
     });
   });
 
+  // plan 2026-08-08-1910-1 Phase 3（A12 open：pipe-junction stubs stroke/fill 路由）：
+  // applyProps 把 flow/dashOffset/strokeWidth 路由到 stubs，但 applyCompositeProps 只传 {root,body} →
+  // BODY_FIELDS（fill/stroke）只到 body，stubs 保留 create 期颜色 → 改色后半截接线头不变色。
+  describe('scada-pipe-junction stubs stroke/fill follow body (plan 2026-08-08-1910-1 Phase 3 A12)', () => {
+    it('applyProps 路由 stroke 到 stubs（body 与 stubs 同色）', () => {
+      const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+      engine.reset({
+        version: 1,
+        symbols: [
+          junctionNode('j1', {
+            custom: {
+              connections: [
+                { id: 'a', x: 0, y: 0.5, direction: 'in' },
+                { id: 'b', x: 1, y: 0.5, direction: 'out' },
+              ],
+            },
+          }),
+        ],
+      });
+      engine.setSymbolProps('j1', { stroke: '#ff0000' });
+      // body 同色（经 applyCompositeProps BODY_FIELDS）
+      expect(childOf(engine.getSymbol('j1')!.node, 'body').stroke).toBe('#ff0000');
+      // stubs 同色（A12 修复前：stubs 保留 create 期颜色 #3f7b5a）
+      expect(stubOf(engine.getSymbol('j1')!.node, 0).stroke).toBe('#ff0000');
+      expect(stubOf(engine.getSymbol('j1')!.node, 1).stroke).toBe('#ff0000');
+      engine.destroy();
+    });
+
+    it('applyProps 路由 fill 到 stubs（fallback fill→stroke 覆盖接线头）', () => {
+      const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+      engine.reset({
+        version: 1,
+        symbols: [
+          junctionNode('j1', {
+            custom: {
+              connections: [{ id: 'a', x: 0, y: 0.5, direction: 'in' }],
+            },
+          }),
+        ],
+      });
+      engine.setSymbolProps('j1', { fill: '#00ff00' });
+      // body 同色
+      expect(childOf(engine.getSymbol('j1')!.node, 'body').fill).toBe('#00ff00');
+      // stubs 同色（A12 修复前：stubs fill 不变）
+      expect(stubOf(engine.getSymbol('j1')!.node, 0).fill).toBe('#00ff00');
+      engine.destroy();
+    });
+  });
+
   it('should validate the flow parameter shape', () => {
     const base = { id: 'j1', type: 'scada-pipe-junction', x: 0, y: 0, custom: { connections: [] } };
     expect(validateScadaConfig({ version: 1, symbols: [base] })).toEqual({ ok: true });

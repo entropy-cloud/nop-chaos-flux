@@ -1,5 +1,5 @@
 import { Rect, Text } from 'leafer-ui';
-import { createCompositeGroup, createInstrumentSymbol } from './common.js';
+import { createCompositeGroup, createInstrumentSymbol, setAttrs } from './common.js';
 import type { LeafNode } from '../symbol-types.js';
 
 export const scadaInstrumentProgressType = 'scada-instrument-progress';
@@ -53,10 +53,19 @@ export const scadaInstrumentProgressDefinition = createInstrumentSymbol({
       fontSize: 12,
       fill: props.textColor,
     }) as LeafNode;
-    return createCompositeGroup(props, [
+    const result = createCompositeGroup(props, [
       { name: 'body', node: track },
       { name: 'bar', node: bar },
       { name: 'label', node: label },
     ]);
+    // plan 2026-08-08-1910-1 Phase 2（A11）：height 几何变更重算 track 高度/cornerRadius + bar 高度/cornerRadius
+    // + label y 锚点。width 是 binding 驱动的 bar 长度（extent 宽度），不 resize 容器。
+    result.parts.resize = (key, value) => {
+      if (key !== 'height') return;
+      setAttrs(track, { height: value, cornerRadius: value / 2 });
+      setAttrs(bar, { height: value - 4, cornerRadius: (value - 4) / 2 });
+      setAttrs(label, { y: value / 2 - 8 });
+    };
+    return result;
   },
 });

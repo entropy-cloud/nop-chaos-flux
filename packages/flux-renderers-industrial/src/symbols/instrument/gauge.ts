@@ -31,6 +31,7 @@ export const scadaInstrumentGaugeDefinition = createInstrumentSymbol({
       name: 'body',
       x: width / 2,
       y: height / 2,
+      around: 'center',
       width,
       height,
       fill: props.fill,

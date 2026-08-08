@@ -34,6 +34,7 @@ export const scadaDeviceMotorDefinition = createDeviceSymbol({
       name: 'rotor',
       x: width / 2,
       y: height / 2,
+      around: 'center',
       width: radius * 2,
       height: radius * 2,
       fill: '#ff9800',

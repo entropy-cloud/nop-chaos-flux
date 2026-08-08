@@ -70,10 +70,11 @@ export function applyCompositeProps(
       continue;
     }
     if (EXTENT_FIELDS.has(key)) {
-      // plan 2026-08-06-0900-2 P2-4：width/height 门禁保留——有 extent part（liquid/bar 长度件）路由到 extent；
-      // 无 extent part 时回落 per-symbol resize hook（重算 body + 子形状相对锚点），不再静默丢弃。
+      // plan 2026-08-08-1910-1 Phase 2（A11）：width/height 门禁扩展——有 extent part（liquid/bar 长度件）路由到 extent；
+      // 同时若有 per-symbol resize hook 也调用之（重算 body 容器几何），使容器与 extent 两不误。
+      // resize hook 负责忽略 binding 驱动维度（如 level height=液位）只处理几何维度（如 level width=罐宽）。
       if (parts.extent) setAttrs(parts.extent, { [key]: value });
-      else parts.resize?.(key as 'width' | 'height', value as number, parts);
+      parts.resize?.(key as 'width' | 'height', value as number, parts);
       continue;
     }
     if (BODY_FIELDS.has(key)) {

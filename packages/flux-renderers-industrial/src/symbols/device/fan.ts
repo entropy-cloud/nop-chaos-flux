@@ -30,7 +30,7 @@ export const scadaDeviceFanDefinition = createDeviceSymbol({
       strokeWidth: props.strokeWidth,
     }) as LeafNode;
     const radius = Math.min(width, height) * 0.32;
-    const blades = new Group({ name: 'blades', x: width / 2, y: height / 2 }) as LeafNode;
+    const blades = new Group({ name: 'blades', x: width / 2, y: height / 2, around: 'center' }) as LeafNode;
     const bladeColors = ['#ffb300', '#fb8c00', '#ffb300', '#fb8c00'];
     const bladeNodes: LeafNode[] = [];
     for (let index = 0; index < 4; index++) {

@@ -22,6 +22,7 @@ export const scadaSensorControlIndicatorDefinition = createSensorControlSymbol({
       name: 'body',
       x: width / 2,
       y: height / 2,
+      around: 'center',
       width: height * 0.72,
       height: height * 0.72,
       fill: props.fill,

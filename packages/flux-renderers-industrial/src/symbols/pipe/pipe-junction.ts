@@ -130,6 +130,10 @@ export const scadaPipeJunctionDefinition: ScadaSymbolDefinition = {
     if (props.dashOffset !== undefined) patch.dashOffset = props.dashOffset;
     // plan 2026-08-06-0900-2 P2-8：strokeWidth 路由到 stubs，使 strokeWidth 变更后 body/stub 粗细一致。
     if (props.strokeWidth !== undefined) patch.strokeWidth = props.strokeWidth;
+    // plan 2026-08-08-1910-1 Phase 3（A12）：stroke/fill 路由到 stubs，使改色后 body 与接线头同色
+    // （原 applyCompositeProps 只传 {root,body} → BODY_FIELDS 只到 body，stubs 保留 create 期颜色）。
+    if (props.stroke !== undefined) patch.stroke = props.stroke;
+    if (props.fill !== undefined) patch.fill = props.fill;
     if (Object.keys(patch).length > 0) {
       for (const stub of state.stubs) stub.set(patch);
     }

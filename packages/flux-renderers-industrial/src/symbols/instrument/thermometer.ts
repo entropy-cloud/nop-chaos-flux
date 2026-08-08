@@ -1,5 +1,5 @@
 import { Ellipse, Rect, Text } from 'leafer-ui';
-import { createCompositeGroup, createInstrumentSymbol } from './common.js';
+import { createCompositeGroup, createInstrumentSymbol, setAttrs } from './common.js';
 import type { LeafNode } from '../symbol-types.js';
 
 export const scadaInstrumentThermometerType = 'scada-instrument-thermometer';
@@ -56,6 +56,7 @@ export const scadaInstrumentThermometerDefinition = createInstrumentSymbol({
       name: 'bulb',
       x: width / 2,
       y: height - 8,
+      around: 'center',
       width: width - 6,
       height: width - 6,
       fill: '#e53935',
@@ -72,12 +73,22 @@ export const scadaInstrumentThermometerDefinition = createInstrumentSymbol({
       fill: props.textColor,
       textAlign: 'center',
     }) as LeafNode;
-    return createCompositeGroup(props, [
+    const result = createCompositeGroup(props, [
       { name: 'body', node: tube },
       { name: 'liquid', node: liquid },
       { name: 'bulb', node: bulb },
       { name: 'label', node: label },
     ]);
+    // plan 2026-08-08-1910-1 Phase 2（A11）：width 几何变更重算 tube 宽度/cornerRadius + liquid 宽度/cornerRadius
+    // + bulb 中心 x/尺寸（around:'center' 语义下 x=中心）。height 是 binding 驱动的液位（extent 长度），不 resize 容器。
+    result.parts.resize = (key, value) => {
+      if (key !== 'width') return;
+      setAttrs(tube, { width: value, cornerRadius: value / 2 });
+      setAttrs(liquid, { width: value - 8, cornerRadius: (value - 8) / 2 });
+      setAttrs(bulb, { x: value / 2, width: value - 6, height: value - 6 });
+      setAttrs(label, { width: value });
+    };
+    return result;
   },
   applyProps: (node, parts, props) => {
     if (typeof props.height !== 'number' || !parts.extent) return;

@@ -1,5 +1,5 @@
 import { Rect, Text } from 'leafer-ui';
-import { createCompositeGroup, createInstrumentSymbol } from './common.js';
+import { createCompositeGroup, createInstrumentSymbol, setAttrs } from './common.js';
 import type { LeafNode } from '../symbol-types.js';
 
 export const scadaInstrumentLevelType = 'scada-instrument-level';
@@ -54,11 +54,20 @@ export const scadaInstrumentLevelDefinition = createInstrumentSymbol({
       fill: props.textColor,
       textAlign: 'center',
     }) as LeafNode;
-    return createCompositeGroup(props, [
+    const result = createCompositeGroup(props, [
       { name: 'body', node: body },
       { name: 'liquid', node: liquid },
       { name: 'label', node: label },
     ]);
+    // plan 2026-08-08-1910-1 Phase 2（A11）：width 几何变更重算 body 罐宽 + liquid 宽度（保持 2px padding）
+    // + label 宽度。height 是 binding 驱动的液位（extent 长度），不 resize 容器——避免几何/液位语义打架。
+    result.parts.resize = (key, value) => {
+      if (key !== 'width') return;
+      setAttrs(body, { width: value });
+      setAttrs(liquid, { width: value - 4 });
+      setAttrs(label, { width: value });
+    };
+    return result;
   },
   applyProps: (node, parts, props) => {
     if (typeof props.height !== 'number' || !parts.extent) return;

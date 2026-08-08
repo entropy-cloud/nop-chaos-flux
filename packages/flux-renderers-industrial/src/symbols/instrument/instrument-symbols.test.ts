@@ -374,3 +374,76 @@ describe('I9.2 instrument composite resize via applyProps (plan 2026-08-06-0900-
     engine.destroy();
   });
 });
+
+// plan 2026-08-08-1910-1 Phase 2（A11 open：level/thermometer/progress 补 parts.resize）：
+// 三者有 extent part（liquid/bar），applyCompositeProps EXTENT_FIELDS 分支原只路由到 extent（liquid/bar 长度），
+// body/tank/track 容器留在 create 期几何——改几何尺寸时液柱/bar 溢出容器。
+// 修复后补 parts.resize hook（重算容器几何），extent 仍由 binding 驱动。
+// 语义区分：level/thermometer 的 height = binding 液位（不 resize 容器），width = 几何（resize 容器）；
+// progress 的 width = binding bar 长度（不 resize 容器），height = 几何（resize 容器）。
+describe('I9.2 instrument composite resize via applyProps (plan 2026-08-08-1910-1 Phase 2 A11)', () => {
+  it('level: width applyProps 重算 body width 并调整 liquid width（液柱不溢出罐体）', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [instrumentNode('l1', 'scada-instrument-level')] });
+    expect(childOf(engine.getSymbol('l1')!.node, 'body').width).toBe(60);
+    engine.setSymbolProps('l1', { width: 200 });
+    // body（罐体）width 随几何变更
+    expect(childOf(engine.getSymbol('l1')!.node, 'body').width).toBe(200);
+    // liquid（液柱）width = body width - 4（两侧 2px padding），不溢出
+    expect(childOf(engine.getSymbol('l1')!.node, 'liquid').width).toBe(196);
+    // label width 跟随容器
+    expect(childOf(engine.getSymbol('l1')!.node, 'label').width).toBe(200);
+    engine.destroy();
+  });
+
+  it('thermometer: width applyProps 重算 tube width 并调整 liquid/bulb（液柱不溢出管体）', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [instrumentNode('t1', 'scada-instrument-thermometer')] });
+    expect(childOf(engine.getSymbol('t1')!.node, 'body').width).toBe(40);
+    engine.setSymbolProps('t1', { width: 200 });
+    // body（管体）width 随几何变更 + cornerRadius 跟随
+    expect(childOf(engine.getSymbol('t1')!.node, 'body').width).toBe(200);
+    expect(childOf(engine.getSymbol('t1')!.node, 'body').cornerRadius).toBe(100);
+    // liquid（液柱）width = body width - 8（两侧 4px padding）
+    expect(childOf(engine.getSymbol('t1')!.node, 'liquid').width).toBe(192);
+    // bulb 中心 x = width/2，尺寸 = width - 6
+    expect(childOf(engine.getSymbol('t1')!.node, 'bulb').x).toBe(100);
+    expect(childOf(engine.getSymbol('t1')!.node, 'bulb').width).toBe(194);
+    engine.destroy();
+  });
+
+  it('progress: height applyProps 重算 track height 并调整 bar（bar 不溢出 track）', () => {
+    const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+    engine.reset({ version: 1, symbols: [instrumentNode('p1', 'scada-instrument-progress')] });
+    expect(childOf(engine.getSymbol('p1')!.node, 'body').height).toBe(24);
+    engine.setSymbolProps('p1', { height: 48 });
+    // body（track）height 随几何变更 + cornerRadius 跟随
+    expect(childOf(engine.getSymbol('p1')!.node, 'body').height).toBe(48);
+    expect(childOf(engine.getSymbol('p1')!.node, 'body').cornerRadius).toBe(24);
+    // bar height = track height - 4（上下 2px padding），不溢出
+    expect(childOf(engine.getSymbol('p1')!.node, 'bar').height).toBe(44);
+    expect(childOf(engine.getSymbol('p1')!.node, 'bar').cornerRadius).toBe(22);
+    engine.destroy();
+  });
+
+  it('level: height binding 不被 resize 覆盖（extent 仍由 binding 驱动液位）', () => {
+    const { engine, setValue, flush } = createInstrumentHarness(
+      {
+        version: 1,
+        symbols: [
+          instrumentNode('l1', 'scada-instrument-level', {
+            height: 100,
+            bindings: { height: { point: 'level', scale: { k: 1, b: 0 } } },
+          }),
+        ],
+      },
+      [{ id: 'level', value: 0 }],
+    );
+    setValue('level', 40);
+    flush();
+    // liquid.height = binding 液位（40），body.height 仍是 create 期几何（100，不是 40）
+    expect(childOf(engine.getSymbol('l1')!.node, 'liquid').height).toBe(40);
+    expect(childOf(engine.getSymbol('l1')!.node, 'body').height).toBe(100);
+    engine.destroy();
+  });
+});

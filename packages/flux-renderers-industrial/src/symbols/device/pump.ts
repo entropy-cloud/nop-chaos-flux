@@ -34,6 +34,7 @@ export const scadaDevicePumpDefinition = createDeviceSymbol({
       name: 'impeller',
       x: width / 2,
       y: height / 2,
+      around: 'center',
       width: radius * 2,
       height: radius * 2,
       fill: '#26a69a',

@@ -30,6 +30,7 @@ export const scadaSensorControlSensorDefinition = createSensorControlSymbol({
       name: 'probe',
       x: width / 2,
       y: 10,
+      around: 'center',
       width: width * 0.6,
       height: width * 0.6,
       fill: '#26a69a',
