@@ -1,6 +1,6 @@
 # 02 Industrial HMI Component Audit — HCA11 Editor Infra（编辑器基础设施 23 维包级深审 + 自动修复）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-08
 > Mission: industrial-hmi-component-audit
 > Work Item: HCA11. Editor infra 审计
@@ -110,12 +110,12 @@ editor infra 是编辑器基础设施胶水层（session 一致性 / 事件桥�
 
 ### Phase 1 - 逐文件 23 维包级深审 + finding triage
 
-Status: planned
-Targets: `packages/flux-renderers-industrial/src/editor/`（9 源文件）、`docs/audits/2026-08-08-*-hca11-editor-infra.md`
+Status: completed
+Targets: `packages/flux-renderers-industrial/src/editor/`（9 源文件）、`docs/audits/2026-08-08-1316-hca11-editor-infra.md`
 
 - Item Types: `Proof | Decision`
 
-- [ ] 逐文件过 `docs/skills/deep-audit-prompts.md` 23 维。重点维度：
+- [x] 逐文件过 `docs/skills/deep-audit-prompts.md` 23 维。重点维度：
   - **session 模型不可变性**（editor-session.ts）：working config / selection / mode 的更新路径是否全部经不可变 produce；外部直接 mutate 的守卫；session 变更通知的时序。
   - **adapter 事件桥节流/批处理**（editor-adapter.ts）：engine 事件 → React 通知的节流窗口；批处理不丢事件 / 不重复派发；节流期间销毁的清理（重入/竞态）；与 undo-redo / connection 协同的事件序。
   - **working helpers 纯派生**（editor-working-helpers.ts）：派生函数纯净性（无副作用）；空 selection / 空 config 的边界；派生与 session 真相源一致。
@@ -127,49 +127,49 @@ Targets: `packages/flux-renderers-industrial/src/editor/`（9 源文件）、`do
   - **错误处理 / 类型安全**：空 session / 缺失 cid / NaN 坐标 / 超大 selection 的降级；diff entry cast、unknown 操作类型守卫。
   - **架构边界**：层依赖方向（infra 不应反向依赖 renderer/panel）；公共面最小化；editor subpath 隔离（`/editor` 不污染 runtime bundle）。
   - 若发现定位/集成/测试有效性疑点，触发 dim 21/22/23（toolbox-runtime 命令接线可能触发 dim 22 集成接线）。
-- [ ] 重点抽查边界值：空 working config / 空 selection / 单符号 selection / mutator 同载连续调用 / adapter 节流窗口边界 / test handle mount→unmount→重 mount / 缺失 cid / group 嵌套 mutator。
-- [ ] 产出 `docs/audits/2026-08-08-*-hca11-editor-infra.md`：逐文件 finding 表（维度 / 结论 / `文件:行` 证据 / P0-P3 triage）。
+- [x] 重点抽查边界值：空 working config / 空 selection / 单符号 selection / mutator 同载连续调用 / adapter 节流窗口边界 / test handle mount→unmount→重 mount / 缺失 cid / group 嵌套 mutator。
+- [x] 产出 `docs/audits/2026-08-08-*-hca11-editor-infra.md`：逐文件 finding 表（维度 / 结论 / `文件:行` 证据 / P0-P3 triage）。
 
 Exit Criteria:
 
 > 写法原则：只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续的局部检查；全量验证归 Closure Gates。
 
-- [ ] 审计记录文件存在，含 9 文件逐文件 finding 表 + 每条 `文件:行` 证据经 live 核对。
-- [ ] 所有 finding 已 triage 为 P0/P1/P2/P3 之一（无未分类项）。
+- [x] 审计记录文件存在，含 9 文件逐文件 finding 表 + 每条 `文件:行` 证据经 live 核对。
+- [x] 所有 finding 已 triage 为 P0/P1/P2/P3 之一（无未分类项）。
 
 ### Phase 2 - P0/P1 自动修复 + P2 低成本修复（test-first）
 
-Status: planned
+Status: completed
 Targets: Phase 1 finding 中标 P0/P1 的源文件 + 对应 `*.test.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] 对每条 P0/P1 finding：先写 failing-first focused test（断言正确结果值 / 行为，非 not.toThrow），再修代码使转绿。
-- [ ] P2 低成本（<~30 行 / 单文件 / 无公共面变更）当场修复并带回归测试；P2 高成本入审计卡 backlog（归 HCA-CR）。
-- [ ] 每条 fix 在审计记录文件回写状态（fixed / recorded）+ fix 落点 `文件:行`。
+- [x] 对每条 P0/P1 finding：先写 failing-first focused test（断言正确结果值 / 行为，非 not.toThrow），再修代码使转绿。
+- [x] P2 低成本（<~30 行 / 单文件 / 无公共面变更）当场修复并带回归测试；P2 高成本入审计卡 backlog（归 HCA-CR）。
+- [x] 每条 fix 在审计记录文件回写状态（fixed / recorded）+ fix 落点 `文件:行`。
 
 Exit Criteria:
 
-- [ ] 所有 P0/P1 finding 的 failing-first test 存在且转绿（断言结果值）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 全绿（包级局部验证）。
-- [ ] 审计记录 finding 状态已回写。
+- [x] 所有 P0/P1 finding 的 failing-first test 存在且转绿（断言结果值）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/test` 全绿（包级局部验证）。
+- [x] 审计记录 finding 状态已回写。
 
 ### Phase 3 - owner doc 一致性核对 + 回归抽查 + bug 喂入
 
-Status: planned
+Status: completed
 Targets: `docs/components/industrial-hmi-editor/design-architecture.md`、`design-toolbox.md`、`docs/components/industrial-hmi/editor-initiation.md`、审计记录、HCA-BL 引用
 
 - Item Types: `Fix | Follow-up`
 
-- [ ] 核对 `design-architecture.md`（session / adapter / runtime 架构）+ `design-toolbox.md`（toolbox runtime）+ `editor-initiation.md`（runtime 复用点 + R 系列）与 live infra 一致；仅当发现 drift 时同步（无 drift 不写）。
-- [ ] 抽查构成依赖回归：HCA7 renderer 宿主消费 / HCA9 connection 接线 / HCA10 undo-redo 载荷（`ScadaConfigDiff` 形状与 mutator 消费一致）。
-- [ ] 把本层复杂 / 跨层 bug 候选汇总到审计记录「喂入 HCA-BL」节（正式归档动作在 HCA-BL，本 plan 不产出 `docs/bugs/` 卡片）。
+- [x] 核对 `design-architecture.md`（session / adapter / runtime 架构）+ `design-toolbox.md`（toolbox runtime）+ `editor-initiation.md`（runtime 复用点 + R 系列）与 live infra 一致；仅当发现 drift 时同步（无 drift 不写）。
+- [x] 抽查构成依赖回归：HCA7 renderer 宿主消费 / HCA9 connection 接线 / HCA10 undo-redo 载荷（`ScadaConfigDiff` 形状与 mutator 消费一致）。
+- [x] 把本层复杂 / 跨层 bug 候选汇总到审计记录「喂入 HCA-BL」节（正式归档动作在 HCA-BL，本 plan 不产出 `docs/bugs/` 卡片）。
 
 Exit Criteria:
 
-- [ ] design-architecture.md + design-toolbox.md + editor-initiation.md 经 rg/读核对待无 drift（或有同步 commit）。
-- [ ] 构成依赖回归抽查通过。
-- [ ] HCA-BL 喂入节存在（含 bug 候选清单 + `文件:行`，或明确「无复杂/跨层 bug 候选」+ 理由）。
+- [x] design-architecture.md + design-toolbox.md + editor-initiation.md 经 rg/读核对待无 drift（或有同步 commit）。
+- [x] 构成依赖回归抽查通过。
+- [x] HCA-BL 喂入节存在（含 bug 候选清单 + `文件:行`，或明确「无复杂/跨层 bug 候选」+ 理由）。
 
 ## Draft Review Record
 
@@ -184,16 +184,16 @@ Exit Criteria:
 
 > **关闭条件**：本 section 所有条目 + 每个 Phase Exit Criteria 全部 `[x]` 后才能 `Plan Status: completed`。全量 `pnpm typecheck/build/lint/test` 是 plan 收口时跑一次的仓库级检查（见 guide Minimum Rule 18）。
 
-- [ ] 9 源文件逐文件深审完成，审计记录文件存在且 finding 全 triage。
-- [ ] 所有 in-scope 确认的 P0/P1 live defect 已 test-first 修复（failing-first proof 存在）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] 受影响 owner doc 与 live baseline 一致（或明确无 drift）。
-- [ ] 必要 focused verification 已完成。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 9 源文件逐文件深审完成，审计记录文件存在且 finding 全 triage。
+- [x] 所有 in-scope 确认的 P0/P1 live defect 已 test-first 修复（failing-first proof 存在）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
+- [x] 受影响 owner doc 与 live baseline 一致（或明确无 drift）。
+- [x] 必要 focused verification 已完成。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -206,14 +206,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 9 源文件 23 维包级深审完成（审计记录 `docs/audits/2026-08-08-1316-hca11-editor-infra.md`）。零 P0；P1-1（importConfig 缺 engine.mode 同步，P1-08 parity mode desync）+ P2-1（cloneConfigSnapshot/save 浅克隆 custom，扩展 P2 #4 的 R5 Layer 2 隔离缺口）test-first 修复并转绿；P2-2（connection-wiring pointerup 容器外卡死）+ P3-1/P3-2 经裁定归 HCA-CR backlog（含 Why-Not-Blocking 理由 + fix 方向）。HCA1–HCA11 全 done，解锁 HCA-BL/HCA-CR 收敛。全量 `pnpm typecheck/build/lint/test` 全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立 closure auditor（fresh session）>>
-- Evidence: <<task id / `文件:行` evidence 摘要 / 全量验证状态>>
+- Auditor / Agent: 独立 closure auditor（fresh session `ses_020036ae8ffe2TUR9zV3sOslGP`，不复用执行者上下文）
+- Verdict: approved
+- Evidence: 三件套（plan + diff summary + verification output）独立复核 9 项 checklist 全 PASS：① plan 内部一致（Plan Status/3 Phase Status/checkboxes/Closure Gates 无 completed+unchecked 矛盾，仅 closure-audit gate 待本审计填）；② 审计记录 278 行含 9 文件逐文件 finding 表 + 全 triage；③ P1-1 fix live 核对 `toolbox-runtime.ts:235-239` 与 `runtime-mutators.ts:219-221` load() byte-parity，集成测试断言 `engine.currentMode).toBe('edit')`（结果值）；④ P2-1 fix live 核对 `editor-working-helpers.ts:82-85` cloneNodeDeep + `runtime-mutators.ts:193` save() 用 cloneConfigSnapshot，与 `editor-session.ts:127`（P2 #4）同 structuredClone 纪律；⑤ failing-first 4 测试均断言结果值（非 not.toThrow），修复前 RED / 修复后 GREEN；⑥ 3 项 deferred（P2-2/P3-1/P3-2）诚实裁定，无 P0/P1 伪装；⑦ owner doc 无 drift（fix 使 live 对齐本就正确的 doc）；⑧ src/ 无构建产物；⑨ 独立重跑 `pnpm --filter @nop-chaos/flux-renderers-industrial test` = 99 文件 / 1326 测试全绿（baseline 98/1319，+1 文件 / +7 测试）。
 
 Follow-up:
 
-- 本层 P2/P3 归 HCA-CR；bug 候选归 HCA-BL。
+- 本层 P2-2（connection-wiring pointerup 容器外卡死）+ P3-1（undo-redo-adapter.cloneNodeDeep custom 一致性）+ P3-2（handleGeometryChange microtask teardown 竞态）归 HCA-CR 跨层集中修复（含 fix 方向 + Why-Not-Blocking）。
+- 本层无复杂/跨层 bug 候选需归 `docs/bugs/`（P1-1/P2-1 单概念局部 defect，审计卡内留痕 + 回归测试覆盖即可）。
 - 无其他 plan-owned remaining work。
