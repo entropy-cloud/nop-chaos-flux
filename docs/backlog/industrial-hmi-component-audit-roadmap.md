@@ -258,3 +258,51 @@ graph TD
 4. Renderer 层（HCA1/HCA7）用 18 维组件 checklist（审计卡在 `docs/audits/per-component/`）；内部模块层（HCA2–HCA6, HCA8–HCA11）用 23 维包级深审（记录在 plan 内 + `docs/audits/` 日期文件）。
 5. 每轮审计的 bug 汇总到 HCA-BL，lesson 汇总到 HCA-LL——两者是独立 work item，不跳过。
 6. 审计与修复之间无人工握手门禁（保护区域已获 mission 授权）。
+
+## Follow-up Backlog
+
+> 来源：2026-08-08-1712 两份 audit（open-ended adversarial + multi-dimensional）的 **P2** findings。P0/P1 分两波进 remediation plans：第一波 `docs/plans/2026-08-08-1809-{1,2,3}-industrial-scada-*.md`（F2/F4 + F1/F3/P1-1/P1-3 + P1-2/P1-4/P1-5），第二波 `docs/plans/2026-08-08-1910-{1,2,3}-industrial-scada-*.md`（A1 P0/A11/A12 + A2/A6/A7/A8 + A3/A4）。此处只登记 P2（非阻塞 polish），每条带源 audit 路径以保持可追溯。不驱动独立 plan，由后续 polish 轮或 CR-类 work item 收口。
+>
+> **第一波执行进度**：`2026-08-08-1809-1`（F2/F4）✅ completed（closure audit PASS fresh session `ses_01ece5f09ffelaMWMFqJ5u73pE`；assertShape finite 对齐 + validate 广度/总量上限 fail-closed 早退，industrial 1349 tests 零回归）；`1809-2` / `1809-3` 待执行。F10 follow-up 已可复用 1809-1 产出的 `isFiniteNumber` helper。
+
+### 来自 `docs/audits/2026-08-08-1712-open-audit-industrial-hmi-component-audit.md`
+
+- **[P2] F5 — `parseScadaConfig` 对非对象输入返回 cast 后的原值（类型谎言）+ 浅拷贝与调用方共享嵌套引用**。`serialization/parse.ts:17-24` `shallowCopy`。修复方向：非纯对象抛 `Error('scada config must be an object')`，或 TSDoc 显式声明只读共享。
+- **[P2] F6 — 两份克隆实现语义分裂**（`cloneConfig` allowlist+硬编码 version:1+浅克隆 variable vs `cloneConfigSnapshot` spread+保留 version+深克隆节点）。`editor-session.ts:113-121` vs `editor-working-helpers.ts:70-76`。修复方向：统一为单一 clone 实现（深克隆节点 + spread 顶层 + 守卫 variables），消除硬编码 version。
+- **[P2] F7 — `Animator.pause()` 不停 rAF 时钟，每帧重算并 flush 相同增量**（公共 API，prod 未调用→潜伏）。`binding/animator.ts:121-127` pause + `:203-230` tick 不跳过 paused + `:226-228` 无条件 ensureClock。修复方向：tick 跳过 paused 项 collect，或全 paused 时 stopClock。
+- **[P2] F8 — `recomputeExpressionPoints` 对 `lastDeps` 线性扫描，表达式点扇出大时趋 O(n²)**。`binding/refresh-pipeline.ts:177-194`。修复方向：建反向索引 `Map<depPointId, Set<exprPointId>>`，改 O(扇出) 查找；加深链表达式点基准用例。
+- **[P2] F9 — 错误去重以 message 字符串为键（吞同文案异因错误）+ 去重 Set 生命周期内无界增长**。`engine/event-bridge.ts:161-166` + `binding/point-store.ts:310-315`。修复方向：键加 call site/symbolId/pointId 维度，或改频次去重。
+- **[P2] F10 — `validateBinding` 对 `binding.scale` 仅校验 `isPlainObject`，不校验 k/b（与 declaration scale 内部不一致）**。`serialization/validators/binding.ts:22-24` vs `point-declaration.ts:42`。修复方向：与 declaration scale 同形校验；可复用 plan `2026-08-08-1809-1` 产出的 finite helper。
+- **[P2] F11 — 编辑器 drop 的 `type` 不经符号注册表校验 → 未知 type 进入 working copy/engine**。`editor/scada-editor-canvas.tsx:277-296`。修复方向：drop 前用 `hasScadaSymbol(type)` 校验，未知 type 静默忽略或 onError 上报。
+
+#### 本轮 P2 簇（open-audit `## P2 簇` 表，source: `docs/audits/2026-08-08-1712-open-audit-industrial-hmi-component-audit.md:215-232`）
+
+> 上一轮 F5–F11（上方）是 carry-forward 残留；下面是本轮新报的 P2 簇（13 行，F9 与上方重复已标）。部分已被第二波 plans 的 `Non-Blocking Follow-ups` 指向此处，本表是单一可追溯源头。
+
+- **[P2] 本轮-1 — `renderer/scada-canvas.tsx` + `hooks/use-scada-*` 普遍手写 `useCallback`/`useMemo`**（scada-canvas 7 处、use-scada-events 8 处、use-scada-points-bridge 4 处…），违反 AGENTS.md「React Compiler 基线下默认不加 memo」。修复方向：逐 hook 移除冗余 memo。
+- **[P2] 本轮-2 — `engine/scada-engine.ts:156-159` `interactionOverlay` getter 无 `destroyed` 检查**，销毁后访问惰性重建 overlay 到已销毁 app。修复方向：getter 加 destroyed 早退。
+- **[P2] 本轮-3 — `renderer/scada-canvas.tsx:222-228` `engineRef`/`runtimeRef` 同步 effect 无 cleanup**，unmount 后仍指已销毁 engine（使本轮-2 可达）。修复方向：effect 加 cleanup 置空 ref。
+- **[P2] 本轮-4（=F9）— 错误去重 Set 无界增长**。见上方 F9。
+- **[P2] 本轮-5 — `symbols/visual-state.ts:71-72` revert 仲裁读 `getConfigNode`（raw 实例）不合并 defaults** → 自定义符号 defaults 级 binding 被 revert 覆盖。修复方向：revert 仲裁合并 defaults。
+- **[P2] 本轮-6 — `symbols/base-shapes/round-rect.ts:33` 固定 `cornerRadius:8`**，无按尺寸缩放/无 per-instance 钩子。修复方向：cornerRadius 按尺寸缩放或可配置。
+- **[P2] 本轮-7 — `symbols/pipe/pipe-junction.ts:88` `bidirectional` 只给 `endArrow`，缺 `startArrow`**（语义误导）。修复方向：bidirectional 补 startArrow。
+- **[P2] 本轮-8 — `symbols/composite.ts:100` `createCompositeGroup` 空 children → `body=undefined`** → `applyCompositeProps` 对 undefined `set` 崩溃（自定义复合作者陷阱）。修复方向：空 children 守卫。
+- **[P2] 本轮-9 — `symbols/composite.ts:98-99` `toShapeAttrs` 把 width/height/fill/stroke 写到 `Group`**（无渲染意义，且 sized Group 改变 leafer bounds 语义，叠加 A1）。修复方向：Group 不写几何/样式属性。
+- **[P2] 本轮-10 — `renderer/hooks/use-scada-config-sync.ts:205-252` 每次 config 变更 effect 双跑**（reloadBindings→setRuntime→identity 变→effect 再跑空 diff）。修复方向：消除 identity 抖动。
+- **[P2] 本轮-11 — `editor/toolbox/clipboard.ts:64-91` paste 的 `${id}-copy-${counter}` 不碰撞检查现有 id**（与 group/generateConnectionId 纪律不一致）。修复方向：paste id 碰撞自增。
+- **[P2] 本轮-12 — `editor/toolbox/align-distribute.ts:38-110` align/distribute 对 group 子节点读局部 x/y（非 world）**，与 snap/hit/linkage 已统一的 `collectWorldBounds` 纪律矛盾（docstring 标注 M3 接受）。修复方向：改用 world 坐标或显式声明局部语义。
+- **[P2] 本轮-13 — `renderer/hooks/use-scada-points-bridge.ts:260,284` compiledCache/lastReportedErrors 清理 effect 依赖仅 `[config]`**，expressionCompiler 换身份不清理 → 旧编译产物喂新 evaluator。修复方向：effect deps 加 expressionCompiler。
+
+### 来自 `docs/audits/2026-08-08-1712-multi-audit-industrial-hmi-component-audit.md`
+
+- **[P2] P2-1 — `serializeScadaConfig` 导出但 `parseScadaConfig`/`validateScadaConfig`/`diffScadaConfig`/`ScadaValidationResult` 未导出**（与 "host 校验/审计" 注释不对称）。`index.ts:49-54`。修复方向：co-export 或收窄注释。
+- **[P2] P2-2 — `ScadaEditorSession` 导出泄漏内部 `UndoStack` 类**（与 "域内部持有 INV-4" docstring 矛盾）。`editor/index.ts:17` + `editor-session.ts:2,41`。修复方向：导出投影类型为公开 session type，或 trim 公开接口。
+- **[P2] P2-3 — `industrialRendererDefinitions` 数组未导出**（与所有兄弟 `flux-renderers-*` 包注册模式分叉）。`index.ts:3,64-67`。修复方向：对齐导出，或在 `design-renderer.md §11` 记为接受的例外。
+- **[P2] P2-4 — `handleDelete`/`handleUngroup` 循环对 N 元选中产 N undo entry**（UX papercut + O(N·n) syncWorkingCopy）。`toolbox/toolbox-panel.tsx:113-129` + 镜像键盘路径 `scada-editor-canvas.tsx:309-329`。修复方向：批量 `removeWorkingSymbols(ids[])`/`ungroupSymbols(ids[])` 单 diff。
+- **[P2] P2-5 — `collectWorldBounds` "累加父偏移" 单测是 false-green（父偏移=0）**。`editor/editor-working-helpers.test.ts:79-85` + `connection/connection-adapter.test.ts:33-42`。修复方向：fixture 设父 group x/y 非零并断言子节点累加世界坐标。
+- **[P2] P2-6 — `EditorPalettePanel` 跳过 i18n，直接渲染 raw `def.name`**。`editor/palette/editor-palette.tsx:18-58`。修复方向：`useFluxTranslation` + `t(def.name)`。
+- **[P2] P2-7 — Toolbox 按钮可见 label 硬编码英文，仅 `title` 走 i18n**。`toolbox/toolbox-panel.tsx:131-188`。修复方向：word 按钮的 `label` 传 `t(key)`。
+- **[P2] P2-8 — `editor-internal-error` 错误码 prod 派发但未在 registry/i18n locales/design doc 注册 → 降级 `.unknown`**。`runtime-mutators.ts:111` + `runtime-factories.ts:175` + registry `editor-errors.ts:13-25` + locales + `design-renderer.md:318`。修复方向：加进 `SCADA_EDITOR_ERROR_CODES` + 两 locale + design §8.5.2。
+- **[P2] P2-9 — `design-property-panel.md` §11 引用不存在的 `panel-field.tsx`/`panel-group.tsx`/`useEditorSession`**（doc rot）。`docs/components/industrial-hmi-editor/design-property-panel.md:335-337` + stale 注释 `inspector-panel.tsx:19`。修复方向：改名 `inspector-field.tsx`、删 `panel-group.tsx`、`useEditorSession`→`runtime.session`。
+- **[P2] P2-10 — `design-connection.md` §11 文件树漏 `connection-drag-controller.ts` + `connection-overlay-renderer.ts`**。`design-connection.md:270-274`。修复方向：补 2 项与 `design-renderer.md §11` 一致。
+- **[P2] P2-11 — `design-engine.md` §11 文件树漏 `event-bridge.ts`/`interaction-overlay.ts`/`batch-add-probe.ts`**。`design-engine.md:293-300`。修复方向：补 3 模块 + 一行职责说明。
