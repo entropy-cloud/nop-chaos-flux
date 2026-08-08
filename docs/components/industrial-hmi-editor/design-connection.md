@@ -127,11 +127,11 @@ export interface ScadaPipeConnection {
 
 **图元移动联动场景**（pipe-junction 主体或目标设备移动时连接线跟随）：
 
-| 移动对象                   | 联动行为                                                                                                                                                                                                                                                                                                                            |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **pipe-junction 主体移动** | stub 几何自动跟随（pipe-junction 主体 x/y 改变 → create/applyProps 重新渲染 stub 端点：centerX/centerY 跟随主体，stub 终点 = 主体 + 归一化偏移，pipe-junction.ts:78-89 已落地）；connection.target 不变（仍指向原目标设备）；适配层无需额外处理（runtime 已落地）                                                                   |
-| **目标设备移动**           | connection.target 仍指向同 nodeId（声明不变）；stub 终点 = 目标设备的归一化吸附点（如目标设备 right-middle = `{x:1, y:0.5}`）→ stub 几何需重新计算（stub 从 junction 中心到目标设备归一化点的世界坐标）；**联动算法**（§4.5）：经 nodeId 反查目标设备当前 x/y/width/height → 重新算 stub 终点世界坐标 → 触发 pipe-junction 重新渲染 |
-| **目标设备删除**           | connection.target 指向的 nodeId 不存在 → connection 标记为「dangling」（声明保留 target 但运行时不渲染 stub，或渲染断开指示符）；用户可经「断开连接」工具删除 dangling connection                                                                                                                                                   |
+| 移动对象                   | 联动行为                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **pipe-junction 主体移动** | stub 几何自动跟随（pipe-junction 主体 x/y 改变 → create/applyProps 重新渲染 stub 端点：centerX/centerY 跟随主体，stub 终点 = 主体 + 归一化偏移，pipe-junction.ts:78-89 已落地）；connection.target 不变（仍指向原目标设备）；适配层无需额外处理（runtime 已落地）                                                                                                                                                                      |
+| **目标设备移动**           | connection.target 仍指向同 nodeId（声明不变）；stub 终点 = 目标设备的归一化吸附点（如目标设备 right-middle = `{x:1, y:0.5}`）→ stub 几何需重新计算（stub 从 junction 中心到目标设备归一化点的世界坐标）；**联动算法**（§4.5）：经 nodeId 反查目标设备当前 x/y/width/height → 重新算 stub 终点世界坐标 → 触发 pipe-junction 重新渲染                                                                                                    |
+| **目标设备删除**           | **两条路径分工**：① **编辑器驱动删除**（`removeWorkingSymbol`/`cutSelection`）主动 prune：同一次 diff 内扫所有 junction 的 `custom.connections`，删除 `target===被删id` 的条目（`pruneDanglingConnections`，snapshot-based undo 经 prevSnapshot 完整恢复）；② **外部 config / 运行态**加载产生 target 不存在的 connection → 标记为「dangling」（声明保留 target，运行时不渲染 stub），由 `listAllConnections` 诊断检出，用户可手动清理 |
 
 **联动算法属编辑器适配层**（不进 runtime pipe-junction）：runtime pipe-junction create/applyProps 只读 connection.x/y（归一化，相对主体），不读 connection.target 几何（target 是声明，运行时不解析为目标设备几何）；编辑器适配层在「目标设备移动」场景下重新算 connection.x/y（让 stub 终点视觉上跟随目标设备）。
 
@@ -177,16 +177,16 @@ export function recomputeConnectionAnchor(args: {
 
 ## 5. 字段分类（连线相关字段）
 
-| 字段                                | 归属                         | 说明                                                                                                 |
-| ----------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `custom.connections`                | 组态 JSON pipe-junction 节点 | I9.4 已落地，编辑器只写声明（§4.1 / §4.2 / §4.3）                                                    |
-| `flow`（`{enabled, speed, dash?}`） | 组态 JSON pipe-junction 节点 | 流动动画参数，design-symbols.md §4.2 既有；编辑器属性面板 style 组（design-property-panel.md §5）    |
-| `dashOffset`                        | 组态 JSON pipe-junction 节点 | 流动动画相位，runtime animator flow kind 写入（design-data-binding.md §4.4）                         |
-| `stroke`/`strokeWidth`/`strokeDash` | 组态 JSON pipe-junction 节点 | stub 样式（pipe-junction create 经 `props.stroke ?? props.fill` + `props.strokeWidth ?? 4`，:84-85） |
-| connection.id                       | custom.connections 元素      | 端点 id（组态内唯一，建议 `${junctionId}-conn-${index}` 自动生成）                                   |
-| connection.x/y                      | custom.connections 元素      | 归一化坐标（0..1，端点吸附写入 / 联动算法重算）                                                      |
-| connection.direction                | custom.connections 元素      | in/out/bidirectional（流向，决定 endArrow 渲染）                                                     |
-| connection.target                   | custom.connections 元素      | 目标设备 nodeId（吸附写入，声明连接关系）                                                            |
+| 字段                                | 归属                         | 说明                                                                                                                          |
+| ----------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `custom.connections`                | 组态 JSON pipe-junction 节点 | I9.4 已落地，编辑器只写声明（§4.1 / §4.2 / §4.3）                                                                             |
+| `flow`（`{enabled, speed, dash?}`） | 组态 JSON pipe-junction 节点 | 流动动画参数，design-symbols.md §4.2 既有；编辑器属性面板 style 组（design-property-panel.md §5）                             |
+| `dashOffset`                        | 组态 JSON pipe-junction 节点 | 流动动画相位，runtime animator flow kind 写入（design-data-binding.md §4.4）                                                  |
+| `stroke`/`strokeWidth`/`strokeDash` | 组态 JSON pipe-junction 节点 | stub 样式（pipe-junction create 经 `props.stroke ?? props.fill` + `props.strokeWidth ?? 4`，:84-85）                          |
+| connection.id                       | custom.connections 元素      | 端点 id（组态内唯一，`${junctionId}-conn-${index}` 自动生成，生产拖拽读现有 connections 碰撞避让 → conn-0/conn-1/... 不覆盖） |
+| connection.x/y                      | custom.connections 元素      | 归一化坐标（0..1，端点吸附写入 / 联动算法重算）                                                                               |
+| connection.direction                | custom.connections 元素      | in/out/bidirectional（流向，决定 endArrow 渲染）                                                                              |
+| connection.target                   | custom.connections 元素      | 目标设备 nodeId（吸附写入，声明连接关系）                                                                                     |
 
 ## 6. 图层与场景树（对应 regions 约定）
 
@@ -219,10 +219,10 @@ export function recomputeConnectionAnchor(args: {
 
 ### 8.2 连线相关句柄（消费 design-architecture.md §8.5）
 
-| 句柄                                                 | 连线场景使用                                                                                                  |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `component:updateSymbol(nodeId, patch)`              | 写入 connection（patch = `{custom: {connections: newConnections}}`）                                          |
-| `component:addSymbol(node)` / `removeSymbol(nodeId)` | 添加 / 删除 pipe-junction 图元时，相关 connection 视情况清理（删除目标设备 → dangling connection 处理，§4.4） |
+| 句柄                                                 | 连线场景使用                                                                                                                                                                                                      |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `component:updateSymbol(nodeId, patch)`              | 写入 connection（patch = `{custom: {connections: newConnections}}`）                                                                                                                                              |
+| `component:addSymbol(node)` / `removeSymbol(nodeId)` | 添加 / 删除 pipe-junction 图元时，相关 connection 视情况清理；**编辑器驱动删除**（removeSymbol/cutSelection）主动 prune 其它 junction 上 `target===被删id` 的 connection 声明（§4.4，snapshot-based undo 可恢复） |
 
 ### 8.3 编辑期测试句柄（架构层声明，完整契约属 E2.6）
 
@@ -282,13 +282,13 @@ OR packages/flux-renderers-industrial/src/editor/（方案 A）
 
 ### 12.1 风险清单
 
-| #   | 风险                                                         | 本档防护/接受                                                                                                                      |
-| --- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| C1  | connection.x/y 超出 [0,1] 范围（目标设备远离 pipe-junction） | **接受**：pipe-junction create/applyProps 已支持任意归一化值（stub 视觉延伸到主体外）；算法输出不钳制（保持视觉准确）              |
-| C2  | dangling connection（目标设备删除后 connection.target 失效） | **接受 + 标记**：声明保留 target 但运行时不渲染 stub（或渲染断开指示符）；用户可经「断开连接」工具清理（M3 工具箱 E9）             |
-| C3  | 多 connection 同时编辑时的事件冲突                           | **防护**：适配层维护「当前编辑中的 connectionId」（单一活动端点拖动），其他 connection 不响应 pointerdown                          |
-| C4  | connection.id 唯一性                                         | **防护**：自动生成（建议 `${junctionId}-conn-${index}`），E7.1 实现期落地唯一性校验（对齐 validate.ts id 唯一性模式）              |
-| C5  | 联动算法节流（Editor move 高频每帧）                         | **防护**：复用 spike §2.5 + design-architecture.md §4.6 transform 事件族节流起止帧策略（目标设备移动时 connection 重算只在起止帧） |
+| #   | 风险                                                         | 本档防护/接受                                                                                                                                                                                                                                                                                                           |
+| --- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C1  | connection.x/y 超出 [0,1] 范围（目标设备远离 pipe-junction） | **接受**：pipe-junction create/applyProps 已支持任意归一化值（stub 视觉延伸到主体外）；算法输出不钳制（保持视觉准确）                                                                                                                                                                                                   |
+| C2  | dangling connection（目标设备删除后 connection.target 失效） | **编辑器驱动删除主动 prune**：`removeWorkingSymbol`/`cutSelection` 删节点时同 diff 内扫所有 junction，删除 `target===被删id` 的 connection（snapshot-based undo 可恢复）。**外部 config / 运行态**产生 target 不存在的 connection → 接受 + 标记（声明保留 target，运行时不渲染 stub），由 `listAllConnections` 诊断检出 |
+| C3  | 多 connection 同时编辑时的事件冲突                           | **防护**：适配层维护「当前编辑中的 connectionId」（单一活动端点拖动），其他 connection 不响应 pointerdown                                                                                                                                                                                                               |
+| C4  | connection.id 唯一性                                         | **防护**：自动生成 `${junctionId}-conn-${index}`（`generateConnectionId` 经现有 connections 碰撞避让）。生产拖拽路径（`beginDrag`）读现有 connections 喂生成器 → 同一 junction 连续拖拽产出 conn-0/conn-1/... 不碰撞（commit 端 push 而非覆盖，junction 可扇出到多设备）；折线重拖路径经显式 connectionId 覆盖原条目    |
+| C5  | 联动算法节流（Editor move 高频每帧）                         | **防护**：复用 spike §2.5 + design-architecture.md §4.6 transform 事件族节流起止帧策略（目标设备移动时 connection 重算只在起止帧）                                                                                                                                                                                      |
 
 ### 12.2 风险与取舍
 

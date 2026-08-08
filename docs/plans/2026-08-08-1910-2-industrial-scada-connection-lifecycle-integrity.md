@@ -1,6 +1,6 @@
 # 2 Industrial SCADA Connection Lifecycle & Editor Rollback Integrity
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-08
 > Source: `docs/audits/2026-08-08-1712-open-audit-industrial-hmi-component-audit.md` (A2, A6, A7, A8)
 > Related: `docs/backlog/industrial-hmi-component-audit-roadmap.md`; first-wave sibling plans `2026-08-08-1809-{1,2,3}-*`（validation / editor state / canvas correctness）；本 plan 与 `2026-08-08-1809-2`（editor state：F3 node-id 去重 / P1-1 事务 abort / P1-3 selection 修剪）互补——后者管「node id 空间 + 事务态 + selection」，本 plan 管「connection 声明生命周期 + 引擎回滚」。
@@ -83,74 +83,92 @@
 
 ### Phase 1 - A2 生产连线拖拽 id 不碰撞（connectionId 生成 + commit push）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/editor/connection/connection-drag-controller.ts`；`connection/connection-adapter.ts`；相关测试
 
 - Item Types: `Proof` | `Fix`
 
-- [ ] (Proof / failing-first) 增用例经**生产路径**：mount 含 junction J 的 config → `connectionController.beginDrag('J')` → move 到 target-A → endDrag（commit 写入 conn-0）→ 再 `beginDrag('J')` → move 到 target-B → endDrag → 断言 J 的 custom.connections 长度===2（conn-0 + conn-1），两条 target 分别为 A/B。当前会失败（第二次 endDrag 用 conn-0 覆盖 → 长度仍 1，target=B）。
-- [ ] (Fix) `connection-drag-controller.ts` `beginDrag`：用 `readConnections(junctionNode.custom)` 读现有 connections，传入 `beginConnectionDrag({junctionId, existingConnections})`。
-- [ ] (Fix) `connection-adapter.ts` `beginConnectionDrag`：接 `existingConnections`，`connectionId: args.connectionId ?? generateConnectionId(args.junctionId, args.existingConnections ?? [])`；commit 端 findIndex 不命中即 push（当前已支持 push，关键是 id 不碰撞使 idx 恒 -1）。
-- [ ] (Proof / failing-first) 用例转 pass；既有 connection e2e（`scada-editor-canvas-connection.test.tsx` 走 programmaticConnect）+ redrag/overlay 测试零回归。
+- [x] (Proof / failing-first) 增用例经**生产路径**：mount 含 junction J 的 config → `connectionController.beginDrag('J')` → move 到 target-A → endDrag（commit 写入 conn-0）→ 再 `beginDrag('J')` → move 到 target-B → endDrag → 断言 J 的 custom.connections 长度===2（conn-0 + conn-1），两条 target 分别为 A/B。当前会失败（第二次 endDrag 用 conn-0 覆盖 → 长度仍 1，target=B）。
+- [x] (Fix) `connection-drag-controller.ts` `beginDrag`：用 `readConnections(junctionNode.custom)` 读现有 connections，传入 `beginConnectionDrag({junctionId, existingConnections})`。
+- [x] (Fix) `connection-adapter.ts` `beginConnectionDrag`：接 `existingConnections`，`connectionId: args.connectionId ?? generateConnectionId(args.junctionId, args.existingConnections ?? [])`；commit 端 findIndex 不命中即 push（当前已支持 push，关键是 id 不碰撞使 idx 恒 -1）。
+- [x] (Proof / failing-first) 用例转 pass；既有 connection e2e（`scada-editor-canvas-connection.test.tsx` 走 programmaticConnect）+ redrag/overlay 测试零回归。
 
 Exit Criteria:
 
-- [ ] `beginDrag` 在 live 代码中读现有 connections 并传入 id 生成器（`connection-drag-controller.ts` 可见）。
-- [ ] failing-first 用例（生产路径两次拖拽 → 两条 connections 并存）pass。
-- [ ] 既有 connection 测试零回归。
+- [x] `beginDrag` 在 live 代码中读现有 connections 并传入 id 生成器（`connection-drag-controller.ts` 可见）。
+- [x] failing-first 用例（生产路径两次拖拽 → 两条 connections 并存）pass。
+- [x] 既有 connection 测试零回归。
 
 ### Phase 2 - A6 applyUndoRedoDiff 引擎回滚
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/editor/runtime-mutators.ts`（`applyUndoRedoDiff`）；`editor/renderer/editor-engine.ts`（如经 build 重建）；相关测试
 
 - Item Types: `Proof` | `Fix` | `Decision`
 
-- [ ] (Decision) 选定回滚策略：(a) catch 中 `engine.build(beforeWorking)` 全量重建（leafer 无事务，最稳）；或 (b) 置「引擎已 desync」标志强制下轮 `syncWorkingCopy` 全量同步（diff 为空时也重建）。记录抉择理由（性能 vs 简单性）。
-- [ ] (Proof / failing-first) 增用例：注入一个使 `engine.applyDiff` 抛错的场景（如注册一个 build 时抛错的自定义符号 / mock unknown type）→ `applyUndoRedoDiff` 调用 → 断言 catch 后 `engine` 场景与 `session.workingConfig` 一致（如 `engine.getSymbol(...)` 集合等于 beforeWorking 的节点集），且 `synced.config` 不停留在导致空 diff 的态。当前会失败（engine 半变、working 回滚、永久背离）。
-- [ ] (Fix) `applyUndoRedoDiff` catch：除 `session.workingConfig=beforeWorking` 外，按 Decision 回滚引擎（`engine.build(beforeWorking)`）并同步 `synced.config=clone(beforeWorking)`，确保下轮 diff 不为空时能愈合。
-- [ ] (Proof / failing-first) 用例转 pass；既有 undo/redo 正常路径测试零回归。
+- [x] (Decision) 选定回滚策略：(a) catch 中 `engine.build(beforeWorking)` 全量重建（leafer 无事务，最稳）；或 (b) 置「引擎已 desync」标志强制下轮 `syncWorkingCopy` 全量同步（diff 为空时也重建）。记录抉择理由（性能 vs 简单性）。
+- [x] (Proof / failing-first) 增用例：注入一个使 `engine.applyDiff` 抛错的场景（如注册一个 build 时抛错的自定义符号 / mock unknown type）→ `applyUndoRedoDiff` 调用 → 断言 catch 后 `engine` 场景与 `session.workingConfig` 一致（如 `engine.getSymbol(...)` 集合等于 beforeWorking 的节点集），且 `synced.config` 不停留在导致空 diff 的态。当前会失败（engine 半变、working 回滚、永久背离）。
+- [x] (Fix) `applyUndoRedoDiff` catch：除 `session.workingConfig=beforeWorking` 外，按 Decision 回滚引擎（`engine.build(beforeWorking)`）并同步 `synced.config=clone(beforeWorking)`，确保下轮 diff 不为空时能愈合。
+- [x] (Proof / failing-first) 用例转 pass；既有 undo/redo 正常路径测试零回归。
 
 Exit Criteria:
 
-- [ ] `applyUndoRedoDiff` catch 在 live 代码中回滚引擎场景（`engine.build(beforeWorking)` 或等价 desync-愈合机制可见）。
-- [ ] failing-first 用例（applyDiff 抛错 → engine 与 working copy 一致）pass。
-- [ ] 既有 undo/redo 正常路径测试零回归。
+- [x] `applyUndoRedoDiff` catch 在 live 代码中回滚引擎场景（`engine.build(beforeWorking)` 或等价 desync-愈合机制可见）。
+- [x] failing-first 用例（applyDiff 抛错 → engine 与 working copy 一致）pass。
+- [x] 既有 undo/redo 正常路径测试零回归。
+
+> Decision 记录（strategy a）：catch 中 `engine.build(beforeWorking)` 全量重建。leafer 无事务支持，
+> `engine.applyDiff`（remove→build→update→reorder）半途抛错时场景树已半变且无内部回滚；全量重建
+> （`destroyRoot` + `registry.clear` + rebuild）是唯一可靠回滚，保证场景 === beforeWorking。O(n) 重建
+> 仅在错误路径（罕见），性能可接受；strategy b（desync 标志 + 下轮全量同步）需额外状态机且在空 diff
+> 时仍依赖外部触发，复杂度更高。同步 `synced.config=beforeWorking` 闭合「steady state 下 diff 为空 →
+> 引擎永不愈合」的永久背离路径。
 
 ### Phase 3 - A7 clipboard connection target/id 重写
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/editor/toolbox/clipboard.ts`；相关测试
 
 - Item Types: `Proof` | `Fix`
 
-- [ ] (Proof / failing-first) 增用例：复制 junction J（connection.target='device-1'）+ device-1 一起 → `buildClipboardPaste` → 断言副本 J' 的 connection.target===副本 device-1' 的 id（非原件 device-1）；connection.id !== 原件 connection.id。当前会失败（target 仍指原件 device-1，id 重复）。
-- [ ] (Fix) `buildClipboardPaste`：先对 clipboard.symbols 建 `oldId→newId` 全图映射（含子树递归，用 reassignIdsRecursive 产出的新 id 集），再遍历每个含 `custom.connections` 的节点，重写每个 `connection.target`（命中映射用副本 id，未命中按 dangling 策略：保留或丢弃，记录抉择）与 `connection.id`（经 `generateConnectionId(newJunctionId, [])` 或映射重写）。
-- [ ] (Proof / failing-first) 用例转 pass；既有 clipboard copy/paste/cut 测试零回归。
+- [x] (Proof / failing-first) 增用例：复制 junction J（connection.target='device-1'）+ device-1 一起 → `buildClipboardPaste` → 断言副本 J' 的 connection.target===副本 device-1' 的 id（非原件 device-1）；connection.id !== 原件 connection.id。当前会失败（target 仍指原件 device-1，id 重复）。
+- [x] (Fix) `buildClipboardPaste`：先对 clipboard.symbols 建 `oldId→newId` 全图映射（含子树递归，用 reassignIdsRecursive 产出的新 id 集），再遍历每个含 `custom.connections` 的节点，重写每个 `connection.target`（命中映射用副本 id，未命中按 dangling 策略：保留或丢弃，记录抉择）与 `connection.id`（经 `generateConnectionId(newJunctionId, [])` 或映射重写）。
+- [x] (Proof / failing-first) 用例转 pass；既有 clipboard copy/paste/cut 测试零回归。
 
 Exit Criteria:
 
-- [ ] `buildClipboardPaste` 在 live 代码中重写 connection.target（命中映射用副本）与 connection.id（不重复）。
-- [ ] failing-first 用例（复制 junction+target → 副本连线指向副本）pass。
-- [ ] 既有 clipboard 测试零回归。
+- [x] `buildClipboardPaste` 在 live 代码中重写 connection.target（命中映射用副本）与 connection.id（不重复）。
+- [x] failing-first 用例（复制 junction+target → 副本连线指向副本）pass。
+- [x] 既有 clipboard 测试零回归。
+
+> Dangling 策略抉择：target 未命中映射（未被一起复制）时**保留原件 target id**（dangling-tolerant），
+> 与 `listAllConnections` 的 dangling 检测「容忍 + 诊断」语义一致（Non-Goal：不改 dangling 检测语义）。
+> 复制连接到一个外部设备的 junction 而不复制该设备时，副本 connection 成为 dangling（被诊断器检出），
+> 用户可手动修复；丢弃会静默丢失 connection 声明（破坏性更大）。
 
 ### Phase 4 - A8 删除 prune dangling connection 声明
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/editor/runtime-mutators.ts`（`removeWorkingSymbol`）；`editor/toolbox-runtime.ts`（`cutSelection`）；相关测试
 
 - Item Types: `Proof` | `Fix`
 
-- [ ] (Proof / failing-first) 增用例：working copy 含 junction J（connection.target='dev-1'）+ dev-1 → `removeWorkingSymbol('dev-1')` → 断言 J 的 custom.connections 不再含 target==='dev-1' 的条目；undo 后该 connection 恢复（inverse 完整）。cutSelection 同型一条。当前会失败（dangling connection 原样残留）。
-- [ ] (Fix) `removeWorkingSymbol`：filter 节点后，扫描所有 junction 的 `custom.connections`，prune `connection.target===nodeId` 条目（连同 inverse 以便 undo 恢复）；经既有 pushOperation/syncWorkingCopy 入栈。
-- [ ] (Fix) `cutSelection`（`toolbox-runtime.ts`）同型 prune。
-- [ ] (Proof / failing-first) 用例转 pass；既有 remove/cut/undo 测试零回归。
+- [x] (Proof / failing-first) 增用例：working copy 含 junction J（connection.target='dev-1'）+ dev-1 → `removeWorkingSymbol('dev-1')` → 断言 J 的 custom.connections 不再含 target==='dev-1' 的条目；undo 后该 connection 恢复（inverse 完整）。cutSelection 同型一条。当前会失败（dangling connection 原样残留）。
+- [x] (Fix) `removeWorkingSymbol`：filter 节点后，扫描所有 junction 的 `custom.connections`，prune `connection.target===nodeId` 条目（连同 inverse 以便 undo 恢复）；经既有 pushOperation/syncWorkingCopy 入栈。
+- [x] (Fix) `cutSelection`（`toolbox-runtime.ts`）同型 prune。
+- [x] (Proof / failing-first) 用例转 pass；既有 remove/cut/undo 测试零回归。
 
 Exit Criteria:
 
-- [ ] `removeWorkingSymbol`/`cutSelection` 在 live 代码中 prune dangling connection（target===被删id）。
-- [ ] failing-first 用例（删被连线设备 → 无 dangling；undo 恢复）pass。
-- [ ] 既有 remove/cut/undo 测试零回归。
+- [x] `removeWorkingSymbol`/`cutSelection` 在 live 代码中 prune dangling connection（target===被删id）。
+- [x] failing-first 用例（删被连线设备 → 无 dangling；undo 恢复）pass。
+- [x] 既有 remove/cut/undo 测试零回归。
+
+> 实现注：`removeWorkingSymbol` 经 snapshot-based `pushOperation`（forward 由 `diffScadaConfig` 自动含
+> pruned junction 的 `updated` 条目，inverse 从 `prevSnapshot` 恢复原 connections）。`cutSelection` 由原
+> `pushForward`（手工 forward 仅记 removed，无法恢复 prune）改为 `pushOperation`，使「同型 prune」 +
+> undo 完整恢复语义与 `removeWorkingSymbol` 对齐。共享 helper `pruneDanglingConnections` 落在
+> `editor-working-helpers.ts`（不可变纪律：仅在被改节点重建 `{...node, custom}`）。
 
 ## Draft Review Record
 
@@ -163,17 +181,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] A2：生产 UI 同 junction 多条连线并存（生产路径 failing-first 用例 pass）。
-- [ ] A6：applyUndoRedoDiff 的 engine.applyDiff 抛错时引擎回滚/愈合（failing-first 用例 pass）。
-- [ ] A7：粘贴含连线子图，副本 connection.target 指向副本、id 不重复（failing-first 用例 pass）。
-- [ ] A8：删除被连线设备 prune dangling connection，undo 可恢复（failing-first 用例 pass）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（A2/A6/A7/A8 均为 Fix）。
-- [ ] 受影响 owner doc（`design-connection.md` §5 connection id 纪律 / §4.4 dangling、`design-toolbox.md` §4.3 clipboard connection 重写、`design-undo-redo.md` applyDiff 回滚）已同步到 live baseline，或明确写明 No owner-doc update required。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] A2：生产 UI 同 junction 多条连线并存（生产路径 failing-first 用例 pass）。
+- [x] A6：applyUndoRedoDiff 的 engine.applyDiff 抛错时引擎回滚/愈合（failing-first 用例 pass）。
+- [x] A7：粘贴含连线子图，副本 connection.target 指向副本、id 不重复（failing-first 用例 pass）。
+- [x] A8：删除被连线设备 prune dangling connection，undo 可恢复（failing-first 用例 pass）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（A2/A6/A7/A8 均为 Fix）。
+- [x] 受影响 owner doc（`design-connection.md` §5 connection id 纪律 / §4.4 dangling、`design-toolbox.md` §4.3 clipboard connection 重写、`design-undo-redo.md` applyDiff 回滚）已同步到 live baseline，或明确写明 No owner-doc update required。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -181,18 +199,19 @@ _无（A2/A6/A7/A8 均为 in-scope Fix，不延期）。_
 
 ## Non-Blocking Follow-ups
 
-- clipboard paste `${id}-copy-${counter}` 不碰撞检查现有 id（与 group/generateConnectionId 纪律不一致）—— P2，归 backlog（source: open-audit P2 簇）。
-- align/distribute 对 group 子节点读局部 x/y 非 world —— P2，归 backlog（source: open-audit P2 簇）。
+- clipboard paste `${id}-copy-${counter}` 不碰撞检查现有 id（与 group/generateConnectionId 纪律不一致）—— P2，归 backlog（source: open-audit P2 簇，`industrial-hmi-component-audit-roadmap.md ## Follow-up Backlog` 本轮-11）。
+- align/distribute 对 group 子节点读局部 x/y 非 world —— P2，归 backlog（source: open-audit P2 簇，roadmap 本轮-12）。
 
 ## Closure
 
-Status Note: _关闭时填写_
+Status Note: A2/A6/A7/A8 四条 connection 生命周期 + 引擎回滚 P1 全部 landed（每条 failing-first Proof 在 Fix 前 RED、Fix 后 GREEN，断言跨 data↔engine 可观测结果）。全量仓库验证 green：typecheck 32/32、build 32/32、lint 32/32、test 59/59（industrial 103 files / 1387 tests，baseline 1379 → +8 new）。owner doc 同步：`design-connection.md` §4.4/§5/§8.2/§12.1（C2/C4）+ `design-toolbox.md` §4.3 + `design-undo-redo.md` §12.1（U8）。cutSelection 由 pushForward 改 pushOperation 使 undo 完整恢复 pruned connection（与 removeWorkingSymbol 同型）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: _独立子 agent fresh session_
-- Evidence: _task id / daily log link / findings 摘要_
+- Auditor / Agent: 独立子 agent fresh session `ses_01e340ec6ffeLvZZFWfd1UPV33`（general，closure audit）
+- Verdict: `approved`（0 Blocker / 1 Major-non-blocking-expected / 2 Minor，已全部落地）
+- Evidence: fresh session 独立核对 4 phase fix 全部 live & wired（非 stub）：A2 `connection-drag-controller.ts:81-84` 读现有 connections 喂 `generateConnectionId`；A6 `runtime-mutators.ts:154-156` catch 调 `engine.build(beforeWorking)` + `synced.config` 对齐；A7 `clipboard.ts:87-108/143-158` idMap + target/id 重写，旧 `reassignIdsRecursive` 已移除；A8 `runtime-mutators.ts:99-108` + `toolbox-runtime.ts:180-195` + `editor-working-helpers.ts:183-206` prune + cutSelection 改 pushOperation。failing-first 测试均断言可观测结果（A2 走生产路径 onCommit 写回；A6 mock 模拟半应用再抛；A8 undo 测试断言 pruned connection 恢复）。fresh session 重跑 `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck/lint/test` 全 green（103 files / 1387 tests）。Major（已落地）：`design-connection.md` §4.4 editor-delete 现 prune vs 文档原「保留 dangling」drift → 已同步。Minor（已落地）：`design-toolbox.md` §4.3 / `design-undo-redo.md` omission → 已补 connection 重写说明 + U8 风险行。
 
 Follow-up:
 
-- _仅 non-blocking follow-up_
+- 仅 non-blocking follow-up（roadmap `## Follow-up Backlog` 本轮-11 paste id 碰撞检查 / 本轮-12 align-distribute world 坐标）。无剩余 plan-owned work。

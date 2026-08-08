@@ -127,17 +127,23 @@ interface EditorClipboard {
 }
 ```
 
-| 操作          | UI 触发           | 实现                                                                                                                                                                                                                                                            |
-| ------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 复制（copy）  | Ctrl+C / 右键菜单 | 适配层：深拷贝 selection 的图元节点 → 存入 clipboard；不修改 working copy；不派发 action（仅 statusBar 提示「已复制 N 个图元」）                                                                                                                                |
-| 剪切（cut）   | Ctrl+X / 右键菜单 | 适配层：深拷贝 + 移除 selection（产出 forward diff = `{removed: [...ids], added: [], updated: []}`，结构 diff）；入栈                                                                                                                                           |
-| 粘贴（paste） | Ctrl+V / 右键菜单 | 适配层：读取 clipboard → 为每个图元分配新 id（保证唯一性，建议 `${原id}-copy-${timestamp}` 或 UUID）+ 应用位移偏移（避免与原图元重叠，建议 +20px/+20px）→ 产出 forward diff = `{added: [...新节点], removed: [], updated: []}`；入栈；新 selection = 新 id 列表 |
+| 操作          | UI 触发           | 实现                                                                                                                                                                                                                                                                                                    |
+| ------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 复制（copy）  | Ctrl+C / 右键菜单 | 适配层：深拷贝 selection 的图元节点 → 存入 clipboard；不修改 working copy；不派发 action（仅 statusBar 提示「已复制 N 个图元」）                                                                                                                                                                        |
+| 剪切（cut）   | Ctrl+X / 右键菜单 | 适配层：深拷贝 + 移除 selection（产出 forward diff = `{removed: [...ids], added: [], updated: []}`，结构 diff）；入栈                                                                                                                                                                                   |
+| 粘贴（paste） | Ctrl+V / 右键菜单 | 适配层：读取 clipboard → 为每个图元分配新 id（保证唯一性，建议 `${原id}-copy-${timestamp}` 或 UUID）+ 应用位移偏移（避免与原图元重叠，建议 +20px/+20px）+ **重写 connection.target/id**（见下） → 产出 forward diff = `{added: [...新节点], removed: [], updated: []}`；入栈；新 selection = 新 id 列表 |
 
 **id 唯一性保证**：
 
 - 粘贴时分配新 id（不保留原 id，防止冲突）；
 - 多次粘贴同一 clipboard：每次都分配新 id（用户可连续 Ctrl+V 粘贴多个副本）；
 - id 生成策略：UUID v4 或 `${原id}-copy-${counter}`（编辑会话维护 counter 保证唯一）。
+
+**connection target/id 重写**（粘贴含连线的 pipe-junction 子图）：
+
+- 先对 clipboard.symbols 建 `oldId→newId` 全图映射（顶层 + group 子树递归），再重写每个含 `custom.connections` 节点的连线声明；
+- `connection.target`：命中映射用副本 id（target 同在选区被一起复制时副本连线指向副本 target，而非原件）；未命中（target 未被复制）按 dangling-tolerant 保留原件 target（与 `listAllConnections` 的 dangling 诊断一致）；
+- `connection.id`：经 `generateConnectionId(副本 junction id, ...)` 重新生成，不与原件重复（同一 junction 多条连线互不碰撞）。
 
 **剪贴板隔离**：
 
