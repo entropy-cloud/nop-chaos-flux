@@ -978,6 +978,8 @@ export const enUS: Resource = {
             'duplicate-id': 'Duplicate symbol id',
             'invalid-patch': 'Invalid property patch',
             'invalid-config': 'Invalid config',
+            // plan 2026-08-08-1931-2 Phase 4 / P2-8: mutator applyDiff / undo / redo / transaction commit failure.
+            'editor-internal-error': 'Editor internal error',
             unknown: 'Unknown error',
           },
           toolbox: {

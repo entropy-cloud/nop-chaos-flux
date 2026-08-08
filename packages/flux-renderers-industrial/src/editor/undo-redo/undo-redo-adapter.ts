@@ -1,8 +1,9 @@
-import type { ScadaConfig, ScadaConfigDiff, ScadaSymbolNode } from '../../serialization/config-types.js';
+import type { ScadaConfig, ScadaConfigDiff } from '../../serialization/config-types.js';
 import { diffScadaConfig } from '../../serialization/diff.js';
 import { computeInverse, applyDiffToConfig } from './compute-inverse.js';
 import { UndoStack, type EditorOperationKind, type UndoStackEntry } from './undo-stack.js';
 import { tryCoalesce } from './operation-coalesce.js';
+import { cloneConfigSnapshot } from '../editor-working-helpers.js';
 
 /**
  * 事务语义 + 节流起止帧入栈适配层（design-undo-redo.md §4.2 + spike §2.5）。
@@ -40,7 +41,7 @@ export class UndoRedoAdapter {
     if (this.inTransaction) return;
     this.inTransaction = true;
     this.transactionKind = kind;
-    this.prevAtOpStart = cloneConfig(currentWorkingCopy);
+    this.prevAtOpStart = cloneConfigSnapshot(currentWorkingCopy);
   }
 
   /**
@@ -232,30 +233,9 @@ function now(): number {
   return Date.now();
 }
 
-function cloneConfig(config: ScadaConfig): ScadaConfig {
-  return structuredCloneSafe(config);
-}
+// plan 2026-08-08-1931-2 Phase 2 / F6：config 深拷贝统一到 `editor-working-helpers.cloneConfigSnapshot`
+// （仓库内单一 clone-config 实现）。原本地 structuredCloneSafe/cloneNodeDeep/cloneConfig 三 helper 删除——
+// 它们与 cloneConfigSnapshot 同语义（深隔离 symbols/variables/custom/viewport/background），但硬编码
+// `version:1`（不保留原值）且重复实现。editor-working-helpers 经 connection-adapter 被 import，本模块
+// import 它不构成循环（undo-redo-adapter 不在 editor-working-helpers 的 import 闭包内）。
 
-/**
- * 深拷贝 config（与 editor-session cloneConfig 同语义；这里独立实现避免循环依赖）。
- * symbols/variables/viewport/background 全深拷贝，使事务快照与 working copy 引用隔离。
- */
-function structuredCloneSafe(config: ScadaConfig): ScadaConfig {
-  return {
-    version: 1,
-    ...(config.viewport !== undefined ? { viewport: { ...config.viewport } } : {}),
-    ...(config.background !== undefined ? { background: structuredClone(config.background) } : {}),
-    ...(config.variables !== undefined ? { variables: config.variables.map((v) => ({ ...v })) } : {}),
-    symbols: config.symbols.map(cloneNodeDeep),
-  };
-}
-
-function cloneNodeDeep(node: ScadaSymbolNode): ScadaSymbolNode {
-  const clone: ScadaSymbolNode = { ...node };
-  // HCA11-P3-1（扩展 P2-1 / P2 #4）：深克隆 custom——与 editor-session.cloneNode + editor-working-helpers.cloneNodeDeep
-  // 同纪律，使事务快照 prevAtOpStart 与 working copy 间 custom 子对象引用隔离，任一 in-place 改
-  // custom.connections 不串改快照（否则 diffScadaConfig 漏 custom 变更，undo 丢数据）。
-  if (node.custom) clone.custom = structuredClone(node.custom);
-  if (node.children) clone.children = node.children.map(cloneNodeDeep);
-  return clone;
-}

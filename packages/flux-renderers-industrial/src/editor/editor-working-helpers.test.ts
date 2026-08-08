@@ -68,6 +68,32 @@ describe('cloneConfigSnapshot (plan HCA11 P2-1: extends P2 #4 custom deep-clone)
     expect(snapshot.symbols[0]).not.toBe(configWithCustom.symbols[0]);
     expect(snapshot.symbols[1].children).not.toBe(configWithCustom.symbols[1].children);
   });
+
+  // plan 2026-08-08-1931-2 Phase 2 / F6：variables 深隔离——统一 clone 实现须加深 variables
+  // （旧 cloneConfigSnapshot 仅 `[...config.variables]` 浅数组拷贝，共享 variable 对象引用）。
+  it('deep-isolates variables entries (mutate snapshot.variables[0] does not flow back)', () => {
+    const configWithVars: ScadaConfig = {
+      version: 1,
+      variables: [{ id: 'var1', source: 'static', value: 42 }],
+      symbols: [{ id: 'r1', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10 }],
+    };
+    const snapshot = cloneConfigSnapshot(configWithVars);
+    expect(snapshot.variables).not.toBe(configWithVars.variables);
+    expect(snapshot.variables![0]).not.toBe(configWithVars.variables![0]);
+    snapshot.variables![0].value = 99;
+    expect(configWithVars.variables![0].value).toBe(42);
+  });
+
+  // plan 2026-08-08-1931-2 Phase 2 / F6：version 保留原值（旧 editor-session.cloneConfig 硬编码 version:1）。
+  it('preserves the original config.version (no hardcoded override)', () => {
+    const config: ScadaConfig = {
+      version: 1,
+      variables: [],
+      symbols: [],
+    };
+    const snapshot = cloneConfigSnapshot(config);
+    expect(snapshot.version).toBe(config.version);
+  });
 });
 
 describe('collectAllSymbols + collectWorldBounds (regression)', () => {

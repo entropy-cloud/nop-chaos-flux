@@ -9,14 +9,20 @@
  * **M1 子集**（design-renderer.md §8.5.2 全集剔除 M2 专属码 empty-selection/not-a-group/no-undo/no-redo）：
  * addSymbol/removeSymbol/updateSymbol/save/load 失败路径所需的码在此登记；
  * M2 专属码（group/ungroup/undo/redo）属 E7/E7.2，本文件预留全集常量但 i18n 映射 M1 仅覆盖子集。
+ *
+ * plan 2026-08-08-1931-2 Phase 4 / P2-8：`editor-internal-error`（mutator applyDiff / undo / redo / 事务
+ * commit 失败时由 runtime-factories.syncWorkingCopy + runtime-mutators + undo-redo-adapter 派发）补登 M1 子集
+ * ——先前漏登使 scadaEditorErrorI18nKey('editor-internal-error') 走 `.unknown` fallback，host 显示 unknown 文案。
  */
 export const SCADA_EDITOR_ERROR_CODES = [
-  // M1 子集（addSymbol/removeSymbol/updateSymbol/save/load 失败路径）
+  // M1 子集（addSymbol/removeSymbol/updateSymbol/save/load + applyDiff 内部失败路径）
   'editor-mount-failed',
   'invalid-node',
   'duplicate-id',
   'invalid-patch',
   'invalid-config',
+  // plan 2026-08-08-1931-2 Phase 4 / P2-8：mutator applyDiff / undo / redo / 事务 commit 失败派发（runtime-factories + runtime-mutators）。
+  'editor-internal-error',
   // M2 子集（group/ungroup/undo/redo 失败路径，E7/E7.2 落地行为；码全集登记，i18n 文案随 M2 落地）
   'empty-selection',
   'not-a-group',
@@ -36,6 +42,8 @@ export const SCADA_EDITOR_ERROR_CODES_M1: readonly ScadaEditorErrorCode[] = [
   'duplicate-id',
   'invalid-patch',
   'invalid-config',
+  // plan 2026-08-08-1931-2 Phase 4 / P2-8：applyDiff 失败属 M1 路径（addSymbol/removeSymbol/updateSymbol 的 syncWorkingCopy），i18n 文案与本子集同步落地。
+  'editor-internal-error',
 ];
 
 const EDITOR_I18N_KEY_PREFIX = 'industrial.scada.editor.error';

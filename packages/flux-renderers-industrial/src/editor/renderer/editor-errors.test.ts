@@ -31,6 +31,19 @@ describe('scadaEditorErrorI18nKey (design-renderer.md §8.5.2 独立映射)', ()
     expect(SCADA_EDITOR_ERROR_CODES_M1).not.toContain('no-redo');
   });
 
+  // plan 2026-08-08-1931-2 Phase 4 / P2-8：editor-internal-error（mutator applyDiff 失败派发码）必须在
+  // registry 内——否则 scadaEditorErrorI18nKey 走 .unknown fallback，host 显示 unknown 文案（沉默缺口）。
+  it('maps editor-internal-error to its own i18n key (not .unknown fallback)', () => {
+    expect(scadaEditorErrorI18nKey('editor-internal-error')).toBe(
+      'industrial.scada.editor.error.editor-internal-error',
+    );
+  });
+
+  it('editor-internal-error is registered in both the full registry and the M1 subset', () => {
+    expect(SCADA_EDITOR_ERROR_CODES).toContain('editor-internal-error');
+    expect(SCADA_EDITOR_ERROR_CODES_M1).toContain('editor-internal-error');
+  });
+
   it('full registry includes M2 codes (for E7/E7.2 landing)', () => {
     expect(SCADA_EDITOR_ERROR_CODES).toContain('empty-selection');
     expect(SCADA_EDITOR_ERROR_CODES).toContain('no-undo');

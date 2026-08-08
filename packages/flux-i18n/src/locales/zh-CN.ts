@@ -976,6 +976,8 @@ export const zhCN: Resource = {
             'duplicate-id': '图元 ID 重复',
             'invalid-patch': '属性补丁非法',
             'invalid-config': '组态配置非法',
+            // plan 2026-08-08-1931-2 Phase 4 / P2-8: mutator applyDiff / undo / redo / transaction commit failure.
+            'editor-internal-error': '编辑器内部错误',
             unknown: '未知错误',
           },
           toolbox: {

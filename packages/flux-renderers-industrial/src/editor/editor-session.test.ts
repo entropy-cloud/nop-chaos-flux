@@ -157,6 +157,22 @@ describe('createScadaEditorSession config cloning branches', () => {
     expect(session.workingConfig.variables).not.toBe(fullConfig.variables);
     expect(session.workingConfig.viewport).not.toBe(fullConfig.viewport);
   });
+
+  // plan 2026-08-08-1931-2 Phase 2 / F6：variables 元素深隔离——统一 clone 实现须加深 variables
+  // （mutate workingConfig.variables[0] 不回流原件）+ version 保留原值（旧 cloneConfig 硬编码 version:1）。
+  it('deep-isolates variables entries via the unified clone (F6)', () => {
+    const config: ScadaConfig = {
+      version: 1,
+      variables: [{ id: 'var1', source: 'static', value: 42 }],
+      symbols: [{ id: 'r1', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10 }],
+    };
+    const session = createScadaEditorSession(config);
+    expect(session.workingConfig.variables![0]).not.toBe(config.variables![0]);
+    session.workingConfig.variables![0].value = 99;
+    expect(config.variables![0].value).toBe(42);
+    // version 保留原值（非硬编码覆盖）
+    expect(session.workingConfig.version).toBe(config.version);
+  });
 });
 
 // plan 2026-08-08-1809-2 Phase 1 / F1（Proof）：缺失 variables 的合法 config 进入 createScadaEditorSession

@@ -14,7 +14,9 @@ import { industrialEditorRendererDefinitions } from './renderer-definitions.js';
  */
 export type { ScadaEditorCanvasSchema, ScadaEditorCanvasEvents, ScadaEditorViewportPolicy } from './schemas.js';
 export type { ScadaEditorTestHandle } from './editor-test-handle.js';
-export type { ScadaEditorSession, ScadaEditorMode, ScadaCommitPolicy } from './editor-session.js';
+// plan 2026-08-08-1931-2 Phase 5 / P2-2：包公共面导出 session 投影 type（Omit undoStack），
+// 不泄漏内部 UndoStack 实现类（域内部 INV-4）。实现接口 ScadaEditorSession 仅供 editor 域内部 relative path 消费。
+export type { ScadaEditorSessionPublic, ScadaEditorMode, ScadaCommitPolicy } from './editor-session.js';
 
 /**
  * `scada-editor-canvas` renderer 注册入口（design-renderer.md §11）。

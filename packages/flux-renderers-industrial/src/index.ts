@@ -50,8 +50,23 @@ export { registerScadaSymbols, builtinScadaSymbolDefinitions } from './symbols/r
  * 序列化契约函数（design-renderer.md §4.3 表）：design-contract 函数，运行期经 `exportConfig`/
  * `importConfig` 组件句柄使用；导出供 host 侧工具链（config 迁移/校验/审计）直接调用。
  * 无 live 内部消费者（renderer 经 `engine.exportConfig()` 路径，非此函数），保留导出为契约诚实。
+ *
+ * plan 2026-08-08-1931-2 Phase 3 / P2-1：serialization 导出 parity——parse/validate/diff 与 serialize 同步导出
+ * （与上方 host 校验/审计注释承诺对齐；host 不再需绕 relative path 自建入口校验）。`ScadaValidationResult`
+ * 经 `export type` 导出（类型仅）。`parseScadaConfig` 为 fail-closed 纯对象窄化 + 深隔离（Phase 1 / F5）。
  */
 export { serializeScadaConfig } from './serialization/serialize.js';
+export { parseScadaConfig } from './serialization/parse.js';
+export { validateScadaConfig } from './serialization/validate.js';
+export type { ScadaValidationResult } from './serialization/validate.js';
+export { diffScadaConfig } from './serialization/diff.js';
+
+/**
+ * 内置 renderer 定义数组（design-renderer.md §11）。plan 2026-08-08-1931-2 Phase 3 / P2-3：与所有兄弟
+ * `flux-renderers-*` 包注册模式对齐——导出 definitions 数组，供 host 自定义注册（选择性注册 / 自建 registry
+ * / 顺序控制）。`registerScadaRenderers` 仍是一键全注册便捷入口。
+ */
+export { industrialRendererDefinitions } from './renderer-definitions.js';
 
 /**
  * `scada-canvas` renderer 注册入口（design-renderer.md §11）。

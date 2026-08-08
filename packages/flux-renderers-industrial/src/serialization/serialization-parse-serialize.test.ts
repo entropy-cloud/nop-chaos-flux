@@ -22,18 +22,34 @@ describe('parseScadaConfig', () => {
     expect(() => parseScadaConfig('{not json')).toThrow(/invalid scada config JSON/);
   });
 
-  it('should pass through non-object JSON values unchanged', () => {
-    expect(parseScadaConfig('null')).toBeNull();
-    expect(parseScadaConfig('[1, 2]')).toEqual([1, 2]);
+  // plan 2026-08-08-1931-2 Phase 1 / F5：非纯对象 input 不再返回类型谎言（cast 为 ScadaConfig），
+  // 改为 fail-closed 抛 `scada config must be an object`（与 validate 广度对齐）。
+  // 旧实现 shallowCopy 对 null/array/原始值直接 cast 返回（签名承诺 ScadaConfig 即类型谎言）。
+  it('throws for non-object JSON values (fail-closed, no type-lie cast)', () => {
+    expect(() => parseScadaConfig('null')).toThrow(/scada config must be an object/);
+    expect(() => parseScadaConfig('[1, 2]')).toThrow(/scada config must be an object/);
   });
 
-  it('should shallow-copy object input to defend against external mutation', () => {
+  it('throws for non-object input bypassing the type signature at runtime', () => {
+    expect(() => parseScadaConfig(42 as unknown as object)).toThrow(/scada config must be an object/);
+    expect(() => parseScadaConfig(null as unknown as object)).toThrow(/scada config must be an object/);
+    expect(() => parseScadaConfig([1, 2] as unknown as object)).toThrow(/scada config must be an object/);
+  });
+
+  // plan 2026-08-08-1931-2 Phase 1 / F5：object 分支深隔离——与调用方不共享嵌套引用。
+  // 旧实现 shallowCopy 只复制顶层 + symbols/variables 数组外壳，元素引用共享 → mutate symbols[0] 回流。
+  it('deep-isolates object input so nested mutations do not flow back to the source', () => {
     const source = baseConfig();
     const parsed = parseScadaConfig(source);
     expect(parsed).not.toBe(source);
     expect(parsed.symbols).not.toBe(source.symbols);
+    // 顶层数组隔离
     parsed.symbols.push(rect('extra'));
     expect(source.symbols).toHaveLength(2);
+    // 嵌套节点深隔离（F5 核心：mutate symbols[0] 不回流）
+    parsed.symbols.splice(1, 1);
+    parsed.symbols[0].x = 999;
+    expect(source.symbols[0].x).toBe(0);
   });
 });
 

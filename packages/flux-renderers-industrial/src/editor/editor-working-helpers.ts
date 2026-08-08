@@ -67,12 +67,19 @@ export function collectWorldBounds(
  * group-child 在 prevSnapshot 与 working copy 间共享同一子节点 ref → applyPatchToWorkingNode 就地 mutate
  * 命中两份 snapshot → diffScadaConfig 经 equality.ts `a === b` 返 true → diff 为空 → grouped-child 编辑
  * 不入栈（数据丢失）。深克隆（复用 undo-redo-adapter.cloneNodeDeep 递归）使子树 identity 变化，diff 非空。
+ *
+ * plan 2026-08-08-1931-2 Phase 2 / F6：本函数现为仓库内**唯一** clone-config 实现（editor-session 的
+ * `cloneConfig` 已改为 thin wrapper 调用它）。variables 加深到 `.map((v) => ({ ...v }))`（旧 `[...config.variables]`
+ * 浅数组拷贝共享 variable 对象引用是 footgun）；viewport 浅拷贝 + background `structuredClone` 与原
+ * editor-session.cloneConfig 同隔离纪律；version 经 `...config` 保留原值（不硬编码 1）。
  */
 export function cloneConfigSnapshot(config: ScadaConfig): ScadaConfig {
   return {
     ...config,
+    ...(config.viewport !== undefined ? { viewport: { ...config.viewport } } : {}),
+    ...(config.background !== undefined ? { background: structuredClone(config.background) } : {}),
     symbols: config.symbols.map(cloneNodeDeep),
-    ...(config.variables ? { variables: [...config.variables] } : {}),
+    ...(config.variables ? { variables: config.variables.map((v) => ({ ...v })) } : {}),
   };
 }
 

@@ -1,5 +1,6 @@
 import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
 import { UndoStack } from './undo-redo/undo-stack.js';
+import { cloneConfigSnapshot } from './editor-working-helpers.js';
 
 /**
  * 编辑会话模式（design-architecture.md §4.5）。
@@ -42,6 +43,19 @@ export interface ScadaEditorSession {
 }
 
 /**
+ * `ScadaEditorSession` 公开投影 type（plan 2026-08-08-1931-2 Phase 5 / P2-2）。
+ *
+ * 包公共面经 `editor/index.ts` 导出此别名——**不泄漏内部 `UndoStack` 实现类**（域内部持有 INV-4：
+ * UndoStack 是 editor/undo-redo/ 域内部实现类，其可变栈结构 + 事务态不应经公开 session type 透传到包公共面）。
+ * undo/redo 对外经 `component:undo()` / `component:redo()` 句柄（design-architecture.md §8.5）+ `onSessionChange`
+ * 载荷的 `canUndo`/`canRedo`（`projectSessionChange` 派生）消费，外部消费者无需也不应直接触 `session.undoStack`。
+ *
+ * 实现接口 `ScadaEditorSession`（含 `undoStack`）仅供 editor 域内部经 relative path 消费；本投影 type 是
+ * 经包公共面（`@nop-chaos/flux-renderers-industrial/editor`）对外暴露的唯一 session type。
+ */
+export type ScadaEditorSessionPublic = Omit<ScadaEditorSession, 'undoStack'>;
+
+/**
  * `onSessionChange` 载荷（design-renderer.md §4.1 + §8.1）。
  * canUndo/canRedo 经 undo-redo 栈派生（E7.2 落地，非恒 false）。
  */
@@ -55,16 +69,17 @@ export interface ScadaEditorSessionChangePayload {
 /**
  * 构造初始编辑会话（含 undo/redo 栈，E7.2 落地）。
  *
- * working copy + committedBaseline 均深拷贝入参 config（编辑期 working copy 变更不回流 props config，
- * R5 双态隔离 Layer 2）。selection 缺省空（无选中），mode 缺省 edit。undoStack 缺省新空栈。
+ * working copy + committedBaseline 均深拷贝入参 config（`cloneConfigSnapshot`，plan 2026-08-08-1931-2 Phase 2 / F6
+ * 统一为仓库内单一 clone 实现；编辑期 working copy 变更不回流 props config，R5 双态隔离 Layer 2）。
+ * selection 缺省空（无选中），mode 缺省 edit。undoStack 缺省新空栈。
  */
 export function createScadaEditorSession(
   config: ScadaConfig,
   options: { mode?: ScadaEditorMode; selection?: string[]; undoStack?: UndoStack } = {},
 ): ScadaEditorSession {
   return {
-    workingConfig: cloneConfig(config),
-    committedBaseline: cloneConfig(config),
+    workingConfig: cloneConfigSnapshot(config),
+    committedBaseline: cloneConfigSnapshot(config),
     selection: options.selection ? [...options.selection] : [],
     mode: options.mode ?? 'edit',
     undoStack: options.undoStack ?? new UndoStack(),
@@ -76,8 +91,8 @@ export function createScadaEditorSession(
  * committedBaseline + 清空 selection + 重置 mode 为 edit + **清空 undo/redo 栈**（编辑历史不保留）。
  */
 export function resetSession(session: ScadaEditorSession, config: ScadaConfig): void {
-  session.workingConfig = cloneConfig(config);
-  session.committedBaseline = cloneConfig(config);
+  session.workingConfig = cloneConfigSnapshot(config);
+  session.committedBaseline = cloneConfigSnapshot(config);
   session.selection = [];
   session.mode = 'edit';
   session.undoStack.clear();
@@ -108,23 +123,4 @@ export function projectSessionChange(session: ScadaEditorSession): ScadaEditorSe
     selection: [...session.selection],
     mode: session.mode,
   };
-}
-
-function cloneConfig(config: ScadaConfig): ScadaConfig {
-  return {
-    version: 1,
-    ...(config.viewport !== undefined ? { viewport: { ...config.viewport } } : {}),
-    ...(config.background !== undefined ? { background: structuredClone(config.background) } : {}),
-    ...(config.variables !== undefined ? { variables: config.variables.map((v) => ({ ...v })) } : {}),
-    symbols: config.symbols.map(cloneNode),
-  };
-}
-
-function cloneNode(node: ScadaSymbolNode): ScadaSymbolNode {
-  const clone: ScadaSymbolNode = { ...node };
-  // plan 2026-08-08-0900-1 Phase 1 / P2 #4：深克隆 custom——浅 `{...node}` 使 working / committedBaseline /
-  // clipboard 间共享 custom 子对象引用，undo/redo 或 group 后改 custom.connections 串改多份。structuredClone 隔离。
-  if (node.custom) clone.custom = structuredClone(node.custom);
-  if (node.children) clone.children = node.children.map(cloneNode);
-  return clone;
 }
