@@ -22,6 +22,15 @@ const SYMBOL_KEYS: Array<keyof ScadaSymbolNode> = [
   'text',
   'textColor',
   'textSize',
+  // plan 2026-08-08-0748-1 HCA5 Phase 2（P1-1 跨层 drift）：补 fontFamily/fontWeight/align
+  // （文本样式三字段）。ScadaSymbolProps（symbol-types.ts:34,36,38）已声明、scada-text create 消费、
+  // validate.ts:287 校验 fontFamily/fontWeight，config-types.ts ScadaSymbolNode 已补声明；此前机械遗漏
+  // 使 diff 路径对三字段产出空 patch，host 同版本 config 改文本对齐/字体时 applyDiff 收不到 patch
+  // （Failure Paths `text-style-ignored`，prior P1-1 `flow` 同类）。机械 lint 守卫 scripts/check-scada-symbol-keys.mjs
+  // 防同类复发（断言 ScadaSymbolNode 字段 ∪ ScadaSymbolProps 字段 ⊆ SYMBOL_KEYS）。
+  'fontFamily',
+  'fontWeight',
+  'align',
   // plan 2026-08-05-0653-2 Phase 2 (open P1-1)：补 'flow'（管道流动参数）。
   // 声明在 config-types.ts:78、validate.ts 校验、pipe-junction.ts create+applyProps 消费；
   // 此前机械遗漏导致 host 同版本 config 改 flow 时 diff 路径产出空 patch（Failure Paths `flow-toggle-ignored`）。

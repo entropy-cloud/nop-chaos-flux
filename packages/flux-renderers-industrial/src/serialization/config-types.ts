@@ -81,6 +81,14 @@ export interface ScadaSymbolNode {
   text?: string;
   textColor?: string;
   textSize?: number;
+  // plan 2026-08-08-0748-1 HCA5 Phase 2（P1-1 跨层 drift）：补 fontFamily/fontWeight/align。
+  // ScadaSymbolProps（symbol-types.ts:34,36,38）已声明、scada-text create 消费、validate.ts:287 校验
+  // fontFamily/fontWeight，但 ScadaSymbolNode 漏声明 → SYMBOL_KEYS（diff.ts）无法含此三键 →
+  // diffScadaConfig 对三字段产出空 patch，host live config 改文本对齐/字体被静默丢弃（prior P1-1
+  // `flow` 同类，2026-08-05-0653-2 Phase 2）。补声明后 SYMBOL_KEYS 可补键，diff 往返恢复。
+  fontFamily?: string;
+  fontWeight?: string;
+  align?: 'left' | 'center' | 'right';
   /** 管线流动参数（I9.4 管道图元经 applyProps 增量消费；I2.2 §4.4 flow 行）。 */
   flow?: { enabled: boolean; speed: number; dash?: number[] };
   custom?: Record<string, unknown>;

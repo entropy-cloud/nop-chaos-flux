@@ -1,4 +1,4 @@
-import type { ActionSchema, BaseSchema, SchemaObject } from '@nop-chaos/flux-core';
+import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject } from '@nop-chaos/flux-core';
 import type { ScadaConfig } from '../serialization/config-types.js';
 
 export type { ScadaConfig } from '../serialization/config-types.js';
@@ -37,6 +37,12 @@ export interface ScadaEditorCanvasSchema extends BaseSchema {
   toolbox?: SchemaObject;
   /** 状态栏 region（含 undo/redo 边界提示，M1 占位）。 */
   statusBar?: SchemaObject;
+  /** 加载态 region（编辑器引擎装配中）。 */
+  loading?: SchemaInput;
+  /** 空态 region（ready 但无图元）。 */
+  empty?: SchemaInput;
+  /** 错误态 region（config 校验/构建失败）。 */
+  error?: SchemaInput;
   /** schema 级事件（整体 prop，D-1 裁定）。 */
   events?: ScadaEditorCanvasEvents;
 }

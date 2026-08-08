@@ -48,7 +48,7 @@ export function EditorPalettePanel(props: EditorPalettePanelProps) {
           draggable
           onDragStart={(e) => handleDragStart(e, def.type)}
           onClick={() => handleAddDefault(def.type)}
-          title={def.type}
+          title={def.name}
         >
           {def.name}
         </Button>

@@ -933,6 +933,7 @@ export const enUS: Resource = {
     industrial: {
       scada: {
         canvasError: 'Scada canvas error',
+        canvasLabel: 'Industrial SCADA canvas',
         error: {
           'config-parse': 'Scada config parse failed',
           'config-invalid': 'Scada config validation failed',
@@ -953,6 +954,7 @@ export const enUS: Resource = {
         editor: {
           loading: 'Loading editor…',
           canvasError: 'Editor canvas error',
+          canvasLabel: 'SCADA editor canvas',
           emptyScene: 'Empty scene — drag symbols from the palette to start editing',
           inspector: {
             title: 'Properties',

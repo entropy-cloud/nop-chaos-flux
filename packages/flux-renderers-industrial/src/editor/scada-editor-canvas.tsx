@@ -39,7 +39,7 @@ function parseAndValidateConfig(
     const config = parseScadaConfig(raw as string | object);
     const result = validateScadaConfig(config);
     if (!result.ok) {
-      return { error: { code: 'invalid-config', message: result.errors.join('; ') } };
+      return { error: { code: 'config-invalid', message: result.errors.join('; ') } };
     }
     return { config };
   } catch (error) {
@@ -214,6 +214,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
 
   const selectedNodeId = selection[0];
   const cidAttr = props.meta.cid !== undefined ? String(props.meta.cid) : undefined;
+  const disabled = props.meta.disabled === true;
 
   // plan 2026-08-08-0900-1 Phase 4 / P2 #40：width/height props 尺寸化根容器（编辑器足迹），
   // canvas 区由 layout-canvas div（flex:1）+ ResizeObserver 驱动 engine.setSize（不再 width/height→canvas 拉伸）。
@@ -258,7 +259,6 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         {showLayoutBody
           ? asReactNode(palette?.render()) ?? <EditorPalettePanel runtime={runtime} onError={handleError} />
           : null}
-        {/* eslint-disable jsx-a11y/no-static-element-interactions -- canvas drop + keyboard target */}
         <div
           ref={containerRef}
           data-cid={cidAttr}
@@ -267,7 +267,12 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
           data-mode={props.props.mode ?? 'edit'}
           className="nop-scada-editor-canvas nop-scada-editor-layout-canvas"
           tabIndex={0}
+          role="application"
+          aria-label={t('industrial.scada.editor.canvasLabel')}
+          aria-disabled={disabled || undefined}
+          inert={disabled || undefined}
         onDrop={(e) => {
+          if (disabled) return;
           e.preventDefault();
           const type = e.dataTransfer.getData('application/x-scada-symbol-type');
           if (type && runtime) {
@@ -297,7 +302,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         // plan 2026-08-07-1835-2 Phase 3 / open P1-B：键盘层——Delete/Ctrl+Z/Y/Ctrl+G/Ctrl+Shift+G/arrows
         // （此前 grep keydown 0 hits，delete/group/ungroup 仅 component:* handle 可达）。
         onKeyDown={(e) => {
-          if (!runtime) return;
+          if (!runtime || disabled) return;
           const sel = selection;
           const ctrl = e.ctrlKey || e.metaKey;
           const key = e.key.toLowerCase();

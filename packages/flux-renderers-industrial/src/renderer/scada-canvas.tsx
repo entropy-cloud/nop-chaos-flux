@@ -295,6 +295,8 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
       data-cid={props.meta.cid !== undefined ? String(props.meta.cid) : undefined}
       data-slot="scada-canvas"
       data-status={effectiveStatus}
+      role="application"
+      aria-label={t('industrial.scada.canvasLabel')}
       className={cn('nop-scada-canvas h-full w-full', props.meta.className)}
     >
       {effectiveStatus === 'loading' ? (

@@ -932,6 +932,7 @@ export const zhCN: Resource = {
     industrial: {
       scada: {
         canvasError: '画布场景错误',
+        canvasLabel: '工业组态画面',
         error: {
           'config-parse': '组态配置解析失败',
           'config-invalid': '组态配置校验未通过',
@@ -951,6 +952,7 @@ export const zhCN: Resource = {
         editor: {
           loading: '编辑器加载中…',
           canvasError: '编辑器画布错误',
+          canvasLabel: '组态编辑器画布',
           emptyScene: '空场景——从左侧图元库拖入图元开始编辑',
           inspector: {
             title: '属性',

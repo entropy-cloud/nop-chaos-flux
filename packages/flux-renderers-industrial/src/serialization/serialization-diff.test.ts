@@ -213,3 +213,54 @@ describe('diffScadaConfig flow field (plan 2026-08-05-0653-2 Phase 2 open P1-1)'
     expect(diff.updated[0]!.id).toBe('p');
   });
 });
+
+// plan 2026-08-08-0748-1 HCA5 Phase 2（P1-1 跨层 drift）：diffScadaConfig 不再丢弃文本样式字段。
+// 失败用例（修复前）：ScadaSymbolProps（symbol-types.ts:34,36,38）声明 align/fontFamily/fontWeight，
+// scada-text create 消费（→ textAlign/fontFamily/fontWeight 节点属性）、validate.ts:287 校验
+// fontFamily/fontWeight，但 ScadaSymbolNode 漏声明 → SYMBOL_KEYS（diff.ts）无法含此三键 → diff
+// 路径对三字段产出空 patch（机械遗漏）→ host 同版本 config 改文本对齐/字体时 applyDiff 收不到
+// patch，文本外观冻结在旧值（Failure Paths `text-style-ignored`，prior P1-1 `flow` 同类）。
+describe('diffScadaConfig text-style fields (plan 2026-08-08-0748-1 HCA5 Phase 2 P1-1)', () => {
+  it('检出 align 变更（left→center）并产出 updated[].patch.align', () => {
+    const prev = baseConfig({
+      symbols: [rect('t', { type: 'scada-text', align: 'left' })],
+    });
+    const next = baseConfig({
+      symbols: [rect('t', { type: 'scada-text', align: 'center' })],
+    });
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.updated).toEqual([{ id: 't', patch: { align: 'center' } }]);
+  });
+
+  it('检出 fontFamily 变更并产出 updated[].patch.fontFamily', () => {
+    const prev = baseConfig({
+      symbols: [rect('t', { type: 'scada-text', fontFamily: 'serif' })],
+    });
+    const next = baseConfig({
+      symbols: [rect('t', { type: 'scada-text', fontFamily: 'sans-serif' })],
+    });
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.updated).toEqual([{ id: 't', patch: { fontFamily: 'sans-serif' } }]);
+  });
+
+  it('检出 fontWeight 变更并产出 updated[].patch.fontWeight', () => {
+    const prev = baseConfig({
+      symbols: [rect('t', { type: 'scada-text', fontWeight: 'normal' })],
+    });
+    const next = baseConfig({
+      symbols: [rect('t', { type: 'scada-text', fontWeight: 'bold' })],
+    });
+    const diff = diffScadaConfig(prev, next);
+    expect(diff.updated).toEqual([{ id: 't', patch: { fontWeight: 'bold' } }]);
+  });
+
+  it('同值 align/fontFamily/fontWeight 不假阳性触发 updated', () => {
+    const prev = baseConfig({
+      symbols: [rect('t', { type: 'scada-text', align: 'right', fontFamily: 'mono', fontWeight: 'bold' })],
+    });
+    const next = baseConfig({
+      symbols: [rect('t', { type: 'scada-text', align: 'right', fontFamily: 'mono', fontWeight: 'bold' })],
+    });
+    expect(diffScadaConfig(prev, next).updated).toEqual([]);
+  });
+});
