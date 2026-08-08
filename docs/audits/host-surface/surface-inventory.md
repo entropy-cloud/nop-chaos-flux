@@ -98,6 +98,38 @@
 - **15-2 NaN fail-closed（fd-4 相关）→ 收敛**：0150-3 已补 fail-closed 用例 `designer-xyflow-node.keyboard.test.tsx:121-139`（零尺寸矩形 → 有限 (0,0) 回退 + 调用计数锁定），无 NaN 传播路径；不另行登记 P1。
 - **MA4.3 缺口（H7 回归基准）**：`createDesignerStoreAdapter`（MA43-P1-01）**已补测**（`adapters/designer-store-adapter.test.ts` 7 用例，2026-07-27 后补齐）；`resolveDesignerManifest`/`designerHostContract`/`DESIGNER_CAPABILITY_PUBLICATION` **仍零直接测试**（H7 缺口，Phase 2/3 回归项）；`DesignerCanvasContent` 仅间接测试（H7 记录项）。
 
+## D3.2 增量登记（2026-08-08，plan `2026-08-08-1315-1` Phase 1 交付）
+
+### 面级 e2e 覆盖矩阵（既有 spec ↔ ss-1..ss-10）
+
+| e2e spec                                    | ss-1 | ss-2 | ss-3 | ss-4 | ss-5 | ss-6 | ss-7 | ss-8 | ss-9 | ss-10 |
+| ------------------------------------------- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ----- |
+| report-designer-demo（用例 1 核心面渲染）   | ✓    |      | ✓    |      |      |      | ✓    |      |      |       |
+| report-designer-demo（用例 3 行列头）       | ✓    |      |      |      |      |      |      |      |      |       |
+| report-designer-demo（用例 4 sticky 滚动）  | ✓    |      |      |      |      |      |      |      |      |       |
+| report-designer-demo（用例 5 cell 点击）    |      |      |      |      |      |      | ✓    |      |      |       |
+| report-designer-demo（用例 6 工具栏本地化） |      |      | ✓    | ✓    |      |      |      |      |      |       |
+| report-designer-demo（用例 7 编辑器移除）   |      | ✓    |      |      |      |      |      |      |      |       |
+| report-designer-demo（用例 8 字段拖拽写值） | ✓    | ✓    |      |      |      |      |      |      |      |       |
+| report-designer-demo（用例 9 sheet tab）    |      |      |      |      |      |      | ✓    |      |      |       |
+| exploratory/subagent-a（工具栏 + 零 error） |      |      | ✓    |      |      |      |      |      |      |       |
+| spreadsheet-demo（**新增，Phase 5 落地**）  | ✓    | ✓    | ✓    | ✓    | ✓    | ✓    | ✓    | ✓    | ✓    | ✓     |
+
+> 以上既有 spec 宿主归属 = report-designer（`report-designer-demo.spec.ts` 9 用例）与 exploratory 兜底（1 用例）；**真缺口已闭合**：D3.2 Phase 5 新建独立宿主页（`apps/playground/src/pages/spreadsheet-demo.tsx` + `spreadsheet-page.tsx`，route `#/spreadsheet`）+ 独立 spec `spreadsheet-demo.spec.ts`（10 用例，每面 ≥1 场景，programmatic DOM 断言；同时构成 P1 修复 107/108 的 e2e 确认点），2026-08-08 全绿（10/10）。
+
+### D3.2 收口增量（2026-08-08）
+
+- **owner doc 落地**：`docs/architecture/spreadsheet/design.md` 新建（Phase 1 裁决，单文件 <40 KB，只写最终设计状态）；README §1 spreadsheet 行契约基准更新为「spreadsheet/design.md + report-designer 侧两文件（宿主视角保留）」。
+- **新增 spec 登记**：`tests/e2e/spreadsheet-demo.spec.ts`（10 用例）；`playground-entry-pages.spec.ts` 补 spreadsheet 路由断言（ROUTE_ASSERTIONS）。
+
+### 已知遗留输入终态核对（2026-08-08 live）
+
+- **MA43-P1-06/07 → 收敛（纯复核非 re-fix）**：`resolveSpreadsheetManifest`/`spreadsheetHostContract` 直接测试在案（`spreadsheet-manifest.test.ts` 两 describe 块：resolveSpreadsheetManifest 三版本别名 + spreadsheetHostContract 绑定）；arm-index 标 fixed R2.37/R2.38 与 live 一致。
+- **spreadsheet-core 默认工厂 4 函数零测试 → 复核确认仍零直接测试**（`createDefaultSelection`/`createDefaultViewport`/`createDefaultHistory`/`createDefaultLayout`，types.ts:267-289；`createDefaultViewport` 仅 core.ts:49 间接使用）→ H7 回归项，Phase 4 补测。
+- **MA5 P3-03 同义反复测试 → 确认仍同义反复**（`use-spreadsheet-interactions.test.ts` 仅编译期 key 计数）→ Phase 4 重写为行为断言。
+- **MA5 P3-06 no-op 回调 → 确认 live**（`use-spreadsheet-shell.ts:25-35` `setCellValue`/`setCommentText` 空回调，消费点 use-selection.ts:239-241/use-clipboard.ts:57/use-comments.ts:45；toolbar cell-editor UI 已移除但状态管线残留）→ ss-2/ss-7 面裁决。
+- **MA5 P3-12 计数语义 → 确认 live**（`spreadsheet-grid/constants.ts:105-123` `getSelectedAxisInfo` count 返回 span `end-start+1` 而非实际选中数；消费点 spreadsheet-grid.tsx:75-76 + use-context-menu-actions.ts:104/137/168）→ ss-7 面 P1/P2 登记。
+
 ## 引用关系
 
 - D3.1 plan 引用: 本清单 fd-1..fd-13 + `docs/audits/host-surface/README.md` §1/§2（flow-designer 行）。

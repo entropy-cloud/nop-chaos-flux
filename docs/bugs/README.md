@@ -125,3 +125,7 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/104-flow-designer-nan-width-fail-closed-fix.md`
 - `docs/bugs/105-gantt-on-task-edit-event-contract-fix.md`
 - `docs/bugs/106-kanban-dead-component-handles-fix.md`
+- `docs/bugs/107-spreadsheet-frozen-panes-render-unpinned-fix.md`
+- `docs/bugs/108-spreadsheet-multi-select-count-span-fix.md`
+- `docs/bugs/109-spreadsheet-setcellnumberformat-noop-fix.md`
+- `docs/bugs/110-spreadsheet-find-result-shape-contract-drift-fix.md`
