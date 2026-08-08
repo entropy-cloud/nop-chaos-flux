@@ -73,7 +73,7 @@ export function useFormLoadAction(input: {
         ) {
           return;
         }
-        reportFormInitActionError(runtime, path, error);
+        reportFormInitActionError(runtime, path, error, 'Form loadAction failed');
         // A real failure must not strand the activation key: the effect body
         // bails on `loadActionKeyRef.current === activationKey`, so keeping the
         // key would permanently disable autoLoad for this activation. Clear it

@@ -330,6 +330,10 @@ describe('FormRenderer loadAction', () => {
       expect(failingDispatch).toHaveBeenCalledTimes(1);
     });
 
+    // P3-1: loadAction failures surface their own message instead of reusing
+    // the initAction wording ("Form initAction failed").
+    expect(runtime.env.notify).toHaveBeenCalledWith('error', 'Form loadAction failed');
+
     // A dependency flip (new loadAction identity, same activation key) re-runs
     // the effect; a failed autoLoad must be retryable, not permanently disabled.
     const retryDispatch = vi.fn().mockResolvedValue({

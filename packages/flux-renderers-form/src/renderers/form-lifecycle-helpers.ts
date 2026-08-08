@@ -93,11 +93,12 @@ export function reportFormInitActionError(
   runtime: RendererRuntime,
   path: string,
   error: unknown,
+  message = 'Form initAction failed',
 ) {
   reportRuntimeHostIssue({
     env: runtime.env,
     level: 'error',
-    message: 'Form initAction failed',
+    message,
     error,
     phase: 'action',
     path,
